@@ -562,6 +562,19 @@ function renderSymbolic(ast) {
       if (ast.name === "talAdjust") {
         // Wrap compound (binary) expressions in parens; leave atomic ones bare
         const wrappedInner = ast.arg.type === "bin" ? `(${inner})` : inner;
+        // If the inner argument is a compile-time-constant number (not a stat
+        // token or an unresolved compound expression), pre-multiply the fixed
+        // 0.02 coefficient into it now so we display one number instead of
+        // the arithmetic (e.g. "15 + 0.3×TAL" not "15 + 0.02×15×TAL"). This
+        // is a general rule: two adjacent numeric literals with no stat token
+        // involved get folded into a single coefficient at symbolic-render
+        // time. Anything else (a bare stat token, or a compound expression
+        // that can't be reduced without knowing stat values) falls back to
+        // the unmultiplied display form.
+        if (ast.arg.type === "num") {
+          const coeff = 0.02 * ast.arg.v;
+          return `${wrappedInner} + ${coeff}×TAL`;
+        }
         return `${wrappedInner} + 0.02×${wrappedInner}×TAL`;
       }
       return tag ? `${inner} <span class="adj">${tag}</span>` : inner;
@@ -686,7 +699,7 @@ function mountAllCards() {
     currentRank[famId] = fam.ranks.length - 1;
     const grid = tierGrids[fam.tier];
     if (!grid) { console.error(`No .tier.${fam.tier} .grid found for ${famId}`); continue; }
-    const card = renderSkillCard(famId, fam, 0, currentView, stats);
+    const card = renderSkillCard(famId, fam, currentRank[famId], currentView, stats);
     card.dataset.fam = famId;
     grid.appendChild(card);
   }
