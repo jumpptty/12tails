@@ -232,6 +232,14 @@
     background:var(--paper);color:var(--acc);cursor:pointer;padding:0;
   }
   .ranktoggle button.active{background:var(--acc);color:#fff;}
+  .classctoggle{
+    display:inline-flex;align-items:center;gap:3px;margin:0 0 3px 6px;
+    font-family:Consolas,monospace;font-size:8.5px;font-weight:700;
+    padding:2px 6px;border:1px solid var(--acc);border-radius:2px;
+    background:var(--paper);color:var(--acc);cursor:pointer;
+  }
+  .classctoggle input{margin:0;cursor:pointer;}
+  .classctoggle.on{background:var(--acc);color:#fff;}
   .computed{font-weight:700;}
   .computed.prob{font-weight:400;}
 </style>
@@ -635,7 +643,14 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix) {
 }
 
 function renderSkillCard(famId, fam, rankIdx, view, stats) {
-  const r = fam.ranks[rankIdx];
+  const baseRank = fam.ranks[rankIdx];
+  // Merge any currently-ON classC overrides onto the base rank. Later
+  // array entries win if two overrides somehow touch the same field
+  // (doesn't occur in current data, but keeps the merge well-defined).
+  const onToggles = classCToggle[famId] || {};
+  const r = (baseRank.classC || [])
+    .filter(entry => onToggles[entry.passiveId])
+    .reduce((merged, entry) => ({ ...merged, ...entry }), { ...baseRank });
   const el = document.createElement("div");
   el.className = "sk";
   const iconSrc = ICONS[fam.icon(r)] || "";
@@ -643,6 +658,12 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
     ? `<div class="ranktoggle" data-fam="${famId}">${fam.ranks.map((_,i)=>
         `<button type="button" data-rank="${i}" class="${i===rankIdx?"active":""}">${i+1}</button>`).join("")}</div>`
     : "";
+  const classCToggles = (baseRank.classC || []).map(entry => {
+    const isOn = !!onToggles[entry.passiveId];
+    return `<label class="classctoggle${isOn ? " on" : ""}" data-fam="${famId}" data-passive="${entry.passiveId}">
+      <input type="checkbox" ${isOn ? "checked" : ""}> ${entry.passiveId}
+    </label>`;
+  }).join("");
   // A rank is "active" (has some castable/triggerable form) when it sets at
   // least one of cd/mp/sp/cast/dmg. Pure passives (e.g. nAttack, intellect,
   // statPlus, astralTalent) have none of these and must render zero chip
@@ -676,6 +697,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
     <img class="ic" src="${iconSrc}" alt="">
     <div class="body">
       ${rankButtons}
+      ${classCToggles}
       <h3>${r.id.replace("pgn_","")}</h3>
       ${chipsBlock}
       <ul class="notes">${(r.notes||[]).map(n=>`<li>${n}</li>`).join("")}</ul>
@@ -686,6 +708,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
 const currentRank = {};
 let currentView = "base";
 const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0 };
+const classCToggle = {};
 
 function mountAllCards() {
   // Grouped by tier for Task-2's existing per-tier .grid containers.
@@ -721,6 +744,14 @@ document.addEventListener("click", e => {
   const rb = e.target.closest(".ranktoggle button");
   if (rb) {
     currentRank[rb.closest(".ranktoggle").dataset.fam] = parseInt(rb.dataset.rank, 10);
+    rerenderAll();
+    return;
+  }
+  const cc = e.target.closest(".classctoggle");
+  if (cc) {
+    const famId = cc.dataset.fam, passiveId = cc.dataset.passive;
+    classCToggle[famId] = classCToggle[famId] || {};
+    classCToggle[famId][passiveId] = !classCToggle[famId][passiveId];
     rerenderAll();
     return;
   }
