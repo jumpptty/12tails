@@ -629,7 +629,21 @@ function renderSymbolic(ast) {
     case "stat": return ast.v;
     case "ceil": return `⌈${renderSymbolic(ast.arg)}⌉`;
     case "floor": return `⌊${renderSymbolic(ast.arg)}⌋`;
-    case "bin": return `${renderSymbolic(ast.left)} ${ast.op} ${renderSymbolic(ast.right)}`;
+    case "bin": {
+      // A child needs parens when appearing under ×/÷ if its own rendering
+      // is (or unconditionally produces) a lower-precedence +/- expression;
+      // otherwise left-to-right ×/÷ concatenation is already unambiguous.
+      const needsParensAsMulOperand = (node) =>
+        (node.type === "bin" && (node.op === "+" || node.op === "-")) ||
+        (node.type === "fn" && node.name === "talAdjust");
+      const wrap = (node) => {
+        const rendered = renderSymbolic(node);
+        return (ast.op === "×" || ast.op === "/") && needsParensAsMulOperand(node)
+          ? `(${rendered})`
+          : rendered;
+      };
+      return `${wrap(ast.left)} ${ast.op} ${wrap(ast.right)}`;
+    }
     case "fn": {
       const inner = renderSymbolic(ast.arg);
       const tag = ADJUSTER_TAGS[ast.name];
