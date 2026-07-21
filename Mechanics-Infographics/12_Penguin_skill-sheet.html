@@ -250,6 +250,7 @@
     <label>CHA<input type="number" id="stat-CHA" value="0" min="0"></label>
     <label>TAL<input type="number" id="stat-TAL" value="0" min="0"></label>
     <label>LCK<input type="number" id="stat-LCK" value="0" min="0"></label>
+    <label>Lv<input type="number" id="stat-Lv" value="0" min="0"></label>
   </div>
 </div>
 
@@ -468,7 +469,7 @@ const SKILLS = {
 // ===== Formula evaluator (Task 3): tokenizer, parser, symbolic + numeric render =====
 // Hand-rolled recursive-descent parser — no eval()/Function() constructor anywhere.
 function tokenizeFormula(expr) {
-  const re = /\s*(?:(\d+\.?\d*)|(ATK|INT|AGI|CHA|TAL|LCK)|(agiAdjust|magAdjust|chaAdjust|talAdjust|lckAdjust|clamp)|([()+\-×*/⌈⌉⌊⌋,]))\s*/g;
+  const re = /\s*(?:(\d+\.?\d*)|(ATK|INT|AGI|CHA|TAL|LCK|Lv)|(agiAdjust|magAdjust|chaAdjust|talAdjust|lckAdjust|clamp)|([()+\-×*/⌈⌉⌊⌋,]))\s*/g;
   const tokens = [];
   let m, pos = 0;
   while (pos < expr.length) {
@@ -684,7 +685,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
 
 const currentRank = {};
 let currentView = "base";
-const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0 };
+const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0 };
 
 function mountAllCards() {
   // Grouped by tier for Task-2's existing per-tier .grid containers.
