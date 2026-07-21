@@ -402,6 +402,56 @@ const SKILLS = {
         notes:["<b>5 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (7 total), +<b>0.1×character level</b> dmg each."] },
     ],
   },
+  manaArc: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_manaArc1", reqLv:5,  cd:"agiAdjust(1)", cast:null, mp:6,  sp:-4,  dmg:"talAdjust(10×1)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."] },
+    { id:"pgn_manaArc2", reqLv:13, cd:"agiAdjust(1)", cast:null, mp:12, sp:-6,  dmg:"talAdjust(10×2)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."] },
+    { id:"pgn_manaArc3", reqLv:21, cd:"agiAdjust(1)", cast:null, mp:18, sp:-8,  dmg:"talAdjust(10×3)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."] },
+    { id:"pgn_manaArc4", reqLv:29, cd:"agiAdjust(1)", cast:null, mp:24, sp:-10, dmg:"talAdjust(10×4)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."] },
+  ]},
+  dispell: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_dispell1", reqLv:7,  cd:"agiAdjust(3+1)", cast:null, mp:14, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.2 magical status from everyone in the AoE.","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."] },
+    { id:"pgn_dispell2", reqLv:23, cd:"agiAdjust(3+2)", cast:null, mp:22, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.4 magical status from everyone in the AoE.","<span class=\"syn\">needs <b>\"parallelShift5\"</b></span>: dispell level +1 (lv.4→lv.5).","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."] },
+  ]},
+  blink: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_blink1", reqLv:15, cd:"agiAdjust(12)", cast:null, mp:5, sp:-10, range:"5m self-teleport", notes:["Teleports <b>5m</b> forward, ignoring collision along the path.","Removes lock-status level ≤2.","12% (LCK↑) chance <span class=\"syn\">with <b>\"doubleSpell5\"</b></span> to grant <b>multiCast</b> (1 stack, 3s) — this is the skill doubleSpell5 actually procs from, not \"any spell\"."] },
+    { id:"pgn_blink2", reqLv:31, cd:"agiAdjust(12)", cast:null, mp:5, sp:-15, range:"8m self-teleport", notes:["Teleports <b>8m</b> forward, ignoring collision along the path.","Removes lock-status level ≤4.","Same 12% <b>\"doubleSpell5\"</b> multiCast-grant roll as rank 1."] },
+  ]},
+  mpTransfer: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_mpTransfer1", reqLv:9,  cd:"agiAdjust(30)", cast:null, mp:30, sp:0, range:"locked", notes:["Heals target ally's MP: <b>30 + 0.1×your max MP</b>.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: +<b>0.5×character level</b> bonus heal (undocumented)."] },
+    { id:"pgn_mpTransfer2", reqLv:25, cd:"agiAdjust(30)", cast:null, mp:60, sp:0, range:"locked", notes:["Heals target ally's MP: <b>60 + 0.1×your max MP</b>.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: +<b>0.5×character level</b> bonus heal (undocumented)."] },
+  ]},
+  manaBurn: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_manaBurn1", reqLv:17, cd:"agiAdjust(18+6×1)", cast:"magAdjust(2+1)", mp:15, sp:0, range:"locked", notes:["Drains <b>25 MP</b> from target, deals damage = that % of their max MP now missing.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: status level +2, and +<b>0.1×your current MP</b> to the drain amount."] },
+    { id:"pgn_manaBurn2", reqLv:33, cd:"agiAdjust(18+6×2)", cast:"magAdjust(2+2)", mp:30, sp:0, range:"locked", notes:["Drains <b>45 MP</b> from target, deals damage = that % of their max MP now missing.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: status level +2, and +<b>0.1×your current MP</b> to the drain amount."] },
+  ]},
+  fallingStars: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_fallingStars1", reqLv:12, cd:"agiAdjust(30)", cast:null, mp:20, sp:-10, dmg:"talAdjust(15+15×1)", ko:0, range:"12m radius, self-centered", notes:["5 stars, 2m-radius impact each. Target cap 5.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ×1.5 targeting radius, target cap→10, impact radius 2m→3m, ×1.25 damage — swaps to a distinct \"giant stars\" effect."] },
+    { id:"pgn_fallingStars2", reqLv:20, cd:"agiAdjust(30)", cast:null, mp:30, sp:-15, dmg:"talAdjust(15+15×2)", ko:0, range:"16m radius, self-centered", notes:["8 stars, 2m-radius impact each. Target cap 5.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ×1.5 targeting radius, target cap→10, impact radius 2m→3m, ×1.25 damage."] },
+  ]},
+  fallingComets: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_fallingComets1", reqLv:28, cd:"agiAdjust(60)", cast:"magAdjust(2+4×1)", mp:35, sp:0, dmg:"talAdjust(15+15×1)", ko:0, range:"locked, ±8m scatter", notes:["5 comets scatter within ±8m of target, 6m-radius impact each, linear falloff to 50% at edge.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ±10m scatter, 9m impact radius, ×1.25 damage."] },
+    { id:"pgn_fallingComets2", reqLv:36, cd:"agiAdjust(60)", cast:"magAdjust(2+4×2)", mp:50, sp:0, dmg:"talAdjust(15+15×2)", ko:0, range:"locked, ±8m scatter", notes:["8 comets scatter within ±8m of target, 6m-radius impact each, linear falloff to 50% at edge.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ±10m scatter, 9m impact radius, ×1.25 damage."] },
+  ]},
+  manaVortex: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_manaVortex1", reqLv:17, cd:"agiAdjust(120)", cast:"magAdjust(3+2×1)", mp:40, sp:0, range:"16m tick radius (at vortex position)", notes:["Summons a pet: 200 HP, 100 max MP, chaAdjust(60)s lifetime. Ticks every 2s: 24 flat dmg + mpSap in radius.","<span class=\"syn\">Feeds <b>\"novaFlare1\"</b></span> — see its card."] },
+    { id:"pgn_manaVortex2", reqLv:24, cd:"agiAdjust(120)", cast:"magAdjust(3+2×2)", mp:55, sp:0, range:"20m tick radius (at vortex position)", notes:["Summons a pet: 400 HP, 200 max MP, chaAdjust(60)s lifetime. Ticks every 2s: 36 flat dmg + mpSap in radius."] },
+    { id:"pgn_manaVortex3", reqLv:31, cd:"agiAdjust(120)", cast:"magAdjust(3+2×3)", mp:70, sp:0, range:"24m tick radius (at vortex position)", notes:["Summons a pet: 600 HP, 300 max MP, chaAdjust(60)s lifetime. Ticks every 2s: 48 flat dmg + mpSap in radius."] },
+  ]},
+  novaFlare: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_novaFlare1", reqLv:38, cd:"agiAdjust(120)", cast:null, mp:0, sp:-30, range:"= active manaVortex's own tick radius", notes:[
+        "Detonates your own active <b>\"manaVortex\"</b>: damage = <b>0.5×vortex HP + vortex MP</b>, in the vortex's own AoE radius, then destroys it and refunds its MP.",
+        "<span class=\"warn\">Whiffs for 0 damage (but still costs SP and goes on CD) if no manaVortex is currently active.</span>" ] },
+  ]},
+  astralTalent: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_astralTalent1", reqLv:22, notes:["<b>+10 TAL</b>, <b>+2 max SP</b> — the +2 SP is on top of (not instead of) the SP the +10 TAL itself yields via the TAL/5 formula; undocumented in tooltip."] },
+    { id:"pgn_astralTalent2", reqLv:28, notes:["<b>+10 TAL</b>, <b>+2 max SP</b>."] },
+    { id:"pgn_astralTalent3", reqLv:34, notes:["<b>+10 TAL</b>, <b>+2 max SP</b>."] },
+    { id:"pgn_astralTalent4", reqLv:40, notes:["<b>+10 TAL</b>, <b>+2 max SP</b>.","All 4 ranks combined: <b>+40 TAL, +8 max SP</b> flat (separate from TAL-derived SP)."] },
+  ]},
+  meteora: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
+    { id:"pgn_meteora1", reqLv:35, cd:"agiAdjust(300)", cast:"magAdjust(6+6×1)", mp:120, sp:-35, dmg:"talAdjust(200+150×1)", ko:0, range:"locked, 9m impact radius", notes:["Lands on target's position, 9m-radius/6m-height impact."] },
+    { id:"pgn_meteora2", reqLv:40, cd:"agiAdjust(300)", cast:"magAdjust(6+6×2)", mp:160, sp:-45, dmg:"talAdjust(200+150×2)", ko:0, range:"locked, 12m impact radius", notes:["Lands on target's position, 12m-radius/6m-height impact."] },
+  ]},
 };
 
 // ===== Formula evaluator (Task 3): tokenizer, parser, symbolic + numeric render =====
