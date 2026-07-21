@@ -225,7 +225,10 @@
     border-radius:3px;background:var(--paper);color:var(--ink);
   }
   /* ---------- rank selector ---------- */
-  .ranktoggle{display:flex;gap:3px;margin:0 0 3px;}
+  /* Rank buttons and any classC toggles share one row so a card's controls
+     read as a single control strip, not stacked lines. */
+  .ctrlrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;margin:0 0 3px;}
+  .ranktoggle{display:flex;gap:3px;}
   .ranktoggle button{
     font-family:Consolas,monospace;font-size:9px;font-weight:700;
     width:18px;height:18px;line-height:1;border:1px solid var(--acc);border-radius:2px;
@@ -233,7 +236,7 @@
   }
   .ranktoggle button.active{background:var(--acc);color:#fff;}
   .classctoggle{
-    display:inline-flex;align-items:center;gap:3px;margin:0 0 3px 6px;
+    display:inline-flex;align-items:center;gap:3px;
     font-family:Consolas,monospace;font-size:8.5px;font-weight:700;
     padding:2px 6px;border:1px solid var(--acc);border-radius:2px;
     background:var(--paper);color:var(--acc);cursor:pointer;
@@ -773,11 +776,14 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
       </div>`
     : "";
 
+  const ctrlRow = (rankButtons || classCToggles)
+    ? `<div class="ctrlrow">${rankButtons}${classCToggles}</div>`
+    : "";
+
   el.innerHTML = `
     <img class="ic" src="${iconSrc}" alt="">
     <div class="body">
-      ${rankButtons}
-      ${classCToggles}
+      ${ctrlRow}
       <h3>${r.id.replace("pgn_","")}</h3>
       ${chipsBlock}
       <ul class="notes">${(r.notes||[]).map(n=>`<li>${n}</li>`).join("")}</ul>
