@@ -429,7 +429,11 @@ function renderSymbolic(ast) {
       // talAdjust/agiAdjust fold into the surrounding formula's own displayed
       // tag (CD chip already says agiAdjust; TAL(n) is pre-expanded per the
       // template's documented convention) rather than adding a redundant tag.
-      if (ast.name === "talAdjust") return `${inner} + 0.02×${inner}×TAL`;
+      if (ast.name === "talAdjust") {
+        // Wrap compound (binary) expressions in parens; leave atomic ones bare
+        const wrappedInner = ast.arg.type === "bin" ? `(${inner})` : inner;
+        return `${wrappedInner} + 0.02×${wrappedInner}×TAL`;
+      }
       return tag ? `${inner} <span class="adj">${tag}</span>` : inner;
     }
   }
