@@ -331,11 +331,19 @@ const SKILLS = {
       { id:"pgn_nAttack1", reqLv:1, notes:[
           "Unlocks normal-attack combo hit 2.",
           "All 3 combo stages share <b>one</b> damage formula: <b>0.5×ATK</b>, KO 1 — no per-stage bonus.",
-          "<span class=\"syn\">needs <b>\"spreadShot5\"</b></span>: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1." ] },
+          "<span class=\"syn\">needs <b>\"spreadShot5\"</b></span>: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1." ],
+        classC:[{ passiveId:"spreadShot5", notes:[
+          "Unlocks normal-attack combo hit 2.",
+          "All 3 combo stages share <b>one</b> damage formula: <b>0.5×ATK</b>, KO 1 — no per-stage bonus.",
+          "<b>\"spreadShot5\" ON:</b> 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1." ] }] },
       { id:"pgn_nAttack2", reqLv:2, notes:[
           "Unlocks normal-attack combo hit 3 (finisher).",
           "Same shared <b>0.5×ATK</b> formula as hits 1-2 — no damage bonus for reaching the 3rd hit.",
-          "<span class=\"syn\">needs <b>\"spreadShot5\"</b></span>: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1." ] },
+          "<span class=\"syn\">needs <b>\"spreadShot5\"</b></span>: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1." ],
+        classC:[{ passiveId:"spreadShot5", notes:[
+          "Unlocks normal-attack combo hit 3 (finisher).",
+          "Same shared <b>0.5×ATK</b> formula as hits 1-2 — no damage bonus for reaching the 3rd hit.",
+          "<b>\"spreadShot5\" ON:</b> 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1." ] }] },
     ],
   },
   cAttack: {
@@ -345,19 +353,35 @@ const SKILLS = {
       { id:"pgn_cAttack1", reqLv:4,  mp:"clamp(⌈0.03×ATK⌉, 3, 6)", notes:[
           "Channel: 3% of ATK into <b>3~6 MP</b>/sec while holding.",
           "<b>No direct damage on release</b> — pure MP-channel utility.",
-          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ] },
+          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ],
+        classC:[{ passiveId:"manaField5", notes:[
+          "Channel: 3% of ATK into <b>3~6 MP</b>/sec while holding.",
+          "<b>No direct damage on release</b> — pure MP-channel utility.",
+          "<b>\"manaField5\" ON:</b> +1 MP/tick (chargeLv 1), and shares MP with allies within 8m." ] }] },
       { id:"pgn_cAttack2", reqLv:10, mp:"clamp(⌈0.06×ATK⌉, 6, 12)", notes:[
           "Channel: 6% of ATK into <b>6~12 MP</b>/sec while holding.",
           "<b>No direct damage on release</b> — pure MP-channel utility.",
-          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ] },
+          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ],
+        classC:[{ passiveId:"manaField5", notes:[
+          "Channel: 6% of ATK into <b>6~12 MP</b>/sec while holding.",
+          "<b>No direct damage on release</b> — pure MP-channel utility.",
+          "<b>\"manaField5\" ON:</b> +2 MP/tick (chargeLv 2), and shares MP with allies within 8m." ] }] },
       { id:"pgn_cAttack3", reqLv:16, mp:"clamp(⌈0.09×ATK⌉, 9, 18)", notes:[
           "Channel: 9% of ATK into <b>9~18 MP</b>/sec while holding.",
           "<b>No direct damage on release</b> — pure MP-channel utility.",
-          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ] },
+          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ],
+        classC:[{ passiveId:"manaField5", notes:[
+          "Channel: 9% of ATK into <b>9~18 MP</b>/sec while holding.",
+          "<b>No direct damage on release</b> — pure MP-channel utility.",
+          "<b>\"manaField5\" ON:</b> +3 MP/tick (chargeLv 3), and shares MP with allies within 8m." ] }] },
       { id:"pgn_cAttack4", reqLv:22, mp:"clamp(⌈0.12×ATK⌉, 12, 24)", notes:[
           "Channel: 12% of ATK into <b>12~24 MP</b>/sec while holding (max rank).",
           "<b>No direct damage on release</b> — pure MP-channel utility.",
-          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ] },
+          "<span class=\"syn\">needs <b>\"manaField5\"</b></span>: +<b>chargeLv</b> MP/tick, and shares MP with allies within 8m." ],
+        classC:[{ passiveId:"manaField5", notes:[
+          "Channel: 12% of ATK into <b>12~24 MP</b>/sec while holding (max rank).",
+          "<b>No direct damage on release</b> — pure MP-channel utility.",
+          "<b>\"manaField5\" ON:</b> +4 MP/tick (chargeLv 4), and shares MP with allies within 8m." ] }] },
     ],
   },
   intellect: {
@@ -410,47 +434,91 @@ const SKILLS = {
     ranks: [
       { id:"pgn_manaMissile1", sLv:1, reqLv:3,  cd:"agiAdjust(10)",  cast:"magAdjust(2)", mp:9,  sp:0,
         dmg:"talAdjust(15)", ko:1, hate:0, range:"locked", targets:"2 missiles",
-        notes:["<b>2 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles, +<b>0.1×character level</b> dmg each."] },
+        notes:["<b>2 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles, +<b>0.1×character level</b> dmg each."],
+        classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(15) + 0.1×Lv", notes:[
+          "<b>4 missiles</b> (2 base + 2 from \"moreMissile5\"), each hits independently." ] }] },
       { id:"pgn_manaMissile2", sLv:2, reqLv:11, cd:"agiAdjust(12)",  cast:"magAdjust(3)", mp:15, sp:0,
         dmg:"talAdjust(18)", ko:1, hate:0, range:"locked", targets:"3 missiles",
-        notes:["<b>3 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (5 total), +<b>0.1×character level</b> dmg each."] },
+        notes:["<b>3 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (5 total), +<b>0.1×character level</b> dmg each."],
+        classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(18) + 0.1×Lv", notes:[
+          "<b>5 missiles</b> (3 base + 2 from \"moreMissile5\"), each hits independently." ] }] },
       { id:"pgn_manaMissile3", sLv:3, reqLv:19, cd:"agiAdjust(14)",  cast:"magAdjust(4)", mp:21, sp:0,
         dmg:"talAdjust(21)", ko:1, hate:0, range:"locked", targets:"4 missiles",
-        notes:["<b>4 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (6 total), +<b>0.1×character level</b> dmg each."] },
+        notes:["<b>4 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (6 total), +<b>0.1×character level</b> dmg each."],
+        classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(21) + 0.1×Lv", notes:[
+          "<b>6 missiles</b> (4 base + 2 from \"moreMissile5\"), each hits independently." ] }] },
       { id:"pgn_manaMissile4", sLv:4, reqLv:27, cd:"agiAdjust(16)",  cast:"magAdjust(5)", mp:27, sp:0,
         dmg:"talAdjust(24)", ko:1, hate:0, range:"locked", targets:"5 missiles",
-        notes:["<b>5 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (7 total), +<b>0.1×character level</b> dmg each."] },
+        notes:["<b>5 missiles</b>, each hits independently.","<span class=\"syn\">needs <b>\"moreMissile5\"</b></span>: +2 missiles (7 total), +<b>0.1×character level</b> dmg each."],
+        classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(24) + 0.1×Lv", notes:[
+          "<b>7 missiles</b> (5 base + 2 from \"moreMissile5\"), each hits independently." ] }] },
     ],
   },
   manaArc: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_manaArc1", reqLv:5,  cd:"agiAdjust(1)", cast:null, mp:6,  sp:-4,  dmg:"talAdjust(10)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."] },
-    { id:"pgn_manaArc2", reqLv:13, cd:"agiAdjust(1)", cast:null, mp:12, sp:-6,  dmg:"talAdjust(20)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."] },
-    { id:"pgn_manaArc3", reqLv:21, cd:"agiAdjust(1)", cast:null, mp:18, sp:-8,  dmg:"talAdjust(30)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."] },
-    { id:"pgn_manaArc4", reqLv:29, cd:"agiAdjust(1)", cast:null, mp:24, sp:-10, dmg:"talAdjust(40)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."] },
+    { id:"pgn_manaArc1", reqLv:5,  cd:"agiAdjust(1)", cast:null, mp:6,  sp:-4,  dmg:"talAdjust(10)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(10) + 0.5×Lv" }] },
+    { id:"pgn_manaArc2", reqLv:13, cd:"agiAdjust(1)", cast:null, mp:12, sp:-6,  dmg:"talAdjust(20)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(20) + 0.5×Lv" }] },
+    { id:"pgn_manaArc3", reqLv:21, cd:"agiAdjust(1)", cast:null, mp:18, sp:-8,  dmg:"talAdjust(30)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(30) + 0.5×Lv" }] },
+    { id:"pgn_manaArc4", reqLv:29, cd:"agiAdjust(1)", cast:null, mp:24, sp:-10, dmg:"talAdjust(40)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"syn\">needs <b>\"penguinOfArc5\"</b></span>: +<b>0.5×character level</b> damage, plus a cosmetic VFX swap."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(40) + 0.5×Lv" }] },
   ]},
   dispell: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_dispell1", reqLv:7,  cd:"agiAdjust(4)", cast:null, mp:14, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.2 magical status from everyone in the AoE.","<span class=\"syn\">needs <b>\"parallelShift5\"</b></span>: dispell level +1 (lv.2→lv.3).","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."] },
-    { id:"pgn_dispell2", reqLv:23, cd:"agiAdjust(5)", cast:null, mp:22, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.4 magical status from everyone in the AoE.","<span class=\"syn\">needs <b>\"parallelShift5\"</b></span>: dispell level +1 (lv.4→lv.5).","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."] },
+    { id:"pgn_dispell1", reqLv:7,  cd:"agiAdjust(4)", cast:null, mp:14, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.2 magical status from everyone in the AoE.","<span class=\"syn\">needs <b>\"parallelShift5\"</b></span>: dispell level +1 (lv.2→lv.3).","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."],
+      classC:[{ passiveId:"parallelShift5", notes:[
+        "Strips all lv.2 magical status from everyone in the AoE.",
+        "<b>\"parallelShift5\" ON:</b> dispell level +1 (lv.2→lv.3).",
+        "Also destroys mirageOrb/skyOrb items within 6m (undocumented)." ] }] },
+    { id:"pgn_dispell2", reqLv:23, cd:"agiAdjust(5)", cast:null, mp:22, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.4 magical status from everyone in the AoE.","<span class=\"syn\">needs <b>\"parallelShift5\"</b></span>: dispell level +1 (lv.4→lv.5).","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."],
+      classC:[{ passiveId:"parallelShift5", notes:[
+        "Strips all lv.4 magical status from everyone in the AoE.",
+        "<b>\"parallelShift5\" ON:</b> dispell level +1 (lv.4→lv.5).",
+        "Also destroys mirageOrb/skyOrb items within 6m (undocumented)." ] }] },
   ]},
   blink: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
     { id:"pgn_blink1", reqLv:15, cd:"agiAdjust(12)", cast:null, mp:5, sp:-10, range:"5m self-teleport", notes:["Teleports <b>5m</b> forward, ignoring collision along the path.","Removes lock-status level ≤2.","12% (LCK↑) chance <span class=\"syn\">with <b>\"doubleSpell5\"</b></span> to grant <b>multiCast</b> (1 stack, 3s) — this is the skill doubleSpell5 actually procs from, not \"any spell\"."] },
     { id:"pgn_blink2", reqLv:31, cd:"agiAdjust(12)", cast:null, mp:5, sp:-15, range:"8m self-teleport", notes:["Teleports <b>8m</b> forward, ignoring collision along the path.","Removes lock-status level ≤4.","Same 12% <b>\"doubleSpell5\"</b> multiCast-grant roll as rank 1."] },
   ]},
   mpTransfer: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_mpTransfer1", reqLv:9,  cd:"agiAdjust(30)", cast:null, mp:30, sp:0, range:"locked", notes:["Heals target ally's MP: <b>30 + 0.1×your max MP</b>.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: +<b>0.5×character level</b> bonus heal (undocumented)."] },
-    { id:"pgn_mpTransfer2", reqLv:25, cd:"agiAdjust(30)", cast:null, mp:60, sp:0, range:"locked", notes:["Heals target ally's MP: <b>60 + 0.1×your max MP</b>.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: +<b>0.5×character level</b> bonus heal (undocumented)."] },
+    { id:"pgn_mpTransfer1", reqLv:9,  cd:"agiAdjust(30)", cast:null, mp:30, sp:0, range:"locked", notes:["Heals target ally's MP: <b>30 + 0.1×your max MP</b>.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: +<b>0.5×character level</b> bonus heal (undocumented)."],
+      classC:[{ passiveId:"manaSurge5", notes:[
+        "Heals target ally's MP: <b>30 + 0.1×your max MP</b>.",
+        "<b>\"manaSurge5\" ON:</b> +0.5×character level bonus heal." ] }] },
+    { id:"pgn_mpTransfer2", reqLv:25, cd:"agiAdjust(30)", cast:null, mp:60, sp:0, range:"locked", notes:["Heals target ally's MP: <b>60 + 0.1×your max MP</b>.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: +<b>0.5×character level</b> bonus heal (undocumented)."],
+      classC:[{ passiveId:"manaSurge5", notes:[
+        "Heals target ally's MP: <b>60 + 0.1×your max MP</b>.",
+        "<b>\"manaSurge5\" ON:</b> +0.5×character level bonus heal." ] }] },
   ]},
   manaBurn: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_manaBurn1", reqLv:17, cd:"agiAdjust(24)", cast:"magAdjust(3)", mp:15, sp:0, range:"locked", notes:["Drains <b>25 MP</b> from target, deals damage = that % of their max MP now missing.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: status level +2, and +<b>0.1×your current MP</b> to the drain amount."] },
-    { id:"pgn_manaBurn2", reqLv:33, cd:"agiAdjust(30)", cast:"magAdjust(4)", mp:30, sp:0, range:"locked", notes:["Drains <b>45 MP</b> from target, deals damage = that % of their max MP now missing.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: status level +2, and +<b>0.1×your current MP</b> to the drain amount."] },
+    { id:"pgn_manaBurn1", reqLv:17, cd:"agiAdjust(24)", cast:"magAdjust(3)", mp:15, sp:0, range:"locked", notes:["Drains <b>25 MP</b> from target, deals damage = that % of their max MP now missing.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: status level +2, and +<b>0.1×your current MP</b> to the drain amount."],
+      classC:[{ passiveId:"manaSurge5", notes:[
+        "Drains <b>25 MP</b> from target, deals damage = that % of their max MP now missing.",
+        "<b>\"manaSurge5\" ON:</b> status level +2, and +0.1×your current MP to the drain amount." ] }] },
+    { id:"pgn_manaBurn2", reqLv:33, cd:"agiAdjust(30)", cast:"magAdjust(4)", mp:30, sp:0, range:"locked", notes:["Drains <b>45 MP</b> from target, deals damage = that % of their max MP now missing.","<span class=\"syn\">needs <b>\"manaSurge5\"</b></span>: status level +2, and +<b>0.1×your current MP</b> to the drain amount."],
+      classC:[{ passiveId:"manaSurge5", notes:[
+        "Drains <b>45 MP</b> from target, deals damage = that % of their max MP now missing.",
+        "<b>\"manaSurge5\" ON:</b> status level +2, and +0.1×your current MP to the drain amount." ] }] },
   ]},
   fallingStars: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_fallingStars1", reqLv:12, cd:"agiAdjust(30)", cast:null, mp:20, sp:-10, dmg:"talAdjust(30)", ko:0, range:"12m radius, self-centered", notes:["5 stars, 2m-radius impact each. Target cap 5.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ×1.5 targeting radius, target cap→10, impact radius 2m→3m, ×1.25 damage — swaps to a distinct \"giant stars\" effect."] },
-    { id:"pgn_fallingStars2", reqLv:20, cd:"agiAdjust(30)", cast:null, mp:30, sp:-15, dmg:"talAdjust(45)", ko:0, range:"16m radius, self-centered", notes:["8 stars, 2m-radius impact each. Target cap 5.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ×1.5 targeting radius, target cap→10, impact radius 2m→3m, ×1.25 damage."] },
+    { id:"pgn_fallingStars1", reqLv:12, cd:"agiAdjust(30)", cast:null, mp:20, sp:-10, dmg:"talAdjust(30)", ko:0, range:"12m radius, self-centered", notes:["5 stars, 2m-radius impact each. Target cap 5.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ×1.5 targeting radius, target cap→10, impact radius 2m→3m, ×1.25 damage — swaps to a distinct \"giant stars\" effect."],
+      classC:[{ passiveId:"giantStar5", dmg:"talAdjust(30) × 1.25", range:"18m radius, self-centered", notes:[
+        "5 stars (target cap 10 with \"giantStar5\"), 2m-radius impact each (3m with \"giantStar5\").",
+        "<b>\"giantStar5\" ON:</b> ×1.5 targeting radius, target cap 5→10, impact radius 2m→3m, ×1.25 damage." ] }] },
+    { id:"pgn_fallingStars2", reqLv:20, cd:"agiAdjust(30)", cast:null, mp:30, sp:-15, dmg:"talAdjust(45)", ko:0, range:"16m radius, self-centered", notes:["8 stars, 2m-radius impact each. Target cap 5.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ×1.5 targeting radius, target cap→10, impact radius 2m→3m, ×1.25 damage."],
+      classC:[{ passiveId:"giantStar5", dmg:"talAdjust(45) × 1.25", range:"24m radius, self-centered", notes:[
+        "8 stars (target cap 10 with \"giantStar5\"), 2m-radius impact each (3m with \"giantStar5\").",
+        "<b>\"giantStar5\" ON:</b> ×1.5 targeting radius, target cap 5→10, impact radius 2m→3m, ×1.25 damage." ] }] },
   ]},
   fallingComets: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_fallingComets1", reqLv:28, cd:"agiAdjust(60)", cast:"magAdjust(6)", mp:35, sp:0, dmg:"talAdjust(30)", ko:0, range:"locked, ±8m scatter", notes:["5 comets scatter within ±8m of target, 6m-radius impact each, linear falloff to 50% at edge.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ±10m scatter, 9m impact radius, ×1.25 damage."] },
-    { id:"pgn_fallingComets2", reqLv:36, cd:"agiAdjust(60)", cast:"magAdjust(10)", mp:50, sp:0, dmg:"talAdjust(45)", ko:0, range:"locked, ±8m scatter", notes:["8 comets scatter within ±8m of target, 6m-radius impact each, linear falloff to 50% at edge.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ±10m scatter, 9m impact radius, ×1.25 damage."] },
+    { id:"pgn_fallingComets1", reqLv:28, cd:"agiAdjust(60)", cast:"magAdjust(6)", mp:35, sp:0, dmg:"talAdjust(30)", ko:0, range:"locked, ±8m scatter", notes:["5 comets scatter within ±8m of target, 6m-radius impact each, linear falloff to 50% at edge.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ±10m scatter, 9m impact radius, ×1.25 damage."],
+      classC:[{ passiveId:"giantStar5", dmg:"talAdjust(30) × 1.25", notes:[
+        "5 comets scatter within ±10m of target (±8m base), 9m-radius impact each (6m base), linear falloff to 50% at edge.",
+        "<b>\"giantStar5\" ON:</b> ±10m scatter, 9m impact radius, ×1.25 damage." ] }] },
+    { id:"pgn_fallingComets2", reqLv:36, cd:"agiAdjust(60)", cast:"magAdjust(10)", mp:50, sp:0, dmg:"talAdjust(45)", ko:0, range:"locked, ±8m scatter", notes:["8 comets scatter within ±8m of target, 6m-radius impact each, linear falloff to 50% at edge.","<span class=\"syn\">needs <b>\"giantStar5\"</b></span>: ±10m scatter, 9m impact radius, ×1.25 damage."],
+      classC:[{ passiveId:"giantStar5", dmg:"talAdjust(45) × 1.25", notes:[
+        "8 comets scatter within ±10m of target (±8m base), 9m-radius impact each (6m base), linear falloff to 50% at edge.",
+        "<b>\"giantStar5\" ON:</b> ±10m scatter, 9m impact radius, ×1.25 damage." ] }] },
   ]},
   manaVortex: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
     { id:"pgn_manaVortex1", reqLv:17, cd:"agiAdjust(120)", cast:"magAdjust(5)", mp:40, sp:0, range:"16m tick radius (at vortex position)", notes:["Summons a pet: 200 HP, 100 max MP, chaAdjust(60)s lifetime. Ticks every 2s: 24 flat dmg + mpSap in radius.","<span class=\"syn\">Feeds <b>\"novaFlare1\"</b></span> — see its card."] },
