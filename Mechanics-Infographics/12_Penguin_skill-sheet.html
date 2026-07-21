@@ -683,7 +683,7 @@ function mountAllCards() {
   };
   for (const famId in SKILLS) {
     const fam = SKILLS[famId];
-    currentRank[famId] = 0;
+    currentRank[famId] = fam.ranks.length - 1;
     const grid = tierGrids[fam.tier];
     if (!grid) { console.error(`No .tier.${fam.tier} .grid found for ${famId}`); continue; }
     const card = renderSkillCard(famId, fam, 0, currentView, stats);
