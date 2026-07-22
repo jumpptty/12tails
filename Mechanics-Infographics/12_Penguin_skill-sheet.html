@@ -384,33 +384,25 @@ const SKILLS = {
     tier: "basic",
     icon: r => r.id.replace("pgn_",""),
     ranks: [
-      { id:"pgn_cAttack1", reqLv:4,  mp:"clamp(⌈0.03×ATK⌉, 3, 6)", notes:[
-          "Channel: 3% of ATK into <b>3~6 MP</b>/sec while holding.",
-          "<b>No direct damage on release</b> — pure MP-channel utility." ],
-        classC:[{ passiveId:"manaField5", notes:[
-          "Channel: 3% of ATK into <b>3~6 MP</b>/sec while holding.",
-          "<b>No direct damage on release</b> — pure MP-channel utility.",
+      { id:"pgn_cAttack1", reqLv:4,  mp:"clamp(⌈0.03×ATK⌉, 3, 6)", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second." ],
+        classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second.",
           "<span class=\"classc-on\">+1 MP/tick (chargeLv 1), and shares MP with allies within 8m.</span>" ] }] },
-      { id:"pgn_cAttack2", reqLv:10, mp:"clamp(⌈0.06×ATK⌉, 6, 12)", notes:[
-          "Channel: 6% of ATK into <b>6~12 MP</b>/sec while holding.",
-          "<b>No direct damage on release</b> — pure MP-channel utility." ],
-        classC:[{ passiveId:"manaField5", notes:[
-          "Channel: 6% of ATK into <b>6~12 MP</b>/sec while holding.",
-          "<b>No direct damage on release</b> — pure MP-channel utility.",
+      { id:"pgn_cAttack2", reqLv:10, mp:"clamp(⌈0.06×ATK⌉, 6, 12)", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second." ],
+        classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second.",
           "<span class=\"classc-on\">+2 MP/tick (chargeLv 2), and shares MP with allies within 8m.</span>" ] }] },
-      { id:"pgn_cAttack3", reqLv:16, mp:"clamp(⌈0.09×ATK⌉, 9, 18)", notes:[
-          "Channel: 9% of ATK into <b>9~18 MP</b>/sec while holding.",
-          "<b>No direct damage on release</b> — pure MP-channel utility." ],
-        classC:[{ passiveId:"manaField5", notes:[
-          "Channel: 9% of ATK into <b>9~18 MP</b>/sec while holding.",
-          "<b>No direct damage on release</b> — pure MP-channel utility.",
+      { id:"pgn_cAttack3", reqLv:16, mp:"clamp(⌈0.09×ATK⌉, 9, 18)", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second." ],
+        classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second.",
           "<span class=\"classc-on\">+3 MP/tick (chargeLv 3), and shares MP with allies within 8m.</span>" ] }] },
-      { id:"pgn_cAttack4", reqLv:22, mp:"clamp(⌈0.12×ATK⌉, 12, 24)", notes:[
-          "Channel: 12% of ATK into <b>12~24 MP</b>/sec while holding (max rank).",
-          "<b>No direct damage on release</b> — pure MP-channel utility." ],
-        classC:[{ passiveId:"manaField5", notes:[
-          "Channel: 12% of ATK into <b>12~24 MP</b>/sec while holding (max rank).",
-          "<b>No direct damage on release</b> — pure MP-channel utility.",
+      { id:"pgn_cAttack4", reqLv:22, mp:"clamp(⌈0.12×ATK⌉, 12, 24)", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second." ],
+        classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
+          "Gains {{mp}} MP per second.",
           "<span class=\"classc-on\">+4 MP/tick (chargeLv 4), and shares MP with allies within 8m.</span>" ] }] },
     ],
   },
@@ -946,17 +938,25 @@ function renderSkillCard(famId, fam, rankIdx, view, stats, enemyStats, revisedAr
     </label>`;
   }).join("");
   // A rank is "active" (has some castable/triggerable form) when it sets at
-  // least one of cd/mp/sp/cast. dmg is deliberately EXCLUDED from this check
-  // — dmg now only ever renders inline in notes via {{dmg}} (never in the
-  // fixed row), and several skills (e.g. nAttack's ice projectile) always
-  // fire regardless of any cast/cooldown gate, so a bare dmg field alone
-  // must not imply "this is an active, castable skill" (Design Correction 1
+  // least one of cd/mp/sp/cast, AND mp is genuinely a resource COST there
+  // (not a gain). dmg is deliberately EXCLUDED from this check — dmg now
+  // only ever renders inline in notes via {{dmg}} (never in the fixed row),
+  // and several skills (e.g. nAttack's ice projectile) always fire
+  // regardless of any cast/cooldown gate, so a bare dmg field alone must
+  // not imply "this is an active, castable skill" (Design Correction 1
   // still applies: pure passives like intellect/statPlus/astralTalent, and
-  // now also nAttack despite carrying a dmg formula, render zero chip rows).
-  const isActive = !!(r.cd || r.mp || r.sp || r.cast);
+  // now also nAttack despite carrying a dmg formula, render zero chip
+  // rows). cAttack is the one family whose mp field is a GAIN (MP/sec
+  // channeled while holding), not a cost — r.mpIsGain opts a rank out of
+  // treating mp as an isActive/cost signal, so cAttack correctly renders
+  // as a pure passive (its mp value is only ever shown via {{mp}} inline
+  // in notes, never in the fixed cost row) while every other card's mp
+  // field keeps behaving exactly as before (a real cost, shown in-row).
+  const mpIsCost = r.mp && !r.mpIsGain;
+  const isActive = !!(r.cd || mpIsCost || r.sp || r.cast);
 
   const cdChip = r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s",revisedArtOn) : "";
-  const mpChip = r.mp ? chipHTML("mp","MP",r.mp,view,stats) : "";
+  const mpChip = mpIsCost ? chipHTML("mp","MP",r.mp,view,stats) : "";
   const spChip = r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats) : "";
   const castChip = !isActive ? "" : r.cast
     ? chipHTML("cast","CAST",r.cast,view,stats,"s")
