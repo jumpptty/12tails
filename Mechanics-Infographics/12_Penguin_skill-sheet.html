@@ -137,7 +137,7 @@
   .chiprow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
   .chip{
     font-family:Consolas,monospace;font-variant-numeric:tabular-nums;
-    font-size:9.4px;line-height:1;padding:3.5px 6px;border-radius:2px;
+    font-size:9.4px;line-height:1;padding:3.5px 4px;border-radius:2px;
     background:var(--chip-bg);color:var(--ink);white-space:nowrap;
     /* inline-block so padding fully and predictably controls the chip's
        rendered height — plain "inline" left padding affecting only the
@@ -147,7 +147,7 @@
   .chip b{font-weight:700;}
   .chip .t{color:var(--ink-soft);font-size:8.4px;letter-spacing:.06em;}
   .chip.cd{background:#fff;border:1px solid var(--acc);}
-  .chip.dmg{background:var(--acc);color:#fff;padding:1px 6px;}
+  .chip.dmg{background:var(--acc);color:#fff;padding:1px 4px;}
   .chip.ko{background:#F1E3D0;color:#7A4A22;border:1px solid #C9A877;}
   .chip.rng{background:#FBEEDD;border:1px solid #C97A2B;}
   .chip.rng .t{color:var(--ink);}
@@ -163,7 +163,7 @@
      (a border would add 2px of height that padding alone can't offset,
      since border isn't part of the padding box) so the two chip types
      match in rendered height exactly, not just in padding value. */
-  .chip.chance{background:#FCE7F0;color:#C2417A;padding:1px 6px;}
+  .chip.chance{background:#FCE7F0;color:#C2417A;padding:1px 4px;}
   .chip.chance b{color:#C2417A;}
   /* SP comes in two flavors (mirrors the game's own tooltip color convention,
      GameGui.cs: cSP<0 -> red text, cSP>0 -> blue text): red SP is spent on
@@ -837,7 +837,7 @@ function formatNumber(n) {
 function formatRange(a, b, suffix) {
   const lo = Math.min(a, b), hi = Math.max(a, b);
   const minS = formatNumber(lo), maxS = formatNumber(hi);
-  return minS === maxS ? `${minS}${suffix}` : `[${minS}-${maxS}]${suffix}`;
+  return minS === maxS ? `${minS}${suffix}` : `${minS}-${maxS}${suffix}`;
 }
 
 function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn) {
