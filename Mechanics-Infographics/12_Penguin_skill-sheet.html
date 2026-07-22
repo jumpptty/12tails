@@ -805,15 +805,47 @@ function formatNumber(n) {
 }
 
 // ===== Card renderer + state (Task 4) =====
-function chipHTML(cls, label, formulaOrConst, view, stats, suffix) {
+// Formats a computed {min,max} pair as "N" (if min===max after formatting)
+// or "[min-max]" otherwise. Suffix (e.g. "s") is appended once, outside
+// the brackets, per the design's display-format decision.
+//
+// Sorts its two inputs before formatting: renderRange's "min"/"max" args
+// select a roll DIRECTION (roll=0 vs roll=ceil(0.2*LCK)), not a guaranteed
+// output ordering. For adjusters that DECREASE as the roll grows (agiAdjust
+// on a CD formula, magAdjust on a CAST formula, defAdjust inside the dmg
+// pipeline), the "min"-rollMode call actually yields the numerically LARGER
+// result. Sorting here guarantees the displayed bracket is always true
+// numeric [low-high], regardless of which internal call produced which
+// value — verified by hand: agiAdjust(16) with AGI=80/LCK=40 gives
+// min-rollMode=9.85, max-rollMode=9.48 (inverted), so without this sort the
+// chip would have displayed "[9.8-9.5]" instead of the correct "[9.5-9.8]".
+function formatRange(a, b, suffix) {
+  const lo = Math.min(a, b), hi = Math.max(a, b);
+  const minS = formatNumber(lo), maxS = formatNumber(hi);
+  return minS === maxS ? `${minS}${suffix}` : `[${minS}-${maxS}]${suffix}`;
+}
+
+function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn) {
   suffix = suffix || "";
   if (typeof formulaOrConst === "number") {
     return `<span class="chip ${cls}">${label?`<span class="t">${label}</span> `:""}<b>${formulaOrConst}${suffix}</b></span>`;
   }
   const ast = parseFormula(formulaOrConst);
-  const body = view === "plugin"
-    ? `<b class="computed">${formatNumber(renderNumeric(ast, stats))}${suffix}</b>`
-    : `<b>${renderSymbolic(ast)}${suffix}</b>`;
+  let body;
+  if (view === "plugin") {
+    let min = renderRange(ast, stats, "min");
+    let max = renderRange(ast, stats, "max");
+    // revisedArt5: ceil(0.88 * cTime), applied strictly AFTER the base CD
+    // range, to both endpoints independently — CD chips only (identified
+    // by cls === "cd"). See Task 5 for how revisedArtOn is threaded in.
+    if (cls === "cd" && revisedArtOn) {
+      min = Math.ceil(0.88 * min);
+      max = Math.ceil(0.88 * max);
+    }
+    body = `<b class="computed">${formatRange(min, max, suffix)}</b>`;
+  } else {
+    body = `<b>${renderSymbolic(ast)}${suffix}</b>`;
+  }
   return `<span class="chip ${cls}">${label?`<span class="t">${label}</span> `:""}${body}</span>`;
 }
 
@@ -825,11 +857,33 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix) {
 // not a card's notes actually reference {{dmg}}) — every other field keeps
 // rendering in its row regardless of whether it's also referenced inline.
 const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|range|ko)\}\}/g;
-function substituteInlineChips(text, r, view, stats) {
+function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
   return text.replace(INLINE_CHIP_RE, (_, token) => {
     switch (token) {
-      case "dmg": return r.dmg ? chipHTML("dmg","",r.dmg,view,stats) : "";
-      case "cd": return r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s") : "";
+      case "dmg": {
+        if (!r.dmg) return "";
+        if (view !== "plugin") {
+          // Base view: unchanged from today — plain symbolic chip, no
+          // mitigation pipeline shown (design spec: base view is untouched).
+          return chipHTML("dmg","",r.dmg,view,stats);
+        }
+        const ast = parseFormula(r.dmg);
+        // Attacker-side rolls move together: "min" attacker roll pairs with
+        // "max" defender roll (defAdjust's own internal roll direction is
+        // inverted below), and vice versa, per the design's sync/invert rule.
+        const baseMin = renderRange(ast, stats, "min");
+        const baseMax = renderRange(ast, stats, "max");
+        const afterDmgMin = evalDmgAdjust(baseMin, stats.damageMod, stats.LCK, "min");
+        const afterDmgMax = evalDmgAdjust(baseMax, stats.damageMod, stats.LCK, "max");
+        // Defender roll direction is INVERTED relative to the attacker's:
+        // true minimum damage pairs the attacker's worst roll with the
+        // defender's BEST (max DEF) roll; true maximum pairs attacker's
+        // best roll with defender's WORST (min DEF) roll.
+        const finalMin = evalDefAdjust(afterDmgMin, enemyStats.DEF, enemyStats.LCK, "max");
+        const finalMax = evalDefAdjust(afterDmgMax, enemyStats.DEF, enemyStats.LCK, "min");
+        return `<span class="chip dmg"><b class="computed">${formatRange(finalMin, finalMax, "")}</b></span>`;
+      }
+      case "cd": return r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s",revisedArtOn) : "";
       case "mp": return r.mp ? chipHTML("mp","MP",r.mp,view,stats) : "";
       case "sp": return r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats) : "";
       case "cast": return r.cast ? chipHTML("cast","CAST",r.cast,view,stats,"s") : `<span class="chip instant">INSTANT</span>`;
@@ -842,7 +896,7 @@ function substituteInlineChips(text, r, view, stats) {
   });
 }
 
-function renderSkillCard(famId, fam, rankIdx, view, stats) {
+function renderSkillCard(famId, fam, rankIdx, view, stats, enemyStats, revisedArtOn) {
   const baseRank = fam.ranks[rankIdx];
   // Merge any currently-ON classC overrides onto the base rank. Later
   // array entries win if two overrides somehow touch the same field
@@ -874,7 +928,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
   // now also nAttack despite carrying a dmg formula, render zero chip rows).
   const isActive = !!(r.cd || r.mp || r.sp || r.cast);
 
-  const cdChip = r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s") : "";
+  const cdChip = r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s",revisedArtOn) : "";
   const mpChip = r.mp ? chipHTML("mp","MP",r.mp,view,stats) : "";
   const spChip = r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats) : "";
   const castChip = !isActive ? "" : r.cast
@@ -908,7 +962,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
       ${ctrlRow}
       <h3>${r.id.replace("pgn_","")}</h3>
       ${chipsBlock}
-      <ul class="notes">${(r.notes||[]).map(n=>`<li>${substituteInlineChips(n,r,view,stats)}</li>`).join("")}</ul>
+      <ul class="notes">${(r.notes||[]).map(n=>`<li>${substituteInlineChips(n,r,view,stats,enemyStats,revisedArtOn)}</li>`).join("")}</ul>
     </div>`;
   return el;
 }
@@ -932,7 +986,7 @@ function mountAllCards() {
     currentRank[famId] = fam.ranks.length - 1;
     const grid = tierGrids[fam.tier];
     if (!grid) { console.error(`No .tier.${fam.tier} .grid found for ${famId}`); continue; }
-    const card = renderSkillCard(famId, fam, currentRank[famId], currentView, stats);
+    const card = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, false);
     card.dataset.fam = famId;
     grid.appendChild(card);
   }
@@ -943,7 +997,7 @@ function rerenderAll() {
     const fam = SKILLS[famId];
     const old = document.querySelector(`.sk[data-fam="${famId}"]`);
     if (!old) continue;
-    const fresh = renderSkillCard(famId, fam, currentRank[famId], currentView, stats);
+    const fresh = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, false);
     fresh.dataset.fam = famId;
     old.replaceWith(fresh);
   }
