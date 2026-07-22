@@ -159,6 +159,11 @@
   .chip.cast .t{color:var(--ink);}
   .chip.cast b{color:#1B8A94;}
   .chip.instant{font-style:italic;color:#1B8A94;}
+  /* Proc/roll chance chips ({{chance:N}}) — a distinct teal-green so a
+     percentage never reads as a cost (mp/sp), a duration (dur), or a
+     cast-time (cast) chip at a glance. */
+  .chip.chance{background:#E5F3EC;border:1px solid #2E8B57;}
+  .chip.chance b{color:#2E8B57;}
   /* SP comes in two flavors (mirrors the game's own tooltip color convention,
      GameGui.cs: cSP<0 -> red text, cSP>0 -> blue text): red SP is spent on
      cast, blue SP is only a threshold you must have — it is never deducted. */
@@ -365,12 +370,13 @@ const SKILLS = {
           "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>2</b> times." ],
         classC:[{ passiveId:"spreadShot5", notes:[
           "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>2</b> times.",
-          "<span class=\"classc-on\">\"spreadShot5\" ON: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1.</span>" ] }] },
+          "<span class=\"classc-on\">\"spreadShot5\" ON: Grants 1st and 2nd projectiles {{chance:20}} chance to spread 3 ways.</span>" ] }] },
       { id:"pgn_nAttack2", reqLv:2, dmg:"0.5×ATK", notes:[
           "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>3</b> times." ],
         classC:[{ passiveId:"spreadShot5", notes:[
           "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>3</b> times.",
-          "<span class=\"classc-on\">\"spreadShot5\" ON: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1.</span>" ] }] },
+          "<span class=\"classc-on\">\"spreadShot5\" ON: Grants 1st and 2nd projectiles {{chance:20}} chance to spread 3 ways.</span>",
+          "<span class=\"classc-on\">\"spreadShot5\" ON: Grants 3rd projectile {{chance:40}} chance to spread 3 ways.</span>" ] }] },
     ],
   },
   cAttack: {
@@ -864,9 +870,21 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn)
 // Only "dmg" is ALSO removed from the fixed row unconditionally (whether or
 // not a card's notes actually reference {{dmg}}) — every other field keeps
 // rendering in its row regardless of whether it's also referenced inline.
-const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|range|ko)\}\}/g;
+const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|range|ko|chance:(\d+(?:\.\d+)?))\}\}/g;
 function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
-  return text.replace(INLINE_CHIP_RE, (_, token) => {
+  return text.replace(INLINE_CHIP_RE, (_, token, chanceLiteral) => {
+    // {{chance:N}} is parameterized — the base % lives in the placeholder
+    // itself (not a per-rank data field), since a single rank can reference
+    // several independent LCK-adjusted chances (e.g. one per combo hit).
+    // Base view shows the symbolic lckAdjust(N)% form; Final view computes
+    // the real LCK-adjusted percentage from the entered Player Stats LCK.
+    if (token.startsWith("chance:")) {
+      const n = parseFloat(chanceLiteral);
+      const body = view === "plugin"
+        ? `<b class="computed">${formatNumber(evalLckAdjust(n, stats.LCK))}%</b>`
+        : `<b>lckAdjust(${n})%</b>`;
+      return `<span class="chip chance">${body}</span>`;
+    }
     switch (token) {
       case "dmg": {
         if (!r.dmg) return "";
