@@ -1022,6 +1022,28 @@ const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0, damageMod:1 };
 const enemyStats = { DEF:0, CHA:0, LCK:0 };
 const classCToggle = {};
 
+// UI state (view mode, revisedArt, per-card rank selection, Class C toggles)
+// persists across reloads the same way Player/Enemy Stats already do. One
+// combined key rather than four, since these values are only ever read/
+// written together (every state-changing click handler below saves the
+// whole bundle in one shot) — no benefit to four separate localStorage
+// round-trips for values that always change as a unit. Restored BEFORE
+// mountAllCards() runs (not after) so the very first render already
+// reflects saved state instead of flashing defaults then re-rendering.
+const UI_STORAGE_KEY = "penguinSheetUIState";
+function saveUIState() {
+  try {
+    localStorage.setItem(UI_STORAGE_KEY, JSON.stringify({ currentView, revisedArtOn, currentRank, classCToggle }));
+  } catch (e) { /* corrupt/inaccessible storage — state just won't persist */ }
+}
+try {
+  const savedUI = JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || "{}");
+  if (savedUI.currentView === "base" || savedUI.currentView === "plugin") currentView = savedUI.currentView;
+  if (typeof savedUI.revisedArtOn === "boolean") revisedArtOn = savedUI.revisedArtOn;
+  if (savedUI.currentRank && typeof savedUI.currentRank === "object") Object.assign(currentRank, savedUI.currentRank);
+  if (savedUI.classCToggle && typeof savedUI.classCToggle === "object") Object.assign(classCToggle, savedUI.classCToggle);
+} catch (e) { /* corrupt/inaccessible storage — fall back to defaults silently */ }
+
 function mountAllCards() {
   // Grouped by tier for Task-2's existing per-tier .grid containers.
   const tierGrids = {
@@ -1032,7 +1054,12 @@ function mountAllCards() {
   };
   for (const famId in SKILLS) {
     const fam = SKILLS[famId];
-    currentRank[famId] = fam.ranks.length - 1;
+    // Default to max rank only if nothing was restored, or the restored
+    // index is stale (e.g. the sheet's data changed rank counts since the
+    // value was saved) — never trust a saved index blindly.
+    if (!(Number.isInteger(currentRank[famId]) && currentRank[famId] >= 0 && currentRank[famId] < fam.ranks.length)) {
+      currentRank[famId] = fam.ranks.length - 1;
+    }
     const grid = tierGrids[fam.tier];
     if (!grid) { console.error(`No .tier.${fam.tier} .grid found for ${famId}`); continue; }
     const card = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, revisedArtOn);
@@ -1056,6 +1083,7 @@ document.addEventListener("click", e => {
   const rb = e.target.closest(".ranktoggle button");
   if (rb) {
     currentRank[rb.closest(".ranktoggle").dataset.fam] = parseInt(rb.dataset.rank, 10);
+    saveUIState();
     rerenderAll();
     return;
   }
@@ -1064,6 +1092,7 @@ document.addEventListener("click", e => {
     const famId = cc.dataset.fam, passiveId = cc.dataset.passive;
     classCToggle[famId] = classCToggle[famId] || {};
     classCToggle[famId][passiveId] = !classCToggle[famId][passiveId];
+    saveUIState();
     rerenderAll();
     return;
   }
@@ -1071,6 +1100,7 @@ document.addEventListener("click", e => {
   if (ra) {
     revisedArtOn = !revisedArtOn;
     document.getElementById("revisedArtToggle").classList.toggle("on", revisedArtOn);
+    saveUIState();
     rerenderAll();
     return;
   }
@@ -1080,6 +1110,7 @@ document.addEventListener("click", e => {
     document.querySelectorAll("#viewToggle button").forEach(b => b.classList.toggle("active", b === vb));
     document.getElementById("statPanel").classList.toggle("disabled", currentView !== "plugin");
     document.getElementById("enemyStatPanel").classList.toggle("disabled", currentView !== "plugin");
+    saveUIState();
     rerenderAll();
   }
 });
@@ -1152,6 +1183,17 @@ document.querySelectorAll("#enemyStatPanel input").forEach(inp => {
 });
 
 document.getElementById("revisedArtToggle").innerHTML = `<img src="${ICONS["revisedArt5"]}" alt="revisedArt5">`;
+
+// Sync the static control-bar buttons (view toggle, revisedArt) to any
+// restored UI state BEFORE the first mount, so the page never flashes
+// default-state controls that don't match the cards they sit above.
+// currentRank/classCToggle need no equivalent sync here — mountAllCards()
+// builds each card's rank buttons/checkboxes fresh from that state, so
+// they're correct on first render without a separate pass.
+document.querySelectorAll("#viewToggle button").forEach(b => b.classList.toggle("active", b.dataset.view === currentView));
+document.getElementById("statPanel").classList.toggle("disabled", currentView !== "plugin");
+document.getElementById("enemyStatPanel").classList.toggle("disabled", currentView !== "plugin");
+document.getElementById("revisedArtToggle").classList.toggle("on", revisedArtOn);
 
 mountAllCards();
 </script>
