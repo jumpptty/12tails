@@ -187,10 +187,18 @@ A rank's `notes` strings may embed `{{token}}` placeholders that get
 replaced with a live, view-aware chip inline in the sentence — e.g. "Fires
 ice projectile, each dealing {{dmg}} damage." Implemented as
 `INLINE_CHIP_RE` / `substituteInlineChips` in the script. Supported tokens:
-`dmg, cd, mp, sp, cast, range, ko`, plus the parameterized
+`dmg, cd, mp, sp, cast, dur, range, ko`, plus the parameterized
 `chance:N` (e.g. `{{chance:20}}`) for LCK-adjusted proc/spread chances whose
 base value isn't a per-rank data field (a single rank can reference several
 independent chances, so the base % travels in the placeholder text itself).
+
+`dur` was added later (doubleCast/tripleCast's `chaAdjust(12)`-second buff
+duration) — it reuses `.chip.dur` CSS that existed in the stylesheet from
+the original Chameleon template but had never been wired to a Penguin field
+until then. Reads `r.dur` (a formula string, same shape as `r.dmg`/`r.cd`)
+and renders through the same symbolic/computed-range split as every other
+formula-backed token — no new plumbing beyond adding it to the regex and
+switch statement.
 
 **Visual rule (current, corrected twice during review — this is the final
 state):** every inline chip is a full visual clone of the `{{dmg}}` chip —
