@@ -463,24 +463,24 @@ const SKILLS = {
     ranks: [
       { id:"pgn_manaMissile1", sLv:1, reqLv:3,  cd:"agiAdjust(10)",  cast:"magAdjust(2)", mp:9,  sp:0,
         dmg:"talAdjust(15)", ko:1, hate:0, range:"locked", targets:"2 missiles",
-        notes:["<b>2 missiles</b>, each hits independently, dealing {{dmg}} damage."],
+        notes:["Fires {2} mana missiles, each dealing {{dmg}} damage."],
         classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(15) + 0.1×Lv", notes:[
-          "<span class=\"classc-on\"><b>4 missiles</b> (2 base + 2 from \"moreMissile5\"), each hits independently, +0.1×character level dmg each, dealing {{dmg}} damage.</span>" ] }] },
+          "Fires {4} mana missiles, each dealing {{dmg}} damage." ] }] },
       { id:"pgn_manaMissile2", sLv:2, reqLv:11, cd:"agiAdjust(12)",  cast:"magAdjust(3)", mp:15, sp:0,
         dmg:"talAdjust(18)", ko:1, hate:0, range:"locked", targets:"3 missiles",
-        notes:["<b>3 missiles</b>, each hits independently, dealing {{dmg}} damage."],
+        notes:["Fires {3} mana missiles, each dealing {{dmg}} damage."],
         classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(18) + 0.1×Lv", notes:[
-          "<span class=\"classc-on\"><b>5 missiles</b> (3 base + 2 from \"moreMissile5\"), each hits independently, +0.1×character level dmg each, dealing {{dmg}} damage.</span>" ] }] },
+          "Fires {5} mana missiles, each dealing {{dmg}} damage." ] }] },
       { id:"pgn_manaMissile3", sLv:3, reqLv:19, cd:"agiAdjust(14)",  cast:"magAdjust(4)", mp:21, sp:0,
         dmg:"talAdjust(21)", ko:1, hate:0, range:"locked", targets:"4 missiles",
-        notes:["<b>4 missiles</b>, each hits independently, dealing {{dmg}} damage."],
+        notes:["Fires {4} mana missiles, each dealing {{dmg}} damage."],
         classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(21) + 0.1×Lv", notes:[
-          "<span class=\"classc-on\"><b>6 missiles</b> (4 base + 2 from \"moreMissile5\"), each hits independently, +0.1×character level dmg each, dealing {{dmg}} damage.</span>" ] }] },
+          "Fires {6} mana missiles, each dealing {{dmg}} damage." ] }] },
       { id:"pgn_manaMissile4", sLv:4, reqLv:27, cd:"agiAdjust(16)",  cast:"magAdjust(5)", mp:27, sp:0,
         dmg:"talAdjust(24)", ko:1, hate:0, range:"locked", targets:"5 missiles",
-        notes:["<b>5 missiles</b>, each hits independently, dealing {{dmg}} damage."],
+        notes:["Fires {5} mana missiles, each dealing {{dmg}} damage."],
         classC:[{ passiveId:"moreMissile5", dmg:"talAdjust(24) + 0.1×Lv", notes:[
-          "<span class=\"classc-on\"><b>7 missiles</b> (5 base + 2 from \"moreMissile5\"), each hits independently, +0.1×character level dmg each, dealing {{dmg}} damage.</span>" ] }] },
+          "Fires {7} mana missiles, each dealing {{dmg}} damage." ] }] },
     ],
   },
   manaArc: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
