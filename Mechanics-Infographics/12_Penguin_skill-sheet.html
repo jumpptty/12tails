@@ -269,11 +269,13 @@
     background:var(--paper);color:var(--acc);cursor:pointer;
   }
   .classctoggle input{margin:0;cursor:pointer;}
-  /* Dark gold marks an active (ON) Class C synergy — both the toggle
+  /* Deep violet marks an active (ON) Class C synergy — both the toggle
      control itself and the bonus line it reveals in .notes, so the whole
-     synergy (control + text) reads as one gold-tinted unit. */
-  .classctoggle.on{background:#9A7B0A;border-color:#9A7B0A;color:#fff;}
-  .classc-on{color:#9A7B0A;}
+     synergy (control + text) reads as one violet-tinted unit. Chosen to be
+     distinct from every other chip/accent color already on the sheet
+     (teal --acc, orange KO/range, purple dur, cyan cast, red/blue SP+MP). */
+  .classctoggle.on{background:#6B3FA0;border-color:#6B3FA0;color:#fff;}
+  .classc-on{color:#6B3FA0;}
   /* Single-brace {value} marker (RANK_VALUE_RE) — a value already
      hand-written per-rank/per-classC in notes text, flagged so it reads as
      "changes elsewhere on this card" without a full chip box like {{dmg}}
