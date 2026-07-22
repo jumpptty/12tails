@@ -1063,6 +1063,25 @@ document.addEventListener("click", e => {
   }
 });
 
+// Keyboard shortcuts: V toggles Base/Final view, R toggles revisedArt.
+// Both dispatch a real click on the existing control-bar button(s) rather
+// than re-implementing the toggle logic a second time, so there is exactly
+// one code path for each toggle regardless of how it was triggered. Ignored
+// while focus is in a text/number input (e.g. typing into a stat field),
+// so pressing "r" while entering a value doesn't accidentally fire the
+// revisedArt toggle.
+document.addEventListener("keydown", e => {
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea") return;
+  const key = e.key.toLowerCase();
+  if (key === "v") {
+    const other = document.querySelector(`#viewToggle button[data-view="${currentView === "plugin" ? "base" : "plugin"}"]`);
+    if (other) other.click();
+  } else if (key === "r") {
+    document.getElementById("revisedArtToggle").click();
+  }
+});
+
 // Plug-in stat values persist across page reloads via localStorage, so a
 // reader doesn't have to retype their character's stats every visit. Only
 // the 8 player stat numbers are persisted here (enemy stats have their own
