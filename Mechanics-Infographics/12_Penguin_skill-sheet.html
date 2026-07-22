@@ -159,11 +159,11 @@
   .chip.cast .t{color:var(--ink);}
   .chip.cast b{color:#1B8A94;}
   .chip.instant{font-style:italic;color:#1B8A94;}
-  /* Proc/roll chance chips ({{chance:N}}) — pink, borderless like .chip.dmg
-     (a border would add 2px of height that padding alone can't offset,
-     since border isn't part of the padding box) so the two chip types
-     match in rendered height exactly, not just in padding value. */
-  .chip.chance{background:#FCE7F0;color:#C2417A;padding:1px 4px;}
+  /* Proc/roll chance chips ({{chance:N}}) — pink; box model comes from the
+     shared .chip-inline rule (declared last in this stylesheet, below all
+     per-type rules, so it always wins the cascade — it's exclusively an
+     inline chip type). */
+  .chip.chance{background:#FCE7F0;color:#C2417A;}
   .chip.chance b{color:#C2417A;}
   /* SP comes in two flavors (mirrors the game's own tooltip color convention,
      GameGui.cs: cSP<0 -> red text, cSP>0 -> blue text): red SP is spent on
@@ -181,6 +181,17 @@
   .chip.mp{background:#E3EEF9;border:1px solid #2A63A8;}
   .chip.mp .t{color:var(--ink);}
   .chip.mp b{color:#2A63A8;}
+  /* Inline chips (rendered via {{token}} inside notes prose) must match
+     .chip.dmg's box model exactly — same padding/height/width — regardless
+     of the chip's own color theme, so a sentence's chips don't visually
+     bounce between two sizes. Declared last, after every .chip.<type> rule
+     above, so its padding/border always win the cascade (equal specificity,
+     later wins) without needing an !important. Border removed (not just
+     overridden to 0 width) because border isn't part of the padding box: a
+     chip with border:1px + padding:1px is 2px taller than a borderless chip
+     with the same padding, even though the CSS values "match". Each type's
+     background/text color rules above still apply on top of this. */
+  .chip.chip-inline{padding:1px 4px;border:none;}
   /* Top-down AoE shape diagram (cone/rectangle/etc) for a skill's notes to wrap
      around — float it left as the first child of .body, before .chips/.notes,
      and it reads like a magazine pull-figure instead of eating a full row. Reuse
@@ -832,10 +843,11 @@ function formatRange(a, b, suffix) {
   return minS === maxS ? `${minS}${suffix}` : `${minS}-${maxS}${suffix}`;
 }
 
-function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn) {
+function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn, inline) {
   suffix = suffix || "";
+  const clsAttr = inline ? `${cls} chip-inline` : cls;
   if (typeof formulaOrConst === "number") {
-    return `<span class="chip ${cls}">${label?`<span class="t">${label}</span> `:""}<b>${formulaOrConst}${suffix}</b></span>`;
+    return `<span class="chip ${clsAttr}">${label?`<span class="t">${label}</span> `:""}<b>${formulaOrConst}${suffix}</b></span>`;
   }
   const ast = parseFormula(formulaOrConst);
   let body;
@@ -853,7 +865,7 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn)
   } else {
     body = `<b>${renderSymbolic(ast)}${suffix}</b>`;
   }
-  return `<span class="chip ${cls}">${label?`<span class="t">${label}</span> `:""}${body}</span>`;
+  return `<span class="chip ${clsAttr}">${label?`<span class="t">${label}</span> `:""}${body}</span>`;
 }
 
 // Inline-chip substitution: a notes string may contain {{token}} placeholders
@@ -876,7 +888,7 @@ function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
       const body = view === "plugin"
         ? `<b class="computed">${formatNumber(evalLckAdjust(n, stats.LCK))}%</b>`
         : `<b>lckAdjust(${n})%</b>`;
-      return `<span class="chip chance">${body}</span>`;
+      return `<span class="chip chance chip-inline">${body}</span>`;
     }
     switch (token) {
       case "dmg": {
@@ -902,14 +914,14 @@ function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
         const finalMax = evalDefAdjust(afterDmgMax, enemyStats.DEF, enemyStats.LCK, "min");
         return `<span class="chip dmg"><b class="computed">${formatRange(finalMin, finalMax, "")}</b></span>`;
       }
-      case "cd": return r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s",revisedArtOn) : "";
-      case "mp": return r.mp ? chipHTML("mp","MP",r.mp,view,stats) : "";
-      case "sp": return r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats) : "";
-      case "cast": return r.cast ? chipHTML("cast","CAST",r.cast,view,stats,"s") : `<span class="chip instant">INSTANT</span>`;
-      case "range": return r.range === "locked" ? `<span class="chip rng"><span class="t">Range</span> <b>Locked-on</b></span>`
-        : r.range === "inf" ? `<span class="chip rng"><span class="t">Range</span> <b>∞</b></span>`
-        : r.range ? `<span class="chip rng"><span class="t">Range</span> <b>${r.range}</b></span>` : "";
-      case "ko": return (r.ko !== undefined) ? `<span class="chip ko"><span class="t">KO</span> ${r.ko}</span>` : "";
+      case "cd": return r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s",revisedArtOn,true) : "";
+      case "mp": return r.mp ? chipHTML("mp","MP",r.mp,view,stats,"",undefined,true) : "";
+      case "sp": return r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats,"",undefined,true) : "";
+      case "cast": return r.cast ? chipHTML("cast","CAST",r.cast,view,stats,"s",undefined,true) : `<span class="chip instant chip-inline">INSTANT</span>`;
+      case "range": return r.range === "locked" ? `<span class="chip rng chip-inline"><span class="t">Range</span> <b>Locked-on</b></span>`
+        : r.range === "inf" ? `<span class="chip rng chip-inline"><span class="t">Range</span> <b>∞</b></span>`
+        : r.range ? `<span class="chip rng chip-inline"><span class="t">Range</span> <b>${r.range}</b></span>` : "";
+      case "ko": return (r.ko !== undefined) ? `<span class="chip ko chip-inline"><span class="t">KO</span> ${r.ko}</span>` : "";
       default: return "";
     }
   });
