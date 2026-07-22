@@ -139,11 +139,15 @@
     font-family:Consolas,monospace;font-variant-numeric:tabular-nums;
     font-size:9.4px;line-height:1;padding:3.5px 6px;border-radius:2px;
     background:var(--chip-bg);color:var(--ink);white-space:nowrap;
+    /* inline-block so padding fully and predictably controls the chip's
+       rendered height — plain "inline" left padding affecting only the
+       painted background, not the box height a height tweak expects. */
+    display:inline-block;vertical-align:middle;
   }
   .chip b{font-weight:700;}
   .chip .t{color:var(--ink-soft);font-size:8.4px;letter-spacing:.06em;}
   .chip.cd{background:#fff;border:1px solid var(--acc);}
-  .chip.dmg{background:var(--acc);color:#fff;padding:2.4px 6px;}
+  .chip.dmg{background:var(--acc);color:#fff;padding:1px 6px;}
   .chip.ko{background:#F1E3D0;color:#7A4A22;border:1px solid #C9A877;}
   .chip.rng{background:#FBEEDD;border:1px solid #C97A2B;}
   .chip.rng .t{color:var(--ink);}
