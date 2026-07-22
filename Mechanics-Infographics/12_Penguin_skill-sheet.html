@@ -221,6 +221,8 @@
     padding:5px 12px;border:none;background:var(--paper);color:var(--acc);cursor:pointer;
   }
   .viewtoggle button.active{background:var(--acc);color:#fff;}
+  .statgroup{display:flex;flex-direction:column;gap:3px;}
+  .statgrouplabel{font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
   .statpanel{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .statpanel.disabled{opacity:.4;pointer-events:none;}
   .statpanel label{display:flex;flex-direction:column;font-size:8.5px;color:var(--ink-soft);gap:2px;}
@@ -262,14 +264,26 @@
     <button type="button" data-view="base" class="active">BASE</button>
     <button type="button" data-view="plugin">PLUG-IN STATS</button>
   </div>
-  <div class="statpanel disabled" id="statPanel">
-    <label>ATK<input type="number" id="stat-ATK" value="0" min="0"></label>
-    <label>INT<input type="number" id="stat-INT" value="0" min="0"></label>
-    <label>AGI<input type="number" id="stat-AGI" value="0" min="0"></label>
-    <label>CHA<input type="number" id="stat-CHA" value="0" min="0"></label>
-    <label>TAL<input type="number" id="stat-TAL" value="0" min="0"></label>
-    <label>LCK<input type="number" id="stat-LCK" value="0" min="0"></label>
-    <label>Lv<input type="number" id="stat-Lv" value="0" min="0"></label>
+  <div class="statgroup">
+    <div class="statgrouplabel">Player Stats</div>
+    <div class="statpanel disabled" id="statPanel">
+      <label>ATK<input type="number" id="stat-ATK" value="0" min="0"></label>
+      <label>INT<input type="number" id="stat-INT" value="0" min="0"></label>
+      <label>AGI<input type="number" id="stat-AGI" value="0" min="0"></label>
+      <label>CHA<input type="number" id="stat-CHA" value="0" min="0"></label>
+      <label>TAL<input type="number" id="stat-TAL" value="0" min="0"></label>
+      <label>LCK<input type="number" id="stat-LCK" value="0" min="0"></label>
+      <label>Player Level<input type="number" id="stat-Lv" value="0" min="0"></label>
+      <label>DMG Mod<input type="number" id="stat-damageMod" value="1" min="0" step="0.1"></label>
+    </div>
+  </div>
+  <div class="statgroup">
+    <div class="statgrouplabel">Enemy Stats</div>
+    <div class="statpanel disabled" id="enemyStatPanel">
+      <label>DEF<input type="number" id="enemystat-DEF" value="0" min="0"></label>
+      <label>CHA<input type="number" id="enemystat-CHA" value="0" min="0"></label>
+      <label>LCK<input type="number" id="enemystat-LCK" value="0" min="0"></label>
+    </div>
   </div>
 </div>
 
@@ -901,7 +915,8 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
 
 const currentRank = {};
 let currentView = "base";
-const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0 };
+const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0, damageMod:1 };
+const enemyStats = { DEF:0, CHA:0, LCK:0 };
 const classCToggle = {};
 
 function mountAllCards() {
@@ -954,14 +969,16 @@ document.addEventListener("click", e => {
     currentView = vb.dataset.view;
     document.querySelectorAll("#viewToggle button").forEach(b => b.classList.toggle("active", b === vb));
     document.getElementById("statPanel").classList.toggle("disabled", currentView !== "plugin");
+    document.getElementById("enemyStatPanel").classList.toggle("disabled", currentView !== "plugin");
     rerenderAll();
   }
 });
 
 // Plug-in stat values persist across page reloads via localStorage, so a
 // reader doesn't have to retype their character's stats every visit. Only
-// the 7 stat numbers are persisted — view mode, rank selections, and
-// classC toggles all still reset to their defaults on reload.
+// the 8 player stat numbers are persisted here (enemy stats have their own
+// block below) — view mode, rank selections, and classC toggles all still
+// reset to their defaults on reload.
 const STATS_STORAGE_KEY = "penguinSheetStats";
 try {
   const saved = JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || "{}");
@@ -974,10 +991,33 @@ try {
   }
 } catch (e) { /* corrupt/inaccessible storage — fall back to defaults silently */ }
 
-document.querySelectorAll(".statpanel input").forEach(inp => {
+document.querySelectorAll("#statPanel input").forEach(inp => {
   inp.addEventListener("input", () => {
     stats[inp.id.replace("stat-","")] = parseFloat(inp.value) || 0;
     try { localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats)); } catch (e) {}
+    if (currentView === "plugin") rerenderAll();
+  });
+});
+
+// Enemy stat values persist the same way, under their own storage key and
+// input-id prefix, so plugging in an enemy's DEF/CHA/LCK survives reloads
+// too without colliding with the player's own stat keys.
+const ENEMY_STATS_STORAGE_KEY = "penguinSheetEnemyStats";
+try {
+  const savedEnemy = JSON.parse(localStorage.getItem(ENEMY_STATS_STORAGE_KEY) || "{}");
+  for (const key in enemyStats) {
+    if (typeof savedEnemy[key] === "number") {
+      enemyStats[key] = savedEnemy[key];
+      const inp = document.getElementById("enemystat-" + key);
+      if (inp) inp.value = savedEnemy[key];
+    }
+  }
+} catch (e) { /* corrupt/inaccessible storage — fall back to defaults silently */ }
+
+document.querySelectorAll("#enemyStatPanel input").forEach(inp => {
+  inp.addEventListener("input", () => {
+    enemyStats[inp.id.replace("enemystat-","")] = parseFloat(inp.value) || 0;
+    try { localStorage.setItem(ENEMY_STATS_STORAGE_KEY, JSON.stringify(enemyStats)); } catch (e) {}
     if (currentView === "plugin") rerenderAll();
   });
 });
