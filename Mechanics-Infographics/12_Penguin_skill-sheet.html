@@ -143,7 +143,7 @@
   .chip b{font-weight:700;}
   .chip .t{color:var(--ink-soft);font-size:8.4px;letter-spacing:.06em;}
   .chip.cd{background:#fff;border:1px solid var(--acc);}
-  .chip.dmg{background:var(--acc);color:#fff;}
+  .chip.dmg{background:var(--acc);color:#fff;padding:2.4px 6px;}
   .chip.ko{background:#F1E3D0;color:#7A4A22;border:1px solid #C9A877;}
   .chip.rng{background:#FBEEDD;border:1px solid #C97A2B;}
   .chip.rng .t{color:var(--ink);}
@@ -876,9 +876,26 @@ document.addEventListener("click", e => {
   }
 });
 
+// Plug-in stat values persist across page reloads via localStorage, so a
+// reader doesn't have to retype their character's stats every visit. Only
+// the 7 stat numbers are persisted — view mode, rank selections, and
+// classC toggles all still reset to their defaults on reload.
+const STATS_STORAGE_KEY = "penguinSheetStats";
+try {
+  const saved = JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || "{}");
+  for (const key in stats) {
+    if (typeof saved[key] === "number") {
+      stats[key] = saved[key];
+      const inp = document.getElementById("stat-" + key);
+      if (inp) inp.value = saved[key];
+    }
+  }
+} catch (e) { /* corrupt/inaccessible storage — fall back to defaults silently */ }
+
 document.querySelectorAll(".statpanel input").forEach(inp => {
   inp.addEventListener("input", () => {
     stats[inp.id.replace("stat-","")] = parseFloat(inp.value) || 0;
+    try { localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats)); } catch (e) {}
     if (currentView === "plugin") rerenderAll();
   });
 });
