@@ -274,6 +274,11 @@
      synergy (control + text) reads as one gold-tinted unit. */
   .classctoggle.on{background:#9A7B0A;border-color:#9A7B0A;color:#fff;}
   .classc-on{color:#9A7B0A;}
+  /* Single-brace {value} marker (RANK_VALUE_RE) — a value already
+     hand-written per-rank/per-classC in notes text, flagged so it reads as
+     "changes elsewhere on this card" without a full chip box like {{dmg}}
+     etc. get. Bold + accent color only, no background/border/padding. */
+  .rankval{color:var(--acc);font-weight:700;}
   .computed{font-weight:700;}
   .computed.prob{font-weight:400;}
 </style>
@@ -423,10 +428,10 @@ const SKILLS = {
     // exact code-name casing straight from r.id (renderSkillCard), unaffected.
     icon: r => r.id.replace("pgn_","").toLowerCase(),
     ranks: [
-      { id:"pgn_Intellect1", reqLv:8,  notes:["<b>+10 INT</b>."] },
-      { id:"pgn_Intellect2", reqLv:16, notes:["<b>+20 INT</b>."] },
-      { id:"pgn_Intellect3", reqLv:24, notes:["<b>+30 INT</b>."] },
-      { id:"pgn_Intellect4", reqLv:32, notes:["<b>+40 INT</b>."] },
+      { id:"pgn_Intellect1", reqLv:8,  notes:["+{10} INT."] },
+      { id:"pgn_Intellect2", reqLv:16, notes:["+{20} INT."] },
+      { id:"pgn_Intellect3", reqLv:24, notes:["+{30} INT."] },
+      { id:"pgn_Intellect4", reqLv:32, notes:["+{40} INT."] },
     ],
   },
   doubleCast: {
@@ -866,6 +871,18 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn,
 // not a card's notes actually reference {{dmg}}) — every other field keeps
 // rendering in its row regardless of whether it's also referenced inline.
 const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|range|ko|chance:(\d+(?:\.\d+)?))\}\}/g;
+// Single-brace {text} is a lighter-weight sibling of {{token}}: it's NOT a
+// live substitution (no chip field lookup, no view/stat awareness) — it's a
+// visual marker for a value that's already hand-written per-rank/per-classC
+// in the notes text (e.g. "+10 INT" vs "+40 INT" across Intellect's 4
+// ranks), so a reader can tell at a glance "this number changes elsewhere on
+// this card" without it needing a full chip box. Content is free-form
+// (whatever the rank's own note already says — a bare number, a formula
+// string like "chaAdjust(12)", etc.) and is rendered as-is, just wrapped in
+// a bold accent-colored span. Applied as a second pass AFTER the {{token}}
+// replace above, so by the time this regex runs there are no literal "{{"
+// runs left to misparse as two adjacent single braces.
+const RANK_VALUE_RE = /\{([^{}]+)\}/g;
 function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
   return text.replace(INLINE_CHIP_RE, (_, token, chanceLiteral) => {
     // {{chance:N}} is parameterized — the base % lives in the placeholder
@@ -914,7 +931,7 @@ function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
       case "ko": return (r.ko !== undefined) ? `<span class="chip ko chip-inline"><span class="t">KO</span> ${r.ko}</span>` : "";
       default: return "";
     }
-  });
+  }).replace(RANK_VALUE_RE, (_, inner) => `<b class="rankval">${inner}</b>`);
 }
 
 function renderSkillCard(famId, fam, rankIdx, view, stats, enemyStats, revisedArtOn) {

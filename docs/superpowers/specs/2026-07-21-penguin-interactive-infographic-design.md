@@ -211,6 +211,31 @@ chip row (whether or not a rank's notes actually reference `{{dmg}}`) —
 every other inlined field still renders in the fixed row too unless that
 specific rank opts out (see `mpIsGain` below).
 
+### Rank-value marker (`{value}`, single brace — lighter sibling of `{{token}}`)
+
+A single-brace `{...}` in notes text is **not** a live substitution — no
+chip field lookup, no view/stat awareness. It's a visual marker for a value
+that's already hand-written per-rank (or per-Class-C-override) directly in
+the notes string, e.g. Intellect's `+{10} INT.` / `+{20} INT.` /
+`+{30} INT.` / `+{40} INT.` across its 4 ranks (was plain `<b>+10 INT</b>.`
+etc. before this convention existed — the number already varied by rank,
+it just wasn't visually flagged as such). Content is free-form: whatever
+the rank's own note already says (a bare number, a formula string like
+`chaAdjust(12)`, anything) — it's rendered as-is, just wrapped in
+`<b class="rankval">`.
+
+Implemented as `RANK_VALUE_RE` (`/\{([^{}]+)\}/g`) applied as a **second**
+`.replace()` pass in `substituteInlineChips`, strictly after the `{{token}}`
+pass — by the time it runs, every real `{{...}}` has already been consumed,
+so there's no leftover `{{` for the single-brace regex to misparse as two
+adjacent single-brace matches. `.rankval` CSS is bold + `var(--acc)` text
+color only — no background/border/padding, unlike `.chip-inline` — so it
+reads as "this number changes elsewhere on this card" without the visual
+weight of a full chip box. Use `{{token}}` when the value needs to be
+computed/view-aware (Base vs Final, LCK ranges, revisedArt, etc.); use
+`{value}` when the value is just a plain rank-varying number/string already
+written out per rank and only needs a lightweight visual flag.
+
 ### `mpIsGain`: a rank's `mp` field can mean "gained", not "cost"
 
 Default assumption everywhere is `mp` = a cost paid to cast. A rank can set
