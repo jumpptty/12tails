@@ -715,11 +715,15 @@ function evalTalAdjust(v, tal, lck, rollMode) {
   return Math.ceil(truncated);
 }
 function evalLckAdjust(v, lck) {
-  // lckAdjust has no random roll of its own (CharacterControl.cs:20658) —
-  // it's a deterministic diminishing-returns curve on the caster's own LCK,
-  // unaffected by min/max roll mode. Unchanged from the sheet's existing formula.
-  const num = v * (1 + 0.01 * lck);
-  return 100 * num / (num - v + 100);
+  // lckAdjust has no random roll of its own (CharacterControl.cs:20658-20671)
+  // — it's a deterministic diminishing-returns curve on the caster's own LCK,
+  // unaffected by min/max roll mode. Exact source: v<=0 returns 0 outright;
+  // otherwise lck is clamped to [1,512] before use, and the result is
+  // floored (source always returns an int), not left as a raw float.
+  if (v <= 0) return 0;
+  const clampedLck = Math.min(Math.max(lck, 1), 512);
+  const num = v * (1 + 0.01 * clampedLck);
+  return Math.floor(100 * num / (num - v + 100));
 }
 
 // dmgAdjust and defAdjust are NOT reachable via the generic `fn` AST case —

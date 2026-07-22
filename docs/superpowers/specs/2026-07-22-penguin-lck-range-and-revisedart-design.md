@@ -83,6 +83,17 @@ rolls).
   adjuster) — included here for completeness/fidelity but likely dead
   code for this specific class's sheet. Confirm during implementation
   whether anything actually calls it; if not, skip implementing it.
+- `lckAdjust(n)` — `CharacterControl.cs:20658-20671`: **has no random roll
+  of its own** (unaffected by min/max roll mode — it's the one adjuster in
+  this list that isn't itself randomized, only used to size the diminishing-
+  returns curve for LCK-driven percentage/chance terms elsewhere). Exact
+  formula, all 3 steps required, none of which were in this doc's original
+  draft (a real gap caught in review — do not re-drop these when reading
+  this doc): if `n≤0` return `0` outright; else `num = n × (1+0.01×clamp(LCK,
+  1,512))` (LCK IS clamped here, unlike the roll-based adjusters where the
+  clamp applies to `stat+roll` — here it applies to the bare LCK stat);
+  return `floor(100×num / (num−n+100))` — the result is always an integer
+  (floored), never a raw float.
 
 **revisedArt5** (`CharacterControl.cs:20102-20227`, `addTimeOut`): once a
 cooldown value is computed by the caller (i.e., AFTER `agiAdjust` has
