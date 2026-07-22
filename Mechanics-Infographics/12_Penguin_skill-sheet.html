@@ -192,6 +192,11 @@
      with the same padding, even though the CSS values "match". Each type's
      background/text color rules above still apply on top of this. */
   .chip.chip-inline{padding:1px 4px;border:none;}
+  /* MP inline chips get a thin border back, unlike other inline types — but
+     as an inset box-shadow, not a real border, so it paints inside the box
+     rather than adding to its rendered width/height (a real border would
+     break the box-model match with .chip.dmg established above). */
+  .chip.mp.chip-inline{box-shadow:inset 0 0 0 1px #2A63A8;}
   /* Top-down AoE shape diagram (cone/rectangle/etc) for a skill's notes to wrap
      around — float it left as the first child of .body, before .chips/.notes,
      and it reads like a magazine pull-figure instead of eating a full row. Reuse
@@ -396,24 +401,24 @@ const SKILLS = {
     icon: r => r.id.replace("pgn_",""),
     ranks: [
       { id:"pgn_cAttack1", reqLv:4,  mp:"clamp(⌈0.03×ATK⌉, 3, 6)", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second." ],
+          "Gains {{mp}} per second." ],
         classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second.",
+          "Gains {{mp}} per second.",
           "<span class=\"classc-on\">+1 MP/tick (chargeLv 1), and shares MP with allies within 8m.</span>" ] }] },
       { id:"pgn_cAttack2", reqLv:10, mp:"clamp(⌈0.06×ATK⌉, 6, 12)", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second." ],
+          "Gains {{mp}} per second." ],
         classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second.",
+          "Gains {{mp}} per second.",
           "<span class=\"classc-on\">+2 MP/tick (chargeLv 2), and shares MP with allies within 8m.</span>" ] }] },
       { id:"pgn_cAttack3", reqLv:16, mp:"clamp(⌈0.09×ATK⌉, 9, 18)", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second." ],
+          "Gains {{mp}} per second." ],
         classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second.",
+          "Gains {{mp}} per second.",
           "<span class=\"classc-on\">+3 MP/tick (chargeLv 3), and shares MP with allies within 8m.</span>" ] }] },
       { id:"pgn_cAttack4", reqLv:22, mp:"clamp(⌈0.12×ATK⌉, 12, 24)", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second." ],
+          "Gains {{mp}} per second." ],
         classC:[{ passiveId:"manaField5", mpIsGain:true, notes:[
-          "Gains {{mp}} MP per second.",
+          "Gains {{mp}} per second.",
           "<span class=\"classc-on\">+4 MP/tick (chargeLv 4), and shares MP with allies within 8m.</span>" ] }] },
     ],
   },
