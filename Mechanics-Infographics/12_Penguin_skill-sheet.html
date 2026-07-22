@@ -434,17 +434,10 @@ const SKILLS = {
     icon: r => r.id.replace("pgn_",""),
     ranks: [
       { id:"pgn_doubleCast1", reqLv:32, cd:"agiAdjust(240)", mp:20, sp:-20, range:null, notes:[
-          "Grants self <b>multiCast lv1</b>, <b>chaAdjust(12)</b>s. Next qualifying spell cast fires twice.",
-          "<span class=\"warn\">Shares its cooldown with <b>\"tripleCast2\"</b></span> — casting either puts both on CD." ] },
-    ],
-  },
-  tripleCast: {
-    tier: "basic",
-    icon: r => r.id.replace("pgn_",""),
-    ranks: [
+          "Grants self <b>multiCast lv1</b>, <b>chaAdjust(12)</b>s. Next qualifying spell cast fires twice." ] },
       { id:"pgn_tripleCast2", reqLv:40, cd:"agiAdjust(240)", mp:40, sp:-30, range:null, notes:[
           "Grants self <b>multiCast lv2</b>, <b>chaAdjust(12)</b>s — consumed 1 level per subsequent qualifying cast (practically: next 2 casts each fire twice, not one spell firing 3× in one press).",
-          "<span class=\"warn\">Shares its cooldown with <b>\"doubleCast1\"</b></span>; using either overwrites the other's pending buff rather than stacking." ] },
+          "<span class=\"warn\">Overwrites the other rank's pending buff rather than stacking if both are somehow active.</span>" ] },
     ],
   },
   statPlus: {
