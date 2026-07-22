@@ -438,10 +438,12 @@ const SKILLS = {
     tier: "basic",
     icon: r => r.id.replace("pgn_",""),
     ranks: [
-      { id:"pgn_doubleCast1", reqLv:32, cd:"agiAdjust(240)", mp:20, sp:-20, range:null, notes:[
-          "Grants self <b>multiCast lv1</b>, <b>chaAdjust(12)</b>s. Next qualifying spell cast fires twice." ] },
-      { id:"pgn_tripleCast2", reqLv:40, cd:"agiAdjust(240)", mp:40, sp:-30, range:null, notes:[
-          "Grants self <b>multiCast lv2</b>, <b>chaAdjust(12)</b>s — consumed 1 level per subsequent qualifying cast (practically: next 2 casts each fire twice, not one spell firing 3× in one press).",
+      { id:"pgn_doubleCast1", reqLv:32, cd:"agiAdjust(240)", mp:20, sp:-20, range:null, dur:"chaAdjust(12)", notes:[
+          "Grants self {multiCast lv1} for {{dur}}, next spell casts {twice}.",
+          "Qualifying spells: manaMissile, blink, manaBurn, fallingStars, fallingComets, frozenBlast, arcticWind, iceBlock, parallelShift." ] },
+      { id:"pgn_tripleCast2", reqLv:40, cd:"agiAdjust(240)", mp:40, sp:-30, range:null, dur:"chaAdjust(12)", notes:[
+          "Grants self {multiCast lv2} for {{dur}}, next spell casts {thrice} — consumed 1 level per subsequent qualifying cast (practically: next 2 casts each fire twice, not one spell firing 3× in one press).",
+          "Qualifying spells: manaMissile, blink, manaBurn, fallingStars, fallingComets, frozenBlast, arcticWind, iceBlock, parallelShift.",
           "<span class=\"warn\">Overwrites the other rank's pending buff rather than stacking if both are somehow active.</span>" ] },
     ],
   },
@@ -870,7 +872,7 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix, revisedArtOn,
 // Only "dmg" is ALSO removed from the fixed row unconditionally (whether or
 // not a card's notes actually reference {{dmg}}) — every other field keeps
 // rendering in its row regardless of whether it's also referenced inline.
-const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|range|ko|chance:(\d+(?:\.\d+)?))\}\}/g;
+const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|dur|range|ko|chance:(\d+(?:\.\d+)?))\}\}/g;
 // Single-brace {text} is a lighter-weight sibling of {{token}}: it's NOT a
 // live substitution (no chip field lookup, no view/stat awareness) — it's a
 // visual marker for a value that's already hand-written per-rank/per-classC
@@ -925,6 +927,7 @@ function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
       case "mp": return r.mp ? chipHTML("mp","MP",r.mp,view,stats,"",undefined,true) : "";
       case "sp": return r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats,"",undefined,true) : "";
       case "cast": return r.cast ? chipHTML("cast","CAST",r.cast,view,stats,"s",undefined,true) : `<span class="chip instant chip-inline">INSTANT</span>`;
+      case "dur": return r.dur ? chipHTML("dur","",r.dur,view,stats,"s",undefined,true) : "";
       case "range": return r.range === "locked" ? `<span class="chip rng chip-inline"><span class="t">Range</span> <b>Locked-on</b></span>`
         : r.range === "inf" ? `<span class="chip rng chip-inline"><span class="t">Range</span> <b>∞</b></span>`
         : r.range ? `<span class="chip rng chip-inline"><span class="t">Range</span> <b>${r.range}</b></span>` : "";
