@@ -335,15 +335,15 @@ const SKILLS = {
     tier: "basic",
     icon: r => r.id.replace("pgn_",""),
     ranks: [
-      { id:"pgn_nAttack1", reqLv:1, notes:[
-          "Fires ice projectile in straight line, each dealing <b>0.5×ATK</b> damage, up to <b>2</b> times." ],
+      { id:"pgn_nAttack1", reqLv:1, dmg:"0.5×ATK", notes:[
+          "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>2</b> times." ],
         classC:[{ passiveId:"spreadShot5", notes:[
-          "Fires ice projectile in straight line, each dealing <b>0.5×ATK</b> damage, up to <b>2</b> times.",
+          "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>2</b> times.",
           "<span class=\"classc-on\">\"spreadShot5\" ON: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1.</span>" ] }] },
-      { id:"pgn_nAttack2", reqLv:2, notes:[
-          "Fires ice projectile in straight line, each dealing <b>0.5×ATK</b> damage, up to <b>3</b> times." ],
+      { id:"pgn_nAttack2", reqLv:2, dmg:"0.5×ATK", notes:[
+          "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>3</b> times." ],
         classC:[{ passiveId:"spreadShot5", notes:[
-          "Fires ice projectile in straight line, each dealing <b>0.5×ATK</b> damage, up to <b>3</b> times.",
+          "Fires ice projectile in straight line, each dealing {{dmg}} damage, up to <b>3</b> times.",
           "<span class=\"classc-on\">\"spreadShot5\" ON: 20% (hits 1-2) / 40% (hit 3, LCK↑) chance to fire 3 spread projectiles instead of 1.</span>" ] }] },
     ],
   },
@@ -721,6 +721,31 @@ function chipHTML(cls, label, formulaOrConst, view, stats, suffix) {
   return `<span class="chip ${cls}">${label?`<span class="t">${label}</span> `:""}${body}</span>`;
 }
 
+// Inline-chip substitution: a notes string may contain {{token}} placeholders
+// (dmg, cd, mp, sp, cast, range, ko) that get replaced with the same
+// chip-styled HTML the fixed chip row uses, so a sentence like "each dealing
+// {{dmg}} damage" renders a live, view-aware chip in place of the token.
+// Only "dmg" is ALSO removed from the fixed row unconditionally (whether or
+// not a card's notes actually reference {{dmg}}) — every other field keeps
+// rendering in its row regardless of whether it's also referenced inline.
+const INLINE_CHIP_RE = /\{\{(dmg|cd|mp|sp|cast|range|ko)\}\}/g;
+function substituteInlineChips(text, r, view, stats) {
+  return text.replace(INLINE_CHIP_RE, (_, token) => {
+    switch (token) {
+      case "dmg": return r.dmg ? chipHTML("dmg","",r.dmg,view,stats) : "";
+      case "cd": return r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s") : "";
+      case "mp": return r.mp ? chipHTML("mp","MP",r.mp,view,stats) : "";
+      case "sp": return r.sp ? chipHTML(r.sp<0?"spr":"spb","SP",Math.abs(r.sp),view,stats) : "";
+      case "cast": return r.cast ? chipHTML("cast","CAST",r.cast,view,stats,"s") : `<span class="chip instant">INSTANT</span>`;
+      case "range": return r.range === "locked" ? `<span class="chip rng"><span class="t">Range</span> <b>Locked-on</b></span>`
+        : r.range === "inf" ? `<span class="chip rng"><span class="t">Range</span> <b>∞</b></span>`
+        : r.range ? `<span class="chip rng"><span class="t">Range</span> <b>${r.range}</b></span>` : "";
+      case "ko": return (r.ko !== undefined) ? `<span class="chip ko"><span class="t">KO</span> ${r.ko}</span>` : "";
+      default: return "";
+    }
+  });
+}
+
 function renderSkillCard(famId, fam, rankIdx, view, stats) {
   const baseRank = fam.ranks[rankIdx];
   // Merge any currently-ON classC overrides onto the base rank. Later
@@ -744,10 +769,14 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
     </label>`;
   }).join("");
   // A rank is "active" (has some castable/triggerable form) when it sets at
-  // least one of cd/mp/sp/cast/dmg. Pure passives (e.g. nAttack, intellect,
-  // statPlus, astralTalent) have none of these and must render zero chip
-  // rows — no CAST/INSTANT chip synthesized for them (Design Correction 1).
-  const isActive = !!(r.cd || r.mp || r.sp || r.cast || r.dmg);
+  // least one of cd/mp/sp/cast. dmg is deliberately EXCLUDED from this check
+  // — dmg now only ever renders inline in notes via {{dmg}} (never in the
+  // fixed row), and several skills (e.g. nAttack's ice projectile) always
+  // fire regardless of any cast/cooldown gate, so a bare dmg field alone
+  // must not imply "this is an active, castable skill" (Design Correction 1
+  // still applies: pure passives like intellect/statPlus/astralTalent, and
+  // now also nAttack despite carrying a dmg formula, render zero chip rows).
+  const isActive = !!(r.cd || r.mp || r.sp || r.cast);
 
   const cdChip = r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s") : "";
   const mpChip = r.mp ? chipHTML("mp","MP",r.mp,view,stats) : "";
@@ -758,12 +787,13 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
   const rangeChip = !isActive ? "" : r.range === "locked" ? `<span class="chip rng"><span class="t">Range</span> <b>Locked-on</b></span>`
     : r.range === "inf" ? `<span class="chip rng"><span class="t">Range</span> <b>∞</b></span>`
     : r.range ? `<span class="chip rng"><span class="t">Range</span> <b>${r.range}</b></span>` : "";
-  const dmgChip = r.dmg ? chipHTML("dmg","",r.dmg,view,stats) : "";
+  // dmg no longer renders in the fixed row — it's inlined into notes text
+  // via a {{dmg}} placeholder instead (see substituteInlineChips above).
   const koChip = (isActive && r.ko !== undefined) ? `<span class="chip ko"><span class="t">KO</span> ${r.ko}</span>` : "";
 
   const row1 = `${cdChip}${mpChip}${spChip}`;
   const row2 = `${castChip}${rangeChip}`;
-  const row3 = `${dmgChip}${koChip}`;
+  const row3 = `${koChip}`;
   const chipsBlock = (row1 || row2 || row3)
     ? `<div class="chips">
         ${row1 ? `<div class="chiprow">${row1}</div>` : ""}
@@ -782,7 +812,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats) {
       ${ctrlRow}
       <h3>${r.id.replace("pgn_","")}</h3>
       ${chipsBlock}
-      <ul class="notes">${(r.notes||[]).map(n=>`<li>${n}</li>`).join("")}</ul>
+      <ul class="notes">${(r.notes||[]).map(n=>`<li>${substituteInlineChips(n,r,view,stats)}</li>`).join("")}</ul>
     </div>`;
   return el;
 }
