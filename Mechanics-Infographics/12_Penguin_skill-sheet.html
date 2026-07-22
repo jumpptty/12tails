@@ -675,14 +675,88 @@ function renderSymbolic(ast) {
   }
 }
 
-function renderNumeric(ast, stats) {
+// A "roll" is the random(0, ceil(0.2*LCK)) term every adjuster function
+// draws from its own relevant character's LCK stat in the real game
+// (CharacterControl.cs). rollMode "min" always evaluates the roll as 0;
+// "max" evaluates it as its ceiling, ceil(0.2*rollStat). Exact per-function
+// formulas and rounding below are transcribed verbatim from source, not
+// approximated — see docs/superpowers/specs/2026-07-22-penguin-lck-range-and-revisedart-design.md.
+function rollValue(rollStat, rollMode) {
+  return rollMode === "max" ? Math.ceil(0.2 * rollStat) : 0;
+}
+
+// agiAdjust/magAdjust/chaAdjust/talAdjust each need TWO stats (the roll's own
+// stat, e.g. AGI, AND LCK for the roll's ceiling) — a single-stat helper
+// signature doesn't fit all of them cleanly, so each gets its own explicit
+// function instead of forcing a shared shape that would obscure the exact
+// per-function source formula. All four take (v, statValue, lckValue, rollMode).
+function evalAgiAdjust(v, agi, lck, rollMode) {
+  const num = agi + rollValue(lck, rollMode);
+  return v * (1 - num / (num + 128));
+}
+function evalMagAdjust(v, intStat, lck, rollMode) {
+  const num = Math.min(Math.max(intStat + rollValue(lck, rollMode), 1), 512);
+  // CharacterControl.cs:20587 — num/32 is integer division (num and 32 both
+  // int in source), truncating toward zero BEFORE the subtraction.
+  const divided = Math.trunc(num / 32);
+  return Math.min(Math.max(v - divided, 0.1), 600);
+}
+function evalChaAdjust(v, cha, lck, rollMode) {
+  const num = Math.min(Math.max(cha + rollValue(lck, rollMode), 1), 512);
+  const truncated = Math.trunc(v * (1 + 0.015 * num));
+  // CharacterControl.cs:20593-20619 — ceil only applies in the t>0 branch;
+  // a non-positive result returns as-is, un-ceil'd.
+  return truncated > 0 ? Math.ceil(truncated) : truncated;
+}
+function evalTalAdjust(v, tal, lck, rollMode) {
+  if (v <= 0) return 0;
+  const num = Math.min(Math.max(tal + rollValue(lck, rollMode), 1), 512);
+  const truncated = Math.trunc(v * (1 + 0.02 * num));
+  return Math.ceil(truncated);
+}
+function evalLckAdjust(v, lck) {
+  // lckAdjust has no random roll of its own (CharacterControl.cs:20658) —
+  // it's a deterministic diminishing-returns curve on the caster's own LCK,
+  // unaffected by min/max roll mode. Unchanged from the sheet's existing formula.
+  const num = v * (1 + 0.01 * lck);
+  return 100 * num / (num - v + 100);
+}
+
+// dmgAdjust and defAdjust are NOT reachable via the generic `fn` AST case —
+// no Penguin skill formula string contains a literal "dmgAdjust(...)" or
+// "defAdjust(...)" call (those two only ever apply to a dmg chip's ALREADY-
+// evaluated final number, as a post-processing step — see Task 3's dmg-chip
+// wrapper). They're defined here as plain functions, not evaluator cases,
+// since they never appear inside a parsed formula AST.
+function evalDmgAdjust(d, damageMod, attackerLck, rollMode) {
+  const roll = rollValue(attackerLck, rollMode);
+  const clampedMod = Math.min(Math.max(damageMod, 0), 5);
+  return Math.ceil(clampedMod * d + roll);
+}
+function evalDefAdjust(d, def, defenderLck, rollMode) {
+  const defRoll = rollValue(defenderLck, rollMode);
+  const defPrime = Math.min(Math.max(def + defRoll, 1), 512);
+  let flat = Math.trunc(d - 0.5 * defPrime);
+  if (flat < 1) flat = 1;
+  let pct = Math.trunc(d * (1 - defPrime / (defPrime + 64)));
+  if (pct < 1) pct = 1;
+  return Math.ceil(0.35 * flat + 0.65 * pct);
+}
+
+// Walks an AST once, evaluating every LCK-adjuster at the given roll extreme
+// ("min" or "max"), using `stats` for the attacker-side values (ATK/INT/AGI/
+// CHA/TAL/LCK/Lv/damageMod — the existing global `stats` object, extended in
+// Task 2). Defender stats never appear inside a formula AST (no skill formula
+// references enemy stats directly) — defAdjust is applied separately in
+// Task 3's dmg-chip wrapper, not through this function.
+function renderRange(ast, stats, rollMode) {
   switch (ast.type) {
     case "num": return ast.v;
     case "stat": return stats[ast.v] || 0;
-    case "ceil": return Math.ceil(renderNumeric(ast.arg, stats));
-    case "floor": return Math.floor(renderNumeric(ast.arg, stats));
+    case "ceil": return Math.ceil(renderRange(ast.arg, stats, rollMode));
+    case "floor": return Math.floor(renderRange(ast.arg, stats, rollMode));
     case "bin": {
-      const l = renderNumeric(ast.left, stats), r = renderNumeric(ast.right, stats);
+      const l = renderRange(ast.left, stats, rollMode), r = renderRange(ast.right, stats, rollMode);
       if (ast.op === "+") return l + r;
       if (ast.op === "-") return l - r;
       if (ast.op === "×") return l * r;
@@ -690,18 +764,18 @@ function renderNumeric(ast, stats) {
       throw new Error(`Unknown op ${ast.op}`);
     }
     case "fn": {
-      const v = renderNumeric(ast.arg, stats);
+      const v = renderRange(ast.arg, stats, rollMode);
       switch (ast.name) {
-        case "agiAdjust": return v * 128 / (stats.AGI + 128);
-        case "magAdjust": return v * 128 / (stats.INT + 128); // same shape as agiAdjust, on INT
-        case "chaAdjust": return v * (1 + 0.015 * stats.CHA);
-        case "talAdjust": return v + 0.02 * v * stats.TAL;
-        case "lckAdjust": { const num = v * (1 + 0.01 * stats.LCK); return 100 * num / (num - v + 100); }
+        case "agiAdjust": return evalAgiAdjust(v, stats.AGI, stats.LCK, rollMode);
+        case "magAdjust": return evalMagAdjust(v, stats.INT, stats.LCK, rollMode);
+        case "chaAdjust": return evalChaAdjust(v, stats.CHA, stats.LCK, rollMode);
+        case "talAdjust": return evalTalAdjust(v, stats.TAL, stats.LCK, rollMode);
+        case "lckAdjust": return evalLckAdjust(v, stats.LCK);
         default: throw new Error(`Unknown fn ${ast.name}`);
       }
     }
     case "clamp": {
-      const [expr, lo, hi] = ast.args.map(a => renderNumeric(a, stats));
+      const [expr, lo, hi] = ast.args.map(a => renderRange(a, stats, rollMode));
       return Math.min(Math.max(expr, lo), hi);
     }
   }
