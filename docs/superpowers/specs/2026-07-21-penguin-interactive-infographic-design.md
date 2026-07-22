@@ -72,7 +72,15 @@ for this class.
 
 ## Card model changes from Chameleon template
 
-### 1. Rank merge
+> **2026-07-22 update:** Sections 1 and 3 below describe the *original*
+> design as implemented in the main 9-task plan and Class C toggle plan.
+> Both have since been superseded by conventions established during the
+> card-by-card review pass (see "Current conventions (post-review)" below,
+> which is authoritative for anything it covers). Kept here for history —
+> do not re-implement the "plug-in view" naming or the name-pattern-only
+> rank-merge rule; both were corrected.
+
+### 1. Rank merge (superseded — see below)
 
 Any set of sibling `commandNum`s whose skill names differ only by a trailing
 rank digit (verified by checking they share a `cType`/coroutine dispatch
@@ -105,7 +113,7 @@ need to change." Penguin's values: an aqua hue for `--acc`/`--acc-tint`
 approach as Chameleon's green — light tint background, saturated border/text
 accent), spot-checked in both light and dark preview.
 
-### 3. Base view vs. plug-in view
+### 3. Base view vs. plug-in view (superseded — see below)
 
 A view toggle (two-state control, e.g. a segmented switch) fixed near the
 top of the document, above the first tier's content:
@@ -134,6 +142,126 @@ top of the document, above the first tier's content:
 LCK` — feeding every card simultaneously. Changing a value live-recomputes
 all currently-plug-in-view chips. Panel is inert/hidden (or just visually
 de-emphasized) in base view since it has no effect there.
+
+## Current conventions (post-review, authoritative)
+
+The card-by-card review pass (started after the main build, Class C toggle,
+and LCK-range/revisedArt plans were all complete) established several
+conventions beyond what any prior spec covers. This section is the living
+reference — update it in place as new conventions are set, rather than
+leaving them to only exist in commit messages.
+
+### View naming: "Base" / "Final" (not "Plug-in Stats")
+
+The second view's **button label** is "FINAL", not "Plug-in Stats"/"Plug-in
+view" (renamed per explicit request — the internal JS identifier is still
+the string `"plugin"` throughout the code; only the user-facing label
+changed). Two stat panels feed it: "Player Stats" (`ATK, INT, AGI, CHA, TAL,
+LCK, Player Level` — `Lv` was renamed from the original spec's plain `Lv`)
+and "Enemy Stats" (`DEF, CHA, LCK`), the latter added later to drive the
+damage chip's defense-mitigation pipeline (see LCK-range design doc for the
+full pipeline). Both panels persist to `localStorage`, scoped as
+`#statPanel input` / the enemy panel's own id — never a shared
+`.statpanel input` class selector, which would conflate the two panels (a
+real bug caught during the LCK-range build, see that plan's review notes).
+
+### Family merge: same skill *slot*, not just same name pattern
+
+The original rank-merge rule (trailing-digit siblings of the same name)
+still holds, but the review pass established a broader rule: **any set of
+skills that occupy the same effective skill slot** — sharing a cooldown,
+being mutually exclusive, or otherwise being "one skill with several named
+ranks" in all but the game's own data model — merge into one card with a
+rank toggle, even when their names don't share a prefix. Example:
+`doubleCast1` and `tripleCast2` were originally two separate one-rank cards
+that cross-referenced each other via "shares cooldown with" warning text;
+merged into a single `doubleCast` family (rank 1 = `doubleCast1`, rank 2 =
+`tripleCast2`) once recognized as the same slot. Each rank keeps its own
+`<h3>` title (driven by that rank's own `r.id`, unaffected by which family
+object groups it) and its own real cost/cooldown/notes — merging is purely
+a card-grouping decision, not a data change.
+
+### Inline chip mechanism (`{{token}}`)
+
+A rank's `notes` strings may embed `{{token}}` placeholders that get
+replaced with a live, view-aware chip inline in the sentence — e.g. "Fires
+ice projectile, each dealing {{dmg}} damage." Implemented as
+`INLINE_CHIP_RE` / `substituteInlineChips` in the script. Supported tokens:
+`dmg, cd, mp, sp, cast, range, ko`, plus the parameterized
+`chance:N` (e.g. `{{chance:20}}`) for LCK-adjusted proc/spread chances whose
+base value isn't a per-rank data field (a single rank can reference several
+independent chances, so the base % travels in the placeholder text itself).
+
+**Visual rule (current, corrected twice during review — this is the final
+state):** every inline chip is a full visual clone of the `{{dmg}}` chip —
+same accent background, white text, same padding, **no border**, regardless
+of what color that chip type uses in the fixed row (e.g. `.chip.mp` is
+light-blue-with-border in the fixed row, but solid-accent-with-white-text
+when rendered inline via `{{mp}}`). This is implemented as a `.chip-inline`
+modifier class, added only at inline call sites (never on fixed-row chips),
+declared *last* in the stylesheet — after every per-type `.chip.<type>`
+color/border rule — so its background/color/border/box-shadow always win
+the cascade at equal specificity without an `!important`. Earlier
+intermediate states (per-type color kept, only box-model unified; then a
+manually-added thin border via inset `box-shadow` on `.chip.mp` alone) were
+both superseded — do not reintroduce either.
+
+`dmg` is the one field that's *also* unconditionally removed from the fixed
+chip row (whether or not a rank's notes actually reference `{{dmg}}`) —
+every other inlined field still renders in the fixed row too unless that
+specific rank opts out (see `mpIsGain` below).
+
+### `mpIsGain`: a rank's `mp` field can mean "gained", not "cost"
+
+Default assumption everywhere is `mp` = a cost paid to cast. A rank can set
+`mpIsGain: true` to flag that its `mp` value is actually MP *gained* (e.g.
+`cAttack`'s channel-for-MP passive), which does two things:
+- Excludes that rank from the fixed MP-cost chip row (`mpIsCost = r.mp &&
+  !r.mpIsGain` gates both `isActive` and the `mpChip` render).
+- The value still renders correctly wherever `{{mp}}` is used inline in
+  notes — the flag only changes fixed-row/isActive treatment, not the
+  chip's own math.
+
+Scoped per-rank, never global — every other card's `mp` field is an
+unaffected real cost. A card whose only "active" signal was `mp` (no
+cd/sp/cast) becomes a pure passive (zero chip rows) once `mpIsGain` is set,
+same as any other passive.
+
+### Class C synergy toggle
+
+Per-card checkbox (`classCToggle[famId][passiveId]`, independent per card
+even when two cards reference the same `passiveId`) that live-recomputes
+chips/notes when a Class C passive is toggled ON. A rank's `classC` array
+holds `{passiveId, ...fieldOverrides}` entries; the active rank is a
+non-mutating merge (`{...baseRank, ...matchedEntry}`) of the base rank plus
+any currently-ON override. ON-state note text is wrapped in
+`<span class="classc-on">` (dark gold, **not bold** — bold was removed per
+review feedback) and is fully hidden (not shown as grayed-out "needs X"
+prose) until toggled on.
+
+### Keyboard shortcuts
+
+`V` toggles Base/Final view, `R` toggles revisedArt — both implemented by
+dispatching a real `.click()` on the existing toggle button (single source
+of truth, no duplicated toggle logic), ignored while an `<input>`/`<textarea>`
+has focus.
+
+### Chip alignment: top, not center
+
+`.sk` (skill-card icon+body grid) and `.pv` (passive-card icon+body flex)
+both use `align-items:start`, not `center` — so icon/text don't visually
+jump vertically when toggling rank or view changes a card's content height.
+Applies to passive cards too (confirmed in review), not just multi-rank
+skill cards.
+
+### Bracket-free ranges
+
+`formatRange(a, b, suffix)` renders `min-maxsuffix` (e.g. `12-18s`), not
+`[min-max]suffix` — brackets were removed sheet-wide (dmg, CD, CAST) per
+review feedback. Dmg/inline chips also use tighter padding (`1px 4px`) than
+the base fixed-row chip (`3.5px 4px`), so the box hugs the value more
+closely; the base `.chip` rule's own horizontal padding (`4px`) was
+unchanged, only its vertical padding differs between the two contexts.
 
 ## Formula evaluator engine
 
