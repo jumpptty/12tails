@@ -221,6 +221,13 @@
     padding:5px 12px;border:none;background:var(--paper);color:var(--acc);cursor:pointer;
   }
   .viewtoggle button.active{background:var(--acc);color:#fff;}
+  .revisedarttoggle{
+    border:1px solid var(--acc);border-radius:4px;background:var(--paper);
+    padding:2px;cursor:pointer;line-height:0;
+  }
+  .revisedarttoggle img{width:28px;height:28px;display:block;filter:grayscale(100%);opacity:.5;}
+  .revisedarttoggle.on img{filter:none;opacity:1;}
+  .revisedarttoggle.on{border-color:#9A7B0A;}
   .statgroup{display:flex;flex-direction:column;gap:3px;}
   .statgrouplabel{font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
   .statpanel{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
@@ -264,6 +271,7 @@
     <button type="button" data-view="base" class="active">BASE</button>
     <button type="button" data-view="plugin">PLUG-IN STATS</button>
   </div>
+  <button type="button" id="revisedArtToggle" class="revisedarttoggle" title="revisedArt5 (12% cooldown reduction)"></button>
   <div class="statgroup">
     <div class="statgrouplabel">Player Stats</div>
     <div class="statpanel disabled" id="statPanel">
@@ -969,6 +977,7 @@ function renderSkillCard(famId, fam, rankIdx, view, stats, enemyStats, revisedAr
 
 const currentRank = {};
 let currentView = "base";
+let revisedArtOn = false;
 const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0, damageMod:1 };
 const enemyStats = { DEF:0, CHA:0, LCK:0 };
 const classCToggle = {};
@@ -986,7 +995,7 @@ function mountAllCards() {
     currentRank[famId] = fam.ranks.length - 1;
     const grid = tierGrids[fam.tier];
     if (!grid) { console.error(`No .tier.${fam.tier} .grid found for ${famId}`); continue; }
-    const card = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, false);
+    const card = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, revisedArtOn);
     card.dataset.fam = famId;
     grid.appendChild(card);
   }
@@ -997,7 +1006,7 @@ function rerenderAll() {
     const fam = SKILLS[famId];
     const old = document.querySelector(`.sk[data-fam="${famId}"]`);
     if (!old) continue;
-    const fresh = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, false);
+    const fresh = renderSkillCard(famId, fam, currentRank[famId], currentView, stats, enemyStats, revisedArtOn);
     fresh.dataset.fam = famId;
     old.replaceWith(fresh);
   }
@@ -1015,6 +1024,13 @@ document.addEventListener("click", e => {
     const famId = cc.dataset.fam, passiveId = cc.dataset.passive;
     classCToggle[famId] = classCToggle[famId] || {};
     classCToggle[famId][passiveId] = !classCToggle[famId][passiveId];
+    rerenderAll();
+    return;
+  }
+  const ra = e.target.closest("#revisedArtToggle");
+  if (ra) {
+    revisedArtOn = !revisedArtOn;
+    document.getElementById("revisedArtToggle").classList.toggle("on", revisedArtOn);
     rerenderAll();
     return;
   }
@@ -1075,6 +1091,8 @@ document.querySelectorAll("#enemyStatPanel input").forEach(inp => {
     if (currentView === "plugin") rerenderAll();
   });
 });
+
+document.getElementById("revisedArtToggle").innerHTML = `<img src="${ICONS["revisedArt5"]}" alt="revisedArt5">`;
 
 mountAllCards();
 </script>
