@@ -5,7 +5,6 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
-| nAttack | Normal Attack | 3 | 2 | false | true | — | — |
 | massCast | Mass Cast | 2 | 180 | true | false | 9 | true |
 | phantomBane | Phantom Bane | 4 | 30 | true | false | — | — |
 | shadowGaze | Shadow Gaze | 4 | 30 | true | false | — | — |
@@ -49,23 +48,23 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `bat_<name>` entry in `BatSkill.cs`'s `getSkill()` cost table (verified with a direct grep, zero matches)
   — confirming they are not part of Bat's own learnable skill roster and are correctly excluded from this
   table.
-- **`cAttack` excluded — no `addTimeOut`-based cooldown of its own.** Bat's charge attack is the
-  "drainLife" ability (`doBeginCharge`/`doReleaseCharge`, `Bat.cs:10324`/`10588`). Its only cast-rate gate
-  is a generic `this.mChar.actionTime + (float)1 > Time.time` check (`Bat.cs:10490`) — a flat 1s
-  action-lockout shared by all actions, not a named `addTimeOut`/`isTimeOut` cooldown key. A repo-wide
-  grep for `addTimeOut`/`isTimeOut` with `cAttack` in `Bat.cs` returns zero matches. This matches the
-  precedent in the existing Penguin doc, where `pgn_cAttack1-4` are documented as "passive, charge-attack
-  rank" with "No MP/SP/CD of their own." `bat_cAttack1/2/3` in `BatSkill.cs` are real cost-table entries
-  (skill-point gated), but they gate *unlocking* charge-attack rank, not a cooldown — so `cAttack` has no
-  row in this table.
-- **`nAttack` included — unlike Penguin, Bat's normal-attack combo stages DO carry their own
-  `addTimeOut("nAttack", …)` calls**, each a bare (non-`agiAdjust`-wrapped) literal:
-  `RPC_nAttack1`/`RPC_nAttack2` set 1.5s (`Bat.cs:20367`, `Bat.cs:20659`), `RPC_nAttack3` (the deepest/
-  max-rank combo stage, `bat_nAttack3` in `BatSkill.cs`) sets 2s (`Bat.cs:21074`). The table reports the
-  max-rank (nAttack3) value, 2s, consistent with how every other multi-stage skill in this table reports
-  its max-rank cast site. (A separate, unrelated `addTimeOut("nAttack", 1f)` exists at `Bat.cs:9861` inside
-  a `Game.mGameCode == 967` branch — a special event-minigame mode, not the standard combat path — and is
-  not used for this table.)
+- **`nAttack`/`cAttack` excluded — blanket plan-level scope rule, not a per-skill judgment call.** The
+  plan's Global Constraints now exclude basic-attack (`nAttack`) and charge-attack (`cAttack`) skills from
+  every class's table entirely, regardless of whether either has a real cooldown at its own cast site.
+  This applies uniformly: `cAttack` (Bat's "drainLife" charge attack, `doBeginCharge`/`doReleaseCharge`,
+  `Bat.cs:10324`/`10588`) has no `addTimeOut`-based cooldown of its own anyway — its only cast-rate gate is
+  a generic `this.mChar.actionTime + (float)1 > Time.time` check (`Bat.cs:10490`), a flat 1s action-lockout
+  shared by all actions, not a named cooldown key (a repo-wide grep for `addTimeOut`/`isTimeOut` with
+  `cAttack` in `Bat.cs` returns zero matches) — matching the Penguin doc's precedent where `pgn_cAttack1-4`
+  are "passive, charge-attack rank" with no CD of their own. `nAttack` is different: **it does have a
+  genuine named cooldown**, unlike Penguin's. Bat's normal-attack combo stages carry their own
+  `addTimeOut("nAttack", …)` calls, each a bare (non-`agiAdjust`-wrapped) literal — `RPC_nAttack1`/
+  `RPC_nAttack2` set 1.5s (`Bat.cs:20367`, `Bat.cs:20659`), `RPC_nAttack3` (the max-rank combo stage,
+  `bat_nAttack3` in `BatSkill.cs`) sets 2s (`Bat.cs:21074`). It is excluded from this table purely by the
+  blanket policy above, not because it lacks a real cooldown — anyone re-deriving this table from scratch
+  should not rediscover `nAttack` and add it back in. (A separate, unrelated `addTimeOut("nAttack", 1f)`
+  also exists at `Bat.cs:9861` inside a `Game.mGameCode == 967` branch — a special event-minigame mode, not
+  the standard combat path — irrelevant either way now that `nAttack` is out of scope.)
 - **`phantomBane`/`dissolute`/`corruption`/`doom` cooldowns are conditionally zeroed by the `shadowMastery`
   passive.** All four are set via a ternary in the shared cast dispatcher, e.g.
   `Bat.cs:24474` — `this.$mTimeOut$19914 = ((this.$mShadowMastery$19915 <= 0) ? 30 : 0);` — where
@@ -106,8 +105,6 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   precedent: skill-point-costed entries in the cost table that are not independently castable.
 
 ### CD citations
-- `nAttack` CD: `Bat.cs:21074` — `this.$self_$19872.mChar.addTimeOut("nAttack", (float)2);` (max-rank/
-  nAttack3 combo stage; bare literal, NOT `agiAdjust`-wrapped)
 - `massCast` CD: `Bat.cs:11131` — `this.mChar.addTimeOut("massCast", this.mChar.agiAdjust((float)180));`
 - `phantomBane` CD: `Bat.cs:24474` — `this.$mTimeOut$19914 = ((this.$mShadowMastery$19915 <= 0) ? 30 : 0);`, wrapped at `Bat.cs:24812` — `addTimeOut(this.$sType$19926, agiAdjust((float)this.$mTimeOut$19914))`
 - `shadowGaze` CD: `Bat.cs:11333` — `this.mChar.addTimeOut("shadowGaze", this.mChar.agiAdjust((float)30));` (default/`demonGaze5`-not-learned branch)
