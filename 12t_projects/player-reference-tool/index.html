@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 Tails Tools</title>
+<style>
+  :root{
+    --ink:#eae3d2;
+    --panel:#f6f1e4;
+    --panel-2:#efe7d5;
+    --line:#cbb98f;
+    --text:#241b12;
+    --muted:#6b5c47;
+    --gold:#8a6a1f;
+    --gold-soft:rgba(138,106,31,.12);
+    --seal:#7a2e22;
+    --shadow:0 1px 2px rgba(40,30,10,.08), 0 16px 36px -20px rgba(40,30,10,.22);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#150f0c;
+      --panel:#1f1712;
+      --panel-2:#271c15;
+      --line:#4a3a26;
+      --text:#ece4d6;
+      --muted:#b0a189;
+      --gold:#c9a227;
+      --gold-soft:rgba(201,162,39,.14);
+      --seal:#c2503c;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#150f0c;
+    --panel:#1f1712;
+    --panel-2:#271c15;
+    --line:#4a3a26;
+    --text:#ece4d6;
+    --muted:#b0a189;
+    --gold:#c9a227;
+    --gold-soft:rgba(201,162,39,.14);
+    --seal:#c2503c;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--text);
+    background:
+      radial-gradient(900px 420px at 18% -12%, var(--gold-soft), transparent 65%),
+      var(--ink);
+    font-family:-apple-system,"Segoe UI",system-ui,sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.entry-title{
+    font-family:Georgia,"Iowan Old Style","Noto Serif Thai",serif;
+    text-wrap:balance;
+  }
+  a{color:inherit}
+  .num{font-family:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,monospace; font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+
+  /* ---- header ---- */
+  .hub-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    flex-wrap:wrap; position:relative;
+    padding:18px 24px; border-bottom:1px solid var(--line);
+  }
+  .hub-bar::after{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:1px;
+    background:var(--gold); transform:scaleX(0); transform-origin:50% 50%;
+    animation:unseal .6s .1s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  @media (prefers-reduced-motion: reduce){.hub-bar::after{animation:none; transform:scaleX(1)}}
+  @keyframes unseal{to{transform:scaleX(1)}}
+  .brand{
+    text-decoration:none; font-family:Georgia,"Iowan Old Style","Noto Serif Thai",serif;
+    font-size:19px; font-weight:700; letter-spacing:.3px;
+  }
+  .crumb{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
+  .crumb-current{color:var(--gold); font-weight:600}
+
+  /* ---- stage / views ---- */
+  .stage{max-width:760px; margin:0 auto; padding:44px 20px 80px}
+  .view:not([hidden]){animation:viewIn .22s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes viewIn{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion: reduce){.view:not([hidden]){animation:none}}
+
+  /* ---- ledger index (menu) ----
+     A grid of 2 chip-width columns, not a full-width row list — each entry
+     is a self-contained cell so the row never stretches edge-to-edge on a
+     wide viewport. The 1px gap + var(--line) backdrop on .ledger draws the
+     hairline dividers between cells (both directions) without per-side
+     border bookkeeping; .ledger-wrap's own border still frames the outside. */
+  .ledger-wrap{
+    position:relative; background:var(--line); border:1px solid var(--line);
+    border-radius:3px; box-shadow:var(--shadow); overflow:hidden;
+  }
+  .ledger{
+    list-style:none; margin:0; padding:0;
+    display:grid; grid-template-columns:1fr 1fr; gap:1px;
+  }
+  @media(max-width:560px){ .ledger{grid-template-columns:1fr} }
+  .entry{
+    position:relative; display:flex; align-items:center; gap:14px;
+    padding:18px; text-decoration:none; color:inherit; background:var(--panel);
+    transition:background-color .15s ease;
+  }
+  .entry::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--gold); transform:scaleY(0); transform-origin:50% 50%;
+    transition:transform .15s ease;
+  }
+  .entry:hover,.entry:focus-visible{background:var(--gold-soft)}
+  .entry:hover::before,.entry:focus-visible::before{transform:scaleY(1)}
+  .entry-mark{
+    flex:none; width:38px; height:38px; border-radius:50%; border:1px solid var(--gold);
+    background:var(--panel-2); color:var(--gold); display:flex; align-items:center; justify-content:center;
+  }
+  .entry-body{flex:1; min-width:0}
+  .entry-title{font-size:16.5px; margin:0; line-height:1.25}
+  .entry-tag{
+    display:block; margin-top:3px; font-size:10px; letter-spacing:.9px; text-transform:uppercase;
+    color:var(--muted); font-family:-apple-system,"Segoe UI",system-ui,sans-serif;
+  }
+  .entry-arrow{flex:none; color:var(--gold); font-size:14px; transition:transform .15s ease}
+  .entry:hover .entry-arrow,.entry:focus-visible .entry-arrow{transform:translateX(3px)}
+  /* external (link-out) entries get a diagonal nudge instead, echoing their ↗ glyph */
+  .entry-external:hover .entry-arrow,.entry-external:focus-visible .entry-arrow{transform:translate(2px,-2px)}
+
+  /* ---- tool shell ---- */
+  .tool-shell{position:relative; background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:var(--shadow)}
+
+  /* ================= stat-gain tool ================= */
+  .sg{padding:26px 24px}
+  .sg h2{font-size:21px; margin:0 0 18px}
+  .sg-controls{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
+    padding:16px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:14px; align-items:end;
+  }
+  .sg-controls label{display:block; font-size:10.5px; color:var(--muted); margin:0 0 6px; letter-spacing:.7px; text-transform:uppercase}
+  .sg-controls select,.sg-controls input{
+    width:100%; background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:2px; padding:9px 10px; font-size:15px; outline:none; font-family:inherit;
+  }
+  .sg-controls select:focus,.sg-controls input:focus{border-color:var(--gold)}
+  .sg-msg{min-height:18px; margin:12px 2px 0; font-size:13px; color:var(--seal)}
+  .sg-results{margin-top:18px; border:1px solid var(--line); border-radius:3px; overflow:hidden}
+  .sg-results table{width:100%; border-collapse:collapse; font-size:14px}
+  .sg-results thead th{
+    background:var(--panel-2); color:var(--gold); font-weight:700; text-align:right;
+    padding:10px 14px; border-bottom:1px solid var(--gold); font-size:10.5px; letter-spacing:.6px; text-transform:uppercase;
+  }
+  .sg-results thead th:first-child{text-align:left}
+  .sg-results tbody td{padding:10px 14px; text-align:right; border-bottom:1px solid var(--line); font-size:13.5px}
+  .sg-results tbody tr:last-child td{border-bottom:none}
+  .sg-results tbody tr:hover td{background:var(--gold-soft)}
+  .sg-statcell{text-align:left}
+  .sg-tick{display:inline-block; width:3px; height:13px; margin-right:9px; vertical-align:-2px; border-radius:1px}
+  .sg-stat-abbr{font-weight:700; font-size:13px}
+  .sg-gain{font-weight:700; font-size:14.5px}
+  .sg-gain.zero{color:var(--muted); font-weight:500}
+  .sg-muted{color:var(--muted)}
+  .sg-foot{color:var(--muted); font-size:12px; margin:16px 2px 0; line-height:1.5}
+
+  .sg-gate{position:absolute; inset:0; background:rgba(10,7,5,.82); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:5; padding:20px; border-radius:3px}
+  .sg-body.locked .sg-gate{display:flex}
+  .sg-gate-card{background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:26px; max-width:400px; width:100%; text-align:center; box-shadow:var(--shadow)}
+  .sg-gate-card h3{margin:0 0 4px; font-size:19px}
+  .sg-gate-sub{color:var(--muted); font-size:12px; margin:0 0 18px}
+  .sg-gate-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+  .sg-gate-btn{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:2px; padding:11px 6px;
+    color:var(--text); font-size:12.5px; letter-spacing:.3px; font-weight:600; cursor:pointer;
+    transition:background-color .15s,border-color .15s,color .15s,transform .1s; font-family:inherit;
+  }
+  .sg-gate-btn:hover{border-color:var(--gold); background:var(--gold-soft)}
+  .sg-gate-btn:active{transform:scale(.96)}
+  .sg-body{position:relative; min-height:380px}
+  .sg-body.locked .sg-inner{filter:blur(5px); pointer-events:none; user-select:none}
+
+  @media(max-width:620px){.sg-controls{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="hub-bar">
+  <a href="#" class="brand">12 Tails Tools</a>
+  <nav class="crumb">
+    <span class="crumb-current" id="crumbCurrent"></span>
+  </nav>
+</header>
+
+<main class="stage">
+
+  <section id="view-menu" class="view">
+    <div class="ledger-wrap">
+      <ul class="ledger" id="toolGrid"></ul>
+    </div>
+  </section>
+
+  <section id="view-tool" class="view" hidden>
+    <div class="tool-shell" id="toolShell">
+      <div id="toolMount"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+"use strict";
+
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+
+/* ============================================================
+   Skill Cooldown/Duration Lookup — adjusted-value math.
+   Ranges (not single rolls) because the tool shows the full
+   possible spread from LCK's random component, not one outcome.
+   ============================================================ */
+
+// R = Random(0, ceil(0.2*LCK)) — modeled as its own [min,max] range
+// (0 to the roll's ceiling), not a single roll.
+function lckSpreadRange(LCK) {
+  const rMax = Math.ceil(0.2 * Math.max(LCK, 0));
+  return [0, rMax];
+}
+
+// agiAdjust(t) = t * (1 - n/(n+128)), n = AGI + R — higher n = shorter CD, so
+// max R gives the MIN of the range and min R (=0) gives the MAX of the range.
+function agiAdjustRange(base, AGI, LCK) {
+  const [rMin, rMax] = lckSpreadRange(LCK);
+  const nMin = AGI + rMin, nMax = AGI + rMax;
+  const shortest = base * (1 - nMax / (nMax + 128));
+  const longest  = base * (1 - nMin / (nMin + 128));
+  return [shortest, longest];
+}
+
+// chaAdjust(t) = ceil(t * (1 + 0.015*clamp(CHA+R,1,512))) — higher R = longer
+// duration, so min R gives the MIN of the range and max R gives the MAX.
+function chaAdjustRange(base, CHA, LCK) {
+  const [rMin, rMax] = lckSpreadRange(LCK);
+  const clampedMin = Math.min(Math.max(CHA + rMin, 1), 512);
+  const clampedMax = Math.min(Math.max(CHA + rMax, 1), 512);
+  const shortest = Math.ceil(base * (1 + 0.015 * clampedMin));
+  const longest  = Math.ceil(base * (1 + 0.015 * clampedMax));
+  return [shortest, longest];
+}
+
+// Applies revisedArt5's 12% CD reduction (×0.88, ceil) to each endpoint of a
+// CD range, AFTER agiAdjust has already run — matches the Penguin sheet's
+// chipHTML order exactly. No-op if the toggle is off or the skill is exempt
+// (basic attacks/consumables never get this reduction).
+function applyRevisedArt(range, on, exempt) {
+  if (!on || exempt) return range;
+  return range.map(v => Math.ceil(0.88 * v));
+}
+
+/* ============================================================
+   Tool registry — two kinds of entry:
+   - mounted tools: own markup + logic, mount into an isolated
+     container the first time they're opened (needs `id` + `mount`).
+   - link-out entries: point at another tool's own separate
+     Artifact instead of merging its code in here (needs `url`).
+     Policy set 2026-08-12 — new tools default to link-out.
+   ============================================================ */
+const TOOLS = [
+  {
+    id: "stat-gain",
+    title: "Stat-Gain Calculator",
+    category: "Calculator",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V14M10 20V9M16 20V13M22 20V4"/></svg>',
+    mounted: false,
+    mount(root){ mountStatGain(root); }
+  },
+  {
+    title: "GoldenKingBug Spawn Map",
+    category: "Map",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    url: "https://claude.ai/code/artifact/4de5b8d7-5d7c-40d6-ab8c-3e0c75692591"
+  }
+];
+
+function mountStatGain(root){
+  root.innerHTML = `
+    <div class="sg">
+      <h2>Stat-Gain Calculator</h2>
+
+      <div class="sg-body locked">
+        <div class="sg-gate">
+          <div class="sg-gate-card">
+            <h3>Choose your class</h3>
+            <p class="sg-gate-sub">Sets the base stat row used below.</p>
+            <div class="sg-gate-grid" data-role="gateGrid"></div>
+          </div>
+        </div>
+
+        <div class="sg-inner">
+          <div class="sg-controls">
+            <div>
+              <label>Class</label>
+              <select data-role="cls"></select>
+            </div>
+            <div>
+              <label>Current level</label>
+              <input data-role="cur" type="number" min="1" max="100" step="1" value="1">
+            </div>
+            <div>
+              <label>Target level</label>
+              <input data-role="tgt" type="number" min="1" max="100" step="1" value="100">
+            </div>
+          </div>
+          <div class="sg-msg" data-role="msg"></div>
+
+          <div class="sg-results">
+            <table>
+              <thead>
+                <tr><th>Stat</th><th>Base</th><th>At current</th><th>At target</th><th>Gained</th></tr>
+              </thead>
+              <tbody data-role="rows"></tbody>
+            </table>
+          </div>
+
+          <p class="sg-foot">ตารางนี้ไม่รวม StatPlus / SuperStatPlus</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Stat order index 0..7 — verified from CharacterData.cs:218-493
+  const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
+  const FULL  = {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"};
+  const COLOR = {ATK:"#c2503c",DEF:"#4f7fb8",AGI:"#5a9a63",VIT:"#c9a227",INT:"#b0568f",CHA:"#8a72b8",TAL:"#3f9a8c",LCK:"#a3862c"};
+
+  // base[i] per class, ATK..LCK
+  const CLASSES = {
+    Wolf:[7,8,7,7,6,5,5,3], Bison:[9,8,6,8,4,4,5,4], Panda:[8,7,8,6,4,4,6,5], Whale:[5,9,3,9,7,7,4,4],
+    Cat:[8,4,9,5,3,4,6,9], Chameleon:[7,5,8,5,4,5,7,7], Rabbit:[6,4,7,7,5,6,5,8], Mole:[5,7,5,6,5,5,8,7],
+    Monkey:[5,5,4,8,8,8,6,5], Sheep:[4,5,4,4,8,8,8,4], Penguin:[3,6,5,3,9,7,9,6], Bat:[6,5,6,5,7,9,4,6]
+  };
+
+  const MAX_LV = 100;
+  const CAP_LV = 95; // stat gain stops increasing past this level
+  // verified leveling formula — CharacterData.cs:515
+  const gain = (lv, base) => Math.floor((Math.min(lv, CAP_LV) - 1) * (base + 3) * 0.083);
+
+  const clsSel = $('[data-role="cls"]', root);
+  const curEl  = $('[data-role="cur"]', root);
+  const tgtEl  = $('[data-role="tgt"]', root);
+  const rows   = $('[data-role="rows"]', root);
+  const msg    = $('[data-role="msg"]', root);
+  const gateGrid = $('[data-role="gateGrid"]', root);
+  const body   = $(".sg-body", root);
+
+  for (const name of Object.keys(CLASSES)) {
+    const o = document.createElement("option");
+    o.value = name; o.textContent = name;
+    clsSel.appendChild(o);
+
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "sg-gate-btn"; b.textContent = name;
+    b.addEventListener("click", () => {
+      clsSel.value = name;
+      body.classList.remove("locked");
+      render();
+    });
+    gateGrid.appendChild(b);
+  }
+
+  function readLevel(el){
+    const v = el.value.trim();
+    if (v === "" || !/^\d+$/.test(v)) return null;
+    return Math.min(MAX_LV, Math.max(1, parseInt(v,10)));
+  }
+
+  function render(){
+    const cls = clsSel.value;
+    const base = CLASSES[cls];
+    const cur = readLevel(curEl);
+    const tgt = readLevel(tgtEl);
+
+    rows.innerHTML = "";
+    if (!base || cur === null || tgt === null){
+      msg.textContent = "Enter whole numbers (1–"+MAX_LV+") for both levels.";
+      return;
+    }
+    if (tgt < cur){
+      msg.textContent = "Target level ("+tgt+") must be ≥ current level ("+cur+").";
+      return;
+    }
+    msg.textContent = "";
+
+    for (let i=0;i<8;i++){
+      const s = STATS[i], b = base[i];
+      const atCur = gain(cur, b), atTgt = gain(tgt, b), g = atTgt - atCur;
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="sg-statcell"><span class="sg-tick" style="background:'+COLOR[s]+'"></span>'+
+          '<span class="sg-stat-abbr" style="color:'+COLOR[s]+'">'+s+'</span> <span class="sg-muted">'+FULL[s]+'</span></td>'+
+        '<td class="sg-muted num">'+b+'</td>'+
+        '<td class="sg-muted num">'+atCur+'</td>'+
+        '<td class="sg-muted num">'+atTgt+'</td>'+
+        '<td class="num"><span class="sg-gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
+      rows.appendChild(tr);
+    }
+  }
+
+  function clampInput(el){
+    const v = el.value;
+    if (v === "") return;
+    const n = parseInt(v, 10);
+    if (!isNaN(n) && n > MAX_LV) el.value = String(MAX_LV);
+  }
+
+  clsSel.addEventListener("change", render);
+  curEl.addEventListener("input", () => { clampInput(curEl); render(); });
+  tgtEl.addEventListener("input", () => { clampInput(tgtEl); render(); });
+}
+
+/* ============================================================
+   Hub shell: ledger index + hash router
+   ============================================================ */
+const toolGrid = $("#toolGrid");
+const viewMenu = $("#view-menu");
+const viewTool = $("#view-tool");
+const toolMount = $("#toolMount");
+const crumbCurrent = $("#crumbCurrent");
+
+toolGrid.innerHTML = TOOLS.map(t => t.url ? `
+  <li><a class="entry entry-external" href="${t.url}" target="_blank" rel="noopener">
+    <span class="entry-mark">${t.icon}</span>
+    <span class="entry-body">
+      <span class="entry-title">${t.title}</span>
+      <span class="entry-tag">${t.category}</span>
+    </span>
+    <span class="entry-arrow">↗</span>
+  </a></li>
+` : `
+  <li><a class="entry" href="#${t.id}">
+    <span class="entry-mark">${t.icon}</span>
+    <span class="entry-body">
+      <span class="entry-title">${t.title}</span>
+      <span class="entry-tag">${t.category}</span>
+    </span>
+    <span class="entry-arrow">→</span>
+  </a></li>
+`).join("");
+
+function showMenu(){
+  viewMenu.hidden = false; viewTool.hidden = true;
+  crumbCurrent.textContent = "";
+  document.title = "12 Tails Tools";
+}
+
+function showTool(tool){
+  viewMenu.hidden = true; viewTool.hidden = false;
+  crumbCurrent.textContent = tool.title;
+  document.title = "12 Tails Tools — " + tool.title;
+  if (!tool.mounted){ tool.mount(toolMount); tool.mounted = true; }
+}
+
+function route(){
+  const id = decodeURIComponent(location.hash.slice(1));
+  const tool = TOOLS.find(t => t.id === id);
+  if (tool) showTool(tool); else showMenu();
+}
+
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
