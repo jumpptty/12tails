@@ -195,10 +195,6 @@
     width:80px; background:var(--panel); color:var(--text); border:1px solid var(--line);
     border-radius:2px; padding:9px 10px; font-size:15px; outline:none; font-family:inherit;
   }
-  .sk-controls input[type=text]{
-    width:200px; background:var(--panel); color:var(--text); border:1px solid var(--line);
-    border-radius:2px; padding:9px 10px; font-size:15px; outline:none; font-family:inherit;
-  }
   .sk-revisedart{
     border:1px solid var(--gold); border-radius:4px; background:var(--panel);
     padding:4px; cursor:pointer; line-height:0; align-self:end;
@@ -206,26 +202,46 @@
   .sk-revisedart img{width:28px; height:28px; display:block; filter:grayscale(100%); opacity:.5}
   .sk-revisedart.on img{filter:none; opacity:1}
   .sk-revisedart.on{border-color:var(--gold)}
-  .sk-classfilter{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px}
-  .sk-classchip{
-    background:var(--panel-2); border:1px solid var(--line); border-radius:2px; padding:6px 12px;
-    color:var(--text); font-size:12px; cursor:pointer; font-family:inherit;
+  .sk-search-wrap{position:relative; margin-bottom:20px}
+  .sk-search{
+    box-sizing:border-box; width:100%; background:var(--panel-2); color:var(--text);
+    border:1px solid var(--line); border-radius:3px; padding:16px 18px; font-size:18px;
+    outline:none; font-family:inherit;
   }
-  .sk-classchip.on{border-color:var(--gold); color:var(--gold); background:var(--gold-soft)}
-  .sk-results{border:1px solid var(--line); border-radius:3px; overflow:hidden}
-  .sk-results table{width:100%; border-collapse:collapse; font-size:13.5px}
-  .sk-results thead th{
-    background:var(--panel-2); color:var(--gold); font-weight:700; text-align:right;
-    padding:9px 12px; border-bottom:1px solid var(--gold); font-size:10px; letter-spacing:.6px; text-transform:uppercase;
+  .sk-search:focus{border-color:var(--gold)}
+  .sk-suggestions{
+    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
+    max-height:340px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.25);
   }
-  .sk-results thead th:first-child,.sk-results thead th:nth-child(2){text-align:left}
-  .sk-results tbody td{padding:9px 12px; text-align:right; border-bottom:1px solid var(--line); font-size:13px}
-  .sk-results tbody td:first-child,.sk-results tbody td:nth-child(2){text-align:left}
-  .sk-results tbody tr:last-child td{border-bottom:none}
-  .sk-results tbody tr:hover td{background:var(--gold-soft)}
-  .sk-skillcell{display:flex; align-items:center; gap:8px}
-  .sk-skillcell img{width:22px; height:22px; border-radius:3px; flex:none}
-  .sk-empty{padding:20px; text-align:center; color:var(--muted); font-size:13px}
+  .sk-suggestion{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 14px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--line);
+  }
+  .sk-suggestion:last-child{border-bottom:none}
+  .sk-suggestion:hover,.sk-suggestion.active{background:var(--gold-soft)}
+  .sk-suggestion-name{color:var(--text)}
+  .sk-tag{
+    font-size:10.5px; letter-spacing:.4px; text-transform:uppercase; font-weight:700;
+    color:var(--tag-color); white-space:nowrap;
+  }
+  .sk-empty-state{padding:70px 20px; text-align:center; color:var(--muted); font-size:14px}
+  .sk-hero{border:1px solid var(--line); border-radius:3px; background:var(--panel-2); padding:32px 28px}
+  .sk-hero-head{display:flex; align-items:center; gap:18px; margin-bottom:28px}
+  .sk-hero-icon{width:96px; height:96px; border-radius:6px; flex:none; border:1px solid var(--line)}
+  .sk-hero-title{display:flex; flex-direction:column; gap:8px}
+  .sk-hero-name{font-size:32px; margin:0; line-height:1.1}
+  .sk-hero-stats{display:flex; flex-wrap:wrap; gap:20px}
+  .sk-stat{flex:1 1 220px; background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:22px}
+  .sk-stat-label{font-size:11px; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
+  .sk-stat-value{font-size:46px; font-weight:700; color:var(--gold); line-height:1; font-family:ui-monospace,monospace}
+  .sk-stat-base{font-size:13px; color:var(--muted); margin:8px 0 0}
+  .sk-stat-exempt{font-size:12px; color:var(--muted); margin:8px 0 0; font-style:italic}
+  @media(max-width:620px){
+    .sk-hero{padding:22px 18px}
+    .sk-hero-head{flex-direction:column; text-align:center}
+    .sk-stat-value{font-size:34px}
+  }
 </style>
 </head>
 <body>
@@ -929,9 +945,17 @@ SKILL_ICONS["revisedArt5"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAA
 /* ============================================================
    Skill Cooldown/Duration Lookup — mount function.
    ============================================================ */
-function mountSkillCooldownLookup(root){
-  const CLASSES = [...new Set(SKILLS.map(s => s.class))].sort();
+// One color per class for the search dropdown's class tag — the hub's
+// "Ledger" design system otherwise reserves color for gold (accent) and
+// oxblood (errors) only; this is a deliberate, approved exception scoped
+// to this one tool, not a precedent for the rest of the hub.
+const CLASS_COLORS = {
+  Bat: "#8f6bd1", Bison: "#b8703f", Cat: "#d97a4f", Chameleon: "#5a9e4f",
+  Mole: "#8a6d45", Monkey: "#cf5a3a", Panda: "#5b8a8c", Penguin: "#4fa3c9",
+  Rabbit: "#d9689e", Sheep: "#b89bd9", Whale: "#3d5f99", Wolf: "#7d8b99",
+};
 
+function mountSkillCooldownLookup(root){
   root.innerHTML = `
     <div class="sk">
       <h2>Skill Cooldown/Duration Lookup</h2>
@@ -939,16 +963,13 @@ function mountSkillCooldownLookup(root){
         <div><label>AGI</label><input type="number" data-role="agi" min="0" value="0"></div>
         <div><label>CHA</label><input type="number" data-role="cha" min="0" value="0"></div>
         <div><label>LCK</label><input type="number" data-role="lck" min="0" value="0"></div>
-        <div><label>Search</label><input type="text" data-role="search" placeholder=""></div>
         <button type="button" class="sk-revisedart" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
       </div>
-      <div class="sk-classfilter" data-role="classfilter"></div>
-      <div class="sk-results"><table>
-        <thead><tr>
-          <th>Skill</th><th>Class</th><th>CD (base)</th><th>CD (adjusted)</th><th>Duration (base)</th><th>Duration (adjusted)</th>
-        </tr></thead>
-        <tbody data-role="rows"></tbody>
-      </table></div>
+      <div class="sk-search-wrap">
+        <input type="text" class="sk-search" data-role="search" placeholder="Search a skill…" autocomplete="off">
+        <div class="sk-suggestions" data-role="suggestions" hidden></div>
+      </div>
+      <div data-role="display"></div>
     </div>
   `;
 
@@ -957,31 +978,14 @@ function mountSkillCooldownLookup(root){
   const lckEl = $('[data-role="lck"]', root);
   const searchEl = $('[data-role="search"]', root);
   const raBtn = $('[data-role="revisedart"]', root);
-  const classFilterEl = $('[data-role="classfilter"]', root);
-  const rows = $('[data-role="rows"]', root);
+  const suggestionsEl = $('[data-role="suggestions"]', root);
+  const displayEl = $('[data-role="display"]', root);
 
   raBtn.innerHTML = `<img src="${SKILL_ICONS["revisedArt5"]}" alt="revisedArt5">`;
   let revisedArtOn = false;
-  let activeClass = null; // null = All
-
-  const allChip = document.createElement("button");
-  allChip.type = "button"; allChip.className = "sk-classchip on"; allChip.textContent = "All";
-  allChip.addEventListener("click", () => { activeClass = null; syncChips(); render(); });
-  classFilterEl.appendChild(allChip);
-
-  const classChips = {};
-  CLASSES.forEach(cls => {
-    const chip = document.createElement("button");
-    chip.type = "button"; chip.className = "sk-classchip"; chip.textContent = cls;
-    chip.addEventListener("click", () => { activeClass = cls; syncChips(); render(); });
-    classFilterEl.appendChild(chip);
-    classChips[cls] = chip;
-  });
-
-  function syncChips(){
-    allChip.classList.toggle("on", activeClass === null);
-    CLASSES.forEach(cls => classChips[cls].classList.toggle("on", activeClass === cls));
-  }
+  let selected = null;
+  let activeIndex = -1;
+  let currentMatches = [];
 
   function fmt(range){
     if (range.length === 1) return range[0].toFixed(1).replace(/\.0$/,"");
@@ -990,52 +994,131 @@ function mountSkillCooldownLookup(root){
     return fa === fb ? fa : `${fa}–${fb}`;
   }
 
-  function render(){
+  function closeSuggestions(){
+    suggestionsEl.hidden = true;
+    suggestionsEl.innerHTML = "";
+    activeIndex = -1;
+    currentMatches = [];
+  }
+
+  function updateActiveHighlight(){
+    $$(".sk-suggestion", suggestionsEl).forEach((el,i) => el.classList.toggle("active", i === activeIndex));
+  }
+
+  function openSuggestions(matches){
+    currentMatches = matches;
+    activeIndex = matches.length ? 0 : -1;
+    if (!matches.length){ closeSuggestions(); return; }
+    suggestionsEl.innerHTML = matches.map((s,i) => `
+      <div class="sk-suggestion${i===0 ? " active" : ""}" data-index="${i}">
+        <span class="sk-suggestion-name">${s.name}</span>
+        <span class="sk-tag" style="--tag-color:${CLASS_COLORS[s.class]}">${s.class}</span>
+      </div>
+    `).join("");
+    suggestionsEl.hidden = false;
+    $$(".sk-suggestion", suggestionsEl).forEach(el => {
+      // mousedown (not click) + preventDefault so the input never blurs
+      // before the selection registers — the classic autocomplete fix.
+      el.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        selectSkill(currentMatches[Number(el.dataset.index)]);
+      });
+    });
+  }
+
+  function selectSkill(s){
+    selected = s;
+    searchEl.value = s.name;
+    closeSuggestions();
+    renderHero();
+  }
+
+  function renderHero(){
+    if (!selected){
+      displayEl.innerHTML = `<div class="sk-empty-state">Search a skill above to see its cooldown and duration.</div>`;
+      return;
+    }
     const AGI = parseFloat(agiEl.value) || 0;
     const CHA = parseFloat(chaEl.value) || 0;
     const LCK = parseFloat(lckEl.value) || 0;
-    const q = searchEl.value.trim().toLowerCase();
 
-    const filtered = SKILLS.filter(s =>
-      (activeClass === null || s.class === activeClass) &&
-      (q === "" || s.name.toLowerCase().includes(q))
-    );
+    let cdRange = selected.cdWrapped ? agiAdjustRange(selected.cd, AGI, LCK) : [selected.cd];
+    cdRange = applyRevisedArt(cdRange, revisedArtOn, selected.revisedArtExempt);
 
-    if (filtered.length === 0){
-      rows.innerHTML = `<tr><td colspan="6" class="sk-empty">No matches</td></tr>`;
-      return;
+    let durationBlock = "";
+    if (selected.duration !== undefined){
+      const durRange = selected.durWrapped ? chaAdjustRange(selected.duration, CHA, LCK) : [selected.duration];
+      durationBlock = `
+        <div class="sk-stat">
+          <p class="sk-stat-label">Duration</p>
+          <div class="sk-stat-value">${fmt(durRange)}s</div>
+          <p class="sk-stat-base">base ${selected.duration}s</p>
+        </div>
+      `;
     }
 
-    rows.innerHTML = filtered.map(s => {
-      let cdRange = s.cdWrapped ? agiAdjustRange(s.cd, AGI, LCK) : [s.cd];
-      cdRange = applyRevisedArt(cdRange, revisedArtOn, s.revisedArtExempt);
-      const cdAdjusted = fmt(cdRange);
-
-      let durBase = "—", durAdjusted = "—";
-      if (s.duration !== undefined){
-        durBase = s.duration;
-        const durRange = s.durWrapped ? chaAdjustRange(s.duration, CHA, LCK) : [s.duration];
-        durAdjusted = fmt(durRange);
-      }
-
-      return `<tr>
-        <td><span class="sk-skillcell"><img src="${SKILL_ICONS[s.icon]}" alt="">${s.name}</span></td>
-        <td>${s.class}</td>
-        <td class="num">${s.cd}s</td>
-        <td class="num">${cdAdjusted}s</td>
-        <td class="num">${durBase === "—" ? "—" : durBase + "s"}</td>
-        <td class="num">${durAdjusted === "—" ? "—" : durAdjusted + "s"}</td>
-      </tr>`;
-    }).join("");
+    displayEl.innerHTML = `
+      <div class="sk-hero">
+        <div class="sk-hero-head">
+          <img class="sk-hero-icon" src="${SKILL_ICONS[selected.icon]}" alt="">
+          <div class="sk-hero-title">
+            <h3 class="sk-hero-name">${selected.name}</h3>
+            <span class="sk-tag" style="--tag-color:${CLASS_COLORS[selected.class]}">${selected.class}</span>
+          </div>
+        </div>
+        <div class="sk-hero-stats">
+          <div class="sk-stat">
+            <p class="sk-stat-label">Cooldown</p>
+            <div class="sk-stat-value">${fmt(cdRange)}s</div>
+            <p class="sk-stat-base">base ${selected.cd}s</p>
+            ${selected.revisedArtExempt ? `<p class="sk-stat-exempt">Exempt from revisedArt5</p>` : ""}
+          </div>
+          ${durationBlock}
+        </div>
+      </div>
+    `;
   }
 
-  agiEl.addEventListener("input", render);
-  chaEl.addEventListener("input", render);
-  lckEl.addEventListener("input", render);
-  searchEl.addEventListener("input", render);
-  raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); render(); });
+  function onSearchInput(){
+    const q = searchEl.value.trim().toLowerCase();
+    if (selected && selected.name.toLowerCase() !== q){
+      selected = null;
+      renderHero();
+    }
+    if (q === ""){
+      closeSuggestions();
+      return;
+    }
+    openSuggestions(SKILLS.filter(s => s.name.toLowerCase().includes(q)).slice(0, 20));
+  }
 
-  render();
+  searchEl.addEventListener("input", onSearchInput);
+  searchEl.addEventListener("focus", () => { if (searchEl.value.trim() !== "") onSearchInput(); });
+  searchEl.addEventListener("blur", closeSuggestions);
+  searchEl.addEventListener("keydown", (e) => {
+    if (suggestionsEl.hidden || currentMatches.length === 0) return;
+    if (e.key === "ArrowDown"){
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, currentMatches.length - 1);
+      updateActiveHighlight();
+    } else if (e.key === "ArrowUp"){
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      updateActiveHighlight();
+    } else if (e.key === "Enter"){
+      e.preventDefault();
+      if (activeIndex >= 0) selectSkill(currentMatches[activeIndex]);
+    } else if (e.key === "Escape"){
+      closeSuggestions();
+    }
+  });
+
+  agiEl.addEventListener("input", renderHero);
+  chaEl.addEventListener("input", renderHero);
+  lckEl.addEventListener("input", renderHero);
+  raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); renderHero(); });
+
+  renderHero();
 }
 
 /* ============================================================
