@@ -24,7 +24,7 @@ CLASSES = [
     "panda", "penguin", "rabbit", "sheep", "whale", "wolf",
 ]
 
-ROW_RE = re.compile(r"^\|\s*([A-Za-z0-9]+)\s*\|[^|]*\|\s*(\d+)\s*\|")
+ROW_RE = re.compile(r"^\|\s*([A-Za-z0-9&]+)\s*\|[^|]*\|\s*(\d+)\s*\|")
 
 
 def load_needed(cls):
@@ -38,14 +38,22 @@ def load_needed(cls):
         if line.startswith("| Skill ID"):
             in_table = True
             continue
-        if in_table:
-            if line.startswith("|---"):
-                continue
-            m = ROW_RE.match(line)
-            if not m:
-                break  # table ended
-            skill_id, max_rank = m.group(1), int(m.group(2))
-            needed.append((cls, skill_id, max_rank))
+        if not in_table:
+            continue
+        if not line.startswith("|"):
+            break  # table ended
+        if line.startswith("|---"):
+            continue
+        m = ROW_RE.match(line)
+        if not m:
+            # A table row that doesn't match is a parsing bug, not the end of
+            # the table -- fail loud instead of silently dropping this row
+            # and every row after it (bit Panda's wind&cloud/rain&storm rows
+            # the first time this script ran, when the regex didn't allow
+            # "&" in Skill ID).
+            raise SystemExit(f"UNPARSEABLE table row in {cls}: {line!r}")
+        skill_id, max_rank = m.group(1), int(m.group(2))
+        needed.append((cls, skill_id, max_rank))
     return needed
 
 
