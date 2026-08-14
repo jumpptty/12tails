@@ -12,7 +12,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | needlePrison | Needle Prison | 2 | 60 | true | false | — | — |
 | massShot | Mass Shot | 2 | 30 | true | false | — | — |
 | poisonVolley | Poison Volley | 2 | 60 | true | false | — | — |
-| venomShock | Venom Shock | 2 | 90 | true | false | 12 | false |
+| venomShock | Venom Shock | 2 | 90 | true | false | — | — |
 | massInvisibility | Mass Invisibility | 2 | 300 | true | false | 12 | true |
 | finalEntrapment | Final Entrapment | 2 | 300 | true | false | 7 | true |
 | tormentRain | Torment Rain | 1 | 3 | true | false | — | — |
@@ -24,8 +24,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | slayer | Bug Slayer / Tail Slayer / Elemental Slayer / Machine Slayer | 4 | 90 | true | false | — | — |
 | allSlayer | All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer | 4 | 240 | true | false | — | — |
 | allSlain | All Slain | 2 | 300 | true | false | — | — |
-| rustyDecay | Rusty Decay | 1 | 90 | true | false | 12 | false |
-| tent | Tent | 1 | 240 | true | false | 12 | false |
+| rustyDecay | Rusty Decay | 1 | 90 | true | false | — | — |
+| tent | Tent | 1 | 240 | true | false | — | — |
 | markOfSlayer | Mark of Slayer | 1 | 150 | true | false | — | — |
 | zeroShot | Zero Shot | 1 | 60 | true | false | — | — |
 | thunderDragon | Thunder Dragon | 1 | 90 | true | false | — | — |
@@ -152,19 +152,21 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   (`Chameleon.cs:9172`) on the spawned cage object (the same cage that `tormentRain`'s own barrage is
   scoped to hit). Both durations are chaAdjust-wrapped, non-contested, and not gated behind a separate
   passive.
-- **`tent`'s duration is wrapped by `magAdjust`, not `chaAdjust` — reported `false` in the literal
-  chaAdjust column, but it is not a bare/unwrapped literal either.** `Chameleon.cs:36128` —
-  `this.$castTime$23070 = this.$self_$23071.mChar.magAdjust((float)12);` — is then reused directly as
-  the duration argument at `Chameleon.cs:36139` — `this.$self_$23071.mChar.RPC_AddStatus("tent", 5,
-  (int)this.$castTime$23070, 0, this.$self_$23071.mChar.ActorNr);`. The value (`12`) is genuine and
-  self-applied (not contested), it just scales with the caster's MAG stat instead of CHA — flagged here
-  so the lookup tool doesn't mistake `Duration Wrapped = false` for "flat literal, never scales."
-- **`rustyDecay` and `venomShock` use flat literal (non-`chaAdjust`) duration arguments — genuine
-  values, `Duration Wrapped = false`.** `rustyDecay`: `Chameleon.cs:35523` —
-  `this.$tChar$23053.RPC_AddStatus("rustyDecay", 2, 12, 0, this.$self_$23064.mChar.ActorNr);` (bare `12`,
-  confirmed not `chaAdjust`-wrapped). `venomShock`: `Chameleon.cs:23956` —
-  `this.$tChar$22726.RPC_AddStatus("venomShock", this.$sLv$22737, 12, 0,
-  this.$self_$22738.mChar.ActorNr);` (bare `12`, confirmed not `chaAdjust`-wrapped).
+- **`tent`, `rustyDecay`, and `venomShock` are excluded (2026-08-14, at the user's request) — all three
+  citable values are real, but none is the kind of duration this doc's table reports for other skills.**
+  `tent`: `Chameleon.cs:36128` — `this.$castTime$23070 = this.$self_$23071.mChar.magAdjust((float)12);`,
+  applied at `Chameleon.cs:36139` — `RPC_AddStatus("tent", 5, (int)this.$castTime$23070, 0, ActorNr)` —
+  but this fires from inside the cast/channel state machine itself (`case 3:`, gated on
+  `actionState == "attack"` and `myCommand == "tent"`, `Chameleon.cs:36109-36118`), tagging the caster
+  with a `"tent"` status for the same `magAdjust(12)` span as the cast/channel animation — a channel-lock
+  marker synced to the cast, not a lingering post-cast buff the way this doc's other Duration entries
+  are. `rustyDecay`: `Chameleon.cs:35523` — `this.$tChar$23053.RPC_AddStatus("rustyDecay", 2, 12, 0,
+  this.$self_$23064.mChar.ActorNr);` (bare `12`, not `chaAdjust`-wrapped) — but `$tChar$` is the enemy
+  hit by the skill, not the caster, matching the Cat doc's `grandCasinoArcade`/`moonBlade`/`moonStorm`/
+  `deltaStrike` precedent (an on-hit debuff inflicted on a target is the wrong side of the cast for this
+  column). `venomShock`: `Chameleon.cs:23956` — `this.$tChar$22726.RPC_AddStatus("venomShock",
+  this.$sLv$22737, 12, 0, this.$self_$22738.mChar.ActorNr);` (bare `12`, not `chaAdjust`-wrapped) — same
+  target-applied-debuff reason as `rustyDecay`.
 - **No `RPC_AddStatus` call exists anywhere in the coroutine class body** (confirmed by bounding each
   skill's `internal sealed class $RPC_<name>` range in `Chameleon.cs`, then cross-checking against the
   full-file `RPC_AddStatus` grep) for: `quickFire` (`Chameleon.cs:19240-20438`), `massShot`
@@ -211,11 +213,11 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `finalEntrapment` Duration: `Chameleon.cs:24999` — `this.$mDuration$22755 = Mathf.FloorToInt((float)this.$self_$22758.mChar.chaAdjust(2 * this.$sLv$22757 + 3));`, applied as a spawned-effect lifetime at `Chameleon.cs:9172` — `effectControl.life = (float)mDuration;` (sLv2 → chaAdjust(7); field-effect lifetime, not `RPC_AddStatus` — see judgment-call note)
 - `fatalStrike` Duration: `Chameleon.cs:26313` — `this.$self_$22795.mChar.RPC_AddStatus("fatalStrike", this.$sLv$22794 + ((!this.$self_$22795.mChar.hasSkill(403)) ? 0 : 1), this.$self_$22795.mChar.chaAdjust(12), 5 + ((!this.$self_$22795.mChar.hasSkill(403)) ? 0 : 5), this.$self_$22795.mChar.ActorNr);` (duration argument is a flat `chaAdjust(12)`, unaffected by sLv or the passive)
 - `campFire` Duration: `Chameleon.cs:29360` — `this.$mCampFireTimer$22881 = this.$self_$22884.mChar.chaAdjust(30);`, passed into `Chameleon_campFire.Init` via `RPC_campFire_create` (`Chameleon.cs:29365`, `9417-9455`) (field-effect lifetime, not `RPC_AddStatus` — see judgment-call note)
-- `rustyDecay` Duration: `Chameleon.cs:35523` — `this.$tChar$23053.RPC_AddStatus("rustyDecay", 2, 12, 0, this.$self_$23064.mChar.ActorNr);` (flat literal `12`, confirmed NOT chaAdjust-wrapped)
-- `tent` Duration: `Chameleon.cs:36128` — `this.$castTime$23070 = this.$self_$23071.mChar.magAdjust((float)12);`, applied at `Chameleon.cs:36139` — `this.$self_$23071.mChar.RPC_AddStatus("tent", 5, (int)this.$castTime$23070, 0, this.$self_$23071.mChar.ActorNr);` (magAdjust-wrapped, not chaAdjust — see judgment-call note)
-- `venomShock` Duration: `Chameleon.cs:23956` — `this.$tChar$22726.RPC_AddStatus("venomShock", this.$sLv$22737, 12, 0, this.$self_$22738.mChar.ActorNr);` (flat literal `12`, confirmed NOT chaAdjust-wrapped)
 - `needlePrison`, `poisonVolley`, `markOfSlayer`, `thunderDragon`: target-CHA-contested via `Damage.getDebuff` — see judgment-call notes above for each skill's specific citation. Duration cells are `—`.
 - `quickFire`, `massShot`, `tormentRain`, `leftStride`, `rightStride`, `bloodBurn`, `slayer`, `allSlayer`,
   `allSlain`, `zeroShot`: no usable Duration — no `RPC_AddStatus` call exists in the skill's own coroutine
   class body (or its downstream `_fire` coroutine, where applicable); see the bulk judgment-call note
   above for the exact class-range bounds checked. Duration cells are `—`.
+- `tent`, `rustyDecay`, `venomShock`: excluded on scope grounds (channel-lock marker / enemy-applied
+  debuff, not the caster's own duration), not because no citable value exists — see the dedicated
+  judgment-call note above for the exact citations.

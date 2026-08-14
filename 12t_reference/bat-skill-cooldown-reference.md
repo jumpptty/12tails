@@ -26,7 +26,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | phantasmBlast | Phantasm Blast | 2 | 90 | true | false | — | — |
 | charm | Charm | 2 | 120 | true | false | — | — |
 | mindControl | Mind Control | 2 | 120 | true | false | — | — |
-| mimic | Mimic | 2 | 360 | true | false | — | — |
+| mimic | Mimic | 2 | 360 | true | false | 60 | true |
 | shame | Shame | 1 | 60 | true | false | — | — |
 | darkStalker | Dark Stalker | 1 | 120 | true | false | 999 | false |
 | soulEater | Soul Eater | 1 | 150 | true | false | — | — |
@@ -142,3 +142,17 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `darkStalker` Duration: `Bat.cs:40263` — `this.$hitChar$20358.RPC_AddStatus("darkStalker", 9, 999, 0, this.$self_$20362.mChar.ActorNr);` (flat literal `999`, confirmed NOT `chaAdjust`-wrapped and not stat-contested — applied to the enemy target but the value itself is a hardcoded constant)
 - `mirageOrb` Duration: `Bat.cs:31265` — `this.$nLife$20114 = this.$self_$20118.mChar.chaAdjust(30);`, passed into `RPC_mirageOrb_fire(firePos, fireDir, nLife, sLv)` as the orb's own lifetime (self-cast, not target-contested). Matches the flavor text exactly ("Cast an invisible orb... 30 sec", `BatSkill_eng.cs:530`).
 - **`shadowIllusion` Duration is verified in code at `chaAdjust(60)`, not the `chaAdjust(30)` all four ranks' own flavor text claims ("...deal 50%/50%/75%/100% dmg and receive 160% dmg. (30 sec)", `BatSkill_eng.cs:574` etc.) — a genuine flavor-text/code mismatch, reported at the verified code value per this doc's standing rule.** `Bat.cs:13115`, inside `RPC_shadowIllusion_create`'s own body — `bat_illusion.summon(this.gameObject, nDamageMod, nHitMod, (float)this.mChar.chaAdjust(60));` — `Bat_illusion.summon(GameObject, float, float, float nTimer)` (`Bat_illusion.cs:60`) stores `nTimer + Time.time` as the illusion clone's own despawn deadline (`Bat_illusion.cs:73`), checked against `Time.time` at `Bat_illusion.cs:669` and destroyed at `Bat_illusion.cs:487`. A full-file grep of `Bat.cs` for `.summon(` returns exactly this one call site, confirming it's shadowIllusion's own (not shared with another skill). `nDamageMod = 0.25 + num*0.25` (`Bat.cs:13105`, `num` = `sLv` capped/wrapped past rank 3) does correctly match the flavor text's 50/75/100% damage scaling, so only the duration figure itself is the mismatch.
+- **`mimic` Duration is verified in code at a flat `chaAdjust(60)` for both ranks — not the per-rank
+  `bat_mimic1`/`bat_mimic2` flavor text, which claims "(60 sec)"/"(90 sec)" respectively
+  (`BatSkill_eng.cs:827`, `:838`) — another genuine flavor-text/code mismatch, same class as
+  `shadowIllusion` above, reported at the verified code value (max rank = `60`, not `90`).**
+  `RPC_mimic_create(Vector3, Vector3, int tID, int nID)` (`Bat.cs:38696`) receives no `sLv`/rank
+  parameter at all — confirmed at both real cast sites, `Bat.cs:38226`/`:38266` — so the duration
+  literally cannot vary by rank in code, regardless of what the tooltip claims per rank. Duration itself:
+  `Bat.cs:38936` — `this.$mDuration$20318 = this.$self_$20330.mChar.chaAdjust(60);`, applied to the
+  targeted ally's clone as the actual `"mimic"` status at `Bat.cs:39132` — `addStatus("mimic", 1,
+  this.$mDuration$20318, 0, ...)` (caster's own CHA, not target-contested — `mimic` targets/reanimates a
+  friendly character as a stand-in double, not an enemy). The caster's own concurrent `"hide"`
+  invisibility uses the same base plus a flat `+12`: `Bat.cs:39312` — `addStatus("hide", 1,
+  this.$mDuration$20318 + 12, 0, ...)`, not surfaced as its own row (same skill's own effect, not a
+  separate cooldown-bearing skill).

@@ -24,14 +24,14 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | allFeather | All Feather | 2 | 60 | true | false | 15 | true |
 | divinitySword | Divinity Sword | 2 | 45 | true | false | — | — |
 | divinitySpear | Divinity Spear | 2 | 60 | true | false | — | — |
-| seal | Seal | 1 | 12 | true | false | — | — |
+| seal | Seal | 1 | 12 | true | false | 60 | true |
 | repel | Repel | 2 | 120 | true | false | 6 | true |
 | reverse | Reverse | 2 | 240 | true | false | 3 | true |
 | soulOfArms | Soul of Arms | 2 | 300 | true | false | — | — |
 | purifyingTear | Purifying Tear | 1 | 480 | true | false | — | — |
 | lullaby | Lullaby | 1 | 60 | true | false | — | — |
 | divinityAxe | Divinity Axe | 1 | 150 | true | false | — | — |
-| edenSanctuary | Eden Sanctuary | 1 | 240 | true | false | — | — |
+| edenSanctuary | Eden Sanctuary | 1 | 240 | true | false | 12 | false |
 | worldEncarta | World Encarta | 1 | 150 | true | false | 9 | true |
 
 ## Citations
@@ -84,6 +84,36 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   (`SheepSkill_eng.cs:713-756`), but since the actual `Sheep.cs` cast site is a single shared
   `RPC_seal`/`addTimeOut("seal", ...)` regardless of which variant is learned (`Sheep.cs:10782-10790`,
   `:32722`), the cooldown-lookup tool only needs the one shared value — hence one row.
+- **Only two of the four `sealOf*` names are actually live-castable — Earth/Heaven are combo-triggered
+  VFX with no ground-lifetime of their own, not two more independently-placeable seal types (re-checked
+  2026-08-14, user request).** The player-input dispatch (`Sheep.cs:7379-7397`) only recognizes
+  `shp_sealOfAttack1` (routes `sLv=1`) and `shp_sealOfDefense2` (`sLv=2`) — a full-file grep for
+  `shp_sealOfEarth1`/`shp_sealOfHeaven2` returns zero hits outside `SheepSkill.cs`'s metadata tree.
+  Inside `RPC_seal` (`Sheep.cs:31985-32826`), `sLv` picks which prefab to place — `sLv==1` loads
+  `redSeal` (`:32191`), else `blueSeal` (`:32226`) — and **both converge on one shared lifetime**:
+  `Sheep.cs:32284` — `this.$mSealControl$28058.life = (float)this.$self_$28064.mChar.chaAdjust(60);` —
+  a real ground-despawn timer (`EffectControl.cs:164,179-183` accumulates `Time.deltaTime` and
+  self-destroys once `life` elapses; the `afterLife` grace period is untouched, keeping its `1f`
+  constructor default). "Earth"/"Heaven" are a separate, automatic combo-proc: `RPC_seal` itself tracks
+  the caster's last three placed seals and, on a matching RRR/BBB/mixed pattern, fires
+  `RPC_seal_create(pos, dir, tID, 1..4)` (`Sheep.cs:10789`, `:32402-32656`) — that coroutine only
+  `Instantiate`s a visual-effect prefab and `Destroy`s the prior one on the next trigger
+  (`Sheep.cs:10796-10802`); no `EffectControl`, no `.life` field, no despawn timer of its own to cite.
+  Ground-lifetime is therefore one shared `chaAdjust(60)` regardless of red/blue type, and there is no
+  Earth/Heaven lifetime to report because those aren't independently-placed ground objects in this build.
+- **`edenSanctuary`'s field-lifetime is a genuine, citable value in its own companion class — a bare
+  literal, not `chaAdjust`-wrapped (found 2026-08-14, user request).** `RPC_edenSanctuary`
+  (`Sheep.cs:11787-11789`, generator `Sheep.cs:36772-37219`) requires an already-placed seal (gated at
+  `Sheep.cs:7545-7551`, matching "Required 3 seals in placed," `SheepSkill_eng.cs:1025`), instantiates
+  the `edenSanctuary` prefab at the seal's position (`Sheep.cs:37133`), and calls
+  `SendMessage("InitEdenSanctuary", ActorNr)` on `Sheep_edenSanctuary` (`Sheep.cs:37142`). That
+  component's own deadline: `Sheep_edenSanctuary.cs:73` — `this.rKABs8tDiX = Time.time + (float)12;` —
+  checked in `Update()` (`:129`), then `DestroySanctuary()` (`:135`) plays a 1s destroy animation before
+  the actual `Destroy` (`:372`, `:409-423`) — so real on-screen persistence is `12`s active + `1`s
+  destroy-animation grace; this table reports the citable `12`. While active, every 2s it separately
+  re-applies a `"sanctuary"` buff to allies in range (`Sheep_edenSanctuary.cs:160-205`,
+  `RPC_AddStatus("sanctuary", 5, 3, 0, ...)`) — also a bare literal `3`, distinct from the field's own
+  `12`s lifetime and not what this row reports.
 - **`bookBash5` is excluded — a genuinely active-mode skill (`mode = instant`, `cType = "bookBash"`,
   `SheepSkill.cs:1455-1465`) that has no real, reusable per-cast cooldown, matching its own flavor text
   verbatim.** `SheepSkill_eng.cs:1069` — "Perform a book bashing attack that has no cooldown." The only
@@ -114,12 +144,27 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `this.$hitChar$28126.RPC_AddStatus("sleep", 1, Damage.getDebuff((float)6, this.$self_$28130.mChar.cha,
   this.$hitChar$28126.cha), 0, this.$self_$28130.mChar.ActorNr);`. All three report Duration `—`.
 - **`bless`'s cooldown is capped at a flat 30s by the `gospel5` passive — base value reported assumes
-  `gospel5` unlearned, per the "report the un-upgraded base value, cite the upgrade" rule.**
+  `gospel5` unlearned, per the "report the un-upgraded base value, cite the upgrade" rule. `gospel5`'s
+  own flavor text is only half-accurate: the "+1 level" claim is verified exactly, but "decreases
+  cooldown by 70%" is a flavor-text gloss on the max-rank case, not the real mechanism.**
   `Sheep.cs:21263` — `this.$mTimeOut$27749 = ((!this.$self_$27763.mChar.hasSkill(412)) ?
   (30 + 15 * this.$sLv$27762) : 30);` — commandNum `412` maps to `shp_gospel5` per `SheepSkill.cs`'s own
-  `getSkillTree()` table (`:3247-3256`: `commandNum == 412` → `result = "shp_gospel5"`), matching
+  `getSkillTree()` table (`:3247-3256`: `commandNum == 412` → `result = "shp_gospel5"`).
   `gospel5`'s own description ("Increases level of all bless skills by 1 and decreases their cooldown by
-  70%.", `SheepSkill_eng.cs:937`). Base (unlearned, `sLv = 4`) = `30 + 15*4` = `90`, the value reported.
+  70%.", `SheepSkill_eng.cs:937`) is right about the level (`+1` to `bless`'s `RPC_AddStatus` level
+  argument, confirmed at `:22824` — see the Duration citation), but the cooldown isn't actually a 70%
+  reduction of anything: it's a hardcoded flat `30`, independent of `sLv`. At Bless's own max rank
+  (unlearned base `30+15*4=90`), a flat `30` happens to read as a ~66.7% cut — close enough to "70%" to
+  be the obvious source of the flavor text — but the real rule has no percentage in it at all; at rank 1
+  (base `45`), the same flat `30` is only a 33% cut, nothing like "70%". Base (unlearned, `sLv = 4`) =
+  `30 + 15*4` = `90`, the value reported.
+  This is the first Sheep case of a skill whose Cooldown (not Duration) depends on a *different* skill's
+  learned rank — encoded structurally in the lookup tool's data via a `cdDep` field (2026-08-14) on the
+  `sheep_bless` `SKILLS` entry (`12t_projects/player-reference-tool/index.html`): `gospel5` is single-
+  rank (learned or not, `minRank:0, maxRank:1`), so `rawAtRank(R) = 90 + (-60)*R` gives the correct `90`
+  unlearned / `30` learned (matching this note's own two cited values) despite only being a 2-point
+  linear fit — the tool renders this as a single icon toggle (`.sk-dep-toggle`), not a rank stepper,
+  since there's no middle rank to select.
 - **`clear`/`cleanse`/`allCleanse`'s Duration is extended from 1s to 6s by the `purify5` passive — base
   value reported assumes `purify5` unlearned.** `Sheep.cs:24881`/`:25375`/`:25835` all gate on
   `hasSkill(442)`; commandNum `442` maps to `shp_purify5` per `SheepSkill.cs:3280-3289`, matching
@@ -147,19 +192,20 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `lightBind`, `illuminate`, and `feather` have a per-`sLv` cooldown term.
 - **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `heal`, `quickHeal`,
   `allHeal`, `pacify`, `overHeal`, `revive`, `revert`, `holyLight`, `divinitySword`, `divinitySpear`,
-  `seal`, `soulOfArms`, `purifyingTear`, `divinityAxe`, `edenSanctuary` — confirmed by a full-file grep
+  `soulOfArms`, `purifyingTear`, `divinityAxe` — confirmed by a full-file grep
   of every `RPC_AddStatus(` call in `Sheep.cs` and cross-checking each hit against these skills' own
   coroutine bodies. `overHeal` is actually a penetrating-damage attack against a full-HP enemy despite
   its "heal" name (`SheepSkill_eng.cs:431`: "deals 50 penetrating damage to a target with full hp"), and
-  `holyLight`/`seal`/`edenSanctuary` are channel/field-placement mechanics whose "temporary" flavor text
-  has no citable duration constant in their own cast-site coroutines — the remaining `RPC_AddStatus` hits
-  in the file belong either to the 12 support skills, to passive/excluded skills, or to an unrelated
+  `holyLight` is a channel mechanic whose "temporary" flavor text has no citable duration constant in
+  its own cast-site coroutine — the remaining `RPC_AddStatus` hits in the file belong either to the 12
+  support skills, to passive/excluded skills, or to an unrelated
   generic minigame/consumable-item/flag-capture effects system (`wash`, `ice`, `bubbleShield`,
   `iceShield`, `awareness`, `float`, `mpsap`, `burn`, `paralysis`, `blind`, `plague`, `frost`,
   `whiteFlag`, `redFlag`, `blueFlag`, `yellowFlag`, `awake`, `happy`, `charm`, `artCancel`, `heavy`,
   `mpDrain`, `hpDrain`) — none tied to any `SheepSkill.cs` roster entry, matching the same generic-
-  effects block documented in the Panda/Mole/Rabbit docs. Duration cells for all fifteen skills listed
-  above are `—`.
+  effects block documented in the Panda/Mole/Rabbit docs. Duration cells for all thirteen skills listed
+  above are `—`. **`seal` and `edenSanctuary` are no longer in this list** — each has a real,
+  citable field-lifetime, verified separately below (not via `RPC_AddStatus`).
 
 ### CD citations
 - `heal` CD: `Sheep.cs:21229` — `this.$mTimeOut$27749 = 12 + 2 * this.$sLv$27762;` (sLv4 → 20), wrapped at `Sheep.cs:21606` — `this.$self_$27763.mChar.addTimeOut(this.$sType$27758, this.$self_$27763.mChar.agiAdjust((float)this.$mTimeOut$27749));`
@@ -204,6 +250,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `worldEncarta` Duration: `Sheep.cs:38357` — `this.$tChar$28182.RPC_AddStatus("worldEncarta", 5, this.$self_$28186.mChar.chaAdjust(9), this.$self_$28186.mChar.atk, ...);` (caster's own `chaAdjust`; 4th param is an attack-derived value, not duration)
 - `sleep`, `lightBind`, `lullaby`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
 - `heal`, `quickHeal`, `allHeal`, `pacify`, `overHeal`, `revive`, `revert`, `holyLight`, `divinitySword`,
-  `divinitySpear`, `seal`, `soulOfArms`, `purifyingTear`, `divinityAxe`, `edenSanctuary`: no usable
+  `divinitySpear`, `soulOfArms`, `purifyingTear`, `divinityAxe`: no usable
   Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists in the skill's own
   coroutine class body; see the bulk judgment-call note above. Duration cells are `—`.
+- `seal` Duration (ground field-lifetime, not `RPC_AddStatus`): `Sheep.cs:32284` — `this.$mSealControl$28058.life = (float)this.$self_$28064.mChar.chaAdjust(60);` — see the dedicated judgment-call note above.
+- `edenSanctuary` Duration (field-lifetime, bare literal): `Sheep.cs:37142` → `Sheep_edenSanctuary.cs:73` — `this.rKABs8tDiX = Time.time + (float)12;` — see the dedicated judgment-call note above.

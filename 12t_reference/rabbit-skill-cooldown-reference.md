@@ -8,8 +8,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | statScan | Stat Scan | 1 | 30 | true | false | — | — |
 | bounce | Bounce | 2 | 30 | true | false | — | — |
 | maimShot | Maim Shot | 4 | 15 | true | false | — | — |
-| mix | Mix | 4 | 30 | true | false | — | — |
-| shake | Shake | 3 | 30 | true | false | — | — |
+| mix | Mix | 4 | 30 | true | false | 60 | true |
+| shake | Shake | 3 | 30 | true | false | 60 | true |
 | miracleBlend | Miracle Blend | 1 | 60 | true | false | 6 | true |
 | stickyGum | Sticky Gum | 2 | 60 | true | false | 12 | true |
 | acidicField | Acidic Field | 2 | 60 | true | false | 12 | true |
@@ -31,7 +31,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | diamondShot | Diamond Shot | 1 | 300 | true | false | — | — |
 | tenShot | Ten Shot | 1 | 120 | true | false | — | — |
 | extravagance | Extravagance | 1 | 120 | true | false | 6 | true |
-| contract | Contract | 1 | 180 | true | false | — | — |
+| contract | Contract | 1 | 180 | true | false | 300 | false |
 
 ## Citations
 
@@ -200,22 +200,52 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `hasSkill(444)`, a state pre-arm on login (matching the Panda `fuujinKen`/`raijinKen` preemptive-
   `addTimeOut` precedent) — matches the real cast site exactly (`Rabbit.cs:40652`,
   `agiAdjust((float)180)`). Not a discrepancy.
-- **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`, `bounce`, `mix`,
-  `shake`, `gilShot`, `backpack`, `fourShot`, `circleShot`,
-  `mall`, `truceTrading`, `shootingArray`, `millionaire`, `diamondShot`, `tenShot`,
-  `contract` — confirmed by a full-file grep of every `RPC_AddStatus(` call in `Rabbit.cs` and
-  cross-checking each hit against these skills' own coroutine bodies. `mix`/`shake`/`miracleBlend` throw
-  consumable potions (picked up separately, off the skill's own cast-site duration path) — the remaining
-  `RPC_AddStatus` hits in the file belong either to the 12 support skills, to the
-  passive/excluded skills documented above, or to an unrelated shared minigame/consumable-item/flag-
-  capture effect system (`wash`, `bless`, `ice`, `bubbleShield`, `iceShield`, `awareness`, `float`,
-  `mpsap`, `burn`, `blind`, `plague`, `frost`, `awake`, `yellowFlag`, `cleanse`, `blueFlag`, `whiteFlag`,
-  `redFlag`, `happy`, `charm`, `clear`, `poison`, `heavy`, `mpDrain`, `hpDrain`) — none tied to any
-  `RabbitSkill.cs` roster entry, matching the same generic-effects block documented in the Monkey/Panda
-  docs. Duration cells for all fifteen skills listed above are `—`. **`miracleBlend`, `stickyGum`,
-  `acidicField`, `healingField` are no longer in this list** — each is verified separately below, none
-  via `RPC_AddStatus` (they're field objects with their own on-the-ground lifetime, not a status applied
-  to a character).
+- **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`, `bounce`,
+  `gilShot`, `backpack`, `fourShot`, `circleShot`,
+  `mall`, `truceTrading`, `shootingArray`, `millionaire`, `diamondShot`, `tenShot` — confirmed by a
+  full-file grep of every `RPC_AddStatus(` call in `Rabbit.cs` and cross-checking each hit against these
+  skills' own coroutine bodies. The remaining `RPC_AddStatus` hits in the file belong either to the 12
+  support skills, to the passive/excluded skills documented above, or to an unrelated shared
+  minigame/consumable-item/flag-capture effect system (`wash`, `bless`, `ice`, `bubbleShield`,
+  `iceShield`, `awareness`, `float`, `mpsap`, `burn`, `blind`, `plague`, `frost`, `awake`, `yellowFlag`,
+  `cleanse`, `blueFlag`, `whiteFlag`, `redFlag`, `happy`, `charm`, `clear`, `poison`, `heavy`, `mpDrain`,
+  `hpDrain`) — none tied to any `RabbitSkill.cs` roster entry, matching the same generic-effects block
+  documented in the Monkey/Panda docs. Duration cells for all twelve skills listed above are `—`.
+  **`mix`, `shake`, `miracleBlend`, `stickyGum`, `acidicField`, `healingField`, `contract` are no longer
+  in this list** — each is verified separately below, none via `RPC_AddStatus` (thrown potions and field
+  objects have their own on-the-ground lifetime; `contract` summons a real character with its own
+  lifespan field).
+- **`mix` and `shake` throw potions whose ground lifetime (re-checked 2026-08-14, user request) uses the
+  exact same `Rabbit_potion` companion-class mechanism `miracleBlend` already established, not a
+  distinct system.** `mix` (`RPC_mix_create`): spawn `Rabbit.cs:24530`
+  (`GetComponent(typeof(Rabbit_potion))`), lifetime at `Rabbit.cs:24535` —
+  `this.$mPotionControl$27010.Init(this.$self_$27014.mChar.chaAdjust(60), this.$tID$27012,
+  this.$self_$27014.mChar.ActorNr);`. `shake` (`RPC_shake_create`): spawn `Rabbit.cs:25362`, lifetime at
+  `Rabbit.cs:25367` — `this.$mPotionControl$27033.Init(this.$self_$27037.mChar.chaAdjust(60),
+  this.$tID$27035, this.$self_$27037.mChar.ActorNr);`. Both `chaAdjust(60)`, matching `miracleBlend`'s
+  own create-coroutine, which calls the identical `Rabbit_potion.Init(chaAdjust(60), ...)` pattern — all
+  three skills share one prop class and one lifetime constant. Despawn logic lives in
+  `Rabbit_potion.cs`, not `Rabbit.cs`: `Init(int nLife, int nID, int nOwnerID)` at `Rabbit_potion.cs:45`
+  stores a deadline at `:70` (`this.AEGNULYSjg = (int)((float)nLife + Time.time);`); `Update()`
+  (`:88-137`) checks that deadline (`:115`) and falls through to `Destroy(this.gameObject)` (`:130`) once
+  it passes — a genuine ground-despawn timer, distinct from the pickup-triggered `Destroy` inside
+  `OnTriggerEnter` (`:141-270`). This is "how long the potion sits on the ground before vanishing if
+  nobody picks it up," not the drinker's own buff duration (already covered separately by each potion's
+  own on-pickup status, e.g. `miracleBlend`'s `"miracleDrop"`).
+- **`contract` summons a real character (a Light Panther/Leopard/Golem elemental, by rank) with its own
+  bare-literal 300s lifespan — not `RPC_AddStatus`, and not in `Rabbit.cs` at all.** `RPC_contract_create`
+  (`Rabbit.cs:11542`) instantiates the rank-specific elemental (`sLv==1`→`LightPanther`, `Rabbit.cs:11572`;
+  `sLv==2`→`LightLeopard`, `:11584`; `sLv==3`→`LightGolem`, `:11596`; `Instantiate` at `:11611`,
+  `isSummon = true` at `:11766`). Each elemental's own `Awake()` sets its despawn deadline as a **bare
+  literal**, not wrapped in any Adjust function: `LightPanther.cs:44` — `this.iLbtx364rH = Time.time +
+  (float)300;` — identically `LightLeopard.cs:44` and `LightGolem.cs:44`. Checked each `Update()`
+  (`LightPanther.cs:286`, `LightLeopard.cs:286`, `LightGolem.cs:183`): while `Time.time` hasn't passed the
+  deadline the unit stays alive; once it has, execution falls into the same death-sequence branch used for
+  `hp <= 0` (e.g. `LightPanther.cs:295-305`, `RPC_dead`) — timeout is treated identically to being killed.
+  **Caution for future citation:** `Rabbit.cs:40729` sets `$mContractTime$27422 =
+  mChar.magAdjust(3 + 3*sLv)`, checked at `:40359` and fed to `DisplayCastBar` at `:40738` — this is the
+  pre-summon **cast/channel gate**, not the summoned elemental's lifespan; do not conflate the two if
+  re-deriving this citation later.
 - **`stickyGum`/`acidicField`/`healingField` each place a timed field object whose lifetime is set by its
   own dedicated companion `.cs` file, not by anything in `Rabbit.cs`'s `RPC_AddStatus` calls — same
   "verified outside the class-name file" pattern as `alchemistLab`/`miracleBlend`.** Each companion file
@@ -269,9 +299,12 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `healingField` Duration (field lifetime): `Rabbit.cs:37831` — `this.$mDuration$27360 = this.$self_$27363.mChar.chaAdjust(12);`, same pattern via `Rabbit_healingField.cs`.
 - `rapidTrance` Duration: `Rabbit.cs:29119` — `this.$self_$27126.mChar.RPC_AddStatus("rapidTrance", 1, this.$self_$27126.mChar.chaAdjust(12), 0, ...);` (self, not target-contested)
 - `extravagance` Duration: `Rabbit.cs:39902` — `this.$self_$27416.mChar.RPC_AddStatus("atkUp", 5, this.$self_$27416.mChar.chaAdjust(6), this.$mExtravaganceValue$27411, ...);` (self, not target-contested; 4th param is the money-derived attack-bonus value, not duration)
+- `mix` Duration (potion ground-lifetime, not `RPC_AddStatus`): `Rabbit.cs:24530,24535` — `this.$mPotionControl$27010.Init(this.$self_$27014.mChar.chaAdjust(60), this.$tID$27012, this.$self_$27014.mChar.ActorNr);`, same `Rabbit_potion.cs` despawn-deadline pattern as `miracleBlend`/`stickyGum`/etc. See the dedicated judgment-call note above.
+- `shake` Duration (potion ground-lifetime): `Rabbit.cs:25362,25367` — `this.$mPotionControl$27033.Init(this.$self_$27037.mChar.chaAdjust(60), this.$tID$27035, this.$self_$27037.mChar.ActorNr);`, same pattern.
+- `contract` Duration (summoned-elemental lifespan, bare literal, not `RPC_AddStatus`): `Rabbit.cs:11542,11572/11584/11596` (rank-specific `LightPanther`/`LightLeopard`/`LightGolem`) → each unit's own `Awake()`, e.g. `LightPanther.cs:44` — `this.iLbtx364rH = Time.time + (float)300;`. See the dedicated judgment-call note above (and its caution re: not conflating this with `Rabbit.cs:40729`'s unrelated `magAdjust` cast-gate value).
 - `maimShot`, `gorgonShot`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
-- `statScan`, `bounce`, `mix`, `shake`, `gilShot`,
+- `statScan`, `bounce`, `gilShot`,
   `backpack`, `fourShot`, `circleShot`, `mall`, `truceTrading`, `shootingArray`, `millionaire`,
-  `diamondShot`, `tenShot`, `contract`: no usable Duration — no `RPC_AddStatus`/
+  `diamondShot`, `tenShot`: no usable Duration — no `RPC_AddStatus`/
   `addStatus`/field-effect-lifetime call exists in the skill's own coroutine class body; see the bulk
   judgment-call note above. Duration cells are `—`.

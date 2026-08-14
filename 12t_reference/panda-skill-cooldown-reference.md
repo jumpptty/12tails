@@ -15,7 +15,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | risingVortex | Rising Vortex | 2 | 60 | true | false | — | — |
 | risingDragons | Rising Dragons | 2 | 240 | true | false | — | — |
 | ashura | Ashura | 2 | 300 | true | false | 24 | true |
-| drunkenFist | Drunken Fist | 2 | 30 | true | false | — | — |
+| drunkenFist | Drunken Fist | 2 | 30 | true | false | 12 | true |
 | waterMonkey | Water Monkey | 2 | 30 | true | false | — | — |
 | waterCrane | Water Crane | 2 | 30 | true | false | — | — |
 | stasisBlow | Stasis Blow | 2 | 30 | true | false | — | — |
@@ -125,6 +125,26 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `getDrunkenPlusLv()`) adds a **separate** self-buff status `"drunken"` (`chaAdjust(12)`) during
   `drunkenFist`'s own cast, rather than drunkenPlus having any independent cast site of its own. No
   additional row is added for `drunkenPlus`.
+- **`drunkenFist`'s Duration cell now reports this `"drunken"` self-buff's `chaAdjust(12)` — re-checked
+  2026-08-14 (user request) — but it only exists at all once `drunkenPlus` (either rank) is learned; the
+  value itself does not change between rank 1 and rank 2.** `Panda.cs:32576-32591`: `$mDrunkenPluslv$25475
+  = getDrunkenPlusLv()` (`Panda.cs:9011-9014`: `hasSkill(304)→2, hasSkill(303)→1, else 0` —
+  `PandaSkill.cs:2788-2809` confirms commandNum 303/304 = `drunkenPlus1`/`2`); `if (mDrunkenPluslv <= 0)
+  goto IL_6DA` skips the whole block when drunkenPlus is unlearned — so with neither rank learned,
+  `drunkenFist` has no self-buff duration at all, matching this table's own "no dep = no upgrade path"
+  convention rather than a `dep`-steppable value (there's nothing to step between — it's on-at-a-flat-
+  value or off, not a scaling rank). `RPC_AddStatus("drunken", mDrunkenPluslv, chaAdjust(12), 0,
+  ActorNr)` — the `chaAdjust(12)` third argument (duration) is a fixed literal, not derived from
+  `mDrunkenPluslv`, so rank 1 and rank 2 both give the same `12`; only the *status level* argument
+  (used for evasion/damage magnitude, not duration) scales 1→2. **Also corrects the eng flavor text**
+  (`PandaSkill_eng.cs:576`/`:587`, "giving Panda **and its target** a 10%/20% evasion chance and 10%/20%
+  damage decrease"): `RPC_AddStatus` is only ever called on `self_.mChar` — no target-side application
+  exists anywhere in the coroutine, so "and its target" is inaccurate; separately, the coded effect is a
+  flat `damageMod += 0.1f` (`CharacterControl.cs:15790`, a **damage-dealt increase**, not a "decrease")
+  regardless of rank, and evasion (`lckAdjust(5*statusLv)`, `CharacterControl.cs:3085`) is the only value
+  that actually scales by rank (5%/10%, not the tooltip's claimed 10%/20%). This self-buff `"drunken"` is
+  distinct from `"drunk"`, the CHA-contested target debuff cited in the judgment-call note below — the
+  two share a name root but are separate statuses on separate characters.
 - **`shadowFist1`-`4` are confirmed passives (normal-attack/SageFist extra-hit-damage proc), but rank 4
   is a genuine `getSkill()` dead-code-fallthrough trap landing on `deathBlow`'s cType — matching the
   Mole `heavyBuilt`/`speedDrill`/`skyDrill` precedent.** Ranks 1-3 explicitly `goto IL_BD1`/`IL_259D`
@@ -233,7 +253,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 ### Duration citations
 - `ashura` Duration: `Panda.cs:30572` — `this.$self_$25452.mChar.RPC_AddStatus("ashura", this.$sLv$25451, this.$self_$25452.mChar.chaAdjust(24), 0, this.$self_$25452.mChar.ActorNr);` (self, not target-contested)
 - `comboLink` Duration: `Panda.cs:40570` — `this.$self_$25683.mChar.RPC_AddStatus("atkUp", 5, this.$self_$25683.mChar.chaAdjust(6), this.$nComboCount$25682, this.$self_$25683.mChar.ActorNr);` (self, not target-contested; 4th param is the combo-count stack value, not duration)
-- `drunkenFist`, `stasisBlow`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
+- `drunkenFist` Duration: `Panda.cs:32591` — `this.$self_$25490.mChar.RPC_AddStatus("drunken", this.$mDrunkenPluslv$25475, this.$self_$25490.mChar.chaAdjust(12), 0, this.$self_$25490.mChar.ActorNr);` (self, not target-contested — but gated entirely on `drunkenPlus` being learned; see dedicated judgment-call note above. `drunkenFist`'s *separate* `"drunk"` target debuff remains CHA-contested/excluded, see below)
+- `stasisBlow`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cell is `—`
 - `risingDragons`, `deathBlow`: incidental hit-reaction/proc-flag statuses (`"lock"`, `"death"`), not the skill's own duration — see judgment-call note; Duration cells are `—`
 - `roll`, `threeSteps`, `rushingFalcon`, `qiStrike`, `pummel`, `towerRush`, `tigerToss`, `risingVortex`,
   `waterMonkey`, `waterCrane`, `spTransfer`, `wind&cloud`, `rain&storm`, `lotusPalm`, `heavenPalm`,

@@ -1,5 +1,38 @@
 # 12 Tails Workspace — Handoff
 
+**Update 2026-08-14:** still on the `skill-cooldown-lookup` branch, still not merged to `master`, and a
+large additional session's worth of work landed on top of the already-committed 2026-08-13 state
+described below — **all of it currently uncommitted** (`git status` shows `index.html` and every
+`12t_reference/*-skill-cooldown-reference.md` modified, on top of the pre-existing unrelated
+uncommitted Penguin sheet/reorg work noted further down). Despite being uncommitted, the tool **has
+been published live** to its Artifact URL multiple times this session via the
+`publish-player-reference-tool` skill — publishing and committing are independent actions here, don't
+assume "uncommitted" means "not live" the way earlier snapshots of this doc did. What landed:
+- **New `dep`/`cdDep` mechanic**: a skill's Cooldown or Duration can now depend on a separate passive's
+  learned rank — extended (2026-08-13 committed at `2b18241`, then further 2026-08-14 work on top) to
+  Sheep's `bless`↔`gospel5` and Whale's six `knightOfTheDeep1`-affected skills (Cooldown-side deps, a
+  new capability beyond the original Duration-only design) — see
+  `docs/superpowers/specs/2026-08-14-skill-dependent-cooldown-design.md`.
+- **A full cross-class Duration re-audit**, at the user's direction, correcting or adding data for
+  specific skills across Bat, Cat, Chameleon, Mole, Monkey, Panda, Penguin, Rabbit, and Sheep — see
+  `12t_projects/player-reference-tool/CLAUDE.md`'s new "data & UI conventions" section for the two
+  general rules this surfaced (object/summon lifetimes now count as Duration; "enemy-applied debuff,
+  wrong side of the cast" is its own exclusion reason distinct from CHA-contested) and two genuine
+  miscites caught and fixed (Mole's `flameCarnival`, Penguin's `iceBlock`).
+- **New `durationInfinite` (∞ chip)** for confirmed-no-despawn-timer pet summons (Mole's `barrelBot`,
+  Monkey's `phoenix`/`ja`/`gadina`/`buiten`/`summonGaos`), **new `durPostAdd`** schema field for
+  Penguin's `iceBlock` compound formula, and a **hover probability tooltip** on both stat numbers
+  showing the real per-outcome LCK-roll distribution (not a naive uniform assumption) — all documented
+  in the same `player-reference-tool/CLAUDE.md` section.
+- **Display precision changed 1→2 decimals** at the user's request (the underlying formulas are real
+  floats with no in-game rounding of their own; 1 decimal was losing real precision).
+- **Verified 2026-08-14**: ran a full programmatic diff of every `SKILLS` entry in `index.html` against
+  its class's own `12t_reference/*.md` table — **zero mismatches across all 306 skills**, so the
+  reference docs are trustworthy as of this snapshot despite the volume of changes above.
+- Also worth correcting from the 2026-08-13 text below: `12t_reference/penguin-skill-cooldown-reference.md`
+  **does exist** (it was mistakenly flagged as a gap mid-session before being found) — Penguin has the
+  same per-class cooldown doc every other class has, it just wasn't caught by an early `Glob` check.
+
 Snapshot as of 2026-08-12, with updates on 2026-08-13 (workplace machine) — the skill-cooldown-lookup
 plan (all 17 tasks, see below) finished this session on its dedicated branch, not yet merged to
 `master`. This is a point-in-time note for resuming from a different machine — see "No remote

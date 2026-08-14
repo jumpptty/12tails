@@ -18,7 +18,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | copycat | Copycat | 2 | 120 | true | false | — | — |
 | damageRoulette | Damage Roulette | 2 | 60 | true | false | 12 | true |
 | nineLives | Nine Lives | 2 | 60 | true | false | — | — |
-| grandCasinoArcade | Grand Casino Arcade | 2 | 600 | true | false | 60 | false |
+| grandCasinoArcade | Grand Casino Arcade | 2 | 600 | true | false | — | — |
 | flyingDagger | Flying Dagger | 4 | 24 | true | false | — | — |
 | forwardLunge | Forward Lunge | 2 | 30 | true | false | — | — |
 | reverseThrust | Reverse Thrust | 2 | 45 | true | false | — | — |
@@ -26,9 +26,9 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | heartRipper | Heart Ripper / Finishing Blow | 3 | 120 | true | false | — | — |
 | disarm | Disarm | 2 | 33 | true | false | — | — |
 | bleed | Bleed | 2 | 66 | true | false | — | — |
-| moonBlade | Moon Blade | 2 | 90 | true | false | 1 | false |
-| moonStorm | Moon Storm | 2 | 120 | true | false | 1 | false |
-| deltaStrike | Delta Strike | 2 | 180 | true | false | 3 | false |
+| moonBlade | Moon Blade | 2 | 90 | true | false | — | — |
+| moonStorm | Moon Storm | 2 | 120 | true | false | — | — |
+| deltaStrike | Delta Strike | 2 | 180 | true | false | — | — |
 | swiftPace | Swift Pace | 1 | 90 | true | false | — | — |
 | pillagePlunge | Pillage Plunge | 1 | 120 | true | false | — | — |
 | supportFire | Support Fire | 1 | 240 | true | false | — | — |
@@ -113,16 +113,20 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `twoPair` itself defines. (Note: this status-copy mechanic lives in `twoPair`'s own coroutine range,
   `Cat.cs:25518-26413` — despite the thematic name fit, `copycat`'s own range, `Cat.cs:26413-26940`, has no
   `RPC_AddStatus` call at all.)
-- **`grandCasinoArcade`'s `doom` proc uses a flat literal duration, not contested — a genuine value.**
-  `Cat.cs:28048` — `this.$doomChar$21916.RPC_AddStatus("doom", this.$doomChar$21916.getStatusLv("doom") +
-  1, 60, 0, this.$self_$21925.mChar.ActorNr);` — the duration argument is the bare literal `60` (confirmed
-  NOT `chaAdjust`-wrapped and NOT `Damage.getDebuff`), applied to enemies hit by the AoE, mirroring the
-  existing Bat doc's `darkStalker` precedent (hardcoded constant applied to a target is still usable).
-- **`moonBlade`/`moonStorm`'s `cut` and `deltaStrike`'s `lock` are guaranteed on-hit procs with flat literal
-  durations.** `moonBlade`: `Cat.cs:35739` — `RPC_AddStatus("cut", sLv * 2, 1, 0, ActorNr)`. `moonStorm`:
-  `Cat.cs:36475` — same shape. `deltaStrike`: `Cat.cs:37186` — `RPC_AddStatus("lock", 1, 3, 0, ActorNr)`.
-  All three durations are bare literals (`1`, `1`, `3`), confirmed NOT `chaAdjust`-wrapped, and are not
-  gated behind any separate passive or `hasSkill` check — genuine values.
+- **`grandCasinoArcade`'s `doom` proc, and `moonBlade`/`moonStorm`'s `cut`/`deltaStrike`'s `lock` procs,
+  are excluded (2026-08-14, at the user's request) — all four are on-hit debuffs the skill inflicts on
+  an enemy target, not a duration on the caster's own skill/buff, and the lookup tool's Duration column
+  is scoped to the latter.** `grandCasinoArcade`: `Cat.cs:28048` —
+  `this.$doomChar$21916.RPC_AddStatus("doom", this.$doomChar$21916.getStatusLv("doom") + 1, 60, 0,
+  this.$self_$21925.mChar.ActorNr);` (bare literal `60`, applied to enemies hit by the AoE). `moonBlade`:
+  `Cat.cs:35739` — `RPC_AddStatus("cut", sLv * 2, 1, 0, ActorNr)`. `moonStorm`: `Cat.cs:36475` — same
+  shape. `deltaStrike`: `Cat.cs:37186` — `RPC_AddStatus("lock", 1, 3, 0, ActorNr)`. All four durations
+  (`60`, `1`, `1`, `3`) are bare literals, confirmed NOT `chaAdjust`-wrapped, and not gated behind any
+  separate passive/`hasSkill` check — genuinely real values, just for the wrong side of the cast (enemy-
+  applied, not self/ally-applied), which is why they're reported here but not carried into the tool's
+  Duration cells. Distinct from this doc's CHA-contested-duration exclusions above (`Damage.getDebuff`-
+  based): these four are flat literals, not contested — excluded on scope grounds, not a contested-value
+  technicality.
 - **No `RPC_AddStatus` call exists anywhere in the coroutine class body** (confirmed by bounding each
   skill's class definition range in `Cat.cs` via `internal sealed class $RPC_<name>` markers, then
   cross-checking against the full-file `RPC_AddStatus` grep) for: `evenOdds` (`Cat.cs:9335-9378`,
@@ -170,13 +174,12 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `fateDraw` Duration: `Cat.cs:21461` — `this.$tChar$21759.RPC_AddStatus("fortune", this.$sLv$21763, this.$self_$21764.mChar.chaAdjust(15), 0, this.$self_$21764.mChar.ActorNr);` (default/no-passive branch; see judgment-call note re: `hasSkill(412)`)
 - `powerShuffle` Duration: `Cat.cs:22082` — `this.$mDuration$21772 = this.$self_$21778.mChar.chaAdjust(30);`, applied at `Cat.cs:22110` (e.g. `RPC_AddStatus("atkUp", 1, mDuration, ..., ActorNr)`, one of 16 shared branches) (self-buff, not target-contested)
 - `damageRoulette` Duration: `Cat.cs:27052` — `this.$self_$21895.mChar.RPC_AddStatus("damageRoulette", this.$sLv$21894, this.$self_$21895.mChar.chaAdjust(12), 0, this.$self_$21895.mChar.ActorNr);` (self-buff, not target-contested)
-- `grandCasinoArcade` Duration: `Cat.cs:28048` — `this.$doomChar$21916.RPC_AddStatus("doom", this.$doomChar$21916.getStatusLv("doom") + 1, 60, 0, this.$self_$21925.mChar.ActorNr);` (flat literal `60`, confirmed NOT chaAdjust-wrapped)
-- `moonBlade` Duration: `Cat.cs:35739` — `this.$hitChar$22106.RPC_AddStatus("cut", this.$sLv$22113 * 2, 1, 0, this.$self_$22114.mChar.ActorNr);` (flat literal `1`, confirmed NOT chaAdjust-wrapped)
-- `moonStorm` Duration: `Cat.cs:36475` — `this.$hitChar$22123.RPC_AddStatus("cut", this.$sLv$22132 * 2, 1, 0, this.$self_$22133.mChar.ActorNr);` (flat literal `1`, confirmed NOT chaAdjust-wrapped)
-- `deltaStrike` Duration: `Cat.cs:37186` — `this.$tChar$22142.RPC_AddStatus("lock", 1, 3, 0, this.$self_$22163.mChar.ActorNr);` (flat literal `3`, confirmed NOT chaAdjust-wrapped)
 - `evenOdds`, `luckyCard`, `lifeGamble`, `skillGamble`, `luckyDice`, `doubleDown`, `twoPair`, `copycat`,
   `nineLives`, `flyingDagger`, `forwardLunge`, `reverseThrust`, `backflip`, `heartRipper`, `disarm`,
   `bleed`, `swiftPace`, `pillagePlunge`, `supportFire`: no usable Duration — either no `RPC_AddStatus` call
   exists in the skill's own coroutine class body, or the only call present is contested
   (`Damage.getDebuff`) or a dynamic status-copy (`twoPair`'s inherited `sTime - Time.time`); see the
   judgment-call notes above for the specific reason per skill.
+- `grandCasinoArcade`, `moonBlade`, `moonStorm`, `deltaStrike`: excluded on scope grounds (enemy-applied
+  on-hit debuff, not the caster's own duration), not because no citable value exists — see the dedicated
+  judgment-call note above for the exact citations (`doom`/`cut`/`cut`/`lock`).

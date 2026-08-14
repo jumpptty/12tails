@@ -11,27 +11,27 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | unsummon | Unsummon | 1 | 3 | false | false | — | — |
 | instantCast | Instant Cast | 2 | 240 | true | false | 12 | true |
 | fireBall | Fireball | 4 | 30 | true | false | — | — |
-| phoenix | Phoenix | 4 | 45 | true | false | — | — |
+| phoenix | Phoenix | 4 | 45 | true | false | ∞ | — |
 | skyCrimson | Sky Crimson | 1 | 120 | true | false | — | — |
 | blazingArrow | Blazing Arrow | 1 | 120 | true | false | — | — |
 | flashFire | Flash Fire | 4 | 60 | true | false | — | — |
-| ja | Ja | 4 | 90 | true | false | — | — |
-| runicFlame | Runic Flame | 1 | 180 | true | false | — | — |
+| ja | Ja | 4 | 90 | true | false | ∞ | — |
+| runicFlame | Runic Flame | 1 | 180 | true | false | 5 | true |
 | worldIgnition | World Ignition | 2 | 300 | true | false | — | — |
 | instantBlaze | Instant Blaze | 1 | 30 | true | false | — | — |
 | fireAvatar | Fire Avatar | 1 | 600 | true | false | 120 | true |
 | groundLock | Ground Lock | 4 | 30 | true | false | — | — |
-| gadina | Gadina | 4 | 45 | true | false | — | — |
+| gadina | Gadina | 4 | 45 | true | false | ∞ | — |
 | planetBreaker | Planet Breaker | 1 | 60 | true | false | — | — |
 | titanicEarthPulse | Titanic Earth Pulse | 1 | 240 | true | false | — | — |
 | stoneHammer | Stone Hammer | 4 | 60 | true | false | — | — |
-| buiten | Buiten Hou Hou | 4 | 120 | true | false | — | — |
-| runicSand | Runic Sand | 1 | 180 | true | false | — | — |
+| buiten | Buiten Hou Hou | 4 | 120 | true | false | ∞ | — |
+| runicSand | Runic Sand | 1 | 180 | true | false | 5 | true |
 | earthGuard | Earth Guard | 1 | 60 | true | false | — | — |
 | earthForm | Earth Form | 1 | 600 | true | false | 120 | true |
 | lavu | Lavu | 2 | 600 | true | false | 60 | true |
 | volcanicEruption | Volcanic Eruption | 1 | 240 | true | false | — | — |
-| summonGaos | Summon Gaos | 1 | 300 | true | false | — | — |
+| summonGaos | Summon Gaos | 1 | 300 | true | false | ∞ | — |
 | summonSoul | Summon Soul | 1 | 3 | false | false | 240 | false |
 
 ## Citations
@@ -117,6 +117,33 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   three names returns zero matches. None of them have their own `getSkill()`/`getSkillTree()` entry;
   they are internal states of the `phoenix`/`gadina`/`lavu`/`fireAvatar`/`earthForm` summon-and-transform
   system, not independently learnable/castable skills. Excluded.
+- **`phoenix`, `ja`, `gadina`, `buiten`, and `summonGaos` each summon a real `CharacterControl`-bearing
+  pet with no despawn timer anywhere — confirmed by reading each pet's own class file in full
+  (2026-08-14, user request) — reported as `∞` (infinite-duration chip), not `—`.** Each skill's
+  `RPC_<name>_create` spawns its pet fresh, calling `SendMessage("unsummon")` on any existing one first
+  (recasting replaces, doesn't stack): `phoenix`/`ja`/`gadina`/`buiten` create `Phoenix`/`Ja`/`Gadina`/
+  `Buiten`-typed GameObjects (`isSummon = true` set on each, e.g. `Monkey.cs:11624` for `phoenix`);
+  `summonGaos` mirrors the pattern (`Monkey.cs:14444`, `Resources.Load(".../Gaos/Gaos")`). A full read of
+  `Phoenix.cs`, `Ja.cs`, `Gadina.cs`, `Buiten.cs`, and `Gaos.cs` found zero `chaAdjust`/`talAdjust`/
+  `Time.time`-based despawn deadlines in any of them — every `Destroy(this.gameObject)` call sits inside
+  that pet's own `unsummon()` coroutine (explicit dismiss or implicit replace-on-recast) or its death
+  sequence (`hp <= 0`), never a timer. This is the "confirmed no timer, persists until death/unsummon/
+  disconnect" case, distinct from a skill with no citable Duration data at all — the lookup tool
+  surfaces the distinction as an `∞` chip rather than a plain `—`.
+- **Bat's `guardianOfTheNight` and Whale's `12thKingdomKnight` were checked for the same pattern
+  (2026-08-14) and are NOT included above — they're a different, ambiguous case, flagged for the user
+  rather than resolved here.** Both spawn a persistent escort `MonoBehaviour` with no despawn timer of
+  its own (matching the `phoenix`-family pattern), but neither is `CharacterControl`-bearing — each only
+  holds a reference to the *owner's* `CharacterControl` and attacks via the owner's own `hit()`
+  (`Bat_guardianOfTheNight.cs:154`/`893`; `whale_kingdomKnight.cs:36`/`439`), more like a stat-borrowing
+  turret than an independent pet. Both classes' own docs already report a real, separately-verified
+  `chaAdjust(60)` **status** duration tied to the same skill name (`bat-skill-cooldown-reference.md`'s
+  `guardianOfTheNight`, `whale-skill-cooldown-reference.md`'s `12thKingdomKnight`'s `"kingdomKnight"`
+  buff) — whether that status expiring actually despawns the escort, or the escort structurally outlives
+  it (matching this session's earlier `flameCarnival` miscite, where a real `chaAdjust` value turned out
+  to gate the wrong thing), has not been independently re-verified. Not changed pending that check —
+  `bat-skill-cooldown-reference.md`'s and `whale-skill-cooldown-reference.md`'s own citations for those
+  two skills stand as-is for now.
 - **`fireBall`'s cooldown is conditionally halved by a separate passive (`hasSkill(402)`, almost
   certainly `rapidFire3`, "Reduces fireballs' casting and cooldown by 3 and 6 seconds" per
   `MonkeySkill_eng.cs:334`) when cast without a target lock — this table reports the un-passived base
@@ -141,25 +168,26 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   (`+1`/`+2`/`+3`, matching the eng description "increases Monkey's ground lock duration to 4/5/6
   seconds") and `secondStone5` ("Add 2 seconds to 'groundlock' duration"), neither of which changes the
   fact that the final value is CHA-contested and thus unreportable as a fixed base.
-- **`runicFlame` and `runicSand` are sp-scaled self-channels with no fixed Duration, plus each
-  periodically drops a fire/sand-trail segment whose lifetime is computed through a parameter
-  deceptively named `tID` — not a target ID at all.** Both apply a self-status via `RPC_AddStatus`
-  gating the channel: `runicFlame` — `Monkey.cs:29442` —
-  `this.$self_$24557.EOxsb7GTOK.RPC_AddStatus("runicFlame", 1, Mathf.FloorToInt((float)this.$self_$24557.EOxsb7GTOK.sp * 0.2f), 0, ...);`
-  ; `runicSand` — `Monkey.cs:34130`, identical pattern — both scale with the caster's **current SP
-  pool** at cast time, not a fixed learnable value, so neither has a reportable Duration Base (same
-  "channeled, no fixed duration" reasoning as the Mole `advanceRepair` precedent). Separately, while the
-  channel status is active, `Monkey.cs:12431` —
-  `int tID = this.EOxsb7GTOK.chaAdjust(5);` (inside `RunicFlame()`, called every `0.2f`s while
-  `hasStatus("runicFlame")`) — computes a **chaAdjust-wrapped value of `5`** and passes it through
-  `RPC_runicFlame_fire(tPos, tDir, tID)` → `Monkey_runicFlame.Init(gameObject, mChar, nLife)` where
-  `Monkey_runicFlame.cs:27` sets `this.mLife = Time.time + (float)nLife;` — the parameter is literally
-  named `tID` at the call site (matching the standard `(Vector3 mPos, Vector3 tDir, int tID)` RPC
-  signature convention) but is actually reused to carry the individual fire-trail segment's 5-second
+- **`runicFlame` and `runicSand` are sp-scaled self-channels with no fixed Duration of their own, but
+  each periodically drops a fire/sand-trail segment on the ground whose own lingering lifetime — a
+  `chaAdjust(5)` value, reported 2026-08-14 at the user's request — is what this table's Duration column
+  reports, per the "cite the object's own on-the-ground lifetime, not just character-applied statuses"
+  convention established for Mole's mines/Rabbit's fields.** The channel-gating self-status
+  (`RPC_AddStatus("runicFlame"/"runicSand", 1, Mathf.FloorToInt(sp*0.2f), 0, ...)`, `Monkey.cs:29442`/
+  `:34130`) scales with the caster's **current SP pool** at cast time, not a fixed learnable value, so it
+  has no reportable Duration Base of its own (same "channeled, no fixed duration" reasoning as the Mole
+  `advanceRepair` precedent) — that status is NOT what this table's Duration cell reports. What it
+  reports instead is each trail segment's own ground-lifetime: while the channel status is active,
+  `Monkey.cs:12431` — `int tID = this.EOxsb7GTOK.chaAdjust(5);` (inside `RunicFlame()`, called every
+  `0.2f`s while `hasStatus("runicFlame")`) — computes a **chaAdjust-wrapped value of `5`** and passes it
+  through `RPC_runicFlame_fire(tPos, tDir, tID)` → `Monkey_runicFlame.Init(gameObject, mChar, nLife)`
+  where `Monkey_runicFlame.cs:27` sets `this.mLife = Time.time + (float)nLife;` — the parameter is
+  literally named `tID` at the call site (matching the standard `(Vector3 mPos, Vector3 tDir, int tID)`
+  RPC signature convention) but is actually reused to carry the individual fire-trail segment's 5-second
   lifetime, not a real target actor ID. `runicSand` mirrors this exactly at `Monkey.cs:13697` /
-  `Monkey_runicSand.cs:27`. Neither segment-lifetime value is used as this table's Duration (it's a
-  per-tick visual-effect lifetime, not the skill's own active-duration), so both `runicFlame` and
-  `runicSand` report Duration `—`.
+  `Monkey_runicSand.cs:27`. Every segment dropped during the channel shares this same fixed 5s
+  (`chaAdjust`-scaled) lifetime, so it's a stable, citable Duration despite the channel itself having
+  none.
 - **`summonSoul` sets `addTimeOut("summonSoul", ...)` twice, on two different characters — only the
   self-cast is the player's real recast cooldown.** `Monkey.cs:24139` —
   `this.$mSummonChar$24439.addTimeOut("summonSoul", (float)999);` — applied to the **summoned
@@ -261,9 +289,12 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `lavu` Duration: `Monkey.cs:34579` — `this.$mDuration$24678 = this.$self_$24681.EOxsb7GTOK.chaAdjust(60);`, applied at `Monkey.cs:34590` — `this.$self_$24681.EOxsb7GTOK.RPC_AddStatus("lavu", this.$sLv$24680, this.$mDuration$24678, 0, this.$self_$24681.EOxsb7GTOK.ActorNr);`
 - `summonSoul` Duration: `Monkey.cs:24195` (Phoenix1) through `24407` (Gaos) — every summon-type branch, e.g. `this.$tChar$24438.RPC_AddStatus("phoenixSoul", 1, 240, 0, this.$self_$24444.EOxsb7GTOK.ActorNr);` — bare literal `240` in all branches (`phoenixSoul`/`jaSoul`/`gadinaSoul`/`buitenSoul`/`gaosSoul`), applied to a friendly target, not contested
 - `skyCrimson`, `worldIgnition`, `groundLock`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
-- `runicFlame`, `runicSand`: sp-scaled self-channel with no fixed base, plus an unrelated chaAdjust-wrapped trail-segment lifetime disguised as a `tID` parameter — see judgment-call note; Duration cells are `—`
-- `fireBall`, `phoenix`, `blazingArrow`, `flashFire`, `ja`, `instantBlaze`, `gadina`, `planetBreaker`,
-  `titanicEarthPulse`, `stoneHammer`, `buiten`, `earthGuard`, `volcanicEruption`, `summonGaos`,
+- `runicFlame` Duration (trail-segment ground-lifetime, not the channel status): `Monkey.cs:12431,12436` — `int tID = this.EOxsb7GTOK.chaAdjust(5); this.RPC_runicFlame_fire(this.S3vsdQ4mPv.position, vector, tID);` → `Monkey_runicFlame.cs:20,27` — `Init(GameObject nOwner, CharacterControl nOwnerChar, int nLife)` sets `this.mLife = Time.time + (float)nLife;` — see the dedicated judgment-call note above.
+- `runicSand` Duration (trail-segment ground-lifetime): `Monkey.cs:13697` — same pattern via `Monkey_runicSand.cs:20,27`.
+- `fireBall`, `blazingArrow`, `flashFire`, `instantBlaze`, `planetBreaker`,
+  `titanicEarthPulse`, `stoneHammer`, `earthGuard`, `volcanicEruption`,
   `summonAttack`, `summonDefense`, `unsummon`, `summonRelease`: no usable Duration — no
   `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists in the skill's own coroutine class body;
   see the bulk judgment-call note above. Duration cells are `—`.
+- `phoenix`, `ja`, `gadina`, `buiten`, `summonGaos`: Duration cells are `∞` (confirmed no despawn timer
+  — see the dedicated judgment-call note above), not `—`.

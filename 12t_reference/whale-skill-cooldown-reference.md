@@ -103,7 +103,14 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   below). `knightOfTheDeep1`'s own flavor text only mentions Javelin/FlyingShield
   (`WhaleSkill_eng.cs:532`: "reduces cooldown of Jevalin and FlyingShield by 18 sec"), but the code
   applies it more broadly to all six weapon-swing-style skills; none of this changes the base (lv-0)
-  numbers reported here.
+  numbers reported here. Encoded structurally in the lookup tool's data (2026-08-14) via a `cdDep`
+  field on each of the six affected `SKILLS` entries (`12t_projects/player-reference-tool/index.html`):
+  `knightOfTheDeep1` is single-rank (`minRank:0, maxRank:1`), so each skill's own `perRank` is just its
+  cited reduction as a negative (`sweep`/`javelin`: `-10`, `shieldRush`/`flyingShield`: `-15`,
+  `peninsulaImpale`: `-30`, `peninsulaRound`: `-40`) — all six share one `id` (`"knightOfTheDeep"`) so
+  toggling it on one skill carries over to the others, matching the passive being one single learned/
+  not-learned state in-game. Rendered as a single icon toggle (`.sk-dep-toggle`), not a rank stepper,
+  since there's no middle rank.
 - **CD-wrapped status verified individually at every one of the 23 skills' own cast sites, per the
   plan's `manaArc`/`quickHeal`-precedent warning — no bare-literal trap found for Whale.** All 23 use
   `agiAdjust(...)`, either directly at their own dedicated cast site (`sweep`, `javelin`, `honor`,

@@ -6,11 +6,11 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
 | reload | Reload | 2 | 240 | true | false | — | — |
-| mine | Landmine | 4 | 15 | true | false | — | — |
+| mine | Landmine | 4 | 15 | true | false | 60 | true |
 | mortarShot | Mortar Shot | 2 | 30 | true | false | — | — |
 | bunker | Bunker | 2 | 30 | true | false | — | — |
 | tnt | TNT | 4 | 90 | true | false | — | — |
-| stunMine | Stun Mine | 2 | 45 | true | false | — | — |
+| stunMine | Stun Mine | 2 | 45 | true | false | 60 | false |
 | stunGrenade | Stun Grenade | 2 | 60 | true | false | — | — |
 | flameTurret | Flame Turret | 3 | 120 | true | false | 5 | true |
 | fireBarrage | Fire Barrage | 2 | 120 | true | false | — | — |
@@ -18,7 +18,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | timeNuke | Time Nuke | 2 | 360 | true | false | 60 | false |
 | detonate | Detonate | 1 | 360 | true | false | — | — |
 | autoGyroGun | Auto Gyro Gun | 4 | 30 | true | false | 120 | true |
-| barrelBot | Barrel Bot | 4 | 240 | true | false | — | — |
+| barrelBot | Barrel Bot | 4 | 240 | true | false | ∞ | — |
 | megaPunch | Mega Punch | 2 | 30 | true | false | — | — |
 | megaHammer | Mega Hammer | 2 | 30 | true | false | — | — |
 | chopper | Chopper | 3 | 45 | true | false | — | — |
@@ -28,7 +28,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | advanceRepair | Advance Repair | 1 | 30 | true | false | — | — |
 | napalm | Napalm | 1 | 150 | true | false | — | — |
 | grenadeCluster | Grenade Cluster | 1 | 120 | true | false | — | — |
-| flameCarnival | Flame Carnival | 1 | 150 | true | false | — | — |
+| flameCarnival | Flame Carnival | 1 | 150 | true | false | 90 | true |
 | megaDrill | Mega Drill | 1 | 30 | true | false | — | — |
 | barrelCannon | Barrel Cannon | 1 | 120 | true | false | — | — |
 | warFactory | War Factory | 1 | 180 | true | false | — | — |
@@ -152,10 +152,10 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   moves at all — it is not gated by a fixed timer or `RPC_AddStatus` call, so it has no reportable
   Duration value, matching the eng description's "Restore 150hp/sec to any target friendly machines or
   structures" with no stated time limit.
-- **No `RPC_AddStatus`/field-effect-lifetime/`addStatus` call exists for**: `reload`, `mine`,
-  `mortarShot`, `bunker`, `tnt`, `stunMine`, `stunGrenade`, `fireBarrage`, `bombardment`, `detonate`,
+- **No `RPC_AddStatus`/field-effect-lifetime/`addStatus` call exists for**: `reload`,
+  `mortarShot`, `bunker`, `tnt`, `stunGrenade`, `fireBarrage`, `bombardment`, `detonate`,
   `barrelBot`, `megaPunch`, `megaHammer`, `chopper`, `missile`, `napalm`,
-  `grenadeCluster`, `flameCarnival`, `megaDrill`, `barrelCannon`, `warFactory`, `warCapital` — confirmed
+  `grenadeCluster`, `megaDrill`, `barrelCannon`, `warFactory`, `warCapital` — confirmed
   by cross-checking each skill's cast-site coroutine class body against the full-file `RPC_AddStatus`/
   `.addStatus(`/`.life = ` grep results. These are pure-damage, pure-utility, or summon-creation skills
   with no self/target buff-duration of their own. Duration cells are `—`.
@@ -165,6 +165,41 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   this.mChar.ActorNr, this.mChar.chaAdjust(120)));` — the turret's own `create(CharacterControl,
   int, float)` receives `chaAdjust(120)` as its lifetime directly, no companion-file `Init()` indirection
   needed for this one.
+- **`mine` and `stunMine` are also no longer in the bulk list above — re-checked 2026-08-14 (user request)
+  and each has a real, verified prop-lifetime via the `Init(nLife, ...)` companion-file pattern (same
+  shape as Rabbit's `stickyGum`/`acidicField`/`healingField`), not `RPC_AddStatus`.** `mine`: spawn/`Init`
+  at `Mole.cs:24233` → `Mole_mine.cs:60` — `this.aO9boyDZyA = (int)((float)this.lwlbygsWTr.chaAdjust(60) +
+  Time.time);` — **`chaAdjust(60)`**, self-scaled off the placer's own CHA; enforced in
+  `Mole_mine.cs:146-163`'s `Update()`, `Destroy` on expiry unless already detonated. `stunMine`: `Init` at
+  `Mole.cs:27019` → `Mole_stunMine.cs:60` — `this.XYwd2vIXAX = (int)((float)this.MAZdRGaitt.talAdjust(60) +
+  Time.time);` — **`talAdjust(60)`, not `chaAdjust`** (a genuinely different scaling stat — TAL, not CHA,
+  independently re-confirmed 2026-08-14 by reading `Mole_stunMine.cs` directly and cross-checking
+  `talAdjust` is a real `CharacterControl` method, `CharacterControl.cs:20624` — not a mis-citation);
+  same `Update()`-gated `Destroy` pattern at `Mole_stunMine.cs:146-163`. Since this tool has no TAL
+  input, `stunMine`'s reported `60` is the TAL-unadjusted base (`talAdjust`'s own baseline at TAL=0
+  equals the raw value), and `Duration Wrapped` is reported `false` even though the value does genuinely
+  scale in-game — same convention as Chameleon's `tent`/`magAdjust` case, flagged here so the lookup
+  tool doesn't read `false` as "never scales, period."
+- **`flameCarnival`'s reported `chaAdjust(90)` is the unarmed trap's own arming-window despawn timer,
+  NOT the fire hazard's active/burn duration — flagged explicitly 2026-08-14 after the user correctly
+  caught that 90s (~225s at 100 CHA) reads nothing like the skill's actual ~10s in-game hazard window,
+  then asked to keep the trap-lifetime value once the distinction was clear.** `Mole_flameCarnival.cs:53`
+  — `this.X83bE9HJAd = (int)((float)this.wZxb0yFo8I.chaAdjust(90) + Time.time);` governs how long the
+  placed-but-unstepped-on trap prop sits before vanishing if nobody triggers it (an arming window, same
+  category as a landmine's own sit-time) — this is genuinely what this table's Duration column reports
+  for `mine`/`stunMine` too, so it's kept for consistency rather than excluded, but readers should not
+  read it as "how long the fire burns." Once triggered (`Mole_flameCarnival.cs`'s `OnTriggerEnter`,
+  cast site `Mole.cs:38659` `RPC_flameCarnival`), that trap object is destroyed almost immediately
+  (`Mole.cs:39014`) and a **separate** coroutine, `RPC_flameCarnival_fire` (`Mole.cs:38844-39257`), takes
+  over the actual damage/visual effect — a tick loop capped at `i >= 20` (`Mole.cs:39033`) with short
+  yields (`WaitForSeconds(0.3f)`/`0.3f`/`0.5f` at the coroutine's entry states, then a
+  `this.YieldDefault(1)` per subsequent tick, `Mole.cs:39020`) — clearly much shorter than 90s and
+  consistent with the user's ~10s observation, but its exact total could not be pinned to one citable
+  number: `YieldDefault`'s own implementation lives in the compiled `GenericGeneratorEnumerator<
+  WaitForSeconds>` base class, which has no `.cs` source in this repo (only call sites), so its per-tick
+  wait can't be independently confirmed the way every other citation in this doc-family is. This active-
+  burn duration is NOT what the table's Duration column reports for this skill — only the arming window
+  is, per the above.
 - **`barrelBot` was specifically re-checked (user question, 2026-08-13) and confirmed to have no timed
   lifetime at all — unlike `autoGyroGun`, `flameTurret`, `synchroMole`, and `kingKaiser`, all of which
   do.** `barrelBot.create(int nCreatorID)` (`BarrelBot.cs:1920`, called `Mole.cs:13005`) takes only the
@@ -172,8 +207,10 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   lines) for `chaAdjust` returns zero hits, and its only two `Destroy(this.gameObject)` calls are both
   conditional on death/disconnect state, not a timer: `:366` fires when `!this.mCreatorChar` (creator
   gone), `:6529` fires when `this.mChar.actionState == "dead"` (the bot itself was killed). Barrel Bot
-  persists until it dies or its owner disconnects, not for a fixed duration — the `—` Duration cell is
-  correct as-is, not a documentation gap.
+  persists until it dies or its owner disconnects, not for a fixed duration. **Reported as `∞` (2026-08-14,
+  at the user's request) rather than `—`** — the lookup tool now distinguishes "confirmed no timer,
+  persists until death/unsummon/disconnect" (an infinity-icon Duration chip) from "no citable Duration
+  data of any kind" (a plain `—`); this is the former, not the latter.
 - **Confirmed-passive skills excluded from the table (no cooldown, `mode = eSkillMode.passive` in
   `getSkill()`, no `RPC_<name>` cast handler in `Mole.cs`):** `gadgeteer1`-`4` (Workshop crafting-tier
   unlock), `statPlus1`-`4` and `superStatPlus5` (flat stat bonuses), `extraPowder1`-`3` (blast-radius
@@ -219,11 +256,16 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `synchroMole` Duration: `Mole.cs:13242` — `this.mChar.RPC_AddStatus("synchroMole", sLv, num, this.mChar.tal, this.mChar.ActorNr);` with `num = this.mChar.chaAdjust(30)` set at `Mole.cs:13237` (self-buff, not target-contested)
 - `kingKaiser` Duration: `Mole.cs:36023` — `this.$tChar$23853.StartCoroutine_Auto(this.$tChar$23853.addStatus("transform", 1, this.$mDuration$23851, 0, this.$self_$23861.mChar.ActorNr));` and `Mole.cs:36135` — `this.$self_$23861.mChar.StartCoroutine_Auto(this.$self_$23861.mChar.addStatus("hide", 1, this.$mDuration$23851, 0, this.$self_$23861.mChar.ActorNr));`, with `$mDuration$23851 = this.$self_$23861.mChar.chaAdjust(240)` set at `Mole.cs:35789` (`addStatus`, not literally `RPC_AddStatus` — see judgment-call note)
 - `autoGyroGun` Duration (summon lifetime, not `RPC_AddStatus`): `Mole.cs:12235` — `autoGyroGun.StartCoroutine_Auto(autoGyroGun.create(this.mChar, this.mChar.ActorNr, this.mChar.chaAdjust(120)));` — see the dedicated judgment-call note above.
-- `barrelBot`: re-checked and confirmed to have no timed lifetime at all (HP/disconnect-based instead) — see the dedicated judgment-call note above. Duration cell is `—`, correctly.
-- `reload`, `mine`, `mortarShot`, `bunker`, `tnt`, `stunMine`, `stunGrenade`, `fireBarrage`, `bombardment`,
+- `barrelBot`: re-checked and confirmed to have no timed lifetime at all (HP/disconnect-based instead) — see the dedicated judgment-call note above. Duration cell is `∞`.
+- `mine` Duration (prop lifetime, not `RPC_AddStatus`): `Mole.cs:24233` → `Mole_mine.cs:60` — `this.aO9boyDZyA = (int)((float)this.lwlbygsWTr.chaAdjust(60) + Time.time);` — see the dedicated judgment-call note above.
+- `stunMine` Duration (prop lifetime, not `RPC_AddStatus`, `talAdjust`-wrapped not `chaAdjust`): `Mole.cs:27019` → `Mole_stunMine.cs:60` — `this.XYwd2vIXAX = (int)((float)this.MAZdRGaitt.talAdjust(60) + Time.time);` — see the dedicated judgment-call note above.
+- `reload`, `mortarShot`, `bunker`, `tnt`, `stunGrenade`, `fireBarrage`, `bombardment`,
   `detonate`, `megaPunch`, `megaHammer`, `chopper`, `missile`,
-  `advanceRepair`, `napalm`, `grenadeCluster`, `flameCarnival`, `megaDrill`, `barrelCannon`, `warFactory`,
+  `advanceRepair`, `napalm`, `grenadeCluster`, `megaDrill`, `barrelCannon`, `warFactory`,
   `warCapital`: no usable Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists in
   the skill's own coroutine class body; see the bulk judgment-call notes above (`advanceRepair`'s channel
   mechanic and `warFactory`'s excluded `rollerMachine` proc get their own dedicated notes). Duration
   cells are `—`.
+- `flameCarnival` Duration (unarmed-trap arming window, not the fire's own burn time — see the dedicated
+  judgment-call note above): `Mole.cs:38518,38559` → `Mole_flameCarnival.cs:53` —
+  `this.X83bE9HJAd = (int)((float)this.wZxb0yFo8I.chaAdjust(90) + Time.time);`
