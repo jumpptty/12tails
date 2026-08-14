@@ -10,9 +10,9 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | maimShot | Maim Shot | 4 | 15 | true | false | — | — |
 | mix | Mix | 4 | 30 | true | false | — | — |
 | shake | Shake | 3 | 30 | true | false | — | — |
-| miracleBlend | Miracle Blend | 1 | 60 | true | false | — | — |
-| stickyGum | Sticky Gum | 2 | 60 | true | false | — | — |
-| acidicField | Acidic Field | 2 | 60 | true | false | — | — |
+| miracleBlend | Miracle Blend | 1 | 60 | true | false | 6 | true |
+| stickyGum | Sticky Gum | 2 | 60 | true | false | 12 | true |
+| acidicField | Acidic Field | 2 | 60 | true | false | 12 | true |
 | immuneShot | Immune Shot | 1 | 30 | true | false | 20 | true |
 | boostShot | Boost Shot | 1 | 30 | true | false | 35 | true |
 | heatShot | Heat Shot | 1 | 30 | true | false | 35 | true |
@@ -27,7 +27,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | truceTrading | Truce Trading & Co. | 2 | 240 | true | false | — | — |
 | shootingArray | Shooting Array | 2 | 120 | true | false | — | — |
 | millionaire | Millionaire | 2 | 300 | true | false | — | — |
-| healingField | Healing Field | 1 | 120 | true | false | — | — |
+| healingField | Healing Field | 1 | 120 | true | false | 12 | true |
 | diamondShot | Diamond Shot | 1 | 300 | true | false | — | — |
 | tenShot | Ten Shot | 1 | 120 | true | false | — | — |
 | extravagance | Extravagance | 1 | 120 | true | false | 6 | true |
@@ -76,6 +76,21 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   (`RabbitSkill.cs:1935-1960`: `mode=instant; target=self; cType="stickyGum"`) — despite `alchemistLab4`
   being just as clearly a passive town-unlock as ranks 1-3. No extra row needed since `stickyGum` is
   already reported from its own clean ranks 1-2.
+- **`alchemistLab`'s MiracleBlend-duration-extension claim (eng description above) is independently
+  verified in code — not in `Rabbit.cs` at all, but in `Rabbit_potion.cs`, the thrown potion's own
+  pickup-effect class.** A full-file grep of `Rabbit.cs` for `alchemistLab` returns zero hits; the real
+  mechanism is `Rabbit_potion.cs:223-270`, where the potion's pickup handler checks
+  `hasSkill(231)`/`hasSkill(232)`/`hasSkill(233)`/`hasSkill(234)` (confirmed as
+  `rab_alchemistLab1`-`4` via `RabbitSkill.cs:2628-2671`'s `commandNum` switch) to set a local rank
+  variable `num` to 1/2/3/4 (default 0, but floored to 1 by `Mathf.Clamp(num,1,4)` at the call site).
+  That rank feeds the `"miracleDrop"` status duration at `Rabbit_potion.cs:432-438`:
+  `this.chaAdjust(4 + 2 * num)` → 6/8/10/12s, exactly matching the flavor text. `miracleBlend`'s Duration
+  is now reported as `6` (rank-1/unlearned raw value) rather than `—`; the previous "no usable Duration"
+  judgment call was correct for `Rabbit.cs` alone but missed this per-skill companion file. This is also
+  the first case in this doc of a skill whose Duration is a function of a *different* skill's learned
+  rank rather than only CHA/LCK — see `12t_projects/player-reference-tool/index.html`'s `dep` field on
+  the `SKILLS` entry, which encodes this relationship structurally for the lookup tool
+  (`rawAtRank(R) = duration + perRank*(R - minRank)`, `minRank:1, maxRank:4, perRank:2` here).
 - **`bunnyBargain1`-`4` are confirmed passives (NPC shop discount/bonus), and `herbFinder1`-`2`
   legitimately share the same passive tail via natural empty-fallthrough — not a trap.**
   `bunnyBargain1`/`2` explicitly `goto IL_A1A`(`RabbitSkill.cs:751`)/direct(`:757`) → `IL_435`
@@ -93,7 +108,11 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   both empty-fallthrough (ranks 1-2) and explicit `goto IL_2873` (rank 3, `:634`). The mechanism is
   `Rabbit.cs:10381-10420`'s `getMedicalEnhancementLv()` (returns 0/1/2/3 based on which
   `medicalEnhancement` rank is learned), which feeds directly into the ImmuneShot/BoostShot/HeatShot/
-  LifeShot duration formulas below — see the Duration citations note.
+  LifeShot duration formulas below — see the Duration citations note. This relationship is encoded
+  structurally in the lookup tool's data via each of those four `SKILLS` entries' `dep` field
+  (`12t_projects/player-reference-tool/index.html`): `rawAtRank(R) = duration + perRank*(R - minRank)`,
+  `minRank:0, maxRank:3, perRank:5`, letting the tool live-recompute Duration for any learned rank
+  instead of only reporting the unlearned base.
 - **`customizedShotgun1`/`2` are confirmed passives, but their `getSkill()` entries are a dead-code-
   fallthrough trap landing on `millionaire`'s real active-skill tail — the clearest instance of the
   Mole/Panda-precedent bug in this file.** Both ranks (`RabbitSkill.cs:803-813`, note the file also has
@@ -182,20 +201,33 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `addTimeOut` precedent) — matches the real cast site exactly (`Rabbit.cs:40652`,
   `agiAdjust((float)180)`). Not a discrepancy.
 - **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`, `bounce`, `mix`,
-  `shake`, `miracleBlend`, `stickyGum`, `acidicField`, `gilShot`, `backpack`, `fourShot`, `circleShot`,
-  `mall`, `truceTrading`, `shootingArray`, `millionaire`, `healingField`, `diamondShot`, `tenShot`,
+  `shake`, `gilShot`, `backpack`, `fourShot`, `circleShot`,
+  `mall`, `truceTrading`, `shootingArray`, `millionaire`, `diamondShot`, `tenShot`,
   `contract` — confirmed by a full-file grep of every `RPC_AddStatus(` call in `Rabbit.cs` and
   cross-checking each hit against these skills' own coroutine bodies. `mix`/`shake`/`miracleBlend` throw
-  consumable potions (picked up separately, off the skill's own cast-site duration path) and
-  `stickyGum`/`acidicField`/`healingField` place a timed field object, but none of their own dedicated
-  coroutines (`RPC_cast1`, `RPC_<name>_cast`) contain a citable `RPC_AddStatus`/field-lifetime constant —
-  the remaining `RPC_AddStatus` hits in the file belong either to the 12 support skills, to the
+  consumable potions (picked up separately, off the skill's own cast-site duration path) — the remaining
+  `RPC_AddStatus` hits in the file belong either to the 12 support skills, to the
   passive/excluded skills documented above, or to an unrelated shared minigame/consumable-item/flag-
   capture effect system (`wash`, `bless`, `ice`, `bubbleShield`, `iceShield`, `awareness`, `float`,
   `mpsap`, `burn`, `blind`, `plague`, `frost`, `awake`, `yellowFlag`, `cleanse`, `blueFlag`, `whiteFlag`,
   `redFlag`, `happy`, `charm`, `clear`, `poison`, `heavy`, `mpDrain`, `hpDrain`) — none tied to any
   `RabbitSkill.cs` roster entry, matching the same generic-effects block documented in the Monkey/Panda
-  docs. Duration cells for all nineteen skills listed above are `—`.
+  docs. Duration cells for all fifteen skills listed above are `—`. **`miracleBlend`, `stickyGum`,
+  `acidicField`, `healingField` are no longer in this list** — each is verified separately below, none
+  via `RPC_AddStatus` (they're field objects with their own on-the-ground lifetime, not a status applied
+  to a character).
+- **`stickyGum`/`acidicField`/`healingField` each place a timed field object whose lifetime is set by its
+  own dedicated companion `.cs` file, not by anything in `Rabbit.cs`'s `RPC_AddStatus` calls — same
+  "verified outside the class-name file" pattern as `alchemistLab`/`miracleBlend`.** Each companion file
+  (`Rabbit_stickyGum.cs`, `Rabbit_acidicField.cs`, `Rabbit_healingField.cs`) defines an `Init(int nLv,
+  int nLife, int nOwnerID)` (or, for `healingField`'s single-rank case, `Init(int nLife, int nOwnerID)`)
+  that stores a deadline `nLife + Time.time`; its own `Update()` calls
+  `UnityEngine.Object.Destroy(this.gameObject)` once `Time.time` passes that deadline — confirmed
+  identical in all three files (`Rabbit_stickyGum.cs:28,50,91,113`, `Rabbit_acidicField.cs:50,100,213`,
+  `Rabbit_healingField.cs:47,96,204`). `Rabbit.cs` computes `nLife` in each skill's own cast coroutine
+  before calling `RPC_<name>_create(...)` → `Init(...)`, all three landing on the identical
+  `chaAdjust(12)`: `stickyGum` at `Rabbit.cs:26621`, `acidicField` at `Rabbit.cs:27128`, `healingField`
+  at `Rabbit.cs:37831`.
 
 ### CD citations
 - `statScan` CD: `Rabbit.cs:22746` — `this.$self_$26966.mChar.addTimeOut("statScan", this.$self_$26966.mChar.agiAdjust(30f));`
@@ -231,11 +263,15 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `boostShot` Duration: `Rabbit.cs:28341` — `this.$tChar$27103.RPC_AddStatus("boost", this.$mBoostLv$27107, this.$self_$27115.mChar.chaAdjust(30 + this.$mLv$27104 * 5), 0, ...);` — base = `chaAdjust(35)`
 - `heatShot` Duration: `Rabbit.cs:28400` — `this.$tChar$27103.RPC_AddStatus("heat", this.$mHeatLv$27108, this.$self_$27115.mChar.chaAdjust(30 + this.$mLv$27104 * 5), 0, ...);` — base = `chaAdjust(35)`
 - `lifeShot` Duration: `Rabbit.cs:28459` — `this.$tChar$27103.RPC_AddStatus("autoLife", this.$mAutoLifeLv$27109, this.$self_$27115.mChar.chaAdjust(60 + this.$mLv$27104 * 5), 0, ...);` — base = `chaAdjust(65)`
+- `miracleBlend` Duration: `Rabbit_potion.cs:432-438` — `characterControl2.RPC_AddStatus("miracleDrop", Mathf.Clamp(num, 1, 4), characterControl.chaAdjust(4 + 2 * num), 50, this.gbbNPxW0WH);` — `num` is set from `hasSkill(231/232/233/234)` (`rab_alchemistLab1`-`4`, `Rabbit_potion.cs:223-270`), floored to 1 by the `Mathf.Clamp`; base with `num = 1` (no `alchemistLab`) = `chaAdjust(6)`. Verified outside `Rabbit.cs` — see the dedicated judgment-call note above.
+- `stickyGum` Duration (field lifetime, not `RPC_AddStatus`): `Rabbit.cs:26621` — `this.$mDuration$27071 = this.$self_$27075.mChar.chaAdjust(12);`, passed into `RPC_stickyGum_create(...)` → `Rabbit_stickyGum.Init(sLv, nLife, ownerID)`, which stores `nLife + Time.time` as the field's own despawn deadline. See the dedicated judgment-call note above.
+- `acidicField` Duration (field lifetime): `Rabbit.cs:27128` — `this.$mDuration$27083 = this.$self_$27087.mChar.chaAdjust(12);`, same `Init()`-deadline pattern via `Rabbit_acidicField.cs`.
+- `healingField` Duration (field lifetime): `Rabbit.cs:37831` — `this.$mDuration$27360 = this.$self_$27363.mChar.chaAdjust(12);`, same pattern via `Rabbit_healingField.cs`.
 - `rapidTrance` Duration: `Rabbit.cs:29119` — `this.$self_$27126.mChar.RPC_AddStatus("rapidTrance", 1, this.$self_$27126.mChar.chaAdjust(12), 0, ...);` (self, not target-contested)
 - `extravagance` Duration: `Rabbit.cs:39902` — `this.$self_$27416.mChar.RPC_AddStatus("atkUp", 5, this.$self_$27416.mChar.chaAdjust(6), this.$mExtravaganceValue$27411, ...);` (self, not target-contested; 4th param is the money-derived attack-bonus value, not duration)
 - `maimShot`, `gorgonShot`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
-- `statScan`, `bounce`, `mix`, `shake`, `miracleBlend`, `stickyGum`, `acidicField`, `gilShot`,
+- `statScan`, `bounce`, `mix`, `shake`, `gilShot`,
   `backpack`, `fourShot`, `circleShot`, `mall`, `truceTrading`, `shootingArray`, `millionaire`,
-  `healingField`, `diamondShot`, `tenShot`, `contract`: no usable Duration — no `RPC_AddStatus`/
+  `diamondShot`, `tenShot`, `contract`: no usable Duration — no `RPC_AddStatus`/
   `addStatus`/field-effect-lifetime call exists in the skill's own coroutine class body; see the bulk
   judgment-call note above. Duration cells are `—`.

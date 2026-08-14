@@ -29,6 +29,27 @@ The stamped-seal medallion (fox-tail glyph) that originally topped `.ledger-wrap
 
 **Type roles**: Georgia-family serif for all headings/titles (`h1-h3`, `.entry-title`) — a deliberate workhorse choice, not a trendy display face. System sans for UI chrome/labels/body. `ui-monospace` (`.num` class) for every numeric table cell — ledger/ticker precision, ties to the subject.
 
-**Structure**: menu is a `<ul class="ledger">` of `.entry` chips (mark + title + category tag + arrow) laid out as a **2-column grid** (since 2026-08-12; collapses to 1 column under 560px) — a hairline-ruled ledger sheet (1px `--line` gaps between cells), not elevated/shadowed dashboard cards, so it still reads as an index rather than a tile grid. Changed from the original full-width single-column row list because a single entry stretched edge-to-edge at 760px looked disproportionately long. Each entry's `category` tag is real taxonomy (Calculator/Lookup/Map/...), not decoration — keep it accurate per tool. Link-out entries get the `→` arrow swapped for `↗` and an `.entry-external` class (diagonal hover-nudge instead of horizontal) so the two entry kinds are visually distinguishable without adding any text.
+**Structure**: menu is a `<ul class="ledger">` of `.entry` chips (mark + title + category tag + arrow) laid out as a **2-column grid** (since 2026-08-12; collapses to 1 column under 560px). Changed from the original full-width single-column row list because a single entry stretched edge-to-edge at 760px looked disproportionately long. Each entry's `category` tag is real taxonomy (Calculator/Lookup/Map/...), not decoration — keep it accurate per tool. Link-out entries get the `→` arrow swapped for `↗` and an `.entry-external` class (diagonal hover-nudge instead of horizontal) so the two entry kinds are visually distinguishable without adding any text.
+
+**Chips are visually disconnected (changed 2026-08-13, user-requested):** each `.entry` is now its own bordered chip (`border:1px solid var(--line)`, own `border-radius:3px`) with a real `14px` grid `gap`, not a shared hairline-divided sheet — `.ledger-wrap` used to carry a solid `--line` background plus a `1px` grid gap so that gap read as dividers between flush cells, with `.ledger-wrap`'s own border/shadow framing the whole thing as one card; that's gone; `.ledger-wrap` is now just a plain layout container with no border/background/shadow of its own. Deliberate reversal of the original "ledger sheet, not a card grid" framing above — don't re-merge the chips back into one bordered sheet without being asked. `.entry` also carries `min-height:100px` (same day, same request) so a 2-line title (e.g. "Skill Cooldown/Duration Lookup") doesn't make that chip visibly taller than its 1-line siblings — measured against the tallest real entry at the time, not an arbitrary round number; re-measure if a much longer title gets added later.
 
 **Skill icons render borderless (2026-08-13, user-requested):** the Skill Cooldown/Duration Lookup tool's large hero icon (`.sk-hero-icon`) and the revisedArt5 toggle icon (`.sk-revisedart`) both used to have a hairline `--line`/`--gold` border box around them; both were changed to `border:none`. Deliberate, not an oversight — don't reintroduce a border on either without being asked.
+
+## Known issues / deferred fixes
+
+- **Arrow-key skill navigation order — interim fix landed 2026-08-14, real fix still deferred.**
+  `SKILLS_ORDERED` (`index.html`, right after the `SKILLS` array closes) was first built as
+  `[...SKILLS].sort()` by `class` then by the string `id` field (e.g. `"bat_blackServant"`) —
+  alphabetical by skill *name-as-written-in-code*. That broke immediately in practice: it silently
+  diverged from the search dropdown's own order (which just preserves `SKILLS`' array/definition order),
+  so arrowing through a class didn't match what its dropdown entries showed, and felt like it randomly
+  jumped to the next class early. Fixed same-day by setting `SKILLS_ORDERED = SKILLS` directly — every
+  class is already one contiguous block in the raw array (verified), so this now matches the dropdown
+  exactly. **This is still not the user's actual end goal.** They want navigation ordered by each skill's
+  real **in-game numeric skill code** (the `commandNum`/`hasSkill(N)` IDs seen throughout the decompiled
+  source, e.g. `RabbitSkill.cs`'s `commandNum` switch, `WolfSkill.cs`'s equivalent — a different per-class
+  numbering scheme than either the string `id`s or the array's own definition order). `SKILLS` has no
+  field for that numeric code today; adding it means sourcing each skill's real number from its class's
+  own `<Class>Skill.cs` `commandNum`-to-name switch (the exact lookup pattern used repeatedly this
+  session, e.g. Rabbit alchemistLab1-4 = 231-234, Wolf perseverance1/2 = 121/122) — a real per-skill
+  research pass across all 12 classes, not a quick fix, which is why it's still deferred.

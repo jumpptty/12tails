@@ -17,7 +17,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | bombardment | Bombardment | 2 | 180 | true | false | — | — |
 | timeNuke | Time Nuke | 2 | 360 | true | false | 60 | false |
 | detonate | Detonate | 1 | 360 | true | false | — | — |
-| autoGyroGun | Auto Gyro Gun | 4 | 30 | true | false | — | — |
+| autoGyroGun | Auto Gyro Gun | 4 | 30 | true | false | 120 | true |
 | barrelBot | Barrel Bot | 4 | 240 | true | false | — | — |
 | megaPunch | Mega Punch | 2 | 30 | true | false | — | — |
 | megaHammer | Mega Hammer | 2 | 30 | true | false | — | — |
@@ -154,11 +154,26 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   structures" with no stated time limit.
 - **No `RPC_AddStatus`/field-effect-lifetime/`addStatus` call exists for**: `reload`, `mine`,
   `mortarShot`, `bunker`, `tnt`, `stunMine`, `stunGrenade`, `fireBarrage`, `bombardment`, `detonate`,
-  `autoGyroGun`, `barrelBot`, `megaPunch`, `megaHammer`, `chopper`, `missile`, `napalm`,
+  `barrelBot`, `megaPunch`, `megaHammer`, `chopper`, `missile`, `napalm`,
   `grenadeCluster`, `flameCarnival`, `megaDrill`, `barrelCannon`, `warFactory`, `warCapital` — confirmed
   by cross-checking each skill's cast-site coroutine class body against the full-file `RPC_AddStatus`/
   `.addStatus(`/`.life = ` grep results. These are pure-damage, pure-utility, or summon-creation skills
   with no self/target buff-duration of their own. Duration cells are `—`.
+- **`autoGyroGun` is no longer in the list above — it does have a real, verified summon lifetime, just
+  not via `RPC_AddStatus`.** `Mole.cs:12235` — inside the summon-creation branch (immediately after the
+  `AutoGyroGun` component lookup), `autoGyroGun.StartCoroutine_Auto(autoGyroGun.create(this.mChar,
+  this.mChar.ActorNr, this.mChar.chaAdjust(120)));` — the turret's own `create(CharacterControl,
+  int, float)` receives `chaAdjust(120)` as its lifetime directly, no companion-file `Init()` indirection
+  needed for this one.
+- **`barrelBot` was specifically re-checked (user question, 2026-08-13) and confirmed to have no timed
+  lifetime at all — unlike `autoGyroGun`, `flameTurret`, `synchroMole`, and `kingKaiser`, all of which
+  do.** `barrelBot.create(int nCreatorID)` (`BarrelBot.cs:1920`, called `Mole.cs:13005`) takes only the
+  creator's ActorNr — no life/duration parameter of any kind. A full-file grep of `BarrelBot.cs` (6660
+  lines) for `chaAdjust` returns zero hits, and its only two `Destroy(this.gameObject)` calls are both
+  conditional on death/disconnect state, not a timer: `:366` fires when `!this.mCreatorChar` (creator
+  gone), `:6529` fires when `this.mChar.actionState == "dead"` (the bot itself was killed). Barrel Bot
+  persists until it dies or its owner disconnects, not for a fixed duration — the `—` Duration cell is
+  correct as-is, not a documentation gap.
 - **Confirmed-passive skills excluded from the table (no cooldown, `mode = eSkillMode.passive` in
   `getSkill()`, no `RPC_<name>` cast handler in `Mole.cs`):** `gadgeteer1`-`4` (Workshop crafting-tier
   unlock), `statPlus1`-`4` and `superStatPlus5` (flat stat bonuses), `extraPowder1`-`3` (blast-radius
@@ -203,8 +218,10 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `timeNuke` Duration: `Mole_timeNuke.cs:56` — `this.DOBdTpEK5v = Time.time;`, fuse checked at `Mole_timeNuke.cs:241` — `if (this.DOBdTpEK5v + (float)60 <= Time.time + (float)1)` (flat literal `60`, confirmed NOT Adjust-wrapped — spawned-prop fuse timer, see judgment-call note)
 - `synchroMole` Duration: `Mole.cs:13242` — `this.mChar.RPC_AddStatus("synchroMole", sLv, num, this.mChar.tal, this.mChar.ActorNr);` with `num = this.mChar.chaAdjust(30)` set at `Mole.cs:13237` (self-buff, not target-contested)
 - `kingKaiser` Duration: `Mole.cs:36023` — `this.$tChar$23853.StartCoroutine_Auto(this.$tChar$23853.addStatus("transform", 1, this.$mDuration$23851, 0, this.$self_$23861.mChar.ActorNr));` and `Mole.cs:36135` — `this.$self_$23861.mChar.StartCoroutine_Auto(this.$self_$23861.mChar.addStatus("hide", 1, this.$mDuration$23851, 0, this.$self_$23861.mChar.ActorNr));`, with `$mDuration$23851 = this.$self_$23861.mChar.chaAdjust(240)` set at `Mole.cs:35789` (`addStatus`, not literally `RPC_AddStatus` — see judgment-call note)
+- `autoGyroGun` Duration (summon lifetime, not `RPC_AddStatus`): `Mole.cs:12235` — `autoGyroGun.StartCoroutine_Auto(autoGyroGun.create(this.mChar, this.mChar.ActorNr, this.mChar.chaAdjust(120)));` — see the dedicated judgment-call note above.
+- `barrelBot`: re-checked and confirmed to have no timed lifetime at all (HP/disconnect-based instead) — see the dedicated judgment-call note above. Duration cell is `—`, correctly.
 - `reload`, `mine`, `mortarShot`, `bunker`, `tnt`, `stunMine`, `stunGrenade`, `fireBarrage`, `bombardment`,
-  `detonate`, `autoGyroGun`, `barrelBot`, `megaPunch`, `megaHammer`, `chopper`, `missile`,
+  `detonate`, `megaPunch`, `megaHammer`, `chopper`, `missile`,
   `advanceRepair`, `napalm`, `grenadeCluster`, `flameCarnival`, `megaDrill`, `barrelCannon`, `warFactory`,
   `warCapital`: no usable Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists in
   the skill's own coroutine class body; see the bulk judgment-call notes above (`advanceRepair`'s channel

@@ -15,8 +15,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | nightmare | Nightmare | 2 | 180 | true | false | — | — |
 | doom | Doom | 2 | 180 | true | false | — | — |
 | guardianOfTheNight | Guardian of the Night | 2 | 600 | true | false | 60 | true |
-| mirageOrb | Mirage Orb | 4 | 30 | true | false | — | — |
-| shadowIllusion | Shadow Illusion | 4 | 60 | true | false | — | — |
+| mirageOrb | Mirage Orb | 4 | 30 | true | false | 30 | true |
+| shadowIllusion | Shadow Illusion | 4 | 60 | true | false | 60 | true |
 | blind | Blind | 2 | 30 | true | false | — | — |
 | confusion | Confusion | 2 | 45 | true | false | — | — |
 | hateTransfer | Hate Transfer | 2 | 60 | true | false | — | — |
@@ -140,3 +140,5 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `massCast` Duration: `Bat.cs:11164` — `this.mChar.RPC_AddStatus("massCast", sLv, this.mChar.chaAdjust(3 + 3 * sLv), 0, this.mChar.ActorNr);` (self-buff, scales with caster's own rank/CHA only; max rank sLv=2 → `chaAdjust(9)`)
 - `guardianOfTheNight` Duration: `Bat.cs:30592` — `this.$mDuration$20102 = this.$self_$20106.mChar.chaAdjust(30 * this.$sLv$20105);`, applied at `Bat.cs:30603` — `RPC_AddStatus("guardianOfTheNight", sLv, mDuration, 0, ActorNr)` (not contested — only the caster's own CHA/rank; max rank sLv=2 → `chaAdjust(60)`)
 - `darkStalker` Duration: `Bat.cs:40263` — `this.$hitChar$20358.RPC_AddStatus("darkStalker", 9, 999, 0, this.$self_$20362.mChar.ActorNr);` (flat literal `999`, confirmed NOT `chaAdjust`-wrapped and not stat-contested — applied to the enemy target but the value itself is a hardcoded constant)
+- `mirageOrb` Duration: `Bat.cs:31265` — `this.$nLife$20114 = this.$self_$20118.mChar.chaAdjust(30);`, passed into `RPC_mirageOrb_fire(firePos, fireDir, nLife, sLv)` as the orb's own lifetime (self-cast, not target-contested). Matches the flavor text exactly ("Cast an invisible orb... 30 sec", `BatSkill_eng.cs:530`).
+- **`shadowIllusion` Duration is verified in code at `chaAdjust(60)`, not the `chaAdjust(30)` all four ranks' own flavor text claims ("...deal 50%/50%/75%/100% dmg and receive 160% dmg. (30 sec)", `BatSkill_eng.cs:574` etc.) — a genuine flavor-text/code mismatch, reported at the verified code value per this doc's standing rule.** `Bat.cs:13115`, inside `RPC_shadowIllusion_create`'s own body — `bat_illusion.summon(this.gameObject, nDamageMod, nHitMod, (float)this.mChar.chaAdjust(60));` — `Bat_illusion.summon(GameObject, float, float, float nTimer)` (`Bat_illusion.cs:60`) stores `nTimer + Time.time` as the illusion clone's own despawn deadline (`Bat_illusion.cs:73`), checked against `Time.time` at `Bat_illusion.cs:669` and destroyed at `Bat_illusion.cs:487`. A full-file grep of `Bat.cs` for `.summon(` returns exactly this one call site, confirming it's shadowIllusion's own (not shared with another skill). `nDamageMod = 0.25 + num*0.25` (`Bat.cs:13105`, `num` = `sLv` capped/wrapped past rank 3) does correctly match the flavor text's 50/75/100% damage scaling, so only the duration figure itself is the mismatch.

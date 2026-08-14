@@ -71,7 +71,9 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `WolfSkill.cs` (`doubleArt` → `IL_2D01`, `:2143-2154`; `statPlus` → `IL_F84`, `:2097-2113`;
   `weaponPlus` → `IL_2981`, `:1918-1929`; `armorPlus` → `IL_33B0`, `:1898-1909`; `noKo` → `IL_3425`,
   `:1879-1890`; `lastBlade1` own body, `:816-821`; `finalEclipse1` own body, `:902-907`), and no
-  `addTimeOut`/`RPC_<name>` cast handler of their own in `Wolf.cs`.
+  `addTimeOut`/`RPC_<name>` cast handler of their own in `Wolf.cs`. `perseverance1`/`2` do have a real,
+  verified gameplay effect despite the no-`cType` classification — see the dedicated note below on why
+  it's a Duration modifier for this doc's other rows rather than a skill of its own.
 - **All Class-C (Lv.5) passive-only skills excluded**: `continuousBlade5`, `skySlasher5`, `fortitude5`,
   `sublimeArt5`, `superStatPlus5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5`, `wildHeart5`,
   `revisedSkill5`, `revisedMagic5`, `revisedArt5` — all `mode = eSkillMode.passive` directly in their
@@ -163,6 +165,30 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `mpDrain`, `hpDrain`) — none tied to any `WolfSkill.cs` roster entry, matching the same generic-effects
   block documented in the Sheep/Panda/Rabbit docs. Duration cells for all fourteen skills listed above
   are `—`.
+- **`perseverance1`/`2`'s flavor text ("Passively extends the duration of all possitive status on Wolf
+  by 30%/50%", `WolfSkill_eng.cs:103`, `:114`) is independently verified in code — not in `Wolf.cs` at
+  all (zero hits for `perseverance` or `hasSkill(121)`/`hasSkill(122)` there), but in the shared base
+  class `CharacterControl.cs`, inside `RPC_AddStatus` itself.** `CharacterControl.cs:13379-13419`:
+  `if (this.Type == "Wolf") { if (this.hasSkill(121)) { int num = 1; if (this.hasSkill(122)) { num = 2; }
+  if (StatusData.isBuffStatus(sType)) { sTime = Mathf.FloorToInt((1.1f + 0.2f * num) * sTime); } } }` —
+  `this` is the character *receiving* the status (`RPC_AddStatus` is always invoked as
+  `target.RPC_AddStatus(...)`), so this fires for any Wolf holding Perseverance who receives a buff,
+  regardless of which skill (their own or an ally's) produced it. `hasSkill(121)` = `wlf_perseverance1`,
+  `hasSkill(122)` = `wlf_perseverance2` (`WolfSkill.cs:2313-2333`'s `commandNum` switch) — **note IDs 121/
+  122 are reused by unrelated Sheep/Penguin mechanics elsewhere in this same file
+  (`CharacterControl.cs:3828-3862` gated `Type=="Sheep"`, `:23063-23098` gated `Type=="Penguin"`); only
+  the `Type=="Wolf"`-gated occurrence above is Perseverance.** Multiplier: rank 1 → `1.1+0.2*1 = 1.3`
+  (matches "+30%"), rank 2 → `1.1+0.2*2 = 1.5` (matches "+50%"); unlearned, the whole block is skipped
+  (×1, no change). Applies via `Mathf.FloorToInt` (floor, not `chaAdjust`'s `Ceil`) to `sTime`, which is
+  the duration value the caller already computed (typically already `chaAdjust`-wrapped) — i.e. this is a
+  **second, later multiplicative step on top of the fully-adjusted duration**, not a change to the raw
+  base fed into `chaAdjust`. Confirmed applicable to all five of this table's Duration-bearing skills by
+  checking `StatusData.isBuffStatus()` (`StatusData.cs:6323-7171`) for each of their status names:
+  `"valor"` (`:6464`), `"darkEdge"` (`:6470`), `"lunarEclipse"` (`:6476`), `"holySword"` (`:6482`),
+  `"holyArmor"` (`:6488`) — all five `break` (return `true`). This relationship is encoded in the lookup
+  tool's data as a `dep` with `kind:"postMultiply"` (`12t_projects/player-reference-tool/index.html`),
+  distinct from Rabbit's `medicalEnhancement`/`alchemistLab` `dep`s (which add to the pre-`chaAdjust` raw
+  value instead) — see that spec's addendum for why the two need different `kind`s.
 - **`grandMark` (`Wolf.cs:8578`, `RPC_grandMark`) and `wlf_resurrect1`-`3` (a leftover/legacy name in the
   `a2 == "wlf_..."` per-name dispatcher, `Wolf.cs:6032-6058`) are not independent skills — excluded, not
   judgment calls.** `grandMark` is Cross Break's own ground-marker visual effect (placed by Cross Break,
@@ -198,11 +224,11 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `twinResonance` CD: `Wolf.cs:37213` — `this.$self_$29730.mChar.addTimeOut("twinResonance", this.$self_$29730.mChar.agiAdjust(240f));` (single-rank `wlf_twinResonance5`; matches the preemptive pre-arm at `Wolf.cs:93`)
 
 ### Duration citations
-- `braveSpirit` Duration: `Wolf.cs:20489` — `this.$tChar$29360.RPC_AddStatus("valor", this.$sLv$29364 + ((!this.$self_$29365.mChar.hasSkill(402)) ? 0 : 2), this.$self_$29365.mChar.chaAdjust(15), 0, this.$self_$29365.mChar.ActorNr);` (applied to allies in range using the caster's own `chaAdjust`, not target-contested; flat `15` regardless of rank — only the status *level* param scales with rank/`gloriousSpirit5`)
-- `darkEdge` Duration: `Wolf.cs:30805` — `this.$self_$29595.mChar.RPC_AddStatus("darkEdge", this.$sLv$29594, this.$self_$29595.mChar.chaAdjust(this.$sLv$29594 * 2), 0, this.$self_$29595.mChar.ActorNr);` (self-cast; at max rank `sLv=4` → `chaAdjust(8)`, matching the rank-4 flavor text "for 8 seconds", `WolfSkill_eng.cs:829`)
-- `lunarEclipse` Duration: `Wolf.cs:31238` — `this.$self_$29605.mChar.RPC_AddStatus("lunarEclipse", this.$sLv$29604, this.$self_$29605.mChar.chaAdjust(9 + 3 * this.$sLv$29604), 0, this.$self_$29605.mChar.ActorNr);` (self-cast; at max rank `sLv=2` → `chaAdjust(15)`)
-- `holySword` Duration: `Wolf.cs:32969` — `this.$self_$29645.mChar.RPC_AddStatus("holySword", 5, this.$self_$29645.mChar.chaAdjust(24), (int)this.$nValue$29642, this.$self_$29645.mChar.ActorNr);` (self-cast; 4th param is the weapon-atk-bonus value, not duration)
-- `holyArmor` Duration: `Wolf.cs:33484` — `this.$self_$29655.mChar.RPC_AddStatus("holyArmor", 5, this.$self_$29655.mChar.chaAdjust(24), (int)this.$nValue$29652, this.$self_$29655.mChar.ActorNr);` (self-cast; 4th param is the armor-def-bonus value, not duration)
+- `braveSpirit` Duration: `Wolf.cs:20489` — `this.$tChar$29360.RPC_AddStatus("valor", this.$sLv$29364 + ((!this.$self_$29365.mChar.hasSkill(402)) ? 0 : 2), this.$self_$29365.mChar.chaAdjust(15), 0, this.$self_$29365.mChar.ActorNr);` (applied to allies in range using the caster's own `chaAdjust`, not target-contested; flat `15` regardless of rank — only the status *level* param scales with rank/`gloriousSpirit5`). Post-`chaAdjust`, further multiplied by `Perseverance` if the *receiving* ally is a Wolf with it learned — see the dedicated note above.
+- `darkEdge` Duration: `Wolf.cs:30805` — `this.$self_$29595.mChar.RPC_AddStatus("darkEdge", this.$sLv$29594, this.$self_$29595.mChar.chaAdjust(this.$sLv$29594 * 2), 0, this.$self_$29595.mChar.ActorNr);` (self-cast; at max rank `sLv=4` → `chaAdjust(8)`, matching the rank-4 flavor text "for 8 seconds", `WolfSkill_eng.cs:829`). Perseverance-eligible (self-cast, so the caster's own rank applies).
+- `lunarEclipse` Duration: `Wolf.cs:31238` — `this.$self_$29605.mChar.RPC_AddStatus("lunarEclipse", this.$sLv$29604, this.$self_$29605.mChar.chaAdjust(9 + 3 * this.$sLv$29604), 0, this.$self_$29605.mChar.ActorNr);` (self-cast; at max rank `sLv=2` → `chaAdjust(15)`). Perseverance-eligible.
+- `holySword` Duration: `Wolf.cs:32969` — `this.$self_$29645.mChar.RPC_AddStatus("holySword", 5, this.$self_$29645.mChar.chaAdjust(24), (int)this.$nValue$29642, this.$self_$29645.mChar.ActorNr);` (self-cast; 4th param is the weapon-atk-bonus value, not duration). Perseverance-eligible.
+- `holyArmor` Duration: `Wolf.cs:33484` — `this.$self_$29655.mChar.RPC_AddStatus("holyArmor", 5, this.$self_$29655.mChar.chaAdjust(24), (int)this.$nValue$29652, this.$self_$29655.mChar.ActorNr);` (self-cast; 4th param is the armor-def-bonus value, not duration). Perseverance-eligible.
 - `powerBreak`, `armorBreak`, `provoke`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
 - `artCancel`: incidental flat target-side interrupt/stun flag (`RPC_AddStatus("artCancel", 1, 1, 0, ...)`), not the skill's own duration — see judgment-call note; Duration cell is `—`
 - `crusader`, `secondWind`, `crossBreak`, `grandCross`, `massResurrection`, `bladeFang`, `counter`,
