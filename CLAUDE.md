@@ -67,7 +67,19 @@ The source was run through an obfuscator; expect this on every file:
   (added 2026-08-13) — max-rank active-skill cooldown/duration data (`agiAdjust`/`chaAdjust`-wrapped
   status, `revisedArtExempt`) feeding the Skill Cooldown/Duration Lookup tool in `player-reference-tool`
   below. Narrower scope than the `*-skill-data-reference.md` docs above (cooldown/duration only, no
-  damage formulas, active skills only) — don't conflate the two doc families.
+  damage formulas, active skills only) — don't conflate the two doc families. **Cast Time (added
+  2026-08-14) has no matching `*-casttime-reference.md` doc family** — unlike cooldown/duration, its
+  104-skill (of 306) research pass was distilled straight into `index.html`'s own `SKILLS` entries
+  (`castTime`/`castWrapped`/`castDep` fields) and dated notes in `player-reference-tool/CLAUDE.md`, not
+  written out as separate per-class markdown docs. Don't go looking for a cast-time equivalent of these
+  cooldown docs — it doesn't exist; the tool's own data/CLAUDE.md notes are the citation trail.
+- **Decompiled source can lag the *live* server, not just the repo's own history** — confirmed 2026-08-14:
+  `Mole_stunMine.cs:60` still reads `talAdjust(60)` for Stun Mine's duration, but the user confirmed the
+  live game has since been patched to `chaAdjust(60)` (matching sibling `mine`'s behavior). When a
+  decompiled-source citation and direct user testing disagree, the user's live observation wins — update
+  the doc/tool and leave a note (see `12t_reference/mole-skill-cooldown-reference.md`'s `stunMine`
+  citation for the pattern) rather than trusting the source blindly just because it's the thing you can
+  grep.
 
 ## Repo layout
 
@@ -94,7 +106,29 @@ The source was run through an obfuscator; expect this on every file:
   deliverables; that `CLAUDE.md` also documents the shared-`#toolMount` container-per-tool fix that
   landed alongside the 2nd mounted tool. Publish updates with the `publish-player-reference-tool` skill
   (or `/publish-player-reference-tool`) — it always targets the tool's existing Artifact URL in place;
-  never publish this one without the `url:` param or it forks a duplicate.
+  never publish this one without the `url:` param or it forks a duplicate. **Skill Cooldown/Duration
+  Lookup grew a 3rd Cast Time chip 2026-08-14** (MAG/INT-based, `magAdjust()`, new INT control alongside
+  AGI/CHA/LCK; 104 of 306 skills have one) plus a `castDep` mechanism (Chameleon's Improved Slayer
+  stepper, Whale's Reduced Cast toggle) — see `player-reference-tool/CLAUDE.md`'s dated 2026-08-14 notes
+  for the full detail, including why `castDep` deliberately does NOT reuse the existing Cooldown/Duration
+  `dep` pattern's post-adjust-multiply order. The 3-stat row is now a fixed CSS grid (not flex) so a
+  skill missing one of the three leaves that column blank instead of stretching its neighbors, and any
+  dep/private-server toggle sits absolutely positioned in the box's own corner instead of adding a new
+  row underneath — **not visually verified live**, no browser tool was available in the session that
+  built it.
+- **Penguin's Damage Formula chip grew a full "Final Damage" pipeline + a "Mods" popup, 2026-08-16.**
+  Damage now chains all 4 real stages (attacker's `dmgAdjust`, target's `defAdjust`, target's `hitMod`,
+  on top of the existing `talAdjust`-based Raw Damage), shown as a `[min,max]` range against 3 real named
+  enemy presets plus an opt-in one-hit "Test" simulation using real damage-digit textures. `damageMod`/
+  `hitMod` (both real, previously-missing `CharacterControl` fields) are now user-controllable via a new
+  "Mods" popup — a curated 5-buff subset out of 13 found by sweeping the source. Also filled in 3 more
+  Class C damage dependencies (`penguinOfArc` on Mana Arc, `frostSpike` on a new Ice Shield "Shield
+  Formula" row, `giantStar` on Falling Stars/Comets — the tool's first *multiplicative* dep, initially
+  missed and caught by the user against the real in-game tooltip) and fixed 2 real bugs (ATK/TAL/CHAR-LV
+  inputs never triggered a re-render; the Final Damage range could render outside its own chip). Full
+  detail — every formula citation, both `defAdjust` misreads corrected mid-session, every Python
+  cross-check — is in `player-reference-tool/CLAUDE.md`'s 15th-through-22nd dated passes; see
+  `HANDOFF.md`'s 2026-08-16 entry for the session-level summary.
 - **`.claude/`** — harness config specific to this repo, ported 2026-08-12 from a Desktop copy of this
   project and adapted to this repo's actual layout: `agents/mechanics-researcher.md` (read-only agent
   that traces skill/damage/heal formulas through the decompiled source — prefer it over ad-hoc `.cs`

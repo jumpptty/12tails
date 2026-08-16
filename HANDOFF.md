@@ -1,5 +1,73 @@
 # 12 Tails Workspace — Handoff
 
+**Update 2026-08-16 (on top of the 2026-08-14 rank-selector/damage-formula pilot below): Final Damage
+chip built out to the full real damage pipeline, a new "Mods" buff/debuff popup, and the remaining Class
+C dependency sweep across the Penguin skills already built out.** Continuing the Penguin damage-formula
+pilot from 2026-08-14, this session (a long back-and-forth with the user, many small dated passes — see
+`player-reference-tool/CLAUDE.md`'s 15th-through-22nd passes for the full blow-by-blow) added:
+- **Target-mitigated "Final Damage" chip** — 3 real named enemy presets (Carron/Stingdune/Silverbug, real
+  target-avatar icons from `gamegui/icons/targetavatar/`), `defAdjust`'s real formula (a weighted blend of
+  a subtractive and a multiplicative term, each independently floored at 1 — **got this wrong twice**
+  before landing right; see the 15th pass for the "read an obfuscated function all the way to its real
+  `return`, don't stop at the first plausible assignment" lesson, now the project's 3rd documented instance
+  of that mistake). Shown as a `[min,max]` range, plus an opt-in "Test" button (renamed from "Simulate")
+  that rolls one concrete hit using the real in-game damage-digit textures (`GameAssets/Effects/DamageNum/`)
+  and a floating/fading animation matching the live game — supports multiple concurrent popups so a second
+  click doesn't kill the first one's in-flight animation (18th pass).
+- **New "Mods" popup** — `damageMod` (attacker-side) and `hitMod` (target-side), two real `CharacterControl`
+  fields (`dmgAdjust`/`RPC_AddDamage`) missing from every earlier damage-chip pass, both defaulting to 1.0
+  and only moving while a specific buff/debuff status is active. A `mechanics-researcher` subagent swept
+  `CharacterControl.cs` and found 13 distinct statuses touching either field; user curated a 5-buff subset
+  (`reduce`, `miracleDrop`, `valor`, `sealOfHeaven`, `amplifyDamage`) for the actual popup. Uses the real
+  in-game buff-bar icons (`gamegui/icons/status/`), not skill-hotbar art — a better semantic fit for an
+  on/off toggle.
+- **Remaining Penguin Class C damage dependencies found and wired in**: `manaArc`'s `penguinOfArc`
+  (+0.5×LV, additive — straightforward, reused the existing `dmgDep` shape). `iceShield`'s `frostSpike`
+  (+LV, but genuinely different formula ORDER — its Class C bonus is added BEFORE focusIntellect's
+  multiplier, not after like every other skill checked, needed a whole new `shield`/`shieldDep`/
+  `renderShieldFormula` code path since a shield HP pool isn't damage dealt to a target — no `defAdjust`
+  mitigation applies to it, so it's a 2-chip row, not 3). `fallingStars`/`fallingComets`'s `giantStar`
+  (×1.25, the tool's first MULTIPLICATIVE Class C dep, needed its own `dmgMultDep` schema field) — **this
+  one was initially missed**: `hasSkill(442)` doesn't apply its bonus inline, it dispatches to a wholly
+  separate coroutine (`RPC_giantStars_fire`/`RPC_giantComets_fire`), and the first pass stopped reading at
+  "it switches coroutines" without opening the target function — caught by the user quoting the real
+  in-game tooltip ("+50% range and +25% damage") against the tool's unchanged output.
+- **Two real bugs found and fixed**: ATK/TAL/CHAR-LV stat inputs never had their `input` event listener
+  wired at all (added when those fields were introduced, listener wiring was missed) — Raw Damage/Final
+  Damage looked unresponsive to the stat that matters most for them until some unrelated field happened to
+  trigger a re-render. And the Final Damage range text could render outside its own chip's visible box — a
+  `min-width:auto`-family CSS bug, same family already documented multiple times in this file, this time
+  one level deeper (the chip container was already fixed earlier; a child inside it also needed the same
+  `max-width:100%` treatment once that chip's layout stopped stretching its children by default).
+
+Full formula citations, every corrected mistake (including the two `defAdjust` misreads and the missed
+`giantStar` dispatch), and every Python cross-check script used (no browser tool available this session
+either) are in `player-reference-tool/CLAUDE.md`'s 15th-through-22nd dated passes — **read those before
+extending any of this further**, don't re-derive from scratch. **Published live** to the tool's existing
+Artifact URL after every single pass this session (standing user instruction: always publish, never
+without `url:`) — same URL as every prior session, no fork. Git state unchanged from the 2026-08-14
+snapshot further down (same modified-file list — `index.html`, `player-reference-tool/CLAUDE.md`, this
+doc, root `CLAUDE.md` — just more content within them; still all uncommitted, still on the
+`skill-cooldown-lookup` branch, still not merged to `master`).
+
+**Update 2026-08-14 (3rd session today, on top of the Cast Time/layout work already logged below): a
+skill-rank selector + damage formula row, Penguin-only pilot.** Click a Penguin skill's hero icon to
+cycle its rank (icon art itself swaps per rank, no text badge) — `cd`/`castTime` now resolve per-rank
+where the source genuinely varies by rank (confirmed real, e.g. `manaMissile`'s CD is `8+2×sLv`, not
+hypothetical). New full-width damage-formula row below the 3-stat grid, `talAdjust(...)` expanded to its
+real algebraic form (`X + 0.02X×TAL`, verified against `CharacterControl.cs:20624`) with color-coded
+terms (aqua TAL, blue INT, red ATK token added for parity though unused by Penguin), plus a Focus
+Intellect toggle that simplifies `×(1+0.01×focusIntellect)` to `×0.01×INT` (verified algebraically true
+against source, since the buff's stored value is exactly `INT-100`). Side effect: found and fixed 6
+pre-existing mislabeled skill-icon keys left over from the original Task 13 extraction (`focusIntellect`/
+`parallelShift`/`snowBall`/`cosmicRift`/`cosmicFriday`/`tripleCast` were stored under the wrong rank
+suffix). Full detail, all the judgment calls on what counts as "damage" vs. shield/heal/contingent
+effects, and the verification method used (no browser available — a Python reimplementation of the
+render logic plus an exhaustive icon-key/array-length coverage script, not a live visual check) are in
+`12t_projects/player-reference-tool/CLAUDE.md`'s new "Rank selector + damage formula — Penguin pilot"
+section — read that before touching this feature or extending it to another class. **Scope is Penguin's
+27 `SKILLS` entries only** — the other 11 classes have no `maxRank`/`dmg` fields yet.
+
 **Update 2026-08-14:** still on the `skill-cooldown-lookup` branch, still not merged to `master`, and a
 large additional session's worth of work landed on top of the already-committed 2026-08-13 state
 described below — **all of it currently uncommitted** (`git status` shows `index.html` and every
@@ -32,6 +100,74 @@ assume "uncommitted" means "not live" the way earlier snapshots of this doc did.
 - Also worth correcting from the 2026-08-13 text below: `12t_reference/penguin-skill-cooldown-reference.md`
   **does exist** (it was mistakenly flagged as a gap mid-session before being found) — Penguin has the
   same per-class cooldown doc every other class has, it just wasn't caught by an early `Glob` check.
+
+**Further update, same day (2026-08-14), a separate session on top of everything above — new "Cast
+Time" chip, castDep mechanic, and a layout overhaul. Still all uncommitted, still published live
+(multiple times) via `publish-player-reference-tool`.** What landed, in order:
+
+1. **New third stat: Cast Time**, MAG(displayed as INT)-based via `CharacterControl.magAdjust(t)`
+   (`CharacterControl.cs:20584-20589`) — a genuinely different formula shape from `agiAdjust`/`chaAdjust`:
+   `n = clamp(INT+R, 1, 512)` then `t - floor(n/32)` (a real **integer** divide, not a smooth curve),
+   clamped to `[0.1, 600]`. New `magAdjustAtRoll`/`magAdjustRange` functions in `index.html` (beside
+   `chaAdjustRange`) replicate the floor exactly — don't "smooth" it out, the coarse stepping is real
+   in-game behavior. New INT input added to the tool's controls row (AGI/INT/CHA/LCK).
+   - Data gathered by dispatching one research subagent per class in parallel (11 classes + Penguin done
+     directly), each tracing `magAdjust()` call sites through the obfuscated source and cross-referencing
+     each skill's already-verified Max Rank from the existing `12t_reference/*-skill-cooldown-reference.md`
+     docs. **104 of 306 skills have a real cast time** — most are instant. `sLv` in these formulas is
+     1-indexed (equal to the real in-game rank number), confirmed independently across 6 different
+     classes by tracing literal call sites (e.g. `RPC_cast1("phantomBane", ..., 1/2/3/4)`).
+   - **Unlike the cooldown/duration research, this data has no per-class `*-casttime-reference.md` doc
+     family** — it's cited only in `player-reference-tool/CLAUDE.md`'s dated notes and the `SKILLS`
+     array's own fields. See root `CLAUDE.md`'s new note on this.
+   - Two judgment calls, documented in `player-reference-tool/CLAUDE.md`: Rabbit's `contract` picks one
+     of 3 different cast times (6/9/12s) depending on which ally it summons, not rank — reported the
+     floor value (6s). Chameleon's `tent` has a second, separate 6s→12s phase after its main cast —
+     reported only the first 6s, matching every other skill's "time before the cast bar finishes"
+     definition.
+2. **`castDep` — a new dependency mechanic for Cast Time, 2 real cases, both user-requested in a
+   follow-up ask.** Reuses `getDepRank`/`renderDepBlock` from the existing Cooldown/Duration `dep`
+   pattern unchanged, but **does NOT reuse `depPostMultiply`-after-adjust** the way Duration's `dep`
+   does — both known `castDep` cases apply their multiplier/formula **before** `magAdjust` in source
+   (verified against Wolf's `darkEdge` for the contrasting Duration-side order), so `castBlock` folds the
+   dep into `rawCast` directly before calling `magAdjustRange`. This is intentional, not an inconsistency
+   to "fix" later.
+   - **Chameleon `slayer`/`allSlayer`**: depend on "Improved Slayer" (`getImprovedSlayerLv()`,
+     `Chameleon.cs:9501`, `hasSkill(351-354)`, 4 real ranks) — renders as the numbered-button stepper
+     (same format as Rabbit's Medical Enhancement/Alchemist Lab), per explicit user request.
+   - **Whale's 8 `reducedCast`-affected skills** (`bubbleShield`, `heavyWeight`, `hydroBlast`,
+     `rejuvenate`, `callToArm`, `salvation`, `megalodon`, `revitalize`): `hasSkill(373)` halves cast time
+     via `Mathf.FloorToInt(0.5*mCastTime)` before `magAdjust` — confirmed exhaustive (only one
+     `hasSkill(373)` call in all of `Whale.cs`, so this list is complete, not a sample). Renders as a
+     single icon toggle, same visual language as the existing Cooldown-side `knightOfTheDeep` toggle —
+     genuinely a **different** passive from `knightOfTheDeep` (different 6-vs-8-skill set, different
+     stat), don't merge them.
+   - New icons extracted from `RippedAssets/.../gamegui/icons/skills/{chameleon,whale}/`:
+     `improvedSlayer4.png`, `reducedCast1.png`.
+3. **Layout overhaul, user-requested from a screenshot.** `.sk-hero-stats` switched from flex to CSS
+   grid (`repeat(3,1fr)`) with `.sk-stat-cd`/`-cast`/`-dur` each pinning `grid-column:1/2/3` explicitly —
+   necessary because the 3 boxes are conditionally rendered, and grid's default auto-placement would
+   otherwise pack whichever exist into the first open columns (e.g. Duration sliding into column 2 on a
+   Cast-Time-less skill) instead of leaving a skill's missing stat as blank space in its own column.
+   Also moved `.sk-dep`/`.sk-ps-toggle` from stacking as a new bordered row below the base-value line to
+   `position:absolute` in the box's own bottom-right corner, so a dep-bearing box no longer renders
+   visibly taller than its siblings. Widened `.stage` from 760px to 940px **only while this tool is
+   open** (new `html.tool-wide-hero` class, same toggle mechanism as the existing `tool-fit-screen`) —
+   the menu/Stat-Gain keep the original 760px.
+   - **None of this session's UI work (steps 1-3) was visually verified live — no browser/Playwright tool
+     was available in the session that built it**, unlike most of the 2026-08-12/13 work below, which
+     did have Playwright. Structural checks (brace/tag balance, script parses, exact field-count
+     assertions) all pass and the underlying math was hand-verified, but the actual rendered layout
+     (especially the corner-positioned dep/ps-toggle's fit against the box's other content) is a
+     considered-but-unconfirmed guess. **Do a real visual pass on this before treating it as done** —
+     open the tool, check a 3-chip skill (e.g. Sheep's `bless`, Whale's `bubbleShield`), a skill with a
+     stepper dep (Chameleon's `slayer`), and a private-server skill, at a few window widths.
+4. **Separately, a live-server data correction (Mole's `stunMine`)**: the user reported its Duration is
+   `chaAdjust`, not the `talAdjust` the decompiled source (`Mole_stunMine.cs:60`) still shows — the game
+   has been patched since this build was captured. Fixed in `12t_reference/mole-skill-cooldown-reference.md`
+   and the `SKILLS` entry (`durWrapped:false`→`true`), old source citation kept for the record with a
+   "superseded" note rather than deleted. See root `CLAUDE.md`'s new note on decompiled-source-vs-live
+   drift for the general pattern this represents.
 
 Snapshot as of 2026-08-12, with updates on 2026-08-13 (workplace machine) — the skill-cooldown-lookup
 plan (all 17 tasks, see below) finished this session on its dedicated branch, not yet merged to
@@ -67,6 +203,10 @@ already-finished Penguin Interactive Infographic/Class-C/LCK-range plans, not an
     column under 560px) — the single Stat-Gain row read as disproportionately long at full width.
   - **3 tools total as of 2026-08-13**: Stat-Gain Calculator (mounted), Skill Cooldown/Duration Lookup
     (mounted — **new 2026-08-13**, see the finished plan below), GoldenKingBug Spawn Map (link-out).
+  - **Skill Cooldown/Duration Lookup grew a 3rd "Cast Time" stat 2026-08-14** (new INT control, MAG-based
+    `magAdjust()`, 104/306 skills) plus a `castDep` mechanic and a flex→grid layout overhaul — see the
+    "Further update, same day (2026-08-14)" section at the very top of this doc for full detail; not
+    visually verified live (no browser tool that session).
   - The shared-`#toolMount`-DOM-clobbering bug this doc used to flag as "still-unfixed" **is now fixed**
     (landed 2026-08-13 as part of the skill-cooldown-lookup plan's Task 16, since that tool is what made
     the bug real instead of hypothetical) — each mounted tool now gets its own lazily-created, persistent
@@ -216,6 +356,39 @@ been tracked since Task 14's commit earlier this session. **Still untracked** (c
 is itself still uncommitted, unlike its own output). This repo has no remote — anything still untracked
 exists in exactly one place on disk. Run `git status` before assuming anything described in this
 handoff is actually recoverable from git history.
+
+**Update (2026-08-14, exact `git status` at the end of the Cast Time session — trust this over the
+2026-08-13 paragraph above for current state, it's now stale):**
+```
+ M 12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html
+ M 12t_projects/player-reference-tool/CLAUDE.md
+ M 12t_projects/player-reference-tool/index.html
+ M 12t_reference/2026-07-21-penguin-skill-data-reference.md
+ M 12t_reference/mole-skill-cooldown-reference.md
+ M 12t_reference/panda-skill-cooldown-reference.md
+ M 12t_reference/whale-skill-cooldown-reference.md
+ M docs/superpowers/plans/2026-07-21-penguin-classc-toggle.md
+ M docs/superpowers/plans/2026-07-21-penguin-interactive-infographic.md
+ M docs/superpowers/plans/2026-07-22-penguin-lck-range-and-revisedart.md
+ M docs/superpowers/specs/2026-07-21-penguin-classc-toggle-design.md
+?? .claude/
+?? 12t_projects/agi-cha-sweetspot/
+?? 12t_projects/goldenkingbug-spawn-map/
+?? 12t_projects/stat-gain-tables/
+?? 12t_reference/12Tails-Mechanics-Reference.md
+```
+The `player-reference-tool`/`mole`/`panda`/`whale`/`.claude` rows are this and the prior 2026-08-14
+session's work described above. **The four Penguin-titled `M` rows (`penguin-skill-sheet.html`,
+`2026-07-21-penguin-skill-data-reference.md`, and the 3 `docs/superpowers/plans|specs` files) predate
+both 2026-08-14 sessions and were never touched by either** — this handoff doc doesn't know what they
+contain or whether they're finished; the "Known local uncommitted work" paragraph above may or may not
+still describe them accurately (a "Hit Mod" feature + `manaArc` CD fix) — re-check with `git diff`
+before assuming, don't trust that paragraph blindly, it wasn't re-verified this session. `??
+12t_projects/{agi-cha-sweetspot,goldenkingbug-spawn-map,stat-gain-tables}/` and `12t_reference/
+12Tails-Mechanics-Reference.md` being untracked looks like a `.gitignore` scoping gap (these are real
+shipped deliverables per the "Shipped deliverables" section above, not throwaway files) — worth an
+explicit decision (add to git, or confirm intentionally excluded) rather than leaving it ambiguous
+indefinitely.
 
 ## Repo setup notes
 
