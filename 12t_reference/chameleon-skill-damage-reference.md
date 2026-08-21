@@ -123,6 +123,25 @@ compose correctly with no further engine changes needed (`resolveRank` picks the
 before the dep applies on top): Perfect Blend rank 1/2 × Erase Senses off/on → 2/6/4/8; True Invisibility
 rank 1/2 × off/on → 8/12/12/16, all matching the source formulas by hand.
 
+## Follow-up, 2026-08-21: same per-rank Duration bug found on Mass Invisibility/Final Entrapment too
+
+User: "fix mass invis and final entrpment durations on skill rank too" — same class of bug as Perfect
+Blend/True Invisibility, caught by the user a 2nd time rather than swept for proactively the first time.
+Re-verified both directly: `massInvisibility` (`Chameleon.cs:24575`) — `chaAdjust(4×sLv+4)`, no passive
+gate → 8/12 at rank 1/2. `finalEntrapment` (`Chameleon.cs:24999`) — `floor(chaAdjust(2×sLv+3))` → 5/7 at
+rank 1/2. Both converted from a flat number (matching only rank 2) to a per-rank array
+(`duration:[8,12]`/`duration:[5,7]`).
+
+**Swept the rest of Chameleon's Duration-bearing skills for the same bug while at it** (should have been
+done the first time this bug was found, not just fixed reactively skill-by-skill): re-read Immunity's
+(`Chameleon.cs:18876`) and Fatal Strike's (`Chameleon.cs:26313`) own `RPC_AddStatus` calls directly —
+both confirmed genuinely flat, `sLv` only affects the STATUS LEVEL argument (2nd param) in both, the
+DURATION argument (3rd param) is a literal `chaAdjust(12)` in both cases, not `sLv`-dependent at all. No
+fix needed for either. Camp Fire's own duration (`chaAdjust(30)`, a spawned-prop lifetime not
+`RPC_AddStatus`) was already confirmed flat in the original cooldown-reference doc's own citation.
+Every Chameleon skill with a Duration field is now confirmed either correctly flat or correctly
+per-rank-array — no more instances of this bug remain in this class's roster.
+
 ## Follow-up, 2026-08-21: Skin Shift's placement in the skill order fixed, its 120s CD re-verified
 
 User: "Skin Shift placement in the order is off, it should be so much later in the order" + "check too if
