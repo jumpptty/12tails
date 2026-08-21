@@ -24,7 +24,7 @@ back to that sweep.
 | finalEntrapment | 2 | none (CC prop) | — | — | — | — |
 | tormentRain | 1 | `0.5×ATK + talAdjust(60)` | 1 | 1 (AoE) | — | — |
 | fatalStrike | 4 | none of its own (buffs normal attack `+6×lv`) | n/a | — | `extraArrows5`(403): +1 lv, +5 stacks — not modeled (no chip to attach to) | — |
-| leftStride | 2 | none of its own (fires normal-attack shots) | 1 | n/a (dmgNote only) | `doubleStrider5`(423) doubles shots — not modeled (no dmg field) | — |
+| leftStride | 2 | none of its own — "5 Normal Attack Arrows" (3 at rank 1), plain-worded dmgNote | 1 | n/a (dmgNote only, no dmg/sim chip by design) | `doubleStrider5`(423) doubles to 10 (6 at rank 1) — stated in dmgNote, not a live toggle | — |
 | rightStride | 2 | flat `0.4×ATK`, piercing raycast | 2 | `rank×2+1` volleys | `doubleStrider5`(423) doubles volley count | — |
 | campFire | 2 | none (heal) | — | — | — | — |
 | bloodBurn | 2 | none (self HP-cost→heal) | — | — | — | — |
