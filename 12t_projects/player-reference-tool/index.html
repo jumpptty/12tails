@@ -3606,11 +3606,23 @@ function mountSkillCooldownLookup(root){
     // Fixed by reading the actual applied status off `lckProc.applies`
     // (new field, set per-skill: "frost" for Arctic Wind/Ice Shield/
     // Tornado, "paralysis" for Thunder Dragon, "multicast" for Double Cast)
-    // instead of a hardcoded literal -- `|| "proc"` is a safety fallback for
-    // any future `lckProc` skill that forgets to set it, not an expected
-    // case for any skill listed above.
-    const procApplies = selected.lckProc.applies || "proc";
-    const procLabel = hit.proc ? `<span class="sk-multihit-proc sk-multihit-proc-${procApplies}">${procApplies}</span>` : "";
+    // instead of a hardcoded literal.
+    // Real regression from that same fix, caught the same day via a JSDOM
+    // repro (user: "damage sim is showing nothing"): `selected.lckProc`
+    // itself is undefined for the vast majority of skills (only ~5 have any
+    // lckProc at all) -- reading `.applies` off it UNCONDITIONALLY, before
+    // even checking `hit.proc`, threw `Cannot read properties of undefined
+    // (reading 'applies')` on every Simulate click for every OTHER skill,
+    // silently killing the whole click handler (and therefore the entire
+    // popup) with no visible error. Moved the read inside the SAME
+    // short-circuit `hit.proc ? ... : ""` that already correctly guarded
+    // this -- `hit.proc` can only be true when `rollLckProc` already
+    // confirmed `skill.lckProc` exists (see its own `if (!skill.lckProc)
+    // return false` guard), so `selected.lckProc.applies` is safe to read
+    // ONLY inside that branch, never unconditionally before it.
+    const procLabel = hit.proc
+      ? (() => { const a = selected.lckProc.applies || "proc"; return `<span class="sk-multihit-proc sk-multihit-proc-${a}">${a}</span>`; })()
+      : "";
     // Purple digit set (Thunder Dragon pilot, 2026-08-21) -- the real
     // in-game damage-popup color for RPC_AddEffectDamage-pathway skills,
     // reusing the dmgdigit_p<N> textures extracted alongside the white

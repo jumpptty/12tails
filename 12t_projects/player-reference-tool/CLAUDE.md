@@ -4191,3 +4191,41 @@ through `data-role` attribute selectors scoped to `root`, unaffected by the extr
 actually reads as centered above the fields row (not off-center or overlapping), and that the red-tinted
 box still reads as one cohesive panel rather than two visually distinct boxes, before treating this as
 fully done.
+
+### 2026-08-21, immediate follow-up: Simulate/Test was crashing for every skill except the ~5 with `lckProc` -- a real regression, found via a genuine browser-engine repro, not static reading
+
+User: "damage sim is showing nothing, please fix." Static review of the recent Enemy Stats/stats-panel
+changes found nothing — none of them touch `rollOneHit`/`revealMultiHit` at all. Rather than keep guessing,
+installed `jsdom` in the scratchpad and wrote a real reproduction: load `index.html` into an actual DOM,
+navigate to the tool, select a skill via the real search box, click the real Simulate button, and check
+what's actually in the DOM afterward — catching the exact exception a live browser's devtools console
+would show, which none of this session's usual `new Function()`-syntax/CSS-balance checks can see (both
+of those only catch parse-time errors, not runtime exceptions triggered by user interaction).
+
+**Root cause, found immediately**: `revealMultiHit` (the "fix hardcoded frost" pass, a few turns earlier
+this same session) reads `selected.lckProc.applies` UNCONDITIONALLY, before ever checking `hit.proc`:
+```js
+const procApplies = selected.lckProc.applies || "proc";
+const procLabel = hit.proc ? `<span ...>${procApplies}</span>` : "";
+```
+`selected.lckProc` is `undefined` for the vast majority of skills — only ~5 (Arctic Wind, Ice Shield,
+Tornado, Double Cast, Thunder Dragon) have any `lckProc` field at all. Reading `.applies` off `undefined`
+throws `TypeError: Cannot read properties of undefined (reading 'applies')` on EVERY Simulate click for
+every OTHER skill, inside the button's own click handler — an uncaught exception there kills the whole
+handler silently (no visible error to the user, only in devtools), so the click appears to do nothing at
+all. The OLD code (`hit.proc ? "frost" : ""`) never had this problem because the string literal was
+free to evaluate regardless of `selected.lckProc`; the new code introduced a REAL unconditional read that
+the ternary's short-circuit no longer protected.
+
+**Fix**: moved the `.applies` read inside the same `hit.proc` short-circuit that already existed, so it's
+only ever evaluated when `hit.proc` is true — which (via `rollLckProc`'s own `if (!skill.lckProc) return
+false` guard) is only ever true for a skill that genuinely HAS `lckProc`. Confirmed via the same JSDOM
+repro: Auto Gyro Gun's Simulate now renders real digit images with zero errors (previously threw
+immediately); re-ran the same test against Thunder Dragon to confirm the proc-label feature itself still
+works correctly after the fix (not just "doesn't crash") — 6 hit items rendered, matching "Test 6 hits",
+zero errors.
+
+**Process note for this file, worth remembering**: a real DOM/JS-engine reproduction (jsdom + simulated
+clicks) caught this in one shot where static code reading had already failed across a genuine (if
+unsuccessful) diagnostic pass — worth reaching for jsdom again the next time a "such-and-such isn't
+working" report resists static diagnosis and no live browser tool is available in the session.
