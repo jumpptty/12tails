@@ -111,9 +111,10 @@ The source was run through an obfuscator; expect this on every file:
   data/CLAUDE.md notes are the citation trail.
 - **`12t_reference/*-skill-damage-reference.md`** — per-class damage-formula/rank-selector companion
   data (`maxRank`, per-rank `cd`/`castTime`/`duration` arrays, `dmg`, dep/mult mechanisms, `hitCount`) —
-  currently **2 of 12 classes** (Penguin, Mole), added as each class gets the rank-selector/damage-chip
-  treatment described under "Rank selector + damage formula" in `player-reference-tool/CLAUDE.md`, not
-  all at once. Penguin's copy is the original, pre-dating this naming convention — it shipped as the
+  currently **3 of 12 classes** (Penguin, Mole, Chameleon — added 2026-08-21), added as each class gets
+  the rank-selector/damage-chip treatment described under "Rank selector + damage formula" in
+  `player-reference-tool/CLAUDE.md`, not all at once. Penguin's copy is the original, pre-dating this
+  naming convention — it shipped as the
   dated `2026-07-21-penguin-skill-data-reference.md` (the class's initial full research pass, source of
   truth for the interactive skill sheet in `12t_projects/` too) and was **renamed to
   `penguin-skill-damage-reference.md` in the same 2026-08-20 pass**, to match Mole's already-established

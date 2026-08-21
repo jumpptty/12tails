@@ -3649,3 +3649,57 @@ the branching `usedKeys` logic confirmed all 9 keys for the base card and an una
 fit without crowding at the chip's full width, and that toggling either Double Bot or Synchro Mole from
 THIS card live-updates the Stats table the same way it already does from a moveset child's card, before
 treating this as fully done.
+
+## Rank selector + damage formula rollout to Chameleon, 2026-08-21 (3rd class after Penguin/Mole)
+
+User: "chameleon class next!" — same full treatment (rank selector, Damage Formula, KO, `lckProc`) applied
+to all 24 of Chameleon's active skills (the existing `chameleon-skill-reference.md` cooldown/duration doc
+already covered these — this pass adds the damage layer on top, same shape as Mole's own rollout). Full
+citations in the new `12t_reference/chameleon-skill-damage-reference.md`; summarized here.
+
+**Two genuinely new mechanics this class introduced, not seen in Penguin/Mole:**
+- **`venomShock`/`rustyDecay` deal damage OUTSIDE their own cast entirely** — each applies a 2nd status
+  (venomShock/rustyDecay) to a target that may already be carrying a 1st one (poison/rust, from
+  `poisonVolley` or normal attacks); the real damage fires inside `CharacterControl.cs`'s own `addStatus`
+  dispatch the instant the 2nd status lands, scaled by the 1st status's live level/remaining duration. Both
+  modeled as opaque, state-contingent `dmg` text (3rd shape, same bucket as Penguin's `novaFlare`) — no
+  clean formula exists independent of live combat state.
+- **`slayer`/`allSlayer`'s real damage formula ignores the skill's OWN rank entirely** — it's driven
+  100% by the separate Improved Slayer passive's rank instead; the skill's own rank (1-4) selects which
+  enemy TYPE gets a race bonus, not a power scaling. Modeled as a flat `dmg` (Improved Slayer at 0),
+  `dmgNote`-flagged rather than dynamically computed — the real mechanic (Improved Slayer changing the
+  `atkCoeff`/`talAdjust`-base COEFFICIENTS themselves, not just appending a term) doesn't fit the existing
+  `dmgDep` engine's additive-term shape, and building a new mechanism for one class's one pair of skills
+  wasn't judged worth it this pass.
+
+**Icon situation had 2 real problems, not just the usual missing-lower-ranks gap**: `slayer`/`allSlayer`'s
+real per-rank files are named by ENEMY TYPE (`bugSlayer0-4.png`/`tailSlayer0-4.png`/etc for slayer, one
+file per tier for allSlayer), not a plain rank digit — broke the tool's standard "strip trailing digit,
+append rank" icon-cycle logic entirely. Fixed by re-keying at extraction time (`chameleon_slayer1`↔
+`bugSlayer1.png`, `chameleon_slayer2`↔`tailSlayer2.png`, etc., matching each rank's own real unlock
+progression) rather than building a bespoke icon-lookup mechanism — the existing generic logic works
+unchanged once the extracted keys follow the expected naming. Also found 5 more mislabeled `...1`-suffix
+keys pointing at nonexistent files (`tent`/`markOfSlayer`/`zeroShot`/`thunderDragon`/`rustyDecay`, real
+files all suffix `5`) — same family as every prior class's own icon-key bug, fixed the same way.
+
+**Two skills (`fatalStrike`, `leftStride`) deal no damage of their own** — both drive the shared
+normal-attack formula (`Chameleon_nAttack.cs:502`) instead, which this tool has never modeled for any
+class. `leftStride` still gets a standalone KO chip (the normal-attack's own flat 1, no `dmg` field
+required for that); `fatalStrike` gets neither, since it has no direct hit call at all.
+
+**New engine reuse, no new mechanisms needed**: `hitCountDep` (Penguin's Deadly Frost pattern) reused
+twice — `quickFire`'s Added Fire passive doubles its rapid-fire hit count, `rightStride`'s Double Strider
+passion doubles its volley count. `dmgMultDep` reused once — `massShot`'s Mass House Lock passive, ×1.5.
+`lckProc` used with `dep` OMITTED for the first time — `thunderDragon`'s 12% paralyze chance is genuinely
+unconditional (no passive gates it), confirmed the engine already supports this (`lpDepOn` defaults to
+`true` when no `dep` is set).
+
+Verified: script-block syntax clean, CSS comment-strip+brace-balance check clean (both now standard
+practice after the earlier CSS-comment incident), every one of 24 skills' icon keys (including every
+`1..maxRank` rank for multi-rank skills) confirmed present in `SKILL_ICONS` via a Node script (not eyeballed),
+new icon extractions spot-checked byte-exact via `Buffer.compare` including the trickiest re-keyed ones
+(`chameleon_slayer1`↔`bugSlayer1.png`, `chameleon_allSlayer3`↔`allElementalSlayer3.png`). Hit-count/dep
+math for `quickFire`/`rightStride`/`massShot` re-derived in Node and matched by hand. **Not yet visually
+verified live** — no browser tool available this session; do a real click-through pass (rank-cycle icons
+across all 24 skills, especially slayer/allSlayer's type-based icon swap, the 2 opaque-text damage chips,
+and the unconditional lckProc chip) before treating this as fully done.
