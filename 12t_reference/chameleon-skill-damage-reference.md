@@ -93,10 +93,28 @@ back to that sweep.
   `thunderDragon`'s reflect fires on an unpredictable number of incoming hits, not a caster-side loop.
   Both flagged via `dmgNote` rather than forcing a numeric `hitCount` that would misrepresent them.
 
+## Follow-up, 2026-08-21: Erase Senses wired up as a real Duration dep on Perfect Blend/True Invisibility
+
+User asked directly whether `eraseSenses5` (hasSkill 412) affects `perfectBlend`/`trueInvisibility`'s
+Duration — re-verified against source (not just trusted the existing `chameleon-skill-reference.md`
+citation): confirmed real for both. `Chameleon.cs:20687` — `perfectBlend`'s raw duration is
+`2×sLv + (hasSkill(412) ? 4 : 0)`; `Chameleon.cs:21155` — `trueInvisibility`'s is
+`4 + 4×sLv + (hasSkill(412) ? 4 : 0)`. Both a flat `+4` to the raw value, gated on the same passive.
+`massInvisibility` (the 3rd invisibility-family skill) double-checked and confirmed genuinely unaffected —
+its own `RPC_AddStatus("invisible", ...)` call site (`Chameleon.cs:24575`) has no `hasSkill(412)` check
+at all.
+
+Neither skill had this modeled as an interactive dep before — both just showed the no-passive value with
+no toggle. Added `dep:{id:"eraseSenses", perRank:4, minRank:0, maxRank:1}` to both (same standard
+additive-`perRank` shape already used elsewhere in this tool, e.g. Rabbit's Alchemist Lab), icon extracted
+and byte-verified. Per this tool's standing "assume the passive is learned" default, both skills' shown
+Duration changes from the base value to the with-passive one by default (Perfect Blend 4s→8s, True
+Invisibility 12s→16s at max rank) — a real, correct behavior change, not a regression.
+
 ## Open items / could not verify
 
-None outstanding from this pass — every one of the 24 active skills was checked for damage/KO/hit-count/
-dep/lckProc and reported above, either with a real citation or a confirmed "no damage" finding.
+None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and
+reported above, either with a real citation or a confirmed "no damage" finding.
 
 See `player-reference-tool/CLAUDE.md`'s own dated section for the full implementation narrative
 (engine reuse, icon extraction, verification detail).
