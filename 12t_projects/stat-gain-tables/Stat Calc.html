@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 Tails — Stat-Gain Calculator</title>
+<style>
+  :root{
+    --bg:#0d1422; --panel:#16223a; --panel2:#101a2c; --line:#26334d;
+    --ink:#e7eefb; --muted:#9fb3d1; --dim:#6f86ab; --accent:#4fd5c9;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:linear-gradient(180deg,#0f1626,#0b1120 60%); color:var(--ink);
+    font-family:"Segoe UI",Helvetica,Arial,sans-serif; min-height:100vh; padding:28px 16px 60px;
+  }
+  .wrap{max-width:760px; margin:0 auto}
+  h1{font-size:26px; margin:0 0 22px}
+  .sub{color:var(--muted); font-size:13px; margin:0 0 22px}
+  .sub code{color:#cdd9ec; background:#0f1830; padding:1px 6px; border-radius:5px; font-size:12px}
+  .controls{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:18px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:14px; align-items:end;
+  }
+  label{display:block; font-size:12px; color:var(--dim); margin:0 0 6px; letter-spacing:.3px; text-transform:uppercase}
+  select,input{
+    width:100%; background:#0f1830; color:var(--ink); border:1px solid var(--line);
+    border-radius:8px; padding:10px 11px; font-size:15px; outline:none;
+  }
+  select:focus,input:focus{border-color:var(--accent)}
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{opacity:.5}
+  .msg{min-height:18px; margin:12px 2px 0; font-size:13px; color:#ff8f8f}
+  .span-note{color:var(--muted); font-size:13px}
+  .results{margin-top:18px; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  thead th{
+    background:var(--panel); color:#cdd9ec; font-weight:700; text-align:right;
+    padding:11px 14px; border-bottom:1px solid var(--line); font-size:12px; letter-spacing:.3px;
+  }
+  thead th:first-child{text-align:left}
+  tbody td{padding:10px 14px; text-align:right; border-bottom:1px solid #1b2840; font-variant-numeric:tabular-nums}
+  tbody tr:nth-child(odd) td{background:var(--panel2)}
+  tbody tr:last-child td{border-bottom:none}
+  .statcell{text-align:left; font-weight:700}
+  .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:9px; vertical-align:middle}
+  .gain{font-weight:800; font-size:16px}
+  .gain.zero{color:var(--dim); font-weight:600}
+  .muted{color:var(--dim)}
+  tfoot td{background:var(--panel); padding:12px 14px; font-size:13px; color:var(--muted); text-align:left}
+  tfoot b{color:#fff}
+  .foot-formula{color:var(--dim); font-size:12px; margin:16px 2px 0; line-height:1.5}
+  @media(max-width:620px){.controls{grid-template-columns:1fr 1fr}}
+
+  .gate{position:fixed; inset:0; background:rgba(6,10,18,.92); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px}
+  .gate-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px; max-width:440px; width:100%; text-align:center}
+  .gate-card h2{margin:0 0 6px; font-size:20px; color:var(--ink)}
+  .gate-sub{color:var(--muted); font-size:13px; margin:0 0 18px}
+  .gate-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .gate-btn{background:#0f1830; border:1px solid var(--line); border-radius:10px; padding:12px 8px;
+    color:var(--ink); font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s,transform .1s}
+  .gate-btn:hover{border-color:var(--accent)}
+  .gate-btn:active{transform:scale(.97)}
+  .wrap.locked{filter:blur(5px); pointer-events:none; user-select:none}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h2>Choose your class</h2>
+    <div class="gate-grid" id="gateGrid"></div>
+  </div>
+</div>
+
+<div class="wrap locked" id="wrap">
+  <h1>12 Tails — Stat-Gain Calculator</h1>
+
+  <div class="controls">
+    <div>
+      <label for="cls">Class</label>
+      <select id="cls"></select>
+    </div>
+    <div>
+      <label for="cur">Current level</label>
+      <input id="cur" type="number" min="1" max="100" step="1" value="1">
+    </div>
+    <div>
+      <label for="tgt">Target level</label>
+      <input id="tgt" type="number" min="1" max="100" step="1" value="100">
+    </div>
+  </div>
+  <div class="msg" id="msg"></div>
+
+  <div class="results">
+    <table>
+      <thead>
+        <tr>
+          <th>Stat</th><th>Base</th><th>At current</th><th>At target</th><th>Gained</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="foot-formula">ตารางนี้ไม่รวม StatPlus / SuperStatPlus</p>
+</div>
+
+<script>
+"use strict";
+
+// Stat order index 0..7 — verified from CharacterData.cs:218-493
+const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
+const FULL  = {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"};
+const COLOR = {ATK:"#ff6b66",DEF:"#6ea2ff",AGI:"#5fd08a",VIT:"#ffb05a",INT:"#ff7bdf",CHA:"#c78bf0",TAL:"#4fd5c9",LCK:"#e0b25a"};
+
+// base[i] per class, ATK..LCK
+const CLASSES = {
+  Wolf:[7,8,7,7,6,5,5,3], Bison:[9,8,6,8,4,4,5,4], Panda:[8,7,8,6,4,4,6,5], Whale:[5,9,3,9,7,7,4,4],
+  Cat:[8,4,9,5,3,4,6,9], Chameleon:[7,5,8,5,4,5,7,7], Rabbit:[6,4,7,7,5,6,5,8], Mole:[5,7,5,6,5,5,8,7],
+  Monkey:[5,5,4,8,8,8,6,5], Sheep:[4,5,4,4,8,8,8,4], Penguin:[3,6,5,3,9,7,9,6], Bat:[6,5,6,5,7,9,4,6]
+};
+
+const MAX_LV = 100;
+const CAP_LV = 95; // stat gain stops increasing past this level
+// verified leveling formula — CharacterData.cs:515
+const gain = (lv, base) => Math.floor((Math.min(lv, CAP_LV) - 1) * (base + 3) * 0.083);
+
+const $ = id => document.getElementById(id);
+const clsSel = $("cls"), curEl = $("cur"), tgtEl = $("tgt"), rows = $("rows"), msg = $("msg");
+const gate = $("gate"), gateGrid = $("gateGrid"), wrap = $("wrap");
+
+// populate class dropdown + gate buttons
+for (const name of Object.keys(CLASSES)) {
+  const o = document.createElement("option");
+  o.value = name; o.textContent = name;
+  clsSel.appendChild(o);
+
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "gate-btn"; b.textContent = name;
+  b.addEventListener("click", () => {
+    clsSel.value = name;
+    gate.style.display = "none";
+    wrap.classList.remove("locked");
+    render();
+  });
+  gateGrid.appendChild(b);
+}
+
+function readLevel(el){
+  const v = el.value.trim();
+  if (v === "" || !/^\d+$/.test(v)) return null;
+  return Math.min(MAX_LV, Math.max(1, parseInt(v,10)));
+}
+
+function render(){
+  const cls = clsSel.value;
+  const base = CLASSES[cls];
+  const cur = readLevel(curEl);
+  const tgt = readLevel(tgtEl);
+
+  rows.innerHTML = "";
+  if (cur === null || tgt === null){
+    msg.textContent = "Enter whole numbers (1–"+MAX_LV+") for both levels.";
+    return;
+  }
+  if (tgt < cur){
+    msg.textContent = "Target level ("+tgt+") must be ≥ current level ("+cur+").";
+    return;
+  }
+  msg.textContent = "";
+
+  for (let i=0;i<8;i++){
+    const s = STATS[i], b = base[i];
+    const atCur = gain(cur, b), atTgt = gain(tgt, b), g = atTgt - atCur;
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="statcell"><span class="dot" style="background:'+COLOR[s]+'"></span>'+
+        '<span style="color:'+COLOR[s]+'">'+s+'</span> <span class="muted" style="font-weight:400">'+FULL[s]+'</span></td>'+
+      '<td class="muted">'+b+'</td>'+
+      '<td class="muted">'+atCur+'</td>'+
+      '<td class="muted">'+atTgt+'</td>'+
+      '<td><span class="gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
+    rows.appendChild(tr);
+  }
+}
+
+function clampInput(el){
+  const v = el.value;
+  if (v === "") return;
+  const n = parseInt(v, 10);
+  if (!isNaN(n) && n > MAX_LV) el.value = String(MAX_LV);
+}
+
+clsSel.addEventListener("change", render);
+curEl.addEventListener("input", () => { clampInput(curEl); render(); });
+tgtEl.addEventListener("input", () => { clampInput(tgtEl); render(); });
+</script>
+</body>
+</html>
