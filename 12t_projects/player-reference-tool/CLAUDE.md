@@ -3794,5 +3794,32 @@ chip as "currently only Mole's stunMine/stunGrenade" — already wrong before th
 
 Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance check clean, grepped for zero
 dangling `koVal`/`koToggles`/`sk-ko-standalone-toggles` references outside the still-live `.sk-ko-badge`
-block. **Not yet visually verified live** — no browser tool available this session; check Left Stride's
-card renders the note-only chip cleanly (no orphaned KO label/value), before treating this as fully done.
+block.
+
+### 2026-08-21, immediate follow-up: Left Stride's note-only chip replaced with a real Damage Formula chip, `dmg` gains function support
+
+User reacted to a screenshot of the note-only chip on Left Stride's own card: "Is it so hard to remove
+this shit and put a proper damage formula chip here / 3 normal attack arrows for level 1 / 5 normal attack
+arrows for level 2 / double the count for the related skillDep." Left Stride's arrow count is rank- AND
+dep-dependent text (not a damage number — each arrow still uses the shared, untracked normal-attack
+formula) — the existing per-rank-array `dmg` extension only varied by rank, so this needed one more small
+extension: `skill.dmg` may now ALSO be a function `(rank, depLv) => string`, same calling convention
+`resolveAtkCoeff` already uses for a function-shaped `atkCoeff` (the Slayer/All Slayer Improved Slayer
+pilot). `getDmgText` checks `typeof skill.dmg === "function"` first, reading `skill.dmgRankDep` for the
+dep state, before falling back to `resolveRank` for the array/flat-string cases.
+
+`chameleon_leftStride`'s `dmg` is now `(rank,depLv)=>{ const base=rank===1?3:5; return
+`${depLv?base*2:base} Normal Attack Arrows`; }`, with `dmgRankDep:CHAMELEON_DOUBLESTRIDER_DEP` — the SAME
+dep object Right Stride's own `hitCountDep` already references, so the corner toggle this automatically
+gets (via `renderHero`'s existing `dmgRankDep` handling, no new plumbing) shares live state with Right
+Stride's. Left Stride now renders through the normal `if (selected.dmg)` path like every real damage
+skill — a real Damage Formula chip, plus a `.sk-ko-badge` "KO 1" nested in its corner for free (it never
+had one before, since it never had a `dmg` field to nest under). Raw/Final Damage/Simulate correctly stay
+absent, same as Venom Shock/Rusty Decay — the resolved text is opaque prose, fails both the
+`talAdjust(...)` and pure-arithmetic shape checks, matching the user's own earlier "no raw / dmg sim
+needed" instruction on this exact skill.
+
+Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance check clean, Node-verified
+all 4 rank×dep combinations (3/5/6/10) match the user's spec exactly. **Not yet visually verified live** —
+no browser tool available this session; check the Damage Formula chip renders cleanly and the corner
+toggle actually stays linked with Right Stride's, before treating this as fully done.

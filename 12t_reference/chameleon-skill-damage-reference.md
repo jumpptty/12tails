@@ -266,6 +266,40 @@ live, just only reachable via the nested badge path now). Verified: JS syntax cl
 brace-balance check clean, grepped for zero dangling `koVal`/`koToggles`/`sk-ko-standalone-toggles`
 references outside the still-live `.sk-ko-badge` block.
 
+### Follow-up, immediately after: Left Stride gets a real Damage Formula chip instead of the note-only chip
+
+User, reacting to a screenshot of the note-only chip: "Is it so hard to remove this shit and put a proper
+damage formula chip here / 3 normal attack arrows for level 1 / 5 normal attack arrows for level 2 /
+double the count for the related skillDep." Left Stride's own arrow count (not a damage NUMBER, since each
+arrow still uses the untracked shared normal-attack formula) is itself rank- and dep-dependent text — a
+genuinely new shape, since the existing per-rank-array `dmg` extension (Venom Shock/Rusty Decay, above)
+only varies by rank, not by a dep too.
+
+**New capability, not a one-off**: `skill.dmg` may now ALSO be a function `(rank, depLv) => string` —
+same `(rank, depLv)` calling convention `resolveAtkCoeff` already uses for a function-shaped `atkCoeff`
+(Slayer/All Slayer's Improved Slayer pilot, earlier this file), reading the same `skill.dmgRankDep`
+reference. `getDmgText` (the resolver added for the array case) now checks `typeof skill.dmg ===
+"function"` first, before falling back to `resolveRank` for the array/flat-string cases.
+
+Left Stride: `dmg:(rank,depLv)=>{ const base = rank===1?3:5; return `${depLv?base*2:base} Normal Attack
+Arrows`; }`, `dmgRankDep:CHAMELEON_DOUBLESTRIDER_DEP` — the SAME dep object Right Stride's own
+`hitCountDep` already references (`Chameleon.cs:27058` citation unchanged from the original note), so the
+corner toggle this automatically wires up (`renderHero`'s existing `selected.dmgRankDep ?
+renderDmgRankToggle(...)` line, no changes needed there) shares live state with Right Stride's — toggling
+either updates both, same linked-toggle precedent used throughout this file. Verified in Node: rank
+1/dep-off → "3 Normal Attack Arrows", rank 2/dep-off → "5", rank 1/dep-on → "6", rank 2/dep-on → "10" —
+exact match to the user's spec and the original citation's 3/5/6/10 figures.
+
+Left Stride now renders through the normal `if (selected.dmg)` branch like every other damage skill —
+real Damage Formula chip, `.sk-ko-badge` showing "KO 1" nested in its corner (previously the flat KO badge
+never rendered for this skill at all, since it never had a real `dmg` field to nest under). Raw/Final
+Damage/Simulate all correctly stay absent — the resolved text is opaque prose (contains letters), so it
+fails both the `talAdjust(...)` and pure-arithmetic regex checks the same as Venom Shock/Rusty Decay,
+matching the user's own earlier instruction on this exact skill ("no raw / dmg sim needed").
+
+Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, Node-verified the 4 output
+values above match exactly.
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and
