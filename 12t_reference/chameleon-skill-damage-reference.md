@@ -11,7 +11,8 @@ back to that sweep.
 
 | Skill | Max Rank | dmg shape | KO | Hit count | Dep mechanism | lckProc |
 |---|---|---|---|---|---|---|
-| immunity | 3 | none (buff) | — | — | — | — |
+| immunity | 2 | none (buff) | — | — | — | — |
+| skinShift | 1 | none (self-cost only) | — | — | shares Immunity's own cooldown key | — |
 | quickFire | 4 | 3-phase `dmgGroups`: open/close flat `0.25×ATK`, burst `0.25→0.35×ATK` w/ Added Fire | 0 | `2+2×rank` base, `2+4×rank` w/ Added Fire | `addedFire5` (hasSkill 402): both the burst coefficient bump AND hit-count doubling modeled (rank+dep-aware `dmgGroups` group values, new engine capability this pass) | — |
 | perfectBlend | 2 | none (buff) | — | — | — | — |
 | trueInvisibility | 2 | none (buff) | — | — | — | — |
@@ -92,6 +93,35 @@ back to that sweep.
   distinct enemies were recently damaged by ANY of this Chameleon's skills), not a fixed function of rank;
   `thunderDragon`'s reflect fires on an unpredictable number of incoming hits, not a caster-side loop.
   Both flagged via `dmgNote` rather than forcing a numeric `hitCount` that would misrepresent them.
+
+## Follow-up, 2026-08-21: Immunity/Skin Shift split into 2 real skill cards, per-rank Duration bug fixed
+
+User: "Immunity Skill card max at rank 2, and remove mention of skinshift, it deserves its own skill
+card." The original cooldown-reference doc had combined `chm_immunity1`/`chm_immunity2` (the 2 real
+Immunity ranks) with the Class-C `chm_skinShift5` entry into one Max-Rank-3 row, following this doc
+family's own "shares one cType, combine into one row" precedent — reasonable at the cooldown/duration
+level (both share the exact same `"immunity"` cooldown key and Skin Shift applies no duration of its
+own), but not right once Damage/KO fields entered the picture: Skin Shift is a genuinely distinct cast
+(its own `req level 70` unlock, own SP/MP cost, own self-damage mechanic, own icon) that happens to share
+a cooldown lock with Immunity, matching the same "materially different mechanics, own row even with a
+shared cType" precedent already established elsewhere in this tool (Whale's flyingShield/homingShield,
+Panda's Tiger Toss family).
+
+`chameleon_immunity` reverted to Max Rank 2 (`chm_immunity1`/`chm_immunity2` only), name back to plain
+"Immunity", icon back to the real rank-2 art. New `chameleon_skinShift` entry (Max Rank 1, same shared
+cooldown, own icon) — no `dmg`/`ko` fields (its only combat-adjacent effect is self-damage, `ceil(0.1×
+current hp)`, `Chameleon.cs:35229`, same "self-cost, not damage dealt" treatment as Blood Burn earlier in
+this same pass), fully explained via `dmgNote` instead: costs 10% current HP to re-level whatever
+Immunity status is already active, grants no fresh Immunity of its own.
+
+**Real bug found and fixed in the same pass**: Perfect Blend's and True Invisibility's `duration` fields
+were still flat numbers (matching only rank 2's own value) despite both formulas genuinely scaling with
+rank (`2×sLv` and `4+4×sLv` respectively) — cycling either skill's rank selector had no effect on the
+displayed Duration at all. Converted both to per-rank arrays (`duration:[2,4]` / `duration:[8,12]`).
+Verified in Node that the existing per-rank-array-resolution and Erase-Senses-dep mechanisms already
+compose correctly with no further engine changes needed (`resolveRank` picks the right array element
+before the dep applies on top): Perfect Blend rank 1/2 × Erase Senses off/on → 2/6/4/8; True Invisibility
+rank 1/2 × off/on → 8/12/12/16, all matching the source formulas by hand.
 
 ## Follow-up, 2026-08-21: Erase Senses wired up as a real Duration dep on Perfect Blend/True Invisibility
 
