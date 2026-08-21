@@ -3564,3 +3564,41 @@ doubleBot+Heavy Built 2 → 1800; King Kaiser tier 1 at Heavy Built 0/2 → 1500
 formula by hand. **Not yet visually verified live** — no browser tool available this session; check the
 new corner toggle doesn't collide with the 3×3 stat grid, and that toggling it live-updates the HP cell
 in both Barrel Bot's and King Kaiser's own chip, before treating this as fully done.
+
+### 2026-08-21, later same day: base "Barrel Bot" summon entry gets its own Stats chip, in row 2
+
+User: "Add Barrel Bot stat chip in Barrel Bot skill card too, use the available 2nd row in this case."
+The base `mole_barrelBot` entry (the summon skill itself, distinct from its 8 "Barrel Bot - X" moveset
+children) had no Stats chip at all before this pass, unlike its children -- because it genuinely can't
+reuse their placement: those 8 have no Cast Time/Duration/LCK-proc of their own, leaving `.sk-hero-stats`
+columns 2-4 free for the chip; this entry has REAL data in all 3 (`castTime:[4,5,6,7]`, `cd:240`,
+`durationInfinite:true`), so that space is already fully occupied. Its own 2nd row (`.sk-dmg-row`) is the
+genuinely blank one instead (no `dmg`/`shield`/`ko`), which is what the user pointed at.
+
+**Verified BEFORE wiring `ownStats:true` onto this entry that doing so would have been wrong.** Every
+other `ownStats` skill's own Cooldown/Cast Time genuinely reads Barrel Bot's own AGI -- but this entry's
+own cooldown-arming call is different: `Mole.cs:23429`, inside the shared `RPC_assemble1` dispatcher
+(also used by `autoGyroGun`/`warCapital`), runs on `$self_.mChar` -- Mole's OWN `CharacterControl`, not
+the resulting summon's. Confirmed by tracing the obfuscated `$self_` closure variable back through the
+class, not assumed from the naming pattern alone. Setting `ownStats:true` here would have silently
+swapped this skill's real Cooldown/Cast Time calculation from Mole's own AGI to Barrel Bot's own
+(dramatically lower, ~10 vs. 128) -- a real correctness bug, not just a display choice, caught before it
+shipped rather than after.
+
+**New `bbStatsInRow2` flag + a 4th branch in `renderHero()`'s own `ownStats`/`ownStatsDmgOnly`/
+`ownStatsKaiser` chain** — deliberately does NOT touch the top-level `AGI`/`LCK`/`ATK`/`TAL` consts the
+way the other 3 branches do; it only computes `bbStatsTable` for display. Net effect: every one of the 9
+cells on this card correctly renders as "not used" (`getUsedOwnStatKeys` genuinely finds nothing --  no
+`dmg`, no `atkCoeff`, `ownStats` itself is false so the AGI check never fires) -- accurate, not a bug,
+since none of Barrel Bot's own stats actually drive any calculation on THIS particular card; they're pure
+reference info here, unlike every other card that shows this table. New `.sk-stat-bb-row2` CSS variant
+(`grid-column:1/-1`, full width) replaces the top-row placement's `2/span 3` -- nothing else shares row 2
+on this card, so there's no reason to leave column 1 blank the way the top-row version does to make room
+for a real Cooldown chip beside it. `bbStatsBlock`'s own top-row insertion point is suppressed
+(`${selected.bbStatsInRow2 ? "" : bbStatsBlock}`) so it doesn't render twice.
+
+Verified: script-block syntax clean, CSS comment-strip+brace-balance check clean, `getUsedOwnStatKeys`
+re-derived in Node against this exact entry's real fields, confirmed empty set (all 9 cells dimmed).
+**Not yet visually verified live** — no browser tool available this session; check the full-width chip
+actually fits row 2's existing reserved height and that the Heavy Built corner toggle doesn't collide with
+anything at the wider width, before treating this as fully done.

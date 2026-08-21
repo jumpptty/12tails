@@ -514,6 +514,16 @@
      load-bearing for the CURRENTLY SELECTED skill is communicated by the
      used/unused color treatment below instead of by hiding columns. */
   .sk-stat-bb{grid-column:2 / span 3}
+  /* Row-2 placement (2026-08-21, base "Barrel Bot" summon entry): unlike
+     every "Barrel Bot - X" moveset child (whose top .sk-hero-stats row has
+     no Cast Time/Duration/LCK-proc of its own, freeing columns 2-4 for the
+     usual placement above), this skill has real Cooldown+Cast Time+
+     Duration filling every column already -- the Stats chip moves into the
+     otherwise-blank 2nd row (.sk-dmg-row) instead. Full width there
+     (grid-column:1/-1, not 2/span 3) since nothing else shares that row
+     for this skill -- no reason to leave column 1 artificially blank the
+     way the top-row placement does to make room for a real Cooldown chip. */
+  .sk-stat-bb-row2{grid-column:1 / -1}
   .sk-bb-table{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px 8px; margin-top:2px}
   .sk-bb-stat{display:flex; flex-direction:column; min-width:0}
   .sk-bb-stat-label{font-size:9px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); white-space:nowrap; margin:0}
@@ -2325,7 +2335,7 @@ const SKILLS = [
   { id:"mole_timeNuke", name:"Time Nuke", class:"Mole", icon:"mole_timeNuke2", maxRank:2, cd:360, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:false, dmg:"talAdjust(100×sLv+50)", hitCount:()=>4, dmgNote:"up to 4 ring pulses, falls off with ring distance (not shown); Smart Shell (smartShell1) halves same-layer / +30 flat enemy-layer, not modeled", ko:"3" },
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cd:360, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, dmg:"10×sLv", dmgDep:{id:"synchroMole2", label:"Synchro Mole (Rank 2)", icon:"mole_synchroMole2", minRank:0, maxRank:1, term:"TAL", termClass:"dmg-tal", calc:(LV,rank,TAL)=>Math.floor(TAL||0)}, dmgReplaceDep:{id:"hiddenTurret", label:"Hidden Turret", icon:"mole_hiddenTurret5", minRank:0, maxRank:1, coeff:0.25, lckCoeff:0.125, calc:(rank,LV)=>Math.floor(0.25*rank*LV)}, ownLck:true, ko:"1", dmgNote:"turret's own flat ATK stat (10/20/30/40 by rank), independent of Mole's own stats; continuous auto-attack, not a single cast — Raw/Final Damage below model one representative turret hit, confirmed to route through the same dmgAdjust/defAdjust/hitMod pipeline as every other skill (CharacterControl.hit(), no talAdjust step). Hidden Turret (hiddenTurret5) REPLACES this base value with 0.25×rank×MoleLV rather than adding to it — below Mole level 40 this is actually a NET DECREASE versus no Hidden Turret at all, despite its tooltip reading like a flat bonus (break-even is exactly level 40, any rank). Synchro Mole at rank 2 (not rank 1) adds +floor(Mole's TAL) on top of whichever base is active, applied only to already-summoned turrets, not retroactively. The turret ALSO has its own independent LCK stat (baseline 10×rank, same formula as its ATK; replaced by 0.125×rank×MoleLV — HALF the ATK/DEF coefficient — with Hidden Turret active), used for the Final Damage chip's dmgAdjust roll INSTEAD of the LCK input above, which represents Mole's own LCK, not the turret's." },
-  { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true },
+  { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true, bbStatsInRow2:true },
   { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1", dmgNote:"one of the summoned Barrel Bot's own AI-picked attacks, used at point-blank range (<1m) when no other move is available — its own \"nAttack\" internal timeout is a flat 3s, NOT agiAdjust-wrapped (`BarrelBot.cs:2480`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown (240s, shown on the base Barrel Bot entry)" },
   { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5", dmgNote:"used within 3m; rank = PunchLv, granted by Mole's own Mega Punch unlock (hasSkill 331/332); \"punch\" internal timeout is agiAdjust-wrapped, base 12s (`BarrelBot.cs:2892`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
   { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv", dmgNote:"used within 2m; rank = HammerLv, granted by Mole's own Mega Hammer unlock (hasSkill 333/334); \"hammer\" internal timeout is agiAdjust-wrapped, base 15s (`BarrelBot.cs:3287`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
@@ -3814,6 +3824,26 @@ function mountSkillCooldownLookup(root){
       const kk = kingKaiserOwnStats(kaiserLv, heavyBuiltLv);
       AGI = kk.agi; LCK = kk.lck; ATK = kk.atk; TAL = kk.tal;
       bbStatsTable = kk;
+    } else if (selected.bbStatsInRow2){
+      // Base "Barrel Bot" summon entry (2026-08-21, user-requested): this
+      // skill's own Cooldown/Cast Time genuinely use MOLE's own AGI, not
+      // Barrel Bot's -- verified directly, the arming call
+      // (`Mole.cs:23429`, inside the shared RPC_assemble1 dispatcher) runs
+      // on `$self_.mChar` (Mole himself), not the summoned companion's own
+      // CharacterControl (unlike every "Barrel Bot - X" moveset child,
+      // whose own cooldowns genuinely DO read Barrel Bot's own AGI). So
+      // unlike full `ownStats`, this branch deliberately does NOT touch
+      // AGI/LCK/ATK/TAL at all -- it only computes bbStatsTable so the
+      // Stats chip can show Barrel Bot's own numbers as pure reference
+      // info, with every cell correctly landing on "not used" (this card
+      // has no damage formula and a Mole-sourced Cooldown, so nothing here
+      // genuinely reads any of Barrel Bot's own stats) rather than
+      // misrepresenting them as calculation inputs they aren't.
+      bbStatsTable = barrelBotOwnStats(
+        getDepRank(MOLE_DOUBLEBOT_DEP) === MOLE_DOUBLEBOT_DEP.maxRank,
+        getDepRank(MOLE_SYNCHROMOLE_BARRELBOT_DEP) === MOLE_SYNCHROMOLE_BARRELBOT_DEP.maxRank,
+        LV, TAL, heavyBuiltLv
+      );
     }
 
     const rank = getSkillRank(selected);
@@ -4468,7 +4498,20 @@ function mountSkillCooldownLookup(root){
       // skips both "no ko field" and "ko evaluates to 0" the same way,
       // leaving the row genuinely blank for every other buff/heal/summon.
       const koVal = getKOValue(selected, rank);
-      if (koVal){
+      // bbStatsInRow2 (2026-08-21, user-requested): the base "Barrel Bot"
+      // summon entry itself (unlike its 8 "Barrel Bot - X" moveset
+      // children) has REAL Cooldown/Cast Time/Duration data of its own
+      // filling every column of .sk-hero-stats -- there's no free column
+      // 2-4 space up there for the usual .sk-stat-bb placement the way the
+      // moveset children have (all 8 of those have none of the 3 top-row
+      // fields, which is exactly why that space was free for them). This
+      // skill's own 2nd row is genuinely blank instead (no dmg/shield/ko),
+      // so the Stats chip moves there -- full width (.sk-stat-bb-row2),
+      // not squeezed into 3-of-4 columns the way the top-row placement is,
+      // since there's nothing else sharing the row here.
+      if (selected.bbStatsInRow2 && bbStatsBlock){
+        dmgBlock = `<div class="sk-dmg-row">${bbStatsBlock.replace('class="sk-stat sk-stat-bb"', 'class="sk-stat sk-stat-bb sk-stat-bb-row2"')}</div>`;
+      } else if (koVal){
         const koToggles = [
           selected.koDep ? renderDmgToggle(selected.koDep) : "",
           selected.koMultDep ? renderDmgToggle(selected.koMultDep) : "",
@@ -4515,7 +4558,7 @@ function mountSkillCooldownLookup(root){
           ${castBlock}
           ${durationBlock}
           ${lckProcBlock}
-          ${bbStatsBlock}
+          ${selected.bbStatsInRow2 ? "" : bbStatsBlock}
         </div>
         ${dmgBlock}
       </div>
