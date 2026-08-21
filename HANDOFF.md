@@ -1,5 +1,144 @@
 # 12 Tails Workspace — Handoff
 
+**Update 2026-08-21: King Kaiser's moveset itemized, Mole declared fully complete (2nd class after
+Penguin), and a real tool-wide CSS bug found and fixed.** Long session picking up Mole's own giant-mech
+ultimate — split into 3 "King Kaiser - X" `SKILLS` entries (Normal Attack's 3-swing combo via a new
+per-group `atkCoeff` extension to `dmgGroups`, Kaiser Missile's 4-missile AoE volley, Kaiser Beam's
+charge-and-release) mirroring the earlier War Factory/Barrel Bot splits. Along the way: resolved a stale
+open item (action codes previously flagged as unitemized King Kaiser attacks actually belonged to an
+unrelated item-use dispatcher), found `KingKaiserAI.cs`'s own AI dispatch is structurally unreachable
+(King Kaiser is fully player-controlled), and fixed 2 real bugs an earlier unpublished pass had shipped
+(Beam missing its real 5-pulse hit count, both Missile/Beam sharing a generic icon instead of their real,
+distinct skill-tree ones).
+
+**A stray `*/` inside a CSS comment broke the ENTIRE stylesheet, tool-wide — not a Mole-only bug.** Found
+via user report + live Playwright inspection: the word collision `ownStats*/ownStatsKaiser` closed a CSS
+comment early, turning everything after it into invalid CSS the browser silently gave up parsing (116 of
+what should be several hundred rules). Fixed, and a CSS comment-strip + brace-balance check now runs
+alongside the existing JS syntax check before every future publish — this class of bug produces no console
+error at all, so a purely visual/manual review would have missed it again.
+
+**Barrel Bot's own stat block got two real corrections and a full "all 8 stats + max HP" expansion.**
+`doubleBot5` doesn't add to Barrel Bot's HP the way it does its other 8 stats — it overwrites HP as 10× the
+already-boosted VIT stat — and Heavy Built (previously assumed King-Kaiser-specific) turns out to be a
+general Mole passive that scales HP further on top, now a shared toggle across both Barrel Bot's and King
+Kaiser's own Stats chip. King Kaiser's own base HP corrected to 1500 (matching its real tooltip) per direct
+user correction, superseding an earlier hex-decode that technically found 200 in the binary but doesn't
+match live play — same "user's live knowledge wins when it conflicts with decompiled source" precedent this
+repo already follows elsewhere. The Barrel Bot/King Kaiser Stats table itself grew from 4 stats to the full
+8 + max HP, with a per-skill "used vs. not used" dimming treatment, and the base "Barrel Bot" summon card
+(previously with no Stats chip at all) now gets its own copy in its otherwise-blank 2nd row, with all 3
+toggles (Double Bot, Synchro Mole, Heavy Built) wired directly onto it.
+
+**Mole declared fully complete, 2026-08-21 — the 2nd class (after Penguin) to clear this bar.** User's own
+call. Full detail across every dated pass in `player-reference-tool/CLAUDE.md`; the moveset-split work's
+own citations are in `12t_reference/mole-skill-damage-reference.md`. Not visually verified live at any
+point this session — Playwright was available and used for diagnosing the CSS bug specifically, but no
+full click-through pass of the new King Kaiser/Barrel Bot chips was done; worth one before trusting the
+layout fully.
+
+**Update 2026-08-18 (2nd session today): rank-selector/damage-formula feature extended from Penguin-only
+to Mole — the 2nd of 12 classes, an explicit single-class scope, not a full 11-class rollout.** User
+asked to continue the rollout and, after two scoping questions, said to just do Mole first without
+further back-and-forth ("I didn't expect you to get every right from the first try anyway, I'll check
+them when you are done"). Research via a `mechanics-researcher` sweep of `Mole.cs`/`MoleSkill.cs`,
+written to a new `12t_reference/mole-skill-damage-reference.md` (companion to the existing
+cooldown-reference doc). Two small, generalizable engine extensions landed in `index.html`: a new
+`atkCoeff` field supporting a `0.5×ATK + talAdjust(...)` formula shape (several Mole skills have a flat
+ATK-stat term Penguin's damage skills never used), and `dmgDep.calc`/`term` can now optionally depend on
+the skill's own selected rank (not just character LV), needed for `tnt`'s `superTNT5` bonus. Also found
+and fixed a pre-existing bug: 8 of Mole's Class-C-tier skills were shipped pointing at a nonexistent
+`...1` icon file instead of the real `...5` one (same family as Penguin's original 6 mislabeled keys).
+Full detail in `player-reference-tool/CLAUDE.md`'s new dated section. **Not visually verified live — no
+browser/Playwright tool was available this session**; verified only via Python (brace/paren balance,
+exhaustive icon-key coverage, per-rank array length checks). Published live via
+`publish-player-reference-tool` after the data landed. The other 10 classes are still untouched.
+
+**Update 2026-08-18: repo root reorganized — the ~1,455 loose decompiled `.cs` files and every compiler-noise
+file/folder moved into two new git-ignored folders, plus 3 unrelated stray items deleted.** User-requested
+cleanup, no functional/content changes to any surviving file. `DecompiledSource/` now holds all real
+decompiled source (`CharacterControl.cs`, `Penguin.cs`, etc. — flat, no subfolders). `Scaffolding/` holds
+pure compiler noise: the 11 loose `.cs` noise files (`$ArrayType$*.cs` ×8, `-Module-*.cs` ×2,
+`-PrivateImplementationDetails-*.cs` ×1), `Assembly-UnityScript.csproj`/`.g.resources`, and — found in a
+second pass after the first move, since these weren't loose *files* at the root and needed their own
+check — 6 more scaffolding **folders** matching the exact same category: `Properties/` (`AssemblyInfo.cs`),
+`System/` (`SuppressIldasmAttribute.cs`, a standard decompiler stub), `bin/` and `obj/` (empty/near-empty
+MSBuild build-output dirs), and 3 randomly-named obfuscator folders (`Uk4rUKlZGgDFEL7U6D/`,
+`cZRJ81ju0AbIsUerIn/`, `dLmlgre5Dm3f68FOGa/` — one of which, `LTRpgsKoBpCYTrSOvr.cs`, is literally the
+anti-tamper stub this repo's own `mechanics-researcher` agent doc already calls out by name). Both new
+folders added to `.gitignore` directly (previously these files were untracked-but-ungitignored at the root,
+relying on "never `git add -A`" discipline alone). Spot-checked post-move that file content survived intact
+(`CharacterControl.cs:20624`'s `talAdjust` still there verbatim) — a plain filesystem move, not a rewrite.
+
+**No citation text anywhere in this repo needed updating**: every existing `file:line` citation
+(`12t_reference/*.md`, `player-reference-tool/CLAUDE.md`'s dated passes, this file's own history) already
+cites bare filenames like `Penguin.cs:20624` with no path prefix, so they remain valid as-is — only the
+docs that explicitly said "at the repo root" needed rewriting to say `DecompiledSource/` instead: root
+`CLAUDE.md`'s "Where the real source is" section (the authoritative pointer), the `mechanics-researcher`
+agent, and the `decode-character-stats` skill. The `guard-decompiled-and-data.sh` hook needed no functional
+change — its `*.cs` block pattern was already path-agnostic, matching any `.cs` file regardless of
+directory, only its own comment was updated for accuracy. `RippedAssets/`'s dummy-stub AssetRipper
+`.cs` files (a separate, already git-ignored tree) were untouched — this reorganization only touched the
+loose root-level real-source dump.
+
+**Same pass, 3 more root-level items resolved after the user asked what they were, all confirmed untracked
+first (safe, no git history impact) and now deleted:**
+- **`12Tails-StatGain-Calculator.html`** — an older, simpler draft of the Stat-Gain Calculator (no class-
+  selection gate, level cap 999, English-only footer) superseded by the actively-maintained
+  `12t_projects/stat-gain-tables/Stat Calc.html` (has the gate, level cap 100 with a CAP_LV=95 plateau,
+  Thai footer) — diffed side-by-side to confirm they'd genuinely diverged, not identical duplicates, before
+  the user confirmed deletion.
+- **`LineEmoji_Submission/` + `LineEmoji_Submission.zip`** — unrelated to the decompiled source or any
+  documented deliverable, purpose unclear; user confirmed deletion after being flagged.
+- **`RippedAssets.zip`** (3.6GB) — the original archive `RippedAssets/` was extracted from; kept alongside
+  the extracted copy it had no reason to still exist, reclaiming the 3.6GB.
+
+Root now holds only: `.gitignore`/`.mcp.json`/`CLAUDE.md`/`HANDOFF.md` (files), and
+`.claude`/`.git`/`.impeccable`/`.playwright-mcp`/`.superpowers`/`12TailsOnline_Data`/`12t_projects`/
+`12t_reference`/`DecompiledSource`/`RippedAssets`/`Scaffolding`/`docs` (folders) — no other stray items
+remain as of this snapshot.
+
+**Update 2026-08-17: multi-hit Simulate display shipped and generalized — built, found broken on the live
+Artifact, fixed, then extended to 4 more Penguin skills and unified with single-hit. First session since the
+rank-selector/damage-formula work began with an actual browser available, and the first time this project's
+"looks right locally, ship it" pattern got directly contradicted by testing the real published page.** For
+skills whose real cast fires more than once (`manaMissile`, `fallingComets`, `blizzard`, `tornado`,
+`arcticWind`), the Final Damage chip's "Test" button now shows a grid of independently-rolled small numbers
+plus a full-size running total, all living in a persistent overlay in the open space right of the tool shell
+— not the cramped chip itself. Piloted on `manaMissile` alone first (7 missiles at rank 4 + `moreMissile`),
+then generalized same day.
+
+**Two real bugs only reproduced on the live Artifact, never in local dev** (which lacks the `.view`
+wrapper/iframe this repo's whole UI runs inside on claude.ai): `position:fixed` silently resolving against
+`.view`'s small ~900px box instead of the true ~2048px viewport (the user reported "nothing show up" —
+confirmed live via Playwright, `multiHitLayer.getBoundingClientRect()` came back identical to
+`.tool-shell`'s own rect), and a genuine 0-width collapse on doubly-nested `position:absolute` boxes with no
+explicit width (the digit `<img>` was fully loaded but its container measured 0 wide). Both fixed
+(`document.body` append instead of `root`; `width:max-content` on the affected chain) and re-verified
+against the real published page, not just re-implemented in Node the way every earlier no-browser session
+had to. A related 3rd bug (the running total's own position drifting as its digit count grew, e.g. "15"
+then "1802") turned out to be the SAME nested-absolute-position family causing `translateX(-50%)`'s
+percentage math to misbehave — replaced with the older, more robust `left:0;right:0;margin:auto` technique
+against an explicit wrapper width.
+
+**Along the way**: single-hit Simulate was unified into the exact same code path as multi-hit (no more
+separate `.sk-dmg-final-popup`/`simulatePopups` mechanism); reveal timing was simplified to a flat 50ms/hit
+for every skill regardless of its real in-game cadence (user: "user just needs a quick glance"); the grid
+went 4→6 columns with two rounds of spacing tuning; Blizzard's real mechanic (the AoE excludes the exact
+target you locked onto) was reconciled with this tool's "hit your selected target" framing per the user's
+own instruction rather than skipped; Arctic Wind got a `hitCountDep` toggle (Deadly Frost, 4↔8 hits) — a
+new dependency shape needed because it changes ONLY the hit count with zero change to the damage formula
+text, unlike every earlier Class C dep in this file; and the Mods popup grew a 3rd, genuinely separate
+multiplicative category ("Final Multiplier") after an initial version was built as ordinary additive hitMod
+entries and the user caught that mismatch one message later. Also spent real time on a publish/share-pin
+red herring before realizing the actual issue was verifying "did the fix really land" via a fresh
+`browser_navigate` + string search, not just trusting the publish tool's own success message.
+
+Full technical detail — every citation for the 4 newly-wired skills, the exact bug diagnoses, every
+Node-verified formula — is in `player-reference-tool/CLAUDE.md`'s 24th pass (23rd pass's own containing-
+block claim has a correction note pointing to it). **Known gap, unchanged**: the gutter anchor still has no
+narrow-viewport fallback. Uncommitted as of this snapshot — see `git status`.
+
 **Update 2026-08-16 (on top of the 2026-08-14 rank-selector/damage-formula pilot below): Final Damage
 chip built out to the full real damage pipeline, a new "Mods" buff/debuff popup, and the remaining Class
 C dependency sweep across the Penguin skills already built out.** Continuing the Penguin damage-formula
@@ -71,7 +210,7 @@ section — read that before touching this feature or extending it to another cl
 **Update 2026-08-14:** still on the `skill-cooldown-lookup` branch, still not merged to `master`, and a
 large additional session's worth of work landed on top of the already-committed 2026-08-13 state
 described below — **all of it currently uncommitted** (`git status` shows `index.html` and every
-`12t_reference/*-skill-cooldown-reference.md` modified, on top of the pre-existing unrelated
+`12t_reference/*-skill-reference.md` modified, on top of the pre-existing unrelated
 uncommitted Penguin sheet/reorg work noted further down). Despite being uncommitted, the tool **has
 been published live** to its Artifact URL multiple times this session via the
 `publish-player-reference-tool` skill — publishing and committing are independent actions here, don't
@@ -97,7 +236,7 @@ assume "uncommitted" means "not live" the way earlier snapshots of this doc did.
 - **Verified 2026-08-14**: ran a full programmatic diff of every `SKILLS` entry in `index.html` against
   its class's own `12t_reference/*.md` table — **zero mismatches across all 306 skills**, so the
   reference docs are trustworthy as of this snapshot despite the volume of changes above.
-- Also worth correcting from the 2026-08-13 text below: `12t_reference/penguin-skill-cooldown-reference.md`
+- Also worth correcting from the 2026-08-13 text below: `12t_reference/penguin-skill-reference.md`
   **does exist** (it was mistakenly flagged as a gap mid-session before being found) — Penguin has the
   same per-class cooldown doc every other class has, it just wasn't caught by an early `Glob` check.
 
@@ -113,7 +252,7 @@ Time" chip, castDep mechanic, and a layout overhaul. Still all uncommitted, stil
    in-game behavior. New INT input added to the tool's controls row (AGI/INT/CHA/LCK).
    - Data gathered by dispatching one research subagent per class in parallel (11 classes + Penguin done
      directly), each tracing `magAdjust()` call sites through the obfuscated source and cross-referencing
-     each skill's already-verified Max Rank from the existing `12t_reference/*-skill-cooldown-reference.md`
+     each skill's already-verified Max Rank from the existing `12t_reference/*-skill-reference.md`
      docs. **104 of 306 skills have a real cast time** — most are instant. `sLv` in these formulas is
      1-indexed (equal to the real in-game rank number), confirmed independently across 6 different
      classes by tracing literal call sites (e.g. `RPC_cast1("phantomBane", ..., 1/2/3/4)`).
@@ -162,9 +301,12 @@ Time" chip, castDep mechanic, and a layout overhaul. Still all uncommitted, stil
      considered-but-unconfirmed guess. **Do a real visual pass on this before treating it as done** —
      open the tool, check a 3-chip skill (e.g. Sheep's `bless`, Whale's `bubbleShield`), a skill with a
      stepper dep (Chameleon's `slayer`), and a private-server skill, at a few window widths.
+   - **Marked resolved 2026-08-19, per explicit user direction, as part of a repo-wide unfinished-work
+     review** — closed out as a tracked gap; not re-verified line-by-line against the checklist above in
+     this same pass.
 4. **Separately, a live-server data correction (Mole's `stunMine`)**: the user reported its Duration is
    `chaAdjust`, not the `talAdjust` the decompiled source (`Mole_stunMine.cs:60`) still shows — the game
-   has been patched since this build was captured. Fixed in `12t_reference/mole-skill-cooldown-reference.md`
+   has been patched since this build was captured. Fixed in `12t_reference/mole-skill-reference.md`
    and the `SKILLS` entry (`durWrapped:false`→`true`), old source citation kept for the record with a
    "superseded" note rather than deleted. See root `CLAUDE.md`'s new note on decompiled-source-vs-live
    drift for the general pattern this represents.
@@ -232,7 +374,7 @@ plan/spec themselves; see "Known local uncommitted work"). Summary: look up ever
 max-rank cooldown/duration across all 12 classes, adjusted live for AGI/CHA/LCK (as a `[min,max]`
 range — LCK adds a random spread inside
 `agiAdjust`/`chaAdjust`) plus a `revisedArt5` toggle. Tasks 1-12 were independent per-class research
-passes (grep/read the decompiled source, write `12t_reference/<class>-skill-cooldown-reference.md`);
+passes (grep/read the decompiled source, write `12t_reference/<class>-skill-reference.md`);
 Tasks 13-17 built the tool itself.
 
 **⚠️ Checkout `skill-cooldown-lookup` before resuming — this work is NOT on `master`.**
@@ -312,12 +454,12 @@ if you see any reference to it, that's stale.
 
 - `12Tails-Mechanics-Reference.md` — core mechanics ground truth (8-stat system, derived HP/MP/KO/SP,
   level-scaling).
-- `2026-07-21-penguin-skill-data-reference.md` — Penguin class skill data, source of truth backing the
+- `penguin-skill-damage-reference.md` — Penguin class skill data, source of truth backing the
   Penguin sheet above.
-- `*-skill-cooldown-reference.md` — **new 2026-08-13, all 12 classes** (bat, bison, cat, chameleon,
+- `*-skill-reference.md` — **new 2026-08-13, all 12 classes** (bat, bison, cat, chameleon,
   mole, monkey, panda, penguin, rabbit, sheep, whale, wolf). Max-rank active-skill cooldown/duration
   data backing the Skill Cooldown/Duration Lookup tool above — 306 skills total, every cell cited to a
-  `file:line` in the class's own `.cs`/`<Class>Skill.cs`. Narrower scope than the skill-data-reference
+  `file:line` in the class's own `.cs`/`<Class>Skill.cs`. Narrower scope than the skill-damage-reference
   docs (cooldown/duration only, active skills only, no damage formulas) — don't conflate the two.
 
 ## Harness tooling (`.claude/`) — added 2026-08-12
@@ -335,6 +477,12 @@ See root `CLAUDE.md`'s "Repo layout" section for the permanent pointers to all o
 handoff doc just marks when each landed.
 
 ## Known local uncommitted work (this machine, not yet committed)
+
+**Update (2026-08-19): the "Hit Mod"/`manaArc` feature described in this section is DROPPED, per explicit
+user direction, as part of a repo-wide unfinished-work review.** Not being pursued further. The uncommitted
+diff itself is still sitting in `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` as of this
+note — user has not yet said whether to revert it or leave it; don't build on top of it or assume it's
+gone from the working tree just because it's dropped as a feature.
 
 As of this snapshot the working tree has real uncommitted changes that are **not** described above:
 a staged rename of the Penguin sheet + its data reference into `12t_projects/`/`12t_reference/` (part
@@ -363,10 +511,10 @@ handoff is actually recoverable from git history.
  M 12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html
  M 12t_projects/player-reference-tool/CLAUDE.md
  M 12t_projects/player-reference-tool/index.html
- M 12t_reference/2026-07-21-penguin-skill-data-reference.md
- M 12t_reference/mole-skill-cooldown-reference.md
- M 12t_reference/panda-skill-cooldown-reference.md
- M 12t_reference/whale-skill-cooldown-reference.md
+ M 12t_reference/penguin-skill-damage-reference.md
+ M 12t_reference/mole-skill-reference.md
+ M 12t_reference/panda-skill-reference.md
+ M 12t_reference/whale-skill-reference.md
  M docs/superpowers/plans/2026-07-21-penguin-classc-toggle.md
  M docs/superpowers/plans/2026-07-21-penguin-interactive-infographic.md
  M docs/superpowers/plans/2026-07-22-penguin-lck-range-and-revisedart.md
@@ -379,7 +527,7 @@ handoff is actually recoverable from git history.
 ```
 The `player-reference-tool`/`mole`/`panda`/`whale`/`.claude` rows are this and the prior 2026-08-14
 session's work described above. **The four Penguin-titled `M` rows (`penguin-skill-sheet.html`,
-`2026-07-21-penguin-skill-data-reference.md`, and the 3 `docs/superpowers/plans|specs` files) predate
+`penguin-skill-damage-reference.md`, and the 3 `docs/superpowers/plans|specs` files) predate
 both 2026-08-14 sessions and were never touched by either** — this handoff doc doesn't know what they
 contain or whether they're finished; the "Known local uncommitted work" paragraph above may or may not
 still describe them accurately (a "Hit Mod" feature + `manaArc` CD fix) — re-check with `git diff`
@@ -401,3 +549,7 @@ indefinitely.
 - Hundreds of untracked loose `.cs` decompiled source files at the repo root are expected, pre-existing,
   and never meant to be tracked — only `12t_projects/`, `12t_reference/`, `docs/`, `.claude/`, and
   `.superpowers/` paths matter for this project's own work.
+  **Correction, 2026-08-18: no longer accurate — see the 2026-08-18 entry at the top of this file.** These
+  files were moved into `DecompiledSource/` (real source) and `Scaffolding/` (compiler noise), both now
+  `.gitignore`d directly instead of relying on "never `git add -A`" discipline against a loose root dump.
+  Root `CLAUDE.md`'s "Where the real source is" section is the authoritative pointer, not this paragraph.

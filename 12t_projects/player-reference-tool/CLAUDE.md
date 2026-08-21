@@ -445,6 +445,20 @@ damage-formula treatment (`mole-skill-damage-reference.md`) so far. Going forwar
 any class touched again gets swept for every field — but "touched" is still per-class/per-skill, not an
 instruction to retroactively backfill all 12 classes to Penguin's depth in one pass.
 
+**Mole declared fully complete, 2026-08-21** — user's own call, the 2nd class (after Penguin) held to this
+bar. Reached across many sessions' worth of work documented throughout this file: the full rank-selector/
+damage-formula rollout (2026-08-18), the KO sweep (2 passes, 2026-08-19), the `dmgGroups` mechanism
+(Napalm's real two-formula-per-hit shape, then its 5×-projectile correction), War Factory split into 5
+"War Factory - X" entries (plus the Cart Bomb/hit-count corrections), Barrel Bot split into 8 "Barrel Bot -
+X" entries (plus its own independent stat block, the `revisedArt5`-exemption fix, the real-Mole-icon-with-
+caster-badge reformat, and the base summon card's own Stats chip in row 2), King Kaiser split into 3
+"King Kaiser - X" entries (plus the corrected AI-unreachable finding and the misattributed-action-codes
+open item this same pass resolved), and finally the full 8-stat-+-mhp "Barrel Bot Stats"/"King Kaiser
+Stats" tables with real `doubleBot5`/`synchroMole`/Heavy Built dependencies. Any future Mole work is still
+welcome — this marks the class as having cleared the same bar Penguin did, not a freeze on touching it
+again. 10 classes (Bat, Bison, Cat, Chameleon, Monkey, Panda, Rabbit, Sheep, Whale, Wolf) remain below this
+bar.
+
 ## Rank selector + damage formula — Penguin pilot (2026-08-14)
 
 **Scope: Penguin's 27 `SKILLS` entries only.** The other 11 classes are untouched — no `maxRank`, no
