@@ -248,6 +248,24 @@ visually verified live** — no browser tool available this session; check Venom
 actually swaps the displayed percentage, and that Left Stride's new info icon opens/positions correctly
 (same gutter-popup mechanism as the Damage Formula chip's), before treating this as fully done.
 
+### Follow-up, immediately after: the standalone KO chip removed entirely — Left Stride was its only user
+
+User: "remove the KO chip, it is useless, check if it appears elsewhere" — the standalone `.sk-ko-standalone`
+chip (for a skill with a real KO value but no Damage Formula), not the small `.sk-ko-badge` nested inside
+the Damage Formula chip (kept, e.g. Mega Punch/Mega Hammer/Absolute Zero). Audited via a full `SKILLS`
+array parse (bracket-depth walker, not a line-based grep) before removing anything: exactly **one** skill
+across all 12 classes ever reached the standalone branch — Chameleon's Left Stride — since every other
+`ko`-bearing skill also carries a `dmg` field (even `dmg:"0"`), routing it through the badge instead.
+Removed the `else if (koVal){...}` branch in `renderHero()` entirely; Left Stride's `ko:"1"` data field
+stays (a real, cited fact — its own `dmgNote` already explains "KO alone is the normal-attack's own flat 1
+per arrow"), it's just no longer surfaced as a numeric chip. Left Stride now falls through to the
+note-only branch (added the same session, just above) instead, so its `dmgNote` still displays via the
+info icon — the citation isn't lost, only the standalone "KO 1" number is gone. Cleaned up the now-dead
+`.sk-ko-standalone-toggles` CSS rule and its stale comment (`getKOValue`/`koDep`/`koMultDep` are all still
+live, just only reachable via the nested badge path now). Verified: JS syntax clean, CSS comment-strip +
+brace-balance check clean, grepped for zero dangling `koVal`/`koToggles`/`sk-ko-standalone-toggles`
+references outside the still-live `.sk-ko-badge` block.
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and

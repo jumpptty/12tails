@@ -927,29 +927,30 @@
      confirmed `nKo`, the 3rd damage-application function's shared parameter,
      is real and separate from `nDamage`; see getKOValue's own comment for
      the full citation trail). Two placements for the SAME underlying value,
-     picked by whether a real Damage Formula chip exists to nest inside:
      .sk-ko-badge sits in .sk-dmg-formula's own bottom-left corner (that
      chip's position:relative, added above, is its containing block) --
      small and unobtrusive since a Damage Formula chip already has its own
-     big hero number doing the main work; .sk-ko-standalone is a full
-     .sk-stat-styled chip (reused, not reinvented) for the rarer case where
-     a skill has NO Damage Formula at all but a genuine nonzero KO value
-     (currently only Mole's stunMine/stunGrenade) -- there's no other chip
-     for it to attach to, so it takes Raw Damage's usual grid-column:1 slot
-     instead. */
+     big hero number doing the main work. .sk-ko-standalone (originally a
+     standalone KO-value chip for the rare skill with a real nonzero KO but
+     no Damage Formula) was removed 2026-08-21, user-requested ("it is
+     useless") -- audited first via a full SKILLS parse and confirmed
+     exactly one skill in the whole tool ever reached it (Chameleon's Left
+     Stride; every other `ko`-bearing skill also carries a `dmg` field, even
+     if just `dmg:"0"`, so it renders the .sk-ko-badge above instead). The
+     `.sk-ko-standalone` CLASS lives on -- reused as the shape for the
+     note-only chip (see renderHero's own comment at its render site) -- but
+     no `ko` value or `koDep`/`koMultDep` toggle ever populates it anymore. */
   .sk-ko-badge{position:absolute; left:14px; bottom:10px; display:flex; align-items:center; gap:6px}
   .sk-ko-label{font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted)}
   .sk-ko-value{font-size:15px; font-weight:700; color:var(--gold); font-family:ui-monospace,monospace}
   /* Toggle icons scaled down from .sk-dep-toggle's default 28px -- this is
      explicitly the "small" chip, a full-size icon here would dominate it.
-     Only ever populated for the standalone case today (stunMine's mineLover/
-     grenadeCluster, stunGrenade's grenadeCluster) -- none of the 4 nested-
-     badge skills (manaMissile/frozenBlast/arcticWind/absoluteZero) have a
-     koDep/koMultDep of their own, but the markup stays generic rather than
-     hardcoding "never render toggles here" in case a future skill needs one. */
-  .sk-ko-badge .sk-dep-toggle img, .sk-ko-standalone-toggles .sk-dep-toggle img{width:16px; height:16px}
+     Only ever populated by the nested .sk-ko-badge case today (Mega Punch/
+     Hammer's megaDrill, stunMine's mineLover/grenadeCluster, stunGrenade's
+     grenadeCluster -- all `dmg`-bearing, so all render via .sk-ko-badge, not
+     the removed standalone chip). */
+  .sk-ko-badge .sk-dep-toggle img{width:16px; height:16px}
   .sk-ko-standalone{grid-column:1}
-  .sk-ko-standalone-toggles{position:absolute; top:12px; right:14px; display:flex; gap:6px}
   /* flex:1 (not also display:flex on itself) -- fills whatever vertical
      space is left below the fixed-at-top .sk-dmg-head, without making this
      element's OWN children flex items too. That was tried (2026-08-14,
@@ -4683,14 +4684,6 @@ function mountSkillCooldownLookup(root){
       // reserves its full min-height:134px (see that class's own comment) --
       // no chips inside it, just the container, so the space is genuinely
       // blank rather than an empty-looking chip with a border around it.
-      // KO exception (same day, same request): a skill with no Damage
-      // Formula at all (so no .sk-ko-badge slot to nest inside) still gets
-      // a standalone KO chip if its real KO value is nonzero -- currently
-      // only Mole's stunMine/stunGrenade. `getKOValue` returns null (not 0)
-      // for skills with no `ko` field at all, so `if (koVal)` correctly
-      // skips both "no ko field" and "ko evaluates to 0" the same way,
-      // leaving the row genuinely blank for every other buff/heal/summon.
-      const koVal = getKOValue(selected, rank);
       // bbStatsInRow2 (2026-08-21, user-requested): the base "Barrel Bot"
       // summon entry itself (unlike its 8 "Barrel Bot - X" moveset
       // children) has REAL Cooldown/Cast Time/Duration data of its own
@@ -4704,49 +4697,24 @@ function mountSkillCooldownLookup(root){
       // since there's nothing else sharing the row here.
       if (selected.bbStatsInRow2 && bbStatsBlock){
         dmgBlock = `<div class="sk-dmg-row">${bbStatsBlock.replace('class="sk-stat sk-stat-bb"', 'class="sk-stat sk-stat-bb sk-stat-bb-row2"')}</div>`;
-      } else if (koVal){
-        const koToggles = [
-          selected.koDep ? renderDmgToggle(selected.koDep) : "",
-          selected.koMultDep ? renderDmgToggle(selected.koMultDep) : "",
-        ].join("");
-        // dmgNote info icon (2026-08-21, user-caught): a skill with a
-        // standalone KO chip but no real Damage Formula (e.g. Chameleon's
-        // Left Stride) previously had NO render path for its own dmgNote at
-        // all -- that text only ever displayed via the Damage Formula
-        // chip's own .sk-dmg-info click-to-open icon (see that branch
-        // above), so a skill routed to THIS branch instead had its dmgNote
-        // silently authored into SKILLS but never shown anywhere on the
-        // live page. Reuses the exact same .sk-dmg-info/.sk-dmg-info-pop
-        // markup and the existing single-instance toggle listener/
-        // positionDmgInfoPopup wiring below -- safe because dmgBlock only
-        // ever renders ONE of the dmg/shield/koVal/blank branches per
-        // skill, so at most one .sk-dmg-info exists in the DOM at a time
-        // regardless of which branch produced it.
-        const koInfo = selected.dmgNote ? `
-          <details class="sk-dmg-info">
-            <summary title="More info">ℹ</summary>
-            <div class="sk-dmg-info-pop">${selected.dmgNote}</div>
-          </details>
-        ` : "";
-        dmgBlock = `
-          <div class="sk-dmg-row">
-            <div class="sk-stat sk-ko-standalone">
-              <div class="sk-dmg-label-row">
-                <p class="sk-stat-label">KO</p>
-                ${koInfo}
-              </div>
-              <div class="sk-stat-value">${koVal}</div>
-              <div class="sk-ko-standalone-toggles">${koToggles}</div>
-            </div>
-          </div>
-        `;
       } else if (selected.dmgNote){
-        // Same gap as above, one level further: a skill with NEITHER a real
-        // Damage Formula NOR a nonzero KO (e.g. Chameleon's Fatal Strike,
-        // Mark of Slayer) used to render a fully blank .sk-dmg-row, so its
-        // dmgNote had no chip to attach to at all. A minimal note-only chip,
-        // same .sk-ko-standalone shape, so a purely-descriptive skill still
-        // surfaces its own citation instead of it existing only in the data.
+        // Standalone KO chip removed (2026-08-21, user-requested: "it is
+        // useless") -- audited first via a full SKILLS parse and confirmed
+        // exactly ONE skill in the whole tool ever reached it (Chameleon's
+        // Left Stride; every other `ko`-bearing skill also has a `dmg`
+        // field, even if just `dmg:"0"`, so it renders the nested
+        // .sk-ko-badge inside the Damage Formula chip instead -- untouched
+        // by this removal). Left Stride's own `ko:"1"` value is no longer
+        // displayed anywhere; its dmgNote (which already explains "KO alone
+        // is the normal-attack's own flat 1 per arrow") still surfaces via
+        // this same note-only branch below, just without a numeric chip.
+        // A skill with NEITHER a real Damage Formula NOR anything else
+        // (e.g. Chameleon's Fatal Strike, Mark of Slayer) used to render a
+        // fully blank .sk-dmg-row, so its dmgNote had no chip to attach to
+        // at all. A minimal note-only chip, reusing the .sk-ko-standalone
+        // shape (name kept for the CSS class only -- no KO value involved
+        // here anymore), so a purely-descriptive skill still surfaces its
+        // own citation instead of it existing only in the data.
         const noteInfo = `
           <details class="sk-dmg-info">
             <summary title="More info">ℹ</summary>

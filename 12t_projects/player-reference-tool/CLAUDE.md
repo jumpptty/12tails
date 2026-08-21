@@ -3769,3 +3769,30 @@ check clean, grepped for zero remaining unguarded raw `.dmg` string-method call 
 verified live** — no browser tool available this session; check Venom Shock's rank 1↔2 toggle swaps the
 displayed percentage, and Left Stride's new info icon opens/positions correctly, before treating this as
 fully done.
+
+### 2026-08-21, immediate follow-up: standalone KO chip removed — audited first, exactly 1 skill used it
+
+User: "remove the KO chip, it is useless, check if it appears elsewhere" — scoped to the standalone
+`.sk-ko-standalone` chip specifically (a skill with a real KO value but no Damage Formula), confirmed NOT
+the nested `.sk-ko-badge` inside the Damage Formula chip (kept — still used by Mega Punch/Mega Hammer/
+Absolute Zero/etc.). Before removing anything, parsed the full `SKILLS` array with a bracket-depth walker
+(not line-based grep, since entries are single un-pretty-printed lines) to find every entry with a `ko`
+field but no `dmg` field — the exact condition that reaches the standalone branch. Result: **1 of 324
+entries**, Chameleon's own `chameleon_leftStride` — every other `ko`-bearing skill in the tool also has a
+`dmg` field (even a flat `dmg:"0"`, e.g. Stun Mine/Stun Grenade/Barrel Cannon), so they all render via the
+nested badge instead and were never reachable through the standalone path in the first place.
+
+Removed `renderHero()`'s `else if (koVal){...}` branch entirely (and its now-unused `const koVal =
+getKOValue(selected, rank);` declaration). Left Stride's `ko:"1"` data field itself is untouched — a real,
+cited fact (its own `dmgNote` already explains "KO alone is the normal-attack's own flat 1 per arrow") —
+just no longer rendered as a standalone numeric chip. It now falls through to the note-only branch (added
+earlier the same session) instead, so the citation still surfaces via the info icon, just without the bare
+"KO 1" number above it. Cleaned up the now-dead `.sk-ko-standalone-toggles` CSS rule (no skill ever
+populates `koToggles` on this path anymore) and rewrote its stale comment block, which still described the
+chip as "currently only Mole's stunMine/stunGrenade" — already wrong before this pass (those 2 gained a real
+`dmg:"0"` back on 2026-08-19, routing them through the badge), corrected while removing the rest.
+
+Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance check clean, grepped for zero
+dangling `koVal`/`koToggles`/`sk-ko-standalone-toggles` references outside the still-live `.sk-ko-badge`
+block. **Not yet visually verified live** — no browser tool available this session; check Left Stride's
+card renders the note-only chip cleanly (no orphaned KO label/value), before treating this as fully done.
