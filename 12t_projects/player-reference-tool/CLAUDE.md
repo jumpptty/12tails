@@ -4022,3 +4022,54 @@ Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, Node-ver
 population logic. **Not yet visually verified live** — no browser tool available this session; check the
 red tint reads as genuinely subtle (not alarming), and that switching enemy presets or hand-editing a
 field visibly moves the Final Damage number, before treating this as fully done.
+
+### 2026-08-21, same day: "Enemy Stat" label + column alignment, preset picker relocated to a prev/next cycle with Custom detection, icon 3x'd
+
+User: "Add 'Enemy Stat' text where the enemy atk is at now, and shift all 8 enemy stat to the right,
+aligning each with the player stat field perfectly. Relocated the enemy preset from the final damage chip
+to inside the enemy stat panel, instead of showing 3 at the same time, it will now be a toggle with next
+and previous arrows moving between enemy presets. If the user edit the enemy stat field themselves, the
+enemy icon will turn into 'Custom' text, clicking the next or previous button again will still go back to
+enemy preset logic. I want small left and right triangle arrow beside the enemy preset icon, enemy preset
+icon should be about 300% the size of the current size."
+
+**Label + alignment.** A new `.sk-enemystat-label-cell` (`<label>Enemy Stat</label>`) is now the FIRST
+child of the Enemy Stats row, taking the exact slot the ATK field used to occupy; the 8 real stat fields
+shift right one slot, keeping their existing `atk,def,tal,agi,vit,cha,int,lck` order (already matching the
+player row's own order, so no reshuffling needed there). The alignment mechanism: this new cell is fixed
+to `width:calc(5ch + 22px)` — the EXACT same width every number input (including the player row's own
+CHAR LV) already resolves to — since two independent flex rows only line up column-for-column when each
+corresponding cell is the same width. "Enemy Stat" (10 characters) doesn't fit that narrow width on one
+line at normal size, so the cell uses `white-space:normal` (wraps to 2 lines) rather than `nowrap`
+(which would overflow the column and misalign every field after it).
+
+**Preset picker relocated + redesigned.** The old `.sk-enemy-btns` (3 buttons shown simultaneously,
+`data-role="enemy-preset"`, lived in the Final Damage chip's `.sk-dmg-final-controls`) is gone entirely —
+removed the markup, the `enemyBtns` computation, the per-render click-handler in `renderHero()` (dead code
+now, since the buttons it targeted no longer exist), and the `.sk-enemy-btn`/`.sk-enemy-btns` CSS. In its
+place: a single `.sk-enemy-cycle-icon-wrap` (78px — "about 300%" of the old 26px icon, exact 3x) flanked
+by two small (12px) triangle-SVG `.sk-enemy-cycle-arrow` buttons, living in the Enemy Stats panel as the
+10th cell (after LCK, so it can't disturb the 9 columns' alignment to its left). `selectedEnemy` still
+exists inside `renderHero()` as the "is a target conceptually active" gate, but no longer supplies numbers
+(unchanged from the previous pass — DEF/LCK already read live off `enemyDefEl`/`enemyLckEl`).
+
+**Custom detection**, new `enemyStatsCustom` boolean, exploits a distinction that already existed for
+free: `applyEnemyPresetToStatFields` sets `.value` as a raw DOM property (never fires a real `input`
+event), while an actual keystroke or spinner click always does — so the SAME 8 field listeners that
+already call `renderHero()` on edit now also set `enemyStatsCustom = true` and re-render the cycle display,
+with zero risk of a preset's own programmatic write being mistaken for a user edit. `updateEnemyCycleDisplay()`
+swaps the icon `<img>` for a plain "Custom" label (`.sk-enemy-custom-label`) whenever this flag is true.
+Clicking either arrow (`cycleEnemyPreset(dir)`, wraps around `ENEMY_PRESETS`' own array order — Node-
+verified both directions) ALWAYS re-applies real preset values and clears `enemyStatsCustom`, per the
+user's own spec ("clicking next or previous button again will still go back to enemy preset logic") —
+even starting from a hand-edited Custom state. Also carries over the old click-handler's stale-popup clear
+(`multiHitGroups`/`multiHitLayer.innerHTML` reset) that used to live in the per-render listener, now inside
+`cycleEnemyPreset` itself since the widget is mount-persistent, not rebuilt per skill.
+
+Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, grepped for zero dangling
+references to the removed `enemyBtns`/`data-role="enemy-preset"`, cross-checked every new `data-role`
+(`enemy-prev`/`enemy-next`/`enemy-cycle-display`) appears in both template and query, Node-verified the
+prev/next wrap-around in both directions. **Not yet visually verified live** — no browser tool available
+this session; check the "Enemy Stat" 2-line wrap doesn't look cramped, that the 78px icon (much taller
+than the other row cells) doesn't visually dominate the panel awkwardly under `align-items:end`, and that
+the Custom↔preset icon swap actually looks right, before treating this as fully done.

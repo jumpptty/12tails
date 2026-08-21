@@ -402,6 +402,25 @@
   .sk-enemystat-controls{display:flex; background:var(--stat-atk-soft); border:1px solid var(--stat-atk)}
   .sk-enemystat-controls label{color:var(--stat-atk)}
   .sk-enemystat-controls[hidden]{display:none}
+  /* "Enemy Stat" label cell (2026-08-21, user-requested: put this text
+     where enemy ATK used to sit, then shift the 8 real stat fields right so
+     each aligns with its player-row counterpart) -- fixed to the EXACT same
+     width as every stat input (calc(5ch + 22px), same token the player row's
+     CHAR LV cell resolves to, since LV is also a plain number input using
+     the shared .sk-controls input[type=number] rule). This is what actually
+     produces the alignment: two independent flex rows only line up
+     column-for-column if each corresponding cell is the same width, and
+     "Enemy Stat" (10 characters) doesn't fit that width on one line at the
+     label's normal size -- white-space:normal (not nowrap) lets it wrap to
+     2 lines rather than overflow the column and misalign everything after
+     it. flex-direction:column + justify-content:flex-end bottom-anchors the
+     text against the row's align-items:end baseline, roughly where a
+     neighboring cell's INPUT box (not its label) sits, since this cell has
+     no input of its own to anchor against. */
+  .sk-enemystat-label-cell{
+    width:calc(5ch + 22px); display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  .sk-enemystat-label-cell label{margin:0; white-space:normal; line-height:1.25}
   /* Absolutely positioned into the box's own bottom-right corner (2026-08-14,
      user-requested) rather than stacked in normal flow below -- previously
      margin-top:6px'd itself onto a new line under the base-value text,
@@ -792,21 +811,35 @@
      convention (align-items:center above) -- Final Damage was already the
      one centered chip in this row before this pass, that part isn't new. */
   .sk-dmg-final-controls{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px}
-  .sk-enemy-btns{display:flex; gap:4px}
-  /* Real target-avatar portraits (gamegui/icons/targetavatar/), not a
-     letter -- object-fit:cover crops each 137x128 portrait to fill this
-     small square button rather than letterboxing it. Dim-when-unselected/
-     full-color-when-selected is the same on/off language every other
-     toggle icon in this tool already uses. */
-  .sk-enemy-btn{
-    width:26px; height:26px; border:1px solid var(--line); border-radius:3px;
-    background:var(--panel-2); cursor:pointer; padding:0; overflow:hidden;
+  /* Enemy preset cycle (2026-08-21) -- relocated here from the Final Damage
+     chip's old .sk-enemy-btns row (3 buttons shown at once) into the Enemy
+     Stats panel instead, per direct user request: one icon + prev/next
+     triangle arrows, not three simultaneous choices. Icon is 78px, "about
+     300% the current size" of the old 26px .sk-enemy-btn it replaces (same
+     real target-avatar portraits, object-fit:cover). No more dim-when-
+     unselected/full-when-selected toggle language -- there's only ever ONE
+     icon shown now, and it's always the active selection, so it's always
+     full color; "unselected" doesn't apply to a single-icon display. */
+  .sk-enemy-cycle{display:flex; align-items:center; gap:6px; align-self:end}
+  .sk-enemy-cycle-arrow{
+    border:none; background:none; padding:2px; cursor:pointer; color:var(--muted); line-height:0;
   }
-  .sk-enemy-btn img{width:100%; height:100%; object-fit:cover; display:block; filter:grayscale(60%); opacity:.7}
-  .sk-enemy-btn:hover{border-color:var(--gold)}
-  .sk-enemy-btn:hover img{opacity:.9}
-  .sk-enemy-btn.on{border-color:var(--gold)}
-  .sk-enemy-btn.on img{filter:none; opacity:1}
+  .sk-enemy-cycle-arrow:hover{color:var(--gold)}
+  .sk-enemy-cycle-arrow svg{width:12px; height:12px; fill:currentColor; display:block}
+  .sk-enemy-cycle-icon-wrap{
+    width:78px; height:78px; flex:none; border:1px solid var(--line); border-radius:4px;
+    background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center;
+  }
+  .sk-enemy-cycle-icon-wrap img{width:100%; height:100%; object-fit:cover; display:block}
+  /* "Custom" (2026-08-21, user-requested): replaces the icon entirely --
+     not a caption underneath it -- the instant the user hand-edits any
+     Enemy Stats field, so it's immediately obvious the shown stats no
+     longer match any named preset. See enemyStatsCustom's own comment for
+     the detection mechanism. */
+  .sk-enemy-custom-label{
+    font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+    color:var(--muted); text-align:center;
+  }
   /* margin:0 (was "8px 0 0") -- sits in the exact same slot the number now
      occupies, right after the header with nothing in between (2026-08-19).
      Practically unreachable now that Carron is pre-selected by default (see
@@ -947,10 +980,13 @@
      currentColor so the icon and the adjacent text share --stat-atk (the
      existing damage-red token from the formula-term coloring, reused here
      rather than inventing a second red) with one color declaration. */
-  /* margin-top:0 (was 8px) -- .sk-dmg-final-controls now supplies that
-     spacing itself (both this button and .sk-enemy-btns sit inside it as
-     plain flex siblings, margin-free), since Simulate moved out of
-     finalDamageBody into the shared controls row below the number. */
+  /* margin-top:0 (was 8px) -- .sk-dmg-final-controls supplies that spacing
+     itself, since Simulate moved out of finalDamageBody into its own
+     controls row below the number. That row used to also hold the 3-preset
+     .sk-enemy-btns group as a plain flex sibling; that group was relocated
+     to the Enemy Stats panel (2026-08-21), so this button is now the row's
+     only child -- margin-top:0 is still correct, just no longer shared
+     with a sibling that no longer lives here. */
   .sk-simulate-btn{
     display:flex; align-items:center; gap:4px;
     border:none; background:none; padding:0; cursor:pointer;
@@ -2827,6 +2863,7 @@ function mountSkillCooldownLookup(root){
         </button>
       </div>
       <div class="sk-controls sk-enemystat-controls" data-role="enemystat-controls" hidden>
+        <div class="sk-enemystat-label-cell"><label>Enemy Stat</label></div>
         <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
         <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
         <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
@@ -2835,6 +2872,15 @@ function mountSkillCooldownLookup(root){
         <div><label>CHA</label><input type="number" data-role="enemyCha" min="0" value="128"></div>
         <div><label>INT</label><input type="number" data-role="enemyInt" min="0" value="128"></div>
         <div><label>LCK</label><input type="number" data-role="enemyLck" min="0" value="128"></div>
+        <div class="sk-enemy-cycle">
+          <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
+            <svg viewBox="0 0 24 24"><polygon points="16,3 7,12 16,21"></polygon></svg>
+          </button>
+          <div class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"></div>
+          <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
+            <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
+          </button>
+        </div>
       </div>
       <div class="sk-search-wrap">
         <input type="text" class="sk-search" data-role="search" placeholder="Search a skill…" autocomplete="off">
@@ -2872,6 +2918,13 @@ function mountSkillCooldownLookup(root){
   const enemyLckEl = $('[data-role="enemyLck"]', root);
   const enemyStatToggleBtn = $('[data-role="enemystat-toggle"]', root);
   const enemyStatControlsEl = $('[data-role="enemystat-controls"]', root);
+  // Enemy preset cycle (2026-08-21, relocated from the Final Damage chip's
+  // old 3-buttons-at-once .sk-enemy-btns row into this panel, per direct
+  // user request -- see the cycleEnemyPreset/updateEnemyCycleDisplay
+  // functions below for the full mechanism).
+  const enemyPrevBtn = $('[data-role="enemy-prev"]', root);
+  const enemyNextBtn = $('[data-role="enemy-next"]', root);
+  const enemyCycleDisplayEl = $('[data-role="enemy-cycle-display"]', root);
   const searchEl = $('[data-role="search"]', root);
   const raBtn = $('[data-role="revisedart"]', root);
   const suggestionsEl = $('[data-role="suggestions"]', root);
@@ -2918,6 +2971,54 @@ function mountSkillCooldownLookup(root){
     });
   }
   applyEnemyPresetToStatFields(selectedEnemyId);
+  // "Custom" detection (2026-08-21, user-requested): true the instant the
+  // user directly edits any Enemy Stats field, rather than getting there
+  // via a preset. Relies on a real distinction that already exists for
+  // free -- applyEnemyPresetToStatFields sets `.value` as a DOM property,
+  // which never fires a genuine `input` event, while the browser always
+  // fires one for an actual keystroke/spinner click -- so the enemy field
+  // listeners below can tell "the preset just wrote this" apart from "the
+  // user just typed this" without any extra bookkeeping.
+  let enemyStatsCustom = false;
+  // Renders the current enemy-cycle state into its persistent display
+  // element -- either the active preset's real icon, or a plain "Custom"
+  // label once enemyStatsCustom is true. Called on mount, on every
+  // prev/next click, and on every genuine Enemy Stats field edit -- never
+  // tied to renderHero()/displayEl's per-skill rebuild, since this widget
+  // lives in the persistent .sk-enemystat-controls panel, not the
+  // per-skill card.
+  function updateEnemyCycleDisplay(){
+    if (enemyStatsCustom){
+      enemyCycleDisplayEl.innerHTML = `<span class="sk-enemy-custom-label">Custom</span>`;
+      enemyCycleDisplayEl.title = "Custom enemy stats (hand-edited)";
+    } else {
+      const preset = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
+      enemyCycleDisplayEl.innerHTML = preset ? `<img src="${SKILL_ICONS[preset.icon]}" alt="${preset.label}">` : "";
+      enemyCycleDisplayEl.title = preset ? preset.label : "";
+    }
+  }
+  // Prev/next (2026-08-21, relocated from the Final Damage chip's old
+  // 3-buttons-at-once row, per direct user request): wraps around
+  // ENEMY_PRESETS' own array order. Clicking either arrow ALWAYS forces
+  // real preset values back in and clears Custom mode -- "clicking next or
+  // previous button again will still go back to enemy preset logic," per
+  // the user's own spec -- even if the user had just hand-edited a field.
+  function cycleEnemyPreset(dir){
+    const idx = ENEMY_PRESETS.findIndex(e => e.id === selectedEnemyId);
+    selectedEnemyId = ENEMY_PRESETS[(idx + dir + ENEMY_PRESETS.length) % ENEMY_PRESETS.length].id;
+    applyEnemyPresetToStatFields(selectedEnemyId);
+    enemyStatsCustom = false;
+    updateEnemyCycleDisplay();
+    // Same stale-popup clear the old per-render click handler used to do
+    // when switching targets -- a simulated roll against the PREVIOUS
+    // target shouldn't linger once a new one's active.
+    multiHitGroups = [];
+    multiHitLayer.innerHTML = "";
+    renderHero();
+  }
+  enemyPrevBtn.addEventListener("click", () => cycleEnemyPreset(-1));
+  enemyNextBtn.addEventListener("click", () => cycleEnemyPreset(1));
+  updateEnemyCycleDisplay();
   let nextSimulatePopupId = 1;
   // Multi-hit Simulate (e.g. manaMissile's several missiles landing as one
   // cast, selected.hitCount>1) deliberately does NOT go through the
@@ -4673,11 +4774,11 @@ function mountSkillCooldownLookup(root){
         // already baked into dmgCalcRange, and the target's own def/lck
         // roll via defAdjustRange), worst-case-with-worst-case /
         // best-case-with-best-case, not just mitigating the raw MIDPOINT.
-        const enemyBtns = ENEMY_PRESETS.map(e => `
-          <button type="button" class="sk-enemy-btn${selectedEnemyId === e.id ? " on" : ""}" data-role="enemy-preset" data-enemy-id="${e.id}" title="${e.label} (DEF ${e.def}, LCK ${e.lck})">
-            <img src="${SKILL_ICONS[e.icon]}" alt="${e.label}">
-          </button>
-        `).join("");
+        // Preset selection UI itself moved to the Enemy Stats panel
+        // (2026-08-21, see enemyPrevBtn/enemyNextBtn/enemyCycleDisplayEl) --
+        // selectedEnemy here is now ONLY the "is a target conceptually
+        // active" gate a few lines below, not a source of DEF/LCK numbers
+        // (those come from enemyDefEl/enemyLckEl, see rollOneHit's comment).
         const selectedEnemy = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
 
         // Mods popup (2026-08-16): damageMod/hitMod, both 1.0 baseline +
@@ -4862,7 +4963,6 @@ function mountSkillCooldownLookup(root){
             </div>
             ${finalDamageBody}
             <div class="sk-dmg-final-controls">
-              <div class="sk-enemy-btns">${enemyBtns}</div>
               ${simulateBtn}
             </div>
             ${modsPopup}
@@ -5120,22 +5220,12 @@ function mountSkillCooldownLookup(root){
       });
     }
 
-    // Picking a target now just selects it for the (deterministic) range
-    // display -- superseded same day: this used to also re-roll a
-    // simulated hit on every click, back when the enemy button WAS the
-    // simulate trigger. That's now the separate sword "Simulate" button
-    // below. Still clears any in-flight simulated popup on switch, though
-    // -- a stale roll against the PREVIOUS target shouldn't linger once a
-    // new one's selected.
-    $$('[data-role="enemy-preset"]', displayEl).forEach(btn => {
-      btn.addEventListener("click", () => {
-        selectedEnemyId = btn.dataset.enemyId;
-        applyEnemyPresetToStatFields(selectedEnemyId);
-        multiHitGroups = [];
-        multiHitLayer.innerHTML = "";
-        renderHero();
-      });
-    });
+    // Enemy preset selection moved OUT of displayEl entirely (2026-08-21)
+    // -- it used to be 3 per-skill-rebuilt buttons here (`data-role=
+    // "enemy-preset"`), now it's the persistent prev/next cycle widget in
+    // the Enemy Stats panel (enemyPrevBtn/enemyNextBtn, wired once at mount
+    // time below, not re-wired per skill). Nothing left to do in this
+    // per-render listener block for it.
 
     const simulateBtn = $('[data-role="simulate-hit"]', displayEl);
     if (simulateBtn){
@@ -5322,8 +5412,16 @@ function mountSkillCooldownLookup(root){
   // repeating the exact ATK/TAL/LV gap documented directly above.
   defEl.addEventListener("input", renderHero);
   vitEl.addEventListener("input", renderHero);
+  // A genuine user edit on ANY Enemy Stats field flips into Custom mode --
+  // see enemyStatsCustom's own comment for why a plain `input` listener is
+  // sufficient to distinguish this from applyEnemyPresetToStatFields' own
+  // programmatic `.value` writes (those never fire `input` at all).
   [enemyAtkEl, enemyDefEl, enemyTalEl, enemyAgiEl, enemyVitEl, enemyChaEl, enemyIntEl, enemyLckEl]
-    .forEach(el => el.addEventListener("input", renderHero));
+    .forEach(el => el.addEventListener("input", () => {
+      enemyStatsCustom = true;
+      updateEnemyCycleDisplay();
+      renderHero();
+    }));
   raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); renderHero(); });
   let enemyStatOpen = false;
   enemyStatToggleBtn.addEventListener("click", () => {
