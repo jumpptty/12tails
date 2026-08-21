@@ -24,6 +24,16 @@
     --stat-atk:#b91c1c;
     --stat-tal:#0e7490;
     --stat-int:#1d4ed8;
+    /* Effect-damage font (Thunder Dragon pilot, 2026-08-21) -- matches the
+       real in-game damage-popup color convention this tool already reserved
+       for RPC_AddEffectDamage-pathway skills (see the dmgdigit_p<N> purple
+       digit textures, extracted alongside the white dmgdigit_w<N> set back
+       in the Penguin damage-pipeline work but never called until now). A
+       plain-text stand-in for that same purple, distinct from every other
+       stat-coloring token here since it isn't a stat term at all -- it's a
+       skill-wide "this number goes through the OTHER application pathway"
+       flag. */
+    --stat-effect:#7c3aed;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -40,6 +50,7 @@
       --stat-atk:#ef4444;
       --stat-tal:#22d3ee;
       --stat-int:#5b9bf0;
+      --stat-effect:#c084fc;
     }
   }
   :root[data-theme="dark"]{
@@ -56,6 +67,7 @@
     --stat-atk:#ef4444;
     --stat-tal:#22d3ee;
     --stat-int:#5b9bf0;
+    --stat-effect:#c084fc;
   }
 
   *{box-sizing:border-box}
@@ -1001,6 +1013,12 @@
   .dmg-tal{color:var(--stat-tal); font-weight:700}
   .dmg-atk{color:var(--stat-atk); font-weight:700}
   .dmg-int{color:var(--stat-int); font-weight:700}
+  /* Effect-damage base number (Thunder Dragon pilot, 2026-08-21) -- takes
+     .dmg-num's normal slot in a flat-shape formula's item list, whenever
+     `skill.effectDamage` is set. Purple, matching the real in-game
+     RPC_AddEffectDamage damage-popup color (see the dmgdigit_p<N> textures
+     used by the Simulate popup for the same flagged skills). */
+  .dmg-effect{color:var(--stat-effect); font-weight:700}
   .dmg-text{color:var(--text)}
   /* Substituted-number Damage Formula (2026-08-19, user-redesigned): the big
      "hero number" per term (colored the same as the old symbolic coefficient
@@ -1345,6 +1363,24 @@ function dmgAdjustRange(nDamage, damageMod, lck) {
 function hitModAdjust(nDamage, hitMod) {
   const mod = Math.min(Math.max(hitMod, 0), 3);
   return Math.ceil(mod * nDamage);
+}
+// Effect-damage hitMod variant (CharacterControl.cs:6203, inside
+// RPC_AddEffectDamage -- a SEPARATE application site from the RPC_AddDamage
+// one hitModAdjust above models). Same clamp/multiply shape, but
+// Mathf.FloorToInt, not CeilToInt -- confirmed by reading RPC_AddEffectDamage
+// to its own end (Thunder Dragon pilot, 2026-08-21): `nDamage =
+// Mathf.FloorToInt(Mathf.Clamp(this.hitMod,0,3) * nDamage)` is the ONLY
+// mitigation this pathway applies at all -- no dmgAdjust call, no defAdjust
+// call anywhere in the function, confirmed via a full read start-to-finish,
+// not just a grep for "defAdjust" (which would've missed a function that
+// never calls it in the first place). A skill on this pathway therefore has
+// zero stat-driven RNG variance in its real damage -- see `effectDamage`'s
+// own usage in rollOneHit/renderHero for how that's modeled (dmgAdjust/
+// defAdjust both skipped entirely, same as `penetrating`, but hitMod rounds
+// down instead of up).
+function hitModAdjustFloor(nDamage, hitMod) {
+  const mod = Math.min(Math.max(hitMod, 0), 3);
+  return Math.floor(mod * nDamage);
 }
 
 // Final Multiplier (2026-08-17) -- NOT a real CharacterControl field, unlike
@@ -2369,7 +2405,7 @@ const SKILLS = [
   { id:"chameleon_tent", name:"Tent", class:"Chameleon", icon:"chameleon_tent5", maxRank:1, castTime:6, castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false },
   { id:"chameleon_markOfSlayer", name:"Mark of Slayer", class:"Chameleon", icon:"chameleon_markOfSlayer5", maxRank:1, castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false, dmgNote:"deals no damage itself — applies a debuff that makes the target eligible for Slayer's ×2 bonus and All Slayer's target filter regardless of actual race — `Chameleon.cs:36792`, see those 2 skills' own notes." },
   { id:"chameleon_zeroShot", name:"Zero Shot", class:"Chameleon", icon:"chameleon_zeroShot5", maxRank:1, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(100)", atkCoeff:3, ko:"10", dmgNote:"point-blank nuke, small hit box (2m×2m, range 3m) — `Chameleon.cs:37422`. A separate, larger-radius (6m) shockwave applies knockback-only force to bystanders outside the hit box, no real damage (`nDamage=-1`, a force-only sentinel) — not modeled." },
-  { id:"chameleon_thunderDragon", name:"Thunder Dragon", class:"Chameleon", icon:"chameleon_thunderDragon5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"50", ko:"0", hitCount:()=>6, lckProc:{label:"Paralyze Chance", chance:12}, dmgNote:"self-centered channeled AoE pulse, flat 50 per tick (no ATK/TAL scaling), up to 6 ticks against anyone within 3m — `Chameleon.cs:38453`, loop bound `:38091-38305`. Each tick independently rolls the 12% paralyze chance shown above, unconditional (no passive gates it). Separately, ANY hit landed on the Chameleon while channeling triggers a guaranteed flat-350 counter-hit on the attacker (`CharacterControl.cs:4627`) — not merged into the number above, a mechanically distinct reflect, not part of the self-pulse." },
+  { id:"chameleon_thunderDragon", name:"Thunder Dragon", class:"Chameleon", icon:"chameleon_thunderDragon5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"50", effectDamage:true, ko:"0", hitCount:()=>6, lckProc:{label:"Paralyze Chance", chance:12}, dmgNote:"self-centered channeled AoE pulse, flat 50 per tick (no ATK/TAL scaling), up to 6 ticks against anyone within 3m — `Chameleon.cs:38453`, loop bound `:38091-38305`. Real effect damage (`RPC_AddEffectDamage`, `Chameleon.cs:38453`/`CharacterControl.cs:6058`), not a normal hit — ignores defense entirely (no defAdjust/dmgAdjust call anywhere in that pipeline, confirmed by reading it start to finish) and rounds hitMod DOWN instead of up, so Final Damage/Test below correctly skip both mitigation stages and floor instead of ceil. Each tick independently rolls the 12% paralyze chance shown above off the CASTER's own LCK only (`lckAdjust(12)` on `this.$self_$23135.mChar`, `Chameleon.cs:38459`) — the target's LCK plays no role in the chance at all, unconditional (no passive gates it). Separately, ANY hit landed on the Chameleon while channeling triggers a guaranteed flat-350 counter-hit on the attacker (`CharacterControl.cs:4627`, also `RPC_AddEffectDamage`) — not merged into the number above, a mechanically distinct reflect, not part of the self-pulse." },
   { id:"mole_reload", name:"Reload", class:"Mole", icon:"mole_reload2", maxRank:2, cd:240, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_mine", name:"Landmine", class:"Mole", icon:"mole_mine4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, cdDep:{id:"mineLover", label:"Mine Lover", icon:"mole_mineLover5", minRank:0, maxRank:1, kind:"replace", replaceValue:8}, dmg:"talAdjust(10×sLv+10)", dmgMultDep:{id:"mineLover", label:"Mine Lover", icon:"mole_mineLover5", minRank:0, maxRank:1, mult:1.25}, dmgNote:"AoE, single hit per target; Smart Shell (smartShell1) adds +30 flat damage vs enemies / halves damage vs same-layer targets — not modeled", ko:"1" },
   { id:"mole_mortarShot", name:"Mortar Shot", class:"Mole", icon:"mole_mortarShot2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:(rank)=>2*rank+1, dmgNote:"per shell (2×sLv+1 shells); falls off up to −50% with distance (assumes point-blank here); ×2 vs Structure race — neither shown", ko:"1" },
@@ -3157,12 +3193,21 @@ function mountSkillCooldownLookup(root){
     // hit()" flagged (but not modeled) back when Flame Turret/Carnival's own
     // `penetrating` flag was first verified via a whole-file `defAdjust`
     // grep in CharacterControl.cs -- confirmed now, not assumed.
-    const afterDef = skill.penetrating
+    // effectDamage (Thunder Dragon pilot, 2026-08-21): a 4th pipeline shape,
+    // alongside penetrating/dmgAdjustSkip -- RPC_AddEffectDamage (unlike
+    // RPC_AddDamage, which every prior shape here still ends up at) never
+    // calls dmgAdjust OR defAdjust at all, confirmed by reading that whole
+    // function (see hitModAdjustFloor's own comment) -- grouped with
+    // `penetrating` in the "skip both stages" branch since the mitigation
+    // skip itself is identical, only the hitMod rounding differs after.
+    const afterDef = (skill.penetrating || skill.effectDamage)
       ? val
       : skill.dmgAdjustSkip
         ? defAdjustRoll(val, selectedEnemy.def, selectedEnemy.lck)
         : defAdjustRoll(dmgAdjustAtRoll(val, playerDamageModValue, randomRoll(lckSpreadRange(attackerLCK)[1])), selectedEnemy.def, selectedEnemy.lck);
-    const afterHitMod = hitModAdjust(afterDef, enemyHitModValue);
+    const afterHitMod = skill.effectDamage
+      ? hitModAdjustFloor(afterDef, enemyHitModValue)
+      : hitModAdjust(afterDef, enemyHitModValue);
     return finalMultiplierAdjust(afterHitMod, finalMultiplierValue);
   }
   // 2D grid (not a single fanned-out row) for multi-hit popups -- laid out
@@ -3235,12 +3280,19 @@ function mountSkillCooldownLookup(root){
     // place) -- hardcoding "frost" text here is therefore accurate for
     // every skill that can actually trigger this, not a guess.
     const procLabel = hit.proc ? `<span class="sk-multihit-frost">frost</span>` : "";
+    // Purple digit set (Thunder Dragon pilot, 2026-08-21) -- the real
+    // in-game damage-popup color for RPC_AddEffectDamage-pathway skills,
+    // reusing the dmgdigit_p<N> textures extracted alongside the white
+    // dmgdigit_w<N> set back in the Penguin damage-pipeline work but never
+    // called until now (see renderDamageDigits' own comment for the source
+    // citation). White remains every other skill's color, unchanged.
+    const digitColor = selected.effectDamage ? "p" : "w";
     if (group.hits.length > 1){
       const hitEl = document.createElement("div");
       hitEl.className = "sk-multihit-item";
       hitEl.style.left = hit.pos.x + "px";
       hitEl.style.top = hit.pos.y + "px";
-      hitEl.innerHTML = renderDamageDigits(hit.value, "w", 20) + procLabel;
+      hitEl.innerHTML = renderDamageDigits(hit.value, digitColor, 20) + procLabel;
       wrap.appendChild(hitEl);
     }
     const totalEl = wrap.querySelector(".sk-multihit-total");
@@ -3250,7 +3302,7 @@ function mountSkillCooldownLookup(root){
     // safe to append unconditionally here since a single-hit group's total
     // is set exactly once, never overwritten by a later hit the way a
     // multi-hit group's running total is.
-    totalEl.innerHTML = renderDamageDigits(group.cumulativeValue, "w") + (group.hits.length === 1 ? procLabel : "");
+    totalEl.innerHTML = renderDamageDigits(group.cumulativeValue, digitColor) + (group.hits.length === 1 ? procLabel : "");
     // Only once every hit has landed does the running total itself start
     // floating/fading -- assigning `animation` fresh, right now, on an
     // element that has existed (static) this whole time, so this is a
@@ -3490,10 +3542,15 @@ function mountSkillCooldownLookup(root){
       const atkItem = effAtkCoeff
         ? (() => { const c = effAtkCoeff * mult; return { value: c * ATK, sub: `${fmtCoeff(c)}ATK`, cls: "dmg-atk" }; })()
         : null;
+      // effectDamage (Thunder Dragon pilot, 2026-08-21): purple text instead
+      // of the plain --text base color, matching the real in-game purple
+      // damage-popup convention this tool reserves for the
+      // RPC_AddEffectDamage pathway (see .dmg-effect's own CSS comment).
+      const flatBaseCls = skill.effectDamage ? "dmg-effect" : "dmg-num";
       let items = replaceDepOn
-        ? [{ value: skill.dmgReplaceDep.calc(rank, LV), sub: `${fmtCoeff(skill.dmgReplaceDep.coeff * rank)}LV`, cls: "dmg-num" }]
+        ? [{ value: skill.dmgReplaceDep.calc(rank, LV), sub: `${fmtCoeff(skill.dmgReplaceDep.coeff * rank)}LV`, cls: flatBaseCls }]
         : (flatBaseVal !== 0 || !atkItem)
-          ? [{ value: flatBaseVal, sub: null, cls: "dmg-num" }]
+          ? [{ value: flatBaseVal, sub: null, cls: flatBaseCls }]
           : [];
       if (atkItem) items = items.length ? [...items, { op: "+" }, atkItem] : [atkItem];
       if (dmgDepOn){
@@ -4544,12 +4601,18 @@ function mountSkillCooldownLookup(root){
           // skill that manually re-applies defAdjust after bypassing hit()
           // (so dmgAdjust never runs) but is NOT fully `penetrating` (defAdjust
           // still applies) needs its own middle branch here too.
+          // effectDamage (Thunder Dragon pilot, 2026-08-21) -- see
+          // rollOneHit's identical comment for the full citation trail:
+          // RPC_AddEffectDamage skips dmgAdjust AND defAdjust entirely
+          // (grouped with `penetrating` below, same skip), and rounds
+          // hitMod DOWN (hitModAdjustFloor) instead of up.
+          const finalHitModFn = selected.effectDamage ? hitModAdjustFloor : hitModAdjust;
           const finalRangeForRange = (range) => {
-            const worstAfterDef = selected.penetrating ? range[0] : selected.dmgAdjustSkip ? defAdjustAtN(range[0], enemyNWorst) : defAdjustAtN(dmgAdjustAtRoll(range[0], playerDamageModValue, playerLckSpread[0]), enemyNWorst);
-            const bestAfterDef = selected.penetrating ? range[1] : selected.dmgAdjustSkip ? defAdjustAtN(range[1], enemyNBest) : defAdjustAtN(dmgAdjustAtRoll(range[1], playerDamageModValue, playerLckSpread[1]), enemyNBest);
+            const worstAfterDef = (selected.penetrating || selected.effectDamage) ? range[0] : selected.dmgAdjustSkip ? defAdjustAtN(range[0], enemyNWorst) : defAdjustAtN(dmgAdjustAtRoll(range[0], playerDamageModValue, playerLckSpread[0]), enemyNWorst);
+            const bestAfterDef = (selected.penetrating || selected.effectDamage) ? range[1] : selected.dmgAdjustSkip ? defAdjustAtN(range[1], enemyNBest) : defAdjustAtN(dmgAdjustAtRoll(range[1], playerDamageModValue, playerLckSpread[1]), enemyNBest);
             return [
-              finalMultiplierAdjust(hitModAdjust(worstAfterDef, enemyHitModValue), finalMultiplierValue),
-              finalMultiplierAdjust(hitModAdjust(bestAfterDef, enemyHitModValue), finalMultiplierValue),
+              finalMultiplierAdjust(finalHitModFn(worstAfterDef, enemyHitModValue), finalMultiplierValue),
+              finalMultiplierAdjust(finalHitModFn(bestAfterDef, enemyHitModValue), finalMultiplierValue),
             ];
           };
           // dmgGroups (2026-08-19, user-specified: "assume all hits connect

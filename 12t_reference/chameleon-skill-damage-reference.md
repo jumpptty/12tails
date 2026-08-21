@@ -35,7 +35,7 @@ back to that sweep.
 | tent | 1 | none (self status) | — | — | — | — |
 | markOfSlayer | 1 | none directly (enables slayer/allSlayer race-bypass) | — | — | — | — |
 | zeroShot | 1 | `3×ATK + talAdjust(100)` | 10 | 1 | — | — |
-| thunderDragon | 1 | flat `50`/tick self-AoE (+ separate flat-350 reflect, not merged) | 0 | 6 | — | **12% paralyze/tick, unconditional** |
+| thunderDragon | 1 | flat `50`/tick self-AoE, **real effect damage** (`RPC_AddEffectDamage`, ignores defense, floors hitMod) + separate flat-350 reflect, not merged | 0 | 6 | — | **12% paralyze/tick, caster-LCK only, unconditional** |
 
 ## Notable findings
 
@@ -331,6 +331,74 @@ to `renderDmgRankToggle`, unaffected.
 
 Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, grepped for zero remaining
 `sk-ko-standalone` references outside its own removal-explaining comment.
+
+### Follow-up, 2026-08-21: Thunder Dragon is real effect damage — new `effectDamage` pipeline shape, purple font/digits, and the paralyze-chance LCK question answered
+
+User: "Thunder Dragon Fix — 1. The damage is effect damage, please use purple font for the damage formula
+chip, and use purple in game font for damage sim, ignore defense, not the usual pipeline. 2. Check if you
+can calculate paralyze chance without considering the target LCK stat."
+
+**Re-read `Chameleon.cs:38380-38470` directly (the tick loop) to verify, not assume from the existing
+citation.** Confirmed: the damage call is `this.$hitChar$23117.RPC_AddEffectDamage(444, 50, 0, 0,
+Vector3.zero, ...)` (`:38453`) — the literal `50` is passed straight in with no `dmgAdjust`/`defAdjust`
+wrapper anywhere in the calling coroutine, and the paralyze-chance roll two lines later
+(`this.$self_$23135.mChar.lckAdjust(12) > Random.Range(0,100)`, `:38459`) reads `lckAdjust` off
+`$self_$23135.mChar` — the CASTER, not the hit target. `Damage.getDebuff(3, casterCha, targetCha)` on the
+next line is a separate, already-excluded mechanic (the paralysis DURATION, CHA-contested, applied to the
+target — matches this doc's own standing "enemy-applied debuff" exclusion rule, not the proc chance).
+
+**Then read `RPC_AddEffectDamage` itself start-to-finish** (`CharacterControl.cs:6058-6209`, ~150 lines of
+per-class guard checks — Panda's rollAround reflect, Monkey's fireAvatar/earthForm KO-nullify, none
+applicable to Chameleon) to find its actual mitigation step, not just confirm "no defAdjust call" via a
+grep (this file's own standing lesson: read to the function's real end before concluding what it computes).
+Found exactly ONE line that touches `nDamage`: `nDamage = Mathf.FloorToInt(Mathf.Clamp(this.hitMod,0,3) *
+nDamage)` (`:6203`) — **FloorToInt, not CeilToInt** (matches this doc's own earlier note about
+`RPC_AddEffectDamage` using Floor where `RPC_AddDamage`/`hit()` use Ceil, now actually acted on for the
+first time). No `dmgAdjust` call, no `defAdjust` call anywhere in the function. **Conclusion: Thunder
+Dragon's real damage has ZERO stat-driven RNG variance** — the only thing that can move it off exactly 50
+is a target-side `hitMod`-affecting buff/debuff (this tool's existing Mods popup: `reduce`/`miracleDrop`/
+`amplifyDamage`), a deterministic multiplier, not a probability roll.
+
+**Answer to question 2, directly**: yes — the paralyze chance genuinely never considers the target's LCK
+at all, confirmed by the source line above (`lckAdjust(12)` on the caster only). The tool's own EXISTING
+`lckProc` implementation (`lckAdjustChance(lp.chance, LCK)` in the render path, `rollLckProc` in the
+Simulate path — both checked directly) already only ever reads the tool's single global `LCK` input
+(modeled as the caster's stat, same as every other `lckProc` skill) and never references `selectedEnemy`
+or any target field — so no code change was needed for this half of the request, just confirmation.
+
+**New `effectDamage:true` flag** (Thunder Dragon's `SKILLS` entry) — a 4th pipeline shape alongside
+`penetrating`/`dmgAdjustSkip`, grouped with `penetrating` in the "skip both dmgAdjust and defAdjust
+entirely" branch (`rollOneHit` and `renderHero`'s `finalRangeForRange`, both updated identically) since the
+mitigation-skip itself is the same — the only NEW behavior is the hitMod rounding direction, via a new
+`hitModAdjustFloor(nDamage, hitMod)` function (mirrors `hitModAdjust` exactly, `Math.floor` instead of
+`Math.ceil`), selected via `selected.effectDamage ? hitModAdjustFloor : hitModAdjust` at both call sites.
+Verified in Node the two functions genuinely diverge at a fractional `hitMod` (1.75 × 50 → 88 ceil vs. 87
+floor), not just a theoretical distinction.
+
+**Purple font.** Thunder Dragon's `dmg:"50"` renders through `renderOneDmgFormula`'s flat-arithmetic
+branch, whose base-value item previously always got `cls:"dmg-num"` (plain `--text` color, no term
+coloring — matches this tool's own documented "flat shape has no color breakdown" rule for every OTHER
+flat skill). Added a new `cls: skill.effectDamage ? "dmg-effect" : "dmg-num"` branch feeding the exact same
+`buildFormulaGrid` item shape, plus a new `.dmg-effect{color:var(--stat-effect); font-weight:700}` CSS rule
+and a new `--stat-effect` token (light `#7c3aed`, dark `#c084fc`) defined alongside the existing
+`--stat-atk`/`--stat-tal`/`--stat-int` term-coloring tokens (all 3 theme blocks — light `:root`, the
+`prefers-color-scheme:dark` media query, and the explicit `[data-theme="dark"]` override). Scoped
+narrowly to the Damage Formula chip's own number, per the user's literal ask — Raw Damage/Final Damage's
+range text is untouched (still gold), since neither was named in the request.
+
+**Purple in-game digits.** `renderDamageDigits(n, color, size)` already accepted a `color` parameter, and
+the purple `dmgdigit_p0`-`dmgdigit_p9` textures were already sitting in `SKILL_ICONS` — extracted back
+during the original Penguin Final Damage pipeline work (2026-08-16) for exactly this eventuality, but never
+actually called by any skill until now (verified all 10 are present and structurally valid PNGs before
+trusting the docs' own claim they were "ready"). Both `revealMultiHit` call sites (`renderDamageDigits(hit
+.value, "w"/"p", ...)`, per-hit and cumulative-total) now compute `digitColor = selected.effectDamage ? "p"
+: "w"` once and use it for both — white stays the default for every other skill, unchanged.
+
+`dmgNote` rewritten to cite the new findings directly (`RPC_AddEffectDamage`/`RPC_AddDamage` line numbers,
+the no-defAdjust/no-dmgAdjust confirmation, the FloorToInt hitMod, the caster-only paralyze roll).
+
+Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, Node-verified the floor/ceil
+hitMod divergence and confirmed no residual `.dmg-num`/white-digit path is reachable for this skill.
 
 ## Open items / could not verify
 

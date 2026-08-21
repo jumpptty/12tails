@@ -3853,3 +3853,44 @@ the branch condition routes each dep to the correct function. **Not yet visually
 browser tool available this session; check Left Stride's toggle icon now renders the real Double Strider
 art (not a broken image) and that every skill's 2nd row looks right with no note-only chip anywhere,
 before treating this as fully done.
+
+### 2026-08-21, same day: Thunder Dragon is real effect damage — a 4th pipeline shape, purple font/digits, paralyze-chance LCK question confirmed
+
+User: "Thunder Dragon Fix — 1. The damage is effect damage, use purple font for the damage formula chip
+and purple in-game font for damage sim, ignore defense, not the usual pipeline. 2. Check if you can
+calculate paralyze chance without considering the target LCK stat." Re-verified both from source directly
+rather than trusting the existing citation:
+
+- `Chameleon.cs:38453` — `RPC_AddEffectDamage(444, 50, ...)`, the literal `50` passed with no `dmgAdjust`/
+  `defAdjust` wrapper. `:38459` — the paralyze roll (`lckAdjust(12) > Random.Range(0,100)`) reads
+  `lckAdjust` off the CASTER's own `mChar`, never the target.
+- `CharacterControl.cs:6058-6209` (`RPC_AddEffectDamage`'s full body, read start to finish, not just
+  grepped) — exactly one mitigation line, `nDamage = Mathf.FloorToInt(Mathf.Clamp(this.hitMod,0,3) *
+  nDamage)` — no `dmgAdjust`, no `defAdjust` anywhere. Thunder Dragon's real damage therefore has ZERO
+  stat-driven RNG variance — only a target-side `hitMod` buff/debuff (the existing Mods popup) can move it
+  off exactly 50.
+- Answer to Q2: confirmed, target LCK plays no role at all. The tool's existing `lckProc` implementation
+  (`lckAdjustChance`/`rollLckProc`, both checked directly) already only ever reads the global caster-LCK
+  input, never `selectedEnemy` — no code change needed for that half, just confirmation.
+
+**New `effectDamage:true` flag** — grouped with `penetrating` in the "skip dmgAdjust+defAdjust entirely"
+branch (`rollOneHit` and `renderHero`'s `finalRangeForRange`, both updated identically), plus a new
+`hitModAdjustFloor(nDamage, hitMod)` function (mirrors `hitModAdjust`, `Math.floor` not `Math.ceil`),
+selected via `selected.effectDamage ? hitModAdjustFloor : hitModAdjust` at both hitMod call sites.
+
+**Purple font**: a new `cls: skill.effectDamage ? "dmg-effect" : "dmg-num"` branch in
+`renderOneDmgFormula`'s flat-arithmetic item builder, a new `.dmg-effect{color:var(--stat-effect)}` rule,
+and a new `--stat-effect` token (light `#7c3aed`, dark `#c084fc`) added to all 3 existing theme blocks
+alongside `--stat-atk`/`--stat-tal`/`--stat-int`. Scoped to the Damage Formula chip's own number only, per
+the literal ask — Raw/Final Damage stay gold, untouched.
+
+**Purple digits**: `renderDamageDigits(n, color, size)` already took a `color` param, and the purple
+`dmgdigit_p0`-`p9` textures were already embedded in `SKILL_ICONS` (extracted during the original Penguin
+Final Damage work, 2026-08-16, but never called by any skill until now — verified all 10 present and
+byte-valid before trusting that). Both `revealMultiHit` call sites now compute `digitColor =
+selected.effectDamage ? "p" : "w"` once and share it.
+
+Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance check clean, Node-verified the
+floor/ceil hitMod divergence is real (50×1.75: 88 ceil vs 87 floor, not identical). **Not yet visually
+verified live** — no browser tool available this session; check the Damage Formula chip's "50" actually
+renders purple, and that a Simulate roll shows purple in-game digits, before treating this as fully done.
