@@ -416,10 +416,27 @@
      would blur that meaning. Input VALUES stay --text (unchanged, inherited
      from the base .sk-controls input rule) so typed numbers stay maximally
      legible -- only the labels and the box itself carry the tint, not the
-     numbers themselves. */
-  .sk-enemystat-controls{display:flex; background:var(--stat-atk-soft); border:1px solid var(--stat-atk)}
+     numbers themselves.
+     Restructured same day (2026-08-21, user: "enemy preset icon, on top of
+     the stat field, middle aligned") into 2 stacked rows -- the cycle
+     widget centered on its own line, the label+8 stat fields below it --
+     so .sk-enemystat-controls is now the OUTER wrapper (the one red-tinted
+     box, owns the background/border/padding that used to live directly on
+     the single flex row when this class and .sk-controls were the same
+     element) and the fields themselves moved to a nested plain
+     `.sk-controls` div. That inner .sk-controls needed its own background/
+     padding/margin RESET to nothing -- otherwise its own base rule (panel-2
+     background, 8px 14px padding) would render as a second, mismatched box
+     nested inside the already-styled outer one. */
+  .sk-enemystat-controls{
+    display:flex; flex-direction:column; gap:8px;
+    background:var(--stat-atk-soft); border:1px solid var(--stat-atk); border-radius:3px;
+    padding:8px 14px; margin-bottom:8px;
+  }
+  .sk-enemystat-controls .sk-controls{background:none; border:none; padding:0; margin-bottom:0}
   .sk-enemystat-controls label{color:var(--stat-atk)}
   .sk-enemystat-controls[hidden]{display:none}
+  .sk-enemy-cycle-row{display:flex; justify-content:center}
   /* "Enemy Stat" label cell (2026-08-21, user-requested: put this text
      where enemy ATK used to sit, then shift the 8 real stat fields right so
      each aligns with its player-row counterpart) -- fixed to the EXACT same
@@ -836,31 +853,25 @@
      unselected/full-when-selected toggle language -- there's only ever ONE
      icon shown now, and it's always the active selection, so it's always
      full color; "unselected" doesn't apply to a single-icon display. */
-  /* Icon sizing corrected same day, user-reported: the original flat 78px
-     ("about 300%" of the old 26px icon, taken literally) visibly inflated
-     the whole row's height past what the label+input stat cells need on
-     their own -- the user wants "the maximum size allowed that wouldn't
-     inflate the height," i.e. sized OFF the row's own natural height, not
-     an independently guessed pixel figure that could be wrong for this
-     font stack anyway. Fixed by construction, not by estimating a safer
-     pixel number: .sk-enemy-cycle switches from align-self:end to
-     align-self:stretch, which gives it a real, concrete height equal to
-     the row's own cross-size (driven by whichever stat <div> -- label +
-     input -- is tallest, same as it always was). height:100% on the icon
-     wrap then resolves against THAT concrete height (percentage heights
-     need a defined containing-block height, which align-self:stretch is
-     what actually supplies here), and aspect-ratio:1/1 computes the width
-     to match -- so the icon is always exactly as tall as the row can hold
-     without growing it, in any browser/font-metric scenario, no guessing
-     required. */
-  .sk-enemy-cycle{display:flex; align-items:center; gap:6px; align-self:stretch}
+  /* Icon sizing: originally matched to the row's own natural height via
+     align-self:stretch + height:100% (see the git history for the full
+     reasoning), back when this widget shared a flex line with the label+8
+     stat-input cells. Moot now that it lives in its own dedicated
+     .sk-enemy-cycle-row (2026-08-21, user: "enemy preset icon, on top of
+     the stat field, middle aligned") -- alone in that row, stretch has
+     nothing else to size against, so a real deliberate size is needed
+     again: 64px, a plain middle-ground pixel value (the user's own prior
+     feedback was "bigger than the original 78px, but I don't hate it," not
+     a request for a specific number) rather than re-deriving one from
+     anything else. */
+  .sk-enemy-cycle{display:flex; align-items:center; gap:6px}
   .sk-enemy-cycle-arrow{
     border:none; background:none; padding:2px; cursor:pointer; color:var(--muted); line-height:0;
   }
   .sk-enemy-cycle-arrow:hover{color:var(--gold)}
   .sk-enemy-cycle-arrow svg{width:12px; height:12px; fill:currentColor; display:block}
   .sk-enemy-cycle-icon-wrap{
-    height:100%; aspect-ratio:1/1; flex:none; border:1px solid var(--line); border-radius:4px;
+    width:64px; height:64px; flex:none; border:1px solid var(--line); border-radius:4px;
     background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center;
   }
   .sk-enemy-cycle-icon-wrap img{width:100%; height:100%; object-fit:cover; display:block}
@@ -2896,24 +2907,28 @@ function mountSkillCooldownLookup(root){
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle><line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line><line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line></svg>
           </button>
         </div>
-        <div class="sk-controls sk-enemystat-controls" data-role="enemystat-controls" hidden>
-          <div class="sk-enemystat-label-cell"><label>Enemy Stat</label></div>
-          <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
-          <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
-          <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
-          <div><label>AGI</label><input type="number" data-role="enemyAgi" min="0" value="128"></div>
-          <div><label>VIT</label><input type="number" data-role="enemyVit" min="0" value="128"></div>
-          <div><label>CHA</label><input type="number" data-role="enemyCha" min="0" value="128"></div>
-          <div><label>INT</label><input type="number" data-role="enemyInt" min="0" value="128"></div>
-          <div><label>LCK</label><input type="number" data-role="enemyLck" min="0" value="128"></div>
-          <div class="sk-enemy-cycle">
-            <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
-              <svg viewBox="0 0 24 24"><polygon points="16,3 7,12 16,21"></polygon></svg>
-            </button>
-            <div class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"></div>
-            <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
-              <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
-            </button>
+        <div class="sk-enemystat-controls" data-role="enemystat-controls" hidden>
+          <div class="sk-enemy-cycle-row">
+            <div class="sk-enemy-cycle">
+              <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
+                <svg viewBox="0 0 24 24"><polygon points="16,3 7,12 16,21"></polygon></svg>
+              </button>
+              <div class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"></div>
+              <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
+                <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
+              </button>
+            </div>
+          </div>
+          <div class="sk-controls">
+            <div class="sk-enemystat-label-cell"><label>Enemy Stat</label></div>
+            <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
+            <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
+            <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
+            <div><label>AGI</label><input type="number" data-role="enemyAgi" min="0" value="128"></div>
+            <div><label>VIT</label><input type="number" data-role="enemyVit" min="0" value="128"></div>
+            <div><label>CHA</label><input type="number" data-role="enemyCha" min="0" value="128"></div>
+            <div><label>INT</label><input type="number" data-role="enemyInt" min="0" value="128"></div>
+            <div><label>LCK</label><input type="number" data-role="enemyLck" min="0" value="128"></div>
           </div>
         </div>
       </div>

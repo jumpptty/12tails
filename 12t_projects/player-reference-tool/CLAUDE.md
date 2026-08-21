@@ -4159,3 +4159,35 @@ tool box (`.tool-shell`), not the inner `.sk-hero` detail card, which sits well 
 box. Fixed by anchoring to `shellRect.top` instead (already computed earlier in the same function for the
 left-edge math, so no new measurement needed) -- the panel's top now lines up with the tool's own outer
 edge, level with the "Skill Cooldown / Duration" heading, not down at the individual skill card's own top.
+
+### 2026-08-21, immediate follow-up: Enemy Stats panel restructured into 2 rows -- preset cycle on top, centered
+
+User: "enemy preset icon, on top of the stat field, middle aligned." The enemy preset icon+prev/next
+arrows had been the LAST item in the Enemy Stats panel's single flex-wrap row (after LCK), which — once
+that row wrapped to a 2nd line — put it below the stat fields, left-aligned, not above and centered.
+
+**Split into two stacked rows.** `.sk-enemystat-controls` (previously the SAME element as the flex-wrap
+row itself, sharing the `.sk-controls` class directly) is now a dedicated OUTER wrapper
+(`display:flex; flex-direction:column; gap:8px`) holding two children: a new `.sk-enemy-cycle-row`
+(`display:flex; justify-content:center`, containing just the prev/next-arrows+icon widget) on top, and a
+nested plain `.sk-controls` div (the "Enemy Stat" label + 8 stat fields, unchanged internal shape) below
+it. `.sk-enemystat-controls` itself now owns the red-tint background/border/padding that used to live
+directly on the single flex row; the nested `.sk-controls` needed its own background/padding/margin RESET
+to nothing (`.sk-enemystat-controls .sk-controls{background:none; border:none; padding:0;
+margin-bottom:0}`) so it doesn't render as a second, redundant panel-2-colored box nested inside the
+already-styled outer one.
+
+**Icon sizing needed a real number again.** The previous pass's `align-self:stretch` + `height:100%` +
+`aspect-ratio:1/1` trick sized the icon against whatever the label+8-stat-fields row's own natural height
+was — meaningless now that the icon lives alone in its own dedicated row (nothing left to stretch
+against). Replaced with a plain fixed `64px` — a deliberate middle-ground value, not re-derived from
+anything, since the user's own prior feedback on this icon was "bigger than the original 78px, but I don't
+hate it," not a request for a specific number.
+
+Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, grepped for zero CSS combinators
+that assumed the old flat sibling structure (none existed to begin with — every JS lookup already went
+through `data-role` attribute selectors scoped to `root`, unaffected by the extra nesting level).
+**Not yet visually verified live** — no browser tool available this session; check the cycle widget
+actually reads as centered above the fields row (not off-center or overlapping), and that the red-tinted
+box still reads as one cohesive panel rather than two visually distinct boxes, before treating this as
+fully done.
