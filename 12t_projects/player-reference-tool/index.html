@@ -814,20 +814,35 @@
   /* Enemy preset cycle (2026-08-21) -- relocated here from the Final Damage
      chip's old .sk-enemy-btns row (3 buttons shown at once) into the Enemy
      Stats panel instead, per direct user request: one icon + prev/next
-     triangle arrows, not three simultaneous choices. Icon is 78px, "about
-     300% the current size" of the old 26px .sk-enemy-btn it replaces (same
-     real target-avatar portraits, object-fit:cover). No more dim-when-
+     triangle arrows, not three simultaneous choices. No more dim-when-
      unselected/full-when-selected toggle language -- there's only ever ONE
      icon shown now, and it's always the active selection, so it's always
      full color; "unselected" doesn't apply to a single-icon display. */
-  .sk-enemy-cycle{display:flex; align-items:center; gap:6px; align-self:end}
+  /* Icon sizing corrected same day, user-reported: the original flat 78px
+     ("about 300%" of the old 26px icon, taken literally) visibly inflated
+     the whole row's height past what the label+input stat cells need on
+     their own -- the user wants "the maximum size allowed that wouldn't
+     inflate the height," i.e. sized OFF the row's own natural height, not
+     an independently guessed pixel figure that could be wrong for this
+     font stack anyway. Fixed by construction, not by estimating a safer
+     pixel number: .sk-enemy-cycle switches from align-self:end to
+     align-self:stretch, which gives it a real, concrete height equal to
+     the row's own cross-size (driven by whichever stat <div> -- label +
+     input -- is tallest, same as it always was). height:100% on the icon
+     wrap then resolves against THAT concrete height (percentage heights
+     need a defined containing-block height, which align-self:stretch is
+     what actually supplies here), and aspect-ratio:1/1 computes the width
+     to match -- so the icon is always exactly as tall as the row can hold
+     without growing it, in any browser/font-metric scenario, no guessing
+     required. */
+  .sk-enemy-cycle{display:flex; align-items:center; gap:6px; align-self:stretch}
   .sk-enemy-cycle-arrow{
     border:none; background:none; padding:2px; cursor:pointer; color:var(--muted); line-height:0;
   }
   .sk-enemy-cycle-arrow:hover{color:var(--gold)}
   .sk-enemy-cycle-arrow svg{width:12px; height:12px; fill:currentColor; display:block}
   .sk-enemy-cycle-icon-wrap{
-    width:78px; height:78px; flex:none; border:1px solid var(--line); border-radius:4px;
+    height:100%; aspect-ratio:1/1; flex:none; border:1px solid var(--line); border-radius:4px;
     background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center;
   }
   .sk-enemy-cycle-icon-wrap img{width:100%; height:100%; object-fit:cover; display:block}

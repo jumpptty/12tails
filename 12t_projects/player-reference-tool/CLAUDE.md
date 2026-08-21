@@ -4073,3 +4073,13 @@ prev/next wrap-around in both directions. **Not yet visually verified live** —
 this session; check the "Enemy Stat" 2-line wrap doesn't look cramped, that the 78px icon (much taller
 than the other row cells) doesn't visually dominate the panel awkwardly under `align-items:end`, and that
 the Custom↔preset icon swap actually looks right, before treating this as fully done.
+
+**Immediate same-day follow-up, user-caught**: "enemy preset icon too big, i want the maximum size allowed
+that wouldn't inflate the height of the enemy stat border area." Correct — a flat 78px was taken literally
+from "about 300%" without checking it against the row's own natural height, and it visibly grew the whole
+panel. Fixed by construction instead of guessing a smaller pixel number: `.sk-enemy-cycle` switched from
+`align-self:end` to `align-self:stretch` (giving it a real, concrete height equal to the row's own
+cross-size), the icon wrap uses `height:100%` (resolves against that now-concrete height) plus
+`aspect-ratio:1/1` (computes width to match) instead of a fixed `78px` square. The icon is now always
+exactly as tall as the row can hold without growing it, in any browser/font-metric scenario — no pixel
+estimate to get wrong.
