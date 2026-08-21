@@ -123,6 +123,27 @@ compose correctly with no further engine changes needed (`resolveRank` picks the
 before the dep applies on top): Perfect Blend rank 1/2 × Erase Senses off/on → 2/6/4/8; True Invisibility
 rank 1/2 × off/on → 8/12/12/16, all matching the source formulas by hand.
 
+## Follow-up, 2026-08-21: Skin Shift's placement in the skill order fixed, its 120s CD re-verified
+
+User: "Skin Shift placement in the order is off, it should be so much later in the order" + "check too if
+it really has the same 120s base CD." Both checked directly rather than assumed.
+
+**CD re-verified real**: `Chameleon.cs:34978`, inside `$RPC_skinShift$23027`'s own class body (line range
+34709-35336), calls `addTimeOut("immunity", agiAdjust(120))` — the identical literal `120` and the same
+`"immunity"` cooldown-lock key as Immunity's own cast site (`Chameleon.cs:19009`). Confirmed by reading
+the actual coroutine body, not re-citing the earlier pass's own note.
+
+**Ordering fixed via real `setReq` (level requirement) data**, not a guess: Skin Shift requires level 70
+(`ChameleonSkill.cs:1136`, `setReq(70, 3)`) — confirmed against several anchor points elsewhere in the
+roster (Immunity rank 1 = level 6, All Slain rank 2 = level 55, Rusty Decay/Tent/Zero Shot = level 75,
+Mark of Slayer/Thunder Dragon = level 85), all read directly rather than trusted from a wide/unreliable
+forward-scan (an initial broad search past 40 lines routinely grabbed a SIBLING skill's `setReq` instead
+of the target's own, due to the fallthrough control-flow shape already documented elsewhere in this repo —
+a tight ~15-line window immediately after each skill's own `skillname ==` check was reliable). Moved from
+right after Immunity (2nd in the list, where it landed purely because it shared Immunity's own cooldown
+key) to between All Slain and Rusty Decay — the correct spot between the "normal" 2-rank skill cluster
+(≤55) and the level-75+ standalone high-tier cluster.
+
 ## Follow-up, 2026-08-21: Erase Senses wired up as a real Duration dep on Perfect Blend/True Invisibility
 
 User asked directly whether `eraseSenses5` (hasSkill 412) affects `perfectBlend`/`trueInvisibility`'s
