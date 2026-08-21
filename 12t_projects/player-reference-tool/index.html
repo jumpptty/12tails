@@ -321,6 +321,24 @@
      cdDep toggle block) rather than typical desktop breakpoint defaults. */
   .sk{position:relative; padding:16px 22px}
   .sk h2{font-size:17px; margin:0 0 8px}
+  /* Stats panel (2026-08-21, user-requested: "make the hidden enemy field
+     appear outside the main skill card along with the player stat field
+     outside to the left of the skill card") -- wraps the player .sk-controls
+     and the enemy .sk-enemystat-controls as one positioning unit. Default
+     (this rule) is a no-op -- normal in-flow stacking, byte-identical to
+     the layout before this pass -- so a narrow viewport with no real gutter
+     space keeps today's behavior exactly. .sk-stats-panel-floating (added/
+     removed by positionStatsPanel(), same gutter-fit-check pattern
+     positionStatTooltips/positionDmgInfoPopup already use) is the ONLY
+     state that actually moves anything: position:fixed pulls the whole
+     panel out of normal flow (so the search box/skill card collapse
+     upward to fill the gap, reading as "search+card start right after the
+     heading" with the stats floating to their left), and the explicit
+     260px width forces .sk-controls' own existing flex-wrap to reflow from
+     one wide horizontal row into ~3 narrower columns -- no redesign of the
+     stat-cell markup needed, the wrap behavior was already there, just
+     never given a narrow enough container to visibly kick in before now. */
+  .sk-stats-panel-floating{position:fixed; width:260px; z-index:4}
   .sk-controls{
     background:var(--panel-2); border-radius:3px;
     padding:8px 14px; display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:8px;
@@ -2862,39 +2880,41 @@ function mountSkillCooldownLookup(root){
     <div class="sk">
       <div class="sk-art" data-role="art"></div>
       <h2>Skill Cooldown / Duration</h2>
-      <div class="sk-controls">
-        <div><label>CHAR LV</label><input type="number" data-role="lv" min="0" value="100"></div>
-        <div><label>ATK</label><input type="number" data-role="atk" min="0" value="128"></div>
-        <div><label>DEF</label><input type="number" data-role="def" min="0" value="128"></div>
-        <div><label>TAL</label><input type="number" data-role="tal" min="0" value="128"></div>
-        <div><label>AGI</label><input type="number" data-role="agi" min="0" value="128"></div>
-        <div><label>VIT</label><input type="number" data-role="vit" min="0" value="128"></div>
-        <div><label>CHA</label><input type="number" data-role="cha" min="0" value="128"></div>
-        <div><label>INT</label><input type="number" data-role="int" min="0" value="128"></div>
-        <div><label>LCK</label><input type="number" data-role="lck" min="0" value="128"></div>
-        <button type="button" class="sk-revisedart" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
-        <button type="button" class="sk-enemystat-toggle" data-role="enemystat-toggle" title="Enemy Stats">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle><line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line><line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line></svg>
-        </button>
-      </div>
-      <div class="sk-controls sk-enemystat-controls" data-role="enemystat-controls" hidden>
-        <div class="sk-enemystat-label-cell"><label>Enemy Stat</label></div>
-        <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
-        <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
-        <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
-        <div><label>AGI</label><input type="number" data-role="enemyAgi" min="0" value="128"></div>
-        <div><label>VIT</label><input type="number" data-role="enemyVit" min="0" value="128"></div>
-        <div><label>CHA</label><input type="number" data-role="enemyCha" min="0" value="128"></div>
-        <div><label>INT</label><input type="number" data-role="enemyInt" min="0" value="128"></div>
-        <div><label>LCK</label><input type="number" data-role="enemyLck" min="0" value="128"></div>
-        <div class="sk-enemy-cycle">
-          <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
-            <svg viewBox="0 0 24 24"><polygon points="16,3 7,12 16,21"></polygon></svg>
+      <div class="sk-stats-panel" data-role="stats-panel">
+        <div class="sk-controls">
+          <div><label>CHAR LV</label><input type="number" data-role="lv" min="0" value="100"></div>
+          <div><label>ATK</label><input type="number" data-role="atk" min="0" value="128"></div>
+          <div><label>DEF</label><input type="number" data-role="def" min="0" value="128"></div>
+          <div><label>TAL</label><input type="number" data-role="tal" min="0" value="128"></div>
+          <div><label>AGI</label><input type="number" data-role="agi" min="0" value="128"></div>
+          <div><label>VIT</label><input type="number" data-role="vit" min="0" value="128"></div>
+          <div><label>CHA</label><input type="number" data-role="cha" min="0" value="128"></div>
+          <div><label>INT</label><input type="number" data-role="int" min="0" value="128"></div>
+          <div><label>LCK</label><input type="number" data-role="lck" min="0" value="128"></div>
+          <button type="button" class="sk-revisedart" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
+          <button type="button" class="sk-enemystat-toggle" data-role="enemystat-toggle" title="Enemy Stats">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle><line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line><line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line></svg>
           </button>
-          <div class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"></div>
-          <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
-            <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
-          </button>
+        </div>
+        <div class="sk-controls sk-enemystat-controls" data-role="enemystat-controls" hidden>
+          <div class="sk-enemystat-label-cell"><label>Enemy Stat</label></div>
+          <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
+          <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
+          <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
+          <div><label>AGI</label><input type="number" data-role="enemyAgi" min="0" value="128"></div>
+          <div><label>VIT</label><input type="number" data-role="enemyVit" min="0" value="128"></div>
+          <div><label>CHA</label><input type="number" data-role="enemyCha" min="0" value="128"></div>
+          <div><label>INT</label><input type="number" data-role="enemyInt" min="0" value="128"></div>
+          <div><label>LCK</label><input type="number" data-role="enemyLck" min="0" value="128"></div>
+          <div class="sk-enemy-cycle">
+            <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
+              <svg viewBox="0 0 24 24"><polygon points="16,3 7,12 16,21"></polygon></svg>
+            </button>
+            <div class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"></div>
+            <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
+              <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
+            </button>
+          </div>
         </div>
       </div>
       <div class="sk-search-wrap">
@@ -2933,6 +2953,7 @@ function mountSkillCooldownLookup(root){
   const enemyLckEl = $('[data-role="enemyLck"]', root);
   const enemyStatToggleBtn = $('[data-role="enemystat-toggle"]', root);
   const enemyStatControlsEl = $('[data-role="enemystat-controls"]', root);
+  const statsPanelEl = $('[data-role="stats-panel"]', root);
   // Enemy preset cycle (2026-08-21, relocated from the Final Damage chip's
   // old 3-buttons-at-once .sk-enemy-btns row into this panel, per direct
   // user request -- see the cycleEnemyPreset/updateEnemyCycleDisplay
@@ -3034,6 +3055,7 @@ function mountSkillCooldownLookup(root){
   enemyPrevBtn.addEventListener("click", () => cycleEnemyPreset(-1));
   enemyNextBtn.addEventListener("click", () => cycleEnemyPreset(1));
   updateEnemyCycleDisplay();
+  positionStatsPanel();
   let nextSimulatePopupId = 1;
   // Multi-hit Simulate (e.g. manaMissile's several missiles landing as one
   // cast, selected.hitCount>1) deliberately does NOT go through the
@@ -4045,6 +4067,52 @@ function mountSkillCooldownLookup(root){
     const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
     pop.style.left = (shellRect.left - popWidth - margin - cbRect.left) + "px";
     pop.style.top = (summaryRect.top - cbRect.top) + "px";
+  }
+
+  // Stats panel (2026-08-21, user-requested: player + Enemy Stats controls
+  // "outside the main skill card... to the left") -- same gutter-fit-check
+  // shape as positionDmgInfoPopup/positionStatTooltips above, applied to a
+  // PERSISTENT control panel instead of a hover/click popup. Progressive
+  // enhancement, not an all-or-nothing redesign: on a viewport too narrow
+  // for a real left gutter, this just removes the floating class and the
+  // panel falls straight back to its original in-flow position (stacked
+  // above the search box, exactly as it always rendered before this pass)
+  // -- there's no "nothing to show" failure mode the way a tooltip has,
+  // since these are real inputs the user needs to reach regardless of
+  // window width. panelWidth is a known constant (matches
+  // .sk-stats-panel-floating's own CSS width), not measured, specifically
+  // to sidestep the chicken-and-egg problem of needing to know the panel's
+  // width to decide whether to give it that width in the first place.
+  function positionStatsPanel(){
+    const shell = document.querySelector(".tool-shell");
+    const searchWrap = $(".sk-search-wrap", root);
+    if (!shell || !searchWrap || !statsPanelEl) return;
+    const shellRect = shell.getBoundingClientRect();
+    const margin = 20;
+    const panelWidth = 260; // must match .sk-stats-panel-floating{width:...}
+    const gutterSpace = shellRect.left;
+    const fitsInGutter = gutterSpace >= panelWidth + margin * 2;
+    if (!fitsInGutter){
+      statsPanelEl.classList.remove("sk-stats-panel-floating");
+      statsPanelEl.style.left = "";
+      statsPanelEl.style.top = "";
+      return;
+    }
+    // Adding the class FIRST (so position:fixed is already active) before
+    // reading offsetParent/getBoundingClientRect -- same order
+    // positionDmgInfoPopup uses, required because the .view containing-
+    // block quirk (documented at length elsewhere in this file) means
+    // offsetParent's identity itself depends on position:fixed already
+    // being in effect, and searchWrap's own rect needs to reflect the
+    // panel ALREADY being out of flow (so search-wrap has already
+    // collapsed upward into the space the panel used to occupy) to anchor
+    // correctly against its real, final position.
+    statsPanelEl.classList.add("sk-stats-panel-floating");
+    const searchRect = searchWrap.getBoundingClientRect();
+    const cb = statsPanelEl.offsetParent;
+    const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
+    statsPanelEl.style.left = (shellRect.left - panelWidth - margin - cbRect.left) + "px";
+    statsPanelEl.style.top = (searchRect.top - cbRect.top) + "px";
   }
 
   function positionStatTooltips(){
@@ -5180,6 +5248,13 @@ function mountSkillCooldownLookup(root){
 
     positionStatTooltips();
     setupStatTooltipInteractions();
+    // Re-checked on every render, not just once at mount -- the mount-time
+    // call in this function's own outer scope covers the common case, but
+    // if this tool was ever mounted while hidden (0-size .tool-shell rect,
+    // safely falls back to non-floating), this is what actually catches it
+    // up to the real, correct gutter width the first time the user does
+    // anything after the tool becomes visible.
+    positionStatsPanel();
 
     // Set via DOM property, not an inline template-string style="" attribute:
     // the data URI's own embedded double quotes (url("data:...")) would close
@@ -5467,7 +5542,7 @@ function mountSkillCooldownLookup(root){
   // Re-anchor the side-gutter tooltips (and the fit-screen layout above
   // them) when the window is resized — gutter availability and the hero
   // card's on-screen position both depend on viewport size.
-  window.addEventListener("resize", () => { if (!root.hidden) { positionStatTooltips(); positionDmgInfoPopup(); } });
+  window.addEventListener("resize", () => { if (!root.hidden) { positionStatTooltips(); positionDmgInfoPopup(); positionStatsPanel(); } });
 
   renderHero();
 }

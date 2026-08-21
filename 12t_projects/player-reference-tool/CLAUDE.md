@@ -4083,3 +4083,47 @@ cross-size), the icon wrap uses `height:100%` (resolves against that now-concret
 `aspect-ratio:1/1` (computes width to match) instead of a fixed `78px` square. The icon is now always
 exactly as tall as the row can hold without growing it, in any browser/font-metric scenario — no pixel
 estimate to get wrong.
+
+### 2026-08-21, same day: player + Enemy Stats panels relocated to a floating left sidebar
+
+User (immediately after the icon-sizing fix, and confirming they didn't mind the icon ending up larger
+than intended): "let's make the hidden enemy field appear outside the main skill card along with the
+player stat field outside to the left of the skill card."
+
+**Chosen approach: reuse the already-proven gutter-positioning pattern this file already has (`positionStatTooltips`/`positionDmgInfoPopup`), not a new 2-column grid rewrite.** Both panels
+(`.sk-controls` player row, `.sk-controls.sk-enemystat-controls` enemy row) are now wrapped in one new
+`<div class="sk-stats-panel" data-role="stats-panel">` positioning unit. A new `positionStatsPanel()`
+(`index.html`, right after `positionDmgInfoPopup`) checks the same `shellRect.left >= width + margin*2`
+gutter-fit condition every other gutter-positioned element already uses, and toggles a
+`.sk-stats-panel-floating` class: when it fits, `position:fixed` pulls the whole panel out of normal flow
+(so the search box/skill card collapse upward to start right after the heading, with stats floating to the
+left) and an explicit `width:260px` forces `.sk-controls`' ALREADY-EXISTING `flex-wrap:wrap` to reflow from
+one wide horizontal row into ~3 narrower columns — no redesign of the stat-cell markup itself was needed,
+the wrap behavior was already there, just never given a narrow enough container to visibly trigger before.
+
+**Progressive enhancement, not all-or-nothing**: on a viewport too narrow for a real left gutter, the class
+is simply never added (or removed if a resize shrinks below the threshold) and the panel falls straight
+back to its exact original in-flow position, stacked above the search box — unlike a tooltip (which can
+just not show when there's no room), these are real inputs the user needs to reach regardless of window
+width, so "no floating" always degrades to "the layout that already worked," never to "invisible."
+
+**`panelWidth` is a known constant (260, matching the CSS), not measured** — deliberately sidesteps a
+chicken-and-egg problem: measuring the panel's rendered width to decide whether to float it would require
+already knowing whether it's floating (a 260px floating panel and a full-width in-flow panel have very
+different natural widths).
+
+**Called from 3 places**: once at mount (covers the common case), inside `renderHero()` right alongside the
+existing `positionStatTooltips()` call (catches up a rare "mounted while hidden" cold-start to real
+dimensions the first time the user does anything after the tool becomes visible), and the existing window
+`resize` listener (added as a 3rd call alongside the other two gutter-positioned elements' own resize
+handling).
+
+Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, confirmed `data-role="stats-panel"`
+appears in both template and query, confirmed all 4 real `positionStatsPanel()` references (definition +
+3 call sites) are wired as intended via grep. **Not yet visually verified live** — no browser tool
+available this session, and this is the largest structural change of the session with the least visual
+certainty: check that the panel actually lands in the gutter (not overlapping the skill card), that the
+260px width produces a reasonable ~3-column reflow rather than something cramped or oddly sparse, that the
+top-anchor against the search box lines up sensibly, and that the narrow-viewport fallback genuinely
+still works (stats stacked above the search box, unchanged from before this pass) before treating this as
+done.
