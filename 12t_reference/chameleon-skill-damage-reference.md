@@ -19,7 +19,7 @@ back to that sweep.
 | needlePrison | 2 | none (CC) | — | — | — | — |
 | massShot | 2 | `0.5×ATK + talAdjust(sLv×8+8)` | 1 | 1 (AoE) | `massHouseLock5` (422) ×1.5 mult | — |
 | poisonVolley | 2 | flat `0.5×ATK` | 1 | 1 (cone AoE) | — | — |
-| venomShock | 2 | opaque, state-contingent poison detonation | 0 | 1 | scales w/ live poison stack | — |
+| venomShock | 2 | 100%/150% of "remaining poison" (rank 1/2), state-contingent | 0 | 1 | scales w/ live poison stack | — |
 | massInvisibility | 2 | none (buff) | — | — | — | — |
 | finalEntrapment | 2 | none (CC prop) | — | — | — | — |
 | tormentRain | 1 | `0.5×ATK + talAdjust(60)` | 1 | 1 (AoE) | — | — |
@@ -31,7 +31,7 @@ back to that sweep.
 | slayer | 4 | `(0.3+0.15×impSlayerLv)×ATK + talAdjust(20+10×impSlayerLv)`, flat w.r.t. own rank | 5 | 1/target | Improved Slayer dmg-side effect modeled (rank-aware `atkCoeff`/`dmg`, linked to existing Cast Time toggle) | — |
 | allSlayer | 4 | `(0.6+0.3×impSlayerLv)×ATK + talAdjust(20+20×impSlayerLv)`, flat w.r.t. own rank | 5 | n/a (target cap not modeled) | same as slayer | — |
 | allSlain | 2 | `talAdjust(sLv×100)` | 0 | variable/uncapped (dmgNote only) | fed by nearly every other damage skill's hit history | — |
-| rustyDecay | 1 | opaque, state-contingent rust detonation | 0 | 1 | requires prior normal-attack rust stack | — |
+| rustyDecay | 1 | 150% of "remaining rust" (always, only 1 rank), state-contingent | 0 | 1 | requires prior normal-attack rust stack | — |
 | tent | 1 | none (self status) | — | — | — | — |
 | markOfSlayer | 1 | none directly (enables slayer/allSlayer race-bypass) | — | — | — | — |
 | zeroShot | 1 | `3×ATK + talAdjust(100)` | 10 | 1 | — | — |
@@ -185,6 +185,22 @@ additive-`perRank` shape already used elsewhere in this tool, e.g. Rabbit's Alch
 and byte-verified. Per this tool's standing "assume the passive is learned" default, both skills' shown
 Duration changes from the base value to the with-passive one by default (Perfect Blend 4s→8s, True
 Invisibility 12s→16s at max rank) — a real, correct behavior change, not a regression.
+
+## Follow-up, 2026-08-21: Venom Shock/Rusty Decay reworded to "100%/150% of remaining X"
+
+User asked for a simple explanation of Venom Shock's formula, then pointed out the cleaner framing
+directly: "100% of remaining poison / 150% of remaining poison / 100% of remaining rust / 150% of
+remaining rust." Verified this is exactly equivalent to the original formula, not an approximation:
+defining "remaining poison" = `ceil(0.25×(poisonLv×10−1)×remaining seconds)` (folding the constant
+`0.25` into the definition), Venom Shock's own per-rank coefficient `0.5×sLv+0.5` simplifies to exactly
+`1.0`/`1.5` at rank 1/2 — a clean 100%/150% multiplier on that base, confirmed in Node. Same reframing
+for Rusty Decay ("remaining rust" = `ceil(0.25×rustLv×15×remaining seconds)`) — user then caught their
+own initial phrasing implied a 100%/150% pair for Rusty Decay too and corrected it: Rusty Decay only has
+1 real learnable rank (re-confirmed via `ChameleonSkill.cs` — only `chm_rustyDecay5` exists, no
+`chm_rustyDecay1`), and its own internal status level is hardcoded to `2` (not the skill's own rank),
+which lands it permanently on the 150% case — there's no reachable 100% version of Rusty Decay. Both
+`dmg` fields reworded to lead with the percentage framing, `dmgNote` keeps the underlying formula for
+citation purposes.
 
 ## Open items / could not verify
 
