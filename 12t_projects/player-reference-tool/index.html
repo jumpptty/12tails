@@ -2358,8 +2358,8 @@ const SKILLS = [
   { id:"chameleon_rightStride", name:"Right Stride", class:"Chameleon", icon:"chameleon_rightStride2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.4, ko:"2", hitCountDep:CHAMELEON_DOUBLESTRIDER_DEP, hitCount:(rank,dmgDepOn,hitCountDepOn)=>(rank*2+1)*(hitCountDepOn?2:1), dmgNote:"piercing raycast, hits every enemy on the line per volley — flat 0.4×ATK per hit, no TAL scaling — `Chameleon.cs:28342/28359`. Hit count shown is volley count (rank×2+1, doubled by Double Strider's shadow clone); an individual volley can hit more than one target if they're lined up, not modeled as extra hits here." },
   { id:"chameleon_campFire", name:"Camp Fire", class:"Chameleon", icon:"chameleon_campFire2", maxRank:2, castTime:5, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true },
   { id:"chameleon_bloodBurn", name:"Blood Burn", class:"Chameleon", icon:"chameleon_bloodBurn2", maxRank:2, cd:18, cdWrapped:true, revisedArtExempt:false },
-  { id:"chameleon_slayer", name:"Bug Slayer / Tail Slayer / Elemental Slayer / Machine Slayer", class:"Chameleon", icon:"chameleon_slayer4", maxRank:4, castTime:2, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:0.5 }, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20)", atkCoeff:0.3, ko:"5", dmgNote:"formula is FLAT regardless of which rank/type is selected — rank here picks which enemy type (Bug/Tail/Elemental/Machine) gets the bonus below, it does not scale the base damage. `Chameleon.cs:31488`. Improved Slayer (same Cast Time corner toggle shown above) also adds +0.15×ATK and +10 to this formula per its own rank — not reflected in the number shown. Deals ×2 total against a race-matching target OR one carrying Mark of Slayer's debuff — not modeled, situational." },
-  { id:"chameleon_allSlayer", name:"All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer", class:"Chameleon", icon:"chameleon_allSlayer4", maxRank:4, castTime:4, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:1 }, cd:240, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20)", atkCoeff:0.6, ko:"5", dmgNote:"formula is FLAT regardless of rank — only race/Mark-of-Slayer-matching targets are hit at all (a target filter, not a bonus multiplier the way single-target Slayer has). `Chameleon.cs:33249`. Improved Slayer (Cast Time corner toggle above) also adds +0.3×ATK and +20 to this formula per rank, AND raises the per-cast target cap (4+its own rank) — neither reflected in the number/hit-count shown." },
+  { id:"chameleon_slayer", name:"Bug Slayer / Tail Slayer / Elemental Slayer / Machine Slayer", class:"Chameleon", icon:"chameleon_slayer4", maxRank:4, castTime:2, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:0.5 }, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+10×depLv)", atkCoeff:(rank,depLv)=>0.3+0.15*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"formula is FLAT regardless of which rank/type is selected — rank here picks which enemy type (Bug/Tail/Elemental/Machine) gets the bonus below, it does not scale the base damage. `Chameleon.cs:31488`. Improved Slayer (same passive as the Cast Time corner toggle — this toggle and that one share live state) adds +0.15×ATK and +10 to this formula per its own rank, both reflected above. Deals ×2 total against a race-matching target OR one carrying Mark of Slayer's debuff — not modeled, situational." },
+  { id:"chameleon_allSlayer", name:"All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer", class:"Chameleon", icon:"chameleon_allSlayer4", maxRank:4, castTime:4, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:1 }, cd:240, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+20×depLv)", atkCoeff:(rank,depLv)=>0.6+0.3*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"formula is FLAT regardless of rank — only race/Mark-of-Slayer-matching targets are hit at all (a target filter, not a bonus multiplier the way single-target Slayer has). `Chameleon.cs:33249`. Improved Slayer (same passive as the Cast Time corner toggle — this toggle and that one share live state) adds +0.3×ATK and +20 to this formula per rank, both reflected above; it ALSO raises the per-cast target cap (4+its own rank), not reflected in the hit-count shown." },
   { id:"chameleon_allSlain", name:"All Slain", class:"Chameleon", icon:"chameleon_allSlain2", maxRank:2, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×100)", ko:"0", dmgNote:"hits every enemy this Chameleon has damaged (via any skill or normal attack) since the last All Slain cast, then clears that list — `Chameleon.cs:34377`. Genuinely variable/uncapped hit count driven by recent combat history, not a fixed function of rank; shown as a single hit here, real casts can hit far more." },
   { id:"chameleon_skinShift", name:"Skin Shift", class:"Chameleon", icon:"chameleon_skinShift5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmgNote:"deals no damage to enemies — self-only: costs 10% of Chameleon's own CURRENT hp (`ceil(0.1×hp)`, `Chameleon.cs:35229`) to re-level whatever Immunity status is already active by +1, up to Immunity's own max. Grants no fresh Immunity of its own — requires Immunity already active to do anything (`ChameleonSkill.cs:1136`, req level 70, prerequisite skill 122). Shares Immunity's own \"immunity\" cooldown key (`Chameleon.cs:34978`) — casting either locks out the other, same shared-cType-but-genuinely-separate-skill shape as this tool's existing Whale/Panda precedents." },
   { id:"chameleon_rustyDecay", name:"Rusty Decay", class:"Chameleon", icon:"chameleon_rustyDecay5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"Detonates the target's existing rust stack (only applied by this Chameleon's own normal attacks vs. Robots, once Rusty Decay is learned): ceil(0.375×15×rustLv×remaining rust seconds). Deals 0 if the target has no active rust.", ko:"0", dmgNote:"state-contingent — `CharacterControl.cs:37192`, same construction as Venom Shock's poison-detonation, symmetrical mechanic." },
@@ -2957,11 +2957,39 @@ function mountSkillCooldownLookup(root){
       let idx = hitIndex;
       for (const g of skill.dmgGroups){
         const gHitCount = resolveGroupHitCount(skill, g);
-        if (idx < gHitCount) return g.atkCoeff !== undefined ? resolveGroupAtkCoeff(skill, g) : skill.atkCoeff;
+        if (idx < gHitCount) return g.atkCoeff !== undefined ? resolveGroupAtkCoeff(skill, g) : resolveAtkCoeff(skill, getSkillRank(skill));
         idx -= gHitCount;
       }
     }
-    return skill.atkCoeff;
+    return resolveAtkCoeff(skill, getSkillRank(skill));
+  }
+  // Chameleon Slayer/All Slayer pilot (2026-08-21): a SKILL-LEVEL (not
+  // dmgGroups-scoped) equivalent of resolveGroupAtkCoeff -- Improved
+  // Slayer's real rank (0-4, already modeled as the existing `castDep` on
+  // both these skills' Cast Time chip) also changes BOTH the atkCoeff
+  // AND the flat talAdjust-base literal in the damage formula itself
+  // (`Chameleon.cs:31488`: `(0.3+0.15*improvedSlayerLv)*ATK +
+  // talAdjust(20+10*improvedSlayerLv)`), previously left un-modeled
+  // (dmgNote-only) because neither existing mechanism fit: dmgDep only
+  // appends an additive term, dmgMultDep only scales the WHOLE existing
+  // formula uniformly -- neither can change a base coefficient itself.
+  // `skill.atkCoeff` may now optionally be a function `(rank, depLv) =>
+  // number` (same "function instead of static number" convention as the
+  // dmgGroups extension above), and `skill.dmg`'s own text may contain a
+  // 2nd substitution token, `depLv`, alongside the existing `sLv` --
+  // substituteDmgVars replaces both in one pass, reusing `skill.dmgRankDep`
+  // (a plain dep reference, deliberately re-keyed to the SAME `id` as an
+  // existing castDep where one already exists, e.g. Slayer/All Slayer's
+  // `improvedSlayer` -- so this new toggle instance shares live state with
+  // the Cast Time corner one, not a duplicate/independent tracker).
+  function resolveAtkCoeff(skill, rank){
+    if (typeof skill.atkCoeff !== "function") return skill.atkCoeff;
+    const depLv = skill.dmgRankDep ? getDepRank(skill.dmgRankDep) : 0;
+    return skill.atkCoeff(rank, depLv);
+  }
+  function substituteDmgVars(text, skill, rank){
+    const depLv = skill.dmgRankDep ? getDepRank(skill.dmgRankDep) : 0;
+    return text.replace(/\bsLv\b/g, String(rank)).replace(/\bdepLv\b/g, String(depLv));
   }
   // One independent roll of a skill's own lckProc mechanic (2026-08-20,
   // Simulate integration) -- e.g. Arctic Wind/Tornado's per-hit chance to
@@ -3015,7 +3043,7 @@ function mountSkillCooldownLookup(root){
       TAL = kk.tal; LCK = kk.lck; ATK = kk.atk;
     }
     const selectedEnemy = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
-    const text = resolveHitDmgText(skill, hitIndex).replace(/\bsLv\b/g, String(rank));
+    const text = substituteDmgVars(resolveHitDmgText(skill, hitIndex), skill, rank);
     const talMatch = text.match(/talAdjust\(([^()]+)\)/);
     const focusOn = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
     const dmgDepOn = skill.dmgDep && getDepRank(skill.dmgDep) === skill.dmgDep.maxRank;
@@ -3256,8 +3284,8 @@ function mountSkillCooldownLookup(root){
     // 1x/1.2x/1.3x ATK, all sharing one flat `dmg:"0"` base) instead of the
     // single skill-level atkCoeff every other skill still uses. undefined
     // (the default, every non-dmgGroups call site) falls back to skill.atkCoeff.
-    const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : skill.atkCoeff;
-    const text = dmgTextRaw.replace(/\bsLv\b/g, String(rank));
+    const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : resolveAtkCoeff(skill, rank);
+    const text = substituteDmgVars(dmgTextRaw, skill, rank);
     const talMatch = text.match(/talAdjust\(([^()]+)\)/);
     const focusOn = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
     // Class C damage-modifying passives (e.g. manaMissile's moreMissile5) --
@@ -4206,6 +4234,7 @@ function mountSkillCooldownLookup(root){
         (selected.ownStats || selected.ownStatsDmgOnly) ? renderDmgToggle(MOLE_DOUBLEBOT_DEP) : "",
         (selected.ownStats || selected.ownStatsDmgOnly) ? renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP) : "",
         selected.ownStatsKaiser ? renderDmgRankToggle(KING_KAISER_LV_DEP) : "",
+        selected.dmgRankDep ? renderDmgRankToggle(selected.dmgRankDep) : "",
       ].join("");
       const dmgInfo = selected.dmgNote ? `
         <details class="sk-dmg-info">
@@ -4270,9 +4299,9 @@ function mountSkillCooldownLookup(root){
       // from getting the chip itself, same as before. Only genuinely opaque
       // prose (novaFlare, detonate, warFactory, napalm) still fails the
       // arithmetic-literal test below and correctly gets no chip.
-      const talMatchCalc = selected.dmg.replace(/\bsLv\b/g, String(rank)).match(/talAdjust\(([^()]+)\)/);
+      const talMatchCalc = substituteDmgVars(selected.dmg, selected, rank).match(/talAdjust\(([^()]+)\)/);
       const dmgReplaceDepOnCalc = selected.dmgReplaceDep && getDepRank(selected.dmgReplaceDep) === selected.dmgReplaceDep.maxRank;
-      const flatComputableCalc = !talMatchCalc && /^[\d\s×*+\-.]+$/.test(selected.dmg.replace(/\bsLv\b/g, String(rank)));
+      const flatComputableCalc = !talMatchCalc && /^[\d\s×*+\-.]+$/.test(substituteDmgVars(selected.dmg, selected, rank));
       let dmgCalcChip = "";
       let dmgFinalChip = "";
       if (talMatchCalc || flatComputableCalc || selected.dmgGroups){
@@ -4308,8 +4337,8 @@ function mountSkillCooldownLookup(root){
           // see renderOneDmgFormula's identical parameter for the citation
           // trail. undefined (every pre-existing call site) falls back to
           // selected.atkCoeff, unchanged.
-          const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : selected.atkCoeff;
-          const t = dmgTemplateText.replace(/\bsLv\b/g, String(rank));
+          const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : resolveAtkCoeff(selected, rank);
+          const t = substituteDmgVars(dmgTemplateText, selected, rank);
           const tm = t.match(/talAdjust\(([^()]+)\)/);
           const dmgCalcPostFn = v => {
             let val = v;

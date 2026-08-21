@@ -28,8 +28,8 @@ back to that sweep.
 | rightStride | 2 | flat `0.4×ATK`, piercing raycast | 2 | `rank×2+1` volleys | `doubleStrider5`(423) doubles volley count | — |
 | campFire | 2 | none (heal) | — | — | — | — |
 | bloodBurn | 2 | none (self HP-cost→heal) | — | — | — | — |
-| slayer | 4 | flat `talAdjust(20)` (real formula also scales w/ Improved Slayer, not modeled) | 5 | 1/target | Improved Slayer dmg-side effect NOT modeled (only Cast Time side is) | — |
-| allSlayer | 4 | flat `talAdjust(20)` (same caveat) | 5 | n/a (target cap not modeled) | same as slayer | — |
+| slayer | 4 | `(0.3+0.15×impSlayerLv)×ATK + talAdjust(20+10×impSlayerLv)`, flat w.r.t. own rank | 5 | 1/target | Improved Slayer dmg-side effect modeled (rank-aware `atkCoeff`/`dmg`, linked to existing Cast Time toggle) | — |
+| allSlayer | 4 | `(0.6+0.3×impSlayerLv)×ATK + talAdjust(20+20×impSlayerLv)`, flat w.r.t. own rank | 5 | n/a (target cap not modeled) | same as slayer | — |
 | allSlain | 2 | `talAdjust(sLv×100)` | 0 | variable/uncapped (dmgNote only) | fed by nearly every other damage skill's hit history | — |
 | rustyDecay | 1 | opaque, state-contingent rust detonation | 0 | 1 | requires prior normal-attack rust stack | — |
 | tent | 1 | none (self status) | — | — | — | — |
@@ -43,13 +43,18 @@ back to that sweep.
   reading `Chameleon.cs:31488`/`:33249` directly: both formulas are driven entirely by the separate
   Improved Slayer passive's own rank (`improvedSlayerLv`), not by `sLv`. The skill's own "rank" (1-4)
   instead selects which enemy type (Bug→Tail→Elemental→Machine) the ×2 race bonus applies to — a genuinely
-  different meaning of "rank" than every other skill in this tool. Modeled as a FLAT `dmg` (`talAdjust(20)`
-  for slayer, `talAdjust(20)` for allSlayer, i.e. Improved Slayer at rank 0), with a `dmgNote` explicitly
-  flagging both the flat-regardless-of-rank behavior and Improved Slayer's real, un-modeled bonus
-  (`+0.15×ATK/+10` per rank for slayer, `+0.3×ATK/+20` per rank for allSlayer) — chosen over attempting to
-  dynamically model it because the existing `dmgDep` engine only supports appending an additive term, not
-  changing the `atkCoeff`/`talAdjust`-base coefficients themselves, which is what this passive actually
-  does. A future pass could build that mechanism if warranted.
+  different meaning of "rank" than every other skill in this tool.
+- **UPDATE, 2026-08-21 same day**: Improved Slayer's real damage-side effect IS now modeled, at the user's
+  explicit request ("Slayer and AllSlayer damage formula should have ImprovedSlayer skillDep too"). Needed
+  a new engine capability, since it changes the `atkCoeff`/`talAdjust`-base coefficients THEMSELVES (not
+  an additive term the existing `dmgDep` could append): `skill.atkCoeff` may now optionally be a function
+  `(rank, depLv) => number`, and `skill.dmg` text may contain a 2nd substitution token (`depLv`, alongside
+  the existing `sLv`) resolved via a new `skill.dmgRankDep` field — a skill-level generalization of the
+  per-group function support added for Quick Fire earlier this pass, applied here at the whole-skill
+  level since neither skill uses `dmgGroups`. `dmgRankDep` deliberately reuses the SAME `id:"improvedSlayer"`
+  as both skills' existing `castDep`, so the new Damage Formula corner toggle and the existing Cast Time
+  one share live state — toggling either updates both. Verified in Node: `slayer` at Improved Slayer 0/4 →
+  101/303 (ATK 100, TAL 128); `allSlayer` at 0/4 → 131/536, both matching the source formula by hand.
 - **Icon fix, a genuinely new shape**: `slayer`/`allSlayer`'s real per-rank icon files are named by ENEMY
   TYPE, not by a plain rank digit (`bugSlayer{0-4}.png`, `tailSlayer{0-4}.png`,
   `elementalSlayer{0-4}.png`, `machineSlayer{0-4}.png` for slayer; `allBugSlayer1.png`/`allTailSlayer2.png`/

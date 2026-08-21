@@ -3703,3 +3703,29 @@ math for `quickFire`/`rightStride`/`massShot` re-derived in Node and matched by 
 verified live** — no browser tool available this session; do a real click-through pass (rank-cycle icons
 across all 24 skills, especially slayer/allSlayer's type-based icon swap, the 2 opaque-text damage chips,
 and the unconditional lckProc chip) before treating this as fully done.
+
+### 2026-08-21, later same day: Improved Slayer's damage-side effect on Slayer/All Slayer finally modeled
+
+User: "Slayer and AllSlayer damage formula should have ImprovedSlayer skillDep too" — the exact mechanic
+flagged-but-not-modeled in this same day's earlier pass, now built for real. Needed a skill-level
+generalization of the per-group function support added for Quick Fire earlier this pass (see that entry
+above), since Improved Slayer changes the `atkCoeff`/`talAdjust`-base coefficients THEMSELVES, not an
+additive term the existing `dmgDep` mechanism could append.
+
+**Two small, general extensions**: `skill.atkCoeff` may now optionally be a function `(rank, depLv) =>
+number` (mirroring the dmgGroups extension exactly, just at the whole-skill level via a new
+`resolveAtkCoeff(skill, rank)` helper, applied at all 4 real call sites: `resolveHitAtkCoeff`'s fallback,
+`renderOneDmgFormula`, and `calcRangeFor`'s two internal uses). `skill.dmg` text may contain a 2nd
+substitution token, `depLv`, resolved alongside the existing `sLv` via a new `substituteDmgVars(text,
+skill, rank)` helper that replaced all 5 relevant `.replace(/\bsLv\b/g, ...)` call sites (the other 4 --
+`shield`, `ko`, `dmgReplaceDep` -- were left untouched, not exercised by any current `depLv`-using skill).
+Both `slayer` and `allSlayer` now set `dmgRankDep` to the SAME `id:"improvedSlayer"` their existing
+`castDep` already uses, so the new Damage Formula corner toggle and the existing Cast Time one share live
+state -- toggling either updates both, same linked-toggle precedent used throughout this file.
+
+Verified in Node: `slayer` at Improved Slayer 0/4 (ATK 100, TAL 128) → 101/303 total damage; `allSlayer`
+at 0/4 → 131/536, both hand-checked against the real source formula
+(`(coeff)×ATK + talAdjust(base)`) term by term. Script-block syntax clean, CSS comment-strip+brace-balance
+check clean. **Not yet visually verified live** — no browser tool available this session; check the new
+corner toggle in the Damage Formula header actually stays in sync with the existing Cast Time one when
+either is clicked, before treating this as fully done.
