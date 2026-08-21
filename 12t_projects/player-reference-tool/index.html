@@ -2349,7 +2349,7 @@ const SKILLS = [
   { id:"chameleon_needlePrison", name:"Needle Prison", class:"Chameleon", icon:"chameleon_needlePrison2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false },
   { id:"chameleon_massShot", name:"Mass Shot", class:"Chameleon", icon:"chameleon_massShot2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×8+8)", atkCoeff:0.5, ko:"1", dmgMultDep:{id:"massHouseLock", label:"Mass House Lock", icon:"chameleon_massHouseLock5", minRank:0, maxRank:1, mult:1.5}, dmgNote:"single AoE pass (radius 6m, +3m with Mass House Lock — not shown), hits every target once — `Chameleon.cs:22513/22558`. Mass House Lock (massHouseLock5) also adds +2s to Needle Prison's own Duration, not linked to this toggle." },
   { id:"chameleon_poisonVolley", name:"Poison Volley", class:"Chameleon", icon:"chameleon_poisonVolley2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.5, ko:"1", dmgNote:"single cone AoE pass, flat 0.5×ATK, no TAL scaling — `Chameleon.cs:23312`. Also applies a stacking poison debuff (min sLv stacks, capped at Deadly Venom's own increasedPoisonLv+1) that Venom Shock later detonates — see that skill's own note." },
-  { id:"chameleon_venomShock", name:"Venom Shock", class:"Chameleon", icon:"chameleon_venomShock2", maxRank:2, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"Detonates the target's existing poison stack (from Poison Volley or poison-tagged normal attacks): rank 1 deals 100% of remaining poison, rank 2 deals 150%. Deals 0 if the target has no active poison.", ko:"0", dmgNote:"\"remaining poison\" = ceil(0.25×(poisonLv×10−1)×remaining poison seconds) — the 2 ranks apply a straight 1.0×/1.5× multiplier on top of that (`Chameleon.cs`'s own coefficient is `0.5×sLv+0.5`, which simplifies to exactly 100%/150% at sLv 1/2). State-contingent — `CharacterControl.cs:36976-37030`, triggered the instant this skill's own status lands on an already-poisoned target, not a direct hit() call of its own." },
+  { id:"chameleon_venomShock", name:"Venom Shock", class:"Chameleon", icon:"chameleon_venomShock2", maxRank:2, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:["100% of remaining poison damage", "150% of remaining poison damage"], ko:"0", dmgNote:"detonates the target's existing poison stack (from Poison Volley or poison-tagged normal attacks) — 0 if the target has no active poison. \"remaining poison\" = ceil(0.25×(poisonLv×10−1)×remaining poison seconds) — the 2 ranks apply a straight 1.0×/1.5× multiplier on top of that (`Chameleon.cs`'s own coefficient is `0.5×sLv+0.5`, which simplifies to exactly 100%/150% at sLv 1/2). State-contingent — `CharacterControl.cs:36976-37030`, triggered the instant this skill's own status lands on an already-poisoned target, not a direct hit() call of its own." },
   { id:"chameleon_massInvisibility", name:"Mass Invisibility", class:"Chameleon", icon:"chameleon_massInvisibility2", maxRank:2, castTime:8, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:[8,12], durWrapped:true },
   { id:"chameleon_finalEntrapment", name:"Final Entrapment", class:"Chameleon", icon:"chameleon_finalEntrapment2", maxRank:2, castTime:6, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:[5,7], durWrapped:true },
   { id:"chameleon_tormentRain", name:"Torment Rain", class:"Chameleon", icon:"chameleon_tormentRain1", maxRank:1, cd:3, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(60)", atkCoeff:0.5, ko:"1", dmgNote:"single AoE burst (radius 8m) from the arrow-rain VFX, hits every target in range once — `Chameleon.cs:26039/26067`. Scoped to Final Entrapment's cage; requires an active cage to be useful (not itself gated in this tool)." },
@@ -2362,7 +2362,7 @@ const SKILLS = [
   { id:"chameleon_allSlayer", name:"All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer", class:"Chameleon", icon:"chameleon_allSlayer4", maxRank:4, castTime:4, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:1 }, cd:240, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+20×depLv)", atkCoeff:(rank,depLv)=>0.6+0.3*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"formula is FLAT regardless of rank — only race/Mark-of-Slayer-matching targets are hit at all (a target filter, not a bonus multiplier the way single-target Slayer has). `Chameleon.cs:33249`. Improved Slayer (same passive as the Cast Time corner toggle — this toggle and that one share live state) adds +0.3×ATK and +20 to this formula per rank, both reflected above; it ALSO raises the per-cast target cap (4+its own rank), not reflected in the hit-count shown." },
   { id:"chameleon_allSlain", name:"All Slain", class:"Chameleon", icon:"chameleon_allSlain2", maxRank:2, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×100)", ko:"0", dmgNote:"hits every enemy this Chameleon has damaged (via any skill or normal attack) since the last All Slain cast, then clears that list — `Chameleon.cs:34377`. Genuinely variable/uncapped hit count driven by recent combat history, not a fixed function of rank; shown as a single hit here, real casts can hit far more." },
   { id:"chameleon_skinShift", name:"Skin Shift", class:"Chameleon", icon:"chameleon_skinShift5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmgNote:"deals no damage to enemies — self-only: costs 10% of Chameleon's own CURRENT hp (`ceil(0.1×hp)`, `Chameleon.cs:35229`) to re-level whatever Immunity status is already active by +1, up to Immunity's own max. Grants no fresh Immunity of its own — requires Immunity already active to do anything (`ChameleonSkill.cs:1136`, req level 70, prerequisite skill 122). Shares Immunity's own \"immunity\" cooldown key (`Chameleon.cs:34978`) — casting either locks out the other, same shared-cType-but-genuinely-separate-skill shape as this tool's existing Whale/Panda precedents." },
-  { id:"chameleon_rustyDecay", name:"Rusty Decay", class:"Chameleon", icon:"chameleon_rustyDecay5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"Detonates the target's existing rust stack (only applied by this Chameleon's own normal attacks vs. Robots, once Rusty Decay is learned): deals 150% of remaining rust. Deals 0 if the target has no active rust.", ko:"0", dmgNote:"\"remaining rust\" = ceil(0.25×rustLv×15×remaining rust seconds). Always the 150% case (same construction as Venom Shock's poison-detonation, but Rusty Decay only has 1 real rank — its own internal status level is hardcoded to 2, matching what would be Venom Shock's rank-2 multiplier, so there's no 100% case reachable here). State-contingent — `CharacterControl.cs:37192`, triggered the instant this skill's own status lands on an already-rusted target." },
+  { id:"chameleon_rustyDecay", name:"Rusty Decay", class:"Chameleon", icon:"chameleon_rustyDecay5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"150% of remaining rust damage", ko:"0", dmgNote:"detonates the target's existing rust stack (only applied by this Chameleon's own normal attacks vs. Robots, once Rusty Decay is learned) — 0 if the target has no active rust. \"remaining rust\" = ceil(0.25×rustLv×15×remaining rust seconds). Always the 150% case (same construction as Venom Shock's poison-detonation, but Rusty Decay only has 1 real rank — its own internal status level is hardcoded to 2, matching what would be Venom Shock's rank-2 multiplier, so there's no 100% case reachable here). State-contingent — `CharacterControl.cs:37192`, triggered the instant this skill's own status lands on an already-rusted target." },
   { id:"chameleon_tent", name:"Tent", class:"Chameleon", icon:"chameleon_tent5", maxRank:1, castTime:6, castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false },
   { id:"chameleon_markOfSlayer", name:"Mark of Slayer", class:"Chameleon", icon:"chameleon_markOfSlayer5", maxRank:1, castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false, dmgNote:"deals no damage itself — applies a debuff that makes the target eligible for Slayer's ×2 bonus and All Slayer's target filter regardless of actual race — `Chameleon.cs:36792`, see those 2 skills' own notes." },
   { id:"chameleon_zeroShot", name:"Zero Shot", class:"Chameleon", icon:"chameleon_zeroShot5", maxRank:1, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(100)", atkCoeff:3, ko:"10", dmgNote:"point-blank nuke, small hit box (2m×2m, range 3m) — `Chameleon.cs:37422`. A separate, larger-radius (6m) shockwave applies knockback-only force to bystanders outside the hit box, no real damage (`nDamage=-1`, a force-only sentinel) — not modeled." },
@@ -2807,6 +2807,18 @@ function mountSkillCooldownLookup(root){
   function resolveRank(value, rank){
     return Array.isArray(value) ? value[rank - 1] : value;
   }
+  // `skill.dmg` may ALSO be a per-rank array of opaque-prose strings (Venom
+  // Shock/Rusty Decay pilot, 2026-08-21) -- same resolveRank mechanism cd/
+  // castTime/duration already use, applied one level earlier so every
+  // downstream `.dmg` consumer below still only ever sees a plain string.
+  // Only meaningful for the opaque-prose render shape (3): a talAdjust-
+  // wrapped or flat-arithmetic `dmg` has never needed per-rank text because
+  // `sLv` substitution already makes the SAME template evaluate differently
+  // per rank -- this is only for skills whose payoff isn't a formula at all
+  // (e.g. "100% of remaining poison damage" at rank 1 vs "150%" at rank 2).
+  function getDmgText(skill, rank){
+    return resolveRank(skill.dmg, rank);
+  }
   // Minimal arithmetic evaluator for the small set of controlled formula
   // strings authored into SKILLS.dmg (e.g. "15+15×sLv") -- not general user
   // input, so Function() over a pre-sanitized numeric/operator string is
@@ -2902,7 +2914,7 @@ function mountSkillCooldownLookup(root){
   // hit, not 6 identical rolls) and by the Raw/Final Damage chips in
   // renderHero (so the chips shown before any dice are rolled also reflect
   // every distinct formula, not just skill.dmg's one).
-  function resolveHitDmgText(skill, hitIndex){
+  function resolveHitDmgText(skill, hitIndex, rank){
     if (skill.dmgGroups && hitIndex !== undefined){
       let idx = hitIndex;
       for (const g of skill.dmgGroups){
@@ -2911,7 +2923,7 @@ function mountSkillCooldownLookup(root){
         idx -= gHitCount;
       }
     }
-    return skill.dmg;
+    return getDmgText(skill, rank);
   }
   // Chameleon Quick Fire pilot (2026-08-21): a dmgGroups group's `atkCoeff`/
   // `hitCount` can now each optionally be a FUNCTION `(rank, depOn) => value`
@@ -3043,7 +3055,7 @@ function mountSkillCooldownLookup(root){
       TAL = kk.tal; LCK = kk.lck; ATK = kk.atk;
     }
     const selectedEnemy = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
-    const text = substituteDmgVars(resolveHitDmgText(skill, hitIndex), skill, rank);
+    const text = substituteDmgVars(resolveHitDmgText(skill, hitIndex, rank), skill, rank);
     const talMatch = text.match(/talAdjust\(([^()]+)\)/);
     const focusOn = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
     const dmgDepOn = skill.dmgDep && getDepRank(skill.dmgDep) === skill.dmgDep.maxRank;
@@ -3276,7 +3288,7 @@ function mountSkillCooldownLookup(root){
       `).join("")}</div>`;
     }
     if (!skill.dmg) return null;
-    return renderOneDmgFormula(skill, rank, skill.dmg);
+    return renderOneDmgFormula(skill, rank, getDmgText(skill, rank));
   }
   function renderOneDmgFormula(skill, rank, dmgTextRaw, atkCoeffOverride){
     // atkCoeffOverride (King Kaiser's Normal Attack pilot, 2026-08-20): lets a
@@ -4299,9 +4311,9 @@ function mountSkillCooldownLookup(root){
       // from getting the chip itself, same as before. Only genuinely opaque
       // prose (novaFlare, detonate, warFactory, napalm) still fails the
       // arithmetic-literal test below and correctly gets no chip.
-      const talMatchCalc = substituteDmgVars(selected.dmg, selected, rank).match(/talAdjust\(([^()]+)\)/);
+      const talMatchCalc = substituteDmgVars(getDmgText(selected, rank), selected, rank).match(/talAdjust\(([^()]+)\)/);
       const dmgReplaceDepOnCalc = selected.dmgReplaceDep && getDepRank(selected.dmgReplaceDep) === selected.dmgReplaceDep.maxRank;
-      const flatComputableCalc = !talMatchCalc && /^[\d\s×*+\-.]+$/.test(substituteDmgVars(selected.dmg, selected, rank));
+      const flatComputableCalc = !talMatchCalc && /^[\d\s×*+\-.]+$/.test(substituteDmgVars(getDmgText(selected, rank), selected, rank));
       let dmgCalcChip = "";
       let dmgFinalChip = "";
       if (talMatchCalc || flatComputableCalc || selected.dmgGroups){
@@ -4358,7 +4370,7 @@ function mountSkillCooldownLookup(root){
             ? talAdjustRange(evalArith(tm[1]), TAL, LCK).map(dmgCalcPostFn)
             : (() => { const b = dmgReplaceDepOnCalc ? selected.dmgReplaceDep.calc(rank, LV) : evalArith(t); return [b, b].map(dmgCalcPostFn); })();
         };
-        const dmgCalcRange = calcRangeFor(selected.dmg);
+        const dmgCalcRange = calcRangeFor(getDmgText(selected, rank));
         // Header reuses .sk-dmg-head/.sk-dmg-label-row/.sk-dmg-toggles
         // verbatim (2026-08-19, user-requested: "header text in-line with
         // damage formula vertical position, and the hero number align with
@@ -4486,7 +4498,7 @@ function mountSkillCooldownLookup(root){
           // separate, independently-tracked stat, not the player's own LCK
           // input this tool otherwise uses everywhere else.
           const attackerLCK = selected.ownLck
-            ? (dmgReplaceDepOnCalc ? Math.floor(selected.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(selected.dmg.replace(/\bsLv\b/g, String(rank))))
+            ? (dmgReplaceDepOnCalc ? Math.floor(selected.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(getDmgText(selected, rank).replace(/\bsLv\b/g, String(rank))))
             : (selected.ownStatsDmgOnly ? bbOwnLCK : LCK);
           const playerLckSpread = lckSpreadRange(attackerLCK);
           // penetrating (Mole's Flame Turret pilot, 2026-08-19) -- see
@@ -4697,12 +4709,57 @@ function mountSkillCooldownLookup(root){
           selected.koDep ? renderDmgToggle(selected.koDep) : "",
           selected.koMultDep ? renderDmgToggle(selected.koMultDep) : "",
         ].join("");
+        // dmgNote info icon (2026-08-21, user-caught): a skill with a
+        // standalone KO chip but no real Damage Formula (e.g. Chameleon's
+        // Left Stride) previously had NO render path for its own dmgNote at
+        // all -- that text only ever displayed via the Damage Formula
+        // chip's own .sk-dmg-info click-to-open icon (see that branch
+        // above), so a skill routed to THIS branch instead had its dmgNote
+        // silently authored into SKILLS but never shown anywhere on the
+        // live page. Reuses the exact same .sk-dmg-info/.sk-dmg-info-pop
+        // markup and the existing single-instance toggle listener/
+        // positionDmgInfoPopup wiring below -- safe because dmgBlock only
+        // ever renders ONE of the dmg/shield/koVal/blank branches per
+        // skill, so at most one .sk-dmg-info exists in the DOM at a time
+        // regardless of which branch produced it.
+        const koInfo = selected.dmgNote ? `
+          <details class="sk-dmg-info">
+            <summary title="More info">ℹ</summary>
+            <div class="sk-dmg-info-pop">${selected.dmgNote}</div>
+          </details>
+        ` : "";
         dmgBlock = `
           <div class="sk-dmg-row">
             <div class="sk-stat sk-ko-standalone">
-              <p class="sk-stat-label">KO</p>
+              <div class="sk-dmg-label-row">
+                <p class="sk-stat-label">KO</p>
+                ${koInfo}
+              </div>
               <div class="sk-stat-value">${koVal}</div>
               <div class="sk-ko-standalone-toggles">${koToggles}</div>
+            </div>
+          </div>
+        `;
+      } else if (selected.dmgNote){
+        // Same gap as above, one level further: a skill with NEITHER a real
+        // Damage Formula NOR a nonzero KO (e.g. Chameleon's Fatal Strike,
+        // Mark of Slayer) used to render a fully blank .sk-dmg-row, so its
+        // dmgNote had no chip to attach to at all. A minimal note-only chip,
+        // same .sk-ko-standalone shape, so a purely-descriptive skill still
+        // surfaces its own citation instead of it existing only in the data.
+        const noteInfo = `
+          <details class="sk-dmg-info">
+            <summary title="More info">ℹ</summary>
+            <div class="sk-dmg-info-pop">${selected.dmgNote}</div>
+          </details>
+        `;
+        dmgBlock = `
+          <div class="sk-dmg-row">
+            <div class="sk-stat sk-ko-standalone">
+              <div class="sk-dmg-label-row">
+                <p class="sk-stat-label">Note</p>
+                ${noteInfo}
+              </div>
             </div>
           </div>
         `;

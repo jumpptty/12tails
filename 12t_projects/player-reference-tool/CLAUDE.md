@@ -3729,3 +3729,43 @@ at 0/4 → 131/536, both hand-checked against the real source formula
 check clean. **Not yet visually verified live** — no browser tool available this session; check the new
 corner toggle in the Damage Formula header actually stays in sync with the existing Cast Time one when
 either is clicked, before treating this as fully done.
+
+### 2026-08-21, same day: Venom Shock/Rusty Decay text shortened via a new `dmg`-as-per-rank-array capability, and a real dmgNote-visibility gap fixed
+
+User: "venomShock and rustyDecay damage formulas are still long, replace them with literally / XXX% of
+remaining poison/rust damage." Both skills render via the opaque-prose `dmg` shape (literal text, only
+`sLv`/`depLv` token substitution, never arithmetic) — collapsing Venom Shock's real rank 1/2 split
+(100%/150%) into one short, per-rank-correct number needed a small generalization rather than a static
+two-value sentence. `skill.dmg` may now be a per-rank array, resolved via the same `resolveRank(value,
+rank)` helper `cd`/`castTime`/`duration` already use — new `getDmgText(skill, rank)` (`index.html`, right
+after `resolveRank`), and every direct `.dmg` text consumer now routes through it first:
+`resolveHitDmgText` (gained a 3rd `rank` param, its only caller `rollOneHit` updated to pass it),
+`renderDmgFormula`, and 4 spots in `renderHero` (`talMatchCalc`/`flatComputableCalc`/`dmgCalcRange`/the
+`dmgReplaceDep` attacker-LCK branch). `venomShock`'s `dmg` is now `["100% of remaining poison damage",
+"150% of remaining poison damage"]`; `rustyDecay` stays a flat string (`"150% of remaining rust damage"`,
+1 real rank, always the 150% case). Both skills' dropped "deals 0 if no active stack" caveat moved into
+`dmgNote` instead of being lost. Full citations unchanged, still in each skill's own `dmgNote`.
+
+**Separately, same session, user-caught**: "leftStride wording fix is not here in the latest artifact?" —
+prompted by a screenshot of the live tool showing Left Stride's card with no visible note anywhere.
+Verified first that this was NOT a publish/cache problem — a fresh `WebFetch` against the live Artifact
+came back byte-exact against the local file's exact `leftStride` entry text, including the already-
+published wording fix. The REAL gap: `dmgNote` has only ever rendered through the Damage Formula chip's
+own click-to-open info icon (`.sk-dmg-info`), and Left Stride has no `dmg` field at all (its real damage
+routes through the shared, untracked normal-attack formula) — it only ever reaches the standalone-KO
+chip branch in `renderHero()`, which never had an info icon wired to it, so the note text was correctly
+authored into `SKILLS` but had genuinely no place to display, on Left Stride's card or anywhere else this
+shape occurs (also Fatal Strike/Mark of Slayer, which have `dmgNote` but no `dmg` AND no `ko` — previously
+not even a KO chip to attach to, a fully blank `.sk-dmg-row`). Fixed generally in `renderHero()`, not as a
+Chameleon-only patch: the standalone-KO branch now renders the same `.sk-dmg-info`/`.sk-dmg-info-pop`
+markup the Damage Formula chip uses, and a new minimal "Note"-only `.sk-ko-standalone`-shaped chip covers
+the fully-blank case. No new listener/positioning plumbing needed — `dmgBlock` only ever renders ONE of
+its 4 branches (dmg / shield / KO-standalone / note-only) per skill, so at most one `.sk-dmg-info` exists
+in the DOM at a time regardless of which branch produced it, and the existing single-instance toggle
+listener + `positionDmgInfoPopup` already re-query fresh on every render.
+
+Verified: `new Function` syntax check on the full script block clean, CSS comment-strip+brace-balance
+check clean, grepped for zero remaining unguarded raw `.dmg` string-method call sites. **Not yet visually
+verified live** — no browser tool available this session; check Venom Shock's rank 1↔2 toggle swaps the
+displayed percentage, and Left Stride's new info icon opens/positions correctly, before treating this as
+fully done.
