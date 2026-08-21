@@ -3477,3 +3477,90 @@ tier 3's ATK 300/DEF 250 — exact match against the already-confirmed tier tabl
 verified live** — no browser tool available this session; check the 3×3 grid actually fits the chip's
 existing height without overflow, and that the dimmed/undimmed contrast reads clearly at the smaller
 15px/9px sizes, before treating this as fully done.
+
+### 2026-08-21, same day: a stray `*/` in the pass above's own CSS comment broke the ENTIRE stylesheet, tool-wide
+
+User screenshot: every skill card rendering as unstyled, misplaced text — not a Barrel Bot/King Kaiser
+issue specifically, every single skill in all 12 classes was affected. Root cause, found via live
+Playwright inspection of the published Artifact (`document.styleSheets[1].cssRules.length` — should be
+several hundred, was stuck at exactly **116**, with the last successfully parsed rule being
+`.sk-stat-lck`): the "full visibility" pass's own new CSS comment contained the literal text
+`ownStats*/ownStatsKaiser` — the `*/` inside that word collision closed the CSS comment early, turning
+everything after it (several hundred more rules, including `.sk-stat-tooltip`, `.sk-bb-table`, every
+`.sk-dmg-*` rule, etc.) into invalid raw CSS text that the browser's parser silently gave up on for the
+rest of the file. Fixed by rewording the comment to avoid the collision (`ownStats (or ownStatsKaiser)`),
+verified by stripping every `/* ... */` comment from the CSS the same way a real parser does and
+confirming balanced braces + zero leftover comment markers + every known rule present in the stripped
+text (a real programmatic check, not just re-reading the diff by eye).
+
+**Publish/verification took two real detours worth remembering for next time**: (1) After publishing the
+fix, a fresh Playwright navigation — even with `Network.setCacheDisabled` and a cache-busted URL query —
+kept resolving to the SAME stale frame build id (`/_f/1787281714-dfa2/`) with the bug still present, while
+a separate `WebFetch` call to the identical URL got a genuinely newer frame id with the fix already live.
+This wasn't a code problem — it was CDN/edge-cache propagation specific to whatever route Playwright's
+browser was hitting; `WebFetch` apparently resolves through a different path that picked up the fresh
+build sooner. Confirmed the fix was real and live via the independent WebFetch check rather than fighting
+the stale Playwright tab further. (2) The user pointed out mid-diagnosis that autocomplete suggestion
+clicks in this tool are wired to `mousedown`, not `click` (`el.addEventListener("mousedown", ...)`,
+`e.preventDefault()` — "the classic autocomplete fix" per the code's own comment) — an early debugging
+attempt using `target.click()` silently did nothing (no error, no state change) until switched to
+dispatching a real `mousedown` `MouseEvent`. Worth remembering for any future Playwright script against
+this tool's search box specifically.
+
+**Process takeaway, now a standing habit**: a large prose comment with parenthetical asides has already
+broken this file's own brace/paren balance twice before (documented earlier this file, both in *JS*
+comments) — this is the same failure mode showing up in a *CSS* comment instead, where the stakes are
+higher (a broken JS comment fails a manual balance check; a broken CSS comment fails SILENTLY and can
+take down the entire stylesheet with no console error at all). Going forward: run the CSS strip-comments-
+and-check-braces script (shown above) alongside the existing `new Function(js)` syntax check before every
+publish that touches the `<style>` block, not just after something looks visually wrong.
+
+### 2026-08-21, later same day: Barrel Bot's HP was missing 2 real dependencies, and King Kaiser's HP corrected to 1500 per the user's own live-game knowledge
+
+User: "fix barrelbot stat HP skillDep on HeavyBuilt and doubleBot skillDep" + "fix KingKaiser HP to be
+1500." Both real corrections, not just requests to re-verify.
+
+**Barrel Bot's mhp is affected by BOTH doubleBot5 AND Heavy Built, neither modeled before this pass.**
+Re-reading `Mole.cs:12708-12781` (the same `RPC_barrelBot_create` region the existing doubleBot/
+synchroMole citations already covered, but stopped one line too early) found `Mole.cs:12754`, still
+inside the same `hasSkill(423)` block as the already-modeled 8-stat bonus: `characterControl.mhp = 10 *
+characterControl.vit;` — doubleBot5 doesn't ADD to mhp the way it does the other 8 stats, it OVERWRITES
+it as 10× the (already-boosted) vit. Immediately after that block, `Mole.cs:12765-12781` runs
+`getHeavyBuiltLv()` UNCONDITIONALLY (not gated on doubleBot) and scales whatever mhp currently is by
+`ceil(mhp × (1+0.5×heavyBuiltLv))` — the exact same formula shape King Kaiser's own mhp already used
+(`Mole.cs:35936`), confirming Heavy Built is a general Mole passive affecting more than one summon, not
+King-Kaiser-specific as the original citation assumed.
+
+**New shared `MOLE_HEAVYBUILT_DEP`** (`id:"heavyBuilt"`, real 0-2 rank-cycle, `mol_heavyBuilt1`/`2`,
+hasSkill 361/362, `MoleSkill.cs:3165-3177`) — one toggle instance drives BOTH Barrel Bot's and King
+Kaiser's own Stats chip, reusing `renderDmgRankToggle` (the same icon-cycle mechanism King Kaiser's own
+tier dep already uses) placed in the Stats chip's own top-right corner (new `.sk-bb-heavybuilt`,
+`position:absolute; right:14px; top:12px` — same position as every other chip-level `.sk-dep` in this
+tool) rather than the Damage Formula header, since Heavy Built only ever moves the HP cell (a field this
+tool's calculations never read, confirmed via `getUsedOwnStatKeys`), never anything damage-related.
+`barrelBotOwnStats()`/`kingKaiserOwnStats()` both gained a `heavyBuiltLv` parameter, threaded through
+every `renderHero()` call site (the 2 `rollOneHit`/`renderOneDmgFormula` call sites were left unchanged —
+neither ever reads `mhp`, so passing `heavyBuiltLv` there would be a no-op).
+
+**King Kaiser's mhp changed from 200 (the earlier pass's hex-decode) to 1500, per direct user
+correction.** Re-verified the hex-decode wasn't simply a wrong-prefab mixup before accepting the
+correction: the 6 real summon prefabs (`KingKaiser_r/_g/_b/_k/_w`, `Mole.cs:35720-35776`) were searched
+for directly in the binary (bypassing the decode script's own name-stripping, which had been silently
+collapsing every suffixed search back to the bare "KingKaiser" already-decoded result) — all 6 literal
+strings exist in `resources.assets`, but NONE of them decode as their own valid `CharacterControl` block,
+confirming they're cosmetic-only variant references sharing the one base "KingKaiser" component already
+found (genuinely `mhp=200` in the binary, re-confirmed, not a lookup mistake). That 200 is real and
+citable as what's actually serialized — but per this repo's own standing rule (a user's direct live-game
+correction wins over a decompiled-source reading when the two conflict, same precedent as Mole's
+`stunMine` chaAdjust/talAdjust note), 1500 — matching the skill's own tooltip
+(`MoleSkill_eng.cs:851`) — is now the base King Kaiser feeds into the same Heavy Built formula:
+`ceil(1500 × (1+0.5×heavyBuiltLv))` → 1500/2250/3000 at Heavy Built 0/1/2.
+
+Verified: script-block syntax clean, CSS comment-strip+brace-balance check clean (see the pass above —
+now run as standard practice), new icon extractions (`mole_heavyBuilt1`/`2`) byte-exact via
+`Buffer.compare`. Node re-derivation of both updated stat functions: Barrel Bot baseline (no toggles)
+mhp=400 unchanged; with doubleBot only (LV=100) mhp jumps to 900 (10×90, using the already-boosted vit);
+doubleBot+Heavy Built 2 → 1800; King Kaiser tier 1 at Heavy Built 0/2 → 1500/3000, both matching the
+formula by hand. **Not yet visually verified live** — no browser tool available this session; check the
+new corner toggle doesn't collide with the 3×3 stat grid, and that toggling it live-updates the HP cell
+in both Barrel Bot's and King Kaiser's own chip, before treating this as fully done.

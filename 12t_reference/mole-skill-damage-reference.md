@@ -415,6 +415,19 @@ carried over to Barrel Bot Mega Punch's own Damage Formula on the next selection
 128→0-contribution, `24+44+43(0.4ATK)(0.48TAL)` reflecting the OFF state) without needing to click
 anything on BarrelBot's own card again.
 
+**`mhp` correction (2026-08-21) — the earlier read of `Mole.cs:12708-12759` stopped one line too early.**
+User: "fix barrelbot stat HP skillDep on HeavyBuilt and doubleBot skillDep." The 8-stat `doubleBot5`
+additive block above is real and unchanged, but the SAME `hasSkill(423)` block continues one line further,
+`Mole.cs:12754`: `characterControl.mhp = 10 * characterControl.vit;` — `doubleBot5` doesn't ADD to mhp the
+way it does the other 8 stats, it OVERWRITES it as 10× the already-boosted `vit` (so at Mole LV 100,
+vit=40+50=90 → mhp=900, not the rank-4 baseline 400). Immediately after, `Mole.cs:12765-12781` runs
+`getHeavyBuiltLv()` UNCONDITIONALLY (not gated on `doubleBot5` at all) and scales whatever `mhp` currently
+is: `ceil(mhp × (1+0.5×heavyBuiltLv))` — the exact same formula shape already used for King Kaiser's own
+`mhp` (`Mole.cs:35936`), confirming Heavy Built (`hasSkill 361/362`, `mol_heavyBuilt1`/`2`) is a general
+Mole passive scaling more than one summon's HP, not King-Kaiser-specific as first assumed. Neither
+mechanism was modeled in the tool before this correction (no `mhp` field existed on `barrelBotOwnStats()`
+at all until the same day's earlier "full visibility" pass, which then missed both of these).
+
 **New `barrelBotOwnStats(doubleBotOn, synchroMoleOn, moleLV, moleTAL)` helper + `ownStats:true` flag**
 (`index.html`) — overrides the tool's global ATK/TAL/AGI/LCK inputs with the computed values above for all
 8 Barrel Bot `SKILLS` entries only; every other skill in the tool (including Mole's own moveset) is
