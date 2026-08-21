@@ -34,6 +34,12 @@
        skill-wide "this number goes through the OTHER application pathway"
        flag. */
     --stat-effect:#7c3aed;
+    /* Paralysis proc label (2026-08-21, user-requested: "paralysis yellow
+       font color") -- a distinct token from --gold (this tool's own brass
+       accent, deliberately muted) since a proc label needs to read as
+       "highlighted status," the same reasoning every other --stat-* token
+       here already uses. */
+    --stat-paralysis:#ca8a04;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -51,6 +57,7 @@
       --stat-tal:#22d3ee;
       --stat-int:#5b9bf0;
       --stat-effect:#c084fc;
+      --stat-paralysis:#facc15;
     }
   }
   :root[data-theme="dark"]{
@@ -68,6 +75,7 @@
     --stat-tal:#22d3ee;
     --stat-int:#5b9bf0;
     --stat-effect:#c084fc;
+    --stat-paralysis:#facc15;
   }
 
   *{box-sizing:border-box}
@@ -853,6 +861,13 @@
      "frost" was itself part of the mistake worth cleaning up, not just the
      text inside it. */
   .sk-multihit-proc{font-size:9px; font-weight:700; color:var(--stat-int); margin-left:4px; letter-spacing:.2px; white-space:nowrap}
+  /* Per-status proc color (2026-08-21, user-requested: "paralysis yellow
+     font color") -- .sk-multihit-proc's base color stays the existing blue
+     (--stat-int), correct for "frost"/"multicast"; this one override wins
+     via source order + equal specificity for a paralysis proc specifically,
+     keyed off the same `applies` value the label text itself already uses
+     (see procLabel's own comment in revealMultiHit). */
+  .sk-multihit-proc-paralysis{color:var(--stat-paralysis)}
   /* Minimal inline SVG, not a ripped game asset (user-requested) -- a
      3-line sword silhouette (blade + crossguard + hilt stub), colored via
      currentColor so the icon and the adjacent text share --stat-atk (the
@@ -3290,7 +3305,8 @@ function mountSkillCooldownLookup(root){
     // instead of a hardcoded literal -- `|| "proc"` is a safety fallback for
     // any future `lckProc` skill that forgets to set it, not an expected
     // case for any skill listed above.
-    const procLabel = hit.proc ? `<span class="sk-multihit-proc">${selected.lckProc.applies || "proc"}</span>` : "";
+    const procApplies = selected.lckProc.applies || "proc";
+    const procLabel = hit.proc ? `<span class="sk-multihit-proc sk-multihit-proc-${procApplies}">${procApplies}</span>` : "";
     // Purple digit set (Thunder Dragon pilot, 2026-08-21) -- the real
     // in-game damage-popup color for RPC_AddEffectDamage-pathway skills,
     // reusing the dmgdigit_p<N> textures extracted alongside the white

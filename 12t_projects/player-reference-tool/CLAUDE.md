@@ -3912,3 +3912,13 @@ Verified: syntax/CSS checks clean, Node-confirmed all 5 real `lckProc` entries c
 value. **Not yet visually verified live** — no browser tool available this session; check Thunder Dragon's
 Simulate popup shows "paralysis" (not "frost") on a proc, and that Arctic Wind/Tornado are unaffected,
 before treating this as fully done.
+
+### 2026-08-21, immediate follow-up: paralysis proc label recolored yellow
+
+User: "paralysis yellow font color please." New `--stat-paralysis` token (light `#ca8a04`, dark `#facc15`)
+in all 3 theme blocks. `procLabel` now adds a 2nd `applies`-keyed class alongside the base
+`.sk-multihit-proc`, and a new `.sk-multihit-proc-paralysis{color:var(--stat-paralysis)}` rule overrides
+the base blue for paralysis specifically (source-order win, same specificity) — frost/multicast unchanged.
+
+Verified: syntax/CSS checks clean, confirmed cascade order programmatically. **Not yet visually verified
+live** — no browser tool available this session.

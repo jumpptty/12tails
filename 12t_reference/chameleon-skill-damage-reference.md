@@ -424,6 +424,19 @@ entries carry a correct `applies` value via a Node scan (Paralyze Chance→paral
 multicast, the 3 Frost Chance entries→frost), and zero remaining `sk-multihit-frost` references outside
 the rename's own explanatory comment.
 
+### Follow-up, immediately after: paralysis proc label recolored yellow
+
+User: "paralysis yellow font color please." New `--stat-paralysis` token (light `#ca8a04`, dark
+`#facc15`) added to all 3 theme blocks alongside the existing `--stat-*` family. `procLabel` (`revealMultiHit`)
+now adds a 2nd, `applies`-keyed class (`sk-multihit-proc-${procApplies}`) alongside the base
+`.sk-multihit-proc`; a new `.sk-multihit-proc-paralysis{color:var(--stat-paralysis)}` rule overrides the
+base blue for a paralysis proc specifically (same specificity, wins on source order — verified the
+override rule is declared after the base rule in the stylesheet). Frost/multicast keep the existing blue,
+unchanged, since neither was named in the request.
+
+Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, confirmed cascade order
+programmatically (override rule's string index > base rule's).
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and
