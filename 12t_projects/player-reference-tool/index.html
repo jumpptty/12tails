@@ -2337,7 +2337,11 @@ const SKILLS = [
   { id:"cat_pillagePlunge", name:"Pillage Plunge", class:"Cat", icon:"cat_pillagePlunge1", cd:120, cdWrapped:true, revisedArtExempt:false },
   { id:"cat_supportFire", name:"Support Fire", class:"Cat", icon:"cat_supportFire1", cd:240, cdWrapped:true, revisedArtExempt:false },
   { id:"chameleon_immunity", name:"Immunity / Skin Shift", class:"Chameleon", icon:"chameleon_immunity3", maxRank:3, cd:120, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
-  { id:"chameleon_quickFire", name:"Quick Fire", class:"Chameleon", icon:"chameleon_quickFire4", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.25, ko:"0", hitCountDep:CHAMELEON_ADDEDFIRE_DEP, hitCount:(rank,dmgDepOn,hitCountDepOn)=>2+(hitCountDepOn?4:2)*rank, dmgNote:"3-phase burst (open/rapid-fire/close), flat 0.25×ATK per hit, no TAL scaling — `Chameleon.cs:19620/19741/19912`. Rapid-fire phase fires 2×rank hits base, 4×rank with Added Fire (addedFire5) — total hits shown includes the fixed open+close pair. Added Fire ALSO adds +0.1×ATK specifically to the rapid-fire hits (not the open/close pair) — not reflected in the number above, only the hit-count doubling is modeled." },
+  { id:"chameleon_quickFire", name:"Quick Fire", class:"Chameleon", icon:"chameleon_quickFire4", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.25, ko:"0", hitCountDep:CHAMELEON_ADDEDFIRE_DEP, hitCount:(rank,dmgDepOn,hitCountDepOn)=>2+(hitCountDepOn?4:2)*rank, dmgGroups:[
+    {dmg:"0", atkCoeff:0.25, hitCount:1, label:"Opening Shot"},
+    {dmg:"0", atkCoeff:(rank,depOn)=>depOn?0.35:0.25, hitCount:(rank,depOn)=>(depOn?4:2)*rank, dep:CHAMELEON_ADDEDFIRE_DEP, label:"Rapid-Fire Burst"},
+    {dmg:"0", atkCoeff:0.25, hitCount:1, label:"Closing Shot"},
+  ], dmgNote:"3-phase burst (open/rapid-fire/close), no TAL scaling — `Chameleon.cs:19620/19741/19912`. Open/close shots are always flat 0.25×ATK, 1 hit each. The rapid-fire phase fires 2×rank hits base (0.25×ATK each), or 4×rank hits at 0.35×ATK each with Added Fire (addedFire5) — both the coefficient bump AND the extra hits are real and shown above." },
   { id:"chameleon_perfectBlend", name:"Perfect Blend", class:"Chameleon", icon:"chameleon_perfectBlend2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, duration:4, durWrapped:true },
   { id:"chameleon_trueInvisibility", name:"True Invisibility", class:"Chameleon", icon:"chameleon_trueInvisibility2", maxRank:2, castTime:5, castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
   { id:"chameleon_needlePrison", name:"Needle Prison", class:"Chameleon", icon:"chameleon_needlePrison2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false },
@@ -2899,12 +2903,45 @@ function mountSkillCooldownLookup(root){
     if (skill.dmgGroups && hitIndex !== undefined){
       let idx = hitIndex;
       for (const g of skill.dmgGroups){
-        if (idx < g.hitCount) return g.dmg;
-        idx -= g.hitCount;
+        const gHitCount = resolveGroupHitCount(skill, g);
+        if (idx < gHitCount) return g.dmg;
+        idx -= gHitCount;
       }
     }
     return skill.dmg;
   }
+  // Chameleon Quick Fire pilot (2026-08-21): a dmgGroups group's `atkCoeff`/
+  // `hitCount` can now each optionally be a FUNCTION `(rank, depOn) => value`
+  // instead of a static number -- mirrors the skill-level `hitCount(rank,
+  // dmgDepOn, hitCountDepOn)` convention exactly, just scoped to one group.
+  // Needed because Quick Fire's rapid-fire burst phase genuinely goes
+  // 0.25->0.35xATK AND 2xrank->4xrank hits with Added Fire active
+  // (Chameleon.cs:19741/20061) -- a real 2-axis (rank AND toggle) variance
+  // on ONE group only (the open/close shots stay flat 0.25/1-hit
+  // regardless). The earlier King-Kaiser-pilot atkCoeff-per-group mechanism
+  // (comment below) only ever supported a static number, with no rank or
+  // toggle awareness at all -- insufficient here. `g.dep` (a single shared
+  // dep reference, not two separate atkCoeffDep/hitCountDep fields --
+  // simpler for the one real case so far, where both react to the SAME
+  // passive) is resolved via `getDepRank` directly rather than threading a
+  // new parameter through every call site -- dep/rank state is already
+  // shared closure state accessible anywhere in this file (same as
+  // `renderDmgToggle`/`getSkillRank` already do). Every read site that used
+  // to access `g.atkCoeff`/`g.hitCount` directly (resolveHitDmgText/
+  // resolveHitAtkCoeff below, renderDmgFormula, the Raw Damage groups list,
+  // the Final Damage groups reduce, the total-hits label) now goes through
+  // these instead -- fully backward compatible, a group with a plain number
+  // (King Kaiser/Napalm, neither rank- nor toggle-aware) behaves identically
+  // to before, since `typeof value === "function"` is false for a number.
+  function resolveGroupValue(skill, g, field){
+    const raw = g[field];
+    if (typeof raw !== "function") return raw;
+    const rank = getSkillRank(skill);
+    const depOn = g.dep ? getDepRank(g.dep) === g.dep.maxRank : false;
+    return raw(rank, depOn);
+  }
+  function resolveGroupAtkCoeff(skill, g){ return resolveGroupValue(skill, g, "atkCoeff"); }
+  function resolveGroupHitCount(skill, g){ return resolveGroupValue(skill, g, "hitCount"); }
   // King Kaiser's Normal Attack pilot (2026-08-20): the first dmgGroups skill
   // whose groups vary by atkCoeff, not just dmg text -- a real 3-swing combo
   // (1x/1.2x/1.3x ATK, KingKaiser.cs:1680/1885/2031) on a single flat `dmg:"0"`
@@ -2916,8 +2953,9 @@ function mountSkillCooldownLookup(root){
     if (skill.dmgGroups && hitIndex !== undefined){
       let idx = hitIndex;
       for (const g of skill.dmgGroups){
-        if (idx < g.hitCount) return g.atkCoeff !== undefined ? g.atkCoeff : skill.atkCoeff;
-        idx -= g.hitCount;
+        const gHitCount = resolveGroupHitCount(skill, g);
+        if (idx < gHitCount) return g.atkCoeff !== undefined ? resolveGroupAtkCoeff(skill, g) : skill.atkCoeff;
+        idx -= gHitCount;
       }
     }
     return skill.atkCoeff;
@@ -3202,7 +3240,7 @@ function mountSkillCooldownLookup(root){
       return `<div class="sk-dmg-group-list">${skill.dmgGroups.map(g => `
         <div class="sk-dmg-group">
           <p class="sk-dmg-group-label">${g.label}</p>
-          <div class="sk-dmg-group-formula">${renderOneDmgFormula(skill, rank, g.dmg, g.atkCoeff)}</div>
+          <div class="sk-dmg-group-formula">${renderOneDmgFormula(skill, rank, g.dmg, resolveGroupAtkCoeff(skill, g))}</div>
         </div>
       `).join("")}</div>`;
     }
@@ -4316,7 +4354,7 @@ function mountSkillCooldownLookup(root){
               <div class="sk-dmg-group-list">${selected.dmgGroups.map(g => `
                 <div class="sk-dmg-group">
                   <p class="sk-dmg-group-label">${g.label}</p>
-                  <div class="sk-stat-value sk-stat-value-sm">${fmt(calcRangeFor(g.dmg, g.atkCoeff))}</div>
+                  <div class="sk-stat-value sk-stat-value-sm">${fmt(calcRangeFor(g.dmg, resolveGroupAtkCoeff(selected, g)))}</div>
                 </div>
               `).join("")}</div>
             ` : `<div class="sk-stat-value">${fmt(dmgCalcRange)}</div>`}
@@ -4455,8 +4493,9 @@ function mountSkillCooldownLookup(root){
           // Damage number changes.
           const finalRange = selected.dmgGroups
             ? selected.dmgGroups.reduce((acc, g) => {
-                const gFinal = finalRangeForRange(calcRangeFor(g.dmg, g.atkCoeff));
-                return [acc[0] + gFinal[0] * g.hitCount, acc[1] + gFinal[1] * g.hitCount];
+                const gFinal = finalRangeForRange(calcRangeFor(g.dmg, resolveGroupAtkCoeff(selected, g)));
+                const gHitCount = resolveGroupHitCount(selected, g);
+                return [acc[0] + gFinal[0] * gHitCount, acc[1] + gFinal[1] * gHitCount];
               }, [0, 0])
             : finalRangeForRange(dmgCalcRange);
           // Sword+"Simulate" button: a SEPARATE action from picking a target
@@ -4483,7 +4522,7 @@ function mountSkillCooldownLookup(root){
           // that group directly, for single- and multi-hit skills alike
           // (2026-08-17, unified) -- nothing to do here on a normal render.
           finalDamageBody = selected.dmgGroups
-            ? `<div class="sk-stat-value">${fmt(finalRange)}</div><p class="sk-dmg-final-note">total, ${selected.dmgGroups.reduce((s, g) => s + g.hitCount, 0)} hits, all connect</p>`
+            ? `<div class="sk-stat-value">${fmt(finalRange)}</div><p class="sk-dmg-final-note">total, ${selected.dmgGroups.reduce((s, g) => s + resolveGroupHitCount(selected, g), 0)} hits, all connect</p>`
             : `<div class="sk-stat-value">${fmt(finalRange)}</div>`;
         }
         // Header reuses .sk-dmg-head/.sk-dmg-label-row/.sk-dmg-toggles

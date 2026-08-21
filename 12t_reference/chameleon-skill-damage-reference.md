@@ -12,7 +12,7 @@ back to that sweep.
 | Skill | Max Rank | dmg shape | KO | Hit count | Dep mechanism | lckProc |
 |---|---|---|---|---|---|---|
 | immunity | 3 | none (buff) | — | — | — | — |
-| quickFire | 4 | flat `0.25×ATK` | 0 | `2+2×rank` base, `2+4×rank` w/ Added Fire | `addedFire5` (hasSkill 402): hit-count doubling modeled; +0.1×ATK on burst-only hits NOT modeled | — |
+| quickFire | 4 | 3-phase `dmgGroups`: open/close flat `0.25×ATK`, burst `0.25→0.35×ATK` w/ Added Fire | 0 | `2+2×rank` base, `2+4×rank` w/ Added Fire | `addedFire5` (hasSkill 402): both the burst coefficient bump AND hit-count doubling modeled (rank+dep-aware `dmgGroups` group values, new engine capability this pass) | — |
 | perfectBlend | 2 | none (buff) | — | — | — | — |
 | trueInvisibility | 2 | none (buff) | — | — | — | — |
 | needlePrison | 2 | none (CC) | — | — | — | — |
@@ -65,12 +65,23 @@ back to that sweep.
   rustyDecay itself) lands on a target already carrying the FIRST status (poison/rust). Both formulas scale
   with the existing stack's own level and remaining duration — genuinely state-contingent, same opaque-text
   bucket as Penguin's `novaFlare`, not reducible to a clean formula independent of live combat state.
-- **`quickFire`'s Added Fire passive (`addedFire5`) changes BOTH a coefficient and the hit count** — the
-  existing `dmgDep`/`dmgMultDep` mechanisms only handle one or the other cleanly. Modeled the hit-count
-  doubling (the larger, more visible effect) via the existing `hitCountDep` mechanism (same shape as
-  Penguin's Deadly Frost); the smaller +0.1×ATK bonus on burst-only hits is flagged in `dmgNote` but not
-  reflected in the live number, since modeling it correctly would need a 3-phase `dmgGroups` split for a
-  small per-hit difference.
+- **`quickFire`'s Added Fire passive (`addedFire5`) changes BOTH a coefficient and the hit count on one
+  `dmgGroups` phase only** — first modeled with only the hit-count doubling reflected (the coefficient
+  bump flagged in `dmgNote` but not computed), then corrected same-day after the user asked directly why
+  it wasn't reflected. Required a real, generalized engine extension: a `dmgGroups` group's `atkCoeff`/
+  `hitCount` fields can now each optionally be a function `(rank, depOn) => value` instead of a static
+  number (mirroring the skill-level `hitCount(rank, dmgDepOn, hitCountDepOn)` convention exactly), read
+  via 2 new small resolver functions (`resolveGroupAtkCoeff`/`resolveGroupHitCount`) that every existing
+  `dmgGroups` read site (8 total across `resolveHitDmgText`/`resolveHitAtkCoeff`/`renderDmgFormula`/Raw
+  Damage/Final Damage/the total-hits label) now goes through — fully backward compatible, a group with a
+  plain number behaves identically to before (King Kaiser's Normal Attack, Napalm, unaffected). A real
+  correctness trap caught and fixed along the way: the group-walk logic that finds which formula/coefficient
+  a given hit index belongs to (`idx -= g.hitCount`) would have misrouted hits to the wrong group if the
+  burst group's hit count had stayed fixed at its toggle-ON maximum while the toggle was actually off — the
+  closing shot's real (smaller) index would still have landed "inside" the burst group's now-too-generous
+  static bound. Verified in Node: rank 4 with Added Fire on → 18 total hits, burst coefficient 0.35;
+  Added Fire off → 10 total hits, burst coefficient 0.25, and the group boundary correctly shrinks (hit
+  index 9 routes to the closing shot, not a phantom extra burst hit).
 - **`fatalStrike`/`leftStride` deal no damage of their own** — both buff/drive the shared normal-attack
   formula (`Chameleon_nAttack.cs:502`), which this tool has never modeled as its own tracked mechanic for
   any class. `leftStride` still gets a standalone KO chip (flat 1, from the normal-attack path) since KO
