@@ -300,6 +300,38 @@ matching the user's own earlier instruction on this exact skill ("no raw / dmg s
 Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, Node-verified the 4 output
 values above match exactly.
 
+### Follow-up, immediately after: 2 more user-reported issues from the same screenshot round
+
+**1. The note-only chip is gone entirely, tool-wide, not just for Fatal Strike.** User: "remove this kind
+of off on every skill card, a blank chip with only note icon, disgusting" — a flat rejection of the
+minimal note-only chip added a few passes above, not a request to scope it down. Removed `renderHero()`'s
+`else if (selected.dmgNote){...}` branch outright; any skill with neither a real Damage Formula nor a
+shield now renders the plain blank `.sk-dmg-row` again (same as every buff/heal/summon already did before
+that branch existed). `dmgNote` text for skills like Fatal Strike/Mark of Slayer stays in the data as a
+citation, just isn't surfaced by any chip — matching how every OTHER un-chipped `dmgNote` in this file
+already worked before this detour. Also cleaned up the now-fully-dead `.sk-ko-standalone` CSS rule (its
+last real consumer, the note-only chip, is gone) and rewrote the stale comment block explaining both
+removals.
+
+**2. Left Stride's own new Double Strider toggle icon was broken (a placeholder image), caught live via a
+screenshot.** Root cause: I'd wired Left Stride's `dmgRankDep` toggle through `renderDmgRankToggle` (used
+for a TRUE multi-rank cycle, e.g. Improved Slayer's 0-4) instead of `renderDmgToggle` (a plain 0/1 toggle
+that reads `dep.icon` directly). `renderDmgRankToggle`'s own icon-key logic strips the dep icon's trailing
+digit and appends `1..maxRank` — for `CHAMELEON_DOUBLESTRIDER_DEP` (`icon:"chameleon_doubleStrider5",
+minRank:0, maxRank:1`) that computes `"chameleon_doubleStrider1"` at BOTH rank 0 and rank 1, a key that
+never existed in `SKILL_ICONS` (the only real embedded icon is `chameleon_doubleStrider5`, the Class-C-tier
+suffix, not a rank digit) — `SKILL_ICONS["chameleon_doubleStrider1"]` is `undefined`, hence the broken
+`<img src="undefined">`. Confirmed the icon itself was never the problem (`Buffer.compare` against the real
+source PNG — byte-exact, per the user's own correction not to bother re-extracting it). Fixed by branching
+the `dmgRankDep` toggle render in `renderHero`'s `dmgToggles` array on `dep.maxRank - dep.minRank > 1` —
+`renderDmgRankToggle` only for a genuine multi-rank cycle, `renderDmgToggle` otherwise — matching exactly
+how Right Stride's own `hitCountDep` already renders this SAME dep object correctly one line above. Node-
+verified the branch condition routes Double Strider (0-1) to `renderDmgToggle` and Improved Slayer (0-4)
+to `renderDmgRankToggle`, unaffected.
+
+Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, grepped for zero remaining
+`sk-ko-standalone` references outside its own removal-explaining comment.
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and

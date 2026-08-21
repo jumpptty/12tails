@@ -3823,3 +3823,33 @@ Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance che
 all 4 rank×dep combinations (3/5/6/10) match the user's spec exactly. **Not yet visually verified live** —
 no browser tool available this session; check the Damage Formula chip renders cleanly and the corner
 toggle actually stays linked with Right Stride's, before treating this as fully done.
+
+### 2026-08-21, immediate follow-up: note-only chip removed entirely (tool-wide, not per-skill), and Left Stride's broken toggle icon fixed
+
+Two more issues from a screenshot round of the same session:
+
+1. **Note-only chip gone, everywhere.** User: "remove this kind of off on every skill card, a blank chip
+   with only note icon, disgusting" — outright rejection, not a scope-down request. Removed `renderHero()`'s
+   `else if (selected.dmgNote){...}` branch entirely; a skill with neither `dmg` nor `shield` now renders
+   the plain blank `.sk-dmg-row` again, same as before the note-only chip existed. `dmgNote` text for
+   skills like Fatal Strike/Mark of Slayer stays as a citation in `SKILLS`, just isn't surfaced by any
+   chip — matching every other un-chipped `dmgNote` in this file. Cleaned up the now-fully-dead
+   `.sk-ko-standalone` CSS rule and its stale comment.
+2. **Left Stride's own Double Strider toggle icon was broken (placeholder image), caught live via a
+   screenshot.** Cause: I'd routed its `dmgRankDep` toggle through `renderDmgRankToggle` (for a TRUE
+   multi-rank cycle) instead of `renderDmgToggle` (a plain 0/1 toggle reading `dep.icon` directly).
+   `renderDmgRankToggle`'s icon-key logic strips the dep icon's trailing digit and appends `1..maxRank` —
+   for `CHAMELEON_DOUBLESTRIDER_DEP` (`icon:"chameleon_doubleStrider5", minRank:0, maxRank:1`) that
+   computes `"chameleon_doubleStrider1"` at both states, a key that never existed (the only real icon is
+   suffixed `5`, the Class-C-tier convention, not a rank digit). Confirmed the icon file itself was fine
+   (`Buffer.compare` against source, byte-exact — per the user's own correction, no re-extraction needed).
+   Fixed by branching `dmgRankDep`'s toggle render on `dep.maxRank - dep.minRank > 1` in `renderHero`'s
+   `dmgToggles` array — `renderDmgRankToggle` only for a genuine cycle (Improved Slayer's 0-4, unaffected),
+   `renderDmgToggle` otherwise, matching how Right Stride's own `hitCountDep` already renders this SAME
+   dep object correctly.
+
+Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance check clean, Node-verified
+the branch condition routes each dep to the correct function. **Not yet visually verified live** — no
+browser tool available this session; check Left Stride's toggle icon now renders the real Double Strider
+art (not a broken image) and that every skill's 2nd row looks right with no note-only chip anywhere,
+before treating this as fully done.

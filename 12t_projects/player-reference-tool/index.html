@@ -926,20 +926,24 @@
   /* KO chip (2026-08-19, user-requested -- a `mechanics-researcher` sweep
      confirmed `nKo`, the 3rd damage-application function's shared parameter,
      is real and separate from `nDamage`; see getKOValue's own comment for
-     the full citation trail). Two placements for the SAME underlying value,
-     .sk-ko-badge sits in .sk-dmg-formula's own bottom-left corner (that
-     chip's position:relative, added above, is its containing block) --
-     small and unobtrusive since a Damage Formula chip already has its own
-     big hero number doing the main work. .sk-ko-standalone (originally a
-     standalone KO-value chip for the rare skill with a real nonzero KO but
-     no Damage Formula) was removed 2026-08-21, user-requested ("it is
-     useless") -- audited first via a full SKILLS parse and confirmed
-     exactly one skill in the whole tool ever reached it (Chameleon's Left
-     Stride; every other `ko`-bearing skill also carries a `dmg` field, even
-     if just `dmg:"0"`, so it renders the .sk-ko-badge above instead). The
-     `.sk-ko-standalone` CLASS lives on -- reused as the shape for the
-     note-only chip (see renderHero's own comment at its render site) -- but
-     no `ko` value or `koDep`/`koMultDep` toggle ever populates it anymore. */
+     the full citation trail). .sk-ko-badge sits in .sk-dmg-formula's own
+     bottom-left corner (that chip's position:relative, added above, is its
+     containing block) -- small and unobtrusive since a Damage Formula chip
+     already has its own big hero number doing the main work. The
+     standalone `.sk-ko-standalone` chip (a rare skill with a real nonzero
+     KO but no Damage Formula) and its short-lived note-only replacement
+     (a minimal chip for a skill with only a dmgNote and nothing else) were
+     both removed 2026-08-21, both user-requested -- the standalone KO chip
+     because exactly one skill in the whole tool ever reached it (Chameleon's
+     Left Stride, since re-worked to have a real Damage Formula chip
+     instead; every other `ko`-bearing skill carries a `dmg` field and
+     already renders via .sk-ko-badge above), the note-only chip on sight
+     ("a blank chip with only note icon, disgusting"). A skill with neither
+     a real Damage Formula nor a shield now renders the plain blank
+     .sk-dmg-row again -- its dmgNote (if any) stays in the data as a
+     citation but isn't surfaced by any chip, same as every other un-chipped
+     dmgNote in this file. Don't reintroduce either removed chip shape
+     without being asked again. */
   .sk-ko-badge{position:absolute; left:14px; bottom:10px; display:flex; align-items:center; gap:6px}
   .sk-ko-label{font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted)}
   .sk-ko-value{font-size:15px; font-weight:700; color:var(--gold); font-family:ui-monospace,monospace}
@@ -947,10 +951,8 @@
      explicitly the "small" chip, a full-size icon here would dominate it.
      Only ever populated by the nested .sk-ko-badge case today (Mega Punch/
      Hammer's megaDrill, stunMine's mineLover/grenadeCluster, stunGrenade's
-     grenadeCluster -- all `dmg`-bearing, so all render via .sk-ko-badge, not
-     the removed standalone chip). */
+     grenadeCluster). */
   .sk-ko-badge .sk-dep-toggle img{width:16px; height:16px}
-  .sk-ko-standalone{grid-column:1}
   /* flex:1 (not also display:flex on itself) -- fills whatever vertical
      space is left below the fixed-at-top .sk-dmg-head, without making this
      element's OWN children flex items too. That was tried (2026-08-14,
@@ -4258,7 +4260,18 @@ function mountSkillCooldownLookup(root){
         (selected.ownStats || selected.ownStatsDmgOnly) ? renderDmgToggle(MOLE_DOUBLEBOT_DEP) : "",
         (selected.ownStats || selected.ownStatsDmgOnly) ? renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP) : "",
         selected.ownStatsKaiser ? renderDmgRankToggle(KING_KAISER_LV_DEP) : "",
-        selected.dmgRankDep ? renderDmgRankToggle(selected.dmgRankDep) : "",
+        // renderDmgRankToggle only for a TRUE multi-rank cycle (maxRank-
+        // minRank>1, e.g. Improved Slayer's 0-4) -- its own icon-key logic
+        // strips the dep icon's trailing digit and appends 1..maxRank,
+        // which is wrong for a plain 0/1 dep like Left Stride's Double
+        // Strider: its only real icon file is suffixed 5 (the Class-C-tier
+        // convention, not a rank digit), so renderDmgRankToggle would
+        // request a nonexistent "...1" key and render a broken image (bug
+        // caught live, 2026-08-21, via a screenshot of the broken icon).
+        // renderDmgToggle reads `dep.icon` directly with no key-guessing,
+        // matching how Right Stride's own hitCountDep already renders this
+        // SAME dep object correctly one line above.
+        selected.dmgRankDep ? (selected.dmgRankDep.maxRank - selected.dmgRankDep.minRank > 1 ? renderDmgRankToggle(selected.dmgRankDep) : renderDmgToggle(selected.dmgRankDep)) : "",
       ].join("");
       const dmgInfo = selected.dmgNote ? `
         <details class="sk-dmg-info">
@@ -4708,41 +4721,20 @@ function mountSkillCooldownLookup(root){
       // since there's nothing else sharing the row here.
       if (selected.bbStatsInRow2 && bbStatsBlock){
         dmgBlock = `<div class="sk-dmg-row">${bbStatsBlock.replace('class="sk-stat sk-stat-bb"', 'class="sk-stat sk-stat-bb sk-stat-bb-row2"')}</div>`;
-      } else if (selected.dmgNote){
-        // Standalone KO chip removed (2026-08-21, user-requested: "it is
-        // useless") -- audited first via a full SKILLS parse and confirmed
-        // exactly ONE skill in the whole tool ever reached it (Chameleon's
-        // Left Stride; every other `ko`-bearing skill also has a `dmg`
-        // field, even if just `dmg:"0"`, so it renders the nested
-        // .sk-ko-badge inside the Damage Formula chip instead -- untouched
-        // by this removal). Left Stride's own `ko:"1"` value is no longer
-        // displayed anywhere; its dmgNote (which already explains "KO alone
-        // is the normal-attack's own flat 1 per arrow") still surfaces via
-        // this same note-only branch below, just without a numeric chip.
-        // A skill with NEITHER a real Damage Formula NOR anything else
-        // (e.g. Chameleon's Fatal Strike, Mark of Slayer) used to render a
-        // fully blank .sk-dmg-row, so its dmgNote had no chip to attach to
-        // at all. A minimal note-only chip, reusing the .sk-ko-standalone
-        // shape (name kept for the CSS class only -- no KO value involved
-        // here anymore), so a purely-descriptive skill still surfaces its
-        // own citation instead of it existing only in the data.
-        const noteInfo = `
-          <details class="sk-dmg-info">
-            <summary title="More info">ℹ</summary>
-            <div class="sk-dmg-info-pop">${selected.dmgNote}</div>
-          </details>
-        `;
-        dmgBlock = `
-          <div class="sk-dmg-row">
-            <div class="sk-stat sk-ko-standalone">
-              <div class="sk-dmg-label-row">
-                <p class="sk-stat-label">Note</p>
-                ${noteInfo}
-              </div>
-            </div>
-          </div>
-        `;
       } else {
+        // Note-only chip removed (2026-08-21, user-requested: "remove this
+        // kind of off on every skill card, a blank chip with only note
+        // icon" -- tried immediately after the standalone-KO-chip removal
+        // above, in the same session, as a way to keep a purely-descriptive
+        // skill's dmgNote reachable; the user rejected it outright on sight
+        // rather than asking for it to be scoped down). A skill with
+        // neither a real Damage Formula, a shield, nor bbStats now renders
+        // the plain blank .sk-dmg-row again, same as every buff/heal/summon
+        // always has -- its own dmgNote (Fatal Strike, Mark of Slayer, etc.)
+        // stays in the data as a citation but isn't surfaced by any chip,
+        // matching the convention every OTHER un-chipped dmgNote in this
+        // file already followed before this whole detour. Don't reintroduce
+        // a note-only chip without being asked again.
         dmgBlock = `<div class="sk-dmg-row"></div>`;
       }
     }
