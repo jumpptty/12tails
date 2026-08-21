@@ -3602,3 +3602,36 @@ re-derived in Node against this exact entry's real fields, confirmed empty set (
 **Not yet visually verified live** — no browser tool available this session; check the full-width chip
 actually fits row 2's existing reserved height and that the Heavy Built corner toggle doesn't collide with
 anything at the wider width, before treating this as fully done.
+
+### 2026-08-21, immediate follow-up: Double Bot/Synchro Mole wired onto the base card too, and the "all dimmed" call from the pass above reversed
+
+User: "wire synchromole and double bot skillDep in to barrelBot base card too" + "all the affected stats
+should be golden like normal hero numbers."
+
+**Toggles.** The base Barrel Bot card has no Damage Formula chip at all (unlike its 8 moveset children,
+which keep their own Double Bot/Synchro Mole toggles in that chip's header, unchanged) — without adding
+them here too, there was no way to actually flip either passive from this card, even though the Stats
+table was already silently reflecting whatever their last-set state happened to be from some OTHER card.
+`bbToggles` now branches: `bbStatsInRow2` gets all 3 (Double Bot, Synchro Mole, Heavy Built) grouped in
+one row reusing `.sk-dmg-toggles` (the same header-toggle-row class/flex layout the Damage Formula chip
+already uses); every other card keeps just Heavy Built alone, unchanged. Same shared dep ids as
+everywhere else in this file — clicking either instance (this card's or a moveset child's) updates both.
+
+**Dimming reversed for this one variant.** The immediately preceding pass had every one of the 9 cells on
+this card dimmed, correctly per `getUsedOwnStatKeys`'s own question ("does the SELECTED skill's own
+formula read this stat" — genuinely no, for a skill with no `dmg` and a Mole-sourced Cooldown). But once
+Double Bot/Synchro Mole/Heavy Built are live, interactive toggles on this SAME card, that's the wrong
+question to be asking here — the user's framing was "affected by the toggles," not "used by a formula."
+Checked which of the 9 stats are actually inert to all 3 toggles: none are — Double Bot alone moves all 8
+core stats plus `mhp` indirectly (via its `10×vit` overwrite), Synchro Mole moves atk/def, Heavy Built
+moves `mhp`. So for `bbStatsInRow2` specifically, `usedKeys` is now a fixed set of all 9 keys rather than
+`getUsedOwnStatKeys`'s result — every cell on this one card renders full gold. `getUsedOwnStatKeys` itself
+is untouched, still correct and still driving the dimming on every OTHER card that reuses this table.
+
+Verified: script-block syntax clean, CSS comment-strip+brace-balance check clean, Node re-derivation of
+the branching `usedKeys` logic confirmed all 9 keys for the base card and an unaffected 3-key result
+(`atk`/`tal`/`lck`) for a representative moveset child (Mega Drill), matching pre-existing behavior exactly.
+**Not yet visually verified live** — no browser tool available this session; check all 3 corner toggles
+fit without crowding at the chip's full width, and that toggling either Double Bot or Synchro Mole from
+THIS card live-updates the Stats table the same way it already does from a moveset child's card, before
+treating this as fully done.

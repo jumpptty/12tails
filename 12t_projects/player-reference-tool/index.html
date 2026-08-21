@@ -3979,7 +3979,24 @@ function mountSkillCooldownLookup(root){
       // doesn't use still shows its real value, just dimmed instead of
       // hidden -- that's the whole point of this pass, not a bug to
       // "finish" by pruning back down to 4.
-      const usedKeys = getUsedOwnStatKeys(selected);
+      // bbStatsInRow2 (2026-08-21 follow-up, user: "all the affected stats
+      // should be golden like normal hero numbers"): getUsedOwnStatKeys
+      // answers "does THIS skill's own formula read this stat," which is
+      // correctly empty for the base Barrel Bot card (no dmg/agiAdjust
+      // Cooldown reads any of these) -- but that's the wrong question once
+      // Double Bot/Synchro Mole/Heavy Built toggles are live on this same
+      // card (see bbToggles below): every one of the 9 stats responds to
+      // at least one of those 3 (doubleBot alone moves all 8 core stats
+      // plus mhp indirectly; synchroMole moves atk/def; heavyBuilt moves
+      // mhp), so dimming any of them here would read as "this number is
+      // inert," when the user is actively watching it change in response
+      // to the toggles right on this card. All 9 keys treated as "used"
+      // (full gold) for this variant specifically -- not a change to
+      // getUsedOwnStatKeys itself, which stays correct for every OTHER
+      // card that reuses this same table.
+      const usedKeys = selected.bbStatsInRow2
+        ? new Set(["mhp","atk","def","agi","vit","mag","cha","tal","lck"])
+        : getUsedOwnStatKeys(selected);
       const bbRow = (key, label, val) => `
         <div class="sk-bb-stat${usedKeys.has(key) ? "" : " sk-bb-stat-unused"}" title="${usedKeys.has(key) ? "Used by this skill's calculation" : "Not used by any calculation on this skill"}">
           <p class="sk-bb-stat-label">${label}</p>
@@ -4010,7 +4027,21 @@ function mountSkillCooldownLookup(root){
       // see getUsedOwnStatKeys), never anything damage-related. Same
       // top-right corner position as every other chip-level dep in this
       // tool (.sk-dep).
-      const bbHeavyBuilt = `<div class="sk-bb-heavybuilt">${renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)}</div>`;
+      // Double Bot / Synchro Mole (2026-08-21 follow-up, base Barrel Bot
+      // card only): this card has no Damage Formula chip at all (its 8
+      // moveset children keep those 2 toggles in THAT chip's own header,
+      // unchanged) -- without its own copy of them here, there'd be no way
+      // to actually flip Double Bot/Synchro Mole from this card, even
+      // though the Stats table already reflects whatever their last-set
+      // state happens to be. Same shared dep id as everywhere else in this
+      // file, so clicking either instance updates both. Grouped with Heavy
+      // Built in one flex row (reuses .sk-dmg-toggles, the same header-
+      // toggle-row class the Damage Formula chip uses) rather than 3
+      // separate corner elements.
+      const bbToggles = selected.bbStatsInRow2
+        ? [renderDmgToggle(MOLE_DOUBLEBOT_DEP), renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("")
+        : renderDmgRankToggle(MOLE_HEAVYBUILT_DEP);
+      const bbHeavyBuilt = `<div class="sk-bb-heavybuilt sk-dmg-toggles">${bbToggles}</div>`;
       bbStatsBlock = `
         <div class="sk-stat sk-stat-bb">
           <p class="sk-stat-label">${bbTitle}</p>
