@@ -4151,3 +4151,11 @@ Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, confirme
 skill-card class via grep. **Not yet visually verified live** — no browser tool available this session;
 check the panel now stays invisible until a skill is picked, and that its top border genuinely lines up
 with `.sk-hero`'s own top edge once one is, before treating this as fully done.
+
+**Immediate same-day correction, user-caught via screenshot**: the `.sk-hero` anchor above was wrong --
+"the alignment fixed went in the wrong direction, it should shift upward to the very edge of the outer
+border, not the inner border." "The skill card" in the user's original request meant the WHOLE visible
+tool box (`.tool-shell`), not the inner `.sk-hero` detail card, which sits well below the heading/search
+box. Fixed by anchoring to `shellRect.top` instead (already computed earlier in the same function for the
+left-edge math, so no new measurement needed) -- the panel's top now lines up with the tool's own outer
+edge, level with the "Skill Cooldown / Duration" heading, not down at the individual skill card's own top.

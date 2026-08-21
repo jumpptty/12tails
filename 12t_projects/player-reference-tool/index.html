@@ -4117,20 +4117,19 @@ function mountSkillCooldownLookup(root){
     // offsetParent's identity itself depends on position:fixed already
     // being in effect.
     statsPanelEl.classList.add("sk-stats-panel-floating");
-    // Top-anchored to .sk-hero itself (2026-08-21, user-requested: "shift
-    // player stat panel upward so the top border is the same level as the
-    // top edge of the skill card") -- was anchored to .sk-search-wrap's own
-    // top, which sits BELOW the card's real top edge (the search box comes
-    // first, the card follows it). .sk-hero is guaranteed to exist here --
-    // this function already returned above if `selected` is falsy, and
-    // renderHero() only ever leaves displayEl without a .sk-hero when
-    // nothing's selected.
-    const heroEl = $(".sk-hero", displayEl);
-    const anchorRect = (heroEl || shell).getBoundingClientRect();
+    // Top-anchored to shellRect itself, i.e. .tool-shell's own OUTER edge
+    // (2026-08-21, corrected same day -- user: "it should shift upward to
+    // the very edge of the outer border, not the inner border"). The
+    // previous attempt anchored to .sk-hero (the inner skill-detail card,
+    // which sits well below the heading/search box) -- "the skill card" in
+    // the user's original request meant the whole visible tool box, not
+    // that inner element specifically. shellRect is already computed above
+    // for the left-edge math, so this needed no new measurement, just using
+    // the right one.
     const cb = statsPanelEl.offsetParent;
     const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
     statsPanelEl.style.left = (shellRect.left - panelWidth - margin - cbRect.left) + "px";
-    statsPanelEl.style.top = (anchorRect.top - cbRect.top) + "px";
+    statsPanelEl.style.top = (shellRect.top - cbRect.top) + "px";
   }
 
   function positionStatTooltips(){
