@@ -4083,10 +4083,22 @@ function mountSkillCooldownLookup(root){
   // .sk-stats-panel-floating's own CSS width), not measured, specifically
   // to sidestep the chicken-and-egg problem of needing to know the panel's
   // width to decide whether to give it that width in the first place.
+  // Hidden entirely until a skill is selected (2026-08-21, user-reported:
+  // on first page load, before anything's selected, the panel rendered
+  // overlapping the middle of the tool instead of sitting cleanly in the
+  // gutter -- there's no skill card to align against yet at that point, so
+  // rather than chase that empty-state geometry, the panel just doesn't
+  // exist on screen until there IS a real card to sit beside). Reuses
+  // `selected` from the enclosing closure -- null until selectSkill() runs
+  // for the first time, same variable renderHero() itself already gates on.
   function positionStatsPanel(){
     const shell = document.querySelector(".tool-shell");
-    const searchWrap = $(".sk-search-wrap", root);
-    if (!shell || !searchWrap || !statsPanelEl) return;
+    if (!shell || !statsPanelEl) return;
+    if (!selected){
+      statsPanelEl.hidden = true;
+      return;
+    }
+    statsPanelEl.hidden = false;
     const shellRect = shell.getBoundingClientRect();
     const margin = 20;
     const panelWidth = 260; // must match .sk-stats-panel-floating{width:...}
@@ -4103,16 +4115,22 @@ function mountSkillCooldownLookup(root){
     // positionDmgInfoPopup uses, required because the .view containing-
     // block quirk (documented at length elsewhere in this file) means
     // offsetParent's identity itself depends on position:fixed already
-    // being in effect, and searchWrap's own rect needs to reflect the
-    // panel ALREADY being out of flow (so search-wrap has already
-    // collapsed upward into the space the panel used to occupy) to anchor
-    // correctly against its real, final position.
+    // being in effect.
     statsPanelEl.classList.add("sk-stats-panel-floating");
-    const searchRect = searchWrap.getBoundingClientRect();
+    // Top-anchored to .sk-hero itself (2026-08-21, user-requested: "shift
+    // player stat panel upward so the top border is the same level as the
+    // top edge of the skill card") -- was anchored to .sk-search-wrap's own
+    // top, which sits BELOW the card's real top edge (the search box comes
+    // first, the card follows it). .sk-hero is guaranteed to exist here --
+    // this function already returned above if `selected` is falsy, and
+    // renderHero() only ever leaves displayEl without a .sk-hero when
+    // nothing's selected.
+    const heroEl = $(".sk-hero", displayEl);
+    const anchorRect = (heroEl || shell).getBoundingClientRect();
     const cb = statsPanelEl.offsetParent;
     const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
     statsPanelEl.style.left = (shellRect.left - panelWidth - margin - cbRect.left) + "px";
-    statsPanelEl.style.top = (searchRect.top - cbRect.top) + "px";
+    statsPanelEl.style.top = (anchorRect.top - cbRect.top) + "px";
   }
 
   function positionStatTooltips(){

@@ -4127,3 +4127,27 @@ certainty: check that the panel actually lands in the gutter (not overlapping th
 top-anchor against the search box lines up sensibly, and that the narrow-viewport fallback genuinely
 still works (stats stacked above the search box, unchanged from before this pass) before treating this as
 done.
+
+### 2026-08-21, immediate follow-up: 2 real problems from the very first screenshot of the panel
+
+User's first live look confirmed the concern above was warranted — a screenshot showed the panel rendering
+overlapping the middle of the tool (not the left gutter) on first page load, before anything's selected.
+Two fixes:
+
+1. **"Hide until a skill is selected instead."** Rather than chase the empty-state geometry (there's no
+   skill card to align against yet when nothing's selected — `.sk-hero` doesn't exist in the DOM at that
+   point), `positionStatsPanel()` now checks `selected` (the same variable `renderHero()` itself already
+   gates on) FIRST and sets `statsPanelEl.hidden = true` immediately if it's null, before any gutter-fit
+   math runs at all. The mount-time call (`selected` still `null` at that point) now correctly hides the
+   panel from the very first paint — no separate gating mechanism needed elsewhere, this one check covers
+   cold mount AND any later deselection.
+2. **"Shift player stat panel upward so the top border is the same level as the top edge of the skill
+   card."** The panel's `top` anchor was `.sk-search-wrap`'s own top — below the card's real top edge,
+   since the search box sits above the card in normal flow. Changed to anchor against `.sk-hero` itself
+   (guaranteed to exist by the time this code runs, since the function already returned above whenever
+   `selected` is falsy) — `heroEl.getBoundingClientRect().top` instead of `searchRect.top`.
+
+Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, confirmed `.sk-hero` is the correct
+skill-card class via grep. **Not yet visually verified live** — no browser tool available this session;
+check the panel now stays invisible until a skill is picked, and that its top border genuinely lines up
+with `.sk-hero`'s own top edge once one is, before treating this as fully done.
