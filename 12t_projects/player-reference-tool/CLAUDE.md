@@ -3971,3 +3971,10 @@ Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, cross-ch
 + 2 toggle buttons actually fit the 940px-wide stage without unwanted wrapping, that the Enemy Stats row
 genuinely toggles open/closed, and that the `5ch+22px` width isn't visibly too tight/loose for "99999"
 before treating this as fully done — the buffer size is an estimate, not a measured value.
+
+**Immediate same-day follow-up, user-caught**: "move the enemy icon up a bit so it align well with the
+rest." Root cause: `.sk-enemystat-toggle svg` was sized `26x26`, smaller than `.sk-revisedart img`'s
+`30x30` — under `.sk-controls`' `align-items:end` (bottom-aligns every flex item), the two buttons'
+bottom edges matched but the smaller icon's own top sat 4px lower than revisedArt's, reading as "sunk."
+Fixed by matching the pixel size to `30x30` exactly, removing the mismatch at its source rather than
+patching around it with a manual offset.

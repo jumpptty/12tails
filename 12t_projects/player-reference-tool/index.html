@@ -352,8 +352,16 @@
     border:none; border-radius:4px; background:none;
     padding:0; cursor:pointer; line-height:0; align-self:end; color:var(--muted);
   }
+  /* 30x30, matching .sk-revisedart img exactly (was 26x26, user-reported
+     2026-08-21: "move the enemy icon up a bit so it align well"). Root
+     cause, not a padding/margin patch: .sk-controls' align-items:end
+     bottom-aligns every flex item's own box to the row's tallest item --
+     with a smaller icon than revisedArt's 30px, the two buttons' BOTTOM
+     edges matched but the smaller icon's TOP sat visibly lower than
+     revisedArt's, reading as "sunk." Matching the pixel size removes the
+     mismatch outright instead of offsetting around it. */
   .sk-enemystat-toggle svg{
-    width:26px; height:26px; display:block; fill:none; stroke:currentColor;
+    width:30px; height:30px; display:block; fill:none; stroke:currentColor;
     stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:.5;
   }
   .sk-enemystat-toggle.on{color:var(--gold)}
