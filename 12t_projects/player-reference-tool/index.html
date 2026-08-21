@@ -40,6 +40,12 @@
        "highlighted status," the same reasoning every other --stat-* token
        here already uses. */
     --stat-paralysis:#ca8a04;
+    /* Enemy Stats row tint (2026-08-21, user-requested: "subtle red tint...
+       in font color and box color"). Reuses --stat-atk itself for font
+       color (already this tool's own red, no need for a near-duplicate
+       token) and pairs it with a translucent -soft variant for the box
+       background, mirroring --gold/--gold-soft's exact existing pattern. */
+    --stat-atk-soft:rgba(185,28,28,.08);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -58,6 +64,7 @@
       --stat-int:#5b9bf0;
       --stat-effect:#c084fc;
       --stat-paralysis:#facc15;
+      --stat-atk-soft:rgba(239,68,68,.12);
     }
   }
   :root[data-theme="dark"]{
@@ -76,6 +83,7 @@
     --stat-int:#5b9bf0;
     --stat-effect:#c084fc;
     --stat-paralysis:#facc15;
+    --stat-atk-soft:rgba(239,68,68,.12);
   }
 
   *{box-sizing:border-box}
@@ -379,7 +387,20 @@
      existing margin-bottom (inherited, unmodified) -- no extra margin
      tuning added here, not visually verified live this session so a hand-
      guessed offset would be as likely to look wrong as right. */
-  .sk-enemystat-controls{display:flex}
+  /* Subtle red tint (2026-08-21, user-requested: "in font color and box
+     color") -- background overrides .sk-controls' own inherited --panel-2
+     with a translucent red wash (--stat-atk-soft, mirroring --gold/
+     --gold-soft's pattern) and the border/labels pick up --stat-atk itself.
+     Deliberately NOT --seal (this tool's own oxblood token) -- that's
+     reserved for error/validation messages only per this project's own
+     design-system rule (see this file's own "Ledger direction" notes);
+     reusing it here for a purely decorative "this is the enemy row" accent
+     would blur that meaning. Input VALUES stay --text (unchanged, inherited
+     from the base .sk-controls input rule) so typed numbers stay maximally
+     legible -- only the labels and the box itself carry the tint, not the
+     numbers themselves. */
+  .sk-enemystat-controls{display:flex; background:var(--stat-atk-soft); border:1px solid var(--stat-atk)}
+  .sk-enemystat-controls label{color:var(--stat-atk)}
   .sk-enemystat-controls[hidden]{display:none}
   /* Absolutely positioned into the box's own bottom-right corner (2026-08-14,
      user-requested) rather than stacked in normal flow below -- previously
@@ -2310,8 +2331,15 @@ const CHAMELEON_DOUBLESTRIDER_DEP = { id: "doubleStrider", label: "Double Stride
 // Both def AND lck are used (defAdjustRoll -- see its own comment for the
 // formula, subtractive not multiplicative, not the illustrative-tier
 // spread this file's history briefly assumed).
+// Carron given a full 8-stat block (2026-08-21, user-specified: "Carron
+// Stat = all 2") -- feeds the new Enemy Stats row (see
+// applyEnemyPresetToStatFields) when this preset is picked. Stingdune/
+// Silverbug deliberately keep only def/lck -- the only 2 fields either the
+// real defAdjust pipeline OR the user has ever specified real numbers for;
+// inventing atk/tal/agi/vit/cha/int for them would be a guess this file's
+// own citation-honesty rule doesn't allow.
 const ENEMY_PRESETS = [
-  { id: "carron", label: "Carron", icon: "enemy_carron", def: 2, lck: 2 },
+  { id: "carron", label: "Carron", icon: "enemy_carron", atk: 2, def: 2, tal: 2, agi: 2, vit: 2, cha: 2, int: 2, lck: 2 },
   { id: "stingdune", label: "Stingdune", icon: "enemy_stingdune", def: 200, lck: 10 },
   { id: "silverbug", label: "Silverbug", icon: "enemy_silverbug", def: 300, lck: 45 },
 ];
@@ -2827,9 +2855,13 @@ function mountSkillCooldownLookup(root){
   const lvEl = $('[data-role="lv"]', root);
   // Enemy Stats row (2026-08-21, user-requested futureproofing) -- 8 fields,
   // no CharLV (an enemy doesn't have one this tool tracks). Not currently
-  // read by any skill formula -- exists so a future contested-stat mechanic
-  // (e.g. a real target-CHA/DEF/etc. dependency) has real inputs to read
-  // from day one, same reasoning as the player-side DEF/VIT fields above.
+  // read by any skill formula when first added -- corrected same day
+  // (2026-08-21, user: "damage sim target stat should be based on the enemy
+  // stat field I just asked you to add"): DEF/LCK are now the actual live
+  // source for the Final Damage/Simulate pipeline's target-side mitigation
+  // (see rollOneHit's own comment), not just a futureproofing placeholder.
+  // ATK/TAL/AGI/VIT/CHA/INT still aren't read by anything yet -- no current
+  // skill's target-side math needs them -- but exist for whenever one does.
   const enemyAtkEl = $('[data-role="enemyAtk"]', root);
   const enemyDefEl = $('[data-role="enemyDef"]', root);
   const enemyTalEl = $('[data-role="enemyTal"]', root);
@@ -2863,6 +2895,29 @@ function mountSkillCooldownLookup(root){
   // changes it, same standing-state precedent as activePlayerMods/
   // activeEnemyMods.
   let selectedEnemyId = "carron";
+  // Populates the Enemy Stats row from an ENEMY_PRESETS entry (2026-08-21,
+  // user-requested: "selecting carron should replace all the values
+  // there") -- only overwrites a field the preset actually defines (Carron
+  // defines all 8, so selecting it replaces every field; Stingdune/
+  // Silverbug only define def/lck today, so selecting either only replaces
+  // those 2, leaving the rest at whatever's already typed rather than
+  // inventing values). Called both on initial mount (below) and from the
+  // enemy-preset click handler, so the row always reflects whichever
+  // preset is actually active -- critical now that the damage pipeline
+  // reads DEF/LCK live off this row rather than off the preset object
+  // directly (see rollOneHit's own comment).
+  function applyEnemyPresetToStatFields(presetId){
+    const preset = ENEMY_PRESETS.find(e => e.id === presetId);
+    if (!preset) return;
+    const fieldMap = {
+      atk: enemyAtkEl, def: enemyDefEl, tal: enemyTalEl, agi: enemyAgiEl,
+      vit: enemyVitEl, cha: enemyChaEl, int: enemyIntEl, lck: enemyLckEl,
+    };
+    Object.entries(fieldMap).forEach(([key, el]) => {
+      if (preset[key] !== undefined) el.value = preset[key];
+    });
+  }
+  applyEnemyPresetToStatFields(selectedEnemyId);
   let nextSimulatePopupId = 1;
   // Multi-hit Simulate (e.g. manaMissile's several missiles landing as one
   // cast, selected.hitCount>1) deliberately does NOT go through the
@@ -3305,11 +3360,22 @@ function mountSkillCooldownLookup(root){
     // function (see hitModAdjustFloor's own comment) -- grouped with
     // `penetrating` in the "skip both stages" branch since the mitigation
     // skip itself is identical, only the hitMod rounding differs after.
+    // Target DEF/LCK now read LIVE off the Enemy Stats row (2026-08-21,
+    // user-corrected: "damage sim target stat should be based on the enemy
+    // stat field I just asked you to add") -- selectedEnemy is still used
+    // to gate whether a target is picked at all (line above) and to drive
+    // the preset buttons' own highlight/tooltip, but the actual NUMBERS fed
+    // into defAdjust now come from enemyDefEl/enemyLckEl, which a preset
+    // click populates (see applyEnemyPresetToStatFields) and the user can
+    // freely hand-edit afterward -- clicking Carron is a quick-fill, not a
+    // separate source of truth from what's actually visible in the row.
+    const enemyDEF = parseFloat(enemyDefEl.value) || 0;
+    const enemyLCK = parseFloat(enemyLckEl.value) || 0;
     const afterDef = (skill.penetrating || skill.effectDamage)
       ? val
       : skill.dmgAdjustSkip
-        ? defAdjustRoll(val, selectedEnemy.def, selectedEnemy.lck)
-        : defAdjustRoll(dmgAdjustAtRoll(val, playerDamageModValue, randomRoll(lckSpreadRange(attackerLCK)[1])), selectedEnemy.def, selectedEnemy.lck);
+        ? defAdjustRoll(val, enemyDEF, enemyLCK)
+        : defAdjustRoll(dmgAdjustAtRoll(val, playerDamageModValue, randomRoll(lckSpreadRange(attackerLCK)[1])), enemyDEF, enemyLCK);
     const afterHitMod = skill.effectDamage
       ? hitModAdjustFloor(afterDef, enemyHitModValue)
       : hitModAdjust(afterDef, enemyHitModValue);
@@ -4684,8 +4750,15 @@ function mountSkillCooldownLookup(root){
           // CharacterControl field -- see finalMultiplierAdjust). Same
           // worst-with-worst / best-with-best extreme-pairing principle as
           // the previous pass, just one stage longer.
-          const enemyNWorst = Math.min(Math.max(selectedEnemy.def + Math.ceil(0.2 * Math.max(selectedEnemy.lck, 0)), 1), 512);
-          const enemyNBest = Math.min(Math.max(selectedEnemy.def + 0, 1), 512);
+          // Live off the Enemy Stats row (2026-08-21) -- see rollOneHit's
+          // identical comment for the full citation trail: selectedEnemy
+          // still gates/highlights which preset button is active, but the
+          // actual DEF/LCK numbers feeding defAdjust come from
+          // enemyDefEl/enemyLckEl now, not the static preset object.
+          const enemyDEF = parseFloat(enemyDefEl.value) || 0;
+          const enemyLCK = parseFloat(enemyLckEl.value) || 0;
+          const enemyNWorst = Math.min(Math.max(enemyDEF + Math.ceil(0.2 * Math.max(enemyLCK, 0)), 1), 512);
+          const enemyNBest = Math.min(Math.max(enemyDEF + 0, 1), 512);
           // ownLck (Auto Gyro Gun pilot, 2026-08-18) -- see rollOneHit's
           // identical comment for the full citation trail. dmgAdjust reads
           // `this.lck`, the ATTACKER's own field -- for the turret that's a
@@ -5057,6 +5130,7 @@ function mountSkillCooldownLookup(root){
     $$('[data-role="enemy-preset"]', displayEl).forEach(btn => {
       btn.addEventListener("click", () => {
         selectedEnemyId = btn.dataset.enemyId;
+        applyEnemyPresetToStatFields(selectedEnemyId);
         multiHitGroups = [];
         multiHitLayer.innerHTML = "";
         renderHero();

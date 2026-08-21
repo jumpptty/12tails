@@ -3978,3 +3978,47 @@ rest." Root cause: `.sk-enemystat-toggle svg` was sized `26x26`, smaller than `.
 bottom edges matched but the smaller icon's own top sat 4px lower than revisedArt's, reading as "sunk."
 Fixed by matching the pixel size to `30x30` exactly, removing the mismatch at its source rather than
 patching around it with a manual offset.
+
+### 2026-08-21, same day: Enemy Stats row wired into the real damage pipeline, preset buttons quick-fill it, subtle red tint
+
+User: "Carron Stat = all 2, selecting carron should replace all the values there. Use subtle red tint too
+to indicate enemy in font color and box color." Mid-turn, a direct correction: "You should know by now
+that damage sim target stat should be based on the enemy stat field I just asked you to add" — the Enemy
+Stats row from the previous pass had shipped as pure futureproofing (no skill formula read it yet); the
+user's real intent was for it to become the ACTUAL source of the Final Damage/Simulate pipeline's target
+DEF/LCK immediately, not stay inert.
+
+**`ENEMY_PRESETS`'s Carron entry now carries all 8 stats** (`atk:2, def:2, tal:2, agi:2, vit:2, cha:2,
+int:2, lck:2`), per the user's own stated numbers. Stingdune/Silverbug deliberately kept at just `def`/
+`lck` — the only 2 fields either the real pipeline or the user has ever specified real values for;
+inventing the other 6 would be a guess, not a citation.
+
+**New `applyEnemyPresetToStatFields(presetId)`** — copies only the fields a preset actually defines into
+the Enemy Stats inputs (Carron: all 8; Stingdune/Silverbug: just def/lck, leaving the rest at whatever's
+already typed rather than overwriting with invented numbers). Called from 2 places: once at mount time
+(so the row shows Carron's real values from the start, not the raw HTML `128` defaults — critical now
+that the pipeline reads this row live) and from the existing enemy-preset click handler (added one line).
+Node-verified: Carron replaces all 8 fields; Stingdune only replaces `def`/`lck`, leaving a fresh 128
+elsewhere untouched.
+
+**The actual pipeline rewire** — 4 call sites (`rollOneHit`'s `afterDef` branch, `renderHero`'s
+`enemyNWorst`/`enemyNBest`) previously read `selectedEnemy.def`/`selectedEnemy.lck` (the static preset
+object) directly; both now read `parseFloat(enemyDefEl.value)`/`parseFloat(enemyLckEl.value)` instead.
+`selectedEnemy`/`selectedEnemyId` still exist and still gate/highlight which preset button is active, but
+they're no longer the numeric source of truth — the Enemy Stats row is, so hand-editing any field after
+clicking a preset is immediately respected by Final Damage/Simulate, matching a real player wanting to
+test a custom enemy. Grepped for zero remaining `selectedEnemy.def`/`selectedEnemy.lck` reads afterward.
+
+**Subtle red tint** — new `--stat-atk-soft` token (mirrors `--gold`/`--gold-soft`'s existing pairing
+pattern) added to all 3 theme blocks, paired with the ALREADY-existing `--stat-atk` (this tool's own red
+term-color token — reused rather than inventing a near-duplicate). `.sk-enemystat-controls` background
+overrides the inherited `--panel-2` with `--stat-atk-soft`, border and label text use `--stat-atk`.
+Deliberately NOT `--seal` (this tool's own oxblood token, reserved for error/validation messages only per
+this project's own documented design-system rule) — reusing it here for a decorative "this is the enemy
+row" accent would blur that established meaning. Typed VALUES stay `--text` (unchanged) for legibility;
+only labels and the box itself carry the tint.
+
+Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, Node-verified the preset-to-field
+population logic. **Not yet visually verified live** — no browser tool available this session; check the
+red tint reads as genuinely subtle (not alarming), and that switching enemy presets or hand-editing a
+field visibly moves the Final Damage number, before treating this as fully done.
