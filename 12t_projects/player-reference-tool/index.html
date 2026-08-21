@@ -318,9 +318,21 @@
     padding:8px 14px; display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:8px;
   }
   .sk-controls label{display:block; font-size:10.5px; color:var(--muted); margin:0 0 3px; letter-spacing:.7px; text-transform:uppercase}
+  /* Width shrunk from a flat 80px (2026-08-21, user-requested) once DEF/VIT
+     joined the player row and the 8-field Enemy Stats row was added -- 9
+     number inputs (was 7) plus 2 toggle buttons need to fit the same
+     940px-wide tool-wide-hero stage, so "generous enough for any value" had
+     to become "exactly enough for the stated ceiling." `5ch` sizes to the
+     current font's own digit width (not a guessed px figure that could be
+     wrong for a different font stack) for "99999" (5 digits, the user's own
+     stated ceiling), `+22px` covers the reduced padding (6px each side) plus
+     the browser's native number-input spinner arrows and border -- not
+     visually verified live this session (no browser tool available), so
+     treat the buffer as an estimate, not a measured value, if this ever
+     looks visibly too tight/loose. */
   .sk-controls input[type=number]{
-    width:80px; background:var(--panel); color:var(--text); border:1px solid var(--line);
-    border-radius:2px; padding:5px 10px; font-size:14px; outline:none; font-family:inherit;
+    width:calc(5ch + 22px); background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:2px; padding:5px 6px; font-size:14px; outline:none; font-family:inherit;
   }
   .sk-revisedart{
     border:none; border-radius:4px; background:none;
@@ -328,6 +340,39 @@
   }
   .sk-revisedart img{width:30px; height:30px; display:block; filter:grayscale(100%); opacity:.5}
   .sk-revisedart.on img{filter:none; opacity:1}
+  /* Enemy Stats toggle (2026-08-21, user-requested: "positioned right to the
+     revisedArt icon") -- an inline SVG, not a ripped game asset, matching
+     the Final Damage chip's own Simulate-button precedent ("this is a UI
+     CONTROL, use a minimalistic icon, not an in-game one"). Same borderless/
+     dim-when-off/full-when-on toggle language as every other icon toggle in
+     this tool, just via stroke color + opacity on an inline <svg> instead of
+     a grayscale filter on a raster <img>, since there's no bitmap here to
+     filter. */
+  .sk-enemystat-toggle{
+    border:none; border-radius:4px; background:none;
+    padding:0; cursor:pointer; line-height:0; align-self:end; color:var(--muted);
+  }
+  .sk-enemystat-toggle svg{
+    width:26px; height:26px; display:block; fill:none; stroke:currentColor;
+    stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:.5;
+  }
+  .sk-enemystat-toggle.on{color:var(--gold)}
+  .sk-enemystat-toggle.on svg{opacity:1}
+  /* Enemy Stats row (2026-08-21) -- reuses .sk-controls' own flex layout
+     (same class applied alongside this one), hidden via the native `hidden`
+     attribute (same convention as .sk-suggestions elsewhere in this file).
+     The explicit [hidden]{display:none} override is REQUIRED, not
+     redundant: .sk-controls already sets display:flex as an AUTHOR rule,
+     which beats the browser's own [hidden]{display:none} UA-stylesheet rule
+     regardless of selector specificity (author rules always win over UA
+     rules at the same specificity) -- without this override, toggling the
+     `hidden` attribute alone would do nothing and the row would stay
+     visible. Spacing above/below when open comes from .sk-controls' own
+     existing margin-bottom (inherited, unmodified) -- no extra margin
+     tuning added here, not visually verified live this session so a hand-
+     guessed offset would be as likely to look wrong as right. */
+  .sk-enemystat-controls{display:flex}
+  .sk-enemystat-controls[hidden]{display:none}
   /* Absolutely positioned into the box's own bottom-right corner (2026-08-14,
      user-requested) rather than stacked in normal flow below -- previously
      margin-top:6px'd itself onto a new line under the base-value text,
@@ -2733,12 +2778,27 @@ function mountSkillCooldownLookup(root){
       <div class="sk-controls">
         <div><label>CHAR LV</label><input type="number" data-role="lv" min="0" value="100"></div>
         <div><label>ATK</label><input type="number" data-role="atk" min="0" value="128"></div>
+        <div><label>DEF</label><input type="number" data-role="def" min="0" value="128"></div>
         <div><label>TAL</label><input type="number" data-role="tal" min="0" value="128"></div>
         <div><label>AGI</label><input type="number" data-role="agi" min="0" value="128"></div>
+        <div><label>VIT</label><input type="number" data-role="vit" min="0" value="128"></div>
         <div><label>CHA</label><input type="number" data-role="cha" min="0" value="128"></div>
         <div><label>INT</label><input type="number" data-role="int" min="0" value="128"></div>
         <div><label>LCK</label><input type="number" data-role="lck" min="0" value="128"></div>
         <button type="button" class="sk-revisedart" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
+        <button type="button" class="sk-enemystat-toggle" data-role="enemystat-toggle" title="Enemy Stats">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle><line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line><line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line></svg>
+        </button>
+      </div>
+      <div class="sk-controls sk-enemystat-controls" data-role="enemystat-controls" hidden>
+        <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
+        <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
+        <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
+        <div><label>AGI</label><input type="number" data-role="enemyAgi" min="0" value="128"></div>
+        <div><label>VIT</label><input type="number" data-role="enemyVit" min="0" value="128"></div>
+        <div><label>CHA</label><input type="number" data-role="enemyCha" min="0" value="128"></div>
+        <div><label>INT</label><input type="number" data-role="enemyInt" min="0" value="128"></div>
+        <div><label>LCK</label><input type="number" data-role="enemyLck" min="0" value="128"></div>
       </div>
       <div class="sk-search-wrap">
         <input type="text" class="sk-search" data-role="search" placeholder="Search a skill…" autocomplete="off">
@@ -2753,8 +2813,25 @@ function mountSkillCooldownLookup(root){
   const chaEl = $('[data-role="cha"]', root);
   const lckEl = $('[data-role="lck"]', root);
   const atkEl = $('[data-role="atk"]', root);
+  const defEl = $('[data-role="def"]', root);
   const talEl = $('[data-role="tal"]', root);
+  const vitEl = $('[data-role="vit"]', root);
   const lvEl = $('[data-role="lv"]', root);
+  // Enemy Stats row (2026-08-21, user-requested futureproofing) -- 8 fields,
+  // no CharLV (an enemy doesn't have one this tool tracks). Not currently
+  // read by any skill formula -- exists so a future contested-stat mechanic
+  // (e.g. a real target-CHA/DEF/etc. dependency) has real inputs to read
+  // from day one, same reasoning as the player-side DEF/VIT fields above.
+  const enemyAtkEl = $('[data-role="enemyAtk"]', root);
+  const enemyDefEl = $('[data-role="enemyDef"]', root);
+  const enemyTalEl = $('[data-role="enemyTal"]', root);
+  const enemyAgiEl = $('[data-role="enemyAgi"]', root);
+  const enemyVitEl = $('[data-role="enemyVit"]', root);
+  const enemyChaEl = $('[data-role="enemyCha"]', root);
+  const enemyIntEl = $('[data-role="enemyInt"]', root);
+  const enemyLckEl = $('[data-role="enemyLck"]', root);
+  const enemyStatToggleBtn = $('[data-role="enemystat-toggle"]', root);
+  const enemyStatControlsEl = $('[data-role="enemystat-controls"]', root);
   const searchEl = $('[data-role="search"]', root);
   const raBtn = $('[data-role="revisedart"]', root);
   const suggestionsEl = $('[data-role="suggestions"]', root);
@@ -5157,7 +5234,21 @@ function mountSkillCooldownLookup(root){
   atkEl.addEventListener("input", renderHero);
   talEl.addEventListener("input", renderHero);
   lvEl.addEventListener("input", renderHero);
+  // DEF/VIT (2026-08-21, added alongside ATK/TAL/AGI/CHA/INT/LCK to complete
+  // all 8 core stats) and the 8 Enemy Stats fields all get the same
+  // input->renderHero wiring on arrival, not after-the-fact -- avoids
+  // repeating the exact ATK/TAL/LV gap documented directly above.
+  defEl.addEventListener("input", renderHero);
+  vitEl.addEventListener("input", renderHero);
+  [enemyAtkEl, enemyDefEl, enemyTalEl, enemyAgiEl, enemyVitEl, enemyChaEl, enemyIntEl, enemyLckEl]
+    .forEach(el => el.addEventListener("input", renderHero));
   raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); renderHero(); });
+  let enemyStatOpen = false;
+  enemyStatToggleBtn.addEventListener("click", () => {
+    enemyStatOpen = !enemyStatOpen;
+    enemyStatControlsEl.hidden = !enemyStatOpen;
+    enemyStatToggleBtn.classList.toggle("on", enemyStatOpen);
+  });
 
   // Document-scoped (not searchEl-scoped) so Left/Right work once a skill card
   // has focus moved off the search box — guarded on root.hidden so this doesn't

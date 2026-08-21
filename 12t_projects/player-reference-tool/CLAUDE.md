@@ -3922,3 +3922,52 @@ the base blue for paralysis specifically (source-order win, same specificity) �
 
 Verified: syntax/CSS checks clean, confirmed cascade order programmatically. **Not yet visually verified
 live** — no browser tool available this session.
+
+### 2026-08-21, same day: DEF/VIT completed on the player row, a new hidden-by-default Enemy Stats row, input width shrunk to fit 5 digits
+
+User: "Add DEF and VIT stat field to the player stat, defaulting to 128 as always, all 8 stats are present
+now, futureproofing skills in the future that might use these stats. Add a row for enemy stat, featuring
+all 8 stat fields (no CharLV), this row will not be visible by default, only when the user click enemy
+stat button will this field appear. The button will be positioned right to the revisedArt icon. Now that
+the stat field size has increased... reduce the text box horizontal length instead, supporting just enough
+for 99999 (5 digits)." Pure UI scaffolding, not tied to any current skill formula — explicitly futureproofing.
+
+**Player row**: `def`/`vit` number inputs added (default 128, matching every other stat input's own
+convention), positioned `atk, def, tal, agi, vit, cha, int, lck` — DEF right after ATK, VIT right after
+AGI, matching `CharacterControl.cs`'s own field-declaration adjacency (already used elsewhere in this file
+for the Barrel Bot/King Kaiser Stats table's cell ordering) without reshuffling the 6 pre-existing fields'
+positions. Both wired with the exact same `input -> renderHero` listener every other stat field already
+has — added proactively, not after a bug report, directly citing the 2026-08-16 "ATK/TAL/LV never wired"
+incident in the same code block as the reason.
+
+**Enemy Stats row**: a new `<div class="sk-controls sk-enemystat-controls" hidden>` (8 fields, ATK/DEF/
+TAL/AGI/VIT/CHA/INT/LCK, no CharLV — an enemy has no character level this tool tracks), reusing
+`.sk-controls`' own flex layout via a 2nd class rather than a new one. Toggled by a new
+`.sk-enemystat-toggle` button, an inline SVG (a simple target/crosshair glyph, 2px stroke) rather than a
+ripped game asset — matches the Final Damage chip's own Simulate-button precedent ("this is a UI control,
+use a minimalistic icon, not an in-game one"), positioned immediately after `raBtn` in the same `.sk-
+controls` flex row so it sits to `revisedArt`'s right per the literal request. Same dim-when-off/full-
+when-on toggle convention as every other icon toggle in this tool, via `stroke:currentColor`+`opacity`
+instead of a raster grayscale filter (no bitmap to filter here).
+
+**Real gotcha caught before shipping, not after**: `.sk-enemystat-controls` reuses `.sk-controls{display:
+flex}`, and since that's an AUTHOR-stylesheet rule, it beats the browser's own `[hidden]{display:none}`
+UA-stylesheet rule at equal specificity regardless of selector type (author rules always win over UA rules
+at the same specificity, origin/importance is checked before specificity in the cascade) — toggling the
+`hidden` ATTRIBUTE alone would have silently done nothing, the row staying visible always. Added an
+explicit `.sk-enemystat-controls[hidden]{display:none}` override rule to fix this before it ever shipped
+broken, not as a follow-up patch.
+
+**Input width**: `.sk-controls input[type=number]` shrunk from a flat `80px` to `calc(5ch + 22px)` with
+padding tightened from `10px` to `6px` per side — `5ch` sizes to the CURRENT font's own digit width for
+"99999" (the user's stated ceiling) rather than a guessed px figure that could be wrong for a different
+font stack, `+22px` is an estimated buffer for the reduced padding plus the browser's native number-input
+spinner arrows and border. Applies to BOTH the player row and the new Enemy Stats row automatically, since
+both share the same `.sk-controls input[type=number]` selector.
+
+Verified: JS syntax clean, CSS comment-strip+brace-balance check clean, cross-checked every new
+`data-role` appears in both the template AND its JS query (no typo'd selector silently returning `null`).
+**Not yet visually verified live** — no browser tool available this session; check all 9 player-row inputs
++ 2 toggle buttons actually fit the 940px-wide stage without unwanted wrapping, that the Enemy Stats row
+genuinely toggles open/closed, and that the `5ch+22px` width isn't visibly too tight/loose for "99999"
+before treating this as fully done — the buffer size is an estimate, not a measured value.
