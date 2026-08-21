@@ -3894,3 +3894,21 @@ Verified: `new Function` syntax check clean, CSS comment-strip+brace-balance che
 floor/ceil hitMod divergence is real (50×1.75: 88 ceil vs 87 floor, not identical). **Not yet visually
 verified live** — no browser tool available this session; check the Damage Formula chip's "50" actually
 renders purple, and that a Simulate roll shows purple in-game digits, before treating this as fully done.
+
+### 2026-08-21, immediate follow-up: multi-hit Simulate's proc label was hardcoded "frost" tool-wide, not just wrong for Thunder Dragon
+
+User: "in the damage sim, when paralyze procc, it shows frost, such as beginner mistake :(" — real bug.
+`revealMultiHit`'s `procLabel` hardcoded the literal `"frost"` (2026-08-20 pass), correct at the time since
+only frost-applying skills (Arctic Wind/Ice Shield/Tornado) had a `dmg` field + `lckProc` combo reaching
+that code path — broke the instant Thunder Dragon became the first non-frost one.
+
+Fixed generally: every `lckProc` object now carries a new `applies` field (the real in-game status the
+proc inflicts — `"frost"` ×3, `"paralysis"` for Thunder Dragon, `"multicast"` for Double Cast). `procLabel`
+reads `selected.lckProc.applies` (fallback `"proc"`) instead of a literal. Also renamed
+`.sk-multihit-frost` → `.sk-multihit-proc` — the class name itself was part of the mistake, not just the
+text inside it.
+
+Verified: syntax/CSS checks clean, Node-confirmed all 5 real `lckProc` entries carry the correct `applies`
+value. **Not yet visually verified live** — no browser tool available this session; check Thunder Dragon's
+Simulate popup shows "paralysis" (not "frost") on a proc, and that Arctic Wind/Tornado are unaffected,
+before treating this as fully done.

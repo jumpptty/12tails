@@ -400,6 +400,30 @@ the no-defAdjust/no-dmgAdjust confirmation, the FloorToInt hitMod, the caster-on
 Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, Node-verified the floor/ceil
 hitMod divergence and confirmed no residual `.dmg-num`/white-digit path is reachable for this skill.
 
+### Follow-up, immediately after: the multi-hit Simulate proc label was hardcoded to "frost" tool-wide
+
+User: "in the damage sim, when paralyze procc, it shows frost, such as beginner mistake :(" — a real, valid
+catch. `revealMultiHit`'s `procLabel` (`index.html`) had hardcoded the literal text `"frost"` since the
+`lckProc` Simulate-integration pass (2026-08-20), reasoned as safe at the time because only Arctic Wind/
+Ice Shield/Tornado (all genuinely frost) had a `dmg` field + `lckProc` combo able to reach that code path.
+That reasoning broke the instant Thunder Dragon (this same day, above) became the first non-frost
+`lckProc` skill with a real `dmg` field — its own proc genuinely applies `"paralysis"`, not frost, so its
+Simulate popup was showing the wrong status name on every successful roll.
+
+Fixed generally, not skill-specifically: every `lckProc` object now carries a new `applies` field (the
+literal in-game status name the proc actually inflicts) — `"frost"` for Arctic Wind/Ice Shield/Tornado,
+`"paralysis"` for Thunder Dragon, `"multicast"` for Double Cast (harmless to set even though Double Cast
+has no `dmg` field and can never actually reach this code path — consistency, not dead weight).
+`procLabel` now reads `selected.lckProc.applies` at render time instead of a literal, falling back to the
+generic `"proc"` only if a future `lckProc` skill forgets to set it. Also renamed the CSS class itself
+(`.sk-multihit-frost` → `.sk-multihit-proc`) — a class name that only ever meant "frost" was part of the
+same mistake, not just the text inside it.
+
+Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, confirmed all 5 real `lckProc`
+entries carry a correct `applies` value via a Node scan (Paralyze Chance→paralysis, Multicast Chance→
+multicast, the 3 Frost Chance entries→frost), and zero remaining `sk-multihit-frost` references outside
+the rename's own explanatory comment.
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and
