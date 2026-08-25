@@ -6,8 +6,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
 | statScan | Stat Scan | 1 | 30 | true | false | — | — |
-| bounce | Bounce | 2 | 30 | true | false | — | — |
-| maimShot | Maim Shot | 4 | 15 | true | false | — | — |
+| bounce | Bounce | 2 | 30 | true | false | 4 / 8 | false (fixed) |
+| maimShot | Maim Shot | 4 | 15 | true | false | 3 (contested) | Damage.getDebuff |
 | mix | Mix | 4 | 30 | true | false | 60 | true |
 | shake | Shake | 3 | 30 | true | false | 60 | true |
 | miracleBlend | Miracle Blend | 1 | 60 | true | false | 6 | true |
@@ -200,7 +200,10 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `hasSkill(444)`, a state pre-arm on login (matching the Panda `fuujinKen`/`raijinKen` preemptive-
   `addTimeOut` precedent) — matches the real cast site exactly (`Rabbit.cs:40652`,
   `agiAdjust((float)180)`). Not a discrepancy.
-- **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`, `bounce`,
+- **`bounce` applies a fixed `hide` status buff for 4s (Rank 1) / 8s (Rank 2)** (`Rabbit.cs:21068-21073`):
+  `this.$self_$26924.mChar.StartCoroutine_Auto(this.$self_$26924.mChar.addStatus("hide", 1, 4 * this.$sLv$26923 + 1, 0, this.$self_$26924.mChar.ActorNr));`
+  and sets `mBounceTimer = Time.time + 4 * sLv`. Fixed duration (not CHA-adjusted).
+- **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`,
   `gilShot`, `backpack`, `fourShot`, `circleShot`,
   `mall`, `truceTrading`, `shootingArray`, `millionaire`, `diamondShot`, `tenShot` — confirmed by a
   full-file grep of every `RPC_AddStatus(` call in `Rabbit.cs` and cross-checking each hit against these
