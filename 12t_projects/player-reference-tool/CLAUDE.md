@@ -1529,7 +1529,7 @@ citations in that agent's own report, condensed here):
   each comet independently `hit()`-rolled ~0.15s apart in-game. Real caveat (documented in `dmgNote`, not
   modeled): each comet's landing point scatters randomly near the target (`Random.Range(-8,8)`/`(-10,10)`
   with Giant Star), so N comets fired isn't the same guarantee as N hits landed -- Simulate assumes every
-  comet connects anyway (user-specified: "assume all hit connects", same instruction later reused for
+  comet connects anyway (user-specified: "assume all hits", same instruction later reused for
   Arctic Wind).
 - **Blizzard** (`hitCount:()=>6`, flat, confirmed not rank-scaled) -- a real conceptual conflict found and
   resolved with the user directly: `Penguin.cs:34571-34599` confirms the AoE is centered on the LOCKED
@@ -2525,18 +2525,18 @@ twice, both edits made before publishing since neither needed live back-and-fort
    other skill), and the Raw Damage chip in `renderHero` (a new `calcRangeFor(dmgTemplateText)` closure,
    extracted from the old hardcoded-to-`selected.dmg` `talMatchCalc`/`dmgCalcPostFn` block the same way, called
    once per group and rendered as a labeled `.sk-dmg-group-list` instead of the usual single `.sk-stat-value`).
-2. "in the final damage chip, assume all hits connect and come up with a damage range for skills with multiple
+2. "in the final damage chip, assume all hits and come up with a damage range for skills with multiple
    formulas" -- deliberately a DIFFERENT shape from Raw Damage's per-group list: Final Damage sums every
    group's own post-pipeline range × that group's `hitCount` (`finalRangeForRange`, itself extracted from the
    old inline `worstAfterDef`/`bestAfterDef`/`finalRange` block, now reusable per-group), landing on one total
-   number with a new `.sk-dmg-final-note` caption ("total, 6 hits, all connect") so it doesn't read as a
+   number with a new `.sk-dmg-final-note` caption ("total, 6 hits") so it doesn't read as a
    per-hit figure the way every other multi-hit skill's Final Damage chip does (manaMissile etc. deliberately
    UNCHANGED -- still shows one missile's own range, not a 5-missile total; the summing behavior only triggers
    for `dmgGroups` skills, confirmed by re-checking Mana Missile's own chip after this pass, numbers identical
    to before).
 3. A third, unprompted user comment during verification -- "for napalm skill specifically, it is certain that
    all 5 projectiles will hit the same target, becuase it's always used with target at point blank range and
-   the projectiles have quite a large hitbox" -- confirmed the "assume all connect" framing isn't a hypothetical
+   the projectiles have quite a large hitbox" -- confirmed the "assume all hits" framing isn't a hypothetical
    worst case for THIS skill, it's the realistic outcome given how it's actually played; folded into `dmgNote`
    rather than left as a bare assumption baked silently into the math.
 
@@ -2565,7 +2565,7 @@ screenshot alone.
 Verified live (Node static server, `Cache-Control: no-store` + CDP `Network.setCacheDisabled`, fresh
 navigation per check): Napalm's Damage Formula chip shows both `30 + 76(0.6TAL)` (Tick 1) and `5 + 12(0.1TAL)`
 (Ticks 2-6) stacked; Raw Damage shows `106-122` / `17-20` stacked; Final Damage shows `212-245` with the
-"total, 6 hits, all connect" caption; Simulate's 6 revealed hits were `128, 20, 19, 22, 21, 21` (hit 0 the
+"total, 6 hits" caption; Simulate's 6 revealed hits were `128, 20, 19, 22, 21, 21` (hit 0 the
 real 30-base roll, hits 1-5 the real 5-base rolls, summing to `231`, inside the `212-245` range) -- confirms
 `resolveHitDmgText` is correctly wiring hit index 0 to the `dmgGroups` first entry. Flame Turret (single-
 formula, `penetrating:true`) re-checked after the refactor: `53-61`/`59-68`, byte-identical to its own
@@ -2596,7 +2596,7 @@ PROJECTILE'S OWN IMPACT POSITION on collision (`Mole_napalm.cs:179`) -- confirme
 `ActionName` dispatch; `:5671`, integer-keyed `num3` dispatch, both guarded by `if (this.mChar.isMine) break`)
 are both just the standard Photon network-replication receivers that mirror the OWNING client's already-made
 decision onto other clients' screens, not independent triggers of new game logic. So **5 independent
-projectiles, each capable of independently starting its own full 6-pulse AoE sequence** -- if all 5 connect
+projectiles, each capable of independently starting its own full 6-pulse AoE sequence** -- if all 5 hit
 with the same target (which the user had already separately confirmed is the reliable real case: "it's always
 used with target at point blank range and the projectiles have quite a large hitbox"), that target takes
 5×6 = **30 total damage pulses**, not 6: 5 real `talAdjust(30)` pulses (one per projectile's own tick-0) +
@@ -2614,7 +2614,7 @@ Verified live (fresh Node server, `Cache-Control: no-store` + CDP `Network.setCa
 Formula/Raw Damage chips show the same 2 per-tick numbers as before (`30+76(0.6TAL)` / `5+12(0.1TAL)`,
 `106-122` / `17-20` -- correctly UNCHANGED, since a single projectile's own per-tick formula/range didn't
 change, only how many times it's counted) with the new "×5 projectiles" labels; Final Damage jumped from
-`212-245` to **`1060-1225`** (total, 30 hits, all connect); Simulate's title changed to "Test 30 hits" and a
+`212-245` to **`1060-1225`** (total, 30 hits); Simulate's title changed to "Test 30 hits" and a
 live roll produced exactly 5 big (>60) values and 25 small values, summing to `1152`, correctly inside the
 new `1060-1225` range. Screenshot confirmed no layout regression from the longer group labels or the 5×
 larger hit grid. `12t_reference/mole-skill-damage-reference.md`'s own napalm row and its
@@ -4316,7 +4316,7 @@ range rather than approximating it). `dmgHitCountRange` already defaults to `[1,
 neither field (`getHitCountRange`'s existing behavior, untouched), so a single-hit skill's Final Damage
 number is multiplied by 1 and doesn't change at all -- purely additive for the common case.
 
-The "total, N hits, all connect" note (previously `dmgGroups`-only) now shows for ANY skill whose hit
+The "total, N hits" note (previously `dmgGroups`-only) now shows for ANY skill whose hit
 count exceeds 1, using the same hit-count LABEL the Simulate button's own title already computes --
 correctly showing a real RANGE ("total, 17-22 hits") for duration-derived skills like Tornado instead of
 a single fixed number, since their hit count itself varies with the CHA/LCK roll.
@@ -4451,7 +4451,7 @@ wasn't the binding constraint there) while the MAX branch was genuinely pulled d
 (computed ~2187 uncapped → ~1566 after the pool ceiling) -- confirming the `Math.min` only bites where it
 should, not uniformly, and the result stays a well-formed `[min,max]` range (min ≤ max) throughout. Also
 updated the "total, N hits" note to flag when the shown total is capped -- the hit-count LABEL still
-shows the uncapped tick count (duration÷tick-rate), so a bare "total, 23 hits, all connect" next to an
+shows the uncapped tick count (duration÷tick-rate), so a bare "total, 23 hits" next to an
 already-capped number would misleadingly imply all 23 landed at full, uncapped value.
 
 **Not visually verified** — same no-Playwright limitation as the rest of this session's work; the hand
@@ -4484,7 +4484,7 @@ re-litigating:
    un-prorated damage first) -- the pool is a floor the last hit can overshoot by up to one whole hit, not
    a hard ceiling that caps mid-hit.
 
-Also removed the now-inapplicable "total, N hits, all connect" note for Typhoon specifically (per direct
+Also removed the now-inapplicable "total, N hits" note for Typhoon specifically (per direct
 follow-up: "no need to estimate tick count for typhoon case") -- the new model isn't hit-count-based at
 all, so that label would describe a computation that isn't what's shown; replaced with "HP pool total, +1
 hit if the last tick overshoots it" instead. Every non-Typhoon skill's Final Damage (including plain
