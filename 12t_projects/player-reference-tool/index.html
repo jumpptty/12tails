@@ -5048,7 +5048,7 @@ function mountSkillCooldownLookup(root){
         <div class="sk-stat sk-stat-dur">
           ${durLabelRow}
           <div class="sk-stat-value-wrap">
-            <div class="sk-stat-value${(selected.durWrapped || selected.durContested) ? "" : " unwrapped"}>${fmt(durRange)}s</div>
+            <div class="sk-stat-value${(selected.durWrapped || selected.durContested) ? "" : " unwrapped"}">${fmt(durRange)}s</div>
             ${durDist ? renderProbabilityTooltip(durDist) : ""}
           </div>
           <p class="sk-stat-base">${durBaseLabel} ${rawDuration}s${durPostAddNote}</p>
