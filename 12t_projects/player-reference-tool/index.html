@@ -487,6 +487,7 @@
      background, 8px 14px padding) would render as a second, mismatched box
      nested inside the already-styled outer one. */
   .sk-enemystat-controls{
+    position:relative;
     display:flex; flex-direction:column; gap:8px;
     background:var(--stat-atk-soft); border:1px solid var(--stat-atk); border-radius:3px;
     padding:8px 14px; margin-bottom:8px;
@@ -969,20 +970,22 @@
      Enemy Stats field, so it's immediately obvious the shown stats no
      longer match any named preset. See enemyStatsCustom's own comment for
      the detection mechanism. */
-  .sk-enemy-info-wrap{position:relative; display:flex; align-items:center; margin-left:4px}
+  .sk-enemy-info-wrap{
+    position:absolute; top:8px; right:8px; display:flex; align-items:center; z-index:10;
+  }
   .sk-enemy-info-btn{
-    width:20px; height:20px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
+    width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
     color:var(--muted); padding:0; display:flex; align-items:center; justify-content:center; cursor:pointer;
     transition:border-color .15s ease, color .15s ease, background-color .15s ease;
   }
   .sk-enemy-info-btn:hover, .sk-enemy-info-btn:focus-visible{
     border-color:var(--gold); color:var(--gold); background:var(--panel);
   }
-  .sk-enemy-info-btn svg{width:12px; height:12px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .sk-enemy-info-btn svg{width:11px; height:11px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round}
   .sk-enemy-info-popover{
     display:none; position:absolute; top:calc(100% + 6px); right:0;
     background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
-    box-shadow:0 6px 20px rgba(0,0,0,.6); padding:8px 10px; z-index:100; min-width:180px; max-width:240px;
+    box-shadow:0 6px 20px rgba(0,0,0,.7); padding:8px 10px; z-index:200; min-width:180px; max-width:250px;
     pointer-events:auto; text-align:left;
   }
   .sk-enemy-info-wrap:hover .sk-enemy-info-popover,
@@ -3237,6 +3240,12 @@ function mountSkillCooldownLookup(root){
           </button>
         </div>
         <div class="sk-enemystat-controls" data-role="enemystat-controls" hidden>
+          <div class="sk-enemy-info-wrap" data-role="enemy-info-wrap">
+            <button type="button" class="sk-enemy-info-btn" data-role="enemy-info-btn" title="Enemy Immunities" aria-label="Enemy Immunities">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </button>
+            <div class="sk-enemy-info-popover" data-role="enemy-info-popover"></div>
+          </div>
           <div class="sk-enemy-cycle-row">
             <div class="sk-enemy-cycle">
               <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
@@ -3246,12 +3255,6 @@ function mountSkillCooldownLookup(root){
               <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
                 <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
               </button>
-              <div class="sk-enemy-info-wrap" data-role="enemy-info-wrap">
-                <button type="button" class="sk-enemy-info-btn" data-role="enemy-info-btn" title="Enemy Immunities" aria-label="Enemy Immunities">
-                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                </button>
-                <div class="sk-enemy-info-popover" data-role="enemy-info-popover"></div>
-              </div>
             </div>
           </div>
           <div class="sk-controls">
