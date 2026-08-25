@@ -2993,7 +2993,7 @@ const SKILLS = [
   { id:"penguin_manaBurn", name:"Mana Burn", class:"Penguin", icon:"penguin_manaBurn2", maxRank:2, castTime:[3,4], castWrapped:true, cd:[24,30], cdWrapped:true, revisedArtExempt:false },
   { id:"penguin_fallingStars", name:"Falling Stars", class:"Penguin", icon:"penguin_fallingStars2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15+15×sLv)", dmgFocusIntellect:true, dmgMultDep:{id:"giantStar", label:"Giant Star", icon:"penguin_giantStar5", minRank:0, maxRank:1, mult:1.25}, dmgNote:"per star; Giant Star also +50% range (not shown, no chip for it)" },
   { id:"penguin_fallingComets", name:"Falling Comets", class:"Penguin", icon:"penguin_fallingComets2", maxRank:2, castTime:[6,10], castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15+15×sLv)", dmgFocusIntellect:true, dmgMultDep:{id:"giantStar", label:"Giant Star", icon:"penguin_giantStar5", minRank:0, maxRank:1, mult:1.25}, hitCount:(rank,dmgDepOn)=>2+3*rank, dmgNote:"per comet center, before distance falloff; 2+3×rank comets fired ~0.15s apart in-game (Simulate shows a flat 50ms/hit glance, not this real interval), each independently rolled, but each one scatters near the target so not all are guaranteed to land; Giant Star also +50% range (not shown, no chip for it)" },
-  { id:"penguin_manaVortex", name:"Mana Vortex", class:"Penguin", icon:"penguin_manaVortex3", maxRank:3, castTime:[5,7,9], castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmg:"sLv×12+12", dmgNote:"per tick, no TAL/focusIntellect scaling" },
+  { id:"penguin_manaVortex", name:"Mana Vortex", class:"Penguin", icon:"penguin_manaVortex3", maxRank:3, castTime:[5,7,9], castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmg:"sLv×12+12", ownLck:0, dmgNote:"per tick (every 2s over 60s duration), dealt by the Mana Vortex summon itself (attacker LCK = 0, no TAL/focusIntellect scaling). Saps sLv×4 MP from targets." },
   { id:"penguin_novaFlare", name:"Nova Flare", class:"Penguin", icon:"penguin_novaFlare1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"0.5×Vortex HP + Vortex MP", dmgNote:"detonates caster’s active Mana Vortex; 0 damage if none active" },
   { id:"penguin_meteora", name:"Meteora", class:"Penguin", icon:"penguin_meteora2", maxRank:2, castTime:[12,18], castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(200+150×sLv)", dmgFocusIntellect:true },
   { id:"penguin_frozenBlast", name:"Frozen Blast", class:"Penguin", icon:"penguin_frozenBlast4", maxRank:4, castTime:3, castWrapped:true, cd:[12,15,18,21], cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×12+18)", dmgFocusIntellect:true, dmgNote:"falls off with distance from impact", ko:"1" },
@@ -3733,9 +3733,9 @@ function mountSkillCooldownLookup(root){
     // -- using the player's own LCK input here would silently substitute
     // the wrong actor's stat. `ownLck` marks a skill whose attacker-LCK for
     // this roll must be computed from its own base/replaceDep instead.
-    const attackerLCK = skill.ownLck
-      ? (dmgReplaceDepOn ? Math.floor(skill.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(text))
-      : LCK;
+    const attackerLCK = (skill.ownLck !== undefined)
+      ? (typeof skill.ownLck === "number" ? skill.ownLck : (dmgReplaceDepOn ? Math.floor(skill.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(text)))
+      : (skill.ownStatsDmgOnly ? bbOwnLCK : LCK);
     // penetrating (Mole's Flame Turret pilot, 2026-08-19, user-reported +
     // independently re-verified against source, THEN corrected again same
     // day when the user asked about Flame Carnival/Napalm too): a skill
@@ -5381,8 +5381,8 @@ function mountSkillCooldownLookup(root){
           // `this.lck`, the ATTACKER's own field -- for the turret that's a
           // separate, independently-tracked stat, not the player's own LCK
           // input this tool otherwise uses everywhere else.
-          const attackerLCK = selected.ownLck
-            ? (dmgReplaceDepOnCalc ? Math.floor(selected.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(getDmgText(selected, rank).replace(/\bsLv\b/g, String(rank))))
+          const attackerLCK = (selected.ownLck !== undefined)
+            ? (typeof selected.ownLck === "number" ? selected.ownLck : (dmgReplaceDepOnCalc ? Math.floor(selected.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(getDmgText(selected, rank).replace(/\bsLv\b/g, String(rank)))))
             : (selected.ownStatsDmgOnly ? bbOwnLCK : LCK);
           const playerLckSpread = lckSpreadRange(attackerLCK);
           // penetrating (Mole's Flame Turret pilot, 2026-08-19) -- see
