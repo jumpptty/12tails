@@ -731,7 +731,7 @@
      separate chips. Expanded 2026-08-21 (user request: "full visibility,
      used or not") from 4 stats (ATK/TAL/AGI/LCK only) to the FULL 8-stat
      block + mhp, always 9 cells now regardless of skill/entity -- 3 columns
-     x 3 rows, ordered to match CharacterControl.cs's own field declaration
+     x 3 rows, ordered to match the game's field declaration
      order read left-to-right/top-to-bottom (hp, atk, def / agi, vit, mag /
      cha, tal, lck). The old .sk-bb-table-3 3-column variant (for
      ownStatsDmgOnly, which only ever had 3 of the 4 stats to show) is gone
@@ -1607,7 +1607,7 @@ function chaAdjustRange(base, CHA, LCK) {
   return [chaAdjustAtRoll(base, CHA, rMin), chaAdjustAtRoll(base, CHA, rMax)];
 }
 
-// debuffAdjust(base, casterCHA, targetCHA) (Damage.cs:317, Damage.getDebuff) --
+// debuffAdjust(base, casterCHA, targetCHA) (Damage.getDebuff) --
 // contested debuff duration against enemy target's CHA.
 // When caster.cha <= target.cha: floor(base * (1 + (c1 - c2)/(|c1 - c2| + 64)))
 // When caster.cha > target.cha: floor(base * (1 + 0.01 * (c1 - c2)))
@@ -1619,7 +1619,7 @@ function debuffAdjust(base, casterCHA, targetCHA) {
 
 
 // talAdjust(t) = (int)(t * (1 + 0.02*n)), n = clamp(TAL+R,1,512) -- damage
-// boost (CharacterControl.cs:20624). Same monotonic-increasing shape as
+// boost. Same monotonic-increasing shape as
 // chaAdjust (min R -> min output).
 function talAdjustAtRoll(base, TAL, R) {
   const n = Math.min(Math.max(TAL + R, 1), 512);
@@ -1630,8 +1630,8 @@ function talAdjustRange(base, TAL, LCK) {
   return [talAdjustAtRoll(base, TAL, rMin), talAdjustAtRoll(base, TAL, rMax)];
 }
 
-// defAdjust(nDamage) (CharacterControl.cs:20524) -- called on the TARGET
-// (characterControl.defAdjust(nDamage), CharacterControl.cs:3546,
+// defAdjust(nDamage) -- called on the TARGET
+// (characterControl.defAdjust(nDamage), game engine,
 // immediately before RPC_AddDamage), using the DEFENDER's own def/lck, not
 // the attacker's. This tool got this formula wrong TWICE before landing
 // here (see this project's own CLAUDE.md for the full correction history)
@@ -1674,8 +1674,8 @@ function defAdjustRoll(nDamage, def, lck) {
   return defAdjustAtN(nDamage, n);
 }
 
-// dmgAdjust(nDamage) (CharacterControl.cs:20487-20491) -- called on the
-// ATTACKER (this.dmgAdjust(nDamage), CharacterControl.cs:3540) BEFORE
+// dmgAdjust(nDamage) -- called on the
+// ATTACKER (this.dmgAdjust(nDamage), game engine) BEFORE
 // defAdjust runs on the target. Two independent components, both from the
 // ATTACKER's own side: damageMod, a buff/debuff-driven multiplier (default
 // 1.0, clamped 0..5 -- see the Mods popup / MOD_DEFS) and the attacker's
@@ -1691,14 +1691,14 @@ function dmgAdjustRange(nDamage, damageMod, lck) {
   return [dmgAdjustAtRoll(nDamage, damageMod, rMin), dmgAdjustAtRoll(nDamage, damageMod, rMax)];
 }
 
-// hitMod (CharacterControl.cs:3765, inside the TARGET's own RPC_AddDamage)
+// hitMod (game engine, inside the TARGET's own RPC_AddDamage)
 // -- applied AFTER defAdjust has already run, not before. No RNG of its own
 // (plain multiplier), default 1.0, clamped 0..3.
 function hitModAdjust(nDamage, hitMod) {
   const mod = Math.min(Math.max(hitMod, 0), 3);
   return Math.ceil(mod * nDamage);
 }
-// Effect-damage hitMod variant (CharacterControl.cs:6203, inside
+// Effect-damage hitMod variant (game engine, inside
 // RPC_AddEffectDamage -- a SEPARATE application site from the RPC_AddDamage
 // one hitModAdjust above models). Same clamp/multiply shape, but
 // Mathf.FloorToInt, not CeilToInt -- confirmed by reading RPC_AddEffectDamage
@@ -1732,7 +1732,7 @@ function finalMultiplierAdjust(nDamage, finalMultiplier) {
 }
 
 // magAdjust(t) = clamp(t - floor(clamp(MAG+R,1,512)/32), 0.1, 600) -- cast time, MAG-based
-// (CharacterControl.cs:20584-20589). The MAG+R term is clamped to [1,512] BEFORE the /32,
+//. The MAG+R term is clamped to [1,512] BEFORE the /32,
 // and that division is a genuine integer divide in source (floor, not round) -- higher n =
 // shorter cast time, so max R gives the MIN of the range and min R (=0) gives the MAX,
 // same direction as agiAdjust.
@@ -1746,11 +1746,11 @@ function magAdjustRange(base, MAG, LCK) {
   return [magAdjustAtRoll(base, MAG, rMax), magAdjustAtRoll(base, MAG, rMin)];
 }
 
-// lckAdjust(nChance) (CharacterControl.cs:20658-20671) -- the LCK-proc-chance
+// lckAdjust(nChance) -- the LCK-proc-chance
 // chip's own formula, genuinely different shape from every *Adjust above:
 // no Random.Range baked into the function itself (that roll lives at each
 // individual CALL SITE, e.g. arcticWind's `Random.Range(0,100) <
-// this.mChar.lckAdjust(20)` -- Penguin.cs:10671), so lckAdjust itself is a
+// this.mChar.lckAdjust(20)`), so lckAdjust itself is a
 // single deterministic percentage for a given LCK, not a [min,max] spread.
 // That's why this chip renders one live number, not a range with a
 // probability tooltip the way Cooldown/Cast Time/Duration do.
@@ -1766,11 +1766,11 @@ function lckAdjustChance(nChance, LCK) {
 // BarrelBot's own independent stat block (Barrel Bot moveset pilot,
 // 2026-08-20) -- like AutoGyroGun before it, BarrelBot is a real,
 // separately-tracked CharacterControl (`this.mChar = GetComponent(...)`,
-// `BarrelBot.cs:32`), NOT a proxy for Mole's own stats. Every atkCoeff/
+//), NOT a proxy for Mole's own stats. Every atkCoeff/
 // talAdjust/agiAdjust call across all 8 "Barrel Bot - X" SKILLS entries
 // reads BarrelBot's OWN atk/tal/agi/lck, confirmed by tracing `this.mChar`
 // through every one of those formula call sites.
-// Baseline (`BarrelBot.cs:47-152`, type-gated by rank, "BarrelBot1".."4"):
+// Baseline (, type-gated by rank, "BarrelBot1".."4"):
 //   atk = def = 15×rank, agi = mag = cha = 10 FLAT (never scales with rank
 //   at all), vit = tal = lck = 10×rank.
 // This tool has no 2nd rank-selector for BarrelBot's own body rank
@@ -1780,14 +1780,14 @@ function lckAdjustChance(nChance, LCK) {
 // unexposed rank/dep elsewhere. doubleBotOn/synchroMoleOn are computed by
 // each call site via the shared `getDepRank` toggles, same as every other
 // dep in this tool.
-//   doubleBot5 (hasSkill 423, `Mole.cs:12708-12759`, inside
+//   doubleBot5 (hasSkill 423,, inside
 //   RPC_barrelBot_create): adds `(int)(0.5×Mole's own character level)` to
 //   EVERY stat -- atk/def/agi/vit/mag/cha/tal/lck, additive, all 8 at once.
-//   (Its OTHER hasSkill(423) site, `Mole.cs:12415`, only gates a 2nd-slot
+//   (Its OTHER hasSkill(423) site,, only gates a 2nd-slot
 //   tracking flag for having 2 Barrel Bots deployed -- unrelated to stats,
 //   confirmed by reading both sites fully rather than assuming either one
 //   was the real mechanism.)
-//   synchroMole rank 2 (`Mole.cs:13330-13368`, the SAME sweep already
+//   synchroMole rank 2 (, the SAME sweep already
 //   modeled for AutoGyroGun -- matches type strings "BarrelBot1".."5" too):
 //   adds `floor(Mole's own TAL)` to atk (and def, unused by this tool) only
 //   -- not tal/agi/lck. Reuses AutoGyroGun's own dep id ("synchroMole2") so
@@ -1797,11 +1797,11 @@ function lckAdjustChance(nChance, LCK) {
 // explicit "show every stat for full visibility, used or not" request --
 // def/vit/mag/cha/mhp were never returned before (this tool never modeled
 // them, since nothing here simulates damage TAKEN or has an HP chip), even
-// though BarrelBot.cs's own rank-4 branch (`BarrelBot.cs:130-154`) sets all
+// though Barrel Bot's own rank-4 branch () sets all
 // of them just as concretely as atk/tal/agi/lck: `hp=mhp=400`, `def=60`
 // (chained with atk in source, `this.mChar.atk = (this.mChar.def = 60)`),
 // `vit=tal=lck=40`, `agi=mag=cha=10`. doubleBot5's own bonus really does
-// apply to all 8 core stats (`Mole.cs:12708-12759`, additive, confirmed via
+// apply to all 8 core stats (, additive, confirmed via
 // the "EVERY stat -- atk/def/agi/vit/mag/cha/tal/lck" citation already in
 // this file's history) -- the OLD version of this function only added the
 // bonus to 4 of the 8, a real gap now fixed, not just a display omission.
@@ -1809,12 +1809,12 @@ function lckAdjustChance(nChance, LCK) {
 // its existing citation.
 // mhp -- CORRECTED 2026-08-21 (user: "fix barrelbot stat HP skillDep on
 // HeavyBuilt and doubleBot skillDep"). The earlier "mhp is untouched by
-// doubleBot5" claim was wrong -- re-reading `Mole.cs:12708-12759` to its
+// doubleBot5" claim was wrong -- re-reading to its
 // actual end (not just the 8-stat additive block) finds ONE more line
-// still inside the SAME `hasSkill(423)` block: `Mole.cs:12754` --
+// still inside the SAME `hasSkill(423)` block: --
 // `characterControl.mhp = 10 * characterControl.vit;` -- doubleBot5
 // doesn't ADD to mhp, it OVERWRITES it as 10x the (already-boosted) vit
-// stat. And `Mole.cs:12765-12781` (`getHeavyBuiltLv()`, unconditional,
+// stat. And (`getHeavyBuiltLv()`, unconditional,
 // same block every other summon-creation coroutine in this file shares --
 // see kingKaiserOwnStats' own citation) then scales WHATEVER mhp is at
 // that point by `ceil(mhp × (1+0.5×heavyBuiltLv))` -- so heavyBuiltLv
@@ -1837,33 +1837,33 @@ function barrelBotOwnStats(doubleBotOn, synchroMoleOn, moleLV, moleTAL, heavyBui
 }
 
 // King Kaiser (2026-08-20 pilot) -- Mole TRANSFORMS into King Kaiser (not a
-// summoned companion like Barrel Bot/Auto Gyro Gun -- KingKaiser.cs:35995
+// summoned companion like Barrel Bot/Auto Gyro Gun
 // swaps the player's own Photon actor mapping onto the new mech GameObject,
 // `PhotonClient.ActorNrList[tID] = mKingKaiser`), but the mech still runs on
-// its own independent CharacterControl (`KingKaiser.cs:49`,
+// its own independent CharacterControl (,
 // `this.mChar = GetComponent<CharacterControl>()`), so its stats are still
 // genuinely its own, not Mole's regular inputs -- same mechanical caution as
 // Barrel Bot, different narrative (transform, not command-a-companion).
 // ATK/DEF are the only 2 fields ever touched in code, scaled by King
-// Kaiser's own upgrade tier (`getKaiserLv()`, `Mole.cs:13607-13646`,
+// Kaiser's own upgrade tier (`getKaiserLv()`,,
 // 0-3 via hasSkill 371/372/373 -- see KING_KAISER_LV_DEP below):
-// `KingKaiser.cs:3994/3997`, `atk = 150 + 50×kaiserLv`, `def = 100 + 50×kaiserLv`.
+//, `atk = 150 + 50×kaiserLv`, `def = 100 + 50×kaiserLv`.
 // Every other stat (agi/vit/mag/cha/tal/lck) is NEVER touched by any code in
-// KingKaiser.cs -- hex-decoded directly from the serialized prefab default
+// King Kaiser -- hex-decoded directly from the serialized prefab default
 // via this repo's decode-character-stats skill (12TailsOnline_Data/
 // resources.assets, all 5 color-variant reskins byte-identical): tal=75,
 // agi=200, lck=200, vit=150, mag=100, cha=200. Confirmed via a full-file
-// grep of Mole.cs that neither doubleBot5 nor synchroMole's own type-string
+// grep of Mole skill logic that neither doubleBot5 nor synchroMole's own type-string
 // sweeps ever match "KingKaiser" -- no dynamic stat-boost dependency exists
 // for this summon, unlike Barrel Bot/Auto Gyro Gun, so this helper only
 // needs the rank parameter.
 // mhp -- CORRECTED 2026-08-21 (user: "fix KingKaiser HP to be 1500", i.e.
-// matching the skill's own tooltip, `MoleSkill_eng.cs:851`: "ride a giant
+// matching the skill's own tooltip,: "ride a giant
 // robot with 1500 hp"). The prior pass's hex-decode of the "KingKaiser"
 // prefab genuinely found mhp=200 in `12TailsOnline_Data/resources.assets`
 // (re-verified again this pass, including checking whether the 6 real
 // color-suffixed prefabs actually instantiated at the summon site --
-// `KingKaiser_r/_g/_b/_k/_w`, `Mole.cs:35720-35776` -- carry their OWN
+// `KingKaiser_r/_g/_b/_k/_w`, -- carry their OWN
 // separate stat block: they don't, none of those 5 literal name strings
 // found elsewhere in the binary decode as a valid CharacterControl block,
 // confirming they're cosmetic-only variants of the one base "KingKaiser"
@@ -2606,7 +2606,7 @@ const SKILL_ICONS = {
 
 // Wolf's Perseverance passive extends the duration of every one of Wolf's own
 // buff-type skills by a flat multiplier — a class-wide relationship (verified in
-// CharacterControl.cs's RPC_AddStatus, not any per-skill Wolf.cs cast site), so
+// the engine's RPC_AddStatus, not any per-skill Wolf skill cast site), so
 // one shared dep object is referenced by all affected SKILLS entries below rather
 // than copy-pasted per skill.
 const WOLF_PERSEVERANCE_DEP = {
@@ -2616,7 +2616,7 @@ const WOLF_PERSEVERANCE_DEP = {
 
 // Whale's Knight of the Deep passive (single-rank, 0 or 1 — getKnightOfTheDeepLv())
 // reduces six weapon-swing skills' cooldowns by a skill-specific flat amount at
-// rank 1, verified at each skill's own Whale.cs cast site. A factory rather than
+// rank 1, verified at each skill's own Whale skill cast site. A factory rather than
 // one shared object like WOLF_PERSEVERANCE_DEP, since the reduction differs
 // per skill (-10/-10/-15/-15/-30/-40).
 function whaleKnightDep(perRank){
@@ -2633,7 +2633,7 @@ const WHALE_REDUCED_CAST_DEP = { id: "reducedCast", label: "Reduced Cast", icon:
 const PENGUIN_FOCUS_INTELLECT_DEP = { id: "focusIntellect", label: "Focus Intellect",
   icon: "penguin_focusIntellect5", minRank: 0, maxRank: 1 };
 
-// Deadly Frost (hasSkill(413), Penguin.cs:30831 -- `$i$26330 < 4 +
+// Deadly Frost (hasSkill(413), Penguin skill logic -- `$i$26330 < 4 +
 // (hasSkill(413) ? 4 : 0)`): doubles Arctic Wind's tick count 4->8 with NO
 // change to the per-tick damage formula at all, unlike every other dep in
 // this file so far -- so it's used only via a skill's own `hitCountDep`
@@ -2651,14 +2651,14 @@ const MOLE_DOUBLEBOT_DEP = { id: "doubleBot", label: "Double Bot",
   icon: "mole_doubleBot5", minRank: 0, maxRank: 1 };
 // Deliberately the SAME id AutoGyroGun's own Synchro Mole dep already uses
 // -- one real cast sweeps every matching summon (AutoGyroGun1-5 AND
-// BarrelBot1-5, Mole.cs:13295-13368) at once, so toggling either skill's
+// BarrelBot1-5, Mole skill logic) at once, so toggling either skill's
 // icon should flip both, same linked-toggle precedent as mineLover/
 // megaDrill elsewhere in this file.
 const MOLE_SYNCHROMOLE_BARRELBOT_DEP = { id: "synchroMole2", label: "Synchro Mole (Rank 2)",
   icon: "mole_synchroMole2", minRank: 0, maxRank: 1 };
 // King Kaiser's own tier dep (2026-08-20 pilot) -- a real icon-cycle rank
 // (1-3), but genuinely driven by 3 SEPARATE single-rank skill unlocks
-// (getKaiserLv(), Mole.cs:13607-13646: hasSkill(371)="mol_kingKaiser1" (the
+// (getKaiserLv(), Mole skill logic: hasSkill(371)="mol_kingKaiser1" (the
 // base cast itself) -> 1, hasSkill(372)="mol_kaiserCannon1" -> 2,
 // hasSkill(373)="mol_kaiserBeam1" -> 3), not one skill's own multi-rank
 // upgrade the way Chameleon's Improved Slayer is -- reuses the generic
@@ -2672,12 +2672,12 @@ const MOLE_SYNCHROMOLE_BARRELBOT_DEP = { id: "synchroMole2", label: "Synchro Mol
 const KING_KAISER_LV_DEP = { id: "kaiserLv", label: "King Kaiser Level",
   icon: "mole_kingKaiser3", minRank: 1, maxRank: 3 };
 // Heavy Built (2026-08-21, user-requested fix) -- a real 0-2 rank passive
-// (hasSkill 361/362, `mol_heavyBuilt1`/`mol_heavyBuilt2`, `MoleSkill.cs:
-// 3165-3177`) that scales an already-computed mhp by `ceil(mhp × (1+0.5×
+// (hasSkill 361/362, mol_heavyBuilt1/mol_heavyBuilt2)
+// that scales an already-computed mhp by ceil(mhp × (1+0.5×
 // heavyBuiltLv))` -- confirmed as a GENERAL Mole passive, not King-Kaiser-
 // specific: the exact same formula/getHeavyBuiltLv() call appears twice,
-// once for King Kaiser's own mhp (`Mole.cs:35936`) and once for Barrel
-// Bot's (`Mole.cs:12765-12781`), both reusing the identical ceil(mhp×
+// once for King Kaiser's own mhp and once for Barrel
+// Bot's, both reusing the identical ceil(mhp×
 // (1+0.5×lv)) shape off whatever mhp the summon already has at that point
 // -- shared dep id so a single toggle instance drives both chips, same
 // linked-toggle precedent as doubleBot/synchroMole/mineLover/megaDrill.
@@ -2687,7 +2687,7 @@ const MOLE_HEAVYBUILT_DEP = { id: "heavyBuilt", label: "Heavy Built",
 // Chameleon rollout (2026-08-21, 3rd class after Penguin/Mole) -- Class C
 // damage-affecting deps. addedFire5 (hasSkill 402): Quick Fire's burst
 // phase gains +0.1xATK per hit AND doubles its own hit-loop count
-// (Chameleon.cs:19741/20061) -- the coefficient bump on burst-only hits
+// -- the coefficient bump on burst-only hits
 // isn't modeled (would need a dmgGroups-shaped 3-phase split for a small
 // per-hit difference), only the hit-count doubling, via hitCountDep same
 // as Penguin's Deadly Frost precedent; the coefficient nuance is flagged
@@ -2695,7 +2695,7 @@ const MOLE_HEAVYBUILT_DEP = { id: "heavyBuilt", label: "Heavy Built",
 const CHAMELEON_ADDEDFIRE_DEP = { id: "addedFire", label: "Added Fire",
   icon: "chameleon_addedFire5", minRank: 0, maxRank: 1 };
 // massHouseLock5 (hasSkill 422): x1.5 multiplicative on Mass Shot's whole
-// formula (Chameleon.cs:22524) plus +3m AoE radius (not modeled, no radius
+// formula plus +3m AoE radius (not modeled, no radius
 // chip exists). Same passive also adds +2s to Needle Prison's own Duration
 // (already excluded from this tool's Duration column per the existing
 // cooldown-reference doc -- not re-linked here, scope stayed to Mass Shot's
@@ -2754,7 +2754,7 @@ const ENEMY_PRESETS = [
 
 // Mods popup (2026-08-16): the buffs/debuffs that move damageMod (attacker,
 // dmgAdjust) and hitMod (target, RPC_AddDamage) away from their 1.0
-// baseline. Formulas verified against CharacterControl.cs's status
+// baseline. Formulas verified against the engine's status
 // apply/remove regions (this project's CLAUDE.md has the full per-status
 // citation table -- 13 statuses were found touching these two fields; this
 // is a user-curated subset, not the full list, so an unlisted status isn't
@@ -2891,30 +2891,30 @@ const SKILLS = [
     {dmg:"0", atkCoeff:0.25, hitCount:1, label:"Opening Shot"},
     {dmg:"0", atkCoeff:(rank,depOn)=>depOn?0.35:0.25, hitCount:(rank,depOn)=>(depOn?4:2)*rank, dep:CHAMELEON_ADDEDFIRE_DEP, label:"Rapid-Fire Burst"},
     {dmg:"0", atkCoeff:0.25, hitCount:1, label:"Closing Shot"},
-  ], dmgNote:"3-phase burst (open/rapid-fire/close), no TAL scaling — `Chameleon.cs:19620/19741/19912`. Open/close shots are always flat 0.25×ATK, 1 hit each. The rapid-fire phase fires 2×rank hits base (0.25×ATK each), or 4×rank hits at 0.35×ATK each with Added Fire (addedFire5) — both the coefficient bump AND the extra hits are real and shown above." },
+  ], dmgNote:"3-phase burst (open/rapid-fire/close), no TAL scaling. Open/close shots are always flat 0.25×ATK, 1 hit each. The rapid-fire phase fires 2×rank hits base (0.25×ATK each), or 4×rank hits at 0.35×ATK each with Added Fire (addedFire5) — both the coefficient bump AND the extra hits are reflected above." },
   { id:"chameleon_perfectBlend", name:"Perfect Blend", class:"Chameleon", icon:"chameleon_perfectBlend2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, duration:[2,4], durWrapped:true, dep:{ id:"eraseSenses", label:"Erase Senses", icon:"chameleon_eraseSenses5", minRank:0, maxRank:1, perRank:4 } },
   { id:"chameleon_trueInvisibility", name:"True Invisibility", class:"Chameleon", icon:"chameleon_trueInvisibility2", maxRank:2, castTime:5, castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:[8,12], durWrapped:true, dep:{ id:"eraseSenses", label:"Erase Senses", icon:"chameleon_eraseSenses5", minRank:0, maxRank:1, perRank:4 } },
   { id:"chameleon_needlePrison", name:"Needle Prison", class:"Chameleon", icon:"chameleon_needlePrison2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"chameleon_massShot", name:"Mass Shot", class:"Chameleon", icon:"chameleon_massShot2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×8+8)", atkCoeff:0.5, ko:"1", dmgMultDep:{id:"massHouseLock", label:"Mass House Lock", icon:"chameleon_massHouseLock5", minRank:0, maxRank:1, mult:1.5}, dmgNote:"single AoE pass (radius 6m, +3m with Mass House Lock — not shown), hits every target once — `Chameleon.cs:22513/22558`. Mass House Lock (massHouseLock5) also adds +2s to Needle Prison's own Duration, not linked to this toggle." },
-  { id:"chameleon_poisonVolley", name:"Poison Volley", class:"Chameleon", icon:"chameleon_poisonVolley2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.5, ko:"1", dmgNote:"single cone AoE pass, flat 0.5×ATK, no TAL scaling — `Chameleon.cs:23312`. Also applies a stacking poison debuff (min sLv stacks, capped at Deadly Venom's own increasedPoisonLv+1) that Venom Shock later detonates — see that skill's own note." },
-  { id:"chameleon_venomShock", name:"Venom Shock", class:"Chameleon", icon:"chameleon_venomShock2", maxRank:2, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:["100% of remaining poison damage", "150% of remaining poison damage"], ko:"0", dmgNote:"detonates the target's existing poison stack (from Poison Volley or poison-tagged normal attacks) — 0 if the target has no active poison. \"remaining poison\" = ceil(0.25×(poisonLv×10−1)×remaining poison seconds) — the 2 ranks apply a straight 1.0×/1.5× multiplier on top of that (`Chameleon.cs`'s own coefficient is `0.5×sLv+0.5`, which simplifies to exactly 100%/150% at sLv 1/2). State-contingent — `CharacterControl.cs:36976-37030`, triggered the instant this skill's own status lands on an already-poisoned target, not a direct hit() call of its own." },
+  { id:"chameleon_massShot", name:"Mass Shot", class:"Chameleon", icon:"chameleon_massShot2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×8+8)", atkCoeff:0.5, ko:"1", dmgMultDep:{id:"massHouseLock", label:"Mass House Lock", icon:"chameleon_massHouseLock5", minRank:0, maxRank:1, mult:1.5}, dmgNote:"Single AoE pass (radius 6m, +3m with Mass House Lock), hits every target once. Mass House Lock (massHouseLock5) also adds +2s to Needle Prison's own Duration, not linked to this toggle." },
+  { id:"chameleon_poisonVolley", name:"Poison Volley", class:"Chameleon", icon:"chameleon_poisonVolley2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.5, ko:"1", dmgNote:"Single cone AoE pass, flat 0.5×ATK, no TAL scaling. Also applies a stacking poison debuff (min sLv stacks, capped at Deadly Venom's increasedPoisonLv + 1) that Venom Shock later detonates — see that skill's own note." },
+  { id:"chameleon_venomShock", name:"Venom Shock", class:"Chameleon", icon:"chameleon_venomShock2", maxRank:2, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:["100% of remaining poison damage", "150% of remaining poison damage"], ko:"0", dmgNote:"Detonates the target's existing poison stack (from Poison Volley or poison-tagged normal attacks) — 0 if the target has no active poison. Remaining poison damage = ceil(0.25×(poisonLv×10 − 1)×remaining poison seconds) multiplied by 100% (Rank 1) / 150% (Rank 2). State-contingent, triggered when this skill's status lands on an already-poisoned target." },
   { id:"chameleon_massInvisibility", name:"Mass Invisibility", class:"Chameleon", icon:"chameleon_massInvisibility2", maxRank:2, castTime:8, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:[8,12], durWrapped:true },
   { id:"chameleon_finalEntrapment", name:"Final Entrapment", class:"Chameleon", icon:"chameleon_finalEntrapment2", maxRank:2, castTime:6, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:[5,7], durWrapped:true },
-  { id:"chameleon_tormentRain", name:"Torment Rain", class:"Chameleon", icon:"chameleon_tormentRain1", maxRank:1, cd:3, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(60)", atkCoeff:0.5, ko:"1", dmgNote:"single AoE burst (radius 8m) from the arrow-rain VFX, hits every target in range once — `Chameleon.cs:26039/26067`. Scoped to Final Entrapment's cage; requires an active cage to be useful (not itself gated in this tool)." },
-  { id:"chameleon_fatalStrike", name:"Fatal Strike", class:"Chameleon", icon:"chameleon_fatalStrike4", maxRank:4, cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmgNote:"deals no damage of its own — buffs the next 5 (+5 with extraArrows5) normal-attack bow shots with a flat +6×fatalStrikeLv bonus each (extraArrows5 also raises fatalStrikeLv itself by 1) — `Chameleon.cs:26313`, payoff in `Chameleon_nAttack.cs:502`. This tool doesn't track the normal-attack formula itself, so no Damage Formula chip is shown." },
-  { id:"chameleon_leftStride", name:"Left Stride", class:"Chameleon", icon:"chameleon_leftStride2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:(rank,depLv)=>{ const base = rank===1 ? 3 : 5; return `${depLv ? base*2 : base} Normal Attack Arrows`; }, dmgRankDep:CHAMELEON_DOUBLESTRIDER_DEP, ko:"1", dmgNote:"3 Normal Attack Arrows while dashing (5 at rank 2), doubled to 6/10 once Double Strider's shadow clone spawns mid-dash — `Chameleon.cs:27058`. Each arrow uses the shared normal-attack formula this tool doesn't track (see Fatal Strike's own note), so no Raw/Final Damage or Simulate chip is shown for it — KO alone is the normal-attack's own flat 1 per arrow, shown in the badge above." },
-  { id:"chameleon_rightStride", name:"Right Stride", class:"Chameleon", icon:"chameleon_rightStride2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.4, ko:"2", hitCountDep:CHAMELEON_DOUBLESTRIDER_DEP, hitCount:(rank,dmgDepOn,hitCountDepOn)=>(rank*2+1)*(hitCountDepOn?2:1), dmgNote:"piercing raycast, hits every enemy on the line per volley — flat 0.4×ATK per hit, no TAL scaling — `Chameleon.cs:28342/28359`. Hit count shown is volley count (rank×2+1, doubled by Double Strider's shadow clone); an individual volley can hit more than one target if they're lined up, not modeled as extra hits here." },
+  { id:"chameleon_tormentRain", name:"Torment Rain", class:"Chameleon", icon:"chameleon_tormentRain1", maxRank:1, cd:3, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(60)", atkCoeff:0.5, ko:"1", dmgNote:"Single AoE burst (radius 8m) from the arrow-rain VFX, hits every target in range once. Scoped to Final Entrapment's cage; requires an active cage to be useful." },
+  { id:"chameleon_fatalStrike", name:"Fatal Strike", class:"Chameleon", icon:"chameleon_fatalStrike4", maxRank:4, cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmgNote:"Buffs the next 5 (+5 with extraArrows5) normal-attack bow shots with a flat +6×fatalStrikeLv bonus each (extraArrows5 also raises fatalStrikeLv by 1). Does not deal direct skill damage." },
+  { id:"chameleon_leftStride", name:"Left Stride", class:"Chameleon", icon:"chameleon_leftStride2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:(rank,depLv)=>{ const base = rank===1 ? 3 : 5; return `${depLv ? base*2 : base} Normal Attack Arrows`; }, dmgRankDep:CHAMELEON_DOUBLESTRIDER_DEP, ko:"1", dmgNote:"Fires 3 normal attack arrows while dashing (5 at rank 2), doubled to 6/10 once Double Strider's shadow clone spawns mid-dash. Each arrow deals normal attack damage with base KO=1 per arrow." },
+  { id:"chameleon_rightStride", name:"Right Stride", class:"Chameleon", icon:"chameleon_rightStride2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.4, ko:"2", hitCountDep:CHAMELEON_DOUBLESTRIDER_DEP, hitCount:(rank,dmgDepOn,hitCountDepOn)=>(rank*2+1)*(hitCountDepOn?2:1), dmgNote:"Piercing raycast, hits every enemy in line per volley — flat 0.4×ATK per hit, no TAL scaling. Hit count shown is volley count (rank×2 + 1, doubled by Double Strider's shadow clone); an individual volley can pierce through multiple aligned targets." },
   { id:"chameleon_campFire", name:"Camp Fire", class:"Chameleon", icon:"chameleon_campFire2", maxRank:2, castTime:5, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true },
   { id:"chameleon_bloodBurn", name:"Blood Burn", class:"Chameleon", icon:"chameleon_bloodBurn2", maxRank:2, cd:18, cdWrapped:true, revisedArtExempt:false },
-  { id:"chameleon_slayer", name:"Bug Slayer / Tail Slayer / Elemental Slayer / Machine Slayer", class:"Chameleon", icon:"chameleon_slayer4", maxRank:4, castTime:2, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:0.5 }, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+10×depLv)", atkCoeff:(rank,depLv)=>0.3+0.15*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"formula is FLAT regardless of which rank/type is selected — rank here picks which enemy type (Bug/Tail/Elemental/Machine) gets the bonus below, it does not scale the base damage. `Chameleon.cs:31488`. Improved Slayer (same passive as the Cast Time corner toggle — this toggle and that one share live state) adds +0.15×ATK and +10 to this formula per its own rank, both reflected above. Deals ×2 total against a race-matching target OR one carrying Mark of Slayer's debuff — not modeled, situational." },
-  { id:"chameleon_allSlayer", name:"All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer", class:"Chameleon", icon:"chameleon_allSlayer4", maxRank:4, castTime:4, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:1 }, cd:240, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+20×depLv)", atkCoeff:(rank,depLv)=>0.6+0.3*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"formula is FLAT regardless of rank — only race/Mark-of-Slayer-matching targets are hit at all (a target filter, not a bonus multiplier the way single-target Slayer has). `Chameleon.cs:33249`. Improved Slayer (same passive as the Cast Time corner toggle — this toggle and that one share live state) adds +0.3×ATK and +20 to this formula per rank, both reflected above; it ALSO raises the per-cast target cap (4+its own rank), not reflected in the hit-count shown." },
-  { id:"chameleon_allSlain", name:"All Slain", class:"Chameleon", icon:"chameleon_allSlain2", maxRank:2, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×100)", ko:"0", dmgNote:"hits every enemy this Chameleon has damaged (via any skill or normal attack) since the last All Slain cast, then clears that list — `Chameleon.cs:34377`. Genuinely variable/uncapped hit count driven by recent combat history, not a fixed function of rank; shown as a single hit here, real casts can hit far more." },
-  { id:"chameleon_skinShift", name:"Skin Shift", class:"Chameleon", icon:"chameleon_skinShift5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmgNote:"deals no damage to enemies — self-only: costs 10% of Chameleon's own CURRENT hp (`ceil(0.1×hp)`, `Chameleon.cs:35229`) to re-level whatever Immunity status is already active by +1, up to Immunity's own max. Grants no fresh Immunity of its own — requires Immunity already active to do anything (`ChameleonSkill.cs:1136`, req level 70, prerequisite skill 122). Shares Immunity's own \"immunity\" cooldown key (`Chameleon.cs:34978`) — casting either locks out the other, same shared-cType-but-genuinely-separate-skill shape as this tool's existing Whale/Panda precedents." },
-  { id:"chameleon_rustyDecay", name:"Rusty Decay", class:"Chameleon", icon:"chameleon_rustyDecay5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"150% of remaining rust damage", ko:"0", dmgNote:"detonates the target's existing rust stack (only applied by this Chameleon's own normal attacks vs. Robots, once Rusty Decay is learned) — 0 if the target has no active rust. \"remaining rust\" = ceil(0.25×rustLv×15×remaining rust seconds). Always the 150% case (same construction as Venom Shock's poison-detonation, but Rusty Decay only has 1 real rank — its own internal status level is hardcoded to 2, matching what would be Venom Shock's rank-2 multiplier, so there's no 100% case reachable here). State-contingent — `CharacterControl.cs:37192`, triggered the instant this skill's own status lands on an already-rusted target." },
+  { id:"chameleon_slayer", name:"Bug Slayer / Tail Slayer / Elemental Slayer / Machine Slayer", class:"Chameleon", icon:"chameleon_slayer4", maxRank:4, castTime:2, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:0.5 }, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+10×depLv)", atkCoeff:(rank,depLv)=>0.3+0.15*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"Formula is flat across ranks — rank selects which enemy type (Bug/Tail/Elemental/Machine) receives the bonus. Improved Slayer adds +0.15×ATK and +10 to this formula per rank, reflected above. Deals 2× damage against matching race targets or targets marked with Mark of Slayer." },
+  { id:"chameleon_allSlayer", name:"All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer", class:"Chameleon", icon:"chameleon_allSlayer4", maxRank:4, castTime:4, castWrapped:true, castDep: { id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4, perRank:1 }, cd:240, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(20+20×depLv)", atkCoeff:(rank,depLv)=>0.6+0.3*depLv, dmgRankDep:{ id:"improvedSlayer", label:"Improved Slayer", icon:"chameleon_improvedSlayer4", minRank:0, maxRank:4 }, ko:"5", dmgNote:"Formula is flat across ranks — targets matching the selected race (or marked with Mark of Slayer) are targeted. Improved Slayer adds +0.3×ATK and +20 to this formula per rank, reflected above, and raises max target cap (4 + improvedSlayerLv)." },
+  { id:"chameleon_allSlain", name:"All Slain", class:"Chameleon", icon:"chameleon_allSlain2", maxRank:2, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×100)", ko:"0", dmgNote:"Hits every enemy the Chameleon has damaged since the last All Slain cast, then clears that list. Hit count is variable based on engaged targets." },
+  { id:"chameleon_skinShift", name:"Skin Shift", class:"Chameleon", icon:"chameleon_skinShift5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmgNote:"Self-only: costs 10% current HP (ceil(0.1×HP)) to increase active Immunity status level by +1, up to max rank. Requires active Immunity buff to activate. Shares cooldown with Immunity." },
+  { id:"chameleon_rustyDecay", name:"Rusty Decay", class:"Chameleon", icon:"chameleon_rustyDecay5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"150% of remaining rust damage", ko:"0", dmgNote:"Detonates the target's active rust stack (applied to Robot targets via normal attacks after learning Rusty Decay) — deals 0 if target is not rusted. Deals damage based on ceil(0.25×rustLv×15×remaining rust seconds) with a 1.5× detonation multiplier." },
   { id:"chameleon_tent", name:"Tent", class:"Chameleon", icon:"chameleon_tent5", maxRank:1, castTime:6, castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false },
-  { id:"chameleon_markOfSlayer", name:"Mark of Slayer", class:"Chameleon", icon:"chameleon_markOfSlayer5", maxRank:1, castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false, dmgNote:"deals no damage itself — applies a debuff that makes the target eligible for Slayer's ×2 bonus and All Slayer's target filter regardless of actual race — `Chameleon.cs:36792`, see those 2 skills' own notes." },
-  { id:"chameleon_zeroShot", name:"Zero Shot", class:"Chameleon", icon:"chameleon_zeroShot5", maxRank:1, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(100)", atkCoeff:3, ko:"10", dmgNote:"point-blank nuke, small hit box (2m×2m, range 3m) — `Chameleon.cs:37422`. A separate, larger-radius (6m) shockwave applies knockback-only force to bystanders outside the hit box, no real damage (`nDamage=-1`, a force-only sentinel) — not modeled." },
-  { id:"chameleon_thunderDragon", name:"Thunder Dragon", class:"Chameleon", icon:"chameleon_thunderDragon5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"50", effectDamage:true, ko:"0", hitCount:()=>6, lckProc:{label:"Paralyze Chance", chance:12, applies:"paralysis"}, dmgNote:"self-centered channeled AoE pulse, flat 50 per tick (no ATK/TAL scaling), up to 6 ticks against anyone within 3m — `Chameleon.cs:38453`, loop bound `:38091-38305`. Real effect damage (`RPC_AddEffectDamage`, `Chameleon.cs:38453`/`CharacterControl.cs:6058`), not a normal hit — ignores defense entirely (no defAdjust/dmgAdjust call anywhere in that pipeline, confirmed by reading it start to finish) and rounds hitMod DOWN instead of up, so Final Damage/Test below correctly skip both mitigation stages and floor instead of ceil. Each tick independently rolls the 12% paralyze chance shown above off the CASTER's own LCK only (`lckAdjust(12)` on `this.$self_$23135.mChar`, `Chameleon.cs:38459`) — the target's LCK plays no role in the chance at all, unconditional (no passive gates it). Separately, ANY hit landed on the Chameleon while channeling triggers a guaranteed flat-350 counter-hit on the attacker (`CharacterControl.cs:4627`, also `RPC_AddEffectDamage`) — not merged into the number above, a mechanically distinct reflect, not part of the self-pulse." },
+  { id:"chameleon_markOfSlayer", name:"Mark of Slayer", class:"Chameleon", icon:"chameleon_markOfSlayer5", maxRank:1, castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false, dmgNote:"Applies a debuff making the target eligible for Slayer's 2× damage bonus and All Slayer's targeting regardless of actual enemy race." },
+  { id:"chameleon_zeroShot", name:"Zero Shot", class:"Chameleon", icon:"chameleon_zeroShot5", maxRank:1, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(100)", atkCoeff:3, ko:"10", dmgNote:"Point-blank nuke with small hitbox (2m × 2m, range 3m). A separate larger 6m shockwave applies knockback force to nearby targets." },
+  { id:"chameleon_thunderDragon", name:"Thunder Dragon", class:"Chameleon", icon:"chameleon_thunderDragon5", maxRank:1, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"50", effectDamage:true, ko:"0", hitCount:()=>6, lckProc:{label:"Paralyze Chance", chance:12, applies:"paralysis"}, dmgNote:"Self-centered channeled AoE pulse, flat 50 per tick (no ATK/TAL scaling), up to 6 ticks against targets within 3m. Deals true effect damage, bypassing DEF and damageMod. Each tick independently rolls a 12% paralyze chance scaled by caster LCK. Any hit received while channeling triggers a flat 350 true damage counter-hit on the attacker." },
   { id:"mole_reload", name:"Reload", class:"Mole", icon:"mole_reload2", maxRank:2, cd:240, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_mine", name:"Landmine", class:"Mole", icon:"mole_mine4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, cdDep:{id:"mineLover", label:"Mine Lover", icon:"mole_mineLover5", minRank:0, maxRank:1, kind:"replace", replaceValue:8}, dmg:"talAdjust(10×sLv+10)", dmgMultDep:{id:"mineLover", label:"Mine Lover", icon:"mole_mineLover5", minRank:0, maxRank:1, mult:1.25}, dmgNote:"AoE, single hit per target; Smart Shell (smartShell1) adds +30 flat damage vs enemies / halves damage vs same-layer targets — not modeled", ko:"1" },
   { id:"mole_mortarShot", name:"Mortar Shot", class:"Mole", icon:"mole_mortarShot2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:(rank)=>2*rank+1, dmgNote:"per shell (2×sLv+1 shells); falls off up to −50% with distance (assumes point-blank here); ×2 vs Structure race — neither shown", ko:"1" },
@@ -2938,7 +2938,7 @@ const SKILLS = [
     // routed this skill through the standalone-KO-chip path. User disliked
     // that treatment specifically for stunMine/stunGrenade: every hit() call
     // in this skill's own coroutine passes a literal nDamage=0
-    // (Mole.cs:11156,11169, confirmed via mechanics-researcher AND
+    // (Mole skill logic,11169, confirmed via mechanics-researcher AND
     // independently re-read directly) -- a REAL, verified zero at the
     // SOURCE, not an absence of data -- so a genuine (flat, no-talAdjust)
     // `dmg:"0"` is accurate here, unlike e.g. Barrel Cannon where damage is
@@ -2947,7 +2947,7 @@ const SKILLS = [
     // the SOURCE does NOT mean the tool should show 0 -- the user reported
     // seeing "1 damage, shown in normal color" in practice and correctly
     // guessed a floor was involved. hit() runs nDamage through dmgAdjust
-    // THEN defAdjust UNCONDITIONALLY, even for 0 (CharacterControl.cs:3540,
+    // THEN defAdjust UNCONDITIONALLY, even for 0 (game engine,
     // 3546 -- no skip-if-zero guard), and defAdjust's own formula floors
     // BOTH its light/heavy components to a minimum of 1 each, so the
     // mitigated result is a real range whose minimum is ALWAYS exactly 1
@@ -2960,7 +2960,7 @@ const SKILLS = [
     ko:"10×sLv", koDep:{id:"grenadeCluster", label:"Grenade Cluster", icon:"mole_grenadeCluster5", minRank:0, maxRank:1, rankBonus:1}, koMultDep:{id:"mineLover", label:"Mine Lover", icon:"mole_mineLover5", minRank:0, maxRank:1, mult:1.25} },
   { id:"mole_stunGrenade", name:"Stun Grenade", class:"Mole", icon:"mole_stunGrenade2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false,
     // Same dmg:"0" treatment (and same-day floor correction) as stunMine
-    // above -- Mole_stunGrenade.cs:259/295 also passes a literal nDamage=0.
+    // abovealso passes a literal nDamage=0.
     dmg:"0", dmgNote:"deals 0 real damage at the source, but hit()'s dmgAdjust/defAdjust chain still runs unconditionally on that 0 -- defAdjust's own formula floors the mitigated result to a minimum of 1 regardless of target DEF, so Final Damage below is never actually 0 in practice — pure KO/stun otherwise, no scaling damage component",
     ko:"10×sLv", koDep:{id:"grenadeCluster", label:"Grenade Cluster", icon:"mole_grenadeCluster5", minRank:0, maxRank:1, rankBonus:1} },
   { id:"mole_flameTurret", name:"Flame Turret", class:"Mole", icon:"mole_flameTurret3", maxRank:3, cd:120, cdWrapped:true, revisedArtExempt:false, duration:5, durWrapped:true, dmg:"talAdjust(5×sLv)", hitCountDuration:0.25, penetrating:true, dmgNote:"per tick, organic-race-only; tick count = channel duration ÷ 0.25s; ignores enemy DEF and damageMod entirely (penetrating, direct RPC_AddDamage, bare talAdjust with no dmgAdjust wrapper) — Final Damage/Test below correctly skip both stages" },
@@ -2968,35 +2968,35 @@ const SKILLS = [
   { id:"mole_bombardment", name:"Bombardment", class:"Mole", icon:"mole_bombardment2", maxRank:2, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10+15×sLv)", hitCount:(rank)=>5*(rank<=1?1:3), dmgNote:"per strike-hit (5 @ rank 1, 15 @ rank 2); falls off with distance (not shown)", ko:"1" },
   { id:"mole_timeNuke", name:"Time Nuke", class:"Mole", icon:"mole_timeNuke2", maxRank:2, cd:360, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:false, dmg:"talAdjust(100×sLv+50)", hitCount:()=>4, dmgNote:"up to 4 ring pulses, falls off with ring distance (not shown); Smart Shell (smartShell1) halves same-layer / +30 flat enemy-layer, not modeled", ko:"3" },
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cd:360, cdWrapped:true, revisedArtExempt:false },
-  { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, dmg:"10×sLv", dmgDep:{id:"synchroMole2", label:"Synchro Mole (Rank 2)", icon:"mole_synchroMole2", minRank:0, maxRank:1, term:"TAL", termClass:"dmg-tal", calc:(LV,rank,TAL)=>Math.floor(TAL||0)}, dmgReplaceDep:{id:"hiddenTurret", label:"Hidden Turret", icon:"mole_hiddenTurret5", minRank:0, maxRank:1, coeff:0.25, lckCoeff:0.125, calc:(rank,LV)=>Math.floor(0.25*rank*LV)}, ownLck:true, ko:"1", hitCountDuration:2, dmgNote:"turret's own flat ATK stat (10/20/30/40 by rank), independent of Mole's own stats; fires once every 2s (AutoGyroGun.cs:1326, a flat nAttack cooldown, same across all 4 ranks) for its whole summon lifetime — Final Damage below totals every hit over that full duration (duration ÷ 2s), not one representative hit; first shot lands ~0.9s after deploy (0.8s create animation + 0.1s fire wind-up), a small, un-modeled offset against the simple duration÷2 total. Confirmed to route through the same dmgAdjust/defAdjust/hitMod pipeline as every other skill (CharacterControl.hit(), no talAdjust step). Hidden Turret (hiddenTurret5) REPLACES this base value with 0.25×rank×MoleLV rather than adding to it — below Mole level 40 this is actually a NET DECREASE versus no Hidden Turret at all, despite its tooltip reading like a flat bonus (break-even is exactly level 40, any rank). Synchro Mole at rank 2 (not rank 1) adds +floor(Mole's TAL) on top of whichever base is active, applied only to already-summoned turrets, not retroactively. The turret ALSO has its own independent LCK stat (baseline 10×rank, same formula as its ATK; replaced by 0.125×rank×MoleLV — HALF the ATK/DEF coefficient — with Hidden Turret active), used for the Final Damage chip's dmgAdjust roll INSTEAD of the LCK input above, which represents Mole's own LCK, not the turret's." },
+  { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, dmg:"10×sLv", dmgDep:{id:"synchroMole2", label:"Synchro Mole (Rank 2)", icon:"mole_synchroMole2", minRank:0, maxRank:1, term:"TAL", termClass:"dmg-tal", calc:(LV,rank,TAL)=>Math.floor(TAL||0)}, dmgReplaceDep:{id:"hiddenTurret", label:"Hidden Turret", icon:"mole_hiddenTurret5", minRank:0, maxRank:1, coeff:0.25, lckCoeff:0.125, calc:(rank,LV)=>Math.floor(0.25*rank*LV)}, ownLck:true, ko:"1", hitCountDuration:2, dmgNote:"Turret's own flat ATK stat (10/20/30/40 by rank), independent of Mole's own stats; fires once every 2s for its whole summon lifetime — Final Damage totals every hit over full duration (duration ÷ 2s); first shot lands ~0.9s after deploy (0.8s create animation + 0.1s fire wind-up). Routes through standard damage pipeline (no TAL scaling). Hidden Turret (hiddenTurret5) REPLACES this base value with 0.25×rank×MoleLV rather than adding to it — below Mole level 40 this is a net decrease versus no Hidden Turret at all (break-even is level 40, any rank). Synchro Mole at rank 2 adds +floor(Mole's TAL) on top of whichever base is active, applied only to already-summoned turrets. The turret ALSO has its own independent LCK stat (baseline 10×rank; replaced by 0.125×rank×MoleLV with Hidden Turret active), used for the Final Damage chip's roll instead of Mole's own LCK." },
   { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true, bbStatsInRow2:true },
-  { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1", dmgNote:"one of the summoned Barrel Bot's own AI-picked attacks, used at point-blank range (<1m) when no other move is available — its own \"nAttack\" internal timeout is a flat 3s, NOT agiAdjust-wrapped (`BarrelBot.cs:2480`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown (240s, shown on the base Barrel Bot entry)" },
-  { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5", dmgNote:"used within 3m; rank = PunchLv, granted by Mole's own Mega Punch unlock (hasSkill 331/332); \"punch\" internal timeout is agiAdjust-wrapped, base 12s (`BarrelBot.cs:2892`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
-  { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv", dmgNote:"used within 2m; rank = HammerLv, granted by Mole's own Mega Hammer unlock (hasSkill 333/334); \"hammer\" internal timeout is agiAdjust-wrapped, base 15s (`BarrelBot.cs:3287`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
-  { id:"mole_barrelBot_chopper", name:"Barrel Bot - Chopper", class:"Mole", ownStats:true, icon:"mole_chopper3", casterBadge:"mole_barrelBot0", maxRank:3, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>4, ko:"1", dmgNote:"real for-loop, 4 forward-flight collision ticks per activation (`BarrelBot.cs:3707-3751`, own separate implementation from Mole's own personal Chopper's 10 ticks — don't conflate); used within 4m; rank = ChopperLv, granted by Mole's own Chopper unlocks (hasSkill 341/342/343); \"chopper\" internal timeout is agiAdjust-wrapped, base 60s (`BarrelBot.cs:3826`); not in the original moveset list this pass was scoped to, added anyway since it's a real, verified 5th AI-picked move — flag if this wasn't wanted; cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
-  { id:"mole_barrelBot_missile", name:"Barrel Bot - Missile", class:"Mole", ownStats:true, icon:"mole_missile4", casterBadge:"mole_barrelBot0", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgAdjustSkip:true, ko:"3", dmgNote:"fires MissileLv separate missiles (real while-loop, `BarrelBot.cs:4124-4220`), each independently impacting for the same talAdjust(30) — rank = MissileLv, granted by BarrelBot's OWN separate missile unlock tree (hasSkill 351-354, distinct from Mole's own personal Missile skill); used within 16m; real damage formula lives in the companion `BarrelBot_missile.cs:349` (only found on a follow-up full read of that file, not the main coroutine) — bypasses hit() entirely (manual `characterControl2.defAdjust(characterControl.talAdjust(30))` then `RPC_AddDamage`), so dmgAdjust (attacker damageMod+LCK roll) never runs, but defAdjust genuinely still does — modeled via a new `dmgAdjustSkip` flag, distinct from full `penetrating` (which also skips defAdjust); \"missile\" internal timeout is agiAdjust-wrapped, base 60s (`BarrelBot.cs:4382`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
-  { id:"mole_barrelBot_drill", name:"Barrel Bot - Mega Drill", class:"Mole", ownStats:true, icon:"mole_megaDrill5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:false, revisedArtExempt:true, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:()=>4, ko:"2", dmgNote:"real for-loop, 4 hit-scan ticks per activation (`BarrelBot.cs:4624-4685/4944`); used within 2m; requires Mole's own Mega Drill unlock (hasSkill 433, DrillLv boolean, no rank scaling on the formula itself); its own \"drill\" internal timeout is a flat 9s, NOT agiAdjust-wrapped (`BarrelBot.cs:4818`); cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
-  { id:"mole_barrelBot_cannon", name:"Barrel Bot - Barrel Cannon", class:"Mole", ownStats:true, icon:"mole_barrelCannon5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:true, revisedArtExempt:true, dmg:"0", atkCoeff:1.5, ko:"1", dmgNote:"single AoE shell (radius 3, height 4 — `BarrelBot.cs:1869`), used within 20m; requires Barrel Cannon (barrelCannon5, hasSkill 443, CannonLv boolean); real formula lives in `RPC_cannon_hit` (`BarrelBot.cs:1889`), fired via the shared `RPC_cannon_fire` projectile (its own companion file, `BarrelBot_cannon.cs`, only spawns/tracks the shell — the hit payload is back in BarrelBot.cs); this is the single reactive shot the AI picks in normal combat (\"cannon\" internal timeout, agiAdjust-wrapped, base 9s, `BarrelBot.cs:5278`) — see Mole's own \"Cannon Form\" entry for the other, player-commanded way this same shell fires; cooldown shown is this move's own internal cadence, not the summon's own recast cooldown" },
+  { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1", dmgNote:"One of the summoned Barrel Bot's own AI-picked attacks, used at point-blank range (<1m) when no other move is available — internal timeout is a flat 3s (not agiAdjust-wrapped); cooldown shown is this move's own internal cadence, not the summon's recast cooldown (240s, shown on base Barrel Bot entry)." },
+  { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5", dmgNote:"Used within 3m; rank = PunchLv, granted by Mole's own Mega Punch unlock (hasSkill 331/332); \"punch\" internal timeout is agiAdjust-wrapped, base 12s; cooldown shown is this move's internal cadence, not the summon's recast cooldown." },
+  { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv", dmgNote:"Used within 2m; rank = HammerLv, granted by Mole's own Mega Hammer unlock (hasSkill 333/334); \"hammer\" internal timeout is agiAdjust-wrapped, base 15s; cooldown shown is this move's internal cadence, not the summon's recast cooldown." },
+  { id:"mole_barrelBot_chopper", name:"Barrel Bot - Chopper", class:"Mole", ownStats:true, icon:"mole_chopper3", casterBadge:"mole_barrelBot0", maxRank:3, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>4, ko:"1", dmgNote:"4 forward-flight collision ticks per activation (distinct from Mole's own personal Chopper's 10 ticks); used within 4m; rank = ChopperLv, granted by Mole's own Chopper unlocks (hasSkill 341/342/343); \"chopper\" internal timeout is agiAdjust-wrapped, base 60s; cooldown shown is this move's internal cadence, not the summon's recast cooldown." },
+  { id:"mole_barrelBot_missile", name:"Barrel Bot - Missile", class:"Mole", ownStats:true, icon:"mole_missile4", casterBadge:"mole_barrelBot0", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgAdjustSkip:true, ko:"3", dmgNote:"Fires MissileLv separate missiles, each independently impacting for the same talAdjust(30) — rank = MissileLv, granted by Barrel Bot's own missile unlock tree (hasSkill 351-354, distinct from Mole's personal Missile skill); used within 16m; damages with talAdjust(30) reduced by target DEF (bypasses attacker damageMod/LCK roll); \"missile\" internal timeout is agiAdjust-wrapped, base 60s; cooldown shown is this move's internal cadence, not the summon's recast cooldown." },
+  { id:"mole_barrelBot_drill", name:"Barrel Bot - Mega Drill", class:"Mole", ownStats:true, icon:"mole_megaDrill5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:false, revisedArtExempt:true, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:()=>4, ko:"2", dmgNote:"4 hit-scan ticks per activation; used within 2m; requires Mole's Mega Drill unlock (hasSkill 433, DrillLv boolean, no rank scaling on formula itself); internal timeout is a flat 9s (not agiAdjust-wrapped); cooldown shown is this move's internal cadence, not the summon's recast cooldown." },
+  { id:"mole_barrelBot_cannon", name:"Barrel Bot - Barrel Cannon", class:"Mole", ownStats:true, icon:"mole_barrelCannon5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:true, revisedArtExempt:true, dmg:"0", atkCoeff:1.5, ko:"1", dmgNote:"Single AoE shell (radius 3, height 4), used within 20m; requires Barrel Cannon (barrelCannon5, hasSkill 443, CannonLv boolean); this is the single reactive shot the AI picks in normal combat (\"cannon\" internal timeout, agiAdjust-wrapped, base 9s) — see Mole's own \"Barrel Cannon\" entry for the player-commanded burst mode; cooldown shown is this move's internal cadence, not the summon's recast cooldown." },
   { id:"mole_megaPunch", name:"Mega Punch", class:"Mole", icon:"mole_megaPunch2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, dmgMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5}, ko:"5", koMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5} },
   { id:"mole_megaHammer", name:"Mega Hammer", class:"Mole", icon:"mole_megaHammer2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(12×sLv)", atkCoeff:0.5, dmgMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5}, ko:"10×sLv", koMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5} },
   { id:"mole_chopper", name:"Chopper", class:"Mole", icon:"mole_chopper3", maxRank:3, cd:45, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>10, dmgNote:"per tick, 10 forward-flight collision ticks; Barrel Cannon (barrelCannon5) adds a separate flat AoE bombing pass, not modeled", ko:"1" },
   { id:"mole_missile", name:"Missile", class:"Mole", icon:"mole_missile4", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgNote:"per missile, homing to a random enemy within 32m", ko:"3" },
   { id:"mole_synchroMole", name:"Synchro Mole", class:"Mole", icon:"mole_synchroMole2", maxRank:2, cd:300, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true },
   { id:"mole_kingKaiser", name:"King Kaiser", class:"Mole", icon:"mole_kingKaiser1", maxRank:1, cd:999, cdWrapped:true, revisedArtExempt:false, duration:240, durWrapped:true },
-  { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1", dmgNote:"Mole TRANSFORMS into King Kaiser (`PhotonClient.ActorNrList[tID]` is swapped onto the mech's own GameObject, `Mole.cs:35995`) rather than summoning a companion, but the mech still runs its own separate CharacterControl (`KingKaiser.cs:49`), so its ATK/TAL/AGI/LCK are still genuinely its own — see the King Kaiser Stats chip. Real 3-hit melee combo, each swing its own hit() call at 1×/1.2×/1.3×ATK (`KingKaiser.cs:1680/1885/2031`), KO=1 each; internal \"nAttack\" cooldown is a flat 4s, NOT agiAdjust-wrapped (`KingKaiser.cs:2179`) — SHARED with Kaiser Missile below (same cType key, `KingKaiser.cs:2711`), so firing one puts the other on cooldown too." },
-  { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5", dmgNote:"4-missile volley (2 sequential volleys of 2, `KingKaiser.cs:2489-2604`), each impact an AoE scan (radius 5, `Damage.FindAreaTarget`) hitting everyone in range for flat 100 (no ATK/TAL scaling), KO=5 — `RPC_kaiserMissile_hit`, `KingKaiser.cs:1331`. Requires the Kaiser Cannon upgrade (kaiserCannon1, hasSkill 372, King Kaiser Level 2+) — the player's own attack-click handler routes to Missile instead of melee when `mLv>1` AND target distance >10 (`KingKaiser.cs:951-984`). King Kaiser is fully player-controlled in practice (`Mole.cs:35865` sets `isControlled=true` unconditionally on the summoned mech), which makes `KingKaiserAI.cs`'s own autopilot dispatch code structurally unreachable (`Update()` breaks before calling `AIControl()` whenever `isControlled` is true) — confirmed vestigial, not a 2nd real behavior path; doubly so since that AI code also calls a `RPC_kaiserPunch` method that doesn't exist anywhere in `KingKaiser.cs` and checks an `isTimeOut(\"kaiserMissile\")` key this skill's own cast never arms. Shares the \"nAttack\" cooldown key with Normal Attack above (own `addTimeOut` call re-arms that key, not a separate one of its own, `KingKaiser.cs:2711`) — real, not a citation error." },
-  { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1", dmgNote:"Charge-and-release attack, 5 real forward-corridor pulses on full release (real loop bound `i<5`, `KingKaiser.cs:3269-3501`), each pulse flat 300 damage (no ATK/TAL scaling), KO=1, hate=1 — `KingKaiser.cs:3538`. Requires King Kaiser Level 3 (kaiserBeam1, hasSkill 373) AND 75 SP AND holding the charge for a REAL 6.5s before releasing (`doBeginCharge`/`doReleaseCharge`, `KingKaiser.cs:1017-1225`) — releasing early deals ZERO damage (confirmed by exhaustive absence: no hit()/RPC_AddDamage call anywhere in `RPC_kaiserBeam0`'s own class body, the early-release handler). Cooldown shown is the fully-charged release's own internal lock, flat 30s, NOT agiAdjust-wrapped (`KingKaiser.cs:3426`) — genuinely never gated by `isTimeOut` anywhere in this file though (only \"nAttack\" ever is), so this 30s may be vestigial in practice; the real re-cast throttle appears to be the 75 SP cost regenerating. The charge-START action arms a separate, shorter 2s lock on the same \"kaiserBeam\" key (`KingKaiser.cs:3041`) but deals no damage of its own, not modeled as its own row." },
+  { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1", dmgNote:"Mole transforms into King Kaiser rather than summoning a companion, with King Kaiser having its own separate ATK/TAL/AGI/LCK stats — see the King Kaiser Stats chip. 3-hit melee combo, each swing dealing 1×/1.2×/1.3×ATK, KO=1 each; internal \"nAttack\" cooldown is a flat 4s (not agiAdjust-wrapped), shared with Kaiser Missile below, so firing one puts the other on cooldown too." },
+  { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5", dmgNote:"4-missile volley (2 sequential volleys of 2), each impact an AoE scan (radius 5) hitting everyone in range for flat 100 (no ATK/TAL scaling), KO=5. Requires the Kaiser Cannon upgrade (kaiserCannon1, King Kaiser Level 2+) — attack-clicks route to Missile instead of melee when level >1 and target distance >10m. Shares the 4s \"nAttack\" cooldown with Normal Attack above." },
+  { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1", dmgNote:"Charge-and-release attack: 5 forward-corridor pulses on full release, each pulse dealing flat 300 damage (no ATK/TAL scaling), KO=1. Requires King Kaiser Level 3 (kaiserBeam1), 75 SP, and holding the charge for a full 6.5s before releasing — releasing early deals 0 damage. Cooldown shown is 30s flat (not agiAdjust-wrapped)." },
   { id:"mole_advanceRepair", name:"Advance Repair", class:"Mole", icon:"mole_advanceRepair5", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false },
-  { id:"mole_napalm", name:"Napalm", class:"Mole", icon:"mole_napalm5", maxRank:1, cd:150, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5)", dmgGroups:[{dmg:"talAdjust(30)", hitCount:5, label:"Tick 1 ×5 projectiles"}, {dmg:"talAdjust(5)", hitCount:25, label:"Ticks 2–6 ×5 projectiles"}], hitCount:()=>30, penetrating:true, dmgNote:"EACH of the 5 fired projectiles independently starts its OWN full 6-pulse AoE sequence on impact (Mole_napalm.cs's own OnTriggerEnter -> RPC_napalm_hit, one call per projectile collision, not a shared sequence) — 5 projectiles × 6 pulses = 30 total when every projectile connects, not 6; Final Damage totals all 30 assuming every one connects — reliably true in practice, since it's cast point-blank on the target with a large enough pulse hitbox that all 5 projectiles land on/near it and every one of their own 6 pulses re-hits it; organic-race-only; bypasses defAdjust AND dmgAdjust entirely (\"penetrating\", direct RPC_AddDamage)" },
+  { id:"mole_napalm", name:"Napalm", class:"Mole", icon:"mole_napalm5", maxRank:1, cd:150, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5)", dmgGroups:[{dmg:"talAdjust(30)", hitCount:5, label:"Tick 1 ×5 projectiles"}, {dmg:"talAdjust(5)", hitCount:25, label:"Ticks 2–6 ×5 projectiles"}], hitCount:()=>30, penetrating:true, dmgNote:"EACH of the 5 fired projectiles independently starts its OWN full 6-pulse AoE sequence on impact — 5 projectiles × 6 pulses = 30 total when every projectile connects, not 6; Final Damage totals all 30 assuming every one connects — reliably true in practice, since it's cast point-blank on the target with a large enough pulse hitbox that all 5 projectiles land on/near it and every one of their own 6 pulses re-hits it; organic-race-only; bypasses DEF and damageMod entirely (penetrating direct effect damage)" },
   { id:"mole_grenadeCluster", name:"Grenade Cluster", class:"Mole", icon:"mole_grenadeCluster5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", atkCoeff:1, hitCount:()=>8, dmgNote:"per grenade, 8 grenades, self-centered ring burst; falls off with distance (assumes point-blank here)", ko:"10" },
-  { id:"mole_flameCarnival", name:"Flame Carnival", class:"Mole", icon:"mole_flameCarnival5", maxRank:1, cd:150, cdWrapped:true, revisedArtExempt:false, duration:90, durWrapped:true, dmg:"talAdjust(10)", hitCount:()=>20, penetrating:true, dmgNote:"per tick, 20 ticks (fixed, not CHA-scaled), organic-race-only, radius grows 3→5; Duration shown is the unarmed trap's arming window, not the burn time; ignores enemy DEF and damageMod entirely (penetrating, direct RPC_AddDamage, bare talAdjust with no dmgAdjust wrapper) — Final Damage/Test below correctly skip both stages; Smart Shell (smartShell1) halves same-layer damage, not modeled" },
+  { id:"mole_flameCarnival", name:"Flame Carnival", class:"Mole", icon:"mole_flameCarnival5", maxRank:1, cd:150, cdWrapped:true, revisedArtExempt:false, duration:90, durWrapped:true, dmg:"talAdjust(10)", hitCount:()=>20, penetrating:true, dmgNote:"per tick, 20 ticks (fixed, not CHA-scaled), organic-race-only, radius grows 3→5; Duration shown is the unarmed trap's arming window, not the burn time; ignores enemy DEF and damageMod entirely (penetrating direct effect damage) — Final Damage/Test below correctly skip both stages; Smart Shell (smartShell1) halves same-layer damage, not modeled" },
   { id:"mole_megaDrill", name:"Mega Drill", class:"Mole", icon:"mole_megaDrill5", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(45)", atkCoeff:1, dmgNote:"forward drill dash, single hit", ko:"2" },
-  { id:"mole_barrelCannon", name:"Barrel Cannon", class:"Mole", ownStatsDmgOnly:true, icon:"mole_barrelCannon5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:1.5, hitCount:()=>10, ko:"1", dmgNote:"NOT an AI-autonomous Barrel Bot move, unlike every other Barrel Bot entry — this burst mode is the one thing Mole explicitly COMMANDS rather than the summon deciding on its own: the player casts Mole's own \"Barrel Cannon\" skill (`RPC_barrelCannon`, `Mole.cs:39835-40208`). Cooldown shown IS Mole's own cast-side cooldown (`addTimeOut(\"barrelCannon\", agiAdjust(120))` on Mole's own `mChar`, `Mole.cs:40199`) — uses Mole's own AGI/LCK inputs above and IS revisedArt-eligible, unlike every other Barrel Bot entry. Once triggered, auto-fires the SAME shell as the reactive single-shot \"Barrel Bot - Barrel Cannon\" move (identical 1.5×ATK AoE formula, same `RPC_cannon_fire`/`RPC_cannon_hit` payload, computed off Barrel Bot's OWN ATK/attacker-LCK — the shell's actual hit() call runs on Barrel Bot's own CharacterControl regardless of who commanded it) once every real 0.5s at a locked target, up to 10 shots total or until the target's lost (`BarrelBot.cs:5716-5762`, real counter loop `mCannonCount>=10`); requires Barrel Cannon (barrelCannon5). Barrel Bot's own separate internal \"cannonForm\" re-trigger timeout (agiAdjust-wrapped off Barrel Bot's own AGI, base 90s, `BarrelBot.cs:5639`) is a real, lower-level gate too, but Mole's own 120s cast cooldown is always the binding one a player actually experiences, so that's what's shown." },
-  { id:"mole_warFactory_sawMachine", name:"War Factory - Saw Machine", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15)", atkCoeff:1.5, hitCount:()=>4, ko:"0", dmgNote:"4 sequential swing phases per activation (real for-loop, i=1..4, each its own rectangular hitbox scan/hit — Mole.cs:40568-40751), assumes the target stays in every phase's hitbox; one of the deployed structure's randomly-cycled sub-attacks (~3s internal cadence while active); cooldown shown is War Factory's own deploy cooldown, not a per-attack one — Mole.cs:40770" },
-  { id:"mole_warFactory_bazooka", name:"War Factory - Bazooka", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(50)", atkCoeff:1, ko:"5", dmgNote:"one of the deployed structure's randomly-cycled sub-attacks (~3s internal cadence while active); cooldown shown is War Factory's own deploy cooldown, not a per-attack one — Mole_bazooka.cs:228" },
-  { id:"mole_warFactory_teslaCoil", name:"War Factory - Tesla Coil", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:()=>7, ko:"0", dmgNote:"AoE, up to 7 pulses per activation (5m range); every landed pulse also inflicts paralysis (rank 2, 3s) unless the target is already standby/run/emotion-locked — deterministic, not RNG-gated, but not modeled (no status chip in this tool); cooldown shown is War Factory's own deploy cooldown, not a per-attack one — Mole.cs:42065, paralysis Mole.cs:42109" },
-  { id:"mole_warFactory_rollerMachine", name:"War Factory - Roller Machine", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:3, hitCount:()=>11, ko:"0", dmgNote:"1 initial hit-scan on roll-start plus up to 10 more per-tick hit-scans while rolling (real counter loop, i=0..9, Mole.cs:42494-42643), same 3×ATK formula every time — theoretical max assumes the same target stays in the small 1.5×1.5 rolling hitbox the whole roll; cooldown shown is War Factory's own deploy cooldown, not a per-attack one — Mole.cs:42430 (initial), :42597-42643 (loop)" },
-  { id:"mole_warFactory_cartBomb", name:"War Factory - Cart Bomb", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(150)", ko:"30", dmgNote:"AoE burst, radius 6+1.5×extraPowderLv (extraPowder1-3, not modeled — no radius chip in this tool); linear distance falloff from full value at center to 50% at the radius edge (not shown, assumes point-blank here); this is War Factory's own real cast/deploy action (confirmed via Mole_cartBomb.cs — a MonoBehaviour that tracks the caster for up to 3s then fires this hit), not one of the structure's post-deploy random sub-attacks like the other 3 — cooldown shown is the skill's own real 180s cooldown, armed by this exact action — Mole.cs:14183-14213 (formula), Mole_cartBomb.cs:88-127 (trigger)" },
+  { id:"mole_barrelCannon", name:"Barrel Cannon", class:"Mole", ownStatsDmgOnly:true, icon:"mole_barrelCannon5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:1.5, hitCount:()=>10, ko:"1", dmgNote:"NOT an AI-autonomous Barrel Bot move, unlike other Barrel Bot entries — this burst mode is commanded directly by the player casting Mole's own \"Barrel Cannon\" skill. Cooldown shown is Mole's own cast cooldown (120s base, agiAdjust-wrapped, revisedArt-eligible) using Mole's own AGI/LCK inputs above. Once triggered, auto-fires the same shell as the reactive single-shot \"Barrel Bot - Barrel Cannon\" move (identical 1.5×ATK AoE formula, computed off Barrel Bot's OWN ATK/attacker-LCK) once every 0.5s at a locked target, up to 10 shots total or until the target is lost; requires Barrel Cannon (barrelCannon5). Barrel Bot's separate internal re-trigger timeout (90s base) is bypassed by Mole's 120s cast cooldown." },
+  { id:"mole_warFactory_sawMachine", name:"War Factory - Saw Machine", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15)", atkCoeff:1.5, hitCount:()=>4, ko:"0", dmgNote:"4 sequential swing phases per activation, assumes the target stays in every phase's hitbox; one of the deployed structure's randomly-cycled sub-attacks (~3s cadence while active); cooldown shown is War Factory's own deploy cooldown, not a per-attack one." },
+  { id:"mole_warFactory_bazooka", name:"War Factory - Bazooka", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(50)", atkCoeff:1, ko:"5", dmgNote:"One of the deployed structure's randomly-cycled sub-attacks (~3s cadence while active); cooldown shown is War Factory's own deploy cooldown, not a per-attack one." },
+  { id:"mole_warFactory_teslaCoil", name:"War Factory - Tesla Coil", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:()=>7, ko:"0", dmgNote:"AoE, up to 7 pulses per activation (5m range); every landed pulse also inflicts paralysis (rank 2, 3s); cooldown shown is War Factory's own deploy cooldown, not a per-attack one." },
+  { id:"mole_warFactory_rollerMachine", name:"War Factory - Roller Machine", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:3, hitCount:()=>11, ko:"0", dmgNote:"1 initial hit on roll-start plus up to 10 more per-tick hits while rolling, same 3×ATK formula every time — theoretical max assumes the same target stays in the 1.5×1.5 rolling hitbox the whole roll; cooldown shown is War Factory's own deploy cooldown, not a per-attack one." },
+  { id:"mole_warFactory_cartBomb", name:"War Factory - Cart Bomb", class:"Mole", icon:"mole_warFactory5", maxRank:1, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(150)", ko:"30", dmgNote:"AoE burst, radius 6 + 1.5×extraPowderLv; linear distance falloff from full value at center to 50% at the radius edge (assumes point-blank here); this is War Factory's own initial deploy burst action, not one of the structure's post-deploy random sub-attacks; cooldown shown is the skill's own 180s deploy cooldown." },
   { id:"mole_warCapital", name:"War Capital", class:"Mole", icon:"mole_warCapital5", maxRank:1, castTime:24, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(50)", hitCount:()=>8, dmgNote:"8-missile volley", ko:"3" },
   { id:"monkey_summonAttack", name:"Summon Attack", class:"Monkey", icon:"monkey_summonAttack1", cd:3, cdWrapped:false, revisedArtExempt:false },
   { id:"monkey_summonDefense", name:"Summon Defense", class:"Monkey", icon:"monkey_summonDefense1", cd:3, cdWrapped:false, revisedArtExempt:false },
@@ -3068,7 +3068,7 @@ const SKILLS = [
   { id:"penguin_arcticWind", name:"Arctic Wind", class:"Penguin", icon:"penguin_arcticWind3", maxRank:3, castTime:[2,2.5,3], castWrapped:true, cd:[15,18,21], cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×10+5)", dmgFocusIntellect:true, hitCount:(rank,dmgDepOn,hitCountDepOn)=>hitCountDepOn?8:4, hitCountDep:PENGUIN_DEADLY_FROST_DEP, dmgNote:"per tick<br>4 ticks with base skill<br>8 ticks with Deadly Frost", ko:"1", lckProc:{label:"Frost Chance", chance:20, applies:"frost", dep:{id:"arcticFrost1", label:"Arctic Frost", icon:"penguin_arcticFrost1", minRank:0, maxRank:1}} },
   { id:"penguin_iceShield", name:"Ice Shield", class:"Penguin", icon:"penguin_iceShield4", maxRank:4, castTime:[3.5,4,4.5,5], castWrapped:true, cd:[45,60,75,90], cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, shield:"talAdjust(10+20×sLv)", shieldFocusIntellect:true, shieldDep:{id:"frostSpike", label:"Frost Spike", icon:"penguin_frostSpike5", minRank:0, maxRank:1, term:"LV", calc:(LV)=>LV}, lckProc:{label:"Frost Chance", chance:12, applies:"frost", dep:{id:"frostSpike", label:"Frost Spike", icon:"penguin_frostSpike5", minRank:0, maxRank:1}} },
   { id:"penguin_iceBlock", name:"Ice Block", class:"Penguin", icon:"penguin_iceBlock2", maxRank:2, castTime:[2,3], castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, durPostAdd:6 },
-  { id:"penguin_snowMan", name:"Snow Man", class:"Penguin", icon:"penguin_snowMan2", maxRank:2, castTime:[4,6], castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:[6,10], durContested:true, dmgNote:"Transforms target enemy into a Snowman with talAdjust(50×sLv) HP shield. Incapacitates target for Damage.getDebuff(2 + 4×sLv, caster.cha, target.cha) seconds (6s/10s base, contested against target CHA)." },
+  { id:"penguin_snowMan", name:"Snow Man", class:"Penguin", icon:"penguin_snowMan2", maxRank:2, castTime:[4,6], castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:[6,10], durContested:true, dmgNote:"Transforms target enemy into a Snowman with talAdjust(50×sLv) HP shield. Incapacitates target for 6s (Rank 1) / 10s (Rank 2) base (contested duration against target CHA)." },
   { id:"penguin_tornado", name:"Tornado", class:"Penguin", icon:"penguin_tornado3", maxRank:3, castTime:[4,6,8], castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dmg:"talAdjust(10×sLv)", dmgFocusIntellect:true, hitCountDuration:0.35, dmgFlagDep:{id:"typhoon", label:"Typhoon", icon:"penguin_typhoon1", minRank:0, maxRank:1, hp:"talAdjust(100×sLv)"}, dmgNote:(typhoonOn)=>typhoonOn
     ? `Typhoon active: auto-tracks the locked target instead of requiring manual steering (Tornado is normally player-steered) — makes the "target stays in the AoE" assumption far more reliable in practice. Cost: the tornado now has its own self-depleting HP/damage-budget pool (see the Typhoon HP line above), which loses HP equal to the actual damage it deals each tick and self-destructs once exhausted. Final Damage below reflects this directly: minimum = the HP pool's own low roll, maximum = the pool's high roll plus one full hit's worth of Final Damage on top — the tick that finally drains the pool below 0 still lands at full, un-prorated value before the game notices it's empty, so the pool is a floor the last hit can overshoot by up to one whole hit, not a hard ceiling. Per-tick damage, 0.35s tick rate, and duration are otherwise unaffected by Typhoon.`
     : `Per tick (every 0.35s in-game; Simulate shows a flat 50ms/hit glance, not this real interval); hit count = channel duration ÷ 0.35, assumes target stays in the tornado's radius the whole time — an AoE around the (player-steerable) tornado, not a guaranteed hit. Toggle Typhoon (top-right icon) to see how that assumption changes once the tornado auto-tracks its target instead.`,
@@ -3082,8 +3082,8 @@ const SKILLS = [
   { id:"penguin_cosmicRift", name:"Cosmic Rift", class:"Penguin", icon:"penguin_cosmicRift5", maxRank:1, castTime:9, castWrapped:true, cd:180, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
   { id:"penguin_cosmicFriday", name:"Cosmic Friday", class:"Penguin", icon:"penguin_cosmicFriday5", maxRank:1, castTime:12, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:3, durWrapped:false },
   { id:"rabbit_statScan", name:"Stat Scan", class:"Rabbit", icon:"rabbit_statScan1", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, dmgNote:"Reveals target enemy's current HP, SP, stats, and elemental attributes." },
-  { id:"rabbit_bounce", name:"Bounce", class:"Rabbit", icon:"rabbit_bounce2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, duration:[4, 8], durWrapped:false, durNote:"Hide buff: Rabbit leaps into the air and becomes completely untargetable and invisible (hide status 1) for 4s (Rank 1) / 8s (Rank 2) — Rabbit.cs:21068-21073. While hidden, drops enemy aggro (releaseTarget), ignores raycasts/collisions (layer = 2), disables renderers, and evades all attacks (CharacterControl.cs:3046, 32818-32858). Fixed duration (unaffected by CHA). Landing or performing an action ends the hide state.", dmg:"0", atkCoeff:(rank, depLv)=>depLv>0?0.5:0, ko:(rank, depLv)=>depLv>0?"1 + 20":null, dmgFlagDep:{id:"fromTheAbove", label:"From the Above", icon:"rabbit_fromTheAbove5", minRank:0, maxRank:1}, dmgNote:(flagOn)=>flagOn?"With From the Above (fromTheAbove5), Bounce enables a mid-air shot (0.5×ATK, KO=1, SP=+1) plus a ground landing AoE slam (1.0×ATK, KO=20).":"Movement jump skill (no damage, no KO). If From the Above (fromTheAbove5) is learned, jumping before landing Bounce triggers an aerial shot (0.5×ATK, KO=1, SP=+1) and a ground landing slam (1.0×ATK, KO=20)." },
-  { id:"rabbit_maimShot", name:"Maim Shot", class:"Rabbit", icon:"rabbit_maimShot4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, duration:3, durContested:true, durNote:"Maim debuff: Clamps target running movement speed to (4 − 0.5×sLv) m/s while active (Rank 1: 3.5 m/s, Rank 2: 3.0 m/s, Rank 3: 2.5 m/s, Rank 4: 2.0 m/s) — CharacterControl.cs:2527-2533. Duration is contested against target CHA via Damage.getDebuff(3, casterCHA, targetCHA) — Rabbit.cs:23337.", dmg:"talAdjust(5×sLv+20×depLv)", atkCoeff:0.5, ko:"1", dmgRankDep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}, lckProc:{label:"Knee Shot KO Proc", chance:20, applies:"ko40", baseText:"base 20% (KO = 40)", dep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}}, dmgNote:"Deals 0.5×ATK + talAdjust(5×sLv + [kneeShot5: 20]), base KO=1. Restores +1 SP on hit — Rabbit.cs:23354. Applies Maim movement slow debuff for contested 3s against target CHA (Damage.getDebuff(3, casterCHA, targetCHA) — Rabbit.cs:23337). With Knee Shot (kneeShot5), adds +20 flat TAL damage and rolls an independent lckAdjust(20) chance to inflict 40 KO — Rabbit.cs:23256-23280." },
+  { id:"rabbit_bounce", name:"Bounce", class:"Rabbit", icon:"rabbit_bounce2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, duration:[4, 8], durWrapped:false, durNote:"Hide buff: Rabbit leaps into the air and becomes completely untargetable and invisible (hide status 1) for 4s (Rank 1) / 8s (Rank 2). While hidden, drops enemy aggro, ignores collisions, and evades all attacks. Fixed duration (unaffected by CHA). Landing or performing an action ends the hide state.", dmg:"0", atkCoeff:(rank, depLv)=>depLv>0?0.5:0, ko:(rank, depLv)=>depLv>0?"1 + 20":null, dmgFlagDep:{id:"fromTheAbove", label:"From the Above", icon:"rabbit_fromTheAbove5", minRank:0, maxRank:1}, dmgNote:(flagOn)=>flagOn?"With From the Above (fromTheAbove5), Bounce enables a mid-air shot (0.5×ATK, KO=1, SP=+1) plus a ground landing AoE slam (1.0×ATK, KO=20).":"Movement jump skill (no damage, no KO). If From the Above (fromTheAbove5) is learned, jumping before landing Bounce triggers an aerial shot (0.5×ATK, KO=1, SP=+1) and a ground landing slam (1.0×ATK, KO=20)." },
+  { id:"rabbit_maimShot", name:"Maim Shot", class:"Rabbit", icon:"rabbit_maimShot4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, duration:3, durContested:true, durNote:"Maim debuff: Clamps target running movement speed to (4 − 0.5×sLv) m/s while active (Rank 1: 3.5 m/s, Rank 2: 3.0 m/s, Rank 3: 2.5 m/s, Rank 4: 2.0 m/s). Duration is 3s base (contested against target CHA).", dmg:"talAdjust(5×sLv+20×depLv)", atkCoeff:0.5, ko:"1", dmgRankDep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}, lckProc:{label:"Knee Shot KO Proc", chance:20, applies:"ko40", baseText:"base 20% (KO = 40)", dep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}}, dmgNote:"Deals 0.5×ATK + talAdjust(5×sLv + [kneeShot5: 20]), base KO=1. Restores +1 SP on hit. Applies Maim movement slow debuff for 3s base (contested against target CHA). With Knee Shot (kneeShot5), adds +20 flat TAL damage and rolls an independent lckAdjust(20) chance to inflict 40 KO." },
   { id:"rabbit_mix", name:"Mix", class:"Rabbit", icon:"rabbit_mix4", maxRank:4, castTime:[2.5,3,3.5,4], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmgDep:{id:"extraPotion", label:"Extra Potion", icon:"rabbit_extraPotion5", minRank:0, maxRank:1, term:"0.3LV", calc:(LV)=>0.3*LV}, dmgNote:"Produces HP (20×sLv + [extraPotion5: 0.3×LV]), SP (4×sLv), and MP potion pickups on ground for 60s." },
   { id:"rabbit_shake", name:"Shake", class:"Rabbit", icon:"rabbit_shake3", maxRank:3, castTime:[3,3.5,4], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmgNote:"Blends adjacent ground potion pickups into compound potions with 60s lifetime." },
   { id:"rabbit_miracleBlend", name:"Miracle Blend", class:"Rabbit", icon:"rabbit_miracleBlend1", maxRank:1, castTime:5, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dep:{id:"alchemistLab", label:"Alchemist Lab", icon:"rabbit_alchemistLab4", minRank:1, maxRank:4, perRank:2}, lckProc:{label:"Miracle Drop Proc", chance:5, rolls:4, applies:"miracleDrop", baseText:"base 5% × 4 rolls", calc:(chance,LCK)=>{ const singlePct = lckAdjustChance(chance, LCK) / 100; return ((1 - Math.pow(1 - singlePct, 4)) * 100).toFixed(1); }, dep:{id:"miracleDrop", label:"Miracle Drop", icon:"rabbit_miracleDrop5", minRank:0, maxRank:1}}, dmgNote:"Spawns 3 potions by default, or 4 potions with Miracle Drop passive. With Miracle Drop, each potion independently rolls lckAdjust(5) chance (~10% at 128 LCK, 34.4% cumulative chance for ≥1) to become a Golden Potion (Pot 6 / Miracle Drop). Picking up a Miracle Drop grants +[(alchemistLabLv+1)×10]% damageMod & hitMod (+20% / +30% / +40% / +50% total damage & accuracy/crit bonus) for chaAdjust(4 + 2×alchemistLabLv) seconds (6/8/10/12s base duration)." },
@@ -3094,7 +3094,7 @@ const SKILLS = [
   { id:"rabbit_heatShot", name:"Heat Shot", class:"Rabbit", icon:"rabbit_heatShot1", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, duration:35, durWrapped:true, dep:{id:"medicalEnhancement", label:"Medical Enhancement", icon:"rabbit_medicalEnhancement3", minRank:0, maxRank:3, perRank:5}, dmgNote:"Grants heat buff for chaAdjust(30 + 5×[medEnhanceLv+1]) seconds (35/40/45/50s base duration)." },
   { id:"rabbit_lifeShot", name:"Life Shot", class:"Rabbit", icon:"rabbit_lifeShot1", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, duration:65, durWrapped:true, dep:{id:"medicalEnhancement", label:"Medical Enhancement", icon:"rabbit_medicalEnhancement3", minRank:0, maxRank:3, perRank:5}, dmgNote:"Applies autoLife auto-revive buff on ally for chaAdjust(60 + 5×[medEnhanceLv+1]) seconds (65/70/75/80s base duration)." },
   { id:"rabbit_rapidTrance", name:"Rapid Trance", class:"Rabbit", icon:"rabbit_rapidTrance1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmgNote:"Grants rapidTrance action speed / animation speed boost for chaAdjust(12) seconds." },
-  { id:"rabbit_gorgonShot", name:"Gorgon Shot", class:"Rabbit", icon:"rabbit_gorgonShot2", maxRank:2, cd:180, cdWrapped:true, revisedArtExempt:false, duration:[6, 9], durContested:true, dmg:"talAdjust(50×sLv)", ko:"0", dmgNote:"Deals talAdjust(50×sLv) true effect damage (KO=0) and petrifies the target for Damage.getDebuff(3×sLv + 3, caster.cha, target.cha) seconds (contested base 6s / 9s)." },
+  { id:"rabbit_gorgonShot", name:"Gorgon Shot", class:"Rabbit", icon:"rabbit_gorgonShot2", maxRank:2, cd:180, cdWrapped:true, revisedArtExempt:false, duration:[6, 9], durContested:true, dmg:"talAdjust(50×sLv)", ko:"0", dmgNote:"Deals talAdjust(50×sLv) true effect damage (KO=0) and petrifies the target for 6s (Rank 1) / 9s (Rank 2) base (contested duration against target CHA)." },
   { id:"rabbit_gilShot", name:"Gil Shot", class:"Rabbit", icon:"rabbit_gilShot4", maxRank:4, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv+20×depLv)", atkCoeff:(rank)=>0.6+0.1*rank, ko:"sLv+1", dmgRankDep:{id:"diamondShot", label:"Diamond Shot", icon:"rabbit_diamondShot5", minRank:0, maxRank:1}, dmgNote:"Deals (0.6 + 0.1×sLv)×ATK + talAdjust(10×sLv + [diamondShot5: 20]). Diamond Shot bonus scales inside talAdjust with TAL stat. Restores +1 SP on cast. KO = sLv + 1 (2/3/4/5)." },
   { id:"rabbit_backpack", name:"Backpack", class:"Rabbit", icon:"rabbit_backpack2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0.5×sLv×InventoryWeight", ko:"10×sLv", dmgDep:{id:"bigBag", label:"Big Bag", icon:"rabbit_bigBag5", minRank:0, maxRank:1, term:"0.25×ItemCount", calc:()=>0}, dmgNote:"Deals 0.5×sLv×InventoryWeight + [bigBag5: 0.25×ItemCount] physical damage (KO = 10×sLv). Reference benchmarks: 30kg -> 15/30 dmg; 60kg -> 30/60 dmg; 100kg -> 50/100 dmg." },
   { id:"rabbit_fourShot", name:"Four Shot", class:"Rabbit", icon:"rabbit_fourShot2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15×sLv+10×depLv)", atkCoeff:0.5, hitCount:()=>4, ko:"1", dmgRankDep:{id:"tenShot", label:"Ten Shot", icon:"rabbit_tenShot5", minRank:0, maxRank:1}, dmgNote:"Fires 4 rapid shots. Each hit deals 0.5×ATK + talAdjust(15×sLv + [tenShot5: 10]), KO=1 (total 4 hits). Ten Shot bonus scales inside talAdjust with TAL stat." },
@@ -3104,7 +3104,7 @@ const SKILLS = [
   { id:"rabbit_shootingArray", name:"Shooting Array", class:"Rabbit", icon:"rabbit_shootingArray2", maxRank:2, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15×sLv)", atkCoeff:0.5, dmgGroups:[{dmg:"talAdjust(15×sLv)", atkCoeff:0.5, hitCount:3, label:"Burst (3 hits)"}, {dmg:"talAdjust(30×sLv)", atkCoeff:1.0, hitCount:1, label:"Finisher (1 hit)"}], hitCount:()=>4, ko:"1", dmgNote:"4-hit combo: 3 rapid shots dealing 0.5×ATK + talAdjust(15×sLv) followed by 1 finisher dealing 1.0×ATK + talAdjust(30×sLv). Total 4 hits." },
   { id:"rabbit_millionaire", name:"Millionaire", class:"Rabbit", icon:"rabbit_millionaire2", maxRank:2, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"ceil(0.005×sLv×min(Gil+Jil, 99999))", ko:"1", dmgNote:"Deals true damage equal to ceil(0.005×sLv×min(Gil+Jil, 99999)), KO=1. Capped at 99,999 Gil -> 500 flat damage at Rank 1, 1000 flat damage at Rank 2. Consumes 0 Gil on hit." },
   { id:"rabbit_healingField", name:"Healing Field", class:"Rabbit", icon:"rabbit_healingField1", maxRank:1, castTime:5, castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, hitCountDuration:2, dmgNote:"Deploys healing aura (radius 12m) lasting chaAdjust(12) seconds. Pulses every 2.0s, restoring 70 flat HP per tick to all allies in radius. Total pulse count scales dynamically with CHA stat (duration ÷ 2s; 6 pulses = 420 HP at base CHA)." },
-  { id:"rabbit_diamondShot", name:"Diamond Shot", class:"Rabbit", icon:"rabbit_diamondShot1", maxRank:1, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"1000", effectDamage:true, ko:"0", dmgNote:"Fires diamond projectile dealing 1000 flat true effect damage to non-player targets (RPC_AddEffectDamage). Bypasses DEF and damageMod (purple effect damage)." },
+  { id:"rabbit_diamondShot", name:"Diamond Shot", class:"Rabbit", icon:"rabbit_diamondShot1", maxRank:1, cd:300, cdWrapped:true, revisedArtExempt:false, dmg:"1000", effectDamage:true, ko:"0", dmgNote:"Fires diamond projectile dealing 1000 flat true effect damage to non-player targets. Bypasses DEF and damageMod (purple effect damage)." },
   { id:"rabbit_tenShot", name:"Ten Shot", class:"Rabbit", icon:"rabbit_tenShot1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(60)", atkCoeff:0.5, hitCount:()=>10, ko:"1", dmgNote:"Fires 10 consecutive shots. Each hit deals 0.5×ATK + talAdjust(60), KO=1 (total 10 hits)." },
   { id:"rabbit_extravagance", name:"Extravagance", class:"Rabbit", icon:"rabbit_extravagance1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dmgDep:{id:"skillBargain", label:"Skill Bargain", icon:"rabbit_skillBargain5", minRank:0, maxRank:1, term:"0", calc:()=>0}, dmgNote:"Consumes 1% Gil (capped at 512, reduced by 40% with skillBargain5) to grant +GilSpent flat ATK buff for chaAdjust(6) seconds." },
   { id:"rabbit_contract", name:"Contract", class:"Rabbit", icon:"rabbit_contract1", maxRank:1, castTime:6, castWrapped:true, cd:180, cdWrapped:true, revisedArtExempt:false, duration:300, durWrapped:false, dmgNote:"Contracts 2 Black Panther bodyguards for 300s to attack and defend the caster." },
@@ -3576,7 +3576,7 @@ function mountSkillCooldownLookup(root){
   }
   // One <img> per digit, using the real in-game damage-popup textures
   // (GameAssets/Effects/DamageNum/<color><digit>.png, Damage.getDamageTexture
-  // in Damage.cs) instead of this tool's own UI font -- the whole point of
+  // in game damage logic) instead of this tool's own UI font -- the whole point of
   // the Final Damage chip per the user's own framing. `size` (px, digit
   // height) defaults to the CSS class's own 34px when omitted -- only the
   // multi-hit small-popup call site overrides it, every existing call site
@@ -3589,15 +3589,15 @@ function mountSkillCooldownLookup(root){
   }
   // Multi-hit Simulate support: how many independent damage instances a
   // skill's Test button should roll/display. Two real shapes, confirmed via
-  // mechanics-researcher against Penguin.cs (2026-08-17):
+  // mechanics-researcher against Penguin skill logic (2026-08-17):
   // - Fixed formula (manaMissile's N missiles, fallingComets' N comets) --
   //   `skill.hitCount(rank, dmgDepOn)`, deterministic for a given rank/dep
   //   state, same every time you click Test.
   // - Duration-derived (tornado's N ticks) -- `skill.hitCountDuration`
   //   (the tick interval in seconds), used against the skill's OWN already-
   //   chaAdjust-wrapped `duration` field. Tornado is a channeled DoT
-  //   (`Penguin.cs:32839` sets the channel end at `chaAdjust(6)` seconds;
-  //   `Penguin_tornado.cs:248-256` ticks the AoE scan every REAL 0.35s), not
+  //   ( sets the channel end at `chaAdjust(6)` seconds;
+  // ticks the AoE scan every REAL 0.35s), not
   //   a burst -- so its "how many hits" isn't a fixed integer, it's however
   //   many 0.35s ticks fit in that CHA/LCK-rolled channel length, i.e. the
   //   Duration chip's own [min,max] divided by 0.35 (user-specified formula).
@@ -3637,7 +3637,7 @@ function mountSkillCooldownLookup(root){
   }
   // dmgGroups (Napalm pilot, 2026-08-19): a skill whose hits genuinely roll
   // DIFFERENT base formulas across the same cast -- not every hit of a
-  // multi-hit skill shares one `dmg` template (Mole.cs:37684, `talAdjust(i!=0
+  // multi-hit skill shares one `dmg` template (Mole skill logic, `talAdjust(i!=0
   // ? 5 : 30)` inside RPC_napalm_hit's own i=0..5 loop: tick 1 hits
   // talAdjust(30), ticks 2-6 hit talAdjust(5) each). `dmgGroups` is an
   // ordered list of `{dmg, hitCount, label}` covering every hit in cast
@@ -3667,7 +3667,7 @@ function mountSkillCooldownLookup(root){
   // dmgDepOn, hitCountDepOn)` convention exactly, just scoped to one group.
   // Needed because Quick Fire's rapid-fire burst phase genuinely goes
   // 0.25->0.35xATK AND 2xrank->4xrank hits with Added Fire active
-  // (Chameleon.cs:19741/20061) -- a real 2-axis (rank AND toggle) variance
+  // -- a real 2-axis (rank AND toggle) variance
   // on ONE group only (the open/close shots stay flat 0.25/1-hit
   // regardless). The earlier King-Kaiser-pilot atkCoeff-per-group mechanism
   // (comment below) only ever supported a static number, with no rank or
@@ -3695,7 +3695,7 @@ function mountSkillCooldownLookup(root){
   function resolveGroupHitCount(skill, g){ return resolveGroupValue(skill, g, "hitCount"); }
   // King Kaiser's Normal Attack pilot (2026-08-20): the first dmgGroups skill
   // whose groups vary by atkCoeff, not just dmg text -- a real 3-swing combo
-  // (1x/1.2x/1.3x ATK, KingKaiser.cs:1680/1885/2031) on a single flat `dmg:"0"`
+  // (1x/1.2x/1.3x ATK, King Kaiser data/1885/2031) on a single flat `dmg:"0"`
   // base, so the per-hit coefficient itself needs to vary, mirroring
   // resolveHitDmgText's own group-walk exactly. Falls back to the skill-level
   // atkCoeff (or undefined) for every pre-existing dmgGroups skill (Napalm),
@@ -3716,7 +3716,7 @@ function mountSkillCooldownLookup(root){
   // Slayer's real rank (0-4, already modeled as the existing `castDep` on
   // both these skills' Cast Time chip) also changes BOTH the atkCoeff
   // AND the flat talAdjust-base literal in the damage formula itself
-  // (`Chameleon.cs:31488`: `(0.3+0.15*improvedSlayerLv)*ATK +
+  // (: `(0.3+0.15*improvedSlayerLv)*ATK +
   // talAdjust(20+10*improvedSlayerLv)`), previously left un-modeled
   // (dmgNote-only) because neither existing mechanism fit: dmgDep only
   // appends an additive term, dmgMultDep only scales the WHOLE existing
@@ -3833,12 +3833,12 @@ function mountSkillCooldownLookup(root){
     const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
     const finalMultiplierValue = FINAL_MULT_MOD_IDS.reduce((prod, id) => prod * (activeFinalMultMods.has(id) ? (1 + MOD_DEFS[id].delta) : 1), 1);
     // ownLck (Auto Gyro Gun pilot, 2026-08-18): dmgAdjust's LCK-rolled term
-    // (CharacterControl.cs:20489, `Random(0, ceil(0.2*this.lck))`) reads
+    // (game engine, `Random(0, ceil(0.2*this.lck))`) reads
     // `this.lck` -- the ATTACKER's own field. For a normal skill cast the
     // attacker IS Mole, so the tool's global LCK input is correct. Auto Gyro
     // Gun's turret is a SEPARATE CharacterControl with its own independently-
-    // tracked lck stat (AutoGyroGun.cs:77/92/107/126, `10×rank`, replaced by
-    // `0.125×rank×MoleLv` when hiddenTurret5 is active -- Mole.cs:12187,
+    // tracked lck stat (Auto Gyro Gun logic/92/107/126, `10×rank`, replaced by
+    // `0.125×rank×MoleLv` when hiddenTurret5 is active
     // HALF the atk/def coefficient, confirmed NOT touched by Synchro Mole)
     // -- using the player's own LCK input here would silently substitute
     // the wrong actor's stat. `ownLck` marks a skill whose attacker-LCK for
@@ -3851,12 +3851,12 @@ function mountSkillCooldownLookup(root){
     // day when the user asked about Flame Carnival/Napalm too): a skill
     // flagged `penetrating:true` calls RPC_AddDamage on the target DIRECTLY
     // instead of going through hit() -- confirmed exhaustively (a
-    // whole-file grep for "defAdjust" in CharacterControl.cs turns up
+    // whole-file grep for "defAdjust" in game engine turns up
     // exactly 5 hits: the function's own declaration, hit()'s automatic
-    // call at :3546, and 3 OTHER skills that manually re-apply defAdjust
+    // call in hit(), and 3 OTHER skills that manually re-apply defAdjust
     // themselves after also bypassing hit() -- neither Flame Turret's
-    // (Mole.cs:28200) nor Flame Carnival's (:39150) own call site is among
-    // them; a companion grep of Mole.cs itself for "defAdjust" also comes
+    // nor Flame Carnival's own call site is among
+    // them; a companion grep of Mole skill logic itself for "defAdjust" also comes
     // back with zero hits, ruling out a manual re-application written in
     // the CALLING file instead). The FIRST version of this fix only skipped
     // defAdjust -- wrong, caught by re-reading the actual call site:
@@ -3871,7 +3871,7 @@ function mountSkillCooldownLookup(root){
     // dmgAdjustAtRoll/defAdjustRoll both skipped entirely rather than just
     // the latter.
     // dmgAdjustSkip (BarrelBot Missile pilot, 2026-08-20): a 3rd pipeline
-    // shape, distinct from `penetrating` -- BarrelBot_missile.cs:349 calls
+    // shape, distinct from `penetrating`calls
     // `characterControl2.defAdjust(characterControl.talAdjust(30))` directly
     // then `RPC_AddDamage(...)`, bypassing hit() (so dmgAdjust -- the
     // attacker's own damageMod+LCK-roll term -- never runs) but MANUALLY
@@ -3880,7 +3880,7 @@ function mountSkillCooldownLookup(root){
     // "other skills that manually re-apply defAdjust after also bypassing
     // hit()" flagged (but not modeled) back when Flame Turret/Carnival's own
     // `penetrating` flag was first verified via a whole-file `defAdjust`
-    // grep in CharacterControl.cs -- confirmed now, not assumed.
+    // grep in game engine -- confirmed now, not assumed.
     // effectDamage (Thunder Dragon pilot, 2026-08-21): a 4th pipeline shape,
     // alongside penetrating/dmgAdjustSkip -- RPC_AddEffectDamage (unlike
     // RPC_AddDamage, which every prior shape here still ends up at) never
@@ -4083,7 +4083,7 @@ function mountSkillCooldownLookup(root){
   // before this pass. Two known formula shapes today (Penguin/Mole pilots):
   // a talAdjust(<expr>) wrapper -- expanded to its algebraic
   // base+TAL-coefficient form per CharacterControl.talAdjust
-  // (nPower*(1+0.02*TAL), CharacterControl.cs:20624) -- or a flat/
+  // (nPower*(1+0.02*TAL), game engine) -- or a flat/
   // no-talAdjust linear expression (evaluated straight to one number). A
   // third shape (no sLv, no talAdjust -- e.g. novaFlare's vortex-state-
   // dependent damage) is genuinely opaque and stays plain cited text, not
@@ -4092,7 +4092,7 @@ function mountSkillCooldownLookup(root){
   // damage line also carries is deliberately NOT stored in the `dmg`
   // template text -- it's collapsed to its algebraic simplification
   // 0.01×INT (since the buff's stored value is exactly INT-100,
-  // Penguin.cs:35867, so 1+0.01*(INT-100) = 0.01*INT) and applied here via
+  // Penguin skill logic, so 1+0.01*(INT-100) = 0.01*INT) and applied here via
   // the `dmgFocusIntellect` flag + the focusIntellectOn toggle instead.
   // dmgGroups (2026-08-19, see resolveHitDmgText's own comment for the full
   // citation trail): renders EVERY distinct per-hit formula, each in its own
@@ -4128,7 +4128,7 @@ function mountSkillCooldownLookup(root){
     // (hasSkill(402)?...)").
     const dmgDepOn = skill.dmgDep && getDepRank(skill.dmgDep) === skill.dmgDep.maxRank;
     // `term` is usually a fixed display string, but Mole's superTNT5
-    // (Mole.cs:26048, `(0.1*sLv+0.1)*charLv`) genuinely depends on the
+    // (Mole skill logic, `(0.1*sLv+0.1)*charLv`) genuinely depends on the
     // SKILL's OWN selected rank, not just LV -- letting `term` be a
     // `(rank)=>string` function too (same optional-shape pattern `calc`
     // already uses) covers that without a second dep field.
@@ -4144,7 +4144,7 @@ function mountSkillCooldownLookup(root){
     // term can opt in explicitly too instead of guessing from text content.
     const dmgDepTermClass = (skill.dmgDep && skill.dmgDep.termClass) || "dmg-term";
     // Multiplicative Class C passives (e.g. Falling Stars/Comets' Giant
-    // Star, Penguin.cs:37270 / :37547 -- $RPC_giantStars_fire$/$RPC_giantComets_fire$
+    // Star, $RPC_giantStars_fire$/$RPC_giantComets_fire$
     // unconditionally computing hitDmg = 1.25×storedBaseDamage, dispatched to
     // INSTEAD of the base fire coroutine once hasSkill(442) is true, not a
     // conditional multiplier inline in one shared function). Folded straight
@@ -4235,7 +4235,7 @@ function mountSkillCooldownLookup(root){
       // ATK term (Mole pilot, 2026-08-18): a flat coefficient on the raw ATK
       // stat, added to the talAdjust(...) result -- NOT fed into talAdjust's
       // own base like sLv is. Real source shape e.g. megaPunch's
-      // `0.5*ATK + talAdjust(10*sLv)` (Mole.cs:32478-32504). Order is base,
+      // `0.5*ATK + talAdjust(10*sLv)`. Order is base,
       // ATK, TAL (user-specified, 2026-08-19) when there's no bracket to
       // worry about. Not currently reachable together with dmgFocusIntellect
       // by any real skill (Mole has atkCoeff, Penguin has dmgFocusIntellect,
@@ -4270,7 +4270,7 @@ function mountSkillCooldownLookup(root){
       // dmgReplaceDep (Mole's Auto Gyro Gun / hiddenTurret5 pilot, 2026-08-18):
       // a Class C passive that OVERWRITES the flat base value instead of
       // adding or multiplying it -- genuinely different from dmgDep/
-      // dmgMultDep. Mole.cs:12141-12152: hiddenTurret5 replaces the turret's
+      // dmgMultDep. Mole skill logic: hiddenTurret5 replaces the turret's
       // `atk` field with `0.25×sLv×MoleLv` moments after it's set to the
       // flat `10×sLv` baseline, rather than adjusting that baseline -- so
       // toggling it on has to swap the whole base term's value AND caption,
@@ -4289,7 +4289,7 @@ function mountSkillCooldownLookup(root){
       // CALCULATED Raw/Final Damage numbers were always correct even before
       // this fix, but the DISPLAYED formula text silently dropped the ATK
       // term entirely for a skill whose `dmg` base is flat. Roller Machine's
-      // real formula (`Mole.cs:42430`, `3*this.mChar.atk`) has NO talAdjust
+      // real formula (, `3*this.mChar.atk`) has NO talAdjust
       // component at all -- modeled as `dmg:"0"` (flat) + `atkCoeff:3`, so
       // when the flat base is exactly 0 the "0" term is omitted entirely
       // (not shown as "0 + 648(3ATK)") rather than always prefixing it, the
@@ -4363,7 +4363,7 @@ function mountSkillCooldownLookup(root){
   }
   // Shield formulas (Ice Shield pilot, 2026-08-16): same talAdjust +
   // Class-C-dependency shape as renderDmgFormula, but focusIntellect wraps
-  // the CLASS C BONUS TOO here -- Penguin.cs:31129-31140 (iceShield_cast)
+  // the CLASS C BONUS TOO here(iceShield_cast)
   // computes talAdjust(...) + classCBonus FIRST as one sum, THEN multiplies
   // that whole sum by (1+0.01×focusIntellect) if the buff's active. That's
   // the REVERSE of manaMissile/manaArc's (talAdjust×focus) + classCBonus
@@ -4424,7 +4424,7 @@ function mountSkillCooldownLookup(root){
   // "replace" kind (Mole's Mine Lover pilot, 2026-08-19): a 3rd shape,
   // alongside the existing additive (perRank) and postMultiply ones -- Mine
   // Lover doesn't offset or scale the raw cooldown, it swaps in an entirely
-  // different HARDCODED literal (`Mole.cs:23891-23905`:
+  // different HARDCODED literal (:
   // `hasSkill(402) ? addTimeOut("mine", agiAdjust(8)) : addTimeOut("mine",
   // agiAdjust(15))` -- 8 is neither `15 - N` nor `15 * N` for any clean N,
   // so neither perRank nor postMultiply can express it; same shape as
@@ -4444,7 +4444,7 @@ function mountSkillCooldownLookup(root){
   // sweep of all 27 Penguin skills + 6 Mole skills for `hit()`/`RPC_AddDamage`/
   // `RPC_AddEffectDamage`'s shared `nKo` parameter -- confirmed real and
   // separate from `nDamage` in every one of those 3 function signatures,
-  // `CharacterControl.cs:2807/3680/6058`). `skill.ko` is a plain arithmetic
+  //). `skill.ko` is a plain arithmetic
   // string (same `sLv`-substitution convention as `dmg`) -- unlike damage,
   // no source KO value in this sweep was ever wrapped in an *Adjust function
   // (talAdjust/agiAdjust/etc.), so there's no LCK-roll spread to model, just
@@ -4457,7 +4457,7 @@ function mountSkillCooldownLookup(root){
   // not dmgDep's append-a-term pattern).
   // `koMultDep` (Mole's mineLover pilot): mirrors `dmgMultDep` exactly --
   // `Math.floor(value * mult)`, matching the real `Mathf.FloorToInt(1.25f*...)`
-  // source truncation (`Mole.cs:11092-11103`) confirmed for stunMine only,
+  // source truncation () confirmed for stunMine only,
   // not stunGrenade.
   function getKOValue(skill, rank){
     if (skill.ko === undefined) return null;
@@ -4920,7 +4920,7 @@ function mountSkillCooldownLookup(root){
     } else if (selected.ownStatsKaiser){
       // King Kaiser pilot (2026-08-20): unlike Barrel Bot, ALL of King
       // Kaiser's own cooldowns are flat literals, never agiAdjust-wrapped
-      // (verified directly against KingKaiser.cs -- no skill here sets
+      // (verified directly against King Kaiser -- no skill here sets
       // cdWrapped:true), so overriding AGI has no actual effect on any
       // Cooldown chip -- assigned anyway for the stats table's own
       // completeness/consistency with the Barrel Bot precedent, harmless
@@ -4933,7 +4933,7 @@ function mountSkillCooldownLookup(root){
       // Base "Barrel Bot" summon entry (2026-08-21, user-requested): this
       // skill's own Cooldown/Cast Time genuinely use MOLE's own AGI, not
       // Barrel Bot's -- verified directly, the arming call
-      // (`Mole.cs:23429`, inside the shared RPC_assemble1 dispatcher) runs
+      // (, inside the shared RPC_assemble1 dispatcher) runs
       // on `$self_.mChar` (Mole himself), not the summoned companion's own
       // CharacterControl (unlike every "Barrel Bot - X" moveset child,
       // whose own cooldowns genuinely DO read Barrel Bot's own AGI). So
@@ -5061,12 +5061,12 @@ function mountSkillCooldownLookup(root){
     // the 4th .sk-hero-stats slot reserved since 2026-08-14 for exactly this
     // (see .sk-stat-lck's own CSS comment). Genuinely different shape from
     // Cooldown/Cast Time/Duration: lckAdjust has no roll baked into the
-    // function itself (CharacterControl.cs:20658), the roll lives at each
+    // function itself, the roll lives at each
     // proc's own call site instead -- so this is one live deterministic
     // percentage, not a [min,max] range, and needs no probability tooltip.
     // Gated by the skill's own dep (Arctic Wind: arcticFrost1) exactly like
     // every other dep-toggle in this tool -- OFF means the proc can never
-    // roll at all in source (Penguin.cs:10665, `arcticFrostLv<=0` short-
+    // roll at all in source (Penguin skill logic, `arcticFrostLv<=0` short-
     // circuits to false before lckAdjust is even called), so the displayed
     // chance is a hard 0%, not just a dimmed/muted version of the on value.
     let lckProcBlock = "";
@@ -5136,7 +5136,7 @@ function mountSkillCooldownLookup(root){
           <div class="sk-bb-stat-value num">${fmtOne(val)}</div>
         </div>
       `;
-      // Order matches CharacterControl.cs's own declared field order
+      // Order matches the engine's own declared field order
       // (hp, atk, def, agi, vit, mag, cha, tal, lck) read left-to-right,
       // top-to-bottom across the 3x3 grid -- not an arbitrary layout.
       const bbRows =
@@ -5220,9 +5220,9 @@ function mountSkillCooldownLookup(root){
         // effect is defined per-skill rather than by a fixed calc/mult
         // shape like every other dep field here -- Typhoon (pgn_typhoon1,
         // hasSkill(344)) doesn't touch the per-tick damage formula, tick
-        // rate, or duration at all (Penguin.cs:11299-11311), but its
+        // rate, or duration at all, but its
         // self-depleting HP/damage-budget pool (talAdjust(sLv×100)×focus,
-        // Penguin.cs:11305) DOES change Final Damage -- see the HP subline
+        // Penguin skill logic) DOES change Final Damage -- see the HP subline
         // below and the finalRange computation further down. Only needs
         // id/label/icon/minRank/maxRank to render the toggle itself (same
         // generic renderDmgToggle/getDepRank machinery every other dep
@@ -5310,7 +5310,7 @@ function mountSkillCooldownLookup(root){
       // literal, no dep at all) still produces a REAL, nonzero Final Damage
       // in the actual game -- hit()'s dmgAdjust/defAdjust run
       // UNCONDITIONALLY even for a literal nDamage=0 input
-      // (CharacterControl.cs:3540/3546, no skip-if-zero guard), and
+      // (game engine/3546, no skip-if-zero guard), and
       // defAdjust's own formula floors BOTH its light/heavy components to a
       // minimum of 1 each (`max(d-0.5N,1)` / `max(d*(1-N/(N+64)),1)`), so a
       // true 0 always yields a real >=1 result, never a literal 0, once it's
@@ -5348,16 +5348,16 @@ function mountSkillCooldownLookup(root){
         // text instead of hardcoded to selected.dmg -- so dmgGroups (2026-08-19,
         // see resolveHitDmgText's own comment for the full citation trail) can
         // run it once per distinct per-hit formula instead of duplicating this
-        // whole block. Mirrors the real (int) cast order in Penguin.cs:
+        // whole block. Mirrors the real (int) cast order in Penguin skill logic:
         // talAdjust() truncates itself first (done inside talAdjustAtRoll),
         // then the focus multiplier and any Class C additive bonus are applied
         // to that already-truncated value, and the WHOLE combined result is
         // truncated once more -- not truncated after each individual step. A
         // multiplicative dep (Giant Star) is a THIRD, separate truncation on
         // top of that: source stores the focus-adjusted value in a real `int`
-        // field first (Penguin.cs:25554, 26421 -- an assignment, not a temp
+        // field first (an assignment, not a temp
         // float), THEN a different coroutine reads that already-int value and
-        // does (int)(1.25f * storedInt) (:37270/:37547) -- genuinely two
+        // does (int)(1.25f * storedInt) -- genuinely two
         // truncation points, not one combined expression, so it needs its own
         // Math.trunc call rather than folding into the return below.
         const calcRangeFor = (dmgTemplateText, atkCoeffOverride) => {
@@ -5528,7 +5528,7 @@ function mountSkillCooldownLookup(root){
           // rollOneHit's identical (and identically corrected) comment for
           // the full citation trail. The real call
           // (`RPC_AddDamage(actionCode, this.mChar.talAdjust(5*sLv), 0, 0,
-          // ...)`, Mole.cs:28200/39150) is a bare talAdjust value -- no
+          // ...)`, Mole skill logic/39150) is a bare talAdjust value -- no
           // dmgAdjust(...) wrapper, so BOTH the attacker-side step
           // (damageMod + attacker LCK roll) and the target-side one
           // (defAdjust) are skipped for a flagged skill, not just the
@@ -5606,7 +5606,7 @@ function mountSkillCooldownLookup(root){
           // MAXIMUM = the pool's own max roll (same conversion) PLUS one
           // full hit's worth of already-fully-processed Final Damage
           // (finalRangeForRange's own max) on top -- because the real
-          // depletion check (Penguin_typhoon.cs:93-100) runs AFTER a tick
+          // depletion check runs AFTER a tick
           // already landed, so the tick that finally drains the pool below
           // 0 still deals its full, un-prorated damage first; the pool is a
           // floor the last hit can overshoot by up to one whole hit, not a
@@ -5841,7 +5841,7 @@ function mountSkillCooldownLookup(root){
         const shieldBaseVal = evalArith(shieldMatchCalc[1]);
         const focusOnCalc = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
         const shieldDepOnCalc = selected.shieldDep && getDepRank(selected.shieldDep) === selected.shieldDep.maxRank;
-        // Opposite order from dmgCalcPostFn (Penguin.cs:31129-31140): the
+        // Opposite order from dmgCalcPostFn: the
         // Class C bonus is added BEFORE focusIntellect's multiplier here,
         // not after.
         const shieldCalcPostFn = v => {
@@ -6121,7 +6121,7 @@ function mountSkillCooldownLookup(root){
           if (selected.dmgFocusIntellect && getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank){
             hpPool = Math.trunc(hpPool * 0.01 * INT);
           }
-          // Safety cap only -- defAdjust is floored at 1 (CharacterControl.cs's
+          // Safety cap only -- defAdjust is floored at 1 (the engine's
           // own formula), so every iteration strictly reduces hpPool by a
           // POSITIVE amount and this loop is mathematically guaranteed to
           // terminate; this just bounds worst-case runaway if some future
@@ -6473,7 +6473,7 @@ function mountStatGain(root){
     </div>
   `;
 
-  // Stat order index 0..7 — verified from CharacterData.cs:218-493
+  // Stat order index 0..7
   const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
   const FULL  = {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"};
   const COLOR = {ATK:"#c2503c",DEF:"#4f7fb8",AGI:"#5a9a63",VIT:"#c9a227",INT:"#b0568f",CHA:"#8a72b8",TAL:"#3f9a8c",LCK:"#a3862c"};
@@ -6487,7 +6487,7 @@ function mountStatGain(root){
 
   const MAX_LV = 100;
   const CAP_LV = 95; // stat gain stops increasing past this level
-  // verified leveling formula — CharacterData.cs:515
+  // verified leveling formula
   const gain = (lv, base) => Math.floor((Math.min(lv, CAP_LV) - 1) * (base + 3) * 0.083);
 
   const clsSel = $('[data-role="cls"]', root);

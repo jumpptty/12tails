@@ -109,7 +109,7 @@
 <script>
 "use strict";
 
-// Stat order index 0..7 — verified from CharacterData.cs:218-493
+// Stat order index 0..7
 const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
 const FULL  = {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"};
 const COLOR = {ATK:"#ff6b66",DEF:"#6ea2ff",AGI:"#5fd08a",VIT:"#ffb05a",INT:"#ff7bdf",CHA:"#c78bf0",TAL:"#4fd5c9",LCK:"#e0b25a"};
@@ -123,7 +123,7 @@ const CLASSES = {
 
 const MAX_LV = 100;
 const CAP_LV = 95; // stat gain stops increasing past this level
-// verified leveling formula — CharacterData.cs:515
+// verified leveling formula
 const gain = (lv, base) => Math.floor((Math.min(lv, CAP_LV) - 1) * (base + 3) * 0.083);
 
 const $ = id => document.getElementById(id);
