@@ -25,7 +25,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | gilShot | 4 | none | `(0.6 + 0.1×sLv)×ATK + talAdjust(10×sLv)` (`Rabbit.cs:30399`) | KO=`sLv+1` (`[2, 3, 4, 5]`), restores +1 SP | **diamondShot5** (hasSkill 403, +20 to talAdjust base) | 1 |
 | backpack | 2 | none | `0.5×sLv×Weight` (`Rabbit.cs:31593`) | KO=`10×sLv` (`[10, 20]`) | **bigBag5** (hasSkill 423, adds `+0.25×ItemCount`) | 1 |
 | fourShot | 2 | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
-| circleShot | 2 | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE burst (radius `8×rangeMod`), KO=1 | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 1 |
+| circleShot | 2 | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE spray (radius `8×rangeMod`, 3 rapid pulses, `Rabbit.cs:32690-32872, 33141`), KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 3 |
 | mall | 2 | none | no dmg — sets up mobile player shop vendor | — | — | — |
 | truceTrading | 2 | none | no dmg — invulnerable trading zone | — | — | — |
 | shootingArray | 2 | none | 3 hits of `0.5×ATK + talAdjust(15×sLv)` + 1 finisher of `1.0×ATK + talAdjust(30×sLv)` (`Rabbit.cs:35331`, `:35630`) | modeled via `dmgGroups` (4 hits total), KO=1/hit | — | 4 (`dmgGroups`) |
@@ -57,9 +57,10 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 
 ### 3. Circle Shot (`circleShot1-2`)
 * **Source:** `Rabbit.cs:32732` inside `$RPC_circleShot$27232`
-* **Formula:** `(int)(0.5f * atk + talAdjust(15 * sLv + (hasSkill(433) ? 10 : 0)))`
-* **Radius:** `8 * rangeMod` (1 pulse).
-* **KO:** 1.
+* **Formula:** `(int)(0.5f * atk + talAdjust(15 * sLv + (hasSkill(433) ? 10 : 0)))` per pulse.
+* **Hit Count:** 3 rapid AoE pulses (`Rabbit.cs:32690-32872`, `this.$i$27236 < 3` yielding `WaitForSeconds(0.133f)` at `Rabbit.cs:33141`).
+* **Radius:** `8 * rangeMod` meters.
+* **KO:** 1 per hit (3 KO total across all 3 hits).
 * **Dependency:** Shares `rab_tenShot5` (+10 to talAdjust base).
 
 ### 4. Shooting Array (`shootingArray1-2`)
