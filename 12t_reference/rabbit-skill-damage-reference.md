@@ -103,12 +103,15 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **KO:** 1 per hit.
 
 ### 10. Acidic Field (`acidicField1-2`)
-* **Source:** `Rabbit_acidicField.cs:198`, `Rabbit.cs:27128`
-* **Formula:** `RPC_AddEffectDamage(242 + sLv, 10 * sLv, 0, 0, ...)`
+* **Source:** `Rabbit_acidicField.cs:198`, `Rabbit.cs:10159`, `Rabbit.cs:27128`
+* **Formula:** `RPC_AddEffectDamage(242 + effectiveLv, 10 * effectiveLv, 0, 0, ...)` where `effectiveLv = sLv + (hasSkill(442) ? 1 : 0)`.
+  * Without Healing Field: 10 true effect damage/tick (Rank 1), 20 (Rank 2).
+  * With Healing Field (`rab_healingField5`, Skill ID 442): 20 true effect damage/tick (Rank 1), 30 (Rank 2).
+* **Damage Type:** True Effect Damage (`effectDamage: true`, purple damage font in formula and purple digit popup `dmgdigit_p<N>` in simulation, bypasses DEF and damageMod).
 * **Duration & Pulse Cadence:** `chaAdjust(12)` seconds total duration, pulsing once every 2.0s (`Rabbit_acidicField.cs:131`).
-* **Hit Count Scaling:** Dynamic pulse count $= \lfloor\text{chaAdjust}(12) / 2\rfloor$ (6 pulses at base CHA, increasing with higher CHA stat).
-* **Damage:** 10 flat true effect damage at rank 1, 20 at rank 2 per tick (penetrating, bypasses enemy DEF and damageMod).
+* **Hit Count Scaling:** Dynamic pulse count $= \lfloor\text{chaAdjust}(12) / 2\rfloor$ (6 pulses at base CHA, scaling with CHA).
 * **Status:** Applies `"acid"` status.
+* **Dependency:** `rab_healingField5` (Skill ID 442, `RabbitSkill.cs:3255`) adds `+1` effective skill level.
 
 ### 11. Healing Field (`healingField1`)
 * **Source:** `Rabbit.cs:37831`, `Rabbit_healingField.cs:189`
