@@ -69,5 +69,13 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
    * Flat arithmetic parser regexes must always support parentheses: `/^[\d\s×*+\-().]+$/`.
 3. **Programmatic PNG Header Icon Extraction**:
    * Icons must be extracted directly from `RippedAssets/...` and validated for authentic PNG headers (`89 50 4E 47 0D 0A 1A 0A`). Never use placeholder base64 strings.
-4. **Mandatory Automated Linting**:
+5. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
+   * **Never stop early** after reading the initial cast dispatch or a single coroutine.
+   * Thoroughly trace the **entire lifecycle** of the skill from initiation to resolution:
+     1. **Cast & Wind-up:** `RPC_<skill>`, `DisplayCastBar`, `addTimeOut` / cooldown application.
+     2. **Multi-Phase Transitions:** In-flight coroutines, secondary triggers (e.g. mid-air actions, collision handlers, landing phases), companion `MonoBehaviour` instances.
+     3. **All Damage & KO Instances:** Check EVERY `hit()` / `RPC_AddDamage` / `FindAreaTarget` call in all phases (initial hit, mid-air triggers, ground slam / landing, recurring tick loops). Record both `nDamage` formula and `nKo` value for every phase.
+     4. **Conditional Passive Branches:** Check all `hasSkill(...)` branches for added hits, modified coefficients, or secondary effects.
+     5. **Secondary Effects:** SP/MP recovery or siphoning, debuff status applications (`RPC_AddStatus`), buffs, and summon lifetimes/destruction.
+6. **Mandatory Automated Linting**:
    * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
