@@ -61,15 +61,15 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
 1. **Per-Rank Scaling Audit (`maxRank > 1`)**:
    * Never assume flat scalar properties for skills with multiple ranks.
    * Always inspect the decompiled `RPC_<name>` cast site / `DisplayCastBar` / `addTimeOut` / companion `MonoBehaviour` for `sLv` scaling in:
-     * `castTime` (e.g., `2 + 0.5 * sLv` $\rightarrow$ `[2.5, 3, 3.5, 4]`).
+     * `castTime` (e.g., `2 + 0.5 * sLv` → `[2.5, 3, 3.5, 4]`).
      * `cd` (e.g., `[10, 12, 14, 16]`).
      * `duration` / `hitCountDuration` (e.g., dynamic CHA pulse intervals).
 2. **Formula & Variable Permutation Validation**:
-   * Any formula with variables (`sLv`, `depLv`) or parentheses must evaluate without error across all rank combinations ($1..\text{maxRank}$) and toggle states.
+   * Any formula with variables (`sLv`, `depLv`) or parentheses must evaluate without error across all rank combinations (1..maxRank) and toggle states.
    * Flat arithmetic parser regexes must always support parentheses: `/^[\d\s×*+\-().]+$/`.
 3. **Programmatic PNG Header Icon Extraction**:
    * Icons must be extracted directly from `RippedAssets/...` and validated for authentic PNG headers (`89 50 4E 47 0D 0A 1A 0A`). Never use placeholder base64 strings.
-5. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
+4. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
    * **Never stop early** after reading the initial cast dispatch or a single coroutine.
    * Thoroughly trace the **entire lifecycle** of the skill from initiation to resolution:
      1. **Cast & Wind-up:** `RPC_<skill>`, `DisplayCastBar`, `addTimeOut` / cooldown application.
@@ -79,3 +79,14 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
      5. **Secondary Effects:** SP/MP recovery or siphoning, debuff status applications (`RPC_AddStatus`), buffs, and summon lifetimes/destruction.
 6. **Mandatory Automated Linting**:
    * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
+
+---
+
+## 6. Typography & Markdown Formatting Rule
+
+* **Plain Unicode in Chat & Deliverables:** Never use LaTeX math delimiters or commands (e.g. `$\rightarrow$`, `\times`, `$\le$`, `$1..\text{maxRank}$`) in chat responses, documentation, or code comments. The IDE chat renderer parses standard GitHub-Flavored Markdown without LaTeX math plugins.
+* **Always use native Unicode symbols directly:**
+  * Arrows: `→`, `←`, `↔`
+  * Arithmetic & Comparisons: `×`, `÷`, `±`, `≤`, `≥`, `≠`, `≈`
+  * Ranges & Exponents: `1..maxRank`, `x²`, `x³`
+
