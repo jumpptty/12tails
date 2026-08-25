@@ -1,6 +1,7 @@
 # Large decompiled/ripped asset trees — never bulk-add these
 RippedAssets/
 12TailsOnline_Data/
+DecompiledSource/
 
 # Automation / browser test artifacts
 .playwright-mcp/
