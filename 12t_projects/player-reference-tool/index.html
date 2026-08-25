@@ -1533,6 +1533,17 @@ function chaAdjustRange(base, CHA, LCK) {
   return [chaAdjustAtRoll(base, CHA, rMin), chaAdjustAtRoll(base, CHA, rMax)];
 }
 
+// debuffAdjust(base, casterCHA, targetCHA) (Damage.cs:317, Damage.getDebuff) --
+// contested debuff duration against enemy target's CHA.
+// When caster.cha <= target.cha: floor(base * (1 + (c1 - c2)/(|c1 - c2| + 64)))
+// When caster.cha > target.cha: floor(base * (1 + 0.01 * (c1 - c2)))
+function debuffAdjust(base, casterCHA, targetCHA) {
+  return (casterCHA <= targetCHA)
+    ? Math.floor(base * (1 + (casterCHA - targetCHA) / (Math.abs(casterCHA - targetCHA) + 64)))
+    : Math.floor(base * (1 + 0.01 * (casterCHA - targetCHA)));
+}
+
+
 // talAdjust(t) = (int)(t * (1 + 0.02*n)), n = clamp(TAL+R,1,512) -- damage
 // boost (CharacterControl.cs:20624). Same monotonic-increasing shape as
 // chaAdjust (min R -> min output).
@@ -2957,7 +2968,7 @@ const SKILLS = [
   { id:"penguin_arcticWind", name:"Arctic Wind", class:"Penguin", icon:"penguin_arcticWind3", maxRank:3, castTime:[2,2.5,3], castWrapped:true, cd:[15,18,21], cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×10+5)", dmgFocusIntellect:true, hitCount:(rank,dmgDepOn,hitCountDepOn)=>hitCountDepOn?8:4, hitCountDep:PENGUIN_DEADLY_FROST_DEP, dmgNote:"per tick<br>4 ticks with base skill<br>8 ticks with Deadly Frost", ko:"1", lckProc:{label:"Frost Chance", chance:20, applies:"frost", dep:{id:"arcticFrost1", label:"Arctic Frost", icon:"penguin_arcticFrost1", minRank:0, maxRank:1}} },
   { id:"penguin_iceShield", name:"Ice Shield", class:"Penguin", icon:"penguin_iceShield4", maxRank:4, castTime:[3.5,4,4.5,5], castWrapped:true, cd:[45,60,75,90], cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, shield:"talAdjust(10+20×sLv)", shieldFocusIntellect:true, shieldDep:{id:"frostSpike", label:"Frost Spike", icon:"penguin_frostSpike5", minRank:0, maxRank:1, term:"LV", calc:(LV)=>LV}, lckProc:{label:"Frost Chance", chance:12, applies:"frost", dep:{id:"frostSpike", label:"Frost Spike", icon:"penguin_frostSpike5", minRank:0, maxRank:1}} },
   { id:"penguin_iceBlock", name:"Ice Block", class:"Penguin", icon:"penguin_iceBlock2", maxRank:2, castTime:[2,3], castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, durPostAdd:6 },
-  { id:"penguin_snowMan", name:"Snow Man", class:"Penguin", icon:"penguin_snowMan2", maxRank:2, castTime:[4,6], castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false },
+  { id:"penguin_snowMan", name:"Snow Man", class:"Penguin", icon:"penguin_snowMan2", maxRank:2, castTime:[4,6], castWrapped:true, cd:90, cdWrapped:true, revisedArtExempt:false, duration:[6,10], durContested:true, dmgNote:"Transforms target enemy into a Snowman with talAdjust(50×sLv) HP shield. Incapacitates target for Damage.getDebuff(2 + 4×sLv, caster.cha, target.cha) seconds (6s/10s base, contested against target CHA)." },
   { id:"penguin_tornado", name:"Tornado", class:"Penguin", icon:"penguin_tornado3", maxRank:3, castTime:[4,6,8], castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dmg:"talAdjust(10×sLv)", dmgFocusIntellect:true, hitCountDuration:0.35, dmgFlagDep:{id:"typhoon", label:"Typhoon", icon:"penguin_typhoon1", minRank:0, maxRank:1, hp:"talAdjust(100×sLv)"}, dmgNote:(typhoonOn)=>typhoonOn
     ? `Typhoon active: auto-tracks the locked target instead of requiring manual steering (Tornado is normally player-steered) — makes the "target stays in the AoE" assumption far more reliable in practice. Cost: the tornado now has its own self-depleting HP/damage-budget pool (see the Typhoon HP line above), which loses HP equal to the actual damage it deals each tick and self-destructs once exhausted. Final Damage below reflects this directly: minimum = the HP pool's own low roll, maximum = the pool's high roll plus one full hit's worth of Final Damage on top — the tick that finally drains the pool below 0 still lands at full, un-prorated value before the game notices it's empty, so the pool is a floor the last hit can overshoot by up to one whole hit, not a hard ceiling. Per-tick damage, 0.35s tick rate, and duration are otherwise unaffected by Typhoon.`
     : `Per tick (every 0.35s in-game; Simulate shows a flat 50ms/hit glance, not this real interval); hit count = channel duration ÷ 0.35, assumes target stays in the tornado's radius the whole time — an AoE around the (player-steerable) tornado, not a guaranteed hit. Toggle Typhoon (top-right icon) to see how that assumption changes once the tornado auto-tracks its target instead.`,
@@ -4847,22 +4858,32 @@ function mountSkillCooldownLookup(root){
       const depRank = dep ? getDepRank(dep) : null;
       const durationBase = resolveRank(selected.duration, rank);
       const rawDuration = dep ? depRawValue(durationBase, dep, depRank) : durationBase;
-      let durRange = selected.durWrapped ? chaAdjustRange(rawDuration, CHA, LCK) : [rawDuration];
-      if (selected.durPostAdd) durRange = durRange.map(v => v + selected.durPostAdd);
-      if (dep) durRange = depPostMultiply(durRange, dep, depRank);
+      let durRange;
+      let durBaseLabel;
+      let durDist = null;
+      if (selected.durContested){
+        const enemyCHA = parseFloat(enemyChaEl.value) || 0;
+        const contestedDur = debuffAdjust(rawDuration, CHA, enemyCHA);
+        durRange = [contestedDur];
+        durBaseLabel = "contested base";
+      } else {
+        durRange = selected.durWrapped ? chaAdjustRange(rawDuration, CHA, LCK) : [rawDuration];
+        if (selected.durPostAdd) durRange = durRange.map(v => v + selected.durPostAdd);
+        if (dep) durRange = depPostMultiply(durRange, dep, depRank);
+        durBaseLabel = selected.durWrapped ? "base" : "fixed";
+        const durPostFn = v => {
+          if (selected.durPostAdd) v += selected.durPostAdd;
+          return dep ? depPostMultiply([v], dep, depRank)[0] : v;
+        };
+        durDist = selected.durWrapped ? lckDistribution(rawDuration, CHA, LCK, chaAdjustAtRoll, durPostFn) : null;
+      }
       const depBlock = dep ? renderDepBlock(dep, depRank) : "";
-      const durBaseLabel = selected.durWrapped ? "base" : "fixed";
       const durPostAddNote = selected.durPostAdd ? ` +${selected.durPostAdd}s` : "";
-      const durPostFn = v => {
-        if (selected.durPostAdd) v += selected.durPostAdd;
-        return dep ? depPostMultiply([v], dep, depRank)[0] : v;
-      };
-      const durDist = selected.durWrapped ? lckDistribution(rawDuration, CHA, LCK, chaAdjustAtRoll, durPostFn) : null;
       durationBlock = `
         <div class="sk-stat sk-stat-dur">
           <p class="sk-stat-label">Duration</p>
           <div class="sk-stat-value-wrap">
-            <div class="sk-stat-value${selected.durWrapped ? "" : " unwrapped"}">${fmt(durRange)}s</div>
+            <div class="sk-stat-value${(selected.durWrapped || selected.durContested) ? "" : " unwrapped"}">${fmt(durRange)}s</div>
             ${durDist ? renderProbabilityTooltip(durDist) : ""}
           </div>
           <p class="sk-stat-base">${durBaseLabel} ${rawDuration}s${durPostAddNote}</p>

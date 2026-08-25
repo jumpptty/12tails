@@ -22,7 +22,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | arcticWind | Arctic Wind | 3 | 21 | true | false | — | — |
 | iceShield | Ice Shield | 4 | 90 | true | false | 30 | true |
 | iceBlock | Ice Block | 2 | 90 | true | false | 6 | true |
-| snowMan | Snow Man | 2 | 90 | true | false | — | — |
+| snowMan | Snow Man | 2 | 90 | true | false | 10 (contested: 6/10) | true (Damage.getDebuff) |
 | tornado | Tornado | 3 | 120 | true | false | 6 | true |
 | absoluteZero | Absolute Zero | 2 | 180 | true | false | — | — |
 | blizzard | Blizzard | 2 | 240 | true | false | — | — |
