@@ -3678,7 +3678,7 @@ function mountSkillCooldownLookup(root){
     if (dmgMultDepOn) val = Math.trunc(val * skill.dmgMultDep.mult);
     const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
     const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-    const finalMultiplierValue = 1 + FINAL_MULT_MOD_IDS.reduce((sum, id) => sum + (activeFinalMultMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+    const finalMultiplierValue = FINAL_MULT_MOD_IDS.reduce((prod, id) => prod * (activeFinalMultMods.has(id) ? (1 + MOD_DEFS[id].delta) : 1), 1);
     // ownLck (Auto Gyro Gun pilot, 2026-08-18): dmgAdjust's LCK-rolled term
     // (CharacterControl.cs:20489, `Random(0, ceil(0.2*this.lck))`) reads
     // `this.lck` -- the ATTACKER's own field. For a normal skill cast the
@@ -5252,7 +5252,7 @@ function mountSkillCooldownLookup(root){
         // something derived from the matchup.
         const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
         const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-        const finalMultiplierValue = 1 + FINAL_MULT_MOD_IDS.reduce((sum, id) => sum + (activeFinalMultMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+        const finalMultiplierValue = FINAL_MULT_MOD_IDS.reduce((prod, id) => prod * (activeFinalMultMods.has(id) ? (1 + MOD_DEFS[id].delta) : 1), 1);
         const renderModIcon = (id, activeSet) => {
           const def = MOD_DEFS[id];
           const on = activeSet.has(id);
@@ -5292,7 +5292,7 @@ function mountSkillCooldownLookup(root){
               <div class="sk-mods-col">
                 <p class="sk-mods-col-label">Final Multiplier</p>
                 <div class="sk-mods-icons">${FINAL_MULT_MOD_IDS.map(id => renderModIcon(id, activeFinalMultMods)).join("")}</div>
-                <p class="sk-mods-readout">${finalMultiplierValue.toFixed(2)}</p>
+                <p class="sk-mods-readout">${parseFloat(finalMultiplierValue.toFixed(4))}</p>
               </div>
             </div>
           </div>
