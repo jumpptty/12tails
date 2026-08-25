@@ -5580,7 +5580,7 @@ function mountSkillCooldownLookup(root){
           // hits, all connect" would describe a computation that isn't
           // what's actually being shown.
           const finalNote = typhoonHp
-            ? `<p class="sk-dmg-final-note">HP pool total, +1 hit if the last tick overshoots it</p>`
+            ? `<p class="sk-dmg-final-note">HP pool + overshoot tick</p>`
             : dmgHitCountMax > 1 ? `<p class="sk-dmg-final-note">total, ${totalHitsLabel} hits, all connect</p>` : "";
           finalDamageBody = `<div class="sk-stat-value">${fmt(finalRange)}</div>${finalNote}`;
         }
