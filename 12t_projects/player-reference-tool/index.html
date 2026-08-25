@@ -719,6 +719,7 @@
   .sk-pos-3-4{grid-column:3 / span 2}
   .sk-pos-5-6, .sk-dmg.sk-pos-5-6, .sk-dmg-formula.sk-pos-5-6{grid-column:1 / span 2}
   .sk-pos-7-8, .sk-dmg.sk-pos-7-8, .sk-dmg-formula.sk-pos-7-8{grid-column:3 / span 2}
+  .sk-pos-5-8, .sk-dmg.sk-pos-5-8, .sk-dmg-formula.sk-pos-5-8{grid-column:1 / span 4}
   .sk-stat-cast{grid-column:2}
   .sk-stat-dur{grid-column:3}
   /* .sk-stat-lck (grid-column:4) is reserved, not yet rendered by any
@@ -3096,7 +3097,7 @@ const SKILLS = [
   { id:"rabbit_rapidTrance", name:"Rapid Trance", class:"Rabbit", icon:"rabbit_rapidTrance1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmgNote:"Grants rapidTrance action speed / animation speed boost for chaAdjust(12) seconds." },
   { id:"rabbit_gorgonShot", name:"Gorgon Shot", class:"Rabbit", icon:"rabbit_gorgonShot2", maxRank:2, cd:180, cdWrapped:true, revisedArtExempt:false, duration:[6, 9], durContested:true, dmg:"talAdjust(50×sLv)", ko:"0", dmgNote:"Deals talAdjust(50×sLv) true effect damage (KO=0) and petrifies the target for 6s (Rank 1) / 9s (Rank 2) base (contested duration against target CHA)." },
   { id:"rabbit_gilShot", name:"Gil Shot", class:"Rabbit", icon:"rabbit_gilShot4", maxRank:4, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv+20×depLv)", atkCoeff:(rank)=>0.6+0.1*rank, ko:"sLv+1", dmgRankDep:{id:"diamondShot", label:"Diamond Shot", icon:"rabbit_diamondShot5", minRank:0, maxRank:1}, dmgNote:"Deals (0.6 + 0.1×sLv)×ATK + talAdjust(10×sLv + [diamondShot5: 20]). Diamond Shot bonus scales inside talAdjust with TAL stat. Restores +1 SP on cast. KO = sLv + 1 (2/3/4/5)." },
-  { id:"rabbit_backpack", name:"Backpack", class:"Rabbit", icon:"rabbit_backpack2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"0.5×sLv×InventoryWeight", ko:"10×sLv", dmgDep:{id:"bigBag", label:"Big Bag", icon:"rabbit_bigBag5", minRank:0, maxRank:1, term:"0.25×ItemCount", calc:()=>0}, dmgNote:"Deals 0.5×sLv×InventoryWeight + [bigBag5: 0.25×ItemCount] physical damage (KO = 10×sLv). Reference benchmarks: 30kg -> 15/30 dmg; 60kg -> 30/60 dmg; 100kg -> 50/100 dmg." },
+  { id:"rabbit_backpack", name:"Backpack", class:"Rabbit", icon:"rabbit_backpack2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:(rank)=>(0.5*rank)+"×InventoryWeight", ko:"10×sLv", dmgDep:{id:"bigBag", label:"Big Bag", icon:"rabbit_bigBag5", minRank:0, maxRank:1, term:"0.25×ItemCount", calc:()=>0}, dmgNote:"Deals 0.5×sLv×InventoryWeight + [bigBag5: 0.25×ItemCount] physical damage (KO = 10×sLv). Reference benchmarks: 30kg -> 15/30 dmg; 60kg -> 30/60 dmg; 100kg -> 50/100 dmg." },
   { id:"rabbit_fourShot", name:"Four Shot", class:"Rabbit", icon:"rabbit_fourShot2", maxRank:2, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15×sLv+10×depLv)", atkCoeff:0.5, hitCount:()=>4, ko:"1", dmgRankDep:{id:"tenShot", label:"Ten Shot", icon:"rabbit_tenShot5", minRank:0, maxRank:1}, dmgNote:"Fires 4 rapid shots. Each hit deals 0.5×ATK + talAdjust(15×sLv + [tenShot5: 10]), KO=1 (total 4 hits). Ten Shot bonus scales inside talAdjust with TAL stat." },
   { id:"rabbit_circleShot", name:"Circle Shot", class:"Rabbit", icon:"rabbit_circleShot2", maxRank:2, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15×sLv+10×depLv)", atkCoeff:0.5, ko:"1", dmgRankDep:{id:"tenShot", label:"Ten Shot", icon:"rabbit_tenShot5", minRank:0, maxRank:1}, dmgNote:"360-degree AoE spray (radius 8m). Deals 0.5×ATK + talAdjust(15×sLv + [tenShot5: 10]), KO=1. Ten Shot bonus scales inside talAdjust with TAL stat." },
   { id:"rabbit_mall", name:"Mall", class:"Rabbit", icon:"rabbit_mall2", maxRank:2, cd:90, cdWrapped:true, revisedArtExempt:false, dmgNote:"Mobile shop vendor. Rank 1 opens standard merchant store; Rank 2 adds premium items catalog." },
@@ -4266,42 +4267,12 @@ function mountSkillCooldownLookup(root){
       }
       return buildFormulaGrid(items);
     }
-    if (/^[\d\s×*+\-().]+$/.test(text)){
-      // dmgReplaceDep (Mole's Auto Gyro Gun / hiddenTurret5 pilot, 2026-08-18):
-      // a Class C passive that OVERWRITES the flat base value instead of
-      // adding or multiplying it -- genuinely different from dmgDep/
-      // dmgMultDep. Mole skill logic: hiddenTurret5 replaces the turret's
-      // `atk` field with `0.25×sLv×MoleLv` moments after it's set to the
-      // flat `10×sLv` baseline, rather than adjusting that baseline -- so
-      // toggling it on has to swap the whole base term's value AND caption,
-      // not append to or scale it. `coeff` (a plain number, e.g. 0.25) is
-      // multiplied by `rank` and folded down via fmtCoeff for the caption --
-      // same "compute the coefficient, don't show the arithmetic"
-      // convention every other term already follows (e.g. talCoeff, never
-      // shown as "0.02×50") -- while `skill.dmgReplaceDep.calc(rank, LV)`
-      // supplies the actual substituted big number.
+        if (/^[\d\s×*+\-().]+$/.test(text)){
       const replaceDepOn = skill.dmgReplaceDep && getDepRank(skill.dmgReplaceDep) === skill.dmgReplaceDep.maxRank;
-      // atkCoeff on a FLAT (non-talAdjust) base (War Factory's Roller
-      // Machine pilot, 2026-08-20): every prior atkCoeff skill (Mega Punch
-      // etc.) adds it ON TOP OF a talAdjust(...) term, so this branch never
-      // needed to know about atkCoeff at all -- rollOneHit/dmgCalcPostFn
-      // both already apply it unconditionally regardless of shape, so the
-      // CALCULATED Raw/Final Damage numbers were always correct even before
-      // this fix, but the DISPLAYED formula text silently dropped the ATK
-      // term entirely for a skill whose `dmg` base is flat. Roller Machine's
-      // real formula (, `3*this.mChar.atk`) has NO talAdjust
-      // component at all -- modeled as `dmg:"0"` (flat) + `atkCoeff:3`, so
-      // when the flat base is exactly 0 the "0" term is omitted entirely
-      // (not shown as "0 + 648(3ATK)") rather than always prefixing it, the
-      // way every other flat-shape skill without atkCoeff still does.
       const flatBaseVal = evalArith(text) * mult;
       const atkItem = effAtkCoeff
         ? (() => { const c = effAtkCoeff * mult; return { value: c * ATK, sub: `${fmtCoeff(c)}ATK`, cls: "dmg-atk" }; })()
         : null;
-      // effectDamage (Thunder Dragon pilot, 2026-08-21): purple text instead
-      // of the plain --text base color, matching the real in-game purple
-      // damage-popup convention this tool reserves for the
-      // RPC_AddEffectDamage pathway (see .dmg-effect's own CSS comment).
       const flatBaseCls = skill.effectDamage ? "dmg-effect" : "dmg-num";
       let items = replaceDepOn
         ? [{ value: skill.dmgReplaceDep.calc(rank, LV), sub: `${fmtCoeff(skill.dmgReplaceDep.coeff * rank)}LV`, cls: flatBaseCls }]
@@ -4314,7 +4285,11 @@ function mountSkillCooldownLookup(root){
       }
       return buildFormulaGrid(items);
     }
-    return `<span class="${skill.effectDamage ? "dmg-effect" : "dmg-text"}">${text}</span>`;
+    let fallbackText = text;
+    if (dmgDepOn && dmgDepTermText){
+      fallbackText += ` + ${dmgDepTermText}`;
+    }
+    return `<span class="${skill.effectDamage ? "dmg-effect" : "dmg-text"}">${fallbackText}</span>`;
   }
   // Compact single-line formula renderer (2026-08-22, Typhoon HP subline
   // fix) -- deliberately NOT `renderDmgFormula`/`buildFormulaGrid` above,
@@ -5285,8 +5260,9 @@ function mountSkillCooldownLookup(root){
           ${koToggles}
         </div>
       ` : "";
+      const isBackpack = selected.id === "rabbit_backpack";
       const dmgFormulaChip = `
-        <div class="sk-dmg sk-dmg-formula">
+        <div class="sk-dmg sk-dmg-formula ${isBackpack ? "sk-pos-5-8" : ""}">
           <div class="sk-dmg-head">
             <div class="sk-dmg-label-row">
               <p class="sk-stat-label">Damage Formula</p>
