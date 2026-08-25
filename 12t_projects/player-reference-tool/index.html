@@ -393,6 +393,11 @@
   .sk-controls input[type=number]{
     width:calc(5ch + 22px); background:var(--panel); color:var(--text); border:1px solid var(--line);
     border-radius:2px; padding:5px 6px; font-size:14px; outline:none; font-family:inherit;
+    text-align:center; -moz-appearance:textfield; appearance:textfield;
+  }
+  .sk-controls input[type=number]::-webkit-outer-spin-button,
+  .sk-controls input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none; margin:0;
   }
   /* Own row for the 2 toggle buttons (2026-08-22) -- split out of
      `.sk-controls` itself specifically so that container's fix for the
