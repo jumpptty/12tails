@@ -700,19 +700,19 @@
   .sk-stat-lck{grid-column:4}
 
   /* 8-Position Grid Matrix & Custom Spans (2026-08-25, user-directed) */
-  .sk-pos-1{grid-column:1; grid-row:1}
-  .sk-pos-2{grid-column:2; grid-row:1}
-  .sk-pos-3{grid-column:3; grid-row:1}
-  .sk-pos-4{grid-column:4; grid-row:1}
-  .sk-pos-5{grid-column:1; grid-row:2}
-  .sk-pos-6{grid-column:2; grid-row:2}
-  .sk-pos-7{grid-column:3; grid-row:2}
-  .sk-pos-8{grid-column:4; grid-row:2}
+  .sk-pos-1{grid-column:1}
+  .sk-pos-2{grid-column:2}
+  .sk-pos-3{grid-column:3}
+  .sk-pos-4{grid-column:4}
+  .sk-pos-5{grid-column:1}
+  .sk-pos-6{grid-column:2}
+  .sk-pos-7{grid-column:3}
+  .sk-pos-8{grid-column:4}
 
-  .sk-pos-1-2{grid-column:1 / span 2; grid-row:1}
-  .sk-pos-3-4{grid-column:3 / span 2; grid-row:1}
-  .sk-pos-5-6{grid-column:1 / span 2; grid-row:2}
-  .sk-pos-7-8{grid-column:3 / span 2; grid-row:2}
+  .sk-pos-1-2{grid-column:1 / span 2}
+  .sk-pos-3-4{grid-column:3 / span 2}
+  .sk-pos-5-6, .sk-dmg.sk-pos-5-6, .sk-dmg-formula.sk-pos-5-6{grid-column:1 / span 2}
+  .sk-pos-7-8, .sk-dmg.sk-pos-7-8, .sk-dmg-formula.sk-pos-7-8{grid-column:3 / span 2}
   .sk-stat-cast{grid-column:2}
   .sk-stat-dur{grid-column:3}
   /* .sk-stat-lck (grid-column:4) is reserved, not yet rendered by any
@@ -834,6 +834,19 @@
      -- see that class's own comment for why the KO chip lives here rather
      than in normal flow. */
   .sk-dmg-formula{grid-column:1 / span 2; position:relative}
+  /* 8-Position Matrix Explicit Column Grid Overrides (2026-08-25) */
+  .sk-pos-1{grid-column:1}
+  .sk-pos-2{grid-column:2}
+  .sk-pos-3{grid-column:3}
+  .sk-pos-4{grid-column:4}
+  .sk-pos-5{grid-column:1}
+  .sk-pos-6{grid-column:2}
+  .sk-pos-7{grid-column:3}
+  .sk-pos-8{grid-column:4}
+  .sk-pos-1-2{grid-column:1 / span 2}
+  .sk-pos-3-4{grid-column:3 / span 2}
+  .sk-pos-5-6, .sk-dmg.sk-pos-5-6, .sk-dmg-formula.sk-pos-5-6{grid-column:1 / span 2}
+  .sk-pos-7-8, .sk-dmg.sk-pos-7-8, .sk-dmg-formula.sk-pos-7-8{grid-column:3 / span 2}
   /* justify-content:flex-start (2026-08-19, user-requested) -- overrides
      .sk-stat's inherited vertical centering so Raw Damage's label+value sit
      flush at the top, matching Damage Formula's own top-pinned header (that
@@ -5617,11 +5630,17 @@ function mountSkillCooldownLookup(root){
           <div class="sk-dmg sk-dmg-formula sk-pos-5-6">
             <div class="sk-dmg-head">
               <div class="sk-dmg-label-row">
-                <p class="sk-stat-label">Effect Damage</p>
+                <p class="sk-stat-label">Damage Formula</p>
               </div>
               <div class="sk-dmg-toggles">${snowmanDepToggle}</div>
             </div>
-            <div class="sk-dmg-value"><span style="color:var(--stat-effect)">${dmgVal}</span></div>
+            <div class="sk-dmg-value">
+              <div class="dmg-formula">
+                <span class="dmg-term-group">
+                  <span class="dmg-term num" style="color:var(--stat-effect)">${dmgVal}</span>
+                </span>
+              </div>
+            </div>
             <div class="sk-ko-badge" title="Knockout value">
               <span class="sk-ko-label">KO</span>
               <span class="sk-ko-value">${koVal}</span>
@@ -5630,10 +5649,16 @@ function mountSkillCooldownLookup(root){
           <div class="sk-dmg sk-dmg-formula sk-pos-7-8">
             <div class="sk-dmg-head">
               <div class="sk-dmg-label-row">
-                <p class="sk-stat-label">Snowman Barrier</p>
+                <p class="sk-stat-label">HP Barrier</p>
               </div>
             </div>
-            <div class="sk-dmg-value"><span style="color:var(--gold)">${barrierVal}</span></div>
+            <div class="sk-dmg-value">
+              <div class="dmg-formula">
+                <span class="dmg-term-group">
+                  <span class="dmg-term num" style="color:var(--gold)">${barrierVal}</span>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       `;
