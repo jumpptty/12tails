@@ -3085,7 +3085,7 @@ const SKILLS = [
   { id:"rabbit_maimShot", name:"Maim Shot", class:"Rabbit", icon:"rabbit_maimShot4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv+20×depLv)", atkCoeff:0.5, ko:"0", dmgRankDep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}, dmgNote:"Deals 0.5×ATK + talAdjust(5×sLv + [kneeShot5: 20]), KO=0. Knee Shot bonus scales inside talAdjust with TAL stat. Restores +1 SP on cast. Applies maim movement slow status." },
   { id:"rabbit_mix", name:"Mix", class:"Rabbit", icon:"rabbit_mix4", maxRank:4, castTime:[2.5,3,3.5,4], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmgDep:{id:"extraPotion", label:"Extra Potion", icon:"rabbit_extraPotion5", minRank:0, maxRank:1, term:"0.3LV", calc:(LV)=>0.3*LV}, dmgNote:"Produces HP (20×sLv + [extraPotion5: 0.3×LV]), SP (4×sLv), and MP potion pickups on ground for 60s." },
   { id:"rabbit_shake", name:"Shake", class:"Rabbit", icon:"rabbit_shake3", maxRank:3, castTime:[3,3.5,4], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmgNote:"Blends adjacent ground potion pickups into compound potions with 60s lifetime." },
-  { id:"rabbit_miracleBlend", name:"Miracle Blend", class:"Rabbit", icon:"rabbit_miracleBlend1", maxRank:1, castTime:5, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dep:{id:"alchemistLab", label:"Alchemist Lab", icon:"rabbit_alchemistLab4", minRank:1, maxRank:4, perRank:2}, dmgNote:"Spawns Miracle Potion applying miracleDrop status (+50 all stats) for chaAdjust(4 + 2×alchemistLabLv) seconds (6/8/10/12s base duration)." },
+  { id:"rabbit_miracleBlend", name:"Miracle Blend", class:"Rabbit", icon:"rabbit_miracleBlend1", maxRank:1, castTime:5, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dep:{id:"alchemistLab", label:"Alchemist Lab", icon:"rabbit_alchemistLab4", minRank:1, maxRank:4, perRank:2}, lckProc:{label:"Miracle Drop Proc", chance:5, rolls:4, applies:"miracleDrop", baseText:"base 5% × 4 rolls", calc:(chance,LCK)=>{ const singlePct = lckAdjustChance(chance, LCK) / 100; return ((1 - Math.pow(1 - singlePct, 4)) * 100).toFixed(1); }, dep:{id:"miracleDrop", label:"Miracle Drop", icon:"rabbit_miracleDrop5", minRank:0, maxRank:1}}, dmgNote:"Spawns 3 potions by default, or 4 potions with Miracle Drop passive. With Miracle Drop, each potion independently rolls lckAdjust(5) chance (~10% at 128 LCK, 34.4% cumulative chance for ≥1) to become a Golden Potion (Pot 6 / Miracle Drop). Picking up a Miracle Drop grants +[(alchemistLabLv+1)×10]% damageMod & hitMod (+20% / +30% / +40% / +50% total damage & accuracy/crit bonus) for chaAdjust(4 + 2×alchemistLabLv) seconds (6/8/10/12s base duration)." },
   { id:"rabbit_stickyGum", name:"Sticky Gum", class:"Rabbit", icon:"rabbit_stickyGum2", maxRank:2, castTime:[2,3], castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmgNote:"Places sticky gum trap (radius 1.5m / 2.5m). Applies sticky slow debuff (rank = sLv) for chaAdjust(12) seconds." },
   { id:"rabbit_acidicField", name:"Acidic Field", class:"Rabbit", icon:"rabbit_acidicField2", maxRank:2, castTime:[2,3], castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, hitCountDuration:2, dmg:"10×(sLv+depLv)", effectDamage:true, ko:"0", dmgRankDep:{id:"healingField", label:"Healing Field", icon:"rabbit_healingField5", minRank:0, maxRank:1}, dmgNote:"Deploys acidic cloud (radius 12m) lasting chaAdjust(12) seconds. Pulses every 2.0s, dealing 10×(sLv + [healingField5: 1]) flat true effect damage per tick (10/20 base; 20/30 with Healing Field) and applying acid debuff. Total pulse count scales dynamically with CHA stat (duration ÷ 2s). Bypasses DEF and damageMod (purple effect damage)." },
   { id:"rabbit_immuneShot", name:"Immune Shot", class:"Rabbit", icon:"rabbit_immuneShot1", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, duration:20, durWrapped:true, dep:{id:"medicalEnhancement", label:"Medical Enhancement", icon:"rabbit_medicalEnhancement3", minRank:0, maxRank:3, perRank:5}, dmgNote:"Cleanses all debuffs (remedy) and grants immunity buff for chaAdjust(15 + 5×[medEnhanceLv+1]) seconds (20/25/30/35s base duration)." },
@@ -5058,13 +5058,18 @@ function mountSkillCooldownLookup(root){
       const lpDep = lp.dep;
       const lpDepRank = lpDep ? getDepRank(lpDep) : null;
       const lpDepOn = lpDep ? lpDepRank === lpDep.maxRank : true;
-      const lpChancePct = lpDepOn ? lckAdjustChance(lp.chance, LCK) : 0;
+      const lpChancePct = lpDepOn 
+        ? (lp.calc ? lp.calc(lp.chance, LCK) : lckAdjustChance(lp.chance, LCK)) 
+        : 0;
+      const lpBaseText = lp.baseText 
+        ? (lpDepOn ? lp.baseText : "base 0%") 
+        : `base ${lpDepOn ? lp.chance : 0}%`;
       const lpDepBlock = lpDep ? renderDepBlock(lpDep, lpDepRank) : "";
       lckProcBlock = `
         <div class="sk-stat sk-stat-lck">
           <p class="sk-stat-label">${lp.label}</p>
           <div class="sk-stat-value">${lpChancePct}%</div>
-          <p class="sk-stat-base">base ${lpDepOn ? lp.chance : 0}%</p>
+          <p class="sk-stat-base">${lpBaseText}</p>
           ${lpDepBlock}
         </div>
       `;
