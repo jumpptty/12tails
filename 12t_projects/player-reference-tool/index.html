@@ -969,25 +969,26 @@
      Enemy Stats field, so it's immediately obvious the shown stats no
      longer match any named preset. See enemyStatsCustom's own comment for
      the detection mechanism. */
-  .sk-enemy-info-wrap{position:relative; display:flex; align-items:center}
+  .sk-enemy-info-wrap{position:relative; display:flex; align-items:center; margin-left:4px}
   .sk-enemy-info-btn{
-    width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
+    width:20px; height:20px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
     color:var(--muted); padding:0; display:flex; align-items:center; justify-content:center; cursor:pointer;
-    transition:border-color .15s ease, color .15s ease;
+    transition:border-color .15s ease, color .15s ease, background-color .15s ease;
   }
   .sk-enemy-info-btn:hover, .sk-enemy-info-btn:focus-visible{
-    border-color:var(--gold); color:var(--gold);
+    border-color:var(--gold); color:var(--gold); background:var(--panel);
   }
-  .sk-enemy-info-btn svg{width:11px; height:11px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .sk-enemy-info-btn svg{width:12px; height:12px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round}
   .sk-enemy-info-popover{
-    position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    display:none; position:absolute; top:calc(100% + 6px); right:0;
     background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
     box-shadow:0 6px 20px rgba(0,0,0,.6); padding:8px 10px; z-index:100; min-width:180px; max-width:240px;
     pointer-events:auto; text-align:left;
   }
   .sk-enemy-info-wrap:hover .sk-enemy-info-popover,
-  .sk-enemy-info-wrap:focus-within .sk-enemy-info-popover{
-    display:block !important;
+  .sk-enemy-info-wrap:focus-within .sk-enemy-info-popover,
+  .sk-enemy-info-wrap.active .sk-enemy-info-popover{
+    display:block;
   }
   .sk-enemy-info-title{
     font-size:10px; font-weight:700; color:var(--gold); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;
@@ -3245,6 +3246,12 @@ function mountSkillCooldownLookup(root){
               <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
                 <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
               </button>
+              <div class="sk-enemy-info-wrap" data-role="enemy-info-wrap">
+                <button type="button" class="sk-enemy-info-btn" data-role="enemy-info-btn" title="Enemy Immunities" aria-label="Enemy Immunities">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <div class="sk-enemy-info-popover" data-role="enemy-info-popover"></div>
+              </div>
             </div>
           </div>
           <div class="sk-controls">
@@ -3368,15 +3375,33 @@ function mountSkillCooldownLookup(root){
   // lives in the persistent .sk-enemystat-controls panel, not the
   // per-skill card.
   function updateEnemyCycleDisplay(){
+    const infoPopoverEl = $('[data-role="enemy-info-popover"]', root);
     if (enemyStatsCustom){
       enemyCycleDisplayEl.innerHTML = `<span class="sk-enemy-custom-label">Custom</span>`;
       enemyCycleDisplayEl.title = "Custom enemy stats (hand-edited)";
       if (enemyNameLabelEl) enemyNameLabelEl.innerHTML = `<strong>Custom</strong>`;
+      if (infoPopoverEl) {
+        infoPopoverEl.innerHTML = `<div class="sk-enemy-info-title">Custom Target</div><div class="sk-enemy-info-none">Hand-edited stats (immunities not specified).</div>`;
+      }
     } else {
       const preset = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
       enemyCycleDisplayEl.innerHTML = preset ? `<img src="${SKILL_ICONS[preset.icon]}" alt="${preset.label}">` : "";
       enemyCycleDisplayEl.title = preset ? preset.label : "";
       if (enemyNameLabelEl) enemyNameLabelEl.innerHTML = preset ? `<strong>${preset.label}</strong>` : `<strong>Enemy</strong>`;
+      if (infoPopoverEl && preset) {
+        if (!preset.immunities || preset.immunities.length === 0) {
+          infoPopoverEl.innerHTML = `
+            <div class="sk-enemy-info-title">${preset.label} Immunities</div>
+            <div class="sk-enemy-info-none">None (Vulnerable to all debuffs & CC)</div>
+          `;
+        } else {
+          const chips = preset.immunities.map(imm => `<span class="sk-enemy-imm-chip">${IMMUNITY_LABELS[imm] || imm}</span>`).join("");
+          infoPopoverEl.innerHTML = `
+            <div class="sk-enemy-info-title">${preset.label} Immunities (${preset.immunities.length})</div>
+            <div class="sk-enemy-imm-list">${chips}</div>
+          `;
+        }
+      }
     }
   }
   // Prev/next (2026-08-21, relocated from the Final Damage chip's old
@@ -3400,6 +3425,19 @@ function mountSkillCooldownLookup(root){
   }
   enemyPrevBtn.addEventListener("click", () => cycleEnemyPreset(-1));
   enemyNextBtn.addEventListener("click", () => cycleEnemyPreset(1));
+  const enemyInfoWrap = $('[data-role="enemy-info-wrap"]', root);
+  const enemyInfoBtn = $('[data-role="enemy-info-btn"]', root);
+  if (enemyInfoBtn && enemyInfoWrap) {
+    enemyInfoBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      enemyInfoWrap.classList.toggle("active");
+    });
+    document.addEventListener("click", (e) => {
+      if (!enemyInfoWrap.contains(e.target)) {
+        enemyInfoWrap.classList.remove("active");
+      }
+    });
+  }
   updateEnemyCycleDisplay();
   positionStatsPanel();
   let nextSimulatePopupId = 1;
