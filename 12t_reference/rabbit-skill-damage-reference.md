@@ -103,14 +103,16 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **KO:** 1 per hit.
 
 ### 10. Acidic Field (`acidicField1-2`)
-* **Source:** `Rabbit_acidicField.cs:198`
+* **Source:** `Rabbit_acidicField.cs:198`, `Rabbit.cs:27128`
 * **Formula:** `RPC_AddEffectDamage(242 + sLv, 10 * sLv, 0, 0, ...)`
-* **Tick Rate:** Every 2.0 seconds over `chaAdjust(12)` duration (6 ticks base).
-* **Damage:** 10 flat true effect damage at rank 1, 20 at rank 2 per tick.
+* **Duration & Pulse Cadence:** `chaAdjust(12)` seconds total duration, pulsing once every 2.0s (`Rabbit_acidicField.cs:131`).
+* **Hit Count Scaling:** Dynamic pulse count $= \lfloor\text{chaAdjust}(12) / 2\rfloor$ (6 pulses at base CHA, increasing with higher CHA stat).
+* **Damage:** 10 flat true effect damage at rank 1, 20 at rank 2 per tick (penetrating, bypasses enemy DEF and damageMod).
 * **Status:** Applies `"acid"` status.
 
 ### 11. Healing Field (`healingField1`)
-* **Source:** `Rabbit_healingField.cs:189`
+* **Source:** `Rabbit.cs:37831`, `Rabbit_healingField.cs:189`
 * **Formula:** `RPC_AddHeal(442, 70, 0, 0, ...)`
-* **Tick Rate:** Every 2.0 seconds over `chaAdjust(12)` duration (6 ticks base).
-* **Heal:** 70 flat HP per tick to all allies in radius 12m.
+* **Duration & Pulse Cadence:** `chaAdjust(12)` seconds total duration, pulsing once every 2.0s.
+* **Hit Count Scaling:** Dynamic pulse count $= \lfloor\text{chaAdjust}(12) / 2\rfloor$ (6 pulses at base CHA $\rightarrow$ 420 total HP, scaling with CHA).
+* **Healing Output:** 70 flat HP restored per pulse to all allies in a 12m radius.
