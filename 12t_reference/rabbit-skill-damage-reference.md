@@ -29,7 +29,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | mall | 2 | none | no dmg — sets up mobile player shop vendor | — | — | — |
 | truceTrading | 2 | none | no dmg — invulnerable trading zone | — | — | — |
 | shootingArray | 2 | none | 3 hits of `0.5×ATK + talAdjust(15×sLv)` + 1 finisher of `1.0×ATK + talAdjust(30×sLv)` (`Rabbit.cs:35331`, `:35630`) | modeled via `dmgGroups` (4 hits total), KO=1/hit | — | 4 (`dmgGroups`) |
-| millionaire | 2 | none | `ceil(0.005×sLv×min(Gil+Jil, 99999))` (`Rabbit.cs:37212`) | scales with gold holdings (max 500 at rank 1, max 1000 at rank 2), KO=1 | — | 1 |
+| millionaire | 2 | none | `ceil(0.005×sLv×min(Gil+Jil, 99999))` per pulse (`Rabbit.cs:37212`) | 6-pulse AoE burst (radius 8m, max 500/hit @ R1, max 1000/hit @ R2, `Rabbit.cs:37035`), KO=1/hit | — | 6 |
 | healingField | 1 | none | no dmg — area healing field, radius 12m (`Rabbit_healingField.cs:189`) | heals **70 flat HP** per tick, pulses every 2s (6 ticks over 12s) | — | 6 |
 | diamondShot | 1 | none | **1000 flat true effect damage** (`Rabbit.cs:38322`) | direct `RPC_AddEffectDamage`, penetrating vs monsters | — | 1 |
 | tenShot | 1 | none | `0.5×ATK + talAdjust(60)` per bullet (`Rabbit.cs:39499`, `:39552`) | 10 bullets barrage (10 hits total), KO=1/hit | — | 10 |
