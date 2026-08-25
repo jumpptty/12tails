@@ -3661,7 +3661,7 @@ function mountSkillCooldownLookup(root){
     // citation trail on why a dep was never actually required for this to
     // be computable.
     const dmgReplaceDepOn = skill.dmgReplaceDep && getDepRank(skill.dmgReplaceDep) === skill.dmgReplaceDep.maxRank;
-    const flatComputable = !talMatch && /^[\d\s×*+\-.]+$/.test(text);
+    const flatComputable = !talMatch && /^[\d\s×*+\-().]+$/.test(text);
     if ((!talMatch && !flatComputable) || !selectedEnemy) return 0;
     let val;
     if (talMatch){
@@ -4113,7 +4113,7 @@ function mountSkillCooldownLookup(root){
       }
       return buildFormulaGrid(items);
     }
-    if (/^[\d\s×*+\-.]+$/.test(text)){
+    if (/^[\d\s×*+\-().]+$/.test(text)){
       // dmgReplaceDep (Mole's Auto Gyro Gun / hiddenTurret5 pilot, 2026-08-18):
       // a Class C passive that OVERWRITES the flat base value instead of
       // adding or multiplying it -- genuinely different from dmgDep/
@@ -4234,7 +4234,7 @@ function mountSkillCooldownLookup(root){
       }
       return html;
     }
-    if (/^[\d\s×*+\-.]+$/.test(text)){
+    if (/^[\d\s×*+\-().]+$/.test(text)){
       return `<span class="dmg-num">${fmtCoeff(evalArith(text))}</span>${shieldDepTerm}`;
     }
     return `<span class="dmg-text">${text}</span>`;
@@ -5137,7 +5137,7 @@ function mountSkillCooldownLookup(root){
       // arithmetic-literal test below and correctly gets no chip.
       const talMatchCalc = substituteDmgVars(getDmgText(selected, rank), selected, rank).match(/talAdjust\(([^()]+)\)/);
       const dmgReplaceDepOnCalc = selected.dmgReplaceDep && getDepRank(selected.dmgReplaceDep) === selected.dmgReplaceDep.maxRank;
-      const flatComputableCalc = !talMatchCalc && /^[\d\s×*+\-.]+$/.test(substituteDmgVars(getDmgText(selected, rank), selected, rank));
+      const flatComputableCalc = !talMatchCalc && /^[\d\s×*+\-().]+$/.test(substituteDmgVars(getDmgText(selected, rank), selected, rank));
       let dmgCalcChip = "";
       let dmgFinalChip = "";
       if (talMatchCalc || flatComputableCalc || selected.dmgGroups){
