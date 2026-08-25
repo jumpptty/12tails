@@ -969,6 +969,39 @@
      Enemy Stats field, so it's immediately obvious the shown stats no
      longer match any named preset. See enemyStatsCustom's own comment for
      the detection mechanism. */
+  .sk-enemy-info-wrap{position:relative; display:flex; align-items:center}
+  .sk-enemy-info-btn{
+    width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--muted); padding:0; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .sk-enemy-info-btn:hover, .sk-enemy-info-btn:focus-visible{
+    border-color:var(--gold); color:var(--gold);
+  }
+  .sk-enemy-info-btn svg{width:11px; height:11px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .sk-enemy-info-popover{
+    position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
+    box-shadow:0 6px 20px rgba(0,0,0,.6); padding:8px 10px; z-index:100; min-width:180px; max-width:240px;
+    pointer-events:auto; text-align:left;
+  }
+  .sk-enemy-info-wrap:hover .sk-enemy-info-popover,
+  .sk-enemy-info-wrap:focus-within .sk-enemy-info-popover{
+    display:block !important;
+  }
+  .sk-enemy-info-title{
+    font-size:10px; font-weight:700; color:var(--gold); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;
+  }
+  .sk-enemy-info-none{
+    font-size:11px; color:var(--muted); font-style:italic; line-height:1.3;
+  }
+  .sk-enemy-imm-list{
+    display:flex; flex-wrap:wrap; gap:4px;
+  }
+  .sk-enemy-imm-chip{
+    background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:2px 5px;
+    font-size:10px; color:var(--text); line-height:1.2;
+  }
   .sk-enemy-custom-label{
     font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
     color:var(--muted); text-align:center;
@@ -2688,13 +2721,30 @@ const CHAMELEON_DOUBLESTRIDER_DEP = { id: "doubleStrider", label: "Double Stride
 // real defAdjust pipeline OR the user has ever specified real numbers for;
 // inventing atk/tal/agi/vit/cha/int for them would be a guess this file's
 // own citation-honesty rule doesn't allow.
+const IMMUNITY_LABELS = {
+  artCancel: "Art Cancel",
+  swallow: "Swallow",
+  paralysis: "Paralysis",
+  needlePrison: "Needle Prison",
+  invisible: "Invisible",
+  petrify: "Petrify",
+  snowMan: "Snowman",
+  snowBall: "Snowball",
+  sleep: "Sleep",
+  nightmare: "Nightmare",
+  charm: "Charm",
+  mindControl: "Mind Control",
+  nemesisLarva: "Nemesis Larva",
+  coma: "Coma"
+};
+
 const ENEMY_PRESETS = [
-  { id: "carron", label: "Carron", icon: "enemy_carron", atk: 2, def: 2, tal: 2, agi: 2, vit: 2, cha: 2, int: 2, lck: 2 },
-  { id: "darkfalcon", label: "Italus (12/8)", icon: "enemy_darkfalcon", atk: 370, def: 270, tal: 370, agi: 370, vit: 17000, cha: 170, int: 170, lck: 170 },
-  { id: "reefbug2", label: "Reef (Adv)", icon: "enemy_reefbug2", atk: 138, def: 384, tal: 321, agi: 94, vit: 9300, cha: 246, int: 300, lck: 72 },
-  { id: "nemesisbug_a", label: "Neme (Adv, P1)", icon: "enemy_nemesisbug_a", atk: 670, def: 270, tal: 390, agi: 270, vit: 9900, cha: 390, int: 390, lck: 390 },
-  { id: "mokbug2", label: "Mok (Adv)", icon: "enemy_mokbug2", atk: 450, def: 410, tal: 240, agi: 86, vit: 9000, cha: 120, int: 333, lck: 80 },
-  { id: "goldenkingbug2", label: "Golden (Adv)", icon: "enemy_goldenkingbug2", atk: 360, def: 300, tal: 270, agi: 356, vit: 7500, cha: 78, int: 450, lck: 280 },
+  { id: "carron", label: "Carron", icon: "enemy_carron", atk: 2, def: 2, tal: 2, agi: 2, vit: 2, cha: 2, int: 2, lck: 2, immunities: [] },
+  { id: "darkfalcon", label: "Italus (12/8)", icon: "enemy_darkfalcon", atk: 370, def: 270, tal: 370, agi: 370, vit: 17000, cha: 170, int: 170, lck: 170, immunities: ["artCancel", "swallow", "paralysis", "needlePrison", "invisible", "petrify", "snowMan", "snowBall", "sleep", "nightmare", "charm", "mindControl"] },
+  { id: "reefbug2", label: "Reef (Adv)", icon: "enemy_reefbug2", atk: 138, def: 384, tal: 321, agi: 94, vit: 9300, cha: 246, int: 300, lck: 72, immunities: ["artCancel", "swallow", "paralysis", "needlePrison", "invisible", "petrify", "snowMan", "snowBall", "sleep", "charm", "mindControl", "coma"] },
+  { id: "nemesisbug_a", label: "Neme (Adv, P1)", icon: "enemy_nemesisbug_a", atk: 670, def: 270, tal: 390, agi: 270, vit: 9900, cha: 390, int: 390, lck: 390, immunities: ["artCancel", "swallow", "paralysis", "needlePrison", "invisible", "petrify", "snowMan", "snowBall", "sleep", "charm", "mindControl", "nemesisLarva", "coma"] },
+  { id: "mokbug2", label: "Mok (Adv)", icon: "enemy_mokbug2", atk: 450, def: 410, tal: 240, agi: 86, vit: 9000, cha: 120, int: 333, lck: 80, immunities: ["artCancel", "swallow", "paralysis", "needlePrison", "invisible", "petrify", "snowMan", "snowBall", "sleep", "charm", "mindControl", "coma"] },
+  { id: "goldenkingbug2", label: "Golden (Adv)", icon: "enemy_goldenkingbug2", atk: 360, def: 300, tal: 270, agi: 356, vit: 7500, cha: 78, int: 450, lck: 280, immunities: ["artCancel", "swallow", "sleep", "charm", "mindControl", "coma"] },
 ];
 
 // Mods popup (2026-08-16): the buffs/debuffs that move damageMod (attacker,
