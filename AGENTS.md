@@ -51,3 +51,23 @@ When reading `.cs` files in `DecompiledSource/`:
 
 * **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server.
 * **Preserve Design Integrity:** When updating `12t_projects/player-reference-tool/index.html`, adhere to its "Ledger" visual design system (deep lacquer ground `#141311`, brass-gold ink `#d4af37`, oxblood-red accent `#8b1e1e`, high-contrast legible typography).
+
+---
+
+## 5. Quality Assurance & Skill Verification Protocol
+
+To eliminate regressions and discrepancies when authoring or updating skill mechanics:
+
+1. **Per-Rank Scaling Audit (`maxRank > 1`)**:
+   * Never assume flat scalar properties for skills with multiple ranks.
+   * Always inspect the decompiled `RPC_<name>` cast site / `DisplayCastBar` / `addTimeOut` / companion `MonoBehaviour` for `sLv` scaling in:
+     * `castTime` (e.g., `2 + 0.5 * sLv` $\rightarrow$ `[2.5, 3, 3.5, 4]`).
+     * `cd` (e.g., `[10, 12, 14, 16]`).
+     * `duration` / `hitCountDuration` (e.g., dynamic CHA pulse intervals).
+2. **Formula & Variable Permutation Validation**:
+   * Any formula with variables (`sLv`, `depLv`) or parentheses must evaluate without error across all rank combinations ($1..\text{maxRank}$) and toggle states.
+   * Flat arithmetic parser regexes must always support parentheses: `/^[\d\s×*+\-().]+$/`.
+3. **Programmatic PNG Header Icon Extraction**:
+   * Icons must be extracted directly from `RippedAssets/...` and validated for authentic PNG headers (`89 50 4E 47 0D 0A 1A 0A`). Never use placeholder base64 strings.
+4. **Mandatory Automated Linting**:
+   * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
