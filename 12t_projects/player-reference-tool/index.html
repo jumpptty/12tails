@@ -697,6 +697,24 @@
   .sk-stat-cd{grid-column:1}
   .sk-stat-cast{grid-column:2}
   .sk-stat-dur{grid-column:3}
+  .sk-stat-lck{grid-column:4}
+
+  /* 8-Position Grid Matrix & Custom Spans (2026-08-25, user-directed) */
+  .sk-pos-1{grid-column:1; grid-row:1}
+  .sk-pos-2{grid-column:2; grid-row:1}
+  .sk-pos-3{grid-column:3; grid-row:1}
+  .sk-pos-4{grid-column:4; grid-row:1}
+  .sk-pos-5{grid-column:1; grid-row:2}
+  .sk-pos-6{grid-column:2; grid-row:2}
+  .sk-pos-7{grid-column:3; grid-row:2}
+  .sk-pos-8{grid-column:4; grid-row:2}
+
+  .sk-pos-1-2{grid-column:1 / span 2; grid-row:1}
+  .sk-pos-3-4{grid-column:3 / span 2; grid-row:1}
+  .sk-pos-5-6{grid-column:1 / span 2; grid-row:2}
+  .sk-pos-7-8{grid-column:3 / span 2; grid-row:2}
+  .sk-stat-cast{grid-column:2}
+  .sk-stat-dur{grid-column:3}
   /* .sk-stat-lck (grid-column:4) is reserved, not yet rendered by any
      skill -- see .sk-hero-stats' own comment above. */
   .sk-stat-lck{grid-column:4}
@@ -2565,6 +2583,7 @@ const PENGUIN_FOCUS_INTELLECT_DEP = { id: "focusIntellect", label: "Focus Intell
 // care what the dep actually controls.
 const PENGUIN_DEADLY_FROST_DEP = { id: "deadlyFrost", label: "Deadly Frost",
   icon: "penguin_deadlyFrost5", minRank: 0, maxRank: 1 };
+const PENGUIN_SNOWMAN_DEP = { id: "snowmanRank", label: "Target Snowman Rank", icon: "penguin_snowMan1", minRank: 1, maxRank: 2 };
 // Barrel Bot's own stat-boost passives (2026-08-20 pilot) -- shared across
 // all 8 "Barrel Bot - X" SKILLS entries via barrelBotOwnStats() above.
 const MOLE_DOUBLEBOT_DEP = { id: "doubleBot", label: "Double Bot",
@@ -2978,7 +2997,7 @@ const SKILLS = [
   { id:"penguin_arcticEmperor", name:"Arctic Emperor", class:"Penguin", icon:"penguin_arcticEmperor2", maxRank:2, cd:600, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(60+60×sLv)", dmgFocusIntellect:true, dmgNote:"final tick only (8 prior ticks apply frost, no damage)" },
   { id:"penguin_focusIntellect", name:"Focus Intellect", class:"Penguin", icon:"penguin_focusIntellect5", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true },
   { id:"penguin_parallelShift", name:"Parallel Shift", class:"Penguin", icon:"penguin_parallelShift5", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false },
-  { id:"penguin_snowBall", name:"Snow Ball", class:"Penguin", icon:"penguin_snowBall5", maxRank:1, castTime:3, castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, dmgNote:"Can only be cast on an enemy in Snowman status. Converts Snowman into a Snowball with 150×snowManLv HP shield (150/300 HP), inheriting the remaining duration of the target's active Snowman status (up to contested 6s/10s). When broken or expired, deals 150×snowManLv (150/300) flat true effect damage and 15×snowManLv (15/30) KO." },
+  { id:"penguin_snowBall", name:"Snow Ball", class:"Penguin", icon:"penguin_snowBall5", maxRank:1, castTime:3, castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, customGrid:"snowBall" },
   { id:"penguin_cosmicRift", name:"Cosmic Rift", class:"Penguin", icon:"penguin_cosmicRift5", maxRank:1, castTime:9, castWrapped:true, cd:180, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
   { id:"penguin_cosmicFriday", name:"Cosmic Friday", class:"Penguin", icon:"penguin_cosmicFriday5", maxRank:1, castTime:12, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:3, durWrapped:false },
   { id:"rabbit_statScan", name:"Stat Scan", class:"Rabbit", icon:"rabbit_statScan1", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, dmgNote:"Reveals target enemy's current HP, SP, stats, and elemental attributes." },
@@ -5584,6 +5603,38 @@ function mountSkillCooldownLookup(root){
           ${dmgFormulaChip}
           ${dmgCalcChip}
           ${dmgFinalChip}
+        </div>
+      `;
+    } else if (selected.customGrid === "snowBall"){
+      const snowmanRank = getDepRank(PENGUIN_SNOWMAN_DEP);
+      const snowmanDepToggle = renderDmgRankToggle(PENGUIN_SNOWMAN_DEP);
+      const dmgVal = snowmanRank === 1 ? 150 : 300;
+      const koVal = snowmanRank === 1 ? 15 : 30;
+      const barrierVal = snowmanRank === 1 ? "150 HP" : "300 HP";
+
+      dmgBlock = `
+        <div class="sk-dmg-row">
+          <div class="sk-dmg sk-dmg-formula sk-pos-5-6">
+            <div class="sk-dmg-head">
+              <div class="sk-dmg-label-row">
+                <p class="sk-stat-label">Effect Damage</p>
+              </div>
+              <div class="sk-dmg-toggles">${snowmanDepToggle}</div>
+            </div>
+            <div class="sk-dmg-value"><span style="color:var(--stat-effect)">${dmgVal}</span></div>
+            <div class="sk-ko-badge" title="Knockout value">
+              <span class="sk-ko-label">KO</span>
+              <span class="sk-ko-value">${koVal}</span>
+            </div>
+          </div>
+          <div class="sk-dmg sk-dmg-formula sk-pos-7-8">
+            <div class="sk-dmg-head">
+              <div class="sk-dmg-label-row">
+                <p class="sk-stat-label">Snowman Barrier</p>
+              </div>
+            </div>
+            <div class="sk-dmg-value"><span style="color:var(--gold)">${barrierVal}</span></div>
+          </div>
         </div>
       `;
     } else if (selected.shield){
