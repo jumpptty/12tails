@@ -2732,9 +2732,9 @@ const MOD_DEFS = {
   // needs its own `badge` text (renderModIcon renders it as a small corner
   // label) -- without it there'd be no way to tell 3 stacked-but-unlabeled
   // toggles apart, or to tell at a glance what they even do.
-  finalMult1: { label: "Final Multiplier", icon: "privateServer", level: null, delta: 0.05, badge: "+5%" },
-  finalMult2: { label: "Final Multiplier", icon: "privateServer", level: null, delta: 0.05, badge: "+5%" },
-  finalMult3: { label: "Final Multiplier", icon: "privateServer", level: null, delta: 0.05, badge: "+5%" },
+  finalMult1: { label: "Final Multiplier (PvE Only)", icon: "privateServer", level: null, delta: 0.05, badge: "+5%" },
+  finalMult2: { label: "Final Multiplier (PvE Only)", icon: "privateServer", level: null, delta: 0.05, badge: "+5%" },
+  finalMult3: { label: "Final Multiplier (PvE Only)", icon: "privateServer", level: null, delta: 0.05, badge: "+5%" },
 };
 const PLAYER_MOD_IDS = ["reduceDmg", "miracleDropDmg", "valor", "sealOfHeaven"];
 const ENEMY_MOD_IDS = ["reduceHit", "miracleDropHit", "amplifyDamage"];
@@ -5343,7 +5343,7 @@ function mountSkillCooldownLookup(root){
                 <p class="sk-mods-readout">${enemyHitModValue.toFixed(2)}</p>
               </div>
               <div class="sk-mods-col">
-                <p class="sk-mods-col-label">Final Multiplier</p>
+                <p class="sk-mods-col-label">Final Multiplier (PvE Only)</p>
                 <div class="sk-mods-icons">${FINAL_MULT_MOD_IDS.map(id => renderModIcon(id, activeFinalMultMods)).join("")}</div>
                 <p class="sk-mods-readout">${parseFloat(finalMultiplierValue.toFixed(4))}</p>
               </div>
