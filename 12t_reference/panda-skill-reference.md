@@ -2,6 +2,8 @@
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
 Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+`climbingCliff`/`crumblingMountain` added 2026-08-14 — see the Tiger Toss family judgment-call note
+below for why they were initially left out and then given their own rows.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -12,6 +14,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | pummel | Pummel | 2 | 30 | true | false | — | — |
 | towerRush | Tower Rush | 2 | 30 | true | false | — | — |
 | tigerToss | Tiger Toss | 1 | 30 | true | false | — | — |
+| climbingCliff | Climbing Cliff | 1 | 240 | true | false | 2 | false |
+| crumblingMountain | Crumbling Mountain | 1 | 300 | true | false | 3 | false |
 | risingVortex | Rising Vortex | 2 | 60 | true | false | — | — |
 | risingDragons | Rising Dragons | 2 | 240 | true | false | — | — |
 | ashura | Ashura | 2 | 300 | true | false | 24 | true |
@@ -75,31 +79,37 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   cooldown-free resource-gated handler) both confirm exclusion — matching the eng description "refocus
   his over-charged sp into 100/150 hp" (`PandaSkill_eng.cs:752`, `:763`), gated by needing to rebuild SP,
   not a timer.
-- **`tigerToss`/`tigerPounce`/`climbingCliff`/`crumblingMountain` are one upgrade chain sharing a single
-  `"tigerToss"` cooldown key, but only `tigerToss1` has clean, reliable `getSkill()` metadata — this
-  table reports `tigerToss1`'s own base value.** `tigerToss1` sets its own requirements and `cType`
-  directly (`PandaSkill.cs:369-389`: `setReq(9,3)`, `setSP(12)`, `mode=target`, `target=enemy`,
-  `cType="tigerToss"`), matching its real cast site `Panda.cs:26950` —
-  `addTimeOut("tigerToss", agiAdjust(30f))`. `tigerPounce1` and `climbingCliff1` both explicitly
-  `goto IL_2AC2` (`PandaSkill.cs:409`, `:415`) → `IL_1B9F` (`:1933-1939`) → a **shared passive tail**
-  (`setReq(27,9); mode=passive;` no `cType`, `PandaSkill.cs:1921-1932`) — matching their eng
-  descriptions as passive damage/utility add-ons to TigerToss ("Adds a second hit to TigerToss...",
-  "Enables Panda to use TigerToss on any large target...", `PandaSkill_eng.cs:367`, `:378`).
-  `crumblingMountain1`'s own branch (`PandaSkill.cs:419-425`) is completely empty with no live
-  goto/continue — a dead/unreachable `getSkill()` entry, same shape as the confirmed-dead-code precedent
-  elsewhere in this file. **Despite this, `Panda.cs` gives `climbingCliff` and `crumblingMountain` their
-  own fully-functional coroutines that reuse the `"tigerToss"` cooldown key at longer fixed values**:
-  `RPC_climbingCliff` sets `addTimeOut("tigerToss", agiAdjust((float)240))` at `Panda.cs:27598`, and
-  `RPC_crumblingMountain` sets `addTimeOut("tigerToss", agiAdjust((float)300))` at `Panda.cs:28383` —
-  i.e. once learned, climbing­Cliff/crumblingMountain swap in a stronger, longer-recast version of the
-  same TigerToss action. Since `tigerToss1` is the only member of this chain with clean, internally-
-  consistent `getSkill()` data (Max Rank 1, CD Base 30 both drawn from the same rank-1 cast site), this
-  table reports that value rather than inventing a synthetic "max rank" from a differently-named entry;
-  the 240s/300s upgrade-tier cooldowns are fully preserved in the CD citations below. `getTigerPounceLv()`
-  (`Panda.cs:8669`) is the internal passive-rank lookup used to scale TigerPounce's bonus hit damage — not
-  a separate skill. The `"grab"` sub-action (`RPC_grab`, `Panda.cs:8656`) is the pre-toss grapple-hold
-  applied to the target before TigerToss executes — no `addTimeOut` of its own and no `PandaSkill.cs`
-  roster entry — part of the same family, excluded.
+- **`tigerToss`/`climbingCliff`/`crumblingMountain` are three separate rows sharing one `"tigerToss"`
+  cooldown-lock key (added 2026-08-14, user override — same pattern as Whale's `flyingShield`/
+  `homingShield`).** An earlier pass on this doc treated `climbingCliff`/`crumblingMountain` as an
+  "upgrade chain" and folded their cooldowns into a citation footnote instead of giving them rows,
+  reasoning that `climbingCliff1`'s own `getSkill()` metadata falls through to a shared passive tail
+  (`PandaSkill.cs:1921-1932`: `setReq(27,9); mode=passive;`, no `cType`) and `crumblingMountain1`'s own
+  `getSkill()` branch is dead/unreachable code entirely. The user corrected this: a shared
+  `addTimeOut` cooldown-lock string doesn't mean "not a real skill" — what matters is whether `Panda.cs`
+  gives it its own live cast site, and both do: `RPC_climbingCliff` (`Panda.cs:27598` onward) and
+  `RPC_crumblingMountain` (`Panda.cs:28383` onward) are both fully-functional coroutines with their own
+  `myCommand` dispatch, their own hit/VFX calls, and their own in-game toast strings (`"ClimbingCliff!"`
+  at `:27687`; `"Crumbling Mountain!"` at `:28279`) — genuinely separate actions that happen to reuse
+  `tigerToss1`'s timer key, not variations of one cast. Each is single-rank (`getClimbingCliffLv()`/
+  `getCrumblingMountainLv()`, `Panda.cs:8720`/`:8777`, both plain `hasSkill()` 0/1 checks — no
+  `climbingCliff2-4`/`crumblingMountain2-4` exist). Both are also, previously unreported, `noForce`
+  (knockback-immunity) self-status casters — `Panda.cs:27619` (`climbingCliff`, base `2`) and `:28404`
+  (`crumblingMountain`, base `3`) — via `addStatus(sType, sLv, sTime, sValue, sID)`
+  (`CharacterControl.cs:14445`), which does **no internal CHA scaling**: both durations are flat literals,
+  `durWrapped:false`, unlike every other Duration in this table. Neither is exempt from revisedArt5
+  (same mechanism/exemption-list check as the Whale precedent — `"tigerToss"` isn't on
+  `CharacterControl.cs:20116-20226`'s exemption list). `tigerPounce` and a further passive tier surfaced
+  during this research, `crushingMonolith` (`pnd_crushingMonolith5`, `rSkill=234` i.e. requires
+  `crumblingMountain`), remain excluded — both are confirmed damage-only passives with **no `addTimeOut`
+  of their own anywhere in the codebase** (`tigerPounce`'s bonus-hit block lives *inside*
+  `$RPC_tigerToss$25362`, `tigerToss`'s own coroutine class, gated by `getTigerPounceLv()`
+  (`Panda.cs:8670`, `hasSkill(232)` 0/1); `crushingMonolith` is a `crumblingMountain`-only damage/VFX
+  swap gated by `hasSkill(432)` inside `crumblingMountain`'s own coroutine, `Panda.cs:28158`) — neither
+  is a "skill with a cooldown" by this tool's own scope rule, so neither gets a row. The `"grab"`
+  sub-action (`RPC_grab`, `Panda.cs:8656`) is the pre-toss grapple-hold applied to the target before
+  TigerToss executes — no `addTimeOut` of its own and no `PandaSkill.cs` roster entry — part of the same
+  family, excluded.
 - **`focusedSpirit1`/`2` and `focusedArt1`/`2` are confirmed passives** ("Passively add 30%/60% of
   Panda's current sp to its normal attack's damage" / "...to all of its StikeMaster skills damage",
   `PandaSkill_eng.cs:488`, `:499`, `:510`, `:521`), landing on a shared passive tail
@@ -232,7 +242,9 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `qiStrike` CD: `Panda.cs:23123` — `this.$self_$25285.mChar.addTimeOut("qiStrike", this.$self_$25285.mChar.agiAdjust((float)90));` (single shared cast site for all 3 ranks; fixed literal, not rank-scaled)
 - `pummel` CD: `Panda.cs:24895` — `this.$self_$25324.mChar.addTimeOut("pummel", this.$self_$25324.mChar.agiAdjust(30f));`
 - `towerRush` CD: `Panda.cs:25632` — `this.$self_$25339.mChar.addTimeOut("towerRush", this.$self_$25339.mChar.agiAdjust(30f));`
-- `tigerToss` CD (reported, rank 1 base): `Panda.cs:26950` — `this.$self_$25374.mChar.addTimeOut("tigerToss", this.$self_$25374.mChar.agiAdjust(30f));`; upgrade tiers (not reported, see judgment-call note): `climbingCliff` at `Panda.cs:27598` — `agiAdjust((float)240)`; `crumblingMountain` at `Panda.cs:28383` — `agiAdjust((float)300)`
+- `tigerToss` CD: `Panda.cs:26950` — `this.$self_$25374.mChar.addTimeOut("tigerToss", this.$self_$25374.mChar.agiAdjust(30f));`
+- `climbingCliff` CD (own cast site, shares `tigerToss`'s cooldown-lock key — see judgment-call note): `Panda.cs:27598` — `addTimeOut("tigerToss", agiAdjust((float)240))`
+- `crumblingMountain` CD (own cast site, shares `tigerToss`'s cooldown-lock key — see judgment-call note): `Panda.cs:28383` — `addTimeOut("tigerToss", agiAdjust((float)300))`
 - `risingVortex` CD: `Panda.cs:29127` — `this.$self_$25422.mChar.addTimeOut("risingVortex", this.$self_$25422.mChar.agiAdjust(60f));`
 - `risingDragons` CD: `Panda.cs:30103` — `this.$self_$25442.mChar.addTimeOut("risingDragons", this.$self_$25442.mChar.agiAdjust(240f));`
 - `ashura` CD: `Panda.cs:30659` — `this.$self_$25452.mChar.addTimeOut("ashura", this.$self_$25452.mChar.agiAdjust((float)300));`
@@ -256,6 +268,8 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `drunkenFist` Duration: `Panda.cs:32591` — `this.$self_$25490.mChar.RPC_AddStatus("drunken", this.$mDrunkenPluslv$25475, this.$self_$25490.mChar.chaAdjust(12), 0, this.$self_$25490.mChar.ActorNr);` (self, not target-contested — but gated entirely on `drunkenPlus` being learned; see dedicated judgment-call note above. `drunkenFist`'s *separate* `"drunk"` target debuff remains CHA-contested/excluded, see below)
 - `stasisBlow`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cell is `—`
 - `risingDragons`, `deathBlow`: incidental hit-reaction/proc-flag statuses (`"lock"`, `"death"`), not the skill's own duration — see judgment-call note; Duration cells are `—`
+- `climbingCliff` Duration: `Panda.cs:27619` — `this.$self_$25388.mChar.StartCoroutine_Auto(this.$self_$25388.mChar.addStatus("noForce", 1, 2, 0, this.$self_$25388.mChar.ActorNr));` (self-applied knockback-immunity while climbing; `addStatus`'s `sTime` param does no internal CHA scaling — flat literal `2`, `durWrapped:false`, unlike every other Duration in this table)
+- `crumblingMountain` Duration: `Panda.cs:28404` — `this.$self_$25406.mChar.StartCoroutine_Auto(this.$self_$25406.mChar.addStatus("noForce", 1, 3, 0, this.$self_$25406.mChar.ActorNr));` (same `noForce` mechanism as `climbingCliff`, flat literal `3`, `durWrapped:false`)
 - `roll`, `threeSteps`, `rushingFalcon`, `qiStrike`, `pummel`, `towerRush`, `tigerToss`, `risingVortex`,
   `waterMonkey`, `waterCrane`, `spTransfer`, `wind&cloud`, `rain&storm`, `lotusPalm`, `heavenPalm`,
   `fuujinKen`, `raijinKen`: no usable Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime

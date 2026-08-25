@@ -24,14 +24,14 @@
 
 ## File Structure
 
-Single file, as established by all prior work on this sheet: `Mechanics-Infographics/12_Penguin_skill-sheet.html`. No new files — a separate .js/.css file could not be fetched at runtime by a published Artifact.
+Single file, as established by all prior work on this sheet: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html`. No new files — a separate .js/.css file could not be fetched at runtime by a published Artifact.
 
 ---
 
 ## Task 1: Replace renderNumeric with a range-capable evaluator core
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:678-708` (`renderNumeric` function)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:678-708` (`renderNumeric` function)
 
 **Interfaces:**
 - Consumes: existing `parseFormula` AST shape (`num`, `stat`, `ceil`, `floor`, `bin`, `fn`, `clamp` node types) — unchanged, this task only touches how the AST is evaluated numerically, not parsed.
@@ -41,7 +41,7 @@ This task builds and unit-tests the core math in isolation (a scratch HTML/Node 
 
 - [ ] **Step 1: Read the current renderNumeric implementation**
 
-Read `Mechanics-Infographics/12_Penguin_skill-sheet.html` lines 678-708 to see the exact current code (reproduced here for reference, but confirm against the live file since prior tasks may have shifted line numbers slightly):
+Read `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` lines 678-708 to see the exact current code (reproduced here for reference, but confirm against the live file since prior tasks may have shifted line numbers slightly):
 
 ```js
 function renderNumeric(ast, stats) {
@@ -256,18 +256,18 @@ Note: `evalDmgAdjust`/`evalDefAdjust` need to be added to the `module.exports` l
 
 - [ ] **Step 4: Run the harness and verify output**
 
-Run: `node <scratchpad>/test_range_evaluator.js "Mechanics-Infographics/12_Penguin_skill-sheet.html"`
+Run: `node <scratchpad>/test_range_evaluator.js "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"`
 Expected: `agiAdjust min matches old formula: true ...`, `talAdjust(15) min: 33 expected 33: true`, `talAdjust(15) max: 35 expected 35: true`. The `magAdjust` line is informational only (documents the old approximation was never source-accurate to begin with — this is a genuine formula correction for magAdjust/CAST chips, not a regression, flag this finding in the task report).
 
 - [ ] **Step 5: Confirm no other code in the file still calls the old `renderNumeric` name**
 
-Run: `grep -n "renderNumeric" "Mechanics-Infographics/12_Penguin_skill-sheet.html"`
+Run: `grep -n "renderNumeric" "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"`
 Expected: zero matches (Task 1 fully removes the old function; Task 3 updates every call site to use `renderRange` instead — if this grep finds remaining references, Task 3 hasn't been done yet, which is fine at this point in the plan, but note them for Task 3's implementer).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: replace renderNumeric with range-capable evaluator (min/max LCK rolls)"
 ```
 
@@ -278,9 +278,9 @@ Note: this commit intentionally leaves `chipHTML`/`substituteInlineChips` callin
 ## Task 2: Add Enemy Stats panel, DMG Mod field, Player Level relabel, persistence
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:260-274` (control bar HTML)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:824-827` (state block — `stats` object)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` persistence code (localStorage load/save, currently near the bottom of the `<script>` block — search for `STATS_STORAGE_KEY`)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:260-274` (control bar HTML)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:824-827` (state block — `stats` object)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` persistence code (localStorage load/save, currently near the bottom of the `<script>` block — search for `STATS_STORAGE_KEY`)
 - Modify: CSS (`<style>` block, near existing `.statpanel` rules, currently ~line 224-230)
 
 **Interfaces:**
@@ -289,7 +289,7 @@ Note: this commit intentionally leaves `chipHTML`/`substituteInlineChips` callin
 
 - [ ] **Step 1: Read the current control bar HTML and persistence code**
 
-Read `Mechanics-Infographics/12_Penguin_skill-sheet.html` lines 260-274 (control bar) and search for `STATS_STORAGE_KEY` to find the exact current persistence code — confirm against the live file, since line numbers may have shifted since this plan was written.
+Read `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` lines 260-274 (control bar) and search for `STATS_STORAGE_KEY` to find the exact current persistence code — confirm against the live file, since line numbers may have shifted since this plan was written.
 
 - [ ] **Step 2: Update control bar HTML — label Player Stats, rename Lv, add DMG Mod, add Enemy Stats panel**
 
@@ -426,7 +426,7 @@ Open the file. Confirm: "Player Stats" and "Enemy Stats" labels are visible abov
 - [ ] **Step 8: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: add Enemy Stats panel, DMG Mod field, relabel Lv to Player Level"
 ```
 
@@ -435,9 +435,9 @@ git commit -m "feat: add Enemy Stats panel, DMG Mod field, relabel Lv to Player 
 ## Task 3: Wire range rendering into chipHTML and substituteInlineChips, including the dmg mitigation pipeline
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — `chipHTML` function (currently ~line 716)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — `substituteInlineChips` function (currently ~line 736)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — `renderSkillCard`'s dmg-chip call site inside `substituteInlineChips` (the `case "dmg":` branch)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — `chipHTML` function (currently ~line 716)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — `substituteInlineChips` function (currently ~line 736)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — `renderSkillCard`'s dmg-chip call site inside `substituteInlineChips` (the `case "dmg":` branch)
 
 **Interfaces:**
 - Consumes: Task 1's `renderRange(ast, stats, rollMode)`, `evalDmgAdjust`, `evalDefAdjust`; Task 2's `enemyStats` object.
@@ -445,7 +445,7 @@ git commit -m "feat: add Enemy Stats panel, DMG Mod field, relabel Lv to Player 
 
 - [ ] **Step 1: Read the current chipHTML and substituteInlineChips implementations, and find every call site**
 
-Run: `grep -n "chipHTML(\|substituteInlineChips(" "Mechanics-Infographics/12_Penguin_skill-sheet.html"`
+Run: `grep -n "chipHTML(\|substituteInlineChips(" "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"`
 
 This must find every place these two functions are DEFINED and every place they're CALLED (expect calls inside `renderSkillCard` for `cdChip`/`mpChip`/`spChip`/`castChip` and inside `substituteInlineChips`'s own token-switch body for `dmg`/`cd`/`mp`/`sp`/`cast`/`range`/`ko`). Read the full current bodies of both functions before editing.
 
@@ -573,7 +573,7 @@ And the notes-rendering line:
 
 - [ ] **Step 5: Update every CALLER of `renderSkillCard`** (mountAllCards, rerenderAll, and the click-handler's direct calls if any)
 
-Run: `grep -n "renderSkillCard(" "Mechanics-Infographics/12_Penguin_skill-sheet.html"`
+Run: `grep -n "renderSkillCard(" "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"`
 
 For each call site found (expect `mountAllCards` and `rerenderAll`, both defined after `renderSkillCard`), add `enemyStats` and a `revisedArtOn` reference. Since `revisedArtOn` doesn't exist as a variable yet (Task 5 adds it), temporarily use a literal `false` at each call site in THIS task, e.g.:
 
@@ -590,7 +590,7 @@ Open the file. Confirm: base view renders exactly as before this task (byte-for-
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: wire range rendering + dmg mitigation pipeline into chip rendering"
 ```
 
@@ -599,7 +599,7 @@ git commit -m "feat: wire range rendering + dmg mitigation pipeline into chip re
 ## Task 4: Migrate manaMissile's dmg field to the {{dmg}} inline convention (first real dmg-range card)
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — `SKILLS.manaMissile` data
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — `SKILLS.manaMissile` data
 
 **Interfaces:**
 - Consumes: Task 3's dmg-chip range pipeline.
@@ -609,7 +609,7 @@ manaMissile currently has its `dmg` field set but NOT yet referenced via `{{dmg}
 
 - [ ] **Step 1: Read the current `SKILLS.manaMissile` data**
 
-Run: `grep -n "manaMissile:" "Mechanics-Infographics/12_Penguin_skill-sheet.html"` and read the full family block (4 ranks) that follows.
+Run: `grep -n "manaMissile:" "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"` and read the full family block (4 ranks) that follows.
 
 - [ ] **Step 2: Add a `{{dmg}}`-referencing notes bullet to each of the 4 ranks**
 
@@ -630,7 +630,7 @@ Confirm base view: manaMissile's 4 ranks show a plain symbolic dmg formula inlin
 - [ ] **Step 4: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "content: migrate manaMissile dmg field to {{dmg}} inline convention"
 ```
 
@@ -639,19 +639,19 @@ git commit -m "content: migrate manaMissile dmg field to {{dmg}} inline conventi
 ## Task 5: Add the global revisedArt toggle (control bar icon, grayscale/color, wired to CD ranges)
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — control bar HTML (near the `.viewtoggle`/`.statgroup` markup added in Task 2)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — state block (add `revisedArtOn`)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — event delegation (add a click branch)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — `mountAllCards`/`rerenderAll` (replace the `false` literals from Task 3 Step 5 with the real `revisedArtOn` variable)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — control bar HTML (near the `.viewtoggle`/`.statgroup` markup added in Task 2)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — state block (add `revisedArtOn`)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — event delegation (add a click branch)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — `mountAllCards`/`rerenderAll` (replace the `false` literals from Task 3 Step 5 with the real `revisedArtOn` variable)
 - Modify: CSS — new `.revisedarttoggle` rule with grayscale filter
 
 **Interfaces:**
-- Consumes: Task 3's `revisedArtOn` parameter threading (currently hardcoded `false` at both `renderSkillCard` call sites); the `revisedArt5` icon, already present in `ICONS` (confirm via `grep -n '"revisedArt5"' "Mechanics-Infographics/12_Penguin_skill-sheet.html"` — it was dumped in the original icon-extraction pass even though never used in `SKILLS` data).
+- Consumes: Task 3's `revisedArtOn` parameter threading (currently hardcoded `false` at both `renderSkillCard` call sites); the `revisedArt5` icon, already present in `ICONS` (confirm via `grep -n '"revisedArt5"' "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"` — it was dumped in the original icon-extraction pass even though never used in `SKILLS` data).
 - Produces: `let revisedArtOn = false;` (module-level state, boolean, NOT a per-family map — this is genuinely global). No new functions — this task only wires existing pieces together.
 
 - [ ] **Step 1: Confirm the `revisedArt5` icon exists in `ICONS`**
 
-Run: `grep -c '"revisedArt5"' "Mechanics-Infographics/12_Penguin_skill-sheet.html"`
+Run: `grep -c '"revisedArt5"' "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"`
 Expected: `1` (one occurrence, the `ICONS` object's own key — if this returns `0`, STOP and report BLOCKED, since Task 1 of the original icon-extraction plan claimed all 96 icons including `revisedArt5` were dumped; a missing icon here would mean that claim needs re-verification before this task can proceed).
 
 - [ ] **Step 2: Add the toggle control to the control bar HTML**
@@ -737,7 +737,7 @@ Confirm: the revisedArt icon renders in the control bar, grayscale by default. C
 - [ ] **Step 8: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: add global revisedArt5 toggle (grayscale/color icon, applies to CD ranges)"
 ```
 

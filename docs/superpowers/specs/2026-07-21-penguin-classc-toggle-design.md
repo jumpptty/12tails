@@ -120,7 +120,7 @@ following the exact same input-field pattern as the other 6 stats
 
 7 prose-only synergy bullets currently exist in Basic/Class A tier data and
 must become real `classC` entries (exact override values to be derived from
-`docs/superpowers/specs/2026-07-21-penguin-skill-data-reference.md` at
+`12t_reference/penguin-skill-damage-reference.md` at
 implementation time, not invented fresh):
 
 | Card (family) | Passive | Current prose (summary) |

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the 7 existing static "needs X" prose bullets in `Mechanics-Infographics/12_Penguin_skill-sheet.html` with a per-card, per-passive interactive toggle that live-recomputes chips/notes in both base and plug-in view, per `docs/superpowers/specs/2026-07-21-penguin-classc-toggle-design.md`.
+**Goal:** Replace the 7 existing static "needs X" prose bullets in `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` with a per-card, per-passive interactive toggle that live-recomputes chips/notes in both base and plug-in view, per `docs/superpowers/specs/2026-07-21-penguin-classc-toggle-design.md`.
 
 **Architecture:** A new optional `classC` array on each rank object holds override sub-objects (`{passiveId, ...fieldOverrides}`). `renderSkillCard` merges any currently-ON override into the base rank before building chips/notes, so no chip-building code needs to know toggles exist. A new `classCToggle[famId][passiveId]` state map (default `false`) drives which overrides are active, flipped by a small per-card checkbox control matching the existing rank-toggle/view-toggle visual language. A 7th stat, Character Level (`Lv`), is added to the global stat panel and evaluator stat-token set.
 
@@ -12,7 +12,7 @@
 
 - No `eval()`/`Function()` constructor anywhere in the formula evaluator.
 - The shipped HTML file must remain fully self-contained — no external stylesheet/script/font/image requests.
-- Every override value must trace back to `docs/superpowers/specs/2026-07-21-penguin-skill-data-reference.md` — no invented numbers. Exact source values for all 7 conversions are given in Task 3 below; do not re-derive from scratch.
+- Every override value must trace back to `12t_reference/penguin-skill-damage-reference.md` — no invented numbers. Exact source values for all 7 conversions are given in Task 3 below; do not re-derive from scratch.
 - Each `classC` toggle is independent per card, even when two cards reference the same passive (e.g. `manaBurn` and `mpTransfer` both reference `manaSurge5` — their toggles do NOT sync). This was an explicit design decision, not an oversight — do not "fix" it.
 - Toggle default state is OFF (`false`) for every entry on page load.
 - `notes` overrides REPLACE the entire notes array when ON, they do not append to the base notes.
@@ -22,16 +22,16 @@
 
 ## File Structure
 
-Single file, as established by the main plan: `Mechanics-Infographics/12_Penguin_skill-sheet.html`. This plan only modifies it further — no new files, consistent with the file's self-contained-artifact requirement (a separate .js/.css file could not be fetched at runtime by a published Artifact).
+Single file, as established by the main plan: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html`. This plan only modifies it further — no new files, consistent with the file's self-contained-artifact requirement (a separate .js/.css file could not be fetched at runtime by a published Artifact).
 
 ---
 
 ## Task 1: Add Character Level to the global stat panel and evaluator
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:246-253` (stat panel HTML)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:687` (`stats` object)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` tokenizer regex and `renderNumeric`'s `case "stat"` (wherever the 6-stat token list is enumerated)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:246-253` (stat panel HTML)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:687` (`stats` object)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` tokenizer regex and `renderNumeric`'s `case "stat"` (wherever the 6-stat token list is enumerated)
 
 **Interfaces:**
 - Consumes: existing `stats` object shape (currently `{ATK,INT,AGI,CHA,TAL,LCK}`), existing tokenizer stat-token regex group `(ATK|INT|AGI|CHA|TAL|LCK)`.
@@ -88,7 +88,7 @@ Open the file. Confirm: the stat panel now shows 7 inputs (ATK/INT/AGI/CHA/TAL/L
 - [ ] **Step 6: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: add Character Level (Lv) as a 7th stat token and panel input"
 ```
 
@@ -97,9 +97,9 @@ git commit -m "feat: add Character Level (Lv) as a 7th stat token and panel inpu
 ## Task 2: Add `classC` override merging to `renderSkillCard`, toggle state, and toggle UI wiring
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:636-683` (`renderSkillCard`)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:685-687` (state block, add `classCToggle`)
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html:719-733` (event delegation)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:636-683` (`renderSkillCard`)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:685-687` (state block, add `classCToggle`)
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html:719-733` (event delegation)
 - Modify: CSS (`<style>` block, add `.classctoggle` rules near the existing `.ranktoggle` rules, currently ~line 228-234)
 
 **Interfaces:**
@@ -240,7 +240,7 @@ Remove the temporary `classC` entry once verified — it must not be present in 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: add classC override merging, toggle state, and toggle UI"
 ```
 
@@ -249,7 +249,7 @@ git commit -m "feat: add classC override merging, toggle state, and toggle UI"
 ## Task 3: Convert the 7 existing synergy prose bullets to real `classC` entries
 
 **Files:**
-- Modify: `Mechanics-Infographics/12_Penguin_skill-sheet.html` — `SKILLS.nAttack`, `SKILLS.cAttack`, `SKILLS.manaMissile`, `SKILLS.manaArc`, `SKILLS.dispell`, `SKILLS.manaBurn`, `SKILLS.mpTransfer`, `SKILLS.fallingStars`, `SKILLS.fallingComets`
+- Modify: `12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html` — `SKILLS.nAttack`, `SKILLS.cAttack`, `SKILLS.manaMissile`, `SKILLS.manaArc`, `SKILLS.dispell`, `SKILLS.manaBurn`, `SKILLS.mpTransfer`, `SKILLS.fallingStars`, `SKILLS.fallingComets`
 
 **Interfaces:**
 - Consumes: Task 2's `classC` schema and merge logic; Task 1's `Lv` stat token.
@@ -449,7 +449,7 @@ For each of the 9 cards (nAttack×2 ranks, cAttack×4 ranks, manaMissile×4, man
 - [ ] **Step 11: Commit**
 
 ```bash
-git add "Mechanics-Infographics/12_Penguin_skill-sheet.html"
+git add "12t_projects/penguin-skill-sheet/12_Penguin_skill-sheet.html"
 git commit -m "feat: convert 7 existing Class C synergy notes to interactive toggles"
 ```
 

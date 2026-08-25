@@ -31,9 +31,9 @@ Stat-Gain Calculator.
 ## Research plan
 
 Each class gets a small, uniformly-structured verified reference doc:
-`12t_reference/<class>-skill-cooldown-reference.md` (e.g. `wolf-skill-cooldown-reference.md`) — including
+`12t_reference/<class>-skill-reference.md` (e.g. `wolf-skill-reference.md`) — including
 one for Penguin, even though its full data already exists in
-`12t_reference/2026-07-21-penguin-skill-data-reference.md`, so all 12 classes feed the tool from the same
+`12t_reference/penguin-skill-damage-reference.md`, so all 12 classes feed the tool from the same
 uniform shape (skill id, cooldown, duration) rather than one class being extracted differently from the
 other 11.
 
@@ -62,7 +62,7 @@ const SKILLS = [
     cd: 8, cdWrapped: true,             // cdWrapped=false → adjusted CD == base CD, no range
     revisedArtExempt: false,            // true for basic-attack/consumable skills (nAttack/cAttack-type) —
                                          // revisedArt5's 12% CD reduction never applies to these, per the
-                                         // documented exemption (12t_reference/...penguin-skill-data-reference.md)
+                                         // documented exemption (12t_reference/...penguin-skill-damage-reference.md)
     duration: 12, durWrapped: true },   // duration/durWrapped omitted entirely if not applicable
   ...
 ];

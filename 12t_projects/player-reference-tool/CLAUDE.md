@@ -4229,3 +4229,536 @@ zero errors.
 clicks) caught this in one shot where static code reading had already failed across a genuine (if
 unsuccessful) diagnostic pass — worth reaching for jsdom again the next time a "such-and-such isn't
 working" report resists static diagnosis and no live browser tool is available in the session.
+
+### Polish pass, 2026-08-22: stats-panel first-load position, padding symmetry, icon sizing
+
+Three user-reported issues against the Skill Cooldown/Duration tool's stats panel, from a screenshot pair
+(fresh-session first load vs. after further interaction):
+
+1. **Stats panel sat a few px too high on a session's very first skill selection**, self-correcting only
+   once something else triggered a 2nd render. `positionStatsPanel()`'s synchronous call (end of
+   `renderHero()`) reads `shell.getBoundingClientRect()` immediately after that render's `innerHTML`
+   swap — `getBoundingClientRect()` forces a layout, but only against whatever the DOM's intrinsic sizing
+   already knows at that instant, and the `<img>` tags that same render just inserted (base64 data URIs,
+   no network round-trip, but not spec-guaranteed synchronous) may not have reported their intrinsic
+   height to layout yet on the very first paint. Fixed by adding `requestAnimationFrame(positionStatsPanel)`
+   right after the existing synchronous call — cheap and idempotent (recomputes from scratch), catches up
+   to the settled layout one frame later without needing a real user interaction to trigger it. **Not
+   visually verified live** — no browser tool available this session; the mechanism (measure-too-early,
+   self-corrects on next render) matches the reported symptom exactly, but treat this as the most likely
+   explanation, not a confirmed root cause.
+2. **Player/Enemy Stats rows had asymmetric padding** ("left padding is a lot less than the right").
+   `.sk-controls` was `display:flex; flex-wrap:wrap` with items sized by their own content width (the
+   number inputs' `calc(5ch+22px)`) — when 3×itemWidth+2×gap didn't exactly fill the panel's inner width,
+   flex's default `justify-content:flex-start` left ALL the slack bunched at the end of each row, i.e. the
+   right edge. Fixed by switching `.sk-controls` to `display:grid; grid-template-columns:repeat(3,1fr)` —
+   forces each of the 3 columns to claim an exact equal share of the row regardless of content size, so
+   both edges land flush against the container's own (already-symmetric) `padding:8px 14px`. Safe for both
+   the player row (9 stat divs) and the reused Enemy Stats row (1 fixed-width label-cell + 8 stat divs,
+   see `.sk-enemystat-label-cell`) — both wrap to exactly 3 full rows of 3, no partial-row edge case, and
+   grid's column-track definition (not per-item content width) is now what guarantees the two rows'
+   columns line up, a more robust guarantee than the previous content-width-coincidence approach.
+3. **revisedArt icon grown 50%** (30px → 45px, user-specified), and **revisedArt + the Enemy Stats toggle
+   aligned to a shared vertical center** (user-specified — the two are no longer the same size, so
+   bottom-alignment would leave their centers visibly offset). Required pulling both buttons OUT of
+   `.sk-controls` entirely into a new sibling `.sk-controls-actions` row (`display:flex;
+   align-items:center`) — they used to wrap in as a 4th, uneven row of the SAME flex container the stat
+   fields lived in, and switching that container to grid (fix #2) would otherwise have force-stretched
+   these 2 buttons into full 1fr grid cells each, which was never the actual problem to solve for them.
+   Removed both buttons' now-stale `align-self:end` (inherited from the old shared flex row) since it
+   would silently override the new container's `align-items:center`.
+
+Structural verification only (brace/paren/bracket balance on the script and style blocks, before/after
+diff isolated to confirm no new imbalance) — same no-browser limitation as item 1 above applies to all
+three fixes; do a real visual pass before treating this polish pass as fully confirmed.
+
+### Follow-up, same day (2026-08-22): fix #2 above only solved ROW symmetry, not per-cell centering
+
+User re-reported "still not in the middle" after the grid fix. Real gap: `grid-template-columns:
+repeat(3,1fr)` fixes the ROW's own outer symmetry (equal column widths, so the left/right OUTER padding
+matches) — it says nothing about how content sits WITHIN each of those now-wider columns. Grid's default
+`justify-items:stretch` still stretched each `<div>` cell to its column's full width, and the label/input
+inside stayed left-aligned within that stretched box, so each field hugged the LEFT edge of its own
+(now-wider) column rather than centering in it — a genuinely different bug from the one the grid switch
+fixed, not the same bug recurring. Fixed with `.sk-controls > div{text-align:center}` — deliberately
+NOT `justify-items:center` on the grid container, which would shrink each cell down to its content's own
+width (dominated by the ~60px input) instead of the full column, risking longer labels like "CHAR LV"
+wrapping inside a now-narrower box. `text-align:center` centers the label's text and the `<input>` (a
+replaced element that responds to `text-align` the same way inline-block content does) while the cell
+itself stays stretched to the full column width. Also correctly centers `.sk-enemystat-label-cell`'s
+"Enemy Stat" text despite that cell being its own nested flex container (`display:flex; flex-direction:
+column`) — `text-align` isn't overridden by that rule and still governs the label's own inline text
+inside its (still full-width, `align-items:stretch`-by-default) flex-item box. **Still not visually
+verified** — same no-Playwright limitation as the rest of this pass; if this is STILL not centered when
+actually checked, the next thing to inspect is whether `.sk-controls label`'s own `display:block` is
+somehow constraining its width narrower than the cell before text-align gets a chance to act, since that
+would silently defeat this fix the same way the previous one was silently incomplete.
+
+### Follow-up, same day (2026-08-22): Final Damage now sums all hits for every multi-hit skill, not just dmgGroups ones
+
+User asked for Final Damage to show the total across all hits (min and max) "for every skill that has
+damage sim" -- previously this only happened for the newer `dmgGroups` mechanism (War Factory-style
+skills with several genuinely different per-hit formulas, e.g. `mole_napalm`'s 5-projectile/6-pulse
+breakdown, `chameleon_quickFire`, `mole_kingKaiser_nAttack`). A plain multi-hit skill using the simpler
+`hitCount`/`hitCountDuration` fields (Mana Missile, Tornado, Auto Gyro Gun's turret, etc.) still only
+showed ONE hit's range -- the actual total damage across a whole cast was never shown anywhere except by
+manually adding up individual Simulate rolls.
+
+Generalized the same "sum of per-hit range × hit count" shape (already used by the `dmgGroups` branch)
+to the plain branch too: `finalRange`'s non-`dmgGroups` path now multiplies `finalRangeForRange(dmgCalcRange)`
+by `dmgHitCountRange` (already computed earlier in `renderHero`, previously only used for the Simulate
+button's own title label) -- worst-per-hit × min-hit-count paired with best-per-hit × max-hit-count, the
+same worst-with-worst/best-with-best convention every other independent-RNG-source combination in this
+file already uses (per-hit damage and hit count are independent random draws -- a duration roll doesn't
+correlate with a TAL/LCK damage roll -- and since both factors are non-negative, the product's true
+min/max occurs exactly at the min/max corners of each factor, so pairing the extremes bounds the real
+range rather than approximating it). `dmgHitCountRange` already defaults to `[1,1]` for any skill with
+neither field (`getHitCountRange`'s existing behavior, untouched), so a single-hit skill's Final Damage
+number is multiplied by 1 and doesn't change at all -- purely additive for the common case.
+
+The "total, N hits, all connect" note (previously `dmgGroups`-only) now shows for ANY skill whose hit
+count exceeds 1, using the same hit-count LABEL the Simulate button's own title already computes --
+correctly showing a real RANGE ("total, 17-22 hits") for duration-derived skills like Tornado instead of
+a single fixed number, since their hit count itself varies with the CHA/LCK roll.
+
+**One real near-miss caught before shipping**: a first pass at reading `mole_napalm`'s entry misread its
+PER-GROUP `hitCount:5` (inside one `dmgGroups` array element) as the skill's own TOP-level `hitCount`
+field, which would have meant `getHitCountRange` calling a plain number as a function
+(`skill.hitCount(rank,...)` where `skill.hitCount` is `5`, not a function) -- a real crash risk. Re-read
+the full entry and confirmed the actual top-level field is `hitCount:()=>30` (a real function, matching
+`resolveGroupHitCount`'s own 5+25=30 group sum) -- the regex used for the first pass had simply matched
+the wrong (nested) occurrence of the string "hitCount:". Verified all 3 existing `dmgGroups` skills
+(`chameleon_quickFire`, `mole_kingKaiser_nAttack`, `mole_napalm`) have a proper top-level `hitCount`
+FUNCTION before shipping, not just assumed it from one skill's field name alone.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work; structural
+verification only (brace/bracket balance, manual trace of the math for a `[1,1]` default case and a real
+multi-hit case).
+
+### Follow-up, same day (2026-08-22): Auto Gyro Gun's real fire rate, and a new dmgFlagDep for Tornado's Typhoon
+
+**Auto Gyro Gun was still showing as a single hit despite the previous "sum all hits" generalization**
+because it had no `hitCount`/`hitCountDuration` field at all -- the generalization only multiplies an
+EXISTING hit-count range by 1 for skills with neither field; it doesn't discover a real fire rate on its
+own. Dispatched a `mechanics-researcher` pass specifically for the turret's attack interval: confirmed a
+flat **2.0-second** gap between shots (`AutoGyroGun.cs:1326`, `addTimeOut("nAttack", (float)2)` -- a bare
+literal, not `agiAdjust`/etc.-wrapped, and NOT rank-dependent -- confirmed via a whole-file grep for
+`Adjust(`/`mLv`/`sLv` finding zero timing references at any rank). Wired in as `hitCountDuration:2` --
+the exact same generic mechanism Flame Turret already uses (`duration ÷ interval`, `chaAdjust`-rolled
+range), no new engine work needed. Also found (and noted, not modeled precisely) a real **0.8s deploy +
+0.1s fire-wind-up delay before the FIRST shot** (`AutoGyroGun.cs:1738`, `1680`, `153`) -- a small,
+one-time offset against the simple `duration÷2` total that the existing `hitCountDuration` mechanism has
+no parameter for; left as a documented simplification in the `dmgNote` rather than extending the engine
+for a ≤1-hit precision difference.
+
+**Tornado's Typhoon** (`pgn_typhoon1`, `hasSkill(344)`) -- user described it from in-game knowledge as
+"auto-tracks the target, costs Tornado an HP pool"; verified against source before modeling anything,
+confirming the framing correct on both counts but surfacing detail the user's description didn't have:
+- **Real dispatch**: Typhoon isn't a modifier on the same Tornado object -- if `hasSkill(344)` AND a
+  target was locked at cast time (enemy layer), the game dispatches to a WHOLLY SEPARATE cast
+  (`RPC_typhoon_cast`, spawning `Penguin_typhoon` instead of `Penguin_tornado`), silently falling back to
+  plain Tornado otherwise (`Penguin.cs:20597-20648`). Matches the real in-game tooltip's own "if the
+  target was locked during cast" condition.
+- **Movement**: confirmed real per-`FixedUpdate` homing toward the live target position
+  (`Penguin_typhoon.cs:372`, `AddForce` toward the target each frame) vs. base Tornado's literal WASD/
+  analog-stick input (`Penguin_tornado.cs:456-477`) -- a genuine behavior swap, not a speed/range tweak.
+- **HP mechanic**: real, Typhoon-exclusive (grepped `Penguin_tornado.cs` for any HP-like field -- zero
+  hits, confirming it doesn't exist outside Typhoon mode). Formula `talAdjust(sLv×100)×(1+0.01×focusIntellect)`
+  (`Penguin.cs:11299-11311`) -- same `talAdjust`/focus shape as damage, just a 10× coefficient. Depletes
+  by whatever `hit()` RETURNS each tick (`Penguin_typhoon.cs:152,205`) -- confirmed via a 2nd targeted
+  research pass that `CharacterControl.hit()`'s normal-hit return value is the POST-`dmgAdjust`/`defAdjust`
+  damage that actually landed (`CharacterControl.cs:3540-3673`), not the raw pre-mitigation value Typhoon
+  tried to deal -- meaning a tankier target (more DEF mitigation) makes the pool last LONGER, not shorter.
+  Reaching 0 destroys the typhoon early via the same code path as target-lost/expired
+  (`Penguin_typhoon.cs:93-100,270-276`), genuinely capable of cutting the channel short before the full
+  `chaAdjust(6)`s duration.
+- **Confirmed unaffected**: damage formula, 0.35s tick interval, and duration are all identical to base
+  Tornado (`Penguin.cs:11299,11305`, `Penguin_typhoon.cs:118,128` vs. the already-cited base-Tornado
+  citations) -- Typhoon only changes movement and adds the HP budget, nothing else.
+
+**Modeling decision**: rather than force the HP-depletion mechanic into a fake numeric hit-count cap (it
+depends on each tick's post-mitigation damage, which is itself RNG- and target-DEF-dependent -- a real
+simulation, not a clean formula this tool's existing `hitCountDuration` machinery could absorb), added a
+new **`dmgFlagDep`** field -- the first PURELY INFORMATIONAL dep in this tool: renders a real toggle
+(same generic `renderDmgToggle`/`getDepRank` machinery every other dep uses, needing only
+`id`/`label`/`icon`/`minRank`/`maxRank`, no `calc`/`term`/`mult`) but has ZERO numeric wiring anywhere --
+its only effect is existing so the user can acknowledge the passive, with the full mechanic described
+unconditionally in Tornado's own `dmgNote`. New icon extracted: `penguin_typhoon1.png` -- **the exact
+digit-suffix-to-passive mapping is UNCONFIRMED** (files `typhoon0.png`-`typhoon4.png` all exist; `1`
+matches the skillname `pgn_typhoon1`'s own trailing digit by the established Class-C-tier convention, but
+the actual UI-code lookup table mapping skillname to icon file couldn't be found in the available files
+during research) -- flagged explicitly per this project's own repeated icon-mismatch history (Penguin's
+original 6, Mole's 8) rather than asserted as verified.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work.
+
+### Follow-up, same day (2026-08-22): the Typhoon toggle visibly did nothing when clicked
+
+User reported "typhoon on and off why the same" — a real gap, not a misunderstanding. `dmgFlagDep` was
+deliberately built with NO numeric wiring (the HP-depletion mechanic doesn't reduce to a clean formula —
+see the pass above), but `dmgNote` was still a static string, so the toggle rendered and looked clickable
+while having literally zero visible effect either way — unlike every other toggle in this tool, which all
+change something on click. Fixed by letting `dmgNote` be either the existing plain string OR a
+`(dmgFlagDepOn)=>string` function (same optional-shape pattern `dmgDep.term`/`calc` already use) —
+`dmgFlagDepOn` is now computed right before `dmgInfo` is built, from the same generic `getDepRank`
+mechanism every other dep uses. Tornado's own `dmgNote` is now that function: OFF shows the original
+"player-steered, assumes target stays in radius" framing (with a hint to toggle Typhoon); ON replaces it
+with the full auto-track + self-depleting-HP-budget explanation. No other skill's `dmgNote` needed to
+change — the `typeof ... === "function"` check falls through to the old plain-string behavior for
+everyone else, `dmgFlagDep` is still Tornado-only. Default state is ON (matches this tool's standing
+"assume the passive is learned" convention, same default Hidden Turret/Synchro Mole already use) — so
+selecting Tornado fresh shows the Typhoon-active note first, not the base one.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work.
+
+### Follow-up, same day (2026-08-22): Typhoon's HP pool actually caps Final Damage now
+
+User pushed back on "not modeled numerically" from the pass above -- correctly: the HP-depletion mechanic
+IS computable without a real tick-by-tick RNG simulation, because it's a BUDGET. The typhoon's HP pool
+(`talAdjust(sLv×100)×focus`) is decremented by exactly the damage it deals each tick and self-destructs
+at 0 -- so cumulative damage dealt over its whole life is bounded above by the pool, REGARDLESS of how
+many ticks that takes to reach. That makes "total damage with the pool" exactly
+`min(pool, what an unlimited-HP typhoon would deal over the same duration)` -- a real deterministic bound,
+computable with the exact same `talAdjust`-range machinery already used for damage, not a guess and not a
+Monte Carlo simulation.
+
+**One real precision detail, verified before implementing rather than assumed**: the pool depletes by
+`CharacterControl.hit()`'s own return value, which a 2nd research pass (see the pass above) confirmed is
+the damage AFTER `dmgAdjust`+`defAdjust` but BEFORE `hitMod` (hitMod only applies inside `RPC_AddDamage`,
+which `hit()` calls and returns from without waiting on) -- and this tool's own Final Multiplier is a
+synthetic feature with no real-game equivalent at all. So the cap has to be computed at THAT specific
+pre-hitMod stage, not against the fully-processed Final Damage number, or it would silently apply a
+mitigation stage to the pool comparison that the real depletion mechanism never sees. Split the existing
+`finalRangeForRange` into `afterDefForRange` (the new pre-hitMod stage, exposed) + `applyHitModFinal`
+(hitMod/Final Multiplier, unchanged) -- every existing skill's Final Damage number is byte-identical to
+before, since `finalRangeForRange` itself is now just `applyHitModFinal(afterDefForRange(range))`, the
+same 2 steps it always did, just as 2 named calls instead of one inlined function.
+
+New non-`dmgGroups` branch: computes `afterDef × hitCountRange` (the unlimited total, same math as the
+previous "sum all hits" pass) and, only when `dmgFlagDepOn` and `dmgFlagDep.hp` are both present, ALSO
+computes the pool's own range (`talAdjustRange` on `dmgFlagDep.hp`, with the same focus-multiplier
+treatment `dmgCalcPostFn` already gives the main damage, since Typhoon's HP formula shares that exact
+`talAdjust`+focus shape) and takes the elementwise `Math.min` against the unlimited total BEFORE handing
+the result to `applyHitModFinal` -- matching the real one-time hitMod/Final-Multiplier application order.
+Toggling Typhoon OFF (or any other `dmgFlagDep`-using skill without an `hp` field) falls straight through
+to the unlimited-total path, unchanged. Added `hp:"talAdjust(100×sLv)"` to Tornado's own `dmgFlagDep`
+object -- the same string-formula shape `dmg` itself already uses, parsed with the identical
+`talAdjust(...)`-extraction regex.
+
+**Verified by hand** (not just structurally) against a representative case (rank 3, TAL/INT/LCK 128,
+generic DEF/LCK enemy stats, focus on): the capped total's MIN branch passed through unchanged (the pool
+wasn't the binding constraint there) while the MAX branch was genuinely pulled down by the pool
+(computed ~2187 uncapped → ~1566 after the pool ceiling) -- confirming the `Math.min` only bites where it
+should, not uniformly, and the result stays a well-formed `[min,max]` range (min ≤ max) throughout. Also
+updated the "total, N hits" note to flag when the shown total is capped -- the hit-count LABEL still
+shows the uncapped tick count (duration÷tick-rate), so a bare "total, 23 hits, all connect" next to an
+already-capped number would misleadingly imply all 23 landed at full, uncapped value.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work; the hand
+trace above checks the arithmetic is internally consistent, not that the UI actually renders it correctly.
+
+### Correction, same day (2026-08-22): the pass above was over-engineered -- replaced with the user's own, simpler formula
+
+User rejected the `min(pool, unlimited-total)` approach above directly ("overcomplicating things again...
+not this bullshit") and specified the actual model to use instead. Implemented exactly as given, no
+re-litigating:
+
+1. **Damage Formula chip gains a 2nd small line** when Typhoon is toggled on: "Typhoon HP: `<formula>`".
+   New `.sk-dmg-subline`/`.sk-dmg-subline-label` CSS (smaller/muted, left-aligned -- deliberately not
+   reusing `.sk-dmg-final-note`, which is centered for a different chip's layout). Renders by calling
+   `renderDmgFormula` ITSELF against a tiny pseudo-skill object (`{dmg: dmgFlagDep.hp, dmgFocusIntellect:
+   selected.dmgFocusIntellect}`) rather than duplicating its talAdjust-parsing/coloring logic -- the
+   pseudo-skill has no `dmgDep`/`dmgMultDep`/`atkCoeff`, so those branches simply never trigger.
+2. **Raw Damage is untouched** -- it was already per-hit only (`dmgCalcRange`, never multiplied by hit
+   count anywhere), so this requirement was already satisfied without any change.
+3. **Final Damage replaced entirely**: `minimum = the HP pool's own low roll` (no defAdjust/hitMod/Final
+   Multiplier applied to it at all -- it's Mole's own internal resource, never dealt to a target, so none
+   of that pipeline belongs on it), `maximum = the pool's high roll + finalRangeForRange(dmgCalcRange)[1]`
+   -- one FULL hit's worth of already fully-processed Final Damage (every normal modifier: dmgAdjust,
+   defAdjust, hitMod, Final Multiplier, all of it) added on top of the pool's own max. Deliberately
+   asymmetric -- no "+1 hit" allowance on the minimum, since worst case assumes no overshoot at all while
+   best case assumes the maximum possible one.
+4. **Rationale, user's own words**: "even [if] typhoon HP pool is only one [hit] left, it is capable of
+   doing another full hit" -- matches the real depletion check (`Penguin_typhoon.cs:93-100`, checked AFTER
+   a tick already landed, so the tick that finally drains the pool below 0 still deals its full,
+   un-prorated damage first) -- the pool is a floor the last hit can overshoot by up to one whole hit, not
+   a hard ceiling that caps mid-hit.
+
+Also removed the now-inapplicable "total, N hits, all connect" note for Typhoon specifically (per direct
+follow-up: "no need to estimate tick count for typhoon case") -- the new model isn't hit-count-based at
+all, so that label would describe a computation that isn't what's shown; replaced with "HP pool total, +1
+hit if the last tick overshoots it" instead. Every non-Typhoon skill's Final Damage (including plain
+Tornado with the toggle off) is completely unaffected -- the `typhoonHp` branch only exists between the
+`dmgGroups` branch and the pre-existing "sum all hits" branch, doesn't touch either.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work; verified by
+re-tracing the same representative case as the rejected pass by hand (rank 3, TAL/INT/LCK 128) to confirm
+the new numbers are well-formed (min < max, both positive) and structurally different from the old
+(rejected) result, not a no-op edit.
+
+### Fix, same day (2026-08-22): the HP subline's layout, and Simulate never matching the new Final Damage
+
+Two real bugs, caught from a screenshot ("the damage formula looks like shit") plus a direct report
+("damage sim for typhoon case didn't correspond to the final damage range") -- both consequences of not
+fully accounting for how much `renderDmgFormula` itself had evolved (from another session's parallel
+work) since this feature's own earlier passes.
+
+**1. HP subline layout.** `renderDmgFormula`/`renderOneDmgFormula` no longer render a simple inline
+colored-span string the way they did when the Typhoon toggle/dmgNote work started -- they now build a
+`buildFormulaGrid` 2-ROW CSS grid per term (a big live-computed number in row 1, e.g. "76" for
+`0.6×TAL` with TAL=128, plus a small symbolic caption "(0.6TAL)" in row 2 underneath it), sized for the
+primary 30px Damage Formula display. Reusing that same function for the "Typhoon HP" subline crammed a
+multi-term 2-row grid into a 13px caption-sized line, producing exactly what the screenshot showed --
+overlapping/misaligned numbers. Fixed by writing `renderCompactTalAdjustFormula`, a deliberately separate,
+much simpler function: plain inline colored spans, one line, symbolic-only (no live-computed big number),
+matching what the OLD `renderDmgFormula` used to produce -- the shape that actually fits a small caption.
+Only handles the one shape any `dmgFlagDep.hp` has needed so far (a bare `talAdjust(...)` with an optional
+focusIntellect wrap); not a generalized replacement for the grid renderer.
+
+**2. Simulate ignored the new Typhoon model entirely.** The "Test" button's click handler still called
+`rollHitCount` (the OLD duration÷tick-rate roll) and built that many independent hit reveals -- completely
+disconnected from the new `finalRange` shape (pool + possible overshoot hit), so clicking Test on a
+Typhoon-active Tornado rolled some unrelated number of ticks that had nothing to do with the displayed
+Final Damage range. Fixed in 3 places:
+- `rollOneHit` gained an early-return branch: `hitIndex === 0` for a toggled-on `dmgFlagDep.hp` skill
+  rolls the pool itself (a genuine random `talAdjustAtRoll`, not a min/max extreme -- same "real roll, not
+  always the ceiling" principle `rollHitCount` already uses for duration-derived counts), with NO
+  dmgAdjust/defAdjust/hitMod/Final Multiplier applied (matches `finalRange`'s own reasoning: the pool is
+  never dealt to a target). `hitIndex === 1` (and any other) deliberately does NOT branch here -- per
+  direct user instruction ("the last overshoot still goes through all normal damage pipeline and
+  modifiers"), it falls straight through to the completely unmodified normal single-hit pipeline below.
+- The click handler now sets `hitCount = 2` directly for a Typhoon-active skill (pool + one overshoot
+  hit) instead of calling `rollHitCount` at all -- that function's tick-count roll has nothing to do with
+  this skill's Final Damage anymore.
+- The "Test" button's own title text no longer shows a tick-count range for Typhoon ("Test 23 hits" would
+  actively mislead next to a button that only ever reveals 2 numbers) -- now "Test HP pool + 1 hit".
+
+Per the user's own explicit follow-up ("no need to estimate tick count for typhoon case") -- confirmed
+both fixes already satisfied this: the tick-count-based note text was already dropped in the previous
+pass, and this pass's `hitCount = 2` override means Simulate no longer estimates or displays a tick count
+either.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work.
+
+### Rebuilt again, same day (2026-08-22): a TRUE roll-until-depleted simulation, replacing the "2-reveal" shortcut
+
+User rejected the "2-reveal" (pool + 1 hit) Simulate model too: "why don't you just really simulate it?
+roll a HP pool, and in damage sim for this skill exclusively, roll each hit and deduct from the HP Pool
+until zero." Implemented exactly that. `finalRange` (the deterministic `[min,max]` chip) is UNCHANGED --
+still the pool-plus-one-hit bound from the previous pass, which is a legitimate deterministic BOUND, same
+category as every other skill's Final Damage range in this tool (none of which are simulated
+distributions). Only Simulate itself changed, to be a genuine random realization that lands within that
+bound rather than a second, disconnected shortcut.
+
+**The core architectural problem**: every other multi-hit skill's Simulate popup rolls each hit LAZILY,
+at its own scheduled reveal time (`revealMultiHit` calls `rollOneHit` right when that hit's turn comes
+up) -- workable because `hitCount` is always knowable in advance (a fixed formula or a duration÷tick-rate
+roll, done once upfront). Typhoon's hit count ISN'T knowable in advance -- it's an outcome of the rolls
+themselves, only known once the pool has actually run out. So the whole sequence now rolls synchronously,
+all at once, in the click handler, BEFORE any reveal animation starts -- the reveal loop just plays back
+these already-decided values on schedule afterward.
+
+**`rollOneHit` gained an optional 4th parameter, `staged`** -- every existing call site passes nothing and
+keeps getting the plain final number, completely unchanged. When `staged:true`, it returns
+`{afterDef, final}` instead: `afterDef` is the pre-hitMod stage (confirmed via `mechanics-researcher`
+earlier this session to be exactly what `CharacterControl.hit()` itself returns, and therefore exactly
+what the real HP pool depletes by), `final` is the fully-processed value with hitMod AND Final Multiplier
+already applied -- what actually gets shown and summed. Per the user's own explicit follow-up
+("don't forget that the last overshoot still goes through all normal damage pipeline and modifiers"),
+EVERY hit in the loop -- not just a designated "last" one -- goes through the complete pipeline for its
+displayed value; only the pool-depletion CHECK uses the earlier `afterDef` stage.
+
+**The click handler's Typhoon branch**: rolls the pool once (`talAdjustAtRoll` on `dmgFlagDep.hp`, with
+focus applied the same way the formula/range computations already do), then loops calling
+`rollOneHit(selected, rank, i, true)` -- each iteration deducts that hit's `afterDef` from the pool and
+stops as soon as the pool reaches ≤0, pushing a fully pre-rolled `{value, proc, revealDelay, pos, index}`
+object per hit. `hitCount` becomes `hits.length` -- the loop's own real outcome, not an estimate. A
+`TYPHOON_SIM_CAP` of 300 iterations exists purely as a runaway-safety bound, not a value ever expected to
+matter in practice -- `defAdjust` is floored at 1 in its own real formula, so every iteration strictly
+reduces the pool by a positive amount and the loop is mathematically guaranteed to terminate on its own.
+
+**`revealMultiHit` needed a real fix, not just a call-site change**: it used to treat `hit.value !== null`
+as its own "already revealed" guard -- fine when every hit starts `null` and gets rolled lazily, but for a
+Typhoon hit (which arrives with `value` already set) that same check would have skipped the function
+ENTIRELY, silently preventing pre-rolled hits from ever being drawn to screen at all. Added a real,
+separate `hit.revealed` boolean as the guard instead, and only calls `rollOneHit`/`rollLckProc` when
+`hit.value === null` (the lazy, pre-existing path) -- a pre-rolled hit just gets displayed using its
+already-decided value. Every other skill's hits still start `null` and roll lazily exactly as before.
+
+**Button title** no longer claims a specific count for Typhoon at all ("Test HP pool + 1 hit" was itself
+already stale the moment Simulate stopped being a fixed 2 reveals) -- now "Test (rolls until the HP pool
+depletes)", honest about the fact the actual count isn't knowable before clicking.
+
+TAL/LCK/INT are parsed fresh inside the click handler's Typhoon branch rather than closed over from
+`renderHero`'s own locals -- same reason this listener's own pre-existing comment already gives for
+`dmgHitCountRange`/`dmgDepOnCalc`: it's wired once, outside `renderHero`'s per-render scope, so none of
+its locals are reachable here under any name.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work; this is the
+3rd consecutive rebuild of this exact feature within one session, each time because a genuine gap only
+became visible once the user could react to the previous attempt -- worth a real visual pass before
+treating any of it as settled, more than usual.
+
+### Fix, 2026-08-23: the true-simulation rebuild above still only ever showed 1 hit -- a real bug, found via a live jsdom repro this time, not by more reading
+
+User reported the rebuilt Simulate button still only revealed 1 hit despite the correctly-computed
+roll-until-depleted hit count. Static re-reading of the previous pass's own diff found nothing wrong with
+it in isolation -- the actual bug was one function away, in code that pass never touched. Installed
+`jsdom` in the scratchpad and built a real repro (load `index.html`, navigate to the tool via URL hash,
+type "Tornado" into the real search box, dispatch a real `mousedown` on the suggestion per this file's own
+documented autocomplete-fix precedent, click the real Simulate button, then poll the live DOM) --
+confirmed `hitCount` computed correctly (9-11 across repeated runs, matching the pool-vs-per-hit-damage
+math by hand) but the DOM only ever grew 2 children (1 `.sk-multihit-total` + 1 `.sk-multihit-item`) no
+matter how long the wait, and `multiHitGroups.includes(group)` had gone `false` within about a second of
+the click -- the group was being pruned almost immediately.
+
+**Root cause**: `revealMultiHit`'s own "is this group fully done, time to start the fade and prune it"
+check (right after it writes the running-total's `innerHTML`) read `group.hits.every(h => h.value !==
+null)` -- written for the ORIGINAL lazy-roll design, where a hit's `value` field only stops being `null`
+at the exact instant that hit is revealed, so "every value is set" and "every hit has been shown" were
+the same fact for every skill that existed when this check was written. The 2026-08-22 true-simulation
+rebuild changed that premise for Typhoon specifically without touching this check: its hits are now rolled
+synchronously, ALL at once, at click time -- so every hit already has a non-null `value` from the moment
+the group is created, well before any of them have actually been drawn to screen. On the very FIRST call
+to `revealMultiHit` (hit 0's immediate reveal), this stale check evaluated true immediately, which:
+1. Started the total's 2s fade animation after only 1 of ~10 hits had shown.
+2. Pruned the group from `multiHitGroups` right then.
+3. Scheduled `wrap.remove()` for 2s later.
+
+Every subsequent hit's own scheduled `setTimeout(() => revealMultiHit(group, h), ...)` then hit this SAME
+function's top-of-function guard (`!multiHitGroups.includes(group)` — already fixed in the immediately
+prior pass to use `hit.revealed`, but that fix only patched the ENTRY guard, not this separate exit-
+condition check further down) and silently no-opped — exactly why only 1 hit ever appeared on screen
+regardless of how many the pool math had actually decided.
+
+**Fix**: `group.hits.every(h => h.value !== null)` → `group.hits.every(h => h.revealed)` -- the one flag
+that's only ever true once a hit has genuinely been drawn to screen, for both the lazy-roll path (every
+other skill, unaffected — `h.revealed` and `h.value !== null` become true at the same moment there, since
+`revealMultiHit` sets `revealed = true` immediately before rolling a lazy hit's value) and the pre-rolled
+path (Typhoon) alike. Re-ran the same jsdom repro against the fixed file 3 times: 11, 9, and 10 hit items
+respectively (real RNG variance across separate pool rolls, as expected), confirming the fix and that it
+isn't a fluke of one lucky run.
+
+**Process note**: this is the second time in two consecutive passes that a `value !== null`-based "has
+this been done yet" check silently broke for Typhoon specifically because pre-rolling changed what that
+condition actually meant — the top-of-function guard was fixed in the prior pass, this exit-condition
+check (same function, same underlying assumption, different line) was missed because it wasn't the thing
+that was being actively debugged at the time. Worth grepping a function for EVERY `!== null`/`typeof x
+=== ...` state check when one of them turns out to encode a stale assumption, not just the one that was
+reported broken.
+
+### Follow-up, same day (2026-08-23): Typhoon HP subline right-aligned to stop overlapping the KO badge
+
+User: "right align Typhoon HP to avoid overlapping with KO small text." `.sk-ko-badge` sits
+`position:absolute` at `.sk-dmg-formula`'s own bottom-LEFT corner (`left:14px; bottom:10px`) — the
+Typhoon HP subline (`.sk-dmg-subline`, added 2026-08-22) was left-aligned by default (plain block flow),
+so on a card tall enough for the subline to land near the chip's bottom edge, its text sat directly over
+the KO badge's own corner. One-line fix: `.sk-dmg-subline{text-align:right}` — moves the line to the
+opposite corner, where nothing else in this chip lives. Only Tornado (the sole `dmgFlagDep.hp` user today)
+is affected in practice.
+
+**Not visually verified** — same no-Playwright limitation as the rest of this session's work.
+
+### Fix, same day (2026-08-23): plain multi-hit Final Damage applied hitMod/Final Multiplier to the aggregate instead of per hit
+
+User: "Final Damage currently didn't calculate correctly from hitmod and finalmod." Real bug, found by
+comparing the 3 branches of `finalRange` side by side. The `dmgGroups` branch (2026-08-19) and the
+Typhoon branch (2026-08-22) both correctly compute ONE hit's fully-processed final range first
+(`finalRangeForRange`, which already runs afterDef → hitMod → Final Multiplier) and only multiply by hit
+count afterward. The plain multi-hit branch (added 2026-08-22, "sum of all hits" pass) did the opposite:
+summed the PRE-hitMod `afterDef` value across every hit first (`afterDef × hitCountMin/Max`), then applied
+hitMod and Final Multiplier ONCE to that already-summed total.
+
+Both `hitModAdjust` and `finalMultiplierAdjust` round with `Math.ceil`, and `ceil` is superadditive --
+`sum(ceil(k×xᵢ)) ≥ ceil(k×sum(xᵢ))` always. Applying the multiplier once on the aggregate therefore
+systematically UNDER-counts versus the real per-hit-ceil-then-sum total (which is what actually happens
+in-game, RPC_AddDamage applying hitMod once per hit call, and what Simulate/`rollOneHit` already compute
+per individual hit) -- worse the more hits there are and the further hitMod/Final Multiplier sit from
+1.0. Verified numerically before and after (hitMod 1.5, Final Multiplier 1.1, 7-hit example): old
+`[1191, 1825]`, new (correct) `[1197, 1827]` -- a small but real, systematic undercount, not a rounding
+wash. For a single-hit skill this is a no-op (multiplying by hit-count 1 either way gives the identical
+result), which is exactly why this only ever showed up on multi-hit skills.
+
+Fixed to match the `dmgGroups`/Typhoon pattern: `const perHitFinal = finalRangeForRange(dmgCalcRange);
+return [perHitFinal[0] * dmgHitCountMin, perHitFinal[1] * dmgHitCountMax];` -- one hit's real final value
+(hitMod and Final Multiplier both already applied), then scaled by the hit-count range. `afterDefForRange`/
+`applyHitModFinal` are unchanged and still used (the latter inside `finalRangeForRange`'s own one-line
+definition) -- only this one branch's ORDER of operations changed.
+
+**Verified live via jsdom** (not just structurally): selected Mana Missile, read the Final Damage chip's
+displayed range (`882–1211`), opened the Mods popup, toggled Amplify Damage (a real `hitMod`-side mod) on,
+and confirmed the displayed range updated live and scaled up correctly (`1057–1456`, matching Amplify
+Damage's own `+0.20` delta) -- confirms the fix is wired into the actual render path, not just correct in
+isolation.
+
+### Fix, immediate follow-up (2026-08-23): Typhoon's own Final Damage minimum still didn't move with hitMod
+
+User: "for typhoon, hitmod final damage min preview is still bugged, it don't increase or move at all
+when I increase hitmod." Real gap, separate from the pass above (which fixed every OTHER multi-hit
+skill) -- Typhoon's own branch of `finalRange` was never touched by that fix, and had its own,
+independent reason hitMod never reached the minimum at all: the MINIMUM was `hpRange[0]`, the raw HP
+pool's own low roll straight out of `talAdjustRange`, with NO hitMod or Final Multiplier applied to it
+whatsoever -- per the user's own original 2026-08-22 spec ("no defAdjust/hitMod belongs on it at all,"
+since the pool is Mole's own internal resource, never literally "dealt" to a target). That was a
+deliberate design choice at the time, not an oversight -- but per this new report, the user now wants the
+minimum to actually respond to hitMod, so this session's read is that this supersedes that specific piece
+of the original spec (the rest of it — pool-based bound, "+1 hit" asymmetry on the max only — is
+unchanged and not in question here).
+
+**Why the pool total is meaningfully convertible to hitMod terms at all**: the pool depletes by whatever
+`hit()` returns each tick -- confirmed post-dmgAdjust/defAdjust but PRE-hitMod (see the 2026-08-22 pass's
+own research citation). So the raw pool total is denominated in the exact same "afterDef" units the plain
+multi-hit branch's own per-hit value is, BEFORE hitMod/Final Multiplier would ever apply to it -- the real
+total damage actually dealt to the enemy over the whole channel is the SUM of each tick's own
+hitMod-adjusted value, not the bare pre-hitMod pool total. Displaying the untouched pool value as "Final
+Damage" was never actually expressed in hitMod/Final-Multiplier terms to begin with, which is exactly why
+toggling either one did nothing to it.
+
+**Fix**: wrapped `hpRange` in `applyHitModFinal` (the exact same hitMod → Final Multiplier function every
+other branch's own final step already uses) before using it, for BOTH the minimum and the base of the
+maximum -- `const hpFinalRange = applyHitModFinal(hpRange); return [hpFinalRange[0], hpFinalRange[1] +
+oneHitFinal[1]];`. Deliberately does NOT re-apply dmgAdjust/defAdjust to the pool -- those are
+target-mitigation/attacker-buff stages already notionally folded into what "afterDef" (the units the pool
+depletes in) means by the time the real game subtracts it; re-applying them here would double-count in a
+way hitMod/Final Multiplier (which never touch the pool automatically at all) don't. This is necessarily
+an aggregate approximation, not an exact per-tick-ceil-then-sum the way the plain multi-hit branch's own
+2026-08-23 fix achieves -- Typhoon's real tick count is itself probabilistic (unknown until the pool
+actually depletes), so there's no deterministic per-tick decomposition available to sum exactly, only the
+pool's own aggregate total to convert once. Accepted as the best available deterministic estimate for a
+range display, same category of approximation this tool already accepts elsewhere for a bound rather than
+a true simulation (the real per-tick math IS exact in Simulate's own roll-until-depleted loop, unaffected
+by this change).
+
+**Verified live via jsdom**: selected Tornado (Typhoon on by default), read Final Damage
+(`1504–1919`), toggled Amplify Damage in the Mods popup, confirmed BOTH ends moved
+(`1806–2304` — min scaled ×1.2 matching the +20% hitMod delta, ceiling-rounded; max moved by a
+consistent amount too, since it's `hpFinalRange[1] + oneHitFinal[1]` and `oneHitFinal` also already
+includes hitMod).
+
+### Follow-up, same day (2026-08-23): Typhoon HP subline switched from symbolic to substituted values
+
+User: "please also fix typhoon HP to be the substituted value like the general damage formula too."
+`renderCompactTalAdjustFormula` (built 2026-08-22 specifically to avoid cramming the main Damage Formula
+chip's 2-row grid into a small caption-sized context) was still rendering the OLD, pre-2026-08-19 style
+the main chip itself has long since moved past: purely symbolic coefficients with the literal word "TAL"
+as text (`"300 + 6TAL"`) -- never actually multiplied by the player's own live TAL input at all, unlike
+the main Damage Formula chip's own "hero numbers" (real substituted values, with the coefficient demoted
+to a small caption).
+
+Rewrote the function to compute the real live-substituted contribution for each term (`Math.trunc` on the
+TAL/INT-multiplied value, matching `renderOneDmgFormula`'s own convention exactly), with the original
+coefficient (`fmtCoeff`-formatted) now a small trailing caption in parens right after each number --
+**deliberately still inline/single-line, not `buildFormulaGrid`'s 2-row grid** -- reintroducing that
+specific structure is exactly what caused the original "looks like shit" overlap bug this function was
+built to avoid, and nothing about wanting substituted VALUES requires the 2-row grid's LAYOUT too. New
+`.dmg-term-sub-compact` CSS class for the caption -- deliberately NOT `.dmg-term-sub` (the main chip's own
+caption class), whose `font-size:0.37em` is relative to the 30px main chip's own font-size and would
+resolve to an illegible ~4.8px against this subline's 13px base; `.dmg-term-sub-compact` uses a fixed 10px
+instead. Reads `talEl`/`intEl` directly rather than taking them as new parameters -- this function already
+lives in the same closure as `rollOneHit`/`renderOneDmgFormula`, which do the same.
+
+**Verified live via jsdom**: selected Tornado, read the subline's rendered HTML at the default TAL=128
+(`(300 + 768(6TAL)) × 1.28(0.01INT)`) -- confirming `768` is the real `6×128` TAL contribution, not the
+bare word "TAL" the old version showed -- then bumped TAL to 300 via the real input and confirmed the
+number itself updated live (`768` → `1800`), matching `6×300` exactly, while the coefficient caption
+`(6TAL)` correctly stayed the same (it's a property of the formula, not the current TAL value).

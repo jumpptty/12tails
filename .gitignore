@@ -1,3 +1,14 @@
 # Large decompiled/ripped asset trees — never bulk-add these
 RippedAssets/
 12TailsOnline_Data/
+
+# Decompiled .cs source dump (moved out of the repo root 2026-08-18) and its
+# compiler scaffolding — read-only reference material, not this project's
+# own code, same "never bulk-add" reasoning as the two above.
+DecompiledSource/
+Scaffolding/
+
+# Automation / browser test artifacts
+.playwright-mcp/
+.claude/worktrees/
+.claude/settings.local.json

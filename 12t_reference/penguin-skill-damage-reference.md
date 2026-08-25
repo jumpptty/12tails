@@ -9,12 +9,12 @@ source-of-truth data used to populate the `SKILLS` JS object for the interactive
 sheet — see the design spec (`2026-07-21-penguin-interactive-infographic-design.md`)
 and implementation plan for how it's consumed.
 
-Global mechanics referenced throughout:
-- `agiAdjust(base) = base × 128/(AGI+128)`, further `×0.88` if `hasSkill(424)` ("revisedArt5") — 424 excludes nAttack/cAttack/emoticon/consumable-item cooldowns.
-- `magAdjust(base)` — cast-time reduction from INT (displayed as INT↓).
-- `chaAdjust(v) = v × (1+0.015×CHA)` — buff/debuff duration.
-- `talAdjust(n) = n + 0.02n×TAL`.
-- `lckAdjust(n)` — diminishing-returns % curve.
+Global mechanics referenced throughout: `agiAdjust`, `magAdjust`, `chaAdjust`, `talAdjust`, `lckAdjust` —
+canonical formulas are in `12t_reference/12Tails-Mechanics-Reference.md` §2.4; this doc used to restate
+simplified copies inline but they've been removed to avoid drift (the copies had already silently
+dropped the luck-roll `R` term and the `ceil`/`clamp` wrappers) — always check the canonical doc, not
+memory of this file, if a number looks off. One Penguin-specific override: `agiAdjust` gets a further
+`×0.88` on cooldowns if `hasSkill(424)` ("revisedArt5") — 424 excludes nAttack/cAttack/emoticon/consumable-item cooldowns.
 - `focusIntellect` buff (from `pgn_focusIntellect5`, 421): consumed once by the caster's next damage spell as ×(1+0.01×(INT-100)), then removed.
 - `multiCast` status: granted by `doubleCast1`(sLv1)/`tripleCast2`(sLv2) (Basic tier) and by a 12% `lckAdjust` roll on **blink** casts once `doubleSpell5` (431) is learned (NOT "any spell" despite tooltip). Consumed 1 stack per subsequent cast of a `isDoubleSpell`-flagged skill (manaMissile, manaVortex-family exceptions apply — see below), firing one free extra cast. `iceBlock` uses a different multiplicative model (`mBlockCount = sLv + sLv×multiCastLv`, single-shot consumption).
 - Global Class C economy passives (apply to EVERY other active skill, not tier-scoped): `revisedSkill5` (404) = 50% SP cost reduction on cast; `revisedMagic5` (414) = 20% MP cost reduction on cast; `revisedArt5` (424) = 12% cooldown reduction (excludes basic attacks/consumables).
@@ -66,7 +66,7 @@ Global mechanics referenced throughout:
 
 ### pgn_manaArc1-4 (211-214) — active, RANK FAMILY
 - reqLv 5/13/21/29, MP 6/12/18/24, SP -4/-6/-8/-10 (red), mode instant, cType manaArc
-- CD: flat `agiAdjust(1)` (unusually NOT sLv-scaled — confirmed no agiAdjust wrapper variance). ×0.88 with revisedArt5.
+- CD: flat `1`s, a bare literal — **NOT wrapped in `agiAdjust` at all** (verified at `Penguin.cs:21756`: `mChar.addTimeOut("manaArc", (float)1)`, no `agiAdjust` call anywhere in the coroutine, unlike the damage line two lines above it which does use `talAdjust`). Still gets revisedArt5's ×0.88 since that reduction lives inside `addTimeOut` itself, independent of whether the caller pre-adjusted the value. (Corrected 2026-07-23 — an earlier pass of this doc claimed `agiAdjust(1)`, which was wrong; it caught the missing sLv-scaling but missed that AGI-scaling was absent too.)
 - Cast: instant.
 - Damage: `talAdjust(10×sLv) × (1+0.01×focusIntellect) + (hasSkill(412)?0.5×charLv:0)` → base 10/20/30/40 (matches tooltip). KO 0, Hate 0.
 - Range: AoE radius 3m/height 3m, self-centered. No cast-range gate.

@@ -3,8 +3,8 @@
 Date: 2026-08-14
 Feeds: `12t_projects/player-reference-tool/index.html` (Skill Cooldown/Duration Lookup tool)
 Builds on: `2026-08-13-skill-dependent-duration-design.md` (the original `dep` field, Duration-only)
-Reference docs updated alongside: `12t_reference/sheep-skill-cooldown-reference.md`,
-`12t_reference/whale-skill-cooldown-reference.md`
+Reference docs updated alongside: `12t_reference/sheep-skill-reference.md`,
+`12t_reference/whale-skill-reference.md`
 
 ## Problem
 

@@ -36,7 +36,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 ## Citations
 
 ### Notes on judgment calls (read before Tasks 2-12 reuse this schema)
-- `parallelShift` CD: the existing data-reference doc (`2026-07-21-penguin-skill-data-reference.md`) only
+- `parallelShift` CD: the existing data-reference doc (`penguin-skill-damage-reference.md`) only
   says "CD shares with blink" without a numeric value. Direct verification found parallelShift5's own
   cast site sets the shared `"blink"` cooldown key to `agiAdjust(30)`, not blink's own `agiAdjust(12)` —
   "shares with blink" means the two skills share the same cooldown-timer *key*, not the same *value*. The

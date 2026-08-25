@@ -2,7 +2,7 @@
 
 Date: 2026-08-13
 Feeds: `12t_projects/player-reference-tool/index.html` (Skill Cooldown/Duration Lookup tool)
-Reference doc updated alongside: `12t_reference/rabbit-skill-cooldown-reference.md`
+Reference doc updated alongside: `12t_reference/rabbit-skill-reference.md`
 
 ## Problem
 
@@ -94,7 +94,7 @@ base64-embedded into `SKILL_ICONS` as `rabbit_medicalEnhancement3` /
 
 ## Reference doc changes
 
-`12t_reference/rabbit-skill-cooldown-reference.md`:
+`12t_reference/rabbit-skill-reference.md`:
 - `miracleBlend`'s Duration cell changes from `—` to `6` (Duration Wrapped: `true`),
   with a new citation pointing at `Rabbit_potion.cs`.
 - A new judgment-call note documents the Alchemist Lab dependency and that it was

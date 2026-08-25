@@ -137,12 +137,12 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   holds a reference to the *owner's* `CharacterControl` and attacks via the owner's own `hit()`
   (`Bat_guardianOfTheNight.cs:154`/`893`; `whale_kingdomKnight.cs:36`/`439`), more like a stat-borrowing
   turret than an independent pet. Both classes' own docs already report a real, separately-verified
-  `chaAdjust(60)` **status** duration tied to the same skill name (`bat-skill-cooldown-reference.md`'s
-  `guardianOfTheNight`, `whale-skill-cooldown-reference.md`'s `12thKingdomKnight`'s `"kingdomKnight"`
+  `chaAdjust(60)` **status** duration tied to the same skill name (`bat-skill-reference.md`'s
+  `guardianOfTheNight`, `whale-skill-reference.md`'s `12thKingdomKnight`'s `"kingdomKnight"`
   buff) — whether that status expiring actually despawns the escort, or the escort structurally outlives
   it (matching this session's earlier `flameCarnival` miscite, where a real `chaAdjust` value turned out
   to gate the wrong thing), has not been independently re-verified. Not changed pending that check —
-  `bat-skill-cooldown-reference.md`'s and `whale-skill-cooldown-reference.md`'s own citations for those
+  `bat-skill-reference.md`'s and `whale-skill-reference.md`'s own citations for those
   two skills stand as-is for now.
 - **`fireBall`'s cooldown is conditionally halved by a separate passive (`hasSkill(402)`, almost
   certainly `rapidFire3`, "Reduces fireballs' casting and cooldown by 3 and 6 seconds" per

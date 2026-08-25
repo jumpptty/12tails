@@ -10,7 +10,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | mortarShot | Mortar Shot | 2 | 30 | true | false | — | — |
 | bunker | Bunker | 2 | 30 | true | false | — | — |
 | tnt | TNT | 4 | 90 | true | false | — | — |
-| stunMine | Stun Mine | 2 | 45 | true | false | 60 | false |
+| stunMine | Stun Mine | 2 | 45 | true | false | 60 | true |
 | stunGrenade | Stun Grenade | 2 | 60 | true | false | — | — |
 | flameTurret | Flame Turret | 3 | 120 | true | false | 5 | true |
 | fireBarrage | Fire Barrage | 2 | 120 | true | false | — | — |
@@ -141,11 +141,23 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `RPC_teslaCoil`, and `RPC_rollerMachine` (`Mole.cs:13956`, `14006`, `14056`, `14063`) are the deployed
   factory's own randomly-cycled turret behaviors — each briefly re-uses the `"warFactory"` cooldown key
   with a bare `addTimeOut("warFactory", agiAdjust((float)3))` as an internal attack-cycle throttle
-  (`Mole.cs:40814`, `41388`, `41900`, `42687`), not a re-castable player cooldown. `RPC_rollerMachine`
-  also applies a flat, non-contested `RPC_AddStatus("paralysis", 2, 3, 0, ...)` proc to hit enemies
-  (`Mole.cs:42109`) — excluded from this table as an incidental turret-attack side effect (not a duration
-  tied to casting `warFactory` itself), the same reasoning the Chameleon doc used to exclude
-  `thunderDragon`'s reflect-paralysis proc.
+  (`Mole.cs:40814`, `41388`, `41900`, `42687`), not a re-castable player cooldown. **Correction,
+  2026-08-20**: the flat, non-contested `RPC_AddStatus("paralysis", 2, 3, 0, ...)` proc at `Mole.cs:42109`
+  was previously misattributed to `RPC_rollerMachine` here — it actually sits inside `RPC_teslaCoil`'s own
+  class body (`$RPC_teslaCoil$24002`, `Mole.cs:41581-42197`; `$RPC_rollerMachine$24015` doesn't start
+  until `:42198`, confirmed by locating both classes' own `internal sealed class` declarations). Still
+  excluded from this table either way, same reasoning as before (an incidental turret-attack side effect,
+  not a duration tied to casting `warFactory` itself — same precedent the Chameleon doc used to exclude
+  `thunderDragon`'s reflect-paralysis proc), just correctly attributed now. Also 2026-08-20: `sawMachine`/
+  `bazooka`/`teslaCoil`/`rollerMachine` were split into their own `SKILLS` entries in `index.html`
+  ("War Factory - X") with real damage-formula citations — see `mole-skill-damage-reference.md`'s own
+  War Factory section for the full detail. **Correction, same day**: `cartBomb` was initially thought to
+  be non-combat (this cast/deploy coroutine only, no damage) since no `hit()` call exists in its own
+  ~1080-line coroutine body — but its companion `Mole_cartBomb.cs` (only fully read on a follow-up pass)
+  shows the summoned cart itself calls `RPC_cartBomb_hit` after tracking the caster for up to 3s, which
+  DOES deal real AoE damage (`talAdjust(150)`, KO=30, radius `6+1.5×extraPowderLv`, `Mole.cs:14183-14213`)
+  — so `cartBomb` is both the cast/deploy action AND a real combat sub-attack, not an either/or; also
+  modeled as its own `SKILLS` entry (`mole_warFactory_cartBomb`).
 - **`advanceRepair` is a channeled heal with no fixed duration — Duration `—`.** `$RPC_advanceRepair$23866`
   (`Mole.cs:36263-37520`) heals the target 150 hp/sec and drains 1 sp/sec from Mole in a loop
   (`Mole.cs:36676-36699`) that continues until the target dies, Mole runs out of sp, moves too far, or
@@ -171,15 +183,15 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   at `Mole.cs:24233` → `Mole_mine.cs:60` — `this.aO9boyDZyA = (int)((float)this.lwlbygsWTr.chaAdjust(60) +
   Time.time);` — **`chaAdjust(60)`**, self-scaled off the placer's own CHA; enforced in
   `Mole_mine.cs:146-163`'s `Update()`, `Destroy` on expiry unless already detonated. `stunMine`: `Init` at
-  `Mole.cs:27019` → `Mole_stunMine.cs:60` — `this.XYwd2vIXAX = (int)((float)this.MAZdRGaitt.talAdjust(60) +
-  Time.time);` — **`talAdjust(60)`, not `chaAdjust`** (a genuinely different scaling stat — TAL, not CHA,
-  independently re-confirmed 2026-08-14 by reading `Mole_stunMine.cs` directly and cross-checking
-  `talAdjust` is a real `CharacterControl` method, `CharacterControl.cs:20624` — not a mis-citation);
-  same `Update()`-gated `Destroy` pattern at `Mole_stunMine.cs:146-163`. Since this tool has no TAL
-  input, `stunMine`'s reported `60` is the TAL-unadjusted base (`talAdjust`'s own baseline at TAL=0
-  equals the raw value), and `Duration Wrapped` is reported `false` even though the value does genuinely
-  scale in-game — same convention as Chameleon's `tent`/`magAdjust` case, flagged here so the lookup
-  tool doesn't read `false` as "never scales, period."
+  `Mole.cs:27019` → `Mole_stunMine.cs:60` — decompiled source (this build) reads
+  `this.XYwd2vIXAX = (int)((float)this.MAZdRGaitt.talAdjust(60) + Time.time);` — `talAdjust(60)`, a
+  different scaling stat than `mine`'s sibling `chaAdjust(60)` (independently re-confirmed 2026-08-14 by
+  reading `Mole_stunMine.cs` directly and cross-checking `talAdjust` is a real `CharacterControl` method,
+  `CharacterControl.cs:20624` — not a mis-citation at the time). **Superseded same day, user-confirmed
+  live-server correction: the live game has since been patched so `stunMine`'s duration now uses
+  `chaAdjust(60)`, matching `mine`'s sibling behavior — this decompiled source is stale on this specific
+  point.** `Duration Wrapped` is now reported `true` (CHA-scaling, same as every other `chaAdjust`
+  duration in this doc), not the `false`/TAL-unadjusted-base treatment used before this correction.
 - **`flameCarnival`'s reported `chaAdjust(90)` is the unarmed trap's own arming-window despawn timer,
   NOT the fire hazard's active/burn duration — flagged explicitly 2026-08-14 after the user correctly
   caught that 90s (~225s at 100 CHA) reads nothing like the skill's actual ~10s in-game hazard window,
@@ -258,7 +270,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `autoGyroGun` Duration (summon lifetime, not `RPC_AddStatus`): `Mole.cs:12235` — `autoGyroGun.StartCoroutine_Auto(autoGyroGun.create(this.mChar, this.mChar.ActorNr, this.mChar.chaAdjust(120)));` — see the dedicated judgment-call note above.
 - `barrelBot`: re-checked and confirmed to have no timed lifetime at all (HP/disconnect-based instead) — see the dedicated judgment-call note above. Duration cell is `∞`.
 - `mine` Duration (prop lifetime, not `RPC_AddStatus`): `Mole.cs:24233` → `Mole_mine.cs:60` — `this.aO9boyDZyA = (int)((float)this.lwlbygsWTr.chaAdjust(60) + Time.time);` — see the dedicated judgment-call note above.
-- `stunMine` Duration (prop lifetime, not `RPC_AddStatus`, `talAdjust`-wrapped not `chaAdjust`): `Mole.cs:27019` → `Mole_stunMine.cs:60` — `this.XYwd2vIXAX = (int)((float)this.MAZdRGaitt.talAdjust(60) + Time.time);` — see the dedicated judgment-call note above.
+- `stunMine` Duration (prop lifetime, not `RPC_AddStatus`): decompiled source at `Mole.cs:27019` → `Mole_stunMine.cs:60` still reads `this.XYwd2vIXAX = (int)((float)this.MAZdRGaitt.talAdjust(60) + Time.time);` (`talAdjust`), but the live server has since been patched to `chaAdjust(60)` per user confirmation 2026-08-14 — reported as `chaAdjust`/`durWrapped:true` now. See the dedicated judgment-call note above.
 - `reload`, `mortarShot`, `bunker`, `tnt`, `stunGrenade`, `fireBarrage`, `bombardment`,
   `detonate`, `megaPunch`, `megaHammer`, `chopper`, `missile`,
   `advanceRepair`, `napalm`, `grenadeCluster`, `megaDrill`, `barrelCannon`, `warFactory`,

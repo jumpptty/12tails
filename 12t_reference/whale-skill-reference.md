@@ -2,6 +2,8 @@
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
 Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+`homingShield` added 2026-08-14 — see its judgment-call note below for why it was initially left out and
+then given its own row.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -10,6 +12,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | honor | Honor | 4 | 60 | true | false | 12 | true |
 | shieldRush | Shield Rush | 2 | 45 | true | false | — | — |
 | flyingShield | Flying Shield | 2 | 45 | true | false | — | — |
+| homingShield | Homing Shield | 1 | 120 | true | false | 3 | true |
 | swallow | Swallow | 2 | 90 | true | false | — | — |
 | gobbleUp | Gobble Up | 1 | 60 | true | false | — | — |
 | peninsulaImpale | Peninsula Impale | 2 | 90 | true | false | — | — |
@@ -78,47 +81,59 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `Start()` even spawns it directly via `this.createOverPresence()` when `hasSkill(313)`
   (`Whale.cs:86-92`), independent of any `getSkill()`/cast pathway. `heavyWeight` is already reported
   cleanly from its own 2-rank progression, so `overPresence` gets no row.
-- **`flyingShield`'s cType is deliberately reused by a level-70 evolution skill, `homingShield5`, with a
-  materially different (higher) cooldown at its own distinct cast site — reported using the base
-  `flyingShield1`/`flyingShield2` value, evolution noted separately, not as a fallthrough bug.**
-  `WhaleSkill.cs:1134-1171` gives `homingShield5` its own explicit (non-fallthrough) block:
-  `setReq(70, 3); setSP(-24); mode = target; target = enemy; cType = "flyingShield"; rSkill = 224;`.
-  At the `Whale.cs` cast-site level this plays out as two separate coroutines sharing one cooldown lock
-  name: the base ability (`myCommand = "flyingShield"`) arms
-  `addTimeOut("flyingShield", agiAdjust((float)(45 - 15 * getKnightOfTheDeepLv())))` (`Whale.cs:25005`),
-  while the evolved ability (`myCommand = "homingShield"`, triggering `RPC_homingShield_fire`,
-  `Whale.cs:35194`) arms the *same* `"flyingShield"`-keyed timer but with
-  `addTimeOut("flyingShield", agiAdjust((float)(120 - 40 * getKnightOfTheDeepLv())))`
-  (`Whale.cs:35293`) — roughly 2.5x the base cooldown, matching the flavor-text jump from a single thrown
-  shield to a multi-hit homing one (`WhaleSkill_eng.cs:946-955`). Since the table's own `flyingShield1`/
-  `flyingShield2` progression is a clean, self-contained 2-rank family (`WhaleSkill.cs:319-344` →
-  `:1974-1999`), the row reports that base value (Max Rank 2, CD 45); the `homingShield5` evolution's
-  higher CD (base 120, unlearned-`knightOfTheDeepLv` baseline) is documented here rather than baked into
-  the table row, matching the established "report the un-modified base, cite the upgrade" convention.
+- **`homingShield` gets its own row (added 2026-08-14, user override) — it is a genuinely separate active
+  skill from `flyingShield`, not a footnote on it.** An earlier pass on this doc treated
+  `homingShield5` (`WhaleSkill.cs:1134-1171`: `setReq(70, 3); setSP(-24); mode = target; target = enemy;
+  cType = "flyingShield"; rSkill = 224;`) as a level-70 "evolution" of `flyingShield` and folded its
+  higher cooldown into a citation note instead of giving it a row, reasoning that the two share one
+  cooldown-lock name (`cType = "flyingShield"`). The user explicitly corrected this: they're two
+  different active skills in-game (distinct action code `422` vs. `flyingShield`'s own, distinct
+  `RPC_homingShield`/`RPC_homingShield_fire` coroutines, distinct multi-hit homing-projectile mechanic
+  per `WhaleSkill_eng.cs:950` — *"Whale cannot use shield while the shield is still flying"*, itself
+  proof they're not simultaneously-castable variants of one ability) and should be reported as such. The
+  shared `cType` string is just how the two coroutines happen to reuse one cooldown-timer *key* in the
+  engine, not evidence they're one skill: the base ability arms
+  `addTimeOut("flyingShield", agiAdjust((float)(45 - 15 * getKnightOfTheDeepLv())))` (`Whale.cs:25005`)
+  from its own cast site (`myCommand == "flyingShield"`), while `homingShield` arms the same-keyed timer
+  but with `addTimeOut("flyingShield", agiAdjust((float)(120 - 40 * getKnightOfTheDeepLv())))`
+  (`Whale.cs:35293`) from its own separate cast site (`myCommand == "homingShield"`,
+  `Whale.cs:35176-35293`). Duration: `homingShield`'s own coroutine applies a self-targeted `"noShield"`
+  recast-lockout status at `Whale.cs:35211` —
+  `RPC_AddStatus("noShield", 1, chaAdjust(3), 40, ActorNr)` — base `3`, `chaAdjust`-wrapped; corroborated
+  by the homing projectile's own object lifetime using the identical `chaAdjust(3)` value
+  (`Whale.cs:10431` → `Whale_homingShield.cs:31`, self-destructs at `:225-254`). Not exempt from
+  revisedArt5: the reduction is centralized in `CharacterControl.cs:20102`'s `addTimeOut`, gated on an
+  explicit `cType` exemption list (`:20116-20224`, e.g. `nAttack`/`potion`/`bomb`/...) that
+  `"flyingShield"` isn't part of, so both rows get the same 0.88× multiplier
+  (`CharacterControl.cs:20227`). Single-rank (only `whl_homingShield5` exists — no `1-4` variants).
 - **`getKnightOfTheDeepLv()` is a passive CD-reduction modifier (from the passive `knightOfTheDeep1`
-  skill) affecting six skills' cooldowns — base values reported assume it unlearned.**
+  skill) affecting seven skills' cooldowns — base values reported assume it unlearned.**
   `Whale.cs:9813-9816`: `return (!this.mChar.hasSkill(273)) ? 0 : 1;` — 0 unless `knightOfTheDeep1`
   is learned. It reduces `sweep`/`javelin` by `10 * lv`, `shieldRush`/`flyingShield`/base by `15 * lv`,
-  and `peninsulaImpale`/`peninsulaRound` by `30`/`40 * lv` respectively (all at the cast sites cited
-  below). `knightOfTheDeep1`'s own flavor text only mentions Javelin/FlyingShield
-  (`WhaleSkill_eng.cs:532`: "reduces cooldown of Jevalin and FlyingShield by 18 sec"), but the code
-  applies it more broadly to all six weapon-swing-style skills; none of this changes the base (lv-0)
-  numbers reported here. Encoded structurally in the lookup tool's data (2026-08-14) via a `cdDep`
-  field on each of the six affected `SKILLS` entries (`12t_projects/player-reference-tool/index.html`):
-  `knightOfTheDeep1` is single-rank (`minRank:0, maxRank:1`), so each skill's own `perRank` is just its
-  cited reduction as a negative (`sweep`/`javelin`: `-10`, `shieldRush`/`flyingShield`: `-15`,
-  `peninsulaImpale`: `-30`, `peninsulaRound`: `-40`) — all six share one `id` (`"knightOfTheDeep"`) so
-  toggling it on one skill carries over to the others, matching the passive being one single learned/
-  not-learned state in-game. Rendered as a single icon toggle (`.sk-dep-toggle`), not a rank stepper,
-  since there's no middle rank.
-- **CD-wrapped status verified individually at every one of the 23 skills' own cast sites, per the
-  plan's `manaArc`/`quickHeal`-precedent warning — no bare-literal trap found for Whale.** All 23 use
+  `peninsulaImpale`/`peninsulaRound` by `30`/`40 * lv`, and (2026-08-14) `homingShield` by `40 * lv`
+  (its own separate cast site, `Whale.cs:35293`, happens to match `peninsulaRound`'s magnitude)
+  respectively (all at the cast sites cited below). `knightOfTheDeep1`'s own flavor text only mentions
+  Javelin/FlyingShield (`WhaleSkill_eng.cs:532`: "reduces cooldown of Jevalin and FlyingShield by 18
+  sec"), but the code applies it more broadly to all seven weapon-swing-style skills (an omission that
+  now also covers `homingShield`, undocumented in-game same as the other five); none of this changes the
+  base (lv-0) numbers reported here. Encoded structurally in the lookup tool's data (2026-08-14) via a
+  `cdDep` field on each of the seven affected `SKILLS` entries
+  (`12t_projects/player-reference-tool/index.html`): `knightOfTheDeep1` is single-rank (`minRank:0,
+  maxRank:1`), so each skill's own `perRank` is just its cited reduction as a negative
+  (`sweep`/`javelin`: `-10`, `shieldRush`/`flyingShield`: `-15`, `peninsulaImpale`: `-30`,
+  `peninsulaRound`/`homingShield`: `-40`) — all seven share one `id` (`"knightOfTheDeep"`) so toggling
+  it on one skill carries over to the others, matching the passive being one single learned/not-learned
+  state in-game. Rendered as a single icon toggle (`.sk-dep-toggle`), not a rank stepper, since there's
+  no middle rank.
+- **CD-wrapped status verified individually at every one of the 24 skills' own cast sites, per the
+  plan's `manaArc`/`quickHeal`-precedent warning — no bare-literal trap found for Whale.** All 24 use
   `agiAdjust(...)`, either directly at their own dedicated cast site (`sweep`, `javelin`, `honor`,
-  `shieldRush`, `flyingShield`, `swallow`, `gobbleUp`, `peninsulaImpale`, `peninsulaRound`,
-  `12thKingdomKnight`, `whaleWave`, `malStorm`, `bubbleBurst`, `bowlingWhale`, `grandTide`) or via the
-  one shared `"cast"`-mode dispatcher's single wrap point (`bubbleShield`, `heavyWeight`, `hydroBlast`,
-  `rejuvenate`, `callToArm`, `salvation`, `megalodon`, `revitalize`, all wrapped at `Whale.cs:21261`:
-  `addTimeOut(this.$sType$28566, agiAdjust((float)this.$mTimeOut$28554))`) — no exceptions found.
+  `shieldRush`, `flyingShield`, `homingShield`, `swallow`, `gobbleUp`, `peninsulaImpale`,
+  `peninsulaRound`, `12thKingdomKnight`, `whaleWave`, `malStorm`, `bubbleBurst`, `bowlingWhale`,
+  `grandTide`) or via the one shared `"cast"`-mode dispatcher's single wrap point (`bubbleShield`,
+  `heavyWeight`, `hydroBlast`, `rejuvenate`, `callToArm`, `salvation`, `megalodon`, `revitalize`, all
+  wrapped at `Whale.cs:21261`: `addTimeOut(this.$sType$28566, agiAdjust((float)this.$mTimeOut$28554))`)
+  — no exceptions found.
 - **CHA-contested Duration exclusions, per the plan's contested-duration rule.** `swallow`'s own duration:
   `Whale.cs:25811` — `this.$mDuration$28700 = Damage.getDebuff((float)(12 + ((!hasSkill(432)) ? 0 : 3)),
   this.$self_$28706.mChar.cha, this.$tChar$28694.cha);`, applied at `:25816`. `heavyWeight`'s `"heavy"`
@@ -161,6 +176,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `honor` CD: `Whale.cs:23695` — `addTimeOut("honor", agiAdjust(60f))` (flat, all 4 ranks share it)
 - `shieldRush` CD: `Whale.cs:24436` — `addTimeOut("shieldRush", agiAdjust((float)(45 - 15 * getKnightOfTheDeepLv())))` (→ 45)
 - `flyingShield` CD (base ability, own cast site): `Whale.cs:25005` — `addTimeOut("flyingShield", agiAdjust((float)(45 - 15 * getKnightOfTheDeepLv())))` (→ 45); see judgment-call note re: `homingShield5`'s separate 120-base cast site at `:35293`
+- `homingShield` CD (own cast site, `myCommand == "homingShield"`): `Whale.cs:35293` — `addTimeOut("flyingShield", agiAdjust((float)(120 - 40 * getKnightOfTheDeepLv())))` (→ 120); shares `flyingShield`'s cooldown-lock key but is a distinct skill with its own cast site — see judgment-call note
 - `swallow` CD: `Whale.cs:25528` — `addTimeOut("swallow", agiAdjust((float)90))` (flat, both ranks share it)
 - `gobbleUp` CD: `Whale.cs:26375` — `addTimeOut("gobbleUp", agiAdjust((float)60))` (flat, single-rank `whl_gobbleUp1`)
 - `peninsulaImpale` CD: `Whale.cs:27265` — `addTimeOut("peninsulaImpale", agiAdjust((float)(90 - 30 * getKnightOfTheDeepLv())))` (→ 90)
@@ -187,6 +203,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 - `12thKingdomKnight` Duration: `Whale.cs:28527` — `this.$mDuration$28776 = this.$self_$28780.mChar.chaAdjust(60);`, applied at `:28538` — `RPC_AddStatus("kingdomKnight", this.$sLv$28779, this.$mDuration$28776, 0, ...);` (caster's own `chaAdjust`, matching "for 60 seconds" in both `12thKingdomKnight1`/`2` descriptions)
 - `salvation` Duration: `Whale.cs:33788` — `this.$tChar$28891.RPC_AddStatus("salvation", this.$sLv$28893, this.$self_$28894.mChar.chaAdjust(2 * this.$sLv$28893 + 2), 0, ...);` (caster's own `chaAdjust`; base `2*sLv+2` evaluated at max rank sLv=2 → 6)
 - `revitalize` Duration: `Whale.cs:36236` — see judgment-call note; reuses `rejuvenate`'s own `chaAdjust(18)` formula at a fixed status level of 3
+- `homingShield` Duration: `Whale.cs:35211` — `this.$self_$28931.mChar.RPC_AddStatus("noShield", 1, this.$self_$28931.mChar.chaAdjust(3), 40, this.$self_$28931.mChar.ActorNr);` (self-targeted, caster's own `chaAdjust`, not target-contested; a recast-lockout gate rather than a combat buff — see judgment-call note. Corroborated by the homing projectile's own object lifetime sharing the identical `chaAdjust(3)` value: `Whale.cs:10431` → `Whale_homingShield.cs:31`)
 - `swallow`, `heavyWeight`: CHA-contested via `Damage.getDebuff(...)` — see judgment-call note; Duration cells are `—`
 - `sweep`, `javelin`, `shieldRush`, `flyingShield`, `gobbleUp`, `peninsulaImpale`, `peninsulaRound`,
   `hydroBlast`, `whaleWave`, `malStorm`, `callToArm`, `megalodon`, `bubbleBurst`, `bowlingWhale`,

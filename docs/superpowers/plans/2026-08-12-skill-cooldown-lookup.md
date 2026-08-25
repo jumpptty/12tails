@@ -58,11 +58,11 @@ Python script (Node is not available in this environment — confirmed this sess
 
 ---
 
-## Task 1: Penguin skill-cooldown-reference doc (establishes the schema)
+## Task 1: Penguin skill-reference doc (establishes the schema)
 
 **Files:**
-- Create: `12t_reference/penguin-skill-cooldown-reference.md`
-- Read: `12t_reference/2026-07-21-penguin-skill-data-reference.md` (source of truth — Penguin's data is
+- Create: `12t_reference/penguin-skill-reference.md`
+- Read: `12t_reference/penguin-skill-damage-reference.md` (source of truth — Penguin's data is
   already verified, this task extracts/reformats, it does not re-derive from raw `.cs` source)
 
 **Interfaces:**
@@ -88,7 +88,7 @@ Python script (Node is not available in this environment — confirmed this sess
 
 - [ ] **Step 1: List every active skill Penguin's existing doc documents**
 
-Read `12t_reference/2026-07-21-penguin-skill-data-reference.md` fully. For every skill family with a
+Read `12t_reference/penguin-skill-damage-reference.md` fully. For every skill family with a
 `cd` field (active skills), note its id, display name, and max rank (highest rank number that family
 reaches).
 
@@ -111,7 +111,7 @@ If the skill grants a buff/debuff duration that is NOT contested by the target, 
 duration value and whether it's `chaAdjust`-wrapped. If contested, or no duration exists, both cells are
 `—`.
 
-- [ ] **Step 5: Write `12t_reference/penguin-skill-cooldown-reference.md`**
+- [ ] **Step 5: Write `12t_reference/penguin-skill-reference.md`**
 
 Using the exact schema above. Every row's CD/duration/wrapped/exempt values must trace back to a
 citation in the "## Citations" section pointing at the ORIGINAL source (`Penguin.cs:LINE` or
@@ -131,21 +131,21 @@ Repeat for a spot-check of at least 5 citations. All must match.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/penguin-skill-cooldown-reference.md"
+git add "12t_reference/penguin-skill-reference.md"
 git commit -m "docs: add Penguin skill-cooldown reference (schema baseline)"
 ```
 
 ---
 
-## Task 2: Bat skill-cooldown-reference doc
+## Task 2: Bat skill-reference doc
 
 **Files:**
-- Create: `12t_reference/bat-skill-cooldown-reference.md`
+- Create: `12t_reference/bat-skill-reference.md`
 - Read: `BatSkill.cs`, `Bat.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema (reproduced exactly, `Bat` substituted for `Class`).
-- Produces: `12t_reference/bat-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/bat-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1: List every active skill in `BatSkill.cs`**
 
@@ -178,7 +178,7 @@ For each cast site calling `RPC_AddStatus(...)`, check whether the duration argu
 `chaAdjust(...)` and whether it's contested by the target (e.g. the target's own stat modifies the
 final duration, not just the caster's CHA) — if contested, omit duration entirely for that skill.
 
-- [ ] **Step 5: Write `12t_reference/bat-skill-cooldown-reference.md`**
+- [ ] **Step 5: Write `12t_reference/bat-skill-reference.md`**
 
 Following Task 1's exact schema (table + "## Citations" section, `file:line` for every cell).
 
@@ -190,21 +190,21 @@ line says what's claimed.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/bat-skill-cooldown-reference.md"
+git add "12t_reference/bat-skill-reference.md"
 git commit -m "docs: add Bat skill-cooldown reference"
 ```
 
 ---
 
-## Task 3: Bison skill-cooldown-reference doc
+## Task 3: Bison skill-reference doc
 
 **Files:**
-- Create: `12t_reference/bison-skill-cooldown-reference.md`
+- Create: `12t_reference/bison-skill-reference.md`
 - Read: `BisonSkill.cs`, `Bison.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/bison-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/bison-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1: List every active skill in `BisonSkill.cs`**
 
@@ -230,239 +230,239 @@ grep -n "RPC_AddStatus" Bison.cs
 ```
 Check `chaAdjust`-wrapping and target-contested status per hit; omit if contested.
 
-- [ ] **Step 5: Write `12t_reference/bison-skill-cooldown-reference.md`** following Task 1's schema.
+- [ ] **Step 5: Write `12t_reference/bison-skill-reference.md`** following Task 1's schema.
 
 - [ ] **Step 6: Verify citations** — spot-check at least 5 against `Bison.cs`/`BisonSkill.cs`.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/bison-skill-cooldown-reference.md"
+git add "12t_reference/bison-skill-reference.md"
 git commit -m "docs: add Bison skill-cooldown reference"
 ```
 
 ---
 
-## Task 4: Cat skill-cooldown-reference doc
+## Task 4: Cat skill-reference doc
 
 **Files:**
-- Create: `12t_reference/cat-skill-cooldown-reference.md`
+- Create: `12t_reference/cat-skill-reference.md`
 - Read: `CatSkill.cs`, `Cat.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/cat-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/cat-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" CatSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Cat.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Cat.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/cat-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/cat-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Cat.cs`/`CatSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/cat-skill-cooldown-reference.md"
+git add "12t_reference/cat-skill-reference.md"
 git commit -m "docs: add Cat skill-cooldown reference"
 ```
 
 ---
 
-## Task 5: Chameleon skill-cooldown-reference doc
+## Task 5: Chameleon skill-reference doc
 
 **Files:**
-- Create: `12t_reference/chameleon-skill-cooldown-reference.md`
+- Create: `12t_reference/chameleon-skill-reference.md`
 - Read: `ChameleonSkill.cs`, `Chameleon.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/chameleon-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/chameleon-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" ChameleonSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Chameleon.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Chameleon.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/chameleon-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/chameleon-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Chameleon.cs`/`ChameleonSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/chameleon-skill-cooldown-reference.md"
+git add "12t_reference/chameleon-skill-reference.md"
 git commit -m "docs: add Chameleon skill-cooldown reference"
 ```
 
 ---
 
-## Task 6: Mole skill-cooldown-reference doc
+## Task 6: Mole skill-reference doc
 
 **Files:**
-- Create: `12t_reference/mole-skill-cooldown-reference.md`
+- Create: `12t_reference/mole-skill-reference.md`
 - Read: `MoleSkill.cs`, `Mole.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/mole-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/mole-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" MoleSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Mole.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Mole.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/mole-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/mole-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Mole.cs`/`MoleSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/mole-skill-cooldown-reference.md"
+git add "12t_reference/mole-skill-reference.md"
 git commit -m "docs: add Mole skill-cooldown reference"
 ```
 
 ---
 
-## Task 7: Monkey skill-cooldown-reference doc
+## Task 7: Monkey skill-reference doc
 
 **Files:**
-- Create: `12t_reference/monkey-skill-cooldown-reference.md`
+- Create: `12t_reference/monkey-skill-reference.md`
 - Read: `MonkeySkill.cs`, `Monkey.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/monkey-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/monkey-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" MonkeySkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Monkey.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Monkey.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/monkey-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/monkey-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Monkey.cs`/`MonkeySkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/monkey-skill-cooldown-reference.md"
+git add "12t_reference/monkey-skill-reference.md"
 git commit -m "docs: add Monkey skill-cooldown reference"
 ```
 
 ---
 
-## Task 8: Panda skill-cooldown-reference doc
+## Task 8: Panda skill-reference doc
 
 **Files:**
-- Create: `12t_reference/panda-skill-cooldown-reference.md`
+- Create: `12t_reference/panda-skill-reference.md`
 - Read: `PandaSkill.cs`, `Panda.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/panda-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/panda-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" PandaSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Panda.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Panda.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/panda-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/panda-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Panda.cs`/`PandaSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/panda-skill-cooldown-reference.md"
+git add "12t_reference/panda-skill-reference.md"
 git commit -m "docs: add Panda skill-cooldown reference"
 ```
 
 ---
 
-## Task 9: Rabbit skill-cooldown-reference doc
+## Task 9: Rabbit skill-reference doc
 
 **Files:**
-- Create: `12t_reference/rabbit-skill-cooldown-reference.md`
+- Create: `12t_reference/rabbit-skill-reference.md`
 - Read: `RabbitSkill.cs`, `Rabbit.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/rabbit-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/rabbit-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" RabbitSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Rabbit.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Rabbit.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/rabbit-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/rabbit-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Rabbit.cs`/`RabbitSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/rabbit-skill-cooldown-reference.md"
+git add "12t_reference/rabbit-skill-reference.md"
 git commit -m "docs: add Rabbit skill-cooldown reference"
 ```
 
 ---
 
-## Task 10: Sheep skill-cooldown-reference doc
+## Task 10: Sheep skill-reference doc
 
 **Files:**
-- Create: `12t_reference/sheep-skill-cooldown-reference.md`
+- Create: `12t_reference/sheep-skill-reference.md`
 - Read: `SheepSkill.cs`, `Sheep.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/sheep-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/sheep-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" SheepSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Sheep.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Sheep.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/sheep-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/sheep-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Sheep.cs`/`SheepSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/sheep-skill-cooldown-reference.md"
+git add "12t_reference/sheep-skill-reference.md"
 git commit -m "docs: add Sheep skill-cooldown reference"
 ```
 
 ---
 
-## Task 11: Whale skill-cooldown-reference doc
+## Task 11: Whale skill-reference doc
 
 **Files:**
-- Create: `12t_reference/whale-skill-cooldown-reference.md`
+- Create: `12t_reference/whale-skill-reference.md`
 - Read: `WhaleSkill.cs`, `Whale.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/whale-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/whale-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" WhaleSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Whale.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Whale.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/whale-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/whale-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Whale.cs`/`WhaleSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/whale-skill-cooldown-reference.md"
+git add "12t_reference/whale-skill-reference.md"
 git commit -m "docs: add Whale skill-cooldown reference"
 ```
 
 ---
 
-## Task 12: Wolf skill-cooldown-reference doc
+## Task 12: Wolf skill-reference doc
 
 **Files:**
-- Create: `12t_reference/wolf-skill-cooldown-reference.md`
+- Create: `12t_reference/wolf-skill-reference.md`
 - Read: `WolfSkill.cs`, `Wolf.cs`
 
 **Interfaces:**
 - Consumes: Task 1's schema.
-- Produces: `12t_reference/wolf-skill-cooldown-reference.md`, consumed by Task 15.
+- Produces: `12t_reference/wolf-skill-reference.md`, consumed by Task 15.
 
 - [ ] **Step 1:** `grep -n "getSkill\|SkillClass\|cType" WolfSkill.cs | head -80` — list active skills + max ranks.
 - [ ] **Step 2:** `grep -n "RPC_<skillName>" Wolf.cs` per skill; read handler, record `addTimeOut` value + `agiAdjust`-wrapped status.
 - [ ] **Step 3:** Determine `revisedArtExempt` (true only for `nAttack`/`cAttack`-type).
 - [ ] **Step 4:** `grep -n "RPC_AddStatus" Wolf.cs`; record duration + `chaAdjust`-wrapped status, omit if target-contested.
-- [ ] **Step 5:** Write `12t_reference/wolf-skill-cooldown-reference.md` following Task 1's schema.
+- [ ] **Step 5:** Write `12t_reference/wolf-skill-reference.md` following Task 1's schema.
 - [ ] **Step 6:** Spot-check at least 5 citations against `Wolf.cs`/`WolfSkill.cs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "12t_reference/wolf-skill-cooldown-reference.md"
+git add "12t_reference/wolf-skill-reference.md"
 git commit -m "docs: add Wolf skill-cooldown reference"
 ```
 
@@ -481,7 +481,7 @@ git commit -m "docs: add Wolf skill-cooldown reference"
 
 - [ ] **Step 1: Build the needed-icon list from all 12 reference docs**
 
-For each of the 12 `12t_reference/*-skill-cooldown-reference.md` files, read its table and build a list
+For each of the 12 `12t_reference/*-skill-reference.md` files, read its table and build a list
 of `(class, skillId, maxRank)` triples — one per row.
 
 - [ ] **Step 2: Write the generalized dump script**
@@ -647,7 +647,7 @@ git commit -m "feat: add adjusted-value math functions for skill-cooldown-lookup
 **Files:**
 - Modify: `12t_projects/player-reference-tool/index.html` (add a `SKILL_ICONS` object and a `SKILLS`
   array, above the `TOOLS` registry, below Task 14's functions)
-- Read: all 12 `12t_reference/*-skill-cooldown-reference.md` files, Task 13's icon JSON output
+- Read: all 12 `12t_reference/*-skill-reference.md` files, Task 13's icon JSON output
 
 **Interfaces:**
 - Consumes: Tasks 1-12's reference docs, Task 13's icon data.
@@ -666,7 +666,7 @@ git commit -m "feat: add adjusted-value math functions for skill-cooldown-lookup
 
 - [ ] **Step 1: Merge the 12 reference docs' tables into the `SKILLS` array**
 
-For every row across all 12 `12t_reference/*-skill-cooldown-reference.md` files, produce one `SKILLS`
+For every row across all 12 `12t_reference/*-skill-reference.md` files, produce one `SKILLS`
 entry with the exact field shape above. `id` is `<class-lowercase>_<skillId>` to guarantee uniqueness
 across classes even if two classes happen to reuse a skill id string.
 
@@ -678,7 +678,7 @@ exactly those same keys.
 - [ ] **Step 3: Verify row count**
 
 ```bash
-grep -c "^|" 12t_reference/*-skill-cooldown-reference.md
+grep -c "^|" 12t_reference/*-skill-reference.md
 ```
 Sum the per-file counts (minus each file's 1 header + 1 separator row) and confirm it matches
 `SKILLS.length` (spot-check via a quick `grep -c "id:" ` on the pasted array, or count entries visually
@@ -964,7 +964,7 @@ fixed in a later session than this plan's context, or may still need the contain
 - [ ] **Step 4: Update root `CLAUDE.md` and `HANDOFF.md`**
 
 Update the `player-reference-tool` bullets in both to reflect 3 tools total (Stat-Gain, GoldenKingBug
-Spawn Map link-out, Skill Cooldown/Duration Lookup) and the new `12t_reference/*-skill-cooldown-reference.md`
+Spawn Map link-out, Skill Cooldown/Duration Lookup) and the new `12t_reference/*-skill-reference.md`
 docs (12 new files).
 
 - [ ] **Step 5: Commit**

@@ -312,6 +312,7 @@
       <label>DEF<input type="number" id="enemystat-DEF" value="0" min="0"></label>
       <label>CHA<input type="number" id="enemystat-CHA" value="0" min="0"></label>
       <label>LCK<input type="number" id="enemystat-LCK" value="0" min="0"></label>
+      <label>Hit Mod<input type="number" id="enemystat-hitMod" value="1" min="0" max="3" step="0.1"></label>
     </div>
   </div>
 </div>
@@ -494,14 +495,14 @@ const SKILLS = {
     ],
   },
   manaArc: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
-    { id:"pgn_manaArc1", reqLv:5,  cd:"agiAdjust(1)", cast:null, mp:6,  sp:-4,  dmg:"talAdjust(10)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."],
-      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(10) + 0.5×Lv", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"classc-on\">+0.5×character level damage, plus a cosmetic VFX swap.</span>"] }] },
-    { id:"pgn_manaArc2", reqLv:13, cd:"agiAdjust(1)", cast:null, mp:12, sp:-6,  dmg:"talAdjust(20)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."],
-      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(20) + 0.5×Lv", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"classc-on\">+0.5×character level damage, plus a cosmetic VFX swap.</span>"] }] },
-    { id:"pgn_manaArc3", reqLv:21, cd:"agiAdjust(1)", cast:null, mp:18, sp:-8,  dmg:"talAdjust(30)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."],
-      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(30) + 0.5×Lv", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"classc-on\">+0.5×character level damage, plus a cosmetic VFX swap.</span>"] }] },
-    { id:"pgn_manaArc4", reqLv:29, cd:"agiAdjust(1)", cast:null, mp:24, sp:-10, dmg:"talAdjust(40)", ko:0, range:"3m radius, self-centered", notes:["Self-centered burst, 3m radius/3m height."],
-      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(40) + 0.5×Lv", notes:["Self-centered burst, 3m radius/3m height.","<span class=\"classc-on\">+0.5×character level damage, plus a cosmetic VFX swap.</span>"] }] },
+    { id:"pgn_manaArc1", reqLv:5,  cd:"1", cast:null, mp:6,  sp:-4,  dmg:"talAdjust(10)", ko:0, range:"Self-centered 3m radius", notes:["Bursts mana energy, dealing {{dmg}} damage."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(10) + 0.5×Lv", notes:["Bursts mana energy, dealing {{dmg}} damage."] }] },
+    { id:"pgn_manaArc2", reqLv:13, cd:"1", cast:null, mp:12, sp:-6,  dmg:"talAdjust(20)", ko:0, range:"Self-centered 3m radius", notes:["Bursts mana energy, dealing {{dmg}} damage."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(20) + 0.5×Lv", notes:["Bursts mana energy, dealing {{dmg}} damage."] }] },
+    { id:"pgn_manaArc3", reqLv:21, cd:"1", cast:null, mp:18, sp:-8,  dmg:"talAdjust(30)", ko:0, range:"Self-centered 3m radius", notes:["Bursts mana energy, dealing {{dmg}} damage."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(30) + 0.5×Lv", notes:["Bursts mana energy, dealing {{dmg}} damage."] }] },
+    { id:"pgn_manaArc4", reqLv:29, cd:"1", cast:null, mp:24, sp:-10, dmg:"talAdjust(40)", ko:0, range:"Self-centered 3m radius", notes:["Bursts mana energy, dealing {{dmg}} damage."],
+      classC:[{ passiveId:"penguinOfArc5", dmg:"talAdjust(40) + 0.5×Lv", notes:["Bursts mana energy, dealing {{dmg}} damage."] }] },
   ]},
   dispell: { tier:"classA", icon:r=>r.id.replace("pgn_",""), ranks:[
     { id:"pgn_dispell1", reqLv:7,  cd:"agiAdjust(4)", cast:null, mp:14, sp:0, range:"5m radius (rangeMod), self-centered", notes:["Strips all lv.2 magical status from everyone in the AoE.","Also destroys mirageOrb/skyOrb items within 6m (undocumented)."],
@@ -784,6 +785,22 @@ function evalDefAdjust(d, def, defenderLck, rollMode) {
   if (pct < 1) pct = 1;
   return Math.ceil(0.35 * flat + 0.65 * pct);
 }
+// hitMod: the DEFENDER's own damage-taken multiplier (CharacterControl.cs
+// field, default 1, mutated by generic size/buff statuses — shrink/enlarge/
+// valor/enrage/miracleDrop etc., none Penguin-specific). Distinct from DEF
+// (defAdjust's flat/% mitigation) and from the ATTACKER's damageMod
+// (dmgAdjust) — this is a third, separate multiplier applied to the
+// defender's INCOMING damage, confirmed at two call sites:
+// RPC_AddDamage:3765 (normal hits, ceil, AFTER dmgAdjust+defAdjust already
+// ran) and RPC_AddEffectDamage:6203 (defense-ignoring bonus bursts like
+// frozenBreak5/deadlyFrost5, floor instead of ceil, but no defAdjust step
+// at all on that path). Has no random roll of its own — deterministic once
+// hitMod is known, so it applies identically to both range endpoints.
+function evalHitMod(d, hitMod, roundMode) {
+  const clamped = Math.min(Math.max(hitMod, 0), 3);
+  const scaled = clamped * d;
+  return roundMode === "floor" ? Math.floor(scaled) : Math.ceil(scaled);
+}
 
 // Walks an AST once, evaluating every LCK-adjuster at the given roll extreme
 // ("min" or "max"), using `stats` for the attacker-side values (ATK/INT/AGI/
@@ -928,8 +945,17 @@ function substituteInlineChips(text, r, view, stats, enemyStats, revisedArtOn) {
         // true minimum damage pairs the attacker's worst roll with the
         // defender's BEST (max DEF) roll; true maximum pairs attacker's
         // best roll with defender's WORST (min DEF) roll.
-        const finalMin = evalDefAdjust(afterDmgMin, enemyStats.DEF, enemyStats.LCK, "max");
-        const finalMax = evalDefAdjust(afterDmgMax, enemyStats.DEF, enemyStats.LCK, "min");
+        const afterDefMin = evalDefAdjust(afterDmgMin, enemyStats.DEF, enemyStats.LCK, "max");
+        const afterDefMax = evalDefAdjust(afterDmgMax, enemyStats.DEF, enemyStats.LCK, "min");
+        // hitMod: defender's own damage-taken multiplier, applied last (see
+        // evalHitMod above) — deterministic (no roll), so both endpoints use
+        // the same round mode. "ceil" matches RPC_AddDamage's normal-hit path;
+        // a future defense-ignoring-burst chip (frozenBreak5/deadlyFrost5
+        // "Frozen Break!"/"Deadly Frost!" values) would need "floor" instead
+        // to match RPC_AddEffectDamage exactly, if those are ever surfaced as
+        // their own computed {{dmg}}-style chip rather than a flat literal.
+        const finalMin = evalHitMod(afterDefMin, enemyStats.hitMod, "ceil");
+        const finalMax = evalHitMod(afterDefMax, enemyStats.hitMod, "ceil");
         return `<span class="chip dmg"><b class="computed">${formatRange(finalMin, finalMax, "")}</b></span>`;
       }
       case "cd": return r.cd ? chipHTML("cd","CD",r.cd,view,stats,"s",revisedArtOn,true) : "";
@@ -1029,7 +1055,7 @@ const currentRank = {};
 let currentView = "base";
 let revisedArtOn = false;
 const stats = { ATK:0, INT:0, AGI:0, CHA:0, TAL:0, LCK:0, Lv:0, damageMod:1 };
-const enemyStats = { DEF:0, CHA:0, LCK:0 };
+const enemyStats = { DEF:0, CHA:0, LCK:0, hitMod:1 };
 const classCToggle = {};
 
 // UI state (view mode, revisedArt, per-card rank selection, Class C toggles)
