@@ -18,7 +18,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | heatShot | Heat Shot | 1 | 30 | true | false | 35 | true |
 | lifeShot | Life Shot | 1 | 30 | true | false | 65 | true |
 | rapidTrance | Rapid Trance | 1 | 120 | true | false | 12 | true |
-| gorgonShot | Gorgon Shot | 2 | 180 | true | false | — | — |
+| gorgonShot | Gorgon Shot | 2 | 180 | true | false | 6 / 9 (contested) | Damage.getDebuff |
 | gilShot | Gil Shot | 4 | 30 | true | false | — | — |
 | backpack | Backpack | 2 | 60 | true | false | — | — |
 | fourShot | Four Shot | 2 | 60 | true | false | — | — |
