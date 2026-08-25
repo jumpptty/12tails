@@ -1219,6 +1219,7 @@
      and info icon centered-align on unequal box heights and read as
      slightly offset vertically instead of level with each other. */
   .sk-dmg-label-row .sk-stat-label{margin:0}
+  .sk-stat > .sk-dmg-label-row{margin-bottom:5px}
   /* min-height:28px (2026-08-19, user-requested: "normalize every skill to
      as if it has a skillDep icon") -- matches .sk-dep-toggle img's own fixed
      28x28 size exactly. A skill with no dep/focus toggle at all renders
@@ -3082,7 +3083,7 @@ const SKILLS = [
   { id:"penguin_cosmicFriday", name:"Cosmic Friday", class:"Penguin", icon:"penguin_cosmicFriday5", maxRank:1, castTime:12, castWrapped:true, cd:300, cdWrapped:true, revisedArtExempt:false, duration:3, durWrapped:false },
   { id:"rabbit_statScan", name:"Stat Scan", class:"Rabbit", icon:"rabbit_statScan1", maxRank:1, cd:30, cdWrapped:true, revisedArtExempt:false, dmgNote:"Reveals target enemy's current HP, SP, stats, and elemental attributes." },
   { id:"rabbit_bounce", name:"Bounce", class:"Rabbit", icon:"rabbit_bounce2", maxRank:2, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:(rank, depLv)=>depLv>0?0.5:0, ko:(rank, depLv)=>depLv>0?"1 + 20":null, dmgFlagDep:{id:"fromTheAbove", label:"From the Above", icon:"rabbit_fromTheAbove5", minRank:0, maxRank:1}, dmgNote:(flagOn)=>flagOn?"With From the Above (fromTheAbove5), Bounce enables a mid-air shot (0.5×ATK, KO=1, SP=+1) plus a ground landing AoE slam (1.0×ATK, KO=20).":"Movement jump skill (no damage, no KO). If From the Above (fromTheAbove5) is learned, jumping before landing Bounce triggers an aerial shot (0.5×ATK, KO=1, SP=+1) and a ground landing slam (1.0×ATK, KO=20)." },
-  { id:"rabbit_maimShot", name:"Maim Shot", class:"Rabbit", icon:"rabbit_maimShot4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv+20×depLv)", atkCoeff:0.5, ko:"0", dmgRankDep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}, dmgNote:"Deals 0.5×ATK + talAdjust(5×sLv + [kneeShot5: 20]), KO=0. Knee Shot bonus scales inside talAdjust with TAL stat. Restores +1 SP on cast. Applies maim movement slow status." },
+  { id:"rabbit_maimShot", name:"Maim Shot", class:"Rabbit", icon:"rabbit_maimShot4", maxRank:4, cd:15, cdWrapped:true, revisedArtExempt:false, duration:3, durContested:true, durNote:"Maim debuff: Clamps target running movement speed to (4 − 0.5×sLv) m/s while active (Rank 1: 3.5 m/s, Rank 2: 3.0 m/s, Rank 3: 2.5 m/s, Rank 4: 2.0 m/s) — CharacterControl.cs:2527-2533. Duration is contested against target CHA via Damage.getDebuff(3, casterCHA, targetCHA) — Rabbit.cs:23337.", dmg:"talAdjust(5×sLv+20×depLv)", atkCoeff:0.5, ko:"1", dmgRankDep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}, lckProc:{label:"Knee Shot KO Proc", chance:20, applies:"ko40", baseText:"base 20% (KO = 40)", dep:{id:"kneeShot", label:"Knee Shot", icon:"rabbit_kneeShot5", minRank:0, maxRank:1}}, dmgNote:"Deals 0.5×ATK + talAdjust(5×sLv + [kneeShot5: 20]), base KO=1. Restores +1 SP on hit — Rabbit.cs:23354. Applies Maim movement slow debuff for contested 3s against target CHA (Damage.getDebuff(3, casterCHA, targetCHA) — Rabbit.cs:23337). With Knee Shot (kneeShot5), adds +20 flat TAL damage and rolls an independent lckAdjust(20) chance to inflict 40 KO — Rabbit.cs:23256-23280." },
   { id:"rabbit_mix", name:"Mix", class:"Rabbit", icon:"rabbit_mix4", maxRank:4, castTime:[2.5,3,3.5,4], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmgDep:{id:"extraPotion", label:"Extra Potion", icon:"rabbit_extraPotion5", minRank:0, maxRank:1, term:"0.3LV", calc:(LV)=>0.3*LV}, dmgNote:"Produces HP (20×sLv + [extraPotion5: 0.3×LV]), SP (4×sLv), and MP potion pickups on ground for 60s." },
   { id:"rabbit_shake", name:"Shake", class:"Rabbit", icon:"rabbit_shake3", maxRank:3, castTime:[3,3.5,4], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, dmgNote:"Blends adjacent ground potion pickups into compound potions with 60s lifetime." },
   { id:"rabbit_miracleBlend", name:"Miracle Blend", class:"Rabbit", icon:"rabbit_miracleBlend1", maxRank:1, castTime:5, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dep:{id:"alchemistLab", label:"Alchemist Lab", icon:"rabbit_alchemistLab4", minRank:1, maxRank:4, perRank:2}, lckProc:{label:"Miracle Drop Proc", chance:5, rolls:4, applies:"miracleDrop", baseText:"base 5% × 4 rolls", calc:(chance,LCK)=>{ const singlePct = lckAdjustChance(chance, LCK) / 100; return ((1 - Math.pow(1 - singlePct, 4)) * 100).toFixed(1); }, dep:{id:"miracleDrop", label:"Miracle Drop", icon:"rabbit_miracleDrop5", minRank:0, maxRank:1}}, dmgNote:"Spawns 3 potions by default, or 4 potions with Miracle Drop passive. With Miracle Drop, each potion independently rolls lckAdjust(5) chance (~10% at 128 LCK, 34.4% cumulative chance for ≥1) to become a Golden Potion (Pot 6 / Miracle Drop). Picking up a Miracle Drop grants +[(alchemistLabLv+1)×10]% damageMod & hitMod (+20% / +30% / +40% / +50% total damage & accuracy/crit bonus) for chaAdjust(4 + 2×alchemistLabLv) seconds (6/8/10/12s base duration)." },
@@ -4529,12 +4530,10 @@ function mountSkillCooldownLookup(root){
   // <details> has no box to measure, so there's nothing useful to do here
   // while it's shut, unlike the always-in-DOM probability tooltips.
   function positionDmgInfoPopup(){
-    const infoEl = $(".sk-dmg-info", displayEl);
-    if (!infoEl || !infoEl.open) return;
+    const infoEls = $$(".sk-dmg-info", displayEl);
+    if (!infoEls.length) return;
     const shell = document.querySelector(".tool-shell");
-    const summary = $("summary", infoEl);
-    const pop = $(".sk-dmg-info-pop", infoEl);
-    if (!shell || !summary || !pop) return;
+    if (!shell) return;
     const shellRect = shell.getBoundingClientRect();
     const margin = 20;
     const popWidthBudget = 300; // .sk-dmg-info-pop's own max-width + a little slack
@@ -4543,21 +4542,26 @@ function mountSkillCooldownLookup(root){
     // side reads as attached to it, unlike crossing over to the right.
     const gutterSpace = shellRect.left;
     const fitsInGutter = gutterSpace >= popWidthBudget + margin * 2;
-    if (!fitsInGutter){
-      pop.style.position = "";
-      pop.style.left = "";
-      pop.style.top = "";
-      pop.style.transform = "";
-      return;
-    }
-    const summaryRect = summary.getBoundingClientRect();
-    const popWidth = pop.getBoundingClientRect().width;
-    pop.style.position = "fixed";
-    pop.style.transform = "none";
-    const cb = pop.offsetParent;
-    const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
-    pop.style.left = (shellRect.left - popWidth - margin - cbRect.left) + "px";
-    pop.style.top = (summaryRect.top - cbRect.top) + "px";
+    infoEls.forEach(infoEl => {
+      const summary = $("summary", infoEl);
+      const pop = $(".sk-dmg-info-pop", infoEl);
+      if (!summary || !pop) return;
+      if (!infoEl.open || !fitsInGutter){
+        pop.style.position = "";
+        pop.style.left = "";
+        pop.style.top = "";
+        pop.style.transform = "";
+        return;
+      }
+      const summaryRect = summary.getBoundingClientRect();
+      const popWidth = pop.getBoundingClientRect().width;
+      pop.style.position = "fixed";
+      pop.style.transform = "none";
+      const cb = pop.offsetParent;
+      const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
+      pop.style.left = (shellRect.left - popWidth - margin - cbRect.left) + "px";
+      pop.style.top = (summaryRect.top - cbRect.top) + "px";
+    });
   }
 
   // Stats panel (2026-08-21, user-requested: player + Enemy Stats controls
@@ -5025,13 +5029,26 @@ function mountSkillCooldownLookup(root){
         };
         durDist = selected.durWrapped ? lckDistribution(rawDuration, CHA, LCK, chaAdjustAtRoll, durPostFn) : null;
       }
+      const durNoteText = typeof selected.durNote === "function" ? selected.durNote(rank, depRank) : selected.durNote;
+      const durInfo = durNoteText ? `
+        <details class="sk-dmg-info">
+          <summary title="Debuff detail">ℹ</summary>
+          <div class="sk-dmg-info-pop">${durNoteText}</div>
+        </details>
+      ` : "";
+      const durLabelRow = durInfo ? `
+        <div class="sk-dmg-label-row">
+          <p class="sk-stat-label">Duration</p>
+          ${durInfo}
+        </div>
+      ` : `<p class="sk-stat-label">Duration</p>`;
       const depBlock = dep ? renderDepBlock(dep, depRank) : "";
       const durPostAddNote = selected.durPostAdd ? ` +${selected.durPostAdd}s` : "";
       durationBlock = `
         <div class="sk-stat sk-stat-dur">
-          <p class="sk-stat-label">Duration</p>
+          ${durLabelRow}
           <div class="sk-stat-value-wrap">
-            <div class="sk-stat-value${(selected.durWrapped || selected.durContested) ? "" : " unwrapped"}">${fmt(durRange)}s</div>
+            <div class="sk-stat-value${(selected.durWrapped || selected.durContested) ? "" : " unwrapped"}>${fmt(durRange)}s</div>
             ${durDist ? renderProbabilityTooltip(durDist) : ""}
           </div>
           <p class="sk-stat-base">${durBaseLabel} ${rawDuration}s${durPostAddNote}</p>
@@ -6040,10 +6057,9 @@ function mountSkillCooldownLookup(root){
       });
     }
 
-    const dmgInfoEl = $(".sk-dmg-info", displayEl);
-    if (dmgInfoEl){
-      dmgInfoEl.addEventListener("toggle", positionDmgInfoPopup);
-    }
+    $$(".sk-dmg-info", displayEl).forEach(el => {
+      el.addEventListener("toggle", positionDmgInfoPopup);
+    });
 
     const rankBtn = $('[data-role="rank-cycle"]', displayEl);
     if (rankBtn){
