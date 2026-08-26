@@ -1075,7 +1075,7 @@
      was still inside root -- and why an already-revealed hit's element is
      never recreated once appended). inset:0 makes this layer's box match
      the real viewport now that it's outside that quirk's reach. */
-  .sk-multihit-layer{position:fixed; inset:0; pointer-events:none; z-index:15}
+  .sk-multihit-layer{position:absolute; left:calc(100% + 20px); top:20px; width:260px; pointer-events:none; z-index:15}
   /* One per Simulate click, positioned via JS (shellRect-anchored, see the
      click listener) in the open gutter to the right of the tool shell --
      user-specified, there's nothing else out there to collide with.
@@ -3312,6 +3312,7 @@ function mountSkillCooldownLookup(root){
           </div>
         </div>
       </div>
+      <div class="sk-multihit-layer" data-role="multihit-layer"></div>
       <div class="sk-search-wrap">
         <input type="text" class="sk-search" data-role="search" placeholder="Search a skill…" autocomplete="off">
         <div class="sk-suggestions" data-role="suggestions" hidden></div>
@@ -3518,21 +3519,7 @@ function mountSkillCooldownLookup(root){
   // .getBoundingClientRect()` is always the correct reference frame to
   // convert a true-viewport rect (shellRect/finalRect) into a coordinate
   // relative to this layer, regardless of which case applies.
-  const multiHitLayer = document.createElement("div");
-  multiHitLayer.className = "sk-multihit-layer";
-  // Appended to document.body, NOT root -- root lives inside .view, and
-  // .view's own entrance animation (targeting transform) makes it a
-  // permanent containing block for position:fixed/absolute descendants
-  // per spec (same quirk already documented for positionStatTooltips/
-  // positionDmgInfoPopup elsewhere in this file). Confirmed live via
-  // Playwright against the actual published Artifact: multiHitLayer's own
-  // getBoundingClientRect() came back IDENTICAL to .tool-shell's small
-  // ~900px-wide box, not the true ~2048px iframe viewport, when appended
-  // to root -- meaning every popup positioned "in the open gutter" via
-  // shellRect.right+40 landed outside that small frame's own bounds and
-  // was invisible. document.body sits OUTSIDE .view's subtree entirely, so
-  // position:fixed here resolves against the real (iframe) viewport.
-  document.body.appendChild(multiHitLayer);
+  const multiHitLayer = $('[data-role="multihit-layer"]', root);
   // Safety net: if the user navigates away from this tool entirely (not
   // just switches skill/target within it) while a group is mid-animation,
   // this layer -- now living outside root -- won't be hidden/cleared by
@@ -3971,7 +3958,7 @@ function mountSkillCooldownLookup(root){
   // Shared constants (not re-declared per-function) so multiHitGroupWidth
   // below can never silently drift out of sync with the grid it's sizing
   // the total's centering box against.
-  const MULTIHIT_COLS = 6, MULTIHIT_COL_SPACING = 90, MULTIHIT_ROW_SPACING = 28, MULTIHIT_START_Y = 44;
+  const MULTIHIT_COLS = 3, MULTIHIT_COL_SPACING = 72, MULTIHIT_ROW_SPACING = 26, MULTIHIT_START_Y = 40;
   function multiHitGridPos(i, n){
     const row = Math.floor(i / MULTIHIT_COLS), col = i % MULTIHIT_COLS;
     return { x: col * MULTIHIT_COL_SPACING, y: MULTIHIT_START_Y + row * MULTIHIT_ROW_SPACING };
@@ -3995,7 +3982,7 @@ function mountSkillCooldownLookup(root){
   // even a wide 4-digit hit value there.
   function multiHitGroupWidth(n){
     const itemsInFirstRow = Math.min(MULTIHIT_COLS, n);
-    return (itemsInFirstRow - 1) * MULTIHIT_COL_SPACING + 100;
+    return (itemsInFirstRow - 1) * MULTIHIT_COL_SPACING + 80;
   }
   // Reveals exactly ONE hit: rolls it, folds it into the group's running
   // total, and APPENDS a brand-new element -- never touches any
@@ -5992,13 +5979,11 @@ function mountSkillCooldownLookup(root){
         // multiHitLayer's own frame by subtracting its rect (see that
         // declaration for why a plain subtraction is correct even under
         // the .view transform quirk documented elsewhere in this file).
-        const shellRect = document.querySelector(".tool-shell").getBoundingClientRect();
-        const layerRect = multiHitLayer.getBoundingClientRect();
         const wrap = document.createElement("div");
         wrap.className = "sk-multihit-group";
         wrap.dataset.groupId = group.id;
-        wrap.style.left = (shellRect.right + 40 - layerRect.left) + "px";
-        wrap.style.top = (shellRect.top + 20 - layerRect.top) + "px";
+        wrap.style.left = "0px";
+        wrap.style.top = "0px";
         // Explicit width, not CSS max-content -- see multiHitGroupWidth's
         // own comment for why .sk-multihit-total needs a real pixel-width
         // parent to center against.
