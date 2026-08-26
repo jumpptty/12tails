@@ -72,12 +72,22 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
      2. Cooldown formula (`mTimeOut` assignment & `agiAdjust` wrapper).
      3. Damage / Heal / KO execution (`hit()`, `RPC_AddDamage`, `RPC_AddHeal`, `RPC_AddEffectDamage`, `nKo`).
      4. Passive modifier gates (`hasSkill(...)`, `get<Passive>Lv()`).
-4. **Formula & Variable Permutation Validation**:
+4. **Mandatory Passive Dependency & `skillDep` Audit**:
+   * For every skill traced, scan the entire initiation, timeout, and execution block for all `hasSkill(ID)` and `get<Passive>Lv()` calls.
+   * Cross-reference every found skill ID in `<Class>Skill.cs` or `CharacterData.cs` to identify the exact passive name.
+   * Map every passive modifier to its proper tool dependency hook:
+     * **Cooldown Reduction / Override** → `cdDep: <CLASS>_<PASSIVE>_DEP` (e.g. Gospel `kind: "replace"`, Mine Lover, Whale Knight).
+     * **Cast Time Reduction** → `castDep: <CLASS>_<PASSIVE>_DEP` (e.g. Improved Slayer, Reduced Cast).
+     * **Damage / Heal Multiplier or Rank Addition** → `dep: <CLASS>_<PASSIVE>_DEP`, `dmgMultDep`, or `dmgRankDep` (e.g. Benediction, Hidden Blade).
+     * **Duration / Pulse Interval Extension** → `durDep: <CLASS>_<PASSIVE>_DEP`.
+     * **Knockout Shift** → `koDep: <CLASS>_<PASSIVE>_DEP` (e.g. Grenade Cluster).
+   * Verify that the passive's authentic rank icon exists in `SKILL_ICONS` so the toggle chip renders seamlessly.
+5. **Formula & Variable Permutation Validation**:
    * Any formula with variables (`sLv`, `depLv`) or parentheses must evaluate without error across all rank combinations (1..maxRank) and toggle states.
    * Flat arithmetic parser regexes must always support parentheses: `/^[\d\s×*+\-().]+$/`.
-5. **Programmatic PNG Header Icon Extraction**:
+6. **Programmatic PNG Header Icon Extraction**:
    * Icons must be extracted directly from `RippedAssets/...` and validated for authentic PNG headers (`89 50 4E 47 0D 0A 1A 0A`). Never use placeholder base64 strings.
-6. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
+7. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
    * **Never stop early** after reading the initial cast dispatch or a single coroutine.
    * Thoroughly trace the **entire lifecycle** of the skill from initiation to resolution:
      1. **Cast & Wind-up:** `RPC_<skill>`, `DisplayCastBar`, `addTimeOut` / cooldown application.
@@ -85,7 +95,7 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
      3. **All Damage & KO Instances:** Check EVERY `hit()` / `RPC_AddDamage` / `FindAreaTarget` call in all phases (initial hit, mid-air triggers, ground slam / landing, recurring tick loops). Record both `nDamage` formula and `nKo` value for every phase.
      4. **Conditional Passive Branches:** Check all `hasSkill(...)` branches for added hits, modified coefficients, or secondary effects.
      5. **Secondary Effects:** SP/MP recovery or siphoning, debuff status applications (`RPC_AddStatus`), buffs, and summon lifetimes/destruction.
-7. **Mandatory Automated Linting**:
+8. **Mandatory Automated Linting**:
    * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
 
 ---
