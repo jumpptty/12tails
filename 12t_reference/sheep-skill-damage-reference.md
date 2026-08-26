@@ -19,7 +19,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - `divinityAxe`: Crushing holy slam dealing `talAdjust(45)`, 2 KO.
 - **Support, Blessings & Seals**:
   - `bless`: Increases all 8 core stats by +5 per rank (up to +20, or +25 with Gospel) for 30s (`chaAdjusted`).
-  - `illuminate`: Targeted restorative aura pulsing every 3s to restore `4×sLv` HP, `sLv` MP, and `sLv` SP for 12s (`chaAdjusted`).
+  - `illuminate`: Targeted restorative aura pulsing every 3s to restore `4×(sLv + 2×depLv)` HP and `sLv + 2×depLv` MP/SP for 12s (`chaAdjusted`). Grants +2 bonus ranks with Blinding Light passive (4/8/12/16 HP base, or 12/16/20/24 HP with Blinding Light).
   - `sleep` & `lullaby`: Single-target and area sleep crowd control (contested by target CHA).
   - `feather` & `allFeather`: Reduces character weight by -5/-10 (super jump/slow fall) and adds +0.25/+0.50 m/s flat run speed for 15s (`chaAdjusted`). (Does not grant AGI).
   - `seal`: Places Red / Blue ground seals for 60s.
@@ -47,7 +47,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_revert` | Revert | 1 | 900s | 0s | — | 100% HP/MP/KO reset | — | Complete emergency recovery. |
 | `sheep_holyLight` | Holy Light | 2 | 60s | 6s | — | `talAdjust(12 + 12×sLv)` | 1 | Linear holy ray dealing magic damage with 1 KO knockback. |
 | `sheep_lightBind` | Light Bind | 4 | [18, 22, 26, 30]s | [2, 2.5, 3, 3.5]s | 3s | `6×(sLv+depLv)` (per 1.0s tick) | 0 | Roots target (0 moveSpeed) for 3s base (`chaAdjusted`, contested) + 1.0s fixed duration with Intense Bind. Deals 6×(sLv+depLv) effect damage/tick (up to 30 at Rank 4 with Intense Bind). |
-| `sheep_illuminate` | Illuminate | 4 | [15, 18, 21, 24]s | [2, 3, 4, 5]s | 12s | `+4×sLv HP, +sLv MP/SP` | — | Friendly HoT/MoT/SoT buff pulsing every 3s for 12s (`chaAdjusted`). +2 effective ranks with Blinding Light. |
+| `sheep_illuminate` | Illuminate | 4 | [15, 18, 21, 24]s | [2, 3, 4, 5]s | 12s | `+4×(sLv + 2×depLv) HP, +(sLv + 2×depLv) MP/SP` | — | Friendly HoT/MoT/SoT buff pulsing every 3s for 12s (`chaAdjusted`). +2 effective ranks with Blinding Light (12/16/20/24 HP, 3/4/5/6 MP/SP per tick). |
 | `sheep_feather` | Feather | 2 | [15, 18]s | [2, 3]s | 15s | -5/-10 weight, +0.25/0.50 spd | — | Reduces weight by -5/-10 (super jump) and increases run speed by +0.25/+0.50 m/s for 15s (`chaAdjusted`). |
 | `sheep_allFeather` | All Feather | 2 | 60s | [4, 5]s | 15s | -5/-10 weight, +0.25/0.50 spd | — | Party-wide weight reduction (-5/-10) and run speed buff (+0.25/+0.50 m/s) for 15s (`chaAdjusted`). |
 | `sheep_divinitySword`| Divinity Sword | 2 | 45s | [3, 4]s | — | `talAdjust(10 + 20×sLv)` | 1 | Forward holy slash summoned weapon strike. |
@@ -114,7 +114,8 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Cast Time: `Sheep.cs:21424` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21429` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
   - Duration: `Sheep.cs:29411` — `this.$self_$27966.mChar.chaAdjust(12)`.
-  - Effect: `CharacterControl.cs:9402` — `RPC_AddHeal(1, 4 * sLv, sLv, sLv, 0, 0, sID)` pulsing every 3.0s (+4×sLv HP, +sLv MP, +sLv SP).
+  - Status Level: `Sheep.cs:29411` — `sLv + ((!this.$self_$27966.mChar.hasSkill(413)) ? 0 : 2)` (Blinding Light passive grants +2 effective ranks).
+  - Effect: `CharacterControl.cs:9402` — `this.RPC_AddHeal(1, 4 * sLv, sLv, sLv, 0, 0, sID)` pulsing every 3.0s (`global::Math.mod(2 * (sTime - sAge), 6) == 0`). Restores `4×(sLv + 2×depLv)` HP and `sLv + 2×depLv` MP/SP per tick (16 HP base at Rank 4, 24 HP with Blinding Light).
 - **`feather`**:
   - Cast Time: `Sheep.cs:21441` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21446` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
