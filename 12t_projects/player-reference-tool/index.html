@@ -3236,7 +3236,7 @@ const SKILLS = [
   { id:"sheep_revive", name:"Revive", class:"Sheep", icon:"sheep_revive2", maxRank:2, cd:[240, 180], cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×50)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, dmgNote:"Resurrects a fallen ally with recovered HP scaling with TAL and Benediction." },
   { id:"sheep_revert", name:"Revert", class:"Sheep", icon:"sheep_revert1", maxRank:1, cd:900, cdWrapped:true, revisedArtExempt:false, dmgNote:"Ultimate emergency reset: completely restores caster to 100% HP, MP, and KO." },
   { id:"sheep_holyLight", name:"Holy Light", class:"Sheep", icon:"sheep_holyLight2", maxRank:2, cd:60, cdWrapped:true, castTime:6, castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×12+12)", ko:"1", dmgNote:"Straight linear holy ray dealing holy magic damage with 1 KO knockback." },
-  { id:"sheep_lightBind", name:"Light Bind", class:"Sheep", icon:"sheep_lightBind4", maxRank:4, cd:[18, 22, 26, 30], cdWrapped:true, castTime:[2, 2.5, 3, 3.5], castWrapped:true, revisedArtExempt:false, duration:3, durWrapped:true, durContested:true, hitCountDuration:1, dmg:"6×(sLv+depLv)", effectDamage:true, ko:"0", dmgRankDep:SHEEP_INTENSE_BIND_DEP, durNote:"Binds target in place (movement speed = 0) for 3s base (contested by target CHA) + 1.0s fixed duration with Intense Bind (uncontested), pulsing every 1.0s to deal 6×(sLv+depLv) flat true effect damage per tick (6 / 12 / 18 / 24, up to 30 at Rank 4 with Intense Bind).", dmgNote:"Binds target in place (0 movement speed) for 3s (contested by target CHA) + 1.0s fixed with Intense Bind (uncontested).\nPulses every 1.0s to deal 6×(sLv+depLv) (6 / 12 / 18 / 24, or 12 / 18 / 24 / 30 with Intense Bind) flat true effect damage per tick.\nBypasses enemy DEF and damageMod (purple effect damage)." },
+  { id:"sheep_lightBind", name:"Light Bind", class:"Sheep", icon:"sheep_lightBind4", maxRank:4, cd:[18, 22, 26, 30], cdWrapped:true, castTime:[2, 2.5, 3, 3.5], castWrapped:true, revisedArtExempt:false, duration:3, durWrapped:true, durContested:true, dep:SHEEP_INTENSE_BIND_DEP, durPostAdd:(depRank)=>(depRank?1:0), hitCountDuration:1, dmg:"6×(sLv+depLv)", effectDamage:true, ko:"0", dmgRankDep:SHEEP_INTENSE_BIND_DEP, durNote:"Binds target in place (movement speed = 0) for 3s base (contested by target CHA against enemy CHA) + 1.0s fixed duration with Intense Bind (uncontested), pulsing every 1.0s to deal 6×(sLv+depLv) flat true effect damage per tick (6 / 12 / 18 / 24, up to 30 at Rank 4 with Intense Bind).", dmgNote:"Binds target in place (0 movement speed) for 3s (contested by target CHA) + 1.0s fixed with Intense Bind (uncontested).\nPulses every 1.0s to deal 6×(sLv+depLv) (6 / 12 / 18 / 24, or 12 / 18 / 24 / 30 with Intense Bind) flat true effect damage per tick.\nBypasses enemy DEF and damageMod (purple effect damage)." },
   { id:"sheep_illuminate", name:"Illuminate", class:"Sheep", icon:"sheep_illuminate4", maxRank:4, cd:[15, 18, 21, 24], cdWrapped:true, castTime:[2, 3, 4, 5], castWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, isHeal:true, dmg:"4×sLv HP, sLv MP/SP", dmgRankDep:SHEEP_BLINDING_LIGHT_DEP, dmgNote:"Bestows a restorative aura on target ally for chaAdjust(12) seconds (+2 bonus ranks with Blinding Light passive).\nPulses every 3.0s (4 ticks) to restore:\n• +4×(sLv + [blindingLight5: 2]) HP (4 / 8 / 12 / 16 base; 12 / 16 / 20 / 24 with Blinding Light)\n• +(sLv + [blindingLight5: 2]) MP (1 / 2 / 3 / 4 base; 3 / 4 / 5 / 6 with Blinding Light)\n• +(sLv + [blindingLight5: 2]) SP (1 / 2 / 3 / 4 base; 3 / 4 / 5 / 6 with Blinding Light)", durNote:"Bestows a restorative aura on target ally for chaAdjust(12) seconds, pulsing every 3.0s (4 ticks) to restore +4×sLv HP (4 / 8 / 12 / 16 HP), +sLv MP (1 / 2 / 3 / 4 MP), and +sLv SP (1 / 2 / 3 / 4 SP) per pulse." },
   { id:"sheep_feather", name:"Feather", class:"Sheep", icon:"sheep_feather2", maxRank:2, cd:[15, 18], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, durNote:"Grants target ally +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2) flat run speed and reduces character weight by -5 (Rank 1) / -10 (Rank 2) for chaAdjust(15) seconds.", dmgNote:"Grants target ally for chaAdjust(15) seconds:\n• Run Speed: +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2)\n• Weight: -5 (Rank 1) / -10 (Rank 2)" },
   { id:"sheep_allFeather", name:"All Feather", class:"Sheep", icon:"sheep_allFeather2", maxRank:2, cd:60, cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, durNote:"Grants all party members in range +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2) flat run speed and reduces character weight by -5 (Rank 1) / -10 (Rank 2) for chaAdjust(15) seconds.", dmgNote:"Party-wide feather blessing for chaAdjust(15) seconds:\n• Run Speed: +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2)\n• Weight: -5 (Rank 1) / -10 (Rank 2) to all allies in range" },
@@ -4907,7 +4907,11 @@ function mountSkillCooldownLookup(root){
       let durDist = null;
       if (selected.durContested){
         const enemyCHA = parseFloat(enemyChaEl.value) || 0;
-        const contestedDur = debuffAdjust(rawDuration, CHA, enemyCHA);
+        let contestedDur = debuffAdjust(rawDuration, CHA, enemyCHA);
+        if (selected.durPostAdd){
+          const postAdd = typeof selected.durPostAdd === "function" ? selected.durPostAdd(depRank) : (depRank ? selected.durPostAdd : 0);
+          contestedDur += postAdd;
+        }
         durRange = [contestedDur];
         durBaseLabel = "contested base";
       } else {
@@ -4935,7 +4939,7 @@ function mountSkillCooldownLookup(root){
         </div>
       ` : `<p class="sk-stat-label">Duration</p>`;
       const depBlock = dep ? renderDepBlock(dep, depRank) : "";
-      const durPostAddNote = selected.durPostAdd ? ` +${selected.durPostAdd}s` : "";
+      const durPostAddNote = selected.durPostAdd ? (depRank ? ` +${typeof selected.durPostAdd === "function" ? selected.durPostAdd(depRank) : selected.durPostAdd}s (fixed)` : "") : "";
       durationBlock = `
         <div class="sk-stat sk-stat-dur">
           ${durLabelRow}
