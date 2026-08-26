@@ -1498,40 +1498,88 @@
     .sk-stat-value{font-size:24px}
   }
 
-  /* Mounted tools — no-scroll "fit one screen" mode.
-     html.tool-fit-screen is set/cleared in showTool()/showMenu() for both
-     mounted tools (skill-cooldown-lookup, stat-gain — added 2026-08-14,
-     originally built for skill-cooldown-lookup alone, then extended the
-     same day once the user pointed out Stat-Gain's results table had the
-     identical scrolling problem). Link-out tools never trigger it, and
-     the menu view is unaffected (no class applied there). Skill Cooldown's
-     vertical rhythm above is sized against Sheep's Bless (wrapped cooldown+
-     duration plus a cdDep block, the tallest real card); Stat-Gain's is
-     sized against its own results table, which is always exactly 8 rows
-     (one per stat) regardless of the level range entered — a fixed, bounded
-     size, unlike a hypothetical per-level table, so no internal-scroll
-     fallback is needed there the way the skill-lookup tooltip has one. */
+  /* Mounted tools — strictly zero-scroll "fit one screen" mode across all viewports. */
   html.tool-fit-screen{overflow:hidden}
   html.tool-fit-screen body{height:100dvh; min-height:0; overflow:hidden; display:flex; flex-direction:column}
   html.tool-fit-screen .hub-bar{flex:none; padding:10px 24px}
   html.tool-fit-screen .stage{
-    /* width:100% is required here: once body is a flex column, .stage
-       becomes a flex item, and a flex item with auto margins on the cross
-       axis (this container's own centering margin:0 auto) is NOT stretched
-       to fill by default — it shrinks to content width instead, breaking
-       the max-width:760px centered-container trick. Pinning width:100%
-       (still capped by max-width) restores the original centering.
-       Deliberately NOT overflow:hidden here (body/html above already own
-       the actual no-scroll guarantee, since they span the full viewport
-       width): .stage is narrower (760px, centered) than the viewport, and
-       the side-gutter tooltips below (positionStatTooltips) render outside
-       its box on purpose — .stage clipping its own overflow would clip
-       those tooltips too, since the .view entrance animation's transform
-       makes them a containing-block descendant of this subtree regardless
-       of their fixed positioning (see positionStatTooltips' own comment). */
     width:100%; flex:1; min-height:0;
     display:flex; flex-direction:column; justify-content:center;
     padding:10px 20px;
+    transform-origin:center center;
+  }
+
+  @media (max-width: 1350px) {
+    html.tool-wide-hero .stage { max-width: 760px; }
+  }
+
+  /* Horizontal in-flow stats panel on compact screens when not floating in left gutter */
+  .sk-stats-panel:not(.sk-stats-panel-floating) {
+    display:flex;
+    flex-direction:row;
+    gap:8px;
+    margin-bottom:6px;
+    align-items:stretch;
+  }
+  .sk-stats-panel:not(.sk-stats-panel-floating) .sk-controls {
+    flex:1;
+    margin-bottom:0;
+    padding:6px 8px;
+  }
+  .sk-stats-panel:not(.sk-stats-panel-floating) .sk-controls-actions {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+    margin-bottom:0;
+  }
+  .sk-stats-panel:not(.sk-stats-panel-floating) .sk-enemystat-controls {
+    flex:1;
+    margin-bottom:0;
+    padding:6px 8px;
+  }
+
+  /* Compact density scaling on short viewports (<=820px) or constrained widths (<=1300px) */
+  @media (max-height: 820px), (max-width: 1300px) {
+    .hub-bar{padding:8px 20px}
+    .stage{padding:10px 16px 20px}
+    .sk{padding:10px 14px}
+    .sk h2{font-size:15px; margin:0 0 6px}
+    .sk-search-wrap{margin-bottom:6px}
+    .sk-search{padding:6px 10px; font-size:13.5px}
+    .sk-hero{padding:12px 14px}
+    .sk-hero-head{gap:10px; margin-bottom:8px}
+    .sk-hero-icon{width:46px; height:46px}
+    .sk-hero-name{font-size:18px}
+    .sk-hero-stats{gap:8px}
+    .sk-stat{min-height:94px; padding:8px 10px}
+    .sk-stat-value{font-size:24px}
+    .sk-stat-base{font-size:11.5px; margin:2px 0 0}
+    .sk-dmg-row{gap:8px; margin-top:8px; min-height:118px}
+    .sk-dmg{min-height:94px; padding:8px 10px}
+    .sk-dmg-final{min-height:118px}
+    .sk-controls{padding:6px 10px; gap:8px; margin-bottom:6px}
+    .sk-controls input[type=number]{font-size:12px; padding:3px 4px}
+    .sk-controls-actions{margin-bottom:6px; gap:8px}
+    .sk-revisedart img{width:36px; height:36px}
+    .sk-enemystat-toggle svg{width:24px; height:24px}
+    .sk-enemystat-controls{padding:6px 10px; gap:6px; margin-bottom:6px}
+    .sk-enemy-cycle-icon-wrap{width:48px; height:48px}
+    .sk-stats-panel-floating{width:240px}
+  }
+
+  /* Extreme narrow viewport reflow */
+  @media (max-width: 680px) {
+    .sk-hero-stats{grid-template-columns:repeat(2, 1fr)}
+    .sk-stat-cd{grid-column:1}
+    .sk-stat-cast{grid-column:2}
+    .sk-stat-dur{grid-column:1}
+    .sk-stat-lck{grid-column:2}
+    .sk-stat-bb{grid-column:1 / -1}
+    .sk-dmg-row{grid-template-columns:repeat(2, 1fr); min-height:auto}
+    .sk-dmg-formula{grid-column:1 / -1}
+    .sk-dmg-calc{grid-column:1}
+    .sk-dmg-final{grid-column:2}
   }
 </style>
 </head>
@@ -4511,12 +4559,13 @@ function mountSkillCooldownLookup(root){
     const shell = document.querySelector(".tool-shell");
     if (!shell) return;
     const shellRect = shell.getBoundingClientRect();
-    const margin = 20;
-    const popWidthBudget = 300; // .sk-dmg-info-pop's own max-width + a little slack
-    // Left gutter (user-requested) -- .sk-dmg-formula lives in the left
-    // column of .sk-dmg-row, so opening its info popup toward the same
-    // side reads as attached to it, unlike crossing over to the right.
-    const gutterSpace = shellRect.left;
+    const margin = 10;
+    const statsPanelWidth = 240;
+    const statsPanelFloating = Boolean(selected) && (shellRect.left >= statsPanelWidth + margin);
+    const popWidthBudget = 300;
+
+    const useRight = statsPanelFloating;
+    const gutterSpace = useRight ? (window.innerWidth - shellRect.right) : shellRect.left;
     const fitsInGutter = gutterSpace >= popWidthBudget + margin * 2;
     infoEls.forEach(infoEl => {
       const summary = $("summary", infoEl);
@@ -4535,33 +4584,12 @@ function mountSkillCooldownLookup(root){
       pop.style.transform = "none";
       const cb = pop.offsetParent;
       const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
-      pop.style.left = (shellRect.left - popWidth - margin - cbRect.left) + "px";
+      const desiredLeft = useRight ? (shellRect.right + margin) : (shellRect.left - popWidth - margin);
+      pop.style.left = (desiredLeft - cbRect.left) + "px";
       pop.style.top = (summaryRect.top - cbRect.top) + "px";
     });
   }
 
-  // Stats panel (2026-08-21, user-requested: player + Enemy Stats controls
-  // "outside the main skill card... to the left") -- same gutter-fit-check
-  // shape as positionDmgInfoPopup/positionStatTooltips above, applied to a
-  // PERSISTENT control panel instead of a hover/click popup. Progressive
-  // enhancement, not an all-or-nothing redesign: on a viewport too narrow
-  // for a real left gutter, this just removes the floating class and the
-  // panel falls straight back to its original in-flow position (stacked
-  // above the search box, exactly as it always rendered before this pass)
-  // -- there's no "nothing to show" failure mode the way a tooltip has,
-  // since these are real inputs the user needs to reach regardless of
-  // window width. panelWidth is a known constant (matches
-  // .sk-stats-panel-floating's own CSS width), not measured, specifically
-  // to sidestep the chicken-and-egg problem of needing to know the panel's
-  // width to decide whether to give it that width in the first place.
-  // Hidden entirely until a skill is selected (2026-08-21, user-reported:
-  // on first page load, before anything's selected, the panel rendered
-  // overlapping the middle of the tool instead of sitting cleanly in the
-  // gutter -- there's no skill card to align against yet at that point, so
-  // rather than chase that empty-state geometry, the panel just doesn't
-  // exist on screen until there IS a real card to sit beside). Reuses
-  // `selected` from the enclosing closure -- null until selectSkill() runs
-  // for the first time, same variable renderHero() itself already gates on.
   function positionStatsPanel(){
     const shell = document.querySelector(".tool-shell");
     if (!shell || !statsPanelEl) return;
@@ -4570,92 +4598,54 @@ function mountSkillCooldownLookup(root){
       return;
     }
     statsPanelEl.hidden = false;
+    const hubBar = document.querySelector(".hub-bar");
+    const hubH = hubBar ? hubBar.offsetHeight : 42;
     const shellRect = shell.getBoundingClientRect();
-    const margin = 20;
-    const panelWidth = 260; // must match .sk-stats-panel-floating{width:...}
+    const margin = 10;
+    const panelWidth = 240;
     const gutterSpace = shellRect.left;
-    const fitsInGutter = gutterSpace >= panelWidth + margin * 2;
+    const fitsInGutter = gutterSpace >= panelWidth + margin;
     if (!fitsInGutter){
       statsPanelEl.classList.remove("sk-stats-panel-floating");
       statsPanelEl.style.left = "";
       statsPanelEl.style.top = "";
       return;
     }
-    // Adding the class FIRST (so position:fixed is already active) before
-    // reading offsetParent/getBoundingClientRect -- same order
-    // positionDmgInfoPopup uses, required because the .view containing-
-    // block quirk (documented at length elsewhere in this file) means
-    // offsetParent's identity itself depends on position:fixed already
-    // being in effect.
     statsPanelEl.classList.add("sk-stats-panel-floating");
-    // Top-anchored to shellRect itself, i.e. .tool-shell's own OUTER edge
-    // (2026-08-21, corrected same day -- user: "it should shift upward to
-    // the very edge of the outer border, not the inner border"). The
-    // previous attempt anchored to .sk-hero (the inner skill-detail card,
-    // which sits well below the heading/search box) -- "the skill card" in
-    // the user's original request meant the whole visible tool box, not
-    // that inner element specifically. shellRect is already computed above
-    // for the left-edge math, so this needed no new measurement, just using
-    // the right one.
     const cb = statsPanelEl.offsetParent;
     const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
-    statsPanelEl.style.left = (shellRect.left - panelWidth - margin - cbRect.left) + "px";
-    statsPanelEl.style.top = (shellRect.top - cbRect.top) + "px";
+    const desiredLeft = Math.max(8, shellRect.left - panelWidth - margin);
+    const desiredTop = Math.max(hubH + 8, Math.min(shellRect.top, window.innerHeight - statsPanelEl.offsetHeight - 8));
+    statsPanelEl.style.left = (desiredLeft - cbRect.left) + "px";
+    statsPanelEl.style.top = (desiredTop - cbRect.top) + "px";
   }
 
   function positionStatTooltips(){
     const shell = document.querySelector(".tool-shell");
     if (!shell) return;
     const shellRect = shell.getBoundingClientRect();
-    const margin = 20;
-    const viewportMargin = 16; // breathing room below the tooltip's bottom edge
-    const rowWidth = 122; // wide enough for 2-decimal labels like "117.14s"
-    const colGap = 16;    // matches .sk-stat-tooltip's column-gap
-    const padX = 24;      // matches .sk-stat-tooltip's left+right padding (12px * 2)
-    const padY = 16;      // matches .sk-stat-tooltip's top+bottom padding (8px * 2)
+    const margin = 10;
+    const statsPanelWidth = 240;
+    const statsPanelFloating = Boolean(selected) && (shellRect.left >= statsPanelWidth + margin);
+    const viewportMargin = 16;
+    const rowWidth = 122;
+    const colGap = 16;
+    const padX = 24;
+    const padY = 16;
     $$(".sk-stat", displayEl).forEach((statEl, i) => {
       const tooltip = $(".sk-stat-tooltip", statEl);
       const wrap = $(".sk-stat-value-wrap", statEl);
       if (!tooltip || !wrap) return;
-      const useLeft = i === 0; // Cooldown is always the first stat box -> left gutter, Duration -> right
+      const useLeft = (i === 0) && !statsPanelFloating;
       const wrapRect = wrap.getBoundingClientRect();
-
-      // "Does a gutter exist at all" only needs room for one column — the
-      // actual column count (and therefore actual width) is decided below,
-      // once we already know we're committed to gutter mode or not.
       const gutterSpace = useLeft ? shellRect.left : (window.innerWidth - shellRect.right);
       const fitsInGutter = gutterSpace >= rowWidth + padX + margin * 2;
-      // Fallback (below-card) mode centers the tooltip under .sk-stat itself
-      // (CSS left:50%/transform:translateX(-50%), relative to .sk-stat, its
-      // containing block) — NOT under the viewport. Sizing it off the full
-      // window width let it grow wide enough to run past whichever screen
-      // edge is closer to the stat box's own center (caught live: it
-      // overflowed the right edge with .sk-stat sitting right-of-center).
-      // The safe width budget is 2x the shorter distance from that center
-      // to either edge, so growing in either direction can never cross it.
       const statCenterX = statEl.getBoundingClientRect().left + statEl.getBoundingClientRect().width / 2;
       const fallbackWidth = 2 * Math.min(statCenterX, window.innerWidth - statCenterX);
       const availableWidth = (fitsInGutter ? gutterSpace : fallbackWidth) - margin * 2;
-
-      // Real remaining space below this tooltip's anchor point, not a flat
-      // viewport fraction (the old CSS max-height:80vh alone) — a flat cap
-      // doesn't know how far down the screen the anchor itself already is,
-      // which could still push the tooltip's bottom edge off-screen with no
-      // page scroll available to reach it (this tool runs in the no-scroll
-      // "fit one screen" mode). Applies to both the gutter case and the
-      // below-card fallback.
       const anchorTop = fitsInGutter ? wrapRect.top : (statEl.getBoundingClientRect().bottom + 8);
       const availableHeight = Math.max(80, window.innerHeight - anchorTop - viewportMargin);
       tooltip.style.maxHeight = availableHeight + "px";
-
-      // Pick as many columns as the outcome list actually NEEDS to fit
-      // within availableHeight without scrolling — capped only by how many
-      // columns fit availableWidth — rather than a flat 2-column ceiling.
-      // User-reported: the old flat cap left real gutter width unused and
-      // forced a scroll to see the rest of the list even when there was
-      // plenty of room beside the panel to just show it all directly.
-      // overflow-y:auto (CSS) stays as the last-resort safety net for the
-      // rare case where even the widest column count still doesn't fit.
       const rows = $$(".sk-stat-tooltip-row", tooltip);
       if (rows.length){
         const rowHeight = rows[0].getBoundingClientRect().height || 19;
@@ -4663,13 +4653,6 @@ function mountSkillCooldownLookup(root){
         const neededCols = Math.ceil(rows.length / maxRowsPerCol);
         const maxColsByWidth = Math.max(1, Math.floor((availableWidth - padX + colGap) / (rowWidth + colGap)));
         const cols = Math.max(1, Math.min(neededCols, maxColsByWidth));
-        // Rechunk into exactly `cols` explicit .sk-stat-tooltip-col elements
-        // (see the CSS comment on .sk-stat-tooltip-col for why this replaced
-        // CSS column-count) — re-parents the existing row nodes rather than
-        // rebuilding them, and is safe to re-run on every call (including on
-        // resize, against an already-chunked tooltip): it always starts by
-        // collecting every row regardless of its current column, so each run
-        // rebuilds cleanly from scratch.
         const rowsPerCol = Math.ceil(rows.length / cols);
         tooltip.innerHTML = "";
         for (let c = 0; c < cols; c++){
@@ -4682,7 +4665,6 @@ function mountSkillCooldownLookup(root){
         }
         tooltip.style.width = (cols * rowWidth + (cols - 1) * colGap + padX) + "px";
       }
-
       if (!fitsInGutter){
         tooltip.style.position = "";
         tooltip.style.left = "";
@@ -4703,28 +4685,6 @@ function mountSkillCooldownLookup(root){
     });
   }
 
-  // Two problems the pure-CSS :hover tooltip had, both user-reported:
-  // (1) A tall outcome list needs scrolling (see positionStatTooltips'
-  //     max-height cap above), but the tooltip is pointer-events:none while
-  //     just hovering the number, and moving the cursor off the number to
-  //     reach the tooltip itself drops the :hover before the cursor arrives
-  //     — there was no way to actually scroll it. Fixed by redirecting wheel
-  //     events from the number (.sk-stat-value-wrap, the existing hover
-  //     trigger) straight to the tooltip's own scrollTop, so the cursor
-  //     never has to leave the number to scroll.
-  // (2) No way to keep the tooltip open while moving the mouse elsewhere
-  //     (e.g. to actually use a scrollbar, or just to read it hands-free).
-  //     Fixed with click-to-pin: clicking the number toggles a `.pinned`
-  //     class (see the CSS rule beside .sk-stat-value-wrap:hover above),
-  //     which keeps it visible independent of :hover AND turns
-  //     pointer-events back on so the now-reachable tooltip behaves like a
-  //     normal element (native wheel-scroll, text selection, etc.) once the
-  //     cursor actually gets there. Only one tooltip stays pinned at a time;
-  //     clicking anywhere outside the pinned number unpins it (delegated to
-  //     `document`, registered once outside renderHero — see near the
-  //     document keydown listener below — since renderHero() reruns on
-  //     every skill change and re-registering a document-level listener
-  //     there every time would leak).
   function setupStatTooltipInteractions(){
     $$(".sk-stat-value-wrap", displayEl).forEach(wrap => {
       const tooltip = $(".sk-stat-tooltip", wrap);
@@ -5964,34 +5924,17 @@ function mountSkillCooldownLookup(root){
       }
     });
 
-    positionStatTooltips();
-    setupStatTooltipInteractions();
-    // Re-checked on every render, not just once at mount -- the mount-time
-    // call in this function's own outer scope covers the common case, but
-    // if this tool was ever mounted while hidden (0-size .tool-shell rect,
-    // safely falls back to non-floating), this is what actually catches it
-    // up to the real, correct gutter width the first time the user does
-    // anything after the tool becomes visible.
     positionStatsPanel();
-    // Deferred follow-up (2026-08-22, user-reported: on a fresh session's
-    // very first skill selection, the stats panel measured a few px too
-    // high, self-correcting only once the user did something else that
-    // triggered a 2nd render). The synchronous call above reads
-    // shellRect.top immediately after this render's innerHTML swap --
-    // getBoundingClientRect() forces a layout, but only against whatever
-    // the DOM's intrinsic sizing already knows at that instant. On the
-    // very first render, the `<img>` tags this render just inserted (data
-    // URIs, decoded from base64 already in memory, no network round-trip --
-    // but still not guaranteed synchronous by spec) may not have reported
-    // their intrinsic height to layout yet, so .tool-shell's measured
-    // height (and therefore shellRect.top, which is unaffected by height
-    // directly but shares the same "layout not fully settled" timing risk)
-    // can be read a frame too early. Re-running this AFTER the browser's
-    // next paint (one rAF tick further than a same-tick 2nd call would
-    // reach) catches up to whatever the correct settled layout turns out to
-    // be, without waiting on a real user interaction to trigger it. Cheap
-    // and idempotent -- recomputes from scratch, no state to double-apply.
-    requestAnimationFrame(positionStatsPanel);
+    positionStatTooltips();
+    positionDmgInfoPopup();
+    setupStatTooltipInteractions();
+    fitStageToScreen();
+    requestAnimationFrame(() => {
+      positionStatsPanel();
+      positionStatTooltips();
+      positionDmgInfoPopup();
+      fitStageToScreen();
+    });
 
     // Set via DOM property, not an inline template-string style="" attribute:
     // the data URI's own embedded double quotes (url("data:...")) would close
@@ -6331,7 +6274,7 @@ function mountSkillCooldownLookup(root){
   // Re-anchor the side-gutter tooltips (and the fit-screen layout above
   // them) when the window is resized — gutter availability and the hero
   // card's on-screen position both depend on viewport size.
-  window.addEventListener("resize", () => { if (!root.hidden) { positionStatTooltips(); positionDmgInfoPopup(); positionStatsPanel(); } });
+  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(); } });
 
   renderHero();
 }
@@ -6583,6 +6526,31 @@ toolGrid.innerHTML = TOOLS.map(t => t.url ? `
   </a></li>
 `).join("");
 
+function fitStageToScreen(){
+  if (!document.documentElement.classList.contains("tool-fit-screen")) return;
+  const stage = document.querySelector(".stage");
+  if (!stage) return;
+  const hubBar = document.querySelector(".hub-bar");
+  const hubH = hubBar ? hubBar.offsetHeight : 42;
+  const availH = window.innerHeight - hubH - 12;
+  const availW = window.innerWidth - 12;
+
+  stage.style.transform = "none";
+  const naturalH = stage.scrollHeight;
+  const naturalW = stage.scrollWidth;
+
+  const scaleH = availH / naturalH;
+  const scaleW = availW / naturalW;
+  const scale = Math.min(1, scaleH, scaleW);
+
+  if (scale < 0.999) {
+    stage.style.transform = "scale(" + scale + ")";
+    stage.style.transformOrigin = "center center";
+  } else {
+    stage.style.transform = "none";
+  }
+}
+
 function showMenu(){
   viewMenu.hidden = false; viewTool.hidden = true;
   crumbCurrent.textContent = "";
@@ -6617,6 +6585,7 @@ function showTool(tool){
   const container = getToolContainer(tool);
   if (!tool.mounted){ tool.mount(container); tool.mounted = true; }
   Object.values(toolContainers).forEach(el => { el.hidden = (el !== container); });
+  fitStageToScreen();
 }
 
 function route(){
