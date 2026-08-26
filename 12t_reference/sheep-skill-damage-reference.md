@@ -12,6 +12,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Threat reduction via **Harmonic Diffuse** passive: `-0.15 × healAmount × harmonicDiffuseLv`.
 - **Holy Arts & Divinity Damage**:
   - `holyLight`: Straight holy ray dealing `talAdjust(12 + 12×sLv)` with 1 KO knockback.
+  - `overHeal`: Offensive opening strike targeting enemies at 100% full HP (`Sheep.cs:26334–26357`). Deals `talAdjust((20 + 30×sLv) × (1 + 0.15×benedictionLv))` magic damage capped at `(20% + 10%×sLv) × target Max HP` (30% Max HP at R1, 40% at R2). Deals 0 damage if target is below max HP.
   - `lightBind`: Single-target root (`moveSpeed = 0`) dealing `6×sLv` flat true effect damage every 1.0s (`CharacterControl.cs:9369`, purple penetrating damage). No burst finisher.
   - `divinitySword`: Holy summon slash dealing `talAdjust(10 + 20×sLv)`, 1 KO.
   - `divinitySpear`: Piercing line thrust dealing `talAdjust(10 + 15×sLv)`, 1 KO.
@@ -41,7 +42,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_clear` | Clear | 2 | [12, 18]s | [2, 3]s | — | Cleanse 1 debuff | — | Cleanses 1 negative status from target ally. |
 | `sheep_cleanse` | Cleanse | 1 | 30s | 4s | — | Cleanse debuffs | — | Targeted status cleanse. |
 | `sheep_allCleanse` | All Cleanse | 1 | 90s | 6s | — | Party cleanse | — | Cleanses debuffs from all party members. |
-| `sheep_overHeal` | Over Heal | 2 | [30, 45]s | [4, 6]s | Barrier | `talAdjust(20 + 30×sLv)` | 0 | Heals ally; excess HP converts to barrier up to sLv×100 HP. |
+| `sheep_overHeal` | Over Heal | 2 | [30, 45]s | [4, 6]s | — | `talAdjust(20 + 30×sLv)` | 0 | Offensive opening burst against full HP enemies (`hp == mhp`). Deals `talAdjust(20+30×sLv)` magic damage, capped at (20%+10%×sLv) of target Max HP (30% at R1, 40% at R2). Deals 0 damage if target `hp != mhp`. |
 | `sheep_revive` | Revive | 2 | [240, 180]s | [4, 5]s | — | `talAdjust(50×sLv)` | 0 | Resurrects fallen ally with HP scaling with TAL and Benediction. |
 | `sheep_revert` | Revert | 1 | 900s | 0s | — | 100% HP/MP/KO reset | — | Complete emergency recovery. |
 | `sheep_holyLight` | Holy Light | 2 | 60s | 6s | — | `talAdjust(12 + 12×sLv)` | 1 | Linear holy ray dealing magic damage with 1 KO knockback. |
@@ -92,7 +93,9 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 - **`overHeal`**:
   - Cast Time: `Sheep.cs:21356` — `this.$mCastTime$27748 = (float)(2 + 2 * this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21361` — `this.$mTimeOut$27749 = 15 + 15 * this.$sLv$27762;` (agiAdjusted).
-  - Healing & Barrier: `Sheep.cs:28200` — `talAdjust(20 + 30*sLv)` + barrier up to `sLv*100`.
+  - Offensive Logic: `Sheep.cs:26334–26357` —
+    - Target condition check: `if (this.$tChar$27882.hp != this.$tChar$27882.mhp) { mHeal = 0; } else { mHeal = Mathf.Min(talAdjust(...), Mathf.FloorToInt((0.2f + 0.1f * sLv) * target.mhp)); }`
+    - Damage application: `RPC_AddDamage(250 + sLv, mHeal, 0, 0, Vector3.zero, caster.ActorNr)` (0 KO).
 - **`revive`**:
   - Cast Time: `Sheep.cs:21373` — `this.$mCastTime$27748 = (float)(3 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21378` — `this.$mTimeOut$27749 = 60 + 60 * this.$sLv$27762;` (agiAdjusted).
