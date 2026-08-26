@@ -94,8 +94,15 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
      2. **Multi-Phase Transitions:** In-flight coroutines, secondary triggers (e.g. mid-air actions, collision handlers, landing phases), companion `MonoBehaviour` instances.
      3. **All Damage & KO Instances:** Check EVERY `hit()` / `RPC_AddDamage` / `FindAreaTarget` call in all phases (initial hit, mid-air triggers, ground slam / landing, recurring tick loops). Record both `nDamage` formula and `nKo` value for every phase.
      4. **Conditional Passive Branches:** Check all `hasSkill(...)` branches for added hits, modified coefficients, or secondary effects.
-     5. **Secondary Effects:** SP/MP recovery or siphoning, debuff status applications (`RPC_AddStatus`), buffs, and summon lifetimes/destruction.
-8. **Mandatory Automated Linting**:
+8. **Mandatory Status Effect & Buff/Debuff Execution Trace (Zero Guesswork / No Trope Assumptions)**:
+   * **Never assume or guess what a buff, debuff, barrier, or status effect does based on its English name, icon, or common RPG tropes** (e.g. assuming 'Illuminate' is stealth reveal, 'Feather' is AGI, or 'Light Bind' has a burst finisher).
+   * Whenever `RPC_AddStatus(statusName, sLv, duration, sValue, ...)` is called:
+     1. Search `CharacterControl.cs` for `case "<statusName>":` and `sType == "<statusName>"`.
+     2. Trace the exact variables modified upon application (`RPC_AddStatus`), on recurring tick loops (`mod(...)`), and upon removal (`removeStatus`).
+     3. Verify exact stat/variable deltas: `deltaRunSpeed`, `weight`, `sF2cOBZX7wK` (jump gravity), `deltaDef`, `deltaAllStat`, `RPC_AddHeal`, `RPC_AddEffectDamage`, etc.
+     4. Note the exact role of the `sValue` parameter (e.g. `sValue` passed as caster ATK vs target DEF vs flat HP).
+   * If any mechanic or effect is ambiguous or not 100% proven from decompiled C# source, **stop and verify again or ask the user** — never write speculative or placeholder text.
+9. **Mandatory Automated Linting**:
    * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
 
 ---
