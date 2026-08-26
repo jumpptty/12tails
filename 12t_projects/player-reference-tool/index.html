@@ -1503,40 +1503,32 @@
   html.tool-fit-screen body{height:100dvh; min-height:0; overflow:hidden; display:flex; flex-direction:column}
   html.tool-fit-screen .hub-bar{flex:none; padding:10px 24px}
   html.tool-fit-screen .stage{
-    width:100%; flex:1; min-height:0;
-    display:flex; flex-direction:column; justify-content:center;
-    padding:10px 20px;
+    position:relative; width:100%; flex:1; min-height:0;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
     transform-origin:center center;
   }
 
-  @media (max-width: 1350px) {
-    html.tool-wide-hero .stage { max-width: 760px; }
+  html.tool-wide-hero .tool-shell {
+    position:relative; width:860px; max-width:860px; margin:0 auto;
   }
 
-  /* Horizontal in-flow stats panel on compact screens when not floating in left gutter */
-  .sk-stats-panel:not(.sk-stats-panel-floating) {
-    display:flex;
-    flex-direction:row;
-    gap:8px;
-    margin-bottom:6px;
-    align-items:stretch;
+  /* Stats panel ALWAYS sits on the left of .tool-shell — never reorganizes */
+  .sk-stats-panel {
+    position:absolute; right:calc(100% + 20px); top:0;
+    width:260px; margin:0; z-index:10;
   }
-  .sk-stats-panel:not(.sk-stats-panel-floating) .sk-controls {
-    flex:1;
-    margin-bottom:0;
-    padding:6px 8px;
+
+  /* Stat tooltips ALWAYS sit on the right of .tool-shell */
+  .sk-stat-tooltip {
+    position:fixed; left:calc(100% + 20px); top:100px;
+    transform:none; right:auto; z-index:20;
   }
-  .sk-stats-panel:not(.sk-stats-panel-floating) .sk-controls-actions {
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:4px;
-    margin-bottom:0;
-  }
-  .sk-stats-panel:not(.sk-stats-panel-floating) .sk-enemystat-controls {
-    flex:1;
-    margin-bottom:0;
-    padding:6px 8px;
+
+  /* Damage info popover sits on the right of .tool-shell */
+  .sk-dmg-info-pop {
+    position:fixed; left:calc(100% + 20px); top:240px;
+    transform:none; width:260px; z-index:20;
   }
 
   /* Compact density scaling on short viewports (<=820px) or constrained widths (<=1300px) */
@@ -4554,135 +4546,31 @@ function mountSkillCooldownLookup(root){
   // <details> has no box to measure, so there's nothing useful to do here
   // while it's shut, unlike the always-in-DOM probability tooltips.
   function positionDmgInfoPopup(){
-    const infoEls = $$(".sk-dmg-info", displayEl);
-    if (!infoEls.length) return;
-    const shell = document.querySelector(".tool-shell");
-    if (!shell) return;
-    const shellRect = shell.getBoundingClientRect();
-    const margin = 10;
-    const statsPanelWidth = 240;
-    const statsPanelFloating = Boolean(selected) && (shellRect.left >= statsPanelWidth + margin);
-    const popWidthBudget = 300;
-
-    const useRight = statsPanelFloating;
-    const gutterSpace = useRight ? (window.innerWidth - shellRect.right) : shellRect.left;
-    const fitsInGutter = gutterSpace >= popWidthBudget + margin * 2;
-    infoEls.forEach(infoEl => {
-      const summary = $("summary", infoEl);
-      const pop = $(".sk-dmg-info-pop", infoEl);
-      if (!summary || !pop) return;
-      if (!infoEl.open || !fitsInGutter){
-        pop.style.position = "";
-        pop.style.left = "";
-        pop.style.top = "";
-        pop.style.transform = "";
-        return;
-      }
-      const summaryRect = summary.getBoundingClientRect();
-      const popWidth = pop.getBoundingClientRect().width;
-      pop.style.position = "fixed";
-      pop.style.transform = "none";
-      const cb = pop.offsetParent;
-      const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
-      const desiredLeft = useRight ? (shellRect.right + margin) : (shellRect.left - popWidth - margin);
-      pop.style.left = (desiredLeft - cbRect.left) + "px";
-      pop.style.top = (summaryRect.top - cbRect.top) + "px";
-    });
+    // Fixed layout: popover sits in right gutter at left: calc(100% + 20px)
   }
 
   function positionStatsPanel(){
-    const shell = document.querySelector(".tool-shell");
-    if (!shell || !statsPanelEl) return;
-    if (!selected){
-      statsPanelEl.hidden = true;
-      return;
-    }
-    statsPanelEl.hidden = false;
-    const hubBar = document.querySelector(".hub-bar");
-    const hubH = hubBar ? hubBar.offsetHeight : 42;
-    const shellRect = shell.getBoundingClientRect();
-    const margin = 10;
-    const panelWidth = 240;
-    const gutterSpace = shellRect.left;
-    const fitsInGutter = gutterSpace >= panelWidth + margin;
-    if (!fitsInGutter){
-      statsPanelEl.classList.remove("sk-stats-panel-floating");
-      statsPanelEl.style.left = "";
-      statsPanelEl.style.top = "";
-      return;
-    }
-    statsPanelEl.classList.add("sk-stats-panel-floating");
-    const cb = statsPanelEl.offsetParent;
-    const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
-    const desiredLeft = Math.max(8, shellRect.left - panelWidth - margin);
-    const desiredTop = Math.max(hubH + 8, Math.min(shellRect.top, window.innerHeight - statsPanelEl.offsetHeight - 8));
-    statsPanelEl.style.left = (desiredLeft - cbRect.left) + "px";
-    statsPanelEl.style.top = (desiredTop - cbRect.top) + "px";
+    if (!statsPanelEl) return;
+    statsPanelEl.hidden = !selected;
   }
 
   function positionStatTooltips(){
-    const shell = document.querySelector(".tool-shell");
-    if (!shell) return;
-    const shellRect = shell.getBoundingClientRect();
-    const margin = 10;
-    const statsPanelWidth = 240;
-    const statsPanelFloating = Boolean(selected) && (shellRect.left >= statsPanelWidth + margin);
-    const viewportMargin = 16;
-    const rowWidth = 122;
-    const colGap = 16;
-    const padX = 24;
-    const padY = 16;
-    $$(".sk-stat", displayEl).forEach((statEl, i) => {
-      const tooltip = $(".sk-stat-tooltip", statEl);
-      const wrap = $(".sk-stat-value-wrap", statEl);
-      if (!tooltip || !wrap) return;
-      const useLeft = (i === 0) && !statsPanelFloating;
-      const wrapRect = wrap.getBoundingClientRect();
-      const gutterSpace = useLeft ? shellRect.left : (window.innerWidth - shellRect.right);
-      const fitsInGutter = gutterSpace >= rowWidth + padX + margin * 2;
-      const statCenterX = statEl.getBoundingClientRect().left + statEl.getBoundingClientRect().width / 2;
-      const fallbackWidth = 2 * Math.min(statCenterX, window.innerWidth - statCenterX);
-      const availableWidth = (fitsInGutter ? gutterSpace : fallbackWidth) - margin * 2;
-      const anchorTop = fitsInGutter ? wrapRect.top : (statEl.getBoundingClientRect().bottom + 8);
-      const availableHeight = Math.max(80, window.innerHeight - anchorTop - viewportMargin);
-      tooltip.style.maxHeight = availableHeight + "px";
-      const rows = $$(".sk-stat-tooltip-row", tooltip);
-      if (rows.length){
-        const rowHeight = rows[0].getBoundingClientRect().height || 19;
-        const maxRowsPerCol = Math.max(1, Math.floor((availableHeight - padY) / rowHeight));
-        const neededCols = Math.ceil(rows.length / maxRowsPerCol);
-        const maxColsByWidth = Math.max(1, Math.floor((availableWidth - padX + colGap) / (rowWidth + colGap)));
-        const cols = Math.max(1, Math.min(neededCols, maxColsByWidth));
-        const rowsPerCol = Math.ceil(rows.length / cols);
-        tooltip.innerHTML = "";
-        for (let c = 0; c < cols; c++){
-          const col = document.createElement("div");
-          col.className = "sk-stat-tooltip-col";
-          for (let r = c * rowsPerCol; r < Math.min((c + 1) * rowsPerCol, rows.length); r++){
-            col.appendChild(rows[r]);
-          }
-          tooltip.appendChild(col);
+    const tooltip = $(".sk-stat-tooltip", displayEl);
+    if (!tooltip) return;
+    const rows = $$(".sk-stat-tooltip-row", tooltip);
+    if (rows.length && !$(".sk-stat-tooltip-col", tooltip)){
+      const cols = Math.min(2, Math.ceil(rows.length / 8));
+      const rowsPerCol = Math.ceil(rows.length / cols);
+      tooltip.innerHTML = "";
+      for (let c = 0; c < cols; c++){
+        const col = document.createElement("div");
+        col.className = "sk-stat-tooltip-col";
+        for (let r = c * rowsPerCol; r < Math.min((c + 1) * rowsPerCol, rows.length); r++){
+          col.appendChild(rows[r]);
         }
-        tooltip.style.width = (cols * rowWidth + (cols - 1) * colGap + padX) + "px";
+        tooltip.appendChild(col);
       }
-      if (!fitsInGutter){
-        tooltip.style.position = "";
-        tooltip.style.left = "";
-        tooltip.style.right = "";
-        tooltip.style.top = "";
-        tooltip.style.transform = "";
-        return;
-      }
-      const tooltipWidth = tooltip.getBoundingClientRect().width;
-      const desiredLeft = useLeft ? (shellRect.left - tooltipWidth - margin) : (shellRect.right + margin);
-      tooltip.style.position = "fixed";
-      tooltip.style.transform = "none";
-      tooltip.style.right = "auto";
-      const cb = tooltip.offsetParent;
-      const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
-      tooltip.style.left = (desiredLeft - cbRect.left) + "px";
-      tooltip.style.top = (wrapRect.top - cbRect.top) + "px";
-    });
+    }
   }
 
   function setupStatTooltipInteractions(){
@@ -6529,26 +6417,26 @@ toolGrid.innerHTML = TOOLS.map(t => t.url ? `
 function fitStageToScreen(){
   if (!document.documentElement.classList.contains("tool-fit-screen")) return;
   const stage = document.querySelector(".stage");
-  if (!stage) return;
+  const shell = document.querySelector(".tool-shell");
+  if (!stage || !shell) return;
+
   const hubBar = document.querySelector(".hub-bar");
   const hubH = hubBar ? hubBar.offsetHeight : 42;
-  const availH = window.innerHeight - hubH - 12;
-  const availW = window.innerWidth - 12;
+  const availH = window.innerHeight - hubH - 24;
+  const availW = window.innerWidth - 24;
 
-  stage.style.transform = "none";
-  const naturalH = stage.scrollHeight;
-  const naturalW = stage.scrollWidth;
+  const isSkillLookup = document.documentElement.classList.contains("tool-wide-hero");
+  const compW = isSkillLookup ? 1420 : (shell.offsetWidth || 760);
+  const statsPanel = isSkillLookup ? document.querySelector(".sk-stats-panel") : null;
+  const shellH = shell.offsetHeight || 500;
+  const statsH = (statsPanel && !statsPanel.hidden) ? statsPanel.offsetHeight : 0;
+  const compH = Math.max(shellH, statsH, 540);
 
-  const scaleH = availH / naturalH;
-  const scaleW = availW / naturalW;
+  const scaleH = availH / compH;
+  const scaleW = availW / compW;
   const scale = Math.min(1, scaleH, scaleW);
 
-  if (scale < 0.999) {
-    stage.style.transform = "scale(" + scale + ")";
-    stage.style.transformOrigin = "center center";
-  } else {
-    stage.style.transform = "none";
-  }
+  stage.style.transform = scale < 0.999 ? ("scale(" + scale + ")") : "none";
 }
 
 function showMenu(){
