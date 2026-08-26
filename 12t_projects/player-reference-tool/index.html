@@ -4517,9 +4517,13 @@ function mountSkillCooldownLookup(root){
   // depRank === dep.maxRank (both known cases are 0/1 toggles) -- returns
   // the untouched baseValue otherwise.
   function depRawValue(baseValue, dep, depRank){
+    if (!dep) return baseValue;
     if (dep.kind === "postMultiply") return baseValue;
     if (dep.kind === "replace") return depRank === dep.maxRank ? dep.replaceValue : baseValue;
-    return baseValue + dep.perRank * (depRank - dep.minRank);
+    if (dep.perRank !== undefined) {
+      return baseValue + dep.perRank * (depRank - dep.minRank);
+    }
+    return baseValue;
   }
   function depPostMultiply(range, dep, depRank){
     return dep.kind === "postMultiply" ? range.map(v => Math.floor(v * dep.multipliers[depRank])) : range;
