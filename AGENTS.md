@@ -56,20 +56,28 @@ When reading `.cs` files in `DecompiledSource/`:
 
 ## 5. Quality Assurance & Skill Verification Protocol
 
-To eliminate regressions and discrepancies when authoring or updating skill mechanics:
+To eliminate regressions and discrepancies when authoring or updating skill mechanics (especially when processing multiple skills or entire classes in a single prompt):
 
-1. **Per-Rank Scaling Audit (`maxRank > 1`)**:
-   * Never assume flat scalar properties for skills with multiple ranks.
-   * Always inspect the decompiled `RPC_<name>` cast site / `DisplayCastBar` / `addTimeOut` / companion `MonoBehaviour` for `sLv` scaling in:
-     * `castTime` (e.g., `2 + 0.5 * sLv` → `[2.5, 3, 3.5, 4]`).
-     * `cd` (e.g., `[10, 12, 14, 16]`).
-     * `duration` / `hitCountDuration` (e.g., dynamic CHA pulse intervals).
-2. **Formula & Variable Permutation Validation**:
+1. **No Shortcuts or Flat Approximations in Bulk Operations**:
+   * Never summarize or approximate values across multiple skills.
+   * Every single skill in a request must undergo an independent, exhaustive decompiled source trace before any data or code is authored.
+2. **Mandatory Per-Rank Scaling Arrays (`maxRank > 1`)**:
+   * Always inspect the decompiled `RPC_<name>` cast site / `DisplayCastBar` / `addTimeOut` / companion `MonoBehaviour` for `sLv` scaling:
+     * `castTime`: if `sLv` dependent (e.g., `1 + sLv` → `[2, 3, 4, 5]`), define as explicit array and check adjustment wrapper (`magAdjust` vs `chaAdjust`).
+     * `cd`: if `sLv` dependent (e.g., `12 + 2 * sLv` → `[14, 16, 18, 20]`), define as explicit array and check adjustment wrapper (`agiAdjust`).
+     * `duration` / `hitCountDuration`: check if duration or tick intervals scale per rank.
+3. **Mandatory Line-by-Line Citations (`file:line`)**:
+   * Every skill presentation and documentation must cite exact source lines for:
+     1. Cast time formula (`mCastTime` assignment & `magAdjust`/`chaAdjust` wrapper).
+     2. Cooldown formula (`mTimeOut` assignment & `agiAdjust` wrapper).
+     3. Damage / Heal / KO execution (`hit()`, `RPC_AddDamage`, `RPC_AddHeal`, `RPC_AddEffectDamage`, `nKo`).
+     4. Passive modifier gates (`hasSkill(...)`, `get<Passive>Lv()`).
+4. **Formula & Variable Permutation Validation**:
    * Any formula with variables (`sLv`, `depLv`) or parentheses must evaluate without error across all rank combinations (1..maxRank) and toggle states.
    * Flat arithmetic parser regexes must always support parentheses: `/^[\d\s×*+\-().]+$/`.
-3. **Programmatic PNG Header Icon Extraction**:
+5. **Programmatic PNG Header Icon Extraction**:
    * Icons must be extracted directly from `RippedAssets/...` and validated for authentic PNG headers (`89 50 4E 47 0D 0A 1A 0A`). Never use placeholder base64 strings.
-4. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
+6. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
    * **Never stop early** after reading the initial cast dispatch or a single coroutine.
    * Thoroughly trace the **entire lifecycle** of the skill from initiation to resolution:
      1. **Cast & Wind-up:** `RPC_<skill>`, `DisplayCastBar`, `addTimeOut` / cooldown application.
@@ -77,7 +85,7 @@ To eliminate regressions and discrepancies when authoring or updating skill mech
      3. **All Damage & KO Instances:** Check EVERY `hit()` / `RPC_AddDamage` / `FindAreaTarget` call in all phases (initial hit, mid-air triggers, ground slam / landing, recurring tick loops). Record both `nDamage` formula and `nKo` value for every phase.
      4. **Conditional Passive Branches:** Check all `hasSkill(...)` branches for added hits, modified coefficients, or secondary effects.
      5. **Secondary Effects:** SP/MP recovery or siphoning, debuff status applications (`RPC_AddStatus`), buffs, and summon lifetimes/destruction.
-6. **Mandatory Automated Linting**:
+7. **Mandatory Automated Linting**:
    * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
 
 ---
