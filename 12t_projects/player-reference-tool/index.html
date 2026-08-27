@@ -556,6 +556,29 @@
     font-size:10.5px; letter-spacing:.4px; text-transform:uppercase; font-weight:700;
     color:var(--tag-color); white-space:nowrap;
   }
+  .sk-hero-sub{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  .sk-cost-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:1.5px 6px; font-size:10px; font-weight:700; letter-spacing:.4px;
+    border-radius:3px; line-height:1.2; user-select:none; white-space:nowrap;
+    font-family:inherit;
+  }
+  .sk-cost-mp{
+    background:rgba(30,58,138,0.4); border:1px solid rgba(59,130,246,0.65);
+    color:#93c5fd; text-shadow:0 0 4px rgba(59,130,246,0.4);
+  }
+  .sk-cost-sp-red{
+    background:rgba(127,29,29,0.4); border:1px solid rgba(239,68,68,0.65);
+    color:#fca5a5; text-shadow:0 0 4px rgba(239,68,68,0.4);
+  }
+  .sk-cost-sp-blue{
+    background:rgba(21,94,117,0.4); border:1px solid rgba(6,182,212,0.65);
+    color:#67e8f9; text-shadow:0 0 4px rgba(6,182,212,0.4);
+  }
+  .sk-cost-free{
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.18);
+    color:var(--muted);
+  }
   .sk-empty-state{padding:40px 20px; text-align:center; color:var(--muted); font-size:14px}
   .sk-hero{border:1px solid var(--line); border-radius:3px; background:var(--panel-2); padding:16px 20px}
   .sk-hero-head{display:flex; align-items:center; gap:14px; margin-bottom:12px}
@@ -3933,13 +3956,23 @@ function mountSkillCooldownLookup(root){
     // be computable.
     const dmgReplaceDepOn = skill.dmgReplaceDep && getDepRank(skill.dmgReplaceDep) === skill.dmgReplaceDep.maxRank;
     const flatComputable = !talMatch && /^[\d\s×*+\-().]+$/.test(text);
-    if ((!talMatch && !flatComputable) || !selectedEnemy) return 0;
+    if ((!talMatch && !flatComputable) || (!selectedEnemy && !skill.isHeal)) return 0;
     let val;
     if (talMatch){
-      const dmgBaseVal = evalArith(talMatch[1]);
+      let depMult = 1;
+      if (skill.dmgRankDep && skill.dmgRankDep.mult) {
+        const depR = getDepRank(skill.dmgRankDep);
+        depMult = 1 + skill.dmgRankDep.mult * depR;
+      }
+      const mult = dmgMultDepOn ? skill.dmgMultDep.mult : 1;
+      const dmgBaseVal = evalArith(talMatch[1]) * mult * depMult;
       val = talAdjustAtRoll(dmgBaseVal, TAL, randomRoll(lckSpreadRange(LCK)[1]));
     } else {
       val = dmgReplaceDepOn ? skill.dmgReplaceDep.calc(rank, LV) : evalArith(text);
+      if (skill.dmgRankDep && skill.dmgRankDep.mult) {
+        const depR = getDepRank(skill.dmgRankDep);
+        val = val * (1 + skill.dmgRankDep.mult * depR);
+      }
     }
     const hitAtkCoeff = resolveHitAtkCoeff(skill, hitIndex);
     if (hitAtkCoeff) val += hitAtkCoeff * ATK;
@@ -4018,7 +4051,8 @@ function mountSkillCooldownLookup(root){
     const enemyDEF = parseFloat(enemyDefEl.value) || 0;
     const enemyLCK = parseFloat(enemyLckEl.value) || 0;
     if (skill.isHeal){
-      return val;
+      val = Math.trunc(val);
+      return staged ? { afterDef: val, final: val } : val;
     }
     const afterDef = (skill.penetrating || skill.effectDamage)
       ? val
