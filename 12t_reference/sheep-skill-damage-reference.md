@@ -131,7 +131,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 - **`divinitySpear`**:
   - Cast Time: `Sheep.cs:21492` — `this.$mCastTime$27748 = (float)(3 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21497` — `this.$mTimeOut$27749 = 60;` (agiAdjusted).
-  - Damage: `Sheep.cs:30800` — `talAdjust(10 + 15*sLv)`, KO 1.
+  - Damage: `Sheep.cs:31786` & `31840` — `3 × talAdjust(10 + 15*sLv)`, KO 1 per hit (3 hits).
 - **`repel`**:
   - Cast Time: `Sheep.cs:21509` — `this.$mCastTime$27748 = (float)(6 - this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21514` — `this.$mTimeOut$27749 = 120;` (agiAdjusted).
@@ -144,7 +144,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 - **`divinityAxe`**:
   - Cast Time: `Sheep.cs:21560` — `this.$mCastTime$27748 = (float)7;` (magAdjusted).
   - Cooldown: `Sheep.cs:21565` — `this.$mTimeOut$27749 = 150;` (agiAdjusted).
-  - Damage: `Sheep.cs:36100` — `talAdjust(45)`, KO 2.
+  - Damage: `Sheep.cs:36612` & `36593` — `5 × talAdjust(45)`, KO 2 per hit (5 hits).
 - **`worldEncarta`**:
   - Cast Time: `Sheep.cs:21577` — `this.$mCastTime$27748 = (float)7;` (magAdjusted).
   - Cooldown: `Sheep.cs:21582` — `this.$mTimeOut$27749 = 150;` (agiAdjusted).
