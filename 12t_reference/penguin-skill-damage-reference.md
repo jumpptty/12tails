@@ -52,7 +52,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 | `penguin_parallelShift` | Parallel Shift | 1 | 10 MP, 20 SP (red) | 45s | 0s | — | Astral displacement and cooldown reset |
 | `penguin_snowBall` | Snowball | 1 | 30 MP | 15s | 1s | — | Throws giant rolling snowball |
 | `penguin_cosmicRift` | Cosmic Rift | 1 | 50 MP, 50 SP (red) | 120s | 4s | 8s | Dimensional rift distorting gravity and dealing continuous damage |
-| `penguin_cosmicFriday` | Cosmic Friday | 1 | Free / 0 | 300s | 0s | 20s | Ultimate celestial alignment |
+| `penguin_cosmicFriday` | Cosmic Friday | 1 | 100 MP, 50 SP (red) | 300s | 0s | 20s | Ultimate celestial alignment |
 
 ---
 

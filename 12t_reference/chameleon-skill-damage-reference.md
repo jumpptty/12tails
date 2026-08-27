@@ -35,7 +35,7 @@ back to that sweep.
 | tent | 1 | 40 MP, 30 SP (red) | none (self status) | — | — | — | — |
 | markOfSlayer | 1 | 45 MP, 45 SP (red) | none directly (enables slayer/allSlayer race-bypass) | — | — | — | — |
 | zeroShot | 1 | 30 MP, 30 SP (red) | `3×ATK + talAdjust(100)` | 10 | 1 | — | — |
-| thunderDragon | 1 | Free / 0 | flat `50`/tick self-AoE, **real effect damage** (`RPC_AddEffectDamage`, ignores defense, floors hitMod) + separate flat-350 reflect, not merged | 0 | 6 | — | **12% paralyze/tick, caster-LCK only, unconditional** |
+| thunderDragon | 1 | 50 MP, 50 SP (red) | flat `50`/tick self-AoE, **real effect damage** (`RPC_AddEffectDamage`, ignores defense, floors hitMod) + separate flat-350 reflect, not merged | 0 | 6 | — | **12% paralyze/tick, caster-LCK only, unconditional** |
 
 ## Notable findings
 
