@@ -608,6 +608,22 @@
      (same "shrink don't wrap" rule already applied to every chip's text),
      ellipsis only kicks in if even the shrink floor isn't small enough. */
   .sk-hero-name{font-size:21px; margin:0; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .sk-hero-info{position:relative; display:inline-flex; align-items:center; line-height:0; flex:none}
+  .sk-hero-info summary{
+    list-style:none; cursor:pointer; width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+    line-height:1; font-family:-apple-system,"Segoe UI",system-ui,sans-serif;
+    color:var(--muted); border:1px solid var(--line); transition:color .15s, border-color .15s;
+  }
+  .sk-hero-info summary::-webkit-details-marker{display:none}
+  .sk-hero-info:hover summary, .sk-hero-info[open] summary{color:var(--gold); border-color:var(--gold)}
+  .sk-hero-info-pop{
+    position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%); z-index:30;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
+    padding:10px 14px; font-size:12px; line-height:1.45; color:var(--text);
+    white-space:pre-line; width:max-content; max-width:380px; box-shadow:var(--shadow);
+    pointer-events:auto;
+  }
   /* Grid, not flex -- 3 fixed columns (Cooldown/Cast Time/Duration, pinned via
      .sk-stat-cd/-cast/-dur's own grid-column below) regardless of how many of
      the 3 a given skill actually has. Flex's flex-grow used to stretch
@@ -3223,34 +3239,34 @@ const SKILLS = [
   { id:"rabbit_tenShot", name:"Ten Shot", class:"Rabbit", icon:"rabbit_tenShot1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(60)", atkCoeff:0.5, hitCount:()=>10, ko:"1", dmgNote:"Fires 10 consecutive shots. Each hit deals 0.5×ATK + talAdjust(60), KO=1 (total 10 hits)." },
   { id:"rabbit_extravagance", name:"Extravagance", class:"Rabbit", icon:"rabbit_extravagance1", maxRank:1, cd:120, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, dmgDep:{id:"skillBargain", label:"Skill Bargain", icon:"rabbit_skillBargain5", minRank:0, maxRank:1, term:"0", calc:()=>0}, dmgNote:"Consumes 1% Gil (capped at 512, reduced by 40% with skillBargain5) to grant +GilSpent flat ATK buff for chaAdjust(6) seconds.", durNote:"Consumes 1% current Gil (up to 512 Gil, -40% cost with Skill Bargain) to grant +1 flat ATK per Gil spent (up to +512 ATK) for chaAdjust(6) seconds." },
   { id:"rabbit_contract", name:"Contract", class:"Rabbit", icon:"rabbit_contract1", maxRank:1, castTime:6, castWrapped:true, cd:180, cdWrapped:true, revisedArtExempt:false, duration:300, durWrapped:false, dmgNote:"Contracts 2 Black Panther bodyguards for 300s to attack and defend the caster.", durNote:"Summons 2 Black Panther bodyguard mercenaries to fight and defend the caster for 300 seconds." },
-    { id:"sheep_heal", name:"Heal", class:"Sheep", icon:"sheep_heal4", maxRank:4, cd:[14, 16, 18, 20], cdWrapped:true, castTime:[2, 3, 4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×15+10)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, dmgNote:"Direct single-target recovery.\nScales with TAL and Benediction passive (+15% per rank).\nBypasses enemy DEF." },
-  { id:"sheep_bless", name:"Bless", class:"Sheep", icon:"sheep_bless4", maxRank:4, cd:[45, 60, 75, 90], cdWrapped:true, cdDep:SHEEP_GOSPEL_DEP, castTime:[3, 4, 5, 6], castWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, durNote:"Increases all 8 core stats (ATK, DEF, AGI, VIT, MAG, CHA, TAL, LCK) by +5 per rank (+5 / +10 / +15 / +20, or +10 / +15 / +20 / +25 with Gospel) for chaAdjust(30) seconds.", dmgNote:"Increases all 8 core stats by +5 per rank (up to +20 at rank 4) for 30s (chaAdjusted).\nGospel passive fixes base cooldown to 30s across all ranks." },
-  { id:"sheep_quickHeal", name:"Quick Heal", class:"Sheep", icon:"sheep_quickHeal2", maxRank:2, cd:1, cdWrapped:false, revisedArtExempt:false, dmg:"talAdjust(sLv×10)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, dmgNote:"Instant low-cooldown single-target heal.\nScales with TAL and Benediction passive (+15% per rank)." },
-  { id:"sheep_allHeal", name:"All Heal", class:"Sheep", icon:"sheep_allHeal2", maxRank:2, cd:[45, 60], cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×15+10)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, dmgNote:"Party-wide 8m radius area heal.\nScales with TAL and Benediction passive (+15% per rank)." },
-  { id:"sheep_pacify", name:"Pacify", class:"Sheep", icon:"sheep_pacify2", maxRank:2, cd:[45, 60], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, dmgNote:"Calms target enemy, dramatically reducing aggression and attack threat." },
-  { id:"sheep_sleep", name:"Sleep", class:"Sheep", icon:"sheep_sleep2", maxRank:2, cd:90, cdWrapped:true, castTime:[6, 8], castWrapped:true, revisedArtExempt:false, duration:[15, 20], durWrapped:true, durContested:true, durNote:"Puts target enemy to sleep for 15s (Rank 1) / 20s (Rank 2) base (contested by target CHA), halting all movement (0 speed) and actions until duration expires or damage is taken.", dmgNote:"Puts target to sleep for 10s + 5s×rank (chaAdjusted). Taking damage awakens the target." },
-  { id:"sheep_clear", name:"Clear", class:"Sheep", icon:"sheep_clear2", maxRank:2, cd:[12, 18], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, dmgNote:"Single-target cleanse, removing 1 negative status effect." },
-  { id:"sheep_cleanse", name:"Cleanse", class:"Sheep", icon:"sheep_cleanse1", maxRank:1, cd:30, cdWrapped:true, castTime:4, castWrapped:true, revisedArtExempt:false, dmgNote:"Targeted cleanse removing negative status debuffs." },
-  { id:"sheep_allCleanse", name:"All Cleanse", class:"Sheep", icon:"sheep_allCleanse1", maxRank:1, cd:90, cdWrapped:true, castTime:6, castWrapped:true, revisedArtExempt:false, dmgNote:"Party-wide cleanse, removing negative status effects from all allies." },
-  { id:"sheep_overHeal", name:"Over Heal", class:"Sheep", icon:"sheep_overHeal2", maxRank:2, cd:[30, 45], cdWrapped:true, castTime:[4, 6], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×30+20)", ko:"0", dmgRankDep:SHEEP_BENEDICTION_DEP, dmgNote:"Offensive opening burst skill against enemies at 100% full HP (Sheep.cs:26334–26357).\n• Condition: Deals 0 damage if target is below max HP (hp != mhp).\n• Damage: Deals talAdjust(20 + 30×sLv) magic damage (boosted by +15%/rank from Benediction), capped at (0.2 + 0.1×sLv) × target Max HP (30% Max HP at R1, 40% Max HP at R2)." },
-  { id:"sheep_revive", name:"Revive", class:"Sheep", icon:"sheep_revive2", maxRank:2, cd:[240, 180], cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×50)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, dmgNote:"Resurrects a fallen ally with recovered HP scaling with TAL and Benediction." },
-  { id:"sheep_revert", name:"Revert", class:"Sheep", icon:"sheep_revert1", maxRank:1, cd:900, cdWrapped:true, revisedArtExempt:false, dmgNote:"Ultimate emergency reset: completely restores caster to 100% HP, MP, and KO." },
-  { id:"sheep_holyLight", name:"Holy Light", class:"Sheep", icon:"sheep_holyLight2", maxRank:2, cd:60, cdWrapped:true, castTime:6, castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×12+12)", ko:"1", dmgNote:"Straight linear holy ray dealing holy magic damage with 1 KO knockback." },
-  { id:"sheep_lightBind", name:"Light Bind", class:"Sheep", icon:"sheep_lightBind4", maxRank:4, cd:[18, 22, 26, 30], cdWrapped:true, castTime:[2, 2.5, 3, 3.5], castWrapped:true, revisedArtExempt:false, duration:3, durWrapped:true, durContested:true, dep:SHEEP_INTENSE_BIND_DEP, durPostAdd:(depRank)=>(depRank?1:0), hitCountDuration:1, dmg:"6×(sLv+depLv)", effectDamage:true, ko:"0", dmgRankDep:SHEEP_INTENSE_BIND_DEP, durNote:"Binds target in place (movement speed = 0) for 3s base (contested by target CHA against enemy CHA) + 1.0s fixed duration with Intense Bind (uncontested), pulsing every 1.0s to deal 6×(sLv+depLv) flat true effect damage per tick (6 / 12 / 18 / 24, up to 30 at Rank 4 with Intense Bind).", dmgNote:"Binds target in place (0 movement speed) for 3s (contested by target CHA) + 1.0s fixed with Intense Bind (uncontested).\nPulses every 1.0s to deal 6×(sLv+depLv) (6 / 12 / 18 / 24, or 12 / 18 / 24 / 30 with Intense Bind) flat true effect damage per tick.\nBypasses enemy DEF and damageMod (purple effect damage)." },
-  { id:"sheep_illuminate", name:"Illuminate", class:"Sheep", icon:"sheep_illuminate4", maxRank:4, cd:[15, 18, 21, 24], cdWrapped:true, castTime:[2, 3, 4, 5], castWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, isHeal:true, dmg:"4×(sLv+2×depLv)", dmgRankDep:SHEEP_BLINDING_LIGHT_DEP, dmgNote:"Bestows a restorative aura on target ally for chaAdjust(12) seconds (+2 bonus ranks with Blinding Light passive).\nPulses every 3.0s (4 ticks) to restore:\n• +4×(sLv + 2×depLv) HP (4 / 8 / 12 / 16 HP base; 12 / 16 / 20 / 24 HP with Blinding Light)\n• +(sLv + 2×depLv) MP (1 / 2 / 3 / 4 base; 3 / 4 / 5 / 6 with Blinding Light)\n• +(sLv + 2×depLv) SP (1 / 2 / 3 / 4 base; 3 / 4 / 5 / 6 with Blinding Light)", durNote:"Bestows a restorative aura on target ally for chaAdjust(12) seconds, pulsing every 3.0s (4 ticks) to restore +4×(sLv + 2×depLv) HP, +(sLv + 2×depLv) MP, and +(sLv + 2×depLv) SP per pulse." },
-  { id:"sheep_feather", name:"Feather", class:"Sheep", icon:"sheep_feather2", maxRank:2, cd:[15, 18], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, durNote:"Grants target ally +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2) flat run speed and reduces character weight by -5 (Rank 1) / -10 (Rank 2) for chaAdjust(15) seconds.", dmgNote:"Grants target ally for chaAdjust(15) seconds:\n• Run Speed: +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2)\n• Weight: -5 (Rank 1) / -10 (Rank 2)" },
-  { id:"sheep_allFeather", name:"All Feather", class:"Sheep", icon:"sheep_allFeather2", maxRank:2, cd:60, cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, durNote:"Grants all party members in range +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2) flat run speed and reduces character weight by -5 (Rank 1) / -10 (Rank 2) for chaAdjust(15) seconds.", dmgNote:"Party-wide feather blessing for chaAdjust(15) seconds:\n• Run Speed: +0.25 m/s (Rank 1) / +0.50 m/s (Rank 2)\n• Weight: -5 (Rank 1) / -10 (Rank 2) to all allies in range" },
-  { id:"sheep_divinitySword", name:"Divinity Sword", class:"Sheep", icon:"sheep_divinitySword2", maxRank:2, cd:45, cdWrapped:true, castTime:[3, 4], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×20+10)", ko:"1", dmgNote:"Summons a divinity sword that executes a forward holy slash." },
-  { id:"sheep_divinitySpear", name:"Divinity Spear", class:"Sheep", icon:"sheep_divinitySpear2", maxRank:2, cd:60, cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×15+10)", ko:"1", dmgNote:"Piercing linear divinity spear thrust piercing through enemies in line." },
-  { id:"sheep_seal", name:"Seal", class:"Sheep", icon:"sheep_seal1", maxRank:1, cd:12, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, durNote:"Deploys a Red or Blue sacred ground seal lasting chaAdjust(60) seconds for battlefield positioning and combo synergy.", dmgNote:"Places a Red (Attack) or Blue (Defense) ground seal lasting 60s (chaAdjusted). Aligning 3 seals activates Earth/Heaven combo manifestations." },
-  { id:"sheep_repel", name:"Repel", class:"Sheep", icon:"sheep_repel2", maxRank:2, cd:120, cdWrapped:true, castTime:[5, 4], castWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, durNote:"Deploys a holy deflection barrier lasting chaAdjust(6) seconds that absorbs 50 (Rank 1) / 100 (Rank 2) flat damage per hit and deflects incoming physical and projectile attacks.", dmgNote:"Spawns a physical deflection field lasting 6s (chaAdjusted) that repels enemies and blocks linear attacks." },
-  { id:"sheep_reverse", name:"Reverse", class:"Sheep", icon:"sheep_reverse2", maxRank:2, cd:240, cdWrapped:true, castTime:[7, 5], castWrapped:true, revisedArtExempt:false, duration:3, durWrapped:true, durNote:"Casts an inversion barrier lasting chaAdjust(3) seconds that converts 50% (Rank 1) / 100% (Rank 2) of incoming attack damage into instant HP healing.", dmgNote:"Ground inversion seal lasting 3s (chaAdjusted) that reverses status and damage interactions." },
-  { id:"sheep_soulOfArms", name:"Soul of Arms", class:"Sheep", icon:"sheep_soulOfArms2", maxRank:2, cd:300, cdWrapped:true, castTime:[6, 8], castWrapped:true, revisedArtExempt:false, dmgNote:"Summons animated spiritual divinity weapons that hover and auto-attack nearby targets alongside the caster." },
-  { id:"sheep_purifyingTear", name:"Purifying Tear", class:"Sheep", icon:"sheep_purifyingTear1", maxRank:1, cd:480, cdWrapped:true, castTime:3, castWrapped:true, revisedArtExempt:false, dmgNote:"Emits a massive 40m cleansing holy shockwave that instantly wipes all accumulated enemy threat/hate (removeHate)." },
-  { id:"sheep_lullaby", name:"Lullaby", class:"Sheep", icon:"sheep_lullaby1", maxRank:1, cd:60, cdWrapped:true, castTime:9, castWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, durContested:true, durNote:"Sings a soothing area lullaby putting all enemies in range to sleep for chaAdjust(6) seconds base (contested by target CHA), disabling movement and actions until woken by damage.", dmgNote:"Soothing hymn putting all nearby enemies within area into sleep state for 6s (chaAdjusted)." },
-  { id:"sheep_divinityAxe", name:"Divinity Axe", class:"Sheep", icon:"sheep_divinityAxe1", maxRank:1, cd:150, cdWrapped:true, castTime:7, castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(45)", ko:"2", dmgNote:"Summons a colossal divinity battleaxe executing a crushing ground smash dealing heavy holy damage with 2 KO." },
-  { id:"sheep_edenSanctuary", name:"Eden Sanctuary", class:"Sheep", icon:"sheep_edenSanctuary1", maxRank:1, cd:240, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:false, durNote:"Deploys an 18m radius sacred sanctuary lasting 12 seconds, granting 50% incoming damage reduction to all allies inside the zone.", dmgNote:"Sanctuary ground field lasting 12s, pulsing every 2s to grant all allies within 18m area 50% damage reduction (sanctuary status)." },
-  { id:"sheep_worldEncarta", name:"World Encarta", class:"Sheep", icon:"sheep_worldEncarta1", maxRank:1, cd:150, cdWrapped:true, castTime:7, castWrapped:true, revisedArtExempt:false, duration:9, durWrapped:true, durNote:"Envelops target ally in an absolute divine sanctuary for chaAdjust(9) seconds: adds +20% of caster's ATK (+0.2×ATK) as flat bonus DEF and renders the target completely immune to all damage and negative status effects.", dmgNote:"Envelops target in an absolute divine sanctuary for chaAdjust(9) seconds:\n• DEF Bonus: +20% of caster's ATK (+0.2×ATK) added to target DEF\n• Invulnerability: Target is 100% immune to all damage and negative status effects" },
+    { id:"sheep_heal", name:"Heal", class:"Sheep", icon:"sheep_heal4", maxRank:4, cd:[14, 16, 18, 20], cdWrapped:true, castTime:[2, 3, 4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×15+10)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, note:"Restores HP to a single target ally." },
+  { id:"sheep_bless", name:"Bless", class:"Sheep", icon:"sheep_bless4", maxRank:4, cd:[45, 60, 75, 90], cdWrapped:true, cdDep:SHEEP_GOSPEL_DEP, castTime:[3, 4, 5, 6], castWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, note:"Blesses an ally, temporarily increasing all 8 core stats by (4 + 4×sLv). If Gospel is learned, grants +4 additional stats and sets base cooldown to 30s." },
+  { id:"sheep_quickHeal", name:"Quick Heal", class:"Sheep", icon:"sheep_quickHeal2", maxRank:2, cd:1, cdWrapped:false, revisedArtExempt:false, dmg:"talAdjust(sLv×10)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, note:"Instantly casts a 3m area heal around the caster to restore HP to nearby allies." },
+  { id:"sheep_allHeal", name:"All Heal", class:"Sheep", icon:"sheep_allHeal2", maxRank:2, cd:[45, 60], cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×15+10)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, note:"Casts a map-wide blessing that restores HP to all party members." },
+  { id:"sheep_pacify", name:"Pacify", class:"Sheep", icon:"sheep_pacify2", maxRank:2, cd:[45, 60], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, note:"Calms a targeted enemy, dramatically reducing its aggression and attack threat." },
+  { id:"sheep_sleep", name:"Sleep", class:"Sheep", icon:"sheep_sleep2", maxRank:2, cd:90, cdWrapped:true, castTime:[6, 8], castWrapped:true, revisedArtExempt:false, duration:[15, 20], durWrapped:true, durContested:true, note:"Puts a targeted enemy to sleep, disabling movement and actions. Taking damage awakens the target." },
+  { id:"sheep_clear", name:"Clear", class:"Sheep", icon:"sheep_clear2", maxRank:2, cd:[12, 18], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, note:"Removes 1 negative status debuff from a single targeted ally." },
+  { id:"sheep_cleanse", name:"Cleanse", class:"Sheep", icon:"sheep_cleanse1", maxRank:1, cd:30, cdWrapped:true, castTime:4, castWrapped:true, revisedArtExempt:false, note:"Cleanses all negative status debuffs from a single targeted ally." },
+  { id:"sheep_allCleanse", name:"All Cleanse", class:"Sheep", icon:"sheep_allCleanse1", maxRank:1, cd:90, cdWrapped:true, castTime:6, castWrapped:true, revisedArtExempt:false, note:"Cleanses all negative status debuffs from all party members." },
+  { id:"sheep_overHeal", name:"Over Heal", class:"Sheep", icon:"sheep_overHeal2", maxRank:2, cd:[30, 45], cdWrapped:true, castTime:[4, 6], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×30+20)", ko:"0", dmgRankDep:SHEEP_BENEDICTION_DEP, note:"Opening holy strike against an enemy at 100% full HP (deals 0 damage if target is below max HP). Damage is capped at (20% + 10%×sLv) of the target's Max HP." },
+  { id:"sheep_revive", name:"Revive", class:"Sheep", icon:"sheep_revive2", maxRank:2, cd:[240, 180], cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×50)", isHeal:true, dmgRankDep:SHEEP_BENEDICTION_DEP, note:"Resurrects a fallen ally back to life with recovered HP." },
+  { id:"sheep_revert", name:"Revert", class:"Sheep", icon:"sheep_revert1", maxRank:1, cd:900, cdWrapped:true, revisedArtExempt:false, note:"Ultimate emergency recovery: completely restores the caster to 100% full HP, MP, and KO." },
+  { id:"sheep_holyLight", name:"Holy Light", class:"Sheep", icon:"sheep_holyLight2", maxRank:2, cd:60, cdWrapped:true, castTime:6, castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×12+12)", ko:"1", note:"Fires a piercing linear holy ray that strikes through enemies in a line." },
+  { id:"sheep_lightBind", name:"Light Bind", class:"Sheep", icon:"sheep_lightBind4", maxRank:4, cd:[18, 22, 26, 30], cdWrapped:true, castTime:[2, 2.5, 3, 3.5], castWrapped:true, revisedArtExempt:false, duration:3, durWrapped:true, durContested:true, dep:SHEEP_INTENSE_BIND_DEP, durPostAdd:(depRank)=>(depRank?1:0), hitCountDuration:1, dmg:"6×(sLv+depLv)", effectDamage:true, ko:"0", dmgRankDep:SHEEP_INTENSE_BIND_DEP, note:"Roots a target in place (0 movement speed), pulsing true effect damage every 1.0s that bypasses enemy DEF. If Intense Bind is learned, adds +1.0s of uncontested root duration." },
+  { id:"sheep_illuminate", name:"Illuminate", class:"Sheep", icon:"sheep_illuminate4", maxRank:4, cd:[15, 18, 21, 24], cdWrapped:true, castTime:[2, 3, 4, 5], castWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, isHeal:true, dmg:"4×(sLv+2×depLv)", dmgRankDep:SHEEP_BLINDING_LIGHT_DEP, note:"Bestows a restorative aura on an ally that pulses every 3.0s to restore HP, MP, and SP. If Blinding Light is learned, increases the amount of HP, MP, and SP restored per pulse." },
+  { id:"sheep_feather", name:"Feather", class:"Sheep", icon:"sheep_feather2", maxRank:2, cd:[15, 18], cdWrapped:true, castTime:[2, 3], castWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, note:"Grants a target ally +0.25 m/s run speed per skill rank and reduces weight by -5 per rank to increase jump height." },
+  { id:"sheep_allFeather", name:"All Feather", class:"Sheep", icon:"sheep_allFeather2", maxRank:2, cd:60, cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, note:"Grants all party members in range +0.25 m/s run speed per skill rank and reduces weight by -5 per rank to increase jump height." },
+  { id:"sheep_divinitySword", name:"Divinity Sword", class:"Sheep", icon:"sheep_divinitySword2", maxRank:2, cd:45, cdWrapped:true, castTime:[3, 4], castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(sLv×20+10)", ko:"1", note:"Summons a floating divinity sword to execute a sweeping forward holy slash." },
+  { id:"sheep_divinitySpear", name:"Divinity Spear", class:"Sheep", icon:"sheep_divinitySpear2", maxRank:2, cd:60, cdWrapped:true, castTime:[4, 5], castWrapped:true, revisedArtExempt:false, dmg:"3×talAdjust(sLv×15+10)", ko:"1", note:"Summons a divinity spear that executes a piercing linear thrust, striking targets 3 times." },
+  { id:"sheep_seal", name:"Seal", class:"Sheep", icon:"sheep_seal1", maxRank:1, cd:12, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, note:"Deploys a Red or Blue sacred ground seal. Aligning 3 seals triggers powerful Earth or Heaven combo manifestations." },
+  { id:"sheep_repel", name:"Repel", class:"Sheep", icon:"sheep_repel2", maxRank:2, cd:120, cdWrapped:true, castTime:[5, 4], castWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, note:"Deploys a holy deflection barrier that repels enemies, blocks linear attacks, and absorbs flat damage per hit." },
+  { id:"sheep_reverse", name:"Reverse", class:"Sheep", icon:"sheep_reverse2", maxRank:2, cd:240, cdWrapped:true, castTime:[7, 5], castWrapped:true, revisedArtExempt:false, duration:3, durWrapped:true, note:"Casts an inversion barrier that converts (50% × sLv) of incoming attack damage into instant HP healing." },
+  { id:"sheep_soulOfArms", name:"Soul of Arms", class:"Sheep", icon:"sheep_soulOfArms2", maxRank:2, cd:300, cdWrapped:true, castTime:[6, 8], castWrapped:true, revisedArtExempt:false, note:"Summons animated divinity weapons that hover and automatically attack nearby enemies alongside the caster." },
+  { id:"sheep_purifyingTear", name:"Purifying Tear", class:"Sheep", icon:"sheep_purifyingTear1", maxRank:1, cd:480, cdWrapped:true, castTime:3, castWrapped:true, revisedArtExempt:false, note:"Emits a 40m cleansing holy shockwave that instantly resets all accumulated enemy aggro and attack threat." },
+  { id:"sheep_lullaby", name:"Lullaby", class:"Sheep", icon:"sheep_lullaby1", maxRank:1, cd:60, cdWrapped:true, castTime:9, castWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true, durContested:true, note:"Sings a soothing area lullaby putting all nearby enemies to sleep. Taking damage awakens affected targets." },
+  { id:"sheep_divinityAxe", name:"Divinity Axe", class:"Sheep", icon:"sheep_divinityAxe1", maxRank:1, cd:150, cdWrapped:true, castTime:7, castWrapped:true, revisedArtExempt:false, dmg:"5×talAdjust(45)", ko:"2", note:"Summons a divine battleaxe, damaging enemies in the area 5 times." },
+  { id:"sheep_edenSanctuary", name:"Eden Sanctuary", class:"Sheep", icon:"sheep_edenSanctuary1", maxRank:1, cd:240, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:false, note:"Deploys an 18m radius sacred sanctuary that grants 50% incoming damage reduction to all allies inside the zone." },
+  { id:"sheep_worldEncarta", name:"World Encarta", class:"Sheep", icon:"sheep_worldEncarta1", maxRank:1, cd:150, cdWrapped:true, castTime:7, castWrapped:true, revisedArtExempt:false, duration:9, durWrapped:true, note:"Envelops a target ally in an absolute sanctuary: adds +20% of caster ATK as bonus DEF and grants total invulnerability to all damage and debuffs." },
 { id:"whale_sweep", name:"Sweep", class:"Whale", icon:"whale_sweep2", cd:30, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-10) },
   { id:"whale_javelin", name:"Javelin", class:"Whale", icon:"whale_javelin2", cd:30, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-10) },
   { id:"whale_honor", name:"Honor", class:"Whale", icon:"whale_honor4", cd:60, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
@@ -3330,6 +3346,7 @@ const CLASS_COLORS = {
   Mole: "#8a6d45", Monkey: "#cf5a3a", Panda: "#5b8a8c", Penguin: "#4fa3c9",
   Rabbit: "#d9689e", Sheep: "#b89bd9", Whale: "#3d5f99", Wolf: "#7d8b99",
 };
+const UPGRADED_CLASSES = new Set(["Penguin", "Mole", "Chameleon", "Rabbit", "Sheep"]);
 
 function mountSkillCooldownLookup(root){
   root.innerHTML = `
@@ -4848,6 +4865,31 @@ function mountSkillCooldownLookup(root){
     }
 
     const rank = getSkillRank(selected);
+    const isUpgradedClass = UPGRADED_CLASSES.has(selected.class);
+    let heroInfoHtml = "";
+    if (isUpgradedClass) {
+      const dmgFlagDepOn = selected.dmgFlagDep && getDepRank(selected.dmgFlagDep) === selected.dmgFlagDep.maxRank;
+      const dmgNoteText = typeof selected.dmgNote === "function" ? selected.dmgNote(dmgFlagDepOn) : selected.dmgNote;
+
+      const depRank = selected.dep ? getDepRank(selected.dep) : null;
+      const durNoteText = typeof selected.durNote === "function" ? selected.durNote(rank, depRank) : selected.durNote;
+
+      const shieldNoteText = selected.shieldNote;
+      const generalNoteText = selected.note;
+
+      const rawNotes = [dmgNoteText, durNoteText, shieldNoteText, generalNoteText].filter(Boolean);
+      const uniqueNotes = Array.from(new Set(rawNotes));
+
+      if (uniqueNotes.length > 0) {
+        const combinedNotes = uniqueNotes.join("\n\n");
+        heroInfoHtml = `
+          <details class="sk-hero-info">
+            <summary title="Skill info">ℹ</summary>
+            <div class="sk-hero-info-pop">${combinedNotes}</div>
+          </details>
+        `;
+      }
+    }
     const psActive = !!(privateServerOn && selected.ps && selected.ps.cd !== undefined);
     const cdBase = resolveRank(psActive ? selected.ps.cd : selected.cd, rank);
     const cdDep = selected.cdDep;
@@ -4930,7 +4972,7 @@ function mountSkillCooldownLookup(root){
         durDist = selected.durWrapped ? lckDistribution(rawDuration, CHA, LCK, chaAdjustAtRoll, durPostFn) : null;
       }
       const durNoteText = typeof selected.durNote === "function" ? selected.durNote(rank, depRank) : selected.durNote;
-      const durInfo = durNoteText ? `
+      const durInfo = (!isUpgradedClass && durNoteText) ? `
         <details class="sk-dmg-info">
           <summary title="Debuff detail">ℹ</summary>
           <div class="sk-dmg-info-pop">${durNoteText}</div>
@@ -5152,7 +5194,7 @@ function mountSkillCooldownLookup(root){
       // (Tornado's own dmgNote below only exercises this today).
       const dmgFlagDepOn = selected.dmgFlagDep && getDepRank(selected.dmgFlagDep) === selected.dmgFlagDep.maxRank;
       const dmgNoteText = typeof selected.dmgNote === "function" ? selected.dmgNote(dmgFlagDepOn) : selected.dmgNote;
-      const dmgInfo = dmgNoteText ? `
+      const dmgInfo = (!isUpgradedClass && dmgNoteText) ? `
         <details class="sk-dmg-info">
           <summary title="More info">ℹ</summary>
           <div class="sk-dmg-info-pop">${dmgNoteText}</div>
@@ -5726,7 +5768,7 @@ function mountSkillCooldownLookup(root){
         selected.shieldFocusIntellect ? renderDmgToggle(PENGUIN_FOCUS_INTELLECT_DEP) : "",
         selected.shieldDep ? renderDmgToggle(selected.shieldDep) : "",
       ].join("");
-      const shieldInfo = selected.shieldNote ? `
+      const shieldInfo = (!isUpgradedClass && selected.shieldNote) ? `
         <details class="sk-dmg-info">
           <summary title="More info">ℹ</summary>
           <div class="sk-dmg-info-pop">${selected.shieldNote}</div>
@@ -5829,6 +5871,7 @@ function mountSkillCooldownLookup(root){
             <h3 class="sk-hero-name">${selected.name}</h3>
             <span class="sk-tag" style="--tag-color:${CLASS_COLORS[selected.class]}">${selected.class}</span>
           </div>
+          ${heroInfoHtml}
         </div>
         <div class="sk-hero-stats">
           <div class="sk-stat sk-stat-cd">
@@ -5950,7 +5993,7 @@ function mountSkillCooldownLookup(root){
       });
     }
 
-    $$(".sk-dmg-info", displayEl).forEach(el => {
+    $$(".sk-dmg-info, .sk-hero-info", displayEl).forEach(el => {
       el.addEventListener("toggle", positionDmgInfoPopup);
     });
 

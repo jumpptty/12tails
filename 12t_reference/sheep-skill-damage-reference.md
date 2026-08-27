@@ -18,7 +18,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - `divinitySpear`: Piercing line thrust dealing `talAdjust(10 + 15×sLv)`, 1 KO.
   - `divinityAxe`: Crushing holy slam dealing `talAdjust(45)`, 2 KO.
 - **Support, Blessings & Seals**:
-  - `bless`: Increases all 8 core stats by +5 per rank (up to +20, or +25 with Gospel) for 30s (`chaAdjusted`).
+  - `bless`: Increases all 8 core stats by `4 + 4×sLv` (+8/+12/+16/+20, or +12/+16/+20/+24 with Gospel) for 30s (`chaAdjusted`).
   - `illuminate`: Targeted restorative aura pulsing every 3s to restore `4×(sLv + 2×depLv)` HP and `sLv + 2×depLv` MP/SP for 12s (`chaAdjusted`). Grants +2 bonus ranks with Blinding Light passive (4/8/12/16 HP base, or 12/16/20/24 HP with Blinding Light).
   - `sleep` & `lullaby`: Single-target and area sleep crowd control (contested by target CHA).
   - `feather` & `allFeather`: Reduces character weight by -5/-10 (super jump/slow fall) and adds +0.25/+0.50 m/s flat run speed for 15s (`chaAdjusted`). (Does not grant AGI).
@@ -34,9 +34,9 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | Skill ID | Name | Max Rank | Cooldown (Base) | Cast Time (Base) | Duration (Base) | Formula / Effect | KO | Notes |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :--- |
 | `sheep_heal` | Heal | 4 | [14, 16, 18, 20]s | [2, 3, 4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Single-target heal scaling with TAL and Benediction (+15%/rank). |
-| `sheep_bless` | Bless | 4 | [45, 60, 75, 90]s | [3, 4, 5, 6]s | 30s | +5/10/15/20 all stats | — | Buffs all 8 stats for 30s (`chaAdjusted`). Gospel passive fixes CD to 30s and grants +1 status level. |
-| `sheep_quickHeal` | Quick Heal | 2 | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` | 0 | Instant single-target heal scaling with TAL and Benediction. |
-| `sheep_allHeal` | All Heal | 2 | [45, 60]s | [4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Party-wide 8m AoE heal scaling with TAL and Benediction. |
+| `sheep_bless` | Bless | 4 | [45, 60, 75, 90]s | [3, 4, 5, 6]s | 30s | +8/12/16/20 all stats | — | Buffs all 8 stats by `4 + 4×sLv` for 30s (`chaAdjusted`). Gospel passive fixes CD to 30s and grants +1 status level (+4 all stats). |
+| `sheep_quickHeal` | Quick Heal | 2 | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` | 0 | Instant 3m AoE heal around caster scaling with TAL and Benediction (hits up to 5 allies, or 7 with KO Heal). |
+| `sheep_allHeal` | All Heal | 2 | [45, 60]s | [4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Map-wide party heal (unlimited range) scaling with TAL and Benediction. |
 | `sheep_pacify` | Pacify | 2 | [45, 60]s | [2, 3]s | — | Aggro reduction | — | Calms target enemy, reducing threat. |
 | `sheep_sleep` | Sleep | 2 | 90s | [6, 8]s | [15, 20]s | Sleep CC | — | Single-target sleep for (10 + 5×sLv)s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
 | `sheep_clear` | Clear | 2 | [12, 18]s | [2, 3]s | — | Cleanse 1 debuff | — | Cleanses 1 negative status from target ally. |
@@ -51,14 +51,14 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_feather` | Feather | 2 | [15, 18]s | [2, 3]s | 15s | -5/-10 weight, +0.25/0.50 spd | — | Reduces weight by -5/-10 (super jump) and increases run speed by +0.25/+0.50 m/s for 15s (`chaAdjusted`). |
 | `sheep_allFeather` | All Feather | 2 | 60s | [4, 5]s | 15s | -5/-10 weight, +0.25/0.50 spd | — | Party-wide weight reduction (-5/-10) and run speed buff (+0.25/+0.50 m/s) for 15s (`chaAdjusted`). |
 | `sheep_divinitySword`| Divinity Sword | 2 | 45s | [3, 4]s | — | `talAdjust(10 + 20×sLv)` | 1 | Forward holy slash summoned weapon strike. |
-| `sheep_divinitySpear`| Divinity Spear | 2 | 60s | [4, 5]s | — | `talAdjust(10 + 15×sLv)` | 1 | Linear piercing spear thrust through enemies. |
+| `sheep_divinitySpear`| Divinity Spear | 2 | 60s | [4, 5]s | — | `3 × talAdjust(10 + 15×sLv)` | 1 | Linear piercing spear thrust through enemies, striking 3 times. |
 | `sheep_seal` | Seal | 1 | 12s | 0s | 60s | Red/Blue ground seal | — | Ground seal lasting 60s (`chaAdjusted`) for combo alignment. |
 | `sheep_repel` | Repel | 2 | 120s | [5, 4]s | 6s | Physical deflection | — | Deflection wall lasting 6s (`chaAdjusted`), absorbing 50/100 damage/hit and blocking projectiles. |
-| `sheep_reverse` | Reverse | 2 | 240s | [7, 5]s | 3s | Status inversion | — | Inversion seal lasting 3s (`chaAdjusted`), converting 50%/100% of incoming damage to healing. |
+| `sheep_reverse` | Reverse | 2 | 240s | [7, 5]s | 3s | Status inversion | — | Inversion seal lasting 3s (`chaAdjusted`), converting `50% × sLv` (50%/100%) of incoming damage to healing. |
 | `sheep_soulOfArms` | Soul of Arms | 2 | 300s | [6, 8]s | — | Autonomous weapons | — | Summons spiritual weapons that auto-attack nearby targets. |
 | `sheep_purifyingTear`| Purifying Tear | 1 | 480s | 3s | — | Threat wipe (AoE) | — | 40m holy shockwave wiping all accumulated enemy threat/hate. |
 | `sheep_lullaby` | Lullaby | 1 | 60s | 9s | 6s | Area Sleep CC | — | Soothing area hymn sleeping all nearby targets for 6s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
-| `sheep_divinityAxe` | Divinity Axe | 1 | 150s | 7s | — | `talAdjust(45)` | 2 | Heavy holy ground slam dealing damage with 2 KO knockback. |
+| `sheep_divinityAxe` | Divinity Axe | 1 | 150s | 7s | — | `5 × talAdjust(45)` | 2 | Summons a divine battleaxe, damaging enemies in the area 5 times. |
 | `sheep_edenSanctuary`| Eden Sanctuary | 1 | 240s | 0s | 12s | 50% dmg reduction | — | 18m sanctuary field reducing incoming damage by 50% for 12s. |
 | `sheep_worldEncarta` | World Encarta | 1 | 150s | 7s | 9s | Invulnerability + DEF | — | Target invulnerability barrier for 9s (`chaAdjusted`): adds +20% of caster's ATK as DEF and grants 100% immunity. |
 

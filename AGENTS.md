@@ -56,56 +56,35 @@ When reading `.cs` files in `DecompiledSource/`:
 
 ---
 
-## 5. Quality Assurance & Skill Verification Protocol
+## 5. Skill Verification & Quality Assurance Pipeline
 
-To eliminate regressions and discrepancies when authoring or updating skill mechanics (especially when processing multiple skills or entire classes in a single prompt):
+Every skill authoring, formula update, or tooltip review must strictly follow this linear 4-step execution pipeline:
 
-1. **No Shortcuts or Flat Approximations in Bulk Operations**:
-   * Never summarize or approximate values across multiple skills.
-   * Every single skill in a request must undergo an independent, exhaustive decompiled source trace before any data or code is authored.
-2. **Mandatory Per-Rank Scaling Arrays (`maxRank > 1`)**:
-   * Always inspect the decompiled `RPC_<name>` cast site / `DisplayCastBar` / `addTimeOut` / companion `MonoBehaviour` for `sLv` scaling:
-     * `castTime`: if `sLv` dependent (e.g., `1 + sLv` → `[2, 3, 4, 5]`), define as explicit array and check adjustment wrapper (`magAdjust` vs `chaAdjust`).
-     * `cd`: if `sLv` dependent (e.g., `12 + 2 * sLv` → `[14, 16, 18, 20]`), define as explicit array and check adjustment wrapper (`agiAdjust`).
-     * `duration` / `hitCountDuration`: check if duration or tick intervals scale per rank.
-3. **Mandatory Line-by-Line Citations (`file:line`)**:
-   * Every skill presentation and documentation must cite exact source lines for:
-     1. Cast time formula (`mCastTime` assignment & `magAdjust`/`chaAdjust` wrapper).
-     2. Cooldown formula (`mTimeOut` assignment & `agiAdjust` wrapper).
-     3. Damage / Heal / KO execution (`hit()`, `RPC_AddDamage`, `RPC_AddHeal`, `RPC_AddEffectDamage`, `nKo`).
-     4. Passive modifier gates (`hasSkill(...)`, `get<Passive>Lv()`).
-4. **Mandatory Passive Dependency & `skillDep` Audit**:
-   * For every skill traced, scan the entire initiation, timeout, and execution block for all `hasSkill(ID)` and `get<Passive>Lv()` calls.
-   * Cross-reference every found skill ID in `<Class>Skill.cs` or `CharacterData.cs` to identify the exact passive name.
-   * Map every passive modifier to its proper tool dependency hook:
-     * **Cooldown Reduction / Override** → `cdDep: <CLASS>_<PASSIVE>_DEP` (e.g. Gospel `kind: "replace"`, Mine Lover, Whale Knight).
-     * **Cast Time Reduction** → `castDep: <CLASS>_<PASSIVE>_DEP` (e.g. Improved Slayer, Reduced Cast).
-     * **Damage / Heal Multiplier or Rank Addition** → `dep: <CLASS>_<PASSIVE>_DEP`, `dmgMultDep`, or `dmgRankDep` (e.g. Benediction, Hidden Blade).
-     * **Duration / Pulse Interval Extension** → `durDep: <CLASS>_<PASSIVE>_DEP`.
-     * **Knockout Shift** → `koDep: <CLASS>_<PASSIVE>_DEP` (e.g. Grenade Cluster).
-   * Verify that the passive's authentic rank icon exists in `SKILL_ICONS` so the toggle chip renders seamlessly.
-5. **Formula & Variable Permutation Validation**:
-   * Any formula with variables (`sLv`, `depLv`) or parentheses must evaluate without error across all rank combinations (1..maxRank) and toggle states.
-   * Flat arithmetic parser regexes must always support parentheses: `/^[\d\s×*+\-().]+$/`.
-6. **Programmatic PNG Header Icon Extraction**:
-   * Icons must be extracted directly from `RippedAssets/...` and validated for authentic PNG headers (`89 50 4E 47 0D 0A 1A 0A`). Never use placeholder base64 strings.
-7. **Full-Lifecycle End-to-End Execution Trace (Mandatory for All Skills)**:
-   * **Never stop early** after reading the initial cast dispatch or a single coroutine.
-   * Thoroughly trace the **entire lifecycle** of the skill from initiation to resolution:
-     1. **Cast & Wind-up:** `RPC_<skill>`, `DisplayCastBar`, `addTimeOut` / cooldown application.
-     2. **Multi-Phase Transitions:** In-flight coroutines, secondary triggers (e.g. mid-air actions, collision handlers, landing phases), companion `MonoBehaviour` instances.
-     3. **All Damage & KO Instances:** Check EVERY `hit()` / `RPC_AddDamage` / `FindAreaTarget` call in all phases (initial hit, mid-air triggers, ground slam / landing, recurring tick loops). Record both `nDamage` formula and `nKo` value for every phase.
-     4. **Conditional Passive Branches:** Check all `hasSkill(...)` branches for added hits, modified coefficients, or secondary effects.
-8. **Mandatory Status Effect & Buff/Debuff Execution Trace (Zero Guesswork / No Trope Assumptions)**:
-   * **Never assume or guess what a buff, debuff, barrier, or status effect does based on its English name, icon, or common RPG tropes** (e.g. assuming 'Illuminate' is stealth reveal, 'Feather' is AGI, or 'Light Bind' has a burst finisher).
-   * Whenever `RPC_AddStatus(statusName, sLv, duration, sValue, ...)` is called:
-     1. Search `CharacterControl.cs` for `case "<statusName>":` and `sType == "<statusName>"`.
-     2. Trace the exact variables modified upon application (`RPC_AddStatus`), on recurring tick loops (`mod(...)`), and upon removal (`removeStatus`).
-     3. Verify exact stat/variable deltas: `deltaRunSpeed`, `weight`, `sF2cOBZX7wK` (jump gravity), `deltaDef`, `deltaAllStat`, `RPC_AddHeal`, `RPC_AddEffectDamage`, etc.
-     4. Note the exact role of the `sValue` parameter (e.g. `sValue` passed as caster ATK vs target DEF vs flat HP).
-   * If any mechanic or effect is ambiguous or not 100% proven from decompiled C# source, **stop and verify again or ask the user** — never write speculative or placeholder text.
-9. **Mandatory Automated Linting**:
-   * Before committing, run `node scripts/validate_skills.js` to execute the 100% automated integrity test suite covering all skills, formula permutations, and base64 icon assets.
+### Step 1: Pre-Flight Source Extraction (Zero Assumptions)
+* **Never guess or use generic RPG tropes.**
+* Run a temporary scratch script (in `<appDataDir>/brain/<conversation-id>/scratch/`) or `view_file` to trace the full lifecycle across:
+  1. **Cast Dispatch:** `<Class>.cs` (`RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust` wrappers, per-rank arrays for `maxRank > 1`).
+  2. **Execution & Companion Logic:** `<Class>_<companion>.cs` (multi-hit loops, secondary triggers, collision handlers).
+  3. **Status Effects:** `CharacterControl.cs` (`case "<status>":` and `sType == "<status>"` to verify exact stat deltas: `deltaAtk`, `deltaDef`, `deltaRunSpeed`, `weight`, tick formulas in `mod`, and removal in `removeStatus`).
+  4. **In-Game Tooltips:** `<Class>Skill_eng.cs` (reference for authentic flavor context; code findings always override tooltip errors).
+  5. **Passive Dependencies:** Scan for all `hasSkill(ID)` / `get<Passive>Lv()` calls; map to proper tool hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
+
+### Step 2: Observable Proof Review Table (3-Point Citation)
+Present a structured review table to the user. Every single skill entry must include:
+1. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` call.
+2. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
+3. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line`):** Exact raw string from client language files.
+4. **Proposed Header Tooltip:** Concise flavor context + non-obvious hidden mechanics (AoE radius, cleanses, sleep breaks, aggro wipes, qualitative passive phrasing). **Never duplicate numbers/formulas already displayed on the chips.**
+
+> ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
+
+### Step 3: Strict Single-Class User Gate
+* Process strictly **one class at a time**.
+* **Hard STOP:** Wait for explicit user review and approval before writing changes to `index.html` or advancing to the next class.
+
+### Step 4: Apply, Verify & Lint
+* Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`).
+* Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
 
 ---
 
