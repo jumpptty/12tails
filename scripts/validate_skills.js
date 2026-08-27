@@ -165,6 +165,22 @@ SKILLS.forEach(sk => {
     errorCount++;
   }
 
+  // Cost check
+  if (sk.cost) {
+    if (Array.isArray(sk.cost.mp) && sk.cost.mp.length !== maxRank) {
+      console.error(`[COST ERROR] ${ctx}: cost.mp array length (${sk.cost.mp.length}) does not match maxRank (${maxRank})`);
+      errorCount++;
+    }
+    if (Array.isArray(sk.cost.sp) && sk.cost.sp.length !== maxRank) {
+      console.error(`[COST ERROR] ${ctx}: cost.sp array length (${sk.cost.sp.length}) does not match maxRank (${maxRank})`);
+      errorCount++;
+    }
+    if ((sk.cost.sp || Array.isArray(sk.cost.sp)) && !['red', 'blue'].includes(sk.cost.spType)) {
+      console.error(`[COST ERROR] ${ctx}: sp cost defined without valid spType ('red' | 'blue')`);
+      errorCount++;
+    }
+  }
+
   // Formula evaluation check across all permutations
   if (sk.dmg) {
     for (let r = 1; r <= maxRank; r++) {
