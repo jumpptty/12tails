@@ -44,7 +44,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_allCleanse` | All Cleanse | 1 | 90s | 6s | — | Party cleanse | — | Cleanses debuffs from all party members. |
 | `sheep_overHeal` | Over Heal | 2 | [30, 45]s | [4, 6]s | — | `talAdjust(20 + 30×sLv)` | 0 | Offensive opening burst against full HP enemies (`hp == mhp`). Deals `talAdjust(20+30×sLv)` magic damage, capped at (20%+10%×sLv) of target Max HP (30% at R1, 40% at R2). Deals 0 damage if target `hp != mhp`. |
 | `sheep_revive` | Revive | 2 | [240, 180]s | [4, 5]s | — | `talAdjust(50×sLv)` | 0 | Resurrects fallen ally with HP scaling with TAL and Benediction. |
-| `sheep_revert` | Revert | 1 | 900s | 0s | — | 100% HP/MP/KO reset | — | Complete emergency recovery. |
+| `sheep_revert` | Revert | 1 | 900s | 6s | — | 100% HP/MP/KO reset | — | Complete emergency recovery. |
 | `sheep_holyLight` | Holy Light | 2 | 60s | 6s | — | `talAdjust(12 + 12×sLv)` | 1 | Linear holy ray dealing magic damage with 1 KO knockback. |
 | `sheep_lightBind` | Light Bind | 4 | [18, 22, 26, 30]s | [2, 2.5, 3, 3.5]s | 3s | `6×(sLv+depLv)` (per 1.0s tick) | 0 | Roots target (0 moveSpeed) for 3s base (`chaAdjusted`, contested) + 1.0s fixed duration with Intense Bind. Deals 6×(sLv+depLv) effect damage/tick (up to 30 at Rank 4 with Intense Bind). |
 | `sheep_illuminate` | Illuminate | 4 | [15, 18, 21, 24]s | [2, 3, 4, 5]s | 12s | `+4×(sLv + 2×depLv) HP, +(sLv + 2×depLv) MP/SP` | — | Friendly HoT/MoT/SoT buff pulsing every 3s for 12s (`chaAdjusted`). +2 effective ranks with Blinding Light (12/16/20/24 HP, 3/4/5/6 MP/SP per tick). |
