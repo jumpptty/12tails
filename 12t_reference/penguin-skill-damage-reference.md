@@ -22,6 +22,40 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 
 ---
 
+## Summary Table
+
+| Skill ID | Name | Max Rank | Cost (Base) | Cooldown (Base) | Cast Time (Base) | Duration (Base) | Formula / Effect |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `penguin_doubleCast` | Double Cast | 1 | 20 MP, 20 SP (red) | 240s | 0s | 12s | Grants Multi Cast lv.1 (next spell casts 2×) |
+| `penguin_tripleCast` | Triple Cast | 1 | 40 MP, 30 SP (red) | 240s | 0s | 12s | Grants Multi Cast lv.2 (next 2 spells cast 2×) |
+| `penguin_manaMissile` | Mana Missile | 4 | [9, 15, 21, 27] MP | [10, 12, 14, 16]s | [2, 3, 4, 5]s | — | `talAdjust(3×sLv + 12)` per missile (sLv+1 missiles) |
+| `penguin_manaArc` | Mana Arc | 4 | [6, 12, 18, 24] MP, [4, 6, 8, 10] SP (red) | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` self AoE |
+| `penguin_dispell` | Dispell | 2 | [14, 21] MP | [4, 5]s | 0s | — | Cleanses buff tier 2×sLv from enemies in AoE |
+| `penguin_blink` | Blink | 2 | 5 MP, [10, 15] SP (red) | 12s | 0s | — | Instant teleport (5m / 8m) |
+| `penguin_mpTransfer` | MP Transfer | 2 | [30, 45] MP | 30s | 0s | — | Restores `30×sLv + 10% Max MP` to target ally |
+| `penguin_manaBurn` | Mana Burn | 2 | [15, 20] MP | [24, 30]s | [3, 4]s | — | Drains target MP and deals damage scaling with missing MP |
+| `penguin_fallingStars` | Falling Stars | 2 | [20, 30] MP, [10, 15] SP (red) | 30s | 0s | — | `talAdjust(15 + 15×sLv)` per star (AoE bombardment) |
+| `penguin_fallingComets` | Falling Comets | 2 | [35, 45] MP | 60s | 0s | — | Targeted comet strike dealing heavy TAL damage |
+| `penguin_manaVortex` | Mana Vortex | 3 | [40, 55, 70] MP | [30, 40, 50]s | [3, 4, 5]s | 10s | Pulsing mana vortex dealing damage and pulling enemies |
+| `penguin_novaFlare` | Nova Flare | 1 | 30 SP (red) | 90s | 0s | — | Massive astral detonation |
+| `penguin_meteora` | Meteora | 2 | [120, 150] MP, [35, 45] SP (red) | [180, 240]s | [8, 10]s | — | Cataclysmic meteor strike |
+| `penguin_frozenBlast` | Frozen Blast | 4 | [12, 16, 20, 24] MP | [12, 14, 16, 18]s | [2, 2.5, 3, 3.5]s | — | `talAdjust(8 + 8×sLv)` linear ice blast |
+| `penguin_arcticWind` | Arctic Wind | 3 | [20, 26, 32] MP | [20, 25, 30]s | [2, 3, 4]s | 5s | Frontal freezing wind cone |
+| `penguin_iceShield` | Ice Shield | 4 | [15, 23, 31, 39] MP | 60s | [2, 3, 4, 5]s | 30s | Absorptive ice barrier shielding damage |
+| `penguin_iceBlock` | Ice Block | 2 | [10, 15] MP | [45, 60]s | 0s | 10s | Freezes self in invulnerable ice block |
+| `penguin_snowMan` | Snowman | 2 | [20, 30] MP | [60, 75]s | [3, 4]s | 20s | Summons distracting snowman decoy |
+| `penguin_tornado` | Tornado | 3 | [36, 48, 60] MP | [35, 45, 55]s | [3, 4, 5]s | 8s | Moving blizzard vortex |
+| `penguin_absoluteZero` | Absolute Zero | 2 | [35, 45] MP, [30, 40] SP (blue) | [90, 120]s | [4, 5]s | — | Deep freezing frost wave |
+| `penguin_blizzard` | Blizzard | 2 | [65, 80] MP | [120, 150]s | [6, 8]s | 10s | Map-wide snowstorm dealing continuous TAL damage |
+| `penguin_arcticEmperor` | Arctic Emperor | 2 | [60, 75] MP, [25, 35] SP (red) | [180, 240]s | [6, 8]s | 15s | Summons supreme Arctic Emperor spirit |
+| `penguin_focusIntellect` | Focus Intellect | 1 | 30 MP, 75 SP (red) | 60s | 0s | 10s | Empowers next spell with INT scaling |
+| `penguin_parallelShift` | Parallel Shift | 1 | 10 MP, 20 SP (red) | 45s | 0s | — | Astral displacement and cooldown reset |
+| `penguin_snowBall` | Snowball | 1 | 30 MP | 15s | 1s | — | Throws giant rolling snowball |
+| `penguin_cosmicRift` | Cosmic Rift | 1 | 50 MP, 50 SP (red) | 120s | 4s | 8s | Dimensional rift distorting gravity and dealing continuous damage |
+| `penguin_cosmicFriday` | Cosmic Friday | 1 | Free / 0 | 300s | 0s | 20s | Ultimate celestial alignment |
+
+---
+
 ## BASIC (1xx)
 
 ### pgn_nAttack1 (101) / pgn_nAttack2 (102) — passive, combo unlockers

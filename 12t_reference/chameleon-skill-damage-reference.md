@@ -9,33 +9,33 @@ back to that sweep.
 
 ## Summary table
 
-| Skill | Max Rank | dmg shape | KO | Hit count | Dep mechanism | lckProc |
-|---|---|---|---|---|---|---|
-| immunity | 2 | none (buff) | — | — | — | — |
-| skinShift | 1 | none (self-cost only) | — | — | shares Immunity's own cooldown key | — |
-| quickFire | 4 | 3-phase `dmgGroups`: open/close flat `0.25×ATK`, burst `0.25→0.35×ATK` w/ Added Fire | 0 | `2+2×rank` base, `2+4×rank` w/ Added Fire | `addedFire5` (hasSkill 402): both the burst coefficient bump AND hit-count doubling modeled (rank+dep-aware `dmgGroups` group values, new engine capability this pass) | — |
-| perfectBlend | 2 | none (buff) | — | — | — | — |
-| trueInvisibility | 2 | none (buff) | — | — | — | — |
-| needlePrison | 2 | none (CC) | — | — | — | — |
-| massShot | 2 | `0.5×ATK + talAdjust(sLv×8+8)` | 1 | 1 (AoE) | `massHouseLock5` (422) ×1.5 mult | — |
-| poisonVolley | 2 | flat `0.5×ATK` | 1 | 1 (cone AoE) | — | — |
-| venomShock | 2 | 100%/150% of "remaining poison" (rank 1/2), state-contingent | 0 | 1 | scales w/ live poison stack | — |
-| massInvisibility | 2 | none (buff) | — | — | — | — |
-| finalEntrapment | 2 | none (CC prop) | — | — | — | — |
-| tormentRain | 1 | `0.5×ATK + talAdjust(60)` | 1 | 1 (AoE) | — | — |
-| fatalStrike | 4 | none of its own (buffs normal attack `+6×lv`) | n/a | — | `extraArrows5`(403): +1 lv, +5 stacks — not modeled (no chip to attach to) | — |
-| leftStride | 2 | none of its own — "5 Normal Attack Arrows" (3 at rank 1), plain-worded dmgNote | 1 | n/a (dmgNote only, no dmg/sim chip by design) | `doubleStrider5`(423) doubles to 10 (6 at rank 1) — stated in dmgNote, not a live toggle | — |
-| rightStride | 2 | flat `0.4×ATK`, piercing raycast | 2 | `rank×2+1` volleys | `doubleStrider5`(423) doubles volley count | — |
-| campFire | 2 | none (heal) | — | — | — | — |
-| bloodBurn | 2 | none (self HP-cost→heal) | — | — | — | — |
-| slayer | 4 | `(0.3+0.15×impSlayerLv)×ATK + talAdjust(20+10×impSlayerLv)`, flat w.r.t. own rank | 5 | 1/target | Improved Slayer dmg-side effect modeled (rank-aware `atkCoeff`/`dmg`, linked to existing Cast Time toggle) | — |
-| allSlayer | 4 | `(0.6+0.3×impSlayerLv)×ATK + talAdjust(20+20×impSlayerLv)`, flat w.r.t. own rank | 5 | n/a (target cap not modeled) | same as slayer | — |
-| allSlain | 2 | `talAdjust(sLv×100)` | 0 | variable/uncapped (dmgNote only) | fed by nearly every other damage skill's hit history | — |
-| rustyDecay | 1 | 150% of "remaining rust" (always, only 1 rank), state-contingent | 0 | 1 | requires prior normal-attack rust stack | — |
-| tent | 1 | none (self status) | — | — | — | — |
-| markOfSlayer | 1 | none directly (enables slayer/allSlayer race-bypass) | — | — | — | — |
-| zeroShot | 1 | `3×ATK + talAdjust(100)` | 10 | 1 | — | — |
-| thunderDragon | 1 | flat `50`/tick self-AoE, **real effect damage** (`RPC_AddEffectDamage`, ignores defense, floors hitMod) + separate flat-350 reflect, not merged | 0 | 6 | — | **12% paralyze/tick, caster-LCK only, unconditional** |
+| Skill | Max Rank | Cost (Base) | dmg shape | KO | Hit count | Dep mechanism | lckProc |
+|---|---|---|---|---|---|---|---|
+| immunity | 2 | [3, 5] MP | none (buff) | — | — | — | — |
+| skinShift | 1 | 10 MP, 10 SP (red) | none (self-cost only) | — | — | shares Immunity's own cooldown key | — |
+| quickFire | 4 | [12, 16, 20, 24] SP (blue) | 3-phase `dmgGroups`: open/close flat `0.25×ATK`, burst `0.25→0.35×ATK` w/ Added Fire | 0 | `2+2×rank` base, `2+4×rank` w/ Added Fire | `addedFire5` (hasSkill 402): both the burst coefficient bump AND hit-count doubling modeled (rank+dep-aware `dmgGroups` group values, new engine capability this pass) | — |
+| perfectBlend | 2 | 12 MP, [8, 14] SP (red) | none (buff) | — | — | — | — |
+| trueInvisibility | 2 | 12 MP, [14, 20] SP (red) | none (buff) | — | — | — | — |
+| needlePrison | 2 | [14, 20] SP (red) | none (CC) | — | — | — | — |
+| massShot | 2 | [10, 15] SP (red) | `0.5×ATK + talAdjust(sLv×8+8)` | 1 | 1 (AoE) | `massHouseLock5` (422) ×1.5 mult | — |
+| poisonVolley | 2 | [6, 12] MP, [12, 24] SP (red) | flat `0.5×ATK` | 1 | 1 (cone AoE) | — | — |
+| venomShock | 2 | [12, 24] MP, [24, 36] SP (red) | 100%/150% of "remaining poison" (rank 1/2), state-contingent | 0 | 1 | scales w/ live poison stack | — |
+| massInvisibility | 2 | [28, 38] MP | none (buff) | — | — | — | — |
+| finalEntrapment | 2 | [20, 30] MP, [35, 45] SP (red) | none (CC prop) | — | — | — | — |
+| tormentRain | 1 | 15 MP, 15 SP (red) | `0.5×ATK + talAdjust(60)` | 1 | 1 (AoE) | — | — |
+| fatalStrike | 4 | [6, 8, 10, 12] MP, [6, 8, 10, 12] SP (blue) | none of its own (buffs normal attack `+6×lv`) | n/a | — | `extraArrows5`(403): +1 lv, +5 stacks — not modeled (no chip to attach to) | — |
+| leftStride | 2 | 4 MP, 12 SP (red) | none of its own — "5 Normal Attack Arrows" (3 at rank 1), plain-worded dmgNote | 1 | n/a (dmgNote only, no dmg/sim chip by design) | `doubleStrider5`(423) doubles to 10 (6 at rank 1) — stated in dmgNote, not a live toggle | — |
+| rightStride | 2 | [4, 8] MP, [12, 24] SP (red) | flat `0.4×ATK`, piercing raycast | 2 | `rank×2+1` volleys | `doubleStrider5`(423) doubles volley count | — |
+| campFire | 2 | [10, 15] MP, 24 SP (red) | none (heal) | — | — | — | — |
+| bloodBurn | 2 | [12, 18] MP, 24 SP (red) | none (self HP-cost→heal) | — | — | — | — |
+| slayer | 4 | 12 MP, 24 SP (red) | `(0.3+0.15×impSlayerLv)×ATK + talAdjust(20+10×impSlayerLv)`, flat w.r.t. own rank | 5 | 1/target | Improved Slayer dmg-side effect modeled (rank-aware `atkCoeff`/`dmg`, linked to existing Cast Time toggle) | — |
+| allSlayer | 4 | 24 MP, 36 SP (red) | `(0.6+0.3×impSlayerLv)×ATK + talAdjust(20+20×impSlayerLv)`, flat w.r.t. own rank | 5 | n/a (target cap not modeled) | same as slayer | — |
+| allSlain | 2 | [32, 45] MP, [45, 60] SP (red) | `talAdjust(sLv×100)` | 0 | variable/uncapped (dmgNote only) | fed by nearly every other damage skill's hit history | — |
+| rustyDecay | 1 | 24 MP, 30 SP (red) | 150% of "remaining rust" (always, only 1 rank), state-contingent | 0 | 1 | requires prior normal-attack rust stack | — |
+| tent | 1 | 40 MP, 30 SP (red) | none (self status) | — | — | — | — |
+| markOfSlayer | 1 | 45 MP, 45 SP (red) | none directly (enables slayer/allSlayer race-bypass) | — | — | — | — |
+| zeroShot | 1 | 30 MP, 30 SP (red) | `3×ATK + talAdjust(100)` | 10 | 1 | — | — |
+| thunderDragon | 1 | Free / 0 | flat `50`/tick self-AoE, **real effect damage** (`RPC_AddEffectDamage`, ignores defense, floors hitMod) + separate flat-350 reflect, not merged | 0 | 6 | — | **12% paralyze/tick, caster-LCK only, unconditional** |
 
 ## Notable findings
 
