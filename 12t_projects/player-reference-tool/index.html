@@ -4099,6 +4099,7 @@ function mountSkillCooldownLookup(root){
   let revisedArtOn = true;
   let privateServerOn = false;
   let selected = null;
+  let hasSelectedAnySkill = false;
   let activeIndex = -1;
   let currentMatches = [];
   const depRanks = {};
@@ -5396,6 +5397,7 @@ function mountSkillCooldownLookup(root){
   }
 
   function selectSkill(s){
+    hasSelectedAnySkill = true;
     selected = s;
     searchEl.value = s.name;
     closeSuggestions();
@@ -5450,16 +5452,13 @@ function mountSkillCooldownLookup(root){
 
     function renderHero(){
     if (!selected){
-      displayEl.innerHTML = "";
-      searchWrapEl.classList.add("sk-search-hero");
-      toolShellEl.classList.add("is-hero-empty");
-      // visibility, not mask-image:"none" — CSS mask-image:none means "no
-      // mask applied" (renders the element's full unclipped box), the
-      // OPPOSITE of hidden. Caught live: with no skill selected this drew
-      // a solid gold rectangle across the empty state instead of nothing.
-      // See this project's CLAUDE.md for the full story.
-      artEl.style.visibility = "hidden";
-      return;
+      if (!hasSelectedAnySkill){
+        displayEl.innerHTML = "";
+        searchWrapEl.classList.add("sk-search-hero");
+        toolShellEl.classList.add("is-hero-empty");
+        artEl.style.visibility = "hidden";
+        return;
+      }
     }
     searchWrapEl.classList.remove("sk-search-hero");
     toolShellEl.classList.remove("is-hero-empty");
@@ -6873,9 +6872,11 @@ function mountSkillCooldownLookup(root){
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
-    if (selected && selected.name.toLowerCase() !== q){
-      selected = null;
-      renderHero();
+    if (!hasSelectedAnySkill){
+      if (selected && selected.name.toLowerCase() !== q){
+        selected = null;
+        renderHero();
+      }
     }
     if (q === ""){
       closeSuggestions();
