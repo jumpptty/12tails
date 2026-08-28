@@ -716,6 +716,7 @@
      at the user's request — chips should read as disconnected, not stuck
      together) — .ledger-wrap is now a plain layout container, no border/
      background/shadow of its own. */
+  #view-menu{ padding-top: 48px; padding-bottom: 60px; }
   .ledger-wrap{ position:relative; }
   .ledger{
     list-style:none; margin:0; padding:0;
@@ -1097,7 +1098,24 @@
   }
   .sk-ps-toggle img{width:20px; height:20px; display:block; filter:grayscale(100%); opacity:.5}
   .sk-ps-toggle.on img{filter:none; opacity:1}
-  .sk-search-wrap{position:relative; margin-bottom:10px}
+  .sk-search-wrap{position:relative; margin-bottom:10px; transition:all 0.2s ease}
+  .sk-search-hero{margin:28px 0 20px}
+  .sk-search-hero .sk-search{
+    padding:15px 20px;
+    font-size:19px;
+    font-weight:600;
+    border-radius:4px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.22), 0 1px 3px rgba(0,0,0,0.15);
+    border-color:var(--gold);
+  }
+  .sk-search-hero .sk-search:focus{
+    box-shadow:0 0 0 2px var(--gold-soft), 0 4px 18px rgba(201,162,39,0.25);
+  }
+  .sk-search-hero .sk-search::placeholder{
+    color:var(--muted);
+    font-weight:normal;
+    opacity:0.75;
+  }
   .sk-search{
     box-sizing:border-box; width:100%; background:var(--panel-2); color:var(--text);
     border:1px solid var(--line); border-radius:3px; padding:9px 14px; font-size:15px;
@@ -3939,7 +3957,6 @@ function mountSkillCooldownLookup(root){
   root.innerHTML = `
     <div class="sk">
       <div class="sk-art" data-role="art"></div>
-      <h2>Skill Cooldown / Duration</h2>
       <div class="sk-stats-panel" data-role="stats-panel">
         <div class="sk-controls">
           <div><label>CHAR LV</label><input type="number" data-role="lv" min="0" value="100"></div>
@@ -3990,7 +4007,7 @@ function mountSkillCooldownLookup(root){
         </div>
       </div>
       <div class="sk-multihit-layer" data-role="multihit-layer"></div>
-      <div class="sk-search-wrap">
+      <div class="sk-search-wrap sk-search-hero">
         <input type="text" class="sk-search" data-role="search" placeholder="Search a skill…" autocomplete="off">
         <div class="sk-suggestions" data-role="suggestions" hidden></div>
       </div>
@@ -4036,6 +4053,7 @@ function mountSkillCooldownLookup(root){
   const enemyCycleDisplayEl = $('[data-role="enemy-cycle-display"]', root);
   const enemyNameLabelEl = $('[data-role="enemy-name-label"]', root);
   const searchEl = $('[data-role="search"]', root);
+  const searchWrapEl = $('.sk-search-wrap', root);
   const raBtn = $('[data-role="revisedart"]', root);
   const suggestionsEl = $('[data-role="suggestions"]', root);
   const displayEl = $('[data-role="display"]', root);
@@ -5396,7 +5414,8 @@ function mountSkillCooldownLookup(root){
 
     function renderHero(){
     if (!selected){
-      displayEl.innerHTML = `<div class="sk-empty-state">Search a skill above to see its cooldown and duration.</div>`;
+      displayEl.innerHTML = "";
+      searchWrapEl.classList.add("sk-search-hero");
       // visibility, not mask-image:"none" — CSS mask-image:none means "no
       // mask applied" (renders the element's full unclipped box), the
       // OPPOSITE of hidden. Caught live: with no skill selected this drew
@@ -6815,6 +6834,11 @@ function mountSkillCooldownLookup(root){
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
+    if (q.length > 0 || selected) {
+      searchWrapEl.classList.remove("sk-search-hero");
+    } else {
+      searchWrapEl.classList.add("sk-search-hero");
+    }
     if (selected && selected.name.toLowerCase() !== q){
       selected = null;
       renderHero();
@@ -7946,6 +7970,10 @@ function showTool(tool){
   document.documentElement.classList.toggle("tool-wide-hero", tool.id === "skill-cooldown-lookup" || tool.id === "stat-roll");
   const container = getToolContainer(tool);
   if (!tool.mounted){ tool.mount(container); tool.mounted = true; }
+  if (tool.id === "skill-cooldown-lookup") {
+    const sInp = container.querySelector('[data-role="search"]');
+    if (sInp) setTimeout(() => sInp.focus(), 60);
+  }
   Object.values(toolContainers).forEach(el => { el.hidden = (el !== container); });
   fitStageToScreen();
 }
