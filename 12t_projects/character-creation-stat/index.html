@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tales of Tails — Stat Roll Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080f12;
+    --surface: #0f1e24;
+    --surface2: #162830;
+    --border: rgba(100,220,210,0.1);
+    --border-hover: rgba(100,220,210,0.22);
+    --text: #d8f0ee;
+    --text-muted: #6fa8a2;
+    --text-dim: #3d6e6a;
+    --accent: #1ab8aa;
+    --accent-glow: rgba(26,184,170,0.14);
+    --accent-light: #4dd9cc;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.08);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+    --amber: #fbbf24;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 10px;
+  }
+
+  h1 span {
+    color: var(--accent-light);
+  }
+
+  .credit-inline {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    opacity: 0.75;
+    align-self: center;
+  }
+
+  .subtitle {
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  select {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888892' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  select:hover { border-color: var(--border-hover); }
+  select:focus { outline: none; border-color: var(--accent); }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .stat-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 10px 8px;
+    transition: border-color 0.15s;
+  }
+
+  .stat-cell:focus-within {
+    border-color: var(--border-hover);
+  }
+
+  .stat-cell.impossible {
+    border-color: var(--red);
+    background: var(--red-bg);
+  }
+
+  .stat-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .stat-cell input[type="number"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    outline: none;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    padding: 6px 8px;
+    font-family: inherit;
+    -moz-appearance: textfield;
+    transition: border-color 0.15s;
+    margin: 4px 0;
+  }
+
+  .stat-cell input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .stat-cell input[type="number"]::-webkit-outer-spin-button,
+  .stat-cell input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .stat-cell input::placeholder { color: var(--text-dim); font-weight: 400; font-size: 16px; }
+
+  .stat-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  .stat-base {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .stat-range {
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  .stat-range.hidden { display: none; }
+
+  .calc-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  .calc-btn:hover { opacity: 0.88; }
+  .calc-btn:active { transform: scale(0.99); }
+  .calc-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--surface2); color: var(--text-muted); }
+
+  #output { margin-top: 1rem; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .metric {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .metric-value.good { color: var(--green); }
+  .metric-value.warn { color: var(--amber); }
+  .metric-value.bad  { color: var(--red); }
+
+  .result-summary {
+    font-size: 13px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 0.875rem;
+    line-height: 1.7;
+  }
+
+  .result-summary strong { color: var(--text); font-weight: 500; }
+
+  .tag {
+    display: inline-block;
+    background: var(--accent-glow);
+    border: 1px solid rgba(26,184,170,0.3);
+    color: var(--accent-light);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin: 2px 2px 2px 0;
+    font-weight: 500;
+  }
+
+  .impossible-msg {
+    background: var(--red-bg);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    color: var(--red);
+    font-size: 13px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .impossible-msg strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+  .guaranteed-msg {
+    background: var(--green-bg);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    color: var(--green);
+    font-size: 13px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .guaranteed-msg strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+  .error-msg {
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 0.5rem 0;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+    float: right;
+    margin-top: -2px;
+    transition: opacity 0.15s;
+    opacity: 0.75;
+  }
+  .clear-btn:hover { opacity: 1; }
+
+  /* Target Recommender Styles */
+  .stat-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .stat-toggle:hover { border-color: var(--border-hover); }
+  .stat-toggle.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+  }
+  .stat-toggle.active .stat-toggle-name {
+    color: var(--accent-light);
+  }
+  .stat-toggle-name {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+
+  .preset-btn {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-right: 6px;
+    transition: all 0.15s;
+  }
+  .preset-btn:hover {
+    color: var(--text);
+    border-color: var(--accent-light);
+  }
+
+  .progress-bg {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 1rem;
+    display: none;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  footer {
+    margin-top: 3rem;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+
+  .lang-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px;
+  }
+
+  .lang-btn {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    background: none;
+    color: var(--text-muted);
+    transition: background 0.15s, color 0.15s;
+    letter-spacing: 0.03em;
+  }
+
+  .lang-btn.active { background: var(--accent); color: #fff; }
+
+  header { position: relative; }
+
+  @media (max-width: 420px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .result-row { grid-template-columns: 1fr; }
+    h1 { font-size: 22px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btnTH" onclick="setLang('th')">TH</button>
+    </div>
+    <div class="eyebrow">Tales of Tails</div>
+    <h1 id="titleMain">Stat Roll Calculator<br><span id="titleSub">for Character Creation</span><span class="credit-inline">cr. jumpptty</span></h1>
+    <p class="subtitle" id="subtitleText">Set minimum targets for any stats. The calculator finds the probability of rolling all of them at once on a new character.</p>
+  </header>
+
+  <div class="card">
+    <div class="card-label" id="labelClass">Class</div>
+    <select id="classSelect">
+      <option value="" id="optPlaceholder">— select a class —</option>
+      <option value="Wolf">Wolf</option>
+      <option value="Bison">Bison</option>
+      <option value="Panda">Panda</option>
+      <option value="Whale">Whale</option>
+      <option value="Cat">Cat</option>
+      <option value="Chameleon">Chameleon</option>
+      <option value="Rabbit">Rabbit</option>
+      <option value="Mole">Mole</option>
+      <option value="Monkey">Monkey</option>
+      <option value="Sheep">Sheep</option>
+      <option value="Penguin">Penguin</option>
+      <option value="Bat">Bat</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="card-label" id="labelTargets">
+      Minimum stat targets
+      <button class="clear-btn" id="clearBtn" onclick="clearAll()">Clear all</button>
+    </div>
+    <div class="stat-grid" id="statGrid">
+      </div>
+  </div>
+
+  <button class="calc-btn" id="calcBtn" onclick="calculate()">Calculate probability</button>
+
+  <div id="output"></div>
+
+  <div class="divider"></div>
+  
+  <header style="margin-bottom: 1.5rem;">
+    <h2 style="font-size: 20px; font-weight: 600; color: var(--text);">
+      <span id="titleRecommender">Target Recommender</span>
+    </h2>
+    <p class="subtitle" id="subRecommender">Select the stats you want to maximize and the number of rolls you are willing to do.</p>
+  </header>
+
+  <div class="card">
+    <div class="card-label" id="labelMaxStats">Stats to Maximize</div>
+    <div class="stat-grid" id="recStatGrid">
+      </div>
+    
+    <div style="margin-top: 1.25rem;">
+      <div class="card-label" id="labelMaxRolls">Maximum Attempts (Rolls)</div>
+      
+      <div style="margin-bottom: 8px;">
+        <span style="font-size: 11px; color: var(--text-dim); margin-right: 6px;" id="lblQuickRolls">Quick:</span>
+        <button class="preset-btn" onclick="setRolls(1000)">1,000</button>
+        <button class="preset-btn" onclick="setRolls(10000)">10,000</button>
+      </div>
+
+      <input type="number" id="maxRollsInput" style="width: 100%; padding: 10px 14px; font-size: 15px; font-family: inherit; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; transition: border-color 0.15s;" value="1000" min="1" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+  </div>
+
+  <button class="calc-btn" id="btnSuggest" onclick="suggestTargets()">Suggest Targets</button>
+  
+  <div id="progressContainer" class="progress-bg">
+    <div id="progressBar" class="progress-fill"></div>
+  </div>
+
+  <div id="recOutput" style="margin-top: 1rem;"></div>
+
+  <footer id="footerText">Base growth rates and formulas extracted from CharacterData.cs · Tales of Tails client build</footer>
+</div>
+
+<script>
+const STAT_NAMES = ['ATK','DEF','AGI','VIT','INT','CHA','TAL','LCK'];
+
+const BASE = {
+  Wolf:      [7,8,7,7,6,5,5,3],
+  Bison:     [9,8,6,8,4,4,5,4],
+  Panda:     [8,7,8,6,4,4,6,5],
+  Whale:     [5,9,3,9,7,7,4,4],
+  Cat:       [8,4,9,5,3,4,6,9],
+  Chameleon: [7,5,8,5,4,5,7,7],
+  Rabbit:    [6,4,7,7,5,6,5,8],
+  Mole:      [5,7,5,6,5,5,8,7],
+  Monkey:    [5,5,4,8,8,8,6,5],
+  Sheep:     [4,5,4,4,8,8,8,4],
+  Penguin:   [3,6,5,3,9,7,9,6],
+  Bat:       [6,5,6,5,7,9,4,6]
+};
+
+function maxStat(base) { return Math.min(12, base + 4 + 1); }
+function minStat(base) { return Math.max(3, base - 4 + 1); }
+
+function buildGrid() {
+  const grid = document.getElementById('statGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'stat-cell';
+    cell.id = 'cell' + i;
+    cell.innerHTML = `
+      <div class="stat-name">${STAT_NAMES[i]}</div>
+      <input type="number" id="s${i}" min="3" max="12" placeholder="—" oninput="onStatInput(${i})">
+      <div class="stat-meta">
+        <span class="stat-base" id="b${i}"></span>
+        <span class="stat-range hidden" id="r${i}"></span>
+      </div>`;
+    grid.appendChild(cell);
+  }
+}
+
+function onClassChange() {
+  const cls = document.getElementById('classSelect').value;
+  document.getElementById('output').innerHTML = '';
+  document.getElementById('recOutput').innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const inp = document.getElementById('s' + i);
+    const bEl = document.getElementById('b' + i);
+    const rEl = document.getElementById('r' + i);
+    const cell = document.getElementById('cell' + i);
+    inp.value = '';
+    cell.classList.remove('impossible');
+    if (cls && BASE[cls]) {
+      const base = BASE[cls][i];
+      bEl.textContent = LANG[currentLang].base + ' ' + base;
+      rEl.textContent = minStat(base) + '–' + maxStat(base);
+      rEl.classList.remove('hidden');
+      inp.min = minStat(base);
+      inp.max = maxStat(base);
+    } else {
+      bEl.textContent = '';
+      rEl.classList.add('hidden');
+    }
+  }
+}
+
+function onStatInput(i) {
+  const cls = document.getElementById('classSelect').value;
+  if (!cls || !BASE[cls]) return;
+  const inp = document.getElementById('s' + i);
+  const cell = document.getElementById('cell' + i);
+  const val = parseInt(inp.value);
+  const max = maxStat(BASE[cls][i]);
+  if (!isNaN(val) && val > max) {
+    cell.classList.add('impossible');
+  } else {
+    cell.classList.remove('impossible');
+  }
+}
+
+function clearAll() {
+  for (let i = 0; i < 8; i++) {
+    document.getElementById('s' + i).value = '';
+    document.getElementById('cell' + i).classList.remove('impossible');
+  }
+  document.getElementById('output').innerHTML = '';
+}
+
+// Precomputed factorials
+const FACT = [1];
+function factorial(n) {
+  if (FACT[n] !== undefined) return FACT[n];
+  FACT[n] = n * factorial(n - 1);
+  return FACT[n];
+}
+
+// Generate all ways to distribute `total` rolls across 8 stats
+let DISTS = null;
+function getDists() {
+  if (DISTS) return DISTS;
+  DISTS = [];
+  function gen(idx, rem, cur) {
+    if (idx === 7) { cur.push(rem); DISTS.push(cur.slice()); cur.pop(); return; }
+    for (let k = 0; k <= rem; k++) { cur.push(k); gen(idx + 1, rem - k, cur); cur.pop(); }
+  }
+  gen(0, 4, []);
+  return DISTS;
+}
+
+function distCoeff(dist) {
+  let c = factorial(4);
+  for (let x of dist) c /= factorial(x);
+  return c / Math.pow(8, 4);
+}
+
+function calcProb(baseArr, targets) {
+  const reqs = [];
+  for (let i = 0; i < 8; i++) {
+    if (targets[i] === null) { reqs.push(null); continue; }
+    const req = targets[i] - baseArr[i] - 1;
+    if (req > 4) return 0;
+    if (req <= -4) { reqs.push(null); continue; }
+    reqs.push(req);
+  }
+  if (reqs.every(r => r === null)) return 1;
+
+  const dists = getDists();
+  const coeffs = dists.map(distCoeff);
+  let total = 0;
+
+  for (let bi = 0; bi < dists.length; bi++) {
+    const bd = dists[bi];
+    const bc = coeffs[bi];
+    for (let pi = 0; pi < dists.length; pi++) {
+      const pd = dists[pi];
+      let ok = true;
+      for (let i = 0; i < 8; i++) {
+        if (reqs[i] === null) continue;
+        if ((bd[i] - pd[i]) < reqs[i]) { ok = false; break; }
+      }
+      if (ok) total += bc * coeffs[pi];
+    }
+  }
+  return total;
+}
+
+function rateColor(prob) {
+  if (prob >= 0.1) return 'good';
+  if (prob >= 0.01) return 'warn';
+  return 'bad';
+}
+
+function calculate() {
+  const cls = document.getElementById('classSelect').value;
+  const out = document.getElementById('output');
+
+  if (!cls) { out.innerHTML = `<p class="error-msg">${LANG[currentLang].errNoClass}</p>`; return; }
+
+  const base = BASE[cls];
+  const targets = [];
+  const impossibles = [];
+  let anySet = false;
+  const activeTags = [];
+
+  for (let i = 0; i < 8; i++) {
+    const raw = document.getElementById('s' + i).value;
+    if (raw === '' || parseInt(raw) <= 0) { targets.push(null); continue; }
+    const t = parseInt(raw);
+    const mx = maxStat(base[i]);
+    if (t > mx) { impossibles.push(`${STAT_NAMES[i]} ≥ ${t} (max: ${mx})`); targets.push(null); continue; }
+    if (t <= minStat(base[i])) { targets.push(null); continue; }
+    targets.push(t);
+    activeTags.push(`${STAT_NAMES[i]} ≥ ${t}`);
+    anySet = true;
+  }
+
+  const L = LANG[currentLang];
+
+  if (impossibles.length > 0) {
+    out.innerHTML = `<div class="impossible-msg"><strong>${L.impossibleTitle}</strong>${impossibles.map(s => `<span style="display:block;margin-top:2px">${s} ${L.impossibleSuffix} ${cls}</span>`).join('')}</div>`;
+    return;
+  }
+  if (!anySet) { out.innerHTML = `<p class="error-msg">${L.errNoTarget}</p>`; return; }
+
+  const prob = calcProb(base, targets);
+  const pct = (prob * 100).toFixed(4);
+  const expected = prob > 0 ? Math.round(1 / prob) : Infinity;
+  const colorClass = rateColor(prob);
+
+  if (prob >= 1) {
+    out.innerHTML = `<div class="guaranteed-msg"><strong>${L.guaranteedTitle}</strong>${L.guaranteedBody(cls)}</div>`;
+    return;
+  }
+
+  const tagsHtml = activeTags.map(t => `<span class="tag">${t}</span>`).join('');
+
+  out.innerHTML = `
+    <div class="result-card">
+      <div class="result-row">
+        <div class="metric">
+          <div class="metric-label">${L.probLabel}</div>
+          <div class="metric-value ${colorClass}">${pct}%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">${L.attemptsLabel}</div>
+          <div class="metric-value ${colorClass}">${expected.toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="result-summary">
+        ${L.summaryBody(cls, tagsHtml, expected.toLocaleString())}
+      </div>
+    </div>`;
+}
+
+// --- Target Recommender Logic ---
+let selectedStatsToMax = new Set();
+let isCalculating = false;
+
+function buildRecGrid() {
+  const grid = document.getElementById('recStatGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'stat-toggle';
+    cell.id = 'toggle' + i;
+    cell.onclick = () => toggleStat(i);
+    cell.innerHTML = `<div class="stat-toggle-name">${STAT_NAMES[i]}</div>`;
+    grid.appendChild(cell);
+  }
+}
+
+function toggleStat(i) {
+  if(isCalculating) return;
+  const cell = document.getElementById('toggle' + i);
+  if (selectedStatsToMax.has(i)) {
+    selectedStatsToMax.delete(i);
+    cell.classList.remove('active');
+  } else {
+    selectedStatsToMax.add(i);
+    cell.classList.add('active');
+  }
+}
+
+function setRolls(val) {
+  if(isCalculating) return;
+  document.getElementById('maxRollsInput').value = val;
+}
+
+async function suggestTargets() {
+  if (isCalculating) return;
+  
+  const cls = document.getElementById('classSelect').value;
+  const out = document.getElementById('recOutput');
+  const rollsStr = document.getElementById('maxRollsInput').value;
+  const maxRolls = parseInt(rollsStr);
+  const L = LANG[currentLang];
+  const btnSuggest = document.getElementById('btnSuggest');
+
+  if (!cls) { out.innerHTML = `<p class="error-msg">${L.errNoClass}</p>`; return; }
+  if (selectedStatsToMax.size === 0) { out.innerHTML = `<p class="error-msg">${L.errNoRecStats}</p>`; return; }
+  if (isNaN(maxRolls) || maxRolls < 1) { out.innerHTML = `<p class="error-msg">${L.errInvalidRolls}</p>`; return; }
+
+  // Lock UI & Setup Progress
+  isCalculating = true;
+  btnSuggest.disabled = true;
+  btnSuggest.textContent = L.calculatingLabel;
+  out.innerHTML = '';
+  
+  const progContainer = document.getElementById('progressContainer');
+  const progBar = document.getElementById('progressBar');
+  progContainer.style.display = 'block';
+  progBar.style.width = '0%';
+
+  const baseArr = BASE[cls];
+  const selected = Array.from(selectedStatsToMax);
+  const targetProb = 1 / maxRolls;
+  let validBuilds = [];
+
+  const firstStat = selected[0];
+  const minT = minStat(baseArr[firstStat]);
+  const maxT = maxStat(baseArr[firstStat]);
+  const totalOuterLoops = maxT - minT + 1;
+
+  // Helper to chunk work so browser doesn't freeze
+  const yieldThread = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  async function exploreAsync() {
+    for (let t = minT; t <= maxT; t++) {
+      let currentTargets = [t];
+      // Mathematically prune branches early: if we already require more than 4 positive bonuses, it's impossible.
+      const initialReq = Math.max(0, t - baseArr[firstStat] - 1);
+
+      function innerExplore(idx, currentSumReq) {
+        if (currentSumReq > 4) return; // EARLY PRUNING: Massively speeds up calculation
+
+        if (idx === selected.length) {
+          const fullTargets = Array(8).fill(null);
+          for(let i = 0; i < selected.length; i++) {
+            fullTargets[selected[i]] = currentTargets[i];
+          }
+          const prob = calcProb(baseArr, fullTargets);
+          if (prob > 0 && prob >= targetProb) {
+            validBuilds.push({ 
+              targets: fullTargets.slice(), 
+              prob: prob, 
+              sum: currentTargets.reduce((a,b) => a+b, 0) 
+            });
+          }
+          return;
+        }
+
+        const sIdx = selected[idx];
+        for (let val = minStat(baseArr[sIdx]); val <= maxStat(baseArr[sIdx]); val++) {
+          currentTargets.push(val);
+          const stepReq = Math.max(0, val - baseArr[sIdx] - 1);
+          innerExplore(idx + 1, currentSumReq + stepReq);
+          currentTargets.pop();
+        }
+      }
+
+      if (selected.length > 1) {
+        innerExplore(1, initialReq);
+      } else {
+        if (initialReq <= 4) {
+          const fullTargets = Array(8).fill(null);
+          fullTargets[firstStat] = t;
+          const prob = calcProb(baseArr, fullTargets);
+          if (prob >= targetProb) {
+            validBuilds.push({ targets: fullTargets, prob, sum: t });
+          }
+        }
+      }
+
+      // Update progress visualization
+      const progressPct = ((t - minT + 1) / totalOuterLoops) * 100;
+      progBar.style.width = progressPct + '%';
+      
+      await yieldThread();
+    }
+  }
+
+  await exploreAsync();
+
+  // Reset UI
+  isCalculating = false;
+  btnSuggest.disabled = false;
+  btnSuggest.textContent = L.btnSuggest;
+  setTimeout(() => progContainer.style.display = 'none', 400);
+
+  if (validBuilds.length === 0) {
+    out.innerHTML = `<div class="impossible-msg"><strong>${L.noBuildsTitle}</strong>${L.noBuildsBody}</div>`;
+    return;
+  }
+
+  // Sort by highest stat sum, then by highest probability
+  validBuilds.sort((a, b) => {
+    if (b.sum !== a.sum) return b.sum - a.sum;
+    return b.prob - a.prob;
+  });
+
+  // Extract top 3 pareto-optimal builds
+  let bestBuilds = [];
+  let currentMaxProb = -1;
+  for (const build of validBuilds) {
+    if (build.prob > currentMaxProb) {
+      bestBuilds.push(build);
+      currentMaxProb = build.prob;
+    }
+    if (bestBuilds.length >= 3) break;
+  }
+
+  let html = `<div class="result-card"><div style="font-size:13px; color:var(--text-muted); margin-bottom:1rem;">${L.recResultsPrefix} <strong>${maxRolls.toLocaleString()}</strong> ${L.recResultsSuffix}:</div>`;
+  
+  bestBuilds.forEach((build, index) => {
+    const tags = selected.map(i => `<span class="tag">${STAT_NAMES[i]} ≥ ${build.targets[i]}</span>`).join('');
+    const expected = Math.round(1 / build.prob);
+    const probPct = (build.prob * 100).toFixed(4);
+    const color = rateColor(build.prob);
+    
+    html += `
+      <div style="${index > 0 ? 'border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;' : ''}">
+        <div style="margin-bottom: 6px;">${tags}</div>
+        <div style="font-size: 12px; color: var(--text-dim); display:flex; gap: 14px; flex-wrap: wrap;">
+          <span>${L.probLabel}: <strong class="metric-value ${color}" style="font-size: 13px;">${probPct}%</strong></span>
+          <span>${L.attemptsLabel}: <strong style="color:var(--text)">~${expected.toLocaleString()}</strong></span>
+          <span>${L.sumLabel}: <strong style="color:var(--text)">${build.sum}</strong></span>
+        </div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  out.innerHTML = html;
+}
+
+const CLASS_NAMES = {
+  en: { Wolf:'Wolf', Bison:'Bison', Panda:'Panda', Whale:'Whale', Cat:'Cat', Chameleon:'Chameleon', Rabbit:'Rabbit', Mole:'Mole', Monkey:'Monkey', Sheep:'Sheep', Penguin:'Penguin', Bat:'Bat' },
+  th: { Wolf:'หมาป่า', Bison:'ไบซัน', Panda:'แพนด้า', Whale:'วาฬ', Cat:'แมว', Chameleon:'กิ้งก่า', Rabbit:'กระต่าย', Mole:'ตุ่น', Monkey:'ลิง', Sheep:'แกะ', Penguin:'เพนกวิน', Bat:'ค้างคาว' }
+};
+document.getElementById('classSelect').addEventListener('change', onClassChange);
+
+buildGrid();
+buildRecGrid();
+
+const LANG = {
+  en: {
+    titleMain: 'Stat Roll Calculator',
+    titleSub: 'for Character Creation',
+    subtitle: 'Set minimum targets for any stats. The calculator finds the probability of rolling all of them at once on a new character.',
+    labelClass: 'Class',
+    optPlaceholder: '— select a class —',
+    labelTargets: 'Minimum stat targets',
+    clearBtn: 'Clear all',
+    calcBtn: 'Calculate probability',
+    footer: 'Base growth rates and formulas extracted from CharacterData.cs · Tales of Tails client build',
+    base: 'base',
+    errNoClass: 'Please select a class first.',
+    errNoTarget: 'Enter at least one minimum stat target to calculate.',
+    impossibleTitle: 'Impossible target',
+    impossibleSuffix: 'cannot be reached for',
+    guaranteedTitle: 'Guaranteed',
+    guaranteedBody: (cls) => `Every ${CLASS_NAMES.en[cls] || cls} creation meets this target. No rerolling needed.`,
+    probLabel: 'Probability',
+    attemptsLabel: 'Expected rolls',
+    summaryBody: (cls, tags, n) => `<strong>${CLASS_NAMES.en[cls] || cls}</strong> — targeting ${tags}<br>On average, you would need to roll <strong>${n} times</strong> before getting all these stat minimums simultaneously.`,
+    titleRecommender: 'Target Recommender',
+    subRecommender: 'Select the stats you want to maximize and the number of rolls you are willing to do.',
+    labelMaxStats: 'Stats to Maximize',
+    labelMaxRolls: 'Maximum Attempts (Rolls)',
+    quickLabel: 'Quick:',
+    btnSuggest: 'Suggest Targets',
+    calculatingLabel: 'Calculating...',
+    errNoRecStats: 'Select at least one stat to maximize.',
+    errInvalidRolls: 'Enter a valid number of rolls.',
+    noBuildsTitle: 'No realistic builds found',
+    noBuildsBody: 'Try increasing your maximum rolls or selecting fewer stats.',
+    recResultsPrefix: 'Best realistic targets within',
+    recResultsSuffix: 'rolls',
+    sumLabel: 'Selected Sum'
+  },
+  th: {
+    titleMain: 'เครื่องคำนวณความน่าจะเป็นค่าสเตตัส',
+    titleSub: 'ตอนสร้างตัวละคร',
+    subtitle: 'ตั้งค่าสเตตัสขั้นต่ำที่ต้องการ เครื่องคำนวณจะหาโอกาสที่จะได้ค่าครบทุกตัวพร้อมกันตอนสร้างตัวละคร',
+    labelClass: 'คลาส',
+    optPlaceholder: '— เลือกคลาส —',
+    labelTargets: 'ค่าสเตตัสขั้นต่ำที่ต้องการ',
+    clearBtn: 'ล้างทั้งหมด',
+    calcBtn: 'คำนวณโอกาส',
+    footer: 'ข้อมูลอัตราการเติบโตและสูตรดึงมาจาก CharacterData.cs · Tales of Tails client build',
+    base: 'ค่าเริ่มต้น',
+    errNoClass: 'กรุณาเลือกคลาสก่อน',
+    errNoTarget: 'กรุณาใส่ค่าสเตตัสขั้นต่ำอย่างน้อยหนึ่งตัว',
+    impossibleTitle: 'เป้าหมายเป็นไปไม่ได้',
+    impossibleSuffix: 'ไม่สามารถทำได้สำหรับ',
+    guaranteedTitle: 'รับประกัน',
+    guaranteedBody: (cls) => `ทุกการสร้างตัวละคร ${CLASS_NAMES.th[cls] || cls} ผ่านเงื่อนไขนี้อยู่แล้ว ไม่จำเป็นต้อง reroll`,
+    probLabel: 'โอกาส',
+    attemptsLabel: 'จำนวนครั้งที่คาดว่าต้อง roll',
+    summaryBody: (cls, tags, n) => `<strong>${CLASS_NAMES.th[cls] || cls}</strong> — เป้าหมาย ${tags}<br>โดยเฉลี่ยต้อง roll <strong>${n} ครั้ง</strong> ก่อนจะได้ค่าสเตตัสครบตามที่ต้องการพร้อมกัน`,
+    titleRecommender: 'ระบบแนะนำเป้าหมายสเตตัส',
+    subRecommender: 'เลือกสเตตัสที่ต้องการเน้น และจำนวนครั้งสูงสุดที่คุณยอม roll ไหว',
+    labelMaxStats: 'สเตตัสที่ต้องการเน้น',
+    labelMaxRolls: 'จำนวน Roll สูงสุดที่รับได้',
+    quickLabel: 'ทางลัด:',
+    btnSuggest: 'แนะนำเป้าหมาย',
+    calculatingLabel: 'กำลังคำนวณ...',
+    errNoRecStats: 'กรุณาเลือกอย่างน้อยหนึ่งสเตตัส',
+    errInvalidRolls: 'กรุณาระบุจำนวน roll ที่ถูกต้อง',
+    noBuildsTitle: 'ไม่พบเป้าหมายที่เป็นไปได้',
+    noBuildsBody: 'ลองเพิ่มจำนวน roll สูงสุด หรือลดจำนวนสเตตัสที่ต้องการเน้นลง',
+    recResultsPrefix: 'เป้าหมายที่ดีที่สุดภายใน',
+    recResultsSuffix: 'rolls',
+    sumLabel: 'ผลรวมที่เลือก'
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  const L = LANG[lang];
+  document.getElementById('htmlRoot').lang = lang;
+  document.getElementById('titleMain').childNodes[0].textContent = L.titleMain;
+  document.getElementById('titleSub').textContent = L.titleSub;
+  document.getElementById('subtitleText').textContent = L.subtitle;
+  document.getElementById('labelClass').childNodes[0].textContent = L.labelClass;
+  document.getElementById('optPlaceholder').textContent = L.optPlaceholder;
+  
+  const labelTargets = document.getElementById('labelTargets');
+  const clearBtnEl = document.getElementById('clearBtn');
+  clearBtnEl.textContent = L.clearBtn;
+  labelTargets.childNodes[0].textContent = L.labelTargets + ' ';
+  document.getElementById('calcBtn').textContent = L.calcBtn;
+  
+  // Recommender text
+  document.getElementById('titleRecommender').textContent = L.titleRecommender;
+  document.getElementById('subRecommender').textContent = L.subRecommender;
+  document.getElementById('labelMaxStats').textContent = L.labelMaxStats;
+  document.getElementById('labelMaxRolls').textContent = L.labelMaxRolls;
+  document.getElementById('lblQuickRolls').textContent = L.quickLabel;
+  
+  // Don't overwrite calculating text if currently processing
+  if(!isCalculating) {
+    document.getElementById('btnSuggest').textContent = L.btnSuggest;
+  }
+
+  document.getElementById('footerText').textContent = L.footer;
+  document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+  document.getElementById('btnTH').classList.toggle('active', lang === 'th');
+  
+  const cls = document.getElementById('classSelect').value;
+  if (cls && BASE[cls]) {
+    for (let i = 0; i < 8; i++) {
+      const bEl = document.getElementById('b' + i);
+      if (bEl.textContent) bEl.textContent = L.base + ' ' + BASE[cls][i];
+    }
+  }
+  
+  const select = document.getElementById('classSelect');
+  const names = CLASS_NAMES[lang];
+  for (const opt of select.options) {
+    if (opt.value && names[opt.value]) opt.textContent = names[opt.value];
+  }
+  
+  document.getElementById('output').innerHTML = '';
+  document.getElementById('recOutput').innerHTML = '';
+}
+</script>
+</body>
+</html>

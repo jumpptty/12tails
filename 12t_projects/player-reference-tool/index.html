@@ -104,6 +104,569 @@
   .num{font-family:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,monospace; font-variant-numeric:tabular-nums}
   :focus-visible{outline:2px solid var(--gold); outline-offset:2px}
 
+    /* ---- Stat Roll Calculator (Embedded Tool — Compact Option 2 Tabbed) ---- */
+  .sr-wrap {
+    padding: 16px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .sr-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sr-header-text {
+    flex: 1;
+    min-width: 260px;
+  }
+  .sr-header-title {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Noto Serif Thai", "Thonburi", "Leelawadee UI", serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+  .sr-header-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 5px 0 0 0;
+    line-height: 1.5;
+  }
+  .sr-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 2px;
+  }
+  .sr-class-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sr-class-select-wrap label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .sr-select {
+    padding: 6px 30px 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    color: var(--text);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .sr-select:hover {
+    border-color: var(--gold);
+  }
+  .sr-select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold-soft);
+  }
+  .sr-lang-toggle {
+    display: inline-flex;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 2px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .sr-lang-btn {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s ease;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+  .sr-lang-btn:hover:not(.active) {
+    color: var(--text);
+  }
+  .sr-lang-btn.active {
+    background: var(--gold);
+    color: #14110b;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  .sr-deck {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .sr-deck {
+      grid-template-columns: 1fr;
+    }
+  }
+  .sr-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .sr-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+  .sr-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.3;
+  }
+  .sr-card-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 1px;
+    transform: rotate(45deg);
+    flex: none;
+  }
+  .sr-clear-btn {
+    background: none;
+    border: none;
+    color: var(--seal);
+    font-size: 11.5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    padding: 2px 5px;
+    opacity: 0.85;
+    transition: all 0.15s ease;
+    border-radius: 2px;
+    line-height: 1.2;
+  }
+  .sr-clear-btn:hover {
+    opacity: 1;
+    text-decoration: underline;
+    background: var(--stat-atk-soft);
+  }
+  .sr-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+  }
+  @media (max-width: 480px) {
+    .sr-stat-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .sr-stat-cell {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 7px 8px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 64px;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: text;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .sr-stat-cell:hover {
+    border-color: rgba(201,162,39,0.45);
+  }
+  .sr-stat-cell:focus-within {
+    border-color: var(--gold);
+    background: var(--panel-2);
+    box-shadow: 0 0 0 2px var(--gold-soft);
+  }
+  .sr-stat-cell.impossible {
+    border-color: var(--seal) !important;
+    background: var(--stat-atk-soft) !important;
+    box-shadow: 0 0 0 2px rgba(239,68,68,0.15) !important;
+  }
+  .sr-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    line-height: 1;
+  }
+  .sr-stat-name {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+  .sr-stat-range {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: -0.01em;
+  }
+  .sr-stat-range.hidden {
+    display: none;
+  }
+  .sr-stat-cell input[type="number"] {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 0;
+    font-family: inherit;
+    -moz-appearance: textfield;
+    margin: 3px 0;
+    text-align: left;
+    line-height: 1.2;
+    box-sizing: border-box;
+  }
+  .sr-stat-cell input[type="number"]::placeholder {
+    color: var(--muted);
+    opacity: 0.35;
+    font-weight: normal;
+  }
+  .sr-stat-cell input[type="number"]::-webkit-outer-spin-button,
+  .sr-stat-cell input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+  .sr-stat-bottom {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 9.5px;
+    color: var(--muted);
+    line-height: 1.2;
+  }
+  .sr-action-btn {
+    width: 100%;
+    padding: 9.5px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    background: linear-gradient(180deg, #deb838 0%, #b88f1e 100%);
+    color: #14110b;
+    border: 1px solid #e5bd42;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
+    box-sizing: border-box;
+  }
+  .sr-action-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #e8c446 0%, #c9a027 100%);
+    box-shadow: 0 3px 10px rgba(201,162,39,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+    transform: translateY(-1px);
+  }
+  .sr-action-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .sr-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--panel-2);
+    color: var(--muted);
+    border-color: var(--line);
+    box-shadow: none;
+    text-shadow: none;
+  }
+  .sr-result-box {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+    animation: fadeIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .sr-metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .sr-metric {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 8px 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .sr-metric-lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 3px;
+    line-height: 1.2;
+  }
+  .sr-metric-val {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .sr-metric-val.good { color: var(--stat-tal); }
+  .sr-metric-val.warn { color: var(--gold); }
+  .sr-metric-val.bad { color: var(--seal); }
+  .sr-summary-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.55;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+  .sr-summary-text strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .sr-tag {
+    display: inline-block;
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 12px;
+    margin: 1px 3px 1px 0;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .sr-err-msg {
+    background: var(--stat-atk-soft);
+    border: 1px solid var(--seal);
+    border-radius: 3px;
+    padding: 10px 12px;
+    color: var(--seal);
+    font-size: 12px;
+    line-height: 1.5;
+    animation: fadeIn 0.2s ease;
+  }
+  .sr-err-msg strong {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .sr-guaranteed-msg {
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 10px 12px;
+    color: var(--gold);
+    font-size: 12px;
+    line-height: 1.5;
+    animation: fadeIn 0.2s ease;
+  }
+  .sr-guaranteed-msg strong {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  /* Tactile recommender toggles */
+  .sr-rec-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  @media (max-width: 480px) {
+    .sr-rec-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .sr-rec-toggle {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 7.5px 4px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+  }
+  .sr-rec-toggle:hover {
+    border-color: var(--gold);
+    transform: translateY(-1px);
+  }
+  .sr-rec-toggle:active {
+    transform: translateY(0);
+  }
+  .sr-rec-toggle.active {
+    background: linear-gradient(180deg, #deb838 0%, #b88f1e 100%);
+    border-color: #e5bd42;
+    box-shadow: 0 2px 6px rgba(201,162,39,0.3);
+  }
+  .sr-rec-toggle.active .sr-rec-name {
+    color: #14110b;
+    font-weight: 700;
+  }
+  .sr-rec-name {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+    transition: color 0.15s ease;
+    line-height: 1;
+  }
+  .sr-presets {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .sr-preset-lbl {
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-right: 2px;
+  }
+  .sr-preset-btn {
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    padding: 2.5px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.2;
+  }
+  .sr-preset-btn:hover {
+    color: var(--text);
+    border-color: var(--gold);
+    background: var(--panel);
+  }
+  .sr-preset-btn.active {
+    background: var(--gold);
+    color: #14110b;
+    border-color: #e5bd42;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .sr-num-input {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.15s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+    box-sizing: border-box;
+  }
+  .sr-num-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold-soft);
+  }
+  .sr-progress-bg {
+    width: 100%;
+    height: 5px;
+    background: var(--panel-2);
+    border-radius: 3px;
+    overflow: hidden;
+    display: none;
+    margin-top: -4px;
+  }
+  .sr-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #b88f1e, #deb838);
+    width: 0%;
+    transition: width 0.08s linear;
+  }
+
+  /* ---- Compact Tabbed Recommender (Option 2) ---- */
+  .sr-rec-tab-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .sr-rec-tab {
+    flex: 1;
+    padding: 4px 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    font-family: inherit;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .sr-rec-tab:hover:not(.active) {
+    color: var(--text);
+    background: var(--gold-soft);
+  }
+  .sr-rec-tab.active {
+    background: var(--gold);
+    color: #14110b;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .sr-rec-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   /* ---- header ---- */
   .hub-bar{
     display:flex; align-items:center; justify-content:space-between; gap:16px;
@@ -6361,6 +6924,671 @@ function mountSkillCooldownLookup(root){
 }
 
 /* ============================================================
+   Stat Roll Calculator (Character Creation) — Mounted Tool
+   ============================================================ */
+function mountStatRoll(root) {
+  root.innerHTML = `
+    <div class="sr-wrap">
+      <div class="sr-header">
+        <div class="sr-header-text">
+          <h2 class="sr-header-title" data-role="titleMain">เครื่องคำนวณสเตตัสตอนสร้างตัวละคร</h2>
+          <p class="sr-header-sub" data-role="subtitle">ตั้งค่าสเตตัสขั้นต่ำที่ต้องการเพื่อหาโอกาสที่จะได้ค่าครบทุกตัวพร้อมกัน</p>
+        </div>
+        <div class="sr-header-controls">
+          <div class="sr-class-select-wrap">
+            <label data-role="lblClass">คลาส</label>
+            <select class="sr-select" data-role="classSelect">
+              <option value="" data-role="optPlaceholder">— เลือกคลาส —</option>
+              <option value="Wolf">หมาป่า</option>
+              <option value="Bison">ไบซัน</option>
+              <option value="Panda">แพนด้า</option>
+              <option value="Whale">วาฬ</option>
+              <option value="Cat">แมว</option>
+              <option value="Chameleon">กิ้งก่า</option>
+              <option value="Rabbit">กระต่าย</option>
+              <option value="Mole">ตุ่น</option>
+              <option value="Monkey">ลิง</option>
+              <option value="Sheep">แกะ</option>
+              <option value="Penguin">เพนกวิน</option>
+              <option value="Bat">ค้างคาว</option>
+            </select>
+          </div>
+          <div class="sr-lang-toggle">
+            <button type="button" class="sr-lang-btn" data-role="btnEN">EN</button>
+            <button type="button" class="sr-lang-btn active" data-role="btnTH">TH</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sr-deck">
+        <!-- Left Deck: Probability Targets -->
+        <div class="sr-card">
+          <div class="sr-card-head">
+            <div class="sr-card-title" data-role="labelTargets">ค่าสเตตัสขั้นต่ำที่ต้องการ</div>
+            <button type="button" class="sr-clear-btn" data-role="clearBtn">ล้างทั้งหมด</button>
+          </div>
+          <div class="sr-stat-grid" data-role="statGrid"></div>
+          <button type="button" class="sr-action-btn" data-role="calcBtn">คำนวณโอกาส</button>
+          <div data-role="output"></div>
+        </div>
+
+        <!-- Right Deck: Target Recommender -->
+        <div class="sr-card">
+          <div class="sr-card-head">
+            <div class="sr-card-title" data-role="titleRecommender">แนะนำเป้าหมายสเตตัส</div>
+          </div>
+          <p class="sr-header-sub" data-role="subRecommender" style="margin-top:-6px;">เลือกสเตตัสที่ต้องการเน้น และจำนวน Roll สูงสุดที่รับได้</p>
+          
+          <div>
+            <div class="sr-metric-lbl" data-role="labelMaxStats" style="margin-bottom:6px;">สเตตัสที่ต้องการเน้น</div>
+            <div class="sr-rec-grid" data-role="recStatGrid"></div>
+          </div>
+
+          <div>
+            <div class="sr-card-head" style="margin-bottom:6px;">
+              <div class="sr-metric-lbl" data-role="labelMaxRolls">จำนวน Roll สูงสุดที่รับได้</div>
+              <div class="sr-presets">
+                <span class="sr-preset-lbl" data-role="lblQuickRolls">ทางลัด:</span>
+                <button type="button" class="sr-preset-btn active" data-role="preset1k">1,000</button>
+                <button type="button" class="sr-preset-btn" data-role="preset10k">10,000</button>
+                <button type="button" class="sr-preset-btn" data-role="preset50k">50,000</button>
+              </div>
+            </div>
+            <input type="number" class="sr-num-input num" data-role="maxRollsInput" value="1000" min="1">
+          </div>
+
+          <button type="button" class="sr-action-btn" data-role="btnSuggest">แนะนำเป้าหมาย</button>
+          
+          <div class="sr-progress-bg" data-role="progressContainer">
+            <div class="sr-progress-fill" data-role="progressBar"></div>
+          </div>
+
+          <div data-role="recOutput"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const STAT_NAMES = ['ATK','DEF','AGI','VIT','INT','CHA','TAL','LCK'];
+
+  const BASE = {
+    Wolf:      [7,8,7,7,6,5,5,3],
+    Bison:     [9,8,6,8,4,4,5,4],
+    Panda:     [8,7,8,6,4,4,6,5],
+    Whale:     [5,9,3,9,7,7,4,4],
+    Cat:       [8,4,9,5,3,4,6,9],
+    Chameleon: [7,5,8,5,4,5,7,7],
+    Rabbit:    [6,4,7,7,5,6,5,8],
+    Mole:      [5,7,5,6,5,5,8,7],
+    Monkey:    [5,5,4,8,8,8,6,5],
+    Sheep:     [4,5,4,4,8,8,8,4],
+    Penguin:   [3,6,5,3,9,7,9,6],
+    Bat:       [6,5,6,5,7,9,4,6]
+  };
+
+  const CLASS_NAMES = {
+    en: { Wolf:'Wolf', Bison:'Bison', Panda:'Panda', Whale:'Whale', Cat:'Cat', Chameleon:'Chameleon', Rabbit:'Rabbit', Mole:'Mole', Monkey:'Monkey', Sheep:'Sheep', Penguin:'Penguin', Bat:'Bat' },
+    th: { Wolf:'หมาป่า', Bison:'ไบซัน', Panda:'แพนด้า', Whale:'วาฬ', Cat:'แมว', Chameleon:'กิ้งก่า', Rabbit:'กระต่าย', Mole:'ตุ่น', Monkey:'ลิง', Sheep:'แกะ', Penguin:'เพนกวิน', Bat:'ค้างคาว' }
+  };
+
+  const LANG = {
+    en: {
+      titleMain: 'Stat Roll Calculator',
+      subtitle: 'Set minimum targets for any stats to calculate simultaneous creation probability.',
+      labelClass: 'Class',
+      optPlaceholder: '— select a class —',
+      labelTargets: 'Minimum Stat Targets',
+      clearBtn: 'Clear all',
+      calcBtn: 'Calculate probability',
+      base: 'base',
+      errNoClass: 'Please select a class first.',
+      errNoTarget: 'Enter at least one minimum stat target to calculate.',
+      impossibleTitle: 'Impossible target',
+      impossibleSuffix: 'cannot be reached for',
+      guaranteedTitle: 'Guaranteed',
+      guaranteedBody: (cls) => `Every ${CLASS_NAMES.en[cls] || cls} creation meets this target. No rerolling needed.`,
+      probLabel: 'Probability',
+      attemptsLabel: 'Expected rolls',
+      summaryBody: (cls, tags, n) => `<strong>${CLASS_NAMES.en[cls] || cls}</strong> — targeting ${tags}<br>On average, you would need to roll <strong>${n} times</strong> before getting all these stat minimums simultaneously.`,
+      titleRecommender: 'Target Recommender',
+      subRecommender: 'Select stats to maximize and your max acceptable roll count.',
+      labelMaxStats: 'Stats to Maximize',
+      labelMaxRolls: 'Maximum Attempts (Rolls)',
+      quickLabel: 'Quick:',
+      btnSuggest: 'Suggest Targets',
+      calculatingLabel: 'Calculating...',
+      errNoRecStats: 'Select at least one stat to maximize.',
+      errInvalidRolls: 'Enter a valid number of rolls.',
+      noBuildsTitle: 'No realistic builds found',
+      noBuildsBody: 'Try increasing your maximum rolls or selecting fewer stats.',
+      recResultsPrefix: 'Best realistic targets within',
+      recResultsSuffix: 'rolls',
+      sumLabel: 'Selected Sum',
+      tabMax: '★ Max Stats',
+      tabBalanced: '⚖ Balanced',
+      tabEasy: '⚡ Easy Roll'
+    },
+    th: {
+      titleMain: 'เครื่องคำนวณสเตตัสตอนสร้างตัวละคร',
+      subtitle: 'ตั้งค่าสเตตัสขั้นต่ำที่ต้องการเพื่อหาโอกาสที่จะได้ค่าครบทุกตัวพร้อมกัน',
+      labelClass: 'คลาส',
+      optPlaceholder: '— เลือกคลาส —',
+      labelTargets: 'ค่าสเตตัสขั้นต่ำที่ต้องการ',
+      clearBtn: 'ล้างทั้งหมด',
+      calcBtn: 'คำนวณโอกาส',
+      base: 'ค่าเริ่มต้น',
+      errNoClass: 'กรุณาเลือกคลาสก่อน',
+      errNoTarget: 'กรุณาใส่ค่าสเตตัสขั้นต่ำอย่างน้อยหนึ่งตัว',
+      impossibleTitle: 'เป้าหมายเป็นไปไม่ได้',
+      impossibleSuffix: 'ไม่สามารถทำได้สำหรับ',
+      guaranteedTitle: 'รับประกัน',
+      guaranteedBody: (cls) => `ทุกการสร้างตัวละคร ${CLASS_NAMES.th[cls] || cls} ผ่านเงื่อนไขนี้อยู่แล้ว ไม่จำเป็นต้อง reroll`,
+      probLabel: 'โอกาส',
+      attemptsLabel: 'จำนวน Roll โดยเฉลี่ย',
+      summaryBody: (cls, tags, n) => `<strong>${CLASS_NAMES.th[cls] || cls}</strong> — เป้าหมาย ${tags}<br>โดยเฉลี่ยต้อง roll <strong>${n} ครั้ง</strong> ก่อนจะได้ค่าสเตตัสครบตามที่ต้องการพร้อมกัน`,
+      titleRecommender: 'แนะนำเป้าหมายสเตตัส',
+      subRecommender: 'เลือกสเตตัสที่ต้องการเน้น และจำนวน Roll สูงสุดที่รับได้',
+      labelMaxStats: 'สเตตัสที่ต้องการเน้น',
+      labelMaxRolls: 'จำนวน Roll สูงสุดที่รับได้',
+      quickLabel: 'ทางลัด:',
+      btnSuggest: 'แนะนำเป้าหมาย',
+      calculatingLabel: 'กำลังคำนวณ...',
+      errNoRecStats: 'กรุณาเลือกอย่างน้อยหนึ่งสเตตัส',
+      errInvalidRolls: 'กรุณาระบุจำนวน roll ที่ถูกต้อง',
+      noBuildsTitle: 'ไม่พบเป้าหมายที่เป็นไปได้',
+      noBuildsBody: 'ลองเพิ่มจำนวน roll สูงสุด หรือลดจำนวนสเตตัสที่ต้องการเน้นลง',
+      recResultsPrefix: 'เป้าหมายที่ดีที่สุดภายใน',
+      recResultsSuffix: 'rolls',
+      sumLabel: 'ผลรวมสเตตัสที่เลือก',
+      tabMax: '★ สเตตัสสูงสุด',
+      tabBalanced: '⚖ สมดุล',
+      tabEasy: '⚡ Roll ง่ายสุด'
+    }
+  };
+
+  // Default to Thai ('th')
+  let currentLang = 'th';
+  let selectedStatsToMax = new Set();
+  let isCalculating = false;
+
+  // Cached recommendation builds for tab switching
+  let currentRecBuilds = [];
+  let currentRecSelected = [];
+  let currentRecMaxRolls = 1000;
+  let activeTabIdx = 0;
+
+  const maxStat = (base) => Math.min(12, base + 4 + 1);
+  const minStat = (base) => Math.max(3, base - 4 + 1);
+
+  // Scoped element references
+  const classSelect = root.querySelector('[data-role="classSelect"]');
+  const statGrid = root.querySelector('[data-role="statGrid"]');
+  const recStatGrid = root.querySelector('[data-role="recStatGrid"]');
+  const output = root.querySelector('[data-role="output"]');
+  const recOutput = root.querySelector('[data-role="recOutput"]');
+  const maxRollsInput = root.querySelector('[data-role="maxRollsInput"]');
+  const btnSuggest = root.querySelector('[data-role="btnSuggest"]');
+  const calcBtn = root.querySelector('[data-role="calcBtn"]');
+  const clearBtn = root.querySelector('[data-role="clearBtn"]');
+  const progressContainer = root.querySelector('[data-role="progressContainer"]');
+  const progressBar = root.querySelector('[data-role="progressBar"]');
+  const btnEN = root.querySelector('[data-role="btnEN"]');
+  const btnTH = root.querySelector('[data-role="btnTH"]');
+  const preset1k = root.querySelector('[data-role="preset1k"]');
+  const preset10k = root.querySelector('[data-role="preset10k"]');
+  const preset50k = root.querySelector('[data-role="preset50k"]');
+
+  // Factorials for probability distribution
+  const FACT = [1];
+  function factorial(n) {
+    if (FACT[n] !== undefined) return FACT[n];
+    FACT[n] = n * factorial(n - 1);
+    return FACT[n];
+  }
+
+  let DISTS = null;
+  function getDists() {
+    if (DISTS) return DISTS;
+    DISTS = [];
+    function gen(idx, rem, cur) {
+      if (idx === 7) { cur.push(rem); DISTS.push(cur.slice()); cur.pop(); return; }
+      for (let k = 0; k <= rem; k++) { cur.push(k); gen(idx + 1, rem - k, cur); cur.pop(); }
+    }
+    gen(0, 4, []);
+    return DISTS;
+  }
+
+  function distCoeff(dist) {
+    let c = factorial(4);
+    for (let x of dist) c /= factorial(x);
+    return c / Math.pow(8, 4);
+  }
+
+  function calcProb(baseArr, targets) {
+    const reqs = [];
+    for (let i = 0; i < 8; i++) {
+      if (targets[i] === null) { reqs.push(null); continue; }
+      const req = targets[i] - baseArr[i] - 1;
+      if (req > 4) return 0;
+      if (req <= -4) { reqs.push(null); continue; }
+      reqs.push(req);
+    }
+    if (reqs.every(r => r === null)) return 1;
+
+    const dists = getDists();
+    const coeffs = dists.map(distCoeff);
+    let total = 0;
+
+    for (let bi = 0; bi < dists.length; bi++) {
+      const bd = dists[bi];
+      const bc = coeffs[bi];
+      for (let pi = 0; pi < dists.length; pi++) {
+        const pd = dists[pi];
+        let ok = true;
+        for (let i = 0; i < 8; i++) {
+          if (reqs[i] === null) continue;
+          if ((bd[i] - pd[i]) < reqs[i]) { ok = false; break; }
+        }
+        if (ok) total += bc * coeffs[pi];
+      }
+    }
+    return total;
+  }
+
+  function rateColor(prob) {
+    if (prob >= 0.05) return 'good';
+    if (prob >= 0.005) return 'warn';
+    return 'bad';
+  }
+
+  function buildGrid() {
+    statGrid.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'sr-stat-cell';
+      cell.dataset.idx = i;
+      cell.innerHTML = `
+        <div class="sr-stat-top">
+          <span class="sr-stat-name">${STAT_NAMES[i]}</span>
+          <span class="sr-stat-range num hidden" data-stat-range="${i}"></span>
+        </div>
+        <input type="number" class="num" data-stat-input="${i}" min="3" max="12" placeholder="—">
+        <div class="sr-stat-bottom">
+          <span class="sr-stat-base" data-stat-base="${i}"></span>
+        </div>`;
+      
+      const inp = cell.querySelector('input');
+      cell.addEventListener('click', (e) => {
+        if (e.target !== inp) inp.focus();
+      });
+      inp.addEventListener('input', () => onStatInput(i));
+      statGrid.appendChild(cell);
+    }
+  }
+
+  function buildRecGrid() {
+    recStatGrid.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'sr-rec-toggle';
+      cell.dataset.recIdx = i;
+      cell.innerHTML = `<div class="sr-rec-name">${STAT_NAMES[i]}</div>`;
+      cell.addEventListener('click', () => toggleStat(i));
+      recStatGrid.appendChild(cell);
+    }
+  }
+
+  function toggleStat(i) {
+    if (isCalculating) return;
+    const cell = recStatGrid.querySelector(`[data-rec-idx="${i}"]`);
+    if (selectedStatsToMax.has(i)) {
+      selectedStatsToMax.delete(i);
+      cell.classList.remove('active');
+    } else {
+      selectedStatsToMax.add(i);
+      cell.classList.add('active');
+    }
+  }
+
+  function onClassChange() {
+    const cls = classSelect.value;
+    output.innerHTML = '';
+    recOutput.innerHTML = '';
+    currentRecBuilds = [];
+    const L = LANG[currentLang];
+    for (let i = 0; i < 8; i++) {
+      const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
+      const bEl = statGrid.querySelector(`[data-stat-base="${i}"]`);
+      const rEl = statGrid.querySelector(`[data-stat-range="${i}"]`);
+      const cell = inp.closest('.sr-stat-cell');
+      inp.value = '';
+      cell.classList.remove('impossible');
+      if (cls && BASE[cls]) {
+        const base = BASE[cls][i];
+        bEl.textContent = L.base + ' ' + base;
+        rEl.textContent = minStat(base) + '–' + maxStat(base);
+        rEl.classList.remove('hidden');
+        inp.min = minStat(base);
+        inp.max = maxStat(base);
+      } else {
+        bEl.textContent = '';
+        rEl.classList.add('hidden');
+      }
+    }
+  }
+
+  function onStatInput(i) {
+    const cls = classSelect.value;
+    if (!cls || !BASE[cls]) return;
+    const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
+    const cell = inp.closest('.sr-stat-cell');
+    const val = parseInt(inp.value);
+    const max = maxStat(BASE[cls][i]);
+    if (!isNaN(val) && val > max) {
+      cell.classList.add('impossible');
+    } else {
+      cell.classList.remove('impossible');
+    }
+  }
+
+  function clearAll() {
+    for (let i = 0; i < 8; i++) {
+      const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
+      inp.value = '';
+      inp.closest('.sr-stat-cell').classList.remove('impossible');
+    }
+    output.innerHTML = '';
+  }
+
+  function calculate() {
+    const cls = classSelect.value;
+    const L = LANG[currentLang];
+    if (!cls) {
+      output.innerHTML = `<div class="sr-err-msg">${L.errNoClass}</div>`;
+      return;
+    }
+
+    const base = BASE[cls];
+    const targets = [];
+    const impossibles = [];
+    let anySet = false;
+    const activeTags = [];
+
+    for (let i = 0; i < 8; i++) {
+      const raw = statGrid.querySelector(`[data-stat-input="${i}"]`).value;
+      if (raw === '' || parseInt(raw) <= 0) { targets.push(null); continue; }
+      const t = parseInt(raw);
+      const mx = maxStat(base[i]);
+      if (t > mx) { impossibles.push(`${STAT_NAMES[i]} ≥ ${t} (max: ${mx})`); targets.push(null); continue; }
+      if (t <= minStat(base[i])) { targets.push(null); continue; }
+      targets.push(t);
+      activeTags.push(`${STAT_NAMES[i]} ≥ ${t}`);
+      anySet = true;
+    }
+
+    if (impossibles.length > 0) {
+      output.innerHTML = `<div class="sr-err-msg"><strong>${L.impossibleTitle}</strong>${impossibles.map(s => `<span>${s} ${L.impossibleSuffix} ${cls}</span>`).join('<br>')}</div>`;
+      return;
+    }
+    if (!anySet) {
+      output.innerHTML = `<div class="sr-err-msg">${L.errNoTarget}</div>`;
+      return;
+    }
+
+    const prob = calcProb(base, targets);
+    const pct = (prob * 100).toFixed(4);
+    const expected = prob > 0 ? Math.round(1 / prob) : Infinity;
+    const colorClass = rateColor(prob);
+
+    if (prob >= 1) {
+      output.innerHTML = `<div class="sr-guaranteed-msg"><strong>${L.guaranteedTitle}</strong>${L.guaranteedBody(cls)}</div>`;
+      return;
+    }
+
+    const tagsHtml = activeTags.map(t => `<span class="sr-tag">${t}</span>`).join(' ');
+
+    output.innerHTML = `
+      <div class="sr-result-box">
+        <div class="sr-metric-row">
+          <div class="sr-metric">
+            <div class="sr-metric-lbl">${L.probLabel}</div>
+            <div class="sr-metric-val ${colorClass} num">${pct}%</div>
+          </div>
+          <div class="sr-metric">
+            <div class="sr-metric-lbl">${L.attemptsLabel}</div>
+            <div class="sr-metric-val ${colorClass} num">${expected.toLocaleString()}</div>
+          </div>
+        </div>
+        <div class="sr-summary-text">
+          ${L.summaryBody(cls, tagsHtml, expected.toLocaleString())}
+        </div>
+      </div>`;
+  }
+
+  function renderTabbedRecommender() {
+    const L = LANG[currentLang];
+    if (!currentRecBuilds || currentRecBuilds.length === 0) return;
+
+    const tabLabels = [L.tabMax, L.tabBalanced, L.tabEasy];
+    let tabsHtml = '';
+    currentRecBuilds.forEach((build, idx) => {
+      const lbl = tabLabels[idx] || `#${idx + 1}`;
+      const activeCls = idx === activeTabIdx ? ' active' : '';
+      tabsHtml += `<button type="button" class="sr-rec-tab${activeCls}" data-rec-tab="${idx}">${lbl} <span class="num">(Σ${build.sum})</span></button>`;
+    });
+
+    const activeBuild = currentRecBuilds[activeTabIdx] || currentRecBuilds[0];
+    const tags = currentRecSelected.map(i => `<span class="sr-tag">${STAT_NAMES[i]} ≥ ${activeBuild.targets[i]}</span>`).join(' ');
+    const expected = Math.round(1 / activeBuild.prob);
+    const probPct = (activeBuild.prob * 100).toFixed(4);
+    const color = rateColor(activeBuild.prob);
+
+    recOutput.innerHTML = `
+      <div class="sr-result-box">
+        <div style="font-size:11.5px; color:var(--muted); margin-bottom:2px;">${L.recResultsPrefix} <strong style="color:var(--text)" class="num">${currentRecMaxRolls.toLocaleString()}</strong> ${L.recResultsSuffix}:</div>
+        <div class="sr-rec-tab-bar">${tabsHtml}</div>
+        <div class="sr-rec-card">
+          <div style="margin-bottom: 2px;">${tags}</div>
+          <div style="font-size: 11px; color: var(--muted); display:flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <span>${L.probLabel}: <strong class="sr-metric-val ${color} num" style="font-size: 12px;">${probPct}%</strong></span>
+            <span>${L.attemptsLabel}: <strong style="color:var(--text)" class="num">~${expected.toLocaleString()}</strong></span>
+            <span>${L.sumLabel}: <strong style="color:var(--text)" class="num">${activeBuild.sum}</strong></span>
+          </div>
+        </div>
+      </div>`;
+
+    // Add tab click events
+    recOutput.querySelectorAll('[data-rec-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeTabIdx = parseInt(btn.dataset.recTab);
+        renderTabbedRecommender();
+      });
+    });
+  }
+
+  async function suggestTargets() {
+    if (isCalculating) return;
+    const cls = classSelect.value;
+    const rollsStr = maxRollsInput.value;
+    const maxRolls = parseInt(rollsStr);
+    const L = LANG[currentLang];
+
+    if (!cls) { recOutput.innerHTML = `<div class="sr-err-msg">${L.errNoClass}</div>`; return; }
+    if (selectedStatsToMax.size === 0) { recOutput.innerHTML = `<div class="sr-err-msg">${L.errNoRecStats}</div>`; return; }
+    if (isNaN(maxRolls) || maxRolls < 1) { recOutput.innerHTML = `<div class="sr-err-msg">${L.errInvalidRolls}</div>`; return; }
+
+    const minProbRequired = 1 / maxRolls;
+    const base = BASE[cls];
+    const selected = Array.from(selectedStatsToMax);
+    const numSelected = selected.length;
+
+    const ranges = selected.map(i => {
+      const mn = minStat(base[i]);
+      const mx = maxStat(base[i]);
+      const vals = [];
+      for (let v = mx; v >= mn; v--) vals.push(v);
+      return vals;
+    });
+
+    let totalCombinations = 1;
+    ranges.forEach(r => totalCombinations *= r.length);
+
+    isCalculating = true;
+    btnSuggest.disabled = true;
+    btnSuggest.textContent = L.calculatingLabel;
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    recOutput.innerHTML = '';
+
+    const validBuilds = [];
+    let processed = 0;
+
+    async function exploreAsync() {
+      const BATCH_SIZE = 50;
+      let batchCount = 0;
+
+      function getNextComb(indices) {
+        for (let i = numSelected - 1; i >= 0; i--) {
+          indices[i]++;
+          if (indices[i] < ranges[i].length) return true;
+          indices[i] = 0;
+        }
+        return false;
+      }
+
+      const indices = new Array(numSelected).fill(0);
+      let hasNext = true;
+
+      while (hasNext) {
+        const fullTargets = new Array(8).fill(null);
+        let sum = 0;
+        for (let k = 0; k < numSelected; k++) {
+          const statIdx = selected[k];
+          const val = ranges[k][indices[k]];
+          fullTargets[statIdx] = val;
+          sum += val;
+        }
+
+        const prob = calcProb(base, fullTargets);
+        if (prob >= minProbRequired) {
+          validBuilds.push({ targets: fullTargets, prob, sum });
+        }
+
+        processed++;
+        batchCount++;
+        if (batchCount >= BATCH_SIZE) {
+          batchCount = 0;
+          const pct = Math.min(100, Math.round((processed / totalCombinations) * 100));
+          progressBar.style.width = pct + '%';
+          await new Promise(r => setTimeout(r, 0));
+        }
+
+        hasNext = getNextComb(indices);
+      }
+    }
+
+    await exploreAsync();
+
+    isCalculating = false;
+    btnSuggest.disabled = false;
+    btnSuggest.textContent = L.btnSuggest;
+    setTimeout(() => { progressContainer.style.display = 'none'; }, 300);
+
+    if (validBuilds.length === 0) {
+      currentRecBuilds = [];
+      recOutput.innerHTML = `<div class="sr-err-msg"><strong>${L.noBuildsTitle}</strong>${L.noBuildsBody}</div>`;
+      return;
+    }
+
+    validBuilds.sort((a, b) => {
+      if (b.sum !== a.sum) return b.sum - a.sum;
+      return b.prob - a.prob;
+    });
+
+    let bestBuilds = [];
+    let currentMaxProb = -1;
+    for (const build of validBuilds) {
+      if (build.prob > currentMaxProb) {
+        bestBuilds.push(build);
+        currentMaxProb = build.prob;
+      }
+      if (bestBuilds.length >= 3) break;
+    }
+
+    currentRecBuilds = bestBuilds;
+    currentRecSelected = selected;
+    currentRecMaxRolls = maxRolls;
+    activeTabIdx = 0;
+
+    renderTabbedRecommender();
+  }
+
+  function updatePresets() {
+    const val = parseInt(maxRollsInput.value);
+    preset1k.classList.toggle('active', val === 1000);
+    preset10k.classList.toggle('active', val === 10000);
+    preset50k.classList.toggle('active', val === 50000);
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    const L = LANG[lang];
+    root.querySelector('[data-role="titleMain"]').textContent = L.titleMain;
+    root.querySelector('[data-role="subtitle"]').textContent = L.subtitle;
+    root.querySelector('[data-role="lblClass"]').textContent = L.labelClass;
+    root.querySelector('[data-role="optPlaceholder"]').textContent = L.optPlaceholder;
+    root.querySelector('[data-role="labelTargets"]').textContent = L.labelTargets;
+    root.querySelector('[data-role="clearBtn"]').textContent = L.clearBtn;
+    root.querySelector('[data-role="calcBtn"]').textContent = L.calcBtn;
+    root.querySelector('[data-role="titleRecommender"]').textContent = L.titleRecommender;
+    root.querySelector('[data-role="subRecommender"]').textContent = L.subRecommender;
+    root.querySelector('[data-role="labelMaxStats"]').textContent = L.labelMaxStats;
+    root.querySelector('[data-role="labelMaxRolls"]').textContent = L.labelMaxRolls;
+    root.querySelector('[data-role="lblQuickRolls"]').textContent = L.quickLabel;
+    if (!isCalculating) btnSuggest.textContent = L.btnSuggest;
+
+    btnEN.classList.toggle('active', lang === 'en');
+    btnTH.classList.toggle('active', lang === 'th');
+
+    const cls = classSelect.value;
+    if (cls && BASE[cls]) {
+      for (let i = 0; i < 8; i++) {
+        const bEl = statGrid.querySelector(`[data-stat-base="${i}"]`);
+        if (bEl && bEl.textContent) bEl.textContent = L.base + ' ' + BASE[cls][i];
+      }
+    }
+
+    const names = CLASS_NAMES[lang];
+    for (const opt of classSelect.options) {
+      if (opt.value && names[opt.value]) opt.textContent = names[opt.value];
+    }
+
+    output.innerHTML = '';
+    if (currentRecBuilds && currentRecBuilds.length > 0) {
+      renderTabbedRecommender();
+    } else {
+      recOutput.innerHTML = '';
+    }
+  }
+
+  // Event Listeners
+  classSelect.addEventListener('change', onClassChange);
+  calcBtn.addEventListener('click', calculate);
+  clearBtn.addEventListener('click', clearAll);
+  btnSuggest.addEventListener('click', suggestTargets);
+  btnEN.addEventListener('click', () => setLang('en'));
+  btnTH.addEventListener('click', () => setLang('th'));
+
+  maxRollsInput.addEventListener('input', updatePresets);
+  preset1k.addEventListener('click', () => { if (!isCalculating) { maxRollsInput.value = 1000; updatePresets(); } });
+  preset10k.addEventListener('click', () => { if (!isCalculating) { maxRollsInput.value = 10000; updatePresets(); } });
+  preset50k.addEventListener('click', () => { if (!isCalculating) { maxRollsInput.value = 50000; updatePresets(); } });
+
+  buildGrid();
+  buildRecGrid();
+}
+
+/* ============================================================
    Tool registry — two kinds of entry:
    - mounted tools: own markup + logic, mount into an isolated
      container the first time they're opened (needs `id` + `mount`).
@@ -6399,6 +7627,14 @@ const TOOLS = [
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V14M10 20V9M16 20V13M22 20V4"/></svg>',
     mounted: false,
     mount(root){ mountStatGain(root); }
+  },
+  {
+    id: "stat-roll",
+    title: "Stat Roll Calculator",
+    category: "Calculator",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+    mounted: false,
+    mount(root){ mountStatRoll(root); }
   },
   {
     title: "GoldenKingBug Spawn Map",
@@ -6661,8 +7897,8 @@ function showTool(tool){
   viewMenu.hidden = true; viewTool.hidden = false;
   crumbCurrent.textContent = tool.title;
   document.title = "12 Tails Tools — " + tool.title;
-  document.documentElement.classList.toggle("tool-fit-screen", tool.id === "skill-cooldown-lookup" || tool.id === "stat-gain");
-  document.documentElement.classList.toggle("tool-wide-hero", tool.id === "skill-cooldown-lookup");
+  document.documentElement.classList.toggle("tool-fit-screen", tool.id === "skill-cooldown-lookup" || tool.id === "stat-gain" || tool.id === "stat-roll");
+  document.documentElement.classList.toggle("tool-wide-hero", tool.id === "skill-cooldown-lookup" || tool.id === "stat-roll");
   const container = getToolContainer(tool);
   if (!tool.mounted){ tool.mount(container); tool.mounted = true; }
   Object.values(toolContainers).forEach(el => { el.hidden = (el !== container); });
