@@ -74,7 +74,11 @@ Present a structured review table to the user. Every single skill entry must inc
 1. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` call.
 2. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
 3. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line`):** Exact raw string from client language files.
-4. **Proposed Header Tooltip:** Concise flavor context + non-obvious hidden mechanics (AoE radius, cleanses, sleep breaks, aggro wipes, qualitative passive phrasing). **Never duplicate numbers/formulas already displayed on the chips.**
+4. **Proposed Header Tooltip (`desc`):**
+   * **In-Game Client Phrasing as Baseline:** Base descriptions directly on authentic client tooltips (`<Class>Skill_eng.cs`) to preserve original flavor context and terminology.
+   * **Qualitative Over Quantitative:** Strip out all rank-dependent and dependency-scaled quantitative numbers (damage values, durations, tick counts, percentage bonuses) to avoid duplicating or conflicting with live UI calculation chips.
+   * **Always Include Verified Geometries:** Always state exact AoE radii, projectile ranges, and cleanse areas whenever verified from decompiled targeting code (`Damage.FindAreaTarget`, `Damage.FindRecTarget`, OverlapSphere, raycasts).
+   * **Highlight Utility & Hidden Mechanics:** Clearly note non-obvious behavior (cleanses, lock removals, sleep breaks, aggro wipes, absolute immunities, unlisted passive hooks).
 
 > ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
 
