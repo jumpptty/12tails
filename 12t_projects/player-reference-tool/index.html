@@ -7065,6 +7065,7 @@ function mountStatRoll(root) {
       recResultsPrefix: 'Best realistic targets within',
       recResultsSuffix: 'rolls',
       sumLabel: 'Selected Sum',
+      recSymmetricNote: '* Symmetrical stats with equal base values can be swapped in any order.',
       tabMax: '★ Max Stats',
       tabBalanced: '⚖ Balanced',
       tabEasy: '⚡ Easy Roll'
@@ -7101,6 +7102,7 @@ function mountStatRoll(root) {
       recResultsPrefix: 'เป้าหมายที่ดีที่สุดภายใน',
       recResultsSuffix: 'rolls',
       sumLabel: 'ผลรวมสเตตัสที่เลือก',
+      recSymmetricNote: '* สเตตัสที่มีค่าเริ่มต้นเท่ากัน สามารถสลับค่าระหว่างกันได้',
       tabMax: '★ สเตตัสสูงสุด',
       tabBalanced: '⚖ สมดุล',
       tabEasy: '⚡ Roll ง่ายสุด'
@@ -7369,6 +7371,8 @@ function mountStatRoll(root) {
   function renderTabbedRecommender() {
     const L = LANG[currentLang];
     if (!currentRecBuilds || currentRecBuilds.length === 0) return;
+    const cls = classSelect.value;
+    const base = BASE[cls];
 
     const tabLabels = [L.tabMax, L.tabBalanced, L.tabEasy];
     let tabsHtml = '';
@@ -7379,10 +7383,49 @@ function mountStatRoll(root) {
     });
 
     const activeBuild = currentRecBuilds[activeTabIdx] || currentRecBuilds[0];
-    const tags = currentRecSelected.map(i => `<span class="sr-tag">${STAT_NAMES[i]} ≥ ${activeBuild.targets[i]}</span>`).join(' ');
+
+    // Group selected stats by base stat value
+    const groupsByBase = {};
+    currentRecSelected.forEach(i => {
+      const bVal = base[i];
+      if (!groupsByBase[bVal]) groupsByBase[bVal] = [];
+      groupsByBase[bVal].push({
+        idx: i,
+        name: STAT_NAMES[i],
+        target: activeBuild.targets[i]
+      });
+    });
+
+    let hasAsymmetricGroup = false;
+    const chipStrings = [];
+    const processedBases = new Set();
+
+    currentRecSelected.forEach(i => {
+      const bVal = base[i];
+      if (processedBases.has(bVal)) return;
+      processedBases.add(bVal);
+
+      const items = groupsByBase[bVal];
+      if (items.length === 1) {
+        chipStrings.push(`${items[0].name} ≥ ${items[0].target}`);
+      } else {
+        const names = items.map(it => it.name).join(', ');
+        const sortedTargets = items.map(it => it.target).sort((a, b) => b - a);
+        const allEqual = sortedTargets.every(t => t === sortedTargets[0]);
+        if (allEqual) {
+          chipStrings.push(`${names} ≥ ${sortedTargets[0]}`);
+        } else {
+          hasAsymmetricGroup = true;
+          chipStrings.push(`${names} ≥ ${sortedTargets.join(', ')}`);
+        }
+      }
+    });
+
+    const tags = chipStrings.map(t => `<span class="sr-tag">${t}</span>`).join(' ');
     const expected = Math.round(1 / activeBuild.prob);
     const probPct = (activeBuild.prob * 100).toFixed(4);
     const color = rateColor(activeBuild.prob);
+    const noteHtml = hasAsymmetricGroup ? `<div style="font-size: 10.5px; color: var(--muted); margin-top: 5px; font-style: italic;">${L.recSymmetricNote}</div>` : '';
 
     recOutput.innerHTML = `
       <div class="sr-result-box">
@@ -7395,6 +7438,7 @@ function mountStatRoll(root) {
             <span>${L.attemptsLabel}: <strong style="color:var(--text)" class="num">~${expected.toLocaleString()}</strong></span>
             <span>${L.sumLabel}: <strong style="color:var(--text)" class="num">${activeBuild.sum}</strong></span>
           </div>
+          ${noteHtml}
         </div>
       </div>`;
 
