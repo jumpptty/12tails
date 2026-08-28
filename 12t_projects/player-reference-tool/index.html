@@ -1098,23 +1098,58 @@
   }
   .sk-ps-toggle img{width:20px; height:20px; display:block; filter:grayscale(100%); opacity:.5}
   .sk-ps-toggle.on img{filter:none; opacity:1}
+  .tool-shell.is-hero-empty{
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
   .sk-search-wrap{position:relative; margin-bottom:10px; transition:all 0.2s ease}
-  .sk-search-hero{margin:28px 0 20px}
+  .sk-search-hero{
+    margin: 54px auto 36px;
+    max-width: 640px;
+  }
   .sk-search-hero .sk-search{
-    padding:15px 20px;
-    font-size:19px;
-    font-weight:600;
-    border-radius:4px;
-    box-shadow:0 4px 16px rgba(0,0,0,0.22), 0 1px 3px rgba(0,0,0,0.15);
-    border-color:var(--gold);
+    padding: 16px 28px;
+    font-family: Georgia, "Iowan Old Style", "Noto Serif Thai", serif;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    color: #deb838;
+    background: var(--panel);
+    border: 1.5px solid var(--gold);
+    border-radius: 4px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 0 12px rgba(201,162,39,0.2);
   }
   .sk-search-hero .sk-search:focus{
-    box-shadow:0 0 0 2px var(--gold-soft), 0 4px 18px rgba(201,162,39,0.25);
+    border-color: #f0d060;
+    box-shadow: 0 0 0 2px var(--gold-soft), 0 8px 32px rgba(201,162,39,0.35);
   }
   .sk-search-hero .sk-search::placeholder{
-    color:var(--muted);
-    font-weight:normal;
-    opacity:0.75;
+    font-family: Georgia, "Iowan Old Style", "Noto Serif Thai", serif;
+    color: #c9a227;
+    font-weight: 700;
+    opacity: 0.75;
+    text-align: center;
+  }
+  .sk-search-hero .sk-suggestions{
+    top: calc(100% + 8px);
+    border-color: var(--gold);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+    border-radius: 4px;
+  }
+  .sk-search-hero .sk-suggestion{
+    padding: 12px 20px;
+    font-size: 15.5px;
+  }
+  .sk-search-hero .sk-suggestion-name{
+    font-family: Georgia, "Iowan Old Style", "Noto Serif Thai", serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .sk-search-hero .sk-suggestion:hover .sk-suggestion-name,
+  .sk-search-hero .sk-suggestion.active .sk-suggestion-name{
+    color: #deb838;
   }
   .sk-search{
     box-sizing:border-box; width:100%; background:var(--panel-2); color:var(--text);
@@ -4052,6 +4087,7 @@ function mountSkillCooldownLookup(root){
   const enemyNextBtn = $('[data-role="enemy-next"]', root);
   const enemyCycleDisplayEl = $('[data-role="enemy-cycle-display"]', root);
   const enemyNameLabelEl = $('[data-role="enemy-name-label"]', root);
+  const toolShellEl = $("#toolShell");
   const searchEl = $('[data-role="search"]', root);
   const searchWrapEl = $('.sk-search-wrap', root);
   const raBtn = $('[data-role="revisedart"]', root);
@@ -5416,6 +5452,7 @@ function mountSkillCooldownLookup(root){
     if (!selected){
       displayEl.innerHTML = "";
       searchWrapEl.classList.add("sk-search-hero");
+      toolShellEl.classList.add("is-hero-empty");
       // visibility, not mask-image:"none" — CSS mask-image:none means "no
       // mask applied" (renders the element's full unclipped box), the
       // OPPOSITE of hidden. Caught live: with no skill selected this drew
@@ -5424,6 +5461,8 @@ function mountSkillCooldownLookup(root){
       artEl.style.visibility = "hidden";
       return;
     }
+    searchWrapEl.classList.remove("sk-search-hero");
+    toolShellEl.classList.remove("is-hero-empty");
     const INT = parseFloat(intEl.value) || 0;
     const CHA = parseFloat(chaEl.value) || 0;
     const LV = parseFloat(lvEl.value) || 0;
@@ -6834,11 +6873,6 @@ function mountSkillCooldownLookup(root){
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
-    if (q.length > 0 || selected) {
-      searchWrapEl.classList.remove("sk-search-hero");
-    } else {
-      searchWrapEl.classList.add("sk-search-hero");
-    }
     if (selected && selected.name.toLowerCase() !== q){
       selected = null;
       renderHero();
