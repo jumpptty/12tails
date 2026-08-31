@@ -7203,6 +7203,8 @@ function mountStatRoll(root) {
     const reqs = [];
     for (let i = 0; i < 8; i++) {
       if (targets[i] === null) { reqs.push(null); continue; }
+      if (targets[i] > 12) return 0;
+      if (targets[i] <= 3) { reqs.push(null); continue; }
       const req = targets[i] - baseArr[i] - 1;
       if (req > 4) return 0;
       if (req <= -4) { reqs.push(null); continue; }
@@ -7418,6 +7420,32 @@ function mountStatRoll(root) {
       </div>`;
   }
 
+  function findBestForK(base, selected, k) {
+    const numSelected = selected.length;
+    const parts = getPartitions(numSelected, k);
+    let best = null;
+    let maxProb = -1;
+    let maxSum = -1;
+
+    for (const p of parts) {
+      const targets = new Array(8).fill(null);
+      let sum = 0;
+      for (let i = 0; i < numSelected; i++) {
+        const sIdx = selected[i];
+        const val = Math.min(12, Math.max(3, base[sIdx] + 1 + p[i]));
+        targets[sIdx] = val;
+        sum += val;
+      }
+      const prob = calcProb(base, targets);
+      if (sum > maxSum || (sum === maxSum && prob > maxProb)) {
+        maxSum = sum;
+        maxProb = prob;
+        best = { targets, prob, sum, k };
+      }
+    }
+    return best;
+  }
+
   function updateRecommender() {
     const cls = classSelect.value;
     const L = LANG[currentLang];
@@ -7434,31 +7462,18 @@ function mountStatRoll(root) {
 
     const base = BASE[cls];
     const selected = Array.from(selectedStatsToMax);
-    const numSelected = selected.length;
 
     const bestBuilds = [];
-    for (const k of [4, 3, 2]) {
-      const parts = getPartitions(numSelected, k);
-      let bestForK = null;
-      let maxProbForK = -1;
+    const seenKeys = new Set();
 
-      for (const p of parts) {
-        const targets = new Array(8).fill(null);
-        let sum = 0;
-        for (let i = 0; i < numSelected; i++) {
-          const sIdx = selected[i];
-          const val = base[sIdx] + 1 + p[i];
-          targets[sIdx] = val;
-          sum += val;
-        }
-        const prob = calcProb(base, targets);
-        if (prob > maxProbForK) {
-          maxProbForK = prob;
-          bestForK = { targets, prob, sum };
-        }
-      }
-      if (bestForK) {
-        bestBuilds.push(bestForK);
+    for (let k = 4; k >= 0; k--) {
+      const candidate = findBestForK(base, selected, k);
+      if (!candidate) continue;
+      const key = candidate.targets.map(t => t === null ? '_' : t).join(',');
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        bestBuilds.push(candidate);
+        if (bestBuilds.length === 3) break;
       }
     }
 
