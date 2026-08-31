@@ -60,7 +60,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_seal` | Seal | 1 | 10 MP | 12s | 0s | 60s | Red/Blue ground seal | — | Ground seal lasting 60s (`chaAdjusted`) for combo alignment. |
 | `sheep_repel` | Repel | 2 | [14, 20] MP | 120s | [5, 4]s | 6s | Physical deflection | — | Deflection wall lasting 6s (`chaAdjusted`), absorbing 50/100 damage/hit and blocking projectiles. |
 | `sheep_reverse` | Reverse | 2 | [24, 28] MP | 240s | [7, 5]s | 3s | Status inversion | — | Inversion seal lasting 3s (`chaAdjusted`), converting `50% × sLv` (50%/100%) of incoming damage to healing. |
-| `sheep_soulOfArms` | Soul of Arms | 2 | [40, 55] MP, [40, 55] SP (red) | 300s | [6, 8]s | — | `6 × talAdjust(10 + 20×sLv) + talAdjust(50 + 50×sLv)` | 2 | Single-target 7-hit holy barrage: 6 rapid strikes dealing `talAdjust(10 + 20×sLv)` each (KO=2) followed by 1 heavy finisher strike dealing `talAdjust(50 + 50×sLv)` (KO=2). Rank 1 base: 6×30 + 100 = 280 base (5.6×TAL); Rank 2 base: 6×50 + 150 = 450 base (9.0×TAL). |
+| `sheep_soulOfArms` | Soul of Arms | 2 | [40, 55] MP, [40, 55] SP (red) | 300s | [6, 8]s | — | `6 × talAdjust(10 + 20×sLv) + talAdjust(50 + 50×sLv)` | 2 | Single-target 7-hit holy barrage: 6 rapid strikes dealing `talAdjust(10 + 20×sLv)` each (KO=2) followed by 1 heavy finisher strike dealing `talAdjust(50 + 50×sLv)` (KO=2). |
 | `sheep_purifyingTear`| Purifying Tear | 1 | 25 MP, 50 SP (red) | 480s | 3s | — | Threat wipe (AoE) | — | 40m holy shockwave wiping all accumulated enemy threat/hate. |
 | `sheep_lullaby` | Lullaby | 1 | 75 MP, 30 SP (red) | 60s | 9s | 6s | Area Sleep CC | — | Soothing area hymn sleeping all nearby targets for 6s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
 | `sheep_divinityAxe` | Divinity Axe | 1 | 54 MP | 150s | 7s | — | `5 × talAdjust(45)` | 2 | Summons a divine battleaxe, damaging enemies in the area 5 times. |
@@ -148,7 +148,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Cooldown: `Sheep.cs:21548` — `this.$mTimeOut$27749 = 300;` (agiAdjusted).
   - Damage (Hits 1–6): `Sheep.cs:34255, 34305, 34355, 34405, 34455, 34505` — `talAdjust(10 + 20*sLv)`, KO 2 per hit (6 hits).
   - Damage (Hit 7 Finisher): `Sheep.cs:34555` — `talAdjust(50 + 50*sLv)`, KO 2 (1 hit).
-  - Total Sequence: 7 hits, `6 × talAdjust(10 + 20×sLv) + talAdjust(50 + 50×sLv)`. Rank 1: 6×30 + 100 = 280 base; Rank 2: 6×50 + 150 = 450 base.
+  - Total Sequence: 7 hits, `6 × talAdjust(10 + 20×sLv) + talAdjust(50 + 50×sLv)`.
 - **`divinityAxe`**:
   - Cast Time: `Sheep.cs:21560` — `this.$mCastTime$27748 = (float)7;` (magAdjusted).
   - Cooldown: `Sheep.cs:21565` — `this.$mTimeOut$27749 = 150;` (agiAdjusted).
