@@ -79,9 +79,12 @@ typeLevelStat[i] = floor( (lv - 1) * (baseStat[i] + 3) * 0.083 )
 ```
 So each stat grows ~`(base+3)/12` per level (0.083 ≈ 1/12). Higher base stats grow faster.
 
-**Character creation** `getNewRandomStat` (CharacterData.cs:538): start from class base, then **+1 to 4 random
-stats** and **−1 to 4 random stats**, finally **clamp each stat to [3, 12]**. Net: a randomized variation of the
-class template.
+**Character creation** `getNewRandomStat` (CharacterData.cs:538–624):
+1. Start with class base stats `getTypeStat(mType)` (CharacterData.cs:547).
+2. Add `+1` to 4 randomly chosen stats with replacement (CharacterData.cs:553–570).
+3. Subtract `−1` from 4 randomly chosen stats with replacement (CharacterData.cs:576–593).
+4. Add `+1` to all 8 stats and clamp each stat to `[3, 12]`: `Mathf.Clamp(typeStat[k] + 1, 3, 12)` (CharacterData.cs:601).
+Net: Maximum possible roll on any stat is hard-capped at **12**, and minimum possible roll is **3**. For high-base stats (e.g. Bison ATK base 9, Whale DEF base 9), unconstrained `9 + 1 + 4 = 14` is clamped down to `12`.
 
 ---
 
