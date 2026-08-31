@@ -2078,22 +2078,19 @@
      so it never steals the hover off the number itself. */
   .sk-stat-value-wrap{display:inline-block}
   .sk-stat-tooltip{
-    position:absolute; left:50%; top:calc(100% + 8px); transform:translateX(-50%); z-index:10;
+    position:fixed; z-index:25;
     background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
     box-shadow:var(--shadow); padding:8px 12px;
     display:flex; align-items:stretch;
     opacity:0; visibility:hidden; pointer-events:none;
     transition:opacity .12s ease;
-    /* max-height here is a pre-JS/no-JS fallback only — positionStatTooltips()
-       (mountSkillCooldownLookup) overwrites it inline on every render with a
-       precise cap based on actual remaining space below this tooltip's real
-       anchor point, since a flat viewport fraction doesn't know how far down
-       the screen the anchor itself already is. overflow-y:auto is what
-       actually keeps a very-high-LCK outcome list from running off-screen —
-       this page has no page-level scroll to fall back on while this tool is
-       open, so the tooltip needs its own self-contained scroll instead. */
-    max-height:80vh; overflow-y:auto; overflow-x:hidden;
+    max-height:calc(100vh - 120px); overflow-y:auto; overflow-x:hidden;
   }
+  .sk-stat-value-wrap:hover .sk-stat-tooltip,
+  .sk-stat-value-wrap.pinned .sk-stat-tooltip,
+  .sk-stat-tooltip:hover{opacity:1; visibility:visible}
+  .sk-stat-value-wrap.pinned .sk-stat-tooltip,
+  .sk-stat-tooltip:hover{pointer-events:auto}
   /* Pinned (2026-08-14, user-requested — see the click-to-pin JS in
      mountSkillCooldownLookup) keeps the tooltip open independent of :hover,
      AND turns pointer-events back on so it becomes a normal scrollable
@@ -2101,9 +2098,7 @@
      number, pointer-events stays none (see .sk-stat-tooltip's own rule) so
      the tooltip never steals the hover off the number, and scrolling is
      instead redirected from the number itself via a wheel listener. */
-  .sk-stat-value-wrap:hover .sk-stat-tooltip,
-  .sk-stat-value-wrap.pinned .sk-stat-tooltip{opacity:1; visibility:visible}
-  .sk-stat-value-wrap.pinned .sk-stat-tooltip{pointer-events:auto}
+
   /* Explicit column elements, not CSS column-count: multi-column layout only
      treats column-count as a target, not a hard cap — when content doesn't
      balance into that many columns within the box's own max-height, browsers
@@ -2188,17 +2183,6 @@
     width:260px; margin:0; z-index:10;
   }
 
-  /* Stat tooltips ALWAYS sit on the right of .tool-shell */
-  .sk-stat-tooltip {
-    position:fixed; left:calc(100% + 20px); top:100px;
-    transform:none; right:auto; z-index:20;
-  }
-
-  /* Damage info popover sits on the right of .tool-shell */
-  .sk-dmg-info-pop {
-    position:fixed; left:calc(100% + 20px); top:240px;
-    transform:none; width:260px; z-index:20;
-  }
 
   /* Compact density scaling on short viewports (<=820px) or constrained widths (<=1300px) */
   @media (max-height: 820px), (max-width: 1300px) {
@@ -5259,17 +5243,22 @@ function mountSkillCooldownLookup(root){
   // artificially narrow and had to scroll even when there was plenty of
   // room beside the panel to just show the whole thing — user-reported.
   function renderProbabilityTooltip(dist){
-    // Single starting column — positionStatTooltips() rechunks the rows into
-    // as many .sk-stat-tooltip-col elements as actually fit, once it knows
-    // the real available space (never visible in this single-column form,
-    // since that rechunk runs synchronously right after this DOM is built).
-    return `
-      <div class="sk-stat-tooltip" role="tooltip">
+    const cols = dist.length > 8 ? 2 : 1;
+    const rowsPerCol = Math.ceil(dist.length / cols);
+    let colsHtml = "";
+    for (let c = 0; c < cols; c++){
+      const chunk = dist.slice(c * rowsPerCol, (c + 1) * rowsPerCol);
+      colsHtml += `
         <div class="sk-stat-tooltip-col">
-          ${dist.map(d => `
+          ${chunk.map(d => `
             <div class="sk-stat-tooltip-row"><span>${d.label}s</span><span>${fmtOne(d.pct)}%</span></div>
           `).join("")}
         </div>
+      `;
+    }
+    return `
+      <div class="sk-stat-tooltip" role="tooltip">
+        ${colsHtml}
       </div>
     `;
   }
@@ -5311,22 +5300,32 @@ function mountSkillCooldownLookup(root){
   }
 
   function positionStatTooltips(){
-    const tooltip = $(".sk-stat-tooltip", displayEl);
-    if (!tooltip) return;
-    const rows = $$(".sk-stat-tooltip-row", tooltip);
-    if (rows.length && !$(".sk-stat-tooltip-col", tooltip)){
-      const cols = Math.min(2, Math.ceil(rows.length / 8));
-      const rowsPerCol = Math.ceil(rows.length / cols);
-      tooltip.innerHTML = "";
-      for (let c = 0; c < cols; c++){
-        const col = document.createElement("div");
-        col.className = "sk-stat-tooltip-col";
-        for (let r = c * rowsPerCol; r < Math.min((c + 1) * rowsPerCol, rows.length); r++){
-          col.appendChild(rows[r]);
-        }
-        tooltip.appendChild(col);
-      }
-    }
+    const shell = document.querySelector(".tool-shell");
+    if (!shell) return;
+    const shellRect = shell.getBoundingClientRect();
+    const margin = 20; // 20px gap outside the right edge of the skill card
+
+    const stage = document.querySelector(".stage");
+    const scale = stage ? (stage.getBoundingClientRect().width / (stage.offsetWidth || 1) || 1) : 1;
+
+    $$(".sk-stat", displayEl).forEach(statEl => {
+      const tooltip = $(".sk-stat-tooltip", statEl);
+      const wrap = $(".sk-stat-value-wrap", statEl);
+      if (!tooltip || !wrap) return;
+
+      const wrapRect = wrap.getBoundingClientRect();
+      const desiredLeft = shellRect.right + margin;
+      const desiredTop = wrapRect.top;
+
+      tooltip.style.position = "fixed";
+      tooltip.style.transform = "none";
+      tooltip.style.right = "auto";
+
+      const cb = tooltip.offsetParent;
+      const cbRect = cb ? cb.getBoundingClientRect() : { left: 0, top: 0 };
+      tooltip.style.left = ((desiredLeft - cbRect.left) / scale) + "px";
+      tooltip.style.top = ((desiredTop - cbRect.top) / scale) + "px";
+    });
   }
 
   function setupStatTooltipInteractions(){
@@ -5334,6 +5333,9 @@ function mountSkillCooldownLookup(root){
       const tooltip = $(".sk-stat-tooltip", wrap);
       if (!tooltip) return;
       wrap.style.cursor = "pointer";
+      wrap.addEventListener("mouseenter", () => {
+        positionStatTooltips();
+      });
       wrap.addEventListener("wheel", (e) => {
         if (tooltip.scrollHeight <= tooltip.clientHeight) return; // nothing to scroll
         e.preventDefault();
@@ -5344,6 +5346,7 @@ function mountSkillCooldownLookup(root){
         const pin = !wrap.classList.contains("pinned");
         $$(".sk-stat-value-wrap.pinned", displayEl).forEach(w => { if (w !== wrap) w.classList.remove("pinned"); });
         wrap.classList.toggle("pinned", pin);
+        if (pin) positionStatTooltips();
       });
     });
   }
