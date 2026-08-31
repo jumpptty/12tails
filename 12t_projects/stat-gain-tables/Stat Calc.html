@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>12 Tails — Stat-Gain Calculator</title>
+<title>12 Tails — เครื่องคำนวณสเตตัสตามเลเวล</title>
 <style>
   :root{
     --bg:#0d1422; --panel:#16223a; --panel2:#101a2c; --line:#26334d;
@@ -15,7 +15,19 @@
     font-family:"Segoe UI",Helvetica,Arial,sans-serif; min-height:100vh; padding:28px 16px 60px;
   }
   .wrap{max-width:760px; margin:0 auto}
-  h1{font-size:26px; margin:0 0 22px}
+  .head{display:flex; align-items:center; justify-content:space-between; margin:0 0 22px; gap:12px; flex-wrap:wrap}
+  .head h1{font-size:24px; margin:0}
+  .lang-toggle{
+    display:inline-flex; background:#0f1830; border:1px solid var(--line);
+    border-radius:18px; padding:2px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .lang-btn{
+    font-family:inherit; font-size:12px; font-weight:700; padding:4px 12px; border:none;
+    border-radius:14px; cursor:pointer; background:transparent; color:var(--muted);
+    transition:all 0.15s ease; letter-spacing:0.05em; line-height:1.2;
+  }
+  .lang-btn:hover:not(.active){color:var(--ink)}
+  .lang-btn.active{background:var(--accent); color:#081018; box-shadow:0 1px 4px rgba(0,0,0,0.25)}
   .sub{color:var(--muted); font-size:13px; margin:0 0 22px}
   .sub code{color:#cdd9ec; background:#0f1830; padding:1px 6px; border-radius:5px; font-size:12px}
   .controls{
@@ -68,25 +80,31 @@
 
 <div class="gate" id="gate">
   <div class="gate-card">
-    <h2>Choose your class</h2>
+    <h2 id="gateTitle">เลือกคลาสของคุณ</h2>
     <div class="gate-grid" id="gateGrid"></div>
   </div>
 </div>
 
 <div class="wrap locked" id="wrap">
-  <h1>12 Tails — Stat-Gain Calculator</h1>
+  <div class="head">
+    <h1 id="titleMain">12 Tails — เครื่องคำนวณสเตตัสตามเลเวล</h1>
+    <div class="lang-toggle">
+      <button type="button" class="lang-btn" id="btnEN">EN</button>
+      <button type="button" class="lang-btn active" id="btnTH">TH</button>
+    </div>
+  </div>
 
   <div class="controls">
     <div>
-      <label for="cls">Class</label>
+      <label for="cls" id="lblClass">คลาส</label>
       <select id="cls"></select>
     </div>
     <div>
-      <label for="cur">Current level</label>
+      <label for="cur" id="lblCur">เลเวลปัจจุบัน</label>
       <input id="cur" type="number" min="1" max="100" step="1" value="1">
     </div>
     <div>
-      <label for="tgt">Target level</label>
+      <label for="tgt" id="lblTgt">เลเวลเป้าหมาย</label>
       <input id="tgt" type="number" min="1" max="100" step="1" value="100">
     </div>
   </div>
@@ -96,22 +114,23 @@
     <table>
       <thead>
         <tr>
-          <th>Stat</th><th>Base</th><th>At current</th><th>At target</th><th>Gained</th>
+          <th id="thStat">สเตตัส</th><th id="thCur">ที่เลเวลปัจจุบัน</th><th id="thTgt">ที่เลเวลเป้าหมาย</th><th id="thGain">ได้รับเพิ่ม</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
     </table>
   </div>
 
-  <p class="foot-formula">ตารางนี้ไม่รวม StatPlus / SuperStatPlus</p>
+  <p class="foot-formula" id="footFormula">ตารางนี้ไม่รวม StatPlus / SuperStatPlus</p>
 </div>
 
 <script>
 "use strict";
 
+let currentLang = "th";
+
 // Stat order index 0..7
 const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
-const FULL  = {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"};
 const COLOR = {ATK:"#ff6b66",DEF:"#6ea2ff",AGI:"#5fd08a",VIT:"#ffb05a",INT:"#ff7bdf",CHA:"#c78bf0",TAL:"#4fd5c9",LCK:"#e0b25a"};
 
 // base[i] per class, ATK..LCK
@@ -119,6 +138,43 @@ const CLASSES = {
   Wolf:[7,8,7,7,6,5,5,3], Bison:[9,8,6,8,4,4,5,4], Panda:[8,7,8,6,4,4,6,5], Whale:[5,9,3,9,7,7,4,4],
   Cat:[8,4,9,5,3,4,6,9], Chameleon:[7,5,8,5,4,5,7,7], Rabbit:[6,4,7,7,5,6,5,8], Mole:[5,7,5,6,5,5,8,7],
   Monkey:[5,5,4,8,8,8,6,5], Sheep:[4,5,4,4,8,8,8,4], Penguin:[3,6,5,3,9,7,9,6], Bat:[6,5,6,5,7,9,4,6]
+};
+
+const LANG = {
+  en: {
+    pageTitle: "12 Tails — Stat-Gain Calculator",
+    titleMain: "12 Tails — Stat-Gain Calculator",
+    gateTitle: "Choose your class",
+    lblClass: "Class",
+    lblCur: "Current level",
+    lblTgt: "Target level",
+    thStat: "Stat",
+    thCur: "At current",
+    thTgt: "At target",
+    thGain: "Gained",
+    foot: "This table does not include StatPlus / SuperStatPlus",
+    msgInvalid: "Enter whole numbers (1–100) for both levels.",
+    msgTgtLow: (tgt, cur) => "Target level (" + tgt + ") must be ≥ current level (" + cur + ").",
+    full: {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"},
+    classes: {Wolf:"Wolf", Bison:"Bison", Panda:"Panda", Whale:"Whale", Cat:"Cat", Chameleon:"Chameleon", Rabbit:"Rabbit", Mole:"Mole", Monkey:"Monkey", Sheep:"Sheep", Penguin:"Penguin", Bat:"Bat"}
+  },
+  th: {
+    pageTitle: "12 Tails — เครื่องคำนวณสเตตัสตามเลเวล",
+    titleMain: "12 Tails — เครื่องคำนวณสเตตัสตามเลเวล",
+    gateTitle: "เลือกคลาสของคุณ",
+    lblClass: "คลาส",
+    lblCur: "เลเวลปัจจุบัน",
+    lblTgt: "เลเวลเป้าหมาย",
+    thStat: "สเตตัส",
+    thCur: "ที่เลเวลปัจจุบัน",
+    thTgt: "ที่เลเวลเป้าหมาย",
+    thGain: "ได้รับเพิ่ม",
+    foot: "ตารางนี้ไม่รวม StatPlus / SuperStatPlus",
+    msgInvalid: "กรุณากรอกตัวเลขจำนวนเต็ม (1–100) ทั้งสองช่อง",
+    msgTgtLow: (tgt, cur) => "เลเวลเป้าหมาย (" + tgt + ") ต้องไม่น้อยกว่าเลเวลปัจจุบัน (" + cur + ")",
+    full: {ATK:"โจมตี",DEF:"ป้องกัน",AGI:"ว่องไว",VIT:"พลังชีวิต",INT:"ปัญญา",CHA:"เสน่ห์",TAL:"ทักษะ",LCK:"โชค"},
+    classes: {Wolf:"หมาป่า", Bison:"ไบซัน", Panda:"แพนด้า", Whale:"วาฬ", Cat:"แมว", Chameleon:"กิ้งก่า", Rabbit:"กระต่าย", Mole:"ตุ่น", Monkey:"ลิง", Sheep:"แกะ", Penguin:"เพนกวิน", Bat:"ค้างคาว"}
+  }
 };
 
 const MAX_LV = 100;
@@ -129,15 +185,20 @@ const gain = (lv, base) => Math.floor((Math.min(lv, CAP_LV) - 1) * (base + 3) * 
 const $ = id => document.getElementById(id);
 const clsSel = $("cls"), curEl = $("cur"), tgtEl = $("tgt"), rows = $("rows"), msg = $("msg");
 const gate = $("gate"), gateGrid = $("gateGrid"), wrap = $("wrap");
+const btnEN = $("btnEN"), btnTH = $("btnTH");
+
+const selectOptions = {};
+const gateButtons = {};
 
 // populate class dropdown + gate buttons
 for (const name of Object.keys(CLASSES)) {
   const o = document.createElement("option");
-  o.value = name; o.textContent = name;
+  o.value = name; o.textContent = LANG[currentLang].classes[name] || name;
   clsSel.appendChild(o);
+  selectOptions[name] = o;
 
   const b = document.createElement("button");
-  b.type = "button"; b.className = "gate-btn"; b.textContent = name;
+  b.type = "button"; b.className = "gate-btn"; b.textContent = LANG[currentLang].classes[name] || name;
   b.addEventListener("click", () => {
     clsSel.value = name;
     gate.style.display = "none";
@@ -145,6 +206,35 @@ for (const name of Object.keys(CLASSES)) {
     render();
   });
   gateGrid.appendChild(b);
+  gateButtons[name] = b;
+}
+
+function setLang(lang){
+  currentLang = lang;
+  const L = LANG[lang];
+  document.documentElement.lang = lang;
+  document.title = L.pageTitle;
+  $("titleMain").textContent = L.titleMain;
+  $("gateTitle").textContent = L.gateTitle;
+  $("lblClass").textContent = L.lblClass;
+  $("lblCur").textContent = L.lblCur;
+  $("lblTgt").textContent = L.lblTgt;
+  $("thStat").textContent = L.thStat;
+  $("thCur").textContent = L.thCur;
+  $("thTgt").textContent = L.thTgt;
+  $("thGain").textContent = L.thGain;
+  $("footFormula").textContent = L.foot;
+
+  btnEN.classList.toggle("active", lang === "en");
+  btnTH.classList.toggle("active", lang === "th");
+
+  for (const name of Object.keys(CLASSES)) {
+    const label = L.classes[name] || name;
+    if (selectOptions[name]) selectOptions[name].textContent = label;
+    if (gateButtons[name]) gateButtons[name].textContent = label;
+  }
+
+  render();
 }
 
 function readLevel(el){
@@ -154,6 +244,7 @@ function readLevel(el){
 }
 
 function render(){
+  const L = LANG[currentLang];
   const cls = clsSel.value;
   const base = CLASSES[cls];
   const cur = readLevel(curEl);
@@ -161,11 +252,11 @@ function render(){
 
   rows.innerHTML = "";
   if (cur === null || tgt === null){
-    msg.textContent = "Enter whole numbers (1–"+MAX_LV+") for both levels.";
+    msg.textContent = L.msgInvalid;
     return;
   }
   if (tgt < cur){
-    msg.textContent = "Target level ("+tgt+") must be ≥ current level ("+cur+").";
+    msg.textContent = L.msgTgtLow(tgt, cur);
     return;
   }
   msg.textContent = "";
@@ -176,8 +267,7 @@ function render(){
     const tr = document.createElement("tr");
     tr.innerHTML =
       '<td class="statcell"><span class="dot" style="background:'+COLOR[s]+'"></span>'+
-        '<span style="color:'+COLOR[s]+'">'+s+'</span> <span class="muted" style="font-weight:400">'+FULL[s]+'</span></td>'+
-      '<td class="muted">'+b+'</td>'+
+        '<span style="color:'+COLOR[s]+'">'+s+'</span> <span class="muted" style="font-weight:400">'+L.full[s]+'</span></td>'+
       '<td class="muted">'+atCur+'</td>'+
       '<td class="muted">'+atTgt+'</td>'+
       '<td><span class="gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
@@ -195,6 +285,8 @@ function clampInput(el){
 clsSel.addEventListener("change", render);
 curEl.addEventListener("input", () => { clampInput(curEl); render(); });
 tgtEl.addEventListener("input", () => { clampInput(tgtEl); render(); });
+btnEN.addEventListener("click", () => setLang("en"));
+btnTH.addEventListener("click", () => setLang("th"));
 </script>
 </body>
 </html>

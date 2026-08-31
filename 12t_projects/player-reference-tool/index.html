@@ -792,7 +792,19 @@
      a fixed, bounded size, not a per-level table, so fitting it needs no
      internal scroll fallback the way the skill-lookup tooltip does. */
   .sg{padding:16px 22px}
-  .sg h2{font-size:17px; margin:0 0 8px}
+  .sg-head{display:flex; align-items:center; justify-content:space-between; margin:0 0 8px}
+  .sg-head h2{font-size:17px; margin:0}
+  .sg-lang-toggle{
+    display:inline-flex; background:var(--panel-2); border:1px solid var(--line);
+    border-radius:18px; padding:2px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .sg-lang-btn{
+    font-family:inherit; font-size:11px; font-weight:700; padding:3px 10px; border:none;
+    border-radius:14px; cursor:pointer; background:transparent; color:var(--muted);
+    transition:all 0.15s ease; letter-spacing:0.05em; line-height:1.2;
+  }
+  .sg-lang-btn:hover:not(.active){color:var(--text)}
+  .sg-lang-btn.active{background:var(--gold); color:#14110b; box-shadow:0 1px 4px rgba(0,0,0,0.25)}
   .sg-controls{
     background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
     padding:10px 14px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:12px; align-items:end;
@@ -7771,55 +7783,9 @@ const CLASS_ART = {
 };
 
 function mountStatGain(root){
-  root.innerHTML = `
-    <div class="sg">
-      <h2>Stat-Gain Calculator</h2>
+  let currentLang = "th";
 
-      <div class="sg-body locked">
-        <div class="sg-gate">
-          <div class="sg-gate-card">
-            <h3>Choose your class</h3>
-            <p class="sg-gate-sub">Sets the base stat row used below.</p>
-            <div class="sg-gate-grid" data-role="gateGrid"></div>
-          </div>
-        </div>
-
-        <div class="sg-inner">
-          <div class="sg-art" data-role="art"></div>
-          <div class="sg-controls">
-            <div>
-              <label>Class</label>
-              <select data-role="cls"></select>
-            </div>
-            <div>
-              <label>Current level</label>
-              <input data-role="cur" type="number" min="1" max="100" step="1" value="1">
-            </div>
-            <div>
-              <label>Target level</label>
-              <input data-role="tgt" type="number" min="1" max="100" step="1" value="100">
-            </div>
-          </div>
-          <div class="sg-msg" data-role="msg"></div>
-
-          <div class="sg-results">
-            <table>
-              <thead>
-                <tr><th>Stat</th><th>Base</th><th>At current</th><th>At target</th><th>Gained</th></tr>
-              </thead>
-              <tbody data-role="rows"></tbody>
-            </table>
-          </div>
-
-          <p class="sg-foot">ตารางนี้ไม่รวม StatPlus / SuperStatPlus</p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Stat order index 0..7
   const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
-  const FULL  = {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"};
   const COLOR = {ATK:"#c2503c",DEF:"#4f7fb8",AGI:"#5a9a63",VIT:"#c9a227",INT:"#b0568f",CHA:"#8a72b8",TAL:"#3f9a8c",LCK:"#a3862c"};
 
   // base[i] per class, ATK..LCK
@@ -7829,33 +7795,164 @@ function mountStatGain(root){
     Monkey:[5,5,4,8,8,8,6,5], Sheep:[4,5,4,4,8,8,8,4], Penguin:[3,6,5,3,9,7,9,6], Bat:[6,5,6,5,7,9,4,6]
   };
 
+  const LANG = {
+    en: {
+      title: "Stat-Gain Calculator",
+      gateTitle: "Choose your class",
+      gateSub: "Sets the class used below.",
+      lblClass: "Class",
+      lblCur: "Current level",
+      lblTgt: "Target level",
+      thStat: "Stat",
+      thCur: "At current",
+      thTgt: "At target",
+      thGain: "Gained",
+      foot: "This table does not include StatPlus / SuperStatPlus",
+      msgInvalid: "Enter whole numbers (1–100) for both levels.",
+      msgTgtLow: (tgt, cur) => "Target level (" + tgt + ") must be ≥ current level (" + cur + ").",
+      full: {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"},
+      classes: {Wolf:"Wolf", Bison:"Bison", Panda:"Panda", Whale:"Whale", Cat:"Cat", Chameleon:"Chameleon", Rabbit:"Rabbit", Mole:"Mole", Monkey:"Monkey", Sheep:"Sheep", Penguin:"Penguin", Bat:"Bat"}
+    },
+    th: {
+      title: "เครื่องคำนวณสเตตัสตามเลเวล",
+      gateTitle: "เลือกคลาสของคุณ",
+      gateSub: "กำหนดการเติบโตสเตตัสของคลาสที่เลือก",
+      lblClass: "คลาส",
+      lblCur: "เลเวลปัจจุบัน",
+      lblTgt: "เลเวลเป้าหมาย",
+      thStat: "สเตตัส",
+      thCur: "ที่เลเวลปัจจุบัน",
+      thTgt: "ที่เลเวลเป้าหมาย",
+      thGain: "ได้รับเพิ่ม",
+      foot: "ตารางนี้ไม่รวม StatPlus / SuperStatPlus",
+      msgInvalid: "กรุณากรอกตัวเลขจำนวนเต็ม (1–100) ทั้งสองช่อง",
+      msgTgtLow: (tgt, cur) => "เลเวลเป้าหมาย (" + tgt + ") ต้องไม่น้อยกว่าเลเวลปัจจุบัน (" + cur + ")",
+      full: {ATK:"โจมตี",DEF:"ป้องกัน",AGI:"ว่องไว",VIT:"พลังชีวิต",INT:"ปัญญา",CHA:"เสน่ห์",TAL:"ทักษะ",LCK:"โชค"},
+      classes: {Wolf:"หมาป่า", Bison:"ไบซัน", Panda:"แพนด้า", Whale:"วาฬ", Cat:"แมว", Chameleon:"กิ้งก่า", Rabbit:"กระต่าย", Mole:"ตุ่น", Monkey:"ลิง", Sheep:"แกะ", Penguin:"เพนกวิน", Bat:"ค้างคาว"}
+    }
+  };
+
   const MAX_LV = 100;
   const CAP_LV = 95; // stat gain stops increasing past this level
   // verified leveling formula
   const gain = (lv, base) => Math.floor((Math.min(lv, CAP_LV) - 1) * (base + 3) * 0.083);
 
-  const clsSel = $('[data-role="cls"]', root);
-  const curEl  = $('[data-role="cur"]', root);
-  const tgtEl  = $('[data-role="tgt"]', root);
-  const rows   = $('[data-role="rows"]', root);
-  const msg    = $('[data-role="msg"]', root);
-  const art    = $('[data-role="art"]', root);
+  root.innerHTML = `
+    <div class="sg">
+      <div class="sg-head">
+        <h2 data-role="title">เครื่องคำนวณสเตตัสตามเลเวล</h2>
+        <div class="sg-lang-toggle">
+          <button type="button" class="sg-lang-btn" data-role="btnEN">EN</button>
+          <button type="button" class="sg-lang-btn active" data-role="btnTH">TH</button>
+        </div>
+      </div>
+
+      <div class="sg-body locked">
+        <div class="sg-gate">
+          <div class="sg-gate-card">
+            <h3 data-role="gateTitle">เลือกคลาสของคุณ</h3>
+            <p class="sg-gate-sub" data-role="gateSub">กำหนดการเติบโตสเตตัสของคลาสที่เลือก</p>
+            <div class="sg-gate-grid" data-role="gateGrid"></div>
+          </div>
+        </div>
+
+        <div class="sg-inner">
+          <div class="sg-art" data-role="art"></div>
+          <div class="sg-controls">
+            <div>
+              <label data-role="lblClass">คลาส</label>
+              <select data-role="cls"></select>
+            </div>
+            <div>
+              <label data-role="lblCur">เลเวลปัจจุบัน</label>
+              <input data-role="cur" type="number" min="1" max="100" step="1" value="1">
+            </div>
+            <div>
+              <label data-role="lblTgt">เลเวลเป้าหมาย</label>
+              <input data-role="tgt" type="number" min="1" max="100" step="1" value="100">
+            </div>
+          </div>
+          <div class="sg-msg" data-role="msg"></div>
+
+          <div class="sg-results">
+            <table>
+              <thead>
+                <tr>
+                  <th data-role="thStat">สเตตัส</th>
+                  <th data-role="thCur">ที่เลเวลปัจจุบัน</th>
+                  <th data-role="thTgt">ที่เลเวลเป้าหมาย</th>
+                  <th data-role="thGain">ได้รับเพิ่ม</th>
+                </tr>
+              </thead>
+              <tbody data-role="rows"></tbody>
+            </table>
+          </div>
+
+          <p class="sg-foot" data-role="foot">ตารางนี้ไม่รวม StatPlus / SuperStatPlus</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const clsSel   = $('[data-role="cls"]', root);
+  const curEl    = $('[data-role="cur"]', root);
+  const tgtEl    = $('[data-role="tgt"]', root);
+  const rows     = $('[data-role="rows"]', root);
+  const msg      = $('[data-role="msg"]', root);
+  const art      = $('[data-role="art"]', root);
   const gateGrid = $('[data-role="gateGrid"]', root);
-  const body   = $(".sg-body", root);
+  const body     = $(".sg-body", root);
+  const btnEN    = $('[data-role="btnEN"]', root);
+  const btnTH    = $('[data-role="btnTH"]', root);
+
+  const gateButtons = {};
+  const selectOptions = {};
 
   for (const name of Object.keys(CLASSES)) {
     const o = document.createElement("option");
-    o.value = name; o.textContent = name;
+    o.value = name;
+    o.textContent = LANG[currentLang].classes[name] || name;
     clsSel.appendChild(o);
+    selectOptions[name] = o;
 
     const b = document.createElement("button");
-    b.type = "button"; b.className = "sg-gate-btn"; b.textContent = name;
+    b.type = "button";
+    b.className = "sg-gate-btn";
+    b.textContent = LANG[currentLang].classes[name] || name;
     b.addEventListener("click", () => {
       clsSel.value = name;
       body.classList.remove("locked");
       render();
     });
     gateGrid.appendChild(b);
+    gateButtons[name] = b;
+  }
+
+  function setLang(lang){
+    currentLang = lang;
+    const L = LANG[lang];
+    btnEN.classList.toggle("active", lang === "en");
+    btnTH.classList.toggle("active", lang === "th");
+
+    $('[data-role="title"]', root).textContent = L.title;
+    $('[data-role="gateTitle"]', root).textContent = L.gateTitle;
+    $('[data-role="gateSub"]', root).textContent = L.gateSub;
+    $('[data-role="lblClass"]', root).textContent = L.lblClass;
+    $('[data-role="lblCur"]', root).textContent = L.lblCur;
+    $('[data-role="lblTgt"]', root).textContent = L.lblTgt;
+    $('[data-role="thStat"]', root).textContent = L.thStat;
+    $('[data-role="thCur"]', root).textContent = L.thCur;
+    $('[data-role="thTgt"]', root).textContent = L.thTgt;
+    $('[data-role="thGain"]', root).textContent = L.thGain;
+    $('[data-role="foot"]', root).textContent = L.foot;
+
+    for (const name of Object.keys(CLASSES)) {
+      const label = L.classes[name] || name;
+      if (selectOptions[name]) selectOptions[name].textContent = label;
+      if (gateButtons[name]) gateButtons[name].textContent = label;
+    }
+
+    render();
   }
 
   function readLevel(el){
@@ -7865,6 +7962,7 @@ function mountStatGain(root){
   }
 
   function render(){
+    const L = LANG[currentLang];
     const cls = clsSel.value;
     const base = CLASSES[cls];
     const cur = readLevel(curEl);
@@ -7885,11 +7983,11 @@ function mountStatGain(root){
 
     rows.innerHTML = "";
     if (!base || cur === null || tgt === null){
-      msg.textContent = "Enter whole numbers (1–"+MAX_LV+") for both levels.";
+      msg.textContent = L.msgInvalid;
       return;
     }
     if (tgt < cur){
-      msg.textContent = "Target level ("+tgt+") must be ≥ current level ("+cur+").";
+      msg.textContent = L.msgTgtLow(tgt, cur);
       return;
     }
     msg.textContent = "";
@@ -7900,8 +7998,7 @@ function mountStatGain(root){
       const tr = document.createElement("tr");
       tr.innerHTML =
         '<td class="sg-statcell"><span class="sg-tick" style="background:'+COLOR[s]+'"></span>'+
-          '<span class="sg-stat-abbr" style="color:'+COLOR[s]+'">'+s+'</span> <span class="sg-muted">'+FULL[s]+'</span></td>'+
-        '<td class="sg-muted num">'+b+'</td>'+
+          '<span class="sg-stat-abbr" style="color:'+COLOR[s]+'">'+s+'</span> <span class="sg-muted">'+L.full[s]+'</span></td>'+
         '<td class="sg-muted num">'+atCur+'</td>'+
         '<td class="sg-muted num">'+atTgt+'</td>'+
         '<td class="num"><span class="sg-gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
@@ -7919,6 +8016,8 @@ function mountStatGain(root){
   clsSel.addEventListener("change", render);
   curEl.addEventListener("input", () => { clampInput(curEl); render(); });
   tgtEl.addEventListener("input", () => { clampInput(tgtEl); render(); });
+  btnEN.addEventListener("click", () => setLang("en"));
+  btnTH.addEventListener("click", () => setLang("th"));
 }
 
 /* ============================================================
