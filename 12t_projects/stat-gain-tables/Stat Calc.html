@@ -46,11 +46,11 @@
   .results{margin-top:18px; border:1px solid var(--line); border-radius:12px; overflow:hidden}
   table{width:100%; border-collapse:collapse; font-size:14px}
   thead th{
-    background:var(--panel); color:#cdd9ec; font-weight:700; text-align:right;
+    background:var(--panel); color:#cdd9ec; font-weight:700; text-align:center;
     padding:11px 14px; border-bottom:1px solid var(--line); font-size:12px; letter-spacing:.3px;
   }
   thead th:first-child{text-align:left}
-  tbody td{padding:10px 14px; text-align:right; border-bottom:1px solid #1b2840; font-variant-numeric:tabular-nums}
+  tbody td{padding:10px 14px; text-align:center; border-bottom:1px solid #1b2840; font-variant-numeric:tabular-nums}
   tbody tr:nth-child(odd) td{background:var(--panel2)}
   tbody tr:last-child td{border-bottom:none}
   .statcell{text-align:left; font-weight:700}
@@ -172,7 +172,7 @@ const LANG = {
     foot: "ตารางนี้ไม่รวม StatPlus / SuperStatPlus",
     msgInvalid: "กรุณากรอกตัวเลขจำนวนเต็ม (1–100) ทั้งสองช่อง",
     msgTgtLow: (tgt, cur) => "เลเวลเป้าหมาย (" + tgt + ") ต้องไม่น้อยกว่าเลเวลปัจจุบัน (" + cur + ")",
-    full: {ATK:"โจมตี",DEF:"ป้องกัน",AGI:"ว่องไว",VIT:"พลังชีวิต",INT:"ปัญญา",CHA:"เสน่ห์",TAL:"ทักษะ",LCK:"โชค"},
+    full: {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"},
     classes: {Wolf:"หมาป่า", Bison:"ไบซัน", Panda:"แพนด้า", Whale:"วาฬ", Cat:"แมว", Chameleon:"กิ้งก่า", Rabbit:"กระต่าย", Mole:"ตุ่น", Monkey:"ลิง", Sheep:"แกะ", Penguin:"เพนกวิน", Bat:"ค้างคาว"}
   }
 };

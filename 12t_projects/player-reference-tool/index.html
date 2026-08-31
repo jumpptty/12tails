@@ -819,11 +819,11 @@
   .sg-results{margin-top:10px; border:1px solid var(--line); border-radius:3px; overflow:hidden}
   .sg-results table{width:100%; border-collapse:collapse; font-size:14px}
   .sg-results thead th{
-    background:var(--panel-2); color:var(--gold); font-weight:700; text-align:right;
+    background:var(--panel-2); color:var(--gold); font-weight:700; text-align:center;
     padding:7px 12px; border-bottom:1px solid var(--gold); font-size:10.5px; letter-spacing:.6px; text-transform:uppercase;
   }
   .sg-results thead th:first-child{text-align:left}
-  .sg-results tbody td{padding:7px 12px; text-align:right; border-bottom:1px solid var(--line); font-size:13px}
+  .sg-results tbody td{padding:7px 12px; text-align:center; border-bottom:1px solid var(--line); font-size:13px}
   .sg-results tbody tr:last-child td{border-bottom:none}
   .sg-results tbody tr:hover td{background:var(--gold-soft)}
   .sg-results tbody td.sg-statcell{text-align:left}
@@ -7041,33 +7041,14 @@ function mountStatRoll(root) {
           <div class="sr-card-head">
             <div class="sr-card-title" data-role="titleRecommender">แนะนำเป้าหมายสเตตัส</div>
           </div>
-          <p class="sr-header-sub" data-role="subRecommender" style="margin-top:-6px;">เลือกสเตตัสที่ต้องการเน้น และจำนวน Roll สูงสุดที่รับได้</p>
+          <p class="sr-header-sub" data-role="subRecommender" style="margin-top:-6px;">เลือกสเตตัสที่ต้องการเน้น</p>
           
           <div>
             <div class="sr-metric-lbl" data-role="labelMaxStats" style="margin-bottom:6px;">สเตตัสที่ต้องการเน้น</div>
             <div class="sr-rec-grid" data-role="recStatGrid"></div>
           </div>
 
-          <div>
-            <div class="sr-card-head" style="margin-bottom:6px;">
-              <div class="sr-metric-lbl" data-role="labelMaxRolls">จำนวน Roll สูงสุดที่รับได้</div>
-              <div class="sr-presets">
-                <span class="sr-preset-lbl" data-role="lblQuickRolls">ทางลัด:</span>
-                <button type="button" class="sr-preset-btn active" data-role="preset1k">1,000</button>
-                <button type="button" class="sr-preset-btn" data-role="preset10k">10,000</button>
-                <button type="button" class="sr-preset-btn" data-role="preset50k">50,000</button>
-              </div>
-            </div>
-            <input type="number" class="sr-num-input num" data-role="maxRollsInput" value="1000" min="1">
-          </div>
-
-          <button type="button" class="sr-action-btn" data-role="btnSuggest">แนะนำเป้าหมาย</button>
-          
-          <div class="sr-progress-bg" data-role="progressContainer">
-            <div class="sr-progress-fill" data-role="progressBar"></div>
-          </div>
-
-          <div data-role="recOutput"></div>
+          <div data-role="recOutput" style="margin-top: 12px;"></div>
         </div>
 
         <!-- Right Deck: Probability Targets -->
@@ -7126,23 +7107,16 @@ function mountStatRoll(root) {
       attemptsLabel: 'Expected rolls',
       summaryBody: (cls, tags, n) => `<strong>${CLASS_NAMES.en[cls] || cls}</strong> — targeting ${tags}<br>On average, you would need to roll <strong>${n} times</strong> before getting all these stat minimums simultaneously.`,
       titleRecommender: 'Target Recommender',
-      subRecommender: 'Select stats to maximize and your max acceptable roll count.',
+      subRecommender: 'Select the stats you want to maximize.',
       labelMaxStats: 'Stats to Maximize',
-      labelMaxRolls: 'Maximum Attempts (Rolls)',
-      quickLabel: 'Quick:',
-      btnSuggest: 'Suggest Targets',
-      calculatingLabel: 'Calculating...',
       errNoRecStats: 'Select at least one stat to maximize.',
-      errInvalidRolls: 'Enter a valid number of rolls.',
       noBuildsTitle: 'No realistic builds found',
-      noBuildsBody: 'Try increasing your maximum rolls or selecting fewer stats.',
-      recResultsPrefix: 'Best realistic targets within',
-      recResultsSuffix: 'rolls',
+      noBuildsBody: 'Try selecting fewer stats to maximize.',
       sumLabel: 'Selected Sum',
       recSymmetricNote: '* Symmetrical stats with equal base values can be swapped in any order.',
-      tabMax: '★ Max Stats',
-      tabBalanced: '⚖ Balanced',
-      tabEasy: '⚡ Easy Roll'
+      tabMax: '★ Max',
+      tabBalanced: '⚖ Recommended',
+      tabEasy: '⚡ Easy'
     },
     th: {
       titleMain: 'เครื่องคำนวณสเตตัสตอนสร้างตัวละคร',
@@ -7163,35 +7137,26 @@ function mountStatRoll(root) {
       attemptsLabel: 'จำนวน Roll โดยเฉลี่ย',
       summaryBody: (cls, tags, n) => `<strong>${CLASS_NAMES.th[cls] || cls}</strong> — เป้าหมาย ${tags}<br>โดยเฉลี่ยต้อง roll <strong>${n} ครั้ง</strong> ก่อนจะได้ค่าสเตตัสครบตามที่ต้องการพร้อมกัน`,
       titleRecommender: 'แนะนำเป้าหมายสเตตัส',
-      subRecommender: 'เลือกสเตตัสที่ต้องการเน้น และจำนวน Roll สูงสุดที่รับได้',
+      subRecommender: 'เลือกสเตตัสที่ต้องการเน้น',
       labelMaxStats: 'สเตตัสที่ต้องการเน้น',
-      labelMaxRolls: 'จำนวน Roll สูงสุดที่รับได้',
-      quickLabel: 'ทางลัด:',
-      btnSuggest: 'แนะนำเป้าหมาย',
-      calculatingLabel: 'กำลังคำนวณ...',
       errNoRecStats: 'กรุณาเลือกอย่างน้อยหนึ่งสเตตัส',
-      errInvalidRolls: 'กรุณาระบุจำนวน roll ที่ถูกต้อง',
       noBuildsTitle: 'ไม่พบเป้าหมายที่เป็นไปได้',
-      noBuildsBody: 'ลองเพิ่มจำนวน roll สูงสุด หรือลดจำนวนสเตตัสที่ต้องการเน้นลง',
-      recResultsPrefix: 'เป้าหมายที่ดีที่สุดภายใน',
-      recResultsSuffix: 'rolls',
+      noBuildsBody: 'ลองลดจำนวนสเตตัสที่ต้องการเน้นลง',
       sumLabel: 'ผลรวมสเตตัสที่เลือก',
       recSymmetricNote: '* สเตตัสที่มีค่าเริ่มต้นเท่ากัน สามารถสลับค่าระหว่างกันได้',
       tabMax: '★ สเตตัสสูงสุด',
-      tabBalanced: '⚖ สมดุล',
-      tabEasy: '⚡ Roll ง่ายสุด'
+      tabBalanced: '⚖ แนะนำ',
+      tabEasy: '⚡ สบายๆ'
     }
   };
 
   // Default to Thai ('th')
   let currentLang = 'th';
   let selectedStatsToMax = new Set();
-  let isCalculating = false;
 
   // Cached recommendation builds for tab switching
   let currentRecBuilds = [];
   let currentRecSelected = [];
-  let currentRecMaxRolls = 1000;
   let activeTabIdx = 0;
 
   const maxStat = (base) => Math.min(12, base + 4 + 1);
@@ -7203,17 +7168,10 @@ function mountStatRoll(root) {
   const recStatGrid = root.querySelector('[data-role="recStatGrid"]');
   const output = root.querySelector('[data-role="output"]');
   const recOutput = root.querySelector('[data-role="recOutput"]');
-  const maxRollsInput = root.querySelector('[data-role="maxRollsInput"]');
-  const btnSuggest = root.querySelector('[data-role="btnSuggest"]');
   const calcBtn = root.querySelector('[data-role="calcBtn"]');
   const clearBtn = root.querySelector('[data-role="clearBtn"]');
-  const progressContainer = root.querySelector('[data-role="progressContainer"]');
-  const progressBar = root.querySelector('[data-role="progressBar"]');
   const btnEN = root.querySelector('[data-role="btnEN"]');
   const btnTH = root.querySelector('[data-role="btnTH"]');
-  const preset1k = root.querySelector('[data-role="preset1k"]');
-  const preset10k = root.querySelector('[data-role="preset10k"]');
-  const preset50k = root.querySelector('[data-role="preset50k"]');
 
   // Factorials for probability distribution
   const FACT = [1];
@@ -7272,6 +7230,25 @@ function mountStatRoll(root) {
     return total;
   }
 
+  function getPartitions(n, k) {
+    const results = [];
+    function gen(idx, rem, cur) {
+      if (idx === n - 1) {
+        cur.push(rem);
+        results.push(cur.slice());
+        cur.pop();
+        return;
+      }
+      for (let x = 0; x <= rem; x++) {
+        cur.push(x);
+        gen(idx + 1, rem - x, cur);
+        cur.pop();
+      }
+    }
+    gen(0, k, []);
+    return results;
+  }
+
   function rateColor(prob) {
     if (prob >= 0.05) return 'good';
     if (prob >= 0.005) return 'warn';
@@ -7316,7 +7293,6 @@ function mountStatRoll(root) {
   }
 
   function toggleStat(i) {
-    if (isCalculating) return;
     const cell = recStatGrid.querySelector(`[data-rec-idx="${i}"]`);
     if (selectedStatsToMax.has(i)) {
       selectedStatsToMax.delete(i);
@@ -7325,13 +7301,12 @@ function mountStatRoll(root) {
       selectedStatsToMax.add(i);
       cell.classList.add('active');
     }
+    updateRecommender();
   }
 
   function onClassChange() {
     const cls = classSelect.value;
     output.innerHTML = '';
-    recOutput.innerHTML = '';
-    currentRecBuilds = [];
     const L = LANG[currentLang];
     for (let i = 0; i < 8; i++) {
       const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
@@ -7352,6 +7327,7 @@ function mountStatRoll(root) {
         rEl.classList.add('hidden');
       }
     }
+    updateRecommender();
   }
 
   function onStatInput(i) {
@@ -7442,6 +7418,63 @@ function mountStatRoll(root) {
       </div>`;
   }
 
+  function updateRecommender() {
+    const cls = classSelect.value;
+    const L = LANG[currentLang];
+    if (!cls) {
+      recOutput.innerHTML = `<div class="sr-err-msg">${L.errNoClass}</div>`;
+      currentRecBuilds = [];
+      return;
+    }
+    if (selectedStatsToMax.size === 0) {
+      recOutput.innerHTML = '';
+      currentRecBuilds = [];
+      return;
+    }
+
+    const base = BASE[cls];
+    const selected = Array.from(selectedStatsToMax);
+    const numSelected = selected.length;
+
+    const bestBuilds = [];
+    for (const k of [4, 3, 2]) {
+      const parts = getPartitions(numSelected, k);
+      let bestForK = null;
+      let maxProbForK = -1;
+
+      for (const p of parts) {
+        const targets = new Array(8).fill(null);
+        let sum = 0;
+        for (let i = 0; i < numSelected; i++) {
+          const sIdx = selected[i];
+          const val = base[sIdx] + 1 + p[i];
+          targets[sIdx] = val;
+          sum += val;
+        }
+        const prob = calcProb(base, targets);
+        if (prob > maxProbForK) {
+          maxProbForK = prob;
+          bestForK = { targets, prob, sum };
+        }
+      }
+      if (bestForK) {
+        bestBuilds.push(bestForK);
+      }
+    }
+
+    if (bestBuilds.length === 0) {
+      currentRecBuilds = [];
+      recOutput.innerHTML = `<div class="sr-err-msg"><strong>${L.noBuildsTitle}</strong>${L.noBuildsBody}</div>`;
+      return;
+    }
+
+    currentRecBuilds = bestBuilds;
+    currentRecSelected = selected;
+    if (activeTabIdx >= bestBuilds.length) activeTabIdx = 0;
+
+    renderTabbedRecommender();
+  }
+
   function renderTabbedRecommender() {
     const L = LANG[currentLang];
     if (!currentRecBuilds || currentRecBuilds.length === 0) return;
@@ -7503,7 +7536,6 @@ function mountStatRoll(root) {
 
     recOutput.innerHTML = `
       <div class="sr-result-box">
-        <div style="font-size:11.5px; color:var(--muted); margin-bottom:2px;">${L.recResultsPrefix} <strong style="color:var(--text)" class="num">${currentRecMaxRolls.toLocaleString()}</strong> ${L.recResultsSuffix}:</div>
         <div class="sr-rec-tab-bar">${tabsHtml}</div>
         <div class="sr-rec-card">
           <div style="margin-bottom: 2px;">${tags}</div>
@@ -7525,130 +7557,6 @@ function mountStatRoll(root) {
     });
   }
 
-  async function suggestTargets() {
-    if (isCalculating) return;
-    const cls = classSelect.value;
-    const rollsStr = maxRollsInput.value;
-    const maxRolls = parseInt(rollsStr);
-    const L = LANG[currentLang];
-
-    if (!cls) { recOutput.innerHTML = `<div class="sr-err-msg">${L.errNoClass}</div>`; return; }
-    if (selectedStatsToMax.size === 0) { recOutput.innerHTML = `<div class="sr-err-msg">${L.errNoRecStats}</div>`; return; }
-    if (isNaN(maxRolls) || maxRolls < 1) { recOutput.innerHTML = `<div class="sr-err-msg">${L.errInvalidRolls}</div>`; return; }
-
-    const minProbRequired = 1 / maxRolls;
-    const base = BASE[cls];
-    const selected = Array.from(selectedStatsToMax);
-    const numSelected = selected.length;
-
-    const ranges = selected.map(i => {
-      const mn = minStat(base[i]);
-      const mx = maxStat(base[i]);
-      const vals = [];
-      for (let v = mx; v >= mn; v--) vals.push(v);
-      return vals;
-    });
-
-    let totalCombinations = 1;
-    ranges.forEach(r => totalCombinations *= r.length);
-
-    isCalculating = true;
-    btnSuggest.disabled = true;
-    btnSuggest.textContent = L.calculatingLabel;
-    progressContainer.style.display = 'block';
-    progressBar.style.width = '0%';
-    recOutput.innerHTML = '';
-
-    const validBuilds = [];
-    let processed = 0;
-
-    async function exploreAsync() {
-      const BATCH_SIZE = 50;
-      let batchCount = 0;
-
-      function getNextComb(indices) {
-        for (let i = numSelected - 1; i >= 0; i--) {
-          indices[i]++;
-          if (indices[i] < ranges[i].length) return true;
-          indices[i] = 0;
-        }
-        return false;
-      }
-
-      const indices = new Array(numSelected).fill(0);
-      let hasNext = true;
-
-      while (hasNext) {
-        const fullTargets = new Array(8).fill(null);
-        let sum = 0;
-        for (let k = 0; k < numSelected; k++) {
-          const statIdx = selected[k];
-          const val = ranges[k][indices[k]];
-          fullTargets[statIdx] = val;
-          sum += val;
-        }
-
-        const prob = calcProb(base, fullTargets);
-        if (prob >= minProbRequired) {
-          validBuilds.push({ targets: fullTargets, prob, sum });
-        }
-
-        processed++;
-        batchCount++;
-        if (batchCount >= BATCH_SIZE) {
-          batchCount = 0;
-          const pct = Math.min(100, Math.round((processed / totalCombinations) * 100));
-          progressBar.style.width = pct + '%';
-          await new Promise(r => setTimeout(r, 0));
-        }
-
-        hasNext = getNextComb(indices);
-      }
-    }
-
-    await exploreAsync();
-
-    isCalculating = false;
-    btnSuggest.disabled = false;
-    btnSuggest.textContent = L.btnSuggest;
-    setTimeout(() => { progressContainer.style.display = 'none'; }, 300);
-
-    if (validBuilds.length === 0) {
-      currentRecBuilds = [];
-      recOutput.innerHTML = `<div class="sr-err-msg"><strong>${L.noBuildsTitle}</strong>${L.noBuildsBody}</div>`;
-      return;
-    }
-
-    validBuilds.sort((a, b) => {
-      if (b.sum !== a.sum) return b.sum - a.sum;
-      return b.prob - a.prob;
-    });
-
-    let bestBuilds = [];
-    let currentMaxProb = -1;
-    for (const build of validBuilds) {
-      if (build.prob > currentMaxProb) {
-        bestBuilds.push(build);
-        currentMaxProb = build.prob;
-      }
-      if (bestBuilds.length >= 3) break;
-    }
-
-    currentRecBuilds = bestBuilds;
-    currentRecSelected = selected;
-    currentRecMaxRolls = maxRolls;
-    activeTabIdx = 0;
-
-    renderTabbedRecommender();
-  }
-
-  function updatePresets() {
-    const val = parseInt(maxRollsInput.value);
-    preset1k.classList.toggle('active', val === 1000);
-    preset10k.classList.toggle('active', val === 10000);
-    preset50k.classList.toggle('active', val === 50000);
-  }
-
   function setLang(lang) {
     currentLang = lang;
     const L = LANG[lang];
@@ -7661,10 +7569,6 @@ function mountStatRoll(root) {
     root.querySelector('[data-role="calcBtn"]').textContent = L.calcBtn;
     root.querySelector('[data-role="titleRecommender"]').textContent = L.titleRecommender;
     root.querySelector('[data-role="subRecommender"]').textContent = L.subRecommender;
-    root.querySelector('[data-role="labelMaxStats"]').textContent = L.labelMaxStats;
-    root.querySelector('[data-role="labelMaxRolls"]').textContent = L.labelMaxRolls;
-    root.querySelector('[data-role="lblQuickRolls"]').textContent = L.quickLabel;
-    if (!isCalculating) btnSuggest.textContent = L.btnSuggest;
 
     btnEN.classList.toggle('active', lang === 'en');
     btnTH.classList.toggle('active', lang === 'th');
@@ -7683,25 +7587,15 @@ function mountStatRoll(root) {
     }
 
     output.innerHTML = '';
-    if (currentRecBuilds && currentRecBuilds.length > 0) {
-      renderTabbedRecommender();
-    } else {
-      recOutput.innerHTML = '';
-    }
+    updateRecommender();
   }
 
   // Event Listeners
   classSelect.addEventListener('change', onClassChange);
   calcBtn.addEventListener('click', calculate);
   clearBtn.addEventListener('click', clearAll);
-  btnSuggest.addEventListener('click', suggestTargets);
   btnEN.addEventListener('click', () => setLang('en'));
   btnTH.addEventListener('click', () => setLang('th'));
-
-  maxRollsInput.addEventListener('input', updatePresets);
-  preset1k.addEventListener('click', () => { if (!isCalculating) { maxRollsInput.value = 1000; updatePresets(); } });
-  preset10k.addEventListener('click', () => { if (!isCalculating) { maxRollsInput.value = 10000; updatePresets(); } });
-  preset50k.addEventListener('click', () => { if (!isCalculating) { maxRollsInput.value = 50000; updatePresets(); } });
 
   buildGrid();
   buildRecGrid();
@@ -7827,7 +7721,7 @@ function mountStatGain(root){
       foot: "ตารางนี้ไม่รวม StatPlus / SuperStatPlus",
       msgInvalid: "กรุณากรอกตัวเลขจำนวนเต็ม (1–100) ทั้งสองช่อง",
       msgTgtLow: (tgt, cur) => "เลเวลเป้าหมาย (" + tgt + ") ต้องไม่น้อยกว่าเลเวลปัจจุบัน (" + cur + ")",
-      full: {ATK:"โจมตี",DEF:"ป้องกัน",AGI:"ว่องไว",VIT:"พลังชีวิต",INT:"ปัญญา",CHA:"เสน่ห์",TAL:"ทักษะ",LCK:"โชค"},
+      full: {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"},
       classes: {Wolf:"หมาป่า", Bison:"ไบซัน", Panda:"แพนด้า", Whale:"วาฬ", Cat:"แมว", Chameleon:"กิ้งก่า", Rabbit:"กระต่าย", Mole:"ตุ่น", Monkey:"ลิง", Sheep:"แกะ", Penguin:"เพนกวิน", Bat:"ค้างคาว"}
     }
   };
