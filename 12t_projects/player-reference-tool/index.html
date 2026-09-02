@@ -3175,6 +3175,101 @@
     }
   }
 
+
+  /* Dark mode overrides for Chameleon Attack Simulator chip */
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry,
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry {
+      background: rgba(32, 60, 42, 0.32);
+      border-color: rgba(67, 150, 101, 0.45);
+      box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry::before {
+      background: #3bb273;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:hover,
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:focus-visible {
+      background: rgba(42, 80, 56, 0.45);
+      border-color: #3bb273;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-mark {
+      border-color: rgba(59, 178, 115, 0.6);
+      color: #4ade80;
+      background: rgba(22, 48, 32, 0.7);
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-mark svg {
+      stroke: #4ade80;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-title {
+      color: #e2f0e6;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-arrow {
+      color: #4ade80;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-tag {
+      color: #86efac;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-beta-badge {
+      background: #1e5e3a;
+      color: #bdf2cf;
+      border: 1px solid #3bb273;
+      box-shadow: 0 0 8px rgba(59, 178, 115, 0.25);
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-chm-art {
+      background: #4ade80;
+      opacity: 0.18;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:hover .entry-chm-art,
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:focus-visible .entry-chm-art {
+      opacity: 0.32;
+    }
+  }
+
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry {
+    background: rgba(32, 60, 42, 0.32);
+    border-color: rgba(67, 150, 101, 0.45);
+    box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry::before {
+    background: #3bb273;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry:hover,
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry:focus-visible {
+    background: rgba(42, 80, 56, 0.45);
+    border-color: #3bb273;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-mark {
+    border-color: rgba(59, 178, 115, 0.6);
+    color: #4ade80;
+    background: rgba(22, 48, 32, 0.7);
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-mark svg {
+    stroke: #4ade80;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-title {
+    color: #e2f0e6;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-arrow {
+    color: #4ade80;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-tag {
+    color: #86efac;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-beta-badge {
+    background: #1e5e3a;
+    color: #bdf2cf;
+    border: 1px solid #3bb273;
+    box-shadow: 0 0 8px rgba(59, 178, 115, 0.25);
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry-chm-art {
+    background: #4ade80;
+    opacity: 0.18;
+  }
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry:hover .entry-chm-art,
+  :root[data-theme="dark"] .entry-chm.entry-wide .entry:focus-visible .entry-chm-art {
+    opacity: 0.32;
+  }
+
 </style>
 </head>
 <body>
@@ -8604,22 +8699,22 @@ const CHM_ICONS = {
 };
 
 const CHM_WEAPONS = [
-  { id: 'poseidonBow', name: 'Poseidon Bow', lv: 70, atk: 46, hpDrain: 12, crit: 0, revert: 0, desc: '+12% hpDrain2 (2% Max HP)', icon: CHM_ICONS.poseidonBow },
-  { id: 'championBow', name: 'G.Champion Bow', lv: 68, atk: 60, hpDrain: 0, crit: 7, revert: 0, desc: '+7% Critical Chance', icon: CHM_ICONS.championBow },
-  { id: 'timeBow', name: 'Time Bow', lv: 80, atk: 54, hpDrain: 0, crit: 0, revert: 1, desc: '+1% Revert (Full Heal)', icon: CHM_ICONS.timeBow },
-  { id: 'none', name: 'None (Unarmed)', lv: 0, atk: 0, hpDrain: 0, crit: 0, revert: 0, desc: 'No weapon equipped', icon: '' }
+  { id: 'poseidonBow', name: 'Poseidon Bow', lv: 70, hpDrain: 12, crit: 0, revert: 0, desc: '+12% HP Drain 2 (2% Max HP)', icon: CHM_ICONS.poseidonBow },
+  { id: 'championBow', name: 'G.Champion Bow', lv: 68, hpDrain: 0, crit: 7, revert: 0, desc: '+7% Critical Chance', icon: CHM_ICONS.championBow },
+  { id: 'timeBow', name: 'Time Bow', lv: 80, hpDrain: 0, crit: 0, revert: 1, desc: '+1% Revert (Full Restore)', icon: CHM_ICONS.timeBow },
+  { id: 'none', name: 'None (Unarmed)', lv: 0, hpDrain: 0, crit: 0, revert: 0, desc: 'No proc effect', icon: '' }
 ];
 
 const CHM_HELMETS = [
-  { id: 'poseidonHelmet', name: 'Poseidon Helmet', lv: 61, atk: 3, hpDrain: 8, crit: 0, desc: 'All Stats +3, +8% hpDrain2', icon: CHM_ICONS.poseidonHelmet },
-  { id: 'championHelmet', name: 'Champion Helmet', lv: 63, atk: 9, hpDrain: 0, crit: 5, desc: 'ATK+9, VIT+9, +5% Crit', icon: CHM_ICONS.championHelmet },
-  { id: 'none', name: 'None', lv: 0, atk: 0, hpDrain: 0, crit: 0, desc: 'No accessory equipped', icon: '' }
+  { id: 'poseidonHelmet', name: 'Poseidon Helmet', lv: 61, hpDrain: 8, crit: 0, desc: '+8% HP Drain 2 (2% Max HP)', icon: CHM_ICONS.poseidonHelmet },
+  { id: 'championHelmet', name: 'Champion Helmet', lv: 63, hpDrain: 0, crit: 5, desc: '+5% Critical Chance', icon: CHM_ICONS.championHelmet },
+  { id: 'none', name: 'None', lv: 0, hpDrain: 0, crit: 0, desc: 'No proc effect', icon: '' }
 ];
 
 const CHM_ARMORS = [
-  { id: 'championArmor', name: 'Champion Armor', lv: 63, def: 14, crit: 6, custom: false, desc: 'DEF+14, +6% Critical', icon: CHM_ICONS.championArmor },
-  { id: 'customArmor', name: 'Custom Armor', lv: 0, def: 0, crit: 0, custom: true, desc: 'Player custom stats', icon: '' },
-  { id: 'none', name: 'None', lv: 0, def: 0, crit: 0, custom: false, desc: 'No armor equipped', icon: '' }
+  { id: 'championArmor', name: 'Champion Armor', lv: 63, crit: 6, custom: false, desc: '+6% Critical Chance', icon: CHM_ICONS.championArmor },
+  { id: 'customArmor', name: 'Custom Armor', lv: 0, crit: 0, custom: true, desc: 'Custom proc effects', icon: '' },
+  { id: 'none', name: 'None', lv: 0, crit: 0, custom: false, desc: 'No proc effect', icon: '' }
 ];
 
 function mountChameleonSim(root) {
@@ -8702,12 +8797,12 @@ function mountChameleonSim(root) {
     const hel = CHM_HELMETS.find(h => h.id === simState.selectedHelmet) || CHM_HELMETS[2];
     const arm = CHM_ARMORS.find(a => a.id === simState.selectedArmor) || CHM_ARMORS[2];
 
-    const gearAtk = wep.atk + hel.atk + (arm.custom ? simState.customAtk : 0);
-    const gearCrit = wep.crit + hel.crit + (arm.custom ? simState.customCrit : arm.crit);
-    const gearHpDrain = wep.hpDrain + hel.hpDrain;
-    const gearRevert = wep.revert;
+    const gearCrit = (wep.crit || 0) + (hel.crit || 0) + (arm.custom ? (simState.customCrit || 0) : (arm.crit || 0));
+    const gearHpDrain = (wep.hpDrain || 0) + (hel.hpDrain || 0);
+    const gearRevert = wep.revert || 0;
 
-    const totalAtk = simState.atk + gearAtk;
+    // Player inputs final total ATK directly once (no raw stat gain from equipment)
+    const totalAtk = simState.atk;
     const deMult = simState.doubleEffect ? 2 : 1;
 
     const critBase = gearCrit + (simState.criticalPlusRank > 0 ? (simState.criticalPlusRank * 4 + 4) : 0);
@@ -8726,7 +8821,7 @@ function mountChameleonSim(root) {
     return {
       wep, hel, arm,
       totalAtk,
-      gearAtk, gearCrit, gearHpDrain, gearRevert,
+      gearCrit, gearHpDrain, gearRevert,
       critBase, hpDrainBase, revertBase, poisonBase,
       effCritRate, effHpDrainRate, effRevertRate, effPoisonRate,
       fsCD
@@ -9047,13 +9142,9 @@ function mountChameleonSim(root) {
 
             <!-- Custom Armor Inputs -->
             <div id="chmCustomArmorRow" style="display:none; margin-top:10px;" class="chm-stat-row">
-              <div class="chm-input-group">
-                <label>Custom ATK</label>
-                <input type="number" id="chmCustomAtk" value="0" min="0">
-              </div>
-              <div class="chm-input-group">
-                <label>Custom Crit %</label>
-                <input type="number" id="chmCustomCrit" value="0" min="0">
+              <div class="chm-input-group" style="flex:1;">
+                <label>Custom Armor Crit %</label>
+                <input type="number" id="chmCustomCrit" value="0" min="0" max="100">
               </div>
             </div>
           </div>
@@ -9070,16 +9161,16 @@ function mountChameleonSim(root) {
                 <input type="number" id="chmInpLevel" value="70" min="1" max="100">
               </div>
               <div class="chm-input-group">
-                <label>Base ATK</label>
-                <input type="number" id="chmInpAtk" value="150" min="0">
+                <label>Total ATK</label>
+                <input type="number" id="chmInpAtk" value="150" min="0" title="Player final in-game status ATK">
               </div>
               <div class="chm-input-group">
-                <label>Base LCK</label>
-                <input type="number" id="chmInpLck" value="40" min="0">
+                <label>Total LCK</label>
+                <input type="number" id="chmInpLck" value="40" min="0" title="Player final in-game status LCK">
               </div>
               <div class="chm-input-group">
-                <label>Base AGI (CD)</label>
-                <input type="number" id="chmInpAgi" value="60" min="0">
+                <label>Total AGI (CD)</label>
+                <input type="number" id="chmInpAgi" value="60" min="0" title="Player final in-game status AGI">
               </div>
             </div>
             <div class="chm-stat-row chm-stat-row-2-3">
@@ -9561,7 +9652,11 @@ function mountChameleonSim(root) {
     chmHeroRevertSub.textContent = bonuses.revertBase > 0 ? ('Base ' + bonuses.revertBase + '% (Full Heal)') : 'No Time Bow';
 
     // Deck Badges
-    gearBonusBadge.textContent = '+' + bonuses.gearAtk + ' ATK | +' + bonuses.gearCrit + '% Crit';
+    const gearProcParts = [];
+    if (bonuses.gearHpDrain > 0) gearProcParts.push('+' + bonuses.gearHpDrain + '% HP Drain');
+    if (bonuses.gearCrit > 0) gearProcParts.push('+' + bonuses.gearCrit + '% Crit');
+    if (bonuses.gearRevert > 0) gearProcParts.push('+' + bonuses.gearRevert + '% Revert');
+    gearBonusBadge.textContent = gearProcParts.length ? gearProcParts.join(' | ') : 'No Gear Procs';
     totalAtkBadge.textContent = 'Total ATK: ' + bonuses.totalAtk;
 
     // Skill matrix badges & labels
@@ -9688,8 +9783,8 @@ function mountChameleonSim(root) {
   helSelect.addEventListener('change', onEquipChange);
   armSelect.addEventListener('change', onEquipChange);
 
-  customAtkInp.addEventListener('input', () => { simState.customAtk = Number(customAtkInp.value) || 0; updateUI(); });
-  customCritInp.addEventListener('input', () => { simState.customCrit = Number(customCritInp.value) || 0; updateUI(); });
+  if (customAtkInp) customAtkInp.addEventListener('input', () => { simState.customAtk = Number(customAtkInp.value) || 0; updateUI(); });
+  if (customCritInp) customCritInp.addEventListener('input', () => { simState.customCrit = Number(customCritInp.value) || 0; updateUI(); });
 
   inpLevel.addEventListener('input', () => { simState.level = Number(inpLevel.value) || 70; updateUI(); });
   inpAtk.addEventListener('input', () => { simState.atk = Number(inpAtk.value) || 150; updateUI(); });
