@@ -3013,6 +3013,14 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
+  .chm-distrib-pct {
+    font-size: 10px;
+    font-weight: 600;
+    color: #9ca3af;
+    margin-left: auto;
+    font-family: monospace;
+    letter-spacing: 0.01em;
+  }
 
   /* Status Telemetry Badges */
   .chm-badge-grid {
@@ -9317,7 +9325,6 @@ function mountChameleonSim(root) {
           <div class="chm-card">
             <div class="chm-card-title">
               <span>Character & Enemy Stats</span>
-              <span class="chm-card-badge" id="chmTotalAtkBadge">Total ATK: 0</span>
             </div>
             <div class="chm-stat-row chm-stat-row-4">
               <div class="chm-input-group">
@@ -9638,12 +9645,12 @@ function mountChameleonSim(root) {
               <div class="chm-distrib-seg chm-seg-hpdrain" id="chmSegHpDrain" style="width:0%;"></div>
             </div>
             <div class="chm-distrib-legend">
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#38bdf8;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#38bdf8;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#10b981;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#10b981;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong> <span id="chmPctBase" class="chm-distrib-pct">0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#38bdf8;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#38bdf8;">0</strong> <span id="chmPctFatal" class="chm-distrib-pct">0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#10b981;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#10b981;">0</strong> <span id="chmPctPierce" class="chm-distrib-pct">0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong> <span id="chmPctCrit" class="chm-distrib-pct">0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong> <span id="chmPctPoison" class="chm-distrib-pct">0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong> <span id="chmPctHpDrain" class="chm-distrib-pct">0%</span></div>
             </div>
           </div>
 
@@ -9794,6 +9801,12 @@ function mountChameleonSim(root) {
   const valPoisonDmg = root.querySelector('#chmValPoisonDmg');
   const valHpDrainDmg = root.querySelector('#chmValHpDrainDmg');
   const totalDistribLabel = root.querySelector('#chmTotalDistribLabel');
+  const pctBase = root.querySelector('#chmPctBase');
+  const pctFatal = root.querySelector('#chmPctFatal');
+  const pctPierce = root.querySelector('#chmPctPierce');
+  const pctCrit = root.querySelector('#chmPctCrit');
+  const pctPoison = root.querySelector('#chmPctPoison');
+  const pctHpDrain = root.querySelector('#chmPctHpDrain');
 
   const badgeCrits = root.querySelector('#chmBadgeCrits');
   const badgePoison = root.querySelector('#chmBadgePoison');
@@ -9801,8 +9814,6 @@ function mountChameleonSim(root) {
   const badgeRevert = root.querySelector('#chmBadgeRevert');
 
   const gearBonusBadge = root.querySelector('#chmGearBonusBadge');
-  const totalAtkBadge = root.querySelector('#chmTotalAtkBadge');
-
   const logScroll = root.querySelector('#chmLogScroll');
   const logSearch = root.querySelector('#chmLogSearch');
   const filterBtns = root.querySelectorAll('.chm-log-filter-btn');
@@ -9845,8 +9856,6 @@ function mountChameleonSim(root) {
     if (bonuses.gearCrit > 0) gearProcParts.push('+' + bonuses.gearCrit + '% Crit');
     if (bonuses.gearRevert > 0) gearProcParts.push('+' + bonuses.gearRevert + '% Revert');
     gearBonusBadge.textContent = gearProcParts.length ? gearProcParts.join(' | ') : 'No Gear Procs';
-    totalAtkBadge.textContent = 'Total ATK: ' + bonuses.totalAtk;
-
     // Skill matrix badges & labels
     const fsRank = simState.extraArrows ? Math.min(simState.fatalStrikeRank + 1, 5) : simState.fatalStrikeRank;
     const fsChargesText = simState.extraArrows ? '10 Shots' : '5 Shots';
@@ -9898,6 +9907,12 @@ function mountChameleonSim(root) {
     valPoisonDmg.textContent = Math.round(simState.totalPoisonDoT).toLocaleString();
     valHpDrainDmg.textContent = Math.round(simState.totalHpDrainDmg).toLocaleString();
     totalDistribLabel.textContent = Math.round(simState.totalDamage).toLocaleString() + ' Total';
+    pctBase.textContent = pBase.toFixed(1) + '%';
+    pctFatal.textContent = pFatal.toFixed(1) + '%';
+    pctPierce.textContent = pPierce.toFixed(1) + '%';
+    pctCrit.textContent = pCrit.toFixed(1) + '%';
+    pctPoison.textContent = pPoison.toFixed(1) + '%';
+    pctHpDrain.textContent = pHpDrain.toFixed(1) + '%';
 
     // Badges
     badgeCrits.textContent = simState.critCount;
