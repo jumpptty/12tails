@@ -2965,6 +2965,7 @@
     background: radial-gradient(circle at 50% 90%, rgba(212, 175, 55, 0.08) 0%, #161513 75%);
     border: 1px solid rgba(212, 175, 55, 0.28);
     user-select: none;
+    padding: 10px 8px;
   }
   .chm-kpi-arena-card .chm-kpi-label {
     text-align: center;
@@ -2976,11 +2977,12 @@
   }
   .chm-kpi-arena-stage {
     position: relative;
-    height: 38px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: visible;
+    width: 100%;
   }
   .chm-arena-idle-hint {
     font-family: monospace;
@@ -2992,18 +2994,18 @@
     transition: opacity 0.2s ease;
     user-select: none;
   }
-  /* Floating Combat Number Lanes (Left: 20%, Middle: 50%, Right: 80%) */
+  /* Floating Combat Number Lanes (Left: 22%, Middle: 50%, Right: 78% for clean clearance) */
   .chm-arena-lane {
     position: absolute;
-    bottom: 2px;
+    bottom: 3px;
     width: 0;
     height: 0;
     pointer-events: none;
     z-index: 10;
   }
-  .chm-lane-left { left: 20%; }
-  .chm-lane-mid { left: 50%; }
-  .chm-lane-right { left: 80%; }
+  .chm-lane-left { left: 22%; }
+  .chm-lane-mid { left: 50%; bottom: 5px; }
+  .chm-lane-right { left: 78%; }
 
   .chm-fct-item {
     position: absolute;
@@ -3016,20 +3018,57 @@
     animation: chmFloatUp 1.6s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
   }
+  .chm-fct-item .sk-dmg-final-digit {
+    margin: 0 -0.5px;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+  .chm-fct-item.chm-fct-crit {
+    animation: chmFloatUpCrit 1.7s cubic-bezier(0.18, 0.9, 0.32, 1) forwards;
+    filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
+  }
+  .chm-fct-item.chm-fct-drain {
+    filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.5)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95));
+  }
+  .chm-fct-item.chm-fct-heal {
+    filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
+  }
+  .chm-fct-item.chm-fct-dot {
+    filter: drop-shadow(0 0 3px rgba(192, 132, 252, 0.4)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
+  }
   @keyframes chmFloatUp {
     0% {
       opacity: 1;
       transform: translate(-50%, 0) scale(1);
     }
-    15% {
-      transform: translate(-50%, -6px) scale(1.06);
+    18% {
+      transform: translate(-50%, -7px) scale(1.05);
     }
-    70% {
+    72% {
       opacity: 0.9;
     }
     100% {
       opacity: 0;
-      transform: translate(-50%, -36px) scale(0.9);
+      transform: translate(-50%, -34px) scale(0.92);
+    }
+  }
+  @keyframes chmFloatUpCrit {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1.12);
+    }
+    15% {
+      transform: translate(-50%, -9px) scale(1.22);
+    }
+    28% {
+      transform: translate(-50%, -14px) scale(1.1);
+    }
+    72% {
+      opacity: 0.92;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -38px) scale(0.95);
     }
   }
 
@@ -3302,12 +3341,12 @@
     height: 100%;
     transition: width 0.2s ease;
   }
-  .chm-seg-base { background: #d4af37; }
-  .chm-seg-fatal { background: #38bdf8; }
-  .chm-seg-pierce { background: #10b981; }
-  .chm-seg-crit { background: #ea580c; }
-  .chm-seg-poison { background: #a855f7; }
-  .chm-seg-hpdrain { background: #ec4899; }
+  .chm-seg-base { background: #ffffff; }
+  .chm-seg-fatal { background: #ef4444; }
+  .chm-seg-pierce { background: #15803d; }
+  .chm-seg-crit { background: #facc15; }
+  .chm-seg-poison { background: #22c55e; }
+  .chm-seg-hpdrain { background: #a855f7; }
 
   .chm-distrib-legend {
     display: grid;
@@ -3525,9 +3564,9 @@
 
   .chm-badge-fatal {
     display: inline-block;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
     padding: 1px 6px;
     border-radius: 3px;
     font-size: 10px;
@@ -3536,9 +3575,9 @@
   }
   .chm-badge-crit {
     display: inline-block;
-    color: #ea580c;
-    background: rgba(234, 88, 12, 0.12);
-    border: 1px solid rgba(234, 88, 12, 0.35);
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.35);
     padding: 1px 6px;
     border-radius: 3px;
     font-size: 10px;
@@ -3547,9 +3586,9 @@
   }
   .chm-badge-poison {
     display: inline-block;
-    color: #c084fc;
-    background: rgba(192, 132, 252, 0.12);
-    border: 1px solid rgba(192, 132, 252, 0.35);
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
     padding: 1px 6px;
     border-radius: 3px;
     font-size: 10px;
@@ -3558,9 +3597,9 @@
   }
   .chm-badge-drain {
     display: inline-block;
-    color: #ec4899;
-    background: rgba(236, 72, 153, 0.12);
-    border: 1px solid rgba(236, 72, 153, 0.35);
+    color: #c084fc;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid rgba(192, 132, 252, 0.35);
     padding: 1px 6px;
     border-radius: 3px;
     font-size: 10px;
@@ -9417,7 +9456,7 @@ function mountChameleonSim(root) {
         if (tickDmg > 0) {
           simState.totalPoisonDoT += tickDmg;
           if (simState.isRunning) {
-            spawnDamageNumber(tickDmg, 'p', 16, 'right');
+            spawnDamageNumber(tickDmg, 'p', 14, 'right', 'dot');
           }
         }
       }
@@ -9540,23 +9579,27 @@ function mountChameleonSim(root) {
       // 1. Bow fire sound on shot
       soundMgr.play('bowFire', 0.55);
 
-      // 2. White physical damage number (Left Lane, 22px)
-      spawnDamageNumber(finalImpact, 'w', 22, 'left');
+      // 2. White physical damage number (Left Lane: 24px crit or 19px normal)
+      if (rollCrit) {
+        spawnDamageNumber(finalImpact, 'w', 24, 'left', 'crit');
+      } else {
+        spawnDamageNumber(finalImpact, 'w', 19, 'left', 'impact');
+      }
 
       // 3. Authentic critical crunch hit sound
       if (rollCrit) {
         soundMgr.play('bowHitCrit', 0.85);
       }
 
-      // 4. HP Drain: Purple effect damage number (Middle Lane, smaller 16px)
+      // 4. HP Drain: Purple effect damage number (Middle Lane: 14px compact)
       if (didHpDrain && curHpDrainDmg > 0) {
-        spawnDamageNumber(curHpDrainDmg, 'p', 16, 'mid');
+        spawnDamageNumber(curHpDrainDmg, 'p', 14, 'mid', 'drain');
       }
 
-      // 5. Revert Proc: Revert SFX and Green healing number (Middle Lane, 22px)
+      // 5. Revert Proc: Revert SFX and Green healing number (Middle Lane: 20px heal)
       if (didRevert) {
         soundMgr.play('revert', 0.85);
-        spawnDamageNumber(simState.maxHp, 'g', 22, 'mid');
+        spawnDamageNumber(simState.maxHp, 'g', 20, 'mid', 'heal');
       }
     }
 
@@ -9604,12 +9647,12 @@ function mountChameleonSim(root) {
     updateUI();
   }
 
-  function spawnDamageNumber(val, color, size, lane) {
+  function spawnDamageNumber(val, color, size, lane, type) {
     if (!simState.isRunning || val <= 0) return;
     const laneEl = (lane === 'left') ? laneLeft : (lane === 'mid') ? laneMid : laneRight;
     if (!laneEl) return;
     const fct = document.createElement('div');
-    fct.className = 'chm-fct-item';
+    fct.className = 'chm-fct-item' + (type ? (' chm-fct-' + type) : '');
     fct.innerHTML = renderDamageDigits(val, color, size);
     fct.addEventListener('animationend', () => fct.remove());
     laneEl.appendChild(fct);
@@ -10119,7 +10162,7 @@ function mountChameleonSim(root) {
             </div>
             <div class="chm-kpi-card">
               <span class="chm-kpi-label">Poison Stack</span>
-              <span class="chm-kpi-val" style="color:#c084fc;" id="chmKpiPoisonStack">0 / 6</span>
+              <span class="chm-kpi-val" style="color:#22c55e;" id="chmKpiPoisonStack">0 / 6</span>
               <span class="chm-kpi-sub" id="chmKpiPoisonDpsSub">0.0 DoT DPS</span>
             </div>
           </div>
@@ -10139,12 +10182,12 @@ function mountChameleonSim(root) {
               <div class="chm-distrib-seg chm-seg-hpdrain" id="chmSegHpDrain" style="width:0%;"></div>
             </div>
             <div class="chm-distrib-legend">
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong> <span id="chmPctBase" class="chm-distrib-pct">0.0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#38bdf8;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#38bdf8;">0</strong> <span id="chmPctFatal" class="chm-distrib-pct">0.0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#10b981;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#10b981;">0</strong> <span id="chmPctPierce" class="chm-distrib-pct">0.0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong> <span id="chmPctCrit" class="chm-distrib-pct">0.0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong> <span id="chmPctPoison" class="chm-distrib-pct">0.0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong> <span id="chmPctHpDrain" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ffffff;"></div>Base: <strong id="chmValBaseDmg" style="color:#ffffff;">0</strong> <span id="chmPctBase" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ef4444;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#ef4444;">0</strong> <span id="chmPctFatal" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#15803d;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#16a34a;">0</strong> <span id="chmPctPierce" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#facc15;"></div>Crit: <strong id="chmValCritDmg" style="color:#facc15;">0</strong> <span id="chmPctCrit" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#22c55e;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#22c55e;">0</strong> <span id="chmPctPoison" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#c084fc;">0</strong> <span id="chmPctHpDrain" class="chm-distrib-pct">0.0%</span></div>
             </div>
           </div>
 
@@ -10156,7 +10199,7 @@ function mountChameleonSim(root) {
             </div>
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="Fatal Strike Casts">Fatal Strikes</div>
-              <div class="chm-badge-count" style="color:#38bdf8;" id="chmBadgeFatalCasts">0 casts</div>
+              <div class="chm-badge-count" style="color:#ef4444;" id="chmBadgeFatalCasts">0 casts</div>
             </div>
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="Critical Hits">Critical Hits</div>
@@ -10164,11 +10207,11 @@ function mountChameleonSim(root) {
             </div>
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="Poison Procs">Poison Procs</div>
-              <div class="chm-badge-count" style="color:#c084fc;" id="chmBadgePoison">0 procs</div>
+              <div class="chm-badge-count" style="color:#22c55e;" id="chmBadgePoison">0 procs</div>
             </div>
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="HP Drain Procs">HP Drain Procs</div>
-              <div class="chm-badge-count" style="color:#ec4899;" id="chmBadgeHpDrain">0 procs</div>
+              <div class="chm-badge-count" style="color:#c084fc;" id="chmBadgeHpDrain">0 procs</div>
             </div>
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="Revert Procs">Revert Procs</div>
