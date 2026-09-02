@@ -2806,73 +2806,54 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  /* Compact Combat Arena (~110px) */
-  .chm-combat-arena {
+  /* KPI Combat Test Area Chip & Floating Numbers (Leftmost of 5 KPI Chips) */
+  .chm-kpi-arena-card {
     position: relative;
-    height: 110px;
-    background: radial-gradient(circle at 50% 85%, rgba(212, 175, 55, 0.09) 0%, rgba(18, 17, 15, 0.96) 75%);
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    border-radius: 6px;
-    margin-bottom: 12px;
     overflow: hidden;
+    background: radial-gradient(circle at 50% 90%, rgba(212, 175, 55, 0.08) 0%, #161513 75%);
+    border: 1px solid rgba(212, 175, 55, 0.28);
     user-select: none;
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.7);
   }
-  .chm-arena-ground {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 18px;
-    background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(0, 0, 0, 0.45) 100%);
-    border-top: 1px dashed rgba(212, 175, 55, 0.22);
-  }
-  .chm-arena-dummy {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+  .chm-kpi-arena-stage {
+    position: relative;
+    height: 30px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    pointer-events: none;
-    opacity: 0.85;
+    justify-content: center;
+    overflow: visible;
   }
-  .chm-arena-dummy-icon {
-    font-size: 26px;
-    line-height: 1;
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8));
-  }
-  .chm-arena-dummy-label {
-    font-size: 8px;
+  .chm-arena-idle-hint {
+    font-family: monospace;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 1.2px;
-    color: rgba(212, 175, 55, 0.65);
-    text-transform: uppercase;
-    margin-top: 2px;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    user-select: none;
   }
-  /* Floating Combat Number Lanes (Left: 24%, Middle: 50%, Right: 76%) */
+  /* Floating Combat Number Lanes (Left: 20%, Middle: 50%, Right: 80%) */
   .chm-arena-lane {
     position: absolute;
-    bottom: 34px;
+    bottom: 2px;
     width: 0;
     height: 0;
     pointer-events: none;
     z-index: 10;
   }
-  .chm-lane-left { left: 24%; }
+  .chm-lane-left { left: 20%; }
   .chm-lane-mid { left: 50%; }
-  .chm-lane-right { left: 76%; }
+  .chm-lane-right { left: 80%; }
 
   .chm-fct-item {
     position: absolute;
     bottom: 0;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, 0) scale(1);
     display: flex;
     align-items: center;
     white-space: nowrap;
-    animation: chmFloatUp 1.8s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+    animation: chmFloatUp 1.6s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
   }
   @keyframes chmFloatUp {
@@ -2881,11 +2862,14 @@
       transform: translate(-50%, 0) scale(1);
     }
     15% {
-      transform: translate(-50%, -10px) scale(1.08);
+      transform: translate(-50%, -6px) scale(1.06);
+    }
+    70% {
+      opacity: 0.9;
     }
     100% {
       opacity: 0;
-      transform: translate(-50%, -58px) scale(0.9);
+      transform: translate(-50%, -36px) scale(0.9);
     }
   }
 
@@ -3024,16 +3008,19 @@
     color: #d4af37;
   }
 
-  /* KPI Hero Cards */
+  /* KPI Hero Cards (5 Chips in One Row: Test Area + 4 KPIs) */
   .chm-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
   }
-  @media (max-width: 980px) {
+  @media (max-width: 1080px) {
+    .chm-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 640px) {
     .chm-kpi-grid { grid-template-columns: repeat(2, 1fr); }
   }
-  @media (max-width: 480px) {
+  @media (max-width: 440px) {
     .chm-kpi-grid { grid-template-columns: 1fr; }
   }
   .chm-kpi-card {
@@ -5286,6 +5273,17 @@ const CLASS_COLORS = {
 };
 const UPGRADED_CLASSES = new Set(["Penguin", "Mole", "Chameleon", "Rabbit", "Sheep"]);
 
+// One <img> per digit, using the real in-game damage-popup textures
+// (GameAssets/Effects/DamageNum/<color><digit>.png, Damage.getDamageTexture
+// in game damage logic) instead of this tool's own UI font. `size` (px, digit
+// height) defaults to the CSS class's own 34px when omitted.
+function renderDamageDigits(n, color, size){
+  const style = size ? ` style="height:${size}px"` : "";
+  return String(Math.max(0, Math.round(n))).split("").map(d =>
+    `<img class="sk-dmg-final-digit" src="${SKILL_ICONS["dmgdigit_" + color + d]}" alt="${d}"${style}>`
+  ).join("");
+}
+
 function mountSkillCooldownLookup(root){
   root.innerHTML = `
     <div class="sk">
@@ -5632,19 +5630,7 @@ function mountSkillCooldownLookup(root){
   function randomRoll(rMax){
     return Math.floor(Math.random() * (rMax + 1));
   }
-  // One <img> per digit, using the real in-game damage-popup textures
-  // (GameAssets/Effects/DamageNum/<color><digit>.png, Damage.getDamageTexture
-  // in game damage logic) instead of this tool's own UI font -- the whole point of
-  // the Final Damage chip per the user's own framing. `size` (px, digit
-  // height) defaults to the CSS class's own 34px when omitted -- only the
-  // multi-hit small-popup call site overrides it, every existing call site
-  // is unaffected.
-  function renderDamageDigits(n, color, size){
-    const style = size ? ` style="height:${size}px"` : "";
-    return String(Math.max(0, Math.round(n))).split("").map(d =>
-      `<img class="sk-dmg-final-digit" src="${SKILL_ICONS["dmgdigit_" + color + d]}" alt="${d}"${style}>`
-    ).join("");
-  }
+  // (Damage digit rendering lifted to top-level shared function renderDamageDigits)
   // Multi-hit Simulate support: how many independent damage instances a
   // skill's Test button should roll/display. Two real shapes, confirmed via
   // mechanics-researcher against Penguin skill logic (2026-08-17):
@@ -9071,6 +9057,11 @@ function mountChameleonSim(root) {
     logSearch: ''
   };
 
+  let laneLeft = null;
+  let laneMid = null;
+  let laneRight = null;
+  let arenaHint = null;
+
   function chmLckAdjust(chance, lck) {
     if (chance <= 0) return 0;
     const num = chance * (1 + 0.01 * Math.min(Math.max(lck, 1), 512));
@@ -9174,7 +9165,7 @@ function mountChameleonSim(root) {
         if (tickDmg > 0) {
           simState.totalPoisonDoT += tickDmg;
           if (simState.isRunning) {
-            spawnDamageNumber(tickDmg, 'p', 20, 'right');
+            spawnDamageNumber(tickDmg, 'p', 16, 'right');
           }
         }
       }
@@ -9297,23 +9288,23 @@ function mountChameleonSim(root) {
       // 1. Bow fire sound on shot
       soundMgr.play('bowFire', 0.55);
 
-      // 2. White physical damage number (Left Lane, 28px)
-      spawnDamageNumber(finalImpact, 'w', 28, 'left');
+      // 2. White physical damage number (Left Lane, 22px)
+      spawnDamageNumber(finalImpact, 'w', 22, 'left');
 
       // 3. Authentic critical crunch hit sound
       if (rollCrit) {
         soundMgr.play('bowHitCrit', 0.85);
       }
 
-      // 4. HP Drain: Purple effect damage number (Middle Lane, smaller 20px)
+      // 4. HP Drain: Purple effect damage number (Middle Lane, smaller 16px)
       if (didHpDrain && curHpDrainDmg > 0) {
-        spawnDamageNumber(curHpDrainDmg, 'p', 20, 'mid');
+        spawnDamageNumber(curHpDrainDmg, 'p', 16, 'mid');
       }
 
-      // 5. Revert Proc: Revert SFX and Green healing number (Middle Lane, 28px)
+      // 5. Revert Proc: Revert SFX and Green healing number (Middle Lane, 22px)
       if (didRevert) {
         soundMgr.play('revert', 0.85);
-        spawnDamageNumber(simState.maxHp, 'g', 28, 'mid');
+        spawnDamageNumber(simState.maxHp, 'g', 22, 'mid');
       }
     }
 
@@ -9397,6 +9388,10 @@ function mountChameleonSim(root) {
       soundMgr.play((Math.random() < 0.5) ? 'fatalStrike1' : 'fatalStrike2', 0.85);
     }
 
+    // Execute first shot immediately on click
+    executeOneShot(bonuses, enemy);
+    updateUI();
+
     simState.timerId = setInterval(() => {
       executeOneShot(bonuses, enemy);
       updateUI();
@@ -9413,6 +9408,7 @@ function mountChameleonSim(root) {
       simState.timerId = null;
     }
     updateControlButtons();
+    updateUI();
   }
 
   // Setup Markup
@@ -9822,20 +9818,19 @@ function mountChameleonSim(root) {
             </div>
           </div>
 
-          <!-- Combat Arena (Floating Combat Text Stage) -->
-          <div class="chm-combat-arena" id="chmCombatArena">
-            <div class="chm-arena-ground"></div>
-            <div class="chm-arena-dummy">
-              <span class="chm-arena-dummy-icon">🎯</span>
-              <span class="chm-arena-dummy-label">Target Dummy</span>
-            </div>
-            <div class="chm-arena-lane chm-lane-left" id="chmLaneLeft"></div>
-            <div class="chm-arena-lane chm-lane-mid" id="chmLaneMid"></div>
-            <div class="chm-arena-lane chm-lane-right" id="chmLaneRight"></div>
-          </div>
-
-          <!-- Hero KPI Dashboard -->
+          <!-- Hero KPI Dashboard + Combat Test Area (5 Chips in One Row) -->
           <div class="chm-kpi-grid">
+            <!-- Test Area Chip (Leftmost of 5) -->
+            <div class="chm-kpi-card chm-kpi-arena-card" id="chmCombatArena">
+              <span class="chm-kpi-label">Test Area</span>
+              <div class="chm-kpi-arena-stage">
+                <div class="chm-arena-lane chm-lane-left" id="chmLaneLeft"></div>
+                <div class="chm-arena-lane chm-lane-mid" id="chmLaneMid"></div>
+                <div class="chm-arena-lane chm-lane-right" id="chmLaneRight"></div>
+                <span class="chm-arena-idle-hint" id="chmArenaHint">STANDBY</span>
+              </div>
+              <span class="chm-kpi-sub">White · Mid · DoT</span>
+            </div>
             <div class="chm-kpi-card">
               <span class="chm-kpi-label">Total Damage</span>
               <span class="chm-kpi-val" id="chmKpiDamage">0</span>
@@ -10004,9 +9999,10 @@ function mountChameleonSim(root) {
   const chmHeroRevertRate = root.querySelector('#chmHeroRevertRate');
   const chmHeroRevertSub = root.querySelector('#chmHeroRevertSub');
 
-  const laneLeft = root.querySelector('#chmLaneLeft');
-  const laneMid = root.querySelector('#chmLaneMid');
-  const laneRight = root.querySelector('#chmLaneRight');
+  laneLeft = root.querySelector('#chmLaneLeft');
+  laneMid = root.querySelector('#chmLaneMid');
+  laneRight = root.querySelector('#chmLaneRight');
+  arenaHint = root.querySelector('#chmArenaHint');
   const soundToggleBtn = root.querySelector('#chmSoundToggleBtn');
 
   const kpiDamage = root.querySelector('#chmKpiDamage');
@@ -10119,6 +10115,19 @@ function mountChameleonSim(root) {
     const isRobot = (enemy.race === 'Robots');
     const dotDps = simState.currentPoisonStacks > 0 ? (isRobot ? (15 * simState.currentPoisonStacks) / 4 : (10 * simState.currentPoisonStacks - 1) / 4) : 0;
     kpiPoisonDpsSub.textContent = dotDps.toFixed(1) + ' DoT DPS (' + (isRobot ? 'Rust' : 'Poison') + ')';
+
+    // Test Area Hint update
+    if (arenaHint) {
+      if (simState.isRunning) {
+        arenaHint.style.display = 'none';
+      } else if (simState.totalShots > 0) {
+        arenaHint.style.display = 'block';
+        arenaHint.textContent = simState.totalShots + ' SHOTS';
+      } else {
+        arenaHint.style.display = 'block';
+        arenaHint.textContent = 'STANDBY';
+      }
+    }
 
     // Damage Distribution
     const totalDmg = Math.max(simState.totalDamage, 1);
