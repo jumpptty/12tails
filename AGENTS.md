@@ -92,11 +92,21 @@ Present a structured review table to the user. Every single skill entry must inc
 
 ---
 
-## 6. Typography & Markdown Formatting Rule
+## 6. Typography & Markdown Formatting Rule (STRICT NO-LATEX)
 
-* **Plain Unicode in Chat & Deliverables:** Never use LaTeX math delimiters or commands (e.g. `$\rightarrow$`, `\times`, `$\le$`, `$1..\text{maxRank}$`) in chat responses, documentation, or code comments. The IDE chat renderer parses standard GitHub-Flavored Markdown without LaTeX math plugins.
-* **Always use native Unicode symbols directly:**
-  * Arrows: `→`, `←`, `↔`
-  * Arithmetic & Comparisons: `×`, `÷`, `±`, `≤`, `≥`, `≠`, `≈`
-  * Ranges & Exponents: `1..maxRank`, `x²`, `x³`
+> ⛔ **CRITICAL MANDATORY RULE — ZERO LATEX IN CHAT & DELIVERABLES:**
+> 
+> The IDE chat interface and markdown deliverables DO NOT support KaTeX / MathJax / LaTeX math plugins. Any LaTeX syntax renders as raw, ugly, unreadable text like `\frac{64}{\text{EnemyDef} + 64}` or `$$ ... $$`.
+> 
+> **NEVER output any of the following:**
+> - ❌ Math delimiters: `$ ... $`, `$$ ... $$`
+> - ❌ LaTeX commands: `\frac`, `\text`, `\times`, `\le`, `\ge`, `\neq`, `\pm`, `\left`, `\right`, `\lceil`, `\rceil`, `\lfloor`, `\rfloor`, `\dots`
+> - ❌ Subscripts/superscripts via TeX: `\text{TAL}_{\text{eff}}` (use plain text `TAL_eff` or code blocks)
+>
+> **ALWAYS use plain English, standard code blocks, or native Unicode symbols:**
+> - Code blocks for formulas: `Final Damage = Base Damage * (64 / (EnemyDef + 64))`
+> - Arrows: `→`, `←`, `↔`
+> - Arithmetic & Comparisons: `×`, `÷`, `±`, `≤`, `≥`, `≠`, `≈`
+> - Ranges & Exponents: `1..maxRank`, `[0..ceil(0.2 * LCK)]`, `x²`, `x³`
+> - Subscripts/Identifiers: `TAL_eff`, `Clamp(...)`, `Floor(...)`, `Ceil(...)`
 
