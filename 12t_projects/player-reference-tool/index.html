@@ -2721,11 +2721,11 @@
   .chm-dep-btn {
     display: flex;
     align-items: center;
-    gap: 7px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
-    padding: 5px 8px;
+    gap: 8px;
+    background: #181714;
+    border: none;
+    border-radius: 0;
+    padding: 6px 9px;
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
@@ -2734,20 +2734,18 @@
     min-width: 0;
   }
   .chm-dep-btn:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(212, 175, 55, 0.4);
+    background: #23211c;
   }
   .chm-dep-btn.active {
-    background: rgba(212, 175, 55, 0.15);
-    border-color: #d4af37;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+    background: #252117;
+    box-shadow: inset 3px 0 0 #d4af37;
   }
   .chm-dep-icon-wrap {
     width: 26px;
     height: 26px;
     background: #0a0a09;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
+    border: none;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2755,7 +2753,7 @@
     flex-shrink: 0;
   }
   .chm-dep-btn:not(.active) .chm-dep-icon-wrap img {
-    filter: grayscale(100%) opacity(40%);
+    filter: grayscale(100%) opacity(35%);
   }
   .chm-dep-btn.active .chm-dep-icon-wrap img {
     filter: none;
@@ -2791,19 +2789,19 @@
     font-family: monospace;
     font-size: 9px;
     font-weight: 700;
-    padding: 2px 5px;
-    border-radius: 3px;
+    padding: 3px 6px;
+    border: none;
+    border-radius: 0;
     flex-shrink: 0;
   }
   .chm-dep-btn.active .chm-dep-status-tag {
-    background: rgba(212, 175, 55, 0.25);
-    color: #d4af37;
-    border: 1px solid rgba(212, 175, 55, 0.4);
+    background: #d4af37;
+    color: #12110e;
+    font-weight: 800;
   }
   .chm-dep-btn:not(.active) .chm-dep-status-tag {
-    background: rgba(255, 255, 255, 0.05);
+    background: #21201c;
     color: #6b7280;
-    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   /* KPI Combat Test Area Chip & Floating Numbers (Leftmost of 5 KPI Chips) */
@@ -2875,29 +2873,35 @@
 
   /* Sound Toggle Button */
   .chm-sound-btn {
-    background: #191815;
-    border: 1px solid rgba(212, 175, 55, 0.35);
+    background: #201e19;
+    border: none;
+    border-radius: 0;
     color: #d4af37;
     font-size: 11px;
-    font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 8px 14px;
     cursor: pointer;
     transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     user-select: none;
+    white-space: nowrap;
   }
   .chm-sound-btn:hover {
-    background: #24221d;
-    border-color: #d4af37;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+    background: #2b2821;
+    color: #fef08a;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   }
   .chm-sound-btn.muted {
-    background: #141311;
-    border-color: rgba(255, 255, 255, 0.12);
+    background: #161513;
+    border: none;
     color: #6b7280;
+  }
+  .chm-sound-btn.muted:hover {
+    background: #1f1e1a;
+    color: #9ca3af;
   }
 
   /* Right Deck: Simulation Engine & Telemetry */
@@ -2914,26 +2918,37 @@
   }
   .chm-mode-tabs {
     display: flex;
-    background: #0f0e0c;
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    border-radius: 6px;
+    background: #0c0b0a;
+    border: none;
+    border-radius: 0;
     padding: 2px;
+    gap: 2px;
   }
   .chm-mode-tab {
-    background: transparent;
+    background: #171614;
     border: none;
-    color: #9ca3af;
-    font-size: 12px;
+    border-radius: 0;
+    color: #8f8c85;
+    font-size: 11.5px;
     font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 4px;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+    padding: 7px 15px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s ease;
     white-space: nowrap;
+  }
+  .chm-mode-tab:hover:not(.active) {
+    background: #23211c;
+    color: #e5e5e5;
   }
   .chm-mode-tab.active {
     background: #d4af37;
-    color: #141311;
+    border: none;
+    border-radius: 0;
+    color: #12110e;
+    font-weight: 800;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
   .chm-actions {
     display: flex;
@@ -2942,46 +2957,57 @@
     flex-wrap: wrap;
   }
   .chm-fire-btn {
-    background: linear-gradient(180deg, #8b1e1e, #5a1212);
-    border: 1px solid #d4af37;
-    color: #fef3c7;
+    background: linear-gradient(180deg, #9e2323, #781515);
+    border: none;
+    border-radius: 0;
+    color: #ffffff;
     font-family: 'Cinzel', serif;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 700;
-    padding: 8px 18px;
-    border-radius: 5px;
+    letter-spacing: 0.5px;
+    padding: 8px 20px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
     display: flex;
     align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 10px rgba(139, 30, 30, 0.4);
+    gap: 7px;
+    box-shadow: 0 2px 8px rgba(120, 21, 21, 0.35);
     white-space: nowrap;
   }
   .chm-fire-btn:hover {
-    background: linear-gradient(180deg, #a82424, #6f1616);
+    background: linear-gradient(180deg, #ba2b2b, #8f1b1b);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(139, 30, 30, 0.6);
+    box-shadow: 0 4px 14px rgba(158, 35, 35, 0.5);
+  }
+  .chm-fire-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
   .chm-fire-btn.firing {
     background: linear-gradient(180deg, #b45309, #78350f);
-    border-color: #f59e0b;
+    border: none;
+    color: #fef3c7;
+  }
+  .chm-fire-btn.firing:hover {
+    background: linear-gradient(180deg, #d97706, #92400e);
   }
   .chm-reset-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #9ca3af;
+    background: #201e19;
+    border: none;
+    border-radius: 0;
+    color: #a1a1aa;
     font-size: 11.5px;
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 8px 14px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s ease;
     white-space: nowrap;
   }
   .chm-reset-btn:hover {
-    color: #f3f4f6;
-    background: rgba(255, 255, 255, 0.1);
+    color: #f4f4f5;
+    background: #2b2821;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   }
 
   /* Quick shot chips for instant mode */
@@ -2991,21 +3017,21 @@
     align-items: center;
   }
   .chm-instant-chip {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #1c1b18;
+    border: none;
+    border-radius: 0;
     color: #9ca3af;
     font-size: 11px;
     font-family: monospace;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 4px;
+    font-weight: 700;
+    padding: 6px 10px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s ease;
   }
   .chm-instant-chip:hover {
-    background: rgba(212, 175, 55, 0.15);
-    border-color: #d4af37;
-    color: #d4af37;
+    background: #d4af37;
+    color: #12110e;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   }
 
   /* KPI Hero Cards (5 Chips in One Row: Test Area + 4 KPIs) */
@@ -3209,33 +3235,44 @@
     flex-wrap: wrap;
   }
   .chm-log-filter-btn {
-    background: #12110f;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #9ca3af;
+    background: #1c1a17;
+    border: none;
+    border-radius: 0;
+    color: #8e8c87;
     font-size: 10.5px;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    padding: 5px 11px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s ease;
     white-space: nowrap;
   }
+  .chm-log-filter-btn:hover {
+    background: #272520;
+    color: #e5e5e5;
+  }
   .chm-log-filter-btn.active {
-    background: rgba(212, 175, 55, 0.2);
-    border-color: #d4af37;
-    color: #d4af37;
+    background: #d4af37;
+    border: none;
+    border-radius: 0;
+    color: #12110e;
+    font-weight: 800;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
   .chm-log-search {
-    background: #12110f;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #1c1a17;
+    border: none;
+    border-radius: 0;
     color: #f3f4f6;
     font-size: 11.5px;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 5px 9px;
     width: 130px;
     outline: none;
+    transition: box-shadow 0.15s ease;
   }
-  .chm-log-search:focus { border-color: #d4af37; }
+  .chm-log-search:focus {
+    box-shadow: inset 0 0 0 1px #d4af37;
+  }
   .chm-log-scroll {
     max-height: 240px;
     overflow-y: auto;
@@ -9831,7 +9868,7 @@ function mountChameleonSim(root) {
                 <button type="button" class="chm-instant-chip" data-cnt="500">500</button>
                 <button type="button" class="chm-instant-chip" data-cnt="1000">1,000</button>
               </div>
-              <input type="number" id="chmInstantCountInput" value="100" min="1" max="5000" style="width:70px; background:#12110f; border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px; border-radius:4px; font-family:monospace;">
+              <input type="number" id="chmInstantCountInput" value="100" min="1" max="5000" style="width:70px; background:#1c1b18; border:none; color:#fff; padding:6px 8px; border-radius:0; font-family:monospace; font-weight:700;">
               <button type="button" class="chm-fire-btn" id="chmSimulateInstantBtn">⚡ Simulate</button>
               <button type="button" class="chm-reset-btn" id="chmResetBtn2">↺ Reset</button>
             </div>
