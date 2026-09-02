@@ -2984,28 +2984,27 @@
 
   .chm-distrib-legend {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
     font-size: 11px;
   }
-  @media (max-width: 1200px) {
-    .chm-distrib-legend { grid-template-columns: repeat(3, 1fr); }
-  }
   @media (max-width: 600px) {
     .chm-distrib-legend { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 380px) {
+    .chm-distrib-legend { grid-template-columns: 1fr; }
   }
   .chm-distrib-item {
     background: #11100e;
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 4px;
-    padding: 5px 8px;
+    padding: 6px 10px;
     display: flex;
     align-items: center;
     gap: 6px;
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
   .chm-dot {
     width: 8px;
@@ -3020,6 +3019,8 @@
     margin-left: auto;
     font-family: monospace;
     letter-spacing: 0.01em;
+    flex-shrink: 0;
+    padding-left: 4px;
   }
 
   /* Status Telemetry Badges */
@@ -8847,9 +8848,8 @@ const CHM_HELMETS = [
 ];
 
 const CHM_ARMORS = [
-  { id: 'championArmor', name: 'Champion Armor', lv: 63, crit: 6, custom: false, desc: '+6% Critical Chance', icon: CHM_ICONS.championArmor },
-  { id: 'customArmor', name: 'Custom Armor', lv: 0, crit: 0, custom: true, desc: 'Custom proc effects', icon: '' },
-  { id: 'none', name: 'None', lv: 0, crit: 0, custom: false, desc: 'No proc effect', icon: '' }
+  { id: 'championArmor', name: 'Champion Armor', lv: 63, crit: 6, desc: '+6% Critical Chance', icon: CHM_ICONS.championArmor },
+  { id: 'none', name: 'None', lv: 0, crit: 0, desc: 'No proc effect', icon: '' }
 ];
 
 function mountChameleonSim(root) {
@@ -8859,8 +8859,6 @@ function mountChameleonSim(root) {
     lck: 128,
     agi: 200,
     maxHp: 3000,
-    customAtk: 0,
-    customCrit: 0,
     selectedWeapon: 'poseidonBow',
     selectedHelmet: 'poseidonHelmet',
     selectedArmor: 'championArmor',
@@ -8938,9 +8936,9 @@ function mountChameleonSim(root) {
   function getComputedBonuses() {
     const wep = CHM_WEAPONS.find(w => w.id === simState.selectedWeapon) || CHM_WEAPONS[3];
     const hel = CHM_HELMETS.find(h => h.id === simState.selectedHelmet) || CHM_HELMETS[2];
-    const arm = CHM_ARMORS.find(a => a.id === simState.selectedArmor) || CHM_ARMORS[2];
+    const arm = CHM_ARMORS.find(a => a.id === simState.selectedArmor) || CHM_ARMORS[1];
 
-    const gearCrit = (wep.crit || 0) + (hel.crit || 0) + (arm.custom ? (simState.customCrit || 0) : (arm.crit || 0));
+    const gearCrit = (wep.crit || 0) + (hel.crit || 0) + (arm.crit || 0);
     const gearHpDrain = (wep.hpDrain || 0) + (hel.hpDrain || 0);
     const gearRevert = wep.revert || 0;
 
@@ -9131,7 +9129,7 @@ function mountChameleonSim(root) {
       didRevert
     };
 
-    if (simState.log.length > 500) simState.log.shift();
+    if (simState.log.length > 1000) simState.log.shift();
     simState.log.push(entry);
   }
 
@@ -9312,13 +9310,6 @@ function mountChameleonSim(root) {
               </div>
             </div>
 
-            <!-- Custom Armor Inputs -->
-            <div id="chmCustomArmorRow" style="display:none; margin-top:10px;" class="chm-stat-row">
-              <div class="chm-input-group" style="flex:1;">
-                <label>Custom Armor Crit %</label>
-                <input type="number" id="chmCustomCrit" value="0" min="0" max="100">
-              </div>
-            </div>
           </div>
 
           <!-- Character & Target Stats -->
@@ -9599,6 +9590,7 @@ function mountChameleonSim(root) {
                 <button type="button" class="chm-instant-chip" data-cnt="100">100</button>
                 <button type="button" class="chm-instant-chip" data-cnt="250">250</button>
                 <button type="button" class="chm-instant-chip" data-cnt="500">500</button>
+                <button type="button" class="chm-instant-chip" data-cnt="1000">1,000</button>
               </div>
               <input type="number" id="chmInstantCountInput" value="100" min="1" max="5000" style="width:70px; background:#12110f; border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px; border-radius:4px; font-family:monospace;">
               <button type="button" class="chm-fire-btn" id="chmSimulateInstantBtn">⚡ Simulate</button>
@@ -9645,12 +9637,12 @@ function mountChameleonSim(root) {
               <div class="chm-distrib-seg chm-seg-hpdrain" id="chmSegHpDrain" style="width:0%;"></div>
             </div>
             <div class="chm-distrib-legend">
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong> <span id="chmPctBase" class="chm-distrib-pct">0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#38bdf8;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#38bdf8;">0</strong> <span id="chmPctFatal" class="chm-distrib-pct">0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#10b981;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#10b981;">0</strong> <span id="chmPctPierce" class="chm-distrib-pct">0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong> <span id="chmPctCrit" class="chm-distrib-pct">0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong> <span id="chmPctPoison" class="chm-distrib-pct">0%</span></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong> <span id="chmPctHpDrain" class="chm-distrib-pct">0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong> <span id="chmPctBase" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#38bdf8;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#38bdf8;">0</strong> <span id="chmPctFatal" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#10b981;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#10b981;">0</strong> <span id="chmPctPierce" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong> <span id="chmPctCrit" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong> <span id="chmPctPoison" class="chm-distrib-pct">0.0%</span></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong> <span id="chmPctHpDrain" class="chm-distrib-pct">0.0%</span></div>
             </div>
           </div>
 
@@ -9718,10 +9710,6 @@ function mountChameleonSim(root) {
   const wepDesc = root.querySelector('#chmWepDesc');
   const helDesc = root.querySelector('#chmHelDesc');
   const armDesc = root.querySelector('#chmArmDesc');
-
-  const customArmorRow = root.querySelector('#chmCustomArmorRow');
-  const customAtkInp = root.querySelector('#chmCustomAtk');
-  const customCritInp = root.querySelector('#chmCustomCrit');
 
   const inpLevel = root.querySelector('#chmInpLevel');
   const inpAtk = root.querySelector('#chmInpAtk');
@@ -9958,7 +9946,7 @@ function mountChameleonSim(root) {
       return;
     }
 
-    const rowsHtml = filtered.slice(-100).reverse().map(e => `
+    const rowsHtml = filtered.slice(-1000).reverse().map(e => `
       <div class="chm-log-row chm-log-entry">
         <span class="chm-col-shot">#${e.shot}</span>
         <span class="chm-col-time">${e.time}s</span>
@@ -9982,7 +9970,7 @@ function mountChameleonSim(root) {
 
     const w = CHM_WEAPONS.find(item => item.id === simState.selectedWeapon) || CHM_WEAPONS[3];
     const h = CHM_HELMETS.find(item => item.id === simState.selectedHelmet) || CHM_HELMETS[2];
-    const a = CHM_ARMORS.find(item => item.id === simState.selectedArmor) || CHM_ARMORS[2];
+    const a = CHM_ARMORS.find(item => item.id === simState.selectedArmor) || CHM_ARMORS[1];
 
     wepImg.src = w.icon || '';
     wepImg.style.display = w.icon ? 'block' : 'none';
@@ -9999,16 +9987,12 @@ function mountChameleonSim(root) {
     armName.textContent = a.name;
     armDesc.textContent = a.desc;
 
-    customArmorRow.style.display = a.custom ? 'grid' : 'none';
     updateUI();
   }
 
   wepSelect.addEventListener('change', onEquipChange);
   helSelect.addEventListener('change', onEquipChange);
   armSelect.addEventListener('change', onEquipChange);
-
-  if (customAtkInp) customAtkInp.addEventListener('input', () => { simState.customAtk = Number(customAtkInp.value) || 0; updateUI(); });
-  if (customCritInp) customCritInp.addEventListener('input', () => { simState.customCrit = Number(customCritInp.value) || 0; updateUI(); });
 
   inpLevel.addEventListener('input', () => { simState.level = Number(inpLevel.value) || 70; updateUI(); });
   inpAtk.addEventListener('input', () => { simState.atk = Number(inpAtk.value) || 150; updateUI(); });
