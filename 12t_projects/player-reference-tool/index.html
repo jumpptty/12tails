@@ -2663,6 +2663,16 @@
     gap: 6px;
     min-width: 0;
   }
+  .chm-dep-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  @media (max-width: 520px) {
+    .chm-dep-grid {
+      grid-template-columns: 1fr;
+    }
+  }
   .chm-skill-header-row {
     display: flex;
     align-items: center;
@@ -9477,78 +9487,6 @@ function mountChameleonSim(root) {
                   </div>
                   <span class="chm-dep-status-tag">ACTIVE</span>
                 </button>
-              </div>
-
-              <!-- Piercing Venom Block -->
-              <div class="chm-skill-block">
-                <div class="chm-skill-header-row">
-                  <div class="chm-skill-main-icon">
-                    <img src="${CHM_ICONS.piercingVenom}" alt="Piercing Venom">
-                  </div>
-                  <div class="chm-skill-title-col">
-                    <span class="chm-skill-title-text">Piercing Venom</span>
-                    <span class="chm-skill-subtitle-text" id="chmPVenomBonusLabel">+12 DMG / Stack</span>
-                  </div>
-                  <select class="chm-equip-select" id="chmPVenomRankSelect" style="width:110px;">
-                    <option value="1">Piercing Lv.1</option>
-                    <option value="0">Off (0)</option>
-                  </select>
-                </div>
-
-                <!-- Deadly Venom Chip -->
-                <button type="button" class="chm-dep-btn active" id="chmDeadlyVenomBtn">
-                  <div class="chm-dep-icon-wrap">
-                    <img src="${CHM_ICONS.deadlyVenom}" alt="Deadly Venom">
-                  </div>
-                  <div class="chm-dep-info">
-                    <span class="chm-dep-label">Deadly Venom</span>
-                    <span class="chm-dep-desc">2× Damage Bonus, Cap 6</span>
-                  </div>
-                  <span class="chm-dep-status-tag">ACTIVE</span>
-                </button>
-
-                <!-- Poison Mode Chip -->
-                <button type="button" class="chm-dep-btn active" id="chmPoisonModeBtn">
-                  <div class="chm-dep-icon-wrap">
-                    <img src="${CHM_ICONS.poisonArrow}" alt="Poison Mode">
-                  </div>
-                  <div class="chm-dep-info">
-                    <span class="chm-dep-label" id="chmPoisonModeTitle">Dynamic Stacking</span>
-                    <span class="chm-dep-desc" id="chmPoisonModeDesc">Rolls from 0 to Cap</span>
-                  </div>
-                  <span class="chm-dep-status-tag" id="chmPoisonModeTag">DYNAMIC</span>
-                </button>
-              </div>
-
-              <!-- Poison Arrow Block -->
-              <div class="chm-skill-block">
-                <div class="chm-skill-header-row">
-                  <div class="chm-skill-main-icon">
-                    <img src="${CHM_ICONS.poisonArrow}" alt="Poison Arrow">
-                  </div>
-                  <div class="chm-skill-title-col">
-                    <span class="chm-skill-title-text">Poison Arrow</span>
-                    <span class="chm-skill-subtitle-text">Base 24% Proc Chance</span>
-                  </div>
-                  <select class="chm-equip-select" id="chmPoisonArrowSelect" style="width:110px;">
-                    <option value="4">Rank 4 (24%)</option>
-                    <option value="3">Rank 3 (20%)</option>
-                    <option value="2">Rank 2 (16%)</option>
-                    <option value="1">Rank 1 (12%)</option>
-                  </select>
-                </div>
-
-                <!-- Rusty Decay Chip -->
-                <button type="button" class="chm-dep-btn" id="chmRustyDecayBtn">
-                  <div class="chm-dep-icon-wrap">
-                    <img src="${CHM_ICONS.rustyDecay}" alt="Rusty Decay">
-                  </div>
-                  <div class="chm-dep-info">
-                    <span class="chm-dep-label">Rusty Decay</span>
-                    <span class="chm-dep-desc">+2 Stacks / Proc (Rust on Mecha)</span>
-                  </div>
-                  <span class="chm-dep-status-tag">OFF</span>
-                </button>
 
                 <!-- Double Effect Chip -->
                 <button type="button" class="chm-dep-btn active" id="chmDoubleEffectBtn">
@@ -9561,6 +9499,76 @@ function mountChameleonSim(root) {
                   </div>
                   <span class="chm-dep-status-tag">ACTIVE</span>
                 </button>
+              </div>
+
+              <!-- Poison Arrow & Venoms Block (Spans 2 columns / full width) -->
+              <div class="chm-skill-block" style="grid-column: 1 / -1;">
+                <div class="chm-skill-header-row">
+                  <div class="chm-skill-main-icon">
+                    <img src="${CHM_ICONS.poisonArrow}" alt="Poison Arrow">
+                  </div>
+                  <div class="chm-skill-title-col">
+                    <span class="chm-skill-title-text">Poison Arrow</span>
+                    <span class="chm-skill-subtitle-text" id="chmPoisonArrowSubtitle">Base 24% Proc Chance</span>
+                  </div>
+                  <select class="chm-equip-select" id="chmPoisonArrowSelect" style="width:110px;">
+                    <option value="4">Rank 4 (24%)</option>
+                    <option value="3">Rank 3 (20%)</option>
+                    <option value="2">Rank 2 (16%)</option>
+                    <option value="1">Rank 1 (12%)</option>
+                    <option value="0">Off (0%)</option>
+                  </select>
+                </div>
+
+                <div class="chm-dep-grid">
+                  <!-- Piercing Venom Chip -->
+                  <button type="button" class="chm-dep-btn active" id="chmPVenomBtn">
+                    <div class="chm-dep-icon-wrap">
+                      <img src="${CHM_ICONS.piercingVenom}" alt="Piercing Venom">
+                    </div>
+                    <div class="chm-dep-info">
+                      <span class="chm-dep-label">Piercing Venom</span>
+                      <span class="chm-dep-desc" id="chmPVenomDesc">+12 DMG / Stack</span>
+                    </div>
+                    <span class="chm-dep-status-tag">ACTIVE</span>
+                  </button>
+
+                  <!-- Deadly Venom Chip -->
+                  <button type="button" class="chm-dep-btn active" id="chmDeadlyVenomBtn">
+                    <div class="chm-dep-icon-wrap">
+                      <img src="${CHM_ICONS.deadlyVenom}" alt="Deadly Venom">
+                    </div>
+                    <div class="chm-dep-info">
+                      <span class="chm-dep-label">Deadly Venom</span>
+                      <span class="chm-dep-desc">2× Damage Bonus, Cap 6</span>
+                    </div>
+                    <span class="chm-dep-status-tag">ACTIVE</span>
+                  </button>
+
+                  <!-- Rusty Decay Chip -->
+                  <button type="button" class="chm-dep-btn" id="chmRustyDecayBtn">
+                    <div class="chm-dep-icon-wrap">
+                      <img src="${CHM_ICONS.rustyDecay}" alt="Rusty Decay">
+                    </div>
+                    <div class="chm-dep-info">
+                      <span class="chm-dep-label">Rusty Decay</span>
+                      <span class="chm-dep-desc">+2 Stacks / Proc (Rust on Mecha)</span>
+                    </div>
+                    <span class="chm-dep-status-tag">OFF</span>
+                  </button>
+
+                  <!-- Dynamic Stacking Mode Chip -->
+                  <button type="button" class="chm-dep-btn active" id="chmPoisonModeBtn">
+                    <div class="chm-dep-icon-wrap">
+                      <img src="${CHM_ICONS.poisonArrow}" alt="Poison Mode">
+                    </div>
+                    <div class="chm-dep-info">
+                      <span class="chm-dep-label" id="chmPoisonModeTitle">Dynamic Stacking</span>
+                      <span class="chm-dep-desc" id="chmPoisonModeDesc">Rolls from 0 to Cap</span>
+                    </div>
+                    <span class="chm-dep-status-tag" id="chmPoisonModeTag">DYNAMIC</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -9734,8 +9742,8 @@ function mountChameleonSim(root) {
   const bullsEyeBtn = root.querySelector('#chmBullsEyeBtn');
   const bowMasteryBtn = root.querySelector('#chmBowMasteryBtn');
 
-  const pVenomRankSelect = root.querySelector('#chmPVenomRankSelect');
-  const pVenomBonusLabel = root.querySelector('#chmPVenomBonusLabel');
+  const pVenomBtn = root.querySelector('#chmPVenomBtn');
+  const pVenomDesc = root.querySelector('#chmPVenomDesc');
   const deadlyVenomBtn = root.querySelector('#chmDeadlyVenomBtn');
   const poisonModeBtn = root.querySelector('#chmPoisonModeBtn');
   const poisonModeTitle = root.querySelector('#chmPoisonModeTitle');
@@ -9743,6 +9751,7 @@ function mountChameleonSim(root) {
   const poisonModeTag = root.querySelector('#chmPoisonModeTag');
 
   const poisonArrowSelect = root.querySelector('#chmPoisonArrowSelect');
+  const poisonArrowSubtitle = root.querySelector('#chmPoisonArrowSubtitle');
   const rustyDecayBtn = root.querySelector('#chmRustyDecayBtn');
   const doubleEffectBtn = root.querySelector('#chmDoubleEffectBtn');
 
@@ -9851,7 +9860,13 @@ function mountChameleonSim(root) {
     fsCdDesc.textContent = simState.fatalStrikeMode === 'rotation' ? ('0.5s Lock + ' + bonuses.fsCD + 's CD') : 'Persistent (No CD)';
 
     critPlusBonusLabel.textContent = simState.criticalPlusRank > 0 ? ('+' + (simState.criticalPlusRank * 4 + 4) + '% Base Crit') : '0% Base Crit';
-    pVenomBonusLabel.textContent = simState.piercingVenomRank > 0 ? (simState.deadlyVenom ? '+12 DMG / Stack' : '+6 DMG / Stack') : 'Disabled';
+    pVenomDesc.textContent = simState.piercingVenomRank > 0 ? (simState.deadlyVenom ? '+12 DMG / Stack' : '+6 DMG / Stack') : 'Disabled';
+    pVenomBtn.classList.toggle('active', simState.piercingVenomRank > 0);
+    pVenomBtn.querySelector('.chm-dep-status-tag').textContent = simState.piercingVenomRank > 0 ? 'ACTIVE' : 'OFF';
+
+    const paRates = [0, 12, 16, 20, 24];
+    const curPaRate = paRates[simState.poisonArrowRank] || 0;
+    poisonArrowSubtitle.textContent = simState.poisonArrowRank > 0 ? ('Base ' + curPaRate + '% Proc Chance') : 'Disabled (0%)';
 
     // Hero KPIs
     const grandTotal = Math.round(simState.totalDamage);
@@ -10046,7 +10061,10 @@ function mountChameleonSim(root) {
     updateUI();
   });
 
-  pVenomRankSelect.addEventListener('change', () => { simState.piercingVenomRank = Number(pVenomRankSelect.value); updateUI(); });
+  pVenomBtn.addEventListener('click', () => {
+    simState.piercingVenomRank = simState.piercingVenomRank > 0 ? 0 : 1;
+    updateUI();
+  });
   deadlyVenomBtn.addEventListener('click', () => {
     simState.deadlyVenom = !simState.deadlyVenom;
     deadlyVenomBtn.classList.toggle('active', simState.deadlyVenom);
