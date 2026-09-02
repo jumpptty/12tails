@@ -46,6 +46,24 @@
        token) and pairs it with a translucent -soft variant for the box
        background, mirroring --gold/--gold-soft's exact existing pattern. */
     --stat-atk-soft:rgba(185,28,28,.08);
+    --chm-chip-bg:#edf5ee;
+    --chm-chip-border:#5ea87c;
+    --chm-chip-bg-hover:#e1efe2;
+    --chm-chip-border-hover:#2e8b57;
+    --chm-chip-accent:#2e8b57;
+    --chm-chip-mark-bg:#d8eadb;
+    --chm-chip-mark-border:#439665;
+    --chm-chip-mark-color:#27794b;
+    --chm-chip-title:#1a3c27;
+    --chm-chip-arrow:#2e8b57;
+    --chm-chip-tag:#3d8359;
+    --chm-chip-badge-bg:#2e8b57;
+    --chm-chip-badge-text:#ffffff;
+    --chm-chip-badge-border:transparent;
+    --chm-chip-badge-shadow:0 1px 4px rgba(46,139,87,0.35);
+    --chm-chip-art-color:#27794b;
+    --chm-chip-art-opacity:0.28;
+    --chm-chip-art-opacity-hover:0.38;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -65,6 +83,24 @@
       --stat-effect:#c084fc;
       --stat-paralysis:#facc15;
       --stat-atk-soft:rgba(239,68,68,.12);
+      --chm-chip-bg:rgba(32,60,42,0.32);
+      --chm-chip-border:rgba(67,150,101,0.45);
+      --chm-chip-bg-hover:rgba(42,80,56,0.45);
+      --chm-chip-border-hover:#3bb273;
+      --chm-chip-accent:#3bb273;
+      --chm-chip-mark-bg:rgba(22,48,32,0.7);
+      --chm-chip-mark-border:rgba(59,178,115,0.6);
+      --chm-chip-mark-color:#4ade80;
+      --chm-chip-title:#e2f0e6;
+      --chm-chip-arrow:#4ade80;
+      --chm-chip-tag:#86efac;
+      --chm-chip-badge-bg:#1e5e3a;
+      --chm-chip-badge-text:#bdf2cf;
+      --chm-chip-badge-border:#3bb273;
+      --chm-chip-badge-shadow:0 0 8px rgba(59,178,115,0.25);
+      --chm-chip-art-color:#4ade80;
+      --chm-chip-art-opacity:0.18;
+      --chm-chip-art-opacity-hover:0.32;
     }
   }
   :root[data-theme="dark"]{
@@ -84,6 +120,24 @@
     --stat-effect:#c084fc;
     --stat-paralysis:#facc15;
     --stat-atk-soft:rgba(239,68,68,.12);
+    --chm-chip-bg:rgba(32,60,42,0.32);
+    --chm-chip-border:rgba(67,150,101,0.45);
+    --chm-chip-bg-hover:rgba(42,80,56,0.45);
+    --chm-chip-border-hover:#3bb273;
+    --chm-chip-accent:#3bb273;
+    --chm-chip-mark-bg:rgba(22,48,32,0.7);
+    --chm-chip-mark-border:rgba(59,178,115,0.6);
+    --chm-chip-mark-color:#4ade80;
+    --chm-chip-title:#e2f0e6;
+    --chm-chip-arrow:#4ade80;
+    --chm-chip-tag:#86efac;
+    --chm-chip-badge-bg:#1e5e3a;
+    --chm-chip-badge-text:#bdf2cf;
+    --chm-chip-badge-border:#3bb273;
+    --chm-chip-badge-shadow:0 0 8px rgba(59,178,115,0.25);
+    --chm-chip-art-color:#4ade80;
+    --chm-chip-art-opacity:0.18;
+    --chm-chip-art-opacity-hover:0.32;
   }
 
   *{box-sizing:border-box}
@@ -2922,21 +2976,23 @@
     transition: width 0.2s ease;
   }
   .chm-seg-base { background: #d4af37; }
+  .chm-seg-fatal { background: #38bdf8; }
+  .chm-seg-pierce { background: #10b981; }
   .chm-seg-crit { background: #ea580c; }
   .chm-seg-poison { background: #a855f7; }
   .chm-seg-hpdrain { background: #ec4899; }
 
   .chm-distrib-legend {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
     font-size: 11px;
   }
-  @media (max-width: 900px) {
-    .chm-distrib-legend { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 1200px) {
+    .chm-distrib-legend { grid-template-columns: repeat(3, 1fr); }
   }
-  @media (max-width: 480px) {
-    .chm-distrib-legend { grid-template-columns: 1fr; }
+  @media (max-width: 600px) {
+    .chm-distrib-legend { grid-template-columns: repeat(2, 1fr); }
   }
   .chm-distrib-item {
     background: #11100e;
@@ -3058,43 +3114,122 @@
   .chm-log-scroll::-webkit-scrollbar { width: 6px; }
   .chm-log-scroll::-webkit-scrollbar-track { background: #0d0c0a; }
   .chm-log-scroll::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 3px; }
-  .chm-log-entry {
-    padding: 4px 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    display: flex;
+  .chm-log-scroll {
+    height: 320px;
+    overflow-y: auto;
+    overflow-x: auto;
+    position: relative;
+    background: #0d0c0a;
+  }
+  .chm-log-row {
+    display: grid;
+    grid-template-columns: 56px 64px 84px 75px 110px 105px 95px 75px;
+    min-width: 664px;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    padding: 5px 10px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11.5px;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .chm-log-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #171512;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #a89a85;
+    text-transform: uppercase;
+    padding: 7px 10px;
   }
   .chm-log-entry:nth-child(even) { background: rgba(255, 255, 255, 0.015); }
-  .chm-log-num { color: #6b7280; min-width: 40px; }
-  .chm-log-time { color: #9ca3af; min-width: 44px; }
-  .chm-log-dmg { font-weight: 700; color: #f3f4f6; min-width: 60px; }
-  .chm-log-crit { color: #ea580c; font-weight: 700; }
-  .chm-log-fs { color: #3b82f6; font-size: 9.5px; border: 1px solid rgba(59, 130, 246, 0.4); padding: 0 3px; border-radius: 3px; }
-  .chm-log-poison { color: #c084fc; font-weight: 600; }
-  .chm-log-hpdrain { color: #ec4899; font-weight: 700; }
-  .chm-log-revert { color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.15); padding: 1px 4px; border-radius: 3px; }
+  .chm-log-entry:hover { background: rgba(212, 175, 55, 0.05); }
+
+  /* Column typography & badge styling */
+  .chm-col-shot { color: #8a8377; }
+  .chm-col-time { color: #b5a995; }
+  .chm-col-dmg { font-weight: 700; color: #f9fafb; }
+  .chm-col-empty { color: rgba(255, 255, 255, 0.15); font-weight: 400; text-align: center; display: block; width: 100%; }
+
+  .chm-badge-fatal {
+    display: inline-block;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .chm-badge-crit {
+    display: inline-block;
+    color: #ea580c;
+    background: rgba(234, 88, 12, 0.12);
+    border: 1px solid rgba(234, 88, 12, 0.35);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .chm-badge-poison {
+    display: inline-block;
+    color: #c084fc;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid rgba(192, 132, 252, 0.35);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .chm-badge-drain {
+    display: inline-block;
+    color: #ec4899;
+    background: rgba(236, 72, 153, 0.12);
+    border: 1px solid rgba(236, 72, 153, 0.35);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .chm-badge-revert {
+    display: inline-block;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
 
 
-  /* Chameleon Attack Simulator Entry in Main Menu (2-col wide, subtle green tint, beta badge, line art backdrop) */
+  /* Chameleon Attack Simulator Entry in Main Menu (2-col wide, theme-aware tokens, beta badge, line art backdrop) */
   .entry-chm.entry-wide .entry {
     position: relative;
     overflow: hidden;
-    background: #edf5ee;
-    border-color: #5ea87c;
+    background: var(--chm-chip-bg);
+    border-color: var(--chm-chip-border);
     box-shadow: var(--shadow);
   }
   .entry-chm.entry-wide .entry::before {
-    background: #2e8b57;
+    background: var(--chm-chip-accent);
     transform: scaleY(1);
     z-index: 3;
   }
   .entry-chm.entry-wide .entry:hover,
   .entry-chm.entry-wide .entry:focus-visible {
-    background: #e1efe2;
-    border-color: #2e8b57;
+    background: var(--chm-chip-bg-hover);
+    border-color: var(--chm-chip-border-hover);
   }
   .entry-chm.entry-wide .entry .entry-mark,
   .entry-chm.entry-wide .entry .entry-body,
@@ -3105,25 +3240,25 @@
   .entry-chm.entry-wide .entry-mark {
     width: 54px;
     height: 54px;
-    border-color: #439665;
-    color: #27794b;
-    background: #d8eadb;
+    border-color: var(--chm-chip-mark-border);
+    color: var(--chm-chip-mark-color);
+    background: var(--chm-chip-mark-bg);
   }
   .entry-chm.entry-wide .entry-mark svg {
     width: 28px;
     height: 28px;
-    stroke: #27794b;
+    stroke: var(--chm-chip-mark-color);
   }
   .entry-chm.entry-wide .entry-title {
     font-size: 23px;
-    color: #1a3c27;
+    color: var(--chm-chip-title);
   }
   .entry-chm.entry-wide .entry-arrow {
     font-size: 18px;
-    color: #2e8b57;
+    color: var(--chm-chip-arrow);
   }
   .entry-chm.entry-wide .entry-tag {
-    color: #3d8359;
+    color: var(--chm-chip-tag);
     font-weight: 600;
   }
   .entry-beta-badge {
@@ -3136,9 +3271,10 @@
     text-transform: uppercase;
     padding: 3px 8px;
     border-radius: 12px;
-    background: #2e8b57;
-    color: #ffffff;
-    box-shadow: 0 1px 4px rgba(46, 139, 87, 0.35);
+    background: var(--chm-chip-badge-bg);
+    color: var(--chm-chip-badge-text);
+    border: 1px solid var(--chm-chip-badge-border);
+    box-shadow: var(--chm-chip-badge-shadow);
     margin-left: 10px;
     vertical-align: 3px;
     line-height: 1;
@@ -3157,14 +3293,14 @@
     mask-size: contain;
     -webkit-mask-position: center center;
     mask-position: center center;
-    background: #27794b;
-    opacity: 0.28;
+    background: var(--chm-chip-art-color);
+    opacity: var(--chm-chip-art-opacity);
     transform: scaleX(-1);
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
   .entry-chm.entry-wide .entry:hover .entry-chm-art,
   .entry-chm.entry-wide .entry:focus-visible .entry-chm-art {
-    opacity: 0.38;
+    opacity: var(--chm-chip-art-opacity-hover);
     transform: scaleX(-1) translateX(-4px);
   }
   @media (max-width: 600px) {
@@ -3175,99 +3311,90 @@
     }
   }
 
-
-  /* Dark mode overrides for Chameleon Attack Simulator chip */
-  :root[data-theme="dark"] .entry-chm.entry-wide .entry,
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry {
-      background: rgba(32, 60, 42, 0.32);
-      border-color: rgba(67, 150, 101, 0.45);
-      box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry::before {
-      background: #3bb273;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:hover,
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:focus-visible {
-      background: rgba(42, 80, 56, 0.45);
-      border-color: #3bb273;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-mark {
-      border-color: rgba(59, 178, 115, 0.6);
-      color: #4ade80;
-      background: rgba(22, 48, 32, 0.7);
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-mark svg {
-      stroke: #4ade80;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-title {
-      color: #e2f0e6;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-arrow {
-      color: #4ade80;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-tag {
-      color: #86efac;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-beta-badge {
-      background: #1e5e3a;
-      color: #bdf2cf;
-      border: 1px solid #3bb273;
-      box-shadow: 0 0 8px rgba(59, 178, 115, 0.25);
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-chm-art {
-      background: #4ade80;
-      opacity: 0.18;
-    }
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:hover .entry-chm-art,
-    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:focus-visible .entry-chm-art {
-      opacity: 0.32;
-    }
-  }
-
+  /* ── Dark mode: Chameleon Attack Simulator tool chip ─────────────────── */
   :root[data-theme="dark"] .entry-chm.entry-wide .entry {
-    background: rgba(32, 60, 42, 0.32);
-    border-color: rgba(67, 150, 101, 0.45);
+    background: rgba(32, 60, 42, 0.32) !important;
+    border-color: rgba(67, 150, 101, 0.45) !important;
     box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry::before {
-    background: #3bb273;
+    background: #3bb273 !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry:hover,
   :root[data-theme="dark"] .entry-chm.entry-wide .entry:focus-visible {
-    background: rgba(42, 80, 56, 0.45);
-    border-color: #3bb273;
+    background: rgba(42, 80, 56, 0.45) !important;
+    border-color: #3bb273 !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-mark {
-    border-color: rgba(59, 178, 115, 0.6);
-    color: #4ade80;
-    background: rgba(22, 48, 32, 0.7);
+    border-color: rgba(59, 178, 115, 0.6) !important;
+    color: #4ade80 !important;
+    background: rgba(22, 48, 32, 0.7) !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-mark svg {
-    stroke: #4ade80;
+    stroke: #4ade80 !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-title {
-    color: #e2f0e6;
+    color: #e2f0e6 !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-arrow {
-    color: #4ade80;
+    color: #4ade80 !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-tag {
-    color: #86efac;
+    color: #86efac !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-beta-badge {
-    background: #1e5e3a;
-    color: #bdf2cf;
-    border: 1px solid #3bb273;
-    box-shadow: 0 0 8px rgba(59, 178, 115, 0.25);
+    background: #1e5e3a !important;
+    color: #bdf2cf !important;
+    border: 1px solid #3bb273 !important;
+    box-shadow: 0 0 8px rgba(59, 178, 115, 0.25) !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry-chm-art {
-    background: #4ade80;
-    opacity: 0.18;
+    background: #4ade80 !important;
+    opacity: 0.18 !important;
   }
   :root[data-theme="dark"] .entry-chm.entry-wide .entry:hover .entry-chm-art,
   :root[data-theme="dark"] .entry-chm.entry-wide .entry:focus-visible .entry-chm-art {
-    opacity: 0.32;
+    opacity: 0.32 !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry {
+      background: rgba(32, 60, 42, 0.32) !important;
+      border-color: rgba(67, 150, 101, 0.45) !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry::before {
+      background: #3bb273 !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:hover,
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:focus-visible {
+      background: rgba(42, 80, 56, 0.45) !important;
+      border-color: #3bb273 !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-mark {
+      border-color: rgba(59, 178, 115, 0.6) !important;
+      color: #4ade80 !important;
+      background: rgba(22, 48, 32, 0.7) !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-title {
+      color: #e2f0e6 !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-arrow {
+      color: #4ade80 !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-tag {
+      color: #86efac !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-beta-badge {
+      background: #1e5e3a !important;
+      color: #bdf2cf !important;
+      border: 1px solid #3bb273 !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry-chm-art {
+      background: #4ade80 !important;
+      opacity: 0.18 !important;
+    }
+    :root:not([data-theme="light"]) .entry-chm.entry-wide .entry:hover .entry-chm-art {
+      opacity: 0.32 !important;
+    }
   }
 
 </style>
@@ -8719,20 +8846,20 @@ const CHM_ARMORS = [
 
 function mountChameleonSim(root) {
   let simState = {
-    level: 70,
-    atk: 150,
-    lck: 40,
-    agi: 60,
-    maxHp: 1200,
+    level: 100,
+    atk: 200,
+    lck: 128,
+    agi: 200,
+    maxHp: 3000,
     customAtk: 0,
     customCrit: 0,
     selectedWeapon: 'poseidonBow',
     selectedHelmet: 'poseidonHelmet',
     selectedArmor: 'championArmor',
-    selectedEnemyId: 'reefbug2',
+    selectedEnemyId: 'carron',
     customEnemyDef: 50,
-    customEnemyRace: 'Organic',
-    bowMastery: true,
+    customEnemyLck: 50,
+    customEnemyRace: 'Organic',    bowMastery: true,
     fatalStrikeRank: 4,
     extraArrows: true,
     fatalStrikeMode: 'rotation', // 'always' | 'rotation'
@@ -8743,7 +8870,7 @@ function mountChameleonSim(root) {
     deadlyVenom: true,
     poisonMode: 'dynamic', // 'dynamic' | 'max'
     poisonArrowRank: 4,
-    rustyDecay: true,
+    rustyDecay: false,
     doubleEffect: true,
     simMode: 'infinite', // 'infinite' | 'instant'
     instantCount: 100,
@@ -8755,6 +8882,8 @@ function mountChameleonSim(root) {
     totalTime: 0,
     totalDamage: 0,
     totalBaseImpactDmg: 0,
+    totalFatalStrikeDmg: 0,
+    totalPiercingVenomDmg: 0,
     totalCritExtraDmg: 0,
     totalHpDrainDmg: 0,
     totalPoisonDoT: 0,
@@ -8786,10 +8915,16 @@ function mountChameleonSim(root) {
 
   function getEnemyInfo() {
     if (simState.selectedEnemyId === 'custom') {
-      return { def: simState.customEnemyDef, race: simState.customEnemyRace, label: 'Custom Target' };
+      return { def: simState.customEnemyDef, lck: simState.customEnemyLck || 0, race: simState.customEnemyRace, label: 'Custom Target' };
     }
-    const p = (typeof ENEMY_PRESETS !== 'undefined') ? ENEMY_PRESETS.find(e => e.id === simState.selectedEnemyId) : null;
-    return p ? { def: p.def, race: 'Organic', label: p.label } : { def: 50, race: 'Organic', label: 'Carron' };
+    const presets = [
+      { id: 'carron', def: 2, lck: 2, race: 'Organic', label: 'Carron' },
+      { id: 'darkfalcon', def: 270, lck: 170, race: 'Organic', label: 'Shadow Italus' },
+      { id: 'reefbug2', def: 384, lck: 72, race: 'Organic', label: 'ReefBugAdv' },
+      { id: 'earthavatar', def: 500, lck: 150, race: 'Organic', label: 'EarthAvatar' }
+    ];
+    const p = presets.find(e => e.id === simState.selectedEnemyId) || ((typeof ENEMY_PRESETS !== 'undefined') ? ENEMY_PRESETS.find(e => e.id === simState.selectedEnemyId) : null);
+    return p ? { def: p.def, lck: (p.lck !== undefined ? p.lck : 0), race: p.race || 'Organic', label: p.label } : { def: 2, lck: 2, race: 'Organic', label: 'Carron' };
   }
 
   function getComputedBonuses() {
@@ -8834,6 +8969,8 @@ function mountChameleonSim(root) {
     simState.totalTime = 0;
     simState.totalDamage = 0;
     simState.totalBaseImpactDmg = 0;
+    simState.totalFatalStrikeDmg = 0;
+    simState.totalPiercingVenomDmg = 0;
     simState.totalCritExtraDmg = 0;
     simState.totalHpDrainDmg = 0;
     simState.totalPoisonDoT = 0;
@@ -8886,7 +9023,8 @@ function mountChameleonSim(root) {
     const bMasteryBonus = simState.bowMastery ? Math.floor(0.1 * simState.level) : 0;
     const curFsBonus = isFsActive ? fsBonus : 0;
 
-    const baseRaw = Math.floor(0.35 * bonuses.totalAtk) + curFsBonus + pVenomBonus + bMasteryBonus;
+    const rawArrowBase = Math.floor(0.35 * bonuses.totalAtk) + bMasteryBonus;
+    const baseRaw = rawArrowBase + curFsBonus + pVenomBonus;
 
     // Crit roll
     const rollCrit = (Math.random() * 100 < bonuses.effCritRate);
@@ -8897,13 +9035,38 @@ function mountChameleonSim(root) {
     }
     const critRaw = rollCrit ? Math.ceil(baseRaw * critMult) : baseRaw;
 
-    // Defense mitigation
-    const defFactor = 64 / (enemy.def + 64);
-    const finalImpact = Math.floor(critRaw * defFactor);
-    const unCritImpact = Math.floor(baseRaw * defFactor);
-    const critExtra = rollCrit ? (finalImpact - unCritImpact) : 0;
+    // Attacker LCK variance roll (dmgAdjust: + Random(0, ceil(0.2 * LCK)))
+    const maxRAtk = Math.ceil(0.2 * simState.lck);
+    const rAtk = (maxRAtk > 0) ? Math.floor(Math.random() * maxRAtk) : 0;
+    const outgoingDmg = critRaw + rAtk;
+    const unCritOutgoingDmg = baseRaw + rAtk;
 
-    simState.totalBaseImpactDmg += unCritImpact;
+    // Target DEF and LCK variance roll (defAdjust: Clamp(DEF + Random(0, ceil(0.2 * LCK)), 1, 512))
+    const enemyLck = (enemy.lck !== undefined) ? enemy.lck : 0;
+    const maxRDef = Math.ceil(0.2 * enemyLck);
+    const rDef = (maxRDef > 0) ? Math.floor(Math.random() * maxRDef) : 0;
+    const effDef = Math.min(512, Math.max(1, enemy.def + rDef));
+
+    // Verified 12Tails defAdjust live mitigation formula (CharacterControl.cs:20524)
+    function defAdjust(d, def) {
+      const light = Math.max(1, Math.trunc(d - 0.5 * def));
+      const heavy = Math.max(1, Math.trunc(d * (1 - def / (def + 64))));
+      return Math.ceil(0.35 * light + 0.65 * heavy);
+    }
+
+    const finalImpact = defAdjust(outgoingDmg, effDef);
+    const unCritImpact = defAdjust(unCritOutgoingDmg, effDef);
+    const critExtra = rollCrit ? Math.max(0, finalImpact - unCritImpact) : 0;
+
+    // Separate White Damage components proportionally through DEF
+    const totalRawPart = (baseRaw > 0) ? baseRaw : 1;
+    const fsDmg = Math.round(unCritImpact * (curFsBonus / totalRawPart));
+    const pierceDmg = Math.round(unCritImpact * (pVenomBonus / totalRawPart));
+    const baseArrowDmg = Math.max(1, unCritImpact - fsDmg - pierceDmg);
+
+    simState.totalBaseImpactDmg += baseArrowDmg;
+    simState.totalFatalStrikeDmg += fsDmg;
+    simState.totalPiercingVenomDmg += pierceDmg;
     simState.totalCritExtraDmg += critExtra;
 
     // Poison proc roll
@@ -8941,8 +9104,9 @@ function mountChameleonSim(root) {
     advanceSimTime(0.3, enemy); // arrow shot takes 0.3s
     simState.totalShots++;
 
-    simState.totalDamage = simState.totalBaseImpactDmg + simState.totalCritExtraDmg + simState.totalHpDrainDmg + simState.totalPoisonDoT;
+    simState.totalDamage = simState.totalBaseImpactDmg + simState.totalFatalStrikeDmg + simState.totalPiercingVenomDmg + simState.totalCritExtraDmg + simState.totalHpDrainDmg + simState.totalPoisonDoT;
 
+    const poisonInc = didPoison ? (simState.rustyDecay ? 2 : 1) : 0;
     const entry = {
       shot: simState.totalShots,
       time: simState.totalTime.toFixed(2),
@@ -8953,6 +9117,7 @@ function mountChameleonSim(root) {
       critMult: critMult.toFixed(2),
       isFs: isFsActive,
       poisonStacks: simState.currentPoisonStacks,
+      poisonAdded: poisonInc,
       didPoison,
       hpDrainDmg: curHpDrainDmg,
       didRevert
@@ -9030,7 +9195,6 @@ function mountChameleonSim(root) {
           </div>
           <div>
             <h2 class="chm-header-title">Chameleon Normal Attack Simulator</h2>
-            <div class="chm-header-sub">Lv.70+ Multi-Dependency Damage, Cooldown Rotation & Status Proc Engine</div>
           </div>
         </div>
         <div class="chm-header-right">
@@ -9158,42 +9322,47 @@ function mountChameleonSim(root) {
             <div class="chm-stat-row chm-stat-row-4">
               <div class="chm-input-group">
                 <label>Level</label>
-                <input type="number" id="chmInpLevel" value="70" min="1" max="100">
+                <input type="number" id="chmInpLevel" value="100" min="1" max="100">
               </div>
               <div class="chm-input-group">
                 <label>Total ATK</label>
-                <input type="number" id="chmInpAtk" value="150" min="0" title="Player final in-game status ATK">
+                <input type="number" id="chmInpAtk" value="200" min="0" title="Player final in-game status ATK">
               </div>
               <div class="chm-input-group">
                 <label>Total LCK</label>
-                <input type="number" id="chmInpLck" value="40" min="0" title="Player final in-game status LCK">
+                <input type="number" id="chmInpLck" value="128" min="0" title="Player final in-game status LCK">
               </div>
               <div class="chm-input-group">
                 <label>Total AGI (CD)</label>
-                <input type="number" id="chmInpAgi" value="60" min="0" title="Player final in-game status AGI">
+                <input type="number" id="chmInpAgi" value="200" min="0" title="Player final in-game status AGI">
               </div>
             </div>
             <div class="chm-stat-row chm-stat-row-2-3">
               <div class="chm-input-group">
                 <label>Player Max HP</label>
-                <input type="number" id="chmInpMaxHp" value="1200" min="1">
+                <input type="number" id="chmInpMaxHp" value="3000" min="1">
               </div>
               <div class="chm-input-group">
                 <label>Target Preset</label>
                 <select id="chmEnemySelect">
-                  <option value="reefbug2">Reef Bug Adv (DEF 384)</option>
-                  <option value="carron">Carron (DEF 2)</option>
-                  <option value="mokbug2">Mok Bug Adv (DEF 410)</option>
-                  <option value="earthavatar">Earth Avatar (DEF 500)</option>
+                  <option value="carron" selected>Carron (DEF 2, LCK 2)</option>
+                  <option value="darkfalcon">Shadow Italus (DEF 270, LCK 170)</option>
+                  <option value="reefbug2">ReefBugAdv (DEF 384, LCK 72)</option>
+                  <option value="earthavatar">EarthAvatar (DEF 500, LCK 150)</option>
                   <option value="custom">Custom Target</option>
                 </select>
               </div>
             </div>
-            <!-- Custom Enemy DEF Row -->
+
+            <!-- Custom Enemy DEF & LCK Row -->
             <div id="chmCustomEnemyRow" style="display:none;" class="chm-stat-row">
               <div class="chm-input-group">
                 <label>Enemy DEF</label>
                 <input type="number" id="chmInpEnemyDef" value="50" min="0">
+              </div>
+              <div class="chm-input-group">
+                <label>Enemy LCK</label>
+                <input type="number" id="chmInpEnemyLck" value="50" min="0">
               </div>
               <div class="chm-input-group">
                 <label>Enemy Race</label>
@@ -9341,7 +9510,7 @@ function mountChameleonSim(root) {
                 </button>
 
                 <!-- Poison Mode Chip -->
-                <button type="button" class="chm-dep-btn" id="chmPoisonModeBtn">
+                <button type="button" class="chm-dep-btn active" id="chmPoisonModeBtn">
                   <div class="chm-dep-icon-wrap">
                     <img src="${CHM_ICONS.poisonArrow}" alt="Poison Mode">
                   </div>
@@ -9372,7 +9541,7 @@ function mountChameleonSim(root) {
                 </div>
 
                 <!-- Rusty Decay Chip -->
-                <button type="button" class="chm-dep-btn active" id="chmRustyDecayBtn">
+                <button type="button" class="chm-dep-btn" id="chmRustyDecayBtn">
                   <div class="chm-dep-icon-wrap">
                     <img src="${CHM_ICONS.rustyDecay}" alt="Rusty Decay">
                   </div>
@@ -9380,7 +9549,7 @@ function mountChameleonSim(root) {
                     <span class="chm-dep-label">Rusty Decay</span>
                     <span class="chm-dep-desc">+2 Stacks / Proc (Rust on Mecha)</span>
                   </div>
-                  <span class="chm-dep-status-tag">ACTIVE</span>
+                  <span class="chm-dep-status-tag">OFF</span>
                 </button>
 
                 <!-- Double Effect Chip -->
@@ -9462,15 +9631,19 @@ function mountChameleonSim(root) {
             </div>
             <div class="chm-distrib-bar">
               <div class="chm-distrib-seg chm-seg-base" id="chmSegBase" style="width:0%;"></div>
+              <div class="chm-distrib-seg chm-seg-fatal" id="chmSegFatal" style="width:0%;"></div>
+              <div class="chm-distrib-seg chm-seg-pierce" id="chmSegPierce" style="width:0%;"></div>
               <div class="chm-distrib-seg chm-seg-crit" id="chmSegCrit" style="width:0%;"></div>
               <div class="chm-distrib-seg chm-seg-poison" id="chmSegPoison" style="width:0%;"></div>
               <div class="chm-distrib-seg chm-seg-hpdrain" id="chmSegHpDrain" style="width:0%;"></div>
             </div>
             <div class="chm-distrib-legend">
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base Impact: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit Bonus: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison DoT: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong></div>
-              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>HP Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#d4af37;"></div>Base: <strong id="chmValBaseDmg" style="color:#d4af37;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#38bdf8;"></div>Fatal: <strong id="chmValFatalDmg" style="color:#38bdf8;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#10b981;"></div>P.Venom: <strong id="chmValPierceDmg" style="color:#10b981;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ea580c;"></div>Crit: <strong id="chmValCritDmg" style="color:#ea580c;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#a855f7;"></div>Poison: <strong id="chmValPoisonDmg" style="color:#a855f7;">0</strong></div>
+              <div class="chm-distrib-item"><div class="chm-dot" style="background:#ec4899;"></div>Drain: <strong id="chmValHpDrainDmg" style="color:#ec4899;">0</strong></div>
             </div>
           </div>
 
@@ -9507,7 +9680,17 @@ function mountChameleonSim(root) {
               <input type="text" class="chm-log-search" id="chmLogSearch" placeholder="Search #shot...">
             </div>
             <div class="chm-log-scroll" id="chmLogScroll">
-              <div style="padding:16px; text-align:center; color:#6b7280;">Combat log is empty. Start simulation to record shots.</div>
+              <div class="chm-log-row chm-log-header-row">
+                <span class="chm-col-shot">SHOT</span>
+                <span class="chm-col-time">TIME</span>
+                <span class="chm-col-dmg">DAMAGE</span>
+                <span class="chm-col-fatal">FATAL</span>
+                <span class="chm-col-crit">CRITICAL</span>
+                <span class="chm-col-poison">POISON</span>
+                <span class="chm-col-drain">HP DRAIN</span>
+                <span class="chm-col-revert">REVERT</span>
+              </div>
+              <div style="padding:24px; text-align:center; color:#6b7280; min-width:664px;">Combat log is empty. Start simulation to record shots.</div>
             </div>
           </div>
         </div>
@@ -9541,6 +9724,7 @@ function mountChameleonSim(root) {
   const enemySelect = root.querySelector('#chmEnemySelect');
   const customEnemyRow = root.querySelector('#chmCustomEnemyRow');
   const inpEnemyDef = root.querySelector('#chmInpEnemyDef');
+  const inpEnemyLck = root.querySelector('#chmInpEnemyLck');
   const inpEnemyRace = root.querySelector('#chmInpEnemyRace');
 
   const fsRankSelect = root.querySelector('#chmFsRankSelect');
@@ -9598,10 +9782,14 @@ function mountChameleonSim(root) {
   const kpiPoisonDpsSub = root.querySelector('#chmKpiPoisonDpsSub');
 
   const segBase = root.querySelector('#chmSegBase');
+  const segFatal = root.querySelector('#chmSegFatal');
+  const segPierce = root.querySelector('#chmSegPierce');
   const segCrit = root.querySelector('#chmSegCrit');
   const segPoison = root.querySelector('#chmSegPoison');
   const segHpDrain = root.querySelector('#chmSegHpDrain');
   const valBaseDmg = root.querySelector('#chmValBaseDmg');
+  const valFatalDmg = root.querySelector('#chmValFatalDmg');
+  const valPierceDmg = root.querySelector('#chmValPierceDmg');
   const valCritDmg = root.querySelector('#chmValCritDmg');
   const valPoisonDmg = root.querySelector('#chmValPoisonDmg');
   const valHpDrainDmg = root.querySelector('#chmValHpDrainDmg');
@@ -9690,16 +9878,22 @@ function mountChameleonSim(root) {
     // Damage Distribution
     const totalDmg = Math.max(simState.totalDamage, 1);
     const pBase = (simState.totalBaseImpactDmg / totalDmg) * 100;
+    const pFatal = (simState.totalFatalStrikeDmg / totalDmg) * 100;
+    const pPierce = (simState.totalPiercingVenomDmg / totalDmg) * 100;
     const pCrit = (simState.totalCritExtraDmg / totalDmg) * 100;
     const pPoison = (simState.totalPoisonDoT / totalDmg) * 100;
     const pHpDrain = (simState.totalHpDrainDmg / totalDmg) * 100;
 
     segBase.style.width = pBase + '%';
+    segFatal.style.width = pFatal + '%';
+    segPierce.style.width = pPierce + '%';
     segCrit.style.width = pCrit + '%';
     segPoison.style.width = pPoison + '%';
     segHpDrain.style.width = pHpDrain + '%';
 
     valBaseDmg.textContent = Math.round(simState.totalBaseImpactDmg).toLocaleString();
+    valFatalDmg.textContent = Math.round(simState.totalFatalStrikeDmg).toLocaleString();
+    valPierceDmg.textContent = Math.round(simState.totalPiercingVenomDmg).toLocaleString();
     valCritDmg.textContent = Math.round(simState.totalCritExtraDmg).toLocaleString();
     valPoisonDmg.textContent = Math.round(simState.totalPoisonDoT).toLocaleString();
     valHpDrainDmg.textContent = Math.round(simState.totalHpDrainDmg).toLocaleString();
@@ -9715,14 +9909,27 @@ function mountChameleonSim(root) {
   }
 
   function renderLog() {
+    const logHeaderHtml = `
+      <div class="chm-log-row chm-log-header-row">
+        <span class="chm-col-shot">SHOT</span>
+        <span class="chm-col-time">TIME</span>
+        <span class="chm-col-dmg">DAMAGE</span>
+        <span class="chm-col-fatal">FATAL</span>
+        <span class="chm-col-crit">CRITICAL</span>
+        <span class="chm-col-poison">POISON</span>
+        <span class="chm-col-drain">HP DRAIN</span>
+        <span class="chm-col-revert">REVERT</span>
+      </div>
+    `;
+
     if (simState.log.length === 0) {
-      logScroll.innerHTML = '<div style="padding:16px; text-align:center; color:#6b7280;">Combat log is empty. Start simulation to record shots.</div>';
+      logScroll.innerHTML = logHeaderHtml + '<div style="padding:24px; text-align:center; color:#6b7280; min-width:664px;">Combat log is empty. Start simulation to record shots.</div>';
       return;
     }
 
     let filtered = simState.log;
     if (simState.logFilter === 'crit') filtered = filtered.filter(e => e.isCrit);
-    else if (simState.logFilter === 'poison') filtered = filtered.filter(e => e.didPoison);
+    else if (simState.logFilter === 'poison') filtered = filtered.filter(e => e.poisonAdded > 0 || e.didPoison);
     else if (simState.logFilter === 'drain') filtered = filtered.filter(e => e.hpDrainDmg > 0);
     else if (simState.logFilter === 'revert') filtered = filtered.filter(e => e.didRevert);
 
@@ -9732,22 +9939,24 @@ function mountChameleonSim(root) {
     }
 
     if (filtered.length === 0) {
-      logScroll.innerHTML = '<div style="padding:12px; text-align:center; color:#6b7280;">No shots match active filter/search.</div>';
+      logScroll.innerHTML = logHeaderHtml + '<div style="padding:20px; text-align:center; color:#6b7280; min-width:664px;">No shots match active filter/search.</div>';
       return;
     }
 
-    logScroll.innerHTML = filtered.slice(-100).reverse().map(e => `
-      <div class="chm-log-entry">
-        <span class="chm-log-num">#${e.shot}</span>
-        <span class="chm-log-time">${e.time}s</span>
-        <span class="chm-log-dmg">${e.netDmg} dmg</span>
-        ${e.isCrit ? `<span class="chm-log-crit">CRIT (${e.critMult}×)</span>` : ''}
-        ${e.isFs ? '<span class="chm-log-fs">FATAL</span>' : ''}
-        <span class="chm-log-poison">P[${e.poisonStacks}]${e.didPoison ? ' +1' : ''}</span>
-        ${e.hpDrainDmg > 0 ? `<span class="chm-log-hpdrain">+${e.hpDrainDmg} Drain</span>` : ''}
-        ${e.didRevert ? '<span class="chm-log-revert">REVERT</span>' : ''}
+    const rowsHtml = filtered.slice(-100).reverse().map(e => `
+      <div class="chm-log-row chm-log-entry">
+        <span class="chm-col-shot">#${e.shot}</span>
+        <span class="chm-col-time">${e.time}s</span>
+        <span class="chm-col-dmg">${e.netDmg} dmg</span>
+        <span class="chm-col-fatal">${e.isFs ? '<span class="chm-badge-fatal">FATAL</span>' : '<span class="chm-col-empty">—</span>'}</span>
+        <span class="chm-col-crit">${e.isCrit ? `<span class="chm-badge-crit">CRIT ${e.critMult}×</span>` : '<span class="chm-col-empty">—</span>'}</span>
+        <span class="chm-col-poison">${(e.poisonStacks > 0 || e.poisonAdded > 0) ? `<span class="chm-badge-poison">P[${e.poisonStacks}]${e.poisonAdded > 0 ? ` +${e.poisonAdded}` : ''}</span>` : '<span class="chm-col-empty">—</span>'}</span>
+        <span class="chm-col-drain">${e.hpDrainDmg > 0 ? `<span class="chm-badge-drain">+${e.hpDrainDmg} HP</span>` : '<span class="chm-col-empty">—</span>'}</span>
+        <span class="chm-col-revert">${e.didRevert ? '<span class="chm-badge-revert">REVERT</span>' : '<span class="chm-col-empty">—</span>'}</span>
       </div>
     `).join('');
+
+    logScroll.innerHTML = logHeaderHtml + rowsHtml;
   }
 
   // Event Handlers
@@ -9798,6 +10007,9 @@ function mountChameleonSim(root) {
     updateUI();
   });
   inpEnemyDef.addEventListener('input', () => { simState.customEnemyDef = Number(inpEnemyDef.value) || 50; updateUI(); });
+  if (inpEnemyLck) {
+    inpEnemyLck.addEventListener('input', () => { simState.customEnemyLck = Number(inpEnemyLck.value) || 0; updateUI(); });
+  }
   inpEnemyRace.addEventListener('change', () => { simState.customEnemyRace = inpEnemyRace.value; updateUI(); });
 
   fsRankSelect.addEventListener('change', () => { simState.fatalStrikeRank = Number(fsRankSelect.value); updateUI(); });
@@ -9848,7 +10060,7 @@ function mountChameleonSim(root) {
     poisonModeTitle.textContent = isDynamic ? 'Dynamic Stacking' : 'Start at Max Stacks';
     poisonModeDesc.textContent = isDynamic ? 'Rolls from 0 to Cap' : 'Instant Cap from Start';
     poisonModeTag.textContent = isDynamic ? 'DYNAMIC' : 'MAX';
-    poisonModeBtn.classList.toggle('active', !isDynamic);
+    poisonModeBtn.classList.add('active');
     resetSim();
   });
   poisonArrowSelect.addEventListener('change', () => { simState.poisonArrowRank = Number(poisonArrowSelect.value); updateUI(); });
