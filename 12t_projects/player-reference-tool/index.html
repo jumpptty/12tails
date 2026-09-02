@@ -2597,21 +2597,175 @@
     cursor: pointer;
   }
 
-  /* Stat Inputs */
+  /* Stat Inputs & Character-Target Grid */
+  .chm-char-target-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    gap: 10px;
+    align-items: stretch;
+  }
+  @media (max-width: 640px) {
+    .chm-char-target-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .chm-player-stats-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: space-between;
+    min-width: 0;
+  }
   .chm-stat-row {
     display: grid;
     gap: 8px;
-    margin-bottom: 8px;
   }
-  .chm-stat-row-4 {
-    grid-template-columns: repeat(4, 1fr);
+  .chm-stat-row-2 {
+    grid-template-columns: 1fr 1fr;
   }
-  .chm-stat-row-2-3 {
-    grid-template-columns: 1fr 2fr;
+  .chm-stat-row-3 {
+    grid-template-columns: 1fr 1fr 1fr;
   }
-  @media (max-width: 580px) {
-    .chm-stat-row-4 { grid-template-columns: repeat(2, 1fr); }
-    .chm-stat-row-2-3 { grid-template-columns: 1fr; }
+  @media (max-width: 480px) {
+    .chm-stat-row-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Stat Input Accents: ATK (Red), LCK (Orange), AGI (Green) */
+  .chm-stat-accent-atk label {
+    color: #ef4444 !important;
+  }
+  .chm-stat-accent-atk input {
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    background: rgba(239, 68, 68, 0.06) !important;
+  }
+  .chm-stat-accent-atk input:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+  }
+
+  .chm-stat-accent-lck label {
+    color: #f97316 !important;
+  }
+  .chm-stat-accent-lck input {
+    border-color: rgba(249, 115, 22, 0.45) !important;
+    background: rgba(249, 115, 22, 0.06) !important;
+  }
+  .chm-stat-accent-lck input:focus {
+    border-color: #f97316 !important;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.25) !important;
+  }
+
+  .chm-stat-accent-agi label {
+    color: #22c55e !important;
+  }
+  .chm-stat-accent-agi input {
+    border-color: rgba(34, 197, 94, 0.45) !important;
+    background: rgba(34, 197, 94, 0.06) !important;
+  }
+  .chm-stat-accent-agi input:focus {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25) !important;
+  }
+
+  /* Target Preset Box (Occupies Right Side Spanning 2 Rows) */
+  .chm-target-preset-panel {
+    background: #12110f;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+  }
+  .chm-target-panel-header label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .chm-target-panel-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .chm-target-avatar-wrap {
+    width: 46px;
+    height: 46px;
+    background: #0a0a09;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chm-target-avatar-wrap:hover {
+    border-color: #d4af37;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
+  }
+  .chm-target-avatar-wrap img {
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
+    display: block;
+  }
+  .chm-target-details-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+  }
+  .chm-target-details-col select {
+    background: #1b1916;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #e5e5e5;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 6px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  .chm-target-details-col select:focus {
+    border-color: #d4af37;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  }
+  .chm-target-stat-pill {
+    font-family: monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chm-custom-enemy-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(212, 175, 55, 0.18);
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  @media (max-width: 480px) {
+    .chm-custom-enemy-row {
+      grid-template-columns: 1fr;
+    }
   }
   .chm-input-group {
     display: flex;
@@ -2812,9 +2966,17 @@
     border: 1px solid rgba(212, 175, 55, 0.28);
     user-select: none;
   }
+  .chm-kpi-arena-card .chm-kpi-label {
+    text-align: center;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+  .chm-kpi-arena-card.running .chm-kpi-label {
+    opacity: 0;
+    visibility: hidden;
+  }
   .chm-kpi-arena-stage {
     position: relative;
-    height: 30px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -9237,6 +9399,7 @@ function mountChameleonSim(root) {
     const maxPoison = simState.deadlyVenom ? 6 : 4;
     simState.currentPoisonStacks = (simState.poisonMode === 'max') ? maxPoison : 0;
     clearFloatingNumbers();
+    if (combatArenaCard) combatArenaCard.classList.remove('running');
     updateUI();
   }
 
@@ -9627,43 +9790,65 @@ function mountChameleonSim(root) {
             <div class="chm-card-title">
               <span>Character & Enemy Stats</span>
             </div>
-            <div class="chm-stat-row chm-stat-row-4">
-              <div class="chm-input-group">
-                <label>Level</label>
-                <input type="number" id="chmInpLevel" value="100" min="1" max="100">
+            <div class="chm-char-target-grid">
+              <!-- Left Column: Player Stats in 2 Rows -->
+              <div class="chm-player-stats-col">
+                <!-- 1st Row: Level and Max HP -->
+                <div class="chm-stat-row chm-stat-row-2">
+                  <div class="chm-input-group">
+                    <label>Level</label>
+                    <input type="number" id="chmInpLevel" value="100" min="1" max="100">
+                  </div>
+                  <div class="chm-input-group">
+                    <label>Player Max HP</label>
+                    <input type="number" id="chmInpMaxHp" value="3000" min="1">
+                  </div>
+                </div>
+                <!-- 2nd Row: ATK / LCK / AGI with Accents -->
+                <div class="chm-stat-row chm-stat-row-3">
+                  <div class="chm-input-group chm-stat-accent-atk">
+                    <label>Total ATK</label>
+                    <input type="number" id="chmInpAtk" value="200" min="0" title="Player final in-game status ATK">
+                  </div>
+                  <div class="chm-input-group chm-stat-accent-lck">
+                    <label>Total LCK</label>
+                    <input type="number" id="chmInpLck" value="128" min="0" title="Player final in-game status LCK">
+                  </div>
+                  <div class="chm-input-group chm-stat-accent-agi">
+                    <label>Total AGI (CD)</label>
+                    <input type="number" id="chmInpAgi" value="200" min="0" title="Player final in-game status AGI">
+                  </div>
+                </div>
               </div>
-              <div class="chm-input-group">
-                <label>Total ATK</label>
-                <input type="number" id="chmInpAtk" value="200" min="0" title="Player final in-game status ATK">
-              </div>
-              <div class="chm-input-group">
-                <label>Total LCK</label>
-                <input type="number" id="chmInpLck" value="128" min="0" title="Player final in-game status LCK">
-              </div>
-              <div class="chm-input-group">
-                <label>Total AGI (CD)</label>
-                <input type="number" id="chmInpAgi" value="200" min="0" title="Player final in-game status AGI">
-              </div>
-            </div>
-            <div class="chm-stat-row chm-stat-row-2-3">
-              <div class="chm-input-group">
-                <label>Player Max HP</label>
-                <input type="number" id="chmInpMaxHp" value="3000" min="1">
-              </div>
-              <div class="chm-input-group">
-                <label>Target Preset</label>
-                <select id="chmEnemySelect">
-                  <option value="carron" selected>Carron (DEF 2, LCK 2)</option>
-                  <option value="darkfalcon">Shadow Italus (DEF 270, LCK 170)</option>
-                  <option value="reefbug2">ReefBugAdv (DEF 384, LCK 72)</option>
-                  <option value="earthavatar">EarthAvatar (DEF 500, LCK 150)</option>
-                  <option value="custom">Custom Target</option>
-                </select>
+
+              <!-- Right Column: Target Preset Panel occupying the red box -->
+              <div class="chm-target-preset-panel">
+                <div class="chm-target-panel-header">
+                  <label>Target Preset</label>
+                </div>
+                <div class="chm-target-panel-body">
+                  <div class="chm-target-avatar-wrap" id="chmTargetAvatarWrap" title="Target monster preview">
+                    <img src="" id="chmTargetAvatarImg" alt="Target">
+                  </div>
+                  <div class="chm-target-details-col">
+                    <select id="chmEnemySelect">
+                      <option value="carron" selected>Carron (DEF 2, LCK 2)</option>
+                      <option value="earthavatar">Earth Avatar (DEF 500, LCK 150)</option>
+                      <option value="darkfalcon">Shadow Italus (DEF 270, LCK 170)</option>
+                      <option value="reefbug2">ReefBugAdv (DEF 384, LCK 72)</option>
+                      <option value="nemesisbug_a">NemeAdv (DEF 270, LCK 390)</option>
+                      <option value="mokbug2">MokAdv (DEF 410, LCK 80)</option>
+                      <option value="goldenkingbug2">GoldenAdv (DEF 300, LCK 280)</option>
+                      <option value="custom">Custom Target</option>
+                    </select>
+                    <div class="chm-target-stat-pill" id="chmTargetStatPill">DEF 2 · LCK 2</div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Custom Enemy DEF & LCK Row -->
-            <div id="chmCustomEnemyRow" style="display:none;" class="chm-stat-row">
+            <div id="chmCustomEnemyRow" style="display:none;" class="chm-stat-row chm-custom-enemy-row">
               <div class="chm-input-group">
                 <label>Enemy DEF</label>
                 <input type="number" id="chmInpEnemyDef" value="50" min="0">
@@ -9911,14 +10096,12 @@ function mountChameleonSim(root) {
           <div class="chm-kpi-grid">
             <!-- Test Area Chip (Leftmost of 5) -->
             <div class="chm-kpi-card chm-kpi-arena-card" id="chmCombatArena">
-              <span class="chm-kpi-label">Test Area</span>
+              <span class="chm-kpi-label" id="chmArenaLabel">Test Area</span>
               <div class="chm-kpi-arena-stage">
                 <div class="chm-arena-lane chm-lane-left" id="chmLaneLeft"></div>
                 <div class="chm-arena-lane chm-lane-mid" id="chmLaneMid"></div>
                 <div class="chm-arena-lane chm-lane-right" id="chmLaneRight"></div>
-                <span class="chm-arena-idle-hint" id="chmArenaHint">STANDBY</span>
               </div>
-              <span class="chm-kpi-sub">White · Mid · DoT</span>
             </div>
             <div class="chm-kpi-card chm-kpi-card-total-dmg">
               <span class="chm-kpi-label">Total Damage</span>
@@ -10048,6 +10231,11 @@ function mountChameleonSim(root) {
   const inpEnemyDef = root.querySelector('#chmInpEnemyDef');
   const inpEnemyLck = root.querySelector('#chmInpEnemyLck');
   const inpEnemyRace = root.querySelector('#chmInpEnemyRace');
+  const targetAvatarWrap = root.querySelector('#chmTargetAvatarWrap');
+  const targetAvatarImg = root.querySelector('#chmTargetAvatarImg');
+  const targetStatPill = root.querySelector('#chmTargetStatPill');
+  const combatArenaCard = root.querySelector('#chmCombatArena');
+  const arenaLabel = root.querySelector('#chmArenaLabel');
 
   const fsRankSelect = root.querySelector('#chmFsRankSelect');
   const fsBonusLabel = root.querySelector('#chmFsBonusLabel');
@@ -10146,10 +10334,12 @@ function mountChameleonSim(root) {
       toggleFireBtn.classList.add('firing');
       fireBtnIcon.textContent = '⏸';
       fireBtnText.textContent = 'Pause Fire';
+      if (combatArenaCard) combatArenaCard.classList.add('running');
     } else {
       toggleFireBtn.classList.remove('firing');
       fireBtnIcon.textContent = '▶';
       fireBtnText.textContent = 'Start Shooting';
+      if (combatArenaCard && simState.totalShots === 0) combatArenaCard.classList.remove('running');
     }
   }
 
@@ -10213,17 +10403,35 @@ function mountChameleonSim(root) {
     const dotDps = simState.currentPoisonStacks > 0 ? (isRobot ? (15 * simState.currentPoisonStacks) / 4 : (10 * simState.currentPoisonStacks - 1) / 4) : 0;
     kpiPoisonDpsSub.textContent = dotDps.toFixed(1) + ' DoT DPS (' + (isRobot ? 'Rust' : 'Poison') + ')';
 
-    // Test Area Hint update
-    if (arenaHint) {
-      if (simState.isRunning) {
-        arenaHint.style.display = 'none';
-      } else if (simState.totalShots > 0) {
-        arenaHint.style.display = 'block';
-        arenaHint.textContent = simState.totalShots + ' SHOTS';
+    // Target Preset avatar and stat pill update
+    const pTarget = (typeof ENEMY_PRESETS !== 'undefined') ? ENEMY_PRESETS.find(e => e.id === simState.selectedEnemyId) : null;
+    if (targetAvatarImg && targetAvatarWrap) {
+      if (pTarget && typeof SKILL_ICONS !== 'undefined' && SKILL_ICONS[pTarget.icon]) {
+        targetAvatarImg.src = SKILL_ICONS[pTarget.icon];
+        targetAvatarImg.style.display = 'block';
+        targetAvatarWrap.title = pTarget.label;
+        const customTxt = targetAvatarWrap.querySelector('.chm-custom-avatar-text');
+        if (customTxt) customTxt.remove();
       } else {
-        arenaHint.style.display = 'block';
-        arenaHint.textContent = 'STANDBY';
+        targetAvatarImg.style.display = 'none';
+        if (!targetAvatarWrap.querySelector('.chm-custom-avatar-text')) {
+          const span = document.createElement('span');
+          span.className = 'chm-custom-avatar-text';
+          span.style.cssText = 'font-size:10px;font-weight:700;color:#d4af37;letter-spacing:0.5px;';
+          span.textContent = 'CUSTOM';
+          targetAvatarWrap.appendChild(span);
+        }
       }
+    }
+    if (targetStatPill) {
+      if (simState.selectedEnemyId === 'custom') {
+        targetStatPill.textContent = 'DEF ' + simState.customEnemyDef + ' · LCK ' + (simState.customEnemyLck || 0);
+      } else if (pTarget) {
+        targetStatPill.textContent = 'DEF ' + pTarget.def + ' · LCK ' + (pTarget.lck !== undefined ? pTarget.lck : 0);
+      }
+    }
+    if (combatArenaCard) {
+      combatArenaCard.classList.toggle('running', simState.isRunning);
     }
 
     // Damage Distribution
@@ -10364,6 +10572,14 @@ function mountChameleonSim(root) {
     customEnemyRow.style.display = (enemySelect.value === 'custom') ? 'grid' : 'none';
     updateUI();
   });
+  if (targetAvatarWrap) {
+    targetAvatarWrap.addEventListener('click', () => {
+      enemySelect.focus();
+      if (enemySelect.showPicker) {
+        try { enemySelect.showPicker(); } catch (err) {}
+      }
+    });
+  }
   inpEnemyDef.addEventListener('input', () => { simState.customEnemyDef = Number(inpEnemyDef.value) || 50; updateUI(); });
   if (inpEnemyLck) {
     inpEnemyLck.addEventListener('input', () => { simState.customEnemyLck = Number(inpEnemyLck.value) || 0; updateUI(); });
