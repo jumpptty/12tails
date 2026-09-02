@@ -3051,6 +3051,18 @@
     color: #d4af37;
     line-height: 1.1;
   }
+  .chm-kpi-card-total-dmg {
+    justify-content: space-between;
+  }
+  .chm-kpi-val-total-dmg {
+    font-size: clamp(24px, 2.5vw, 32px);
+    line-height: 1.15;
+    margin-top: auto;
+    margin-bottom: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .chm-kpi-sub {
     font-size: 11px;
     color: #6b7280;
@@ -3130,40 +3142,47 @@
     padding-left: 4px;
   }
 
-  /* Status Telemetry Badges */
+  /* Status Telemetry Badges (6 Badges in One Row) */
   .chm-badge-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 8px;
   }
-  @media (max-width: 900px) {
+  @media (max-width: 1080px) {
+    .chm-badge-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 640px) {
     .chm-badge-grid { grid-template-columns: repeat(2, 1fr); }
   }
-  @media (max-width: 480px) {
+  @media (max-width: 440px) {
     .chm-badge-grid { grid-template-columns: 1fr; }
   }
   .chm-badge-card {
     background: #141311;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
-    padding: 8px 10px;
+    padding: 7px 9px;
     min-width: 0;
   }
   .chm-badge-name {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     color: #9ca3af;
     text-transform: uppercase;
+    letter-spacing: 0.25px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .chm-badge-count {
     font-family: monospace;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #f3f4f6;
     margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Combat Log */
@@ -9831,13 +9850,12 @@ function mountChameleonSim(root) {
               </div>
               <span class="chm-kpi-sub">White · Mid · DoT</span>
             </div>
-            <div class="chm-kpi-card">
+            <div class="chm-kpi-card chm-kpi-card-total-dmg">
               <span class="chm-kpi-label">Total Damage</span>
-              <span class="chm-kpi-val" id="chmKpiDamage">0</span>
-              <span class="chm-kpi-sub" id="chmKpiHitsSub">0 shots fired</span>
+              <span class="chm-kpi-val chm-kpi-val-total-dmg" id="chmKpiDamage">0</span>
             </div>
             <div class="chm-kpi-card">
-              <span class="chm-kpi-label">Sustained DPS</span>
+              <span class="chm-kpi-label">DPS</span>
               <span class="chm-kpi-val" id="chmKpiDPS">0.0</span>
               <span class="chm-kpi-sub" id="chmKpiTimeSub">0.00s elapsed</span>
             </div>
@@ -9877,23 +9895,31 @@ function mountChameleonSim(root) {
             </div>
           </div>
 
-          <!-- Status Telemetry Badges -->
+          <!-- Status Telemetry Badges (6 Chips in One Row) -->
           <div class="chm-badge-grid">
             <div class="chm-badge-card">
-              <div class="chm-badge-name">Critical Hits</div>
+              <div class="chm-badge-name" title="Total Shots Fired">Total Shots</div>
+              <div class="chm-badge-count" id="chmBadgeShots">0</div>
+            </div>
+            <div class="chm-badge-card">
+              <div class="chm-badge-name" title="Fatal Strike Casts">Fatal Strikes</div>
+              <div class="chm-badge-count" style="color:#38bdf8;" id="chmBadgeFatalCasts">0 casts</div>
+            </div>
+            <div class="chm-badge-card">
+              <div class="chm-badge-name" title="Critical Hits">Critical Hits</div>
               <div class="chm-badge-count" id="chmBadgeCrits">0</div>
             </div>
             <div class="chm-badge-card">
-              <div class="chm-badge-name">Poison Procs</div>
-              <div class="chm-badge-count" style="color:#c084fc;" id="chmBadgePoison">0</div>
+              <div class="chm-badge-name" title="Poison Procs">Poison Procs</div>
+              <div class="chm-badge-count" style="color:#c084fc;" id="chmBadgePoison">0 procs</div>
             </div>
             <div class="chm-badge-card">
-              <div class="chm-badge-name">HP Drain Procs</div>
-              <div class="chm-badge-count" style="color:#ec4899;" id="chmBadgeHpDrain">0</div>
+              <div class="chm-badge-name" title="HP Drain Procs">HP Drain Procs</div>
+              <div class="chm-badge-count" style="color:#ec4899;" id="chmBadgeHpDrain">0 procs</div>
             </div>
             <div class="chm-badge-card">
-              <div class="chm-badge-name">Revert Procs</div>
-              <div class="chm-badge-count" style="color:#10b981;" id="chmBadgeRevert">0</div>
+              <div class="chm-badge-name" title="Revert Procs">Revert Procs</div>
+              <div class="chm-badge-count" style="color:#10b981;" id="chmBadgeRevert">0 procs</div>
             </div>
           </div>
 
@@ -10006,7 +10032,6 @@ function mountChameleonSim(root) {
   const soundToggleBtn = root.querySelector('#chmSoundToggleBtn');
 
   const kpiDamage = root.querySelector('#chmKpiDamage');
-  const kpiHitsSub = root.querySelector('#chmKpiHitsSub');
   const kpiDPS = root.querySelector('#chmKpiDPS');
   const kpiTimeSub = root.querySelector('#chmKpiTimeSub');
   const kpiCritRate = root.querySelector('#chmKpiCritRate');
@@ -10034,6 +10059,8 @@ function mountChameleonSim(root) {
   const pctPoison = root.querySelector('#chmPctPoison');
   const pctHpDrain = root.querySelector('#chmPctHpDrain');
 
+  const badgeShots = root.querySelector('#chmBadgeShots');
+  const badgeFatalCasts = root.querySelector('#chmBadgeFatalCasts');
   const badgeCrits = root.querySelector('#chmBadgeCrits');
   const badgePoison = root.querySelector('#chmBadgePoison');
   const badgeHpDrain = root.querySelector('#chmBadgeHpDrain');
@@ -10100,7 +10127,7 @@ function mountChameleonSim(root) {
     // Hero KPIs
     const grandTotal = Math.round(simState.totalDamage);
     kpiDamage.textContent = grandTotal.toLocaleString();
-    kpiHitsSub.textContent = simState.totalShots + ' shots (' + (simState.fsCasts > 0 ? (simState.fsCasts + ' Fatal Strike casts') : '0 casts') + ')';
+    kpiDamage.title = grandTotal.toLocaleString() + ' Total Damage';
 
     const dps = simState.totalTime > 0 ? (simState.totalDamage / simState.totalTime) : 0;
     kpiDPS.textContent = dps.toFixed(1);
@@ -10159,11 +10186,16 @@ function mountChameleonSim(root) {
     pctPoison.textContent = pPoison.toFixed(1) + '%';
     pctHpDrain.textContent = pHpDrain.toFixed(1) + '%';
 
-    // Badges
-    badgeCrits.textContent = simState.critCount;
-    badgePoison.textContent = simState.poisonProcs + ' procs';
-    badgeHpDrain.textContent = simState.hpDrainProcs + ' procs (' + simState.totalHpDrainDmg.toLocaleString() + ' HP)';
-    badgeRevert.textContent = simState.revertProcs + ' procs';
+    // Badges (6 Telemetry Badges)
+    if (badgeShots) badgeShots.textContent = simState.totalShots.toLocaleString();
+    if (badgeFatalCasts) badgeFatalCasts.textContent = simState.fsCasts.toLocaleString() + (simState.fsCasts === 1 ? ' cast' : ' casts');
+    if (badgeCrits) badgeCrits.textContent = simState.critCount.toLocaleString();
+    if (badgePoison) badgePoison.textContent = simState.poisonProcs.toLocaleString() + ' procs';
+    if (badgeHpDrain) {
+      badgeHpDrain.textContent = simState.hpDrainProcs.toLocaleString() + ' procs';
+      badgeHpDrain.title = simState.hpDrainProcs + ' procs (' + simState.totalHpDrainDmg.toLocaleString() + ' HP drained)';
+    }
+    if (badgeRevert) badgeRevert.textContent = simState.revertProcs.toLocaleString() + ' procs';
 
     renderLog();
   }
