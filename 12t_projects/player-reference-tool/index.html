@@ -11348,7 +11348,7 @@ function mountChameleonSim(root) {
       const q = simState.logSearch.trim().toLowerCase().replace('#', '');
       filtered = filtered.filter(e => {
         if (String(e.shot).includes(q)) return true;
-        if (q.includes('stride') && e.isStride) return true;
+        if ((q.includes('stride') || q.includes('ls')) && e.isStride) return true;
         if (q.includes('fatal') && e.isFs) return true;
         if (q.includes('crit') && e.isCrit) return true;
         return false;
@@ -11362,7 +11362,7 @@ function mountChameleonSim(root) {
 
     const rowsHtml = filtered.slice(-1000).reverse().map(e => `
       <div class="chm-log-row chm-log-entry">
-        <span class="chm-col-shot">#${e.shot}${e.isStride ? '<span class="chm-badge-stride">STRIDE</span>' : ''}</span>
+        <span class="chm-col-shot">#${e.shot}${e.isStride ? '<span class="chm-badge-stride">LS</span>' : ''}</span>
         <span class="chm-col-time">${e.time}s</span>
         <span class="chm-col-dmg">${e.netDmg} dmg</span>
         <span class="chm-col-fatal">${e.isFs ? '<span class="chm-badge-fatal">FATAL</span>' : '<span class="chm-col-empty">—</span>'}</span>
