@@ -2559,20 +2559,23 @@
     letter-spacing: 0.5px;
   }
   .chm-equip-icon-wrap {
-    width: 44px;
-    height: 44px;
-    background: #0a0a09;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
+    width: 58px;
+    height: 58px;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    margin: 0 auto;
   }
   .chm-equip-icon-wrap img {
-    width: 38px;
-    height: 38px;
+    width: 57px;
+    height: 57px;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
     image-rendering: pixelated;
+    display: block;
   }
   .chm-equip-name {
     font-size: 11px;
@@ -3347,22 +3350,34 @@
   }
   .chm-kpi-card-total-dmg {
     justify-content: space-between;
+    min-width: 0;
+    overflow: hidden;
   }
   .chm-kpi-val-total-dmg {
-    font-size: clamp(24px, 2.5vw, 32px);
+    font-family: monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(22px, 2.2vw, 28px);
     line-height: 1.15;
     margin-top: auto;
     margin-bottom: auto;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
+    transition: font-size 0.15s ease;
   }
+  .chm-kpi-val-total-dmg.len-xs { font-size: clamp(22px, 2.2vw, 28px); }
+  .chm-kpi-val-total-dmg.len-sm { font-size: clamp(17px, 1.8vw, 21px); }
+  .chm-kpi-val-total-dmg.len-md { font-size: clamp(14px, 1.5vw, 17px); }
+  .chm-kpi-val-total-dmg.len-lg { font-size: clamp(12px, 1.2vw, 14px); }
+  .chm-kpi-val-total-dmg.len-xl { font-size: clamp(10.5px, 1vw, 12px); }
   .chm-kpi-sub {
     font-size: 11px;
     color: #6b7280;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   /* Damage Distribution Bar */
@@ -3550,7 +3565,7 @@
   /* Authentic 12Tails In-Game Skill Slots Row (Positioned below HP bar) */
   .chm-tf-skill-slots-row {
     position: absolute;
-    left: 195px;
+    left: 65px;
     top: 86px;
     display: flex;
     gap: 10px;
@@ -10832,7 +10847,8 @@ function mountChameleonSim(root) {
             </div>
             <div class="chm-kpi-card chm-kpi-card-total-dmg">
               <span class="chm-kpi-label">Total Damage</span>
-              <span class="chm-kpi-val chm-kpi-val-total-dmg" id="chmKpiDamage">0</span>
+              <span class="chm-kpi-val chm-kpi-val-total-dmg len-xs" id="chmKpiDamage">0</span>
+              <span class="chm-kpi-sub" id="chmKpiDamageSub">0 shots fired</span>
             </div>
             <div class="chm-kpi-card">
               <span class="chm-kpi-label">DPS</span>
@@ -11024,6 +11040,7 @@ function mountChameleonSim(root) {
   const soundToggleBtn = root.querySelector('#chmSoundToggleBtn');
 
   const kpiDamage = root.querySelector('#chmKpiDamage');
+  const kpiDamageSub = root.querySelector('#chmKpiDamageSub');
   const kpiDPS = root.querySelector('#chmKpiDPS');
   const kpiTimeSub = root.querySelector('#chmKpiTimeSub');
   const kpiCritRate = root.querySelector('#chmKpiCritRate');
@@ -11168,8 +11185,37 @@ function mountChameleonSim(root) {
 
     // Hero KPIs
     const grandTotal = Math.round(simState.totalDamage);
-    kpiDamage.textContent = grandTotal.toLocaleString();
-    kpiDamage.title = grandTotal.toLocaleString() + ' Total Damage';
+    const formattedTotal = grandTotal.toLocaleString();
+    kpiDamage.textContent = formattedTotal;
+    kpiDamage.title = formattedTotal + ' Total Damage';
+
+    // Overflow-proof dynamic font scaling based on formatted string length
+    const totalLen = formattedTotal.length;
+    kpiDamage.classList.remove('len-xs', 'len-sm', 'len-md', 'len-lg', 'len-xl');
+    if (totalLen <= 7) {
+      kpiDamage.classList.add('len-xs');
+    } else if (totalLen <= 9) {
+      kpiDamage.classList.add('len-sm');
+    } else if (totalLen <= 11) {
+      kpiDamage.classList.add('len-md');
+    } else if (totalLen <= 14) {
+      kpiDamage.classList.add('len-lg');
+    } else {
+      kpiDamage.classList.add('len-xl');
+    }
+
+    if (kpiDamageSub) {
+      if (grandTotal >= 1000000000) {
+        kpiDamageSub.textContent = '≈ ' + (grandTotal / 1e9).toFixed(2) + 'B (' + simState.totalShots.toLocaleString() + ' shots)';
+        kpiDamageSub.title = 'Approx. ' + (grandTotal / 1e9).toFixed(3) + ' Billion damage over ' + simState.totalShots.toLocaleString() + ' shots';
+      } else if (grandTotal >= 1000000) {
+        kpiDamageSub.textContent = '≈ ' + (grandTotal / 1e6).toFixed(2) + 'M (' + simState.totalShots.toLocaleString() + ' shots)';
+        kpiDamageSub.title = 'Approx. ' + (grandTotal / 1e6).toFixed(3) + ' Million damage over ' + simState.totalShots.toLocaleString() + ' shots';
+      } else {
+        kpiDamageSub.textContent = simState.totalShots.toLocaleString() + (simState.totalShots === 1 ? ' shot fired' : ' shots fired');
+        kpiDamageSub.title = grandTotal.toLocaleString() + ' damage across ' + simState.totalShots.toLocaleString() + ' shots';
+      }
+    }
 
     const dps = simState.totalTime > 0 ? (simState.totalDamage / simState.totalTime) : 0;
     kpiDPS.textContent = dps.toFixed(1);
