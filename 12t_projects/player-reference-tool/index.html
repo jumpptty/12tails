@@ -3504,11 +3504,17 @@
     font-weight: normal;
   }
 
-  /* Authentic 12Tails In-Game Skill Slot (Fatal Strike with live Cooldown Downtime) */
-  .chm-tf-skill-slot {
+  /* Authentic 12Tails In-Game Skill Slots Row (Fatal Strike & Left Stride) */
+  .chm-tf-skill-slots-row {
     position: absolute;
-    left: 42px;
+    left: 36px;
     top: 45px;
+    display: flex;
+    gap: 8px;
+    z-index: 6;
+  }
+  .chm-tf-skill-slot {
+    position: relative;
     width: 48px;
     height: 48px;
     background: #141311;
@@ -3517,7 +3523,6 @@
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 8px rgba(0, 0, 0, 0.7);
     overflow: hidden;
     user-select: none;
-    z-index: 6;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3977,6 +3982,18 @@
     font-size: 10px;
     font-weight: 700;
     text-align: center;
+  }
+  .chm-badge-stride {
+    display: inline-block;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-align: center;
+    margin-left: 3px;
   }
   .chm-badge-crit {
     display: inline-block;
@@ -9761,6 +9778,10 @@ function mountChameleonSim(root) {
     currentPoisonStacks: 0,
     fsCharges: 0,
     fsRemainingCD: 0,
+    leftStrideActive: true,
+    lsRemainingCD: 0,
+    lsCycle: 0,
+    lsCasts: 0,
     fsCasts: 0,
     log: [],
     logFilter: 'all',
@@ -9875,6 +9896,9 @@ function mountChameleonSim(root) {
     simState.revertProcs = 0;
     simState.fsCharges = 0;
     simState.fsRemainingCD = 0;
+    simState.lsRemainingCD = 0;
+    simState.lsCycle = 0;
+    simState.lsCasts = 0;
     simState.fsCasts = 0;
     simState.log = [];
     simState.poisonTickTimer = 0;
@@ -9889,6 +9913,9 @@ function mountChameleonSim(root) {
     simState.totalTime += dt;
     if (simState.fatalStrikeMode === 'rotation' && simState.fsRemainingCD > 0) {
       simState.fsRemainingCD = Math.max(0, simState.fsRemainingCD - dt);
+    }
+    if (simState.leftStrideActive && simState.lsRemainingCD > 0) {
+      simState.lsRemainingCD = Math.max(0, simState.lsRemainingCD - dt);
     }
     if (simState.currentPoisonStacks > 0) {
       const isRobot = (enemy.race === 'Robots');
@@ -9929,7 +9956,16 @@ function mountChameleonSim(root) {
     }
   }
 
-  function executeOneShot(bonuses, enemy) {
+  function getLeftStrideCD() {
+    const rolled = chmAgiAdjust(60, simState.agi, simState.lck);
+    return simState.revArt ? Math.ceil(0.88 * rolled) : Math.max(1, Math.round(rolled));
+  }
+
+  function shouldCastLeftStride() {
+    return (simState.leftStrideActive && simState.lsRemainingCD <= 0 && simState.lsCycle === 0);
+  }
+
+  function executeArrow(bonuses, enemy, isStride = false) {
     const fsRank = (simState.fatalStrikeRank > 0 && simState.extraArrows) ? Math.min(simState.fatalStrikeRank + 1, 5) : simState.fatalStrikeRank;
     const fsBonus = 6 * fsRank;
     const maxPoison = simState.deadlyVenom ? 6 : 4;
@@ -10022,9 +10058,7 @@ function mountChameleonSim(root) {
       }
     }
 
-    advanceSimTime(0.3, enemy); // arrow shot takes 0.3s
     simState.totalShots++;
-
     simState.totalDamage = simState.totalBaseImpactDmg + simState.totalFatalStrikeDmg + simState.totalPiercingVenomDmg + simState.totalCritExtraDmg + simState.totalHpDrainDmg + simState.totalPoisonDoT;
 
     if (simState.isRunning) {
@@ -10065,6 +10099,7 @@ function mountChameleonSim(root) {
       isCrit: rollCrit,
       critMult: critMult.toFixed(2),
       isFs: isFsActive,
+      isStride,
       poisonStacks: simState.currentPoisonStacks,
       poisonAdded: poisonInc,
       didPoison,
@@ -10076,16 +10111,38 @@ function mountChameleonSim(root) {
     simState.log.push(entry);
   }
 
+  function executeOneShot(bonuses, enemy) {
+    advanceSimTime(0.3, enemy); // arrow shot takes 0.3s
+    executeArrow(bonuses, enemy, false);
+  }
+
   function runInstantSimulation(count) {
     resetSim();
     const bonuses = getComputedBonuses();
     const enemy = getEnemyInfo();
 
-    for (let i = 0; i < count; i++) {
+    while (simState.totalShots < count) {
       if (shouldCastFatalStrike()) {
         castFatalStrike(bonuses, enemy);
+      } else if (shouldCastLeftStride()) {
+        // Cast Left Stride 2 + Double Stride (10 arrows across 2.298s)
+        simState.lsCasts++;
+        simState.lsRemainingCD = getLeftStrideCD();
+        // Cycle 1: 0.366s windup
+        advanceSimTime(0.366, enemy);
+        executeArrow(bonuses, enemy, true);
+        executeArrow(bonuses, enemy, true);
+        // Cycles 2 to 5: 0.433s each
+        for (let c = 2; c <= 5; c++) {
+          advanceSimTime(0.433, enemy);
+          executeArrow(bonuses, enemy, true);
+          executeArrow(bonuses, enemy, true);
+        }
+        // Post-cast recovery: 0.200s
+        advanceSimTime(0.200, enemy);
+      } else {
+        executeOneShot(bonuses, enemy);
       }
-      executeOneShot(bonuses, enemy);
     }
 
     updateUI();
@@ -10114,19 +10171,50 @@ function mountChameleonSim(root) {
     const bonuses = getComputedBonuses();
     const enemy = getEnemyInfo();
 
+    // Priority 1: Fatal Strike rotation
     if (shouldCastFatalStrike()) {
-      // 1. Cast Fatal Strike animation lock + bow draw windup (0.70s)
       castFatalStrike(bonuses, enemy);
       updateUI();
-      // Wait 700ms for cast animation + bow draw before firing the next arrow
       simState.timerId = setTimeout(stepInfinite, 700);
-    } else {
-      // 2. Fire one arrow shot (0.30s)
-      executeOneShot(bonuses, enemy);
-      updateUI();
-      // Wait 300ms for arrow animation before next action
-      simState.timerId = setTimeout(stepInfinite, 300);
+      return;
     }
+
+    // Priority 2: Left Stride start trigger
+    if (shouldCastLeftStride()) {
+      simState.lsCasts++;
+      simState.lsRemainingCD = getLeftStrideCD();
+      simState.lsCycle = 1;
+      updateUI();
+      // Cycle 1 initial windup: 366ms
+      simState.timerId = setTimeout(stepInfinite, 366);
+      return;
+    }
+
+    // Left Stride execution cycles (1..5)
+    if (simState.lsCycle >= 1 && simState.lsCycle <= 5) {
+      const dt = (simState.lsCycle === 1) ? 0.366 : 0.433;
+      advanceSimTime(dt, enemy);
+      // Double Stride fires 2 arrows simultaneously (Chameleon + Shadow clone)
+      executeArrow(bonuses, enemy, true);
+      executeArrow(bonuses, enemy, true);
+      updateUI();
+
+      if (simState.lsCycle < 5) {
+        simState.lsCycle++;
+        simState.timerId = setTimeout(stepInfinite, 433);
+      } else {
+        // Finished cycle 5 -> recovery 200ms
+        simState.lsCycle = 0;
+        advanceSimTime(0.200, enemy);
+        simState.timerId = setTimeout(stepInfinite, 200);
+      }
+      return;
+    }
+
+    // Standard Normal Attack Shot (0.30s)
+    executeOneShot(bonuses, enemy);
+    updateUI();
+    simState.timerId = setTimeout(stepInfinite, 300);
   }
 
   function startInfinite() {
@@ -10561,13 +10649,22 @@ function mountChameleonSim(root) {
                   <span class="chm-tf-sub" id="chmTfSub">Lv.100 [Boss]</span><span id="chmTfNameText">Earth Avatar</span>
                 </div>
 
-                <!-- Authentic 12Tails In-Game Skill Slot: Fatal Strike with live Cooldown Downtime -->
-                <div class="chm-tf-skill-slot" id="chmTfFsSlot" title="Fatal Strike (Skill Slot 1)">
-                  <span class="chm-slot-hotkey">1</span>
-                  <img class="chm-slot-icon" id="chmSlotFsIcon" src="" alt="Fatal Strike">
-                  <span class="chm-slot-charges" id="chmSlotFsCharges" style="display:none;">10</span>
-                  <div class="chm-slot-cd-overlay" id="chmSlotFsCdOverlay" style="display:none;"></div>
-                  <span class="chm-slot-cd-text" id="chmSlotFsCdText" style="display:none;"></span>
+                <!-- Authentic In-Game Skill Slots: Fatal Strike & Left Stride -->
+                <div class="chm-tf-skill-slots-row">
+                  <!-- Skill Slot 1: Fatal Strike -->
+                  <div class="chm-tf-skill-slot" id="chmTfFsSlot" title="Fatal Strike - Click to toggle">
+                    <img class="chm-slot-icon" id="chmSlotFsIcon" src="" alt="Fatal Strike">
+                    <span class="chm-slot-charges" id="chmSlotFsCharges" style="display:none;">10</span>
+                    <div class="chm-slot-cd-overlay" id="chmSlotFsCdOverlay" style="display:none;"></div>
+                    <span class="chm-slot-cd-text" id="chmSlotFsCdText" style="display:none;"></span>
+                  </div>
+
+                  <!-- Skill Slot 2: Left Stride (Double Stride) -->
+                  <div class="chm-tf-skill-slot" id="chmTfLsSlot" title="Left Stride (Double Stride) - Click to toggle">
+                    <img class="chm-slot-icon" id="chmSlotLsIcon" src="" alt="Left Stride">
+                    <div class="chm-slot-cd-overlay" id="chmSlotLsCdOverlay" style="display:none;"></div>
+                    <span class="chm-slot-cd-text" id="chmSlotLsCdText" style="display:none;"></span>
+                  </div>
                 </div>
 
                 <!-- MHP Track -->
@@ -10870,6 +10967,10 @@ function mountChameleonSim(root) {
   const chmSlotFsCharges = root.querySelector('#chmSlotFsCharges');
   const chmSlotFsCdOverlay = root.querySelector('#chmSlotFsCdOverlay');
   const chmSlotFsCdText = root.querySelector('#chmSlotFsCdText');
+  const chmTfLsSlot = root.querySelector('#chmTfLsSlot');
+  const chmSlotLsIcon = root.querySelector('#chmSlotLsIcon');
+  const chmSlotLsCdOverlay = root.querySelector('#chmSlotLsCdOverlay');
+  const chmSlotLsCdText = root.querySelector('#chmSlotLsCdText');
   const chmTfMhp1 = root.querySelector('#chmTfMhp1');
   const chmTfMhp2 = root.querySelector('#chmTfMhp2');
   const chmTfMhp3 = root.querySelector('#chmTfMhp3');
@@ -10893,6 +10994,9 @@ function mountChameleonSim(root) {
     chmTfHp3.src = CHM_ICONS.targetBar_hp3;
     if (chmSlotFsIcon && CHM_ICONS.fatalStrike) {
       chmSlotFsIcon.src = CHM_ICONS.fatalStrike;
+    }
+    if (chmSlotLsIcon && typeof SKILL_ICONS !== 'undefined' && SKILL_ICONS.chameleon_leftStride2) {
+      chmSlotLsIcon.src = SKILL_ICONS.chameleon_leftStride2;
     }
   }
 
@@ -11071,7 +11175,7 @@ function mountChameleonSim(root) {
       }
     }
 
-    // Update In-Game Fatal Strike Skill Slot (Cooldown Downtime / Charges)
+    // Update In-Game Fatal Strike Skill Slot
     if (chmTfFsSlot) {
       if (simState.fatalStrikeRank === 0) {
         chmTfFsSlot.className = 'chm-tf-skill-slot disabled';
@@ -11119,6 +11223,41 @@ function mountChameleonSim(root) {
         if (chmSlotFsCharges) chmSlotFsCharges.style.display = 'none';
         if (chmSlotFsCdOverlay) chmSlotFsCdOverlay.style.display = 'none';
         if (chmSlotFsCdText) chmSlotFsCdText.style.display = 'none';
+      }
+    }
+
+    // Update In-Game Left Stride Skill Slot
+    if (chmTfLsSlot) {
+      if (!simState.leftStrideActive) {
+        chmTfLsSlot.className = 'chm-tf-skill-slot disabled';
+        chmTfLsSlot.title = 'Left Stride (Off) - Click to toggle';
+        if (chmSlotLsCdOverlay) chmSlotLsCdOverlay.style.display = 'block';
+        if (chmSlotLsCdText) {
+          chmSlotLsCdText.style.display = 'flex';
+          chmSlotLsCdText.textContent = 'OFF';
+          chmSlotLsCdText.style.fontSize = '12px';
+          chmSlotLsCdText.style.color = '#71717a';
+        }
+      } else if (simState.lsCycle > 0) {
+        chmTfLsSlot.className = 'chm-tf-skill-slot active-buff';
+        chmTfLsSlot.title = 'Left Stride (Casting cycle ' + simState.lsCycle + '/5) - Click to toggle';
+        if (chmSlotLsCdOverlay) chmSlotLsCdOverlay.style.display = 'none';
+        if (chmSlotLsCdText) chmSlotLsCdText.style.display = 'none';
+      } else if (simState.lsRemainingCD > 0) {
+        chmTfLsSlot.className = 'chm-tf-skill-slot on-cd';
+        chmTfLsSlot.title = 'Left Stride (Cooldown: ' + simState.lsRemainingCD.toFixed(1) + 's) - Click to toggle';
+        if (chmSlotLsCdOverlay) chmSlotLsCdOverlay.style.display = 'block';
+        if (chmSlotLsCdText) {
+          chmSlotLsCdText.style.display = 'flex';
+          chmSlotLsCdText.textContent = (simState.lsRemainingCD >= 1.0) ? Math.ceil(simState.lsRemainingCD) : simState.lsRemainingCD.toFixed(1);
+          chmSlotLsCdText.style.fontSize = '19px';
+          chmSlotLsCdText.style.color = '#ffffff';
+        }
+      } else {
+        chmTfLsSlot.className = 'chm-tf-skill-slot ready';
+        chmTfLsSlot.title = 'Left Stride (Ready) - Click to toggle';
+        if (chmSlotLsCdOverlay) chmSlotLsCdOverlay.style.display = 'none';
+        if (chmSlotLsCdText) chmSlotLsCdText.style.display = 'none';
       }
     }
 
@@ -11202,7 +11341,7 @@ function mountChameleonSim(root) {
 
     const rowsHtml = filtered.slice(-1000).reverse().map(e => `
       <div class="chm-log-row chm-log-entry">
-        <span class="chm-col-shot">#${e.shot}</span>
+        <span class="chm-col-shot">#${e.shot}${e.isStride ? '<span class="chm-badge-stride">STRIDE</span>' : ''}</span>
         <span class="chm-col-time">${e.time}s</span>
         <span class="chm-col-dmg">${e.netDmg} dmg</span>
         <span class="chm-col-fatal">${e.isFs ? '<span class="chm-badge-fatal">FATAL</span>' : '<span class="chm-col-empty">—</span>'}</span>
@@ -11314,6 +11453,17 @@ function mountChameleonSim(root) {
       if (simState.fatalStrikeRank === 0) {
         simState.fsCharges = 0;
         simState.fsRemainingCD = 0;
+      }
+      updateUI();
+    });
+  }
+  if (chmTfLsSlot) {
+    chmTfLsSlot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      simState.leftStrideActive = !simState.leftStrideActive;
+      if (!simState.leftStrideActive) {
+        simState.lsRemainingCD = 0;
+        simState.lsCycle = 0;
       }
       updateUI();
     });
