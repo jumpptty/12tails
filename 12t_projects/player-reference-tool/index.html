@@ -3939,8 +3939,8 @@
   }
   .chm-log-row {
     display: grid;
-    grid-template-columns: 56px 64px 84px 75px 110px 105px 95px 75px;
-    min-width: 664px;
+    grid-template-columns: 56px 64px 84px 52px 72px 110px 105px 95px 75px;
+    min-width: 715px;
     align-items: center;
     gap: 8px;
     padding: 5px 10px;
@@ -3970,6 +3970,7 @@
   .chm-col-shot { color: #8a8377; }
   .chm-col-time { color: #b5a995; }
   .chm-col-dmg { font-weight: 700; color: #f9fafb; }
+  .chm-col-ls { text-align: center; }
   .chm-col-empty { color: rgba(255, 255, 255, 0.15); font-weight: 400; text-align: center; display: block; width: 100%; }
 
   .chm-badge-fatal {
@@ -10833,13 +10834,14 @@ function mountChameleonSim(root) {
                 <span class="chm-col-shot">SHOT</span>
                 <span class="chm-col-time">TIME</span>
                 <span class="chm-col-dmg">DAMAGE</span>
+                <span class="chm-col-ls">LS</span>
                 <span class="chm-col-fatal">FATAL</span>
                 <span class="chm-col-crit">CRITICAL</span>
                 <span class="chm-col-poison">POISON</span>
                 <span class="chm-col-drain">HP DRAIN</span>
                 <span class="chm-col-revert">REVERT</span>
               </div>
-              <div style="padding:24px; text-align:center; color:#6b7280; min-width:664px;">Combat log is empty. Start simulation to record shots.</div>
+              <div style="padding:24px; text-align:center; color:#6b7280; min-width:715px;">Combat log is empty. Start simulation to record shots.</div>
             </div>
           </div>
         </div>
@@ -11325,6 +11327,7 @@ function mountChameleonSim(root) {
         <span class="chm-col-shot">SHOT</span>
         <span class="chm-col-time">TIME</span>
         <span class="chm-col-dmg">DAMAGE</span>
+        <span class="chm-col-ls">LS</span>
         <span class="chm-col-fatal">FATAL</span>
         <span class="chm-col-crit">CRITICAL</span>
         <span class="chm-col-poison">POISON</span>
@@ -11334,7 +11337,7 @@ function mountChameleonSim(root) {
     `;
 
     if (simState.log.length === 0) {
-      logScroll.innerHTML = logHeaderHtml + '<div style="padding:24px; text-align:center; color:#6b7280; min-width:664px;">Combat log is empty. Start simulation to record shots.</div>';
+      logScroll.innerHTML = logHeaderHtml + '<div style="padding:24px; text-align:center; color:#6b7280; min-width:715px;">Combat log is empty. Start simulation to record shots.</div>';
       return;
     }
 
@@ -11356,15 +11359,16 @@ function mountChameleonSim(root) {
     }
 
     if (filtered.length === 0) {
-      logScroll.innerHTML = logHeaderHtml + '<div style="padding:20px; text-align:center; color:#6b7280; min-width:664px;">No shots match active filter/search.</div>';
+      logScroll.innerHTML = logHeaderHtml + '<div style="padding:20px; text-align:center; color:#6b7280; min-width:715px;">No shots match active filter/search.</div>';
       return;
     }
 
     const rowsHtml = filtered.slice(-1000).reverse().map(e => `
       <div class="chm-log-row chm-log-entry">
-        <span class="chm-col-shot">#${e.shot}${e.isStride ? '<span class="chm-badge-stride">LS</span>' : ''}</span>
+        <span class="chm-col-shot">#${e.shot}</span>
         <span class="chm-col-time">${e.time}s</span>
         <span class="chm-col-dmg">${e.netDmg} dmg</span>
+        <span class="chm-col-ls">${e.isStride ? '<span class="chm-badge-stride">LS</span>' : '<span class="chm-col-empty">—</span>'}</span>
         <span class="chm-col-fatal">${e.isFs ? '<span class="chm-badge-fatal">FATAL</span>' : '<span class="chm-col-empty">—</span>'}</span>
         <span class="chm-col-crit">${e.isCrit ? `<span class="chm-badge-crit">CRIT ${e.critMult}×</span>` : '<span class="chm-col-empty">—</span>'}</span>
         <span class="chm-col-poison">${(e.poisonStacks > 0 || e.poisonAdded > 0) ? `<span class="chm-badge-poison">P[${e.poisonStacks}]${e.poisonAdded > 0 ? ` +${e.poisonAdded}` : ''}</span>` : '<span class="chm-col-empty">—</span>'}</span>
