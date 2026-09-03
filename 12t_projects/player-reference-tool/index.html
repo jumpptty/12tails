@@ -12234,10 +12234,20 @@ function showTool(tool){
   fitStageToScreen();
 }
 
+window.goatcounter = window.goatcounter || {};
+window.goatcounter.path = function(p) { return location.pathname + (location.hash || '#menu'); };
+let isInitialRoute = true;
 function route(){
   const id = decodeURIComponent(location.hash.slice(1));
   const tool = TOOLS.find(t => t.id === id);
   if (tool) showTool(tool); else showMenu();
+  if (!isInitialRoute && window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({
+      path: location.pathname + (location.hash || '#menu'),
+      title: document.title
+    });
+  }
+  isInitialRoute = false;
 }
 
 window.addEventListener("hashchange", route);
