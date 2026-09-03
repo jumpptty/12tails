@@ -4451,8 +4451,16 @@ function hitModAdjustFloor(nDamage, hitMod) {
 // unlike hitMod's real 0..3 game-engine clamp, there's no source citation to
 // clamp against here; the value is naturally bounded anyway (at most 3
 // toggles x 5%).
-function finalMultiplierAdjust(nDamage, finalMultiplier) {
-  return Math.ceil(finalMultiplier * nDamage);
+// Final Multiplier (PvE Only, updated 2026-09-03)
+// Server mechanic: applies sequentially per active +5% stack with Math.ceil
+// at EACH intermediate step: damage = Math.ceil(damage * 1.05) per stack.
+// Especially impactful on smaller hits where intermediate fractions round up.
+function finalMultiplierAdjust(nDamage, count) {
+  let dmg = nDamage;
+  for (let i = 0; i < count; i++) {
+    dmg = Math.ceil(dmg * 1.05);
+  }
+  return dmg;
 }
 
 // magAdjust(t) = clamp(t - floor(clamp(MAG+R,1,512)/32), 0.1, 600) -- cast time, MAG-based
@@ -6628,7 +6636,7 @@ function mountSkillCooldownLookup(root){
     if (dmgMultDepOn) val = Math.trunc(val * skill.dmgMultDep.mult);
     const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
     const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-    const finalMultiplierValue = FINAL_MULT_MOD_IDS.reduce((prod, id) => prod * (activeFinalMultMods.has(id) ? (1 + MOD_DEFS[id].delta) : 1), 1);
+    const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
     // ownLck (Auto Gyro Gun pilot, 2026-08-18): dmgAdjust's LCK-rolled term
     // (game engine, `Random(0, ceil(0.2*this.lck))`) reads
     // `this.lck` -- the ATTACKER's own field. For a normal skill cast the
@@ -6708,7 +6716,7 @@ function mountSkillCooldownLookup(root){
     const afterHitMod = skill.effectDamage
       ? hitModAdjustFloor(afterDef, enemyHitModValue)
       : hitModAdjust(afterDef, enemyHitModValue);
-    const final = finalMultiplierAdjust(afterHitMod, finalMultiplierValue);
+    const final = finalMultiplierAdjust(afterHitMod, finalMultCount);
     // `staged` (2026-08-22, Typhoon true-simulation pilot): every existing
     // call site passes nothing here and keeps getting the plain final
     // number, unchanged. The Typhoon Simulate loop below is the one caller
@@ -8123,7 +8131,7 @@ function mountSkillCooldownLookup(root){
         // something derived from the matchup.
         const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
         const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-        const finalMultiplierValue = FINAL_MULT_MOD_IDS.reduce((prod, id) => prod * (activeFinalMultMods.has(id) ? (1 + MOD_DEFS[id].delta) : 1), 1);
+        const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
         const renderModIcon = (id, activeSet) => {
           const def = MOD_DEFS[id];
           const on = activeSet.has(id);
@@ -8163,7 +8171,7 @@ function mountSkillCooldownLookup(root){
               <div class="sk-mods-col">
                 <p class="sk-mods-col-label">Final Multiplier (PvE Only)</p>
                 <div class="sk-mods-icons">${FINAL_MULT_MOD_IDS.map(id => renderModIcon(id, activeFinalMultMods)).join("")}</div>
-                <p class="sk-mods-readout">${parseFloat(finalMultiplierValue.toFixed(4))}</p>
+                <p class="sk-mods-readout">+5% &times; ${finalMultCount}</p>
               </div>
             </div>
           </div>
@@ -8246,8 +8254,8 @@ function mountSkillCooldownLookup(root){
             (selected.penetrating || selected.effectDamage) ? range[1] : selected.dmgAdjustSkip ? defAdjustAtN(range[1], enemyNBest) : defAdjustAtN(dmgAdjustAtRoll(range[1], playerDamageModValue, playerLckSpread[1]), enemyNBest),
           ];
           const applyHitModFinal = (range) => [
-            finalMultiplierAdjust(finalHitModFn(range[0], enemyHitModValue), finalMultiplierValue),
-            finalMultiplierAdjust(finalHitModFn(range[1], enemyHitModValue), finalMultiplierValue),
+            finalMultiplierAdjust(finalHitModFn(range[0], enemyHitModValue), finalMultCount),
+            finalMultiplierAdjust(finalHitModFn(range[1], enemyHitModValue), finalMultCount),
           ];
           const finalRangeForRange = (range) => applyHitModFinal(afterDefForRange(range));
           // Sword+"Simulate" button: a SEPARATE action from picking a target
