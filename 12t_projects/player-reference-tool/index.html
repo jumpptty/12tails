@@ -10356,10 +10356,10 @@ function mountChameleonSim(root) {
       <div class="chm-grid">
         <!-- Left Deck: Config, Gear, Dependencies -->
         <div class="chm-deck">
-          <!-- Equipment Selection -->
+          <!-- Equipment -->
           <div class="chm-card">
             <div class="chm-card-title">
-              <span>Equipment Selection</span>
+              <span>Equipment</span>
               <span class="chm-card-badge" id="chmGearBonusBadge">+0 ATK | +0% Crit</span>
             </div>
             <div class="chm-equip-slots">
@@ -10405,19 +10405,19 @@ function mountChameleonSim(root) {
 
           </div>
 
-          <!-- Character Stats -->
+          <!-- Stats -->
           <div class="chm-card">
             <div class="chm-card-title">
-              <span>Character Stats</span>
+              <span>Stats</span>
             </div>
             <div class="chm-player-stats-grid">
               <div class="chm-input-group">
                 <label>Level</label>
                 <input type="number" id="chmInpLevel" value="100" min="1" max="100">
               </div>
-              <div class="chm-input-group">
-                <label>Player Max HP</label>
-                <input type="number" id="chmInpMaxHp" value="3000" min="1">
+              <div class="chm-input-group chm-stat-accent-vit">
+                <label>VIT</label>
+                <input type="number" id="chmInpVit" value="300" min="1" title="Player VIT (1 VIT = 10 Max HP)">
               </div>
               <div class="chm-input-group chm-stat-accent-atk">
                 <label>Total ATK</label>
@@ -10638,7 +10638,7 @@ function mountChameleonSim(root) {
             <div class="chm-actions" id="chmInfiniteActions">
               <button type="button" class="chm-fire-btn" id="chmToggleFireBtn">
                 <span id="chmFireBtnIcon">▶</span>
-                <span id="chmFireBtnText">Start Shooting</span>
+                <span id="chmFireBtnText">Start</span>
               </button>
               <button type="button" class="chm-sound-btn" id="chmSoundToggleBtn">🔊 Audio ON</button>
               <button type="button" class="chm-reset-btn" id="chmResetBtn">↺ Reset</button>
