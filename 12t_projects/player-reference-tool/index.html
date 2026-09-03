@@ -10902,7 +10902,7 @@ function mountChameleonSim(root) {
   const inpAtk = root.querySelector('#chmInpAtk');
   const inpLck = root.querySelector('#chmInpLck');
   const inpAgi = root.querySelector('#chmInpAgi');
-  const inpMaxHp = root.querySelector('#chmInpMaxHp');
+  const inpVit = root.querySelector('#chmInpVit');
   const enemySelect = root.querySelector('#chmEnemySelect');
   const customEnemyRow = root.querySelector('#chmCustomEnemyRow');
   const inpEnemyDef = root.querySelector('#chmInpEnemyDef');
@@ -11058,12 +11058,12 @@ function mountChameleonSim(root) {
     if (simState.isRunning) {
       toggleFireBtn.classList.add('firing');
       fireBtnIcon.textContent = '⏸';
-      fireBtnText.textContent = 'Pause Fire';
+      fireBtnText.textContent = 'Stop';
       if (combatArenaCard) combatArenaCard.classList.add('running');
     } else {
       toggleFireBtn.classList.remove('firing');
       fireBtnIcon.textContent = '▶';
-      fireBtnText.textContent = 'Start Shooting';
+      fireBtnText.textContent = 'Start';
       if (combatArenaCard && simState.totalShots === 0) combatArenaCard.classList.remove('running');
     }
   }
@@ -11449,7 +11449,14 @@ function mountChameleonSim(root) {
   inpAtk.addEventListener('input', () => { simState.atk = Number(inpAtk.value) || 150; updateUI(); });
   inpLck.addEventListener('input', () => { simState.lck = Number(inpLck.value) || 40; updateUI(); });
   inpAgi.addEventListener('input', () => { simState.agi = Number(inpAgi.value) || 60; updateUI(); });
-  inpMaxHp.addEventListener('input', () => { simState.maxHp = Number(inpMaxHp.value) || 1200; updateUI(); });
+  if (inpVit) {
+    inpVit.addEventListener('input', () => {
+      const vit = Number(inpVit.value) || 300;
+      simState.vit = vit;
+      simState.maxHp = vit * 10;
+      updateUI();
+    });
+  }
 
   enemySelect.addEventListener('change', () => {
     simState.selectedEnemyId = enemySelect.value;
