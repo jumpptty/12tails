@@ -3507,45 +3507,46 @@
   /* Authentic 12Tails In-Game Skill Slots Row (Fatal Strike & Left Stride) */
   .chm-tf-skill-slots-row {
     position: absolute;
-    left: 36px;
-    top: 45px;
+    left: 18px;
+    top: 36px;
     display: flex;
     gap: 8px;
     z-index: 6;
   }
   .chm-tf-skill-slot {
     position: relative;
-    width: 48px;
-    height: 48px;
-    background: #141311;
-    border: 2px solid #3c3426;
-    border-radius: 4px;
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 8px rgba(0, 0, 0, 0.7);
+    width: 72px;
+    height: 72px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    box-shadow: none;
     overflow: hidden;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.15s;
+    transition: opacity 0.2s, transform 0.15s;
   }
   .chm-tf-skill-slot:hover {
     transform: scale(1.05);
   }
   .chm-tf-skill-slot.ready {
-    border-color: #38342c;
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.6);
+    border: none;
+    box-shadow: none;
   }
   .chm-tf-skill-slot.on-cd {
-    border-color: #26221c;
-    box-shadow: inset 0 0 4px #000, 0 1px 4px rgba(0, 0, 0, 0.5);
+    border: none;
+    box-shadow: none;
   }
   .chm-tf-skill-slot.active-buff {
-    border-color: #38bdf8;
-    box-shadow: inset 0 0 4px rgba(56, 189, 248, 0.3), 0 0 10px rgba(56, 189, 248, 0.6);
+    border: none;
+    box-shadow: none;
   }
   .chm-tf-skill-slot.disabled {
-    border-color: #22201d;
+    border: none;
+    box-shadow: none;
     opacity: 0.35;
     filter: grayscale(0.85);
   }
@@ -3567,21 +3568,23 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    border-radius: 2px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+    image-rendering: pixelated;
   }
   .chm-slot-charges {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    background: rgba(10, 12, 16, 0.9);
+    bottom: 3px;
+    right: 3px;
+    background: rgba(10, 12, 16, 0.92);
     border: 1px solid #0284c7;
     color: #38bdf8;
     font-family: "Segoe UI", monospace;
-    font-size: 10.5px;
+    font-size: 13px;
     font-weight: 900;
     line-height: 1;
-    padding: 1px 3px;
-    border-radius: 2px;
+    padding: 2px 5px;
+    border-radius: 3px;
     text-shadow: 0 0 4px rgba(56, 189, 248, 0.8);
     z-index: 5;
     pointer-events: none;
@@ -3590,6 +3593,7 @@
     position: absolute;
     inset: 0;
     background: rgba(12, 11, 9, 0.72);
+    border-radius: 6px;
     z-index: 3;
     pointer-events: none;
   }
@@ -3600,7 +3604,7 @@
     align-items: center;
     justify-content: center;
     font-family: "Segoe UI", "Arial Black", sans-serif;
-    font-size: 19px;
+    font-size: 26px;
     font-weight: 900;
     color: #ffffff;
     text-shadow: 0 1px 3px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
@@ -11208,7 +11212,7 @@ function mountChameleonSim(root) {
         if (chmSlotFsCdText) {
           chmSlotFsCdText.style.display = 'flex';
           chmSlotFsCdText.textContent = 'OFF';
-          chmSlotFsCdText.style.fontSize = '12px';
+          chmSlotFsCdText.style.fontSize = '15px';
           chmSlotFsCdText.style.color = '#71717a';
         }
       } else if (simState.fatalStrikeMode === 'always') {
@@ -11228,7 +11232,7 @@ function mountChameleonSim(root) {
         if (chmSlotFsCdText) {
           chmSlotFsCdText.style.display = 'flex';
           chmSlotFsCdText.textContent = (simState.fsRemainingCD >= 1.0) ? Math.ceil(simState.fsRemainingCD) : simState.fsRemainingCD.toFixed(1);
-          chmSlotFsCdText.style.fontSize = '19px';
+          chmSlotFsCdText.style.fontSize = '26px';
           chmSlotFsCdText.style.color = '#ffffff';
         }
       } else if (simState.fsCharges > 0) {
@@ -11258,7 +11262,7 @@ function mountChameleonSim(root) {
         if (chmSlotLsCdText) {
           chmSlotLsCdText.style.display = 'flex';
           chmSlotLsCdText.textContent = 'OFF';
-          chmSlotLsCdText.style.fontSize = '12px';
+          chmSlotLsCdText.style.fontSize = '15px';
           chmSlotLsCdText.style.color = '#71717a';
         }
       } else if (simState.lsRemainingCD > 0) {
@@ -11269,7 +11273,7 @@ function mountChameleonSim(root) {
         if (chmSlotLsCdText) {
           chmSlotLsCdText.style.display = 'flex';
           chmSlotLsCdText.textContent = (simState.lsRemainingCD >= 1.0) ? Math.ceil(simState.lsRemainingCD) : simState.lsRemainingCD.toFixed(1);
-          chmSlotLsCdText.style.fontSize = '19px';
+          chmSlotLsCdText.style.fontSize = '26px';
           chmSlotLsCdText.style.color = '#ffffff';
         }
       } else {
