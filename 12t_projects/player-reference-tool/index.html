@@ -3242,6 +3242,28 @@
     background: #2b2821;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   }
+  .chm-mods-btn {
+    background: #201e19;
+    border: 1px solid var(--line);
+    border-radius: 0;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    white-space: nowrap;
+    line-height: 1.2;
+    user-select: none;
+    text-transform: uppercase;
+  }
+  .chm-mods-btn:hover {
+    color: var(--text);
+    border-color: var(--gold);
+    background: #2b2821;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  }
 
   /* Quick shot chips for instant mode */
   .chm-instant-chips {
@@ -9767,6 +9789,12 @@ class ChmSoundManager {
 function mountChameleonSim(root) {
   const soundMgr = new ChmSoundManager();
 
+  // Damage Modifiers isolated state (matching Skill Lookup tool mechanics)
+  let chmActivePlayerMods = new Set();
+  let chmActiveEnemyMods = new Set();
+  let chmActiveFinalMultMods = new Set(["finalMult1", "finalMult2"]);
+  let chmModsOpen = false;
+
   let simState = {
     level: 100,
     atk: 200,
@@ -9963,7 +9991,10 @@ function mountChameleonSim(root) {
       simState.poisonTickTimer += dt;
       if (simState.poisonTickTimer >= 4.0) {
         simState.poisonTickTimer -= 4.0;
-        const tickDmg = isRobot ? (15 * simState.currentPoisonStacks) : (10 * simState.currentPoisonStacks - 1);
+        const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (chmActiveEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+        const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => chmActiveFinalMultMods.has(id)).length;
+        const baseTick = isRobot ? (15 * simState.currentPoisonStacks) : (10 * simState.currentPoisonStacks - 1);
+        const tickDmg = (baseTick > 0) ? finalMultiplierAdjust(hitModAdjustFloor(baseTick, enemyHitModValue), finalMultCount) : 0;
         if (tickDmg > 0) {
           simState.totalPoisonDoT += tickDmg;
           if (simState.isRunning) {
@@ -10034,11 +10065,16 @@ function mountChameleonSim(root) {
     }
     const critRaw = rollCrit ? Math.ceil(baseRaw * critMult) : baseRaw;
 
-    // Attacker LCK variance roll (dmgAdjust: + Random(0, ceil(0.2 * LCK)))
+    // Damage modifiers active values
+    const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (chmActivePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+    const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (chmActiveEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+    const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => chmActiveFinalMultMods.has(id)).length;
+
+    // Attacker LCK variance roll (dmgAdjust: Clamp(Ceil(playerDamageMod * raw) + Random(0, ceil(0.2 * LCK)), 1, 99999))
     const maxRAtk = Math.ceil(0.2 * simState.lck);
     const rAtk = (maxRAtk > 0) ? Math.floor(Math.random() * maxRAtk) : 0;
-    const outgoingDmg = critRaw + rAtk;
-    const unCritOutgoingDmg = baseRaw + rAtk;
+    const outgoingDmg = Math.min(99999, Math.max(1, Math.ceil(playerDamageModValue * critRaw) + rAtk));
+    const unCritOutgoingDmg = Math.min(99999, Math.max(1, Math.ceil(playerDamageModValue * baseRaw) + rAtk));
 
     // Target DEF and LCK variance roll (defAdjust: Clamp(DEF + Random(0, ceil(0.2 * LCK)), 1, 512))
     const enemyLck = (enemy.lck !== undefined) ? enemy.lck : 0;
@@ -10053,15 +10089,21 @@ function mountChameleonSim(root) {
       return Math.ceil(0.35 * light + 0.65 * heavy);
     }
 
-    const finalImpact = defAdjust(outgoingDmg, effDef);
-    const unCritImpact = defAdjust(unCritOutgoingDmg, effDef);
-    const critExtra = rollCrit ? Math.max(0, finalImpact - unCritImpact) : 0;
+    const defImpact = defAdjust(outgoingDmg, effDef);
+    const unCritDefImpact = defAdjust(unCritOutgoingDmg, effDef);
 
-    // Separate White Damage components proportionally through DEF
+    // Target hitMod and Final Multiplier stages
+    const afterHitMod = hitModAdjust(defImpact, enemyHitModValue);
+    const unCritAfterHitMod = hitModAdjust(unCritDefImpact, enemyHitModValue);
+    const finalImpact = finalMultiplierAdjust(afterHitMod, finalMultCount);
+    const unCritFinalImpact = finalMultiplierAdjust(unCritAfterHitMod, finalMultCount);
+    const critExtra = rollCrit ? Math.max(0, finalImpact - unCritFinalImpact) : 0;
+
+    // Separate White Damage components proportionally through DEF and modifiers
     const totalRawPart = (baseRaw > 0) ? baseRaw : 1;
-    const fsDmg = Math.round(unCritImpact * (curFsBonus / totalRawPart));
-    const pierceDmg = Math.round(unCritImpact * (pVenomBonus / totalRawPart));
-    const baseArrowDmg = Math.max(1, unCritImpact - fsDmg - pierceDmg);
+    const fsDmg = Math.round(unCritFinalImpact * (curFsBonus / totalRawPart));
+    const pierceDmg = Math.round(unCritFinalImpact * (pVenomBonus / totalRawPart));
+    const baseArrowDmg = Math.max(1, unCritFinalImpact - fsDmg - pierceDmg);
 
     simState.totalBaseImpactDmg += baseArrowDmg;
     simState.totalFatalStrikeDmg += fsDmg;
@@ -10079,14 +10121,15 @@ function mountChameleonSim(root) {
       }
     }
 
-    // HP drain roll
+    // HP drain roll (authentic effect damage: hitModAdjustFloor + sequential finalMultiplierAdjust)
     let didHpDrain = false;
     let curHpDrainDmg = 0;
     if (bonuses.hpDrainBase > 0) {
       if (Math.random() * 100 < bonuses.effHpDrainRate) {
         didHpDrain = true;
         simState.hpDrainProcs++;
-        curHpDrainDmg = Math.floor(0.02 * simState.maxHp);
+        const baseDrain = Math.floor(0.02 * simState.maxHp);
+        curHpDrainDmg = (baseDrain > 0) ? finalMultiplierAdjust(hitModAdjustFloor(baseDrain, enemyHitModValue), finalMultCount) : 0;
         simState.totalHpDrainDmg += curHpDrainDmg;
       }
     }
@@ -10135,7 +10178,7 @@ function mountChameleonSim(root) {
     const entry = {
       shot: simState.totalShots,
       time: simState.totalTime.toFixed(2),
-      baseDmg: unCritImpact,
+      baseDmg: unCritFinalImpact,
       critExtra,
       netDmg: finalImpact,
       isCrit: rollCrit,
@@ -10649,6 +10692,7 @@ function mountChameleonSim(root) {
                 <span id="chmFireBtnText">Start</span>
               </button>
               <button type="button" class="chm-sound-btn" id="chmSoundToggleBtn">🔊 Audio ON</button>
+              <button type="button" class="chm-mods-btn" id="chmModsBtn" title="Damage modifiers (buffs/debuffs)">Mods</button>
               <button type="button" class="chm-reset-btn" id="chmResetBtn">↺ Reset</button>
             </div>
 
@@ -10662,6 +10706,7 @@ function mountChameleonSim(root) {
               </div>
               <input type="number" id="chmInstantCountInput" value="100" min="1" max="5000" style="width:44px; background:#1c1b18; border:none; color:#fff; padding:4px 4px; border-radius:0; font-family:monospace; font-weight:700; font-size:10.5px; text-align:center;">
               <button type="button" class="chm-fire-btn" id="chmSimulateInstantBtn">⚡ Simulate</button>
+              <button type="button" class="chm-mods-btn" id="chmModsBtn2" title="Damage modifiers (buffs/debuffs)">Mods</button>
               <button type="button" class="chm-reset-btn" id="chmResetBtn2">↺ Reset</button>
             </div>
           </div>
@@ -10889,6 +10934,8 @@ function mountChameleonSim(root) {
           </div>
         </div>
       </div>
+      <!-- Damage Modifiers Popup Modal -->
+      <div id="chmModsModalWrap"></div>
     </div>
   `;
 
@@ -11133,7 +11180,11 @@ function mountChameleonSim(root) {
     const maxPoison = simState.deadlyVenom ? 6 : 4;
     kpiPoisonStack.textContent = simState.currentPoisonStacks + ' / ' + maxPoison;
     const isRobot = (enemy.race === 'Robots');
-    const dotDps = simState.currentPoisonStacks > 0 ? (isRobot ? (15 * simState.currentPoisonStacks) / 4 : (10 * simState.currentPoisonStacks - 1) / 4) : 0;
+    const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (chmActiveEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+    const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => chmActiveFinalMultMods.has(id)).length;
+    const baseDotTick = simState.currentPoisonStacks > 0 ? (isRobot ? (15 * simState.currentPoisonStacks) : (10 * simState.currentPoisonStacks - 1)) : 0;
+    const modifiedDotTick = (baseDotTick > 0) ? finalMultiplierAdjust(hitModAdjustFloor(baseDotTick, enemyHitModValue), finalMultCount) : 0;
+    const dotDps = modifiedDotTick / 4;
     kpiPoisonDpsSub.textContent = dotDps.toFixed(1) + ' DoT DPS (' + (isRobot ? 'Rust' : 'Poison') + ')';
 
     // Target Preset avatar and stat pill update
@@ -11641,6 +11692,88 @@ function mountChameleonSim(root) {
   });
   resetBtn.addEventListener('click', resetSim);
   resetBtn2.addEventListener('click', resetSim);
+
+  // Damage Modifiers Modal Render & Listeners
+  function renderChmModsModal() {
+    const wrap = root.querySelector('#chmModsModalWrap');
+    if (!wrap) return;
+    if (!chmModsOpen) {
+      wrap.innerHTML = '';
+      return;
+    }
+    const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (chmActivePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+    const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (chmActiveEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
+    const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => chmActiveFinalMultMods.has(id)).length;
+
+    function renderChmModIcon(id, activeSet) {
+      const def = MOD_DEFS[id];
+      const on = activeSet.has(id);
+      const levelLabel = def.level ? ` (Lv.${def.level})` : "";
+      const badge = def.badge ? `<span class="sk-mod-icon-badge">${def.badge}</span>` : "";
+      return `
+        <button type="button" class="sk-mod-icon${on ? " on" : ""}" data-role="chm-mod-toggle" data-mod-id="${id}" title="${def.label}${levelLabel}: +${def.delta.toFixed(2)}">
+          <img src="${SKILL_ICONS[def.icon]}" alt="${def.label}">
+          ${badge}
+        </button>
+      `;
+    }
+
+    wrap.innerHTML = `
+      <div class="sk-mods-backdrop" data-role="chm-mods-backdrop">
+        <div class="sk-mods-popup" data-role="chm-mods-popup">
+          <div class="sk-mods-head">
+            <span>Damage Modifiers</span>
+            <button type="button" class="sk-mods-close" data-role="chm-mods-close" aria-label="Close">&times;</button>
+          </div>
+          <div class="sk-mods-col">
+            <p class="sk-mods-col-label">Player &middot; damageMod</p>
+            <div class="sk-mods-icons">${PLAYER_MOD_IDS.map(id => renderChmModIcon(id, chmActivePlayerMods)).join("")}</div>
+            <p class="sk-mods-readout">${playerDamageModValue.toFixed(2)}</p>
+          </div>
+          <div class="sk-mods-col">
+            <p class="sk-mods-col-label">Target &middot; hitMod</p>
+            <div class="sk-mods-icons">${ENEMY_MOD_IDS.map(id => renderChmModIcon(id, chmActiveEnemyMods)).join("")}</div>
+            <p class="sk-mods-readout">${enemyHitModValue.toFixed(2)}</p>
+          </div>
+          <div class="sk-mods-col">
+            <p class="sk-mods-col-label">Final Multiplier (PvE Only)</p>
+            <div class="sk-mods-icons">${FINAL_MULT_MOD_IDS.map(id => renderChmModIcon(id, chmActiveFinalMultMods)).join("")}</div>
+            <p class="sk-mods-readout">+5% &times; ${finalMultCount}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const chmModsBtn = root.querySelector('#chmModsBtn');
+  const chmModsBtn2 = root.querySelector('#chmModsBtn2');
+  if (chmModsBtn) chmModsBtn.addEventListener('click', () => { chmModsOpen = !chmModsOpen; renderChmModsModal(); });
+  if (chmModsBtn2) chmModsBtn2.addEventListener('click', () => { chmModsOpen = !chmModsOpen; renderChmModsModal(); });
+
+  const modalWrap = root.querySelector('#chmModsModalWrap');
+  if (modalWrap) {
+    modalWrap.addEventListener('click', (e) => {
+      if (e.target.closest('[data-role="chm-mods-close"]') || e.target.matches('[data-role="chm-mods-backdrop"]')) {
+        chmModsOpen = false;
+        renderChmModsModal();
+        return;
+      }
+      const toggleBtn = e.target.closest('[data-role="chm-mod-toggle"]');
+      if (toggleBtn) {
+        const id = toggleBtn.getAttribute('data-mod-id');
+        const targetSet = PLAYER_MOD_IDS.includes(id) ? chmActivePlayerMods
+          : ENEMY_MOD_IDS.includes(id) ? chmActiveEnemyMods
+          : FINAL_MULT_MOD_IDS.includes(id) ? chmActiveFinalMultMods
+          : null;
+        if (targetSet) {
+          if (targetSet.has(id)) targetSet.delete(id);
+          else targetSet.add(id);
+          renderChmModsModal();
+          updateUI();
+        }
+      }
+    });
+  }
 
   simulateInstantBtn.addEventListener('click', () => {
     const cnt = Math.max(1, Math.min(5000, Number(instantCountInput.value) || 100));
