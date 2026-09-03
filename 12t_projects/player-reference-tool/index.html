@@ -9940,12 +9940,13 @@ function mountChameleonSim(root) {
 
   function shouldCastFatalStrike() {
     if (simState.fatalStrikeRank <= 0) return false;
+    if (simState.lsCycle > 0) return false; // Strict lockout during Left Stride animation
     const fsRank = (simState.fatalStrikeRank > 0 && simState.extraArrows) ? Math.min(simState.fatalStrikeRank + 1, 5) : simState.fatalStrikeRank;
     return (simState.fatalStrikeMode === 'rotation' && fsRank > 0 && simState.fsCharges === 0 && simState.fsRemainingCD <= 0);
   }
 
   function castFatalStrike(bonuses, enemy) {
-    if (simState.fatalStrikeRank <= 0) return;
+    if (simState.fatalStrikeRank <= 0 || simState.lsCycle > 0) return;
     const fsRank = (simState.fatalStrikeRank > 0 && simState.extraArrows) ? Math.min(simState.fatalStrikeRank + 1, 5) : simState.fatalStrikeRank;
     const fsMaxCharges = simState.extraArrows ? 10 : 5;
     simState.fsCasts++;
@@ -10174,29 +10175,7 @@ function mountChameleonSim(root) {
     const bonuses = getComputedBonuses();
     const enemy = getEnemyInfo();
 
-    // Priority 1: Fatal Strike rotation
-    if (shouldCastFatalStrike()) {
-      castFatalStrike(bonuses, enemy);
-      updateUI();
-      simState.timerId = setTimeout(stepInfinite, 700);
-      return;
-    }
-
-    // Priority 2: Left Stride start trigger
-    if (shouldCastLeftStride()) {
-      simState.lsCasts++;
-      simState.lsRemainingCD = getLeftStrideCD();
-      simState.lsCycle = 1;
-      if (simState.isRunning) {
-        soundMgr.play((Math.random() < 0.5) ? 'leftStride1' : 'leftStride2', 0.95);
-      }
-      updateUI();
-      // Cycle 1 initial windup: 366ms
-      simState.timerId = setTimeout(stepInfinite, 366);
-      return;
-    }
-
-    // Left Stride execution cycles (1..5)
+    // Priority 1: Left Stride active channel in progress (ALL other skill casts locked out)
     if (simState.lsCycle >= 1 && simState.lsCycle <= 5) {
       const dt = (simState.lsCycle === 1) ? 0.366 : 0.433;
       advanceSimTime(dt, enemy);
@@ -10224,6 +10203,28 @@ function mountChameleonSim(root) {
         advanceSimTime(0.200, enemy);
         simState.timerId = setTimeout(stepInfinite, 200);
       }
+      return;
+    }
+
+    // Priority 2: Fatal Strike rotation (only cast when not channeling another skill)
+    if (shouldCastFatalStrike()) {
+      castFatalStrike(bonuses, enemy);
+      updateUI();
+      simState.timerId = setTimeout(stepInfinite, 700);
+      return;
+    }
+
+    // Priority 3: Left Stride start trigger
+    if (shouldCastLeftStride()) {
+      simState.lsCasts++;
+      simState.lsRemainingCD = getLeftStrideCD();
+      simState.lsCycle = 1;
+      if (simState.isRunning) {
+        soundMgr.play((Math.random() < 0.5) ? 'leftStride1' : 'leftStride2', 0.95);
+      }
+      updateUI();
+      // Cycle 1 initial windup: 366ms
+      simState.timerId = setTimeout(stepInfinite, 366);
       return;
     }
 
@@ -11473,6 +11474,7 @@ function mountChameleonSim(root) {
   if (chmTfFsSlot) {
     chmTfFsSlot.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (simState.lsCycle > 0) return; // Action locked out during Left Stride animation
       simState.fatalStrikeRank = (simState.fatalStrikeRank === 0) ? 4 : 0;
       if (fsRankSelect) fsRankSelect.value = String(simState.fatalStrikeRank);
       if (simState.fatalStrikeRank === 0) {
