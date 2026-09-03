@@ -110,3 +110,32 @@ Present a structured review table to the user. Every single skill entry must inc
 > - Ranges & Exponents: `1..maxRank`, `[0..ceil(0.2 * LCK)]`, `x²`, `x³`
 > - Subscripts/Identifiers: `TAL_eff`, `Clamp(...)`, `Floor(...)`, `Ceil(...)`
 
+---
+
+## 7. Large File Handling & Crash Prevention Protocol (Mandatory for index.html)
+
+`12t_projects/player-reference-tool/index.html` is **>6.4 MB** because it embeds 670 game icons as raw Base64 data URIs (lines ~3,600 to ~9,600). Ingesting this into an AI chat context triggers token exhaustion, emergency context truncations (`CHECKPOINT 0`), memory loss, and recursive crash loops.
+
+To permanently prevent session crashes and turn interruptions:
+
+1. **Strict Zero-Base64 Ingestion:**
+   * Never execute `view_file`, `grep_search`, or raw file dumps across the Base64 icon definitions (lines ~3,600 to ~9,600).
+   * To inspect icon keys or definitions, run a small Node.js scratch script that tests keys with regex and prints only string names, never the Base64 payloads.
+
+2. **Out-of-Process Patching via Scratch Scripts:**
+   * Never use IDE editing tools (`replace_file_content` / `multi_replace_file_content`) to pass large sections of `index.html` through the context window.
+   * All modifications to `index.html` must be applied using small Node.js patch scripts located in `<appDataDir>/brain/<conversation-id>/scratch/`.
+   * The patch script loads `index.html`, replaces the targeted logic in memory, writes the file back, and prints only a 1-line confirmation (e.g., `SUCCESS: Patched Left Stride (42 lines)`). Exactly 0 KB of raw HTML or Base64 enters the agent context.
+
+3. **Absolute Ban on Reading Transcripts:**
+   * Never run shell commands to read, tail, or grep `transcript.jsonl`, `transcript_full.jsonl`, or anything under `.system_generated/logs/`.
+
+4. **Git Checkpoint Before Every Phase:**
+   * Always verify a clean working tree (`git status`) or commit working states before applying edits. If any script behaves unexpectedly, revert immediately via `git checkout`.
+
+5. **Mandatory Post-Edit Verification:**
+   * Immediately after any patch script runs, execute:
+     `node scripts/validate_skills.js`
+   * Confirm that 100% of skills, formula permutations, and icons continue to pass automated integrity checks.
+
+
