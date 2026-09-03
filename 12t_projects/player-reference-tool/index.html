@@ -3799,14 +3799,14 @@
     padding-left: 4px;
   }
 
-  /* Status Telemetry Badges (6 Badges in One Row) */
+  /* Status Telemetry Badges (7 Badges in One Row) */
   .chm-badge-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 8px;
   }
-  @media (max-width: 1080px) {
-    .chm-badge-grid { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 1100px) {
+    .chm-badge-grid { grid-template-columns: repeat(4, 1fr); }
   }
   @media (max-width: 640px) {
     .chm-badge-grid { grid-template-columns: repeat(2, 1fr); }
@@ -10790,11 +10790,15 @@ function mountChameleonSim(root) {
             </div>
           </div>
 
-          <!-- Status Telemetry Badges (6 Chips in One Row) -->
+          <!-- Status Telemetry Badges (7 Chips in One Row) -->
           <div class="chm-badge-grid">
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="Total Shots Fired">Total Shots</div>
               <div class="chm-badge-count" id="chmBadgeShots">0</div>
+            </div>
+            <div class="chm-badge-card">
+              <div class="chm-badge-name" title="Left Stride Casts">Left Strides</div>
+              <div class="chm-badge-count" style="color:#38bdf8;" id="chmBadgeLeftStrideCasts">0 casts</div>
             </div>
             <div class="chm-badge-card">
               <div class="chm-badge-name" title="Fatal Strike Casts">Fatal Strikes</div>
@@ -10961,6 +10965,7 @@ function mountChameleonSim(root) {
   const pctHpDrain = root.querySelector('#chmPctHpDrain');
 
   const badgeShots = root.querySelector('#chmBadgeShots');
+  const badgeLeftStrideCasts = root.querySelector('#chmBadgeLeftStrideCasts');
   const badgeFatalCasts = root.querySelector('#chmBadgeFatalCasts');
   const badgeCrits = root.querySelector('#chmBadgeCrits');
   const badgePoison = root.querySelector('#chmBadgePoison');
@@ -11304,8 +11309,9 @@ function mountChameleonSim(root) {
     pctPoison.textContent = pPoison.toFixed(1) + '%';
     pctHpDrain.textContent = pHpDrain.toFixed(1) + '%';
 
-    // Badges (6 Telemetry Badges)
+    // Badges (7 Telemetry Badges)
     if (badgeShots) badgeShots.textContent = simState.totalShots.toLocaleString();
+    if (badgeLeftStrideCasts) badgeLeftStrideCasts.textContent = simState.lsCasts.toLocaleString() + (simState.lsCasts === 1 ? ' cast' : ' casts');
     if (badgeFatalCasts) badgeFatalCasts.textContent = simState.fsCasts.toLocaleString() + (simState.fsCasts === 1 ? ' cast' : ' casts');
     if (badgeCrits) badgeCrits.textContent = simState.critCount.toLocaleString();
     if (badgePoison) badgePoison.textContent = simState.poisonProcs.toLocaleString() + ' procs';
