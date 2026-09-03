@@ -11244,7 +11244,7 @@ function mountChameleonSim(root) {
       }
     }
 
-    // Update In-Game Left Stride Skill Slot
+    // Update In-Game Left Stride Skill Slot (Cooldown starts immediately upon cast)
     if (chmTfLsSlot) {
       if (!simState.leftStrideActive) {
         chmTfLsSlot.className = 'chm-tf-skill-slot disabled';
@@ -11256,14 +11256,10 @@ function mountChameleonSim(root) {
           chmSlotLsCdText.style.fontSize = '12px';
           chmSlotLsCdText.style.color = '#71717a';
         }
-      } else if (simState.lsCycle > 0) {
-        chmTfLsSlot.className = 'chm-tf-skill-slot active-buff';
-        chmTfLsSlot.title = 'Left Stride (Casting cycle ' + simState.lsCycle + '/5) - Click to toggle';
-        if (chmSlotLsCdOverlay) chmSlotLsCdOverlay.style.display = 'none';
-        if (chmSlotLsCdText) chmSlotLsCdText.style.display = 'none';
       } else if (simState.lsRemainingCD > 0) {
-        chmTfLsSlot.className = 'chm-tf-skill-slot on-cd';
-        chmTfLsSlot.title = 'Left Stride (Cooldown: ' + simState.lsRemainingCD.toFixed(1) + 's) - Click to toggle';
+        // Cooldown begins counting down the exact instant it is casted
+        chmTfLsSlot.className = 'chm-tf-skill-slot on-cd' + (simState.lsCycle > 0 ? ' casting' : '');
+        chmTfLsSlot.title = 'Left Stride (Cooldown: ' + simState.lsRemainingCD.toFixed(1) + 's' + (simState.lsCycle > 0 ? ' · Stride ' + simState.lsCycle + '/5' : '') + ') - Click to toggle';
         if (chmSlotLsCdOverlay) chmSlotLsCdOverlay.style.display = 'block';
         if (chmSlotLsCdText) {
           chmSlotLsCdText.style.display = 'flex';
