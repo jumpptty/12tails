@@ -7562,15 +7562,20 @@ function mountSkillCooldownLookup(root){
       const depLv = skill.dmgRankDep
         ? getDepRank(skill.dmgRankDep)
         : (skill.dmgDep ? (getDepRank(skill.dmgDep) === skill.dmgDep.maxRank ? 1 : 0) : (skill.dmgFlagDep ? (getDepRank(skill.dmgFlagDep) === skill.dmgFlagDep.maxRank ? 1 : 0) : 0));
-      const res = skill.ko(rank, depLv);
-      return res;
+      return skill.ko(rank, depLv);
     }
+    const koStr = String(skill.ko);
+    if (koStr.includes("..")) return koStr;
     const koDepOn = skill.koDep && getDepRank(skill.koDep) === skill.koDep.maxRank;
     const effRank = rank + (koDepOn ? skill.koDep.rankBonus : 0);
-    let val = evalArith(String(skill.ko).replace(/\bsLv\b/g, String(effRank)));
-    const koMultOn = skill.koMultDep && getDepRank(skill.koMultDep) === skill.koMultDep.maxRank;
-    if (koMultOn) val = Math.floor(val * skill.koMultDep.mult);
-    return Math.trunc(val);
+    try {
+      let val = evalArith(koStr.replace(/\bsLv\b/g, String(effRank)));
+      const koMultOn = skill.koMultDep && getDepRank(skill.koMultDep) === skill.koMultDep.maxRank;
+      if (koMultOn) val = Math.floor(val * skill.koMultDep.mult);
+      return Math.trunc(val);
+    } catch (e) {
+      return koStr;
+    }
   }
   // Hover-only breakdown of the LCK roll behind a range — e.g. "13.6s: 42%"
   // — shown below the stat card so the [min,max] spread doesn't read as

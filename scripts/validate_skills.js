@@ -34,6 +34,7 @@ const exposeInjection = `
   window._substituteDmgVars = substituteDmgVars;
   window._renderOneDmgFormula = renderOneDmgFormula;
   window._rollOneHit = rollOneHit;
+  window._getKOValue = getKOValue;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
 `;
@@ -181,9 +182,22 @@ SKILLS.forEach(sk => {
     }
   }
 
-  // Formula evaluation check across all permutations
-  if (sk.dmg) {
-    for (let r = 1; r <= maxRank; r++) {
+  // Formula and KO evaluation check across all permutations
+  for (let r = 1; r <= maxRank; r++) {
+    if (sk.ko !== undefined) {
+      try {
+        const koVal = sandbox._getKOValue(sk, r);
+        if (koVal === null || koVal === undefined || koVal === "" || String(koVal).includes("NaN")) {
+          console.error(`[KO ERROR] ${ctx} Rank ${r}: evaluated to invalid KO value -> ${koVal}`);
+          errorCount++;
+        }
+      } catch (e) {
+        console.error(`[KO EXCEPTION] ${ctx} Rank ${r}: ${e.message}`);
+        errorCount++;
+      }
+    }
+
+    if (sk.dmg) {
       const depMax = sk.dmgRankDep ? (sk.dmgRankDep.maxRank || 1) : 0;
       for (let depLv = 0; depLv <= depMax; depLv++) {
         if (sk.dmgRankDep) sandbox._depRanks[sk.dmgRankDep.id] = depLv;
