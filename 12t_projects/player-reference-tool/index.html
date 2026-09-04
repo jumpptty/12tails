@@ -2061,6 +2061,7 @@
   .dmg-tal{color:var(--stat-tal); font-weight:700}
   .dmg-atk{color:var(--stat-atk); font-weight:700}
   .dmg-int{color:var(--stat-int); font-weight:700}
+  .dmg-def{color:#38bdf8; font-weight:700}
   /* Effect-damage base number (Thunder Dragon pilot, 2026-08-21) -- takes
      .dmg-num's normal slot in a flat-shape formula's item list, whenever
      `skill.effectDamage` is set. Purple, matching the real in-game
@@ -6203,30 +6204,30 @@ const SKILLS = [
   { id:"sheep_divinityAxe", name:"Divinity Axe", class:"Sheep", icon:"sheep_divinityAxe1", maxRank:1, cost:{mp:54}, cd:150, cdWrapped:true, castTime:7, castWrapped:true, revisedArtExempt:false, dmg:"talAdjust(45)", hitCount:()=>5, ko:"2", note:"Summons a divine battleaxe, damaging enemies in the area 5 times." },
   { id:"sheep_edenSanctuary", name:"Eden Sanctuary", class:"Sheep", icon:"sheep_edenSanctuary1", maxRank:1, cost:{mp:40,sp:40,spType:"red"}, cd:240, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:false, note:"Deploys an 18m radius sacred sanctuary that grants 50% incoming damage reduction to all allies inside the zone." },
   { id:"sheep_worldEncarta", name:"World Encarta", class:"Sheep", icon:"sheep_worldEncarta1", maxRank:1, cost:{mp:50,sp:50,spType:"red"}, cd:150, cdWrapped:true, castTime:7, castWrapped:true, revisedArtExempt:false, duration:9, durWrapped:true, note:"Envelops a target ally in an absolute sanctuary: adds +20% of caster ATK as bonus DEF and grants total invulnerability to all damage and debuffs." },
-{ id:"whale_sweep", name:"Sweep", class:"Whale", icon:"whale_sweep2", cd:30, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-10) },
-  { id:"whale_javelin", name:"Javelin", class:"Whale", icon:"whale_javelin2", cd:30, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-10) },
-  { id:"whale_honor", name:"Honor", class:"Whale", icon:"whale_honor4", cd:60, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
-  { id:"whale_shieldRush", name:"Shield Rush", class:"Whale", icon:"whale_shieldRush2", cd:45, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-15) },
-  { id:"whale_flyingShield", name:"Flying Shield", class:"Whale", icon:"whale_flyingShield2", cd:45, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-15) },
-  { id:"whale_homingShield", name:"Homing Shield", class:"Whale", icon:"whale_homingShield1", cd:120, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-40), duration:3, durWrapped:true },
-  { id:"whale_swallow", name:"Swallow", class:"Whale", icon:"whale_swallow2", cd:90, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_gobbleUp", name:"Gobble Up", class:"Whale", icon:"whale_gobbleUp1", cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_peninsulaImpale", name:"Peninsula Impale", class:"Whale", icon:"whale_peninsulaImpale2", cd:90, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-30) },
-  { id:"whale_peninsulaRound", name:"Peninsula Round", class:"Whale", icon:"whale_peninsulaRound2", cd:120, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-40) },
-  { id:"whale_12thKingdomKnight", name:"12th Kingdom Knight", class:"Whale", icon:"whale_12thKingdomKnight2", cd:600, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true },
-  { id:"whale_bubbleShield", name:"Bubble Shield", class:"Whale", icon:"whale_bubbleShield4", castTime:4.5, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
-  { id:"whale_heavyWeight", name:"Heavy Weight", class:"Whale", icon:"whale_heavyWeight2", castTime:4, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_hydroBlast", name:"Hydro Blast", class:"Whale", icon:"whale_hydroBlast4", castTime:4.5, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_rejuvenate", name:"Rejuvenate", class:"Whale", icon:"whale_rejuvenate4", castTime:5.5, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:90, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true },
-  { id:"whale_whaleWave", name:"Whale Wave", class:"Whale", icon:"whale_whaleWave2", cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_malStorm", name:"Mal Storm", class:"Whale", icon:"whale_malStorm2", cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_callToArm", name:"Call To Arm", class:"Whale", icon:"whale_callToArm1", castTime:5, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:120, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_salvation", name:"Salvation", class:"Whale", icon:"whale_salvation2", castTime:5, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:240, cdWrapped:true, revisedArtExempt:false, duration:6, durWrapped:true },
-  { id:"whale_megalodon", name:"Megalodon", class:"Whale", icon:"whale_megalodon2", castTime:8, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:240, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_bubbleBurst", name:"Bubble Burst", class:"Whale", icon:"whale_bubbleBurst1", cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_revitalize", name:"Revitalize", class:"Whale", icon:"whale_revitalize1", castTime:6, castWrapped:true, castDep: WHALE_REDUCED_CAST_DEP, cd:180, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true },
-  { id:"whale_bowlingWhale", name:"Bowling Whale", class:"Whale", icon:"whale_bowlingWhale1", cd:180, cdWrapped:true, revisedArtExempt:false },
-  { id:"whale_grandTide", name:"Grand Tide", class:"Whale", icon:"whale_grandTide1", cd:300, cdWrapped:true, revisedArtExempt:false },
+  { id:"whale_sweep", name:"Sweep", class:"Whale", icon:"whale_sweep2", maxRank:2, cost:{mp:[0, 10], sp:[12, 8], spType:"red"}, cd:30, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-10), dmg:(rank)=>rank===1?"talAdjust(10)":"talAdjust(15)", atkCoeff:0.5, hitCount:()=>2, ko:"2", dmgNote:"2 hits. Each hit deals 0.5×ATK + talAdjust(5 + 5×sLv), KO=2 per hit." },
+  { id:"whale_javelin", name:"Javelin", class:"Whale", icon:"whale_javelin2", maxRank:2, cost:{mp:10, sp:[8, 12], spType:"red"}, cd:30, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-10), dmg:(rank)=>rank===1?"talAdjust(10)":"talAdjust(20)", atkCoeff:0.5, ko:"1", dmgNote:"Pierces enemies in a straight line dealing 0.5×ATK + talAdjust(10×sLv), KO=1, applying puncture." },
+  { id:"whale_honor", name:"Honor", class:"Whale", icon:"whale_honor4", maxRank:4, cost:{mp:[10, 15, 20, 25], sp:15, spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmg:(rank)=>`+${rank * 10} ATK/DEF/CHA`, dmgNote:"Grants honor to all allies in 15m radius, adding +10×sLv to ATK, DEF, and CHA for 12s, plus taunts enemies in 18+6×sLv meters." },
+  { id:"whale_shieldRush", name:"Shield Rush", class:"Whale", icon:"whale_shieldRush2", maxRank:2, cost:{mp:0, sp:[15, 18], spType:"red"}, cd:45, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-15), defCoeff:(rank)=>rank===1?0.5:1.0, dmg:(rank)=>rank===1?"talAdjust(10)":"talAdjust(20)", ko:(rank)=>String(rank*10), dmgNote:"Deals 0.5×sLv×DEF + talAdjust(10×sLv), knocking targets down with KO=10×sLv." },
+  { id:"whale_flyingShield", name:"Flying Shield", class:"Whale", icon:"whale_flyingShield2", maxRank:2, cost:{mp:0, sp:[16, 20], spType:"red"}, cd:45, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-15), defCoeff:(rank)=>rank===1?0.5:1.0, dmg:(rank)=>rank===1?"talAdjust(10)":"talAdjust(20)", ko:(rank)=>String(rank*10), dmgNote:"Throws boomerang shield dealing Floor(0.5×sLv×DEF) + talAdjust(10×sLv), KO=10×sLv to all targets in its path." },
+  { id:"whale_homingShield", name:"Homing Shield", class:"Whale", icon:"whale_homingShield1", maxRank:1, cost:{mp:0, sp:24, spType:"red"}, cd:120, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-40), duration:3, durWrapped:true, defCoeff:0.5, dmg:"talAdjust(20)", ko:"10", dmgNote:"Multi-hit homing projectile dealing 0.5×DEF + talAdjust(20), KO=10 per hit. Imposes 3s noShield status." },
+  { id:"whale_swallow", name:"Swallow", class:"Whale", icon:"whale_swallow2", maxRank:2, cost:{mp:0, sp:[10, 15], spType:"red"}, cd:90, cdWrapped:true, revisedArtExempt:false, dmg:"Utility", durNote:"CHA-contested duration (base 12s, +3s with Wonder Belly).", dmgNote:"Pulls target (9m / 15m). Swallows smaller target, disabling it and adding 50% of its weight to Whale." },
+  { id:"whale_gobbleUp", name:"Gobble Up", class:"Whale", icon:"whale_gobbleUp1", maxRank:1, cost:{mp:0, sp:5, spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", ko:"15", dmgNote:"Requires swallowed target in mouth. Spits target out dealing talAdjust(30), KO=15." },
+  { id:"whale_peninsulaImpale", name:"Peninsula Impale", class:"Whale", icon:"whale_peninsulaImpale2", maxRank:2, cost:{mp:0, sp:[18, 24], spType:"red"}, cd:90, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-30), atkCoeff:0.5, hitCount:()=>6, ko:"1", dmg:(rank)=>rank===1?"talAdjust(10)":"talAdjust(15)", dmgNote:"6 strikes. Each strike deals 0.5×ATK + talAdjust(5×sLv + 5), KO=1." },
+  { id:"whale_peninsulaRound", name:"Peninsula Round", class:"Whale", icon:"whale_peninsulaRound2", maxRank:2, cost:{mp:0, sp:[20, 25], spType:"red"}, cd:120, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-40), atkCoeff:0.5, hitCount:()=>5, ko:"1", dmg:(rank)=>rank===1?"talAdjust(10)":"talAdjust(15)", dmgNote:"5 spins dealing 0.5×ATK + talAdjust(5×sLv + 5), KO=1 each. Redirects projectiles." },
+  { id:"whale_12thKingdomKnight", name:"12th Kingdom Knight", class:"Whale", icon:"whale_12thKingdomKnight2", maxRank:2, cost:{mp:0, sp:[45, 60], spType:"red"}, cd:600, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, atkCoeff:0.2, ko:"1", dmg:(rank)=>rank===1?"talAdjust(5)":"talAdjust(10)", dmgNote:"Summons 4 Kingdom Knights for 60s. Each knight attacks dealing 0.2×ATK + talAdjust(5×sLv), KO=1." },
+  { id:"whale_bubbleShield", name:"Bubble Shield", class:"Whale", icon:"whale_bubbleShield4", maxRank:4, cost:{mp:[6, 8, 10, 12], sp:0}, castTime:4.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, dmg:(rank)=>`talAdjust(${10 * rank + 20})`, dmgNote:"Bubble shield absorbs 50% damage up to 30+10×sLv HP. Explodes upon breaking or after 12s dealing talAdjust(10×sLv + 20) in 8m AoE." },
+  { id:"whale_heavyWeight", name:"Heavy Weight", class:"Whale", icon:"whale_heavyWeight2", maxRank:2, cost:{mp:[10, 14], sp:0}, castTime:4, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:(rank)=>`+${rank * 15} Weight, -${rank} Run Speed`, durNote:"CHA-contested duration (base 15s).", dmgNote:"Target weight increased by 15×sLv and run speed reduced by sLv." },
+  { id:"whale_hydroBlast", name:"Hydro Blast", class:"Whale", icon:"whale_hydroBlast4", maxRank:4, cost:{mp:[8, 12, 16, 20], sp:0}, castTime:4.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false, ko:(rank)=>String(rank), dmg:(rank)=>`talAdjust(${10 * rank + 10})`, dmgNote:"Launches target into the air dealing talAdjust(10×sLv + 10) + TargetWeight, KO=sLv." },
+  { id:"whale_rejuvenate", name:"Rejuvenate", class:"Whale", icon:"whale_rejuvenate4", maxRank:4, cost:{mp:[10, 15, 20, 25], sp:[0, 0, 12, 12], spType:"blue"}, castTime:5.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:90, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:(rank)=>`5 ticks × [${6 * rank + 6} + ${(rank * 0.4).toFixed(1)}% Max HP]`, dmgNote:"Heals target every 4s for 18s (5 ticks). Each tick heals 6×sLv + 6 + Floor(0.004×sLv×TargetMaxHP).", durNote:"Restores target HP every 4s for 18s (5 ticks total)." },
+  { id:"whale_whaleWave", name:"Whale Wave", class:"Whale", icon:"whale_whaleWave2", maxRank:2, cost:{mp:0, sp:[12, 16], spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, ko:"1..3", dmg:(rank)=>rank===1?"talAdjust(100)":"talAdjust(150)", dmgNote:"Ground smash AoE (6m radius). Deals talAdjust(WhaleWeight × (0.5 + 0.5×sLv)) scaled by distance (100 / 150 TAL at base 100 weight)." },
+  { id:"whale_malStorm", name:"Mal Storm", class:"Whale", icon:"whale_malStorm2", maxRank:2, cost:{mp:0, sp:[18, 24], spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, hitCount:()=>4, ko:"1", dmg:(rank)=>rank===1?"talAdjust(30)":"talAdjust(50)", dmgNote:"Storm AoE (8m radius). 4 lightning strikes, each dealing talAdjust(20×sLv + 10), KO=1." },
+  { id:"whale_callToArm", name:"Call To Arm", class:"Whale", icon:"whale_callToArm1", maxRank:1, cost:{mp:15, sp:0}, castTime:5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:120, cdWrapped:true, revisedArtExempt:false, ko:"10", dmg:"talAdjust(30)", dmgNote:"Teleports to the ally with lowest HP, releasing a shockwave that deals talAdjust(30), KO=10, Hate=10." },
+  { id:"whale_salvation", name:"Salvation", class:"Whale", icon:"whale_salvation2", maxRank:2, cost:{mp:[24, 36], sp:0}, castTime:5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:240, cdWrapped:true, revisedArtExempt:false, duration:[4, 6], durWrapped:true, dmg:"Invulnerability", dmgNote:"Grants 100% damage invulnerability to all allies within area for chaAdjust(2×sLv + 2) seconds (4s / 6s)." },
+  { id:"whale_megalodon", name:"Megalodon", class:"Whale", icon:"whale_megalodon2", maxRank:2, cost:{mp:[30, 45], sp:[25, 35], spType:"red"}, castTime:8, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:240, cdWrapped:true, revisedArtExempt:false, hitCount:()=>2, ko:"1", dmg:(rank)=>rank===1?"talAdjust(200)":"talAdjust(300)", dmgNote:"Ancient leviathan bites twice dealing talAdjust(100×sLv + 100) per bite (400 / 600 TAL total), KO=1 each." },
+  { id:"whale_bubbleBurst", name:"Bubble Burst", class:"Whale", icon:"whale_bubbleBurst1", maxRank:1, cost:{free:true}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"Detonate Shields", dmgNote:"Passively adds +1 effective rank and +20 TAL burst to Bubble Shield. Active: instantly detonates all active Bubble Shields." },
+  { id:"whale_revitalize", name:"Revitalize", class:"Whale", icon:"whale_revitalize1", maxRank:1, cost:{mp:60, sp:0}, castTime:6, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:180, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:"5 ticks × [24 + 1.2% Max HP]", dmgNote:"Casts Rejuvenate Rank 3 on all allies in 12m radius, healing 24 + Floor(0.012×MaxHP) every 4s for 18s (5 ticks).", durNote:"Restores ally HP every 4s for 18s (5 ticks total)." },
+  { id:"whale_bowlingWhale", name:"Bowling Whale", class:"Whale", icon:"whale_bowlingWhale1", maxRank:1, cost:{mp:0, sp:25, spType:"red"}, cd:180, cdWrapped:true, revisedArtExempt:false, atkCoeff:0.7, ko:"1", dmg:"talAdjust(35)", dmgNote:"Curls into a ball and rolls through enemies dealing 0.7×ATK + talAdjust(35), KO=1, knocking targets away." },
+  { id:"whale_grandTide", name:"Grand Tide", class:"Whale", icon:"whale_grandTide1", maxRank:1, cost:{mp:30, sp:20, spType:"red"}, cd:300, cdWrapped:true, revisedArtExempt:false, atkCoeff:1.0, ko:"0", dmg:"talAdjust(200)", dmgNote:"Channeled tsunami sweeping forward. Drains 10 MP and 20 SP (10 SP with Revised Skill) per sec, dealing 1.0×ATK + talAdjust(200) per tick." },
   { id:"wolf_braveSpirit", name:"Brave Spirit", class:"Wolf", icon:"wolf_braveSpirit4", cd:30, cdWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, dep:WOLF_PERSEVERANCE_DEP },
   { id:"wolf_crusader", name:"Crusader", class:"Wolf", icon:"wolf_crusader4", cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"wolf_powerBreak", name:"Power Break", class:"Wolf", icon:"wolf_powerBreak2", cd:30, cdWrapped:true, revisedArtExempt:false },
@@ -6785,6 +6786,13 @@ function mountSkillCooldownLookup(root){
   // existing castDep where one already exists, e.g. Slayer/All Slayer's
   // `improvedSlayer` -- so this new toggle instance shares live state with
   // the Cast Time corner one, not a duplicate/independent tracker).
+  function resolveDefCoeff(skill, rank){
+    if (typeof skill.defCoeff !== "function") return skill.defCoeff;
+    const depLv = skill.dmgRankDep
+      ? getDepRank(skill.dmgRankDep)
+      : (skill.dmgDep ? (getDepRank(skill.dmgDep) === skill.dmgDep.maxRank ? 1 : 0) : (skill.dmgFlagDep ? (getDepRank(skill.dmgFlagDep) === skill.dmgFlagDep.maxRank ? 1 : 0) : 0));
+    return skill.defCoeff(rank, depLv);
+  }
   function resolveAtkCoeff(skill, rank){
     if (typeof skill.atkCoeff !== "function") return skill.atkCoeff;
     const depLv = skill.dmgRankDep
@@ -6890,6 +6898,11 @@ function mountSkillCooldownLookup(root){
     }
     const hitAtkCoeff = resolveHitAtkCoeff(skill, hitIndex);
     if (hitAtkCoeff) val += hitAtkCoeff * ATK;
+    const hitDefCoeff = resolveDefCoeff(skill, rank);
+    if (hitDefCoeff) {
+      const DEF_val = parseFloat(defEl.value) || 0;
+      val += hitDefCoeff * DEF_val;
+    }
     if (skill.dmgFocusIntellect && focusOn) val = val * 0.01 * INT;
     if (dmgDepOn) val += skill.dmgDep.calc(LV, rank, TAL);
     val = Math.trunc(val);
@@ -7188,6 +7201,7 @@ function mountSkillCooldownLookup(root){
     // single skill-level atkCoeff every other skill still uses. undefined
     // (the default, every non-dmgGroups call site) falls back to skill.atkCoeff.
     const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : resolveAtkCoeff(skill, rank);
+    const effDefCoeff = resolveDefCoeff(skill, rank);
     const text = substituteDmgVars(dmgTextRaw, skill, rank);
     const talMatch = text.match(/talAdjust\(([^()]+)\)/);
     const focusOn = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
@@ -7316,7 +7330,11 @@ function mountSkillCooldownLookup(root){
       // never both) -- when it IS focus-wrapped, ATK sits OUTSIDE/BEFORE the
       // bracket, matching the pre-existing (pre-2026-08-19) behavior exactly
       // (untestable against a real skill either way today).
-      const atkItem = effAtkCoeff
+      const DEF = parseFloat(defEl.value) || 0;
+    const defItem = effDefCoeff
+        ? (() => { const c = effDefCoeff * mult; return { value: c * DEF, sub: `${fmtCoeff(c)}DEF`, cls: "dmg-def" }; })()
+        : null;
+    const atkItem = effAtkCoeff
         ? (() => { const c = effAtkCoeff * mult; return { value: c * ATK, sub: `${fmtCoeff(c)}ATK`, cls: "dmg-atk" }; })()
         : null;
       let items = skill.dmgFocusIntellect && focusOn
@@ -7332,6 +7350,7 @@ function mountSkillCooldownLookup(root){
         : [
             { value: base, sub: null, cls: "dmg-num" },
             ...(atkItem ? [{ op: "+" }, atkItem] : []),
+            ...(defItem ? [{ op: "+" }, defItem] : []),
             { op: "+" },
             { value: talCoeff * TAL, sub: `${fmtCoeff(talCoeff)}TAL`, cls: "dmg-tal" },
           ];
@@ -8309,6 +8328,7 @@ function mountSkillCooldownLookup(root){
           // trail. undefined (every pre-existing call site) falls back to
           // selected.atkCoeff, unchanged.
           const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : resolveAtkCoeff(selected, rank);
+          const effDefCoeff = resolveDefCoeff(selected, rank);
           const t = substituteDmgVars(dmgTemplateText, selected, rank);
           const tm = t.match(/talAdjust\(([^()]+)\)/);
           const dmgCalcPostFn = v => {
@@ -8318,6 +8338,10 @@ function mountSkillCooldownLookup(root){
               val = val * (1 + selected.dmgRankDep.mult * depR);
             }
             if (effAtkCoeff) val += effAtkCoeff * ATK;
+            if (effDefCoeff) {
+              const DEF_val = parseFloat(defEl.value) || 0;
+              val += effDefCoeff * DEF_val;
+            }
             if (selected.dmgFocusIntellect && focusOnCalc) val = val * 0.01 * INT;
             if (dmgDepOnCalc) val += selected.dmgDep.calc(LV, rank, TAL);
             val = Math.trunc(val);
