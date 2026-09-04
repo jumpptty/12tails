@@ -11639,9 +11639,16 @@ function mountChameleonSim(root) {
         if (chmSlotFsCdOverlay) chmSlotFsCdOverlay.style.display = 'none';
         if (chmSlotFsCdText) chmSlotFsCdText.style.display = 'none';
       } else if (simState.fsRemainingCD > 0) {
-        chmTfFsSlot.className = 'chm-tf-skill-slot on-cd';
-        chmTfFsSlot.title = 'Fatal Strike (Cooldown: ' + simState.fsRemainingCD.toFixed(1) + 's) - Click to toggle';
-        if (chmSlotFsCharges) chmSlotFsCharges.style.display = 'none';
+        chmTfFsSlot.className = 'chm-tf-skill-slot on-cd' + (simState.fsCharges > 0 ? ' active-buff' : '');
+        chmTfFsSlot.title = 'Fatal Strike (Cooldown: ' + simState.fsRemainingCD.toFixed(1) + 's' + (simState.fsCharges > 0 ? ' · ' + simState.fsCharges + ' shots remaining' : '') + ') - Click to toggle';
+        if (chmSlotFsCharges) {
+          if (simState.fsCharges > 0) {
+            chmSlotFsCharges.style.display = 'block';
+            chmSlotFsCharges.textContent = simState.fsCharges;
+          } else {
+            chmSlotFsCharges.style.display = 'none';
+          }
+        }
         if (chmSlotFsCdOverlay) chmSlotFsCdOverlay.style.display = 'block';
         if (chmSlotFsCdText) {
           chmSlotFsCdText.style.display = 'flex';
