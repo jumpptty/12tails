@@ -2395,6 +2395,201 @@
     letter-spacing: 0.5px;
     white-space: nowrap;
   }
+  .chm-header-guide-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    background: rgba(212, 175, 55, 0.14);
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+  }
+  .chm-header-guide-btn:hover {
+    background: rgba(212, 175, 55, 0.28);
+    border-color: #d4af37;
+    color: #fff;
+    box-shadow: 0 0 14px rgba(212, 175, 55, 0.45);
+    transform: translateY(-1px);
+  }
+  .chm-header-guide-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Chameleon Onboarding Guide Walkthrough (Ledger Style) */
+  .chm-guide-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99990;
+    pointer-events: auto;
+    background: rgba(10, 9, 8, 0.78);
+    transition: clip-path 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chm-guide-spotlight {
+    position: fixed;
+    z-index: 99992;
+    pointer-events: none;
+    border-radius: 8px;
+    border: 2px solid #d4af37;
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.55), inset 0 0 14px rgba(212, 175, 55, 0.15);
+    transition: top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                left 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chm-guide-popover {
+    position: fixed;
+    z-index: 99995;
+    width: min(92vw, 360px);
+    background: #171613;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.88), 0 0 24px rgba(212, 175, 55, 0.25);
+    color: #e5e5e5;
+    font-family: inherit;
+    transition: top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                left 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.2s ease;
+  }
+  .chm-guide-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .chm-guide-step-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .chm-guide-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.15s ease;
+  }
+  .chm-guide-close-btn:hover {
+    color: #ef4444;
+  }
+  .chm-guide-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f5f5f5;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chm-guide-body {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #a8a29e;
+    margin-bottom: 14px;
+  }
+  .chm-guide-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .chm-guide-skip-btn {
+    background: none;
+    border: none;
+    color: #737373;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+  }
+  .chm-guide-skip-btn:hover {
+    color: #d4d4d4;
+    text-decoration: underline;
+  }
+  .chm-guide-nav-btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chm-guide-btn-prev {
+    background: #23221f;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #bbb;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chm-guide-btn-prev:hover {
+    background: #2e2d29;
+    color: #fff;
+  }
+  .chm-guide-btn-next {
+    background: linear-gradient(135deg, #d4af37, #aa8524);
+    border: 1px solid #d4af37;
+    color: #141311;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.35);
+    transition: all 0.15s ease;
+  }
+  .chm-guide-btn-next:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  /* Pulsing Beacon for Step 4 */
+  .chm-guide-beacon {
+    position: fixed;
+    z-index: 99996;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: chmBeaconBounce 1.2s ease-in-out infinite;
+    transition: top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chm-guide-beacon-arrow {
+    font-size: 20px;
+    color: #facc15;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.85);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .chm-guide-beacon-ring {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #facc15;
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.85);
+    animation: chmBeaconPulse 1.4s ease-out infinite;
+  }
+  @keyframes chmBeaconPulse {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  @keyframes chmBeaconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
 
   /* Hero Expected Proc Probability Strip */
   .chm-hero-prob-strip {
@@ -2522,6 +2717,14 @@
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
+  }
+  #chmGearBonusBadge {
+    color: #facc15 !important;
+    background: rgba(212, 175, 55, 0.14) !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.2) !important;
+    letter-spacing: 0.5px;
+    font-weight: 600;
   }
 
   /* Equipment Slots */
@@ -2656,7 +2859,19 @@
     }
   }
 
-  /* Stat Input Accents: ATK (Red), LCK (Orange), AGI (Green) */
+  /* Stat Input Accents: VIT (Yellow), ATK (Red), LCK (Orange), AGI (Green) */
+  .chm-stat-accent-vit label {
+    color: #facc15 !important;
+  }
+  .chm-stat-accent-vit input {
+    border-color: rgba(250, 204, 21, 0.45) !important;
+    background: rgba(250, 204, 21, 0.06) !important;
+  }
+  .chm-stat-accent-vit input:focus {
+    border-color: #facc15 !important;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25) !important;
+  }
+
   .chm-stat-accent-atk label {
     color: #ef4444 !important;
   }
@@ -10365,7 +10580,9 @@ function mountChameleonSim(root) {
           </div>
         </div>
         <div class="chm-header-right">
-          <span class="chm-header-pill">NORMAL ATTACK RANK 4 (0.3s)</span>
+          <button type="button" class="chm-header-pill chm-header-guide-btn" id="chmGuideBtn" title="แนะนำขั้นตอนการใช้งาน">
+            <span>📖</span> วิธีใช้งาน (Guide)
+          </button>
         </div>
       </div>
 
@@ -10425,7 +10642,7 @@ function mountChameleonSim(root) {
         <!-- Left Deck: Config, Gear, Dependencies -->
         <div class="chm-deck">
           <!-- Equipment -->
-          <div class="chm-card">
+          <div class="chm-card" id="chmEquipCard">
             <div class="chm-card-title">
               <span>Equipment</span>
               <span class="chm-card-badge" id="chmGearBonusBadge">+0 ATK | +0% Crit</span>
@@ -10474,7 +10691,7 @@ function mountChameleonSim(root) {
           </div>
 
           <!-- Stats -->
-          <div class="chm-card">
+          <div class="chm-card" id="chmStatsCard">
             <div class="chm-card-title">
               <span>Stats</span>
             </div>
@@ -10484,7 +10701,7 @@ function mountChameleonSim(root) {
                 <input type="number" id="chmInpLevel" value="100" min="1" max="100">
               </div>
               <div class="chm-input-group chm-stat-accent-vit">
-                <label>VIT</label>
+                <label>Total VIT</label>
                 <input type="number" id="chmInpVit" value="300" min="1" title="Player VIT (1 VIT = 10 Max HP)">
               </div>
               <div class="chm-input-group chm-stat-accent-atk">
@@ -10503,7 +10720,7 @@ function mountChameleonSim(root) {
           </div>
 
           <!-- Skill Dependencies Matrix (Rich Icon Chips) -->
-          <div class="chm-card">
+          <div class="chm-card" id="chmSkillsCard">
             <div class="chm-card-title">
               <span>Skills</span>
             </div>
@@ -11735,8 +11952,12 @@ function mountChameleonSim(root) {
   });
 
   toggleFireBtn.addEventListener('click', () => {
-    if (simState.isRunning) stopInfinite();
-    else startInfinite();
+    if (simState.isRunning) {
+      stopInfinite();
+    } else {
+      startInfinite();
+      closeChmGuide();
+    }
   });
   resetBtn.addEventListener('click', resetSim);
   resetBtn2.addEventListener('click', resetSim);
@@ -11854,6 +12075,267 @@ function mountChameleonSim(root) {
   // Initial render
   onEquipChange();
   resetSim();
+
+  // ==========================================
+  // 4-Step Guided Onboarding Tour (Chameleon Sim)
+  // ==========================================
+  const CHM_GUIDE_STEPS = [
+    {
+      targetId: 'chmEquipCard',
+      tag: 'ขั้นตอนที่ 1 / 4',
+      title: 'Step 1: เลือกอุปกรณ์',
+      body: 'เพื่อจำลองเอฟเฟกต์พิเศษของไอเทม'
+    },
+    {
+      targetId: 'chmStatsCard',
+      tag: 'ขั้นตอนที่ 2 / 4',
+      title: 'Step 2: Status ตัวละคร',
+      body: ''
+    },
+    {
+      targetId: 'chmSkillsCard',
+      tag: 'ขั้นตอนที่ 3 / 4',
+      title: 'Step 3: Skill ตัวละคร',
+      body: ''
+    },
+    {
+      targetId: 'chmToggleFireBtn',
+      tag: 'ขั้นตอนที่ 4 / 4',
+      title: 'Step 4: กด Start เพื่อจำลองการยิงได้เลย',
+      body: 'เมื่อตั้งค่าครบแล้ว กดปุ่ม Start เพื่อเริ่มจำลองการยิงแบบ Real-time และตรวจสอบ DPS, โอกาสคริ, ดาเมจพิษ พร้อม Hit Log ได้ทันที!'
+    }
+  ];
+
+  let currentGuideStep = -1;
+  let guideOverlayEl = null;
+  let guideSpotlightEl = null;
+  let guidePopoverEl = null;
+  let guideBeaconEl = null;
+  const CHM_GUIDE_STORAGE_KEY = 'chm_atk_sim_guide_seen_v1';
+
+  function positionGuideElements() {
+    if (currentGuideStep < 0 || currentGuideStep >= CHM_GUIDE_STEPS.length) return;
+    const step = CHM_GUIDE_STEPS[currentGuideStep];
+    const targetEl = root.querySelector('#' + step.targetId);
+    if (!targetEl || !guideSpotlightEl || !guidePopoverEl) return;
+
+    const rect = targetEl.getBoundingClientRect();
+    const pad = (currentGuideStep === 3) ? 6 : 8;
+
+    // Spotlight Cutout position
+    const spotTop = Math.max(0, rect.top - pad);
+    const spotLeft = Math.max(0, rect.left - pad);
+    const spotWidth = rect.width + pad * 2;
+    const spotHeight = rect.height + pad * 2;
+
+    guideSpotlightEl.style.top = spotTop + 'px';
+    guideSpotlightEl.style.left = spotLeft + 'px';
+    guideSpotlightEl.style.width = spotWidth + 'px';
+    guideSpotlightEl.style.height = spotHeight + 'px';
+
+    // Set clip-path hole on overlay so clicks inside the hole pass directly to the target element
+    const x1 = spotLeft;
+    const y1 = spotTop;
+    const x2 = spotLeft + spotWidth;
+    const y2 = spotTop + spotHeight;
+    if (guideOverlayEl) {
+      guideOverlayEl.style.clipPath = `polygon(0px 0px, 0px 100%, ${x1}px 100%, ${x1}px ${y1}px, ${x2}px ${y1}px, ${x2}px ${y2}px, ${x1}px ${y2}px, ${x1}px 100%, 100% 100%, 100% 0px)`;
+    }
+
+    // Beacon (Step 4 only)
+    if (currentGuideStep === 3 && guideBeaconEl) {
+      guideBeaconEl.style.display = 'flex';
+      const beaconTop = Math.max(8, rect.top - 52);
+      const beaconLeft = rect.left + (rect.width / 2) - 14;
+      guideBeaconEl.style.top = beaconTop + 'px';
+      guideBeaconEl.style.left = beaconLeft + 'px';
+    } else if (guideBeaconEl) {
+      guideBeaconEl.style.display = 'none';
+    }
+
+    // Popover position
+    const popoverWidth = Math.min(window.innerWidth * 0.92, 360);
+    const popoverHeight = guidePopoverEl.offsetHeight || 190;
+
+    let popoverLeft = 0;
+    let popoverTop = 0;
+
+    // Prefer placing popover to the right of the focused card if space allows, so inputs remain 100% visible
+    if (currentGuideStep < 3 && (window.innerWidth - rect.right >= popoverWidth + 20)) {
+      popoverLeft = rect.right + 16;
+      popoverTop = Math.max(14, Math.min(window.innerHeight - popoverHeight - 14, rect.top));
+    } else {
+      popoverLeft = rect.left + (rect.width / 2) - (popoverWidth / 2);
+      if (popoverLeft < 12) popoverLeft = 12;
+      if (popoverLeft + popoverWidth > window.innerWidth - 12) {
+        popoverLeft = window.innerWidth - popoverWidth - 12;
+      }
+
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      if (currentGuideStep === 3) {
+        if (spaceAbove > popoverHeight + 60) {
+          popoverTop = rect.top - popoverHeight - 60;
+        } else {
+          popoverTop = rect.bottom + 16;
+        }
+      } else if (spaceBelow >= popoverHeight + 20) {
+        popoverTop = rect.bottom + 16;
+      } else if (spaceAbove >= popoverHeight + 20) {
+        popoverTop = rect.top - popoverHeight - 16;
+      } else {
+        popoverTop = Math.max(16, (window.innerHeight - popoverHeight) / 2);
+      }
+    }
+
+    guidePopoverEl.style.width = popoverWidth + 'px';
+    guidePopoverEl.style.left = popoverLeft + 'px';
+    guidePopoverEl.style.top = Math.max(10, Math.min(window.innerHeight - popoverHeight - 12, popoverTop)) + 'px';
+  }
+
+  function renderGuideStep(stepIdx) {
+    // Elevate current focused panel and de-elevate previous targets so inputs are fully interactive
+    CHM_GUIDE_STEPS.forEach(s => {
+      const el = root.querySelector('#' + s.targetId);
+      if (el) el.classList.remove('chm-guide-focused-target');
+    });
+
+    currentGuideStep = stepIdx;
+    const step = CHM_GUIDE_STEPS[stepIdx];
+    const targetEl = root.querySelector('#' + step.targetId);
+    if (!targetEl) return;
+
+    targetEl.classList.add('chm-guide-focused-target');
+
+    // Smooth auto-scroll target into viewport center
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+    // Update Popover content
+    const isFirst = stepIdx === 0;
+    const isLast = stepIdx === CHM_GUIDE_STEPS.length - 1;
+
+    guidePopoverEl.innerHTML = `
+      <div class="chm-guide-head">
+        <span class="chm-guide-step-tag">${step.tag}</span>
+      </div>
+      <h3 class="chm-guide-title">${step.title}</h3>
+      ${step.body ? `<div class="chm-guide-body">${step.body}</div>` : ''}
+      <div class="chm-guide-footer">
+        <div>
+          ${!isFirst ? '<button type="button" class="chm-guide-btn-prev" id="chmGuidePrevBtn">ย้อนกลับ</button>' : ''}
+        </div>
+        <div class="chm-guide-nav-btns">
+          <button type="button" class="chm-guide-btn-next" id="chmGuideNextBtn">${isLast ? 'เสร็จสิ้น ✓' : 'ถัดไป →'}</button>
+        </div>
+      </div>
+    `;
+
+    // Bind event buttons inside popover
+    const prevBtn = guidePopoverEl.querySelector('#chmGuidePrevBtn');
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => renderGuideStep(currentGuideStep - 1));
+    }
+    const nextBtn = guidePopoverEl.querySelector('#chmGuideNextBtn');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (isLast) {
+          closeChmGuide();
+        } else {
+          renderGuideStep(currentGuideStep + 1);
+        }
+      });
+    }
+
+    // Recalculate coordinates immediately, and again after smooth scroll settles
+    positionGuideElements();
+    setTimeout(positionGuideElements, 150);
+    setTimeout(positionGuideElements, 350);
+  }
+
+  function openChmGuide(startIdx = 0) {
+    // Ensure we are in Infinite Shooting mode so Step 4 points to Start
+    if (simState.mode !== 'infinite') {
+      modeInfiniteBtn.click();
+    }
+
+    if (!guideOverlayEl) {
+      guideOverlayEl = document.createElement('div');
+      guideOverlayEl.className = 'chm-guide-overlay';
+      guideOverlayEl.id = 'chmGuideOverlay';
+
+      guideSpotlightEl = document.createElement('div');
+      guideSpotlightEl.className = 'chm-guide-spotlight';
+
+      guidePopoverEl = document.createElement('div');
+      guidePopoverEl.className = 'chm-guide-popover';
+
+      guideBeaconEl = document.createElement('div');
+      guideBeaconEl.className = 'chm-guide-beacon';
+      guideBeaconEl.innerHTML = `
+        <span class="chm-guide-beacon-arrow">↓</span>
+        <div class="chm-guide-beacon-ring"></div>
+      `;
+
+      // Append overlay, spotlight, popover, and beacon to document.body
+      // NOTE: Popover is NOT a child of overlay so it does not get clipped by overlay's clipPath
+      document.body.appendChild(guideOverlayEl);
+      document.body.appendChild(guideSpotlightEl);
+      document.body.appendChild(guidePopoverEl);
+      document.body.appendChild(guideBeaconEl);
+    }
+
+    guideOverlayEl.style.display = 'block';
+    renderGuideStep(startIdx);
+  }
+
+  function closeChmGuide() {
+    try {
+      localStorage.setItem(CHM_GUIDE_STORAGE_KEY, '1');
+    } catch (e) {}
+
+    CHM_GUIDE_STEPS.forEach(s => {
+      const el = root.querySelector('#' + s.targetId);
+      if (el) el.classList.remove('chm-guide-focused-target');
+    });
+
+    if (guideOverlayEl) guideOverlayEl.remove();
+    if (guideSpotlightEl) guideSpotlightEl.remove();
+    if (guidePopoverEl) guidePopoverEl.remove();
+    if (guideBeaconEl) guideBeaconEl.remove();
+
+    guideOverlayEl = null;
+    guideSpotlightEl = null;
+    guidePopoverEl = null;
+    guideBeaconEl = null;
+    currentGuideStep = -1;
+  }
+
+  // Auto reposition on scroll and resize
+  window.addEventListener('resize', positionGuideElements);
+  window.addEventListener('scroll', positionGuideElements, { passive: true });
+
+  // Escape key handling removed - progression via Next button only
+
+  // Re-trigger button in header
+  const chmGuideBtn = root.querySelector('#chmGuideBtn');
+  if (chmGuideBtn) {
+    chmGuideBtn.addEventListener('click', () => {
+      openChmGuide(0);
+    });
+  }
+
+  // First-time visit auto trigger
+  let seenGuide = false;
+  try {
+    seenGuide = localStorage.getItem(CHM_GUIDE_STORAGE_KEY) === '1';
+  } catch (e) {}
+
+  if (!seenGuide) {
+    setTimeout(() => {
+      openChmGuide(0);
+    }, 600);
+  }
 }
 
 
