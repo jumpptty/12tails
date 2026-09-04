@@ -2418,6 +2418,12 @@
   }
 
   /* Chameleon Onboarding Guide Walkthrough (Ledger Style) */
+  html.chm-guide-scroll-locked,
+  html.chm-guide-scroll-locked body {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
   .chm-guide-overlay {
     position: fixed;
     inset: 0;
@@ -12253,7 +12259,27 @@ function mountChameleonSim(root) {
     setTimeout(positionGuideElements, 350);
   }
 
+  function preventGuideWheel(e) {
+    e.preventDefault();
+  }
+
+  function preventGuideKeys(e) {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+        return;
+      }
+      e.preventDefault();
+    }
+  }
+
   function openChmGuide(startIdx = 0) {
+    // Disable user scrolling during walkthrough
+    document.documentElement.classList.add('chm-guide-scroll-locked');
+    document.body.classList.add('chm-guide-scroll-locked');
+    window.addEventListener('wheel', preventGuideWheel, { passive: false });
+    window.addEventListener('touchmove', preventGuideWheel, { passive: false });
+    window.addEventListener('keydown', preventGuideKeys);
+
     // Ensure we are in Infinite Shooting mode so Step 4 points to Start
     if (simState.mode !== 'infinite') {
       modeInfiniteBtn.click();
@@ -12309,6 +12335,13 @@ function mountChameleonSim(root) {
     guidePopoverEl = null;
     guideBeaconEl = null;
     currentGuideStep = -1;
+
+    // Restore scrolling when walkthrough ends
+    document.documentElement.classList.remove('chm-guide-scroll-locked');
+    document.body.classList.remove('chm-guide-scroll-locked');
+    window.removeEventListener('wheel', preventGuideWheel);
+    window.removeEventListener('touchmove', preventGuideWheel);
+    window.removeEventListener('keydown', preventGuideKeys);
   }
 
   // Auto reposition on scroll and resize
