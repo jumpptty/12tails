@@ -53,6 +53,11 @@ When reading `.cs` files in `DecompiledSource/`:
 
 * **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server.
 * **Preserve Design Integrity:** When updating `12t_projects/player-reference-tool/index.html`, adhere to its "Ledger" visual design system (deep lacquer ground `#141311`, brass-gold ink `#d4af37`, oxblood-red accent `#8b1e1e`, high-contrast legible typography).
+* **Inline Skill Description Container (`.sk-hero-desc`):**
+  * Sits inline to the right of the skill icon and title in the card hero header (`flex: 1; min-width: 0; margin-left: 14px;`).
+  * **Visual Style:** Gold Accent Bar (`background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`).
+  * **Typography:** Google Fonts **Prompt** (`font-family: 'Prompt', -apple-system, sans-serif; font-size: 12px; line-height: 1.45; color: var(--muted);`). Auto-shrinks down to `10.5px` if text exceeds 2 lines.
+  * **Responsive:** Stretches `100%` full width beneath the title on mobile viewports.
 
 ---
 
@@ -75,9 +80,13 @@ Present a structured review table to the user. Every single skill entry must inc
 2. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
 3. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line`):** Exact raw string from client language files.
 4. **Proposed Header Tooltip (`desc`):**
-   * **In-Game Client Phrasing as Baseline:** Base descriptions directly on authentic client tooltips (`<Class>Skill_eng.cs`) to preserve original flavor context and terminology.
+   * **In-Game Client Phrasing as Baseline:** Base descriptions directly on authentic client tooltips (Thai strings as primary) to preserve original flavor context and terminology.
    * **Qualitative Over Quantitative:** Strip out all rank-dependent and dependency-scaled quantitative numbers (damage values, durations, tick counts, percentage bonuses) to avoid duplicating or conflicting with live UI calculation chips.
    * **Always Include Verified Geometries:** Always state exact AoE radii, projectile ranges, and cleanse areas whenever verified from decompiled targeting code (`Damage.FindAreaTarget`, `Damage.FindRecTarget`, OverlapSphere, raycasts).
+   * **Dynamic Variable Highlights (`**value**`):**
+     * For any qualitative variable that changes with `rank` or passive dependency (`skillDep`), define `desc` as a function: `(rank, depRank) => ...`.
+     * Wrap the dynamic value in markdown bold: `**${value}**` (e.g. `**${3 * rank + 2}m**` or `**เลเวล ${x}**`).
+     * `renderHero()` automatically parses `**value**` into `<span class="sk-val">value</span>`, styled as **Brass Gold** (`color: var(--gold); font-weight: 600;`), and strips raw asterisks from the native `title` hover tooltip.
    * **Highlight Utility & Hidden Mechanics:** Clearly note non-obvious behavior (cleanses, lock removals, sleep breaks, aggro wipes, absolute immunities, unlisted passive hooks).
 
 > ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
