@@ -20,8 +20,8 @@ Verified from decompiled source (`DecompiledSource/Whale.cs`, `DecompiledSource/
     - `whale_whaleWave`: Ground smash dealing `talAdjust(WhaleWeight × (0.5 + 0.5×sLv))` scaled by distance from impact (100 / 150 TAL at base 100 weight).
     - `whale_hydroBlast`: Vertical water geyser dealing `talAdjust(10×sLv + 10) + TargetWeight`.
 - **Healing & Protective Bubble Mechanics**:
-  - `whale_rejuvenate`: Periodic regeneration ticking 5 times over 18s (every 4s). Each tick restores `6×sLv + 6 + Floor(0.004 × sLv × TargetMaxHP)`.
-  - `whale_revitalize`: Casts Rejuvenate Rank 3 on all allies within 12m radius, ticking 5 times for `24 + Floor(0.012 × TargetMaxHP)`.
+  - `whale_rejuvenate`: Periodic regeneration ticking every 4s over 18s. Each tick restores `6×sLv + 6 + Floor(0.004 × sLv × TargetMaxHP)`.
+  - `whale_revitalize`: Casts Rejuvenate Rank 3 on all allies within 12m radius, ticking every 4s for `24 + Floor(0.012 × TargetMaxHP)`.
   - `whale_bubbleShield`: Absorbs 50% of incoming damage up to `30 + 10×sLv` HP. When expired (12s) or broken, explodes in an 8m AoE dealing `talAdjust(10×sLv + 20)` magic damage.
   - `whale_bubbleBurst`: Passively adds +1 effective rank and +20 TAL burst damage to Bubble Shield; active trigger detonates all shields immediately.
   - `whale_salvation`: Grants 100% damage invulnerability to all allies in range for `chaAdjust(2×sLv + 2)` seconds (4s at R1, 6s at R2).
@@ -58,14 +58,14 @@ Verified from decompiled source (`DecompiledSource/Whale.cs`, `DecompiledSource/
 | `whale_bubbleShield`| Bubble Shield | 4 | [6, 8, 10, 12] MP, 0 SP | 30s | 4.5s | 12s | `talAdjust(10×sLv + 20)` (Burst) | — | Bubble shield absorbs 50% damage up to 30+10×sLv HP. Explodes upon breaking or after 12s dealing talAdjust(10×sLv + 20) in 8m AoE. Reduced Cast halves cast time. |
 | `whale_heavyWeight` | Heavy Weight | 2 | [10, 14] MP, 0 SP | 60s | 4s | Contested (15s base) | Debuff (No Damage Formula) | — | Target weight increased by 15×sLv and run speed reduced by sLv for 15s base (`chaAdjusted`, contested). Reduced Cast halves cast time. |
 | `whale_hydroBlast` | Hydro Blast | 4 | [8, 12, 16, 20] MP, 0 SP | 60s | 4.5s | — | `talAdjust(10×sLv + 10) + TargetWeight` | sLv | Launches target into the air dealing talAdjust(10×sLv + 10) + TargetWeight, KO=sLv. Reduced Cast halves cast time. |
-| `whale_rejuvenate` | Rejuvenate | 4 | [10, 15, 20, 25] MP, [0, 0, 12, 12] SP (blue) | 90s | 5.5s | 18s | `6×sLv + 6 + Floor(0.004×sLv×MaxHP)` | 0 | Heals target every 4s for 18s (5 ticks total). Each tick heals 6×sLv + 6 + Floor(0.004×sLv×TargetMaxHP). Reduced Cast halves cast time. |
+| `whale_rejuvenate` | Rejuvenate | 4 | [10, 15, 20, 25] MP, [0, 0, 12, 12] SP (blue) | 90s | 5.5s | 18s | `6×sLv + 6 + Floor(0.004×sLv×MaxHP)` | 0 | Heals target every 4s for 18s. Each tick heals 6×sLv + 6 + Floor(0.004×sLv×TargetMaxHP). Reduced Cast halves cast time. |
 | `whale_whaleWave` | Whale Wave | 2 | 0 MP, [12, 16] SP (red) | 60s | 0s | — | `talAdjust(WhaleWeight × (0.5 + 0.5×sLv))` | 1-3 | Ground smash AoE (6m radius). Deals talAdjust(WhaleWeight × (0.5 + 0.5×sLv)) scaled by distance (100 / 150 TAL at base 100 weight). |
 | `whale_malStorm` | Mal Storm | 2 | 0 MP, [18, 24] SP (red) | 60s | 0s | — | `4 × talAdjust(20×sLv + 10)` | 1 | Storm AoE (8m radius). 4 lightning strikes, each dealing talAdjust(20×sLv + 10), KO=1. |
 | `whale_callToArm` | Call To Arm | 1 | 15 MP, 0 SP | 120s | 5s | — | `talAdjust(30)` | 10 | Teleports to the ally with lowest HP, releasing a shockwave that deals talAdjust(30), KO=10, Hate=10. Reduced Cast halves cast time. |
 | `whale_salvation` | Salvation | 2 | [24, 36] MP, 0 SP | 240s | 5s | [4, 6]s | Invulnerability (No Damage Formula) | — | Grants 100% damage invulnerability to all allies within area for chaAdjust(2×sLv + 2) seconds (4s / 6s). Reduced Cast halves cast time. |
 | `whale_megalodon` | Megalodon | 2 | [30, 45] MP, [25, 35] SP (red) | 240s | 8s | — | `2 × talAdjust(100×sLv + 100)` | 1 | Ancient leviathan bites twice dealing talAdjust(100×sLv + 100) per bite (400 / 600 TAL total), KO=1 each. Reduced Cast halves cast time. |
 | `whale_bubbleBurst` | Bubble Burst | 1 | Free (0 MP, 0 SP) | 60s | 0s | — | Active Detonation (No Damage Formula) | — | Passively adds +1 effective rank and +20 TAL burst to Bubble Shield. Active: instantly detonates all active Bubble Shields. |
-| `whale_revitalize` | Revitalize | 1 | 60 MP, 0 SP | 180s | 6s | 18s | `24 + 1.2% Max HP` | 0 | Casts Rejuvenate Rank 3 on all allies in 12m radius, healing 24 + Floor(0.012×MaxHP) every 4s for 18s (5 ticks). Reduced Cast halves cast time. |
+| `whale_revitalize` | Revitalize | 1 | 60 MP, 0 SP | 180s | 6s | 18s | `24 + 1.2% Max HP` | 0 | Casts Rejuvenate Rank 3 on all allies in 12m radius, healing 24 + Floor(0.012×MaxHP) every 4s for 18s. Reduced Cast halves cast time. |
 | `whale_bowlingWhale`| Bowling Whale | 1 | 0 MP, 25 SP (red) | 180s | 0s | — | `0.7×ATK + talAdjust(35)` | 1 | Curls into a ball and rolls through enemies dealing 0.7×ATK + talAdjust(35), KO=1, knocking targets away. |
 | `whale_grandTide` | Grand Tide | 1 | 30 MP, 20 SP (red) | 300s | 0s | Channeled | `1.0×ATK + talAdjust(200)` (per tick) | 0 | Channeled tsunami sweeping forward. Drains 10 MP and 20 SP (10 SP with Revised Skill) per sec, dealing 1.0×ATK + talAdjust(200) per tick. |
 

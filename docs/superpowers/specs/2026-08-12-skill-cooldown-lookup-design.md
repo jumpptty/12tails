@@ -4,7 +4,7 @@
 
 ## Goal
 
-A new tool mounted inline into the "12 Tails Tools" hub (`12t_projects/player-reference-tool/index.html`)
+A new tool mounted inline into the "12 Tails Bible" hub (`12t_projects/player-reference-tool/index.html`)
 that lets a player look up, across all 12 classes, every active skill's max-rank cooldown and (if
 applicable) buff/debuff duration — both the raw source value and the value adjusted for the player's own
 AGI/CHA/LCK, with an optional `revisedArt5` (12% CD reduction) toggle.

@@ -137,7 +137,7 @@ The source was run through an obfuscator; expect this on every file:
   its own Artifact (2026-08-12). Has its own `CLAUDE.md` with the Artifact URL to republish in place —
   check it before publishing this one, omitting `url:` forks a duplicate. Linked from the
   `player-reference-tool` hub below as a link-out entry, not merged into it.
-- **`12t_projects/player-reference-tool/`** — the "12 Tails Tools" Artifact, a single-file multi-tool
+- **`12t_projects/player-reference-tool/`** — the "12 Tails Bible" Artifact, a single-file multi-tool
   hub for player-facing reference calculators. **Policy (set 2026-08-12): new tools are added as links
   out to their own separate Artifacts, never mounted inline into this hub's `TOOLS` registry** — a
   same-day attempt to inline-embed the GoldenKingBug Spawn Map (a ~700KB Three.js scene) was reverted

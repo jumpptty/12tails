@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a mounted "Skill Cooldown/Duration Lookup" tool to the "12 Tails Tools" hub
+**Goal:** Add a mounted "Skill Cooldown/Duration Lookup" tool to the "12 Tails Bible" hub
 (`12t_projects/player-reference-tool/index.html`) covering every active skill's max-rank cooldown and
 buff/debuff duration across all 12 classes, adjusted live for the player's AGI/CHA/LCK and an optional
 `revisedArt5` toggle.

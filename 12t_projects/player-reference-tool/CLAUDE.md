@@ -1,6 +1,6 @@
 # CLAUDE.md — PlayerReferenceTool
 
-Source of truth for the **"12 Tails Tools"** Artifact — a single-file multi-tool hub for 12TailsOnline reference calculators.
+Source of truth for the **"12 Tails Bible"** Artifact — a single-file multi-tool hub for 12TailsOnline reference calculators.
 
 - `index.html` is the full artifact source — edit it directly here, then publish straight from this path (the Artifact tool doesn't require a scratchpad copy). Always pass `url: https://claude.ai/code/artifact/5f024957-09df-4f7c-b4d6-c9f38823e7c8` to update in place — omitting it forks a duplicate artifact. Or just run `/publish-player-reference-tool`.
 - Architecture: a `TOOLS` registry array with two entry shapes:
@@ -12,7 +12,7 @@ Source of truth for the **"12 Tails Tools"** Artifact — a single-file multi-to
 ## Content rules (user-specified, always apply)
 
 - No explanations, descriptions, or subtitle copy anywhere in the UI — labels and controls only. No blurb text under entry titles, no intro paragraph under headings.
-- Header is plain text `12 Tails Tools` — no icon, no tagline.
+- Header is plain text `12 Tails Bible` — no icon, no tagline.
 - When adding a tool entry or a tool's own heading, do not add a description line under it unless the user explicitly asks for one.
 
 ## Design system — "Ledger" direction (est. 2026-08-12)

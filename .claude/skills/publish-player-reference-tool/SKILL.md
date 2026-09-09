@@ -1,6 +1,6 @@
 ---
 name: publish-player-reference-tool
-description: Publish 12t_projects/player-reference-tool/index.html (the "12 Tails Tools" hub) to its live Artifact URL. Use when the user asks to publish, deploy, push, or update the reference tool artifact.
+description: Publish 12t_projects/player-reference-tool/index.html (the "12 Tails Bible" hub) to its live Artifact URL. Use when the user asks to publish, deploy, push, or update the reference tool artifact.
 ---
 
 # Publish Player Reference Tool

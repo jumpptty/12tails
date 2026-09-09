@@ -332,7 +332,7 @@ already-finished Penguin Interactive Infographic/Class-C/LCK-range plans, not an
   trimmed to just "GoldenKingBug Spawn Map"), see that folder's own `CLAUDE.md` (**new 2026-08-12**)
   for the URL to republish in place. Linked from the tools hub below rather than embedded in it.
 - `agi-cha-sweetspot/AGI-CHA-Sweetspot-Infographic.html`.
-- `player-reference-tool/index.html` — **new 2026-08-12**, the "12 Tails Tools" multi-tool Artifact hub.
+- `player-reference-tool/index.html` — **new 2026-08-12**, the "12 Tails Bible" multi-tool Artifact hub.
   Uses a new "Ledger" visual design system, documented in that folder's own `CLAUDE.md` — read it
   before touching the UI. Publish with the `publish-player-reference-tool` skill, always to its
   existing Artifact URL (never omit `url:`).
@@ -354,7 +354,7 @@ already-finished Penguin Interactive Infographic/Class-C/LCK-range plans, not an
     the bug real instead of hypothetical) — each mounted tool now gets its own lazily-created, persistent
     container, shown/hidden on switch instead of a shared `innerHTML` write. Verified live via Playwright
     that switching between the two mounted tools preserves each one's state rather than wiping it.
-  - The "All Tools" breadcrumb link was removed same-day (redundant with clicking the "12 Tails Tools"
+  - The "All Tools" breadcrumb link was removed same-day (redundant with clicking the "12 Tails Bible"
     brand title, which already navigates home) — only the current-tool-name crumb remains.
   - **Published live** as of the 2026-08-12 session with the 2-col grid/GoldenKingBug link/All-Tools-
     removal changes above — the `publish-player-reference-tool` skill's `disable-model-invocation` lock
