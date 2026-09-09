@@ -5962,7 +5962,7 @@ const ENEMY_MOD_IDS = ["reduceHit", "miracleDropHit", "amplifyDamage"];
 const FINAL_MULT_MOD_IDS = ["finalMult1", "finalMult2", "finalMult3"];
 
 const SKILLS = [
-  { id:"bat_massCast", name:"Mass Cast", class:"Bat", icon:"bat_massCast2", cd:180, cdWrapped:true, revisedArtExempt:false, duration:9, durWrapped:true },
+  { id:"bat_massCast", name:"Mass Cast", class:"Bat", desc:(rank)=>`ทำให้เวท **${rank} ครั้ง**ต่อไปของค้างคาว กลายเป็นเวทกระจายผลใส่ศัตรูทั้งหมดในระยะ **18m** รอบเป้าหมาย (สูงสุด 6 เป้าหมาย)`, icon:"bat_massCast2", maxRank:2, cost:{mp:30,sp:15,spType:"blue"}, cd:180, cdWrapped:true, revisedArtExempt:false, duration:[6,9], durWrapped:true },
   { id:"bat_phantomBane", name:"Phantom Bane", class:"Bat", icon:"bat_phantomBane4", castTime:3.5, castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"bat_shadowGaze", name:"Shadow Gaze", class:"Bat", icon:"bat_shadowGaze4", cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"bat_dissolute", name:"Dissolute", class:"Bat", icon:"bat_dissolute2", castTime:2, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false },
