@@ -6265,14 +6265,14 @@ const SKILLS = [
   { id:"whale_bubbleShield", name:"Bubble Shield", class:"Whale", icon:"whale_bubbleShield4", maxRank:4, cost:{mp:[6, 8, 10, 12], sp:0}, castTime:4.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, shield:"talAdjust(10×sLv + 20 + 20×depLv)", shieldRankDep:WHALE_BUBBLE_BURST_DEP },
   { id:"whale_heavyWeight", name:"Heavy Weight", class:"Whale", icon:"whale_heavyWeight2", maxRank:2, cost:{mp:[10, 14], sp:0}, castTime:4, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, durContested:true, durNote:"CHA-contested duration (base 15s). Target weight increased by 15×sLv and run speed reduced by sLv." },
   { id:"whale_hydroBlast", name:"Hydro Blast", class:"Whale", icon:"whale_hydroBlast4", maxRank:4, cost:{mp:[8, 12, 16, 20], sp:0}, castTime:4.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false, ko:(rank)=>String(rank), dmg:"talAdjust(10×sLv + 10 + 20×depLv) + TargetWeight", dmgRankDep:WHALE_SPIRAL_BLAST_DEP },
-  { id:"whale_rejuvenate", name:"Rejuvenate", class:"Whale", icon:"whale_rejuvenate4", maxRank:4, cost:{mp:[10, 15, 20, 25], sp:[0, 0, 12, 12], spType:"blue"}, castTime:5.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:90, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:(rank)=>`5 ticks × [${6 * rank + 6} + ${(rank * 0.4).toFixed(1)}% Max HP]`, dmgNote:"Heals target every 4s for 18s (5 ticks). Each tick heals 6×sLv + 6 + Floor(0.004×sLv×TargetMaxHP).", durNote:"Restores target HP every 4s for 18s (5 ticks total)." },
+  { id:"whale_rejuvenate", name:"Rejuvenate", class:"Whale", icon:"whale_rejuvenate4", maxRank:4, cost:{mp:[10, 15, 20, 25], sp:[0, 0, 12, 12], spType:"blue"}, castTime:5.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:90, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:(rank)=>`${6 * rank + 6} + ${(rank * 0.4).toFixed(1)}% Max HP`, dmgNote:"Heals target every 4s for 18s (5 ticks). Each tick heals 6×sLv + 6 + Floor(0.004×sLv×TargetMaxHP).", durNote:"Restores target HP every 4s for 18s (5 ticks total)." },
   { id:"whale_whaleWave", name:"Whale Wave", class:"Whale", icon:"whale_whaleWave2", maxRank:2, cost:{mp:0, sp:[12, 16], spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, ko:"5×sLv", koMultDep:WHALE_DIVING_PRESS_DEP, dmg:"talAdjust(50 + 50×sLv)", dmgMultDep:WHALE_DIVING_PRESS_DEP },
   { id:"whale_malStorm", name:"Mal Storm", class:"Whale", icon:"whale_malStorm2", maxRank:2, cost:{mp:0, sp:[18, 24], spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, hitCount:()=>4, ko:(rank, depLv)=>depLv ? "2" : "1", dmg:"talAdjust(10 + 20×sLv)", dmgMultDep:WHALE_DIVING_PRESS_DEP },
   { id:"whale_callToArm", name:"Call To Arm", class:"Whale", icon:"whale_callToArm1", maxRank:1, cost:{mp:15, sp:0}, castTime:5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:120, cdWrapped:true, revisedArtExempt:false, ko:"10", dmg:"talAdjust(30)", dmgNote:"Teleports to the ally with lowest HP, releasing a shockwave that deals talAdjust(30), KO=10, Hate=10." },
   { id:"whale_salvation", name:"Salvation", class:"Whale", icon:"whale_salvation2", maxRank:2, cost:{mp:[24, 36], sp:0}, castTime:5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:240, cdWrapped:true, revisedArtExempt:false, duration:[4, 6], durWrapped:true, durNote:"Grants 100% damage invulnerability to all allies within area for chaAdjust(2×sLv + 2) seconds (4s / 6s)." },
   { id:"whale_megalodon", name:"Megalodon", class:"Whale", icon:"whale_megalodon2", maxRank:2, cost:{mp:[30, 45], sp:[25, 35], spType:"red"}, castTime:8, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:240, cdWrapped:true, revisedArtExempt:false, hitCount:()=>2, ko:"1", dmg:(rank)=>rank===1?"talAdjust(200)":"talAdjust(300)", dmgNote:"Ancient leviathan bites twice dealing talAdjust(100×sLv + 100) per bite (400 / 600 TAL total), KO=1 each." },
   { id:"whale_bubbleBurst", name:"Bubble Burst", class:"Whale", icon:"whale_bubbleBurst1", maxRank:1, cost:{free:true}, cd:60, cdWrapped:true, revisedArtExempt:false, durNote:"Passively adds +1 effective rank and +20 TAL burst to Bubble Shield. Active: instantly detonates all active Bubble Shields." },
-  { id:"whale_revitalize", name:"Revitalize", class:"Whale", icon:"whale_revitalize1", maxRank:1, cost:{mp:60, sp:0}, castTime:6, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:180, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:"5 ticks × [24 + 1.2% Max HP]", dmgNote:"Casts Rejuvenate Rank 3 on all allies in 12m radius, healing 24 + Floor(0.012×MaxHP) every 4s for 18s (5 ticks).", durNote:"Restores ally HP every 4s for 18s (5 ticks total)." },
+  { id:"whale_revitalize", name:"Revitalize", class:"Whale", icon:"whale_revitalize1", maxRank:1, cost:{mp:60, sp:0}, castTime:6, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:180, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:"24 + 1.2% Max HP", dmgNote:"Casts Rejuvenate Rank 3 on all allies in 12m radius, healing 24 + Floor(0.012×MaxHP) every 4s for 18s (5 ticks).", durNote:"Restores ally HP every 4s for 18s (5 ticks total)." },
   { id:"whale_bowlingWhale", name:"Bowling Whale", class:"Whale", icon:"whale_bowlingWhale1", maxRank:1, cost:{mp:0, sp:25, spType:"red"}, cd:180, cdWrapped:true, revisedArtExempt:false, atkCoeff:0.7, ko:"1", dmg:"talAdjust(35)", dmgNote:"Curls into a ball and rolls through enemies dealing 0.7×ATK + talAdjust(35), KO=1, knocking targets away." },
   { id:"whale_grandTide", name:"Grand Tide", class:"Whale", icon:"whale_grandTide1", maxRank:1, cost:{mp:30, sp:20, spType:"red"}, cd:300, cdWrapped:true, revisedArtExempt:false, atkCoeff:1.0, ko:"0", dmg:"talAdjust(200)", dmgNote:"Channeled tsunami sweeping forward. Drains 10 MP and 20 SP (10 SP with Revised Skill) per sec, dealing 1.0×ATK + talAdjust(200) per tick." },
   { id:"wolf_braveSpirit", name:"Brave Spirit", class:"Wolf", icon:"wolf_braveSpirit4", cd:30, cdWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, dep:WOLF_PERSEVERANCE_DEP },
@@ -7230,6 +7230,24 @@ function mountSkillCooldownLookup(root){
   // term-substitution work to renderOneDmgFormula per group, unchanged for
   // every other skill (the vast majority, no dmgGroups field at all), which
   // still goes through the plain single-formula path below exactly as before.
+  const buildFormulaGrid = items => {
+    let col = 0;
+    const numCells = [], subCells = [];
+    items.forEach(item => {
+      col++;
+      if (item.op){
+        numCells.push(`<span class="dmg-op" style="grid-column:${col};grid-row:1">${item.op}</span>`);
+        return;
+      }
+      const big = item.text !== undefined ? item.text : (item.raw ? fmtCoeff(item.value) : Math.trunc(item.value));
+      numCells.push(`<span class="${item.cls}" style="grid-column:${col};grid-row:1">${big}</span>`);
+      if (item.sub){
+        subCells.push(`<span class="dmg-term-sub" style="grid-column:${col};grid-row:2">(${item.sub})</span>`);
+      }
+    });
+    return `<div class="dmg-term-group">${numCells.join("")}${subCells.join("")}</div>`;
+  };
+
   function renderDmgFormula(skill, rank){
     if (skill.dmgGroups){
       return `<div class="sk-dmg-group-list">${skill.dmgGroups.map(g => `
@@ -7329,23 +7347,6 @@ function mountSkillCooldownLookup(root){
     // `raw` (fmtCoeff instead of Math.trunc for the big number) exists for
     // the one non-damage-contribution term in this function, the
     // focusIntellect multiplier itself (see its own call site below).
-    const buildFormulaGrid = items => {
-      let col = 0;
-      const numCells = [], subCells = [];
-      items.forEach(item => {
-        col++;
-        if (item.op){
-          numCells.push(`<span class="dmg-op" style="grid-column:${col};grid-row:1">${item.op}</span>`);
-          return;
-        }
-        const big = item.text !== undefined ? item.text : (item.raw ? fmtCoeff(item.value) : Math.trunc(item.value));
-        numCells.push(`<span class="${item.cls}" style="grid-column:${col};grid-row:1">${big}</span>`);
-        if (item.sub){
-          subCells.push(`<span class="dmg-term-sub" style="grid-column:${col};grid-row:2">(${item.sub})</span>`);
-        }
-      });
-      return `<div class="dmg-term-group">${numCells.join("")}${subCells.join("")}</div>`;
-    };
     if (talMatch){
       let depMult = 1;
       if (skill.dmgRankDep && skill.dmgRankDep.mult) {
@@ -7500,18 +7501,53 @@ function mountSkillCooldownLookup(root){
     const talMatch = text.match(/talAdjust\(([^()]+)\)/);
     const focusOn = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
     const shieldDepOn = skill.shieldDep && getDepRank(skill.shieldDep) === skill.shieldDep.maxRank;
-    const shieldDepTerm = shieldDepOn ? ` + <span class="dmg-term">${skill.shieldDep.term}</span>` : "";
+    const TAL = parseFloat(talEl ? talEl.value : 0) || 0;
+    const INT = parseFloat(intEl ? intEl.value : 0) || 0;
+    const LV = parseFloat(lvEl ? lvEl.value : 0) || 0;
+
     if (talMatch){
       const base = evalArith(talMatch[1]);
-      const talCoeff = fmtCoeff(0.02 * base);
-      let html = `<span class="dmg-num">${fmtCoeff(base)}</span> + <span class="dmg-tal">${talCoeff}TAL</span>${shieldDepTerm}`;
+      const talCoeff = 0.02 * base;
+      const baseItem = { value: base, sub: null, cls: "dmg-num" };
+      const talItem = { value: talCoeff * TAL, sub: `${fmtCoeff(talCoeff)}TAL`, cls: "dmg-tal" };
+      const shieldDepItem = shieldDepOn ? {
+        value: typeof skill.shieldDep.calc === "function" ? skill.shieldDep.calc(LV) : LV,
+        sub: skill.shieldDep.term || "LV",
+        cls: skill.shieldDep.termClass || "dmg-term"
+      } : null;
+
+      let items;
       if (skill.shieldFocusIntellect && focusOn){
-        html = `(${html}) × <span class="dmg-int">0.01INT</span>`;
+        items = [
+          { op: "(" },
+          baseItem,
+          { op: "+" },
+          talItem,
+          ...(shieldDepItem ? [{ op: "+" }, shieldDepItem] : []),
+          { op: ")" },
+          { op: "×" },
+          { value: 0.01 * INT, sub: "0.01INT", cls: "dmg-int", raw: true }
+        ];
+      } else {
+        items = [
+          baseItem,
+          { op: "+" },
+          talItem,
+          ...(shieldDepItem ? [{ op: "+" }, shieldDepItem] : [])
+        ];
       }
-      return html;
+      return buildFormulaGrid(items);
     }
     if (/^[\d\s×*+\-().]+$/.test(text)){
-      return `<span class="dmg-num">${fmtCoeff(evalArith(text))}</span>${shieldDepTerm}`;
+      const flatBase = evalArith(text);
+      const shieldDepItem = shieldDepOn ? {
+        value: typeof skill.shieldDep.calc === "function" ? skill.shieldDep.calc(LV) : LV,
+        sub: skill.shieldDep.term || "LV",
+        cls: skill.shieldDep.termClass || "dmg-term"
+      } : null;
+      let items = [{ value: flatBase, sub: null, cls: "dmg-num" }];
+      if (shieldDepItem) items.push({ op: "+" }, shieldDepItem);
+      return buildFormulaGrid(items);
     }
     return `<span class="dmg-text">${text}</span>`;
   }

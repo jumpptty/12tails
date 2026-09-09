@@ -33,6 +33,7 @@ const exposeInjection = `
   window._getDmgText = getDmgText;
   window._substituteDmgVars = substituteDmgVars;
   window._renderOneDmgFormula = renderOneDmgFormula;
+  window._renderShieldFormula = renderShieldFormula;
   window._rollOneHit = rollOneHit;
   window._getKOValue = getKOValue;
   window._depRanks = depRanks;
@@ -213,6 +214,27 @@ SKILLS.forEach(sk => {
           }
         } catch (e) {
           console.error(`[FORMULA EXCEPTION] ${ctx} Rank ${r} (dep ${depLv}): ${e.message}`);
+          errorCount++;
+        }
+      }
+    }
+
+    if (sk.shield) {
+      const depMax = sk.shieldRankDep ? (sk.shieldRankDep.maxRank || 1) : (sk.shieldDep ? (sk.shieldDep.maxRank || 1) : 0);
+      for (let depLv = 0; depLv <= depMax; depLv++) {
+        if (sk.shieldRankDep) sandbox._depRanks[sk.shieldRankDep.id] = depLv;
+        if (sk.shieldDep) sandbox._depRanks[sk.shieldDep.id] = depLv;
+        
+        try {
+          const htmlOut = sandbox._renderShieldFormula(sk, r);
+          checkedFormulas++;
+          
+          if (!htmlOut || htmlOut.includes("NaN") || htmlOut.includes("undefined")) {
+            console.error(`[SHIELD FORMULA ERROR] ${ctx} Rank ${r} (dep ${depLv}): formula evaluated to invalid output -> ${htmlOut}`);
+            errorCount++;
+          }
+        } catch (e) {
+          console.error(`[SHIELD FORMULA EXCEPTION] ${ctx} Rank ${r} (dep ${depLv}): ${e.message}`);
           errorCount++;
         }
       }
