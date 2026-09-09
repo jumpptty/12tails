@@ -76,3 +76,25 @@ const heroDescHtml = descStr ? `<div class="sk-hero-desc" title="${descClean}">$
 1. **Qualitative Over Quantitative**: Never include base cooldowns or raw damage formulas inside `desc` (they are shown in the CD chip and Damage chip).
 2. **Dynamic Geometry & Thresholds**: Always highlight rank-scaled geometries (radii, distance, arc degrees) and cleanse/dispel thresholds using `**${val}**`.
 3. **Authentic Thai Flavor**: Prioritize authentic Thai client text (`<Class>Skill_th.cs` or in-game client terminology) as baseline phrasing.
+
+---
+
+## 4. Multi-Rank Icon Completeness
+
+* Whenever a skill has `maxRank > 1`, **every single rank must have its authentic in-game icon** registered (`<skill>1`, `<skill>2`, `<skill>3`, `<skill>4`, `<skill>5`).
+* Icons must be extracted directly from `RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills/<class>/` with valid PNG headers (`89 50 4E 47 0D 0A 1A 0A`).
+* **Zero Placeholders**: Never reuse a single rank's icon across all ranks or use placeholders when rank-numbered assets exist in the game files. The UI engine automatically switches icons on rank selection (`selected.icon.replace(/\d+$/, '') + rank`).
+
+---
+
+## 5. Status Effect Profiling Protocol
+
+Whenever a skill applies or interacts with a status effect on self, ally, or enemy via `RPC_AddStatus(sType, sLv, sTime, sValue, sID)`:
+1. **Status Name (`sType`) & Numeric ID (`nCode`)**: Trace exact string passed and integer ID in `StatusData.cs`.
+2. **Status Level (`sLv`)**: Document the exact level passed across ranks 1..maxRank.
+3. **Classification (from `StatusData.cs`)**:
+   - `isBuffStatus(sType)` / `isDebuffStatus(sType)`
+   - `isStateStatus(sType)`
+   - `isMagicalStatus(sType)` (can be cleansed by Dispell) vs `isPhysicalStatus(sType)` (physical cleanses)
+   - `isLockStatus(sType)` / `isShieldStatus(sType)` / `isSystemStatus(sType)`
+4. **Target & Stat Deltas**: Target (`self`, `ally`, `enemy`), class restrictions, and stat adjustments in `CharacterControl.cs`.

@@ -70,16 +70,30 @@ Every skill authoring, formula update, or tooltip review must strictly follow th
 * Run a temporary scratch script (in `<appDataDir>/brain/<conversation-id>/scratch/`) or `view_file` to trace the full lifecycle across:
   1. **Cast Dispatch:** `<Class>.cs` (`RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust` wrappers, per-rank arrays for `maxRank > 1`).
   2. **Execution & Companion Logic:** `<Class>_<companion>.cs` (multi-hit loops, secondary triggers, collision handlers).
-  3. **Status Effects:** `CharacterControl.cs` (`case "<status>":` and `sType == "<status>"` to verify exact stat deltas: `deltaAtk`, `deltaDef`, `deltaRunSpeed`, `weight`, tick formulas in `mod`, and removal in `removeStatus`).
-  4. **In-Game Tooltips:** `<Class>Skill_eng.cs` (reference for authentic flavor context; code findings always override tooltip errors).
-  5. **Passive Dependencies:** Scan for all `hasSkill(ID)` / `get<Passive>Lv()` calls; map to proper tool hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
+  3. **Status Effect Tracing (Name, Level, and Classification):**
+     * **Status Name (`sType`) & ID:** Exact string passed to `RPC_AddStatus` and integer code `nCode` from `StatusData.cs`.
+     * **Status Level (`sLv`):** Exact level passed or calculated at each rank.
+     * **Status Classification (via `StatusData.cs`):** Must verify and report exact boolean return values:
+       - `isBuffStatus(sType)` / `isDebuffStatus(sType)`
+       - `isStateStatus(sType)`
+       - `isMagicalStatus(sType)` (eligible for Dispell) vs `isPhysicalStatus(sType)` (physical cleanses)
+       - `isLockStatus(sType)` / `isShieldStatus(sType)` / `isSystemStatus(sType)`
+     * **Target & Stat Deltas:** Target (`self`, `ally`, `enemy`), class restrictions, stat adjustments (`deltaAtk`, `deltaDef`, `deltaRunSpeed`), periodic ticks in `mod`, and removal in `removeStatus`.
+  4. **Multi-Rank Icon Completeness:**
+     * For any skill with `maxRank > 1`, inspect and extract **every rank variant icon** (`<skill>1`, `<skill>2`, `<skill>3`, `<skill>4`, `<skill>5`) from `RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills/<class>/`.
+     * **Zero Placeholders Rule:** Never rely on a single rank icon or placeholder when authentic rank-numbered icons exist in ripped game assets.
+  5. **In-Game Tooltips:** `<Class>Skill_eng.cs` & `<Class>Skill_thai.cs` (reference for authentic flavor context; code findings always override tooltip errors).
+  6. **Passive Dependencies:** Scan for all `hasSkill(ID)` / `get<Passive>Lv()` calls; map to proper tool hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
 
 ### Step 2: Observable Proof Review Table (3-Point Citation)
 Present a structured review table to the user. Every single skill entry must include:
 1. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` call.
 2. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
-3. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line`):** Exact raw string from client language files.
-4. **Proposed Header Tooltip (`desc`):**
+3. **Status Profile (if status applied):**
+   * Name (`sType`), Numeric ID (`nCode`), Status Level (`sLv`) per rank.
+   * Full classification breakdown (`Buff`/`Debuff`, `State`, `Magical`/`Physical`, `Lock`, `Shield`).
+4. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line` & `_thai.cs:line`):** Exact raw strings from client language files.
+5. **Proposed Header Tooltip (`desc`):**
    * **In-Game Client Phrasing as Baseline:** Base descriptions directly on authentic client tooltips (Thai strings as primary) to preserve original flavor context and terminology.
    * **Qualitative Over Quantitative:** Strip out all rank-dependent and dependency-scaled quantitative numbers (damage values, durations, tick counts, percentage bonuses) to avoid duplicating or conflicting with live UI calculation chips.
    * **Always Include Verified Geometries:** Always state exact AoE radii, projectile ranges, and cleanse areas whenever verified from decompiled targeting code (`Damage.FindAreaTarget`, `Damage.FindRecTarget`, OverlapSphere, raycasts).
@@ -96,7 +110,7 @@ Present a structured review table to the user. Every single skill entry must inc
 * **Hard STOP:** Wait for explicit user review and approval before writing changes to `index.html` or advancing to the next class.
 
 ### Step 4: Apply, Verify & Lint
-* Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`).
+* Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
 * Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
 
 ---
