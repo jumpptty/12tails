@@ -56,7 +56,7 @@ const descRaw = typeof selected.desc === "function" ? selected.desc(rank, heroDe
 const descStr = descRaw ? String(descRaw) : "";
 const descClean = descStr.replace(/\*\*([^*]+)\*\*/g, "$1");
 const descFormatted = descStr.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>');
-const heroDescHtml = descStr ? `<div class="sk-hero-desc" title="${descClean}">${descFormatted}</div>` : "";
+const heroDescHtml = (descStr || statusBadgeHtml) ? `<div class="sk-hero-desc">${statusBadgeHtml}${descFormatted}</div>` : "";
 ```
 
 ### Highlight Styling
@@ -68,7 +68,7 @@ const heroDescHtml = descStr ? `<div class="sk-hero-desc" title="${descClean}">$
 ```
 * **Contrast**: Uses `--gold` (`#c9a227` in Dark Mode, `#8a6a1f` in Light Mode) for high contrast and seamless harmony with the Gold Accent Bar.
 * **Typography Safety**: Uses plain inline text styling without padding or borders to avoid clipping Thai tone marks (ไม้เอก, ไม้โท, สระบน/ล่าง).
-* **Hover Tooltip**: Raw asterisks `**...**` are stripped for clean native `title` attribute tooltips.
+* **No Native Browser Tooltip**: The native `title` attribute is explicitly omitted from `.sk-hero-desc` to prevent unsightly default browser tooltip popups. Custom tooltips (e.g. status classification badges) use dedicated CSS popovers instead.
 
 ---
 

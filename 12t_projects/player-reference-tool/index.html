@@ -8130,7 +8130,7 @@ function mountSkillCooldownLookup(root){
         statusClean += `${sKeyword} `;
       }
     }
-    const heroDescHtml = (descStr || statusBadgeHtml) ? `<div class="sk-hero-desc" title="${statusClean}${descClean}">${statusBadgeHtml}${descFormatted}</div>` : "";
+    const heroDescHtml = (descStr || statusBadgeHtml) ? `<div class="sk-hero-desc">${statusBadgeHtml}${descFormatted}</div>` : "";
     const psActive = !!(privateServerOn && selected.ps && selected.ps.cd !== undefined);
     const cdBase = resolveRank(psActive ? selected.ps.cd : selected.cd, rank);
     const cdDep = selected.cdDep;

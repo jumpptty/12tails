@@ -100,7 +100,8 @@ Present a structured review table to the user. Every single skill entry must inc
    * **Dynamic Variable Highlights (`**value**`):**
      * For any qualitative variable that changes with `rank` or passive dependency (`skillDep`), define `desc` as a function: `(rank, depRank) => ...`.
      * Wrap the dynamic value in markdown bold: `**${value}**` (e.g. `**${3 * rank + 2}m**` or `**เลเวล ${x}**`).
-     * `renderHero()` automatically parses `**value**` into `<span class="sk-val">value</span>`, styled as **Brass Gold** (`color: var(--gold); font-weight: 600;`), and strips raw asterisks from the native `title` hover tooltip.
+     * `renderHero()` automatically parses `**value**` into `<span class="sk-val">value</span>`, styled as **Brass Gold** (`color: var(--gold); font-weight: 600;`).
+     * **No Native Browser Tooltip:** Native `title` attribute is explicitly omitted from `.sk-hero-desc` to prevent unsightly default browser tooltip popups.
    * **Highlight Utility & Hidden Mechanics:** Clearly note non-obvious behavior (cleanses, lock removals, sleep breaks, aggro wipes, absolute immunities, unlisted passive hooks).
 
 > ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
