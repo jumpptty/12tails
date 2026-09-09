@@ -113,6 +113,7 @@ Present a structured review table to the user. Every single skill entry must inc
 ### Step 4: Apply, Verify & Lint
 * Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
 * Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
+* **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for skill additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via `node scripts/validate_skills.js` and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when the user explicitly requests a visual check.
 
 ---
 
