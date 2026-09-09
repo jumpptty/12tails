@@ -5790,6 +5790,7 @@ const PENGUIN_FOCUS_INTELLECT_DEP = { id: "focusIntellect", label: "Focus Intell
 const PENGUIN_DEADLY_FROST_DEP = { id: "deadlyFrost", label: "Deadly Frost",
   icon: "penguin_deadlyFrost5", minRank: 0, maxRank: 1 };
 const PENGUIN_SNOWMAN_DEP = { id: "snowmanRank", label: "Target Snowman Rank", icon: "penguin_snowMan1", minRank: 1, maxRank: 2 };
+const PENGUIN_PARALLEL_SHIFT_DEP = { id: "parallelShift", label: "Parallel Shift", icon: "penguin_parallelShift5", minRank: 0, maxRank: 1 };
 // Barrel Bot's own stat-boost passives (2026-08-20 pilot) -- shared across
 // all 8 "Barrel Bot - X" SKILLS entries via barrelBotOwnStats() above.
 const MOLE_DOUBLEBOT_DEP = { id: "doubleBot", label: "Double Bot",
@@ -6201,7 +6202,11 @@ const SKILLS = [
   { id:"penguin_tripleCast", name:"Triple Cast", class:"Penguin", desc:"เข้าสู่ท่าร่ายเวทขั้นสูง ทำให้การร่ายครั้งต่อไปสกิลออก 3 ครั้งติดต่อกันในการร่ายครั้งเดียว", icon:"penguin_tripleCast2", maxRank:1, cost:{mp:40,sp:30,spType:"red"}, cd:240, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, durNote:"Grants Triple Cast stance for chaAdjust(12) seconds, enabling spells to trigger up to 3 simultaneous casts." },
   { id:"penguin_manaMissile", name:"Mana Missile", class:"Penguin", desc:"ยิงศรเวทมนตร์ติดตามเป้าหมายโดยอัตโนมัติ ทำความเสียหายเวทต่อเนื่องโดยไม่ทำให้เป้าหมายกระเด็น", icon:"penguin_manaMissile4", maxRank:4, cost:{mp:[9,15,21,27]}, castTime:[2,3,4,5], castWrapped:true, cd:[10,12,14,16], cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(3×sLv+12)", dmgFocusIntellect:true, dmgDep:{id:"moreMissile", label:"More Missile", icon:"penguin_moreMissile5", minRank:0, maxRank:1, term:"0.1LV", calc:(LV)=>0.1*LV}, dmgNote:"per missile", hitCount:(rank,dmgDepOn)=>rank+1+(dmgDepOn?2:0), ko:"1" },
   { id:"penguin_manaArc", name:"Mana Arc", class:"Penguin", desc:"ระเบิดคลื่นพลังเวทกระจายออกเป็นวงรอบตัวในระยะ 3m ทำความเสียหายแก่ศัตรูรอบข้างทันที", icon:"penguin_manaArc4", maxRank:4, cost:{mp:[6,12,18,24],sp:[4,6,8,10],spType:"red"}, cd:1, cdWrapped:false, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", dmgFocusIntellect:true, dmgDep:{id:"penguinOfArc", label:"Penguin of Arc", icon:"penguin_penguinOfArc5", minRank:0, maxRank:1, term:"0.5LV", calc:(LV)=>0.5*LV} },
-  { id:"penguin_dispell", name:"Dispell", class:"Penguin", desc:"ปลดปล่อยคลื่นเวทมนตร์ลบล้างสถานะทางเวทมนตร์ทั้งหมดในระยะ 5m รอบตัว ทั้งเพื่อนและศัตรู", icon:"penguin_dispell2", maxRank:2, cost:{mp:[14,21]}, cd:[4,5], cdWrapped:true, revisedArtExempt:false },
+  { id:"penguin_dispell", name:"Dispell", class:"Penguin", desc:(rank, depRank)=>{
+    const pShift = (depRank !== null && depRank !== undefined) ? depRank : getDepRank(PENGUIN_PARALLEL_SHIFT_DEP);
+    const x = 2 * rank + (pShift ? 1 : 0) + 1;
+    return `ปลดปล่อยคลื่นเวทมนตร์ลบล้างสถานะ isMagical() ที่ต่ำกว่าเลเวล ${x} ทั้งหมดในระยะ 5m รอบตัว ทั้งเพื่อนและศัตรู`;
+  }, icon:"penguin_dispell2", maxRank:2, cost:{mp:[14,21]}, cd:[4,5], cdWrapped:true, revisedArtExempt:false, duration:1, durWrapped:false, dep:PENGUIN_PARALLEL_SHIFT_DEP, durNote:"Grants 1s of magic debuff immunity and cleanses all active magic status effects up to the dispell level." },
   { id:"penguin_blink", name:"Blink", class:"Penguin", desc:"วาร์ปเพนกวินพุ่งตรงไปข้างหน้าทันทีตามทิศทางที่หันหน้าอยู่ (5m / 8m ตามระดับสกิล)", icon:"penguin_blink2", maxRank:2, cost:{mp:5,sp:[10,15],spType:"red"}, cd:12, cdWrapped:true, revisedArtExempt:false },
   { id:"penguin_mpTransfer", name:"MP Transfer", class:"Penguin", desc:"ถ่ายทอดพลังเวท ฟื้นฟู MP ให้แก่เป้าหมายฝ่ายเดียวกัน พร้อมโบนัสตามค่า Max MP ของเพนกวิน", icon:"penguin_mpTransfer2", maxRank:2, cost:{mp:[30,45]}, cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"penguin_manaBurn", name:"Mana Burn", class:"Penguin", desc:"ทำลาย MP ของเป้าหมาย และสร้างความเสียหายตามสัดส่วนส่วนต่างของ MP ที่สูญเสียไปเทียบกับ Max MP", icon:"penguin_manaBurn2", maxRank:2, cost:{mp:[15,20]}, castTime:[3,4], castWrapped:true, cd:[24,30], cdWrapped:true, revisedArtExempt:false },
@@ -8014,7 +8019,9 @@ function mountSkillCooldownLookup(root){
 
     const isUpgradedClass = UPGRADED_CLASSES.has(selected.class);
     const rank = getSkillRank(selected);
-    const descText = typeof selected.desc === "function" ? selected.desc(rank) : selected.desc;
+    const heroDep = selected.dep || selected.dmgRankDep || selected.dmgDep || selected.cdDep;
+    const heroDepRank = heroDep ? getDepRank(heroDep) : null;
+    const descText = typeof selected.desc === "function" ? selected.desc(rank, heroDepRank) : selected.desc;
     const heroDescHtml = descText ? `<div class="sk-hero-desc" title="${descText}">${descText}</div>` : "";
     const psActive = !!(privateServerOn && selected.ps && selected.ps.cd !== undefined);
     const cdBase = resolveRank(psActive ? selected.ps.cd : selected.cd, rank);
