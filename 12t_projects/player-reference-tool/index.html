@@ -8171,7 +8171,7 @@ function mountSkillCooldownLookup(root){
       const castDist = selected.castWrapped ? lckDistribution(rawCast, INT, LCK, magAdjustAtRoll, v => v) : null;
       castBlock = `
         <div class="sk-stat sk-stat-cast">
-          <p class="sk-stat-label">Cast Time</p>
+          <p class="sk-stat-label">เวลาร่าย</p>
           <div class="sk-stat-value-wrap">
             <div class="sk-stat-value${selected.castWrapped ? "" : " unwrapped"}">${fmt(castRange)}s</div>
             ${castDist ? renderProbabilityTooltip(castDist) : ""}
@@ -8185,7 +8185,7 @@ function mountSkillCooldownLookup(root){
     if (selected.durationInfinite){
       durationBlock = `
         <div class="sk-stat sk-stat-dur">
-          <p class="sk-stat-label">Duration</p>
+          <p class="sk-stat-label">ระยะเวลา</p>
           <div class="sk-stat-value">&infin;</div>
         </div>
       `;
@@ -8226,10 +8226,10 @@ function mountSkillCooldownLookup(root){
       ` : "";
       const durLabelRow = durInfo ? `
         <div class="sk-dmg-label-row">
-          <p class="sk-stat-label">Duration</p>
+          <p class="sk-stat-label">ระยะเวลา</p>
           ${durInfo}
         </div>
-      ` : `<p class="sk-stat-label">Duration</p>`;
+      ` : `<p class="sk-stat-label">ระยะเวลา</p>`;
       const depBlock = dep ? renderDepBlock(dep, depRank) : "";
       const durPostAddNote = selected.durPostAdd ? (depRank ? ` +${typeof selected.durPostAdd === "function" ? selected.durPostAdd(depRank) : selected.durPostAdd}s (fixed)` : "") : "";
       durationBlock = `
@@ -8272,7 +8272,7 @@ function mountSkillCooldownLookup(root){
       const lpDepBlock = lpDep ? renderDepBlock(lpDep, lpDepRank) : "";
       lckProcBlock = `
         <div class="sk-stat sk-stat-lck">
-          <p class="sk-stat-label">${lp.label}</p>
+          <p class="sk-stat-label">โอกาสติด</p>
           <div class="sk-stat-value">${lpChancePct}%</div>
           <p class="sk-stat-base">${lpBaseText}</p>
           ${lpDepBlock}
@@ -8478,7 +8478,7 @@ function mountSkillCooldownLookup(root){
         <div class="sk-dmg sk-dmg-formula ${isBackpack ? "sk-pos-5-8" : ""}">
           <div class="sk-dmg-head">
             <div class="sk-dmg-label-row">
-              <p class="sk-stat-label">${selected.isHeal ? "Heal Formula" : "Damage Formula"}</p>
+              <p class="sk-stat-label">${selected.isHeal ? "สูตรฮีล" : "สูตรดาเมจ"}</p>
               ${dmgInfo}
             </div>
             <div class="sk-dmg-toggles">${dmgToggles}</div>
@@ -8605,7 +8605,7 @@ function mountSkillCooldownLookup(root){
         dmgCalcChip = `
           <div class="sk-stat sk-dmg-calc">
             <div class="sk-dmg-head">
-              <div class="sk-dmg-label-row"><p class="sk-stat-label">${selected.isHeal ? "Raw Heal" : "Raw Damage"}</p></div>
+              <div class="sk-dmg-label-row"><p class="sk-stat-label">รวมการแกว่งค่า LCK</p></div>
               <div class="sk-dmg-toggles"></div>
             </div>
             ${selected.dmgGroups ? `
@@ -8966,7 +8966,7 @@ function mountSkillCooldownLookup(root){
         dmgFinalChip = `
           <div class="sk-stat sk-dmg-final">
             <div class="sk-dmg-head">
-              <div class="sk-dmg-label-row"><p class="sk-stat-label">${selected.isHeal ? "Final Heal" : "Final Damage"}</p></div>
+              <div class="sk-dmg-label-row"><p class="sk-stat-label">${selected.isHeal ? "ฮีลจริง" : "ดาเมจจริง"}</p></div>
               <div class="sk-dmg-toggles">${selected.isHeal ? "" : modsBtn}</div>
             </div>
             ${finalDamageBody}
@@ -8997,7 +8997,7 @@ function mountSkillCooldownLookup(root){
           <div class="sk-dmg sk-dmg-formula sk-pos-5-6">
             <div class="sk-dmg-head">
               <div class="sk-dmg-label-row">
-                <p class="sk-stat-label">Damage Formula</p>
+                <p class="sk-stat-label">สูตรดาเมจ</p>
               </div>
               <div class="sk-dmg-toggles">${snowmanDepToggle}</div>
             </div>
@@ -9055,7 +9055,7 @@ function mountSkillCooldownLookup(root){
         <div class="sk-dmg sk-dmg-formula">
           <div class="sk-dmg-head">
             <div class="sk-dmg-label-row">
-              <p class="sk-stat-label">Shield Formula</p>
+              <p class="sk-stat-label">สูตรโล่</p>
               ${shieldInfo}
             </div>
             <div class="sk-dmg-toggles">${shieldToggles}</div>
@@ -9087,7 +9087,7 @@ function mountSkillCooldownLookup(root){
         shieldCalcChip = `
           <div class="sk-stat sk-dmg-calc">
             <div class="sk-dmg-head">
-              <div class="sk-dmg-label-row"><p class="sk-stat-label">Shield HP</p></div>
+              <div class="sk-dmg-label-row"><p class="sk-stat-label">รวมการแกว่งค่า LCK</p></div>
               <div class="sk-dmg-toggles"></div>
             </div>
             <div class="sk-stat-value">${fmt(shieldCalcRange)}</div>
@@ -9155,7 +9155,7 @@ function mountSkillCooldownLookup(root){
         </div>
         <div class="sk-hero-stats">
           <div class="sk-stat sk-stat-cd">
-            <p class="sk-stat-label">Cooldown</p>
+            <p class="sk-stat-label">คูลดาวน์</p>
             <div class="sk-stat-value-wrap">
               <div class="sk-stat-value${selected.cdWrapped ? "" : " unwrapped"}">${fmt(cdRange)}s</div>
               ${cdDist ? renderProbabilityTooltip(cdDist) : ""}
