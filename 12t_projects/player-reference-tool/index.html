@@ -6,7 +6,7 @@
 <title>12 Tails Tools</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Kanit:wght@300;400;500&family=Prompt:wght@300;400;500&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Kanit:wght@300;400;500&family=Prompt:wght@300;400;500&family=Sarabun:wght@300;400;500&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
 <script data-goatcounter="https://jumpptty.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
@@ -40,6 +40,12 @@
        skill-wide "this number goes through the OTHER application pathway"
        flag. */
     --stat-effect:#7c3aed;
+    --status-kw:#6d28d9;
+    --status-kw-bg:rgba(109,40,217,0.08);
+    --status-kw-border:rgba(109,40,217,0.28);
+    --status-kw-hbg:rgba(109,40,217,0.16);
+    --status-kw-hborder:#6d28d9;
+    --status-kw-htext:#4c1d95;
     /* Paralysis proc label (2026-08-21, user-requested: "paralysis yellow
        font color") -- a distinct token from --gold (this tool's own brass
        accent, deliberately muted) since a proc label needs to read as
@@ -87,6 +93,12 @@
       --stat-tal:#22d3ee;
       --stat-int:#5b9bf0;
       --stat-effect:#c084fc;
+      --status-kw:#c4b5fd;
+      --status-kw-bg:rgba(167,139,250,0.14);
+      --status-kw-border:rgba(167,139,250,0.4);
+      --status-kw-hbg:rgba(167,139,250,0.28);
+      --status-kw-hborder:#a78bfa;
+      --status-kw-htext:#ffffff;
       --stat-paralysis:#facc15;
       --stat-atk-soft:rgba(239,68,68,.12);
       --chm-chip-bg:rgba(32,60,42,0.32);
@@ -124,6 +136,12 @@
     --stat-tal:#22d3ee;
     --stat-int:#5b9bf0;
     --stat-effect:#c084fc;
+    --status-kw:#c4b5fd;
+    --status-kw-bg:rgba(167,139,250,0.14);
+    --status-kw-border:rgba(167,139,250,0.4);
+    --status-kw-hbg:rgba(167,139,250,0.28);
+    --status-kw-hborder:#a78bfa;
+    --status-kw-htext:#ffffff;
     --stat-paralysis:#facc15;
     --stat-atk-soft:rgba(239,68,68,.12);
     --chm-chip-bg:rgba(32,60,42,0.32);
@@ -1333,9 +1351,69 @@
     text-overflow:ellipsis;
     word-break:break-word;
   }
+  .sk-hero-desc:has(.sk-status:hover),
+  .sk-hero-desc:has(.sk-status.is-active){
+    overflow:visible;
+  }
   .sk-hero-desc .sk-val{
     color:var(--gold);
     font-weight:600;
+  }
+  .sk-hero-desc .sk-status{
+    position:relative;
+    display:inline-block;
+    cursor:help;
+    margin-right:6px;
+    font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+    font-size:11.5px;
+    line-height:1.25;
+    vertical-align:baseline;
+    color:var(--status-kw, #6d28d9);
+    background:var(--status-kw-bg, rgba(109,40,217,0.08));
+    border:1px solid var(--status-kw-border, rgba(109,40,217,0.28));
+    border-radius:3px;
+    padding:1px 6px;
+    font-weight:600;
+    transition:all 0.15s ease;
+  }
+  .sk-hero-desc .sk-status:hover,
+  .sk-hero-desc .sk-status.is-active{
+    background:var(--status-kw-hbg, rgba(109,40,217,0.16));
+    border-color:var(--status-kw-hborder, #6d28d9);
+    color:var(--status-kw-htext, #4c1d95);
+  }
+  .sk-hero-desc .sk-status:hover::after,
+  .sk-hero-desc .sk-status.is-active::after{
+    content:attr(data-classification);
+    position:absolute;
+    bottom:calc(100% + 7px);
+    left:50%;
+    transform:translateX(-50%);
+    background:#0f0a07;
+    color:#fff;
+    border:1px solid var(--gold);
+    border-radius:4px;
+    padding:3px 8px;
+    font-family:'Prompt',-apple-system,sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,0.8);
+    z-index:100;
+    pointer-events:none;
+  }
+  .sk-hero-desc .sk-status:hover::before,
+  .sk-hero-desc .sk-status.is-active::before{
+    content:"";
+    position:absolute;
+    bottom:calc(100% + 1px);
+    left:50%;
+    transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:var(--gold);
+    z-index:101;
+    pointer-events:none;
   }
   /* nowrap+ellipsis is the safety net (2026-08-14, user-reported: a long
      merged name like Chameleon's "All Bug Slayer / All Tail Slayer / All
@@ -5964,7 +6042,7 @@ const ENEMY_MOD_IDS = ["reduceHit", "miracleDropHit", "amplifyDamage"];
 const FINAL_MULT_MOD_IDS = ["finalMult1", "finalMult2", "finalMult3"];
 
 const SKILLS = [
-  { id:"bat_massCast", name:"Mass Cast", class:"Bat", desc:(rank, depRank)=>{
+  { id:"bat_massCast", name:"Mass Cast", class:"Bat", status:{ name:"massCast", sLv:(rank)=>rank, class:"Buff, State" }, desc:(rank, depRank)=>{
     const ttoOn = (depRank !== null && depRank !== undefined) ? depRank : getDepRank(BAT_TTO_DEP);
     if (ttoOn) {
       return `ทำให้เวท **${rank} ครั้ง** ต่อไปของค้างคาว กลายเป็นเวทกระจายผลใส่ศัตรูทั้งหมดในระยะ **18m** รอบเป้าหมาย (สูงสุด 6 เป้าหมาย)`;
@@ -8039,7 +8117,20 @@ function mountSkillCooldownLookup(root){
     const descStr = descRaw ? String(descRaw) : "";
     const descClean = descStr.replace(/\*\*([^*]+)\*\*/g, "$1");
     const descFormatted = descStr.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>');
-    const heroDescHtml = descStr ? `<div class="sk-hero-desc" title="${descClean}">${descFormatted}</div>` : "";
+    let statusBadgeHtml = "";
+    let statusClean = "";
+    if (selected.status) {
+      const statuses = Array.isArray(selected.status) ? selected.status : [selected.status];
+      for (const st of statuses) {
+        const sName = st.name;
+        const sLvVal = typeof st.sLv === "function" ? st.sLv(rank, heroDepRank) : resolveRank(st.sLv, rank);
+        const sClass = st.class || "";
+        const sKeyword = `[${sName}${sLvVal}]`;
+        statusBadgeHtml += `<span class="sk-status" data-classification="${sClass}" onclick="this.classList.toggle(\'is-active\');event.stopPropagation();">${sKeyword}</span> `;
+        statusClean += `${sKeyword} `;
+      }
+    }
+    const heroDescHtml = (descStr || statusBadgeHtml) ? `<div class="sk-hero-desc" title="${statusClean}${descClean}">${statusBadgeHtml}${descFormatted}</div>` : "";
     const psActive = !!(privateServerOn && selected.ps && selected.ps.cd !== undefined);
     const cdBase = resolveRank(psActive ? selected.ps.cd : selected.cd, rank);
     const cdDep = selected.cdDep;
@@ -9473,7 +9564,8 @@ function mountSkillCooldownLookup(root){
   // stopPropagation so clicking the number itself never reaches this.
   document.addEventListener("click", () => {
     if (root.hidden) return;
-    $$(".sk-stat-value-wrap.pinned", displayEl).forEach(w => w.classList.remove("pinned"));
+    $(".sk-stat-value-wrap.pinned", displayEl).forEach(w => w.classList.remove("pinned"));
+    $(".sk-status.is-active", displayEl).forEach(el => el.classList.remove("is-active"));
   });
 
   // Re-anchor the side-gutter tooltips (and the fit-screen layout above

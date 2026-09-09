@@ -183,6 +183,37 @@ SKILLS.forEach(sk => {
     }
   }
 
+  // Status Effect Profile check
+  if (sk.status) {
+    const statuses = Array.isArray(sk.status) ? sk.status : [sk.status];
+    statuses.forEach((st, idx) => {
+      if (!st.name || typeof st.name !== 'string') {
+        console.error(`[STATUS ERROR] ${ctx}: status[${idx}] missing valid string name`);
+        errorCount++;
+      }
+      if (!st.class || typeof st.class !== 'string') {
+        console.error(`[STATUS ERROR] ${ctx}: status[${idx}] missing valid string classification ('class')`);
+        errorCount++;
+      }
+      if (Array.isArray(st.sLv) && st.sLv.length !== maxRank) {
+        console.error(`[STATUS ERROR] ${ctx}: status[${idx}].sLv array length (${st.sLv.length}) does not match maxRank (${maxRank})`);
+        errorCount++;
+      }
+      for (let r = 1; r <= maxRank; r++) {
+        try {
+          const sLvVal = typeof st.sLv === 'function' ? st.sLv(r, 0) : (Array.isArray(st.sLv) ? st.sLv[r - 1] : (st.sLv !== undefined ? st.sLv : r));
+          if (sLvVal === null || sLvVal === undefined || isNaN(sLvVal)) {
+            console.error(`[STATUS ERROR] ${ctx} Rank ${r}: evaluated to invalid sLv -> ${sLvVal}`);
+            errorCount++;
+          }
+        } catch (e) {
+          console.error(`[STATUS EXCEPTION] ${ctx} Rank ${r}: ${e.message}`);
+          errorCount++;
+        }
+      }
+    });
+  }
+
   // Formula and KO evaluation check across all permutations
   for (let r = 1; r <= maxRank; r++) {
     if (sk.ko !== undefined) {
