@@ -774,15 +774,13 @@
   .hub-btn-donate{
     display:inline-flex; align-items:center; justify-content:center;
     padding:4px; margin:0; background:none; border:none; box-shadow:none;
-    color:var(--muted); opacity:.75; cursor:pointer; border-radius:4px;
-    transition:color .18s ease, opacity .18s ease, transform .18s cubic-bezier(.2,.7,.2,1);
-    line-height:1;
+    font-size:17px; line-height:1; cursor:pointer; border-radius:4px;
+    opacity:.75; transition:opacity .18s ease, transform .18s cubic-bezier(.2,.7,.2,1);
   }
   .hub-btn-donate:hover{
-    color:var(--gold); opacity:1; background:none; box-shadow:none; transform:scale(1.15);
+    opacity:1; background:none; box-shadow:none; transform:scale(1.18);
   }
   .hub-btn-donate:active{transform:scale(.95); opacity:.9}
-  .hub-btn-donate-icon{display:block; width:19px; height:19px}
   @media (max-width:720px){.hub-note{display:none}}
 
   /* ---- Donate Modal ---- */
@@ -4741,15 +4739,7 @@
     <nav class="crumb">
     <span class="crumb-current" id="crumbCurrent"></span>
   </nav>
-    <button type="button" class="hub-btn-donate" id="btnDonate" aria-label="Donate" title="Donate (PromptPay)">
-      <svg class="hub-btn-donate-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
-        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
-        <line x1="6" y1="1" x2="6" y2="4"></line>
-        <line x1="10" y1="1" x2="10" y2="4"></line>
-        <line x1="14" y1="1" x2="14" y2="4"></line>
-      </svg>
-    </button>
+    <button type="button" class="hub-btn-donate" id="btnDonate" aria-label="Donate" title="Donate (PromptPay)">☕</button>
   </div>
 </header>
 
