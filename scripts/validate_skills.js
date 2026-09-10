@@ -145,6 +145,7 @@ SKILLS.forEach(sk => {
   if (sk.dmgMultDep) checkIcon(sk.dmgMultDep.icon, `${ctx} [dmgMultDep icon]`);
   if (sk.hitCountDep) checkIcon(sk.hitCountDep.icon, `${ctx} [hitCountDep icon]`);
   if (sk.dep) checkIcon(sk.dep.icon, `${ctx} [dep icon]`);
+  if (sk.descDep) checkIcon(sk.descDep.icon, `${ctx} [descDep icon]`);
 
   // Max Rank check
   const maxRank = sk.maxRank || 1;
