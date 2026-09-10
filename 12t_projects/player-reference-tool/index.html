@@ -772,21 +772,18 @@
   .crumb-current{color:var(--gold); font-weight:600}
   .hub-right{display:flex; align-items:center; gap:14px}
   .hub-btn-donate{
-    display:inline-flex; align-items:center; gap:6px; padding:5px 12px;
-    background:rgba(212,175,55,.08); border:1px solid rgba(212,175,55,.45);
-    border-radius:4px; color:var(--gold); font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif;
-    font-size:12px; font-weight:500; letter-spacing:.3px; cursor:pointer;
-    transition:all .18s cubic-bezier(.2,.7,.2,1); box-shadow:0 1px 3px rgba(0,0,0,.2);
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:4px; margin:0; background:none; border:none; box-shadow:none;
+    color:var(--muted); opacity:.75; cursor:pointer; border-radius:4px;
+    transition:color .18s ease, opacity .18s ease, transform .18s cubic-bezier(.2,.7,.2,1);
+    line-height:1;
   }
   .hub-btn-donate:hover{
-    background:rgba(212,175,55,.18); border-color:var(--gold);
-    box-shadow:0 2px 8px rgba(212,175,55,.25); transform:translateY(-1px);
+    color:var(--gold); opacity:1; background:none; box-shadow:none; transform:scale(1.15);
   }
-  .hub-btn-donate:active{transform:translateY(0); background:rgba(212,175,55,.26)}
-  .hub-btn-donate-icon{font-size:13px; line-height:1}
-  .hub-btn-donate-text{line-height:1.2}
+  .hub-btn-donate:active{transform:scale(.95); opacity:.9}
+  .hub-btn-donate-icon{display:block; width:19px; height:19px}
   @media (max-width:720px){.hub-note{display:none}}
-  @media (max-width:480px){.hub-btn-donate-text{display:none}.hub-btn-donate{padding:5px 9px}}
 
   /* ---- Donate Modal ---- */
   .donate-backdrop[hidden]{display:none !important}
@@ -4744,9 +4741,14 @@
     <nav class="crumb">
     <span class="crumb-current" id="crumbCurrent"></span>
   </nav>
-    <button type="button" class="hub-btn-donate" id="btnDonate" title="สนับสนุนผู้พัฒนา (PromptPay)">
-      <span class="hub-btn-donate-icon">☕</span>
-      <span class="hub-btn-donate-text">Donate</span>
+    <button type="button" class="hub-btn-donate" id="btnDonate" aria-label="Donate" title="Donate (PromptPay)">
+      <svg class="hub-btn-donate-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+        <line x1="6" y1="1" x2="6" y2="4"></line>
+        <line x1="10" y1="1" x2="10" y2="4"></line>
+        <line x1="14" y1="1" x2="14" y2="4"></line>
+      </svg>
     </button>
   </div>
 </header>
