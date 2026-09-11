@@ -203,6 +203,8 @@
     flex: 1;
     min-width: 260px;
   }
+  .sr-title-short, .sg-title-short { display: none; }
+  .sr-title-full, .sg-title-full { display: inline; }
   .sr-header-title {
     margin: 0;
     font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
@@ -572,10 +574,44 @@
   }
 
   @media (max-width: 640px) {
+    .sr-title-full, .sg-title-full { display: none; }
+    .sr-title-short, .sg-title-short { display: inline; }
     .sr-wrap { padding: 10px 10px 14px; }
-    .sr-header { padding-bottom: 8px; margin-bottom: 10px; gap: 8px; }
-    .sr-header-title { font-size: 16px; }
-    .sr-header-sub { font-size: 11px; margin-top: 2px; }
+    .sr-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      gap: 6px;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+    .sr-header-text { flex: 1; min-width: 0; }
+    .sr-header-title {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      margin: 0;
+    }
+    .sr-header-sub { display: none !important; }
+    .sr-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      padding-top: 0;
+    }
+    .sr-class-select-wrap label { display: none; }
+    .sr-cls-custom-picker .cls-picker-btn {
+      height: 30px;
+      padding: 2px 7px 2px 5px;
+      font-size: 11.5px;
+    }
+    .sr-cls-custom-picker .cls-picker-thumb { width: 18px; height: 18px; }
+    .sr-lang-toggle { padding: 1px; }
+    .sr-lang-btn { font-size: 10px; padding: 2px 7px; }
     .sr-deck { gap: 10px; }
     .sr-card { padding: 10px 12px; gap: 8px; }
     .sr-card-title { font-size: 13.5px; }
@@ -1015,7 +1051,24 @@
 
   @media (max-width: 640px) {
     .sg { padding: 10px 10px 14px; }
-    .sg-head h2 { font-size: 15px; }
+    .sg-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      gap: 8px;
+      margin: 0 0 6px;
+    }
+    .sg-head h2 {
+      font-size: 14.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      margin: 0;
+    }
+    .sg-lang-toggle { flex-shrink: 0; padding: 1px; }
+    .sg-lang-btn { font-size: 10px; padding: 2px 7px; }
     .sg-controls { padding: 8px 10px; gap: 8px; grid-template-columns: 1fr; }
     .sg-controls select, .sg-controls input { height: 38px; font-size: 13.5px; padding: 4px 8px; }
     .sg-results table { font-size: 12.5px; }
@@ -10659,7 +10712,7 @@ function mountStatRoll(root) {
     <div class="sr-wrap locked">
       <div class="sr-header">
         <div class="sr-header-text">
-          <h2 class="sr-header-title" data-role="titleMain">สุ่มค่าสเตตัสตอนสร้างตัวละคร</h2>
+          <h2 class="sr-header-title" data-role="titleMain"><span class="sr-title-full">สุ่มค่าสเตตัสตอนสร้างตัวละคร</span><span class="sr-title-short">สุ่มสเตตัสเริ่มต้น</span></h2>
           <p class="sr-header-sub" data-role="subtitle">ตั้งค่าสเตตัสขั้นต่ำที่ต้องการเพื่อหาโอกาสที่จะได้ค่าครบทุกตัวพร้อมกัน</p>
         </div>
         <div class="sr-header-controls">
@@ -10751,6 +10804,7 @@ function mountStatRoll(root) {
   const LANG = {
     en: {
       titleMain: 'Stat Roll Calculator',
+      titleShort: 'Stat Roll',
       subtitle: 'Set minimum targets for any stats to calculate simultaneous creation probability.',
       labelClass: 'Class',
       optPlaceholder: '— select a class —',
@@ -10781,6 +10835,7 @@ function mountStatRoll(root) {
     },
     th: {
       titleMain: 'สุ่มค่าสเตตัสตอนสร้างตัวละคร',
+      titleShort: 'สุ่มสเตตัสเริ่มต้น',
       subtitle: 'ตั้งค่าสเตตัสขั้นต่ำที่ต้องการเพื่อหาโอกาสที่จะได้ค่าครบทุกตัวพร้อมกัน',
       labelClass: 'คลาส',
       optPlaceholder: '— เลือกคลาส —',
@@ -11287,7 +11342,7 @@ function mountStatRoll(root) {
   function setLang(lang) {
     currentLang = lang;
     const L = LANG[lang];
-    root.querySelector('[data-role="titleMain"]').textContent = L.titleMain;
+    root.querySelector('[data-role="titleMain"]').innerHTML = `<span class="sr-title-full">${L.titleMain}</span><span class="sr-title-short">${L.titleShort}</span>`;
     root.querySelector('[data-role="subtitle"]').textContent = L.subtitle;
     root.querySelector('[data-role="lblClass"]').textContent = L.labelClass;
     root.querySelector('[data-role="optPlaceholder"]').textContent = L.optPlaceholder;
@@ -13890,6 +13945,7 @@ function mountStatGain(root){
   const LANG = {
     en: {
       title: "Stat-Gain Calculator",
+      titleShort: "Stat Gain",
       gateTitle: "Choose your class",
       gateSub: "Sets the class used below.",
       lblClass: "Class",
@@ -13907,6 +13963,7 @@ function mountStatGain(root){
     },
     th: {
       title: "อัตราการเติบโตของค่าสเตตัส",
+      titleShort: "การเติบโตสเตตัส",
       gateTitle: "เลือกคลาสของคุณ",
       gateSub: "กำหนดการเติบโตสเตตัสของคลาสที่เลือก",
       lblClass: "คลาส",
@@ -13932,7 +13989,7 @@ function mountStatGain(root){
   root.innerHTML = `
     <div class="sg">
       <div class="sg-head">
-        <h2 data-role="title">อัตราการเติบโตของค่าสเตตัส</h2>
+        <h2 data-role="title"><span class="sg-title-full">อัตราการเติบโตของค่าสเตตัส</span><span class="sg-title-short">การเติบโตสเตตัส</span></h2>
         <div class="sg-lang-toggle">
           <button type="button" class="sg-lang-btn" data-role="btnEN">EN</button>
           <button type="button" class="sg-lang-btn active" data-role="btnTH">TH</button>
@@ -14058,7 +14115,7 @@ function mountStatGain(root){
     btnEN.classList.toggle("active", lang === "en");
     btnTH.classList.toggle("active", lang === "th");
 
-    $('[data-role="title"]', root).textContent = L.title;
+    $('[data-role="title"]', root).innerHTML = `<span class="sg-title-full">${L.title}</span><span class="sg-title-short">${L.titleShort}</span>`;
     $('[data-role="gateTitle"]', root).textContent = L.gateTitle;
     $('[data-role="gateSub"]', root).textContent = L.gateSub;
     $('[data-role="lblClass"]', root).textContent = L.lblClass;
