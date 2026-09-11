@@ -6797,12 +6797,10 @@ function mountSkillCooldownLookup(root){
 
   function getAvailableServers(skill) {
     if (!skill) return ["og"];
-    const srvs = ["og"];
-    if (skill.servers) {
-      if (skill.servers.tot) srvs.push("tot");
-      if (skill.servers.tto) srvs.push("tto");
-    }
-    if (skill.ps && !srvs.includes("tot")) srvs.push("tot");
+    const srvs = [];
+    if (skill.servers && skill.servers.tto) srvs.push("tto");
+    if ((skill.servers && skill.servers.tot) || skill.ps) srvs.push("tot");
+    srvs.push("og");
     return srvs;
   }
 
