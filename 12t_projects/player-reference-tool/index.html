@@ -570,6 +570,34 @@
     line-height: 1.5;
     animation: fadeIn 0.2s ease;
   }
+
+  @media (max-width: 640px) {
+    .sr-wrap { padding: 10px 10px 14px; }
+    .sr-header { padding-bottom: 8px; margin-bottom: 10px; gap: 8px; }
+    .sr-header-title { font-size: 16px; }
+    .sr-header-sub { font-size: 11px; margin-top: 2px; }
+    .sr-deck { gap: 10px; }
+    .sr-card { padding: 10px 12px; gap: 8px; }
+    .sr-card-title { font-size: 13.5px; }
+    .sr-stat-grid { gap: 5px; }
+    .sr-stat-cell { min-height: 52px; padding: 5px 6px 4px; }
+    .sr-stat-cell input[type="number"] { font-size: 15px; margin: 1px 0; }
+    .sr-action-btn { padding: 8px 12px; font-size: 12.5px; }
+    .sr-result-box { padding: 8px 10px; gap: 6px; }
+    .sr-metric { padding: 6px 8px; }
+    .sr-metric-val { font-size: 16px; }
+    .sr-summary-text { font-size: 11px; padding-top: 6px; }
+    .sr-rec-grid { gap: 4px; }
+    .sr-rec-btn { padding: 4px 6px; font-size: 11px; }
+  }
+
+  @media (max-height: 820px) {
+    .sr-wrap { padding: 10px 14px 12px; }
+    .sr-header { padding-bottom: 8px; margin-bottom: 8px; }
+    .sr-card { padding: 10px 12px; gap: 8px; }
+    .sr-stat-cell { min-height: 52px; padding: 5px 6px 4px; }
+    .sr-action-btn { padding: 7px 12px; font-size: 12px; }
+  }
   .sr-err-msg strong {
     display: block;
     font-weight: 700;
@@ -984,6 +1012,26 @@
   .sg-gain.zero{color:var(--muted); font-weight:500}
   .sg-muted{color:var(--muted)}
   .sg-foot{color:var(--muted); font-size:12px; margin:8px 2px 0; line-height:1.4}
+
+  @media (max-width: 640px) {
+    .sg { padding: 10px 10px 14px; }
+    .sg-head h2 { font-size: 15px; }
+    .sg-controls { padding: 8px 10px; gap: 8px; grid-template-columns: 1fr; }
+    .sg-controls select, .sg-controls input { height: 38px; font-size: 13.5px; padding: 4px 8px; }
+    .sg-results table { font-size: 12.5px; }
+    .sg-results thead th { padding: 5px 6px; font-size: 9.5px; }
+    .sg-results tbody td { padding: 5px 6px; font-size: 12px; }
+    .sg-stat-abbr { font-size: 12px; }
+    .sg-gain { font-size: 13px; }
+    .sg-foot { font-size: 10.5px; margin-top: 6px; }
+  }
+
+  @media (max-height: 820px) {
+    .sg { padding: 10px 14px 12px; }
+    .sg-controls { padding: 6px 10px; gap: 6px; }
+    .sg-controls select, .sg-controls input { height: 38px; font-size: 13px; }
+    .sg-results tbody td { padding: 4px 8px; font-size: 12px; }
+  }
 
   .sg-gate{
     position:fixed; inset:0; background:rgba(10,7,5,.84); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
@@ -11079,6 +11127,7 @@ function mountStatRoll(root) {
           ${L.summaryBody(cls, tagsHtml, expected.toLocaleString())}
         </div>
       </div>`;
+    if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
   function findBestForK(base, selected, k) {
@@ -11229,8 +11278,10 @@ function mountStatRoll(root) {
       btn.addEventListener('click', () => {
         activeTabIdx = parseInt(btn.dataset.recTab);
         renderTabbedRecommender();
+        if (typeof fitStageToScreen === 'function') fitStageToScreen();
       });
     });
+    if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
   function setLang(lang) {
@@ -14077,6 +14128,7 @@ function mountStatGain(root){
         '<td class="num"><span class="sg-gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
       rows.appendChild(tr);
     }
+    if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
   function clampInput(el){
@@ -14157,6 +14209,19 @@ function fitStageToScreen(){
   const scale = Math.min(1, scaleH, scaleW);
 
   stage.style.transform = scale < 0.999 ? ("scale(" + scale + ")") : "none";
+}
+
+if (typeof ResizeObserver !== 'undefined') {
+  const shellEl = document.querySelector(".tool-shell");
+  if (shellEl) {
+    let resizeTimer = null;
+    new ResizeObserver(() => {
+      if (resizeTimer) cancelAnimationFrame(resizeTimer);
+      resizeTimer = requestAnimationFrame(() => {
+        if (typeof fitStageToScreen === 'function') fitStageToScreen();
+      });
+    }).observe(shellEl);
+  }
 }
 
 function showMenu(){
