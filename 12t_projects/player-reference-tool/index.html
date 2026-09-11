@@ -1387,6 +1387,18 @@
   .sk-picker-classes{
     width:100%;
   }
+  .sk-picker-classes .sg-gate-grid{
+    display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;
+  }
+  @media (max-width: 800px) {
+    .sk-picker-classes .sg-gate-grid{grid-template-columns:repeat(4, 1fr); gap:8px}
+  }
+  @media (max-width: 520px) {
+    .sk-picker-classes .sg-gate-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
+    .sk-picker-classes .sg-gate-icon{width:56px; height:56px}
+    .sk-picker-classes .sg-gate-label{font-size:11.5px}
+    .sk-picker-classes .sg-gate-btn{padding:8px 4px 6px; gap:4px}
+  }
   .sk-roster-header{
     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
     padding:12px 16px; margin-bottom:14px;
@@ -2668,6 +2680,14 @@
   html.tool-wide-hero .tool-shell {
     position:relative; width:860px; max-width:860px; margin:0 auto;
   }
+  @media (max-width: 900px) {
+    html.tool-wide-hero .tool-shell {
+      width: 100%;
+      max-width: 100%;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+  }
 
   /* Stats panel ALWAYS sits on the left of .tool-shell — never reorganizes */
   .sk-stats-panel {
@@ -2683,11 +2703,21 @@
     .sk{padding:10px 14px}
     .sk h2{font-size:15px; margin:0 0 6px}
     .sk-search-bar-row{--sk-search-h: 54px; margin-bottom:6px}
+    .sk-search-bar-row.is-hero{margin:12px auto 16px}
+    .sk-picker-root{margin:0 auto 12px}
     .sk-search-wrap{margin-bottom:0}
     .sk-search{height:var(--sk-search-h, 54px); padding:0 14px; font-size:17px}
     .sk-browse-btn{width:var(--sk-search-h, 54px); height:var(--sk-search-h, 54px)}
     .sk-browse-btn svg{width:20px; height:20px}
     .sk-server-btn{width:38px; height:38px; border:none; background:transparent; padding:0}
+    .sk-picker-classes .sg-gate-icon{width:72px; height:72px}
+    .sk-picker-classes .sg-gate-btn{padding:10px 4px 8px; gap:6px}
+    .sk-picker-classes .sg-gate-label{font-size:12.5px}
+    .sk-roster-grid{max-height:calc(100dvh - 220px); min-height:220px}
+    .sk-roster-card{min-height:84px; padding:8px 6px}
+    .sk-roster-icon{width:40px; height:40px}
+    .sk-roster-name{font-size:11.5px}
+    .sk-roster-header{padding:8px 12px; margin-bottom:8px}
     /* .sk-has-server-deps override removed */
     .sk-hero{padding:12px 14px}
     .sk-hero-head{gap:10px; margin-bottom:8px}
@@ -14078,11 +14108,12 @@ function fitStageToScreen(){
   const availW = window.innerWidth - 24;
 
   const isSkillLookup = document.documentElement.classList.contains("tool-wide-hero");
-  const compW = isSkillLookup ? 1420 : (shell.offsetWidth || 760);
   const statsPanel = isSkillLookup ? document.querySelector(".sk-stats-panel") : null;
+  const isStatsVisible = isSkillLookup && statsPanel && !statsPanel.hidden && statsPanel.offsetHeight > 0;
+  const compW = isStatsVisible ? 1420 : (shell.offsetWidth || 860);
   const shellH = shell.offsetHeight || 500;
-  const statsH = (statsPanel && !statsPanel.hidden) ? statsPanel.offsetHeight : 0;
-  const compH = Math.max(shellH, statsH, 540);
+  const statsH = isStatsVisible ? statsPanel.offsetHeight : 0;
+  const compH = Math.max(shellH, statsH, 460);
 
   const scaleH = availH / compH;
   const scaleW = availW / compW;
