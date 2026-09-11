@@ -7111,9 +7111,65 @@ const SKILLS = [
     desc: (rank) => `แปลงร่างเป็นเป้าหมายและคัดลอกค่าพลังทั้งหมด (ฮีโร่ต้องมีเลเวลไม่เกินค้างคาว, มอนสเตอร์ต้องมีเลเวลไม่เกิน **${15 * rank + 20}**) สามารถใช้สกิลพื้นฐานของเป้าหมายได้ (เมื่อเรียน **All Mimic** จะคัดลอกสกิลขั้นสูงและสั่งร่างมายาแปลงร่างตาม)`,
     revisedArtExempt: false
   },
-  { id:"bat_shame", name:"Shame", class:"Bat", icon:"bat_shame1", castTime:4, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false },
-  { id:"bat_darkStalker", name:"Dark Stalker", class:"Bat", icon:"bat_darkStalker1", castTime:9, castWrapped:true, cd:120, cdWrapped:true, revisedArtExempt:false, duration:999, durWrapped:false },
-  { id:"bat_soulEater", name:"Soul Eater", class:"Bat", icon:"bat_soulEater1", cd:150, cdWrapped:true, revisedArtExempt:false },
+    {
+    id: "bat_shame",
+    name: "Shame",
+    class: "Bat",
+    icon: "bat_shame5",
+    maxRank: 1,
+    cost: { mp: 10, sp: 35, spType: "blue" },
+    castTime: 4,
+    castWrapped: true,
+    cd: 60,
+    cdWrapped: true,
+    duration: 15,
+    durWrapped: false,
+    durContested: true,
+    durContestedInverted: false,
+    status: {
+      name: "shame",
+      sLv: 5,
+      class: "Debuff, Magical"
+    },
+    desc: "สาปเป้าหมายให้เขินอาย ลดค่า CHA ของเป้าหมายลง **50** และเพิ่มระดับของคำสาปถัดไปอีก **+1 เลเวล** (เมื่อร่ายซ้ำจะเพิ่มระดับเป็น **เลเวล 6** หรือ -60 CHA)",
+    revisedArtExempt: false
+  },
+    {
+    id: "bat_darkStalker",
+    name: "Dark Stalker",
+    class: "Bat",
+    icon: "bat_darkStalker1",
+    maxRank: 1,
+    cost: { mp: 45, sp: 20, spType: "blue" },
+    castTime: 9,
+    castWrapped: true,
+    cd: 120,
+    cdWrapped: true,
+    duration: 999,
+    durWrapped: false,
+    status: {
+      name: "darkStalker",
+      sLv: 9,
+      class: "Debuff, State, Magical"
+    },
+    desc: "เสกเงาความมืดเข้าเกาะติดเป้าหมาย (ใช้ได้กับฮีโร่เท่านั้น) สร้างความเสียหายต่อเนื่องทุก **4.5 วินาที** เท่ากับ **30% ของค่า CHA เป้าหมาย** ติดตัวจนกว่าเป้าหมายจะตาย",
+    revisedArtExempt: false
+  },
+      {
+    id: "bat_soulEater",
+    name: "Soul Eater",
+    class: "Bat",
+    icon: "bat_soulEater1",
+    maxRank: 1,
+    cost: { mp: 40, sp: 40, spType: "blue" },
+    cd: 150,
+    cdWrapped: true,
+    dmg: "เลเวลรวมดีบัฟศัตรูทั้งหมด x 39 (สูงสุด 1333)",
+    ko: "0",
+    hitCount: () => 1,
+    desc: "สร้างความเสียหายเวทแท้แก่เป้าหมายตามผลรวมเลเวลของดีบัฟทั้งหมดที่ติดอยู่บนตัว โดยไม่ลบล้างดีบัฟเหล่านั้น",
+    revisedArtExempt: false
+  },
   { id:"bat_shadowSacrifice", name:"Shadow Sacrifice", class:"Bat", icon:"bat_shadowSacrifice1", cd:120, cdWrapped:true, revisedArtExempt:false },
   { id:"bat_paranoia", name:"Paranoia", class:"Bat", icon:"bat_paranoia1", castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false },
   {
