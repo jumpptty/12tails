@@ -1355,14 +1355,131 @@
   .sk-has-server-deps .sk-search{
     padding-right:200px;
   }
-  .sk-search-hero{
-    margin: 54px auto 36px;
-    max-width: 640px;
+  .sk-browse-btn{
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    width:48px; height:48px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+    color:var(--gold); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:all .18s cubic-bezier(0.16, 1, 0.3, 1); z-index:3;
+    padding:0;
   }
+  .sk-browse-btn:hover{
+    border-color:var(--gold); background:var(--gold-soft); color:#fff;
+    box-shadow:0 0 12px rgba(212,175,55,0.45); transform:translateY(-50%) scale(1.05);
+  }
+  .sk-browse-btn:active{transform:translateY(-50%) scale(0.96)}
+  .sk-browse-btn.active{
+    border-color:var(--gold); background:var(--gold-soft); color:var(--gold);
+    box-shadow:0 0 0 1.5px var(--gold);
+  }
+  .sk-search-hero{
+    margin: 24px auto 36px;
+    max-width: 680px;
+  }
+  .sk-search-hero .sk-browse-btn{
+    width:52px; height:52px; left:12px;
+  }
+  .sk-picker-root{
+    margin: 0 auto 30px;
+    max-width: 1040px;
+    width: 100%;
+    transition: opacity .2s ease;
+  }
+  .sk-picker-root[hidden]{display:none}
+  .sk-picker-classes{
+    width:100%;
+  }
+  .sk-roster-header{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    padding:12px 16px; margin-bottom:14px;
+    background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold);
+    border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,0.3);
+  }
+  .sk-roster-back{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
+    color:var(--text); padding:7px 15px; font-size:13px; font-weight:600;
+    cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    transition:all .15s ease; font-family:inherit;
+  }
+  .sk-roster-back:hover{
+    border-color:var(--gold); background:var(--gold-soft); color:var(--gold);
+    transform:translateX(-2px);
+  }
+  .sk-roster-back-arr{font-size:16px; line-height:1}
+  .sk-roster-title-wrap{
+    display:flex; align-items:center; gap:10px;
+  }
+  .sk-roster-class-icon{
+    width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+  .sk-roster-class-name{
+    margin:0; font-size:17px; font-weight:700; color:var(--gold);
+  }
+  .sk-roster-count-badge{
+    background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.25);
+    color:#e0be4e; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:12px;
+    letter-spacing:0.3px;
+  }
+  .sk-roster-grid{
+    display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;
+    max-height:560px; overflow-y:auto; padding:4px 2px 10px;
+  }
+  .sk-roster-grid::-webkit-scrollbar { width: 6px; }
+  .sk-roster-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+  .sk-roster-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  .sk-roster-grid::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  @media (max-width: 1024px) {
+    .sk-roster-grid{grid-template-columns:repeat(4, 1fr)}
+  }
+  @media (max-width: 640px) {
+    .sk-roster-grid{grid-template-columns:repeat(3, 1fr); gap:8px}
+  }
+  @media (max-width: 440px) {
+    .sk-roster-grid{grid-template-columns:repeat(2, 1fr); gap:6px}
+  }
+  .sk-roster-card{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+    padding:12px 8px 10px; color:var(--text); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; gap:8px;
+    cursor:pointer; transition:all .18s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative; overflow:hidden; font-family:inherit; min-height:100px;
+  }
+  .sk-roster-card::before{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at center, rgba(212,175,55,0.14) 0%, transparent 70%);
+    opacity:0; transition:opacity .2s ease;
+  }
+  .sk-roster-card:hover{
+    border-color:var(--gold); background:var(--gold-soft);
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.25);
+  }
+  .sk-roster-card:hover::before{opacity:1}
+  .sk-roster-card:active{transform:scale(0.97)}
+  .sk-roster-icon{
+    width:48px; height:48px; object-fit:contain;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    transition:transform .18s ease; pointer-events:none;
+  }
+  .sk-roster-card:hover .sk-roster-icon{transform:scale(1.08)}
+  .sk-roster-name{
+    font-size:12.5px; font-weight:600; line-height:1.3; color:var(--text);
+    pointer-events:none; transition:color .15s ease;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .sk-roster-card:hover .sk-roster-name{color:var(--gold)}
+  .sk-roster-empty{
+    text-align:center; padding:48px 20px;
+    background:var(--panel); border:1px dashed var(--line); border-radius:8px;
+    margin:10px 0;
+  }
+  .sk-roster-empty-icon{font-size:32px; margin-bottom:8px; opacity:0.6}
+  .sk-roster-empty-title{font-size:16px; font-weight:700; color:var(--gold); margin-bottom:4px}
+  .sk-roster-empty-sub{font-size:13px; color:var(--muted)}
   .sk-search-hero .sk-search{
-    padding: 16px 28px;
+    padding: 16px 68px 16px 68px;
     font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     text-align: center;
     color: #deb838;
@@ -1404,7 +1521,7 @@
   }
   .sk-search{
     box-sizing:border-box; width:100%; height:76px; background:var(--panel-2); color:var(--text);
-    border:1px solid var(--line); border-radius:4px; padding:0 22px; font-size:24px;
+    border:1px solid var(--line); border-radius:4px; padding:0 22px 0 68px; font-size:24px;
     font-weight:600; outline:none; font-family:inherit;
   }
   .sk-search:focus{border-color:var(--gold)}
@@ -6963,10 +7080,19 @@ function mountSkillCooldownLookup(root){
       </div>
       <div class="sk-multihit-layer" data-role="multihit-layer"></div>
       <div class="sk-search-wrap sk-search-hero">
+        <button type="button" class="sk-browse-btn active" data-role="browse-btn" title="เลือกตามสายอาชีพ (Browse by Class)" aria-label="Browse by Class">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          </svg>
+        </button>
         <input type="text" class="sk-search" data-role="search" placeholder="ค้นหาสกิล…" autocomplete="off">
         <div class="sk-server-deps" data-role="server-deps"></div>
         <div class="sk-suggestions" data-role="suggestions" hidden></div>
       </div>
+      <div class="sk-picker-root" data-role="picker-root"></div>
       <div data-role="display"></div>
     </div>
   `;
@@ -7016,6 +7142,8 @@ function mountSkillCooldownLookup(root){
   const displayEl = $('[data-role="display"]', root);
   const artEl = $('[data-role="art"]', root);
   const serverDepsEl = $('[data-role="server-deps"]', root);
+  const browseBtn = $('[data-role="browse-btn"]', root);
+  const pickerRootEl = $('[data-role="picker-root"]', root);
 
   raBtn.innerHTML = `<img src="${SKILL_ICONS["revisedArt5"]}" alt="revisedArt5">`;
   let revisedArtOn = true;
@@ -7081,6 +7209,210 @@ function mountSkillCooldownLookup(root){
   let selected = null;
   let hasSelectedAnySkill = false;
   let activeIndex = -1;
+
+  const CLASS_TH_NAMES = {
+    Wolf: 'หมาป่า', Bison: 'ไบซัน', Panda: 'แพนด้า', Whale: 'วาฬ',
+    Cat: 'แมว', Chameleon: 'กิ้งก่า', Rabbit: 'กระต่าย', Mole: 'ตุ่น',
+    Monkey: 'ลิง', Sheep: 'แกะ', Penguin: 'เพนกวิน', Bat: 'ค้างคาว'
+  };
+
+  const CLASS_EN_ORDER = [
+    'Bat', 'Bison', 'Cat', 'Chameleon', 'Mole', 'Monkey',
+    'Panda', 'Penguin', 'Rabbit', 'Sheep', 'Whale', 'Wolf'
+  ];
+
+  let pickerState = 'classes'; // 'classes' | 'roster' | 'global' | 'hidden'
+  let pickerClass = null;
+
+  function renderPickerView(){
+    if (!pickerRootEl) return;
+    if (selected) {
+      pickerRootEl.hidden = true;
+      pickerRootEl.innerHTML = '';
+      if (browseBtn) browseBtn.classList.remove('active');
+      return;
+    }
+
+    pickerRootEl.hidden = false;
+    if (browseBtn) browseBtn.classList.add('active');
+
+    const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
+    if (pickerState === 'roster' && pickerClass) {
+      const classSkills = SKILLS.filter(s => s.class === pickerClass);
+      const filtered = q ? classSkills.filter(s => s.name.toLowerCase().includes(q) || (s.id && s.id.toLowerCase().includes(q))) : classSkills;
+      const thName = CLASS_TH_NAMES[pickerClass] || pickerClass;
+      const classIcon = (typeof CLASS_MINIMAL_ICONS !== 'undefined' && CLASS_MINIMAL_ICONS[pickerClass]) || '';
+
+      pickerRootEl.innerHTML = `
+        <div class="sk-picker-roster">
+          <div class="sk-roster-header">
+            <button type="button" class="sk-roster-back" data-role="roster-back">
+              <span class="sk-roster-back-arr">←</span>
+              <span class="sk-roster-back-txt">กลับสู่รายชื่อคลาส</span>
+            </button>
+            <div class="sk-roster-title-wrap">
+              ${classIcon ? `<img class="sk-roster-class-icon" src="${classIcon}" alt="${pickerClass}">` : ''}
+              <h3 class="sk-roster-class-name">${thName} (${pickerClass})</h3>
+              <span class="sk-roster-count-badge">${classSkills.length} สกิล</span>
+            </div>
+          </div>
+          ${filtered.length > 0 ? `
+            <div class="sk-roster-grid">
+              ${filtered.map(s => `
+                <button type="button" class="sk-roster-card" data-skill-id="${s.id}" title="${s.name}">
+                  <img class="sk-roster-icon" src="${SKILL_ICONS[s.icon] || ''}" alt="${s.name}" loading="lazy">
+                  <span class="sk-roster-name">${s.name}</span>
+                </button>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="sk-roster-empty">
+              <div class="sk-roster-empty-icon">🔍</div>
+              <div class="sk-roster-empty-title">ไม่พบสกิลในคลาสนี้</div>
+              <div class="sk-roster-empty-sub">ลองพิมพ์ชื่อสกิลอื่น หรือล้างคำค้นหาเพื่อดูสกิลทั้งหมด</div>
+            </div>
+          `}
+        </div>
+      `;
+
+      const backBtn = pickerRootEl.querySelector('[data-role="roster-back"]');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          pickerState = 'classes';
+          pickerClass = null;
+          if (searchEl) searchEl.value = '';
+          renderPickerView();
+          if (searchEl) searchEl.focus();
+        });
+      }
+
+      $$('.sk-roster-card', pickerRootEl).forEach(card => {
+        card.addEventListener('click', () => {
+          const sid = card.dataset.skillId;
+          const targetSkill = SKILLS.find(s => s.id === sid);
+          if (targetSkill) selectSkill(targetSkill);
+        });
+      });
+
+    } else if (pickerState === 'global' || (pickerState === 'classes' && q !== '')) {
+      pickerState = 'global';
+      const filtered = SKILLS.filter(s => s.name.toLowerCase().includes(q) || (s.id && s.id.toLowerCase().includes(q)));
+      
+      pickerRootEl.innerHTML = `
+        <div class="sk-picker-roster">
+          <div class="sk-roster-header">
+            <button type="button" class="sk-roster-back" data-role="roster-back">
+              <span class="sk-roster-back-arr">←</span>
+              <span class="sk-roster-back-txt">กลับสู่รายชื่อคลาส</span>
+            </button>
+            <div class="sk-roster-title-wrap">
+              <h3 class="sk-roster-class-name">ผลการค้นหา: "${searchEl.value.trim()}"</h3>
+              <span class="sk-roster-count-badge">${filtered.length} สกิล</span>
+            </div>
+          </div>
+          ${filtered.length > 0 ? `
+            <div class="sk-roster-grid">
+              ${filtered.map(s => `
+                <button type="button" class="sk-roster-card" data-skill-id="${s.id}" title="${s.name} (${s.class})">
+                  <img class="sk-roster-icon" src="${SKILL_ICONS[s.icon] || ''}" alt="${s.name}" loading="lazy">
+                  <span class="sk-roster-name">${s.name}</span>
+                </button>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="sk-roster-empty">
+              <div class="sk-roster-empty-icon">🔍</div>
+              <div class="sk-roster-empty-title">ไม่พบสกิลที่ตรงกับคำค้นหา</div>
+              <div class="sk-roster-empty-sub">ลองค้นหาด้วยคำอื่น หรือกด "กลับสู่รายชื่อคลาส" เพื่อเลือกคลาส</div>
+            </div>
+          `}
+        </div>
+      `;
+
+      const backBtn = pickerRootEl.querySelector('[data-role="roster-back"]');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          pickerState = 'classes';
+          pickerClass = null;
+          if (searchEl) searchEl.value = '';
+          renderPickerView();
+          if (searchEl) searchEl.focus();
+        });
+      }
+
+      $$('.sk-roster-card', pickerRootEl).forEach(card => {
+        card.addEventListener('click', () => {
+          const sid = card.dataset.skillId;
+          const targetSkill = SKILLS.find(s => s.id === sid);
+          if (targetSkill) selectSkill(targetSkill);
+        });
+      });
+
+    } else {
+      // 12-class gate
+      pickerState = 'classes';
+      pickerClass = null;
+
+      pickerRootEl.innerHTML = `
+        <div class="sk-picker-classes">
+          <div class="sg-gate-grid">
+            ${CLASS_EN_ORDER.map(name => {
+              const iconUrl = (typeof CLASS_MINIMAL_ICONS !== 'undefined' && CLASS_MINIMAL_ICONS[name]) || '';
+              const thLabel = CLASS_TH_NAMES[name] || name;
+              return `
+                <button type="button" class="sg-gate-btn" data-class="${name}">
+                  <img class="sg-gate-icon" src="${iconUrl}" alt="${name}" loading="lazy">
+                  <span class="sg-gate-label">${thLabel}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      $$('.sg-gate-btn', pickerRootEl).forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cls = btn.dataset.class;
+          pickerClass = cls;
+          pickerState = 'roster';
+          if (searchEl) searchEl.value = '';
+          renderPickerView();
+          if (searchEl) searchEl.focus();
+        });
+      });
+    }
+
+    if (typeof fitStageToScreen === 'function' && document.documentElement && document.documentElement.classList && typeof document.documentElement.classList.contains === 'function') {
+      fitStageToScreen();
+    }
+  }
+
+  if (browseBtn) {
+    browseBtn.addEventListener('click', () => {
+      if (selected) {
+        pickerClass = selected.class;
+        pickerState = 'roster';
+        selected = null;
+        hasSelectedAnySkill = false;
+        if (searchEl) searchEl.value = '';
+        closeSuggestions();
+        renderHero();
+        renderPickerView();
+        if (searchEl) searchEl.focus();
+      } else {
+        if (pickerState === 'roster' || pickerState === 'global') {
+          pickerState = 'classes';
+          pickerClass = null;
+          if (searchEl) searchEl.value = '';
+          renderPickerView();
+          if (searchEl) searchEl.focus();
+        } else {
+          if (searchEl) searchEl.focus();
+        }
+      }
+    });
+  }
   let currentMatches = [];
   const depRanks = {};
   const skillRanks = {};
@@ -8478,6 +8810,12 @@ function mountSkillCooldownLookup(root){
   function selectSkill(s){
     hasSelectedAnySkill = true;
     selected = s;
+    pickerState = 'hidden';
+    if (pickerRootEl) {
+      pickerRootEl.hidden = true;
+      pickerRootEl.innerHTML = '';
+    }
+    if (browseBtn) browseBtn.classList.remove('active');
     searchEl.value = s.name;
     closeSuggestions();
     // A simulated hit belongs to the skill it was rolled for -- switching
@@ -8538,11 +8876,18 @@ function mountSkillCooldownLookup(root){
         searchWrapEl.classList.remove("sk-has-server-deps");
         toolShellEl.classList.add("is-hero-empty");
         artEl.style.visibility = "hidden";
+        if (statsPanelEl) statsPanelEl.hidden = true;
+        renderPickerView();
         return;
       }
     }
     searchWrapEl.classList.remove("sk-search-hero");
     toolShellEl.classList.remove("is-hero-empty");
+    if (pickerRootEl) {
+      pickerRootEl.hidden = true;
+      pickerRootEl.innerHTML = '';
+    }
+    if (browseBtn) browseBtn.classList.remove('active');
 
     renderServerDeps(selected);
     const activeSelected = getActiveSkill(selected, currentServer);
@@ -10018,11 +10363,10 @@ function mountSkillCooldownLookup(root){
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
-    if (!hasSelectedAnySkill){
-      if (selected && selected.name.toLowerCase() !== q){
-        selected = null;
-        renderHero();
-      }
+    if (!selected){
+      closeSuggestions();
+      renderPickerView();
+      return;
     }
     if (q === ""){
       closeSuggestions();
