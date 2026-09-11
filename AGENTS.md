@@ -56,7 +56,7 @@ When reading `.cs` files in `DecompiledSource/`:
 * **Inline Skill Description Container (`.sk-hero-desc`):**
   * Sits inline to the right of the skill icon and title in the card hero header (`flex: 1; min-width: 0; margin-left: 14px;`).
   * **Visual Style:** Gold Accent Bar (`background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`).
-  * **Typography:** Google Fonts **Prompt** (`font-family: 'Prompt', -apple-system, sans-serif; font-size: 12px; line-height: 1.45; color: var(--muted);`). Auto-shrinks down to `10.5px` if text exceeds 2 lines.
+  * **Typography:** Google Fonts **Prompt** (`font-family: 'Prompt', -apple-system, sans-serif; font-size: 12px; line-height: 1.42; color: var(--muted);`). Auto-adapts up to 3 lines (desktop, max-height `74px`) and 5 lines (mobile, max-height `105px`), dynamically scaling font size down to `10px` if text requires more room.
   * **Responsive:** Stretches `100%` full width beneath the title on mobile viewports.
 
 ---
