@@ -7186,7 +7186,24 @@ const SKILLS = [
     desc: "สังเวยร่างเงาทั้งหมด โดยนำ **20% ของ HP ที่เหลืออยู่** ของแต่ละร่างมายามาฟื้นฟูเลือดให้แก่ค้างคาว",
     revisedArtExempt: false
   },
-  { id:"bat_paranoia", name:"Paranoia", class:"Bat", icon:"bat_paranoia1", castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false },
+  {
+    id: "bat_paranoia",
+    name: "Paranoia",
+    class: "Bat",
+    icon: "bat_paranoia1",
+    maxRank: 1,
+    cost: { mp: 40, sp: 25, spType: "blue" },
+    castTime: 7,
+    castWrapped: true,
+    cd: 150,
+    cdWrapped: true,
+    dmg: "จำนวนเพื่อนรอบเป้าหมาย x 100 (สูงสุด 1000)",
+    effectDamage: true,
+    ko: "0",
+    hitCount: () => 1,
+    desc: "ทำ effect damage ใส่เป้าหมายตามจำนวนเพื่อนร่วมทีมรอบตัวเป้าหมายในระยะ **24m** และปลดล็อกให้สกิล **Switch** สามารถลบล้างสถานะประเภท Lock **เลเวล 5** ได้",
+    revisedArtExempt: false
+  },
   {
     id: "bat_shatteringDream",
     name: "Shattering Dream",
