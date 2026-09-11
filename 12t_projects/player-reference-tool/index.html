@@ -2641,7 +2641,7 @@
      -- the shrink-loop (font-size fallback on overflow) is the mechanism
      doing the real work here, not vertical centering. min-width:0 still
      needed -- same flex-item shrink gotcha as everywhere else in this file. */
-  .sk-dmg-value{flex:1; min-width:0; font-size:30px; font-weight:700; font-family:ui-monospace,monospace; line-height:1.2; white-space:nowrap}
+  .sk-dmg-value{flex:1; min-width:0; font-size:30px; font-weight:700; font-family:ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; line-height:1.2; white-space:nowrap}
   /* 2nd small line under the main Damage Formula (2026-08-22, Typhoon HP
      pilot) -- deliberately smaller/muted/normal-weight, the same visual
      demotion .sk-dmg-final-note already uses for a secondary annotation.
@@ -2704,7 +2704,8 @@
      used by the Simulate popup for the same flagged skills). */
   .dmg-effect{color:var(--stat-effect); font-weight:700}
   .dmg-heal{color:#4ade80; font-weight:700}
-  .dmg-text{color:var(--text)}
+  .dmg-text{color:var(--text); font-family:'Prompt',-apple-system,"Segoe UI",sans-serif}
+  .dmg-prose{font-family:'Prompt',-apple-system,"Segoe UI",sans-serif; font-weight:600}
   /* Substituted-number Damage Formula (2026-08-19, user-redesigned): the big
      "hero number" per term (colored the same as the old symbolic coefficient
      spans -- .dmg-num/.dmg-atk/.dmg-tal/.dmg-term all reused unchanged, no
@@ -7155,7 +7156,7 @@ const SKILLS = [
     desc: "เสกเงาความมืดเข้าเกาะติดเป้าหมาย (ใช้ได้กับฮีโร่เท่านั้น) สร้างความเสียหายต่อเนื่องทุก **4.5 วินาที** เท่ากับ **30% ของค่า CHA เป้าหมาย** ติดตัวจนกว่าเป้าหมายจะตาย",
     revisedArtExempt: false
   },
-      {
+        {
     id: "bat_soulEater",
     name: "Soul Eater",
     class: "Bat",
@@ -7165,12 +7166,26 @@ const SKILLS = [
     cd: 150,
     cdWrapped: true,
     dmg: "เลเวลรวมดีบัฟศัตรูทั้งหมด x 39 (สูงสุด 1333)",
+    effectDamage: true,
     ko: "0",
     hitCount: () => 1,
     desc: "สร้างความเสียหายเวทแท้แก่เป้าหมายตามผลรวมเลเวลของดีบัฟทั้งหมดที่ติดอยู่บนตัว โดยไม่ลบล้างดีบัฟเหล่านั้น",
     revisedArtExempt: false
   },
-  { id:"bat_shadowSacrifice", name:"Shadow Sacrifice", class:"Bat", icon:"bat_shadowSacrifice1", cd:120, cdWrapped:true, revisedArtExempt:false },
+    {
+    id: "bat_shadowSacrifice",
+    name: "Shadow Sacrifice",
+    class: "Bat",
+    icon: "bat_shadowSacrifice1",
+    maxRank: 1,
+    cost: { mp: 30, sp: 30, spType: "blue" },
+    cd: 120,
+    cdWrapped: true,
+    isHeal: true,
+    dmg: "20% ของ HP ร่างเงาที่เหลือ",
+    desc: "สังเวยร่างเงาทั้งหมด โดยนำ **20% ของ HP ที่เหลืออยู่** ของแต่ละร่างมายามาฟื้นฟูเลือดให้แก่ค้างคาว",
+    revisedArtExempt: false
+  },
   { id:"bat_paranoia", name:"Paranoia", class:"Bat", icon:"bat_paranoia1", castTime:7, castWrapped:true, cd:150, cdWrapped:true, revisedArtExempt:false },
   {
     id: "bat_shatteringDream",
@@ -8969,7 +8984,9 @@ function mountSkillCooldownLookup(root){
     if (dmgDepOn && dmgDepTermText){
       fallbackText += ` + ${dmgDepTermText}`;
     }
-    return `<span class="${skill.effectDamage ? "dmg-effect" : "dmg-text"}">${fallbackText}</span>`;
+    const isThai = /[ก-๙]/.test(fallbackText);
+    const cls = (skill.effectDamage ? "dmg-effect" : "dmg-text") + (isThai ? " dmg-prose" : "");
+    return `<span class="${cls}">${fallbackText}</span>`;
   }
   // Compact single-line formula renderer (2026-08-22, Typhoon HP subline
   // fix) -- deliberately NOT `renderDmgFormula`/`buildFormulaGrid` above,
@@ -10620,7 +10637,8 @@ function mountSkillCooldownLookup(root){
     // rather than letting it wrap to a second line.
     $$(".sk-stat-value, .sk-dmg-value", displayEl).forEach(el => {
       let size = parseFloat(getComputedStyle(el).fontSize);
-      while (el.scrollWidth > el.clientWidth && size > 16){
+      const minFloor = el.querySelector(".dmg-prose") ? 11 : 16;
+      while (el.scrollWidth > el.clientWidth && size > minFloor){
         size -= 1;
         el.style.fontSize = size + "px";
       }
