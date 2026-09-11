@@ -1069,44 +1069,32 @@
      share this flex container have their own `.sk-controls-actions` row
      below (see that rule) instead of wrapping in as a 4th, uneven row here. */
   .sk-controls{
-    background:var(--panel-2); border-radius:3px;
-    padding:8px 14px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; align-items:end; margin-bottom:8px;
+    background:linear-gradient(180deg, rgba(212,175,55,0.03) 0%, rgba(20,19,17,0.92) 100%);
+    border:1px solid rgba(212,175,55,0.2); border-left:3px solid var(--gold); border-radius:6px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.35);
+    padding:10px 14px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; align-items:end; margin-bottom:8px;
   }
-  /* Cell-level centering (2026-08-22, user follow-up: "still not in the
-     middle" after the grid fix above) -- the grid fix only solved the ROW's
-     own outer symmetry (equal column widths, so the padding on both outer
-     edges matches); it says nothing about how content sits WITHIN each of
-     those now-wider columns. Grid's default `justify-items:stretch` still
-     stretches each `<div>` cell to its column's full width, and the
-     label/input inside it were left-aligned within that stretched box --
-     so each field hugged the left edge of its own column instead of
-     centering in it, a different bug than the one just fixed.
-     `text-align:center` on the cell (not `justify-items:center` on the
-     grid) is the deliberate choice here: it centers the label's text and
-     the `<input>` (a replaced inline-level element, so it responds to
-     text-align same as inline-block content) WITHOUT shrinking the div
-     itself down to content width -- shrinking would risk "CHAR LV"/longer
-     labels wrapping inside a narrower box, since the div would then only
-     be as wide as its widest child (the input, ~60px) instead of the full
-     column. */
   .sk-controls > div{text-align:center}
-  .sk-controls label{display:block; font-size:10.5px; color:var(--muted); margin:0 0 3px; letter-spacing:.7px; text-transform:uppercase}
-  /* Width shrunk from a flat 80px (2026-08-21, user-requested) once DEF/VIT
-     joined the player row and the 8-field Enemy Stats row was added -- 9
-     number inputs (was 7) plus 2 toggle buttons need to fit the same
-     940px-wide tool-wide-hero stage, so "generous enough for any value" had
-     to become "exactly enough for the stated ceiling." `5ch` sizes to the
-     current font's own digit width (not a guessed px figure that could be
-     wrong for a different font stack) for "99999" (5 digits, the user's own
-     stated ceiling), `+22px` covers the reduced padding (6px each side) plus
-     the browser's native number-input spinner arrows and border -- not
-     visually verified live this session (no browser tool available), so
-     treat the buffer as an estimate, not a measured value, if this ever
-     looks visibly too tight/loose. */
+  .sk-controls label{
+    display:block; font-family:'Chakra Petch', 'Prompt', sans-serif;
+    font-size:11px; font-weight:600; color:#b3a898; margin:0 0 4px;
+    letter-spacing:0.8px; text-transform:uppercase; text-shadow:0 1px 2px rgba(0,0,0,0.5);
+  }
   .sk-controls input[type=number]{
-    width:calc(5ch + 22px); background:var(--panel); color:var(--text); border:1px solid var(--line);
-    border-radius:2px; padding:5px 6px; font-size:14px; outline:none; font-family:inherit;
-    text-align:center; -moz-appearance:textfield; appearance:textfield;
+    width:calc(5ch + 20px); background:rgba(12,11,9,0.85); color:#ede8df;
+    border:1px solid rgba(212,175,55,0.25); border-radius:4px; padding:5px 4px;
+    font-size:15px; font-weight:600; font-family:'JetBrains Mono', 'Chakra Petch', monospace;
+    letter-spacing:0.5px; outline:none; text-align:center;
+    box-shadow:inset 0 1px 4px rgba(0,0,0,0.6);
+    transition:border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    -moz-appearance:textfield; appearance:textfield;
+  }
+  .sk-controls input[type=number]:hover{
+    border-color:rgba(212,175,55,0.55); background:rgba(18,16,13,0.95);
+  }
+  .sk-controls input[type=number]:focus{
+    border-color:var(--gold); box-shadow:0 0 8px rgba(212,175,55,0.4), inset 0 1px 3px rgba(0,0,0,0.6);
+    background:rgba(22,19,15,0.98); color:#ffffff;
   }
   .sk-controls input[type=number]::-webkit-outer-spin-button,
   .sk-controls input[type=number]::-webkit-inner-spin-button{
@@ -1201,33 +1189,41 @@
      nested inside the already-styled outer one. */
   .sk-enemystat-controls{
     position:relative;
-    display:flex; flex-direction:column; gap:8px;
-    background:var(--stat-atk-soft); border:1px solid var(--stat-atk); border-radius:3px;
-    padding:8px 14px; margin-bottom:8px;
+    display:flex; flex-direction:column; gap:10px;
+    background:linear-gradient(180deg, rgba(239,68,68,0.08) 0%, rgba(20,19,17,0.94) 100%);
+    border:1px solid rgba(239,68,68,0.35); border-left:3px solid #ef4444; border-radius:6px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.4), inset 0 0 16px rgba(239,68,68,0.04);
+    padding:10px 14px 12px; margin-bottom:8px;
   }
-  .sk-enemystat-controls .sk-controls{background:none; border:none; padding:0; margin-bottom:0}
-  .sk-enemystat-controls label{color:var(--stat-atk)}
+  .sk-enemystat-controls .sk-controls{background:none; border:none; box-shadow:none; padding:0; margin-bottom:0}
+  .sk-enemystat-controls label{
+    font-family:'Chakra Petch', 'Prompt', sans-serif;
+    color:#ef5350; font-weight:600; letter-spacing:0.8px;
+    text-shadow:0 0 6px rgba(239,68,68,0.3);
+  }
+  .sk-enemystat-controls input[type=number]{
+    background:rgba(18,10,10,0.88); color:#ffcdd2;
+    border:1px solid rgba(239,68,68,0.3); border-radius:4px;
+    box-shadow:inset 0 1px 4px rgba(0,0,0,0.6);
+  }
+  .sk-enemystat-controls input[type=number]:hover{
+    border-color:rgba(239,68,68,0.65); background:rgba(26,12,12,0.95);
+  }
+  .sk-enemystat-controls input[type=number]:focus{
+    border-color:#ff5252; box-shadow:0 0 8px rgba(239,68,68,0.45), inset 0 1px 3px rgba(0,0,0,0.6);
+    background:rgba(30,14,14,0.98); color:#ffffff;
+  }
   .sk-enemystat-controls[hidden]{display:none}
   .sk-enemy-cycle-row{display:flex; justify-content:center}
-  /* "Enemy Stat" label cell (2026-08-21, user-requested: put this text
-     where enemy ATK used to sit, then shift the 8 real stat fields right so
-     each aligns with its player-row counterpart) -- fixed to the EXACT same
-     width as every stat input (calc(5ch + 22px), same token the player row's
-     CHAR LV cell resolves to, since LV is also a plain number input using
-     the shared .sk-controls input[type=number] rule). This is what actually
-     produces the alignment: two independent flex rows only line up
-     column-for-column if each corresponding cell is the same width, and
-     "Enemy Stat" (10 characters) doesn't fit that width on one line at the
-     label's normal size -- white-space:normal (not nowrap) lets it wrap to
-     2 lines rather than overflow the column and misalign everything after
-     it. flex-direction:column + justify-content:flex-end bottom-anchors the
-     text against the row's align-items:end baseline, roughly where a
-     neighboring cell's INPUT box (not its label) sits, since this cell has
-     no input of its own to anchor against. */
   .sk-enemystat-label-cell{
-    width:calc(5ch + 22px); display:flex; flex-direction:column; justify-content:flex-end;
+    width:calc(5ch + 20px); display:flex; flex-direction:column; justify-content:flex-end;
   }
-  .sk-enemystat-label-cell label{margin:0; font-size:11px; font-weight:700; color:var(--stat-atk); white-space:normal; line-height:1.2; text-align:center; word-break:break-word; text-transform:uppercase; letter-spacing:0.5px}
+  .sk-enemystat-label-cell label{
+    margin:0; font-family:'Chakra Petch', 'Prompt', sans-serif;
+    font-size:12.5px; font-weight:700; color:#ff5252; white-space:normal;
+    line-height:1.2; text-align:center; word-break:break-word; text-transform:uppercase;
+    letter-spacing:1px; text-shadow:0 0 8px rgba(255,82,82,0.45);
+  }
   /* Absolutely positioned into the box's own bottom-right corner (2026-08-14,
      user-requested) rather than stacked in normal flow below -- previously
      margin-top:6px'd itself onto a new line under the base-value text,
@@ -1906,15 +1902,21 @@
      feedback was "bigger than the original 78px, but I don't hate it," not
      a request for a specific number) rather than re-deriving one from
      anything else. */
-  .sk-enemy-cycle{display:flex; align-items:center; gap:6px}
+  .sk-enemy-cycle{display:flex; align-items:center; gap:8px}
   .sk-enemy-cycle-arrow{
-    border:none; background:none; padding:2px; cursor:pointer; color:var(--muted); line-height:0;
+    border:none; background:none; padding:4px; cursor:pointer; color:rgba(239,68,68,0.7); line-height:0;
+    transition:color 0.15s ease, transform 0.15s ease;
   }
-  .sk-enemy-cycle-arrow:hover{color:var(--gold)}
-  .sk-enemy-cycle-arrow svg{width:12px; height:12px; fill:currentColor; display:block}
+  .sk-enemy-cycle-arrow:hover{color:#ff6b6b; transform:scale(1.25)}
+  .sk-enemy-cycle-arrow svg{width:13px; height:13px; fill:currentColor; display:block}
   .sk-enemy-cycle-icon-wrap{
-    width:64px; height:64px; flex:none; border:1px solid var(--line); border-radius:4px;
-    background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center;
+    width:64px; height:64px; flex:none; border:1.5px solid rgba(239,68,68,0.45); border-radius:6px;
+    background:rgba(15,11,11,0.95); overflow:hidden; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,0.5), 0 0 10px rgba(239,68,68,0.2);
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .sk-enemy-cycle-icon-wrap:hover{
+    border-color:#ff5252; box-shadow:0 4px 16px rgba(0,0,0,0.6), 0 0 14px rgba(239,68,68,0.4);
   }
   .sk-enemy-cycle-icon-wrap img{width:100%; height:100%; object-fit:cover; display:block}
   /* "Custom" (2026-08-21, user-requested): replaces the icon entirely --
