@@ -1353,6 +1353,7 @@
   }
   /* .sk-has-server-deps padding removed: server-deps is now an external flex sibling */
   .sk-search-bar-row{
+    --sk-search-h: 76px;
     display:flex; align-items:center; gap:10px;
     margin-bottom:10px; transition:all 0.2s ease;
   }
@@ -1360,10 +1361,13 @@
     max-width:680px; margin:24px auto 28px;
   }
   .sk-browse-btn{
-    width:76px; height:76px; flex-shrink:0; box-sizing:border-box;
-    background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+    width:var(--sk-search-h); height:var(--sk-search-h); aspect-ratio:1 / 1; flex-shrink:0; box-sizing:border-box;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
     color:var(--gold); display:flex; align-items:center; justify-content:center;
     cursor:pointer; transition:all .18s cubic-bezier(0.16, 1, 0.3, 1); padding:0;
+  }
+  .sk-browse-btn svg{
+    width:24px; height:24px; pointer-events:none;
   }
   .sk-browse-btn:hover{
     border-color:var(--gold); background:var(--gold-soft); color:#fff;
@@ -1514,7 +1518,7 @@
     color: #deb838;
   }
   .sk-search{
-    box-sizing:border-box; width:100%; height:76px; background:var(--panel-2); color:var(--text);
+    box-sizing:border-box; width:100%; height:var(--sk-search-h, 76px); background:var(--panel-2); color:var(--text);
     border:1px solid var(--line); border-radius:4px; padding:0 22px; font-size:24px;
     font-weight:600; outline:none; font-family:inherit;
   }
@@ -2678,8 +2682,11 @@
     .stage{padding:10px 16px 20px}
     .sk{padding:10px 14px}
     .sk h2{font-size:15px; margin:0 0 6px}
-    .sk-search-wrap{margin-bottom:6px}
-    .sk-search{height:54px; padding:0 14px; font-size:17px}
+    .sk-search-bar-row{--sk-search-h: 54px; margin-bottom:6px}
+    .sk-search-wrap{margin-bottom:0}
+    .sk-search{height:var(--sk-search-h, 54px); padding:0 14px; font-size:17px}
+    .sk-browse-btn{width:var(--sk-search-h, 54px); height:var(--sk-search-h, 54px)}
+    .sk-browse-btn svg{width:20px; height:20px}
     .sk-server-btn{width:38px; height:38px; border:none; background:transparent; padding:0}
     /* .sk-has-server-deps override removed */
     .sk-hero{padding:12px 14px}
