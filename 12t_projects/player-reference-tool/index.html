@@ -1329,7 +1329,7 @@
     border-color: transparent;
     box-shadow: none;
   }
-  .sk-search-wrap{position:relative; margin-bottom:10px; transition:all 0.2s ease}
+  .sk-search-wrap{position:relative; margin-bottom:0; flex:1; transition:all 0.2s ease}
   .sk-server-deps{
     position:absolute; right:12px; top:50%; transform:translateY(-50%);
     display:flex; align-items:center; gap:8px; z-index:3;
@@ -1355,29 +1355,26 @@
   .sk-has-server-deps .sk-search{
     padding-right:200px;
   }
+  .sk-search-bar-row{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:10px; transition:all 0.2s ease;
+  }
+  .sk-search-bar-row.is-hero{
+    max-width:680px; margin:24px auto 28px;
+  }
   .sk-browse-btn{
-    position:absolute; left:12px; top:50%; transform:translateY(-50%);
-    width:48px; height:48px;
+    width:76px; height:76px; flex-shrink:0;
     background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
     color:var(--gold); display:flex; align-items:center; justify-content:center;
-    cursor:pointer; transition:all .18s cubic-bezier(0.16, 1, 0.3, 1); z-index:3;
-    padding:0;
+    cursor:pointer; transition:all .18s cubic-bezier(0.16, 1, 0.3, 1); padding:0;
   }
   .sk-browse-btn:hover{
     border-color:var(--gold); background:var(--gold-soft); color:#fff;
-    box-shadow:0 0 12px rgba(212,175,55,0.45); transform:translateY(-50%) scale(1.05);
+    box-shadow:0 0 12px rgba(212,175,55,0.45); transform:scale(1.05);
   }
-  .sk-browse-btn:active{transform:translateY(-50%) scale(0.96)}
-  .sk-browse-btn.active{
-    border-color:var(--gold); background:var(--gold-soft); color:var(--gold);
-    box-shadow:0 0 0 1.5px var(--gold);
-  }
+  .sk-browse-btn:active{transform:scale(0.96)}
   .sk-search-hero{
-    margin: 24px auto 36px;
-    max-width: 680px;
-  }
-  .sk-search-hero .sk-browse-btn{
-    width:52px; height:52px; left:12px;
+    flex:1; margin:0;
   }
   .sk-picker-root{
     margin: 0 auto 30px;
@@ -1477,7 +1474,7 @@
   .sk-roster-empty-title{font-size:16px; font-weight:700; color:var(--gold); margin-bottom:4px}
   .sk-roster-empty-sub{font-size:13px; color:var(--muted)}
   .sk-search-hero .sk-search{
-    padding: 16px 68px 16px 68px;
+    padding: 16px 28px;
     font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
     font-size: 22px;
     font-weight: 700;
@@ -1521,7 +1518,7 @@
   }
   .sk-search{
     box-sizing:border-box; width:100%; height:76px; background:var(--panel-2); color:var(--text);
-    border:1px solid var(--line); border-radius:4px; padding:0 22px 0 68px; font-size:24px;
+    border:1px solid var(--line); border-radius:4px; padding:0 22px; font-size:24px;
     font-weight:600; outline:none; font-family:inherit;
   }
   .sk-search:focus{border-color:var(--gold)}
@@ -7079,8 +7076,8 @@ function mountSkillCooldownLookup(root){
         </div>
       </div>
       <div class="sk-multihit-layer" data-role="multihit-layer"></div>
-      <div class="sk-search-wrap sk-search-hero">
-        <button type="button" class="sk-browse-btn active" data-role="browse-btn" title="เลือกตามสายอาชีพ (Browse by Class)" aria-label="Browse by Class">
+      <div class="sk-search-bar-row is-hero" data-role="search-bar-row">
+        <button type="button" class="sk-browse-btn" data-role="browse-btn" title="เลือกตามสายอาชีพ (Browse by Class)" aria-label="Browse by Class" hidden>
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
             <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
@@ -7088,9 +7085,11 @@ function mountSkillCooldownLookup(root){
             <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
           </svg>
         </button>
-        <input type="text" class="sk-search" data-role="search" placeholder="ค้นหาสกิล…" autocomplete="off">
-        <div class="sk-server-deps" data-role="server-deps"></div>
-        <div class="sk-suggestions" data-role="suggestions" hidden></div>
+        <div class="sk-search-wrap sk-search-hero">
+          <input type="text" class="sk-search" data-role="search" placeholder="ค้นหาสกิล…" autocomplete="off">
+          <div class="sk-server-deps" data-role="server-deps"></div>
+          <div class="sk-suggestions" data-role="suggestions" hidden></div>
+        </div>
       </div>
       <div class="sk-picker-root" data-role="picker-root"></div>
       <div data-role="display"></div>
@@ -7144,6 +7143,7 @@ function mountSkillCooldownLookup(root){
   const serverDepsEl = $('[data-role="server-deps"]', root);
   const browseBtn = $('[data-role="browse-btn"]', root);
   const pickerRootEl = $('[data-role="picker-root"]', root);
+  const barRowEl = $('[data-role="search-bar-row"]', root);
 
   raBtn.innerHTML = `<img src="${SKILL_ICONS["revisedArt5"]}" alt="revisedArt5">`;
   let revisedArtOn = true;
@@ -7229,12 +7229,11 @@ function mountSkillCooldownLookup(root){
     if (selected) {
       pickerRootEl.hidden = true;
       pickerRootEl.innerHTML = '';
-      if (browseBtn) browseBtn.classList.remove('active');
       return;
     }
 
     pickerRootEl.hidden = false;
-    if (browseBtn) browseBtn.classList.add('active');
+    if (browseBtn) browseBtn.hidden = true;
 
     const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
 
@@ -8815,7 +8814,7 @@ function mountSkillCooldownLookup(root){
       pickerRootEl.hidden = true;
       pickerRootEl.innerHTML = '';
     }
-    if (browseBtn) browseBtn.classList.remove('active');
+    if (browseBtn) browseBtn.hidden = false;
     searchEl.value = s.name;
     closeSuggestions();
     // A simulated hit belongs to the skill it was rolled for -- switching
@@ -8877,17 +8876,20 @@ function mountSkillCooldownLookup(root){
         toolShellEl.classList.add("is-hero-empty");
         artEl.style.visibility = "hidden";
         if (statsPanelEl) statsPanelEl.hidden = true;
+        if (barRowEl) barRowEl.classList.add("is-hero");
+        if (browseBtn) browseBtn.hidden = true;
         renderPickerView();
         return;
       }
     }
     searchWrapEl.classList.remove("sk-search-hero");
     toolShellEl.classList.remove("is-hero-empty");
+    if (barRowEl) barRowEl.classList.remove("is-hero");
+    if (browseBtn) browseBtn.hidden = false;
     if (pickerRootEl) {
       pickerRootEl.hidden = true;
       pickerRootEl.innerHTML = '';
     }
-    if (browseBtn) browseBtn.classList.remove('active');
 
     renderServerDeps(selected);
     const activeSelected = getActiveSkill(selected, currentServer);
