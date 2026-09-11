@@ -8956,7 +8956,7 @@ function mountSkillCooldownLookup(root){
   // Deciding it here with a fixed cap meant a long outcome list stayed
   // artificially narrow and had to scroll even when there was plenty of
   // room beside the panel to just show the whole thing — user-reported.
-  function renderProbabilityTooltip(dist){
+  function renderProbabilityTooltip(dist, isCast = false){
     const cols = dist.length > 8 ? 2 : 1;
     const rowsPerCol = Math.ceil(dist.length / cols);
     let colsHtml = "";
@@ -8965,7 +8965,7 @@ function mountSkillCooldownLookup(root){
       colsHtml += `
         <div class="sk-stat-tooltip-col">
           ${chunk.map(d => `
-            <div class="sk-stat-tooltip-row"><span>${d.label}s</span><span>${fmtOne(d.pct)}%</span></div>
+            <div class="sk-stat-tooltip-row"><span>${(isCast && Math.abs(parseFloat(d.label) - 0.1) < 0.001) ? "ไร้หลอด" : `${d.label}s`}</span><span>${fmtOne(d.pct)}%</span></div>
           `).join("")}
         </div>
       `;
@@ -9092,7 +9092,21 @@ function mountSkillCooldownLookup(root){
     if (range.length === 1) return fmtOne(range[0]);
     const [a,b] = range;
     const fa = fmtOne(a), fb = fmtOne(b);
-    return fa === fb ? fa : `${fa}–${fb}`;
+    return fa === fb ? fa : `${fa}–${fb}`;
+  }
+
+  function fmtCast(range){
+    if (range.length === 1){
+      return Math.abs(range[0] - 0.1) < 0.001 ? "ไร้หลอด" : `${fmtOne(range[0])}s`;
+    }
+    const [a, b] = range;
+    const isA = Math.abs(a - 0.1) < 0.001;
+    const isB = Math.abs(b - 0.1) < 0.001;
+    if (isA && isB) return "ไร้หลอด";
+    if (isA) return `ไร้หลอด ~ ${fmtOne(b)}s`;
+    if (isB) return `${fmtOne(a)} ~ ไร้หลอด`;
+    const fa = fmtOne(a), fb = fmtOne(b);
+    return fa === fb ? `${fa}s` : `${fa}–${fb}s`;
   }
 
   function closeSuggestions(){
@@ -9337,8 +9351,8 @@ function mountSkillCooldownLookup(root){
         <div class="sk-stat sk-stat-cast">
           <p class="sk-stat-label">เวลาร่าย</p>
           <div class="sk-stat-value-wrap">
-            <div class="sk-stat-value${selected.castWrapped ? "" : " unwrapped"}">${fmt(castRange)}s</div>
-            ${castDist ? renderProbabilityTooltip(castDist) : ""}
+            <div class="sk-stat-value${selected.castWrapped ? "" : " unwrapped"}${fmtCast(castRange).length > 7 ? " sk-stat-value-sm" : ""}">${fmtCast(castRange)}</div>
+            ${castDist ? renderProbabilityTooltip(castDist, true) : ""}
           </div>
           <p class="sk-stat-base">${selected.castWrapped ? "base" : "fixed"} ${rawCast}s</p>
           ${castDepBlock}
