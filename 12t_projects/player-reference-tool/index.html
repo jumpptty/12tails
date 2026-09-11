@@ -6866,6 +6866,17 @@ const SKILLS = [
       const loc = hasDistant ? "ที่ตำแหน่งของเป้าหมาย" : "ด้านหน้าตนเอง **1m**";
       return `สร้างลูกแก้วล่องหนรัศมี **1m** ${loc} สูงสุด 4 ลูก<br>ศัตรูที่อยู่ในรัศมีจะได้รับความเสียหาย **${dmg}** ทุก 0.5s (สลายตัวเมื่อทำความเสียหายครบ 10 ครั้ง หรือหมดเวลา)`;
     },
+    servers: {
+      tot: {
+        desc: (rank, depRank) => {
+          const hasDistant = (depRank !== null && depRank !== undefined) ? depRank > 0 : (typeof getDepRank === "function" && getDepRank(BAT_DISTANT_ORB_DEP) > 0);
+          const effLv = rank + (hasDistant ? 2 : 0);
+          const dmg = effLv * 6 - 1;
+          const loc = hasDistant ? "ที่ตำแหน่งของเป้าหมาย" : "ด้านหน้าตนเอง **1m**";
+          return `สร้างลูกแก้วล่องหนรัศมี **1m** ${loc} สูงสุด 4 ลูก (เพื่อนร่วมทีมในรัศมีได้รับ **-0.1 hitmod**)<br>ศัตรูที่อยู่ในรัศมีจะได้รับความเสียหาย **${dmg}** ทุก 0.5s (สลายตัวเมื่อทำความเสียหายครบ 10 ครั้ง หรือหมดเวลา)`;
+        }
+      }
+    },
     revisedArtExempt: false
   },
   { id:"bat_shadowIllusion", name:"Shadow Illusion", class:"Bat", icon:"bat_shadowIllusion4", castTime:6, castWrapped:true, cd:60, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true },
