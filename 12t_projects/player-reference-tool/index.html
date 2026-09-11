@@ -818,7 +818,7 @@
   /* ---- header ---- */
   .hub-bar{
     display:flex; align-items:center; justify-content:space-between; gap:16px;
-    flex-wrap:wrap; position:relative;
+    flex-wrap:nowrap; position:relative;
     padding:18px 24px; border-bottom:1px solid var(--line);
   }
   .hub-bar::after{
@@ -855,47 +855,60 @@
   @media (max-width:860px){.hub-note{display:none}}
   @media (max-width:720px), (max-height:600px){
     .hub-bar, html.tool-fit-screen .hub-bar{
-      flex-wrap:nowrap;
-      padding:7px 12px;
-      gap:8px;
+      flex-wrap:nowrap !important;
+      padding:6px 12px !important;
+      gap:6px !important;
+      min-height:38px;
+      box-sizing:border-box;
     }
     .brand{
-      font-size:15px;
-      white-space:nowrap;
-      flex-shrink:0;
+      font-size:15px !important;
+      white-space:nowrap !important;
+      flex-shrink:0 !important;
     }
     .hub-right{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      min-width:0;
-      flex:1;
-      justify-content:flex-end;
+      display:flex !important;
+      align-items:center !important;
+      gap:6px !important;
+      min-width:0 !important;
+      flex:1 !important;
+      justify-content:flex-end !important;
+      overflow:hidden !important;
     }
     .crumb{
-      min-width:0;
-      overflow:hidden;
-      font-size:11.5px;
-      letter-spacing:.2px;
+      min-width:0 !important;
+      flex:0 1 auto !important;
+      display:flex !important;
+      justify-content:flex-end !important;
+      overflow:hidden !important;
+      font-size:11.5px !important;
+      letter-spacing:.2px !important;
+      white-space:nowrap !important;
     }
     .crumb-current{
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      display:inline-block;
-      max-width:100%;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      white-space:nowrap !important;
+      display:block !important;
+      max-width:100% !important;
     }
-    .crumb-full{display:none}
-    .crumb-short{display:inline}
+    .crumb-full{display:none !important}
+    .crumb-short{
+      display:inline !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      white-space:nowrap !important;
+    }
     .hub-btn-donate{
-      flex-shrink:0;
-      font-size:15px;
-      padding:2px;
+      flex-shrink:0 !important;
+      font-size:16px !important;
+      padding:2px !important;
+      line-height:1 !important;
     }
   }
   @media (max-width:380px){
-    .brand{font-size:13.5px}
-    .crumb{font-size:10.5px}
+    .brand{font-size:13.5px !important}
+    .crumb{font-size:10.5px !important}
   }
 
   /* ---- Donate Modal ---- */
@@ -10881,7 +10894,7 @@ function mountStatRoll(root) {
     },
     th: {
       titleMain: 'สุ่มค่าสเตตัสตอนสร้างตัวละคร',
-      titleShort: 'สุ่มสเตตัสเริ่มต้น',
+      titleShort: 'สุ่มสเตตัส',
       subtitle: 'ตั้งค่าสเตตัสขั้นต่ำที่ต้องการเพื่อหาโอกาสที่จะได้ค่าครบทุกตัวพร้อมกัน',
       labelClass: 'คลาส',
       optPlaceholder: '— เลือกคลาส —',
@@ -13940,7 +13953,7 @@ const TOOLS = [
   {
     id: "stat-gain",
     title: "อัตราการเติบโตของค่าสเตตัส",
-    shortTitle: "การเติบโตสเตตัส",
+    shortTitle: "อัตราเติบโต",
     category: "Calculator",
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V14M10 20V9M16 20V13M22 20V4"/></svg>',
     mounted: false,
@@ -13949,7 +13962,7 @@ const TOOLS = [
   {
     id: "stat-roll",
     title: "สุ่มค่าสเตตัสตอนสร้างตัวละคร",
-    shortTitle: "สุ่มสเตตัสเริ่มต้น",
+    shortTitle: "สุ่มสเตตัส",
     category: "Calculator",
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
     mounted: false,
@@ -14016,7 +14029,7 @@ function mountStatGain(root){
     },
     th: {
       title: "อัตราการเติบโตของค่าสเตตัส",
-      titleShort: "การเติบโตสเตตัส",
+      titleShort: "อัตราเติบโต",
       gateTitle: "เลือกคลาสของคุณ",
       gateSub: "กำหนดการเติบโตสเตตัสของคลาสที่เลือก",
       lblClass: "คลาส",
