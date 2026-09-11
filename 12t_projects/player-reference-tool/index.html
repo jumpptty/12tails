@@ -985,16 +985,31 @@
   .sg-muted{color:var(--muted)}
   .sg-foot{color:var(--muted); font-size:12px; margin:8px 2px 0; line-height:1.4}
 
-  .sg-gate{position:fixed; inset:0; background:rgba(10,7,5,.84); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
-    display:none; align-items:center; justify-content:center; z-index:9999; padding:20px}
+  .sg-gate{
+    position:fixed; inset:0; background:rgba(10,7,5,.84); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+    display:none; align-items:center; justify-content:center; z-index:9999; padding:16px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; box-sizing:border-box;
+  }
   .sg-gate.open{display:flex}
-  .sg-gate-card{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:24px 20px 26px; max-width:1040px; width:95%; text-align:center; box-shadow:0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(212,175,55,0.25); position:relative; animation:sgCardPop .18s cubic-bezier(0.16, 1, 0.3, 1)}
+  .sg-gate-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:20px 18px 22px; max-width:1040px; width:95%; text-align:center;
+    box-shadow:0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(212,175,55,0.25);
+    position:relative; animation:sgCardPop .18s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height:calc(100dvh - 24px); display:flex; flex-direction:column; box-sizing:border-box;
+  }
   @keyframes sgCardPop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .sg-gate-close{position:absolute; top:12px; right:14px; background:none; border:none; color:var(--muted); font-size:22px; line-height:1; cursor:pointer; padding:6px 10px; border-radius:4px; transition:all .15s ease}
   .sg-gate-close:hover{color:var(--text); background:rgba(255,255,255,0.08)}
-  .sg-gate-card h3{margin:0 0 4px; font-size:20px; color:var(--gold); font-weight:700}
-  .sg-gate-sub{color:var(--muted); font-size:12.5px; margin:0 0 18px}
-  .sg-gate-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:10px}
+  .sg-gate-card h3{margin:0 0 4px; font-size:20px; color:var(--gold); font-weight:700; flex-shrink:0}
+  .sg-gate-sub{color:var(--muted); font-size:12.5px; margin:0 0 14px; flex-shrink:0}
+  .sg-gate-grid{
+    display:grid; grid-template-columns:repeat(6,1fr); gap:10px;
+    overflow-y:auto; padding:2px 4px 6px;
+  }
+  .sg-gate-grid::-webkit-scrollbar { width: 5px; }
+  .sg-gate-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+  .sg-gate-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
   .sg-gate-btn {
     background: var(--panel-2);
     border: 1px solid var(--line);
@@ -1059,12 +1074,34 @@
   .sg-gate-btn.active .sg-gate-label {
     color: var(--gold);
   }
-  @media (max-width: 1024px) {
-    .sg-gate-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 860px) {
+    .sg-gate-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .sg-gate-icon { width: 72px; height: 72px; }
+    .sg-gate-btn { padding: 10px 4px 8px; gap: 6px; }
+    .sg-gate-label { font-size: 12.5px; }
   }
-  @media (max-width: 540px) {
-    .sg-gate-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .sg-gate-icon { width: 84px; height: 84px; }
+  @media (max-width: 560px) {
+    .sg-gate { padding: 8px; }
+    .sg-gate-card { padding: 14px 10px 14px; width: 100%; border-radius: 6px; }
+    .sg-gate-close { top: 8px; right: 8px; font-size: 18px; padding: 4px 8px; }
+    .sg-gate-card h3 { font-size: 16px; margin-bottom: 2px; }
+    .sg-gate-sub { font-size: 11px; margin-bottom: 8px; }
+    .sg-gate-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .sg-gate-icon { width: 50px; height: 50px; }
+    .sg-gate-btn { padding: 8px 3px 6px; gap: 4px; }
+    .sg-gate-label { font-size: 11.5px; letter-spacing: 0; }
+  }
+  @media (max-width: 360px) {
+    .sg-gate-icon { width: 44px; height: 44px; }
+    .sg-gate-btn { padding: 6px 2px 5px; gap: 3px; }
+    .sg-gate-label { font-size: 10.5px; }
+  }
+  @media (max-height: 700px) {
+    .sg-gate-card { padding: 12px 10px 12px; }
+    .sg-gate-card h3 { font-size: 16px; margin-bottom: 2px; }
+    .sg-gate-sub { font-size: 11px; margin-bottom: 6px; }
+    .sg-gate-icon { width: 52px; height: 52px; }
+    .sg-gate-btn { padding: 6px 4px 6px; gap: 4px; }
   }
   .sg-body{position:relative; min-height:340px}
   .sg-body.locked .sg-inner{filter:blur(5px); pointer-events:none; user-select:none}
