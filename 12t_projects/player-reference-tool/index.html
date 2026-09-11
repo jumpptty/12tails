@@ -839,6 +839,8 @@
   }
   .crumb{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
   .crumb-current{color:var(--gold); font-weight:600}
+  .crumb-short{display:none}
+  .crumb-full{display:inline}
   .hub-right{display:flex; align-items:center; gap:14px}
   .hub-btn-donate{
     display:inline-flex; align-items:center; justify-content:center;
@@ -850,7 +852,51 @@
     opacity:1; background:none; box-shadow:none; transform:scale(1.18);
   }
   .hub-btn-donate:active{transform:scale(.95); opacity:.9}
-  @media (max-width:720px){.hub-note{display:none}}
+  @media (max-width:860px){.hub-note{display:none}}
+  @media (max-width:720px), (max-height:600px){
+    .hub-bar, html.tool-fit-screen .hub-bar{
+      flex-wrap:nowrap;
+      padding:7px 12px;
+      gap:8px;
+    }
+    .brand{
+      font-size:15px;
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+    .hub-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+      flex:1;
+      justify-content:flex-end;
+    }
+    .crumb{
+      min-width:0;
+      overflow:hidden;
+      font-size:11.5px;
+      letter-spacing:.2px;
+    }
+    .crumb-current{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      display:inline-block;
+      max-width:100%;
+    }
+    .crumb-full{display:none}
+    .crumb-short{display:inline}
+    .hub-btn-donate{
+      flex-shrink:0;
+      font-size:15px;
+      padding:2px;
+    }
+  }
+  @media (max-width:380px){
+    .brand{font-size:13.5px}
+    .crumb{font-size:10.5px}
+  }
 
   /* ---- Donate Modal ---- */
   .donate-backdrop[hidden]{display:none !important}
@@ -11343,6 +11389,9 @@ function mountStatRoll(root) {
     currentLang = lang;
     const L = LANG[lang];
     root.querySelector('[data-role="titleMain"]').innerHTML = `<span class="sr-title-full">${L.titleMain}</span><span class="sr-title-short">${L.titleShort}</span>`;
+    if (crumbCurrent) {
+      crumbCurrent.innerHTML = `<span class="crumb-full">${L.titleMain}</span><span class="crumb-short">${L.titleShort}</span>`;
+    }
     root.querySelector('[data-role="subtitle"]').textContent = L.subtitle;
     root.querySelector('[data-role="lblClass"]').textContent = L.labelClass;
     root.querySelector('[data-role="optPlaceholder"]').textContent = L.optPlaceholder;
@@ -13863,6 +13912,7 @@ const TOOLS = [
   {
     id: "skill-cooldown-lookup",
     title: "รายละเอียดสกิล",
+    shortTitle: "รายละเอียดสกิล",
     category: "",
     wide: true,
     // Star, not the original cooldown-clock glyph (2026-08-19, user-
@@ -13879,6 +13929,7 @@ const TOOLS = [
   {
     id: "chameleon-attack-sim",
     title: "จำลองการโจมตีปกติกิ้งก่า",
+    shortTitle: "จำลองกิ้งก่า",
     category: "Simulator",
     wide: true,
     cls: "entry-chm",
@@ -13889,6 +13940,7 @@ const TOOLS = [
   {
     id: "stat-gain",
     title: "อัตราการเติบโตของค่าสเตตัส",
+    shortTitle: "การเติบโตสเตตัส",
     category: "Calculator",
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V14M10 20V9M16 20V13M22 20V4"/></svg>',
     mounted: false,
@@ -13897,6 +13949,7 @@ const TOOLS = [
   {
     id: "stat-roll",
     title: "สุ่มค่าสเตตัสตอนสร้างตัวละคร",
+    shortTitle: "สุ่มสเตตัสเริ่มต้น",
     category: "Calculator",
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
     mounted: false,
@@ -14116,6 +14169,9 @@ function mountStatGain(root){
     btnTH.classList.toggle("active", lang === "th");
 
     $('[data-role="title"]', root).innerHTML = `<span class="sg-title-full">${L.title}</span><span class="sg-title-short">${L.titleShort}</span>`;
+    if (crumbCurrent) {
+      crumbCurrent.innerHTML = `<span class="crumb-full">${L.title}</span><span class="crumb-short">${L.titleShort}</span>`;
+    }
     $('[data-role="gateTitle"]', root).textContent = L.gateTitle;
     $('[data-role="gateSub"]', root).textContent = L.gateSub;
     $('[data-role="lblClass"]', root).textContent = L.lblClass;
@@ -14311,7 +14367,8 @@ function getToolContainer(tool){
 function showTool(tool){
   closeClassPickerModal();
   viewMenu.hidden = true; viewTool.hidden = false;
-  crumbCurrent.textContent = tool.title;
+  const short = tool.shortTitle || tool.title;
+  crumbCurrent.innerHTML = '<span class="crumb-full">' + tool.title + '</span><span class="crumb-short">' + short + '</span>';
   document.title = "12 Tails Bible — " + tool.title;
   document.documentElement.classList.toggle("tool-fit-screen", tool.id === "skill-cooldown-lookup" || tool.id === "stat-gain" || tool.id === "stat-roll");
   document.documentElement.classList.toggle("tool-wide-hero", tool.id === "skill-cooldown-lookup" || tool.id === "stat-roll");
