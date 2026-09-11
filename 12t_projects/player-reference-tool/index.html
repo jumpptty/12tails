@@ -292,6 +292,11 @@
     color: #14110b;
     box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   }
+  .sr-wrap.locked .sr-deck {
+    filter: blur(5px);
+    pointer-events: none;
+    user-select: none;
+  }
   .sr-deck {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -887,7 +892,17 @@
      attribute regardless of selector specificity, so this is safe even
      though .entry-mark's icon markup is shared with every other entry. */
   .entry-wide .entry-mark svg{width:28px; height:28px}
-  .entry-wide .entry-title{font-size:23px}
+  .entry-wide .entry-title{
+    font-size: 24px;
+    font-family: 'Prompt', Georgia, "Iowan Old Style", serif;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: .3px;
+    transition: color .15s ease, text-shadow .15s ease;
+  }
+  .entry-wide .entry:hover .entry-title{
+    text-shadow: 0 0 14px rgba(212,175,55,0.35);
+  }
   .entry-wide .entry-arrow{font-size:18px}
   .entry{
     position:relative; display:flex; align-items:center; gap:14px;
@@ -2675,7 +2690,7 @@
     image-rendering: pixelated;
   }
   .chm-header-title {
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel', 'Prompt', -apple-system, sans-serif;
     font-size: clamp(16px, 1.6vw, 22px);
     font-weight: 700;
     color: #d4af37;
@@ -10222,7 +10237,7 @@ function closeClassPickerModal() {
 
 function mountStatRoll(root) {
   root.innerHTML = `
-    <div class="sr-wrap">
+    <div class="sr-wrap locked">
       <div class="sr-header">
         <div class="sr-header-text">
           <h2 class="sr-header-title" data-role="titleMain">สุ่มค่าสเตตัสตอนสร้างตัวละคร</h2>
@@ -10395,6 +10410,8 @@ function mountStatRoll(root) {
   const srClsBtn = root.querySelector('[data-role="srClsBtn"]');
   const srClsThumb = root.querySelector('[data-role="srClsThumb"]');
   const srClsName = root.querySelector('[data-role="srClsName"]');
+  const srWrap = root.querySelector('.sr-wrap');
+
   function updateSrPickerTrigger(cls) {
     const L = LANG[currentLang];
     if (cls && BASE[cls]) {
@@ -10408,7 +10425,7 @@ function mountStatRoll(root) {
     }
   }
 
-  function openRollClassModal() {
+  function openRollClassModal(canClose = true) {
     const names = CLASS_NAMES[currentLang];
     openClassPickerModal({
       currentClass: classSelect.value,
@@ -10416,19 +10433,27 @@ function mountStatRoll(root) {
       classNames: names,
       title: currentLang === 'en' ? 'Choose your class' : 'เลือกคลาสของคุณ',
       sub: currentLang === 'en' ? 'Select class to calculate creation probability' : 'เลือกคลาสเพื่อคำนวณโอกาสการสุ่มสเตตัส',
-      canClose: true,
+      canClose: canClose,
       onSelect: (clsName) => {
         classSelect.value = clsName;
         updateSrPickerTrigger(clsName);
+        srWrap.classList.remove('locked');
         onClassChange();
       }
     });
   }
 
+  root._openGate = openRollClassModal;
+
   srClsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    openRollClassModal();
+    openRollClassModal(true);
   });
+
+  // Initial gate modal on mount if locked
+  if (srWrap.classList.contains('locked')) {
+    openRollClassModal(false);
+  }
   const statGrid = root.querySelector('[data-role="statGrid"]');
   const recStatGrid = root.querySelector('[data-role="recStatGrid"]');
   const output = root.querySelector('[data-role="output"]');
@@ -10852,6 +10877,10 @@ function mountStatRoll(root) {
 
     btnEN.classList.toggle('active', lang === 'en');
     btnTH.classList.toggle('active', lang === 'th');
+
+    if (sharedClassGateEl && sharedClassGateEl.classList.contains('open') && srWrap.classList.contains('locked')) {
+      openRollClassModal(false);
+    }
 
     const cls = classSelect.value;
     if (cls && BASE[cls]) {
@@ -11549,7 +11578,7 @@ function mountChameleonSim(root) {
             <img src="${CHM_ICONS.nAttack}" alt="Normal Attack">
           </div>
           <div>
-            <h2 class="chm-header-title">Chameleon Simulator</h2>
+            <h2 class="chm-header-title">จำลองการโจมตีปกติกิ้งก่า</h2>
           </div>
         </div>
         <div class="chm-header-right">
@@ -13356,7 +13385,7 @@ const TOOLS = [
   // while every other entry keeps its real taxonomy tag unchanged.
   {
     id: "skill-cooldown-lookup",
-    title: "12 Tails Skill",
+    title: "รายละเอียดสกิล",
     category: "",
     wide: true,
     // Star, not the original cooldown-clock glyph (2026-08-19, user-
@@ -13372,7 +13401,7 @@ const TOOLS = [
   },
   {
     id: "chameleon-attack-sim",
-    title: "Chameleon Attack Simulator",
+    title: "จำลองการโจมตีปกติกิ้งก่า",
     category: "Simulator",
     wide: true,
     cls: "entry-chm",
@@ -13397,7 +13426,7 @@ const TOOLS = [
     mount(root){ mountStatRoll(root); }
   },
   {
-    title: "GoldenKingBug Spawn Map",
+    title: "แผนที่บอสแมลงทอง",
     category: "Map",
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
     url: "https://claude.ai/code/artifact/4de5b8d7-5d7c-40d6-ab8c-3e0c75692591"
@@ -13796,6 +13825,9 @@ function showTool(tool){
   const container = getToolContainer(tool);
   if (!tool.mounted){ tool.mount(container); tool.mounted = true; }
   if (tool.id === "stat-gain" && container._openGate && container.querySelector(".sg-body.locked")) {
+    container._openGate(false);
+  }
+  if (tool.id === "stat-roll" && container._openGate && container.querySelector(".sr-wrap.locked")) {
     container._openGate(false);
   }
   if (tool.id === "skill-cooldown-lookup") {
