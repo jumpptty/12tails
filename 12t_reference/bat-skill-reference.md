@@ -34,7 +34,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
 | paranoia | Paranoia | 1 | 150 | true | false | — | — |
 | shatteringDream | Shattering Dream | 1 | 130 | true | false | — | — |
 | nefariousWhip | Nefarious Whip | 1 | 180 | true | false | — | — |
-| blackServant | Black Servant | 1 | 180 | true | false | — | — |
+| blackServant | Black Servant | 1 | 180 | true | false | 90 | true |
 
 ## Citations
 
@@ -156,3 +156,4 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   invisibility uses the same base plus a flat `+12`: `Bat.cs:39312` — `addStatus("hide", 1,
   this.$mDuration$20318 + 12, 0, ...)`, not surfaced as its own row (same skill's own effect, not a
   separate cooldown-bearing skill).
+- `blackServant` Duration: `Bat.cs:45206` — `this.$hitChar$20481.RPC_AddStatus("blackServant", 5, Damage.getDebuff((float)90, this.$self_$20486.mChar.cha, this.$hitChar$20481.cha), 0, this.$self_$20486.mChar.ActorNr);` (contested debuff against target player's CHA; base duration 90s, sLv=5). Only targets dead enemy player characters (`Bat.cs:8468-8488`); converts target to Bat's team layer (`CharacterControl.cs:41447`) with `Shadow<Hero>_AI` attached until duration expires, servant dies, or Bat dies (`Bat.cs:295-301`).

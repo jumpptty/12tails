@@ -30,6 +30,7 @@
     --stat-atk:#b91c1c;
     --stat-tal:#0e7490;
     --stat-int:#1d4ed8;
+    --stat-cha:#8a72b8;
     /* Effect-damage font (Thunder Dragon pilot, 2026-08-21) -- matches the
        real in-game damage-popup color convention this tool already reserved
        for RPC_AddEffectDamage-pathway skills (see the dmgdigit_p<N> purple
@@ -92,6 +93,7 @@
       --stat-atk:#ef4444;
       --stat-tal:#22d3ee;
       --stat-int:#5b9bf0;
+      --stat-cha:#c084fc;
       --stat-effect:#c084fc;
       --status-kw:#c4b5fd;
       --status-kw-bg:rgba(167,139,250,0.14);
@@ -135,6 +137,7 @@
     --stat-atk:#ef4444;
     --stat-tal:#22d3ee;
     --stat-int:#5b9bf0;
+    --stat-cha:#c084fc;
     --stat-effect:#c084fc;
     --status-kw:#c4b5fd;
     --status-kw-bg:rgba(167,139,250,0.14);
@@ -2697,6 +2700,7 @@
   .dmg-atk{color:var(--stat-atk); font-weight:700}
   .dmg-int{color:var(--stat-int); font-weight:700}
   .dmg-def{color:#38bdf8; font-weight:700}
+  .dmg-cha{color:var(--stat-cha); font-weight:700}
   /* Effect-damage base number (Thunder Dragon pilot, 2026-08-21) -- takes
      .dmg-num's normal slot in a flat-shape formula's item list, whenever
      `skill.effectDamage` is set. Purple, matching the real in-game
@@ -7232,14 +7236,33 @@ const SKILLS = [
     castWrapped: true,
     cd: 180,
     cdWrapped: true,
-    dmg: "0.5CHA",
+    dmg: "0",
+    chaCoeff: 0.5,
     effectDamage: true,
+    dmgNote: "Deals 0.5×CHA true effect damage (purple damage, ignores target DEF) per hit for 8 hits (once every 0.5s) in a 4m area (up to 6 targets).",
     hitCount: () => 8,
     ko: "0",
     desc: "เรียกเถาวัลย์แห่งความมืดขึ้นมารัดและฟาดฟันเป้าหมายในระยะ **4m** อย่างต่อเนื่อง **8 ครั้ง** (ทุกๆ **0.5 วินาที**) สร้างความเสียหายเวทแท้ตามค่า **CHA** ของค้างคาว",
     revisedArtExempt: false
   },
-  { id:"bat_blackServant", name:"Black Servant", class:"Bat", icon:"bat_blackServant1", castTime:7, castWrapped:true, cd:180, cdWrapped:true, revisedArtExempt:false },
+  {
+    id: "bat_blackServant",
+    name: "Black Servant",
+    class: "Bat",
+    icon: "bat_blackServant1",
+    maxRank: 1,
+    cost: { mp: 66, sp: 66, spType: "blue" },
+    castTime: 7,
+    castWrapped: true,
+    cd: 180,
+    cdWrapped: true,
+    duration: 90,
+    durWrapped: true,
+    durContested: true,
+    status: { name: "blackServant", sLv: 5, class: "Debuff, State, Magical" },
+    desc: "ชุบชีวิตผู้เล่นฝั่งตรงข้ามที่ตายแล้วขึ้นมาเป็นทาสรับใช้แห่งความมืด (Shadow Servant) และเปลี่ยนฝ่ายมาอยู่ทีมของค้างคาว ควบคุมด้วยระบบ **Shadow AI** นานสูงสุด **90 วินาที** (ลดลงตามค่า CHA ของเป้าหมาย) หรือจนกว่าทาสหรือค้างคาวจะตาย โดย AI จะใช้สกิลคอมโบตามสายที่เหยื่ออัพไว้จริง (เช็ค SP/CD) มีระยะผูกติดค้างคาว (**6m–30m**) และสกิลซัพพอร์ต/ฮีลจะใช้ใส่ตัวเองเท่านั้น (ไม่ฮีลค้างคาว)",
+    revisedArtExempt: false
+  },
   { id:"bison_enrage", name:"Enrage", class:"Bison", icon:"bison_enrage4", cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true },
   { id:"bison_slam", name:"Slam", class:"Bison", icon:"bison_slam2", cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"bison_trample", name:"Trample", class:"Bison", icon:"bison_trample2", cd:120, cdWrapped:true, revisedArtExempt:false },
@@ -8418,6 +8441,12 @@ function mountSkillCooldownLookup(root){
       : (skill.dmgDep ? (getDepRank(skill.dmgDep) === skill.dmgDep.maxRank ? 1 : 0) : (skill.dmgFlagDep ? (getDepRank(skill.dmgFlagDep) === skill.dmgFlagDep.maxRank ? 1 : 0) : (skill.dmgMultDep ? (getDepRank(skill.dmgMultDep) === skill.dmgMultDep.maxRank ? 1 : 0) : 0)));
     return skill.defCoeff(rank, depLv);
   }
+  function resolveChaCoeff(skill, rank){
+    if (typeof skill.chaCoeff !== "function") return skill.chaCoeff;
+    const depLv = skill.dmgRankDep ? getDepRank(skill.dmgRankDep) : 0;
+    return skill.chaCoeff(rank, depLv);
+  }
+  function resolveGroupChaCoeff(skill, g){ return resolveGroupValue(skill, g, "chaCoeff"); }
   function resolveAtkCoeff(skill, rank){
     if (typeof skill.atkCoeff !== "function") return skill.atkCoeff;
     const depLv = skill.dmgRankDep
@@ -8530,6 +8559,11 @@ function mountSkillCooldownLookup(root){
     if (hitDefCoeff) {
       const DEF_val = parseFloat(defEl.value) || 0;
       val += hitDefCoeff * DEF_val;
+    }
+    const hitChaCoeff = gObj ? (gObj.chaCoeff !== undefined ? resolveGroupChaCoeff(skill, gObj) : resolveChaCoeff(skill, rank)) : resolveChaCoeff(skill, rank);
+    if (hitChaCoeff) {
+      const CHA_val = parseFloat(chaEl.value) || 0;
+      val += hitChaCoeff * CHA_val;
     }
     if (skill.dmgFocusIntellect && focusOn) val = val * 0.01 * INT;
     if (dmgDepOn) val += skill.dmgDep.calc(LV, rank, TAL);
@@ -8848,6 +8882,7 @@ function mountSkillCooldownLookup(root){
     // (the default, every non-dmgGroups call site) falls back to skill.atkCoeff.
     const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : resolveAtkCoeff(skill, rank);
     const effDefCoeff = resolveDefCoeff(skill, rank);
+    const effChaCoeff = resolveChaCoeff(skill, rank);
     const text = substituteDmgVars(dmgTextRaw, skill, rank);
     const talMatch = text.match(/talAdjust\(([^()]+)\)/);
     const focusOn = getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank;
@@ -8889,6 +8924,7 @@ function mountSkillCooldownLookup(root){
     const dmgMultDepOn = skill.dmgMultDep && getDepRank(skill.dmgMultDep) === skill.dmgMultDep.maxRank;
     const mult = dmgMultDepOn ? skill.dmgMultDep.mult : 1;
     const INT = parseFloat(intEl.value) || 0;
+    const CHA = parseFloat(chaEl.value) || 0;
     const LV = parseFloat(lvEl.value) || 0;
     // ownStats -- see renderHero's identical override for the full citation
     // trail (BarrelBot's own independent stat block, barrelBotOwnStats()).
@@ -8966,6 +9002,9 @@ function mountSkillCooldownLookup(root){
     const atkItem = effAtkCoeff
         ? (() => { const c = effAtkCoeff * mult; return { value: c * ATK, sub: `${fmtCoeff(c)}ATK`, cls: "dmg-atk" }; })()
         : null;
+    const chaItem = effChaCoeff
+        ? (() => { const c = effChaCoeff * mult; return { value: c * CHA, sub: `${fmtCoeff(c)}CHA`, cls: "dmg-cha" }; })()
+        : null;
       let items = skill.dmgFocusIntellect && focusOn
         ? [
             ...(atkItem ? [atkItem, { op: "+" }] : []),
@@ -8980,6 +9019,7 @@ function mountSkillCooldownLookup(root){
             { value: base, sub: null, cls: "dmg-num" },
             ...(atkItem ? [{ op: "+" }, atkItem] : []),
             ...(defItem ? [{ op: "+" }, defItem] : []),
+            ...(chaItem ? [{ op: "+" }, chaItem] : []),
             { op: "+" },
             { value: talCoeff * TAL, sub: `${fmtCoeff(talCoeff)}TAL`, cls: "dmg-tal" },
           ];
@@ -9001,14 +9041,22 @@ function mountSkillCooldownLookup(root){
       const atkItem = effAtkCoeff
         ? (() => { const c = effAtkCoeff * mult; return { value: c * ATK, sub: `${fmtCoeff(c)}ATK`, cls: "dmg-atk" }; })()
         : null;
+      const defItem = effDefCoeff
+        ? (() => { const c = effDefCoeff * mult; return { value: c * DEF, sub: `${fmtCoeff(c)}DEF`, cls: "dmg-def" }; })()
+        : null;
+      const chaItem = effChaCoeff
+        ? (() => { const c = effChaCoeff * mult; return { value: c * CHA, sub: `${fmtCoeff(c)}CHA`, cls: "dmg-cha" }; })()
+        : null;
       const flatBaseCls = skill.effectDamage ? "dmg-effect" : "dmg-num";
       const baseSubText = typeof skill.dmgSub === "function" ? skill.dmgSub(rank) : (skill.dmgSub || null);
       let items = replaceDepOn
         ? [{ value: skill.dmgReplaceDep.calc(rank, LV), sub: `${fmtCoeff(skill.dmgReplaceDep.coeff * rank)}LV`, cls: flatBaseCls }]
-        : (flatBaseVal !== 0 || !atkItem)
+        : (flatBaseVal !== 0 || (!atkItem && !defItem && !chaItem))
           ? [{ value: flatBaseVal, sub: baseSubText, cls: flatBaseCls }]
           : [];
       if (atkItem) items = items.length ? [...items, { op: "+" }, atkItem] : [atkItem];
+      if (defItem) items = items.length ? [...items, { op: "+" }, defItem] : [defItem];
+      if (chaItem) items = items.length ? [...items, { op: "+" }, chaItem] : [chaItem];
       if (dmgDepOn){
         items = [...items, { op: "+" }, { value: skill.dmgDep.calc(LV, rank, TAL), sub: dmgDepTermText, cls: dmgDepTermClass }];
       }
@@ -10022,6 +10070,7 @@ function mountSkillCooldownLookup(root){
           // selected.atkCoeff, unchanged.
           const effAtkCoeff = atkCoeffOverride !== undefined ? atkCoeffOverride : resolveAtkCoeff(selected, rank);
           const effDefCoeff = resolveDefCoeff(selected, rank);
+          const effChaCoeff = resolveChaCoeff(selected, rank);
           const t = substituteDmgVars(dmgTemplateText, selected, rank);
           const tm = t.match(/talAdjust\(([^()]+)\)/);
           const dmgCalcPostFn = v => {
@@ -10035,6 +10084,7 @@ function mountSkillCooldownLookup(root){
               const DEF_val = parseFloat(defEl.value) || 0;
               val += effDefCoeff * DEF_val;
             }
+            if (effChaCoeff) val += effChaCoeff * CHA;
             if (selected.dmgFocusIntellect && focusOnCalc) val = val * 0.01 * INT;
             if (dmgDepOnCalc) val += selected.dmgDep.calc(LV, rank, TAL);
             val = Math.trunc(val);
