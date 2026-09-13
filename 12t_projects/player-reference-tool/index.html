@@ -7666,6 +7666,13 @@ const SKILLS = [
     cd: 45,
     cdWrapped: true,
     durationInfinite: true,
+    servers: {
+      tot: {
+        cd: "รอคนทดสอบ",
+        desc: (rank) => `อัญเชิญ Phoenix ระดับ **${rank}** ออกมาช่วยต่อสู้ในสนาม (สามารถอัญเชิญร่วมกับ Gadina ได้พร้อมกัน, เมื่อ Phoenix โจมตีโดนศัตรูจะลดคูลดาวน์สกิลสาย A ทั้งหมดลง **1 วินาที**, และเมื่อตายจะเกิดใหม่ทันทีแน่นอน **100%**, คูลดาวน์เกิดใหม่ 120s)`,
+        changeNote: "• [Buff] ลด Base Cooldown ลง (รอคนทดสอบ)\n• [Buff] เมื่อ Phoenix โจมตีโดนศัตรู: ลด Cooldown สกิลสาย A ทั้งหมดลง **1 วินาที**\n• [Buff] สามารถอัญเชิญร่วมกับ **Gadina** ได้พร้อมกัน\n• [Buff] โอกาสเกิดใหม่ทันทีเมื่อตายเพิ่มเป็น **100%** (จากเดิม 12–30%, คูลดาวน์เกิดใหม่ 120 วินาทียังคงเดิม)"
+      }
+    },
     revisedArtExempt: false,
     desc: (rank) => `อัญเชิญ Phoenix ระดับ **${rank}** ออกมาช่วยต่อสู้ในสนาม (เมื่อตายมีโอกาสเกิดใหม่ทันที **${6 * rank + 6}%** ตามค่า LCK, คูลดาวน์เกิดใหม่ 120s)`
   },
@@ -7699,6 +7706,12 @@ const SKILLS = [
     duration: 8,
     durWrapped: true,
     status: { name: "burn", sLv: () => 4, class: "Debuff, Magical" },
+    servers: {
+      tot: {
+        desc: "สละ Phoenix 4 แปลงสภาพเป็นลูกศรเพลิงทะลวงเป็นแนวยาว **35m** (ความกว้าง **7m**, รัศมี 3.5m โดยไม่ต้องขึ้นขี่หรือใช้อนิเมชั่นสกิล และสามารถหันตามเป้าหมายได้จนกว่าจะยิงออกไป) ศัตรูที่โดนจะติดสถานะเผาไหม้ แต่ละฮิตฟื้นฟู +1 SP และมีโอกาส **24%** (ตามค่า LCK) ที่จะชุบชีวิต Phoenix 4 กลับมา",
+        changeNote: "• [New] สามารถกดร่ายได้โดยที่ลิงไม่ต้องขึ้นขี่หรือใช้อนิเมชั่นของสกิล\n• [New] ตัวสกิลสามารถหันตามเป้าหมายได้จนกว่าจะยิงออกไป"
+      }
+    },
     revisedArtExempt: false,
     desc: "สละ Phoenix 4 แปลงสภาพเป็นลูกศรเพลิงทะลวงเป็นแนวยาว **35m** (ความกว้าง **7m**, รัศมี 3.5m) ศัตรูที่โดนจะติดสถานะเผาไหม้ แต่ละฮิตฟื้นฟู +1 SP และมีโอกาส **24%** (ตามค่า LCK) ที่จะชุบชีวิต Phoenix 4 กลับมา"
   },
@@ -10101,18 +10114,19 @@ function mountSkillCooldownLookup(root){
     ` : "";
     const heroDescHtml = (descStr || statusBadgeHtml || descDepToggle) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}">${statusBadgeHtml}${descFormatted}${descDepToggle}</div>` : "";
     const cdBase = resolveRank(activeSelected.cd, rank);
-    const cdDep = selected.cdDep;
+    const isCdString = typeof cdBase === "string";
+    const cdDep = isCdString ? null : selected.cdDep;
     const cdDepRank = cdDep ? getDepRank(cdDep) : null;
     const rawCd = cdDep ? depRawValue(cdBase, cdDep, cdDepRank) : cdBase;
-    let cdRange = selected.cdWrapped ? agiAdjustRange(rawCd, AGI, LCK) : [rawCd];
+    let cdRange = (selected.cdWrapped && !isCdString) ? agiAdjustRange(rawCd, AGI, LCK) : [rawCd];
     if (cdDep) cdRange = depPostMultiply(cdRange, cdDep, cdDepRank);
-    cdRange = applyRevisedArt(cdRange, revisedArtOn, selected.revisedArtExempt);
+    if (!isCdString) cdRange = applyRevisedArt(cdRange, revisedArtOn, selected.revisedArtExempt);
     const cdDepBlock = cdDep ? renderDepBlock(cdDep, cdDepRank) : "";
     const cdPostFn = v => {
       if (cdDep) v = depPostMultiply([v], cdDep, cdDepRank)[0];
       return applyRevisedArt([v], revisedArtOn, selected.revisedArtExempt)[0];
     };
-    const cdDist = selected.cdWrapped ? lckDistribution(rawCd, AGI, LCK, agiAdjustAtRoll, cdPostFn) : null;
+    const cdDist = (selected.cdWrapped && !isCdString) ? lckDistribution(rawCd, AGI, LCK, agiAdjustAtRoll, cdPostFn) : null;
 
     let castBlock = "";
     if (activeSelected.castTime !== undefined){
@@ -11147,10 +11161,10 @@ function mountSkillCooldownLookup(root){
           <div class="sk-stat sk-stat-cd">
             <p class="sk-stat-label">คูลดาวน์</p>
             <div class="sk-stat-value-wrap">
-              <div class="sk-stat-value${selected.cdWrapped ? "" : " unwrapped"}">${fmt(cdRange)}s</div>
+              <div class="sk-stat-value${(selected.cdWrapped && !isCdString) ? "" : " unwrapped"}${isCdString ? " sk-stat-value-sm" : ""}">${isCdString ? rawCd : fmt(cdRange) + "s"}</div>
               ${cdDist ? renderProbabilityTooltip(cdDist) : ""}
             </div>
-            <p class="sk-stat-base">${activeSelected.cdWrapped ? "base" : "fixed"} ${rawCd}s</p>
+            <p class="sk-stat-base">${isCdString ? "base cooldown" : ((activeSelected.cdWrapped ? "base" : "fixed") + " " + rawCd + "s")}</p>
             ${(selected.revisedArtExempt && !selected.ownStats && !selected.ownStatsKaiser) ? `<p class="sk-stat-exempt">Exempt from revisedArt5</p>` : ""}
 
             ${cdDepBlock}
