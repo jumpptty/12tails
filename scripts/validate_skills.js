@@ -140,6 +140,7 @@ SKILLS.forEach(sk => {
   // Icon check
   checkIcon(sk.icon, `${ctx} [main icon]`);
   if (sk.cdDep) checkIcon(sk.cdDep.icon, `${ctx} [cdDep icon]`);
+  if (sk.castDep) checkIcon(sk.castDep.icon, `${ctx} [castDep icon]`);
   if (sk.dmgDep) checkIcon(sk.dmgDep.icon, `${ctx} [dmgDep icon]`);
   if (sk.dmgRankDep) checkIcon(sk.dmgRankDep.icon, `${ctx} [dmgRankDep icon]`);
   if (sk.dmgMultDep) checkIcon(sk.dmgMultDep.icon, `${ctx} [dmgMultDep icon]`);
