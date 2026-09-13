@@ -7698,8 +7698,10 @@ const SKILLS = [
     icon: "monkey_rapidFire3",
     maxRank: 3,
     passive: true,
-    cd: "ติดตัว",
-    desc: (rank) => "ทำให้ Phoenix โจมตีเร็วขึ้น **" + (10 * rank + 10) + "%** ตามค่า INT ของลิง (ลดเวลาหน่วงโจมตีปกติและลดช่วงพัก AI ลงเหลือ **" + (3 - rank) + "s**), พร้อมลดเวลาร่าย Fireball ลง **" + rank + "s** และลดคูลดาวน์ลง **" + (3 * rank) + "s**"
+    desc: (rank) => {
+      const intPerSec = [160, 107, 80][rank - 1];
+      return "ทำให้ Phoenix โจมตีเร็วขึ้น (จากเดิมโจมตีทุก 5.0s, ทุกๆ **" + intPerSec + " INT** ของลิง จะลดคูลดาวน์การโจมตีลง **1 วินาที** ลงได้ต่ำสุด **0.1s**, และลดช่วงพัก AI ลงเหลือ **" + (3 - rank) + "s**), พร้อมลดเวลาร่าย Fireball ลง **" + rank + "s** และลดคูลดาวน์ลง **" + (3 * rank) + "s**";
+    }
   },
   {
     id: "monkey_intenseFire",
@@ -7709,7 +7711,6 @@ const SKILLS = [
     icon: "monkey_intenseFire3",
     maxRank: 3,
     passive: true,
-    cd: "ติดตัว",
     status: { name: "burn", sLv: (rank) => rank, class: "Debuff, Magical" },
     desc: (rank) => "เพิ่มพลังโจมตีให้สกิลของ Phoenix ขึ้น **" + (10 * rank + 10) + "%** ตามค่า TAL ของลิง และทำให้ Fireball ทั้งของลิงและ Phoenix ติดสถานะเผาไหม้ [burn" + rank + "] ต่อเนื่อง 4 วินาที"
   },
@@ -11194,15 +11195,16 @@ function mountSkillCooldownLookup(root){
           </div>
           ${heroDescHtml}
         </div>
+        ${selected.passive ? "" : `
         <div class="sk-hero-stats">
           <div class="sk-stat sk-stat-cd">
-            <p class="sk-stat-label">${selected.passive ? "ประเภท" : "คูลดาวน์"}</p>
+            <p class="sk-stat-label">คูลดาวน์</p>
             <div class="sk-stat-value-wrap">
               <div class="sk-stat-value${(selected.cdWrapped && !isCdString) ? "" : " unwrapped"}${isCdString ? " sk-stat-value-sm" : ""}">${isCdString ? rawCd : fmt(cdRange) + "s"}</div>
               ${cdDist ? renderProbabilityTooltip(cdDist) : ""}
             </div>
-            <p class="sk-stat-base">${selected.passive ? "ทักษะติดตัว (Passive)" : (isCdString ? "base cooldown" : ((activeSelected.cdWrapped ? "base" : "fixed") + " " + rawCd + "s"))}</p>
-            ${(selected.revisedArtExempt && !selected.ownStats && !selected.ownStatsKaiser && !selected.passive) ? `<p class="sk-stat-exempt">Exempt from revisedArt5</p>` : ""}
+            <p class="sk-stat-base">${isCdString ? "base cooldown" : ((activeSelected.cdWrapped ? "base" : "fixed") + " " + rawCd + "s")}</p>
+            ${(selected.revisedArtExempt && !selected.ownStats && !selected.ownStatsKaiser) ? `<p class="sk-stat-exempt">Exempt from revisedArt5</p>` : ""}
 
             ${cdDepBlock}
           </div>
@@ -11211,6 +11213,7 @@ function mountSkillCooldownLookup(root){
           ${lckProcBlock}
           ${selected.bbStatsInRow2 ? "" : bbStatsBlock}
         </div>
+        `}
         ${dmgBlock}
       </div>
     `;
