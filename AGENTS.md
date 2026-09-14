@@ -27,7 +27,7 @@ This repository is a reverse-engineering, mechanics-verification, and documentat
   * `*-skill-reference.md`: Cooldown, duration, cast-time data across all 12 classes.
   * `*-skill-damage-reference.md`: Damage formulas, rank selectors, scaling coefficients (Penguin, Mole, Chameleon so far).
 * **`12t_projects/`**: Shipped player-facing deliverables. Every deliverable gets its own sub-folder:
-  * `player-reference-tool/`: The multi-tool hub (`index.html`) using the Thai temple lacquerware design system.
+  * `bible/`: The multi-tool hub (`index.html`) using the Thai temple lacquerware design system.
   * `penguin-skill-sheet/`: Interactive skill infographic.
   * `agi-cha-sweetspot/`: Interactive AGI/CHA stat sweetspot calculator.
   * `goldenkingbug-spawn-map/`: 3D Three.js spawn map.
@@ -52,20 +52,31 @@ When reading `.cs` files in `DecompiledSource/`:
 ## 4. Deliverable Conventions
 
 * **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server.
-* **Preserve Design Integrity:** When updating `12t_projects/player-reference-tool/index.html`, adhere to its "Ledger" visual design system (deep lacquer ground `#141311`, brass-gold ink `#d4af37`, oxblood-red accent `#8b1e1e`, high-contrast legible typography).
+* **Preserve Design Integrity:** When updating `12t_projects/bible/index.html`, adhere to its "Ledger" visual design system (deep lacquer ground `#141311`, brass-gold ink `#d4af37`, oxblood-red accent `#8b1e1e`, high-contrast legible typography).
 * **Inline Skill Description Container (`.sk-hero-desc`):**
   * Sits inline to the right of the skill icon and title in the card hero header (`flex: 1; min-width: 0; margin-left: 14px;`).
   * **Visual Style:** Gold Accent Bar (`background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`).
   * **Typography:** Google Fonts **Prompt** (`font-family: 'Prompt', -apple-system, sans-serif; font-size: 12px; line-height: 1.42; color: var(--muted);`). Auto-adapts up to 4 lines (desktop, max-height `90px`) and 5 lines (mobile, max-height `105px`), dynamically scaling font size down to `10px` if text requires more room.
   * **Responsive:** Stretches `100%` full width beneath the title on mobile viewports.
+* **Basic Attacks & Passives as Cards Policy:** Basic attacks (Combo / `nAttack`), charge attacks (`cAttack`), and passive skills CAN be authored as full skill cards in `bible` (`skill-details`), but strictly when explicitly requested by the user. Do not blanket-exclude them.
+* **Vertical Collapse Convention for Skill Cards:**
+  * All skill cards must collapse vertically whenever a chip row is empty.
+  * **Zero Preserved Blank Space:** Never render empty chip row containers (`<div class="sk-dmg-row"></div>` or empty `.sk-hero-stats`) or enforce artificial fixed min-heights to preserve empty vertical space.
+  * If a skill has no cooldown/cast/duration/stats chips, the top chip row (`.sk-hero-stats`) is omitted completely.
+  * If a skill has no damage formula/shield chips, the second chip row (`.sk-dmg-row`) is omitted completely.
+  * Any skill card with only header information (or only one row of chips) must immediately collapse its vertical footprint to fit its actual contents.
 
 ---
 
 ## 5. Skill Verification & Quality Assurance Pipeline
 
-Every skill authoring, formula update, or tooltip review must strictly follow this linear 4-step execution pipeline:
+Every skill authoring, formula update, or tooltip review must strictly follow this linear execution pipeline, bifurcated by skill type:
 
-### Step 1: Pre-Flight Source Extraction (Zero Assumptions)
+---
+
+### 5.A. Active Skill Pipeline
+
+#### Step A1: Pre-Flight Active Source Extraction (Zero Assumptions)
 * **Never guess or use generic RPG tropes.**
 * Run a temporary scratch script (in `<appDataDir>/brain/<conversation-id>/scratch/`) or `view_file` to trace the full lifecycle across:
   1. **Cast Dispatch:** `<Class>.cs` (`RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust` wrappers, per-rank arrays for `maxRank > 1`).
@@ -85,8 +96,8 @@ Every skill authoring, formula update, or tooltip review must strictly follow th
   5. **In-Game Tooltips:** `<Class>Skill_eng.cs` & `<Class>Skill_thai.cs` (reference for authentic flavor context; code findings always override tooltip errors).
   6. **Passive Dependencies:** Scan for all `hasSkill(ID)` / `get<Passive>Lv()` calls; map to proper tool hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
 
-### Step 2: Observable Proof Review Table (3-Point Citation)
-Present a structured review table to the user. Every single skill entry must include:
+#### Step A2: Active Observable Proof Review Table (3-Point Citation)
+Present a structured review table to the user. Every single active skill entry must include:
 1. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` call.
 2. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
 3. **Status Profile (if status applied):**
@@ -104,13 +115,46 @@ Present a structured review table to the user. Every single skill entry must inc
      * **No Native Browser Tooltip:** Native `title` attribute is explicitly omitted from `.sk-hero-desc` to prevent unsightly default browser tooltip popups.
    * **Highlight Utility & Hidden Mechanics:** Clearly note non-obvious behavior (cleanses, lock removals, sleep breaks, aggro wipes, absolute immunities, unlisted passive hooks).
 
+---
+
+### 5.B. Passive Skill Pipeline
+
+#### Step B1: Pre-Flight Passive Source Extraction (Zero Assumptions)
+* **Never assume a passive only affects one place.** Passives have no cast dispatch; their logic is distributed across checks (`hasSkill(ID)`, `get<Passive>Lv()`, `heroSkill.getSkillRank(...)`).
+* Systematically scan and trace across the **5 Passive Hook Categories**:
+  1. **Stat Alteration Hook:** Modifies base or derived attributes (`CharacterControl.getTypeStat`, `calTotalStat`, `calHp`, `calMp`, `calAtk`, `calDef`, `calSpeed`).
+  2. **Active Skill Dependency Hook:** Modifies cooldown, cast time, MP/SP consumption, hit count, or projectile patterns in `<Class>.cs` or companion scripts.
+  3. **Status Application / Proc Hook:** Grants on-hit effects, debuff chances, or modifies status levels in `AttackHit`, `MagicHit`, or `mod`.
+  4. **AI / Companion Hook:** Modifies summon pet stats, attack intervals, or AI behaviors (e.g. `Phoenix.cs`, `Gadina.cs`, `BarrelBot.cs`).
+  5. **Attack Augmentation Hook:** Modifies normal attack combos or charge attack behaviors (`nAttack`, `cAttack`).
+* **Multi-Rank Icon Completeness:** Inspect and extract every rank variant icon (`<passive>1`..`<passive><maxRank>`) from `RippedAssets/`.
+* **Cross-Linking Target Audit:** Identify and list **every active skill** altered by this passive to ensure interactive dependency wiring (`*Dep`).
+
+#### Step B2: Passive Observable Proof Review Table
+Present a structured review table to the user for every passive entry:
+1. **Hook & Logic Excerpt (`file:line`):** Exact source line showing `hasSkill(...)` / `get<Name>Lv()` check and its execution branch.
+2. **Mechanics & Formula Derivation:** Precise arithmetic for stat additions, timer scaling, proc chances, or level calculations.
+3. **Cross-Linked Active Skills & Dependency Mapping:**
+   * List all affected active skills.
+   * Proposed dependency toggle constant (`const <CLASS>_<NAME>_DEP = { ... }`) and target hooks (`cdDep`, `castDep`, `durDep`, `dmgRankDep`, `hitCountDep`, `descDep`). If self-contained, declare `None`.
+4. **Status Profile (if status granted/applied):** Name (`sType`), Numeric ID (`nCode`), Level (`sLv`), Classification breakdown.
+5. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line` & `_thai.cs:line`):** Exact raw strings.
+6. **Proposed Card Definition (`index.html` Schema):**
+   * **Mandatory Fields:** `id`, `name`, `nameTha`, `class`, `icon` (maxRank icon), `maxRank`, `passive: true`, `desc`.
+   * **Strict Exclusion Rule:** Passive cards **MUST NEVER** include `cd`, `castTime`, `cost`, `duration`, or `ko`. (The UI omits `.sk-hero-stats` when empty, collapsing the top row vertically).
+   * **Dynamic Highlights:** Wrap dynamic numerical/stat ranks in `**${value}**` inside `desc`.
+
 > ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
 
-### Step 3: Strict Single-Class User Gate
+---
+
+### 5.C. Shared Gates, Application & Verification
+
+#### Step 3: Strict Single-Class User Gate
 * Process strictly **one class at a time**.
 * **Hard STOP:** Wait for explicit user review and approval before writing changes to `index.html` or advancing to the next class.
 
-### Step 4: Apply, Verify & Lint
+#### Step 4: Apply, Verify & Lint
 * Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
 * Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
 * **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for skill additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via `node scripts/validate_skills.js` and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when the user explicitly requests a visual check.
@@ -139,7 +183,7 @@ Present a structured review table to the user. Every single skill entry must inc
 
 ## 7. Large File Handling & Crash Prevention Protocol (Mandatory for index.html)
 
-`12t_projects/player-reference-tool/index.html` is **>6.4 MB** because it embeds 670 game icons as raw Base64 data URIs (lines ~3,600 to ~9,600). Ingesting this into an AI chat context triggers token exhaustion, emergency context truncations (`CHECKPOINT 0`), memory loss, and recursive crash loops.
+`12t_projects/bible/index.html` is **>6.4 MB** because it embeds 670 game icons as raw Base64 data URIs (lines ~3,600 to ~9,600). Ingesting this into an AI chat context triggers token exhaustion, emergency context truncations (`CHECKPOINT 0`), memory loss, and recursive crash loops.
 
 To permanently prevent session crashes and turn interruptions:
 

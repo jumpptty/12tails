@@ -12,7 +12,7 @@ const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
 
-const targetPath = path.resolve(__dirname, '../12t_projects/player-reference-tool/index.html');
+const targetPath = path.resolve(__dirname, '../12t_projects/bible/index.html');
 if (!fs.existsSync(targetPath)) {
   console.error("Target index.html not found at:", targetPath);
   process.exit(1);
@@ -78,7 +78,7 @@ const sandbox = {
     querySelector: () => makeEl(),
     addEventListener: () => {}
   },
-  location: { hash: "skill-cooldown-lookup" },
+  location: { hash: "skill-details" },
   history: { replaceState: () => {} },
   setTimeout: () => {},
   clearTimeout: () => {},
@@ -150,6 +150,30 @@ SKILLS.forEach(sk => {
 
   // Max Rank check
   const maxRank = sk.maxRank || 1;
+
+  // Passive skill schema check
+  if (sk.passive) {
+    if (sk.cd !== undefined) {
+      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'cd' (found: ${sk.cd})`);
+      errorCount++;
+    }
+    if (sk.castTime !== undefined) {
+      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'castTime'`);
+      errorCount++;
+    }
+    if (sk.cost !== undefined) {
+      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'cost'`);
+      errorCount++;
+    }
+    if (sk.duration !== undefined) {
+      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'duration'`);
+      errorCount++;
+    }
+    if (!sk.desc) {
+      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must provide a descriptive 'desc'`);
+      errorCount++;
+    }
+  }
 
   // Cast Time array check
   if (Array.isArray(sk.castTime) && sk.castTime.length !== maxRank) {
