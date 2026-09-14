@@ -43,7 +43,7 @@ This repository is a reverse-engineering, mechanics-verification, and documentat
 
 When reading `.cs` files in `DecompiledSource/`:
 1. **Junk Predicates:** The obfuscator wraps logic in bogus arithmetic (e.g., `if (68549 - 287643 != -219094)`). Ignore the condition and follow the true branch.
-2. **Companion Skill Files:** Always check for `<Class>_<skillName>.cs` (e.g. `Mole_napalm.cs`, `Bat_illusionFire.cs`, `BarrelBot_missile.cs`). `<Class>.cs` often only dispatches the cast, while the actual damage loop or multi-hit logic lives in the companion `MonoBehaviour`. Read companion files to the very end.
+2. **Companion Skill Files:** Always check for `<Class>_<skillName>.cs` (e.g. `Mole_napalm.cs`, `Bat_illusionFire.cs`, `BarrelBot_missile.cs`). `<Class>.cs` often only dispatches the cast, while the actual damage loop or multi-hit logic lives in the companion `MonoBehaviour`. Read companion files to the very end. For companion entities and summons (`BarrelBot.cs`, `Phoenix.cs`, `AutoGyroGun.cs`), trace summon stat inheritance and refer to [Section 8](#8-summon-mechanics-companion-movesets--summon-stat-cards).
 3. **Mangled Identifiers:** Identifiers like `this.$mSpawnPoint$44454` or `LTRpgsKoBpCYTrSOvr` are compiler noise. Real game functions (`getTypeStat`, `createActor`, `dmgAdjust`, `talAdjust`) are intact.
 4. **Live Server vs Decompiled Code:** If direct user testing or live gameplay contradicts a decompiled value (e.g. a live patch adjusted a duration from `talAdjust` to `chaAdjust`), **the user's live observation takes precedence**. Document the discrepancy with a note.
 
@@ -95,6 +95,13 @@ Every skill authoring, formula update, or tooltip review must strictly follow th
      * **Zero Placeholders Rule:** Never rely on a single rank icon or placeholder when authentic rank-numbered icons exist in ripped game assets.
   5. **In-Game Tooltips:** `<Class>Skill_eng.cs` & `<Class>Skill_thai.cs` (reference for authentic flavor context; code findings always override tooltip errors).
   6. **Passive Dependencies:** Scan for all `hasSkill(ID)` / `get<Passive>Lv()` calls; map to proper tool hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
+  7. **Summon / Companion Trigger (MANDATORY):** If the skill spawns an entity, deploys a turret, or commands a companion (e.g., `RPC_SpawnBarrelBot`, `RPC_CreatePet`, `RPC_KingKaiser`, `BarrelBot.cs`, `Phoenix.cs`, `Gadina.cs`):
+     * **IMMEDIATELY activate and strictly adhere to [Section 8](#8-summon-mechanics-companion-movesets--summon-stat-cards) and [Section 9](#9-compatible-skills-navigation-compatskills-conventions).**
+     * Separate Main Summon Card (full 9-stat grid) from Child Moveset Cards (selective stat glowing).
+     * Strictly separate Player LCK (duration/channel variance) from Summon LCK (damage spread).
+     * Suppress duration chips on simulation sub-attacks (`hideDurationChip: true`).
+     * Omit `cost` completely on automated companion AI moves.
+     * Wire `compatSkills` strictly on the main summon skill only.
 
 #### Step A2: Active Observable Proof Review Table (3-Point Citation)
 Present a structured review table to the user. Every single active skill entry must include:
@@ -125,7 +132,7 @@ Present a structured review table to the user. Every single active skill entry m
   1. **Stat Alteration Hook:** Modifies base or derived attributes (`CharacterControl.getTypeStat`, `calTotalStat`, `calHp`, `calMp`, `calAtk`, `calDef`, `calSpeed`).
   2. **Active Skill Dependency Hook:** Modifies cooldown, cast time, MP/SP consumption, hit count, or projectile patterns in `<Class>.cs` or companion scripts.
   3. **Status Application / Proc Hook:** Grants on-hit effects, debuff chances, or modifies status levels in `AttackHit`, `MagicHit`, or `mod`.
-  4. **AI / Companion Hook:** Modifies summon pet stats, attack intervals, or AI behaviors (e.g. `Phoenix.cs`, `Gadina.cs`, `BarrelBot.cs`).
+  4. **AI / Companion Hook:** Modifies summon pet stats, attack intervals, or AI behaviors (e.g. `Phoenix.cs`, `Gadina.cs`, `BarrelBot.cs`, `HeavyBuilt`, `SynchroMole`, `HiddenTurret`). **MANDATORY:** Cross-reference [Section 8.1](#8-summon-mechanics-companion-movesets--summon-stat-cards) to ensure affected summon stat tables dynamically recalculate when toggled.
   5. **Attack Augmentation Hook:** Modifies normal attack combos or charge attack behaviors (`nAttack`, `cAttack`).
 * **Multi-Rank Icon Completeness:** Inspect and extract every rank variant icon (`<passive>1`..`<passive><maxRank>`) from `RippedAssets/`.
 * **Cross-Linking Target Audit:** Identify and list **every active skill** altered by this passive to ensure interactive dependency wiring (`*Dep`).
@@ -157,6 +164,7 @@ Present a structured review table to the user for every passive entry:
 #### Step 4: Apply, Verify & Lint
 * Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
 * Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
+* **Summon & Companion Checklist:** If skills involve summons or companion moves, verify 100% adherence to [Section 8](#8-summon-mechanics-companion-movesets--summon-stat-cards) (selective stat glowing, LCK separation for damage vs duration variance, `hideDurationChip: true` where applicable, automated move cost omission) and [Section 9](#9-compatible-skills-navigation-compatskills-conventions) (`compatSkills` strictly on main skill only, Prompt Gold 14px header, 42px full-height icons).
 * **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for skill additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via `node scripts/validate_skills.js` and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when the user explicitly requests a visual check.
 
 ---
