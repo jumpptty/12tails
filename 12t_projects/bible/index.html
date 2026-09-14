@@ -6217,10 +6217,10 @@ function kingKaiserOwnStats(kaiserLv, heavyBuiltLv) {
 //           Cooldown always reads Mole's own AGI instead, per its own
 //           caption -- and never for ownStatsKaiser, since no King Kaiser
 //           move has cdWrapped:true at all).
-//   lck  -- used for the attacker-side dmgAdjust roll in Final Damage,
-//           whenever the skill deals real damage and isn't fully bypassing
-//           that pipeline stage (penetrating skips it entirely;
-//           dmgAdjustSkip skips just this step but keeps defAdjust).
+//   lck  -- rolled whenever a skill uses talAdjust (TAL roll), agiAdjust (cooldown
+//           roll), normal attack/atkCoeff (dmgAdjust roll), or an explicit LCK
+//           mechanic. Flat unscaled projectile damage (e.g. Kaiser Missile/Beam)
+//           does not scale with summon LCK.
 //   def/vit/mag/cha/mhp -- never used by ANY skill in this tool today; no
 //           chip here ever simulates damage taken, a shield/heal pool, an
 //           HP bar, or a cast-time/duration figure for one of these
@@ -6228,11 +6228,16 @@ function kingKaiserOwnStats(kaiserLv, heavyBuiltLv) {
 //           that's the honest, correct answer, not a bug to fix later.
 function getUsedOwnStatKeys(skill) {
   const used = new Set();
-  if (skill.atkCoeff !== undefined) used.add("atk");
+  const hasAtk = skill.atkCoeff !== undefined;
   const dmgTexts = skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg];
-  if (dmgTexts.some(t => t && /talAdjust\(/.test(t))) used.add("tal");
-  if (skill.ownStats && skill.cdWrapped) used.add("agi");
-  if ((skill.dmg || skill.dmgGroups) && !skill.penetrating && !skill.dmgAdjustSkip) used.add("lck");
+  const hasTal = dmgTexts.some(t => t && /talAdjust\(/.test(t));
+  const hasAgi = !!(skill.ownStats && skill.cdWrapped);
+  if (hasAtk) used.add("atk");
+  if (hasTal) used.add("tal");
+  if (hasAgi) used.add("agi");
+  if (hasTal || hasAgi || hasAtk || skill.lckProc || skill.lckCoeff !== undefined || dmgTexts.some(t => t && /lckAdjust\(/.test(t))) {
+    used.add("lck");
+  }
   return used;
 }
 
@@ -7970,7 +7975,7 @@ const SKILLS = [
   { id:"mole_chopper", name:"Chopper", class:"Mole", icon:"mole_chopper3", maxRank:3, cost:{sp:[20,24,28],spType:"blue"}, cd:45, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>10, ko:"1" },
   { id:"mole_missile", name:"Missile", class:"Mole", icon:"mole_missile4", maxRank:4, cost:{mp:[12,16,20,24]}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:(rank)=>rank, ko:"3" },
   { id:"mole_synchroMole", name:"Synchro Mole", class:"Mole", icon:"mole_synchroMole2", maxRank:2, cost:{mp:[15,25],sp:[25,35],spType:"red"}, cd:300, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, durNote:"Transfers 50% (Rank 1) / 100% (Rank 2) of Mole's TAL to Barrel Bot and turret ATK/DEF for chaAdjust(30) seconds." },
-  { id:"mole_kingKaiser", name:"King Kaiser", class:"Mole", icon:"mole_kingKaiser1", maxRank:1, cost:{mp:80,sp:80,spType:"red"}, cd:999, cdWrapped:true, revisedArtExempt:false, duration:240, durWrapped:true, durNote:"Transforms Mole into giant King Kaiser mecha with 1,500 HP (+50/100 ATK/DEF with upgrades) and heavy weaponry for 240 seconds." },
+  { id:"mole_kingKaiser", name:"King Kaiser", class:"Mole", icon:"mole_kingKaiser3", maxRank:3, cost:{mp:80,sp:80,spType:"red"}, cd:999, cdWrapped:true, revisedArtExempt:false, duration:240, durWrapped:true, durNote:"Transforms Mole into giant King Kaiser mecha with 1,500 HP (+50/100 ATK/DEF with upgrades) and heavy weaponry for 240 seconds.", desc:(rank)=>"สร้างหุ่นยนต์ยักษ์ King Kaiser ขึ้นบังคับ มีพลังชีวิต **1,500 HP** " + (rank === 3 ? "พร้อมปืนใหญ่ Kaiser Missile และลำแสง **Kaiser Beam** (+100 ATK/DEF)" : rank === 2 ? "พร้อมปืนใหญ่ **Kaiser Missile** (+50 ATK/DEF)" : "พร้อมอาวุธหนักครบครัน") },
   { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1" },
   { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5" },
   { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cost:{free:true}, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1" },
@@ -10552,7 +10557,7 @@ function mountSkillCooldownLookup(root){
       const bb = barrelBotOwnStats(doubleBotOn, synchroMoleOn, LV, TAL, heavyBuiltLv);
       ATK = bb.atk; TAL = bb.tal; bbOwnLCK = bb.lck;
       bbStatsTable = bb;
-    } else if (selected.ownStatsKaiser){
+    } else if (selected.ownStatsKaiser || selected.id === "mole_kingKaiser"){
       // King Kaiser pilot (2026-08-20): unlike Barrel Bot, ALL of King
       // Kaiser's own cooldowns are flat literals, never agiAdjust-wrapped
       // (verified directly against King Kaiser -- no skill here sets
@@ -10560,9 +10565,18 @@ function mountSkillCooldownLookup(root){
       // Cooldown chip -- assigned anyway for the stats table's own
       // completeness/consistency with the Barrel Bot precedent, harmless
       // since it's simply never read downstream for a flat cooldown.
-      const kaiserLv = getDepRank(KING_KAISER_LV_DEP);
+      let kaiserLv = getDepRank(KING_KAISER_LV_DEP);
+      if (selected.id === "mole_kingKaiser") {
+        const curRank = getSkillRank(selected);
+        if (curRank !== kaiserLv) {
+          kaiserLv = curRank;
+          depRanks[KING_KAISER_LV_DEP.id] = curRank;
+        }
+      }
       const kk = kingKaiserOwnStats(kaiserLv, heavyBuiltLv);
-      AGI = kk.agi; LCK = kk.lck; ATK = kk.atk; TAL = kk.tal;
+      if (selected.ownStatsKaiser) {
+        AGI = kk.agi; LCK = kk.lck; ATK = kk.atk; TAL = kk.tal;
+      }
       bbStatsTable = kk;
     } else if (selected.id === "mole_barrelBot"){
       // Base "Barrel Bot" summon entry (2026-08-21, user-requested): this
@@ -10817,7 +10831,7 @@ function mountSkillCooldownLookup(root){
       // (full gold) for this variant specifically -- not a change to
       // getUsedOwnStatKeys itself, which stays correct for every OTHER
       // card that reuses this same table.
-      const usedKeys = (selected.id === "mole_barrelBot" || selected.bbStatsInRow2)
+      const usedKeys = (selected.id === "mole_barrelBot" || selected.id === "mole_kingKaiser" || selected.bbStatsInRow2)
         ? new Set(["mhp","atk","def","agi","vit","mag","cha","tal","lck"])
         : getUsedOwnStatKeys(selected);
       const bbRow = (key, label, val) => `
@@ -10833,9 +10847,9 @@ function mountSkillCooldownLookup(root){
       const bbCaption = selected.ownStatsDmgOnly
         ? "Barrel Bot's own stats — Cooldown above uses Mole's own AGI/LCK instead"
         : "";
-      const bbTitle = selected.ownStatsKaiser ? "King Kaiser Stats" : "Barrel Bot Stats";
-      const bbToggles = selected.ownStatsKaiser
-        ? renderDmgRankToggle(KING_KAISER_LV_DEP)
+      const bbTitle = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser") ? "King Kaiser Stats" : "Barrel Bot Stats";
+      const bbToggles = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser")
+        ? [renderDmgRankToggle(KING_KAISER_LV_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("")
         : [renderDmgToggle(MOLE_DOUBLEBOT_DEP), renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("");
       bbStatsBlock = `
         <div class="sk-stat sk-stat-summon">
@@ -11767,7 +11781,11 @@ function mountSkillCooldownLookup(root){
       btn.addEventListener("click", () => {
         const min = Number(btn.dataset.depMinRank), max = Number(btn.dataset.depMaxRank);
         const cur = depRanks[btn.dataset.depId];
-        depRanks[btn.dataset.depId] = cur >= max ? min : cur + 1;
+        const next = cur >= max ? min : cur + 1;
+        depRanks[btn.dataset.depId] = next;
+        if (btn.dataset.depId === KING_KAISER_LV_DEP.id && selected.id === "mole_kingKaiser") {
+          skillRanks["mole_kingKaiser"] = next;
+        }
         renderHero();
       });
     });
@@ -11797,7 +11815,11 @@ function mountSkillCooldownLookup(root){
     const rankBtn = $('[data-role="rank-cycle"]', displayEl);
     if (rankBtn){
       rankBtn.addEventListener("click", () => {
-        skillRanks[selected.id] = (getSkillRank(selected) % selected.maxRank) + 1;
+        const nextRank = (getSkillRank(selected) % selected.maxRank) + 1;
+        skillRanks[selected.id] = nextRank;
+        if (selected.id === "mole_kingKaiser") {
+          depRanks[KING_KAISER_LV_DEP.id] = nextRank;
+        }
         renderHero();
       });
     }
