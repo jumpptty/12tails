@@ -7995,7 +7995,7 @@ const SKILLS = [
   { id:"mole_timeNuke", name:"Time Nuke", class:"Mole", icon:"mole_timeNuke2", maxRank:2, cost:{mp:[45,60],sp:[45,60],spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:false, dmg:"talAdjust(100×sLv+50)", hitCount:()=>4, ko:"3", durNote:"Deploys a 60s countdown time bomb detonating in a 10m-18m radius for talAdjust(100×sLv+50) AoE damage (100% center, 50% edge)." },
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cost:{mp:24,sp:24,spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, cost:{mp:[10,15,20,25],sp:10,spType:"red"}, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, desc:(rank)=>"สร้างป้อมปืนกล Auto Gyro Gun ที่คอยยิงใส่เป้าหมายในระยะ **" + (8 + 4 * rank) + "m** โดยอัตโนมัติ", compatSkills:["mole_autoGyroGun_nAttack"] },
-  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - ยิงปกติ", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
+  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - ยิงปกติ", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hideDurationChip:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
   { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true, compatSkills:["mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
   { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cost:{free:true}, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1", compatSkills:["mole_barrelBot","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
   { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
@@ -10579,6 +10579,7 @@ function mountSkillCooldownLookup(root){
     // deliberately left untouched here -- they must stay Mole's own for
     // the Cooldown chip's agiAdjustRange call just below.
     let bbOwnLCK = null;
+    let gyroOwnLCK = null;
     // bbStatsTable (2026-08-20): the computed Barrel Bot stat block, kept
     // around (not just applied to AGI/LCK/ATK/TAL above) so the Barrel Bot
     // Stats chip below can display it directly -- transparency in place of
@@ -10628,7 +10629,8 @@ function mountSkillCooldownLookup(root){
       const synchroMoleOn = getDepRank(MOLE_SYNCHROMOLE_BARRELBOT_DEP) === MOLE_SYNCHROMOLE_BARRELBOT_DEP.maxRank;
       const agg = autoGyroGunOwnStats(rank, hiddenTurretOn, synchroMoleOn, heavyBuiltLv, LV, TAL);
       if (selected.ownStatsGyro) {
-        ATK = agg.atk; LCK = agg.lck;
+        ATK = agg.atk;
+        gyroOwnLCK = agg.lck;
       }
       bbStatsTable = agg;
     } else if (selected.id === "mole_barrelBot"){
@@ -10754,7 +10756,7 @@ function mountSkillCooldownLookup(root){
           <div class="sk-stat-value">&infin;</div>
         </div>
       `;
-    } else if (activeSelected.duration !== undefined){
+    } else if (activeSelected.duration !== undefined && !selected.hideDurationChip){
       const dep = selected.dep;
       const depRank = dep ? getDepRank(dep) : null;
       const durationBase = resolveRank(selected.duration, rank);
@@ -11135,7 +11137,8 @@ function mountSkillCooldownLookup(root){
           const b = dmgReplaceDepOnCalc ? selected.dmgReplaceDep.calc(rank, LV) : evalArith(t);
           const baseRange = [b, b].map(dmgCalcPostFn);
           if (!selected.penetrating && !selected.effectDamage && !selected.atkClamp && !selected.dmgAdjustSkip && (effAtkCoeff || selected.id === "bat_nAttack")){
-            const rMax = Math.ceil(0.2 * Math.max(LCK, 0));
+            const effLck = selected.ownStatsGyro ? (gyroOwnLCK !== null ? gyroOwnLCK : LCK) : (selected.ownStatsDmgOnly ? (bbOwnLCK !== null ? bbOwnLCK : LCK) : LCK);
+            const rMax = Math.ceil(0.2 * Math.max(effLck, 0));
             return [baseRange[0], baseRange[1] + rMax];
           }
           return baseRange;
@@ -11281,7 +11284,7 @@ function mountSkillCooldownLookup(root){
           // input this tool otherwise uses everywhere else.
           const attackerLCK = (selected.ownLck !== undefined)
             ? (typeof selected.ownLck === "number" ? selected.ownLck : (dmgReplaceDepOnCalc ? Math.floor(selected.dmgReplaceDep.lckCoeff * rank * LV) : evalArith(getDmgText(selected, rank).replace(/\bsLv\b/g, String(rank)))))
-            : (selected.ownStatsDmgOnly ? bbOwnLCK : LCK);
+            : (selected.ownStatsDmgOnly ? bbOwnLCK : (selected.ownStatsGyro ? gyroOwnLCK : LCK));
           const playerLckSpread = lckSpreadRange(attackerLCK);
           // penetrating (Mole's Flame Turret pilot, 2026-08-19) -- see
           // rollOneHit's identical (and identically corrected) comment for
