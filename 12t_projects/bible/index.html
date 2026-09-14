@@ -10939,9 +10939,6 @@ function mountSkillCooldownLookup(root){
         bbRow("mhp", "HP", bbStatsTable.mhp) + bbRow("atk", "ATK", bbStatsTable.atk) + bbRow("def", "DEF", bbStatsTable.def) +
         bbRow("agi", "AGI", bbStatsTable.agi) + bbRow("vit", "VIT", bbStatsTable.vit) + bbRow("mag", "INT", bbStatsTable.mag) +
         bbRow("cha", "CHA", bbStatsTable.cha) + bbRow("tal", "TAL", bbStatsTable.tal) + bbRow("lck", "LCK", bbStatsTable.lck);
-      const bbCaption = selected.ownStatsDmgOnly
-        ? "Barrel Bot's own stats — Cooldown above uses Mole's own AGI/LCK instead"
-        : "";
       const bbTitle = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser") ? "King Kaiser Stats" : (selected.ownStatsGyro || selected.id === "mole_autoGyroGun") ? "Auto Gyro Gun Stats" : "Barrel Bot Stats";
       const bbToggles = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser")
         ? [renderDmgRankToggle(KING_KAISER_LV_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("")
@@ -10960,7 +10957,6 @@ function mountSkillCooldownLookup(root){
           <div class="sk-summon-grid">
             ${bbRows}
           </div>
-          ${bbCaption ? `<p class="sk-stat-base sk-summon-caption">${bbCaption}</p>` : ""}
         </div>
       `;
     }
