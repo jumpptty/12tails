@@ -207,4 +207,59 @@ To permanently prevent session crashes and turn interruptions:
      `node scripts/validate_skills.js`
    * Confirm that 100% of skills, formula permutations, and icons continue to pass automated integrity checks.
 
+---
+
+## 8. Summon Mechanics, Companion Movesets & Summon Stat Cards
+
+When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, etc.):
+
+1. **Main Summon Card vs Child Moveset Cards:**
+   * **Main Summon Card** (`mole_barrelBot`, `mole_kingKaiser`, `mole_autoGyroGun`):
+     - Displays the full 9-stat Summon Status grid (`mhp`, `atk`, `def`, `agi`, `vit`, `mag`, `cha`, `tal`, `lck`).
+     - All 9 stats are colorized/accented when responsive to summon upgrade toggles (`heavyBuilt`, `synchroMole`, `doubleBot`, `hiddenTurret`).
+     - Omits `.sk-dmg-row` (Damage Formula row) when the summon cast itself deals no direct damage.
+     - Toggle state (e.g. King Kaiser Lv 1..3 icon cycle, Heavy Built, Double Bot, Hidden Turret) dynamically recalculates and updates the summon's stats table.
+   * **Child Moveset / Summon-Attack Cards** (`King Kaiser - Normal Attack`, `Barrel Bot - Mega Punch`, `Auto Gyro Gun - ยิงปกติ`):
+     - Displays the summon stat row with **selective glowing / stat accents**: only stats actively used by this specific move's calculations (`ATK` for damage, `LCK` for attacker damage spread `dmgAdjust`, `AGI` for cooldown if `cdWrapped`) glow with their stat accents. Inert stats are dimmed (`.sk-summon-stat-unused`).
+     - Enemy DEF mitigation uses target DEF/LCK (`defAdjust`), which does NOT cause the summon's DEF/LCK to glow unless the move itself scales from them.
+     - Damage calculations and simulation chips MUST use the **summon's own stats** (`ownStats`, `ownStatsKaiser`, `ownStatsGyro`, `ownStatsDmgOnly`), not the player's stats.
+2. **LCK Stat Separation for Summons & Duration Variance:**
+   * A summon's own LCK stat (`agg.lck`, `bb.lck`, `kk.lck`) is strictly the **attacker's LCK** for the summon's own hits (`dmgAdjust` / `attackerLCK` / `rMax`).
+   * The summon's **duration / channel variance** (e.g. `chaAdjust(120)` or `hitCountDuration` simulation) originates from the PLAYER who cast the summon (Mole). It MUST always calculate duration variance using **Player CHA and Player LCK** (`parseFloat(lckEl.value)`), NEVER the summon's own LCK.
+   * In `renderHero()`, never overwrite the top-level `LCK` variable with the summon's LCK; store the summon's LCK in dedicated variables (`gyroOwnLCK`, `bbOwnLCK`) for `attackerLCK`.
+3. **Duration Chip Suppression on Sub-Attacks:**
+   * Summon attack cards that define `duration` and `hitCountDuration` strictly for simulation hit count math (e.g. `Auto Gyro Gun - ยิงปกติ`) must declare `hideDurationChip: true`.
+   * Adhering to the Vertical Collapse Convention, omitting CD, Cast, Duration, and LCK Proc chips causes `.sk-hero-stats` to collapse completely with zero preserved height.
+4. **Resource Badges / Cost Policy on Summon AI Moves:**
+   * Automated summon pet attacks / AI moves (`mole_barrelBot_nAttack`, `punch`, `hammer`, `chopper`, `missile`, `drill`, `cannon (Auto)`) must omit `cost` completely. Never show "Free" or SP/MP badges for automated companion moves.
+   * Active player command skills where the player casts and spends resources (e.g. `Barrel Bot - Barrel Cannon` non-Auto, costing 50 SP) keep their explicit `cost`.
+5. **Stat Accent Tokens:**
+   * 8 core stats + HP use dedicated CSS color variables: ATK (`--stat-atk`: `#b91c1c`), DEF (`--stat-def`: `#0284c7`), AGI (`--stat-agi`: `#059669`), VIT (`--stat-vit`: `#ca8a04`), INT (`--stat-int`: `#1d4ed8`), CHA (`--stat-cha`: `#8a72b8`), TAL (`--stat-tal`: `#db2777`), LCK (`--stat-lck`: `#059669`), HP (`--stat-hp`: `#b91c1c`).
+
+---
+
+## 9. Compatible Skills Navigation (`compatSkills`) Conventions
+
+When linking related skills (e.g. Mass Cast targets, Barrel Bot moves, King Kaiser weapons, Auto Gyro Gun):
+
+1. **Main Skill Only Policy:**
+   * `compatSkills` must ONLY be defined on the **main skill** (e.g. `bat_massCast`, `mole_barrelBot`, `mole_kingKaiser`, `mole_autoGyroGun`).
+   * Child moves and subordinate skills MUST NOT define `compatSkills`. This prevents navigation loops, clutter, and information overload.
+2. **Header & Typography:**
+   * Header text is strictly `<p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>`.
+   * Styled with Google Fonts **Prompt**, Brass Gold (`color: var(--gold); font-size: 14px; font-weight: 600; letter-spacing: .04em; margin: 0 0 10px 2px;`).
+   * Redundant English badges (`LINK`, `MASS CAST`, `MOVES`) and duplicate headers are strictly prohibited.
+3. **Container Spacing & Clearance:**
+   * Container row `.sk-compat-row` has `margin-top: 14px;`, guaranteeing clean clearance below Position 5-8 (`.sk-dmg-row`) so it never sticks to the row above.
+   * Card `.sk-compat-chip` has `padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);`.
+4. **Full-Height Chip Icon & 2-Line Text Geometry:**
+   * Button `.sk-compat-item`: `display: flex; align-items: center; height: 44px; padding: 0 10px 0 0; border-radius: 6px; overflow: hidden;`.
+   * Icon `img.sk-compat-icon`: `width: 42px; height: 42px;` occupying the **full inner height** of the chip on the left edge, with subtle divider `border-right: 1px solid rgba(255,255,255,0.08)`.
+   * Skill name `.sk-compat-name`: to the right of the icon (`flex: 1; margin-left: 9px; font-size: 11.5px; line-height: 1.22; font-weight: 500;`).
+   * **2-Line Height Boundary:** Long names that wrap to 2 lines (`-webkit-line-clamp: 2`) measure ~28px total, staying strictly within the 42px icon height so chips maintain consistent alignment without bulging.
+5. **Grid Behavior & No Artificial Clamping:**
+   * `.sk-compat-grid`: `display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 10px;`.
+   * `.sk-compat-few-grid` (2-4 items, e.g. King Kaiser with 3 skills): `grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));` with NO restrictive `max-width` clamping, ensuring all items fit in **1 single row** on desktop.
+   * `.sk-compat-single-grid` (1 item): `max-width: 340px;` with `"คลิกเพื่อดูสกิล →"`.
+
 
