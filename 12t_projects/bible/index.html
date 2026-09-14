@@ -2573,22 +2573,55 @@
     .sk-summon-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
     .sk-stat-summon{padding:12px 14px}
   }
-  .sk-compat-chip{grid-column:1 / -1; min-height:94px}
-  .sk-compat-count{color:var(--gold); font-weight:700; margin-left:4px}
-  .sk-compat-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px 8px; margin-top:6px}
+  /* Related / Compatible Skills Row (2026-09-14) */
+  .sk-compat-row{margin-top:14px}
+  .sk-compat-row:empty{display:none; margin:0}
+  .sk-compat-chip{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .sk-compat-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));
+    gap:8px 10px;
+  }
+  .sk-compat-few-grid{
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    max-width:560px;
+  }
+  .sk-compat-single-grid{
+    grid-template-columns:1fr;
+    max-width:340px;
+  }
   .sk-compat-item{
-    display:flex; align-items:center; gap:8px; padding:5px 8px;
+    display:flex; align-items:center; height:44px; padding:0 10px 0 0;
     background:rgba(255,255,255,0.03); border:1px solid var(--line);
     border-radius:6px; cursor:pointer; font-family:inherit; text-align:left;
-    transition:all .15s ease;
+    overflow:hidden; transition:all .15s ease; box-sizing:border-box;
   }
   .sk-compat-item:hover{
-    background:rgba(212,175,55,0.1); border-color:var(--gold);
-    transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.35);
+    background:rgba(212,175,55,0.08); border-color:var(--gold);
+    transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.4);
   }
-  .sk-compat-item img{width:24px; height:24px; border-radius:4px; display:block; flex-shrink:0}
-  .sk-compat-name{font-size:11.5px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .sk-compat-item img, .sk-compat-icon{
+    width:42px; height:42px; display:block; flex-shrink:0;
+    background:rgba(0,0,0,0.4); border-right:1px solid rgba(255,255,255,0.08);
+  }
+  .sk-compat-name{
+    flex:1; min-width:0; margin-left:9px;
+    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-size:11.5px; font-weight:500; color:var(--text); line-height:1.22;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    overflow:hidden; text-overflow:ellipsis; word-break:break-word;
+  }
   .sk-compat-item:hover .sk-compat-name{color:var(--gold)}
+  .sk-compat-arrow{
+    font-size:11px; color:var(--gold); font-weight:600; margin-left:8px;
+    white-space:nowrap; flex-shrink:0; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (max-width:768px){
+    .sk-compat-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px}
+    .sk-compat-few-grid, .sk-compat-single-grid{max-width:100%}
+  }
 
 
   /* Rank-cycling hero icon (Penguin pilot, 2026-08-14) -- plain button reset,
@@ -11689,33 +11722,6 @@ function mountSkillCooldownLookup(root){
     let compatBlock = "";
     if (selected.compatSkills && Array.isArray(selected.compatSkills) && selected.compatSkills.length > 0){
       const count = selected.compatSkills.length;
-      let compatTitle = selected.compatTitle;
-      if (!compatTitle) {
-        if (selected.id === "bat_massCast") {
-          compatTitle = "สกิลที่ MassCast มีผล";
-        } else if (selected.id === "mole_barrelBot" || selected.id.startsWith("mole_barrelBot_")) {
-          compatTitle = "สกิลของ Barrel Bot";
-        } else if (selected.id === "mole_kingKaiser" || selected.id.startsWith("mole_kingKaiser_")) {
-          compatTitle = "สกิลของ King Kaiser";
-        } else if (selected.id === "mole_autoGyroGun") {
-          compatTitle = "สกิลของ Auto Gyro Gun";
-        } else if (selected.id === "mole_autoGyroGun_nAttack") {
-          compatTitle = "สกิลเรียก Auto Gyro Gun";
-        } else {
-          compatTitle = "สกิลที่เกี่ยวข้อง";
-        }
-      }
-
-      let badgeText = "RELATED";
-      if (selected.id === "bat_massCast") {
-        badgeText = "MASS CAST";
-      } else if (selected.id === "mole_barrelBot" || selected.id.startsWith("mole_barrelBot_") ||
-                 selected.id === "mole_kingKaiser" || selected.id.startsWith("mole_kingKaiser_")) {
-        badgeText = "MOVES";
-      } else if (selected.id === "mole_autoGyroGun" || selected.id === "mole_autoGyroGun_nAttack") {
-        badgeText = "LINK";
-      }
-
       const gridClass = count === 1 ? "sk-compat-grid sk-compat-single-grid" : (count <= 4 ? "sk-compat-grid sk-compat-few-grid" : "sk-compat-grid");
       const itemClass = count === 1 ? "sk-compat-item sk-compat-item-single" : (count <= 4 ? "sk-compat-item sk-compat-item-few" : "sk-compat-item");
 
@@ -11726,26 +11732,18 @@ function mountSkillCooldownLookup(root){
         const iconData = SKILL_ICONS[iconKey] || "";
         const arrowHtml = count === 1
           ? `<span class="sk-compat-arrow">คลิกเพื่อดูสกิล →</span>`
-          : (count <= 4 ? `<span class="sk-compat-arrow">→</span>` : "");
+          : "";
         return `
           <button type="button" class="${itemClass}" data-skill-id="${sk.id}" title="${sk.name}">
-            <div class="sk-compat-item-left">
-              <img src="${iconData}" alt="${sk.name}">
-              <span class="sk-compat-name">${sk.name}</span>
-            </div>
+            <img src="${iconData}" alt="${sk.name}" class="sk-compat-icon">
+            <span class="sk-compat-name">${sk.name}</span>
             ${arrowHtml}
           </button>
         `;
       }).join("");
 
       compatBlock = `
-        <div class="sk-stat sk-compat-chip">
-          <div class="sk-compat-head">
-            <div class="sk-compat-title-wrap">
-              <span class="sk-compat-badge">${badgeText}</span>
-              <p class="sk-stat-label">${compatTitle} <span class="sk-compat-count">(${count})</span></p>
-            </div>
-          </div>
+        <div class="sk-compat-chip">
           <div class="${gridClass}">
             ${compatItems}
           </div>
