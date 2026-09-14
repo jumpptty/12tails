@@ -4762,3 +4762,92 @@ lives in the same closure as `rollOneHit`/`renderOneDmgFormula`, which do the sa
 bare word "TAL" the old version showed -- then bumped TAL to 300 via the real input and confirmed the
 number itself updated live (`768` → `1800`), matching `6×300` exactly, while the coefficient caption
 `(6TAL)` correctly stayed the same (it's a property of the formula, not the current TAL value).
+
+### 2026-09-14: Player stat input highlighting ("stat signature accents") -- new `.sk-controls` feature, plus a real `defCoeff`/`CHAR LV` gap found and closed
+
+User asked for the global player stat panel (`.sk-controls`: ATK/DEF/TAL/AGI/VIT/CHA/INT/LCK/CHAR LV) to
+highlight whichever inputs actually drive the currently-selected skill's own chips -- separate and new
+relative to this file's existing Section-8-equivalent summon-stat-table glowing (`getUsedOwnStatKeys`,
+which colors cells *inside* a summon's own 9-stat block like the Barrel Bot Stats chip). This is the
+top-level `AGENTS.md`'s own new Section 10 now; full mechanism detail lives there, this entry is the
+session narrative and the mistakes made getting there.
+
+**Design went through 2 real style iterations before landing.** First attempt: a single uniform pulsing
+gold glow (`.sk-stat-glow` class, `@keyframes skStatGlow`) on whichever ONE input a skill's own
+`highlightStat` field named -- built as a Phoenix Fireball pilot (its Cooldown reads Monkey's own INT
+instead of AGI/LCK, `Phoenix.cs:2562-2573`, a genuinely atypical dependency worth calling out). **User
+rejected this outright** ("your logic is correct, but the style is not what I envisioned") and it was
+fully reverted via `git restore` rather than hand-un-edited, since a manual 3-edit revert had already
+drifted the file's line endings enough to confuse `git diff`. Second, accepted design: color EVERY
+relevant input using that stat's own ALREADY-ESTABLISHED `--stat-atk`/`--stat-tal`/etc. accent tokens
+(the same ones this file's damage-formula term-coloring has used since the Penguin pilot), a static
+border+label recolor, later given "a bit of glow, no animation" -- a plain `box-shadow:0 0 6px
+var(--sg-color)` per stat, using each stat's own token directly rather than an alpha-blended version (no
+`color-mix()` precedent anywhere in this file, and the CSS custom-property route needs no alpha math
+anyway). `.sk-stat-glow-<key>` classes each just set one `--sg-color` var; 2 shared attribute-selector
+rules (`[class^="sk-stat-glow-"] label`/`input[type=number]`) apply it uniformly -- adding a 9th stat
+later (CHAR LV) needed only one more `--sg-color` one-liner, not a repeat of the color+border+shadow
+rule set.
+
+**`getUsedPlayerStatKeys(skill)`** (`index.html`, right after `getUsedOwnStatKeys`): same structural
+philosophy as that function -- reads `SKILLS` fields directly (`cdWrapped`, `castWrapped`,
+`durWrapped`/`durContested`, `dmg`/`shield` text, `atkCoeff`, `lckProc`) rather than threading through
+`renderHero()`'s own runtime branches, verified via a lightweight `vm`-sandboxed extraction of the live
+`SKILLS` array (no `jsdom` install available this session -- truncating the script right after `const
+SKILLS_ORDERED = SKILLS;` and capturing both onto `globalThis` before the rest of the script's
+DOM-dependent code could throw was enough to test real skill objects against the real function, cheaper
+than a full jsdom install for this kind of pure-data-function check). Own-stat exclusion rules (which
+`ownStats*` variant hides which input, since the real attacker isn't the player for that chip) match
+`getUsedOwnStatKeys`'s own established distinctions exactly -- full citations in `AGENTS.md` Section 10
+point 5, not repeated here.
+
+**Real gap #1, user-caught after the first version shipped: `defCoeff` was missing entirely.** 3 Whale
+skills (Shield Rush, Flying Shield, Homing Shield) have a `defCoeff` field -- the DEF-equivalent of
+`atkCoeff`, a flat coefficient of the caster's own DEF added to the damage formula -- that the first pass
+never checked for at all, so DEF never highlighted for any skill in the whole tool despite 3 real,
+shipped dependencies on it. Fixed with one more `hasDef`/`used.add("def")` branch, same shape as the
+existing `hasAtk` check.
+
+**Real gap #2, user-caught immediately after: CHAR LV (Mana Missile "dependent of CHAR LV input too but
+currently not glowing").** The first version had no LV detection at all. Tracing every real LV dependency
+in the tool (not guessed at) found 3 distinct mechanisms feeding it: (1) a Class C dep's own display
+`term` literally containing the substring `"LV"` -- `dmgDep`/`shieldDep` on Mana Missile's More Missile,
+Mana Arc's Penguin of Arc, TNT's Super TNT, Mix's Extra Potion, and Ice Shield's Frost Spike, found via an
+exhaustive grep for `term:"..LV"` across every `dmgDep`/`shieldDep`/`dmgReplaceDep`/`koDep`/`koMultDep`/
+`dmgRankDep`/`dmgMultDep` object in the file, not assumed from Mana Missile alone; (2) `skill.ownStats` or
+`ownStatsDmgOnly` (both route through `barrelBotOwnStats()`, whose Double Bot bonus adds
+`floor(0.5×moleLV)` to every one of Barrel Bot's own stats -- confirmed by reading that function's actual
+body, not inferred); (3) `skill.ownStatsGyro` (`autoGyroGunOwnStats()`'s Hidden Turret,
+`floor(0.25×rank×moleLV)`). Cross-checked the negative case too: `kingKaiserOwnStats()`/`phoenixOwnStats()`
+take **no** LV parameter at all, confirmed by reading both function signatures directly -- King Kaiser and
+Phoenix skills correctly never glow LV. A 4th mechanism, `dmgReplaceDep.coeff`, was initially assumed to
+be Auto Gyro Gun's own Hidden Turret path (per an older, pre-2026-08-22 passage elsewhere in this file
+describing that exact mechanism) -- checking live turned up **zero** `dmgReplaceDep:{...}` entries left in
+the current `SKILLS` array at all, meaning that mechanism was fully superseded by the later
+`ownStatsGyro`/`atkCoeff` refactor and is now dead data. Kept the check anyway (cheap, harmless,
+defensive/future-proofing per its own code comment) but the real fix for Auto Gyro Gun's turret attack
+came from adding `ownStatsGyro` to the LV-detection OR-chain, not from `dmgReplaceDep`.
+
+**INT recolored to pink, same session, user-requested with a reference swatch image** ("a bit lighter than
+the image overall color is fine") -- light theme `#be185d`, dark theme `#f472b6`, replacing the prior blue
+(`#1d4ed8`/`#5b9bf0`) across all 3 theme blocks (`:root`, `prefers-color-scheme:dark`,
+`:root[data-theme="dark"]`) -- the 3rd block has different indentation from the other 2 and needed its own
+non-`replace_all` edit both times a token here got changed this session, a recurring trap worth remembering
+for any future 3-location theme-token edit in this file.
+
+**New `--stat-lv` token** (slate/grey, `#475569` light / `#94a3b8` dark) -- deliberately NOT reusing any
+existing stat hue (vit is already amber/yellow-gold, lck is already orange, both close enough to risk
+confusion) -- chosen as a neutral "meta-progression" color distinct from the 8 real `CharacterControl`
+combat stats, since CHAR LV isn't one of them.
+
+**Verification**: every fix this session was checked against the REAL live `SKILLS` array via the same
+`vm`-sandboxed extraction technique (never guessed at), including the specific regression cases each fix
+was meant to close (Phoenix Fireball still shows only `int`, Barrel Bot's 8 moveset children go from `[]`
+to `["lv"]`, Barrel Cannon gains `lv` alongside its existing `agi`/`lck`, King Kaiser/Phoenix skills stay
+LV-free, all 3 Whale `defCoeff` skills gain `def`). Script-syntax (`new Function`) and CSS comment-strip
+brace-balance checks passed after every edit, matching this file's own standing pre-publish checklist.
+**Not visually verified live** -- no browser tool available this session, same standing caveat as most of
+this file's other no-browser passes; do a real click-through (does the static glow actually read as
+"a bit of glow, no animation" at real screen size, does the new pink INT accent contrast legibly against
+both themes) before treating this as fully done. Committed (`abb829e`) and pushed to
+`skill-cooldown-lookup` -- not yet merged/deployed anywhere beyond that branch.

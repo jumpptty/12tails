@@ -242,7 +242,7 @@ When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix
    * Automated summon pet attacks / AI moves (`mole_barrelBot_nAttack`, `punch`, `hammer`, `chopper`, `missile`, `drill`, `cannon (Auto)`) must omit `cost` completely. Never show "Free" or SP/MP badges for automated companion moves.
    * Active player command skills where the player casts and spends resources (e.g. `Barrel Bot - Barrel Cannon` non-Auto, costing 50 SP) keep their explicit `cost`.
 5. **Stat Accent Tokens:**
-   * 8 core stats + HP use dedicated CSS color variables: ATK (`--stat-atk`: `#b91c1c`), DEF (`--stat-def`: `#0284c7`), AGI (`--stat-agi`: `#059669`), VIT (`--stat-vit`: `#ca8a04`), INT (`--stat-int`: `#1d4ed8`), CHA (`--stat-cha`: `#8a72b8`), TAL (`--stat-tal`: `#db2777`), LCK (`--stat-lck`: `#059669`), HP (`--stat-hp`: `#b91c1c`).
+   * 8 core stats + HP + CHAR LV use dedicated CSS color variables (`--stat-atk`, `--stat-def`, `--stat-agi`, `--stat-vit`, `--stat-int`, `--stat-cha`, `--stat-tal`, `--stat-lck`, `--stat-lv`, `--stat-hp`). **Don't hardcode hex values for these in this doc** — a prior version of this bullet did, and several had silently drifted wrong (TAL/LCK/HP were miscited, and INT was recolored pink on 2026-09-14 without this doc being updated at the time). The tokens exist once, in `index.html`'s `:root` / dark-theme blocks — check there before citing a specific value elsewhere. See [Section 10](#10-player-stat-input-highlighting-stat-signature-accents) for the full mechanism that consumes them.
 
 ---
 
@@ -270,4 +270,25 @@ When linking related skills (e.g. Mass Cast targets, Barrel Bot moves, King Kais
    * `.sk-compat-few-grid` (2-4 items, e.g. King Kaiser with 3 skills): `grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));` with NO restrictive `max-width` clamping, ensuring all items fit in **1 single row** on desktop.
    * `.sk-compat-single-grid` (1 item): `max-width: 340px;` with `"คลิกเพื่อดูสกิล →"`.
 
+---
+
+## 10. Player Stat Input Highlighting (Stat Signature Accents)
+
+Added 2026-09-14. Distinct from Section 8's summon-stat-table glowing (which colors cells inside a *summon's own* 9-stat block, e.g. the "Barrel Bot Stats" chip) — this colors the **player's own global stat inputs** (`.sk-controls`: ATK/DEF/TAL/AGI/VIT/CHA/INT/LCK/CHAR LV) whenever the currently selected skill's own displayed chips genuinely read that input.
+
+1. **`getUsedPlayerStatKeys(skill)`** (`index.html`, next to `getUsedOwnStatKeys`): a structural function — reads `SKILLS` fields directly (`cdWrapped`, `castWrapped`, `durWrapped`/`durContested`, `dmg`/`shield` text, `atkCoeff`, `defCoeff`, `lckProc`, dep objects) rather than threading through `renderHero()`'s runtime branches. Returns a `Set` of stat keys (`atk`/`def`/`tal`/`agi`/`vit`/`cha`/`int`/`lck`/`lv`).
+2. **CSS**: `.sk-stat-glow-<key>` classes (toggled on each input's wrapping `<div>`, once per `renderHero()` call) set one `--sg-color` custom property to that stat's own `--stat-<key>` token; shared `[class^="sk-stat-glow-"]` rules apply it as the input's border color, label color, and a soft **static** `box-shadow` glow. **No animation** — an earlier pulsing-gold-only version was tried and explicitly rejected by the user in favor of this per-stat, non-animated treatment.
+3. **`defCoeff`** is the DEF-equivalent of `atkCoeff` (Whale's Shield Rush/Flying Shield/Homing Shield only, so far) — a flat coefficient of the caster's own DEF added to the damage formula. Easy to miss: it was missed on the first pass and had to be added as a follow-up fix.
+4. **CHAR LV (`lv`) detection** — no chip literally labeled "LV" exists, so this isn't a simple field check:
+   * A Class C dep's own display `term` literally contains the substring `"LV"` (`dmgDep`/`shieldDep` — Mana Missile's More Missile, Mana Arc's Penguin of Arc, TNT's Super TNT, Mix's Extra Potion, Ice Shield's Frost Spike).
+   * `skill.ownStats` or `skill.ownStatsDmgOnly` — both route through `barrelBotOwnStats()`, whose Double Bot bonus (`floor(0.5×moleLV)`) is added to every one of Barrel Bot's own stats.
+   * `skill.ownStatsGyro` — routes through `autoGyroGunOwnStats()`, whose Hidden Turret bonus is `floor(0.25×rank×moleLV)`.
+   * `kingKaiserOwnStats()`/`phoenixOwnStats()` take **no** LV parameter at all — King Kaiser and Phoenix skills never glow LV, regardless of `ownStatsKaiser`/`ownStatsPhoenix`.
+5. **Own-stat exclusion rules** (which own-stat variant hides which player input, since the real attacker isn't the player for that chip):
+   * `ownStats` (Barrel Bot's 8 moveset children): fully summon-sourced — AGI/LCK/ATK/TAL never glow; only LV glows (via Double Bot).
+   * `ownStatsDmgOnly` (Barrel Cannon): ATK/TAL/damage-LCK excluded (Barrel Bot's own stats), but AGI/LCK still glow for Cooldown (genuinely Mole's own, per its own citation trail) and LV still glows.
+   * `ownStatsKaiser` (King Kaiser moves): ATK/TAL/damage-LCK excluded; no Cooldown chip exists on any King Kaiser move at all, so AGI never applies; no LV (per point 4).
+   * `ownStatsPhoenix` (Phoenix, including the base summon skill): TAL/damage-LCK excluded (Phoenix's own stats); AGI/CHA/INT/LCK still glow for Cooldown/Cast Time/Duration/Rebirth Chance, which stay Monkey's own. No LV.
+   * `phoenixFireballCd` (Phoenix Fireball only): Cooldown glows **INT**, not AGI/LCK — Rapid Fire scales off Monkey's own INT (`Phoenix.cs:2562-2573`), a real, deliberately atypical exception verified against source, not an oversight to "fix" later.
+6. **Known gap, not yet closed**: a skill whose only real damage is a bare dep-derived flat number (no `talAdjust`, no `atkCoeff` — e.g. Stun Mine/Grenade) still rolls a real LCK-driven Final Damage spread via `dmgAdjust`, but isn't detected as "uses LCK" by this function.
 
