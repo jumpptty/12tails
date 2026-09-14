@@ -1417,7 +1417,7 @@
   .sk-controls > div.sk-stat-glow-lv{ --sg-color:var(--stat-lv); }
   .sk-controls > div[class^="sk-stat-glow-"] label{ color:var(--sg-color); }
   .sk-controls > div[class^="sk-stat-glow-"] input[type=number]{
-    border-color:var(--sg-color);
+    border-color:var(--sg-color); color:var(--sg-color);
     box-shadow:0 0 6px var(--sg-color), inset 0 1px 4px rgba(0,0,0,0.6);
   }
   /* Own row for the 2 toggle buttons (2026-08-22) -- split out of
@@ -3414,11 +3414,26 @@
   html.tool-fit-screen{overflow:hidden}
   html.tool-fit-screen body{height:100dvh; min-height:0; overflow:hidden; display:flex; flex-direction:column}
   html.tool-fit-screen .hub-bar{flex:none; padding:10px 24px}
+  /* align-items:flex-start (not center) + transform-origin:center top
+     (2026-09-14, user-reported): anchors the card to a fixed point just
+     below the hub bar, horizontally centered ("middle top"), instead of
+     vertically centering it in the available viewport height. With
+     align-items:center, every skill's differently-tall card visibly
+     jumped up/down when switching skills, because centering pins the
+     card's MIDDLE, not its top -- a taller card's top edge moves up, a
+     shorter card's top edge moves down, even though nothing about where
+     you'd expect to look (the top of the card) should move at all.
+     transform-origin has to move from its default center-center to
+     center-top in lockstep with align-items, or fitStageToScreen()'s own
+     scale-to-fit transform (see its own comment below) would shrink a
+     too-tall card DOWN toward the box's old center instead of toward its
+     new flex-start anchor, undoing the fix for exactly the viewports where
+     scaling actually kicks in. */
   html.tool-fit-screen .stage{
     position:relative; width:100%; flex:1; min-height:0;
-    display:flex; align-items:center; justify-content:center;
-    padding:0;
-    transform-origin:center center;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:20px 0 0;
+    transform-origin:center top;
   }
 
   html.tool-wide-hero .tool-shell {
@@ -6351,7 +6366,14 @@ function getUsedOwnStatKeys(skill) {
   if (hasAtk) used.add("atk");
   if (hasTal) used.add("tal");
   if (hasAgi) used.add("agi");
-  if (hasTal || hasAgi || hasAtk || skill.lckProc || skill.lckCoeff !== undefined || dmgTexts.some(t => t && /lckAdjust\(/.test(t))) {
+  // LCK only glows for a DIRECT read of the stat (lckProc's own chance chip,
+  // a literal lckCoeff formula term, or an inline lckAdjust() call). talAdjust/
+  // agiAdjust/etc. all bake an LCK-derived roll into their OWN variance range
+  // ambiently -- that's true of nearly every chip, so treating it as "uses
+  // LCK" made LCK glow almost constantly and taught users nothing. Removed
+  // 2026-09-14 per user feedback (also cited Cat's not-yet-implemented
+  // Gambler-class damage mechanic as the same kind of indirect case).
+  if (skill.lckProc || skill.lckCoeff !== undefined || dmgTexts.some(t => t && /lckAdjust\(/.test(t))) {
     used.add("lck");
   }
   return used;
@@ -6364,26 +6386,40 @@ function getUsedOwnStatKeys(skill) {
 // but for the player-facing panel instead of a summon's own stat block.
 // Drives the stat-signature-colored highlight on the matching input
 // (`.sk-stat-glow-<key>` classes, toggled in renderHero()).
-//   agi/lck -- Cooldown, when cdWrapped and not fully summon-sourced
+//   agi     -- Cooldown, when cdWrapped and not fully summon-sourced
 //              (ownStats:true skills replace AGI/LCK/ATK/TAL wholesale with
 //              the summoned entity's own stats -- see the early return).
-//   int/lck -- Cast Time, when castWrapped (magAdjust).
+//   int     -- Cast Time, when castWrapped (magAdjust).
 //   cha     -- Duration, when durWrapped or durContested (chaAdjust /
 //              CHA-contested).
-//   tal/atk/def/lck -- Damage/Shield formula and its LCK-driven raw/attacker
-//              roll, EXCEPT when the real attacker is a summon with its own
-//              stat block (ownStatsDmgOnly/ownStatsKaiser/ownStatsPhoenix/
-//              ownStatsGyro all override ATK/TAL and the damage-roll LCK
-//              for their own cards -- Cooldown/Cast Time/Duration/lckProc
-//              still read the player's own inputs for these variants,
-//              unlike full ownStats, so only the damage contribution is
-//              excluded here). `defCoeff` (Whale's Shield Rush/Flying
-//              Shield/Homing Shield) is the DEF-equivalent of `atkCoeff` --
-//              a flat coefficient of the caster's own DEF added to the
-//              damage formula.
+//   tal/atk/def -- Damage/Shield formula, EXCEPT when the real attacker is a
+//              summon with its own stat block (ownStatsDmgOnly/ownStatsKaiser/
+//              ownStatsPhoenix/ownStatsGyro all override ATK/TAL for their own
+//              cards -- Cooldown/Cast Time/Duration/lckProc still read the
+//              player's own inputs for these variants, unlike full ownStats,
+//              so only the damage contribution is excluded here). `defCoeff`
+//              (Whale's Shield Rush/Flying Shield/Homing Shield) is the
+//              DEF-equivalent of `atkCoeff` -- a flat coefficient of the
+//              caster's own DEF added to the damage formula.
+//   lck     -- ONLY a direct read (lckProc's own chance chip). Removed
+//              2026-09-14: LCK previously also glowed alongside agi/int/cha/
+//              tal/atk/def any time their *Adjust wrapper ran at all, because
+//              agiAdjust/magAdjust/chaAdjust/talAdjust/dmgAdjust/defAdjust all
+//              bake an LCK-derived roll into their own variance range
+//              ambiently. That's true of nearly every chip, so LCK glowed
+//              almost constantly and taught users nothing -- per user
+//              feedback, that ambient/indirect roll (and similar indirect
+//              uses, e.g. Cat's not-yet-implemented Gambler-class damage
+//              mechanic) no longer counts as "using LCK" here.
 //   phoenixFireballCd -- the one skill (Phoenix Fireball) whose Cooldown
 //              reads Monkey's own INT instead of AGI/LCK at all
-//              (Phoenix.cs:2562-2573).
+//              (Phoenix.cs:2562-2573) -- but ONLY glows while Rapid Fire
+//              (cdDep) actually has a rank invested (getDepRank > 0); at
+//              rank 0 the render path (see cdBlock below) falls straight
+//              back to a flat, INT-free cd:5, so glowing INT there would be
+//              showing a stat that genuinely isn't in play yet. Changed
+//              2026-09-14, per user feedback (see the `lv` entry below for
+//              the same live-toggle principle applied to Class C deps).
 //   lv      -- CHAR LV, whenever a Class C dep's own display term
 //              literally contains "LV" (dmgDep/shieldDep -- moreMissile,
 //              penguinOfArc, superTNT, extraPotion, frostSpike all add a
@@ -6398,27 +6434,35 @@ function getUsedOwnStatKeys(skill) {
 //              ATK/DEF by floor(0.25*rank*moleLV)) -- both helpers take the
 //              player's own LV as a real parameter, unlike
 //              kingKaiserOwnStats()/phoenixOwnStats(), which don't.
-// Known gap, not fully re-derived here: a skill whose only real damage is a
-// bare dep-derived flat number (no talAdjust, no atkCoeff -- e.g. Stun
-// Mine/Grenade) still rolls a real LCK-driven Final Damage spread via
-// dmgAdjust, but isn't detected as "uses LCK" by this function.
+//              EVERY one of these is gated on the controlling dep actually
+//              being toggled ON (getDepRank(dep) === dep.maxRank -- moreMissile
+//              rank 1, Double Bot rank 1, Hidden Turret rank 1, all real 0/1
+//              toggles) -- changed 2026-09-14, per user feedback (e.g. Mana
+//              Missile's LV term is entirely absent from the formula until
+//              More Missile is actually switched on; glowing LV regardless
+//              of that toggle's state was showing a stat that wasn't really
+//              contributing yet). Mirrors phoenixFireballCd's own INT gate
+//              above -- both read the SAME live `getDepRank` used to render
+//              the dep's own on/off toggle chip, not a structural guess.
 function getUsedPlayerStatKeys(skill) {
   const used = new Set();
+  const depOn = (dep) => !!dep && getDepRank(dep) === dep.maxRank;
   const depTermText = (dep) => dep ? String(typeof dep.term === "function" ? dep.term(1) : (dep.term || "")) : "";
-  const hasLV = [skill.dmgDep, skill.shieldDep].some(d => depTermText(d).includes("LV"))
-    || (skill.dmgReplaceDep && skill.dmgReplaceDep.coeff !== undefined)
-    || !!(skill.ownStats || skill.ownStatsDmgOnly || skill.ownStatsGyro);
+  const hasLV = [skill.dmgDep, skill.shieldDep].some(d => depTermText(d).includes("LV") && depOn(d))
+    || (skill.dmgReplaceDep && skill.dmgReplaceDep.coeff !== undefined && depOn(skill.dmgReplaceDep))
+    || (!!(skill.ownStats || skill.ownStatsDmgOnly) && depOn(MOLE_DOUBLEBOT_DEP))
+    || (!!skill.ownStatsGyro && depOn(MOLE_HIDDENTURRET_DEP));
   if (hasLV) used.add("lv");
   if (skill.ownStats) return used; // otherwise fully summon-sourced, none of the player's other inputs apply
   const isSummonAttacker = !!(skill.ownStatsDmgOnly || skill.ownStatsKaiser || skill.ownStatsPhoenix || skill.id === "monkey_phoenix" || skill.ownStatsGyro);
   if (skill.cd !== undefined) {
-    if (skill.phoenixFireballCd) used.add("int");
-    else if (skill.cdWrapped) { used.add("agi"); used.add("lck"); }
+    if (skill.phoenixFireballCd) { if (skill.cdDep && getDepRank(skill.cdDep) > 0) used.add("int"); }
+    else if (skill.cdWrapped) used.add("agi");
   }
-  if (skill.castTime !== undefined && skill.castWrapped) { used.add("int"); used.add("lck"); }
+  if (skill.castTime !== undefined && skill.castWrapped) used.add("int");
   if (skill.duration !== undefined) {
     if (skill.durContested) used.add("cha");
-    else if (skill.durWrapped) { used.add("cha"); used.add("lck"); }
+    else if (skill.durWrapped) used.add("cha");
   }
   const dmgTexts = (skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg, skill.shield]).filter(Boolean);
   const hasTal = dmgTexts.some(t => /talAdjust\(/.test(t));
@@ -6428,7 +6472,6 @@ function getUsedPlayerStatKeys(skill) {
     if (hasTal) used.add("tal");
     if (hasAtk) used.add("atk");
     if (hasDef) used.add("def");
-    if (hasTal || hasAtk || hasDef) used.add("lck");
   }
   if (skill.lckProc) used.add("lck");
   return used;
@@ -11490,6 +11533,12 @@ function mountSkillCooldownLookup(root){
           }
           return baseRange;
         };
+        // Debug/test hook (2026-09-14, same convention as getDepRankGlobal
+        // above) -- lets scripts/validate_skills.js call the REAL range
+        // computation from outside renderHero()'s own closure instead of
+        // re-deriving its talAdjust/dmgCalcPostFn branching independently
+        // (which would drift out of sync with this function over time).
+        window._calcRangeFor = calcRangeFor;
         const dmgCalcRange = calcRangeFor(getDmgText(selected, rank));
         // Phoenix_fireBall.cs:189,241: Intense Fire adds a second talAdjust(40)
         // from Monkey. Its LCK roll is independent from Phoenix's own roll.

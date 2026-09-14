@@ -1,11 +1,21 @@
 /**
  * Automated Skill Integrity & Mechanics Linter for 12Tails Reference Tools
- * 
+ *
  * Verifies:
  * 1. Formula validity & evaluation across all rank (1..maxRank) and dependency toggle (0..maxRank) permutations.
  * 2. Icon existence in SKILL_ICONS and PNG header validity (89 50 4E 47 0D 0A 1A 0A).
  * 3. Array bounds for per-rank properties (cd, castTime, duration).
  * 4. Effect damage / penetrating damage flag alignment.
+ * 5. LCK-invariant floor: the "รวมการแกว่งค่า LCK" (Total LCK Variance) chip's own
+ *    minimum, computed by the REAL index.html `calcRangeFor` (exposed via a debug
+ *    hook, not re-derived here to avoid drifting out of sync with it), must never
+ *    move when the player's LCK stat changes -- LCK is a swing ABOVE a fixed floor,
+ *    never a reduction of it. Checked by calling the real function once at a
+ *    realistic LCK and once with LCK forced to 0 and diffing the two minimums,
+ *    for every skill/rank whose damage text is an actual computable formula
+ *    (same talAdjust/flat-literal/dmgGroups gate index.html itself uses to decide
+ *    whether to show this chip at all -- opaque prose skills like Soul Eater/Nova
+ *    Flare/Backpack correctly have no chip and are skipped here too).
  */
 
 const fs = require('fs');
@@ -38,6 +48,7 @@ const exposeInjection = `
   window._getKOValue = getKOValue;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
+  window._selectSkill = selectSkill;
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -47,13 +58,60 @@ function makeEl() {
     innerText: "",
     value: "0",
     style: {},
-    classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{} },
+    dataset: {},
+    classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false },
     appendChild: ()=>{},
     addEventListener: ()=>{},
+    removeEventListener: ()=>{},
     querySelector: () => makeEl(),
     querySelectorAll: () => [],
+    closest: () => null,
+    // .parentElement/.parentNode are read (renderHero's stat-signature-glow
+    // pass, `el.parentElement.className = ...`) by code paths this suite
+    // didn't exercise until the LCK-invariance check below started calling
+    // the real selectSkill()/renderHero() -- a plain object is enough, since
+    // nothing ever reads these classNames back in this sandbox.
+    parentElement: { className: "", style: {} },
+    parentNode: { className: "", style: {} },
+    remove: ()=>{}, focus: ()=>{}, blur: ()=>{}, click: ()=>{},
+    setAttribute: ()=>{}, getAttribute: () => null, removeAttribute: ()=>{},
+    hidden: false,
     getBoundingClientRect: () => ({ top: 0, left: 0, bottom: 0, right: 0, width: 100, height: 100 })
   };
+}
+
+// Realistic seed values for the mount's own stat inputs, matching the
+// defaults literally declared on each <input value="..."> in index.html's
+// own template -- needed so calcRangeFor's LCK-driven roll is actually
+// non-zero in this sandbox (a blank makeEl() stub reads back as "0" for
+// every field, which would make the LCK-invariance check below vacuously
+// true no matter what calcRangeFor does, since a 0 LCK roll is always 0
+// regardless of any bug).
+const DATA_ROLE_DEFAULTS = {
+  atk:"128", def:"128", tal:"128", agi:"128", vit:"128", cha:"128", int:"128", lck:"128", lv:"100",
+  enemyAtk:"128", enemyDef:"128", enemyTal:"128", enemyAgi:"128", enemyVit:"128", enemyCha:"128", enemyInt:"128", enemyLck:"128"
+};
+// $(sel, root) in index.html always calls root.querySelector(sel) fresh --
+// a plain makeEl() stub returns a NEW blank object every call, so mutating
+// one query result (e.g. to force LCK to 0) would never be visible to a
+// later query for the same selector. This registry makes querySelector
+// selector-stable (same object back every time), matching how the real
+// mount caches each `const xEl = $(...)` once at mount time and keeps
+// reading that same element's `.value` on every render.
+const elementRegistry = new Map();
+function makeSmartRoot() {
+  const root = makeEl();
+  root.querySelector = (sel) => {
+    if (!elementRegistry.has(sel)) {
+      const m = sel.match(/data-role="([^"]+)"/);
+      const role = m ? m[1] : null;
+      const el = makeEl();
+      el.value = (role && DATA_ROLE_DEFAULTS[role] !== undefined) ? DATA_ROLE_DEFAULTS[role] : "0";
+      elementRegistry.set(sel, el);
+    }
+    return elementRegistry.get(sel);
+  };
+  return root;
 }
 
 const sandbox = {
@@ -67,6 +125,7 @@ const sandbox = {
   Set: Set,
   Map: Map,
   makeEl: makeEl,
+  makeSmartRoot: makeSmartRoot,
   requestAnimationFrame: (cb) => cb(),
   document: {
     documentElement: makeEl(),
@@ -87,7 +146,8 @@ const sandbox = {
 sandbox.window = sandbox;
 
 scriptCode += `
-mountSkillCooldownLookup(makeEl());
+window._root = makeSmartRoot();
+mountSkillCooldownLookup(window._root);
 `;
 
 try {
@@ -109,6 +169,8 @@ console.log(`Auditing ${SKILLS.length} skills and ${Object.keys(SKILL_ICONS).len
 
 let errorCount = 0;
 let checkedFormulas = 0;
+let checkedLckFloors = 0;
+const lckEl = sandbox._root.querySelector('[data-role="lck"]');
 
 // 1. Audit Icons
 const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -264,13 +326,47 @@ SKILLS.forEach(sk => {
           const rawText = sandbox._getDmgText(sk, r);
           const htmlOut = sandbox._renderOneDmgFormula(sk, r, rawText);
           checkedFormulas++;
-          
+
           if (!htmlOut || htmlOut.includes("NaN") || htmlOut.includes("undefined")) {
             console.error(`[FORMULA ERROR] ${ctx} Rank ${r} (dep ${depLv}): formula evaluated to invalid output -> ${htmlOut}`);
             errorCount++;
           }
         } catch (e) {
           console.error(`[FORMULA EXCEPTION] ${ctx} Rank ${r} (dep ${depLv}): ${e.message}`);
+          errorCount++;
+        }
+
+        // LCK-invariant floor check (see file header, item 5). Same gate
+        // index.html itself uses to decide whether the "Total LCK Variance"
+        // chip is shown at all -- opaque prose (Soul Eater's "x39 (max
+        // 1333)", Backpack's "InventoryWeight", ...) isn't a real formula
+        // and correctly gets no chip / no check here.
+        try {
+          const rawText = sandbox._getDmgText(sk, r);
+          const subText = sandbox._substituteDmgVars(rawText, sk, r);
+          const isComputable = /talAdjust\(([^()]+)\)/.test(subText)
+            || /^[\d\s×*+\-().]+$/.test(subText)
+            || !!sk.dmgGroups;
+          if (isComputable) {
+            sandbox._skillRanks[sk.id] = r;
+
+            lckEl.value = DATA_ROLE_DEFAULTS.lck;
+            sandbox._selectSkill(sk);
+            const normalRange = sandbox._calcRangeFor(rawText);
+
+            lckEl.value = "0";
+            sandbox._selectSkill(sk);
+            const zeroLckRange = sandbox._calcRangeFor(rawText);
+            lckEl.value = DATA_ROLE_DEFAULTS.lck; // restore before any later check reads it
+
+            checkedLckFloors++;
+            if (normalRange[0] !== zeroLckRange[0]) {
+              console.error(`[LCK FLOOR ERROR] ${ctx} Rank ${r} (dep ${depLv}): minimum moved with LCK -> LCK=${DATA_ROLE_DEFAULTS.lck} min=${normalRange[0]} vs LCK=0 min=${zeroLckRange[0]}`);
+              errorCount++;
+            }
+          }
+        } catch (e) {
+          console.error(`[LCK FLOOR EXCEPTION] ${ctx} Rank ${r} (dep ${depLv}): ${e.message}`);
           errorCount++;
         }
       }
@@ -300,9 +396,10 @@ SKILLS.forEach(sk => {
 });
 
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
+console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
-  console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
+  console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
 } else {
   console.error(`FAILED: Found ${errorCount} error(s). Please fix before committing.`);
   process.exit(1);

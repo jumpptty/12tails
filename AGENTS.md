@@ -43,7 +43,7 @@ This repository is a reverse-engineering, mechanics-verification, and documentat
 
 When reading `.cs` files in `DecompiledSource/`:
 1. **Junk Predicates:** The obfuscator wraps logic in bogus arithmetic (e.g., `if (68549 - 287643 != -219094)`). Ignore the condition and follow the true branch.
-2. **Companion Skill Files:** Always check for `<Class>_<skillName>.cs` (e.g. `Mole_napalm.cs`, `Bat_illusionFire.cs`, `BarrelBot_missile.cs`). `<Class>.cs` often only dispatches the cast, while the actual damage loop or multi-hit logic lives in the companion `MonoBehaviour`. Read companion files to the very end. For companion entities and summons (`BarrelBot.cs`, `Phoenix.cs`, `AutoGyroGun.cs`), trace summon stat inheritance and refer to [Section 8](#8-summon-mechanics-companion-movesets--summon-stat-cards).
+2. **Companion Skill Files:** Always check for `<Class>_<skillName>.cs` (e.g. `Mole_napalm.cs`, `Bat_illusionFire.cs`, `BarrelBot_missile.cs`). `<Class>.cs` often only dispatches the cast, while the actual damage loop or multi-hit logic lives in the companion `MonoBehaviour`. Read companion files to the very end. For companion entities and summons (`BarrelBot.cs`, `Phoenix.cs`, `AutoGyroGun.cs`), trace summon stat inheritance and refer to [Section 7](#7-summon-mechanics-companion-movesets--summon-stat-cards).
 3. **Mangled Identifiers:** Identifiers like `this.$mSpawnPoint$44454` or `LTRpgsKoBpCYTrSOvr` are compiler noise. Real game functions (`getTypeStat`, `createActor`, `dmgAdjust`, `talAdjust`) are intact.
 4. **Live Server vs Decompiled Code:** If direct user testing or live gameplay contradicts a decompiled value (e.g. a live patch adjusted a duration from `talAdjust` to `chaAdjust`), **the user's live observation takes precedence**. Document the discrepancy with a note.
 
@@ -96,7 +96,7 @@ Every skill authoring, formula update, or tooltip review must strictly follow th
   5. **In-Game Tooltips:** `<Class>Skill_eng.cs` & `<Class>Skill_thai.cs` (reference for authentic flavor context; code findings always override tooltip errors).
   6. **Passive Dependencies:** Scan for all `hasSkill(ID)` / `get<Passive>Lv()` calls; map to proper tool hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
   7. **Summon / Companion Trigger (MANDATORY):** If the skill spawns an entity, deploys a turret, or commands a companion (e.g., `RPC_SpawnBarrelBot`, `RPC_CreatePet`, `RPC_KingKaiser`, `BarrelBot.cs`, `Phoenix.cs`, `Gadina.cs`):
-     * **IMMEDIATELY activate and strictly adhere to [Section 8](#8-summon-mechanics-companion-movesets--summon-stat-cards) and [Section 9](#9-compatible-skills-navigation-compatskills-conventions).**
+     * **IMMEDIATELY activate and strictly adhere to [Section 7](#7-summon-mechanics-companion-movesets--summon-stat-cards) and [Section 8](#8-compatible-skills-navigation-compatskills-conventions).**
      * Separate Main Summon Card (full 9-stat grid) from Child Moveset Cards (selective stat glowing).
      * Strictly separate Player LCK (duration/channel variance) from Summon LCK (damage spread).
      * Suppress duration chips on simulation sub-attacks (`hideDurationChip: true`).
@@ -132,7 +132,7 @@ Present a structured review table to the user. Every single active skill entry m
   1. **Stat Alteration Hook:** Modifies base or derived attributes (`CharacterControl.getTypeStat`, `calTotalStat`, `calHp`, `calMp`, `calAtk`, `calDef`, `calSpeed`).
   2. **Active Skill Dependency Hook:** Modifies cooldown, cast time, MP/SP consumption, hit count, or projectile patterns in `<Class>.cs` or companion scripts.
   3. **Status Application / Proc Hook:** Grants on-hit effects, debuff chances, or modifies status levels in `AttackHit`, `MagicHit`, or `mod`.
-  4. **AI / Companion Hook:** Modifies summon pet stats, attack intervals, or AI behaviors (e.g. `Phoenix.cs`, `Gadina.cs`, `BarrelBot.cs`, `HeavyBuilt`, `SynchroMole`, `HiddenTurret`). **MANDATORY:** Cross-reference [Section 8.1](#8-summon-mechanics-companion-movesets--summon-stat-cards) to ensure affected summon stat tables dynamically recalculate when toggled.
+  4. **AI / Companion Hook:** Modifies summon pet stats, attack intervals, or AI behaviors (e.g. `Phoenix.cs`, `Gadina.cs`, `BarrelBot.cs`, `HeavyBuilt`, `SynchroMole`, `HiddenTurret`). **MANDATORY:** Cross-reference [Section 7.1](#7-summon-mechanics-companion-movesets--summon-stat-cards) to ensure affected summon stat tables dynamically recalculate when toggled.
   5. **Attack Augmentation Hook:** Modifies normal attack combos or charge attack behaviors (`nAttack`, `cAttack`).
 * **Multi-Rank Icon Completeness:** Inspect and extract every rank variant icon (`<passive>1`..`<passive><maxRank>`) from `RippedAssets/`.
 * **Cross-Linking Target Audit:** Identify and list **every active skill** altered by this passive to ensure interactive dependency wiring (`*Dep`).
@@ -164,32 +164,12 @@ Present a structured review table to the user for every passive entry:
 #### Step 4: Apply, Verify & Lint
 * Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
 * Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
-* **Summon & Companion Checklist:** If skills involve summons or companion moves, verify 100% adherence to [Section 8](#8-summon-mechanics-companion-movesets--summon-stat-cards) (selective stat glowing, LCK separation for damage vs duration variance, `hideDurationChip: true` where applicable, automated move cost omission) and [Section 9](#9-compatible-skills-navigation-compatskills-conventions) (`compatSkills` strictly on main skill only, Prompt Gold 14px header, 42px full-height icons).
+* **Summon & Companion Checklist:** If skills involve summons or companion moves, verify 100% adherence to [Section 7](#7-summon-mechanics-companion-movesets--summon-stat-cards) (selective stat glowing, LCK separation for damage vs duration variance, `hideDurationChip: true` where applicable, automated move cost omission) and [Section 8](#8-compatible-skills-navigation-compatskills-conventions) (`compatSkills` strictly on main skill only, Prompt Gold 14px header, 42px full-height icons).
 * **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for skill additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via `node scripts/validate_skills.js` and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when the user explicitly requests a visual check.
 
 ---
 
-## 6. Typography & Markdown Formatting Rule (STRICT NO-LATEX)
-
-> ⛔ **CRITICAL MANDATORY RULE — ZERO LATEX IN CHAT & DELIVERABLES:**
-> 
-> The IDE chat interface and markdown deliverables DO NOT support KaTeX / MathJax / LaTeX math plugins. Any LaTeX syntax renders as raw, ugly, unreadable text like `\frac{64}{\text{EnemyDef} + 64}` or `$$ ... $$`.
-> 
-> **NEVER output any of the following:**
-> - ❌ Math delimiters: `$ ... $`, `$$ ... $$`
-> - ❌ LaTeX commands: `\frac`, `\text`, `\times`, `\le`, `\ge`, `\neq`, `\pm`, `\left`, `\right`, `\lceil`, `\rceil`, `\lfloor`, `\rfloor`, `\dots`
-> - ❌ Subscripts/superscripts via TeX: `\text{TAL}_{\text{eff}}` (use plain text `TAL_eff` or code blocks)
->
-> **ALWAYS use plain English, standard code blocks, or native Unicode symbols:**
-> - Code blocks for formulas: `Final Damage = Base Damage * (64 / (EnemyDef + 64))`
-> - Arrows: `→`, `←`, `↔`
-> - Arithmetic & Comparisons: `×`, `÷`, `±`, `≤`, `≥`, `≠`, `≈`
-> - Ranges & Exponents: `1..maxRank`, `[0..ceil(0.2 * LCK)]`, `x²`, `x³`
-> - Subscripts/Identifiers: `TAL_eff`, `Clamp(...)`, `Floor(...)`, `Ceil(...)`
-
----
-
-## 7. Large File Handling & Crash Prevention Protocol (Mandatory for index.html)
+## 6. Large File Handling & Crash Prevention Protocol (Mandatory for index.html)
 
 `12t_projects/bible/index.html` is **>6.4 MB** because it embeds 670 game icons as raw Base64 data URIs (lines ~3,600 to ~9,600). Ingesting this into an AI chat context triggers token exhaustion, emergency context truncations (`CHECKPOINT 0`), memory loss, and recursive crash loops.
 
@@ -217,7 +197,7 @@ To permanently prevent session crashes and turn interruptions:
 
 ---
 
-## 8. Summon Mechanics, Companion Movesets & Summon Stat Cards
+## 7. Summon Mechanics, Companion Movesets & Summon Stat Cards
 
 When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, etc.):
 
@@ -242,11 +222,11 @@ When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix
    * Automated summon pet attacks / AI moves (`mole_barrelBot_nAttack`, `punch`, `hammer`, `chopper`, `missile`, `drill`, `cannon (Auto)`) must omit `cost` completely. Never show "Free" or SP/MP badges for automated companion moves.
    * Active player command skills where the player casts and spends resources (e.g. `Barrel Bot - Barrel Cannon` non-Auto, costing 50 SP) keep their explicit `cost`.
 5. **Stat Accent Tokens:**
-   * 8 core stats + HP + CHAR LV use dedicated CSS color variables (`--stat-atk`, `--stat-def`, `--stat-agi`, `--stat-vit`, `--stat-int`, `--stat-cha`, `--stat-tal`, `--stat-lck`, `--stat-lv`, `--stat-hp`). **Don't hardcode hex values for these in this doc** — a prior version of this bullet did, and several had silently drifted wrong (TAL/LCK/HP were miscited, and INT was recolored pink on 2026-09-14 without this doc being updated at the time). The tokens exist once, in `index.html`'s `:root` / dark-theme blocks — check there before citing a specific value elsewhere. See [Section 10](#10-player-stat-input-highlighting-stat-signature-accents) for the full mechanism that consumes them.
+   * 8 core stats + HP + CHAR LV use dedicated CSS color variables (`--stat-atk`, `--stat-def`, `--stat-agi`, `--stat-vit`, `--stat-int`, `--stat-cha`, `--stat-tal`, `--stat-lck`, `--stat-lv`, `--stat-hp`). **Don't hardcode hex values for these in this doc** — a prior version of this bullet did, and several had silently drifted wrong (TAL/LCK/HP were miscited, and INT was recolored pink on 2026-09-14 without this doc being updated at the time). The tokens exist once, in `index.html`'s `:root` / dark-theme blocks — check there before citing a specific value elsewhere. See [Section 9](#9-player-stat-input-highlighting-stat-signature-accents) for the full mechanism that consumes them.
 
 ---
 
-## 9. Compatible Skills Navigation (`compatSkills`) Conventions
+## 8. Compatible Skills Navigation (`compatSkills`) Conventions
 
 When linking related skills (e.g. Mass Cast targets, Barrel Bot moves, King Kaiser weapons, Auto Gyro Gun):
 
@@ -272,23 +252,25 @@ When linking related skills (e.g. Mass Cast targets, Barrel Bot moves, King Kais
 
 ---
 
-## 10. Player Stat Input Highlighting (Stat Signature Accents)
+## 9. Player Stat Input Highlighting (Stat Signature Accents)
 
-Added 2026-09-14. Distinct from Section 8's summon-stat-table glowing (which colors cells inside a *summon's own* 9-stat block, e.g. the "Barrel Bot Stats" chip) — this colors the **player's own global stat inputs** (`.sk-controls`: ATK/DEF/TAL/AGI/VIT/CHA/INT/LCK/CHAR LV) whenever the currently selected skill's own displayed chips genuinely read that input.
+Added 2026-09-14. Distinct from Section 7's summon-stat-table glowing (which colors cells inside a *summon's own* 9-stat block, e.g. the "Barrel Bot Stats" chip) — this colors the **player's own global stat inputs** (`.sk-controls`: ATK/DEF/TAL/AGI/VIT/CHA/INT/LCK/CHAR LV) whenever the currently selected skill's own displayed chips genuinely read that input.
 
 1. **`getUsedPlayerStatKeys(skill)`** (`index.html`, next to `getUsedOwnStatKeys`): a structural function — reads `SKILLS` fields directly (`cdWrapped`, `castWrapped`, `durWrapped`/`durContested`, `dmg`/`shield` text, `atkCoeff`, `defCoeff`, `lckProc`, dep objects) rather than threading through `renderHero()`'s runtime branches. Returns a `Set` of stat keys (`atk`/`def`/`tal`/`agi`/`vit`/`cha`/`int`/`lck`/`lv`).
-2. **CSS**: `.sk-stat-glow-<key>` classes (toggled on each input's wrapping `<div>`, once per `renderHero()` call) set one `--sg-color` custom property to that stat's own `--stat-<key>` token; shared `[class^="sk-stat-glow-"]` rules apply it as the input's border color, label color, and a soft **static** `box-shadow` glow. **No animation** — an earlier pulsing-gold-only version was tried and explicitly rejected by the user in favor of this per-stat, non-animated treatment.
+2. **CSS**: `.sk-stat-glow-<key>` classes (toggled on each input's wrapping `<div>`, once per `renderHero()` call) set one `--sg-color` custom property to that stat's own `--stat-<key>` token; shared `[class^="sk-stat-glow-"]` rules apply it as the input's border color, label color, number text color, and a soft **static** `box-shadow` glow. **No animation** — an earlier pulsing-gold-only version was tried and explicitly rejected by the user in favor of this per-stat, non-animated treatment. The number-text color rule (added 2026-09-14) shares the same selector as the border/glow rule rather than needing its own `:focus` override — that selector's specificity (0,3,2) already beats `.sk-controls input[type=number]:focus`'s own `color:#ffffff` (0,3,1), so the accent color persists even while the input is focused, consistent with how the border/glow already behaved.
 3. **`defCoeff`** is the DEF-equivalent of `atkCoeff` (Whale's Shield Rush/Flying Shield/Homing Shield only, so far) — a flat coefficient of the caster's own DEF added to the damage formula. Easy to miss: it was missed on the first pass and had to be added as a follow-up fix.
 4. **CHAR LV (`lv`) detection** — no chip literally labeled "LV" exists, so this isn't a simple field check:
    * A Class C dep's own display `term` literally contains the substring `"LV"` (`dmgDep`/`shieldDep` — Mana Missile's More Missile, Mana Arc's Penguin of Arc, TNT's Super TNT, Mix's Extra Potion, Ice Shield's Frost Spike).
    * `skill.ownStats` or `skill.ownStatsDmgOnly` — both route through `barrelBotOwnStats()`, whose Double Bot bonus (`floor(0.5×moleLV)`) is added to every one of Barrel Bot's own stats.
    * `skill.ownStatsGyro` — routes through `autoGyroGunOwnStats()`, whose Hidden Turret bonus is `floor(0.25×rank×moleLV)`.
    * `kingKaiserOwnStats()`/`phoenixOwnStats()` take **no** LV parameter at all — King Kaiser and Phoenix skills never glow LV, regardless of `ownStatsKaiser`/`ownStatsPhoenix`.
-5. **Own-stat exclusion rules** (which own-stat variant hides which player input, since the real attacker isn't the player for that chip):
-   * `ownStats` (Barrel Bot's 8 moveset children): fully summon-sourced — AGI/LCK/ATK/TAL never glow; only LV glows (via Double Bot).
-   * `ownStatsDmgOnly` (Barrel Cannon): ATK/TAL/damage-LCK excluded (Barrel Bot's own stats), but AGI/LCK still glow for Cooldown (genuinely Mole's own, per its own citation trail) and LV still glows.
-   * `ownStatsKaiser` (King Kaiser moves): ATK/TAL/damage-LCK excluded; no Cooldown chip exists on any King Kaiser move at all, so AGI never applies; no LV (per point 4).
-   * `ownStatsPhoenix` (Phoenix, including the base summon skill): TAL/damage-LCK excluded (Phoenix's own stats); AGI/CHA/INT/LCK still glow for Cooldown/Cast Time/Duration/Rebirth Chance, which stay Monkey's own. No LV.
-   * `phoenixFireballCd` (Phoenix Fireball only): Cooldown glows **INT**, not AGI/LCK — Rapid Fire scales off Monkey's own INT (`Phoenix.cs:2562-2573`), a real, deliberately atypical exception verified against source, not an oversight to "fix" later.
-6. **Known gap, not yet closed**: a skill whose only real damage is a bare dep-derived flat number (no `talAdjust`, no `atkCoeff` — e.g. Stun Mine/Grenade) still rolls a real LCK-driven Final Damage spread via `dmgAdjust`, but isn't detected as "uses LCK" by this function.
+   * **Live-toggle gated, not just structural** — changed 2026-09-14, per user feedback: every one of the above ONLY glows LV while its controlling dep is actually switched on (`getDepRank(dep) === dep.maxRank`, the exact same live value `renderDepBlock` reads to draw the dep's own on/off toggle chip) — Mana Missile's LV term is completely absent from the formula until More Missile is toggled on, so glowing LV regardless of that toggle's state showed a stat that wasn't really contributing. Applies to all 5 `dmgDep`/`shieldDep` cases, `dmgReplaceDep.coeff`, and the `ownStats`/`ownStatsDmgOnly`→`MOLE_DOUBLEBOT_DEP` / `ownStatsGyro`→`MOLE_HIDDENTURRET_DEP` pairs alike.
+5. **LCK glows only on a DIRECT read of the stat** (`lckProc`'s own chance chip, a literal `lckCoeff` formula term, or an inline `lckAdjust()` call in the formula text) — changed 2026-09-14, per user feedback. Previously LCK also glowed alongside AGI/INT/CHA/TAL/ATK/DEF any time their own `*Adjust` wrapper ran at all (`cdWrapped`, `castWrapped`, `durWrapped`, a `talAdjust`/`atkCoeff`/`defCoeff` damage formula), because `agiAdjust`/`magAdjust`/`chaAdjust`/`talAdjust`/`dmgAdjust`/`defAdjust` all bake an LCK-derived roll into their own variance range ambiently. That's true of nearly every chip, so LCK glowed almost constantly and taught users nothing. The same exclusion applies to `getUsedOwnStatKeys` (summon stat tables, [Section 7](#7-summon-mechanics-companion-movesets--summon-stat-cards)) — ambient LCK-roll usage doesn't glow there either, only a direct `lckProc`/`lckCoeff`/`lckAdjust()` read. This also covers indirect-by-nature mechanics not yet in the tool (e.g. Cat's Gambler-class damage calc, cited by the user as the same category of "don't glow").
+6. **Own-stat exclusion rules** (which own-stat variant hides which player input, since the real attacker isn't the player for that chip):
+   * `ownStats` (Barrel Bot's 8 moveset children): fully summon-sourced — AGI/ATK/TAL never glow; only LV glows (via Double Bot).
+   * `ownStatsDmgOnly` (Barrel Cannon): ATK/TAL excluded (Barrel Bot's own stats), but AGI still glows for Cooldown (genuinely Mole's own, per its own citation trail) and LV still glows.
+   * `ownStatsKaiser` (King Kaiser moves): ATK/TAL excluded; no Cooldown chip exists on any King Kaiser move at all, so AGI never applies; no LV (per point 4).
+   * `ownStatsPhoenix` (Phoenix, including the base summon skill): TAL excluded (Phoenix's own stat); AGI/CHA/INT still glow for Cooldown/Cast Time/Duration, which stay Monkey's own (Rebirth Chance's LCK glows only via its direct `lckProc` read, unaffected by this exclusion list). No LV.
+   * `phoenixFireballCd` (Phoenix Fireball only): Cooldown glows **INT**, not AGI — Rapid Fire scales off Monkey's own INT (`Phoenix.cs:2562-2573`), a real, deliberately atypical exception verified against source, not an oversight to "fix" later. **Also live-toggle gated** (2026-09-14): INT only glows while `cdDep` (Rapid Fire) has any rank invested (`getDepRank(skill.cdDep) > 0`, not `=== maxRank` — Rapid Fire is a 0-3 investment, not a binary toggle, and any positive rank already contributes a nonzero factor per `phoenixFireballPassiveFactor`). At rank 0 the render path falls back to a flat, INT-free `cd:5`, so INT correctly stops glowing there too.
+7. **Verified via a scratch VM harness** (2026-09-14, `scripts/validate_skills.js`'s own sandbox pattern — loads `index.html`'s script into a `vm` context with a DOM shim and calls `mountSkillCooldownLookup`) rather than code review alone: toggling `moreMissile`/`rapidFire` between 0 and their max rank and calling `getUsedPlayerStatKeys` directly confirmed `lv`/`int` appear and disappear exactly as designed, with the sibling stats that are NOT dep-gated (`agi`/`tal` on Mana Missile) staying glowed throughout.
 
