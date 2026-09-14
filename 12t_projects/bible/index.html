@@ -31,10 +31,11 @@
     --stat-def:#0284c7;
     --stat-agi:#059669;
     --stat-vit:#ca8a04;
-    --stat-int:#1d4ed8;
+    --stat-int:#be185d;
     --stat-cha:#8a72b8;
     --stat-tal:#0e7490;
     --stat-lck:#ea580c;
+    --stat-lv:#475569;
     --stat-hp:#16a34a;
     /* Effect-damage font (Thunder Dragon pilot, 2026-08-21) -- matches the
        real in-game damage-popup color convention this tool already reserved
@@ -99,10 +100,11 @@
       --stat-def:#38bdf8;
       --stat-agi:#34d399;
       --stat-vit:#facc15;
-      --stat-int:#5b9bf0;
+      --stat-int:#f472b6;
       --stat-cha:#c084fc;
       --stat-tal:#22d3ee;
       --stat-lck:#fb923c;
+      --stat-lv:#94a3b8;
       --stat-hp:#4ade80;
       --stat-effect:#c084fc;
       --status-kw:#c4b5fd;
@@ -148,10 +150,11 @@
     --stat-def:#38bdf8;
     --stat-agi:#34d399;
     --stat-vit:#facc15;
-    --stat-int:#5b9bf0;
+    --stat-int:#f472b6;
     --stat-cha:#c084fc;
     --stat-tal:#22d3ee;
     --stat-lck:#fb923c;
+    --stat-lv:#94a3b8;
     --stat-hp:#4ade80;
     --stat-effect:#c084fc;
     --status-kw:#c4b5fd;
@@ -1396,6 +1399,26 @@
   .sk-controls input[type=number]::-webkit-outer-spin-button,
   .sk-controls input[type=number]::-webkit-inner-spin-button{
     -webkit-appearance:none; margin:0;
+  }
+  /* Stat signature highlight: marks which player stat input actually
+     drives the selected skill's own chips, using that stat's own
+     established --stat-* accent token (see getUsedPlayerStatKeys()) -- a
+     static color cue plus a soft static glow, no animation. Each
+     .sk-stat-glow-<key> rule only sets --sg-color; the shared attribute
+     selectors below apply the actual color/border/glow off that one var. */
+  .sk-controls > div.sk-stat-glow-atk{ --sg-color:var(--stat-atk); }
+  .sk-controls > div.sk-stat-glow-def{ --sg-color:var(--stat-def); }
+  .sk-controls > div.sk-stat-glow-tal{ --sg-color:var(--stat-tal); }
+  .sk-controls > div.sk-stat-glow-agi{ --sg-color:var(--stat-agi); }
+  .sk-controls > div.sk-stat-glow-vit{ --sg-color:var(--stat-vit); }
+  .sk-controls > div.sk-stat-glow-cha{ --sg-color:var(--stat-cha); }
+  .sk-controls > div.sk-stat-glow-int{ --sg-color:var(--stat-int); }
+  .sk-controls > div.sk-stat-glow-lck{ --sg-color:var(--stat-lck); }
+  .sk-controls > div.sk-stat-glow-lv{ --sg-color:var(--stat-lv); }
+  .sk-controls > div[class^="sk-stat-glow-"] label{ color:var(--sg-color); }
+  .sk-controls > div[class^="sk-stat-glow-"] input[type=number]{
+    border-color:var(--sg-color);
+    box-shadow:0 0 6px var(--sg-color), inset 0 1px 4px rgba(0,0,0,0.6);
   }
   /* Own row for the 2 toggle buttons (2026-08-22) -- split out of
      `.sk-controls` itself specifically so that container's fix for the
@@ -6334,6 +6357,83 @@ function getUsedOwnStatKeys(skill) {
   return used;
 }
 
+// Which of the PLAYER's own 8 stat inputs (see .sk-controls) actually drive
+// the currently-selected skill's own displayed chips -- mirrors
+// getUsedOwnStatKeys above (same structural approach: read SKILLS fields
+// directly rather than thread through renderHero()'s own runtime branches),
+// but for the player-facing panel instead of a summon's own stat block.
+// Drives the stat-signature-colored highlight on the matching input
+// (`.sk-stat-glow-<key>` classes, toggled in renderHero()).
+//   agi/lck -- Cooldown, when cdWrapped and not fully summon-sourced
+//              (ownStats:true skills replace AGI/LCK/ATK/TAL wholesale with
+//              the summoned entity's own stats -- see the early return).
+//   int/lck -- Cast Time, when castWrapped (magAdjust).
+//   cha     -- Duration, when durWrapped or durContested (chaAdjust /
+//              CHA-contested).
+//   tal/atk/def/lck -- Damage/Shield formula and its LCK-driven raw/attacker
+//              roll, EXCEPT when the real attacker is a summon with its own
+//              stat block (ownStatsDmgOnly/ownStatsKaiser/ownStatsPhoenix/
+//              ownStatsGyro all override ATK/TAL and the damage-roll LCK
+//              for their own cards -- Cooldown/Cast Time/Duration/lckProc
+//              still read the player's own inputs for these variants,
+//              unlike full ownStats, so only the damage contribution is
+//              excluded here). `defCoeff` (Whale's Shield Rush/Flying
+//              Shield/Homing Shield) is the DEF-equivalent of `atkCoeff` --
+//              a flat coefficient of the caster's own DEF added to the
+//              damage formula.
+//   phoenixFireballCd -- the one skill (Phoenix Fireball) whose Cooldown
+//              reads Monkey's own INT instead of AGI/LCK at all
+//              (Phoenix.cs:2562-2573).
+//   lv      -- CHAR LV, whenever a Class C dep's own display term
+//              literally contains "LV" (dmgDep/shieldDep -- moreMissile,
+//              penguinOfArc, superTNT, extraPotion, frostSpike all add a
+//              flat term of the caster's own level), or dmgReplaceDep.coeff
+//              (no current SKILLS entry sets this field, kept as a
+//              defensive/future-proofing check -- it was Auto Gyro Gun's
+//              original Hidden Turret mechanism before the 2026-08-22
+//              ownStatsGyro refactor superseded it), or ownStats/
+//              ownStatsDmgOnly (barrelBotOwnStats(), Double Bot adds
+//              floor(0.5*moleLV) to every one of Barrel Bot's own stats) /
+//              ownStatsGyro (autoGyroGunOwnStats(), Hidden Turret scales
+//              ATK/DEF by floor(0.25*rank*moleLV)) -- both helpers take the
+//              player's own LV as a real parameter, unlike
+//              kingKaiserOwnStats()/phoenixOwnStats(), which don't.
+// Known gap, not fully re-derived here: a skill whose only real damage is a
+// bare dep-derived flat number (no talAdjust, no atkCoeff -- e.g. Stun
+// Mine/Grenade) still rolls a real LCK-driven Final Damage spread via
+// dmgAdjust, but isn't detected as "uses LCK" by this function.
+function getUsedPlayerStatKeys(skill) {
+  const used = new Set();
+  const depTermText = (dep) => dep ? String(typeof dep.term === "function" ? dep.term(1) : (dep.term || "")) : "";
+  const hasLV = [skill.dmgDep, skill.shieldDep].some(d => depTermText(d).includes("LV"))
+    || (skill.dmgReplaceDep && skill.dmgReplaceDep.coeff !== undefined)
+    || !!(skill.ownStats || skill.ownStatsDmgOnly || skill.ownStatsGyro);
+  if (hasLV) used.add("lv");
+  if (skill.ownStats) return used; // otherwise fully summon-sourced, none of the player's other inputs apply
+  const isSummonAttacker = !!(skill.ownStatsDmgOnly || skill.ownStatsKaiser || skill.ownStatsPhoenix || skill.id === "monkey_phoenix" || skill.ownStatsGyro);
+  if (skill.cd !== undefined) {
+    if (skill.phoenixFireballCd) used.add("int");
+    else if (skill.cdWrapped) { used.add("agi"); used.add("lck"); }
+  }
+  if (skill.castTime !== undefined && skill.castWrapped) { used.add("int"); used.add("lck"); }
+  if (skill.duration !== undefined) {
+    if (skill.durContested) used.add("cha");
+    else if (skill.durWrapped) { used.add("cha"); used.add("lck"); }
+  }
+  const dmgTexts = (skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg, skill.shield]).filter(Boolean);
+  const hasTal = dmgTexts.some(t => /talAdjust\(/.test(t));
+  const hasAtk = skill.atkCoeff !== undefined;
+  const hasDef = skill.defCoeff !== undefined;
+  if (!isSummonAttacker) {
+    if (hasTal) used.add("tal");
+    if (hasAtk) used.add("atk");
+    if (hasDef) used.add("def");
+    if (hasTal || hasAtk || hasDef) used.add("lck");
+  }
+  if (skill.lckProc) used.add("lck");
+  return used;
+}
+
 // Shared by fmt() (mount-scoped, formats a whole range) and lckDistribution
 // (top-level, needs to bucket individual per-roll values by the same
 // 2-decimal-trimmed string a range endpoint would display as). 2 decimals
@@ -10636,9 +10736,9 @@ function mountSkillCooldownLookup(root){
     if (range.length === 1) return fmtOne(range[0]);
     const [a,b] = range;
     const fa = fmtOne(a), fb = fmtOne(b);
-    return fa === fb ? fa : `${fa}–${fb}`;
-  }
-
+    return fa === fb ? fa : `${fa}–${fb}`;
+  }
+
   function fmtCast(range){
     if (range.length === 1){
       return Math.abs(range[0] - 0.1) < 0.001 ? '<span class="sk-instant-txt">ไร้หลอด</span>' : `${fmtOne(range[0])}s`;
@@ -10748,6 +10848,11 @@ function mountSkillCooldownLookup(root){
     renderServerDeps(selected);
     const activeSelected = getActiveSkill(selected, currentServer);
     const rank = getSkillRank(selected);
+    // Stat signature highlight (see .sk-stat-glow-* CSS + getUsedPlayerStatKeys()).
+    const usedPlayerStats = getUsedPlayerStatKeys(selected);
+    [["atk",atkEl],["def",defEl],["tal",talEl],["agi",agiEl],["vit",vitEl],["cha",chaEl],["int",intEl],["lck",lckEl],["lv",lvEl]].forEach(([key, el]) => {
+      el.parentElement.className = usedPlayerStats.has(key) ? `sk-stat-glow-${key}` : "";
+    });
     const INT = parseFloat(intEl.value) || 0;
     const CHA = parseFloat(chaEl.value) || 0;
     const LV = parseFloat(lvEl.value) || 0;
