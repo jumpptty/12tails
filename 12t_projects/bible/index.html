@@ -7996,23 +7996,23 @@ const SKILLS = [
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cost:{mp:24,sp:24,spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, cost:{mp:[10,15,20,25],sp:10,spType:"red"}, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, desc:(rank)=>"สร้างป้อมปืนกล Auto Gyro Gun ที่คอยยิงใส่เป้าหมายในระยะ **" + (8 + 4 * rank) + "m** โดยอัตโนมัติ", compatSkills:["mole_autoGyroGun_nAttack"] },
   { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - ยิงปกติ", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
-  { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true },
-  { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cost:{free:true}, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1" },
-  { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5" },
-  { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[18,20],spType:"blue"}, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv" },
-  { id:"mole_barrelBot_chopper", name:"Barrel Bot - Chopper", class:"Mole", ownStats:true, icon:"mole_chopper3", casterBadge:"mole_barrelBot0", maxRank:3, cost:{sp:[20,24,28],spType:"blue"}, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>4, ko:"1" },
-  { id:"mole_barrelBot_missile", name:"Barrel Bot - Missile", class:"Mole", ownStats:true, icon:"mole_missile4", casterBadge:"mole_barrelBot0", maxRank:4, cost:{mp:[12,16,20,24]}, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgAdjustSkip:true, ko:"3" },
-  { id:"mole_barrelBot_drill", name:"Barrel Bot - Mega Drill", class:"Mole", ownStats:true, icon:"mole_megaDrill5", casterBadge:"mole_barrelBot0", maxRank:1, cost:{sp:36,spType:"blue"}, cd:9, cdWrapped:false, revisedArtExempt:true, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:()=>4, ko:"2" },
-  { id:"mole_barrelBot_cannon", name:"Barrel Bot - Barrel Cannon", class:"Mole", ownStats:true, icon:"mole_barrelCannon5", casterBadge:"mole_barrelBot0", maxRank:1, cost:{sp:50,spType:"blue"}, cd:9, cdWrapped:true, revisedArtExempt:true, dmg:"0", atkCoeff:1.5, ko:"1" },
+  { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true, compatSkills:["mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cost:{free:true}, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1", compatSkills:["mole_barrelBot","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[18,20],spType:"blue"}, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_chopper", name:"Barrel Bot - Chopper", class:"Mole", ownStats:true, icon:"mole_chopper3", casterBadge:"mole_barrelBot0", maxRank:3, cost:{sp:[20,24,28],spType:"blue"}, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>4, ko:"1", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_missile", name:"Barrel Bot - Missile", class:"Mole", ownStats:true, icon:"mole_missile4", casterBadge:"mole_barrelBot0", maxRank:4, cost:{mp:[12,16,20,24]}, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgAdjustSkip:true, ko:"3", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_drill","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_drill", name:"Barrel Bot - Mega Drill", class:"Mole", ownStats:true, icon:"mole_megaDrill5", casterBadge:"mole_barrelBot0", maxRank:1, cost:{sp:36,spType:"blue"}, cd:9, cdWrapped:false, revisedArtExempt:true, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:()=>4, ko:"2", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_cannon"] },
+  { id:"mole_barrelBot_cannon", name:"Barrel Bot - Barrel Cannon", class:"Mole", ownStats:true, icon:"mole_barrelCannon5", casterBadge:"mole_barrelBot0", maxRank:1, cost:{sp:50,spType:"blue"}, cd:9, cdWrapped:true, revisedArtExempt:true, dmg:"0", atkCoeff:1.5, ko:"1", compatSkills:["mole_barrelBot","mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill"] },
   { id:"mole_megaPunch", name:"Mega Punch", class:"Mole", icon:"mole_megaPunch2", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, dmgMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5}, ko:"5", koMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5} },
   { id:"mole_megaHammer", name:"Mega Hammer", class:"Mole", icon:"mole_megaHammer2", maxRank:2, cost:{sp:[18,20],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(12×sLv)", atkCoeff:0.5, dmgMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5}, ko:"10×sLv", koMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5} },
   { id:"mole_chopper", name:"Chopper", class:"Mole", icon:"mole_chopper3", maxRank:3, cost:{sp:[20,24,28],spType:"blue"}, cd:45, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>10, ko:"1" },
   { id:"mole_missile", name:"Missile", class:"Mole", icon:"mole_missile4", maxRank:4, cost:{mp:[12,16,20,24]}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:(rank)=>rank, ko:"3" },
   { id:"mole_synchroMole", name:"Synchro Mole", class:"Mole", icon:"mole_synchroMole2", maxRank:2, cost:{mp:[15,25],sp:[25,35],spType:"red"}, cd:300, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, durNote:"Transfers 50% (Rank 1) / 100% (Rank 2) of Mole's TAL to Barrel Bot and turret ATK/DEF for chaAdjust(30) seconds." },
-  { id:"mole_kingKaiser", name:"King Kaiser", class:"Mole", icon:"mole_kingKaiser3", maxRank:3, cost:{mp:80,sp:80,spType:"red"}, cd:999, cdWrapped:true, revisedArtExempt:false, duration:240, durWrapped:true, durNote:"Transforms Mole into giant King Kaiser mecha with 1,500 HP (+50/100 ATK/DEF with upgrades) and heavy weaponry for 240 seconds.", desc:(rank)=>"สร้างหุ่นยนต์ยักษ์ King Kaiser ขึ้นบังคับ มีพลังชีวิต **1,500 HP** " + (rank === 3 ? "พร้อมปืนใหญ่ Kaiser Missile และลำแสง **Kaiser Beam** (+100 ATK/DEF)" : rank === 2 ? "พร้อมปืนใหญ่ **Kaiser Missile** (+50 ATK/DEF)" : "พร้อมอาวุธหนักครบครัน") },
-  { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1" },
-  { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5" },
-  { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cost:{free:true}, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1" },
+  { id:"mole_kingKaiser", name:"King Kaiser", class:"Mole", icon:"mole_kingKaiser3", maxRank:3, cost:{mp:80,sp:80,spType:"red"}, cd:999, cdWrapped:true, revisedArtExempt:false, duration:240, durWrapped:true, durNote:"Transforms Mole into giant King Kaiser mecha with 1,500 HP (+50/100 ATK/DEF with upgrades) and heavy weaponry for 240 seconds.", desc:(rank)=>"สร้างหุ่นยนต์ยักษ์ King Kaiser ขึ้นบังคับ มีพลังชีวิต **1,500 HP** " + (rank === 3 ? "พร้อมปืนใหญ่ Kaiser Missile และลำแสง **Kaiser Beam** (+100 ATK/DEF)" : rank === 2 ? "พร้อมปืนใหญ่ **Kaiser Missile** (+50 ATK/DEF)" : "พร้อมอาวุธหนักครบครัน"), compatSkills:["mole_kingKaiser_nAttack","mole_kingKaiser_missile","mole_kingKaiser_beam"] },
+  { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1", compatSkills:["mole_kingKaiser","mole_kingKaiser_missile","mole_kingKaiser_beam"] },
+  { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5", compatSkills:["mole_kingKaiser","mole_kingKaiser_nAttack","mole_kingKaiser_beam"] },
+  { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cost:{free:true}, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1", compatSkills:["mole_kingKaiser","mole_kingKaiser_nAttack","mole_kingKaiser_missile"] },
   { id:"mole_advanceRepair", name:"Advance Repair", class:"Mole", icon:"mole_advanceRepair5", maxRank:1, cost:{sp:10,spType:"red"}, cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_napalm", name:"Napalm", class:"Mole", icon:"mole_napalm5", maxRank:1, cost:{sp:40,spType:"red"}, cd:150, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5)", dmgGroups:[{dmg:"talAdjust(30)", hitCount:5, label:"Tick 1 ×5 projectiles"}, {dmg:"talAdjust(5)", hitCount:25, label:"Ticks 2–6 ×5 projectiles"}], hitCount:()=>30, penetrating:true },
   { id:"mole_grenadeCluster", name:"Grenade Cluster", class:"Mole", icon:"mole_grenadeCluster5", maxRank:1, cost:{mp:10,sp:40,spType:"red"}, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", atkCoeff:1, hitCount:()=>8, ko:"10" },
@@ -11680,48 +11680,75 @@ function mountSkillCooldownLookup(root){
       // so the Stats chip moves there -- full width (.sk-stat-bb-row2),
       // not squeezed into 3-of-4 columns the way the top-row placement is,
       // since there's nothing else sharing the row here.
-      if (selected.compatSkills && Array.isArray(selected.compatSkills)){
-        const compatItems = selected.compatSkills.map(id => {
-          const sk = SKILLS.find(s => s.id === id);
-          if (!sk) return "";
-          const iconKey = sk.icon;
-          const iconData = SKILL_ICONS[iconKey] || "";
-          return `
-            <button type="button" class="sk-compat-item" data-skill-id="${sk.id}" title="${sk.name}">
-              <img src="${iconData}" alt="${sk.name}">
-              <span class="sk-compat-name">${sk.name}</span>
-            </button>
-          `;
-        }).join("");
-
-        dmgBlock = `
-          <div class="sk-dmg-row">
-            <div class="sk-stat sk-compat-chip">
-              <p class="sk-stat-label">สกิลที่ MassCast มีผล <span class="sk-compat-count">(${selected.compatSkills.length})</span></p>
-              <div class="sk-compat-grid">
-                ${compatItems}
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        // Note-only chip removed (2026-08-21, user-requested: "remove this
-        // kind of off on every skill card, a blank chip with only note
-        // icon" -- tried immediately after the standalone-KO-chip removal
-        // above, in the same session, as a way to keep a purely-descriptive
-        // skill's dmgNote reachable; the user rejected it outright on sight
-        // rather than asking for it to be scoped down). A skill with
-        // neither a real Damage Formula, a shield, nor bbStats now renders
-        // the plain blank .sk-dmg-row again, same as every buff/heal/summon
-        // always has -- its own dmgNote (Fatal Strike, Mark of Slayer, etc.)
-        // stays in the data as a citation but isn't surfaced by any chip,
-        // matching the convention every OTHER un-chipped dmgNote in this
-        // file already followed before this whole detour. Don't reintroduce
-        // a note-only chip without being asked again.
-        dmgBlock = "";
-      }
+      dmgBlock = "";
     }
 
+    let compatBlock = "";
+    if (selected.compatSkills && Array.isArray(selected.compatSkills) && selected.compatSkills.length > 0){
+      const count = selected.compatSkills.length;
+      let compatTitle = selected.compatTitle;
+      if (!compatTitle) {
+        if (selected.id === "bat_massCast") {
+          compatTitle = "สกิลที่ MassCast มีผล";
+        } else if (selected.id === "mole_barrelBot" || selected.id.startsWith("mole_barrelBot_")) {
+          compatTitle = "สกิลของ Barrel Bot";
+        } else if (selected.id === "mole_kingKaiser" || selected.id.startsWith("mole_kingKaiser_")) {
+          compatTitle = "สกิลของ King Kaiser";
+        } else if (selected.id === "mole_autoGyroGun") {
+          compatTitle = "สกิลของ Auto Gyro Gun";
+        } else if (selected.id === "mole_autoGyroGun_nAttack") {
+          compatTitle = "สกิลเรียก Auto Gyro Gun";
+        } else {
+          compatTitle = "สกิลที่เกี่ยวข้อง";
+        }
+      }
+
+      let badgeText = "RELATED";
+      if (selected.id === "bat_massCast") {
+        badgeText = "MASS CAST";
+      } else if (selected.id === "mole_barrelBot" || selected.id.startsWith("mole_barrelBot_") ||
+                 selected.id === "mole_kingKaiser" || selected.id.startsWith("mole_kingKaiser_")) {
+        badgeText = "MOVES";
+      } else if (selected.id === "mole_autoGyroGun" || selected.id === "mole_autoGyroGun_nAttack") {
+        badgeText = "LINK";
+      }
+
+      const gridClass = count === 1 ? "sk-compat-grid sk-compat-single-grid" : (count <= 4 ? "sk-compat-grid sk-compat-few-grid" : "sk-compat-grid");
+      const itemClass = count === 1 ? "sk-compat-item sk-compat-item-single" : (count <= 4 ? "sk-compat-item sk-compat-item-few" : "sk-compat-item");
+
+      const compatItems = selected.compatSkills.map(id => {
+        const sk = SKILLS.find(s => s.id === id);
+        if (!sk) return "";
+        const iconKey = sk.icon;
+        const iconData = SKILL_ICONS[iconKey] || "";
+        const arrowHtml = count === 1
+          ? `<span class="sk-compat-arrow">คลิกเพื่อดูสกิล →</span>`
+          : (count <= 4 ? `<span class="sk-compat-arrow">→</span>` : "");
+        return `
+          <button type="button" class="${itemClass}" data-skill-id="${sk.id}" title="${sk.name}">
+            <div class="sk-compat-item-left">
+              <img src="${iconData}" alt="${sk.name}">
+              <span class="sk-compat-name">${sk.name}</span>
+            </div>
+            ${arrowHtml}
+          </button>
+        `;
+      }).join("");
+
+      compatBlock = `
+        <div class="sk-stat sk-compat-chip">
+          <div class="sk-compat-head">
+            <div class="sk-compat-title-wrap">
+              <span class="sk-compat-badge">${badgeText}</span>
+              <p class="sk-stat-label">${compatTitle} <span class="sk-compat-count">(${count})</span></p>
+            </div>
+          </div>
+          <div class="${gridClass}">
+            ${compatItems}
+          </div>
+        </div>
+      `;
+    }
 
     displayEl.innerHTML = `
       <div class="sk-hero">
@@ -11750,6 +11777,11 @@ function mountSkillCooldownLookup(root){
         </div>
         ` : ""}
         ${dmgBlock}
+        ${compatBlock ? `
+        <div class="sk-compat-row">
+          ${compatBlock}
+        </div>
+        ` : ""}
       </div>
     `;
 
