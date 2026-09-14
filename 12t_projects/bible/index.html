@@ -6198,6 +6198,37 @@ function kingKaiserOwnStats(kaiserLv, heavyBuiltLv) {
   return { atk: 150 + 50 * kaiserLv, def: 100 + 50 * kaiserLv, agi: 200, vit: 150, mag: 100, cha: 200, tal: 75, lck: 200, mhp };
 }
 
+// Auto Gyro Gun summon stats (2026-08-22): AutoGyroGun is a real,
+// independently-tracked CharacterControl.
+// - Base stats: mhp = 50 * rank, atk = def = agi = vit = mag = cha = tal = lck = 10 * rank.
+// - Hidden Turret (hasSkill 354, mol_hiddenTurret1): atk = def = floor(0.25 * rank * moleLV),
+//   agi = vit = mag = cha = tal = lck = floor(0.125 * rank * moleLV), mhp = ceil(10 * vit).
+// - Synchro Mole (hasSkill 368, mol_synchroMole2): adds floor(moleTAL) to atk and def.
+// - Heavy Built (hasSkill 361/362, mol_heavyBuilt1/2): scales mhp by ceil(mhp * (1 + 0.5 * heavyBuiltLv)).
+function autoGyroGunOwnStats(rank, hiddenTurretOn, synchroMoleOn, heavyBuiltLv, moleLV, moleTAL) {
+  const r = Math.max(1, rank || 1);
+  let atk, def, agi, vit, mag, cha, tal, lck, mhp;
+  if (hiddenTurretOn) {
+    atk = Math.floor(0.25 * r * moleLV);
+    def = Math.floor(0.25 * r * moleLV);
+    const sub = Math.floor(0.125 * r * moleLV);
+    agi = sub; vit = sub; mag = sub; cha = sub; tal = sub; lck = sub;
+    mhp = Math.ceil(10 * vit);
+  } else {
+    const base = 10 * r;
+    atk = base; def = base; agi = base; vit = base; mag = base; cha = base; tal = base; lck = base;
+    mhp = 50 * r;
+  }
+  if (synchroMoleOn) {
+    const bonus = Math.floor(moleTAL);
+    atk += bonus; def += bonus;
+  }
+  if (heavyBuiltLv > 0) {
+    mhp = Math.ceil(mhp * (1 + 0.5 * heavyBuiltLv));
+  }
+  return { atk, def, agi, vit, mag, cha, tal, lck, mhp };
+}
+
 // Which of an ownStats*/ownStatsKaiser skill's own 8 stats + mhp actually
 // feed a real number this tool computes, vs. shown for pure reference
 // (2026-08-21, "full visibility" request -- the Barrel Bot/King Kaiser
@@ -7208,6 +7239,8 @@ const KING_KAISER_LV_DEP = { id: "kaiserLv", label: "King Kaiser Level",
 // linked-toggle precedent as doubleBot/synchroMole/mineLover/megaDrill.
 const MOLE_HEAVYBUILT_DEP = { id: "heavyBuilt", label: "Heavy Built",
   icon: "mole_heavyBuilt2", minRank: 0, maxRank: 2 };
+const MOLE_HIDDENTURRET_DEP = { id: "hiddenTurret", label: "Hidden Turret",
+  icon: "mole_hiddenTurret5", minRank: 0, maxRank: 1 };
 
 // Chameleon rollout (2026-08-21, 3rd class after Penguin/Mole) -- Class C
 // damage-affecting deps. addedFire5 (hasSkill 402): Quick Fire's burst
@@ -7961,7 +7994,8 @@ const SKILLS = [
   { id:"mole_bombardment", name:"Bombardment", class:"Mole", icon:"mole_bombardment2", maxRank:2, cost:{mp:[20,35],sp:[35,50],spType:"blue"}, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10+15×sLv)", hitCount:(rank)=>5*(rank<=1?1:3), ko:"1" },
   { id:"mole_timeNuke", name:"Time Nuke", class:"Mole", icon:"mole_timeNuke2", maxRank:2, cost:{mp:[45,60],sp:[45,60],spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:false, dmg:"talAdjust(100×sLv+50)", hitCount:()=>4, ko:"3", durNote:"Deploys a 60s countdown time bomb detonating in a 10m-18m radius for talAdjust(100×sLv+50) AoE damage (100% center, 50% edge)." },
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cost:{mp:24,sp:24,spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false },
-  { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, cost:{mp:[10,15,20,25],sp:10,spType:"red"}, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, dmg:"10×sLv", dmgDep:{id:"synchroMole2", label:"Synchro Mole (Rank 2)", icon:"mole_synchroMole2", minRank:0, maxRank:1, term:"TAL", termClass:"dmg-tal", calc:(LV,rank,TAL)=>Math.floor(TAL||0)}, dmgReplaceDep:{id:"hiddenTurret", label:"Hidden Turret", icon:"mole_hiddenTurret5", minRank:0, maxRank:1, coeff:0.25, lckCoeff:0.125, calc:(rank,LV)=>Math.floor(0.25*rank*LV)}, ownLck:true, ko:"1", hitCountDuration:2 },
+  { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, cost:{mp:[10,15,20,25],sp:10,spType:"red"}, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, desc:(rank)=>"สร้างป้อมปืนกล Auto Gyro Gun ที่คอยยิงใส่เป้าหมายในระยะ **" + (8 + 4 * rank) + "m** โดยอัตโนมัติ", compatSkills:["mole_autoGyroGun_nAttack"] },
+  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - Normal Attack", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
   { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true },
   { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cost:{free:true}, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1" },
   { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5" },
@@ -9466,6 +9500,11 @@ function mountSkillCooldownLookup(root){
     } else if (skill.ownStatsKaiser){
       const kk = kingKaiserOwnStats(getDepRank(KING_KAISER_LV_DEP));
       TAL = kk.tal; LCK = kk.lck; ATK = kk.atk;
+    } else if (skill.ownStatsGyro){
+      const hiddenTurretOn = getDepRank(MOLE_HIDDENTURRET_DEP) === MOLE_HIDDENTURRET_DEP.maxRank;
+      const synchroMoleOn = getDepRank(MOLE_SYNCHROMOLE_BARRELBOT_DEP) === MOLE_SYNCHROMOLE_BARRELBOT_DEP.maxRank;
+      const agg = autoGyroGunOwnStats(rank, hiddenTurretOn, synchroMoleOn, 0, LV, TAL);
+      TAL = agg.tal; LCK = agg.lck; ATK = agg.atk;
     }
     const selectedEnemy = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
     const gObj = (groupIndex !== undefined && skill.dmgGroups) ? skill.dmgGroups[groupIndex] : null;
@@ -9904,6 +9943,11 @@ function mountSkillCooldownLookup(root){
     } else if (skill.ownStatsKaiser){
       const kk = kingKaiserOwnStats(getDepRank(KING_KAISER_LV_DEP));
       ATK = kk.atk; TAL = kk.tal;
+    } else if (skill.ownStatsGyro){
+      const hiddenTurretOn = getDepRank(MOLE_HIDDENTURRET_DEP) === MOLE_HIDDENTURRET_DEP.maxRank;
+      const synchroMoleOn = getDepRank(MOLE_SYNCHROMOLE_BARRELBOT_DEP) === MOLE_SYNCHROMOLE_BARRELBOT_DEP.maxRank;
+      const agg = autoGyroGunOwnStats(rank, hiddenTurretOn, synchroMoleOn, 0, LV, TAL);
+      ATK = agg.atk; TAL = agg.tal;
     }
     // buildFormulaGrid(items): items is a flat left-to-right list, each
     // either {op:"<text>"} (a plain "+"/"("/")"/"×" glyph, row-1-only) or
@@ -10578,6 +10622,14 @@ function mountSkillCooldownLookup(root){
         AGI = kk.agi; LCK = kk.lck; ATK = kk.atk; TAL = kk.tal;
       }
       bbStatsTable = kk;
+    } else if (selected.ownStatsGyro || selected.id === "mole_autoGyroGun"){
+      const hiddenTurretOn = getDepRank(MOLE_HIDDENTURRET_DEP) === MOLE_HIDDENTURRET_DEP.maxRank;
+      const synchroMoleOn = getDepRank(MOLE_SYNCHROMOLE_BARRELBOT_DEP) === MOLE_SYNCHROMOLE_BARRELBOT_DEP.maxRank;
+      const agg = autoGyroGunOwnStats(rank, hiddenTurretOn, synchroMoleOn, heavyBuiltLv, LV, TAL);
+      if (selected.ownStatsGyro) {
+        ATK = agg.atk; LCK = agg.lck;
+      }
+      bbStatsTable = agg;
     } else if (selected.id === "mole_barrelBot"){
       // Base "Barrel Bot" summon entry (2026-08-21, user-requested): this
       // skill's own Cooldown/Cast Time genuinely use MOLE's own AGI, not
@@ -10653,7 +10705,7 @@ function mountSkillCooldownLookup(root){
             ${cdDist ? renderProbabilityTooltip(cdDist) : ""}
           </div>
           <p class="sk-stat-base">${isCdString ? "base cooldown" : ((activeSelected.cdWrapped ? "base" : "fixed") + " " + rawCd + "s")}</p>
-          ${(selected.revisedArtExempt && !selected.ownStats && !selected.ownStatsKaiser) ? `<p class="sk-stat-exempt">Exempt from revisedArt5</p>` : ""}
+          ${(selected.revisedArtExempt && !selected.ownStats && !selected.ownStatsKaiser && !selected.ownStatsGyro) ? `<p class="sk-stat-exempt">Exempt from revisedArt5</p>` : ""}
 
           ${cdDepBlock}
         </div>
@@ -10831,7 +10883,7 @@ function mountSkillCooldownLookup(root){
       // (full gold) for this variant specifically -- not a change to
       // getUsedOwnStatKeys itself, which stays correct for every OTHER
       // card that reuses this same table.
-      const usedKeys = (selected.id === "mole_barrelBot" || selected.id === "mole_kingKaiser" || selected.bbStatsInRow2)
+      const usedKeys = (selected.id === "mole_barrelBot" || selected.id === "mole_kingKaiser" || selected.id === "mole_autoGyroGun" || selected.bbStatsInRow2)
         ? new Set(["mhp","atk","def","agi","vit","mag","cha","tal","lck"])
         : getUsedOwnStatKeys(selected);
       const bbRow = (key, label, val) => `
@@ -10847,9 +10899,11 @@ function mountSkillCooldownLookup(root){
       const bbCaption = selected.ownStatsDmgOnly
         ? "Barrel Bot's own stats — Cooldown above uses Mole's own AGI/LCK instead"
         : "";
-      const bbTitle = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser") ? "King Kaiser Stats" : "Barrel Bot Stats";
+      const bbTitle = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser") ? "King Kaiser Stats" : (selected.ownStatsGyro || selected.id === "mole_autoGyroGun") ? "Auto Gyro Gun Stats" : "Barrel Bot Stats";
       const bbToggles = (selected.ownStatsKaiser || selected.id === "mole_kingKaiser")
         ? [renderDmgRankToggle(KING_KAISER_LV_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("")
+        : (selected.ownStatsGyro || selected.id === "mole_autoGyroGun")
+        ? [renderDmgToggle(MOLE_HIDDENTURRET_DEP), renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("")
         : [renderDmgToggle(MOLE_DOUBLEBOT_DEP), renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("");
       bbStatsBlock = `
         <div class="sk-stat sk-stat-summon">
@@ -11819,6 +11873,10 @@ function mountSkillCooldownLookup(root){
         skillRanks[selected.id] = nextRank;
         if (selected.id === "mole_kingKaiser") {
           depRanks[KING_KAISER_LV_DEP.id] = nextRank;
+        } else if (selected.id === "mole_autoGyroGun") {
+          skillRanks["mole_autoGyroGun_nAttack"] = nextRank;
+        } else if (selected.id === "mole_autoGyroGun_nAttack") {
+          skillRanks["mole_autoGyroGun"] = nextRank;
         }
         renderHero();
       });
