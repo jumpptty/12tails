@@ -7995,7 +7995,7 @@ const SKILLS = [
   { id:"mole_timeNuke", name:"Time Nuke", class:"Mole", icon:"mole_timeNuke2", maxRank:2, cost:{mp:[45,60],sp:[45,60],spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:false, dmg:"talAdjust(100×sLv+50)", hitCount:()=>4, ko:"3", durNote:"Deploys a 60s countdown time bomb detonating in a 10m-18m radius for talAdjust(100×sLv+50) AoE damage (100% center, 50% edge)." },
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cost:{mp:24,sp:24,spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, cost:{mp:[10,15,20,25],sp:10,spType:"red"}, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, desc:(rank)=>"สร้างป้อมปืนกล Auto Gyro Gun ที่คอยยิงใส่เป้าหมายในระยะ **" + (8 + 4 * rank) + "m** โดยอัตโนมัติ", compatSkills:["mole_autoGyroGun_nAttack"] },
-  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - Normal Attack", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
+  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - ยิงปกติ", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
   { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true },
   { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cost:{free:true}, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1" },
   { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5" },
@@ -10548,6 +10548,7 @@ function mountSkillCooldownLookup(root){
 
     renderServerDeps(selected);
     const activeSelected = getActiveSkill(selected, currentServer);
+    const rank = getSkillRank(selected);
     const INT = parseFloat(intEl.value) || 0;
     const CHA = parseFloat(chaEl.value) || 0;
     const LV = parseFloat(lvEl.value) || 0;
@@ -10653,7 +10654,6 @@ function mountSkillCooldownLookup(root){
     }
 
     const isUpgradedClass = UPGRADED_CLASSES.has(selected.class);
-    const rank = getSkillRank(selected);
     const heroDep = selected.descDep || selected.dep || selected.dmgRankDep || selected.dmgDep || selected.cdDep;
     const heroDepRank = heroDep ? getDepRank(heroDep) : null;
     const descRaw = typeof activeSelected.desc === "function" ? activeSelected.desc(rank, heroDepRank) : activeSelected.desc;
