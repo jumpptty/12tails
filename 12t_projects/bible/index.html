@@ -28,9 +28,14 @@
        (oxblood, reserved for errors) on purpose: a bright/saturated red
        reads as "highlighted term," not "something's wrong." */
     --stat-atk:#b91c1c;
-    --stat-tal:#0e7490;
+    --stat-def:#0284c7;
+    --stat-agi:#059669;
+    --stat-vit:#ca8a04;
     --stat-int:#1d4ed8;
     --stat-cha:#8a72b8;
+    --stat-tal:#0e7490;
+    --stat-lck:#ea580c;
+    --stat-hp:#16a34a;
     /* Effect-damage font (Thunder Dragon pilot, 2026-08-21) -- matches the
        real in-game damage-popup color convention this tool already reserved
        for RPC_AddEffectDamage-pathway skills (see the dmgdigit_p<N> purple
@@ -91,9 +96,14 @@
       --seal:#c2503c;
       --shadow:0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
       --stat-atk:#ef4444;
-      --stat-tal:#22d3ee;
+      --stat-def:#38bdf8;
+      --stat-agi:#34d399;
+      --stat-vit:#facc15;
       --stat-int:#5b9bf0;
       --stat-cha:#c084fc;
+      --stat-tal:#22d3ee;
+      --stat-lck:#fb923c;
+      --stat-hp:#4ade80;
       --stat-effect:#c084fc;
       --status-kw:#c4b5fd;
       --status-kw-bg:rgba(167,139,250,0.14);
@@ -135,9 +145,14 @@
     --seal:#c2503c;
     --shadow:0 1px 2px rgba(0,0,0,.5), 0 20px 44px -22px rgba(0,0,0,.75);
     --stat-atk:#ef4444;
-    --stat-tal:#22d3ee;
+    --stat-def:#38bdf8;
+    --stat-agi:#34d399;
+    --stat-vit:#facc15;
     --stat-int:#5b9bf0;
     --stat-cha:#c084fc;
+    --stat-tal:#22d3ee;
+    --stat-lck:#fb923c;
+    --stat-hp:#4ade80;
     --stat-effect:#c084fc;
     --status-kw:#c4b5fd;
     --status-kw-bg:rgba(167,139,250,0.14);
@@ -2478,17 +2493,86 @@
      -- every variant now renders the same 9-cell shape; which cells are
      load-bearing for the CURRENTLY SELECTED skill is communicated by the
      used/unused color treatment below instead of by hiding columns. */
-  .sk-stat-bb{grid-column:2 / span 3}
-  /* Row-2 placement (2026-08-21, base "Barrel Bot" summon entry): unlike
-     every "Barrel Bot - X" moveset child (whose top .sk-hero-stats row has
-     no Cast Time/Duration/LCK-proc of its own, freeing columns 2-4 for the
-     usual placement above), this skill has real Cooldown+Cast Time+
-     Duration filling every column already -- the Stats chip moves into the
-     otherwise-blank 2nd row (.sk-dmg-row) instead. Full width there
-     (grid-column:1/-1, not 2/span 3) since nothing else shares that row
-     for this skill -- no reason to leave column 1 artificially blank the
-     way the top-row placement does to make room for a real Cooldown chip. */
-  .sk-stat-bb-row2{grid-column:1 / -1}
+  /* Summon Status Row (Dedicated full-width row for summon stats) */
+  .sk-summon-row{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:12px}
+  .sk-summon-row:empty{display:none; margin:0}
+  .sk-summon-row:last-child{margin-bottom:0}
+  .sk-stat-summon{
+    grid-column:1 / -1; min-height:auto; padding:14px 18px;
+    background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--gold);
+    border-radius:4px; position:relative; box-shadow:0 2px 8px rgba(0,0,0,0.25);
+  }
+  .sk-summon-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.06);
+    flex-wrap:wrap; gap:8px;
+  }
+  .sk-summon-title-wrap{display:flex; align-items:center; gap:8px}
+  .sk-summon-badge{
+    font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--gold); background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.35);
+    padding:2px 6px; border-radius:3px; line-height:1.3; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+  }
+  .sk-summon-head .sk-stat-label{
+    margin:0; font-size:11.5px; font-weight:600; color:var(--gold);
+    letter-spacing:.06em; text-transform:uppercase; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+  }
+  .sk-summon-toggles{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  .sk-summon-grid{display:grid; grid-template-columns:repeat(9, 1fr); gap:8px}
+  /* Stat accent tokens mapped to summon stats */
+  .sk-summon-stat-mhp{--stat-accent:var(--stat-hp)}
+  .sk-summon-stat-atk{--stat-accent:var(--stat-atk)}
+  .sk-summon-stat-def{--stat-accent:var(--stat-def)}
+  .sk-summon-stat-agi{--stat-accent:var(--stat-agi)}
+  .sk-summon-stat-vit{--stat-accent:var(--stat-vit)}
+  .sk-summon-stat-mag{--stat-accent:var(--stat-int)}
+  .sk-summon-stat-cha{--stat-accent:var(--stat-cha)}
+  .sk-summon-stat-tal{--stat-accent:var(--stat-tal)}
+  .sk-summon-stat-lck{--stat-accent:var(--stat-lck)}
+  .sk-summon-stat{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:9px 4px; background:rgba(0,0,0,0.32); border:1px solid var(--line);
+    border-radius:4px; min-width:0; transition:all .15s ease;
+  }
+  .sk-summon-stat.sk-summon-stat-used{
+    border-color:rgba(255,255,255,0.12);
+    border-top:2px solid var(--stat-accent);
+    padding-top:8px;
+  }
+  .sk-summon-stat.sk-summon-stat-used .sk-summon-stat-label{
+    color:var(--stat-accent);
+    font-weight:700;
+    opacity:.9;
+  }
+  .sk-summon-stat.sk-summon-stat-used .sk-summon-stat-value{
+    color:var(--stat-accent);
+  }
+  .sk-summon-stat.sk-summon-stat-used:hover{
+    border-color:var(--stat-accent);
+    background:rgba(255,255,255,0.04);
+    transform:translateY(-1px);
+  }
+  .sk-summon-stat-label{
+    font-size:10px; font-weight:600; color:var(--muted); letter-spacing:.05em;
+    text-transform:uppercase; margin:0 0 4px 0; white-space:nowrap;
+    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+  }
+  .sk-summon-stat-value{
+    font-size:18px; font-weight:700; color:var(--gold); line-height:1.2;
+    white-space:nowrap; font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,'Prompt',monospace;
+  }
+  .sk-summon-stat.sk-summon-stat-unused{opacity:.45}
+  .sk-summon-stat.sk-summon-stat-unused .sk-summon-stat-value{color:var(--muted); font-weight:500}
+  .sk-summon-caption{
+    margin:10px 0 0 0; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.06);
+    font-size:11px; color:var(--muted); line-height:1.4;
+    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (max-width:768px){
+    .sk-summon-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
+    .sk-stat-summon{padding:12px 14px}
+  }
   .sk-compat-chip{grid-column:1 / -1; min-height:94px}
   .sk-compat-count{color:var(--gold); font-weight:700; margin-left:4px}
   .sk-compat-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px 8px; margin-top:6px}
@@ -2506,21 +2590,7 @@
   .sk-compat-name{font-size:11.5px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .sk-compat-item:hover .sk-compat-name{color:var(--gold)}
 
-  .sk-bb-table{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px 8px; margin-top:2px}
-  .sk-bb-stat{display:flex; flex-direction:column; min-width:0}
-  .sk-bb-stat-label{font-size:9px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); white-space:nowrap; margin:0}
-  .sk-bb-stat-value{font-size:15px; font-weight:700; color:var(--gold); line-height:1.3; white-space:nowrap}
-  /* Unused stat (2026-08-21): dimmed, not hidden -- the whole point of this
-     table's "full visibility" redesign is showing every real stat value
-     even when nothing in this tool's calculations reads it, so the value
-     stays visible and legible, just visually deprioritized vs. the stats
-     actually driving a number elsewhere on this same card. */
-  .sk-bb-stat-unused .sk-bb-stat-value{color:var(--muted); font-weight:600; opacity:.7}
-  /* Heavy Built toggle (2026-08-21) -- same top-right corner position as
-     every other chip-level dep in this tool (.sk-dep), placed directly on
-     the Stats chip itself since it only ever moves the HP cell inside this
-     same table, never anything on a different chip. */
-  .sk-bb-heavybuilt{position:absolute; right:14px; top:12px}
+
   /* Rank-cycling hero icon (Penguin pilot, 2026-08-14) -- plain button reset,
      the .sk-hero-icon child keeps its existing size/radius unchanged. Only
      applied when selected.maxRank>1 (see renderHero) -- single-rank skills
@@ -3102,15 +3172,18 @@
   .dmg-tal{color:var(--stat-tal); font-weight:700}
   .dmg-atk{color:var(--stat-atk); font-weight:700}
   .dmg-int{color:var(--stat-int); font-weight:700}
-  .dmg-def{color:#38bdf8; font-weight:700}
+  .dmg-def{color:var(--stat-def); font-weight:700}
+  .dmg-agi{color:var(--stat-agi); font-weight:700}
+  .dmg-vit{color:var(--stat-vit); font-weight:700}
   .dmg-cha{color:var(--stat-cha); font-weight:700}
+  .dmg-lck{color:var(--stat-lck); font-weight:700}
   /* Effect-damage base number (Thunder Dragon pilot, 2026-08-21) -- takes
      .dmg-num's normal slot in a flat-shape formula's item list, whenever
      `skill.effectDamage` is set. Purple, matching the real in-game
      RPC_AddEffectDamage damage-popup color (see the dmgdigit_p<N> textures
      used by the Simulate popup for the same flagged skills). */
   .dmg-effect{color:var(--stat-effect); font-weight:700}
-  .dmg-heal{color:#4ade80; font-weight:700}
+  .dmg-heal{color:var(--stat-hp); font-weight:700}
   .dmg-text{color:var(--text); font-family:'Prompt',-apple-system,"Segoe UI",sans-serif}
   .dmg-prose{font-family:'Prompt',-apple-system,"Segoe UI",sans-serif; font-weight:600}
   /* Substituted-number Damage Formula (2026-08-19, user-redesigned): the big
@@ -3354,7 +3427,7 @@
     .sk-stat-cast{grid-column:2}
     .sk-stat-dur{grid-column:1}
     .sk-stat-lck{grid-column:2}
-    .sk-stat-bb{grid-column:1 / -1}
+    .sk-stat-summon{grid-column:1 / -1}
     .sk-dmg-row{grid-template-columns:repeat(2, 1fr); min-height:auto}
     .sk-dmg-formula{grid-column:1 / -1}
     .sk-dmg-calc{grid-column:1}
@@ -7884,7 +7957,7 @@ const SKILLS = [
   { id:"mole_timeNuke", name:"Time Nuke", class:"Mole", icon:"mole_timeNuke2", maxRank:2, cost:{mp:[45,60],sp:[45,60],spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:false, dmg:"talAdjust(100×sLv+50)", hitCount:()=>4, ko:"3", durNote:"Deploys a 60s countdown time bomb detonating in a 10m-18m radius for talAdjust(100×sLv+50) AoE damage (100% center, 50% edge)." },
   { id:"mole_detonate", name:"Detonate", class:"Mole", icon:"mole_detonate1", maxRank:1, cost:{mp:24,sp:24,spType:"red"}, cd:360, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_autoGyroGun", name:"Auto Gyro Gun", class:"Mole", icon:"mole_autoGyroGun4", maxRank:4, cost:{mp:[10,15,20,25],sp:10,spType:"red"}, castTime:[2,3,4,5], castWrapped:true, cd:30, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true, dmg:"10×sLv", dmgDep:{id:"synchroMole2", label:"Synchro Mole (Rank 2)", icon:"mole_synchroMole2", minRank:0, maxRank:1, term:"TAL", termClass:"dmg-tal", calc:(LV,rank,TAL)=>Math.floor(TAL||0)}, dmgReplaceDep:{id:"hiddenTurret", label:"Hidden Turret", icon:"mole_hiddenTurret5", minRank:0, maxRank:1, coeff:0.25, lckCoeff:0.125, calc:(rank,LV)=>Math.floor(0.25*rank*LV)}, ownLck:true, ko:"1", hitCountDuration:2 },
-  { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true, bbStatsInRow2:true },
+  { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true },
   { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cost:{free:true}, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1" },
   { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5" },
   { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cost:{sp:[18,20],spType:"blue"}, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv" },
@@ -10491,7 +10564,7 @@ function mountSkillCooldownLookup(root){
       const kk = kingKaiserOwnStats(kaiserLv, heavyBuiltLv);
       AGI = kk.agi; LCK = kk.lck; ATK = kk.atk; TAL = kk.tal;
       bbStatsTable = kk;
-    } else if (selected.bbStatsInRow2){
+    } else if (selected.id === "mole_barrelBot"){
       // Base "Barrel Bot" summon entry (2026-08-21, user-requested): this
       // skill's own Cooldown/Cast Time genuinely use MOLE's own AGI, not
       // Barrel Bot's -- verified directly, the arming call
@@ -10744,62 +10817,39 @@ function mountSkillCooldownLookup(root){
       // (full gold) for this variant specifically -- not a change to
       // getUsedOwnStatKeys itself, which stays correct for every OTHER
       // card that reuses this same table.
-      const usedKeys = selected.bbStatsInRow2
+      const usedKeys = (selected.id === "mole_barrelBot" || selected.bbStatsInRow2)
         ? new Set(["mhp","atk","def","agi","vit","mag","cha","tal","lck"])
         : getUsedOwnStatKeys(selected);
       const bbRow = (key, label, val) => `
-        <div class="sk-bb-stat${usedKeys.has(key) ? "" : " sk-bb-stat-unused"}" title="${usedKeys.has(key) ? "Used by this skill's calculation" : "Not used by any calculation on this skill"}">
-          <p class="sk-bb-stat-label">${label}</p>
-          <div class="sk-bb-stat-value num">${fmtOne(val)}</div>
+        <div class="sk-summon-stat sk-summon-stat-${key}${usedKeys.has(key) ? " sk-summon-stat-used" : " sk-summon-stat-unused"}" title="${usedKeys.has(key) ? "Used by this skill's calculation" : "Not used by any calculation on this skill"}">
+          <span class="sk-summon-stat-label">${label}</span>
+          <span class="sk-summon-stat-value num">${fmtOne(val)}</span>
         </div>
       `;
-      // Order matches the engine's own declared field order
-      // (hp, atk, def, agi, vit, mag, cha, tal, lck) read left-to-right,
-      // top-to-bottom across the 3x3 grid -- not an arbitrary layout.
       const bbRows =
         bbRow("mhp", "HP", bbStatsTable.mhp) + bbRow("atk", "ATK", bbStatsTable.atk) + bbRow("def", "DEF", bbStatsTable.def) +
         bbRow("agi", "AGI", bbStatsTable.agi) + bbRow("vit", "VIT", bbStatsTable.vit) + bbRow("mag", "INT", bbStatsTable.mag) +
         bbRow("cha", "CHA", bbStatsTable.cha) + bbRow("tal", "TAL", bbStatsTable.tal) + bbRow("lck", "LCK", bbStatsTable.lck);
-      // ownStatsDmgOnly (Barrel Cannon) caption kept -- it explains a real,
-      // non-obvious mechanic split (this skill's Cooldown reads Mole's own
-      // AGI/LCK, not Barrel Bot's, even though every OTHER number on this
-      // card is Barrel Bot's own) that the used/unused dimming alone
-      // doesn't fully spell out (AGI dims here for a DIFFERENT reason than
-      // it dims on, say, Mega Drill -- flat cooldown vs. wrong-entity
-      // cooldown -- worth keeping the explicit sentence for this one case).
       const bbCaption = selected.ownStatsDmgOnly
         ? "Barrel Bot's own stats — Cooldown above uses Mole's own AGI/LCK instead"
         : "";
       const bbTitle = selected.ownStatsKaiser ? "King Kaiser Stats" : "Barrel Bot Stats";
-      // Heavy Built toggle (2026-08-21) -- lives on the Stats chip itself,
-      // not the Damage Formula header like doubleBot/synchroMole, since it
-      // only ever moves mhp (a field this tool's calculations never read --
-      // see getUsedOwnStatKeys), never anything damage-related. Same
-      // top-right corner position as every other chip-level dep in this
-      // tool (.sk-dep).
-      // Double Bot / Synchro Mole (2026-08-21 follow-up, base Barrel Bot
-      // card only): this card has no Damage Formula chip at all (its 8
-      // moveset children keep those 2 toggles in THAT chip's own header,
-      // unchanged) -- without its own copy of them here, there'd be no way
-      // to actually flip Double Bot/Synchro Mole from this card, even
-      // though the Stats table already reflects whatever their last-set
-      // state happens to be. Same shared dep id as everywhere else in this
-      // file, so clicking either instance updates both. Grouped with Heavy
-      // Built in one flex row (reuses .sk-dmg-toggles, the same header-
-      // toggle-row class the Damage Formula chip uses) rather than 3
-      // separate corner elements.
-      const bbToggles = selected.bbStatsInRow2
-        ? [renderDmgToggle(MOLE_DOUBLEBOT_DEP), renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("")
-        : renderDmgRankToggle(MOLE_HEAVYBUILT_DEP);
-      const bbHeavyBuilt = `<div class="sk-bb-heavybuilt sk-dmg-toggles">${bbToggles}</div>`;
+      const bbToggles = selected.ownStatsKaiser
+        ? renderDmgRankToggle(KING_KAISER_LV_DEP)
+        : [renderDmgToggle(MOLE_DOUBLEBOT_DEP), renderDmgToggle(MOLE_SYNCHROMOLE_BARRELBOT_DEP), renderDmgRankToggle(MOLE_HEAVYBUILT_DEP)].join("");
       bbStatsBlock = `
-        <div class="sk-stat sk-stat-bb">
-          <p class="sk-stat-label">${bbTitle}</p>
-          ${bbHeavyBuilt}
-          <div class="sk-bb-table">
+        <div class="sk-stat sk-stat-summon">
+          <div class="sk-summon-head">
+            <div class="sk-summon-title-wrap">
+              <span class="sk-summon-badge">SUMMON</span>
+              <p class="sk-stat-label">${bbTitle}</p>
+            </div>
+            <div class="sk-summon-toggles sk-dmg-toggles">${bbToggles}</div>
+          </div>
+          <div class="sk-summon-grid">
             ${bbRows}
           </div>
-          ${bbCaption ? `<p class="sk-stat-base">${bbCaption}</p>` : ""}
+          ${bbCaption ? `<p class="sk-stat-base sk-summon-caption">${bbCaption}</p>` : ""}
         </div>
       `;
     }
@@ -11562,9 +11612,7 @@ function mountSkillCooldownLookup(root){
       // so the Stats chip moves there -- full width (.sk-stat-bb-row2),
       // not squeezed into 3-of-4 columns the way the top-row placement is,
       // since there's nothing else sharing the row here.
-      if (selected.bbStatsInRow2 && bbStatsBlock){
-        dmgBlock = `<div class="sk-dmg-row">${bbStatsBlock.replace('class="sk-stat sk-stat-bb"', 'class="sk-stat sk-stat-bb sk-stat-bb-row2"')}</div>`;
-      } else if (selected.compatSkills && Array.isArray(selected.compatSkills)){
+      if (selected.compatSkills && Array.isArray(selected.compatSkills)){
         const compatItems = selected.compatSkills.map(id => {
           const sk = SKILLS.find(s => s.id === id);
           if (!sk) return "";
@@ -11620,13 +11668,17 @@ function mountSkillCooldownLookup(root){
           </div>
           ${heroDescHtml}
         </div>
-        ${(cdBlock || castBlock || durationBlock || lckProcBlock || (bbStatsBlock && !selected.bbStatsInRow2)) ? `
+        ${bbStatsBlock ? `
+        <div class="sk-summon-row">
+          ${bbStatsBlock}
+        </div>
+        ` : ""}
+        ${(cdBlock || castBlock || durationBlock || lckProcBlock) ? `
         <div class="sk-hero-stats">
           ${cdBlock}
           ${castBlock}
           ${durationBlock}
           ${lckProcBlock}
-          ${selected.bbStatsInRow2 ? "" : bbStatsBlock}
         </div>
         ` : ""}
         ${dmgBlock}
@@ -11638,7 +11690,7 @@ function mountSkillCooldownLookup(root){
     // Duration boxes sharing the row — shrink each value down from its
     // current (breakpoint-appropriate) size until it fits on one line,
     // rather than letting it wrap to a second line.
-    $$(".sk-stat-value, .sk-dmg-value", displayEl).forEach(el => {
+    $$(".sk-stat-value, .sk-dmg-value, .sk-summon-stat-value", displayEl).forEach(el => {
       let size = parseFloat(getComputedStyle(el).fontSize);
       const minFloor = el.querySelector(".dmg-prose") ? 11 : 16;
       while (el.scrollWidth > el.clientWidth && size > minFloor){
