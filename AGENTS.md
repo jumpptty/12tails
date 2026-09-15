@@ -148,7 +148,7 @@ Present a structured review table to the user for every passive entry:
 5. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line` & `_thai.cs:line`):** Exact raw strings.
 6. **Proposed Card Definition (`index.html` Schema):**
    * **Mandatory Fields:** `id`, `name`, `nameTha`, `class`, `icon` (maxRank icon), `maxRank`, `passive: true`, `desc`.
-   * **Strict Exclusion Rule:** Passive cards **MUST NEVER** include `cd`, `castTime`, `cost`, `duration`, or `ko`. (The UI omits `.sk-hero-stats` when empty, collapsing the top row vertically).
+   * **Exclusion Rule (revised 2026-09-15 — was previously "MUST NEVER"):** Passive cards *may* carry `cd`, `castTime`, `cost`, `duration`, or `ko` when the passive genuinely has one (e.g. an internal proc cooldown, a real MP/SP tax) — but this is rare; the default expectation for a stat-modifier/dependency passive is still none of these. Don't add one speculatively. (The UI omits `.sk-hero-stats` when empty, collapsing the top row vertically, exactly as before.)
    * **Dynamic Highlights:** Wrap dynamic numerical/stat ranks in `**${value}**` inside `desc`.
 
 > ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
@@ -160,6 +160,10 @@ Present a structured review table to the user for every passive entry:
 #### Step 3: Strict Single-Class User Gate
 * Process strictly **one class at a time**.
 * **Hard STOP:** Wait for explicit user review and approval before writing changes to `index.html` or advancing to the next class.
+
+#### Step 3.5: Close the SkillDep Loop
+* When a skill's own review/apply introduces a real `dep`/`dmgDep`/`cdDep`/`hitCountDep`/etc. pointing at ANOTHER skill that has no `SKILLS` card of its own yet (only a standalone dep object built ahead of time, e.g. `GADINA_TITANSWORD_DEP` before Titan Sword existed, or `MNK_GROUNDLOCK_AEGIS_DEP`/`MNK_GROUNDLOCK_SECONDSTONE_DEP` before Aegis of Earth/Second Stone existed), **proactively name those related skills and urge doing them next** — even if they're passives, and even if the original research plan deferred them to a later batch. A dep object with no card behind it is only half the loop.
+* This takes priority over whatever the next item in the pre-planned batch/queue order happens to be — ask the user explicitly rather than silently defaulting back to the original queue.
 
 #### Step 4: Apply, Verify & Lint
 * Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
@@ -230,9 +234,9 @@ When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix
 
 When linking related skills (e.g. Mass Cast targets, Barrel Bot moves, King Kaiser weapons, Auto Gyro Gun):
 
-1. **Main Skill Only Policy:**
-   * `compatSkills` must ONLY be defined on the **main skill** (e.g. `bat_massCast`, `mole_barrelBot`, `mole_kingKaiser`, `mole_autoGyroGun`).
-   * Child moves and subordinate skills MUST NOT define `compatSkills`. This prevents navigation loops, clutter, and information overload.
+1. **Main Skill Only Policy (summon/mass-cast hubs) vs. Mutual Cross-Links (skill + its own passive dependencies):**
+   * For a **summon or mass-cast hub** (e.g. `bat_massCast`, `mole_barrelBot`, `mole_kingKaiser`, `mole_autoGyroGun`): `compatSkills` must ONLY be defined on the **main skill**. Child moves and subordinate skills MUST NOT define `compatSkills`. This prevents navigation loops, clutter, and information overload for a hub with many children.
+   * For an **active skill and the small number of passives it directly, mechanically depends on** (e.g. Ground Lock ↔ Aegis of Earth ↔ Second Stone, revised 2026-09-15 per direct user request): `compatSkills` MAY be mutual — every skill in the small dependency cluster lists every other one. This is a deliberate exception to the hub rule above, scoped to genuine skillDep clusters (typically 2-3 skills), not a blanket permission to cross-link broadly. Don't extend this pattern to a hub-shaped relationship (many children, one parent) — that still follows the main-skill-only rule.
 2. **Header & Typography:**
    * Header text is strictly `<p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>`.
    * Styled with Google Fonts **Prompt**, Brass Gold (`color: var(--gold); font-size: 14px; font-weight: 600; letter-spacing: .04em; margin: 0 0 10px 2px;`).

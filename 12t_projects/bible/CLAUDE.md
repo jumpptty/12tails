@@ -4851,3 +4851,134 @@ this file's other no-browser passes; do a real click-through (does the static gl
 "a bit of glow, no animation" at real screen size, does the new pink INT accent contrast legibly against
 both themes) before treating this as fully done. Committed (`abb829e`) and pushed to
 `skill-cooldown-lookup` -- not yet merged/deployed anywhere beyond that branch.
+
+### 2026-09-15: Monkey batch-2 kickoff -- Runic Flame/Fire Rune shipped, Ja's 8 stats resolved, a real "cooldown-lookup stub" collision caught before it shipped
+
+Multi-session Monkey research pass (via `mechanics-researcher` subagent dispatch, one per skill),
+covering Runic Flame, Fire Rune, World Ignition, Ground Lock, Gadina, Titan Sword, Aegis of Earth,
+Planet Breaker, Titanic Earth Pulse, and Stone Hammer. Only the first pair (Runic Flame + Fire Rune)
+went through full user review and got applied to `index.html` this session -- the rest are staged,
+unreviewed, in `12t_reference/monkey-batch2-research-DRAFT.md` (moved there from a session-scoped
+temp scratchpad specifically so it survives a `/clear`; not this file's job to duplicate that
+content, see that doc directly for every citation).
+
+**Real bug nearly shipped, caught before any edit: `index.html`'s `SKILLS` array has TWO different
+authoring styles for the same array, not two separate tables.** While building Runic Flame's card
+from scratch (modeled on `monkey_flashFire`'s rich-card shape: `dmg`/`cost`/`desc` etc., spaced
+`id: "..."`), a grep for the exact string `monkey_runicFlame1` (the icon key) turned up a SECOND hit
+in an unexpected place: `{ id:"monkey_runicFlame", name:"Runic Flame", class:"Monkey",
+icon:"monkey_runicFlame1", cd:180, cdWrapped:true, revisedArtExempt:false, duration:5,
+durWrapped:true }` -- no spaces after colons, right after `monkey_ja_detonate`'s entry, alongside a
+whole run of similarly terse stubs for `worldIgnition`/`groundLock`/`gadina`/`planetBreaker`/
+`titanicEarthPulse`/`stoneHammer`/etc. **These are NOT a separate "cooldown lookup" data structure
+sitting elsewhere in the file** -- they're leftover lightweight placeholder entries in the SAME
+`SKILLS` array, pre-populated (presumably by whatever earlier pass built out the branch's own
+`skill-cooldown-lookup` feature) with just enough fields (`cd`/`castTime`/`duration`/`icon`) to give
+every remaining Monkey skill a cooldown/duration chip before its full interactive card exists.
+Building a brand-new rich card for a skill that already has one of these stubs and pushing it in as
+a SEPARATE array entry would have created two objects sharing one `id` -- undefined behavior for
+whichever lookup/render path resolves by id first. Fixed by writing the patch script to REPLACE the
+stub (exact string match on its whole line, `mustReplaceOnce`-guarded so the script throws instead
+of silently duplicating if the stub's text ever drifts) rather than append a new object.
+**Practical rule for next time**: before writing ANY new Monkey `SKILLS` entry (and likely other
+classes -- this stub pass may not be Monkey-only, not checked), grep for `id:"<class>_<skillId>"`
+(no space) FIRST, not just `id: "<class>_<skillId>"` (spaced) -- a hit on the terse form means a
+stub already exists and must be upgraded in place, not duplicated. The stub's own `cd`/`castTime`/
+`duration` values are a genuine head start (Ground Lock's stub `castTime:4, cd:30` already matched
+this session's from-scratch source research exactly at rank 4) but Gadina's stub (`castTime:11,
+cd:45`) contradicted fresh research (Gadina is confirmed instant-cast with NO cooldown at all, no
+`addTimeOut("gadina",...)` anywhere in source) -- treat a stub's numbers as a lead to verify, not a
+citation to trust outright.
+
+**Runic Flame** (`mnk_runicFlame1`, maxRank 1) upgraded from that stub into a full card: `cost:{mp:30}`,
+`cd:180, cdWrapped:true`, `dmg:"talAdjust(24)"`, `ko:"0"`, `duration:5, durWrapped:true` (kept from
+the stub -- verified as the real `chaAdjust(5)` trail-segment lifetime, a genuinely different
+quantity from the buff's own `floor(playerSP×0.2)`-second duration, which isn't stat-scaled at all
+and so isn't a fit for a `duration` chip -- left to the desc text only), `status:{name:"runicFlame",
+sLv:()=>1, class:"Buff, Magical"}`. **Fire Rune** (`mnk_fireRune1-3`) added as a brand-new passive
+entry (no stub existed for it, since a pure passive has nothing for the cooldown-lookup feature to
+show) with a new `lckProc:{label:"SP/MP Restore Chance", chance:12}` chip -- `chance:12` deliberately
+matches `applies` being OMITTED: every existing `lckProc` example (`rebirth`/`paralysis`/`frost`)
+uses `applies` to name a real STATUS the proc inflicts, and Fire Rune's proc restores SP/MP directly
+via `RPC_AddHeal`, applying no status at all -- tagging it with a fake status name would have been
+worse than leaving the field out. 3 new icons extracted (`fireRune1/2/3.png`, `runicFlame1` already
+existed from the stub-era pre-population).
+
+**Fire Rune's desc went through 2 corrections post-apply, both real, both user-caught:**
+1. **Language.** Applied first with an English desc, mirroring how the research phase communicates
+   findings -- user corrected immediately: "never forget this tool is Thai-based." Saved as a
+   standing feedback memory (outside this repo, in Claude's own cross-session memory) so future
+   research batches draft `desc` in Thai from the start rather than translating after the fact.
+   While fixing this, also verified Runic Flame's own "every X seconds" framing against source
+   (`Monkey_runicFlame.cs`'s `OnTriggerEnter`) and found it doesn't tick on a timer at all -- pure
+   contact damage, no per-target cooldown/de-dupe in the collision handler, so a target walking in
+   and out of the same flame segment repeatedly takes a fresh hit every single re-entry with no rate
+   limit. Rephrased to "แผดเผาศัตรูทุกครั้งที่สัมผัสกำแพงไฟ" (damages on every contact) instead of a
+   fixed-interval claim.
+2. **Actual proc scope.** The applied desc (mirroring the in-game tooltip's own "he or his fire
+   summon" framing) named exactly 3 trigger sources. User asked to confirm this was really
+   exhaustive; re-mapping all 16 `FireRune()` call sites in `Monkey.cs` to their enclosing generated
+   coroutine class found real, previously-unlisted procs from the charge attack (`RPC_cAttack1`) and
+   Blazing Arrow (`RPC_blazingArrow`, confirmed by direct read), very likely Flash Fire too, plus a
+   cluster of call sites tied to Monkey's rank-5 transformation ultimates (Mike Blink/Fire Keep/Earth
+   Form/Phoenix Armor/Gadina Armor) that a simple line-range-to-class mapping can't cleanly attribute
+   -- those coroutines are shared/reused across multiple `myCommand` states, so this needs its own
+   dedicated research pass into that ultimate-passive tier before it can be modeled precisely. Desc
+   widened to "ทุกครั้งที่การโจมตีของลิงหรือสกิลต่างๆ ของลิงสร้างความเสียหายโดนเป้าหมาย" (whenever damage
+   from Monkey's attacks or various skills lands) rather than continuing to enumerate an
+   incomplete list -- matches this file's own standing "don't misrepresent an untracked mechanic"
+   convention (same category as Ice Twister's un-modeled velocity bump, Napalm's tooltip-vs-code gap,
+   etc.).
+
+**Ja's summon stats resolved via a real binary hex-decode, same technique this repo's
+`decode-character-stats` skill already used for King Kaiser/Barrel Bot, extended with one genuinely
+new wrinkle documented in that skill's own `SKILL.md` (not duplicated here): Ja's serialized `Type`
+field ("Ja1".."Ja4") doesn't share a record with a `Name` field of the same string the way Gadina's
+did -- it required searching for the target string as the `Type` field and reverse-scanning backward
+for a plausible preceding `Name` length-prefix, which turned up `Name="Little Ja"/"Medium Ja"/"Big
+Ja"/"Giant Ja"` (mirroring the "lesser/medium/large/great" phrasing already seen in Gadina's own
+tooltip -- a naming-convention match used as a corroborating signal that the decode found the right
+record). Result: `jaOwnStats(rank)` (`index.html`) now returns real values instead of `"?"` for all 8
+previously-unresolved stats -- ATK/DEF/AGI/VIT/MAG/TAL/LCK = 10/20/30/40 by rank, CHA = 20/20/60/80
+(the rank-2 anomaly, where CHA equals the other stats instead of doubling them the way it does at
+ranks 1/3/4, is decoded exactly as-is -- not smoothed into a clean progression). HP stays the
+already-source-verified 100/200/300/400 (`Ja.cs:1906-1972`, hardcoded literals, unrelated to the
+binary decode). Since Ja.cs never explicitly sets `mhp` anywhere (confirmed: grepped the whole file,
+zero hits), the decoded `mhp` field (10/20/30/40) is dead placeholder data of the same kind Gadina's
+own baked `atk`/`def`/`mhp` fields turned out to be -- disregarded, not displayed.
+
+**Colorization**: `monkey_ja`/`monkey_ja_detonate` added to the existing "full accent color" `usedKeys`
+override list (`renderHero()`, same list `mole_barrelBot`'s base summon card already uses) rather than
+falling through to `getUsedOwnStatKeys`'s formula-driven used/unused split -- no chip in this tool
+reads any of Ja's own 9 stats in a calculation (same situation as the base Barrel Bot card), so
+without the override every cell would render fully dimmed gray regardless of having real numbers now,
+which isn't "colorized" in any visible sense. Matches this file's own established precedent exactly,
+not a new mechanism.
+
+**`monkey_ja_detonate`'s KO clause corrected**: the applied desc said "ค่า KO **${10×rank}**", implying
+a flat, rank-locked number. Re-read the real explode code (`Ja.cs:1594`, the same `hit()` call whose
+`nDamage` argument the desc's damage clause already correctly describes as "HP ปัจจุบันของ Ja") and
+confirmed the 4th `hit()` argument (`nKo`) is `Mathf.FloorToInt(0.1f × mChar.hp)` -- **10% of Ja's
+CURRENT hp**, not rank. The displayed numbers (10/20/30/40) don't change, since they're already
+correct at Ja's max HP (`100×rank`, so `0.1×100×rank = 10×rank` exactly) -- only the WORDING was
+fixed, from a flat-constant framing to "และค่า KO เท่ากับ **10%** ของ HP ปัจจุบันของ Ja ในขณะนั้นเช่นกัน"
+(KO also equals 10% of Ja's current HP), mirroring how the damage clause is already phrased. A real
+player who detonates Ja after it's taken damage would see a lower KO than the displayed number --
+this is now honestly represented in the copy even though the tool's own static display can't show a
+live HP-dependent range the way it does for e.g. Titanic Earth Pulse's Gadina-HP-based damage
+(different skill, same batch, not yet applied -- see the DRAFT doc).
+
+**Investigated, found nothing**: user recalled "Ja is usually summoned at half HP" from live play.
+Checked Ja.cs's summon coroutine (hp set directly to the full literal, no halving before or after),
+confirmed `mhp` is never touched anywhere in the file, no decay-over-time code, no shared `onSummon`
+hook in `CharacterControl.cs` that would halve an incoming summon (the only `onSummon(GameObject)`
+methods anywhere in the decompiled tree belong to unrelated minigame-mode scripts), and neither
+tooltip mentions a half-HP condition. Left as an open question for a future session with more
+context on the exact observed conditions -- not fabricated, not dismissed.
+
+Applied via the standard Node-scratch-patch-script protocol throughout (`mustReplaceOnce`-style exact
+string matching, one script per logical change), `node scripts/validate_skills.js` run and passing
+after every patch (334 skills / 446 formula permutations / 781 icons by the end of the session, up
+from the session's starting count). Not visually verified live -- no browser tool used this session,
+consistent with this project's `AGENTS.md`-mandated ban on routine visual checks for skill
+additions/formula corrections (reserved for major layout/CSS redesigns or explicit user request).
