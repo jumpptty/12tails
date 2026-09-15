@@ -2596,6 +2596,25 @@
     .sk-summon-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
     .sk-stat-summon{padding:12px 14px}
   }
+  /* Skill detail + related skills (2026-09-15) -- preserve the established
+     860px skill-card shell and pin related navigation at the top of the
+     right gutter. Simulate output moves to a separate lower-left result lane
+     beneath the player/enemy stat panel, keeping navigation and combat output
+     in distinct gutters. */
+  .sk-detail-layout{display:block}
+  .sk-compat-rail{margin-top:14px}
+  @media (min-width:1180px){
+    .sk-detail-layout--has-compat .sk-compat-rail{
+      position:absolute; left:calc(100% + 20px); top:0; width:260px;
+      margin:0; min-width:0; z-index:4;
+    }
+    .sk-has-compat-left-ledger .sk-multihit-layer{
+      left:auto; right:calc(100% + 20px);
+    }
+    .sk-compat-rail .sk-compat-grid{grid-template-columns:1fr}
+    .sk-compat-rail .sk-compat-single-grid{max-width:none}
+  }
+
   /* Related / Compatible Skills Row (2026-09-14) */
   .sk-compat-row{margin-top:14px}
   .sk-compat-row:empty{display:none; margin:0}
@@ -2645,10 +2664,6 @@
     overflow:hidden; text-overflow:ellipsis; word-break:break-word;
   }
   .sk-compat-item:hover .sk-compat-name{color:var(--gold)}
-  .sk-compat-arrow{
-    font-size:11px; color:var(--gold); font-weight:600; margin-left:8px;
-    white-space:nowrap; flex-shrink:0; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
-  }
   @media (max-width:768px){
     .sk-compat-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px}
     .sk-compat-few-grid, .sk-compat-single-grid{max-width:100%}
@@ -6445,7 +6460,7 @@ function getUsedOwnStatKeys(skill) {
   const hasAtk = skill.atkCoeff !== undefined;
   const dmgTexts = skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg];
   const hasTal = dmgTexts.some(t => t && /talAdjust\(/.test(t));
-  const hasAgi = !!((skill.ownStats || skill.ownStatsGadina) && skill.cdWrapped);
+  const hasAgi = !!((skill.ownStats || skill.ownStatsGadina) && skill.cdWrapped && !skill.cdPlayerStats);
   if (hasAtk) used.add("atk");
   if (hasTal) used.add("tal");
   if (hasAgi) used.add("agi");
@@ -6548,7 +6563,7 @@ function getUsedPlayerStatKeys(skill) {
     // genuinely DOES read the player's own ATK too, via Titan Sword's
     // dynamic per-hit bonus (see renderOneDmgFormula's ownStatsGadina
     // branch) -- ATK must keep glowing here, only AGI is wrong.
-    else if (skill.cdWrapped && !skill.ownStatsGadina) used.add("agi");
+    else if (skill.cdWrapped && (!skill.ownStatsGadina || skill.cdPlayerStats)) used.add("agi");
   }
   if (skill.castTime !== undefined && skill.castWrapped) used.add("int");
   if (skill.duration !== undefined) {
@@ -8471,7 +8486,6 @@ const SKILLS = [
     cdWrapped: false,
     revisedArtExempt: false,
     desc: "สั่งให้ซัมมอนที่ควบคุมอยู่เข้าโจมตีเป้าหมายศัตรูทันที (ใช้ได้เมื่อมีซัมมอนอยู่บนสนาม)",
-    compatSkills: ["monkey_ja"],
   },
   {
     id: "monkey_summonDefense",
@@ -8485,7 +8499,6 @@ const SKILLS = [
     cdWrapped: false,
     revisedArtExempt: false,
     desc: "สั่งให้ซัมมอนที่ควบคุมอยู่หยุดการโจมตีทั้งหมดและเคลื่อนที่กลับมาคุ้มกันลิง (ใช้ได้เมื่อมีซัมมอนอยู่บนสนาม)",
-    compatSkills: ["monkey_ja"],
   },
   {
     id: "monkey_unsummon",
@@ -8770,7 +8783,7 @@ const SKILLS = [
     cd: 90,
     cdWrapped: true,
     durationInfinite: true,
-    compatSkills: ["monkey_summonAttack", "monkey_summonDefense", "monkey_ja_detonate"],
+    compatSkills: ["monkey_ja_detonate"],
     revisedArtExempt: false,
     desc: (rank) => `เรียกลูกไฟมีชีวิต Ja **ระดับ ${rank}** ออกมาช่วยรบ ขณะที่ Ja ยังมีชีวิตอยู่ใกล้ตัว จะเพิ่มพลัง TAL ให้ลิงตลอดเวลา **+${10 * rank}** จะแทนที่ Phoenix, Gadina หรือ Ja ตัวเดิมทันทีหากมีอยู่แล้ว`
   },
@@ -8927,11 +8940,15 @@ const SKILLS = [
     cost: { sp: 35, spType: "blue" },
     cd: 60,
     cdWrapped: true,
+    cdPlayerStats: true,
     ownStatsGadina: true,
+    ownStatsGadinaRank: 4,
     dmgRankDep: MNK_TITANSWORD_DEP,
     dmg: "0",
     atkCoeff: 1,
     ko: "10",
+    hitCount: () => 3,
+    dmgModes: true,
     dmgGroups: [
       { dmg: "0", atkCoeff: 1, ko: "10", hitCount: 3, label: "Inner Circle" },
       { dmg: "5", atkCoeff: 0, ko: "5", hitCount: 3, label: "Outer Ring" }
@@ -10275,7 +10292,7 @@ function mountSkillCooldownLookup(root){
       const titanSwordLv = getDepRank(MNK_TITANSWORD_DEP);
       const aegisOfEarthLv = getDepRank(MNK_GROUNDLOCK_AEGIS_DEP);
       const earthSoulOn = getDepRank(MONKEY_EARTHSOUL_DEP) === MONKEY_EARTHSOUL_DEP.maxRank;
-      const gadina = gadinaOwnStats(rank, titanSwordLv, aegisOfEarthLv, { atk: ATK, def: DEF, agi: AGI, vit: VIT, mag: INT, cha: CHA, tal: TAL, lck: LCK }, earthSoulOn);
+      const gadina = gadinaOwnStats(skill.ownStatsGadinaRank || rank, titanSwordLv, aegisOfEarthLv, { atk: ATK, def: DEF, agi: AGI, vit: VIT, mag: INT, cha: CHA, tal: TAL, lck: LCK }, earthSoulOn);
       const dynamicBonus = titanSwordLv > 0 ? Math.floor((0.1 * titanSwordLv + 0.1) * monkeyATK) : 0;
       ATK = gadina.atk + dynamicBonus;
     }
@@ -10785,7 +10802,7 @@ function mountSkillCooldownLookup(root){
       gadinaTitanSwordLv = getDepRank(MNK_TITANSWORD_DEP);
       const aegisOfEarthLv = getDepRank(MNK_GROUNDLOCK_AEGIS_DEP);
       const earthSoulOn = getDepRank(MONKEY_EARTHSOUL_DEP) === MONKEY_EARTHSOUL_DEP.maxRank;
-      const gadina = gadinaOwnStats(rank, gadinaTitanSwordLv, aegisOfEarthLv, {
+      const gadina = gadinaOwnStats(skill.ownStatsGadinaRank || rank, gadinaTitanSwordLv, aegisOfEarthLv, {
         atk: gadinaMonkeyATK, def: parseFloat(defEl.value) || 0, agi: parseFloat(agiEl.value) || 0,
         vit: parseFloat(vitEl.value) || 0, mag: INT, cha: CHA, tal: TAL, lck: parseFloat(lckEl.value) || 0
       }, earthSoulOn);
@@ -11253,6 +11270,34 @@ function mountSkillCooldownLookup(root){
     statsPanelEl.hidden = !selected;
   }
 
+  // The two external gutters have different live heights: the stats gutter
+  // on the left and the related-skills rail on the right. Put temporary
+  // simulated hits beneath whichever one ends first. A short related list
+  // therefore keeps results on the right; a tall list moves them below the
+  // Enemy Stats panel on the left.
+  function positionCombatLedger(){
+    const compatRail = $(".sk-compat-rail", displayEl);
+    const canUseExternalRails = window.innerWidth >= 1180;
+    const useExternalLedger = !!compatRail && canUseExternalRails;
+    const statsBottom = statsPanelEl && !statsPanelEl.hidden
+      ? Number(statsPanelEl.offsetTop || 0) + Number(statsPanelEl.offsetHeight || 0)
+      : 0;
+    const relatedBottom = compatRail
+      ? Number(compatRail.offsetTop || 0) + Number(compatRail.offsetHeight || 0)
+      : Infinity;
+    const rightLedgerTop = relatedBottom + 16;
+    const leftLedgerTop = statsBottom + 16;
+    const useRightLane = useExternalLedger && rightLedgerTop <= leftLedgerTop;
+    const useLeftLane = useExternalLedger && !useRightLane;
+    root.classList.toggle("sk-has-compat-right-ledger", useRightLane);
+    root.classList.toggle("sk-has-compat-left-ledger", useLeftLane);
+    if (!useExternalLedger){
+      multiHitLayer.style.top = "";
+      return;
+    }
+    multiHitLayer.style.top = Math.max(20, useRightLane ? rightLedgerTop : leftLedgerTop) + "px";
+  }
+
   function positionStatTooltips(){
     const shell = document.querySelector(".tool-shell");
     if (!shell) return;
@@ -11420,6 +11465,8 @@ function mountSkillCooldownLookup(root){
     if (!selected){
       if (!hasSelectedAnySkill){
         displayEl.innerHTML = "";
+        root.classList.remove("sk-has-compat-right-ledger", "sk-has-compat-left-ledger");
+        multiHitLayer.style.top = "";
         if (serverDepsEl) serverDepsEl.innerHTML = "";
         searchWrapEl.classList.add("sk-search-hero");
         if (serverDepsEl) serverDepsEl.innerHTML = "";
@@ -11470,6 +11517,7 @@ function mountSkillCooldownLookup(root){
     let ATK = parseFloat(atkEl.value) || 0;
     let TAL = parseFloat(talEl.value) || 0;
     const monkeyTAL = TAL;
+    const monkeyAGI = AGI;
     const monkeyLCK = LCK;
     // ownStatsDmgOnly (Cannon Form, 2026-08-20): the one Barrel Bot move
     // Mole explicitly COMMANDS rather than the AI picking on its own --
@@ -11593,7 +11641,7 @@ function mountSkillCooldownLookup(root){
       const titanSwordLv = getDepRank(MNK_TITANSWORD_DEP);
       const aegisOfEarthLv = getDepRank(MNK_GROUNDLOCK_AEGIS_DEP);
       const earthSoulOn = getDepRank(MONKEY_EARTHSOUL_DEP) === MONKEY_EARTHSOUL_DEP.maxRank;
-      const gadina = gadinaOwnStats(rank, titanSwordLv, aegisOfEarthLv, {
+      const gadina = gadinaOwnStats(selected.ownStatsGadinaRank || rank, titanSwordLv, aegisOfEarthLv, {
         atk: ATK, def: parseFloat(defEl.value) || 0, agi: AGI, vit: parseFloat(vitEl.value) || 0,
         mag: INT, cha: CHA, tal: TAL, lck: LCK
       }, earthSoulOn);
@@ -11663,7 +11711,9 @@ function mountSkillCooldownLookup(root){
       const cdDep = isCdString ? null : selected.cdDep;
       const cdDepRank = cdDep ? getDepRank(cdDep) : null;
       const rawCd = cdDep ? depRawValue(cdBase, cdDep, cdDepRank) : cdBase;
-      let cdRange = (selected.cdWrapped && !isCdString) ? agiAdjustRange(rawCd, AGI, LCK) : [rawCd];
+      const cdAGI = selected.cdPlayerStats ? monkeyAGI : AGI;
+      const cdLCK = selected.cdPlayerStats ? monkeyLCK : LCK;
+      let cdRange = (selected.cdWrapped && !isCdString) ? agiAdjustRange(rawCd, cdAGI, cdLCK) : [rawCd];
       if (cdDep) cdRange = depPostMultiply(cdRange, cdDep, cdDepRank);
       if (!isCdString) cdRange = applyRevisedArt(cdRange, revisedArtOn, selected.revisedArtExempt);
       const cdDepBlock = cdDep ? renderDepBlock(cdDep, cdDepRank) : "";
@@ -11671,7 +11721,7 @@ function mountSkillCooldownLookup(root){
         if (cdDep) v = depPostMultiply([v], cdDep, cdDepRank)[0];
         return applyRevisedArt([v], revisedArtOn, selected.revisedArtExempt)[0];
       };
-      const cdDist = (selected.cdWrapped && !isCdString) ? lckDistribution(rawCd, AGI, LCK, agiAdjustAtRoll, cdPostFn) : null;
+      const cdDist = (selected.cdWrapped && !isCdString) ? lckDistribution(rawCd, cdAGI, cdLCK, agiAdjustAtRoll, cdPostFn) : null;
       cdBlock = `
         <div class="sk-stat sk-stat-cd">
           <p class="sk-stat-label">คูลดาวน์</p>
@@ -12719,14 +12769,11 @@ function mountSkillCooldownLookup(root){
         if (!sk) return "";
         const iconKey = sk.icon;
         const iconData = SKILL_ICONS[iconKey] || "";
-        const arrowHtml = count === 1
-          ? `<span class="sk-compat-arrow">คลิกเพื่อดูสกิล →</span>`
-          : "";
+
         return `
           <button type="button" class="${itemClass}" data-skill-id="${sk.id}" title="${sk.name}">
             <img src="${iconData}" alt="${sk.name}" class="sk-compat-icon">
             <span class="sk-compat-name">${sk.name}</span>
-            ${arrowHtml}
           </button>
         `;
       }).join("");
@@ -12742,7 +12789,9 @@ function mountSkillCooldownLookup(root){
     }
 
     displayEl.innerHTML = `
-      <div class="sk-hero">
+      <div class="sk-detail-layout${compatBlock ? " sk-detail-layout--has-compat" : ""}">
+        <div class="sk-detail-main">
+          <div class="sk-hero">
         <div class="sk-hero-head">
           ${heroIconHtml}
           <div class="sk-hero-title">
@@ -12768,10 +12817,12 @@ function mountSkillCooldownLookup(root){
         </div>
         ` : ""}
         ${dmgBlock}
-        ${compatBlock ? `
-        <div class="sk-compat-row">
-          ${compatBlock}
+          </div>
         </div>
+        ${compatBlock ? `
+        <aside class="sk-compat-rail" aria-label="สกิลที่เกี่ยวข้อง">
+          ${compatBlock}
+        </aside>
         ` : ""}
       </div>
     `;
@@ -12827,12 +12878,14 @@ function mountSkillCooldownLookup(root){
     });
 
     positionStatsPanel();
+    positionCombatLedger();
     positionStatTooltips();
     positionDmgInfoPopup();
     setupStatTooltipInteractions();
     fitStageToScreen();
     requestAnimationFrame(() => {
       positionStatsPanel();
+      positionCombatLedger();
       positionStatTooltips();
       positionDmgInfoPopup();
       fitStageToScreen();
@@ -13198,7 +13251,7 @@ function mountSkillCooldownLookup(root){
   // Re-anchor the side-gutter tooltips (and the fit-screen layout above
   // them) when the window is resized — gutter availability and the hero
   // card's on-screen position both depend on viewport size.
-  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(); } });
+  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); positionCombatLedger(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(); } });
 
   renderHero();
 }
