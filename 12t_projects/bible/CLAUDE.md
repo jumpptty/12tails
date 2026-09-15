@@ -4982,3 +4982,83 @@ after every patch (334 skills / 446 formula permutations / 781 icons by the end 
 from the session's starting count). Not visually verified live -- no browser tool used this session,
 consistent with this project's `AGENTS.md`-mandated ban on routine visual checks for skill
 additions/formula corrections (reserved for major layout/CSS redesigns or explicit user request).
+
+### 2026-09-15 (later same day): Planet Breaker applied, a real render-crash caught and fixed,
+### compatSkills made bidirectional tool-wide, KO badge reworked for multi-value dmgGroups
+
+Continuation of the Monkey batch-2 pass. Three separate pieces of work, done in this order:
+
+**1. compatSkills made bidirectional, tool-wide (user-requested policy reversal).** Phoenix's
+`compatSkills` had 4 generic summon-command entries (Summon Attack/Defense, Unsummon, Summon
+Release) that aren't really Phoenix-specific -- removed, per user ("they are not really
+important"). While doing that, the user asked to make ALL `compatSkills` edges bidirectional --
+scoped by follow-up question to "every hub in the file", not just Phoenix's own cluster, reversing
+`AGENTS.md` Section 8.1's previous "main skill only" hub rule. Added reverse edges (reciprocal, not
+a full sibling mesh -- a child only links back to the parent(s) that reference it) to: Phoenix's
+remaining 6 links, Ja's 3 links, Bat Mass Cast's 15 spell targets, Barrel Bot's 8 moves, King
+Kaiser's 3 moves, Auto Gyro Gun's move, and closed a pre-existing gap where Gadina - Normal Attack
+had no `compatSkills` at all despite being listed by 3 other cards. `AGENTS.md` Section 8.1 rewritten
+to document the new policy. Committed/pushed as `a5ddb6f`.
+
+**2. Planet Breaker (`monkey_planetBreaker`) upgraded from stub to a full card**, per the standard
+single-skill review gate -- see `12t_reference/monkey-batch2-research-DRAFT.md` item 6 for the full
+citation trail, including a real correction caught mid-review: the initial research claimed Gadina's
+own 2nd cooldown was for "AI auto-cast gating," which was never actually verified and turned out to
+be flatly wrong -- it's `doBeginCharge()`, the same player-input charge-attack hook every character
+class overrides, gated on Titan Sword being FULLY MAXED (not just rank>=1, which only gates the
+smaller ATK-bonus term). Applied with `ownStatsGadina:true` + 2 `dmgGroups` (Inner Circle atkCoeff 1,
+Outer Ring atkCoeff 0 flat 5) + a `dmgNote` preserving the dual-trigger mechanic the user asked to
+keep out of the main `desc`.
+
+**Real crash caught and fixed, not just a cosmetic gap:** the very first apply of Planet Breaker
+(no top-level `dmg` field, only `dmgGroups`) made the card's own detail view render completely
+blank below the header -- user-reported live, with a screenshot ("check planer breaker syntax, the
+skill card is gone" / "just blank like this"). Root-caused via a scratch VM harness driving the real
+`selectSkill()` (not just `validate_skills.js`'s own formula-permutation audit, which doesn't
+exercise this exact code path): `renderHero()`'s "Total LCK Variance" chip unconditionally calls
+`calcRangeFor(getDmgText(skill, rank))` whenever `dmgGroups` exists, and an `undefined` top-level
+`dmg` turns into `evalArith("")` -> `Function("return ()")` -> a genuine `SyntaxError` that aborts
+the render mid-function, right after the header markup (built earlier in the same function) had
+already been written. Fixed by adding a top-level `dmg:"0", atkCoeff:1, ko:"10"` mirroring Inner
+Circle, matching the convention King Kaiser's own `dmgGroups` card already used correctly. Documented
+in `AGENTS.md` Section 4 as a standing rule for any future `dmgGroups` skill.
+
+Also generalized a 2nd real bug in the same code path while fixing the crash: the Titan-Sword-bonus
+term's breakdown-grid renderer hardcoded Gadina - Normal Attack's own `0.5` ATK coefficient instead
+of reading the current skill/group's real `effAtkCoeff` -- harmless for that one card (its own
+`atkCoeff` genuinely is 0.5) but would have silently halved Planet Breaker's real inner-circle bonus
+number, since its real coefficient is 1. Verified backward-compatible for Gadina - Normal Attack by
+re-deriving that `effAtkCoeff` resolves to the identical `0.5` there, not by diffing rendered output
+(no prior snapshot existed) -- a pure-substitution equivalence, not an empirical A/B.
+
+**3. KO badge reworked** (user-requested, prompted directly by Planet Breaker being the first skill
+in the tool whose `dmgGroups` genuinely carry different KO values -- Inner Circle 10 vs Outer Ring
+5 -- which the old single-corner-badge design couldn't represent at all; `getKOValue` only ever read
+the skill-level `ko`, so the badge would have silently shown one misleading number for the whole
+chip). New `getGroupKOInfo()` computes each visible group's own KO (falling back to the skill-level
+`ko` for a group with no override) and collapses to the existing single `.sk-ko-badge` corner
+position when every group's value matches -- verified via the same VM harness that this reproduces
+byte-identical results for King Kaiser's Normal Attack (3 swings, shared `ko:"1"`) and Napalm (no
+`ko` field at all, no badge) -- or splits into an inline chip per group, on that group's own label
+row, only when they differ. The 26px `padding-bottom` reserved on `.sk-dmg-group-list` purely to
+avoid colliding with the corner badge is now scoped to a `.sk-reserve-ko` modifier class, applied
+only when that corner badge actually renders -- the differing-KO case needs no reserved space at
+all, which was the user's original complaint ("KO badge... doesn't take vertical space"). Also gave
+`.sk-ko-badge` an actual bordered-chip look (`background:var(--gold-soft); border:1px solid
+var(--gold)`) instead of bare text, per the user's 2nd ask ("looks better and better visibility"),
+reusing existing design tokens rather than inventing a new color.
+
+All three pieces applied via the standard Node-scratch-patch-script protocol (CRLF-aware this
+session -- `index.html` uses `\r\n` line endings; a naive `\n`-based literal match silently fails
+with 0 matches until the script normalizes to `\n`, patches, then converts back before writing),
+`node scripts/validate_skills.js` passing after every patch (339 skills / 474 formula permutations /
+440 LCK-floor checks / 796 icons by the end of the session). The render-crash and KO-badge fixes were
+verified with a scratch VM harness reusing `scripts/validate_skills.js`'s own sandbox pattern (loads
+`index.html`'s script into a `vm` context with a DOM shim, calls the real `selectSkill()`/
+`renderHero()`, inspects the resulting `[data-role="display"]` innerHTML) rather than code review
+alone -- catching, mid-verification, that a naive "grab whichever registered element has the longest
+innerHTML" heuristic picks the wrong element (a `[data-role="server-deps"]` debug dump was longer
+than the actual card content for one test skill), fixed by targeting `[data-role="display"]`
+directly. Not visually verified live in a real browser -- no browser tool used, consistent with this
+project's routine-visual-check ban; user was invited to check the live render themselves.
+Committed/pushed as `130ced3`.

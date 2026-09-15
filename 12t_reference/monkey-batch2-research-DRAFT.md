@@ -703,7 +703,7 @@ mhp=1770` (vs. `atk=90, vit=126, mhp=1260` with Earth Soul off) -- the +51 delta
 `node scripts/validate_skills.js` passing (339 skills / 470 formula permutations / 796 icons) +
 full-script `new Function()` syntax check clean.
 
-## [ ] 6. Planet Breaker (active, mnk_planetBreaker1, maxRank 1)
+## [x] 6. Planet Breaker (active, mnk_planetBreaker1, maxRank 1) -- APPROVED & APPLIED
 
 Gadina4-gated command skill (same gate family as Titanic Earth Pulse). SkillClass: setReq(31,8),
 setSP(-35), instant mode, cType "planetBreaker". Double-gated: UI-side check (Monkey.cs:8108-8169)
@@ -712,21 +712,39 @@ Gadina.hp>0 and not busy -- "Gadina is not ready" message if so).
 
 Monkey's role is purely cosmetic (animation + VFX at Monkey's position, own 60s cooldown for the
 skill-bar UI, agiAdjust on MONKEY's own AGI/LCK). The real attack delegates to Gadina's own script
-(Gadina.cs:5403-5931), which has a SEPARATE 60s cooldown keyed to GADINA's own AGI/LCK (used only
-for Gadina's own AI auto-cast gating, not player-facing).
+(Gadina.cs:5403-5931), which has a SEPARATE 60s cooldown keyed to GADINA's own AGI/LCK.
+
+**CORRECTION (post-review, user-caught):** the line above originally claimed Gadina's own cooldown
+was "used only for Gadina's own AI auto-cast gating, not player-facing" -- this is WRONG and was
+never actually verified against source before being written. Re-checked: Gadina's OWN trigger path
+is `doBeginCharge()` (Gadina.cs:1817-1926), the same generic charge-attack input hook every
+`CharacterControl`-derived class overrides (confirmed by grepping `doBeginCharge` across the whole
+decompiled tree -- every hero/summon class has one). It is gated on `GadinaType==Gadina4 &&
+mSwordLv==Lv4 (Titan Sword FULLY MAXED, rank 3) && isMine && actionState in {standby,run}`; every
+other branch (wrong type, sword not maxed, not the controlling client, busy) falls through to
+`"This character cannot use charged attack"` (Gadina.cs:1925). This is **not AI at all** -- it's a
+real, separate, player-triggered path: whoever is directly piloting Gadina fires this same
+`RPC_planetBreaker` as Gadina's own charge attack once Titan Sword is fully ranked, on Gadina's own
+independent cooldown. Titan Sword therefore has a second real payoff beyond its ATK-bonus term:
+maxing it unlocks an entirely separate, independently-cooling-down way to trigger this attack.
+Below max rank, Gadina has NO charge attack in form 4 at all (confirmed: `doBeginCharge`'s only
+non-fallthrough branch is this one, for every GadinaType, not just non-4 forms).
 
 **Damage loop:** runs 3 times, 0.3s apart. Each tick:
 - Inner circle: Damage.FindAreaTarget(Gadina's position, radius 5*rangeMod, height 3*rangeMod) --
   flat-ground circular AoE (not sphere). hitAtk = Gadina's OWN ATK stat (NOT Monkey's TAL/ATK) +
   [if Monkey's Titan Sword rank>=1: floor((0.1*swordLv+0.1) * Monkey's own ATK)]. hit(11, dmg, 10ko,
-  knockback away from Gadina).
+  knockback away from Gadina). (Note: this rank>=1 ATK-bonus gate is independent of and weaker than
+  doBeginCharge's own rank==3/maxed gate above -- the bonus scales in from rank 1, the alternate
+  charge-attack trigger only unlocks at rank 3.)
 - Outer donut: radius out to fixed 12m (NOT rangeMod-scaled), excludes inner-circle targets. Flat
   5 dmg / 5 ko / 2x knockback-only ring. hit(12, ...).
 
 No RPC_AddStatus anywhere in the coroutine -- pure damage+knockback AoE, no status applied.
 
 Tooltip ENG (MonkeySkill_eng.cs:675): "Command Forth form Gadina to use ultimate sowrd attack. Deal
-damage to adjacent area." (typo "sowrd" is authentic to the client string). THAI similar, more descriptive.
+damage to adjacent area." (typo "sowrd" is authentic to the client string). THAI (_thai.cs:697):
+"สั่งให้กาดิน่าร่างสี่ใช้ท่าไม้ตายของดาบ ปักดาบลงบนพื้นแล้ว ลากทำความเสียหายโดยรอบ".
 
 **Key mechanic to highlight:** damage source is Gadina's own ATK, not Monkey's TAL -- easy to
 misattribute since it's filed under Monkey's skill list. Titan Sword passive (skill #5) adds a
@@ -735,6 +753,37 @@ binary check) Gadina's Type=="Gadina4".
 
 Icons: planetBreaker1.png is the correct/sole icon (maxRank=1); planetBreaker0/2/3/4.png are
 leftover/shared UI-state assets, not additional ranks.
+
+**APPLIED SCHEMA** (`index.html`): `ownStatsGadina:true, dmgRankDep:MNK_TITANSWORD_DEP`, plus a
+top-level `dmg:"0", atkCoeff:1, ko:"10"` mirroring Inner Circle (see crash note below) and
+`dmgGroups:[{dmg:"0",atkCoeff:1,ko:"10",hitCount:3,label:"Inner Circle"},
+{dmg:"5",atkCoeff:0,ko:"5",hitCount:3,label:"Outer Ring"}]`. The doBeginCharge dual-trigger mechanic
+is preserved in `dmgNote` (dropped from the user-facing `desc` per user request, since it's a
+niche mechanic better suited to the detail note than the header flavor text).
+
+**Real bug found and fixed during apply, worth remembering for Titanic Earth Pulse/Stone Hammer or
+any future `dmgGroups` skill:** `renderHero()`'s "Total LCK Variance" calc chip
+(`index.html:12016`) reads a skill's TOP-LEVEL `dmg` field unconditionally whenever `dmgGroups` is
+present, even though the actual per-hit breakdown already iterates groups separately via
+`renderOneDmgFormula`. A `dmgGroups` skill with no top-level `dmg` (as first authored here) makes
+`getDmgText()` return `undefined` -> `evalArith("")` -> `Function("return ()")` -> a real
+`SyntaxError` that aborts `renderHero()` mid-render, right after the header, leaving the rest of
+the card blank (user-reported: "the skill card is gone... just blank like this", with a screenshot
+matching exactly this failure mode). Fix: always give a `dmgGroups` skill a top-level
+`dmg`/`atkCoeff`/`ko` mirroring its most representative group (King Kaiser's Normal Attack already
+did this correctly; Planet Breaker's stub->card upgrade initially missed it). Also generalized a
+second real bug found in the same pass: the Titan-Sword-bonus term's own breakdown-grid renderer
+hardcoded Gadina - Normal Attack's `0.5` ATK coefficient instead of reading the current
+skill/group's own `effAtkCoeff` -- harmless for that one card (0.5 either way) but would have
+silently halved Planet Breaker's real inner-circle bonus display had it not been generalized.
+
+**Also reworked as part of this apply (not a Planet Breaker-specific mechanic, a general tool
+convention):** the KO badge now supports `dmgGroups` whose groups carry genuinely different `ko`
+values (Planet Breaker: Inner Circle 10, Outer Ring 5 -- the first skill in the tool to need this).
+`getGroupKOInfo()` collapses to the existing single corner badge when every group's own `ko`
+matches (every pre-existing `dmgGroups` skill, e.g. King Kaiser's 3 swings/Napalm's ticks, zero
+behavior change), or splits into a small inline chip per group, on that group's own label row, only
+when they differ -- see `AGENTS.md` Section 4 for the authoring-facing summary.
 
 ## [ ] 7. Titanic Earth Pulse (active, mnk_titanicEarthPulse1, maxRank 1)
 
