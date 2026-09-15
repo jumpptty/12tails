@@ -7824,14 +7824,14 @@ const SKILLS = [
     "bat_paranoia",
     "bat_shatteringDream"
   ] },
-  { id:"bat_phantomBane", name:"Phantom Bane", class:"Bat", icon:"bat_phantomBane4", maxRank:4, cost:{mp:[10,13,16,19]}, castTime:[2,2.5,3,3.5], castWrapped:true, cd:30, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:12, durWrapped:true, durContested:true, durPostAdd:(depRank)=>(getDepRank(BAT_DEMON_BANE_DEP)?6:0), hitCountDuration:2, dmg:(rank)=>{ const cLv = rank + (getDepRank(BAT_DEMON_BANE_DEP)?1:0) + (getDepRank(BAT_SHAME_DEP)?1:0); return "6×" + cLv + "+3"; }, effectDamage:true, ko:"0", dep:BAT_DEMON_BANE_DEP, dmgRankDep:BAT_SHAME_DEP, status:{ name:"phantomBane", sLv:(rank)=>rank+(getDepRank(BAT_DEMON_BANE_DEP)?1:0)+(getDepRank(BAT_SHAME_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const db = getDepRank(BAT_DEMON_BANE_DEP); const shame = getDepRank(BAT_SHAME_DEP); const cLv = rank + (db?1:0) + (shame?1:0); const dmg = 6 * cLv + 3; const line1 = shame ? ("เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **" + dmg + "** ทุก **2s**") : ("สาปเป้าหมาย ทำดาเมจม่วง **" + dmg + "** ทุก **2s**"); const line2 = "**Demon Bane:** เพิ่มระดับคำสาป **+1 เลเวล** และขยายเวลา **+6s**"; return line1 + "<br>" + line2; }, revisedArtExempt:false },
-  { id:"bat_shadowGaze", name:"Shadow Gaze", class:"Bat", icon:"bat_shadowGaze4", maxRank:4, cost:{mp:[11, 13, 19, 23]}, cd:30, cdWrapped:true, cdDep:BAT_DEMON_GAZE_DEP, revisedArtExempt:false, dmg:"talAdjust(12 + 12×sLv + 12×depLv)", dmgRankDep:BAT_DEMON_GAZE_DEP, ko:"0", desc:"เวทความมืดที่ทำความเสียหายให้เป้าหมายทันที<br>**Demon Gaze:** เพิ่มความเสียหาย **+talAdjust(12)** และลดคูลดาวน์พื้นฐานเหลือ **20s**" },
-  { id:"bat_dissolute", name:"Dissolute", class:"Bat", icon:"bat_dissolute2", maxRank:2, cost:{mp:[13,19]}, castTime:[1.5,2], castWrapped:true, cd:60, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:6, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, status:{ name:"dissolute", sLv:(rank,depRank)=>rank+(depRank?1:0), class:"Debuff, Magical" }, desc:(rank,depRank)=>{ const shame = (depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP); const sLv = rank + (shame?1:0); const x = sLv + 3; const kw2 = `<span class="sk-status" data-classification="Debuff, Magical">[dissolute${sLv + 1}]</span>`; return `ลบล้าง และป้องกันการรับสถานะ Buff ที่ต่ำกว่าเลเวล **${x}**<br>หากเป้าหมายติด **Shame:** อยู่ ${kw2} ลบล้าง และป้องกันการรับสถานะ Buff ที่ต่ำกว่าเลเวล **${x + 1}**`; }, revisedArtExempt:false },
-  { id:"bat_corruption", name:"Corruption", class:"Bat", icon:"bat_corruption2", maxRank:2, cost:{mp:[15,23]}, castTime:[3,4], castWrapped:true, cd:60, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:15, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, status:{ name:"corruption", sLv:(rank,depRank)=>rank+(((depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP))?1:0), class:"Debuff, Magical" }, desc:(rank,depRank)=>{ const shame = (depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP); const sLv = rank + (shame?1:0); const dmg = 15 * (sLv + 1); const sp = 5 * sLv; if (shame) return `เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **${dmg}** และลด SP **${sp}** ทุกครั้งที่เป้าหมายทำการโจมตี`; return `สาปเป้าหมาย ทำดาเมจม่วง **${dmg}** และลด SP **${sp}** ทุกครั้งที่เป้าหมายทำการโจมตี`; }, revisedArtExempt:false },
-  { id:"bat_curse", name:"Curse", class:"Bat", icon:"bat_curse4", maxRank:4, cost:{mp:[7,11,15,19]}, castTime:[3,4,5,6], castWrapped:true, cd:120, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:15, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, descDep:BAT_DARK_STALKER_DEP, status:{ name:"curse", sLv:(rank)=>rank+(getDepRank(BAT_SHAME_DEP)?1:0)+(getDepRank(BAT_DARK_STALKER_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const shame = getDepRank(BAT_SHAME_DEP); const ds = getDepRank(BAT_DARK_STALKER_DEP); const sLv = rank + (shame?1:0) + (ds?1:0); return `สาปเป้าหมาย ลดค่าพลังพื้นฐานทุกอย่างลง **${3 * sLv + 3}** หน่วย`; }, revisedArtExempt:false },
+  { id:"bat_phantomBane", name:"Phantom Bane", class:"Bat", icon:"bat_phantomBane4", maxRank:4, cost:{mp:[10,13,16,19]}, castTime:[2,2.5,3,3.5], castWrapped:true, cd:30, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:12, durWrapped:true, durContested:true, durPostAdd:(depRank)=>(getDepRank(BAT_DEMON_BANE_DEP)?6:0), hitCountDuration:2, dmg:(rank)=>{ const cLv = rank + (getDepRank(BAT_DEMON_BANE_DEP)?1:0) + (getDepRank(BAT_SHAME_DEP)?1:0); return "6×" + cLv + "+3"; }, effectDamage:true, ko:"0", dep:BAT_DEMON_BANE_DEP, dmgRankDep:BAT_SHAME_DEP, status:{ name:"phantomBane", sLv:(rank)=>rank+(getDepRank(BAT_DEMON_BANE_DEP)?1:0)+(getDepRank(BAT_SHAME_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const db = getDepRank(BAT_DEMON_BANE_DEP); const shame = getDepRank(BAT_SHAME_DEP); const cLv = rank + (db?1:0) + (shame?1:0); const dmg = 6 * cLv + 3; const line1 = shame ? ("เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **" + dmg + "** ทุก **2s**") : ("สาปเป้าหมาย ทำดาเมจม่วง **" + dmg + "** ทุก **2s**"); const line2 = "**Demon Bane:** เพิ่มระดับคำสาป **+1 เลเวล** และขยายเวลา **+6s**"; return line1 + "<br>" + line2; }, revisedArtExempt:false, compatSkills:["bat_massCast"] },
+  { id:"bat_shadowGaze", name:"Shadow Gaze", class:"Bat", icon:"bat_shadowGaze4", maxRank:4, cost:{mp:[11, 13, 19, 23]}, cd:30, cdWrapped:true, cdDep:BAT_DEMON_GAZE_DEP, revisedArtExempt:false, dmg:"talAdjust(12 + 12×sLv + 12×depLv)", dmgRankDep:BAT_DEMON_GAZE_DEP, ko:"0", desc:"เวทความมืดที่ทำความเสียหายให้เป้าหมายทันที<br>**Demon Gaze:** เพิ่มความเสียหาย **+talAdjust(12)** และลดคูลดาวน์พื้นฐานเหลือ **20s**", compatSkills:["bat_massCast"] },
+  { id:"bat_dissolute", name:"Dissolute", class:"Bat", icon:"bat_dissolute2", maxRank:2, cost:{mp:[13,19]}, castTime:[1.5,2], castWrapped:true, cd:60, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:6, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, status:{ name:"dissolute", sLv:(rank,depRank)=>rank+(depRank?1:0), class:"Debuff, Magical" }, desc:(rank,depRank)=>{ const shame = (depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP); const sLv = rank + (shame?1:0); const x = sLv + 3; const kw2 = `<span class="sk-status" data-classification="Debuff, Magical">[dissolute${sLv + 1}]</span>`; return `ลบล้าง และป้องกันการรับสถานะ Buff ที่ต่ำกว่าเลเวล **${x}**<br>หากเป้าหมายติด **Shame:** อยู่ ${kw2} ลบล้าง และป้องกันการรับสถานะ Buff ที่ต่ำกว่าเลเวล **${x + 1}**`; }, revisedArtExempt:false, compatSkills:["bat_massCast"] },
+  { id:"bat_corruption", name:"Corruption", class:"Bat", icon:"bat_corruption2", maxRank:2, cost:{mp:[15,23]}, castTime:[3,4], castWrapped:true, cd:60, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:15, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, status:{ name:"corruption", sLv:(rank,depRank)=>rank+(((depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP))?1:0), class:"Debuff, Magical" }, desc:(rank,depRank)=>{ const shame = (depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP); const sLv = rank + (shame?1:0); const dmg = 15 * (sLv + 1); const sp = 5 * sLv; if (shame) return `เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **${dmg}** และลด SP **${sp}** ทุกครั้งที่เป้าหมายทำการโจมตี`; return `สาปเป้าหมาย ทำดาเมจม่วง **${dmg}** และลด SP **${sp}** ทุกครั้งที่เป้าหมายทำการโจมตี`; }, revisedArtExempt:false, compatSkills:["bat_massCast"] },
+  { id:"bat_curse", name:"Curse", class:"Bat", icon:"bat_curse4", maxRank:4, cost:{mp:[7,11,15,19]}, castTime:[3,4,5,6], castWrapped:true, cd:120, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:15, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, descDep:BAT_DARK_STALKER_DEP, status:{ name:"curse", sLv:(rank)=>rank+(getDepRank(BAT_SHAME_DEP)?1:0)+(getDepRank(BAT_DARK_STALKER_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const shame = getDepRank(BAT_SHAME_DEP); const ds = getDepRank(BAT_DARK_STALKER_DEP); const sLv = rank + (shame?1:0) + (ds?1:0); return `สาปเป้าหมาย ลดค่าพลังพื้นฐานทุกอย่างลง **${3 * sLv + 3}** หน่วย`; }, revisedArtExempt:false, compatSkills:["bat_massCast"] },
   { id:"bat_echoes", name:"Echoes", class:"Bat", desc:(rank)=>"ยิงลูกเวทมนตร์ 3 ลูกใส่เป้าหมายในระยะ **20m** และสะท้อนไปมาระหว่างศัตรูรอบข้างได้ **"+rank+" ครั้ง** (รัศมีค้นหาเป้าหมายสะท้อน **30m**)", icon:"bat_echoes2", maxRank:2, cost:{mp:[17,21],sp:13,spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, hitCount:()=>3, dmg:"talAdjust(20 + 20×sLv)", ko:"0" },
   { id:"bat_nightmare", name:"Nightmare", class:"Bat", desc:"ร่ายเวทขังเป้าหมายเดี่ยว สร้างความเสียหายทุกๆ 2 วินาที โดยไม่คิด DEF พร้อมลบสถานะ Paralysis, Sleep, Snowman และ Mind Control ของเป้าหมายออกทันที", icon:"bat_nightmare2", maxRank:2, cost:{mp:[35,45],sp:[30,40],spType:"red"}, castTime:[4,5], castWrapped:true, cd:180, cdWrapped:true, duration:9, durWrapped:true, durContested:true, hitCountDuration:2, dmg:"22×sLv + 22", penetrating:true, ko:"0", status:{ name:"nightmare", sLv:(rank)=>rank, class:"Debuff, Magical" }, revisedArtExempt:false },
-  { id:"bat_doom", name:"Doom", class:"Bat", desc:"สาปให้ติดสถานะ Doom นับถอยหลังระเบิดสร้างความเสียหายม่วง ยิ่ง CHA ค้างคาวมากกว่ายิ่งระเบิดเร็ว", icon:"bat_doom2", maxRank:2, cost:{mp:[35,40]}, castTime:[4,5], castWrapped:true, cd:180, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:60, durWrapped:true, durContested:true, durContestedInverted:true, dmgRankDep:BAT_DOOM_STACK_DEP, dmg:(rank,depRank)=>{ const table = { 1:"330", 2:"450", 3:"666", 4:"999", 5:"1199", 6:"1300", 7:"1599" }; return table[depRank || 1] || "330"; }, effectDamage:true, ko:"0", status:{ name:"doom", sLv:(rank,depRank)=>depRank || rank, class:"Debuff, Magical" }, revisedArtExempt:false },
+  { id:"bat_doom", name:"Doom", class:"Bat", desc:"สาปให้ติดสถานะ Doom นับถอยหลังระเบิดสร้างความเสียหายม่วง ยิ่ง CHA ค้างคาวมากกว่ายิ่งระเบิดเร็ว", icon:"bat_doom2", maxRank:2, cost:{mp:[35,40]}, castTime:[4,5], castWrapped:true, cd:180, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:60, durWrapped:true, durContested:true, durContestedInverted:true, dmgRankDep:BAT_DOOM_STACK_DEP, dmg:(rank,depRank)=>{ const table = { 1:"330", 2:"450", 3:"666", 4:"999", 5:"1199", 6:"1300", 7:"1599" }; return table[depRank || 1] || "330"; }, effectDamage:true, ko:"0", status:{ name:"doom", sLv:(rank,depRank)=>depRank || rank, class:"Debuff, Magical" }, revisedArtExempt:false, compatSkills:["bat_massCast"] },
   { id:"bat_guardianOfTheNight", name:"Guardian of the Night", class:"Bat", icon:"bat_guardianOfTheNight2", maxRank:2, cost:{mp:70,sp:35,spType:"red"}, castTime:[10,13], castWrapped:true, cd:600, cdWrapped:true, duration:[30,60], durWrapped:true, hitCount:()=>2, dmg:"66×sLv + 33", ko:"0", status:{ name:"guardianOfTheNight", sLv:(rank)=>rank, class:"Buff, State" }, desc:(rank)=>`เรียกบอสด่าน 8/6 ออกมาช่วยสู้ ค้นหาศัตรูในระยะ **32m** ทุกๆ 2.5 วินาที หากศัตรูอยู่ในระยะ <16m จะพุ่งเข้าฟันสองที (รัศมี **4m**) หากอยู่นอกระยะ **16m** มีโอกาส 50% ที่จะร่ายคำสาป **Curse** (เลเวล **${rank * 2}**) และ **Nightmare** (เลเวล **${rank}**) ใส่เป้าหมายด้วยค่า CHA 128 หน่วย`, revisedArtExempt:false },
   {
     id: "bat_mirageOrb",
@@ -7933,7 +7933,8 @@ const SKILLS = [
       const missPct = 10 * rank + 10;
       return `การโจมตีปกติและท่าชาร์จมีโอกาสพลาด **${missPct}%** (เพิ่มอีก **+10%** หากติด **Shame**, โอกาสไม่ขึ้นกับค่า LCK)<br>ส่งผลเฉพาะการโจมตีกายภาพพื้นฐาน (ไม่มีผลกับดาเมจเอฟเฟกต์ เช่น **DarkEdge** ของหมาป่า หรือ **Puncture** ของปลาวาฬ)`;
     },
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_confusion",
@@ -7954,7 +7955,8 @@ const SKILLS = [
       const cancelPct = 6 * rank + 6;
       return `เมื่อใช้สกิลมีโอกาส **${cancelPct}%** (เพิ่มโอกาสอีก **+6%** หากติด **Shame**) ที่สกิลจะล้มเหลวและติดคูลดาวน์ 30 วินาทีทันที โอกาสไม่ขึ้นอยู่กับค่า LCK`;
     },
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_hateTransfer",
@@ -8027,7 +8029,8 @@ const SKILLS = [
         changeNote: "• [Nerf] Shattering Dream ไม่เพิ่มระดับสกิลนี้อีกต่อไป"
       }
     },
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_phantasmBlast",
@@ -8058,7 +8061,8 @@ const SKILLS = [
         changeNote: "• [Nerf] Shattering Dream ไม่เพิ่มระดับสกิลนี้อีกต่อไป"
       }
     },
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_charm",
@@ -8081,7 +8085,8 @@ const SKILLS = [
       class: "Debuff, Magical"
     },
     desc: "เสกเวทมนตร์สะกดใจเป้าหมาย ทำให้เป้าหมายเปลี่ยนมาอยู่ฝั่งเดียวกับค้างคาวชั่วขณะหนึ่ง (ไม่มีผลกับเป้าหมายประเภทหุ่นยนต์ หรือเป้าหมายที่ติด Mind Control, Nightmare, Snowman)",
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_mindControl",
@@ -8147,7 +8152,8 @@ const SKILLS = [
       class: "Debuff, Magical"
     },
     desc: "สาปเป้าหมายให้เขินอาย ลดค่า CHA ของเป้าหมายลง **50** และเพิ่มระดับของคำสาปถัดไปอีก **+1 เลเวล** (เมื่อร่ายซ้ำจะเพิ่มระดับเป็น **เลเวล 6** หรือ -60 CHA)",
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
     {
     id: "bat_darkStalker",
@@ -8184,7 +8190,8 @@ const SKILLS = [
     ko: "0",
     hitCount: () => 1,
     desc: "สร้างความเสียหายเวทแท้แก่เป้าหมายตามผลรวมเลเวลของดีบัฟทั้งหมดที่ติดอยู่บนตัว โดยไม่ลบล้างดีบัฟเหล่านั้น",
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
     {
     id: "bat_shadowSacrifice",
@@ -8216,7 +8223,8 @@ const SKILLS = [
     ko: "0",
     hitCount: () => 1,
     desc: "ทำ effect damage ใส่เป้าหมายตามจำนวนเพื่อนร่วมทีมรอบตัวเป้าหมายในระยะ **24m** และปลดล็อกให้สกิล **Switch** สามารถลบล้างสถานะประเภท Lock **เลเวล 5** ได้",
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_shatteringDream",
@@ -8239,7 +8247,8 @@ const SKILLS = [
         changeNote: "• [Nerf] ไม่เพิ่มระดับของ Dream Dazzle และ Phantasm Blast อีกต่อไป"
       }
     },
-    revisedArtExempt: false
+    revisedArtExempt: false,
+    compatSkills: ["bat_massCast"],
   },
   {
     id: "bat_nefariousWhip",
@@ -8413,30 +8422,30 @@ const SKILLS = [
       }
     },
     desc:(rank)=>"สร้างป้อมปืนกล Auto Gyro Gun ที่คอยยิงใส่เป้าหมายในระยะ **" + (8 + 4 * rank) + "m** โดยอัตโนมัติ", compatSkills:["mole_autoGyroGun_nAttack"] },
-  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - ยิงปกติ", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hideDurationChip:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**" },
+  { id:"mole_autoGyroGun_nAttack", name:"Auto Gyro Gun - ยิงปกติ", class:"Mole", ownStatsGyro:true, icon:"mole_autoGyroGun4", maxRank:4, cost:{free:true}, duration:120, durWrapped:true, hideDurationChip:true, hitCountDuration:2, dmg:"0", atkCoeff:1, ko:"1", desc:(rank)=>"กระสุนปืนกลของป้อมปืน Auto Gyro Gun ยิงโจมตีเป้าหมายในแนวเส้นตรงระยะ **" + (8 + 4 * rank) + "m** กว้าง **2m** ทุกๆ **2 วินาที**", compatSkills:["mole_autoGyroGun"] },
   { id:"mole_barrelBot", name:"Barrel Bot", class:"Mole", icon:"mole_barrelBot4", maxRank:4, cost:{mp:[25,35,45,55],sp:10,spType:"red"}, castTime:[4,5,6,7], castWrapped:true, cd:240, cdWrapped:true, revisedArtExempt:false, durationInfinite:true, compatSkills:["mole_barrelBot_nAttack","mole_barrelBot_punch","mole_barrelBot_hammer","mole_barrelBot_chopper","mole_barrelBot_missile","mole_barrelBot_drill","mole_barrelBot_cannon","mole_barrelCannon"] },
-  { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1" },
-  { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5" },
-  { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv" },
-  { id:"mole_barrelBot_chopper", name:"Barrel Bot - Chopper", class:"Mole", ownStats:true, icon:"mole_chopper3", casterBadge:"mole_barrelBot0", maxRank:3, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>4, ko:"1" },
-  { id:"mole_barrelBot_missile", name:"Barrel Bot - Missile", class:"Mole", ownStats:true, icon:"mole_missile4", casterBadge:"mole_barrelBot0", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgAdjustSkip:true, ko:"3" },
-  { id:"mole_barrelBot_drill", name:"Barrel Bot - Mega Drill", class:"Mole", ownStats:true, icon:"mole_megaDrill5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:false, revisedArtExempt:true, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:()=>4, ko:"2" },
-  { id:"mole_barrelBot_cannon", name:"Barrel Bot - Barrel Cannon (Auto)", class:"Mole", ownStats:true, icon:"mole_barrelCannon5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:true, revisedArtExempt:true, dmg:"0", atkCoeff:1.5, ko:"1" },
+  { id:"mole_barrelBot_nAttack", name:"Barrel Bot - Normal Attack", class:"Mole", ownStats:true, icon:"mole_barrelBot4", maxRank:1, cd:3, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:0.5, ko:"1", compatSkills:["mole_barrelBot"] },
+  { id:"mole_barrelBot_punch", name:"Barrel Bot - Mega Punch", class:"Mole", ownStats:true, icon:"mole_megaPunch2", casterBadge:"mole_barrelBot0", maxRank:2, cd:12, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(12×sLv)", atkCoeff:0.4, ko:"5", compatSkills:["mole_barrelBot"] },
+  { id:"mole_barrelBot_hammer", name:"Barrel Bot - Mega Hammer", class:"Mole", ownStats:true, icon:"mole_megaHammer2", casterBadge:"mole_barrelBot0", maxRank:2, cd:15, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"10×sLv", compatSkills:["mole_barrelBot"] },
+  { id:"mole_barrelBot_chopper", name:"Barrel Bot - Chopper", class:"Mole", ownStats:true, icon:"mole_chopper3", casterBadge:"mole_barrelBot0", maxRank:3, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>4, ko:"1", compatSkills:["mole_barrelBot"] },
+  { id:"mole_barrelBot_missile", name:"Barrel Bot - Missile", class:"Mole", ownStats:true, icon:"mole_missile4", casterBadge:"mole_barrelBot0", maxRank:4, cd:60, cdWrapped:true, revisedArtExempt:true, dmg:"talAdjust(30)", hitCount:(rank)=>rank, dmgAdjustSkip:true, ko:"3", compatSkills:["mole_barrelBot"] },
+  { id:"mole_barrelBot_drill", name:"Barrel Bot - Mega Drill", class:"Mole", ownStats:true, icon:"mole_megaDrill5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:false, revisedArtExempt:true, dmg:"talAdjust(15)", atkCoeff:0.5, hitCount:()=>4, ko:"2", compatSkills:["mole_barrelBot"] },
+  { id:"mole_barrelBot_cannon", name:"Barrel Bot - Barrel Cannon (Auto)", class:"Mole", ownStats:true, icon:"mole_barrelCannon5", casterBadge:"mole_barrelBot0", maxRank:1, cd:9, cdWrapped:true, revisedArtExempt:true, dmg:"0", atkCoeff:1.5, ko:"1", compatSkills:["mole_barrelBot"] },
   { id:"mole_megaPunch", name:"Mega Punch", class:"Mole", icon:"mole_megaPunch2", maxRank:2, cost:{sp:[15,18],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, dmgMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5}, ko:"5", koMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5} },
   { id:"mole_megaHammer", name:"Mega Hammer", class:"Mole", icon:"mole_megaHammer2", maxRank:2, cost:{sp:[18,20],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(12×sLv)", atkCoeff:0.5, dmgMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5}, ko:"10×sLv", koMultDep:{id:"megaDrill", label:"Mega Drill", icon:"mole_megaDrill5", minRank:0, maxRank:1, mult:1.5} },
   { id:"mole_chopper", name:"Chopper", class:"Mole", icon:"mole_chopper3", maxRank:3, cost:{sp:[20,24,28],spType:"blue"}, cd:45, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv)", atkCoeff:0.3, hitCount:()=>10, ko:"1" },
   { id:"mole_missile", name:"Missile", class:"Mole", icon:"mole_missile4", maxRank:4, cost:{mp:[12,16,20,24]}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:(rank)=>rank, ko:"3" },
   { id:"mole_synchroMole", name:"Synchro Mole", class:"Mole", icon:"mole_synchroMole2", maxRank:2, cost:{mp:[15,25],sp:[25,35],spType:"red"}, cd:300, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true, durNote:"Transfers 50% (Rank 1) / 100% (Rank 2) of Mole's TAL to Barrel Bot and turret ATK/DEF for chaAdjust(30) seconds." },
   { id:"mole_kingKaiser", name:"King Kaiser", class:"Mole", icon:"mole_kingKaiser3", maxRank:3, cost:{mp:80,sp:80,spType:"red"}, cd:999, cdWrapped:true, revisedArtExempt:false, duration:240, durWrapped:true, durNote:"Transforms Mole into giant King Kaiser mecha with 1,500 HP (+50/100 ATK/DEF with upgrades) and heavy weaponry for 240 seconds.", desc:(rank)=>"สร้างหุ่นยนต์ยักษ์ King Kaiser ขึ้นบังคับ มีพลังชีวิต **1,500 HP** " + (rank === 3 ? "พร้อมปืนใหญ่ Kaiser Missile และลำแสง **Kaiser Beam** (+100 ATK/DEF)" : rank === 2 ? "พร้อมปืนใหญ่ **Kaiser Missile** (+50 ATK/DEF)" : "พร้อมอาวุธหนักครบครัน"), compatSkills:["mole_kingKaiser_nAttack","mole_kingKaiser_missile","mole_kingKaiser_beam"] },
-  { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1" },
-  { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5" },
-  { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cost:{free:true}, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1" },
+  { id:"mole_kingKaiser_nAttack", name:"King Kaiser - Normal Attack", class:"Mole", ownStatsKaiser:true, icon:"mole_kingKaiser1", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"0", atkCoeff:1, dmgGroups:[{dmg:"0", atkCoeff:1, hitCount:1, label:"Swing 1"}, {dmg:"0", atkCoeff:1.2, hitCount:1, label:"Swing 2"}, {dmg:"0", atkCoeff:1.3, hitCount:1, label:"Swing 3"}], hitCount:()=>3, ko:"1", compatSkills:["mole_kingKaiser"] },
+  { id:"mole_kingKaiser_missile", name:"King Kaiser - Kaiser Missile", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserCannon4", maxRank:1, cost:{free:true}, cd:4, cdWrapped:false, revisedArtExempt:true, dmg:"100", hitCount:()=>4, ko:"5", compatSkills:["mole_kingKaiser"] },
+  { id:"mole_kingKaiser_beam", name:"King Kaiser - Kaiser Beam", class:"Mole", ownStatsKaiser:true, icon:"mole_kaiserBeam4", maxRank:1, cost:{free:true}, cd:30, cdWrapped:false, revisedArtExempt:true, dmg:"300", hitCount:()=>5, ko:"1", compatSkills:["mole_kingKaiser"] },
   { id:"mole_advanceRepair", name:"Advance Repair", class:"Mole", icon:"mole_advanceRepair5", maxRank:1, cost:{sp:10,spType:"red"}, cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"mole_napalm", name:"Napalm", class:"Mole", icon:"mole_napalm5", maxRank:1, cost:{sp:40,spType:"red"}, cd:150, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5)", dmgGroups:[{dmg:"talAdjust(30)", hitCount:5, label:"Tick 1 ×5 projectiles"}, {dmg:"talAdjust(5)", hitCount:25, label:"Ticks 2–6 ×5 projectiles"}], hitCount:()=>30, penetrating:true },
   { id:"mole_grenadeCluster", name:"Grenade Cluster", class:"Mole", icon:"mole_grenadeCluster5", maxRank:1, cost:{mp:10,sp:40,spType:"red"}, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", atkCoeff:1, hitCount:()=>8, ko:"10" },
   { id:"mole_flameCarnival", name:"Flame Carnival", class:"Mole", icon:"mole_flameCarnival5", maxRank:1, cost:{free:true}, cd:150, cdWrapped:true, revisedArtExempt:false, duration:90, durWrapped:true, durNote:"Arms a trap for up to 90s; on trigger, expands radius (3m→5m) and deals 20 ticks of talAdjust(10) penetrating fire damage to organic targets.", dmg:"talAdjust(10)", hitCount:()=>20, penetrating:true },
   { id:"mole_megaDrill", name:"Mega Drill", class:"Mole", icon:"mole_megaDrill5", maxRank:1, cost:{sp:36,spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(45)", atkCoeff:1, ko:"2" },
-  { id:"mole_barrelCannon", name:"Barrel Bot - Barrel Cannon", class:"Mole", ownStatsDmgOnly:true, icon:"mole_barrelCannon5", maxRank:1, cost:{sp:50,spType:"blue"}, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:1.5, hitCount:()=>10, ko:"1" },
+  { id:"mole_barrelCannon", name:"Barrel Bot - Barrel Cannon", class:"Mole", ownStatsDmgOnly:true, icon:"mole_barrelCannon5", maxRank:1, cost:{sp:50,spType:"blue"}, cd:120, cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:1.5, hitCount:()=>10, ko:"1", compatSkills:["mole_barrelBot"] },
   { id:"mole_warFactory_sawMachine", name:"War Factory - Saw Machine", class:"Mole", icon:"mole_warFactory5", maxRank:1, cost:{free:true}, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(15)", atkCoeff:1.5, hitCount:()=>4, ko:"0" },
   { id:"mole_warFactory_bazooka", name:"War Factory - Bazooka", class:"Mole", icon:"mole_warFactory5", maxRank:1, cost:{free:true}, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(50)", atkCoeff:1, ko:"5" },
   { id:"mole_warFactory_teslaCoil", name:"War Factory - Tesla Coil", class:"Mole", icon:"mole_warFactory5", maxRank:1, cost:{free:true}, cd:180, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(30)", hitCount:()=>7, ko:"0" },
@@ -8454,7 +8463,8 @@ const SKILLS = [
     cd: 3,
     cdWrapped: false,
     revisedArtExempt: false,
-    desc: "สั่งให้ซัมมอนที่ควบคุมอยู่เข้าโจมตีเป้าหมายศัตรูทันที (ใช้ได้เมื่อมีซัมมอนอยู่บนสนาม)"
+    desc: "สั่งให้ซัมมอนที่ควบคุมอยู่เข้าโจมตีเป้าหมายศัตรูทันที (ใช้ได้เมื่อมีซัมมอนอยู่บนสนาม)",
+    compatSkills: ["monkey_ja"],
   },
   {
     id: "monkey_summonDefense",
@@ -8467,7 +8477,8 @@ const SKILLS = [
     cd: 3,
     cdWrapped: false,
     revisedArtExempt: false,
-    desc: "สั่งให้ซัมมอนที่ควบคุมอยู่หยุดการโจมตีทั้งหมดและเคลื่อนที่กลับมาคุ้มกันลิง (ใช้ได้เมื่อมีซัมมอนอยู่บนสนาม)"
+    desc: "สั่งให้ซัมมอนที่ควบคุมอยู่หยุดการโจมตีทั้งหมดและเคลื่อนที่กลับมาคุ้มกันลิง (ใช้ได้เมื่อมีซัมมอนอยู่บนสนาม)",
+    compatSkills: ["monkey_ja"],
   },
   {
     id: "monkey_unsummon",
@@ -8565,7 +8576,6 @@ const SKILLS = [
     durationInfinite: true,
     lckProc: { label: "Rebirth Chance", chance: [12, 18, 24, 30], applies: "rebirth" },
     compatSkills: [
-      "monkey_summonAttack", "monkey_summonDefense", "monkey_unsummon", "monkey_summonRelease",
       "monkey_rapidFire", "monkey_intenseFire", "monkey_skyCrimson", "monkey_blazingArrow", "monkey_instantBlaze",
       "monkey_phoenix_fireBall"
     ],
@@ -8611,7 +8621,8 @@ const SKILLS = [
           : "ฟินิกซ์ยิงลูกบอลเพลิงใส่เป้าหมายด้วยค่า TAL ของฟินิกซ์ โดย Rapid Fire เพิ่มความเร็วการยิงตาม INT ของลิง",
         changeNote: "• [Buff] Rapid Fire's Phoenix attack-speed scaling uses 40% / 60% / 80% Monkey INT (from 20% / 30% / 40%)\n• [Buff] Intense Fire's Phoenix Fireball bonus uses 60% / 80% / 100% Monkey talAdjust(40) (from 20% / 30% / 40%)"
       }
-    }
+    },
+    compatSkills: ["monkey_phoenix"],
   },
   {
     id: "monkey_rapidFire",
@@ -8634,7 +8645,8 @@ const SKILLS = [
     desc: (rank) => {
       const intPerSec = [160, 107, 80][rank - 1];
       return "ทำให้ Phoenix โจมตีเร็วขึ้น (จากเดิมโจมตีทุก 5.0s, ทุกๆ **" + intPerSec + " INT** ของลิง จะลดคูลดาวน์การโจมตีลง **1 วินาที** ลงได้ต่ำสุด **0.1s**, และลดช่วงพัก AI ลงเหลือ **" + (3 - rank) + "s**), พร้อมลดเวลาร่าย Fireball ลง **" + rank + "s** และลดคูลดาวน์ลง **" + (3 * rank) + "s**";
-    }
+    },
+    compatSkills: ["monkey_phoenix"],
   },
   {
     id: "monkey_skyCrimson",
@@ -8663,7 +8675,8 @@ const SKILLS = [
       tot: {
         phoenixFireballIntenseFireFactors: [0.6, 0.8, 1.0]
       }
-    }
+    },
+    compatSkills: ["monkey_phoenix"],
   },
   {
     id: "monkey_intenseFire",
@@ -8683,7 +8696,8 @@ const SKILLS = [
         changeNote: "• [Buff] เพิ่มพลังโจมตีให้สกิลของ Phoenix ตามค่า TAL ของลิงเป็น **[60%, 80%, 100%]** (จากเดิม 20%, 30%, 40%)"
       }
     },
-    desc: (rank) => "เพิ่มพลังโจมตีให้สกิลของ Phoenix ขึ้น **" + (10 * rank + 10) + "%** ตามค่า TAL ของลิง และทำให้ Fireball ทั้งของลิงและ Phoenix ติดสถานะเผาไหม้ [burn" + rank + "] ต่อเนื่อง 4 วินาที"
+    desc: (rank) => "เพิ่มพลังโจมตีให้สกิลของ Phoenix ขึ้น **" + (10 * rank + 10) + "%** ตามค่า TAL ของลิง และทำให้ Fireball ทั้งของลิงและ Phoenix ติดสถานะเผาไหม้ [burn" + rank + "] ต่อเนื่อง 4 วินาที",
+    compatSkills: ["monkey_phoenix"],
   },
   {
     id: "monkey_blazingArrow",
@@ -8711,7 +8725,8 @@ const SKILLS = [
       }
     },
     revisedArtExempt: false,
-    desc: "สละ Phoenix 4 ที่เรียกอยู่ แปลงร่างเป็นลูกศรเพลิงพุ่งทะลวงเป็นแนวยาว **35m** ไปข้างหน้า (รัศมีทะลวง **3.5m**) ด้วยพลัง TAL ของลิงเอง ศัตรูที่โดนจะติดสถานะเผาไหม้ และมีโอกาสตามค่า LCK ของลิงเองที่จะเรียก Phoenix 4 กลับมาทันทีหลังจบท่า"
+    desc: "สละ Phoenix 4 ที่เรียกอยู่ แปลงร่างเป็นลูกศรเพลิงพุ่งทะลวงเป็นแนวยาว **35m** ไปข้างหน้า (รัศมีทะลวง **3.5m**) ด้วยพลัง TAL ของลิงเอง ศัตรูที่โดนจะติดสถานะเผาไหม้ และมีโอกาสตามค่า LCK ของลิงเองที่จะเรียก Phoenix 4 กลับมาทันทีหลังจบท่า",
+    compatSkills: ["monkey_phoenix"],
   },
   {
     id: "monkey_flashFire",
@@ -8761,7 +8776,8 @@ const SKILLS = [
     cost: { free: true },
     ko: (rank) => String(10 * rank),
     revisedArtExempt: false,
-    desc: (rank) => `สั่งให้ Ja พุ่งเข้าหาเป้าหมายแล้วระเบิดตัวเอง สร้างความเสียหายเท่ากับ HP ปัจจุบันของ Ja ในขณะนั้น (ยิ่งใกล้จุดระเบิดยิ่งแรง สูงสุดเท่า HP เต็ม) และค่า KO เท่ากับ **10%** ของ HP ปัจจุบันของ Ja ในขณะนั้นเช่นกัน ในรัศมี **${4 + 2 * rank}m** จากนั้น Ja จะหายไป`
+    desc: (rank) => `สั่งให้ Ja พุ่งเข้าหาเป้าหมายแล้วระเบิดตัวเอง สร้างความเสียหายเท่ากับ HP ปัจจุบันของ Ja ในขณะนั้น (ยิ่งใกล้จุดระเบิดยิ่งแรง สูงสุดเท่า HP เต็ม) และค่า KO เท่ากับ **10%** ของ HP ปัจจุบันของ Ja ในขณะนั้นเช่นกัน ในรัศมี **${4 + 2 * rank}m** จากนั้น Ja จะหายไป`,
+    compatSkills: ["monkey_ja"],
   },
   {
     id: "monkey_fireRune",
@@ -8880,7 +8896,8 @@ const SKILLS = [
     cd: [3, 3, 4, 4],
     cdWrapped: true,
     revisedArtExempt: true,
-    dmgNote: "โจมตีปกติของ Gadina ตามฟอร์ม 1-4 (จำนวนครั้งโจมตีต่อคอมโบ: 1/2/3/3 ครั้ง) หากเรียนรู้ Titan Sword จะได้รับโบนัส ATK เพิ่มเติมชั่วขณะ +floor((0.1×เลเวล Titan Sword+0.1)×ATK ของลิง) ต่อการโจมตีแต่ละครั้ง (รวมเข้ากับสูตรคำนวณแล้ว) Hate ที่เกิดขึ้นเท่ากับค่าความเสียหายที่สร้างได้"
+    dmgNote: "โจมตีปกติของ Gadina ตามฟอร์ม 1-4 (จำนวนครั้งโจมตีต่อคอมโบ: 1/2/3/3 ครั้ง) หากเรียนรู้ Titan Sword จะได้รับโบนัส ATK เพิ่มเติมชั่วขณะ +floor((0.1×เลเวล Titan Sword+0.1)×ATK ของลิง) ต่อการโจมตีแต่ละครั้ง (รวมเข้ากับสูตรคำนวณแล้ว) Hate ที่เกิดขึ้นเท่ากับค่าความเสียหายที่สร้างได้",
+    compatSkills: ["monkey_gadina", "monkey_titanSword", "monkey_earthSoul"],
   },
   {
     id: "monkey_titanSword",
@@ -8921,7 +8938,7 @@ const SKILLS = [
     compatSkills: ["monkey_groundLock", "monkey_aegisOfEarth"],
     desc: "เพิ่มระดับสถานะตรึงของ **Ground Lock** **+2** และเกิดการโจมตีซ้ำอีกครั้งหลังจากนั้น **3 วินาที**"
   },
-  { id:"monkey_instantBlaze", name:"Instant Blaze", class:"Monkey", icon:"monkey_instantBlaze1", cd:30, cdWrapped:true, revisedArtExempt:false },
+  { id:"monkey_instantBlaze", name:"Instant Blaze", class:"Monkey", icon:"monkey_instantBlaze1", cd:30, cdWrapped:true, revisedArtExempt:false, compatSkills:["monkey_phoenix"] },
   { id:"monkey_earthGuard", name:"Earth Guard", class:"Monkey", icon:"monkey_earthGuard1", cd:60, cdWrapped:true, revisedArtExempt:false },
   { id:"monkey_summonSoul", name:"Summon Soul", class:"Monkey", icon:"monkey_summonSoul1", cd:3, cdWrapped:false, revisedArtExempt:false, duration:240, durWrapped:false },
   {
