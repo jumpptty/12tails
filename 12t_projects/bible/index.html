@@ -2929,7 +2929,7 @@
      the CHIP's own bottom-left corner (see its own comment) -- fine against
      a single dmg-term-group's usual height, but 2+ stacked groups here grow
      tall enough to collide with it without this reserved gap. */
-  .sk-dmg-formula .sk-dmg-group-list{padding-bottom:26px}
+  .sk-dmg-formula .sk-dmg-group-list.sk-reserve-ko{padding-bottom:26px}
   .sk-dmg-group-list{display:flex; flex-direction:column; gap:10px; width:100%}
   .sk-dmg-group{display:flex; flex-direction:column; align-items:center; gap:2px}
   .sk-dmg-formula .sk-dmg-group{align-items:flex-start}
@@ -3157,7 +3157,14 @@
      citation but isn't surfaced by any chip, same as every other un-chipped
      dmgNote in this file. Don't reintroduce either removed chip shape
      without being asked again. */
-  .sk-ko-badge{position:absolute; left:14px; bottom:10px; display:flex; align-items:center; gap:6px}
+  .sk-ko-badge{position:absolute; left:14px; bottom:10px; display:flex; align-items:center; gap:5px; padding:2px 7px; border-radius:3px; background:var(--gold-soft); border:1px solid var(--gold)}
+  /* Per-group KO chip (2026-09-15, Planet Breaker pilot -- the first
+     dmgGroups skill whose groups genuinely carry different KO values, see
+     getGroupKOInfo's own comment) -- sits inline on its own group's label
+     row instead of the chip's absolute corner, so 2+ differing KOs don't
+     collide or get silently averaged into one misleading corner number. */
+  .sk-ko-badge-inline{position:static}
+  .sk-dmg-group-label-row{display:flex; align-items:center; justify-content:space-between; gap:8px}
   .sk-ko-label{font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted)}
   .sk-ko-value{font-size:15px; font-weight:700; color:var(--gold); font-family:ui-monospace,monospace}
   /* Toggle icons scaled down from .sk-dep-toggle's default 28px -- this is
@@ -8875,7 +8882,7 @@ const SKILLS = [
     ko: "5×sLv",
     ownLck: [15, 30, 50, 75],
     dmgNote: "แรงกระแทกตอนเรียกออกมา: รัศมี 4×rank+8m (12/16/20/24m), สูง 2m, เพิ่ม Hate ให้เป้าหมาย 50×rank (50/100/150/200) -- ไม่มีชิปแสดง Hate ในเครื่องมือนี้ ค่า LCK ที่ใช้คำนวณคือ LCK ของ Gadina เอง (15/30/50/75 ก่อนโบนัส Earth Soul ซึ่งยังไม่ได้ผูกไว้ในการ์ดนี้)",
-    compatSkills: ["monkey_aegisOfEarth", "monkey_titanSword", "monkey_gadina_nAttack", "monkey_earthSoul"],
+    compatSkills: ["monkey_aegisOfEarth", "monkey_titanSword", "monkey_gadina_nAttack", "monkey_earthSoul", "monkey_planetBreaker"],
     revisedArtExempt: false,
     desc: (rank)=>"เรียก Gadina ธาตุดินระดับ **"+rank+"** ออกมาช่วยรบทันที ค่า ATK และ DEF ของ Gadina จะเพิ่มขึ้นตามเลเวลของ **Titan Sword** และ **Aegis of Earth** ตามลำดับ หากเรียนรู้ **Earth Soul** จะเสริมพลังให้ครบทั้ง 8 สเตตัส เมื่อเรียกออกมาจะเกิดแรงกระแทกใส่ศัตรูรอบข้างในรัศมี **"+(4*rank+8)+"m**"
   },
@@ -8907,10 +8914,33 @@ const SKILLS = [
     icon: "monkey_titanSword3",
     maxRank: 3,
     passive: true,
-    compatSkills: ["monkey_gadina", "monkey_gadina_nAttack"],
+    compatSkills: ["monkey_gadina", "monkey_gadina_nAttack", "monkey_planetBreaker"],
     desc: (rank)=>"เพิ่มค่า **+"+[20,35,50][rank-1]+" ATK** ให้ Gadina และเพิ่มพลังโจมตีของ Gadina อีก **+"+[20,30,40][rank-1]+"% ATK** ของลิงทุกครั้งที่โจมตี เพิ่มค่า KO การโจมตีของ Gadina เป็น **"+rank+"**"
   },
-  { id:"monkey_planetBreaker", name:"Planet Breaker", class:"Monkey", icon:"monkey_planetBreaker1", cd:60, cdWrapped:true, revisedArtExempt:false },
+  {
+    id: "monkey_planetBreaker",
+    name: "Planet Breaker",
+    nameTha: "แพลนเน็ตเบรกเกอร์",
+    class: "Monkey",
+    icon: "monkey_planetBreaker1",
+    maxRank: 1,
+    cost: { sp: 35, spType: "blue" },
+    cd: 60,
+    cdWrapped: true,
+    ownStatsGadina: true,
+    dmgRankDep: MNK_TITANSWORD_DEP,
+    dmg: "0",
+    atkCoeff: 1,
+    ko: "10",
+    dmgGroups: [
+      { dmg: "0", atkCoeff: 1, ko: "10", hitCount: 3, label: "Inner Circle" },
+      { dmg: "5", atkCoeff: 0, ko: "5", hitCount: 3, label: "Outer Ring" }
+    ],
+    dmgNote: "ดาเมจจริงมาจากค่า ATK ของ Gadina เอง (ไม่ใช่ของลิง) แบ่งเป็นวงใน (รัศมี 5×rangeMod, ATK ของ Gadina + โบนัสจาก Titan Sword ผลักออกจาก Gadina) และวงนอก (รัศมีคงที่ 12m ไม่รวม rangeMod ดาเมจคงที่ 5 ไม่ผูกกับสเตตัสใดๆ ผลักแรงขึ้น 2 เท่า) ยิงรวม 3 ครั้ง ห่างกัน 0.3 วินาที ไม่มีสถานะใดๆ เกิดขึ้น เมื่อ Titan Sword ครบเลเวลสูงสุด Gadina จะสามารถใช้ท่านี้เป็นท่าชาร์จของตัวเองได้เช่นกัน (คูลดาวน์แยกต่างหากจากของลิง คำนวณจากค่า AGI/LCK ของ Gadina เอง ไม่ใช่ของลิง)",
+    compatSkills: ["monkey_gadina", "monkey_titanSword", "monkey_earthSoul"],
+    revisedArtExempt: false,
+    desc: "สั่งให้ Gadina ฟอร์ม 4 ใช้ท่าไม้ตายของดาบ ปักดาบลงพื้นสร้างความเสียหายรอบตัว **3 ครั้ง** ห่างกัน **0.3 วินาที** ด้วยพลัง ATK ของ Gadina เอง (วงในรัศมี **5×rangeMod m**, วงนอกรัศมีคงที่ **12m** ได้รับดาเมจเพียง **5** และแรงผลักเพิ่มขึ้น) หากเรียนรู้ **Titan Sword** จะเสริมพลังโจมตีวงในเพิ่มเติมจากค่า ATK ของลิงเอง"
+  },
   {
     id: "monkey_aegisOfEarth",
     name: "Aegis of Earth",
@@ -8949,7 +8979,7 @@ const SKILLS = [
     icon: "monkey_earthSoul5",
     maxRank: 1,
     passive: true,
-    compatSkills: ["monkey_gadina", "monkey_gadina_nAttack"],
+    compatSkills: ["monkey_gadina", "monkey_gadina_nAttack", "monkey_planetBreaker"],
     desc: "เพิ่มค่าสเตตัสทั้ง 8 ของ Gadina (ATK/DEF/AGI/VIT/INT/CHA/TAL/LCK) เท่ากับเปอร์เซ็นต์ของค่าสเตตัสของลิงเอง ตามฟอร์มปัจจุบันของ Gadina **10%/20%/30%/40%** (ฟอร์ม 1-4 ไม่ใช่ตามเลเวลของลิงตามที่ทูลทิปในเกมระบุ)"
   },
   { id:"monkey_fireAvatar", name:"Fire Avatar", class:"Monkey", icon:"monkey_fireAvatar1", castTime:9, castWrapped:true, cd:600, cdWrapped:true, revisedArtExempt:false, duration:120, durWrapped:true },
@@ -10622,12 +10652,28 @@ function mountSkillCooldownLookup(root){
       // renderDmgFormula used to still show its formula line unconditionally --
       // filtered out here so a dep-gated group only appears once its dep is on.
       const visibleGroups = skill.dmgGroups.filter(g => resolveGroupHitCount(skill, g) !== 0);
-      return `<div class="sk-dmg-group-list">${visibleGroups.map(g => `
+      const koInfo = getGroupKOInfo(skill, rank);
+      const showSharedBadge = koInfo && koInfo.shared !== null;
+      const showPerGroupBadge = koInfo && !koInfo.collapsed;
+      const listClass = "sk-dmg-group-list" + (showSharedBadge ? " sk-reserve-ko" : "");
+      return `<div class="${listClass}">${visibleGroups.map(g => {
+        const gKo = showPerGroupBadge ? getKOValue(g.ko !== undefined ? { ...skill, ko: g.ko } : skill, rank) : null;
+        const groupKoChip = (gKo !== null && gKo !== undefined) ? `
+          <div class="sk-ko-badge sk-ko-badge-inline" title="Knockout value">
+            <span class="sk-ko-label">KO</span>
+            <span class="sk-ko-value">${gKo}</span>
+          </div>
+        ` : "";
+        return `
         <div class="sk-dmg-group">
-          <p class="sk-dmg-group-label">${typeof g.label === "function" ? g.label(rank) : g.label}</p>
+          <div class="sk-dmg-group-label-row">
+            <p class="sk-dmg-group-label">${typeof g.label === "function" ? g.label(rank) : g.label}</p>
+            ${groupKoChip}
+          </div>
           <div class="sk-dmg-group-formula">${renderOneDmgFormula(skill, rank, g.dmg, resolveGroupAtkCoeff(skill, g))}</div>
         </div>
-      `).join("")}</div>`;
+      `;
+      }).join("")}</div>`;
     }
     if (!skill.dmg) return null;
     return renderOneDmgFormula(skill, rank, getDmgText(skill, rank));
@@ -10894,12 +10940,19 @@ function mountSkillCooldownLookup(root){
       if (dmgDepOn){
         items = [...items, { op: "+" }, { value: skill.dmgDep.calc(LV, rank, TAL), sub: dmgDepTermText, cls: dmgDepTermClass }];
       }
-      // Gadina - Normal Attack's 2nd ATK term (Titan Sword's dynamic bonus,
+      // Gadina-sourced skills' 2nd ATK term (Titan Sword's dynamic bonus,
       // see the ownStatsGadina branch above) -- a genuinely separate ATK
       // source from the main atkItem above, so it gets its own term/caption
-      // instead of being summed invisibly into one number.
-      if (skill.ownStatsGadina && gadinaMonkeyATK !== null && gadinaTitanSwordLv > 0){
-        const c = (0.1 * gadinaTitanSwordLv + 0.1) * 0.5 * mult;
+      // instead of being summed invisibly into one number. Uses THIS
+      // group/skill's own effAtkCoeff (not a hardcoded 0.5) so a second
+      // ownStatsGadina skill with a different coefficient (Planet Breaker's
+      // inner circle, coeff 1, added 2026-09-15) still renders correctly --
+      // Gadina - Normal Attack's own atkCoeff is still 0.5, so this is a
+      // pure generalization, not a behavior change for that card. Gated on
+      // effAtkCoeff being truthy so a flat/no-ATK dmgGroup entry (Planet
+      // Breaker's outer ring, coeff 0) doesn't show a stray "+0xMonkeyATK".
+      if (skill.ownStatsGadina && gadinaMonkeyATK !== null && gadinaTitanSwordLv > 0 && effAtkCoeff){
+        const c = (0.1 * gadinaTitanSwordLv + 0.1) * effAtkCoeff * mult;
         const bonusItem = { value: c * gadinaMonkeyATK, sub: `${fmtCoeff(c)}MonkeyATK`, cls: "dmg-atk" };
         items = items.length ? [...items, { op: "+" }, bonusItem] : [bonusItem];
       }
@@ -11116,6 +11169,21 @@ function mountSkillCooldownLookup(root){
     } catch (e) {
       return koStr;
     }
+  }
+  // Per-group KO (2026-09-15, Planet Breaker pilot): a group's own `ko`
+  // field overrides the skill-level one for that group only; a group with
+  // no `ko` of its own falls back to the skill-level value, so every
+  // pre-existing dmgGroups skill (no per-group ko field at all) computes
+  // the exact same value for every group -- collapsed:true, zero behavior
+  // change. Only a group set with genuinely differing per-group ko values
+  // (currently just Planet Breaker's Inner Circle 10 / Outer Ring 5) is
+  // collapsed:false. shared is that common value when collapsed, else null.
+  function getGroupKOInfo(skill, rank){
+    if (!skill.dmgGroups) return null;
+    const visible = skill.dmgGroups.filter(g => resolveGroupHitCount(skill, g) !== 0);
+    const values = visible.map(g => getKOValue(g.ko !== undefined ? { ...skill, ko: g.ko } : skill, rank));
+    const collapsed = values.every(v => v === values[0]);
+    return { visible, values, collapsed, shared: collapsed ? (values[0] ?? null) : null };
   }
   // Hover-only breakdown of the LCK roll behind a range — e.g. "13.6s: 42%"
   // — shown below the stat card so the [min,max] spread doesn't read as
@@ -11927,7 +11995,8 @@ function mountSkillCooldownLookup(root){
       // no ko field" and (impossible today, but not assumed away) "ko
       // evaluates to 0" the same way. See getKOValue's own comment for the
       // full source citation trail.
-      const koVal = getKOValue(activeSelected, rank);
+      const groupKOInfo = activeSelected.dmgGroups ? getGroupKOInfo(activeSelected, rank) : null;
+      const koVal = groupKOInfo ? groupKOInfo.shared : getKOValue(activeSelected, rank);
       const koToggles = [
         activeSelected.koDep ? renderDmgToggle(activeSelected.koDep) : "",
         activeSelected.koMultDep ? renderDmgToggle(activeSelected.koMultDep) : "",
