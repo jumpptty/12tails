@@ -247,6 +247,12 @@ SKILLS.forEach(sk => {
   // Max Rank check
   const maxRank = sk.maxRank || 1;
 
+  // Prohibited/Abolished properties check
+  if ('dmgNote' in sk || sk.dmgNote !== undefined) {
+    console.error(`[SCHEMA ERROR] ${ctx}: 'dmgNote' is permanently abolished and must not be present`);
+    errorCount++;
+  }
+
   // Passive skill schema check
   // Note: cd/castTime/cost/duration are allowed on a passive when it genuinely has one
   // (e.g. an internal proc cooldown, a real MP/SP-gated active it grants) per AGENTS.md
