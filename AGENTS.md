@@ -74,6 +74,8 @@ When reading `.cs` files in `DecompiledSource/`:
 
 Every skill authoring, formula update, or tooltip review must strictly follow this linear execution pipeline, bifurcated by skill type:
 
+**Shared/Universal Skills Exemption (added 2026-09-16):** Five skills share identical numeric skill IDs and mechanics across all 12 classes (verified: same IDs/effects in `Monkey.cs`, `CharacterControl.cs`, `CharacterDataClass.cs`, cross-checked against `PenguinSkill.cs`) — Revised Art (`#424`, -12% cooldown on all skills except `nAttack`/`cAttack`/consumables), Revised Magic (`#414`, -20% MP cost, rounded up), Revised Skill (`#404`, -50% SP cost, rounded up), Stat Plus (`#141-144`, +2 to all 8 stats per rank), and Super Stat Plus (`#441`, +10 to all 8 stats). These are authored **once**, under a dedicated `class: "Common"` tile in `12t_projects/bible/index.html` (`common_revisedArt`, `common_revisedMagic`, `common_revisedSkill`, `common_statPlus`, `common_superStatPlus`), not duplicated per class. **Skip these five when running the per-class research pipeline below** — reference the existing Common cards instead of re-deriving them. The separate 12-card Common support batch (Replenishment through Divine Channel) is now fully researched and authored; unlike the five universal skills, each card has its own source-class level formula and must retain its individual source proof and `supportSourceClass` / `supportFormula` wiring.
+
 ---
 
 ### 5.A. Active Skill Pipeline
