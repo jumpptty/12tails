@@ -21,6 +21,7 @@
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const targetPath = path.resolve(__dirname, '../12t_projects/bible/index.html');
 if (!fs.existsSync(targetPath)) {
@@ -29,6 +30,39 @@ if (!fs.existsSync(targetPath)) {
 }
 
 const html = fs.readFileSync(targetPath, 'utf8');
+
+// The player-facing update panel is static data, so it otherwise silently
+// drifts behind Git history. A dirty tracked tree must carry a newly prepared
+// top entry; a clean tree must have that entry match HEAD's commit subject.
+const changelogMatch = html.match(/const CHANGELOG_DATA\s*=\s*\{[\s\S]*?entries:\s*\[\s*\["([^"]+)","([^"]+)"\]/);
+if (!changelogMatch) {
+  console.error('[CHANGELOG ERROR] Could not read the newest CHANGELOG_DATA entry.');
+  process.exit(1);
+}
+const [, changelogTime, changelogSubject] = changelogMatch;
+if (Number.isNaN(Date.parse(changelogTime))) {
+  console.error(`[CHANGELOG ERROR] Newest entry has an invalid ISO timestamp: '${changelogTime}'.`);
+  process.exit(1);
+}
+let headSubject = '';
+let trackedTreeDirty = false;
+try {
+  headSubject = execFileSync('git', ['log', '-1', '--format=%s'], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8' }).trim();
+  execFileSync('git', ['diff', '--quiet', 'HEAD', '--'], { cwd: path.resolve(__dirname, '..'), stdio: 'ignore' });
+} catch (error) {
+  trackedTreeDirty = true;
+}
+if (trackedTreeDirty && changelogSubject === headSubject) {
+  console.error(`[CHANGELOG ERROR] Tracked changes are pending but CHANGELOG_DATA still names HEAD: '${headSubject}'. Prepend the planned commit subject before validating.`);
+  process.exit(1);
+}
+if (!trackedTreeDirty && changelogSubject !== headSubject) {
+  console.error(`[CHANGELOG ERROR] Newest CHANGELOG_DATA entry '${changelogSubject}' does not match HEAD '${headSubject}'. Update the panel before pushing.`);
+  process.exit(1);
+}
+console.log(trackedTreeDirty
+  ? `CHANGELOG PENDING: '${changelogSubject}' is prepared for the next commit.`
+  : `CHANGELOG CURRENT: '${changelogSubject}' matches HEAD.`);
 
 // Extract script content
 const scriptStart = html.indexOf('<script>');
