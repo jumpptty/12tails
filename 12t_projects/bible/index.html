@@ -2635,7 +2635,10 @@
      in distinct gutters. */
   .sk-detail-layout{display:block}
   .sk-compat-rail{margin-top:14px}
-  @media (min-width:1180px){
+  /* Keep related skills in the right rail on compact desktop windows. The
+     fit-to-screen pass scales the complete workspace below this width instead
+     of reflowing the navigation underneath the skill card. */
+  @media (min-width:900px){
     .sk-detail-layout--has-compat .sk-compat-rail{
       position:absolute; left:calc(100% + 20px); top:0; width:260px;
       margin:0; min-width:0; z-index:4;
@@ -11403,7 +11406,7 @@ function mountSkillCooldownLookup(root){
   // Enemy Stats panel on the left.
   function positionCombatLedger(){
     const compatRail = $(".sk-compat-rail", displayEl);
-    const canUseExternalRails = window.innerWidth >= 1180;
+    const canUseExternalRails = window.innerWidth >= 900;
     const useExternalLedger = !!compatRail && canUseExternalRails;
     const statsBottom = statsPanelEl && !statsPanelEl.hidden
       ? Number(statsPanelEl.offsetTop || 0) + Number(statsPanelEl.offsetHeight || 0)
@@ -17086,7 +17089,13 @@ const hubBar = document.querySelector(".hub-bar");
   const isSkillLookup = document.documentElement.classList.contains("tool-wide-hero");
   const statsPanel = isSkillLookup ? document.querySelector(".sk-stats-panel") : null;
   const isStatsVisible = isSkillLookup && statsPanel && !statsPanel.hidden && statsPanel.offsetHeight > 0;
-  const compW = isStatsVisible ? 1420 : (shell.offsetWidth || 860);
+  const compatRail = isSkillLookup ? document.querySelector(".sk-detail-layout--has-compat .sk-compat-rail") : null;
+  const hasSideCompatRail = !!compatRail && window.innerWidth >= 900;
+  // Include both external gutters when compact desktop keeps related skills
+  // alongside the card; otherwise scaling would leave the rail clipped.
+  const compW = hasSideCompatRail
+    ? (isStatsVisible ? 1500 : 1220)
+    : (isStatsVisible ? 1420 : (shell.offsetWidth || 860));
   const shellH = shell.offsetHeight || 500;
   const statsH = isStatsVisible ? statsPanel.offsetHeight : 0;
   const compH = Math.max(shellH, statsH, 460);
