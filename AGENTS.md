@@ -103,17 +103,18 @@ Every skill authoring, formula update, or tooltip review must strictly follow th
      * Strictly separate Player LCK (duration/channel variance) from Summon LCK (damage spread).
      * Suppress duration chips on simulation sub-attacks (`hideDurationChip: true`).
      * Omit `cost` completely on automated companion AI moves.
-     * Wire `compatSkills` strictly on the main summon skill only.
 
-#### Step A2: Active Observable Proof Review Table (3-Point Citation)
+#### Step A2: Active Observable Proof Review Table
 Present a structured review table to the user. Every single active skill entry must include:
-1. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` call.
-2. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
-3. **Status Profile (if status applied):**
+1. **Identity Mapping:** Source key / internal name, user-facing card name, and planned `SKILLS.id`. Resolve any naming mismatch here before discussing mechanics or authoring the card.
+2. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` call.
+3. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion Script):** Exact code modifying stats, dealing damage/heals, or applying buffs/debuffs.
+4. **Status Profile (if status applied):**
    * Name (`sType`), Numeric ID (`nCode`), Status Level (`sLv`) per rank.
    * Full classification breakdown (`Buff`/`Debuff`, `State`, `Magical`/`Physical`, `Lock`, `Shield`).
-4. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line` & `_thai.cs:line`):** Exact raw strings from client language files.
-5. **Proposed Header Tooltip (`desc`):**
+   * **Rendered Status Badge:** Every applied status MUST be represented in the proposed schema as `status: { name, sLv, class }` (or a `status` array for multiple statuses), producing its `[statusLevel]` keyword badge and classification tooltip. State `None` only when the skill applies no status.
+5. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line` & `_thai.cs:line`):** Exact raw strings from client language files.
+6. **Proposed Header Tooltip (`desc`):**
    * **In-Game Client Phrasing as Baseline:** Base descriptions directly on authentic client tooltips (Thai strings as primary) to preserve original flavor context and terminology.
    * **Qualitative Over Quantitative:** Strip out all rank-dependent and dependency-scaled quantitative numbers (damage values, durations, tick counts, percentage bonuses) to avoid duplicating or conflicting with live UI calculation chips.
    * **Always Include Verified Geometries:** Always state exact AoE radii, projectile ranges, and cleanse areas whenever verified from decompiled targeting code (`Damage.FindAreaTarget`, `Damage.FindRecTarget`, OverlapSphere, raycasts).
@@ -123,6 +124,10 @@ Present a structured review table to the user. Every single active skill entry m
      * `renderHero()` automatically parses `**value**` into `<span class="sk-val">value</span>`, styled as **Brass Gold** (`color: var(--gold); font-weight: 600;`).
      * **No Native Browser Tooltip:** Native `title` attribute is explicitly omitted from `.sk-hero-desc` to prevent unsightly default browser tooltip popups.
    * **Highlight Utility & Hidden Mechanics:** Clearly note non-obvious behavior (cleanses, lock removals, sleep breaks, aggro wipes, absolute immunities, unlisted passive hooks).
+7. **Proposed Active Card Definition (`index.html` Schema):** Show one complete schema block before requesting approval; do not substitute prose for any field.
+   * **Identity:** `id`, `name`, `nameTha`, `class`, `icon` (max-rank icon), `maxRank`.
+   * **Complete Chip Audit:** Explicitly account for every applicable field—`cost`, `cd`/`cdWrapped`, `castTime`/`castWrapped`, `duration`/`durWrapped` (or `durationInfinite`/`hideDurationChip`), `status`, `lckProc`, `ko`/`koDep`, `dmg`/`shield`/`dmgGroups`, hit count, and clamps. State `None` for each category that is not present.
+   * **Simulation & Cross-Links:** List every dependency hook (`cdDep`, `castDep`, `durDep`, `dmgRankDep`, `dmgDep`, `koDep`, `hitCountDep`), any own-stat/summon routing, and proposed reciprocal `compatSkills` links. State `None` when absent.
 
 ---
 
@@ -150,6 +155,7 @@ Present a structured review table to the user for every passive entry:
 5. **In-Game Client Tooltip (`<Class>Skill_eng.cs:line` & `_thai.cs:line`):** Exact raw strings.
 6. **Proposed Card Definition (`index.html` Schema):**
    * **Mandatory Fields:** `id`, `name`, `nameTha`, `class`, `icon` (maxRank icon), `maxRank`, `passive: true`, `desc`.
+   * **Rendered Status Badge:** If the passive directly applies or grants a status, its proposed schema MUST include `status: { name, sLv, class }` (or a `status` array for multiple statuses); otherwise explicitly state `status: None`.
    * **Exclusion Rule (revised 2026-09-15 — was previously "MUST NEVER"):** Passive cards *may* carry `cd`, `castTime`, `cost`, `duration`, or `ko` when the passive genuinely has one (e.g. an internal proc cooldown, a real MP/SP tax) — but this is rare; the default expectation for a stat-modifier/dependency passive is still none of these. Don't add one speculatively. (The UI omits `.sk-hero-stats` when empty, collapsing the top row vertically, exactly as before.)
    * **Dynamic Highlights:** Wrap dynamic numerical/stat ranks in `**${value}**` inside `desc`.
 
@@ -170,7 +176,7 @@ Present a structured review table to the user for every passive entry:
 #### Step 4: Apply, Verify & Lint
 * Apply changes to deliverables using authentic PNG header icons (`89 50 4E 47 0D 0A 1A 0A`) for all ranks 1..maxRank.
 * Execute automated integrity test suite: `node scripts/validate_skills.js` (validates all skills, formula permutations across ranks 1..maxRank and dependencies, and icon assets).
-* **Summon & Companion Checklist:** If skills involve summons or companion moves, verify 100% adherence to [Section 7](#7-summon-mechanics-companion-movesets--summon-stat-cards) (selective stat glowing, LCK separation for damage vs duration variance, `hideDurationChip: true` where applicable, automated move cost omission) and [Section 8](#8-compatible-skills-navigation-compatskills-conventions) (`compatSkills` strictly on main skill only, Prompt Gold 14px header, 42px full-height icons).
+* **Summon & Companion Checklist:** If skills involve summons or companion moves, verify 100% adherence to [Section 7](#7-summon-mechanics-companion-movesets--summon-stat-cards) (selective stat glowing, LCK separation for damage vs duration variance, `hideDurationChip: true` where applicable, automated move cost omission) and [Section 8](#8-compatible-skills-navigation-compatskills-conventions) (bidirectional `compatSkills`, Prompt Gold 14px header, 42px full-height icons).
 * **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for skill additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via `node scripts/validate_skills.js` and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when the user explicitly requests a visual check.
 
 ---
@@ -195,6 +201,7 @@ To permanently prevent session crashes and turn interruptions:
 
 4. **Git Checkpoint Before Every Phase:**
    * Always verify a clean working tree (`git status`) or commit working states before applying edits. If any script behaves unexpectedly, revert immediately via `git checkout`.
+   * If the tree is dirty, inspect and preserve unrelated changes; do not commit or revert them.
 
 5. **Mandatory Post-Edit Verification:**
    * Immediately after any patch script runs, execute:
@@ -214,7 +221,7 @@ When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix
      - Omits `.sk-dmg-row` (Damage Formula row) when the summon cast itself deals no direct damage.
      - Toggle state (e.g. King Kaiser Lv 1..3 icon cycle, Heavy Built, Double Bot, Hidden Turret) dynamically recalculates and updates the summon's stats table.
    * **Child Moveset / Summon-Attack Cards** (`King Kaiser - Normal Attack`, `Barrel Bot - Mega Punch`, `Auto Gyro Gun - ยิงปกติ`):
-     - Displays the summon stat row with **selective glowing / stat accents**: only stats actively used by this specific move's calculations (`ATK` for damage, `LCK` for attacker damage spread `dmgAdjust`, `AGI` for cooldown if `cdWrapped`) glow with their stat accents. Inert stats are dimmed (`.sk-summon-stat-unused`).
+      - Displays the summon stat row with **selective glowing / stat accents**: only stats actively used by this specific move's calculations (`ATK` for damage, `AGI` for cooldown if `cdWrapped`) glow with their stat accents. Inert stats are dimmed (`.sk-summon-stat-unused`).
      - Enemy DEF mitigation uses target DEF/LCK (`defAdjust`), which does NOT cause the summon's DEF/LCK to glow unless the move itself scales from them.
      - Damage calculations and simulation chips MUST use the **summon's own stats** (`ownStats`, `ownStatsKaiser`, `ownStatsGyro`, `ownStatsDmgOnly`), not the player's stats.
 2. **LCK Stat Separation for Summons & Duration Variance:**
