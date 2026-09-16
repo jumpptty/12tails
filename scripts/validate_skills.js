@@ -214,27 +214,24 @@ SKILLS.forEach(sk => {
   const maxRank = sk.maxRank || 1;
 
   // Passive skill schema check
+  // Note: cd/castTime/cost/duration are allowed on a passive when it genuinely has one
+  // (e.g. an internal proc cooldown, a real MP/SP-gated active it grants) per AGENTS.md
+  // Section 5.B's revised (2026-09-15) exclusion rule -- this is rare, so authors should
+  // still default to omitting them for a plain stat-modifier/dependency passive.
   if (sk.passive) {
-    if (sk.cd !== undefined) {
-      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'cd' (found: ${sk.cd})`);
-      errorCount++;
-    }
-    if (sk.castTime !== undefined) {
-      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'castTime'`);
-      errorCount++;
-    }
-    if (sk.cost !== undefined) {
-      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'cost'`);
-      errorCount++;
-    }
-    if (sk.duration !== undefined) {
-      console.error(`[PASSIVE ERROR] ${ctx}: passive skills must not define 'duration'`);
-      errorCount++;
-    }
     if (!sk.desc) {
       console.error(`[PASSIVE ERROR] ${ctx}: passive skills must provide a descriptive 'desc'`);
       errorCount++;
     }
+  }
+
+  // dmgGroups requires a top-level dmg/atkCoeff/ko mirroring the primary group
+  // (AGENTS.md Section 4) -- omitting it makes getDmgText() return undefined,
+  // which crashes renderHero() mid-render (this happened once already, with
+  // Planet Breaker's original stub->card upgrade, 2026-09-15).
+  if (sk.dmgGroups && sk.dmg === undefined) {
+    console.error(`[DMGGROUPS ERROR] ${ctx}: dmgGroups present but no top-level 'dmg' -- this crashes renderHero() (see AGENTS.md Section 4)`);
+    errorCount++;
   }
 
   // Cast Time array check
@@ -267,6 +264,15 @@ SKILLS.forEach(sk => {
     }
     if ((sk.cost.sp || Array.isArray(sk.cost.sp)) && !['red', 'blue'].includes(sk.cost.spType)) {
       console.error(`[COST ERROR] ${ctx}: sp cost defined without valid spType ('red' | 'blue')`);
+      errorCount++;
+    }
+    // Automated summon/companion AI moves must never show a "Free" badge --
+    // they must omit cost completely (AGENTS.md Section 7.4). Real player-paid
+    // spends on a summon-attacker skill (e.g. Titanic Earth Pulse's ownStatsGadinaHP,
+    // Barrel Cannon's ownStatsDmgOnly) are unaffected since they don't set cost.free.
+    const isSummonAttacker = !!(sk.ownStats || sk.ownStatsDmgOnly || sk.ownStatsKaiser || sk.ownStatsGyro || sk.ownStatsPhoenix || sk.ownStatsGadinaHP);
+    if (isSummonAttacker && sk.cost.free === true) {
+      console.error(`[COST ERROR] ${ctx}: automated summon/companion move must omit cost completely, not show a Free badge (AGENTS.md Section 7.4)`);
       errorCount++;
     }
   }
@@ -393,6 +399,27 @@ SKILLS.forEach(sk => {
       }
     }
   }
+});
+
+// 3. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
+// reciprocated -- if A lists B, B must list A back).
+const skillById = new Map(SKILLS.map(s => [s.id, s]));
+SKILLS.forEach(sk => {
+  if (!Array.isArray(sk.compatSkills)) return;
+  const ctx = `${sk.class} > ${sk.name} (${sk.id})`;
+  sk.compatSkills.forEach(targetId => {
+    const target = skillById.get(targetId);
+    if (!target) {
+      console.error(`[COMPAT ERROR] ${ctx}: compatSkills references unknown id '${targetId}'`);
+      errorCount++;
+      return;
+    }
+    const targetCompat = Array.isArray(target.compatSkills) ? target.compatSkills : [];
+    if (!targetCompat.includes(sk.id)) {
+      console.error(`[COMPAT ERROR] ${ctx}: compatSkills -> '${targetId}' is not reciprocated ('${targetId}' does not list '${sk.id}' back)`);
+      errorCount++;
+    }
+  });
 });
 
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
