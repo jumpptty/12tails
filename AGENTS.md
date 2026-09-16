@@ -161,6 +161,12 @@ Present a structured review table to the user for every passive entry:
    * **Exclusion Rule (revised 2026-09-15 — was previously "MUST NEVER"):** Passive cards *may* carry `cd`, `castTime`, `cost`, `duration`, or `ko` when the passive genuinely has one (e.g. an internal proc cooldown, a real MP/SP tax) — but this is rare; the default expectation for a stat-modifier/dependency passive is still none of these. Don't add one speculatively. (The UI omits `.sk-hero-stats` when empty, collapsing the top row vertically, exactly as before.)
    * **Dynamic Highlights:** Wrap dynamic numerical/stat ranks in `**${value}**` inside `desc`.
 
+### 5.B.3. Finding Preservation Review (All Skill-Details Cards)
+
+* **Zero Silent Omissions:** When composing a skill card's `desc`, account for **every verified finding** from the source extraction. Put every finding that fits a card field into that field (`status`, chips, formula rows, dependency hooks, summon table, `compatSkills`, or `desc`).
+* **Required Numbered Remainder List:** Before requesting approval or applying a skill-details card, present every verified finding that does **not** fit an existing card field as a numbered list for user review. Each item must include its `file:line` citation, a concise description of the finding, and why it cannot be represented in the current schema.
+* **User Chooses Omissions:** Do not silently discard, simplify away, or decide to omit any item in that numbered list. Ask the user to choose which finding(s), if any, may be omitted; retain the rest in the proposed schema, header description, or a documented follow-up as the user directs. State `None` explicitly when no findings remain outside the card fields.
+
 > ⚠️ **Hard Gate:** Any formula, stat delta, or mechanic presented without its exact `file:line` source citation and code snippet is rejected as unverified by definition.
 
 ---
