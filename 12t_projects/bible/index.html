@@ -2034,9 +2034,9 @@
     text-overflow:ellipsis;
     word-break:break-word;
   }
-  .sk-support-lv{
-    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    margin:10px 0 0; padding:8px 12px;
+    .sk-support-lv{
+    display:flex; align-items:center; gap:9px 14px; flex-wrap:wrap;
+    margin:14px 0; padding:12px 14px 11px;
     background:var(--panel); border:1px solid var(--gold); border-radius:4px;
     font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
   }
@@ -2044,12 +2044,23 @@
     font-size:11.5px; color:var(--gold); font-weight:600; white-space:nowrap;
   }
   .sk-support-lv input[type=number]{
-    width:calc(4ch + 16px); background:rgba(12,11,9,0.85); color:#ede8df;
-    border:1px solid rgba(212,175,55,0.4); border-radius:4px; padding:4px;
-    font-size:13px; text-align:center;
+    width:4.8ch; min-width:42px; height:30px; box-sizing:border-box;
+    appearance:textfield; -moz-appearance:textfield;
+    background:rgba(12,11,9,0.85); color:#ede8df;
+    border:1px solid rgba(212,175,55,0.4); border-radius:4px; padding:3px 6px;
+    font:600 13px/1.2 'Prompt',-apple-system,"Segoe UI",sans-serif; text-align:center;
+  }
+  .sk-support-lv input[type=number]::-webkit-inner-spin-button,
+  .sk-support-lv input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
+  .sk-support-lv input[type=number]:focus{
+    outline:none; border-color:var(--gold); box-shadow:0 0 0 2px rgba(212,175,55,0.13);
   }
   .sk-support-lv-result{
-    flex-basis:100%; margin:2px 0 0; font-size:12px; line-height:1.42; color:var(--muted);
+    flex-basis:100%; margin:1px 0 0; padding-top:8px;
+    border-top:1px solid rgba(212,175,55,0.18);
+    font-size:12px; line-height:1.42; color:var(--muted);
   }
   .sk-support-lv-result .sk-val{ color:var(--gold); font-weight:600; }
   .sk-hero-desc:has(.sk-status:hover),
@@ -2325,9 +2336,9 @@
     text-overflow:ellipsis;
     word-break:break-word;
   }
-  .sk-support-lv{
-    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    margin:10px 0 0; padding:8px 12px;
+    .sk-support-lv{
+    display:flex; align-items:center; gap:9px 14px; flex-wrap:wrap;
+    margin:14px 0; padding:12px 14px 11px;
     background:var(--panel); border:1px solid var(--gold); border-radius:4px;
     font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
   }
@@ -2335,12 +2346,23 @@
     font-size:11.5px; color:var(--gold); font-weight:600; white-space:nowrap;
   }
   .sk-support-lv input[type=number]{
-    width:calc(4ch + 16px); background:rgba(12,11,9,0.85); color:#ede8df;
-    border:1px solid rgba(212,175,55,0.4); border-radius:4px; padding:4px;
-    font-size:13px; text-align:center;
+    width:4.8ch; min-width:42px; height:30px; box-sizing:border-box;
+    appearance:textfield; -moz-appearance:textfield;
+    background:rgba(12,11,9,0.85); color:#ede8df;
+    border:1px solid rgba(212,175,55,0.4); border-radius:4px; padding:3px 6px;
+    font:600 13px/1.2 'Prompt',-apple-system,"Segoe UI",sans-serif; text-align:center;
+  }
+  .sk-support-lv input[type=number]::-webkit-inner-spin-button,
+  .sk-support-lv input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
+  .sk-support-lv input[type=number]:focus{
+    outline:none; border-color:var(--gold); box-shadow:0 0 0 2px rgba(212,175,55,0.13);
   }
   .sk-support-lv-result{
-    flex-basis:100%; margin:2px 0 0; font-size:12px; line-height:1.42; color:var(--muted);
+    flex-basis:100%; margin:1px 0 0; padding-top:8px;
+    border-top:1px solid rgba(212,175,55,0.18);
+    font-size:12px; line-height:1.42; color:var(--muted);
   }
   .sk-support-lv-result .sk-val{ color:var(--gold); font-weight:600; }
   .sk-hero-desc:has(.sk-status:hover),
@@ -7908,6 +7930,8 @@ const ENEMY_MOD_IDS = ["reduceHit", "miracleDropHit", "amplifyDamage"];
 // not folded additively into damageMod or hitMod -- see finalMultiplierAdjust.
 const FINAL_MULT_MOD_IDS = ["finalMult1", "finalMult2", "finalMult3"];
 
+const COMMON_SUPPORT_SKILL_IDS = ["common_replenishment", "common_elementalBound", "common_psalmOfEnergy", "common_zephyrLore", "common_stunningGround", "common_seaAegis", "common_astralShift", "common_bloodCarnage", "common_obsidianFang", "common_assassinate", "common_mineWalker", "common_divineChannel"];
+
 const SKILLS = [
   {
     id: "bat_nAttack",
@@ -9433,6 +9457,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_replenishment"),
     supportSourceClass: "Rabbit",
     supportFormula: (num, LV) => "ฟื้นฟู HP/MP/SP/KO ให้เป้าหมายอย่างละ **" + num + "%** ของค่าสูงสุด",
     dmgNote: "ต้องมี Rabbit ในบัญชี เป้าหมาย: ally (ใช้กับตัวละครอื่น) หากบัญชีไม่มี Rabbit เลย ปุ่มนี้จะไม่ทำอะไรเลย (Debug.LogError เงียบๆ)",
@@ -9449,6 +9474,7 @@ const SKILLS = [
     cd: 600,
     cdWrapped: false,
     status: { name: "elementalBound", sLv: 9, class: "Debuff, State" },
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_elementalBound"),
     supportSourceClass: "Monkey",
     supportFormula: (num, LV) => "หยุดศัตรูในระยะ 12m รอบตัวไว้กับที่ เป็นเวลา **" + Math.floor(0.2 * num) + " วินาที**",
     dmgNote: "ต้องมี Monkey ในบัญชี ⚠️ กลไกเป็นการตรึง (moveSpeed=0 ทุกเฟรม) เหมือน Ground Lock ทุกประการ แต่ StatusData.isLockStatus(\"elementalBound\") คืนค่า false — ไม่ถูกจัดเป็นสถานะ Lock อย่างเป็นทางการ แม้กลไกจะเหมือนกัน",
@@ -9464,6 +9490,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_psalmOfEnergy"),
     supportSourceClass: "Panda",
     supportFormula: (num, LV) => "ฟื้นฟู SP ให้ตัวเอง **" + num + "** และเพื่อนในระยะ 12m สูงสุด 5 คน คนละ **" + Math.floor(num * 0.5) + "**",
     dmgNote: "ต้องมี Panda ในบัญชี เพื่อนที่ได้รับผลจำกัดสูงสุด 5 คนต่อการใช้ 1 ครั้ง",
@@ -9480,6 +9507,7 @@ const SKILLS = [
     cd: 600,
     cdWrapped: false,
     status: { name: "zephyrLore", sLv: 9, class: "Buff, State" },
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_zephyrLore"),
     supportSourceClass: "Chameleon",
     supportFormula: (num, LV) => "ล้างสถานะผิดปกติ (debuff) ทั้งหมด และเพิ่มความเร็ววิ่ง **+" + (0.08 * num).toFixed(2) + "** เป็นเวลา 12 วินาที",
     dmgNote: "ต้องมี Chameleon ในบัญชี ล้างทุก debuff ที่ไม่ใช่ system status แบบเหมารวม ไม่ใช่รายการที่เจาะจง",
@@ -9495,6 +9523,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_stunningGround"),
     supportSourceClass: "Bison",
     supportFormula: (num, LV) => "สร้างความเสียหาย **" + num + "** และ KO **" + num + "** ให้ศัตรูทุกตัวในระยะ 6m รอบตัว",
     dmgNote: "ต้องมี Bison ในบัญชี ดาเมจและ KO ใช้ค่าเดียวกัน (num) ทั้งคู่ ไม่มีสถานะติดตัว",
@@ -9511,6 +9540,7 @@ const SKILLS = [
     cd: 600,
     cdWrapped: false,
     status: { name: "seaAegis", sLv: 9, class: "Buff, State" },
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_seaAegis"),
     supportSourceClass: "Whale",
     supportFormula: (num, LV) => "ลดความเสียหายที่ได้รับลง **" + (2 * num) + "** ต่อการโดนโจมตีแต่ละครั้ง เป็นเวลา 12 วินาที",
     dmgNote: "ต้องมี Whale ในบัญชี ⚠️ เป็นการลดดาเมจแบบ flat (ลบตรงๆ ไม่ใช่ %) มีผลทั้งดาเมจตรงและดาเมจต่อเนื่อง แต่ StatusData.isShieldStatus(\"seaAegis\") คืนค่า false — ไม่ถูกจัดเป็นสถานะโล่อย่างเป็นทางการ แม้กลไกจะเป็นโล่จริง",
@@ -9527,6 +9557,7 @@ const SKILLS = [
     cd: 600,
     cdWrapped: false,
     status: { name: "astralShift", sLv: 9, class: "None (unclassified in StatusData.cs)" },
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_astralShift"),
     supportSourceClass: "Penguin",
     supportFormula: (num, LV) => "ฟื้นฟู MP **" + Math.floor(3 * num) + "** และเพิ่มค่า TAL **+" + num + "** เป็นเวลา 12 วินาที",
     dmgNote: "ต้องมี Penguin ในบัญชี ⚠️ สถานะนี้ไม่มีอยู่ใน StatusData.cs เลย (isBuffStatus/isDebuffStatus/isStateStatus ฯลฯ คืนค่า false ทั้งหมด) ทั้งที่กลไกจริงเพิ่ม TAL ให้ ถือเป็นบัฟที่ไม่ถูกจัดหมวดหมู่อย่างเป็นทางการ",
@@ -9543,6 +9574,7 @@ const SKILLS = [
     cd: 600,
     cdWrapped: false,
     status: { name: "bloodCarnage", sLv: 9, class: "Debuff, State" },
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_bloodCarnage"),
     supportSourceClass: "Bat",
     supportFormula: (num, LV) => "สาปเป้าหมายเป็นเวลา 12 วินาที โดนความเสียหายประมาณทุก 2 วินาที ครั้งละ **" + num + "** และดูดเลือดคืนให้ตัวเอง **" + Math.floor(0.5 * num) + "** ต่อครั้ง",
     dmgNote: "ต้องมี Bat ในบัญชี (ตัวเดียวในกลุ่มนี้ที่ตัวเองเป็นทั้งผู้ให้และผู้รับ Bat class) เป้าหมาย: enemy",
@@ -9558,6 +9590,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_obsidianFang"),
     supportSourceClass: "Wolf",
     supportFormula: (num, LV) => "โจมตีศัตรูในระยะ 24m สูงสุด 6 จังหวะ (1 จังหวะต่อเป้าหมาย) ความเสียหายเพิ่มขึ้นทีละจังหวะจาก **" + Math.floor(0.5 * num * 5) + "** ถึง **" + Math.floor(0.5 * num * 10) + "**",
     dmgNote: "ต้องมี Wolf ในบัญชี สูตรต่อจังหวะที่ i (0-5): floor(0.5×num×(5+i)) — เพิ่มขึ้นทีละ 0.5×num ต่อจังหวะ ไม่ใช่ตัวคูณ",
@@ -9573,6 +9606,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_assassinate"),
     supportSourceClass: "Cat",
     supportFormula: (num, LV) => "สร้างความเสียหายให้เป้าหมายตามระยะใกล้-ไกล สูงสุด **" + Math.floor(0.5 * num * 40) + "** เมื่ออยู่ประชิดตัว ต่ำสุด **" + Math.floor(0.5 * num * 10) + "** เมื่ออยู่ไกล (ไม่เกิน 50% ของ HP สูงสุดเป้าหมาย)",
     dmgNote: "ต้องมี Cat ในบัญชี สูตร: min(0.5×num×clamp(40-ระยะห่าง,10,40), 0.5×HPสูงสุดเป้าหมาย) — ยิ่งใกล้ยิ่งแรง มีเพดานกันวันช็อต",
@@ -9588,6 +9622,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_mineWalker"),
     supportSourceClass: "Mole",
     supportFormula: (num, LV) => "สร้างสนามระเบิดรอบตัวระยะ 4m นาน ~12 วินาที (24 ครั้ง ทุก 0.5 วินาที) ความเสียหายสูงสุด **" + Math.floor(num * 0.04 * 40) + "** ต่อครั้งเมื่ออยู่ตรงกลาง พร้อม KO 1 ต่อครั้ง",
     dmgNote: "ต้องมี Mole ในบัญชี สนามตามตัวผู้ใช้ (re-center ทุกครั้ง ไม่ใช่ปักตำแหน่งตายตัว) ดาเมจต่อครั้ง: floor(num×0.04×(40-ระยะห่างยกกำลังสอง))",
@@ -9603,6 +9638,7 @@ const SKILLS = [
     cost: { mp: 10 },
     cd: 600,
     cdWrapped: false,
+    hideCdChip: true, supportCdInDesc: true, compatSkills: COMMON_SUPPORT_SKILL_IDS.filter(skillId => skillId !== "common_divineChannel"),
     supportSourceClass: "Sheep",
     supportFormula: (num, LV) => "ฟื้นฟู HP ให้ตัวเอง **" + Math.floor(8 * num) + "** และเพื่อนในระยะ 12m สูงสุด 5 คน คนละ **" + Math.floor(4 * num) + "**",
     dmgNote: "ต้องมี Sheep ในบัญชี เพื่อนที่ได้รับผลจำกัดสูงสุด 5 คน ได้รับครึ่งหนึ่งของที่ตัวเองได้",
@@ -11982,11 +12018,12 @@ function mountSkillCooldownLookup(root){
     const LV = parseFloat(lvEl.value) || 0;
     let supportLvBlock = "";
     if (activeSelected.supportSourceClass) {
-      let supNum = Math.min(Math.max(supportAccountLv, 0), 60);
+      supportAccountLv = Math.min(Math.max(Number(supportAccountLv) || 1, 1), 60);
+      let supNum = supportAccountLv;
       if (supNum > LV) supNum = Math.floor(0.5 * (supNum + LV));
       let supResult = activeSelected.supportFormula ? activeSelected.supportFormula(supNum, LV) : "";
       supResult = supResult.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>');
-      supportLvBlock = '<div class="sk-support-lv"><label for="supportLvInput">เลเวล ' + activeSelected.supportSourceClass + ' ในบัญชี</label><input type="number" id="supportLvInput" data-role="supportLv" min="0" max="60" value="' + supportAccountLv + '"><p class="sk-support-lv-result">' + supResult + '</p></div>';
+      supportLvBlock = '<div class="sk-support-lv"><label for="supportLvInput">เลเวล ' + activeSelected.supportSourceClass + ' ในบัญชี</label><input type="number" id="supportLvInput" data-role="supportLv" min="1" max="60" step="1" inputmode="numeric" value="' + supportAccountLv + '"><p class="sk-support-lv-result">' + supResult + '</p></div>';
     }
     // ownStats (Barrel Bot moveset pilot, 2026-08-20): AGI/LCK/ATK/TAL are
     // normally the player's own inputs, correct for every skill except one
@@ -12149,7 +12186,12 @@ function mountSkillCooldownLookup(root){
     const isUpgradedClass = UPGRADED_CLASSES.has(selected.class);
     const heroDep = activeSelected.descDep || activeSelected.dep || activeSelected.dmgRankDep || activeSelected.dmgDep || activeSelected.cdDep;
     const heroDepRank = heroDep ? getDepRank(heroDep) : null;
-    const descRaw = typeof activeSelected.desc === "function" ? activeSelected.desc(rank, heroDepRank) : activeSelected.desc;
+    let descRaw = typeof activeSelected.desc === "function" ? activeSelected.desc(rank, heroDepRank) : activeSelected.desc;
+    if (activeSelected.supportCdInDesc && activeSelected.cd !== undefined) {
+      const supportCd = applyRevisedArt([resolveRank(activeSelected.cd, rank)], revisedArtOn, selected.revisedArtExempt)[0];
+      const cooldownNote = "คูลดาวน์ **" + fmtOne(supportCd) + " วินาที**" + (revisedArtOn ? " (Revised Art)" : "");
+      descRaw = (descRaw ? String(descRaw) + "<br>" : "") + cooldownNote;
+    }
     const descStr = descRaw ? String(descRaw) : "";
     const descClean = descStr.replace(/\*\*([^*]+)\*\*/g, "$1");
     const descFormatted = descStr.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>');
@@ -12175,7 +12217,7 @@ function mountSkillCooldownLookup(root){
     ` : "";
     const heroDescHtml = (descStr || statusBadgeHtml || descDepToggle) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}">${statusBadgeHtml}${descFormatted}${descDepToggle}</div>` : "";
     let cdBlock = "";
-    if (activeSelected.cd !== undefined){
+    if (activeSelected.cd !== undefined && !selected.hideCdChip){
       if (selected.phoenixFireballCd){
         // Phoenix.cs:2562–2573: Rapid Fire uses Monkey INT, not AGI/LCK.
         const cdDep = selected.cdDep;
@@ -13420,9 +13462,21 @@ function mountSkillCooldownLookup(root){
 
     const supportLvInput = displayEl.querySelector('[data-role="supportLv"]');
     if (supportLvInput) {
-      supportLvInput.addEventListener("input", () => {
-        supportAccountLv = parseFloat(supportLvInput.value) || 0;
-        renderHero();
+      const updateSupportResult = () => {
+        const typed = Number(supportLvInput.value);
+        supportAccountLv = Number.isFinite(typed) ? Math.min(Math.max(typed, 1), 60) : 1;
+        const currentLV = parseFloat(lvEl.value) || 0;
+        let supNum = supportAccountLv;
+        if (supNum > currentLV) supNum = Math.floor(0.5 * (supNum + currentLV));
+        let result = activeSelected.supportFormula ? activeSelected.supportFormula(supNum, currentLV) : "";
+        result = result.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>');
+        const resultEl = displayEl.querySelector('.sk-support-lv-result');
+        if (resultEl) resultEl.innerHTML = result;
+      };
+      supportLvInput.addEventListener("input", updateSupportResult);
+      supportLvInput.addEventListener("change", () => {
+        updateSupportResult();
+        supportLvInput.value = supportAccountLv;
       });
     }
 
