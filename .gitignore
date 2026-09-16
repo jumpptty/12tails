@@ -10,3 +10,6 @@ DecompiledSource/
 .claude/settings.local.json
 node_modules/
 *.lnk
+
+# Local donation artwork
+Donate.jpg
