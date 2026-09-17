@@ -83,6 +83,8 @@ const exposeInjection = `
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
+  window._getRenderedHeroHtml = () => displayEl.innerHTML;
+  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -441,7 +443,47 @@ SKILLS.forEach(sk => {
   }
 });
 
-// 3. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
+// 3. Gaos child moves must render entirely from Gaos's own CharacterControl
+// stats. The LCK-floor check above exercises calcRangeFor()/rollOneHit(), but
+// the visible aggregate LCK chip and simulation are assembled separately in
+// renderHero(). Compare the rendered hero with deliberately changed Monkey
+// attack/talent/luck inputs so a missing renderHero own-stat override cannot
+// pass unnoticed again.
+let checkedGaosHeroRouting = 0;
+SKILLS.filter(sk => sk.ownStatsGaos && sk.id !== "monkey_summonGaos").forEach(sk => {
+  const ctx = `${sk.class} > ${sk.name} (${sk.id})`;
+  for (let r = 1; r <= (sk.maxRank || 1); r++) {
+    try {
+      const { atk, tal, lck } = sandbox._statInputs;
+      sandbox._skillRanks[sk.id] = r;
+      atk.value = DATA_ROLE_DEFAULTS.atk;
+      tal.value = DATA_ROLE_DEFAULTS.tal;
+      lck.value = DATA_ROLE_DEFAULTS.lck;
+      sandbox._selectSkill(sk);
+      const gaosBaseline = sandbox._getRenderedHeroHtml();
+
+      atk.value = "7";
+      tal.value = "13";
+      lck.value = "19";
+      sandbox._selectSkill(sk);
+      const monkeyMutated = sandbox._getRenderedHeroHtml();
+
+      atk.value = DATA_ROLE_DEFAULTS.atk;
+      tal.value = DATA_ROLE_DEFAULTS.tal;
+      lck.value = DATA_ROLE_DEFAULTS.lck;
+      checkedGaosHeroRouting++;
+      if (gaosBaseline !== monkeyMutated) {
+        console.error(`[GAOS OWN-STATS ERROR] ${ctx} Rank ${r}: rendered formula/simulation changed when Monkey ATK/TAL/LCK changed`);
+        errorCount++;
+      }
+    } catch (e) {
+      console.error(`[GAOS OWN-STATS EXCEPTION] ${ctx} Rank ${r}: ${e.message}`);
+      errorCount++;
+    }
+  }
+});
+
+// 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
 SKILLS.forEach(sk => {
@@ -464,9 +506,10 @@ SKILLS.forEach(sk => {
 
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
+console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
-  console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
+  console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
 } else {
   console.error(`FAILED: Found ${errorCount} error(s). Please fix before committing.`);
   process.exit(1);
