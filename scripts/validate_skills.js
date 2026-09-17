@@ -504,6 +504,32 @@ SKILLS.forEach(sk => {
   });
 });
 
+// 5. Report standalone dep objects with no matching SKILLS card yet (AGENTS.md
+// Section 5.C Step 3.5's "close the loop" backlog). Informational only -- never
+// fails the build. A dep is "resolved" once some skill's own id matches
+// "<classPrefix>_<dep.id>" (every observed dep so far lives in the same class
+// as the skill(s) that reference it).
+const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep"];
+const seenDeps = new Map(); // dep.id -> { label, resolved, referencedBy: [] }
+SKILLS.forEach(sk => {
+  const classPrefix = sk.class.toLowerCase() + "_";
+  DEP_FIELDS.forEach(field => {
+    const dep = sk[field];
+    if (!dep || !dep.id) return;
+    if (!seenDeps.has(dep.id)) {
+      seenDeps.set(dep.id, { label: dep.label || dep.id, resolved: skillById.has(classPrefix + dep.id), referencedBy: [] });
+    }
+    seenDeps.get(dep.id).referencedBy.push(sk.id);
+  });
+});
+const danglingDeps = [...seenDeps.entries()].filter(([, v]) => !v.resolved);
+if (danglingDeps.length > 0) {
+  console.log(`\n[DEP BACKLOG] ${danglingDeps.length} standalone dep(s) with no matching SKILLS card yet (AGENTS.md Step 3.5):`);
+  danglingDeps.forEach(([id, v]) => {
+    console.log(`  - ${v.label} (dep id "${id}"), referenced by: ${v.referencedBy.join(", ")}`);
+  });
+}
+
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
