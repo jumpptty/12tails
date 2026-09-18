@@ -79,6 +79,8 @@ typeLevelStat[i] = floor( (lv - 1) * (baseStat[i] + 3) * 0.083 )
 ```
 So each stat grows ~`(base+3)/12` per level (0.083 ≈ 1/12). Higher base stats grow faster.
 
+> **Server Difference:** Original code has no level cap on this formula (scales continuously up to Lv 100+). In Tales of Tail (ToT), passive stat growth from level is capped at Lv 95 (`min(lv, 95)` — levels 96–100 grant no additional passive level stats).
+
 **Character creation** `getNewRandomStat` (CharacterData.cs:538–624):
 1. Start with class base stats `getTypeStat(mType)` (CharacterData.cs:547).
 2. Add `+1` to 4 randomly chosen stats with replacement (CharacterData.cs:553–570).
