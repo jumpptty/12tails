@@ -1,12 +1,13 @@
 ---
 description: Research and implement a 12 Tails Online skill into the Bible skill-detail tool. Usage: /sd <Class> <Skill Name>
+argument-hint: <Class> <Skill Name>
 ---
 
 # Skill Detail Research & Implementation Workflow (/sd)
 
-When this command is invoked with `/sd <Class> <Skill Name>` (or `/skill <Class> <Skill Name>`):
+This command was invoked with `/sd $ARGUMENTS`.
 
-Execute the full **Skill Verification & Quality Assurance Pipeline** defined in [12t_projects/bible/GEMINI.md §3](12t_projects/bible/GEMINI.md#3-skill-verification--quality-assurance-pipeline):
+Execute the full **Skill Verification & Quality Assurance Pipeline** defined in `AGENTS.md` (Section 5) and `12t_projects/bible/GEMINI.md`:
 
 ---
 

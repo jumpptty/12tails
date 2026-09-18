@@ -1,6 +1,6 @@
 # Bible Deliverable Guidelines (`12t_projects/bible/`)
 
-This document contains mandatory guidelines, UI conventions, card schemas, and file-handling safety rules specifically for the **Bible multi-tool deliverable** (`12t_projects/bible/index.html`).
+This document contains mandatory guidelines, UI conventions, card schemas, verification pipelines, and file-handling safety rules specifically for the **Bible multi-tool deliverable** (`12t_projects/bible/index.html`).
 
 ---
 
@@ -52,7 +52,73 @@ To permanently prevent session crashes and turn interruptions:
 
 ---
 
-## 3. Skill Card Schema & Authoring Standards
+## 3. Skill Verification & Quality Assurance Pipeline
+
+Every skill authoring, formula update, or tooltip review must strictly follow this linear execution pipeline:
+
+### 3.A. Active Skill Pipeline
+
+#### Step A1: Pre-Flight Active Source Extraction (Zero Assumptions)
+* **Never guess or use generic RPG tropes.**
+* Run a temporary scratch script (in `<appDataDir>/brain/<conversation-id>/scratch/`) or `view_file` to trace the full lifecycle across:
+  0. **Cost/Mode/Req Table:** Run `python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs` for every skill's MP/SP/reqLv before reading `getSkill()`'s obfuscated fallthrough chain by eye. SP field sign indicates type (negative = red/consumed, positive = blue/threshold gate, `0` = no SP cost).
+  1. **Cast Dispatch:** `<Class>.cs` (`RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust` wrappers, per-rank arrays).
+  2. **Execution & Companion Logic:** `<Class>_<companion>.cs` (multi-hit loops, secondary triggers, collision handlers).
+  3. **Status Effect Tracing (Name, Level, and Classification):**
+     * **Status Name (`sType`) & ID (`nCode`):** Exact string and integer code from `StatusData.cs`.
+     * **Status Level (`sLv`):** Exact level passed or calculated per rank.
+     * **Status Classification (via `StatusData.cs`, see [12Tails-Mechanics-Reference.md §4.2](../../12t_reference/12Tails-Mechanics-Reference.md#42-status-classification-cleanse-system-statusdatacs)):** Verify `isBuffStatus`, `isDebuffStatus`, `isStateStatus`, `isMagicalStatus`, `isPhysicalStatus`, `isLockStatus`, `isShieldStatus`.
+     * **Debuff Duration Contesting:** Any status calculated via `Damage.getDebuff(...)` requires `durWrapped: true` and `durContested: true`. For `Damage.getDebuffInvert(...)`, declare `durContestedInverted: true`.
+  4. **Multi-Rank Icon Completeness:** For `maxRank > 1`, inspect and extract every rank variant icon (`<skill>1`..`<skill><maxRank>`) from `RippedAssets/`. Zero placeholders.
+  5. **In-Game Tooltips:** Cite raw strings from `<Class>Skill_eng.cs` & `<Class>Skill_thai.cs`.
+  6. **Passive Dependencies:** Trace all `hasSkill(ID)` / `get<Passive>Lv()` hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
+  7. **Summons & Companions:** If the skill spawns an entity or commands a companion, adhere strictly to [Section 5](#5-summon-mechanics-companion-movesets--summon-stat-cards).
+
+#### Step A2: Active Observable Proof Review Table
+Present a structured review table to the user including:
+1. **Identity Mapping:** Internal source key, user-facing name (EN & TH), planned ID, class, max rank.
+2. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` snippets.
+3. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion):** Exact logic modifying stats, damage, or statuses.
+4. **Status Profile:** Name (`sType`), Numeric ID (`nCode`), `sLv`, and full boolean classification breakdown.
+5. **Client Tooltips:** Exact strings cited from `*Skill_thai.cs` and `*Skill_eng.cs`.
+6. **Proposed Header Tooltip (`desc`):** Authentic client phrasing as baseline, qualitative over quantitative, dynamic highlights with `**bold**`, clear mention of geometries and cleanse thresholds.
+7. **Proposed Card Schema:** Complete deliverable card definition (see [Section 4](#4-skill-card-schema--authoring-standards)).
+
+---
+
+### 3.B. Passive Skill Pipeline
+
+#### Step B1: Pre-Flight Passive Source Extraction (Zero Assumptions)
+* Systematically scan and trace across the **5 Passive Hook Categories**:
+  1. **Stat Alteration Hook:** Modifies base or derived attributes (`CharacterControl.getTypeStat`, `calTotalStat`, `calHp`, `calMp`, `calAtk`, `calDef`, `calSpeed`).
+  2. **Active Skill Dependency Hook:** Modifies cooldown, cast time, MP/SP consumption, hit count, or projectile patterns.
+  3. **Status Application / Proc Hook:** Grants on-hit effects, debuff chances, or modifies status levels in `AttackHit`, `MagicHit`, or `mod`.
+  4. **AI / Companion Hook:** Modifies summon pet stats or AI behaviors (e.g. `HeavyBuilt`, `SynchroMole`, `HiddenTurret`).
+  5. **Attack Augmentation Hook:** Modifies normal attack combos or charge attack behaviors (`nAttack`, `cAttack`).
+* **Multi-Rank Icon Completeness:** Verify all rank variant icons from `RippedAssets/`.
+* **Cross-Linking Target Audit:** Identify and list every active skill altered by this passive.
+
+#### Step B2: Passive Observable Proof Review Table
+Present a structured review table including:
+1. **Hook & Logic Excerpt (`file:line`):** Exact source line showing `hasSkill(...)` / `get<Name>Lv()` check and its execution branch.
+2. **Mechanics & Derivation:** Precise arithmetic for stat additions, timer scaling, proc chances, or level calculations.
+3. **Cross-Linked Active Skills & Dependency Mapping:** List all affected active skills and proposed dependency toggles.
+4. **Status Profile:** Status details if granted/applied.
+5. **Client Tooltips:** Exact raw strings from client files.
+6. **Proposed Card Definition:** Schema block ready for `index.html` (see [Section 4](#4-skill-card-schema--authoring-standards)).
+
+---
+
+### 3.C. Shared Gates, Review & Verification
+
+1. **Strict Single-Class User Gate:** Process strictly one class at a time and wait for explicit user approval before writing changes.
+2. **Close the SkillDep Loop:** When a skill introduces a dependency on another skill that has no card yet, proactively surface those related skills to the user to implement next.
+3. **Zero Silent Omissions & Numbered Remainder List:** Account for every verified finding in card fields or `desc`. Any verified finding that does not fit an existing field must be presented as a numbered remainder list for the user to review and decide upon.
+4. **Validation & Integrity Pass:** After patching via out-of-process scratch scripts, run `node scripts/validate_skills.js` to ensure 100% integrity pass before committing.
+
+---
+
+## 4. Skill Card Schema & Authoring Standards
 
 ### Proposed Active Card Schema (`SKILLS` Object)
 ```javascript
@@ -95,7 +161,7 @@ To permanently prevent session crashes and turn interruptions:
 
 ---
 
-## 4. Summon Mechanics, Companion Movesets & Summon Stat Cards
+## 5. Summon Mechanics, Companion Movesets & Summon Stat Cards
 
 When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, etc.):
 
@@ -119,7 +185,7 @@ When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix
 
 ---
 
-## 5. Compatible Skills Navigation (`compatSkills`) Conventions
+## 6. Compatible Skills Navigation (`compatSkills`) Conventions
 
 1. **Bidirectional Policy:** Every `compatSkills` edge must be reciprocated. If skill A lists skill B, skill B's own `compatSkills` must list A back. Sibling-to-sibling mesh links are allowed where beneficial for player navigation.
 2. **Header & Typography:** Header is strictly `<p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>` (Google Fonts **Prompt**, Brass Gold `14px`). Redundant badges (`LINK`, `MASS CAST`, `MOVES`) are prohibited.
@@ -134,7 +200,7 @@ When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix
 
 ---
 
-## 6. Player Stat Input Highlighting (Stat Signature Accents)
+## 7. Player Stat Input Highlighting (Stat Signature Accents)
 
 Controls the highlighting of the player's global stat inputs (`.sk-controls`: ATK/DEF/TAL/AGI/VIT/CHA/INT/LCK/CHAR LV) when the selected skill's chips read that input:
 

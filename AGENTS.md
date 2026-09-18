@@ -52,18 +52,7 @@ When reading `.cs` files in `DecompiledSource/`:
 
 ---
 
-## 4. Universal Deliverable Conventions
-
-* **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server.
-* **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for data additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via automated test scripts (`node scripts/validate_skills.js`) and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when explicitly requested by the user.
-* **Sub-Project Guidelines:** For project-specific UI standards, schemas, and design systems, refer directly to that deliverable's local guideline document:
-  * **Bible Hub (`12t_projects/bible/`)**: See [12t_projects/bible/GEMINI.md](12t_projects/bible/GEMINI.md) for the "Ledger" design system, `.sk-hero-desc` container, card schema, summon mechanics, `compatSkills`, stat glow tokens, and the 6.4MB large-file patching protocol.
-
----
-
-## 5. Skill Verification & Quality Assurance Pipeline
-
-Every skill authoring, formula update, or tooltip review must strictly follow this linear execution pipeline:
+## 4. Mechanics Reference Documentation Protocol
 
 **Mandatory Reference Review First:** Before starting any decompiled source tracing or deep-dive research, the agent MUST read `12t_reference/12Tails-Mechanics-Reference.md` (and the corresponding `*-skill-reference.md` / `*-skill-damage-reference.md`) to check if the global mechanic, formula, stat adjuster, or damage pipeline has already been verified and documented. Never spend turns re-researching solved mechanics (such as `hitMod`, `defAdjust`, `chaAdjust`, derived stats, or class growth tables).
 
@@ -76,62 +65,9 @@ Every skill authoring, formula update, or tooltip review must strictly follow th
 
 ---
 
-### 5.A. Active Skill Pipeline
+## 5. Universal Deliverable Conventions & Sub-Project Pointers
 
-#### Step A1: Pre-Flight Active Source Extraction (Zero Assumptions)
-* **Never guess or use generic RPG tropes.**
-* Run a temporary scratch script (in `<appDataDir>/brain/<conversation-id>/scratch/`) or `view_file` to trace the full lifecycle across:
-  0. **Cost/Mode/Req Table:** Run `python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs` for every skill's MP/SP/reqLv before reading `getSkill()`'s obfuscated fallthrough chain by eye. SP field sign indicates type (negative = red/consumed, positive = blue/threshold gate, `0` = no SP cost).
-  1. **Cast Dispatch:** `<Class>.cs` (`RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust` wrappers, per-rank arrays).
-  2. **Execution & Companion Logic:** `<Class>_<companion>.cs` (multi-hit loops, secondary triggers, collision handlers).
-  3. **Status Effect Tracing (Name, Level, and Classification):**
-     * **Status Name (`sType`) & ID (`nCode`):** Exact string and integer code from `StatusData.cs`.
-     * **Status Level (`sLv`):** Exact level passed or calculated per rank.
-     * **Status Classification (via `StatusData.cs`, see [12Tails-Mechanics-Reference.md §4.2](12t_reference/12Tails-Mechanics-Reference.md#42-status-classification--cleanse-system-statusdatacs)):** Verify `isBuffStatus`, `isDebuffStatus`, `isStateStatus`, `isMagicalStatus`, `isPhysicalStatus`, `isLockStatus`, `isShieldStatus`.
-     * **Debuff Duration Contesting:** Any status calculated via `Damage.getDebuff(...)` requires `durWrapped: true` and `durContested: true`. For `Damage.getDebuffInvert(...)`, declare `durContestedInverted: true`.
-  4. **Multi-Rank Icon Completeness:** For `maxRank > 1`, inspect and extract every rank variant icon (`<skill>1`..`<skill><maxRank>`) from `RippedAssets/`. Zero placeholders.
-  5. **In-Game Tooltips:** Cite raw strings from `<Class>Skill_eng.cs` & `<Class>Skill_thai.cs`.
-  6. **Passive Dependencies:** Trace all `hasSkill(ID)` / `get<Passive>Lv()` hooks (`cdDep`, `castDep`, `dmgRankDep`, `durDep`, `koDep`).
-  7. **Summons & Companions:** If the skill spawns an entity or commands a companion, adhere strictly to [12t_projects/bible/GEMINI.md §4](12t_projects/bible/GEMINI.md#4-summon-mechanics-companion-movesets--summon-stat-cards) and [12Tails-Mechanics-Reference.md §4.3](12t_reference/12Tails-Mechanics-Reference.md#43-summon--companion-entity-mechanics).
-
-#### Step A2: Active Observable Proof Review Table
-Present a structured review table to the user including:
-1. **Identity Mapping:** Internal source key, user-facing name (EN & TH), planned ID, class, max rank.
-2. **Cast Dispatch Excerpt (`<Class>.cs:line`):** Exact `addTimeOut`, `DisplayCastBar`, and `RPC_<skill>` snippets.
-3. **Execution / Status Delta Excerpt (`CharacterControl.cs:line` or Companion):** Exact logic modifying stats, damage, or statuses.
-4. **Status Profile:** Name (`sType`), Numeric ID (`nCode`), `sLv`, and full boolean classification breakdown.
-5. **Client Tooltips:** Exact strings cited from `*Skill_thai.cs` and `*Skill_eng.cs`.
-6. **Proposed Header Tooltip (`desc`):** Authentic client phrasing as baseline, qualitative over quantitative, dynamic highlights with `**bold**`, clear mention of geometries and cleanse thresholds.
-7. **Proposed Card Schema:** Complete deliverable card definition (see [12t_projects/bible/GEMINI.md §3](12t_projects/bible/GEMINI.md#3-skill-card-schema--authoring-standards)).
-
----
-
-### 5.B. Passive Skill Pipeline
-
-#### Step B1: Pre-Flight Passive Source Extraction (Zero Assumptions)
-* Systematically scan and trace across the **5 Passive Hook Categories**:
-  1. **Stat Alteration Hook:** Modifies base or derived attributes (`CharacterControl.getTypeStat`, `calTotalStat`, `calHp`, `calMp`, `calAtk`, `calDef`, `calSpeed`).
-  2. **Active Skill Dependency Hook:** Modifies cooldown, cast time, MP/SP consumption, hit count, or projectile patterns.
-  3. **Status Application / Proc Hook:** Grants on-hit effects, debuff chances, or modifies status levels in `AttackHit`, `MagicHit`, or `mod`.
-  4. **AI / Companion Hook:** Modifies summon pet stats or AI behaviors (e.g. `HeavyBuilt`, `SynchroMole`, `HiddenTurret`).
-  5. **Attack Augmentation Hook:** Modifies normal attack combos or charge attack behaviors (`nAttack`, `cAttack`).
-* **Multi-Rank Icon Completeness:** Verify all rank variant icons from `RippedAssets/`.
-* **Cross-Linking Target Audit:** Identify and list every active skill altered by this passive.
-
-#### Step B2: Passive Observable Proof Review Table
-Present a structured review table including:
-1. **Hook & Logic Excerpt (`file:line`):** Exact source line showing `hasSkill(...)` / `get<Name>Lv()` check and its execution branch.
-2. **Mechanics & Derivation:** Precise arithmetic for stat additions, timer scaling, proc chances, or level calculations.
-3. **Cross-Linked Active Skills & Dependency Mapping:** List all affected active skills and proposed dependency toggles.
-4. **Status Profile:** Status details if granted/applied.
-5. **Client Tooltips:** Exact raw strings from client files.
-6. **Proposed Card Definition:** Schema block ready for `index.html` (see [12t_projects/bible/GEMINI.md §3](12t_projects/bible/GEMINI.md#3-skill-card-schema--authoring-standards)).
-
----
-
-### 5.C. Shared Gates, Review & Verification
-
-1. **Strict Single-Class User Gate:** Process strictly one class at a time and wait for explicit user approval before writing changes.
-2. **Close the SkillDep Loop:** When a skill introduces a dependency on another skill that has no card yet, proactively surface those related skills to the user to implement next.
-3. **Zero Silent Omissions & Numbered Remainder List:** Account for every verified finding in card fields or `desc`. Any verified finding that does not fit an existing field must be presented as a numbered remainder list for the user to review and decide upon.
-4. **Validation & Integrity Pass:** After patching via out-of-process scratch scripts (see [12t_projects/bible/GEMINI.md §1](12t_projects/bible/GEMINI.md#1-large-file-handling--crash-prevention-protocol-64-mb)), run `node scripts/validate_skills.js` to ensure 100% integrity pass before committing.
+* **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server.
+* **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for data additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via automated test scripts (`node scripts/validate_skills.js`) and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when explicitly requested by the user.
+* **Sub-Project Guidelines:** For project-specific UI standards, verification pipelines, schemas, and design systems, refer directly to that deliverable's local guideline document:
+  * **Bible Hub (`12t_projects/bible/`)**: See [12t_projects/bible/GEMINI.md](12t_projects/bible/GEMINI.md) for the "Ledger" design system, skill verification & QA pipeline, review table standards, card schemas, summon mechanics, `compatSkills`, stat glow tokens, and the 6.4MB large-file patching protocol.
