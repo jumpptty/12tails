@@ -64,6 +64,31 @@ console.log(trackedTreeDirty
   ? `CHANGELOG PENDING: '${changelogSubject}' is prepared for the next commit.`
   : `CHANGELOG CURRENT: '${changelogSubject}' matches HEAD.`);
 
+// Soft reminder (non-blocking, unlike the CHANGELOG gate above): index.html
+// changing without GEMINI.md changing alongside it isn't necessarily wrong --
+// most edits (desc text, a new card following existing patterns) don't touch
+// any documented convention -- but it's exactly the case that let the
+// Status Keyword Rendering section silently drift out of date behind the
+// real implementation earlier in this project's history. This only nudges;
+// it never exits non-zero. Checks the working tree diff when dirty, or the
+// most recent commit's own diff when clean, so it fires at the same two
+// checkpoints as the CHANGELOG gate (before commit, before push).
+try {
+  const repoRoot = path.resolve(__dirname, '..');
+  const changedFiles = trackedTreeDirty
+    ? execFileSync('git', ['diff', '--name-only', 'HEAD', '--'], { cwd: repoRoot, encoding: 'utf8' })
+    : execFileSync('git', ['diff', '--name-only', 'HEAD~1', 'HEAD', '--'], { cwd: repoRoot, encoding: 'utf8' });
+  const files = changedFiles.split('\n').filter(Boolean);
+  const touchedIndex = files.some(f => f.endsWith('12t_projects/bible/index.html'));
+  const touchedGemini = files.some(f => f.endsWith('12t_projects/bible/GEMINI.md'));
+  if (touchedIndex && !touchedGemini) {
+    console.log(`[GEMINI.md REMINDER] index.html changed without GEMINI.md changing in the same ${trackedTreeDirty ? 'working tree diff' : 'commit'} -- if this introduced or changed a convention (new desc markdown, a new schema field, a new chip/layout mechanism), document it there before ${trackedTreeDirty ? 'committing' : 'pushing'}. If it's just desc text or a new card following existing patterns, no action needed.`);
+  }
+} catch (error) {
+  // Best-effort only (e.g. HEAD~1 doesn't exist yet on a repo's first commit) --
+  // never block validation over this.
+}
+
 // Extract script content
 const scriptStart = html.indexOf('<script>');
 const scriptEnd = html.lastIndexOf('</script>');
