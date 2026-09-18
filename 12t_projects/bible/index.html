@@ -8479,7 +8479,7 @@ const SKILLS = [
     "bat_shatteringDream",
     "bat_autoMass"
   ] },
-  { id:"bat_phantomBane", name:"Phantom Bane", class:"Bat", icon:"bat_phantomBane4", maxRank:4, cost:{mp:[10,13,16,19]}, castTime:[2,2.5,3,3.5], castWrapped:true, cd:30, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:12, durWrapped:true, durContested:true, durPostAdd:(depRank)=>(getDepRank(BAT_DEMON_BANE_DEP)?6:0), hitCountDuration:2, dmg:(rank)=>{ const cLv = rank + (getDepRank(BAT_DEMON_BANE_DEP)?1:0) + (getDepRank(BAT_SHAME_DEP)?1:0); return "6×" + cLv + "+3"; }, effectDamage:true, ko:"0", dep:BAT_DEMON_BANE_DEP, dmgRankDep:BAT_SHAME_DEP, status:{ name:"phantomBane", sLv:(rank)=>rank+(getDepRank(BAT_DEMON_BANE_DEP)?1:0)+(getDepRank(BAT_SHAME_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const db = getDepRank(BAT_DEMON_BANE_DEP); const shame = getDepRank(BAT_SHAME_DEP); const cLv = rank + (db?1:0) + (shame?1:0); const dmg = 6 * cLv + 3; const line1 = shame ? ("เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **" + dmg + "** ทุก **2s**") : ("สาปเป้าหมาย ทำดาเมจม่วง **" + dmg + "** ทุก **2s**"); const line2 = "**Demon Bane:** เพิ่มระดับคำสาป **+1 เลเวล** และขยายเวลา **+6s**"; return line1 + "<br>" + line2; }, revisedArtExempt:false, compatSkills:["bat_massCast","bat_shadowMastery","bat_demonBane","bat_shame"] },
+  { id:"bat_phantomBane", name:"Phantom Bane", class:"Bat", icon:"bat_phantomBane4", maxRank:4, cost:{mp:[10,13,16,19]}, castTime:[2,2.5,3,3.5], castWrapped:true, cd:30, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:12, durWrapped:true, durContested:true, durPostAdd:(depRank)=>(getDepRank(BAT_DEMON_BANE_DEP)?6:0), durPostAddContested:true, hitCountDuration:2, dmg:(rank)=>{ const cLv = rank + (getDepRank(BAT_DEMON_BANE_DEP)?1:0) + (getDepRank(BAT_SHAME_DEP)?1:0); return "6×" + cLv + "+3"; }, effectDamage:true, ko:"0", dep:BAT_DEMON_BANE_DEP, dmgRankDep:BAT_SHAME_DEP, status:{ name:"phantomBane", sLv:(rank)=>rank+(getDepRank(BAT_DEMON_BANE_DEP)?1:0)+(getDepRank(BAT_SHAME_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const db = getDepRank(BAT_DEMON_BANE_DEP); const shame = getDepRank(BAT_SHAME_DEP); const cLv = rank + (db?1:0) + (shame?1:0); const dmg = 6 * cLv + 3; const line1 = shame ? ("เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **" + dmg + "** ทุก **2s**") : ("สาปเป้าหมาย ทำดาเมจม่วง **" + dmg + "** ทุก **2s**"); const line2 = "**Demon Bane:** เพิ่มระดับคำสาป **+1 เลเวล** และขยายเวลา **+6s**"; return line1 + "<br>" + line2; }, revisedArtExempt:false, compatSkills:["bat_massCast","bat_shadowMastery","bat_demonBane","bat_shame"] },
   { id:"bat_shadowGaze", name:"Shadow Gaze", class:"Bat", icon:"bat_shadowGaze4", maxRank:4, cost:{mp:[11, 13, 19, 23]}, cd:30, cdWrapped:true, cdDep:BAT_DEMON_GAZE_DEP, revisedArtExempt:false, dmg:"talAdjust(12 + 12×sLv + 12×depLv)", dmgRankDep:BAT_DEMON_GAZE_DEP, ko:"0", desc:"เวทความมืดที่ทำความเสียหายให้เป้าหมายทันที<br>**Demon Gaze:** เพิ่มความเสียหาย **+talAdjust(12)** และลดคูลดาวน์พื้นฐานเหลือ **20s**", compatSkills:["bat_massCast","bat_demonGaze"] },
   { id:"bat_dissolute", name:"Dissolute", class:"Bat", icon:"bat_dissolute2", maxRank:2, cost:{mp:[13,19]}, castTime:[1.5,2], castWrapped:true, cd:60, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:6, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, status:{ name:"dissolute", sLv:(rank,depRank)=>rank+(depRank?1:0), class:"Debuff, Magical" }, desc:(rank,depRank)=>{ const shame = (depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP); const sLv = rank + (shame?1:0); const x = sLv + 3; const kw2 = `<span class="sk-status" data-classification="Debuff, Magical">[dissolute${sLv + 1}]</span>`; return `ลบล้าง และป้องกันการรับสถานะ Buff ที่ต่ำกว่าเลเวล **${x}**<br>หากเป้าหมายติด **Shame:** อยู่ ${kw2} ลบล้าง และป้องกันการรับสถานะ Buff ที่ต่ำกว่าเลเวล **${x + 1}**`; }, revisedArtExempt:false, compatSkills:["bat_massCast","bat_shadowMastery","bat_shame"] },
   { id:"bat_corruption", name:"Corruption", class:"Bat", icon:"bat_corruption2", maxRank:2, cost:{mp:[15,23]}, castTime:[3,4], castWrapped:true, cd:60, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:15, durWrapped:true, durContested:true, dep:BAT_SHAME_DEP, status:{ name:"corruption", sLv:(rank,depRank)=>rank+(((depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP))?1:0), class:"Debuff, Magical" }, desc:(rank,depRank)=>{ const shame = (depRank!==null&&depRank!==undefined)?depRank:getDepRank(BAT_SHAME_DEP); const sLv = rank + (shame?1:0); const dmg = 15 * (sLv + 1); const sp = 5 * sLv; if (shame) return `เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **${dmg}** และลด SP **${sp}** ทุกครั้งที่เป้าหมายทำการโจมตี`; return `สาปเป้าหมาย ทำดาเมจม่วง **${dmg}** และลด SP **${sp}** ทุกครั้งที่เป้าหมายทำการโจมตี`; }, revisedArtExempt:false, compatSkills:["bat_massCast","bat_shadowMastery","bat_shame"] },
@@ -8900,7 +8900,17 @@ const SKILLS = [
     desc: "มีโอกาสที่การร่ายเวทสาปปกติของค้างคาวจะติดสถานะ <span class=\"sk-status\" data-classification=\"Buff, State\">[massCast1]</span> ให้ตัวเองโดยอัตโนมัติ<br>ปลดล็อกให้ **Shame, Soul Eater, Paranoia, Shattering Dream** สามารถใช้ผล Mass Cast กระจายดาเมจได้ (ปกติทำไม่ได้)",
     compatSkills: ["bat_massCast", "bat_shame", "bat_soulEater", "bat_paranoia", "bat_shatteringDream"]
   },
-  { id:"bat_demonBane", name:"Demon Bane", class:"Bat", icon:"bat_demonBane5", maxRank:1, compatSkills:["bat_phantomBane"] },
+  {
+    id: "bat_demonBane",
+    name: "Demon Bane",
+    nameTha: "เดมอน เบน",
+    class: "Bat",
+    icon: "bat_demonBane5",
+    maxRank: 1,
+    passive: true,
+    desc: "เพิ่มผลของ **Phantom Bane** ขึ้นอีก **+1 เลเวล** และยืดระยะเวลาสาปขึ้นอีก **+6 วินาที**",
+    compatSkills: ["bat_phantomBane"]
+  },
   { id:"bat_demonGaze", name:"Demon Gaze", class:"Bat", icon:"bat_demonGaze5", maxRank:1, compatSkills:["bat_shadowGaze"] },
   {
     id: "bat_shame",
@@ -12017,12 +12027,13 @@ function mountSkillCooldownLookup(root){
       const durBase = resolveRank(skill.duration, rank);
       if (skill.durContested){
         const enemyCHA = parseFloat(enemyChaEl.value) || 0;
+        const depRank = skill.dep ? (typeof getDepRank === "function" ? getDepRank(skill.dep.id || skill.dep) : 0) : 0;
+        const postAdd = skill.durPostAdd ? (typeof skill.durPostAdd === "function" ? skill.durPostAdd(depRank) : (depRank ? skill.durPostAdd : 0)) : 0;
+        const contestBase = skill.durPostAddContested ? durBase + postAdd : durBase;
         let d = skill.durContestedInverted
-          ? debuffAdjust(durBase, enemyCHA, CHA)
-          : debuffAdjust(durBase, CHA, enemyCHA);
-        if (skill.durPostAdd){
-          const depRank = skill.dep ? (typeof getDepRank === "function" ? getDepRank(skill.dep.id || skill.dep) : 0) : 0;
-          const postAdd = typeof skill.durPostAdd === "function" ? skill.durPostAdd(depRank) : (depRank ? skill.durPostAdd : 0);
+          ? debuffAdjust(contestBase, enemyCHA, CHA)
+          : debuffAdjust(contestBase, CHA, enemyCHA);
+        if (postAdd && !skill.durPostAddContested){
           d += postAdd;
         }
         const hits = Math.max(1, Math.floor(d / skill.hitCountDuration));
@@ -12047,12 +12058,13 @@ function mountSkillCooldownLookup(root){
       const durBase = resolveRank(skill.duration, rank);
       if (skill.durContested){
         const enemyCHA = parseFloat(enemyChaEl.value) || 0;
+        const depRank = skill.dep ? (typeof getDepRank === "function" ? getDepRank(skill.dep.id || skill.dep) : 0) : 0;
+        const postAdd = skill.durPostAdd ? (typeof skill.durPostAdd === "function" ? skill.durPostAdd(depRank) : (depRank ? skill.durPostAdd : 0)) : 0;
+        const contestBase = skill.durPostAddContested ? durBase + postAdd : durBase;
         let d = skill.durContestedInverted
-          ? debuffAdjust(durBase, enemyCHA, CHA)
-          : debuffAdjust(durBase, CHA, enemyCHA);
-        if (skill.durPostAdd){
-          const depRank = skill.dep ? (typeof getDepRank === "function" ? getDepRank(skill.dep.id || skill.dep) : 0) : 0;
-          const postAdd = typeof skill.durPostAdd === "function" ? skill.durPostAdd(depRank) : (depRank ? skill.durPostAdd : 0);
+          ? debuffAdjust(contestBase, enemyCHA, CHA)
+          : debuffAdjust(contestBase, CHA, enemyCHA);
+        if (postAdd && !skill.durPostAddContested){
           d += postAdd;
         }
         return Math.max(1, Math.floor(d / skill.hitCountDuration));
@@ -13872,25 +13884,26 @@ function mountSkillCooldownLookup(root){
       let durRange;
       let durBaseLabel;
       let durDist = null;
+      const postAdd = selected.durPostAdd ? (typeof selected.durPostAdd === "function" ? selected.durPostAdd(depRank) : (depRank ? selected.durPostAdd : 0)) : 0;
       if (selected.durContested){
         const enemyCHA = parseFloat(enemyChaEl.value) || 0;
         const contestedCHA = selected.durContestedSource === "phoenix" && phoenixOwnCHA !== null ? phoenixOwnCHA : CHA;
+        const contestBase = selected.durPostAddContested ? rawDuration + postAdd : rawDuration;
         let contestedDur = selected.durContestedInverted
-          ? debuffAdjust(rawDuration, enemyCHA, contestedCHA)
-          : debuffAdjust(rawDuration, contestedCHA, enemyCHA);
-        if (selected.durPostAdd){
-          const postAdd = typeof selected.durPostAdd === "function" ? selected.durPostAdd(depRank) : (depRank ? selected.durPostAdd : 0);
+          ? debuffAdjust(contestBase, enemyCHA, contestedCHA)
+          : debuffAdjust(contestBase, contestedCHA, enemyCHA);
+        if (postAdd && !selected.durPostAddContested){
           contestedDur += postAdd;
         }
         durRange = [contestedDur];
         durBaseLabel = selected.durContestedInverted ? "contested base (inverted)" : "contested base";
       } else {
         durRange = selected.durWrapped ? chaAdjustRange(rawDuration, CHA, LCK) : [rawDuration];
-        if (selected.durPostAdd) durRange = durRange.map(v => v + selected.durPostAdd);
+        if (postAdd) durRange = durRange.map(v => v + postAdd);
         if (dep) durRange = depPostMultiply(durRange, dep, depRank);
         durBaseLabel = selected.durWrapped ? "base" : "fixed";
         const durPostFn = v => {
-          if (selected.durPostAdd) v += selected.durPostAdd;
+          if (postAdd) v += postAdd;
           return dep ? depPostMultiply([v], dep, depRank)[0] : v;
         };
         durDist = selected.durWrapped ? lckDistribution(rawDuration, CHA, LCK, chaAdjustAtRoll, durPostFn) : null;
@@ -13910,7 +13923,8 @@ function mountSkillCooldownLookup(root){
         </div>
       ` : `<p class="sk-stat-label">${durLabelText}</p>`;
       const depBlock = dep ? renderDepBlock(dep, depRank) : "";
-      const durPostAddNote = selected.durPostAdd ? (depRank ? ` +${typeof selected.durPostAdd === "function" ? selected.durPostAdd(depRank) : selected.durPostAdd}s (fixed)` : "") : "";
+      const durPostAddNote = (postAdd && !selected.durPostAddContested) ? ` +${postAdd}s (fixed)` : "";
+      const rawDurationDisplay = (selected.durContested && selected.durPostAddContested) ? rawDuration + postAdd : rawDuration;
       durationBlock = `
         <div class="sk-stat sk-stat-dur">
           ${durLabelRow}
@@ -13918,7 +13932,7 @@ function mountSkillCooldownLookup(root){
             <div class="sk-stat-value${(selected.durWrapped || selected.durContested) ? "" : " unwrapped"}">${fmt(durRange)}s</div>
             ${durDist ? renderProbabilityTooltip(durDist) : ""}
           </div>
-          <p class="sk-stat-base">${durBaseLabel} ${rawDuration}s${durPostAddNote}</p>
+          <p class="sk-stat-base">${durBaseLabel} ${rawDurationDisplay}s${durPostAddNote}</p>
           ${depBlock}
         </div>
       `;
@@ -19171,7 +19185,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){
