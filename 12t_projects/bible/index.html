@@ -2127,26 +2127,56 @@
   .sk-hero-desc .sk-status.is-active{
     color:var(--status-kw-htext, #4c1d95);
   }
-  .sk-hero-desc .sk-status:hover::after,
-  .sk-hero-desc .sk-status.is-active::after{
-    content:attr(data-classification);
+  /* Popup is a real child element (added 2026-09-19, replacing the earlier
+     content:attr() two-line trick) -- pseudo-element `content` is one plain
+     text node, so the type line and desc line couldn't be colored/weighted
+     independently, and a divider between them wasn't expressible at all.
+     Positioning is copied verbatim from the old ::after rule -- .sk-status
+     keeps position:relative, so absolute values are unchanged. */
+  .sk-hero-desc .sk-status-tip{
+    display:none;
     position:absolute;
     bottom:calc(100% + 7px);
     left:50%;
     transform:translateX(-50%);
     background:#0f0a07;
-    color:#fff;
     border:1px solid var(--gold);
     border-radius:4px;
-    padding:3px 8px;
+    padding:5px 10px;
     font-family:'Prompt',-apple-system,sans-serif;
-    font-size:11px;
-    font-weight:600;
-    letter-spacing:0.3px;
-    white-space:nowrap;
+    text-align:center;
+    white-space:normal;
+    width:max-content;
+    max-width:280px;
     box-shadow:0 4px 14px rgba(0,0,0,0.8);
     z-index:100;
     pointer-events:none;
+  }
+  .sk-hero-desc .sk-status:hover .sk-status-tip,
+  .sk-hero-desc .sk-status.is-active .sk-status-tip{
+    display:block;
+  }
+  .sk-hero-desc .sk-status-tip-type{
+    display:block;
+    color:#c4b5fd;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.3px;
+  }
+  .sk-hero-desc .sk-status-tip-divider{
+    display:block;
+    width:100%;
+    height:1px;
+    margin:4px 0;
+    background:var(--gold);
+    opacity:0.6;
+  }
+  .sk-hero-desc .sk-status-tip-desc{
+    display:block;
+    color:#fff;
+    font-size:11px;
+    font-weight:400;
+    line-height:1.4;
   }
   .sk-hero-desc .sk-status:hover::before,
   .sk-hero-desc .sk-status.is-active::before{
@@ -2422,26 +2452,56 @@
   .sk-hero-desc .sk-status.is-active{
     color:var(--status-kw-htext, #4c1d95);
   }
-  .sk-hero-desc .sk-status:hover::after,
-  .sk-hero-desc .sk-status.is-active::after{
-    content:attr(data-classification);
+  /* Popup is a real child element (added 2026-09-19, replacing the earlier
+     content:attr() two-line trick) -- pseudo-element `content` is one plain
+     text node, so the type line and desc line couldn't be colored/weighted
+     independently, and a divider between them wasn't expressible at all.
+     Positioning is copied verbatim from the old ::after rule -- .sk-status
+     keeps position:relative, so absolute values are unchanged. */
+  .sk-hero-desc .sk-status-tip{
+    display:none;
     position:absolute;
     bottom:calc(100% + 7px);
     left:50%;
     transform:translateX(-50%);
     background:#0f0a07;
-    color:#fff;
     border:1px solid var(--gold);
     border-radius:4px;
-    padding:3px 8px;
+    padding:5px 10px;
     font-family:'Prompt',-apple-system,sans-serif;
-    font-size:11px;
-    font-weight:600;
-    letter-spacing:0.3px;
-    white-space:nowrap;
+    text-align:center;
+    white-space:normal;
+    width:max-content;
+    max-width:280px;
     box-shadow:0 4px 14px rgba(0,0,0,0.8);
     z-index:100;
     pointer-events:none;
+  }
+  .sk-hero-desc .sk-status:hover .sk-status-tip,
+  .sk-hero-desc .sk-status.is-active .sk-status-tip{
+    display:block;
+  }
+  .sk-hero-desc .sk-status-tip-type{
+    display:block;
+    color:#c4b5fd;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.3px;
+  }
+  .sk-hero-desc .sk-status-tip-divider{
+    display:block;
+    width:100%;
+    height:1px;
+    margin:4px 0;
+    background:var(--gold);
+    opacity:0.6;
+  }
+  .sk-hero-desc .sk-status-tip-desc{
+    display:block;
+    color:#fff;
+    font-size:11px;
+    font-weight:400;
+    line-height:1.4;
   }
   .sk-hero-desc .sk-status:hover::before,
   .sk-hero-desc .sk-status.is-active::before{
@@ -8441,13 +8501,48 @@ const STATUS_CLASS_MAP = {
   shame: "Debuff, Magical",
   zephyrlore: "Buff, State",
 };
+// Plain-language effect shown as a 2nd centered line under the classification
+// in [name]'s hover popup. Sparse by design, same safe-fallback shape as
+// STATUS_CLASS_MAP -- a status with no entry here just shows the classification
+// alone (unchanged single-line popup), not a blank/broken 2nd line. Add an
+// entry only after verifying the actual mechanic in CharacterControl.cs /
+// StatusData.cs (see GEMINI.md Section 3.0 point 4) -- don't paraphrase a
+// client tooltip's claim uncritically, that's exactly how frost got
+// mischaracterized as "no slow effect" earlier this session.
+//
+// An entry may be a plain string (status doesn't scale with level, e.g.
+// frost's hard moveSpeed=0 stop is identical at every level) OR a function
+// `(sLv) => string` for one whose real effect scales with sLv (e.g. ice's
+// moveMod -= 0.1+0.1*sLv, CharacterControl.cs:38604). getStatusDesc() below
+// calls it with `null` when [name] was typed with no trailing rank digits
+// (unsubstituted -- show the formula in words) and with the real number when
+// [name3]/the card's own status.sLv was resolved (substituted -- show the
+// computed value for at-a-glance comprehension).
+const STATUS_DESC_MAP = {
+  frost: "หยุดเป้าหมายอยู่กับที่สนิท (moveSpeed = 0)",
+  ice: (sLv) => sLv != null
+    ? `ชะลอความเร็วเป้าหมาย ${10 + 10 * sLv}% (เลเวล ${sLv})`
+    : "ชะลอความเร็วเป้าหมาย (10 + 10×เลเวล)%",
+};
+function getStatusDesc(name, sLv){
+  const entry = STATUS_DESC_MAP[name.toLowerCase()];
+  if (!entry) return "";
+  return typeof entry === "function" ? entry(sLv) : entry;
+}
+// Shared popup markup for both the [name] shorthand and the status:{} auto-badge
+// -- a real child element, not CSS content:attr() (see .sk-status-tip comment).
+function renderStatusTip(cls, desc){
+  return `<span class="sk-status-tip"><span class="sk-status-tip-type">${cls}</span>${desc ? `<span class="sk-status-tip-divider"></span><span class="sk-status-tip-desc">${desc}</span>` : ""}</span>`;
+}
 function renderStatusKeywords(s) {
   // Skip [name] occurrences already hand-wrapped in their own <span class="sk-status">
   // (legacy per-card authoring, e.g. bat_dissolute's kw2) -- otherwise this double-wraps.
   return s.replace(/(<span class="sk-status"[^>]*>)?\[([a-zA-Z]+)(\d*)\](<\/span>)?/g, (match, openTag, name, num, closeTag) => {
     if (openTag || closeTag) return match;
     const cls = STATUS_CLASS_MAP[name.toLowerCase()];
-    return cls ? `<span class="sk-status" data-classification="${cls}">[${name}${num}]</span>` : match;
+    if (!cls) return match;
+    const sDesc = getStatusDesc(name, num ? parseInt(num, 10) : null);
+    return `<span class="sk-status" onclick="this.classList.toggle('is-active');event.stopPropagation();">[${name}${num}]${renderStatusTip(cls, sDesc)}</span>`;
   });
 }
 
@@ -13836,8 +13931,9 @@ function mountSkillCooldownLookup(root){
         // (keeps this badge and the [name] inline shorthand from drifting apart);
         // falls back to the card's own status.class for anything not yet mapped.
         const sClass = STATUS_CLASS_MAP[sName.toLowerCase()] || st.class || "";
+        const sDesc = getStatusDesc(sName, sLvVal);
         const sKeyword = `[${sName}${sLvVal}]`;
-        statusBadgeHtml += `<span class="sk-status" data-classification="${sClass}" onclick="this.classList.toggle(\'is-active\');event.stopPropagation();">${sKeyword}</span> `;
+        statusBadgeHtml += `<span class="sk-status" onclick="this.classList.toggle(\'is-active\');event.stopPropagation();">${sKeyword}${renderStatusTip(sClass, sDesc)}</span> `;
         statusClean += `${sKeyword} `;
       }
     }
@@ -19306,7 +19402,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){
