@@ -205,13 +205,13 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - CD: `12+3×sLv` → 21s at sLv3. ×0.88 with revisedArt5.
 - Cast: `1.5+0.5×sLv` → 3.0s at sLv3.
 - Damage per tick: `talAdjust(sLv×10+5)×(1+0.01×focusIntellect)`. KO 1, Hate 0. Fired as 4 sequential ticks (8 with `deadlyFrost5`/413) walking forward, each a trapezoid (base2/top2.5/range4/height3). +1 SP to caster per hit.
-- Status: normally applies `ice` (sLv level, `chaAdjust(3)`s) on hit; **if `arcticFrost1`(314) is learned, 20% (`lckAdjust`) chance instead applies `frost`** (level 1, `chaAdjust(2)`s, purely cosmetic — NO slow effect, confirmed no moveMod entry) INSTEAD of ice — reads as a downgrade on that roll, not an upgrade, verified directly in code.
+- Status: normally applies `ice` (sLv level, `chaAdjust(3)`s) on hit; **if `arcticFrost1`(314) is learned, 20% (`lckAdjust`) chance instead applies `frost`** (level 1, `chaAdjust(2)`s) INSTEAD of ice. **CORRECTED 2026-09-18** — a previous pass of this doc claimed frost was "purely cosmetic, no slow effect" because it checked only the local `moveMod` field on this call site; `frost` doesn't use `moveMod` at all — `CharacterControl.cs:2409-2424` hard-sets `this.moveSpeed = 0; this.myForce = Vector3.zero;` on application (identical mechanism to `groundLock`, two cases above it in the same switch), a full immobilize, stronger than `ice`'s percentage `moveMod` slow (confirmed at `CharacterControl.cs:17373`, `moveMod += 0.1+0.1×sLv` on ice's removal). `frost` is also classified `isLockStatus()==true` (`StatusData.cs:6160`, grouped with `groundLock`/`needlePrison`/`sticky`/`lightBind`) and is one of the CC types `float` status grants immunity against (`CharacterControl.cs:13156`). Reads as a genuine upgrade on that roll (full stop vs. percentage slow), not a downgrade.
 - Range: shaped AoE (4-8 sequential trapezoid segments), no cast-range gate, no target-lock required.
 - Class C mods: `deadlyFrost5`(413) doubles segment count 4→8 (matches tooltip "+100% range"); if target has `frost`, bonus flat defense-ignoring `RPC_AddEffectDamage(413, 50)` "Deadly Frost!" burst.
 - `isDoubleSpell=true`.
 
 ### pgn_arcticFrost1 (314) — passive
-- reqLv 29. Sole effect: enables the 20% `frost`-instead-of-`ice` roll on arcticWind hits (see above) — this is its entire coded effect, nothing else found. Reads as a downgrade (2s no-slow vs 3s slow), reported as coded.
+- reqLv 29. Sole effect: enables the 20% `frost`-instead-of-`ice` roll on arcticWind hits (see above) — this is its entire coded effect, nothing else found. Reads as an upgrade on that roll (2s full immobilize via `moveSpeed=0` vs 3s percentage `moveMod` slow), not a downgrade — see corrected note above.
 
 ### pgn_iceShield1-4 (321-324) — active, RANK FAMILY
 - reqLv 7/15/23/31, MP 15/23/31/39, SP 0, mode target/ally, cType iceShield
