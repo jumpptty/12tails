@@ -26,7 +26,7 @@ This repository is a reverse-engineering, mechanics-verification, and documentat
   * `12Tails-Mechanics-Reference.md`: 8-stat system, derived HP/MP/KO/SP formulas, growth tables.
   * `*-skill-reference.md`: Cooldown, duration, cast-time data across all 12 classes.
   * `*-skill-damage-reference.md`: Damage formulas, rank selectors, scaling coefficients (Penguin, Mole, Chameleon, Monkey so far).
-  * ⚠️ **Strictly Portable Markdown Links:** All documentation links between Markdown files in this repo must use repo-relative paths (e.g. `[12Tails-Mechanics-Reference.md §3.5](12t_reference/12Tails-Mechanics-Reference.md#...)`) rather than OS-specific absolute URIs (`file:///c:/...`).
+  * ⚠️ **Strictly Portable Markdown Links:** All documentation links between Markdown files in this repo must use repo-relative paths (e.g. `[12Tails-Mechanics-Reference.md §3.5](12t_reference/12Tails-Mechanics-Reference.md#35-universal-shared-skills-characterdataclasscs-charactercontrolcs)`) rather than OS-specific absolute URIs (`file:///c:/...`).
   * ⚠️ **Clean Reference Directory:** `12t_reference/` is strictly for verified, permanent ground-truth documents. Temporary session drafts or in-progress research dumps must stay in `<appDataDir>/brain/<conversation-id>/scratch/` until fully reviewed and consolidated into `12Tails-Mechanics-Reference.md` or `<class>-skill-damage-reference.md`.
 * **`12t_projects/`**: Shipped player-facing deliverables. Every deliverable gets its own sub-folder:
   * `bible/`: The multi-tool hub (`index.html`). See [12t_projects/bible/GEMINI.md](12t_projects/bible/GEMINI.md) for its dedicated design system, card schemas, and large-file safety protocol.
