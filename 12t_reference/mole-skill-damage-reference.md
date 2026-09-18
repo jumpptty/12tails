@@ -680,6 +680,16 @@ session) — do a real visual pass (3-swing combo formula rendering, both new ic
 Damage's dmgGroups-summed total for Normal Attack, Beam's "Test 5 hits" Simulate button) before treating
 this as fully done, same standing caveat every no-browser session in this file already carries.
 
+## Server Balance Variations (TTO)
+
+Private-server values are documented from the Bible skill-detail schema; the BigBug decompile remains the original-server baseline.
+
+| Skill | Original BigBug baseline | TTO delta |
+|---|---|---|
+| Auto Gyro Gun | No simultaneous-turret limit is represented on the original card. | Cap is 8 guns without Hidden Turret or 12 with Hidden Turret. |
+
+Source of server delta: `12t_projects/bible/index.html:9160`.
+
 ## Open items / could not verify
 
 _(the King Kaiser open item previously listed here was resolved above, 2026-08-21)_

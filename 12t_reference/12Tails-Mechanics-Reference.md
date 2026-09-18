@@ -45,7 +45,11 @@ Exact source lines:
 When max HP/MP changes, current HP/MP is **rescaled proportionally** so the % stays the same (:1464, :1470).
 
 > **KO / SP**: "KO" is a knock-out/stagger pool (max ≈ `DEF/3+10`); "SP" is a stamina/skill pool used by
-> some abilities (`cSP` cost on skills). Both regenerate over time (see CharacterControl.cs ~:1949/:2029).
+> physical and hybrid abilities (`cSP` cost on skills, see §3.1). Both regenerate passively over time (see CharacterControl.cs ~:1949/:2029).
+>
+> **Universal In-Combat SP Generation Rules:**
+> 1. **Attacker Basic Attack Hit:** Every landed basic attack hit (`nAttack` / Combo) grants **+1 SP** to the attacker (`self.<class>.sp = self.<class>.sp + 1`, duplicated across `Monkey.cs:20055`, `Wolf.cs:15292`, `Bat_nAttack.cs:294`, `Penguin.cs:29541`, etc.).
+> 2. **Victim Damage Taken:** Whenever a character takes direct damage (`myDamage > 0`), the engine immediately grants **+1 SP** to the victim (`this.sp++`, CharacterControl.cs:2122 inside `ApplyDamage()`).
 
 ### 1.3 Where total stats come from
 `total[i] = bStat[i] + bonus[i] + typeLevelStat[i] + skillBonus + Σ equipment.att[i]`
@@ -161,6 +165,19 @@ agiAdjust(t) = t * (1 - n/(n + 128))             // diminishing-returns speedup
 ```
 chaAdjust(t) = ceil( t * (1 + 0.015 * clamp(CHA + R, 1, 512)) )   // +1.5% duration per CHA
 ```
+**`Damage.getDebuff(t, casterCHA, targetCHA)`** contested debuff duration (Damage.cs:317):
+Used by debuffs where duration is contested between caster and target (e.g. `Amplify Damage`, `Ignite`, `World Ignition`, `Acidic Field`).
+```
+delta = casterCHA - targetCHA
+if (casterCHA <= targetCHA):
+    getDebuff = floor( t * (1 + delta / (|delta| + 64)) )    // diminishing penalty down to >0
+else:
+    getDebuff = floor( t * (1 + 0.01 * delta) )               // +1% duration per point of CHA lead
+```
+**`Damage.getBuff(t, cha1, cha2)`** dual-actor buff duration (Damage.cs:311):
+```
+getBuff = floor( t * (1 + 0.01 * (cha1 + cha2)) )
+```
 **`talAdjust(p)`** skill power, TAL-based (CharacterControl.cs:20624):
 ```
 talAdjust(p) = ceil( p * (1 + 0.02 * clamp(TAL + R, 1, 512)) )    // +2% power per TAL
@@ -177,6 +194,36 @@ asymptotically approaches but never reaches 100.
 `eDamageType { damage, ally, effect, heal }` (eDamageType.cs) selects damage-number color. Combat outcome FX
 (no-hit results) have dedicated displays: **miss, evade, resist, immune, deflect, reflect, confuse**
 (Damage.cs `displayMiss/displayEvade/displayResist/displayImmune/displayDeflect/displayReflect/displayConfuse`).
+
+### 2.6 Target-side damage received multiplier — `hitMod` (CharacterControl.cs:160, 3765, 6203)
+`hitMod` is the engine-level incoming damage multiplier stored on each character (`this.hitMod`, default `1.0f`, CharacterControl.cs:160). It scales **all incoming damage** received by the character before shield absorption:
+
+1. **Direct Physical / Skill Damage (`RPC_AddDamage`, CharacterControl.cs:3765):**
+   ```csharp
+   nDamage = Mathf.CeilToInt(Mathf.Clamp(this.hitMod, 0f, 3f) * (float)nDamage);
+   ```
+2. **Effect / True / DoT Damage (`RPC_AddEffectDamage`, CharacterControl.cs:6203):**
+   ```csharp
+   nDamage = Mathf.FloorToInt(Mathf.Clamp(this.hitMod, 0f, 3f) * (float)nDamage);
+   ```
+3. **Hard Clamps:** Multiplier is clamped to `[0.0, 3.0]`.
+
+#### ⚠️ Decompiled Source Inverted Sign Arithmetic Trap:
+In BigBug Studio's code, developers implemented debuffs intended to *increase* damage taken using subtraction, and buffs intended to *reduce* damage taken using addition:
+* **Incoming Damage Amplifiers (Debuffs):**
+  * `amplifyDamage` (Bat): `this.hitMod -= 0.05f * (float)sLv` (CharacterControl.cs:18163) — intended design / tooltip: `+5% * rank` (+0.05 to +0.20) incoming damage.
+  * `ignite` (Monkey): `this.hitMod -= 0.1f * (float)sLv` (CharacterControl.cs:17127) — intended design / tooltip: `+10% * rank` (+0.10 to +0.20) incoming damage.
+  * `inferno`: `this.hitMod -= 0.1f * (float)sLv` (CharacterControl.cs:18971).
+  * `miracleDrop` (Rabbit): `this.hitMod -= 0.1f * (float)sLv + 0.1f` (CharacterControl.cs:16962).
+  * `maim` (Rabbit): `this.hitMod -= 0.05f * (float)sLv` (CharacterControl.cs:16698).
+  * `reduce`: `this.hitMod -= 0.05f * (float)sLv` (CharacterControl.cs:16698).
+* **Incoming Damage Reducers (Buffs):**
+  * `sealOfDefense` (Sheep): `this.hitMod += 0.1f` (CharacterControl.cs:17916) — intended design / tooltip: `+10% defense`.
+  * `sealOfEarth` (Sheep): `this.hitMod += 0.15f` (CharacterControl.cs:17930).
+  * `sealOfHeaven` (Sheep): `this.hitMod += 0.05f` (CharacterControl.cs:17945).
+  * `enlarge`: `this.hitMod += 0.05f * (float)sLv` (CharacterControl.cs:16772).
+* **Removal:** Status expiration reverses the exact operation (`removeStatus`, CharacterControl.cs:37261–42083).
+* **Deliverables & Tooltip Convention:** Player tools describe this mechanic using the player-facing standard `+0.xx hitmod` (e.g. `+0.05` to `+0.20` for Amplify Damage) matching the intended game design and Monkey/Bat pilot conventions. Do not treat the source `-=` as a bug to be re-investigated in future sessions.
 
 ---
 
@@ -197,6 +244,12 @@ rSkill : prerequisite skill id
 Skills are looked up by a 3-letter class prefix (`wlf`, `bsn`, `pnd`, …) in `SkillData.getSkill` (SkillData.cs:21),
 which dispatches to the per-class `*Skill.cs` table. The `*Skill.cs` files only hold this metadata
 (costs / requirements / text) — **not** the damage numbers.
+
+#### Signed SP Cost Semantics (`cSP`):
+* **Red SP (Consumed, `cSP < 0` / `skillClass.setSP(-X)`):**
+  Requires and **consumes** SP on cast (`GameGui.cs:37782–37807`: `mChar.sp += cSP`). Its cost is halved by Revised Skill (#404, `Mathf.CeilToInt(cSP * 0.5f)`). Rendered in-game as red text `new Color(1f, 0.2f, 0.2f)` (`GameGui.cs:22032`, `Guix.cs:3301`). Standard for almost all physical skills.
+* **Blue SP (Activation Threshold / Gate-Only, `cSP > 0` / `skillClass.setSP(X)`):**
+  Checks that the player currently possesses at least that amount of SP (`GameGui.cs:37609`), but **does NOT consume SP** on cast (the `cSP < 0` deduction branch in `GameGui.cs:37782` is bypassed). Rendered in-game as cyan-blue text `new Color(0.2f, 0.6f, 1f)` (`GameGui.cs:22054`, `Guix.cs:3288`). (e.g. Whale's `rejuvenate` Ranks 3–4 requiring 12 SP without spending it).
 
 ### 3.2 Skill damage model
 Damage values are hardcoded at each skill's execution site (in the class combat script, e.g. `Cat.cs`, and in
@@ -233,6 +286,19 @@ heal = 6*skillLv + 6 + floor(0.004 * skillLv * maxHP)
 ```
 i.e. a flat part plus a % of the target's max HP scaled by skill level.
 
+### 3.5 Universal Shared Skills (CharacterDataClass.cs, CharacterControl.cs)
+Five skills share identical numeric skill IDs, mechanics, and effects across all 12 classes (verified in `Monkey.cs`, `CharacterControl.cs`, `CharacterDataClass.cs`, and `PenguinSkill.cs`):
+
+| Skill Name | ID | Mechanics & Effect |
+|------------|----|--------------------|
+| **Stat Plus** (`statPlus1..4`) | `#141–144` | Grants `+2` to all 8 stats per rank (`+2, +4, +6, +8` total). Evaluated directly in `CharacterDataClass.getStat(n)` (CharacterDataClass.cs:1216). |
+| **Super Stat Plus** (`superStatPlus5`) | `#441` | Grants `+10` to all 8 stats unconditionally. Evaluated in `CharacterDataClass.getStat(n)`. |
+| **Revised Art** (`revisedArt5`) | `#424` | `-12%` cooldown reduction on all skills across the board (CharacterControl.cs:20575, `mTimeOut * 0.88f`). Excludes basic attack (`nAttack`), charge attack (`cAttack`), and consumables. |
+| **Revised Magic** (`revisedMagic5`) | `#414` | `-20%` MP cost reduction (`Mathf.CeilToInt(cMP * 0.8f)`). |
+| **Revised Skill** (`revisedSkill5`) | `#404` | `-50%` SP cost reduction (`Mathf.CeilToInt(cSP * 0.5f)`). |
+
+These five skills are class-independent engine constants.
+
 ---
 
 ## 4. Hidden mechanics & special interactions
@@ -268,6 +334,33 @@ Each status maps to a sequential integer code. Grouped by function:
   `eraseBoost`, `speedBoost`, `wash`, `tent`, `happy`, `sad`, `death`.
 
 (Full enumerated codes live in StatusData.cs:63–1372; icons resolve from `GameGui/Icons/Status/<name>`.)
+
+### 4.2 Status classification & cleanse system (StatusData.cs)
+Status effects are queried at runtime via static boolean predicates in `StatusData.cs` that govern cleanse eligibility, dispel interactions, and UI categorization:
+
+| Category Query | Purpose / Engine Behavior |
+|----------------|---------------------------|
+| **`isDebuffStatus(sType)`** | Evaluates whether the effect is negative. Target-contested via `Damage.getDebuff` (§2.4). |
+| **`isBuffStatus(sType)`** | Evaluates whether the effect is positive. Extended via caster CHA (`chaAdjust`). |
+| **`isMagicalStatus(sType)`** | Marks status as magical in nature. Eligible for magical dispels (e.g. Penguin's `Dispell`, Bat's `Dissolute`). |
+| **`isPhysicalStatus(sType)`** | Marks status as physical/biological in nature (e.g. `amplifyDamage`, `poison`, `bleed`, `blind`). Removed by physical cures/cleanses. |
+| **`isStateStatus(sType)`** | Structural character states (e.g. `transform`, `mount`, `guardianOfTheNight`, `berserkerRush`). |
+| **`isLockStatus(sType)`** | Total action disables / locks. |
+| **`isShieldStatus(sType)`** | Active protective shields absorbing incoming damage. |
+| **`isSystemStatus(sType)`** | Internal engine statuses that cannot be modified or cleared by player abilities. |
+
+### 4.3 Summon & companion entity mechanics
+Summons (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, Gadina, Shadow Clones) are separate `CharacterControl` instances with specific engine inheritance rules:
+
+1. **Independent 9-Stat Profile (`ownStats`):**
+   * Summon entities instantiate with their own 9-stat array (`mhp, atk, def, agi, vit, mag, cha, tal, lck`), independent of the player's direct base stats.
+   * Summon upgrade passives (e.g. Mole's `Double Bot`, `Synchro Mole`, `Hidden Turret`, `Heavy Built`) scale the summon's base attributes based on player level (`moleLV`).
+2. **LCK Stat Separation (Damage Roll vs Duration Variance):**
+   * **Damage Spread (`dmgAdjust`):** The summon's **own LCK stat** (`agg.lck`, `bb.lck`, `kk.lck`) is strictly the attacker's LCK for the summon's own attacks and movesets.
+   * **Duration / Channel Variance:** In contrast, summon existence timers, channel durations, and skill active lifetimes (`chaAdjust`, `hitCountDuration`) originate from the **Player Caster** and calculate variance using the **Player's CHA and Player's LCK**, never the summon's LCK.
+3. **Automated Move Resource Policy:**
+   * Automated companion AI moves (`barrelBot_nAttack`, `punch`, `hammer`, `autoGyroGun_nAttack`) consume 0 MP/SP (`cost: None`).
+   * Active command abilities where the player spends resources to command the summon (e.g. `Barrel Cannon` manual cast, 50 SP) consume player resources normally.
 
 ---
 
