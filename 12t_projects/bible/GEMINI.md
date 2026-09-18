@@ -56,6 +56,15 @@ To permanently prevent session crashes and turn interruptions:
 
 Every skill authoring, formula update, or tooltip review must strictly follow this linear execution pipeline:
 
+### 3.0. Dead Code Verification Gate (checked before declaring ANYTHING dead/unwired)
+
+**Never declare a mechanic "dead code," "unwired," or "not found in code" from a single file's call sites.** A getter/setter or stored field with only one write-site and no read *inside the class's own primary `.cs` file* (`<Class>.cs`) is not proof the value is unused — it is proof the read lives somewhere else. Concrete precedent: `getFrostBiteLv()` in `Penguin.cs` (assigned once at `Penguin.cs:30793`, field declared at `30864`) looked like dead code by every grep scoped to `Penguin.cs` alone — the real read site was in the companion file `Penguin_nAttack.cs:321-359` (the normal-attack hit coroutine), which is where nearly all on-hit proc logic for a class actually lives, not in `<Class>.cs` itself.
+
+Before concluding a finding "doesn't make sense," "has no call site," or "seems like dead code":
+1. Search **every** `<Class>_*.cs` companion file (`Penguin_nAttack.cs`, `Penguin_manaMissile.cs`, `Penguin_tornado.cs`, `Penguin_typhoon.cs`, etc. — use the file browser or `Glob`/`Grep` across `DecompiledSource/<Class>_*.cs`, not just the one file you started in), plus `CharacterControl.cs`, `Damage.cs`, `StatusData.cs`, and `GameGui.cs` for the same identifier (function name, field name, or `hasSkill(ID)` number).
+2. Only after that class-wide sweep comes up empty is it safe to report a mechanic as unverified/dead in the client code (and even then, phrase it as "not found after searching `<Class>.cs` + all `<Class>_*.cs` companion files" — cite the full search scope, not just the one file you happened to check).
+3. This applies symmetrically to `12t_reference/*.md` reference docs — if an existing reference doc claims something is dead code, that claim is a prior finding, not ground truth; re-verify it against the full companion-file set the same way before trusting or repeating it in a new card's `desc`.
+
 ### 3.A. Active Skill Pipeline
 
 #### Step A1: Pre-Flight Active Source Extraction (Zero Assumptions)

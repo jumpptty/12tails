@@ -256,8 +256,11 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - Companion file confirmed genuinely separate summon type (`Penguin_typhoon.cs`, not a `Penguin_tornado.cs` reskin) — distinct HP pool and target-locked-orbit behavior is the real differentiator, not raw damage.
 - Range: Locked-on (requires resolved enemy target to trigger at all).
 
-### pgn_frostBite1-4 (351-354) — passive, **CONFIRMED DEAD CODE**
-- `getFrostBiteLv()` is computed but its only call site (inside arcticWind_fire) never reads the result afterward. Zero mechanical effect anywhere in the codebase, verified via exhaustive grep. Not a DoT/poison system — flag on the sheet as "no coded effect found" rather than inventing one; note this may be server-side or simply unwired.
+### pgn_frostBite1-4 (351-354) — passive, modifies Normal Attack (CORRECTED 2026-09-18 — previous "dead code" claim below was wrong; the only read site is in the companion file `Penguin_nAttack.cs`, not `Penguin.cs`, and was missed by a `Penguin.cs`-only grep)
+- `getFrostBiteLv()` (`Penguin.cs:11391`, highest-rank-wins over hasSkill(351-354)) is read in `Penguin_nAttack.cs:321-359`, inside the normal-attack hit coroutine.
+- On every landed normal attack hit: roll `lckAdjust(4×frostBiteLv+4)`% chance (rank1=8%, rank2=12%, rank3=16%, rank4=20% — tooltip's "4/8/12/16%" undersells by a flat 4 points at every rank) to apply `frost` (level=frostBiteLv, duration `Damage.getDebuff(2, casterCHA, targetCHA)` contested); **on the complementary roll** (not landing frost), applies `ice` instead (level=frostBiteLv, duration `Damage.getDebuff(3, casterCHA, targetCHA)` contested).
+- **Mutually exclusive per hit** — this is NOT "100% ice + separate % chance of frost on top" as the client tooltip (`PenguinSkill_eng.cs:763` etc.) implies; ice is the fallback outcome of the same roll that can instead land frost, never both simultaneously on one hit.
+- Fires `Camera.main.SendMessage("newGameMessage", "Frost Bite!")` or `"Ice!"` respectively as a UI cue.
 
 ### pgn_absoluteZero1/2 (361/362) — active, RANK FAMILY (sLv1/sLv2)
 - reqLv 22/28, MP 35/50, SP 30/40 (**positive → BLUE, gate-only, never deducted**), mode target/enemy, cType absoluteZero
