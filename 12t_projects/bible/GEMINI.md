@@ -146,7 +146,9 @@ Present a structured review table including:
 ```
 
 ### Proposed Passive Card Schema
+
 ```javascript
+// Minimal / Standard Passive (Stat modifier or pure passive hook)
 {
   id: "class_passiveName",
   name: "English Name",
@@ -157,7 +159,26 @@ Present a structured review table including:
   passive: true,
   desc: (rank) => `เพิ่มความสามารถ **${rank * 10}%**`
 }
+
+// Feature-Rich Passive (with Status, Internal Cooldown, Duration, or Proc Rate)
+{
+  id: "class_procPassive",
+  name: "English Name",
+  nameTha: "ชื่อไทย",
+  class: "Class",
+  icon: "iconKeyMaxRank",
+  maxRank: 3,
+  passive: true,
+  cd: [10, 8, 6], // Internal proc cooldown (if present in source)
+  duration: [5, 5, 5], // Temporary buff duration (if applied)
+  status: { name: "buffStatus", sLv: [1, 2, 3], class: "Buff Status" }, // Status badge & classification
+  lckProc: [15, 20, 25], // Proc chance % (if probabilistic)
+  desc: (rank) => `เมื่อโจมตีมีโอกาส **${15 + rank*5}%** มอบสถานะ...`
+}
 ```
+
+> **Chip Support on Passives Policy:**
+> Passive cards *can and should* carry `status`, `cd`, `duration`, `lckProc`, `cost`, or `ko` whenever decompiled source code proves the passive genuinely possesses them (e.g. granted statuses, internal cooldowns, proc rates, or toggle costs). Do not omit verified mechanics under the false assumption that passives are restricted to text-only descriptions. Unused chip rows collapse automatically per the Vertical Collapse Convention.
 
 ---
 
