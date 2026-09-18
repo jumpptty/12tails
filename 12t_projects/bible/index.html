@@ -8612,7 +8612,7 @@ const SKILLS = [
       return `การโจมตีปกติและท่าชาร์จมีโอกาสพลาด **${missPct}%** (เพิ่มอีก **+10%** หากติด **Shame**, โอกาสไม่ขึ้นกับค่า LCK)<br>ส่งผลเฉพาะการโจมตีกายภาพพื้นฐาน (ไม่มีผลกับดาเมจเอฟเฟกต์ เช่น **DarkEdge** ของหมาป่า หรือ **Puncture** ของปลาวาฬ)`;
     },
     revisedArtExempt: false,
-    compatSkills: ["bat_massCast", "bat_shame"],
+    compatSkills: ["bat_massCast", "bat_shame", "bat_chiroptophobia"],
   },
   {
     id: "bat_confusion",
@@ -8634,7 +8634,7 @@ const SKILLS = [
       return `เมื่อใช้สกิลมีโอกาส **${cancelPct}%** (เพิ่มโอกาสอีก **+6%** หากติด **Shame**) ที่สกิลจะล้มเหลวและติดคูลดาวน์ 30 วินาทีทันที โอกาสไม่ขึ้นอยู่กับค่า LCK`;
     },
     revisedArtExempt: false,
-    compatSkills: ["bat_massCast", "bat_shame"],
+    compatSkills: ["bat_massCast", "bat_shame", "bat_chiroptophobia"],
   },
   {
     id: "bat_hateTransfer",
@@ -9000,7 +9000,22 @@ const SKILLS = [
     desc: "สังเวยร่างเงาทั้งหมด โดยนำ **20% ของ HP ที่เหลืออยู่** ของแต่ละร่างมายามาฟื้นฟูเลือดให้แก่ค้างคาว",
     revisedArtExempt: false
   },
-  { id:"bat_chiroptophobia", name:"Chiroptophobia", class:"Bat", icon:"bat_chiroptophobia5", maxRank:1 },
+  {
+    id: "bat_chiroptophobia",
+    name: "Chiroptophobia",
+    nameTha: "ไคร็อปโตโฟเบีย",
+    class: "Bat",
+    icon: "bat_chiroptophobia5",
+    maxRank: 1,
+    passive: true,
+    dmg: "(Blind + Confuse เลเวลรวมบนเป้าหมาย) × 7 + 7",
+    effectDamage: true,
+    ko: "0",
+    duration: 60,
+    durWrapped: false,
+    desc: "สแกนศัตรูรอบตัวค้างคาวในระยะ 12m ทุก 1 วินาที (สูงสุด 5 เป้าหมาย) หากเป้าหมายติดสถานะ Blind หรือ Confuse อยู่ จะสาปให้ติดสถานะ **Chiroptophobia** ที่เลเวลเท่ากับ **ผลรวมเลเวล Blind + Confuse** (อัปเกรดเฉพาะเมื่อเลเวลใหม่สูงกว่าเดิม) นาน **60 วินาที**<br>ระหว่างติดสถานะ จะโดนดาเมจแท้ **เลเวล×7+7** ทุก ~1.5 วินาที และจะหลุดสถานะทันทีหากเป้าหมายไม่มีทั้ง Blind และ Confuse แล้ว หรือออกห่างจากค้างคาวเกิน **13m**",
+    compatSkills: ["bat_blind", "bat_confusion"]
+  },
   {
     id: "bat_paranoia",
     name: "Paranoia",
@@ -19195,7 +19210,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){
