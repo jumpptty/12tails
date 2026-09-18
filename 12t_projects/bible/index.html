@@ -8476,7 +8476,8 @@ const SKILLS = [
     "bat_shame",
     "bat_soulEater",
     "bat_paranoia",
-    "bat_shatteringDream"
+    "bat_shatteringDream",
+    "bat_autoMass"
   ] },
   { id:"bat_phantomBane", name:"Phantom Bane", class:"Bat", icon:"bat_phantomBane4", maxRank:4, cost:{mp:[10,13,16,19]}, castTime:[2,2.5,3,3.5], castWrapped:true, cd:30, cdWrapped:true, cdDep:BAT_SHADOW_MASTERY_DEP, duration:12, durWrapped:true, durContested:true, durPostAdd:(depRank)=>(getDepRank(BAT_DEMON_BANE_DEP)?6:0), hitCountDuration:2, dmg:(rank)=>{ const cLv = rank + (getDepRank(BAT_DEMON_BANE_DEP)?1:0) + (getDepRank(BAT_SHAME_DEP)?1:0); return "6×" + cLv + "+3"; }, effectDamage:true, ko:"0", dep:BAT_DEMON_BANE_DEP, dmgRankDep:BAT_SHAME_DEP, status:{ name:"phantomBane", sLv:(rank)=>rank+(getDepRank(BAT_DEMON_BANE_DEP)?1:0)+(getDepRank(BAT_SHAME_DEP)?1:0), class:"Debuff, Magical" }, desc:(rank)=>{ const db = getDepRank(BAT_DEMON_BANE_DEP); const shame = getDepRank(BAT_SHAME_DEP); const cLv = rank + (db?1:0) + (shame?1:0); const dmg = 6 * cLv + 3; const line1 = shame ? ("เป้าหมายติดสถานะ **Shame:** เพิ่มระดับคำสาป ทำดาเมจม่วง **" + dmg + "** ทุก **2s**") : ("สาปเป้าหมาย ทำดาเมจม่วง **" + dmg + "** ทุก **2s**"); const line2 = "**Demon Bane:** เพิ่มระดับคำสาป **+1 เลเวล** และขยายเวลา **+6s**"; return line1 + "<br>" + line2; }, revisedArtExempt:false, compatSkills:["bat_massCast","bat_shadowMastery","bat_demonBane","bat_shame"] },
   { id:"bat_shadowGaze", name:"Shadow Gaze", class:"Bat", icon:"bat_shadowGaze4", maxRank:4, cost:{mp:[11, 13, 19, 23]}, cd:30, cdWrapped:true, cdDep:BAT_DEMON_GAZE_DEP, revisedArtExempt:false, dmg:"talAdjust(12 + 12×sLv + 12×depLv)", dmgRankDep:BAT_DEMON_GAZE_DEP, ko:"0", desc:"เวทความมืดที่ทำความเสียหายให้เป้าหมายทันที<br>**Demon Gaze:** เพิ่มความเสียหาย **+talAdjust(12)** และลดคูลดาวน์พื้นฐานเหลือ **20s**", compatSkills:["bat_massCast","bat_demonGaze"] },
@@ -8884,7 +8885,21 @@ const SKILLS = [
       "bat_darkIntention"
     ]
   },
-  { id:"bat_autoMass", name:"Auto Mass", class:"Bat", icon:"bat_autoMass5", maxRank:1 },
+  {
+    id: "bat_autoMass",
+    name: "Auto Mass",
+    nameTha: "มวลอัตโนมัติ",
+    class: "Bat",
+    icon: "bat_autoMass5",
+    maxRank: 1,
+    passive: true,
+    duration: 3,
+    durWrapped: false,
+    lckProc: { label: "Mass Cast Chance", chance: 12, applies: "massCast" },
+    status: { name: "massCast", sLv: 1, class: "Buff, State" },
+    desc: "มีโอกาสที่การร่ายเวทสาปปกติของค้างคาวจะติดสถานะ <span class=\"sk-status\" data-classification=\"Buff, State\">[massCast1]</span> ให้ตัวเองโดยอัตโนมัติ<br>ปลดล็อกให้ **Shame, Soul Eater, Paranoia, Shattering Dream** สามารถใช้ผล Mass Cast กระจายดาเมจได้ (ปกติทำไม่ได้)",
+    compatSkills: ["bat_massCast", "bat_shame", "bat_soulEater", "bat_paranoia", "bat_shatteringDream"]
+  },
   { id:"bat_demonBane", name:"Demon Bane", class:"Bat", icon:"bat_demonBane5", maxRank:1, compatSkills:["bat_phantomBane"] },
   { id:"bat_demonGaze", name:"Demon Gaze", class:"Bat", icon:"bat_demonGaze5", maxRank:1, compatSkills:["bat_shadowGaze"] },
   {
@@ -8909,7 +8924,7 @@ const SKILLS = [
     },
     desc: "สาปเป้าหมายให้เขินอาย ลดค่า CHA ของเป้าหมายลง **50** และเพิ่มระดับของคำสาปถัดไปอีก **+1 เลเวล** (เมื่อร่ายซ้ำจะเพิ่มระดับเป็น **เลเวล 6** หรือ -60 CHA)",
     revisedArtExempt: false,
-    compatSkills: ["bat_massCast", "bat_phantomBane", "bat_dissolute", "bat_corruption", "bat_curse", "bat_blind", "bat_confusion", "bat_shadowMastery"],
+    compatSkills: ["bat_massCast", "bat_phantomBane", "bat_dissolute", "bat_corruption", "bat_curse", "bat_blind", "bat_confusion", "bat_shadowMastery", "bat_autoMass"],
   },
   {
     id: "bat_darkStalker",
@@ -8948,7 +8963,7 @@ const SKILLS = [
     hitCount: () => 1,
     desc: "สร้างความเสียหายเวทแท้แก่เป้าหมายตามผลรวมเลเวลของดีบัฟทั้งหมดที่ติดอยู่บนตัว โดยไม่ลบล้างดีบัฟเหล่านั้น",
     revisedArtExempt: false,
-    compatSkills: ["bat_massCast"],
+    compatSkills: ["bat_massCast", "bat_autoMass"],
   },
   { id:"bat_distantOrb", name:"Distant Orb", class:"Bat", icon:"bat_distantOrb5", maxRank:1, compatSkills:["bat_mirageOrb"] },
   {
@@ -8983,7 +8998,7 @@ const SKILLS = [
     hitCount: () => 1,
     desc: "ทำ effect damage ใส่เป้าหมายตามจำนวนเพื่อนร่วมทีมรอบตัวเป้าหมายในระยะ **24m** และปลดล็อกให้สกิล **Switch** สามารถลบล้างสถานะประเภท Lock **เลเวล 5** ได้",
     revisedArtExempt: false,
-    compatSkills: ["bat_massCast", "bat_switch"],
+    compatSkills: ["bat_massCast", "bat_switch", "bat_autoMass"],
   },
   {
     id: "bat_shatteringDream",
@@ -9007,7 +9022,7 @@ const SKILLS = [
       }
     },
     revisedArtExempt: false,
-    compatSkills: ["bat_massCast", "bat_dreamDazzle", "bat_phantasmBlast"],
+    compatSkills: ["bat_massCast", "bat_dreamDazzle", "bat_phantasmBlast", "bat_autoMass"],
   },
   {
     id: "bat_nefariousWhip",
@@ -19156,7 +19171,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){
