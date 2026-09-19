@@ -539,6 +539,29 @@ let checkedDeepLinks = 0;
   sandbox.location.hash = "skill-details";
 }
 
+// 3c. Status keyword sanity: every card `status:{name}` must resolve to a
+// classification (STATUS_CLASS_MAP or its own status.class), and a mapped status
+// must render its [name] shorthand with that classification in the popup.
+let checkedStatusKeywords = 0;
+SKILLS.forEach(sk => {
+  const list = sk.status ? (Array.isArray(sk.status) ? sk.status : [sk.status]) : [];
+  list.forEach(st => {
+    checkedStatusKeywords++;
+    if (!st.name || !(st.class || sandbox.STATUS_CLASS_MAP[String(st.name).toLowerCase()])) {
+      console.error(`[STATUS ERROR] ${sk.id}: status "${st.name}" has no classification (add it to STATUS_CLASS_MAP after checking StatusData.cs, or give status.class).`);
+      errorCount++;
+    }
+  });
+});
+{
+  checkedStatusKeywords++;
+  const html = sandbox.renderStatusKeywords("[focusIntellect5]");
+  if (!html.includes("Buff, State") || !html.includes("0.01")) {
+    console.error(`[STATUS ERROR] [focusIntellect5] did not render its class + description: ${html.slice(0, 160)}`);
+    errorCount++;
+  }
+}
+
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -699,6 +722,7 @@ console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks 
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
 console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
+console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
