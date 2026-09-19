@@ -66,6 +66,16 @@ To permanently prevent session crashes and turn interruptions:
 
 ---
 
+### Class Badge in the Player Stat Panel (added 2026-09-19)
+
+The player stat panel (`.sk-stats-panel`) opens with a `.sk-class-badge`: the selected skill's **class portrait**, its name and the caption "ค่าสถานะตัวละครของคุณ" ("your character's stats"), so a new user can tell those inputs are for their own character and not the skill or the enemy.
+
+* **Art:** `CLASS_PORTRAITS` (a `const` right after `CLASS_ART`) holds full-colour 96×96 PNG data URIs, one per class. This is deliberately **not** `CLASS_ART`, which is the black line-art mask used as the faint card backdrop. Source: `minimal_class_icons/bg_removed/<Class>.png`, cropped to the character, padded square, downscaled (~170 KB for all 12).
+* **Update path:** `updateClassBadge(cls)` is called from `renderHero()` beside the `CLASS_ART` backdrop update. A class with no portrait (shared `Common` skills) shows the caption only. The panel is hidden until a skill is selected, so the badge never shows an empty state.
+* **Compact mode:** under `max-height: 820px` the portrait shrinks to 40px so the no-scroll screen still fits.
+* **Validation:** `scripts/validate_skills.js` §3i requires a valid PNG portrait for every class that owns a skill (`[PORTRAIT ERROR]`). Adding a new class means adding its portrait here.
+
+---
 ## 3. Skill Verification & Quality Assurance Pipeline
 
 Every skill authoring, formula update, or tooltip review must strictly follow this linear execution pipeline:

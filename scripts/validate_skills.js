@@ -97,6 +97,7 @@ let scriptCode = html.slice(scriptStart + 8, scriptEnd);
 // Expose internal functions and variables to window
 scriptCode = scriptCode.replace('const SKILLS =', 'window.SKILLS =');
 scriptCode = scriptCode.replace('const SKILL_ICONS =', 'window.SKILL_ICONS =');
+scriptCode = scriptCode.replace('const CLASS_PORTRAITS =', 'window.CLASS_PORTRAITS =');
 
 const exposeInjection = `
   window._getDmgText = getDmgText;
@@ -791,6 +792,24 @@ SKILLS.forEach(sk => {
     errorCount++;
   }
 });
+// 3i. Class portraits for the stat panel badge (CLASS_PORTRAITS): every class a skill belongs to (other
+// than shared "Common" skills, which have no character art) needs a valid PNG portrait.
+let checkedPortraits = 0;
+{
+  const portraits = sandbox.CLASS_PORTRAITS;
+  if (!portraits) { console.error("[PORTRAIT ERROR] CLASS_PORTRAITS is not defined"); errorCount++; }
+  else {
+    [...new Set(SKILLS.map(sk => sk.class))].filter(c => c && c !== "Common").forEach(cls => {
+      checkedPortraits++;
+      const data = portraits[cls];
+      if (!data) { console.error(`[PORTRAIT ERROR] class "${cls}" has no CLASS_PORTRAITS entry`); errorCount++; return; }
+      const buf = Buffer.from(String(data).replace("data:image/png;base64,", ""), "base64");
+      if (!String(data).startsWith("data:image/png;base64,") || buf.length < 8 || !buf.subarray(0, 8).equals(pngHeader)) {
+        console.error(`[PORTRAIT ERROR] class "${cls}" portrait is not a valid PNG data URI`); errorCount++;
+      }
+    });
+  }
+}
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -955,6 +974,7 @@ console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
 console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) checks.`);
 console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base order) checks.`);
 console.log(`Verified ${checkedRankIcons} multi-rank icon presence checks.`);
+console.log(`Verified ${checkedPortraits} class portrait checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
