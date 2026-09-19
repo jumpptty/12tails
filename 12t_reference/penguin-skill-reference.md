@@ -284,9 +284,9 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 - CD: flat `agiAdjust(30)` both ranks. ×0.88 with revisedArt5.
 - Cast: instant (own dedicated coroutine).
 - Per-star damage: `talAdjust(15+15×sLv) × (1+0.01×focusIntellect)` → sLv1=30 (matches tooltip), **sLv2=45 (tooltip claims 40 — code wins, tooltip is stale)**. Delivered via secondary 2m-radius/4m-height impact burst per star.
-- Range: AoE radius `(hasSkill(442)?1.5:1)×(8+sLv×4)` → 12m/16m (matches tooltip), height 6m, self-centered. Target cap 5 (10 with giantStar5).
+- Range: target-search radius `Mathf.FloorToInt(hasSkill(442) ? 1 : 1.5f) * (8+sLv×4)` (`Penguin.cs:25066`) → 12m/16m, height 6m, self-centered (`Damage.FindAreaTarget(mPos, hitRange, 6, layer)`, `Penguin.cs:25071`). **`FloorToInt` wraps only the multiplier, so `FloorToInt(1.5)` = 1 and `giantStar5` does NOT enlarge this radius as decompiled** (the tooltip's "+50% range" is not implemented here; live-server behavior untested — live observation wins if it differs). Target cap 5 (10 with giantStar5, `Penguin.cs:25121`).
 - Has its own inline 12% multiCast-grant roll if doubleSpell5 learned (coded locally, not via shared dispatcher).
-- Class C mods: `giantStar5`(442) — ×1.5 targeting radius (undocumented: ALSO doubles target cap 5→10, and bumps per-star explosion radius 2m→3m, undocumented), swaps to `RPC_giantStars_fire` entirely, ×1.25 damage (matches tooltip).
+- Class C mods: `giantStar5`(442) — target cap 5→10 (undocumented) and per-star explosion radius 2m→3m (`Penguin.cs:37265`, undocumented), swaps to `RPC_giantStars_fire` entirely, ×1.25 damage (`Penguin.cs:37270`, matches tooltip). The tooltip's ×1.5 targeting radius has no effect as decompiled (see Range above).
 
 ### pgn_fallingComets1/2 (243/244) — active, RANK FAMILY (sLv1/sLv2)
 - reqLv 28/36, MP 35/50, SP 0, mode target, cType fallingComets
@@ -491,7 +491,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - The tooltip string itself is broken in `PenguinSkill_eng.cs` (checks `"pnd_superStatPlus5"`, Panda's prefix — a copy-paste bug, so Penguin's client doesn't even show a matching tooltip). No `hasSkill(441)`, no stat-bonus field, anywhere in `Penguin.cs`/`CharacterControl.cs`/`GameGui.cs`/`SkillClass.cs`. Likely server-authoritative and outside this decompile. **Report as "not found in code, likely server-side" on the sheet — do not fabricate a formula.**
 
 ### pgn_giantStar5 (442) — modifies BOTH fallingStars AND fallingComets
-- fallingStars: targeting radius ×1.5 (matches tooltip), ALSO doubles target cap 5→10 (undocumented), ALSO bumps per-star explosion radius 2m→3m (undocumented, separate from the targeting radius). Swaps to `RPC_giantStars_fire`, damage ×1.25 (matches tooltip).
+- fallingStars: target cap 5→10 (undocumented) and per-star explosion radius 2m→3m (undocumented). Swaps to `RPC_giantStars_fire`, damage ×1.25 (matches tooltip). **Targeting radius is NOT ×1.5 as decompiled** — `Mathf.FloorToInt(1.5f)` collapses the multiplier to 1 (`Penguin.cs:25066`), contradicting the tooltip (+50% range); live behavior unverified.
 - fallingComets: scatter radius ±8m→±10m (undocumented), explosion radius 6m→9m (matches "+50%"), damage ×1.25 (matches tooltip). Swaps to `RPC_giantComets_fire`.
 - Three genuinely separate radius values change — tooltip only names one.
 
