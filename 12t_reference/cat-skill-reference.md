@@ -188,4 +188,11 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 # Damage & Mechanics
 
-Not written yet. Every skill shown in the app needs an entry here.
+Entries are being written skill by skill; every skill shown in the app needs one (no exclusions).
+
+### cat_joker5 (402) — passive, Class C
+- reqLv 55, reqBn 0, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`). The only two `hasSkill(402)` checks in the Cat source are inside `RPC_luckyCard` (`Cat.cs:20850`, `:20870`) — Joker modifies **Lucky Card only**.
+- **Damage bonus:** `hitDamage = (int)(hitDamage + 0.5 × (casterLCK − targetLCK))` (`Cat.cs:20856`). Unlike the base random roll, which is floored with `Mathf.Max(…, 0)` (`:20845`), this term is **not clamped**: against a target with higher LCK than the Cat it is negative and **reduces** Lucky Card's damage. The Joker card carries a red warning for this.
+- **Doom proc:** only after a real hit (`hit() != 0`, `Cat.cs:20862`), if the target does not already have `doom` (`:20876`) and `Random.Range(0,100) < lckAdjust(6)` (`:20882`): `RPC_AddStatus("doom", 1, Damage.getDebuff(30, target.cha, caster.cha), 0, casterActor)` (`:20888`) and the client message "Joker Card!" (`:20893`). The duration is CHA-contested with the **target's CHA passed first**, the same reversed order as Bat's Doom, hence `durContested` + `durContestedInverted`. The 6 is a base chance that `lckAdjust` scales with the caster's LCK, so it is shown as a chip, not typed in the desc.
+- Client tooltips: TH "ทำให้การปา LuckyCard มีโอกาส 5% ทำให้เป้าหมายติด Doom1และเพิ่มความแสียหายของ LuckyCard เป็น 1.0-3.0"; EN "Increases LuckyCard's damge to 1.0~3.0 and gives it a 5% chance to inflict 'doom1' status." (`CatSkill_thai.cs` / `CatSkill_eng.cs`). Code wins: the chance is `lckAdjust(6)` not a flat 5%, and the damage change is the flat `0.5×(LCK − targetLCK)` above, not a 1.0–3.0 multiplier.
+- Full Lucky Card formula: see the `cat_luckyCard` entry below once written.
