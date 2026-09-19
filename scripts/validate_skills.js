@@ -659,6 +659,13 @@ let checkedLckDiff = 0;
     const withoutJoker = sandbox._renderOneDmgFormula(sk, 4, sandbox._getDmgText(sk, 4));
     expect("formula shows the Joker term only when Joker is on", [withJoker.includes("Joker"), withoutJoker.includes("Joker")], [true, false]);
     expect("formula always shows the random LCK term", withoutJoker.includes("ΔLCK"), true);
+    expect("formula shows the random term as a 0~max range (rank 4, LCK lead 100 -> 0~250)", withoutJoker.includes("0~250"), true);
+    inputs.lck.value = "2"; sandbox._selectSkill(sk);
+    const noLead = sandbox._renderOneDmgFormula(sk, 4, sandbox._getDmgText(sk, 4));
+    expect("no LCK lead: the random term shows a plain 0, not 0~0", [noLead.includes("0~"), noLead.includes(">0<")], [false, true]);
+    inputs.lck.value = "102"; inputs.enemyLck.value = "202"; sandbox._depRanks[sk.lckDiffDep.id] = 1; sandbox._selectSkill(sk);
+    const behindJoker = sandbox._renderOneDmgFormula(sk, 4, sandbox._getDmgText(sk, 4));
+    expect("behind on LCK with Joker: shown as a minus term, not \"+ -n\"", [behindJoker.includes("−"), behindJoker.includes("-50")], [true, false]);
   } catch (e) {
     console.error(`[LCK-DIFF EXCEPTION] ${e.message}`);
     errorCount++;
