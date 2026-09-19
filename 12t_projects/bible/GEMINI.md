@@ -119,7 +119,7 @@ Present a structured review table to the user including:
   3. **Status Application / Proc Hook:** Grants on-hit effects, debuff chances, or modifies status levels in `AttackHit`, `MagicHit`, or `mod`.
   4. **AI / Companion Hook:** Modifies summon pet stats or AI behaviors (e.g. `HeavyBuilt`, `SynchroMole`, `HiddenTurret`).
   5. **Attack Augmentation Hook:** Modifies normal attack combos or charge attack behaviors (`nAttack`, `cAttack`).
-* **Multi-Rank Icon Completeness:** Verify all rank variant icons from `RippedAssets/`.
+* **Multi-Rank Icon Completeness:** Verify all rank variant icons from `RippedAssets/`. **Enforced:** `node scripts/validate_skills.js` fails with `[ICON RANK ERROR]` when a `maxRank > 1` card lacks any `<icon base><rank>` key (the hero icon otherwise silently falls back to the max-rank icon, so a gap is invisible). The rank PNGs live in `RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills/<class>/<skill><rank>.png` and embed as their raw base64.
 * **Cross-Linking Target Audit:** Identify and list every active skill altered by this passive.
 
 #### Step B2: Passive Observable Proof Review Table

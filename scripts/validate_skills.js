@@ -270,6 +270,8 @@ SKILLS.forEach(sk => {
   if (sk.hitCountDep) checkIcon(sk.hitCountDep.icon, `${ctx} [hitCountDep icon]`);
   if (sk.dep) checkIcon(sk.dep.icon, `${ctx} [dep icon]`);
   if (sk.descDep) checkIcon(sk.descDep.icon, `${ctx} [descDep icon]`);
+  if (sk.lckDiffDep) checkIcon(sk.lckDiffDep.icon, `${ctx} [lckDiffDep icon]`);
+  if (sk.lckProc && sk.lckProc.dep) checkIcon(sk.lckProc.dep.icon, `${ctx} [lckProc dep icon]`);
 
   // Max Rank check
   const maxRank = sk.maxRank || 1;
@@ -774,6 +776,21 @@ let checkedBenediction = 0;
   inputs.tal.value = saved.tal; inputs.lck.value = saved.lck;
   if (saved.ben === undefined) delete sandbox._depRanks.benediction; else sandbox._depRanks.benediction = saved.ben;
 }
+// 3h. MULTI-RANK ICON COMPLETENESS (GEMINI.md §3: "for maxRank > 1, extract every rank variant icon
+// from RippedAssets/. Zero placeholders."). The hero icon swaps to `<base><rank>` for a multi-rank skill
+// and SILENTLY falls back to the max-rank icon when that key is missing, so a gap never shows up as an
+// error anywhere else -- Lucky Card shipped with only rank 4 because nothing checked this.
+let checkedRankIcons = 0;
+SKILLS.forEach(sk => {
+  if (!(sk.maxRank > 1) || !sk.icon) return;
+  const base = sk.icon.replace(/\d+$/, "");
+  const absent = [];
+  for (let r = 1; r <= sk.maxRank; r++) { checkedRankIcons++; if (!(base + r in SKILL_ICONS)) absent.push(r); }
+  if (absent.length) {
+    console.error(`[ICON RANK ERROR] ${sk.id} (maxRank ${sk.maxRank}) is missing rank icon(s) ${absent.map(r => base + r).join(", ")} -- extract them from RippedAssets/.../gamegui/icons/skills/<class>/`);
+    errorCount++;
+  }
+});
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -937,6 +954,7 @@ console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
 console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
 console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) checks.`);
 console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base order) checks.`);
+console.log(`Verified ${checkedRankIcons} multi-rank icon presence checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
