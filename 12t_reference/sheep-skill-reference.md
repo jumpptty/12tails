@@ -274,11 +274,11 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - All active Sheep SP costs are Red SP (`cSP < 0`).
 - **Healing & Benediction Scaling**:
   - Direct heals (`heal`, `quickHeal`, `allHeal`, `overHeal`, `revive`) scale directly with `TAL` via `mChar.talAdjust(...)`.
-  - Multiplied by the **Benediction** passive: `× (1.0 + 0.15 × benedictionLv)` (+15% per rank, up to +45% at Rank 3).
+  - Scaled by the **Benediction** passive (+15% per rank, up to +45% at Rank 3). **The multiplier goes INSIDE `talAdjust`, on an integer-truncated base, in 32-bit floats** — `mChar.talAdjust((int)((1f + 0.15f × benedictionLv) × (float)base))` (verified 2026-09-19: `heal` `Sheep.cs:22284`, `allHeal` `:23284`, `overHeal` `:26334`, `revive` `:26864`), *not* `talAdjust(base) × (1 + 0.15×lv)`. The float32 arithmetic matters at the edges: `revive` sLv2 (base 100) at Benediction 1 truncates to **115**, whereas plain double arithmetic gives 114. Heal `sLv×15+10`, allHeal `sLv×15+10`, overHeal `sLv×30+20`, revive `sLv×50`.
   - Threat reduction via **Harmonic Diffuse** passive: `-0.15 × healAmount × harmonicDiffuseLv`.
 - **Holy Arts & Divinity Damage**:
   - `holyLight`: Straight holy ray dealing `talAdjust(12 + 12×sLv)` with 1 KO knockback.
-  - `overHeal`: Offensive opening strike targeting enemies at 100% full HP (`Sheep.cs:26334–26357`). Deals `talAdjust((20 + 30×sLv) × (1 + 0.15×benedictionLv))` magic damage capped at `(20% + 10%×sLv) × target Max HP` (30% Max HP at R1, 40% at R2). Deals 0 damage if target is below max HP.
+  - `overHeal`: Offensive opening strike targeting enemies at 100% full HP (`Sheep.cs:26334–26357`). Deals `talAdjust((int)((1f + 0.15f×benedictionLv) × (20 + 30×sLv)))` magic damage (`Sheep.cs:26334`) capped at `(20% + 10%×sLv) × target Max HP` (30% Max HP at R1, 40% at R2). Deals 0 damage if target is below max HP.
   - `lightBind`: Single-target root (`moveSpeed = 0`) dealing `6×sLv` flat true effect damage every 1.0s (`CharacterControl.cs:9369`, purple penetrating damage). No burst finisher.
   - `divinitySword`: Holy summon slash dealing `talAdjust(10 + 20×sLv)`, 1 KO.
   - `divinitySpear`: Piercing line thrust dealing `3 × talAdjust(10 + 15×sLv)` (3 hits), 1 KO.

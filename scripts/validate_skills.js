@@ -679,9 +679,7 @@ let checkedConsistency = 0;
   // about which path (roll or range) matches the game; do not "fix" by widening the range.
   // Remove an entry once the skill is consistent again.
   const KNOWN_RANGE_SIM_MISMATCH = {
-    // The roll applies the Benediction multiplier to the base before talAdjust, the range after it,
-    // so the two round differently and sit 1 apart. Needs a decision on which order the game uses.
-    sheep_overHeal: "Benediction multiplier order (roll: before talAdjust, range: after) -> 1 apart",
+    // (none right now -- add "skillId: reason" only for a mismatch found by this scan and not yet resolved)
   };
   const DEP_FIELD_NAMES = ["dmgDep", "dmgMultDep", "dmgRankDep", "dmgFlagDep", "dmgReplaceDep", "hitCountDep", "lckDiffDep", "cdDep", "castDep", "koDep"];
   const inputs = sandbox._statInputs;
@@ -735,6 +733,39 @@ let checkedConsistency = 0;
     errorCount++;
   });
   if (known.length) console.log(`[RANGE/SIM KNOWN ISSUES] ${known.length} skill(s) still inconsistent, tracked in KNOWN_RANGE_SIM_MISMATCH: ${known.join(", ")}`);
+}
+// 3g. Sheep Benediction (Sheep.cs:22284/23284/26334/26864): talAdjust((int)((1f + 0.15f*lv) * base)) --
+// the multiplier is INSIDE talAdjust, on the integer-truncated 32-bit-float product. Checked with a
+// zero LCK spread (deterministic) at TAL 100, where talAdjust(p) = ceil(p * 3), so the expected raw
+// damage is exact: overHeal r2 lv3 = talAdjust(int(1.45f*80)=116) = 348; revive r2 lv1 = talAdjust(int(1.15f*100)=115) = 345
+// (plain double arithmetic would give 114 -> 342).
+let checkedBenediction = 0;
+{
+  const inputs = sandbox._statInputs;
+  const saved = { tal: inputs.tal.value, lck: inputs.lck.value, ben: sandbox._depRanks.benediction };
+  const expectEq = (label, got, want) => {
+    checkedBenediction++;
+    if (got !== want) { console.error(`[BENEDICTION ERROR] ${label}: expected ${want}, got ${got}`); errorCount++; }
+  };
+  try {
+    inputs.tal.value = "100"; inputs.lck.value = "0";
+    [["sheep_overHeal", 2, 3, 348], ["sheep_overHeal", 1, 1, 171], ["sheep_revive", 2, 1, 345], ["sheep_heal", 4, 3, 303]].forEach(([id, rank, lv, want]) => {
+      const sk = SKILLS.find(x => x.id === id);
+      sandbox._depRanks[sk.dmgRankDep.id] = lv;
+      sandbox._skillRanks[sk.id] = rank;
+      sandbox._calcRangeFor = undefined;
+      sandbox._selectSkill(sk);
+      const raw = sandbox._calcRangeFor(sandbox._getDmgText(sk, rank));
+      expectEq(`${id} r${rank} Benediction ${lv}: raw range (min)`, raw[0], want);
+      expectEq(`${id} r${rank} Benediction ${lv}: raw range (max)`, raw[1], want);
+      if (sk.isHeal) expectEq(`${id} r${rank} Benediction ${lv}: simulated heal`, sandbox._rollOneHit(sk, rank), want);
+    });
+  } catch (e) {
+    console.error(`[BENEDICTION EXCEPTION] ${e.message}`);
+    errorCount++;
+  }
+  inputs.tal.value = saved.tal; inputs.lck.value = saved.lck;
+  if (saved.ben === undefined) delete sandbox._depRanks.benediction; else sandbox._depRanks.benediction = saved.ben;
 }
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
@@ -898,6 +929,7 @@ console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutation
 console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
 console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
 console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) checks.`);
+console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base order) checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
