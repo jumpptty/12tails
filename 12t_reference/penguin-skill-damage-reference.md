@@ -42,7 +42,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 | `penguin_frozenBlast` | Frozen Blast | 4 | [12, 16, 20, 24] MP | [12, 14, 16, 18]s | [2, 2.5, 3, 3.5]s | — | `talAdjust(8 + 8×sLv)` linear ice blast |
 | `penguin_arcticWind` | Arctic Wind | 3 | [20, 26, 32] MP | [20, 25, 30]s | [2, 3, 4]s | 5s | Frontal freezing wind cone |
 | `penguin_iceShield` | Ice Shield | 4 | [15, 23, 31, 39] MP | 60s | [2, 3, 4, 5]s | 30s | Absorptive ice barrier shielding damage |
-| `penguin_iceBlock` | Ice Block | 2 | [10, 15] MP | [45, 60]s | 0s | 10s | Freezes self in invulnerable ice block |
+| `penguin_iceBlock` | Ice Block | 2 | [10, 15] MP | 90s | [2, 3]s | `chaAdjust(6)+6`s (block lifetime) | Row of `1+2×sLv` ground ice blocks that slow nearby enemies (`ice`, 2s flat) |
 | `penguin_snowMan` | Snowman | 2 | [20, 30] MP | [60, 75]s | [3, 4]s | 20s | Summons distracting snowman decoy |
 | `penguin_tornado` | Tornado | 3 | [36, 48, 60] MP | [35, 45, 55]s | [3, 4, 5]s | 8s | Moving blizzard vortex |
 | `penguin_absoluteZero` | Absolute Zero | 2 | [35, 45] MP, [30, 40] SP (blue) | [90, 120]s | [4, 5]s | — | Deep freezing frost wave |
@@ -82,7 +82,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 - reqLv 40, MP 40, SP -30 (red), instant, cType "tripleCast"
 - CD: shared `agiAdjust(240)` pool with doubleCast1.
 - Grants self status `multiCast` sLv=2, duration `chaAdjust(12)`s. **Next qualifying cast fires 3 times consecutively** (matches tooltip and live play). Each qualifying cast routine checks `getStatusLv("multiCast")`, calls `reduceStatusLv("multiCast", 1)` (removing the status at 0) and re-invokes itself via `RPC_<skill>_multiCast` (e.g. `Penguin.cs:22884-22904` for blink) -- and that re-invoked cast runs the same check again. Total casts = 1 + status level (doubleCast1 = 2, tripleCast2 = 3). (CORRECTED: an earlier note here claimed "2 separate casts each fire twice"; that missed the self-recursion.) Using either doubleCast1/tripleCast2 overwrites (doesn't stack with) the other's pending buff. There is no separate `tripleCast` status -- `tripleCast` is only the cooldown key (`Penguin.cs:9829`).
-- iceBlock exception: reads `multiCast` level as a direct multiplier (`sLv×3` for tripleCast2), not decrement-per-cast.
+- iceBlock exception: consumes the whole `multiCast` status and uses its level as a multiplier on the block count (`mBlockCount = sLv + sLv×multiCastLv`, `Penguin.cs:31595-31600`), instead of the decrement-and-recast pattern; it does not re-invoke itself.
 
 ### pgn_statPlus1-4 (141/142/143/144) — passive, generic
 - Each rank: flat **+2 to every basic stat** (class-generic mechanism, no hidden bonus, verified clean). All 4 ranks: +8 all stats.
@@ -223,14 +223,13 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - NOT doubleSpell-eligible.
 - Class C mods: `frostSpike5`(423) adds `+charLv` flat shield HP, AND separately gives a 12% chance on full-absorb to AoE-apply `frost` (5m radius, `chaAdjust(2)`s) to nearby enemies (undocumented secondary effect, found via `CharacterControl.cs`).
 
-### pgn_iceBlock1/2 (331/333) — active, RANK FAMILY (sLv1/sLv2)
-- reqLv 9/25, MP 10/15, SP 0, mode instant/self (but NOT actually a self-buff — see mechanic), cType iceBlock
-- CD: flat `90` both ranks (not sLv-scaled). ×0.88 with revisedArt5.
-- Cast: `1+sLv` → 2s/3s.
-- No direct hit. Fires `mBlockCount+1` ground ice-zones in a row (`mBlockCount = sLv+sLv×multiCastLv`), raycast-placed within 12m below caster's front, each zone `Init(mLife=chaAdjust(6)+6, mLv=sLv)`.
-- Each zone: persists `chaAdjust(6)+6`s, ticks 1s, applies `ice` status (level sLv, duration flat 2s — NOT chaAdjust-scaled) to enemies within radius `6+3×mLv` (12m at rank2) lacking `ice` already.
-- Range: no cast-range gate; placement bounded by 12m downward raycast near caster.
-- `isDoubleSpell=true` — AND multiCast stacks directly multiply `mBlockCount` (different consumption model than other doubleSpell skills).
+### pgn_iceBlock1/2 (331/333) — active, RANK FAMILY (sLv1/sLv2) (REWRITTEN 2026-09-19 from source; earlier notes and the old card claimed a self-shield / "mBlockCount+1 zones" -- both wrong)
+- reqLv 9/25, reqBn 3/7, MP 10/15, SP 0, mode instant/self, cType iceBlock. Client tooltip (`PenguinSkill_thai.cs:675/686`, `_eng.cs`): "create three/five blocks of ice that temporary slow down nearby enemies within 8m/12m".
+- **NOT a self-buff:** the caster gets no shield/invulnerability. It places ground ice blocks.
+- CD: flat `90` both ranks, `agiAdjust` (wrapped) (`Penguin.cs:19697`, `:19866`). Cast: `magAdjust(1+sLv)` → 2s/3s (`:19692`, `:19860`). `isDoubleSpell=true` (`:19702`).
+- **Block count = `1 + 2×mBlockCount`, `mBlockCount = sLv + sLv×multiCastLv`** (`Penguin.cs:31595-31600`; the whole `multiCast` status is consumed at cast and multiplies, it does not re-cast). The loop places a centre block at `pos + 1.5×forward` (`i==0`) and a left/right pair at `±i×1.5×right` for `i=1..mBlockCount`, each raycast down from +9 (range 12). Rank1: 3 blocks (5 with Double Cast, 7 with Triple Cast); rank2: 5 (9 / 13).
+- Each block (`Penguin_iceBlock.cs`): lifetime `Init(chaAdjust(6)+6, sLv, owner)` (`Penguin.cs:10744`; `mLife = nLife + Time.time`, `Penguin_iceBlock.cs:51`). Every 1s (start jitter 0.1-0.9s) it scans `FindAreaTarget(pos, 6+3×mLv, 6, 130816-(1<<ownerLayer))` -- radius 9m (rank1) / 12m (rank2), height 6, enemies only -- and applies `RPC_AddStatus("ice", mLv, 2, 0, owner)` to targets that do not already have `ice`. Ice level = rank (slow `10+10×lv`% via `moveMod`); duration is a flat 2s with no CHA involvement at all.
+- Discrepancy: rank1 tooltip says 8m, code gives `6+3×1 = 9m` (rank2 matches at 12m). Code value used unless live testing says otherwise.
 
 ### pgn_snowMan1/2 (332/334) — active, RANK FAMILY (sLv1/sLv2)
 - reqLv 17/33, MP 20/27, SP 0, mode target/enemy, cType snowMan
