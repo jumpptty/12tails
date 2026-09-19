@@ -189,7 +189,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 | `penguin_focusIntellect` | Focus Intellect | 1 | 30 MP, 75 SP (red) | 60s | 0s | 10s | Empowers next spell with INT scaling |
 | `penguin_parallelShift` | Parallel Shift | 1 | 10 MP, 20 SP (red) | 45s | 0s | — | Astral displacement and cooldown reset |
 | `penguin_snowBall` | Snowball | 1 | 30 MP | 15s | 1s | — | Throws giant rolling snowball |
-| `penguin_cosmicRift` | Cosmic Rift | 1 | 50 MP, 50 SP (red) | 120s | 4s | 8s | Dimensional rift distorting gravity and dealing continuous damage |
+| `penguin_cosmicRift` | Cosmic Rift | 1 | 50 MP, 50 SP (red) | 180s (`agiAdjust`) | 9s (`magAdjust`) | 12s (`chaAdjust`) | Self buff: no damage dealt or taken, no skills, no HP/MP/SP recovery (corrected 2026-09-19 from source; the old 120s/4s/8s row was wrong) |
 | `penguin_cosmicFriday` | Cosmic Friday | 1 | 100 MP, 50 SP (red) | 300s | 0s | 20s | Ultimate celestial alignment |
 
 ---
@@ -482,10 +482,19 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - **Confirmed zero secondary effects** after exhaustive search (companion file is an empty stub) — legitimate "nothing hidden," not incomplete research.
 
 ### pgn_cosmicRift5 (434) — active
-- reqLv 75, MP 50, SP -50 (red), instant, self, cType cosmicRift. CD `agiAdjust(180)`.
+- reqLv 75 (reqBn 4), MP 50, SP -50 (red), mode instant, self, cType cosmicRift. CD `agiAdjust(180)` (`Penguin.cs:19831`, `:19869`). **Cast time is `magAdjust(9)`** (`Penguin.cs:19826`, `:19864`) — "instant" is only the decoder mode. Not Double Spell eligible (`:19836`).
 - Self-buff `cosmicRift` sLv5, duration `chaAdjust(12)`s: caster takes ZERO incoming damage AND deals ZERO outgoing damage (fully bidirectional null) — matches tooltip exactly. Also disables special-form and pauses HP/MP regen ticks.
 - **Cannot cast any other skill while active** (auto-refunds MP/SP if attempted). Mutually exclusive with `cosmicFriday` (434/444 don't stack).
 - No hasSkill() gate exists — this skill is entirely self-contained status logic, not a modifier of anything else.
+- **Verified 2026-09-19 (all in the `cosmicRift` status, classification "Buff, State" = only `StatusData.isStateStatus` `:5028` + `isBuffStatus` `:6860`):**
+  - Outgoing: an attacker with the status deals 0 damage, 0 KO and 0 Hate (`CharacterControl.cs:3900-3925`, effect-damage path `:6254`). The client tooltip agrees ("preventing all damage dealt from him or to him").
+  - Incoming: in the victim-side status loop (the same one that handles shield absorption, e.g. `snowBall`), `cosmicRift` sets `nDamage = 0`, `nKo = 0` and `isSpecialForm = false` (`CharacterControl.cs:6907-6923`). Hate is not zeroed on this side.
+  - Healing: `AddHeal` zeroes `nHp`, `nMp` and `nSp` (not `nKo`) while the status is active (`CharacterControl.cs:7471-7473`, `:7666-7676`). This is the "pauses regen" behavior above.
+  - Skill lockout: any skill cast is refused with "Cannot use skill with cosmicRift" and MP/SP are refunded (`Penguin.cs:7352-7359`).
+  - Status immunities: `blend` and `invisible` cannot be applied while active (`CharacterControl.cs:11166`, `:11316`); `cosmicRift` and `cosmicFriday` block each other in both directions (`:11625-11637`, `:11646-11650`).
+  - Cancel: the client's "Changing back!" routine removes `cosmicRift` together with `transform`, `mount`, `fireAvatar` and `earthForm` (`GameGui.cs:30785-30793`).
+  - Mission spawn: `Penguin.Start()` puts both `cosmicRift` (`agiAdjust(180)`) and `cosmicFriday` (`agiAdjust(300)`) on cooldown when `Game.mGameType > 4` (mission instances) (`Penguin.cs:82-86`).
+  - Client tooltips: TH "ทำให้เพนกวินติดสถานะอมตะ แต่ไม่สามารถสร้างความเสียหายหรือกดเปลี่ยนใช้ไอเท็มต่างๆได้"; EN "Warp Penguin to another dimension, preventing all damage dealt from him or to him." (`PenguinSkill_thai.cs` / `PenguinSkill_eng.cs:1067`). No code path was found that blocks item use directly; healing being zeroed is what makes potions useless.
 
 ### pgn_superStatPlus5 (441) — **NOT FOUND IN CLIENT CODE**
 - The tooltip string itself is broken in `PenguinSkill_eng.cs` (checks `"pnd_superStatPlus5"`, Panda's prefix — a copy-paste bug, so Penguin's client doesn't even show a matching tooltip). No `hasSkill(441)`, no stat-bonus field, anywhere in `Penguin.cs`/`CharacterControl.cs`/`GameGui.cs`/`SkillClass.cs`. Likely server-authoritative and outside this decompile. **Report as "not found in code, likely server-side" on the sheet — do not fabricate a formula.**

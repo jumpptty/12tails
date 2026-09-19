@@ -553,14 +553,14 @@ SKILLS.forEach(sk => {
     }
   });
 });
-{
+[["[focusIntellect5]", "0.01"], ["[cosmicRift5]", "KO"]].forEach(([tag, mustContain]) => {
   checkedStatusKeywords++;
-  const html = sandbox.renderStatusKeywords("[focusIntellect5]");
-  if (!html.includes("Buff, State") || !html.includes("0.01")) {
-    console.error(`[STATUS ERROR] [focusIntellect5] did not render its class + description: ${html.slice(0, 160)}`);
+  const html = sandbox.renderStatusKeywords(tag);
+  if (!html.includes("Buff, State") || !html.includes(mustContain)) {
+    console.error(`[STATUS ERROR] ${tag} did not render its class + description: ${html.slice(0, 160)}`);
     errorCount++;
   }
-}
+});
 
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
