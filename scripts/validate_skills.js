@@ -553,7 +553,7 @@ SKILLS.forEach(sk => {
     }
   });
 });
-[["[focusIntellect5]", "0.01"], ["[cosmicRift5]", "KO"]].forEach(([tag, mustContain]) => {
+[["[focusIntellect5]", "0.01"], ["[cosmicRift5]", "KO"], ["[cosmicFriday5]", "KO"]].forEach(([tag, mustContain]) => {
   checkedStatusKeywords++;
   const html = sandbox.renderStatusKeywords(tag);
   if (!html.includes("Buff, State") || !html.includes(mustContain)) {

@@ -190,7 +190,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 | `penguin_parallelShift` | Parallel Shift | 1 | 10 MP, 20 SP (red) | 45s | 0s | — | Astral displacement and cooldown reset |
 | `penguin_snowBall` | Snowball | 1 | 30 MP | 15s | 1s | — | Throws giant rolling snowball |
 | `penguin_cosmicRift` | Cosmic Rift | 1 | 50 MP, 50 SP (red) | 180s (`agiAdjust`) | 9s (`magAdjust`) | 12s (`chaAdjust`) | Self buff: no damage dealt or taken, no skills, no HP/MP/SP recovery (corrected 2026-09-19 from source; the old 120s/4s/8s row was wrong) |
-| `penguin_cosmicFriday` | Cosmic Friday | 1 | 100 MP, 50 SP (red) | 300s | 0s | 20s | Ultimate celestial alignment |
+| `penguin_cosmicFriday` | Cosmic Friday | 1 | 100 MP, 50 SP (red) | 300s (`agiAdjust`) | 12s (`magAdjust`) | 3s flat (channel, re-applied every 2s) | Channel: allies within 3m deal and take no damage, no HP/MP/SP recovery (corrected 2026-09-19 from source; the old 0s/20s row was wrong) |
 
 ---
 
@@ -510,10 +510,17 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - Applies identically to typhoon (tornado's evolved form), not just base tornado — tooltip only says "Tornado."
 
 ### pgn_cosmicFriday5 (444) — active, class ultimate
-- reqLv 85, MP 100, SP -50 (red), instant, self, cType cosmicFriday. CD `agiAdjust(300)`.
+- reqLv 85 (reqBn 6), MP 100, SP -50 (red), mode instant, self, cType cosmicFriday. CD `agiAdjust(300)` (`Penguin.cs:19853`, `:19869`). **Cast time is `magAdjust(12)`** (`Penguin.cs:19848`, `:19864`) — "instant" is only the decoder mode. Not Double Spell eligible (`:19858`).
 - Channeled party-invulnerability zone: every 2s drains `hasSkill(414)?20:25` MP from caster (confirms revisedMagic5 applies here too), pulses 3m-radius/3m-height AoE around caster, refreshing `cosmicFriday` status (sLv5, 3s duration, same bidirectional damage-null as cosmicRift) on every ally caught inside.
 - Companion file confirmed pure trigger-collider logic (redundant/backup status-application path on player-tag collision) — no additional hidden mechanic.
 - Shares mutual-exclusivity and full status-handling code with cosmicRift(434).
+- **Verified 2026-09-19 (channel loop = `$RPC_cosmicFriday_cast`, `Penguin.cs:39062`; classification "Buff, State" = only `StatusData.isStateStatus` `:5034` + `isBuffStatus` `:6866`):**
+  - Tick: the first pulse is immediate (`mUpdateTime` starts at 0), then every 2s (`Penguin.cs:39387-39395`). Each pulse costs `hasSkill(414) ? 20 : 25` MP (`:39400`); the channel ends when MP < 25 (`:39377`).
+  - Pulse: `Damage.FindAreaTarget(casterPos, 3, 3, 1 << casterLayer)` (radius 3m, height 3m, caster's layer — `:39410`), then `RPC_AddStatus("cosmicFriday", 5, 3, 0, casterActor)` on every character found (`:39449`). Duration is a flat literal 3 — not `chaAdjust`-wrapped. The loop has no self-exclusion, so the caster is presumably in his own list (unconfirmed in live play).
+  - Cancel: pressing a movement key (`Input.GetAxisRaw("Vertical"/"Horizontal") != 0`, not while chatting, `isMine` only) calls `RPC_cosmicFriday_cancel` (`Penguin.cs:39341-39370`, `:11653`), which sets the caster back to `standby`. The loop also ends if the caster leaves the attack state (`:39310-39316`).
+  - Companion `Penguin_cosmicFriday.cs` (601 lines, read in full): `InitCosmicFriday` stores the owner id, finds the owner's `CharacterControl` and plays the "create" animation; `Update` makes the object follow the owner and starts `DestroyCosmicFriday` (plays "destroy", then `Destroy(gameObject)`) once the owner leaves the attack state or `myCommand != "cosmicFriday"`; `OnTriggerEnter` (`:99-167`) gives any Player-tagged character on the same layer `addStatus("cosmicFriday", 5, 2, 0, owner)` — **2s** — unless the owner's HP < 1. The trigger collider's size is set in the prefab, not in code, so the tooltip's "5m" cannot be confirmed from source; only the 3m pulse can.
+  - Status effects mirror `cosmicRift` at the same sites: a holder deals 0 damage/KO/Hate (`CharacterControl.cs:3906`, `:6260`); incoming effect damage and KO become 0 (`:6929-6940`, unlike Rift it does **not** cancel special form); HP/MP/SP healing is zeroed (`:7479-7483`); `blend`/`invisible` cannot be applied (`:11181`, `:11331`); exclusive with `cosmicRift` (`:11631-11640`). **No skill lockout** for holders — `Penguin.cs` only blocks casting for `cosmicRift`. The regular-hit victim path (`RPC_AddDamage`/`onDamageEvent`) has no `cosmicFriday` check, same open question as `cosmicRift`.
+  - Client tooltips: TH "ทำให้เพื่อนในระยะ 5m ติดสถานะ CosmicRift จนกว่าเพนกวิ้นจะขยับ (Channel)" (names the wrong status, `CosmicRift`); EN "Channel all allies in the area into another dimension, preventing all damage dealt from them or to them." (`PenguinSkill_thai.cs` / `PenguinSkill_eng.cs:1067` region).
 
 ---
 
