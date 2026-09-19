@@ -80,7 +80,7 @@ Before concluding a finding "doesn't make sense," "has no call site," or "seems 
 ### 3.A. Active Skill Pipeline
 
 #### Step A1: Pre-Flight Active Source Extraction (Zero Assumptions)
-* **Never guess or use generic RPG tropes.**
+* **Approximations & Wiki Extrapolations Are Strictly Forbidden:** Never guess, linearly scale (e.g. assuming Rank 2 is +25%/+50% MP), or rely on unverified community wiki data. BigBug Studio authored irregular per-rank values directly into control-flow bytecode.
 * Run a temporary scratch script (in `<appDataDir>/brain/<conversation-id>/scratch/`) or `view_file` to trace the full lifecycle across:
   0. **Cost/Mode/Req Table:** Run `python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs` for every skill's MP/SP/reqLv before reading `getSkill()`'s obfuscated fallthrough chain by eye. SP field sign indicates type (negative = red/consumed, positive = blue/threshold gate, `0` = no SP cost).
   1. **Cast Dispatch:** `<Class>.cs` (`RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust` wrappers, per-rank arrays).

@@ -61,6 +61,8 @@ When reading `.cs` files in `DecompiledSource/`:
 2. **Class-Specific vs Global Separation:** If the finding is specific to one class, record it in `12t_reference/<class>-skill-damage-reference.md`. If it affects the global engine or multiple classes, record it in `12Tails-Mechanics-Reference.md`.
 3. **Never Leave Ground Truth Solely in Code:** Never leave newly discovered mechanics trapped only in deliverable card objects or chat responses.
 
+**Strict Prohibition on Approximations & Wiki Guesses:** Approximations, linear extrapolations (e.g. assuming Rank 2 MP is +25%/+50%), or unverified community wiki values are strictly forbidden across all deliverables and reference documents. All resource costs (MP, SP sign and magnitude), requirements (`reqLv`, `reqBn`), cast times, cooldowns, durations, and damage formulas MUST be decoded and verified directly from decompiled source (`DecompiledSource/`) using `python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs` and source files (`<Class>.cs`, `<Class>_<companion>.cs`).
+
 **Shared/Universal Skills Exemption:** Five skills share identical numeric skill IDs and mechanics across all 12 classes (Revised Art `#424`, Revised Magic `#414`, Revised Skill `#404`, Stat Plus `#141-144`, Super Stat Plus `#441`). These are authored **once** under the Common category (documented in [12Tails-Mechanics-Reference.md §3.5](12t_reference/12Tails-Mechanics-Reference.md#35-universal-shared-skills-characterdataclasscs-charactercontrolcs)). Skip these five when running per-class skill pipelines.
 
 ---
