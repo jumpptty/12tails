@@ -20,8 +20,11 @@ To permanently prevent session crashes and turn interruptions:
    * The patch script loads `index.html`, replaces the targeted logic in memory, writes the file back, and prints only a 1-line confirmation (e.g., `SUCCESS: Patched Left Stride (42 lines)`). Exactly 0 KB of raw HTML or Base64 enters the agent context.
 
 3. **Git Checkpoint Before Every Phase:**
-   * Always verify a clean working tree (`git status`) or commit working states before applying edits. If any script behaves unexpectedly, revert immediately via `git checkout`.
+   * Always verify a clean working tree (`git status`) or commit working states before applying edits. **A dirty `index.html` means uncommitted card work exists — make a local WIP commit of it before running any patch script.**
+   * **Never run `git checkout`, `git restore`, `git reset` or `git stash` on `index.html` to undo a script.** On a dirty tree they silently destroy every uncommitted edit in the file (this is how the Penguin ToT/TTO card overrides were lost). Every patch script must first copy `index.html` to its scratch folder (e.g. `index.<timestamp>.bak`) and, if it misbehaves, restore from that copy or re-apply only the affected fields.
    * If the tree is dirty, inspect and preserve unrelated changes; do not commit or revert them.
+   * **Never replace a whole card line.** Patch scripts change only the specific fields they mean to (insert/replace one `key:value`, or add one id to `compatSkills`). Rewriting a card from hand-typed text silently drops every field you forgot to retype (this is how Mana Missile, Falling Stars/Comets and Arctic Wind lost their damage formulas).
+   * **`node scripts/validate_skills.js` enforces this**: with pending changes it errors (`[FIELD LOSS ERROR]`) if any card lost a field it had at `HEAD`. A deliberate removal must be named: `--allow-field-loss=<cardId:field,...>`. It also prints a `[DOC BACKLOG]` count of app skills with no entry in their class reference (`--list-doc-backlog` lists names).
 
 4. **Mandatory Post-Edit Verification & Changelog Gate:**
    * Before committing, prepend a `CHANGELOG_DATA.entries` item in `index.html` using the **exact planned commit subject** and the current ISO timestamp.

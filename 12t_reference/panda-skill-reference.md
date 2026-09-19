@@ -1,7 +1,7 @@
 # Panda — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 `climbingCliff`/`crumblingMountain` added 2026-08-14 — see the Tiger Toss family judgment-call note
 below for why they were initially left out and then given their own rows.
 
@@ -275,3 +275,19 @@ below for why they were initially left out and then given their own rows.
   `fuujinKen`, `raijinKen`: no usable Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime
   call exists in the skill's own coroutine class body; see the bulk judgment-call note above. Duration
   cells are `—`.
+
+---
+
+# Damage & Mechanics
+
+
+## Server Balance Variations (ToT)
+
+Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
+
+| Skill | Original BigBug baseline | ToT delta |
+|---|---|---|
+| Lotus Palm | 75s base cooldown. | Base cooldown reduced to 67.5s. |
+| Heaven Palm | 150s base cooldown. | Base cooldown reduced to 135s. |
+
+Source of server deltas: `12t_projects/bible/index.html:10537-10538`.

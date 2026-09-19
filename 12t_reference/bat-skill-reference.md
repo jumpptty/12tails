@@ -1,7 +1,7 @@
 # Bat — Skill Cooldown/Duration Reference
 
 Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -157,3 +157,22 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   this.$mDuration$20318 + 12, 0, ...)`, not surfaced as its own row (same skill's own effect, not a
   separate cooldown-bearing skill).
 - `blackServant` Duration: `Bat.cs:45206` — `this.$hitChar$20481.RPC_AddStatus("blackServant", 5, Damage.getDebuff((float)90, this.$self_$20486.mChar.cha, this.$hitChar$20481.cha), 0, this.$self_$20486.mChar.ActorNr);` (contested debuff against target player's CHA; base duration 90s, sLv=5). Only targets dead enemy player characters (`Bat.cs:8468-8488`); converts target to Bat's team layer (`CharacterControl.cs:41447`) with `Shadow<Hero>_AI` attached until duration expires, servant dies, or Bat dies (`Bat.cs:295-301`).
+
+---
+
+# Damage & Mechanics
+
+
+## Server Balance Variations (ToT & TTO)
+
+Private-server values below are documented from the Bible skill-detail schema, not the BigBug decompile; the original-server column is the BigBug baseline represented by that card.
+
+| Skill | Server | Original BigBug baseline | Server delta |
+|---|---|---|---|
+| Mass Cast | TTO | The buff lasts 6 / 9 seconds. | Replaced duration-based spreading with exactly 1 / 2 affected casts at ranks 1 / 2. |
+| Mirage Orb | ToT | Allies in the orb receive no `hitMod` reduction. | Allies inside the orb receive `-0.1 hitMod`. |
+| Dream Dazzle | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
+| Phantasm Blast | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
+| Shattering Dream | TTO | Raises Dream Dazzle and Phantasm Blast by one level. | No longer grants either level increase. |
+
+Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910`.

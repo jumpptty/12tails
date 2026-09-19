@@ -555,6 +555,115 @@ if (danglingDeps.length > 0) {
   });
 }
 
+// 6. FIELD-LOSS GUARD (blocking). Several Penguin cards once lost their whole
+// dmg/hitCount/ko/lckProc formulas because a patch script replaced entire card
+// lines with hand-typed text -- and nothing failed, since a card without `dmg`
+// is still "valid". So: while the tree has pending changes, every card that
+// exists at HEAD must still have every top-level field it had at HEAD.
+// A deliberate removal must be named explicitly:
+//   node scripts/validate_skills.js --allow-field-loss=penguin_iceBlock:castTime,penguin_x:dmg
+// (AGENTS.md "Editing index.html safely": never replace a whole card line.)
+function splitCardFields(line) {
+  const s = line.trim();
+  let j = s.indexOf('{') + 1;
+  const stack = [];
+  let instr = null, esc = false, cur = '';
+  const parts = [];
+  while (j < s.length) {
+    const c = s[j];
+    if (instr) {
+      cur += c;
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (instr === '`' && c === '$' && s[j + 1] === '{') { cur += '{'; j++; stack.push('${'); instr = null; }
+      else if (c === instr) instr = null;
+      j++; continue;
+    }
+    if (stack.length && stack[stack.length - 1] === '${' && c === '}') { stack.pop(); cur += c; instr = '`'; j++; continue; }
+    if (c === '"' || c === "'" || c === '`') { instr = c; cur += c; j++; continue; }
+    if ('{[('.includes(c)) { stack.push(c); cur += c; j++; continue; }
+    if ('}])'.includes(c)) { if (!stack.length) break; stack.pop(); cur += c; j++; continue; }
+    if (c === ',' && !stack.length) { parts.push(cur.trim()); cur = ''; j++; continue; }
+    cur += c; j++;
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts.map(p => (p.match(/^([A-Za-z_$][\w$]*)\s*:/) || [])[1]).filter(Boolean);
+}
+function cardFieldMap(source) {
+  const lines = source.split('\n');
+  const start = lines.findIndex(l => l.startsWith('const SKILLS = ['));
+  const end = lines.findIndex((l, i) => i > start && l.startsWith('];'));
+  const map = new Map();
+  for (let i = start + 1; i < end; i++) {
+    const m = lines[i].match(/^  \{ id:"([^"]+)"/);
+    if (!m) continue;
+    let k = i; const buf = [lines[i]];
+    while (!lines[k].trimEnd().endsWith('},') && k + 1 < end) { k++; buf.push(lines[k]); }
+    map.set(m[1], new Set(splitCardFields(buf.join(' '))));
+  }
+  return map;
+}
+if (trackedTreeDirty) {
+  let headHtml = null;
+  try {
+    headHtml = execFileSync('git', ['show', 'HEAD:12t_projects/bible/index.html'], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } catch (e) { /* first commit / file untracked: nothing to compare */ }
+  if (headHtml) {
+    const allowArg = process.argv.find(a => a.startsWith('--allow-field-loss='));
+    const allowed = new Set(allowArg ? allowArg.slice('--allow-field-loss='.length).split(',').map(x => x.trim()).filter(Boolean) : []);
+    const before = cardFieldMap(headHtml), after = cardFieldMap(html);
+    const losses = [];
+    before.forEach((keys, id) => {
+      if (!after.has(id)) return;   // whole-card removal is a separate, visible diff
+      keys.forEach(k => { if (!after.get(id).has(k) && !allowed.has(id + ':' + k)) losses.push(id + ':' + k); });
+    });
+    if (losses.length) {
+      errorCount++;
+      console.error(`[FIELD LOSS ERROR] ${losses.length} field(s) present at HEAD are gone from the working tree (a script probably replaced a whole card line):`);
+      losses.forEach(l => console.error('  - ' + l));
+      console.error('  If intended, re-run with --allow-field-loss=<id:field,...>; otherwise restore them (git show HEAD:12t_projects/bible/index.html).');
+    } else {
+      console.log(`Field-loss guard: no card lost a field vs HEAD (${before.size} cards compared).`);
+    }
+  }
+}
+
+// 7. DOC COVERAGE BACKLOG (informational, never fails). AGENTS.md: every skill
+// shown in the app must have an entry in its class's `<class>-skill-reference.md`
+// under "# Damage & Mechanics" (no exclusions). Name-match heuristic: the card's
+// base name must appear as a word in that section. Add --list-doc-backlog for names.
+{
+  const refDir = path.resolve(__dirname, '../12t_reference');
+  const perClass = new Map();
+  SKILLS.forEach(sk => {
+    const [cls, ...rest] = sk.id.split('_');
+    if (cls === 'common') return;   // shared skills live once in 12Tails-Mechanics-Reference.md §3.5
+    const base = rest.join('_');
+    if (!perClass.has(cls)) {
+      const f = path.join(refDir, cls + '-skill-reference.md');
+      let text = '';
+      if (fs.existsSync(f)) {
+        const doc = fs.readFileSync(f, 'utf8');
+        const i = doc.indexOf('\n# Damage & Mechanics');
+        text = i === -1 ? '' : doc.slice(i);
+      }
+      perClass.set(cls, { text, total: 0, missing: [] });
+    }
+    const e = perClass.get(cls);
+    e.total++;
+    const re = new RegExp('(?<![A-Za-z])' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:[0-9]|-[0-9])?(?![a-z])', 'i');
+    if (!re.test(e.text)) e.missing.push(base);
+  });
+  const gaps = [...perClass.entries()].filter(([, e]) => e.missing.length);
+  if (gaps.length) {
+    const total = gaps.reduce((n, [, e]) => n + e.missing.length, 0);
+    console.log(`\n[DOC BACKLOG] ${total} app skill(s) have no entry under "# Damage & Mechanics" in their <class>-skill-reference.md:`);
+    gaps.forEach(([cls, e]) => {
+      console.log(`  - ${cls}: ${e.missing.length}/${e.total} missing` + (process.argv.includes('--list-doc-backlog') ? ` -> ${e.missing.join(', ')}` : ''));
+    });
+  }
+}
+
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);

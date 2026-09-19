@@ -1,7 +1,7 @@
 # Bison — Skill Cooldown/Duration Reference
 
 Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -125,3 +125,18 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `Bison.cs:28935-29637` — and cross-checking against a full-file `RPC_AddStatus` grep) — these are pure-damage
   or pure-utility skills with no buff/debuff duration of their own. Duration cells are `—`. (`knockDown`'s and
   `powerCleave`'s conditional passive-gated bonus statuses are addressed separately above.)
+
+---
+
+# Damage & Mechanics
+
+
+## Server Balance Variations (ToT)
+
+Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
+
+| Skill | Original BigBug baseline | ToT delta |
+|---|---|---|
+| Over Power | 600s base cooldown. | Base cooldown reduced to 420s. |
+
+Source of server delta: `12t_projects/bible/index.html:8972`.
