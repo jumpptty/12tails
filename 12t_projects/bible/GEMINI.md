@@ -280,3 +280,16 @@ When authoring skill descriptions with `**bold**` formatting:
 4. **Visual Styling ("Ledger" Aesthetic):**
    * `.sk-desc-skill-link` is a `<button>` using `--gold` text with a subtle ambient gold glow (`text-shadow: 0 0 7px rgba(245, 166, 35, 0.45);`), pointer cursor, and intensified hover radiance (`text-shadow: 0 0 12px rgba(245, 166, 35, 0.9), 0 0 4px rgba(255, 255, 255, 0.6); filter: brightness(1.2);`). No underline (user preference). Styles are scoped to `.sk-hero-desc`, `.sk-support-lv-result` and `.sk-server-popup-body`; all three render through `formatDescTokens(str, skill)`.
 
+
+---
+
+## 9. Deep Links to Skill Cards
+
+Every skill card has a shareable URL on the GitHub Pages site (`https://jumpptty.github.io/12tails/12t_projects/bible/`; the repo-root `index.html` redirect already forwards the hash):
+
+* **Format:** `#skill-details/<skillId>` with an optional server: `#skill-details/penguin_frozenBlast?server=tot` (`server` is `tot` or `tto`; a server the skill has no override for is dropped, the card opens on BB). `<skillId>` is the card's `id`. The legacy `#skill-cooldown-lookup` alias also accepts a skill id.
+* **Opening:** `route()` splits the hash into tool / skill id / `server`, shows the tool, then calls `container._selectSkillById(id, server)` (defined next to `selectSkill()` in `mountSkillCooldownLookup`). An unknown id is ignored and leaves the empty search view. A deep link skips the search-box auto-focus.
+* **Keeping the URL in sync:** `selectSkill()`, the server buttons and the two selection-clearing paths call `syncSkillHash()`, which rewrites the hash with `history.replaceState`. `replaceState` fires no `hashchange`, so browsing skills neither fills the back button nor produces GoatCounter hits.
+* **GoatCounter stays at tool level:** `getGoatPath()` strips everything after the tool id (`/bible/#skill-details`), so per-skill or per-server paths never reach the counter. Do not add the skill id back to it without deciding that is wanted.
+* **Not supported (static hosting):** path-style URLs (`/bible/penguin_frozenBlast`) and per-skill link previews (Open Graph titles/images), both of which would need generated per-skill pages.
+* **Validation:** `node scripts/validate_skills.js` drives the real `route()` in its sandbox (section 3b): card opens and hash is rewritten to its canonical form, unknown server dropped, unknown id ignored, legacy alias, and GoatCounter path.

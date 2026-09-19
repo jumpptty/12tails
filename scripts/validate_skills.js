@@ -508,6 +508,37 @@ SKILLS.filter(sk => sk.ownStatsGaos && sk.id !== "monkey_summonGaos").forEach(sk
   }
 });
 
+// 3b. Deep links: #skill-details/<skillId>[?server=tot|tto]. Drives the real
+// route() in the sandbox. selectSkill() rewrites the hash to its canonical form
+// through history.replaceState, so a deliberately non-canonical start hash makes
+// that rewrite observable. Also: unknown ids must not throw, and GoatCounter's
+// path must stay at tool level (never one path per skill).
+let checkedDeepLinks = 0;
+{
+  const calls = [];
+  sandbox.history.replaceState = (a, b, h) => { calls.push(h); sandbox.location.hash = h; };
+  const drive = (hash) => { calls.length = 0; sandbox.location.hash = hash; sandbox.route(); return calls.slice(); };
+  const expect = (label, got, want) => {
+    checkedDeepLinks++;
+    if (JSON.stringify(got) !== JSON.stringify(want)) {
+      console.error(`[DEEP LINK ERROR] ${label}: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
+      errorCount++;
+    }
+  };
+  try {
+    expect("opens card + keeps valid server", drive("#skill-details/penguin_frozenBlast?server=tot&x=1"), ["#skill-details/penguin_frozenBlast?server=tot"]);
+    expect("drops a server the skill does not have", drive("#skill-details/penguin_frozenBlast?server=zzz"), ["#skill-details/penguin_frozenBlast"]);
+    expect("plain id, no server", drive("#skill-details/penguin_iceShield?x=1"), ["#skill-details/penguin_iceShield"]);
+    expect("unknown id neither throws nor rewrites", drive("#skill-details/no_such_skill"), []);
+    expect("legacy #skill-cooldown-lookup alias with a skill", drive("#skill-cooldown-lookup/penguin_blizzard?x=1"), ["#skill-details/penguin_blizzard"]);
+    expect("GoatCounter path ignores skill + server", (sandbox.location.hash = "#skill-details/penguin_frozenBlast?server=tot", sandbox.getGoatPath()), "/bible/#skill-details");
+  } catch (e) {
+    console.error(`[DEEP LINK EXCEPTION] ${e.message}`);
+    errorCount++;
+  }
+  sandbox.location.hash = "skill-details";
+}
+
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -667,6 +698,7 @@ if (trackedTreeDirty) {
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
+console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
