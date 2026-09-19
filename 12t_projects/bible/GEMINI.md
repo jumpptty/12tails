@@ -213,6 +213,14 @@ Present a structured review table including:
 
 ---
 
+### LCK-Difference Damage (`lckDiffCoeff` / `lckDiffDep`, added 2026-09-19 for Cat Lucky Card)
+
+For a skill whose raw damage depends on the **difference** between the attacker's LCK and the target's LCK (Lucky Card: `int(0.5×ATK + Random(0, k×max(LCK − targetLCK, 0)))`, `Cat.cs:20845`), the calculator reads the player LCK input and the **Enemy Stats LCK** input (default enemy: Carron, LCK 2):
+
+* **`lckDiffCoeff: (rank) => k`** — adds a random roll `0 … k × max(LCK − enemyLCK, 0)` to raw damage. It extends the **maximum** of the raw range only and is clamped at 0. Shown as a `.dmg-lck` term ("Random 0~k×ΔLCK") in the formula grid.
+* **`lckDiffDep: { …dep, coeff }`** — a dependency (e.g. `CAT_JOKER_DEP`) that adds `coeff × (LCK − enemyLCK)` **without clamping** (it can be negative), applied after the first integer truncation, shifting **both** ends of the range. Its toggle renders in the damage header like other damage deps and shares state, by `dep.id`, with a `lckProc.dep` on the same card.
+* The `[LCK FLOOR]` validator check runs such a skill with the dep **off** (a deterministic LCK term legitimately moves the minimum); `scripts/validate_skills.js` §3e tests both fields through the real range code and the real `rollOneHit`, including the negative-difference cases.
+
 ## 5. Summon Mechanics, Companion Movesets & Summon Stat Cards
 
 When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, etc.):

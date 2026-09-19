@@ -85,8 +85,8 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   used.** `Cat.cs:8848` gates `RPC_AddStatus("insight", 1, chaAdjust(3), 0, ActorNr)` (`Cat.cs:8854`) behind
   `this.mChar.hasSkill(421)` — a separate passive, out of scope. `awareness`'s own guaranteed status
   (`Cat.cs:8837`) is unconditional and is what this table reports.
-- **`luckyCard`'s `doom` proc is both passive-gated and target-contested — excluded on two independent
-  grounds.** `Cat.cs:20870` gates the `RPC_AddStatus("doom", 1, Damage.getDebuff(...), 0, ActorNr)` call
+- **`luckyCard`'s `doom` proc is both passive-gated and target-contested — has no Duration cell in this table, on two independent
+  grounds (documented in full under `cat_luckyCard` / `cat_joker5` in Damage & Mechanics below).** `Cat.cs:20870` gates the `RPC_AddStatus("doom", 1, Damage.getDebuff(...), 0, ActorNr)` call
   (`Cat.cs:20888`) behind `this.$self_$21749.mChar.hasSkill(402)` (a separate passive) *and* the debuff
   amount itself is computed via `Damage.getDebuff(base, targetCha, casterCha)` — target-CHA-dependent
   regardless of the passive gate. Duration is `—`/`—`.
@@ -195,4 +195,14 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Damage bonus:** `hitDamage = (int)(hitDamage + 0.5 × (casterLCK − targetLCK))` (`Cat.cs:20856`). Unlike the base random roll, which is floored with `Mathf.Max(…, 0)` (`:20845`), this term is **not clamped**: against a target with higher LCK than the Cat it is negative and **reduces** Lucky Card's damage. The Joker card carries a red warning for this.
 - **Doom proc:** only after a real hit (`hit() != 0`, `Cat.cs:20862`), if the target does not already have `doom` (`:20876`) and `Random.Range(0,100) < lckAdjust(6)` (`:20882`): `RPC_AddStatus("doom", 1, Damage.getDebuff(30, target.cha, caster.cha), 0, casterActor)` (`:20888`) and the client message "Joker Card!" (`:20893`). The duration is CHA-contested with the **target's CHA passed first**, the same reversed order as Bat's Doom, hence `durContested` + `durContestedInverted`. The 6 is a base chance that `lckAdjust` scales with the caster's LCK, so it is shown as a chip, not typed in the desc.
 - Client tooltips: TH "ทำให้การปา LuckyCard มีโอกาส 5% ทำให้เป้าหมายติด Doom1และเพิ่มความแสียหายของ LuckyCard เป็น 1.0-3.0"; EN "Increases LuckyCard's damge to 1.0~3.0 and gives it a 5% chance to inflict 'doom1' status." (`CatSkill_thai.cs` / `CatSkill_eng.cs`). Code wins: the chance is `lckAdjust(6)` not a flat 5%, and the damage change is the flat `0.5×(LCK − targetLCK)` above, not a 1.0–3.0 multiplier.
-- Full Lucky Card formula: see the `cat_luckyCard` entry below once written.
+
+### cat_luckyCard1-4 — active, RANK FAMILY
+- reqLv 3 / 9 / 15 / 21, reqBn 0 / 1 / 2 / 3, MP 2 / 3 / 4 / 5, SP **+5 / +8 / +11 / +14** (`decode_skilldata.py`). Positive SP is **blue**: a gate that is not consumed (`12Tails-Mechanics-Reference.md` §Red/Blue SP, `GameGui.cs:37609`). Mode target, enemy, `cType luckyCard`.
+- **Cooldown:** `addTimeOut("luckyCard", agiAdjust(12 + 3×sLv))` → 15 / 18 / 21 / 24s (`Cat.cs:21090`). Revised Art applies. **No cast time** — the coroutine is animation only (`:21059`, no `magAdjust`).
+- **Range:** the cast is refused unless the target is within 20m (`sqrMagnitude < 400`, `Cat.cs:7804`). The attack is a **hitscan**, not a projectile: one ray of length 20 from 1.2m above the caster toward the target collider's centre (`:20593-20609`, `:20790`), ignoring the caster's own layer and layers 1 and 2 (`:20780`). A collider without a `CharacterControl` takes no damage (`:20837`).
+- **Damage:** `hitDamage = (int)(0.5×ATK + Random.Range(0, max((0.5×sLv + 0.5) × (casterLCK − targetLCK), 0)))` (`Cat.cs:20845`) — the random ceiling is 1.0 / 1.5 / 2.0 / 2.5 times the LCK lead, floored at 0 (`Mathf.Max`). It then goes through `hit(200+sLv, target, dmg, KO 1, Hate 0, forward)` (`:20862`), i.e. the normal `dmgAdjust` → `defAdjust` → `hitMod` pipeline.
+- **On a real hit only** (`hit() != 0`, `Cat.cs:20862-20865`, otherwise `goto IL_69C`): the caster gains **+1 SP** (`:20901`) and the Joker roll below runs.
+- **Joker (`hasSkill(402)`):** adds `(int)(hitDamage + 0.5×(casterLCK − targetLCK))` (`:20856`) — **not clamped**, so it *reduces* damage when the target has more LCK than the Cat — and rolls `Random(0,100) < lckAdjust(6)` for `doom` level 1 (`:20870-20893`). Full detail in the `cat_joker5` entry above.
+- **Cosmetic only:** a coin flip (`Random.Range(0,2)`, `:20683`) picks one of two card effect variants.
+- **Tooltips:** ranks 1–4 say "random damage based on lck (0 ~ 1.0 / 1.5 / 2.0 / 2.5 x lck)" (`CatSkill_thai.cs` / `_eng.cs`). The code differs in three ways the tooltip omits: there is a hidden base of `0.5×ATK`; the LCK term is the **difference** from the target's LCK, not the caster's raw LCK; and it is floored at 0.
+- **App modeling:** `dmg:"0"` + `atkCoeff:0.5`, `lckDiffCoeff` (the random ceiling) and `lckDiffDep` (Joker), read against the **Enemy Stats LCK** input. The default enemy preset is Carron with LCK 2, so out of the box the difference is roughly the player's own LCK − 2. See `GEMINI.md` §4 (LCK-difference fields).

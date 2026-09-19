@@ -6735,7 +6735,7 @@ function getUsedOwnStatKeys(skill) {
   // LCK" made LCK glow almost constantly and taught users nothing. Removed
   // 2026-09-14 per user feedback (also cited Cat's not-yet-implemented
   // Gambler-class damage mechanic as the same kind of indirect case).
-  if (skill.lckProc || skill.lckCoeff !== undefined || dmgTexts.some(t => t && /lckAdjust\(/.test(t))) {
+  if (skill.lckProc || skill.lckCoeff !== undefined || skill.lckDiffCoeff !== undefined || dmgTexts.some(t => t && /lckAdjust\(/.test(t))) {
     used.add("lck");
   }
   return used;
@@ -8160,6 +8160,14 @@ const WHALE_REDUCED_CAST_DEP = { id: "reducedCast", label: "Reduced Cast", icon:
 const PENGUIN_FOCUS_INTELLECT_DEP = { id: "focusIntellect", label: "Focus Intellect",
   icon: "penguin_focusIntellect5", minRank: 0, maxRank: 1 };
 
+// Cat's Joker (hasSkill(402), Cat.cs:20850/20870) -- modifies Lucky Card only.
+// `coeff` is its damage term: hitDamage = (int)(hitDamage + 0.5 * (casterLCK - targetLCK)),
+// UNCLAMPED (Cat.cs:20856), unlike the base random roll below. Shared by
+// cat_luckyCard's `lckDiffDep` (damage) and `lckProc.dep` (Doom chance).
+const CAT_JOKER_DEP = { id: "joker", label: "Joker", icon: "cat_joker5", minRank: 0, maxRank: 1, coeff: 0.5 };
+// Lucky Card's random ceiling multiplier per rank (Cat.cs:20845): 1.0 / 1.5 / 2.0 / 2.5.
+const CAT_LUCKYCARD_LCK_COEFF = (rank) => 0.5 * rank + 0.5;
+
 // Deadly Frost (hasSkill(413), Penguin skill logic -- `$i$26330 < 4 +
 // (hasSkill(413) ? 4 : 0)`): doubles Arctic Wind's tick count 4->8 with NO
 // change to the per-tick damage formula at all, unlike every other dep in
@@ -9485,7 +9493,7 @@ const SKILLS = [
   { id:"cat_awareness", name:"Awareness", class:"Cat", icon:"cat_awareness2", cd:1, cdWrapped:false, revisedArtExempt:false, duration:1, durWrapped:false },
   { id:"cat_treasureHunt", name:"Treasure Hunt", class:"Cat", icon:"cat_treasureHunt1", maxRank:1 },
   { id:"cat_felineAgility", name:"Feline Agility", class:"Cat", icon:"cat_felineAgility4", maxRank:4 },
-  { id:"cat_luckyCard", name:"Lucky Card", class:"Cat", icon:"cat_luckyCard4", cd:24, cdWrapped:true, revisedArtExempt:false, compatSkills:["cat_joker"] },
+  { id:"cat_luckyCard", name:"Lucky Card", class:"Cat", icon:"cat_luckyCard4", maxRank:4, cost:{mp:[2,3,4,5], sp:[5,8,11,14], spType:"blue"}, cd:[15,18,21,24], cdWrapped:true, revisedArtExempt:false, dmg:"0", atkCoeff:0.5, ko:"1", lckDiffCoeff:CAT_LUCKYCARD_LCK_COEFF, lckDiffDep:CAT_JOKER_DEP, lckProc:{label:"Joker Chance", chance:6, applies:"doom", dep:CAT_JOKER_DEP}, desc:"ปาไพ่ใส่เป้าหมายที่ล็อกไว้ในระยะ **20m** ทำความเสียหายตามค่า ATK และสุ่มเพิ่มตามส่วนต่าง LCK ระหว่างแมวกับเป้าหมาย พร้อมได้ **+1 SP** เมื่อโดน<br>• **Joker:** เพิ่มความเสียหายอีก **0.5** เท่าของส่วนต่าง LCK และมีโอกาสทำให้เป้าหมายติด [doom1]<br>__**สำคัญ:** โบนัสของ Joker **ไม่ถูกจำกัดที่ 0** หากเป้าหมายมี LCK สูงกว่าแมว จะ **ลดความเสียหาย** ของ Lucky Card ลง__", compatSkills:["cat_joker"] },
   { id:"cat_fateDraw", name:"Fate Draw", class:"Cat", icon:"cat_fateDraw4", cd:30, cdWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true },
   { id:"cat_powerShuffle", name:"Power Shuffle", class:"Cat", icon:"cat_powerShuffle2", cd:45, cdWrapped:true, revisedArtExempt:false, duration:30, durWrapped:true },
   { id:"cat_lifeGamble", name:"Life Gamble", class:"Cat", icon:"cat_lifeGamble1", cd:30, cdWrapped:true, revisedArtExempt:false },
@@ -12358,6 +12366,17 @@ function mountSkillCooldownLookup(root){
   // input, so Function() over a pre-sanitized numeric/operator string is
   // safe and far simpler than hand-rolling a parser for what's always one of
   // a handful of known linear shapes.
+  // lckDiffCoeff / lckDiffDep (Lucky Card, 2026-09-19): raw damage adds
+  // Random(0, coef * max(LCK - targetLCK, 0)) (Cat.cs:20845) and, with Joker,
+  // an UNCLAMPED coef2 * (LCK - targetLCK) (Cat.cs:20856). The target's LCK is
+  // the Enemy Stats LCK input (enemyLckEl), the same number defAdjust reads.
+  function resolveLckDiffCoeff(skill, rank){
+    const c = skill.lckDiffCoeff;
+    return c === undefined ? 0 : (typeof c === "function" ? c(rank) : c);
+  }
+  function lckDiffJokerOn(skill){
+    return !!(skill.lckDiffDep && getDepRank(skill.lckDiffDep) === skill.lckDiffDep.maxRank);
+  }
   function evalArith(expr){
     const sanitized = expr.replace(/×/g, "*").replace(/[^0-9+\-*/.() ]/g, "");
     return Function('"use strict"; return (' + sanitized + ")")();
@@ -12734,7 +12753,11 @@ function mountSkillCooldownLookup(root){
     }
     if (skill.dmgFocusIntellect && focusOn) val = val * 0.01 * INT;
     if (dmgDepOn) val += skill.dmgDep.calc(LV, rank, TAL);
+    const lckDiffC = resolveLckDiffCoeff(skill, rank);
+    const lckDiffTarget = lckDiffC ? (parseFloat(enemyLckEl.value) || 0) : 0;
+    if (lckDiffC) val += Math.random() * lckDiffC * Math.max(LCK - lckDiffTarget, 0);
     val = Math.trunc(val);
+    if (lckDiffC && lckDiffJokerOn(skill)) val = Math.trunc(val + skill.lckDiffDep.coeff * (LCK - lckDiffTarget));
     if (dmgMultDepOn) val = Math.trunc(val * skill.dmgMultDep.mult);
     const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
     const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
@@ -13333,6 +13356,12 @@ function mountSkillCooldownLookup(root){
       if (chaItem) items = items.length ? [...items, { op: "+" }, chaItem] : [chaItem];
       if (dmgDepOn){
         items = [...items, { op: "+" }, { value: skill.dmgDep.calc(LV, rank, TAL), sub: dmgDepTermText, cls: dmgDepTermClass }];
+      }
+      const lckDiffC = resolveLckDiffCoeff(skill, rank);
+      if (lckDiffC){
+        const dLck = (parseFloat(lckEl.value) || 0) - (parseFloat(enemyLckEl.value) || 0);
+        items = [...items, { op: "+" }, { value: Math.floor(lckDiffC * Math.max(dLck, 0)), sub: `Random 0~${fmtCoeff(lckDiffC)}×ΔLCK`, cls: "dmg-lck" }];
+        if (lckDiffJokerOn(skill)) items = [...items, { op: "+" }, { value: Math.trunc(skill.lckDiffDep.coeff * dLck), sub: `${fmtCoeff(skill.lckDiffDep.coeff)}×ΔLCK (Joker)`, cls: "dmg-lck" }];
       }
       // Gadina-sourced skills' 2nd ATK term (Titan Sword's dynamic bonus,
       // see the ownStatsGadina branch above) -- a genuinely separate ATK
@@ -14573,6 +14602,7 @@ function mountSkillCooldownLookup(root){
         activeSelected.dmgFocusIntellect ? renderDmgToggle(PENGUIN_FOCUS_INTELLECT_DEP) : "",
         activeSelected.dmgDep ? renderDmgToggle(activeSelected.dmgDep) : "",
         activeSelected.dmgMultDep ? renderDmgToggle(activeSelected.dmgMultDep) : "",
+        activeSelected.lckDiffDep ? renderDmgToggle(activeSelected.lckDiffDep) : "",
         activeSelected.dmgReplaceDep ? renderDmgToggle(activeSelected.dmgReplaceDep) : "",
         activeSelected.hitCountDep ? renderDmgToggle(activeSelected.hitCountDep) : "",
         // dmgFlagDep (Tornado/Typhoon pilot, 2026-08-22): a toggle whose
@@ -14749,6 +14779,17 @@ function mountSkillCooldownLookup(root){
             if (dmgMultDepOnCalc) val = Math.trunc(val * activeSelected.dmgMultDep.mult);
             return val;
           };
+          const applyLckDiffToRange = (r) => {
+            const c = resolveLckDiffCoeff(activeSelected, rank);
+            if (!c) return r;
+            const eL = parseFloat(enemyLckEl.value) || 0;
+            let lo = r[0], hi = r[1] + Math.floor(c * Math.max(LCK - eL, 0));
+            if (lckDiffJokerOn(activeSelected)) {
+              const j = activeSelected.lckDiffDep.coeff * (LCK - eL);
+              lo = Math.trunc(lo + j); hi = Math.trunc(hi + j);
+            }
+            return [lo, hi];
+          };
           if (activeSelected.phoenixFireball) {
             const depRank = getDepRank(MONKEY_INTENSEFIRE_DEP);
             const phoenixRange = talAdjustRange(40, TAL, phoenixOwnLCK !== null ? phoenixOwnLCK : LCK);
@@ -14773,9 +14814,9 @@ function mountSkillCooldownLookup(root){
           if (!activeSelected.penetrating && !activeSelected.effectDamage && !activeSelected.atkClamp && !activeSelected.dmgAdjustSkip && (effAtkCoeff || activeSelected.id === "bat_nAttack")){
             const effLck = activeSelected.ownStatsPhoenix ? (phoenixOwnLCK !== null ? phoenixOwnLCK : LCK) : (activeSelected.ownStatsGyro ? (gyroOwnLCK !== null ? gyroOwnLCK : LCK) : (activeSelected.ownStatsDmgOnly ? (bbOwnLCK !== null ? bbOwnLCK : LCK) : LCK));
             const rMax = Math.ceil(0.2 * Math.max(effLck, 0));
-            return [baseRange[0], baseRange[1] + rMax];
+            return applyLckDiffToRange([baseRange[0], baseRange[1] + rMax]);
           }
-          return baseRange;
+          return applyLckDiffToRange(baseRange);
         };
         // Debug/test hook (2026-09-14, same convention as getDepRankGlobal
         // above) -- lets scripts/validate_skills.js call the REAL range
@@ -19577,7 +19618,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){

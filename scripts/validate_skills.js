@@ -109,7 +109,7 @@ const exposeInjection = `
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
-  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl };
+  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -423,6 +423,15 @@ SKILLS.forEach(sk => {
           if (isComputable) {
             sandbox._skillRanks[sk.id] = r;
 
+            // A skill with `lckDiffDep` (Lucky Card + Joker) has a DETERMINISTIC
+            // 0.5*(LCK - targetLCK) term that legitimately moves the minimum with
+            // LCK when the dep is on (and deps default to ON). This invariant is
+            // about the random spread, so check that skill with the dep off; the
+            // dep's own behavior is covered by section 3e.
+            const floorJokerId = sk.lckDiffDep ? sk.lckDiffDep.id : null;
+            const floorJokerSaved = floorJokerId ? sandbox._depRanks[floorJokerId] : undefined;
+            if (floorJokerId) sandbox._depRanks[floorJokerId] = 0;
+
             lckEl.value = DATA_ROLE_DEFAULTS.lck;
             sandbox._selectSkill(sk);
             const normalRange = sandbox._calcRangeFor(rawText);
@@ -431,6 +440,9 @@ SKILLS.forEach(sk => {
             sandbox._selectSkill(sk);
             const zeroLckRange = sandbox._calcRangeFor(rawText);
             lckEl.value = DATA_ROLE_DEFAULTS.lck; // restore before any later check reads it
+            if (floorJokerId) {
+              if (floorJokerSaved === undefined) delete sandbox._depRanks[floorJokerId]; else sandbox._depRanks[floorJokerId] = floorJokerSaved;
+            }
 
             checkedLckFloors++;
             if (normalRange[0] !== zeroLckRange[0]) {
@@ -562,6 +574,79 @@ SKILLS.forEach(sk => {
   }
 });
 
+// 3e. lckDiffCoeff / lckDiffDep (Cat Lucky Card + Joker, Cat.cs:20845-20856):
+// raw damage = int(0.5*ATK + Random(0, coef*max(LCK - targetLCK, 0))), and Joker
+// adds an UNCLAMPED 0.5*(LCK - targetLCK). Driven through the real range code
+// with explicit player/enemy LCK values (the app's default enemy is Carron, LCK 2).
+let checkedLckDiff = 0;
+{
+  const sk = SKILLS.find(s => s.id === "cat_luckyCard");
+  const inputs = sandbox._statInputs;
+  const saved = { atk: inputs.atk.value, lck: inputs.lck.value, enemy: inputs.enemyLck.value, joker: sandbox._depRanks[sk.lckDiffDep.id] };
+  const rangeAt = (rank, atk, lck, eLck, joker) => {
+    inputs.atk.value = String(atk); inputs.lck.value = String(lck); inputs.enemyLck.value = String(eLck);
+    sandbox._depRanks[sk.lckDiffDep.id] = joker ? 1 : 0;
+    sandbox._skillRanks[sk.id] = rank;
+    sandbox._selectSkill(sk);
+    return sandbox._calcRangeFor(sandbox._getDmgText(sk, rank));
+  };
+  const expect = (label, got, want) => {
+    checkedLckDiff++;
+    if (JSON.stringify(got) !== JSON.stringify(want)) {
+      console.error(`[LCK-DIFF ERROR] ${label}: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
+      errorCount++;
+    }
+  };
+  try {
+    const base = rangeAt(4, 200, 102, 102, false);        // diff 0: only the 0.5*ATK base (+ the engine's own LCK spread)
+    const lead = rangeAt(4, 200, 102, 2, false);           // diff +100, coef 2.5 -> random ceiling +250 on the max only
+    expect("min never moves with the LCK lead (Joker off)", lead[0], base[0]);
+    expect("random ceiling = floor(coef * diff) added to the max", lead[1] - base[1], 250);
+    expect("rank 1 coefficient is 1.0", rangeAt(1, 200, 102, 2, false)[1] - rangeAt(1, 200, 102, 102, false)[1], 100);
+    const jokerLead = rangeAt(4, 200, 102, 2, true);       // + trunc(0.5*100) = +50 on BOTH ends
+    expect("Joker shifts min by +0.5*diff", jokerLead[0] - lead[0], 50);
+    expect("Joker shifts max by +0.5*diff", jokerLead[1] - lead[1], 50);
+    const behind = rangeAt(4, 200, 102, 202, false);       // diff -100: the random part is CLAMPED at 0
+    expect("negative diff: random term clamped to 0", behind[1] - base[1], 0);
+    const jokerBehind = rangeAt(4, 200, 102, 202, true);    // Joker is NOT clamped: -50 on both ends
+    expect("negative diff + Joker reduces the min", jokerBehind[0] - behind[0], -50);
+    expect("negative diff + Joker reduces the max", jokerBehind[1] - behind[1], -50);
+    // The real roll path (rollOneHit) draws its own random numbers, so compare
+    // AVERAGES over many rolls. Expected gaps are large next to the noise (one
+    // roll's spread is ~70, so 400 rolls give a standard error of ~3.5).
+    const avgRoll = (atk, lck, eLck, joker) => {
+      inputs.atk.value = String(atk); inputs.lck.value = String(lck); inputs.enemyLck.value = String(eLck);
+      sandbox._depRanks[sk.lckDiffDep.id] = joker ? 1 : 0;
+      sandbox._skillRanks[sk.id] = 4;
+      sandbox._selectSkill(sk);
+      let sum = 0;
+      for (let i = 0; i < 400; i++) sum += sandbox._rollOneHit(sk, 4);
+      return sum / 400;
+    };
+    const rollBase = avgRoll(200, 102, 102, false);
+    const rollLead = avgRoll(200, 102, 2, false);
+    expect("roll: an LCK lead adds a random 0..250 (mean ~+125, minus enemy-LCK mitigation noise)", rollLead - rollBase > 80, true);
+    const rollLeadJoker = avgRoll(200, 102, 2, true);
+    expect("roll: Joker with an LCK lead adds ~+50 on top", rollLeadJoker - rollLead > 35, true);
+    const rollBehind = avgRoll(200, 102, 202, false);
+    const rollBehindJoker = avgRoll(200, 102, 202, true);
+    expect("roll: Joker while BEHIND on LCK lowers damage by ~50 (unclamped)", rollBehindJoker - rollBehind < -35, true);
+    sandbox._depRanks[sk.lckDiffDep.id] = 1;
+    inputs.atk.value = "200"; inputs.lck.value = "102"; inputs.enemyLck.value = "2";
+    sandbox._selectSkill(sk);
+    const withJoker = sandbox._renderOneDmgFormula(sk, 4, sandbox._getDmgText(sk, 4));
+    sandbox._depRanks[sk.lckDiffDep.id] = 0;
+    const withoutJoker = sandbox._renderOneDmgFormula(sk, 4, sandbox._getDmgText(sk, 4));
+    expect("formula shows the Joker term only when Joker is on", [withJoker.includes("Joker"), withoutJoker.includes("Joker")], [true, false]);
+    expect("formula always shows the random LCK term", withoutJoker.includes("ΔLCK"), true);
+  } catch (e) {
+    console.error(`[LCK-DIFF EXCEPTION] ${e.message}`);
+    errorCount++;
+  }
+  inputs.atk.value = saved.atk; inputs.lck.value = saved.lck; inputs.enemyLck.value = saved.enemy;
+  if (saved.joker === undefined) delete sandbox._depRanks[sk.lckDiffDep.id]; else sandbox._depRanks[sk.lckDiffDep.id] = saved.joker;
+}
+
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -588,7 +673,7 @@ SKILLS.forEach(sk => {
 // fails the build. A dep is "resolved" once some skill's own id matches
 // "<classPrefix>_<dep.id>" (every observed dep so far lives in the same class
 // as the skill(s) that reference it).
-const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep"];
+const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep", "lckDiffDep"];
 const seenDeps = new Map(); // dep.id -> { label, resolved, referencedBy: [] }
 SKILLS.forEach(sk => {
   const classPrefix = sk.class.toLowerCase() + "_";
@@ -723,6 +808,7 @@ console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
 console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
 console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
+console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
