@@ -1,7 +1,7 @@
 # Whale — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 `homingShield` added 2026-08-14 — see its judgment-call note below for why it was initially left out and
 then given its own row.
 
@@ -160,7 +160,7 @@ then given its own row.
   `callToArm`, `megalodon`, `bubbleBurst`, `bowlingWhale`, `grandTide` — confirmed by a full-file grep
   of every `RPC_AddStatus(` call in `Whale.cs` and cross-checking each hit against these skills' own
   coroutine bodies. The remaining `RPC_AddStatus` hits in the file belong either to the 12 support
-  skills, to passive/excluded skills (`lastHope`, `hardenSkin`, `wallPuncture`), or to an unrelated
+  skills, to passive skills (`lastHope`, `hardenSkin`, `wallPuncture`), or to an unrelated
   generic minigame/consumable-item/hit-reaction effects system clustered separately in the file (`wash`,
   `ice`, `iceShield`, `awareness`, `float`, `bless`, `burn`, `paralysis`, `blind`, `plague`, `frost`,
   `awake`, `whiteFlag`/`blueFlag`/`redFlag`/`yellowFlag`, `cleanse`, `happy`, `charm`, `defDown`,

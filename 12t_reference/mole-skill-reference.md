@@ -1,7 +1,7 @@
 # Mole — Skill Cooldown/Duration Reference
 
 Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -223,7 +223,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   at the user's request) rather than `—`** — the lookup tool now distinguishes "confirmed no timer,
   persists until death/unsummon/disconnect" (an infinity-icon Duration chip) from "no citable Duration
   data of any kind" (a plain `—`); this is the former, not the latter.
-- **Confirmed-passive skills excluded from the table (no cooldown, `mode = eSkillMode.passive` in
+- **Confirmed-passive skills have no row in this table (no cooldown, `mode = eSkillMode.passive` in
   `getSkill()`, no `RPC_<name>` cast handler in `Mole.cs`):** `gadgeteer1`-`4` (Workshop crafting-tier
   unlock), `statPlus1`-`4` and `superStatPlus5` (flat stat bonuses), `extraPowder1`-`3` (blast-radius
   bonus), `smartShell1` (landmine/grenade damage bonus), `kaiserCannon1`/`kaiserBeam1` (King Kaiser

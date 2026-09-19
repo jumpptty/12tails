@@ -1,7 +1,7 @@
 # Wolf — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -74,7 +74,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `addTimeOut`/`RPC_<name>` cast handler of their own in `Wolf.cs`. `perseverance1`/`2` do have a real,
   verified gameplay effect despite the no-`cType` classification — see the dedicated note below on why
   it's a Duration modifier for this doc's other rows rather than a skill of its own.
-- **All Class-C (Lv.5) passive-only skills excluded**: `continuousBlade5`, `skySlasher5`, `fortitude5`,
+- **Class-C (Lv.5) passive-only skills have no row in this table** (no cooldown, duration or cast time to report), but they are *not* excluded from documentation — their mechanics belong in [wolf-skill-damage-reference.md](wolf-skill-damage-reference.md#class-c-passives) (only `fortitude5` is written up so far): `continuousBlade5`, `skySlasher5`, `fortitude5`,
   `sublimeArt5`, `superStatPlus5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5`, `wildHeart5`,
   `revisedSkill5`, `revisedMagic5`, `revisedArt5` — all `mode = eSkillMode.passive` directly in their
   own `getSkill()` body (`WolfSkill.cs:920`, `:943`, `:966`, `:989`, `:1012`, `:1040`, `:1063`, `:1200`,
@@ -83,7 +83,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   entry, but it modifies the charge-attack (`cAttack`) combo tier via `getChargeAttackLv()`/
   `getSkySlasherLv()` (`Wolf.cs:8382-8419`), not an independently cast skill — no `wlf_skySlasher`
   entry exists in the `a2 == "wlf_..."` per-name cast dispatcher (unlike every genuine active skill
-  below), confirming it's excluded like the rest of this group. `revisedArt5`'s own description
+  below), confirming it's not an independently cast skill, like the rest of this group. `revisedArt5`'s own description
   ("Reduces all skills' cooldown by 12%.", `WolfSkill_eng.cs:1060`) is the mechanic the table's
   `revisedArt Exempt` column exists to model — none of Wolf's 23 active rows are exempt from it.
 - **Two harmless `getSkill()` dead-code-fallthrough traps (empty rank branch landing on an unrelated
@@ -158,7 +158,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `thirdRend`, `mirrorBlade`, `feralAssault`, `dualBrand`, `twinResonance` — confirmed by a full-file
   grep of every `addTimeOut(`/`RPC_AddStatus(` call in `Wolf.cs` (90 total occurrences, all
   individually reviewed) and cross-checking each hit against these skills' own coroutine bodies; the
-  remaining hits belong either to the 12 support skills, the excluded passives above, or an unrelated
+  remaining hits belong either to the 12 support skills, the Class-C passives above, or an unrelated
   generic minigame/consumable-item/flag-capture effects system (`wash`, `bless`, `ice`, `bubbleShield`,
   `iceShield`, `awareness`, `float`, `mpsap`, `burn`, `paralysis`, `blind`, `plague`, `frost`, `awake`,
   `yellowFlag`, `redFlag`, `cleanse`, `blueFlag`, `whiteFlag`, `happy`, `charm`, `bleed`, `heavy`,

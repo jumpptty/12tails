@@ -1,7 +1,7 @@
 # Monkey — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -95,7 +95,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   set identical `setReq(34, 20)` values, but they are two separately-defined labels reached by two
   separate branches — not a shared jump target — so this is not a convergence artifact, just duplicate
   literal constants. All six families set `mode = eSkillMode.passive` with no `cType`, no `RPC_<name>`
-  cast handler, and no `addTimeOut` anywhere in `Monkey.cs`. Excluded as confirmed passives.
+  cast handler, and no `addTimeOut` anywhere in `Monkey.cs`. No table row, as confirmed passives.
 - **`earthRune` is the inverse case worth flagging: it looks passive in `getSkill()` (confirmed above)
   but Monkey.cs *does* contain real, working `RPC_earthRune`/`RPC_earthPulse` handlers — these are an
   automatic proc, not a player-cast skill, so the exclusion still holds.** `Monkey.cs:13554` —
@@ -235,9 +235,9 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `mpDrain`, `hpDrain` — none tied to any `MonkeySkill.cs` roster entry), or to the excluded `noForce`
   side-effect (`titanicEarthPulse`'s cast, `Monkey.cs:32403`, flat `7`, anti-knockback grace period —
   same `noForce` pattern the Mole doc excluded from `kingKaiser`) and `fireKeep` charge-stack status
-  (tied to the excluded passive `fireKeep5`, `Monkey.cs:25735`/`25743`). Duration cells for the twenty
+  (tied to the passive `fireKeep5`, which has no table row, `Monkey.cs:25735`/`25743`). Duration cells for the twenty
   skills listed above are `—`.
-- **Confirmed-passive skills excluded from the table (no cooldown, `mode = eSkillMode.passive` in
+- **Confirmed-passive skills have no row in this table (no cooldown, `mode = eSkillMode.passive` in
   `getSkill()`, no `RPC_<name>` cast handler in `Monkey.cs`):** `statPlus1`-`4` and `superStatPlus5`
   (flat stat bonuses), `rapidFire1`-`3` (phoenix attack-speed/fireball-cost passive), `intenseFire1`-`3`
   (phoenix damage/burn-status passive), `fireRune1`-`3` (fire-summon sp/mp-on-hit passive),

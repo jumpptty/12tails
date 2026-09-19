@@ -1,7 +1,7 @@
 # Penguin — Skill Cooldown/Duration Reference
 
 Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|

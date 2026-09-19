@@ -1,7 +1,7 @@
 # Sheep — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -198,7 +198,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   its "heal" name (`SheepSkill_eng.cs:431`: "deals 50 penetrating damage to a target with full hp"), and
   `holyLight` is a channel mechanic whose "temporary" flavor text has no citable duration constant in
   its own cast-site coroutine — the remaining `RPC_AddStatus` hits in the file belong either to the 12
-  support skills, to passive/excluded skills, or to an unrelated
+  support skills, to passive skills, or to an unrelated
   generic minigame/consumable-item/flag-capture effects system (`wash`, `ice`, `bubbleShield`,
   `iceShield`, `awareness`, `float`, `mpsap`, `burn`, `paralysis`, `blind`, `plague`, `frost`,
   `whiteFlag`, `redFlag`, `blueFlag`, `yellowFlag`, `awake`, `happy`, `charm`, `artCancel`, `heavy`,

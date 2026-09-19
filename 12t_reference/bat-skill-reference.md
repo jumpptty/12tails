@@ -1,7 +1,7 @@
 # Bat — Skill Cooldown/Duration Reference
 
 Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -93,7 +93,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   unrelated `RPC_AddStatus("massCast", 1, 3, 0, …)` at `Bat.cs:23360` uses a flat unwrapped `sLv=1`/
   duration=3 — this is inside the auto-trigger path for the `autoMass5` passive (a separate skill, out of
   scope), not massCast's own cast, so it is not used for this table's Duration value.
-- **Passive/no-own-cast-site families excluded entirely** (confirmed via `BatSkill.cs`'s `getSkill()`: no
+- **Passive/no-own-cast-site families have no row in this table** (confirmed via `BatSkill.cs`'s `getSkill()`: no
   `cType` assigned, and confirmed via `Bat.cs`: no `addTimeOut`/`isTimeOut` call under their own name):
   `drainMana` (drainLife charge-attack lifesteal-tier passive), `statPlus`, `amplifyDamage`,
   `shadowMastery` (the CD-zeroing passive referenced above), `dreamBurst`, `allMimic`, `illusionEffect5`,

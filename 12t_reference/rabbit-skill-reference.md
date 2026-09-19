@@ -1,7 +1,7 @@
 # Rabbit — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
@@ -208,7 +208,7 @@ Scope: active skills only (has a real cooldown), max rank only. Passive/no-coold
   `mall`, `truceTrading`, `shootingArray`, `millionaire`, `diamondShot`, `tenShot` — confirmed by a
   full-file grep of every `RPC_AddStatus(` call in `Rabbit.cs` and cross-checking each hit against these
   skills' own coroutine bodies. The remaining `RPC_AddStatus` hits in the file belong either to the 12
-  support skills, to the passive/excluded skills documented above, or to an unrelated shared
+  support skills, to the passive skills documented above, or to an unrelated shared
   minigame/consumable-item/flag-capture effect system (`wash`, `bless`, `ice`, `bubbleShield`,
   `iceShield`, `awareness`, `float`, `mpsap`, `burn`, `blind`, `plague`, `frost`, `awake`, `yellowFlag`,
   `cleanse`, `blueFlag`, `whiteFlag`, `redFlag`, `happy`, `charm`, `clear`, `poison`, `heavy`, `mpDrain`,

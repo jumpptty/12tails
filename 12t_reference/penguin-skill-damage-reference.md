@@ -319,7 +319,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 ### pgn_focusIntellect5 (421) — active
 - reqLv 70, MP 30, SP -75 (red), instant, self. CD `agiAdjust(120)`.
 - Self-buff: `focusIntellect` status, sLv5, duration `chaAdjust(6)`s, value = INT-100. Consumed by caster's next damage spell as ×(1+0.01×(INT-100)), then removed.
-- **Undocumented secondary effect**: while learned, ALL incoming debuff-status durations against this Penguin are reduced 25% (`sTime = ⌈0.75×sTime⌉`) — zero tooltip mention, found only via cross-file grep.
+- **No debuff-duration effect:** Focus Intellect does not shorten incoming debuffs. The 25% reduction at `CharacterControl.cs:13421-13434` (`hasSkill(421)`) is inside the `if (this.Type == "Wolf")` block of `RPC_AddStatus` (L13379), so it belongs to Wolf's `wlf_fortitude5` (`WolfSkill.cs:3109`), not to Penguin.
 
 ### pgn_parallelShift5 (422) — active
 - reqLv 70, MP 10, SP -20 (red), instant, self, cType "blink". CD shares with blink.

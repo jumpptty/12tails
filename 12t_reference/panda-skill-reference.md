@@ -1,7 +1,7 @@
 # Panda — Skill Cooldown/Duration Reference
 
 Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
-Scope: active skills only (has a real cooldown), max rank only. Passive/no-cooldown skills excluded.
+Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in the class's `*-skill-damage-reference.md`.
 `climbingCliff`/`crumblingMountain` added 2026-08-14 — see the Tiger Toss family judgment-call note
 below for why they were initially left out and then given their own rows.
 
@@ -101,7 +101,7 @@ below for why they were initially left out and then given their own rows.
   (same mechanism/exemption-list check as the Whale precedent — `"tigerToss"` isn't on
   `CharacterControl.cs:20116-20226`'s exemption list). `tigerPounce` and a further passive tier surfaced
   during this research, `crushingMonolith` (`pnd_crushingMonolith5`, `rSkill=234` i.e. requires
-  `crumblingMountain`), remain excluded — both are confirmed damage-only passives with **no `addTimeOut`
+  `crumblingMountain`), remain without a table row — both are confirmed damage-only passives with **no `addTimeOut`
   of their own anywhere in the codebase** (`tigerPounce`'s bonus-hit block lives *inside*
   `$RPC_tigerToss$25362`, `tigerToss`'s own coroutine class, gated by `getTigerPounceLv()`
   (`Panda.cs:8670`, `hasSkill(232)` 0/1); `crushingMonolith` is a `crumblingMountain`-only damage/VFX
@@ -188,7 +188,7 @@ below for why they were initially left out and then given their own rows.
   grep of both `PandaSkill.cs` and `PandaSkill_eng.cs` for `ashuraFist` returns zero matches: no
   `getSkill()`/`getSkillTree()` entry and no description. It's an internal state of the `ashura`
   transformation, not a roster skill.
-- **Confirmed-passive Class-C (Lv.5) skills excluded from the table** (no cooldown, `mode =
+- **Confirmed-passive Class-C (Lv.5) skills have no row in this table** (no cooldown, `mode =
   eSkillMode.passive` in `getSkill()`, no `RPC_<name>` cast handler with its own `addTimeOut` in
   `Panda.cs`): `auraBlast5` (final-combo → area attack), `auraField5` (sp-charge aura for allies),
   `superStatPlus5` (+10 all stats), `nineSteps5` (ThreeStep/RushingFalcon hit-count damage passive),
@@ -227,7 +227,7 @@ below for why they were initially left out and then given their own rows.
   `waterCrane`, `spTransfer`, `wind&cloud`, `rain&storm`, `lotusPalm`, `heavenPalm`, `fuujinKen`,
   `raijinKen` — confirmed by a full-file grep of every `RPC_AddStatus`/`.addStatus(` call in `Panda.cs`
   and cross-checking each hit against these skills' own coroutine bodies; the remaining hits belong
-  either to the 12 support skills, to the excluded/passive skills documented above, or to an unrelated
+  either to the 12 support skills, to the passive skills documented above, or to an unrelated
   shared minigame/consumable-item/flag-capture effect system (`wash`, `bless`, `ice`, `bubbleShield`,
   `iceShield`, `awareness`, `float`, `mpsap`, `burn`, `blind`, `plague`, `frost`, `redFlag`, `cleanse`,
   `blueFlag`, `whiteFlag`, `awake`, `yellowFlag`, `happy`, `charm`, `ko`, `defUp`, `heavy`, `mpDrain`,
