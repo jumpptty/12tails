@@ -1410,8 +1410,9 @@
      BOTH the player row (9 stat divs) and the reused Enemy Stats row (1
      label-cell + 8 stat divs) -- both wrap to exactly 3 full rows of 3, no
      partial-row edge case -- now that the 2 toggle buttons that used to
-     share this flex container have their own `.sk-controls-actions` row
-     below (see that rule) instead of wrapping in as a 4th, uneven row here. */
+     share this flex container are gone from it (Revised Art moved into the player
+     class badge and the enemy show/hide toggle was removed, 2026-09-19), so no 4th,
+     uneven row can wrap in here. */
   /* Class badge (2026-09-19): sits above the player stat inputs and names whose stats they are. */
   .sk-class-badge{
     display:flex; align-items:center; gap:12px; margin-bottom:8px; padding:8px 14px 8px 10px;
@@ -1427,7 +1428,8 @@
     color:#ede8df; letter-spacing:0.6px; text-transform:uppercase; text-shadow:0 1px 2px rgba(0,0,0,0.5);
   }
   .sk-class-badge-name:empty{display:none}
-  .sk-class-badge-sub{font-family:'Prompt', 'Chakra Petch', sans-serif; font-size:11px; color:#b3a898}
+  /* One line: Thai has no spaces, so a wrap would split a word mid-way ("...ของ / คุณ"). */
+  .sk-class-badge-sub{font-family:'Prompt', 'Chakra Petch', sans-serif; font-size:10.5px; color:#b3a898; white-space:nowrap}
   @media (max-height: 820px){
     .sk-class-badge{gap:8px; padding:5px 12px 5px 8px; margin-bottom:6px}
     .sk-class-badge-img{width:40px; height:40px}
@@ -1498,44 +1500,17 @@
      enemy-stat toggle, bottom-alignment would leave their vertical centers
      visibly offset, so this switches the shared axis to true center
      alignment instead. */
-  .sk-controls-actions{
-    display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;
-  }
   .sk-revisedart{
     border:none; border-radius:4px; background:none;
     padding:0; cursor:pointer; line-height:0;
   }
   /* 45px = 30px × 1.5 (2026-08-22, user-requested: "revisedArt icon size
-     increase by 50%") -- the enemy-stat toggle deliberately does NOT scale
-     with it (user's own instruction named only revisedArt), so the two are
-     now genuinely different sizes; `.sk-controls-actions`' own
-     align-items:center (above) is what keeps them visually paired despite
-     the size difference, not a shared height. */
+     increase by 50%"). Since 2026-09-19 the button lives in the player class
+     badge, where `.sk-class-badge .sk-revisedart img` sets its size. */
   .sk-revisedart img{width:45px; height:45px; display:block; filter:grayscale(100%); opacity:.5}
+  .sk-class-badge .sk-revisedart{margin-left:auto; flex:none}
+  .sk-class-badge .sk-revisedart img{width:40px; height:40px}
   .sk-revisedart.on img{filter:none; opacity:1}
-  /* Enemy Stats toggle (2026-08-21, user-requested: "positioned right to the
-     revisedArt icon") -- an inline SVG, not a ripped game asset, matching
-     the Final Damage chip's own Simulate-button precedent ("this is a UI
-     CONTROL, use a minimalistic icon, not an in-game one"). Same borderless/
-     dim-when-off/full-when-on toggle language as every other icon toggle in
-     this tool, just via stroke color + opacity on an inline <svg> instead of
-     a grayscale filter on a raster <img>, since there's no bitmap here to
-     filter. */
-  .sk-enemystat-toggle{
-    border:none; border-radius:4px; background:none;
-    padding:0; cursor:pointer; line-height:0; color:var(--muted);
-  }
-  /* Was 30x30 to match .sk-revisedart img exactly (2026-08-21) -- no longer
-     matched (2026-08-22) now that revisedArt grew to 45px and this one
-     deliberately didn't (see `.sk-revisedart img`'s own comment); the two
-     stay visually paired via `.sk-controls-actions`' align-items:center
-     instead of equal size. */
-  .sk-enemystat-toggle svg{
-    width:30px; height:30px; display:block; fill:none; stroke:currentColor;
-    stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:.5;
-  }
-  .sk-enemystat-toggle.on{color:var(--stat-atk)}
-  .sk-enemystat-toggle.on svg{opacity:1}
   /* Enemy Stats row (2026-08-21) -- reuses .sk-controls' own flex layout
      (same class applied alongside this one), hidden via the native `hidden`
      attribute (same convention as .sk-suggestions elsewhere in this file).
@@ -1572,15 +1547,14 @@
      padding/margin RESET to nothing -- otherwise its own base rule (panel-2
      background, 8px 14px padding) would render as a second, mismatched box
      nested inside the already-styled outer one. */
-  .sk-enemystat-controls{
-    position:relative;
-    display:flex; flex-direction:column; gap:10px;
+  /* Enemy panel (2026-09-19): two SEPARATE red cards like the player's -- the badge, then the 8 stats. */
+  .sk-enemystat-controls{position:relative; display:flex; flex-direction:column; gap:8px; margin-bottom:8px}
+  .sk-enemystat-controls .sk-controls, .sk-class-badge.sk-enemy-badge{
     background:linear-gradient(180deg, rgba(239,68,68,0.08) 0%, rgba(20,19,17,0.94) 100%);
     border:1px solid rgba(239,68,68,0.35); border-left:3px solid #ef4444; border-radius:6px;
     box-shadow:0 6px 20px rgba(0,0,0,0.4), inset 0 0 16px rgba(239,68,68,0.04);
-    padding:10px 14px 12px; margin-bottom:8px;
   }
-  .sk-enemystat-controls .sk-controls{background:none; border:none; box-shadow:none; padding:0; margin-bottom:0}
+  .sk-enemystat-controls .sk-controls, .sk-enemystat-controls .sk-class-badge{margin-bottom:0}
   .sk-enemystat-controls label{
     font-family:'Chakra Petch', 'Prompt', sans-serif;
     color:#ef5350; font-weight:600; letter-spacing:0.8px;
@@ -1599,15 +1573,8 @@
     background:rgba(30,14,14,0.98); color:#ffffff;
   }
   .sk-enemystat-controls[hidden]{display:none}
-  .sk-enemy-cycle-row{display:flex; justify-content:center}
   .sk-enemystat-label-cell{
     width:calc(5ch + 20px); display:flex; flex-direction:column; justify-content:flex-end;
-  }
-  .sk-enemystat-label-cell label{
-    margin:0; font-family:'Chakra Petch', 'Prompt', sans-serif;
-    font-size:12.5px; font-weight:700; color:#ff5252; white-space:normal;
-    line-height:1.2; text-align:center; word-break:break-word; text-transform:uppercase;
-    letter-spacing:1px; text-shadow:0 0 8px rgba(255,82,82,0.45);
   }
   /* Absolutely positioned into the box's own bottom-right corner (2026-08-14,
      user-requested) rather than stacked in normal flow below -- previously
@@ -3078,19 +3045,23 @@
      feedback was "bigger than the original 78px, but I don't hate it," not
      a request for a specific number) rather than re-deriving one from
      anything else. */
-  .sk-enemy-cycle{display:flex; align-items:center; gap:8px}
-  .sk-enemy-cycle-arrow{
-    border:none; background:none; padding:4px; cursor:pointer; color:rgba(239,68,68,0.7); line-height:0;
-    transition:color 0.15s ease, transform 0.15s ease;
-  }
-  .sk-enemy-cycle-arrow:hover{color:#ff6b6b; transform:scale(1.25)}
-  .sk-enemy-cycle-arrow svg{width:13px; height:13px; fill:currentColor; display:block}
+  .sk-enemy-badge-text{flex:1 1 auto}
+  /* Only the NAME row needs to clear the absolutely positioned immunities button; the caption sits below it. */
+  .sk-enemy-badge-name{color:#ff8a80; text-shadow:0 0 8px rgba(255,82,82,0.35); white-space:nowrap; padding-right:22px}
+  .sk-enemy-badge-name strong{font-weight:700}
+  /* Long preset names shrink to stay on one line (steps set by fitEnemyName). */
+  .sk-enemy-badge-name.is-long{font-size:13px; letter-spacing:0.3px}
+  .sk-enemy-badge-name.is-longer{font-size:12px; letter-spacing:0.2px}
+  .sk-enemy-badge-name.is-longest{font-size:10.5px; letter-spacing:0}
+  .sk-enemy-custom-icon{width:30px; height:30px; fill:none; stroke:#ef5350; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; opacity:.9}
   .sk-enemy-cycle-icon-wrap{
-    width:64px; height:64px; flex:none; border:1.5px solid rgba(239,68,68,0.45); border-radius:6px;
+    padding:0; cursor:pointer; font:inherit; color:inherit;
+    width:56px; height:56px; flex:none; border:1.5px solid rgba(239,68,68,0.45); border-radius:6px;
     background:rgba(15,11,11,0.95); overflow:hidden; display:flex; align-items:center; justify-content:center;
     box-shadow:0 4px 14px rgba(0,0,0,0.5), 0 0 10px rgba(239,68,68,0.2);
     transition:border-color 0.2s ease, box-shadow 0.2s ease;
   }
+  .sk-enemy-cycle-icon-wrap:focus-visible{outline:2px solid #ff5252; outline-offset:2px}
   .sk-enemy-cycle-icon-wrap:hover{
     border-color:#ff5252; box-shadow:0 4px 16px rgba(0,0,0,0.6), 0 0 14px rgba(239,68,68,0.4);
   }
@@ -3739,11 +3710,10 @@
     .sk-dmg-final{min-height:118px}
     .sk-controls{padding:6px 10px; gap:8px; margin-bottom:6px}
     .sk-controls input[type=number]{font-size:12px; padding:3px 4px}
-    .sk-controls-actions{margin-bottom:6px; gap:8px}
     .sk-revisedart img{width:36px; height:36px}
-    .sk-enemystat-toggle svg{width:24px; height:24px}
-    .sk-enemystat-controls{padding:6px 10px; gap:6px; margin-bottom:6px}
-    .sk-enemy-cycle-icon-wrap{width:48px; height:48px}
+    .sk-class-badge .sk-revisedart img{width:32px; height:32px}
+    .sk-enemystat-controls{gap:6px; margin-bottom:6px}
+    .sk-enemy-cycle-icon-wrap{width:40px; height:40px}
     .sk-stats-panel-floating{width:240px}
   }
 
@@ -11585,6 +11555,7 @@ function mountSkillCooldownLookup(root){
             <span class="sk-class-badge-name" data-role="class-badge-name"></span>
             <span class="sk-class-badge-sub">ค่าสถานะตัวละครของคุณ</span>
           </div>
+          <button type="button" class="sk-revisedart on" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
         </div>
         <div class="sk-controls">
           <div><label>CHAR LV</label><input type="number" data-role="lv" min="0" value="100"></div>
@@ -11597,32 +11568,22 @@ function mountSkillCooldownLookup(root){
           <div><label>INT</label><input type="number" data-role="int" min="0" value="128"></div>
           <div><label>LCK</label><input type="number" data-role="lck" min="0" value="128"></div>
         </div>
-        <div class="sk-controls-actions">
-          <button type="button" class="sk-revisedart on" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
-          <button type="button" class="sk-enemystat-toggle on" data-role="enemystat-toggle" title="Enemy Stats">
-            <svg viewBox="0 0 24 24"><path d="m12.5 17-.5-1-.5 1z"></path><path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z"></path><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="12" r="1"></circle></svg>
-          </button>
-        </div>
         <div class="sk-enemystat-controls" data-role="enemystat-controls">
+          <div class="sk-class-badge sk-enemy-badge">
+            <button type="button" class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display" title="Click for the next enemy"></button>
+            <div class="sk-class-badge-text sk-enemy-badge-text">
+              <span class="sk-class-badge-name sk-enemy-badge-name" data-role="enemy-name-label"><strong>Carron</strong></span>
+              <span class="sk-class-badge-sub">ค่าสถานะตัวละครเป้าหมาย</span>
+            </div>
           <div class="sk-enemy-info-wrap" data-role="enemy-info-wrap">
             <button type="button" class="sk-enemy-info-btn" data-role="enemy-info-btn" title="Enemy Immunities" aria-label="Enemy Immunities">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             </button>
             <div class="sk-enemy-info-popover" data-role="enemy-info-popover"></div>
           </div>
-          <div class="sk-enemy-cycle-row">
-            <div class="sk-enemy-cycle">
-              <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-prev" title="Previous enemy preset">
-                <svg viewBox="0 0 24 24"><polygon points="16,3 7,12 16,21"></polygon></svg>
-              </button>
-              <div class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"></div>
-              <button type="button" class="sk-enemy-cycle-arrow" data-role="enemy-next" title="Next enemy preset">
-                <svg viewBox="0 0 24 24"><polygon points="8,3 17,12 8,21"></polygon></svg>
-              </button>
-            </div>
           </div>
           <div class="sk-controls">
-            <div class="sk-enemystat-label-cell"><label data-role="enemy-name-label"><strong>Carron</strong></label></div>
+            <div class="sk-enemystat-label-cell" aria-hidden="true"></div>
             <div><label>ATK</label><input type="number" data-role="enemyAtk" min="0" value="128"></div>
             <div><label>DEF</label><input type="number" data-role="enemyDef" min="0" value="128"></div>
             <div><label>TAL</label><input type="number" data-role="enemyTal" min="0" value="128"></div>
@@ -11681,15 +11642,11 @@ function mountSkillCooldownLookup(root){
   const enemyChaEl = $('[data-role="enemyCha"]', root);
   const enemyIntEl = $('[data-role="enemyInt"]', root);
   const enemyLckEl = $('[data-role="enemyLck"]', root);
-  const enemyStatToggleBtn = $('[data-role="enemystat-toggle"]', root);
-  const enemyStatControlsEl = $('[data-role="enemystat-controls"]', root);
   const statsPanelEl = $('[data-role="stats-panel"]', root);
   // Enemy preset cycle (2026-08-21, relocated from the Final Damage chip's
   // old 3-buttons-at-once .sk-enemy-btns row into this panel, per direct
   // user request -- see the cycleEnemyPreset/updateEnemyCycleDisplay
   // functions below for the full mechanism).
-  const enemyPrevBtn = $('[data-role="enemy-prev"]', root);
-  const enemyNextBtn = $('[data-role="enemy-next"]', root);
   const enemyCycleDisplayEl = $('[data-role="enemy-cycle-display"]', root);
   const enemyNameLabelEl = $('[data-role="enemy-name-label"]', root);
   const toolShellEl = $("#toolShell");
@@ -12243,20 +12200,28 @@ function mountSkillCooldownLookup(root){
   // tied to renderHero()/displayEl's per-skill rebuild, since this widget
   // lives in the persistent .sk-enemystat-controls panel, not the
   // per-skill card.
+  // Long preset names ("Neme (Adv, P1)") shrink in steps so the name stays on one line in the badge.
+  function fitEnemyName(label){
+    if (!enemyNameLabelEl) return;
+    const n = String(label).length;
+    enemyNameLabelEl.classList.toggle("is-long", n >= 9);
+    enemyNameLabelEl.classList.toggle("is-longer", n >= 12);
+    enemyNameLabelEl.classList.toggle("is-longest", n >= 14);
+  }
   function updateEnemyCycleDisplay(){
     const infoPopoverEl = $('[data-role="enemy-info-popover"]', root);
     if (enemyStatsCustom){
-      enemyCycleDisplayEl.innerHTML = `<span class="sk-enemy-custom-label">Custom</span>`;
-      enemyCycleDisplayEl.title = "Custom enemy stats (hand-edited)";
-      if (enemyNameLabelEl) enemyNameLabelEl.innerHTML = `<strong>Custom</strong>`;
+      enemyCycleDisplayEl.innerHTML = `<svg class="sk-enemy-custom-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+      enemyCycleDisplayEl.title = "Custom enemy stats (hand-edited) - click to go back to the presets";
+      if (enemyNameLabelEl) { enemyNameLabelEl.innerHTML = `<strong>Custom</strong>`; fitEnemyName("Custom"); }
       if (infoPopoverEl) {
         infoPopoverEl.innerHTML = `<div class="sk-enemy-info-title">Custom Target</div><div class="sk-enemy-info-none">Hand-edited stats (immunities not specified).</div>`;
       }
     } else {
       const preset = ENEMY_PRESETS.find(e => e.id === selectedEnemyId);
       enemyCycleDisplayEl.innerHTML = preset ? `<img src="${SKILL_ICONS[preset.icon]}" alt="${preset.label}">` : "";
-      enemyCycleDisplayEl.title = preset ? preset.label : "";
-      if (enemyNameLabelEl) enemyNameLabelEl.innerHTML = preset ? `<strong>${preset.label}</strong>` : `<strong>Enemy</strong>`;
+      enemyCycleDisplayEl.title = preset ? preset.label + " - click for the next enemy" : "";
+      if (enemyNameLabelEl) { enemyNameLabelEl.innerHTML = preset ? `<strong>${preset.label}</strong>` : `<strong>Enemy</strong>`; fitEnemyName(preset ? preset.label : "Enemy"); }
       if (infoPopoverEl && preset) {
         if (!preset.immunities || preset.immunities.length === 0) {
           infoPopoverEl.innerHTML = `
@@ -12273,9 +12238,10 @@ function mountSkillCooldownLookup(root){
       }
     }
   }
-  // Prev/next (2026-08-21, relocated from the Final Damage chip's old
+  // Cycling (2026-08-21, relocated from the Final Damage chip's old
   // 3-buttons-at-once row, per direct user request): wraps around
-  // ENEMY_PRESETS' own array order. Clicking either arrow ALWAYS forces
+  // ENEMY_PRESETS' own array order. Since 2026-09-19 the only control is a click on the
+  // enemy icon (forward only; the prev/next arrows were removed). A click ALWAYS forces
   // real preset values back in and clears Custom mode -- "clicking next or
   // previous button again will still go back to enemy preset logic," per
   // the user's own spec -- even if the user had just hand-edited a field.
@@ -12292,8 +12258,9 @@ function mountSkillCooldownLookup(root){
     multiHitLayer.innerHTML = "";
     renderHero();
   }
-  enemyPrevBtn.addEventListener("click", () => cycleEnemyPreset(-1));
-  enemyNextBtn.addEventListener("click", () => cycleEnemyPreset(1));
+  // Clicking the enemy icon steps to the next preset (wraps). There is no "previous" -- the arrows were removed
+  // 2026-09-19; a full lap of the 7 presets is short enough.
+  enemyCycleDisplayEl.addEventListener("click", () => cycleEnemyPreset(1));
   const enemyInfoWrap = $('[data-role="enemy-info-wrap"]', root);
   const enemyInfoBtn = $('[data-role="enemy-info-btn"]', root);
   if (enemyInfoBtn && enemyInfoWrap) {
@@ -14949,7 +14916,7 @@ function mountSkillCooldownLookup(root){
         // roll via defAdjustRange), worst-case-with-worst-case /
         // best-case-with-best-case, not just mitigating the raw MIDPOINT.
         // Preset selection UI itself moved to the Enemy Stats panel
-        // (2026-08-21, see enemyPrevBtn/enemyNextBtn/enemyCycleDisplayEl) --
+        // (2026-08-21, see enemyCycleDisplayEl) --
         // selectedEnemy here is now ONLY the "is a target conceptually
         // active" gate a few lines below, not a source of DEF/LCK numbers
         // (those come from enemyDefEl/enemyLckEl, see rollOneHit's comment).
@@ -15678,7 +15645,7 @@ function mountSkillCooldownLookup(root){
     // Enemy preset selection moved OUT of displayEl entirely (2026-08-21)
     // -- it used to be 3 per-skill-rebuilt buttons here (`data-role=
     // "enemy-preset"`), now it's the persistent prev/next cycle widget in
-    // the Enemy Stats panel (enemyPrevBtn/enemyNextBtn, wired once at mount
+    // the Enemy Stats panel (the enemy icon click, wired once at mount
     // time below, not re-wired per skill). Nothing left to do in this
     // per-render listener block for it.
 
@@ -15935,12 +15902,6 @@ function mountSkillCooldownLookup(root){
       renderHero();
     }));
   raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); renderHero(); });
-  let enemyStatOpen = true;
-  enemyStatToggleBtn.addEventListener("click", () => {
-    enemyStatOpen = !enemyStatOpen;
-    enemyStatControlsEl.hidden = !enemyStatOpen;
-    enemyStatToggleBtn.classList.toggle("on", enemyStatOpen);
-  });
 
   // Document-scoped (not searchEl-scoped) so Left/Right work once a skill card
   // has focus moved off the search box — guarded on root.hidden so this doesn't
@@ -19720,7 +19681,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){

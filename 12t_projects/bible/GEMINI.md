@@ -74,6 +74,13 @@ The player stat panel (`.sk-stats-panel`) opens with a `.sk-class-badge`: the se
 * **Update path:** `updateClassBadge(cls)` is called from `renderHero()` beside the `CLASS_ART` backdrop update. A class with no portrait (shared `Common` skills) shows the caption only. The panel is hidden until a skill is selected, so the badge never shows an empty state.
 * **Compact mode:** under `max-height: 820px` the portrait shrinks to 40px so the no-scroll screen still fits.
 * **Validation:** `scripts/validate_skills.js` §3i requires a valid PNG portrait for every class that owns a skill (`[PORTRAIT ERROR]`). Adding a new class means adding its portrait here.
+* **Revised Art button** lives at the right end of this badge (it used to sit in a separate button row between the two panels; that row no longer exists).
+* **Enemy badge** (`.sk-class-badge.sk-enemy-badge`) is a **separate card** above the enemy stats, exactly like the player's badge above the player's stats (the red enemy panel is now two red cards with an 8px gap, not one box): a preset icon, the preset name and the caption "ค่าสถานะตัวละครเป้าหมาย" ("target character's stats"), with the immunities "i" button at its right. **Clicking the icon steps to the next preset** (wraps; forward only; a click from "Custom" returns to the presets) — the ◂ ▸ arrows were removed. The enemy panel stays red, the player badge gold. The old cycler row and name cell are gone; the enemy stat grid keeps an **empty first cell** so its 8 stats sit under the same columns as the player's (which starts with CHAR LV).
+  * Long preset names shrink in steps (`fitEnemyName`: ≥9 / ≥12 / ≥14 characters → 13 / 12 / 10.5px) so they stay on one line.
+  * After a hand-edit the badge shows a "?" icon and the name "Custom".
+  * The enemy panel is **always visible** now: the show/hide toggle (`enemystat-toggle`) was removed.
+* **Captions never wrap** (`white-space:nowrap`): Thai has no spaces, so a wrap splits a word mid-way.
+* **Validation (panel structure):** §3j checks both captions exist once, Revised Art sits inside the player badge, the enemy badge is its own card with a clickable icon plus name/info roles and no stat inputs inside it, and the toggle, the arrows and the `.sk-controls-actions` row never come back (`[PANEL ERROR]`).
 
 ---
 ## 3. Skill Verification & Quality Assurance Pipeline

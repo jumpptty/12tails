@@ -111,6 +111,8 @@ const exposeInjection = `
   window._selectSkill = selectSkill;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
+  window._cycleEnemyPreset = cycleEnemyPreset;
+  window._selectedEnemyId = () => selectedEnemyId;
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -810,6 +812,52 @@ let checkedPortraits = 0;
     });
   }
 }
+// 3j. Stat panel structure (2026-09-19): both badges present, Revised Art lives INSIDE the player badge,
+// and the enemy show/hide toggle + the old button row are gone for good.
+let checkedPanelMarkup = 0;
+{
+  const startIdx = html.indexOf('<div class="sk-stats-panel"');
+  const endIdx = html.indexOf('<div class="sk-multihit-layer"', startIdx);
+  const panel = startIdx === -1 || endIdx === -1 ? "" : html.slice(startIdx, endIdx);
+  const check = (label, ok) => { checkedPanelMarkup++; if (!ok) { console.error(`[PANEL ERROR] ${label}`); errorCount++; } };
+  check("stats panel template not found", panel.length > 0);
+  const count = (needle) => panel.split(needle).length - 1;
+  check("player caption should appear exactly once", count("ค่าสถานะตัวละครของคุณ") === 1);
+  check("enemy caption should appear exactly once", count("ค่าสถานะตัวละครเป้าหมาย") === 1);
+  check("enemy show/hide toggle must stay removed", count("enemystat-toggle") === 0);
+  check("the old .sk-controls-actions button row must stay removed", count("sk-controls-actions") === 0);
+  const playerBadgeStart = panel.indexOf('class="sk-class-badge"');
+  const playerBadgeEnd = panel.indexOf('<div class="sk-controls">', playerBadgeStart);
+  const playerBadge = playerBadgeStart === -1 ? "" : panel.slice(playerBadgeStart, playerBadgeEnd);
+  check("Revised Art button must be inside the player badge", playerBadge.includes('data-role="revisedart"'));
+  const enemyBadgeStart = panel.indexOf('class="sk-class-badge sk-enemy-badge"');
+  const enemyStatsStart = panel.indexOf('<div class="sk-controls">', enemyBadgeStart);
+  const enemyBadge = enemyBadgeStart === -1 ? "" : panel.slice(enemyBadgeStart, enemyStatsStart);
+  ["enemy-cycle-display", "enemy-name-label", "enemy-info-btn"].forEach(role =>
+    check(`enemy badge is missing data-role="${role}"`, enemyBadge.includes(`data-role="${role}"`)));
+  check("enemy badge must be its own card: the enemy stat inputs must not be inside it", !enemyBadge.includes('data-role="enemyAtk"') && enemyStatsStart > enemyBadgeStart);
+  check("the enemy icon must be a button (click = next preset)", enemyBadge.includes('<button type="button" class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"'));
+  check("the enemy prev/next arrows must stay removed", count("enemy-prev") === 0 && count("enemy-next") === 0);
+}
+// 3l. Enemy icon click = next preset (cycleEnemyPreset(1)): it must visit every preset exactly once, forward,
+// and wrap back to the start. (The prev/next arrows are gone, so this is the only way to change the target.)
+let checkedEnemyCycle = 0;
+{
+  const startId = sandbox._selectedEnemyId();
+  const visited = [startId];
+  let guard = 0;
+  do { sandbox._cycleEnemyPreset(1); visited.push(sandbox._selectedEnemyId()); } while (visited[visited.length - 1] !== startId && ++guard < 50);
+  const lap = visited.slice(0, -1);
+  const check = (label, ok) => { checkedEnemyCycle++; if (!ok) { console.error(`[ENEMY CYCLE ERROR] ${label}: visited ${visited.join(" > ")}`); errorCount++; } };
+  check("a lap must return to the starting preset", visited[visited.length - 1] === startId);
+  check("a lap must visit at least two presets", lap.length >= 2);
+  check("every preset must be visited exactly once per lap", new Set(lap).size === lap.length);
+  const afterLap = sandbox._selectedEnemyId();
+  sandbox._cycleEnemyPreset(1);
+  check("one more click after a lap moves on to the second preset again", sandbox._selectedEnemyId() === lap[1]);
+  for (let i = 1; i < lap.length; i++) sandbox._cycleEnemyPreset(1);   // finish that lap so the sandbox ends where it started
+  check("state restored after the test", sandbox._selectedEnemyId() === afterLap);
+}
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -975,6 +1023,8 @@ console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) chec
 console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base order) checks.`);
 console.log(`Verified ${checkedRankIcons} multi-rank icon presence checks.`);
 console.log(`Verified ${checkedPortraits} class portrait checks.`);
+console.log(`Verified ${checkedPanelMarkup} stat panel structure checks.`);
+console.log(`Verified ${checkedEnemyCycle} enemy icon-cycle checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
