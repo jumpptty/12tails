@@ -50,6 +50,7 @@ To permanently prevent session crashes and turn interruptions:
     - **Auto-badge vs. manual placement:** a card's own `status:{name, sLv, class}` field still auto-prepends a badge to the very start of `.sk-hero-desc` exactly as before (`sLv` can be a function that resolves the level per selected rank — `[name]` inline cannot do this, it's static text). The moment `[name]` (any/no trailing rank digits, case-insensitive — **name-only match**, deliberate choice) appears anywhere inside that same skill's `desc`, the auto-badge is suppressed entirely: you've taken manual control of where this status displays, full stop. A card that wants to show two different levels of its own status (e.g. a base badge plus a separately-cited escalated level, like `bat_dissolute`'s Shame-boosted +1 citation) must place **both** inline explicitly — it can no longer lean on the auto-badge for one of them once any `[name]` is present. (An earlier version of this rule matched exact name+level pairs instead, so the auto-badge would still fire for a non-matching level; that was reverted per direct user request — the rule is now "any `[name]` at all clears the default," and `bat_dissolute` was migrated to place both mentions explicitly to match.)
     - `renderStatusKeywords()` skips any `[name]` that's already hand-wrapped in its own `<span class="sk-status">` (legacy per-card authoring predating this convention, e.g. `bat_dissolute`'s old inline `kw2` template before it was migrated) — otherwise it double-wraps. New cards should use the bare `[name]` shorthand, not hand-rolled `<span>` HTML; no card in the file needs this fallback anymore, but it's cheap defensive coverage against a future regression.
   * **No Native Browser Tooltip:** Native `title` attribute is explicitly omitted from `.sk-hero-desc` to prevent unsightly default browser tooltip popups.
+  * **Omit Wrapped Duration & Proc Chance from `desc`:** Never mention wrapped duration (e.g. `chaAdjust`) or wrapped proc chance (e.g. `lckAdjust`) as static numbers in the `desc` text. These dynamic scaling values are already dedicatedly rendered in the interactive stat chips (`duration`, `durWrapped`, `lckProc`).
 * **Basic Attacks & Passives as Cards Policy:** Basic attacks (Combo / `nAttack`), charge attacks (`cAttack`), and passive skills CAN be authored as full skill cards in `bible` (`skill-details`), but strictly when explicitly requested by the user.
 * **Vertical Collapse Convention for Skill Cards:**
   * All skill cards must collapse vertically whenever a chip row is empty.
@@ -200,10 +201,12 @@ Present a structured review table including:
 > **Chip Support on Passives Policy:**
 > Passive cards *can and should* carry `status`, `cd`, `duration`, `lckProc`, `cost`, or `ko` whenever decompiled source code proves the passive genuinely possesses them (e.g. granted statuses, internal cooldowns, proc rates, or toggle costs). Do not omit verified mechanics under the false assumption that passives are restricted to text-only descriptions. Unused chip rows collapse automatically per the Vertical Collapse Convention.
 
-> **Dual-Duration & Chip Position Overrides (added 2026-09-19):**
+> **Dual-Duration, Dual-LCK Proc & Chip Position Overrides (added 2026-09-19):**
 > A skill whose passive/proc grants a status with a genuinely different duration than the card's own primary `duration` (e.g. Frost Bite's frost-vs-ice roll, `chaAdjust(2)` vs `chaAdjust(3)`) uses `secondaryDuration: {duration, durWrapped, durContested, label}` — renders as its own `.sk-stat-dur2` chip, same shape as the primary `duration`/`durWrapped`/`durContested` fields but scoped under one object with a required `label` to distinguish it (e.g. `"Ice Duration"`).
 >
-> `.sk-hero-stats`'s 4 chip slots (`cd`, `cast`, `dur`, `lck`, columns 1/2/3/4) have fixed CSS defaults so layout stays predictable when chips are conditionally present — but `dur2` and `lck` both default to column 4, which collide whenever a card genuinely has both (Frost Bite was the first). Rather than special-casing that in CSS (tried once, reverted — it broke `monkey_runicSand`, which pairs `castTime` with `secondaryDuration` and would have collided with a blanket "`dur2` → column 2" rule), the general fix is a per-card **`chipCols`** field: a sparse `{cd, cd2, cast, dur, dur2, lck: N}` map that renders as an inline `style="grid-column:N"` on that one chip, via a `chipColStyle(key)` helper in `renderHero()`. Every card without `chipCols` is completely unaffected — the class defaults are back to their plain, un-special-cased original form. `.sk-hero-stats` also has `grid-auto-flow:dense` so a chip moved to an earlier column via `chipCols` actually backfills that slot instead of wrapping to a phantom 2nd row (CSS Grid's default sparse packing cursor only moves forward, never backtracks, once a later-DOM-order chip has claimed a higher column).
+> Similarly, a skill with distinct proc chances across multiple combo hits or modes (e.g. Spread Shot's 20% on hits 1-2 vs 40% on hit 3) uses `secondaryLckProc: {label, chance, applies, ...}` — renders as its own `.sk-stat-lck2` chip.
+>
+> `.sk-hero-stats`'s 4 chip slots (`cd`, `cast`, `dur`, `lck`, columns 1/2/3/4) have fixed CSS defaults so layout stays predictable when chips are conditionally present — but `dur2`, `lck`, and `lck2` default to column 4, which collide whenever a card genuinely has multiple. Rather than special-casing that in CSS (tried once, reverted — it broke `monkey_runicSand`, which pairs `castTime` with `secondaryDuration` and would have collided with a blanket "`dur2` → column 2" rule), the general fix is a per-card **`chipCols`** field: a sparse `{cd, cd2, cast, dur, dur2, lck, lck2: N}` map that renders as an inline `style="grid-column:N"` on that one chip, via a `chipColStyle(key)` helper in `renderHero()`. Every card without `chipCols` is completely unaffected — the class defaults are back to their plain, un-special-cased original form. `.sk-hero-stats` also has `grid-auto-flow:dense` so a chip moved to an earlier column via `chipCols` actually backfills that slot instead of wrapping to a phantom 2nd row (CSS Grid's default sparse packing cursor only moves forward, never backtracks, once a later-DOM-order chip has claimed a higher column).
 
 ---
 
@@ -255,3 +258,22 @@ Controls the highlighting of the player's global stat inputs (`.sk-controls`: AT
 3. **CHAR LV (`lv`) Live-Toggle Gating**: LV only glows when its controlling dependency is actually toggled on (`getDepRank(dep) === dep.maxRank`).
 4. **LCK Direct-Read Rule**: LCK only glows on a direct read (`lckProc`, literal `lckCoeff`, or `lckAdjust()` in formula text). Ambient LCK rolls inside `*Adjust` wrappers do NOT trigger LCK glowing.
 5. **Own-Stat Exclusion Rules**: Summon sub-moves exclude player ATK/TAL/AGI according to summon ownership (`ownStats`, `ownStatsDmgOnly`, `ownStatsKaiser`, `ownStatsPhoenix`, `phoenixFireballCd`).
+
+---
+
+## 8. Interactive Skill Cross-Linking via Description (`desc`)
+
+When authoring skill descriptions with `**bold**` formatting:
+
+1. **Automatic Skill Name Detection (`findSkillByMention`):**
+   * Any skill name enclosed in `**...**` (e.g. `**Frozen Blast**`, `**Fireball4**`, `**ท่าโจมตีปกติ**`, `**ไอซ์ ทวิสเตอร์**`) is automatically detected via an O(1) Pre-Indexed Map and converted into an interactive button (`.sk-desc-skill-link`).
+   * Clicking the link immediately navigates to that skill card via `selectSkill(targetSkill)`.
+2. **3-Tier Disambiguation Priority:**
+   * **Tier 1 (CompatSkills):** Matches against the card's own `compatSkills` list first (highest fidelity).
+   * **Tier 2 (Same Class):** Matches against all skills belonging to the current class. Note: the linked skill does **not** need to be in `compatSkills` to resolve.
+   * **Tier 3 (Common & Global):** Matches against Common skills, then across all other classes globally.
+3. **Fast Rejection of Non-Skill Terms:**
+   * Numerical values, percentages, arithmetic terms, timers, and general bold phrases (`**+2m**`, `**50%**`, `**15 วินาที**`, `**ต่ำสุดเหลือ 50%**`, `**Shame:**`) are automatically rejected from being links and render as standard `<span class="sk-val">...</span>` gold highlights.
+4. **Visual Styling ("Ledger" Aesthetic):**
+   * `.sk-desc-skill-link` is a `<button>` using `--gold` text with a subtle ambient gold glow (`text-shadow: 0 0 7px rgba(245, 166, 35, 0.45);`), pointer cursor, and intensified hover radiance (`text-shadow: 0 0 12px rgba(245, 166, 35, 0.9), 0 0 4px rgba(255, 255, 255, 0.6); filter: brightness(1.2);`). No underline (user preference). Styles are scoped to `.sk-hero-desc`, `.sk-support-lv-result` and `.sk-server-popup-body`; all three render through `formatDescTokens(str, skill)`.
+

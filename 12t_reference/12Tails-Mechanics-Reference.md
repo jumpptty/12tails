@@ -319,7 +319,7 @@ Each status maps to a sequential integer code. Grouped by function:
 
 - **Control / disables:** `ko`, `lock`, `paralysis`, `petrify`, `fear`, `drunken`/`drunk`, `grab`, `swallow`,
   `gobble`, `provoke`, `disarm`, `artCancel`, `delayQi`, `sticky`, `heavy`, `needlePrison`, `maim`.
-- **Damage-over-time / decay:** `poison`, `venomShock`, `bleed`, `cut`, `acid`, `rust`, `rustyDecay`, `puncture`,
+- **Damage-over-time / decay:** `burn`, `poison`, `venomShock`, `bleed`, `cut`, `acid`, `rust`, `rustyDecay`, `puncture`,
   `hpSap/mpSap/spSap/koSap`, `hpDrain/mpDrain/spDrain/koDrain`, `heat`.
 - **Regen / restore:** `hpRegen`, `mpRegen`, `rejuvenate`, `remedy`, `salvation`, `lifeBoost`, `magicBoost`,
   `autoLife`, `lastHope`, `miracleDrop`.
@@ -348,6 +348,20 @@ Status effects are queried at runtime via static boolean predicates in `StatusDa
 | **`isLockStatus(sType)`** | Total action disables / locks. |
 | **`isShieldStatus(sType)`** | Active protective shields absorbing incoming damage. |
 | **`isSystemStatus(sType)`** | Internal engine statuses that cannot be modified or cleared by player abilities. |
+
+**The `dispell` status (magic-status purge + short immunity).** `StatusData.cs:5813/6848/7478` list `dispell` in `isMagicalStatus`, `isBuffStatus` and `isDebuffStatus`. Its `sLv` is the **purge tier**, applied with `sTime = 1` (1 second):
+- **On apply** (`CharacterControl.cs:38485`, `case "dispell"`): every active status with `isMagical()` and `status.sLv <= dispell.sLv` is collected into `mDispellList` and removed via `removeStatus` (`:38508-38560`).
+- **While active** (`CharacterControl.cs:12977`, inside `RPC_AddStatus`): an incoming magical status with `sLv <= getStatusLv("dispell")` is rejected (`RPC_AddDamage(-83, ...)` fires as the feedback) -- `dissolute` takes a separate branch and is exempt (`:12967`).
+- Sources: Penguin `Dispell` -> level `2×sLv (+1 with parallelShift5)` (`Penguin.cs:22252`); Fay / IceGuardian bosses apply level 5 (`Fay.cs:2495`, `IceGuardian.cs:2494`).
+
+**The `dissolute` status (buff purge + buff block).** `dissolute` is `isMagicalStatus` + `isDebuffStatus` (`StatusData.cs:5939`, `:7532`), not a buff. With `d` = its `sLv`:
+- **Apply-time purge** (`CharacterControl.cs:40160`): removes every status with `isBuff()`, `!isSystem()` and `status.sLv <= d+2`. **State buffs are removed** (no State check); **System buffs are immune** (e.g. `hpRegen`, `mpRegen`, `reflect`, `noForce`, `awake`).
+- **Block while active** (`CharacterControl.cs:13081-13095`, `RPC_AddStatus`): rejects incoming `isBuffStatus && !isStateStatus` with `sLv <= d+2` (`RPC_AddDamage(-83)` feedback). **State buffs pass; System buffs are blocked** (no `isSystemStatus` check in this branch -- the two `isSystemStatus` calls in `RPC_AddStatus`, `:12677` and `:13672`, belong to the `immunity` and debuff-LCK-resist branches).
+- **Exempt from the Dispell block:** `RPC_AddStatus` skips the `dispell`/`clear`/`cleanse` checks for `dissolute` (`:12968`), so it always lands.
+- **Dispell vs Dissolute:** Dissolute strips an existing `dispell` (level `L`) when `L <= d+2`. Dispell can only land (and then purge Dissolute) when `L >= d+3`, since `dispell` is a non-State, non-System buff blocked by the rule above.
+- Bat sources: level = rank `+1` (Revised Art) `+1` (target has `shame`), clamped to 4 with Shadow Mastery (`Bat.cs:26111-26145`); bosses apply 4-6.
+
+
 
 ### 4.3 Summon & companion entity mechanics
 Summons (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, Gadina, Shadow Clones) are separate `CharacterControl` instances with specific engine inheritance rules:

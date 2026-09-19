@@ -64,9 +64,10 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 - `hasSkill(401)` ("spreadShot5", Class C): 20% chance (hits 1-2) / 40% chance (hit 3, `lckAdjust`) to fire 3 spread projectiles instead of one.
 
 ### pgn_cAttack1-4 (111/112/113/114) — passive, charge-attack rank
-- Gates `getChargeAttackLv()` = 1/2/3/4 (highest rank wins, not additive).
-- Channel tick (every 1s while holding): `MP = clamp(⌈0.03×chargeLv×ATK⌉, chargeLv×3, chargeLv×6)`. **No direct damage on release ever** — pure MP-channel utility, confirmed no `hit()` call anywhere in the release coroutine.
-- `hasSkill(411)` ("manaField5", Class C): adds `+chargeLv` to the MP tick and shares MP with allies in 8m radius.
+- Gates `getChargeAttackLv()` = 1/2/3/4 (`Penguin.cs:20624`, highest rank wins, not additive).
+- Channel tick (every 1s while holding, `Penguin.cs:18870-18973`): `MP = clamp(⌈0.03×chargeLv×ATK⌉ + (hasSkill(411)?chargeLv:0), chargeLv×3, chargeLv×6)`.
+- **No direct damage on release ever** (`RPC_cAttack0`, `Penguin.cs:19045-19245`) — pure MP-channel utility, confirmed zero `hit()` or projectile call anywhere in the release coroutine.
+- `hasSkill(411)` ("manaField5", Class C): adds `+chargeLv` to self MP tick and shares `chargeLv` MP/s (`1/2/3/4 MP/s`) with allies in 8m radius (`vector.sqrMagnitude < 64f`, `RPC_AddHeal(411, ...)`).
 
 ### pgn_Intellect1-4 (121/122/123/124) — passive, +INT
 - Each rank: **+10 INT, +30 current MP, +30 max MP** (tooltip only mentions +10 INT — the MP bonus is undocumented but confirmed at 3 separate code sites). All 4 ranks: +40 INT, +120 MP/+120 max MP.
@@ -195,7 +196,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - CD: `9+3×sLv` base → 21s at max. ×0.88 with revisedArt5.
 - Cast: flat `magAdjust(3)` all ranks.
 - Damage: `talAdjust(sLv×12+18)×(1+0.01×focusIntellect)`, falloff-scaled by distance (`1-0.5×clamp(dist/hitRange,0,1)`). KO 1, Hate 0. On hit: +1 SP to caster.
-- Applies `ice` status (slow, `moveMod -= 0.1+0.1×sLv`) level sLv, duration `chaAdjust(3)`.
+- Applies `ice` status (slow, `moveMod -= 0.1+0.1×sLv`) level sLv, duration `chaAdjust(3)` (uncontested: scales with Penguin's CHA/LCK, enemy CHA has no effect).
 - Range: AoE radius `2+sLv+(hasSkill(403)?2:0)` (6m→8m at max with frozenBreak5), self-centered, no cast-range gate, no target-lock required.
 - Class C mods: `frozenBreak5`(403) — +2m radius, and if target already has `ice`, bonus defense-ignoring `RPC_AddEffectDamage(403, 15×iceLv)` "Frozen Break!" burst.
 - `isDoubleSpell=true`.
@@ -283,10 +284,10 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 ### pgn_arcticEmperor1/2 (371/372) — active, RANK FAMILY (sLv1/sLv2)
 - reqLv 35/40, MP 60/80, SP 25/35 (**negative → RED, spent on cast**), mode instant/enemy, cType arcticEmperor
 - CD: `agiAdjust(600)` — own dedicated `addTimeOut` call, NOT routed through shared dispatcher.
-- Cast: instant (no castTime variable at all — animation plays but no commitment-window gate).
+- Cast: instant (no commitment-window gate; 0.3s startup delay before ice castle appears, 1.0s caster animation lock).
 - **Two-phase mechanic, bundled in one skill** (companion file `Penguin_arcticEmperor.cs` is confirmed pure cosmetic VFX, zero gameplay logic):
-  - Ticks 0-7 (8 ticks, 1s apart): self-centered AoE radius 8m/height 6m, applies `frost` status (level 1, `getDebuff(3,...)`s) to everyone caught — **no damage during these 8 ticks.**
-  - Final tick: same AoE zone, deals burst damage `talAdjust(60+60×sLv)×(1+0.01×focusIntellect)` (180 at sLv2) to everyone in zone, KO 0, Hate 0, AND simultaneously strips `frost` from every target hit.
+  - Ticks 0-7 (8 ticks, 1s apart, lasting 8.0s total): self-centered AoE radius 8m/height 6m, applies `frost` status (`sLv1` base / rank-scaled on TTO & ToT, `getDebuff(3,...)`s) to everyone caught — **no damage during these 8 ticks.**
+  - Final tick (8.3s after cast / 8.0s after castle spawns): same AoE zone, deals burst damage `talAdjust(60+60×sLv)×(1+0.01×focusIntellect)` (180 at sLv2) to everyone in zone, KO 0, Hate 0, AND simultaneously strips `frost` from every target hit.
 - Range: self-centered AoE radius 8m/height 6m (not sLv-scaled), no cast-range gate, no target-lock required — hits everyone in zone regardless of prior lock, filtered only by faction layer.
 - No hasSkill() gates found.
 
@@ -367,3 +368,23 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - Channeled party-invulnerability zone: every 2s drains `hasSkill(414)?20:25` MP from caster (confirms revisedMagic5 applies here too), pulses 3m-radius/3m-height AoE around caster, refreshing `cosmicFriday` status (sLv5, 3s duration, same bidirectional damage-null as cosmicRift) on every ally caught inside.
 - Companion file confirmed pure trigger-collider logic (redundant/backup status-application path on player-tag collision) — no additional hidden mechanic.
 - Shares mutual-exclusivity and full status-handling code with cosmicRift(434).
+
+---
+
+## Server Balance Variations
+
+### Tailstopia Online (TTO)
+* **Intellect (`pgn_Intellect1-4`):** INT bonus rebalanced from flat +10 per rank (+10/+20/+30/+40) to +6, +7, +8, +9 (cumulative `+6 / +13 / +21 / +30 INT`).
+* **Astral Talent (`pgn_astralTalent1-4`):** TAL bonus rebalanced from flat +10 per rank (+10/+20/+30/+40) to +6, +7, +8, +9 (cumulative `+6 / +13 / +21 / +30 TAL`).
+* **Arctic Emperor (`pgn_arcticEmperor1/2`):** `frost` status level now scales with skill rank: `frost 1 → 1/2` (Rank 1 applies Frost Lv.1, Rank 2 applies Frost Lv.2, contested 3s duration).
+* **Blizzard (`pgn_blizzard1/2`):** After casting is complete, Penguin is no longer rooted and can move freely while the 6-wave blizzard is active (though other skills remain locked during storm duration).
+
+### Tales of Tail (ToT)
+* **Frozen Blast (`pgn_frozenBlast1-4`):** Base damage buffed from `talAdjust(sLv×12+18)` (30/42/54/66) to `talAdjust(15×sLv+15)` (30/45/60/75).
+* **Ice Shield (`pgn_iceShield1-4`):** Base cooldown nerfed (+25%) from `[45, 60, 75, 90]` seconds to `[56.25, 75, 93.75, 112.5]` seconds.
+* **Blizzard (`pgn_blizzard1/2`):** Maximum hit count for Rank 2 buffed from 6 hits to 8 hits (`hitCount: (rank) => rank === 2 ? 8 : 6`).
+* **Arctic Emperor (`pgn_arcticEmperor1/2`):**
+  * `frost` status level for Rank 2 buffed from Lv.1 to Lv.2 (`frost 1 → 2`).
+  * Base cooldown Rank 1 buffed from 600s to 300s.
+  * Base cooldown Rank 2 buffed from 600s to 180s (`cd: [300, 180]`).
+
