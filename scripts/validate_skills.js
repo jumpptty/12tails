@@ -839,6 +839,54 @@ let checkedPanelMarkup = 0;
   check("the enemy icon must be a button (click = next preset)", enemyBadge.includes('<button type="button" class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"'));
   check("the enemy prev/next arrows must stay removed", count("enemy-prev") === 0 && count("enemy-next") === 0);
 }
+// 3k. Summon stat-feed glow (getSummonFeedPlayerStatKeys, 2026-09-19): a character stat glows in the player
+// panel when a dependency feeds it into a summon stat AND the selected skill's chips read that summon stat.
+let checkedSummonFeed = 0;
+{
+  const byId = id => SKILLS.find(x => x.id === id);
+  const DEP_IDS = ["doubleBot", "synchroMole2", "hiddenTurret", "fireSoul", "earthSoul", "aegisOfEarth"];
+  const saved = DEP_IDS.map(id => [id, sandbox._depRanks[id]]);
+  const glow = (id, deps) => {
+    DEP_IDS.forEach(d => { sandbox._depRanks[d] = deps[d] !== undefined ? deps[d] : 0; });
+    return sandbox.getUsedPlayerStatKeys(byId(id));
+  };
+  const expectKey = (label, set, key, want) => {
+    checkedSummonFeed++;
+    if (set.has(key) !== want) { console.error(`[SUMMON FEED ERROR] ${label}: "${key}" should ${want ? "" : "NOT "}glow, keys = ${[...set].sort().join(",")}`); errorCount++; }
+  };
+  try {
+    // Barrel Bot: Double Bot feeds LV, Synchro Mole feeds TAL (into ATK/DEF)
+    const bb = "mole_barrelBot_punch";
+    expectKey("Barrel Bot, both deps on", glow(bb, { doubleBot: 1, synchroMole2: 1 }), "lv", true);
+    expectKey("Barrel Bot, both deps on", glow(bb, { doubleBot: 1, synchroMole2: 1 }), "tal", true);
+    expectKey("Barrel Bot, Double Bot only", glow(bb, { doubleBot: 1 }), "lv", true);
+    expectKey("Barrel Bot, Double Bot only", glow(bb, { doubleBot: 1 }), "tal", false);
+    expectKey("Barrel Bot, Synchro Mole only", glow(bb, { synchroMole2: 1 }), "tal", true);
+    expectKey("Barrel Bot, Synchro Mole only", glow(bb, { synchroMole2: 1 }), "lv", false);
+    expectKey("Barrel Bot, deps off", glow(bb, {}), "lv", false);
+    expectKey("Barrel Bot, deps off", glow(bb, {}), "tal", false);
+    // Auto Gyro Gun: Hidden Turret feeds LV
+    expectKey("Auto Gyro Gun, Hidden Turret on", glow("mole_autoGyroGun_nAttack", { hiddenTurret: 1 }), "lv", true);
+    expectKey("Auto Gyro Gun, Hidden Turret off", glow("mole_autoGyroGun_nAttack", {}), "lv", false);
+    // Phoenix: Fire Soul feeds each stat the chips read (Instant Blaze reads the Phoenix's TAL only)
+    expectKey("Phoenix Instant Blaze, Fire Soul on", glow("monkey_instantBlaze", { fireSoul: 1 }), "tal", true);
+    expectKey("Phoenix Instant Blaze, Fire Soul on: DEF is not read", glow("monkey_instantBlaze", { fireSoul: 1 }), "def", false);
+    expectKey("Phoenix Instant Blaze, Fire Soul on: VIT is not read", glow("monkey_instantBlaze", { fireSoul: 1 }), "vit", false);
+    expectKey("Phoenix Instant Blaze, Fire Soul off", glow("monkey_instantBlaze", {}), "tal", false);
+    // Gadina: Aegis of Earth feeds VIT into the MHP that Titanic Earth Pulse reads
+    expectKey("Titanic Earth Pulse, Aegis of Earth on", glow("monkey_titanicEarthPulse", { aegisOfEarth: 2 }), "vit", true);
+    expectKey("Titanic Earth Pulse, no VIT feed", glow("monkey_titanicEarthPulse", {}), "vit", false);
+    // A skill with no summon is unaffected however the deps are set
+    const plainOn = glow("penguin_frozenBlast", { doubleBot: 1, synchroMole2: 1, hiddenTurret: 1, fireSoul: 1, earthSoul: 1, aegisOfEarth: 3 });
+    const plainOff = glow("penguin_frozenBlast", {});
+    checkedSummonFeed++;
+    if ([...plainOn].sort().join() !== [...plainOff].sort().join()) { console.error("[SUMMON FEED ERROR] a non-summon skill's glow changed with summon dependencies"); errorCount++; }
+  } catch (e) {
+    console.error(`[SUMMON FEED EXCEPTION] ${e.message}`);
+    errorCount++;
+  }
+  saved.forEach(([id, val]) => { if (val === undefined) delete sandbox._depRanks[id]; else sandbox._depRanks[id] = val; });
+}
 // 3l. Enemy icon click = next preset (cycleEnemyPreset(1)): it must visit every preset exactly once, forward,
 // and wrap back to the start. (The prev/next arrows are gone, so this is the only way to change the target.)
 let checkedEnemyCycle = 0;
@@ -1024,6 +1072,7 @@ console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base or
 console.log(`Verified ${checkedRankIcons} multi-rank icon presence checks.`);
 console.log(`Verified ${checkedPortraits} class portrait checks.`);
 console.log(`Verified ${checkedPanelMarkup} stat panel structure checks.`);
+console.log(`Verified ${checkedSummonFeed} summon stat-feed glow checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy icon-cycle checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
