@@ -26,8 +26,8 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 
 | Skill ID | Name | Max Rank | Cost (Base) | Cooldown (Base) | Cast Time (Base) | Duration (Base) | Formula / Effect |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| `penguin_doubleCast` | Double Cast | 1 | 20 MP, 20 SP (red) | 240s | 0s | 12s | Grants Multi Cast lv.1 (next spell casts 2×) |
-| `penguin_tripleCast` | Triple Cast | 1 | 40 MP, 30 SP (red) | 240s | 0s | 12s | Grants Multi Cast lv.2 (next 2 spells cast 2×) |
+| `penguin_doubleCast` | Double Cast | 1 | 20 MP, 20 SP (red) | 240s | 0s | 12s | Grants Multi Cast lv.1 (next qualifying spell casts 2× consecutively) |
+| `penguin_tripleCast` | Triple Cast | 1 | 40 MP, 30 SP (red) | 240s | 0s | 12s | Grants Multi Cast lv.2 (next qualifying spell casts 3× consecutively) |
 | `penguin_manaMissile` | Mana Missile | 4 | [9, 15, 21, 27] MP | [10, 12, 14, 16]s | [2, 3, 4, 5]s | — | `talAdjust(3×sLv + 12)` per missile (sLv+1 missiles) |
 | `penguin_manaArc` | Mana Arc | 4 | [6, 12, 18, 24] MP, [4, 6, 8, 10] SP (red) | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` self AoE |
 | `penguin_dispell` | Dispell | 2 | [14, 21] MP | [4, 5]s | 0s | — | Cleanses buff tier 2×sLv from enemies in AoE |
@@ -75,13 +75,13 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 ### pgn_doubleCast1 (131) — active
 - reqLv 32, MP 20, SP -20 (red), instant, cType "doubleCast"
 - CD: `agiAdjust(240)` — **shared cooldown pool with tripleCast2** (casting either puts both on CD).
-- Grants self status `multiCast` sLv=1, duration `chaAdjust(12)`s. Next qualifying spell cast fires twice (1 extra cast).
+- Grants self status `multiCast` sLv=1, duration `chaAdjust(12)`s. Next qualifying spell cast fires twice (1 extra cast: total casts = 1 + status level).
 - No range (self-target, no distance check).
 
 ### pgn_tripleCast2 (132) — active
 - reqLv 40, MP 40, SP -30 (red), instant, cType "tripleCast"
 - CD: shared `agiAdjust(240)` pool with doubleCast1.
-- Grants self status `multiCast` sLv=2, duration `chaAdjust(12)`s. Consumed 1 level per subsequent qualifying cast — practically "next 2 qualifying casts each fire twice" (up to 2 separate button-presses within the buff window), NOT one spell firing 3× in a single press despite tooltip wording. Using either doubleCast1/tripleCast2 overwrites (doesn't stack with) the other's pending buff.
+- Grants self status `multiCast` sLv=2, duration `chaAdjust(12)`s. **Next qualifying cast fires 3 times consecutively** (matches tooltip and live play). Each qualifying cast routine checks `getStatusLv("multiCast")`, calls `reduceStatusLv("multiCast", 1)` (removing the status at 0) and re-invokes itself via `RPC_<skill>_multiCast` (e.g. `Penguin.cs:22884-22904` for blink) -- and that re-invoked cast runs the same check again. Total casts = 1 + status level (doubleCast1 = 2, tripleCast2 = 3). (CORRECTED: an earlier note here claimed "2 separate casts each fire twice"; that missed the self-recursion.) Using either doubleCast1/tripleCast2 overwrites (doesn't stack with) the other's pending buff. There is no separate `tripleCast` status -- `tripleCast` is only the cooldown key (`Penguin.cs:9829`).
 - iceBlock exception: reads `multiCast` level as a direct multiplier (`sLv×3` for tripleCast2), not decrement-per-cast.
 
 ### pgn_statPlus1-4 (141/142/143/144) — passive, generic
