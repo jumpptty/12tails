@@ -623,6 +623,26 @@ let checkedLckDiff = 0;
       for (let i = 0; i < 400; i++) sum += sandbox._rollOneHit(sk, 4);
       return sum / 400;
     };
+    // Consistency: the Final Damage RANGE shown on the card must contain every simulated roll
+    // (the hero range and the Test/Simulate popup share the same pipeline stages), and its
+    // maximum must be reachable, not wildly above what rolls ever produce.
+    const finalRangeAt = (rank, atk, lck, eLck, joker) => {
+      inputs.atk.value = String(atk); inputs.lck.value = String(lck); inputs.enemyLck.value = String(eLck);
+      sandbox._depRanks[sk.lckDiffDep.id] = joker ? 1 : 0;
+      sandbox._skillRanks[sk.id] = rank;
+      sandbox._selectSkill(sk);
+      const raw = sandbox._calcRangeFor(sandbox._getDmgText(sk, rank));
+      const fin = sandbox._finalRangeForRange(raw);
+      let lo = Infinity, hi = -Infinity;
+      for (let i = 0; i < 1500; i++) { const r = sandbox._rollOneHit(sk, rank); lo = Math.min(lo, r); hi = Math.max(hi, r); }
+      return { fin, lo, hi };
+    };
+    [[4, 200, 102, 2, false], [4, 200, 102, 2, true], [1, 200, 102, 2, false], [4, 200, 102, 102, false], [4, 200, 102, 202, true]].forEach(([rk, atk, lck, eLck, jk]) => {
+      const { fin, lo, hi } = finalRangeAt(rk, atk, lck, eLck, jk);
+      const tag = `rank ${rk}, ATK ${atk}, LCK ${lck} vs ${eLck}, Joker ${jk ? "on" : "off"}`;
+      expect(`final range contains every roll (${tag}) [range ${fin[0]}-${fin[1]}, rolled ${lo}-${hi}]`, lo >= fin[0] && hi <= fin[1], true);
+      expect(`final range max is reachable (${tag}) [range max ${fin[1]}, top roll ${hi}]`, hi >= fin[1] * 0.85, true);
+    });
     const rollBase = avgRoll(200, 102, 102, false);
     const rollLead = avgRoll(200, 102, 2, false);
     expect("roll: an LCK lead adds a random 0..250 (mean ~+125, minus enemy-LCK mitigation noise)", rollLead - rollBase > 80, true);
@@ -647,6 +667,75 @@ let checkedLckDiff = 0;
   if (saved.joker === undefined) delete sandbox._depRanks[sk.lckDiffDep.id]; else sandbox._depRanks[sk.lckDiffDep.id] = saved.joker;
 }
 
+// 3f. Range-vs-simulator consistency, EVERY single-hit skill with a computable damage
+// formula: every roll of the real Test/Simulate path (rollOneHit) must fall inside the
+// Final Damage range the card displays (finalRangeForRange(calcRangeFor(...))). Run twice
+// per skill rank, once with every dependency at its default and once with every dependency
+// switched off. Skipped: dmgGroups skills (per-group sums) and prose/non-computable text.
+// (Found 2026-09-19: Lucky Card's LCK-difference roll was missing from the displayed max.)
+let checkedConsistency = 0;
+{
+  // Pre-existing mismatches found by this very check, NOT yet resolved. Each needs a decision
+  // about which path (roll or range) matches the game; do not "fix" by widening the range.
+  // Remove an entry once the skill is consistent again.
+  const KNOWN_RANGE_SIM_MISMATCH = {
+    // The roll applies the Benediction multiplier to the base before talAdjust, the range after it,
+    // so the two round differently and sit 1 apart. Needs a decision on which order the game uses.
+    sheep_overHeal: "Benediction multiplier order (roll: before talAdjust, range: after) -> 1 apart",
+  };
+  const DEP_FIELD_NAMES = ["dmgDep", "dmgMultDep", "dmgRankDep", "dmgFlagDep", "dmgReplaceDep", "hitCountDep", "lckDiffDep", "cdDep", "castDep", "koDep"];
+  const inputs = sandbox._statInputs;
+  const N = 2000;   // large on purpose: an overshoot can be a rare tail event (a few in 6000 rolls)
+  const failures = new Map();
+  SKILLS.forEach(sk => {
+    if (sk.dmgGroups) return;
+    const depIds = [];
+    DEP_FIELD_NAMES.forEach(f => { if (sk[f] && sk[f].id) depIds.push([sk[f].id, sk[f].minRank !== undefined ? sk[f].minRank : 0]); });
+    if (sk.dmgFocusIntellect) depIds.push(["focusIntellect", 0]);
+    // Two stat profiles: the sandbox defaults (player LCK/ATK/TAL 0) AND a high-stat profile.
+    // Only the high profile gives LCK-difference skills (Lucky Card) a real LCK lead over the
+    // enemy, so a range/roll gap in that term can't hide behind all-zero stats.
+    [null, { atk: "200", tal: "200", lck: "150" }].forEach(profile => {
+    const savedStats = profile ? { atk: inputs.atk.value, tal: inputs.tal.value, lck: inputs.lck.value } : null;
+    if (profile) { inputs.atk.value = profile.atk; inputs.tal.value = profile.tal; inputs.lck.value = profile.lck; }
+    [false, true].forEach(depsOff => {
+      if (depsOff && depIds.length === 0) return;   // nothing to switch off
+      const saved = depIds.map(([id]) => [id, sandbox._depRanks[id]]);
+      depIds.forEach(([id, min]) => { if (depsOff) sandbox._depRanks[id] = min; else delete sandbox._depRanks[id]; });
+      for (let r = 1; r <= Math.max(1, sk.maxRank || 1); r++) {
+        try {
+          const rawText = sandbox._getDmgText(sk, r);
+          const subText = sandbox._substituteDmgVars(rawText, sk, r);
+          if (!(/talAdjust\(([^()]+)\)/.test(subText) || /^[\d\s×*+\-().]+$/.test(subText))) continue;
+          sandbox._skillRanks[sk.id] = r;
+          sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined;
+          sandbox._selectSkill(sk);
+          if (!sandbox._calcRangeFor || !sandbox._finalRangeForRange) continue;
+          const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(rawText));
+          let lo = Infinity, hi = -Infinity;
+          for (let i = 0; i < N; i++) { const x = sandbox._rollOneHit(sk, r); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+          checkedConsistency++;
+          if (lo < fin[0] || hi > fin[1]) {
+            if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}${depsOff ? " (deps off)" : ""}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
+          }
+        } catch (e) {
+          if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}: EXCEPTION ${e.message}`);
+        }
+      }
+      depIds.forEach(([id]) => { delete sandbox._depRanks[id]; });
+      saved.forEach(([id, val]) => { if (val !== undefined) sandbox._depRanks[id] = val; });
+    });
+    if (profile) { inputs.atk.value = savedStats.atk; inputs.tal.value = savedStats.tal; inputs.lck.value = savedStats.lck; }
+    });
+  });
+  const known = [];
+  failures.forEach((msg, id) => {
+    if (KNOWN_RANGE_SIM_MISMATCH[id]) { known.push(id); return; }
+    console.error(`[RANGE/SIM ERROR] ${id} ${msg}`);
+    errorCount++;
+  });
+  if (known.length) console.log(`[RANGE/SIM KNOWN ISSUES] ${known.length} skill(s) still inconsistent, tracked in KNOWN_RANGE_SIM_MISMATCH: ${known.join(", ")}`);
+}
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
@@ -809,6 +898,7 @@ console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutation
 console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
 console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
 console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) checks.`);
+console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
