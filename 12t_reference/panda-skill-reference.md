@@ -280,6 +280,41 @@ below for why they were initially left out and then given their own rows.
 
 # Damage & Mechanics
 
+### Three Steps (`panda_threeSteps`)
+
+- **Class / Category:** Panda (Basic Combat Tree, Skill IDs: #201, #202)
+- **Ranks:** 2 (`maxRank: 2`)
+- **Requirements & Resource Type:**
+  - Rank 1: `reqLv: 3`, `reqBn: 0`, `MP: 0`, `SP: 12` (SP threshold requirement gate: positive integer in `PandaSkill.cs:214`, meaning >=12 SP required to initiate, but consumes 0 SP).
+  - Rank 2: `reqLv: 9`, `reqBn: 1`, `MP: 0`, `SP: 15` (SP threshold requirement gate: positive integer in `PandaSkill.cs:2067`, meaning >=15 SP required to initiate, consumes 0 SP).
+- **Cooldown & Timing:**
+  - Base Cooldown: `30s` (scaled via `agiAdjust(30f)`, `Panda.cs:21519`).
+  - Cast Time: `0s` (Instant cast).
+  - Duration: `—` (no status applied).
+- **Execution Lifecycle & Hit Geometry:**
+  - Coroutine: `$RPC_threeStep$25233` (`Panda.cs:20835-21805`).
+  - Movement & Timing:
+    - Step 1: Dash forward at `moveSpeed = 4f` for `0.3s`, hits forward box (`1m * rangeMod` W x `1m * rangeMod` H x `1m * rangeMod` L, `2m * rangeMod` forward distance, `Panda.cs:20938`), yields `0.1s` + `0.2s` transition.
+    - Step 2: Hit check at forward position, yields `0.1s`.
+    - Step 3: Dash forward at `moveSpeed = 5f` for `0.4s`, yields `0.1s` prep, hits forward box, yields `0.1s` recovery.
+  - Resource Generation: `mChar.sp = mChar.sp + 1` (+1 SP per target hit on each step, `Panda.cs:20999`, `:21181`, `:21395`).
+  - KO: `1` per step hit (`Panda.cs:20966`, `:21148`, `:21362`).
+- **Damage Formula & Scaling:**
+  - Base Step Formula:
+    `hitDmg = int(0.4 * (ATK + getFocusedArtDmg()) + talAdjust(3 * sLv))` (`Panda.cs:20943`, `:21113`, `:21327`).
+  - **Focused Art Interaction (`Panda.cs:10841`):**
+    `getFocusedArtDmg() = 0.5 * SP * getFocusedArtLv()` (where `SP` is the character's current SP pool, and `focusedArtLv` is 1 or 2).
+    Expanded outside ATK bracket: `0.4 * ATK + talAdjust(3 * sLv) + 0.2 * SP * focusedArtLv`.
+  - **Nine Steps Multiplier Hook (`Panda.cs:21124`, `:21338`):**
+    `if (getNineStepsLv() > 0) hitDmg *= 1 + hitCount;`
+    When Nine Steps (#402) is active, successful hits increment `hitCount`, scaling subsequent steps:
+    - Step 1: `hitCount == 0` -> Multiplier = `1x`
+    - Step 2: `hitCount == 1` (if Step 1 hit) -> Multiplier = `2x` (`0.8 * ATK + talAdjust(6 * sLv) + 0.4 * SP * focusedArtLv`)
+    - Step 3: `hitCount == 2` (if Steps 1 & 2 hit) -> Multiplier = `3x` (`1.2 * ATK + talAdjust(9 * sLv) + 0.6 * SP * focusedArtLv`)
+    - Total sequence damage: `1x + 2x + 3x = 6x` (versus `3x` without Nine Steps).
+
+
+
 
 ## Server Balance Variations (ToT)
 

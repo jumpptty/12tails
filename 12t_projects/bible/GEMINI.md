@@ -246,6 +246,15 @@ The Final Damage range on a card (`finalRangeForRange(calcRangeFor(text))`) and 
 * **`range.foldedSpread`:** for an ATK skill, `calcRangeFor` folds the engine's own `dmgAdjust` attacker-LCK spread (`ceil(0.2×LCK)`) into the raw max, and `afterDefForRange` re-applies that spread when computing the final max. So the base for the final max is the raw max **minus exactly what was folded in** (`0` for a `talAdjust` skill, which folds nothing; `rMax` for a flat-ATK skill). Using the raw *min* instead (the old rule) dropped `talAdjust`'s own LCK spread and any skill-specific random term such as Lucky Card's, so hybrid `talAdjust + atkCoeff` skills (Wolf Cross Break, most Whale/Rabbit/Mole/Chameleon attacks, Barrel Bot moves) showed a max below what could be rolled.
 * **`KNOWN_RANGE_SIM_MISMATCH`** in the validator lists skills that still disagree, each with a reason (currently none). It only suppresses; remove an entry as soon as its skill is consistent. Do not widen a range to make a skill pass.
 
+### Panda Current SP Input & Focused Art Scaling (`hasCurrentSp`, added 2026-09-20)
+
+Panda combat skills scale base attack damage using current SP via the Focused Art passive (`getFocusedArtDmg() = 0.5×SP×focusedArtLv`, `Panda.cs:10841`). In skills such as Three Steps (`0.4×(ATK + getFocusedArtDmg())`), this contributes `0.2×SP×focusedArtLv`:
+
+* **`hasCurrentSp: true`** — renders an interactive `SP [ 50 ]` input control directly on the skill card in the formula header row alongside dependency toggles (default: 50). Changes dynamically re-evaluate the formula grid, final damage range, and simulator rolls in real time.
+* **Focused Art Term Separation:** Focused Art is rendered as an independent, explicit term outside the ATK bracket (`+ 0.2×SP Focused Art`), colored with `.dmg-sp`.
+* **Nine Steps Sequence Escalation:** When the Nine Steps toggle (`PANDA_NINESTEPS_DEP`) is off, the formula displays as a single uniform row. When toggled on, it expands into 3 distinct formula rows (`Step 1 (1x)`, `Step 2 (2x)`, `Step 3 (3x)`), scaling base ATK, TAL, and the Focused Art bonus across the sequence via `stepMult`.
+
+
 ## 5. Summon Mechanics, Companion Movesets & Summon Stat Cards
 
 When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, etc.):
