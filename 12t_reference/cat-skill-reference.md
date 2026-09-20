@@ -206,3 +206,17 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Cosmetic only:** a coin flip (`Random.Range(0,2)`, `:20683`) picks one of two card effect variants.
 - **Tooltips:** ranks 1–4 say "random damage based on lck (0 ~ 1.0 / 1.5 / 2.0 / 2.5 x lck)" (`CatSkill_thai.cs` / `_eng.cs`). The code differs in three ways the tooltip omits: there is a hidden base of `0.5×ATK`; the LCK term is the **difference** from the target's LCK, not the caster's raw LCK; and it is floored at 0.
 - **App modeling:** `dmg:"0"` + `atkCoeff:0.5`, `lckDiffCoeff` (the random ceiling) and `lckDiffDep` (Joker), read against the **Enemy Stats LCK** input. The default enemy preset is Carron with LCK 2, so out of the box the difference is roughly the player's own LCK − 2. See `GEMINI.md` §4 (LCK-difference fields).
+
+### cat_fateDraw1-4 — active, RANK FAMILY
+- reqLv 5 / 11 / 17 / 23, reqBn 1 / 3 / 5 / 7, MP 4 / 6 / 8 / 10, SP 0, mode instant, target ally (`decode_skilldata.py`).
+- **Cooldown:** `addTimeOut("fateDraw", agiAdjust(30f))` (`Cat.cs:21554`), Revised Art applies. **No cast time** — the coroutine does no `magAdjust` wait, animation only.
+- **Area:** `Damage.FindAreaTarget(position, 15 × rangeMod, 3 × rangeMod, 1 << caster.layer)` (`Cat.cs:21405-21413`) — a 15m-radius, 3m-high cylinder (horizontal distance measured to the collider edge, vertical overlap check, `Damage.cs:963-1120`). `(layerMask & 1 << target.layer) != 0` (`Damage.cs:1052`) keeps only the caster's own layer: the Cat and its allies.
+- **Effect:** `RPC_AddStatus("fortune", sLv, chaAdjust(15), 0, ActorNr)` (`Cat.cs:21461`). Duration is the caster's CHA-based `chaAdjust(15)`, not contested by the target.
+- **`fortune` status:** add `deltaLck(sLv × 10)` (`CharacterControl.cs:36235-36247`), removal `deltaLck(−sLv × 10)` (`CharacterControl.cs:16212`) → LCK +10 / +20 / +30 / +40. Classified **Buff, Magical**: in `isMagicalStatus` (`StatusData.cs:5693`) and `isBuffStatus` (`StatusData.cs:6650`).
+- **Lady Luck (`hasSkill(412)`)** branch: `RPC_AddStatus("fortune", sLv + 1, chaAdjust(30), …)` (`Cat.cs:21447-21453`) — status level +1 (rank 4 → +50 LCK) and doubled duration. The second `hasSkill(412)` check (`Cat.cs:21575`) only selects the `ladyLuck_ring` VFX — cosmetic.
+- **Tooltips:** EN "Perform a move that gives Cat and nearby allies 'fortune1' status, increasing luck by 10. (15 sec)" (`CatSkill_eng.cs:264-297`); TH "สกิลที่ทำให้แมวและเพื่อนใน ระยะติดสถานะ fortune1 ชั่วขณะหนึ่ง (+10 lck, 15 sec)" (`CatSkill_thai.cs:286-319`). The tooltip's 15 sec is the base `chaAdjust(15)`; the 15m ally-only area is not mentioned.
+- **App modeling:** description-only mention of Lady Luck (no toggle dep); `status:{name:"fortune"}` badge, `STATUS_CLASS_MAP` / `STATUS_DESC_MAP` entries for `fortune`.
+
+### cat_ladyLuck5 (412) — passive, Class C
+- reqLv 60, reqBn 1, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`). Both `hasSkill(412)` checks in `Cat.cs` are inside `RPC_fateDraw` (`:21447`, `:21575`): it modifies **Fate Draw only** (status level +1, duration `chaAdjust(30)` instead of `chaAdjust(15)`; the second check is only the `ladyLuck_ring` VFX).
+- Tooltips: EN "Increses the effect of FateDraw for by 1 level and doubles its duration." (`CatSkill_eng.cs:950`); TH "เพิ่มผลของ FateDraw ขึ้น 1 เลเวลและยืดระยะเวลาขึ้น สองเท่า" (`CatSkill_thai.cs:972`).
