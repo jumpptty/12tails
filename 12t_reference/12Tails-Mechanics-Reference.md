@@ -363,6 +363,19 @@ Status effects are queried at runtime via static boolean predicates in `StatusDa
 
 
 
+### 4.2.1 Re-applying an already-active status — level merge rule (`CharacterControl.cs:14017-14160`, inside `RPC_AddStatus`)
+
+Found empirically (2026-09-20): two Rabbits with Medical Enhancement 3 (level cap 4) shot the same target and it reached `heat5`, above either caster's cap, after which further shots no longer refreshed the duration. This is the **generic** same-`sType` merge in `RPC_AddStatus`, not Rabbit code. For the target's existing entry with the same `sType`, compared with the incoming `(sLv, sID)` (`sID` = the caster's `ActorNr`):
+
+| Existing vs incoming | Result | Source |
+|---|---|---|
+| `existing.sLv == sLv` **and** `existing.sID == sID` (same caster) | `sTime = max(existing remaining, sTime)`, i.e. the duration refreshes to whichever is longer; the level stays. A few types also tweak `sValue` (`comboPlus`, `hardenSkin`, `damagePlus`, default `max`). | `:14023-14035`, `:14056-14103` |
+| `existing.sLv == sLv` **and** `existing.sID != sID` (different caster) | **`sLv++`**: the level is bumped by 1 above the incoming level, then applied. Skipped only for `hpDrain` / `mpDrain` / `spDrain`. | `:14115-14143` (`else { ... sLv++; }`) |
+| `existing.sLv > sLv` | **`return`**: the new application is dropped entirely (no level change, no duration refresh). | `:14153-14159` |
+| `existing.sLv < sLv` | falls through to `addStatus(sType, sLv, sTime, sValue, sID)`, replacing the lower-level entry. | `:14182` |
+
+**Consequences (Rabbit Heat Shot worked example).** A Rabbit's own cast computes `heatLv = min(current + 1, 1 + medEnhLv)` (`Rabbit.cs:28375-28399`), so a single Rabbit never exceeds its cap and its recasts at the cap refresh the duration (same caster, equal level). A **second** caster whose cap equals the current level hits the different-caster branch and pushes the level to `cap + 1` (heat4 → **heat5**). Once the target is above every caster's cap, every later shot has `existing.sLv > sLv` and is silently dropped, so the duration stops refreshing until the status expires. The caster's own `RPC_AddHeal` SP gain (`Rabbit.cs:28405`) still fires because it is a separate call. Whether `sLv++` is intended for the level-capped Rabbit shots is unknown; the rule itself is generic to all statuses. Other sources of `heat` (`Bear.cs:1555` applies `heat` level 4 for `chaAdjust(12)`; `GameGui.cs:33430` applies level 2) hit the same rule but were not tested. Not yet traced: how `addStatus` swaps an existing entry (whether the replaced level's stat delta, e.g. `deltaTal(-10 × oldLv)`, is reversed first).
+
 ### 4.3 Summon & companion entity mechanics
 Summons (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, Gadina, Shadow Clones) are separate `CharacterControl` instances with specific engine inheritance rules:
 
