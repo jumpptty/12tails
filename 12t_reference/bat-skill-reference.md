@@ -176,3 +176,8 @@ Private-server values below are documented from the Bible skill-detail schema, n
 | Shattering Dream | TTO | Raises Dream Dazzle and Phantasm Blast by one level. | No longer grants either level increase. |
 
 Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910`.
+
+### bat_shame — `shame` status on the target (enemy stat debuff)
+- **Level applied:** `5 + ((!target.hasStatus("shame")) ? 0 : 1)` (`Bat.cs:39685`) — Lv.5 on a fresh target, **Lv.6 when the target already has Shame** (a recast); the escalated level is then re-applied with `RPC_AddStatus("shame", lv, ...)`.
+- **Effect:** on add `deltaCha(-10 * sLv)` (`CharacterControl.cs:40938`), on removal `deltaCha(10 * sLv)` (`CharacterControl.cs:18460`) — the target's CHA drops by **50 (Lv.5) / 60 (Lv.6)**. Classified Debuff, Magical.
+- **App modeling:** Debuff panel > Enemy Stats has a built-in `shame6` toggle (`ENEMY_STAT_DEBUFFS`, -60 CHA) that feeds the enemy CHA used by every duration/debuff formula, shown as the `-60 = total` chip under the enemy CHA input.
