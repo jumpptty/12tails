@@ -262,7 +262,7 @@ Verified from decompiled source (`DecompiledSource/Whale.cs`, `DecompiledSource/
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :---: | :--- |
 | `whale_sweep` | Sweep | 2 | [0, 10] MP, [12, 8] SP (red) | 30s | 0s | — | `0.5×ATK + talAdjust(5 + 5×sLv + 20×depLv)` | 2 | 2 hits. Each hit deals 0.5×ATK + talAdjust(5 + 5×sLv + 20×depLv), KO=2 per hit. Knight of the Deep reduces CD by -10s. Tide Cutter adds +20 TAL. |
 | `whale_javelin` | Javelin | 2 | 10 MP, [8, 12] SP (red) | 30s | 0s | — | `0.5×ATK + talAdjust(10×sLv + 10×depLv)` | 1 | Pierces enemies in a straight line dealing 0.5×ATK + talAdjust(10×sLv + 10×depLv), KO=1, applying puncture. Knight of the Deep reduces CD by -10s. Tide Cutter adds +10 TAL. |
-| `whale_honor` | Honor | 4 | [10, 15, 20, 25] MP, 15 SP (red) | 60s | 0s | 12s | Buff / Taunt (No Damage Formula) | — | Grants honor to all allies in 15m radius, adding +10×sLv to CHA only (no ATK/DEF; sLv is 1–4, so +10/20/30/40) for 12s (`chaAdjusted`). Taunts enemies in 18+6×sLv meters. |
+| `whale_honor` | Honor | 4 | [10, 12, 14, 16] MP, no SP | 60s | 0s | 12s | Buff / Taunt (No Damage Formula) | — | Grants honor to all allies in 15m radius, adding +10×sLv to CHA only (no ATK/DEF; sLv is 1–4, so +10/20/30/40) for 12s (`chaAdjusted`). Taunts enemies in 18+6×sLv meters with hate `floor((0.5×sLv+0.5)×casterCHA)` (+500 with Honor Stand). See §3.13. |
 | `whale_shieldRush` | Shield Rush | 2 | 0 MP, [15, 18] SP (red) | 45s | 0s | — | `Floor(0.5×sLv×DEF) + talAdjust(10×sLv)` | 10×sLv | Charging shield slam dealing 0.5×sLv×DEF + talAdjust(10×sLv), knocking targets down with KO=10×sLv. Knight of the Deep reduces CD by -15s. |
 | `whale_flyingShield`| Flying Shield | 2 | 0 MP, [16, 20] SP (red) | 45s | 0s | — | `Floor(0.5×sLv×DEF) + talAdjust(10×sLv)` | 10×sLv | Throws boomerang shield dealing Floor(0.5×sLv×DEF) + talAdjust(10×sLv), KO=10×sLv to all targets in its path. Knight of the Deep reduces CD by -15s. |
 | `whale_homingShield`| Homing Shield | 1 | 0 MP, 24 SP (red) | 120s | 0s | 3s | `0.5×DEF + talAdjust(20)` | 10 | Multi-hit homing projectile dealing 0.5×DEF + talAdjust(20), KO=10 per hit. Imposes 3s noShield status. Knight of the Deep reduces CD by -40s. |
@@ -479,3 +479,18 @@ Per-second drain (`Whale_grandTide.cs:72–79`):
 this.mWhale.mChar.cMp = 10;
 this.mWhale.mChar.cSp = (this.mWhale.hasSkill(126) ? -10 : -20);
 ```
+
+### 3.13 Honor (`Whale.cs:23500-23900`, `CharacterControl.cs:35558`, `:15894`, `:4370-4400`)
+- **Cost:** `python scripts/decode_skilldata.py DecompiledSource/WhaleSkill.cs` → `whl_honor1-4`: MP 10/12/14/16, SP 0, `instant`, reqLv 5/11/17/23, reqBn 1/3/5/7. The cast site (`Whale.cs:7804`) deducts nothing itself. The earlier `[10, 15, 20, 25] MP + 15 SP (red)` row had no source and was removed (2026-09-20).
+- **Cast:** `addTimeOut("honor", agiAdjust(60f))` (`Whale.cs:23695`); allies via `Damage.FindAreaTarget(pos, 15×rangeMod, 3×rangeMod, ownLayer)` (`:23844`) each get `RPC_AddStatus("honor", sLv, chaAdjust(12), 0, casterId)` (`:23868`).
+- **CHA:** `deltaCha(10 × sLv)` on apply (`CharacterControl.cs:35558`), `deltaCha(-10 × sLv)` on removal (`:15894`). `sLv` is 1–4 (`Whale.cs:4231-4285`).
+- **Hate on enemies:** `FindAreaTarget(pos, 18 + 6×sLv, 6, enemyLayers)` (`Whale.cs:23876`) then `RPC_AddDamage(-1, 0, 0, floor((sLv×0.5+0.5)×caster.cha) + (hasSkill(412) ? 500 : 0), …)` — 100/150/200/250% of the caster's CHA. No `talAdjust`/LCK spread. Client tooltips (`WhaleSkill_eng.cs:253-286`) agree on the 100–250%.
+- **Honor Stand (`whl_honorStand5`, skill 412, `WhaleSkill.cs:3155`):** `RPC_AddDamage` reduces incoming KO on a receiver that has skill 412 and the `honor` status: `nKo = floor((1 − 0.1 × honorLv) × nKo)` (`CharacterControl.cs:4370-4400`). **Discrepancy:** both client tooltips say the extra hate is **+300** (`WhaleSkill_eng.cs:939`, `WhaleSkill_thai.cs:966`) but the code adds **+500** (`Whale.cs`, `hasSkill(412) ? 500 : 0`); the code value is used in the app, live observation takes precedence if it differs.
+- **Classification:** `honor` is in `isBuffStatus` (`StatusData.cs:6590`) and `isMagicalStatus` (`:5651`) → Buff, Magical. The status-level merge rule for re-application is generic, see [12Tails-Mechanics-Reference.md §4.2.1](12t_reference/12Tails-Mechanics-Reference.md#421-re-applying-an-already-active-status--level-merge-rule-charactercontrolcs14017-14160-inside-rpc_addstatus).
+
+## Server Balance Variations
+
+Base engine (BigBug) values are documented above; this section lists private-server deltas.
+
+### Tailstopia Online (TTO)
+- **Honor Stand also adds +1 to Honor's `sLv`** (user-reported from live play, 2026-09-20; server-side change, not visible in `DecompiledSource/`). Base code (`Whale.cs:23500-23900`) uses the single cast `sLv` for the honor status level, so with the +1 all of these follow it: CHA `+10×sLv` (`CharacterControl.cs:35558`), KO reduction `10%×honorLv` (`:4400`), hate `floor((0.5×sLv+0.5)×CHA)` and taunt radius `18+6×sLv` (`Whale.cs:23876`). Example: rank 4 + Honor Stand → `[honor5]`, CHA +50, hate 300%, radius 48m. The bible card models this as `servers.tto` with an Honor Stand dependency toggle (default learned).
