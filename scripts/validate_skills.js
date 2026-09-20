@@ -722,6 +722,7 @@ let checkedLckDiff = 0;
     const off = sandbox._renderOneDmgFormula(sk, 2, sandbox._getDmgText(sk, 2));
     expect("formula shows the roll as a 0~max range on own LCK", [off.includes("0~255"), off.includes("×LCK"), off.includes("ΔLCK")], [true, true, false]);
     expect("formula shows no Roll the Dice term while it is off", off.includes("Roll the Dice"), false);
+    expect("formula has no plain base number, it starts with the LCK term", [off.includes("dmg-num"), off.includes("dmg-lck")], [false, true]);
     setup(2, 128, 2, true);
     const on = sandbox._renderOneDmgFormula(sk, 2, sandbox._getDmgText(sk, 2));
     expect("formula shows the Roll the Dice term when on", on.includes("Roll the Dice"), true);
