@@ -326,3 +326,36 @@ Private-server values are documented from the Bible skill-detail schema; BigBug 
 | Heaven Palm | 150s base cooldown. | Base cooldown reduced to 135s. |
 
 Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
+
+### Rushing Falcon (`panda_rushingFalcon`)
+
+- **Class / Category:** Panda (Basic Combat Tree, Skill IDs: #203, #204)
+- **Ranks:** 2 (`maxRank: 2`)
+- **Requirements & Resource Type:**
+  - Rank 1: `reqLv: 15`, `reqBn: 2`, `MP: 0`, `SP: 18` (SP threshold requirement gate: positive integer in `PandaSkill.cs:238`, meaning >=18 SP required to initiate, but consumes 0 SP).
+  - Rank 2: `reqLv: 21`, `reqBn: 3`, `MP: 0`, `SP: 22` (SP threshold requirement gate: positive integer in `PandaSkill.cs:2040`, meaning >=22 SP required to initiate, consumes 0 SP).
+- **Cooldown & Timing:**
+  - Base Cooldown: `30s` (scaled via `agiAdjust(30f)`, `Panda.cs:22587`).
+  - Cast Time: `0s` (Instant cast, `skillClass.mode = eSkillMode.instant`, `PandaSkill.cs:2044`).
+  - Duration: `—` (no status applied).
+- **Execution Lifecycle & Hit Geometry:**
+  - Coroutine: `$RPC_rushingFalcon$25258` (`Panda.cs:21885-22750`).
+  - Movement & Timing:
+    - Dash forward at `moveSpeed = 8f` (state 2) then `moveSpeed = 6f` (states 3, 4, 5).
+    - Step 1: Hit check in rectangular box (`1.6m * rangeMod` W x `1m * rangeMod` H x `2m * rangeMod` L, forward offset `-0.5m * transform.forward`, `Panda.cs:22115`).
+    - Step 2: Hit check in rectangular box (`1m * rangeMod` W x `1m * rangeMod` H x `1m * rangeMod` L, `2m * rangeMod` forward distance, `Panda.cs:22245`).
+    - Step 3: Hit check in rectangular box (`1m * rangeMod` W x `1m * rangeMod` H x `1m * rangeMod` L, `2m * rangeMod` forward distance, `Panda.cs:22395`).
+- **Damage Formula & Resource Generation:**
+  - Base Damage per hit: `hitDmg = (int)(0.5f * ((float)mChar.atk + getFocusedArtDmg()) + talAdjust(sLv * 5))` (`Panda.cs:22120`, `:22250`, `:22400`).
+    - ATK component: `0.5 * ATK`.
+    - TAL component: `talAdjust(5 * sLv)` (Rank 1: base 5; Rank 2: base 10; scaling: `base + 0.02 * base * TAL`).
+    - Focused Art component: `0.5 * getFocusedArtDmg() = 0.5 * (0.5 * SP * focusedArtLv) = 0.25 * SP * focusedArtLv` (`Panda.cs:10841`).
+  - SP Generation: Every target connected on each hit yields `mChar.sp = mChar.sp + 1` (+1 SP per target per step hit, `Panda.cs:22164`, `:22294`, `:22444`).
+  - Knockout (KO): `1` per hit (`mChar.hit(202 + sLv, hitObject, hitDmg, 1, 0, 0.5f * transform.forward)`).
+- **Nine Steps Synergy (`nineSteps`, Skill #402):**
+  - Hit count tracking: each connecting hit increments `hitCount++` (`Panda.cs:22180`, `:22310`, `:22460`).
+  - If `getNineStepsLv() > 0`, hit damage is escalated by `hitDmg *= 1 + hitCount`:
+    - Step 1: 1x damage multiplier (`hitCount = 0`).
+    - Step 2: 2x damage multiplier (`hitCount = 1`).
+    - Step 3: 3x damage multiplier (`hitCount = 2`).
+  - All components (ATK, TAL, and Focused Art) scale proportionally with the step multiplier.
