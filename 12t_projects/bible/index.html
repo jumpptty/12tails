@@ -3528,10 +3528,12 @@
   .dmg-agi{color:var(--stat-agi); font-weight:700}
   .dmg-vit{color:var(--stat-vit); font-weight:700}
   .dmg-sp{color:#0284c7}
-  .sk-current-sp-wrap{display:inline-flex; align-items:center; gap:5px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:2px 6px; height:28px; box-sizing:border-box}
+  .sk-current-sp-wrap{display:inline-flex; align-items:center; gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:0 6px; height:28px; box-sizing:border-box}
+  .sk-current-sp-wrap:focus-within{border-color:var(--gold)}
   .sk-current-sp-label{font-family:'Prompt',sans-serif; font-size:11px; font-weight:700; color:var(--gold); letter-spacing:0.5px}
-  .sk-current-sp-input{width:42px; height:20px; background:var(--bg); border:1px solid var(--line); border-radius:3px; color:var(--text); font-family:'Prompt',monospace; font-size:12px; font-weight:600; text-align:center; outline:none; padding:0}
-  .sk-current-sp-input:focus{border-color:var(--gold)}
+  .sk-current-sp-input{width:36px; height:26px; background:transparent; border:none; color:var(--text); font-family:'Prompt',monospace; font-size:12px; font-weight:600; text-align:center; outline:none; padding:0; -moz-appearance:textfield}
+  .sk-current-sp-input::-webkit-outer-spin-button,
+  .sk-current-sp-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   .dmg-cha{color:var(--stat-cha); font-weight:700}
   .dmg-lck{color:var(--stat-lck); font-weight:700}
   /* Effect-damage base number (Thunder Dragon pilot, 2026-08-21) -- takes
@@ -11152,11 +11154,11 @@ const SKILLS = [
   { id:"panda_cAttack", name:"Charge Attack", class:"Panda", icon:"panda_cAttack3", maxRank:3 },
   { id:"panda_roll", name:"Roll", class:"Panda", icon:"panda_roll2", cd:60, cdWrapped:true, revisedArtExempt:false },
   { id:"panda_resistance", name:"Resistance", class:"Panda", icon:"panda_resistance4", maxRank:4 },
-  { id:"panda_threeSteps", name:"Three Steps", nameTha:"ท่าเตะสามจังหวะ", class:"Panda", icon:"panda_threeSteps2", maxRank:2, cost:{sp:[12,15],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(3×sLv)", atkCoeff:0.4, ko:"1", hasCurrentSp:true, atkFirst:true, hitCountDep:PANDA_NINESTEPS_DEP, dmgRankDep:PANDA_FOCUSEDART_DEP, hitCount:()=>3, dmgGroups:[
-    { dmg:"talAdjust(3×sLv)", atkCoeff:0.4, stepMult:1, hitCount:(rank,depOn)=>depOn?0:3 },
-    { dmg:"talAdjust(3×sLv)", atkCoeff:0.4, stepMult:1, hitCount:(rank,depOn)=>depOn?1:0, label:"Step 1 (1x)" },
-    { dmg:"talAdjust(6×sLv)", atkCoeff:0.8, stepMult:2, hitCount:(rank,depOn)=>depOn?1:0, label:"Step 2 (2x)" },
-    { dmg:"talAdjust(9×sLv)", atkCoeff:1.2, stepMult:3, hitCount:(rank,depOn)=>depOn?1:0, label:"Step 3 (3x)" }
+  { id:"panda_threeSteps", name:"Three Steps", nameTha:"ท่าเตะสามจังหวะ", class:"Panda", icon:"panda_threeSteps2", maxRank:2, cost:{sp:[12,15],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(3×sLv)", atkCoeff:0.4, ko:"1", hasCurrentSp:true, hitCountDep:PANDA_NINESTEPS_DEP, dmgRankDep:PANDA_FOCUSEDART_DEP, hitCount:()=>3, dmgGroups:[
+    { dmg:"talAdjust(3×sLv)", atkCoeff:0.4, stepMult:1, dep:PANDA_NINESTEPS_DEP, hitCount:(rank,depOn)=>depOn?0:3 },
+    { dmg:"talAdjust(3×sLv)", atkCoeff:0.4, stepMult:1, dep:PANDA_NINESTEPS_DEP, hitCount:(rank,depOn)=>depOn?1:0, label:"Step 1 (1x)" },
+    { dmg:"talAdjust(6×sLv)", atkCoeff:0.8, stepMult:2, dep:PANDA_NINESTEPS_DEP, hitCount:(rank,depOn)=>depOn?1:0, label:"Step 2 (2x)" },
+    { dmg:"talAdjust(9×sLv)", atkCoeff:1.2, stepMult:3, dep:PANDA_NINESTEPS_DEP, hitCount:(rank,depOn)=>depOn?1:0, label:"Step 3 (3x)" }
   ], compatSkills:["panda_focusedArt","panda_nineSteps"], desc:(rank)=>`พุ่งเตะต่อเนื่อง **3 จังหวะ** ไปข้างหน้าเป็นระยะทางสั้นๆ เข้าโจมตีศัตรูในทิศทางที่กำหนด` },
   { id:"panda_rushingFalcon", name:"Rushing Falcon", class:"Panda", icon:"panda_rushingFalcon2", cd:30, cdWrapped:true, revisedArtExempt:false },
   { id:"panda_qiStrike", name:"Qi Strike", class:"Panda", icon:"panda_qiStrike3", cd:90, cdWrapped:true, revisedArtExempt:false },
@@ -12734,7 +12736,8 @@ function mountSkillCooldownLookup(root){
     const raw = g[field];
     if (typeof raw !== "function") return raw;
     const rank = getSkillRank(skill);
-    const depOn = g.dep ? getDepRank(g.dep) === g.dep.maxRank : false;
+    const dep = g.dep || skill.hitCountDep || skill.dep;
+    const depOn = dep ? getDepRank(dep) === dep.maxRank : false;
     return raw(rank, depOn);
   }
   function resolveGroupAtkCoeff(skill, g){ return resolveGroupValue(skill, g, "atkCoeff"); }
@@ -13523,7 +13526,7 @@ function mountSkillCooldownLookup(root){
             { op: ")" }, { op: "×" },
             { value: 0.01 * INT, sub: "0.01INT", cls: "dmg-int", raw: true },
           ]
-        : (skill.atkFirst || skill.class === "Panda")
+        : (skill.atkFirst)
         ? [
             ...(atkItem ? [atkItem, { op: "+" }] : []),
             { value: base, sub: null, cls: "dmg-num" },
@@ -13534,11 +13537,11 @@ function mountSkillCooldownLookup(root){
           ]
         : [
             { value: base, sub: null, cls: "dmg-num" },
+            { op: "+" },
+            { value: talCoeff * TAL, sub: `${fmtCoeff(talCoeff)}TAL`, cls: "dmg-tal" },
             ...(atkItem ? [{ op: "+" }, atkItem] : []),
             ...(defItem ? [{ op: "+" }, defItem] : []),
             ...(chaItem ? [{ op: "+" }, chaItem] : []),
-            { op: "+" },
-            { value: talCoeff * TAL, sub: `${fmtCoeff(talCoeff)}TAL`, cls: "dmg-tal" },
           ];
       const pandaFocusedLv = (skill.class === "Panda" && typeof getDepRank === "function") ? getDepRank(PANDA_FOCUSEDART_DEP) : 0;
       if (pandaFocusedLv > 0) {
@@ -14849,7 +14852,7 @@ function mountSkillCooldownLookup(root){
       const pandaSpWrap = (activeSelected.hasCurrentSp || (activeSelected.class === "Panda" && activeSelected.dmg)) ? `
         <div class="sk-current-sp-wrap" title="Current SP (ค่า SP สำหรับคำนวณ Focused Art)">
           <span class="sk-current-sp-label">SP</span>
-          <input type="number" class="sk-current-sp-input" data-role="panda-current-sp" min="0" max="999" value="${pandaCurrentSp}">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="sk-current-sp-input" data-role="panda-current-sp" maxlength="4" value="${pandaCurrentSp}">
         </div>
       ` : "";
       const dmgToggles = [
@@ -15125,20 +15128,22 @@ function mountSkillCooldownLookup(root){
         // -- the user explicitly asked for "all formula for every hit" here,
         // not a combined figure (that's what Final Damage's own dmgGroups
         // branch below is for, a deliberately different summed-total shape).
+        const visibleDmgGroups = activeSelected.dmgGroups ? activeSelected.dmgGroups.filter(g => resolveGroupHitCount(activeSelected, g) !== 0) : [];
+        const isSingleUnlabeledGroup = visibleDmgGroups.length === 1 && !visibleDmgGroups[0].label;
         dmgCalcChip = `
           <div class="sk-stat sk-dmg-calc">
             <div class="sk-dmg-head">
               <div class="sk-dmg-label-row"><p class="sk-stat-label">รวมการแกว่งค่า LCK</p></div>
               <div class="sk-dmg-toggles"></div>
             </div>
-            ${activeSelected.dmgGroups ? `
-              <div class="sk-dmg-group-list">${activeSelected.dmgGroups.filter(g => resolveGroupHitCount(activeSelected, g) !== 0).map(g => `
+            ${(activeSelected.dmgGroups && !isSingleUnlabeledGroup) ? `
+              <div class="sk-dmg-group-list">${visibleDmgGroups.map(g => `
                 <div class="sk-dmg-group">
-                  <p class="sk-dmg-group-label">${typeof g.label === "function" ? g.label(rank) : g.label}</p>
-                  <div class="sk-stat-value sk-stat-value-sm">${fmt(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g)))}</div>
+                  ${g.label ? `<p class="sk-dmg-group-label">${typeof g.label === "function" ? g.label(rank) : g.label}</p>` : ""}
+                  <div class="sk-stat-value sk-stat-value-sm">${fmt(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g), g))}</div>
                 </div>
               `).join("")}</div>
-            ` : `<div class="sk-stat-value-wrap"><div class="sk-stat-value">${fmt(dmgCalcRange)}</div>${dmgCalcDist ? renderProbabilityTooltip(dmgCalcDist, false, "") : ""}</div>`}
+            ` : `<div class="sk-stat-value-wrap"><div class="sk-stat-value">${fmt(isSingleUnlabeledGroup ? calcRangeFor(visibleDmgGroups[0].dmg, resolveGroupAtkCoeff(activeSelected, visibleDmgGroups[0]), visibleDmgGroups[0]) : dmgCalcRange)}</div>${dmgCalcDist ? renderProbabilityTooltip(dmgCalcDist, false, "") : ""}</div>`}
           </div>
         `;
 
@@ -15367,7 +15372,7 @@ function mountSkillCooldownLookup(root){
           } else {
           const finalRange = activeSelected.dmgGroups
             ? activeSelected.dmgGroups.reduce((acc, g) => {
-                const gFinal = finalRangeForRange(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g)));
+                const gFinal = finalRangeForRange(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g), g));
                 const gHitCount = resolveGroupHitCount(activeSelected, g);
                 return [acc[0] + gFinal[0] * gHitCount, acc[1] + gFinal[1] * gHitCount];
               }, [0, 0])
@@ -15766,14 +15771,53 @@ function mountSkillCooldownLookup(root){
 
     const pandaSpInput = displayEl.querySelector('[data-role="panda-current-sp"]');
     if (pandaSpInput) {
-      pandaSpInput.addEventListener("input", (e) => {
-        pandaCurrentSp = Math.max(0, parseInt(e.target.value, 10) || 0);
-        renderHero();
-        const inp = displayEl.querySelector('[data-role="panda-current-sp"]');
-        if (inp) {
-          inp.focus();
-          inp.setSelectionRange(inp.value.length, inp.value.length);
+      const updatePandaSpLive = (e) => {
+        const cleaned = e.target.value.replace(/[^0-9]/g, "");
+        if (cleaned !== e.target.value) e.target.value = cleaned;
+        pandaCurrentSp = cleaned === "" ? 0 : parseInt(cleaned, 10);
+        const fEl = displayEl.querySelector('.sk-dmg-formula .sk-dmg-value');
+        if (fEl) fEl.innerHTML = renderDmgFormula(activeSelected, rank);
+        const calcEl = displayEl.querySelector('.sk-dmg-calc');
+        if (calcEl) {
+          const vGroups = activeSelected.dmgGroups ? activeSelected.dmgGroups.filter(g => resolveGroupHitCount(activeSelected, g) !== 0) : [];
+          const singleUnlabeled = vGroups.length === 1 && !vGroups[0].label;
+          if (activeSelected.dmgGroups && !singleUnlabeled) {
+            const listEl = calcEl.querySelector('.sk-dmg-group-list');
+            if (listEl) {
+              listEl.innerHTML = vGroups.map(g => `
+                <div class="sk-dmg-group">
+                  ${g.label ? `<p class="sk-dmg-group-label">${typeof g.label === "function" ? g.label(rank) : g.label}</p>` : ""}
+                  <div class="sk-stat-value sk-stat-value-sm">${fmt(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g), g))}</div>
+                </div>
+              `).join("");
+            }
+          } else {
+            const valEl = calcEl.querySelector('.sk-stat-value');
+            if (valEl) valEl.textContent = fmt(singleUnlabeled ? calcRangeFor(vGroups[0].dmg, resolveGroupAtkCoeff(activeSelected, vGroups[0]), vGroups[0]) : calcRangeFor(getDmgText(activeSelected, rank)));
+          }
         }
+        const finalEl = displayEl.querySelector('.sk-dmg-final');
+        if (finalEl && selectedEnemy) {
+          const fVal = finalEl.querySelector('.sk-stat-value');
+          if (fVal) {
+            const newFinal = activeSelected.dmgGroups
+              ? activeSelected.dmgGroups.reduce((acc, g) => {
+                  const gFinal = finalRangeForRange(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g), g));
+                  const gHitCount = resolveGroupHitCount(activeSelected, g);
+                  return [acc[0] + gFinal[0] * gHitCount, acc[1] + gFinal[1] * gHitCount];
+                }, [0, 0])
+              : (() => {
+                  const oneHit = finalRangeForRange(calcRangeFor(getDmgText(activeSelected, rank)));
+                  return [oneHit[0] * dmgHitCountMin, oneHit[1] * dmgHitCountMax];
+                })();
+            fVal.textContent = fmt(newFinal);
+          }
+        }
+      };
+      pandaSpInput.addEventListener("input", updatePandaSpLive);
+      pandaSpInput.addEventListener("change", (e) => {
+        updatePandaSpLive(e);
+        pandaSpInput.value = pandaCurrentSp;
       });
     }
     const supportLvInput = displayEl.querySelector('[data-role="supportLv"]');
@@ -19935,7 +19979,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-20T09:58:06.700Z","feat(panda): verify Three Steps card (3-step dash sequence, SP threshold gate, Nine Steps 3-step escalation, Focused Art SP scaling)"], ["2026-09-20T04:40:29.000Z","feat(whale): verify Honor Stand card (Whale-only KO reduction, +500 hate, TTO +1 Honor sLv), fix Honor KO condition, add Honor (Lv.4) stat buff"], ["2026-09-20T04:28:15.000Z","feat(whale): verify Honor card (CHA-only status, enemy hate, Honor Stand interaction, TTO Honor Stand +1 sLv toggle, correct MP cost)"], ["2026-09-20T04:08:23.000Z","feat(bible): add Heat (Lv.4) +40 TAL to the Buff popup stat buffs, stackable per stat with Bless"], ["2026-09-20T03:23:04.000Z","docs(bible): note that Revised Art can raise short cooldowns due to the whole-second round-up (card red text, fix cited code line)"], ["2026-09-20T03:05:45.000Z","chore(bible): add missing changelog entry for the addStatus swap trace docs"], ["2026-09-20T02:11:35.000Z","feat(rabbit): verify Heat Shot card (level stacking to Medical Enhancement cap, TAL and immediate SP per level, [heat] status desc)"], ["2026-09-20T02:03:21.000Z","docs(whale): correct Honor to CHA-only (+10 x sLv, sLv 1-4) with source citations"], ["2026-09-20T01:48:48.000Z","feat(bible): replace Mods with Buff and Debuff popups (Bless +24 all stats, damageMod, final multiplier, hitMod) in the player and enemy palettes"], ["2026-09-19T16:10:00.000Z","feat(bible): glow the enemy stats a skill's chips read (DEF for defAdjust damage, CHA for contested durations, LCK for Lucky Card) like the player's"], ["2026-09-19T15:31:11.000Z","feat(bible): glow the character stats that feed a summon's stats (Double Bot, Synchro Mole, Hidden Turret, Fire/Earth Soul, Aegis) when its chips read them"], ["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-20T10:12:06.255Z","fix(panda): Three Steps term order, dynamic 3-step Nine Steps rows, SP box UI and live typing, fix undefined chip label"], ["2026-09-20T09:58:06.700Z","feat(panda): verify Three Steps card (3-step dash sequence, SP threshold gate, Nine Steps 3-step escalation, Focused Art SP scaling)"], ["2026-09-20T04:40:29.000Z","feat(whale): verify Honor Stand card (Whale-only KO reduction, +500 hate, TTO +1 Honor sLv), fix Honor KO condition, add Honor (Lv.4) stat buff"], ["2026-09-20T04:28:15.000Z","feat(whale): verify Honor card (CHA-only status, enemy hate, Honor Stand interaction, TTO Honor Stand +1 sLv toggle, correct MP cost)"], ["2026-09-20T04:08:23.000Z","feat(bible): add Heat (Lv.4) +40 TAL to the Buff popup stat buffs, stackable per stat with Bless"], ["2026-09-20T03:23:04.000Z","docs(bible): note that Revised Art can raise short cooldowns due to the whole-second round-up (card red text, fix cited code line)"], ["2026-09-20T03:05:45.000Z","chore(bible): add missing changelog entry for the addStatus swap trace docs"], ["2026-09-20T02:11:35.000Z","feat(rabbit): verify Heat Shot card (level stacking to Medical Enhancement cap, TAL and immediate SP per level, [heat] status desc)"], ["2026-09-20T02:03:21.000Z","docs(whale): correct Honor to CHA-only (+10 x sLv, sLv 1-4) with source citations"], ["2026-09-20T01:48:48.000Z","feat(bible): replace Mods with Buff and Debuff popups (Bless +24 all stats, damageMod, final multiplier, hitMod) in the player and enemy palettes"], ["2026-09-19T16:10:00.000Z","feat(bible): glow the enemy stats a skill's chips read (DEF for defAdjust damage, CHA for contested durations, LCK for Lucky Card) like the player's"], ["2026-09-19T15:31:11.000Z","feat(bible): glow the character stats that feed a summon's stats (Double Bot, Synchro Mole, Hidden Turret, Fire/Earth Soul, Aegis) when its chips read them"], ["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){

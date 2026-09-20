@@ -336,3 +336,19 @@ Every skill card has a shareable URL on the GitHub Pages site (`https://jumpptty
 * **GoatCounter stays at tool level:** `getGoatPath()` strips everything after the tool id (`/bible/#skill-details`), so per-skill or per-server paths never reach the counter. Do not add the skill id back to it without deciding that is wanted.
 * **Not supported (static hosting):** path-style URLs (`/bible/penguin_frozenBlast`) and per-skill link previews (Open Graph titles/images), both of which would need generated per-skill pages.
 * **Validation:** `node scripts/validate_skills.js` drives the real `route()` in its sandbox (section 3b): card opens and hash is rewritten to its canonical form, unknown server dropped, unknown id ignored, legacy alias, and GoatCounter path.
+
+---
+
+## 10. Panda Interactive Mechanics & SP Scaling
+
+1. **Current SP Field (`hasCurrentSp: true`):**
+   * Placed in the damage chip header (`.sk-dmg-head .sk-dmg-toggles`) as a single pill container (`.sk-current-sp-wrap`).
+   * Displays `"SP"` label alongside a live `<input type="text" inputmode="numeric" pattern="[0-9]*" class="sk-current-sp-input">` without browser spin steppers or inner border containers.
+   * **Live Input Handling:** Keystrokes update `.sk-dmg-value`, `.sk-dmg-calc`, and `.sk-dmg-final` in place without recreating or un-focusing the `<input>` DOM node, allowing smooth continuous multi-digit typing.
+   * Global state `let pandaCurrentSp = 50;` initializes default SP to 50.
+2. **Formula Term Ordering for Panda Damage Skills:**
+   * In `renderOneDmgFormula`, TAL terms (`base` + `talCoeff*TAL`) render first, followed by ATK terms (`atkItem`), followed by the independent Focused Art bonus term (`+ 0.2×stepMult×focusedArtLv×SP Focused Art` in `.dmg-sp`).
+3. **Dynamic Group Escalation (`dmgGroups` + `hitCountDep`):**
+   * When Nine Steps is OFF, the single base group resolves with hitCount 3 and no label, collapsing into a single formula row and single raw damage number.
+   * When Nine Steps is ON (`depRanks[PANDA_NINESTEPS_DEP.id] === 1`), `resolveGroupValue` resolves the base group to hitCount 0 and activates the 3 individual step groups (`Step 1 (1x)`, `Step 2 (2x)`, `Step 3 (3x)`), dynamically expanding the formula and raw damage chips into 3 distinct labeled rows.
+
