@@ -1062,7 +1062,46 @@ if (trackedTreeDirty) {
   }
 }
 
+// Custom buff/debuff rules + final-multiplier maths (2026-09-20)
+let checkedCustomBd = 0;
+{
+  const v = sandbox.validateCustomBd, adj = sandbox.finalMultiplierAdjust;
+  const check = (label, cond) => {
+    checkedCustomBd++;
+    if (!cond) { errorCount++; console.error(`[CUSTOM BD ERROR] ${label}`); }
+  };
+  if (typeof v !== "function" || typeof adj !== "function") {
+    errorCount++; console.error("[CUSTOM BD ERROR] validateCustomBd / finalMultiplierAdjust not exported");
+  } else {
+    check("stat +20 ok", v({ kind: "stat", name: "Buff", stat: "atk", value: "20" }).ok);
+    check("stat all ok", v({ kind: "stat", name: "Buff", stat: "all", value: 5 }).ok);
+    check("stat negative rejected", !v({ kind: "stat", name: "Buff", stat: "atk", value: -1 }).ok);
+    check("stat decimal rejected", !v({ kind: "stat", name: "Buff", stat: "atk", value: 1.5 }).ok);
+    check("stat bad key rejected", !v({ kind: "stat", name: "Buff", stat: "hp", value: 1 }).ok);
+    check("enemyStat negative ok", v({ kind: "enemyStat", name: "Debuff", stat: "def", value: -30 }).ok);
+    check("enemyStat over 9999 rejected", !v({ kind: "enemyStat", name: "Debuff", stat: "def", value: -10000 }).ok);
+    check("empty name rejected", !v({ kind: "dmgMod", name: "  ", value: 0.1 }).ok);
+    check("25-char name rejected", !v({ kind: "dmgMod", name: "x".repeat(25), value: 0.1 }).ok);
+    check("24-char name ok", v({ kind: "dmgMod", name: "x".repeat(24), value: 0.1 }).ok);
+    check("dmgMod negative decimal ok", v({ kind: "dmgMod", name: "Nerf", value: "-0.15" }).ok);
+    check("hitMod rounds to 2dp", v({ kind: "hitMod", name: "H", value: "0.123" }).entry.value === 0.12);
+    check("hitMod out of range rejected", !v({ kind: "hitMod", name: "H", value: 11 }).ok);
+    check("finalMult 24 ok", v({ kind: "finalMult", name: "F", value: "24" }).ok);
+    check("finalMult negative rejected", !v({ kind: "finalMult", name: "F", value: -1 }).ok);
+    check("finalMult over 1000 rejected", !v({ kind: "finalMult", name: "F", value: 1001 }).ok);
+    check("NaN rejected", !v({ kind: "dmgMod", name: "N", value: "abc" }).ok);
+    check("blank value rejected", !v({ kind: "dmgMod", name: "N", value: "" }).ok);
+    check("unknown kind rejected", !v({ kind: "bogus", name: "N", value: 1 }).ok);
+    // legacy numeric count and the new percent-step array must agree for built-in 5% stacks
+    check("legacy count 2 == [5,5]", adj(100, 2) === adj(100, [5, 5]) && adj(100, 2) === 111);
+    check("no steps leaves damage alone", adj(100, []) === 100 && adj(100, 0) === 100);
+    check("custom 24% steps with ceil (25 -> 31)", adj(25, [24]) === 31);
+    check("built-in then custom order", adj(100, [5, 24]) === Math.ceil(105 * 124 / 100));
+  }
+}
+
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
+console.log(`Verified ${checkedCustomBd} custom buff/debuff checks.`);
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
 console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
