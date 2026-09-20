@@ -679,6 +679,60 @@ let checkedLckDiff = 0;
   if (saved.joker === undefined) delete sandbox._depRanks[sk.lckDiffDep.id]; else sandbox._depRanks[sk.lckDiffDep.id] = saved.joker;
 }
 
+// 3e-ii. lckDiffOwn / lckDiffExclusive + Roll the Dice (Cat Lucky Dice, Cat.cs:23939):
+// raw damage = Random.Range(0, sLv*LCK) [+ LCK with Roll the Dice], reading the caster's OWN
+// LCK (the Enemy Stats LCK is never subtracted) and excluding the upper bound (max = sLv*LCK - 1).
+{
+  const sk = SKILLS.find(s => s.id === "cat_luckyDice");
+  const inputs = sandbox._statInputs;
+  const saved = { lck: inputs.lck.value, enemy: inputs.enemyLck.value, dep: sandbox._depRanks[sk.lckDiffDep.id] };
+  const setup = (rank, lck, eLck, dep) => {
+    inputs.lck.value = String(lck); inputs.enemyLck.value = String(eLck);
+    sandbox._depRanks[sk.lckDiffDep.id] = dep ? 1 : 0;
+    sandbox._skillRanks[sk.id] = rank;
+    sandbox._selectSkill(sk);
+  };
+  const rangeAt = (rank, lck, eLck, dep) => { setup(rank, lck, eLck, dep); return sandbox._calcRangeFor(sandbox._getDmgText(sk, rank)); };
+  const expect = (label, got, want) => {
+    checkedLckDiff++;
+    if (JSON.stringify(got) !== JSON.stringify(want)) {
+      console.error(`[LCK-DIFF ERROR] Lucky Dice: ${label}: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
+      errorCount++;
+    }
+  };
+  try {
+    expect("rank 2, LCK 128: raw range 0 .. 2*128-1", rangeAt(2, 128, 2, false), [0, 255]);
+    expect("rank 1, LCK 128: raw range 0 .. 128-1", rangeAt(1, 128, 2, false), [0, 127]);
+    expect("enemy LCK is ignored (own-LCK roll)", rangeAt(2, 128, 500, false), [0, 255]);
+    expect("Roll the Dice rank 2: LCK .. 3*LCK-1", rangeAt(2, 128, 2, true), [128, 383]);
+    expect("Roll the Dice rank 1: LCK .. 2*LCK-1", rangeAt(1, 128, 2, true), [128, 255]);
+    expect("Roll the Dice ignores enemy LCK too", rangeAt(2, 128, 500, true), [128, 383]);
+    expect("LCK 0 rolls exactly 0", rangeAt(2, 0, 2, false), [0, 0]);
+    expect("LCK 0 + Roll the Dice is still 0", rangeAt(2, 0, 2, true), [0, 0]);
+    [[2, 128, false], [2, 128, true], [1, 77, false], [1, 77, true], [2, 1, false]].forEach(([rk, lck, dep]) => {
+      setup(rk, lck, 2, dep);
+      const raw = sandbox._calcRangeFor(sandbox._getDmgText(sk, rk));
+      const fin = sandbox._finalRangeForRange(raw);
+      let lo = Infinity, hi = -Infinity;
+      for (let i = 0; i < 1500; i++) { const r = sandbox._rollOneHit(sk, rk); lo = Math.min(lo, r); hi = Math.max(hi, r); }
+      const tag = `rank ${rk}, LCK ${lck}, Roll the Dice ${dep ? "on" : "off"}`;
+      expect(`final range contains every roll (${tag}) [range ${fin[0]}-${fin[1]}, rolled ${lo}-${hi}]`, lo >= fin[0] && hi <= fin[1], true);
+    });
+    setup(2, 128, 2, false);
+    const off = sandbox._renderOneDmgFormula(sk, 2, sandbox._getDmgText(sk, 2));
+    expect("formula shows the roll as a 0~max range on own LCK", [off.includes("0~255"), off.includes("×LCK"), off.includes("ΔLCK")], [true, true, false]);
+    expect("formula shows no Roll the Dice term while it is off", off.includes("Roll the Dice"), false);
+    setup(2, 128, 2, true);
+    const on = sandbox._renderOneDmgFormula(sk, 2, sandbox._getDmgText(sk, 2));
+    expect("formula shows the Roll the Dice term when on", on.includes("Roll the Dice"), true);
+  } catch (e) {
+    console.error(`[LCK-DIFF EXCEPTION] Lucky Dice: ${e.message}`);
+    errorCount++;
+  }
+  inputs.lck.value = saved.lck; inputs.enemyLck.value = saved.enemy;
+  if (saved.dep === undefined) delete sandbox._depRanks[sk.lckDiffDep.id]; else sandbox._depRanks[sk.lckDiffDep.id] = saved.dep;
+}
+
 // 3f. Range-vs-simulator consistency, EVERY single-hit skill with a computable damage
 // formula: every roll of the real Test/Simulate path (rollOneHit) must fall inside the
 // Final Damage range the card displays (finalRangeForRange(calcRangeFor(...))). Run twice

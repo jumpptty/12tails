@@ -220,3 +220,17 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ### cat_ladyLuck5 (412) — passive, Class C
 - reqLv 60, reqBn 1, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`). Both `hasSkill(412)` checks in `Cat.cs` are inside `RPC_fateDraw` (`:21447`, `:21575`): it modifies **Fate Draw only** (status level +1, duration `chaAdjust(30)` instead of `chaAdjust(15)`; the second check is only the `ladyLuck_ring` VFX).
 - Tooltips: EN "Increses the effect of FateDraw for by 1 level and doubles its duration." (`CatSkill_eng.cs:950`); TH "เพิ่มผลของ FateDraw ขึ้น 1 เลเวลและยืดระยะเวลาขึ้น สองเท่า" (`CatSkill_thai.cs:972`).
+
+### cat_luckyDice1-2 — active, RANK FAMILY
+- reqLv 9 / 15, reqBn 3 / 5, MP 8 / 12, SP **-12 / -16** (`decode_skilldata.py`). Negative SP is **red**: consumed on cast. Mode target, enemy, `cType luckyDice`.
+- **Cooldown:** `addTimeOut("luckyDice", agiAdjust(60))` (`Cat.cs:24162`), Revised Art applies. **No cast time** — animation only; damage resolves ~0.5s after the throw starts (0.4s + 0.1s waits, `Cat.cs:23682-24447`).
+- **Area:** `Damage.FindAreaTarget(mPos, 6, 5, 130816 - (1 << caster.layer))` (`Cat.cs:23929-23934`) — radius 6, height 5, centred on the cat, every layer except the caster's own (enemies). Radius is a flat 6: no `rangeMod`.
+- **Damage:** `hitDmg = Random.Range(0, sLv × mChar.lck) + (hasSkill(432) ? mChar.lck : 0)` (`Cat.cs:23939`). No ATK term. `Random.Range(int, int)` **excludes the upper bound**, so the real range is `0 … sLv×LCK − 1` (tooltip says `0 ~ 1.0 / 2.0 × lck`). `mChar.lck` is the live LCK including buffs (e.g. `fortune`). The roll is made **once, before the target loop** — every enemy in range takes the same number. It then goes through `hit(230+sLv, target, dmg, KO 1, Hate 0, forward)` (`:23962`), the normal `dmgAdjust → defAdjust → hitMod` pipeline; the Cat gains **+1 SP per target hit** (`:23968`).
+- **Tooltips:** EN "Perform a move that deals random damage to nearby enemies (0 ~ 1.0 x lck)." / `(0 ~ 2.0 x lck)` (`CatSkill_eng.cs:352`, `:363`); TH "โยนลูกเต๋าออกไปทำความ เสียหายแบบสุ่มตัวเลข รอบๆ ตัวแมว (0 ~ 1.0 x lck)" / `(0 ~ 2.0 x lck)` (`CatSkill_thai.cs:374`, `:385`). Omitted by the tooltip: the 6m radius, the shared roll, the exclusive maximum, the +1 SP per hit.
+- **App modeling:** reuses Lucky Card's LCK-difference mechanism with two flags — `lckDiffOwn` (the roll reads the caster's own LCK; target LCK = 0) and `lckDiffExclusive` (displayed max one lower) — and `CAT_ROLLTHEDICE_DEP` (`coeff:1`) as the `lckDiffDep`. Range at LCK 128: rank 1 `0-127`, rank 2 `0-255`; with Roll the Dice `128-255` / `128-383`.
+
+### cat_rollTheDice5 (432) — passive, Class C
+- reqLv 75, reqBn 4, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`). The only two `hasSkill(432)` consumers are Lucky Dice and Double Down.
+- **Lucky Dice:** adds a flat `+LCK` to the roll (`Cat.cs:23939`) — both ends move, so the range becomes `LCK … (sLv+1)×LCK − 1` (tooltip: "1.0~3.0", the rank 2 result).
+- **Double Down:** the range/size variable `mRange` goes 1 → 2 (`Cat.cs:25389-25396`) and the hit's KO becomes `sLv×3 + 2 + (hasSkill(432) ? 2 : 0)` (`Cat.cs:25358`) — "Doubles the size of DoubleDown and its ko damage". The Thai tooltip calls Double Down "Cacton".
+- Tooltips: EN "Increases the damage of LuckyDices to 1.0~3.0. Doubles the size of DoubleDown and its ko damage." (`CatSkill_eng.cs:972`); TH "เพิ่มความเสียหายของ LuckyDices เป็น 1.0~3.0 ขยายขนาดของ Cacton ขึ้น 2 เท่าและเพิ่ม ko ขึ้นอีก 2" (`CatSkill_thai.cs:990`).
