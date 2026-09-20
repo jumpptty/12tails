@@ -293,7 +293,7 @@ Five skills share identical numeric skill IDs, mechanics, and effects across all
 |------------|----|--------------------|
 | **Stat Plus** (`statPlus1..4`) | `#141–144` | Grants `+2` to all 8 stats per rank (`+2, +4, +6, +8` total). Evaluated directly in `CharacterDataClass.getStat(n)` (CharacterDataClass.cs:1216). |
 | **Super Stat Plus** (`superStatPlus5`) | `#441` | Grants `+10` to all 8 stats unconditionally. Evaluated in `CharacterDataClass.getStat(n)`. |
-| **Revised Art** (`revisedArt5`) | `#424` | `-12%` cooldown reduction on all skills across the board (CharacterControl.cs:20575, `mTimeOut * 0.88f`). Excludes basic attack (`nAttack`), charge attack (`cAttack`), and consumables. |
+| **Revised Art** (`revisedArt5`) | `#424` | `-12%` cooldown reduction on all skills across the board, applied in `addTimeOut` as `cTime = (float)Mathf.CeilToInt(0.88f * cTime)` (`CharacterControl.cs:20227`; `cTime` is the already-`agiAdjust`ed fractional value, and without Revised Art it is left unrounded). **Round-up can raise the cooldown:** `ceil(0.88X) > X` whenever `(k-1)/0.88 < X < k` for a whole `k <= 8` (e.g. `0.5 → 1`, `3.5 → 4`, `7.96 → 8`); a raw `7.9` still drops to `7`. From `k >= 9` the window is empty, so it only happens for cooldowns under 8s. Excludes basic attack (`nAttack`), charge attack (`cAttack`), and consumables. |
 | **Revised Magic** (`revisedMagic5`) | `#414` | `-20%` MP cost reduction (`Mathf.CeilToInt(cMP * 0.8f)`). |
 | **Revised Skill** (`revisedSkill5`) | `#404` | `-50%` SP cost reduction (`Mathf.CeilToInt(cSP * 0.5f)`). |
 
