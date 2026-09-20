@@ -3322,6 +3322,8 @@
     --bd-title:#ede8df; --bd-label:#b3a898; --bd-glow:rgba(212,175,55,0.4);
     --bd-shadow:0 4px 16px rgba(0,0,0,0.35);
   }
+  .sk-bd-switch{ --bd-accent:var(--gold); --bd-label:#b3a898; --bd-glow:rgba(212,175,55,0.4) }
+  .sk-bd-switch.is-debuff{ --bd-accent:#ef4444; --bd-label:#ef5350; --bd-glow:rgba(239,68,68,0.4) }
   .sk-bd-btn.is-debuff, .sk-bd-popup.is-debuff{
     --bd-accent:#ef4444; --bd-edge:rgba(239,68,68,0.35);
     --bd-bg:linear-gradient(180deg, rgba(239,68,68,0.08) 0%, rgba(20,19,17,0.94) 100%);
@@ -3329,6 +3331,21 @@
     --bd-shadow:0 6px 20px rgba(0,0,0,0.4), inset 0 0 16px rgba(239,68,68,0.04);
   }
   .sk-bd-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px}
+  .sk-bd-cell{position:relative; display:flex}
+  .sk-bd-cell .sk-bd-btn{flex:1; padding-right:46px}
+  /* Quick on/off switch (2026-09-20): suspends every selected buff/debuff on that side
+     without clearing the selection, so buffed vs unbuffed results can be compared at once. */
+  .sk-bd-switch{position:absolute; right:10px; top:50%; transform:translateY(-50%); width:28px; height:16px; padding:0; border-radius:8px; cursor:pointer;
+    border:1px solid var(--bd-accent); background:color-mix(in srgb, var(--bd-accent) 35%, transparent); transition:background .15s ease, border-color .15s ease}
+  .sk-bd-switch[hidden]{display:none}
+  .sk-bd-knob{position:absolute; top:1px; left:13px; width:12px; height:12px; border-radius:50%; background:#ede8df; transition:left .15s ease, background .15s ease}
+  .sk-bd-switch[aria-checked="false"]{background:transparent; border-color:var(--bd-label); opacity:.7}
+  .sk-bd-switch[aria-checked="false"] .sk-bd-knob{left:1px; background:var(--bd-label)}
+  .sk-bd-btn.is-suspended{opacity:.55; box-shadow:var(--bd-shadow)}
+  .sk-bd-btn.is-suspended .sk-bd-count{background:transparent; color:var(--bd-label); border:1px solid var(--bd-label)}
+  .sk-bd-servers{display:flex; align-items:center; gap:6px; margin-left:12px}
+  .sk-bd-servers .sk-server-btn{width:40px; height:40px}
+  .sk-bd-suspended{font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--bd-label); border:1px solid var(--bd-label); border-radius:4px; padding:1px 6px}
   .sk-bd-btn{
     position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
     padding:9px 12px 9px 10px; cursor:pointer; background:var(--bd-bg); color:var(--bd-label);
@@ -11754,8 +11771,8 @@ function mountSkillCooldownLookup(root){
           <div><label>LCK</label><input type="number" data-role="lck" min="0" value="128"><span class="sk-stat-bonus" data-role="bonus-lck" hidden></span></div>
         </div>
         <div class="sk-bd-row">
-          <button type="button" class="sk-bd-btn is-buff" data-role="buff-open" title="Buffs: stat buffs, damageMod, final multiplier"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10"></polygon></svg><span>Buff</span><span class="sk-bd-count" data-role="buff-count" hidden></span></button>
-          <button type="button" class="sk-bd-btn is-debuff" data-role="debuff-open" title="Debuffs on the target: hitMod"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,21 21,14 19,3 5,3 3,14"></polygon></svg><span>Debuff</span><span class="sk-bd-count" data-role="debuff-count" hidden></span></button>
+          <div class="sk-bd-cell"><button type="button" class="sk-bd-btn is-buff" data-role="buff-open" title="Buffs: stat buffs, damageMod, final multiplier"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10"></polygon></svg><span>Buff</span><span class="sk-bd-count" data-role="buff-count" hidden></span></button><button type="button" class="sk-bd-switch is-buff" data-role="buff-switch" role="switch" aria-checked="true" title="Buffs on / off (keeps your selection)" hidden><span class="sk-bd-knob"></span></button></div>
+          <div class="sk-bd-cell"><button type="button" class="sk-bd-btn is-debuff" data-role="debuff-open" title="Debuffs on the target: hitMod"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,21 21,14 19,3 5,3 3,14"></polygon></svg><span>Debuff</span><span class="sk-bd-count" data-role="debuff-count" hidden></span></button><button type="button" class="sk-bd-switch is-debuff" data-role="debuff-switch" role="switch" aria-checked="true" title="Debuffs on / off (keeps your selection)" hidden><span class="sk-bd-knob"></span></button></div>
         </div>
         <div class="sk-enemystat-controls" data-role="enemystat-controls">
           <div class="sk-class-badge sk-enemy-badge">
@@ -11824,11 +11841,32 @@ function mountSkillCooldownLookup(root){
     fortune5: { icon: "cat_fateDraw4", name: "Fortune (Lv.5)", desc: "+50 LCK", lck: 50 },
     jaSoul4: { icon: "monkey_ja4", name: "Ja Soul (Lv.4)", desc: "+40 TAL", tal: 40 },
   };
+  // Buff/Debuff popup server + quick switches (2026-09-20). bdServer is the popup's OWN
+  // server (independent of currentServer, which drives skill cards). Any STAT_BUFFS /
+  // MOD_DEFS entry may carry `servers:{tto:{...field overrides}, tot:{hidden:true}}` or
+  // `onlyServers:["tto"]`; bdResolve() returns the effective entry or null when the entry
+  // does not exist on that server. buffsSuspended / debuffsSuspended (the quick switches)
+  // zero out that whole side without touching the selection. Session-only state.
+  let bdServer = "og";
+  let buffsSuspended = false;
+  let debuffsSuspended = false;
+  function bdResolve(entry, server){
+    if (!entry) return null;
+    const srv = server || bdServer;
+    if (entry.onlyServers && !entry.onlyServers.includes(srv)) return null;
+    const o = entry.servers && entry.servers[srv];
+    if (o && o.hidden) return null;
+    return o ? Object.assign({}, entry, o) : entry;
+  }
   const activeStatBuffs = new Set();
   function statBonus(key){
     let n = 0;
-    activeStatBuffs.forEach(id => { const b = STAT_BUFFS[id]; n += (b.all || 0) + (b[key] || 0); });
+    if (buffsSuspended) return 0;
+    activeStatBuffs.forEach(id => { const b = bdResolve(STAT_BUFFS[id]); if (b) n += (b.all || 0) + (b[key] || 0); });
     return n;
+  }
+  function statBuffsLive(){
+    return !buffsSuspended && [...activeStatBuffs].some(id => bdResolve(STAT_BUFFS[id]));
   }
   function statVal(el){ return (parseFloat(el.value) || 0) + statBonus(el.dataset.role); }
 
@@ -12094,6 +12132,20 @@ function mountSkillCooldownLookup(root){
     popups.forEach(el => el.remove());
   }
 
+    // Shared by the skill-card server row and the Buff/Debuff popup selector (role = data-role, optional).
+    function serverBtnHtml(srv, active, role) {
+      const iconKey = "server_" + srv;
+      const label = SERVER_LABELS[srv] || srv.toUpperCase();
+      const hasImg = !!(SKILL_ICONS[iconKey] || SKILL_ICONS[srv]);
+      const content = hasImg
+        ? `<img src="${SKILL_ICONS[iconKey] || SKILL_ICONS[srv]}" alt="${srv.toUpperCase()}">`
+        : `<span class="sk-server-badge">${srv.toUpperCase()}</span>`;
+      return `<button type="button" class="sk-server-btn${active ? " active" : ""}"${role ? ` data-role="${role}"` : ""} data-server="${srv}" title="${label}">
+        ${content}
+      </button>`;
+    }
+    const BD_SERVERS = ["og", "tot", "tto"];
+
     function renderServerDeps(skill) {
     if (!serverDepsEl) return;
     if (!skill) {
@@ -12102,17 +12154,7 @@ function mountSkillCooldownLookup(root){
     }
     const avail = getAvailableServers(skill);
     const activeSrv = avail.includes(currentServer) ? currentServer : "og";
-    serverDepsEl.innerHTML = avail.map(srv => {
-      const iconKey = "server_" + srv;
-      const label = SERVER_LABELS[srv] || srv.toUpperCase();
-      const hasImg = !!(SKILL_ICONS[iconKey] || SKILL_ICONS[srv]);
-      const content = hasImg
-        ? `<img src="${SKILL_ICONS[iconKey] || SKILL_ICONS[srv]}" alt="${srv.toUpperCase()}">`
-        : `<span class="sk-server-badge">${srv.toUpperCase()}</span>`;
-      return `<button type="button" class="sk-server-btn${srv === activeSrv ? " active" : ""}" data-server="${srv}" title="${label}">
-        ${content}
-      </button>`;
-    }).join("");
+    serverDepsEl.innerHTML = avail.map(srv => serverBtnHtml(srv, srv === activeSrv)).join("");
   }
 
   if (serverDepsEl) {
@@ -12550,6 +12592,20 @@ function mountSkillCooldownLookup(root){
   // off. Still just a persisted Set like the other two, so switching
   // skill/target doesn't touch it either.
   let activeFinalMultMods = new Set();
+  // Server-resolved, suspend-aware mod values. `force` = ignore the quick switches
+  // (the popup readouts show what the selection is worth even while suspended).
+  function playerDamageModCalc(force){
+    if (buffsSuspended && !force) return 1;
+    return 1 + PLAYER_MOD_IDS.reduce((sum, id) => { const d = bdResolve(MOD_DEFS[id]); return sum + (d && activePlayerMods.has(id) ? d.delta : 0); }, 0);
+  }
+  function enemyHitModCalc(force){
+    if (debuffsSuspended && !force) return 1;
+    return 1 + ENEMY_MOD_IDS.reduce((sum, id) => { const d = bdResolve(MOD_DEFS[id]); return sum + (d && activeEnemyMods.has(id) ? d.delta : 0); }, 0);
+  }
+  function finalMultCountCalc(force){
+    if (buffsSuspended && !force) return 0;
+    return FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id) && bdResolve(MOD_DEFS[id])).length;
+  }
   let bdOpen = null; // null | "buff" | "debuff"
 
   // Skill-rank selector (Penguin pilot, 2026-08-14): click the hero icon to
@@ -13000,9 +13056,9 @@ function mountSkillCooldownLookup(root){
     val = Math.trunc(val);
     if (lckDiffC && lckDiffJokerOn(skill)) val = Math.trunc(val + skill.lckDiffDep.coeff * (LCK - lckDiffTarget));
     if (dmgMultDepOn) val = Math.trunc(val * skill.dmgMultDep.mult);
-    const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-    const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-    const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
+    const playerDamageModValue = playerDamageModCalc();
+    const enemyHitModValue = enemyHitModCalc();
+    const finalMultCount = finalMultCountCalc();
     // ownLck (Auto Gyro Gun pilot, 2026-08-18): dmgAdjust's LCK-rolled term
     // (game engine, `Random(0, ceil(0.2*this.lck))`) reads
     // `this.lck` -- the ATTACKER's own field. For a normal skill cast the
@@ -15186,9 +15242,9 @@ function mountSkillCooldownLookup(root){
         // selectedEnemy) so the Mods button/popup works even before a
         // target's picked -- these represent standing combat buffs, not
         // something derived from the matchup.
-        const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-        const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-        const finalMultCount = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
+        const playerDamageModValue = playerDamageModCalc();
+        const enemyHitModValue = enemyHitModCalc();
+        const finalMultCount = finalMultCountCalc();
         let simulateBtn = "";
         let finalDamageBody = `<p class="sk-dmg-final-hint">Pick a target</p>`;
         if (activeSelected.isHeal || activeSelected.isHate) {
@@ -16059,6 +16115,8 @@ function mountSkillCooldownLookup(root){
   const bdHost = $('[data-role="bd-host"]', root);
   const buffBtn = $('[data-role="buff-open"]', root);
   const debuffBtn = $('[data-role="debuff-open"]', root);
+  const buffSwitch = $('[data-role="buff-switch"]', root);
+  const debuffSwitch = $('[data-role="debuff-switch"]', root);
   const modNum = v => "+" + String(+v.toFixed(2));
   function bdItem(role, id, icon, name, desc, on){
     return `
@@ -16069,7 +16127,8 @@ function mountSkillCooldownLookup(root){
       </button>`;
   }
   function modItem(id, activeSet, unit){
-    const def = MOD_DEFS[id];
+    const def = bdResolve(MOD_DEFS[id]);
+    if (!def) return "";
     const name = def.level ? `${def.label} (Lv.${def.level})` : def.label;
     return bdItem("bd-mod", id, def.icon, name, `${modNum(def.delta)} ${unit}`, activeSet.has(id));
   }
@@ -16082,16 +16141,17 @@ function mountSkillCooldownLookup(root){
   }
   function renderBdPopup(){
     if (!bdOpen){ bdHost.innerHTML = ""; return; }
-    const dmgMod = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + (activePlayerMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-    const hitMod = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + (activeEnemyMods.has(id) ? MOD_DEFS[id].delta : 0), 0);
-    const fmCount = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
+    const dmgMod = playerDamageModCalc(true);
+    const hitMod = enemyHitModCalc(true);
+    const fmCount = finalMultCountCalc(true);
     const isBuff = bdOpen === "buff";
+    const suspended = isBuff ? buffsSuspended : debuffsSuspended;
     let body;
     if (isBuff){
       body =
-        bdSection("Stat Buffs", "", Object.entries(STAT_BUFFS).map(([id, b]) => bdItem("bd-stat", id, b.icon, b.name, b.desc, activeStatBuffs.has(id))).join("")) +
+        bdSection("Stat Buffs", "", Object.keys(STAT_BUFFS).map(id => { const b = bdResolve(STAT_BUFFS[id]); return b ? bdItem("bd-stat", id, b.icon, b.name, b.desc, activeStatBuffs.has(id)) : ""; }).join("")) +
         bdSection("Damage Mod", dmgMod.toFixed(2), PLAYER_MOD_IDS.map(id => modItem(id, activePlayerMods, "dmgMod")).join("")) +
-        bdSection("Final Multiplier &middot; PvE Only", "+" + fmCount * 5 + "%", FINAL_MULT_MOD_IDS.map((id, n) => bdItem("bd-mod", id, MOD_DEFS[id].icon, `Final Multiplier ${n + 1}`, "+5% final damage", activeFinalMultMods.has(id))).join(""));
+        bdSection("Final Multiplier &middot; PvE Only", "+" + fmCount * 5 + "%", FINAL_MULT_MOD_IDS.filter(id => bdResolve(MOD_DEFS[id])).map((id, n) => bdItem("bd-mod", id, bdResolve(MOD_DEFS[id]).icon, `Final Multiplier ${n + 1}`, "+5% final damage", activeFinalMultMods.has(id))).join(""));
     } else {
       body = bdSection("Target Hit Mod", hitMod.toFixed(2), ENEMY_MOD_IDS.map(id => modItem(id, activeEnemyMods, "hitMod")).join(""));
     }
@@ -16099,7 +16159,7 @@ function mountSkillCooldownLookup(root){
     bdHost.innerHTML = `
       <div class="sk-bd-backdrop" data-role="bd-backdrop">
         <div class="sk-bd-popup ${isBuff ? "is-buff" : "is-debuff"}" role="dialog" aria-label="${isBuff ? "Buff" : "Debuff"}">
-          <div class="sk-bd-head">${svg}<span class="sk-bd-title">${isBuff ? "Buff" : "Debuff"}</span><button type="button" class="sk-bd-close" data-role="bd-close" aria-label="Close">&times;</button></div>
+          <div class="sk-bd-head">${svg}<span class="sk-bd-title">${isBuff ? "Buff" : "Debuff"}</span>${suspended ? '<span class="sk-bd-suspended">Off</span>' : ""}<div class="sk-bd-servers">${BD_SERVERS.map(srv => serverBtnHtml(srv, srv === bdServer, "bd-server")).join("")}</div><button type="button" class="sk-bd-close" data-role="bd-close" aria-label="Close">&times;</button></div>
           ${body}
         </div>
       </div>`;
@@ -16107,6 +16167,11 @@ function mountSkillCooldownLookup(root){
   function updateBdButtons(){
     const buffN = activePlayerMods.size + activeFinalMultMods.size + activeStatBuffs.size;
     const debuffN = activeEnemyMods.size;
+    [[buffBtn, buffN, buffSwitch, buffsSuspended], [debuffBtn, debuffN, debuffSwitch, debuffsSuspended]].forEach(([btn, n, sw, off]) => {
+      sw.hidden = n === 0;
+      sw.setAttribute("aria-checked", String(!off));
+      btn.classList.toggle("is-suspended", n > 0 && off);
+    });
     [[buffBtn, buffN, "buff-count"], [debuffBtn, debuffN, "debuff-count"]].forEach(([btn, n, role]) => {
       btn.classList.toggle("has-active", n > 0);
       const c = $('[data-role="' + role + '"]', btn);
@@ -16121,13 +16186,20 @@ function mountSkillCooldownLookup(root){
       chip.hidden = n === 0;
       if (n) chip.textContent = "+" + n + " = " + statVal(el);
     });
-    $('.sk-stats-panel > .sk-controls', root).classList.toggle("has-bonus", activeStatBuffs.size > 0);
+    $('.sk-stats-panel > .sk-controls', root).classList.toggle("has-bonus", statBuffsLive());
   }
+  buffSwitch.addEventListener("click", () => { buffsSuspended = !buffsSuspended; updateBdButtons(); renderHero(); });
+  debuffSwitch.addEventListener("click", () => { debuffsSuspended = !debuffsSuspended; updateBdButtons(); renderHero(); });
   buffBtn.addEventListener("click", () => { bdOpen = "buff"; renderBdPopup(); });
   debuffBtn.addEventListener("click", () => { bdOpen = "debuff"; renderBdPopup(); });
   bdHost.addEventListener("click", (e) => {
     if (e.target.matches('[data-role="bd-backdrop"]') || e.target.closest('[data-role="bd-close"]')){
       bdOpen = null; renderBdPopup(); return;
+    }
+    const srvBtn = e.target.closest('[data-role="bd-server"]');
+    if (srvBtn){
+      bdServer = srvBtn.dataset.server;
+      renderBdPopup(); updateBdButtons(); renderHero(); return;
     }
     const item = e.target.closest('[data-role="bd-mod"], [data-role="bd-stat"]');
     if (!item) return;
@@ -20010,7 +20082,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-20T11:38:03.783Z","feat(bible): add Fortune Lv.5 and Ja Soul Lv.4 stat buffs to the buff panel"],["2026-09-20T11:36:51.664Z","fix(cat): add space before เท่าตัว in Fate Draw and Lady Luck descriptions"],["2026-09-20T11:35:37.877Z","fix(cat): align Fate Draw description wording with Lady Luck"],["2026-09-20T11:33:17.644Z","fix(cat): rewrite Lady Luck description"],["2026-09-20T11:31:44.478Z","feat(cat): add Lady Luck dependency toggle to Fate Draw"],["2026-09-20T11:27:54.724Z","feat(cat): verify Fate Draw card and add Lady Luck passive card"],["2026-09-20T11:20:33.821Z","feat(panda): mention Focused Art and Nine Steps in Three Steps and Rushing Falcon descriptions"],["2026-09-20T11:19:25.341Z","fix(panda): link skill names in Focused Art and Nine Steps descriptions"],["2026-09-20T11:12:50.937Z","feat(panda): verify Focused Art and Nine Steps cards (SP-scaling passive, hit-count multiplier)"],["2026-09-20T10:49:30.803Z","fix(panda): fix ReferenceError in rollOneHit when Focused Art is active"],["2026-09-20T10:41:07.816Z","feat(panda): verify Rushing Falcon card (3-hit high-speed dash, SP threshold gate, Nine Steps escalation, Focused Art scaling)"], ["2026-09-20T10:27:05.874Z","fix(panda): clamp SP input to max 100"], ["2026-09-20T10:12:06.255Z","fix(panda): Three Steps term order, dynamic 3-step Nine Steps rows, SP box UI and live typing, fix undefined chip label"], ["2026-09-20T09:58:06.700Z","feat(panda): verify Three Steps card (3-step dash sequence, SP threshold gate, Nine Steps 3-step escalation, Focused Art SP scaling)"], ["2026-09-20T04:40:29.000Z","feat(whale): verify Honor Stand card (Whale-only KO reduction, +500 hate, TTO +1 Honor sLv), fix Honor KO condition, add Honor (Lv.4) stat buff"], ["2026-09-20T04:28:15.000Z","feat(whale): verify Honor card (CHA-only status, enemy hate, Honor Stand interaction, TTO Honor Stand +1 sLv toggle, correct MP cost)"], ["2026-09-20T04:08:23.000Z","feat(bible): add Heat (Lv.4) +40 TAL to the Buff popup stat buffs, stackable per stat with Bless"], ["2026-09-20T03:23:04.000Z","docs(bible): note that Revised Art can raise short cooldowns due to the whole-second round-up (card red text, fix cited code line)"], ["2026-09-20T03:05:45.000Z","chore(bible): add missing changelog entry for the addStatus swap trace docs"], ["2026-09-20T02:11:35.000Z","feat(rabbit): verify Heat Shot card (level stacking to Medical Enhancement cap, TAL and immediate SP per level, [heat] status desc)"], ["2026-09-20T02:03:21.000Z","docs(whale): correct Honor to CHA-only (+10 x sLv, sLv 1-4) with source citations"], ["2026-09-20T01:48:48.000Z","feat(bible): replace Mods with Buff and Debuff popups (Bless +24 all stats, damageMod, final multiplier, hitMod) in the player and enemy palettes"], ["2026-09-19T16:10:00.000Z","feat(bible): glow the enemy stats a skill's chips read (DEF for defAdjust damage, CHA for contested durations, LCK for Lucky Card) like the player's"], ["2026-09-19T15:31:11.000Z","feat(bible): glow the character stats that feed a summon's stats (Double Bot, Synchro Mole, Hidden Turret, Fire/Earth Soul, Aegis) when its chips read them"], ["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-20T11:50:58.845Z","feat(bible): add server toggle and quick on/off switches to Buff/Debuff panels"],["2026-09-20T11:38:03.783Z","feat(bible): add Fortune Lv.5 and Ja Soul Lv.4 stat buffs to the buff panel"],["2026-09-20T11:36:51.664Z","fix(cat): add space before เท่าตัว in Fate Draw and Lady Luck descriptions"],["2026-09-20T11:35:37.877Z","fix(cat): align Fate Draw description wording with Lady Luck"],["2026-09-20T11:33:17.644Z","fix(cat): rewrite Lady Luck description"],["2026-09-20T11:31:44.478Z","feat(cat): add Lady Luck dependency toggle to Fate Draw"],["2026-09-20T11:27:54.724Z","feat(cat): verify Fate Draw card and add Lady Luck passive card"],["2026-09-20T11:20:33.821Z","feat(panda): mention Focused Art and Nine Steps in Three Steps and Rushing Falcon descriptions"],["2026-09-20T11:19:25.341Z","fix(panda): link skill names in Focused Art and Nine Steps descriptions"],["2026-09-20T11:12:50.937Z","feat(panda): verify Focused Art and Nine Steps cards (SP-scaling passive, hit-count multiplier)"],["2026-09-20T10:49:30.803Z","fix(panda): fix ReferenceError in rollOneHit when Focused Art is active"],["2026-09-20T10:41:07.816Z","feat(panda): verify Rushing Falcon card (3-hit high-speed dash, SP threshold gate, Nine Steps escalation, Focused Art scaling)"], ["2026-09-20T10:27:05.874Z","fix(panda): clamp SP input to max 100"], ["2026-09-20T10:12:06.255Z","fix(panda): Three Steps term order, dynamic 3-step Nine Steps rows, SP box UI and live typing, fix undefined chip label"], ["2026-09-20T09:58:06.700Z","feat(panda): verify Three Steps card (3-step dash sequence, SP threshold gate, Nine Steps 3-step escalation, Focused Art SP scaling)"], ["2026-09-20T04:40:29.000Z","feat(whale): verify Honor Stand card (Whale-only KO reduction, +500 hate, TTO +1 Honor sLv), fix Honor KO condition, add Honor (Lv.4) stat buff"], ["2026-09-20T04:28:15.000Z","feat(whale): verify Honor card (CHA-only status, enemy hate, Honor Stand interaction, TTO Honor Stand +1 sLv toggle, correct MP cost)"], ["2026-09-20T04:08:23.000Z","feat(bible): add Heat (Lv.4) +40 TAL to the Buff popup stat buffs, stackable per stat with Bless"], ["2026-09-20T03:23:04.000Z","docs(bible): note that Revised Art can raise short cooldowns due to the whole-second round-up (card red text, fix cited code line)"], ["2026-09-20T03:05:45.000Z","chore(bible): add missing changelog entry for the addStatus swap trace docs"], ["2026-09-20T02:11:35.000Z","feat(rabbit): verify Heat Shot card (level stacking to Medical Enhancement cap, TAL and immediate SP per level, [heat] status desc)"], ["2026-09-20T02:03:21.000Z","docs(whale): correct Honor to CHA-only (+10 x sLv, sLv 1-4) with source citations"], ["2026-09-20T01:48:48.000Z","feat(bible): replace Mods with Buff and Debuff popups (Bless +24 all stats, damageMod, final multiplier, hitMod) in the player and enemy palettes"], ["2026-09-19T16:10:00.000Z","feat(bible): glow the enemy stats a skill's chips read (DEF for defAdjust damage, CHA for contested durations, LCK for Lucky Card) like the player's"], ["2026-09-19T15:31:11.000Z","feat(bible): glow the character stats that feed a summon's stats (Double Bot, Synchro Mole, Hidden Turret, Fire/Earth Soul, Aegis) when its chips read them"], ["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){
