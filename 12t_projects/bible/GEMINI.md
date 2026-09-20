@@ -343,8 +343,8 @@ Every skill card has a shareable URL on the GitHub Pages site (`https://jumpptty
 
 1. **Current SP Field (`hasCurrentSp: true`):**
    * Placed in the damage chip header (`.sk-dmg-head .sk-dmg-toggles`) as a single pill container (`.sk-current-sp-wrap`).
-   * Displays `"SP"` label alongside a live `<input type="text" inputmode="numeric" pattern="[0-9]*" class="sk-current-sp-input">` without browser spin steppers or inner border containers.
-   * **Live Input Handling:** Keystrokes update `.sk-dmg-value`, `.sk-dmg-calc`, and `.sk-dmg-final` in place without recreating or un-focusing the `<input>` DOM node, allowing smooth continuous multi-digit typing.
+   * Displays `"SP"` label alongside a live `<input type="text" inputmode="numeric" pattern="[0-9]*" class="sk-current-sp-input" maxlength="3">` clamped to max 100 (0–100 range matching the 12Tails 100 SP bar limit) without browser spin steppers or inner border containers.
+   * **Live Input Handling:** Keystrokes update `.sk-dmg-value`, `.sk-dmg-calc`, and `.sk-dmg-final` in place without recreating or un-focusing the `<input>` DOM node, allowing smooth continuous multi-digit typing. If typed value exceeds 100, it automatically clamps to 100 live.
    * Global state `let pandaCurrentSp = 50;` initializes default SP to 50.
 2. **Formula Term Ordering for Panda Damage Skills:**
    * In `renderOneDmgFormula`, TAL terms (`base` + `talCoeff*TAL`) render first, followed by ATK terms (`atkItem`), followed by the independent Focused Art bonus term (`+ 0.2×stepMult×focusedArtLv×SP Focused Art` in `.dmg-sp`).
