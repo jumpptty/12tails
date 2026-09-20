@@ -359,3 +359,37 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
     - Step 2: 2x damage multiplier (`hitCount = 1`).
     - Step 3: 3x damage multiplier (`hitCount = 2`).
   - All components (ATK, TAL, and Focused Art) scale proportionally with the step multiplier.
+
+
+### Focused Art (`panda_focusedArt`, skills #263/#264)
+
+- **Passive, 0 MP / 0 SP, no cooldown.** Rank 1 = Lv 30 / Bn 21, rank 2 = Lv 33 / Bn 24 (`decode_skilldata.py`; passive tail `PandaSkill.cs:1821-1839`).
+- **Tooltip:** "Passively add 50% / 100% of Panda's current sp to all of its StikeMaster skills damage." (`PandaSkill_eng.cs:506-523`; Thai `PandaSkill_thai.cs:528`, `:539`).
+- **Formula (`Panda.cs:8976-8985`):**
+  `getFocusedArtLv() = hasSkill(264) ? 2 : (hasSkill(263) ? 1 : 0)` (rank 2 replaces rank 1, no stacking);
+  `getFocusedArtDmg() = 0.5 * mChar.sp * getFocusedArtLv()`.
+- **Where it applies:** the term is added *inside* the ATK bracket, `coeff * (ATK + getFocusedArtDmg()) + talAdjust(...)`, so the effective bonus per hit is `coeff * 0.5 * SP * rank` — it scales with each skill's own ATK coefficient (the tooltip's "50%/100%" is relative to that bracket, not a flat share of SP). SP is the live `mChar.sp` at the moment the hit resolves.
+- **Consumers** (all `Panda.cs`; Focused Spirit is a separate passive for normal attacks, `getFocusedSpiritDmg() = 0.3*sp*lv`, `:8969`):
+
+| Skill | Lines | Damage formula |
+|---|---|---|
+| Three Steps | 20943, 21113, 21327 | `0.4·(ATK+FA) + talAdjust(3·sLv)` |
+| Rushing Falcon | 22107, 22245, 22395 | `0.5·(ATK+FA) + talAdjust(5·sLv)` |
+| Qi Strike (`$RPC_qiStrike2`) | 23526 | `sLv·(ATK+FA)` (hit id `210+sLv`) |
+| Pummel | 24770, 24788 | `0.35·(ATK+FA) + talAdjust(5·sLv+5)`; `0.25·(ATK+FA) + talAdjust(5·sLv)` |
+| Tower Rush | 25429, 25442 | `0.75·(ATK+FA) + talAdjust(15·sLv+15)`; `0.5·(ATK+FA) + talAdjust(15·sLv)` |
+| Tiger Toss | 26675 | `0.5·(ATK+FA) + talAdjust(15·sLv)` |
+| Tiger Pounce | 26828 | `0.5·(ATK+FA) + talAdjust(weight)` |
+| Climbing Cliff | 27516 | `0.3·(ATK+FA) + talAdjust(10)` |
+| Crumbling Mountain | 28153 | `0.3·(ATK+FA) + talAdjust(10)` |
+| Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
+| Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
+
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps and Rushing Falcon cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+
+### Nine Steps (`panda_nineSteps`, skill #402)
+
+- **Passive Class-C, Lv 55 / Bn 0, 0 MP / 0 SP, no cooldown** (`decode_skilldata.py`).
+- **Tooltip:** "Passively increases damage of ThreeStep and RushingFalcon by the number of its own hit." (`PandaSkill_eng.cs:935-943`; Thai `PandaSkill_thai.cs:957`).
+- **Hook:** `getNineStepsLv() = hasSkill(402) ? 1 : 0` (`Panda.cs:9693`); each step does `if (getNineStepsLv() > 0) hitDmg *= 1 + hitCount;` (`Panda.cs:21118-21124`, `:21332`, `:22250`, `:22400`). Steps therefore deal 100% / 200% / 300% (6× total vs 3×), scaling ATK, TAL and Focused Art terms alike.
+- The `getNineStepsLv() != 0` check at `Panda.cs:21569` only chooses between the `nineStep1` / `nineStep2` voice clips (50% each) — no damage effect.
