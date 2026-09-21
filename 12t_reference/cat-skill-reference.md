@@ -265,3 +265,48 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - Note: Code gives `+0.3 × LCK`, which actually exceeds the normal `0.2 × LCK` random ceiling and is completely deterministic.
 - **App modeling:** `cat_noChance` (`passive: true`, `compatSkills: ["cat_nAttack"]`), cross-linked with `cat_nAttack` (`compatSkills: ["cat_noChance"]`). Mentions and links Hidden Blade for clarification.
 
+### cat_nineLives1-2 (263, 264) — passive, RANK FAMILY
+- reqLv 30 / 35, reqBn 21 / 23, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`, `CatSkill.cs:565-583`, `:2794-2815`).
+- **Trigger Logic:** Located in `Cat.cs:207-366` inside `Cat.Update()` when `hp <= 0` and `actionState != "dead"`:
+  ```csharp
+  int nineLivesLv = this.getNineLivesLv(); // returns 1 if hasSkill(263), 2 if hasSkill(264)
+  // Evaluated after blackServant, autoLife, and Small Anubi pet (p_sab):
+  if (UnityEngine.Random.Range(0, 100) < this.mChar.lckAdjust(nineLivesLv * 6))
+  {
+      if (this.mChar.getStatus("death") == null)
+      {
+          this.StartCoroutine_Auto(this.RPC_nineLives(this.KOIRnET4pM.position, this.KOIRnET4pM.forward, 0, nineLivesLv));
+          if (PhotonClient.IsInitialized())
+          {
+              this.ActionEvent("RPC_nineLives" + nineLivesLv, this.KOIRnET4pM.position, this.KOIRnET4pM.forward, 0);
+          }
+          break; // prevents RPC_dead
+      }
+  }
+  ```
+- **Base Chance & LCK Scaling:**
+  - Rank 1 (`nineLivesLv = 1`): Base chance = `1 × 6 = 6%`
+  - Rank 2 (`nineLivesLv = 2`): Base chance = `2 × 6 = 12%`
+  - Scaled by `mChar.lckAdjust(nineLivesLv * 6)` using the character's LCK:
+    `num = baseChance × (1 + 0.01 × Clamp(LCK, 1, 512))`
+    `Proc% = Floor(100 × num / (num - baseChance + 100))`
+- **Revive Sequence & Effects (`Cat.cs:27238-27645`, `$RPC_nineLives$21898`):**
+  1. Cat collapses to the ground (`hp = 0`, `actionState = "dead"`, plays animation `"ko"` with `deadEffect`) and lies motionless for **3.0 seconds** (`Yield(2, WaitForSeconds(3f))`).
+  2. At 3.0s, Cat revives with:
+     - `hp = 99` (revives with flat 99 HP).
+     - `ko = mChar.mko` (fully restores KO bar).
+     - `mChar.actionState = "attack"`, `myCommand = "nineLives"`.
+     - Status: `addStatus("noDamage", 1, 3, 0, ActorNr)` gives **3.0 seconds of invulnerability** (`noDamage`).
+     - Plays animation `"getUp"` (1.0s wait) with randomized voice line (`nineLives1` or `nineLives2`).
+  3. Returns to `actionState = "standby"`.
+- **Internal Cooldown (Bug / Missing Check):**
+  - In `RPC_nineLives` (`Cat.cs:27390`), the code calls:
+    `this.$self_$21901.mChar.addTimeOut("nineLives", this.$self_$21901.mChar.agiAdjust((float)60));`
+    intending a 60-second cooldown scaled by AGI (`agiAdjust(60)`).
+  - **However, `Cat.cs:334` NEVER checks `isTimeOut("nineLives")` before proccing!** There is not a single `isTimeOut("nineLives")` check anywhere in the game codebase.
+  - **Net Result:** There is **NO functional internal cooldown**. Once the 3-second `noDamage` invulnerability ends, if the Cat suffers lethal damage again, Nine Lives can proc again immediately if the LCK roll succeeds.
+- **Client Tooltips:**
+  - EN: *"Passively gives Cat a 6% change to revive when it dies."* / *"12% change"* (`CatSkill_eng.cs:510`, `:521` — source has typo "change" for "chance").
+  - TH: *"ทักษะติดตัวที่ทำให้แมวมีโอกาส 6% ที่จะฟื้นคืนชีพ เมื่อตาย"* / *"12%"* (`CatSkill_thai.cs:532`, `:543`).
+
+
