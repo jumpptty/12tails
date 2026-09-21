@@ -234,3 +234,34 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Lucky Dice:** adds a flat `+LCK` to the roll (`Cat.cs:23939`) — both ends move, so the range becomes `LCK … (sLv+1)×LCK − 1` (tooltip: "1.0~3.0", the rank 2 result).
 - **Double Down:** the range/size variable `mRange` goes 1 → 2 (`Cat.cs:25389-25396`) and the hit's KO becomes `sLv×3 + 2 + (hasSkill(432) ? 2 : 0)` (`Cat.cs:25358`) — "Doubles the size of DoubleDown and its ko damage". The Thai tooltip calls Double Down "Cacton".
 - Tooltips: EN "Increases the damage of LuckyDices to 1.0~3.0. Doubles the size of DoubleDown and its ko damage." (`CatSkill_eng.cs:972`); TH "เพิ่มความเสียหายของ LuckyDices เป็น 1.0~3.0 ขยายขนาดของ Cacton ขึ้น 2 เท่าและเพิ่ม ko ขึ้นอีก 2" (`CatSkill_thai.cs:990`).
+
+### cat_noChance5 (401) — passive, Class C
+- reqLv 55, reqBn 0, MP 0, SP 0, mode passive, required skill 103 (Combo Lv 3, `cat_nAttack3`), no cType (`decode_skilldata.py`, `CatSkill.cs:962-984`, `3172`).
+- **Normal Attack LCK Damage Override:** The only `hasSkill(401)` check in the game engine is in `CharacterControl.cs:3513-3537` inside `CharacterControl.hit(int actionCode, ...)`:
+  ```csharp
+  if (this.Type == "Cat")
+  {
+      if (this.hasSkill(401))
+      {
+          if (actionCode < 10)
+          {
+              nDamage = Mathf.CeilToInt(Mathf.Clamp(this.damageMod, 0f, 5f) * (float)nDamage + 0.3f * (float)this.lck);
+              goto IL_1549; // jumps directly to defAdjust, skipping dmgAdjust!
+          }
+      }
+  }
+  nDamage = this.dmgAdjust(nDamage);
+  IL_1549:
+  nDamage = characterControl.defAdjust(nDamage);
+  ```
+- **Mechanics Breakdown:**
+  - **Normal behavior without No Chance:** Outgoing damage goes through `CharacterControl.dmgAdjust` (`CharacterControl.cs:20487-20491`), which adds `(float)Random.Range(0, Mathf.CeilToInt(0.2f * (float)this.lck))`. This is a random roll from 0 up to `0.2 × LCK` (exclusive integer ceiling).
+  - **With No Chance:** For basic combo strikes (`actionCode < 10`: Cat's `nAttack1`..`nAttack4` pass action codes 1, 2, 3, 4; `Cat.cs:16694`, `17447`, `18135`, `18378`, `19111`, `19352`), the code explicitly adds a flat **`+ 0.3 × LCK`** and immediately executes `goto IL_1549`, completely **bypassing `dmgAdjust`**.
+  - **Zero Variance:** Eliminates all RNG from the LCK roll on normal attacks.
+  - **Scope Limitation:** Special procs such as Hidden Blade pass `actionCode = 333` (`Cat.cs:18068`, `18313`, `19047`), which is `>= 10` and therefore does **not** receive this bonus.
+- **Client Tooltips:**
+  - EN: *"Gives Cat's normal attack the ability to always deals maximum luck damage."* (`CatSkill_eng.cs:884`).
+  - TH: *"ทำให้การโจมตีปกติของแมวให้ผลสุ่มสูงสุดจากค่า Lck เสมอ "* (`CatSkill_thai.cs:906`).
+  - Note: Code gives `+0.3 × LCK`, which actually exceeds the normal `0.2 × LCK` random ceiling and is completely deterministic.
+- **App modeling:** `cat_noChance` (`passive: true`, `compatSkills: ["cat_nAttack"]`), cross-linked with `cat_nAttack` (`compatSkills: ["cat_noChance"]`).
+
