@@ -263,5 +263,5 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - EN: *"Gives Cat's normal attack the ability to always deals maximum luck damage."* (`CatSkill_eng.cs:884`).
   - TH: *"ทำให้การโจมตีปกติของแมวให้ผลสุ่มสูงสุดจากค่า Lck เสมอ "* (`CatSkill_thai.cs:906`).
   - Note: Code gives `+0.3 × LCK`, which actually exceeds the normal `0.2 × LCK` random ceiling and is completely deterministic.
-- **App modeling:** `cat_noChance` (`passive: true`, `compatSkills: ["cat_nAttack", "cat_hiddenBlade"]`), cross-linked with `cat_nAttack` (`compatSkills: ["cat_noChance"]`) and `cat_hiddenBlade` (`compatSkills: ["cat_noChance"]`).
+- **App modeling:** `cat_noChance` (`passive: true`, `compatSkills: ["cat_nAttack"]`), cross-linked with `cat_nAttack` (`compatSkills: ["cat_noChance"]`). Mentions and links Hidden Blade for clarification.
 
