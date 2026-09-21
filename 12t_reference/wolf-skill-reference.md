@@ -252,6 +252,18 @@ Private-server values are documented from the Bible skill-detail schema; BigBug 
 
 Source of server deltas: `12t_projects/bible/index.html:10761,10769`.
 
+### wlf_crossBreak1-3 (261/262/263) — active, rank family
+
+- **Metadata:** three ranks; rank 3 is Lv 30/Bn 18, MP 35, SP -40 (red/consumed), target-enemy, `cType crossBreak` (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`). Base cooldown is `agiAdjust(60)` (`Wolf.cs:24066`).
+- **Exact damage:** every target in the 5m area receives one direct hit with:
+  ```csharp
+  mChar.hit(260 + sLv, target,
+      (int)(0.4f * mChar.atk + mChar.talAdjust(45 * sLv)),
+      5 * sLv, 0, Vector3.zero);
+  ```
+  (`Wolf.cs:23960-23973`). The `0.4 × ATK` term is a plain float multiplication and is combined with the already-rounded `talAdjust` result before the outer C# `(int)` truncation. **It does not call `atkAdjust()`**, therefore it has no second ATK-side LCK roll. The only attacker LCK rolls are inside `talAdjust` and later `dmgAdjust` in the shared hit pipeline.
+- **Rank 3 raw formula:** `int(0.4 × ATK + talAdjust(135))`; KO = 15. It continues through the shared `dmgAdjust → defAdjust → hitMod` pipeline after the `hit(...)` call.
+
 ## Class-C Passives
 
 Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Only Fortitude is written up so far; `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5` and `wildHeart5` still need their own entries.

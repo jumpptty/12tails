@@ -265,6 +265,21 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - Note: Code gives `+0.3 × LCK`, which actually exceeds the normal `0.2 × LCK` random ceiling and is completely deterministic.
 - **App modeling:** `cat_noChance` (`passive: true`, `compatSkills: ["cat_nAttack"]`), cross-linked with `cat_nAttack` (`compatSkills: ["cat_noChance"]`). Mentions and links Hidden Blade for clarification.
 
+### cat_powerOne1 / cat_powerTwo2 / cat_powerThree3 / cat_powerSeven4 / cat_superSeven5 (241/242/243/244/442) — passive family
+- **Metadata:** all are single-rank passive skills with no MP/SP cost or `cType`. Requirements: Power One Lv16/Bn4, Power Two Lv20/Bn8, Power Three Lv24/Bn12, Power Seven Lv28/Bn16, Super Seven Lv85/Bn6 (`scripts/decode_skilldata.py DecompiledSource/CatSkill.cs`). Every matching icon is present in the Cat asset folder and embedded as `cat_powerOne1`, `cat_powerTwo2`, `cat_powerThree3`, `cat_powerSeven4`, and `cat_superSeven5` in the Bible.
+- **Single shared hook:** the mechanics are not in `Cat.cs`; `CharacterControl.hit(...)` applies them to any Cat hit against another Player/Enemy before the ordinary attacker-side `dmgAdjust` step (`CharacterControl.cs:2807-3014`). Each matching condition replaces raw `nDamage` with `floor(nDamage × multiplier)`:
+  ```csharp
+  if (this.hp % 10 == 7 && this.hasSkill(244)) nDamage = Mathf.FloorToInt(nDamage * 1.7f);
+  if (this.hp % 10 == 3 && this.hasSkill(243)) nDamage = Mathf.FloorToInt(nDamage * 1.3f);
+  if (this.hp % 10 == 2 && this.hasSkill(242)) nDamage = Mathf.FloorToInt(nDamage * 1.2f);
+  if (this.hp % 10 == 1 && this.hasSkill(241)) nDamage = Mathf.FloorToInt(nDamage * 1.1f);
+  ```
+  The modified hit then continues through the normal `dmgAdjust → target.defAdjust → hitMod` pipeline. The floor occurs **before** outgoing LCK spread and defense mitigation, so this is not the generic `damageMod` multiplier.
+- **Super Seven override:** `hasSkill(442)` is checked *before* the four exact-last-digit checks. It tests digit positions 0-3 individually; any is 7 gives `floor(nDamage × 1.7)` (`CharacterControl.cs:2850-2912`). `Math.getDigit(num, pos)` first takes `abs(num) / 10^pos`, floors it, then returns `% 10`, so Super Seven matches 7 in the ones, tens, hundreds, or thousands place only (`Math.cs:656-660`). It does **not** check `hasSkill(244)`: Super Seven independently grants the 1.7× effect whenever one of those four HP digits is 7. Its tooltip understates this as merely enabling Power Seven.
+- **Priority:** Super Seven wins and jumps past every normal Power check; otherwise Power Seven, Three, Two, then One are mutually exclusive because a number has one final digit. At raw damage 1-9, `floor` can make the displayed increase smaller than the nominal percentage.
+- **Client tooltips:** EN: Power One “Passively increases Cat's damage by 10% when last digit of its hp is equal to 1.” (`CatSkill_eng.cs:396-405`); Two 20% (`:407-416`); Three 30% (`:418-427`); Seven 70% (`:429-438`); Super Seven “Passively enables PowerSeven to activate when there's a number 7 in Cat's hp.” (`:979-988`). Thai equivalents are at `CatSkill_thai.cs:418-461` and `:1001-1010`.
+- **App modeling:** use five passive cards with no cost, cooldown, duration, or status chips. Each description must state its exact HP-digit condition and `floor(raw × multiplier)` ordering; Super Seven needs a reciprocal `compatSkills` link to Power Seven and an explicit note that it triggers from any 7 among the last four HP digits without requiring Power Seven.
+
 ### cat_nineLives1-2 (263, 264) — passive, RANK FAMILY
 - reqLv 30 / 35, reqBn 21 / 23, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`, `CatSkill.cs:565-583`, `:2794-2815`).
 - **Trigger Logic:** Located in `Cat.cs:207-366` inside `Cat.Update()` when `hp <= 0` and `actionState != "dead"`:
