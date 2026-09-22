@@ -12,7 +12,7 @@ For most enemies/structures, `<Unit>.cs` in `DecompiledSource/` only sets placeh
 ## Procedure
 
 1. **Reconfirm the field order against `CharacterControl.cs` in `DecompiledSource/`** (verified against `CharacterControl.cs` around line ~29675+):
-   `Name(str), Type(str), Lv, Skin, Race, hp, sp, mp, ko, mhp, msp, mmp, mko, atk, def, agi, vit, mag, cha, tal, lck, weight, runSpeed(float)...`
+   `Name(str), Type(str), Lv, Skin, Race, mTargetAvartar(PPtr<Texture>, 8 bytes), hp, sp, mp, ko, mhp, msp, mmp, mko, atk, def, agi, vit, mag, cha, tal, lck, weight, runSpeed(float)...`
    The 8 main stats are `atk, def, agi, vit, mag, cha, tal, lck` (8 consecutive int32s).
 
 2. **Find the right binary file:** `12TailsOnline_Data/` at the repo root (containing `resources.assets`, `level0`, `level1`, ... `sharedassets*.assets`).

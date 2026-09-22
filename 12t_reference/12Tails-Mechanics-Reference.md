@@ -225,6 +225,22 @@ In BigBug Studio's code, developers implemented debuffs intended to *increase* d
 * **Removal:** Status expiration reverses the exact operation (`removeStatus`, CharacterControl.cs:37261–42083).
 * **Deliverables & Tooltip Convention:** Player tools describe this mechanic using the player-facing standard `+0.xx hitmod` (e.g. `+0.05` to `+0.20` for Amplify Damage) matching the intended game design and Monkey/Bat pilot conventions. Do not treat the source `-=` as a bug to be re-investigated in future sessions.
 
+### 2.7 Type-specific flat reduction — CaptainCrab
+
+`CaptainCrab` (Crab Captain) has a built-in **100 flat damage reduction per direct hit**. It is not part of `defAdjust` or `hitMod`:
+
+```csharp
+// RPC_AddDamage first: ceil(clamp(hitMod, 0, 3) * nDamage)
+// CharacterControl.cs:3765
+
+// Later, in the direct-damage AddDamage coroutine:
+if (this.self.Type == "CaptainCrab")
+    nDamage = Mathf.Max(0, nDamage - 100);
+// CharacterControl.cs:31639-31650
+```
+
+Therefore the native direct-hit order at this tail of the pipeline is **`hitMod` → shields/status absorption → `max(0, damage − 100)` → HP damage accumulation** (`RPC_AddDamage`: CharacterControl.cs:3759-3765; `AddDamage`: CharacterControl.cs:31580-31662). The test is absent from the separate `RPC_AddEffectDamage` path (whose `hitMod` is at CharacterControl.cs:6203), so this special reduction does **not** apply to effect/true/DoT damage. `GiantSandBug` has the analogous direct-hit `−30` clause immediately before it (CharacterControl.cs:31627-31638).
+
 ---
 
 ## 3. Skills
@@ -348,6 +364,8 @@ Status effects are queried at runtime via static boolean predicates in `StatusDa
 | **`isLockStatus(sType)`** | Total action disables / locks. |
 | **`isShieldStatus(sType)`** | Active protective shields absorbing incoming damage. |
 | **`isSystemStatus(sType)`** | Internal engine statuses that cannot be modified or cleared by player abilities. |
+
+**The `damagePlus` status (next-hit raw-damage bonus).** `damagePlus` is both **Magical** and a **Buff** (`StatusData.cs:5421`, `:6644`). During the generic `CharacterControl.hit()` pipeline, an active stack adds `10 × status.sLv` to `nDamage`, then subtracts 1 from `status.sValue`; the status is removed when that value reaches 0 (`CharacterControl.cs:3447-3474`). It therefore applies after any earlier raw-damage transformation at the hit site and before the ordinary attacker `dmgAdjust` step.
 
 **The `dispell` status (magic-status purge + short immunity).** `StatusData.cs:5813/6848/7478` list `dispell` in `isMagicalStatus`, `isBuffStatus` and `isDebuffStatus`. Its `sLv` is the **purge tier**, applied with `sTime = 1` (1 second):
 - **On apply** (`CharacterControl.cs:38485`, `case "dispell"`): every active status with `isMagical()` and `status.sLv <= dispell.sLv` is collected into `mDispellList` and removed via `removeStatus` (`:38508-38560`).
