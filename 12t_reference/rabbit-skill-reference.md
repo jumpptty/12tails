@@ -431,7 +431,8 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Damage Type:** True Effect Damage (`effectDamage: true`, purple damage font in formula and purple digit popup `dmgdigit_p<N>` in simulation, bypasses DEF and damageMod).
 * **Duration & Pulse Cadence:** `chaAdjust(12)` seconds total duration, pulsing once every 2.0s (`Rabbit_acidicField.cs:131`).
 * **Hit Count Scaling:** Dynamic pulse count $= \lfloor\text{chaAdjust}(12) / 2\rfloor$ (6 pulses at base CHA, scaling with CHA).
-* **Status:** Applies `"acid"` status.
+* **Area:** Each pulse calls `Damage.FindAreaTarget(transform.position, 12, 3, layerMask)` (`Rabbit_acidicField.cs:141`) — a fixed 12m radius / 3m height cylinder, identical at both ranks and **not** multiplied by `rangeMod` (the field object isn't the caster). The Thai client tooltip claims "8 m" for Rank 1 vs "12 m" for Rank 2 (`RabbitSkill_thai.cs:455`, `:465`); the code shows one constant radius for both ranks, so the tooltip's per-rank figure is stale/inaccurate.
+* **Status:** Applies/refreshes `"acid"` (duration 3s, re-applied every pulse) on each hit target — `deltaDef(-10 * effectiveLv)` (`RPC_AddStatus` call `Rabbit_acidicField.cs:193`; apply-side DEF delta at `CharacterControl.cs:16820`). Classification: `isDebuffStatus` and `isPhysicalStatus` both true (`StatusData.cs:7448`, `:5499`) — Debuff, Physical.
 * **Dependency:** `rab_healingField5` (Skill ID 442, `RabbitSkill.cs:3255`) adds `+1` effective skill level.
 
 ### 11. Healing Field (`healingField1`)
@@ -440,3 +441,9 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Duration & Pulse Cadence:** `chaAdjust(12)` seconds total duration, pulsing once every 2.0s.
 * **Hit Count Scaling:** Dynamic pulse count $= \lfloor\text{chaAdjust}(12) / 2\rfloor$ (6 pulses at base CHA $\rightarrow$ 420 total HP, scaling with CHA).
 * **Healing Output:** 70 flat HP restored per pulse to all allies in a 12m radius.
+
+### 12. Gorgon Shot (`gorgonShot1-2`)
+* **Source:** `Rabbit.cs:29638` (`Physics.SphereCastAll`) through `:29726` inside `$RPC_gorgonShot$27149`
+* **Formula:** `talAdjust(sLv * 50)` (no ATK term), KO `0` (`Rabbit.cs:29671`).
+* **Piercing beam, not a single-target shot:** `Physics.SphereCastAll(firePos, 1, fireDir, 36, hitLayer)` (`Rabbit.cs:29638`) collects every collider along a 36m, 1m-radius line, and the hit-processing `while` loop that follows never `break`s after a successful hit (`Rabbit.cs:29666-29726`) — it increments and keeps going. Every enemy pierced by the beam is hit, damaged, petrified, and grants the caster `+1 SP`, not just the first target struck.
+* **Status:** `"petrify"` applied per pierced target, duration `Damage.getDebuff(sLv*3+3, caster.cha, target.cha)` (`Rabbit.cs:29698`, `[6s, 9s]` base, CHA-contested). Apply-side effect (`CharacterControl.cs:37536-37568`): `deltaDef(-(sLv*20+20))` (DEF −40/−60), cleanses `paralysis`/`sleep`/`snowMan`/`blend`/`invisible`/`mindControl`, sets `actionState = "petrify"` and `moveSpeed = 0` (full stone lock, not merely slowed). Classification: `isDebuffStatus` and `isStateStatus` both true (`StatusData.cs:7454`, `:4932`); **not** in `isLockStatus`'s explicit name list (`groundLock`/`needlePrison`/`sticky`/`frost`/`lightBind` only, `StatusData.cs:6133-6178`) despite the hard movement/action lock — Debuff, State (matches the game's own classification, not the mechanical lock behavior).
