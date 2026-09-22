@@ -17,7 +17,7 @@ Index → role confirmed by the in-combat stat assembly (CharacterControl.cs:143
 
 | Idx | Stat | Primary role |
 |----|------|--------------|
-| 0 | **ATK** Attack   | physical skill base damage (`atkAdjust`) |
+| 0 | **ATK** Attack   | physical skill base damage (read raw, see §3.2 — `atkAdjust` exists but is dead code) |
 | 1 | **DEF** Defense  | damage mitigation (`defAdjust`); max KO |
 | 2 | **AGI** Agility  | reduces action/recovery time (`agiAdjust`) |
 | 3 | **VIT** Vitality | max HP |
@@ -122,10 +122,15 @@ dmgAdjust(d) = ceil( clamp(damageMod, 0, 5) * d + R )
 `damageMod` defaults to `1.0` (CharacterControl.cs:142) and is raised/lowered by buffs/debuffs (e.g. `damagePlus`,
 `powerBreak`). Capped at 5× outgoing.
 
-**`atkAdjust(p)`** physical skill base damage (CharacterControl.cs:20516):
+**`atkAdjust(p)`** (CharacterControl.cs:20516) — **dead code, never called.** Fully implemented, same shape as
+every other adjuster:
 ```
 atkAdjust(p) = floor( clamp( p * (ATK + R), 1, 512 ) )
 ```
+but `grep -rn "atkAdjust("` across the entire `DecompiledSource/` tree returns only this definition — zero
+call sites in any `<Class>.cs`, companion file, or elsewhere in `CharacterControl.cs` itself. Real ATK-scaling
+damage (basic attacks, charge attacks, hybrid ATK+TAL skills) reads the raw `mChar.atk` stat directly with a
+plain float coefficient instead (see §3.2) — do not cite this function as live in any card/desc.
 
 **`koAdjust` / `hateAdjust` / `forceAdjust`** (CharacterControl.cs:20495/20509/20502):
 ```
@@ -208,22 +213,31 @@ asymptotically approaches but never reaches 100.
    ```
 3. **Hard Clamps:** Multiplier is clamped to `[0.0, 3.0]`.
 
-#### ⚠️ Decompiled Source Inverted Sign Arithmetic Trap:
-In BigBug Studio's code, developers implemented debuffs intended to *increase* damage taken using subtraction, and buffs intended to *reduce* damage taken using addition:
-* **Incoming Damage Amplifiers (Debuffs):**
-  * `amplifyDamage` (Bat): `this.hitMod -= 0.05f * (float)sLv` (CharacterControl.cs:18163) — intended design / tooltip: `+5% * rank` (+0.05 to +0.20) incoming damage.
-  * `ignite` (Monkey): `this.hitMod -= 0.1f * (float)sLv` (CharacterControl.cs:17127) — intended design / tooltip: `+10% * rank` (+0.10 to +0.20) incoming damage.
-  * `inferno`: `this.hitMod -= 0.1f * (float)sLv` (CharacterControl.cs:18971).
-  * `miracleDrop` (Rabbit): `this.hitMod -= 0.1f * (float)sLv + 0.1f` (CharacterControl.cs:16962).
-  * `maim` (Rabbit): `this.hitMod -= 0.05f * (float)sLv` (CharacterControl.cs:16698).
-  * `reduce`: `this.hitMod -= 0.05f * (float)sLv` (CharacterControl.cs:16698).
-* **Incoming Damage Reducers (Buffs):**
-  * `sealOfDefense` (Sheep): `this.hitMod += 0.1f` (CharacterControl.cs:17916) — intended design / tooltip: `+10% defense`.
-  * `sealOfEarth` (Sheep): `this.hitMod += 0.15f` (CharacterControl.cs:17930).
-  * `sealOfHeaven` (Sheep): `this.hitMod += 0.05f` (CharacterControl.cs:17945).
-  * `enlarge`: `this.hitMod += 0.05f * (float)sLv` (CharacterControl.cs:16772).
-* **Removal:** Status expiration reverses the exact operation (`removeStatus`, CharacterControl.cs:37261–42083).
-* **Deliverables & Tooltip Convention:** Player tools describe this mechanic using the player-facing standard `+0.xx hitmod` (e.g. `+0.05` to `+0.20` for Amplify Damage) matching the intended game design and Monkey/Bat pilot conventions. Do not treat the source `-=` as a bug to be re-investigated in future sessions.
+#### Apply-site vs removeStatus mirror (fixed 2026-09-22 — see the same-day `atkAdjust` finding for the
+general pattern; citations below were pointing at the `removeStatus` mirror, not the real apply site)
+The true apply-site logic lives in the generic per-status coroutine (`CharacterControl.cs` ~29658–42189, the
+"Main()" state machine `hit()`/`RPC_AddStatus` compiles down to), **not** `removeStatus` (CharacterControl.cs
+:14452–19043) — `removeStatus` only reverses whatever the apply site did, at the same line offset minus
+~21000. Citing the mirror instead of the apply site is an easy mistake (both contain a plausible-looking
+`hitMod -=`/`+=` line for the right status name) and is exactly what happened here previously. Values below
+are re-verified at the real apply-site line:
+* **Incoming Damage Amplifiers (Debuffs, `hitMod` increases):**
+  * `amplifyDamage` (Bat): `this.hitMod += 0.05f * sLv` (CharacterControl.cs:40480) — `+5%×rank` (+0.05 to +0.20) incoming damage.
+  * `ignite` (Monkey, World Ignition): `this.hitMod += 0.1f * sLv` (CharacterControl.cs:37903) — `+10%×rank` incoming damage; card-verified, `monkey_worldIgnition2`'s own `desc` independently states "รับความเสียหายเพิ่มขึ้นจากทุกแหล่งที่มา".
+  * `inferno`: `this.hitMod += 0.1f * sLv` (CharacterControl.cs:42083).
+  * `miracleDrop` (Rabbit): `this.hitMod += 0.1f * sLv + 0.1f` (CharacterControl.cs:37674) — a tradeoff, not a pure debuff: `damageMod` gains the identical `+0.1×sLv+0.1` in the same block, so this is "hit harder, get hit harder."
+  * `reduce`: `this.hitMod += 0.05f * sLv` (CharacterControl.cs:37261) — same tradeoff shape as `miracleDrop` (a self-shrink effect; see `MOD_DEFS.reduceDmg`/`reduceHit` in `index.html`).
+  * `maim` (Rabbit): **no `hitMod`/`damageMod`/`moveMod` change found.** Both the apply-site (`CharacterControl.cs:37208-37214`) and `removeStatus` (`:16642-16648`) cases are empty (`goto`/`break` only, no field writes) — the previous `hitMod -= 0.05×sLv` claim here was actually `reduce`'s line miscited under `maim`'s name. Whatever `maim` actually does (its name suggests a different debuff entirely) has not been traced yet; do not re-add a `hitMod` claim for it without tracing its real effect first.
+* **Incoming Damage Reducers (Buffs, `hitMod` decreases):**
+  * `sealOfDefense` (Sheep): `this.hitMod -= 0.1f` (CharacterControl.cs:39699) — `-10%` incoming damage.
+  * `sealOfEarth` (Sheep): `this.hitMod -= 0.15f` (CharacterControl.cs:39713) — also `damageMod += 0.05f` in the same block.
+  * `sealOfHeaven` (Sheep): `this.hitMod -= 0.05f` (CharacterControl.cs:39728) — also `damageMod += 0.15f` in the same block.
+  * `enlarge`: `this.hitMod -= 0.05f * sLv` (CharacterControl.cs:37341).
+* **Removal:** Status expiration reverses the exact operation — the mirror lines are in `removeStatus`,
+  CharacterControl.cs:14452–19043 (e.g. `amplifyDamage`'s own mirror sits at :18163, `ignite`'s at :17127).
+* **Deliverables & Tooltip Convention:** Player tools describe this mechanic using the player-facing standard
+  `+0.xx hitmod` (e.g. `+0.05` to `+0.20` for Amplify Damage), which matches the sign of the real apply site
+  above — no inversion to correct for.
 
 ### 2.7 Type-specific flat reduction — CaptainCrab
 
@@ -281,12 +295,20 @@ this.mChar.hit(444, target, this.mChar.talAdjust(50) + 200, 3, 0, Vector3.zero);
 So that skill's damage before the attacker/defender adjusters is `talAdjust(50) + 200`.
 
 - **Most active skills scale on TAL** via `talAdjust(coeff)` (`+2%`/TAL).
-- **Basic/weapon-style hits scale on ATK** via `atkAdjust(coeff)` (`×(ATK+R)`).
+- **Basic/weapon-style and hybrid ATK+TAL hits scale on ATK by reading the raw stat directly**
+  (`mChar.atk` × a plain float coefficient, e.g. Cat's Combo at `Cat.cs:16502`: `(int)(0.5f * mChar.atk)`;
+  Cat action 434 at `Cat.cs:40195`: `(int)(1.5f * mChar.atk + talAdjust(45))`) — **not** through `atkAdjust`.
+  `atkAdjust(p)` is fully implemented at
+  `CharacterControl.cs:20516` (`floor(clamp(p*(ATK+R),1,512))`, matching the shape of the other
+  adjusters) but has **zero call sites anywhere in the decompiled source** (`grep -rn "atkAdjust("` across
+  all of `DecompiledSource/` returns only its own definition) — verified dead code, not merely unwired in
+  one class's files (checked project-wide, per the Dead Code Verification Gate in AGENTS.md §3.0). Do not
+  cite `atkAdjust` as the mechanism for ATK-scaling damage in any card/desc.
 - The final number then runs through `dmgAdjust` (attacker) → `defAdjust` (target) from §2.
 
 ### 3.3 Representative coefficients (sampled from Cat.cs)
-Coefficient = the literal passed to `talAdjust(...)`/`atkAdjust(...)`; small for low-tier moves, large for
-ultimates:
+Coefficient = the literal passed to `talAdjust(...)` (ATK-scaling terms, per §3.2 above, are a plain float
+multiplier on the raw stat, not a call to any adjuster); small for low-tier moves, large for ultimates:
 
 | Coeff seen | 1 | 3 | 5 | 6 | 12 | 14 | 15 | 30 | 45 | 50 |
 |------------|---|---|---|---|----|----|----|----|----|----|
@@ -319,9 +341,12 @@ These five skills are class-independent engine constants.
 
 ## 4. Hidden mechanics & special interactions
 
-- **Luck touches everything.** The `R = Random(0, ceil(0.2*LCK))` spread is added inside `dmgAdjust`, `atkAdjust`,
-  `defAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust`, `talAdjust`. High LCK is a soft, universal stat buff (more
-  upside on every roll) plus a direct `%`-chance boost through `lckAdjust`.
+- **Luck touches everything actually reachable.** The `R = Random(0, ceil(0.2*LCK))` spread is added inside
+  `dmgAdjust`, `defAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust`, `talAdjust` — all confirmed live. `atkAdjust`
+  also contains this same roll in its own body but is dead code (see §3.2), so its `R` spread never actually
+  fires; ATK-scaling damage gets its LCK spread only from the shared `dmgAdjust`/`defAdjust` stages downstream,
+  same as everything else. High LCK is a soft, universal stat buff (more upside on every roll) plus a direct
+  `%`-chance boost through `lckAdjust`.
 - **Global multiplier mods** (default 1.0, changed by statuses): `damageMod` (0–5 cap on outgoing damage),
   `koMod`, `hateMod`, `forceMod`. Reset to defaults at CharacterControl.cs:142+.
 - **Holy interactions** — `holyArmor` and `holySword` multiply a value by `1000` then add `getStatusValue(...)`
@@ -459,7 +484,7 @@ diminishing-but-uncapped value.
 | System | Key file(s) / lines |
 |--------|---------------------|
 | Damage helpers & display | `Damage.cs` (`getDamage` :262, `getBuff` :309, `getDebuff` :317; AoE target finders; FX displays) |
-| Combat adjusters | `CharacterControl.cs` :20487–20671 (`dmgAdjust/atkAdjust/defAdjust/agiAdjust/magAdjust/chaAdjust/talAdjust/lckAdjust/koAdjust/hateAdjust/forceAdjust`) |
+| Combat adjusters | `CharacterControl.cs` :20487–20671 (`dmgAdjust/atkAdjust/defAdjust/agiAdjust/magAdjust/chaAdjust/talAdjust/lckAdjust/koAdjust/hateAdjust/forceAdjust`; `atkAdjust` at :20516 is dead code — zero call sites project-wide, see §3.2) |
 | Hit pipeline | `CharacterControl.cs` :2807 (`hit`), :3540–3566 (order), :3680 (`RPC_AddDamage`) |
 | Derived stats & gear assembly | `CharacterControl.cs` :1431–1497 |
 | Stat string parse/build | `CharacterDataClass.cs` :1216 (`getStat`), stat assembly ~:370–407 |
