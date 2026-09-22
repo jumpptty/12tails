@@ -316,10 +316,25 @@ below for why they were initially left out and then given their own rows.
 
 
 
+### Shadow Fist (`panda_shadowFist`, skill IDs #331–#334)
+
+- **Ranks / requirements:** four passive ranks with no MP or SP cost: R1 Lv. 9 / Bn. 3, R2 Lv. 15 / Bn. 5, R3 Lv. 21 / Bn. 7, R4 Lv. 27 / Bn. 9 (`PandaSkill.cs:733-768`, `:1614-1638`; decoded `pnd_shadowFist1`–`4`). `getShadowFistLv()` resolves the highest learned ID 331/332/333/334 to levels 1/2/3/4 (`Panda.cs:9144-9192`).
+- **Effect Damage:** after a successful eligible base hit, `ShadowFist(target)` checks that the target is a living `CharacterControl`, then calls `RPC_AddEffectDamage(433, nShadowDamage, ...)` (`Panda.cs:35783-35821`). The separate hit is **Effect Damage**, not ATK/TAL damage and does not enter the ordinary defense damage formula. Its amount is `3 * ShadowFistRank`: 3 / 6 / 9 / 12.
+- **Spirit Fist interaction:** with Spirit Fist (#433), Shadow Fist adds `floor(0.16 * PandaLevel)` to that Effect Damage before the `RPC_AddEffectDamage` call (`Panda.cs:35804-35821`). This is a flat addition after rank damage, not a 16% multiplier.
+- **Trigger rule:** it is not a random proc. A skill must successfully connect and explicitly start `ShadowFist(target)`; examples include normal-attack hit paths (`Panda.cs:15397-15407`, `:15582-15592`) and Sage-skill hit paths such as Water Monkey (`Panda.cs:33043-33086`), Water Crane (`:33905-33958`), Wind & Cloud, Rain & Storm, Lotus Palm, and Heaven Palm. If Shadow Fist is unlearned, the coroutine exits before making the Effect Damage call (`Panda.cs:35834-35855`).
+- **Duration / cooldown:** none; this is an immediate passive follow-up, not a status or cast.
+
+### Spirit Fist (`panda_spiritFist`, skill ID #433)
+
+- **Passive / requirement:** single-rank Class-C passive, Lv. 75 / Bn. 4, no MP or SP cost (`PandaSkill.cs:1275-1296`; decoded `pnd_spiritFist5`).
+- **Shadow Fist bonus:** adds `floor(0.16 * PandaLevel)` Effect Damage to each Shadow Fist follow-up (`Panda.cs:35804-35821`).
+- **Sage range bonus:** the code reads `hasSkill(433)` as 0/1 and adds it directly to the affected target-finder dimension, giving a genuine +1m before `rangeMod`: Water Monkey's three 2m rectangle dimensions (`Panda.cs:32900-33020`); Water Crane's 4m radius (`:33539`, `:33884-33886`); Stasis Blow and Death Blow's 1m/4m rectangle dimensions (`:34298-34312`, `:35114-35128`); Wind & Cloud (`:36768`); Rain & Storm's 5m radius (`:38381-38390`); and Heaven Palm's target radius (`:39821-39826`, `:40077`). It does not alter their base damage coefficients.
+- **Duration / cooldown:** none; all changes are passive and read at the affected cast's execution time.
+
 ### Water Monkey (`panda_waterMonkey`, skill IDs #311/#312)
 
 - **Ranks, requirements, and resource gate:** Rank 1 requires Lv. 5 / Bn. 1 / 12 SP; Rank 2 requires Lv. 11 / Bn. 3 / 16 SP. Both are instant, enemy-targeted casts and use `setSP(...)` (a positive SP initiation threshold, not SP consumption): `PandaSkill.cs:629-645`, `:1721-1746`.
-- **Cooldown and sequence:** the move sets `addTimeOut("waterMonkey", agiAdjust(30))` (`Panda.cs:33100-33118`). It executes two forward rectangular target scans, 0.7 seconds apart (`Panda.cs:32900-33020`, `:33003-33020`): each scan is 2m by 2m by 2m with Spirit Fist (#433) adding 1m to each of those dimensions, and a 3m `rangeMod` reach.
+- **Cooldown and sequence:** the move sets `addTimeOut("waterMonkey", agiAdjust(30))` (`Panda.cs:33100-33118`). It executes two forward rectangular target scans, 0.7 seconds apart (`Panda.cs:32900-33020`, `:33003-33020`). `FindRecTarget` takes **base half-width, far half-width, forward depth, height** (`Damage.cs:1416-1452`), so the `2, 2, 2, 3×rangeMod` call is a 4m-wide × 2m-deep × 3m-high rectangle, not four independent dimensions. Spirit Fist changes it to `3, 3, 3, 3×rangeMod`: 6m wide × 3m deep × 3m high.
 - **Damage:** every connected target hit uses action ID `310 + sLv` (311/312), KO `5 * sLv`, and
   `floor(0.5 * ATK + talAdjust(10 * sLv) * (1 + 0.5 * TimeAndTideLv))` (`Panda.cs:33043`). Rank 1/2 therefore use `talAdjust(10)` / `talAdjust(20)` before Time and Tide. The passive multiplies only the TAL-adjusted term; it does **not** scale the 0.5 ATK term. There is no `getFocusedArtDmg()` in the expression.
 - **Evasion while attacking:** against incoming damage while `myCommand == "waterMonkey"`, the engine rolls `Random.Range(0,100) < lckAdjust(50 * (hasSkill(413) ? 2 : 1))` and negates the attack on success (`CharacterControl.cs:3134-3167`). Thus its base is 50%, or 100% with Time and Tide (#413), before LCK adjustment; this is defensive and is deliberately not an outgoing-damage simulation proc.
