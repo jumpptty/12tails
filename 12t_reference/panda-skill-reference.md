@@ -316,6 +316,70 @@ below for why they were initially left out and then given their own rows.
 
 
 
+### Water Monkey (`panda_waterMonkey`, skill IDs #311/#312)
+
+- **Ranks, requirements, and resource gate:** Rank 1 requires Lv. 5 / Bn. 1 / 12 SP; Rank 2 requires Lv. 11 / Bn. 3 / 16 SP. Both are instant, enemy-targeted casts and use `setSP(...)` (a positive SP initiation threshold, not SP consumption): `PandaSkill.cs:629-645`, `:1721-1746`.
+- **Cooldown and sequence:** the move sets `addTimeOut("waterMonkey", agiAdjust(30))` (`Panda.cs:33100-33118`). It executes two forward rectangular target scans, 0.7 seconds apart (`Panda.cs:32900-33020`, `:33003-33020`): each scan is 2m by 2m by 2m with Spirit Fist (#433) adding 1m to each of those dimensions, and a 3m `rangeMod` reach.
+- **Damage:** every connected target hit uses action ID `310 + sLv` (311/312), KO `5 * sLv`, and
+  `floor(0.5 * ATK + talAdjust(10 * sLv) * (1 + 0.5 * TimeAndTideLv))` (`Panda.cs:33043`). Rank 1/2 therefore use `talAdjust(10)` / `talAdjust(20)` before Time and Tide. The passive multiplies only the TAL-adjusted term; it does **not** scale the 0.5 ATK term. There is no `getFocusedArtDmg()` in the expression.
+- **Evasion while attacking:** against incoming damage while `myCommand == "waterMonkey"`, the engine rolls `Random.Range(0,100) < lckAdjust(50 * (hasSkill(413) ? 2 : 1))` and negates the attack on success (`CharacterControl.cs:3134-3167`). Thus its base is 50%, or 100% with Time and Tide (#413), before LCK adjustment; this is defensive and is deliberately not an outgoing-damage simulation proc.
+- **On successful base hits:** each target hit grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:33043-33086`). Shadow Fist adds its separate Effect Damage only when learned; its normal value is `3 * ShadowFistRank`, plus `floor(0.16 * level)` with Spirit Fist (`Panda.cs:9144-9192`, `:35804-35845`).
+- **Duration:** none; the two attack scans and evasive state are animation/coroutine state, not an applied status.
+
+### Water Crane (`panda_waterCrane`, skill IDs #313/#314)
+
+- **Ranks, requirements, and resource gate:** Rank 1 requires Lv. 17 / Bn. 5 / 14 SP; Rank 2 requires Lv. 23 / Bn. 7 / 18 SP. Both are instant, enemy-targeted casts; positive `setSP(...)` is an initiation threshold rather than an expenditure (`PandaSkill.cs:655-678`, `:1694-1719`).
+- **Cooldown and pulses:** `addTimeOut("waterCrane", agiAdjust(30))` sets the 30-second pre-AGI cooldown (`Panda.cs:33645-33675`). The attack executes two area scans, separated by 0.7 seconds (`Panda.cs:33870-33905`, `:33974-33976`), centered on the Panda. Each scan has 4m radius (5m with Spirit Fist) and 5m height, all multiplied by `rangeMod` (`Panda.cs:33529-33540`, `:33884-33886`).
+- **Damage:** each target caught by each pulse gets action ID `312 + sLv` (313/314), KO 1, and
+  `floor(0.5 * ATK + talAdjust(10 * sLv) * (1 + 0.5 * TimeAndTideLv))` (`Panda.cs:33905`). Rank 1/2 use `talAdjust(10)` / `talAdjust(20)` before the passive. As with Water Monkey, Time and Tide scales the TAL term only and Focused Art is absent.
+- **Evasion and successful-hit follow-up:** Water Crane uses the same 50% / 100%-with-Time-and-Tide LCK-adjusted defensive evasion gate as Water Monkey (`CharacterControl.cs:3134-3167`). Every successful base pulse grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:33905-33958`), whose optional Effect Damage follows the same Shadow Fist / Spirit Fist rule cited above.
+- **Duration:** none; the two pulses are attack sequence timing rather than a status or field duration.
+
+### Time and Tide (`panda_timeAndTide`, skill ID #413)
+
+- **Passive / requirement:** single-rank Class-C passive, Lv. 60 / Bn. 1, no MP or SP cost (`PandaSkill.cs:1229-1245`; decoded `pnd_timeAndTide5`). Its getter returns exactly 0 or 1 from `hasSkill(413)` (`Panda.cs:9714-9717`).
+- **Water Monkey and Water Crane damage:** their hit expressions multiply the `talAdjust(10 * sLv)` result by `1 + 0.5 * getTimeAndTideLv()` (`Panda.cs:33043`, `:33905`). Learning Time and Tide makes that term 1.5x; the separate `0.5 * ATK` term remains unchanged.
+- **Evasion:** it doubles the Water Monkey / Water Crane incoming-attack evasion base from 50 to 100 before `lckAdjust` (`CharacterControl.cs:3140-3161`). It is not a damage proc and does not appear in either skill's outgoing damage simulator.
+- **Visual-only branch:** the casts select `timeAndTideMonkey` / `timeAndTideCrane` effects when this passive is learned (`Panda.cs:33237-33264`, `:33792-33825`); these effect assets do not add another damage instance.
+
+### Wind & Cloud (`panda_wind&cloud`, skill IDs #351/#352)
+
+- **Ranks, requirements, and cost:** Rank 1 requires Lv. 20 / Bn. 12 and consumes 10 MP + 20 SP; Rank 2 requires Lv. 24 / Bn. 15 and consumes 10 MP + 24 SP (`PandaSkill.cs:818-829`, `:1548-1568`). It is an instant, enemy-targeted skill.
+- **Cooldown:** 120 seconds before AGI adjustment: `addTimeOut("wind&cloud", agiAdjust(120))` (`Panda.cs:37799-37802`). Revised Art applies normally.
+- **Nine nearby-area strikes:** The coroutine performs nine sequential area checks. Each connecting hit uses action ID `350 + sLv` (351/352), KO 1, and raw damage
+  `floor(0.4 × ATK + talAdjust(5 × sLv))` — Rank 1 uses `talAdjust(5)`, Rank 2 `talAdjust(10)` (`Panda.cs:36768-36802`, `:36895-36911`, `:37056-37072`, `:37160-37176`, `:37264-37280`, `:37368-37384`, `:37499-37515`, `:37603-37619`, `:37688-37704`).
+- **Evasion during the sequence:** While `actionState == "attack"` and `myCommand` is `"windCloud"`, an incoming attack rolls `Random.Range(0,100) < lckAdjust(30)` and is negated on success (`CharacterControl.cs:3170-3203`). The displayed 30% is therefore LCK-adjusted, not a fixed chance; `lckAdjust(p) = floor(100 × p(1+0.01×LCK)/(100+0.01×p×LCK))` (`CharacterControl.cs:20658-20670`).
+- **Shadow Fist interaction:** Every successful base hit starts `ShadowFist(target)` (`Panda.cs:36791-36802` and the eight later strike blocks). That coroutine does nothing without Shadow Fist; with it, it adds Effect Damage `3 × ShadowFistRank`, plus `floor(0.16 × character level)` when Spirit Fist (#433) is learned (`Panda.cs:9144-9192`, `:35804-35821`, `:35834-35845`). Spirit Fist also expands this skill's first area dimension from `3 × rangeMod` to `4 × rangeMod` (`Panda.cs:36768`).
+- **Duration:** none — the move has no applied status or independent duration; its protected/evasive window is only the active attack sequence.
+
+### Rain & Storm (`panda_rain&storm`, skill IDs #353/#354)
+
+- **Ranks, requirements, and cost:** Rank 1 requires Lv. 28 / Bn. 18 and consumes 15 MP + 32 SP (`PandaSkill.cs:844-855`). Rank 2 requires Lv. 30 / Bn. 21 and consumes 15 MP + 40 SP; it is instant and enemy-targeted (`PandaSkill.cs:1521-1541`).
+- **Cooldown:** 180 seconds before AGI adjustment: `addTimeOut("rain&storm", agiAdjust(180))` (`Panda.cs:38827-38830`). Revised Art applies normally.
+- **Four nearby-area pulses:** The coroutine runs four area checks, each centered on the Panda, with range `(5 + SpiritFistLv) × rangeMod` and height `2 × rangeMod` (`Panda.cs:38390`, `:38482`, `:38579`, `:38671`). Each successful hit uses action ID `352 + sLv` (353/354), KO 1, and raw damage `floor(0.65 × ATK + talAdjust(15 × sLv))` (`Panda.cs:38413`, `:38505`, `:38602`, `:38694`). Rank 1 therefore uses `talAdjust(15)` and Rank 2 uses `talAdjust(30)`.
+- **Evasion during the sequence:** Like Wind & Cloud, an incoming attack while `myCommand == "rainStorm"` rolls `Random.Range(0,100) < lckAdjust(30)` and is negated on success (`CharacterControl.cs:3170-3203`). This is a defensive reactive roll, not an outgoing-hit proc.
+- **Shadow Fist interaction and SP gain:** Each connected base pulse grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:38413-38424`, `:38505-38516`, `:38602-38613`, `:38694-38705`). Shadow Fist's Effect Damage is `3 × ShadowFistRank`, plus `floor(0.16 × character level)` with Spirit Fist (#433) (`Panda.cs:9144-9192`, `:35804-35845`). Spirit Fist also extends the base 5m area range to 6m.
+- **Duration:** none — it applies no status or independent field lifetime; the evasive window only exists during the active attack sequence.
+
+### Lotus Palm (`panda_lotusPalm`, skill IDs #361/#362)
+
+- **Ranks, requirements, and cost:** Rank 1 requires Lv. 24 / Bn. 15 and consumes 7 MP + 30 SP (`PandaSkill.cs:870-881`). Rank 2 requires Lv. 27 / Bn. 18 and consumes 7 MP + 35 SP; it is a target-mode enemy skill (`PandaSkill.cs:1494-1514`).
+- **Cooldown:** BigBug baseline is 75 seconds before AGI adjustment: `addTimeOut("lotusPalm", agiAdjust(75))` (`Panda.cs:39317-39322`). ToT changes the base cooldown to 67.5 seconds (documented below under Server Balance Variations).
+- **One direct target hit:** At 1.4 seconds after the action starts, the cast checks the selected target object and hits it directly — no `FindAreaTarget` call or area pulse loop exists (`Panda.cs:39493-39528`). The raw damage is `floor(0.5 × ATK + talAdjust(10 + 20 × sLv))`, with action ID `360 + sLv` (361/362), KO 5, and a forward force vector (`Panda.cs:39528`). Rank 1 uses `talAdjust(30)`; Rank 2 uses `talAdjust(50)`.
+- **No Focused Art:** The literal hit expression contains only `0.5 × ATK` and `talAdjust(10 + 20 × sLv)`; there is no `getFocusedArtDmg()` call (`Panda.cs:39528`).
+- **Shadow Fist interaction and SP gain:** On a successful direct hit, Lotus Palm grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:39528-39537`). Shadow Fist's Effect Damage is `3 × ShadowFistRank`, plus `floor(0.16 × character level)` with Spirit Fist (#433) (`Panda.cs:9144-9192`, `:35804-35845`).
+- **Duration:** none — it applies no status or independent duration.
+
+### Heaven Palm (`panda_heavenPalm`, skill IDs #363/#364)
+
+- **Ranks, requirements, and cost:** Rank 1 requires Lv. 30 / Bn. 21 and consumes 23 MP + 60 SP (`PandaSkill.cs:896-907`). Rank 2 requires Lv. 33 / Bn. 24 and consumes 23 MP + 75 SP; both ranks use target-mode enemy casting (`PandaSkill.cs:1467-1487`).
+- **Cooldown:** BigBug baseline is 150 seconds before AGI adjustment: `addTimeOut("heavenPalm", agiAdjust(150))` (`Panda.cs:40164-40167`). ToT changes the base cooldown to 135 seconds (documented below under Server Balance Variations).
+- **Four target-area pulses:** The cast locks movement, schedules pulses at 1.2s, 1.8s, 2.2s, and 2.6s after action start (`Panda.cs:39800-39826`, `:39982-40060`). Every pulse scans around the selected impact position using range `(2 × sLv + 2 + SpiritFistLv) × rangeMod` and height `2 × rangeMod` (`Panda.cs:40077`). This is 4m / 6m base radius at ranks 1 / 2, increased to 5m / 7m with Spirit Fist (#433).
+- **Damage:** Each connected target receives action ID `362 + sLv` (363/364), KO 1, and raw damage `floor(0.5 × ATK + talAdjust(15 × sLv + 10))` (`Panda.cs:40100`). Rank 1 uses `talAdjust(25)`; Rank 2 uses `talAdjust(40)`.
+- **No Focused Art:** The literal hit expression contains only `0.5 × ATK` and `talAdjust(15 × sLv + 10)`; there is no `getFocusedArtDmg()` call (`Panda.cs:40100`).
+- **Shadow Fist interaction and SP gain:** Each successful pulse hit grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:40100-40111`). Shadow Fist's Effect Damage is `3 × ShadowFistRank`, plus `floor(0.16 × character level)` with Spirit Fist (`Panda.cs:9144-9192`, `:35804-35845`).
+- **Duration:** none — the timed pulses are part of the attack animation, not a status or independent field duration.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

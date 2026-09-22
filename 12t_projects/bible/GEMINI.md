@@ -226,6 +226,12 @@ Present a structured review table including:
 >
 > Similarly, a skill with distinct proc chances across multiple combo hits or modes (e.g. Spread Shot's 20% on hits 1-2 vs 40% on hit 3) uses `secondaryLckProc: {label, chance, applies, ...}` — renders as its own `.sk-stat-lck2` chip.
 >
+> **Non-damage procs (`lckProc.simulate: false`, added 2026-09-22):** Retain the LCK-adjusted chance chip but exclude the mechanic from the outgoing-damage simulator when its roll is not caused by the skill's hit. Use this for defensive/reactive mechanics such as Panda Wind & Cloud's incoming-hit evasion; never show that roll as a proc label beside simulated outgoing damage.
+
+> **Dynamic LCK-chip base chance:** `lckProc.chance` may be `(rank, procDepRank) => number` when a separately rendered skill dependency changes the source chance. The chance function is resolved before `lckAdjust`; use it for Water Monkey/Water Crane's Time and Tide 50% → 100% evasion base so the chip follows the shared Time and Tide toggle while `simulate:false` still prevents an outgoing-damage proc.
+
+> **Post-`talAdjust` passive multiplier (`dmgRankDep.postTal: true`, added 2026-09-22):** Set this alongside a numeric `dmgRankDep.mult` only when source multiplies the already-truncated `talAdjust(...)` result, before it is added to ATK (Panda Time and Tide: `0.5×ATK + talAdjust(10×sLv)×(1+0.5×passiveLv)`). The simulator and range path then apply the multiplier to the TAL term alone; do not use the default inside-`talAdjust` multiplier, which changes LCK rounding and is a different formula.
+>
 > `.sk-hero-stats`'s 4 chip slots (`cd`, `cast`, `dur`, `lck`, columns 1/2/3/4) have fixed CSS defaults so layout stays predictable when chips are conditionally present — but `dur2`, `lck`, and `lck2` default to column 4, which collide whenever a card genuinely has multiple. Rather than special-casing that in CSS (tried once, reverted — it broke `monkey_runicSand`, which pairs `castTime` with `secondaryDuration` and would have collided with a blanket "`dur2` → column 2" rule), the general fix is a per-card **`chipCols`** field: a sparse `{cd, cd2, cast, dur, dur2, lck, lck2: N}` map that renders as an inline `style="grid-column:N"` on that one chip, via a `chipColStyle(key)` helper in `renderHero()`. Every card without `chipCols` is completely unaffected — the class defaults are back to their plain, un-special-cased original form. `.sk-hero-stats` also has `grid-auto-flow:dense` so a chip moved to an earlier column via `chipCols` actually backfills that slot instead of wrapping to a phantom 2nd row (CSS Grid's default sparse packing cursor only moves forward, never backtracks, once a later-DOM-order chip has claimed a higher column).
 
 ---
@@ -250,6 +256,8 @@ The Final Damage range on a card (`finalRangeForRange(calcRangeFor(text))`) and 
 ### Panda Current SP Input & Focused Art Scaling (`hasCurrentSp`, added 2026-09-20)
 
 Panda combat skills scale base attack damage using current SP via the Focused Art passive (`getFocusedArtDmg() = 0.5×SP×focusedArtLv`, `Panda.cs:10841`). In skills such as Three Steps (`0.4×(ATK + getFocusedArtDmg())`), this contributes `0.2×SP×focusedArtLv`:
+
+* **Explicit consumer gate (`usesFocusedArt: true`, added 2026-09-22):** Focused Art is never inferred from `class:"Panda"`, `dmg`, or `atkCoeff`. Set `usesFocusedArt:true` only after the skill's own cast-site contains `getFocusedArtDmg()`; this gate controls the simulator, formula row, final range, and Current SP input together. Three Steps and Rushing Falcon are verified consumers. Wind & Cloud is not: all nine hit sites use `0.4×ATK + talAdjust(5×sLv)` with no Focused Art call (`Panda.cs:36791`, `:36900`, `:37061`, `:37165`, `:37269`, `:37373`, `:37504`, `:37608`, `:37693`).
 
 * **`hasCurrentSp: true`** — renders an interactive `SP [ 50 ]` input control directly on the skill card in the formula header row alongside dependency toggles (default: 50). Changes dynamically re-evaluate the formula grid, final damage range, and simulator rolls in real time.
 * **Focused Art Term Separation:** Focused Art is rendered as an independent, explicit term outside the ATK bracket (`+ 0.2×SP Focused Art`), colored with `.dmg-sp`.
