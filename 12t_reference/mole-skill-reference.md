@@ -684,6 +684,10 @@ string (`"BarrelBot1"`..`"4"`, matching the skill's own `maxRank:4`), set at spa
   `agiAdjustRange(12, 60, 90)` — a visibly narrower reduction than the same base would get from Mole's
   own 128 AGI.
 
+The parent `barrelBot` card now shows these rank-specific base values for ranks 1–4. Its eight child-move
+cards intentionally remain pinned to the established rank-4 combat view, so adding parent-card ranks does
+not change their existing damage/cooldown calculations.
+
 **`doubleBot5` (`hasSkill(423)`) — resolves this doc's own previously-open item.** `Mole.cs:12708-12759`:
 when active, adds `Mathf.FloorToInt(0.5×Mole's own character level)` to ALL 8 of BarrelBot's stats
 (atk/def/vit/tal/agi/mag/cha/lck) at once — additive on top of the rank-gated baseline above, not an
@@ -917,12 +921,10 @@ tooltip name has nothing to do with a hidden Mole-side method; it's purely the f
 (`mol_kaiserBeam1`), `hasSkill(372)`→2 (`mol_kaiserCannon1`), `hasSkill(371)`→1 (`mol_kingKaiser1`), else
 0. Own stat block, `summon(int nLv)` (`KingKaiser.cs:3991-3997`) — the ONLY 2 stats ever touched by any
 code in `KingKaiser.cs`: `atk = 150+50×nLv`, `def = 100+50×nLv` (tier 1/2/3 → ATK 200/250/300, DEF
-150/200/250). TAL/AGI/LCK (75/200/200, already in the tool's `kingKaiserOwnStats()`) are real,
-hex-decoded prefab defaults from a prior pass — not re-derived or contradicted, just confirmed unused by
-any King Kaiser formula (zero `talAdjust`/`agiAdjust`/`lckAdjust` calls anywhere in the file). Base HP
-1500 (tooltip-confirmed, `MoleSkill_eng.cs:851`), scaled by Mole's Heavy Built passive
-(`getHeavyBuiltLv()`, `Mole.cs:13213-13216`, hasSkill 361/362) — `hp = ceil(hp×(1+0.5×heavyBuiltLv))`,
-matching the +50%/+100% tooltip text exactly. Cast consumes 1 Kaiser Battery item (`m_kbt1`,
+150/200/250). Corrected pointer-aware decoding of all five color-variant prefab records gives the fixed
+fields `MHP=2000, AGI=100, VIT=200, MAG=75, CHA=200, TAL=150, LCK=75`; none is overwritten by the
+runtime code. Heavy Built (`getHeavyBuiltLv()`, `Mole.cs:13213-13216`, hasSkill 361/362) scales that real
+base as `hp = ceil(2000×(1+0.5×heavyBuiltLv))` → 2000 / 3000 / 4000. Cast consumes 1 Kaiser Battery item (`m_kbt1`,
 `Mole.cs:7007`/`:35684`).
 
 **3 new `SKILLS` entries, all `ownStatsKaiser:true`, all `revisedArtExempt:true`** (King Kaiser's own
@@ -933,11 +935,11 @@ structurally reach any of its cooldowns, same "own empty skill list" gap already
   own `hit()` call: 1.0×ATK / 1.2×ATK / 1.3×ATK (`KingKaiser.cs:1680/1885/2031`), KO=1 each. Modeled as a
   3-entry `dmgGroups` (the tool's first `dmgGroups` skill to also need a per-group `atkCoeff` — a small
   engine extension, `resolveHitDmgAtkCoeff`, added alongside the pre-existing per-group `dmg` lookup).
-  Cooldown flat `4s`, NOT `agiAdjust`-wrapped (`KingKaiser.cs:2179`) — **shared with Kaiser Missile below**
+  Cooldown flat `4s`, NOT `agiAdjust`-wrapped (`KingKaiser.cs:2179`) — **shared with Kaiser Cannon below**
   (same `"nAttack"` timeout key re-armed by both, `KingKaiser.cs:2711`), confirmed via a full-file
   `addTimeOut`/`isTimeOut` grep (only 2 distinct keys exist in the whole file: `"nAttack"`,
   `"kaiserBeam"`).
-- **King Kaiser - Kaiser Missile** (`mole_kingKaiser_missile`) — real name per tooltip is "Kaiser Cannon"
+- **King Kaiser - Kaiser Cannon** (`mole_kingKaiser_missile`) — the tooltip's real display name;
   (`mol_kaiserCannon1`'s own text, `MoleSkill_eng.cs:862`: *"shoot cannons at target from a distance"*),
   the internal method is `kaiserMissile`. 4-missile volley (2 sequential volleys of 2,
   `KingKaiser.cs:2489-2604`), each impact an AoE scan (radius 5) hitting everyone in range for flat 100
@@ -958,7 +960,7 @@ structurally reach any of its cooldowns, same "own empty skill list" gap already
   full release, `KingKaiser.cs:3426`) is genuinely never gated by `isTimeOut` anywhere in the file (only
   `"nAttack"` ever is) — flagged as likely vestigial in practice, with the 75 SP cost (naturally
   regenerating) acting as the real soft throttle. Icon corrected to the real, distinct
-  `mole_kaiserBeam4` (byte-verified), same reasoning as Kaiser Missile above.
+  `mole_kaiserBeam4` (byte-verified), same reasoning as Kaiser Cannon above.
 
 Verified: script-block syntax parse clean (`new Function(js)`), both new icon extractions byte-exact
 against their `RippedAssets` source files (`Buffer.compare`), no stale `mole_kingKaiser1` icon reference
@@ -974,6 +976,7 @@ Private-server values are documented from the Bible skill-detail schema; the Big
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Auto Gyro Gun | No simultaneous-turret limit is represented on the original card. | Cap is 8 guns without Hidden Turret or 12 with Hidden Turret. |
+| King Kaiser; King Kaiser - Normal Attack / Kaiser Cannon / Kaiser Beam | MHP 2000, then Heavy Built applies `ceil(MHP×(1+0.5×rank))` → 2000 / 3000 / 4000. | **Nerf:** MHP is fixed at 1500 and Heavy Built does not apply. The server selector is present on the parent and all three child cards because their shared own-stat block changes. |
 
 Source of server delta: `12t_projects/bible/index.html:9160`.
 

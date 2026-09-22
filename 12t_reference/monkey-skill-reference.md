@@ -343,7 +343,27 @@ Consolidated ground-truth reference for Monkey skill damage formulas, status pro
 
 ## 2. Deep Mechanic Analyses & Source Citations
 
-### 2.1 Gadina & Titanic Earth Pulse (`monkey_titanicEarthPulse`)
+### 2.1 Ja own stats (`monkey_ja` / `monkey_ja_detonate`)
+
+Ja's own stats are serialized in the live `12TailsOnline_Data/level16` `CharacterControl` records, rather than assigned by the readable Ja scripts. The correct record layout has `Lv`, `Skin`, and `Race`, then the eight-byte `mTargetAvartar` PPtr, followed by HP/resources and the eight combat stats: `CharacterControl.cs:29681-29738`. A previous decoder did not skip that PPtr, shifting every scalar after Race by two `int32` values; the four rank records below supersede those values.
+
+| Ja rank | Serialized name / type | Byte offset | Current HP / MHP | ATK | DEF | AGI | VIT | MAG | CHA | TAL | LCK |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Little Ja / `Ja1` | 438592 | 100 / 200 | 10 | 10 | 10 | 20 | 10 | 10 | 10 | 10 |
+| 2 | Medium Ja / `Ja2` | 439408 | 200 / 400 | 20 | 20 | 20 | 20 | 20 | 20 | 20 | 20 |
+| 3 | Big Ja / `Ja3` | 440224 | 300 / 600 | 30 | 30 | 30 | 60 | 30 | 30 | 30 | 30 |
+| 4 | Giant Ja / `Ja4` | 441032 | 400 / 800 | 40 | 40 | 40 | 80 | 40 | 40 | 40 | 40 |
+
+All four records have `Lv` 8/16/24/32 respectively, `Skin=0`, `Race=5`, PPtr `fileID=1, pathID=243`, and SP/MP/KO plus their maxima of 10/20/30/40. The app's Ja stat helper uses MHP 200/400/600/800; `Ja.cs` assigns current HP 100/200/300/400 when summoning, which is why current HP and MHP must not be conflated.
+
+### 2.2 Gaos own stats (`monkey_summonGaos` and Gaos attacks)
+
+Gaos's `resources.assets` `CharacterControl` record is at byte offset `44479000`; decoding after the
+`mTargetAvartar` PPtr gives `MHP=24000, ATK=480, DEF=240, AGI=240, VIT=2400, MAG=120, CHA=120, TAL=120,
+LCK=120`. `Gaos.cs:71` sets current/max HP to 24000 and `Gaos.cs:74` sets KO to 450, but it does not
+overwrite any of those eight combat stats. These supersede the previous shifted-field mapping in the tool.
+
+### 2.3 Gadina & Titanic Earth Pulse (`monkey_titanicEarthPulse`)
 * **Source:** `Monkey.cs:33100–33250`, `Monkey_earthPulse.cs:1–150`.
 * **Requirement:** Requires Gadina at Rank 4 (`gadinaLv == 4`). Consumes/sacrifices Gadina immediately upon cast.
 * **Damage Mechanics:**
@@ -358,7 +378,7 @@ Consolidated ground-truth reference for Monkey skill damage formulas, status pro
     - Tick 5: 5m radius (fixed 6m cylinder height).
   - Targets caught within 1m of the epicenter suffer all 5 damage ticks.
 
-### 2.2 Stone Hammer (`monkey_stoneHammer`)
+### 2.4 Stone Hammer (`monkey_stoneHammer`)
 * **Source:** `Monkey.cs:33448–33492`, `MonkeySkill.cs:680–720`.
 * **Targeting Geometry:** Ground-targeted cylinder AoE centered on landing zone:
   - Radius: `1.0 + 0.5 * sLv` meters (1.5m / 2.0m / 2.5m / 3.0m).
@@ -372,7 +392,7 @@ Consolidated ground-truth reference for Monkey skill damage formulas, status pro
 * **Channeling Vulnerability:**
   - Carries a ~0.8s local animation channel after cast completion. Re-verifies `actionState == "attack"` and `myCommand == "stoneHammer"`. If interrupted (stunned, staggered, moved), cast aborts with 0 damage dealt.
 
-### 2.3 Runic Flame & Fire Rune
+### 2.5 Runic Flame & Fire Rune
 * **Source:** `Monkey.cs:12229–12457`, `Monkey_runicFlame.cs:207`.
 * **Duration Formula:** Consumes all banked player SP on cast:
   `duration = Mathf.FloorToInt(sp * 0.2f)` seconds.
