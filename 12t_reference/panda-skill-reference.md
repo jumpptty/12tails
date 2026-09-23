@@ -470,6 +470,22 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - Per target hit: `sp += 1` (`:23559`) inside the target loop, so each later target in the same punch reads a 1-higher SP for Focused Art. `ComboPlus()` fires once if anything was hit (`:23578`).
 - **Delay Qi hold:** `RPC_delayQi` grants status `delayQi` (nCode 301; `isStateStatus` + `isBuffStatus`, `StatusData.cs:778/4890/6560`; Panda-only handler `CharacterControl.cs:12259`) for `chaAdjust(3) + 3·getQiBurstLv()` s at the cast rank (`Panda.cs:24255`). The next attack press releases `RPC_qiStrike2` at the status level (`:7897-7904`), which removes the status (`:23742-23748`).
 
+### Pummel (`panda_pummel`, skills #221/#223)
+
+- **Cost / requirements (`decode_skilldata.py`):** MP 0, SP **−12/−16** (consumed, red), Lv 7/19, Bn 2/6, instant, target enemy. CD `addTimeOut("pummel", agiAdjust(30))`, fixed for both ranks (`Panda.cs:24895`).
+- **Tooltip:** "Instantly perform a series of quick forward jabs. (5x5 dmg.)" / "(10x5 dmg.)" (`PandaSkill_eng.cs:308/319`; Thai `PandaSkill_thai.cs:330/341`).
+- **Coroutine `$RPC_pummel$25313` (`Panda.cs:24301-25120`):** lunge forward at `moveSpeed = 16` (`:24448`), stop (`:24475`), then **5 jabs** (`i < 5`, `:24743`; `i++` `:25077`), then step back at `moveSpeed = −6` (`:24637`) and return to standby (`:24690`).
+- **Per jab:**
+  - Base: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod, 3·rangeMod)` (`:24783`) = **2 m wide, 1 m long, 3 m tall**; damage `(int)(0.25·(ATK + getFocusedArtDmg()) + talAdjust(5·sLv))` (`:24788`).
+  - Ogre Impact (`hasSkill(422)`, `:24759`): `FindRecTarget(pos, forward, 2, 2, 3, 3)` (`:24765`) = **4 m wide, 3 m long, 3 m tall, not scaled by `rangeMod`**; damage `(int)(0.35·(ATK + getFocusedArtDmg()) + talAdjust(5·sLv + 5))` (`:24770`); also spawns the `pummel_ogre` / `pummel_ogreArm1/2` visuals (`:24480-24601`).
+  - `hit(219 + 2·sLv, obj, dmg, sLv, 0, Vector3.zero)` (`:24812`): KO `sLv`, no knockback, dodgeable (`hit()` path). `sp += 1` per target (`:24845`); `ComboPlus()` once per jab that hit anything (`:24862`). No status.
+
+### Ogre Impact (`panda_ogreImpact`, skill #422)
+
+- **Passive, Lv 70 / Bn 3, 0 MP / 0 SP** (`decode_skilldata.py`; `PandaSkill.cs:3173`).
+- **Tooltip:** "Increases Pummel and Tower Rush's damage and range with a red ogre effect." (`PandaSkill_eng.cs:957`; Thai `PandaSkill_thai.cs:979`).
+- **Hooks:** Pummel — larger fixed box and `0.35·(ATK+FA) + talAdjust(5·sLv+5)` (see above). Tower Rush — `hasSkill(422)` branch uses `0.75·(ATK+FA) + talAdjust(15·sLv+15)` instead of `0.5·(ATK+FA) + talAdjust(15·sLv)` (`Panda.cs:25429`, `:25442`); Tower Rush geometry to be verified with its card.
+
 ### Delay Qi (`panda_delayQi`, skill #214)
 
 - **Req Lv 23 / Bn 7, SP −24, `mode = passive` in `getSkill()`** (`PandaSkill.cs:288-304`, `decode_skilldata.py`).
@@ -506,7 +522,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
 | Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
 
-  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon and Qi Strike cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike and Pummel cards are fully verified in the app so far; the rest are recorded here for their future cards.)
 
 ### Nine Steps (`panda_nineSteps`, skill #402)
 
