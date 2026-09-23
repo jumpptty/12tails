@@ -440,9 +440,9 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - Coroutine: `$RPC_rushingFalcon$25258` (`Panda.cs:21885-22750`).
   - Movement & Timing:
     - Dash forward at `moveSpeed = 8f` (state 2) then `moveSpeed = 6f` (states 3, 4, 5).
-    - Step 1: Hit check in rectangular box (`1.6m * rangeMod` W x `1m * rangeMod` H x `2m * rangeMod` L, forward offset `-0.5m * transform.forward`, `Panda.cs:22115`).
-    - Step 2: Hit check in rectangular box (`1m * rangeMod` W x `1m * rangeMod` H x `1m * rangeMod` L, `2m * rangeMod` forward distance, `Panda.cs:22245`).
-    - Step 3: Hit check in rectangular box (`1m * rangeMod` W x `1m * rangeMod` H x `1m * rangeMod` L, `2m * rangeMod` forward distance, `Panda.cs:22395`).
+    - Step 1: `FindRecTarget(pos − 0.5·forward, forward, 1.6·rangeMod, 1·rangeMod, 2·rangeMod, 2·rangeMod)` (`Panda.cs:22102`) — a trapezoid **3.2 m wide at the start narrowing to 2 m**, 2 m long, 2 m tall, starting 0.5 m behind Panda (width args are half-widths, see [Mechanics Reference §4](12Tails-Mechanics-Reference.md#4-hidden-mechanics--special-interactions)).
+    - Step 2: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod, 2·rangeMod)` (`Panda.cs:22240`) — **2 m wide, 1 m long, 2 m tall**.
+    - Step 3: same box as step 2 (`Panda.cs:22390`).
 - **Damage Formula & Resource Generation:**
   - Base Damage per hit: `hitDmg = (int)(0.5f * ((float)mChar.atk + getFocusedArtDmg()) + talAdjust(sLv * 5))` (`Panda.cs:22120`, `:22250`, `:22400`).
     - ATK component: `0.5 * ATK`.
