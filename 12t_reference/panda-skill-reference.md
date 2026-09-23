@@ -459,6 +459,17 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - All components (ATK, TAL, and Focused Art) scale proportionally with the step multiplier.
 
 
+### Qi Strike (`panda_qiStrike`, skills #211-#213)
+
+- **Cost / requirements (`decode_skilldata.py`):** MP 0, SP **−15/−18/−21** (negative = consumed, red), Lv 5/11/17, Bn 1/3/5, instant, target enemy (`PandaSkill.cs:261-266`). CD `addTimeOut("qiStrike", agiAdjust(90))`, fixed for all ranks (`Panda.cs:23123`).
+- **Tooltip:** "Charge up and unleash a destructive forward punch. (1.0 / 2.0 / 3.0 x atk.)" (`PandaSkill_eng.cs:268/279/290`; Thai `PandaSkill_thai.cs:290/301/312`).
+- **Charge (`$RPC_qiStrike1$25279`, `Panda.cs:22845-23291`):** sets `actionState="attack"`, `myCommand="qiStrike1"`, `moveSpeed=0` (`:23114-23141`); no `DisplayCastBar` in the path. Waits until `Time.time >= actionTime + 1 + sLv` (`:23028`) = **2/3/4 s**, not wrapped in any adjuster, then auto-releases: `RPC_qiStrike2`, or `RPC_delayQi` when `hasSkill(214)` (Delay Qi) (`:23036-23064`). No other release path exists in `Panda.cs`, `CharacterControl.cs`, `Damage.cs`, `StatusData.cs` (searched; `PandaCult*.cs` not read).
+- **Punch (`$RPC_qiStrike2$25291`, `Panda.cs:23328-23932`):** 0.2 s wind-up (`:23929`), one hit check, 0.4 s tail (`:23927`).
+  - Box: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod + 5·getQiBurstLv(), 2·rangeMod)` (`:23503`), i.e. ~2 m wide, **1 m long, 6 m with Qi Burst** (`getQiBurstLv() = hasSkill(412)`, `:9702`); only the 1 m base scales with `rangeMod`.
+  - Damage: `hit(210+sLv, obj, (int)(sLv·(ATK + getFocusedArtDmg())), 10·sLv, 0, 3·forward)` (`:23526`). **No `talAdjust` term**; KO `10·sLv`; goes through `hit()` so it can be dodged/blocked (Mechanics Reference §2).
+  - Per target hit: `sp += 1` (`:23559`) inside the target loop, so each later target in the same punch reads a 1-higher SP for Focused Art. `ComboPlus()` fires once if anything was hit (`:23578`).
+- **Delay Qi hold:** `RPC_delayQi` grants status `delayQi` (nCode 301; `isStateStatus` + `isBuffStatus`, `StatusData.cs:778/4890/6560`; Panda-only handler `CharacterControl.cs:12259`) for `chaAdjust(3) + 3·getQiBurstLv()` s at the cast rank (`Panda.cs:24255`). The next attack press releases `RPC_qiStrike2` at the status level (`:7897-7904`), which removes the status (`:23742-23748`).
+
 ### Focused Art (`panda_focusedArt`, skills #263/#264)
 
 - **Passive, 0 MP / 0 SP, no cooldown.** Rank 1 = Lv 30 / Bn 21, rank 2 = Lv 33 / Bn 24 (`decode_skilldata.py`; passive tail `PandaSkill.cs:1821-1839`).
@@ -483,7 +494,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
 | Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
 
-  (`FA` = `getFocusedArtDmg()`. Only Three Steps and Rushing Falcon cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon and Qi Strike cards are fully verified in the app so far; the rest are recorded here for their future cards.)
 
 ### Nine Steps (`panda_nineSteps`, skill #402)
 
