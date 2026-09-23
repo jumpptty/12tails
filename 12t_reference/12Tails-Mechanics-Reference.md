@@ -386,6 +386,14 @@ These five skills are class-independent engine constants.
 - **Stat buffs are flat deltas.** Applying `atkUp` does `deltaAtk(+num)`; on expiry `deltaAtk(-num)`
   (CharacterControl.cs:14691+). The same pattern covers `defUp/agiUp/vitUp/magUp/chaUp/talUp/lckUp` and the
   matching `*Down` debuffs. `num` is the status' strength/level, set by the skill that applied it.
+- **Rectangle/trapezoid hit boxes — `Damage.FindRecTarget(pos, dir, BaseWidth, TopWidth, TargetRange, TargetHeight, layerMask)`**
+  (verified 2026-09-23, `Damage.cs:1416-1600`). Corners are `(±BaseWidth, 0, 0)` and `(±TopWidth, 0, TargetRange)` in
+  the caster's frame (`:1437-1446`, rotated by `dir` at `:1455-1464`), so the **full width is `2×BaseWidth` at the caster
+  and `2×TopWidth` at the far end** — the width arguments are half-widths. A target counts when the point of its
+  CharacterController bounds nearest the far-end centre lies inside that quad (angle-sum > 355°, `:1576-1590`; or its
+  centre is within `extents.x` of the far-end centre, `:1541-1556`) **and** its capsule overlaps the vertical band
+  `[pos.y − 0.5×TargetHeight, pos.y + TargetHeight]` (`:1567`, `:1576`). Cards should quote full width
+  (`2×BaseWidth`) and `TargetHeight` as the height.
 
 ### 4.1 Status effect catalog (StatusData.getStatusCode, StatusData.cs)
 Each status maps to a sequential integer code. Grouped by function:

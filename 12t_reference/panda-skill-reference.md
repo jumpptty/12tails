@@ -465,10 +465,22 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 - **Tooltip:** "Charge up and unleash a destructive forward punch. (1.0 / 2.0 / 3.0 x atk.)" (`PandaSkill_eng.cs:268/279/290`; Thai `PandaSkill_thai.cs:290/301/312`).
 - **Charge (`$RPC_qiStrike1$25279`, `Panda.cs:22845-23291`):** sets `actionState="attack"`, `myCommand="qiStrike1"`, `moveSpeed=0` (`:23114-23141`); no `DisplayCastBar` in the path. Waits until `Time.time >= actionTime + 1 + sLv` (`:23028`) = **2/3/4 s**, not wrapped in any adjuster, then auto-releases: `RPC_qiStrike2`, or `RPC_delayQi` when `hasSkill(214)` (Delay Qi) (`:23036-23064`). No other release path exists in `Panda.cs`, `CharacterControl.cs`, `Damage.cs`, `StatusData.cs` (searched; `PandaCult*.cs` not read).
 - **Punch (`$RPC_qiStrike2$25291`, `Panda.cs:23328-23932`):** 0.2 s wind-up (`:23929`), one hit check, 0.4 s tail (`:23927`).
-  - Box: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod + 5·getQiBurstLv(), 2·rangeMod)` (`:23503`), i.e. ~2 m wide, **1 m long, 6 m with Qi Burst** (`getQiBurstLv() = hasSkill(412)`, `:9702`); only the 1 m base scales with `rangeMod`.
+  - Box: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod + 5·getQiBurstLv(), 2·rangeMod)` (`:23503`), i.e. **2 m wide** (half-width 1 m, see [Mechanics Reference §4](12Tails-Mechanics-Reference.md#4-hidden-mechanics--special-interactions)), **2 m tall** (band −1 m…+2 m around the caster's feet), **1 m long, 6 m with Qi Burst** (`getQiBurstLv() = hasSkill(412)`, `:9702`). Width, height and the 1 m base length scale with `rangeMod`; Qi Burst's +5 m does not.
   - Damage: `hit(210+sLv, obj, (int)(sLv·(ATK + getFocusedArtDmg())), 10·sLv, 0, 3·forward)` (`:23526`). **No `talAdjust` term**; KO `10·sLv`; goes through `hit()` so it can be dodged/blocked (Mechanics Reference §2).
   - Per target hit: `sp += 1` (`:23559`) inside the target loop, so each later target in the same punch reads a 1-higher SP for Focused Art. `ComboPlus()` fires once if anything was hit (`:23578`).
 - **Delay Qi hold:** `RPC_delayQi` grants status `delayQi` (nCode 301; `isStateStatus` + `isBuffStatus`, `StatusData.cs:778/4890/6560`; Panda-only handler `CharacterControl.cs:12259`) for `chaAdjust(3) + 3·getQiBurstLv()` s at the cast rank (`Panda.cs:24255`). The next attack press releases `RPC_qiStrike2` at the status level (`:7897-7904`), which removes the status (`:23742-23748`).
+
+### Delay Qi (`panda_delayQi`, skill #214)
+
+- **Req Lv 23 / Bn 7, SP −24, `mode = passive` in `getSkill()`** (`PandaSkill.cs:288-304`, `decode_skilldata.py`).
+- **Tooltip:** "Enables Panda to hold his QiStrike and release it later when you press attack (max 3 sec)." (`PandaSkill_eng.cs:301`; Thai `PandaSkill_thai.cs:323`).
+- **Hook:** at the end of Qi Strike's charge, `hasSkill(214)` diverts to `RPC_delayQi` instead of the punch (`Panda.cs:23036-23055`), which grants status `delayQi` (nCode 301, State + Buff) at the Qi Strike rank for `chaAdjust(3) + 3·getQiBurstLv()` s (`:24255`). The next attack press fires `RPC_qiStrike2` at that level (`:7897-7913`), which removes the status (`:23742-23748`). Full detail under Qi Strike above.
+
+### Qi Burst (`panda_qiBurst`, skill #412)
+
+- **Passive Class-C, Lv 60 / Bn 1, 0 MP / 0 SP** (`PandaSkill.cs:1099-1110`).
+- **Tooltip:** "Enables QiStrike to unleash a giant fist that deals its damage in 6m line. Also extend delayQi by 3 sec." (`PandaSkill_eng.cs:950`; Thai `PandaSkill_thai.cs:972`).
+- **Hook:** `getQiBurstLv() = hasSkill(412) ? 1 : 0` (`Panda.cs:9700-9703`). Adds `+5·lv` m to Qi Strike's hit-box length (1 m → 6 m, `:23503`), `+3·lv` s to the `delayQi` hold (`:24255`), and swaps in the `qiBurst` effect prefab (`:23786-23798`).
 
 ### Focused Art (`panda_focusedArt`, skills #263/#264)
 
