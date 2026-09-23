@@ -112,7 +112,12 @@ Almost every adjuster adds a random roll driven by the actor's Luck:
 ```
 R = Random(0, ceil(0.2 * LCK))     // integer in [0, ceil(0.2*LCK))
 ```
-Higher LCK ⇒ a wider upward spread on damage dealt, damage mitigated, action speed, buff length, skill power.
+Higher LCK ⇒ a wider upward spread on damage dealt, damage mitigated, action speed, cast speed, buff length, skill power.
+
+Unity's integer `Random.Range(min, max)` excludes `max`. All 11 `*Adjust` methods are defined once, in
+CharacterControl.cs:20487-20671, and no subclass overrides them. Seven of them roll `R`: `dmgAdjust`, `atkAdjust` (dead code),
+`defAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust` and `talAdjust`. The other four have **no** `R`:
+`koAdjust`, `hateAdjust`, `forceAdjust` (plain `*Mod` multipliers) and `lckAdjust` (reads LCK directly, clamped 1-512).
 
 ### 2.2 Attacker side
 **`dmgAdjust(d)`** outgoing damage (CharacterControl.cs:20487):
@@ -159,8 +164,10 @@ the heavy part; DEF 192 → −75%).
 ### 2.4 Timing / duration / chance adjusters
 **`magAdjust(t)`** cast time, MAG-based (CharacterControl.cs:20584):
 ```
-magAdjust(t) = clamp( t - MAG/32 , 0.1 , 600 )   // flat cast-time reduction
+n            = clamp(MAG + R, 1, 512)
+magAdjust(t) = clamp( t - floor(n/32) , 0.1 , 600 )   // flat cast-time reduction; n/32 is an int divide
 ```
+Source: `int num = Mathf.Clamp(this.mag + UnityEngine.Random.Range(0, Mathf.CeilToInt(0.2f * (float)this.lck)), 1, 512); nCastTime = Mathf.Clamp(nCastTime - (float)(num / 32), 0.1f, (float)600);` (CharacterControl.cs:20586-20587).
 **`agiAdjust(t)`** action/recovery time, AGI-based (CharacterControl.cs:20575):
 ```
 n            = AGI + R
@@ -168,8 +175,10 @@ agiAdjust(t) = t * (1 - n/(n + 128))             // diminishing-returns speedup
 ```
 **`chaAdjust(t)`** buff/debuff duration, CHA-based (CharacterControl.cs:20593):
 ```
-chaAdjust(t) = ceil( t * (1 + 0.015 * clamp(CHA + R, 1, 512)) )   // +1.5% duration per CHA
+chaAdjust(t) = floor( t * (1 + 0.015 * clamp(CHA + R, 1, 512)) )   // +1.5% duration per CHA
 ```
+Rounds **down**, not up: `nTimer = (int)((float)nTimer * ((float)1 + 0.015f * (float)num));` truncates first, so the
+later `Mathf.CeilToInt((float)nTimer)` is a no-op on an already-whole number (CharacterControl.cs:20603, :20619).
 **`Damage.getDebuff(t, casterCHA, targetCHA)`** contested debuff duration (Damage.cs:317):
 Used by debuffs where duration is contested between caster and target (e.g. `Amplify Damage`, `Ignite`, `World Ignition`, `Acidic Field`).
 ```
@@ -185,8 +194,10 @@ getBuff = floor( t * (1 + 0.01 * (cha1 + cha2)) )
 ```
 **`talAdjust(p)`** skill power, TAL-based (CharacterControl.cs:20624):
 ```
-talAdjust(p) = ceil( p * (1 + 0.02 * clamp(TAL + R, 1, 512)) )    // +2% power per TAL
+talAdjust(p) = floor( p * (1 + 0.02 * clamp(TAL + R, 1, 512)) )    // +2% power per TAL; p <= 0 returns 0
 ```
+Rounds **down** for the same reason as `chaAdjust`: `nPower = (int)(...)` truncates before the no-op
+`Mathf.CeilToInt` (CharacterControl.cs:20643, :20653).
 **`lckAdjust(c)`** probability boost, LCK-based (CharacterControl.cs:20658):
 ```
 X            = c * (1 + 0.01 * clamp(LCK, 1, 512))
@@ -467,7 +478,7 @@ A Cat (TAL 100, LCK 50) casts the AoE skill `talAdjust(50) + 200` at a target wi
 `damageMod = 1`. Using average rolls:
 
 1. **Skill power:** `R_atk = Random(0, ceil(0.2*50)) = Random(0,10) ≈ 5`.
-   `talAdjust(50) = ceil(50 * (1 + 0.02*(100+5))) = ceil(50 * 3.10) = 155`. → `raw = 155 + 200 = 355`.
+   `talAdjust(50) = floor(50 * (1 + 0.02*(100+5))) = floor(50 * 3.10) = 155`. → `raw = 155 + 200 = 355`.
 2. **Attacker dmgAdjust:** `ceil(clamp(1,0,5)*355 + ≈5) ≈ 360`.
 3. **Target defAdjust:** `R_def = Random(0, ceil(0.2*30)=6) ≈ 3`, `N = clamp(50+3,1,512) = 53`.
    `light = max(360 − 26.5, 1) = 333`; `heavy = max(360*(1 − 53/117), 1) = 360*0.547 ≈ 197`.
