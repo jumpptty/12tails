@@ -266,6 +266,27 @@ if (this.self.Type == "CaptainCrab")
 
 Therefore the native direct-hit order at this tail of the pipeline is **`hitMod` → shields/status absorption → `max(0, damage − 100)` → HP damage accumulation** (`RPC_AddDamage`: CharacterControl.cs:3759-3765; `AddDamage`: CharacterControl.cs:31580-31662). The test is absent from the separate `RPC_AddEffectDamage` path (whose `hitMod` is at CharacterControl.cs:6203), so this special reduction does **not** apply to effect/true/DoT damage. `GiantSandBug` has the analogous direct-hit `−30` clause immediately before it (CharacterControl.cs:31627-31638).
 
+### 2.8 Evasion (EVADE): only inside the attacker's `hit()` (verified 2026-09-23)
+
+Every dodge in the game is checked in one block of the **attacker's** `hit()` (`CharacterControl.cs:2807`), after the target's `hide` / `noDamage` / `swallow` / `salvation` checks and before `damagePlus` and `dmgAdjust`. `characterControl` there is the target. A successful dodge calls `target.RPC_AddDamage(-82, 0, 0, 0, ...)` and `hit()` returns 0 (`:3636-3641`), so no damage or KO is dealt and every attacker follow-up gated on `hit() != 0` (SP gain, Shadow Fist, on-hit statuses) is skipped too.
+
+| Source | Condition | Chance | Line |
+|---|---|---|---|
+| `drunken` status (Panda Drunken Plus) | target has the status | `lckAdjust(5 × statusLv)` | `:3076-3094` |
+| Panda Roll / Roll Around | `actionState == "attack"` and `myCommand` is `roll` / `rollAround` | 100% | `:3099-3126` |
+| Panda Water Monkey / Water Crane | during that command | `lckAdjust(50)`, `lckAdjust(100)` with Time and Tide (#413) | `:3135-3164` |
+| Panda Wind & Cloud / Rain & Storm | `actionState == "attack"`, command `windCloud` / `rainStorm` | `lckAdjust(30)` | `:3170-3197` |
+| Cat Back Flip | `actionState == "attack"`, command `backflip` | 100% | `:3207-3225` |
+| Cat Evasion (#361-#363) | passive; skipped while the attacker has `sleep`/`snowMan`/`snowBall`/`petrify`/`paralysis` | `lckAdjust(4 × level)`, doubled while `actionState == "run"` | `:3246-3334` |
+| Chameleon Mass Shot | `actionState == "attack"`, command `massShot` | 100% | `:3361-3379` |
+| XunWu (monster) Flame Smite | `actionState == "attack"`, command `flameSmite` | 100% | `:3388-3406` |
+
+Cat **Vendetta** (#364) grants the Cat `RPC_AddHeal(364, 0, 0, 10, ...)` (+10 SP) on every Back Flip or Evasion dodge (`:3230-3241`, `:3339-3350`). Separately, an attacker with `blind` misses `10 + 10 × blindLv`% of the time (marker −81), also inside `hit()`.
+
+**Popup text:** the receiving side maps the negative codes to the floating text in `RPC_AddDamage`'s display coroutine (`CharacterControl.cs:30686-30760`): −81 → `Damage.displayMiss` (**MISS**, a blinded attacker), −82 → `Damage.displayEvade` (**EVADE**, every dodge above), −83 → `displayResist`, −84 → `displayImmune`, followed in the same chain by `displayDeflect` and `displayReflect` (their codes were not read). The textures are `Resources/GameAssets/Effects/Damage/miss` and `evade` (`Damage.cs:611`, `:654`); the PNGs under `effects/damage/assets/materials/` are stored mirrored.
+
+**Not dodgeable:** anything that does not go through `hit()`. That includes Effect Damage (`RPC_AddEffectDamage`, e.g. Panda Shadow Fist, and every Wolf normal attack while Wolf has `darkEdge`, `Wolf.cs:15267`), status ticks/status damage (`StatusUpdate`, `:8832-10634`), projectiles that call `RPC_AddDamage` themselves (`Mole_missile.cs:369`, `BarrelBot_missile.cs:369`, Gallon Bot missile, and many monster projectiles), pet damage, and damage passed on inside `RPC_AddDamage` (`:4994`, `:5531`, `:5661`). The class files contain more direct `RPC_AddDamage` calls that were not classified one by one. The bible's mechanic-glossary topic `evasion` summarises this section.
+
 ---
 
 ## 3. Skills
@@ -386,6 +407,8 @@ Each status maps to a sequential integer code. Grouped by function:
   `eraseBoost`, `speedBoost`, `wash`, `tent`, `happy`, `sad`, `death`.
 
 (Full enumerated codes live in StatusData.cs:63–1372; icons resolve from `GameGui/Icons/Status/<name>`.)
+
+**`poison`** (code 605, Debuff + Physical: `StatusData.cs:1174`, `:5457`, `:7406`): a pure damage-over-time with no stat change on apply (`CharacterControl.cs:36965`). Each tick is Effect Damage `RPC_AddEffectDamage(1, 10 × sLv − 1, ...)` from `StatusUpdate` (`:9208+`), so it cannot be dodged (§2.8) and gets only `hitMod`. **Tick interval: every 4 seconds**, from the user's in-game observation (2026-09-23). The source timer is obfuscated and was not traced. `removeDot()` clears it (`:19664`).
 
 ### 4.2 Status classification & cleanse system (StatusData.cs)
 Status effects are queried at runtime via static boolean predicates in `StatusData.cs` that govern cleanse eligibility, dispel interactions, and UI categorization:

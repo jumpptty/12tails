@@ -264,6 +264,12 @@ Source of server deltas: `12t_projects/bible/index.html:10761,10769`.
   (`Wolf.cs:23960-23973`). The `0.4 × ATK` term is a plain float multiplication and is combined with the already-rounded `talAdjust` result before the outer C# `(int)` truncation. **It does not call `atkAdjust()`**, therefore it has no second ATK-side LCK roll. The only attacker LCK rolls are inside `talAdjust` and later `dmgAdjust` in the shared hit pipeline.
 - **Rank 3 raw formula:** `int(0.4 × ATK + talAdjust(135))`; KO = 15. It continues through the shared `dmgAdjust → defAdjust → hitMod` pipeline after the `hit(...)` call.
 
+### wlf_darkEdge (Dark Edge): normal attacks become Effect Damage (partial, 2026-09-23)
+
+- **Branch:** each normal-attack stage reads `getStatusLv("darkEdge")` (`Wolf.cs:15074`, `:15913`, `:16616`, `:17327`). With the status off (`<= 0`) the swing is an ordinary `mChar.hit(stage, target, hitDmg, 1, 0, ...)` (`:15218`, `:16049`, `:16752`, `:17468`). With it on, the same swing skips `hit()` and instead calls `tChar.RPC_AddEffectDamage(363, hitDmg + Random.Range(0, CeilToInt(0.2 × LCK)), 0, 0, ...)` (`:15267`, `:16098`, `:16801`; stage 4 uses code 364 at `:17517`), then plays `RPC_darkEdge_hit`.
+- **Consequences of skipping `hit()`:** the swing cannot be dodged by the target's `drunken` evasion or the Water Monkey/Water Crane evasion (both live only inside `hit()`, `CharacterControl.cs:3076-3079`, `:3134-3167`), and it gets none of the target-side `hit()` checks. As Effect Damage it takes no `dmgAdjust`/`defAdjust`: only the attacker's LCK roll added here, then `hitMod` (rounded down) on the target (see the `RPC_AddEffectDamage` notes in the Mechanics Reference). KO is 0. The `hit()`-path follow-ups (`onNormalAttackHit`, `isHit`) sit in the `<= 0` branch, so they don't run for Dark Edge swings.
+- **Not yet traced:** how `hitDmg` itself is computed during Dark Edge, and the status duration details beyond `chaAdjust(2 × sLv)` (`Wolf.cs:30805`).
+
 ## Class-C Passives
 
 Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Only Fortitude is written up so far; `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5` and `wildHeart5` still need their own entries.
