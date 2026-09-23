@@ -502,6 +502,27 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 - **`grab` status:** nCode 304 (`StatusData.cs:811`), `isDebuffStatus` + `isStateStatus` (`:7328`, `:4896`); handler sets `moveSpeed = 0`, `myForce = zero` (`CharacterControl.cs:2300`).
 - **Tiger Pounce** (`getTigerPounceLv() = hasSkill(232)`, `Panda.cs:8670`), 0.1 s later: `FindAreaTarget(thrown target position, 3·rangeMod, 6·rangeMod)` (`:26805`) → `hit(232 + lv, obj, (int)(0.5·(ATK+FA) + talAdjust(tChar.weight)), 10, 0, Vector3.zero)` (`:26828`) on every enemy in the circle; `ComboPlus()` once, **no SP gain** in this loop. Weight is the thrown target's `CharacterControl.weight` (character data weight + bonuses, `CharacterControl.cs:1455`), so it is always < 60 here. The app models it with a `น้ำหนัก` input (0–59, default 30) on the Tiger Toss card.
 
+### Climbing Cliff (`panda_climbingCliff`)
+
+- **Requirements (`decode_skilldata.py`):** Lv 21 / Bn 7, `mode = passive`, 0 MP / 0 SP in skill data; no SP check of its own (the Tiger Toss cast needs SP ≥ 12).
+- **Tooltip:** "Enables Panda to use TigerToss on any large target and change it to a climbing attack." / Thai "เปลี่ยนให้ไทเกอร์ทอสเป็นท่า โจมตีต่อเนื่องสำหรับเป้าหมาย" (`PandaSkill_eng.cs`, `PandaSkill_thai.cs`).
+- **Trigger:** Tiger Toss's `$RPC_grab` on a target with height × scale ≥ 3 while Climbing Cliff is learned, unless Crumbling Mountain takes over (`sp >= 40` and learned) (`Panda.cs:26178-26260`).
+- **Coroutine `$RPC_climbingCliff$25380` (`Panda.cs:27194-27750`):** `addTimeOut("tigerToss", agiAdjust(240))` (`:27598`, Tiger Toss's key), self `addStatus("noForce", 1, 2, …)` (`:27619`, 2 s fixed), toast "ClimbingCliff!" (`:27687`). 18 ticks of 0.1 s (`:27347`, `:27750`); hits the **selected target** (`ActorNrList[tID]`, `:27500`) on ticks **1, 3, 5, …, 15 = 8 hits** (`:27442-27484`); step back at `moveSpeed = −4` from tick 12 to 16 (`:27566-27580`).
+- **Per hit:** `hit(260 + sLv, target, (int)(0.3·(ATK + getFocusedArtDmg()) + talAdjust(10)), 1, 0, Vector3.zero)` (`:27516`): KO 1, no force, dodgeable; `sp += 1` and `ComboPlus()` per hit. Crushing Monolith does not apply here.
+
+### Crumbling Mountain (`panda_crumblingMountain`) and Crushing Monolith (`panda_crushingMonolith`, skill #432)
+
+- **Requirements (`decode_skilldata.py`):** Crumbling Mountain Lv 27 / Bn 9, Crushing Monolith Lv 75 / Bn 4; both `mode = passive`, 0 MP / 0 SP in skill data.
+- **Tooltips:** Crumbling Mountain "Gives Climbing Cliff its final attack when Panda uses it with more than 40 sp." / Thai "เพิ่มการโจมตีพิเศษหลังจากท่า ClimblingCliff ถ้า sp มากกว่า 40"; Crushing Monolith Thai "แยกร่างเพิ่มความเสียหายให้ ClimbingMountain ตามความสูงของเป้าหมาย" (no English string found). The source check is **`sp >= 40`**, and SP is checked, not spent.
+- **Trigger:** only through Tiger Toss's `$RPC_grab` (see Tiger Toss): target height×scale ≥ 3, Climbing Cliff learned, `sp >= 40` and Crumbling Mountain learned → `RPC_crumblingMountain`; otherwise Climbing Cliff.
+- **Coroutine `$RPC_crumblingMountain$25394` (`Panda.cs:27796-28670`):** `addTimeOut("tigerToss", agiAdjust(300))` (`:28383`, Tiger Toss's key), self `addStatus("noForce", 1, 3, …)` (`:28404`, 3 s fixed). 28 ticks of 0.1 s (`:27949`, `:28611`); hits the **selected target only** on ticks **2, 5, 9, 10, 11, 15–22 = 13 hits** (`:28044-28119`); toast "Crumbling Mountain!" at tick 16 (`:28279`); step back at `moveSpeed = −4` on ticks 24–27 (`:28351`).
+- **Per hit:** `mDmg = (int)(0.3·(ATK + getFocusedArtDmg()) + talAdjust(10))` (`:28153`), KO 1, no force; `sp += 1` and `ComboPlus()` per hit.
+  - Without Crushing Monolith: `hit(262 + sLv, …)` (`:28223`).
+  - With Crushing Monolith (`hasSkill(432)`, `:28158`): `mDmg += talAdjust((int)(target CharacterController.height × 10))` (`:28175`) — a **second, separately rolled** `talAdjust` using the **raw** collider height (the grab gate uses height × scale) — then `hit(432, …)` (`:28181`). Also spawns 3 `crushingMonolith` visuals around the target (`:28513-28577`).
+- **Compared with Climbing Cliff** (`$RPC_climbingCliff$25380`, `Panda.cs:27194-27750`): 18 ticks, hits on 1, 3, …, 15 = **8 hits**, same per-hit formula, CD 240, noForce 2 s. Crushing Monolith does not apply to Climbing Cliff.
+- **`noForce` status:** nCode 5 (`StatusData.cs:111`), `isBuffStatus` only (`:6356`); handler sets `myForce = zero` (`CharacterControl.cs:2266`).
+- **App modelling:** the Monolith group's text is `talAdjust(10) + talAdjust(tHeight10)`, rolled as two independent `talAdjust` calls; `tHeight10 = round(height × 10)` from the card's `สูง` input (default 3.0 m).
+
 ### Ogre Impact (`panda_ogreImpact`, skill #422)
 
 - **Passive, Lv 70 / Bn 3, 0 MP / 0 SP** (`decode_skilldata.py`; `PandaSkill.cs:3173`).
@@ -544,7 +565,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
 | Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
 
-  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel, Tower Rush and Tiger Toss (+ Tiger Pounce) cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel, Tower Rush and Tiger Toss (+ Tiger Pounce), Climbing Cliff and Crumbling Mountain (+ Crushing Monolith) cards are fully verified in the app so far; the rest are recorded here for their future cards.)
 
 ### Nine Steps (`panda_nineSteps`, skill #402)
 

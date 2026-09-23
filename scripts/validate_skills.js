@@ -105,6 +105,8 @@ const exposeInjection = `
   window._renderOneDmgFormula = renderOneDmgFormula;
   window._renderShieldFormula = renderShieldFormula;
   window._rollOneHit = rollOneHit;
+  window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
+  window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
@@ -767,7 +769,8 @@ let checkedLckDiff = 0;
 // formula: every roll of the real Test/Simulate path (rollOneHit) must fall inside the
 // Final Damage range the card displays (finalRangeForRange(calcRangeFor(...))). Run twice
 // per skill rank, once with every dependency at its default and once with every dependency
-// switched off. Skipped: dmgGroups skills (per-group sums) and prose/non-computable text.
+// switched off. dmgGroups skills are checked group by group: each active group is rolled with
+// rollOneHit(..., groupIndex) against its own range (dmgModes cards and prose text are skipped).
 // (Found 2026-09-19: Lucky Card's LCK-difference roll was missing from the displayed max.)
 let checkedConsistency = 0;
 {
@@ -782,7 +785,7 @@ let checkedConsistency = 0;
   const N = 2000;   // large on purpose: an overshoot can be a rare tail event (a few in 6000 rolls)
   const failures = new Map();
   SKILLS.forEach(sk => {
-    if (sk.dmgGroups) return;
+    if (sk.dmgGroups && sk.dmgModes) return;   // alternative modes/zones, not per-hit groups
     const depIds = [];
     DEP_FIELD_NAMES.forEach(f => { if (sk[f] && sk[f].id) depIds.push([sk[f].id, sk[f].minRank !== undefined ? sk[f].minRank : 0]); });
     if (sk.dmgFocusIntellect) depIds.push(["focusIntellect", 0]);
@@ -798,20 +801,32 @@ let checkedConsistency = 0;
       depIds.forEach(([id, min]) => { if (depsOff) sandbox._depRanks[id] = min; else delete sandbox._depRanks[id]; });
       for (let r = 1; r <= Math.max(1, sk.maxRank || 1); r++) {
         try {
+          const computable = text => {
+            const s = sandbox._substituteDmgVars(text, sk, r);
+            return /talAdjust\(([^()]+)\)/.test(s) || /^[\d\s×*+\-().]+$/.test(s);
+          };
           const rawText = sandbox._getDmgText(sk, r);
-          const subText = sandbox._substituteDmgVars(rawText, sk, r);
-          if (!(/talAdjust\(([^()]+)\)/.test(subText) || /^[\d\s×*+\-().]+$/.test(subText))) continue;
+          if (!sk.dmgGroups && !computable(rawText)) continue;
           sandbox._skillRanks[sk.id] = r;
           sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined;
           sandbox._selectSkill(sk);
           if (!sandbox._calcRangeFor || !sandbox._finalRangeForRange) continue;
-          const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(rawText));
-          let lo = Infinity, hi = -Infinity;
-          for (let i = 0; i < N; i++) { const x = sandbox._rollOneHit(sk, r); lo = Math.min(lo, x); hi = Math.max(hi, x); }
-          checkedConsistency++;
-          if (lo < fin[0] || hi > fin[1]) {
-            if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}${depsOff ? " (deps off)" : ""}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
-          }
+          // One unit per active group (rolled with rollOneHit's groupIndex), or the whole skill.
+          const units = sk.dmgGroups
+            ? sk.dmgGroups.map((g, gi) => ({ g, gi })).filter(({ g }) => sandbox._resolveGroupHitCount(sk, g) > 0 && computable(g.dmg))
+            : [{ g: null, gi: undefined }];
+          units.forEach(({ g, gi }) => {
+            const fin = g
+              ? sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g))
+              : sandbox._finalRangeForRange(sandbox._calcRangeFor(rawText));
+            let lo = Infinity, hi = -Infinity;
+            for (let i = 0; i < N; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false, gi); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+            checkedConsistency++;
+            if (lo < fin[0] || hi > fin[1]) {
+              const where = g ? ` group ${gi}${g.label ? ` "${g.label}"` : ""}` : "";
+              if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}${where}${depsOff ? " (deps off)" : ""}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
+            }
+          });
         } catch (e) {
           if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}: EXCEPTION ${e.message}`);
         }
