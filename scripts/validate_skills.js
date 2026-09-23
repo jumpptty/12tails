@@ -306,6 +306,35 @@ SKILLS.forEach(sk => {
     errorCount++;
   }
 
+  // dmgGroups hit counts must sum to the top-level hitCount for every dep on/off
+  // combination: rollHitCount() (Simulate) uses the top-level value and
+  // resolveHitDmgText() walks the groups by hit index, so a mismatch silently
+  // drops or repeats hits (Tiger Toss once simulated 1 hit instead of 2).
+  // dmgModes cards (alternative modes/zones, not sequential hits) are exempt.
+  // Mirrors resolveGroupValue(): a group's depOn is its own dep, else hitCountDep, else dep.
+  if (sk.dmgGroups && !sk.dmgModes && typeof sk.hitCount === 'function' && !sk.hitCountDuration
+      && sk.dmgGroups.every(g => g.hitCount !== undefined)) {
+    const deps = [];
+    const addDep = d => { if (d && !deps.includes(d)) deps.push(d); };
+    sk.dmgGroups.forEach(g => addDep(g.dep || sk.hitCountDep || sk.dep));
+    addDep(sk.hitCountDep); addDep(sk.dmgDep);
+    for (let r = 1; r <= maxRank; r++) {
+      for (let mask = 0; mask < (1 << deps.length); mask++) {
+        const on = d => !!d && (mask & (1 << deps.indexOf(d))) !== 0;
+        const groupSum = sk.dmgGroups.reduce((s, g) => {
+          const hc = g.hitCount;
+          return s + (typeof hc === 'function' ? hc(r, on(g.dep || sk.hitCountDep || sk.dep)) : hc);
+        }, 0);
+        const top = sk.hitCount(r, on(sk.dmgDep), on(sk.hitCountDep));
+        if (groupSum !== top) {
+          const state = deps.map(d => `${d.id}=${on(d) ? 'on' : 'off'}`).join(', ');
+          console.error(`[DMGGROUPS HITCOUNT ERROR] ${ctx} Rank ${r} (${state}): dmgGroups hit counts sum to ${groupSum} but top-level hitCount is ${top} -- Simulate would roll the wrong number of hits`);
+          errorCount++;
+        }
+      }
+    }
+  }
+
   // Cast Time array check
   if (Array.isArray(sk.castTime) && sk.castTime.length !== maxRank) {
     console.error(`[CAST TIME ERROR] ${ctx}: castTime array length (${sk.castTime.length}) does not match maxRank (${maxRank})`);

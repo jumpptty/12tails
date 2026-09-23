@@ -490,6 +490,18 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - Ogre Impact (`hasSkill(422)`, `:25418`): `FindAreaTarget(pos, 4, 6)` (`:25424`) = **circle of radius 4 m around Panda (front and back), 6 m tall, not scaled by `rangeMod`**; damage `(int)(0.75·(ATK + getFocusedArtDmg()) + talAdjust(15·sLv + 15))` (`:25429`); also spawns the `towerRush_ogre` visual (`:25371-25395`).
   - `hit(220 + 2·sLv, obj, dmg, 10·sLv, 0, Vector3.zero)` (`:25466`): KO `10·sLv`, no knockback, dodgeable (`hit()` path). `sp += 1` per target (`:25499`); `ComboPlus()` once if anything was hit (`:25518`). No status.
 
+### Tiger Toss (`panda_tigerToss`) and Tiger Pounce (`panda_tigerPounce`, skill #232)
+
+- **Tiger Toss cost / requirements (`decode_skilldata.py`):** single rank, Lv 9 / Bn 3, MP 0, **SP +12 (threshold, blue — not consumed)**, `mode = target`, target enemy.
+- **Tooltips:** "Instantly grab and toss target with small or medium size, dealing 15 damage and 3 ko." / Thai "ท่าจับทุ่มของแพนด้า ใช้ได้กับ เป้าหมายขนาดเล็กและขนาดกลาง (+15 dmg, 3ko)"; Tiger Pounce "Adds a second hit to TigerToss, dealing target's weight and 10 ko to all nearby enemies." / Thai "ทำให้เป้าหมายที่โดนทุ่มทำ ความเสียหายให้รอบตัว ตาม น้ำหนัก (0.5 x weight, 10ko)". **Both tooltips disagree with source:** Tiger Toss KO is **5**, not 3; Pounce damage is `0.5·(ATK+FA) + talAdjust(weight)`, not `0.5 × weight`.
+- **Cast = `$RPC_grab$25344` (`Panda.cs:25862-26400`, dispatch `:7174`):** dash at `moveSpeed = 16` (`:26009`), stop (`:26036`), then `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod, 3·rangeMod)` (`:26073`, 2 m wide × 1 m × 3 m tall) must contain the selected target. Then:
+  - target `CharacterController.height × localScale.y < 3` (`:26113`) **and** `weight < 60` (`:26130`) **and** `recieveForce` (`:26136`) → `RPC_tigerToss` (`:26142`); height OK but too heavy / force-immune → toast "Target too heavy!" (`:26168`);
+  - height ≥ 3 → with Climbing Cliff: `sp >= 40` and Crumbling Mountain learned → `RPC_crumblingMountain`, else `RPC_climbingCliff`; without Climbing Cliff → "Target too large!" (`:26178-26260`).
+  - `RPC_grab` has **no `addTimeOut`**: a grab that fails starts no cooldown.
+- **Toss (`$RPC_tigerToss$25362`, `Panda.cs:26452-27190`):** `addTimeOut("tigerToss", agiAdjust(30))` (`:26950`), `moveSpeed = 3`, self `addStatus("noForce", 1, 1, …)` (`:26971`); collision with the target ignored and target gets `addStatus("grab", sLv, 1, …)` (`:27089-27101`). After 0.6 s (`:27127`): `removeStatus("grab")` (`:26653`), then `hit(230 + sLv, target, (int)(0.5·(ATK+FA) + talAdjust(15·sLv)), 5, 0, 5·forward + 2·up)` (`:26675`) — single target, thrown; `sp += 1`, `ComboPlus()`.
+- **`grab` status:** nCode 304 (`StatusData.cs:811`), `isDebuffStatus` + `isStateStatus` (`:7328`, `:4896`); handler sets `moveSpeed = 0`, `myForce = zero` (`CharacterControl.cs:2300`).
+- **Tiger Pounce** (`getTigerPounceLv() = hasSkill(232)`, `Panda.cs:8670`), 0.1 s later: `FindAreaTarget(thrown target position, 3·rangeMod, 6·rangeMod)` (`:26805`) → `hit(232 + lv, obj, (int)(0.5·(ATK+FA) + talAdjust(tChar.weight)), 10, 0, Vector3.zero)` (`:26828`) on every enemy in the circle; `ComboPlus()` once, **no SP gain** in this loop. Weight is the thrown target's `CharacterControl.weight` (character data weight + bonuses, `CharacterControl.cs:1455`), so it is always < 60 here. The app models it with a `น้ำหนัก` input (0–59, default 30) on the Tiger Toss card.
+
 ### Ogre Impact (`panda_ogreImpact`, skill #422)
 
 - **Passive, Lv 70 / Bn 3, 0 MP / 0 SP** (`decode_skilldata.py`; `PandaSkill.cs:3173`).
@@ -532,7 +544,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
 | Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
 
-  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel and Tower Rush cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel, Tower Rush and Tiger Toss (+ Tiger Pounce) cards are fully verified in the app so far; the rest are recorded here for their future cards.)
 
 ### Nine Steps (`panda_nineSteps`, skill #402)
 
