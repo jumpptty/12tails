@@ -150,8 +150,11 @@ below for why they were initially left out and then given their own rows.
   (`PandaSkill_eng.cs:576`/`:587`, "giving Panda **and its target** a 10%/20% evasion chance and 10%/20%
   damage decrease"): `RPC_AddStatus` is only ever called on `self_.mChar` — no target-side application
   exists anywhere in the coroutine, so "and its target" is inaccurate; separately, the coded effect is a
-  flat `damageMod += 0.1f` (`CharacterControl.cs:15790`, a **damage-dealt increase**, not a "decrease")
-  regardless of rank, and evasion (`lckAdjust(5*statusLv)`, `CharacterControl.cs:3085`) is the only value
+  flat `damageMod − 0.1` regardless of rank: a **damage-dealt decrease**, so the tooltip's "decrease" is
+  right. **Corrected 2026-09-23:** this note used to say `+= 0.1` (an increase), citing `CharacterControl.cs:15790`,
+  but that line is inside `removeStatus` (`:14452`) and only undoes the effect. The apply site is
+  `self_.damageMod = self_.damageMod - 0.1f;` in the `$addStatus$35621` coroutine (`CharacterControl.cs:35393`).
+  Evasion (`lckAdjust(5*statusLv)`, `CharacterControl.cs:3076-3079`) is the only value
   that actually scales by rank (5%/10%, not the tooltip's claimed 10%/20%). This self-buff `"drunken"` is
   distinct from `"drunk"`, the CHA-contested target debuff cited in the judgment-call note below — the
   two share a name root but are separate statuses on separate characters.
@@ -330,6 +333,22 @@ below for why they were initially left out and then given their own rows.
 - **Shadow Fist bonus:** adds `floor(0.16 * PandaLevel)` Effect Damage to each Shadow Fist follow-up (`Panda.cs:35804-35821`).
 - **Sage range bonus:** the code reads `hasSkill(433)` as 0/1 and adds it directly to the affected target-finder dimension, giving a genuine +1m before `rangeMod`: Water Monkey's three 2m rectangle dimensions (`Panda.cs:32900-33020`); Water Crane's 4m radius (`:33539`, `:33884-33886`); Stasis Blow and Death Blow's 1m/4m rectangle dimensions (`:34298-34312`, `:35114-35128`); Wind & Cloud (`:36768`); Rain & Storm's 5m radius (`:38381-38390`); and Heaven Palm's target radius (`:39821-39826`, `:40077`). It does not alter their base damage coefficients.
 - **Duration / cooldown:** none; all changes are passive and read at the affected cast's execution time.
+
+### Drunken Fist (`panda_drunkenFist`, skill IDs #301/#302)
+
+- **Ranks, requirements, and resource gate:** Rank 1 costs 4 MP and needs 10 SP (Lv. 3 / Bn. 0); Rank 2 costs 6 MP and needs 12 SP (Lv. 9 / Bn. 1). `setMPSP(4, 10)` / `setMPSP(6, 12)` (`PandaSkill.cs:593`, `:1765`): the positive SP is an initiation threshold (blue), not SP spent. Instant, enemy-targeted, `cType = "drunkenFist"` (`:1770-1780`).
+- **Cooldown:** `addTimeOut("drunkenFist", agiAdjust(30f))` (`Panda.cs:32458`).
+- **Sequence:** four hits from the `$RPC_drunkenFist$25474` state machine. Cast at t=0, then hits at 0.2s (state 2), 0.5s (state 3), 0.7s (state 5) and 0.86s (state 6), and the move ends at 1.2s (state 7) (`Panda.cs:32611-32636` yields). Each hit state first checks `myCommand == "drunkenFist"`, so an interrupted cast skips the remaining hits. Hit detection runs only on the owner (`if (!isMine) goto ...`, `:31712`).
+- **Area:** every hit uses `Damage.FindRecTarget(pos, forward, 1×rangeMod, 1×rangeMod, 1×rangeMod, 2×rangeMod)` (`:31718`, `:31940`, `:32115`, `:32263`): a 2m wide × 1m deep × 2m high box in front. Spirit Fist does not change it (no `hasSkill(433)` term).
+- **Damage:** action ID `300 + sLv`, KO 1, truncated with `(int)`:
+  - Hit 1: `0.4×ATK + talAdjust(3 + 3×sLv)` (`:31741`)
+  - Hits 2-4: `0.4×ATK + talAdjust(3×sLv)` (`:31963`, `:32138`, `:32286`)
+
+  So Rank 1 is `talAdjust(6)` then 3× `talAdjust(3)`, and Rank 2 is `talAdjust(9)` then 3× `talAdjust(6)`. No `getFocusedArtDmg()`. The tooltips say 3 hits ("3x3 dmg" / "6x3 dmg", `PandaSkill_eng.cs:554`, `:565`; TH `PandaSkill_thai.cs:576`, `:587`). The code does 4.
+- **On each successful hit:** +1 SP to the Panda and `ShadowFist(target)` (`:31774-31779` and the matching lines of the other three hits).
+- **Drunken Plus (#303/#304, `getDrunkenPlusLv()` 0/1/2, `Panda.cs:9011-9014`):** at cast start, before hit 1, the Panda gets the self status `drunken` at level = Drunken Plus rank for `chaAdjust(12)` (`:32576-32591`). `drunken` (code 305, Buff + Physical, `StatusData.cs:822`, `:5379`, `:6578`) does `damageMod −0.1` (`CharacterControl.cs:35393`, reversed in `removeStatus` at `:15790`). `damageMod` is read by the shared `hit()` for **every** direct hit the Panda lands (`CharacterControl.cs:3531`, `:3540`), so all Panda direct damage, including Drunken Fist's own 4 hits, is ×0.9 while it lasts. Shadow Fist's Effect Damage (`RPC_AddEffectDamage`) is not affected. The status also gives evasion `Random(0,100) < lckAdjust(5 × level)` against incoming hits (`CharacterControl.cs:3076-3079`). Recasting refreshes the duration without stacking (Mechanics Reference §4.2.1: same caster, same level).
+- **Drunken Spin (#403, `getDrunkenSpinLv()` 0/1, `Panda.cs:9707-9710`):** each hit applies `drunk` (level 1) to a target that does not already have it: `Damage.getDebuff(12, cha, targetCha)` on hit 1 (`:31817`), `getDebuff(6, ...)` on hits 2-4 (`:32039`, `:32214`, `:32362`). `drunk` (code 308, Debuff + Physical, `StatusData.cs:855`, `:5391`, `:7346`) has no stat effect on apply (`CharacterControl.cs:35531`). It reverses movement input in the player hero controllers (`vector *= -1` when `hasStatus("drunk")`, e.g. `Panda.cs:1468`; the same check exists in all 12 hero class files plus BisonCult/PandaCult), so it only matters against players. Otherwise Drunken Spin only swaps the cast effect to `drunkenSpin` (`:31621-31653`).
+- **⚠️ Tooltip vs code:** both tooltips say Drunken Spin adds +6 damage to Drunken Fist (`PandaSkill_eng.cs:994`, `PandaSkill_thai.cs:1016`). None of the four hit expressions reads `getDrunkenSpinLv()`, so the +6 is not in the client code. Not live-tested.
 
 ### Water Monkey (`panda_waterMonkey`, skill IDs #311/#312)
 
