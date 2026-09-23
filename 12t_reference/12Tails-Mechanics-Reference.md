@@ -394,6 +394,10 @@ These five skills are class-independent engine constants.
   centre is within `extents.x` of the far-end centre, `:1541-1556`) **and** its capsule overlaps the vertical band
   `[pos.y − 0.5×TargetHeight, pos.y + TargetHeight]` (`:1567`, `:1576`). Cards should quote full width
   (`2×BaseWidth`) and `TargetHeight` as the height.
+- **Circle hit areas — `Damage.FindAreaTarget(pos, TargetRange, TargetHeight, layerMask)`** (`Damage.cs:963`): an
+  all-around circle of radius `TargetRange` centred on `pos` (debug outline drawn as an octagon at `TargetRange`), with
+  the target's collider edge nearest `pos` (`transform.position + radius·dir`) tested against it; `TargetHeight` is the
+  height. Cards quote it as `รัศมี <TargetRange>m สูง <TargetHeight>m`.
 
 ### 4.1 Status effect catalog (StatusData.getStatusCode, StatusData.cs)
 Each status maps to a sequential integer code. Grouped by function:

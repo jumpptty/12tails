@@ -480,11 +480,21 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - Ogre Impact (`hasSkill(422)`, `:24759`): `FindRecTarget(pos, forward, 2, 2, 3, 3)` (`:24765`) = **4 m wide, 3 m long, 3 m tall, not scaled by `rangeMod`**; damage `(int)(0.35·(ATK + getFocusedArtDmg()) + talAdjust(5·sLv + 5))` (`:24770`); also spawns the `pummel_ogre` / `pummel_ogreArm1/2` visuals (`:24480-24601`).
   - `hit(219 + 2·sLv, obj, dmg, sLv, 0, Vector3.zero)` (`:24812`): KO `sLv`, no knockback, dodgeable (`hit()` path). `sp += 1` per target (`:24845`); `ComboPlus()` once per jab that hit anything (`:24862`). No status.
 
+### Tower Rush (`panda_towerRush`)
+
+- **Cost / requirements (`decode_skilldata.py`):** MP 0, SP **−15/−20** (consumed, red), Lv 13/25, Bn 4/8, instant, target enemy. CD `addTimeOut("towerRush", agiAdjust(30))`, fixed for both ranks (`Panda.cs:25632`).
+- **Tooltip:** "Instantly perform a quick back attack that deal 15 damage and 10 ko." / "…30 damage and 20 ko." (`PandaSkill_eng.cs`; Thai "กระโดดเอาหลังกระแทกเพื่อทำ ko เป้าหมาย (+15dmg, 10ko)" / "(+30dmg, 20ko)", `PandaSkill_thai.cs`).
+- **Coroutine `$RPC_towerRush$25329` (`Panda.cs:25172-25800`):** lunge at `moveSpeed = 16` (`:25319`) for 0.1 s (`:25799`), stop (`:25346`), **one hit**, then step back at `moveSpeed = −4` (`:25545`) for 0.3 s (`:25797`) and return to standby (`:25571`).
+- **Hit:**
+  - Base: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod, 3·rangeMod)` (`:25437`) = **2 m wide, 1 m long, 3 m tall** in front; damage `(int)(0.5·(ATK + getFocusedArtDmg()) + talAdjust(15·sLv))` (`:25442`).
+  - Ogre Impact (`hasSkill(422)`, `:25418`): `FindAreaTarget(pos, 4, 6)` (`:25424`) = **circle of radius 4 m around Panda (front and back), 6 m tall, not scaled by `rangeMod`**; damage `(int)(0.75·(ATK + getFocusedArtDmg()) + talAdjust(15·sLv + 15))` (`:25429`); also spawns the `towerRush_ogre` visual (`:25371-25395`).
+  - `hit(220 + 2·sLv, obj, dmg, 10·sLv, 0, Vector3.zero)` (`:25466`): KO `10·sLv`, no knockback, dodgeable (`hit()` path). `sp += 1` per target (`:25499`); `ComboPlus()` once if anything was hit (`:25518`). No status.
+
 ### Ogre Impact (`panda_ogreImpact`, skill #422)
 
 - **Passive, Lv 70 / Bn 3, 0 MP / 0 SP** (`decode_skilldata.py`; `PandaSkill.cs:3173`).
 - **Tooltip:** "Increases Pummel and Tower Rush's damage and range with a red ogre effect." (`PandaSkill_eng.cs:957`; Thai `PandaSkill_thai.cs:979`).
-- **Hooks:** Pummel — larger fixed box and `0.35·(ATK+FA) + talAdjust(5·sLv+5)` (see above). Tower Rush — `hasSkill(422)` branch uses `0.75·(ATK+FA) + talAdjust(15·sLv+15)` instead of `0.5·(ATK+FA) + talAdjust(15·sLv)` (`Panda.cs:25429`, `:25442`); Tower Rush geometry to be verified with its card.
+- **Hooks:** Pummel — larger fixed box and `0.35·(ATK+FA) + talAdjust(5·sLv+5)` (see above). Tower Rush — `hasSkill(422)` branch uses `0.75·(ATK+FA) + talAdjust(15·sLv+15)` instead of `0.5·(ATK+FA) + talAdjust(15·sLv)` (`Panda.cs:25429`, `:25442`), and swaps the 2 m × 1 m front box for a 4 m-radius circle around Panda (`:25424`, see Tower Rush above).
 
 ### Delay Qi (`panda_delayQi`, skill #214)
 
@@ -522,7 +532,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
 | Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
 
-  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike and Pummel cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel and Tower Rush cards are fully verified in the app so far; the rest are recorded here for their future cards.)
 
 ### Nine Steps (`panda_nineSteps`, skill #402)
 
