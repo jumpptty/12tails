@@ -849,6 +849,20 @@ SKILLS.forEach(sk => {
     errorCount++;
   }
 });
+// 3i2. LCK PROC LABEL COMPLETENESS (GEMINI.md: every lckProc/secondaryLckProc chip must name what the
+// chance is for -- the chip used to silently show a generic "โอกาส" for any card missing this, so a
+// missing label never surfaced anywhere else until this check existed).
+let checkedLckLabels = 0;
+SKILLS.forEach(sk => {
+  for (const field of ["lckProc", "secondaryLckProc"]) {
+    if (!sk[field]) continue;
+    checkedLckLabels++;
+    if (!sk[field].label) {
+      console.error(`[LCK LABEL ERROR] ${sk.id}.${field} has no label -- add one naming what the chance is for (e.g. "โอกาส Frost").`);
+      errorCount++;
+    }
+  }
+});
 // 3i. Class portraits for the stat panel badge (CLASS_PORTRAITS): every class a skill belongs to (other
 // than shared "Common" skills, which have no character art) needs a valid PNG portrait.
 let checkedPortraits = 0;
@@ -1164,6 +1178,7 @@ console.log(`Verified ${checkedStatusKeywords} status keyword checks.`);
 console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) checks.`);
 console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base order) checks.`);
 console.log(`Verified ${checkedRankIcons} multi-rank icon presence checks.`);
+console.log(`Verified ${checkedLckLabels} lckProc/secondaryLckProc label checks.`);
 console.log(`Verified ${checkedPortraits} class portrait checks.`);
 console.log(`Verified ${checkedPanelMarkup} stat panel structure checks.`);
 console.log(`Verified ${checkedSummonFeed} summon stat-feed glow checks.`);

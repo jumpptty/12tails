@@ -364,7 +364,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Formula:** `(int)(0.5f * atk + talAdjust(sLv * 5 + (hasSkill(402) ? 20 : 0)))`
 * **KO:** Base `1` (`Rabbit.cs:23246`). With `hasSkill(402)` (Knee Shot), rolls an independent `lckAdjust(20)` percentage chance to deal `40` KO (`Rabbit.cs:23262-23273`).
 * **On Hit:** Restores `+1 SP` (`Rabbit.cs:23354`) and applies `"maim"` status for duration `Damage.getDebuff(3f, caster.cha, target.cha)` (`Rabbit.cs:23337`).
-* **Maim Status Effect:** Clamps target running speed to `(4 - 0.5 * sLv)` m/s while active (Rank 1: 3.5 m/s, Rank 2: 3.0 m/s, Rank 3: 2.5 m/s, Rank 4: 2.0 m/s) — `CharacterControl.cs:2527-2533`.
+* **Maim Status Effect:** A per-frame clamp inside `CharacterUpdate()` (not the one-time `RPC_AddStatus`/`removeStatus` apply sites, both of which are empty for `maim`): while the target is on its own client (`isMine`) and `actionState == "run"`, if `moveSpeed` exceeds `4 - 0.5×sLv` it is set down to that cap every frame — `CharacterControl.cs:2509-2546` (2527-2533 is the clamp line itself). Rank 1: 3.5 m/s, Rank 2: 3.0 m/s, Rank 3: 2.5 m/s, Rank 4: 2.0 m/s. Only gates running (matches the tooltip "จำกัดความเร็ววิ่ง"); does not touch `moveMod` or walking speed. See `12Tails-Mechanics-Reference.md`'s hitMod catalog note, corrected 2026-09-23.
 * **Dependency:** `rab_kneeShot5` (Skill ID 402, `RabbitSkill.cs:3215`) adds a flat `+20` inside the `talAdjust` base and enables the 20% LCK-scaled chance for 40 KO.
 
 ### 2. Four Shot (`fourShot1-2`)
