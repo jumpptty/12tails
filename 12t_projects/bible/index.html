@@ -63,6 +63,7 @@
     --mech-kw-hbg:rgba(138,106,31,0.16);
     --mech-kw-hborder:#8a6a1f;
     --mech-kw-htext:#6b5118;
+    --mech-link:#0d9488;
     /* Paralysis proc label (2026-08-21, user-requested: "paralysis yellow
        font color") -- a distinct token from --gold (this tool's own brass
        accent, deliberately muted) since a proc label needs to read as
@@ -129,6 +130,7 @@
       --mech-kw-hbg:rgba(201,162,39,0.28);
       --mech-kw-hborder:#c9a227;
       --mech-kw-htext:#ffffff;
+      --mech-link:#2dd4bf;
       --stat-paralysis:#facc15;
       --stat-atk-soft:rgba(239,68,68,.12);
       --chm-chip-bg:rgba(32,60,42,0.32);
@@ -185,6 +187,7 @@
     --mech-kw-hbg:rgba(201,162,39,0.28);
     --mech-kw-hborder:#c9a227;
     --mech-kw-htext:#ffffff;
+    --mech-link:#2dd4bf;
     --stat-paralysis:#facc15;
     --stat-atk-soft:rgba(239,68,68,.12);
     --chm-chip-bg:rgba(32,60,42,0.32);
@@ -1856,10 +1859,10 @@
     font-family:'Prompt',-apple-system,sans-serif; font-size:14px; line-height:1.75;
     color:var(--text); white-space:pre-line;
   }
-  .sk-server-popup-body .sk-val{
+  .sk-val{
     color:var(--gold); font-weight:600;
   }
-  .sk-server-popup-body .sk-val-red{
+  .sk-val-red{
     color:var(--seal); font-weight:600;
   }
   .sk-server-popup-hint{
@@ -1868,8 +1871,8 @@
   }
   .sk-hero-class{cursor:pointer; transition:text-shadow .15s ease}
   .sk-hero-class:hover{text-shadow:0 0 8px var(--tag-color)}
-  .sk-hero-name{cursor:pointer; transition:color .15s ease, text-shadow .15s ease}
-  .sk-hero-name:hover{text-shadow:0 0 10px var(--gold)}
+  .sk-hero-name,.mech-slide-title,#mechanicModalTitle{cursor:pointer; transition:color .15s ease, text-shadow .15s ease}
+  .sk-hero-name:hover,.mech-slide-title:hover,#mechanicModalTitle:hover{text-shadow:0 0 10px var(--gold)}
   .sk-tag-buff{
     display:inline-flex; align-items:center; justify-content:center;
     padding:2px 7px 1px; font-size:11px; font-weight:700; line-height:1.2; border-radius:4px;
@@ -2219,8 +2222,8 @@
     border-top:1px solid rgba(212,175,55,0.18);
     font-size:12px; line-height:1.42; color:var(--muted);
   }
-  .sk-support-lv-result .sk-val{ color:var(--gold); font-weight:600; }
-  .sk-support-lv-result .sk-val-red{ color:var(--seal); font-weight:600; }
+  .sk-val{ color:var(--gold); font-weight:600; }
+  .sk-val-red{ color:var(--seal); font-weight:600; }
   .sk-hero-desc:has(.sk-status:hover),
   .sk-hero-desc:has(.sk-status.is-active){
     overflow:visible;
@@ -2245,14 +2248,11 @@
     display:block;
   }
 
-  .sk-hero-desc .sk-val{
+  .sk-val{
     color:var(--gold);
     font-weight:600;
   }
-  .sk-hero-desc .sk-desc-skill-link,
-  .sk-support-lv-result .sk-desc-skill-link,
-  .sk-server-popup-body .sk-desc-skill-link,
-  .mech-slide-body .sk-desc-skill-link{
+  .sk-desc-skill-link{
     display:inline;
     padding:0;
     margin:0;
@@ -2267,10 +2267,7 @@
     text-shadow:0 0 7px rgba(245, 166, 35, 0.45);
     transition:filter 0.15s ease, text-shadow 0.15s ease;
   }
-  .sk-hero-desc .sk-desc-skill-link:hover,
-  .sk-support-lv-result .sk-desc-skill-link:hover,
-  .sk-server-popup-body .sk-desc-skill-link:hover,
-  .mech-slide-body .sk-desc-skill-link:hover{
+  .sk-desc-skill-link:hover{
     filter:brightness(1.2);
     text-shadow:0 0 12px rgba(245, 166, 35, 0.9), 0 0 4px rgba(255, 255, 255, 0.6);
   }
@@ -2279,16 +2276,13 @@
      opens the mechanic-glossary modal instead of navigating to a skill.
      Also scoped inside .sk-status-tip-desc so STATUS_DESC_MAP text can use
      the same convention. */
-  .sk-hero-desc .sk-mech-link,
-  .sk-support-lv-result .sk-mech-link,
-  .sk-server-popup-body .sk-mech-link,
-  .sk-status-tip-desc .sk-mech-link{
+  .sk-mech-link{
     display:inline;
     padding:0;
     margin:0;
     background:none;
     border:none;
-    color:var(--mech-kw, #8a6a1f);
+    color:var(--mech-link, #0d9488);
     font:inherit;
     font-weight:600;
     cursor:pointer;
@@ -2298,19 +2292,15 @@
     text-underline-offset:2px;
     transition:filter 0.15s ease, color 0.15s ease;
   }
-  .sk-hero-desc .sk-mech-link:hover,
-  .sk-support-lv-result .sk-mech-link:hover,
-  .sk-server-popup-body .sk-mech-link:hover,
-  .sk-status-tip-desc .sk-mech-link:hover{
-    color:var(--mech-kw-hborder, #8a6a1f);
+  .sk-mech-link:hover{
+    color:var(--mech-link, #0d9488);
     filter:brightness(1.2);
   }
-  .sk-hero-desc .sk-val-red{
+  .sk-val-red{
     color:var(--seal);
     font-weight:600;
   }
-  .sk-hero-desc .sk-status,
-  .mech-slide-body .sk-status{
+  .sk-status{
     position:relative;
     display:inline;
     cursor:help;
@@ -2318,10 +2308,8 @@
     font-weight:600;
     transition:color 0.15s ease;
   }
-  .sk-hero-desc .sk-status:hover,
-  .sk-hero-desc .sk-status.is-active,
-  .mech-slide-body .sk-status:hover,
-  .mech-slide-body .sk-status.is-active{
+  .sk-status:hover,
+  .sk-status.is-active{
     color:var(--status-kw-htext, #4c1d95);
   }
   /* Popup is a real child element (added 2026-09-19, replacing the earlier
@@ -2330,8 +2318,7 @@
      independently, and a divider between them wasn't expressible at all.
      Positioning is copied verbatim from the old ::after rule -- .sk-status
      keeps position:relative, so absolute values are unchanged. */
-  .sk-hero-desc .sk-status-tip,
-  .mech-slide-body .sk-status-tip{
+  .sk-status-tip{
     display:none;
     position:absolute;
     bottom:calc(100% + 7px);
@@ -2352,8 +2339,7 @@
     user-select:text;
   }
   /* Invisible bridge over the 7px gap so moving the mouse into the popup keeps it open. */
-  .sk-hero-desc .sk-status-tip::after,
-  .mech-slide-body .sk-status-tip::after{
+  .sk-status-tip::after{
     content:"";
     position:absolute;
     left:0;
@@ -2361,22 +2347,18 @@
     top:100%;
     height:8px;
   }
-  .sk-hero-desc .sk-status:hover .sk-status-tip,
-  .sk-hero-desc .sk-status.is-active .sk-status-tip,
-  .mech-slide-body .sk-status:hover .sk-status-tip,
-  .mech-slide-body .sk-status.is-active .sk-status-tip{
+  .sk-status:hover .sk-status-tip,
+  .sk-status.is-active .sk-status-tip{
     display:block;
   }
-  .sk-hero-desc .sk-status-tip-type,
-  .mech-slide-body .sk-status-tip-type{
+  .sk-status-tip-type{
     display:block;
     color:#c4b5fd;
     font-size:11px;
     font-weight:600;
     letter-spacing:0.3px;
   }
-  .sk-hero-desc .sk-status-tip-divider,
-  .mech-slide-body .sk-status-tip-divider{
+  .sk-status-tip-divider{
     display:block;
     width:100%;
     height:1px;
@@ -2384,18 +2366,15 @@
     background:var(--gold);
     opacity:0.6;
   }
-  .sk-hero-desc .sk-status-tip-desc,
-  .mech-slide-body .sk-status-tip-desc{
+  .sk-status-tip-desc{
     display:block;
     color:#fff;
     font-size:11px;
     font-weight:400;
     line-height:1.4;
   }
-  .sk-hero-desc .sk-status:hover::before,
-  .sk-hero-desc .sk-status.is-active::before,
-  .mech-slide-body .sk-status:hover::before,
-  .mech-slide-body .sk-status.is-active::before{
+  .sk-status:hover::before,
+  .sk-status.is-active::before{
     content:"";
     position:absolute;
     bottom:calc(100% + 1px);
@@ -2622,8 +2601,8 @@
     border-top:1px solid rgba(212,175,55,0.18);
     font-size:12px; line-height:1.42; color:var(--muted);
   }
-  .sk-support-lv-result .sk-val{ color:var(--gold); font-weight:600; }
-  .sk-support-lv-result .sk-val-red{ color:var(--seal); font-weight:600; }
+  .sk-val{ color:var(--gold); font-weight:600; }
+  .sk-val-red{ color:var(--seal); font-weight:600; }
   .sk-hero-desc:has(.sk-status:hover),
   .sk-hero-desc:has(.sk-status.is-active){
     overflow:visible;
@@ -2648,16 +2627,15 @@
     display:block;
   }
 
-  .sk-hero-desc .sk-val{
+  .sk-val{
     color:var(--gold);
     font-weight:600;
   }
-  .sk-hero-desc .sk-val-red{
+  .sk-val-red{
     color:var(--seal);
     font-weight:600;
   }
-  .sk-hero-desc .sk-status,
-  .mech-slide-body .sk-status{
+  .sk-status{
     position:relative;
     display:inline;
     cursor:help;
@@ -2665,10 +2643,8 @@
     font-weight:600;
     transition:color 0.15s ease;
   }
-  .sk-hero-desc .sk-status:hover,
-  .sk-hero-desc .sk-status.is-active,
-  .mech-slide-body .sk-status:hover,
-  .mech-slide-body .sk-status.is-active{
+  .sk-status:hover,
+  .sk-status.is-active{
     color:var(--status-kw-htext, #4c1d95);
   }
   /* Popup is a real child element (added 2026-09-19, replacing the earlier
@@ -2677,8 +2653,7 @@
      independently, and a divider between them wasn't expressible at all.
      Positioning is copied verbatim from the old ::after rule -- .sk-status
      keeps position:relative, so absolute values are unchanged. */
-  .sk-hero-desc .sk-status-tip,
-  .mech-slide-body .sk-status-tip{
+  .sk-status-tip{
     display:none;
     position:absolute;
     bottom:calc(100% + 7px);
@@ -2699,8 +2674,7 @@
     user-select:text;
   }
   /* Invisible bridge over the 7px gap so moving the mouse into the popup keeps it open. */
-  .sk-hero-desc .sk-status-tip::after,
-  .mech-slide-body .sk-status-tip::after{
+  .sk-status-tip::after{
     content:"";
     position:absolute;
     left:0;
@@ -2708,22 +2682,18 @@
     top:100%;
     height:8px;
   }
-  .sk-hero-desc .sk-status:hover .sk-status-tip,
-  .sk-hero-desc .sk-status.is-active .sk-status-tip,
-  .mech-slide-body .sk-status:hover .sk-status-tip,
-  .mech-slide-body .sk-status.is-active .sk-status-tip{
+  .sk-status:hover .sk-status-tip,
+  .sk-status.is-active .sk-status-tip{
     display:block;
   }
-  .sk-hero-desc .sk-status-tip-type,
-  .mech-slide-body .sk-status-tip-type{
+  .sk-status-tip-type{
     display:block;
     color:#c4b5fd;
     font-size:11px;
     font-weight:600;
     letter-spacing:0.3px;
   }
-  .sk-hero-desc .sk-status-tip-divider,
-  .mech-slide-body .sk-status-tip-divider{
+  .sk-status-tip-divider{
     display:block;
     width:100%;
     height:1px;
@@ -2731,8 +2701,7 @@
     background:var(--gold);
     opacity:0.6;
   }
-  .sk-hero-desc .sk-status-tip-desc,
-  .mech-slide-body .sk-status-tip-desc{
+  .sk-status-tip-desc{
     display:block;
     color:#fff;
     font-size:11px;
@@ -2741,10 +2710,8 @@
   }
   .sk-tip-red{ color:var(--seal); font-weight:400; }
   .sk-tip-red-b{ color:var(--seal); font-weight:600; }
-  .sk-hero-desc .sk-status:hover::before,
-  .sk-hero-desc .sk-status.is-active::before,
-  .mech-slide-body .sk-status:hover::before,
-  .mech-slide-body .sk-status.is-active::before{
+  .sk-status:hover::before,
+  .sk-status.is-active::before{
     content:"";
     position:absolute;
     bottom:calc(100% + 1px);
@@ -9181,7 +9148,7 @@ const MECHANIC_DESC_MAP = {
     // CharacterControl.cs:2722, multiplies floats directly) -- stated
     // explicitly per user request.
     steps: [
-      { label: "`moveSpeed` คำนวณจาก AGI และน้ำหนัก", body: "`moveSpeed` = **4 + 0.02 × AGI − 0.04 × น้ำหนักตัวและอุปกรณ์** (น้ำหนักไม่สามารถต่ำกว่า **0** ได้)<br>__ไม่มีการปัดขึ้นหรือปัดลงในขั้นตอนนี้__ และ __ค่านี้ยังไม่ใช่ความเร็วที่ตัวละครเดินจริงในเกม__" },
+      { label: "`moveSpeed` คำนวณจาก <span class='dmg-agi'>AGI</span> และน้ำหนัก", body: "`moveSpeed` = **4 + 0.02<span class='dmg-agi'>AGI</span> − 0.04น้ำหนักตัวและอุปกรณ์** (น้ำหนักไม่สามารถต่ำกว่า **0** ได้)<br>__ไม่มีการปัดขึ้นหรือปัดลงในขั้นตอนนี้__ และ __ค่านี้ยังไม่ใช่ความเร็วที่ตัวละครเดินจริงในเกม__" },
       { label: "`moveMod` ตัวคูณเปอร์เซ็นต์", body: "`moveMod` เป็นตัวคูณเปอร์เซ็นต์ ค่าเริ่มต้น **100%** ปรับขึ้นลงได้จากหลายสถานะ และถูกจำกัดเพดานไว้เสมอระหว่าง **10% ถึง 200%**",
         // 3-icon example row (2026-09-22, user-requested): real skills whose
         // status changes moveMod, each verified at its own apply-site (not
@@ -9212,7 +9179,7 @@ const MECHANIC_DESC_MAP = {
     // §2.2 (dmgAdjust, CharacterControl.cs:20487), §2.3 (defAdjust,
     // :20524), §2.6 (hitMod, :3765) -- all still ceil, stated explicitly.
     steps: [
-      { label: "ดาเมจตั้งต้นจากสกิล (`rawDmg`)", body: "แต่ละสกิลมีสูตรคำนวณดาเมจตั้งต้นของตัวเอง ซึ่ง**แตกต่างกันไปมาก**ในแต่ละสกิล (บางสกิลอิง TAL ผ่าน `talAdjust`, บางสกิลอิง ATK ตรงๆ, บางสกิลผสมทั้งสองแบบ) **ใช้เครื่องมือค้นหาสกิลในแอปนี้เพื่อดูสูตรที่แท้จริงของแต่ละสกิล** ในการ์ดนี้จะเรียกดาเมจตั้งต้นนั้นว่า `rawDmg`" },
+      { label: "ดาเมจตั้งต้นจากสกิล (`rawDmg`)", body: "แต่ละสกิลมีสูตรคำนวณดาเมจของตัวเองที่ต่างกันไปมากในแต่ละสกิล<br>(บางสกิลอิง <span class='dmg-tal'>TAL</span> บางสกิลอิง <span class='dmg-atk'>ATK</span> ในขณะที่ <span class='dmg-lck'>LCK</span> และ <span class='dmg-def'>DEF</span> ก็มีให้เห็นบ้าง)<br>ใช้ **เครื่องมือค้นหาสกิล** เพื่อดูสูตรคำนวณที่ถูกซ่อนไว้ของแต่ละสกิล" },
       { label: "`dmgMod` และสุ่ม LCK → `dmg`", body: "`rawDmg × dmgMod + Rand(0, 0.2×LCK) = dmg`<br>`dmgMod` (ตัวคูณดาเมจออกของผู้โจมตี) เริ่มต้น **100%** ปรับได้ด้วยบัฟ/ดีบัฟ จำกัดเพดานไว้สูงสุด **500%** __ขั้นตอนนี้ปัดขึ้น (ceil) เป็นจำนวนเต็มเสมอ__",
         // 3-icon example row, same convention as movespeed's moveMod step
         // -- each verified at its real apply-site (the Main() coroutine
@@ -9296,8 +9263,8 @@ function renderMechExamples(examples){
   if (!examples || !examples.length) return "";
   const items = examples.map(ex => `<div class="mech-example-item">
         <img class="mech-example-icon" src="${SKILL_ICONS[ex.icon] || ""}" alt="">
-        <span class="mech-example-name">${ex.name}</span>
-        <span class="mech-example-caption">${ex.caption}</span>
+        <span class="mech-example-name">${renderRichText(ex.name)}</span>
+        <span class="mech-example-caption">${renderRichText(ex.caption)}</span>
       </div>`).join("");
   return `<div class="mech-example-grid">${items}</div>`;
 }
@@ -9309,8 +9276,8 @@ function renderMechExamples(examples){
 function renderMechSlide(entry, key, idx){
   const total = entry.steps.length;
   const step = entry.steps[idx];
-  const title = renderMechLinks(renderMechCode(step.label));
-  const body = renderStatusKeywords(formatDescTokens(renderMechCode(step.body)));
+  const title = renderRichText(renderMechCode(step.label));
+  const body = renderRichText(renderMechCode(step.body));
   const examples = renderMechExamples(step.examples);
   const prevDisabled = idx <= 0;
   const nextDisabled = idx >= total - 1;
@@ -9397,9 +9364,24 @@ function fitMechSlide(){
   for (let px = Math.floor(parseFloat(getComputedStyle(body).fontSize)) - 1; px >= 15 && slide.scrollHeight > slide.clientHeight; px--) body.style.fontSize = px + "px";
 }
 window.addEventListener("resize", fitMechSlide);
+// Copies "## [title](link)" (Discord heading + link) and flashes `el` gold. From file:// the hosted address is used.
+function copyTitleLink(title, hash, el){
+  const base = /^https?:$/.test(location.protocol) ? location.href.split("#")[0] : "https://jumpptty.github.io/12tails/12t_projects/bible/";
+  const text = `## [${title}](${base}${hash})`;
+  const done = () => { el.style.color = "var(--gold)"; setTimeout(() => { el.style.color = ""; }, 900); };
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy") && done(); } catch (err) {}
+    ta.remove();
+  };
+  (navigator.clipboard ? navigator.clipboard.writeText(text).then(done, fallback) : fallback());
+}
 function closeMechanicPanel(){
   const backdrop = document.getElementById("mechanicModal");
   if (backdrop) backdrop.hidden = true;
+  if (location.hash.indexOf("#mech/") === 0) history.replaceState(null, "", location.pathname + location.search);
 }
 function mountMechanicGlossary(){
   const openBtn = document.getElementById("btnMechanicGlossary");
@@ -9408,6 +9390,13 @@ function mountMechanicGlossary(){
   if (!openBtn || !backdrop) return;
   openBtn.addEventListener("click", () => openMechanicPanel(null));
   backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeMechanicPanel(); });
+  // Hidden feature: click the step or topic title to copy a link straight to this step.
+  backdrop.addEventListener("click", (e) => {
+    const t = e.target.closest && e.target.closest(".mech-slide-title, #mechanicModalTitle");
+    const key = body && body.dataset.mechKey;
+    if (!t || !key || e.target.closest("button")) return;
+    copyTitleLink(MECHANIC_DESC_MAP[key].title, `#mech/${key}/${parseInt(body.dataset.mechStep || "0", 10) + 1}`, t);
+  });
   backdrop.addEventListener("click", (e) => {
     const link = e.target.closest && e.target.closest(".sk-desc-skill-link");
     if (!link) return;
@@ -9551,6 +9540,11 @@ function formatDescTokens(str, currentSkill) {
       return `<span class="sk-val">${inner}</span>`;
     })
     .replace(/\u0000(\d+)\u0000/g, (m, n) => parts[Number(n)]);
+}
+
+// **bold**, __red__, ^^glossary^^, **Skill** links and [status] tags -- use this for any authored text.
+function renderRichText(str, skill, lck) {
+  return renderStatusKeywords(formatDescTokens(str, skill), lck);
 }
 
 function renderStatusKeywords(s, lck) {
@@ -12702,8 +12696,7 @@ function mountSkillCooldownLookup(root){
     s = s.replace(/\[(buff)\]/gi, '<span class="sk-tag-buff">BUFF</span>');
     s = s.replace(/\[(nerf)\]/gi, '<span class="sk-tag-nerf">NERF</span>');
     s = s.replace(/\[(adjust|rework)\]/gi, '<span class="sk-tag-adjust">$1</span>');
-    s = formatDescTokens(s, skill);
-    s = renderStatusKeywords(s);
+    s = renderRichText(s, skill);
     return s;
   }
 
@@ -15110,8 +15103,7 @@ function mountSkillCooldownLookup(root){
       let supNum = supportAccountLv;
       if (supNum > LV) supNum = Math.floor(0.5 * (supNum + LV));
       let supResult = activeSelected.supportFormula ? activeSelected.supportFormula(supNum, LV) : "";
-      supResult = formatDescTokens(supResult, activeSelected);
-      supResult = renderStatusKeywords(supResult);
+      supResult = renderRichText(supResult, activeSelected);
       supportLvBlock = '<div class="sk-support-lv"><label for="supportLvInput">เลเวล ' + activeSelected.supportSourceClass + ' ในบัญชี</label><input type="number" id="supportLvInput" data-role="supportLv" min="1" max="60" step="1" inputmode="numeric" value="' + supportAccountLv + '"><p class="sk-support-lv-result">' + supResult + '</p></div>';
     }
     // ownStats (Barrel Bot moveset pilot, 2026-08-20): AGI/LCK/ATK/TAL are
@@ -15301,7 +15293,7 @@ function mountSkillCooldownLookup(root){
     }
     const descStr = descRaw ? String(descRaw) : "";
     const descClean = descStr.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1");
-    const descFormatted = renderStatusKeywords(formatDescTokens(descStr, activeSelected || selected), statVal(lckEl));
+    const descFormatted = renderRichText(descStr, activeSelected || selected, statVal(lckEl));
     let statusBadgeHtml = "";
     let statusClean = "";
     if (activeSelected.status) {
@@ -16749,8 +16741,7 @@ function mountSkillCooldownLookup(root){
         let supNum = supportAccountLv;
         if (supNum > currentLV) supNum = Math.floor(0.5 * (supNum + currentLV));
         let result = activeSelected.supportFormula ? activeSelected.supportFormula(supNum, currentLV) : "";
-        result = formatDescTokens(result, activeSelected);
-        result = renderStatusKeywords(result);
+        result = renderRichText(result, activeSelected);
         const resultEl = displayEl.querySelector('.sk-support-lv-result');
         if (resultEl) resultEl.innerHTML = result;
       };
@@ -16802,19 +16793,7 @@ function mountSkillCooldownLookup(root){
         const tag = e.target.closest && e.target.closest(".sk-hero-name");
         if (!tag || !selected || !displayEl.contains(tag)) return;
         syncSkillHash();
-        // Opened from disk (file://) the address is useless in Discord, so use the hosted site's address instead.
-        const base = /^https?:$/.test(location.protocol) ? location.href.split("#")[0] : "https://jumpptty.github.io/12tails/12t_projects/bible/";
-        const text = `## [${selected.name}](${base}${location.hash})`;
-        // Feedback: the name flashes gold for a moment, then returns to its normal colour.
-        const done = () => { tag.style.color = "var(--gold)"; setTimeout(() => { tag.style.color = ""; }, 900); };
-        const fallback = () => {
-          const ta = document.createElement("textarea");
-          ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
-          document.body.appendChild(ta); ta.select();
-          try { document.execCommand("copy") && done(); } catch (err) {}
-          ta.remove();
-        };
-        (navigator.clipboard ? navigator.clipboard.writeText(text).then(done, fallback) : fallback());
+        copyTitleLink(selected.name, location.hash, tag);
       });
     }
 
@@ -21180,7 +21159,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 };
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
-  entries: [["2026-09-23T04:25:06.000Z","feat(bible): add evasion (EVADE) mechanic explainer"],["2026-09-23T03:33:31.000Z","feat(panda): verify Drunken Fist card (4 hits, drunken/drunk statuses)"],["2026-09-23T03:05:48.000Z","fix(bible): chaAdjust durations round down like the game engine"],["2026-09-23T02:47:35.000Z","feat(bible): HD icons and auto-fit layout for mechanic-glossary slides"],["2026-09-22T16:04:56.000Z","feat(bible): redesign mechanic-glossary as a full-page step slideshow with icon examples"],["2026-09-22T10:48:09.000Z","feat(bible): mark mechanic-glossary modal title as Work In Progress"],["2026-09-22T10:32:04.000Z","feat(bible): add mechanic-glossary system (^^term^^ links, moveSpeed and damage pipeline panels)"],["2026-09-22T09:52:06.000Z","feat(rabbit): verify Maim Shot card (maim status badge and desc)"],["2026-09-22T09:37:21.000Z","feat(bible): add Acid (Lv.3) and Petrify (Lv.2) enemy stat debuffs"],["2026-09-22T09:30:55.000Z","feat(rabbit): verify Acidic Field and Gorgon Shot cards"],["2026-09-22T09:17:02.000Z","fix(panda): simplify Wind & Cloud and Rain & Storm descriptions"],["2026-09-22T08:00:00.000Z","feat(panda): document Shadow and Spirit Fist mechanics"],["2026-09-22T07:09:24.623Z","feat(panda): document Panda Water style skill mechanics"],["2026-09-22T06:38:37.177Z","feat(panda): document Panda palm skill mechanics"],["2026-09-22T04:44:34.543Z","docs(cat): refine Combo passive descriptions"],["2026-09-22T04:14:45.727Z","fix(bible): correct summon stats and Kaiser TTO balance"],["2026-09-22T03:43:39.944Z","feat(bible): add Crab Captain target and correct stat decoder"],["2026-09-21T16:16:53.762Z","feat(cat): consolidate Power Seven and streamline Combo details"],["2026-09-21T06:52:58.677Z","fix(cat): drop Hidden Blade from No Chance compatSkills"],["2026-09-21T06:47:54.435Z","style(cat): refine No Chance description wording"],["2026-09-21T06:46:07.942Z","feat(cat): link Hidden Blade in No Chance desc and wire compatSkills"],["2026-09-21T06:37:33.643Z","feat(cat): verify No Chance card (flat +0.3 LCK normal attack)"],["2026-09-21T06:17:20.105Z","style(bible): stat roll tutorial step 3 warning in red"],["2026-09-21T06:15:17.491Z","style(bible): bold the custom stat buff dropdown, ALL in gold and each main stat in its signature accent"],["2026-09-21T06:05:19.651Z","style(bible): stat roll tutorial step 1 widened to one row, reword steps 2.1 and 2.3"],["2026-09-21T06:00:36.151Z","docs(bible): stat roll tutorial step 1 recommends selecting 2 to 5 stats"],["2026-09-21T05:09:08.480Z","style(bible): widen stat roll tutorial pop-up for steps 2.1-2.3 so each description stays on one row"],["2026-09-21T05:06:50.790Z","feat(bible): stat roll tutorial after the class gate (re-openable), donate pop-up thank-you note with Discord link, clickable Discord contact in the top bar"],["2026-09-21T04:18:14.822Z","style(bible): replace donate pop-up QR code with a Thai thank-you note, widen the pop-up so each line stays on one row"],["2026-09-21T03:36:33.000Z","feat(bible): click a skill's name to copy a Discord-ready ## [Skill Name](link) heading, class tag opens that class's skill grid"],["2026-09-21T03:19:28.000Z","style(bible): enlarge the stat roll probability pop-up, drop its subtitle, use stat accents"],["2026-09-21T03:11:39.000Z","style(bible): stat roll recommender buttons use each stat's signature accent"],["2026-09-21T03:10:39.000Z","style(bible): vertically centre the stat roll header title and enlarge it"],["2026-09-21T03:08:49.000Z","feat(bible): stat roll recommender takes centre stage, probability tool moves to a % pop-up"],["2026-09-21T03:06:27.000Z","style(bible): move stat roll probability subtitle from the header into the Advanced pop-up"],["2026-09-21T03:04:06.000Z","style(bible): drop duplicate stat-to-maximize subtitle in the stat roll recommender"],["2026-09-21T03:03:23.000Z","style(bible): stat roll recommender drops its inner card and fills the tool width"],["2026-09-21T03:00:07.000Z","feat(bible): stat roll recommender takes centre stage, probability targets move to an Advanced pop-up"],["2026-09-21T01:22:59.000Z","style(bible): shrink Buff/Debuff popup and its contents ~20%"],["2026-09-21T01:09:01.000Z","fix(bible): host Buff/Debuff popup on body so it stays in the viewport when the stage is scaled"],["2026-09-20T13:35:09.920Z","fix(cat): remove Fate Draw mention and link from Lucky Dice"],["2026-09-20T13:32:27.012Z","fix(cat): drop +1 SP mention and the white 0 base term from Lucky Dice"],["2026-09-20T13:09:05.501Z","feat(cat): verify Lucky Dice and Roll the Dice cards (own-LCK random damage)"],["2026-09-20T12:38:01.154Z","fix(bible): let enemy stat debuffs take a stat below 0 like the game"],["2026-09-20T12:33:35.203Z","feat(bible): add Shame Lv.6 (-60 CHA) enemy stat debuff to the Debuff panel"],["2026-09-20T12:20:52.909Z","feat(bible): custom buffs and debuffs (stat, damage mod, final multiplier, hit mod, enemy stat) in the Buff/Debuff panels"],["2026-09-20T12:07:57.311Z","fix(bible): keep player and enemy stat panels at full size regardless of buffs"],["2026-09-20T12:02:26.858Z","fix(bible): use Honor Stand icon for TTO Honor Lv.5 in the buff panel"],["2026-09-20T11:59:56.391Z","feat(bible): TTO Honor Lv.5 and ToT Recurrent Nova stat buff in the buff panel"],["2026-09-20T11:56:17.667Z","fix(bible): replace Buff/Debuff button pentagon icon with the active count"],["2026-09-20T11:54:00.315Z","fix(bible): keep Buff/Debuff buttons inside the stats panel when the quick switch shows"],["2026-09-20T11:50:58.845Z","feat(bible): add server toggle and quick on/off switches to Buff/Debuff panels"],["2026-09-20T11:38:03.783Z","feat(bible): add Fortune Lv.5 and Ja Soul Lv.4 stat buffs to the buff panel"],["2026-09-20T11:36:51.664Z","fix(cat): add space before เท่าตัว in Fate Draw and Lady Luck descriptions"],["2026-09-20T11:35:37.877Z","fix(cat): align Fate Draw description wording with Lady Luck"],["2026-09-20T11:33:17.644Z","fix(cat): rewrite Lady Luck description"],["2026-09-20T11:31:44.478Z","feat(cat): add Lady Luck dependency toggle to Fate Draw"],["2026-09-20T11:27:54.724Z","feat(cat): verify Fate Draw card and add Lady Luck passive card"],["2026-09-20T11:20:33.821Z","feat(panda): mention Focused Art and Nine Steps in Three Steps and Rushing Falcon descriptions"],["2026-09-20T11:19:25.341Z","fix(panda): link skill names in Focused Art and Nine Steps descriptions"],["2026-09-20T11:12:50.937Z","feat(panda): verify Focused Art and Nine Steps cards (SP-scaling passive, hit-count multiplier)"],["2026-09-20T10:49:30.803Z","fix(panda): fix ReferenceError in rollOneHit when Focused Art is active"],["2026-09-20T10:41:07.816Z","feat(panda): verify Rushing Falcon card (3-hit high-speed dash, SP threshold gate, Nine Steps escalation, Focused Art scaling)"], ["2026-09-20T10:27:05.874Z","fix(panda): clamp SP input to max 100"], ["2026-09-20T10:12:06.255Z","fix(panda): Three Steps term order, dynamic 3-step Nine Steps rows, SP box UI and live typing, fix undefined chip label"], ["2026-09-20T09:58:06.700Z","feat(panda): verify Three Steps card (3-step dash sequence, SP threshold gate, Nine Steps 3-step escalation, Focused Art SP scaling)"], ["2026-09-20T04:40:29.000Z","feat(whale): verify Honor Stand card (Whale-only KO reduction, +500 hate, TTO +1 Honor sLv), fix Honor KO condition, add Honor (Lv.4) stat buff"], ["2026-09-20T04:28:15.000Z","feat(whale): verify Honor card (CHA-only status, enemy hate, Honor Stand interaction, TTO Honor Stand +1 sLv toggle, correct MP cost)"], ["2026-09-20T04:08:23.000Z","feat(bible): add Heat (Lv.4) +40 TAL to the Buff popup stat buffs, stackable per stat with Bless"], ["2026-09-20T03:23:04.000Z","docs(bible): note that Revised Art can raise short cooldowns due to the whole-second round-up (card red text, fix cited code line)"], ["2026-09-20T03:05:45.000Z","chore(bible): add missing changelog entry for the addStatus swap trace docs"], ["2026-09-20T02:11:35.000Z","feat(rabbit): verify Heat Shot card (level stacking to Medical Enhancement cap, TAL and immediate SP per level, [heat] status desc)"], ["2026-09-20T02:03:21.000Z","docs(whale): correct Honor to CHA-only (+10 x sLv, sLv 1-4) with source citations"], ["2026-09-20T01:48:48.000Z","feat(bible): replace Mods with Buff and Debuff popups (Bless +24 all stats, damageMod, final multiplier, hitMod) in the player and enemy palettes"], ["2026-09-19T16:10:00.000Z","feat(bible): glow the enemy stats a skill's chips read (DEF for defAdjust damage, CHA for contested durations, LCK for Lucky Card) like the player's"], ["2026-09-19T15:31:11.000Z","feat(bible): glow the character stats that feed a summon's stats (Double Bot, Synchro Mole, Hidden Turret, Fire/Earth Soul, Aegis) when its chips read them"], ["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
+  entries: [["2026-09-23T05:08:14.000Z","feat(bible): app-wide rich text, glossary deep links, teal ^^term^^ links, stat accents"],["2026-09-23T04:25:06.000Z","feat(bible): add evasion (EVADE) mechanic explainer"],["2026-09-23T03:33:31.000Z","feat(panda): verify Drunken Fist card (4 hits, drunken/drunk statuses)"],["2026-09-23T03:05:48.000Z","fix(bible): chaAdjust durations round down like the game engine"],["2026-09-23T02:47:35.000Z","feat(bible): HD icons and auto-fit layout for mechanic-glossary slides"],["2026-09-22T16:04:56.000Z","feat(bible): redesign mechanic-glossary as a full-page step slideshow with icon examples"],["2026-09-22T10:48:09.000Z","feat(bible): mark mechanic-glossary modal title as Work In Progress"],["2026-09-22T10:32:04.000Z","feat(bible): add mechanic-glossary system (^^term^^ links, moveSpeed and damage pipeline panels)"],["2026-09-22T09:52:06.000Z","feat(rabbit): verify Maim Shot card (maim status badge and desc)"],["2026-09-22T09:37:21.000Z","feat(bible): add Acid (Lv.3) and Petrify (Lv.2) enemy stat debuffs"],["2026-09-22T09:30:55.000Z","feat(rabbit): verify Acidic Field and Gorgon Shot cards"],["2026-09-22T09:17:02.000Z","fix(panda): simplify Wind & Cloud and Rain & Storm descriptions"],["2026-09-22T08:00:00.000Z","feat(panda): document Shadow and Spirit Fist mechanics"],["2026-09-22T07:09:24.623Z","feat(panda): document Panda Water style skill mechanics"],["2026-09-22T06:38:37.177Z","feat(panda): document Panda palm skill mechanics"],["2026-09-22T04:44:34.543Z","docs(cat): refine Combo passive descriptions"],["2026-09-22T04:14:45.727Z","fix(bible): correct summon stats and Kaiser TTO balance"],["2026-09-22T03:43:39.944Z","feat(bible): add Crab Captain target and correct stat decoder"],["2026-09-21T16:16:53.762Z","feat(cat): consolidate Power Seven and streamline Combo details"],["2026-09-21T06:52:58.677Z","fix(cat): drop Hidden Blade from No Chance compatSkills"],["2026-09-21T06:47:54.435Z","style(cat): refine No Chance description wording"],["2026-09-21T06:46:07.942Z","feat(cat): link Hidden Blade in No Chance desc and wire compatSkills"],["2026-09-21T06:37:33.643Z","feat(cat): verify No Chance card (flat +0.3 LCK normal attack)"],["2026-09-21T06:17:20.105Z","style(bible): stat roll tutorial step 3 warning in red"],["2026-09-21T06:15:17.491Z","style(bible): bold the custom stat buff dropdown, ALL in gold and each main stat in its signature accent"],["2026-09-21T06:05:19.651Z","style(bible): stat roll tutorial step 1 widened to one row, reword steps 2.1 and 2.3"],["2026-09-21T06:00:36.151Z","docs(bible): stat roll tutorial step 1 recommends selecting 2 to 5 stats"],["2026-09-21T05:09:08.480Z","style(bible): widen stat roll tutorial pop-up for steps 2.1-2.3 so each description stays on one row"],["2026-09-21T05:06:50.790Z","feat(bible): stat roll tutorial after the class gate (re-openable), donate pop-up thank-you note with Discord link, clickable Discord contact in the top bar"],["2026-09-21T04:18:14.822Z","style(bible): replace donate pop-up QR code with a Thai thank-you note, widen the pop-up so each line stays on one row"],["2026-09-21T03:36:33.000Z","feat(bible): click a skill's name to copy a Discord-ready ## [Skill Name](link) heading, class tag opens that class's skill grid"],["2026-09-21T03:19:28.000Z","style(bible): enlarge the stat roll probability pop-up, drop its subtitle, use stat accents"],["2026-09-21T03:11:39.000Z","style(bible): stat roll recommender buttons use each stat's signature accent"],["2026-09-21T03:10:39.000Z","style(bible): vertically centre the stat roll header title and enlarge it"],["2026-09-21T03:08:49.000Z","feat(bible): stat roll recommender takes centre stage, probability tool moves to a % pop-up"],["2026-09-21T03:06:27.000Z","style(bible): move stat roll probability subtitle from the header into the Advanced pop-up"],["2026-09-21T03:04:06.000Z","style(bible): drop duplicate stat-to-maximize subtitle in the stat roll recommender"],["2026-09-21T03:03:23.000Z","style(bible): stat roll recommender drops its inner card and fills the tool width"],["2026-09-21T03:00:07.000Z","feat(bible): stat roll recommender takes centre stage, probability targets move to an Advanced pop-up"],["2026-09-21T01:22:59.000Z","style(bible): shrink Buff/Debuff popup and its contents ~20%"],["2026-09-21T01:09:01.000Z","fix(bible): host Buff/Debuff popup on body so it stays in the viewport when the stage is scaled"],["2026-09-20T13:35:09.920Z","fix(cat): remove Fate Draw mention and link from Lucky Dice"],["2026-09-20T13:32:27.012Z","fix(cat): drop +1 SP mention and the white 0 base term from Lucky Dice"],["2026-09-20T13:09:05.501Z","feat(cat): verify Lucky Dice and Roll the Dice cards (own-LCK random damage)"],["2026-09-20T12:38:01.154Z","fix(bible): let enemy stat debuffs take a stat below 0 like the game"],["2026-09-20T12:33:35.203Z","feat(bible): add Shame Lv.6 (-60 CHA) enemy stat debuff to the Debuff panel"],["2026-09-20T12:20:52.909Z","feat(bible): custom buffs and debuffs (stat, damage mod, final multiplier, hit mod, enemy stat) in the Buff/Debuff panels"],["2026-09-20T12:07:57.311Z","fix(bible): keep player and enemy stat panels at full size regardless of buffs"],["2026-09-20T12:02:26.858Z","fix(bible): use Honor Stand icon for TTO Honor Lv.5 in the buff panel"],["2026-09-20T11:59:56.391Z","feat(bible): TTO Honor Lv.5 and ToT Recurrent Nova stat buff in the buff panel"],["2026-09-20T11:56:17.667Z","fix(bible): replace Buff/Debuff button pentagon icon with the active count"],["2026-09-20T11:54:00.315Z","fix(bible): keep Buff/Debuff buttons inside the stats panel when the quick switch shows"],["2026-09-20T11:50:58.845Z","feat(bible): add server toggle and quick on/off switches to Buff/Debuff panels"],["2026-09-20T11:38:03.783Z","feat(bible): add Fortune Lv.5 and Ja Soul Lv.4 stat buffs to the buff panel"],["2026-09-20T11:36:51.664Z","fix(cat): add space before เท่าตัว in Fate Draw and Lady Luck descriptions"],["2026-09-20T11:35:37.877Z","fix(cat): align Fate Draw description wording with Lady Luck"],["2026-09-20T11:33:17.644Z","fix(cat): rewrite Lady Luck description"],["2026-09-20T11:31:44.478Z","feat(cat): add Lady Luck dependency toggle to Fate Draw"],["2026-09-20T11:27:54.724Z","feat(cat): verify Fate Draw card and add Lady Luck passive card"],["2026-09-20T11:20:33.821Z","feat(panda): mention Focused Art and Nine Steps in Three Steps and Rushing Falcon descriptions"],["2026-09-20T11:19:25.341Z","fix(panda): link skill names in Focused Art and Nine Steps descriptions"],["2026-09-20T11:12:50.937Z","feat(panda): verify Focused Art and Nine Steps cards (SP-scaling passive, hit-count multiplier)"],["2026-09-20T10:49:30.803Z","fix(panda): fix ReferenceError in rollOneHit when Focused Art is active"],["2026-09-20T10:41:07.816Z","feat(panda): verify Rushing Falcon card (3-hit high-speed dash, SP threshold gate, Nine Steps escalation, Focused Art scaling)"], ["2026-09-20T10:27:05.874Z","fix(panda): clamp SP input to max 100"], ["2026-09-20T10:12:06.255Z","fix(panda): Three Steps term order, dynamic 3-step Nine Steps rows, SP box UI and live typing, fix undefined chip label"], ["2026-09-20T09:58:06.700Z","feat(panda): verify Three Steps card (3-step dash sequence, SP threshold gate, Nine Steps 3-step escalation, Focused Art SP scaling)"], ["2026-09-20T04:40:29.000Z","feat(whale): verify Honor Stand card (Whale-only KO reduction, +500 hate, TTO +1 Honor sLv), fix Honor KO condition, add Honor (Lv.4) stat buff"], ["2026-09-20T04:28:15.000Z","feat(whale): verify Honor card (CHA-only status, enemy hate, Honor Stand interaction, TTO Honor Stand +1 sLv toggle, correct MP cost)"], ["2026-09-20T04:08:23.000Z","feat(bible): add Heat (Lv.4) +40 TAL to the Buff popup stat buffs, stackable per stat with Bless"], ["2026-09-20T03:23:04.000Z","docs(bible): note that Revised Art can raise short cooldowns due to the whole-second round-up (card red text, fix cited code line)"], ["2026-09-20T03:05:45.000Z","chore(bible): add missing changelog entry for the addStatus swap trace docs"], ["2026-09-20T02:11:35.000Z","feat(rabbit): verify Heat Shot card (level stacking to Medical Enhancement cap, TAL and immediate SP per level, [heat] status desc)"], ["2026-09-20T02:03:21.000Z","docs(whale): correct Honor to CHA-only (+10 x sLv, sLv 1-4) with source citations"], ["2026-09-20T01:48:48.000Z","feat(bible): replace Mods with Buff and Debuff popups (Bless +24 all stats, damageMod, final multiplier, hitMod) in the player and enemy palettes"], ["2026-09-19T16:10:00.000Z","feat(bible): glow the enemy stats a skill's chips read (DEF for defAdjust damage, CHA for contested durations, LCK for Lucky Card) like the player's"], ["2026-09-19T15:31:11.000Z","feat(bible): glow the character stats that feed a summon's stats (Double Bot, Synchro Mole, Hidden Turret, Fire/Earth Soul, Aegis) when its chips read them"], ["2026-09-19T15:25:29.000Z","feat(bible): separate enemy stat badge matching the player's (click the icon to cycle presets, no arrows), Revised Art moves into the player badge, remove the enemy show/hide toggle"], ["2026-09-19T15:09:55.000Z","feat(bible): add a class portrait badge at the top of the player stat panel"], ["2026-09-19T14:55:53.000Z","fix(cat): embed Lucky Card rank 1-3 icons; validate multi-rank icon completeness and dep icons"], ["2026-09-19T14:52:08.000Z","feat(cat): tighten Joker and Lucky Card descs"], ["2026-09-19T14:43:56.000Z","feat(cat): show Lucky Card's random LCK-difference term as a 0~max range in the damage formula; show a negative Joker term as a minus"], ["2026-09-19T14:41:16.000Z","fix(sheep): apply Benediction inside talAdjust with the game's 32-bit-float truncation (roll, range, formula); range-vs-simulator scan now clean"], ["2026-09-19T14:18:19.000Z","fix(calc): Final Damage range now matches Test/Simulate (Lucky Card, hybrid ATK+talAdjust skills, Phoenix stale-LCK); fix Barrel Cannon Test crash; add range-vs-simulator scan"], ["2026-09-19T14:10:34.000Z","feat(cat): verify Lucky Card (ATK + LCK-difference roll, Joker dep, +1 SP) with lckDiffCoeff/lckDiffDep support"], ["2026-09-19T14:06:37.000Z","feat(cat): verify Joker card (Lucky Card damage bonus, Doom proc, unclamped-LCK warning)"], ["2026-09-19T13:46:19.000Z","feat(penguin): verify Cosmic Friday card (status badge, [cosmicFriday] status desc, channel cost and cancel, 3m pulse)"], ["2026-09-19T13:36:15.000Z","fix(penguin): drop Cosmic Rift desc bullets that duplicate its status desc"], ["2026-09-19T13:32:54.000Z","feat(penguin): verify Cosmic Rift card (status badge, [cosmicRift] status desc, lockouts, cancel, Cosmic Friday link)"], ["2026-09-19T13:18:10.000Z","feat(penguin): move Focus Intellect effect into [focusIntellect] status desc, add status badge, keep synergy list"], ["2026-09-19T13:06:50.000Z","feat(bible): deep links to individual skill cards (#skill-details/<id>?server=)"], ["2026-09-19T12:44:15.000Z","feat(penguin): revise Mana Missile, Mana Arc, Falling Stars, Falling Comets, Meteora, Giant Star descs and flag Giant Star FloorToInt bug"], ["2026-09-19T12:35:00.000Z","fix(penguin): restore Mana Missile, Falling Stars/Comets, Arctic Wind formulas; merge class reference docs; add field-loss guard"], ["2026-09-19T12:05:28.000Z","docs: drop passive-skill exclusion rule from reference docs, document Wolf Fortitude, link Focus Intellect skills"], ["2026-09-19T10:43:21.000Z","feat(penguin): restore ToT/TTO balance changes for Ice Shield, Blizzard, Arctic Emperor"],["2026-09-19T10:30:26.386Z","fix(penguin): correct MP costs for Arctic Emperor, Meteora, Blizzard, and rank-2 skills"], ["2026-09-19T10:17:54.853Z","feat(penguin): verify Snow Man, Snow Ball, and Absolute Zero cards"], ["2026-09-19T09:27:40.000Z","feat(penguin): redo Ice Block card from source (ice-block wall, 1+2N blocks, CD 90, block lifetime, Multi Cast interaction)"], ["2026-09-19T09:20:39.000Z","feat(penguin): mention Frost Spike in Ice Shield desc"], ["2026-09-19T09:17:51.000Z","feat(penguin): Arctic Wind/Arctic Frost/Frost Spike duration chips and descs, Ice Shield [iceShield] status, ice moveMod desc, status popups never auto-wrap, LV-computed desc accessor"], ["2026-09-19T08:43:44.000Z","feat(bible): changelog numbering oldest=01 and show-all button, Arctic Wind desc, skill links inside red text, Frozen Blast/Combo/Charge Attack wording"], ["2026-09-19T08:33:51.000Z","fix(penguin): correct multiCast/Frost Bite mechanics, add [multicast] statusDesc, revise Cast/Combo/Charge Attack/Parallel Shift descs"], ["2026-09-19T08:17:34.000Z","feat(bible): restore skill links in desc, add [dispell]/[dissolute]/lock status descs, revise Penguin passives"], ["2026-09-18T18:00:56.000Z","chore(tooling): add soft GEMINI.md-staleness reminder to validate_skills.js, catch up docs"], ["2026-09-18T17:56:23.000Z","feat(bible): rebuild [statusName] popup as real DOM (type/divider/desc), fix invisible divider (span needs display:block)"], ["2026-09-18T17:44:52.000Z","feat(bible): add centered plain-language description line to [statusName] hover popup"], ["2026-09-18T17:41:36.000Z","feat(bible): add [statusName] desc shorthand, chipCols per-card layout overrides, curate remaining Penguin passives"], ["2026-09-18T15:36:56.000Z","feat(bible): add __word__ red-bold desc markdown convention alongside existing **word** gold-bold"], ["2026-09-18T15:21:27.000Z","fix(penguin): correct frost status mechanic -- hard moveSpeed=0 lock, not cosmetic/no-slow as previously (wrongly) claimed"], ["2026-09-18T15:13:43.000Z","fix(penguin): correct 4 wrong descs, fill 4 omissions, and fix Frost Bite's mischaracterized-as-dead-code mechanic across the 10 new passives"], ["2026-09-18T11:29:41.000Z","feat(penguin): implement 10 dmg/proc-modifying passive cards, wire reciprocal compatSkills"], ["2026-09-18T11:21:39.000Z","feat(bible): implement Bat Distant Orb passive card"], ["2026-09-18T11:16:05.000Z","feat(bible): add Gadina - Normal Attack swing geometry desc"], ["2026-09-18T10:50:00.370Z","feat(bible): implement Bat Chiroptophobia passive card, link Blind/Confuse"], ["2026-09-18T10:24:37.235Z","docs(bible): clarify Demon Bane's two-independent-rolls wording in desc"], ["2026-09-18T10:22:41.539Z","docs(bible): move Demon Bane's duration-contest note off Phantom Bane's desc onto its own card"], ["2026-09-18T10:21:07.974Z","feat(bible): implement Bat Demon Gaze passive card, trim redundant desc line on Shadow Gaze"], ["2026-09-18T10:17:58.634Z","docs(bible): document Phantom Bane's Demon Bane duration contest in desc"], ["2026-09-18T10:12:07.838Z","feat(bible): implement Bat Demon Bane passive card, contest Phantom Bane's Demon Bane duration bonus"], ["2026-09-18T09:53:17.684Z","feat(bible): implement Bat Auto Mass passive skill card, link Mass Cast splash-gate skills"], ["2026-09-18T08:56:22.854Z","feat(bible): implement Bat Merciless Drain passive skill card with dynamic Dark Intention scaling"], ["2026-09-18T08:35:21.134004Z","feat(bible): implement Bat Dark Intention passive skill card with dynamic Drain Life scaling"], ["2026-09-18T08:17:52.935371Z","feat(bible): implement Bat Illusion Effect passive skill card"], ["2026-09-18T08:04:37.459743Z","feat(bible): implement Bat All Mimic passive skill card"], ["2026-09-18T07:45:33.027Z","feat(bible): implement Bat Shadow Mastery passive skill card"], ["2026-09-18T07:15:14.070Z","feat(bible): complete Monkey roster and document private-server balance variations"], ...CHANGELOG_ARCHIVE.entries]
 };
 
 function mountChangelog(){
@@ -21336,6 +21315,9 @@ function route(){
   if (id === "skill-cooldown-lookup") id = "skill-details";
   const tool = TOOLS.find(t => t.id === id);
   if (tool) showTool(tool); else showMenu();
+  if (id === "mech" && MECHANIC_DESC_MAP[(deepSkill || "").toLowerCase()]) {
+    openMechanicPanel(deepSkill, (parseInt(parts[2], 10) || 1) - 1);
+  }
   if (tool && tool.id === "skill-details" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._selectSkillById) {
     toolContainers[tool.id]._selectSkillById(deepSkill, deepServer);
   }
