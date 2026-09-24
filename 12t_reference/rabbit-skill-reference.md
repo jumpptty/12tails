@@ -494,12 +494,10 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Target Restrictions:** Cannot target self (`:7115`), machines (`:7141`), or structures (`:7154`).
 * **Range & Cooldown:** Range `16 + 5 * getNormalAttackLv()`. Cooldown `agiAdjust(30)` (`:28606`). Instant cast.
 * **Status `autoLife`:** Target receives `[autoLife]` with level `mAutoLifeLv` and duration `chaAdjust(60 + mLv * 5)` (65s, 70s, 75s, 80s) (`Rabbit.cs:28459`). Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5741`, `:6728`) — Buff, Magical.
-  * **Heal on Expiration / Trigger:** In `StatusUpdate()` (`CharacterControl.cs:10330-10363`), when `autoLife` expires (or triggers upon fatal damage/death), it executes `RPC_createEffect("autoLife")`, heals the target for `200 * sLv` HP via `RPC_AddHeal(264, 200 * statusClass.sLv, 0, 0, 0, 0, statusClass.sID)`, and removes the status.
-    - Lv.1: 200 HP (client tooltip mentions 100 HP upon death or double = 200 HP when status expires)
-    - Lv.2: 400 HP
-    - Lv.3: 600 HP
-    - Lv.4: 800 HP (1,000 HP if stacked to Lv.5 by a 2nd Rabbit)
-* **Level Stacking & Multi-Rabbit Stacking:** Increases level by 1 on consecutive shots up to `mLv` (max Lv.4). 2nd Rabbit escalates to Lv.5 (1,000 HP expiration heal), after which duration cannot be refreshed until expiration.
+  * **Heal on Death vs Expiration:**
+    - **On Death (ตาย):** Target revives restoring `100 * sLv` HP (50% effectiveness: 100, 200, 300, 400 HP; 500 HP if stacked to Lv.5 by a 2nd Rabbit).
+    - **On Duration Expiration (หมดเวลา):** Target heals `200 * sLv` HP (full 2x effectiveness: 200, 400, 600, 800 HP; 1,000 HP at Lv.5) via `RPC_AddHeal(264, 200 * statusClass.sLv, 0, 0, 0, 0, statusClass.sID)` in `StatusUpdate()` (`CharacterControl.cs:10347`).
+* **Level Stacking & Multi-Rabbit Stacking:** Increases level by 1 on consecutive shots up to `mLv` (max Lv.4). 2nd Rabbit escalates to Lv.5 (500 HP revive / 1,000 HP expiration heal), after which duration cannot be refreshed until expiration.
 
 ### 17. Medical Enhancement (`medicalEnhancement1-3`) — passive (verified 2026-09-24)
 * **Source:** `RabbitSkill.cs:2728-2760`, `Rabbit.cs:10381-10420` (`getMedicalEnhancementLv()`)
