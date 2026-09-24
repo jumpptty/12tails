@@ -308,7 +308,7 @@ RPC_AddEffectDamage  ── separate path: hitMod only
   - Engine examples that do call `defAdjust` themselves: `CharacterControl.cs:9005`, `:10634`, `:38586` (mana burn).
 - **Inside `RPC_AddDamage`** everything applies no matter how it was reached: `hitMod` (`:3765`), `noDamage`/`perfectArmor`/`perfectShield`, the Whale Peninsula Round redirect (`:4299-4367`), and then the `AddDamage` coroutine (`:5822`/`:6035` → `$AddDamage$35579`) with shield statuses such as Whale's `shield` (`:30855-30960`) and the type-specific flat reductions of §2.7.
 - **`RPC_AddEffectDamage` (`:6058`)** is its own path: `hitMod` (`:6203`) but no dodge, no `defAdjust`, no shield statuses and no Peninsula Round redirect (the only `"peninsulaRound"` check in the engine is `:4313`).
-- **Tool note:** the bible's standard damage pipeline always applies `dmgAdjust`, so direct-caller skill cards (e.g. `mole_missile`) currently overstate damage slightly.
+- **Tool note:** the bible models these with card flags. `dmgAdjustSkip:true` = skips `dmgAdjust` but keeps `defAdjust` (Mole Missile, Barrel Bot Missile). `penetrating:true` = skips both (Flame Turret, Flame Carnival, Monkey Lavu). `effectDamage:true` = the `RPC_AddEffectDamage` path. A direct-caller card without the right flag overstates damage, because the default pipeline applies `dmgAdjust`.
 
 ---
 
