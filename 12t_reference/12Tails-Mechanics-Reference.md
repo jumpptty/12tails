@@ -50,6 +50,10 @@ When max HP/MP changes, current HP/MP is **rescaled proportionally** so the % st
 > **Universal In-Combat SP Generation Rules:**
 > 1. **Attacker Basic Attack Hit:** Every landed basic attack hit (`nAttack` / Combo) grants **+1 SP** to the attacker (`self.<class>.sp = self.<class>.sp + 1`, duplicated across `Monkey.cs:20055`, `Wolf.cs:15292`, `Bat_nAttack.cs:294`, `Penguin.cs:29541`, etc.).
 > 2. **Victim Damage Taken:** Whenever a character takes direct damage (`myDamage > 0`), the engine immediately grants **+1 SP** to the victim (`this.sp++`, CharacterControl.cs:2122 inside `ApplyDamage()`).
+>
+> **SP above max SP decays (verified 2026-09-24, CharacterControl.cs:1945-2005).** SP can exceed `maxSP` (e.g. Panda Ashura's gain clamps to 100, not `maxSP`). While `sp > msp`, the engine removes **1 SP** each time all of these hold: at least `1 + 0.01·(msp − sp)` seconds since the last decay tick (so the interval *shrinks* the further SP is over the cap), at least **2 s** since the last action (`actionTime + 2`), and `actionState` is `standby` or `run`. Exceptions: a `ShadowCopy` never decays, and a **Panda with the `ashura` status** skips the decay (`getStatusLv("ashura") != 0`). The `sp < msp` branch right after it is the passive regen and was not traced.
+>
+> **Status tick cadence:** `StatusUpdate()` (CharacterControl.cs:8659) runs its per-status body at most once per **0.5 s** (`if (kNtcObrGvdk > Time.time - 0.5f)` skip, else `kNtcObrGvdk = Time.time`). A status with no extra gate in its branch (e.g. `ashura`, `:8841`) acts every 0.5 s; others add their own modulo gate on top (`holyWolf`: `mod(2·(sTime − now), 16) == 0` = every 8 s, `:8787`; `afterShock`: `mod(2·now, 6) == 3`, `:8820`).
 
 ### 1.3 Where total stats come from
 `total[i] = bStat[i] + bonus[i] + typeLevelStat[i] + skillBonus + Σ equipment.att[i]`

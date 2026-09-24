@@ -186,11 +186,12 @@ below for why they were initially left out and then given their own rows.
   file); the trap is specific to `mysticSage` accidentally borrowing it. No extra row needed; `heavenPalm`
   is reported using its own real cast site.
 - **`ashuraFist` is Ashura-form's own charge-attack sub-state, not an independently learnable skill —
-  excluded, same reasoning as Monkey's `blazingForm`/`sentinalGuard`.** `Panda.cs:31272` —
-  `addTimeOut("ashuraFist", (float)12)` (flat, unwrapped) — is a real, working cooldown call, but a
-  grep of both `PandaSkill.cs` and `PandaSkill_eng.cs` for `ashuraFist` returns zero matches: no
+  excluded from this table, same reasoning as Monkey's `blazingForm`/`sentinalGuard`.** A grep of both
+  `PandaSkill.cs` and `PandaSkill_eng.cs` for `ashuraFist` returns zero matches: no
   `getSkill()`/`getSkillTree()` entry and no description. It's an internal state of the `ashura`
-  transformation, not a roster skill.
+  transformation, not a roster skill. Its `addTimeOut("ashuraFist", (float)12)` (`Panda.cs:31272`) is
+  **written but never checked** (corrected 2026-09-24; this note used to call it a working cooldown). See
+  the Ashura section under Damage & Mechanics.
 - **Confirmed-passive Class-C (Lv.5) skills have no row in this table** (no cooldown, `mode =
   eSkillMode.passive` in `getSkill()`, no `RPC_<name>` cast handler with its own `addTimeOut` in
   `Panda.cs`): `auraBlast5` (final-combo → area attack), `auraField5` (sp-charge aura for allies),
@@ -564,6 +565,21 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - ⚠️ **Tooltip Discrepancy:** In-game client tooltips (`PandaSkill_eng.cs:466`, `:477`; `PandaSkill_thai.cs:488`, `:499`) claim `(5x8 dmg, 60 dmg)` / `(10x8 dmg, 90 dmg)`. While the 8 jabs accurately deal `talAdjust(5·sLv)` (5 / 10), the finisher in actual decompiled code is **`talAdjust(40·sLv)`** (40 / 80), NOT 60 / 90.
 - **Total Hits & KO:** 8 + 1 = **9 hits**, **9 KO**.
 - **Focused Art Synergy:** Both phases add `getFocusedArtDmg() = 0.5 * sp * rank` inside the ATK bracket (`usesFocusedArt: true`, `hasCurrentSp: true`).
+
+### Ashura (`panda_ashura`, skills #271/#272)
+
+- **Cost / requirements (`decode_skilldata.py`):** MP **25, 35**, SP **−90, −90** (consumed, red), Lv 35/40, Bn 23/25, mode instant, target self (`PandaSkill.cs:556-590`, tree ids `:2748-2759`).
+- **Cast (`$RPC_ashura`, `Panda.cs:30470-30680`):** `addTimeOut("ashura", agiAdjust(300))` (`:30659`); self `RPC_AddStatus("ashura", sLv, chaAdjust(24), 0, ActorNr)` (`:30572`, self buff, not contested). `sLv` = rank (`pnd_ashura2` → `num2++`, `:5916`).
+- **`ashura` status:** code **303** (`StatusData.cs:800`), classified **Buff + State only** (`isBuffStatus` `:6572`, `isStateStatus` `:4902`; absent from the Magical/Physical/Lock/System/Shield lists). Only a Panda can hold it (`RPC_AddStatus` type gate, `CharacterControl.cs:12274`). Red tint + `ashuraFx` on apply (`:35484-35510`), reverted in `removeStatus` (`:15830`).
+  - **SP gain:** in `StatusUpdate` (whose body runs at most once per **0.5 s**, `CharacterControl.cs:8659` `kNtcObrGvdk > Time.time - 0.5f`), `ashura` has no extra per-status gate (unlike `holyWolf`/`afterShock`), so every cycle: `if (hp > 0 && isMine && !hasStatus("provoke")) sp = Clamp(sp + 5·sLv, 0, 100)` (`:8841-8866`) = **+5 / +10 SP per 0.5 s**. Clamped to **100**, not to max SP. **`provoke` blocks the gain.**
+  - **No overflow decay:** the global SP-above-max decay (see [12Tails-Mechanics-Reference.md §1.2](12Tails-Mechanics-Reference.md#12-derived-values-charactercontrolcs14641479)) is skipped for a Panda while `getStatusLv("ashura") != 0` (`CharacterControl.cs:1976-1990`).
+  - Tooltip "ฟื้นคืน sp เป็นร้อยเท่า" (`PandaSkill_thai.cs:550`) is flavour; the real rate is above.
+- **Ashura Fist (charge attack replacement):** in `doBeginCharge` (`Panda.cs:8166`), `if (getStatusLv("ashura") > 0)` starts `RPC_ashuraFist(pos, dir, 0, statusLv)` (`:8215-8231`) instead of `RPC_cAttack1`. That branch has **no `isTimeOut("cAttack")` check and no `hasSkill(111)` check**, unlike the normal charge path (`:8242`).
+  - Coroutine `$RPC_ashuraFist$25457` (`Panda.cs:30843-31420`): sets `myCommand="ashuraFist"`, `addTimeOut("ashuraFist", 12)` (`:31272`), `moveSpeed = 0`, then yields **0.3 s** (`:31398`); state 2 sets `moveSpeed = 6` (`:30987`) and yields **0.6 s** (`:31416`) → lunge of `6 × 0.6 = ` **3.6 m** at `moveMod = 1` (movement = `vMovement·moveSpeed·clamp(moveMod,0.1,2)·dt`, `CharacterControl.cs:2722`); state 3 stops (`:31009`), spawns the effect, snapshots `hitSp = sp`, then **2 hits** (`i < 2`) 0.2 s apart (`:31414`).
+  - Each hit: `FindAreaTarget(pos, 3, 3)` (radius **3 m**, height **3 m**), `hit(272 + sLv, target, (int)(0.5·ATK + talAdjust((int)(0.25·hitSp·sLv))), 5, 0, dir)` (`:31230`); KO **5**; `sp += 1` per landed target; `ComboPlus()` if anything was hit. **No Focused Art term** (`getFocusedArtDmg()` not called). Both hits use the same `hitSp` snapshot.
+  - After the 2nd hit: **`sp = 0`** (`:31118+`).
+  - ⚠️ **Cooldown never enforced:** `isTimeOut("ashuraFist")` appears nowhere in `DecompiledSource/` (only `Panda.cs` mentions `ashuraFist` at all). User-confirmed in-game 2026-09-24: Ashura Fist can be used back-to-back. The 12 s lock is the intended behaviour; the card shows this as a red note.
+- **Card modelling:** `dmg:(rank)=>"talAdjust(floor(0.25·SP·rank))"` reads the card's SP input (`hasCurrentSp:true`, no `usesFocusedArt`), `dmgSub` captions the base `0.25SP` / `0.5SP`, `atkCoeff:0.5`, `ko:"5"`, `hitCount:2`.
 
 ### Ogre Impact (`panda_ogreImpact`, skill #422)
 
