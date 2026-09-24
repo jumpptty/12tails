@@ -319,6 +319,46 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
 - **Branch:** each normal-attack stage reads `getStatusLv("darkEdge")` (`Wolf.cs:15074`, `:15913`, `:16616`, `:17327`). With the status off (`<= 0`) the swing is an ordinary `mChar.hit(stage, target, hitDmg, 1, 0, ...)` (`:15218`, `:16049`, `:16752`, `:17468`, `:17786`). With it on, the same swing skips `hit()` and instead calls `tChar.RPC_AddEffectDamage(363, hitDmg + Random.Range(0, CeilToInt(0.2 × LCK)), 0, 0, ...)` (`:15267`, `:16098`, `:16801`; stage 4 uses code 364 at `:17517`, `:17835`), then plays `RPC_darkEdge_hit`. `hitDmg` is the same Combo value (Feral Instinct and `getCritPlus` included).
 - **Consequences of skipping `hit()`:** the swing cannot be dodged by the target's `drunken` evasion or the Water Monkey/Water Crane evasion (both live only inside `hit()`, `CharacterControl.cs:3076-3079`, `:3134-3167`), and it gets none of the target-side `hit()` checks. As Effect Damage it takes no `dmgAdjust`/`defAdjust`: only the attacker's LCK roll added here, then `hitMod` (rounded down) on the target (see the `RPC_AddEffectDamage` notes in the Mechanics Reference). KO is 0. The `hit()`-path follow-ups (`onNormalAttackHit`, `isHit`, the Feral Instinct SP roll) sit in the `<= 0` branch, so they don't run for Dark Edge swings.
 - **SP under Dark Edge:** +1 per target hit instead of +1 per swing; stage 4's first swing adds +1 twice per target (`:17522` and `:17547`).
+- **Blocked under `holyWolf`:** `RPC_AddStatus` refuses `darkEdge` while the receiver has `holyWolf` (see Holy Wolf block below).
+
+### Holy Wolf block on Dark Edge and Lunar Eclipse (verified 2026-09-24)
+
+`holyWolf` is what Holy Sword and Holy Armor become when both are active (`CharacterControl.cs:11925-11961`: applying one while the other is on renames `sType` to `"holyWolf"`). Inside `RPC_AddStatus` (whole body wrapped in one `for (;;)`, `:10689-14339`), the checks at `:10995-11022` run on the non-immune path:
+
+```csharp
+if (sType == "darkEdge")     { if (this.hasStatus("holyWolf")) { break; } }   // :10995-11007
+if (sType == "lunarEclipse") { if (this.hasStatus("holyWolf")) { break; } }   // :11010-11022
+```
+
+(junk predicates `152596-534936 != -382340`, `8087-142204 != -134117`, `225150-566345 == -341194`, `261711-59576 != 202135` all false, so both reach the `break`). The `break` leaves the outer loop, which ends the method: the status is never added. So Dark Edge and Lunar Eclipse do nothing while Holy Sword + Holy Armor are both active, and gaining `holyWolf` removes both (`:34402-34409`).
+
+### wlf_provoke1-2 (skills #321/#322) — active, single target (verified 2026-09-24)
+
+- **Metadata:** reqLv/Bn 7/2, 13/4; MP 4/6, SP -4/-6 (consumed); `mode = target`, enemy.
+- **Cast** (`RPC_provoke`, `Wolf.cs:26760+`): cooldown `agiAdjust(60)` behind `getDoubleArt()` (`:27011-27017`); the status lands **0.8s** after the cast (`mProvokeTime = Time.time + 0.8f`, `:27140`), on the one target:
+  ```csharp
+  mDuration = Damage.getDebuff(6 + 3*sLv + 3*getWildHeartLv(), mChar.cha, tChar.cha);          // :27177
+  tChar.RPC_AddStatus("provoke", sLv, mDuration, mChar.talAdjust(60*sLv + 60*getWildHeartLv()), ...); // :27186
+  ```
+  Contested base 9 / 12s (+3 Wild Heart); hate `talAdjust(60 / 120)` (+60 Wild Heart). Client tooltips say 6/9s (both languages) and 60/90 hate (EN; TH says 60/120).
+- **Status `provoke`:** `isPhysicalStatus` (`StatusData.cs:5355`) and `isDebuffStatus` (`:7310`) → "Debuff, Physical". Effects on the holder:
+  - Apply: `addHate(casterID, sValue)` once (`CharacterControl.cs:34082`); `addHate` adds the raw value to the caster's hate entry (`:7746`).
+  - No natural MP regen (`CharacterUpdate`, `:1923`) and no idle SP recovery toward the resting level (`:2059`).
+  - `RPC_AddHeal` zeroes `nHp`, `nMp` and `nSp` (KO and hate still pass) (`:7161-7170`).
+  - Pauses Panda Ashura's SP gain (`StatusUpdate`, `:8859`).
+
+### wlf_continuousBlade5 (skill #401) — Class-C passive (verified 2026-09-24)
+
+- **Metadata:** reqLv 55, reqBn 0; MP 0, SP 0; passive (`WolfSkill.cs:915-920`).
+- **Effect** (combo dispatcher, `Wolf.cs:7540-7805`): with `hasSkill(401)` each next stage is started toward the input direction (`vector2`) instead of `HwwoC6K6XP.forward`, and after stage 4 the dispatcher starts `RPC_nAttack5`, which only restarts `RPC_nAttack1` (`:18219`), so the combo loops. No damage change.
+
+### wlf_lunarEclipse1-2 (skills #371/#372) — active, self (verified 2026-09-24)
+
+- **Metadata:** reqLv/Bn 35/23, 40/25; MP 20, SP -45/-60 (consumed); instant, self. (See the judgment-call note above on its broken `getSkill()` `cType`; the cast itself dispatches through `RPC_lunarEclipse`.)
+- **Cast** (`Wolf.cs:31084+`): `RPC_AddStatus("lunarEclipse", sLv, chaAdjust(9 + 3*sLv), 0, ...)` on self (`:31238`) → 12 / 15s; cooldown `agiAdjust(300)` behind `getDoubleArt()` (`:31320-31326`). Client tooltips say 12/17s (EN) and 14/17s (TH).
+- **Status `lunarEclipse`:** code 107 (`StatusData.cs:602`), `isBuffStatus` (`:6476`) and `isStateStatus` (`:4824`) → "Buff, State"; Wolf only (`CharacterControl.cs:12094`); Perseverance-eligible; blocked and removed by `holyWolf` (above).
+  - Apply (`:34241`): `moveMod += 0.4·sLv`, `rangeMod += 0.4·sLv`, colour black. Removal (`:15143`) reverses both.
+  - `rangeMod` multiplies the `FindRecTarget`/area sizes of: Combo stages 1-4, Charge Attack (`RPC_cAttack2`), Counter (`RPC_counter2`), Armor Break, Power Break, Art Cancel, Blade Fang, Blade Song, Brave Spirit, Crusader, Cross Break, Feral Strike, Sky Slasher, Third Rend (every `rangeMod` read in `Wolf.cs`, the rest being item/pet code).
 
 ## Class-C Passives
 
