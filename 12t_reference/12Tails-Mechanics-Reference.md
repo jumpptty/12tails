@@ -291,6 +291,25 @@ Cat **Vendetta** (#364) grants the Cat `RPC_AddHeal(364, 0, 0, 10, ...)` (+10 SP
 
 **Not dodgeable:** anything that does not go through `hit()`. That includes Effect Damage (`RPC_AddEffectDamage`, e.g. Panda Shadow Fist, and every Wolf normal attack while Wolf has `darkEdge`, `Wolf.cs:15267`), status ticks/status damage (`StatusUpdate`, `:8832-10634`), projectiles that call `RPC_AddDamage` themselves (`Mole_missile.cs:369`, `BarrelBot_missile.cs:369`, Gallon Bot missile, and many monster projectiles), pet damage, and damage passed on inside `RPC_AddDamage` (`:4994`, `:5531`, `:5661`). The class files contain more direct `RPC_AddDamage` calls that were not classified one by one. The bible's mechanic-glossary topic `evasion` summarises this section.
 
+### 2.9 Damage routing: `hit()` vs direct `RPC_AddDamage` vs `RPC_AddEffectDamage` (verified 2026-09-24)
+
+There are three entry points, and which one a skill uses decides which pipeline stages it gets:
+
+```
+hit()  ──(unless a target-state exit)──►  RPC_AddDamage  ◄── direct callers (projectiles, Upheaval AoE, …)
+                                            (hitMod, shields, Peninsula Round redirect, …)
+RPC_AddEffectDamage  ── separate path: hitMod only
+```
+
+- **`hit()` (`CharacterControl.cs:2807-3680`)** calls the target's `RPC_AddDamage` in exactly three ways: the landed hit (`:3566`, after `damagePlus` → `dmgAdjust` → `defAdjust` (`:3546`) → `koAdjust`/`hateAdjust`), a dodge `RPC_AddDamage(-82, 0, …)` (8 sites `:3091-3406`, §2.8), or a blind miss `RPC_AddDamage(-81, 0, …)` (`:3504`). It **returns 0 without calling anything** when: the target is null, not tagged `Player`/`Enemy`, or has no `CharacterControl`; `target.recieveDamage == false`; the target has been dead for more than 3 s; or the target has `hide`, `noDamage`, `swallow` or `salvation` (`:2809-2870` → the `return 0` labels at `:3625-3675`). So every `hit()` that reaches the target goes through `RPC_AddDamage`, but a target-state exit reaches nothing.
+- **Direct `RPC_AddDamage` callers** skip everything inside `hit()`: dodge (§2.8), `damagePlus`, `dmgAdjust` and `defAdjust`. `RPC_AddDamage` itself never calls `defAdjust` (the only pipeline call is `hit()`'s `:3546`), so **each direct caller applies defense or not on its own**:
+  - Mole Missile (`Mole_missile.cs:349-369`) and Barrel Bot missile (`BarrelBot_missile.cs:349-369`): `target.RPC_AddDamage(…, target.defAdjust(talAdjust(30)), 3, …)`, so DEF applies but there is no `dmgAdjust` (no attacker `damageMod`, no `dmgAdjust` LCK spread).
+  - Monkey Lavu Upheaval AoE (`Monkey.cs:35201-35240`): `target.RPC_AddDamage(1, 20·L + 10, 2·L + 1, …)` with no `defAdjust`, so a flat value only modified by the target's `hitMod`.
+  - Engine examples that do call `defAdjust` themselves: `CharacterControl.cs:9005`, `:10634`, `:38586` (mana burn).
+- **Inside `RPC_AddDamage`** everything applies no matter how it was reached: `hitMod` (`:3765`), `noDamage`/`perfectArmor`/`perfectShield`, the Whale Peninsula Round redirect (`:4299-4367`), and then the `AddDamage` coroutine (`:5822`/`:6035` → `$AddDamage$35579`) with shield statuses such as Whale's `shield` (`:30855-30960`) and the type-specific flat reductions of §2.7.
+- **`RPC_AddEffectDamage` (`:6058`)** is its own path: `hitMod` (`:6203`) but no dodge, no `defAdjust`, no shield statuses and no Peninsula Round redirect (the only `"peninsulaRound"` check in the engine is `:4313`).
+- **Tool note:** the bible's standard damage pipeline always applies `dmgAdjust`, so direct-caller skill cards (e.g. `mole_missile`) currently overstate damage slightly.
+
 ---
 
 ## 3. Skills
