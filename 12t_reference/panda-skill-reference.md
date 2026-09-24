@@ -538,6 +538,32 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - SP generation: `sp += 1` per target connected per hit (`:28888`, `:29003`)
   - `ComboPlus()` fires on each hit if any target was hit (`:28907`, `:29022`). No status inflicted.
 
+### Rising Dragons (`panda_risingDragons`, skills #253/#254)
+
+- **Cost / requirements (`decode_skilldata.py`):** MP **10, 10** (consumed), SP **−45, −60** (consumed, red — negative in `cSP`), Lv 28/32, Bn 18/21, mode instant, target enemy (`PandaSkill.cs:498-508`, `:1841-1851`).
+- **Cooldown:** Base **240s** before AGI adjustment (`addTimeOut("risingDragons", agiAdjust(240f))`, `Panda.cs:30103`), `cdWrapped: true`, `revisedArtExempt: false`.
+- **Buff / CC Setup on Cast (`Panda.cs:29356-30282`):**
+  - **Self Buff:** Panda immediately receives status `noForce` Level 1 for **3s** unwrapped (`addStatus("noForce", 1, 3, 0)`, `:30124`).
+  - **Pre-attack CC (t = 0.3s):** Target area scan `Damage.FindAreaTarget(pos, 3·rangeMod, 6·rangeMod, hitLayer)` (`:29580`) inflicts status `lock` Level 1 for **2s** unwrapped (`RPC_AddStatus("lock", 1, 2, 0)`, `:29625`) on all targets in Radius **3m**, Height **6m**.
+    - `lock` status mechanics: `StatusData.cs:437` (nCode 41, `isDebuffStatus: true`, `isSystemStatus: true`). `CharacterControl.cs:2284`: zeroes movement and horizontal velocity (`moveSpeed = 0`, `myForce.x = 0`, `myForce.z = 0`).
+- **Phase 1: Uppercut Jabs (8 Hits, `Panda.cs:29726-30092`):**
+  - Loop of 8 ticks at 0.15s intervals (`i = 0..7`).
+  - Area: Radius **3m**, Height **6m** (`FindAreaTarget`).
+  - Formula: `(int)(0.35·(ATK + getFocusedArtDmg()) + talAdjust(5·sLv))` (`Panda.cs:30033`).
+    - Rank 1: `0.35·(ATK + FA) + talAdjust(5)`
+    - Rank 2: `0.35·(ATK + FA) + talAdjust(10)`
+  - KO: **1** per hit. Force: `2 * Vector3.up` (launches targets upwards). `sp += 1` per connected target.
+- **Phase 2: Finishing Dragon Smash (1 Hit, `Panda.cs:29759-29875`):**
+  - Spawns `ashuraFist` prefab at impact point.
+  - Area: Radius **4m**, Height **3m** (`FindAreaTarget`, `:29821`).
+  - Formula: `(int)(0.5·(ATK + getFocusedArtDmg()) + talAdjust(40·sLv))` (`Panda.cs:29844`).
+    - Rank 1: `0.5·(ATK + FA) + talAdjust(40)`
+    - Rank 2: `0.5·(ATK + FA) + talAdjust(80)`
+  - KO: **1**. Force: `3 * (target.pos - caster.pos).normalized` (knocks targets away). `sp += 1` per connected target.
+  - ⚠️ **Tooltip Discrepancy:** In-game client tooltips (`PandaSkill_eng.cs:466`, `:477`; `PandaSkill_thai.cs:488`, `:499`) claim `(5x8 dmg, 60 dmg)` / `(10x8 dmg, 90 dmg)`. While the 8 jabs accurately deal `talAdjust(5·sLv)` (5 / 10), the finisher in actual decompiled code is **`talAdjust(40·sLv)`** (40 / 80), NOT 60 / 90.
+- **Total Hits & KO:** 8 + 1 = **9 hits**, **9 KO**.
+- **Focused Art Synergy:** Both phases add `getFocusedArtDmg() = 0.5 * sp * rank` inside the ATK bracket (`usesFocusedArt: true`, `hasCurrentSp: true`).
+
 ### Ogre Impact (`panda_ogreImpact`, skill #422)
 
 - **Passive, Lv 70 / Bn 3, 0 MP / 0 SP** (`decode_skilldata.py`; `PandaSkill.cs:3173`).
