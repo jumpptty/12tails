@@ -1289,6 +1289,27 @@ let checkedEffectProc = 0;
   inputs.lck.value = savedLck;
   Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
 }
+// 3n. Test button (2026-09-24 redesign): Thai labels per kind, starburst vs cross icon, "×N ฮิต" count only when
+// there is one, the small per-mode variant, and the rendered main button on a multi-hit card.
+let checkedTestBtn = 0;
+{
+  const check = (label, ok) => { checkedTestBtn++; if (!ok) { console.error(`[TEST BUTTON ERROR] ${label}`); errorCount++; } };
+  const b = sandbox.simulateBtnHtml;
+  const dmg = b({ role: "simulate-hit", count: "10" }), heal = b({ role: "simulate-hit", kind: "heal" }), hate = b({ role: "simulate-hit", kind: "hate" });
+  check("damage label", dmg.includes("<span>ทดสอบดาเมจ</span>"));
+  check("damage count reads ×10 ฮิต", dmg.includes('<span class="sk-sim-count">×10 ฮิต</span>'));
+  check("damage uses the starburst icon", dmg.includes("<polygon"));
+  check("heal label + cross icon", heal.includes("<span>ทดสอบฮีล</span>") && heal.includes("<path") && !heal.includes("<polygon"));
+  check("hate label + starburst icon", hate.includes("<span>ทดสอบ Hate</span>") && hate.includes("<polygon"));
+  check("no count text when there is no count", !heal.includes("sk-sim-count"));
+  const grp = b({ role: "simulate-group", groupIndex: 2, small: true, count: "4" });
+  check("per-mode button is the small variant with its group index", grp.includes("is-sm") && grp.includes('data-group-index="2"') && grp.includes("×4 ฮิต"));
+  const sk = SKILLS.find(s => s.id === "whale_peninsulaImpale");
+  sandbox._skillRanks[sk.id] = sk.maxRank; sandbox._selectSkill(sk);
+  const hero = sandbox._getRenderedHeroHtml();
+  check("a multi-hit card renders the main Test button with its hit count", hero.includes('data-role="simulate-hit"') && hero.includes("×10 ฮิต"));
+}
+console.log(`Verified ${checkedTestBtn} Test button checks.`);
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
