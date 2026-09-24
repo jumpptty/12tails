@@ -30,7 +30,7 @@ below for why they were initially left out and then given their own rows.
 | lotusPalm | Lotus Palm | 2 | 75 | true | false | — | — |
 | heavenPalm | Heaven Palm | 2 | 150 | true | false | — | — |
 | comboLink | Combo Link | 1 | 240 | true | false | 6 | true |
-| fuujinKen | Fuujin Ken | 1 | 240 | true | false | — | — |
+| fuujinKen | Fuujin Ken | 1 | 240 | true | false | 9 | false |
 | raijinKen | Raijin Ken | 1 | 300 | true | false | — | — |
 
 ## Citations
@@ -273,9 +273,10 @@ below for why they were initially left out and then given their own rows.
 - `risingDragons`, `deathBlow`: incidental hit-reaction/proc-flag statuses (`"lock"`, `"death"`), not the skill's own duration — see judgment-call note; Duration cells are `—`
 - `climbingCliff` Duration: `Panda.cs:27619` — `this.$self_$25388.mChar.StartCoroutine_Auto(this.$self_$25388.mChar.addStatus("noForce", 1, 2, 0, this.$self_$25388.mChar.ActorNr));` (self-applied knockback-immunity while climbing; `addStatus`'s `sTime` param does no internal CHA scaling — flat literal `2`, `durWrapped:false`, unlike every other Duration in this table)
 - `crumblingMountain` Duration: `Panda.cs:28404` — `this.$self_$25406.mChar.StartCoroutine_Auto(this.$self_$25406.mChar.addStatus("noForce", 1, 3, 0, this.$self_$25406.mChar.ActorNr));` (same `noForce` mechanism as `climbingCliff`, flat literal `3`, `durWrapped:false`)
+- `fuujinKen` Duration: `Panda.cs:41159` — `this.$self_$25701.mChar.StartCoroutine_Auto(this.$self_$25701.mChar.addStatus("noForce", 1, 9, 0, this.$self_$25701.mChar.ActorNr));` (self-applied knockback-immunity during tornado spin; `addStatus` flat literal `9`, `durWrapped:false`, `durLabel:"ระยะเวลากันแรงผลัก"`)
 - `roll`, `threeSteps`, `rushingFalcon`, `qiStrike`, `pummel`, `towerRush`, `tigerToss`, `risingVortex`,
   `waterMonkey`, `waterCrane`, `spTransfer`, `wind&cloud`, `rain&storm`, `lotusPalm`, `heavenPalm`,
-  `fuujinKen`, `raijinKen`: no usable Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime
+  `raijinKen`: no usable Duration — no `RPC_AddStatus`/`addStatus`/field-effect-lifetime
   call exists in the skill's own coroutine class body; see the bulk judgment-call note above. Duration
   cells are `—`.
 
@@ -630,6 +631,26 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 - **Hook:** `getDrunkenSpinLv() = hasSkill(423) ? 1 : 0` (`Panda.cs:9721-9724`).
   - When learned, connecting hits of Drunken Fist inflict status `drunk` at Level 1 with contested duration (`Panda.cs:31817`, `:32039`, `:32214`, `:32362`): base 12s on hit 1, base 6s on hits 2–4 (`Damage.getDebuff(base, caster.cha, target.cha)`).
   - ⚠️ **Tooltip Discrepancy:** The tooltip claims Drunken Spin grants "+6 damage" to Drunken Fist, but decompiled source tracing confirms no damage modifier or `+6` bonus exists for `hasSkill(423)` in `Panda.cs`.
+
+### Fuujin Ken (`panda_fuujinKen`, skill #434)
+
+- **Class-C Active Skill, Lv 75 / Bn 4, 50 MP / 70 SP (consumed)** (`decode_skilldata.py`; `PandaSkill.cs:1381-1406`).
+- **Cooldown & Timing:**
+  - Base Cooldown: `240s` (`Panda.cs:86`, `Panda.cs:41124`: `addTimeOut("fuujinKen", agiAdjust(240f))`).
+  - Cast Time: `0s` (Instant cast, `mode = eSkillMode.instant`).
+  - Animation & Ticks: Coroutine `$RPC_fuujinKen$25688` (`Panda.cs:40786-41481`). Startup 1.0s (0.5s + 0.5s) -> Tornado spin 8.0s (20 ticks at 0.4s interval) -> Recovery 0.7s (total 9.7s).
+- **Buff & Status:**
+  - Grants self status `[noForce]` at Level 1 for 9 seconds fixed upon initiation (`Panda.cs:41159`: `mChar.StartCoroutine_Auto(mChar.addStatus("noForce", 1, 9, 0, mChar.ActorNr))`).
+- **AoE & Pull Mechanic:**
+  - Scans enemies in a 12m radius and 9m height around Panda (`Panda.cs:41352`: `Damage.FindAreaTarget(pos, 12f, 9f, hitLayer)`).
+  - Enemies with `sqrMagnitude > 4` (distance > 2m) are pulled inward towards Panda: `hitForce = 0.5f * Math.vFlat(-hitDir)` (`Panda.cs:41402`).
+  - Enemies within 2m (`sqrMagnitude <= 4`) are lifted slightly (`Vector3.up`) and spawn `fuujinKen_hit` effect (`Panda.cs:41391`, `:41420`).
+- **Damage Formula:**
+  - `hitDmg = Mathf.Clamp(0.004f * (225f - hitDistance), 0.25f, 1f) * (ATK + talAdjust(15))` (`Panda.cs:41386`).
+  - Distance scaling: scales from 90% at 0m (`0.004 * 225 = 0.90`) down to ~32.4% at 12m (`0.004 * (225 - 144) = 0.324`), clamped to minimum 25% (0.25) and maximum 100% (1.0).
+  - KO: `0` (`Panda.cs:41408`).
+  - Focused Art: does not apply (no SP scaling in formula).
+
 
 
 
