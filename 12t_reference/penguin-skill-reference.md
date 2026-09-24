@@ -440,6 +440,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 
 ### pgn_frozenBreak5 (403) — modifies frozenBlast
 - +2m AoE radius. If target has `ice`: bonus defense-ignoring `RPC_AddEffectDamage(403, 15×iceLv)` "Frozen Break!" burst. Matches tooltip.
+- **Order per target (verified 2026-09-24, `Penguin.cs:29506-29536`):** the `ice` check + `RPC_AddEffectDamage(403, 15×iceLv)` runs **before** the white `hit(300+sLv, …)`, and the hit then applies `ice` (level = rank, `chaAdjust(3)`). Frozen Blast is one hit, so the bonus only uses ice already on the target. Bible: `effectProc` bonus with the Frozen Break toggle and a "Ice Lv บนเป้าหมาย" stepper (default 0).
 
 ### pgn_revisedSkill5 (404) — GLOBAL: 50% SP cost reduction on cast, for every active skill class-wide (via GameGui.cs's shared dispatch, not a Penguin.cs hasSkill check).
 
@@ -451,6 +452,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 
 ### pgn_deadlyFrost5 (413) — modifies arcticWind
 - Doubles segment count 4→8 (matches "+100% range"). If target has `frost`: bonus flat defense-ignoring `RPC_AddEffectDamage(413, 50)` "Deadly Frost!" burst.
+- **Order per target per tick (verified 2026-09-24, `Penguin.cs:30603-30650`):** frost check + `RPC_AddEffectDamage(413, 50)` **before** the white `hit(210+sLv, …)`; the landed hit then rolls `frost` (else `ice`). So the 50 lands on every hit while the target has frost, and a tick's own frost only powers the following ticks. Bible: `effectProc` bonus with `status:"frost"` and a "เป้าหมายติด Frost อยู่แล้ว" toggle (default off).
 
 ### pgn_revisedMagic5 (414) — GLOBAL: 20% MP cost reduction on cast, for every active skill class-wide (via GameGui.cs's shared dispatch). Also reduces cosmicFriday5's own channel-tick MP drain 25→20 consistently.
 

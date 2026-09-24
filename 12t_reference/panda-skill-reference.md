@@ -328,6 +328,7 @@ below for why they were initially left out and then given their own rows.
 - **Spirit Fist interaction:** with Spirit Fist (#433), Shadow Fist adds `floor(0.16 * PandaLevel)` to that Effect Damage before the `RPC_AddEffectDamage` call (`Panda.cs:35804-35821`). This is a flat addition after rank damage, not a 16% multiplier.
 - **Trigger rule:** it is not a random proc. A skill must successfully connect and explicitly start `ShadowFist(target)`; examples include normal-attack hit paths (`Panda.cs:15397-15407`, `:15582-15592`) and Sage-skill hit paths such as Water Monkey (`Panda.cs:33043-33086`), Water Crane (`:33905-33958`), Wind & Cloud, Rain & Storm, Lotus Palm, and Heaven Palm. If Shadow Fist is unlearned, the coroutine exits before making the Effect Damage call (`Panda.cs:35834-35855`).
 - **Duration / cooldown:** none; this is an immediate passive follow-up, not a status or cast.
+- **Bible:** modelled as `effectProc: PANDA_SHADOWFIST_PROC` (bonus mode, Shadow Fist 0–4 stepper + Spirit Fist toggle) on Water Monkey/Crane, Stasis/Death Blow, Drunken Fist, Wind & Cloud, Rain & Storm, Lotus/Heaven Palm; the Combo cards get it with their own `/sd` pass.
 
 ### Spirit Fist (`panda_spiritFist`, skill ID #433)
 

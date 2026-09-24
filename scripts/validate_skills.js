@@ -115,6 +115,7 @@ const exposeInjection = `
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
   window._cycleEnemyPreset = cycleEnemyPreset;
   window._selectedEnemyId = () => selectedEnemyId;
+  window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, lastPurple: () => lastRollPurple, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -1245,6 +1246,41 @@ console.log(`Verified ${checkedDurLabels} duration chip label checks.`);
 console.log(`Verified ${checkedPortraits} class portrait checks.`);
 console.log(`Verified ${checkedPanelMarkup} stat panel structure checks.`);
 console.log(`Verified ${checkedSummonFeed} summon stat-feed glow checks.`);
+// 3m. effectProc purple mix (2026-09-24, GEMINI.md "effectProc"): Wall Puncture replace-roll rate and rank-0 off,
+// Megalodon's purple Pull group, every bonus amount, and the gold total digits.
+let checkedEffectProc = 0;
+{
+  const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
+  const check = (label, ok, got) => { checkedEffectProc++; if (!ok) { console.error(`[EFFECTPROC ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  for (let i = 0; i < 10; i++) check(`gold digit dmgdigit_y${i} present`, String(SKILL_ICONS["dmgdigit_y" + i] || "").startsWith("data:image/png"));
+  const byId = id => SKILLS.find(s => s.id === id);
+  const savedLck = inputs.lck.value, savedDeps = Object.assign({}, deps);
+  const purpleRate = (sk, n, gi) => { let p = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, sk.maxRank, undefined, false, gi); if (ep.lastPurple()) p++; } return p / n; };
+  const sweep = byId("whale_sweep");
+  sandbox._skillRanks[sweep.id] = sweep.maxRank; sandbox._selectSkill(sweep);
+  deps.wallPuncture = 0; check("Wall Puncture 0 never procs", purpleRate(sweep, 500) === 0);
+  inputs.lck.value = "150"; deps.wallPuncture = 4;
+  const expected = sandbox.lckAdjustChance(40, 150) / 100, rate = purpleRate(sweep, 4000);
+  check(`Wall Puncture 4 @ LCK 150 proc rate ~${expected}`, Math.abs(rate - expected) < 0.04, rate.toFixed(3));
+  const mega = byId("whale_megalodon");
+  check("Megalodon Pull group always purple", purpleRate(mega, 50, 0) === 1);
+  check("Megalodon Bite group always white", purpleRate(mega, 50, 1) === 0);
+  const aw = byId("penguin_arcticWind");
+  deps.deadlyFrost = 1; deps.arcticFrost1 = 1; deps.targetFrosted = 0;
+  check("Deadly Frost bonus 50 when frost can proc", ep.bonus(aw, 1, 0) === 50, ep.bonus(aw, 1, 0));
+  deps.arcticFrost1 = 0; check("Deadly Frost bonus 0 when frost cannot happen", ep.bonus(aw, 1, 0) === 0, ep.bonus(aw, 1, 0));
+  deps.targetFrosted = 1; check("Deadly Frost bonus 50 on an already-frosted target", ep.bonus(aw, 1, 0) === 50, ep.bonus(aw, 1, 0));
+  deps.deadlyFrost = 0; check("no Deadly Frost, no bonus", ep.bonus(aw, 1, 0) === 0, ep.bonus(aw, 1, 0));
+  const fb = byId("penguin_frozenBlast");
+  deps.frozenBreak = 1; deps.targetIce = 3; check("Frozen Break bonus = 15 x target ice level", ep.bonus(fb, 1, 0) === 45, ep.bonus(fb, 1, 0));
+  deps.frozenBreak = 0; check("no Frozen Break, no bonus", ep.bonus(fb, 1, 0) === 0, ep.bonus(fb, 1, 0));
+  const wm = byId("panda_waterMonkey");
+  deps.shadowFist = 4; deps.spiritFist = 1; check("Shadow Fist 4 + Spirit Fist at Lv 100 = 12 + 16", ep.bonus(wm, 1, 100) === 28, ep.bonus(wm, 1, 100));
+  deps.shadowFist = 0; check("Shadow Fist 0, no bonus", ep.bonus(wm, 1, 100) === 0, ep.bonus(wm, 1, 100));
+  inputs.lck.value = savedLck;
+  Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
+}
+console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy icon-cycle checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
