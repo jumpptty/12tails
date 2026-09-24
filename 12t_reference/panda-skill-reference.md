@@ -651,6 +651,28 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - KO: `0` (`Panda.cs:41408`).
   - Focused Art: does not apply (no SP scaling in formula).
 
+### Raijin Ken (`panda_raijinKen`, skill #444)
 
-
-
+- **Class-C Active Skill, Lv 85 / Bn 6, 70 MP / -90 SP (generates 90 red SP)** (`decode_skilldata.py`; `PandaSkill.cs:1422-1448`).
+  - Requires Fuujin Ken (`rSkill: 434`).
+  - Target Mode: `eSkillMode.target`, `eSkillTarget.enemy` (`PandaSkill.cs:1432-1437`).
+  - Targeting Range: Target lock range on screen up to **35m** (`vector.sqrMagnitude < 1225` in `GameGui.cs:11285`, `:21120`; Tab cycle max 36m in `GameGui.cs:2168`). No distance cap once target is locked.
+- **Cooldown & Timing:**
+  - Base Cooldown: `300s` (`Panda.cs:89`, `Panda.cs:42057`: `addTimeOut("raijinKen", agiAdjust(300f))`).
+  - Cast Time: `0s` (Instant cast bar).
+  - Animation Coroutines: `$RPC_raijinKen$25705` (`Panda.cs:41542-42245`) and `$RPC_raijinKen_hit$25717` (`Panda.cs:42290-42595`).
+    - Charge-up 1: 0.7s (`cAttack1`).
+    - Charge-up 2: 0.5s (`cAttack2`, looping charge). Total charge: 1.2s.
+    - Leap: Panda receives `[hide]` (Lv 1, 1s duration, mid-air invulnerability frame, `Panda.cs:41732`).
+    - Impact dispatch: Dispatches `$RPC_raijinKen_hit$25717` at target's front boundary (`fPos = target.bounds.center - bounds.extents.x * fDir`).
+    - Recovery: 0.8s (`raijinKen2`). Total sequence: ~2.4s.
+- **AoE & Visuals:**
+  - Impact delay: 0.4s (`Panda.cs:42587`).
+  - AoE Area: Scans enemies in **8m radius and 8m height** around impact position (`Panda.cs:42421`: `Damage.FindAreaTarget(hitPos, 8f, 8f, hitLayer)`).
+  - Visual: Spawns `raijinKen_hit` effect, activates cinematic camera `Camera/effectCamera` (`Panda.cs:42546-42554`), and adds full-screen `whiteRamp` flash (`Panda.cs:42464`).
+- **Damage & Knockout Formula:**
+  - `mChar.hit(444, hitObject, 4 * atk + talAdjust(180), 60, 0, Vector3.zero)` (`Panda.cs:42444`).
+  - Damage Formula: `4.0 × ATK + talAdjust(180)`
+  - Knockout (KO): `60` (instant knockdown)
+  - Hit Count: `1`
+  - Focused Art: does not apply (no SP scaling in formula).
