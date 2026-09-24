@@ -907,6 +907,24 @@ SKILLS.forEach(sk => {
     }
   }
 });
+// 3i3. DURATION LABEL FORMAT & COMPLETENESS (GEMINI.md: duration chip labels must use "ระยะเวลา XXX")
+let checkedDurLabels = 0;
+SKILLS.forEach(sk => {
+  if (sk.durLabel) {
+    checkedDurLabels++;
+    if (!sk.durLabel.startsWith("ระยะเวลา")) {
+      console.error(`[DURATION LABEL ERROR] ${sk.id}.durLabel "${sk.durLabel}" must start with "ระยะเวลา" (e.g. "ระยะเวลา Frost").`);
+      errorCount++;
+    }
+  }
+  if (sk.secondaryDuration) {
+    checkedDurLabels++;
+    if (!sk.secondaryDuration.label || !sk.secondaryDuration.label.startsWith("ระยะเวลา")) {
+      console.error(`[DURATION LABEL ERROR] ${sk.id}.secondaryDuration.label "${sk.secondaryDuration ? sk.secondaryDuration.label : undefined}" must start with "ระยะเวลา" (e.g. "ระยะเวลา Ice").`);
+      errorCount++;
+    }
+  }
+});
 // 3i. Class portraits for the stat panel badge (CLASS_PORTRAITS): every class a skill belongs to (other
 // than shared "Common" skills, which have no character art) needs a valid PNG portrait.
 let checkedPortraits = 0;
@@ -1223,6 +1241,7 @@ console.log(`Verified ${checkedLckDiff} LCK-difference (Lucky Card / Joker) chec
 console.log(`Verified ${checkedBenediction} Sheep Benediction (talAdjust base order) checks.`);
 console.log(`Verified ${checkedRankIcons} multi-rank icon presence checks.`);
 console.log(`Verified ${checkedLckLabels} lckProc/secondaryLckProc label checks.`);
+console.log(`Verified ${checkedDurLabels} duration chip label checks.`);
 console.log(`Verified ${checkedPortraits} class portrait checks.`);
 console.log(`Verified ${checkedPanelMarkup} stat panel structure checks.`);
 console.log(`Verified ${checkedSummonFeed} summon stat-feed glow checks.`);
