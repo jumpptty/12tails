@@ -523,6 +523,21 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 - **`noForce` status:** nCode 5 (`StatusData.cs:111`), `isBuffStatus` only (`:6356`); handler sets `myForce = zero` (`CharacterControl.cs:2266`).
 - **App modelling:** the Monolith group's text is `talAdjust(10) + talAdjust(tHeight10)`, rolled as two independent `talAdjust` calls; `tHeight10 = round(height × 10)` from the card's `สูง` input (default 3.0 m).
 
+### Rising Vortex (`panda_risingVortex`, skills #251/#252)
+
+- **Cost / requirements (`decode_skilldata.py`):** MP **5, 5** (consumed), SP **+16/+18** (threshold gate, blue — not consumed, `cSP > 0`), Lv 20/24, Bn 12/15, mode instant, target enemy (`PandaSkill.cs:466-489`, `:1868-1893`). CD `addTimeOut("risingVortex", agiAdjust(60f))`, fixed for both ranks (`Panda.cs:29127`).
+- **Tooltips:** "Perform a spinning uppercut punch that pull nearby enemies toward Panda (10 dmg)." / "…(20 dmg)." (`PandaSkill_eng.cs:444`, `:455`; Thai "ท่าหมัดอัพเปอร์คัทที่ก่อให้เกิด ช่องว่างอากาศดูดเป้าหมาย โดยรอบเข้าหาตัว (+10dmg)" / "(+20dmg)", `PandaSkill_thai.cs:466`, `:477`). "(10 dmg)" and "(20 dmg)" correspond to `talAdjust(10·sLv)`.
+- **Coroutine `$RPC_risingVortex$25412` (`Panda.cs:28672-29351`, dispatch `:7136`):** sets `actionState = "attack"`, `myCommand = "risingVortex"`, plays animation and effect (`:29124-29261`). 0.4 s wind-up (`:29303`) -> **Hit 1** (`:28832`) -> 0.2 s wait (`:29288`) -> **Hit 2** (`:28947`) -> 0.1 s + 0.3 s recovery tail (`:29294`, `:29299`), action ends at t = 1.0 s (`moveSpeed = 0`, `actionState = "standby"`, `:29061-29066`). Total: **2 hits**.
+- **Area & Geometry:** `FindAreaTarget(pos, 3·rangeMod, 3·rangeMod, hitLayer)` (`:28832`, `:28947`) = cylinder centered on Panda with **radius 3 m (diameter 6 m)** and **height 3 m**, both scaling with `rangeMod`.
+- **Force / Knockback Vector:** `(pos - target.pos).normalized` (`:28855`, `:28970`) = pull vector pointing inwards towards Panda's center (vacuum effect).
+- **Per-Hit Damage:** `hit(250 + sLv, obj, (int)(0.5·(ATK + getFocusedArtDmg()) + talAdjust(10·sLv)), 1, 0, pullVector)` (`:28855`, `:28970`):
+  - ATK coefficient: `0.5·(ATK + FA)`
+  - TAL term: `talAdjust(10·sLv)` (Rank 1: `talAdjust(10)`, Rank 2: `talAdjust(20)`)
+  - KO: `1` per hit (total `2` KO across 2 hits)
+  - Focused Art synergy (`usesFocusedArt: true`): `0.5 · getFocusedArtDmg() = 0.25 · SP · focusedArtLv` (`Panda.cs:10841`)
+  - SP generation: `sp += 1` per target connected per hit (`:28888`, `:29003`)
+  - `ComboPlus()` fires on each hit if any target was hit (`:28907`, `:29022`). No status inflicted.
+
 ### Ogre Impact (`panda_ogreImpact`, skill #422)
 
 - **Passive, Lv 70 / Bn 3, 0 MP / 0 SP** (`decode_skilldata.py`; `PandaSkill.cs:3173`).
@@ -565,7 +580,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Rising Vortex | 28855, 28970 | `0.5·(ATK+FA) + talAdjust(10·sLv)` |
 | Rising Dragons | 29844, 30033 | `0.5·(ATK+FA) + talAdjust(40·sLv)`; `0.35·(ATK+FA) + talAdjust(5·sLv)` |
 
-  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel, Tower Rush and Tiger Toss (+ Tiger Pounce), Climbing Cliff and Crumbling Mountain (+ Crushing Monolith) cards are fully verified in the app so far; the rest are recorded here for their future cards.)
+  (`FA` = `getFocusedArtDmg()`. Only Three Steps, Rushing Falcon, Qi Strike, Pummel, Tower Rush, Tiger Toss (+ Tiger Pounce), Climbing Cliff, Crumbling Mountain (+ Crushing Monolith) and Rising Vortex cards are fully verified in the app so far; the rest are recorded here for their future cards.)
 
 ### Nine Steps (`panda_nineSteps`, skill #402)
 
