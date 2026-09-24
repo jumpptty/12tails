@@ -119,7 +119,7 @@ const exposeInjection = `
   window._renderEnemyPicker = renderEnemyPicker;
   window._enemyPickerHtml = () => enemyPickerEl.innerHTML;
   window._selectedEnemyId = () => selectedEnemyId;
-  window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, lastPurple: () => lastRollPurple, hasMix: skillHasPurpleMix };
+  window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -1311,6 +1311,68 @@ let checkedTestBtn = 0;
 }
 console.log(`Verified ${checkedTestBtn} Test button checks.`);
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
+// 3o. Wolf Combo (2026-09-24, GEMINI.md "critProc / effectDamageDep"): Feral Instinct coefficients, hit counts,
+// gear crit rate (lckAdjust(12) Marshal / lckAdjust(18) Champion, x1.8), Dark Edge purple path + KO 0, and
+// range-vs-simulator for every toggle combination (§3f only runs deps at default/off, where crit and Dark Edge are off).
+let checkedWolfCombo = 0;
+{
+  const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
+  const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const sk = SKILLS.find(s => s.id === "wolf_nAttack");
+  const IDS = ["wolfFeralInstinct", "wolfWildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion"];
+  const savedDeps = IDS.map(id => [id, deps[id]]);
+  const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
+  const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
+  const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
+  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
+  // Coefficients: Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
+  setDeps({ wolfFeralInstinct: 4, wolfWildHeart: 1 }); select(3);
+  const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
+  check("Feral 4 + Wild Heart coefficients", coeffs === "0.75,0.75,0.75,0.6,0.9", coeffs);
+  setDeps({}); select(3);
+  const c0 = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
+  check("Feral off coefficients", c0 === "0.5,0.5,0.5,0.4,0.6", c0);
+  setDeps({ wolfFeralInstinct: 0, wolfWildHeart: 1 }); select(3);
+  check("Wild Heart without Feral Instinct adds nothing", sk.dmgGroups.every(g => sandbox._resolveGroupAtkCoeff(sk, g) === (g.label.includes("first") ? 0.4 : g.label.includes("second") ? 0.6 : 0.5)));
+  // Hit counts 2 / 3 / 5.
+  [2, 3, 5].forEach((want, i) => { select(i + 1); const got = sk.dmgGroups.reduce((a, g) => a + sandbox._resolveGroupHitCount(sk, g), 0); check(`rank ${i + 1} hit count`, got === want && sk.hitCount(i + 1) === want, got); });
+  // KO 1, and 0 under Dark Edge.
+  setDeps({}); select(3); check("KO 1 without Dark Edge", sandbox._getKOValue(sk, 3) === 1, sandbox._getKOValue(sk, 3));
+  setDeps({ wolfDarkEdgeOn: 1 }); select(3); check("KO 0 with Dark Edge", sandbox._getKOValue(sk, 3) === 0, sandbox._getKOValue(sk, 3));
+  // Crit rate and purple flag.
+  inputs.atk.value = "200"; inputs.lck.value = "150";
+  const rate = (o, n) => { setDeps(o); select(3); let c = 0, p = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, 3, undefined, false, 0); if (ep.lastCrit()) c++; if (ep.lastPurple()) p++; } return { c: c / n, p: p / n }; };
+  check("no gear never crits", rate({}, 500).c === 0);
+  [["wolfGearMarshal", 12], ["wolfGearChampion", 18]].forEach(([id, base]) => {
+    const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate({ [id]: 1 }, 4000).c;
+    check(`${id} crit rate ~${want} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
+  });
+  check("Dark Edge off is white", rate({}, 200).p === 0);
+  check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
+  check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : "w");'));
+  check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\] \};/.test(html));
+  // Range vs simulator, every toggle combination, both stat profiles.
+  [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
+    inputs.atk.value = atk; inputs.lck.value = lck;
+    [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => ["", "wolfGearMarshal", "wolfGearChampion"].forEach(gear => {
+      const o = { wolfFeralInstinct: f, wolfWildHeart: wh, wolfDarkEdgeOn: de }; if (gear) o[gear] = 1;
+      setDeps(o);
+      for (let r = 1; r <= 3; r++) {
+        select(r);
+        sk.dmgGroups.forEach((g, gi) => {
+          if (sandbox._resolveGroupHitCount(sk, g) === 0) return;
+          const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g));
+          let lo = Infinity, hi = -Infinity;
+          for (let i = 0; i < 400; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false, gi); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+          check(`range/sim rank ${r} ${g.label} feral ${f} wh ${wh} de ${de} gear ${gear || "none"} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+        });
+      }
+    }))));
+  });
+  inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
+  savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
+}
+console.log(`Verified ${checkedWolfCombo} Wolf Combo (Feral Instinct / gear crit / Dark Edge) checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");

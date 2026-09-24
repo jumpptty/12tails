@@ -264,15 +264,65 @@ Source of server deltas: `12t_projects/bible/index.html:10761,10769`.
   (`Wolf.cs:23960-23973`). The `0.4 × ATK` term is a plain float multiplication and is combined with the already-rounded `talAdjust` result before the outer C# `(int)` truncation. **It does not call `atkAdjust()`**, therefore it has no second ATK-side LCK roll. The only attacker LCK rolls are inside `talAdjust` and later `dmgAdjust` in the shared hit pipeline.
 - **Rank 3 raw formula:** `int(0.4 × ATK + talAdjust(135))`; KO = 15. It continues through the shared `dmgAdjust → defAdjust → hitMod` pipeline after the `hit(...)` call.
 
-### wlf_darkEdge (Dark Edge): normal attacks become Effect Damage (partial, 2026-09-23)
+### wlf_nAttack1-3 (Combo, skills #101-#103) — passive, 4-stage normal attack (verified 2026-09-24)
 
-- **Branch:** each normal-attack stage reads `getStatusLv("darkEdge")` (`Wolf.cs:15074`, `:15913`, `:16616`, `:17327`). With the status off (`<= 0`) the swing is an ordinary `mChar.hit(stage, target, hitDmg, 1, 0, ...)` (`:15218`, `:16049`, `:16752`, `:17468`). With it on, the same swing skips `hit()` and instead calls `tChar.RPC_AddEffectDamage(363, hitDmg + Random.Range(0, CeilToInt(0.2 × LCK)), 0, 0, ...)` (`:15267`, `:16098`, `:16801`; stage 4 uses code 364 at `:17517`), then plays `RPC_darkEdge_hit`.
-- **Consequences of skipping `hit()`:** the swing cannot be dodged by the target's `drunken` evasion or the Water Monkey/Water Crane evasion (both live only inside `hit()`, `CharacterControl.cs:3076-3079`, `:3134-3167`), and it gets none of the target-side `hit()` checks. As Effect Damage it takes no `dmgAdjust`/`defAdjust`: only the attacker's LCK roll added here, then `hitMod` (rounded down) on the target (see the `RPC_AddEffectDamage` notes in the Mechanics Reference). KO is 0. The `hit()`-path follow-ups (`onNormalAttackHit`, `isHit`) sit in the `<= 0` branch, so they don't run for Dark Edge swings.
-- **Not yet traced:** how `hitDmg` itself is computed during Dark Edge, and the status duration details beyond `chaAdjust(2 × sLv)` (`Wolf.cs:30805`).
+- **Metadata:** reqLv/Bn 1/0, 2/1, 3/2; MP 0, SP 0; `mode = passive`, `cType = "nAttack"` (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`).
+- **Stage gating:** Combo rank `r` unlocks stage `r+1`. The dispatcher starts `RPC_nAttack2`/`3`/`4` only when `hasSkill(101)`/`(102)`/`(103)` (`Wolf.cs:7562`, `:7634`, `:7706`). Hits per full combo: rank 1 = 2, rank 2 = 3, rank 3 = 5 (stage 4 swings twice). `hasSkill(401)` (Continuous Blade) changes the direction/loop branches in the same dispatcher.
+- **Damage per swing** (Feral Instinct level `F`, see below), each truncated with `(int)` and passed through `getCritPlus`:
+
+| Stage | Raw damage | Line | `hit()` KO |
+|---|---|---|---|
+| 1 | `getCritPlus((int)((0.5 + 0.05·F) × ATK))` | `Wolf.cs:15144` | 1 (`:15218`) |
+| 2 | same | `:15975` | 1 (`:16049`) |
+| 3 | same | `:16678` | 1 (`:16752`) |
+| 4, first swing | `getCritPlus((int)((0.4 + 0.04·F) × ATK))` | `:17386` | 1 (`:17468`) |
+| 4, second swing | `getCritPlus((int)((0.6 + 0.06·F) × ATK))` | `:17717` | 1 (`:17786`) |
+
+  Every swing is `mChar.hit(stage, target, hitDmg, 1, 0, ...)`, i.e. the normal `dmgAdjust → defAdjust → hitMod` pipeline (dodgeable), unless Dark Edge is on (below).
+- **Hit-boxes** (`Damage.FindRecTarget`, all four numbers × `rangeMod`): stages 1, 2 and 4 start 1m behind Wolf with `BaseWidth 2, TopWidth 2, TargetRange 3, TargetHeight 2` (`:15178`, `:16009`, `:17746`), i.e. 4m wide reaching 2m ahead; stage 3 starts 1.5m behind with range 3.5 (`:16712`, also 2m ahead); stage 4's first swing has `TargetHeight 4` (`:17428`). `rangeMod` is raised by Lunar Eclipse (`+0.4×sLv`, `CharacterControl.cs:34248`).
+- **SP:** a swing that lands through `hit()` gives +1 SP once per swing (not per target), or the Feral Instinct amount instead (below).
+- **Weapon `w_wlf59`** (not modelled in the Bible): stages use a longer 8m box and scale damage by `FloorToInt(0.75×)` (stage 2: `CeilToInt(0.5×)`) (`:15159-15175`, `:15990-16001`).
+- **`onNormalAttackHit`** (`Wolf.cs:46424+`, started only on the `hit()` path) holds item on-hit procs (happy, charm, blind, bleed, heavy, plague, heals, 666 effect damage), not skill mechanics.
+
+### getCritPlus — equipment crit on every Combo swing (verified 2026-09-24)
+
+`Wolf.cs:14044-14188`. Adds up a crit chance `n` from the equipped weapon, armor and accessory, then `if (Random.Range(0,100) < lckAdjust(n)) return FloorToInt(1.8 × nDmg)`, else `nDmg` (junk predicates evaluated with a script):
+
+| Slot | Marshal ("supreme commander", Blue 43 / Red 44) | Champion (58) |
+|---|---|---|
+| Weapon | `w_wlf43` / `w_wlf44`: +5 | `w_wlf58`: +7 |
+| Armor | `a_all43` / `a_all44`: +4 | `a_all58`: +6 |
+| Accessory (hat) | `c_all43` / `c_all44`: +3 | `c_all58`: +5 |
+| **Full set** | **12 → `lckAdjust(12)`** | **18 → `lckAdjust(18)`** |
+
+The crit multiplies the truncated raw value before `hit()` (or before Dark Edge's Effect Damage). Item names: `WeaponData_eng.cs`, `ArmorData_eng.cs`, `AccessoryData_eng.cs`. The Bible's Combo card has G. Marshal Sword / G. Champion Sword toggles that assume the full set.
+
+### wlf_feralInstinct1-4 (skills #311-#314) — passive (verified 2026-09-24)
+
+- **Metadata:** reqLv/Bn 5/1, 11/3, 17/5, 23/7; MP 0, SP 0; passive.
+- **Level:** `getFeralInstinctLv()` = Feral Instinct rank + `getWildHeartLv()` (0/1), or 0 if Feral Instinct is not learned (`Wolf.cs:8800-8848`).
+- **Damage:** every Combo coefficient is `base × (1 + 0.1·F)` (`0.5+0.05F`, `0.4+0.04F`, `0.6+0.06F`), i.e. **+10% per level**: +10/20/30/40%, +50% with Wild Heart. The client tooltip says +10/15/20/25% and "+5%" for Wild Heart (`WolfSkill_eng.cs:572-615`, `:994`); the code value is what the Bible shows.
+- **SP:** after a swing lands through `hit()`, `if (Random.Range(0,100) < lckAdjust(4·F)) sp += F` and the normal `+1` is skipped (`:15311-15339`, junk jump to `Block_36 → IL_225`); otherwise `sp += 1`. So the base chance is 4/8/12/16% (20% with Wild Heart; tooltip says 5-20%) and a proc gives `F` SP in place of 1 (no gain at level 1). Dark Edge swings never roll it.
+
+### wlf_wildHeart5 (skill #413) — Class-C passive (verified 2026-09-24)
+
+- **Metadata:** reqLv 60, reqBn 1, requires `rSkill = 314` (Feral Instinct 4) (`WolfSkill.cs:1227-1228`); MP 0, SP 0; passive.
+- `getWildHeartLv() = hasSkill(413) ? 1 : 0` (`Wolf.cs:9127-9130`), used in two places:
+  - Feral Instinct level +1 (above).
+  - Provoke: contested duration base `6 + 3·sLv + 3·WH` (`Damage.getDebuff`, `Wolf.cs:27177`) and hate `talAdjust(60·sLv + 60·WH)` (`:27186`).
+
+### wlf_darkEdge1-4 (Dark Edge, skills #361-#364): normal attacks become Effect Damage (verified 2026-09-24)
+
+- **Metadata:** reqLv/Bn 24/15, 27/18, 30/21, 33/24; MP 12/19/26/33, SP 0; instant, self.
+- **Cast:** `RPC_AddStatus("darkEdge", sLv, chaAdjust(2·sLv), 0, ...)` on self (`Wolf.cs:30805`), cooldown `agiAdjust(120)` behind `getDoubleArt()` (`:30887-30893`). Rank only sets the duration: `getDarkEdgeLv()` (`:8984`) is read at every Combo stage but never used.
+- **Status `darkEdge`:** code 106 (`StatusData.cs:591`), `isBuffStatus` (`:6470`) and `isMagicalStatus` (`:5597`) → "Buff, Magical". Applying it removes `holySword` (`CharacterControl.cs:34159+`); applying `holySword` removes it (`:34268`); `holyWolf` (Holy Sword + Holy Armor) removes it (`:34402`). Perseverance lengthens it as a buff.
+- **Branch:** each normal-attack stage reads `getStatusLv("darkEdge")` (`Wolf.cs:15074`, `:15913`, `:16616`, `:17327`). With the status off (`<= 0`) the swing is an ordinary `mChar.hit(stage, target, hitDmg, 1, 0, ...)` (`:15218`, `:16049`, `:16752`, `:17468`, `:17786`). With it on, the same swing skips `hit()` and instead calls `tChar.RPC_AddEffectDamage(363, hitDmg + Random.Range(0, CeilToInt(0.2 × LCK)), 0, 0, ...)` (`:15267`, `:16098`, `:16801`; stage 4 uses code 364 at `:17517`, `:17835`), then plays `RPC_darkEdge_hit`. `hitDmg` is the same Combo value (Feral Instinct and `getCritPlus` included).
+- **Consequences of skipping `hit()`:** the swing cannot be dodged by the target's `drunken` evasion or the Water Monkey/Water Crane evasion (both live only inside `hit()`, `CharacterControl.cs:3076-3079`, `:3134-3167`), and it gets none of the target-side `hit()` checks. As Effect Damage it takes no `dmgAdjust`/`defAdjust`: only the attacker's LCK roll added here, then `hitMod` (rounded down) on the target (see the `RPC_AddEffectDamage` notes in the Mechanics Reference). KO is 0. The `hit()`-path follow-ups (`onNormalAttackHit`, `isHit`, the Feral Instinct SP roll) sit in the `<= 0` branch, so they don't run for Dark Edge swings.
+- **SP under Dark Edge:** +1 per target hit instead of +1 per swing; stage 4's first swing adds +1 twice per target (`:17522` and `:17547`).
 
 ## Class-C Passives
 
-Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Only Fortitude is written up so far; `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5` and `wildHeart5` still need their own entries.
+Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude is written up here and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, `lawBringer5` and `bloodFang5` still need their own entries.
 
 ### wlf_fortitude5 (421) — passive
 
