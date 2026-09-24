@@ -447,3 +447,64 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Formula:** `talAdjust(sLv * 50)` (no ATK term), KO `0` (`Rabbit.cs:29671`).
 * **Piercing beam, not a single-target shot:** `Physics.SphereCastAll(firePos, 1, fireDir, 36, hitLayer)` (`Rabbit.cs:29638`) collects every collider along a 36m, 1m-radius line, and the hit-processing `while` loop that follows never `break`s after a successful hit (`Rabbit.cs:29666-29726`) — it increments and keeps going. Every enemy pierced by the beam is hit, damaged, petrified, and grants the caster `+1 SP`, not just the first target struck.
 * **Status:** `"petrify"` applied per pierced target, duration `Damage.getDebuff(sLv*3+3, caster.cha, target.cha)` (`Rabbit.cs:29698`, `[6s, 9s]` base, CHA-contested). Apply-side effect (`CharacterControl.cs:37536-37568`): `deltaDef(-(sLv*20+20))` (DEF −40/−60), cleanses `paralysis`/`sleep`/`snowMan`/`blend`/`invisible`/`mindControl`, sets `actionState = "petrify"` and `moveSpeed = 0` (full stone lock, not merely slowed). Classification: `isDebuffStatus` and `isStateStatus` both true (`StatusData.cs:7454`, `:4932`); **not** in `isLockStatus`'s explicit name list (`groundLock`/`needlePrison`/`sticky`/`frost`/`lightBind` only, `StatusData.cs:6133-6178`) despite the hard movement/action lock — Debuff, State (matches the game's own classification, not the mechanical lock behavior).
+
+### 13. Immune Shot (`immuneShot1`) — active, ally target (verified 2026-09-24)
+* **Source:** `Rabbit.cs:6828-6916` (cast dispatch), `Rabbit.cs:28234-28292` (execution) inside `$RPC_medicalShot$27092`
+* **Metadata:** reqLv 20, reqBn 12; MP 10, SP 10 (blue threshold); `mode = target`, ally (`RabbitSkill.cs:475-502`).
+* **Target Restrictions:** Cannot target self (`num == mChar.ActorNr`, `:6848`), machines (`Race == eRace.Robots`, `:6874`), or structures (`Race == eRace.Structure`, `:6887`).
+* **Range & Cooldown:** Range `16 + 5 * getNormalAttackLv()` (21m base at Combo Lv.1, up to 36m at Combo Lv.4, `:28183`). Cooldown `agiAdjust(30)` (`:28570`). Instant cast.
+* **Instant Remedy Cleanse:** Cast immediately applies `[remedy]` Lv.1 for 1s on target (`tChar.RPC_AddStatus("remedy", 1, 1, 0, ...)`, `:28282`). `remedy` iterates all statuses on target and calls `reduceStatusLv(sType, 1)` on all non-State, non-System debuffs (`CharacterControl.cs:37397-37485`), reducing each by 1 level (all Lv.1 debuffs are fully cleansed).
+* **Status `immunity`:** Target receives `[immunity]` with level `mImmunityLv` and duration `chaAdjust(15 + mLv * 5)` where `mLv = 1 + getMedicalEnhancementLv()` (1–4) (`Rabbit.cs:28287`). Duration: 20s (base), 25s, 30s, 35s. Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5705`, `:6668`) — Buff, Magical.
+  * **Level Stacking:** Shooting a target with current `immunity` level `< mLv` increments status level by +1 (`mImmunityLv++`); capped at `mLv`.
+  * **Mechanics:** While active, `RPC_AddStatus` intercepts any incoming status where `this.getStatusLv("immunity") >= sLv` (`CharacterControl.cs:12671`), displays `-84` (Immune text), and aborts application.
+  * **Exemptions:** Does not block `death`, `remedy`, `immunity`, or system statuses (`isSystemStatus`). Does not block direct damage or heals (`RPC_AddHeal`).
+* **Multi-Rabbit Stacking Quirk:** In `RPC_AddStatus` (`CharacterControl.cs:14029-14160`), if another Rabbit (`sID != this.sID`) casts on a target already having Lv.4, `sLv` increments to **5**. However, once at Lv.5, subsequent shots with `sLv <= 4` hit line 14159 (`statusClass.sLv > sLv -> return;`), failing to refresh duration until the status expires.
+
+### 14. Boost Shot (`boostShot2`) — active, ally target (verified 2026-09-24)
+* **Source:** `Rabbit.cs:6917-7005` (cast dispatch), `Rabbit.cs:28293-28351` (execution) inside `$RPC_medicalShot$27092`
+* **Metadata:** reqLv 24, reqBn 15; MP 10, SP 10 (blue threshold); `mode = target`, ally (`RabbitSkill.cs:508-535`).
+* **Target Restrictions:** Cannot target self (`:6937`), machines (`:6963`), or structures (`:6976`).
+* **Range & Cooldown:** Range `16 + 5 * getNormalAttackLv()`. Cooldown `agiAdjust(30)` (`:28582`). Instant cast.
+* **Instant HP Heal:** Heals target immediately for `100 * mBoostLv` HP via `tChar.RPC_AddHeal(251, 100 * mBoostLv, 0, 0, 0, 0, ...)` (`Rabbit.cs:28346`).
+  * Lv.1: 100 HP
+  * Lv.2: 200 HP
+  * Lv.3: 300 HP
+  * Lv.4: 400 HP (500 HP if stacked to Lv.5 by a 2nd Rabbit)
+* **Status `boost`:** Applies `[boost]` with level `mBoostLv` and duration `chaAdjust(30 + mLv * 5)` (35s, 40s, 45s, 50s) (`Rabbit.cs:28341`). Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5729`, `:6716`) — Buff, Magical.
+  * **Effect:** Grants `+10 * sLv VIT` (`deltaVit(10 * sLv)`, `CharacterControl.cs:37495`; removed via `deltaVit(-10 * sLv)`, `:16823`).
+* **Level Stacking & Multi-Rabbit Stacking:** Identical to Immune Shot and Heat Shot: increases level by 1 on repeated casts up to `mLv` (Lv.4 with Medical Enhancement 3). A 2nd Rabbit escalates to Lv.5 (+50 VIT, 500 HP heal), after which duration cannot be refreshed until expiration.
+
+### 15. Heat Shot (`heatShot3`) — active, ally target (verified 2026-09-24)
+* **Source:** `Rabbit.cs:7006-7094` (cast dispatch), `Rabbit.cs:28352-28410` (execution) inside `$RPC_medicalShot$27092`
+* **Metadata:** reqLv 28, reqBn 18; MP 10, SP 10 (blue threshold); `mode = target`, ally (`RabbitSkill.cs:541-568`).
+* **Target Restrictions:** Cannot target self (`:7026`), machines (`:7052`), or structures (`:7065`).
+* **Range & Cooldown:** Range `16 + 5 * getNormalAttackLv()`. Cooldown `agiAdjust(30)` (`:28594`). Instant cast.
+* **Instant SP Restore:** Restores `10 * mHeatLv` SP to target immediately via `tChar.RPC_AddHeal(251, 0, 0, 10 * mHeatLv, 0, 0, ...)` (`Rabbit.cs:28405`).
+  * Lv.1: 10 SP
+  * Lv.2: 20 SP
+  * Lv.3: 30 SP
+  * Lv.4: 40 SP
+* **Status `heat`:** Applies `[heat]` with level `mHeatLv` and duration `chaAdjust(30 + mLv * 5)` (35s, 40s, 45s, 50s) (`Rabbit.cs:28400`). Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5735`, `:6722`) — Buff, Magical.
+  * **Effect:** Grants `+10 * sLv TAL` (`deltaTal(10 * sLv)`, `CharacterControl.cs:37506`; removed via `deltaTal(-10 * sLv)`, `:16834`).
+* **Level Stacking & Multi-Rabbit Stacking:** Level increases by +1 on consecutive shots up to `mLv` (max Lv.4). 2nd Rabbit escalates to Lv.5 (+50 TAL, 40 SP heal), after which duration cannot be refreshed until expiration.
+
+### 16. Life Shot (`lifeShot4`) — active, ally target (verified 2026-09-24)
+* **Source:** `Rabbit.cs:7095-7180` (cast dispatch), `Rabbit.cs:28411-28464` (execution) inside `$RPC_medicalShot$27092`
+* **Metadata:** reqLv 32, reqBn 21; MP 10, SP 10 (blue threshold); `mode = target`, ally (`RabbitSkill.cs:574-601`).
+* **Target Restrictions:** Cannot target self (`:7115`), machines (`:7141`), or structures (`:7154`).
+* **Range & Cooldown:** Range `16 + 5 * getNormalAttackLv()`. Cooldown `agiAdjust(30)` (`:28606`). Instant cast.
+* **Status `autoLife`:** Target receives `[autoLife]` with level `mAutoLifeLv` and duration `chaAdjust(60 + mLv * 5)` (65s, 70s, 75s, 80s) (`Rabbit.cs:28459`). Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5741`, `:6728`) — Buff, Magical.
+  * **Heal on Expiration / Trigger:** In `StatusUpdate()` (`CharacterControl.cs:10330-10363`), when `autoLife` expires (or triggers upon fatal damage/death), it executes `RPC_createEffect("autoLife")`, heals the target for `200 * sLv` HP via `RPC_AddHeal(264, 200 * statusClass.sLv, 0, 0, 0, 0, statusClass.sID)`, and removes the status.
+    - Lv.1: 200 HP (client tooltip mentions 100 HP upon death or double = 200 HP when status expires)
+    - Lv.2: 400 HP
+    - Lv.3: 600 HP
+    - Lv.4: 800 HP (1,000 HP if stacked to Lv.5 by a 2nd Rabbit)
+* **Level Stacking & Multi-Rabbit Stacking:** Increases level by 1 on consecutive shots up to `mLv` (max Lv.4). 2nd Rabbit escalates to Lv.5 (1,000 HP expiration heal), after which duration cannot be refreshed until expiration.
+
+### 17. Medical Enhancement (`medicalEnhancement1-3`) — passive (verified 2026-09-24)
+* **Source:** `RabbitSkill.cs:2728-2760`, `Rabbit.cs:10381-10420` (`getMedicalEnhancementLv()`)
+* **Metadata:** reqLv/Bn 24/15, 27/18, 30/21; MP 0, SP 0; passive (Skills #261, #262, #263).
+* **Effect:** Returns rank 1, 2, or 3 based on highest learned tier. Used exclusively by `mLv = 1 + getMedicalEnhancementLv()` in `RPC_medicalShot`:
+  * Increases maximum status level cap for Immune Shot, Boost Shot, Heat Shot, and Life Shot from Lv.1 to Lv.2, Lv.3, or Lv.4.
+  * Extends status duration by `+5s` per rank (`chaAdjust(base + mLv * 5)`).
+
