@@ -113,7 +113,11 @@ const exposeInjection = `
   window._selectSkill = selectSkill;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
-  window._cycleEnemyPreset = cycleEnemyPreset;
+  window._selectEnemyPreset = selectEnemyPreset;
+  window._enemyPresets = ENEMY_PRESETS;
+  window._undoEnemyChange = undoEnemyChange;
+  window._renderEnemyPicker = renderEnemyPicker;
+  window._enemyPickerHtml = () => enemyPickerEl.innerHTML;
   window._selectedEnemyId = () => selectedEnemyId;
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, lastPurple: () => lastRollPurple, hasMix: skillHasPurpleMix };
 `;
@@ -968,7 +972,8 @@ let checkedPanelMarkup = 0;
   ["enemy-cycle-display", "enemy-name-label", "enemy-info-btn"].forEach(role =>
     check(`enemy badge is missing data-role="${role}"`, enemyBadge.includes(`data-role="${role}"`)));
   check("enemy badge must be its own card: the enemy stat inputs must not be inside it", !enemyBadge.includes('data-role="enemyAtk"') && enemyStatsStart > enemyBadgeStart);
-  check("the enemy icon must be a button (click = next preset)", enemyBadge.includes('<button type="button" class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"'));
+  check("the enemy icon must be a button (click = opens the preset picker)", enemyBadge.includes('<button type="button" class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"'));
+  check("the enemy preset picker must live inside the enemy badge", enemyBadge.includes('data-role="enemy-picker"'));
   check("the enemy prev/next arrows must stay removed", count("enemy-prev") === 0 && count("enemy-next") === 0);
 }
 // 3k. Summon stat-feed glow (getSummonFeedPlayerStatKeys, 2026-09-19): a character stat glows in the player
@@ -1019,24 +1024,28 @@ let checkedSummonFeed = 0;
   }
   saved.forEach(([id, val]) => { if (val === undefined) delete sandbox._depRanks[id]; else sandbox._depRanks[id] = val; });
 }
-// 3l. Enemy icon click = next preset (cycleEnemyPreset(1)): it must visit every preset exactly once, forward,
-// and wrap back to the start. (The prev/next arrows are gone, so this is the only way to change the target.)
+// 3l. Enemy preset picker (2026-09-24): the icon opens a grid of every preset; choosing one applies its stats,
+// and Ctrl+Z (undoEnemyChange) restores the previous enemy, including hand-edited field values.
 let checkedEnemyCycle = 0;
 {
+  const presets = sandbox._enemyPresets || [];
+  const check = (label, ok) => { checkedEnemyCycle++; if (!ok) { console.error(`[ENEMY PICKER ERROR] ${label}`); errorCount++; } };
   const startId = sandbox._selectedEnemyId();
-  const visited = [startId];
-  let guard = 0;
-  do { sandbox._cycleEnemyPreset(1); visited.push(sandbox._selectedEnemyId()); } while (visited[visited.length - 1] !== startId && ++guard < 50);
-  const lap = visited.slice(0, -1);
-  const check = (label, ok) => { checkedEnemyCycle++; if (!ok) { console.error(`[ENEMY CYCLE ERROR] ${label}: visited ${visited.join(" > ")}`); errorCount++; } };
-  check("a lap must return to the starting preset", visited[visited.length - 1] === startId);
-  check("a lap must visit at least two presets", lap.length >= 2);
-  check("every preset must be visited exactly once per lap", new Set(lap).size === lap.length);
-  const afterLap = sandbox._selectedEnemyId();
-  sandbox._cycleEnemyPreset(1);
-  check("one more click after a lap moves on to the second preset again", sandbox._selectedEnemyId() === lap[1]);
-  for (let i = 1; i < lap.length; i++) sandbox._cycleEnemyPreset(1);   // finish that lap so the sandbox ends where it started
-  check("state restored after the test", sandbox._selectedEnemyId() === afterLap);
+  sandbox._renderEnemyPicker();
+  const pickerHtml = sandbox._enemyPickerHtml();
+  check("picker lists every preset once", presets.length >= 2 && presets.every(p => pickerHtml.split(`data-enemy-id="${p.id}"`).length === 2));
+  check("picker marks the current preset", pickerHtml.includes(`is-current" data-enemy-id="${startId}"`));
+  const other = presets.find(p => p.id !== startId);
+  sandbox._selectEnemyPreset(other.id);
+  check("choosing a preset selects it", sandbox._selectedEnemyId() === other.id);
+  check("choosing a preset writes its LCK into the enemy stats", String(sandbox._statInputs.enemyLck.value) === String(other.lck));
+  sandbox._statInputs.enemyLck.value = "777";
+  sandbox._selectEnemyPreset(startId);
+  check("undo restores the previous preset", sandbox._undoEnemyChange() && sandbox._selectedEnemyId() === other.id);
+  check("undo restores a hand-edited field value", String(sandbox._statInputs.enemyLck.value) === "777");
+  sandbox._undoEnemyChange();
+  check("second undo goes back to the start", sandbox._selectedEnemyId() === startId);
+  check("undo with an empty stack does nothing", sandbox._undoEnemyChange() === false);
 }
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
@@ -1281,7 +1290,7 @@ let checkedEffectProc = 0;
   Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
 }
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
-console.log(`Verified ${checkedEnemyCycle} enemy icon-cycle checks.`);
+console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
