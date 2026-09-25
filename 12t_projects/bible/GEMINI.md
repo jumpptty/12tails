@@ -330,6 +330,16 @@ Panda combat skills scale base attack damage using current SP via the Focused Ar
 * **Nine Steps Sequence Escalation:** When the Nine Steps toggle (`PANDA_NINESTEPS_DEP`) is off, the formula displays as a single uniform row. When toggled on, it expands into 3 distinct formula rows (`Step 1 (1x)`, `Step 2 (2x)`, `Step 3 (3x)`), scaling base ATK, TAL, and the Focused Art bonus across the sequence via `stepMult`.
 
 
+### CHA / AGI Optimizer tool (`cha-agi-optimizer`, added 2026-09-25)
+
+A hub tool (`mountChaAgiOptimizer`, tile "ตัวคำนวณ CHA / AGI") that finds the CHA/AGI needed for a buff to have **no downtime** (cooldown ≤ duration, so it can be recast before it ends).
+
+* **Skills:** fixed list `CAO_SKILL_IDS` (user-chosen: Wolf Dark Edge, Wolf Lunar Eclipse, Rabbit Rapid Trance, Chameleon Immunity). Cooldown/duration/rank/icon are read from each skill's own `SKILLS` card, so card fixes flow through; a skill can only be added if its cooldown is a plain `agiAdjust(cd)` and its duration a plain `chaAdjust(dur)` (verify at the cast site first). Wolf Perseverance applies to a card whose `dep` is `WOLF_PERSEVERANCE_DEP` (no hard-coded Wolf check).
+* **Math** (top-level, validator-callable): `caoDuration` = `floor(dur × (1 + 0.015 × clamp(CHA,1,512)))` then Perseverance `floor((1.1+0.2n)×d)`; `caoCooldown` = `cd × 128/(AGI+128)`, Revised Art `ceil(0.88×c)`; LCK fixed at 0 (worst case). `caoAnalyse` returns the cheapest CHA+AGI pair (brute force over CHA 0–512), the minimum AGI at the current CHA, the minimum CHA at the current AGI, and the next-point verdict.
+* **Next-point verdict:** the smooth rule is +1 CHA beats +1 AGI iff `CHA < AGI + 61.33` (from `(CHA+66.67)(AGI+128) ≥ K²`, identical for every skill), shown once as the rule line. The per-skill verdict uses the game's real rounding: if either stat alone reaches no-downtime within 50 points, the one needing fewer points wins; otherwise the average uptime gain per point over the next **50** points. A single next step is too lumpy (Dark Edge needs +9 CHA for its next +1s while Revised Art's `ceil()` moves AGI in 2-point steps), and 20 points still flipped against the rule once.
+* **Undo:** Ctrl+Z (outside a text field) restores the previous CHA/AGI/toggle/rank state (50 deep), only while the tool is visible (`root.hidden` guard). The Skill Details enemy-preset Ctrl+Z got the same guard.
+* **Validator:** `[CAO ERROR]`: every case against an independent brute force, known totals (Dark Edge 522 / 354, Lunar Eclipse 632 / 439), verdict vs the smooth rule away from the line, and the real mount (4 cards, toggle re-render, Ctrl+Z).
+
 ## 5. Summon Mechanics, Companion Movesets & Summon Stat Cards
 
 When working with summon skills (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, etc.):
