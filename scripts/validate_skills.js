@@ -1465,6 +1465,11 @@ let checkedCao = 0;
   const cardCount = (first.match(/class="cao-card"/g) || []).length;
   if (cardCount !== 4) caoFail(`rendered ${cardCount} cards, want 4`); else checkedCao++;
   ["Dark Edge", "Lunar Eclipse", "Rapid Trance", "Immunity"].forEach(n => { if (!first.includes(n)) caoFail(`card "${n}" missing`); else checkedCao++; });
+  // Custom skill card: defaults (cd 120, dur 12, no Perseverance, Revised Art on) must show the same brute-force result.
+  const want = sandbox.caoOptimal(120, 12, 0, true);
+  const cOut = reg.get('[data-role="customCha"]'), aOut = reg.get('[data-role="customAgi"]');
+  if (!cOut || String(cOut.textContent) !== String(want.cha) || String(aOut.textContent) !== String(want.agi))
+    caoFail(`custom card shows CHA ${cOut && cOut.textContent} AGI ${aOut && aOut.textContent}, want ${want.cha} / ${want.agi}`); else checkedCao++;
   if (!rootListeners.click) caoFail("no click handler"); else {
     rootListeners.click({ target: { closest: (sel) => sel === '[data-role="revArt"]' ? {} : null } });
     if (gridHtml() === first) caoFail("Revised Art toggle did not re-render"); else checkedCao++;
