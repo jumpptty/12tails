@@ -279,7 +279,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 - **Holy Arts & Divinity Damage**:
   - `holyLight`: Straight holy ray dealing `talAdjust(12 + 12×sLv)` with 1 KO knockback.
   - `overHeal`: Offensive opening strike targeting enemies at 100% full HP (`Sheep.cs:26334–26357`). Deals `talAdjust((int)((1f + 0.15f×benedictionLv) × (20 + 30×sLv)))` magic damage (`Sheep.cs:26334`) capped at `(20% + 10%×sLv) × target Max HP` (30% Max HP at R1, 40% at R2). Deals 0 damage if target is below max HP.
-  - `lightBind`: Single-target root (`moveSpeed = 0`) dealing `6×sLv` flat true effect damage every 1.0s (`CharacterControl.cs:9369`, purple penetrating damage). No burst finisher.
+  - `lightBind`: Single-target root (`moveSpeed = 0`) dealing `6×sLv` flat Effect Damage every 1.0s (`CharacterControl.cs:2485-2494`, `:9345-9373`). The user confirms that the status also prevents knockback in live play (2026-09-25); the precise force-handling path has not been isolated in the decompiled client. No burst finisher.
   - `divinitySword`: Holy summon slash dealing `talAdjust(10 + 20×sLv)`, 1 KO.
   - `divinitySpear`: Piercing line thrust dealing `3 × talAdjust(10 + 15×sLv)` (3 hits), 1 KO.
   - `divinityAxe`: Divine battleaxe strike dealing `5 × talAdjust(45)` (5 hits), 2 KO.
@@ -371,11 +371,16 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Cooldown: `Sheep.cs:21395` — `this.$mTimeOut$27749 = 60;` (agiAdjusted).
   - Damage: `Sheep.cs:29300` — `talAdjust(12 + 12*sLv)`, KO 1.
 - **`lightBind`**:
+  - Metadata: `shp_lightBind1-4`, skill IDs 301-304, target enemy, MP 10/14/18/22, SP 0, required Lv 3/11/19/27 and Bn 0/1/2/3 (`SheepSkill.cs:609-650`, `:2850-2892`; decoded with `scripts/decode_skilldata.py`).
   - Cast Time: `Sheep.cs:21407` — `this.$mCastTime$27748 = 1.5f + 0.5f * (float)this.$sLv$27762;` (magAdjusted).
   - Cooldown: `Sheep.cs:21412` — `this.$mTimeOut$27749 = 14 + 4 * this.$sLv$27762;` (agiAdjusted).
   - Duration: `Sheep.cs:28899` — `Damage.getDebuff(3f, casterCha, targetCha) + intenseBindLv` (3s base CHA-contested, +1s fixed uncontested from Intense Bind).
+  - Intense Bind (#403, `shp_intenseBind5`) also adds 1 to the status level passed to `RPC_AddStatus` (`Sheep.cs:28898-28902`); its own metadata requires Lv 55, Bn 0, and Light Bind 4 (#304) (`SheepSkill.cs:1235-1252`, `:3291-3300`).
+  - Status: `lightBind` is code 1106 (`StatusData.cs:1757-1763`), classified Debuff (`:7520`), Magical (`:5855`) and Lock (`:6166`, `:6220`); it is absent from the Buff, State, Physical and Shield predicates. The generic status tick only damages a living target and sends `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (`CharacterControl.cs:9345-9373`), so the damage follows the Effect Damage path in [12Tails-Mechanics-Reference.md §2.9](12Tails-Mechanics-Reference.md#29-damage-routing-hit-vs-direct-rpc_adddamage-vs-rpc_addeffectdamage-verified-2026-09-24).
   - Root: `CharacterControl.cs:2491` — `this.moveSpeed = 0f;`.
   - Damage: `CharacterControl.cs:9369` — `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (every 1.0s, deals 6×(sLv+depLv) true effect damage per tick, reaching 30 damage at Rank 4 + Intense Bind; no burst finisher).
+  - **Live observation (2026-09-25):** Light Bind grants knockback immunity. Keep this player-observed behavior in the app status description; the exact force suppression route is not established by the local `moveSpeed = 0` assignment alone.
+  - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). The shared Free Cast hook rolls `lckAdjust(12 × Free Cast rank)`; on success it refunds the skill's MP cost, or 125% of that cost when Return Cast (#431) is learned (`Sheep.cs:10046-10100`). These passive cards need their own `/sd` review before authoring their full descriptions.
 - **`illuminate`**:
   - Cast Time: `Sheep.cs:21424` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21429` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
