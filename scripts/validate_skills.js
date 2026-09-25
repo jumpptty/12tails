@@ -614,6 +614,20 @@ SKILLS.forEach(sk => {
     errorCount++;
   }
 });
+// Status descriptions can cite other statuses. darkEdge -> holyWolf ->
+// darkEdge is a real cycle: both mentions should be styled, with only the
+// first visit to each status expanding into a popup.
+{
+  checkedStatusKeywords++;
+  const html = sandbox.renderStatusKeywords("[darkEdge]");
+  const nested = /class="sk-status"[^>]*>\[holyWolf5\]<span class="sk-status-tip"/.test(html);
+  const popupCount = (html.match(/class="sk-status-tip"/g) || []).length;
+  const cycleLeaf = /class="sk-status">\[darkEdge\]<\/span>/.test(html);
+  if (!nested || popupCount < 2 || popupCount > 10 || !cycleLeaf) {
+    console.error(`[STATUS ERROR] Nested status rendering or cycle guard failed (nested=${nested}, popups=${popupCount}, cycleLeaf=${cycleLeaf}): ${html.slice(0, 300)}`);
+    errorCount++;
+  }
+}
 
 // 3e. lckDiffCoeff / lckDiffDep (Cat Lucky Card + Joker, Cat.cs:20845-20856):
 // raw damage = int(0.5*ATK + Random(0, coef*max(LCK - targetLCK, 0))), and Joker
