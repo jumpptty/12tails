@@ -1430,45 +1430,33 @@ let checkedCasino = 0;
 }
 console.log(`Verified ${checkedCasino} Grand Casino Arcade (LCK odds / range / simulator) checks.`);
 
-// CHA / AGI Optimizer tool (2026-09-25): caoAnalyse() against an independent brute force, then the real mount
-// (4 cards render, a toggle re-renders, Ctrl+Z restores).
+// CHA / AGI Optimizer tool (2026-09-25): caoOptimal() against an independent brute force, the AGI-threshold path,
+// then the real mount (4 cards render, a toggle re-renders, Ctrl+Z restores).
 let checkedCao = 0;
 {
   const caoFail = (msg) => { console.error(`[CAO ERROR] ${msg}`); errorCount++; };
   const bDur = (b, c, p) => { const d = Math.floor(b * (1 + 0.015 * Math.min(Math.max(c, 1), 512))); return p ? Math.floor((1.1 + 0.2 * p) * d) : d; };
   const bCd = (b, a, r) => { const c = b * 128 / (a + 128); return r ? Math.ceil(0.88 * c) : c; };
   const bMinAgi = (cdB, d, r) => { let a = 0; while (bCd(cdB, a, r) > d) a++; return a; };
-  for (const [cdB, dB] of [[120, 8], [300, 15], [120, 12], [120, 2]]) for (const p of [0, 1, 2]) for (const r of [false, true]) {
+  for (const [cdB, dB] of [[120, 8], [300, 15], [120, 12], [120, 2], [120, 6], [300, 12]]) for (const p of [0, 1, 2]) for (const r of [false, true]) {
+    const tag = `cd ${cdB} dur ${dB} persev ${p} revArt ${r}`;
     let best = Infinity;
     for (let c = 0; c <= 512; c++) best = Math.min(best, c + bMinAgi(cdB, bDur(dB, c, p), r));
-    const got = sandbox.caoAnalyse(cdB, dB, 0, 0, p, r).cheapest;
-    const tag = `cd ${cdB} dur ${dB} persev ${p} revArt ${r}`;
-    if (got.cha + got.agi !== best) caoFail(`${tag}: cheapest total ${got.cha + got.agi}, brute force ${best}`); else checkedCao++;
-    if (bCd(cdB, got.agi, r) > bDur(dB, got.cha, p)) caoFail(`${tag}: cheapest pair CHA ${got.cha} AGI ${got.agi} does not cycle`); else checkedCao++;
-    for (const [cha, agi] of [[0, 0], [100, 100], [250, 180], [512, 40]]) {
-      const a = sandbox.caoAnalyse(cdB, dB, cha, agi, p, r);
-      const d = bDur(dB, cha, p);
-      if (a.minAgi !== bMinAgi(cdB, d, r)) caoFail(`${tag} CHA ${cha}: minAgi ${a.minAgi}, brute ${bMinAgi(cdB, d, r)}`); else checkedCao++;
-      let mc = null; for (let c = 0; c <= 512; c++) if (bDur(dB, c, p) >= bCd(cdB, agi, r)) { mc = c; break; }
-      if (a.minCha !== mc) caoFail(`${tag} AGI ${agi}: minCha ${a.minCha}, brute ${mc}`); else checkedCao++;
-      if (a.cycles !== (bCd(cdB, agi, r) <= d)) caoFail(`${tag} CHA ${cha} AGI ${agi}: cycles flag wrong`); else checkedCao++;
-    }
+    const o = sandbox.caoOptimal(cdB, dB, p, r);
+    if (o.cha + o.agi !== best) caoFail(`${tag}: optimal total ${o.cha + o.agi}, brute force ${best}`); else checkedCao++;
+    if (bCd(cdB, o.agi, r) > bDur(dB, o.cha, p)) caoFail(`${tag}: optimal CHA ${o.cha} AGI ${o.agi} has downtime`); else checkedCao++;
+    if (o.gap !== o.cha - o.agi) caoFail(`${tag}: gap ${o.gap} != CHA - AGI`); else checkedCao++;
+    // The card's rule: one point at a time from 0/0, CHA while it leads AGI by less than gap, else AGI. That path
+    // visits one pair per total, so its first no-downtime pair must be the optimum (any earlier one would be cheaper).
+    let c = 0, g = 0;
+    while (bCd(cdB, g, r) > bDur(dB, c, p) && c + g <= best) { if (c - g < o.gap && c < 512) c++; else g++; }
+    if (c !== o.cha || g !== o.agi) caoFail(`${tag}: threshold path stops at CHA ${c} AGI ${g}, optimum CHA ${o.cha} AGI ${o.agi}`); else checkedCao++;
   }
   // Known values from the 2026-09-25 hand calculation (Dark Edge r4, Lunar Eclipse r2).
   [[120, 8, 0, false, 522], [120, 8, 2, true, 354], [300, 15, 0, false, 632], [300, 15, 2, true, 439]].forEach(([cdB, dB, p, r, want]) => {
-    const c = sandbox.caoAnalyse(cdB, dB, 0, 0, p, r).cheapest;
-    if (c.cha + c.agi !== want) caoFail(`known total cd ${cdB} dur ${dB} persev ${p} revArt ${r}: ${c.cha + c.agi}, want ${want}`); else checkedCao++;
+    const o = sandbox.caoOptimal(cdB, dB, p, r);
+    if (o.cha + o.agi !== want) caoFail(`known total cd ${cdB} dur ${dB} persev ${p} revArt ${r}: ${o.cha + o.agi}, want ${want}`); else checkedCao++;
   });
-
-  // Verdict must follow the smooth rule (CHA better iff CHA < AGI + 61.33) away from the line, where rounding can't flip it.
-  for (const [cdB, dB] of [[120, 8], [300, 15], [120, 12]]) for (const p of [0, 2]) for (const r of [false, true])
-    for (const [cha, agi] of [[100, 100], [20, 150], [60, 300], [300, 60], [250, 40], [400, 200]]) {
-      const n = sandbox.caoAnalyse(cdB, dB, cha, agi, p, r).next;
-      if (!n) continue;   // already cycles
-      const want = cha < agi + 61.33 ? "cha" : "agi";
-      if (Math.abs(cha - (agi + 61.33)) < 40) continue;
-      if (n.better !== want) caoFail(`verdict cd ${cdB} dur ${dB} persev ${p} revArt ${r} at CHA ${cha} AGI ${agi}: ${n.better}, rule says ${want}`); else checkedCao++;
-    }
 
   // Real mount with a recording stub root.
   const reg = new Map(), rootListeners = {}, docListeners = [];
