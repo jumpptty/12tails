@@ -240,6 +240,33 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 # Damage & Mechanics
 
+### wlf_powerBreak1-2 (221/223) — Power Break
+
+- **Metadata:** Instant enemy-target attack. Rank 1 requires Lv 7/Bn 2, rank 2 Lv 19/Bn 6; MP 0, consumed red SP 10/14 (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`; ID mapping `WolfSkill.cs:2511-2537`). The normal cooldown is `agiAdjust(30)` after `getDoubleArt()` (`Wolf.cs:22093-22099`), so a successful Double Art roll skips it.
+- **Area and hit:** One hit per target via `FindRecTarget` from `Wolf.position − rangeMod × forward`, half-width `1 × rangeMod`, forward range `(2 × sLv + 2) × rangeMod`, height `3 × rangeMod` (`Wolf.cs:21936`; parameter meanings `Damage.cs:1416`). At default `rangeMod = 1`, that is 2m full width, 3/5m in front, 3m high. The hit is `int(0.5 × ATK + talAdjust(15 × sLv))`, 0 KO, and `0.5 × forward` force (`Wolf.cs:21959`).
+- **Status:** Only a nonzero `hit()` result reaches `RPC_AddStatus("powerBreak", ...)` (`Wolf.cs:21959-22005`). Duration is `Damage.getDebuff(15, caster.CHA, target.CHA)`; there is no `chaAdjust` wrapper (`Wolf.cs:21995`). Level is `sLv + (hasSkill(422) ? 1 : 0)` (`Wolf.cs:22000`). Application snapshots `sValue = clamp(floor(0.1 × target.ATK), 0, 15)` (`Wolf.cs:22005`); the shared handler subtracts `statusLevel × sValue` ATK and removes `atkUp`, `valor`, `enrage`, `comboPlus`, `damagePlus` (`CharacterControl.cs:34000-34019`). Removal restores that saved stat delta (`CharacterControl.cs:15083-15092`). Status code 102 is a **Physical Debuff**, not State, Magical, Lock, Buff or Shield (`StatusData.cs:547-551,5343-5345,7292-7294`; classification functions `StatusData.cs:4809,5220,5582,6133,6241,6323,7175`).
+- **Client text:** EN/TH describe weapon damage and −10/20% ATK, capped at 15/30 (`WolfSkill_eng.cs:297-312`; `WolfSkill_thai.cs:330-345`). The exact calculation snapshots 10% of the target's ATK **once**, caps that snapshot at 15, then multiplies it by the applied status level; Third Rend can raise the rank-2 cap to 45.
+
+### wlf_armorBreak1-2 (222/224) — Armor Break
+
+- **Metadata:** Instant enemy-target attack. Rank 1 requires Lv 13/Bn 4, rank 2 Lv 25/Bn 8; MP 0, consumed red SP 10/14 (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`; ID mapping `WolfSkill.cs:2522-2548`). The normal cooldown is `agiAdjust(30)` after `getDoubleArt()` (`Wolf.cs:22830-22836`).
+- **Area and hit:** One hit per target via `FindRecTarget` from `Wolf.position − rangeMod × forward`, half-width `sLv × rangeMod`, forward range `(2 × sLv + 1) × rangeMod`, height `3 × rangeMod` (`Wolf.cs:22673`; `Damage.cs:1416`). At default `rangeMod = 1`, that is 2/4m full width, 2/4m in front, 3m high. The hit is `int(0.4 × ATK + talAdjust(20 × sLv))`, 0 KO, and `0.5 × forward` force (`Wolf.cs:22696`).
+- **Status:** Only a nonzero `hit()` result reaches `RPC_AddStatus("armorBreak", ...)` (`Wolf.cs:22696-22742`). Duration is `Damage.getDebuff(15, caster.CHA, target.CHA)`, without `chaAdjust` (`Wolf.cs:22732`). Level is `sLv + (hasSkill(422) ? 1 : 0)` (`Wolf.cs:22737`). Application snapshots `sValue = clamp(floor(0.1 × target.DEF), 0, 15)` (`Wolf.cs:22742`); the shared handler subtracts `statusLevel × sValue` DEF and removes `defUp`, `ironShield`, `diamondShield`, `perfectShield`, `bubbleShield`, `hardenSkin`, `salvation`, `iceShield`, `reverse`, `repel` (`CharacterControl.cs:34031-34068`). Removal restores the saved DEF delta (`CharacterControl.cs:15094-15103`). Status code 103 is a **Physical Debuff** only (`StatusData.cs:558-562,5349-5351,7298-7300`; classification functions above).
+- **Client text:** EN/TH describe armor damage and −10/20% DEF, capped at 15/30 (`WolfSkill_eng.cs:319-334`; `WolfSkill_thai.cs:352-367`). The same snapshot-then-level multiplication applies; Third Rend can raise the rank-2 cap to 45.
+
+### wlf_thirdRend5 (422) — Third Rend
+
+- **Metadata:** Single-rank active attack, Lv 70/Bn 3, MP 10 and consumed red SP 20, prerequisite Armor Break rank 2 (`rSkill = 224`; `WolfSkill.cs:1075-1106`, decoded skill data; `WolfSkill.cs:2544-2548`). The normal cooldown is `agiAdjust(30)` after `getDoubleArt()` (`Wolf.cs:32523-32529`).
+- **Active hit:** One hit per target in a forward rectangle with half-width `2 × rangeMod`, range `4 × rangeMod`, height `3 × rangeMod`, starting at Wolf's position (`Wolf.cs:32317`). At default `rangeMod = 1`: 4m wide, 4m in front, 3m high. Raw damage is:
+
+  ```csharp
+  int(0.5f * atk + talAdjust(40 + 10 *
+      (target.getStatusLv("powerBreak") + target.getStatusLv("armorBreak"))))
+  ```
+
+  (`Wolf.cs:32350-32361`). It passes 0 KO and `0.5 × forward` force. Each target's **current** two status levels are read independently when hit; the cast does not itself apply either status.
+- **Passive hook:** Owning skill 422 raises the level that **future** Power Break and Armor Break hits apply by one (`Wolf.cs:22000,22737`). It does not directly change their hit damage or retroactively raise existing target statuses. The Thai/English client tooltips describe both the passive status-level increase and the active hit bonus (`WolfSkill_thai.cs:979-983`; `WolfSkill_eng.cs:946-950`).
+
 ### wlf_crusader1-4 (211/212/213/214) — Crusader
 
 - **Metadata:** Instant enemy-target attack. Ranks 1-4 require Lv 5/Bn 1, Lv 11/Bn 3, Lv 17/Bn 5, and Lv 23/Bn 7; MP costs 6/8/10/12 and blue SP thresholds 10/12/14/16 (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`; `WolfSkill.cs:233-272`). Base cooldown is `agiAdjust(30)` when `getDoubleArt()` returns true (`Wolf.cs:21344-21350`); a successful Double Art roll skips the timeout (`Wolf.cs:8310-8349`).
