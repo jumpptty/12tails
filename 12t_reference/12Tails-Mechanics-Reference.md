@@ -111,6 +111,8 @@ nHate    = attacker.hateAdjust(nHate)
 target.RPC_AddDamage(actionCode, nDamage, nKo, nHate, nForce, attackerID)
 ```
 
+**`hit()` return value versus final HP loss:** After calling the target's `RPC_AddDamage`, `hit()` returns its local `nDamage` (`CharacterControl.cs:3566-3571,3672-3673`), which is the value after `defAdjust` and before the target's `hitMod`. `RPC_AddDamage` is `void` (`CharacterControl.cs:3680`) and applies `ceil(clamp(hitMod, 0, 3) × nDamage)` to its own local parameter (`CharacterControl.cs:3765`); that later `finalDmg` is not returned to the attacker. Skills that heal or scale another effect from the return of `hit()` therefore read **`netDmg`**, not final HP loss. This matters when the target's `hitMod` differs from 1.
+
 ### 2.1 The LCK spread
 Almost every adjuster adds a random roll driven by the actor's Luck:
 ```
