@@ -1375,6 +1375,25 @@ let checkedWolfCombo = 0;
 console.log(`Verified ${checkedWolfCombo} Wolf Combo (Feral Instinct / gear crit / Dark Edge) checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
+
+// Universal Hero Render check (every skill in SKILLS must render without runtime exceptions)
+let checkedHeroRenders = 0;
+for (const sk of SKILLS) {
+  try {
+    sandbox._selectSkill(sk);
+    const heroHtml = sandbox._getRenderedHeroHtml();
+    if (!heroHtml || heroHtml.length < 50) {
+      console.error(`[RENDER ERROR] ${sk.id}: hero HTML is empty or too short`);
+      errorCount++;
+    } else {
+      checkedHeroRenders++;
+    }
+  } catch (e) {
+    console.error(`[RENDER EXCEPTION] ${sk.id}: ${e.message}`);
+    errorCount++;
+  }
+}
+console.log(`Verified ${checkedHeroRenders} hero render checks (every skill selectable without runtime exceptions).`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);

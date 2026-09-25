@@ -238,6 +238,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ### cat_nAttack1-3 — Combo, normal-attack rank family
 - **Rank meaning:** the three learnable entries unlock the 2nd / 3rd / 4th combo stage; Combo rank 1 therefore performs stages 1–2, rank 2 adds stage 3, and rank 3 adds stage 4 (`CatSkill_eng.cs:33-64`, `Cat.cs:8022-8183`). The shared normal-attack timeout is a flat 1.5 seconds (`Cat.cs:16848`, `17091`, `17801`, `18740`).
 - **Raw strike sequence:** stage 1 = `floor(0.5×ATK)` (`Cat.cs:16502`); stage 2 = `floor(0.5×ATK)` (`:17300`); stage 3 has two hit passes, `floor(0.3×ATK)` then `floor(0.4×ATK)` (`:17978`, `:18239`); stage 4 has two, `floor(0.2×ATK)` then `floor(0.6×ATK)` (`:18949`, `:19208`). Each pass calls the normal `hit()` pipeline, so it independently consumes one Charge stack when present.
+- **KO value:** Every landed Combo hit deals a flat **1 KO** (`nKo = 1`, `Cat.cs:16694`, `17447`, `18135`, `18378`, `19111`, `19352`). Hidden Blade replacement hits also deal **1 KO** (`:16622`, `:17390`, `:18068`, `:18313`, `:19047`, `:19288`).
 - **Hidden Blade replacement:** `getHiddenBladeDmg()` is `talAdjust(10×hiddenBladeLv)` (`Cat.cs:10051-10055`). Its ordinary ranks are skills 331–334; Class-C **Jagged Knife** (skill 433) makes `getHiddenBladeLv()` return 5 (`Cat.cs:9996-10046`, `CatSkill.cs:3311`) and widens the facing check from <45° to <75°. On a non-structure target meeting that check, the corresponding normal pass calls action 331–334 with `raw + hiddenBladeDamage` and skips the ordinary normal hit (`Cat.cs:16618-16694`, `:17386-17447`, `:18064-18135`, `:19039-19111`). Thus it is a **replacement strike**, not an additional strike. Its actions are >=10, so No Chance does not affect it.
 - **Power / Charge / No Chance order:** Cat Power effects floor the raw hit first in `CharacterControl.hit()` (`CharacterControl.cs:2850-3014`); the `damagePlus` status then adds `10×status.sLv` and spends one `sValue` stack (`:3447-3474`); finally No Chance applies only to action codes <10 as `ceil(damageMod×nDamage + 0.3×LCK)`, otherwise ordinary `dmgAdjust` runs (`:3513-3546`). This means Charge is not multiplied by Power, and Hidden Blade uses ordinary random `dmgAdjust` even when No Chance is learned.
 
@@ -333,5 +334,69 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Client Tooltips:**
   - EN: *"Passively gives Cat a 6% change to revive when it dies."* / *"12% change"* (`CatSkill_eng.cs:510`, `:521` — source has typo "change" for "chance").
   - TH: *"ทักษะติดตัวที่ทำให้แมวมีโอกาส 6% ที่จะฟื้นคืนชีพ เมื่อตาย"* / *"12%"* (`CatSkill_thai.cs:532`, `:543`).
+
+### cat_grandCasinoArcade1-2 (235, 236) — active, RANK FAMILY
+- **Classification & Requirements:**
+  - Cat Skill Tree A (Gambler branch), commandNum 235 (Rank 1) and 236 (Rank 2) (`CatSkill.cs:2820-2831`).
+  - Target: `enemy`, mode: `instant`, cType: `grandCasinoArcade`.
+  - Rank 1 (`cat_grandCasinoArcade1`): Lv 35, Bn 23, MP 30, SP 55 (`SP: -55`) (`CatSkill.cs:586-602`).
+  - Rank 2 (`cat_grandCasinoArcade2`): Lv 40, Bn 25, MP 50, SP 75 (`SP: -75`) (`CatSkill.cs:603-610`).
+- **Cooldown:**
+  - 600 seconds (10 minutes) across both ranks (`Cat.cs:28612` — `this.$self_$21925.mChar.addTimeOut("grandCasinoArcade", this.$self_$21925.mChar.agiAdjust(600f));`).
+  - Scales with AGI (`agiAdjust(600)`). Not exempt from Revised Art.
+- **Channel / Invulnerability Window (`Cat.cs:28633-28636`):**
+  - Upon cast, Cat enters an arcade machine animation lockout and receives two simultaneous self-buffs:
+    - `addStatus("noDamage", 1, sLv * 5 + 7, 0, ActorNr)`: complete invulnerability to damage.
+    - `addStatus("noForce", 1, sLv * 5 + 7, 0, ActorNr)`: complete immunity to knockback/push forces.
+  - Duration: `sLv * 5 + 7` seconds (Rank 1: **12 seconds**; Rank 2: **17 seconds**).
+- **Spins & Hit Count (`Cat.cs:27956`, `:28303`, `:28507`, `:28596`):**
+  - Loop index `$i$21911` runs from `0` to `sLv * 2`:
+    - Rank 1 (`sLv = 1`): `i = 0, 1, 2` -> **3 spins / 3 hits** (`sLv * 2 + 1 = 3`).
+    - Rank 2 (`sLv = 2`): `i = 0, 1, 2, 3, 4` -> **5 spins / 5 hits** (`sLv * 2 + 1 = 5`).
+  - Delay between spins: ~2.7s (0.7s delay + 2.0s machine cycle).
+- **Slot RNG & Damage Breakdown (`Cat.cs:27993-28265`):**
+  - On each spin, independent RNG roll:
+    `mCasinoResult = UnityEngine.Random.Range(0, Mathf.Clamp(mChar.lck, 0, 255));`
+    Note: `Random.Range(int, int)` is upper-bound exclusive, so range is `0 .. Clamp(LCK, 0, 255) - 1`.
+  - Outcomes:
+    1. **Roll `< 5` ("Casino Doom!"):**
+       - Raw damage = `0`.
+       - Inflicts `[doom]` (+1 stack level, duration 60s) on **all allies and self** within `radius 24m, height 12m` (`Cat.cs:28009-28048` — `Damage.FindAreaTarget(position, 24, 12, 1 << Cat.gameObject.layer)`).
+       - Critical note: If Cat's LCK is `≤ 4`, every roll is strictly `< 5`, meaning 100% of spins will be Doom!
+    2. **Roll `5 .. 49` ("Casino 111"):**
+       - Raw damage = `111`.
+       - Inflicts `hit(271, target, 111, KO: 1, Hate: 0, Vector3.zero)` to all enemies within `radius 24m, height 12m` (non-structures).
+    3. **Roll `50 .. 89` ("Casino 222"):**
+       - Raw damage = `222`.
+       - Inflicts `hit(272, target, 222, KO: 1, Hate: 0, Vector3.zero)` to all enemies within 24m.
+    4. **Roll `90 .. 119` ("Casino 333"):**
+       - Raw damage = `333`.
+       - Inflicts `hit(273, target, 333, KO: 1, Hate: 0, Vector3.zero)` to all enemies within 24m.
+    5. **Roll `≥ 120` ("Casino 777" - Jackpot!):**
+       - Raw damage = `777`.
+       - Inflicts `hit(277, target, 777, KO: 1, Hate: 0, Vector3.zero)` to all enemies within 24m. Requires `LCK ≥ 121` to be rolled.
+- **Power Number Synergy (`CharacterControl.cs:2838-3010`):**
+  - Because Grand Casino Arcade is in Cat Skill Tree A (Gambler branch), the Power Number series passives (`Power One` `1.1×`, `Power Two` `1.2×`, `Power Three` `1.3×`, `Power Seven / Super Seven` `1.7×`) apply to every hit **on both BigBug (OG) and TTO private servers**!
+  - When Power Seven is active (`1.7×`):
+    - 111 -> 188
+    - 222 -> 377
+    - 333 -> 566
+    - 777 -> 1,320
+- **KO & Defense Pipeline:**
+  - Each hit inflicts `KO = 1`.
+  - Raw hit proceeds through standard `dmgAdjust → defAdjust → hitMod`.
+- **Client Tooltips:**
+  - EN: *"Summon a grand casino that randomly deals 111~777x3 damage to all nearby enemies."* / *"111~777x5"* (`CatSkill_eng.cs:528-545`).
+  - TH: *"เรียกคาสิโนขนาดยักษ์ขึ้นมา สุ่มทำความเสียหายเป้าหมาย ในระยะ (111~777 dmg x3)"* / *"(111~777 dmg x5)"* (`CatSkill_thai.cs:550-567`).
+
+---
+
+## Server Balance Variations
+
+### Twelve Tails Online (TTO)
+- **Power Number Series Restriction to Skill Tree A:**
+  - **Base BigBug Engine:** In `CharacterControl.cs:2838-3010`, the Power Number series (`cat_powerOne`, `cat_powerTwo`, `cat_powerThree`, `cat_powerSeven`, `cat_superSeven`) checks `if (this.Type == "Cat")` inside `CharacterControl.hit()`, applying raw damage multipliers (`floor(raw × 1.1 / 1.2 / 1.3 / 1.7)`) globally to **all Cat damage skills** (Combo, Charge Attack, Skill Tree A Gambler skills, and Skill Tree B Assassin skills).
+  - **TTO Server Balance Delta:** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
+
 
 
