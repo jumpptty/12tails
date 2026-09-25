@@ -118,7 +118,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   an enemy target, not a duration on the caster's own skill/buff, and the lookup tool's Duration column
   is scoped to the latter.** `grandCasinoArcade`: `Cat.cs:28048` —
   `this.$doomChar$21916.RPC_AddStatus("doom", this.$doomChar$21916.getStatusLv("doom") + 1, 60, 0,
-  this.$self_$21925.mChar.ActorNr);` (bare literal `60`, applied to enemies hit by the AoE). `moonBlade`:
+  this.$self_$21925.mChar.ActorNr);` (bare literal `60`, applied to the Cat's **own side**, itself and its allies, on a Doom spin; corrected 2026-09-25, it is not applied to enemies — see the `cat_grandCasinoArcade1-2` entry). `moonBlade`:
   `Cat.cs:35739` — `RPC_AddStatus("cut", sLv * 2, 1, 0, ActorNr)`. `moonStorm`: `Cat.cs:36475` — same
   shape. `deltaStrike`: `Cat.cs:37186` — `RPC_AddStatus("lock", 1, 3, 0, ActorNr)`. All four durations
   (`60`, `1`, `1`, `3`) are bare literals, confirmed NOT `chaAdjust`-wrapped, and not gated behind any
@@ -363,6 +363,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
     1. **Roll `< 5` ("Casino Doom!"):**
        - No damage: `hitDamage` stays 0, so the `hit()` loop is skipped entirely (`Cat.cs:28209`).
        - Every character on the Cat's **own layer** (itself and its allies) within `radius 24m, height 12m` gets `RPC_AddStatus("doom", target.getStatusLv("doom") + 1, 60, 0, ActorNr)`: one Doom level above what that target already has, for a flat 60 s (`Cat.cs:28009-28048`, `Damage.FindAreaTarget(position, 24, 12, 1 << Cat.gameObject.layer)`).
+       - The 60 s is not contested and not `chaAdjust`ed. The only change is on the receiving side inside `RPC_AddStatus`: a Wolf with Fortitude (#421) gets `⌈0.75 × 60⌉ = 45 s` (`CharacterControl.cs:13421-13434`). What Doom does on expiry is in [12Tails-Mechanics-Reference.md §4.1](12Tails-Mechanics-Reference.md#41-status-effect-catalog-statusdatagetstatuscode-statusdatacs): Casino Doom's owner is the Cat, so it only explodes if the Cat is alive when it runs out.
        - If Cat's LCK is **≤ 5**, every roll is `< 5` (`Random.Range(0, 5)` tops out at 4; `Range(0, 0)` returns 0), so 100% of spins are Doom.
     2. **Roll `5 .. 49` ("Casino 111"):**
        - Raw damage = `111`.
