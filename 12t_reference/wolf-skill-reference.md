@@ -74,7 +74,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `addTimeOut`/`RPC_<name>` cast handler of their own in `Wolf.cs`. `perseverance1`/`2` do have a real,
   verified gameplay effect despite the no-`cType` classification — see the dedicated note below on why
   it's a Duration modifier for this doc's other rows rather than a skill of its own.
-- **Class-C (Lv.5) passive-only skills have no row in this table** (no cooldown, duration or cast time to report), but they are *not* excluded from documentation — their mechanics belong in [wolf-skill-reference.md](wolf-skill-reference.md#class-c-passives) (`fortitude5` and `bloodFang5` are now written up): `continuousBlade5`, `skySlasher5`, `fortitude5`,
+- **Class-C (Lv.5) passive-only skills have no row in this table** (no cooldown, duration or cast time to report), but they are *not* excluded from documentation — their mechanics belong in [wolf-skill-reference.md](wolf-skill-reference.md#class-c-passives) (`fortitude5`, `lawBringer5`, and `bloodFang5` are now written up): `continuousBlade5`, `skySlasher5`, `fortitude5`,
   `sublimeArt5`, `superStatPlus5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5`, `wildHeart5`,
   `revisedSkill5`, `revisedMagic5`, `revisedArt5` — all `mode = eSkillMode.passive` directly in their
   own `getSkill()` body (`WolfSkill.cs:920`, `:943`, `:966`, `:989`, `:1012`, `:1040`, `:1063`, `:1200`,
@@ -239,6 +239,26 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 ---
 
 # Damage & Mechanics
+
+### wlf_crusader1-4 (211/212/213/214) — Crusader
+
+- **Metadata:** Instant enemy-target attack. Ranks 1-4 require Lv 5/Bn 1, Lv 11/Bn 3, Lv 17/Bn 5, and Lv 23/Bn 7; MP costs 6/8/10/12 and blue SP thresholds 10/12/14/16 (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`; `WolfSkill.cs:233-272`). Base cooldown is `agiAdjust(30)` when `getDoubleArt()` returns true (`Wolf.cs:21344-21350`); a successful Double Art roll skips the timeout (`Wolf.cs:8310-8349`).
+- **Area:** One hit per target in `Damage.FindRecTarget` with start position `Wolf.position − rangeMod × forward`, base/top half-width `2 × rangeMod`, forward `TargetRange = 4 × rangeMod`, and height `2 × rangeMod` (`Wolf.cs:21179`; argument meanings `Damage.cs:1416,1437-1464`). At default `rangeMod = 1` (`CharacterControl.cs:154`), the rectangle is 4m wide and 2m high, from 1m behind to 3m ahead of Wolf.
+- **Damage and heal:** The attack passes the following to `hit()` (`Wolf.cs:21207`):
+
+  ```csharp
+  hit(210 + sLv, target,
+      (int)(0.4f * atk + talAdjust(10 + 10 * sLv) + getLawBringerLv()),
+      0, 0, 0.5f * forward);
+  ```
+
+  KO is 0. `getLawBringerLv()` returns 0 without Law Bringer or Wolf's current `Lv` with skill 412 (`Wolf.cs:9120-9123`), so the passive adds a flat level term **after** `talAdjust` but before the outer truncation and shared hit pipeline. For every target the coroutine retains the highest nonzero `hit()` return (`Wolf.cs:21217-21243`; `CharacterControl.cs:3673`). If that maximum is positive, Wolf receives one self-heal of `ceil(0.25 × sLv × maxDamage)` HP: 25/50/75/100% by rank, rounded up (`Wolf.cs:21254-21262`). The heal does not sum damage across targets and does not occur when all hits return 0.
+- **Client text:** EN says +25/35/45/55 damage and HP restored by the same amount (`WolfSkill_eng.cs:253-295`); TH says holy cross attack, HP restoration, and those same flat damage numbers (`WolfSkill_thai.cs:286-328`). The source instead uses `talAdjust(20/30/40/50)` plus `0.4 × ATK` and an optional Wolf-level term, while healing scales by rank from the highest actual hit result.
+
+### wlf_lawBringer5 (412) — Law Bringer
+
+- **Metadata and prerequisite:** Passive, Lv 60/Bn 1, MP/SP 0, requires Crusader rank 4 (`rSkill = 214`; `WolfSkill.cs:1052-1068`, decoded skill data; skill ID mapping `WolfSkill.cs:3149-3153`).
+- **Only damage hook:** `getLawBringerLv()` returns Wolf's current level when `hasSkill(412)` (`Wolf.cs:9120-9123`), and Crusader adds it once to each target's raw hit (`Wolf.cs:21207`). It can also increase Crusader's self-heal indirectly by raising the strongest actual damage result. The passive switches Crusader's attack and hit effects (`Wolf.cs:8447-8495,21036-21085`). Both client tooltips describe a Crusader damage bonus equal to Wolf's level (`WolfSkill_eng.cs:935-939`; `WolfSkill_thai.cs:968-972`).
 
 ### wlf_bladeFang1-3 (301/302/303) — Blade Fang
 
@@ -523,7 +543,7 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
 
 ## Class-C Passives
 
-Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude and Blood Fang are written up here, and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, and `lawBringer5` still need their own entries.
+Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude, Law Bringer, and Blood Fang are written up here, and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, and `gloriousSpirit5` still need their own entries.
 
 ### wlf_fortitude5 (421) — passive
 
