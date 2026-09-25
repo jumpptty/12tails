@@ -392,6 +392,19 @@ Five skills share identical numeric skill IDs, mechanics, and effects across all
 
 These five skills are class-independent engine constants.
 
+**AGI that replaces Revised Art (verified 2026-09-25, LCK 0).** From `agiAdjust` (§2.4) the cooldown is `CD × 128 / (AGI + 128)`; Revised Art multiplies it by 0.88. Matching the Revised Art cooldown without it: `CD × 128 / (AGI' + 128) = 0.88 × CD × 128 / (AGI + 128)`, and `CD` cancels, so for **every** skill:
+
+```
+AGI' = (AGI + 128) / 0.88 − 128 = 1.136 × AGI + 17.5      extra AGI = 0.136 × (AGI + 128) ≈ (AGI + 128) / 7.3
+```
+
+| AGI with Revised Art | 0 | 50 | 100 | 150 | 200 | 300 | 400 |
+|---|---|---|---|---|---|---|---|
+| AGI without it | 17.5 | 74.3 | 131.1 | 187.9 | 244.7 | 358.4 | 472.0 |
+| Extra AGI | +17.5 | +24.3 | +31.1 | +37.9 | +44.7 | +58.4 | +72.0 |
+
+Revised Art is a flat 12% of the cooldown while each AGI point's cut shrinks as AGI rises, so the AGI it is worth grows with AGI. Rounding: with Revised Art the cooldown is `ceil(0.88 × cd)` (whole seconds, up) and without it it is unrounded, so the exact need can be up to one AGI lower (120s at AGI 0: `ceil(105.6) = 106s`, reached without Revised Art at AGI 17, not 17.5). Checked against exact rounding on Dark Edge / Lunar Eclipse / Rapid Trance / Immunity: the formula is within 0.5 AGI.
+
 ---
 
 ## 4. Hidden mechanics & special interactions
