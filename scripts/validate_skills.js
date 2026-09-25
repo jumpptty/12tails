@@ -1469,11 +1469,22 @@ let checkedCao = 0;
   // the literal "@@D@@{SKILL_ICONS.revisedArt}").
   const shell = String(caoRoot.innerHTML || "");
   if (/@@|\$\{/.test(shell) || !shell.includes(SKILL_ICONS.revisedArt)) caoFail("page template has an unreplaced placeholder or no Revised Art icon"); else checkedCao++;
-  // Custom skill card: defaults (cd 120, dur 12, no Perseverance, Revised Art on) must show the same brute-force result.
-  const want = sandbox.caoOptimal(120, 12, 0, true);
-  const cOut = reg.get('[data-role="customCha"]'), aOut = reg.get('[data-role="customAgi"]');
-  if (!cOut || String(cOut.textContent) !== String(want.cha) || String(aOut.textContent) !== String(want.agi))
-    caoFail(`custom card shows CHA ${cOut && cOut.textContent} AGI ${aOut && aOut.textContent}, want ${want.cha} / ${want.agi}`); else checkedCao++;
+  // Overrides (caoPair): no override = the optimum; a typed CHA gets the lowest AGI that still cycles, a typed AGI the
+  // lowest CHA (null when even CHA 512 is not enough). "Lowest" = the solved value cycles and one point less does not.
+  for (const [cdB, dB, p, r] of [[120, 8, 2, true], [300, 15, 0, false], [120, 12, 0, true], [120, 2, 0, false]]) {
+    const tag = `cd ${cdB} dur ${dB} persev ${p} revArt ${r}`;
+    const o = sandbox.caoOptimal(cdB, dB, p, r), n = sandbox.caoPair(cdB, dB, p, r, null);
+    if (n.cha !== o.cha || n.agi !== o.agi) caoFail(`${tag}: no-override pair ${n.cha}/${n.agi} != optimum ${o.cha}/${o.agi}`); else checkedCao++;
+    for (const cha of [0, 50, 150, 300, 512, 700]) {
+      const agi = sandbox.caoPair(cdB, dB, p, r, { stat: "cha", value: cha }).agi, d = bDur(dB, cha, p);
+      if (bCd(cdB, agi, r) > d || (agi > 0 && bCd(cdB, agi - 1, r) <= d)) caoFail(`${tag} CHA ${cha}: solved AGI ${agi} is not the lowest that cycles`); else checkedCao++;
+    }
+    for (const agi of [0, 60, 154, 400, 2000]) {
+      const cha = sandbox.caoPair(cdB, dB, p, r, { stat: "agi", value: agi }).cha, c = bCd(cdB, agi, r);
+      let want = null; for (let x = 0; x <= 512; x++) if (bDur(dB, x, p) >= c) { want = x; break; }
+      if (cha !== want) caoFail(`${tag} AGI ${agi}: solved CHA ${cha}, want ${want}`); else checkedCao++;
+    }
+  }
   if (!rootListeners.click) caoFail("no click handler"); else {
     rootListeners.click({ target: { closest: (sel) => sel === '[data-role="revArt"]' ? {} : null } });
     if (gridHtml() === first) caoFail("Revised Art toggle did not re-render"); else checkedCao++;
