@@ -516,6 +516,19 @@ Summons (Barrel Bot, King Kaiser, Auto Gyro Gun, Phoenix, Gadina, Shadow Clones)
    * Automated companion AI moves (`barrelBot_nAttack`, `punch`, `hammer`, `autoGyroGun_nAttack`) consume 0 MP/SP (`cost: None`).
    * Active command abilities where the player spends resources to command the summon (e.g. `Barrel Cannon` manual cast, 50 SP) consume player resources normally.
 
+### 4.4 Knockback force versus movement roots (`CharacterControl.cs`)
+
+Incoming direct damage can add a knockback vector to `myForce` (`CharacterControl.cs:6969`, `:31675`). Each update runs `ApplyForce()` (decay), then `ApplyMovement()` (status-specific changes), then `MovementUpdate()` (`:1060-1093`). The final movement call adds force **separately** from voluntary movement: `mChar.Move((vMovement * moveSpeed * clamp(moveMod, 0.1, 2) + verticalSpeed) * deltaTime + myForce)` (`:2722`). Therefore `moveSpeed = 0` alone does not remove an already-queued force vector in this client code.
+
+| Status | Per-update `ApplyMovement()` behavior | Source |
+|---|---|---|
+| `noForce` (status code 5) | `myForce = Vector3.zero`; does not set `moveSpeed` | `StatusData.cs:107-114`; `CharacterControl.cs:2266-2275` |
+| `needlePrison` (604) | `moveSpeed = 0` **and** `myForce = Vector3.zero` | `StatusData.cs:1163-1170`; `CharacterControl.cs:2358-2372` |
+| `groundLock` (906) | `moveSpeed = 0` **and** `myForce = Vector3.zero` | `StatusData.cs:1449-1456`; `CharacterControl.cs:2392-2406` |
+| `lightBind` (1106) | `moveSpeed = 0` only; its branch has no `myForce` assignment | `StatusData.cs:1757-1764`; `CharacterControl.cs:2485-2495` |
+
+`noForce` is a distinct status, not an automatic part of `StatusData.isLockStatus()`: that predicate names `groundLock`, `needlePrison`, `sticky`, `frost` and `lightBind` (`StatusData.cs:6133-6238`), while the `noForce` branch is separately keyed by its own `sType` in `ApplyMovement()`. Sheep Light Bind applies only `RPC_AddStatus("lightBind", ...)` (`Sheep.cs:28898-28902`); no `noForce` application appears in `Sheep.cs`. **Live-server discrepancy:** the user reports that Light Bind also prevents knockback in play (2026-09-25). That observation takes precedence for the player-facing tool; the decompiled client does not expose the additional force suppression, so its implementation path remains unverified. Needle Prison and Ground Lock need no `noForce` status to block force in the decompiled client.
+
 ---
 
 ## 5. Items & equipment
