@@ -360,6 +360,15 @@ if (sType == "lunarEclipse") { if (this.hasStatus("holyWolf")) { break; } }   //
   - Apply (`:34241`): `moveMod += 0.4·sLv`, `rangeMod += 0.4·sLv`, colour black. Removal (`:15143`) reverses both.
   - `rangeMod` multiplies the `FindRecTarget`/area sizes of: Combo stages 1-4, Charge Attack (`RPC_cAttack2`), Counter (`RPC_counter2`), Armor Break, Power Break, Art Cancel, Blade Fang, Blade Song, Brave Spirit, Crusader, Cross Break, Feral Strike, Sky Slasher, Third Rend (every `rangeMod` read in `Wolf.cs`, the rest being item/pet code).
 
+### wlf_weaponPlus1-4 (#231-#234) and wlf_armorPlus1-4 (#241-#244) — passive, equipment stat bonus (verified 2026-09-25)
+
+- **Where:** `CharacterDataClass.updateData()` (`CharacterDataClass.cs:272`), inside `if (this.Type == "Wolf")` (`:431`), right after every equipped item's `att[i]` is added to `statList` (`:384-423`). `updateData()` writes `statList` back with `setStatString(statList)` (`:982`), which is the `stat` string `getStat()` reads (`:1216-1256`) for the in-combat stats, so the bonus is a real stat gain. The IDs 231-234 / 241-244 are reused by other classes (e.g. Cat's Power One-Seven are 241-244), which is why the check sits behind the Wolf type test.
+- **Weapon Plus** (`:442-519`): `n` = highest rank learned (4/3/2/1). If `equipment[0]` (weapon) is not `"none"`, each of the 8 stats gets `+floor(0.1 × n × (itemData.att[i] + equipment[0].att[i]))`.
+- **Armor Plus** (`:536-613`): the same, reading **only `equipment[1]` (armor)**: `+floor(0.1 × n × (itemData.att[i] + equipment[1].att[i]))`, i.e. +10/20/30/40% of the armor's stats.
+- **Accessory, boots, trinket and pet get nothing** from either passive: no other slot index is read here, and no other `hasSkill(231-234)`/`hasSkill(241-244)` in the source is Wolf-gated (the rest are other classes' skills sharing those IDs). Slot indices: `[0]` weapon, `[1]` armor, `[2]` accessory, `[3]` boot, `[4]` trinket, `[5]` pet ([12Tails-Mechanics-Reference.md §5.2](12Tails-Mechanics-Reference.md#52-equipment-slots-6--charactercontrolcs14821497)).
+- **What counts:** the 8 base stats only (`att[0..7]`), from both the item's own stats (`ItemData.getItemData(name).att`) and that equipped copy's extra `att` (`equipment[1].att`). The item's flat `hp`/`mp`/`sp`/`ko` bonuses are not scaled. Each stat is floored separately, e.g. armor DEF +7 at rank 4 → `floor(0.4 × 7) = 2`.
+- **Tooltip:** EN "Passively increases all basic stats of any equiped armor by 10/20/30/40%." (`WolfSkill_eng.cs:385-428`), which matches the code.
+
 ## Class-C Passives
 
 Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude is written up here and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, `lawBringer5` and `bloodFang5` still need their own entries.
