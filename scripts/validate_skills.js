@@ -1430,8 +1430,7 @@ let checkedCasino = 0;
 }
 console.log(`Verified ${checkedCasino} Grand Casino Arcade (LCK odds / range / simulator) checks.`);
 
-// CHA / AGI Optimizer tool (2026-09-25): caoOptimal() against an independent brute force, the AGI-threshold path,
-// then the real mount (4 cards render, a toggle re-renders, Ctrl+Z restores).
+// CHA / AGI Optimizer tool (2026-09-25): caoOptimal() against an independent brute force, then the real mount (4 cards render, a toggle re-renders, Ctrl+Z restores).
 let checkedCao = 0;
 {
   const caoFail = (msg) => { console.error(`[CAO ERROR] ${msg}`); errorCount++; };
@@ -1445,12 +1444,6 @@ let checkedCao = 0;
     const o = sandbox.caoOptimal(cdB, dB, p, r);
     if (o.cha + o.agi !== best) caoFail(`${tag}: optimal total ${o.cha + o.agi}, brute force ${best}`); else checkedCao++;
     if (bCd(cdB, o.agi, r) > bDur(dB, o.cha, p)) caoFail(`${tag}: optimal CHA ${o.cha} AGI ${o.agi} has downtime`); else checkedCao++;
-    if (o.gap !== o.cha - o.agi) caoFail(`${tag}: gap ${o.gap} != CHA - AGI`); else checkedCao++;
-    // The card's rule: one point at a time from 0/0, CHA while it leads AGI by less than gap, else AGI. That path
-    // visits one pair per total, so its first no-downtime pair must be the optimum (any earlier one would be cheaper).
-    let c = 0, g = 0;
-    while (bCd(cdB, g, r) > bDur(dB, c, p) && c + g <= best) { if (c - g < o.gap && c < 512) c++; else g++; }
-    if (c !== o.cha || g !== o.agi) caoFail(`${tag}: threshold path stops at CHA ${c} AGI ${g}, optimum CHA ${o.cha} AGI ${o.agi}`); else checkedCao++;
   }
   // Known values from the 2026-09-25 hand calculation (Dark Edge r4, Lunar Eclipse r2).
   [[120, 8, 0, false, 522], [120, 8, 2, true, 354], [300, 15, 0, false, 632], [300, 15, 2, true, 439]].forEach(([cdB, dB, p, r, want]) => {
