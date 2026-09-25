@@ -321,16 +321,57 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
 - **SP under Dark Edge:** +1 per target hit instead of +1 per swing; stage 4's first swing adds +1 twice per target (`:17522` and `:17547`).
 - **Blocked under `holyWolf`:** `RPC_AddStatus` refuses `darkEdge` while the receiver has `holyWolf` (see Holy Wolf block below).
 
-### Holy Wolf block on Dark Edge and Lunar Eclipse (verified 2026-09-24)
+### Holy Wolf (`holyWolf5`, status #110) — Fusion Status (Holy Sword + Holy Armor) (verified 2026-09-25)
 
-`holyWolf` is what Holy Sword and Holy Armor become when both are active (`CharacterControl.cs:11925-11961`: applying one while the other is on renames `sType` to `"holyWolf"`). Inside `RPC_AddStatus` (whole body wrapped in one `for (;;)`, `:10689-14339`), the checks at `:10995-11022` run on the non-immune path:
+- **Fusion Trigger (`CharacterControl.cs:11925-11971`):**
+  - Applied when Holy Sword is used while Holy Armor is already active, OR when Holy Armor is used while Holy Sword is already active:
+    ```csharp
+    if (sType == "holySword")
+    {
+        if (this.hasStatus("holyArmor"))
+        {
+            sType = "holyWolf";
+            sValue = (int)((float)(sValue * 1000) + this.getStatusValue("holyArmor"));
+        }
+    }
+    if (sType == "holyArmor")
+    {
+        if (this.hasStatus("holySword"))
+        {
+            sType = "holyWolf";
+            sValue = (int)(this.getStatusValue("holySword") * (float)1000 + (float)sValue);
+        }
+    }
+    ```
+- **Level & Metadata:**
+  - Status Level: always **`sLv = 5`** (both Holy Sword and Holy Armor are cast at `sLv = 5`, `Wolf.cs:32969, 33484`). Displayed in-game as **`holyWolf5`** (`[holyWolf5]`).
+  - Code 110 (`StatusData.cs:635`), `isBuffStatus` (`:6494`) and `isStateStatus` (`:4830`) → **"Buff, State"**.
+- **Stat & Regeneration Effects (`CharacterControl.cs:34424-34427`, `:8787-8800`):**
+  - **Combined ATK & DEF:** Grants `deltaAtk(Mathf.FloorToInt(sValue / 1000))` (Holy Sword bonus) and `deltaDef(Mathf.FloorToInt(sValue % 1000))` (Holy Armor bonus) simultaneously. Reversed on expiry (`:15238-15241`).
+  - **Periodic Regeneration:** Every 8 seconds (`Math.mod(2f * (sTime - kNtcObrGvdk), 16f) == 0f`):
+    ```csharp
+    this.RPC_AddHeal(1,
+        Mathf.FloorToInt(0.1f * (float)this.hp),
+        Mathf.FloorToInt(0.1f * (float)this.mp),
+        Mathf.FloorToInt(0.1f * (float)this.sp),
+        0, 0, sID);
+    ```
+    Heals **+10% HP**, **+10% MP**, and **+10% SP** every 8 seconds.
+- **Visuals & Model Changes (`CharacterControl.cs:34430-34616`, `:15244-15290`):**
+  - Dual swords: `holyWolfSword1Fx` on `mount_Hand_L` and `holyWolfSword2Fx` on `mount_Hand_R`.
+  - Armor: `holyWolfArmorFx` on `Spine1`.
+  - Aura: `holyWolfFx` on Wolf root object.
+  - Glowing body: swaps all mesh renderers to `Self-Illumin/Diffuse` material.
+- **Exclusions & Status Blocks (`CharacterControl.cs:34406-34421`, `:11001-11053`):**
+  - Upon fusion, immediately cleanses: `darkEdge`, `lunarEclipse`, `blend`, `invisible`, `holySword`, and `holyArmor`.
+  - While under `holyWolf`, `RPC_AddStatus` unconditionally rejects receiving: `darkEdge`, `lunarEclipse`, `holySword`, and `holyArmor`:
+    ```csharp
+    if (sType == "darkEdge")     { if (this.hasStatus("holyWolf")) { break; } }   // :10995-11007
+    if (sType == "lunarEclipse") { if (this.hasStatus("holyWolf")) { break; } }   // :11010-11022
+    if (sType == "holySword")    { if (this.hasStatus("holyWolf")) { break; } }   // :11025-11037
+    if (sType == "holyArmor")    { if (this.hasStatus("holyWolf")) { break; } }   // :11040-11052
+    ```
 
-```csharp
-if (sType == "darkEdge")     { if (this.hasStatus("holyWolf")) { break; } }   // :10995-11007
-if (sType == "lunarEclipse") { if (this.hasStatus("holyWolf")) { break; } }   // :11010-11022
-```
-
-(junk predicates `152596-534936 != -382340`, `8087-142204 != -134117`, `225150-566345 == -341194`, `261711-59576 != 202135` all false, so both reach the `break`). The `break` leaves the outer loop, which ends the method: the status is never added. So Dark Edge and Lunar Eclipse do nothing while Holy Sword + Holy Armor are both active, and gaining `holyWolf` removes both (`:34402-34409`).
 
 ### wlf_provoke1-2 (skills #321/#322) — active, single target (verified 2026-09-24)
 
@@ -368,6 +409,102 @@ if (sType == "lunarEclipse") { if (this.hasStatus("holyWolf")) { break; } }   //
 - **Accessory, boots, trinket and pet get nothing** from either passive: no other slot index is read here, and no other `hasSkill(231-234)`/`hasSkill(241-244)` in the source is Wolf-gated (the rest are other classes' skills sharing those IDs). Slot indices: `[0]` weapon, `[1]` armor, `[2]` accessory, `[3]` boot, `[4]` trinket, `[5]` pet ([12Tails-Mechanics-Reference.md §5.2](12Tails-Mechanics-Reference.md#52-equipment-slots-6--charactercontrolcs14821497)).
 - **What counts:** the 8 base stats only (`att[0..7]`), from both the item's own stats (`ItemData.getItemData(name).att`) and that equipped copy's extra `att` (`equipment[1].att`). The item's flat `hp`/`mp`/`sp`/`ko` bonuses are not scaled. Each stat is floored separately, e.g. armor DEF +7 at rank 4 → `floor(0.4 × 7) = 2`.
 - **Tooltip:** EN "Passively increases all basic stats of any equiped armor by 10/20/30/40%." (`WolfSkill_eng.cs:385-428`), which matches the code.
+
+### wlf_perseverance1-2 (#121/#122) — passive, rank family (verified 2026-09-25)
+
+- **Metadata:**
+  - Rank 1 (`wlf_perseverance1`, commandNum 121): reqLv 6, reqBn 2, MP 0, SP 0, mode passive, no cType (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`, `WolfSkill.cs:94-105`, `:2313-2323`).
+  - Rank 2 (`wlf_perseverance2`, commandNum 122): reqLv 12, reqBn 4, MP 0, SP 0, mode passive, no cType (`WolfSkill.cs:106-112`, `:2324-2334`).
+- **Hook & Mechanics (`CharacterControl.cs:13379-13420`):**
+  - Perseverance is not handled in `Wolf.cs` (no cast coroutine or timeout); it is implemented directly inside `CharacterControl.RPC_AddStatus(string sType, int sLv, int sTime, int sValue, int sID)`:
+    ```csharp
+    if (this.Type == "Wolf")
+    {
+        if (this.hasSkill(121))
+        {
+            int num = 1;
+            if (this.hasSkill(122))
+            {
+                num = 2;
+            }
+            if (StatusData.isBuffStatus(sType))
+            {
+                sTime = Mathf.FloorToInt((1.1f + 0.2f * (float)num) * (float)sTime);
+            }
+        }
+        if (this.hasSkill(421))
+        {
+            if (StatusData.isDebuffStatus(sType))
+            {
+                sTime = Mathf.CeilToInt(0.75f * (float)sTime);
+            }
+        }
+    }
+    ```
+  - **Receiver-side trigger:** `this` is the character receiving the status. When a Wolf possessing Perseverance receives any status where `StatusData.isBuffStatus(sType) == true` (`StatusData.cs:6323-7171`), its incoming duration `sTime` is multiplied:
+    - Rank 1 (`num = 1`): `Mathf.FloorToInt(1.3f * sTime)` (+30% duration).
+    - Rank 2 (`num = 2`): `Mathf.FloorToInt(1.5f * sTime)` (+50% duration).
+  - **Post-CHA multiplication:** The multiplier runs after caller-side duration adjustments (such as `chaAdjust`) have already executed, and truncates via `Mathf.FloorToInt` (floor, not ceil).
+  - **Universal Buff Scope:** Applies to all incoming buff statuses on the Wolf, whether cast by the Wolf itself (e.g. Brave Spirit `valor`, Dark Edge `darkEdge`, Lunar Eclipse `lunarEclipse`, Holy Sword `holySword`, Holy Armor `holyArmor`) or applied by allies (e.g. Sheep's shields/buffs, Penguin's buffs, Cat's `fortune`).
+  - **Numeric ID note:** Skill IDs 121 and 122 are reused by other classes (Sheep's hate passive at `CharacterControl.cs:3839`, Penguin's skill at `:23075`); only the `this.Type == "Wolf"` block governs Perseverance.
+- **Client Tooltips:**
+  - EN: *"Passively extends the duration of all possitive status on Wolf by 30%."* / *"50%."* (`WolfSkill_eng.cs:99-120`).
+  - TH: *"เพิ่มระยะเวลาของสถานะทางบวกขึ้น 30%"* / *"50%"* (`WolfSkill_thai.cs:99-120`).
+- **App Modeling (`12t_projects/bible/index.html`):**
+  - Card: `wolf_perseverance` (`passive: true`, `compatSkills: ["wolf_braveSpirit", "wolf_darkEdge", "wolf_lunarEclipse", "wolf_holySword", "wolf_holyArmor"]`).
+  - Dependency toggle: `WOLF_PERSEVERANCE_DEP` (`kind: "postMultiply"`, `multipliers: [1, 1.3, 1.5]`) embedded on the five Wolf self-buff cards.
+
+### wlf_feralStrike1-4 (#341-#344) — active, rank family (verified 2026-09-25)
+
+- **Metadata:**
+  - Ranks 1–4: reqLv 16 / 20 / 24 / 28, reqBn 4 / 8 / 12 / 16 (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`, `WolfSkill.cs:645-680`, `:2550-2580`).
+  - MP: **0** across all ranks.
+  - SP: **+15 / +18 / +21 / +24** (Blue SP: required gate to cast, **not consumed**, [12Tails-Mechanics-Reference.md §Red/Blue SP](12Tails-Mechanics-Reference.md#redblue-sp-gauge-system-charactercontrolcs2829-2834-gameguics37609)).
+  - Target: `enemy`, mode: `instant`, cType: `feralStrike`.
+- **Cooldown & Cast Time:**
+  - Cooldown: `addTimeOut("feralStrike", agiAdjust(30f))` (30 seconds, scaled by AGI; subject to `getDoubleArt()` free-recast proc, `Wolf.cs:29452`). Revised Art applies.
+  - Cast Time: **0s** (instant animation, no `magAdjust` wait).
+- **Movement & Collision Pass-Through (`Wolf.cs:29081-29270`):**
+  - Upon cast, Wolf accelerates forward at `moveSpeed = 16` during animation state 2 (~0.4s duration, dashing ~6.4m forward).
+  - Applies `Physics.IgnoreCollision` against targets in a 2m wide × 10m forward box (`:29172`), allowing Wolf to pass straight through enemies without getting blocked.
+  - Re-enables collision in state 3 (`:29258`) with `moveSpeed = 5`, then stops in state 4 (`moveSpeed = 0`, `:29366`).
+- **Cleanse Lock Statuses (`Wolf.cs:29479`, `CharacterControl.cs:19456-19524`):**
+  - On cast start, calls `mChar.removeLockStatus(sLv)`.
+  - Removes all 5 lock statuses in the engine (`StatusData.isLockStatus`) whose status level is `<= sLv` (Rank 1–4 cleanses Lock Lv 1–4):
+    - `groundLock` (Ground Lock)
+    - `needlePrison` (Needle Prison)
+    - `sticky` (Sticky)
+    - `frost` (Frost)
+    - `lightBind` (Light Bind)
+- **Hitbox Geometry (`Damage.FindRecTarget`, `Wolf.cs:29288`):**
+  - Origin: `position - 6 * rangeMod * forward` (starts 6m behind Wolf's destination, sweeping the entire dash path).
+  - Dimensions: `BaseWidth 2 * rangeMod`, `TopWidth 2 * rangeMod` (Full width = `2 × BaseWidth = 4m`), `TargetRange 8 * rangeMod` (length 8m), `TargetHeight 3 * rangeMod` (height 3m).
+  - All dimensions scale dynamically with `rangeMod` (e.g. raised by Lunar Eclipse).
+- **Damage Formula & Pipeline (`Wolf.cs:29311`):**
+  - Hit call:
+    ```csharp
+    mChar.hit(340 + sLv, hitObject,
+        (int)(0.5f * mChar.atk + mChar.talAdjust(15 * sLv)),
+        0, 0, 0.5f * forward);
+    ```
+  - **Raw damage:** `floor(0.5 × ATK + talAdjust(15 × sLv))`.
+    - Rank 1: `floor(0.5 × ATK + talAdjust(15))`
+    - Rank 2: `floor(0.5 × ATK + talAdjust(30))`
+    - Rank 3: `floor(0.5 × ATK + talAdjust(45))`
+    - Rank 4: `floor(0.5 × ATK + talAdjust(60))`
+  - **KO:** `0` (deals no KO damage).
+  - **Push force:** `0.5 × forward`.
+  - **Pipeline:** Continues through normal `dmgAdjust → defAdjust → hitMod`.
+  - **Resource gain:** Grants `+1 SP` per target hit (`Wolf.cs:29337`).
+- **Synergies:**
+  - **Final Eclipse (`wlf_finalEclipse1`, #373):** When Wolf is under `lunarEclipse` and performs a dodge dash, it automatically casts `RPC_feralStrike` at `sLv = statusLv * 2` (Rank 2 or Rank 4 Feral Strike, `Wolf.cs:7937`).
+  - **Lunar Eclipse (`wlf_lunarEclipse`):** `rangeMod += 0.4 × sLv` widens and lengthens the dash hit box by 40% (Rank 1) or 80% (Rank 2).
+- **Client Tooltips:**
+  - EN: *"Quickly plunge forward and pierce through targets in a straight line, dealing extra 15/30/45/60 damage."* (`WolfSkill_eng.cs:704-747`).
+  - TH: *"พุ่งทะลุฉีกผ่านเป้าหมายเพื่อทำความเสียหายเป็นแนวตรง และสลัดตัวเองจากการถูกขังที่ต่ำกว่าระดับ 2/3/4/5 (15/30/45/60 dmg)"* (`WolfSkill_thai.cs:737-775`).
+  - Code differences: Tooltips omit the `0.5 × ATK` base, state the TAL bonus as a flat number rather than `talAdjust`, and omit the 0 KO, the pass-through collision mechanics, and the +1 SP per target hit.
+- **App Modeling (`12t_projects/bible/index.html`):**
+  - Card: `wolf_feralStrike` (`maxRank: 4`, `cost: { mp: 0, sp: [15, 18, 21, 24], spType: "blue" }`, `cd: 30`, `cdWrapped: true`, `atkCoeff: 0.5`, `dmg: "talAdjust(15×sLv)"`, `ko: "0"`, `compatSkills: ["wolf_finalEclipse", "wolf_lunarEclipse"]`).
 
 ## Class-C Passives
 
