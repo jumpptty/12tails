@@ -74,7 +74,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `addTimeOut`/`RPC_<name>` cast handler of their own in `Wolf.cs`. `perseverance1`/`2` do have a real,
   verified gameplay effect despite the no-`cType` classification — see the dedicated note below on why
   it's a Duration modifier for this doc's other rows rather than a skill of its own.
-- **Class-C (Lv.5) passive-only skills have no row in this table** (no cooldown, duration or cast time to report), but they are *not* excluded from documentation — their mechanics belong in [wolf-skill-reference.md](wolf-skill-reference.md#class-c-passives) (only `fortitude5` is written up so far): `continuousBlade5`, `skySlasher5`, `fortitude5`,
+- **Class-C (Lv.5) passive-only skills have no row in this table** (no cooldown, duration or cast time to report), but they are *not* excluded from documentation — their mechanics belong in [wolf-skill-reference.md](wolf-skill-reference.md#class-c-passives) (`fortitude5` and `bloodFang5` are now written up): `continuousBlade5`, `skySlasher5`, `fortitude5`,
   `sublimeArt5`, `superStatPlus5`, `gloriousSpirit5`, `lawBringer5`, `bloodFang5`, `wildHeart5`,
   `revisedSkill5`, `revisedMagic5`, `revisedArt5` — all `mode = eSkillMode.passive` directly in their
   own `getSkill()` body (`WolfSkill.cs:920`, `:943`, `:966`, `:989`, `:1012`, `:1040`, `:1063`, `:1200`,
@@ -239,6 +239,21 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 ---
 
 # Damage & Mechanics
+
+### wlf_bladeFang1-3 (301/302/303) — Blade Fang
+
+- **Metadata:** Instant enemy-target attack, rank requirements Lv 3/Bn 0, Lv 9/Bn 1, Lv 15/Bn 2; MP 0 and consumed red SP 6/9/12 (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`; `WolfSkill.cs:558-590`). The cooldown is `agiAdjust(30)` only when `getDoubleArt()` returns true (`Wolf.cs:26375-26381`). Double Art's successful roll returns false and skips that timeout (`Wolf.cs:8310-8349`).
+- **Hits and damage:** 2/3/4 slashes (the first hit precedes the `bladeFang_count = 0` loop; further slashes stop once the counter reaches `sLv`, `Wolf.cs:25789-25827,25933,26055,26174,26627`). Each target hit uses:
+
+  ```csharp
+  mChar.hit(300 + sLv, target,
+      (int)(0.5f * mChar.atk + mChar.talAdjust(6 + sLv * 6 + (mChar.hasSkill(403) ? 6 : 0))),
+      0, 0, force);
+  ```
+
+  (`Wolf.cs:25789,25996,26237`). The outer cast truncates the sum after `talAdjust`. KO is 0. Every successful hit on each target restores 1 SP (`Wolf.cs:25815,26022,26263`).
+- **Blood Fang (403):** Passive, requires Lv 55/Bn 0 and Blade Fang rank 3 (`rSkill = 303`), with MP/SP 0 (`WolfSkill.cs:1189-1205`, decoded skill data). `hasSkill(403)` adds 6 **inside** the `talAdjust` term on every slash (`Wolf.cs:25789,25996,26237`). The same check changes `Damage.FindRecTarget`'s base and top half-widths from 1 to 2 and `TargetRange` from 4 to 5; `TargetHeight` stays `2 × rangeMod` (`Wolf.cs:25766,25973,26214`; parameter names `Damage.cs:1416`). Its `rangeMod`-offset starting position is unchanged. Blood Fang also selects different slash and hit visual effects (`Wolf.cs:8669-8695,25646-25716`).
+- **Client text:** Blade Fang says `+12×2`, `+18×3`, `+24×4` in Thai and English (`WolfSkill_thai.cs:572-604`, `WolfSkill_eng.cs:539-571`). Blood Fang says it doubles Blade Fang's range and adds 6 damage (`WolfSkill_thai.cs:1012-1016`, `WolfSkill_eng.cs:979-983`); the source's forward-range argument is **4 → 5**, while full target-finder width doubles **2 → 4**.
 
 
 ## Server Balance Variations (ToT)
@@ -508,7 +523,7 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
 
 ## Class-C Passives
 
-Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude is written up here and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, `lawBringer5` and `bloodFang5` still need their own entries.
+Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude and Blood Fang are written up here, and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, `gloriousSpirit5`, and `lawBringer5` still need their own entries.
 
 ### wlf_fortitude5 (421) — passive
 
