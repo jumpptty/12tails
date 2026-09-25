@@ -1465,6 +1465,10 @@ let checkedCao = 0;
   const cardCount = (first.match(/class="cao-card"/g) || []).length;
   if (cardCount !== 4) caoFail(`rendered ${cardCount} cards, want 4`); else checkedCao++;
   ["Dark Edge", "Lunar Eclipse", "Rapid Trance", "Immunity"].forEach(n => { if (!first.includes(n)) caoFail(`card "${n}" missing`); else checkedCao++; });
+  // The page template must carry real icon data, not a leftover patch placeholder (the Revised Art icon once shipped as
+  // the literal "@@D@@{SKILL_ICONS.revisedArt}").
+  const shell = String(caoRoot.innerHTML || "");
+  if (/@@|\$\{/.test(shell) || !shell.includes(SKILL_ICONS.revisedArt)) caoFail("page template has an unreplaced placeholder or no Revised Art icon"); else checkedCao++;
   // Custom skill card: defaults (cd 120, dur 12, no Perseverance, Revised Art on) must show the same brute-force result.
   const want = sandbox.caoOptimal(120, 12, 0, true);
   const cOut = reg.get('[data-role="customCha"]'), aOut = reg.get('[data-role="customAgi"]');
