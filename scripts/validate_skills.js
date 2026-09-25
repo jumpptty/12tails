@@ -1394,6 +1394,41 @@ for (const sk of SKILLS) {
   }
 }
 console.log(`Verified ${checkedHeroRenders} hero render checks (every skill selectable without runtime exceptions).`);
+
+// Grand Casino Arcade (Cat.cs:27993-28265): roll = Random.Range(0, clamp(LCK, 0, 255)); <5 Doom (no hit),
+// <50 = 111, <90 = 222, <120 = 333, else 777. Odds chips, raw range, final range and the real simulator must agree.
+let checkedCasino = 0;
+{
+  const casinoFail = (msg) => { console.error(`[CASINO ERROR] ${msg}`); errorCount++; };
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  for (const lck of [0, 1, 5, 6, 50, 51, 120, 121, 255, 400]) {
+    const sum = sandbox.casinoOdds(lck).reduce((s, o) => s + o.pct, 0);
+    if (!near(sum, 100)) casinoFail(`odds at LCK ${lck} sum to ${sum}, not 100`); else checkedCasino++;
+  }
+  const odds = (lck, i) => sandbox.casinoOdds(lck)[i].pct;
+  [[0, 0, 100], [5, 0, 100], [6, 0, 500 / 6], [6, 1, 100 / 6], [255, 0, 500 / 255], [255, 4, 13500 / 255], [120, 4, 0], [121, 4, 100 / 121]]
+    .forEach(([lck, i, want]) => { if (!near(odds(lck, i), want)) casinoFail(`odds[${i}] at LCK ${lck} = ${odds(lck, i)}, want ${want}`); else checkedCasino++; });
+  [[5, 0], [6, 111], [50, 111], [51, 222], [90, 222], [91, 333], [120, 333], [121, 777], [400, 777]]
+    .forEach(([lck, want]) => { const r = sandbox.casinoRawRange(lck); if (r[0] !== 0 || r[1] !== want) casinoFail(`raw range at LCK ${lck} = ${r}, want 0-${want}`); else checkedCasino++; });
+
+  const sk = SKILLS.find(s => s.id === "cat_grandCasinoArcade");
+  const inputs = sandbox._statInputs;
+  const savedLck = inputs.lck.value, savedPower = sandbox._depRanks.catPower;
+  for (const lck of [5, 50, 121, 255]) for (const power of [0, 4]) {
+    inputs.lck.value = String(lck); sandbox._depRanks.catPower = power; sandbox._skillRanks[sk.id] = 2;
+    sandbox._calcRangeFor = undefined; sandbox._selectSkill(sk);
+    const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, 2)));
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < 3000; i++) { const x = sandbox._rollOneHit(sk, 2); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+    const tag = `LCK ${lck}, Power ${power} [range ${fin[0]}-${fin[1]}, rolled ${lo}-${hi}]`;
+    if (lo < fin[0] || hi > fin[1]) casinoFail(`roll outside range: ${tag}`); else checkedCasino++;
+    if (lck === 5 && (hi !== 0 || fin[1] !== 0)) casinoFail(`LCK 5 must always be Doom (0 damage): ${tag}`); else checkedCasino++;
+    if (lck === 255 && hi < fin[1] * 0.85) casinoFail(`range max not reachable: ${tag}`); else checkedCasino++;
+  }
+  inputs.lck.value = savedLck;
+  if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
+}
+console.log(`Verified ${checkedCasino} Grand Casino Arcade (LCK odds / range / simulator) checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);

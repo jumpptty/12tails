@@ -346,26 +346,27 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - Scales with AGI (`agiAdjust(600)`). Not exempt from Revised Art.
 - **Channel / Invulnerability Window (`Cat.cs:28633-28636`):**
   - Upon cast, Cat enters an arcade machine animation lockout and receives two simultaneous self-buffs:
-    - `addStatus("noDamage", 1, sLv * 5 + 7, 0, ActorNr)`: complete invulnerability to damage.
+    - `addStatus("noDamage", 1, sLv * 5 + 7, 0, ActorNr)`: no damage taken. Checked in `RPC_AddDamage` (`CharacterControl.cs:3724`) and `RPC_AddEffectDamage` (`:6122`), so it blocks Effect Damage too.
     - `addStatus("noForce", 1, sLv * 5 + 7, 0, ActorNr)`: complete immunity to knockback/push forces.
-  - Duration: `sLv * 5 + 7` seconds (Rank 1: **12 seconds**; Rank 2: **17 seconds**).
+  - Duration: `sLv * 5 + 7` seconds (Rank 1: **12 seconds**; Rank 2: **17 seconds**). A literal, not `chaAdjust`.
+  - Both statuses appear only in `isSystemStatus` (`StatusData.cs:4630`, `:4648`) and `isBuffStatus` (`:6338`, `:6356`): **Buff, System**.
 - **Spins & Hit Count (`Cat.cs:27956`, `:28303`, `:28507`, `:28596`):**
   - Loop index `$i$21911` runs from `0` to `sLv * 2`:
     - Rank 1 (`sLv = 1`): `i = 0, 1, 2` -> **3 spins / 3 hits** (`sLv * 2 + 1 = 3`).
     - Rank 2 (`sLv = 2`): `i = 0, 1, 2, 3, 4` -> **5 spins / 5 hits** (`sLv * 2 + 1 = 5`).
-  - Delay between spins: ~2.7s (0.7s delay + 2.0s machine cycle).
+  - Timing (`Cat.cs:28779-28809`): 0.4 s + 1.3 s of set-up, then each spin waits 2.0 s before its roll and 0.7 s after it (0.4 s after the last one).
 - **Slot RNG & Damage Breakdown (`Cat.cs:27993-28265`):**
   - On each spin, independent RNG roll:
     `mCasinoResult = UnityEngine.Random.Range(0, Mathf.Clamp(mChar.lck, 0, 255));`
     Note: `Random.Range(int, int)` is upper-bound exclusive, so range is `0 .. Clamp(LCK, 0, 255) - 1`.
   - Outcomes:
     1. **Roll `< 5` ("Casino Doom!"):**
-       - Raw damage = `0`.
-       - Inflicts `[doom]` (+1 stack level, duration 60s) on **all allies and self** within `radius 24m, height 12m` (`Cat.cs:28009-28048` — `Damage.FindAreaTarget(position, 24, 12, 1 << Cat.gameObject.layer)`).
-       - Critical note: If Cat's LCK is `≤ 4`, every roll is strictly `< 5`, meaning 100% of spins will be Doom!
+       - No damage: `hitDamage` stays 0, so the `hit()` loop is skipped entirely (`Cat.cs:28209`).
+       - Every character on the Cat's **own layer** (itself and its allies) within `radius 24m, height 12m` gets `RPC_AddStatus("doom", target.getStatusLv("doom") + 1, 60, 0, ActorNr)`: one Doom level above what that target already has, for a flat 60 s (`Cat.cs:28009-28048`, `Damage.FindAreaTarget(position, 24, 12, 1 << Cat.gameObject.layer)`).
+       - If Cat's LCK is **≤ 5**, every roll is `< 5` (`Random.Range(0, 5)` tops out at 4; `Range(0, 0)` returns 0), so 100% of spins are Doom.
     2. **Roll `5 .. 49` ("Casino 111"):**
        - Raw damage = `111`.
-       - Inflicts `hit(271, target, 111, KO: 1, Hate: 0, Vector3.zero)` to all enemies within `radius 24m, height 12m` (non-structures).
+       - Every non-structure enemy within `radius 24m, height 12m` takes `hit(270 + d, target, 111 × d, 1, 0, Vector3.zero)` with `d` = 1 / 2 / 3 / 7 for 111 / 222 / 333 / 777 (`Cat.cs:28215-28265`; enemy mask `130816 − (1 << layer)`).
     3. **Roll `50 .. 89` ("Casino 222"):**
        - Raw damage = `222`.
        - Inflicts `hit(272, target, 222, KO: 1, Hate: 0, Vector3.zero)` to all enemies within 24m.
@@ -375,8 +376,10 @@ Entries are being written skill by skill; every skill shown in the app needs one
     5. **Roll `≥ 120` ("Casino 777" - Jackpot!):**
        - Raw damage = `777`.
        - Inflicts `hit(277, target, 777, KO: 1, Hate: 0, Vector3.zero)` to all enemies within 24m. Requires `LCK ≥ 121` to be rolled.
+- **Outcome odds:** with `n = clamp(LCK, 0, 255)`, each outcome's chance is (rolls in its band that are `< n`) / `n`. Example at LCK 150: Doom 5/150 = 3.3%, 111 45/150 = 30%, 222 40/150 = 26.7%, 333 30/150 = 20%, 777 30/150 = 20%. The cap of 255 gives a best case of 777 = 135/255 = 52.9% and Doom = 5/255 = 2.0%.
 - **Power Number Synergy (`CharacterControl.cs:2838-3010`):**
-  - Because Grand Casino Arcade is in Cat Skill Tree A (Gambler branch), the Power Number series passives (`Power One` `1.1×`, `Power Two` `1.2×`, `Power Three` `1.3×`, `Power Seven / Super Seven` `1.7×`) apply to every hit **on both BigBug (OG) and TTO private servers**!
+  - Every Casino hit goes through `hit()`, so the Power Number passives (`Power One` `1.1×`, `Power Two` `1.2×`, `Power Three` `1.3×`, `Power Seven / Super Seven` `1.7×`) apply whenever the Cat's HP digit matches. On TTO this still holds, because Grand Casino Arcade is a Tree A skill (see Server Balance Variations).
+  - For the same reason each hit also consumes one Cat Charge (`damagePlus`) stack and adds its `10 × level` (`CharacterControl.cs:3447-3474`). The tool does not model Charge on this card.
   - When Power Seven is active (`1.7×`):
     - 111 -> 188
     - 222 -> 377
@@ -396,7 +399,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ### Twelve Tails Online (TTO)
 - **Power Number Series Restriction to Skill Tree A:**
   - **Base BigBug Engine:** In `CharacterControl.cs:2838-3010`, the Power Number series (`cat_powerOne`, `cat_powerTwo`, `cat_powerThree`, `cat_powerSeven`, `cat_superSeven`) checks `if (this.Type == "Cat")` inside `CharacterControl.hit()`, applying raw damage multipliers (`floor(raw × 1.1 / 1.2 / 1.3 / 1.7)`) globally to **all Cat damage skills** (Combo, Charge Attack, Skill Tree A Gambler skills, and Skill Tree B Assassin skills).
-  - **TTO Server Balance Delta:** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
+  - **TTO Server Balance Delta (live-server observation reported by the user, 2026-09-25; not in the decompiled client):** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
 
 
 
