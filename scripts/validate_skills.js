@@ -1445,6 +1445,22 @@ let checkedCao = 0;
     if (o.cha + o.agi !== best) caoFail(`${tag}: optimal total ${o.cha + o.agi}, brute force ${best}`); else checkedCao++;
     if (bCd(cdB, o.agi, r) > bDur(dB, o.cha, p)) caoFail(`${tag}: optimal CHA ${o.cha} AGI ${o.agi} has downtime`); else checkedCao++;
   }
+  // Card fill order "AGI first up to the optimal AGI, then CHA": at every point budget on the way it must stay within
+  // 2.05s of the least-downtime split (whole-second rounding makes several AGI values tie; measured max 2.04s).
+  for (const [cdB, dB, p, r] of [[120, 8, 2, true], [120, 8, 0, false], [300, 15, 2, true], [300, 15, 2, false], [120, 12, 0, true], [120, 12, 0, false]]) {
+    const o = sandbox.caoOptimal(cdB, dB, p, r);
+    const down = (a, c) => Math.max(0, bCd(cdB, a, r) - bDur(dB, c, p));
+    let worst = 0;
+    for (let B = 0; B <= o.cha + o.agi; B++) {
+      let best = Infinity;
+      for (let a = 0; a <= B; a++) if (B - a <= 512) best = Math.min(best, down(a, B - a));
+      const a = Math.min(B, o.agi);
+      worst = Math.max(worst, down(a, B - a) - best);
+    }
+    const tag = `cd ${cdB} dur ${dB} persev ${p} revArt ${r}`;
+    if (worst > 2.05) caoFail(`${tag}: fill order is ${worst.toFixed(2)}s behind the best split`); else checkedCao++;
+    if (down(o.agi, o.cha) !== 0) caoFail(`${tag}: fill order does not end at no downtime`); else checkedCao++;
+  }
   // Known values from the 2026-09-25 hand calculation (Dark Edge r4, Lunar Eclipse r2).
   [[120, 8, 0, false, 522], [120, 8, 2, true, 354], [300, 15, 0, false, 632], [300, 15, 2, true, 439]].forEach(([cdB, dB, p, r, want]) => {
     const o = sandbox.caoOptimal(cdB, dB, p, r);
