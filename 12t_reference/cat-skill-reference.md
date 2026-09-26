@@ -591,3 +591,36 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - On proc: Scans entities within 24m radius and 12m height (`Damage.FindAreaTarget(pos, 24, 12, 130816)`, `:4849`). If any valid target (enemy or ally, excluding Cat self) is found, deals `RPC_AddEffectDamage(261, nDamage, 0, 0, Vector3.zero, ActorNr)` (`:4888`) to a randomly chosen target.
   - Complete damage nullification: Cat's incoming damage, KO, and hate are completely zeroed out (`nActionCode = -85; nDamage = 0; nKo = 0; nHate = 0;`, `:4893-4908`).
 - Client tooltips: TH "ทำให้มีโอกาสสะท้อนความเสียหายที่แมวได้รับไปยังศัตรูหรือ เพื่อน (20% chance, 12 sec)" / "(30% chance, 12 sec)" (`CatSkill_thai.cs:58-60`); EN "Temporary gives Cat a 20% / 30% chance to redirect its taken damage to other target (12 sec)." (`CatSkill_eng.cs:58-60`).
+### cat_twoPair1-2 (#251, #252) — active, Tree A, RANK FAMILY
+- reqLv 20 / 24, reqBn 12 / 15, MP 0, Red SP **12 / 18** (`decode_skilldata.py`, `CatSkill.cs:487-510`). SP is positive, consumed on cast (`GameGui.cs:37782`). Mode target, target all (`eSkillTarget.all`, `:1929`), `cType twoPair`.
+- **Cooldown & Cast:** flat `agiAdjust(120f)` (`Cat.cs:26168`). Revised Art applies. Cast time instant.
+- **Bidirectional Status Synchronization (Cross-Copy):** In `Cat.$RPC_twoPair$21857` (`Cat.cs:25716-26058`):
+  - Checks all statuses on Cat (`mStatusList`) and Target (`tStatusList`).
+  - Level filter: `sLv <= rank * 2` (Rank 1: `sLv <= 2` / "ต่ำกว่า 3"; Rank 2: `sLv <= 4` / "ต่ำกว่า 5").
+  - Copies eligible statuses from Cat to Target, and from Target to Cat.
+  - Duration: Remaining time is preserved exactly via `(int)(status.sTime - Time.time)`.
+  - Blacklist (13 excluded statuses): `noDamage`, `noForce`, `overPresence`, `overLord`, `lastHope`, `swallow`, `gobble`, `charm`, `mindControl`, `nightmare`, `mimic`, `allMimic`, `transform`.
+- **Damage & KO:** 0 damage, 0 KO.
+- Client tooltips: TH "ทำให้แมวและเป้าหมายติด สถานะขั้นต่ำกว่า 3 [5] ที่ทั้งคู่มี อยู่ทั้งหมด" (`CatSkill_thai.cs:48-50`); EN "Both Cat and target share all status effects that are lower than level 3 [5]." (`CatSkill_eng.cs:48-50`).
+
+### cat_swiftPace5 (#431) — active, Tree B, Class C
+- reqLv 75, reqBn 4, MP 0, Red SP **−10** (`decode_skilldata.py`, `CatSkill.cs:1031-1054`). Mode target, target enemy, `cType swiftPace`.
+- **Cooldown & Cast:** flat `agiAdjust(90f)` (`Cat.cs:39712`). Revised Art applies. Cast time instant.
+- **Target Conditions:** Target must receive movement and gravity (`target.recieveMovement && target.recieveGravity`, `Cat.cs:6542-6548`); otherwise fails with `"Cannot use on that target"`.
+- **Teleport Mechanics:** Computes spawn position behind target: `Math.getSpawnPos(target.position - (target.collider.bounds.extents.x + 0.5f) * target.forward)` (`:6557`). If obstructed (`Vector3.zero`), cancels with `"Not enough space."` and refunds MP/SP (`returnMPSP`). On success, warps Cat behind target (`KOIRnET4pM.position = spawnPos + 0.1f * Vector3.up`, `:39597`) and turns to face target (`LookAt`, `:39715`).
+- **Tactical Synergy:** Instantly positions Cat for backstab angle checks on **Hidden Blade** (`mHiddenBladeDmg`) and **Backstab** (x2 multiplier on Forward Lunge and Reverse Thrust).
+- **Damage & KO:** 0 damage, 0 KO.
+- Client tooltips: TH "วาร์ปแมวไปข้างหลังเป้าหมาย" (`CatSkill_thai.cs:104`); EN "Instantly teleports Cat to behind the target." (`CatSkill_eng.cs:104`).
+
+### cat_pillagePlunge5 (#434) — active, Tree B, Class C
+- reqLv 75, reqBn 4, MP 15, Red SP **−30** (`decode_skilldata.py`, `CatSkill.cs:1396-1419`). Mode instant, target enemy, `cType pillagePlunge`.
+- **Cooldown & Mobility:** flat `agiAdjust(120f)` (`Cat.cs:40444`). Revised Art applies. Dashes forward with `moveSpeed = 24` (`:40042`) and temporarily ignores character collision (`Physics.IgnoreCollision`, `:40087`).
+- **Damage & KO:** Hits in a rectangular box (length 4m, width 4m, height 2m; `Damage.FindRecTarget`, `:40172`) via `hit(434, target, (int)(1.5f * atk + talAdjust(45)), 0, 0, 0.5f * Vector3.up)` (`:40195`).
+  - Scaling: **1.5 × ATK + talAdjust(45)** (`atkCoeff: 1.5`, `talAdjust(45)`).
+  - KO: 0 (slight knock-up `0.5 * Vector3.up`).
+- **Status Application (`pillage` Lv 5):** `RPC_AddStatus("pillage", 5, Damage.getDebuff(30f, caster.cha, target.cha), 0, ActorNr)` (`:40217`). Base duration 30s, contested by target CHA.
+- **Pillage Status Effects (`CharacterControl.cs:36450-36579`):**
+  1. **Purges 8 Shields:** Immediately cleanses `ironShield`, `diamondShield`, `perfectShield`, `bubbleShield`, `salvation`, `iceShield`, `reverse`, `repel` (`:36454-36475`).
+  2. **Player Target (Forcible Armor Strip):** If target is a player and has an empty inventory slot (`getEmptyInventorySlot()`), forcibly un-equips body armor into inventory (`equipment[1]`, `SendMessage("EquipArmor", "none")`, `:36508-36530`) and displays `"You got pillaged!"`.
+  3. **Monster / NPC Target (Permanent DEF Reduction):** `target.def = Mathf.Max(target.def - sLv * 2, 1)` (`:36574`). With `sLv 5`, reduces monster base DEF by **10** (minimum 1 DEF) permanently for the monster's lifespan.
+- Client tooltips: TH "พุ่งเข้าลอกคราบเป้าหมาย ทำให้ armor หลุดออกจากตัว player หรือลด 10Def ถาวรเมื่อใช้กับ NPC (12 Sec)" (`CatSkill_thai.cs:115`); EN "Dashes and strips enemy armor or permanently reduces NPC's DEF by 10 (12 Sec)." (`CatSkill_eng.cs:115`). Note: Code wins over tooltip's "(12 Sec)" note: base duration is `Damage.getDebuff(30f, caster.cha, target.cha)`.
