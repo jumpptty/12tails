@@ -119,6 +119,7 @@ const exposeInjection = `
   window._renderEnemyPicker = renderEnemyPicker;
   window._enemyPickerHtml = () => enemyPickerEl.innerHTML;
   window._selectedEnemyId = () => selectedEnemyId;
+  window._setServer = (s) => { currentServer = s; };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1302,10 +1303,10 @@ let checkedEffectProc = 0;
   deps.shadowFist = 0; check("Shadow Fist 0, no bonus", ep.bonus(wm, 1, 100) === 0, ep.bonus(wm, 1, 100));
   // Cat Open Wound (#443): 30 x (target disarm Lv + bleed Lv) per landed hit, gated by the passive; hit-number gating (Cat.cs:10404, 17390-17507, 38717-39031).
   const ow = byId("cat_flyingDagger"), fbl = byId("cat_finishingBlow"), cmb = byId("cat_nAttack");
-  deps.openWound = 1; deps.catTargetDisarm = 2; deps.catTargetBleed = 1;
-  check("Open Wound bonus = 30 x (disarm 2 + bleed 1)", ep.bonus(ow, 1, 0) === 90, ep.bonus(ow, 1, 0));
+  deps.openWound = 1;
+  check("Open Wound on = 30 x (Disarm 2 + Bleed 2) = 120 per hit", ep.bonus(ow, 1, 0) === 120, ep.bonus(ow, 1, 0));
   deps.openWound = 0; check("Open Wound off, no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
-  deps.openWound = 1; deps.catTargetDisarm = 0; deps.catTargetBleed = 0; check("fresh target (no disarm/bleed), no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  check("Open Wound is one toggle: no separate target Disarm/Bleed deps", !sandbox.SKILLS.some(s => s.effectProc && s.effectProc.controls && s.effectProc.controls.some(d => /^catTarget/.test(d.id))));
   check("Finishing Blow carries the bonus on hit 3 only", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join() === "false,false,true,false", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join());
   check("a card without effectProc.hits carries it on every hit", ep.hitOk(ow, 1, 0) && ep.hitOk(ow, 1, 2));
   deps.catComboHidden = 0; check("Combo without Hidden Blade: Open Wound on all 6 hits", [0, 1, 2, 3, 4, 5].every(i => ep.hitOk(cmb, 3, i)));
@@ -1520,6 +1521,35 @@ let checkedCao = 0;
   }
 }
 console.log(`Verified ${checkedCao} CHA/AGI Optimizer checks.`);
+// 3q. Cat Power Number series on TTO (user rule 2026-09-26): only Skill Tree A keeps the Power toggle and multiplier;
+// every other Cat damage card (Combo, Tree B, Class C) must show no Power control and ignore a stale Power rank on TTO.
+let checkedCatPowerTto = 0;
+{
+  const fail = (msg) => { console.error(`[CAT POWER TTO ERROR] ${msg}`); errorCount++; };
+  const treeA = new Set(["cat_luckyCard","cat_fateDraw","cat_powerShuffle","cat_lifeGamble","cat_skillGamble","cat_luckyDice","cat_doubleDown","cat_powerOne","cat_powerTwo","cat_powerThree","cat_powerSeven","cat_twoPair","cat_copycat","cat_damageRoulette","cat_nineLives","cat_grandCasinoArcade"]);
+  const dmgCats = SKILLS.filter(s => s.class === "Cat" && (s.dmg || s.dmgGroups || s.comboModel));
+  const savedPower = sandbox._depRanks.catPower;
+  for (const sk of dmgCats) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    for (const server of ["og", "tto"]) {
+      sandbox._setServer(server);
+      sandbox._depRanks.catPower = 4;
+      sandbox._selectSkill(sk);
+      const hasPower = sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"');
+      const want = server === "og" || treeA.has(sk.id);
+      if (hasPower !== want) fail(`${sk.id} on ${server}: Power toggle ${hasPower ? "shown" : "missing"}, expected ${want ? "shown" : "hidden"}`); else checkedCatPowerTto++;
+    }
+    if (!treeA.has(sk.id) && !sk.comboModel && !sk.dmgGroups && sk.dmg && !sk.casinoArcade) {
+      // The displayed damage range must ignore a stale Power rank on TTO.
+      const rangeAt = (p) => { sandbox._setServer("tto"); sandbox._depRanks.catPower = p; sandbox._calcRangeFor = undefined; sandbox._selectSkill(sk); return sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, sk.maxRank || 1))).join(); };
+      const r0 = rangeAt(0), r4 = rangeAt(4);
+      if (r0 !== r4) fail(`${sk.id} on tto: range changes with Power (${r0} vs ${r4})`); else checkedCatPowerTto++;
+    }
+  }
+  sandbox._setServer("og");
+  if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
+}
+console.log(`Verified ${checkedCatPowerTto} Cat Power Number TTO checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
