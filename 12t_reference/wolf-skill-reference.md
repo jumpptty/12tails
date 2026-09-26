@@ -52,16 +52,13 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - **`mount` is not a Wolf class skill — excluded, not a judgment call.** `Wolf.cs:43639` —
   `this.$self_$29901.mChar.addTimeOut("mount", (float)12);` — the universal ride-a-mount action shared
   by every class. `WolfSkill.cs` has no `cType`/`getSkill()` entry for `"mount"` at all.
-- **Every single active skill's live `addTimeOut` call is gated behind the class-wide `getDoubleArt()`
-  proc-chance check — a Wolf-specific mechanic, not a bug, and it does not change the reported base
-  value.** `getDoubleArt()` (`Wolf.cs:8235-8339`) rolls `Random(0,100) >= lckAdjust(learnedRank * 6)`;
-  on success it returns `true` (the normal path — `addTimeOut` fires as usual) and on the `learnedRank*6`%
-  failure roll it instead fires `RPC_doubleArt` and returns `false` (the free-recast proc from the
-  `doubleArt1`-`4` passive — "Gives Wolf a 6/12/18/24% chance to use his skill without any cooldown",
-  `WolfSkill_eng.cs:125` etc. — skipping `addTimeOut` entirely for that cast). Confirmed present at
-  every one of the 23 active-skill cast sites reported in this table (e.g. `Wolf.cs:20576`, `:21344`,
-  `:31320`, `:37207`); the CD values reported here are the normal (non-proc) path, matching how every
-  prior class doc reports the un-modified base value and cites the modifier separately.
+- **Wolf active cooldowns use the class-wide `getDoubleArt()` proc check, with a Class-C exception.**
+  `getDoubleArt()` (`Wolf.cs:8235-8349`) rolls `Random(0,100)` against
+  `lckAdjust(learnedRank * 6)`: the proc fires `RPC_doubleArt` and returns `false`; the ordinary
+  path returns `true`. Most active casts skip `addTimeOut` on a proc. **Feral Assault and Dual Brand
+  require Sublime Art (#431) as well**: on a Double Art proc, their cooldown still starts if
+  `hasSkill(431)` is false (`Wolf.cs:35400-35412`, `:36665-36680`). Twin Resonance needs no
+  Sublime Art check (`Wolf.cs:37207-37213`). The cooldown table reports the normal base values.
 - **`doubleArt1`-`4`, `statPlus1`-`4`, `weaponPlus1`-`4`, `armorPlus1`-`4`, `noKo1`-`3`, `perseverance1`-`2`,
   `feralInstinct1`-`4`, `impulse1`-`2`, `lastBlade1`, `finalEclipse1` are confirmed passives** (self-buff/
   chance-proc/equipment-scaling flavor text, `WolfSkill_eng.cs:99-120` (perseverance), `:165-208`
@@ -567,6 +564,29 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
   - Code differences: Tooltips omit the `0.5 × ATK` base, state the TAL bonus as a flat number rather than `talAdjust`, and omit the 0 KO, the pass-through collision mechanics, and the +1 SP per target hit.
 - **App Modeling (`12t_projects/bible/index.html`):**
   - Card: `wolf_feralStrike` (`maxRank: 4`, `cost: { mp: 0, sp: [15, 18, 21, 24], spType: "blue" }`, `cd: 30`, `cdWrapped: true`, `atkCoeff: 0.5`, `dmg: "talAdjust(15×sLv)"`, `ko: "0"`, `compatSkills: ["wolf_finalEclipse", "wolf_lunarEclipse"]`).
+
+### wlf_feralAssault5 (#443) — Feral Assault
+
+- **Metadata:** `setReq(85, 6)`, `setSP(-45)` (45 SP consumed, 0 MP), `mode = instant`, target `enemy`, `cType = "feralAssault"` (`WolfSkill.cs:1311-1337`; `scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`). One rank. No cast bar or applied status in its coroutine.
+- **Cooldown and passive:** `addTimeOut("feralAssault", agiAdjust(180f))` (`Wolf.cs:35492`), with the Double Art/Sublime Art exception described above (`Wolf.cs:35400-35412`). Revised Art applies.
+- **Dash and cleanse:** `removeLockStatus(5)` at cast start (`Wolf.cs:35452`), removing `groundLock`, `needlePrison`, `sticky`, `frost`, and `lightBind` only when their level is at most 5 (`CharacterControl.cs:19456-19524`). Four movement stages (`Wolf.cs:35282,35306,35498-35503`), with pass-through collision enabled during the dash and restored at its end (`Wolf.cs:35250-35255,35506`).
+- **Damage:** On each of four movement stages, `FindRecTarget(position + 2×forward, -forward, 3, 6, 8, 3, layer)` selects a trapezoid 8m deep, 3m high, widening from 6m to 12m across (`Wolf.cs:35633`; `Damage.cs:1416,1437-1446`). Each stage calls `hit(443, target, (int)(0.5f*atk + talAdjust(60)), 6, 0, 0.5f*forward)` (`Wolf.cs:35652`): raw damage `floor(0.5×ATK + talAdjust(60))`, KO 6, force 0.5 forward. The finish combines all path targets with a radius-6m, height-3m area (`Wolf.cs:35547`; path list: `:35682`) and calls `hit(443, target, atk + talAdjust(90), 6, 0, 0.5f*forward)` (`:35566`). Thus a target caught throughout can receive four path hits and one stronger finish. Both routes use the normal direct-hit pipeline.
+- **Client text:** EN says it zooms through enemies in a straight line and removes level-5 Lock statuses (`WolfSkill_eng.cs:1023-1030`); TH says it escapes confinement below level 6 (`WolfSkill_thai.cs:1056-1063`).
+
+### wlf_dualBrand5 (#434) — Dual Brand
+
+- **Metadata:** `setReq(75, 4)`, `setMPSP(24, -36)` (24 MP and 36 SP consumed), `mode = instant`, target `enemy`, `cType = "dualBrand"` (`WolfSkill.cs:1403-1429`; decoded with `scripts/decode_skilldata.py`). One rank, no cast bar or applied status.
+- **Cooldown and passive:** `addTimeOut("dualBrand", agiAdjust(120f))` (`Wolf.cs:36680`); a Double Art proc skips it only if Sublime Art is learned (`Wolf.cs:36665-36680`). Revised Art applies.
+- **Four hits:** The first two independently scan radius 5m, height 3m (`Wolf.cs:36019,36169`); the next two independently scan a forward rectangle 5m deep, 4m wide, 4m high (`:36319,36496`; `Damage.cs:1416,1437-1446`). All four call `hit(434, target, atk + talAdjust(24), 0, 0, Vector3.zero)` (`Wolf.cs:36042,36192,36342,36519`): raw `ATK + talAdjust(24)`, KO 0, no force, normal direct-hit pipeline. A target inside every scan can receive four hits.
+- **SP branch caution:** Each slash contains `sp = sp + 1` after a `hit(...) != 0` branch (`Wolf.cs:36042-36068,36192-36218,36342-36368,36519-36545`). The first branch's junk predicate sends a nonzero `hit()` result back to the iterator (`:36044-36046`); the SP increment is reached through the zero-return path. `hit()` ordinarily returns nonzero mitigated damage for a successful direct hit (`CharacterControl.cs:3566-3573,3672-3675`). Do not describe this as +1 SP on a landed hit without live confirmation.
+- **Client text:** TH describes continuous wide-area sword slashes (`WolfSkill_thai.cs:1100-1107`). The EN text is attached to misspelled key `wlf_dualBand5`, so it does not match the real `wlf_dualBrand5` metadata key (`WolfSkill_eng.cs:1067-1075`; `WolfSkill.cs:1403`).
+
+### wlf_twinResonance5 (#444) — Twin Resonance
+
+- **Metadata:** `setReq(85, 6)`, `setMPSP(60, -60)` (60 MP and 60 SP consumed), `mode = instant`, target `enemy`, `cType = "twinResonance"` (`WolfSkill.cs:1443-1471`; decoded with `scripts/decode_skilldata.py`). One rank, no cast bar or applied status.
+- **Cooldown and passive:** `addTimeOut("twinResonance", agiAdjust(240f))` (`Wolf.cs:37213`), skipped on a Double Art proc (`:37207-37213`); no Sublime Art gate. Revised Art applies.
+- **Expanding repeated hits:** The cast launches `RPC_twinResonance_fire` (`Wolf.cs:37110-37115`). Its counter starts at 0 and ends before 40 (`:37616,37622`); each cycle waits 0.4s (`:37714`). On each cycle it scans a 190-degree sector, height 2m, with search range `3 + 0.8×i` meters (`:37644`), then admits only targets whose transform is within `1 + 0.8×i` meters (`:37663-37668`). Every qualifying cycle calls `hit(444, target, (int)(0.75f*atk + talAdjust(50)), 2, 0, Vector3.zero)` (`:37674`): raw `floor(0.75×ATK + talAdjust(50))`, KO 2, no force, normal direct-hit pipeline. A nearby stationary target can be hit repeatedly, up to 40 times; a target farther than 32.2m from the fire origin fails the distance gate. Damage totals depend on distance, movement, and whether the channel ends early when the caster has no HP/KO (`:37543-37558`). A fixed 40-hit total would misrepresent most targets.
+- **Client text:** EN describes expanding waves that damage a wide area for a short period (`WolfSkill_eng.cs:1080-1089`); TH describes wide-area sword waves (`WolfSkill_thai.cs:1113-1122`).
 
 ## Class-C Passives
 

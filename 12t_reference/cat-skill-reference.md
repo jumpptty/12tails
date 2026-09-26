@@ -393,6 +393,14 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - EN: *"Summon a grand casino that randomly deals 111~777x3 damage to all nearby enemies."* / *"111~777x5"* (`CatSkill_eng.cs:528-545`).
   - TH: *"เรียกคาสิโนขนาดยักษ์ขึ้นมา สุ่มทำความเสียหายเป้าหมาย ในระยะ (111~777 dmg x3)"* / *"(111~777 dmg x5)"* (`CatSkill_thai.cs:550-567`).
 
+### cat_supportFire5 (#444) — Support Fire, Class C
+- **Skill data:** One rank; level 85, bonus requirement 6, MP 60, SP **+60** (`CatSkill.cs:1436-1464`; `decode_skilldata.py`). The positive SP value is a blue threshold, not an up-front payment. Mode `instant`, target `enemy`, `cType supportFire`.
+- **Cooldown and cast:** `addTimeOut("supportFire", agiAdjust(240f))` (`Cat.cs:40879`), with Revised Art scaling. No cast bar; the animation/channel begins immediately and locks movement (`Cat.cs:40864-40909`).
+- **Cannons and channel:** The cast attempts to place up to six cannons, subject to ground raycasts (`Cat.cs:41043-41099`). While channeled, a firing cycle occurs every `0.01 × Random.Range(24,36)` seconds, i.e. **0.24–0.35 s** (`Cat.cs:41174`). Each cycle picks a random placed cannon and launches a projectile if one exists (`Cat.cs:41179-41228`, `:10636-10753`). The counter advances even if no cannon was placed (`Cat.cs:41244`). Every sixth cycle consumes **12 SP**, reduced to **6 SP** with Revised Skill #404 (`Cat.cs:41249-41255`). The channel stops on movement input or when SP falls below 6 (`Cat.cs:41134-41157`). There is no fixed shot or hit count; SP regeneration and collisions affect the total.
+- **Projectile and impact:** A projectile moves forward at 30 units/s, expires after 10 s, and triggers one explosion on a valid collision (`Cat_supportFire.cs:29-206`). The explosion checks enemy targets within **8 m radius and 3 m height** and calls `hit(444, target, talAdjust(50) + 200, KO 3, Hate 0, Vector3.zero)` once per target (`Cat.cs:10776-10845`). Thus **per explosion per target**, raw damage is `talAdjust(50) + 200`, then the normal `dmgAdjust → defAdjust → hitMod` pipeline applies. The calculator's single-hit Test and range represent one such impact, not an entire channel.
+- **Power Number:** In the base BigBug engine, this `hit()` call qualifies for Cat Power Number raw-damage multipliers (`CharacterControl.cs:2838-3010`). See the TTO restriction below.
+- **Client tooltip:** EN describes a repeating cannon barrage in the area ahead (`CatSkill_eng.cs:1091-1097`); TH explicitly labels it a channel (`CatSkill_thai.cs:1113-1119`).
+
 ---
 
 ## Server Balance Variations
@@ -401,6 +409,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Power Number Series Restriction to Skill Tree A:**
   - **Base BigBug Engine:** In `CharacterControl.cs:2838-3010`, the Power Number series (`cat_powerOne`, `cat_powerTwo`, `cat_powerThree`, `cat_powerSeven`, `cat_superSeven`) checks `if (this.Type == "Cat")` inside `CharacterControl.hit()`, applying raw damage multipliers (`floor(raw × 1.1 / 1.2 / 1.3 / 1.7)`) globally to **all Cat damage skills** (Combo, Charge Attack, Skill Tree A Gambler skills, and Skill Tree B Assassin skills).
   - **TTO Server Balance Delta (live-server observation reported by the user, 2026-09-25; not in the decompiled client):** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
+  - **Support Fire (#444):** This Class C skill receives the Power Number raw-damage multiplier in the base BigBug `hit()` pipeline, but does not receive it on TTO under the observed Tree A restriction.
 
 
 
