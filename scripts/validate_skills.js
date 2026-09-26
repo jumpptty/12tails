@@ -1602,6 +1602,8 @@ let checkedDepStrip = 0;
     const items = strip.split('<div class="sk-dep-item"').length - 1;
     const tagged = strip.split('<span class="sk-dep-item-tags"><span class="sk-dep-tag"').length - 1;
     if (items !== tagged) fail(`${sk.id}: ${items - tagged} strip item(s) without an effect tag`); else checkedDepStrip++;
+    // 3b. no empty dep-toggle containers left behind (summon header, damage header)
+    if (html.includes("sk-summon-toggles") && /<div class="sk-summon-toggles[^"]*">\s*<\/div>/.test(html)) fail(`${sk.id}: empty .sk-summon-toggles container left in the summon header`); else checkedDepStrip++;
     // 3. no empty strip
     if (strip && items === 0) fail(`${sk.id}: empty .sk-dep-strip rendered`); else checkedDepStrip++;
   }
