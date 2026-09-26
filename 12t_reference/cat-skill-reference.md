@@ -559,3 +559,35 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Gamble Protection:** When either Life Gamble (`Cat.cs:22801`) or Skill Gamble (`Cat.cs:23328`) fails, checks `hasSkill(422) && isTimeOut("evenOdds") == 0f`. If ready, fires `RPC_evenOdds` (`Cat.cs:9335`), which puts Even Odds on internal cooldown for `addTimeOut("evenOdds", agiAdjust(90f))` (`Cat.cs:9342`), plays `evenOdds_hit` VFX, and completely nullifies the failure penalty (no HP/MP/SP loss).
 - **Power Shuffle Boost:** In `Cat.cs:22087-22093`, `if (hasSkill(422)) sLv++`. Power Shuffle's stat modifier formula is `FloorToInt(sLv * 0.2f * baseStat)`. Rank 1 (normally sLv 1 = 20%) becomes sLv 2 = 40%; Rank 2 (normally sLv 2 = 40%) becomes sLv 3 = 60%.
 - Client tooltips: TH "ป้องกันความเสียหายจาก lifeGamble และ skillGamble หนึ่งครั้งทุก 90 วิ เพิ่มเลเวลของ powerShuffle ขึ้น 1เลเวล" (`CatSkill_thai.cs:983`); EN "Prevents loss from lifeGamble and skillGamble once every 90 sec. Increases level of powerShuffle by 1." (`CatSkill_eng.cs:961`). Code matches tooltips exactly.
+
+### cat_powerShuffle1-2 (#221, #222) — active, Tree A, RANK FAMILY
+- reqLv 7 / 13, reqBn 2 / 4, MP 0, Red SP **−5 / −10** (`decode_skilldata.py`, `CatSkill.cs:305-328`). Negative SP consumes SP (`GameGui.cs:37782`, rendered in red text at `:22032`). Mode instant, target self, `cType powerShuffle`.
+- **Cooldown & Cast:** flat `agiAdjust(45f)` (`Cat.cs:22394`). Revised Art applies. Instant cast (`mode: instant`).
+- **Reset Existing Power Buffs:** `removePowerStatus()` (`Cat.cs:22415`) cleanses any current `atkUp`/`atkDown` or related stat statuses before applying new ones, preventing overlapping stacks.
+- **Stat Selection & Guaranteed Disjoint:** `mPowerPlus = UnityEngine.Random.Range(1, 9)` selects 1 of 8 stats to buff (1=ATK, 2=DEF, 3=AGI, 4=VIT, 5=MAG, 6=CHA, 7=TAL, 8=LCK). Then `mPowerMinus = (mPowerPlus + UnityEngine.Random.Range(0, 7)) % 8 + 1` mathematically guarantees the debuffed stat is never identical to the buffed stat (`Cat.cs:22072-22077`). Duration is `chaAdjust(30)` (`Cat.cs:22082`).
+- **Even Odds Synergy:** `if (hasSkill(422)) sLv++` (`Cat.cs:22087-22093`). Power Shuffle's stat bonus formula is `FloorToInt(sLv * 0.2f * baseStat)`. Normally Rank 1 = 20% (sLv 1) and Rank 2 = 40% (sLv 2); with Even Odds learned, sLv increases by +1, boosting Rank 1 to **40%** (sLv 2) and Rank 2 to **60%** (sLv 3).
+- Client tooltips: TH "สุ่มเพิ่มและลดค่าพลัง stat สองค่า (20%, 30 sec)" / "(40%, 30 sec)" (`CatSkill_thai.cs:30-32`); EN "Instantly increases and decreases Cat's 2 stat at random by 20% / 40% (30 sec)." (`CatSkill_eng.cs:30-32`).
+
+### cat_doubleDown1-2 (#233, #234) — active, Tree A, RANK FAMILY
+- reqLv 21 / 27, reqBn 7 / 9, MP **16 / 20**, Red SP **−20 / −24** (`decode_skilldata.py`, `CatSkill.cs:423-446`). Mode instant, target enemy, `cType doubleDown`.
+- **Cooldown & Cast:** flat `agiAdjust(30f)` (`Cat.cs:24684`). Revised Art applies. Instant cast.
+- **Target Detection & On-Screen Requirement:** Searches entities via `Damage.FindAreaTarget(pos, sLv * 6 + 12, 10, 130816)` (`Cat.cs:25047`), covering radius **18m** (Rank 1) and **24m** (Rank 2) with height 10m. Layer `130816` targets both enemies and allies. Targets must be visible on screen (`Math.isOnScreen`, `:25075`).
+- **Hits & Selection:** Dispatches `sLv * 3 + 2` hits (**5 hits** at Rank 1, **8 hits** at Rank 2) via `doubleDown_fire` (`Cat.cs:25027`). Each hit picks a random on-screen target (`:25106`) and spawns `RPC_doubleDown_hit`.
+- **Damage, KO, and SP Generation:** In `RPC_doubleDown_hit` (`Cat.cs:25358`), each hit executes `hit(232 + sLv, obj, talAdjust(sLv * 5 + 5), sLv * 3 + 2 + (hasSkill(432) ? 2 : 0), 0, Vector3.zero)`.
+  - Base damage term: `talAdjust(10)` (Rank 1) / `talAdjust(15)` (Rank 2), with `atkCoeff: 0.5` through `dmgAdjust`.
+  - Base KO: **5 KO** (Rank 1) / **8 KO** (Rank 2).
+  - SP Gain: Every hit that connects (`!= 0`) grants Cat **+1 SP** (`this.mChar.sp = this.mChar.sp + 1`, `:25364`).
+- **Roll the Dice Synergy:** `hasSkill(432)` (`Cat.cs:25358`, `:25392-25396`):
+  - Adds **+2 KO** per hit (total 7 KO at Rank 1, 10 KO at Rank 2).
+  - Doubles the hit explosion radius from **1m** (`mRange = 1`) to **2m** (`mRange = 2`).
+- **Power Seven Synergy:** Affects Double Down through `hit()` (`CharacterControl.cs:2850-2924`), granting a **+70%** (x1.7) damage multiplier when Cat's HP ends with the digit 7.
+- Client tooltips: TH "สุ่มทำความเสียหายแก่ศัตรู หรือเพื่อนในจอภาพ ระยะ 18 m รอบตัวแมว (10 dmg, 5 ko, x5hit)" / "24 m … (15 dmg, 8 ko, x8hit)" (`CatSkill_thai.cs:44-46`); EN "Repetitively deals damage to random enemies and allies within 18m / 24m area (10/15 dmg, 5/8 ko, 5/8 hit)." (`CatSkill_eng.cs:44-46`).
+
+### cat_damageRoulette1-2 (#261, #262) — active, Tree A, RANK FAMILY
+- reqLv 24 / 27, reqBn 15 / 18, MP **12 / 15**, Red SP **−12 / −15** (`decode_skilldata.py`, `CatSkill.cs:539-562`). Mode instant, target self, `cType damageRoulette`.
+- **Cooldown & Duration:** Cooldown is flat `agiAdjust(60f)` (`Cat.cs:27071`). Applies buff `damageRoulette` at `sLv` for duration `chaAdjust(12)` (`Cat.cs:27052`).
+- **Damage Redirection Mechanics:** In `CharacterControl.cs:4832-4913`, whenever Cat takes damage (`nDamage > 0`) while having `damageRoulette`:
+  - Proc check: `Random.Range(0, 100) < lckAdjust(10 * statusLv + 10)` (`:4843`), giving base **20%** (Rank 1) / **30%** (Rank 2) chance, scaling with LCK.
+  - On proc: Scans entities within 24m radius and 12m height (`Damage.FindAreaTarget(pos, 24, 12, 130816)`, `:4849`). If any valid target (enemy or ally, excluding Cat self) is found, deals `RPC_AddEffectDamage(261, nDamage, 0, 0, Vector3.zero, ActorNr)` (`:4888`) to a randomly chosen target.
+  - Complete damage nullification: Cat's incoming damage, KO, and hate are completely zeroed out (`nActionCode = -85; nDamage = 0; nKo = 0; nHate = 0;`, `:4893-4908`).
+- Client tooltips: TH "ทำให้มีโอกาสสะท้อนความเสียหายที่แมวได้รับไปยังศัตรูหรือ เพื่อน (20% chance, 12 sec)" / "(30% chance, 12 sec)" (`CatSkill_thai.cs:58-60`); EN "Temporary gives Cat a 20% / 30% chance to redirect its taken damage to other target (12 sec)." (`CatSkill_eng.cs:58-60`).
