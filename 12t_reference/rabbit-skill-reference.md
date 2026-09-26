@@ -10,7 +10,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 | maimShot | Maim Shot | 4 | 15 | true | false | 3 (contested) | Damage.getDebuff |
 | mix | Mix | 4 | 30 | true | false | 60 | true |
 | shake | Shake | 3 | 30 | true | false | 60 | true |
-| miracleBlend | Miracle Blend | 1 | 60 | true | false | 6 | true |
+| miracleBlend | Miracle Blend | 1 | 60 | true | false | 4 (Alchemist Lab 1-4: 6/8/10/12) | true |
 | stickyGum | Sticky Gum | 2 | 60 | true | false | 12 | true |
 | acidicField | Acidic Field | 2 | 60 | true | false | 12 | true |
 | immuneShot | Immune Shot | 1 | 30 | true | false | 20 | true |
@@ -82,10 +82,10 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   mechanism is `Rabbit_potion.cs:223-270`, where the potion's pickup handler checks
   `hasSkill(231)`/`hasSkill(232)`/`hasSkill(233)`/`hasSkill(234)` (confirmed as
   `rab_alchemistLab1`-`4` via `RabbitSkill.cs:2628-2671`'s `commandNum` switch) to set a local rank
-  variable `num` to 1/2/3/4 (default 0, but floored to 1 by `Mathf.Clamp(num,1,4)` at the call site).
+  variable `num` to 1/2/3/4 (default 0). `Mathf.Clamp(num,1,4)` only limits the status **level** (so 0 acts as level 1); the duration term `4 + 2 * num` uses the raw `num`, so it is **4 s** with no Alchemist Lab.
   That rank feeds the `"miracleDrop"` status duration at `Rabbit_potion.cs:432-438`:
   `this.chaAdjust(4 + 2 * num)` → 6/8/10/12s, exactly matching the flavor text. `miracleBlend`'s Duration
-  is now reported as `6` (rank-1/unlearned raw value) rather than `—`; the previous "no usable Duration"
+  is `4` s unlearned and 6/8/10/12 s at Alchemist Lab 1-4 (corrected 2026-09-26; it was reported as `6`); the previous "no usable Duration"
   judgment call was correct for `Rabbit.cs` alone but missed this per-skill companion file. This is also
   the first case in this doc of a skill whose Duration is a function of a *different* skill's learned
   rank rather than only CHA/LCK — see `12t_projects/player-reference-tool/index.html`'s `dep` field on
@@ -298,7 +298,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - `heatShot` cross-caster over-cap: a second Rabbit whose cap equals the target's current level bumps it to `cap + 1` (empirically heat4 → heat5 with two Medical Enhancement 3 Rabbits), and shots then stop refreshing the duration because `RPC_AddStatus` drops any application below the existing level — generic rule documented in [12Tails-Mechanics-Reference.md §4.2.1](12t_reference/12Tails-Mechanics-Reference.md#421-re-applying-an-already-active-status--level-merge-rule-charactercontrolcs14017-14160-inside-rpc_addstatus) (`CharacterControl.cs:14115-14159`).
 - `heatShot` Duration: `Rabbit.cs:28400` — `this.$tChar$27103.RPC_AddStatus("heat", this.$mHeatLv$27108, this.$self_$27115.mChar.chaAdjust(30 + this.$mLv$27104 * 5), 0, ...);` — base = `chaAdjust(35)`
 - `lifeShot` Duration: `Rabbit.cs:28459` — `this.$tChar$27103.RPC_AddStatus("autoLife", this.$mAutoLifeLv$27109, this.$self_$27115.mChar.chaAdjust(60 + this.$mLv$27104 * 5), 0, ...);` — base = `chaAdjust(65)`
-- `miracleBlend` Duration: `Rabbit_potion.cs:432-438` — `characterControl2.RPC_AddStatus("miracleDrop", Mathf.Clamp(num, 1, 4), characterControl.chaAdjust(4 + 2 * num), 50, this.gbbNPxW0WH);` — `num` is set from `hasSkill(231/232/233/234)` (`rab_alchemistLab1`-`4`, `Rabbit_potion.cs:223-270`), floored to 1 by the `Mathf.Clamp`; base with `num = 1` (no `alchemistLab`) = `chaAdjust(6)`. Verified outside `Rabbit.cs` — see the dedicated judgment-call note above.
+- `miracleBlend` Duration: `Rabbit_potion.cs:432-438` — `characterControl2.RPC_AddStatus("miracleDrop", Mathf.Clamp(num, 1, 4), characterControl.chaAdjust(4 + 2 * num), 50, this.gbbNPxW0WH);` — `num` is set from `hasSkill(231/232/233/234)` (`rab_alchemistLab1`-`4`, `Rabbit_potion.cs:223-270`), floored to 1 by the `Mathf.Clamp`; base with no `alchemistLab` (`num = 0`) = `chaAdjust(4)`; Lab 1-4 = `chaAdjust(6/8/10/12)`. Verified outside `Rabbit.cs` — see the dedicated judgment-call note above.
 - `stickyGum` Duration (field lifetime, not `RPC_AddStatus`): `Rabbit.cs:26621` — `this.$mDuration$27071 = this.$self_$27075.mChar.chaAdjust(12);`, passed into `RPC_stickyGum_create(...)` → `Rabbit_stickyGum.Init(sLv, nLife, ownerID)`, which stores `nLife + Time.time` as the field's own despawn deadline. See the dedicated judgment-call note above.
 - `acidicField` Duration (field lifetime): `Rabbit.cs:27128` — `this.$mDuration$27083 = this.$self_$27087.mChar.chaAdjust(12);`, same `Init()`-deadline pattern via `Rabbit_acidicField.cs`.
 - `healingField` Duration (field lifetime): `Rabbit.cs:37831` — `this.$mDuration$27360 = this.$self_$27363.mChar.chaAdjust(12);`, same pattern via `Rabbit_healingField.cs`.
@@ -332,7 +332,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | maimShot | 4 | [12, 13, 14, 15] SP (blue) | none | `0.5×ATK + talAdjust(5×sLv)` (`Rabbit.cs:23280`) | restores +1 SP; applies `"maim"` status (`Damage.getDebuff(3, cha, target.cha)`) | **kneeShot5** (hasSkill 402, +20 to talAdjust base) | 1 |
 | mix | 4 | [6, 9, 12, 15] MP | none | no direct dmg — creates HP/SP/MP potion pickups (`Rabbit_potion.cs`) | HP potion heals `20×sLv` (`[20, 40, 60, 80]`) | **extraPotion5** (hasSkill 412, `+0.3×LV` HP heal) | — |
 | shake | 3 | [6, 10, 14] MP | none | no direct dmg — creates compound potions on ground (lifetime 60s) | — | — | — |
-| miracleBlend | 1 | 18 MP | none | no direct dmg — spawns miracle potion (`Rabbit_potion.cs:438`) | status `"miracleDrop"` duration = `chaAdjust(4 + 2×num)` (6/8/10/12s), +50 all stats | **alchemistLab** (hasSkill 231-234, ranks 1..4, +2s/rank) | — |
+| miracleBlend | 1 | 18 MP | none | no direct dmg — spawns miracle potion (`Rabbit_potion.cs:438`) | status `"miracleDrop"` duration = `chaAdjust(4 + 2×num)` (4/6/8/10/12s), `damageMod` and `hitMod` each `+0.1×sLv+0.1` (`CharacterControl.cs:37667`; the `50` passed as `sValue` is never read) | **alchemistLab** (hasSkill 231-234, ranks 1..4, +2s/rank) | — |
 | stickyGum | 2 | [6, 8] MP, [10, 15] SP (red) | none | no dmg — slows movement in radius `1.5m / 2.5m` (`Rabbit_stickyGum.cs:140`) | status `"sticky"` (lv `sLv`) for `chaAdjust(12)` | — | — |
 | acidicField | 2 | [8, 12] MP, [15, 20] SP (red) | none | `10×sLv` flat true effect damage per tick (`[10, 20]`) (`Rabbit_acidicField.cs:198`) | penetrating (direct `RPC_AddEffectDamage`), pulses every 2s (6 ticks over 12s) + `"acid"` debuff | — | 6 |
 | immuneShot | 1 | 10 MP, 10 SP (blue) | none | no dmg — cures debuffs (`"remedy"`), grants `"immunity"` (`Rabbit.cs:28287`) | duration `chaAdjust(15 + 5×[medEnhanceLv+1])` (20s to 35s) | **medicalEnhancement** (ranks 0..3, +5s/rank) | — |
@@ -506,3 +506,11 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
   * Increases maximum status level cap for Immune Shot, Boost Shot, Heat Shot, and Life Shot from Lv.1 to Lv.2, Lv.3, or Lv.4.
   * Extends status duration by `+5s` per rank (`chaAdjust(base + mLv * 5)`).
 
+
+### rab_miracleBlend1 — active, single rank
+- reqLv 25, reqBn 8, MP 18, SP 0, mode instant/self, `cType miracleBlend` (`decode_skilldata.py`). Cooldown `agiAdjust(60)` (`Rabbit.cs:20363`, dispatcher `:20440`); cast time `magAdjust(5)` (`:20409`, `:20420`).
+- **Potions** (`$RPC_miracleBlend_cast`, `Rabbit.cs:25435-26024`): without Miracle Drop, 3 potions 1.5 m from the Rabbit at 0° / 120° / 240°, each a uniform type from 1-4 (`Random.Range(1,5)`, `:25698-25744`). With Miracle Drop (#422 = `rab_miracleDrop5`, `RabbitSkill.cs:3233`; `hasSkill(422)`, `:25603`): 4 potions at 90° steps (`:25614-25673`), each `lckAdjust(5)`% to be type 6 (the golden / miracle potion), otherwise uniform from 1-5 (`Random.Range(1,6)`). Every potion lasts `chaAdjust(60)` (`Rabbit.cs:26353`).
+- **Pickup** (`Rabbit_potion.OnTriggerEnter`, `Rabbit_potion.cs:223-450`): the owner's client applies it to a character on the Rabbit's own layer (self and allies). `num` = Alchemist Lab rank (`hasSkill(231-234)` → 1-4, highest wins, none = 0). Type 1 `invisible`, 2 `reduce`, 3 `enlarge`, 4 `poison`, 5 MP heal `clamp(10·num, 10, 40)`, 6 `miracleDrop`. The four statuses and `miracleDrop` all use level `clamp(num,1,4)` and duration `chaAdjust(4 + 2·num)` of the **Rabbit's** CHA (4 s unlearned, 6/8/10/12 s at Lab 1-4). The type-number → status mapping is by prefab (`randomPot1..6`) and is not visible in the code; types 1-4 match the tooltip's four statuses.
+- **Probabilities:** per bottle with Miracle Drop = `lckAdjust(5)`% golden; at least one golden in 4 = `1 − (1 − p)^4`. Without Miracle Drop there is no golden potion (types 1-4 only). Both chips are shown on the card.
+- **Statuses** (`StatusData.cs`, apply sites in `CharacterControl.cs`): `miracleDrop` (712, Buff + Magical): `damageMod` and `hitMod` each `+0.1·sLv + 0.1` (`:37667`, remove `:16955`). `reduce` (703, Buff + Physical): `damageMod` / `hitMod` `+0.05·sLv`, `rangeMod −0.1·sLv` (`:37215`). `enlarge` (702, Buff + Physical): `damageMod` / `hitMod` `−0.05·sLv`, `rangeMod +0.1·sLv` (`:37295`). `invisible` (603, Buff + Magical, also `isInvisibleStatus`): monster AI vision checks do not acquire an invisible target (`AI_visionCheck`, e.g. `Alpaca_AI.cs:1093-1345`, same pattern in the other monster AI files; blend is treated the same way); `RPC_AddStatus` refuses it while the target has `fireAvatar`, `earthForm`, `cosmicRift` or `cosmicFriday` (`CharacterControl.cs:11274-11335`). `poison` (605, Debuff + Physical) is documented in the mechanics reference §4.
+- Client tooltips: EN "Randomly mix up three random potions that give 'invisible1', 'enlarge1', 'shrink1' or 'poison1' status for 4 seconds." / TH "สุ่มเสก ยาหายตัว ยาตัวเล็ก ยาขยายร่าง หรือยาพิษ 3 ขวด ลงพื้น (lv.1 potion x3, 4 sec)" (`RabbitSkill_eng.cs:352`, `RabbitSkill_thai.cs`). The tooltip does not mention Miracle Drop's 4th potion or the MP potion.

@@ -1561,6 +1561,15 @@ let checkedCatPowerTto = 0;
   if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || !cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง")) fail("cat_nAttack: Open Wound line must say every hit and that stage 2 after a Hidden Blade backstab gets no purple damage"); else checkedCatPowerTto++;
   const ttoCombo = heroOf(cmb, "tto");
   if (ttoCombo.includes("Power Seven")) fail("cat_nAttack on tto still mentions Power Seven"); else checkedCatPowerTto++;
+  // Rabbit Miracle Blend (Rabbit_potion.cs:432-438): status duration chaAdjust(4 + 2 x Alchemist Lab rank) (4s unlearned), golden potion chip per bottle and per 4 bottles.
+  const mb = SKILLS.find(s => s.id === "rabbit_miracleBlend");
+  for (const [lab, want] of [[0, 4], [1, 6], [2, 8], [3, 10], [4, 12]]) {
+    sandbox._depRanks.alchemistLab = lab;
+    if (!heroOf(mb, "og").includes("base " + want + "s")) fail(`rabbit_miracleBlend at Alchemist Lab ${lab}: duration base must be ${want}s`); else checkedCatPowerTto++;
+  }
+  delete sandbox._depRanks.alchemistLab;
+  const mbHtml = heroOf(mb, "og");
+  if (!mbHtml.includes("โอกาส ยาทองต่อขวด") || !mbHtml.includes("โอกาส ยาทองต่อ 4 ขวด")) fail("rabbit_miracleBlend: needs both golden-potion chips (per bottle and per 4 bottles)"); else checkedCatPowerTto++;
   sandbox._setServer("og");
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
 }
