@@ -442,8 +442,9 @@ Each status maps to a sequential integer code. Grouped by function:
 
 - **Control / disables:** `ko`, `lock`, `paralysis`, `petrify`, `fear`, `drunken`/`drunk`, `grab`, `swallow`,
   `gobble`, `provoke`, `disarm`, `artCancel`, `delayQi`, `sticky`, `heavy`, `needlePrison`, `maim`.
-- **Damage-over-time / decay:** `burn`, `poison`, `venomShock`, `bleed`, `cut`, `acid`, `rust`, `rustyDecay`, `puncture`,
+- **Damage-over-time / decay:** `burn`, `poison`, `venomShock`, `bleed`, `acid`, `rust`, `rustyDecay`, `puncture`,
   `hpSap/mpSap/spSap/koSap`, `hpDrain/mpDrain/spDrain/koDrain`, `heat`.
+- **Shield-piercing state:** `cut` (Debuff + State; on apply removes magical shields of level ≤ its own, `CharacterControl.cs:36308`; see [cat-skill-reference.md](cat-skill-reference.md)).
 - **Regen / restore:** `hpRegen`, `mpRegen`, `rejuvenate`, `remedy`, `salvation`, `lifeBoost`, `magicBoost`,
   `autoLife`, `lastHope`, `miracleDrop`.
 - **Stat up/down:** `atkUp…lckUp`, `atkDown…lckDown` (see flat-delta note above).

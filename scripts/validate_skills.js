@@ -119,7 +119,7 @@ const exposeInjection = `
   window._renderEnemyPicker = renderEnemyPicker;
   window._enemyPickerHtml = () => enemyPickerEl.innerHTML;
   window._selectedEnemyId = () => selectedEnemyId;
-  window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
+  window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -1300,6 +1300,16 @@ let checkedEffectProc = 0;
   const wm = byId("panda_waterMonkey");
   deps.shadowFist = 4; deps.spiritFist = 1; check("Shadow Fist 4 + Spirit Fist at Lv 100 = 12 + 16", ep.bonus(wm, 1, 100) === 28, ep.bonus(wm, 1, 100));
   deps.shadowFist = 0; check("Shadow Fist 0, no bonus", ep.bonus(wm, 1, 100) === 0, ep.bonus(wm, 1, 100));
+  // Cat Open Wound (#443): 30 x (target disarm Lv + bleed Lv) per landed hit, gated by the passive; hit-number gating (Cat.cs:10404, 17390-17507, 38717-39031).
+  const ow = byId("cat_flyingDagger"), fbl = byId("cat_finishingBlow"), cmb = byId("cat_nAttack");
+  deps.openWound = 1; deps.catTargetDisarm = 2; deps.catTargetBleed = 1;
+  check("Open Wound bonus = 30 x (disarm 2 + bleed 1)", ep.bonus(ow, 1, 0) === 90, ep.bonus(ow, 1, 0));
+  deps.openWound = 0; check("Open Wound off, no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  deps.openWound = 1; deps.catTargetDisarm = 0; deps.catTargetBleed = 0; check("fresh target (no disarm/bleed), no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  check("Finishing Blow carries the bonus on hit 3 only", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join() === "false,false,true,false", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join());
+  check("a card without effectProc.hits carries it on every hit", ep.hitOk(ow, 1, 0) && ep.hitOk(ow, 1, 2));
+  deps.catComboHidden = 0; check("Combo without Hidden Blade: Open Wound on all 6 hits", [0, 1, 2, 3, 4, 5].every(i => ep.hitOk(cmb, 3, i)));
+  deps.catComboHidden = 3; check("Combo with Hidden Blade: stage 2 hit has no Open Wound", [0, 1, 2, 3, 4, 5].map(i => ep.hitOk(cmb, 3, i)).join() === "true,false,true,true,true,true");
   inputs.lck.value = savedLck;
   Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
 }

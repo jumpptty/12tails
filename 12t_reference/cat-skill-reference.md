@@ -23,7 +23,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 | forwardLunge | Forward Lunge | 2 | 30 | true | false | — | — |
 | reverseThrust | Reverse Thrust | 2 | 45 | true | false | — | — |
 | backflip | Backflip | 2 | 15 | true | false | — | — |
-| heartRipper | Heart Ripper / Finishing Blow | 3 | 120 | true | false | — | — |
+| heartRipper | Heart Ripper (60, ranks 1-2) / Finishing Blow (120) | 3 | 120 | true | false | — | — |
 | disarm | Disarm | 2 | 33 (rank 1-2: 30/33) | true | false | — | — |
 | bleed | Bleed | 2 | 66 (rank 1-2: 60/66) | true | false | — | — |
 | moonBlade | Moon Blade | 2 | 90 | true | false | — | — |
@@ -475,3 +475,53 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Order matters:** inside Disarm and Bleed the call precedes `RPC_AddStatus`, so the bonus only counts statuses already on the target.
 - **Skills that call it** (per landed hit, `Cat.cs`): Combo `nAttack1-4` (`:16672-19340`, with Hidden Blade / crit branches), Flying Dagger ×3 (`:29494/29548/29598`), Forward Lunge (`:30457`, `:30704`), Reverse Thrust (`:31539`, `:31776`), Heart Ripper 2 (`:33416`, `:33528`), Disarm (`:34178`), Bleed (`:35010`), Moon Blade (`:35713`, `:35815`), Moon Storm (`:36449`, `:36555`), Delta Strike (`:37603` finisher, `:37927` ticks), Finishing Blow 2 (`:38923`). Lucky Card / Dice / Double Down / Grand Casino / Pillage Plunge / Support Fire never call it.
 - Client tooltips: EN "Adds 3 sec to 'disarm' and 'bleed' status and deals special damage when Cat uses normal attack on them." / TH "เพิ่ม effect dmg ให้ n.atk และสกิลสาย B ของแมว … (30x lv skill)" (`CatSkill_eng.cs:1034`, `CatSkill_thai.cs:1056`). The "30×lv" is the target's disarm Lv + bleed Lv, not the skill rank.
+
+### cat_forwardLunge1-2 — active, RANK FAMILY
+- reqLv 5 / 17, reqBn 1 / 5, MP 0, SP **−15 / −18** (red, consumed), mode instant/enemy, `cType forwardLunge` (`decode_skilldata.py`). Cooldown `agiAdjust(30)` (`Cat.cs:30787`).
+- **Sequence** (`$RPC_forwardLunge`, `Cat.cs:29924-31011`): 0.3 s wind-up, then a counter `i` steps 0→4 with 0.1 s waits (`:30132`, `:30236`, `:30915-30941`); `i < 4` = 4 small hits, `i == 4` = the finisher, then 0.1 s + 0.2 s recovery. Five hits total (matches the tooltip's "x5"). Every landed hit gives +1 SP and calls `OpenWound`.
+- **Small hits (4):** `hit(309 + 2·sLv, obj, (int)(0.3×ATK + talAdjust(4·sLv)), nKo 1, 0, 0.5·forward)` (`:30541`, `:30634`); area `FindRecTarget(pos, forward, 1, 1, 3, 2)×rangeMod` = 2 m wide, 3 m long, 2 m high (`:30518`).
+- **Finisher (1):** `hit(99, obj, (int)(0.5×ATK + talAdjust(5·sLv)), nKo 3, 0, forward)` (`:30294`, `:30387`); range 4 m (`:30271`, `moveSpeed 12`).
+- **Backstab (#413):** both hit types run `hitDmg *= 2` when `hasSkill(413)` and `Quaternion.Angle(casterRot, targetRot) < 45` (`:30304-30368`, `:30551-30615`).
+- Client tooltips: EN "Thrust the knife forward and deals 4x5 damage to the enemies in front." / TH "วิ่งแทงมีดไปข้างหน้าอย่าง รวดเร็ว (+4 dmg x5)" (`CatSkill_eng.cs:594-605`, `CatSkill_thai.cs`). The 4/8 is the small hits' TAL term; the tooltip omits the `0.3×ATK`, the finisher and KO 3.
+
+### cat_reverseThrust1-2 — active, RANK FAMILY
+- reqLv 11 / 23, reqBn 3 / 7, MP 0, SP **−16 / −20** (red). Cooldown `agiAdjust(45)` (`Cat.cs:31896`).
+- Two hit sites, each once (no loop, `Cat.cs:31469`, `:31706`): `hit(312 + sLv, obj, (int)(0.5×ATK + talAdjust(10·sLv)), nKo 5·sLv, 0, 0)`; area `FindRecTarget(pos, −forward, 1, 1, 3, 2)×rangeMod` (3 m *behind* the caster, 2 m wide, 2 m high). Each landed hit: +1 SP, `OpenWound`.
+- **Backstab (#413):** `hitDmg *= 2` when `hasSkill(413)` and `Quaternion.Angle(casterRot, targetRot) > 135` (`:31386-31450`, `:31623-31687`), the opposite test to Forward Lunge because the thrust goes backwards.
+- Client tooltips: EN "Thrust the knife backward, dealing 15x2 damage and 10 ko." (`CatSkill_eng.cs:616-627`). Code wins: the TAL term is `10·sLv` (10 / 20, not 15 / 25); KO is `5·sLv` per hit, 10 / 20 across both hits.
+
+### cat_heartRipper1-2 — active, RANK FAMILY
+- reqLv 19 / 25, reqBn 6 / 8, MP 0, SP **−3 / −5** (red). Cooldown flat `agiAdjust(60)` (`Cat.cs:32986`, see the note above about the shared `heartRipper` cooldown key).
+- The target must be in the `"ko"` action state, otherwise "Can only use on ko opponent" and `returnMPSP` refunds the cost (`Cat.cs:7340-7373`).
+- `RPC_heartRipper1` (`:32652`) only teleports, then chains into `RPC_heartRipper2` (`:32891`, `:33169`), area `FindAreaTarget(pos, 1×rangeMod, 5)` (radius 1 m, height 5 m). Two hits, both `nKo 0`: hit 1 `hit(322 + sLv, …, 0.5×ATK + talAdjust(20·sLv + 10))` (`:33378`), hit 2 `talAdjust(10·sLv + 10)` (`:33490`). Each landed hit: +1 SP, `OpenWound`.
+- Client tooltips: EN "Instanly jump over a knocked down enemy and deal 20x2 damage." (`CatSkill_eng.cs:660-671`); the code gives 30 / 50 on hit 1 and 20 / 30 on hit 2.
+
+### cat_finishingBlow5 (#423) — active, Class C
+- reqLv 70, reqBn 3, MP **20**, SP **−45** (red), mode target/enemy, `cType heartRipper` (shares Heart Ripper's cooldown key). Cooldown `agiAdjust(120)` (`Cat.cs:38418`). Same KO-target requirement as Heart Ripper (`Cat.cs:6440-6497`).
+- `RPC_finishingBlow1` (`:38095`) teleports and chains into `RPC_finishingBlow2` (`:38531`); area `FindAreaTarget(pos, 1×rangeMod, 5)`. Four hit sites, each once: `hit(423, obj, 799, 0, 0, 0)` ×3 (`:38717`, `:38817`, `:38917`) and `hit(423, obj, 199, 0, 0, 0)` (`:39031`), **fixed raw damage** (no ATK, TAL or skill rank), KO 0. Total raw 2,596.
+- **Open Wound fires on hit 3 only** (`:38923`); hits 1, 2 and 4 never call `OpenWound`.
+- Also gives Backflip +1 lock-cleanse level (`Cat.cs:32432`, `hasSkill(423)`; Backflip has no card yet).
+- Client tooltips: EN "Perform a finishing blow on knocked down enemy. Enables Backflip to remove lv5 lock." (`CatSkill_eng.cs:1012`).
+
+### cat_moonBlade1-2 — active, RANK FAMILY
+- reqLv 20 / 24, reqBn 12 / 15, MP **10**, SP **−20 / −25** (red). Cooldown `agiAdjust(90)` (`Cat.cs:35957`).
+- Two hit sites (`:35702`, `:35804`): area `FindAreaTarget(pos, 3×rangeMod, 3)` then `4×rangeMod` (a target within 3 m takes both, one at 3-4 m takes one). Each `hit(350 + sLv, obj, (int)(0.5×ATK + talAdjust(15 + 10·sLv)), nKo 1, 0, 0)` = TAL term 25 / 35. Each landed hit: +1 SP, `OpenWound`, then `RPC_AddStatus("cut", 2·sLv, 1, 0, caster)` (`:35739`, `:35841`). The status is applied inside the landed-hit block (indentation-checked), so a dodged hit does not apply it.
+- Client tooltips: EN "…(25x2 dmg)" / "(45x2 dmg)" (`CatSkill_eng.cs:770-781`). Code wins: rank 2 is 35, not 45.
+
+### cat_moonStorm1-2 — active, RANK FAMILY
+- reqLv 28 / 32, reqBn 18 / 21, MP **20**, SP **−30 / −40** (red). Cooldown `agiAdjust(120)` (`Cat.cs:36699`).
+- Eight hits: counter `i` 0→5 with 0.1 s waits, each at `mPos + i×1.5 m×forward`, `FindAreaTarget(…, 2, 2)` (`:36415`, `:36675`); then counter `j` 0→1 with 0.1 s waits (`:36609`), each at `mPos + 12 m×forward`, `FindAreaTarget(…, 3, 2)` (`:36521`). Every hit `hit(350 + sLv, obj, (int)(0.5×ATK + talAdjust(10·sLv + 5)), nKo 1, 0, 0)` (`:36438`, `:36544`), then +1 SP, `OpenWound`, and `cut` (`2·sLv`, 1 s), all inside the landed-hit block.
+- Client tooltips: EN "…(10x8 dmg)" / "(15x8 dmg)" (`CatSkill_eng.cs:792-803`). The hit count of 8 is right; the TAL term is `10·sLv + 5` = 15 / 25.
+
+### cut (status, nCode via `StatusData.cs:1097`)
+- Debuff (`isDebuffStatus`, `StatusData.cs:7388`) and State (`isStateStatus`, `:4914`); not physical, magical, lock or shield. It is **not** a damage-over-time (the §4.1 catalog lists it as one; that grouping is by name only).
+- Apply handler (`CharacterControl.cs:36308`): removes every status on the target that is **Shield and Magical** with `sLv ≤ cut's sLv`. Cat applies it at `sLv = 2 × skill rank` for a flat 1 s (Moon Blade `Cat.cs:35739`, Moon Storm `:36475`).
+
+### cat_backstab5 (#413) — passive, Class C
+- All `hasSkill(413)` sites in `Cat.cs` are Forward Lunge and Reverse Thrust (`:30304`, `:30551`, `:31386`, `:31623`): the whole `hitDmg` (ATK and TAL parts) is doubled before `hit()`, so Power Numbers, dmgAdjust and defAdjust apply afterwards. (`hasSkill(412)` is Lady Luck and `(414)` is Revised Magic, not Backstab.)
+- Client tooltip: EN "Double the damage of forwardLunge and reverseThrust when they are striked from behind."
+
+### Open Wound wiring per skill (2026-09-26)
+- Calls `OpenWound` on every landed hit of: Flying Dagger ×3, Forward Lunge ×5, Reverse Thrust ×2, Heart Ripper ×2, Disarm, Bleed, Moon Blade ×2, Moon Storm ×8, Delta Strike ×7, and Finishing Blow **hit 3 only**.
+- **Combo (`nAttack1-4`, `Cat.cs:16500-19500`):** each strike has a Hidden Blade branch (`hit(331-334, …, hitDmg + hiddenBladeDmg)`, only when `mHiddenBladeDmg != 0` and the target is behind: angle `< 45 (+30 with Jagged Knife #433)`) and a normal branch (`hit(1-4, …, getCritPlus(hitDmg))`). Both branches call `OpenWound` **except stage 2's Hidden Blade hit** (`hit(332)`, `:17390`), whose landed block ends without it (the only `OpenWound` in that class is after the normal `hit(2)`, `:17507`). Stage 4 shares one `OpenWound` tail (`IL_8E7`, `:19099`) between both branches.
+- Encoded in `index.html` as `effectProc.hits` (1-based hit numbers; absent = every hit): Finishing Blow `[3]`; Combo `[1,3,4,5,6]` while Hidden Blade is on, otherwise all six.
