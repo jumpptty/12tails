@@ -19,7 +19,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 | damageRoulette | Damage Roulette | 2 | 60 | true | false | 12 | true |
 | nineLives | Nine Lives | 2 | 60 | true | false | — | — |
 | grandCasinoArcade | Grand Casino Arcade | 2 | 600 | true | false | — | — |
-| flyingDagger | Flying Dagger | 4 | 24 | true | false | — | — |
+| flyingDagger | Flying Dagger | 4 | 24 (rank 1-4: 15/18/21/24) | true | false | — | — |
 | forwardLunge | Forward Lunge | 2 | 30 | true | false | — | — |
 | reverseThrust | Reverse Thrust | 2 | 45 | true | false | — | — |
 | backflip | Backflip | 2 | 15 | true | false | — | — |
@@ -436,3 +436,16 @@ Entries are being written skill by skill; every skill shown in the app needs one
 
 
 
+
+### cat_flyingDagger1-4 (301–304) — active, RANK FAMILY
+- reqLv 3 / 9 / 15 / 21, reqBn 0 / 1 / 2 / 3, MP 0, SP **+10 / +14 / +18 / +22** (positive = blue gate, not consumed), mode target/enemy, `cType flyingDagger` (`decode_skilldata.py`).
+- **Cooldown:** `agiAdjust(12 + sLv×3)` = 15 / 18 / 21 / 24 s (`Cat.cs:29750`). No cast bar (`RPC_flyingDagger`, `Cat.cs:28901-29924`, has no `DisplayCastBar`); the hit lands ~0.6 s after the command (yields 0.2 s → 0.3 s → 0.1 s, then hit; 0.2 s + 0.15 s recovery, `:29791-29833`).
+- **Range / delivery:** cast only when the target is within `sqrMagnitude < 400` = 20 m (`Cat.cs:7519`). The knife is a hitscan `Physics.Raycast(firePos, dir, 20, ~(ownLayer + 2 + 4))` aimed at the target collider's bounds centre (`:29135`, `:29455`), so the first collider on the line takes the hit (any body in the way absorbs it).
+- **Damage (per knife):** `hit(300+sLv, obj, (int)(0.5×ATK + talAdjust(6×sLv)), nKo=1, nHate=0, dir)` (`Cat.cs:29483`, `:29537`, `:29585`). +1 SP per landed hit (`:29489`) and every landed knife calls `OpenWound(hitObject)`, which only acts when the caster has #443 (`Cat.cs:10404+`).
+- **Status:** none.
+- Client tooltips: EN "Throw a flying knife at target enemy, dealing extra 6/12/18/24 damage." / TH "ปามีดบินออกไปทำร้ายเป้าหมายด้วยความเร็วสูง (+6/12/18/24 dmg)" (`CatSkill_eng.cs:550-583`, `CatSkill_thai.cs:572-605`). Code wins: the "extra" is the `talAdjust(6×sLv)` term on top of `0.5×ATK`.
+
+### cat_threeKnives5 (403) — passive, Class C
+- reqLv 55, reqBn 0, MP 0, SP 0, mode passive. All three `hasSkill(403)` checks in `Cat.cs` sit inside `RPC_flyingDagger` (`:29168` extra fire effects + voice, `:29483` center bonus, `:29501` side knives); no other Cat companion file references it (searched `Cat.cs` + `Cat_grandCasinoArcade.cs` + `Cat_supportFire.cs`).
+- **Effect:** Flying Dagger throws **3 knives** in the same frame: the center knife (`talAdjust(6×sLv + 6)`) and two side knives whose raycasts start at `TransformDirection(∓0.6, 0, −0.3)` and fire parallel to the center one (`:29509`, `:29555`); each side knife is `int(0.5×ATK + talAdjust(6×sLv))` (`:29537`, `:29585`), gives its own +1 SP and its own `OpenWound`. A side knife can hit a different body than the center knife.
+- **Tooltip mismatch:** EN "adds 6 damage to them" / TH "เพิ่มความเสียหายขึ้นอีก 6 Dmg" (`CatSkill_eng.cs:990`, `CatSkill_thai.cs:1012`) — the +6 is inside the center knife's `talAdjust` only, not on the side knives.
