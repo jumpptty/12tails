@@ -524,6 +524,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ### Open Wound wiring per skill (2026-09-26)
 - Calls `OpenWound` on every landed hit of: Flying Dagger ×3, Forward Lunge ×5, Reverse Thrust ×2, Heart Ripper ×2, Disarm, Bleed, Moon Blade ×2, Moon Storm ×8, Delta Strike ×7, and Finishing Blow **hit 3 only**.
 - **Combo (`nAttack1-4`, `Cat.cs:16500-19500`):** each strike has a Hidden Blade branch (`hit(331-334, …, hitDmg + hiddenBladeDmg)`, only when `mHiddenBladeDmg != 0` and the target is behind: angle `< 45 (+30 with Jagged Knife #433)`) and a normal branch (`hit(1-4, …, getCritPlus(hitDmg))`). Both branches call `OpenWound` **except stage 2's Hidden Blade hit** (`hit(332)`, `:17390`), whose landed block ends without it (the only `OpenWound` in that class is after the normal `hit(2)`, `:17507`). Stage 4 shares one `OpenWound` tail (`IL_8E7`, `:19099`) between both branches.
+- **App toggle:** one Open Wound icon (default off). On assumes the target already has Disarm Lv 2 and Bleed Lv 2, so each carrying hit adds `30 × (2 + 2)` = 120 purple damage; on Disarm and Bleed it also adds the +3 s to their contested duration. Each card's description ends with an "Open Wound" line saying every hit, or which hits.
 - Encoded in `index.html` as `effectProc.hits` (1-based hit numbers; absent = every hit): Finishing Blow `[3]`; Combo `[1,3,4,5,6]` while Hidden Blade is on, otherwise all six.
 
 ### cat_backflip1-2 — active, RANK FAMILY

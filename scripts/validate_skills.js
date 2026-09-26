@@ -1530,6 +1530,7 @@ let checkedCatPowerTto = 0;
   const dmgCats = SKILLS.filter(s => s.class === "Cat" && (s.dmg || s.dmgGroups || s.comboModel));
   const savedPower = sandbox._depRanks.catPower;
   for (const sk of dmgCats) {
+    if (!treeA.has(sk.id) && !(sk.servers && sk.servers.tto)) fail(`${sk.id}: non-Class-A Cat damage skill has no TTO server entry, so its TTO button is missing`); else checkedCatPowerTto++;
     sandbox._skillRanks[sk.id] = sk.maxRank || 1;
     for (const server of ["og", "tto"]) {
       sandbox._setServer(server);
@@ -1546,6 +1547,20 @@ let checkedCatPowerTto = 0;
       if (r0 !== r4) fail(`${sk.id} on tto: range changes with Power (${r0} vs ${r4})`); else checkedCatPowerTto++;
     }
   }
+  // Open Wound line (user rule 2026-09-26): every card that carries the Open Wound bonus says which hits get it.
+  const owCards = SKILLS.filter(s => s.effectProc && s.effectProc.controls && s.effectProc.controls.some(d => d.id === "openWound"));
+  const heroOf = (sk, server) => { sandbox._setServer(server); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+  for (const sk of owCards) {
+    const h = heroOf(sk, "og");
+    if (!h.includes("Open Wound:") || !h.includes("เพิ่มเติม")) fail(`${sk.id}: no Open Wound bonus-damage line in the description`); else checkedCatPowerTto++;
+  }
+  const fbl = SKILLS.find(s => s.id === "cat_finishingBlow");
+  if (!/sk-tip-red[^>]*>เฉพาะฮิตที่ 3</.test(heroOf(fbl, "og"))) fail("cat_finishingBlow: Open Wound line must say hit 3 only in red"); else checkedCatPowerTto++;
+  const cmb = SKILLS.find(s => s.id === "cat_nAttack");
+  const cmbHtml = heroOf(cmb, "og");
+  if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || !cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง")) fail("cat_nAttack: Open Wound line must say every hit and that stage 2 after a Hidden Blade backstab gets no purple damage"); else checkedCatPowerTto++;
+  const ttoCombo = heroOf(cmb, "tto");
+  if (ttoCombo.includes("Power Seven")) fail("cat_nAttack on tto still mentions Power Seven"); else checkedCatPowerTto++;
   sandbox._setServer("og");
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
 }
