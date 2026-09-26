@@ -120,6 +120,7 @@ const exposeInjection = `
   window._enemyPickerHtml = () => enemyPickerEl.innerHTML;
   window._selectedEnemyId = () => selectedEnemyId;
   window._setServer = (s) => { currentServer = s; };
+  window._renderDmgToggle = renderDmgToggle;
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1574,6 +1575,56 @@ let checkedCatPowerTto = 0;
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
 }
 console.log(`Verified ${checkedCatPowerTto} Cat Power Number TTO checks.`);
+// 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
+// .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
+let checkedDepStrip = 0;
+{
+  const fail = (msg) => { console.error(`[DEP STRIP ERROR] ${msg}`); errorCount++; };
+  const splitStrip = (html) => {
+    const s = html.indexOf('<div class="sk-dep-strip">');
+    if (s < 0) return { strip: "", rest: html };
+    const e = html.indexOf("<!--/sk-dep-strip-->", s);
+    return { strip: html.slice(s, e), rest: html.slice(0, s) + html.slice(e) };
+  };
+  const btnRe = /class="sk-dep-(toggle|rank-icon)[^"]*"[^>]*data-dep-id="([^"]+)"/g;
+  for (const sk of SKILLS) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    sandbox._selectSkill(sk);
+    const html = sandbox._getRenderedHeroHtml();
+    const { strip, rest } = splitStrip(html);
+    // 1. no dep button outside the strip
+    const outside = [...rest.matchAll(btnRe)].map(m => m[2]);
+    if (outside.length) fail(`${sk.id}: dep button(s) outside the strip: ${outside.join(", ")}`); else checkedDepStrip++;
+    // 2. each dep id once in the strip, every item tagged
+    const ids = [...strip.matchAll(btnRe)].map(m => m[2]);
+    const dup = ids.filter((id, i) => ids.indexOf(id) !== i);
+    if (dup.length) fail(`${sk.id}: dep id(s) repeated in the strip: ${dup.join(", ")}`); else checkedDepStrip++;
+    const items = strip.split('<div class="sk-dep-item"').length - 1;
+    const tagged = strip.split('<span class="sk-dep-item-tags"><span class="sk-dep-tag"').length - 1;
+    if (items !== tagged) fail(`${sk.id}: ${items - tagged} strip item(s) without an effect tag`); else checkedDepStrip++;
+    // 3. no empty strip
+    if (strip && items === 0) fail(`${sk.id}: empty .sk-dep-strip rendered`); else checkedDepStrip++;
+  }
+  const byId = (id) => SKILLS.find(s => s.id === id);
+  const stripOf = (id, server) => { if (server) sandbox._setServer(server); const sk = byId(id); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk); const h = splitStrip(sandbox._getRenderedHeroHtml()).strip; sandbox._setServer("og"); return h; };
+  const itemOf = (strip, depId) => { const i = strip.indexOf(`data-dep-id="${depId}"`); if (i < 0) return ""; const e = strip.indexOf('<div class="sk-dep-item"', i); return strip.slice(i, e < 0 ? undefined : e); };
+  // 4. rank-cycle dep keeps its min/max attributes; toggle keeps on/off attributes
+  const mb = stripOf("rabbit_miracleBlend");
+  if (!/data-dep-id="alchemistLab" data-dep-min-rank="0" data-dep-max-rank="4"/.test(mb)) fail("rabbit_miracleBlend: Alchemist Lab strip button lost its rank-cycle attributes"); else checkedDepStrip++;
+  const fd = stripOf("cat_flyingDagger");
+  if (!/data-dep-id="threeKnives" data-dep-toggle-off="0" data-dep-toggle-on="1"/.test(fd)) fail("cat_flyingDagger: Three Knives strip button lost its toggle attributes"); else checkedDepStrip++;
+  // 5. spot checks
+  const dis = itemOf(stripOf("cat_disarm"), "openWound");
+  if (!dis.includes(">DMG<") || !dis.includes(">DUR<")) fail("cat_disarm: Open Wound item must carry DMG and DUR tags"); else checkedDepStrip++;
+  const mbDrop = itemOf(mb, "miracleDrop");
+  if (!mbDrop.includes(">CHANCE<")) fail("rabbit_miracleBlend: Miracle Drop item must carry the CHANCE tag"); else checkedDepStrip++;
+  if (!stripOf("cat_reverseThrust", "og").includes('data-dep-id="catPower"')) fail("cat_reverseThrust on og: Cat Power item missing"); else checkedDepStrip++;
+  if (stripOf("cat_reverseThrust", "tto").includes('data-dep-id="catPower"')) fail("cat_reverseThrust on tto: Cat Power item must be absent"); else checkedDepStrip++;
+  // 6. outside renderHero (no sink) a helper still returns its button
+  const loose = sandbox._renderDmgToggle({ id: "zzLoose", label: "Loose", icon: "cat_openWound5", minRank: 0, maxRank: 1 });
+  if (!loose.includes('data-dep-id="zzLoose"')) fail("renderDmgToggle with no sink must return the button HTML"); else checkedDepStrip++;
+}
+console.log(`Verified ${checkedDepStrip} dependency strip checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
