@@ -24,8 +24,8 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 | reverseThrust | Reverse Thrust | 2 | 45 | true | false | — | — |
 | backflip | Backflip | 2 | 15 | true | false | — | — |
 | heartRipper | Heart Ripper / Finishing Blow | 3 | 120 | true | false | — | — |
-| disarm | Disarm | 2 | 33 | true | false | — | — |
-| bleed | Bleed | 2 | 66 | true | false | — | — |
+| disarm | Disarm | 2 | 33 (rank 1-2: 30/33) | true | false | — | — |
+| bleed | Bleed | 2 | 66 (rank 1-2: 60/66) | true | false | — | — |
 | moonBlade | Moon Blade | 2 | 90 | true | false | — | — |
 | moonStorm | Moon Storm | 2 | 120 | true | false | — | — |
 | deltaStrike | Delta Strike | 2 | 180 | true | false | — | — |
@@ -449,3 +449,29 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - reqLv 55, reqBn 0, MP 0, SP 0, mode passive. All three `hasSkill(403)` checks in `Cat.cs` sit inside `RPC_flyingDagger` (`:29168` extra fire effects + voice, `:29483` center bonus, `:29501` side knives); no other Cat companion file references it (searched `Cat.cs` + `Cat_grandCasinoArcade.cs` + `Cat_supportFire.cs`).
 - **Effect:** Flying Dagger throws **3 knives** in the same frame: the center knife (`talAdjust(6×sLv + 6)`) and two side knives whose raycasts start at `TransformDirection(∓0.6, 0, −0.3)` and fire parallel to the center one (`:29509`, `:29555`); each side knife is `int(0.5×ATK + talAdjust(6×sLv))` (`:29537`, `:29585`), gives its own +1 SP and its own `OpenWound`. A side knife can hit a different body than the center knife.
 - **Tooltip mismatch:** EN "adds 6 damage to them" / TH "เพิ่มความเสียหายขึ้นอีก 6 Dmg" (`CatSkill_eng.cs:990`, `CatSkill_thai.cs:1012`) — the +6 is inside the center knife's `talAdjust` only, not on the side knives.
+
+### cat_disarm1-2 — active, RANK FAMILY
+- reqLv 16 / 20, reqBn 4 / 8, MP 0, SP **+18 / +24** (blue gate), mode target/enemy, `cType disarm` (`decode_skilldata.py`). Status `disarm`: nCode 505 (`StatusData.cs:1075`), Debuff + Physical (`:7376`, `:5427`), not lock/magical/shield.
+- **Cooldown:** `agiAdjust(27 + sLv×3)` = 30 / 33 (`Cat.cs:34345`). No cast bar; hitscan raycast 20 m; hit ~0.6 s after the command (yields 0.2 / 0.3 / 0.1 s, `:34512-34538`). One `hit()` per cast.
+- **Damage:** `hit(99, obj, (int)(0.5×ATK + talAdjust(10×sLv)), nKo=1, 0, dir)` (`Cat.cs:34176`), then `OpenWound(hitObject)`, then the status, then +1 SP.
+- **Status:** `RPC_AddStatus("disarm", sLv, Damage.getDebuff(6 + (hasSkill(443) ? 3 : 0), casterCHA, targetCHA), 10×sLv, caster)` (`:34183-34188`). The Open Wound +3 is **inside** `getDebuff`'s base (6 → 9), so it is CHA-contested with the rest, not a flat add. `getDebuff` (`Damage.cs:317`): `t ≤ 0 diff → floor(base × (1 + diff/(|diff|+64)))`, else `floor(base × (1 + 0.01×diff))` with `diff = casterCHA − targetCHA`.
+- **Effect** (apply site `CharacterControl.cs:36285`): `addTimeOut("nAttack", sTime)` locks the target's normal attack for the whole status time; MP and SP each drop by `sValue = 10×sLv` once (`clamp(x − sValue, 0, max)`). Skills stay usable. Tick (`:9107`) only plays the disarm emoticon.
+- Client tooltips: EN "Throw a dagger at target enemy, temporary disabling its normal attack and reducing 10 [20] mp and 10 [20] sp." / TH "… (+10/+20 dmg, -10/-20 mpsp)" (`CatSkill_eng.cs:726-737`, `CatSkill_thai.cs:748-759`). The "+10/+20 dmg" is the `talAdjust(10×sLv)` term on top of `0.5×ATK`.
+- Accessory-gated block `CharacterControl.cs:13848` (`accessory == "c_all16"`, `lckAdjust(12)`, `RPC_AddDamage(-83…)`) sits in the status-apply path; not traced, not shown on the card.
+
+### cat_bleed1-2 — active, RANK FAMILY
+- reqLv 24 / 28, reqBn 12 / 16, MP **14 / 20**, SP **+18 / +24** (blue gate), `cType bleed`. Status `bleed`: nCode 506 (`StatusData.cs:1086`), Debuff + Physical (`:7382`, `:5433`).
+- **Cooldown:** `agiAdjust(54 + sLv×6)` = 60 / 66 (`Cat.cs:35177`). Same cast shape as Disarm (hitscan 20 m, ~0.6 s, one `hit()`).
+- **Damage:** `hit(99, obj, (int)(0.5×ATK + talAdjust(10×sLv + 5)), 1, 0, dir)` (`Cat.cs:35013`) = +15 / +25 on the TAL term, then `OpenWound`, the status, +1 SP.
+- **Status:** `RPC_AddStatus("bleed", sLv, Damage.getDebuff(12 + (hasSkill(443) ? 3 : 0), casterCHA, targetCHA), 0, caster)` (`:35015-35020`); the Open Wound +3 is inside the contested base, as for Disarm.
+- **Tick** (`CharacterControl.cs:9126-9200`, in `StatusUpdate`, which runs at most every 0.5 s): while `hp > 0 && actionState == "run"` and `Math.mod(2×tickTime, 2) == 0` (`Math.mod` floors its input, so it passes on about every other 0.5 s tick, ≈ once per second), the target takes `RPC_AddEffectDamage(1, 5×sLv, …)` (purple, undodgeable), MP −`3×sLv`, SP −`1×sLv`. The ~1 s interval is derived from that gate and matches the client's "5/10 dps"; a live measurement would override it.
+- Client tooltips: EN "…'bleed1' [bleed2] status that reduces target's hp, mp and sp when it moves (5dps [10dps])" / TH "… (+15/+25 dmg, 5/10dps, 12 sec)" (`CatSkill_eng.cs:748-759`, `CatSkill_thai.cs:770-781`).
+- Accessory-gated block `CharacterControl.cs:13875` (`c_all26`) not traced (same as Disarm's).
+
+### cat_openWound5 (#443) — passive, Class C
+- reqLv 85, reqBn 6, MP 0, SP 0, mode passive.
+- **Duration:** adds 3 to the base passed to `Damage.getDebuff` for `disarm` (6 → 9, `Cat.cs:34183`) and `bleed` (12 → 15, `:35015`), i.e. CHA-contested, not a flat add.
+- **Bonus damage:** `OpenWound(hitObject)` (`Cat.cs:10404-10470`) runs after each landed `hit() != 0`, only for the local caster with #443: `num = 30 × (target disarm Lv + target bleed Lv)`; if `num > 0`, `RPC_AddEffectDamage(443, num, 0, 0, Vector3.zero, caster)`. Purple Effect Damage: no dodge, no dmgAdjust/defAdjust. The 0.1 s timer `mB7xG0SpKp` only throttles the red camera flash and the "OpenWound!" message, **not** the damage.
+- **Order matters:** inside Disarm and Bleed the call precedes `RPC_AddStatus`, so the bonus only counts statuses already on the target.
+- **Skills that call it** (per landed hit, `Cat.cs`): Combo `nAttack1-4` (`:16672-19340`, with Hidden Blade / crit branches), Flying Dagger ×3 (`:29494/29548/29598`), Forward Lunge (`:30457`, `:30704`), Reverse Thrust (`:31539`, `:31776`), Heart Ripper 2 (`:33416`, `:33528`), Disarm (`:34178`), Bleed (`:35010`), Moon Blade (`:35713`, `:35815`), Moon Storm (`:36449`, `:36555`), Delta Strike (`:37603` finisher, `:37927` ticks), Finishing Blow 2 (`:38923`). Lucky Card / Dice / Double Down / Grand Casino / Pillage Plunge / Support Fire never call it.
+- Client tooltips: EN "Adds 3 sec to 'disarm' and 'bleed' status and deals special damage when Cat uses normal attack on them." / TH "เพิ่ม effect dmg ให้ n.atk และสกิลสาย B ของแมว … (30x lv skill)" (`CatSkill_eng.cs:1034`, `CatSkill_thai.cs:1056`). The "30×lv" is the target's disarm Lv + bleed Lv, not the skill rank.
