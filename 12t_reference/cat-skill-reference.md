@@ -537,3 +537,25 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Lock cleanse:** `removeLockStatus(nLv)` (`CharacterControl.cs:19456-19519`) removes `groundLock`, `needlePrison`, `sticky`, `frost` and `lightBind` whose level is ≤ `nLv` (the `lightBind` line is written as `> nLv → break`, the same rule). `nLv` = 2 / 4, or 3 / 5 with Finishing Blow. It never removes `lock` (Delta Strike's root).
 - Client tooltips: EN "Perform a backflip, evading all physical damage. Removes all lv2 [lv4] lock status." / TH "กระโดดกลับตัวหลบการโจมตี ไปด้านหลัง แก้สถานะผิดปกติทางการเคลื่อนไหวที่ต่ำกว่า 3 [5]" (`CatSkill_eng.cs`, `CatSkill_thai.cs`). Code wins on "physical": the evade covers every `hit()`; the TH "lower than 3 / 5" equals the code's "≤ 2 / 4".
 - Not traced: whether Backflip can be cast while rooted (the dispatcher, `Cat.cs:7395-7420`, has no extra gate), so the card does not claim it.
+
+### cat_skillGamble2 (#224) — active, Tree A
+- reqLv 25, reqBn 8, MP 0, Blue SP 5 (`decode_skilldata.py`). SP 5 is positive, so it is a threshold requirement, not consumed on cast (`GameGui.cs:37609`). Mode instant, target self, `cType skillGamble`.
+- **Cooldown:** flat `agiAdjust(30f)` (`Cat.cs:23472`). Revised Art applies. Instant cast (no `DisplayCastBar`).
+- **Roll & Evaluation:** `Random.Range(0, 100) < lckAdjust(50)` (`Cat.cs:23290`).
+- **Success:** `mp = Min(FloorToInt(1.5f * mp), mmp)` and `sp = Min(FloorToInt(1.5f * sp), 100)` (`Cat.cs:23296-23306`), increasing current MP and SP by +50% (capped at max MP and 100 SP).
+- **Failure:** if `hasSkill(422)` (Even Odds) and `isTimeOut("evenOdds") == 0f`, Even Odds intercepts (`Cat.cs:23328-23340`), putting Even Odds on cooldown for `agiAdjust(90f)` and skipping all loss (`goto IL_770`). Otherwise, current MP and SP are halved: `mp = CeilToInt(mp * 0.5f)` and `sp = CeilToInt(sp * 0.5f)` (`Cat.cs:23361-23371`).
+- Client tooltips: TH "สุ่มเพิ่มหรือลด sp และ mp ของ แมว ครึ่งหนึ่งของที่มีอยู่ (50% success)" (`CatSkill_thai.cs:367`); EN "Instantly doubles Cat's mp and sp or reduces them by half (50% success)." (`CatSkill_eng.cs:345`). Code wins on success amount: it adds +50% of current (1.5x), matching the Thai text, not "doubles".
+
+### cat_lifeGamble1 (#223) — active, Tree A
+- reqLv 19, reqBn 6, MP 5, SP 0 (`decode_skilldata.py`). Mode instant, target self, `cType lifeGamble`.
+- **Cooldown:** flat `agiAdjust(30f)` (`Cat.cs:22940`). Revised Art applies. Instant cast (no `DisplayCastBar`).
+- **Roll & Evaluation:** `lckAdjust(50) > Random.Range(0, 100)` (`Cat.cs:22768`).
+- **Success:** `RPC_AddHeal(223, FloorToInt(0.5f * hp), 0, 0, 0, 0, ActorNr)` (`Cat.cs:22774`), healing Cat for +50% of current HP.
+- **Failure:** if `hasSkill(422)` (Even Odds) and `isTimeOut("evenOdds") == 0f`, Even Odds intercepts (`Cat.cs:22801-22813`), putting Even Odds on cooldown for `agiAdjust(90f)` and skipping all self-damage (`goto IL_578`). Otherwise, inflicts self-damage equal to 50% of current HP via `RPC_AddDamage(223, FloorToInt(0.5f * hp), 0, 0, Vector3.zero, ActorNr)` (`Cat.cs:22834`). Because the loss is 50% of current HP, it does not kill Cat outright if HP > 1.
+- Client tooltips: TH "สุ่มเพิ่มหรือลด hp ของแมว ครึ่งหนึ่งของที่มีอยู่ (50% success)" (`CatSkill_thai.cs:356`); EN "Instantly doubles Cat's hp or reduces it by half (50% success)." (`CatSkill_eng.cs:334`). Code wins: heals +50% of current HP (1.5x), matching Thai text, not "doubles".
+
+### cat_evenOdds5 (#422) — passive, Tree A, Class C
+- reqLv 70, reqBn 3, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`, `CatSkill.cs:1143-1155`).
+- **Gamble Protection:** When either Life Gamble (`Cat.cs:22801`) or Skill Gamble (`Cat.cs:23328`) fails, checks `hasSkill(422) && isTimeOut("evenOdds") == 0f`. If ready, fires `RPC_evenOdds` (`Cat.cs:9335`), which puts Even Odds on internal cooldown for `addTimeOut("evenOdds", agiAdjust(90f))` (`Cat.cs:9342`), plays `evenOdds_hit` VFX, and completely nullifies the failure penalty (no HP/MP/SP loss).
+- **Power Shuffle Boost:** In `Cat.cs:22087-22093`, `if (hasSkill(422)) sLv++`. Power Shuffle's stat modifier formula is `FloorToInt(sLv * 0.2f * baseStat)`. Rank 1 (normally sLv 1 = 20%) becomes sLv 2 = 40%; Rank 2 (normally sLv 2 = 40%) becomes sLv 3 = 60%.
+- Client tooltips: TH "ป้องกันความเสียหายจาก lifeGamble และ skillGamble หนึ่งครั้งทุก 90 วิ เพิ่มเลเวลของ powerShuffle ขึ้น 1เลเวล" (`CatSkill_thai.cs:983`); EN "Prevents loss from lifeGamble and skillGamble once every 90 sec. Increases level of powerShuffle by 1." (`CatSkill_eng.cs:961`). Code matches tooltips exactly.
