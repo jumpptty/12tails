@@ -687,6 +687,31 @@ Slayer: MP 12, SP 24 consumed, `mode = target`; All Slayer: MP 24, SP 36 consume
 - **`slayerMark`** (Debuff + Magical, `StatusData.cs:5723`, `:7430`) is read only by those three race checks (`Chameleon.cs:31602, 32630, 33399`); Mark of Slayer applies it at Lv 5 with `Damage.getDebuff(30, …)` duration (`:36792`). Added to `STATUS_CLASS_MAP` / `STATUS_DESC_MAP`.
 - Compat: all 8 cards link to Improved Slayer and Mark of Slayer, and both link back.
 
+## Follow-up, 2026-09-27: Far Reach verified; Slayer is a piercing line
+
+### chm_farReach1-4 (#131-#134) — passive (verified 2026-09-27)
+
+- **Metadata:** reqLv/reqBn 8/4, 16/6, 24/8, 32/10; MP 0, SP 0; `mode = passive` (`scripts/decode_skilldata.py`). `getFarReachLv()` returns 4/3/2/1/0 for `hasSkill(134/133/132/131)`/none (`Chameleon.cs:8716`).
+- **Every read of `getFarReachLv()`:**
+
+| Skill | Effect | Formula | Source |
+|---|---|---|---|
+| Combo (`RPC_nAttack_fire`), Clear Arrow (`RPC_clearArrow_fire`) | arrow `ProjectileControl.life` | `(0.4 + 0.1×FR) × rangeMod` s | `Chameleon.cs:8470`, `:9006` |
+| Quick Fire | cast-range gate | `< 18 + 4×FR` m | `:8232` |
+| Quick Fire | shot raycast distance | `20 + 4×FR` m | `:19467` (used `:19577`, `:19702`, `:19869`) |
+| Right Stride | cast-range gate | `< 18 + 4×FR` m | `:7754` |
+| Right Stride | shot / double-shot `RaycastAll` | `20 + 4×FR` m | `:28342`, `:28392` |
+| Left Stride | cast-range gate only | `< 18 + 4×FR` m | `:7834` |
+| Slayer (all 4) | cast-range gate | `< 24 + 4×FR` m | `:7571` |
+| Slayer (all 4) | arrow line length | `24 + 3×FR` m | `:31455` |
+
+- All Slayer does not read it (fixed 40 m scan). The normal-attack range in metres is `life × velocity`; `velocity` is serialized on the arrow prefab, not in the decompile, so only the client's "+4/8/12/16 m" claim is available (`ChameleonSkill_eng.cs:136-169`). The Thai client text says "+4 m" at every rank (`ChameleonSkill_thai.cs:134-167`), a stale string.
+- App: card `chameleon_farReach` (`passive: true`, per-skill `desc` lines, `compatSkills` to the 9 cards above, each linking back).
+
+### Slayer hits every enemy in a line (correction)
+
+`$RPC_slayer_fire` collects targets with `Damage.FindRecTarget(pos + forward, forward, 0.4 + 0.15×Imp, 0.4 + 0.15×Imp, 24 + 3×FR, 10, layer)` (`Chameleon.cs:31455`) and runs the race / `slayerMark` ×2 check and `hit(320 + sLv, …)` for **each** target in that list (`:31464-31610`): a piercing line of width `0.4 + 0.15×ImprovedSlayerLv` m, not a single-target shot (the summary table's "1/target" means one hit per target). Because the cast gate (`24 + 4×FR`) grows faster than the line (`24 + 3×FR`), at Far Reach ≥ 1 a target near the edge of cast range can be selected but not reached (at FR 4: cast ≤ 40 m, line 36 m). The Slayer card `desc` now says this.
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and
