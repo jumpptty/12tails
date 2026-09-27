@@ -616,7 +616,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ### cat_pillagePlunge5 (#434) — active, Tree B, Class C
 - reqLv 75, reqBn 4, MP 15, Red SP **−30** (`decode_skilldata.py`, `CatSkill.cs:1396-1419`). Mode instant, target enemy, `cType pillagePlunge`.
 - **Cooldown & Mobility:** flat `agiAdjust(120f)` (`Cat.cs:40444`). Revised Art applies. Dashes forward with `moveSpeed = 24` (`:40042`) and temporarily ignores character collision (`Physics.IgnoreCollision`, `:40087`).
-- **Damage & KO:** Hits in a rectangular box (length 4m, width 4m, height 2m; `Damage.FindRecTarget`, `:40172`) via `hit(434, target, (int)(1.5f * atk + talAdjust(45)), 0, 0, 0.5f * Vector3.up)` (`:40195`).
+- **Damage & KO:** Hits in a rectangular box centred on the Cat: `FindRecTarget(position − 2×forward, forward, 2, 2, 4, 2)` (`:40172`) = 4m long (2m behind to 2m ahead), 4m wide (half-width 2), 2m tall via `hit(434, target, (int)(1.5f * atk + talAdjust(45)), 0, 0, 0.5f * Vector3.up)` (`:40195`).
   - Scaling: **1.5 × ATK + talAdjust(45)** (`atkCoeff: 1.5`, `talAdjust(45)`).
   - KO: 0 (slight knock-up `0.5 * Vector3.up`).
 - **Status Application (`pillage` Lv 5):** `RPC_AddStatus("pillage", 5, Damage.getDebuff(30f, caster.cha, target.cha), 0, ActorNr)` (`:40217`). Base duration 30s, contested by target CHA.
