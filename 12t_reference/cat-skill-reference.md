@@ -609,6 +609,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Target Conditions:** Target must receive movement and gravity (`target.recieveMovement && target.recieveGravity`, `Cat.cs:6542-6548`); otherwise fails with `"Cannot use on that target"`.
 - **Teleport Mechanics:** Computes spawn position behind target: `Math.getSpawnPos(target.position - (target.collider.bounds.extents.x + 0.5f) * target.forward)` (`:6557`). If obstructed (`Vector3.zero`), cancels with `"Not enough space."` and refunds MP/SP (`returnMPSP`). On success, warps Cat behind target (`KOIRnET4pM.position = spawnPos + 0.1f * Vector3.up`, `:39597`) and turns to face target (`LookAt`, `:39715`).
 - **Tactical Synergy:** Instantly positions Cat for backstab angle checks on **Hidden Blade** (`mHiddenBladeDmg`) and **Backstab** (x2 multiplier on Forward Lunge and Reverse Thrust).
+- **Range:** no distance gate in `Cat.cs:6528-6600`; the limit is the client's 40 m target lock (`GameGui.cs:4339`, see Mechanics Reference). Card desc: "ในระยะ **40m**".
 - **Damage & KO:** 0 damage, 0 KO.
 - Client tooltips: TH "วาร์ปแมวไปข้างหลังเป้าหมาย" (`CatSkill_thai.cs:104`); EN "Instantly teleports Cat to behind the target." (`CatSkill_eng.cs:104`).
 
