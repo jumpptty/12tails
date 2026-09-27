@@ -513,6 +513,31 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
   - Card: `wolf_perseverance` (`passive: true`, `compatSkills: ["wolf_braveSpirit", "wolf_darkEdge", "wolf_lunarEclipse", "wolf_holySword", "wolf_holyArmor"]`).
   - Dependency toggle: `WOLF_PERSEVERANCE_DEP` (`kind: "postMultiply"`, `multipliers: [1, 1.3, 1.5]`) embedded on the five Wolf self-buff cards.
 
+### wlf_doubleArt1-4 (#131-#134) — passive, rank family (verified 2026-09-27)
+
+- **Metadata:**
+  - Rank 1 (`wlf_doubleArt1`, #131): reqLv 8, reqBn 4, MP 0, SP 0, mode passive, no cType (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`, `WolfSkill.cs:115-127, 2143-2154`).
+  - Rank 2 (`wlf_doubleArt2`, #132): reqLv 16, reqBn 6, MP 0, SP 0, mode passive, no cType (`WolfSkill.cs:128-135, 2136-2142`).
+  - Rank 3 (`wlf_doubleArt3`, #133): reqLv 24, reqBn 8, MP 0, SP 0, mode passive, no cType (`WolfSkill.cs:136-142, 2129-2135`).
+  - Rank 4 (`wlf_doubleArt4`, #134): reqLv 32, reqBn 10, MP 0, SP 0, mode passive, no cType (`WolfSkill.cs:143-150, 2143-2154`).
+- **Engine Mechanics (`Wolf.cs:8235-8350`):**
+  - Every active skill cast on Wolf calls `getDoubleArt()` before adding its cooldown timeout.
+  - **Proc Roll:** `Random.Range(0, 100) < lckAdjust(rank * 6)`.
+    - Rank 1: **6%** base chance (scales with LCK).
+    - Rank 2: **12%** base chance (scales with LCK).
+    - Rank 3: **18%** base chance (scales with LCK).
+    - Rank 4: **24%** base chance (scales with LCK).
+  - **On Proc:** Dispatches visual effect `RPC_doubleArt` / `ActionEvent("RPC_doubleArt", ...)` and returns `false`. The calling skill checks `if (this.getDoubleArt()) { addTimeOut(...); }`; returning `false` skips `addTimeOut`, giving the cast **0s cooldown** (instant free recast).
+- **Class-C Interactions & Exceptions:**
+  - **Feral Assault (#443)** (`Wolf.cs:35400-35412`) & **Dual Brand (#434)** (`Wolf.cs:36665-36680`): Require **Sublime Art (#431)** (`hasSkill(431)`). If Sublime Art is not learned, a Double Art proc still falls through to `addTimeOut` and starts cooldown normally.
+  - **Twin Resonance (#444)** (`Wolf.cs:37207-37213`): Does not require Sublime Art; a Double Art proc directly skips cooldown.
+  - Basic attacks (`nAttack`), charge attacks (`cAttack`), and shared universal skills do not check `getDoubleArt()`.
+- **Client Tooltips:**
+  - TH: *"ให้โอกาสหมาป่าใช้ท่าสกิลโดยไม่มี cool down (6%)"* / *(12%)* / *(18%)* / *(24%)* (`WolfSkill_thai.cs:121-164`).
+  - EN: *"Gives Wolf a 6% / 12% / 18% / 24% chance to use his skill without any cooldown."* (`WolfSkill_eng.cs:121-164`).
+- **App Modeling (`12t_projects/bible/index.html`):**
+  - Card: `wolf_doubleArt` (`passive: true`, `chipCols: { lck: 1 }`, `lckProc: { label: "โอกาสเกิดผล", chance: [6, 12, 18, 24] }`, `compatSkills: ["wolf_sublimeArt", "wolf_feralAssault", "wolf_dualBrand", "wolf_twinResonance"]`).
+
 ### wlf_feralStrike1-4 (#341-#344) — active, rank family (verified 2026-09-25)
 
 - **Metadata:**
@@ -587,6 +612,17 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
 - **Cooldown and passive:** `addTimeOut("twinResonance", agiAdjust(240f))` (`Wolf.cs:37213`), skipped on a Double Art proc (`:37207-37213`); no Sublime Art gate. Revised Art applies.
 - **Expanding repeated hits:** The cast launches `RPC_twinResonance_fire` (`Wolf.cs:37110-37115`). Its counter starts at 0 and ends before 40 (`:37616,37622`); each cycle waits 0.4s (`:37714`). On each cycle it scans a 190-degree sector, height 2m, with search range `3 + 0.8×i` meters (`:37644`), then admits only targets whose transform is within `1 + 0.8×i` meters (`:37663-37668`). Every qualifying cycle calls `hit(444, target, (int)(0.75f*atk + talAdjust(50)), 2, 0, Vector3.zero)` (`:37674`): raw `floor(0.75×ATK + talAdjust(50))`, KO 2, no force, normal direct-hit pipeline. A nearby stationary target can be hit repeatedly, up to 40 times; a target farther than 32.2m from the fire origin fails the distance gate. Damage totals depend on distance, movement, and whether the channel ends early when the caster has no HP/KO (`:37543-37558`). A fixed 40-hit total would misrepresent most targets.
 - **Client text:** EN describes expanding waves that damage a wide area for a short period (`WolfSkill_eng.cs:1080-1089`); TH describes wide-area sword waves (`WolfSkill_thai.cs:1113-1122`).
+
+### wlf_massResurrection1-2 — Mass Resurrection (verified 2026-09-27)
+
+- **Metadata:** rank 1 `setReq(35, 25)`, `setMPSP(45, -35)`; rank 2 reqLv 40, reqBn 27, MP 60, SP −35 (35 SP consumed at both ranks); `mode = instant`, target `ally`, `cType = "massResurrection"` (`WolfSkill.cs:532-560, 1815-1830`; decoded with `scripts/decode_skilldata.py`). No cast bar, no applied status.
+- **Cooldown and passive:** `addTimeOut("massResurrection", agiAdjust(600f))` inside `if (getDoubleArt())` (`Wolf.cs:25255-25261`); a Double Art proc skips it with no Sublime Art gate. Revised Art applies.
+- **Timeline (`RPC_massResurrection`, `Wolf.cs:8648`, generator `Wolf.cs:24835-25402`):** cast → `Yield(2, 0.8s)` → camera motion blur (local player only) → `Yield(3, 0.4s)` → **single revive pulse at 1.2s** → `Yield(4, 0.6s)` → back to standby at 1.8s. Each state checks `actionState == "attack"` and `myCommand == "massResurrection"`; if the cast was interrupted, the pulse does not fire.
+- **Area:** `Damage.FindAreaTarget(position − 4·up, 40, 12, 130816)` — circle radius **40m**, height **12m** (`Wolf.cs:~25030`).
+- **Per-target filter (`Wolf.cs:25060-25158`):** target must be `isPlayer`, `actionState == "dead"`, `Time.time > actionTime + 5` (**dead for more than 5s**), same `mOriginalLayer` as the Wolf (same team), and not `isTransform` / `isSummon` / `isChild`. The roll runs on the target's own client (`isMine`), independently per target: `Random.Range(0, 100) < lckAdjust(25 × sLv)` → base **25%** (rank 1) / **50%** (rank 2), LCK-scaled.
+- **Revive payload:** `ReviveEvent(270 + sLv, CeilToInt(0.5 × mhp), 0, 0, 0, 0, ActorNr)` (`CharacterControl.cs:28338-28470`): HP = `⌈50% max HP⌉`, `mp += 0`, `sp = clamp(msp + 0, 0, 100)` (SP set to max SP), `ko = mko` (full KO); `nHate = 0`, so no hate is generated around the revived player. `ReviveEvent` also requires `recieveRevive` and rejects summons/transforms/children.
+- **Client text:** TH *"เวทมนตร์ที่ให้โอกาสชุบชีวิตเพื่อนทุกคนในระยะ 40 m (50% hp, 25% success)"* / *(50% hp, 50% success)* (`WolfSkill_thai.cs:550-570`); EN *"Release a holy wave that has a 25% / 50% chance of reviving dead allies in the area with 50% of its max hp."* (`WolfSkill_eng.cs:517-535`).
+- **App Modeling:** card `wolf_massResurrection` (`maxRank: 2`, `cost: { mp: [45, 60], sp: 35, spType: "red" }`, `lckProc: { label: "โอกาสชุบชีวิต", chance: [25, 50], simulate: false }`).
 
 ## Class-C Passives
 
