@@ -446,6 +446,15 @@ below for why they were initially left out and then given their own rows.
 - **Shadow Fist interaction and SP gain:** Each successful pulse hit grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:40100-40111`). Shadow Fist's Effect Damage is `3 × ShadowFistRank`, plus `floor(0.16 × character level)` with Spirit Fist (`Panda.cs:9144-9192`, `:35804-35845`).
 - **Duration:** none — the timed pulses are part of the attack animation, not a status or independent field duration.
 
+### pnd_resistance1-4 (#131-#134) — passive, rank family (verified 2026-09-27)
+
+- **Metadata:** reqLv/reqBn 8/4, 16/6, 24/8, 32/10; MP 0, SP 0; `mode = passive`, no cType (`PandaSkill.cs:127-160`; skill IDs `PandaSkill.cs:2345-2386`; decoded with `scripts/decode_skilldata.py`).
+- **Engine hook:** Panda-only block of `RPC_AddStatus` in the base class (`CharacterControl.cs:13441-13580`), after the Roll Around reflect and Safe Guard (#431) checks and before the equipment debuff-resist branch (`:13672`). Highest learned rank sets `num2` (1-4); `Random.Range(0, 100) < lckAdjust(num2 * 4 + 4)` → base **8% / 12% / 16% / 20%**, LCK-scaled, rolled once per incoming status.
+- **Filter:** only `isDebuffStatus(sType) && !isStateStatus(sType)`. On success: `RPC_AddDamage(-83, 0, 0, 0, Vector3.zero, ActorNr)` (rejection feedback, same code as the Dispell/Blessing blocks) and `break` — the status is not applied. No `isSystemStatus` exclusion (unlike the equipment branch).
+- **Cannot block (Debuff ∩ State):** `artCancel`, `blackServant`, `bloodCarnage`, `blueFlag`, `cut`, `darkStalker`, `elementalBound`, `grab`, `overPresence`, `petrify`, `puncture`, `redFlag` — see [12Tails-Mechanics-Reference.md §4](12Tails-Mechanics-Reference.md).
+- **Client text:** TH *"ให้โอกาสแพนด้าในป้องกัน สถานะผิดปกติ (8%)"* … *(20%)* (`PandaSkill_thai.cs:132-169`); EN *"Gives Panda a 8% / 12% / 16% / 20% chance to nullify any negative status."* (`PandaSkill_eng.cs:132-170`).
+- **App Modeling:** card `panda_resistance` (`passive: true`, `chipCols: { lck: 1 }`, `lckProc: { label: "โอกาสป้องกัน", chance: [8, 12, 16, 20], simulate: false }`).
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
