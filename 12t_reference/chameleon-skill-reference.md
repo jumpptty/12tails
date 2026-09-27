@@ -705,7 +705,7 @@ Slayer: MP 12, SP 24 consumed, `mode = target`; All Slayer: MP 24, SP 36 consume
 | Slayer (all 4) | cast-range gate | `< 24 + 4×FR` m | `:7571` |
 | Slayer (all 4) | arrow line length | `24 + 3×FR` m | `:31455` |
 
-- All Slayer does not read it (fixed 40 m scan). The normal-attack range in metres is `life × velocity`; `velocity` is serialized on the arrow prefab, not in the decompile, so only the client's "+4/8/12/16 m" claim is available (`ChameleonSkill_eng.cs:136-169`). The Thai client text says "+4 m" at every rank (`ChameleonSkill_thai.cs:134-167`), a stale string.
+- All Slayer does not read it (fixed 40 m scan). **Normal-attack / Clear Arrow range (verified):** both prefabs (`Effects/nAttack`, `Effects/clearArrow`) carry `Chameleon_nAttack`, whose `Awake()` sets `rigidbody.velocity = forward × 30` (`Chameleon_nAttack.cs:34`) and whose `Init()` raises it to **40** when the owner has Bow Mastery (`hasSkill(401)`, `:100`); `FixedUpdate()` destroys the arrow once its age reaches `ProjectileControl.life` (`:53-62`). Range = speed × life = `30 × (0.4 + 0.1×FR) × rangeMod` = **12 + 3×FR m** (12 / 15 / 18 / 21 / 24 m), or **16 + 4×FR m** with Bow Mastery (16 … 32 m); `rangeMod` is 1 unless a status changes it (`CharacterControl.cs:154`). The client's "+4/8/12/16 m" (`ChameleonSkill_eng.cs:136-169`) is only right with Bow Mastery. The Thai client text says "+4 m" at every rank (`ChameleonSkill_thai.cs:134-167`), a stale string.
 - App: card `chameleon_farReach` (`passive: true`, per-skill `desc` lines, `compatSkills` to the 9 cards above, each linking back).
 
 ### Slayer hits every enemy in a line (correction)
