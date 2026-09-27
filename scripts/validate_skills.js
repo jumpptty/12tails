@@ -919,7 +919,7 @@ SKILLS.forEach(sk => {
 // missing label never surfaced anywhere else until this check existed).
 let checkedLckLabels = 0;
 SKILLS.forEach(sk => {
-  for (const field of ["lckProc", "secondaryLckProc"]) {
+  for (const field of ["lckProc", "secondaryLckProc", "tertiaryLckProc"]) {
     if (!sk[field]) continue;
     checkedLckLabels++;
     if (!sk[field].label) {
