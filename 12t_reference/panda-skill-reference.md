@@ -457,6 +457,15 @@ below for why they were initially left out and then given their own rows.
 - **Stacking with Worm gear:** if the Resistance roll fails, execution falls through to the global equipment debuff-resist roll (`CharacterControl.cs:13588-13660`, see [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md) "Equipment debuff resist"). Panda's Worm set: Worm Knuckle V/R (`w_pnd47`/`48`) +6, Worm Suit V/R (`a_pnd47`/`48`) +6, Worm Cap V/R (`c_pnd47`/`48`) +4 — summed into one `lckAdjust(sum)` roll (full set 16). The two rolls are independent and sequential, so for a Debuff that is neither State nor System: `P(block) = 1 − (1 − lckAdjust(4·rank+4)/100) × (1 − lckAdjust(gear)/100)`. Example at LCK ≤ 1: rank 4 + full set = 1 − 0.80 × 0.84 = **32.8%**. System debuffs only get the Resistance roll.
 - **App Modeling:** card `panda_resistance` (`passive: true`, `chipCols: { lck: 1, lck2: 2 }`, `lckProc: { label: "โอกาสป้องกัน", chance: [8, 12, 16, 20], simulate: false }`, `secondaryLckProc` "โอกาสป้องกันรวม (+ชุดหนอน)" with `deps: [PANDA_GEAR_WORM_WEAPON_DEP, PANDA_GEAR_WORM_ARMOR_DEP, PANDA_GEAR_WORM_CAP_DEP]` and a `calc` implementing the formula above).
 
+### pnd_safeGuard5 (#431) — Safe Guard, Class-C passive (verified 2026-09-27)
+
+- **Metadata:** reqLv 75, reqBn 4, MP 0, SP 0, `mode = passive`, no cType (`scripts/decode_skilldata.py DecompiledSource/PandaSkill.cs`).
+- **Engine hook:** Panda-only block of `RPC_AddStatus` (`CharacterControl.cs:13467-13510`), after the Roll Around branch and **before** Resistance (`:13512`). If `hasSkill(431)`, `isTimeOut("safeGuard") == 0` and `isDebuffStatus(sType)`: `addTimeOut("safeGuard", agiAdjust(180f))`, `ActionEvent("RPC_safeGuard_hit")`, then `break` — the status is not applied. No chance roll and **no State / System filter**: any debuff that reaches `RPC_AddStatus` (Lock, Petrify, Puncture, Drain/Sap, the `death` status…) consumes it. Because it runs first, it is spent even when Resistance would have blocked the same status.
+- **Cooldown:** `agiAdjust(180)`, set again on every client in `RPC_safeGuard_hit` (`Panda.cs:9721-9760`, which also plays `Effects/safeGuard_hit`). Revised Art applies (it lives in `addTimeOut`, Mechanics §3.5). No `-83` resist popup; the feedback is the `safeGuard_hit` effect.
+- **Client text:** EN *"Gives Panda the ability to passively nullify one negative status every 3 minute."* (`PandaSkill_eng.cs:913-917`); TH *"ป้องกันสถานะผิดปรกติที่แพนด้าได้รับทุกๆ 3 นาที"* (`PandaSkill_thai.cs:935-939`).
+- **Live-unverified:** on-hit Drain statuses (e.g. gear `hpDrain`) would consume Safe Guard like any other debuff.
+- **App Modeling:** card `panda_safeGuard` (`passive: true`, `cd: 180`, `cdWrapped: true`, `revisedArtExempt: false`, `compatSkills: ["panda_resistance"]`; Resistance links back).
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
