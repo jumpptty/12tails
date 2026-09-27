@@ -514,3 +514,18 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 - **Probabilities:** per bottle with Miracle Drop = `lckAdjust(5)`% golden; at least one golden in 4 = `1 − (1 − p)^4`. Without Miracle Drop there is no golden potion (types 1-4 only). Both chips are shown on the card.
 - **Statuses** (`StatusData.cs`, apply sites in `CharacterControl.cs`): `miracleDrop` (712, Buff + Magical): `damageMod` and `hitMod` each `+0.1·sLv + 0.1` (`:37667`, remove `:16955`). `reduce` (703, Buff + Physical): `damageMod` / `hitMod` `+0.05·sLv`, `rangeMod −0.1·sLv` (`:37215`). `enlarge` (702, Buff + Physical): `damageMod` / `hitMod` `−0.05·sLv`, `rangeMod +0.1·sLv` (`:37295`). `invisible` (603, Buff + Magical, also `isInvisibleStatus`): monster AI vision checks do not acquire an invisible target (`AI_visionCheck`, e.g. `Alpaca_AI.cs:1093-1345`, same pattern in the other monster AI files; blend is treated the same way); `RPC_AddStatus` refuses it while the target has `fireAvatar`, `earthForm`, `cosmicRift` or `cosmicFriday` (`CharacterControl.cs:11274-11335`). `poison` (605, Debuff + Physical) is documented in the mechanics reference §4.
 - Client tooltips: EN "Randomly mix up three random potions that give 'invisible1', 'enlarge1', 'shrink1' or 'poison1' status for 4 seconds." / TH "สุ่มเสก ยาหายตัว ยาตัวเล็ก ยาขยายร่าง หรือยาพิษ 3 ขวด ลงพื้น (lv.1 potion x3, 4 sec)" (`RabbitSkill_eng.cs:352`, `RabbitSkill_thai.cs`). The tooltip does not mention Miracle Drop's 4th potion or the MP potion.
+
+### Shot range = Combo rank (verified 2026-09-27)
+
+- **No cast-range gate:** `doSkill` aims at the selected target with a flattened direction (`Rabbit.cs:6453-6455`) and starts the shot without checking distance (`:8709`), so the cast works on any locked target (client target lock ≤ 40 m, see [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md) "Target-skill range").
+- **The hit is a single raycast** of length `16 + 5 × getNormalAttackLv()` m (`Physics.Raycast`, first collider on the hit layer), where `getNormalAttackLv()` = Combo rank 0-4 (`hasSkill(101-104)`, `Rabbit.cs:9494`): **16 / 21 / 26 / 31 / 36 m**. A target beyond that is out of reach even though the cast went off. The same `mRange` formula is used by:
+
+| Skill | Source |
+|---|---|
+| Combo (`RPC_nAttack`) | `Rabbit.cs:17581` (ricochet bounce `20 + 5×Combo`, `:17512`) |
+| Charge Attack 2 (`RPC_cAttack2`) | `:19392` (`20 + 5×Combo`) |
+| From the Above | `:22129` |
+| **Maim Shot** | `:23211` (raycast `:23216`) |
+| Medical Shot | `:28183` |
+| Gil Shot | `:30364` |
+| Diamond Shot | `:38258` |
