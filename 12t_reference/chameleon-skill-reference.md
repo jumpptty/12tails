@@ -664,6 +664,28 @@ unchanged, since neither was named in the request.
 Verified: JS syntax clean, CSS comment-strip + brace-balance check clean, confirmed cascade order
 programmatically (override rule's string index > base rule's).
 
+## Follow-up, 2026-09-27: Slayer / All Slayer split into 8 race cards; race logic re-verified
+
+User: "Bug Slayer / Tail Slayer / Elemental Slayer / Machine Slayer and All Bug Slayer / All Tail Slayer / All Elemental Slayer / All Machine Slayer get their own separate cards." The two combined Max-Rank-4 cards (`chameleon_slayer`, `chameleon_allSlayer`) are replaced by 8 Max-Rank-1 cards: `chameleon_bugSlayer`, `chameleon_tailSlayer`, `chameleon_elementalSlayer`, `chameleon_machineSlayer`, `chameleon_allBugSlayer`, `chameleon_allTailSlayer`, `chameleon_allElementalSlayer`, `chameleon_allMachineSlayer`. They are separate skills in every respect that matters to a player: own reqLv/reqBn, own race, and **own cooldown key** (`addTimeOut("slayer" + sLv, …)`, `Chameleon.cs:30820`; `"allSlayer" + sLv`, `:32425`), so all four of a family can be cast back to back.
+
+| Skill | reqLv / reqBn | Race (`eRace`) |
+|---|---|---|
+| `chm_bugSlayer1` | 16 / 4 | Bugs or Plants |
+| `chm_tailSlayer2` | 20 / 8 | Tails |
+| `chm_elementalSlayer3` | 24 / 12 | Elementals |
+| `chm_machineSlayer4` | 28 / 16 | Robots |
+| `chm_allBugSlayer1` | 24 / 15 | Bugs or Plants |
+| `chm_allTailSlayer2` | 27 / 18 | Tails |
+| `chm_allElementalSlayer3` | 30 / 21 | Elementals |
+| `chm_allMachineSlayer4` | 33 / 24 | Robots |
+
+Slayer: MP 12, SP 24 consumed, `mode = target`; All Slayer: MP 24, SP 36 consumed, `mode = instant` (`scripts/decode_skilldata.py`). Cast time `magAdjust(2 + 0.5×ImprovedSlayerLv)` / `magAdjust(4 + ImprovedSlayerLv)` (`:30406`, `:32381`).
+
+- **Slayer race bonus** (`$RPC_slayer_fire`, `Chameleon.cs:31464-31610`, junk predicates evaluated): raw `hitDmg = floor((0.3 + 0.15×Imp)×ATK + talAdjust(20 + 10×Imp))`, KO 5; if the target's `Race` matches `sLv` (1 Bugs/Plants, 2 Tails, 3 Elementals, 4 Robots) **or** it has `slayerMark`, `hitDmg *= 2` before `hit(320 + sLv, …)`; otherwise the arrow still hits for the normal amount. App: `dmgMultDep: CHAMELEON_SLAYER_MATCH_DEP` (`mult: 2`, default on).
+- **All Slayer is a race filter, not a bonus** (correcting the summary table's "same as slayer"): `$RPC_allSlayer_fire` (`Chameleon.cs:32805+`, scan `FindAreaTarget(self, 40, 10)`, `:33216`) hits a target only if its `Race` matches `sLv` **or** it has `slayerMark` (`:33270-33405`), it is on the caster's screen (`Math.isOnScreen`), and fewer than `4 + ImprovedSlayerLv` targets have been hit so far (`:33259`). There is **no ×2**: the hit is `hit(360 + Imp, target, floor((0.6 + 0.3×Imp)×ATK + talAdjust(20 + 20×Imp)), 5, …)`. The cast also marks eligible on-screen targets with `RPC_allSlayer_mark` (`:32590-32645`).
+- **`slayerMark`** (Debuff + Magical, `StatusData.cs:5723`, `:7430`) is read only by those three race checks (`Chameleon.cs:31602, 32630, 33399`); Mark of Slayer applies it at Lv 5 with `Damage.getDebuff(30, …)` duration (`:36792`). Added to `STATUS_CLASS_MAP` / `STATUS_DESC_MAP`.
+- Compat: all 8 cards link to Improved Slayer and Mark of Slayer, and both link back.
+
 ## Open items / could not verify
 
 None outstanding — every one of the 24 active skills was checked for damage/KO/hit-count/dep/lckProc and
