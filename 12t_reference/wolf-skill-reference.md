@@ -627,7 +627,21 @@ The crit multiplies the truncated raw value before `hit()` (or before Dark Edge'
 
 ## Class-C Passives
 
-Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude, Law Bringer, and Blood Fang are written up here, and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, `sublimeArt5`, and `gloriousSpirit5` still need their own entries.
+Class-C (Lv.5) passive-only skills are documented here even though they have no cooldown row in [wolf-skill-reference.md](wolf-skill-reference.md). Fortitude, Glorious Spirit, Law Bringer, and Blood Fang are written up here, and Wild Heart above (next to Feral Instinct); `continuousBlade5`, `skySlasher5`, and `sublimeArt5` still need their own entries.
+
+### wlf_braveSpirit1-4 (skills #201-#204) — active, self-centered ally buff (verified 2026-09-28)
+
+- **Metadata:** reqLv/Bn 3/0, 9/1, 15/2, 21/3; MP 4/6/8/10, SP 0; instant, self (`scripts/decode_skilldata.py DecompiledSource/WolfSkill.cs`; `WolfSkill.cs:191-229`, `:2070-2095`).
+- **Cast** (`RPC_braveSpirit`, `Wolf.cs:20200+`): finds characters on the Wolf's own layer in a cylinder centered on the Wolf, radius `15 × rangeMod` and height `3 × rangeMod` (`Wolf.cs:20451-20489`; `Damage.FindAreaTarget`, `Damage.cs:963-1163`). The caster is included because the search scans all Player/Enemy-tagged objects on that layer without excluding the source.
+- **Status:** every found ally receives `RPC_AddStatus("valor", sLv + (hasSkill(402) ? 2 : 0), chaAdjust(15), 0, ActorNr)` (`Wolf.cs:20489`). `valor` is status code 101 (`StatusData.cs:536-545`), Magical (`:5591-5594`) and Buff (`:6464-6467`), so a receiving Wolf's Perseverance multiplies the already-adjusted duration afterward.
+- **`valor` effect:** apply adds `damageMod += 0.02 + 0.02 × statusLevel` and `deltaRunSpeed(0.1 × statusLevel)` (`CharacterControl.cs:33969-33996`); removal reverses both (`CharacterControl.cs:15068-15080`). `deltaRunSpeed` is a flat addition to `runSpeed`, not a percentage (`CharacterControl.cs:20858-20862`). Thus ranks 1-4 grant +4/+6/+8/+10% outgoing damage and +0.1/+0.2/+0.3/+0.4 base run speed before Glorious Spirit.
+- **Cooldown:** `agiAdjust(30)` behind the normal Double Art check (`Wolf.cs:20576-20587`). Power Break removes `valor` when it applies (`CharacterControl.cs:34000-34019`).
+
+### wlf_gloriousSpirit5 (skill #402) — Class-C passive (verified 2026-09-28)
+
+- **Metadata:** reqLv 55, reqBn 0; MP 0, SP 0; passive; requires Brave Spirit rank 4 (`rSkill = 204`) (`WolfSkill.cs:1029-1050`).
+- **Effect:** Brave Spirit checks `hasSkill(402)` at the application site and adds exactly **+2** to the applied `valor` level (`Wolf.cs:20489`). This raises every Brave Spirit rank's outgoing-damage bonus by another **+4 percentage points** and base run speed by another **+0.2**; ranks 1-4 therefore become `valor3-6` (+8/+10/+12/+14% damage, +0.3/+0.4/+0.5/+0.6 run speed).
+- The passive also swaps Brave Spirit's cast effect and voice assets to the Glorious Spirit variants, but does not change MP cost, area, duration or cooldown (`Wolf.cs:20345-20415`, `:20638-20709`).
 
 ### wlf_fortitude5 (421) — passive
 

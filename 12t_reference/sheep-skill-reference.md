@@ -380,7 +380,22 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Root: `CharacterControl.cs:2491` — `this.moveSpeed = 0f;`.
   - Damage: `CharacterControl.cs:9369` — `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (every 1.0s, deals 6×(sLv+depLv) true effect damage per tick, reaching 30 damage at Rank 4 + Intense Bind; no burst finisher).
   - **Live observation (2026-09-25):** Light Bind grants knockback immunity. Keep this player-observed behavior in the app status description. In the decompiled `ApplyMovement()` branch, `lightBind` sets only `moveSpeed = 0` (`CharacterControl.cs:2485-2495`), whereas `needlePrison` and `groundLock` also clear `myForce` (`:2358-2372`, `:2392-2406`); `MovementUpdate()` adds `myForce` independently of `moveSpeed` (`:2722`). The additional live suppression path remains unverified; see [12Tails-Mechanics-Reference.md §4.4](12Tails-Mechanics-Reference.md#44-knockback-force-versus-movement-roots-charactercontrolcs).
-  - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). The shared Free Cast hook rolls `lckAdjust(12 × Free Cast rank)`; on success it refunds the skill's MP cost, or 125% of that cost when Return Cast (#431) is learned (`Sheep.cs:10046-10100`). These passive cards need their own `/sd` review before authoring their full descriptions.
+  - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). See the verified Free Cast and Return Cast mechanics below.
+
+## Free Cast
+
+- **Metadata:** `shp_freeCast1/2` are passive skills requiring Lv 32/Bn 6 and Lv 40/Bn 10 respectively, with no MP or SP cost (`SheepSkill.cs:129-147`, `:2226-2241`; decoded with `scripts/decode_skilldata.py`).
+- **Proc chance:** `getFreeCastLv()` returns rank 1 for skill #131 and rank 2 for #132 (`Sheep.cs:10047-10049`). Each eligible completed cast rolls `Random.Range(0, 100) < lckAdjust(12 × rank)`, giving base values 12/24 before LCK adjustment (`Sheep.cs:10054-10076`). The English tooltip's 6%/12% values are stale and do not match the executed 12/24 inputs (`SheepSkill_eng.cs:141-156`).
+- **Refund:** On success without Return Cast, the hook looks up the exact cast skill metadata and restores `skill.cMP`, making the cast's net MP cost zero (`Sheep.cs:10076-10082`, `:10111-10125`).
+- **Eligible casts:** The normal hook is called after Quick Heal, Heal, Bless, All Heal, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Revive, Revert, Holy Light, Light Bind, Illuminate, Feather, All Feather, Divinity Sword, Divinity Spear, Seal, Repel and Reverse (`Sheep.cs:10402`, `:22044`, `:22779`, `:23085`, `:23694`, `:24281`, `:24783`, `:25277`, `:25738`, `:26233`, `:26763`, `:27273`, `:28044`, `:28832`, `:29306`, `:29810`, `:30279`, `:30827`, `:31544`, `:32749`, `:33143`, `:33570`). Eden Sanctuary and World Encarta also call the hook directly (`Sheep.cs:37069-37075`, `:38348-38354`).
+- **Excluded MP skills:** Soul of Arms and Book Bash never call `getFreeCast`, so neither can proc Free Cast even when Return Cast is learned. Soul of Arms dispatches into its cast coroutine without a refund hook (`Sheep.cs:7975-8005`, `:33696-34588`); Book Bash likewise dispatches directly into `RPC_bookBash` (`Sheep.cs:7586-7633`, `:37224-37857`). A full-file search finds no `getFreeCast("soulOfArms", ...)` or `getFreeCast("bookBash", ...)` call. Book Bash is the special no-cooldown Lv 75/Bn 4 active documented above, not a normal skill-table entry.
+
+## Return Cast
+
+- **Metadata:** `shp_returnCast5` is a passive requiring Lv 75/Bn 4 and Free Cast rank 2 (#132), with no MP or SP cost (`SheepSkill.cs:1049-1069`; decoded with `scripts/decode_skilldata.py`).
+- **Enhanced refund:** When Return Cast (#431) is learned, a successful Free Cast restores `FloorToInt(1.25 × skill.cMP)` instead of the exact cost, for a net MP gain of 25% subject to integer truncation (`Sheep.cs:10085-10101`).
+- **Class-C access:** Purifying Tear, Lullaby and Divinity Axe only call `getFreeCast(..., 5)` when Return Cast is learned (`Sheep.cs:35014-35026`, `:35659-35671`, `:36356-36368`). This matches the tooltip's stated Class-C unlock (`SheepSkill_eng.cs:900-904`).
+- **Later skills:** Eden Sanctuary and World Encarta call Free Cast without a Return Cast gate, so they remain eligible even without this passive (`Sheep.cs:37069-37075`, `:38348-38354`).
 - **`illuminate`**:
   - Cast Time: `Sheep.cs:21424` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21429` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
