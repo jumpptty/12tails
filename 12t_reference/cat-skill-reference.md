@@ -678,3 +678,41 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - Thus, Copycat only replicates **Regular Damage (white damage)**. Effect damage (such as Poison DoT, Dark Edge, or another Copycat) is ignored and will not overwrite the target's `mLastDamage`.
   - If `mLastDamage <= 0` (target has not yet taken regular damage), Copycat fails and alerts: `"Copycat fail: no damage to copy"` (`Cat.cs:26635`).
 - Client tooltips: TH "ทำความเสียหายที่เป้้าหมาย ได้รับครั้งสุดท้ายอีกครั้ง (75% dmg)" / "(100% dmg)" (`CatSkill_thai.cs:488, 499`); EN "Instantly deals damage equal to 75% / 100% of the last damage that its has received." (`CatSkill_eng.cs:466, 477`).
+
+### cat_evasion1-3 (#361, #362, #363) — passive, Tree B, RANK FAMILY
+- reqLv 24 / 27 / 30, reqBn 15 / 18 / 21, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:3106-3128`). Mode passive, target null, `cType null`.
+- **Evasion Chance & Multiplier (`CharacterControl.cs:3246-3359`):**
+  - Base chance: `rank * 4%` (Rank 1: **4%**, Rank 2: **8%**, Rank 3: **12%**).
+  - Running Bonus: When moving/running (`actionState == "run"`), base chance is doubled (`num2 *= 2` → Rank 1: **8%**, Rank 2: **16%**, Rank 3: **24%**).
+  - Scaling: `UnityEngine.Random.Range(0, 100) < characterControl.lckAdjust(chance)` (scaled by Cat's own LCK).
+- **Execution & Status Restrictions:**
+  - Hard CC Check: Passive evasion is completely disabled if Cat is afflicted by hard CC (`sleep`, `snowMan`, `snowBall`, `petrify`, `paralysis`).
+  - On Successful Evade: Dispatches `RPC_AddDamage(-82)` (displays `EVADE` combat popup), cancels incoming damage and KO entirely (returns 0 damage).
+  - Synergy with `cat_vendetta`: Automatically triggers `characterControl.RPC_AddHeal(364, 0, 0, 10, 0, 0, characterControl.ActorNr)` to restore **+10 SP** if `cat_vendetta1` is learned.
+- Client tooltips: TH "ทำให้แมวมีโอกาสหลบการโจมตี และเพิ่มเป็นสองเท่าหากวิ่งอยู่ (4% / 8% / 12%)" (`CatSkill_thai.cs:836-867`); EN "Gives Cat a chance to evade attacks and doubles the chance when running (4% / 8% / 12%)." (`CatSkill_eng.cs:836-867`).
+
+### cat_vendetta1 (#364) — passive, Tree B, Class C
+- reqLv 33, reqBn 24, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:3139`). Mode passive, target null, `cType null`. Requires `cat_evasion3`.
+- **Mechanics (`CharacterControl.cs:3238, 3347`):**
+  - Triggers on every successful Evade performed by Cat.
+  - Compatible with all Cat evasion sources: passive `cat_evasion` and active iframe during `cat_backflip`.
+  - Effect: Dispatches `characterControl.RPC_AddHeal(364, 0, 0, 10, 0, 0, characterControl.ActorNr)`, instantly restoring **+10 SP** (Blue SP).
+- Client tooltips: TH "เพิ่ม 10 sp ให้แมวทุกครั้งที่แมว evade สำเร็จ" (`CatSkill_thai.cs:869`); EN "Restores 10 SP every time Cat successfully evades an attack." (`CatSkill_eng.cs:869`).
+
+### cat_nineLives1-2 (#263, #264) — passive, Tree A, RANK FAMILY
+- reqLv 30 / 33, reqBn 21 / 24, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:2798-2809`). Mode passive, target null, `cType null`.
+- **Trigger & Activation (`Cat.cs:207-350`):**
+  - Fires upon receiving lethal damage (`hp <= 0`, `actionState != "dead"`, and `getStatus("death") == null`).
+  - Priority Order on Death:
+    1. `blackServant` (revives / consumes status).
+    2. `autoLife` (revives with `sLv * 100` HP).
+    3. Small Anubi Pet (`p_sab`).
+    4. `cat_nineLives` proc check.
+  - Proc Chance: `UnityEngine.Random.Range(0, 100) < this.mChar.lckAdjust(nineLivesLv * 6)` → Base **6%** (Rank 1) / **12%** (Rank 2), scales with Cat's LCK via `lckAdjust`.
+- **Revival Effects (`Cat.cs:27238-27674`, `$RPC_nineLives$21898`):**
+  - Revives Cat with **HP 99** (`mChar.hp = 99`).
+  - Resets KO to full max KO (`mChar.ko = mChar.mko`).
+  - Grants **3 seconds of Invincibility (noDamage)**: `mChar.StartCoroutine_Auto(mChar.addStatus("noDamage", 1, 3, 0, ActorNr))`.
+  - Sets internal cooldown timeout: `mChar.addTimeOut("nineLives", mChar.agiAdjust(60f))` (**60s base cooldown**, reduced by Cat's AGI via `agiAdjust`). Revised Art applies.
+  - Plays animation `getUp` and character voice line (`nineLives1` / `nineLives2`).
+- Client tooltips: TH "ทำให้แมวมีโอกาสฟื้นคืนชีวิตเมื่อตาย (6% / 12%)" (`CatSkill_thai.cs:528-548`); EN "Gives Cat a chance to revive upon death (6% / 12%)." (`CatSkill_eng.cs:528-548`).
