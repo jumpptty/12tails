@@ -190,6 +190,21 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 Entries are being written skill by skill; every skill shown in the app needs one (no exclusions).
 
+### cat_awareness1-2 (#121-122) — active, Tree A
+- reqLv **6 / 12**, reqBn **2 / 4**, MP **0 / 0**, red SP **−3 / −5**; instant, self-targeted (`decode_skilldata.py`, `CatSkill.cs:100-124`). Cooldown is a bare **1 s**, without `agiAdjust` (`Cat.cs:8574`).
+- The actual radius is `12 × sLv` = **12 / 24 m** (`Cat.cs:8674`). `Damage.FindAreaTarget` applies `awareness` at the matching level for a flat **1 s** to nearby characters outside the Cat's own layer (`Cat.cs:8792-8837`). The status removes `blend` and `invisible` on application (`CharacterControl.cs:36204-36227`). The cast also reveals nearby hidden item renderers and triggers `TreasureFound` for treasure boxes within that radius (`Cat.cs:8922-9041`).
+- With **Treasure Hunt** #123, it additionally collects every loaded `treasureBox` tagged `Item` (no radius check in this collection) and calls `displayTreasure(..., chaAdjust(5))` to show them on the minimap (`Cat.cs:8867-8916`, `GameGui.cs:5606-5625`). With **Insight** #421, it gives the Cat `insight` Lv 1 for `chaAdjust(3)` (`Cat.cs:8848-8854`).
+- Client tooltip: EN says **12 / 18 m** (`CatSkill_eng.cs:99-114`); the rank-2 **18 m** conflicts with the cast's `12 × sLv` and is not used on the card. TH says it reveals invisible things (`CatSkill_thai.cs:99-115`).
+
+### cat_treasureHunt1 (#123) — passive, Tree A
+- reqLv **18**, reqBn **6**, MP/SP **0**, passive (`decode_skilldata.py`, `CatSkill.cs:124-135`). Its hook is `hasSkill(123)` inside Awareness (`Cat.cs:8890-8916`): when Awareness is cast, treasure-box locations appear on the minimap for **`chaAdjust(5)` seconds**. The minimap list is assembled before the cast's radius check, so the locations are not limited to Awareness's 12 / 24 m reveal radius. Physical treasure-box reveal still follows the radius check (`Cat.cs:8922-8945`).
+- Client TH and EN tooltips describe the minimap effect (`CatSkill_thai.cs:121-125`, `CatSkill_eng.cs:121-125`; the EN key is misspelled `cat_teasureHunt1`).
+
+### cat_insight5 (#421) — passive, Class C
+- reqLv **70**, reqBn **3**, prerequisite skill **#123 Treasure Hunt**, MP/SP **0**, passive (`decode_skilldata.py`, `CatSkill.cs:1008-1024`). On every Awareness cast, the Cat receives `insight` Lv 1 for **`chaAdjust(3)` seconds** (`Cat.cs:8848-8854`).
+- `insight` is **Buff + State** (`StatusData.cs:4908`, `:6662`). Trap and structure handlers explicitly check `hasStatus("insight")` before damaging the target; examples include Cactun Trap (`CactunTrap.cs:63-69`), Guard Tower (`GuardTower.cs:1236`), Flying Cacton (`FlyingCacton.cs:218-229`), and Mole traps (`Mole.cs:10636`, `:11138`, `:11577`). This is protection at those handlers, not a universal damage-immunity status.
+- Client TH and EN tooltips describe trap/structure protection on Awareness use (`CatSkill_thai.cs:924-928`, `CatSkill_eng.cs:902-906`).
+
 ### cat_joker5 (402) — passive, Class C
 - reqLv 55, reqBn 0, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`). The only two `hasSkill(402)` checks in the Cat source are inside `RPC_luckyCard` (`Cat.cs:20850`, `:20870`) — Joker modifies **Lucky Card only**.
 - **Damage bonus:** `hitDamage = (int)(hitDamage + 0.5 × (casterLCK − targetLCK))` (`Cat.cs:20856`). Unlike the base random roll, which is floored with `Mathf.Max(…, 0)` (`:20845`), this term is **not clamped**: against a target with higher LCK than the Cat it is negative and **reduces** Lucky Card's damage. The Joker card carries a red warning for this.
