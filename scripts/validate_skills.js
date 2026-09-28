@@ -1091,6 +1091,8 @@ SKILLS.forEach(sk => {
 // fails the build. A dep is "resolved" once some skill's own id matches
 // "<classPrefix>_<dep.id>" (every observed dep so far lives in the same class
 // as the skill(s) that reference it).
+// Standalone combat-condition / stack-count toggles that do not correspond to an individual passive skill card.
+const PSEUDO_DEPS = new Set(["doomStack", "slayerRaceMatch"]);
 const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep", "lckDiffDep"];
 const seenDeps = new Map(); // dep.id -> { label, resolved, referencedBy: [] }
 SKILLS.forEach(sk => {
@@ -1099,7 +1101,7 @@ SKILLS.forEach(sk => {
     const dep = sk[field];
     if (!dep || !dep.id) return;
     if (!seenDeps.has(dep.id)) {
-      seenDeps.set(dep.id, { label: dep.label || dep.id, resolved: skillById.has(classPrefix + dep.id), referencedBy: [] });
+      seenDeps.set(dep.id, { label: dep.label || dep.id, resolved: skillById.has(classPrefix + dep.id) || PSEUDO_DEPS.has(dep.id), referencedBy: [] });
     }
     seenDeps.get(dep.id).referencedBy.push(sk.id);
   });
@@ -1347,20 +1349,20 @@ let checkedWolfCombo = 0;
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "wolf_nAttack");
-  const IDS = ["wolfFeralInstinct", "wolfWildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion"];
+  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion"];
   const savedDeps = IDS.map(id => [id, deps[id]]);
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
   check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
   // Coefficients: Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
-  setDeps({ wolfFeralInstinct: 4, wolfWildHeart: 1 }); select(3);
+  setDeps({ wolfFeralInstinct: 4, wildHeart: 1 }); select(3);
   const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral 4 + Wild Heart coefficients", coeffs === "0.75,0.75,0.75,0.6,0.9", coeffs);
   setDeps({}); select(3);
   const c0 = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral off coefficients", c0 === "0.5,0.5,0.5,0.4,0.6", c0);
-  setDeps({ wolfFeralInstinct: 0, wolfWildHeart: 1 }); select(3);
+  setDeps({ wolfFeralInstinct: 0, wildHeart: 1 }); select(3);
   check("Wild Heart without Feral Instinct adds nothing", sk.dmgGroups.every(g => sandbox._resolveGroupAtkCoeff(sk, g) === (g.label.includes("first") ? 0.4 : g.label.includes("second") ? 0.6 : 0.5)));
   // Hit counts 2 / 3 / 5.
   [2, 3, 5].forEach((want, i) => { select(i + 1); const got = sk.dmgGroups.reduce((a, g) => a + sandbox._resolveGroupHitCount(sk, g), 0); check(`rank ${i + 1} hit count`, got === want && sk.hitCount(i + 1) === want, got); });
@@ -1383,7 +1385,7 @@ let checkedWolfCombo = 0;
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
     [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => ["", "wolfGearMarshal", "wolfGearChampion"].forEach(gear => {
-      const o = { wolfFeralInstinct: f, wolfWildHeart: wh, wolfDarkEdgeOn: de }; if (gear) o[gear] = 1;
+      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de }; if (gear) o[gear] = 1;
       setDeps(o);
       for (let r = 1; r <= 3; r++) {
         select(r);

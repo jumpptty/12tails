@@ -444,6 +444,10 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ## Server Balance Variations
 
 ### Twelve Tails Online (TTO)
+- **Feline Agility (#131–#134) Weight Reduction Removed:**
+  - **Base BigBug Engine:** Each rank reduces Cat weight by −3 tg (`CharacterDataClass.cs:778, 795, 812, 829`), granting `+0.12` runspeed per rank (+0.48 at max rank) in addition to +5 AGI per rank (+0.10 runspeed per rank).
+  - **TTO Server Balance Delta (live-server observation reported by user):** On TTO, Feline Agility no longer reduces weight. It only grants **+5 AGI per rank** (+20 AGI at max rank), yielding only `+0.10` moveSpeed per rank (+0.40 at max rank).
+
 - **Power Number Series Restriction to Skill Tree A:**
   - **Base BigBug Engine:** In `CharacterControl.cs:2838-3010`, the Power Number series (`cat_powerOne`, `cat_powerTwo`, `cat_powerThree`, `cat_powerSeven`, `cat_superSeven`) checks `if (this.Type == "Cat")` inside `CharacterControl.hit()`, applying raw damage multipliers (`floor(raw × 1.1 / 1.2 / 1.3 / 1.7)`) globally to **all Cat damage skills** (Combo, Charge Attack, Skill Tree A Gambler skills, and Skill Tree B Assassin skills).
   - **TTO Server Balance Delta (live-server observation reported by the user, 2026-09-25; not in the decompiled client):** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
@@ -644,3 +648,33 @@ Entries are being written skill by skill; every skill shown in the app needs one
   2. **No re-equipping armor:** equipping into the armor slot, from the inventory (`GameGui.cs:13119`) or the equip command path (`:35394`), is refused with "You have been pillaged!" while `hasStatus("pillage")`. Armor slot only: the accessory (`GameGui.cs:13204`, `:35487`), boots (`:13266`, `:35556`) and weapon branches of the same handlers have no Pillage check.
   - `removeStatus("pillage")` has no reversal (`CharacterControl.cs:16278`, empty branch), so the monster DEF loss stays.
 - Client tooltips: TH "พุ่งเข้าลอกคราบเป้าหมาย ทำให้ armor หลุดออกจากตัว player หรือลด 10Def ถาวรเมื่อใช้กับ NPC (12 Sec)" (`CatSkill_thai.cs:115`); EN "Dashes and strips enemy armor or permanently reduces NPC's DEF by 10 (12 Sec)." (`CatSkill_eng.cs:115`). Note: Code wins over tooltip's "(12 Sec)" note: base duration is `Damage.getDebuff(30f, caster.cha, target.cha)`.
+
+### cat_felineAgility1-4 (#131, #132, #133, #134) — passive, Tree B, RANK FAMILY
+- reqLv 8 / 19 / 24 / 32, reqBn 4 / 6 / 8 / 10, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:2420-2463`). Mode passive, target null, `cType null`.
+- **Stat Modifications (`CharacterDataClass.cs:767-834`, `CharacterControl.cs:23001-23060`):**
+  - **AGI:** Each rank adds **+5 AGI** to `statList[2]` (Rank 1: +5, Rank 2: +10, Rank 3: +15, Rank 4: +20).
+  - **Weight Reduction:** Each rank subtracts **3 tg** from `this.weight` (Rank 1: −3 tg, Rank 2: −6 tg, Rank 3: −9 tg, Rank 4: −12 tg). Cat base weight is 35 tg (`CharacterData.cs:175`).
+- **Effect on Runspeed (`CharacterDataClass.cs:979`):**
+  - Formula: `runspeed = 0.01f * ((400 + 2 * AGI) - 4 * Mathf.Max(weight + reducedWeight, 0))`
+  - Decreasing weight by 3 tg adds `0.01 * 4 * 3 = +0.12` to `runspeed` per rank (+0.12 / +0.24 / +0.36 / +0.48).
+  - Increasing AGI by 5 adds `0.01 * 2 * 5 = +0.10` to `runspeed` per rank (+0.10 / +0.20 / +0.30 / +0.40).
+  - Total runspeed increase: **+0.22** per rank (+0.22 / +0.44 / +0.66 / +0.88).
+- Client tooltips: TH "ลดน้ำหนักตัวลงเพื่อเพิ่มความเร็วให้กับแมว (-3 tg, +5 agi)" (`CatSkill_thai.cs:136`); EN "Reduces Cat's weight to increase move speed (-3 tg, +5 agi)." (`CatSkill_eng.cs:136`).
+- **Server Balance Variations (TTO):** Weight reduction is removed on TTO. Only the +5 AGI per rank applies (+0.10 moveSpeed per rank). See Server Balance Variations above.
+
+### cat_copycat1-2 (#243, #244) — active, Tree A, RANK FAMILY
+- reqLv 28 / 32, reqBn 18 / 21, MP **18 / 24**, SP 0 (`decode_skilldata.py`, `CatSkill.cs:513-535`, `:2754-2765`). Mode target, target enemy (`CatSkill.cs:1904-1905`), `cType copycat`.
+- **Cooldown & Cast:** flat `agiAdjust(120f)` (`Cat.cs:26723`). Revised Art applies. Cast time instant (plays animation `pointTarget`, `Cat.cs:26732`).
+- **Target Lock & Execution:** Targets an enemy within target lock range (up to 40m, `GameGui.cs:4339`). Checks target's `mLastDamage` (`Cat.cs:26602`).
+- **Damage Formula & Effect Damage Pathway (`Cat.cs:26608`):**
+  - Executes: `tChar.RPC_AddEffectDamage(252 + sLv, (int)((0.25f * sLv + 0.5f) * tChar.mLastDamage), 0, 0, Vector3.zero, caster.ActorNr)`.
+  - Multiplier:
+    - Rank 1: `(0.25 * 1 + 0.5) = 0.75` (**75% of target's mLastDamage**).
+    - Rank 2: `(0.25 * 2 + 0.5) = 1.00` (**100% of target's mLastDamage**).
+  - Damage Type: **Effect Damage (ดาเมจม่วง)** — bypasses target DEF (`defAdjust`), bypasses `dmgMod`, cannot be dodged or blocked (`hit()` bypassed), and scales with target's `hitMod` (Floor after `hitMod`).
+  - KO: 0 (`nKo: 0`).
+- **Engine Mechanic — `mLastDamage` Filter:**
+  - In `CharacterControl.cs:31686`, `mLastDamage` is ONLY written by regular damage (`RPC_AddDamage`). `RPC_AddEffectDamage` (`:6209, :6559-7000`) does NOT write to `mLastDamage`.
+  - Thus, Copycat only replicates **Regular Damage (white damage)**. Effect damage (such as Poison DoT, Dark Edge, or another Copycat) is ignored and will not overwrite the target's `mLastDamage`.
+  - If `mLastDamage <= 0` (target has not yet taken regular damage), Copycat fails and alerts: `"Copycat fail: no damage to copy"` (`Cat.cs:26635`).
+- Client tooltips: TH "ทำความเสียหายที่เป้้าหมาย ได้รับครั้งสุดท้ายอีกครั้ง (75% dmg)" / "(100% dmg)" (`CatSkill_thai.cs:488, 499`); EN "Instantly deals damage equal to 75% / 100% of the last damage that its has received." (`CatSkill_eng.cs:466, 477`).
