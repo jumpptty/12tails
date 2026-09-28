@@ -125,6 +125,8 @@ CharacterControl.cs:20487-20671, and no subclass overrides them. Seven of them r
 `defAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust` and `talAdjust`. The other four have **no** `R`:
 `koAdjust`, `hateAdjust`, `forceAdjust` (plain `*Mod` multipliers) and `lckAdjust` (reads LCK directly, clamped 1-512).
 
+> **Server Difference (TTO, user-reported live change 2026-09-28, not in the decompiled client):** Tailstopia Online removed `R` from `talAdjust`, `dmgAdjust` and `defAdjust`, which are now `R = 0` there. `agiAdjust`, `magAdjust` and `chaAdjust` keep their roll. Call sites that add their own inline `Random.Range(0, ceil(0.2 × LCK))` outside these three functions are not covered by this report and are assumed unchanged, for example Wolf Dark Edge's Effect Damage (`Wolf.cs:15267`) and Cat No Chance's flat `0.3 × LCK` (not a roll). The Bible applies this with `tdlRoll(R)` inside its `talAdjustAtRoll` / `dmgAdjustAtRoll` / `defAdjustAtRoll`.
+
 ### 2.2 Attacker side
 **`dmgAdjust(d)`** outgoing damage (CharacterControl.cs:20487):
 ```
@@ -498,6 +500,8 @@ Status effects are queried at runtime via static boolean predicates in `StatusDa
 - `mpDrain` / `spDrain` / `koDrain`: take `min(sValue, current)` from the target and `RPC_AddHeal` the same amount of MP / SP / KO to the caster (`:33543-33670`).
 - Being System statuses, the equipment debuff-resist roll skips them, but Panda Resistance does not (see [panda-skill-reference.md](panda-skill-reference.md)). Trinkets add their own `lckAdjust(24)` block: `t_mal56`/`t_fem56` vs `mpSap`/`mpDrain`/`manaBurn`, `t_mal66`/`t_fem66` vs `hpSap`/`hpDrain` (`:13919-13952` → `:14225-14280`).
 - Appliers: `hpDrain`/`mpDrain` from every class file (e.g. `Bat.cs:22152`), `spDrain` from `Bat.cs`, `mpSap` from `ManaVortex.cs`/`ReefBug.cs`; no `RPC_AddStatus` caller for `hpSap`, `spSap`, `koDrain`, `koSap` in the decompile.
+
+> **Server Difference (TTO, user-reported live change 2026-09-28, not in the decompiled client):** on Tailstopia Online the Poseidon Bow (+12%) and Poseidon Helmet (+8%) `hpDrain` proc chance no longer goes through `lckAdjust`. The full set is a flat 20%, or 40% with Chameleon Double Effect (which doubles the base). Other gear procs are not covered by this report. The Bible's Character Hit Mod sim models this with its BB/TTO server toggle.
 
 **Equipment debuff resist (verified 2026-09-27, `CharacterControl.cs:13588-13660` + labels `:14315-14333`, all classes).** Inside `RPC_AddStatus`, after the class-specific blocks: `num3 = 0`; `getInteger(weapon)` 47 or 48 → +6; `getInteger(armor)` 47 or 48 → +6; `getInteger(accessory)` 47 or 48 → +4; `getInteger(accessory)` 19 → +3. If `num3 > 0` and `isDebuffStatus && !isStateStatus && !isSystemStatus`, one roll `Random.Range(0, 100) < lckAdjust(num3)` rejects the status (`RPC_AddDamage(-83)` + `break`). Item 47/48 = each class's bug-themed "prevention of negative statuses" set (e.g. Panda Worm Knuckle/Suit/Cap, Wolf scorpion hat, Bison beetle helmet); accessory 19 = the class "Helps protect against abnormal status" hats (e.g. Panda mushroom hat `c_pnd19`). `Stringf.getInteger`'s body is not in the decompile (the firstpass `Stringf.cs` is an empty stub), so whether it matches only the trailing number (and so whether e.g. `c_all19` also counts) is inferred, not verified. The same function then has per-status accessory resists (`ice`: `c_all21`/`c_all22`, `snowMan`: `c_all29`, `sleep`: `c_mal37`/`c_fem37`, `corruption`: `c_all27`, …; the ice/snowMan/sleep ones roll `lckAdjust(12)`, `:13660+`).
 

@@ -121,6 +121,7 @@ const exposeInjection = `
   window._selectedEnemyId = () => selectedEnemyId;
   window._setServer = (s) => { currentServer = s; };
   window._renderDmgToggle = renderDmgToggle;
+  window._usesTdlRoll = usesTdlRoll;
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1575,6 +1576,52 @@ let checkedCatPowerTto = 0;
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
 }
 console.log(`Verified ${checkedCatPowerTto} Cat Power Number TTO checks.`);
+// TTO removed the LCK roll from talAdjust/dmgAdjust/defAdjust (tdlRoll). Sweep every card with a
+// TTO button from usesTdlRoll: on TTO its final damage range must not move with enemy LCK (only
+// defAdjust reads it) nor with player LCK (unless the card reads LCK directly).
+let checkedTtoNoLck = 0;
+{
+  const fail = (msg) => { console.error(`[TTO NO-LCK ERROR] ${msg}`); errorCount++; };
+  const ins = sandbox._statInputs;
+  const saved = [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value];
+  ins.atk.value = "200"; ins.tal.value = "80";
+  const rangesAt = (sk, server, lck, enemyLck) => {
+    sandbox._setServer(server); ins.lck.value = String(lck); ins.enemyLck.value = String(enemyLck);
+    sandbox._selectSkill(sk);
+    const parts = sk.dmgGroups
+      ? sk.dmgGroups.map(g => sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g)))
+      : [sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, sk.maxRank || 1)))];
+    return JSON.stringify(parts);
+  };
+  const readsLck = (sk) => !!(sk.lckProc || sk.lckCoeff !== undefined || sk.lckDiffCoeff !== undefined || sk.effectLckRoll
+    || sk.casinoArcade || sk.comboModel || /lckAdjust\(|LCK/.test(String(sk.dmg) + JSON.stringify(sk.dmgGroups || [])));
+  let bbVaries = 0;
+  // Formulas on a runtime variable (Vortex HP, InventoryWeight) need inputs calcRangeFor alone does not have.
+  const needsVars = (sk) => /Vortex|InventoryWeight/.test(sandbox._getDmgText(sk, sk.maxRank || 1) + JSON.stringify(sk.dmgGroups || []));
+  for (const sk of SKILLS.filter(s => sandbox._usesTdlRoll(s) && !needsVars(s))) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    try {
+      const base = rangesAt(sk, "tto", 150, 0);
+      const enemy = rangesAt(sk, "tto", 150, 200);
+      if (sk.lckDiffCoeff === undefined && base !== enemy) fail(`${sk.id} on tto: enemy LCK changes damage (${base} vs ${enemy})`); else checkedTtoNoLck++;
+      if (!readsLck(sk)) {
+        const player = rangesAt(sk, "tto", 0, 0);
+        if (base !== player) fail(`${sk.id} on tto: player LCK changes damage (${player} vs ${base})`); else checkedTtoNoLck++;
+      }
+      if (rangesAt(sk, "og", 150, 0) !== rangesAt(sk, "og", 150, 200)) bbVaries++;
+    } catch (e) { fail(`${sk.id}: range threw ${e.message}`); }
+  }
+  // Guards the sweep itself: if BB stops varying too, the ranges above are not reading LCK at all.
+  if (bbVaries < 50) fail(`only ${bbVaries} cards vary with enemy LCK on BB, so the TTO sweep proves nothing`);
+  sandbox._setServer("og");
+  [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value] = saved;
+}
+// Random.Range(0, ceil(0.2*LCK)) excludes its max: LCK 50 gives the 10 rolls 0..9, not 0..10.
+{
+  const dist = sandbox.lckDistribution(0, 0, 50, (b, s, R) => R, v => v);
+  if (dist.length !== 10 || dist[9].label !== "9" || dist[0].pct !== 10) { console.error(`[LCK DIST ERROR] LCK 50 gave ${dist.map(d => d.label).join(",")}`); errorCount++; } else checkedTtoNoLck++;
+}
+console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
 // 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
 // .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;
