@@ -594,6 +594,17 @@ The exported Unity scenes contain **52 scripted candidate placements in 23 scene
 | M972_IceTower9 | `13.523, 28, 1.965` (M972_IceTower9.unity:5089)<br>`-8.158, 18, 3.453` (M972_IceTower9.unity:5136)<br>`13.802, 68, -2.839` (M972_IceTower9.unity:5183)<br>`-9.687, 48, 2.841` (M972_IceTower9.unity:5230) |
 | M973_PirateCave2 | `-89.474, 55.21, 97.739` (M973_PirateCave2.unity:8116)<br>`74.909, 47.63, 19.339` (M973_PirateCave2.unity:8645)<br>`22.883, 58.438, 31.178` (M973_PirateCave2.unity:9591)<br>`83.212, 58.378, 72.798` (M973_PirateCave2.unity:13391) |
 
+### 4.6 Team containers and team-wide skills (`Game.cs`)
+Every spawned character is re-parented under a scene object named `"Team" + (layer - 7)`:
+```csharp
+string name = "Team" + (gameObject.layer - 7);
+GameObject gameObject2 = GameObject.Find(name);
+gameObject.transform.parent = gameObject2.transform;
+```
+(`Game.cs:2924-2926`, same pattern at `:4120-4122` and `:4405-4407`.)
+
+A skill that loops over `self.gameObject.transform.parent` and keeps children tagged `"Player"` therefore reaches **every player on the caster's team, including the caster, anywhere in the scene**. There is no distance, party or line-of-sight filter unless the loop adds one. Example: Sheep All Cleanse (`Sheep.cs:25756-25835`, see [sheep-skill-reference.md](sheep-skill-reference.md)). Its tooltip says "all players in the same team", which matches the team container, not the party list.
+
 ---
 
 ## 5. Items & equipment

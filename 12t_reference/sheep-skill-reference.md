@@ -307,7 +307,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_sleep` | Sleep | 2 | [18, 21] MP | 90s | [6, 8]s | [15, 20]s | Sleep CC | — | Single-target sleep for (10 + 5×sLv)s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
 | `sheep_clear` | Clear | 2 | [12, 16] MP | [12, 18]s | [2, 3]s | — | Cleanse 1 debuff | — | Cleanses 1 negative status from target ally. |
 | `sheep_cleanse` | Cleanse | 1 | 28 MP | 30s | 4s | — | Cleanse debuffs | — | Targeted status cleanse. |
-| `sheep_allCleanse` | All Cleanse | 1 | 54 MP | 90s | 6s | — | Party cleanse | — | Cleanses debuffs from all party members. |
+| `sheep_allCleanse` | All Cleanse | 1 | 54 MP | 90s | 6s | — | Team cleanse | — | Applies `cleanse` Lv4 (Purify Lv5) to every player on the caster's team, no range limit. |
 | `sheep_overHeal` | Over Heal | 2 | [26, 34] MP | [30, 45]s | [4, 6]s | — | `talAdjust(20 + 30×sLv)` | 0 | Offensive opening burst against full HP enemies (`hp == mhp`). Deals `talAdjust(20+30×sLv)` magic damage, capped at (20%+10%×sLv) of target Max HP (30% at R1, 40% at R2). Deals 0 damage if target `hp != mhp`. |
 | `sheep_revive` | Revive | 2 | [28, 36] MP | [240, 180]s | [4, 5]s | — | `talAdjust(50×sLv)` | 0 | Resurrects fallen ally with HP scaling with TAL and Benediction. |
 | `sheep_revert` | Revert | 1 | 50 MP, 50 SP (red) | 900s | 6s | — | 100% HP/MP/KO reset | — | Complete emergency recovery. |
@@ -485,6 +485,15 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
     - **Active Immunity Ward:** `CharacterControl.cs:13024-13050` — while `getStatusLv("cleanse") >= sLv`, any incoming status that is `(isPhysicalStatus || isMagicalStatus) && isDebuffStatus` is blocked with `RPC_AddDamage(-83, ...)`.
   - Free Cast hook: `Sheep.cs:25277` — `this.getFreeCast("cleanse", this.$sLv$27864);`.
   - Other source: War Flag's area pulse (`Sheep.cs:42709`) also applies `RPC_AddStatus("cleanse", 4, 1, ...)` to allied players hit by its `Damage.FindAreaTarget` pulse (fixed values, no Purify bonus).
+
+- **`allCleanse`**:
+  - Cast Time: `Sheep.cs:21333-21338` — `this.$mCastTime$27748 = (float)6;` (magAdjusted via `:21588`).
+  - Cooldown: `Sheep.cs:21344` — `this.$mTimeOut$27749 = 90;` (agiAdjusted via `:21606`).
+  - Resource Cost: 54 MP / 0 SP, Lv 36 / Bn 16, `mode: instant`, `target: ally` (`shp_allCleanse1`, decoded from `SheepSkill.cs`).
+  - Tooltip: `SheepSkill_eng.cs:417` — "Cast a spell that removes all lv.4 negative status from all players in the same team." (Thai `SheepSkill_thai.cs:441`: "รักษาอาการผิดปกติที่เลเวลต่ำ กว่า 5 ทั้งหมดของเพื่อนในทีม").
+  - Dispatch: `Sheep.cs:20364` — `RPC_allCleanse_cast(...)`. Free Cast hook: `Sheep.cs:25738` — `getFreeCast("allCleanse", sLv)`.
+  - Targets: `Sheep.cs:25756-25775` iterates `self.gameObject.transform.parent` and keeps children tagged `"Player"`. Characters are parented under `"Team" + (layer - 7)` (`Game.cs:2924-2926`), so this reaches **every player on the caster's team, caster included, with no range or party limit** (see [12Tails-Mechanics-Reference.md §4.6](12Tails-Mechanics-Reference.md#46-team-containers-and-team-wide-skills-gamecs)).
+  - Status Effect: `Sheep.cs:25835` — the same `"cleanse"` status as Cleanse, applied per target from the caster's client only (`isMine`): Lv. 4 (Purify: Lv. 5), flat 1.0s (Purify: flat 6.0s), unwrapped. Removal and immunity behavior: see `cleanse` above.
 
 - **`purify`**:
   - Metadata: `shp_purify5` is a passive requiring Lv 85 / Bn 6 and All Cleanse (`rSkill: 244`, `SheepSkill.cs:1218, 1228`), with 0 MP / 0 SP cost (`mode = eSkillMode.passive;`, `:1223`).
