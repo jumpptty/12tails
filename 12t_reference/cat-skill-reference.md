@@ -453,6 +453,14 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - **TTO Server Balance Delta (live-server observation reported by the user, 2026-09-25; not in the decompiled client):** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
   - **Support Fire (#444):** This Class C skill receives the Power Number raw-damage multiplier in the base BigBug `hit()` pipeline, but does not receive it on TTO under the observed Tree A restriction.
 
+- **Swift Pace (#431) cooldown reset on player kill:**
+  - **Base BigBug Engine:** the only cooldown write is `addTimeOut("swiftPace", agiAdjust(90f))` at cast (`Cat.cs:39712`); nothing in `Cat.cs` or `CharacterControl.cs` clears it early.
+  - **TTO Server Balance Delta (reported by the user, 2026-09-28; not in the decompiled client):** killing a Player resets Swift Pace's cooldown.
+
+- **Copycat (#243-244) clears the target's last damage in PvE:**
+  - **Base BigBug Engine:** Copycat reads `tChar.mLastDamage` (`Cat.cs:26602-26608`) but never clears it; the only write is `RPC_AddDamage` (`CharacterControl.cs:31686`), so repeated casts can copy the same hit.
+  - **TTO Server Balance Delta (reported by the user, 2026-09-28; not in the decompiled client):** in PvE, using Copycat clears the target's last damage immediately, so the next Copycat needs a new white-damage hit first.
+
 
 
 
