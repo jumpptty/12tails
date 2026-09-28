@@ -457,3 +457,26 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 - **`edenSanctuary`**:
   - Cast Time: `0` (instant).
   - Cooldown: `Sheep.cs:36951` — `this.mChar.addTimeOut("edenSanctuary", this.mChar.agiAdjust(240f));`.
+
+- **`clear`**:
+  - Cast Time: `Sheep.cs:21305` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (Rank 1: 2.0s, Rank 2: 3.0s, magAdjusted via `:21588`).
+  - Cooldown: `Sheep.cs:21310` — `this.$mTimeOut$27749 = 6 + 6 * this.$sLv$27762;` (Rank 1: 12.0s, Rank 2: 18.0s, agiAdjusted via `:21606`).
+  - Resource Cost: Rank 1: 12 MP / 0 SP (`SheepSkill.cs:388`), Rank 2: 16 MP / 0 SP (`SheepSkill.cs:395`).
+  - Requirements: Rank 1: Lv 12 / Bn 4 (`SheepSkill.cs:383`), Rank 2: Lv 20 / Bn 8 (`SheepSkill.cs:1652`).
+  - Status Effect: `Sheep.cs:24881` — `RPC_AddStatus("clear", 2 * sLv + ((!hasSkill(442)) ? 0 : 1), 1 + ((!hasSkill(442)) ? 0 : 5), 0, casterActorNr)`.
+    - Classification: `StatusData.cs:6036` & `6203` — `"Buff, Magical"` (`isBuffStatus == true`, `isMagicalStatus == true`, nCode `1103`).
+    - Base Status Level: Rank 1 = Lv. 2, Rank 2 = Lv. 4 (with Purify: Rank 1 = Lv. 3, Rank 2 = Lv. 5).
+    - Base Duration: Flat 1.0s uncontested (with Purify: flat 6.0s uncontested, unwrapped).
+  - Mechanics on Target:
+    - **On-Cast Cleanse:** `CharacterControl.cs:39387-39405` immediately iterates `mStatusList` and removes all active Physical Debuffs (`isPhysical() && isDebuff()`) with `status.sLv <= clear.sLv`.
+    - **Active Immunity Ward:** `CharacterControl.cs:12997-13023` checks `if (getStatusLv("clear") >= sLv)` when any new status is added. If `StatusData.isPhysicalStatus(sType) && StatusData.isDebuffStatus(sType)`, it calls `RPC_AddDamage(-83, ...)` to block/immunize the target against the incoming debuff for the duration.
+  - Free Cast hook: `Sheep.cs:24783` — `this.getFreeCast("clear", this.$sLv$27851);`.
+
+- **`purify`**:
+  - Metadata: `shp_purify5` is a passive requiring Lv 85 / Bn 6 and All Cleanse (`rSkill: 244`, `SheepSkill.cs:1218, 1228`), with 0 MP / 0 SP cost (`mode = eSkillMode.passive;`, `:1223`).
+  - Tooltip: `SheepSkill_eng.cs:892` — "Increases Clear and Cleanse's level by 1 and prolongs their effects to 6 seconds." (Thai: "เพิ่มระยะเวลาของ Clear กับ Cleanse เป็น 6วิ และ เพิ่มระดับการรักษาขึ้น 1 ระดับ").
+  - Passive Hooks (`hasSkill(442)`):
+    - **Clear (`Sheep.cs:24881`):** Increases status level by +1 (`sLv = 2*rank + 1`) and extends duration to flat 6s (`1 + 5`).
+    - **Cleanse (`Sheep.cs:25375`):** Increases status level by +1 (`sLv = 4 + 1 = 5`) and extends duration to flat 6s (`1 + 5`).
+    - **All Cleanse (`Sheep.cs:25835`):** Increases status level by +1 (`sLv = 4 + 1 = 5`) and extends duration to flat 6s (`1 + 5`).
+
