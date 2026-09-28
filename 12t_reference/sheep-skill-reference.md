@@ -472,6 +472,20 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
     - **Active Immunity Ward:** `CharacterControl.cs:12997-13023` checks `if (getStatusLv("clear") >= sLv)` when any new status is added. If `StatusData.isPhysicalStatus(sType) && StatusData.isDebuffStatus(sType)`, it calls `RPC_AddDamage(-83, ...)` to block/immunize the target against the incoming debuff for the duration.
   - Free Cast hook: `Sheep.cs:24783` — `this.getFreeCast("clear", this.$sLv$27851);`.
 
+- **`cleanse`**:
+  - Cast Time: `Sheep.cs:21321` — `this.$mCastTime$27748 = (float)4;` (magAdjusted via `:21588`).
+  - Cooldown: `Sheep.cs:21327` — `this.$mTimeOut$27749 = 30;` (agiAdjusted via `:21606`).
+  - Resource Cost: 28 MP / 0 SP, Lv 28 / Bn 12, `mode: target`, `target: ally` (`shp_cleanse1`, decoded from `SheepSkill.cs`).
+  - Tooltip: `SheepSkill_eng.cs:406` — "Cast a spell that removes all lv.4 negative status from a taget." (Thai `SheepSkill_thai.cs:430`: "รักษาอาการผิดปกติที่เลเวลต่ำ กว่า 5 ทั้งหมดของเป้าหมาย").
+  - Status Effect: `Sheep.cs:25375` — `RPC_AddStatus("cleanse", 4 + ((!hasSkill(442)) ? 0 : 1), 1 + ((!hasSkill(442)) ? 0 : 5), 0, casterActorNr)`.
+    - Classification: `StatusData.cs:5849` (`isMagicalStatus`) & `:6884` (`isBuffStatus`) — `"Buff, Magical"`, nCode `1104` (`:1735`, `:4021`).
+    - Status Level: Lv. 4 (with Purify: Lv. 5). Duration: flat 1.0s (with Purify: flat 6.0s), uncontested, unwrapped.
+  - Mechanics on Target (differs from Clear: covers **Physical and Magical** debuffs, Clear covers Physical only):
+    - **On-Cast Cleanse:** `CharacterControl.cs:39458-39545` iterates `mStatusList` and removes every status with `status.sLv <= cleanse.sLv` that is `(isPhysical() || isMagical()) && isDebuff()`.
+    - **Active Immunity Ward:** `CharacterControl.cs:13024-13050` — while `getStatusLv("cleanse") >= sLv`, any incoming status that is `(isPhysicalStatus || isMagicalStatus) && isDebuffStatus` is blocked with `RPC_AddDamage(-83, ...)`.
+  - Free Cast hook: `Sheep.cs:25277` — `this.getFreeCast("cleanse", this.$sLv$27864);`.
+  - Other source: War Flag's area pulse (`Sheep.cs:42709`) also applies `RPC_AddStatus("cleanse", 4, 1, ...)` to allied players hit by its `Damage.FindAreaTarget` pulse (fixed values, no Purify bonus).
+
 - **`purify`**:
   - Metadata: `shp_purify5` is a passive requiring Lv 85 / Bn 6 and All Cleanse (`rSkill: 244`, `SheepSkill.cs:1218, 1228`), with 0 MP / 0 SP cost (`mode = eSkillMode.passive;`, `:1223`).
   - Tooltip: `SheepSkill_eng.cs:892` — "Increases Clear and Cleanse's level by 1 and prolongs their effects to 6 seconds." (Thai: "เพิ่มระยะเวลาของ Clear กับ Cleanse เป็น 6วิ และ เพิ่มระดับการรักษาขึ้น 1 ระดับ").
