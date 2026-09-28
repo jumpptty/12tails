@@ -556,6 +556,38 @@ Incoming direct damage can add a knockback vector to `myForce` (`CharacterContro
 
 `noForce` is a distinct status, not an automatic part of `StatusData.isLockStatus()`: that predicate names `groundLock`, `needlePrison`, `sticky`, `frost` and `lightBind` (`StatusData.cs:6133-6238`), while the `noForce` branch is separately keyed by its own `sType` in `ApplyMovement()`. Sheep Light Bind applies only `RPC_AddStatus("lightBind", ...)` (`Sheep.cs:28898-28902`); no `noForce` application appears in `Sheep.cs`. **Live-server discrepancy:** the user reports that Light Bind also prevents knockback in play (2026-09-25). That observation takes precedence for the player-facing tool; the decompiled client does not expose the additional force suppression, so its implementation path remains unverified. Needle Prison and Ground Lock need no `noForce` status to block force in the decompiled client.
 
+### 4.5 Hidden treasure-box placements and spawn rule
+
+`TreasureBox.Start()` rolls once when the scene loads. It destroys a candidate box if `Random.Range(0, 100) < num`, where `num` is 40/30/20/10 for wood/silver/gold/diamond (`TreasureBox.cs:20-86`; `eTreasureBoxLv.cs:5-17`). A surviving box is renamed `treasureBox` and all child renderers are disabled (`TreasureBox.cs:93-115`). Cat Awareness reveals surviving boxes within its 12/24 m radius (`Cat.cs:8922-8945`; `TreasureBox.cs:402-449`). With Treasure Hunt, Awareness marks all loaded surviving boxes on the minimap, regardless of reveal radius (`Cat.cs:8867-8916`).
+
+The exported Unity scenes contain **52 scripted candidate placements in 23 scenes**. These are possible spawn points, not guaranteed boxes on every run. Coordinates below are scene positions `(x, y, z)`, rounded to 0.001 unit. Each `file:line` citation is relative to `RippedAssets/ExportedProject/Assets/Scene/` and points to that object's Transform. The scene YAML omits serialized `mLv`, so its `TreasueBox1/2/3` names do **not** verify a wood/silver/gold/diamond tier.
+
+| Scene | Candidate positions `(x, y, z)` and source |
+|---|---|
+| M105_NeedleCave | `-67.682, 41.337, 78.889` (M105_NeedleCave.unity:6758)<br>`37.727, 39.165, 57.406` (M105_NeedleCave.unity:7250)<br>`22.184, 42.799, 33.385` (M105_NeedleCave.unity:7297) |
+| M205_CrossingPlainLagoon1 | `22.031, 50.183, 81.221` (M205_CrossingPlainLagoon1.unity:5996) |
+| M206_GrandTheftMupo1 | `-9.784, 50.577, -9.506` (M206_GrandTheftMupo1.unity:15024) |
+| M401_DownFromVolcano1 | `-29.649, 42.952, 36.446` (M401_DownFromVolcano1.unity:5998)<br>`24.131, 43.063, 37.065` (M401_DownFromVolcano1.unity:6056)<br>`47.55, 45.928, -6.177` (M401_DownFromVolcano1.unity:6103) |
+| M401_DownFromVolcano2 | `57.927, 44.508, -37.093` (M401_DownFromVolcano2.unity:10261)<br>`-24.574, 46.503, -9.735` (M401_DownFromVolcano2.unity:10214) |
+| M403_CactonGarden | `27.306, 50.089, 18.315` (M403_CactonGarden.unity:4537) |
+| M504_WaterTemple | `12.279, 40.006, 32.65` (M504_WaterTemple.unity:7641)<br>`-47.5, 51, -77.5` (M504_WaterTemple.unity:7688)<br>`47.5, 51, -77.5` (M504_WaterTemple.unity:7735) |
+| M505_SunkenCity2 | `51.236, 50.002, -33.146` (M505_SunkenCity2.unity:6525)<br>`-48.477, 50.031, 33.906` (M505_SunkenCity2.unity:7135)<br>`3.924, 51.197, -15.433` (M505_SunkenCity2.unity:7182) |
+| M603_ShadeInTheCity2 | `-30.432, 49.999, -50.93` (M603_ShadeInTheCity2.unity:12821)<br>`15.42, 50.971, -2.061` (M603_ShadeInTheCity2.unity:12774)<br>`-15.5, 50.955, -7.23` (M603_ShadeInTheCity2.unity:12727) |
+| M606_WalrusGoneMad | `-18.001, 50.014, -2.779` (M606_WalrusGoneMad.unity:6012)<br>`-5.184, 50.002, -17.358` (M606_WalrusGoneMad.unity:7888) |
+| M701_StrangeNewFoe | `-22.71, 50.4, -49.685` (M701_StrangeNewFoe.unity:6937)<br>`76.627, 50.612, 135.202` (M701_StrangeNewFoe.unity:7039) |
+| M702_EasternWorldDivide2 | `-35.426, 50.374, 91.142` (M702_EasternWorldDivide2.unity:8673)<br>`-107.018, 50.063, -89.736` (M702_EasternWorldDivide2.unity:8720) |
+| M704_ZappaBaseEntrance | `-39.314, 50.237, 79.071` (M704_ZappaBaseEntrance.unity:8000) |
+| M805_LightVaultCleaning | `-33.399, 50, 16.124` (M805_LightVaultCleaning.unity:3728)<br>`74, 50, 2` (M805_LightVaultCleaning.unity:3775) |
+| M903_ShadowPalace2 | `211.002, 50, 224.993` (M903_ShadowPalace2.unity:30136)<br>`250.445, 50, -173.293` (M903_ShadowPalace2.unity:30260)<br>`-249.988, 50, 229.065` (M903_ShadowPalace2.unity:30307)<br>`-125.642, 50, -17.977` (M903_ShadowPalace2.unity:30354) |
+| M932_WindHollow1 | `34.708, 31.365, -101.196` (M932_WindHollow1.unity:9151)<br>`-50.354, 37.498, -85.02` (M932_WindHollow1.unity:9732) |
+| M971_MaohsTomb1 | `0, 94.039, 43` (M971_MaohsTomb1.unity:4734) |
+| M971_MaohsTomb4 | `0, 50, 4` (M971_MaohsTomb4.unity:6726) |
+| M971_MaohsTomb8 | `12, 50, 122` (M971_MaohsTomb8.unity:7354)<br>`-12, 50, 122` (M971_MaohsTomb8.unity:7436) |
+| M971_MaohsTomb9 | `54, 50, 72` (M971_MaohsTomb9.unity:9389)<br>`0, 50, 64` (M971_MaohsTomb9.unity:9471)<br>`-36, 50, 195` (M971_MaohsTomb9.unity:9483)<br>`-48, 50, 195` (M971_MaohsTomb9.unity:9565) |
+| M972_IceTower8 | `-6.42, 43.379, -15.104` (M972_IceTower8.unity:5349) |
+| M972_IceTower9 | `13.523, 28, 1.965` (M972_IceTower9.unity:5089)<br>`-8.158, 18, 3.453` (M972_IceTower9.unity:5136)<br>`13.802, 68, -2.839` (M972_IceTower9.unity:5183)<br>`-9.687, 48, 2.841` (M972_IceTower9.unity:5230) |
+| M973_PirateCave2 | `-89.474, 55.21, 97.739` (M973_PirateCave2.unity:8116)<br>`74.909, 47.63, 19.339` (M973_PirateCave2.unity:8645)<br>`22.883, 58.438, 31.178` (M973_PirateCave2.unity:9591)<br>`83.212, 58.378, 72.798` (M973_PirateCave2.unity:13391) |
+
 ---
 
 ## 5. Items & equipment
