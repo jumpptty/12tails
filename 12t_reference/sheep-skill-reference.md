@@ -301,7 +301,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :---: | :--- |
 | `sheep_heal` | Heal | 4 | [6, 12, 18, 24] MP | [14, 16, 18, 20]s | [2, 3, 4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Single-target heal scaling with TAL and Benediction (+15%/rank). |
 | `sheep_bless` | Bless | 4 | [8, 16, 24, 32] MP | [45, 60, 75, 90]s | [3, 4, 5, 6]s | 30s | +8/12/16/20 all stats | — | Buffs all 8 stats by `4 + 4×sLv` for 30s (`chaAdjusted`). Gospel passive fixes CD to 30s and grants +1 status level (+4 all stats). |
-| `sheep_quickHeal` | Quick Heal | 2 | [12, 16] MP, [5, 8] SP (red) | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` | 0 | Instant 3m AoE heal around caster scaling with TAL and Benediction (hits up to 5 allies, or 7 with KO Heal). |
+| `sheep_quickHeal` | Quick Heal | 2 | [12, 16] MP, [5, 8] SP (red) | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` | 0 | Instant AoE heal around caster scaling with TAL and Benediction. Radius 5m (7m with KO Heal), height `3 × rangeMod`, no target cap (`Sheep.cs:10418`, `Damage.FindAreaTarget(pos, radius, height, mask)`). With KO Heal also restores `+sLv` KO. |
 | `sheep_allHeal` | All Heal | 2 | [34, 45] MP | [45, 60]s | [4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Map-wide party heal (unlimited range) scaling with TAL and Benediction. |
 | `sheep_pacify` | Pacify | 2 | [10, 15] MP | [45, 60]s | [2, 3]s | — | Aggro reduction | — | Calms target enemy, reducing threat. |
 | `sheep_sleep` | Sleep | 2 | [18, 21] MP | 90s | [6, 8]s | [15, 20]s | Sleep CC | — | Single-target sleep for (10 + 5×sLv)s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
@@ -494,6 +494,15 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Dispatch: `Sheep.cs:20364` — `RPC_allCleanse_cast(...)`. Free Cast hook: `Sheep.cs:25738` — `getFreeCast("allCleanse", sLv)`.
   - Targets: `Sheep.cs:25756-25775` iterates `self.gameObject.transform.parent` and keeps children tagged `"Player"`. Characters are parented under `"Team" + (layer - 7)` (`Game.cs:2924-2926`), so this reaches **every player on the caster's team, caster included, with no range or party limit** (see [12Tails-Mechanics-Reference.md §4.6](12Tails-Mechanics-Reference.md#46-team-containers-and-team-wide-skills-gamecs)).
   - Status Effect: `Sheep.cs:25835` — the same `"cleanse"` status as Cleanse, applied per target from the caster's client only (`isMine`): Lv. 4 (Purify: Lv. 5), flat 1.0s (Purify: flat 6.0s), unwrapped. Removal and immunity behavior: see `cleanse` above.
+
+- **`koHeal`**:
+  - Metadata: `shp_koHeal5`, skill #422 (`SheepSkill.cs:3262`), passive, Lv 70 / Bn 3, 0 MP / 0 SP. Prerequisite `rSkill: 224` = All Heal Lv 2 (`SheepSkill.cs:1151-1165`, `:2642`).
+  - Tooltip: `SheepSkill_eng.cs:945` — "Increases range of QuickHeal by 2m. Also makes QuickHeal and AllHeal able to remove some ko damage from targets." (Thai `SheepSkill_thai.cs:969`: "เพิ่มระยะให้ quickHeal และทำให้ quickHeal และ allHeal ช่วยรักษาค่า ko ตามระดับเลเวล").
+  - Passive Hooks (`hasSkill(422)`, the only two in `Sheep.cs`):
+    - **Quick Heal (`Sheep.cs:10319-10440`):** radius `5 + 2` = 7m in `Damage.FindAreaTarget(pos, 5 + (flag ? 2 : 0), 3 × rangeMod, layerMask)` (`:10418`); `nKo = sLv` (+1 / +2 KO) passed to `RPC_AddHeal` (`:10423-10440`); swaps the cast effect to the `koHeal` prefab (`:10320-10330`).
+    - **All Heal (`Sheep.cs:23289`):** `RPC_AddHeal(1, mHeal, 0, 0, hasSkill(422) ? 10 * sLv : 0, 0, ...)` → +10 / +20 KO per target.
+  - KO restore: `CharacterControl.AddHeal` does `ko += nKo` capped at `mko` (`CharacterControl.cs:7576-7580`), refilling the KO pool (`mko = floor(DEF/3) + 10`, see [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)).
+  - `Damage.FindAreaTarget` (`Damage.cs:963`): 2nd arg is the horizontal radius measured to the target's collider edge (`sqrMagnitude < TargetRange²`), 3rd arg is the vertical band height; only the height carries `rangeMod` at this call site.
 
 - **`purify`**:
   - Metadata: `shp_purify5` is a passive requiring Lv 85 / Bn 6 and All Cleanse (`rSkill: 244`, `SheepSkill.cs:1218, 1228`), with 0 MP / 0 SP cost (`mode = eSkillMode.passive;`, `:1223`).
