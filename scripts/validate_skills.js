@@ -113,6 +113,7 @@ const exposeInjection = `
   window._selectSkill = selectSkill;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
+  window._statVal = statVal;
   window._selectEnemyPreset = selectEnemyPreset;
   window._enemyPresets = ENEMY_PRESETS;
   window._undoEnemyChange = undoEnemyChange;
@@ -1340,6 +1341,27 @@ let checkedTestBtn = 0;
   check("a multi-hit card renders the main Test button with its hit count", hero.includes('data-role="simulate-hit"') && hero.includes("×10 ฮิต"));
 }
 console.log(`Verified ${checkedTestBtn} Test button checks.`);
+// 3o. Over Swing's Over Power dep feeds the stat panel ATK: min(ceil(0.5 × Lv × ATK), 256 × Lv) (Bison.cs:24764);
+// other cards are untouched.
+let checkedOverPowerAtk = 0;
+{
+  const check = (label, ok, got) => { checkedOverPowerAtk++; if (!ok) { console.error(`[OVER POWER ATK ERROR] ${label}: got ${got}`); errorCount++; } };
+  const atkEl = sandbox._statInputs.atk, deps = sandbox._depRanks, savedAtk = atkEl.value, savedOp = deps.overPower;
+  const savedRole = atkEl.dataset.role;
+  atkEl.dataset.role = "atk"; // the mock DOM has no data-role; statVal() keys on it
+  const os = SKILLS.find(s => s.id === "bison_overSwing");
+  sandbox._selectSkill(os);
+  [[400, 0, 400], [400, 1, 600], [400, 2, 800], [600, 1, 856], [600, 2, 1112], [301, 1, 452]].forEach(([atk, lv, want]) => {
+    atkEl.value = String(atk); deps.overPower = lv;
+    const got = sandbox._statVal(atkEl);
+    check(`ATK ${atk} + Over Power Lv${lv} = ${want}`, got === want, got);
+  });
+  sandbox._selectSkill(SKILLS.find(s => s.id === "bison_overPower"));
+  atkEl.value = "400"; deps.overPower = 2;
+  check("another card ignores the Over Swing dep", sandbox._statVal(atkEl) === 400, sandbox._statVal(atkEl));
+  atkEl.value = savedAtk; atkEl.dataset.role = savedRole; if (savedOp === undefined) delete deps.overPower; else deps.overPower = savedOp;
+}
+console.log(`Verified ${checkedOverPowerAtk} Over Power stat panel checks.`);
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 // 3o. Wolf Combo (2026-09-24, GEMINI.md "critProc / effectDamageDep"): Feral Instinct coefficients, hit counts,
 // gear crit rate (lckAdjust(12) Marshal / lckAdjust(18) Champion, x1.8), Dark Edge purple path + KO 0, and
