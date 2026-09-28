@@ -709,10 +709,11 @@ Entries are being written skill by skill; every skill shown in the app needs one
     3. Small Anubi Pet (`p_sab`).
     4. `cat_nineLives` proc check.
   - Proc Chance: `UnityEngine.Random.Range(0, 100) < this.mChar.lckAdjust(nineLivesLv * 6)` → Base **6%** (Rank 1) / **12%** (Rank 2), scales with Cat's LCK via `lckAdjust`.
+  - **Death Status Check vs Doom:** `getStatus("death") == null` checks specifically for the `death` status (applied by Panda's Instant Death / arena hazards). `doom` deals 330 Effect Damage upon expiration rather than applying `death`, so Nine Lives can still trigger when killed by `doom` damage.
 - **Revival Effects (`Cat.cs:27238-27674`, `$RPC_nineLives$21898`):**
   - Revives Cat with **HP 99** (`mChar.hp = 99`).
   - Resets KO to full max KO (`mChar.ko = mChar.mko`).
   - Grants **3 seconds of Invincibility (noDamage)**: `mChar.StartCoroutine_Auto(mChar.addStatus("noDamage", 1, 3, 0, ActorNr))`.
-  - Sets internal cooldown timeout: `mChar.addTimeOut("nineLives", mChar.agiAdjust(60f))` (**60s base cooldown**, reduced by Cat's AGI via `agiAdjust`). Revised Art applies.
+  - Sets client visual cooldown bar: `mChar.addTimeOut("nineLives", mChar.agiAdjust(60f))` (**60s base cooldown**, reduced by Cat's AGI via `agiAdjust`). Note: `Cat.cs:334` does not check `getTimeOut("nineLives")`, so the revival proc check executes whenever lethal damage is received.
   - Plays animation `getUp` and character voice line (`nineLives1` / `nineLives2`).
 - Client tooltips: TH "ทำให้แมวมีโอกาสฟื้นคืนชีวิตเมื่อตาย (6% / 12%)" (`CatSkill_thai.cs:528-548`); EN "Gives Cat a chance to revive upon death (6% / 12%)." (`CatSkill_eng.cs:528-548`).
