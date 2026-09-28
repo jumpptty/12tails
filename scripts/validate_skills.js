@@ -122,6 +122,7 @@ const exposeInjection = `
   window._setServer = (s) => { currentServer = s; };
   window._renderDmgToggle = renderDmgToggle;
   window._usesTdlRoll = usesTdlRoll;
+  window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1615,6 +1616,22 @@ let checkedTtoNoLck = 0;
   if (bbVaries < 50) fail(`only ${bbVaries} cards vary with enemy LCK on BB, so the TTO sweep proves nothing`);
   sandbox._setServer("og");
   [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value] = saved;
+}
+// Final Multiplier is ToT-only (MOD_DEFS onlyServers), built-in and custom alike: steps only with the popup on ToT.
+{
+  const fm = sandbox._finalMult;
+  fm.active.add("finalMult1");
+  fm.customBd.push({ id: "valFm", kind: "finalMult", name: "t", value: 10 });
+  fm.activeCustom.add("valFm");
+  for (const [srv, want] of [["og", 0], ["tto", 0], ["tot", 2]]) {
+    fm.setServer(srv);
+    const n = fm.count(true).length;
+    if (n !== want) { console.error(`[FINAL MULT ERROR] popup server ${srv}: ${n} Final Multiplier step(s), expected ${want}`); errorCount++; } else checkedTtoNoLck++;
+  }
+  fm.active.delete("finalMult1");
+  fm.customBd.splice(fm.customBd.findIndex(e => e.id === "valFm"), 1);
+  fm.activeCustom.delete("valFm");
+  fm.setServer("og");
 }
 // Random.Range(0, ceil(0.2*LCK)) excludes its max: LCK 50 gives the 10 rolls 0..9, not 0..10.
 {
