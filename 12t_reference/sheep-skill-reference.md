@@ -327,6 +327,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_divinityAxe` | Divinity Axe | 1 | 54 MP | 150s | 7s | — | `5 × talAdjust(45)` | 2 | Summons a divine battleaxe, damaging enemies in the area 5 times. |
 | `sheep_edenSanctuary`| Eden Sanctuary | 1 | 40 MP, 40 SP (red) | 240s | 0s | 12s | 50% dmg reduction | — | 18m sanctuary field reducing incoming damage by 50% for 12s. |
 | `sheep_worldEncarta` | World Encarta | 1 | 50 MP, 50 SP (red) | 150s | 7s | 9s | Invulnerability + DEF | — | Target invulnerability barrier for 9s (`chaAdjusted`): adds +20% of caster's ATK as DEF and grants 100% immunity. |
+| `sheep_bookBash` | Book Bash | 1 | 1 MP, 5 SP (red; 2 with Revised Skill) | none (mission-spawn lock `agiAdjust(60)`) | 0s | — | `getCritPlus(0.5×ATK + talAdjust(10))` | 3 | Front box 2m wide × 2m deep × 2m tall, all targets, dodgeable `hit()`. +1 SP and `onNormalAttackHit` per target hit. No Free Cast. |
 
 ---
 
@@ -380,7 +381,31 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Root: `CharacterControl.cs:2491` — `this.moveSpeed = 0f;`.
   - Damage: `CharacterControl.cs:9369` — `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (every 1.0s, deals 6×(sLv+depLv) true effect damage per tick, reaching 30 damage at Rank 4 + Intense Bind; no burst finisher).
   - **Live observation (2026-09-25):** Light Bind grants knockback immunity. Keep this player-observed behavior in the app status description. In the decompiled `ApplyMovement()` branch, `lightBind` sets only `moveSpeed = 0` (`CharacterControl.cs:2485-2495`), whereas `needlePrison` and `groundLock` also clear `myForce` (`:2358-2372`, `:2392-2406`); `MovementUpdate()` adds `myForce` independently of `moveSpeed` (`:2722`). The additional live suppression path remains unverified; see [12Tails-Mechanics-Reference.md §4.4](12Tails-Mechanics-Reference.md#44-knockback-force-versus-movement-roots-charactercontrolcs).
-  - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). The shared Free Cast hook rolls `lckAdjust(12 × Free Cast rank)`; on success it refunds the skill's MP cost, or 125% of that cost when Return Cast (#431) is learned (`Sheep.cs:10046-10100`). These passive cards need their own `/sd` review before authoring their full descriptions.
+  - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). See the verified Free Cast and Return Cast mechanics below.
+- **`bookBash`** (verified 2026-09-28):
+  - Metadata: `shp_bookBash5`, skill #434, Lv 75 / Bn 4, `setMPSP(1, -5)`, instant, target enemy (`SheepSkill.cs:1441-1465`; decoded with `scripts/decode_skilldata.py`). Tooltips: `SheepSkill_eng.cs:1069`, `SheepSkill_thai.cs:1093`.
+  - SP cost with Revised Skill: the generic GameGui deduction is `sp += CeilToInt(0.5 × cSP)` when `hasSkill(404)` (`GameGui.cs:37788-37797`, `:37945-37954`); its only exemptions are Mole Bombardment/Fire Barrage. So `CeilToInt(0.5 × −5) = CeilToInt(−2.5) = −2` → **2 SP**.
+  - Cooldown: none per cast. `RPC_bookBash` has no `addTimeOut`; the only lock is `Start()`'s `addTimeOut("bookBash", agiAdjust(60f))` inside `while (Game.mGameType > 4)` (mission spawn, `Sheep.cs:82-86`).
+  - Timing: action starts, waits 0.3s (`Sheep.cs:37893`), hits (owner client only, `:37360`), waits 0.2s (`:37896`), returns to standby (`:37470-37490`).
+  - Hitbox: `Damage.FindRecTarget(pos, forward, 1, 1, 2, 2, hitLayer)` (`Sheep.cs:37373`) → 2m wide, 2m deep, 2m tall; every target in it.
+  - Damage: `getCritPlus((int)(0.5f × atk + talAdjust(10)))` (`Sheep.cs:37378`), `hit(434, target, dmg, 3, 0, 0.5 × forward)` (`:37401`) → KO 3, dodgeable.
+  - Per landed hit (`hit() != 0`): `RPC_bookBash_hit` VFX, `onNormalAttackHit(target)` (item on-hit effects, `:37427`), `sp += 1` (`:37437`).
+  - `getCritPlus` (`Sheep.cs:16494-16640`): weapon `w_shp43/44` +5, `w_shp58` +7; armor `a_all43/44` +4, `a_all58` +6; hat `c_all43/44` +3, `c_all58` +5; `Random.Range(0,100) < lckAdjust(n)` → `FloorToInt(1.8 × nDmg)`. Same table as Wolf.
+
+## Free Cast
+
+- **Metadata:** `shp_freeCast1/2` are passive skills requiring Lv 32/Bn 6 and Lv 40/Bn 10 respectively, with no MP or SP cost (`SheepSkill.cs:129-147`, `:2226-2241`; decoded with `scripts/decode_skilldata.py`).
+- **Proc chance:** `getFreeCastLv()` returns rank 1 for skill #131 and rank 2 for #132 (`Sheep.cs:10047-10049`). Each eligible completed cast rolls `Random.Range(0, 100) < lckAdjust(12 × rank)`, giving base values 12/24 before LCK adjustment (`Sheep.cs:10054-10076`). The English tooltip's 6%/12% values are stale and do not match the executed 12/24 inputs (`SheepSkill_eng.cs:141-156`).
+- **Refund:** On success without Return Cast, the hook looks up the exact cast skill metadata and restores `skill.cMP`, making the cast's net MP cost zero (`Sheep.cs:10076-10082`, `:10111-10125`).
+- **Eligible casts:** The normal hook is called after Quick Heal, Heal, Bless, All Heal, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Revive, Revert, Holy Light, Light Bind, Illuminate, Feather, All Feather, Divinity Sword, Divinity Spear, Seal, Repel and Reverse (`Sheep.cs:10402`, `:22044`, `:22779`, `:23085`, `:23694`, `:24281`, `:24783`, `:25277`, `:25738`, `:26233`, `:26763`, `:27273`, `:28044`, `:28832`, `:29306`, `:29810`, `:30279`, `:30827`, `:31544`, `:32749`, `:33143`, `:33570`). Eden Sanctuary and World Encarta also call the hook directly (`Sheep.cs:37069-37075`, `:38348-38354`).
+- **Excluded MP skills:** Soul of Arms and Book Bash never call `getFreeCast`, so neither can proc Free Cast even when Return Cast is learned. Soul of Arms dispatches into its cast coroutine without a refund hook (`Sheep.cs:7975-8005`, `:33696-34588`); Book Bash likewise dispatches directly into `RPC_bookBash` (`Sheep.cs:7586-7633`, `:37224-37857`). A full-file search finds no `getFreeCast("soulOfArms", ...)` or `getFreeCast("bookBash", ...)` call. Book Bash is the special no-cooldown Lv 75/Bn 4 active documented above, not a normal skill-table entry.
+
+## Return Cast
+
+- **Metadata:** `shp_returnCast5` is a passive requiring Lv 75/Bn 4 and Free Cast rank 2 (#132), with no MP or SP cost (`SheepSkill.cs:1049-1069`; decoded with `scripts/decode_skilldata.py`).
+- **Enhanced refund:** When Return Cast (#431) is learned, a successful Free Cast restores `FloorToInt(1.25 × skill.cMP)` instead of the exact cost, for a net MP gain of 25% subject to integer truncation (`Sheep.cs:10085-10101`).
+- **Class-C access:** Purifying Tear, Lullaby and Divinity Axe only call `getFreeCast(..., 5)` when Return Cast is learned (`Sheep.cs:35014-35026`, `:35659-35671`, `:36356-36368`). This matches the tooltip's stated Class-C unlock (`SheepSkill_eng.cs:900-904`).
+- **Later skills:** Eden Sanctuary and World Encarta call Free Cast without a Return Cast gate, so they remain eligible even without this passive (`Sheep.cs:37069-37075`, `:38348-38354`).
 - **`illuminate`**:
   - Cast Time: `Sheep.cs:21424` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
   - Cooldown: `Sheep.cs:21429` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).

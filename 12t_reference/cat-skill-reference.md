@@ -190,6 +190,21 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 Entries are being written skill by skill; every skill shown in the app needs one (no exclusions).
 
+### cat_awareness1-2 (#121-122) — active, Tree A
+- reqLv **6 / 12**, reqBn **2 / 4**, MP **0 / 0**, red SP **−3 / −5**; instant, self-targeted (`decode_skilldata.py`, `CatSkill.cs:100-124`). Cooldown is a bare **1 s**, without `agiAdjust` (`Cat.cs:8574`).
+- The actual radius is `12 × sLv` = **12 / 24 m** (`Cat.cs:8674`). `Damage.FindAreaTarget` applies `awareness` at the matching level for a flat **1 s** to nearby characters outside the Cat's own layer (`Cat.cs:8792-8837`). The status removes existing `blend` and `invisible` on application, with no level comparison; it does not block a new application while active (`CharacterControl.cs:36204-36227`; no `awareness` reader in the invisibility-application paths). The cast also reveals nearby hidden item renderers and triggers `TreasureFound` for treasure boxes within that radius (`Cat.cs:8922-9041`).
+- With **Treasure Hunt** #123, it additionally collects every loaded `treasureBox` tagged `Item` (no radius check in this collection) and calls `displayTreasure(..., chaAdjust(5))` to show them on the minimap (`Cat.cs:8867-8916`, `GameGui.cs:5606-5625`). With **Insight** #421, it gives the Cat `insight` Lv 1 for `chaAdjust(3)` (`Cat.cs:8848-8854`).
+- Client tooltip: EN says **12 / 18 m** (`CatSkill_eng.cs:99-114`); the rank-2 **18 m** conflicts with the cast's `12 × sLv` and is not used on the card. TH says it reveals invisible things (`CatSkill_thai.cs:99-115`).
+
+### cat_treasureHunt1 (#123) — passive, Tree A
+- reqLv **18**, reqBn **6**, MP/SP **0**, passive (`decode_skilldata.py`, `CatSkill.cs:124-135`). Its hook is `hasSkill(123)` inside Awareness (`Cat.cs:8890-8916`): when Awareness is cast, treasure-box locations appear on the minimap for **`chaAdjust(5)` seconds**. The minimap list is assembled before the cast's radius check, so the locations are not limited to Awareness's 12 / 24 m reveal radius. Physical treasure-box reveal still follows the radius check (`Cat.cs:8922-8945`).
+- Client TH and EN tooltips describe the minimap effect (`CatSkill_thai.cs:121-125`, `CatSkill_eng.cs:121-125`; the EN key is misspelled `cat_teasureHunt1`).
+
+### cat_insight5 (#421) — passive, Class C
+- reqLv **70**, reqBn **3**, prerequisite skill **#123 Treasure Hunt**, MP/SP **0**, passive (`decode_skilldata.py`, `CatSkill.cs:1008-1024`). On every Awareness cast, the Cat receives `insight` Lv 1 for **`chaAdjust(3)` seconds** (`Cat.cs:8848-8854`).
+- `insight` is **Buff + State** (`StatusData.cs:4908`, `:6662`). Trap and structure handlers explicitly check `hasStatus("insight")` before damaging the target; examples include Cactun Trap (`CactunTrap.cs:63-69`), Guard Tower (`GuardTower.cs:1236`), Flying Cacton (`FlyingCacton.cs:218-229`), and Mole traps (`Mole.cs:10636`, `:11138`, `:11577`). The checks neither remove nor decrement Insight, so every covered hit is prevented while the status remains active; the generic status timer removes it on expiry (`CharacterControl.cs:19043-19085`, `:10658`). This is protection at those handlers, not a universal damage-immunity status.
+- Client TH and EN tooltips describe trap/structure protection on Awareness use (`CatSkill_thai.cs:924-928`, `CatSkill_eng.cs:902-906`).
+
 ### cat_joker5 (402) — passive, Class C
 - reqLv 55, reqBn 0, MP 0, SP 0, mode passive, no cType (`decode_skilldata.py`). The only two `hasSkill(402)` checks in the Cat source are inside `RPC_luckyCard` (`Cat.cs:20850`, `:20870`) — Joker modifies **Lucky Card only**.
 - **Damage bonus:** `hitDamage = (int)(hitDamage + 0.5 × (casterLCK − targetLCK))` (`Cat.cs:20856`). Unlike the base random roll, which is floored with `Mathf.Max(…, 0)` (`:20845`), this term is **not clamped**: against a target with higher LCK than the Cat it is negative and **reduces** Lucky Card's damage. The Joker card carries a red warning for this.
@@ -429,10 +444,22 @@ Entries are being written skill by skill; every skill shown in the app needs one
 ## Server Balance Variations
 
 ### Twelve Tails Online (TTO)
+- **Feline Agility (#131–#134) Weight Reduction Removed:**
+  - **Base BigBug Engine:** Each rank reduces Cat weight by −3 tg (`CharacterDataClass.cs:778, 795, 812, 829`), granting `+0.12` runspeed per rank (+0.48 at max rank) in addition to +5 AGI per rank (+0.10 runspeed per rank).
+  - **TTO Server Balance Delta (live-server observation reported by user):** On TTO, Feline Agility no longer reduces weight. It only grants **+5 AGI per rank** (+20 AGI at max rank), yielding only `+0.10` moveSpeed per rank (+0.40 at max rank).
+
 - **Power Number Series Restriction to Skill Tree A:**
   - **Base BigBug Engine:** In `CharacterControl.cs:2838-3010`, the Power Number series (`cat_powerOne`, `cat_powerTwo`, `cat_powerThree`, `cat_powerSeven`, `cat_superSeven`) checks `if (this.Type == "Cat")` inside `CharacterControl.hit()`, applying raw damage multipliers (`floor(raw × 1.1 / 1.2 / 1.3 / 1.7)`) globally to **all Cat damage skills** (Combo, Charge Attack, Skill Tree A Gambler skills, and Skill Tree B Assassin skills).
   - **TTO Server Balance Delta (live-server observation reported by the user, 2026-09-25; not in the decompiled client):** On TTO, the Power Number series buff is nerfed and restricted to **Cat Skill Tree A (Gambler branch)** damage skills only (e.g. Lucky Card, Lucky Dice, Damage Roulette). It no longer applies to basic attacks/Combo or Skill Tree B (Assassin branch) attacks.
   - **Support Fire (#444):** This Class C skill receives the Power Number raw-damage multiplier in the base BigBug `hit()` pipeline, but does not receive it on TTO under the observed Tree A restriction.
+
+- **Swift Pace (#431) cooldown reset on player kill:**
+  - **Base BigBug Engine:** the only cooldown write is `addTimeOut("swiftPace", agiAdjust(90f))` at cast (`Cat.cs:39712`); nothing in `Cat.cs` or `CharacterControl.cs` clears it early.
+  - **TTO Server Balance Delta (reported by the user, 2026-09-28; not in the decompiled client):** killing a Player resets Swift Pace's cooldown.
+
+- **Copycat (#243-244) clears the target's last damage in PvE:**
+  - **Base BigBug Engine:** Copycat reads `tChar.mLastDamage` (`Cat.cs:26602-26608`) but never clears it; the only write is `RPC_AddDamage` (`CharacterControl.cs:31686`), so repeated casts can copy the same hit.
+  - **TTO Server Balance Delta (reported by the user, 2026-09-28; not in the decompiled client):** in PvE, using Copycat clears the target's last damage immediately, so the next Copycat needs a new white-damage hit first.
 
 
 
@@ -629,3 +656,72 @@ Entries are being written skill by skill; every skill shown in the app needs one
   2. **No re-equipping armor:** equipping into the armor slot, from the inventory (`GameGui.cs:13119`) or the equip command path (`:35394`), is refused with "You have been pillaged!" while `hasStatus("pillage")`. Armor slot only: the accessory (`GameGui.cs:13204`, `:35487`), boots (`:13266`, `:35556`) and weapon branches of the same handlers have no Pillage check.
   - `removeStatus("pillage")` has no reversal (`CharacterControl.cs:16278`, empty branch), so the monster DEF loss stays.
 - Client tooltips: TH "พุ่งเข้าลอกคราบเป้าหมาย ทำให้ armor หลุดออกจากตัว player หรือลด 10Def ถาวรเมื่อใช้กับ NPC (12 Sec)" (`CatSkill_thai.cs:115`); EN "Dashes and strips enemy armor or permanently reduces NPC's DEF by 10 (12 Sec)." (`CatSkill_eng.cs:115`). Note: Code wins over tooltip's "(12 Sec)" note: base duration is `Damage.getDebuff(30f, caster.cha, target.cha)`.
+
+### cat_felineAgility1-4 (#131, #132, #133, #134) — passive, Tree B, RANK FAMILY
+- reqLv 8 / 19 / 24 / 32, reqBn 4 / 6 / 8 / 10, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:2420-2463`). Mode passive, target null, `cType null`.
+- **Stat Modifications (`CharacterDataClass.cs:767-834`, `CharacterControl.cs:23001-23060`):**
+  - **AGI:** Each rank adds **+5 AGI** to `statList[2]` (Rank 1: +5, Rank 2: +10, Rank 3: +15, Rank 4: +20).
+  - **Weight Reduction:** Each rank subtracts **3 tg** from `this.weight` (Rank 1: −3 tg, Rank 2: −6 tg, Rank 3: −9 tg, Rank 4: −12 tg). Cat base weight is 35 tg (`CharacterData.cs:175`).
+- **Effect on Runspeed (`CharacterDataClass.cs:979`):**
+  - Formula: `runspeed = 0.01f * ((400 + 2 * AGI) - 4 * Mathf.Max(weight + reducedWeight, 0))`
+  - Decreasing weight by 3 tg adds `0.01 * 4 * 3 = +0.12` to `runspeed` per rank (+0.12 / +0.24 / +0.36 / +0.48).
+  - Increasing AGI by 5 adds `0.01 * 2 * 5 = +0.10` to `runspeed` per rank (+0.10 / +0.20 / +0.30 / +0.40).
+  - Total runspeed increase: **+0.22** per rank (+0.22 / +0.44 / +0.66 / +0.88).
+- Client tooltips: TH "ลดน้ำหนักตัวลงเพื่อเพิ่มความเร็วให้กับแมว (-3 tg, +5 agi)" (`CatSkill_thai.cs:136`); EN "Reduces Cat's weight to increase move speed (-3 tg, +5 agi)." (`CatSkill_eng.cs:136`).
+- **Server Balance Variations (TTO):** Weight reduction is removed on TTO. Only the +5 AGI per rank applies (+0.10 moveSpeed per rank). See Server Balance Variations above.
+
+### cat_copycat1-2 (#243, #244) — active, Tree A, RANK FAMILY
+- reqLv 28 / 32, reqBn 18 / 21, MP **18 / 24**, SP 0 (`decode_skilldata.py`, `CatSkill.cs:513-535`, `:2754-2765`). Mode target, target enemy (`CatSkill.cs:1904-1905`), `cType copycat`.
+- **Cooldown & Cast:** flat `agiAdjust(120f)` (`Cat.cs:26723`). Revised Art applies. Cast time instant (plays animation `pointTarget`, `Cat.cs:26732`).
+- **Target Lock & Execution:** Targets an enemy within target lock range (up to 40m, `GameGui.cs:4339`). Checks target's `mLastDamage` (`Cat.cs:26602`).
+- **Damage Formula & Effect Damage Pathway (`Cat.cs:26608`):**
+  - Executes: `tChar.RPC_AddEffectDamage(252 + sLv, (int)((0.25f * sLv + 0.5f) * tChar.mLastDamage), 0, 0, Vector3.zero, caster.ActorNr)`.
+  - Multiplier:
+    - Rank 1: `(0.25 * 1 + 0.5) = 0.75` (**75% of target's mLastDamage**).
+    - Rank 2: `(0.25 * 2 + 0.5) = 1.00` (**100% of target's mLastDamage**).
+  - Damage Type: **Effect Damage (ดาเมจม่วง)** — bypasses target DEF (`defAdjust`), bypasses `dmgMod`, cannot be dodged or blocked (`hit()` bypassed), and scales with target's `hitMod` (Floor after `hitMod`).
+  - KO: 0 (`nKo: 0`).
+- **Engine Mechanic — `mLastDamage` Filter:**
+  - In `CharacterControl.cs:31686`, `mLastDamage` is ONLY written by regular damage (`RPC_AddDamage`). `RPC_AddEffectDamage` (`:6209, :6559-7000`) does NOT write to `mLastDamage`.
+  - Thus, Copycat only replicates **Regular Damage (white damage)**. Effect damage (such as Poison DoT, Dark Edge, or another Copycat) is ignored and will not overwrite the target's `mLastDamage`.
+  - If `mLastDamage <= 0` (target has not yet taken regular damage), Copycat fails and alerts: `"Copycat fail: no damage to copy"` (`Cat.cs:26635`).
+- Client tooltips: TH "ทำความเสียหายที่เป้้าหมาย ได้รับครั้งสุดท้ายอีกครั้ง (75% dmg)" / "(100% dmg)" (`CatSkill_thai.cs:488, 499`); EN "Instantly deals damage equal to 75% / 100% of the last damage that its has received." (`CatSkill_eng.cs:466, 477`).
+
+### cat_evasion1-3 (#361, #362, #363) — passive, Tree B, RANK FAMILY
+- reqLv 24 / 27 / 30, reqBn 15 / 18 / 21, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:3106-3128`). Mode passive, target null, `cType null`.
+- **Evasion Chance & Multiplier (`CharacterControl.cs:3246-3359`):**
+  - Base chance: `rank * 4%` (Rank 1: **4%**, Rank 2: **8%**, Rank 3: **12%**).
+  - Running Bonus: When moving/running (`actionState == "run"`), base chance is doubled (`num2 *= 2` → Rank 1: **8%**, Rank 2: **16%**, Rank 3: **24%**).
+  - Scaling: `UnityEngine.Random.Range(0, 100) < characterControl.lckAdjust(chance)` (scaled by Cat's own LCK).
+- **Execution & Status Restrictions:**
+  - Hard CC Check: Passive evasion is completely disabled if Cat is afflicted by hard CC (`sleep`, `snowMan`, `snowBall`, `petrify`, `paralysis`).
+  - On Successful Evade: Dispatches `RPC_AddDamage(-82)` (displays `EVADE` combat popup), cancels incoming damage and KO entirely (returns 0 damage).
+  - Synergy with `cat_vendetta`: Automatically triggers `characterControl.RPC_AddHeal(364, 0, 0, 10, 0, 0, characterControl.ActorNr)` to restore **+10 SP** if `cat_vendetta1` is learned.
+- Client tooltips: TH "ทำให้แมวมีโอกาสหลบการโจมตี และเพิ่มเป็นสองเท่าหากวิ่งอยู่ (4% / 8% / 12%)" (`CatSkill_thai.cs:836-867`); EN "Gives Cat a chance to evade attacks and doubles the chance when running (4% / 8% / 12%)." (`CatSkill_eng.cs:836-867`).
+
+### cat_vendetta1 (#364) — passive, Tree B, Class C
+- reqLv 33, reqBn 24, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:3139`). Mode passive, target null, `cType null`. Requires `cat_evasion3`.
+- **Mechanics (`CharacterControl.cs:3238, 3347`):**
+  - Triggers on every successful Evade performed by Cat.
+  - Compatible with all Cat evasion sources: passive `cat_evasion` and active iframe during `cat_backflip`.
+  - Effect: Dispatches `characterControl.RPC_AddHeal(364, 0, 0, 10, 0, 0, characterControl.ActorNr)`, instantly restoring **+10 SP** (Blue SP).
+- Client tooltips: TH "เพิ่ม 10 sp ให้แมวทุกครั้งที่แมว evade สำเร็จ" (`CatSkill_thai.cs:869`); EN "Restores 10 SP every time Cat successfully evades an attack." (`CatSkill_eng.cs:869`).
+
+### cat_nineLives1-2 (#263, #264) — passive, Tree A, RANK FAMILY
+- reqLv 30 / 33, reqBn 21 / 24, MP 0, SP 0 (`decode_skilldata.py`, `CatSkill.cs:2798-2809`). Mode passive, target null, `cType null`.
+- **Trigger & Activation (`Cat.cs:207-350`):**
+  - Fires upon receiving lethal damage (`hp <= 0`, `actionState != "dead"`, and `getStatus("death") == null`).
+  - Priority Order on Death:
+    1. `blackServant` (revives / consumes status).
+    2. `autoLife` (revives with `sLv * 100` HP).
+    3. Small Anubi Pet (`p_sab`).
+    4. `cat_nineLives` proc check.
+  - Proc Chance: `UnityEngine.Random.Range(0, 100) < this.mChar.lckAdjust(nineLivesLv * 6)` → Base **6%** (Rank 1) / **12%** (Rank 2), scales with Cat's LCK via `lckAdjust`.
+  - **Death Status Check vs Doom:** `getStatus("death") == null` checks specifically for the `death` status (applied by Panda's Instant Death / arena hazards). `doom` deals 330 Effect Damage upon expiration rather than applying `death`, so Nine Lives can still trigger when killed by `doom` damage.
+- **Revival Effects (`Cat.cs:27238-27674`, `$RPC_nineLives$21898`):**
+  - Revives Cat with **HP 99** (`mChar.hp = 99`).
+  - Resets KO to full max KO (`mChar.ko = mChar.mko`).
+  - Grants **3 seconds of Invincibility (noDamage)**: `mChar.StartCoroutine_Auto(mChar.addStatus("noDamage", 1, 3, 0, ActorNr))`.
+  - Sets client visual cooldown bar: `mChar.addTimeOut("nineLives", mChar.agiAdjust(60f))` (**60s base cooldown**, reduced by Cat's AGI via `agiAdjust`). Note: `Cat.cs:334` does not check `getTimeOut("nineLives")`, so the revival proc check executes whenever lethal damage is received.
+  - Plays animation `getUp` and character voice line (`nineLives1` / `nineLives2`).
+- Client tooltips: TH "ทำให้แมวมีโอกาสฟื้นคืนชีวิตเมื่อตาย (6% / 12%)" (`CatSkill_thai.cs:528-548`); EN "Gives Cat a chance to revive upon death (6% / 12%)." (`CatSkill_eng.cs:528-548`).

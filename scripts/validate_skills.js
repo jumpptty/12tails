@@ -113,6 +113,7 @@ const exposeInjection = `
   window._selectSkill = selectSkill;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
+  window._statVal = statVal;
   window._selectEnemyPreset = selectEnemyPreset;
   window._enemyPresets = ENEMY_PRESETS;
   window._undoEnemyChange = undoEnemyChange;
@@ -121,6 +122,8 @@ const exposeInjection = `
   window._selectedEnemyId = () => selectedEnemyId;
   window._setServer = (s) => { currentServer = s; };
   window._renderDmgToggle = renderDmgToggle;
+  window._usesTdlRoll = usesTdlRoll;
+  window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1089,6 +1092,8 @@ SKILLS.forEach(sk => {
 // fails the build. A dep is "resolved" once some skill's own id matches
 // "<classPrefix>_<dep.id>" (every observed dep so far lives in the same class
 // as the skill(s) that reference it).
+// Standalone combat-condition / stack-count toggles that do not correspond to an individual passive skill card.
+const PSEUDO_DEPS = new Set(["doomStack", "slayerRaceMatch"]);
 const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep", "lckDiffDep"];
 const seenDeps = new Map(); // dep.id -> { label, resolved, referencedBy: [] }
 SKILLS.forEach(sk => {
@@ -1097,7 +1102,7 @@ SKILLS.forEach(sk => {
     const dep = sk[field];
     if (!dep || !dep.id) return;
     if (!seenDeps.has(dep.id)) {
-      seenDeps.set(dep.id, { label: dep.label || dep.id, resolved: skillById.has(classPrefix + dep.id), referencedBy: [] });
+      seenDeps.set(dep.id, { label: dep.label || dep.id, resolved: skillById.has(classPrefix + dep.id) || PSEUDO_DEPS.has(dep.id), referencedBy: [] });
     }
     seenDeps.get(dep.id).referencedBy.push(sk.id);
   });
@@ -1336,6 +1341,27 @@ let checkedTestBtn = 0;
   check("a multi-hit card renders the main Test button with its hit count", hero.includes('data-role="simulate-hit"') && hero.includes("×10 ฮิต"));
 }
 console.log(`Verified ${checkedTestBtn} Test button checks.`);
+// 3o. Over Swing's Over Power dep feeds the stat panel ATK: min(ceil(0.5 × Lv × ATK), 256 × Lv) (Bison.cs:24764);
+// other cards are untouched.
+let checkedOverPowerAtk = 0;
+{
+  const check = (label, ok, got) => { checkedOverPowerAtk++; if (!ok) { console.error(`[OVER POWER ATK ERROR] ${label}: got ${got}`); errorCount++; } };
+  const atkEl = sandbox._statInputs.atk, deps = sandbox._depRanks, savedAtk = atkEl.value, savedOp = deps.overPower;
+  const savedRole = atkEl.dataset.role;
+  atkEl.dataset.role = "atk"; // the mock DOM has no data-role; statVal() keys on it
+  const os = SKILLS.find(s => s.id === "bison_overSwing");
+  sandbox._selectSkill(os);
+  [[400, 0, 400], [400, 1, 600], [400, 2, 800], [600, 1, 856], [600, 2, 1112], [301, 1, 452]].forEach(([atk, lv, want]) => {
+    atkEl.value = String(atk); deps.overPower = lv;
+    const got = sandbox._statVal(atkEl);
+    check(`ATK ${atk} + Over Power Lv${lv} = ${want}`, got === want, got);
+  });
+  sandbox._selectSkill(SKILLS.find(s => s.id === "bison_overPower"));
+  atkEl.value = "400"; deps.overPower = 2;
+  check("another card ignores the Over Swing dep", sandbox._statVal(atkEl) === 400, sandbox._statVal(atkEl));
+  atkEl.value = savedAtk; atkEl.dataset.role = savedRole; if (savedOp === undefined) delete deps.overPower; else deps.overPower = savedOp;
+}
+console.log(`Verified ${checkedOverPowerAtk} Over Power stat panel checks.`);
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 // 3o. Wolf Combo (2026-09-24, GEMINI.md "critProc / effectDamageDep"): Feral Instinct coefficients, hit counts,
 // gear crit rate (lckAdjust(12) Marshal / lckAdjust(18) Champion, x1.8), Dark Edge purple path + KO 0, and
@@ -1345,20 +1371,20 @@ let checkedWolfCombo = 0;
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "wolf_nAttack");
-  const IDS = ["wolfFeralInstinct", "wolfWildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion"];
+  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion"];
   const savedDeps = IDS.map(id => [id, deps[id]]);
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
   check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
   // Coefficients: Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
-  setDeps({ wolfFeralInstinct: 4, wolfWildHeart: 1 }); select(3);
+  setDeps({ wolfFeralInstinct: 4, wildHeart: 1 }); select(3);
   const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral 4 + Wild Heart coefficients", coeffs === "0.75,0.75,0.75,0.6,0.9", coeffs);
   setDeps({}); select(3);
   const c0 = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral off coefficients", c0 === "0.5,0.5,0.5,0.4,0.6", c0);
-  setDeps({ wolfFeralInstinct: 0, wolfWildHeart: 1 }); select(3);
+  setDeps({ wolfFeralInstinct: 0, wildHeart: 1 }); select(3);
   check("Wild Heart without Feral Instinct adds nothing", sk.dmgGroups.every(g => sandbox._resolveGroupAtkCoeff(sk, g) === (g.label.includes("first") ? 0.4 : g.label.includes("second") ? 0.6 : 0.5)));
   // Hit counts 2 / 3 / 5.
   [2, 3, 5].forEach((want, i) => { select(i + 1); const got = sk.dmgGroups.reduce((a, g) => a + sandbox._resolveGroupHitCount(sk, g), 0); check(`rank ${i + 1} hit count`, got === want && sk.hitCount(i + 1) === want, got); });
@@ -1376,12 +1402,12 @@ let checkedWolfCombo = 0;
   check("Dark Edge off is white", rate({}, 200).p === 0);
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
   check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : "w");'));
-  check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\] \};/.test(html));
+  check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\][, ]/.test(html));
   // Range vs simulator, every toggle combination, both stat profiles.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
     [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => ["", "wolfGearMarshal", "wolfGearChampion"].forEach(gear => {
-      const o = { wolfFeralInstinct: f, wolfWildHeart: wh, wolfDarkEdgeOn: de }; if (gear) o[gear] = 1;
+      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de }; if (gear) o[gear] = 1;
       setDeps(o);
       for (let r = 1; r <= 3; r++) {
         select(r);
@@ -1575,6 +1601,68 @@ let checkedCatPowerTto = 0;
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
 }
 console.log(`Verified ${checkedCatPowerTto} Cat Power Number TTO checks.`);
+// TTO removed the LCK roll from talAdjust/dmgAdjust/defAdjust (tdlRoll). Sweep every card with a
+// TTO button from usesTdlRoll: on TTO its final damage range must not move with enemy LCK (only
+// defAdjust reads it) nor with player LCK (unless the card reads LCK directly).
+let checkedTtoNoLck = 0;
+{
+  const fail = (msg) => { console.error(`[TTO NO-LCK ERROR] ${msg}`); errorCount++; };
+  const ins = sandbox._statInputs;
+  const saved = [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value];
+  ins.atk.value = "200"; ins.tal.value = "80";
+  const rangesAt = (sk, server, lck, enemyLck) => {
+    sandbox._setServer(server); ins.lck.value = String(lck); ins.enemyLck.value = String(enemyLck);
+    sandbox._selectSkill(sk);
+    const parts = sk.dmgGroups
+      ? sk.dmgGroups.map(g => sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g)))
+      : [sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, sk.maxRank || 1)))];
+    return JSON.stringify(parts);
+  };
+  const readsLck = (sk) => !!(sk.lckProc || sk.lckCoeff !== undefined || sk.lckDiffCoeff !== undefined || sk.effectLckRoll
+    || sk.casinoArcade || sk.comboModel || /lckAdjust\(|LCK/.test(String(sk.dmg) + JSON.stringify(sk.dmgGroups || [])));
+  let bbVaries = 0;
+  // Formulas on a runtime variable (Vortex HP, InventoryWeight) need inputs calcRangeFor alone does not have.
+  const needsVars = (sk) => /Vortex|InventoryWeight/.test(sandbox._getDmgText(sk, sk.maxRank || 1) + JSON.stringify(sk.dmgGroups || []));
+  for (const sk of SKILLS.filter(s => sandbox._usesTdlRoll(s) && !needsVars(s))) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    try {
+      const base = rangesAt(sk, "tto", 150, 0);
+      const enemy = rangesAt(sk, "tto", 150, 200);
+      if (sk.lckDiffCoeff === undefined && base !== enemy) fail(`${sk.id} on tto: enemy LCK changes damage (${base} vs ${enemy})`); else checkedTtoNoLck++;
+      if (!readsLck(sk)) {
+        const player = rangesAt(sk, "tto", 0, 0);
+        if (base !== player) fail(`${sk.id} on tto: player LCK changes damage (${player} vs ${base})`); else checkedTtoNoLck++;
+      }
+      if (rangesAt(sk, "og", 150, 0) !== rangesAt(sk, "og", 150, 200)) bbVaries++;
+    } catch (e) { fail(`${sk.id}: range threw ${e.message}`); }
+  }
+  // Guards the sweep itself: if BB stops varying too, the ranges above are not reading LCK at all.
+  if (bbVaries < 50) fail(`only ${bbVaries} cards vary with enemy LCK on BB, so the TTO sweep proves nothing`);
+  sandbox._setServer("og");
+  [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value] = saved;
+}
+// Final Multiplier is ToT-only (MOD_DEFS onlyServers), built-in and custom alike: steps only with the popup on ToT.
+{
+  const fm = sandbox._finalMult;
+  fm.active.add("finalMult1");
+  fm.customBd.push({ id: "valFm", kind: "finalMult", name: "t", value: 10 });
+  fm.activeCustom.add("valFm");
+  for (const [srv, want] of [["og", 0], ["tto", 0], ["tot", 2]]) {
+    fm.setServer(srv);
+    const n = fm.count(true).length;
+    if (n !== want) { console.error(`[FINAL MULT ERROR] popup server ${srv}: ${n} Final Multiplier step(s), expected ${want}`); errorCount++; } else checkedTtoNoLck++;
+  }
+  fm.active.delete("finalMult1");
+  fm.customBd.splice(fm.customBd.findIndex(e => e.id === "valFm"), 1);
+  fm.activeCustom.delete("valFm");
+  fm.setServer("og");
+}
+// Random.Range(0, ceil(0.2*LCK)) excludes its max: LCK 50 gives the 10 rolls 0..9, not 0..10.
+{
+  const dist = sandbox.lckDistribution(0, 0, 50, (b, s, R) => R, v => v);
+  if (dist.length !== 10 || dist[9].label !== "9" || dist[0].pct !== 10) { console.error(`[LCK DIST ERROR] LCK 50 gave ${dist.map(d => d.label).join(",")}`); errorCount++; } else checkedTtoNoLck++;
+}
+console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
 // 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
 // .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;

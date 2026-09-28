@@ -125,6 +125,8 @@ CharacterControl.cs:20487-20671, and no subclass overrides them. Seven of them r
 `defAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust` and `talAdjust`. The other four have **no** `R`:
 `koAdjust`, `hateAdjust`, `forceAdjust` (plain `*Mod` multipliers) and `lckAdjust` (reads LCK directly, clamped 1-512).
 
+> **Server Difference (TTO, user-reported live change 2026-09-28, not in the decompiled client):** Tailstopia Online removed `R` from `talAdjust`, `dmgAdjust` and `defAdjust`, which are now `R = 0` there. `agiAdjust`, `magAdjust` and `chaAdjust` keep their roll. Call sites that add their own inline `Random.Range(0, ceil(0.2 × LCK))` outside these three functions are not covered by this report and are assumed unchanged, for example Wolf Dark Edge's Effect Damage (`Wolf.cs:15267`) and Cat No Chance's flat `0.3 × LCK` (not a roll). The Bible applies this with `tdlRoll(R)` inside its `talAdjustAtRoll` / `dmgAdjustAtRoll` / `defAdjustAtRoll`.
+
 ### 2.2 Attacker side
 **`dmgAdjust(d)`** outgoing damage (CharacterControl.cs:20487):
 ```
@@ -459,6 +461,8 @@ Each status maps to a sequential integer code. Grouped by function:
 
 (Full enumerated codes live in StatusData.cs:63–1372; icons resolve from `GameGui/Icons/Status/<name>`.)
 
+**`awareness` and `insight` statuses.** `awareness` (code 501) is Buff + Magical (`StatusData.cs:1031-1040`, `:5687`, `:6638`). On application, it immediately removes any existing `blend` and `invisible` from the recipient (`CharacterControl.cs:36204-36227`): the handler checks only whether each status level is greater than zero, with no comparison to `awareness.sLv`. It has no ongoing reapplication block; a source-wide search found no `hasStatus("awareness")` or `getStatusLv("awareness")` reader in the invisibility-application paths. `insight` (code 508) is Buff + State (`StatusData.cs:1108-1117`, `:4908`, `:6662`); it has no generic damage-reduction rule. Instead, individual traps and structures check `hasStatus("insight")` and skip their damage when it is present (e.g. `CactunTrap.cs:63-69`, `GuardTower.cs:1236`, `FlyingCacton.cs:218-229`, `Mole.cs:10636`). Those checks do not remove or decrement the status, so it protects against each covered hit until its timer expires (`CharacterControl.cs:19043-19085`, `:10658`). Cat Awareness applies the former to nearby targets and, with the Insight passive, grants the latter to the Cat for `chaAdjust(3)` seconds (`Cat.cs:8837`, `:8848-8854`; full skill mechanics in [cat-skill-reference.md](cat-skill-reference.md)).
+
 **`poison`** (code 605, Debuff + Physical: `StatusData.cs:1174`, `:5457`, `:7406`): a pure damage-over-time with no stat change on apply (`CharacterControl.cs:36965`). Each tick is Effect Damage `RPC_AddEffectDamage(1, 10 × sLv − 1, ...)` from `StatusUpdate` (`:9208+`), so it cannot be dodged (§2.8) and gets only `hitMod`. **Tick interval: every 4 seconds**, from the user's in-game observation (2026-09-23). The source timer is obfuscated and was not traced. `removeDot()` clears it (`:19664`).
 
 **`doom`** (Debuff + Magical: `StatusData.cs:5963`, `:7562`). Applying or removing it has no mechanical effect: the apply site only spawns the Bat doom visual (`CharacterControl.cs:40487-40508`) and the `removeStatus` case is empty (`:18152`). The damage happens **only on expiry**, in the expired-status branch of `StatusUpdate` (`:10214` `else` of `statusClass.sTime > now`, `doom` case `:10364-10543`): if the status owner (`sID`, looked up in `PhotonClient.ActorNrList`) still exists and has `hp > 0`, the holder takes `RPC_AddEffectDamage(1, X, 0, 0, …, sID)` with X by level 1–7 = **330 / 450 / 666 / 999 / 1199 / 1300 / 1599**, then the status is removed. Level 8 and above matches no case, so it is removed with **no damage**; so is a Doom whose owner is dead or gone ("No Doom Owner Found"). Because the damage is Effect Damage it cannot be dodged and only `hitMod` applies (§2.9); `noDamage` blocks it (`:6122`). A cleanse or dispel before expiry removes it without the explosion. Sources: Bat Doom (contested duration, `Damage.getDebuff` with the CHA roles swapped), Cat Joker via Lucky Card (level 1, `Damage.getDebuff`), Cat Grand Casino Arcade (level = holder's current + 1, a flat 60 s, on the Cat's own side). Durations pass through `RPC_AddStatus`'s receiver-side rules, e.g. Wolf Fortitude `⌈0.75×sTime⌉` (`:13421-13434`).
@@ -496,6 +500,8 @@ Status effects are queried at runtime via static boolean predicates in `StatusDa
 - `mpDrain` / `spDrain` / `koDrain`: take `min(sValue, current)` from the target and `RPC_AddHeal` the same amount of MP / SP / KO to the caster (`:33543-33670`).
 - Being System statuses, the equipment debuff-resist roll skips them, but Panda Resistance does not (see [panda-skill-reference.md](panda-skill-reference.md)). Trinkets add their own `lckAdjust(24)` block: `t_mal56`/`t_fem56` vs `mpSap`/`mpDrain`/`manaBurn`, `t_mal66`/`t_fem66` vs `hpSap`/`hpDrain` (`:13919-13952` → `:14225-14280`).
 - Appliers: `hpDrain`/`mpDrain` from every class file (e.g. `Bat.cs:22152`), `spDrain` from `Bat.cs`, `mpSap` from `ManaVortex.cs`/`ReefBug.cs`; no `RPC_AddStatus` caller for `hpSap`, `spSap`, `koDrain`, `koSap` in the decompile.
+
+> **Server Difference (TTO, user-reported live change 2026-09-28, not in the decompiled client):** on Tailstopia Online the Poseidon Bow (+12%) and Poseidon Helmet (+8%) `hpDrain` proc chance no longer goes through `lckAdjust`. The full set is a flat 20%, or 40% with Chameleon Double Effect (which doubles the base). Other gear procs are not covered by this report. The Bible's Character Hit Mod sim models this with its BB/TTO server toggle.
 
 **Equipment debuff resist (verified 2026-09-27, `CharacterControl.cs:13588-13660` + labels `:14315-14333`, all classes).** Inside `RPC_AddStatus`, after the class-specific blocks: `num3 = 0`; `getInteger(weapon)` 47 or 48 → +6; `getInteger(armor)` 47 or 48 → +6; `getInteger(accessory)` 47 or 48 → +4; `getInteger(accessory)` 19 → +3. If `num3 > 0` and `isDebuffStatus && !isStateStatus && !isSystemStatus`, one roll `Random.Range(0, 100) < lckAdjust(num3)` rejects the status (`RPC_AddDamage(-83)` + `break`). Item 47/48 = each class's bug-themed "prevention of negative statuses" set (e.g. Panda Worm Knuckle/Suit/Cap, Wolf scorpion hat, Bison beetle helmet); accessory 19 = the class "Helps protect against abnormal status" hats (e.g. Panda mushroom hat `c_pnd19`). `Stringf.getInteger`'s body is not in the decompile (the firstpass `Stringf.cs` is an empty stub), so whether it matches only the trailing number (and so whether e.g. `c_all19` also counts) is inferred, not verified. The same function then has per-status accessory resists (`ice`: `c_all21`/`c_all22`, `snowMan`: `c_all29`, `sleep`: `c_mal37`/`c_fem37`, `corruption`: `c_all27`, …; the ice/snowMan/sleep ones roll `lckAdjust(12)`, `:13660+`).
 
@@ -553,6 +559,40 @@ Incoming direct damage can add a knockback vector to `myForce` (`CharacterContro
 | `lightBind` (1106) | `moveSpeed = 0` only; its branch has no `myForce` assignment | `StatusData.cs:1757-1764`; `CharacterControl.cs:2485-2495` |
 
 `noForce` is a distinct status, not an automatic part of `StatusData.isLockStatus()`: that predicate names `groundLock`, `needlePrison`, `sticky`, `frost` and `lightBind` (`StatusData.cs:6133-6238`), while the `noForce` branch is separately keyed by its own `sType` in `ApplyMovement()`. Sheep Light Bind applies only `RPC_AddStatus("lightBind", ...)` (`Sheep.cs:28898-28902`); no `noForce` application appears in `Sheep.cs`. **Live-server discrepancy:** the user reports that Light Bind also prevents knockback in play (2026-09-25). That observation takes precedence for the player-facing tool; the decompiled client does not expose the additional force suppression, so its implementation path remains unverified. Needle Prison and Ground Lock need no `noForce` status to block force in the decompiled client.
+
+### 4.5 Hidden treasure-box placements and spawn rule
+
+`TreasureBox.Start()` rolls once when the scene loads. It destroys a candidate box if `Random.Range(0, 100) < num`, where `num` is 40/30/20/10 for wood/silver/gold/diamond (`TreasureBox.cs:20-86`; `eTreasureBoxLv.cs:5-17`). A surviving box is renamed `treasureBox` and all child renderers are disabled (`TreasureBox.cs:93-115`). Cat Awareness reveals surviving boxes within its 12/24 m radius (`Cat.cs:8922-8945`; `TreasureBox.cs:402-449`). With Treasure Hunt, Awareness marks all loaded surviving boxes on the minimap, regardless of reveal radius (`Cat.cs:8867-8916`).
+
+**Opening and contents:** A revealed box offers a click interaction only to the Cat. The box maps wood/silver/gold/diamond to action ranks 1/2/3/4, calls `Cat.RPC_treasureHunt(...)`, broadcasts the matching action when Photon is active, plays the open animation, and destroys itself after 3 seconds (`TreasureBox.cs:183-355`, `:156-178`). `Cat.RPC_treasureHunt` only instantiates the `treasureHunt` effect prefab (`Cat.cs:9078-9116`); the broadcast encodes those four actions as `-121` through `-124` (`Cat.cs:2028-2075`, `:3398-3425`). The available client source and exported effect prefab contain **no verified item, currency, or reward table for these boxes**. Their actual contents and drop odds remain unknown; the four action ranks establish box tiers, not rewards.
+
+The exported Unity scenes contain **52 scripted candidate placements in 23 scenes**. These are possible spawn points, not guaranteed boxes on every run. Coordinates below are scene positions `(x, y, z)`, rounded to 0.001 unit. Each `file:line` citation is relative to `RippedAssets/ExportedProject/Assets/Scene/` and points to that object's Transform. The scene YAML omits serialized `mLv`, so its `TreasueBox1/2/3` names do **not** verify a wood/silver/gold/diamond tier.
+
+| Scene | Candidate positions `(x, y, z)` and source |
+|---|---|
+| M105_NeedleCave | `-67.682, 41.337, 78.889` (M105_NeedleCave.unity:6758)<br>`37.727, 39.165, 57.406` (M105_NeedleCave.unity:7250)<br>`22.184, 42.799, 33.385` (M105_NeedleCave.unity:7297) |
+| M205_CrossingPlainLagoon1 | `22.031, 50.183, 81.221` (M205_CrossingPlainLagoon1.unity:5996) |
+| M206_GrandTheftMupo1 | `-9.784, 50.577, -9.506` (M206_GrandTheftMupo1.unity:15024) |
+| M401_DownFromVolcano1 | `-29.649, 42.952, 36.446` (M401_DownFromVolcano1.unity:5998)<br>`24.131, 43.063, 37.065` (M401_DownFromVolcano1.unity:6056)<br>`47.55, 45.928, -6.177` (M401_DownFromVolcano1.unity:6103) |
+| M401_DownFromVolcano2 | `57.927, 44.508, -37.093` (M401_DownFromVolcano2.unity:10261)<br>`-24.574, 46.503, -9.735` (M401_DownFromVolcano2.unity:10214) |
+| M403_CactonGarden | `27.306, 50.089, 18.315` (M403_CactonGarden.unity:4537) |
+| M504_WaterTemple | `12.279, 40.006, 32.65` (M504_WaterTemple.unity:7641)<br>`-47.5, 51, -77.5` (M504_WaterTemple.unity:7688)<br>`47.5, 51, -77.5` (M504_WaterTemple.unity:7735) |
+| M505_SunkenCity2 | `51.236, 50.002, -33.146` (M505_SunkenCity2.unity:6525)<br>`-48.477, 50.031, 33.906` (M505_SunkenCity2.unity:7135)<br>`3.924, 51.197, -15.433` (M505_SunkenCity2.unity:7182) |
+| M603_ShadeInTheCity2 | `-30.432, 49.999, -50.93` (M603_ShadeInTheCity2.unity:12821)<br>`15.42, 50.971, -2.061` (M603_ShadeInTheCity2.unity:12774)<br>`-15.5, 50.955, -7.23` (M603_ShadeInTheCity2.unity:12727) |
+| M606_WalrusGoneMad | `-18.001, 50.014, -2.779` (M606_WalrusGoneMad.unity:6012)<br>`-5.184, 50.002, -17.358` (M606_WalrusGoneMad.unity:7888) |
+| M701_StrangeNewFoe | `-22.71, 50.4, -49.685` (M701_StrangeNewFoe.unity:6937)<br>`76.627, 50.612, 135.202` (M701_StrangeNewFoe.unity:7039) |
+| M702_EasternWorldDivide2 | `-35.426, 50.374, 91.142` (M702_EasternWorldDivide2.unity:8673)<br>`-107.018, 50.063, -89.736` (M702_EasternWorldDivide2.unity:8720) |
+| M704_ZappaBaseEntrance | `-39.314, 50.237, 79.071` (M704_ZappaBaseEntrance.unity:8000) |
+| M805_LightVaultCleaning | `-33.399, 50, 16.124` (M805_LightVaultCleaning.unity:3728)<br>`74, 50, 2` (M805_LightVaultCleaning.unity:3775) |
+| M903_ShadowPalace2 | `211.002, 50, 224.993` (M903_ShadowPalace2.unity:30136)<br>`250.445, 50, -173.293` (M903_ShadowPalace2.unity:30260)<br>`-249.988, 50, 229.065` (M903_ShadowPalace2.unity:30307)<br>`-125.642, 50, -17.977` (M903_ShadowPalace2.unity:30354) |
+| M932_WindHollow1 | `34.708, 31.365, -101.196` (M932_WindHollow1.unity:9151)<br>`-50.354, 37.498, -85.02` (M932_WindHollow1.unity:9732) |
+| M971_MaohsTomb1 | `0, 94.039, 43` (M971_MaohsTomb1.unity:4734) |
+| M971_MaohsTomb4 | `0, 50, 4` (M971_MaohsTomb4.unity:6726) |
+| M971_MaohsTomb8 | `12, 50, 122` (M971_MaohsTomb8.unity:7354)<br>`-12, 50, 122` (M971_MaohsTomb8.unity:7436) |
+| M971_MaohsTomb9 | `54, 50, 72` (M971_MaohsTomb9.unity:9389)<br>`0, 50, 64` (M971_MaohsTomb9.unity:9471)<br>`-36, 50, 195` (M971_MaohsTomb9.unity:9483)<br>`-48, 50, 195` (M971_MaohsTomb9.unity:9565) |
+| M972_IceTower8 | `-6.42, 43.379, -15.104` (M972_IceTower8.unity:5349) |
+| M972_IceTower9 | `13.523, 28, 1.965` (M972_IceTower9.unity:5089)<br>`-8.158, 18, 3.453` (M972_IceTower9.unity:5136)<br>`13.802, 68, -2.839` (M972_IceTower9.unity:5183)<br>`-9.687, 48, 2.841` (M972_IceTower9.unity:5230) |
+| M973_PirateCave2 | `-89.474, 55.21, 97.739` (M973_PirateCave2.unity:8116)<br>`74.909, 47.63, 19.339` (M973_PirateCave2.unity:8645)<br>`22.883, 58.438, 31.178` (M973_PirateCave2.unity:9591)<br>`83.212, 58.378, 72.798` (M973_PirateCave2.unity:13391) |
 
 ---
 
