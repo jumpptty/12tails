@@ -1402,7 +1402,7 @@ let checkedWolfCombo = 0;
   check("Dark Edge off is white", rate({}, 200).p === 0);
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
   check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : "w");'));
-  check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\] \};/.test(html));
+  check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\][, ]/.test(html));
   // Range vs simulator, every toggle combination, both stat profiles.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;

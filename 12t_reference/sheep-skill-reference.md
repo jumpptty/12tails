@@ -327,6 +327,7 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
 | `sheep_divinityAxe` | Divinity Axe | 1 | 54 MP | 150s | 7s | — | `5 × talAdjust(45)` | 2 | Summons a divine battleaxe, damaging enemies in the area 5 times. |
 | `sheep_edenSanctuary`| Eden Sanctuary | 1 | 40 MP, 40 SP (red) | 240s | 0s | 12s | 50% dmg reduction | — | 18m sanctuary field reducing incoming damage by 50% for 12s. |
 | `sheep_worldEncarta` | World Encarta | 1 | 50 MP, 50 SP (red) | 150s | 7s | 9s | Invulnerability + DEF | — | Target invulnerability barrier for 9s (`chaAdjusted`): adds +20% of caster's ATK as DEF and grants 100% immunity. |
+| `sheep_bookBash` | Book Bash | 1 | 1 MP, 5 SP (red; 2 with Revised Skill) | none (mission-spawn lock `agiAdjust(60)`) | 0s | — | `getCritPlus(0.5×ATK + talAdjust(10))` | 3 | Front box 2m wide × 2m deep × 2m tall, all targets, dodgeable `hit()`. +1 SP and `onNormalAttackHit` per target hit. No Free Cast. |
 
 ---
 
@@ -381,6 +382,15 @@ Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/
   - Damage: `CharacterControl.cs:9369` — `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (every 1.0s, deals 6×(sLv+depLv) true effect damage per tick, reaching 30 damage at Rank 4 + Intense Bind; no burst finisher).
   - **Live observation (2026-09-25):** Light Bind grants knockback immunity. Keep this player-observed behavior in the app status description. In the decompiled `ApplyMovement()` branch, `lightBind` sets only `moveSpeed = 0` (`CharacterControl.cs:2485-2495`), whereas `needlePrison` and `groundLock` also clear `myForce` (`:2358-2372`, `:2392-2406`); `MovementUpdate()` adds `myForce` independently of `moveSpeed` (`:2722`). The additional live suppression path remains unverified; see [12Tails-Mechanics-Reference.md §4.4](12Tails-Mechanics-Reference.md#44-knockback-force-versus-movement-roots-charactercontrolcs).
   - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). See the verified Free Cast and Return Cast mechanics below.
+- **`bookBash`** (verified 2026-09-28):
+  - Metadata: `shp_bookBash5`, skill #434, Lv 75 / Bn 4, `setMPSP(1, -5)`, instant, target enemy (`SheepSkill.cs:1441-1465`; decoded with `scripts/decode_skilldata.py`). Tooltips: `SheepSkill_eng.cs:1069`, `SheepSkill_thai.cs:1093`.
+  - SP cost with Revised Skill: the generic GameGui deduction is `sp += CeilToInt(0.5 × cSP)` when `hasSkill(404)` (`GameGui.cs:37788-37797`, `:37945-37954`); its only exemptions are Mole Bombardment/Fire Barrage. So `CeilToInt(0.5 × −5) = CeilToInt(−2.5) = −2` → **2 SP**.
+  - Cooldown: none per cast. `RPC_bookBash` has no `addTimeOut`; the only lock is `Start()`'s `addTimeOut("bookBash", agiAdjust(60f))` inside `while (Game.mGameType > 4)` (mission spawn, `Sheep.cs:82-86`).
+  - Timing: action starts, waits 0.3s (`Sheep.cs:37893`), hits (owner client only, `:37360`), waits 0.2s (`:37896`), returns to standby (`:37470-37490`).
+  - Hitbox: `Damage.FindRecTarget(pos, forward, 1, 1, 2, 2, hitLayer)` (`Sheep.cs:37373`) → 2m wide, 2m deep, 2m tall; every target in it.
+  - Damage: `getCritPlus((int)(0.5f × atk + talAdjust(10)))` (`Sheep.cs:37378`), `hit(434, target, dmg, 3, 0, 0.5 × forward)` (`:37401`) → KO 3, dodgeable.
+  - Per landed hit (`hit() != 0`): `RPC_bookBash_hit` VFX, `onNormalAttackHit(target)` (item on-hit effects, `:37427`), `sp += 1` (`:37437`).
+  - `getCritPlus` (`Sheep.cs:16494-16640`): weapon `w_shp43/44` +5, `w_shp58` +7; armor `a_all43/44` +4, `a_all58` +6; hat `c_all43/44` +3, `c_all58` +5; `Random.Range(0,100) < lckAdjust(n)` → `FloorToInt(1.8 × nDmg)`. Same table as Wolf.
 
 ## Free Cast
 
