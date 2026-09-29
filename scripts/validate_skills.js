@@ -112,7 +112,7 @@ const exposeInjection = `
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
-  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl };
+  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, lv: lvEl };
   window._statVal = statVal;
   window._selectEnemyPreset = selectEnemyPreset;
   window._enemyPresets = ENEMY_PRESETS;
@@ -126,6 +126,7 @@ const exposeInjection = `
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
   window._critView = { set: (v) => { critFormulaView = v; } };
+  window._bisonStun = { set: (v) => { bisonStunDistance = v; }, get: () => bisonStunDistance };
   window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1666,6 +1667,34 @@ let checkedRabbitShot = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedRabbitShot} Rabbit Combo / Charge Attack checks.`);
+// 3o-v. Bison Far Stun / Mass Stun (2026-09-29): num = (int)(0.5 x sLv x ceil(distance)) (Bison.cs:7684), KO = num (+ floor(0.5 x Lv) with Mass Stun, :9134-9150).
+let checkedBisonStun = 0;
+{
+  const deps = sandbox._depRanks, inputs = sandbox._statInputs, bs = sandbox._bisonStun;
+  const check = (label, ok, got) => { checkedBisonStun++; if (!ok) { console.error(`[BISON STUN ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const fs = SKILLS.find(s => s.id === "bison_farStun");
+  const saved = { d: bs.get(), mass: deps.massStun, lv: inputs.lv.value };
+  check("Far Stun carries the distance input and a talAdjust(stunNum) formula", fs.bisonStunInputs === true && fs.dmg === "talAdjust(stunNum)" && fs.hitCount() === 1);
+  // [label, rank, distance, Mass Stun, Bison Lv, damage num, KO]
+  [
+    ["Lv.1 at 7.3 m rounds up to 8 m: floor(0.5 x 8)", 1, 7.3, 0, 100, 4, 4],
+    ["Lv.1 at 6.2 m rounds up to 7 m: floor(3.5)", 1, 6.2, 0, 100, 3, 3],
+    ["Lv.2 at 10 m: 100% of the distance", 2, 10, 0, 100, 10, 10],
+    ["Lv.2 at 9.1 m rounds up to 10 m", 2, 9.1, 0, 100, 10, 10],
+    ["Lv.2 at 0.4 m rounds up to 1 m", 2, 0.4, 0, 100, 1, 1],
+    ["Lv.1 at 1 m: floor(0.5) = 0", 1, 1, 0, 100, 0, 0],
+    ["distance 0", 2, 0, 0, 100, 0, 0],
+    ["Mass Stun adds floor(0.5 x 100) KO", 2, 10, 1, 100, 10, 60],
+    ["Mass Stun with Lv 99 floors 49.5", 2, 10, 1, 99, 10, 59],
+    ["Mass Stun Lv.1 at 7.3 m, Lv 101", 1, 7.3, 1, 101, 4, 54],
+  ].forEach(([label, rank, dist, mass, lv, num, ko]) => {
+    bs.set(dist); deps.massStun = mass; inputs.lv.value = lv;
+    const text = sandbox._substituteDmgVars(fs.dmg, fs, rank), gotKo = sandbox._getKOValue(fs, rank);
+    check(`Far Stun ${label}`, text === `talAdjust(${num})` && gotKo === ko, `${text} / KO ${gotKo} want talAdjust(${num}) / ${ko}`);
+  });
+  bs.set(saved.d); inputs.lv.value = saved.lv; if (saved.mass === undefined) delete deps.massStun; else deps.massStun = saved.mass;
+}
+console.log(`Verified ${checkedBisonStun} Bison Far Stun checks.`);
 // 3o-v. "ดูสูตรคริ" (crit view): a toggle on the cards that model crit (critProc or rawModel.critBase). While on, the formula is drawn as
 // floor(1.8 x (...)), Raw / Final show the crit case and Test always rolls a crit; the shotgun wraps only its base term.
 let checkedCritView = 0;

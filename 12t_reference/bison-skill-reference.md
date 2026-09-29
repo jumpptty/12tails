@@ -290,6 +290,57 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - `RPC_restingGlory` (`Bison.cs:7841-7900`): iterates every child of `gameObject.transform.parent` tagged `"Player"` other than the Bison and calls `RPC_AddHeal(1, (int)(0.35 * mChar.mhp), 0, 0, 0, 0, ActorNr)` — **floor(35% of the Bison's max HP)**, no range check. `RPC_AddHeal` zeroes the heal on a `provoke` target (`CharacterControl.cs:7161-7167`).
 - Tooltip "Returns 35% of Bison's max hp to all teammates when Bison is dead" matches. **Open question:** whether the `parent` group contains only the Bison's own team (PvP); the code itself has no team test.
 
+### bsn_slam1-2 (Slam, #211-212): short dash strike (verified 2026-09-29)
+
+- SP +10/+14 (blue threshold), MP 0, reqLv/reqBn 5/1, 11/3, mode instant, cooldown 30 (`decode_skilldata.py`; `addTimeOut("slam", agiAdjust(30))`, `Bison.cs:21667`). Tooltip: "Do a slam attack that deals damage in short range and remove all lv3 (lv5) lock status" (`BisonSkill_eng.cs`).
+- **Timeline** `RPC_slam` (`Bison.cs:21253-21887`): cast start removes locks (`removeLockStatus(sLv*2 + getAspectOfTheHordeLv())`, `:21688`), `Yield(2, 0.2 s)` windup (`:21835`), then `moveSpeed = 7` (`:21400`) and a 0.1 s tick loop (`Yield(3, 0.1 s)`, `:21839`). Each tick does `i++` and, while `i < 2 + sLv`, one hit round; at `i >= 2 + sLv` the dash stops (`:21516-21534`). So **sLv + 1 hit rounds** (2 at Lv.1, 3 at Lv.2) over (2 + sLv) x 0.1 s = 0.3/0.4 s, about **2.1/2.8 m** of dash.
+- **Hit** per round per target (`:21600-21623`): `Damage.FindRecTarget(pos, forward, 1 + 3*aspect, 1 + 3*aspect, 3*rangeMod, 2*rangeMod, layer)` (half-widths, so **2 m** wide, **8 m** with Aspect of the Horde; 3 x rangeMod long; 2 x rangeMod high; the box travels with the Bison). `hit(99, target, (int)(0.3*ATK + talAdjust(5 + 5*sLv + 5*aspect)), sLv, 0, forward)`: damage uses DEF and `dmgAdjust`; KO = sLv per hit; hate 0. Nothing rejects a target that was hit on the previous tick, so a target that stays in the box takes every round.
+- `removeLockStatus(n)` (`CharacterControl.cs:19456-19500`) removes `groundLock`, `needlePrison`, `sticky`, `frost` and `lightBind` whose level is <= n: n = 2 (Lv.1) / 4 (Lv.2), +1 with Aspect of the Horde. Matches the tooltip ("lower than 3 / 5", "lower than 6").
+
+### bsn_aspectOfTheHorde5 (Aspect of the Horde, #412): Slam and Trample widening (verified 2026-09-29)
+
+- reqLv/reqBn 60/1, mode passive. `getAspectOfTheHordeLv()` = `hasSkill(412) ? 1 : 0` (`Bison.cs:9061-9063`; the other `hasSkill(412)` hits in other class files are those classes' own #412).
+- Uses: Slam hit box half-widths `1 + 3` (`:21600`), Slam and Trample `talAdjust(5 + 5*sLv + 5)` (`:21623`, `:22316`, `:22609`), Slam lock removal +1 level (`:21688`), Trample forward-phase half-widths `1 + 3` (`:22293`; the first-phase box at `:22586` is unchanged). Trample's `removeLockStatus(sLv*2)` (`:22406`) has **no** Aspect term.
+- **Tooltip discrepancy:** "Widen Bison's slam and trample's damage area and gives them ability to remove lv.6 lock status" (`BisonSkill_eng.cs`): the lock-level bonus is Slam only (Trample keeps 2/4), and the +5 base damage is not mentioned.
+
+### bsn_trample1-2 (Trample, #213-214): long charge (verified 2026-09-29)
+
+- SP -30/-40 (red), MP 0, reqLv/reqBn 17/5, 23/7, mode instant, cooldown 120 (`addTimeOut("trample", agiAdjust(120f))`, `Bison.cs:22371`).
+- **Timeline** `RPC_trample` (`Bison.cs:21888-22760`): cast start: `moveSpeed = -2` (a back-step), `removeLockStatus(sLv*2)` (`:22401-22406`), `Yield(2, 0.3 s)` (`:22696`). Phase 1 (`moveSpeed = 7`, `:22035`): three passes at `Yield(4, 0.2 s)` (`:22686`), each with the box `FindRecTarget(pos - forward, forward, 2*rangeMod, 2*rangeMod, 4*rangeMod, 2*rangeMod)` (`:22586`), i.e. 4 x rangeMod wide, 4 x rangeMod long starting 1 m behind the Bison. When `i >= 3` (`:22511`) the animation switches to `trample2`, `moveSpeed = 9` (`:22521`) and phase 2 runs `2 + 5*sLv` passes at `Yield(3, 0.2 s)` (`:22703`) with the box `FindRecTarget(pos, forward, 1 + 3*aspect, 1 + 3*aspect, 3*rangeMod, 2*rangeMod)` (`:22293`), then stops (`:22197`). Distance: 7 x 0.6 = 4.2 m, then 9 x 0.2 x (2 + 5*sLv) = 12.6 m (Lv.1) / 21.6 m (Lv.2).
+- **Hit:** both phases `hit(212 + sLv, target, (int)(0.4*ATK + talAdjust(5 + 5*sLv + 5*aspect)), 3, 0, forward)` (`:22316`, `:22609`): KO 3 per hit, hate 0. Upper bound per target: 3 + (2 + 5*sLv) = **10 (Lv.1) / 15 (Lv.2)** hits if the target stays in every box; the KO push usually moves it out, so the card's hit count is that ceiling.
+- Tooltip "Trample forward and deal damage in a long straight line" (`BisonSkill_eng.cs`) gives no numbers.
+
+### bsn_knockDown1-4 (Knock Down, #221-224): pure-ATK ground smash (verified 2026-09-29)
+
+- SP -5/-8/-12/-15 (red), MP 0, reqLv/reqBn 7/2, 13/4, 19/6, 25/8, mode instant, cooldown 30 (`addTimeOut("knockDown", agiAdjust(30f))`, `Bison.cs:23269`).
+- **Timeline** `RPC_knockDown` (`Bison.cs:22761-23531`): `Yield(2, 0.3 s)` at `moveSpeed = 1`, `Yield(3, 0.4 s)` at `moveSpeed = 4`, `Yield(4, 0.2 s)`; the single hit happens in state 4 (`:22962-23126`), **0.9 s** after the cast starts, then a `Yield(5, 0.2 s)` recovery.
+- **Hit** (`:23064-23126`): `FindAreaTarget(pos + 2*forward, (2 + 2*aftershock)*rangeMod, 2*rangeMod)`; `hitDmg = (int)((0.4 + 0.2*aftershock) * ATK)` (**no talAdjust**), `hitKo = 10*sLv + 10*aftershock`, hate 0, force `Vector3.up`, one `hit(220 + sLv, …)` per target. Every target that takes damage (`hit() != 0`) also gives the Bison **+1 SP** (`:23152`).
+- **Aftershock** (#422, `hasSkill(422)`, `:22967`) changes: radius 4, ATK coefficient 0.6, KO +10; for targets more than 2 m from the box centre (`(target - pos - 2*forward).sqrMagnitude > 4`, `:23108`) `hitDmg` and `hitKo` are halved with `FloorToInt(0.5 * x)` (`:23114-23119`); and each target gets `afterShock` (below).
+- Tooltip "(10/20/30/40 ko)" (`BisonSkill_eng.cs`) matches `10*sLv`. The damage formula has no tooltip.
+
+### bsn_aftershock5 (Aftershock, #422): Knock Down shockwave and status (verified 2026-09-29)
+
+- reqLv/reqBn 70/3, mode passive. Effects listed under Knock Down above. Status `RPC_AddStatus("afterShock", sLv, Damage.getDebuff(15, ownCha, targetCha), 0, ActorNr)` (`Bison.cs:23179`): duration `getDebuff(15, …)` = `floor(15 * (1 + 0.01*(ownCha - targetCha)))` when the Bison's CHA is higher, else `floor(15 * (1 + (ownCha - targetCha)/(|diff| + 64)))` (`Damage.cs:317-319`), i.e. contested by CHA. `sLv` is the Knock Down rank.
+- **Status tick** (`CharacterControl.cs:8808-8832`): while `hp > 0` and `mod(2*t, 6) == 3` (every 3 s), the owner client calls `RPC_AddDamage(220, 0, sLv, 0, Vector3.zero, ActorNr)` — 0 damage and **KO = sLv**. StatusData: Debuff (`StatusData.cs:7322`), Physical (`:5373`).
+- **Tooltip discrepancy:** "…deals half damage in 5m range…" (`BisonSkill_thai.cs`): code radius is 4 x rangeMod with the half-strength ring beyond 2 m; the +0.2 ATK coefficient is not mentioned.
+
+### bsn_farStun1-2 (Far Stun, #241-242): distance-scaled stomp (verified 2026-09-29)
+
+- SP -14/-18 (red), MP 0, reqLv/reqBn 16/4, 20/8, mode **target**, cooldown 120 (`addTimeOut("farStun", agiAdjust(120f))`, `Bison.cs:23938`). No distance check in the dispatch (`Bison.cs:5733-5752`), unlike Instant Rush.
+- **Timeline** `RPC_farStun` (`Bison.cs:23532-24135`): `Yield(2, 0.4 s)`, `Yield(3, 0.3 s)`; the fire step (`:23788-23855`) runs **0.7 s** after the cast starts, then `Yield(4, 0.3 s)`.
+- **Damage** `RPC_farStun_fire` (`Bison.cs:7632-7730`): `num = (int)(0.5 * sLv * Mathf.CeilToInt(flatDistance(bison, tPos)))`; every target inside `FindAreaTarget(tPos, 1, 3)` (radius 1 m, height 3 m, around the **target's position**) takes `hit(240 + sLv, t, talAdjust(num), num, num, Vector3.up)`, i.e. talAdjust(num) damage, **KO num**, hate num. The Bison also hits itself: `hit(240 + sLv, self, talAdjust(num), 0, 0, Vector3.zero)` (`:7715-7725`), which is why the tooltip says it damages the Bison too (its own DEF applies). One hit per target.
+- Tooltip: "damage and ko equal to half / the target's distance" (`BisonSkill_eng.cs`) matches (Lv.1 50%, Lv.2 100% of the rounded-up distance).
+
+### bsn_massStun5 (Mass Stun, #442): Far Stun area (verified 2026-09-29)
+
+- reqLv/reqBn 85/6, mode passive. `hasSkill(442)` (`Bison.cs:23797`) replaces `RPC_farStun_fire` with `RPC_massStun_fire` (`:9082-9160`): `FindAreaTarget(tPos, 5, 3)` (radius **5 m**), `hit(4420 + sLv, t, talAdjust(num), num + FloorToInt(0.5*Lv), num, Vector3.up)` (KO gains **floor(0.5 x Bison Lv)**), and the same self hit. `num` is unchanged. Tooltip matches (Lv means Bison's character level).
+
+### bsn_instantRush1 (Instant Rush, #243): gap closer (verified 2026-09-29)
+
+- SP +12 (blue), MP 0, reqLv/reqBn 24/12, mode **target**, cooldown 30 (`addTimeOut("instantRush", agiAdjust(30f))`, `Bison.cs:24358`).
+- **Cast condition** (`Bison.cs:5752-5799`): the flat distance to the target must satisfy `sqrMagnitude > 144`, i.e. **more than 12 m**; otherwise `newGameMessage("Target too close")`. **Tooltip discrepancy:** "must be more than 16m away" (`BisonSkill_eng.cs`); the card follows the code (12 m).
+- **Motion** `RPC_instantRush` (`Bison.cs:24136-24609`): `Yield(2, 0.1 s)` then `moveSpeed = 24` for `Yield(3, 0.5 s)` = **12 m**, then stop (`:24271-24292`). No damage, KO or status.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
