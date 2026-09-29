@@ -1508,7 +1508,7 @@ let checkedRabbitShot = 0;
   const inputs = sandbox._statInputs, deps = sandbox._depRanks, rb = sandbox._rabbit, ep = sandbox._effectProc;
   const check = (label, ok, got) => { checkedRabbitShot++; if (!ok) { console.error(`[RABBIT SHOT ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const combo = SKILLS.find(s => s.id === "rabbit_nAttack"), charge = SKILLS.find(s => s.id === "rabbit_cAttack");
-  const IDS = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabGear", "rabDeadShot", "rabHeadShot", "rabComboLv", "rabExtravagance"];
+  const IDS = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabWeapon", "rabEquip", "rabDeadShot", "rabHeadShot", "rabComboLv", "rabExtravagance"];
   const savedDeps = IDS.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value };
   const savedDist = [rb.getDistance("combo"), rb.getDistance("charge")], savedAim = rb.getAim();
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
@@ -1572,18 +1572,19 @@ let checkedRabbitShot = 0;
     check(`Charge Attack ${label}`, p.crit === want && p.plain === 0, `${p.crit} want ${want}`);
   });
   // ---- Gear crit base: weapon (+5 / +7) + armor and hat (+7 / +11)
-  [[{}, 0], [{ rabGear: 1 }, 12], [{ rabGear: 2 }, 18], [{ rabW59: 1 }, 0], [{ rabShotgun: 1 }, 0]
+  [[{}, 0], [{ rabWeapon: 1 }, 5], [{ rabWeapon: 2 }, 7], [{ rabEquip: 1 }, 7], [{ rabEquip: 2 }, 11], [{ rabWeapon: 1, rabEquip: 1 }, 12], [{ rabWeapon: 2, rabEquip: 2 }, 18], [{ rabWeapon: 2, rabEquip: 1 }, 14], [{ rabEquip: 2, rabW59: 1 }, 11], [{ rabEquip: 1, rabShotgun: 1 }, 7], [{ rabW59: 1 }, 0], [{ rabShotgun: 1 }, 0]
   ].forEach(([o, want]) => { setDeps(o); check(`crit base ${JSON.stringify(o)}`, sandbox.rabbitCritBase() === want, sandbox.rabbitCritBase()); });
   // ---- Exclusivity: one weapon slot, one armor set, shotgun needs a shotgun weapon
   const dx = rb.depExclusive;
   const sym = Object.keys(dx).filter(k => /^rab/.test(k)).every(a => dx[a].every(b => (dx[b] || []).includes(a)));
   check("Rabbit DEP_EXCLUSIVE is symmetric", sym);
-  check("the gear set, w_rab59 and the shotgun are mutually exclusive", [["rabGear", ["rabW59", "rabShotgun"]], ["rabW59", ["rabGear", "rabShotgun"]], ["rabShotgun", ["rabW59", "rabGear"]]].every(([a, list]) => list.every(b => dx[a].includes(b))));
+  check("the weapon slot, Gatling Gun and the shotgun are mutually exclusive", [["rabWeapon", ["rabW59", "rabShotgun"]], ["rabW59", ["rabWeapon", "rabShotgun"]], ["rabShotgun", ["rabW59", "rabWeapon"]]].every(([a, list]) => list.every(b => dx[a].includes(b))));
+  check("crit equipment (armor + hat) has no exclusivity: it works with the Gatling Gun and the shotgun", !dx.rabEquip && !dx.rabW59.includes("rabEquip") && !dx.rabShotgun.includes("rabEquip") && !dx.rabWeapon.includes("rabEquip"));
   // ---- Crit rate, and crit only on Combo
   inputs.atk.value = "200"; inputs.lck.value = "150";
   const rate = (sk, r, n) => { select(sk, r); let c = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, r, undefined, false); if (ep.lastCrit()) c++; } return c / n; };
   setDeps({}); check("Combo never crits without gear", rate(combo, 1, 400) === 0);
-  [[{ rabGear: 1 }, 12], [{ rabGear: 2 }, 18]].forEach(([o, base]) => {
+  [[{ rabWeapon: 1, rabEquip: 1 }, 12], [{ rabWeapon: 2, rabEquip: 2 }, 18], [{ rabEquip: 2, rabW59: 1 }, 11]].forEach(([o, base]) => {
     setDeps(o); const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate(combo, 1, 5000);
     check(`Combo crit rate ~${want} with base ${base} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
     check("Charge Attack never crits even with the full set", rate(charge, 3, 400) === 0);
@@ -1592,15 +1593,15 @@ let checkedRabbitShot = 0;
   // ---- Header inputs and chips in the rendered card
   select(combo, 3); const heroC = sandbox._getRenderedHeroHtml();
   check("Combo shows the distance box but no aim slider", heroC.includes('data-role="rabbit-distance"') && !heroC.includes('data-role="rabbit-aim"'));
-  check("Combo lists its dependencies", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabGear", "rabW59", "rabShotgun"].every(id => heroC.includes(`data-dep-id="${id}"`)));
+  check("Combo lists its dependencies", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].every(id => heroC.includes(`data-dep-id="${id}"`)));
   // ---- Dependency order on Combo and the merged Hyper Shot + Snipe Mastery dep
   const strip = heroC.match(/data-dep-id="(rab[A-Za-z0-9]+)"/g).map(s => s.slice(13, -1));
-  check("Combo dependency strip order: Bouncing, Hyper+Snipe, Extravagance, gear, Gatling Gun, shotgun", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabGear", "rabW59", "rabShotgun"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
+  check("Combo dependency strip order: Bouncing, Hyper+Snipe, Extravagance, gear, Gatling Gun, shotgun", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
   check("Hyper Shot is one 0..5 dep whose rank-5 icon exists (rank 5 = Snipe Mastery)", combo.dmgControls[1].id === "rabHyperShot" && combo.dmgControls[1].maxRank === 5 && !!sandbox.SKILL_ICONS.rabbit_hyperShot5 && [1, 2, 3, 4].every(n => sandbox.SKILL_ICONS["rabbit_hyperShot" + n]));
   check("no separate Snipe Mastery dependency remains", !/rabSnipe|RABBIT_SNIPE_DEP/.test(html));
-  check("Gatling Gun is the w_rab59 dep name", combo.dmgControls[4].id === "rabW59" && /Gatling Gun/.test(combo.dmgControls[4].label));
+  check("concise dependency names", combo.dmgControls[1].label === "Hyper Shot / Snipe Mastery" && combo.dmgControls[5].id === "rabW59" && combo.dmgControls[5].label === "Gatling Gun" && combo.dmgControls[6].label === "Customized Shotgun");
   check("no crit chip without gear", !heroC.includes("โอกาส Critical"));
-  setDeps({ rabGear: 2 }); select(combo, 3);
+  setDeps({ rabEquip: 2, rabW59: 1 }); select(combo, 3);
   check("crit chip with gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
   setDeps({}); select(charge, 3); const heroK = sandbox._getRenderedHeroHtml();
   check("Charge Attack shows the distance box and the aim slider (idle without a head shot)", heroK.includes('data-role="rabbit-distance"') && heroK.includes('data-role="rabbit-aim"') && heroK.includes("sk-rabbit-aim is-idle"));
@@ -1640,7 +1641,7 @@ let checkedRabbitShot = 0;
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
     const combos = [{}, H4, { rabHyperShot: 5 }, { ...H4, rabBouncing: 1 }, { ...H4, rabShotgun: 1 }, { rabHyperShot: 5, rabShotgun: 2 }, { ...H4, rabW59: 1 },
-      { ...H4, rabGear: 2 }, { rabHyperShot: 5, rabGear: 1, rabBouncing: 1 }, { rabGear: 1 }, { ...H4, rabExtravagance: 1 }];
+      { ...H4, rabWeapon: 2, rabEquip: 2 }, { rabHyperShot: 5, rabWeapon: 1, rabBouncing: 1 }, { rabEquip: 1 }, { ...H4, rabEquip: 2, rabW59: 1 }, { rabHyperShot: 5, rabEquip: 2, rabShotgun: 1 }, { ...H4, rabExtravagance: 1 }];
     const chargeCombos = [CH({}), CH({ rabHyperShot: 4 }), CH({ rabHeadShot: 1 }), CH({ rabHeadShot: 1, rabDeadShot: 1, rabHyperShot: 3 }), CH({ rabHyperShot: 4, rabComboLv: 0 })];
     const sweep = (sk, list, distKind, dists, aims) => list.forEach(o => dists.forEach(d => aims.forEach(a => {
       for (let r = 1; r <= sk.maxRank; r++) {
