@@ -373,6 +373,27 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - `Bison_overLord.OnTriggerEnter` (`Bison_overLord.cs:56-118`): needs the owner alive and not `hide`; the entering object must be tagged `Player`, on the Bison's layer (same team) and `Race == Tails`; it gets `addStatus("overLord", nLv, 999, ceil(0.05 * Bison.def * nLv), ownerID)`. `overLord` apply is `deltaDef(sValue)` (`CharacterControl.cs:35327-35331`), so **DEF +5% / +10% of the Bison's DEF**, fixed at the moment of entry. `OnTriggerExit` removes it (`:126-173`). `StatusData.cs` has no classification for `overLord`.
 - **Tooltip discrepancy:** the English tooltip says "10/20 def", the Thai says "+5%/+10% def" (`BisonSkill_eng.cs`, `BisonSkill_thai.cs`); code matches the Thai. Trigger radius is a prefab value; the tooltip's 12 m is not verifiable in code.
 
+### bsn_ironSkin1-3 / bsn_diamondSkin1-3 (Iron Skin #331-333, Diamond Skin #341-343): range-based damage reduction (verified 2026-09-29)
+
+- reqLv/reqBn 16/4, 20/8, 24/12 (both skins), MP 0, SP 0, mode passive. Tooltips: Iron Skin "Decreases Bison's damage taken from enemies within 6m range by 8/16/24%", Diamond Skin "…farer than 12m range by 8/16/24%" (`BisonSkill_eng.cs`).
+- Both live in the Bison damage-received block of `RPC_AddDamage` (`CharacterControl.cs:4011-4298`), so they apply to direct hits only (Effect Damage never reaches it).
+  - **Iron Skin** (`:4116-4181`, gate `hasSkill(331)`): `d2 = ceil(|attacker - bison|^2)` (3-D positions, includes height); when `d2 < 16 + (hasSkill(433) ? 65 : 0)` (**4 m**, **9 m** with Steel Skin) `nDamage = ceil(nDamage * (1 - 0.08 * n))`. `n` is chosen by rank: `hasSkill(332)` false -> **2**, `hasSkill(333)` false -> **3**, else **3** (`:4149-4177`, junk predicates evaluate to false), i.e. **16% / 24% / 24%** reduction for Lv.1/2/3.
+  - **Diamond Skin** (`:4206-4290`, gate `hasSkill(341)`): applies when `ceil(d2) > 144 - (hasSkill(443) ? 63 : 0)` (**more than 12 m**, **9 m** with Mythril Skin), the same `ceil(nDamage * (1 - 0.08 * n))`, `n` 2 / 3 / 3 by the same #342/#343 test.
+- **Discrepancies (code followed, live observation would override):** the tooltip range is 6 m (code 4 m), and the tooltip percentages 8/16/24 correspond to `n = 1/2/3` while the decompiled literals are 2/3/3, so Lv.3 gives no gain over Lv.2. Logged as an open question: needs a live check of the Lv.1 reduction (16% vs 8%) and the 4 m vs 6 m radius.
+
+### bsn_ironShield1 / bsn_diamondShield1 (Iron Shield #334, Diamond Shield #344): timed range blocks (verified 2026-09-29)
+
+- MP 10, SP -10 (red), reqLv/reqBn 28/18, mode instant, cooldown 90 (`addTimeOut("ironShield", agiAdjust(90))`, `Bison.cs:27790`; `"diamondShield"`, `:28377`).
+- **Timeline** (`Bison.cs:27287-27873`, `:27874-28460`): `Yield(2, 0.3 s)`, `Yield(3, 0.3 s)`; the status is applied at **0.6 s**, then `Yield(4, 0.2 s)`. Duration `mDuration = chaAdjust(6)`, `+= 2` **after** `chaAdjust` with Steel Skin (#433, `:27691-27708`) or Mythril Skin (#443, `:28278-28295`) for the matching shield; status level 1.
+- **Effect** (`CharacterControl.cs:4186-4197`, `:4276-4290`): while `getStatusLv("ironShield") > 0` (or `"diamondShield"`) and the attacker is inside the same range test as the matching skin, `nDamage = 0` and `nKo = 0`. StatusData: Buff, Magical, Shield (`StatusData.cs:6530`/`5621`/`6250` and `6536`/`5627`/`6256`).
+- **Both shields:** applying one while the other is active converts the applied status to `perfectShield`, or to `perfectArmor` when `hasSkill(443)` (`CharacterControl.cs:11973-12033`; guards `:11085-11155`). `perfectShield` sets `nDamage = 0` for any attacker (KO still passes), `perfectArmor` sets `nDamage = 0` and `nKo = 0` (`:4085-4110`). Both are Buff/Magical/Shield (`StatusData.cs:6542`, `:6554`). Their remaining duration and the re-application order are not fully traced (open question).
+- **Tooltip discrepancy:** "blocking all damage taken from enemies within 6m (6 sec)" (`BisonSkill_eng.cs`): code range is 4 m (Iron) / more than 12 m (Diamond), 6 s base.
+
+### bsn_steelSkin5 (Steel Skin, #433) / bsn_mythrilSkin5 (Mythril Skin, #443) (verified 2026-09-29)
+
+- reqLv/reqBn 75/4 and 85/6, mode passive. Steel Skin: Iron Skin / Iron Shield range 4 m -> 9 m (`16 + 65 = 81`, `CharacterControl.cs:4142`) and Iron Shield duration +2 s after `chaAdjust` (`Bison.cs:27696-27702`). Mythril Skin: Diamond Skin / Diamond Shield minimum range 12 m -> 9 m (`144 - 63 = 81`, `:4276` block) and Diamond Shield +2 s (`Bison.cs:28283-28289`), plus `perfectArmor` for the dual-shield case above.
+- **Tooltip discrepancy:** "Increases range effect of IronSkin/Shield to 9m" and the Thai "+3 m" (`BisonSkill_*.cs`): consistent with 9 m, not with a 6 m base.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
