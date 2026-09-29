@@ -394,6 +394,66 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - reqLv/reqBn 75/4 and 85/6, mode passive. Steel Skin: Iron Skin / Iron Shield range 4 m -> 9 m (`16 + 65 = 81`, `CharacterControl.cs:4142`) and Iron Shield duration +2 s after `chaAdjust` (`Bison.cs:27696-27702`). Mythril Skin: Diamond Skin / Diamond Shield minimum range 12 m -> 9 m (`144 - 63 = 81`, `:4276` block) and Diamond Shield +2 s (`Bison.cs:28283-28289`), plus `perfectArmor` for the dual-shield case above.
 - **Tooltip discrepancy:** "Increases range effect of IronSkin/Shield to 9m" and the Thai "+3 m" (`BisonSkill_*.cs`): consistent with 9 m, not with a 6 m base.
 
+### bsn_earthRupture1-2 (Earth Rupture, #351-352): axe shockwave(s) (verified 2026-09-29)
+
+- SP -15/-20 (red), MP 0, reqLv/reqBn 20/12, 24/15, mode instant, cooldown 60 (`addTimeOut("earthRupture", agiAdjust(60))`, `Bison.cs:28730`).
+- **Timeline** `RPC_earthRupture` (`Bison.cs:28466-28934`): `Yield(2, 0.8 s)`, then the fire step (`:28620-28648`), then `Yield(3, 0.7 s)`. The wave spawns at `pos + (0, 0.2, 0.4)` in the Bison's frame.
+- **Waves** `RPC_earthRupture_fire1` (`Bison.cs:8762`): one projectile (`ProjectileControl.life = 2`). `RPC_earthRupture_fire2` (`:8829`, Lv.2): three projectiles at `i * 25` degrees for `i = -1, 0, 1`, same life. Projectile speed and width come from the prefab (`ProjectileControl.velocity`) and are not in the decompiled code, so range and overlap are open questions.
+- **Hit** `Bison_earthRupture.OnCollisionEnter` (`Bison_earthRupture.cs:131-190`): `IgnoreCollision(wave, target)` first, so each wave hits each target once and passes through; `hit(203, target, (int)(0.5*ATK + talAdjust(30)), 5, 0, zero)` (isMine only). **Not rank-scaled**: Lv.2 only adds waves. The waves start from one point, so a target close to the Bison can be crossed by more than one of the three.
+
+### bsn_earthSmasher1-2 (Earth Smasher, #353-354): jump slam (verified 2026-09-29)
+
+- SP -45/-55 (red), MP 0, reqLv/reqBn 28/18, 32/21, mode instant, cooldown 180 (`addTimeOut("earthSmasher", agiAdjust(180))`, `Bison.cs:29381`).
+- **Timeline** `RPC_earthSmasher` (`Bison.cs:28935-29637`): `Yield(2, 0.8 s)`, `moveSpeed = 2`, `Yield(3, 0.6 s)`; the hit happens in state 3, **1.4 s** after the cast starts, then `Yield(4, 1.2 s)` and `Yield(5, 0.6 s)` of recovery.
+- **Hit** (`:29193-29242`): `FindAreaTarget(pos, 7*rangeMod, 2*rangeMod)`, `hit(332 + sLv, t, (int)((0.5*sLv + 0.5)*ATK + talAdjust(50*sLv)), 20 + 20*sLv, 0, 3*up)`: **1.0 x ATK + talAdjust(50)** at Lv.1, **1.5 x ATK + talAdjust(100)** at Lv.2, KO **40 / 60**; +1 SP per damaged target. The radius is 7 at both ranks, although the tooltips say "medium" / "large" (`BisonSkill_eng.cs`).
+
+### bsn_magmaClutter5 (Magma Clutter, #434): lift and gore (verified 2026-09-29)
+
+- MP 20, SP -20 (red), reqLv/reqBn 75/4, mode instant, cooldown 90 (`addTimeOut("magmaClutter", agiAdjust(90))`, `Bison.cs:31715`).
+- **Timeline** `RPC_magmaClutter` (`Bison.cs:31242-31958`): `moveSpeed = 5` at the start, `Yield(2, 0.3 s)`, first hit, `Yield(3, 0.5 s)`, dash (`moveSpeed = 5`), `Yield(4, 0.2 s)`, second hit at **1.0 s**, `Yield(5, 0.3 s)`.
+- **Hit 1** (`:31413-31457`): `FindAreaTarget(pos + forward, 2*rangeMod, 3*rangeMod)`, `hitDmg = (int)(0.5*ATK + talAdjust(100 - target.weight))`, `hit(434, t, hitDmg, floor(0.1*hitDmg), 0, 4*up)`: lighter targets take more (the tooltip's "target's lightness"); KO is 10% of that pre-DEF damage.
+- **Hit 2** (`:31568-31627`): `FindRecTarget(pos, forward, 2, 2, 2*rangeMod, 3*rangeMod)` (4 m wide, 2 x rangeMod long), `hit(434, t, (int)(1.5*ATK + talAdjust(50)), 5, 0, flatDirAwayFromBison)`, +1 SP per damaged target. The target launched by hit 1 can still be inside hit 2's box.
+
+### bsn_calamityHammer5 (Calamity Hammer, #444): ground slam and lava strikes (verified 2026-09-29)
+
+- MP 50, SP -50 (red), reqLv/reqBn 85/6, mode **target**, cooldown 150 (`addTimeOut("calamityHammer", agiAdjust(150))`, `Bison.cs:32264`).
+- **Cast** `RPC_calamityHammer` (`Bison.cs:31959-32443`): `Yield(2, 2.1 s)` windup; at the end `FindAreaTarget(pos + 3.5*forward, 3, 3)` and `hit(444, t, ATK + talAdjust(45), 10, 0, zero)` on everything in that circle (**impact**, not in the tooltip), then `OnCalamityHammer(tID)` starts (`:32156`).
+- **Lava loop** `OnCalamityHammer` (`Bison.cs:32444-32660`): ten passes (`i < 10`) every `Yield(2, 1.5 s)` while the Bison is alive and the chosen target object exists; each pass runs `RPC_calamityHammer_fire(target.position, …)` (position sampled **at the moment of the pass**). `RPC_calamityHammer_fire` (`:32671-32934`) waits `Yield(2, 0.3 s)`, then `FindAreaTarget(hitPos, 1, 3)` and `hit(444, t, ATK + talAdjust(45), 10, 0, up)` on every enemy in radius **1 m** of that spot. Passes run at t = 0, 1.5, … 13.5 s after the windup.
+- Upper bound per target: 1 impact + 10 lava strikes. Tooltip: "(45dmg x 10)" (`BisonSkill_thai.cs`); the +ATK term and the impact are not mentioned.
+
+### bsn_onslaught5 (Onslaught, #413): hate-to-damage roar (verified 2026-09-29)
+
+- MP 50, SP -50 (red), reqLv/reqBn 60/1, mode instant, cooldown 300 (`addTimeOut("onslaught", agiAdjust(300))`, `Bison.cs:30606`).
+- **Timeline** `RPC_onslaught` (`Bison.cs:30086-30709`): `Yield(2, 0.3 s)`, `Yield(3, 0.3 s)`; the effect runs at **0.6 s**, then `Yield(4, 0.2 s)`.
+- **Effect** (`:30424-30518`): every active entry of the Bison's own `mHateList` (`hate > ceil(Time.time)`, hate is stored as an expiry time so it decays 1 per second, see `getHate`, `CharacterControl.cs:7687`) adds `ceil(0.1 * (hate - Time.time))` to `mDmg`; every entry is then zeroed. Every target in `FindAreaTarget(pos, 30, 6, layer)` (radius **30 m**, no rangeMod, own layer excluded) gets `RPC_AddDamage(413, clamp(mDmg, 0, 1999), 0, 0, zero, ActorNr)`: **direct damage, no DEF, no `dmgAdjust`, no LCK roll, no KO**, capped at **1999**.
+- The card models one hate source (input = its current hate); with several entries each is rounded up separately, so the sum can be a little higher. Which hate list the Bison's own `mHateList` holds for a player Bison is an open question; the tooltip says "10% of Bison's total hate (Max 1999 Dmg)" (`BisonSkill_eng.cs`).
+
+### bsn_prideCrusher5 (Pride Crusher, #423): hate-scaled ground smash (verified 2026-09-29)
+
+- MP 5, SP -25 (red), reqLv/reqBn 70/3, mode instant, cooldown 60 (`addTimeOut("prideCrusher", agiAdjust(60))`, `Bison.cs:31023`).
+- **Timeline** `RPC_prideCrusher` (`Bison.cs:30710-31241`): `moveSpeed = 1`, `Yield(2, 0.6 s)`, hit at **0.6 s**, `Yield(3, 0.2 s)`.
+- **Hit** (`:30881-30930`): `FindRecTarget(pos, forward, 1*rangeMod, 1*rangeMod, 8*rangeMod, 3*rangeMod)` (2 x rangeMod wide, 8 x rangeMod long, 3 x rangeMod high); `hitDmg = (int)((ATK + talAdjust(30)) + clamp(0.2 * target.getHate(BisonActorNr), 0, 999))`, `hit(422, t, hitDmg, 10, 0, 0.5*up)`. `getHate` is `floor(hate - Time.time)` (0 when expired). So **ATK + talAdjust(30) + up to 999**, and the hate part goes through DEF like the rest.
+
+### bsn_titanForm1-2 (Titan Form, #371-372): giant form (verified 2026-09-29)
+
+- MP 30/40, SP -55/-70 (red), reqLv/reqBn 35/23, 40/25, mode instant, cooldown 300 (`addTimeOut("titanForm", agiAdjust(300))`, `Bison.cs:29879`).
+- **Cast** `RPC_titanForm` (`Bison.cs:29638-30085`): `Yield(2, 0.3 s)`, then `RPC_AddStatus("titanForm", sLv, chaAdjust(60), …)` and `RPC_AddHeal(370 + sLv, talAdjust(sLv*120 + 80), …)` (`:29792-29797`), `Yield(3, 0.5 s)`.
+- **Status** `titanForm` (State `StatusData.cs:4848`, Buff `:6548`); apply (`CharacterControl.cs:35209-35240`): removes `enrage` and `enlarge`, scale `+ (0.3*sLv + 0.2)`, `deltaDef(30*sLv + 20)`, `deltaVit(30*sLv + 20)`, `rangeMod += 0.3*sLv`, `weight += 15*sLv`; removal reverses all (`:15675-15706`). `rangeMod` scales every `rangeMod` skill area.
+- **Tooltip discrepancy:** the English tooltip says "restores 250 / 400 hp", the Thai "200 / 320" (`BisonSkill_eng.cs`, `BisonSkill_thai.cs`); code is `talAdjust(120*sLv + 80)` = 200 / 320 base, matching the Thai. DEF/VIT +50 / +80 match.
+
+### bsn_colossalWeapon1-2 (Colossal Weapon, #361-362): Combo splash (verified 2026-09-29)
+
+- reqLv/reqBn 24/15, 27/18, mode passive. The splash after each Combo stage is documented in the Combo entry above (`Bison.cs:14930-15029`, `:17362-17461`, `:17652-17749`, `getColossalWeaponLv()` `:8947`): Effect Damage `ceil(0.2 * lv * highestStageDamage)` (20% / 40%) to every target within 8 m (height 4; 6 for spin and Added Swing) of a point 1 m ahead that the stage did not hit. It has no card formula because it depends on the stage's highest hit; the card describes it.
+- Tooltip "splash 20% (40%) of its damage to all enemies within 8m" matches; it omits that already-hit targets are excluded.
+
+### bsn_colossalArmor1-2 (Colossal Armor, #363-364): damage retaliation (verified 2026-09-29)
+
+- reqLv/reqBn 30/21, 33/24, mode passive. In the Bison damage-received block (`CharacterControl.cs:4011-4052`), on every direct hit with `nDamage > 0`: `num3 = 1` (+1 with #364) and the attacker takes `RPC_AddEffectDamage(364, num3, num3, 0, zero, ActorNr)`: **1 / 2 Effect Damage and 1 / 2 KO** (no DEF). Tooltip matches.
+
+### bsn_addedSwing5 (Added Swing, #401): fifth Combo stage (verified 2026-09-29)
+
+- reqLv/reqBn 55/0, mode passive. See the Combo entry: `RPC_nAttack5` starts after `nAttack3` or the spin, on a press more than 2 s later, with no roll (`Bison.cs:5034-5067`); it is a two-hit spin (radius 5 then 6 x rangeMod, height 3; first hit 0 base KO) with the spin's damage coefficients (`:18313-18643`), and it also triggers Berserker Rush, Colossal Weapon and Over Pride like other stages.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

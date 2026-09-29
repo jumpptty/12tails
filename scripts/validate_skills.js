@@ -126,7 +126,7 @@ const exposeInjection = `
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
   window._critView = { set: (v) => { critFormulaView = v; } };
-  window._bisonStun = { set: (v) => { bisonStunDistance = v; }, get: () => bisonStunDistance };
+  window._bisonStun = { set: (v) => { bisonStunDistance = v; }, get: () => bisonStunDistance, setHate: (v) => { bisonHate = v; }, getHate: () => bisonHate, setWeight: (v) => { bisonWeight = v; }, getWeight: () => bisonWeight };
   window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1717,6 +1717,33 @@ let checkedBisonStun = 0;
   check("Power Reel is the x1.5 multiplier dep", pc.dmgMultDep && pc.dmgMultDep.mult === 1.5 && pc.atkCoeff === 1);
   deps.powerHammer = saved[0]; deps.powerReel = saved[1];
   if (saved[0] === undefined) delete deps.powerHammer; if (saved[1] === undefined) delete deps.powerReel;
+}
+// Onslaught (Bison.cs:30448, 30518): clamp(sum ceil(0.1 x hate), 0, 1999); Pride Crusher (:30925): floor(clamp(0.2 x hate, 0, 999)) added to ATK + talAdjust(30); Magma Clutter (:31446): talAdjust(100 - weight).
+{
+  const bs = sandbox._bisonStun;
+  const check = (label, ok, got) => { checkedBisonStun++; if (!ok) { console.error(`[BISON STUN ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const on = SKILLS.find(s => s.id === "bison_onslaught"), pc = SKILLS.find(s => s.id === "bison_prideCrusher"), mc = SKILLS.find(s => s.id === "bison_magmaClutter");
+  const saved = [bs.getHate(), bs.getWeight()];
+  check("Onslaught is direct damage with a hate input and no TTO toggle", on.bisonHateInputs === true && on.penetrating === true && !sandbox._usesTdlRoll(on));
+  // [label, hate, Onslaught damage, Pride Crusher hate part]
+  [
+    ["hate 100", 100, 10, 20], ["hate 105 rounds Onslaught up", 105, 11, 21], ["hate 1", 1, 1, 0], ["hate 0", 0, 0, 0],
+    ["hate 7 floors the Pride Crusher part", 7, 1, 1], ["hate 4", 4, 1, 0], ["Onslaught caps at 1999", 30000, 1999, 999],
+    ["hate 19990 is exactly 1999", 19990, 1999, 999], ["hate 19991 would be 2000 and is clamped", 19991, 1999, 999],
+    ["Pride Crusher caps its hate part at 999", 5000, 500, 999], ["hate 4995 reaches the 999 cap exactly", 4995, 500, 999],
+  ].forEach(([label, h, o, c]) => {
+    bs.setHate(h);
+    const ot = sandbox._substituteDmgVars(on.dmg, on, 1), ct = sandbox._substituteDmgVars(pc.dmg, pc, 1);
+    const wantO = Math.min(1999, o), okO = ot === String(wantO);
+    check(`Onslaught ${label}`, okO, `${ot} want ${wantO}`);
+    check(`Pride Crusher ${label}`, ct === `talAdjust(30)+${c}`, `${ct} want talAdjust(30)+${c}`);
+  });
+  [[30, "talAdjust(100-30)"], [0, "talAdjust(100-0)"], [100, "talAdjust(100-100)"]].forEach(([w, text]) => {
+    bs.setWeight(w);
+    const t = sandbox._substituteDmgVars(mc.dmgGroups[0].dmg, mc, 1);
+    check(`Magma Clutter weight ${w}`, t === text, `${t} want ${text}`);
+  });
+  bs.setHate(saved[0]); bs.setWeight(saved[1]);
 }
 console.log(`Verified ${checkedBisonStun} Bison Far Stun checks.`);
 // 3o-v. "ดูสูตรคริ" (crit view): a toggle on the cards that model crit (critProc or rawModel.critBase). While on, the formula is drawn as
