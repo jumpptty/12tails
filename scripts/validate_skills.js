@@ -1515,6 +1515,10 @@ let checkedRabbitShot = 0;
   const select = (sk, r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
   check("both cards use rawModel with header inputs and no atkCoeff", [combo, charge].every(s => s.rawModel && s.rabbitShotInputs && s.atkCoeff === undefined && s.hitCount() === 1));
   check("only Combo carries a crit base", typeof combo.rawModel.critBase === "function" && charge.rawModel.critBase === undefined);
+  // TTO removed the LCK roll from talAdjust/dmgAdjust/defAdjust, so every damaging Rabbit card must offer the TTO toggle (usesTdlRoll).
+  const dmgCards = SKILLS.filter(s => s.class === "Rabbit" && !s.effectDamage && !s.penetrating && (s.rawModel || s.atkCoeff !== undefined || (s.dmg && s.dmg !== "0") || s.dmgGroups));
+  check("every damaging Rabbit card offers the TTO toggle", dmgCards.length >= 12 && dmgCards.every(s => sandbox._usesTdlRoll(s)), dmgCards.filter(s => !sandbox._usesTdlRoll(s)).map(s => s.id).join(","));
+  check("Combo and Charge Attack offer TTO", sandbox._usesTdlRoll(combo) && sandbox._usesTdlRoll(charge));
   // ---- Combo goldens: [label, rank, ATK, LV, deps, distance, crit, plain]
   const H4 = { rabHyperShot: 4 };
   [
