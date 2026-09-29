@@ -125,7 +125,7 @@ const exposeInjection = `
   window._usesTdlRoll = usesTdlRoll;
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
-  window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, setExtravagance: (v) => { rabbitExtravagance = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
+  window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -815,8 +815,8 @@ let checkedConsistency = 0;
   SKILLS.forEach(sk => {
     if (sk.dmgGroups && sk.dmgModes) return;   // alternative modes/zones, not per-hit groups
     const depIds = [];
-    DEP_FIELD_NAMES.forEach(f => { if (sk[f] && sk[f].id) depIds.push([sk[f].id, sk[f].minRank !== undefined ? sk[f].minRank : 0]); });
-    if (sk.dmgFocusIntellect) depIds.push(["focusIntellect", 0]);
+    DEP_FIELD_NAMES.forEach(f => { if (sk[f] && sk[f].id) depIds.push([sk[f].id, sk[f].minRank !== undefined ? sk[f].minRank : 0, sk[f].maxRank !== undefined ? sk[f].maxRank : 1]); });
+    if (sk.dmgFocusIntellect) depIds.push(["focusIntellect", 0, 1]);
     // Two stat profiles: the sandbox defaults (player LCK/ATK/TAL 0) AND a high-stat profile.
     // Only the high profile gives LCK-difference skills (Lucky Card) a real LCK lead over the
     // enemy, so a range/roll gap in that term can't hide behind all-zero stats.
@@ -826,7 +826,7 @@ let checkedConsistency = 0;
     [false, true].forEach(depsOff => {
       if (depsOff && depIds.length === 0) return;   // nothing to switch off
       const saved = depIds.map(([id]) => [id, sandbox._depRanks[id]]);
-      depIds.forEach(([id, min]) => { if (depsOff) sandbox._depRanks[id] = min; else delete sandbox._depRanks[id]; });
+      depIds.forEach(([id, min, max]) => { sandbox._depRanks[id] = depsOff ? min : max; });   // every dependency starts off in the app: the passes are "all off" and "all on", never "default"
       for (let r = 1; r <= Math.max(1, sk.maxRank || 1); r++) {
         try {
           const computable = text => {
@@ -852,7 +852,7 @@ let checkedConsistency = 0;
             checkedConsistency++;
             if (lo < fin[0] || hi > fin[1]) {
               const where = g ? ` group ${gi}${g.label ? ` "${g.label}"` : ""}` : "";
-              if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}${where}${depsOff ? " (deps off)" : ""}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
+              if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}${where}${depsOff ? " (deps off)" : " (deps on)"}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
             }
           });
         } catch (e) {
@@ -1610,20 +1610,20 @@ let checkedRabbitShot = 0;
   check("Extravagance links reciprocally with each of them", EXTRA_CARDS.every(s => (s.compatSkills || []).includes("rabbit_extravagance")) && EXTRA_CARDS.every(s => SKILLS.find(x => x.id === "rabbit_extravagance").compatSkills.includes(s.id)));
   check("the Buff popup no longer lists Extravagance", !/extravagance512/.test(html));
   const savedAtkRole = inputs.atk.dataset.role; inputs.atk.dataset.role = "atk";   // statBonus() keys off the input data-role
-  setDeps({}); rb.setExtravagance(300); inputs.atk.value = "128";
+  setDeps({}); inputs.atk.value = "128";
   check("Extravagance off leaves ATK alone", EXTRA_CARDS.every(s => { select(s, 1); return sandbox._statVal(inputs.atk) === 128; }));
   setDeps({ rabExtravagance: 1 });
-  check("Extravagance on adds its ATK on every flagged card", EXTRA_CARDS.every(s => { select(s, 1); return sandbox._statVal(inputs.atk) === 428; }), EXTRA_CARDS.map(s => { select(s, 1); return sandbox._statVal(inputs.atk); }).join(","));
+  check("Extravagance on adds its ATK on every flagged card", EXTRA_CARDS.every(s => { select(s, 1); return sandbox._statVal(inputs.atk) === 640; }), EXTRA_CARDS.map(s => { select(s, 1); return sandbox._statVal(inputs.atk); }).join(","));
   select(SKILLS.find(s => s.id === "rabbit_gorgonShot"), 1);
   check("Extravagance does not touch an unflagged card", sandbox._statVal(inputs.atk) === 128);
   select(SKILLS.find(s => s.id === "rabbit_extravagance"), 1);
   check("Extravagance does not buff itself", sandbox._statVal(inputs.atk) === 128);
-  rb.setExtravagance(512); setDeps({ rabExtravagance: 1 }); rb.setDistance("combo", 16); select(combo, 1);
+  setDeps({ rabExtravagance: 1 }); rb.setDistance("combo", 16); select(combo, 1);
   check("Combo raw uses the boosted ATK: floor(0.5 x 640) = 320", sandbox._statVal(inputs.atk) === 640 && sandbox.rabbitComboParts(1, sandbox._statVal(inputs.atk), 100).crit === 320);
-  check("the +ATK box shows only while the dep is on", sandbox._getRenderedHeroHtml().includes('data-role="rabbit-extra-atk"'));
+  check("Extravagance has no input box, it is always the 512 cap", !sandbox._getRenderedHeroHtml().includes('data-role="rabbit-extra-atk"'));
   setDeps({}); select(combo, 1);
-  check("no +ATK box while the dep is off", !sandbox._getRenderedHeroHtml().includes('data-role="rabbit-extra-atk"'));
-  rb.setExtravagance(512); inputs.atk.value = "128";
+  check("no Extravagance ATK while the dep is off", sandbox._statVal(inputs.atk) === 128);
+  inputs.atk.value = "128";
   if (savedAtkRole === undefined) delete inputs.atk.dataset.role; else inputs.atk.dataset.role = savedAtkRole;
   // ---- Stat glow: rawModel declares ATK, and LV only for a live Bouncing Bullet
   setDeps({}); check("Combo glows ATK, not LV, by default", sandbox.getUsedPlayerStatKeys(combo).has("atk") && !sandbox.getUsedPlayerStatKeys(combo).has("lv"));
