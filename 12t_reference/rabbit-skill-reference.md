@@ -550,17 +550,17 @@ Requirements from `python scripts/decode_skilldata.py DecompiledSource/RabbitSki
 - Damage goes through `getCritPlus(...)` (`:16471`): weapon `w_rab43`/`w_rab44` +5, `w_rab58` +7; armor `a_all43`/`a_all44` +4, `a_all58` +6; accessory `c_all43`/`c_all44` +3, `c_all58` +5. `Random.Range(0,100) < lckAdjust(sum)` gives `floor(1.8 × raw)` (same shape as Wolf/Bison gear crit). Not modeled on the card.
 - Hyper Shot term: `mDistance = flat(caster - hit point)`. Without Snipe Mastery `mDistance = clamp(mDistance - 16, 0, 40)`; with Snipe Mastery (`hasSkill(431)`) the raw distance is used (`:17651-17662`). `hyper = floor(mDistance × hyperLv)` (`:17679`), added to `hitDmg` before `getCritPlus`.
 
-**Hyper Shot (`getHypershotLv`, `Rabbit.cs:9421-9470`)**
+**Hyper Shot (`hyperShot1-4`, `getHypershotLv`, `Rabbit.cs:9421-9470`)**
 - Level 1-4 from `hasSkill(131-134)`; it multiplies distance in metres (tooltip "1/2/3/4 dmg per 1m beyond 16 m", `RabbitSkill_eng.cs:143-176`).
 - Read by: Combo (`:17431`, `:17679`), the Bouncing Bullet loop (`:18253`), Charge Attack 2 (`:19416`, `:19513`: `(distance - 16) × lv`, only when `distance > 16`, no 40 m cap), From the Above's air shot (`:22173-22195`, same `(distance - 16) × lv`, distance measured flat from the firing point 12 m above), and the shotgun attack (`:36293-36308`, reversed, see below).
 - Snipe Mastery only changes the Combo and ricochet term and the shotgun term; Charge Attack and From the Above ignore it (`hasSkill(431)` appears only at `:17594`, `:17656`, `:18235`, `:18265`, `:36313` in Rabbit's files; `CharacterControl.cs:13467` is Panda's).
 
-**Snipe Mastery (`hasSkill(431)`)**
+**Snipe Mastery (`snipeMastery5`, `hasSkill(431)`)**
 - Rifle Combo / ricochet: hyper distance starts from `0 m` with no `-16` offset and no `40 m` cap (`:17656`, `:18235`), so short shots also get `distance × lv`. Also swaps the hit effect to `RPC_snipeShot_hit` (`:17594`).
 - Shotgun: `hyper = floor(1.5 × hyper)` when `hyper > 0` (`:36313-36325`).
 - **Discrepancy:** the client tooltips promise "+2 levels" (Thai, `RabbitSkill_thai.cs:950`) and "6 damage per 1m" (English, `RabbitSkill_eng.cs:928`, i.e. level 4 + 2). No `+2` exists anywhere in the decompiled Rabbit path: `getHypershotLv()` returns 0-4 only and `mHyperShotLv` is never adjusted by `hasSkill(431)`. The card follows the code; a live test would settle whether a server patched it.
 
-**Bouncing Bullet (`hasSkill(401)`)**
+**Bouncing Bullet (`bouncingBullet5`, `hasSkill(401)`)**
 - With the passive, `RPC_nAttack` skips the single raycast and enters the ricochet loop (`:17459-17520` then `goto IL_F77`). Path budget `bounceRange = 20 + 5 × Combo` (`:17512`); each segment is `Physics.Raycast(..., bounceRange, layer 1)` against walls (`:18123`), `bounceRange -= segment length` (`:18166`), at most 3 segments (`bounceCount < 3`, `:18076`) and it stops once `bounceRange <= 12` (`:18082`). The direction reflects off the wall normal (`:18370`) and there is a `0.3 s` wait between segments (`:18385`).
 - Every segment uses `Physics.RaycastAll` and loops over all colliders with no `break` (`:18197-18345`): each target on the segment is hit, not only the first (`:18259`, `hit(1, ..., getCritPlus((int)(hitDmg + 0.5 × Lv + hyper)), 1, 0, ...)`).
 - **Damage: `+0.5 × character Lv` flat per hit** (`Lv` is `mChar.Lv`, `:18259`), added to `hitDmg`. The client tooltip (`RabbitSkill_thai.cs:913`, "+50% per rabbit level") reads as a percentage; the code is a flat `0.5` per character level (Lv 100 = +50).
@@ -572,16 +572,16 @@ Requirements from `python scripts/decode_skilldata.py DecompiledSource/RabbitSki
 - So body shot = `0.5 + 0.3×lv` × ATK and head shot = `0.5 + 0.6×lv` × ATK, i.e. the tooltip's "+60~120% × lv" relative to the `0.5 ATK` base.
 - Crosshair range readout uses `25/30/35/40 m` per Combo rank (`Rabbit_sniperCamera.cs:121-163`, display only).
 
-**Dead Shot (`hasSkill(411)`)**
+**Dead Shot (`deadShot5`, `hasSkill(411)`)**
 - Lives inside the head-zone branch only (`:19434-19486`, nesting checked). `Rabbit_sniperCamera.cs:335-452` starts `mDeadShotTimer = Time.time` when the crosshair is on a head zone and resets it to 0 otherwise. Multiplier `1 + 0.5 × clamp(t, 0, 4)` (`:19486`): x1 to x3 at 4 s (tooltip "max 4 sec, 300%" = final multiplier x3). It multiplies `(0.5 ATK + chargeDmg + headShotDmg)`, not the Hyper Shot term. A "Dead Shot!" message shows when the multiplier is above 1 (`:19529-19535`).
 
-**Customized Shotgun (`RPC_shotgun`, `getCustomizedShotgunLv`)**
+**Customized Shotgun (`customizedShotgun1-2`, `RPC_shotgun`, `getCustomizedShotgunLv`)**
 - Level 1/2 needs `isShotgun()` (weapon check, `Rabbit.cs:11136`) plus `hasSkill(353)`/`(354)` (`:11087-11131`). Replaces Combo with an area attack.
 - Hit box: `Damage.FindRecTarget(pos + forward, forward, (0.5×sLv + 0.5)×rangeMod, (sLv + 2)×rangeMod, 12×rangeMod, 4×rangeMod)` (`:36270`): a trapezoid 12 m long, base half-width 1.0 / 1.5 m widening to 3 / 4 m, 4 m high. The tooltip says "2m / 4m cone" (`RabbitSkill_thai.cs:829`, `:840`); only rank 2's far half-width matches.
 - Damage `hitDmg = getCritPlus((int)(0.5 × ATK))` for every target, `hit(350 + sLv, ..., hitDmg + hyper, 1, 0, ...)`, KO 1 (`:36260-36332`). One `+1 SP` per cast if anything was hit (`:36386-36394`).
 - Hyper Shot is reversed: `distance = clamp(16 - flat distance, 0, 16)`, `hyper = (int)(distance × hyperLv)`, x1.5 with Snipe Mastery (`:36298-36325`): the closer the target, the larger the bonus, up to `16 × lv`.
 
-**From the Above (`hasSkill(421)`)**
+**From the Above (`fromTheAbove5`, `hasSkill(421)`)**
 - Lets Rabbit use the normal attack while Bounce is airborne (`:8944` blocks it without the passive). Air shot (`:22100-22260`): fired from `position + 12 m up` downward, `hit(1, ..., getCritPlus((int)(0.5 × ATK + hyper)), 1, ...)`, range `16 + 5 × Combo`, and it re-arms Bounce's cooldown to `agiAdjust(36)` (`:22250`, see the Bounce judgment call above).
 - Landing stomp (`:21608`, `:21629-21652`): `FindAreaTarget(position, 3 × rangeMod, 3)` then `hit(421, target, ATK, 20, 0, ...)`: **1.0 × ATK, KO 20**, radius 3 m (x rangeMod), height 3. This is the Bounce card's damage; the old card entry (`0.5 ATK`, KO `1 + 20`) merged the air shot into it.
 - The `hasSkill(421)` debuff-time reduction at `CharacterControl.cs:13421` sits in Wolf's block (`Type == "Wolf"`, `:13379`), not Rabbit.
@@ -592,37 +592,37 @@ Requirements from `python scripts/decode_skilldata.py DecompiledSource/RabbitSki
 
 Requirements (decode): Bunny Bargain Lv 5/11/17/23 (Bn 1/3/5/7), Special Deal Lv 24/27/30/33 (Bn 15/18/21/24), Skill Bargain Lv 60 (Bn 1), Med Research Lv 75 (Bn 4), New Order Lv 85 (Bn 6), Contract Lv 75 (Bn 4; MP 50, SP 30 red), Mall Lv 16/20 (Bn 4/8; MP 0, SP 0), Truce Trading Lv 24/28 (Bn 12/16; MP 20/30, SP 0; target enemy), Shake Lv 7/13/19 (MP 6/10/14). IDs: Bunny Bargain 311-314, Special Deal 361-364, Mall 341/342, Truce Trading 343/344, Skill Bargain 413, Med Research 432, Contract 434, New Order 444.
 
-**Bunny Bargain (`ShopGui.cs`, `ArenaShopGui.cs`)**
+**Bunny Bargain (`bunnyBargain1-4`, `ShopGui.cs`, `ArenaShopGui.cs`)**
 - Level = number of Bunny Bargain ranks learned (`hasSkill(311)`..`(314)` each `+1`, so 0-4), only for `Type == "Rabbit"` (`ShopGui.cs:2164-2227`, `ArenaShopGui.cs:930-972`). Skill Bargain (`hasSkill(413)`) adds a further `+1` in `ShopGui` (`:2221-2227`) but is not counted in `ArenaShopGui`.
 - Buy price: `floor((1 - 0.05 × lv) × price)` for every shop except the Panther shop, price above 0 (`ShopGui.cs:2251-2269`; Arena shop `ArenaShopGui.cs:1010`). Sell price: `ceil(price × (0.3 + 0.015 × lv))` (`ShopGui.cs:4080`): the base sale value is 30% of the item price and each level adds 1.5 points (= +5% of that base), matching the tooltip's "5% discount and 5% bonus" per level, 25% at level 5.
 
-**Skill Bargain (`hasSkill(413)`)**
+**Skill Bargain (`skillBargain5`, `hasSkill(413)`)**
 - Millionaire fee `sLv × 250` becomes `floor(0.6 × fee)` (`Rabbit.cs:36880-36891`). Extravagance fee `clamp(floor(0.01 × Gil), 1, 512)` becomes `floor(0.6 × fee)` (`:40056-40068`). Contract fee ×0.6 floor, both the affordability check (`:7677-7683`) and the payment (`:11671-11677`).
 - **Gil Shot** and **Diamond Shot** read the Bunny Bargain ranks only when Skill Bargain is owned (the `hasSkill(311-314)` checks are nested inside `hasSkill(413)`, tab depth checked): Gil Shot pays `max(0, Gil - ceil(sLv × (1 - 0.2 × pennySaverLv)))`, `pennySaverLv` = Bunny ranks learned 0-4 (`:30654-30714`); Diamond Shot pays `1000 - 100 × (Bunny ranks learned)` (`:38472-38532`). So "-40%" is only the Bunny 4 + Skill Bargain case for Diamond Shot; Gil Shot's limit is 80% off (cost `ceil(sLv × 0.2)`).
 - Discount to shop prices: see Bunny Bargain (+1 level, 25% at most). Tooltip: "Increases BunnyBargain's discount and bonus to 25%. Also reduces money used in Rabbit's skills by 40%" (`RabbitSkill_eng.cs`).
 
-**Special Deal (`hasSkill(361-364)`)**
+**Special Deal (`specialDeal1-4`, `hasSkill(361-364)`)**
 - Tooltip: +5/10/15/20% money and EXP from missions for all party members. **Not found in the decompiled client** after searching every `*.cs` for `specialDeal` (only `RabbitSkill*.cs`), and every `hasSkill(361-364)` hit (Bat, Bison, Mole, Monkey, Wolf, Sheep's Karma at `CharacterControl.cs:30462`, shadow AI files) belongs to another class. Mission reward code (`MissionGui.cs`, `MissionData.cs`, `MissionClass.cs`, `Game.cs`) has no skill check. The reward is either applied server-side or not implemented; the card states the tooltip and flags it.
 
-**Med Research (`hasSkill(432)`)**
+**Med Research (`medResearch5`, `hasSkill(432)`)**
 - Alchemist Lab level 5 in town (`CompoundGui.cs:1137`, `:1775`): `AlchemistData.getRecipe(5)` adds four recipes `f_ahb1`, `f_amb1`, `f_asb1`, `f_akb1` to the level-4 list (16 recipes at Lab 4: `f_hpb1-3`, `f_mpb1-3`, `f_spb1-3`, `f_slb1-3`, `f_kob1`, `f_htb1`, `f_rmb1`, `f_stb1`; Lab 1 has 4, Lab 2 has 8, Lab 3 has 12, Lab 5 has 20; `AlchemistData.cs:20-155`).
 - Rabbit's lab items (`FieldData.cs:3320`, `cType "drug"`) use a `75 s` shared cooldown instead of `150 s` when the user is a Rabbit with Med Research (`GameGui.cs:32665-32694`). The `potion` (150 s) and `boost` (180 s) item types are unchanged, so the tooltip's "all Rabbit-type items" means the lab drugs. `CharacterControl.cs:8951` (`gobble` status) also reads `hasSkill(432)` but belongs to another class's passive.
 
-**Contract (`RPC_contract`, `hasSkill(434)`)**
+**Contract (`contract5`, `RPC_contract`, `hasSkill(434)`)**
 - Contract level is picked from current SP **after** the skill's 30 SP is paid (`returnMPSP` refunds it on failure, `Rabbit.cs:8808`): level 1 by default, level 2 at SP >= 35, level 3 at SP >= 65 (`:7602-7631`). Cast time `magAdjust(3 + 3 × level)` = 6 / 9 / 12 s (`:40729`).
 - Level 1 summons 2 `LightPanther`, level 2 summons 2 `LightLeopard`, level 3 summons 1 `LightGolem` (`:40376-40475`, `RPC_contract_create` `:11566-11611`). Each spawned unit costs `200 / 600 / 6000` Gil (`:11635-11683`), so the total is `400 / 1200 / 6000` Gil, the same as the affordability check (`:7641-7671`), each ×0.6 (floor) with Skill Bargain. Casting is refused with "Too many contracts!" when `getContractCount() > 6` (`:7689`) and with "not enough money!" when Gil is short (`:7702`).
 - Units live 300 s (Light* `Awake()`, see the Duration citations above). The pre-arm `addTimeOut("contract", agiAdjust(180))` in `Start()` (`:105`) runs unconditionally in real game modes (`Game.mGameType > 4`); the `hasSkill(444)` check after it only guards `Game.useCoin = false` (`:114-120`), so the older note that the pre-arm is "gated by `hasSkill(444)`" was wrong.
 - **Coins:** with Contract, using an NPC coin item has a `Random.Range(0,100) <= lckAdjust(30)` chance to not consume the coin (`GameGui.cs:36812-36835`); the tooltip says 50%. Using a coin always costs 5 game mana (`Game.mGameMana >= 5`, `:36735-36835`) and needs `|coin.lv| <= PlayerData.Rank`.
 
-**New Order (`hasSkill(444)`)**
+**New Order (`newOrder5`, `hasSkill(444)`)**
 - Every summon a Rabbit owner spawns gets `floor(1.5 ×)` on `hp, mhp, mp, mmp, atk, def, agi, vit, mag, cha, tal, lck` (Contract units, `Rabbit.cs:11798-11837`; generic summon event `CharacterControl.cs:29517-29584`).
 - Coin items: a coin whose `lv <= ceil(0.5 × PlayerData.Rank)` is used without being consumed (mana still costs 5, `GameGui.cs:36780-36803`). The Thai tooltip adds "use new coins when Rabbit returns to the scene" (not traced).
 
-**Truce Trading (`RPC_truceTrading1`)**
+**Truce Trading (`truceTrading1-2`, `RPC_truceTrading1`)**
 - Both ranks cast for `magAdjust(12)` seconds with a cast bar (one assignment, `Rabbit.cs:34425-34437`), not `6 / 12`; MP `20 / 30` (decode). The attempt succeeds when `LCK × sLv > Random.Range(0, target.hp)` (`:34105-34111`, needs `!target.isTraded`), i.e. the chance is `min(1, LCK × rank / target HP)`. On success it fires `RPC_truceTrading_fire<rank>` (`:34123`).
 - The purchase itself (item, 150% / 100% price) is not in the client: `truceTrading` appears only in `Rabbit*.cs`, `RabbitSkill*.cs` and the client tooltips (English: rank 1 "150% price and 15% success", rank 2 "100% price and 20% success"; Thai: "real price, 10% / 20%", `RabbitSkill_thai.cs`). The two languages disagree and neither number is in the code. **Resolves the earlier table conflict:** Truce Trading is a negotiation to buy an item from a non-player target, not an invulnerable trading zone (no status or invulnerability code exists for it).
 
-**Mall (`RPC_mall_setup` / `RPC_mall_open`)**
+**Mall (`mall1-2`, `RPC_mall_setup` / `RPC_mall_open`)**
 - MP 0, SP 0 (decode), cooldown 90 s. Opens a shop object (`Rabbit_mall.cs`, `Init(owner, ownerID, sellerID)`) that other players click within 2 m (`sqrMagnitude <= 4`, `:194`) to buy through `MallGui` (`Rabbit.cs:5626-5644`, `MallGui.cs:4885-4960`). `MallGui` holds 8 item slots (`while (i < 8)`, `MallGui.cs:1126`, `:4594`). No rank check for the tooltip's 4 / 8 sellable items was found in `Rabbit.cs`, `Rabbit_mall.cs`, `MallGui.cs` or `CharacterControl.cs`; `hasSkill(341-343)` at `CharacterControl.cs:4206-4251` is Bison's block (`Type == "Bison"`, `:4011`).
 
 **Shake (`shake1-3`)**
