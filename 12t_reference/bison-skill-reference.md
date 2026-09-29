@@ -240,6 +240,56 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 - Adds `floor(clamp(chargeSeconds − 8, 0, 12))` seconds to `holdCharge`, after `chaAdjust` (`Bison.cs:5383`, `:5400`), matching the tooltip's "+12s max". It also spawns `solidCharge_ring` when a charge begins (`Bison.cs:19346`). The KO block covers only `myCommand == "cAttack1"` (charging), not the spin (`cAttack2`).
 
+### bsn_bloodRage1-2 (Blood Rage, #121-122): SP on being hit (verified 2026-09-29)
+
+- reqLv/reqBn 6/2 and 12/4, MP 0, SP 0, mode passive (`decode_skilldata.py`). Tooltip: "20%/40% chance to gain 2/4 sp when it gets hit" (`BisonSkill_eng.cs`).
+- **Trigger** `getBloodRage()` (`Bison.cs:7180-7290`): a per-frame loop on the owning client. `num` = 1 if `hasSkill(121)`, 2 if `hasSkill(122)` (`:7211-7229`). It only runs on the frame after damage was applied (`myDamage == -1`, set by `ApplyDamage` once `myDamage > 0` removed HP, `CharacterControl.cs:2103-2128`), so Effect Damage that also goes through `ApplyDamage` counts and 0-damage hits do not.
+- **Roll:** `Random.Range(0,100) < lckAdjust(num*20)` (`:7235`), i.e. 20% / 40% base, raised by LCK. Only a **successful** roll starts the 1-second internal cooldown (`gdH1UrOpsL = Time.time + 1`, `:7241`); a failed roll does not, so every hit rolls again until one succeeds.
+- **Gain:** `sp = Min(sp + num*2, 100)` (`:7258`); with skill 421 (Blood Bath) `Min(sp + num*4, 100)` (`:7250`). Capped at the literal **100**, not `msp`. The separate engine rule "+1 SP whenever damage is taken" (`CharacterControl.cs:2122`, [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)) stacks with this.
+- Tooltip matches the code (2/4 SP, 20/40%).
+
+### bsn_bloodBath5 (Blood Bath, #421): doubles Blood Rage SP (verified 2026-09-29)
+
+- reqLv/reqBn 70/3, mode passive. Code: the `hasSkill(421)` branch of `getBloodRage()` (`Bison.cs:7244-7250`) uses `num*4` instead of `num*2` (see Blood Rage above): **+4 SP** at Blood Rage 1 and **+8 SP** at Blood Rage 2. Chance and cooldown are unchanged. Tooltip "Double the sp returned from bloodRage" (`BisonSkill_eng.cs`) matches.
+
+### bsn_enrage1-4 (Enrage, #201-204): damage self-buff (verified 2026-09-29)
+
+- MP 4/6/8/10, SP 0, reqLv 3/9/15/21, reqBn 0/1/2/3, mode instant, cooldown 30 (`decode_skilldata.py`; `addTimeOut("enrage", agiAdjust(30f))`, `Bison.cs:21055`).
+- **Cast** `RPC_enrage` (`Bison.cs:20759-21252`): the status is applied in the state after `Yield(2, 0.2s)` + `Yield(3, 0.3s)` (`:21207`, `:21211`), i.e. **0.5 s** after the cast starts, then a further **0.3 s** (`:21213`) before the Bison can act (`actionState == "attack"` until then).
+- **Status** `RPC_AddStatus("enrage", sLv + getRageControlLv(), chaAdjust(12 + 12*getRageControlLv()), 0, ActorNr)` (`:20968-20973`). `StatusData.cs`: Buff (`:6506`) and Magical (`:5615`) — `nStatus == "enrage"`.
+- **Apply effect** (`CharacterControl.cs:34713-34738`): `damageMod += 0.04 + 0.04*sLv` (outgoing damage 8/12/16/20%, 24% with Rage Control), `forceMod += 0.1`, `rangeMod += 0.1`, body scale `+ sLv*0.05`. **Remove** (`:15412-15416`) reverses the scale. `damageMod` enters every hit through `dmgAdjust` ([12Tails-Mechanics-Reference.md §2.2](12Tails-Mechanics-Reference.md)).
+- **Tooltip discrepancy:** `"Temporary increases Bison's attack power by 8% (15 sec)"` (`BisonSkill_eng.cs`). The % values match `damageMod` (a damage multiplier, not ATK). The duration is **12 s** in code (15 in the tooltip); the card follows the code.
+- Rage Control (#402) adds +1 status level and doubles the base duration before `chaAdjust` (12 → 24) — see below.
+
+### bsn_rageControl5 (Rage Control, #402): Enrage / Berserker Rush level and duration (verified 2026-09-29)
+
+- reqLv/reqBn 55/0, mode passive. `getRageControlLv()` = `hasSkill(402) ? 1 : 0` (`Bison.cs:9047-9049`).
+- Enrage: status level `sLv + 1`, duration `chaAdjust(12 + 12)` (`:20968-20973`). Berserker Rush: status level `rank + 1`, duration `chaAdjust(3 + 3)` (`:7821-7824`). The extra level is not capped at the skill's max rank (Enrage 4 + 1 = Lv.5 → damageMod +24%).
+- Tooltip: "Increases enrage and berserkerRush's level by 1 and double their durations" (`BisonSkill_eng.cs`) matches; the Thai tooltip mentions only the duration.
+
+### bsn_berserkerRush1-4 (Berserker Rush, #251-254): on-hit speed and lifesteal status (verified 2026-09-29)
+
+- reqLv/reqBn 20/12, 24/15, 28/18, 32/21, MP 0, SP 0, mode passive (`BisonSkill.cs:1749-1760`).
+- **Trigger** `getBerserkerRush()` (`Bison.cs:7740-7830`): on the frame after damage was applied (`myDamage == -1`), `num` = number of owned ranks (251-254); `Random.Range(0,100) < lckAdjust(4*num)` → **4/8/12/16%** (`:7812`); status `RPC_AddStatus("berserkerRush", num + getRageControlLv(), chaAdjust(3 + 3*getRageControlLv()), 0, ActorNr)` (`:7821-7824`). No internal cooldown. StatusData: Buff (`StatusData.cs:6512`), Physical (`:5361`).
+- **Apply** (`CharacterControl.cs:34752-34885`): removes heavy, groundLock, needlePrison, sticky, ice, snowMan, frost, lightBind, sleep and maim whose level is <= sLv, then `moveMod += 0.1` (remove: `:15477-15481`).
+- **Immunity** (`CharacterControl.cs:13282-13353`): while `berserkerRush` level >= the incoming status level, those same ten statuses are refused.
+- **Lifesteal** (Combo only): every `RPC_nAttack1..5` stage (`Bison.cs:14751/14919`, `15584/15742`, `16395/16553`, `17183/17351`, `18280/18448`) heals `RPC_AddHeal(250+lv, ceil(min((0.04*lv + 0.04) * maxDamage, 8*lv)), …)` on itself, where `maxDamage` is the largest `hit()` return in the stage and the heal is skipped when it is <= 0. Stages 4 and 5 have a second hit pass and a second heal (`:17641`, `:18743`, `mBerserkerRushHeal2`). At sLv 1-4 that is 8/12/16/20% of the biggest hit, capped at **8/16/24/32 HP** per heal; the cap is not mentioned in the tooltip. Only Combo heals; Charge Attack and skills do not.
+- **Tooltip:** "(+10% spd, 8% life steal)" (`BisonSkill_eng.cs`) matches `moveMod +0.1` and the percentage; the tooltip omits the HP cap and the crowd-control immunity.
+- **Remainder / open:** `CharacterControl.hit()` has a block (`:3572-3610`) reached only when the target wears trinket `t_mal66`/`t_fem66` and passes `lckAdjust(24)`: a Bison attacker with `berserkerRush` and `actionCode <= 9` (Combo) gets `return 0` (no damage). Not modelled; trinket effect not traced.
+
+### bsn_furyTrance1-3 (Fury Trance, #262-264): low-HP ATK status (verified 2026-09-29)
+
+- reqLv/reqBn 27/18, 30/21, 33/24, MP 0, SP 0, mode passive.
+- **Trigger** `getFuryTrance()` (`Bison.cs:7920-8110`): a check every **3 seconds** (`:7984`). For i = 3 down to 1 with `hasSkill(261+i)`: if `hp/mhp < 1 - (0.2*i + 0.2)` (Lv.1 < 60%, Lv.2 < 40%, Lv.3 < 20%, `:7960`) and the current `furyTrance` level is below i, apply `furyTrance` level i for `chaAdjust(12)` (`:7966-7979`). An existing status at the same or higher level is not refreshed. Removed when the status level reaches 0 (`:8098-8104`).
+- **Apply** `deltaAtk(sLv * 20)` (`CharacterControl.cs:34956-34960`): **+20/+40/+60 ATK**. StatusData: Buff (`StatusData.cs:6518`), Physical (`:5367`).
+- Tooltip "+atk 20/40/60 when Hp lower than 60/40/20%" (`BisonSkill_eng.cs`) matches; duration 12 s is not in the tooltip.
+
+### bsn_restingGlory1 (Resting Glory, #261): heal on death (verified 2026-09-29)
+
+- reqLv/reqBn 24/15, mode passive. Fired from the death coroutine (`Bison.cs:41227-41248`, owner only, `hasSkill(261)`), which calls `RPC_restingGlory` locally and via `ActionEvent`.
+- `RPC_restingGlory` (`Bison.cs:7841-7900`): iterates every child of `gameObject.transform.parent` tagged `"Player"` other than the Bison and calls `RPC_AddHeal(1, (int)(0.35 * mChar.mhp), 0, 0, 0, 0, ActorNr)` — **floor(35% of the Bison's max HP)**, no range check. `RPC_AddHeal` zeroes the heal on a `provoke` target (`CharacterControl.cs:7161-7167`).
+- Tooltip "Returns 35% of Bison's max hp to all teammates when Bison is dead" matches. **Open question:** whether the `parent` group contains only the Bison's own team (PvP); the code itself has no team test.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
