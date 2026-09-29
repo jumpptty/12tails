@@ -324,7 +324,7 @@ Every class with crit gear wraps some raw damage values in its own `getCritPlus(
 - **Roll:** `Random.Range(0, 100) < lckAdjust(n)` (`lckAdjust` as in §2.4, LCK clamped to 1-512); each call rolls on its own. `n = 0` never crits.
 - **Effect:** `FloorToInt(1.8 × nDmg)` on the raw value only. The result still goes through `hit()` → `dmgAdjust` → `defAdjust` → `hitMod`, so final damage is not exactly 1.8x.
 - **Example chances** (LCK 0 / 128 / 512): Marshal 12 → 12% / 23% / 45%; Champion 18 → 18% / 33% / 57%.
-- **Where the wrap sits differs per skill:** Rabbit rifle Combo, the ricochet and From the Above wrap `hitDmg + Hyper Shot`; the Customized Shotgun wraps only `(int)(0.5 × ATK)` and adds Hyper Shot after; Rabbit Charge Attack has no `getCritPlus` at all. Modeled in the Bible on Wolf Combo, Bison Combo, Sheep Book Bash and Rabbit Combo (`critProc` / `rawModel.critBase`, "ดูสูตรคริ" button, glossary topic `critical`).
+- **Where the wrap sits differs per skill:** Rabbit rifle Combo, the ricochet and From the Above wrap `hitDmg + Hyper Shot`; the Customized Shotgun wraps only `(int)(0.5 × ATK)` and adds Hyper Shot after; Rabbit Charge Attack has no `getCritPlus` at all. Modeled in the Bible on Wolf Combo, Bison Combo, Sheep Book Bash and Rabbit Combo (`critProc` / `rawModel.critBase`, "ดูสูตรคริ" toggle that shows the card as a crit hit).
 
 ## 3. Skills
 

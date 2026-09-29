@@ -125,6 +125,7 @@ const exposeInjection = `
   window._usesTdlRoll = usesTdlRoll;
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
+  window._critView = { set: (v) => { critFormulaView = v; } };
   window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1665,18 +1666,72 @@ let checkedRabbitShot = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedRabbitShot} Rabbit Combo / Charge Attack checks.`);
-// 3o-v. "ดูสูตรคริ" button: shown on exactly the cards that model crit (critProc or rawModel.critBase), opens glossary topic `critical`.
-let checkedCritButton = 0;
+// 3o-v. "ดูสูตรคริ" (crit view): a toggle on the cards that model crit (critProc or rawModel.critBase). While on, the formula is drawn as
+// floor(1.8 x (...)), Raw / Final show the crit case and Test always rolls a crit; the shotgun wraps only its base term.
+let checkedCritView = 0;
 {
-  const check = (label, ok, got) => { checkedCritButton++; if (!ok) { console.error(`[CRIT BUTTON ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
-  const hasBtn = (id) => { const sk = SKILLS.find(s => s.id === id); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml().includes("openMechanicPanel('critical', 0)"); };
+  const inputs = sandbox._statInputs, deps = sandbox._depRanks, ep = sandbox._effectProc, cv = sandbox._critView, rb = sandbox._rabbit;
+  const check = (label, ok, got) => { checkedCritView++; if (!ok) { console.error(`[CRIT VIEW ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const sk = (id) => SKILLS.find(s => s.id === id);
+  const select = (s, r) => { sandbox._skillRanks[s.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(s); };
+  const heroOf = (id) => { const s = sk(id); select(s, s.maxRank || 1); return sandbox._getRenderedHeroHtml(); };
+  const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
+  const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
   check("the cards that model crit are Bison Combo, Rabbit Combo, Sheep Book Bash and Wolf Combo", critCards.join() === "bison_nAttack,rabbit_nAttack,sheep_bookBash,wolf_nAttack", critCards.join());
-  critCards.forEach(id => check(`${id} shows the crit formula button`, hasBtn(id)));
-  ["rabbit_cAttack", "cat_nAttack", "wolf_provoke", "bison_cAttack"].forEach(id => check(`${id} has no crit formula button`, !hasBtn(id)));
-  check("the glossary has the critical topic with 4 steps", /critical: \{\s*title: "คริติคอล \(Critical\)",\s*steps: \[(?:[\s\S]*?label:){4}/.test(html));
+  const RAB = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabWeapon", "rabEquip", "rabExtravagance"];
+  const savedRab = RAB.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDist = rb.getDistance("combo");
+  cv.set(false);
+  critCards.forEach(id => check(`${id} shows the crit view button`, heroOf(id).includes('data-role="crit-view"')));
+  ["rabbit_cAttack", "cat_nAttack", "wolf_provoke", "bison_cAttack"].forEach(id => check(`${id} has no crit view button`, !heroOf(id).includes('data-role="crit-view"')));
+  // formula drawn as a crit, only while the view is on
+  critCards.forEach(id => {
+    cv.set(false); const off = heroOf(id);
+    cv.set(true); const on = heroOf(id);
+    check(`${id} formula is plain with the view off`, !off.includes("⌊"));
+    check(`${id} formula is floor(1.8 x ...) with the view on`, on.includes("⌊") && on.includes("⌋") && /1\.8/.test(on));
+  });
+  cv.set(true); check("crit view does not change a card that has no crit", !heroOf("rabbit_cAttack").includes("⌊") && !heroOf("cat_nAttack").includes("⌊"));
+  // Rabbit Combo goldens: ATK 128, rank 1, 16 m, no deps -> raw 64, crit floor(1.8 x 64) = 115
+  inputs.atk.value = "128"; inputs.lck.value = "128";
+  const rabSet = (o) => RAB.forEach(id => { deps[id] = o[id] || 0; });
+  const combo = sk("rabbit_nAttack"); rb.setDistance("combo", 16);
+  rabSet({}); cv.set(false); select(combo, 1); check("Rabbit raw without the view is 64", rng(combo, 1).join() === "64,64", rng(combo, 1).join());
+  cv.set(true); select(combo, 1); check("Rabbit raw in the crit view is floor(1.8 x 64) = 115", rng(combo, 1).join() === "115,115", rng(combo, 1).join());
+  rabSet({ rabHyperShot: 4 }); rb.setDistance("combo", 26); select(combo, 3);
+  check("Rabbit rifle crit view wraps base + Hyper Shot: floor(1.8 x (64 + 40)) = 187", rng(combo, 3).join() === "187,187", rng(combo, 3).join());
+  rabSet({ rabHyperShot: 4, rabShotgun: 1 }); rb.setDistance("combo", 4); select(combo, 1);
+  check("Rabbit shotgun crit view wraps only the base: floor(1.8 x 64) + 48 = 163", rng(combo, 1).join() === "163,163", rng(combo, 1).join());
+  const shotHtml = sandbox._getRenderedHeroHtml();
+  check("shotgun formula closes the crit bracket before the Hyper Shot term", shotHtml.indexOf("⌋") > 0 && shotHtml.indexOf("⌋") < shotHtml.indexOf("Hyper Shot 4m"));
+  // Test always rolls a crit in the view, and never without gear outside it
+  rabSet({}); rb.setDistance("combo", 16); select(combo, 1);
+  let all = true; for (let i = 0; i < 60; i++) { roll(combo, 1); if (!ep.lastCrit()) all = false; }
+  check("Test rolls a crit every time in the crit view", all);
+  cv.set(false); select(combo, 1); let any = false; for (let i = 0; i < 200; i++) { roll(combo, 1); if (ep.lastCrit()) any = true; }
+  check("Test does not crit without gear when the view is off", !any);
+  // critProc cards: view range == floor(1.8 x normal range) at both ends (no gear, so the normal range has no crit top)
+  ["wolf_nAttack", "bison_nAttack", "sheep_bookBash"].forEach(id => {
+    const s = sk(id); const r = s.maxRank || 1;
+    cv.set(false); select(s, r); const n = rng(s, r);
+    cv.set(true); select(s, r); const c = rng(s, r);
+    check(`${id} crit view range = floor(1.8 x normal)`, c[0] === Math.floor(1.8 * n[0]) && c[1] === Math.floor(1.8 * n[1]), `${n.join("-")} -> ${c.join("-")}`);
+  });
+  // range vs simulator in the crit view, both stat profiles
+  [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
+    inputs.atk.value = atk; inputs.lck.value = lck; cv.set(true);
+    critCards.forEach(id => {
+      const s = sk(id), r = s.maxRank || 1; if (id === "rabbit_nAttack") { rabSet({ rabHyperShot: 4 }); rb.setDistance("combo", 26); } else rabSet({});
+      select(s, r);
+      const rg = rng(s, r), fin = sandbox._finalRangeForRange(rg);
+      let lo = Infinity, hi = -Infinity; for (let i = 0; i < 200; i++) { const x = roll(s, r); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      check(`range/sim in the crit view ${id} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+    });
+  });
+  cv.set(false); inputs.atk.value = savedIn.atk; inputs.lck.value = savedIn.lck; rb.setDistance("combo", savedDist);
+  savedRab.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
-console.log(`Verified ${checkedCritButton} crit formula button checks.`);
+console.log(`Verified ${checkedCritView} crit view checks.`);
 
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
