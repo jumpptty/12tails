@@ -1599,7 +1599,7 @@ let checkedRabbitShot = 0;
   check("Combo dependency strip order: Bouncing, Hyper+Snipe, Extravagance, gear, Gatling Gun, shotgun", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
   check("Hyper Shot is one 0..5 dep whose rank-5 icon exists (rank 5 = Snipe Mastery)", combo.dmgControls[1].id === "rabHyperShot" && combo.dmgControls[1].maxRank === 5 && !!sandbox.SKILL_ICONS.rabbit_hyperShot5 && [1, 2, 3, 4].every(n => sandbox.SKILL_ICONS["rabbit_hyperShot" + n]));
   check("no separate Snipe Mastery dependency remains", !/rabSnipe|RABBIT_SNIPE_DEP/.test(html));
-  check("concise dependency names", combo.dmgControls[1].label === "Hyper Shot / Snipe Mastery" && combo.dmgControls[5].id === "rabW59" && combo.dmgControls[5].label === "Gatling Gun" && combo.dmgControls[6].label === "Customized Shotgun");
+  check("concise dependency names", combo.dmgControls[1].label === "Hyper Shot / Snipe Mastery" && combo.dmgControls[3].label === "Crit Weapon" && combo.dmgControls[4].label === "Crit Armor + Helmet" && combo.dmgControls[5].id === "rabW59" && combo.dmgControls[5].label === "Gatling Gun" && combo.dmgControls[6].label === "Customized Shotgun");
   check("no crit chip without gear", !heroC.includes("โอกาส Critical"));
   setDeps({ rabEquip: 2, rabW59: 1 }); select(combo, 3);
   check("crit chip with gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
