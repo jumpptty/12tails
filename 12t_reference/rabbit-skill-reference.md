@@ -346,7 +346,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | backpack | 2 | Free / 0 | none | `floor(0.5×sLv×InventoryWeight + bigBag?0.25×ItemCount:0)` per hit (`Rabbit.cs:31593`) | 3 AoE pulses every 0.2s; radius 2m (3m with Big Bag), KO=`10×sLv`, 0.3m knockback | **bigBag5** (hasSkill 423, +1m radius and `+0.25×ItemCount`) | 3 |
 | herbFinder | 2 | Passive / 0 | none | no damage — enables field-herb gathering | base chance `20×sLv`% is LCK-adjusted; the inclusive `<=` roll gives one additional integer outcome | **bigBag5** (hasSkill 423, guarantees success) | — |
 | bigBag | 1 | Passive / 0 | none | no direct damage — upgrades Backpack and Herb Finder | Backpack gains range and `+0.25×ItemCount`; Herb Finder succeeds automatically | — | — |
-| fourShot | 2 | [12, 15] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
+| fourShot | 2 | [12, 15] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 shots in 4 directions (70° cones, 24m), one target takes at most 1 hit, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 1 per target (4 shots) |
 | circleShot | 2 | [24, 27] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE spray (radius `8×rangeMod`, 3 rapid pulses, `Rabbit.cs:32690-32872, 33141`), KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 3 |
 | mall | 2 | Free / 0 | none | no dmg — opens a player shop (8-slot `MallGui`, no client rank check on slot count) | — | — | — |
 | truceTrading | 2 | [20, 30] MP | none | no dmg — negotiation to buy an item from a non-player target (success `LCK × rank > Random(0, target HP)`, `Rabbit.cs:34111`) | — | — | — |
@@ -354,7 +354,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | millionaire | 2 | [50, 75] SP (red) | none | `ceil(0.005×sLv×min(Gil+Jil, 99999))` per pulse (`Rabbit.cs:37212`) | 6-pulse AoE burst (radius 8m, max 500/hit @ R1, max 1000/hit @ R2, `Rabbit.cs:37035`), KO=1/hit | — | 6 |
 | healingField | 1 | 30 MP, 30 SP (red) | none | no dmg — area healing field, radius 12m (`Rabbit_healingField.cs:189`) | heals **70 flat HP** per tick, pulses every 2s (6 ticks over 12s) | — | 6 |
 | diamondShot | 1 | 20 SP (red) | none | **1000 flat true effect damage** (`Rabbit.cs:38322`) | direct `RPC_AddEffectDamage`, penetrating vs monsters | — | 1 |
-| tenShot | 1 | 20 SP (red) | none | `0.5×ATK + talAdjust(60)` per bullet (`Rabbit.cs:39499`, `:39552`) | 10 bullets barrage (10 hits total), KO=1/hit | — | 10 |
+| tenShot | 1 | 20 SP (red) | none | `0.5×ATK + talAdjust(60)` per bullet (`Rabbit.cs:39499`, `:39552`) | 10 bullets in 5 volleys (70° cones, 24m), 1-3 hits per target (about 2), KO=1/hit | — | 10 bullets, ~2 per target |
 | extravagance | 1 | 20 MP, 40 SP (red) | none | no dmg — spends `1% Gil` (capped at 512) to grant `+GilSpent` ATK buff for `chaAdjust(6)` (`Rabbit.cs:39902`, `:40056`) | — | **skillBargain5** (hasSkill 413, reduces cost by 40%) | — |
 | contract | 1 | 50 MP, 30 SP (red) | none | no dmg — hires mercenaries by current SP after cost: Lv1 2 Light Panther / Lv2 2 Light Leopard (SP >= 35) / Lv3 1 Light Golem (SP >= 65), 300s (`Rabbit.cs:7602-7631`, `:40376-40475`) | — | — | — |
 
@@ -373,7 +373,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 ### 2. Four Shot (`fourShot1-2`)
 * **Source:** `Rabbit.cs:32374` inside `$RPC_fourShot$27214`
 * **Formula:** `(int)(0.5f * atk + talAdjust(15 * sLv + (hasSkill(433) ? 10 : 0)))` per shot.
-* **Hit Count:** 4 shots in rapid sequence.
+* **Hit Count:** 4 shots in four directions; one target takes at most 1 hit (see the multi-hit geometry section).
 * **KO:** 1 per hit.
 * **Dependency:** `rab_tenShot5` (Skill ID 433, `RabbitSkill.cs:3303`) adds `+10` to `talAdjust` base.
 
@@ -627,6 +627,20 @@ Requirements (decode): Bunny Bargain Lv 5/11/17/23 (Bn 1/3/5/7), Special Deal Lv
 
 **Shake (`shake1-3`)**
 - SP potion amounts are `4 / 8 / 12` SP per bottle for ranks 1-3 (`Rabbit_potion.cs:342-366`), 3 bottles, matching the card; the HP potions of Mix are `20 / 40 / 60 / 80 + floor(0.3 × ExtraPotion × Lv)` (`:294-330`).
+
+**Stat Scan (`statScan1`)** — Lv 22 (Bn 4), SP 6 red, `target` mode, cooldown `agiAdjust(30)` (`Rabbit.cs:22746`). The caster's client posts three `eChatMode.area` chat lines about the target (`Rabbit.cs:22590-22675`): `statScan@ <Name> weigth:<weight>`, then `atk def agi vit`, then `mag cha tal lck`. It shows no HP, level or status.
+
+**Rapid Trance (`rapidTrance1`)** — with the `rapidTrance` status, `doSkill` skips `RPC_cast1` (the mixing cast bar and the cooldown assignment) for Miracle Blend (`Rabbit.cs:6737`), Healing Field (`:7422`), Acidic Field (`:8481`), Sticky Gum (`:8530`), Shake (`:8585`) and Mix (`:8635`), the `_cast` coroutines of Mix, Shake, Miracle Blend, Sticky Gum and Acidic Field switch voice lines (`:24001`, `:24878`, `:25792`, `:26698`, `:27200`) and `RPC_medicalShot` takes its no-cooldown branch (`:27617`, `:28548`). Covers Mix, Shake, Miracle Blend, Sticky Gum, Acidic Field, Healing Field and the four medical shots. `RPC_healingField_cast` has no `rapidTrance` check of its own.
+
+### Multi-hit geometry: Four Shot, Ten Shot, Circle Shot, Shooting Array (verified 2026-09-29)
+
+Hit counts per **target**, checked by listing every `hit()` call, its `Find*Target` and the state machine that drives it. The tooltips ("15 dmg x 4", "60 dmg x 10") count shots, not hits on one target.
+
+- **Four Shot (`fourShot1-2`)** — `RPC_fourShot` runs four states, each firing in one direction: forward, backward, left, right (`fireDir` at `Rabbit.cs:32251`, `:32268`, `:32285`, `:32302`), waiting `0.3-0.4 s` between shots (`:32436-32442`). Every shot is one `Damage.FindAngleTarget(position, fireDir, 24 × rangeMod, 70, 2 × rangeMod)` (`:32355`); `TargetAngle` is halved inside (`Damage.cs:1232`), so each cone is **70° wide** (35° each side), **24 m** long, **2 m** high. The four cones are 90° apart and never overlap (20° gaps), so **one target takes at most 1 hit** (0 in a gap). `hit(320 + sLv, ..., (int)(0.5 × ATK + talAdjust(15 × sLv + 10 × TenShot)), 1, ...)` (`:32374`), KO 1. The old card `hitCount` of 4 was the shot count.
+- **Ten Shot (`tenShot5`)** — five states (`switch` on `i`, `:39262`), each with two launchers firing one cone apiece: `+45°/-45°`, `-135°/+135°`, `+90°/-90°`, `-180°/+180°` and `0°/0°` relative to the facing (`:39286-39419`), waiting `0.1-0.2 s` between volleys. Each cone is `FindAngleTarget(position, dir, 24, 70, 3)` (`:39477-39480`, no `rangeMod`), 10 cones in total, `hit(433, ..., (int)(0.5 × ATK + talAdjust(60)), 1, ...)` (`:39499`, `:39552`). Because the forward pair and the backward pair fire the same direction twice, hits on one target by its angle `θ` from the facing: `|θ|` 0-10° = 2, 10-35° = 3, 35-55° = 1, 55-80° = 2, 80-100° = 1, 100-125° = 2, 125-145° = 1, 145-170° = 3, 170-180° = 2 (average about 2 hits over all angles). The old card `hitCount` of 10 was the shot count.
+- **Circle Shot (`circleShot1-2`)** — 3 pulses, each `FindAreaTarget(position, 8 × rangeMod, 3)` (`:32727`), `0.133 s` apart (`:33141`), so **3 hits on every target within 8 m** (height 3 m). `hit(332 + sLv, ...)`, KO 1 (`:32755`).
+- **Shooting Array (`shootingArray1-2`)** — a `target`-mode skill: the centre is the selected target's position (`tPos = tObject.transform.position`, `:35754`). Three hits of `0.5 × ATK + talAdjust(15 × sLv)` (`:35331`, `:35459`, `:35527`) then a finisher `ATK + talAdjust(30 × sLv)` (`:35630`), each on `FindAreaTarget(tPos, 6 × rangeMod, 3)` (`:35308`, `:35436`, `:35504`, `:35607`): **4 hits on every enemy within 6 m of the selected target**. KO 1.
+- **Millionaire (`millionaire1-2`)** — 6 pulses on `FindAreaTarget(position, 8 × rangeMod, 3)` (`:37189`), waits `0.7 - 0.1 × floor(i/5)` s (`:37266`); tooltip says "half of Rabbit's money" but the code is `ceil(0.005 × sLv × min(Gil + Jil, 99999))` (`:37212`).
 
 ### Card `desc` provenance (2026-09-29 pass)
 
