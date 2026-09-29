@@ -356,6 +356,17 @@ Ja's own stats are serialized in the live `12TailsOnline_Data/level16` `Characte
 
 All four records have `Lv` 8/16/24/32 respectively, `Skin=0`, `Race=5`, PPtr `fileID=1, pathID=243`, and SP/MP/KO plus their maxima of 10/20/30/40. The app's Ja stat helper uses MHP 200/400/600/800; `Ja.cs` assigns current HP 100/200/300/400 when summoning, which is why current HP and MHP must not be conflated.
 
+#### Ja TAL aura vs. Ja Soul
+
+* **Normal Ja is a status buff:** while Ja and its summoner are alive, Ja reapplies `[ja]` to the summoner every 3 seconds at Ja's summon rank, with a 4-second duration (`Ja.cs:250-286`). Applying `[ja]` calls `deltaTal(10*sLv)`, so Ja rank 4 gives the Monkey **+40 TAL** (`CharacterControl.cs:37836-37840`). It is not Ja's own serialized TAL stat.
+* **Summon Soul is separate:** Summon Soul applies `[jaSoul]` to its friendly target for 240 seconds (`Monkey.cs:24241-24286`). `[jaSoul]` also calls `deltaTal(10*sLv)` (`CharacterControl.cs:38184-38188`), but normal Ja does not require Summon Soul to give its own `[ja]` aura.
+
+#### Ja - Detonate
+
+* Ja's explosion searches targets in a radius of `4 + 2×Ja rank` m and a height of 3 m (`Ja.cs:1561`).
+* Per target, raw damage is `trunc(currentJaHP × (1 − 0.5 × distance / radius))`: it is 100% of Ja's **current** HP at the blast centre and 50% at the outer edge (`Ja.cs:1581`, `Ja.cs:1594`).
+* KO is independently `floor(0.1 × currentJaHP)`, so it does not fall off with distance; Ja then self-destructs (`Ja.cs:1594`, `Ja.cs:1609`).
+
 ### 2.2 Gaos own stats (`monkey_summonGaos` and Gaos attacks)
 
 Gaos's `resources.assets` `CharacterControl` record is at byte offset `44479000`; decoding after the

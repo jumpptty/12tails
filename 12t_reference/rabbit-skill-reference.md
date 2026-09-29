@@ -342,7 +342,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | rapidTrance | 1 | 20 MP, 30 SP (red) | none | no dmg — grants `"rapidTrance"` action speed buff for `chaAdjust(12)` (`Rabbit.cs:28846`) | — | — | — |
 | gorgonShot | 2 | [20, 30] MP, [35, 45] SP (red) | none | `talAdjust(50×sLv)` (`[50, 100]`) (`Rabbit.cs:29671`) | petrifies target (`"petrify"`) for `3×sLv+3`s (`[6s, 9s]` contested) | — | 1 |
 | gilShot | 4 | [10, 12, 14, 16] SP (blue) | none | `(0.6 + 0.1×sLv)×ATK + talAdjust(10×sLv)` (`Rabbit.cs:30399`) | KO=`sLv+1` (`[2, 3, 4, 5]`), restores +1 SP | **diamondShot5** (hasSkill 403, +20 to talAdjust base) | 1 |
-| backpack | 2 | Free / 0 | none | `0.5×sLv×Weight` (`Rabbit.cs:31593`) | KO=`10×sLv` (`[10, 20]`) | **bigBag5** (hasSkill 423, adds `+0.25×ItemCount`) | 1 |
+| backpack | 2 | Free / 0 | none | `floor(0.5×sLv×InventoryWeight + bigBag?0.25×ItemCount:0)` per hit (`Rabbit.cs:31593`) | 3 AoE pulses every 0.2s; radius 2m (3m with Big Bag), KO=`10×sLv`, 0.3m knockback | **bigBag5** (hasSkill 423, +1m radius and `+0.25×ItemCount`) | 3 |
 | herbFinder | 2 | Passive / 0 | none | no damage — enables field-herb gathering | base chance `20×sLv`% is LCK-adjusted; the inclusive `<=` roll gives one additional integer outcome | **bigBag5** (hasSkill 423, guarantees success) | — |
 | bigBag | 1 | Passive / 0 | none | no direct damage — upgrades Backpack and Herb Finder | Backpack gains range and `+0.25×ItemCount`; Herb Finder succeeds automatically | — | — |
 | fourShot | 2 | 20 MP, [12, 24] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
@@ -402,10 +402,11 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Dependency:** `rab_diamondShot5` (Skill ID 403, `RabbitSkill.cs:3271`) adds `+20` inside `talAdjust`.
 
 ### 6. Backpack (`backpack1-2`)
-* **Source:** `Rabbit.cs:31593` inside `$RPC_backpack$27175`
-* **Formula:** `0.5f * sLv * InventoryWeight + (useBigBag ? 0.25f * InventoryCount : 0)`
-* **KO:** `10 * sLv` (10 at rank 1, 20 at rank 2).
-* **Dependency:** `rab_bigBag5` (Skill ID 423, `RabbitSkill.cs:3293`).
+* **Source:** `Rabbit.cs:31588-31616` inside `$RPC_backpack$27175`.
+* **Attack:** Three pulses, 0.2s apart (`Rabbit.cs:31568`, `:31666`), targeting enemies in a radius of `2×rangeMod` (or `3×rangeMod` with Big Bag), height 3 (`Rabbit.cs:31588`). Each landed hit deals `floor(0.5×sLv×InventoryWeight + BigBag?0.25×ItemCount:0)`, KO=`10×sLv`, and pushes outward 0.3m (`Rabbit.cs:31593`, `:31616`).
+* **Inventory inputs:** `InventoryWeight` adds each occupied slot's item-type weight once when positive; it does not multiply by that stack's quantity (`Rabbit.cs:31145-31177`). `ItemCount` does sum every stack quantity (`Rabbit.cs:31153`) and is used only by Big Bag's damage bonus.
+* **Passive burden reduction:** Rabbit's occupied inventory slots contribute `0.5 - 0.25×BackpackRank` to carried weight (`CharacterDataClass.cs:2248-2285`): 0.25 per slot at rank 1 (50% reduction) and 0 at rank 2 (100% reduction).
+* **Dependency:** `rab_bigBag5` (Skill ID 423, `RabbitSkill.cs:31024`) adds 1m radius and `0.25×ItemCount` damage per hit.
 
 ### 6.1 Herb Finder (`herbFinder1-2`) and Big Bag (`bigBag5`)
 * **Herb access:** A Rabbit needs Herb Finder rank 1 or 2 before the field-herb interaction is available (`Herb.cs:184`).
