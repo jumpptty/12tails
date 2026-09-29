@@ -341,6 +341,38 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - **Cast condition** (`Bison.cs:5752-5799`): the flat distance to the target must satisfy `sqrMagnitude > 144`, i.e. **more than 12 m**; otherwise `newGameMessage("Target too close")`. **Tooltip discrepancy:** "must be more than 16m away" (`BisonSkill_eng.cs`); the card follows the code (12 m).
 - **Motion** `RPC_instantRush` (`Bison.cs:24136-24609`): `Yield(2, 0.1 s)` then `moveSpeed = 24` for `Yield(3, 0.5 s)` = **12 m**, then stop (`:24271-24292`). No damage, KO or status.
 
+### bsn_powerCleave1-2 (Power Cleave, #301/#303): heavy single strike (verified 2026-09-29)
+
+- SP -10/-15 (red), MP 0, reqLv/reqBn 3/0 and 15/2, mode instant, cooldown 30 (`addTimeOut("powerCleave", agiAdjust(30f))`, `Bison.cs:26237`).
+- **Hit** `RPC_powerCleave` (`Bison.cs:25688-26714`), one `hit()` per target (`:25893-26010`): box `FindRecTarget(pos - forward, forward, 2*rangeMod, 2*rangeMod, 5*rangeMod, 2*rangeMod)` = **4 x rangeMod** wide, 5 x rangeMod long starting 1 m behind the Bison, 2 x rangeMod high.
+  - No hammer (`mPowerHammerLv == 0`, `:25922`): `hit(300 + sLv, t, (int)((1 + 0.5*reel) * (ATK + talAdjust(15*sLv))), 1, talAdjust(15*(sLv + reel)), forward)`: damage = (ATK + talAdjust) truncated after the Power Reel multiplier, **KO 1**, hate talAdjust(15 x (sLv + reel)). Afterwards `sp += 1` (`:25948`) and, with Power Reel, `RPC_AddStatus("cut", 5, 1, …)` on the target (`:25953-25975`).
+  - Hammer (`:25984`): `hit(301 + sLv, t, (int)((1 + 0.5*reel) * ATK), (mPowerHammerLv + reel) * 10, 0, 3*forward)`: **no talAdjust, no hate**, KO `10 x (mPowerHammerLv + reel)`, knock force x3. `mPowerHammerLv = min(getPowerHammerLv(), sLv)` (`:26272-26283`). `sp += 1` per damaged target (`:26010`).
+- **Stage waits** (`Bison.cs:26608-26628`): `Yield(3, 0.6 s)`, `Yield(4, 0.1 s)`, hit stage, `Yield(5, 0.3 s)`, `Yield(6, 0.2 s)`; the Power Reel pull passes use `Yield(2, 0.2 s)` three times before the cast continues (`:26539-26545`, `:26627`). The decompiled jump order of that reel loop is not cleanly recoverable, so the exact cast length with Power Reel is an open question; without it the hit lands about 0.7 s after the cast starts.
+- **Tooltip discrepancy:** "…dealing extra damage and 30 (60) hate" (`BisonSkill_eng.cs`); the code hate is `talAdjust(15 x lv)` = 15 / 30 (extra damage +15 / +30 matches). Not resolved as a live observation.
+
+### bsn_powerHammer1-2 (Power Hammer, #302/#304): hammer conversion (verified 2026-09-29)
+
+- reqLv/reqBn 9/1 and 21/3, mode passive. `getPowerHammerLv()` (`Bison.cs:8192-8236`): 0 unless `isHammer()` (weapon is one of `w_bsn5`, `w_bsn15`, `w_bsn19`, `w_bsn22`, `w_bsn24`, `w_bsn25`, `:8284-8327`), then 1 with #302, 2 with #304. Effect described under Power Cleave: hammer branch, KO `10 x min(hammerLv, cleaveLv)`, no talAdjust, no hate, force x3.
+
+### bsn_powerReel5 (Power Reel, #403): Power Cleave +50%, hate, cut and pull (verified 2026-09-29)
+
+- reqLv/reqBn 55/0, mode passive. `getPowerReelLv()` = `hasSkill(403) ? 1 : 0` (`Bison.cs:9054`).
+- Effects: damage multiplier `1 + 0.5*reel` on both Power Cleave branches, hate `talAdjust(15*(sLv + reel))`, hammer KO `+10`, `cut` status 5 for 1 s on axe hits (StatusData `cut`, removes magical shields of level <= 5), and a pull: `FindAreaTarget(pos, 8, 5)` then `RPC_AddDamage(403, -1, 0, 0, 2 * dirToBison, ActorNr)` (0 damage, force 2 toward the Bison) in three passes (`:26554-26593`).
+- Tooltip matches (+50%, reels nearby enemies); the Thai text also names Power Hammer.
+
+### bsn_warcry1-2 (Warcry, #311-312): mass hate and fear (verified 2026-09-29)
+
+- MP 5/10, SP 0, reqLv/reqBn 5/1, 11/3, mode instant, cooldown 60 (`addTimeOut("warcry", agiAdjust(60))`, `Bison.cs:27087`).
+- `RPC_warcry` (`Bison.cs:26715-27286`): `Yield(2, 0.3 s)`, `Yield(3, 0.3 s)`; the effect runs **0.6 s** after the cast starts, then `Yield(4, 0.2 s)`. Targets: `FindAreaTarget(pos, 18 + 6*sLv, 6, layerMask)` (radius **24 / 30 m**, no rangeMod, height 6, own layer excluded). Each: `RPC_AddDamage(1, 0, 0, talAdjust(15*sLv), 0, ActorNr)` (pure hate, no damage, no KO) and `RPC_AddStatus("fear", sLv, chaAdjust(15), ceil(0.1 * target.atk), ActorNr)` (`:26994-26999`); the duration uses the Bison's CHA only, not the target's.
+- `fear` apply (`CharacterControl.cs:35312-35319`): `deltaAtk(-sLv * sValue)` and `deltaTal(-sLv * sValue)`, `sValue = ceil(0.1 * target ATK)`: ATK **and** TAL are reduced by the same amount, 10% / 20% **of the target's ATK**. StatusData: Debuff (`StatusData.cs:7316`), Magical (`:5645`).
+- **Tooltip discrepancy:** "20 (40) hate … decreasing their attack and talent by 10% (20%)" (`BisonSkill_eng.cs`): hate is `talAdjust(15/30)`; the TAL reduction is the ATK-based amount, not 10% of TAL.
+
+### bsn_overlord1-2 (Overlord, #313-314): DEF aura (verified 2026-09-29)
+
+- reqLv/reqBn 17/5, 23/7, mode passive. `createOverLord()` (`Bison.cs:8480-8517`) spawns the `Bison_overLord` trigger volume as a child, level 2 with `hasSkill(314)`, else 1.
+- `Bison_overLord.OnTriggerEnter` (`Bison_overLord.cs:56-118`): needs the owner alive and not `hide`; the entering object must be tagged `Player`, on the Bison's layer (same team) and `Race == Tails`; it gets `addStatus("overLord", nLv, 999, ceil(0.05 * Bison.def * nLv), ownerID)`. `overLord` apply is `deltaDef(sValue)` (`CharacterControl.cs:35327-35331`), so **DEF +5% / +10% of the Bison's DEF**, fixed at the moment of entry. `OnTriggerExit` removes it (`:126-173`). `StatusData.cs` has no classification for `overLord`.
+- **Tooltip discrepancy:** the English tooltip says "10/20 def", the Thai says "+5%/+10% def" (`BisonSkill_eng.cs`, `BisonSkill_thai.cs`); code matches the Thai. Trigger radius is a prefab value; the tooltip's 12 m is not verifiable in code.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

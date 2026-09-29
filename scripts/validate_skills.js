@@ -1694,6 +1694,30 @@ let checkedBisonStun = 0;
   });
   bs.set(saved.d); inputs.lv.value = saved.lv; if (saved.mass === undefined) delete deps.massStun; else deps.massStun = saved.mass;
 }
+// Power Cleave (Bison.cs:25922 axe branch, :25984 hammer branch): axe = (ATK + talAdjust(15 sLv)) x (1 + 0.5 reel), KO 1; hammer = ATK x (1 + 0.5 reel), KO 10 x (min(hammerLv, sLv) + reel).
+{
+  const deps = sandbox._depRanks;
+  const check = (label, ok, got) => { checkedBisonStun++; if (!ok) { console.error(`[BISON STUN ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const pc = SKILLS.find(s => s.id === "bison_powerCleave");
+  const saved = [deps.powerHammer, deps.powerReel];
+  // [label, rank, hammerLv, reel, dmg text, KO]
+  [
+    ["axe Lv.2 has a talAdjust term and KO 1", 2, 0, 0, "talAdjust(15×2)", 1],
+    ["axe Lv.1", 1, 0, 0, "talAdjust(15×1)", 1],
+    ["hammer 1 on Cleave 2: ATK only, KO 10", 2, 1, 0, "0", 10],
+    ["hammer 2 on Cleave 2: KO 20", 2, 2, 0, "0", 20],
+    ["hammer 2 on Cleave 1 is capped by Cleave: KO 10", 1, 2, 0, "0", 10],
+    ["Power Reel adds 10 KO per hammer: 10 x (2 + 1)", 2, 2, 1, "0", 30],
+    ["Power Reel does not change the axe KO", 2, 0, 1, "talAdjust(15×2)", 1],
+  ].forEach(([label, rank, hl, reel, text, ko]) => {
+    deps.powerHammer = hl; deps.powerReel = reel;
+    const t = sandbox._substituteDmgVars(pc.dmg, pc, rank), k = sandbox._getKOValue(pc, rank);
+    check(`Power Cleave ${label}`, t === text && k === ko, `${t} / KO ${k} want ${text} / ${ko}`);
+  });
+  check("Power Reel is the x1.5 multiplier dep", pc.dmgMultDep && pc.dmgMultDep.mult === 1.5 && pc.atkCoeff === 1);
+  deps.powerHammer = saved[0]; deps.powerReel = saved[1];
+  if (saved[0] === undefined) delete deps.powerHammer; if (saved[1] === undefined) delete deps.powerReel;
+}
 console.log(`Verified ${checkedBisonStun} Bison Far Stun checks.`);
 // 3o-v. "ดูสูตรคริ" (crit view): a toggle on the cards that model crit (critProc or rawModel.critBase). While on, the formula is drawn as
 // floor(1.8 x (...)), Raw / Final show the crit case and Test always rolls a crit; the shotgun wraps only its base term.
