@@ -316,6 +316,16 @@ RPC_AddEffectDamage  ── separate path: hitMod only
 
 ---
 
+### 2.10 Equipment critical hit — `getCritPlus` (verified 2026-09-29)
+
+Every class with crit gear wraps some raw damage values in its own `getCritPlus(nDmg)` before calling `hit()` (Wolf `Wolf.cs:14160-14186`, Bison `Bison.cs:13801-13950`, Sheep `Sheep.cs:16494-16640`, Rabbit `Rabbit.cs:16471-16600`; identical shape):
+
+- **Gear sum** `n`: weapon `w_<cls>43`/`44` +5, `w_<cls>58` +7; armor `a_all43`/`44` +4, `a_all58` +6; hat `c_all43`/`44` +3, `c_all58` +5. Full Marshal (supreme commander) set = 12, full Champion set = 18; there is no other source of crit in these functions.
+- **Roll:** `Random.Range(0, 100) < lckAdjust(n)` (`lckAdjust` as in §2.4, LCK clamped to 1-512); each call rolls on its own. `n = 0` never crits.
+- **Effect:** `FloorToInt(1.8 × nDmg)` on the raw value only. The result still goes through `hit()` → `dmgAdjust` → `defAdjust` → `hitMod`, so final damage is not exactly 1.8x.
+- **Example chances** (LCK 0 / 128 / 512): Marshal 12 → 12% / 23% / 45%; Champion 18 → 18% / 33% / 57%.
+- **Where the wrap sits differs per skill:** Rabbit rifle Combo, the ricochet and From the Above wrap `hitDmg + Hyper Shot`; the Customized Shotgun wraps only `(int)(0.5 × ATK)` and adds Hyper Shot after; Rabbit Charge Attack has no `getCritPlus` at all. Modeled in the Bible on Wolf Combo, Bison Combo, Sheep Book Bash and Rabbit Combo (`critProc` / `rawModel.critBase`, "ดูสูตรคริ" button, glossary topic `critical`).
+
 ## 3. Skills
 
 ### 3.1 Skill metadata — `SkillClass` (SkillClass.cs:154–188)

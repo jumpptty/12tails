@@ -1665,6 +1665,18 @@ let checkedRabbitShot = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedRabbitShot} Rabbit Combo / Charge Attack checks.`);
+// 3o-v. "ดูสูตรคริ" button: shown on exactly the cards that model crit (critProc or rawModel.critBase), opens glossary topic `critical`.
+let checkedCritButton = 0;
+{
+  const check = (label, ok, got) => { checkedCritButton++; if (!ok) { console.error(`[CRIT BUTTON ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const hasBtn = (id) => { const sk = SKILLS.find(s => s.id === id); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml().includes("openMechanicPanel('critical', 0)"); };
+  const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
+  check("the cards that model crit are Bison Combo, Rabbit Combo, Sheep Book Bash and Wolf Combo", critCards.join() === "bison_nAttack,rabbit_nAttack,sheep_bookBash,wolf_nAttack", critCards.join());
+  critCards.forEach(id => check(`${id} shows the crit formula button`, hasBtn(id)));
+  ["rabbit_cAttack", "cat_nAttack", "wolf_provoke", "bison_cAttack"].forEach(id => check(`${id} has no crit formula button`, !hasBtn(id)));
+  check("the glossary has the critical topic with 4 steps", /critical: \{\s*title: "คริติคอล \(Critical\)",\s*steps: \[(?:[\s\S]*?label:){4}/.test(html));
+}
+console.log(`Verified ${checkedCritButton} crit formula button checks.`);
 
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
