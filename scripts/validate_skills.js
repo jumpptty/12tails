@@ -125,7 +125,7 @@ const exposeInjection = `
   window._usesTdlRoll = usesTdlRoll;
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
-  window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
+  window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, setExtravagance: (v) => { rabbitExtravagance = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -1508,7 +1508,7 @@ let checkedRabbitShot = 0;
   const inputs = sandbox._statInputs, deps = sandbox._depRanks, rb = sandbox._rabbit, ep = sandbox._effectProc;
   const check = (label, ok, got) => { checkedRabbitShot++; if (!ok) { console.error(`[RABBIT SHOT ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const combo = SKILLS.find(s => s.id === "rabbit_nAttack"), charge = SKILLS.find(s => s.id === "rabbit_cAttack");
-  const IDS = ["rabHyperShot", "rabSnipe", "rabBouncing", "rabShotgun", "rabW59", "rabWeaponMarshal", "rabWeaponChampion", "rabArmorMarshal", "rabArmorChampion", "rabDeadShot", "rabHeadShot", "rabComboLv"];
+  const IDS = ["rabHyperShot", "rabSnipe", "rabBouncing", "rabShotgun", "rabW59", "rabGear", "rabDeadShot", "rabHeadShot", "rabComboLv", "rabExtravagance"];
   const savedDeps = IDS.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value };
   const savedDist = [rb.getDistance("combo"), rb.getDistance("charge")], savedAim = rb.getAim();
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
@@ -1572,20 +1572,18 @@ let checkedRabbitShot = 0;
     check(`Charge Attack ${label}`, p.crit === want && p.plain === 0, `${p.crit} want ${want}`);
   });
   // ---- Gear crit base: weapon (+5 / +7) + armor and hat (+7 / +11)
-  [[{}, 0], [{ rabWeaponMarshal: 1 }, 5], [{ rabWeaponChampion: 1 }, 7], [{ rabArmorMarshal: 1 }, 7], [{ rabArmorChampion: 1 }, 11],
-    [{ rabWeaponMarshal: 1, rabArmorMarshal: 1 }, 12], [{ rabWeaponChampion: 1, rabArmorChampion: 1 }, 18], [{ rabWeaponChampion: 1, rabArmorMarshal: 1 }, 14], [{ rabW59: 1 }, 0]
+  [[{}, 0], [{ rabGear: 1 }, 12], [{ rabGear: 2 }, 18], [{ rabW59: 1 }, 0], [{ rabShotgun: 1 }, 0]
   ].forEach(([o, want]) => { setDeps(o); check(`crit base ${JSON.stringify(o)}`, sandbox.rabbitCritBase() === want, sandbox.rabbitCritBase()); });
   // ---- Exclusivity: one weapon slot, one armor set, shotgun needs a shotgun weapon
   const dx = rb.depExclusive;
   const sym = Object.keys(dx).filter(k => /^rab/.test(k)).every(a => dx[a].every(b => (dx[b] || []).includes(a)));
   check("Rabbit DEP_EXCLUSIVE is symmetric", sym);
-  check("the weapon slot is exclusive with w_rab59 and the shotgun", ["rabWeaponMarshal", "rabWeaponChampion", "rabW59"].every(a => ["rabWeaponMarshal", "rabWeaponChampion", "rabW59", "rabShotgun"].filter(b => b !== a).every(b => dx[a].includes(b))));
-  check("the armor sets are exclusive", dx.rabArmorMarshal.includes("rabArmorChampion") && dx.rabArmorChampion.includes("rabArmorMarshal"));
+  check("the gear set, w_rab59 and the shotgun are mutually exclusive", [["rabGear", ["rabW59", "rabShotgun"]], ["rabW59", ["rabGear", "rabShotgun"]], ["rabShotgun", ["rabW59", "rabGear"]]].every(([a, list]) => list.every(b => dx[a].includes(b))));
   // ---- Crit rate, and crit only on Combo
   inputs.atk.value = "200"; inputs.lck.value = "150";
   const rate = (sk, r, n) => { select(sk, r); let c = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, r, undefined, false); if (ep.lastCrit()) c++; } return c / n; };
   setDeps({}); check("Combo never crits without gear", rate(combo, 1, 400) === 0);
-  [[{ rabWeaponMarshal: 1, rabArmorMarshal: 1 }, 12], [{ rabWeaponChampion: 1, rabArmorChampion: 1 }, 18]].forEach(([o, base]) => {
+  [[{ rabGear: 1 }, 12], [{ rabGear: 2 }, 18]].forEach(([o, base]) => {
     setDeps(o); const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate(combo, 1, 5000);
     check(`Combo crit rate ~${want} with base ${base} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
     check("Charge Attack never crits even with the full set", rate(charge, 3, 400) === 0);
@@ -1594,18 +1592,39 @@ let checkedRabbitShot = 0;
   // ---- Header inputs and chips in the rendered card
   select(combo, 3); const heroC = sandbox._getRenderedHeroHtml();
   check("Combo shows the distance box but no aim slider", heroC.includes('data-role="rabbit-distance"') && !heroC.includes('data-role="rabbit-aim"'));
-  check("Combo lists its dependencies", ["rabHyperShot", "rabSnipe", "rabBouncing", "rabShotgun", "rabW59", "rabWeaponMarshal", "rabWeaponChampion", "rabArmorMarshal", "rabArmorChampion"].every(id => heroC.includes(`data-dep-id="${id}"`)));
+  check("Combo lists its dependencies", ["rabHyperShot", "rabSnipe", "rabBouncing", "rabShotgun", "rabW59", "rabGear", "rabExtravagance"].every(id => heroC.includes(`data-dep-id="${id}"`)));
   check("no crit chip without gear", !heroC.includes("โอกาส Critical"));
-  setDeps({ rabWeaponChampion: 1 }); select(combo, 3);
+  setDeps({ rabGear: 2 }); select(combo, 3);
   check("crit chip with gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
   setDeps({}); select(charge, 3); const heroK = sandbox._getRenderedHeroHtml();
   check("Charge Attack shows the distance box and the aim slider (idle without a head shot)", heroK.includes('data-role="rabbit-distance"') && heroK.includes('data-role="rabbit-aim"') && heroK.includes("sk-rabbit-aim is-idle"));
-  check("Charge Attack lists its dependencies", ["rabComboLv", "rabHyperShot", "rabHeadShot", "rabDeadShot"].every(id => heroK.includes(`data-dep-id="${id}"`)));
+  check("Charge Attack lists its dependencies", ["rabComboLv", "rabHyperShot", "rabHeadShot", "rabDeadShot", "rabExtravagance"].every(id => heroK.includes(`data-dep-id="${id}"`)));
   check("Charge Attack has no crit chip", !heroK.includes("โอกาส Critical"));
   setDeps({ rabHeadShot: 1, rabDeadShot: 1 }); select(charge, 3);
   check("aim slider is active with head shot and Dead Shot", !sandbox._getRenderedHeroHtml().includes("sk-rabbit-aim is-idle"));
   setDeps({ rabHyperShot: 4 }); rb.setDistance("combo", 26); select(combo, 3);
   check("formula shows the Hyper Shot term with its distance", sandbox._getRenderedHeroHtml().includes("Hyper Shot 26m"));
+  // ---- Extravagance: a skill dependency on every ATK-based Rabbit skill (flag `extravagance`), not a Buff popup entry
+  const EXTRA_CARDS = ["nAttack", "cAttack", "maimShot", "bounce", "gilShot", "fourShot", "circleShot", "shootingArray", "tenShot"].map(k => SKILLS.find(s => s.id === "rabbit_" + k));
+  check("Extravagance is flagged on the nine ATK-based offensive skills and nowhere else in Rabbit", EXTRA_CARDS.every(s => s && s.extravagance === true) && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance).length === 9);
+  check("Extravagance links reciprocally with each of them", EXTRA_CARDS.every(s => (s.compatSkills || []).includes("rabbit_extravagance")) && EXTRA_CARDS.every(s => SKILLS.find(x => x.id === "rabbit_extravagance").compatSkills.includes(s.id)));
+  check("the Buff popup no longer lists Extravagance", !/extravagance512/.test(html));
+  const savedAtkRole = inputs.atk.dataset.role; inputs.atk.dataset.role = "atk";   // statBonus() keys off the input data-role
+  setDeps({}); rb.setExtravagance(300); inputs.atk.value = "128";
+  check("Extravagance off leaves ATK alone", EXTRA_CARDS.every(s => { select(s, 1); return sandbox._statVal(inputs.atk) === 128; }));
+  setDeps({ rabExtravagance: 1 });
+  check("Extravagance on adds its ATK on every flagged card", EXTRA_CARDS.every(s => { select(s, 1); return sandbox._statVal(inputs.atk) === 428; }), EXTRA_CARDS.map(s => { select(s, 1); return sandbox._statVal(inputs.atk); }).join(","));
+  select(SKILLS.find(s => s.id === "rabbit_gorgonShot"), 1);
+  check("Extravagance does not touch an unflagged card", sandbox._statVal(inputs.atk) === 128);
+  select(SKILLS.find(s => s.id === "rabbit_extravagance"), 1);
+  check("Extravagance does not buff itself", sandbox._statVal(inputs.atk) === 128);
+  rb.setExtravagance(512); setDeps({ rabExtravagance: 1 }); rb.setDistance("combo", 16); select(combo, 1);
+  check("Combo raw uses the boosted ATK: floor(0.5 x 640) = 320", sandbox._statVal(inputs.atk) === 640 && sandbox.rabbitComboParts(1, sandbox._statVal(inputs.atk), 100).crit === 320);
+  check("the +ATK box shows only while the dep is on", sandbox._getRenderedHeroHtml().includes('data-role="rabbit-extra-atk"'));
+  setDeps({}); select(combo, 1);
+  check("no +ATK box while the dep is off", !sandbox._getRenderedHeroHtml().includes('data-role="rabbit-extra-atk"'));
+  rb.setExtravagance(512); inputs.atk.value = "128";
+  if (savedAtkRole === undefined) delete inputs.atk.dataset.role; else inputs.atk.dataset.role = savedAtkRole;
   // ---- Stat glow: rawModel declares ATK, and LV only for a live Bouncing Bullet
   setDeps({}); check("Combo glows ATK, not LV, by default", sandbox.getUsedPlayerStatKeys(combo).has("atk") && !sandbox.getUsedPlayerStatKeys(combo).has("lv"));
   setDeps({ rabBouncing: 1 }); check("Bouncing Bullet makes LV glow", sandbox.getUsedPlayerStatKeys(combo).has("lv"));
@@ -1615,7 +1634,7 @@ let checkedRabbitShot = 0;
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
     const combos = [{}, H4, { ...H4, rabSnipe: 1 }, { ...H4, rabBouncing: 1 }, { ...H4, rabShotgun: 1 }, { ...H4, rabShotgun: 2, rabSnipe: 1 }, { ...H4, rabW59: 1 },
-      { ...H4, rabWeaponChampion: 1, rabArmorChampion: 1 }, { ...H4, rabWeaponMarshal: 1, rabArmorMarshal: 1, rabBouncing: 1, rabSnipe: 1 }, { rabArmorMarshal: 1 }];
+      { ...H4, rabGear: 2 }, { ...H4, rabGear: 1, rabBouncing: 1, rabSnipe: 1 }, { rabGear: 1 }, { ...H4, rabExtravagance: 1 }];
     const chargeCombos = [CH({}), CH({ rabHyperShot: 4 }), CH({ rabHeadShot: 1 }), CH({ rabHeadShot: 1, rabDeadShot: 1, rabHyperShot: 3 }), CH({ rabHyperShot: 4, rabComboLv: 0 })];
     const sweep = (sk, list, distKind, dists, aims) => list.forEach(o => dists.forEach(d => aims.forEach(a => {
       for (let r = 1; r <= sk.maxRank; r++) {
