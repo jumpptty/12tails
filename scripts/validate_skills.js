@@ -1484,7 +1484,7 @@ let checkedBisonCombo = 0;
   // Stage 3 row shows the spin after "หรือ" while the card rolls; forced spin shows the spin rows instead.
   setDeps({}); select(4);
   const orHtml = sandbox._getRenderedHeroHtml();
-  check("stage 3 or-row while rolling", (orHtml.match(/sk-dmg-or">หรือ/g) || []).length === 2 && orHtml.includes("Spin &middot; first"));
+  check("stage 3 or-row while rolling", (orHtml.match(/class="sk-dmg-or">หรือ</g) || []).length === 2 && orHtml.includes("Spin &middot; first"));
   setDeps({ bisonSpinForce: 1 }); select(4);
   check("no or-row when the spin is forced", !sandbox._getRenderedHeroHtml().includes("sk-dmg-or"));
   setDeps({}); select(2);
