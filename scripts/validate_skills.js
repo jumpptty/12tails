@@ -1481,6 +1481,14 @@ let checkedBisonCombo = 0;
   check("no crit chip without gear", !sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
   setDeps({ bisonGearChampion: 1 }); select(4);
   check("crit chip with Champion gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical") && sk.critProc.chance() === 18);
+  // Stage 3 row shows the spin after "หรือ" while the card rolls; forced spin shows the spin rows instead.
+  setDeps({}); select(4);
+  const orHtml = sandbox._getRenderedHeroHtml();
+  check("stage 3 or-row while rolling", (orHtml.match(/sk-dmg-or">หรือ/g) || []).length === 2 && orHtml.includes("Spin &middot; first"));
+  setDeps({ bisonSpinForce: 1 }); select(4);
+  check("no or-row when the spin is forced", !sandbox._getRenderedHeroHtml().includes("sk-dmg-or"));
+  setDeps({}); select(2);
+  check("no or-row below rank 3", !sandbox._getRenderedHeroHtml().includes("sk-dmg-or"));
   // Range vs simulator for every stage including the spin and Added Swing, with Raw Strength and gear on.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
