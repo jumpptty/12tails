@@ -1543,8 +1543,8 @@ let checkedRabbitShot = 0;
     ["Bouncing Bullet + w_rab59 + Snipe", 2, 128, 100, { rabHyperShot: 5, rabBouncing: 1, rabW59: 1 }, 20, 48 + 50 + 80, 0],
     ["shotgun: reversed Hyper Shot at 4 m, crit part is the base only", 1, 128, 100, { ...H4, rabShotgun: 1 }, 4, 64, 48],
     ["shotgun + Snipe Mastery x1.5", 1, 128, 100, { rabHyperShot: 5, rabShotgun: 1 }, 4, 64, 72],
-    ["shotgun at 0 m", 1, 128, 100, { ...H4, rabShotgun: 2 }, 0, 64, 64],
-    ["shotgun at 0 m + Snipe", 1, 128, 100, { rabHyperShot: 5, rabShotgun: 2 }, 0, 64, 96],
+    ["shotgun at 0 m", 1, 128, 100, { ...H4, rabShotgun: 1 }, 0, 64, 64],
+    ["shotgun at 0 m + Snipe", 1, 128, 100, { rabHyperShot: 5, rabShotgun: 1 }, 0, 64, 96],
     ["shotgun reaches 13 m at most (bonus 12)", 4, 128, 100, { ...H4, rabShotgun: 1 }, 20, 64, 12],
     ["shotgun ignores w_rab59 and Bouncing Bullet", 1, 128, 100, { ...H4, rabShotgun: 1, rabW59: 1, rabBouncing: 1 }, 4, 64, 48],
     ["shotgun without Hyper Shot", 1, 128, 100, { rabShotgun: 1 }, 4, 64, 0],
@@ -1601,6 +1601,7 @@ let checkedRabbitShot = 0;
   // ---- Dependency order on Combo and the merged Hyper Shot + Snipe Mastery dep
   const strip = heroC.match(/data-dep-id="(rab[A-Za-z0-9]+)"/g).map(s => s.slice(13, -1));
   check("Combo dependency strip order: Bouncing, Hyper+Snipe, Extravagance, gear, Gatling Gun, shotgun", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
+  check("Customized Shotgun is a plain on/off toggle (rank 1 and 2 only change the hit box)", combo.dmgControls.find(d => d.id === "rabShotgun").maxRank === 1);
   check("Hyper Shot is one 0..5 dep whose rank-5 icon exists (rank 5 = Snipe Mastery)", combo.dmgControls[1].id === "rabHyperShot" && combo.dmgControls[1].maxRank === 5 && !!sandbox.SKILL_ICONS.rabbit_hyperShot5 && [1, 2, 3, 4].every(n => sandbox.SKILL_ICONS["rabbit_hyperShot" + n]));
   check("no separate Snipe Mastery dependency remains", !/rabSnipe|RABBIT_SNIPE_DEP/.test(html));
   check("concise dependency names", combo.dmgControls[1].label === "Hyper Shot / Snipe Mastery" && combo.dmgControls[3].label === "Crit Weapon" && combo.dmgControls[4].label === "Crit Armor + Helmet" && combo.dmgControls[5].id === "rabW59" && combo.dmgControls[5].label === "Gatling Gun" && combo.dmgControls[6].label === "Customized Shotgun");
@@ -1644,7 +1645,7 @@ let checkedRabbitShot = 0;
   // ---- Range vs simulator over toggle combinations, both stat profiles
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
-    const combos = [{}, H4, { rabHyperShot: 5 }, { ...H4, rabBouncing: 1 }, { ...H4, rabShotgun: 1 }, { rabHyperShot: 5, rabShotgun: 2 }, { ...H4, rabW59: 1 },
+    const combos = [{}, H4, { rabHyperShot: 5 }, { ...H4, rabBouncing: 1 }, { ...H4, rabShotgun: 1 }, { rabHyperShot: 5, rabShotgun: 1 }, { ...H4, rabW59: 1 },
       { ...H4, rabWeapon: 2, rabEquip: 2 }, { rabHyperShot: 5, rabWeapon: 1, rabBouncing: 1 }, { rabEquip: 1 }, { ...H4, rabEquip: 2, rabW59: 1 }, { rabHyperShot: 5, rabEquip: 2, rabShotgun: 1 }, { ...H4, rabExtravagance: 1 }];
     const chargeCombos = [CH({}), CH({ rabHyperShot: 4 }), CH({ rabHeadShot: 1 }), CH({ rabHeadShot: 1, rabDeadShot: 1, rabHyperShot: 3 }), CH({ rabHyperShot: 4, rabComboLv: 0 })];
     const sweep = (sk, list, distKind, dists, aims) => list.forEach(o => dists.forEach(d => aims.forEach(a => {
