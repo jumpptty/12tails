@@ -181,3 +181,36 @@ Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910
 - **Level applied:** `5 + ((!target.hasStatus("shame")) ? 0 : 1)` (`Bat.cs:39685`) — Lv.5 on a fresh target, **Lv.6 when the target already has Shame** (a recast); the escalated level is then re-applied with `RPC_AddStatus("shame", lv, ...)`.
 - **Effect:** on add `deltaCha(-10 * sLv)` (`CharacterControl.cs:40938`), on removal `deltaCha(10 * sLv)` (`CharacterControl.cs:18460`) — the target's CHA drops by **50 (Lv.5) / 60 (Lv.6)**. Classified Debuff, Magical.
 - **App modeling:** Debuff panel > Enemy Stats has a built-in `shame6` toggle (`ENEMY_STAT_DEBUFFS`, -60 CHA) that feeds the enemy CHA used by every duration/debuff formula, shown as the `-60 = total` chip under the enemy CHA input.
+
+### Bat status effects (popup text in the Bible `STATUS_DESC_MAP`)
+Values verified in `CharacterControl.cs` (per-tick handler / add site / removal site). `sLv` = status level.
+
+| Status | Effect | Source |
+|---|---|---|
+| `phantomBane` | every 2 s `RPC_AddEffectDamage(200+sLv, 6×sLv+3)` (purple) | `CharacterControl.cs:9443-9450` |
+| `corruption` | once per target attack (`actionState=="attack"`, latched by `sValue`): Effect Damage `15+15×sLv`, SP `−5×sLv` | `CharacterControl.cs:9508-9530` |
+| `curse` | on add `deltaAtk/Def/Agi/Vit/Mag/Cha/Tal/Lck(−3×sLv−3)` (all 8 stats); reversed on removal | `CharacterControl.cs:40254-40300`, `:18079-18085` |
+| `nightmare` | `RPC_AddDamage(242+sLv, 22×sLv+22)` every 2 s; on add removes `paralysis`/`sleep`/`snowMan`/`mindControl`, `actionState="nightmare"`, `moveSpeed=0`; while active `paralysis`/`sleep`/`charm`/`mindControl`/`nightmare` cannot be added | `:9643-9650`, `:40352-40420`, `:11256`, `:11466`, `:11676`, `:11781`, `:11841` |
+| `amplifyDamage` | on add `hitMod += 0.05×sLv` | `CharacterControl.cs:40476-40478` |
+| `blind` | basic/charge attacks (`actionCode < 10`) miss when `Random.Range(0,100) < 10×sLv+10` (no LCK) | `CharacterControl.cs:3481-3486` |
+| `confuse` | on skill use `Random.Range(0,100) < 6×sLv+6` → `RPC_AddDamage(-87)` (skill fails, 30 s cooldown) | `Bat.cs:7356-7362` |
+| `blackServant` | on add (dead player): `hp = floor(0.5×mhp)`, `ko = floor(0.5×mko)`, layer switched to the caster's team; on removal `hp = 0`, dead. Hero types only | `CharacterControl.cs:41338-41420`, `:18511-18520`, `:11850` |
+| `guardianOfTheNight` | marker for the summoned boss; `RPC_RemoveStatus` is issued together with `RPC_guardian_unsummon` | `Bat.cs:12436-12437` |
+| `massCast` | Mass Cast spread hook reads `getStatusLv("massCast")` | `Bat.cs:11447` |
+
+Open item: `nightmare` blocks on `snowMan`/`snowBall`/`petrify` (`CharacterControl.cs:11790-11835`) look like the *reverse* of the add-site `removeStatus("snowMan")`. Not resolved; the popup states only the add-site behaviour.
+
+Additional Bat statuses (same popup pass):
+
+| Status | Effect | Source |
+|---|---|---|
+| `shame` | on add `deltaCha(-10×sLv)` (Lv.5 = −50, Lv.6 = −60); caster-side `sLv + (target.hasStatus("shame") ? 1 : 0)` for Blind/Confusion | `CharacterControl.cs:40934-40940`, `Bat.cs:32213`, `Bat.cs:32828` |
+| `charm` | on add target layer = `sValue` (caster team), `addHate(sID,100)`; removal restores `mOriginalLayer`; cannot be added while `mindControl`/`nightmare`/`snowMan`/`snowBall` | `CharacterControl.cs:40664-40730`, `:18236-18245`, `:11655-11710` |
+| `mindControl` | on add removes `paralysis`/`sleep`/`charm`, layer = owner's `mOriginalLayer`, `isMine = owner.isMine`, `addHate(sID,100)`; removal restores layer/ownership; cannot be added while `petrify`/`snowMan`/`snowBall`/`mindControl`/`nightmare` | `CharacterControl.cs:40760-40850`, `:18270-18290`, `:11715-11785` |
+| `darkStalker` | every 4.5 s (`mod(2k,9)==3`) `RPC_AddEffectDamage(432, floor(0.3×target.cha))`; hero types only | `CharacterControl.cs:9770-9780`, `:12638-12645` |
+| `chiroptophobia` | every 1.5 s (`mod(2k,3)==1`) `RPC_AddEffectDamage(422, 7×sLv+7)`; listed only in `isStateStatus` (no Debuff/Magical flag) | `CharacterControl.cs:9660-9690`, `StatusData.cs:5070` |
+
+Follow-up verification:
+- **Guardian of the Night:** status duration is `chaAdjust(30×sLv)` (`Bat.cs:30600-30603`); the same value sets the boss timer `xMnv4YLKcX` (`:30609`). The AI loop (`Bat.cs:12275-12440`) runs the search/attack branch only while the timer has not expired and the Bat is alive; otherwise it falls through to `RPC_RemoveStatus("guardianOfTheNight")` + `RPC_guardian_unsummon`. Boss AI: 2.5 s scan, 32 m × 12 m area, attack when `sqrMagnitude < 256` (16 m), else 50 % cast.
+- **Curse on monsters:** for `!isPlayer`, `vit = ceil(0.1×mhp)` is set before `deltaVit(-3×sLv-3)` (`CharacterControl.cs:40258-40264`); removal only adds the delta back (`:18079-18090`). Same pattern exists for `bless` (`:39134-39140`).
+- **Mass Cast:** with `getStatusLv("massCast") == 0` the spell hits only the target; otherwise `FindAreaTarget(target, 18, 12)` with `hitCount < 6`. Consumers: phantomBane, dissolute, corruption, curse, doom, blind, confusion, dreamDazzle, phantasmBlast, charm, shame, paranoia, shatteringDream, Demon/Shadow Gaze (`Bat.cs:11447`, `:25354`, `:26032`, `:26694`, `:27356`, `:29305`, `:32129`, `:32744`, `:34488`, `:35449`, `:36397`, `:39605`, `:41417`, `:42044`). **Soul Eater (`Bat.cs:40834-40850`) uses the same 18 m × 12 m area with no 6-target cap.**

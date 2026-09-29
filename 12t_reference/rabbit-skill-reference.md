@@ -537,3 +537,11 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | Medical Shot | `:28183` |
 | Gil Shot | `:30364` |
 | Diamond Shot | `:38258` |
+
+### Card `desc` provenance (2026-09-29 pass)
+
+Card descriptions for all Rabbit skills were added in one pass. Basis per skill:
+- **Verified in source / this reference:** Maim Shot, Mix, Alchemist Lab (status level `clamp(rank,1,4)`, duration `chaAdjust(4+2·rank)`, MP potion `clamp(10·rank,10,40)`), Sticky Gum radius 1.5 / 2.5 m, Millionaire (fee `250×sLv` Gil, ×0.6 with Skill Bargain at `Rabbit.cs:36880-36897`; damage `ceil(0.005×sLv×min(Gil+Jil,99999))`), Extravagance (fee ×0.6 with Skill Bargain, `Rabbit.cs:40058-40074`), Diamond Shot (`diamondShot_gil = 1000`, `Rabbit.cs:38472`), Healing Field, Four/Circle/Ten Shot, Shooting Array, Kneeshot, Extra Potion, Medical Enhancement (**+5 s per rank**; the client tooltip's "+10 sec" is stale), Gil Shot base cost `ceil(sLv × (1 − 0.2×pennySaverLv))` (`Rabbit.cs:30714`; the description states only the base `sLv` Gil).
+- **Rapid Trance:** while `getStatus("rapidTrance") != null` the potion skills skip their cooldown assignment (`Rabbit.cs:6737`, `:7422`, `:8481`, `:8530`, `:8585`, `:8635`) and the potion coroutines take the alternate branch (`:24001`, `:24878`, `:25792`, `:26698`, `:27200`, `:27617`, `:28548`); the status itself only tints the model (`CharacterControl.cs:37520`).
+- **Client Thai tooltip only (`RabbitSkill_thai.cs`), values not independently traced:** Combo (+5 m per rank), Charge Attack (+60~120 % ×rank, KO 2×rank), Dead Shot (4 s / 300 %), Bouncing Bullet, Hyper Shot (rank dmg per metre beyond 16 m), Snipe Mastery, From the Above (20 KO), Shake (`4×rank` SP), Bunny Bargain (`5%×rank`), Special Deal (`5%×rank`), Mall, Customized Shotgun, Truce Trading (10 % / 20 %), Med Research, Skill Bargain, New Order, Contract (2 Black Panthers, 300 s).
+- **Open conflict:** the summary table row above calls Truce Trading an "invulnerable trading zone", while the client tooltip says it buys items from a non-player target at full price. The card follows the tooltip until `RPC_truceTrading1/2` (`Rabbit.cs:33896`) is traced.
