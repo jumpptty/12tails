@@ -1362,6 +1362,22 @@ let checkedOverPowerAtk = 0;
   atkEl.value = savedAtk; atkEl.dataset.role = savedRole; if (savedOp === undefined) delete deps.overPower; else deps.overPower = savedOp;
 }
 console.log(`Verified ${checkedOverPowerAtk} Over Power stat panel checks.`);
+// 3o-ii. atkCoeffProc shows its ATK term as "min~max" in both the talAdjust branch (Over Swing) and the
+// flat-ATK branch (Charge Attack, dmg:"0"), only while its dep is on.
+{
+  const deps = sandbox._depRanks, saved = deps.rawStrength;
+  const check = (label, ok) => { if (!ok) { console.error(`[ATK PROC RANGE ERROR] ${label}`); errorCount++; } };
+  ["bison_overSwing", "bison_cAttack"].forEach(id => {
+    const sk = SKILLS.find(s => s.id === id);
+    sandbox._skillRanks[id] = sk.maxRank;
+    deps.rawStrength = 1; sandbox._selectSkill(sk);
+    const on = sandbox._getRenderedHeroHtml();
+    check(`${id} shows min~max ATK with Raw Strength on`, /\d+~\d+/.test(on) && on.includes("ATK / "));
+    deps.rawStrength = 0; sandbox._selectSkill(sk);
+    check(`${id} shows a single ATK value with Raw Strength off`, !sandbox._getRenderedHeroHtml().includes("ATK / "));
+  });
+  if (saved === undefined) delete deps.rawStrength; else deps.rawStrength = saved;
+}
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 // 3o. Wolf Combo (2026-09-24, GEMINI.md "critProc / effectDamageDep"): Feral Instinct coefficients, hit counts,
 // gear crit rate (lckAdjust(12) Marshal / lckAdjust(18) Champion, x1.8), Dark Edge purple path + KO 0, and
