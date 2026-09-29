@@ -185,6 +185,31 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - **Spin Hack tooltip:** "range +40%, damage +10%" (`BisonSkill_eng.cs:970`); code is radius 5→7 and ATK coefficient +0.1 (0.5→0.6 base).
 - **Tooltips:** `BisonSkill_eng.cs:79`, `:90`; `BisonSkill_thai.cs:81`, `:92`.
 
+### bsn_nAttack1-4 (Combo, #101-104): stages, spin and Added Swing (verified 2026-09-29)
+
+- **Metadata:** passive, no cost; Lv 1/2/3/4, Bn 0/1/2/3 (`BisonSkill.cs`, decoded). Tooltips: #101 unlocks hit 2, #102 hit 3, #103/#104 give a 25%/40% spin on hit 3 (`BisonSkill_eng.cs:35-68`, `BisonSkill_thai.cs:37-70`).
+- **Flow (`doNormalAttack`, `Bison.cs:4781-5125`):** hit 2 (`RPC_nAttack2`) needs #101 and a press 0.3-0.7 s after hit 1 (`:4858-4903`). Hit 3 needs #102 and a press more than 1 s after hit 2 (`:4918-4934`); with #103, `num = 25 + 5×ImprovedSwingLv` (+15 with #104) and `Random.Range(0,100) <= lckAdjust(num)` starts the spin `RPC_nAttack4`, else `RPC_nAttack3` (`:4947-5004`). The `<=` makes the chance `lckAdjust(num) + 1` %. Added Swing (#401) starts `RPC_nAttack5` after either `nAttack3` or `nAttack4`, press more than 2 s later, no roll (`:5034-5067`). A stored `holdCharge` releases on the next press instead (`:5089-5120`).
+- **Stages:** each coroutine caches `getBruteStrengthLv()` and `getOverPride()` once (`:14741-14746`, `:15574-15579`, `:16385-16390`, `:17173-17178`, `:18270-18275`), so Raw Strength and Over Pride roll once per stage.
+
+| Stage | Raw per hit | Area | KO |
+|---|---|---|---|
+| 1 | `getCritPlus(floor((0.5 + 0.025×Brute)×ATK))` (`:14776`) | `FindAngleTarget(pos − 0.5·fwd, fwd, 5×rangeMod, 35°, 2×rangeMod)` (`:14801`; 35° is the full width, halved inside `Damage.cs:1232`) | `1 + OverPride` (`:14824`) |
+| 2 | same as 1 (`:15612`) | `FindRecTarget(…, base 1, top 2, range 5, height 2)` ×rangeMod (`:15607`) | `1 + OverPride` |
+| 3 | `getCritPlus(floor((0.6 + 0.03×Brute)×ATK))` (`:16423`) | `FindRecTarget(…, 1, 1.5, 4, 3)` ×rangeMod (`:16418`) | `1 + OverPride` |
+| Spin 1st | `getCritPlus(floor((0.4 + 0.02×Brute)×ATK))` (`:17221`) | radius `5×rangeMod`, height 3 (`:17216`) | `OverPride` (0 base, `:17256`) |
+| Spin 2nd | `getCritPlus(floor((0.5 + 0.025×Brute)×ATK))` (`:17511`, `:17546`) | radius `6×rangeMod`, height 3 (`:17506`) | `1 + OverPride` |
+| Added 1st / 2nd | same as the spin (`:18318`, `:18353`, `:18608`, `:18643`) | 5 / 6 radius (`:18313`, `:18603`) | `OverPride` / `1 + OverPride` |
+
+- **Gear crit (`getCritPlus`, `Bison.cs:13801-13950`):** weapon `w_bsn43`/`w_bsn44` +5, `w_bsn58` +7; armor `a_all43`/`a_all44` +4, `a_all58` +6; accessory `c_all43`/`c_all44` +3, `c_all58` +5. `Random.Range(0,100) < lckAdjust(sum)` → `floor(1.8 × raw)`. Full supreme-commander set = 12, full champion set = 18 (same shape as Wolf). Names: `WeaponData_eng.cs:796`, `:807`, `:917`.
+- **Weapon `w_bsn59`** ("a hammer that can create such void…", `WeaponData_eng.cs:928`), not modelled in the Bible: every stage first pulls enemies within 6 m (`RPC_AddDamage(1, -1, …, 5×direction)`, `Bison.cs:14669-14720`) and scales raw damage by `floor(0.75×)` (`:14780-14787`).
+- **Colossal Weapon (#361-362, `getColossalWeaponLv()` 0-2, `Bison.cs:8947`):** after each stage, every target within 8 m (height 4; 6 for spin/Added Swing) of a point 1 m ahead that the stage did **not** hit takes Effect Damage `ceil(0.2 × lv × highest damage dealt by that stage)` (`:14930-15029`, `:17362-17461`, `:17652-17749`).
+- **SP:** +1 per stage that hits (`:14896` etc.).
+
+### bsn_overPride1-4 (Over Pride, #321-324): per-stage KO/hate proc (verified 2026-09-29)
+
+- **Level:** counts learned #321-#324 (0-4). With level > 0, `Random.Range(0,100) > lckAdjust(20)` returns 0, so the success chance is `lckAdjust(20) + 1` % (`Bison.cs:8532-8611`).
+- **Effect:** read once per Combo stage; a success adds `+level` KO and `level×10` hate to every hit of that stage (`hit(…, 1 + op, op×10, …)`, `Bison.cs:14824`). `onOverPride()` only shows a message and plays a voice (`:8615`).
+
 ### bsn_holdCharge1 (Hold Charge, #113): stored charge status (verified 2026-09-29)
 
 - **Metadata:** passive, Lv 16/Bn 5, no cost (`BisonSkill.cs`, decoded).

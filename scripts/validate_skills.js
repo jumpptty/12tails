@@ -333,7 +333,10 @@ SKILLS.forEach(sk => {
     for (let r = 1; r <= maxRank; r++) {
       for (let mask = 0; mask < (1 << deps.length); mask++) {
         const on = d => !!d && (mask & (1 << deps.indexOf(d))) !== 0;
+        // groupVariant groups count only in their own outcome (validated in the base outcome here).
+        const alt = sandbox.groupVariantIsAlt ? sandbox.groupVariantIsAlt(sk, r) : false;
         const groupSum = sk.dmgGroups.reduce((s, g) => {
+          if (g.variant && (g.variant === "alt") !== alt) return s;
           const hc = g.hitCount;
           return s + (typeof hc === 'function' ? hc(r, on(g.dep || sk.hitCountDep || sk.dep)) : hc);
         }, 0);
@@ -922,7 +925,7 @@ SKILLS.forEach(sk => {
 // missing label never surfaced anywhere else until this check existed).
 let checkedLckLabels = 0;
 SKILLS.forEach(sk => {
-  for (const field of ["lckProc", "secondaryLckProc", "tertiaryLckProc"]) {
+  for (const field of ["lckProc", "secondaryLckProc", "tertiaryLckProc", "quaternaryLckProc"]) {
     if (!sk[field]) continue;
     checkedLckLabels++;
     if (!sk[field].label) {
@@ -1441,6 +1444,61 @@ let checkedWolfCombo = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedWolfCombo} Wolf Combo (Feral Instinct / gear crit / Dark Edge) checks.`);
+// 3o-iii. Bison Combo (2026-09-29): stage/spin/Added Swing hit counts (groupVariant), per-stage Raw Strength
+// coefficients, inclusive spin/Over Pride chances, Over Pride KO, the gear crit chip, and range vs simulator.
+let checkedBisonCombo = 0;
+{
+  const inputs = sandbox._statInputs, deps = sandbox._depRanks;
+  const check = (label, ok, got) => { checkedBisonCombo++; if (!ok) { console.error(`[BISON COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const sk = SKILLS.find(s => s.id === "bison_nAttack");
+  const IDS = ["bruteStrength", "rawStrength", "improvedSwing", "addedSwing", "overPride", "bisonSpinForce", "bisonGearMarshal", "bisonGearChampion"];
+  const savedDeps = IDS.map(id => [id, deps[id]]), saved = { atk: inputs.atk.value, lck: inputs.lck.value };
+  const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
+  const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
+  const hits = () => sk.dmgGroups.reduce((a, g) => a + sandbox._resolveGroupHitCount(sk, g), 0);
+  // Hit counts (Bison.cs:4858-5067): 2 / 3, spin replaces stage 3 with 2 hits, Added Swing +2 from rank 2.
+  [[1, {}, 2], [2, {}, 3], [4, {}, 3], [4, { bisonSpinForce: 1 }, 4], [2, { bisonSpinForce: 1 }, 3], [4, { bisonSpinForce: 1, addedSwing: 1 }, 6], [2, { addedSwing: 1 }, 5]].forEach(([r, o, want]) => {
+    setDeps(o); select(r);
+    check(`rank ${r} ${JSON.stringify(o)} hit count`, hits() === want && sk.hitCount(r) === want, `${hits()} / ${sk.hitCount(r)}`);
+  });
+  // Coefficients with Brute Strength 4, normal and Raw Strength (x5 Brute level).
+  setDeps({ bruteStrength: 4, bisonSpinForce: 1, addedSwing: 1 }); select(4);
+  const coef = sk.dmgGroups.map(g => +sandbox._resolveGroupAtkCoeff(sk, g).toFixed(3)).join(",");
+  const proc = sk.dmgGroups.map(g => +g.atkCoeffProc().toFixed(3)).join(",");
+  check("Brute 4 coefficients", coef === "0.6,0.6,0.72,0.48,0.6,0.48,0.6", coef);
+  check("Raw Strength coefficients", proc === "1,1,1.2,0.8,1,0.8,1", proc);
+  // Chances: spin and Over Pride roll Random(0,100) <= lckAdjust(n), so +1.
+  inputs.lck.value = "0";
+  setDeps({ improvedSwing: 3 });
+  check("spin chance rank 4 + Improved Swing 3", sandbox.groupVariantChance(sk, 4, 0) === sandbox.lckAdjustChance(55, 0) + 1, sandbox.groupVariantChance(sk, 4, 0));
+  check("no spin below rank 3", sandbox.groupVariantChance(sk, 2, 0) === 0);
+  check("Over Pride chip is lckAdjust(20)+1", sk.tertiaryLckProc.calc(20, 0) === sandbox.lckAdjustChance(20, 0) + 1);
+  // KO: Over Pride adds its level on success; the spin's first hit has no base KO.
+  setDeps({ overPride: 4, bisonSpinForce: 1 }); select(4);
+  check("Over Pride 4 KO", sandbox._getKOValue({ ...sk, ko: sk.dmgGroups[0].ko }, 4) === "1–5" && sandbox._getKOValue({ ...sk, ko: sk.dmgGroups[3].ko }, 4) === "0–4");
+  // Crit chip only with gear; forced spin shows the spin rows.
+  setDeps({}); select(4);
+  check("no crit chip without gear", !sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
+  setDeps({ bisonGearChampion: 1 }); select(4);
+  check("crit chip with Champion gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical") && sk.critProc.chance() === 18);
+  // Range vs simulator for every stage including the spin and Added Swing, with Raw Strength and gear on.
+  [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
+    inputs.atk.value = atk; inputs.lck.value = lck;
+    [{}, { bruteStrength: 4, rawStrength: 1, bisonGearChampion: 1 }].forEach(base => {
+      setDeps({ ...base, bisonSpinForce: 1, addedSwing: 1 }); select(4);
+      sk.dmgGroups.forEach((g, gi) => {
+        if (sandbox._resolveGroupHitCount(sk, g) === 0) return;
+        const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g));
+        let lo = Infinity, hi = -Infinity;
+        for (let i = 0; i < 400; i++) { const x = sandbox._rollOneHit(sk, 4, undefined, false, gi); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+        check(`range/sim ${g.label} ${JSON.stringify(base)} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+      });
+    });
+  });
+  inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
+  savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
+}
+console.log(`Verified ${checkedBisonCombo} Bison Combo checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 
