@@ -125,6 +125,7 @@ const exposeInjection = `
   window._usesTdlRoll = usesTdlRoll;
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
+  window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
 
@@ -1499,6 +1500,141 @@ let checkedBisonCombo = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedBisonCombo} Bison Combo checks.`);
+// 3o-iv. Rabbit Combo / Charge Attack (2026-09-29, GEMINI.md "rawModel"): exact raw damage against values worked out by hand from
+// Rabbit.cs (Combo :17409-17690, ricochet :18259, shotgun :36260-36332, Charge Attack :19413-19523), gear crit (:16471), header inputs,
+// DEP_EXCLUSIVE, the crit rate, and range vs simulator over every toggle.
+let checkedRabbitShot = 0;
+{
+  const inputs = sandbox._statInputs, deps = sandbox._depRanks, rb = sandbox._rabbit, ep = sandbox._effectProc;
+  const check = (label, ok, got) => { checkedRabbitShot++; if (!ok) { console.error(`[RABBIT SHOT ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const combo = SKILLS.find(s => s.id === "rabbit_nAttack"), charge = SKILLS.find(s => s.id === "rabbit_cAttack");
+  const IDS = ["rabHyperShot", "rabSnipe", "rabBouncing", "rabShotgun", "rabW59", "rabWeaponMarshal", "rabWeaponChampion", "rabArmorMarshal", "rabArmorChampion", "rabDeadShot", "rabHeadShot", "rabComboLv"];
+  const savedDeps = IDS.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value };
+  const savedDist = [rb.getDistance("combo"), rb.getDistance("charge")], savedAim = rb.getAim();
+  const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
+  const select = (sk, r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
+  check("both cards use rawModel with header inputs and no atkCoeff", [combo, charge].every(s => s.rawModel && s.rabbitShotInputs && s.atkCoeff === undefined && s.hitCount() === 1));
+  check("only Combo carries a crit base", typeof combo.rawModel.critBase === "function" && charge.rawModel.critBase === undefined);
+  // ---- Combo goldens: [label, rank, ATK, LV, deps, distance, crit, plain]
+  const H4 = { rabHyperShot: 4 };
+  [
+    ["0.5 ATK, no deps", 1, 128, 100, {}, 16, 64, 0],
+    ["odd ATK truncates", 1, 127, 100, {}, 16, 63, 0],
+    ["ATK 0 leaves only Hyper Shot (rank 1 reaches 21 m: 5 x 4)", 1, 0, 100, H4, 30, 20, 0],
+    ["Hyper 4 rank 3 at 26 m: (26-16) x 4", 3, 128, 100, H4, 26, 104, 0],
+    ["Hyper 4 below 16 m gives nothing", 3, 128, 100, H4, 10, 64, 0],
+    ["Hyper 4 exactly 16 m gives nothing", 3, 128, 100, H4, 16, 64, 0],
+    ["Snipe Mastery counts from 0 m: floor(26 x 4)", 3, 128, 100, { ...H4, rabSnipe: 1 }, 26, 168, 0],
+    ["Snipe Mastery at 5.5 m: floor(5.5 x 4)", 3, 128, 100, { ...H4, rabSnipe: 1 }, 5.5, 86, 0],
+    ["Hyper 2 rank 4 at the 36 m limit", 4, 128, 100, { rabHyperShot: 2 }, 36, 104, 0],
+    ["distance clamps to the rank range (rank 2 = 26 m)", 2, 128, 100, { rabHyperShot: 3 }, 100, 94, 0],
+    ["no Hyper Shot learned", 3, 128, 100, { rabSnipe: 1 }, 30, 64, 0],
+    ["w_rab59 floors 0.75 x floor(0.5 ATK)", 1, 128, 100, { rabW59: 1 }, 16, 48, 0],
+    ["w_rab59 with odd base: floor(0.75 x 63)", 1, 127, 100, { rabW59: 1 }, 16, 47, 0],
+    ["w_rab59 multiplies the base only, Hyper Shot added after", 4, 128, 100, { ...H4, rabW59: 1 }, 36, 128, 0],
+    ["Bouncing Bullet adds floor(0.5 Lv), Lv 100", 1, 128, 100, { rabBouncing: 1 }, 16, 114, 0],
+    ["Bouncing Bullet Lv 101 floors 50.5", 1, 128, 101, { rabBouncing: 1 }, 16, 114, 0],
+    ["Bouncing Bullet Lv 151", 1, 128, 151, { rabBouncing: 1 }, 16, 139, 0],
+    ["Bouncing Bullet extends the range to 20 + 5 x rank", 1, 128, 100, { ...H4, rabBouncing: 1 }, 25, 150, 0],
+    ["Bouncing Bullet + w_rab59 + Snipe", 2, 128, 100, { ...H4, rabBouncing: 1, rabW59: 1, rabSnipe: 1 }, 20, 48 + 50 + 80, 0],
+    ["shotgun: reversed Hyper Shot at 4 m, crit part is the base only", 1, 128, 100, { ...H4, rabShotgun: 1 }, 4, 64, 48],
+    ["shotgun + Snipe Mastery x1.5", 1, 128, 100, { ...H4, rabShotgun: 1, rabSnipe: 1 }, 4, 64, 72],
+    ["shotgun at 0 m", 1, 128, 100, { ...H4, rabShotgun: 2 }, 0, 64, 64],
+    ["shotgun at 0 m + Snipe", 1, 128, 100, { ...H4, rabShotgun: 2, rabSnipe: 1 }, 0, 64, 96],
+    ["shotgun reaches 13 m at most (bonus 12)", 4, 128, 100, { ...H4, rabShotgun: 1 }, 20, 64, 12],
+    ["shotgun ignores w_rab59 and Bouncing Bullet", 1, 128, 100, { ...H4, rabShotgun: 1, rabW59: 1, rabBouncing: 1 }, 4, 64, 48],
+    ["shotgun without Hyper Shot", 1, 128, 100, { rabShotgun: 1 }, 4, 64, 0],
+  ].forEach(([label, rank, atk, lv, o, dist, crit, plain]) => {
+    setDeps(o); rb.setDistance("combo", dist);
+    const p = sandbox.rabbitComboParts(rank, atk, lv);
+    check(`Combo ${label}`, p.crit === crit && p.plain === plain, `${p.crit}/${p.plain} want ${crit}/${plain}`);
+  });
+  // ---- Charge Attack goldens: [label, lv, ATK, deps, distance, aim, raw]
+  const CH = (o) => ({ rabHyperShot: 0, rabDeadShot: 0, rabHeadShot: 0, rabComboLv: 4, ...o });
+  [
+    ["lv 1 body", 1, 128, CH({}), 16, 0, 102],
+    ["lv 3 body: 0.5 x 128 + int(0.3 x 3 x 128) = 64 + 115", 3, 128, CH({}), 16, 0, 179],
+    ["Hyper 4 at 30 m: (30-16) x 4", 3, 128, CH({ rabHyperShot: 4 }), 30, 0, 235],
+    ["head shot adds the charge term again", 3, 128, CH({ rabHeadShot: 1 }), 16, 0, 294],
+    ["head shot + Hyper", 3, 128, CH({ rabHeadShot: 1, rabHyperShot: 4 }), 30, 0, 350],
+    ["Dead Shot 4 s multiplies x3 (Hyper not multiplied)", 3, 128, CH({ rabHeadShot: 1, rabDeadShot: 1, rabHyperShot: 4 }), 30, 4, 882 + 56],
+    ["Dead Shot 2 s multiplies x2", 3, 128, CH({ rabHeadShot: 1, rabDeadShot: 1 }), 16, 2, 588],
+    ["Dead Shot 1.3 s: float32 multiplier, floor(1.65 x 294)", 3, 128, CH({ rabHeadShot: 1, rabDeadShot: 1 }), 16, 1.3, 485],
+    ["Dead Shot 0 s does nothing", 3, 128, CH({ rabHeadShot: 1, rabDeadShot: 1 }), 16, 0, 294],
+    ["Dead Shot needs a head shot", 3, 128, CH({ rabDeadShot: 1 }), 16, 4, 179],
+    ["range with Combo 0 is 20 m: (20-16) x 4", 3, 128, CH({ rabHyperShot: 4, rabComboLv: 0 }), 40, 0, 179 + 16],
+    ["range with Combo 4 is 40 m: (40-16) x 4", 3, 128, CH({ rabHyperShot: 4, rabComboLv: 4 }), 40, 0, 179 + 96],
+    ["Snipe Mastery is ignored", 3, 128, CH({ rabHyperShot: 4, rabSnipe: 1 }), 10, 0, 179],
+    ["ATK 0", 2, 0, CH({}), 16, 0, 0],
+  ].forEach(([label, lv, atk, o, dist, aim, want]) => {
+    setDeps(o); rb.setDistance("charge", dist); rb.setAim(aim);
+    const p = sandbox.rabbitChargeParts(lv, atk);
+    check(`Charge Attack ${label}`, p.crit === want && p.plain === 0, `${p.crit} want ${want}`);
+  });
+  // ---- Gear crit base: weapon (+5 / +7) + armor and hat (+7 / +11)
+  [[{}, 0], [{ rabWeaponMarshal: 1 }, 5], [{ rabWeaponChampion: 1 }, 7], [{ rabArmorMarshal: 1 }, 7], [{ rabArmorChampion: 1 }, 11],
+    [{ rabWeaponMarshal: 1, rabArmorMarshal: 1 }, 12], [{ rabWeaponChampion: 1, rabArmorChampion: 1 }, 18], [{ rabWeaponChampion: 1, rabArmorMarshal: 1 }, 14], [{ rabW59: 1 }, 0]
+  ].forEach(([o, want]) => { setDeps(o); check(`crit base ${JSON.stringify(o)}`, sandbox.rabbitCritBase() === want, sandbox.rabbitCritBase()); });
+  // ---- Exclusivity: one weapon slot, one armor set, shotgun needs a shotgun weapon
+  const dx = rb.depExclusive;
+  const sym = Object.keys(dx).filter(k => /^rab/.test(k)).every(a => dx[a].every(b => (dx[b] || []).includes(a)));
+  check("Rabbit DEP_EXCLUSIVE is symmetric", sym);
+  check("the weapon slot is exclusive with w_rab59 and the shotgun", ["rabWeaponMarshal", "rabWeaponChampion", "rabW59"].every(a => ["rabWeaponMarshal", "rabWeaponChampion", "rabW59", "rabShotgun"].filter(b => b !== a).every(b => dx[a].includes(b))));
+  check("the armor sets are exclusive", dx.rabArmorMarshal.includes("rabArmorChampion") && dx.rabArmorChampion.includes("rabArmorMarshal"));
+  // ---- Crit rate, and crit only on Combo
+  inputs.atk.value = "200"; inputs.lck.value = "150";
+  const rate = (sk, r, n) => { select(sk, r); let c = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, r, undefined, false); if (ep.lastCrit()) c++; } return c / n; };
+  setDeps({}); check("Combo never crits without gear", rate(combo, 1, 400) === 0);
+  [[{ rabWeaponMarshal: 1, rabArmorMarshal: 1 }, 12], [{ rabWeaponChampion: 1, rabArmorChampion: 1 }, 18]].forEach(([o, base]) => {
+    setDeps(o); const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate(combo, 1, 5000);
+    check(`Combo crit rate ~${want} with base ${base} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
+    check("Charge Attack never crits even with the full set", rate(charge, 3, 400) === 0);
+  });
+  setDeps({});
+  // ---- Header inputs and chips in the rendered card
+  select(combo, 3); const heroC = sandbox._getRenderedHeroHtml();
+  check("Combo shows the distance box but no aim slider", heroC.includes('data-role="rabbit-distance"') && !heroC.includes('data-role="rabbit-aim"'));
+  check("Combo lists its dependencies", ["rabHyperShot", "rabSnipe", "rabBouncing", "rabShotgun", "rabW59", "rabWeaponMarshal", "rabWeaponChampion", "rabArmorMarshal", "rabArmorChampion"].every(id => heroC.includes(`data-dep-id="${id}"`)));
+  check("no crit chip without gear", !heroC.includes("โอกาส Critical"));
+  setDeps({ rabWeaponChampion: 1 }); select(combo, 3);
+  check("crit chip with gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
+  setDeps({}); select(charge, 3); const heroK = sandbox._getRenderedHeroHtml();
+  check("Charge Attack shows the distance box and the aim slider (idle without a head shot)", heroK.includes('data-role="rabbit-distance"') && heroK.includes('data-role="rabbit-aim"') && heroK.includes("sk-rabbit-aim is-idle"));
+  check("Charge Attack lists its dependencies", ["rabComboLv", "rabHyperShot", "rabHeadShot", "rabDeadShot"].every(id => heroK.includes(`data-dep-id="${id}"`)));
+  check("Charge Attack has no crit chip", !heroK.includes("โอกาส Critical"));
+  setDeps({ rabHeadShot: 1, rabDeadShot: 1 }); select(charge, 3);
+  check("aim slider is active with head shot and Dead Shot", !sandbox._getRenderedHeroHtml().includes("sk-rabbit-aim is-idle"));
+  setDeps({ rabHyperShot: 4 }); rb.setDistance("combo", 26); select(combo, 3);
+  check("formula shows the Hyper Shot term with its distance", sandbox._getRenderedHeroHtml().includes("Hyper Shot 26m"));
+  // ---- Stat glow: rawModel declares ATK, and LV only for a live Bouncing Bullet
+  setDeps({}); check("Combo glows ATK, not LV, by default", sandbox.getUsedPlayerStatKeys(combo).has("atk") && !sandbox.getUsedPlayerStatKeys(combo).has("lv"));
+  setDeps({ rabBouncing: 1 }); check("Bouncing Bullet makes LV glow", sandbox.getUsedPlayerStatKeys(combo).has("lv"));
+  setDeps({ rabBouncing: 1, rabShotgun: 1 }); check("shotgun mode drops LV again", !sandbox.getUsedPlayerStatKeys(combo).has("lv"));
+  setDeps({}); check("Charge Attack glows ATK", sandbox.getUsedPlayerStatKeys(charge).has("atk"));
+  // ---- Range vs simulator over toggle combinations, both stat profiles
+  [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
+    inputs.atk.value = atk; inputs.lck.value = lck;
+    const combos = [{}, H4, { ...H4, rabSnipe: 1 }, { ...H4, rabBouncing: 1 }, { ...H4, rabShotgun: 1 }, { ...H4, rabShotgun: 2, rabSnipe: 1 }, { ...H4, rabW59: 1 },
+      { ...H4, rabWeaponChampion: 1, rabArmorChampion: 1 }, { ...H4, rabWeaponMarshal: 1, rabArmorMarshal: 1, rabBouncing: 1, rabSnipe: 1 }, { rabArmorMarshal: 1 }];
+    const chargeCombos = [CH({}), CH({ rabHyperShot: 4 }), CH({ rabHeadShot: 1 }), CH({ rabHeadShot: 1, rabDeadShot: 1, rabHyperShot: 3 }), CH({ rabHyperShot: 4, rabComboLv: 0 })];
+    const sweep = (sk, list, distKind, dists, aims) => list.forEach(o => dists.forEach(d => aims.forEach(a => {
+      for (let r = 1; r <= sk.maxRank; r++) {
+        setDeps(o); rb.setDistance(distKind, d); rb.setAim(a); select(sk, r);
+        const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, r)));
+        let lo = Infinity, hi = -Infinity;
+        for (let i = 0; i < 200; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+        check(`range/sim ${sk.id} r${r} ${JSON.stringify(o)} d${d} aim${a} atk${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+      }
+    })));
+    sweep(combo, combos, "combo", [0, 13, 26, 40], [0]);
+    sweep(charge, chargeCombos, "charge", [0, 16, 30, 40], [0, 2.5, 4]);
+  });
+  inputs.atk.value = savedIn.atk; inputs.lck.value = savedIn.lck;
+  rb.setDistance("combo", savedDist[0]); rb.setDistance("charge", savedDist[1]); rb.setAim(savedAim);
+  savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
+}
+console.log(`Verified ${checkedRabbitShot} Rabbit Combo / Charge Attack checks.`);
+
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 
