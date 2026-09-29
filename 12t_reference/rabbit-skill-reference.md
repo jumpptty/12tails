@@ -196,8 +196,9 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `RabbitSkill_eng.cs:917`) — landing an air-attack under that passive re-arms Bounce's cooldown to `36`
   instead of `30` as a side effect, not Bounce's own base cast value. Table reports the unmodified `30`.
 - **`contract`'s single addTimeOut value is confirmed by a matching preemptive call.** `Rabbit.cs:105`
-  — `this.mChar.addTimeOut("contract", this.mChar.agiAdjust(180f));` — sits inside `Start()`, gated by
-  `hasSkill(444)`, a state pre-arm on login (matching the Panda `fuujinKen`/`raijinKen` preemptive-
+  — `this.mChar.addTimeOut("contract", this.mChar.agiAdjust(180f));` — sits inside `Start()`
+  (unconditional in real game modes; the `hasSkill(444)` check after it only guards `Game.useCoin = false`,
+  `Rabbit.cs:114-120`), a state pre-arm on login (matching the Panda `fuujinKen`/`raijinKen` preemptive-
   `addTimeOut` precedent) — matches the real cast site exactly (`Rabbit.cs:40652`,
   `agiAdjust((float)180)`). Not a discrepancy.
 - **`bounce` applies a fixed `hide` status buff for 4s (Rank 1) / 8s (Rank 2)** (`Rabbit.cs:21068-21073`):
@@ -347,15 +348,15 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | bigBag | 1 | Passive / 0 | none | no direct damage — upgrades Backpack and Herb Finder | Backpack gains range and `+0.25×ItemCount`; Herb Finder succeeds automatically | — | — |
 | fourShot | 2 | [12, 15] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
 | circleShot | 2 | [24, 27] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE spray (radius `8×rangeMod`, 3 rapid pulses, `Rabbit.cs:32690-32872, 33141`), KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 3 |
-| mall | 2 | Free / 0 | none | no dmg — sets up mobile player shop vendor | — | — | — |
-| truceTrading | 2 | [20, 30] MP | none | no dmg — invulnerable trading zone | — | — | — |
+| mall | 2 | Free / 0 | none | no dmg — opens a player shop (8-slot `MallGui`, no client rank check on slot count) | — | — | — |
+| truceTrading | 2 | [20, 30] MP | none | no dmg — negotiation to buy an item from a non-player target (success `LCK × rank > Random(0, target HP)`, `Rabbit.cs:34111`) | — | — | — |
 | shootingArray | 2 | [24, 30] SP (red) | none | 3 hits of `0.5×ATK + talAdjust(15×sLv)` + 1 finisher of `1.0×ATK + talAdjust(30×sLv)` (`Rabbit.cs:35331`, `:35630`) | modeled via `dmgGroups` (4 hits total), KO=1/hit | — | 4 (`dmgGroups`) |
 | millionaire | 2 | [50, 75] SP (red) | none | `ceil(0.005×sLv×min(Gil+Jil, 99999))` per pulse (`Rabbit.cs:37212`) | 6-pulse AoE burst (radius 8m, max 500/hit @ R1, max 1000/hit @ R2, `Rabbit.cs:37035`), KO=1/hit | — | 6 |
 | healingField | 1 | 30 MP, 30 SP (red) | none | no dmg — area healing field, radius 12m (`Rabbit_healingField.cs:189`) | heals **70 flat HP** per tick, pulses every 2s (6 ticks over 12s) | — | 6 |
 | diamondShot | 1 | 20 SP (red) | none | **1000 flat true effect damage** (`Rabbit.cs:38322`) | direct `RPC_AddEffectDamage`, penetrating vs monsters | — | 1 |
 | tenShot | 1 | 20 SP (red) | none | `0.5×ATK + talAdjust(60)` per bullet (`Rabbit.cs:39499`, `:39552`) | 10 bullets barrage (10 hits total), KO=1/hit | — | 10 |
 | extravagance | 1 | 20 MP, 40 SP (red) | none | no dmg — spends `1% Gil` (capped at 512) to grant `+GilSpent` ATK buff for `chaAdjust(6)` (`Rabbit.cs:39902`, `:40056`) | — | **skillBargain5** (hasSkill 413, reduces cost by 40%) | — |
-| contract | 1 | 50 MP, 30 SP (red) | none | no dmg — summons 2 Black Panther bodyguards for 300s (`Rabbit.cs:40382`) | — | — | — |
+| contract | 1 | 50 MP, 30 SP (red) | none | no dmg — hires mercenaries by current SP after cost: Lv1 2 Light Panther / Lv2 2 Light Leopard (SP >= 35) / Lv3 1 Light Golem (SP >= 65), 300s (`Rabbit.cs:7602-7631`, `:40376-40475`) | — | — | — |
 
 ---
 
@@ -587,10 +588,50 @@ Requirements from `python scripts/decode_skilldata.py DecompiledSource/RabbitSki
 
 **Resource-cost audit (2026-09-29):** the summary table's older costs for these skills disagreed with `decode_skilldata.py`, which simulates `getSkill()`'s fall-through: Bounce SP `5 / 8`, Sticky Gum MP `6 / 10` SP `10 / 10`, Acidic Field MP `8 / 12` SP `15 / 15`, Gorgon Shot MP `20 / 30` SP `35 / 50`, Four Shot SP `12 / 15` (no MP), Circle Shot SP `24 / 27` (no MP), Shooting Array SP `24 / 30`, Mall no MP/SP, Truce Trading MP `20 / 30` (no SP). The card costs and the summary table now follow the decode.
 
+### Economy, mercenary and utility skills: Bunny Bargain, Skill Bargain, Special Deal, Med Research, Contract, New Order, Truce Trading, Mall, Shake (verified 2026-09-29)
+
+Requirements (decode): Bunny Bargain Lv 5/11/17/23 (Bn 1/3/5/7), Special Deal Lv 24/27/30/33 (Bn 15/18/21/24), Skill Bargain Lv 60 (Bn 1), Med Research Lv 75 (Bn 4), New Order Lv 85 (Bn 6), Contract Lv 75 (Bn 4; MP 50, SP 30 red), Mall Lv 16/20 (Bn 4/8; MP 0, SP 0), Truce Trading Lv 24/28 (Bn 12/16; MP 20/30, SP 0; target enemy), Shake Lv 7/13/19 (MP 6/10/14). IDs: Bunny Bargain 311-314, Special Deal 361-364, Mall 341/342, Truce Trading 343/344, Skill Bargain 413, Med Research 432, Contract 434, New Order 444.
+
+**Bunny Bargain (`ShopGui.cs`, `ArenaShopGui.cs`)**
+- Level = number of Bunny Bargain ranks learned (`hasSkill(311)`..`(314)` each `+1`, so 0-4), only for `Type == "Rabbit"` (`ShopGui.cs:2164-2227`, `ArenaShopGui.cs:930-972`). Skill Bargain (`hasSkill(413)`) adds a further `+1` in `ShopGui` (`:2221-2227`) but is not counted in `ArenaShopGui`.
+- Buy price: `floor((1 - 0.05 × lv) × price)` for every shop except the Panther shop, price above 0 (`ShopGui.cs:2251-2269`; Arena shop `ArenaShopGui.cs:1010`). Sell price: `ceil(price × (0.3 + 0.015 × lv))` (`ShopGui.cs:4080`): the base sale value is 30% of the item price and each level adds 1.5 points (= +5% of that base), matching the tooltip's "5% discount and 5% bonus" per level, 25% at level 5.
+
+**Skill Bargain (`hasSkill(413)`)**
+- Millionaire fee `sLv × 250` becomes `floor(0.6 × fee)` (`Rabbit.cs:36880-36891`). Extravagance fee `clamp(floor(0.01 × Gil), 1, 512)` becomes `floor(0.6 × fee)` (`:40056-40068`). Contract fee ×0.6 floor, both the affordability check (`:7677-7683`) and the payment (`:11671-11677`).
+- **Gil Shot** and **Diamond Shot** read the Bunny Bargain ranks only when Skill Bargain is owned (the `hasSkill(311-314)` checks are nested inside `hasSkill(413)`, tab depth checked): Gil Shot pays `max(0, Gil - ceil(sLv × (1 - 0.2 × pennySaverLv)))`, `pennySaverLv` = Bunny ranks learned 0-4 (`:30654-30714`); Diamond Shot pays `1000 - 100 × (Bunny ranks learned)` (`:38472-38532`). So "-40%" is only the Bunny 4 + Skill Bargain case for Diamond Shot; Gil Shot's limit is 80% off (cost `ceil(sLv × 0.2)`).
+- Discount to shop prices: see Bunny Bargain (+1 level, 25% at most). Tooltip: "Increases BunnyBargain's discount and bonus to 25%. Also reduces money used in Rabbit's skills by 40%" (`RabbitSkill_eng.cs`).
+
+**Special Deal (`hasSkill(361-364)`)**
+- Tooltip: +5/10/15/20% money and EXP from missions for all party members. **Not found in the decompiled client** after searching every `*.cs` for `specialDeal` (only `RabbitSkill*.cs`), and every `hasSkill(361-364)` hit (Bat, Bison, Mole, Monkey, Wolf, Sheep's Karma at `CharacterControl.cs:30462`, shadow AI files) belongs to another class. Mission reward code (`MissionGui.cs`, `MissionData.cs`, `MissionClass.cs`, `Game.cs`) has no skill check. The reward is either applied server-side or not implemented; the card states the tooltip and flags it.
+
+**Med Research (`hasSkill(432)`)**
+- Alchemist Lab level 5 in town (`CompoundGui.cs:1137`, `:1775`): `AlchemistData.getRecipe(5)` adds four recipes `f_ahb1`, `f_amb1`, `f_asb1`, `f_akb1` to the level-4 list (16 recipes at Lab 4: `f_hpb1-3`, `f_mpb1-3`, `f_spb1-3`, `f_slb1-3`, `f_kob1`, `f_htb1`, `f_rmb1`, `f_stb1`; Lab 1 has 4, Lab 2 has 8, Lab 3 has 12, Lab 5 has 20; `AlchemistData.cs:20-155`).
+- Rabbit's lab items (`FieldData.cs:3320`, `cType "drug"`) use a `75 s` shared cooldown instead of `150 s` when the user is a Rabbit with Med Research (`GameGui.cs:32665-32694`). The `potion` (150 s) and `boost` (180 s) item types are unchanged, so the tooltip's "all Rabbit-type items" means the lab drugs. `CharacterControl.cs:8951` (`gobble` status) also reads `hasSkill(432)` but belongs to another class's passive.
+
+**Contract (`RPC_contract`, `hasSkill(434)`)**
+- Contract level is picked from current SP **after** the skill's 30 SP is paid (`returnMPSP` refunds it on failure, `Rabbit.cs:8808`): level 1 by default, level 2 at SP >= 35, level 3 at SP >= 65 (`:7602-7631`). Cast time `magAdjust(3 + 3 × level)` = 6 / 9 / 12 s (`:40729`).
+- Level 1 summons 2 `LightPanther`, level 2 summons 2 `LightLeopard`, level 3 summons 1 `LightGolem` (`:40376-40475`, `RPC_contract_create` `:11566-11611`). Each spawned unit costs `200 / 600 / 6000` Gil (`:11635-11683`), so the total is `400 / 1200 / 6000` Gil, the same as the affordability check (`:7641-7671`), each ×0.6 (floor) with Skill Bargain. Casting is refused with "Too many contracts!" when `getContractCount() > 6` (`:7689`) and with "not enough money!" when Gil is short (`:7702`).
+- Units live 300 s (Light* `Awake()`, see the Duration citations above). The pre-arm `addTimeOut("contract", agiAdjust(180))` in `Start()` (`:105`) runs unconditionally in real game modes (`Game.mGameType > 4`); the `hasSkill(444)` check after it only guards `Game.useCoin = false` (`:114-120`), so the older note that the pre-arm is "gated by `hasSkill(444)`" was wrong.
+- **Coins:** with Contract, using an NPC coin item has a `Random.Range(0,100) <= lckAdjust(30)` chance to not consume the coin (`GameGui.cs:36812-36835`); the tooltip says 50%. Using a coin always costs 5 game mana (`Game.mGameMana >= 5`, `:36735-36835`) and needs `|coin.lv| <= PlayerData.Rank`.
+
+**New Order (`hasSkill(444)`)**
+- Every summon a Rabbit owner spawns gets `floor(1.5 ×)` on `hp, mhp, mp, mmp, atk, def, agi, vit, mag, cha, tal, lck` (Contract units, `Rabbit.cs:11798-11837`; generic summon event `CharacterControl.cs:29517-29584`).
+- Coin items: a coin whose `lv <= ceil(0.5 × PlayerData.Rank)` is used without being consumed (mana still costs 5, `GameGui.cs:36780-36803`). The Thai tooltip adds "use new coins when Rabbit returns to the scene" (not traced).
+
+**Truce Trading (`RPC_truceTrading1`)**
+- Both ranks cast for `magAdjust(12)` seconds with a cast bar (one assignment, `Rabbit.cs:34425-34437`), not `6 / 12`; MP `20 / 30` (decode). The attempt succeeds when `LCK × sLv > Random.Range(0, target.hp)` (`:34105-34111`, needs `!target.isTraded`), i.e. the chance is `min(1, LCK × rank / target HP)`. On success it fires `RPC_truceTrading_fire<rank>` (`:34123`).
+- The purchase itself (item, 150% / 100% price) is not in the client: `truceTrading` appears only in `Rabbit*.cs`, `RabbitSkill*.cs` and the client tooltips (English: rank 1 "150% price and 15% success", rank 2 "100% price and 20% success"; Thai: "real price, 10% / 20%", `RabbitSkill_thai.cs`). The two languages disagree and neither number is in the code. **Resolves the earlier table conflict:** Truce Trading is a negotiation to buy an item from a non-player target, not an invulnerable trading zone (no status or invulnerability code exists for it).
+
+**Mall (`RPC_mall_setup` / `RPC_mall_open`)**
+- MP 0, SP 0 (decode), cooldown 90 s. Opens a shop object (`Rabbit_mall.cs`, `Init(owner, ownerID, sellerID)`) that other players click within 2 m (`sqrMagnitude <= 4`, `:194`) to buy through `MallGui` (`Rabbit.cs:5626-5644`, `MallGui.cs:4885-4960`). `MallGui` holds 8 item slots (`while (i < 8)`, `MallGui.cs:1126`, `:4594`). No rank check for the tooltip's 4 / 8 sellable items was found in `Rabbit.cs`, `Rabbit_mall.cs`, `MallGui.cs` or `CharacterControl.cs`; `hasSkill(341-343)` at `CharacterControl.cs:4206-4251` is Bison's block (`Type == "Bison"`, `:4011`).
+
+**Shake (`shake1-3`)**
+- SP potion amounts are `4 / 8 / 12` SP per bottle for ranks 1-3 (`Rabbit_potion.cs:342-366`), 3 bottles, matching the card; the HP potions of Mix are `20 / 40 / 60 / 80 + floor(0.3 × ExtraPotion × Lv)` (`:294-330`).
+
 ### Card `desc` provenance (2026-09-29 pass)
 
 Card descriptions for all Rabbit skills were added in one pass. Basis per skill:
 - **Verified in source / this reference:** Maim Shot, Mix, Alchemist Lab (status level `clamp(rank,1,4)`, duration `chaAdjust(4+2·rank)`, MP potion `clamp(10·rank,10,40)`), Sticky Gum radius 1.5 / 2.5 m, Millionaire (fee `250×sLv` Gil, ×0.6 with Skill Bargain at `Rabbit.cs:36880-36897`; damage `ceil(0.005×sLv×min(Gil+Jil,99999))`), Extravagance (fee ×0.6 with Skill Bargain, `Rabbit.cs:40058-40074`), Diamond Shot (`diamondShot_gil = 1000`, `Rabbit.cs:38472`), Healing Field, Four/Circle/Ten Shot, Shooting Array, Kneeshot, Extra Potion, Medical Enhancement (**+5 s per rank**; the client tooltip's "+10 sec" is stale), Gil Shot base cost `ceil(sLv × (1 − 0.2×pennySaverLv))` (`Rabbit.cs:30714`; the description states only the base `sLv` Gil).
 - **Rapid Trance:** while `getStatus("rapidTrance") != null` the potion skills skip their cooldown assignment (`Rabbit.cs:6737`, `:7422`, `:8481`, `:8530`, `:8585`, `:8635`) and the potion coroutines take the alternate branch (`:24001`, `:24878`, `:25792`, `:26698`, `:27200`, `:27617`, `:28548`); the status itself only tints the model (`CharacterControl.cs:37520`).
 - **Client Thai tooltip only (`RabbitSkill_thai.cs`), values not independently traced:** Combo (+5 m per rank), Charge Attack (+60~120 % ×rank, KO 2×rank), Dead Shot (4 s / 300 %), Bouncing Bullet, Hyper Shot (rank dmg per metre beyond 16 m), Snipe Mastery, From the Above (20 KO), Shake (`4×rank` SP), Bunny Bargain (`5%×rank`), Special Deal (`5%×rank`), Mall, Customized Shotgun, Truce Trading (10 % / 20 %), Med Research, Skill Bargain, New Order, Contract (2 Black Panthers, 300 s).
-- **Open conflict:** the summary table row above calls Truce Trading an "invulnerable trading zone", while the client tooltip says it buys items from a non-player target at full price. The card follows the tooltip until `RPC_truceTrading1/2` (`Rabbit.cs:33896`) is traced.
+- **Resolved 2026-09-29:** Truce Trading is a purchase negotiation (see the economy section above); the old "invulnerable trading zone" table row was wrong.
