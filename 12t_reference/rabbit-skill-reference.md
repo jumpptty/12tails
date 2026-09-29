@@ -343,6 +343,8 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | gorgonShot | 2 | [20, 30] MP, [35, 45] SP (red) | none | `talAdjust(50×sLv)` (`[50, 100]`) (`Rabbit.cs:29671`) | petrifies target (`"petrify"`) for `3×sLv+3`s (`[6s, 9s]` contested) | — | 1 |
 | gilShot | 4 | [10, 12, 14, 16] SP (blue) | none | `(0.6 + 0.1×sLv)×ATK + talAdjust(10×sLv)` (`Rabbit.cs:30399`) | KO=`sLv+1` (`[2, 3, 4, 5]`), restores +1 SP | **diamondShot5** (hasSkill 403, +20 to talAdjust base) | 1 |
 | backpack | 2 | Free / 0 | none | `0.5×sLv×Weight` (`Rabbit.cs:31593`) | KO=`10×sLv` (`[10, 20]`) | **bigBag5** (hasSkill 423, adds `+0.25×ItemCount`) | 1 |
+| herbFinder | 2 | Passive / 0 | none | no damage — enables field-herb gathering | base chance `20×sLv`% is LCK-adjusted; the inclusive `<=` roll gives one additional integer outcome | **bigBag5** (hasSkill 423, guarantees success) | — |
+| bigBag | 1 | Passive / 0 | none | no direct damage — upgrades Backpack and Herb Finder | Backpack gains range and `+0.25×ItemCount`; Herb Finder succeeds automatically | — | — |
 | fourShot | 2 | 20 MP, [12, 24] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
 | circleShot | 2 | 20 MP, [24, 36] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE spray (radius `8×rangeMod`, 3 rapid pulses, `Rabbit.cs:32690-32872, 33141`), KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 3 |
 | mall | 2 | 20 MP, 24 SP (red) | none | no dmg — sets up mobile player shop vendor | — | — | — |
@@ -404,6 +406,11 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Formula:** `0.5f * sLv * InventoryWeight + (useBigBag ? 0.25f * InventoryCount : 0)`
 * **KO:** `10 * sLv` (10 at rank 1, 20 at rank 2).
 * **Dependency:** `rab_bigBag5` (Skill ID 423, `RabbitSkill.cs:3293`).
+
+### 6.1 Herb Finder (`herbFinder1-2`) and Big Bag (`bigBag5`)
+* **Herb access:** A Rabbit needs Herb Finder rank 1 or 2 before the field-herb interaction is available (`Herb.cs:184`).
+* **Chance:** Without Big Bag, `getHerbFinder()` resolves the learned rank as `1` or `2`, then succeeds when `Random.Range(0, 100) <= lckAdjust(20×rank)` (`Rabbit.cs:10636-10666`). The actual base chances are therefore **20% / 40%**, LCK-adjusted with an inclusive comparison—not the 30% / 50% stated in the client tooltip (`RabbitSkill_eng.cs:653`, `:664`).
+* **Big Bag:** Owning Skill ID 423 returns success immediately before any roll (`Rabbit.cs:10624-10630`), so Herb Finder is **100%** successful. The same passive expands Backpack's area and adds `0.25×ItemCount` damage (`Rabbit.cs:31024`, `:31588`, `:31593`).
 
 ### 7. Millionaire (`millionaire1-2`)
 * **Source:** `Rabbit.cs:37212` inside `$RPC_millionaire$27336`
