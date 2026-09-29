@@ -328,28 +328,28 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
 |---|---|---|---|---|---|---|---|
 | statScan | 1 | 6 SP (red) | none | no dmg — reveals target stats | — | — | — |
-| bounce | 2 | [5, 10] SP (red) | none | `ATK`, KO=20 (`Rabbit.cs:21652`) | melee leap attack; if `fromTheAbove5` owned, triggers ground stomp | **fromTheAbove5** (stomp effect) | 1 |
+| bounce | 2 | [5, 8] SP (red) | none | `ATK`, KO=20 (`Rabbit.cs:21652`) | melee leap attack; if `fromTheAbove5` owned, triggers ground stomp | **fromTheAbove5** (stomp effect) | 1 |
 | maimShot | 4 | [12, 13, 14, 15] SP (blue) | none | `0.5×ATK + talAdjust(5×sLv)` (`Rabbit.cs:23280`) | restores +1 SP; applies `"maim"` status (`Damage.getDebuff(3, cha, target.cha)`) | **kneeShot5** (hasSkill 402, +20 to talAdjust base) | 1 |
 | mix | 4 | [6, 9, 12, 15] MP | none | no direct dmg — creates HP/SP/MP potion pickups (`Rabbit_potion.cs`) | HP potion heals `20×sLv` (`[20, 40, 60, 80]`) | **extraPotion5** (hasSkill 412, `+0.3×LV` HP heal) | — |
 | shake | 3 | [6, 10, 14] MP | none | no direct dmg — creates compound potions on ground (lifetime 60s) | — | — | — |
 | miracleBlend | 1 | 18 MP | none | no direct dmg — spawns miracle potion (`Rabbit_potion.cs:438`) | status `"miracleDrop"` duration = `chaAdjust(4 + 2×num)` (4/6/8/10/12s), `damageMod` and `hitMod` each `+0.1×sLv+0.1` (`CharacterControl.cs:37667`; the `50` passed as `sValue` is never read) | **alchemistLab** (hasSkill 231-234, ranks 1..4, +2s/rank) | — |
-| stickyGum | 2 | [6, 8] MP, [10, 15] SP (red) | none | no dmg — slows movement in radius `1.5m / 2.5m` (`Rabbit_stickyGum.cs:140`) | status `"sticky"` (lv `sLv`) for `chaAdjust(12)` | — | — |
-| acidicField | 2 | [8, 12] MP, [15, 20] SP (red) | none | `10×sLv` flat true effect damage per tick (`[10, 20]`) (`Rabbit_acidicField.cs:198`) | penetrating (direct `RPC_AddEffectDamage`), pulses every 2s (6 ticks over 12s) + `"acid"` debuff | — | 6 |
+| stickyGum | 2 | [6, 10] MP, [10, 10] SP (red) | none | no dmg — slows movement in radius `1.5m / 2.5m` (`Rabbit_stickyGum.cs:140`) | status `"sticky"` (lv `sLv`) for `chaAdjust(12)` | — | — |
+| acidicField | 2 | [8, 12] MP, [15, 15] SP (red) | none | `10×sLv` flat true effect damage per tick (`[10, 20]`) (`Rabbit_acidicField.cs:198`) | penetrating (direct `RPC_AddEffectDamage`), pulses every 2s (6 ticks over 12s) + `"acid"` debuff | — | 6 |
 | immuneShot | 1 | 10 MP, 10 SP (blue) | none | no dmg — cures debuffs (`"remedy"`), grants `"immunity"` (`Rabbit.cs:28287`) | duration `chaAdjust(15 + 5×[medEnhanceLv+1])` (20s to 35s) | **medicalEnhancement** (ranks 0..3, +5s/rank) | — |
 | boostShot | 1 | 10 MP, 10 SP (blue) | none | no dmg — heals `100×(1+medEnhanceLv)` HP (`100–400`) (`Rabbit.cs:28346`) | grants `"boost"` for `chaAdjust(30 + 5×[medEnhanceLv+1])` (35s to 50s) | **medicalEnhancement** (ranks 0..3, +5s/rank, +100 HP/rank) | — |
 | heatShot | 1 | 10 MP, 10 SP (blue) | none | no dmg — grants `"heat"` status (`Rabbit.cs:28400`): TAL `+10×heatLv` (`CharacterControl.cs:37506`) and an immediate `+10×heatLv` SP heal (`Rabbit.cs:28405`); `heatLv = min(currentHeatLv + 1, 1 + medEnhanceLv)` (`Rabbit.cs:28375-28399`), so recasting on the same target stacks the level | duration `chaAdjust(30 + 5×[medEnhanceLv+1])` (35s to 50s) | **medicalEnhancement** (ranks 0..3: +5s/rank and level cap 1..4, i.e. TAL/SP `+10..+40`) | — |
 | lifeShot | 1 | 10 MP, 10 SP (blue) | none | no dmg — grants `"autoLife"` revive buff (`Rabbit.cs:295`) | duration `chaAdjust(60 + 5×[medEnhanceLv+1])` (65s to 80s) | **medicalEnhancement** (ranks 0..3, +5s/rank) | — |
 | rapidTrance | 1 | 20 MP, 30 SP (red) | none | no dmg — grants `"rapidTrance"` action speed buff for `chaAdjust(12)` (`Rabbit.cs:28846`) | — | — | — |
-| gorgonShot | 2 | [20, 30] MP, [35, 45] SP (red) | none | `talAdjust(50×sLv)` (`[50, 100]`) (`Rabbit.cs:29671`) | petrifies target (`"petrify"`) for `3×sLv+3`s (`[6s, 9s]` contested) | — | 1 |
+| gorgonShot | 2 | [20, 30] MP, [35, 50] SP (red) | none | `talAdjust(50×sLv)` (`[50, 100]`) (`Rabbit.cs:29671`) | petrifies target (`"petrify"`) for `3×sLv+3`s (`[6s, 9s]` contested) | — | 1 |
 | gilShot | 4 | [10, 12, 14, 16] SP (blue) | none | `(0.6 + 0.1×sLv)×ATK + talAdjust(10×sLv)` (`Rabbit.cs:30399`) | KO=`sLv+1` (`[2, 3, 4, 5]`), restores +1 SP | **diamondShot5** (hasSkill 403, +20 to talAdjust base) | 1 |
 | backpack | 2 | Free / 0 | none | `floor(0.5×sLv×InventoryWeight + bigBag?0.25×ItemCount:0)` per hit (`Rabbit.cs:31593`) | 3 AoE pulses every 0.2s; radius 2m (3m with Big Bag), KO=`10×sLv`, 0.3m knockback | **bigBag5** (hasSkill 423, +1m radius and `+0.25×ItemCount`) | 3 |
 | herbFinder | 2 | Passive / 0 | none | no damage — enables field-herb gathering | base chance `20×sLv`% is LCK-adjusted; the inclusive `<=` roll gives one additional integer outcome | **bigBag5** (hasSkill 423, guarantees success) | — |
 | bigBag | 1 | Passive / 0 | none | no direct damage — upgrades Backpack and Herb Finder | Backpack gains range and `+0.25×ItemCount`; Herb Finder succeeds automatically | — | — |
-| fourShot | 2 | 20 MP, [12, 24] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
-| circleShot | 2 | 20 MP, [24, 36] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE spray (radius `8×rangeMod`, 3 rapid pulses, `Rabbit.cs:32690-32872, 33141`), KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 3 |
-| mall | 2 | 20 MP, 24 SP (red) | none | no dmg — sets up mobile player shop vendor | — | — | — |
-| truceTrading | 2 | 20 MP, 24 SP (red) | none | no dmg — invulnerable trading zone | — | — | — |
-| shootingArray | 2 | [24, 36] SP (red) | none | 3 hits of `0.5×ATK + talAdjust(15×sLv)` + 1 finisher of `1.0×ATK + talAdjust(30×sLv)` (`Rabbit.cs:35331`, `:35630`) | modeled via `dmgGroups` (4 hits total), KO=1/hit | — | 4 (`dmgGroups`) |
+| fourShot | 2 | [12, 15] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` per shot (`Rabbit.cs:32374`) | 4 rapid shots, KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 4 |
+| circleShot | 2 | [24, 27] SP (red) | none | `0.5×ATK + talAdjust(15×sLv)` (`Rabbit.cs:32732`) | 360-degree AoE spray (radius `8×rangeMod`, 3 rapid pulses, `Rabbit.cs:32690-32872, 33141`), KO=1/hit | **tenShot5** (hasSkill 433, +10 to talAdjust base) | 3 |
+| mall | 2 | Free / 0 | none | no dmg — sets up mobile player shop vendor | — | — | — |
+| truceTrading | 2 | [20, 30] MP | none | no dmg — invulnerable trading zone | — | — | — |
+| shootingArray | 2 | [24, 30] SP (red) | none | 3 hits of `0.5×ATK + talAdjust(15×sLv)` + 1 finisher of `1.0×ATK + talAdjust(30×sLv)` (`Rabbit.cs:35331`, `:35630`) | modeled via `dmgGroups` (4 hits total), KO=1/hit | — | 4 (`dmgGroups`) |
 | millionaire | 2 | [50, 75] SP (red) | none | `ceil(0.005×sLv×min(Gil+Jil, 99999))` per pulse (`Rabbit.cs:37212`) | 6-pulse AoE burst (radius 8m, max 500/hit @ R1, max 1000/hit @ R2, `Rabbit.cs:37035`), KO=1/hit | — | 6 |
 | healingField | 1 | 30 MP, 30 SP (red) | none | no dmg — area healing field, radius 12m (`Rabbit_healingField.cs:189`) | heals **70 flat HP** per tick, pulses every 2s (6 ticks over 12s) | — | 6 |
 | diamondShot | 1 | 20 SP (red) | none | **1000 flat true effect damage** (`Rabbit.cs:38322`) | direct `RPC_AddEffectDamage`, penetrating vs monsters | — | 1 |
@@ -537,6 +537,55 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 | Medical Shot | `:28183` |
 | Gil Shot | `:30364` |
 | Diamond Shot | `:38258` |
+
+### Shooting kit: Combo, Charge Attack, Hyper Shot, Snipe Mastery, Bouncing Bullet, Dead Shot, Customized Shotgun, From the Above (verified 2026-09-29)
+
+Requirements from `python scripts/decode_skilldata.py DecompiledSource/RabbitSkill.cs`: Combo `nAttack1-4` Lv 1/2/3/4, Charge Attack `cAttack1-3` Lv 4/10/16 (Bn 1/2/3), Hyper Shot Lv 8/16/24/32 (Bn 4/6/8/10), Customized Shotgun Lv 28 (Bn 18/22), Bouncing Bullet Lv 55, Dead Shot Lv 60 (Bn 1), From the Above Lv 70 (Bn 3), Snipe Mastery Lv 75 (Bn 4). All passive, no MP/SP. IDs: Combo 101-104, Charge Attack 111-113, Hyper Shot 131-134, Customized Shotgun 353/354, Bouncing Bullet 401, Dead Shot 411, From the Above 421, Snipe Mastery 431.
+
+**Combo (`RPC_nAttack`)**
+- Dispatch (`Rabbit.cs:9042-9087`): `getCustomizedShotgunLv() > 0` starts `RPC_shotgun`, otherwise `RPC_nAttack`.
+- Base hit: `hitDmg = (int)(0.5 × ATK)` (`:17409`); with weapon `w_rab59` ("A custom made rifle. Designed for even more rapid shooting.", `WeaponData_eng.cs:3344`) `hitDmg = floor(0.75 × hitDmg)` (`:17414-17420`) and the `nAttack` timeout is `1 s` instead of `1.5 s` (`:17809-17823`).
+- Range: one `Physics.Raycast` of `16 + 5 × Combo rank` m (`:17581`), first collider only. KO `1`, hate `0`, `+1 SP` per landed hit (`:17685-17698`).
+- Damage goes through `getCritPlus(...)` (`:16471`): weapon `w_rab43`/`w_rab44` +5, `w_rab58` +7; armor `a_all43`/`a_all44` +4, `a_all58` +6; accessory `c_all43`/`c_all44` +3, `c_all58` +5. `Random.Range(0,100) < lckAdjust(sum)` gives `floor(1.8 × raw)` (same shape as Wolf/Bison gear crit). Not modeled on the card.
+- Hyper Shot term: `mDistance = flat(caster - hit point)`. Without Snipe Mastery `mDistance = clamp(mDistance - 16, 0, 40)`; with Snipe Mastery (`hasSkill(431)`) the raw distance is used (`:17651-17662`). `hyper = floor(mDistance × hyperLv)` (`:17679`), added to `hitDmg` before `getCritPlus`.
+
+**Hyper Shot (`getHypershotLv`, `Rabbit.cs:9421-9470`)**
+- Level 1-4 from `hasSkill(131-134)`; it multiplies distance in metres (tooltip "1/2/3/4 dmg per 1m beyond 16 m", `RabbitSkill_eng.cs:143-176`).
+- Read by: Combo (`:17431`, `:17679`), the Bouncing Bullet loop (`:18253`), Charge Attack 2 (`:19416`, `:19513`: `(distance - 16) × lv`, only when `distance > 16`, no 40 m cap), From the Above's air shot (`:22173-22195`, same `(distance - 16) × lv`, distance measured flat from the firing point 12 m above), and the shotgun attack (`:36293-36308`, reversed, see below).
+- Snipe Mastery only changes the Combo and ricochet term and the shotgun term; Charge Attack and From the Above ignore it (`hasSkill(431)` appears only at `:17594`, `:17656`, `:18235`, `:18265`, `:36313` in Rabbit's files; `CharacterControl.cs:13467` is Panda's).
+
+**Snipe Mastery (`hasSkill(431)`)**
+- Rifle Combo / ricochet: hyper distance starts from `0 m` with no `-16` offset and no `40 m` cap (`:17656`, `:18235`), so short shots also get `distance × lv`. Also swaps the hit effect to `RPC_snipeShot_hit` (`:17594`).
+- Shotgun: `hyper = floor(1.5 × hyper)` when `hyper > 0` (`:36313-36325`).
+- **Discrepancy:** the client tooltips promise "+2 levels" (Thai, `RabbitSkill_thai.cs:950`) and "6 damage per 1m" (English, `RabbitSkill_eng.cs:928`, i.e. level 4 + 2). No `+2` exists anywhere in the decompiled Rabbit path: `getHypershotLv()` returns 0-4 only and `mHyperShotLv` is never adjusted by `hasSkill(431)`. The card follows the code; a live test would settle whether a server patched it.
+
+**Bouncing Bullet (`hasSkill(401)`)**
+- With the passive, `RPC_nAttack` skips the single raycast and enters the ricochet loop (`:17459-17520` then `goto IL_F77`). Path budget `bounceRange = 20 + 5 × Combo` (`:17512`); each segment is `Physics.Raycast(..., bounceRange, layer 1)` against walls (`:18123`), `bounceRange -= segment length` (`:18166`), at most 3 segments (`bounceCount < 3`, `:18076`) and it stops once `bounceRange <= 12` (`:18082`). The direction reflects off the wall normal (`:18370`) and there is a `0.3 s` wait between segments (`:18385`).
+- Every segment uses `Physics.RaycastAll` and loops over all colliders with no `break` (`:18197-18345`): each target on the segment is hit, not only the first (`:18259`, `hit(1, ..., getCritPlus((int)(hitDmg + 0.5 × Lv + hyper)), 1, 0, ...)`).
+- **Damage: `+0.5 × character Lv` flat per hit** (`Lv` is `mChar.Lv`, `:18259`), added to `hitDmg`. The client tooltip (`RabbitSkill_thai.cs:913`, "+50% per rabbit level") reads as a percentage; the code is a flat `0.5` per character level (Lv 100 = +50).
+- `+1 SP` per landed hit (`:18314`). The "Bouncing Bullet" message appears only after a real ricochet (`bounceCount > 1`, `:18331-18337`).
+
+**Charge Attack (`RPC_cAttack1/2/0`)**
+- `cAttack1` starts aiming with the sniper camera (needs `hasSkill(111)`, `:9204-9234`), `cAttack2` fires on release (`:9285-9322`), `cAttack0` cancels (`:9330`). Level = `getChargeAttackLv()` from `hasSkill(111-113)` (`:9547-9570`).
+- Ray length `20 + 5 × Combo` (`:19392`). Damage (`:19413-19520`): `chargeDmg = (int)(0.3 × lv × ATK)`; head zone (`hit.point.y - collider.bounds.center.y > 0.5 × bounds.extents.y`, `:19434`) adds `headShotDmg = (int)(0.3 × lv × ATK)`; `dmg = floor(deadShot × (0.5 × ATK + chargeDmg + headShotDmg) + hyper)`. KO `2 × lv` (`:19523`), `+1 SP` on hit.
+- So body shot = `0.5 + 0.3×lv` × ATK and head shot = `0.5 + 0.6×lv` × ATK, i.e. the tooltip's "+60~120% × lv" relative to the `0.5 ATK` base.
+- Crosshair range readout uses `25/30/35/40 m` per Combo rank (`Rabbit_sniperCamera.cs:121-163`, display only).
+
+**Dead Shot (`hasSkill(411)`)**
+- Lives inside the head-zone branch only (`:19434-19486`, nesting checked). `Rabbit_sniperCamera.cs:335-452` starts `mDeadShotTimer = Time.time` when the crosshair is on a head zone and resets it to 0 otherwise. Multiplier `1 + 0.5 × clamp(t, 0, 4)` (`:19486`): x1 to x3 at 4 s (tooltip "max 4 sec, 300%" = final multiplier x3). It multiplies `(0.5 ATK + chargeDmg + headShotDmg)`, not the Hyper Shot term. A "Dead Shot!" message shows when the multiplier is above 1 (`:19529-19535`).
+
+**Customized Shotgun (`RPC_shotgun`, `getCustomizedShotgunLv`)**
+- Level 1/2 needs `isShotgun()` (weapon check, `Rabbit.cs:11136`) plus `hasSkill(353)`/`(354)` (`:11087-11131`). Replaces Combo with an area attack.
+- Hit box: `Damage.FindRecTarget(pos + forward, forward, (0.5×sLv + 0.5)×rangeMod, (sLv + 2)×rangeMod, 12×rangeMod, 4×rangeMod)` (`:36270`): a trapezoid 12 m long, base half-width 1.0 / 1.5 m widening to 3 / 4 m, 4 m high. The tooltip says "2m / 4m cone" (`RabbitSkill_thai.cs:829`, `:840`); only rank 2's far half-width matches.
+- Damage `hitDmg = getCritPlus((int)(0.5 × ATK))` for every target, `hit(350 + sLv, ..., hitDmg + hyper, 1, 0, ...)`, KO 1 (`:36260-36332`). One `+1 SP` per cast if anything was hit (`:36386-36394`).
+- Hyper Shot is reversed: `distance = clamp(16 - flat distance, 0, 16)`, `hyper = (int)(distance × hyperLv)`, x1.5 with Snipe Mastery (`:36298-36325`): the closer the target, the larger the bonus, up to `16 × lv`.
+
+**From the Above (`hasSkill(421)`)**
+- Lets Rabbit use the normal attack while Bounce is airborne (`:8944` blocks it without the passive). Air shot (`:22100-22260`): fired from `position + 12 m up` downward, `hit(1, ..., getCritPlus((int)(0.5 × ATK + hyper)), 1, ...)`, range `16 + 5 × Combo`, and it re-arms Bounce's cooldown to `agiAdjust(36)` (`:22250`, see the Bounce judgment call above).
+- Landing stomp (`:21608`, `:21629-21652`): `FindAreaTarget(position, 3 × rangeMod, 3)` then `hit(421, target, ATK, 20, 0, ...)`: **1.0 × ATK, KO 20**, radius 3 m (x rangeMod), height 3. This is the Bounce card's damage; the old card entry (`0.5 ATK`, KO `1 + 20`) merged the air shot into it.
+- The `hasSkill(421)` debuff-time reduction at `CharacterControl.cs:13421` sits in Wolf's block (`Type == "Wolf"`, `:13379`), not Rabbit.
+
+**Resource-cost audit (2026-09-29):** the summary table's older costs for these skills disagreed with `decode_skilldata.py`, which simulates `getSkill()`'s fall-through: Bounce SP `5 / 8`, Sticky Gum MP `6 / 10` SP `10 / 10`, Acidic Field MP `8 / 12` SP `15 / 15`, Gorgon Shot MP `20 / 30` SP `35 / 50`, Four Shot SP `12 / 15` (no MP), Circle Shot SP `24 / 27` (no MP), Shooting Array SP `24 / 30`, Mall no MP/SP, Truce Trading MP `20 / 30` (no SP). The card costs and the summary table now follow the decode.
 
 ### Card `desc` provenance (2026-09-29 pass)
 
