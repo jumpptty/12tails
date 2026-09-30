@@ -303,6 +303,16 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 # Damage & Mechanics
 
+### Monkey status effects (verified 2026-09-30, for the Bible status popups)
+
+- **Souls** (`summonSoul`, 240 s, applied to the target): `phoenixSoul` ATK, `jaSoul` TAL, `gadinaSoul` DEF, `buitenSoul` VIT `+10 × sLv` (sLv 1-4 = summon form); `gaosSoul` sLv 5, `deltaAtk` and `deltaDef(8 × sLv)` = **+40 ATK / +40 DEF** (`CharacterControl.cs:38149-38289`, removal mirror `:17213-17257`). The ToT "+40 ATK/AGI/TAL" is a server change (see Server Balance below).
+- **`buiten`** (Buiten statue aura, `Buiten.cs:183-289`): friends within `20 + 5 × lv` m (height `9 × rangeMod`) get `buiten` level lv for 5 s, refreshed while inside; sValue is `10 × lv` for the summoner only (0 for everyone else), applied as `deltaDef(sValue)` (`CharacterControl.cs:38048`). In `RPC_AddDamage`, a holder that is not itself a Buiten passes every `nDamage > 0` hit to the statue (`status.sID`) as `RPC_AddDamage(1, nDamage, 0, 0, …)` and takes 0 itself, while the statue has `hp > 0` (`:4925-4990`). KO is not redirected.
+- **`instantCast`**: while it is active, a cast whose `canInstantCast` is true gets `castTime = 0`, and each such cast runs `reduceStatusLv("instantCast", 1)` (`Monkey.cs:25002-25062`), so the status level is the number of instant casts. Fire Avatar and Earth Form set `canInstantCast = false` (`:25336`, `:25365`). Without the status, skill #431 gives a `lckAdjust(12)` chance of the same instant cast (`:25008-25016`).
+- **`runicFlame` / `runicSand`**: each removes the other on apply (`CharacterControl.cs:37847`, `:38059`). Trail segments act in `OnTriggerEnter`, once per target per segment: a flame segment does `hit(1, target, talAdjust(24), 0, 0)` (`Monkey_runicFlame.cs:207`); a sand segment applies `groundLock` lv 1 for `Damage.getDebuff(2, ownCha, targetCha)` only to a target without `groundLock` (`Monkey_runicSand.cs:215-225`).
+- **`fireKeep`**: sValue = stored Fireballs; a non-targeted Fireball with #402 stores 1 (`chaAdjust(24)`) or, at the same level, 2 (`chaAdjust(30)`) (`Monkey.cs:25735-25743`); the next normal attack fires one and decrements, removing the status at 0 (`Monkey.cs:10039-10055`). The engine cap is **2**; the 3-stack cap is ToT-only (Server Balance below, user-confirmed 2026-09-30), and the Fire Keep card already shows 2 base / 3 under `servers.tot`.
+- **`lavu`**: no effect in the apply switch (`CharacterControl.cs:38111`) and no reader anywhere; it only marks the `chaAdjust(60)` summon window (`Monkey.cs:34579-34594`). The 15/25% damage reduction is ToT-only (Server Balance below).
+- **`ignite`**: `hitMod += 0.1 × sLv` (`:37899`). **`fireAvatar`**: `isSpecialForm`, `Race = Elementals`, `+100` AGI/TAL, removes `invisible` (`:38328`). **`earthForm`**: same but `+100` ATK/DEF (`:38443`).
+
 
 Companion to `monkey-skill-reference.md` (Cooldown/Duration, cite that for CD/Duration citations — not re-derived here).
 Consolidated ground-truth reference for Monkey skill damage formulas, status profiles, companion/summon scaling, and dependencies verified against `DecompiledSource/Monkey.cs`, `MonkeySkill.cs`, `Monkey_*.cs`, and `CharacterControl.cs`.
