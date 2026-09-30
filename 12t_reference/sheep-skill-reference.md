@@ -567,4 +567,8 @@ Kept from the 2026-09-19..28 passes; the per-skill entries above point here. The
 
 ## Server Balance Variations
 
-No ToT or TTO deltas are known for Sheep (checked 2026-09-30): no Sheep card carries a `servers` override, and no Sheep server change is recorded in this repo. Everything above is the BigBug original-engine baseline.
+Everything above is the BigBug original-engine baseline. No ToT deltas are known for Sheep (checked 2026-09-30).
+
+| Skill | Original BigBug baseline | TTO delta |
+|---|---|---|
+| Soul of Arms | No damage reduction while casting (`RPC_soulOfArms_cast`, `Sheep.cs:33696-34698`, touches no `hitMod`). | Magic and physical damage taken is reduced by 50% during the skill animation, i.e. `hitMod −0.5` for the duration of the skill (user-reported 2026-09-30, card `servers.tto.changeNote`). |
