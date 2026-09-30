@@ -571,4 +571,4 @@ Everything above is the BigBug original-engine baseline. No ToT deltas are known
 
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
-| Soul of Arms | No damage reduction while casting (`RPC_soulOfArms_cast`, `Sheep.cs:33696-34698`, touches no `hitMod`). | Magic and physical damage taken is reduced by 50% during the skill animation, i.e. `hitMod −0.5` for the duration of the skill (user-reported 2026-09-30, card `servers.tto.changeNote`). |
+| Soul of Arms | No damage reduction while casting (`RPC_soulOfArms_cast`, `Sheep.cs:33696-34698`, touches no `hitMod`). | Magic and physical damage taken is reduced by 50% during the skill animation (user-reported 2026-09-30, card `servers.tto.changeNote`). How the server implements it (a `hitMod` change or a separate halving like `sanctuary`) is unknown, so the card states only the 50% reduction. |
