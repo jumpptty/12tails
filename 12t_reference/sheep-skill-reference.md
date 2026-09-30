@@ -433,118 +433,47 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 - `RPC_soulOfArms_cast` (`Sheep.cs:33696-34698`): six `hit(370 + sLv, target, talAdjust(20·sLv + 10), KO 2, 0, zero)` then one `hit(370 + sLv, target, talAdjust(50·sLv + 50), KO 2, …)` on the single target (`:34255-34555`); the hits are paced by the `soulOfArms` animation events, not by `Yield` waits. Dodgeable (`hit()`). Never calls `getFreeCast`.
 - **Tooltip discrepancy:** "30~60 ×7" / "60~100 ×7" (`SheepSkill_eng.cs:849-860`); code is 30 ×6 + 100 at rank 1 and 50 ×6 + 150 at rank 2 (before `talAdjust`).
 
+### shp_sealOfAttack1 / shp_sealOfDefense2 / shp_sealOfEarth1 / shp_sealOfHeaven2 (Seal, #341-344): seal fields (verified 2026-09-30)
+
+- Only Seal of Attack (red, sLv 1) and Seal of Defense (blue, sLv 2) are castable (`Sheep.cs:7379-7397`); both share `RPC_seal` (`Sheep.cs:31985-32839`), MP 10, CD `agiAdjust(12)` (`:32722`), seal lifetime `EffectControl.life = chaAdjust(60)` (`:32284`). The Sheep tracks her last three seals (`:32290-32330`).
+- **Field:** when three seals exist, `RPC_seal_create(centroid, …, type)` (`:32402-32656`): red×3 → 1 (Attack), blue×3 → 2 (Defense), blue×2 + red → 3 (Earth, only with #343), red×2 + blue → 4 (Heaven, only with #344) (`Sheep.cs:10789-11250`; the raw jump labels were followed because the stripped conditions are tangled). The new field destroys the previous one.
+- **`Sheep_seal` (`Sheep_seal.cs:40-330`):** radius = the largest flat distance from the centroid to the three seals, rounded up, capped at 30 m; height 12. Every 5 s, on the owner client, every character on the Sheep's layer inside gets `RPC_AddStatus("sealOfAttack" / "sealOfDefense" / "sealOfEarth" / "sealOfHeaven", 1, 6, 0, …)`. The field is destroyed as soon as the owner or any of the three seals is gone.
+- **Statuses** (all Buff + Magical, `StatusData.cs:1790-1823`, `:5903-5921`, `:6908-6926`), apply `CharacterControl.cs:39684-39735`: Attack `damageMod += 0.1`; Defense `hitMod −= 0.1`; Earth `damageMod += 0.05`, `hitMod −= 0.15`; Heaven `damageMod += 0.15`, `hitMod −= 0.05`.
+- **Tooltip discrepancy:** "increases attack power / defense power of all nearby allies by 10%" (`SheepSkill_eng.cs:717-750`): the code changes the damage-dealt and damage-taken multipliers, not ATK/DEF.
+- **Remainder / open:** the decoder reports reqLv/Bn 12/4, 20/8, 28/12, 36/16 for the four names, while the 2026-08-14 note above argues a shared metadata tail overwrites them to 20/8; not relevant to any card field.
+
+### shp_repel1-2 (Repel, #351-352) and shp_reverse1-2 (Reverse, #353-354) (verified 2026-09-30)
+
+- Repel: MP 14/20, Lv 17/24, Bn 6/10, target ally; cast `6 − sLv`, CD 120. `RPC_AddStatus("repel", sLv, chaAdjust(6), 0, …)` (`Sheep.cs:33209`). Reverse: MP 24/28, Lv 31/38, Bn 14/18; cast `9 − 2·sLv`, CD 240; `RPC_AddStatus("reverse", sLv, chaAdjust(3), 0, …)` (`:33636`).
+- Effects are the shield entries in [12Tails-Mechanics-Reference.md §4.1](12Tails-Mechanics-Reference.md#41-status-effect-catalog-statusdatagetstatuscode-statusdatacs): `repel` subtracts `50·sLv` from every direct hit; `reverse` sets the hit to −1 and heals `0.5·sLv × damage`; each removes the other.
+- **Tooltip discrepancies:** Repel "prevents up to 50/100 damage" — it is a per-hit reduction, not a pool. Reverse English "for 6 seconds … up to 50/100 damage" — the code is 3 s (Thai says 3 s) with no cap.
+
+### shp_edenSanctuary5 (Eden Sanctuary, #443) (verified 2026-09-30)
+
+- MP 40, SP −40 (red), Lv 85/Bn 6, mode instant. CD `agiAdjust(240)` (`Sheep.cs:36951`). Needs the current seal field (`jl98IkUjQ5`), else "Need a seal in place" and the MP/SP is returned (`Sheep.cs:7540-7551`); spawns at that field's position (`:37133`).
+- `Sheep_edenSanctuary.cs`: lasts 12 s (`:73`); every 2 s `FindAreaTarget(pos, 18, 6, 130816)` — every character layer, **no team filter**, so enemies inside are covered too — and each gets `RPC_AddStatus("sanctuary", 5, 3, 0, …)` (`:160-205`).
+- Status `sanctuary` (Buff + Magical, `StatusData.cs:1878`, `:5927`, `:6956`): `nDamage = floor(0.5 × nDamage)` on the direct (`CharacterControl.cs:31533`) and Effect Damage (`:6703`) paths.
+- Free Cast without a Return Cast gate (`Sheep.cs:37069-37075`). **Tooltip discrepancy:** "reduce all damage in the area" / Thai "members of the team": the code applies to everyone in range.
+
+### shp_worldEncarta5 (World Encarta, #444) (verified 2026-09-30)
+
+- MP 50, SP −50 (red), Lv 85/Bn 6, target ally. Cast 7 s, CD 150 (dispatcher).
+- `RPC_worldEncarta_cast` (`Sheep.cs:37948-38425`): `RPC_AddStatus("worldEncarta", 5, chaAdjust(9), casterATK, …)` (`:38357`) and starts `OnWorldEncarta(tID)` (`:38360`).
+- Status `worldEncarta` (Buff + Magical, `StatusData.cs:1889`, `:5897`, `:6962`): apply `deltaDef(floor(0.2 × sValue))` (`CharacterControl.cs:39879-39885`). No damage or debuff immunity exists (the old summary's "absolute invulnerability" was wrong).
+- `OnWorldEncarta` (`Sheep.cs:38426-38680`): every 0.5 s while the target holds this Sheep's `worldEncarta`: every enemy in `FindAreaTarget(target, 2, 2, enemyLayer)` takes `hit(444, t, floor(0.5 × statusValue), KO 1, 0, away from target)` (`:38595`). Card: `atkCoeff 0.5`, KO 1, one hit per 0.5 s of duration.
+- **Tooltip discrepancy:** "lasts 12 seconds" (`SheepSkill_eng.cs:1084`); code `chaAdjust(9)`.
+
 ### shp_lightBind1-4 (Light Bind, #301-304), shp_intenseBind5 (Intense Bind, #403), shp_clear1-2 (Clear, #241-242), shp_cleanse1 (Cleanse, #243), shp_allCleanse1 (All Cleanse, #244), shp_purify5 (Purify, #442) (verified 2026-09-25/28, re-checked 2026-09-30)
 
 - Verified in the dedicated `lightBind`, `clear`, `cleanse`, `allCleanse` and `purify` sections below; cast times and cooldowns re-checked against the dispatcher. Intense Bind: +1 status level (+6 damage per tick) and +1 s after `getDebuff` (`Sheep.cs:28898-28902`). The Clear/Cleanse/All Cleanse cards no longer repeat the Purify level and duration (the status badge and duration chip show them).
 
----
-
-## 1. Summary of Sheep Mechanics
-
-- **Resource Costs & Mechanics (MP, Red SP, Blue SP)**:
-  - **MP (Mana Points)**: Consumed on cast.
-  - **Red SP (Stamina / Rage)**: `cSP < 0` in decompiled source (`GameGui.cs:37782`). Requires and **consumes** that amount of SP on cast (rendered in-game as Red SP: `new Color(1f, 0.2f, 0.2f)`).
-  - **Blue SP (Combo / Action Requirement)**: `cSP > 0` in decompiled source (`GameGui.cs:37609`). Requires minimum SP threshold to cast, but **does not consume SP** (rendered in-game as Blue SP: `new Color(0.2f, 0.6f, 1f)`).
-  - All active Sheep SP costs are Red SP (`cSP < 0`).
-- **Healing & Benediction Scaling**:
-  - Direct heals (`heal`, `quickHeal`, `allHeal`, `overHeal`, `revive`) scale directly with `TAL` via `mChar.talAdjust(...)`.
-  - Scaled by the **Benediction** passive (+15% per rank, up to +45% at Rank 3). **The multiplier goes INSIDE `talAdjust`, on an integer-truncated base, in 32-bit floats** — `mChar.talAdjust((int)((1f + 0.15f × benedictionLv) × (float)base))` (verified 2026-09-19: `heal` `Sheep.cs:22284`, `allHeal` `:23284`, `overHeal` `:26334`, `revive` `:26864`), *not* `talAdjust(base) × (1 + 0.15×lv)`. The float32 arithmetic matters at the edges: `revive` sLv2 (base 100) at Benediction 1 truncates to **115**, whereas plain double arithmetic gives 114. Heal `sLv×15+10`, allHeal `sLv×15+10`, overHeal `sLv×30+20`, revive `sLv×50`.
-  - Threat reduction via **Harmonic Diffuse** passive: `-0.15 × healAmount × harmonicDiffuseLv`.
-- **Holy Arts & Divinity Damage**:
-  - `holyLight`: Straight holy ray dealing `talAdjust(12 + 12×sLv)` with 1 KO knockback.
-  - `overHeal`: Offensive opening strike targeting enemies at 100% full HP (`Sheep.cs:26334–26357`). Deals `talAdjust((int)((1f + 0.15f×benedictionLv) × (20 + 30×sLv)))` magic damage (`Sheep.cs:26334`) capped at `(20% + 10%×sLv) × target Max HP` (30% Max HP at R1, 40% at R2). Deals 0 damage if target is below max HP.
-  - `lightBind`: Single-target root (`moveSpeed = 0`) dealing `6×sLv` flat Effect Damage every 1.0s (`CharacterControl.cs:2485-2494`, `:9345-9373`). The user confirms that the status also prevents knockback in live play (2026-09-25), although its decompiled branch does not clear `myForce`; see [12Tails-Mechanics-Reference.md §4.4](12Tails-Mechanics-Reference.md#44-knockback-force-versus-movement-roots-charactercontrolcs). No burst finisher.
-  - `divinitySword`: Holy summon slash dealing `talAdjust(10 + 20×sLv)`, 1 KO.
-  - `divinitySpear`: Piercing line thrust dealing `3 × talAdjust(10 + 15×sLv)` (3 hits), 1 KO.
-  - `divinityAxe`: Divine battleaxe strike dealing `5 × talAdjust(45)` (5 hits), 2 KO.
-- **Support, Blessings & Seals**:
-  - `bless`: Increases all 8 core stats by `4 + 4×sLv` (+8/+12/+16/+20, or +12/+16/+20/+24 with Gospel) for 30s (`chaAdjusted`).
-  - `illuminate`: Targeted restorative aura pulsing every 3s to restore `4×(sLv + 2×depLv)` HP and `sLv + 2×depLv` MP/SP for 12s (`chaAdjusted`). Grants +2 bonus ranks with Blinding Light passive (4/8/12/16 HP base, or 12/16/20/24 HP with Blinding Light).
-  - `sleep` & `lullaby`: Single-target and area sleep crowd control (contested by target CHA).
-  - `feather` & `allFeather`: Reduces character weight by -5/-10 (super jump/slow fall) and adds +0.25/+0.50 m/s flat run speed for 15s (`chaAdjusted`). (Does not grant AGI).
-  - `seal`: Places Red / Blue ground seals for 60s.
-  - `repel` & `reverse`: Tactical barriers lasting 6s / 3s (`chaAdjusted`).
-  - `edenSanctuary`: 18m area field granting 50% damage reduction for 12s.
-  - `worldEncarta`: Divine sanctuary for 9s (`chaAdjusted`), granting +20% of caster's ATK as flat DEF and absolute damage/debuff invulnerability.
 
 ---
 
-## 2. Sheep Skill Reference Table
+## Earlier verified sections (still current)
 
-| Skill ID | Name | Max Rank | Cost (Base) | Cooldown (Base) | Cast Time (Base) | Duration (Base) | Formula / Effect | KO | Notes |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :---: | :--- |
-| `sheep_heal` | Heal | 4 | [6, 12, 18, 24] MP | [14, 16, 18, 20]s | [2, 3, 4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Single-target heal scaling with TAL and Benediction (+15%/rank). |
-| `sheep_bless` | Bless | 4 | [8, 16, 24, 32] MP | [45, 60, 75, 90]s | [3, 4, 5, 6]s | 30s | +8/12/16/20 all stats | — | Buffs all 8 stats by `4 + 4×sLv` for 30s (`chaAdjusted`). Gospel passive fixes CD to 30s and grants +1 status level (+4 all stats). |
-| `sheep_quickHeal` | Quick Heal | 2 | [12, 16] MP, [5, 8] SP (red) | 1s (unwrapped) | 0s | — | `talAdjust(10×sLv)` | 0 | Instant AoE heal around caster scaling with TAL and Benediction. Radius 5m (7m with KO Heal), height `3 × rangeMod`, no target cap (`Sheep.cs:10418`, `Damage.FindAreaTarget(pos, radius, height, mask)`). With KO Heal also restores `+sLv` KO. |
-| `sheep_allHeal` | All Heal | 2 | [34, 45] MP | [45, 60]s | [4, 5]s | — | `talAdjust(10 + 15×sLv)` | 0 | Map-wide party heal (unlimited range) scaling with TAL and Benediction. |
-| `sheep_pacify` | Pacify | 2 | [10, 15] MP | [45, 60]s | [2, 3]s | — | Aggro reduction | — | Calms target enemy, reducing threat. |
-| `sheep_sleep` | Sleep | 2 | [18, 21] MP | 90s | [6, 8]s | [15, 20]s | Sleep CC | — | Single-target sleep for (10 + 5×sLv)s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
-| `sheep_clear` | Clear | 2 | [12, 16] MP | [12, 18]s | [2, 3]s | — | Cleanse 1 debuff | — | Cleanses 1 negative status from target ally. |
-| `sheep_cleanse` | Cleanse | 1 | 28 MP | 30s | 4s | — | Cleanse debuffs | — | Targeted status cleanse. |
-| `sheep_allCleanse` | All Cleanse | 1 | 54 MP | 90s | 6s | — | Team cleanse | — | Applies `cleanse` Lv4 (Purify Lv5) to every player on the caster's team, no range limit. |
-| `sheep_overHeal` | Over Heal | 2 | [26, 34] MP | [30, 45]s | [4, 6]s | — | `talAdjust(20 + 30×sLv)` | 0 | Offensive opening burst against full HP enemies (`hp == mhp`). Deals `talAdjust(20+30×sLv)` magic damage, capped at (20%+10%×sLv) of target Max HP (30% at R1, 40% at R2). Deals 0 damage if target `hp != mhp`. |
-| `sheep_revive` | Revive | 2 | [28, 36] MP | [240, 180]s | [4, 5]s | — | `talAdjust(50×sLv)` | 0 | Resurrects fallen ally with HP scaling with TAL and Benediction. |
-| `sheep_revert` | Revert | 1 | 50 MP, 50 SP (red) | 900s | 6s | — | 100% HP/MP/KO reset | — | Complete emergency recovery. |
-| `sheep_holyLight` | Holy Light | 2 | [30, 40] MP, [30, 40] SP (red) | 60s | 6s | — | `talAdjust(12 + 12×sLv)` | 1 | Linear holy ray dealing magic damage with 1 KO knockback. |
-| `sheep_lightBind` | Light Bind | 4 | [10, 14, 18, 22] MP | [18, 22, 26, 30]s | [2, 2.5, 3, 3.5]s | 3s | `6×(sLv+depLv)` (per 1.0s tick) | 0 | Roots target (0 moveSpeed) for 3s base (`chaAdjusted`, contested) + 1.0s fixed duration with Intense Bind. Deals 6×(sLv+depLv) effect damage/tick (up to 30 at Rank 4 with Intense Bind). |
-| `sheep_illuminate` | Illuminate | 4 | [10, 14, 18, 22] MP | [15, 18, 21, 24]s | [2, 3, 4, 5]s | 12s | `+4×(sLv + 2×depLv) HP, +(sLv + 2×depLv) MP/SP` | — | Friendly HoT/MoT/SoT buff pulsing every 3s for 12s (`chaAdjusted`). +2 effective ranks with Blinding Light (12/16/20/24 HP, 3/4/5/6 MP/SP per tick). |
-| `sheep_feather` | Feather | 2 | [6, 12] MP | [15, 18]s | [2, 3]s | 15s | -5/-10 weight, +0.25/0.50 spd | — | Reduces weight by -5/-10 (super jump) and increases run speed by +0.25/+0.50 m/s for 15s (`chaAdjusted`). |
-| `sheep_allFeather` | All Feather | 2 | [18, 24] MP | 60s | [4, 5]s | 15s | -5/-10 weight, +0.25/0.50 spd | — | Party-wide weight reduction (-5/-10) and run speed buff (+0.25/+0.50 m/s) for 15s (`chaAdjusted`). |
-| `sheep_divinitySword`| Divinity Sword | 2 | [16, 24] MP | 45s | [3, 4]s | — | `talAdjust(10 + 20×sLv)` | 1 | Forward holy slash summoned weapon strike. |
-| `sheep_divinitySpear`| Divinity Spear | 2 | [24, 32] MP | 60s | [4, 5]s | — | `3 × talAdjust(10 + 15×sLv)` | 1 | Linear piercing spear thrust through enemies, striking 3 times. |
-| `sheep_seal` | Seal | 1 | 10 MP | 12s | 0s | 60s | Red/Blue ground seal | — | Ground seal lasting 60s (`chaAdjusted`) for combo alignment. |
-| `sheep_repel` | Repel | 2 | [14, 20] MP | 120s | [5, 4]s | 6s | Physical deflection | — | Deflection wall lasting 6s (`chaAdjusted`), absorbing 50/100 damage/hit and blocking projectiles. |
-| `sheep_reverse` | Reverse | 2 | [24, 28] MP | 240s | [7, 5]s | 3s | Status inversion | — | Inversion seal lasting 3s (`chaAdjusted`), converting `50% × sLv` (50%/100%) of incoming damage to healing. |
-| `sheep_soulOfArms` | Soul of Arms | 2 | [40, 55] MP, [40, 55] SP (red) | 300s | [6, 8]s | — | `6 × talAdjust(10 + 20×sLv) + talAdjust(50 + 50×sLv)` | 2 | Single-target 7-hit holy barrage: 6 rapid strikes dealing `talAdjust(10 + 20×sLv)` each (KO=2) followed by 1 heavy finisher strike dealing `talAdjust(50 + 50×sLv)` (KO=2). |
-| `sheep_purifyingTear`| Purifying Tear | 1 | 25 MP, 50 SP (red) | 480s | 3s | — | Threat wipe (AoE) | — | 40m holy shockwave wiping all accumulated enemy threat/hate. |
-| `sheep_lullaby` | Lullaby | 1 | 75 MP, 30 SP (red) | 60s | 9s | 6s | Area Sleep CC | — | Soothing area hymn sleeping all nearby targets for 6s (`chaAdjusted`, contested by target CHA). Breaks on damage. |
-| `sheep_divinityAxe` | Divinity Axe | 1 | 54 MP | 150s | 7s | — | `5 × talAdjust(45)` | 2 | Summons a divine battleaxe, damaging enemies in the area 5 times. |
-| `sheep_edenSanctuary`| Eden Sanctuary | 1 | 40 MP, 40 SP (red) | 240s | 0s | 12s | 50% dmg reduction | — | 18m sanctuary field reducing incoming damage by 50% for 12s. |
-| `sheep_worldEncarta` | World Encarta | 1 | 50 MP, 50 SP (red) | 150s | 7s | 9s | Invulnerability + DEF | — | Target invulnerability barrier for 9s (`chaAdjusted`): adds +20% of caster's ATK as DEF and grants 100% immunity. |
-| `sheep_bookBash` | Book Bash | 1 | 1 MP, 5 SP (red; 2 with Revised Skill) | none (mission-spawn lock `agiAdjust(60)`) | 0s | — | `getCritPlus(0.5×ATK + talAdjust(10))` | 3 | Front box 2m wide × 2m deep × 2m tall, all targets, dodgeable `hit()`. +1 SP and `onNormalAttackHit` per target hit. No Free Cast. |
+Kept from the 2026-09-19..28 passes; the per-skill entries above point here. The older summary, skill table and citation list that stood here were removed on 2026-09-30 because the per-skill entries supersede them (several of their values were wrong: Sleep duration, Holy Light shape, World Encarta immunity, Eden Sanctuary targets, Revive cooldown formula, Purifying Tear cast time).
 
----
-
-## 3. Decompiled Source Citations
-
-- **`heal`**:
-  - Cast Time: `Sheep.cs:21224` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted at `:21588`).
-  - Cooldown: `Sheep.cs:21229` — `this.$mTimeOut$27749 = 12 + 2 * this.$sLv$27762;` (agiAdjusted at `:21606`).
-  - Healing: `Sheep.cs:22281–22290` — `talAdjust((10 + 15*sLv) * (1 + 0.15*benedictionLv))`, `RPC_AddHeal`.
-- **`allHeal`**:
-  - Cast Time: `Sheep.cs:21241` — `this.$mCastTime$27748 = (float)(3 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21246` — `this.$mTimeOut$27749 = 30 + 15 * this.$sLv$27762;` (agiAdjusted).
-  - Healing: `Sheep.cs:23850` — `talAdjust((10 + 15*sLv) * (1 + 0.15*benedictionLv))`.
-- **`bless`**:
-  - Cast Time: `Sheep.cs:21258` — `this.$mCastTime$27748 = (float)(2 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21263` — `this.$mTimeOut$27749 = ((!hasSkill(412)) ? (30 + 15 * sLv) : 30);` (agiAdjusted).
-- **`pacify`**:
-  - Cast Time: `Sheep.cs:21271` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21276` — `this.$mTimeOut$27749 = 30 + 15 * this.$sLv$27762;` (agiAdjusted).
-- **`sleep`**:
-  - Cast Time: `Sheep.cs:21288` — `this.$mCastTime$27748 = (float)(4 + 2 * this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21293` — `this.$mTimeOut$27749 = 90;` (agiAdjusted).
-- **`clear`**:
-  - Cast Time: `Sheep.cs:21305` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21310` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
-- **`quickHeal`**:
-  - Cast Time: `0` (instant).
-  - Cooldown: `Sheep.cs:10316` — `this.mChar.addTimeOut("quickHeal", (float)1);` (bare literal 1s).
-  - Healing: `Sheep.cs:22800` — `talAdjust(10*sLv * (1 + 0.15*benedictionLv))`.
-- **`overHeal`**:
-  - Cast Time: `Sheep.cs:21356` — `this.$mCastTime$27748 = (float)(2 + 2 * this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21361` — `this.$mTimeOut$27749 = 15 + 15 * this.$sLv$27762;` (agiAdjusted).
-  - Offensive Logic: `Sheep.cs:26334–26357` —
-    - Target condition check: `if (this.$tChar$27882.hp != this.$tChar$27882.mhp) { mHeal = 0; } else { mHeal = Mathf.Min(talAdjust(...), Mathf.FloorToInt((0.2f + 0.1f * sLv) * target.mhp)); }`
-    - Damage application: `RPC_AddDamage(250 + sLv, mHeal, 0, 0, Vector3.zero, caster.ActorNr)` (0 KO).
-- **`revive`**:
-  - Cast Time: `Sheep.cs:21373` — `this.$mCastTime$27748 = (float)(3 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21378` — `this.$mTimeOut$27749 = 60 + 60 * this.$sLv$27762;` (agiAdjusted).
-  - Healing: `Sheep.cs:28600` — `talAdjust(50*sLv * (1 + 0.15*benedictionLv))`.
-- **`holyLight`**:
-  - Cast Time: `Sheep.cs:21390` — `this.$mCastTime$27748 = (float)6;` (magAdjusted).
-  - Cooldown: `Sheep.cs:21395` — `this.$mTimeOut$27749 = 60;` (agiAdjusted).
-  - Damage: `Sheep.cs:29300` — `talAdjust(12 + 12*sLv)`, KO 1.
 - **`lightBind`**:
   - Metadata: `shp_lightBind1-4`, skill IDs 301-304, target enemy, MP 10/14/18/22, SP 0, required Lv 3/11/19/27 and Bn 0/1/2/3 (`SheepSkill.cs:609-650`, `:2850-2892`; decoded with `scripts/decode_skilldata.py`).
   - Cast Time: `Sheep.cs:21407` — `this.$mCastTime$27748 = 1.5f + 0.5f * (float)this.$sLv$27762;` (magAdjusted).
@@ -580,57 +509,6 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 - **Enhanced refund:** When Return Cast (#431) is learned, a successful Free Cast restores `FloorToInt(1.25 × skill.cMP)` instead of the exact cost, for a net MP gain of 25% subject to integer truncation (`Sheep.cs:10085-10101`).
 - **Class-C access:** Purifying Tear, Lullaby and Divinity Axe only call `getFreeCast(..., 5)` when Return Cast is learned (`Sheep.cs:35014-35026`, `:35659-35671`, `:36356-36368`). This matches the tooltip's stated Class-C unlock (`SheepSkill_eng.cs:900-904`).
 - **Later skills:** Eden Sanctuary and World Encarta call Free Cast without a Return Cast gate, so they remain eligible even without this passive (`Sheep.cs:37069-37075`, `:38348-38354`).
-- **`illuminate`**:
-  - Cast Time: `Sheep.cs:21424` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21429` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
-  - Duration: `Sheep.cs:29411` — `this.$self_$27966.mChar.chaAdjust(12)`.
-  - Status Level: `Sheep.cs:29411` — `sLv + ((!this.$self_$27966.mChar.hasSkill(413)) ? 0 : 2)` (Blinding Light passive grants +2 effective ranks).
-  - Effect: `CharacterControl.cs:9402` — `this.RPC_AddHeal(1, 4 * sLv, sLv, sLv, 0, 0, sID)` pulsing every 3.0s (`global::Math.mod(2 * (sTime - sAge), 6) == 0`). Restores `4×(sLv + 2×depLv)` HP and `sLv + 2×depLv` MP/SP per tick (16 HP base at Rank 4, 24 HP with Blinding Light).
-- **`feather`**:
-  - Cast Time: `Sheep.cs:21441` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21446` — `this.$mTimeOut$27749 = 12 + 3 * this.$sLv$27762;` (agiAdjusted).
-  - Effect: `CharacterControl.cs:39638–39644` — `weight -= 5 * sLv`, `sF2cOBZX7wK -= 5 * sLv` (jump gravity), `deltaRunSpeed(0.25f * sLv)`.
-- **`allFeather`**:
-  - Cast Time: `Sheep.cs:21458` — `this.$mCastTime$27748 = (float)(3 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21463` — `this.$mTimeOut$27749 = 60;` (agiAdjusted).
-  - Effect: `CharacterControl.cs:39638–39644` — party-wide weight reduction (-5/-10) and flat run speed (+0.25/+0.50 m/s).
-- **`divinitySword`**:
-  - Cast Time: `Sheep.cs:21475` — `this.$mCastTime$27748 = (float)(2 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21480` — `this.$mTimeOut$27749 = 45;` (agiAdjusted).
-  - Damage: `Sheep.cs:30200` — `talAdjust(10 + 20*sLv)`, KO 1.
-- **`divinitySpear`**:
-  - Cast Time: `Sheep.cs:21492` — `this.$mCastTime$27748 = (float)(3 + this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21497` — `this.$mTimeOut$27749 = 60;` (agiAdjusted).
-  - Damage: `Sheep.cs:31786` & `31840` — `3 × talAdjust(10 + 15*sLv)`, KO 1 per hit (3 hits).
-- **`repel`**:
-  - Cast Time: `Sheep.cs:21509` — `this.$mCastTime$27748 = (float)(6 - this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21514` — `this.$mTimeOut$27749 = 120;` (agiAdjusted).
-- **`reverse`**:
-  - Cast Time: `Sheep.cs:21526` — `this.$mCastTime$27748 = (float)(9 - 2 * this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21531` — `this.$mTimeOut$27749 = 240;` (agiAdjusted).
-- **`soulOfArms`**:
-  - Cast Time: `Sheep.cs:21543` — `this.$mCastTime$27748 = (float)(4 + 2 * this.$sLv$27762);` (magAdjusted).
-  - Cooldown: `Sheep.cs:21548` — `this.$mTimeOut$27749 = 300;` (agiAdjusted).
-  - Damage (Hits 1–6): `Sheep.cs:34255, 34305, 34355, 34405, 34455, 34505` — `talAdjust(10 + 20*sLv)`, KO 2 per hit (6 hits).
-  - Damage (Hit 7 Finisher): `Sheep.cs:34555` — `talAdjust(50 + 50*sLv)`, KO 2 (1 hit).
-  - Total Sequence: 7 hits, `6 × talAdjust(10 + 20×sLv) + talAdjust(50 + 50×sLv)`.
-- **`divinityAxe`**:
-  - Cast Time: `Sheep.cs:21560` — `this.$mCastTime$27748 = (float)7;` (magAdjusted).
-  - Cooldown: `Sheep.cs:21565` — `this.$mTimeOut$27749 = 150;` (agiAdjusted).
-  - Damage: `Sheep.cs:36612` & `36593` — `5 × talAdjust(45)`, KO 2 per hit (5 hits).
-- **`worldEncarta`**:
-  - Cast Time: `Sheep.cs:21577` — `this.$mCastTime$27748 = (float)7;` (magAdjusted).
-  - Cooldown: `Sheep.cs:21582` — `this.$mTimeOut$27749 = 150;` (agiAdjusted).
-  - DEF & Immunity: `Sheep.cs:38357` & `CharacterControl.cs:39883` — `deltaDef(Mathf.FloorToInt(0.2f * casterAtk))`.
-- **`purifyingTear`**:
-  - Cast Time: `Sheep.cs:34888` — `3.0s` (magAdjusted).
-  - Cooldown: `Sheep.cs:35011` — `this.mChar.addTimeOut("purifyingTear", this.mChar.agiAdjust(480f));`.
-- **`lullaby`**:
-  - Cast Time: `Sheep.cs:35388` — `this.$mCastTime$28120 = this.$self_$28130.mChar.magAdjust((float)9);`.
-  - Cooldown: `Sheep.cs:35500` — `60s` (agiAdjusted).
-- **`edenSanctuary`**:
-  - Cast Time: `0` (instant).
-  - Cooldown: `Sheep.cs:36951` — `this.mChar.addTimeOut("edenSanctuary", this.mChar.agiAdjust(240f));`.
 
 - **`clear`**:
   - Cast Time: `Sheep.cs:21305` — `this.$mCastTime$27748 = (float)(1 + this.$sLv$27762);` (Rank 1: 2.0s, Rank 2: 3.0s, magAdjusted via `:21588`).
@@ -686,3 +564,7 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
     - **Cleanse (`Sheep.cs:25375`):** Increases status level by +1 (`sLv = 4 + 1 = 5`) and extends duration to flat 6s (`1 + 5`).
     - **All Cleanse (`Sheep.cs:25835`):** Increases status level by +1 (`sLv = 4 + 1 = 5`) and extends duration to flat 6s (`1 + 5`).
 
+
+## Server Balance Variations
+
+No ToT or TTO deltas are known for Sheep (checked 2026-09-30): no Sheep card carries a `servers` override, and no Sheep server change is recorded in this repo. Everything above is the BigBug original-engine baseline.
