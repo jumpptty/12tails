@@ -283,7 +283,7 @@ Per-skill entries (`### shp_<name>`) are the verified 2026-09-30 pass; they take
 - **Damage (`RPC_cAttack`, `Sheep.cs:9780-9900`):** `n = floor(Time.time − actionTime − 1.3)` = `floor(held − 0.8)` s; `cDmg = (int)Clamp((1 + 0.2 × BenedictionLv) × n × ATK, ATK, 100 × (Lv + OverLimit × Lv))`. `OverLimit = hasSkill(462)`, which is not a Sheep roster skill, so the cap is **100 × Lv**. A legal release (held ≥ 2 s) has n ≥ 1, so the minimum is `(1 + 0.2b) × ATK`.
 - **Ball (`Sheep_cAttack.cs`):** `ProjectileControl.life = 5 × rangeMod`, speed (0, 0, 8) set in the component, turns toward the target by 0.1 rad every 0.1 s. On the first enemy: without White Burst `hit(11, target, cDmg, KO 1, 0, 0.3 × forward)`. No `getCritPlus`, so gear crit never applies.
 - **Tooltip:** "(100%atk/sec, max 100/200/300/400 dmg)" (`SheepSkill_thai.cs:59-92`) matches.
-- **Card:** full charge, `dmg = 100×sLv + 100×depLv` (White Burst dep), KO 1, one hit.
+- **Card:** `rawModel` with a header charge-time slider (2–20 s): `(int)Clamp((1 + 0.2·Benediction) × floor(held − 0.8) × ATK, ATK, 100·Lv)` + 100 with White Burst; Benediction and White Burst are header toggles; KO 1, one hit.
 
 ### shp_whiteBurst5 (White Burst, #411): Charge Attack +100 and splash (verified 2026-09-30)
 

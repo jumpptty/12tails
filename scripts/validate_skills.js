@@ -127,6 +127,7 @@ const exposeInjection = `
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
   window._critView = { set: (v) => { critFormulaView = v; } };
   window._bisonStun = { set: (v) => { bisonStunDistance = v; }, get: () => bisonStunDistance, setHate: (v) => { bisonHate = v; }, getHate: () => bisonHate, setWeight: (v) => { bisonWeight = v; }, getWeight: () => bisonWeight };
+  window._sheepCharge = { set: (t) => { sheepChargeTime = t; }, get: () => sheepChargeTime, seconds: sheepChargeSeconds };
   window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1667,6 +1668,36 @@ let checkedRabbitShot = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedRabbitShot} Rabbit Combo / Charge Attack checks.`);
+
+// 3o-iv-b. Sheep Charge Attack (2026-09-30): charge-time slider + exact raw damage against hand-worked values from RPC_cAttack
+// (Sheep.cs:9780-9800): n = floor(held - 0.8), (int)Clamp((1 + 0.2 Benediction) x n x ATK, ATK, 100 x Lv), White Burst +100.
+let checkedSheepCharge = 0;
+{
+  const deps = sandbox._depRanks, sc = sandbox._sheepCharge;
+  const check = (label, ok, got) => { checkedSheepCharge++; if (!ok) { console.error(`[SHEEP CHARGE ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const card = SKILLS.find(s => s.id === "sheep_cAttack");
+  const saved = { t: sc.get(), wb: deps.whiteBurst, b: deps.benediction };
+  check("Charge Attack uses rawModel with the charge slider and no atkCoeff", !!(card.rawModel && card.sheepChargeInputs && card.atkCoeff === undefined && card.hitCount() === 1 && !card.rawModel.critBase));
+  check("seconds: 2.0 s -> 1, 2.8 s -> 2 (no float drift), 2.79 s -> 1, clamps to 2..20 s",
+    [[2, 1], [2.8, 2], [2.79, 1], [0, 1], [99, 19]].every(([t, n]) => { sc.set(t); return sc.seconds() === n; }));
+  // [label, rank, ATK, held s, benediction, white burst, expected raw]
+  [
+    ["rank 4, ATK 100, 4 s: 3 x 100", 4, 100, 4, 0, 0, 300],
+    ["rank 4, ATK 100, 20 s: capped at 400", 4, 100, 20, 0, 0, 400],
+    ["White Burst adds 100 on top of the cap", 4, 100, 20, 0, 1, 500],
+    ["White Burst adds 100 below the cap", 2, 50, 3, 0, 1, 200],
+    ["Benediction 3: 2 s x 1.6 x 100 = 320", 4, 100, 3, 3, 0, 320],
+    ["Benediction 1: (int)(1.2 x 1 x 99) = 118", 4, 99, 2, 1, 0, 118],
+    ["ATK above the cap gives the cap", 1, 500, 2, 0, 0, 100],
+    ["ATK 0 gives 0", 3, 0, 10, 0, 0, 0],
+  ].forEach(([label, rank, ATK, t, b, wb, want]) => {
+    sc.set(t); deps.benediction = b; deps.whiteBurst = wb;
+    const p = card.rawModel.parts(rank, { ATK, LV: 100 });
+    check(label, p.crit + p.plain === want && p.crit === 0, p.crit + p.plain);
+  });
+  sc.set(saved.t); deps.whiteBurst = saved.wb; deps.benediction = saved.b;
+}
+console.log(`Verified ${checkedSheepCharge} Sheep Charge Attack checks.`);
 // 3o-v. Bison Far Stun / Mass Stun (2026-09-29): num = (int)(0.5 x sLv x ceil(distance)) (Bison.cs:7684), KO = num (+ floor(0.5 x Lv) with Mass Stun, :9134-9150).
 let checkedBisonStun = 0;
 {
