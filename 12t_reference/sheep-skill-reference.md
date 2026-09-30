@@ -406,6 +406,33 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 - **Tick (`:35486-35583`):** while `mp >= 12` and `sp >= 3`, once per second: `sp −= Revised Skill ? 2 : 3`, `mp −= Revised Magic ? 9 : 12`, then `FindAreaTarget(self, 12, 6, 130816)` — every character layer, so **allies are hit too** — and each target other than the Sheep without `sleep` gets `RPC_AddStatus("sleep", 1, getDebuff(6, ownCha, targetCha), 0, …)`. The MP/SP gate uses the unreduced 12/3.
 - Free Cast only with Return Cast (`:35659-35671`). Tooltip "put all friendly and hostile targets within 12m to sleep" matches.
 
+### shp_holyLight1-2 (Holy Light, #271-272): channelled area damage (verified 2026-09-30)
+
+- MP 30/40, SP −30/−40 (red) up front, Lv 35/45, Bn 23/25, mode instant. CD `agiAdjust(60)` (`Sheep.cs:28256`). Not in the shared dispatcher (the old "cast 6 s at `:21390`" citation was Revert's line).
+- `RPC_holyLight` (`Sheep.cs:27437-28500`): channel `mCastTime = magAdjust(6)` with a cast bar (`:27611-27620`); starts only if `mp >= 4·sLv + 4` (`:27766`), ends at `actionTime + mCastTime + 0.6` (`:28022`) or when the owner moves (`:27749-27757`).
+- **Tick (`:27785-27870`):** once per second: `mp −= RevisedMagic ? floor(0.8 × (4·sLv + 4)) : 4·sLv + 4`, then every enemy in `FindAreaTarget(self, 24, 6, enemyLayer)` takes `hit(270 + sLv, t, talAdjust(12·sLv + 12), KO 1, 0, zero)` (owner client) and gets/extends a `holylightFx` visual. Tooltip "24 / 36 damage every second in wide range around Sheep" matches; the old card note ("piercing linear ray") was wrong.
+
+### shp_divinitySword1-2 (Divinity Sword, #331-332) (verified 2026-09-30)
+
+- MP 16/24, Lv 9/17, Bn 3/5, mode target, enemy. Cast `2 + sLv`, CD 45.
+- `RPC_divinitySword_cast` (`Sheep.cs:30429-30903`) starts `RPC_divinitySword_fire(target.position, …)` (`:30613`); the fire coroutine waits 0.8 s, then every enemy in `FindAreaTarget(pos, 2, 4, enemyLayer)` takes `hit(240 + sLv, t, talAdjust(10 + 20·sLv), KO 5, 0, zero)` (`Sheep.cs:31049-31072`). The position is fixed when it fires. Tooltip 30/50 dmg matches. **KO is 5** (the card said 1).
+
+### shp_divinitySpear1-2 (Divinity Spear, #333-334) (verified 2026-09-30)
+
+- MP 24/32, Lv 25/33, Bn 7/9, mode target, enemy. Cast `3 + sLv`, CD 60.
+- `divinitySpear_fire` (`Sheep.cs:31186-31984`): three strikes 1 s apart (`i < 3`, `Yield(2, 1 s)`); each re-reads `tObject.transform.position`, then every enemy in `FindAreaTarget(tPos, 2, 4, enemyLayer)` takes `hit(340 + sLv, t, talAdjust(10 + 15·sLv), KO 5, 0, zero)` (`:31781-31826`). Tooltip 25×3 / 40×3 matches. **KO is 5** per strike (the card said 1); it is a strike on the target's spot, not a "piercing linear thrust".
+
+### shp_divinityAxe5 (Divinity Axe, #433) (verified 2026-09-30)
+
+- MP 54, Lv 75/Bn 4, mode target, enemy. Cast 7 s (dispatcher), CD 150.
+- `RPC_divinityAxe_fire` (`Sheep.cs:36447-36771`): waits 1 s, then 5 strikes 0.4 s apart at the fixed cast position: every enemy in `FindAreaTarget(mPos, 3, 4, enemyLayer)` takes `hit(343, t, talAdjust(45), KO 3, 0, zero)` (`:36607-36640`). Free Cast only with Return Cast (`Sheep.cs:36356-36368`). Tooltip 45×5 matches. **KO is 3** (the card said 2).
+
+### shp_soulOfArms1-2 (Soul of Arms, #371-372) (verified 2026-09-30)
+
+- MP 40/55, SP −40/−55 (red), Lv 35/40, Bn 23/25, mode target, enemy. Cast `4 + 2·sLv`, CD 300.
+- `RPC_soulOfArms_cast` (`Sheep.cs:33696-34698`): six `hit(370 + sLv, target, talAdjust(20·sLv + 10), KO 2, 0, zero)` then one `hit(370 + sLv, target, talAdjust(50·sLv + 50), KO 2, …)` on the single target (`:34255-34555`); the hits are paced by the `soulOfArms` animation events, not by `Yield` waits. Dodgeable (`hit()`). Never calls `getFreeCast`.
+- **Tooltip discrepancy:** "30~60 ×7" / "60~100 ×7" (`SheepSkill_eng.cs:849-860`); code is 30 ×6 + 100 at rank 1 and 50 ×6 + 150 at rank 2 (before `talAdjust`).
+
 ### shp_lightBind1-4 (Light Bind, #301-304), shp_intenseBind5 (Intense Bind, #403), shp_clear1-2 (Clear, #241-242), shp_cleanse1 (Cleanse, #243), shp_allCleanse1 (All Cleanse, #244), shp_purify5 (Purify, #442) (verified 2026-09-25/28, re-checked 2026-09-30)
 
 - Verified in the dedicated `lightBind`, `clear`, `cleanse`, `allCleanse` and `purify` sections below; cast times and cooldowns re-checked against the dispatcher. Intense Bind: +1 status level (+6 damage per tick) and +1 s after `getDebuff` (`Sheep.cs:28898-28902`). The Clear/Cleanse/All Cleanse cards no longer repeat the Purify level and duration (the status badge and duration chip show them).
