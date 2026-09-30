@@ -452,7 +452,7 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 
 - MP 40, SP −40 (red), Lv 85/Bn 6, mode instant. CD `agiAdjust(240)` (`Sheep.cs:36951`). Needs the current seal field (`jl98IkUjQ5`), else "Need a seal in place" and the MP/SP is returned (`Sheep.cs:7540-7551`); spawns at that field's position (`:37133`).
 - `Sheep_edenSanctuary.cs`: lasts 12 s (`:73`); every 2 s `FindAreaTarget(pos, 18, 6, 130816)` — every character layer, **no team filter**, so enemies inside are covered too — and each gets `RPC_AddStatus("sanctuary", 5, 3, 0, …)` (`:160-205`).
-- Status `sanctuary` (Buff + Magical, `StatusData.cs:1878`, `:5927`, `:6956`): `nDamage = floor(0.5 × nDamage)` on the direct (`CharacterControl.cs:31533`) and Effect Damage (`:6703`) paths.
+- Status `sanctuary` (Buff + Magical, `StatusData.cs:1878`, `:5927`, `:6956`): `nDamage = floor(0.5 × nDamage)` on the direct (`CharacterControl.cs:31533`) and Effect Damage (`:6703`) paths. It changes neither `damageMod` nor `hitMod`: `hitMod` is applied first (`RPC_AddDamage` `:3765`, `RPC_AddEffectDamage` `:6203`), and the halving runs later in the damage coroutine, so it multiplies on top of `hitMod` (hitMod 1.2 → 0.6×) rather than adding −0.5. Outgoing damage is unaffected.
 - Free Cast without a Return Cast gate (`Sheep.cs:37069-37075`). **Tooltip discrepancy:** "reduce all damage in the area" / Thai "members of the team": the code applies to everyone in range.
 
 ### shp_worldEncarta5 (World Encarta, #444) (verified 2026-09-30)
