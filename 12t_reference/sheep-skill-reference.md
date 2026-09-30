@@ -392,6 +392,24 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 - Status `wing` (`StatusData.cs:1867`, Buff `:6950`, Magical `:5891`): removes `feather` and `float`, same weight/gravity, `deltaRunSpeed(0.25·sLv + 0.25)` (`:39821-39840`). `RPC_AddStatus` rejects `feather` / `float` while `wing` is active (`:11481-11500`), and while `getStatusLv("wing") × 2 >= sLv` rejects `heavy`, `groundLock`, `needlePrison`, `sticky`, `ice`, `frost`, `lightBind`, `maim` (`:13191-13290`, `RPC_AddDamage(-83)` on block).
 - **Tooltip discrepancy (Floating Wing):** English "preventing all lv.5 negative movement status" (`SheepSkill_eng.cs:992`); the block reaches level 2 × wing level (2 / 4), matching the Thai "ต่ำกว่า 5".
 
+### shp_sleep1-2 (Sleep, #232, #234) (verified 2026-09-30)
+
+- MP 18/21, Lv 17/33, Bn 5/9, mode target, enemy. Cast `4 + 2·sLv` (6/8), CD 90.
+- `RPC_sleep_cast` (`Sheep.cs:23950-24451`): `mDuration = Damage.getDebuff(3 + 3·sLv, ownCha, targetCha)` (CHA-contested, **6 / 9 s** base), `RPC_AddStatus("sleep", sLv, mDuration, 0, …)` (`:24379-24382`). Tooltip 6/9 s matches; the card's former 15/20 s was wrong.
+- Status `sleep`: code (`StatusData.cs:1713`), Debuff (`:7514`) + Magical (`:5837`). Apply (`CharacterControl.cs:39224-39240`): removes `paralysis` / `snowMan`, `actionState = "sleep"`, `moveSpeed = 0`, zzz emote. `RPC_AddStatus` rejects it while the target has `awake`, `tent`, `snowMan`, `snowBall`, `petrify` or `nightmare` (`:11385-11470`); a target wearing the Chinese Dragon Head (`c_mal37` / `c_fem37`) resists on `Random.Range(0,100) < lckAdjust(12)` (`:13758-13775`).
+- **Waking:** a hit with `nDamage >= 6 × (sleepLv − 1)` removes `sleep` and gives `awake` (same level, 6 s) (Effect Damage path `CharacterControl.cs:7014-7036`; direct path `:30575-30595`). So level 1 wakes on any hit, level 2 needs 6+ damage. `awake` is Buff + System (`StatusData.cs:459`, `:4732`, `:6446`) and blocks sleep for its 6 s.
+
+### shp_lullaby5 (Lullaby, #432): channelled area sleep (verified 2026-09-30)
+
+- MP 75, SP −30 (red) up front, Lv 75/Bn 4, mode instant. CD `agiAdjust(60)` (`Sheep.cs:35759`).
+- `RPC_lullaby` (`Sheep.cs:35225-35974`): channel `mCastTime = magAdjust(9)` with a cast bar (`:35388-35400`); it ends at `actionTime + mCastTime + 0.6` (`:35643`) or when the owner moves (`Input.GetAxisRaw` Vertical/Horizontal, `:35449-35456`).
+- **Tick (`:35486-35583`):** while `mp >= 12` and `sp >= 3`, once per second: `sp −= Revised Skill ? 2 : 3`, `mp −= Revised Magic ? 9 : 12`, then `FindAreaTarget(self, 12, 6, 130816)` — every character layer, so **allies are hit too** — and each target other than the Sheep without `sleep` gets `RPC_AddStatus("sleep", 1, getDebuff(6, ownCha, targetCha), 0, …)`. The MP/SP gate uses the unreduced 12/3.
+- Free Cast only with Return Cast (`:35659-35671`). Tooltip "put all friendly and hostile targets within 12m to sleep" matches.
+
+### shp_lightBind1-4 (Light Bind, #301-304), shp_intenseBind5 (Intense Bind, #403), shp_clear1-2 (Clear, #241-242), shp_cleanse1 (Cleanse, #243), shp_allCleanse1 (All Cleanse, #244), shp_purify5 (Purify, #442) (verified 2026-09-25/28, re-checked 2026-09-30)
+
+- Verified in the dedicated `lightBind`, `clear`, `cleanse`, `allCleanse` and `purify` sections below; cast times and cooldowns re-checked against the dispatcher. Intense Bind: +1 status level (+6 damage per tick) and +1 s after `getDebuff` (`Sheep.cs:28898-28902`). The Clear/Cleanse/All Cleanse cards no longer repeat the Purify level and duration (the status badge and duration chip show them).
+
 ---
 
 ## 1. Summary of Sheep Mechanics
