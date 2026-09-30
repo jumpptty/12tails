@@ -1758,7 +1758,7 @@ let checkedCritView = 0;
   const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
   const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
-  check("the cards that model crit are Bison Combo, Rabbit Combo, Sheep Book Bash and Wolf Combo", critCards.join() === "bison_nAttack,rabbit_nAttack,sheep_bookBash,wolf_nAttack", critCards.join());
+  check("the cards that model crit are Bison Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo and Wolf Combo", critCards.join() === "bison_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,wolf_nAttack", critCards.join());
   const RAB = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabWeapon", "rabEquip", "rabExtravagance"];
   const savedRab = RAB.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDist = rb.getDistance("combo");
   cv.set(false);
@@ -1791,7 +1791,7 @@ let checkedCritView = 0;
   cv.set(false); select(combo, 1); let any = false; for (let i = 0; i < 200; i++) { roll(combo, 1); if (ep.lastCrit()) any = true; }
   check("Test does not crit without gear when the view is off", !any);
   // critProc cards: view range == floor(1.8 x normal range) at both ends (no gear, so the normal range has no crit top)
-  ["wolf_nAttack", "bison_nAttack", "sheep_bookBash"].forEach(id => {
+  ["wolf_nAttack", "bison_nAttack", "sheep_bookBash", "sheep_nAttack"].forEach(id => {
     const s = sk(id); const r = s.maxRank || 1;
     cv.set(false); select(s, r); const n = rng(s, r);
     cv.set(true); select(s, r); const c = rng(s, r);

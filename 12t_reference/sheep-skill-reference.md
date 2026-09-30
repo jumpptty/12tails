@@ -263,6 +263,57 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/SheepSkill.cs`) for the player-reference-tool (`12t_projects/player-reference-tool/index.html`).
 
+Per-skill entries (`### shp_<name>`) are the verified 2026-09-30 pass; they take precedence over the older summary sections further down. Command numbers come from `SheepSkill.cs` `getSkillTree()`; costs and requirements were decoded with `scripts/decode_skilldata.py`.
+
+### shp_nAttack1-2 (Combo, #101-102): light-ball projectile per stage (verified 2026-09-30)
+
+- **Metadata:** passive, no cost; Lv 1/Bn 0 and Lv 2/Bn 0. Tooltips: #101 unlocks the 2nd attack, #102 the 3rd (`SheepSkill_eng.cs:35`, `:46`).
+- **Flow (`doNormalAttack`, `Sheep.cs:9016-9280`):** `RPC_nAttack1` from standby/run; `RPC_nAttack2` needs #101, `RPC_nAttack3` needs #102, each chained from the previous stage by a timed press. Each stage coroutine (`Sheep.cs:17230`, `:17656`, `:18101`) fires **one** projectile: `RPC_homingLight_fire` with Homing Light (#401), otherwise `RPC_nAttack_fire` (`:17400`, `:17422` for stage 1), and sets `addTimeOut("nAttack", 2)`.
+- **Projectile:** `RPC_nAttack_fire` sets `ProjectileControl.life = 1.7 × rangeMod` (`Sheep.cs:9303-9390`). The prefab's `ProjectileControl.velocity` is (0, 0, 12), decoded with UnityPy from the live `resources.assets` (GameObject 6065, the same 0.3 m-radius `SphereCollider` + 12 m/s layout as the Sheep-only `homingLight` prefab, GameObject 3581), so the ball travels about **20.4 m** at rangeMod 1.
+- **Damage (`Sheep_nAttack.OnTriggerEnter`, `Sheep_nAttack.cs:91-330`):** `num = (int)(0.5 × ATK)`; `w_shp59` (**Holy Orb**) → `floor(0.75 × num)`; then `num = sheep.getCritPlus(num)`; `hit(1, target, num, KO 1, hate 0, 0.3 × forward)`. The projectile is destroyed on the first enemy it touches (single target). On a landed hit: `onNormalAttackHit(target)` (item on-hit effects) and `sp++`.
+- **Holy Orb ally heal:** with `w_shp59`, a ball touching a same-layer character other than the Sheep is destroyed and heals it `RPC_AddHeal(1, (int)(0.35 × ATK), …)` (`Sheep_nAttack.cs:156-205`).
+- **Gear crit (`getCritPlus`, `Sheep.cs:16494-16640`):** same table as Book Bash (full Marshal 12, full Champion 18) → `floor(1.8 × num)`.
+- **Card:** `atkCoeff 0.5`, KO 1, hit count = rank + 1 (1 stage + one per Combo rank), `critProc` with the gear deps. Holy Orb is described, not modelled.
+
+### shp_cAttack1-4 (Charge Attack, #111-114): charged homing ball (verified 2026-09-30)
+
+- **Metadata:** passive, no cost; Lv 4/10/16/22, Bn 1/2/3/4. `getChargeAttackLv()` counts #111-114 (0-4) (`Sheep.cs:9693-9757`).
+- **Charge / release (`Sheep.cs:9440-9757`):** `doBeginCharge` needs #111 and starts `RPC_cAttack1` (sets `actionTime = Time.time`, `myCommand = "cAttack1"`, `addTimeOut("cAttack", 1)`, `Sheep.cs:18770-18815`). `doReleaseCharge` starts `RPC_cAttack2` only when `actionTime + 2 <= Time.time`, otherwise `RPC_cAttack0` (no attack). In missions (`Game.mGameType > 4`) the clicked Player/Enemy becomes the homing target.
+- **Fire (`RPC_cAttack2`, `Sheep.cs:19025-19447`):** state 2 runs 0.5 s after the release and calls `RPC_cAttack(pos + 3·up, dir, tID)`; `actionTime` is still the charge start at that moment (it is only reset in state 3).
+- **Damage (`RPC_cAttack`, `Sheep.cs:9780-9900`):** `n = floor(Time.time − actionTime − 1.3)` = `floor(held − 0.8)` s; `cDmg = (int)Clamp((1 + 0.2 × BenedictionLv) × n × ATK, ATK, 100 × (Lv + OverLimit × Lv))`. `OverLimit = hasSkill(462)`, which is not a Sheep roster skill, so the cap is **100 × Lv**. A legal release (held ≥ 2 s) has n ≥ 1, so the minimum is `(1 + 0.2b) × ATK`.
+- **Ball (`Sheep_cAttack.cs`):** `ProjectileControl.life = 5 × rangeMod`, speed (0, 0, 8) set in the component, turns toward the target by 0.1 rad every 0.1 s. On the first enemy: without White Burst `hit(11, target, cDmg, KO 1, 0, 0.3 × forward)`. No `getCritPlus`, so gear crit never applies.
+- **Tooltip:** "(100%atk/sec, max 100/200/300/400 dmg)" (`SheepSkill_thai.cs:59-92`) matches.
+- **Card:** full charge, `dmg = 100×sLv + 100×depLv` (White Burst dep), KO 1, one hit.
+
+### shp_whiteBurst5 (White Burst, #411): Charge Attack +100 and splash (verified 2026-09-30)
+
+- **Metadata:** passive, Lv 60/Bn 1. The decoder reports `setMPSP(… )` leftovers from a shared fall-through tail; the skill is passive and costs nothing to own.
+- **Effect (`Sheep_cAttack.cs:268-330`):** on impact, the main target takes `hit(11, target, cDmg + 100, 1, 0, 0.3 × forward)`, and every other target from `FindAreaTarget(impact, 6, 6, enemyMask)` takes `hit(411, t, floor(0.4 × (cDmg + 100)), 1, 0, zero)`.
+- **Tooltip discrepancy:** "Increases the limit of Sheep's charge attack to 500" (`SheepSkill_eng.cs:882`): the code adds a flat +100 to the damage at every Charge Attack rank (400 cap + 100 = 500 only at rank 4); the Thai text ("+100") is accurate.
+
+### shp_homingLight5 (Homing Light, #401): homing Combo ball + MP (verified 2026-09-30)
+
+- **Metadata:** passive, Lv 55/Bn 0.
+- **Effect:** each Combo stage fires `RPC_homingLight_fire(pos, dir, tID)` instead of the plain ball (`Sheep.cs:17400`, `:17929`, `:18374`); `life = 1.7 × rangeMod` (`:11432-11490`). `Sheep_homingLight.cs`: speed (0, 0, 12), every 0.1 s `RotateTowards(target, 0.15 rad)`. Same damage/crit/Holy Orb code as the plain ball, plus `mp += floor(0.05 × Lv)` on a landed hit (not clamped in this code).
+- **Tooltip:** "Restores 5% of Sheep's level to her mp" (`SheepSkill_eng.cs:871`) matches.
+
+### shp_harmonicDiffuse1-4 (Harmonic Diffuse, #121-124): hate reduction (verified 2026-09-30)
+
+- **Metadata:** passive, Lv 6/12/18/24, Bn 2/4/6/8. `getHarmonicDiffuseLv()` counts #121-124 (`Sheep.cs:9981`).
+- **Attacks:** in the receiver's `RPC_AddDamage`, after `nHate = ceil(nDamage + nHate + 10 × nKo)`, a Sheep attacker with the skill gets `nHate = ceil(nHate × (1 − 0.15 × lv))` (`CharacterControl.cs:3828-3898`, junk predicates evaluated). Applies to every direct hit the Sheep lands.
+- **Heals:** only Heal (`Sheep.cs:22287`) and Quick Heal (`:10440`) pass `nHate = −ceil(0.15 × heal × lv)` to `RPC_AddHeal`. `AddHeal` then adds `2 × (hp + mp + sp restored)` and, if the result is positive, gives it as hate toward the healer to every enemy within 24 m of the healed character (`CharacterControl.cs:7593-7654`). At a full restore that is `2h − 0.15·lv·h`, i.e. 7.5%/15%/22.5%/30% less heal hate. All Heal, Revive, Illuminate etc. pass 0.
+- **Tooltip discrepancy:** "decreases all hate generated from Sheep by 15-60%" (`SheepSkill_eng.cs:101-134`): exact for attacks, about half that for Heal/Quick Heal, none for other heals.
+
+### shp_karma1-4 (Karma, #361-364): damage reflection (verified 2026-09-30)
+
+- **Metadata:** passive, Lv 22/28/34/40, Bn 12/16/20/24.
+- **Effect (`CharacterControl.cs:30449-30530`, direct-damage coroutine, owner client):** `karmaLv` = highest of #361-364; if `floor(0.05 × lv × nDamage) > 0` and there is an attacker, the attacker takes `RPC_AddEffectDamage(360 + lv, floor(0.06 × lv × nDamage), 0, 0, zero, SheepActorNr)`: **6/12/18/24%** of the damage received as Effect Damage, no KO. The 5% gate only suppresses the reflect on tiny hits.
+- **Tooltip:** "returns 6/12/18/24% of Sheep's receiving damage" (`SheepSkill_eng.cs:805-838`) matches.
+
+### shp_bookBash5 (Book Bash, #434), shp_freeCast1-2 (Free Cast, #131-132), shp_returnCast5 (Return Cast, #431) (verified 2026-09-28, re-checked 2026-09-30)
+
+- Verified in the dedicated `bookBash`, `## Free Cast` and `## Return Cast` sections below; values unchanged. The Book Bash card no longer repeats the standard +1 SP or the mission lock value (both are shown elsewhere).
+
 ---
 
 ## 1. Summary of Sheep Mechanics
