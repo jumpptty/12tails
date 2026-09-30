@@ -283,7 +283,7 @@ Per-skill entries (`### shp_<name>`) are the verified 2026-09-30 pass; they take
 - **Damage (`RPC_cAttack`, `Sheep.cs:9780-9900`):** `n = floor(Time.time − actionTime − 1.3)` = `floor(held − 0.8)` s; `cDmg = (int)Clamp((1 + 0.2 × BenedictionLv) × n × ATK, ATK, 100 × (Lv + OverLimit × Lv))`. `OverLimit = hasSkill(462)`, which is not a Sheep roster skill, so the cap is **100 × Lv**. A legal release (held ≥ 2 s) has n ≥ 1, so the minimum is `(1 + 0.2b) × ATK`.
 - **Ball (`Sheep_cAttack.cs`):** `ProjectileControl.life = 5 × rangeMod`, speed (0, 0, 8) set in the component, turns toward the target by 0.1 rad every 0.1 s. On the first enemy: without White Burst `hit(11, target, cDmg, KO 1, 0, 0.3 × forward)`. No `getCritPlus`, so gear crit never applies.
 - **Tooltip:** "(100%atk/sec, max 100/200/300/400 dmg)" (`SheepSkill_thai.cs:59-92`) matches.
-- **Card:** `rawModel` with a header charge-time slider (2–20 s): `(int)Clamp((1 + 0.2·Benediction) × floor(held − 0.8) × ATK, ATK, 100·Lv)` + 100 with White Burst; Benediction and White Burst are header toggles; KO 1, one hit.
+- **Card:** `rawModel` with a header charge-time slider (0 s up to the first held time that reaches the cap; under 2 s = no attack): `(int)Clamp((1 + 0.2·Benediction) × floor(held − 0.8) × ATK, ATK, 100·Lv)` + 100 with White Burst; Benediction and White Burst are header toggles; KO 1, one hit.
 
 ### shp_whiteBurst5 (White Burst, #411): Charge Attack +100 and splash (verified 2026-09-30)
 
@@ -388,8 +388,8 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 
 - Feather: MP 6/12, Lv 7/15, Bn 2/4, mode target, ally. Cast `1 + sLv`, CD `12 + 3·sLv`. All Feather: MP 18/24, Lv 23/31, Bn 6/8, mode instant. Cast `3 + sLv`, CD 60.
 - Feather applies to the target (`Sheep.cs:29876-29889`); All Feather to every ally in `FindAreaTarget(self, 12 × rangeMod, 3 × rangeMod, allyLayer)` (`Sheep.cs:30306-30349`). Both: `"wing"` if Floating Wing (#423) else `"feather"`, level `sLv`, `chaAdjust(15)`.
-- Status `feather` (`StatusData.cs:1768`, Buff `:6896`, Magical `:5861`): apply `weight −= 5·sLv`, jump gravity `−= 5·sLv`, `deltaRunSpeed(0.25·sLv)` (`CharacterControl.cs:39634-39644`).
-- Status `wing` (`StatusData.cs:1867`, Buff `:6950`, Magical `:5891`): removes `feather` and `float`, same weight/gravity, `deltaRunSpeed(0.25·sLv + 0.25)` (`:39821-39840`). `RPC_AddStatus` rejects `feather` / `float` while `wing` is active (`:11481-11500`), and while `getStatusLv("wing") × 2 >= sLv` rejects `heavy`, `groundLock`, `needlePrison`, `sticky`, `ice`, `frost`, `lightBind`, `maim` (`:13191-13290`, `RPC_AddDamage(-83)` on block).
+- Status `feather` (`StatusData.cs:1768`, Buff `:6896`, Magical `:5861`): apply `weight −= 5·sLv`, the obfuscated float field `sF2cOBZX7wK −= 5·sLv` (its effect is not traced, so no jump or fall claim is made), `deltaRunSpeed(0.25·sLv)` (`CharacterControl.cs:39634-39644`).
+- Status `wing` (`StatusData.cs:1867`, Buff `:6950`, Magical `:5891`): removes `feather` and `float`, same weight and float-field change, `deltaRunSpeed(0.25·sLv + 0.25)` (`:39821-39840`). `RPC_AddStatus` rejects `feather` / `float` while `wing` is active (`:11481-11500`), and while `getStatusLv("wing") × 2 >= sLv` rejects `heavy`, `groundLock`, `needlePrison`, `sticky`, `ice`, `frost`, `lightBind`, `maim` (`:13191-13290`, `RPC_AddDamage(-83)` on block).
 - **Tooltip discrepancy (Floating Wing):** English "preventing all lv.5 negative movement status" (`SheepSkill_eng.cs:992`); the block reaches level 2 × wing level (2 / 4), matching the Thai "ต่ำกว่า 5".
 
 ### shp_sleep1-2 (Sleep, #232, #234) (verified 2026-09-30)

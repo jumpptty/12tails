@@ -127,7 +127,7 @@ const exposeInjection = `
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
   window._critView = { set: (v) => { critFormulaView = v; } };
   window._bisonStun = { set: (v) => { bisonStunDistance = v; }, get: () => bisonStunDistance, setHate: (v) => { bisonHate = v; }, getHate: () => bisonHate, setWeight: (v) => { bisonWeight = v; }, getWeight: () => bisonWeight };
-  window._sheepCharge = { set: (t) => { sheepChargeTime = t; }, get: () => sheepChargeTime, seconds: sheepChargeSeconds };
+  window._sheepCharge = { set: (t) => { sheepChargeTime = t; }, get: () => sheepChargeTime, seconds: sheepChargeSeconds, maxTime: sheepChargeMaxTime };
   window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
 `;
 scriptCode = scriptCode.replace('function onSearchInput(){', exposeInjection + '\nfunction onSearchInput(){');
@@ -1678,12 +1678,19 @@ let checkedSheepCharge = 0;
   const card = SKILLS.find(s => s.id === "sheep_cAttack");
   const saved = { t: sc.get(), wb: deps.whiteBurst, b: deps.benediction };
   check("Charge Attack uses rawModel with the charge slider and no atkCoeff", !!(card.rawModel && card.sheepChargeInputs && card.atkCoeff === undefined && card.hitCount() === 1 && !card.rawModel.critBase));
-  check("seconds: 2.0 s -> 1, 2.8 s -> 2 (no float drift), 2.79 s -> 1, clamps to 2..20 s",
-    [[2, 1], [2.8, 2], [2.79, 1], [0, 1], [99, 19]].every(([t, n]) => { sc.set(t); return sc.seconds() === n; }));
+  check("seconds: under 2 s -> 0 (no attack), 2.0 s -> 1, 2.8 s -> 2 (no float drift), 2.79 s -> 1",
+    [[0, 0], [1.9, 0], [2, 1], [2.8, 2], [2.79, 1], [10, 9]].every(([t, n]) => sc.seconds(t) === n));
+  // slider max = first held time that reaches the cap: [rank, ATK, benediction, expected seconds]
+  [[4, 100, 0, 4.8], [4, 99, 0, 5.8], [4, 100, 3, 3.8], [1, 500, 0, 2], [1, 100, 0, 2], [3, 0, 0, 2]].forEach(([rank, ATK, b, want]) => {
+    deps.benediction = b; check(`slider max rank ${rank} ATK ${ATK} Benediction ${b}`, sc.maxTime(rank, ATK) === want, sc.maxTime(rank, ATK));
+  });
+  deps.benediction = 0; sc.set(null);
+  check("default (null) follows the max = full charge", card.rawModel.parts(4, { ATK: 100, LV: 100 }).plain === 400);
   // [label, rank, ATK, held s, benediction, white burst, expected raw]
   [
     ["rank 4, ATK 100, 4 s: 3 x 100", 4, 100, 4, 0, 0, 300],
-    ["rank 4, ATK 100, 20 s: capped at 400", 4, 100, 20, 0, 0, 400],
+    ["rank 4, ATK 100, held past the max: capped at 400", 4, 100, 20, 0, 0, 400],
+    ["released at 1.5 s: no attack, White Burst adds nothing", 4, 100, 1.5, 0, 1, 0],
     ["White Burst adds 100 on top of the cap", 4, 100, 20, 0, 1, 500],
     ["White Burst adds 100 below the cap", 2, 50, 3, 0, 1, 200],
     ["Benediction 3: 2 s x 1.6 x 100 = 320", 4, 100, 3, 3, 0, 320],
