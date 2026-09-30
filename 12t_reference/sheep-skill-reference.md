@@ -369,6 +369,29 @@ Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Re
 - Radiant Heal: Lv 55/Bn 0; the Heal splash above. Tooltip "40% within 8m around its primary target" matches (height 3, primary target excluded).
 - KO Heal: see the dedicated `koHeal` section below (Quick Heal radius 7 m and KO `sLv`, All Heal KO `10·sLv`); re-checked, unchanged.
 
+### shp_bless1-4 (Bless, #211-214) and shp_gospel5 (Gospel, #412) (verified 2026-09-30)
+
+- Bless: MP 8/16/24/32, Lv 5/13/21/29, Bn 1/3/5/7, mode target, ally. Cast `2 + sLv`, CD `Gospel ? 30 : 30 + 15·sLv` (`Sheep.cs:21258-21263`).
+- `RPC_bless_cast` (`Sheep.cs:22436-22888`): `tChar.RPC_AddStatus("bless", sLv + (Gospel ? 1 : 0), chaAdjust(30), 0, …)` (`:22824`).
+- Status `bless`: code 1102 (`StatusData.cs:1702`), Buff (`:6872`) + Magical (`:5831`). Apply (`CharacterControl.cs:39130-39175`): `deltaAtk/Def/Agi/Vit/Mag/Cha/Tal/Lck(4·sLv + 4)`; for a non-player target it first sets `vit = ceil(0.1 × mhp)`. Tooltip +8/12/16/20 matches.
+- Gospel: passive, Lv 60/Bn 1 (the decoder's MP 12/SP −12 is a leftover from a shared metadata tail; it is passive). **Tooltip discrepancy:** "decreases their cooldown by 70%" (`SheepSkill_eng.cs:937`): the cooldown is a flat 30 s (a 33% cut at rank 1, 67% at rank 4).
+
+### shp_illuminate1-4 (Illuminate, #311-314) and shp_blindingLight5 (Blinding Light, #413) (verified 2026-09-30)
+
+- Illuminate: MP 10/14/18/22, Lv 5/13/21/29, Bn 1/3/5/7, mode target, ally. Cast `1 + sLv`, CD `12 + 3·sLv`.
+- `RPC_illuminate_cast` (`Sheep.cs:28975-29478`): `RPC_AddStatus("illuminate", sLv + (BlindingLight ? 2 : 0), chaAdjust(12), 0, …)` (`:29411`).
+- Status `illuminate`: code (`StatusData.cs:1779`), Buff (`:6902`) + Magical (`:5867`). Tick (`CharacterControl.cs:9378-9395`): while alive, when `mod(2 × (sTime − t), 6) == 0` (every 3 s), the owner client calls `RPC_AddHeal(1, 4·sLv, sLv, sLv, 0, 0, sID)`: HP `4·sLv`, MP and SP `sLv`. No Benediction term.
+- **Tooltip discrepancy:** "(15 sec)" (`SheepSkill_eng.cs:585-618`); code `chaAdjust(12)`.
+- Blinding Light: passive, Lv 60/Bn 1 (decoder MP 15/SP −15 is the same leftover). Adds +2 to the Illuminate status level; tooltip matches.
+
+### shp_feather1-2 (Feather, #321-322), shp_allFeather1-2 (All Feather, #323-324), shp_floatingWing5 (Floating Wing, #423) (verified 2026-09-30)
+
+- Feather: MP 6/12, Lv 7/15, Bn 2/4, mode target, ally. Cast `1 + sLv`, CD `12 + 3·sLv`. All Feather: MP 18/24, Lv 23/31, Bn 6/8, mode instant. Cast `3 + sLv`, CD 60.
+- Feather applies to the target (`Sheep.cs:29876-29889`); All Feather to every ally in `FindAreaTarget(self, 12 × rangeMod, 3 × rangeMod, allyLayer)` (`Sheep.cs:30306-30349`). Both: `"wing"` if Floating Wing (#423) else `"feather"`, level `sLv`, `chaAdjust(15)`.
+- Status `feather` (`StatusData.cs:1768`, Buff `:6896`, Magical `:5861`): apply `weight −= 5·sLv`, jump gravity `−= 5·sLv`, `deltaRunSpeed(0.25·sLv)` (`CharacterControl.cs:39634-39644`).
+- Status `wing` (`StatusData.cs:1867`, Buff `:6950`, Magical `:5891`): removes `feather` and `float`, same weight/gravity, `deltaRunSpeed(0.25·sLv + 0.25)` (`:39821-39840`). `RPC_AddStatus` rejects `feather` / `float` while `wing` is active (`:11481-11500`), and while `getStatusLv("wing") × 2 >= sLv` rejects `heavy`, `groundLock`, `needlePrison`, `sticky`, `ice`, `frost`, `lightBind`, `maim` (`:13191-13290`, `RPC_AddDamage(-83)` on block).
+- **Tooltip discrepancy (Floating Wing):** English "preventing all lv.5 negative movement status" (`SheepSkill_eng.cs:992`); the block reaches level 2 × wing level (2 / 4), matching the Thai "ต่ำกว่า 5".
+
 ---
 
 ## 1. Summary of Sheep Mechanics
