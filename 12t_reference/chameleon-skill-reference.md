@@ -226,6 +226,11 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 # Damage & Mechanics
 
+### chm_tormentRain1 (Torment Rain): arrow barrage (verified 2026-09-30)
+
+- `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target. CD `agiAdjust(3)` (`:25659`).
+- TTO: see Server Balance Variations below.
+
 
 Companion to `chameleon-skill-reference.md` (Cooldown/Duration, cite that for CD/Duration citations —
 not re-derived here). Written 2026-08-21, the 3rd class (after Penguin, Mole) to get the full rank-
@@ -719,3 +724,9 @@ reported above, either with a real citation or a confirmed "no damage" finding.
 
 See `player-reference-tool/CLAUDE.md`'s own dated section for the full implementation narrative
 (engine reuse, icon extraction, verification detail).
+
+## Server Balance Variations
+
+| Skill | Original BigBug baseline | TTO delta |
+|---|---|---|
+| Torment Rain | `(int)(0.5 × ATK + talAdjust(60))` per target (`Chameleon.cs:26039`). | Damage is plain 100% of ATK, no `talAdjust` term (user-reported 2026-09-30; card `servers.tto`: `dmg "0"`, `atkCoeff 1`). |
