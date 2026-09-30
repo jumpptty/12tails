@@ -314,6 +314,61 @@ Per-skill entries (`### shp_<name>`) are the verified 2026-09-30 pass; they take
 
 - Verified in the dedicated `bookBash`, `## Free Cast` and `## Return Cast` sections below; values unchanged. The Book Bash card no longer repeats the standard +1 SP or the mission lock value (both are shown elsewhere).
 
+### Shared cast dispatcher (verified 2026-09-30)
+
+Heal, All Heal, Bless, Pacify, Sleep, Clear, Cleanse, All Cleanse, Over Heal, Revive, Revert, Light Bind, Illuminate, Feather, All Feather, Divinity Sword, Divinity Spear, Repel, Reverse, Soul of Arms, Divinity Axe and World Encarta go through one dispatcher that sets `castTime` and `timeOut` per skill, then `castTime = magAdjust(castTime)` and `addTimeOut(name, agiAdjust(timeOut))` (`Sheep.cs:21200-21610`). All the card cast times and cooldowns match it (checked for every skill above). Quick Heal, Holy Light, Seal, Purifying Tear, Lullaby, Eden Sanctuary and Book Bash have their own sites. Every heal coroutine below finishes with a 0.5 s recovery (`Yield(2, 0.5 s)`).
+
+### shp_heal1-4 (Heal, #201-204): single-target heal (verified 2026-09-30)
+
+- MP 6/12/18/24, Lv 3/11/19/27, Bn 0/1/2/3, mode target, ally. Cast `1 + sLv` s, CD `12 + 2·sLv` s.
+- `RPC_heal_cast` (`Sheep.cs:21837-22435`): `mHeal = talAdjust((int)((1 + 0.15 × BenedictionLv) × (10 + 15·sLv)))`, `mHate = −ceil(0.15 × mHeal × HarmonicDiffuseLv)`, `tChar.RPC_AddHeal(1, mHeal, 0, 0, 0, mHate, …)` (`:22281-22290`). Tooltip 25/40/55/70 HP matches.
+- **Radiant Heal (#402):** `FindAreaTarget(target, 8, 3, allyLayer)`; every hit other than the primary target gets `RPC_AddHeal(1, ceil(0.4 × mHeal), 0, 0, 0, ceil(mHate), …)` (`:22300-22337`).
+
+### shp_quickHeal1-2 (Quick Heal, #221-222): instant area heal (verified 2026-09-30)
+
+- MP 12/16, SP −5/−8 (red), Lv 7/15, Bn 2/4, mode instant. CD `addTimeOut("quickHeal", 1)`, unwrapped (`Sheep.cs:10316`); no cast time.
+- `RPC_quickHeal` (`Sheep.cs:10201-10445`): `FindAreaTarget(self, 5 + (KoHeal ? 2 : 0), 3 × rangeMod, 1 << ownLayer)` (the Sheep and her allies), heal `talAdjust((int)((1 + 0.15b) × 10·sLv))`, KO `sLv` with KO Heal, hate `−ceil(0.15 × heal × HarmonicDiffuseLv)` (`:10414-10440`). Tooltip 10/20 HP matches. The old card note's "3m" was wrong.
+
+### shp_allHeal1-2 (All Heal, #223-224): team heal (verified 2026-09-30)
+
+- MP 34/45, Lv 23/31, Bn 6/8, mode instant. Cast `3 + sLv`, CD `30 + 15·sLv`.
+- `RPC_allHeal_cast` (`Sheep.cs:22889-23361`): iterates the Sheep's team container (`transform.parent`, see [12Tails-Mechanics-Reference.md §4.6](12Tails-Mechanics-Reference.md#46-team-containers-and-team-wide-skills-gamecs)), `RPC_AddHeal(1, talAdjust((int)((1 + 0.15b) × (10 + 15·sLv))), 0, 0, KoHeal ? 10·sLv : 0, 0, …)` (`:23280-23290`). No range limit; no Harmonic Diffuse term.
+
+### shp_overHeal1-2 (Over Heal, #251-252): full-HP penetrating strike (verified 2026-09-30)
+
+- MP 26/34, Lv 17/24, Bn 6/10, mode target, enemy. Cast `2 + 2·sLv`, CD `15 + 15·sLv`.
+- `RPC_overHeal_cast` (`Sheep.cs:25902-26431`): `mHeal = talAdjust((int)((1 + 0.15b) × (20 + 30·sLv)))`; if `tChar.hp != tChar.mhp` → 0, else `min(mHeal, floor((0.2 + 0.1·sLv) × tChar.mhp))`; `tChar.RPC_AddDamage(250 + sLv, mHeal, 0, 0, zero, …)` (`:26331-26357`) — direct damage: no `dmgAdjust`, no DEF, no KO (card flag `penetrating`). Tooltip "50/80 dmg, max 30/40% mhp" matches.
+
+### shp_revive1-2 (Revive, #253-254) (verified 2026-09-30)
+
+- MP 28/36, Lv 31/38, Bn 14/18, mode target, ally. Cast `3 + sLv`, CD `300 − 60·sLv` (240/180).
+- `RPC_revive_cast` (`Sheep.cs:26432-26941`): `tChar.ReviveEvent(252 + sLv, talAdjust((int)((1 + 0.15b) × 50·sLv)), …)` (`:26861-26867`) → 50/100 HP. **Tooltip discrepancy:** English rank 2 says 80 HP (`SheepSkill_eng.cs:464`); code and Thai say 100.
+
+### shp_revert1 (Revert, #264) (verified 2026-09-30)
+
+- MP 50, SP −50 (red), Lv 40/Bn 24, mode target, ally. Cast 6 s, CD 900 s.
+- `RPC_revert_cast` (`Sheep.cs:26942-27436`): `tChar.RPC_AddHeal(1, tChar.mhp, tChar.mmp, 0, tChar.mko, 0, …)` (`:27371`) — full HP, MP **and KO**, no SP. The tooltip mentions only HP and MP; the old card note ("restores the caster") was wrong — it targets an ally.
+
+### shp_pacify1-2 (Pacify, #231, #233): hate reduction on an ally (verified 2026-09-30)
+
+- MP 10/15, Lv 9/25, Bn 3/7, mode target, ally. Cast `1 + sLv`, CD `30 + 15·sLv`.
+- `RPC_pacify_cast` (`Sheep.cs:23362-23949`): every character from `FindAreaTarget(target, 40, 6, enemyLayer)`; for its hate entry whose `ID` is the target ally, `clearHate(target, floor((0.15·sLv + 0.05) × (hate − Time.time)))` (`:23789-23842`) → **20% / 35%** of the remaining hate. Tooltip matches.
+
+### shp_purifyingTear5 (Purifying Tear, #421): drop the Sheep's aggro (verified 2026-09-30)
+
+- MP 25, SP −50 (red), Lv 70/Bn 3, mode instant, self. CD `agiAdjust(480)` (`Sheep.cs:35011`). **No cast time:** the input dispatch starts `RPC_purifyingTear` directly (`Sheep.cs:7461-7480`) and the coroutine has no `magAdjust`; the card's former 3 s cast time was removed.
+- `RPC_purifyingTear` (`Sheep.cs:34699-35224`): state 3, 0.4 s after the press (`Yield(2, 0.2)`, `Yield(3, 0.2)`), `FindAreaTarget(self, 40, 3, enemyLayer)` → `removeHate(SheepActorNr)` on each (`:34895-34934`). Free Cast only with Return Cast (`:35014-35026`). Tooltip "removes all Sheep's hate from targets within 40m" matches.
+
+### shp_benediction1-3 (Benediction, #261-263) (verified 2026-09-30)
+
+- Passive, Lv 22/28/34, Bn 12/16/20. `getBenedictionLv()` (`Sheep.cs:10551`).
+- Heal, Quick Heal, All Heal, Revive and **Over Heal (damage)** multiply their base by `1 + 0.15·lv` inside `talAdjust` (sites above); Illuminate does not. Charge Attack multiplies its per-second damage by `1 + 0.2·lv` (`Sheep.cs:9790-9800`), which is the tooltip's "charge attack 20/40/60% faster" (the cap is unchanged).
+
+### shp_radiantHeal5 (Radiant Heal, #402) and shp_koHeal5 (KO Heal, #422) (verified 2026-09-30)
+
+- Radiant Heal: Lv 55/Bn 0; the Heal splash above. Tooltip "40% within 8m around its primary target" matches (height 3, primary target excluded).
+- KO Heal: see the dedicated `koHeal` section below (Quick Heal radius 7 m and KO `sLv`, All Heal KO `10·sLv`); re-checked, unchanged.
+
 ---
 
 ## 1. Summary of Sheep Mechanics
