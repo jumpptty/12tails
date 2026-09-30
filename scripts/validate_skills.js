@@ -121,6 +121,7 @@ const exposeInjection = `
   window._enemyPickerHtml = () => enemyPickerEl.innerHTML;
   window._selectedEnemyId = () => selectedEnemyId;
   window._setServer = (s) => { currentServer = s; };
+  window._activeSimSkill = activeSimSkill;
   window._renderDmgToggle = renderDmgToggle;
   window._usesTdlRoll = usesTdlRoll;
   window._finalMult = { count: finalMultCountCalc, active: activeFinalMultMods, customBd: customBd, activeCustom: activeCustom, setServer: (s) => { bdServer = s; } };
@@ -1705,6 +1706,36 @@ let checkedSheepCharge = 0;
   sc.set(saved.t); deps.whiteBurst = saved.wb; deps.benediction = saved.b;
 }
 console.log(`Verified ${checkedSheepCharge} Sheep Charge Attack checks.`);
+
+// 3o-iv-c. Server damage overrides reach the Test roll (2026-09-30, user report: Torment Rain TTO still rolled the base formula).
+// The Test buttons roll activeSimSkill() = getActiveSkill(selected, currentServer); every card whose servers.* entry overrides a
+// damage field must roll inside its own server range.
+let checkedServerSim = 0;
+{
+  const check = (label, ok, got) => { checkedServerSim++; if (!ok) { console.error(`[SERVER SIM ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const inputs = sandbox._statInputs, savedIn = { atk: inputs.atk.value, tal: inputs.tal ? inputs.tal.value : undefined };
+  const DMG_KEYS = ["dmg", "atkCoeff", "rawModel", "dmgGroups"];
+  const cards = SKILLS.filter(s => s.servers && Object.values(s.servers).some(o => o && DMG_KEYS.some(k => k in o)) && !s.isHeal && !s.isHate);
+  inputs.atk.value = "100";
+  for (const sk of cards) for (const [srv, o] of Object.entries(sk.servers)) {
+    if (!o || !DMG_KEYS.some(k => k in o) || o.dmgGroups || sk.dmgGroups) continue;
+    const r = sk.maxRank || 1;
+    sandbox._setServer(srv); sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._selectSkill(sk);
+    const act = sandbox._activeSimSkill();
+    check(`${sk.id} on ${srv}: Test rolls the server card`, DMG_KEYS.every(k => !(k in o) || act[k] === o[k]));
+    const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(act, r)));
+    let lo = Infinity, hi = -Infinity; for (let i = 0; i < 300; i++) { const x = sandbox._rollOneHit(act, r); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+    check(`${sk.id} on ${srv}: Test rolls inside the server range`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+  }
+  const tr = SKILLS.find(s => s.id === "chameleon_tormentRain");
+  sandbox._setServer("tto"); sandbox._skillRanks[tr.id] = 1; sandbox._selectSkill(tr);
+  const act = sandbox._activeSimSkill();
+  check("Torment Rain TTO is plain 1 x ATK (dmg 0, atkCoeff 1)", act.dmg === "0" && act.atkCoeff === 1);
+  sandbox._setServer("og"); sandbox._selectSkill(tr);
+  check("Torment Rain original keeps 0.5 x ATK + talAdjust(60)", sandbox._activeSimSkill().atkCoeff === 0.5 && sandbox._activeSimSkill().dmg === "talAdjust(60)");
+  inputs.atk.value = savedIn.atk; sandbox._setServer("og");
+}
+console.log(`Verified ${checkedServerSim} server-override Test roll checks.`);
 // 3o-v. Bison Far Stun / Mass Stun (2026-09-29): num = (int)(0.5 x sLv x ceil(distance)) (Bison.cs:7684), KO = num (+ floor(0.5 x Lv) with Mass Stun, :9134-9150).
 let checkedBisonStun = 0;
 {
