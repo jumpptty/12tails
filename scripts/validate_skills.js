@@ -1310,6 +1310,10 @@ let checkedEffectProc = 0;
     check("Whale Combo: a purple Wall Puncture hit never crits", purpleCrit === 0, purpleCrit);
     check("Whale Combo: white hits still crit with Champion gear", whiteCrit > 0, whiteCrit); }
   deps.wallPuncture = 0; deps.whaleGearChampion = 0;
+  // Mole Smart Shell (#264): +30 Effect Damage per enemy hit on Mine, Stun Mine, Stun Grenade, Time Nuke (Mole.cs:11583, Mole_stunGrenade.cs:285, Mole_timeNuke.cs:767).
+  ["mole_mine", "mole_stunMine", "mole_stunGrenade", "mole_timeNuke"].forEach(id => { const m = byId(id);
+    deps.smartShell = 1; check(`${id} Smart Shell bonus 30`, ep.bonus(m, 1, 0) === 30, ep.bonus(m, 1, 0));
+    deps.smartShell = 0; check(`${id} no Smart Shell, no bonus`, ep.bonus(m, 1, 0) === 0, ep.bonus(m, 1, 0)); });
   const mega = byId("whale_megalodon");
   check("Megalodon Pull group always purple", purpleRate(mega, 50, 0) === 1);
   check("Megalodon Bite group always white", purpleRate(mega, 50, 1) === 0);
