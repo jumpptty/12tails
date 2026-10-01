@@ -237,7 +237,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 - SP −40 (red), Lv 60/Bn 1, target. CD `agiAdjust(150)` (`:37392`).
 - `RPC_napalm` (`:36935-37520`): 5 shells (`i < 5`, `:37173`) aimed at the target and at the target + world offsets `(±5, 0, ±5)` (≈7.07 m diagonally, `:37190-37200`); mortar arc, `life = 5 × rangeMod` (`:13714-13750`); a shell bursts on any non-own-layer collider (`Mole_napalm.cs:42-70`).
 - `RPC_napalm_hit` (`:37586-37800`): 6 ticks (`i >= 6` exit, `:37659`) 0.5 s apart (`:37798`); `FindAreaTarget(pos, 4 + ExtraPowderLv, 4, enemy layers)` (`:37669-37679`); tick 1 `talAdjust(30)`, ticks 2-6 `talAdjust(5)` (`:37684`); targets that are not `Robots`/`Structure` take direct `RPC_AddDamage(31, dmg, KO 0, …)` (`:37723-37735`).
-- **Card correction:** one pool per target (pools are ≈7 m apart, radius 4-7), so 6 hits = 30 + 5 × 5 (was 5 pools × 6 = 30 hits).
+- **Card (user decision 2026-10-01):** Napalm is used point-blank, so the card assumes all 5 shells burst on the target: 5 pools × 6 ticks = 30 hits (5 × `talAdjust(30)` + 25 × `talAdjust(5)`). At range the pools land ≈7 m apart (radius 4-7), so a target is in one pool (6 hits).
 
 ### mol_cannonExpert5 (Cannon Expert, #401) (verified 2026-10-01)
 
@@ -372,7 +372,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_kingKaiser1 / mol_kaiserCannon1 / mol_kaiserBeam1 (King Kaiser #371, Kaiser Cannon #372, Kaiser Beam #373) (verified 2026-10-01)
 
 - King Kaiser: MP 80, SP −80 (red), Lv 35/Bn 23, instant self. CD `agiAdjust(999)` (`:35380`). Kaiser Cannon (Lv 40/Bn 25) and Kaiser Beam (Lv 45/Bn 27) are passives; the card's rank 1-3 is `getKaiserLv()` (`:13607-13620`).
-- `RPC_kingKaiser_create` (`:35536-36000`): lasts `chaAdjust(240)` (`:35789`); the Kaiser is not a summon (`isSummon = false`, `:35870`); Heavy Built MHP `ceil(× (1 + 0.5 × lv))` (`:35925-35936`); `summon(getKaiserLv())` (`:35995`) sets ATK `150 + 50 × lv`, DEF `100 + 50 × lv` (`KingKaiser.cs:3991-3997`). MHP 2000 from the prefab (see `kingKaiserOwnStats`). **Tooltip discrepancy:** "1500 hp" (ToT's value; see Server Balance Variations). `KingKaiserAI.cs` is unreachable for the player's Kaiser (`isControlled = true`, `:35865`). Each cast uses one Kaiser Battery item `m_kbt1` (checked `:7007`, removed `:35684`). The Kaiser's own `CharacterControl` never calls `hasSkill`, so Revised Art does not reach its attack cooldowns.
+- `RPC_kingKaiser_create` (`:35536-36000`): lasts `chaAdjust(240)` (`:35789`); the Kaiser is not a summon (`isSummon = false`, `:35870`); Heavy Built MHP `ceil(× (1 + 0.5 × lv))` (`:35925-35936`); `summon(getKaiserLv())` (`:35995`) sets ATK `150 + 50 × lv`, DEF `100 + 50 × lv` (`KingKaiser.cs:3991-3997`). MHP 2000 from the prefab (see `kingKaiserOwnStats`; re-decoded 2026-10-01: `KingKaiser_b` `CharacterControl` @ `resources.assets` 45046984 → HP/MHP 2000, AGI 100, VIT 200, MAG 75, CHA 200, TAL 150, LCK 75; user confirmed 2000). **Tooltip discrepancy:** "1500 hp" (ToT's value; see Server Balance Variations). `KingKaiserAI.cs` is unreachable for the player's Kaiser (`isControlled = true`, `:35865`). Each cast uses one Kaiser Battery item `m_kbt1` (checked `:7007`, removed `:35684`). The Kaiser's own `CharacterControl` never calls `hasSkill`, so Revised Art does not reach its attack cooldowns.
 
 ### mol_kingKaiser_nAttack (King Kaiser normal attack) (verified 2026-10-01)
 
@@ -385,7 +385,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 ### mol_kingKaiser_beam (Kaiser Beam) (verified 2026-10-01)
 
-- `doBeginCharge` (`KingKaiser.cs:1017-1060`): needs Kaiser level 3 ("Need KaiserBeam Upgrade") and Kaiser SP ≥ 75 ("Kaiser Beam needs 75 sp"). `RPC_kaiserBeam1` charge (`addTimeOut("kaiserBeam", 2)`, `:3041`); releasing after 6.5 s fires `RPC_kaiserBeam2` (`:1177`), earlier releases abort with `RPC_kaiserBeam0` (no damage); `RPC_kaiserBeam2` fire (`:3118-3580`): `addTimeOut("kaiserBeam", 30)` (`:3426`); 5 pulses (`i >= 5` exit, `:3501`), each `sp = Clamp(sp − 15, 0, 100)` (`:3516`), `FindRecTarget(pos, fwd, 4, 4, 32, 6)` (8 m wide, `:3519`), `hit(21, t, 300, KO 1, hate 1, …)` (`:3538`). Tooltip "75 sp" matches. The `kaiserBeam` timeout is never checked (`isTimeOut` only reads `nAttack`, `:945`), so the 30 s is not enforced in the client — see Open items.
+- `doBeginCharge` (`KingKaiser.cs:1017-1060`): needs Kaiser level 3 ("Need KaiserBeam Upgrade") and Kaiser SP ≥ 75 ("Kaiser Beam needs 75 sp"). `RPC_kaiserBeam1` charge (`addTimeOut("kaiserBeam", 2)`, `:3041`); releasing after 6.5 s fires `RPC_kaiserBeam2` (`:1177`), earlier releases abort with `RPC_kaiserBeam0` (no damage); `RPC_kaiserBeam2` fire (`:3118-3580`): `addTimeOut("kaiserBeam", 30)` (`:3426`); 5 pulses (`i >= 5` exit, `:3501`), each `sp = Clamp(sp − 15, 0, 100)` (`:3516`), `FindRecTarget(pos, fwd, 4, 4, 32, 6)` (8 m wide, `:3519`), `hit(21, t, 300, KO 1, hate 1, …)` (`:3538`). Tooltip "75 sp" matches. The `kaiserBeam` timeout is never checked (`isTimeOut` only reads `nAttack`, `:945`), so the 30 s is not enforced in the client; the card shows no cooldown (user decision 2026-10-01).
 
 ### mol_warFactory5 (War Factory, #434) (verified 2026-10-01)
 
@@ -414,8 +414,8 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_warCapital5 (War Capital, #444) (verified 2026-10-01)
 
 - MP 100, SP −50 (red), Lv 85/Bn 6. Assembled through `RPC_assemble1("warCapital")`: `magAdjust(24)` s, CD `agiAdjust(300)` (`:23387-23429`).
-- `RPC_warCapital_create` (`:14239-14480`): destroys the previous War Capital, `isSummon`, starts `OnWarCapital`. It lives until destroyed or the Mole dies (`Mole_warCapital.cs:100-170`). No Heavy Built.
-- `OnWarCapital` (`:43591-43930`): every 24 s, if `FindAreaTarget(Mole pos, 36, 10)` finds enemies (`:43842-43880`), `RPC_warCapital_fire` (`:43981-44270`) fires 8 missiles 0.15 s apart, each at a random target + up to 2 m random offset (`:43749-43806`). `RPC_warMissile_hit` (`:14589-14660`): `FindAreaTarget(point, 1, 1)`, `hit(−4444, t, talAdjust(50), KO 3, …)`. Tooltip "50 dmg × 8" matches; the "Hp 1500" is the prefab's (not in code).
+- `RPC_warCapital_create` (`:14239-14480`): destroys the previous War Capital, `isSummon`, starts `OnWarCapital`. It lives until destroyed or the Mole dies (`Mole_warCapital.cs:100-170`). No Heavy Built. **Own stats (prefab, decoded 2026-10-01):** `warCapital` `CharacterControl` @ `resources.assets` byte 44560960 (708 bytes; same field layout as King Kaiser, calibrated on Gaos @ 44478976 and King Kaiser_b @ 45046984): HP/MHP **1500**, ATK/DEF/AGI/VIT/MAG/CHA/TAL/LCK **150** each, MP/SP/KO 10. No runtime code overwrites them. The missiles use the Mole's `talAdjust`, not the base's TAL.
+- `OnWarCapital` (`:43591-43930`): every 24 s, if `FindAreaTarget(Mole pos, 36, 10)` finds enemies (`:43842-43880`), `RPC_warCapital_fire` (`:43981-44270`) fires 8 missiles 0.15 s apart, each at a random target + up to 2 m random offset (`:43749-43806`). `RPC_warMissile_hit` (`:14589-14660`): `FindAreaTarget(point, 1, 1)`, `hit(−4444, t, talAdjust(50), KO 3, …)`. Tooltip "50 dmg × 8, Hp 1500" matches.
 
 ## Server Balance Variations (TTO)
 
@@ -430,9 +430,11 @@ Source of server delta: `12t_projects/bible/index.html:9160`.
 
 ## Open items / could not verify
 
-1. **Kaiser Beam cooldown.** The card shows 30 s (`KingKaiser.cs:3426`), but no code checks the `kaiserBeam` timeout; only the 75 Kaiser SP limits it. Keep 30 s, or show no cooldown? A live test can settle it.
-2. **Napalm at point-blank.** The card counts one fire pool per target (6 hits). The 5 shells burst on any collider, so a target hugging the Mole might catch several shells and pools (up to 30 hits). Live test needed.
-3. **King Kaiser HP.** The prefab decode gives 2000 (the card follows it); the tooltip says 1500, which is also ToT's value. Confirm 2000 on the original server.
-4. **War Capital HP.** The tooltip says 1500; the code never sets it (prefab value, not decoded). Not shown on the card.
-5. **Saw Machine's first swing** hits behind the Mole only; the card counts the 3 front swings.
-6. **Tooltip mismatches kept as code:** Landmine 10/20/30/40 (code 20/30/40/50), Bombardment 35/55 (code 25/40), Mine Lover +50 % (code ×1.25), Super TNT "+40 and 2 m radius" (code Lv-scaled, no radius), Speed Drill −25/−50 % dig time (code −26/−53 %), Heavy Built rank 2 Thai text 50 % (code 100 %), Charge Attack English "lv2/3/4 lock" (code 1/3/5).
+None open. Resolved 2026-10-01 (user decisions):
+
+1. **Kaiser Beam cooldown:** the `kaiserBeam` timeout is never checked; the card shows no cooldown (75 Kaiser SP is the only limit).
+2. **Napalm:** the card assumes point-blank use, with all 5 shells on the target (30 hits).
+3. **King Kaiser HP:** 2000 confirmed (prefab re-decode above).
+4. **War Capital HP:** decoded from the prefab: 1500 HP, all stats 150.
+5. **Saw Machine:** the card counts the 3 front swings.
+6. **Tooltip mismatches** are shown on the cards in red (`__…__`), with the code value used: Landmine, Bombardment, Mine Lover, Super TNT, Speed Drill, Heavy Built (Thai rank 2), Charge Attack (English lock levels), King Kaiser HP.
