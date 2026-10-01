@@ -553,6 +553,24 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - Passive, Lv 70/Bn 3. Workshop tier 5 (`CompoundGui.cs:1249`, `:1852`). Item cooldowns for a Mole with #421 (`GameGui.cs:32730-32790`): firework 3 → 1 s, bomb 30 → 15 s. (`CharacterControl.cs:13421` and the other classes' #421 hooks are not Mole's.)
 
+### mol_kingKaiser1 / mol_kaiserCannon1 / mol_kaiserBeam1 (King Kaiser #371, Kaiser Cannon #372, Kaiser Beam #373) (verified 2026-10-01)
+
+- King Kaiser: MP 80, SP −80 (red), Lv 35/Bn 23, instant self. CD `agiAdjust(999)` (`:35380`). Kaiser Cannon (Lv 40/Bn 25) and Kaiser Beam (Lv 45/Bn 27) are passives; the card's rank 1-3 is `getKaiserLv()` (`:13607-13620`).
+- `RPC_kingKaiser_create` (`:35536-36000`): lasts `chaAdjust(240)` (`:35789`); the Kaiser is not a summon (`isSummon = false`, `:35870`); Heavy Built MHP `ceil(× (1 + 0.5 × lv))` (`:35925-35936`); `summon(getKaiserLv())` (`:35995`) sets ATK `150 + 50 × lv`, DEF `100 + 50 × lv` (`KingKaiser.cs:3991-3997`). MHP 2000 from the prefab (see `kingKaiserOwnStats`). **Tooltip discrepancy:** "1500 hp" (ToT's value; see Server Balance Variations). `KingKaiserAI.cs` is not used by the player's Kaiser.
+
+### mol_kingKaiser_nAttack (King Kaiser normal attack) (verified 2026-10-01)
+
+- `KingKaiser.doNormalAttack` (`KingKaiser.cs:900-930`): when `nAttack` is ready; at Kaiser level ≥ 2 and a target farther than 10 m (`sqrMagnitude > 100`) it fires Kaiser Cannon instead.
+- `RPC_nAttack` (`KingKaiser.cs:1471-2270`): 3 swings, `addTimeOut("nAttack", 4)` (`:2179`): `FindRecTarget(pos + right, fwd, 2, 2, 5, 3)` → `hit(1, t, ATK, KO 1)` (`:1657-1680`), `FindRecTarget(pos, fwd, 1.5, 1.5, 4, 3)` → `hit(2, t, (int)(1.2 × ATK), KO 1)` (`:1862-1885`), `FindRecTarget(pos + (−1, 0.5, −2), fwd, 2.5, 2.5, 6, 3)` → `hit(3, t, (int)(1.3 × ATK), KO 1)` (`:2008-2031`); Kaiser `sp + 1` per target on swings 1 and 3 (`:1686`, `:2037`).
+
+### mol_kingKaiser_missile (Kaiser Cannon) (verified 2026-10-01)
+
+- `RPC_kaiserMissile` (`KingKaiser.cs:2321-2750`): two volleys of two shells (`:2462-2467`, `:2562-2567`); shares the `nAttack` 4 s lock (`:2711`). `RPC_kaiserMissile_hit` (`KingKaiser.cs:1280-1340`): `FindAreaTarget(hitPos, 5, 5, enemy layers)`, `hit(21, t, 100, KO 5, …)` (fixed 100 through `hit()`), Kaiser `sp + 1`.
+
+### mol_kingKaiser_beam (Kaiser Beam) (verified 2026-10-01)
+
+- `doBeginCharge` (`KingKaiser.cs:1017-1060`): needs Kaiser level 3 ("Need KaiserBeam Upgrade") and Kaiser SP ≥ 75 ("Kaiser Beam needs 75 sp"). `RPC_kaiserBeam1` charge (`addTimeOut("kaiserBeam", 2)`, `:3041`), `RPC_kaiserBeam2` fire (`:3118-3580`): `addTimeOut("kaiserBeam", 30)` (`:3426`); 5 pulses (`i >= 5` exit, `:3501`), each `sp = Clamp(sp − 15, 0, 100)` (`:3516`), `FindRecTarget(pos, fwd, 4, 4, 32, 6)` (8 m wide, `:3519`), `hit(21, t, 300, KO 1, …)` (`:3538`). Tooltip "75 sp" matches.
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
