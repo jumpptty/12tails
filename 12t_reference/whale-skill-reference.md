@@ -516,6 +516,106 @@ this.mWhale.mChar.cSp = (this.mWhale.hasSkill(126) ? -10 : -20);
 - **Peninsula Asunder (#442, Lv 85 / Bn 6, passive):** the Impale/Round boxes and Impale `+10` above; also Impale reads the locked target (`Whale.cs:26768-26780`) and `LookAt`s it before each stab (`:27183-27199`). Visual swaps `asunderImpale` / `asunderRound` (`:27145`, `:28001`). The `hasSkill(442)` at `CharacterControl.cs:2850` is Cat-only (`Type == "Cat"`), unrelated.
 - **12th Kingdom Knight:** `2 + 2·sLv` knights (`:28414`); `KingdomKnight()` (`Whale.cs:9650-9720`) every 3 s picks `FindClosestTarget(Whale pos, 8)` and all knights attack it; skipped while Whale is in `cAttack1`. Knight hit: `hit(270+sLv, …, (int)(0.2·Whale ATK + 10·sLv), 1, …)` (`whale_kingdomKnight.cs:439`).
 
+## 4. Passive skills (verified 2026-10-01)
+
+All sixteen below are `mode = passive` with no MP/SP (`scripts/decode_skilldata.py DecompiledSource/WhaleSkill.cs`). Skill IDs from `WhaleSkill.cs`'s skill tree.
+
+### 4.1 Shield Bash (`whale_shieldBash`, #114)
+- reqLv 22, reqBn 4.
+- **Trigger** (`doReleaseCharge`, `Whale.cs:8486-8560`): releasing the charge (`myCommand == "cAttack1"`, needs #111) after holding it **≥ 3 s**, with #114 and `Game.mGameType > 4`, starts `RPC_shieldBash(…, 1)` instead of the plain `RPC_cAttack2` release. Under 1 s nothing happens; between 1 and 3 s it is the plain release.
+- **Hit** (`$RPC_shieldBash`, `Whale.cs:19653-20180`): after 0.2 s, every enemy in `FindAreaTarget(pos, 3 × rangeMod, 3 × rangeMod)` takes `hit(221, t, DEF, KO 10, 0, 3 × push away)` (`:19850-19893`): raw damage = Whale's **DEF**, no TAL term. Each landed hit: `RPC_shieldBash_hit` effect and +1 SP (`:19909-19919`).
+- Client tooltips: EN "Enables Whale to bash his shield after charging for more then 3 seconds, dealing damage based on his defense." / TH "… คำนวนค่าความ เสียหายจากค่า def (10 ko)" (`WhaleSkill_eng.cs:88`, `WhaleSkill_thai.cs:86`). Matches the code.
+
+### 4.2 Culinary Tongue (`whale_culinaryTongue`, #121/#122)
+- reqLv/Bn 6/2, 12/4. Level = number of ranks learned (`GameGui.cs:34844-34878`, inside `Type == "Whale"`).
+- On eating (`GameGui.cs` item use, `:34700-35083`): every food stat buff (`atkUp` … `lckUp`, level 1) gets value **and** duration × `(1 + 0.5 × level)` (duration base 120 s → 180 / 240 s), and the food's HP / MP / SP / KO restore is multiplied the same way (`:34936-35020`, `:35083`). The food's own extra status (`status` field) is not scaled.
+- Client tooltips: EN "Increases the resulting effect and duration from food and drink by 50% [100%]." / TH "เพิ่มผลและระยะเวลาจากอาหารและเครื่องดื่มขึ้น 50% [100%]" (`WhaleSkill_eng.cs:99-110`, `WhaleSkill_thai.cs:97-108`). Matches.
+
+### 4.3 Super Size (`whale_superSize`, #131-#134)
+- reqLv/Bn 8/4, 16/6, 24/8, 32/10.
+- Each learned rank adds, in `CharacterDataClass.updateData()` (`CharacterDataClass.cs:650-735`, `Type == "Whale"`): **+15 VIT** (`statList[3]`), **+150 max HP** (the HP that 15 VIT gives, since base HP was already computed as `10 × VIT` at `:626`) and **+2 weight**. All four ranks stack: +60 VIT / +600 HP / +8 weight at rank 4. The status window's base VIT (`getBaseStat(12)`) shows the same +15 per rank (`CharacterControl.cs:22951-22990`).
+- Client tooltips: EN "… adds 15 [30 / 45 / 60] vitality and increases his weight by 2 [4 / 6 / 8]." / TH "(+15 vit, +2w)" on every rank (`WhaleSkill_eng.cs:121-154`, `WhaleSkill_thai.cs:119-152`). EN matches; TH shows the per-rank step.
+
+### 4.4 Wall Puncture (`whale_wallPuncture`, #251-#254)
+- reqLv/Bn 20/12, 24/15, 28/18, 32/21. Fully traced in §3.15 ("Wall Puncture proc"): `getWallPuncture()` = `lckAdjust(10 × level) > Random.Range(0,100)` (`Whale.cs:9196-9215`); a proc replaces the hit with `RPC_AddEffectDamage(251, raw)` + `puncture` (level = rank, 1 s) on Combo, Sweep, Peninsula Impale and Javelin.
+- **`puncture`** apply (`CharacterControl.cs:35859-35875`): removes `ironShield`, `diamondShield`, `perfectShield`, `bubbleShield`, `salvation` and `iceShield` from the target, with no level comparison.
+- Client tooltips: EN "Gives normal attack, PeninsulaImpale, and Javelin a 10% [20 / 30 / 40%] chance to penetrate enemy's defense." / TH "… ทำลายบาเรียและทำความ เสียหายทะลุ def (10% …)" (`WhaleSkill_eng.cs:418-451`, `WhaleSkill_thai.cs:449-482`). They omit Sweep and the LCK scaling.
+
+### 4.5 Auto Shield (`whale_autoShield`, #261-#263)
+- reqLv/Bn 24/15, 27/18, 30/21.
+- **Hook** (`RPC_AddDamage`, receiver side, `CharacterControl.cs:4407-4520`, `Type == "Whale"`, after `hitMod`): on a direct hit while the Whale is **not** holding the charge (`shield` status absent) and has none of `sleep` / `snowMan` / `snowBall` / `petrify` / `paralysis`, roll `Random.Range(0,100) < lckAdjust(6 × lv + 6)` (base **12 / 18 / 24**). On success: `RPC_AddHeal(264, 0, 0, 2 × lv SP)` (+2 / +4 / +6 SP), `nDamage = max(0, nDamage − 10 − 10 × chargeRank)` where `chargeRank` = Charge Attack rank 0-3 (#111-#113), and a shield effect toward the attacker. KO is not changed. Not checked while Peninsula Round is redirecting (that branch skips it).
+- Client tooltips: EN "Gives Whale a 12% [18 / 24%] chance to passively block any attack with his shield. Also gives 2 [4 / 6] sp …" / TH "(12% [18 / 24%])" (`WhaleSkill_eng.cs:462-484`, `WhaleSkill_thai.cs:493-515`). The "block" is the flat `10 + 10 × Charge rank` reduction, not a full block; the chance is LCK-scaled.
+
+### 4.6 Last Hope (`whale_lastHope`, #264)
+- reqLv 33, reqBn 24.
+- **Check** (`LastHope()`, `Whale.cs:9371-9625`, called from the owner's `Update`, `:278`): skipped when `Game.mGameType < 4`, the Whale is dead, or the previous check was under **6 s** ago. It scans every `Player`-tagged character on the Whale's original layer with `hp <= 0`: `n` = their count, capped at **4**. Each of those whose `actionState == "dead"` and whose death (`actionTime`) is within the last 6 s adds **400** to a heal pool.
+- **Effect:** with `n > 0`, `RPC_AddStatus("lastHope", n, 12, 0, self)` (flat 12 s, `:9516`); `lastHope` gives `deltaAtk(15 × n)` and `deltaDef(15 × n)` (`CharacterControl.cs:35898-35905`, removal `:16118`), **+15 / 30 / 45 / 60 ATK and DEF**. State + Buff (`StatusData.cs:4860`, `:6602`); only a Whale (or the CrystalBug monsters) can hold it (`CharacterControl.cs:12356`). Then, if the pool is > 0, `RPC_AddHeal(264, pool)`: **+400 HP per ally who died in the last 6 s** (`Whale.cs:9617-9621`), so each death heals once.
+- Client tooltips: EN "Passively increases Whale's attack and defense power by 15 per one dead allies in range (60 max)." / TH "ฟื้นฟูและเพิ่มพลังปลาวาฬขึ้นตามจำนวนเพื่อนที่ตาย (10% M.Hpวาฬ ,+15 atk, +15 def, 60 max)" (`WhaleSkill_eng.cs:495`, `WhaleSkill_thai.cs:526`). Code wins on the heal: a flat 400 per fresh death, not 10% of max HP. Neither tooltip's "in range" exists in the code: allies anywhere in the instance count.
+
+### 4.7 Over Presence (`whale_overPresence`, #313/#314)
+- reqLv/Bn 17/5, 23/7. (The `getSkill()` fallthrough to `heavyWeight` is a metadata artifact; see the judgment-call note above.)
+- **Aura:** `Whale.Start()` creates the `overPresence` child object when #313 is learned (`Whale.cs:86-92`, `createOverPresence` `:9905-9952`) and calls `Init(level, owner)` with level = 1 + #314 + Over Weight #413. The trigger collider's size is set in the prefab, not in code.
+- `Whale_overPresence.cs`: `OnTriggerEnter` of a Player/Enemy on another layer, while the game state is normal and the Whale is alive and not hidden, runs `addStatus("overPresence", level, 60, 0, owner)` directly (`:56-130`; the local `addStatus`, not `RPC_AddStatus`, so no CHA contest or resist check); `OnTriggerExit` removes it (`:134-187`).
+- **`overPresence`** apply: `moveMod −= 0.1 × level` (`CharacterControl.cs:35951-35955`, removal `:16074`) = **−10 / −20%** move speed (−30% with Over Weight). State + Debuff (`StatusData.cs:4872`, `:7364`).
+- Client tooltips: EN "… reduce running speed of enemies within 6 m range by 5% [10%]." / TH "… ระยะ 10 เมตร … (-5% [-10%])" (`WhaleSkill_eng.cs:605-616`, `WhaleSkill_thai.cs:636-647`). Code wins on the amount (10% per level); the two tooltips disagree on the radius (6 m vs 10 m), and the code does not set it.
+
+### 4.8 Harden Skin (`whale_hardenSkin`, #351-#354)
+- reqLv/Bn 20/12, 24/15, 28/18, 32/21. Level = highest learned (`getHardenSkinLv`, `Whale.cs:10285-10320`).
+- **Trigger** (`HardenSkin()`, `Whale.cs:10230-10250`, owner's `Update` `:290`): right after damage is applied to HP (`myDamage` is set to −1 at `CharacterControl.cs:2128`), at most every 0.5 s: `RPC_AddStatus("hardenSkin", level, chaAdjust(5), 0, self)`.
+- **Stacking** (`RPC_AddStatus` refresh, `CharacterControl.cs:14067-14072`): re-applying the same status raises `sValue` by `level`, up to `15 × level`, and keeps the longer remaining time. `hardenSkin` adds `deltaDef(sValue)` (`:35913`). So the first hit gives +0 and each later hit +level DEF, up to **+15 / 30 / 45 / 60 DEF**, lasting `chaAdjust(5)` s after the last hit. Physical + Buff (`StatusData.cs:5415`, `:6626`).
+- Client tooltips: EN "Temporary increases Whale's defense by 1 [2 / 3 / 4] everytime he gets hit (15 [30 / 45 / 60] max)." / TH "(+1 def/hit, 15max)" … (`WhaleSkill_eng.cs:759-792`, `WhaleSkill_thai.cs:790-823`). Matches, except that the first hit only starts the status at +0.
+
+### 4.9 Entended Wave (`whale_entendedWave`, #401)
+- reqLv 55, reqBn 0. Combo only (see §3.15 Combo): the swing box length goes `4 → 7` m (`Whale.cs:16444`, `:17334`, `:17698`, `:18509`; the extra 3 m is not scaled by `rangeMod`). With the `w_whl59` weapon and a locked target, each swing instead hits that target alone if it is within **9 m → 12 m** (`sqrMagnitude < 81 + 63`, `:16169-16223`, `:17107`, `:17471`, `:18289`). In real game modes it also swaps in the `extendedWave` swing effects (`:16536`, `:16828`, `:18027`).
+- Client tooltips: EN "Increases Whale's normal attack range by 3m." / TH "ยืดระยะของการโจมตีปกติทั้งหมดขึ้นอีก 3 m" (`WhaleSkill_eng.cs:869`, `WhaleSkill_thai.cs:900`). Matches.
+
+### 4.10 Shield Reflect (`whale_shieldReflect`, #411)
+- reqLv 60, reqBn 1. Fully traced in §3.15 ("`shield` status" and "Shield Reflect"): while holding the charge, `nDamage −= 0.25 × Lv` on top of the stance's `10 + 10 × sLv`, and `min(damage before reductions, floor(10 + 10 × sLv + 0.25 × Lv))` is reflected to the attacker as Effect Damage (`CharacterControl.cs:30855-30960`).
+
+### 4.11 Gourmet Heart (`whale_gourmetHeart`, #421)
+- reqLv 70, reqBn 3. Two effects in the item-use path (`GameGui.cs`, `Type == "Whale"`):
+  - **Cooldowns halved:** `food` 120 → **60 s**, `desert` 60 → **30 s**, `drink` 30 → **15 s** (`:34757-34800`).
+  - **Flat bonus** on every food heal: **+100 HP, +40 MP, +10 SP**, added after Culinary Tongue's multiplier (`:35083`).
+- Client tooltips: EN "Gives additional 100 hp 40 mp 10 sp to Whale everytime he eats food. Also reduces cooldown of food by 50%." / TH matches (`WhaleSkill_eng.cs:891`, `WhaleSkill_thai.cs:922`).
+
+### 4.12 Mega Size (`whale_megaSize`, #431)
+- reqLv 75, reqBn 4. `CharacterDataClass.updateData()` (`CharacterDataClass.cs:738-750`): **+40 VIT, +400 max HP, +10 weight**, on top of Super Size. The status window's base-VIT display (`getBaseStat(12)`) only adds Super Size, not Mega Size (`CharacterControl.cs:22951-22990`).
+- Client tooltips: EN "Makes Whale even bigger in size. Adds 40 vitality and increases his weight by 10." / TH "เพิ่ม 40Vit และ 10Weight ให้กับวาฬ" (`WhaleSkill_eng.cs:902`, `WhaleSkill_thai.cs:933`). Matches.
+
+### 4.13 Peninsula Asunder (`whale_peninsulaAsunder`, #442)
+- reqLv 85, reqBn 6. Fully traced in §3.15 ("Peninsula Asunder", "Peninsula Impale", "Peninsula Round"): Impale box `3 × 12 m` (from `2 × 6`) with `+10` inside `talAdjust` and auto-turn toward the locked target before each stab; Round box `6 m wide × 5 m` from 1 m behind (from `3 × 4`).
+- Client tooltips: EN "Doubles the range of peninsula skills. Also enables PeninsulaImpale to automatically turns toward a locked target." / TH adds "+Dmg อีก 10" (`WhaleSkill_eng.cs:968`, `WhaleSkill_thai.cs:999`). TH matches the code better.
+
+### 4.14 Over Weight (`whale_overWeight`, #413)
+- reqLv 60, reqBn 1. Two `hasSkill(413)` sites:
+  - **Heavy Weight:** the `heavy` status level is `rank + 1` in both the ally and the enemy branch (`Whale.cs:30228`, `:30250`).
+  - **Over Presence:** the aura level is +1 (`Whale.cs:9940`), i.e. −20 / −30% move speed.
+- Client tooltips: EN "Increases the resulting effect of HeavyWeight and OverPresence by 1 level." / TH matches (`WhaleSkill_eng.cs:990`, `WhaleSkill_thai.cs:1021`).
+
+### 4.15 Spiral Blast (`whale_spiralBlast`, #423)
+- reqLv 70, reqBn 3. All in `RPC_hydroBlast_fire` (`Whale.cs:9975-10060`):
+  - area `FindAreaTarget(mPos, 1 → 2, 6)` (radius 1 m → 2 m, height 6 m, no `rangeMod`);
+  - damage `hit(320 + rank, t, talAdjust(10 × rank + 10 + 20) + target weight, KO rank, 0, 5 × up)`: **+20 inside `talAdjust`**, not +50%;
+  - on a landed hit, `RPC_AddStatus("wash", rank, 1, 0, …)` on the target. `wash` removes every **Physical Buff** on the target whose level is ≤ the wash level (`CharacterControl.cs:36103-36140`).
+  - It also adds the `spiralBlast` effect and voice (`:9982-9995`, `:30859`).
+- Client tooltips: EN "Increases the damage of HydroBlast by 50% and gives it an ability to remove all positive physical status from the target." / TH same (`WhaleSkill_eng.cs:1001`, `WhaleSkill_thai.cs:1032`). Code wins: +20 TAL base (not 50%), and the cleanse only reaches status levels ≤ the Hydro Blast rank.
+
+### 4.16 Diving Press (`whale_divingPress`, #443)
+- reqLv 85, reqBn 6.
+  - **Whale Wave** (`$RPC_whaleWave`, `Whale.cs:31853-32111`): radius `6 → 9` m (`:31940`); per target the damage `ceil(talAdjust((int)(weight × (0.5 + 0.5 × rank))) × (1 − 0.05 × distance))` and KO `5 × rank` are each multiplied by 1.5 and floored (`:31973-31999`), so KO 5 / 10 → 7 / 15. Swaps to the `divingWave` animation and effect.
+  - **Mal Storm** (`$RPC_malStorm`, `Whale.cs:32686-32775`): radius `8 → 12` m (`:32686`), damage `floor(1.5 × talAdjust(20 × rank + 10))`, KO `1 → 2` (`:32701-32710`), `divingStorm` animation, and a second bolt effect per strike (`createMalstormBolt`, `:10206`, visual only).
+  - The `hasSkill(443)` checks in `CharacterControl.cs` (`:4232`, `:11985`, `:12019`) are other classes' branches.
+- Client tooltips: EN "Increases damage, ko, and range of WhaleWave and MalStorm by 50%." / TH same (`WhaleSkill_eng.cs:1023`, `WhaleSkill_thai.cs:1054`). Matches (Mal Storm's KO goes 1 → 2).
+- Note: §2's table lists Whale Wave KO as "1-3"; the code is `5 × rank` (`Whale.cs:31983`).
+
+### 4.17 Open questions & card mismatches (2026-10-01)
+
+**Card mismatches** (cards in `index.html` vs the entries above; not patched):
+1. `whale_shieldBash`, `whale_culinaryTongue`, `whale_superSize`, `whale_autoShield`, `whale_lastHope`, `whale_overPresence`, `whale_hardenSkin`, `whale_entendedWave`, `whale_gourmetHeart`, `whale_megaSize`, `whale_overWeight`, `whale_spiralBlast`, `whale_divingPress` are bare cards: no `passive:true` and no `desc`.
+
+**Open questions (need a live check):**
+1. Over Presence radius: set by the prefab's trigger collider (EN tooltip 6 m, TH 10 m).
+
 ## Server Balance Variations
 
 Base engine (BigBug) values are documented above; this section lists private-server deltas.
