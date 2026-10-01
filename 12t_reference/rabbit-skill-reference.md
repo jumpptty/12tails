@@ -1,6 +1,6 @@
 # Rabbit — Skill Cooldown/Duration Reference
 
-Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
+Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/bible/index.html`).
 Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
@@ -88,7 +88,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   is `4` s unlearned and 6/8/10/12 s at Alchemist Lab 1-4 (corrected 2026-09-26; it was reported as `6`); the previous "no usable Duration"
   judgment call was correct for `Rabbit.cs` alone but missed this per-skill companion file. This is also
   the first case in this doc of a skill whose Duration is a function of a *different* skill's learned
-  rank rather than only CHA/LCK — see `12t_projects/player-reference-tool/index.html`'s `dep` field on
+  rank rather than only CHA/LCK — see `12t_projects/bible/index.html`'s `dep` field on
   the `SKILLS` entry, which encodes this relationship structurally for the lookup tool
   (`rawAtRank(R) = duration + perRank*(R - minRank)`, `minRank:1, maxRank:4, perRank:2` here).
 - **`bunnyBargain1`-`4` are confirmed passives (NPC shop discount/bonus), and `herbFinder1`-`2`
@@ -110,7 +110,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `medicalEnhancement` rank is learned), which feeds directly into the ImmuneShot/BoostShot/HeatShot/
   LifeShot duration formulas below — see the Duration citations note. This relationship is encoded
   structurally in the lookup tool's data via each of those four `SKILLS` entries' `dep` field
-  (`12t_projects/player-reference-tool/index.html`): `rawAtRank(R) = duration + perRank*(R - minRank)`,
+  (`12t_projects/bible/index.html`): `rawAtRank(R) = duration + perRank*(R - minRank)`,
   `minRank:0, maxRank:3, perRank:5`, letting the tool live-recompute Duration for any learned rank
   instead of only reporting the unlearned base.
 - **`customizedShotgun1`/`2` are confirmed passives, but their `getSkill()` entries are a dead-code-
@@ -320,7 +320,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 # Damage & Mechanics
 
 
-Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted as-is below, not re-derived here except where flagged). This doc backs the rank-selector + damage/heal-formula fields (`maxRank`, per-rank `cd`/`castTime`/`duration` arrays, `dmg`, `dmgDep`/`dmgMultDep`, `atkCoeff`, `hitCount`, `dmgGroups`) added to Rabbit's `SKILLS` entries in `12t_projects/player-reference-tool/index.html`, 2026-08-25 — the 3rd class built out beyond Penguin (1st) and Mole (2nd). Researched via decompiled source analysis of `DecompiledSource/Rabbit.cs`, `DecompiledSource/RabbitSkill.cs`, `DecompiledSource/RabbitSkill_eng.cs`, and companion files (`Rabbit_potion.cs`, `Rabbit_acidicField.cs`, `Rabbit_healingField.cs`, `Rabbit_stickyGum.cs`). All citations are `file:line` against `DecompiledSource/Rabbit.cs` unless noted.
+Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted as-is below, not re-derived here except where flagged). This doc backs the rank-selector + damage/heal-formula fields (`maxRank`, per-rank `cd`/`castTime`/`duration` arrays, `dmg`, `dmgDep`/`dmgMultDep`, `atkCoeff`, `hitCount`, `dmgGroups`) added to Rabbit's `SKILLS` entries in `12t_projects/bible/index.html`, 2026-08-25 — the 3rd class built out beyond Penguin (1st) and Mole (2nd). Researched via decompiled source analysis of `DecompiledSource/Rabbit.cs`, `DecompiledSource/RabbitSkill.cs`, `DecompiledSource/RabbitSkill_eng.cs`, and companion files (`Rabbit_potion.cs`, `Rabbit_acidicField.cs`, `Rabbit_healingField.cs`, `Rabbit_stickyGum.cs`). All citations are `file:line` against `DecompiledSource/Rabbit.cs` unless noted.
 
 ---
 
@@ -650,12 +650,12 @@ Hit counts per **target**, checked by listing every `hit()` call, its `Find*Targ
 
 Every Rabbit card description was first written from the client tooltips, then traced in source in three passes (shooting kit, economy and mercenary skills, multi-hit geometry; see the sections above). Basis per skill now:
 - **Source-verified with citations in this file:** Combo, Charge Attack, Hyper Shot, Snipe Mastery, Bouncing Bullet, Dead Shot, Customized Shotgun, From the Above, Bounce, Stat Scan, Maim Shot, Knee Shot, Mix, Extra Potion, Shake, Miracle Blend, Miracle Drop, Alchemist Lab, Sticky Gum, Acidic Field, Healing Field, Immune / Boost / Heat / Life Shot, Medical Enhancement, Rapid Trance, Gorgon Shot, Gil Shot, Diamond Shot, Bunny Bargain, Skill Bargain, Herb Finder, Backpack, Big Bag, Four / Circle / Ten Shot, Shooting Array, Millionaire, Extravagance, Contract, New Order, Med Research, Truce Trading (client-side roll only) and Mall (client-side only). Resource costs of every skill were re-checked against `decode_skilldata.py`.
-- **Open questions (not resolvable from the decompiled client):**
-  1. **Special Deal** (+5/10/15/20% mission money and EXP): no reader in any `*.cs` file, see the economy section. The card shows the tooltip and says so.
-  2. **Snipe Mastery "+2 Hyper Shot levels" / "6 damage per metre"** (tooltips): not in the code; the code only removes the 16 m offset and 40 m cap and gives the shotgun bonus x1.5. A live test would show whether a server changed it.
-  3. **Mall item slots 4 / 8** (tooltip): no rank-gated limit found in the client (`MallGui` has 8 slots).
-  4. **Truce Trading price (150% / 100%) and the fixed 15% / 20% (English) or 10% / 20% (Thai) success rates**: the purchase is not in the client; only the `LCK × rank > Random(0, target HP)` roll is.
-  5. **Contract, 50% no-coin-loss** (tooltip) versus code `lckAdjust(30)` with `<=`: the card follows the code.
+- **Former open questions, decided 2026-10-01 (user):**
+  1. **Special Deal** (+5/10/15/20% mission money and EXP): searched again (Rabbit files, `CharacterControl.cs`, `Game.cs`, `GameGui.cs`, mission files; #361-364 hooks elsewhere belong to Cat, Bison and Sheep) and still no reader; it is presumably server-side. The card keeps the tooltip value with no disclaimer.
+  2. **Snipe Mastery:** the card follows the code (no 16 m offset, no 40 m cap, shotgun bonus x1.5); the tooltip's "+2 Hyper Shot levels" / "6 damage per metre" are not used.
+  3. **Mall:** 8 item slots at every rank (`MallGui`); no rank-gated limit.
+  4. **Truce Trading:** the success rate is in the code, `mChar.lck × sLv > Random.Range(0, target.hp)` with raw LCK (no `lckAdjust`), checked once when the 12 s channel ends; a target with `isTraded` set is skipped (`Rabbit.cs:34105-34146`; `isTraded` is never set in the client). Only the price is not in the client.
+  5. **Contract** no-coin-loss: the card follows the code, `Random.Range(0,100) <= lckAdjust(30)` (`GameGui.cs` coin dispatch, `hasSkill(434)`).
 - **Modeled on the Combo and Charge Attack cards since 2026-09-29 (`rawModel`, see GEMINI.md):** `w_rab59` (x0.75 damage), gear crit (Combo only; Charge Attack has no `getCritPlus`), the Hyper Shot distance input (rifle, Bouncing Bullet path, shotgun reversed, Charge Attack), Snipe Mastery, Bouncing Bullet, Customized Shotgun mode, the Charge Attack head-shot toggle and the Dead Shot aim-time slider, and Extravagance as a skill dependency (fixed +512 ATK, the cap) on the nine ATK-based offensive skills (Combo, Charge Attack, Maim Shot, Bounce, Gil Shot, Four / Circle / Ten Shot, Shooting Array).
-- **Not modeled on the cards (verified findings with no card field):** From the Above's air shot (same Hyper Shot rule, not a separate card mode); a single target being hit by several ricochet segments of Bouncing Bullet (needs wall geometry); the `w_rab59` faster attack as damage per second; Ten Shot per-angle hit count; Bunny Bargain in `ArenaShopGui` ignoring Skill Bargain; the unresolved meaning of `Game.useCoin = false` under New Order (`Rabbit.cs:114-120`); Alchemist Lab recipe lists per level; Contract unit stats (Light Panther / Leopard / Golem base stats are not decoded).
+- **Not modeled on the cards (verified findings with no card field):** From the Above's air shot (same Hyper Shot rule, not a separate card mode); a single target being hit by several ricochet segments of Bouncing Bullet (needs wall geometry); the `w_rab59` faster attack as damage per second; Ten Shot per-angle hit count; Bunny Bargain in `ArenaShopGui` ignoring Skill Bargain; New Order's `Game.useCoin = false` in `Start()` (`Rabbit.cs:114-120`, traced 2026-10-01: `Game.useCoin` is the "one NPC coin per stage" lock, set when a coin is used (`Rabbit.cs:46916`, every class has the same line), checked in the coin dispatch ("Can only use one coin per stage.", `GameGui.cs:36636`) and already cleared by `Game.nextGame()` at every stage change (`Game.cs:295-323`); the Rabbit's own reset only runs when its player object is created in a mission, so in normal play it changes nothing); Alchemist Lab recipe lists per level; Contract unit stats (Light Panther / Leopard / Golem base stats are not decoded).
 - **Resolved 2026-09-29:** Truce Trading is a purchase negotiation (see the economy section above); the old "invulnerable trading zone" table row was wrong.

@@ -1,6 +1,6 @@
 # Whale — Skill Cooldown/Duration Reference
 
-Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
+Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/bible/index.html`).
 Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 `homingShield` added 2026-08-14 — see its judgment-call note below for why it was initially left out and
 then given its own row.
@@ -118,7 +118,7 @@ then given its own row.
   now also covers `homingShield`, undocumented in-game same as the other five); none of this changes the
   base (lv-0) numbers reported here. Encoded structurally in the lookup tool's data (2026-08-14) via a
   `cdDep` field on each of the seven affected `SKILLS` entries
-  (`12t_projects/player-reference-tool/index.html`): `knightOfTheDeep1` is single-rank (`minRank:0,
+  (`12t_projects/bible/index.html`): `knightOfTheDeep1` is single-rank (`minRank:0,
   maxRank:1`), so each skill's own `perRank` is just its cited reduction as a negative
   (`sweep`/`javelin`: `-10`, `shieldRush`/`flyingShield`: `-15`, `peninsulaImpale`: `-30`,
   `peninsulaRound`/`homingShield`: `-40`) — all seven share one `id` (`"knightOfTheDeep"`) so toggling
@@ -216,7 +216,7 @@ then given its own row.
 # Damage & Mechanics
 
 
-Verified from decompiled source (`DecompiledSource/Whale.cs`, `DecompiledSource/WhaleSkill.cs`, `DecompiledSource/CharacterControl.cs`, and companion scripts) for the player-reference-tool (`12t_projects/player-reference-tool/index.html`).
+Verified from decompiled source (`DecompiledSource/Whale.cs`, `DecompiledSource/WhaleSkill.cs`, `DecompiledSource/CharacterControl.cs`, and companion scripts) for the Bible skill-details tool (`12t_projects/bible/index.html`).
 
 ---
 

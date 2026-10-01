@@ -1,6 +1,6 @@
 # Panda — Skill Cooldown/Duration Reference
 
-Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
+Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/bible/index.html`).
 Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 `climbingCliff`/`crumblingMountain` added 2026-08-14 — see the Tiger Toss family judgment-call note
 below for why they were initially left out and then given their own rows.
@@ -463,7 +463,7 @@ below for why they were initially left out and then given their own rows.
 - **Engine hook:** Panda-only block of `RPC_AddStatus` (`CharacterControl.cs:13467-13510`), after the Roll Around branch and **before** Resistance (`:13512`). If `hasSkill(431)`, `isTimeOut("safeGuard") == 0` and `isDebuffStatus(sType)`: `addTimeOut("safeGuard", agiAdjust(180f))`, `ActionEvent("RPC_safeGuard_hit")`, then `break` — the status is not applied. No chance roll and **no State / System filter**: any debuff that reaches `RPC_AddStatus` (Lock, Petrify, Puncture, Drain/Sap, the `death` status…) consumes it. Because it runs first, it is spent even when Resistance would have blocked the same status.
 - **Cooldown:** `agiAdjust(180)`, set again on every client in `RPC_safeGuard_hit` (`Panda.cs:9721-9760`, which also plays `Effects/safeGuard_hit`). Revised Art applies (it lives in `addTimeOut`, Mechanics §3.5). No `-83` resist popup; the feedback is the `safeGuard_hit` effect.
 - **Client text:** EN *"Gives Panda the ability to passively nullify one negative status every 3 minute."* (`PandaSkill_eng.cs:913-917`); TH *"ป้องกันสถานะผิดปรกติที่แพนด้าได้รับทุกๆ 3 นาที"* (`PandaSkill_thai.cs:935-939`).
-- **Live-unverified:** on-hit Drain statuses (e.g. gear `hpDrain`) would consume Safe Guard like any other debuff.
+- **Drain statuses:** on-hit Drain statuses (e.g. gear `hpDrain`) are debuffs, so they consume Safe Guard like any other debuff (accepted by the user 2026-10-01; not tested live).
 - **App Modeling:** card `panda_safeGuard` (`passive: true`, `cd: 180`, `cdWrapped: true`, `revisedArtExempt: false`, `compatSkills: ["panda_resistance"]`; Resistance links back).
 
 ## Server Balance Variations (ToT)

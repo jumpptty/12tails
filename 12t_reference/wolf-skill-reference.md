@@ -1,6 +1,6 @@
 # Wolf — Skill Cooldown/Duration Reference
 
-Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
+Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/bible/index.html`).
 Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
@@ -183,7 +183,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   checking `StatusData.isBuffStatus()` (`StatusData.cs:6323-7171`) for each of their status names:
   `"valor"` (`:6464`), `"darkEdge"` (`:6470`), `"lunarEclipse"` (`:6476`), `"holySword"` (`:6482`),
   `"holyArmor"` (`:6488`) — all five `break` (return `true`). This relationship is encoded in the lookup
-  tool's data as a `dep` with `kind:"postMultiply"` (`12t_projects/player-reference-tool/index.html`),
+  tool's data as a `dep` with `kind:"postMultiply"` (`12t_projects/bible/index.html`),
   distinct from Rabbit's `medicalEnhancement`/`alchemistLab` `dep`s (which add to the pre-`chaAdjust` raw
   value instead) — see that spec's addendum for why the two need different `kind`s.
 - **`grandMark` (`Wolf.cs:8578`, `RPC_grandMark`) and `wlf_resurrect1`-`3` (a leftover/legacy name in the

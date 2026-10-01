@@ -1,6 +1,6 @@
 # Sheep — Skill Cooldown/Duration Reference
 
-Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
+Verified 2026-08-13 for the skill-cooldown-lookup tool (`12t_projects/bible/index.html`).
 Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
@@ -160,7 +160,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `30 + 15*4` = `90`, the value reported.
   This is the first Sheep case of a skill whose Cooldown (not Duration) depends on a *different* skill's
   learned rank — encoded structurally in the lookup tool's data via a `cdDep` field (2026-08-14) on the
-  `sheep_bless` `SKILLS` entry (`12t_projects/player-reference-tool/index.html`): `gospel5` is single-
+  `sheep_bless` `SKILLS` entry (`12t_projects/bible/index.html`): `gospel5` is single-
   rank (learned or not, `minRank:0, maxRank:1`), so `rawAtRank(R) = 90 + (-60)*R` gives the correct `90`
   unlearned / `30` learned (matching this note's own two cited values) despite only being a 2-point
   linear fit — the tool renders this as a single icon toggle (`.sk-dep-toggle`), not a rank stepper,
@@ -261,7 +261,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 # Damage & Mechanics
 
 
-Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/SheepSkill.cs`) for the player-reference-tool (`12t_projects/player-reference-tool/index.html`).
+Verified from decompiled source (`DecompiledSource/Sheep.cs`, `DecompiledSource/SheepSkill.cs`) for the Bible skill-details tool (`12t_projects/bible/index.html`).
 
 Per-skill entries (`### shp_<name>`) are the verified 2026-09-30 pass; they take precedence over the older summary sections further down. Command numbers come from `SheepSkill.cs` `getSkillTree()`; costs and requirements were decoded with `scripts/decode_skilldata.py`.
 
@@ -483,7 +483,7 @@ Kept from the 2026-09-19..28 passes; the per-skill entries above point here. The
   - Status: `lightBind` is code 1106 (`StatusData.cs:1757-1763`), classified Debuff (`:7520`), Magical (`:5855`) and Lock (`:6166`, `:6220`); it is absent from the Buff, State, Physical and Shield predicates. The generic status tick only damages a living target and sends `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (`CharacterControl.cs:9345-9373`), so the damage follows the Effect Damage path in [12Tails-Mechanics-Reference.md §2.9](12Tails-Mechanics-Reference.md#29-damage-routing-hit-vs-direct-rpc_adddamage-vs-rpc_addeffectdamage-verified-2026-09-24).
   - Root: `CharacterControl.cs:2491` — `this.moveSpeed = 0f;`.
   - Damage: `CharacterControl.cs:9369` — `RPC_AddEffectDamage(300 + sLv, 6 * sLv, 0, 0, Vector3.zero, sID)` (every 1.0s, deals 6×(sLv+depLv) true effect damage per tick, reaching 30 damage at Rank 4 + Intense Bind; no burst finisher).
-  - **Live observation (2026-09-25):** Light Bind grants knockback immunity. Keep this player-observed behavior in the app status description. In the decompiled `ApplyMovement()` branch, `lightBind` sets only `moveSpeed = 0` (`CharacterControl.cs:2485-2495`), whereas `needlePrison` and `groundLock` also clear `myForce` (`:2358-2372`, `:2392-2406`); `MovementUpdate()` adds `myForce` independently of `moveSpeed` (`:2722`). The additional live suppression path remains unverified; see [12Tails-Mechanics-Reference.md §4.4](12Tails-Mechanics-Reference.md#44-knockback-force-versus-movement-roots-charactercontrolcs).
+  - **Knockback (re-traced 2026-10-01):** a 2026-09-25 live report said Light Bind grants knockback immunity, but no code path does it: `ApplyMovement()` sets only `moveSpeed = 0` for `lightBind` (`CharacterControl.cs:2485-2495`), unlike `needlePrison` / `groundLock` which also clear `myForce` (`:2358-2372`, `:2392-2406`); the apply site (`:39607-39623`) touches no force, and `recieveForce` is never cleared. The status text no longer mentions knockback (user decision). See [12Tails-Mechanics-Reference.md §4.4](12Tails-Mechanics-Reference.md#44-knockback-force-versus-movement-roots-charactercontrolcs).
   - After cast, Sheep calls `getFreeCast("lightBind", sLv)` (`Sheep.cs:28832`). See the verified Free Cast and Return Cast mechanics below.
 - **`bookBash`** (verified 2026-09-28):
   - Metadata: `shp_bookBash5`, skill #434, Lv 75 / Bn 4, `setMPSP(1, -5)`, instant, target enemy (`SheepSkill.cs:1441-1465`; decoded with `scripts/decode_skilldata.py`). Tooltips: `SheepSkill_eng.cs:1069`, `SheepSkill_thai.cs:1093`.

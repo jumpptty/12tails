@@ -1,6 +1,6 @@
 # Mole — Skill Cooldown/Duration Reference
 
-Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/player-reference-tool/index.html`).
+Verified 2026-08-12 for the skill-cooldown-lookup tool (`12t_projects/bible/index.html`).
 Scope: this table lists active skills (has a real cooldown), max rank only. Passive/no-cooldown skills have no row here because they have no cooldown to report, but they are not excluded from documentation — their mechanics belong in this file's "Damage & Mechanics" section below.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
@@ -291,7 +291,7 @@ Companion to `mole-skill-reference.md` (cooldown/duration/maxRank — trusted as
 re-derived here except where flagged). This doc backs the rank-selector + damage-formula fields
 (`maxRank`, per-rank `cd`/`castTime`/`duration` arrays, `dmg`, `dmgDep`/`dmgMultDep`, `atkCoeff`,
 `hitCount`/`hitCountDuration`) added to Mole's `SKILLS` entries in
-`12t_projects/player-reference-tool/index.html`, 2026-08-18 — the first class built out beyond the
+`12t_projects/bible/index.html`, 2026-08-18 — the first class built out beyond the
 original Penguin pilot (see that project's own `CLAUDE.md`, "Rank selector + damage formula — Penguin
 pilot"). Researched via a `mechanics-researcher` subagent sweep of `DecompiledSource/Mole.cs`,
 `DecompiledSource/MoleSkill.cs`, `DecompiledSource/MoleSkill_eng.cs`, and `Mole_<skill>.cs` companion
@@ -302,7 +302,7 @@ add a flat coefficient of the caster's own **ATK** stat on top of `talAdjust(...
 `0.5×ATK + talAdjust(10×sLv)`. The tool's rendering/calc engine only understood `talAdjust(...)`-wrapped
 or flat expressions before this pass; a new `atkCoeff` field (paired with the pre-existing but
 previously-unexercised `--stat-atk` CSS token) was added to `renderDmgFormula`, `rollOneHit`, and the
-Raw Damage calc chip to support it — see `player-reference-tool/CLAUDE.md` for the code-level detail.
+Raw Damage calc chip to support it (the app's history is in git).
 
 ## Summary table
 
@@ -511,8 +511,7 @@ stats" — this wording is misleading. Actual mechanism:
   turret's ATK/DEF relative to not having it at all** — the tooltip's "add Mole's level" phrasing
   implies a pure bonus, which it is not below that threshold. Modeled in `index.html` as a new
   `dmgReplaceDep` mechanism (distinct from the existing additive `dmgDep`/multiplicative `dmgMultDep`
-  shapes) since it swaps the base term entirely rather than modifying it — see
-  `player-reference-tool/CLAUDE.md`'s dated section for the engine-side detail.
+  shapes) since it swaps the base term entirely rather than modifying it.
 
 **2. Synchro Mole (rank 2) — a genuine additive `+floor(Mole's TAL)` to both ATK and DEF, confirmed to
 apply to Auto Gyro Gun specifically (not just BarrelBot).**
@@ -565,7 +564,7 @@ represents Mole's own stat, correct for every other skill in the tool, wrong for
 ## KO — missed by both prior KO sweeps, added 2026-08-20
 
 Both Mole KO research passes (the original 6-skill sweep and the follow-up 16-skill exhaustive sweep,
-see `player-reference-tool/CLAUDE.md`'s 2026-08-19 entries) skipped Auto Gyro Gun entirely — it was
+2026-08-19) skipped Auto Gyro Gun entirely — it was
 excluded from both hand-picked skill lists, likely because it's already special-cased everywhere else
 (continuous turret AI, not a single cast) rather than a deliberate "checked, confirmed zero" finding.
 User caught this directly by reading `AutoGyroGun.cs` itself: the turret's own auto-fire coroutine
@@ -982,8 +981,4 @@ Source of server delta: `12t_projects/bible/index.html:9160`.
 
 ## Open items / could not verify
 
-_(the King Kaiser open item previously listed here was resolved above, 2026-08-21)_
-
-See `player-reference-tool/CLAUDE.md` for the full code-level detail across every dated pass in this
-file (the `atkCoeff`/`dmgAdjustSkip`/`dmgReplaceDep`/`dmgGroups` engine extensions, every live-Playwright
-verification, and remaining open TODOs).
+None. The King Kaiser item was resolved above (2026-08-21). The `player-reference-tool/CLAUDE.md` file this section used to point to was removed; checked 2026-10-01 in its last git version (`f16268d^`): it held app UI history and visual-check notes, no unresolved mechanics.
