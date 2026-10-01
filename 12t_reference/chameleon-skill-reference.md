@@ -520,6 +520,11 @@ Each of the eight Slayer cards is its own skill: own reqLv/reqBn, own race, own 
 1. **Final Entrapment cage:** the code only spawns `Effects/finalEntrapment` with a lifetime and position-syncs characters within 8 m; what blocks enemies is in the prefab (colliders), which the decompiled source does not show. No status is applied.
 2. **`invisible` status value:** True/Mass Invisibility pass `talAdjust(10 × sLv)` / `talAdjust(20 × sLv)` as the status value; no reader was found in `CharacterControl.cs`, `StatusData.cs`, `Damage.cs`, `GameGui.cs` or the Chameleon files.
 3. **Zero Shot pull timing:** the pull and the hit are separate states of `RPC_zeroShot`; how many pull pulses run before the hit was not pinned down.
+4. **Crit gear, code vs the Chameleon Simulator (needs a live check):** the Combo arrow counts only G.Marshal Bow +4, Mantis Bow R +5, Mantis Suit R +4, Mantis Hat R +3 (`Chameleon_nAttack.cs:517-668`); Champion gear and Marshal armor/hat add nothing. The Chameleon Simulator in `index.html` (`CHM_WEAPONS` / `CHM_HELMETS` / `CHM_ARMORS`) assumes Champion bow/helmet/armor +7/+5/+6. The cards follow the code.
+5. **Clear Arrow hate (needs a live check):** the hate reduction is clamped to 0 by `hateAdjust`, so in code a Clear Arrow makes the same hate as a normal arrow, unlike the tooltip.
+6. **Tent (needs a live check):** in code a direct hit while in `tent` deals max-HP damage; finishing restores HP/MP, resets every cooldown and clears hate. The tooltip's status removal and SP restore are not in code.
+7. **Tooltip mismatches (cards follow code; details in each skill entry):** Piercing Venom (+4 vs 6), All Slain rank 2 (150 vs `talAdjust(200)`), Erase Senses (+50% vs +4 s), Bow Mastery (+50% vs +33% speed), Added Fire Thai (+30% vs +40%), Needle Prison rank 2 English (2 vs 3 s), Perfect Blend rank 2 (3 vs 4 s), Increased Poison Thai (+2 s every rank), Combo damage-loss percentages.
+8. **Defaults:** the new Chameleon passive/gear toggles (Critical Plus, Bulls Eye, Fatal Strike, crit gear, Piercing Venom, …) start off, like every other dep, so Combo shows no crit until they are turned on.
 
 ## Server Balance Variations
 
