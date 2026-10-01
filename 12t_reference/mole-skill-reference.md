@@ -432,6 +432,43 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - Passive, Lv 60/Bn 1. Sky Drill only (`:31974`, `:32085-32120`): `totalDigTime = FloorToInt(Time.time − actionTime)` (`:31795`); `FindAreaTarget(Mole pos, 5, 5 × rangeMod, enemy layers)`; `hit(413, t, 8 + totalDigTime, KO 8 + totalDigTime, …)` — normal `hit()` path (`dmgAdjust`/`defAdjust`). Tooltip matches.
 
+### mol_autoGyroGun1-4 (Auto Gyro Gun, #301-304) (verified 2026-10-01)
+
+- MP 10/15/20/25, SP −10 (red) at every rank, Lv/Bn 3/0, 9/1, 15/2, 21/3. Cast through `RPC_assemble1("autoGyroGun", …)` (`:8285`, `:22908-23440`): assemble time `magAdjust(1 + sLv)` = 2-5 s, CD `agiAdjust(30)` (`:23353-23429`); the build aborts if `myCommand` stops being `"assemble"` (`:23146`). Spawn point `getSpawnVector(pos + up, 0.7 × forward − up)` (`:23199`).
+- `RPC_autoGyroGun_create` (`:11751-12160`): prefab `AutoGyroGun1-4`, `isSummon`, life `chaAdjust(120)` (`create(…, chaAdjust(120))`, `AutoGyroGun.cs:1610-1740`). Base stats from `Awake` (`AutoGyroGun.cs:42-140`): all eight stats `10 × sLv`, HP `50 × sLv`. Hidden Turret #403 overrides them (`:12141-12160`): ATK/DEF `(int)(0.25 × sLv × Lv)`, AGI/VIT/MAG/CHA/TAL/LCK `(int)(0.125 × sLv × Lv)`, MHP `ceil(10 × VIT)`. Heavy Built: MHP `ceil(MHP × (1 + 0.5 × lv))` (`:12203-12210`). No turret count limit in the client (ToT's 8/12 cap is server-side, see Server Balance Variations).
+- Reload clears the `autoGyroGun` cooldown (`:10202`). The app model is `autoGyroGunOwnStats()`.
+
+### mol_autoGyroGun_nAttack (Auto Gyro Gun attack) (verified 2026-10-01)
+
+- `AutoGyroGun.AIControl` (`AutoGyroGun.cs:733-990`): in standby, once per second after the first 2 s, `findAttackTarget` picks a **random** enemy from `Hate.findEnemies(pos, 8 + 4 × mLv, layer)` (`:991-1030`) and `RPC_fire`s at it; each fire sets `addTimeOut("nAttack", 2)`, so one shot per 2 s.
+- `RPC_fire` (`AutoGyroGun.cs:1100-1480`): `FindRecTarget(pos, dir, 0.2, 0.5, 8 + 4 × mLv, 2, enemy layers)` (half-widths: 0.4 → 1 m wide, `:1220`); every target in the line takes `hit(1, t, turret ATK, KO 1, …)` (`:1243`) — the normal `hit()` path with the turret's own stats.
+
+### mol_hiddenTurret5 (Hidden Turret, #403) (verified 2026-10-01)
+
+- Passive, Lv 55/Bn 0. `getHiddenTurretLv()` (`:13651-13653`).
+- Stats: see Auto Gyro Gun.
+- Hide (`AutoGyroGun.cs:832-848`): when the owner has #403 and `Time.time > hideTimer` (first set to spawn + 3 s, `AutoGyroGun.cs:61`; refreshed to `now + 6` on every shot, `:793`), the turret plays `RPC_hide` (`myCommand = "hide"`, `actionState = "attack"`, `AutoGyroGun.cs:1825-1941`). While hidden, the turret's `RPC_AddDamage` takes `ceil(0.3 × nDamage)` (`CharacterControl.cs:5225-5262`, types AutoGyroGun1-5). It unhides (`RPC_unhide`, 1 s) when a target is found again (`AutoGyroGun.cs:958-961`).
+
+### mol_speedDrill1-2 (Speed Drill, #311-312) (verified 2026-10-01)
+
+- Passive, Lv/Bn 5/1, 11/3. `getSpeedDrillLv()` (`:12251`). Charge Attack only (`:22463`): underground speed `2 + 1.5 × lv` (`:21818`); dig-in `1.9 − 0.5 × lv` s, `1 − 0.2 × lv` with Super Dig (`:21609`, `:22186`). Tooltip "3.5/5 ts, −25 %/−50 %": the speed matches; the dig-in time is −26 %/−53 % in code.
+
+### mol_skyDrill1-2 (Sky Drill, #313-314) (verified 2026-10-01)
+
+- Passive, Lv/Bn 17/5, 23/7. `getSkyDrillLv()` (`:12258`, `:9972`).
+- Trigger (`doReleaseCharge`, `:9972-10012`): releasing Charge Attack (`myCommand == "cAttack1"`) after more than 3 s underground (`Time.time − actionTime > 3`) and only when `Game.mGameType > 4` (real game modes); otherwise the normal `RPC_cAttack0` surfacing.
+- `RPC_skyDrill` (`:31496-32200`): `hitDmg = (int)(0.5 × ATK + talAdjust(10 + 10 × sLv))` (`:32080`); 2 rings (`i < 2`, `:32167`) 0.8 s / 0.1 s apart, ring `i` = `FindAreaTarget(pos, (1 + i) × rangeMod, 5 × rangeMod, enemy layers)` (`:31649`); `hit(312 + sLv, t, hitDmg, KO 4 × sLv, …)` (`:31672`). No de-duplication between rings, so a target within 1 m takes both. Sky Shaker hit: see Sky Shaker. Tooltip "20/30 × 2" is the TAL part only.
+
+### mol_superDig5 (Super Dig, #411) (verified 2026-10-01)
+
+- Passive, Lv 60/Bn 1. Charge Attack: dig-in `1 − 0.2 × SpeedDrill` s instead of `1.9 − 0.5 × SpeedDrill` (`:22186`); heal `RPC_AddHeal(411, ceil(0.01 × MHP))` every 2 s underground while below max HP, real game modes only (`:21823-21860`). `:22290`, `:22359`, `:22469` are animation/dust only. Tooltip matches.
+
+### mol_megaDrill5 (Mega Drill, #433) (verified 2026-10-01)
+
+- SP 36 **blue**, Lv 75/Bn 4, target. CD `agiAdjust(30)` (`:39724`).
+- `RPC_megaDrill` (`:39324-39830`): brief `moveSpeed −5` wind-up, then 4 hits (`i < 4`, `:39761`): `FindRecTarget(pos, fwd, 1, 1, 3, 2, enemy layers)` (2 m wide, 3 m long, `:39563`); `hit(2, t, ATK + talAdjust(45), KO 2, …)` (`:39586`), `sp + 1` per target hit.
+- Passive part: Mega Punch and Mega Hammer `floor(1.5 × hitDmg)` (`:32488`, `:33081`); Barrel Bot gets `drillLv = 1` (`RPC_barrelBot_create`, `:12939`). Card correction: hit count 4 (was 1).
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
