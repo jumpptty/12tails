@@ -1103,7 +1103,7 @@ SKILLS.forEach(sk => {
 // "<classPrefix>_<dep.id>" (every observed dep so far lives in the same class
 // as the skill(s) that reference it).
 // Standalone combat-condition / stack-count toggles that do not correspond to an individual passive skill card.
-const PSEUDO_DEPS = new Set(["doomStack", "slayerRaceMatch"]);
+const PSEUDO_DEPS = new Set(["doomStack", "slayerRaceMatch", "moleStructureTarget"]);
 const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep", "lckDiffDep"];
 const seenDeps = new Map(); // dep.id -> { label, resolved, referencedBy: [] }
 SKILLS.forEach(sk => {
@@ -1324,6 +1324,12 @@ let checkedEffectProc = 0;
     check("Colossal Weapon 2: splash line shown with Stage 1", on.includes('data-role="splash-line"') && /Stage 1 <span class="dmg-effect">\d/.test(on));
     deps.colossalWeapon = 0; sandbox._calcRangeFor = undefined; sandbox._selectSkill(bc); const off = sandbox._getRenderedHeroHtml();
     check("Colossal Weapon off: no splash line", !off.includes('data-role="splash-line"')); }
+  // Mole TNT (Mole.cs:26048): talAdjust((int)(20 + 10 x n + (Super TNT ? (0.1 n + 0.1) x Lv : 0))); at Lv 100: TNT 4 = 60 + 50 = 110, TNT 1 = 30 + 20 = 50.
+  { const lvSaved = inputs.lv.value; inputs.lv.value = "100";
+    check("TNT 4 + Super TNT at Lv 100 base 110", sandbox.moleTntBase(4, 1) === 110, sandbox.moleTntBase(4, 1));
+    check("TNT 1 + Super TNT at Lv 100 base 50", sandbox.moleTntBase(1, 1) === 50, sandbox.moleTntBase(1, 1));
+    check("TNT 4 without Super TNT base 60", sandbox.moleTntBase(4, 0) === 60, sandbox.moleTntBase(4, 0));
+    inputs.lv.value = lvSaved; }
   const mega = byId("whale_megalodon");
   check("Megalodon Pull group always purple", purpleRate(mega, 50, 0) === 1);
   check("Megalodon Bite group always white", purpleRate(mega, 50, 1) === 0);
@@ -1851,7 +1857,8 @@ let checkedCritView = 0;
   const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
   const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
-  check("the cards that model crit are Bison Combo, Chameleon Left Stride and Combo, Panda Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo, Whale Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_leftStride,chameleon_nAttack,panda_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,whale_nAttack,wolf_nAttack", critCards.join());
+  const EXPECTED_CRIT_CARDS = ["bison_nAttack", "chameleon_leftStride", "chameleon_nAttack", "mole_nAttack", "panda_nAttack", "rabbit_nAttack", "sheep_bookBash", "sheep_nAttack", "whale_nAttack", "wolf_nAttack"];
+  check("the cards that model crit are " + EXPECTED_CRIT_CARDS.join(", "), critCards.join() === EXPECTED_CRIT_CARDS.join(), critCards.join());
   // Panda Combo goldens (Panda.cs:15320, :15528, :18652): ATK 100, SP 50, Focused Spirit 2 -> FS 30; stage 1 trunc(0.2 x 130) = 26, crit trunc(0.2 x (180 + 30)) = 42;
   // stage 1 punch 2 never crits; Aura Blast 125 + 30 = 155, crit floor(1.8 x 125) + 30 = 255.
   {

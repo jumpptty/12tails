@@ -286,6 +286,57 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 # Damage & Mechanics
 
+Per-skill entries (`### mol_<name>`) are the verified 2026-10-01 pass; they take precedence over anything older in this file. Command numbers come from `MoleSkill.cs` `getSkillTree()`; costs and requirements were decoded with `scripts/decode_skilldata.py`. Line numbers are `DecompiledSource/Mole.cs` unless another file is named.
+
+### mol_nAttack1-4 (Combo, #101-104): one cannon shell per stage (verified 2026-10-01)
+
+- Passive, Lv/Bn 1/0, 2/1, 3/2, 4/3. Stage `n + 1` needs #10n and a press within the stage window (`doNormalAttack`, `:9515-9800`); `addTimeOut("nAttack", 1.5)` (`:20602`, `:20901`). Up to 5 shells at Combo 4.
+- Each stage fires one `RPC_nAttack_fire` shell (`:20473`, `:21235`), `ProjectileControl.life = 10 × rangeMod` (`:10089`), speed 15 (`Mole_nAttack.cs:20-34`). Star Cannon (`w_mol59`) fires two shells at ±9° instead (`:20419-20464`).
+- **Hit (`Mole_nAttack.cs:90-175`):** on touching an enemy, `num = (int)((0.5 + 0.1 if Cannon Expert #401) × ATK)`, `floor(0.75 ×)` with `w_mol59`, then `mole.getCritPlus(num)` (standard Marshal 12 / Champion 18 table, `:19229-19378`); explosion `FindAreaTarget(point, (4 + ExtraPowderLv) × rangeMod, 4)`; each target takes `hit(1, t, floor(num × (1 − 0.5 × d / r)), KO 1, …)` (falloff `0.25` with Cannon Expert), `onNormalAttackHit`, `sp++`.
+- **Card:** `atkCoeff` 0.5 / 0.6 with Cannon Expert, hit count Combo + 1, `critProc` with gear deps; value is the centre of the blast.
+
+### mol_cAttack1-3 (Charge Attack, #111-113): burrow (verified 2026-10-01)
+
+- Passive, Lv/Bn 4/1, 10/2, 16/3. `getChargeAttackLv()` 0-3 (`:10110`).
+- `RPC_cAttack1` (`:21411-22647`): dig-in time `1.9 − 0.5 × SpeedDrill` s, `1 − 0.2 × SpeedDrill` with Super Dig #411 (`:21609`, `:22186`); underground `moveSpeed` lerps to `2 + 1.5 × SpeedDrill` (`:21818`), renderers hidden and collision with players ignored; every 0.2 s `removeLockStatus(2 × chargeLv − 1)` (`:21755-21769`); auto-surfaces after `4 × chargeLv` s (`digTimeOut`, `:21553`, `:21716`). Super Dig: `RPC_AddHeal(411, ceil(0.01 × mhp))` every 2 s while under and below max HP, real game modes only (`:21823-21860`). No damage immunity was found for the underground state (only hidden + no player collision).
+- Release (`doReleaseCharge`, `:9938-10060`): Sky Drill when learned and underground for more than 3 s (see Sky Drill), else `RPC_cAttack0`.
+- Tooltips: "max 4/8/12 sec" matches; English "lv2/3/4 lock" vs code levels 1/3/5 (`2 × rank − 1`), Thai "ต่ำกว่า 2/4/6" matches the code.
+
+### mol_gadgeteer1-4 (Gadgeteer, #121-124) (verified 2026-10-01)
+
+- Passive. Only read by the Workshop (`CompoundGui.cs:1190-1250`): each of #121-124 and Genius Invention #421 adds one tier to the Mole compound message index (`Language.getMessage("CompoundGui", 400 + n)`). Tooltip "toy lv 10/20/30/40". Not a combat skill. (`CharacterControl.cs` 121-124 hooks are Sheep/Penguin/Panda code.)
+
+### mol_reload1-2 (Reload, #131-132) (verified 2026-10-01)
+
+- MP 15/30, Lv/Bn 32/6, 40/10, instant. CD `agiAdjust(240)`.
+- `RPC_reload` (`:10168-10300`): `removeTimeOut` on mine, mortarShot, bunker, tnt1-4, stunMine, stunGrenade, autoGyroGun, barrelBot, megaPunch, megaHammer; at rank 2 also flameTurret, fireBarrage, bombardment, timeNuke, detonate, chopper, missile, synchroMole, kingKaiser; with Advance Repair #431 also advanceRepair, grenadeCluster, napalm, flameCarnival, megaDrill, barrelCannon, warFactory, warCapital. Then `sp = Clamp(sp + ceil(0.5 × sLv × msp), 0, 100)`.
+
+### mol_mortarShot1-2 (Mortar Shot, #211-212) (verified 2026-10-01)
+
+- SP 12/15 **blue** (threshold), Lv/Bn 5/1, 11/3, target. CD `agiAdjust(30)` (`:24792`). The card's former SP 12/16 was wrong.
+- `RPC_mortarShot` (`:24470-25102`): `2 × sLv + 1` shells (`:24927`), 0.1 s apart; shell speed 20, `life = 5 × rangeMod` (`Mole_mortarShot.cs:19-49`, `:10745-10803`).
+- `RPC_mortarShot_hit` (`:10804-10946`): `FindAreaTarget(point, 4 + ExtraPowderLv, 4)`, `floor((1 − 0.5 × d / r) × (0.5 × ATK + talAdjust(15)))`, ×2 on `eRace.Structure`, `hit(1, t, …, KO 1)`, `sp + 1`.
+
+### mol_bunker1-2 (Bunker, #213-214) (verified 2026-10-01)
+
+- SP −5/−10 (red), Lv/Bn 17/5, 23/7, instant. CD `agiAdjust(30)` (`:25319`). Holds (`myCommand = "bunker" + sLv`) until a movement key is pressed (`:25509-25537`).
+- In the Mole's `RPC_AddDamage` (`CharacterControl.cs:4636-4672`, after `hitMod`): `bunker1` `nDamage = ceil(0.5 ×)`, `bunker2` `ceil(0.25 ×)`, `nKo = 0`. Effect Damage is not reduced.
+
+### mol_tnt1-4 (TNT, #221-224) (verified 2026-10-01)
+
+- SP −10 (red) at every rank, Lv/Bn 7/2, 13/4, 19/6, 25/8. The card's former SP 10/15/20/25 was wrong. Each rank is its own cast with its own cooldown key `"tnt" + n`, `agiAdjust(90)` (`:26180`).
+- `RPC_tnt` (`:25639-26390`): TNT at `8 × n` m ahead (`:25846`); `mTntLv` = highest TNT owned (`:25989-26013`); `hitDmg = talAdjust((int)(20 + 10 × mTntLv + (Super TNT #422 ? (0.1 × n + 0.1) × Lv : 0)))` (`:26048`), `n` = the TNT being cast; `FindAreaTarget(pos, (4 + ExtraPowderLv) × rangeMod, 3 × rangeMod)`; `hit(220 + mTntLv, t, (int)((1 − 0.5 × d / r) × hitDmg), KO 5, …)`, `sp + 1`.
+- **Card correction:** Super TNT is inside `talAdjust` and uses the cast TNT's own `n` (0.2 / 0.3 / 0.4 / 0.5 × Lv), not a flat 0.5 Lv added afterwards.
+
+### mol_superTNT5 (Super TNT, #422) (verified 2026-10-01)
+
+- Passive, Lv 70/Bn 3. The TNT term above. **Tooltip discrepancy:** "+40 damage and 2 m radius"; no radius change in code.
+
+### mol_extraPowder1-3 (Extra Powder, #261-263) (verified 2026-10-01)
+
+- Passive, Lv/Bn 24/15, 28/18, 30/21. `getExtraPowderLv()` 0-3 (`:11438-11480`). Radius `4 + lv`: Combo (`Mole_nAttack.cs:218`), Landmine (`:10575`), Mortar Shot (`:10850`), Stun Mine (`:11072`), Smart Shell (`:11535`), TNT (`:26033`), Bombardment (`:30323-30373`), Napalm (`:37669`); Time Nuke `20 + lv` (`Mole_timeNuke.cs:882`); Cart Bomb `6 + 1.5 × lv` (`:14177`); Grenade Cluster `(int)(4 + 0.5 × lv)` (`Mole_grenadeCluster.cs:179`).
+
+
 
 Companion to `mole-skill-reference.md` (cooldown/duration/maxRank — trusted as-is below, not
 re-derived here except where flagged). This doc backs the rank-selector + damage-formula fields
