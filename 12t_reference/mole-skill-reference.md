@@ -469,6 +469,46 @@ Raw Damage calc chip to support it (the app's history is in git).
 - `RPC_megaDrill` (`:39324-39830`): brief `moveSpeed −5` wind-up, then 4 hits (`i < 4`, `:39761`): `FindRecTarget(pos, fwd, 1, 1, 3, 2, enemy layers)` (2 m wide, 3 m long, `:39563`); `hit(2, t, ATK + talAdjust(45), KO 2, …)` (`:39586`), `sp + 1` per target hit.
 - Passive part: Mega Punch and Mega Hammer `floor(1.5 × hitDmg)` (`:32488`, `:33081`); Barrel Bot gets `drillLv = 1` (`RPC_barrelBot_create`, `:12939`). Card correction: hit count 4 (was 1).
 
+### mol_barrelBot1-4 (Barrel Bot, #321-324) (verified 2026-10-01)
+
+- MP 25/35/45/55, SP −10 (red) at every rank, Lv/Bn 7/2, 13/4, 19/6, 25/8. Cast through `RPC_assemble1("barrelBot", …)` (`:5130-5170`): assemble time `magAdjust(3 + sLv)` = 4-7 s, CD `agiAdjust(240)` (`:23370-23429`).
+- `RPC_barrelBot_create` (`:12279-13040`): without Double Bot #423 the old bot is destroyed; with it the old bot is kept as the second bot (`yGTaGbALKi`) and any older second bot is destroyed (`:12415-12430`). Base stats from `BarrelBot.Awake` (`BarrelBot.cs:25-160`): HP `100 × sLv`, ATK/DEF `15 × sLv`, VIT/TAL/LCK `10 × sLv`, AGI/MAG/CHA 10. Double Bot: every stat `(int)(stat + 0.5 × Lv)`, then MHP `10 × VIT` (`:12708-12725`). Heavy Built: MHP `ceil(MHP × (1 + 0.5 × lv))` (`:12765-12770`). Weapon levels copied from the Mole: PunchLv #331-332, HammerLv #333-334, ChopperLv #341-343, MissileLv #351-354, DrillLv #433, CannonLv #443 (`:12940-13035`). No lifetime: the bot is destroyed only when it dies or its creator is gone (`BarrelBot.cs:179-260`).
+- **AI (`BarrelBotAI.cs`):** targets come from `getHateTarget` after a `Hate.findEnemies(pos, 32, layer)` vision check (`:1347`). `AI_attack` picks the first ready weapon by distance to the target's edge (`:945-1215`): Missile < 16 m, Chopper < 4, Drill < 2, Hammer < 2, Punch < 3, normal attack < 1; otherwise it runs at the target and fires Cannon when < 20 m. Each weapon has its own cooldown on the bot (`agiAdjust` with the bot's AGI, except normal attack and drill).
+- The app model is `barrelBotOwnStats()`.
+
+### mol_barrelBot_nAttack (Barrel Bot normal attack) (verified 2026-10-01)
+
+- `BarrelBot.RPC_nAttack` (`BarrelBot.cs:2050-2540`): two swings (states 3 and 4), each `FindAreaTarget(pos + 0.25 fwd, 1.5, 3)` and `hit(1, t, (int)(0.5 × ATK), KO 1, …)` (`:2249-2272`, `:2341-2364`); `addTimeOut("nAttack", 3)` (`:2480`). Card correction: 2 hits (was 1).
+
+### mol_barrelBot_punch (Barrel Bot Mega Punch) (verified 2026-10-01)
+
+- `BarrelBot.RPC_punch` (`BarrelBot.cs:2588-2940`): `FindRecTarget(pos, fwd, 1, 1, 3.5, 3)` (2 m wide, `:2752`); `hit(2, t, (int)(0.4 × ATK + talAdjust(12 × PunchLv)), KO 5, …)` (`:2775`); CD `agiAdjust(12)` (`:2891`). No Mega Drill ×1.5 here (that is only in the Mole's own `RPC_megaPunch`).
+
+### mol_barrelBot_hammer (Barrel Bot Mega Hammer) (verified 2026-10-01)
+
+- `BarrelBot.RPC_hammer` (`BarrelBot.cs:2988-3340`): `FindRecTarget(pos, fwd, 2, 2, 2.5, 3)` (4 m wide, `:3147`); `hit(3, t, (int)(0.5 × ATK + talAdjust(10 × HammerLv)), KO 10 × HammerLv, …)` (`:3170`); CD `agiAdjust(15)` (`:3286`). No Mega Drill ×1.5.
+
+### mol_barrelBot_chopper (Barrel Bot Chopper) (verified 2026-10-01)
+
+- `BarrelBot.RPC_chopper` (`BarrelBot.cs:3383-3910`): moves forward (`moveSpeed` 3 → 5), 4 hits (`i >= 4` exit, `:3707`), each `FindRecTarget(pos, fwd, 1, 1, 3, 2)` (`:3728`) and `hit(4, t, (int)(0.3 × ATK + talAdjust(5 × ChopperLv)), KO 1, …)` (`:3751`); CD `agiAdjust(60)` (`:3825`).
+
+### mol_barrelBot_missile (Barrel Bot Missile) (verified 2026-10-01)
+
+- `BarrelBot.RPC_missile` (`BarrelBot.cs:3960-4420`): `MissileLv` missiles (`:4219`) fanned by rank (`:4105-4120`), each locked on a random living enemy from `FindAreaTarget(pos, 32, 10)` (`:4109`); CD `agiAdjust(60)` (`:4382`). Homing (`RotateTowards 0.3`, `BarrelBot_missile.cs:45`); on contact `nDamage = target.defAdjust(bot.talAdjust(30))`, `RPC_AddDamage(5, nDamage, KO 3, …)` (`BarrelBot_missile.cs:60-90`) — no `dmgAdjust`, DEF applied (card `dmgAdjustSkip`).
+
+### mol_barrelBot_drill (Barrel Bot Mega Drill) (verified 2026-10-01)
+
+- `BarrelBot.RPC_drill` (`BarrelBot.cs:4483-4980`), needs DrillLv (Mole has #433): 4 hits (`i < 4`, `:4944`), each `FindRecTarget(pos, fwd, 1, 1, 3, 2)` (`:4662`) and `hit(2, t, (int)(0.5 × ATK + talAdjust(15)), KO 2, …)` (`:4685`); `addTimeOut("drill", 9)` flat (`:4818`).
+
+### mol_barrelBot_cannon (Barrel Bot Barrel Cannon, auto) (verified 2026-10-01)
+
+- `BarrelBot.RPC_cannon` (`BarrelBot.cs:5030-5340`), needs CannonLv (Mole has #443): CD `agiAdjust(9)` (`:5278`); shell (`BarrelBot_cannon.cs`) bursts on a non-own-layer collider → `RPC_cannon_hit` (`BarrelBot.cs:1840-1910`): `FindAreaTarget(hitPos, 3, 4, enemy layers)`, `hit(1, t, floor(1.5 × ATK), KO 1, …)`.
+
+### mol_barrelCannon5 (Barrel Cannon, #443) (verified 2026-10-01)
+
+- SP 50 **blue**, Lv 85/Bn 6, target. CD `agiAdjust(120)` (`:40199`).
+- `RPC_barrelCannon` (`:39835-40300`): starts `RPC_cannonForm` on the bot (`:39989-40038`) and on the Double Bot second bot (`:40053-40104`). `RPC_cannonForm` (`BarrelBot.cs:5377-5800`): the bot stands still and fires at the Mole's target every 0.5 s (`:5544`, `:5743`) until 10 shells (`mCannonCount >= 10`, `:5716`) or the target is gone; each shell is the cannon hit above. Passive part: CannonLv for the bot (`:13035`); the tooltip's "bombing attack on Mole's Chopper" is covered under Chopper.
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
