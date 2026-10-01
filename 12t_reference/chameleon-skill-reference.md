@@ -226,6 +226,55 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 # Damage & Mechanics
 
+Verified from decompiled source (`DecompiledSource/Chameleon.cs`, `Chameleon_nAttack.cs`, `Chameleon_campFire.cs`, `Chameleon_needlePrison.cs`, `ChameleonSkill.cs`) for the Bible skill-details tool (`12t_projects/bible/index.html`).
+
+Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take precedence over anything older in this file. Command numbers come from `ChameleonSkill.cs` `getSkillTree()`; costs and requirements were decoded with `scripts/decode_skilldata.py`.
+
+### chm_nAttack1-4 (Combo, #101-104): one arrow per attack (verified 2026-10-01)
+
+- **Metadata:** passive, no cost; Lv/Bn 1/0, 2/1, 3/2, 4/3. `getNormalAttackLv()` = highest of #101-104, 0-4 (`Chameleon.cs:8387-8436`).
+- **Flow:** `doNormalAttack` starts `RPC_nAttack1` from standby/run when the `nAttack` lock is free (`Chameleon.cs:5996-6057`). The coroutine sets `addTimeOut("nAttack", 1.5 − 0.3 × Combo)` = 1.5 / 1.2 / 0.9 / 0.6 / 0.3 s (`:15950-15994`), waits 0.2 s and fires **one** arrow: `RPC_clearArrow_fire` if `getClearArrow()` (Clear Arrow learned and the Chameleon has `invisible`), otherwise `RPC_nAttack_fire` (`:15586-15643`). It fires only in real game modes (`Game.mGameType > 4`, `:15578`).
+- **Arrow:** `ProjectileControl.life = (0.4 + 0.1 × FarReach) × rangeMod` (`:8482`); `Chameleon_nAttack.Awake` speed 30 m/s, 40 m/s with Bow Mastery (`Chameleon_nAttack.cs:34`, `:100`); destroyed on the first enemy it touches. Range 12 + 3 × FR m (16 + 4 × FR with Bow Mastery).
+- **Damage (`Chameleon_nAttack.OnTriggerEnter`, `Chameleon_nAttack.cs:496-688`):** `num = FloorToInt((0.45 − 0.025 × Combo) × ATK) + 6 × fatalStrikeStatusLv + 6 × PiercingVenomLv × target poison lv` (`:502`); Bow Mastery (#401) `num += floor(0.1 × Lv)` (`:505-511`). Coefficient 0.425 / 0.4 / 0.375 / 0.35 ATK at Combo 1-4.
+- **Crit (`:517-668`):** chance sum = weapon `w_chm43`/`w_chm44` (G.Marshal Bow B/R) +4, `w_chm48` (Mantis Bow R) +5; armor `a_chm48` (Mantis Suit R) +4; hat `c_chm48` (Mantis Hat R) +3; Critical Plus `4 × lv + 4`. The armor/hat checks list `a_chm43`/`c_chm43` twice, which are not items (no entry in `ArmorData.cs`/`AccessoryData.cs`). Champion gear (`w_chm58`, `a_all58`, `c_all58`) and Marshal armor/hat (`a_all43/44`, `c_all43/44`) are not in this table, and `Chameleon.getCritPlus` (`Chameleon.cs:14658`, the Marshal/Champion table other classes use) has no caller in any Chameleon file. Roll `Random.Range(0,100) < lckAdjust(sum)` → `CeilToInt(num × 1.8)`, or `CeilToInt(num × (1.8 + 0.15 × CriticalPlusLv))` with Bull's Eye (#413) (`:643-668`). Rounding is **up**, unlike the `getCritPlus` floor.
+- **Hit:** `hit(1 + Combo, target, num, KO 1, hate floor(−0.5 × num × clearLv), 0.15 × forward)` (`:688`), force 1.5 × forward with `w_chm59` Power Bow (`:415-421`). On a landed hit: `onNormalAttackHit`, `sp++`, then the Poison Arrow roll (see Poison Arrow) and All Slain list (#371) (`:696-799`).
+- **Tooltip:** "decrease its damage by 5/10/15/15%" (`ChameleonSkill_eng.cs:37-70`); the code is 0.45 → 0.425/0.4/0.375/0.35 (−5.6/−11/−17/−22%), the Thai rank 4 "20%" is closer.
+- **Card:** `rawModel` (`chameleonComboParts`) with Bow Mastery, Fatal Strike + Extra Arrows, Piercing Venom (rank 2 = Deadly Venom) × target poison level, Critical Plus, Bull's Eye and the crit gear as header deps; crit drawn as ⌈…⌉.
+
+### chm_cAttack1-3 (Charge Attack, #111-113): hidden charge, then a volley (verified 2026-10-01)
+
+- **Metadata:** passive, no cost; Lv/Bn 4/1, 10/3, 16/5. `getChargeAttackLv()` 0-3 (`Chameleon.cs:8608-8648`).
+- **Charge (`RPC_cAttack1`, `Chameleon.cs:16112-16841`):** sets `myCommand = "cAttack1"`, `addTimeOut("cAttack", 1)`; 0.2 s later (real game modes only) `RPC_AddStatus("blend", 4, chaAdjust(3 × chargeLv + 3), 0, …)` on the Chameleon (`:16358`) → 6 / 9 / 12 s, not contested. Silent Walk (#411) lets it walk at `moveSpeed` lerped to 2 (`:16526-16600`).
+- **Release (`doReleaseCharge`, `:6204-6263`):** only after `actionTime + 1.8 s` and in real game modes; `n = FloorToInt(Clamp(held − 0.8, 0, 3 × chargeLv))` → `RPC_cAttack2(…, n)`, else `RPC_cAttack0` (no attack).
+- **Volley (`RPC_cAttack2`, `:16841-17527`):** `2 × n` swings 0.2 s apart (`:17202-17212`), up to 6 / 12 / 18. Each swing: `FindRecTarget(pos, forward, 1, 8, 12, 4)` (2 m wide at the Chameleon, 16 m at 12 m, height 4) and every target takes `hit(111, t, (int)(0.3 × ATK) [+ floor(0.1 × Lv) with Silent Walk] + 6 × PiercingVenomLv × poison lv, KO 1, 0, …)` (`:16976-17036`). No crit, no `sp++`; All Slain list on hit.
+- **`blend` status:** Buff (`StatusData.cs:6674`) + Physical (`:5445`), in `isInvisibleStatus` (`:6196`). Apply (`CharacterControl.cs:36665-36760`): removes `invisible`; for other teams the renderers get the `FX/Camaflage` shader, or are switched off when the Chameleon has Erase Senses (#412). Monster AI skips `blend` targets (e.g. `Alpaca_AI.cs:1321`) and the GUI target picker skips them (`GameGui.cs:3871`). Only a Chameleon or Matti can receive it (`CharacterControl.cs:12399`). `Chameleon.Update` removes it as soon as `actionState` is not standby/run and the command is not `perfectBlend`/`cAttack1` (`Chameleon.cs:166-201`), so the release itself breaks it.
+- **Tooltip:** "(max 3/6/9 sec)" matches the `3 × chargeLv` clamp.
+- **Card:** `rawModel` per swing, `hitCount 6 × rank` (full charge), duration 6/9/12 s with `[blend4]`; Silent Walk and Piercing Venom deps.
+
+### chm_farReach1-4 (Far Reach, #131-134) (verified 2026-09-27, re-checked 2026-10-01)
+
+- `getFarReachLv()` (`Chameleon.cs:8716-8768`, junk predicates re-evaluated) and every read are listed in the Far Reach section further down; unchanged.
+
+### chm_quickFire1-4 (Quick Fire, #201-204): rapid single-target shots (verified 2026-10-01)
+
+- **Metadata:** SP 12/16/20/24 **blue** (threshold, not consumed), Lv/Bn 3/0, 9/1, 15/2, 21/3, mode target, enemy. Cast gate: target closer than `18 + 4 × FR` m (`Chameleon.cs:8232`).
+- **CD:** `addTimeOut("quickFire", agiAdjust(20 + 10 × sLv))` = **30 / 40 / 50 / 60 s** (`Chameleon.cs:20154`). The card's former flat 60 was only right at rank 4.
+- **Shots (`RPC_quickFire`, `Chameleon.cs:19240-20438`):** 0.4 s wind-up, then shots 0.1 s apart, each a `Physics.Raycast` of `20 + 4 × FR` m (`:19467`) that hits the first collider in line. Opening shot `hit(200 + sLv, t, (int)(0.25 × ATK), KO 0, …)` (`:19620`), a loop of `2 × sLv` shots (`4 × sLv` with Added Fire #402, `:20061`) at `(int)((0.25 + 0.1 if Added Fire) × ATK)` (`:19741`), then a closing shot at 0.25 ATK (`:19912`). Total 2 + 2 × sLv (2 + 4 × sLv). Each landed shot `sp + 1` and All Slain list.
+- **Tooltip:** 4/6/8/10 hits matches. Added Fire's Thai "+30%" is +0.1 ATK on 0.25 (+40%) in code.
+
+### chm_bowMastery5 (Bow Mastery, #401) (verified 2026-10-01)
+
+- Passive, Lv 55/Bn 0. Combo and Clear Arrow arrows: speed 40 instead of 30 m/s (`Chameleon_nAttack.cs:100`) and `+ floor(0.1 × Lv)` damage (`:505-511`). No other reads in the Chameleon files. Tooltip "+50% speed" is +33% in code (30 → 40).
+
+### chm_criticalPlus1-4 (Critical Plus, #311-314) and chm_bullsEye5 (Bull's Eye, #413) (verified 2026-10-01)
+
+- Critical Plus: passive, Lv/Bn 5/1, 11/3, 17/5, 23/7. `getCriticalPlusLv()` 0-4 (`Chameleon.cs:9272-9323`); adds `4 × lv + 4` = 8/12/16/20 to the Combo crit chance (`Chameleon_nAttack.cs:620-631`). Tooltip matches.
+- Bull's Eye: passive, Lv 60/Bn 1. Crit multiplier `1.8 + 0.15 × CriticalPlusLv` (`:649-655`), 2.4 at Critical Plus 4 ("240%"). Read only there.
+
+### chm_extraArrows5 (Extra Arrows, #403) (verified 2026-10-01)
+
+- Passive, Lv 55/Bn 0. Fatal Strike's status level +1 and arrow count 5 → 10 (`Chameleon.cs:26313`). Also raises the Immunity gate before Fatal Strike (`:7904`, see Fatal Strike).
+
 ### chm_tormentRain1 (Torment Rain): arrow barrage (verified 2026-09-30)
 
 - `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target. CD `agiAdjust(3)` (`:25659`).
