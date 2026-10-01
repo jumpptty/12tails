@@ -434,11 +434,39 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 - MP 30, SP −30 (red), Lv 75/Bn 4, instant. CD `agiAdjust(60)` (`Chameleon.cs:37513`; also pre-set at mission start, `:86`).
 - `RPC_zeroShot` (`:36976-37784`): pulls every enemy in `FindAreaTarget(pos + 2 × forward, 6, 3)` that is more than 1 m from that point toward it (`RPC_AddDamage(1, −1, 0, 0, dir)`, `:37441-37490`), and hits every target in `FindRecTarget(pos + 0.5 × forward, forward, 2, 2, 3, 3)` (4 m wide, 3 m long, 3 m tall) once with `hit(434, t, 3 × ATK + talAdjust(100), KO 10, 0, 6 × away)` (`:37399-37422`).
 
+### chm_bugSlayer1 / chm_tailSlayer2 / chm_elementalSlayer3 / chm_machineSlayer4 (Slayer, #341-344) (verified 2026-09-27, re-checked 2026-10-01)
+
+- MP 12, SP −24 (red), target enemy; Lv/Bn 16/4, 20/8, 24/12, 28/16. Each has its own cooldown key `"slayer" + sLv`, `agiAdjust(90)` (`Chameleon.cs:30820`), so the four can be chained. Cast `magAdjust(2 + 0.5 × ImprovedSlayerLv)` (`:30401-30422`), only when the target is closer than `24 + 4 × FR` (`:7571`).
+- `RPC_slayer_fire` (`:31274-32144`): line `FindRecTarget(pos + forward, forward, 0.4 + 0.15 × Imp, 0.4 + 0.15 × Imp, 24 + 3 × FR, 10)` (`:31455`); per target `hitDmg = (int)((0.3 + 0.15 × Imp) × ATK + talAdjust(20 + 10 × Imp))`, KO 5 (`:31488-31493`, recomputed per target); `× 2` when the target's race matches `sLv` (1 Bugs/Plants, 2 Tails, 3 Elementals, 4 Robots) or it has `slayerMark` (`:31495-31610`), then `hit(320 + sLv, …)`; All Slain list on a landed hit.
+- Details and the race table are in the 2026-09-27 section further down; unchanged.
+
+### chm_improvedSlayer1-4 (Improved Slayer, #351-354) (verified 2026-10-01)
+
+- Passive, Lv/Bn 20/12, 24/15, 28/18, 32/21. `getImprovedSlayerLv()` 0-4 (`Chameleon.cs:9501-9553`). Slayer: cast +0.5 s/lv, `(0.3 + 0.15 × lv) × ATK + talAdjust(20 + 10 × lv)`, line half-width `0.4 + 0.15 × lv`. All Slayer: cast +1 s/lv, `(0.6 + 0.3 × lv) × ATK + talAdjust(20 + 20 × lv)`, target cap `4 + lv`.
+- **Tooltip discrepancy:** English "+50/100/150/200% damage" is close for the ATK term only; Thai "+10 dmg" at every rank does not match.
+
+### chm_allBugSlayer1 / chm_allTailSlayer2 / chm_allElementalSlayer3 / chm_allMachineSlayer4 (All Slayer, #361-364) (verified 2026-09-27, re-checked 2026-10-01)
+
+- MP 24, SP −36 (red), instant; Lv/Bn 24/15, 27/18, 30/21, 33/24. Own cooldown key `"allSlayer" + sLv`, `agiAdjust(240)` (`Chameleon.cs:32425`). Cast `magAdjust(4 + Imp)` (`:32381`); fires at `castTime + 0.7 s`.
+- `RPC_allSlayer_fire` (`:32805-34044`): `FindAreaTarget(self, 40, 10)` (`:33216`); a target is hit only if its race matches `sLv` or it has `slayerMark`, it is on the caster's screen, and fewer than `4 + Imp` targets were hit (`:33259-33405`): `hit(360 + Imp, t, (int)((0.6 + 0.3 × Imp) × ATK + talAdjust(20 + 20 × Imp)), KO 5, …)` (`:33249-33303`). No ×2.
+
+### chm_allSlain1-2 (All Slain, #371-372) (verified 2026-10-01)
+
+- MP 32/40, SP −45/−50 (red), Lv/Bn 35/23, 40/25, instant. CD `agiAdjust(300)` (`Chameleon.cs:34480`). The card's former MP 32/45, SP 45/60 were wrong.
+- **List (`addAllSlainList`, `:9983-10060`):** a target is added once (no duplicates, never a `Structure`) when hit by Charge Attack (`:17042`), Quick Fire (`:19628`, `:19747`, `:19920`), Mass Shot (`:22591`), Poison Volley (`:23350`), Torment Rain (`:26073`), Right Stride (`:28365`), Slayer (`:31538`), All Slayer (`:33309`), or a Combo / Clear Arrow when All Slain is learned (`Chameleon_nAttack.cs:791-799`, `hasSkill(371)`). Zero Shot, Thunder Dragon and the stride clone do not add.
+- **Cast (`RPC_allSlain`, `:34044-34709`):** every object still in the list takes `hit(370 + sLv, t, talAdjust(100 × sLv), KO 0, …)` (`:34377`), no range limit, then the list is cleared (`:34393`).
+- **Tooltip discrepancy:** rank 2 "150 damage"; code `talAdjust(200)`.
+
+### chm_markOfSlayer5 (Mark of Slayer, #443) (verified 2026-10-01)
+
+- MP 45, SP −45 (red), Lv 85/Bn 6, target enemy. Cast `magAdjust(7)`, CD `agiAdjust(150)` (dispatcher `Chameleon.cs:18351-18362`).
+- `RPC_markOfSlayer_cast` (`:36564-36976`): the selected target gets `RPC_AddStatus("slayerMark", 5, Damage.getDebuff(30, cha, targetCha), 0, …)` (`:36792`). `slayerMark` (Debuff + Magical) is read only by the Slayer/All Slayer race checks (above).
+
 ### chm_thunderDragon5 (Thunder Dragon, #444) (verified 2026-10-01)
 
 - MP 50, SP −50 (red), Lv 85/Bn 6, instant. CD `agiAdjust(90)` (`Chameleon.cs:38225`; also pre-set at mission start, `:89`). Removes the Chameleon's own `blend` and `invisible` (`:38260-38265`).
-- `RPC_thunderDragon` (`:37784-38604`): 6 ticks 0.5 s apart (`:38305`); each tick every enemy in `FindAreaTarget(self, 3, 3)` takes `RPC_AddEffectDamage(444, 50, …)` and, on `lckAdjust(12) > Random.Range(0,100)`, `paralysis` 1 for `getDebuff(3, cha, targetCha)` (`:38380-38470`). The paralysis is on these ticks, not on the reflect.
-- **Reflect:** in the Chameleon's `RPC_AddDamage`, while `myCommand == "thunderDragon2"` and `nDamage > 0`, the attacker takes `RPC_AddEffectDamage(444, 350, …)` (`CharacterControl.cs:4617-4622`), once per direct hit.
+- `RPC_thunderDragon` (`:37784-38604`): 6 ticks 0.5 s apart (`:38305`); each tick every enemy in `FindAreaTarget(self, 3, 3)` takes `RPC_AddEffectDamage(444, 50, …)` and, on `lckAdjust(12) > Random.Range(0,100)`, `paralysis` 1 for `getDebuff(3, cha, targetCha)` (`:38441-38465`). The paralysis is on these ticks, not on the reflect.
+- **Reflect:** in the Chameleon's `RPC_AddDamage`, while `myCommand == "thunderDragon2"` and `nDamage > 0`, the attacker takes `RPC_AddEffectDamage(444, 350, …)` (`CharacterControl.cs:4618-4627`), once per direct hit.
 - **Tooltip:** "3 sec, 100 dps, 12% paralysis, 350 dmg/hit" matches.
 
 
