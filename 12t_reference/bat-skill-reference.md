@@ -372,6 +372,27 @@ Follow-up verification:
 - After the cast (`$RPC_nefariousWhip_cast$20440`), `RPC_nefariousWhip_hit` (`Bat.cs:43783-44075`) ticks **8** times, 0.5 s apart (`i < 8`): each tick every enemy in `FindAreaTarget(hitPos, 4, 6)` takes `RPC_AddEffectDamage(434, (int)(0.5 × CHA), 0, 0, …)` (`:43918-43957`).
 - Client tooltips: EN "Summon shadow vines that deal damage equal to Bat's charisma." (`BatSkill_eng.cs:1054`). Code wins: half of CHA per tick.
 
+### bat_guardianOfTheNight1-2 (#271/#272) — active, rank family (verified 2026-10-01)
+
+- reqLv/Bn 35/23, 40/25; MP **70 / 90**; SP **−35 / −45** (red); instant, self (`decode_skilldata.py`). Cooldown `agiAdjust(600)` (`Bat.cs:30200`); status duration `chaAdjust(30 × rank)` (60 at rank 2).
+- **Cast time:** `magAdjust(3 × rank + 7)` = **10 / 13 s** (`Bat.cs:30052`), then `RPC_guardianOfTheNight_cast` summons the boss (`:30163`).
+- **Boss melee** (`Bat_guardianOfTheNight.cs:848-1333`): `FindAreaTarget(boss, 4, 3)`, `hit(270 + rank, t, 66 × rank + 33, KO 3, 0, …)` = 99 / 165. Its AI loop, search radius and cast chance are in "Follow-up verification" above. Its other attack animations were not traced (no further `hit()` or Effect Damage call exists in that file).
+
+### bat_darkStalker5 (Dark Stalker, #432) — Class-C active (verified 2026-10-01)
+
+- reqLv 75, reqBn 4; MP **45**; SP **−20** (red); target, enemy (`decode_skilldata.py`). Cooldown `agiAdjust(120)` (`Bat.cs:24760`). Only a hero-type target is accepted ("Can only cast on player", `Bat.cs:8252-8277`).
+- Applies `darkStalker` Lv 9 for a flat 999 s to a living target that does not already have it (`Bat.cs:40234-40263`). The status deals `floor(0.3 × target CHA)` Effect Damage every 4.5 s (status table above).
+
+### bat_chiroptophobia5 (Chiroptophobia, #423) — Class-C passive (verified 2026-10-01)
+
+- reqLv 70, reqBn 3; no cost. `Chiroptophobia()` runs from the Bat's own `Update`, at most once per **1 s** (`Bat.cs:13166-13241`): every enemy within `FindAreaTarget(Bat, 12, 5)` gets `chiroptophobia` at level `blind Lv + confuse Lv` for 60 s, only when that is higher than the level it already holds.
+- The status ticks every 1.5 s for `RPC_AddEffectDamage(422, 7 × Lv + 7)`, attributed to the Bat, and is removed when the target has neither `blind` nor `confuse`, when the Bat is gone, or when the Bat is more than 13 m away (`CharacterControl.cs:9674-9759`).
+
+### bat_blackServant5 (Black Servant, #434) — Class-C active (verified 2026-10-01)
+
+- reqLv 85, reqBn 6; MP **66**; SP **−66** (red); target, enemy. Cooldown `agiAdjust(180)` (`Bat.cs:44579`).
+- Target must be a **dead hero-type player** (`isHeroType`, `isPlayer`, `actionState == "dead"`, else "Can only cast on player", `Bat.cs:8468-8511`). The cast adds the matching `Shadow<Class>_AI` component (Wolf, Bison, Panda, Whale, Cat, Chameleon, … `:44954-45055`) and applies `blackServant` Lv 5 for `getDebuff(90)`; status effects are in the table above.
+
 ## Open questions & card mismatches (2026-10-01)
 
 **Card mismatches** (cards in `index.html` vs the entries above):

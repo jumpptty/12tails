@@ -733,6 +733,17 @@ if (this.hasSkill(421))
 - **Effect** (`$RPC_mirrorBlade$29672`, `Wolf.cs:34410-35020`): Wolf stands in place (`moveSpeed 0`); 0.2 s after the cast it records its HP (`:34588`), then 0.8 s + 0.4 s later the owner's client deals `RPC_AddEffectDamage(433, clamp(recordedHP − currentHP, 0, 1999), 0, 0, …)` to the locked target (`:34673-34710`). So it returns the **net HP lost during that 1.2 s window**, capped at **1,999**, as purple Effect Damage (no dodge, no ATK/TAL, no `defAdjust`). Healing inside the window lowers it; no damage taken means 0. No range check in the coroutine.
 - Client tooltips: EN "Perform a counter move that returns all taken damage to one target enemy ." / TH "โจมตีสวนกลับค่าความเสียหายไปให้ศัตรูที่อยู่ที่ล็อคเอาไว้" (`WolfSkill_eng.cs:1012`, `WolfSkill_thai.cs:1045`). They omit the 1.2 s window and the 1,999 cap.
 
+### wlf_cAttack1-3 (Charge Attack, #111-#113) (verified 2026-10-01)
+
+- Passive ranks (charge rank 1 / 2 / 3). `doBeginCharge` (`Wolf.cs:7847-7960`) needs #111; while held, SP drains by `statusLv × 2` (halved with Revised Skill #404) per tick once the charge status is up.
+- **Release** (`$RPC_cAttack2`, `Wolf.cs:19261-19904`): `cTime = clamp(ceil(held seconds − 0.8), 0, 2 × chargeRank)` (`:19731`; `getChargeAttackLv()` = rank, `3 + Sky Slasher` at rank 3, `:8382-8421`). Strikes: hit 1 always, hit 2 when `cTime ≥ 4`, hit 3 when `cTime ≥ 6` (`:19517`, `:19592`). Each strike is `hit(11, t, ATK, KO 0)` in `FindRecTarget(pos − rangeMod·fwd − 2 up, fwd, 2·rangeMod, 6·rangeMod, 30·rangeMod, 6·rangeMod)`: a trapezoid 4 → 12 m wide, **30 m** long (`:19434-19485`).
+- Without #113 a rank-2 charge tops out at 2 strikes and rank 1 at 1; a full rank-3 charge (≥ 6.8 s held) gives 3.
+
+### wlf_skySlasher5 (Sky Slasher, #411) — Class-C passive (verified 2026-10-01)
+
+- Needs Charge Attack rank 3 (`getSkySlasherLv() = hasSkill(411) && hasSkill(113)`, `Wolf.cs:9106-9108`). It raises the charge rank to 4 (above) and adds a **12 s release**: releasing a charge held for 12 s or longer runs `RPC_skySlasher` instead of the normal release (`Wolf.cs:8059-8090`).
+- `$RPC_skySlasher$29610` (`Wolf.cs:31736-31769`): the same 30 m trapezoid as the Charge Attack, each target takes **one** `hit(411, t, 5 × ATK, KO 0)`.
+
 ## Open questions & card mismatches (2026-10-01)
 
 **Card mismatches** (cards in `index.html` vs the entries above; not patched):

@@ -319,35 +319,36 @@ Consolidated ground-truth reference for Monkey skill damage formulas, status pro
 
 ---
 
-## 1. Active Skills Summary
+## 1. Active Skills Summary (re-verified 2026-10-01)
 
-| Skill | Max Rank | Cost (Base) | Base Damage / Formula | KO | Hit Count | Key Dependencies & Mechanics |
+Costs from `scripts/decode_skilldata.py DecompiledSource/MonkeySkill.cs` (negative SP = red / consumed); damage, KO and hit counts from the cited code. The earlier version of this table had wrong costs, damage or KO on most rows (e.g. Fireball MP, Flash Fire, World Ignition, Lavu, Volcanic Eruption, Summon Gaos). Server changes are in §3; summon commands and passives are in §4.
+
+| Skill | Ranks | Cost (MP / SP) | Damage / effect | KO | Hits | Notes |
 |---|---|---|---|---|---|---|
-| **Combo** (`nAttack`) | 3 | — | `0.5×ATK` (all ranks) | 1 | 2 / 3 / 5 | R1: 2 hits, R2: 3 hits, R3: 3 hits + 3-way spread (5 hits total). Grants +1 SP per hit. |
-| **HP Transfer** (`cAttack`) | 4 | [10, 15, 20, 25] HP | None (Utility) | 0 | 1 | Channels HP from Monkey into active summon pet. |
-| **Damage Cast** (`damageCast`) | 4 | 50 SP (red) | Buffs next magic cast | 0 | 1 | Triggers Fire Rune check; consumes SP. |
-| **Instant Cast** (`instantCast`) | 2 | [16, 24] MP, [16, 24] SP (red) | None (Buff) | 0 | — | Grants instant cast buff for duration. |
-| **Fireball** (`fireBall`) | 4 | [9, 13, 17, 21] MP | `talAdjust(20 + 20×sLv)` | 0 | 1 | Single-target magic projectile. Gated by INT for cast time. |
-| **Phoenix** (`phoenix`) | 4 | [30, 45, 60, 75] MP | Summon Entity | 0 | — | Spawns Phoenix companion. Uses own 9-stat array (`ownStatsPhoenix`). |
-| **Phoenix - Fireball** | 1 | — | `talAdjust(20)` | 0 | 1 | Phoenix automated AI attack. Scales with Phoenix's own TAL; CD scales with Monkey's INT via `rapidFire`. |
-| **Phoenix - SkyCrimson** | 1 | 35 MP, 30 SP (red) | `talAdjust(120)` | 5 | 1 | Commanded Phoenix AoE dive attack. |
-| **Blazing Arrow** (`blazingArrow`) | 1 | 35 MP, 30 SP (red) | `talAdjust(120)` | 5 | 1 | Ground-target AoE pillar. |
-| **Flash Fire** (`flashFire`) | 4 | [12, 16, 20, 24] MP, [12, 16, 20, 24] SP (red) | `talAdjust(15 + 15×sLv)` | 5 | 1 | Cone fire burst. |
-| **Ja** (`ja`) | 4 | [15, 30, 45, 60] MP | `talAdjust(25×sLv)` | 0 | 1 | Spawns floating Ja entity. Detonates via command or on expiration. |
-| **Ja - Detonate** | 1 | — | `talAdjust(25×sLv)` | 5 | 1 | Commanded manual explosion of Ja. |
-| **Runic Flame** (`runicFlame`) | 1 | 30 MP, all SP | `talAdjust(24)` | 0 | Variable | Leaves flame trail while running. Duration = `floor(sp × 0.2)` sec. |
-| **World Ignition** (`worldIgnition`) | 2 | [40, 50] MP, [30, 40] SP (red) | `talAdjust(80 + 40×sLv)` | 10 | 1 | Massive radial firestorm. Ignites all targets hit. |
-| **Ground Lock** (`groundLock`) | 4 | [12, 16, 20, 24] MP | `talAdjust(12 + 8×sLv)` (corrected 2026-10-01, `Monkey.cs:30625`) | 1 | 1 | Earth projectile rooting enemies in area. |
-| **Gadina** (`gadina`) | 4 | [30, 45, 60, 75] MP | Main Summon | 0 | — | Spawns Gadina golem mount/companion (`ownStatsGadina`). Base HP/ATK/DEF scale with rank. |
-| **Gadina - Normal Attack** | 1 | — | `1.0×Gadina ATK` | 2 | 1 | Automated Gadina melee slam. |
-| **Gadina - Planet Breaker** | 1 | 35 SP (red) | Inner: Gadina ATK (+ Titan Sword share)<br>Outer: flat 5 | 10 (Inner)<br>5 (Outer) | 3 | Corrected 2026-10-01: three pulses, inner radius 5 m, outer ring 5-12 m. See §4.9. |
-| **Gadina - Titanic Earth Pulse** | 1 | 40 MP, 60 SP (red) | `0.35 × Gadina4 Current HP` | 10 | 5 | Sacrifices Gadina4. Gravity pulse expanding 1m to 5m over 5 ticks (max 1999/tick). |
-| **Stone Hammer** (`stoneHammer`) | 4 | [12, 20, 28, 36] MP | `talAdjust(20 + 25×sLv)`<br>*(+30 with Stone Sentinel)* | 20 / 30 / 40 / 50<br>*(+10 with Sentinel)* | 1 | Cylinder AoE (radius `1 + 0.5×sLv` m, height 6m). Channel interruptible. |
-| **Buiten Hou Hou** (`buiten`) | 4 | [20, 30, 40, 50] MP | Summon Totem | 0 | — | Deploys Buiten totem buffing allies / attacking nearby targets. |
-| **Runic Sand** (`runicSand`) | 1 | 30 MP, all SP | `talAdjust(24)` | 0 | Variable | Earth-element trail counterpart to Runic Flame. |
-| **Lavu** (`lavu`) | 2 | [35, 45] MP, [30, 40] SP (red) | `talAdjust(30 + 30×sLv)` | 0 | Continuous | Creates quicksand / lava hazard field slowing enemies. |
-| **Volcanic Eruption** (`volcanicEruption`)| 1 | 50 MP, 50 SP (red) | `talAdjust(150)` | 10 | 6 | Erupts ground in 6 successive volcanic shocks. |
-| **Summon Gaos** (`summonGaos`) | 1 | 100 MP, 50 SP (red) | Ultimate Summon | 0 | — | Deploys Gaos dragon summon (`ownStatsGaos`). |
+| **Combo** (`nAttack`, #101) | 1 | — | `(int)((0.5 + 0.1 Mike Blink) × ATK)` through `getCritPlus` (`floor(0.75 ×)` with `w_mnk59`) | 1 (+1 Earth Form) | 2 | Two chained stages (`Monkey.cs:19962`, `:20576`); lock 1.5 s each. One learnable rank, not three. |
+| **HP Transfer** (`cAttack`, #111-#114) | 4 | costs HP, not MP/SP: `2·lv − 1` HP per second (9 with Mike Circle) | heals the target `floor((1 + 0.02×ATK) × 2·lv)` per second (doubled when the target is the Monkey's own summon) | 0 | per second | Target within 30 m; needs HP above the cost and a target below max HP (`Monkey.cs:21084-21275`). |
+| **Damage Cast** (#102/#103) | 2 | passive | while channelling HP Transfer, every 0.4 s enemies within 2 m take `hit(2 + lv, getCritPlus((int)(0.25·lv·ATK)))` | 1 | per 0.4 s | Not a buff and costs nothing (`Monkey.cs:21299-21339`); also fires from the Fire Avatar / Earth Form attack paths (`:25644`, `:35102`). |
+| **Instant Cast** (`instantCast`) | 2 | 25, 40 / −15, −20 | buff: casts become instant, one level spent per cast (§ status notes) | — | — | |
+| **Fireball** (`fireBall`) | 4 | 9, 14, 19, 24 / 0 | `talAdjust(20 + 20·sLv (+20 Fire Keep))` (`Monkey_fireBall.cs:200`) | 1 | 1 | `hit(200 + lv)`; `burn` with Intense Fire. |
+| **Phoenix** (`phoenix`) | 4 | 25, 40, 55, 70 / 0 | summon | — | — | Own stats (`ownStatsPhoenix`). |
+| **Phoenix - Fireball** | — | — | `Phoenix talAdjust(40) + floor((0.1·IF + 0.1) × Monkey talAdjust(40))` | 1 | 1 | Interval §4.5. |
+| **Phoenix - Sky Crimson** (#224) | 1 | 0 / −36 | radius 5 m, height 3 m: same base as Phoenix's Fireball, `hit(1, num, KO 1)` (`Phoenix_skyCrimson_fire.cs:167-251`) | 1 | 1 | Monkey-side lock `agiAdjust(120)`; Phoenix's own `agiAdjust(60)` (`Monkey.cs:27427`, `Phoenix.cs:3899`). |
+| **Blazing Arrow** (`blazingArrow`, #234) | 1 | 24 / −48 | 12 circles of radius 3.5 m (3 m apart along the line, `i < 12`), `hit(234, talAdjust(120))`; `burn` Lv 4 (`Monkey.cs:28161-28259`) | 0 | up to 12 | |
+| **Flash Fire** (`flashFire`) | 4 | 24, 32, 40, 48 / −12, −16, −20, −24 | radius 5 m, height 3 m: `talAdjust(8 + 8·sLv (+10 Blazing Fire))` (`Monkey.cs:28593-28621`) | 0 | 1 | |
+| **Ja** (`ja`) | 4 | 15, 30, 45, 60 / 0 | summon; explodes on command or expiry: `trunc(HP × (1 − 0.5 × distance/radius))` (§2.1) | `floor(0.1 × Ja HP)` | 1 | No `talAdjust` damage (the old `talAdjust(25×sLv)` was wrong). |
+| **Runic Flame** (`runicFlame`) | 1 | 30 / all SP | `talAdjust(24)` per segment touched | 0 | variable | §2.5. |
+| **World Ignition** (`worldIgnition`, #271/#272) | 2 | 40, 60 / −30, −35 | applies `ignite` Lv sLv (`getDebuff(60)`, `hitMod +0.1·sLv`) with a pool of `400 + 400·sLv`; when damage taken drains the pool, the target takes Effect Damage `400 + 400·sLv` (800 / 1200) (`Monkey.cs:29907`, `:30257`; `CharacterControl.cs:31074-31113`) | 0 | 1 | Single locked target; not a radial hit. |
+| **Ground Lock** (`groundLock`) | 4 | 8, 12, 16, 20 / 0 | `talAdjust(12 + 8·sLv)`; `groundLock` Lv sLv (+2 Second Stone), contested `3 (+Aegis rank)` s | 1 | 1 | `Monkey.cs:30608-30625`. |
+| **Gadina** (`gadina`) | 4 | 25, 45, 65, 85 / 0 | summon | — | — | Own stats (`ownStatsGadina`). |
+| **Gadina - Normal Attack** | — | — | `(int)(0.5 × (Gadina ATK + floor((0.1·sword + 0.1) × Monkey ATK)))` | = sword rank | 1 / 2 / 3 / 3 | §4.8. |
+| **Gadina - Planet Breaker** | 1 | 0 / −35 | 3 pulses: inner 5 m `Gadina ATK + sword share` (KO 10), outer 5-12 m flat 5 (KO 5) | 10 / 5 | 3 | §4.9. |
+| **Gadina - Titanic Earth Pulse** | 1 | 40 / −60 | `clamp(floor(0.35 × Gadina4 HP), 1, 1999)` per tick | 10 | 5 | §2.3. |
+| **Stone Hammer** (`stoneHammer`) | 4 | 12, 20, 28, 36 / 0 | `talAdjust(20 + 25·sLv (+30 Stone Sentinel))`, radius `1 + 0.5·sLv` m, height 6 m | `10 + 10·sLv` (+10) | 1 | `Monkey.cs:33453-33463`. |
+| **Buiten Hou Hou** (`buiten`) | 4 | 24, 38, 52, 66 / 0 | summon: statue aura (status notes) | — | — | |
+| **Runic Sand** (`runicSand`) | 1 | 30 / all SP | `groundLock` Lv 1 on touch (status notes) | — | variable | |
+| **Lavu** (`lavu`) | 2 | 100, 150 / −75, −75 | summons the snake Lavu (`chaAdjust(60)` window); its attacks use Lavu's own ATK: `hit(1, ATK, KO 10)` and `hit(1, 0.5×ATK, KO 5)` (`Lavu.cs:805`, `:869`) | 10 / 5 | — | Not a "hazard field"; no `talAdjust` damage. |
+| **Volcanic Eruption** (`volcanicEruption`) | 1 | 150 / −50 | `i < 22` iterations 0.5 s apart, each `hit(344, talAdjust(99))` to everything within 12 m (height 6) of the cast point (`Monkey.cs:43326-43861`) | 1 | up to 22 | |
+| **Summon Gaos** (`summonGaos`) | 1 | 300 / −50 | summon (moves in §4.22) | — | — | |
 
 ---
 
