@@ -354,6 +354,48 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 - Passive, Lv 60/Bn 1. `+4` s base duration for Perfect Blend (`Chameleon.cs:20687`) and True Invisibility (`:21155`), not Mass Invisibility. On `blend` apply, other teams' renderers of the Chameleon are switched off instead of the camouflage shader (`CharacterControl.cs:36665-36700`). The radar icon of an enemy Chameleon with #412 is not drawn while it has `blend` or `invisible` (`GameGui.cs:5466-5497`, `displayPlayerIcon`).
 - **Tooltip discrepancy:** "+50%" duration; the code adds a flat 4 s (+200% / +100% for Perfect Blend, +50% / +33% for True Invisibility).
 
+### chm_needlePrison1-2 (Needle Prison, #221, #223) (verified 2026-10-01)
+
+- SP −14/−16 (red), no MP, Lv/Bn 7/2, 19/6, target enemy. CD `agiAdjust(60)` (`Chameleon.cs:21906`). The card's former SP 14/20 was wrong.
+- `RPC_needlePrison` (`:21406-22195`): the selected target only, or with Mass House Lock (#422, `:22024-22033`) every enemy in `FindAreaTarget(target, 6, 3)` (`:21694-21700`); each gets `RPC_AddStatus("needlePrison", sLv, Damage.getDebuff(1 + sLv, cha, targetCha) + (MassHouseLock ? 2 : 0), 0, …)` (`:21745-21750`): 2/3 s contested, +2 s after the contest. No damage. `Chameleon_needlePrison.cs` is only the cage visual spawned by the status (`CharacterControl.cs:36641`).
+- **Tooltip discrepancy:** English rank 2 "(2 sec)"; Thai and code 3 s.
+
+### chm_massHouseLock5 (Mass House Lock, #422) (verified 2026-10-01)
+
+- Passive, Lv 70/Bn 3. Needle Prison: 6 m area around the target, +2 s (above). Mass Shot: radius `6 + 3` (`Chameleon.cs:22508`) and `hitDmg = (int)(1.5 × hitDmg)` (`:22518-22524`). The English tooltip's "lock enemies within 6m of its first target" is the Needle Prison part.
+
+### chm_finalEntrapment1-2 (Final Entrapment, #271-272) (verified 2026-10-01)
+
+- MP 20/30, SP −35/−45 (red), Lv/Bn 35/23, 40/25, target enemy. Cast `magAdjust(6)`, CD `agiAdjust(300)` (dispatcher `Chameleon.cs:18317-18328`).
+- `RPC_finalEntrapment_cast` (`:24837-25269`): `mDuration = FloorToInt(chaAdjust(2 × sLv + 3))` (5/7 s base, `:24999`), then `RPC_finalEntrapment_hit(target position, …)` (`:9116-9251`): destroys the previous cage, instantiates `Effects/finalEntrapment` with `EffectControl.life = mDuration`, and calls `PositionEvent()` on every non-local character in `FindAreaTarget(pos, 8, 8)`. **No status and no damage** are applied in code; whatever traps the enemies is in the cage prefab, which the decompiled source does not show. The old card note "setting movement speed to 0" had no source.
+- Torment Rain reads this cage (`OAQYXXtBCn`): cast only while it exists and the Chameleon is within 40 m (`sqrMagnitude < 1600`, `Chameleon.cs:6686-6703`), and the rain lands at its centre (`:25638-25644`).
+
+### chm_clearArrow1 (Clear Arrow, #263) (verified 2026-10-01)
+
+- Passive, Lv 30/Bn 21. `getClearArrow()` = learned and the Chameleon has `invisible` (`Chameleon.cs:8938-8981`); then Combo fires `RPC_clearArrow_fire` (`:8983-9108`), same `Chameleon_nAttack` damage with `nClearLv = 1`. `Init` keeps the arrow mesh for the owner's team and destroys it for others (`Chameleon_nAttack.cs:272-325`), so enemies do not see it.
+- **Code vs tooltip:** the hit passes hate `floor(−0.5 × num)` (`Chameleon_nAttack.cs:688`), but `hit()` clamps it with `hateAdjust` to 0-999 (`CharacterControl.cs:3556`, `:20509-20511`) before `RPC_AddDamage` adds `damage + 10 × KO` (`:3768`), so a Clear Arrow makes the same hate as a normal arrow. The "no hate" tooltip is not achieved by this code.
+
+### chm_tent5 (Tent, #433) (verified 2026-10-01)
+
+- MP 40, SP −30 (red), Lv 75/Bn 4, instant. Cast `magAdjust(6)`, CD `agiAdjust(240)` (dispatcher `Chameleon.cs:18334-18345`).
+- `RPC_tent_cast` (`:35950-36564`): channel `castTime = magAdjust(12)` with a cast bar and `RPC_AddStatus("tent", 5, (int)castTime, 0, …)` (`:36128-36151`). When the channel completes (`actionTime + castTime + 0.5`, `:36280`): `RPC_AddHeal(433, mhp, mmp, 0, 0, 0, …)` (full HP and MP, no SP/KO), `resetTimeOut()` (clears every cooldown, `CharacterControl.cs:20376-20378`) and `resetHate()` (`Chameleon.cs:36320-36335`).
+- **Status `tent`:** Buff (`StatusData.cs:6692`) + State (`:4920`); only a Chameleon can receive it (`CharacterControl.cs:12436`). `moveSpeed = 0`, `myForce = 0` (`:2375-2386`); `sleep` is rejected (`:11406`); zzz emote every 3 s (`:9274`). **In the direct-damage coroutine every hit taken while in `tent` becomes `nDamage = mhp`** (`:31050-31060`), so any direct hit kills a full-HP Chameleon (Effect Damage is not affected).
+- **Tooltip discrepancy:** "removing all negative status … refill hp mp and sp": no status is removed and SP is not restored in code; cooldowns are reset (Thai "CD").
+
+### chm_campFire1-2 (Camp Fire, #331, #333) (verified 2026-10-01)
+
+- MP 10/15, no SP, Lv/Bn 9/3, 21/7, instant. Cast `magAdjust(3 + sLv)` = 4/5 s, CD `agiAdjust(60)` (dispatcher `Chameleon.cs:18266-18277`). The card's former SP 24 and flat cast 5 s were wrong.
+- `RPC_campFire_cast` (`:29212-29654`): `RPC_campFire_create(pos, …, chaAdjust(30), sLv)` (`:29360-29378`). `Chameleon_campFire.Update` (`Chameleon_campFire.cs:52-183`): every 4 s on the owner client, every character on the owner's layer in `FindAreaTarget(pos, 9, 3)` whose `actionState == "emotion"` gets `RPC_AddHeal(1, ceil(f × mhp), ceil(f × mmp), 0, ceil(f × mko), 0, …)` with `f = 0.01 + 0.02 × sLv` (3% / 5%): HP, MP **and KO**.
+
+### chm_bloodBurn1-2 (Blood Burn, #332, #334) (verified 2026-10-01)
+
+- **No MP or SP cost** (decoder MP 0, SP 0), Lv/Bn 15/5, 27/9, instant. CD `agiAdjust(12 + 3 × sLv)` = 15/18 s (`Chameleon.cs:29985`). The card's former MP 12/18, SP 24 and flat 18 s were wrong.
+- `RPC_bloodBurn` (`:29654-30217`): refused with "Not enough hp" when `hp <= 40` (`:29963`); otherwise `RPC_AddDamage(1, 15 × sLv, …)` on itself (direct damage, `hitMod` applies) and `RPC_AddHeal(1, 0, 15 × sLv, 15 × sLv, 0, 0, …)` (MP and SP) (`:29841-29846`).
+
+### chm_addedFire5 (Added Fire, #402) (verified 2026-10-01)
+
+- Passive, Lv 55/Bn 0. Quick Fire only: loop `4 × sLv` instead of `2 × sLv` (`Chameleon.cs:20061`) and loop shots `(0.25 + 0.1) × ATK` (`:19741`). See Quick Fire.
+
 ### chm_tormentRain1 (Torment Rain): arrow barrage (verified 2026-09-30)
 
 - `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target. CD `agiAdjust(3)` (`:25659`).
