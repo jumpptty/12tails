@@ -571,6 +571,37 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - `doBeginCharge` (`KingKaiser.cs:1017-1060`): needs Kaiser level 3 ("Need KaiserBeam Upgrade") and Kaiser SP ≥ 75 ("Kaiser Beam needs 75 sp"). `RPC_kaiserBeam1` charge (`addTimeOut("kaiserBeam", 2)`, `:3041`), `RPC_kaiserBeam2` fire (`:3118-3580`): `addTimeOut("kaiserBeam", 30)` (`:3426`); 5 pulses (`i >= 5` exit, `:3501`), each `sp = Clamp(sp − 15, 0, 100)` (`:3516`), `FindRecTarget(pos, fwd, 4, 4, 32, 6)` (8 m wide, `:3519`), `hit(21, t, 300, KO 1, …)` (`:3538`). Tooltip "75 sp" matches.
 
+### mol_warFactory5 (War Factory, #434) (verified 2026-10-01)
+
+- MP 15, SP −30 (red) per cast, Lv 75/Bn 4. `doSkill` (`:7382-7400`): a counter steps 1 → 5 and wraps; 1 Saw Machine, 2 Bazooka, 3 Tesla Coil, 4 Roller Machine, 5 Cart Bomb. Cooldown `agiAdjust(3)` after steps 1-4 (`:40814`, `:41388`, `:41900`, `:42687`) and `agiAdjust(180)` after Cart Bomb (`:43394`). `Start()` puts `warFactory` on `agiAdjust(180)` and `warCapital` on `agiAdjust(300)` at spawn in real game modes (`Game.mGameType > 4`, `:105-120`). Reload with Advance Repair clears it (`:10302`). **Card correction:** the units were "free / 180 s"; each costs MP 15 / SP 30 and steps 1-4 use the 3 s cooldown.
+- `mol_warCapital5` shares command #434 in `MoleSkill.cs` (both names map to 434).
+
+### mol_warFactory_sawMachine (Saw Machine) (verified 2026-10-01)
+
+- `RPC_sawMachine` (`:40377-41015`): 4 swings (`i` 1-4, `:40671`), each its own box (`:40710-40746`): behind `FindRecTarget(pos, −fwd, 4, 4, 3, 2)`, then front `(4, 4, 2, 2)`, `(2, 2, 3, 2)`, `(4, 4, 2, 2)`; `hit(4341, t, (int)(1.5 × ATK + talAdjust(15)), KO 0, …)` (`:40770`). A target in front takes at most 3 (card hit count 3, was 4).
+
+### mol_warFactory_bazooka (Bazooka) (verified 2026-10-01)
+
+- `RPC_bazooka` (`:41015-41581`): 3 rockets (`i >= 3` exit, `:41308`), `life = 2 × rangeMod` (`:41361`); on contact (`Mole_bazooka.cs:46-73`): `FindAreaTarget(point, 1, 1, enemy layers)`, `hit(3442, t, ATK + talAdjust(50), KO 5, …)`. Card hit count 3 (was 1).
+
+### mol_warFactory_teslaCoil (Tesla Coil) (verified 2026-10-01)
+
+- `RPC_teslaCoil` (`:41581-42198`): 7 pulses (`i >= 7` exit, `:42034`), `FindAreaTarget(Mole pos, 5, 3)` (`:42046`), `hit(4343, t, talAdjust(30), KO 0, …)` (`:42065`); a hit target whose `actionState` is standby / run / emotion also gets `RPC_AddStatus("paralysis", 2, 3, …)` — level 2, fixed 3 s (`:42076-42109`).
+
+### mol_warFactory_rollerMachine (Roller Machine) (verified 2026-10-01)
+
+- `RPC_rollerMachine` (`:42198-42898`): one hit, then 10 more while rolling forward at `moveSpeed 1` (`i >= 10` exit, `:42597`); each `FindRecTarget(pos, fwd, 1.5, 1.5, 2, 2)` and `hit(4344, t, 3 × ATK, KO 0, …)` (`:42394-42430`, `:42620-42643`). 11 hits.
+
+### mol_warFactory_cartBomb (Cart Bomb) (verified 2026-10-01)
+
+- `RPC_cartBomb` (`:42898-43591`): the Mole steers the cart with the direction keys at 6 m/s (`:43267-43290`). `Mole_cartBomb.cs` (`:20-45`): explodes after 3 s or when the Mole leaves the `cartBomb` command. `RPC_cartBomb_hit` (`:14128-14160`): radius `6 + 1.5 × ExtraPowderLv` (height the same), `hit(3445, t, (int)((1 − 0.5 × d / r) × talAdjust(150)), KO 30, …)`.
+
+### mol_warCapital5 (War Capital, #434) (verified 2026-10-01)
+
+- MP 100, SP −50 (red), Lv 85/Bn 6. Assembled through `RPC_assemble1("warCapital")`: `magAdjust(24)` s, CD `agiAdjust(300)` (`:23387-23429`).
+- `RPC_warCapital_create` (`:14239-14480`): destroys the previous War Capital, `isSummon`, starts `OnWarCapital`. It lives until destroyed or the Mole dies (`Mole_warCapital.cs:100-170`). No Heavy Built.
+- `OnWarCapital` (`:43591-43930`): every 24 s, if `FindAreaTarget(Mole pos, 36, 10)` finds enemies (`:43842-43880`), `RPC_warCapital_fire` (`:43981-44270`) fires 8 missiles 0.15 s apart, each at a random target + up to 2 m random offset (`:43749-43806`). `RPC_warMissile_hit` (`:14589-14660`): `FindAreaTarget(point, 1, 1)`, `hit(−4444, t, talAdjust(50), KO 3, …)`. Tooltip "50 dmg × 8" matches; the "Hp 1500" is the prefab's (not in code).
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
