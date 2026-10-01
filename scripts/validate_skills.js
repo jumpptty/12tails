@@ -128,6 +128,7 @@ const exposeInjection = `
   window._effectProc = { chance: effectProcChance, bonus: effectProcBonus, hitOk: effectProcHitOk, lastPurple: () => lastRollPurple, lastCrit: () => lastRollCrit, hasMix: skillHasPurpleMix };
   window._critView = { set: (v) => { critFormulaView = v; } };
   window._chameleonCritBase = chameleonCritBase;
+  window._pandaSp = { set: (v) => { pandaCurrentSp = v; }, get: () => pandaCurrentSp };
   window._bisonStun = { set: (v) => { bisonStunDistance = v; }, get: () => bisonStunDistance, setHate: (v) => { bisonHate = v; }, getHate: () => bisonHate, setWeight: (v) => { bisonWeight = v; }, getWeight: () => bisonWeight };
   window._sheepCharge = { set: (t) => { sheepChargeTime = t; }, get: () => sheepChargeTime, seconds: sheepChargeSeconds, maxTime: sheepChargeMaxTime };
   window._rabbit = { setDistance: (kind, v) => { if (kind === "charge") rabbitChargeDistance = v; else rabbitComboDistance = v; }, setAim: (v) => { rabbitAimTime = v; }, getAim: () => rabbitAimTime, getDistance: (kind) => kind === "charge" ? rabbitChargeDistance : rabbitComboDistance, depExclusive: DEP_EXCLUSIVE };
@@ -1841,7 +1842,21 @@ let checkedCritView = 0;
   const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
   const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
-  check("the cards that model crit are Bison Combo, Chameleon Left Stride and Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo, Whale Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_leftStride,chameleon_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,whale_nAttack,wolf_nAttack", critCards.join());
+  check("the cards that model crit are Bison Combo, Chameleon Left Stride and Combo, Panda Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo, Whale Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_leftStride,chameleon_nAttack,panda_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,whale_nAttack,wolf_nAttack", critCards.join());
+  // Panda Combo goldens (Panda.cs:15320, :15528, :18652): ATK 100, SP 50, Focused Spirit 2 -> FS 30; stage 1 trunc(0.2 x 130) = 26, crit trunc(0.2 x (180 + 30)) = 42;
+  // stage 1 punch 2 never crits; Aura Blast 125 + 30 = 155, crit floor(1.8 x 125) + 30 = 255.
+  {
+    const pc = sk("panda_nAttack"), g = pc.dmgGroups, sp0 = sandbox._pandaSp.get();
+    const savedP = ["focusedSpirit", "auraBlast", "pandaGearChampion", "pandaGearMarshal"].map(id => [id, deps[id]]);
+    inputs.atk.value = "100"; sandbox._pandaSp.set(50); deps.focusedSpirit = 2; deps.auraBlast = 1; deps.pandaGearChampion = 1; deps.pandaGearMarshal = 0;
+    cv.set(false); select(pc, 4);
+    const gr = (i) => sandbox._calcRangeFor(g[i].dmg, undefined, g[i]).slice(0, 2).join();
+    check("Panda stage 1 hit 1 spans 26-42 with Champion gear", gr(0) === "26,42", gr(0));
+    check("Panda stage 1 hit 2 never crits: 26-26", gr(1) === "26,26", gr(1));
+    check("Panda Aura Blast spans 155-255", gr(6) === "155,255", gr(6));
+    cv.set(true); select(pc, 4); check("Panda crit view stage 1 hit 1 = 42", gr(0) === "42,42", gr(0));
+    cv.set(false); sandbox._pandaSp.set(sp0); savedP.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
+  }
   const RAB = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabWeapon", "rabEquip", "rabExtravagance"];
   const savedRab = RAB.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDist = rb.getDistance("combo");
   cv.set(false);

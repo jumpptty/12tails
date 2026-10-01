@@ -328,7 +328,16 @@ below for why they were initially left out and then given their own rows.
 - **Spirit Fist interaction:** with Spirit Fist (#433), Shadow Fist adds `floor(0.16 * PandaLevel)` to that Effect Damage before the `RPC_AddEffectDamage` call (`Panda.cs:35804-35821`). This is a flat addition after rank damage, not a 16% multiplier.
 - **Trigger rule:** it is not a random proc. A skill must successfully connect and explicitly start `ShadowFist(target)`; examples include normal-attack hit paths (`Panda.cs:15397-15407`, `:15582-15592`) and Sage-skill hit paths such as Water Monkey (`Panda.cs:33043-33086`), Water Crane (`:33905-33958`), Wind & Cloud, Rain & Storm, Lotus Palm, and Heaven Palm. If Shadow Fist is unlearned, the coroutine exits before making the Effect Damage call (`Panda.cs:35834-35855`).
 - **Duration / cooldown:** none; this is an immediate passive follow-up, not a status or cast.
-- **Bible:** modelled as `effectProc: PANDA_SHADOWFIST_PROC` (bonus mode, Shadow Fist 0–4 stepper + Spirit Fist toggle) on Water Monkey/Crane, Stasis/Death Blow, Drunken Fist, Wind & Cloud, Rain & Storm, Lotus/Heaven Palm; the Combo cards get it with their own `/sd` pass.
+- **Bible:** modelled as `effectProc: PANDA_SHADOWFIST_PROC` (bonus mode, Shadow Fist 0–4 stepper + Spirit Fist toggle) on Water Monkey/Crane, Stasis/Death Blow, Drunken Fist, Wind & Cloud, Rain & Storm, Lotus/Heaven Palm; Combo since 2026-10-01 (see below).
+
+### Combo (`panda_nAttack`, #101-104) (verified 2026-10-01)
+
+- **Stages:** stage `n + 1` needs #10n (`doNormalAttack`, `Panda.cs:7585-7800`); `addTimeOut("nAttack", 1.5)` per stage. Hits per stage 2 / 2 / 3 / 1 / 1 (total 4 / 7 / 8 / 9 at Combo 1-4).
+- **Damage:** `(int)(c × (getCritPlus(ATK) + getFocusedSpiritDmg()))`, `c` = 0.2 / 0.3 / 0.25 / 0.65 / 0.85 (`:15320`, `:16191`, `:16978`, `:17858`, `:18425`); `getFocusedSpiritDmg() = 0.3 × current SP × FocusedSpiritLv` (#261-262, 0-2, `:8962-8971`). The crit (`getCritPlus`, standard Marshal 12 / Champion 18 table, `floor(1.8 × ATK)`) wraps ATK only, before the coefficient. **Stage 1's second punch has no `getCritPlus`** (`:15528`).
+- **Boxes (`FindRecTarget`, from the fist):** stages 1-2 `(1, 1, 2, 1)` = 2 × 2 m, height 1 (`:15357`, `:16228`); stage 3 `(1, 1, 3, 3)` from 1 m behind the fist (`:17015`); stage 4 `(1, 1, 2, 2)` (`:17882`); stage 5 `(3, 1.6, 4, 3)` = 6 m narrowing to 3.2 m (`:18508`). Force Gauntlet (`w_pnd59`): `FindAreaTarget(self, 3-4, 2-3)` and `floor(0.75 ×)` damage instead (`:15338-15349` and the matching sites per stage).
+- **Per landed hit:** `hit(stage, t, dmg, KO 1, …)`, `onNormalAttackHit`, `sp + 1`, `ComboPlus()`, `ShadowFist(target)`.
+- **Aura Blast (#401):** replaces stage 5 with `FindAreaTarget(fist, 2, 3)` and `(int)(getCritPlus((int)(1.25 × ATK)) + getFocusedSpiritDmg())`, KO 1, same per-hit effects (`:18425-18678`).
+- **Bible:** `rawModel` with per-group parts (`pandaComboParts`, `critTotal` / `noCrit`), Focused Spirit / Aura Blast / gear deps, the SP input, `effectProc: PANDA_SHADOWFIST_PROC`.
 
 ### Spirit Fist (`panda_spiritFist`, skill ID #433)
 

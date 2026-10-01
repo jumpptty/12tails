@@ -195,7 +195,8 @@ Purple = the Effect Damage path: no dodge, no `damagePlus`/`dmgAdjust`/`defAdjus
 * **Implementation:** `rollOneHit(..., opts)` sets `lastRollPurple`; `revealMultiHit` adds bonuses and splits totals. `[RANGE/SIM]` + `[EFFECTPROC ERROR]`.
 * **`effectProc.noCrit:true`** (replace only, Whale Combo): the purple roll skips `critProc` and the purple range uses the raw range before the crit (`range.noCritRange`).
 * **Mole Smart Shell** (`MOLE_SMARTSHELL_PROC`, bonus 30): Mine, Stun Mine, Stun Grenade, Time Nuke; enemies with [insight] are skipped.
-* **Still to wire at each card's `/sd` pass:** Panda Combo 1–5 (Shadow Fist). Need their own design: Bison Colossal Weapon (splash onto other targets), Bat Merciless Drain (uncertain condition).
+* **rawModel per group** (Panda Combo): `parts(rank, {ATK, LV, group})` and `formulaItems(rank, {..., group})` receive the `dmgGroups` entry; `parts` may return `noCrit` (a hit without `getCritPlus`) or `critTotal` (the whole crit outcome when the crit wraps only part of the formula, e.g. Panda `(int)(c × (floor(1.8 ATK) + Focused Spirit))`).
+* **Need their own design:** Bison Colossal Weapon (splash onto other targets), Bat Merciless Drain (uncertain condition).
 
 ### Header controls, crit and toggle-driven purple (`dmgControls` / `critProc` / `effectDamageDep`)
 
