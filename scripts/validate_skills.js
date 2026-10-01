@@ -1828,7 +1828,7 @@ let checkedCritView = 0;
   const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
   const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
-  check("the cards that model crit are Bison Combo, Chameleon Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,wolf_nAttack", critCards.join());
+  check("the cards that model crit are Bison Combo, Chameleon Left Stride and Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_leftStride,chameleon_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,wolf_nAttack", critCards.join());
   const RAB = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabWeapon", "rabEquip", "rabExtravagance"];
   const savedRab = RAB.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDist = rb.getDistance("combo");
   cv.set(false);

@@ -373,7 +373,7 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 ### chm_clearArrow1 (Clear Arrow, #263) (verified 2026-10-01)
 
 - Passive, Lv 30/Bn 21. `getClearArrow()` = learned and the Chameleon has `invisible` (`Chameleon.cs:8938-8981`); then Combo fires `RPC_clearArrow_fire` (`:8983-9108`), same `Chameleon_nAttack` damage with `nClearLv = 1`. `Init` keeps the arrow mesh for the owner's team and destroys it for others (`Chameleon_nAttack.cs:272-325`), so enemies do not see it.
-- **Code vs tooltip:** the hit passes hate `floor(−0.5 × num)` (`Chameleon_nAttack.cs:688`), but `hit()` clamps it with `hateAdjust` to 0-999 (`CharacterControl.cs:3556`, `:20509-20511`) before `RPC_AddDamage` adds `damage + 10 × KO` (`:3768`), so a Clear Arrow makes the same hate as a normal arrow. The "no hate" tooltip is not achieved by this code.
+- **Code vs tooltip:** the hit passes hate `floor(−0.5 × num)` (`Chameleon_nAttack.cs:688`), but `hit()` clamps it with `hateAdjust` to 0-999 (`CharacterControl.cs:3556`, `:20509-20511`) before `RPC_AddDamage` adds `damage + 10 × KO` (`:3771`), so a Clear Arrow makes the same hate as a normal arrow. The "no hate" tooltip is not achieved by this code.
 
 ### chm_tent5 (Tent, #433) (verified 2026-10-01)
 
@@ -396,10 +396,50 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 
 - Passive, Lv 55/Bn 0. Quick Fire only: loop `4 × sLv` instead of `2 × sLv` (`Chameleon.cs:20061`) and loop shots `(0.25 + 0.1) × ATK` (`:19741`). See Quick Fire.
 
-### chm_tormentRain1 (Torment Rain): arrow barrage (verified 2026-09-30)
+### chm_massShot1-2 (Mass Shot, #222, #224) (verified 2026-10-01)
 
-- `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target. CD `agiAdjust(3)` (`:25659`).
+- SP −10/−12 (red), no MP, Lv/Bn 13/4, 25/8, instant. CD `agiAdjust(30)` (`Chameleon.cs:22762`). The card's former SP 10/15 was wrong.
+- `RPC_massShot` (`:22195-23037`): `moveSpeed = −2` (hops back); every enemy in `FindAreaTarget(self, 6 + (MassHouseLock ? 3 : 0), 3 × rangeMod)` (`:22508`) takes `hit(220 + 2 × sLv, t, (int)(0.5 × ATK + talAdjust(8 × sLv + 8)), KO 1, 0, …)` (`:22513-22558`), `(int)(1.5 × …)` with Mass House Lock. While the command is `massShot` every `hit()` against the Chameleon is dodged ([12Tails-Mechanics-Reference.md §2.8](12Tails-Mechanics-Reference.md#28-evasion-evade-only-inside-the-attackers-hit-verified-2026-09-23)).
+
+### chm_tormentRain1 (Torment Rain, #273): arrow barrage (verified 2026-09-30, re-checked 2026-10-01)
+
+- MP 15, SP −15 (red), Lv 45/Bn 27, instant. CD `agiAdjust(3)` (`Chameleon.cs:25659`). Cast only while the Chameleon's own Final Entrapment cage exists and it is within 40 m of it (`:6686-6703`); the target point is the cage centre (`:25638-25644`).
+- `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target.
 - TTO: see Server Balance Variations below.
+
+### chm_fatalStrike1-4 (Fatal Strike, #301-304) (verified 2026-10-01)
+
+- MP 6/8/10/12, SP 6/8/10/12 **blue** (threshold), Lv/Bn 3/0, 9/1, 15/2, 21/3, instant. CD `agiAdjust(30)` (`Chameleon.cs:26400`).
+- `RPC_fatalStrike` (`:26159-26607`): `RPC_AddStatus("fatalStrike", sLv + (ExtraArrows ? 1 : 0), chaAdjust(12), 5 + (ExtraArrows ? 5 : 0), …)` (`:26313`). The status value is an arrow counter: each `RPC_nAttack_fire` / `RPC_clearArrow_fire` reads the level, passes it to the arrow (`+6 × lv` damage) and decrements the value, removing the status at 0 (`:8494-8530`, `:9036-9077`). Left Stride arrows (and the Double Strider clone's) also use `RPC_nAttack_fire`, so they consume it too.
+- **Status `fatalStrike`:** Buff (`StatusData.cs:6686`) + Magical (`:5717`); only a Chameleon can receive it (`CharacterControl.cs:12421`). No crit effect: the old card note "+5% Critical Rate" had no source.
+- **Immunity gate:** see Immunity (`Chameleon.cs:7904`).
+
+### chm_leftStride1-2 (Left Stride, #321, #323) (verified 2026-10-01)
+
+- SP −12/−18 (red), no MP, Lv/Bn 7/2, 19/6, instant (needs a target closer than `18 + 4 × FR`, `Chameleon.cs:7834`). CD `agiAdjust(60)` (`:27097`). The card's former MP 4 / SP 12 were wrong.
+- `RPC_leftStride` (`:26607-27821`): runs sideways at `runSpeed + 1` and fires `2 × sLv + 1` arrows (`:27058`) with `RPC_nAttack_fire` toward the target (`:26943-26982`), i.e. real Combo arrows: Combo damage at the learned Combo rank, crit, Fatal Strike, Piercing Venom, Poison Arrow, `sp++` and item procs all apply. Double Strider (#423) spawns a clone that fires the same arrow from its own position each time (`:26998-27043`).
+- **Card:** `rawModel` = the Combo model with a Combo-rank dep; hit count `(2 × rank + 1) × 2` with Double Strider.
+
+### chm_rightStride1-2 (Right Stride, #322, #324) (verified 2026-10-01)
+
+- MP 4/6, SP −12/−18 (red), Lv/Bn 13/4, 25/8, instant (target closer than `18 + 4 × FR`, `Chameleon.cs:7754`). CD `agiAdjust(60)` (`:28471`). The card's former MP 4/8, SP 12/24 were wrong.
+- `RPC_rightStride` (`:27821-29212`): `2 × sLv + 1` shots (`:28432`), each `Physics.RaycastAll` of `20 + 4 × FR` m that hits **every** target in line: `hit(301 + 2 × (sLv − 1), t, (int)(0.4 × ATK), KO 2, 0, …)` (`:28342-28370`), `sp + 1` and All Slain list on a landed hit. The Double Strider clone repeats each shot from its position (`:28386-28414`) without SP or All Slain.
+
+### chm_doubleStrider5 (Double Strider, #423) (verified 2026-10-01)
+
+- Passive, Lv 70/Bn 3. Clone for Left and Right Stride (above); doubles the shots.
+
+### chm_zeroShot5 (Zero Shot, #434) (verified 2026-10-01)
+
+- MP 30, SP −30 (red), Lv 75/Bn 4, instant. CD `agiAdjust(60)` (`Chameleon.cs:37513`; also pre-set at mission start, `:86`).
+- `RPC_zeroShot` (`:36976-37784`): pulls every enemy in `FindAreaTarget(pos + 2 × forward, 6, 3)` that is more than 1 m from that point toward it (`RPC_AddDamage(1, −1, 0, 0, dir)`, `:37441-37490`), and hits every target in `FindRecTarget(pos + 0.5 × forward, forward, 2, 2, 3, 3)` (4 m wide, 3 m long, 3 m tall) once with `hit(434, t, 3 × ATK + talAdjust(100), KO 10, 0, 6 × away)` (`:37399-37422`).
+
+### chm_thunderDragon5 (Thunder Dragon, #444) (verified 2026-10-01)
+
+- MP 50, SP −50 (red), Lv 85/Bn 6, instant. CD `agiAdjust(90)` (`Chameleon.cs:38225`; also pre-set at mission start, `:89`). Removes the Chameleon's own `blend` and `invisible` (`:38260-38265`).
+- `RPC_thunderDragon` (`:37784-38604`): 6 ticks 0.5 s apart (`:38305`); each tick every enemy in `FindAreaTarget(self, 3, 3)` takes `RPC_AddEffectDamage(444, 50, …)` and, on `lckAdjust(12) > Random.Range(0,100)`, `paralysis` 1 for `getDebuff(3, cha, targetCha)` (`:38380-38470`). The paralysis is on these ticks, not on the reflect.
+- **Reflect:** in the Chameleon's `RPC_AddDamage`, while `myCommand == "thunderDragon2"` and `nDamage > 0`, the attacker takes `RPC_AddEffectDamage(444, 350, …)` (`CharacterControl.cs:4617-4622`), once per direct hit.
+- **Tooltip:** "3 sec, 100 dps, 12% paralysis, 350 dmg/hit" matches.
 
 
 Companion to `chameleon-skill-reference.md` (Cooldown/Duration, cite that for CD/Duration citations —
