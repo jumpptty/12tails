@@ -660,3 +660,85 @@ if (this.hasSkill(421))
 
 - `this` is the character *receiving* the status, so every debuff applied to a Wolf who knows Fortitude has its duration cut to `⌈0.75×sTime⌉`, whichever skill or source applied it. The check is nested in the Wolf-only block, so other classes' slot-421 skills (e.g. Penguin's Focus Intellect) do not get it.
 - Order within `RPC_AddStatus`: the Perseverance buff-duration bonus (`hasSkill(121/122)`, `L13385-13419`, buffs only) runs first, then Fortitude; Perseverance is gated on `isBuffStatus` and Fortitude on `isDebuffStatus`.
+
+### wlf_noKo1-3 (#251-#253) — passive, rank family (verified 2026-10-01)
+
+- **Metadata:** reqLv/Bn 20/12, 24/15, 28/18; MP 0, SP 0; passive (`decode_skilldata.py`, `WolfSkill.cs:403-428`).
+- **Effect** (`RPC_AddDamage`, receiver side, `CharacterControl.cs:3927-3992`): when a Wolf receives a direct hit with `nKo > 0`, level `n` = 3 / 2 / 1 for #253 / #252 / #251, and `Random.Range(0,100) < lckAdjust(20 × n)` sets `nKo = 0`. The damage itself is unchanged. Only the `RPC_AddDamage` path is checked; KO carried by `RPC_AddEffectDamage` is not.
+- Client tooltips: EN "Gives Wolf a 30% [45% / 60%] chance to block any ko damage dealt to him." / TH "ให้โอกาสทำให้ค่า Ko ที่ได้รับกลายเป็น 0 เพื่อลดการ knockdown (30% [45% / 60%])" (`WolfSkill_eng.cs:429-451`, `WolfSkill_thai.cs:462-484`). Code wins: the base chance is **20 / 40 / 60**, scaled by the Wolf's LCK through `lckAdjust`; only rank 3 matches the tooltip.
+
+### wlf_secondWind1 (#254) — active, self (verified 2026-10-01)
+
+- **Metadata:** reqLv 32, reqBn 21; MP **30**; SP **+20** (blue gate, not consumed); instant, self, `cType secondWind` (`decode_skilldata.py`).
+- **Gate:** refused unless `hp < 0.25 × MHP` ("Can only use secondWind when hp is below 1/4", MP/SP refunded) (`Wolf.cs:5630-5650`).
+- **Cooldown:** `agiAdjust(300)`, skipped by a Double Art proc (`Wolf.cs:23360-23366`).
+- **Effect** (`$RPC_secondWind$29420`, `Wolf.cs:23080-23560`): Wolf stops and plays `instantCast`; after 0.6 s + 0.2 s, `RPC_AddHeal(254, min(ceil(0.5 × MHP), 10 × Lv), 0, 0, ceil(0.5 × MKO), …)` (`:23278`). So the HP heal is half of max HP **capped at 10 × level** (e.g. Lv 100 → at most 1,000 HP), and the KO gauge is refilled by half its maximum (`AddHeal` adds `nKo` to `ko`, clamped to `mko`, `CharacterControl.cs:7444+`). No status.
+- Client tooltips: EN "Call upon Wolf's inner strength and restores half of his max hp. (Can only be used when hp is lower than 25%.)" / TH "ฟื้นพลังชีวิตของหมาป่า 50% (ใช้ได้เมื่อ hp เหลือน้อยกว่า 25%)" (`WolfSkill_eng.cs:462`, `WolfSkill_thai.cs:495`). They omit the 10 × Lv cap and the KO refill.
+
+### wlf_grandCross1 (#264) — active, rank-1 (verified 2026-10-01)
+
+- **Metadata:** reqLv 33, reqBn 24; MP **45**; SP **−30** (red); instant, enemy, `cType grandCross` (`decode_skilldata.py`).
+- **Mark:** a Cross Break cast by a Wolf who knows #264 stores `mark = Wolf position + 0.6 m forward` and `markLv = Cross Break rank`, and shows the `grandCross_mark` object (`Wolf.cs:23850-23871`, `RPC_grandMark` `:8585-8625`). `markLv` starts at 1 (`Wolf.cs:32`).
+- **Gate** (`Wolf.cs:5694-5735`): refused with "No grandCrossMark Found" when no mark object exists, or "Too far away from grandCrossMark" when the mark is more than **30 m** away (`sqrMagnitude > 900`); both refund MP/SP.
+- **Cooldown:** `agiAdjust(120)`, skipped by a Double Art proc (`Wolf.cs:24593-24599`). The cast immediately calls `RPC_grandMark(…, 0)`, which destroys the mark object, so each mark is used once (`:24610`, `:8590-8600`).
+- **Damage** (`$RPC_grandCross$29441`, `Wolf.cs:24275-24800`): after 0.6 s, every enemy in `FindAreaTarget(mark, 6, 8)` (radius 6 m, height 8 m, no `rangeMod`) takes `hit(264, t, talAdjust(60 + 60 × markLv), KO 10, 0, …)` (`:24478-24501`) = `talAdjust(120 / 180 / 240)` for Cross Break 1-3. No ATK term, no SP gain. Then 0.4 s recovery.
+- Client tooltips: EN "Release another powerful wave from the last CrossBreak's location, dealing up to 240 extra damage." / TH "ปักดาบลงพื้น ปลดปล่อยพลังจากจุดที่ทำ CrossBreak ครั้งสุดท้าย" (`WolfSkill_eng.cs:506`, `WolfSkill_thai.cs:539`). ToT cooldown change: see Server Balance Variations above.
+
+### wlf_artCancel1-2 (#323/#324) — active, rank family (verified 2026-10-01)
+
+- **Metadata:** reqLv/Bn 19/6, 25/8; MP 0; SP **−10 / −14** (red); instant, enemy, `cType artCancel` (`decode_skilldata.py`).
+- **Cooldown:** `addTimeOut("artCancel", agiAdjust(60))`, skipped by a Double Art proc (`Wolf.cs:27617-27623`). Art Breaker uses the same key (see the judgment-call note and its entry below).
+- **Cast** (`$RPC_artCancel$29503`, `Wolf.cs:27300-27912`): `removeLockStatus(2 × rank + (Art Breaker #423 ? 1 : 0))` at once (`:27647`, levels ≤ 2 / 4, or 3 / 5), then a dash at `moveSpeed 10`; the hit comes 0.6 s after the cast, then 0.4 s recovery.
+- **Hit:** `FindRecTarget(pos − rangeMod × forward, forward, 3, 3, 3, 2) × rangeMod` (6 m wide, 3 m long from 1 m behind the Wolf, 2 m high) (`:27465`); each enemy takes `hit(321 + rank, t, (int)(0.4 × ATK + talAdjust(20 + 5 × (rank + #423))), KO 0, 0, …)` (`:27488`) = TAL base 25 / 30 (30 / 35 with Art Breaker). On a landed hit: +1 SP and `RPC_AddStatus("artCancel", 1, 1, 0, …)` (`:27514-27529`).
+- **`artCancel` status** (State + Debuff, `StatusData.cs:4818`, `:7304`): the apply handler sets a target whose `actionState == "attack"` back to `standby` ("Your action has been cancelled!") and never stores the status (`isAdd = false`, `CharacterControl.cs:34117-34135`). It interrupts whatever skill or attack the target is performing at that moment; it does nothing to a target that is idle or moving. Children (`isChild`) are immune (`CharacterControl.cs:10700-10712`).
+- Client tooltips: EN "Perform a quick attack that interrupts target's action. Also releases Wolf from all lv.2 [lv.4] lock status." / TH "… สลัดตัวเองจากการถูกขังที่ต่ำกว่าระดับ3 [5]" (`WolfSkill_eng.cs:638-649`, `WolfSkill_thai.cs:671-682`). Matches the code.
+
+### wlf_impulse1-2 (#333/#334) — passive, rank family (verified 2026-10-01)
+
+- **Metadata:** reqLv/Bn 21/7, 27/9; MP 0, SP 0; passive (`decode_skilldata.py`).
+- **Hook** (direct-damage `AddDamage` coroutine on the Wolf's own client, after HP is reduced, `CharacterControl.cs:31788-31972`): Wolf with #333, the hit's damage **> floor(0.07 × MHP)**, none of `sleep` / `snowMan` / `petrify` / `paralysis`, then `Random.Range(0,100) < lckAdjust(20 × lv + 10)` (base **30 / 50**, lv 2 with #334). It also needs `actionState` `standby` or `run` (not mid-skill), the `counter` cooldown free, and the attacker alive, on another layer and within **3 m** (`sqrMagnitude < 9`).
+- **Effect:** `mCounterDmg = damage taken`, then `RPC_counter2(pos, dirToAttacker, 0, lv)` (`:31950-31966`), i.e. Counter's strike at **Impulse's level**: `addTimeOut("counter", agiAdjust(30))` (shared with Counter), and after ~0.3 s every enemy in `FindRecTarget(pos − 2·rangeMod·forward, forward, 2, 2, 5, 3) × rangeMod` takes `RPC_AddEffectDamage(330 + lv, (int)(0.5 × ATK + lv × damageTaken), 0, 0, …)` (`Wolf.cs:28286-28848`, hit `:28506`). That is purple Effect Damage (no dodge, no `dmgAdjust`/`defAdjust`).
+- Client tooltips: EN "Enables Wolf to automaticly use Counter1 when he received damages more than 7% of his max HP." (both ranks) / TH "… ใช้ counter1 [counter2] โดยอัตโนมัติเมื่อได้รับความเสียหายเกิน 7% ของ mhp" (`WolfSkill_eng.cs:682-693`, `WolfSkill_thai.cs:715-726`). The TH rank-2 "counter2" matches the code; neither mentions the chance roll or the 3 m range.
+
+### wlf_bladeSong1-3 (#351-#353) — active, rank family (verified 2026-10-01)
+
+- **Metadata:** reqLv/Bn 20/12, 24/15, 28/18; MP 0; SP **−32 / −36 / −40** (red); instant, enemy, `cType bladeSong` (`decode_skilldata.py`).
+- **Cooldown:** `agiAdjust(120)`, skipped by a Double Art proc (`Wolf.cs:30305-30311`).
+- **Sequence** (`$RPC_bladeSong$29571`, `Wolf.cs:29704-30520`): 0.3 s + 0.4 s wind-up (a short backstep, `moveSpeed −2`), then **`5 + 2 × rank` = 7 / 9 / 11 slashes**, one every 0.2 s (`:30273`, `:30514`). Each slash hits every enemy in `FindRecTarget(pos, forward, 1, 2, 6, 3) × rangeMod` (2 m wide at the Wolf, 4 m at 6 m, 3 m high) with `hit(351, t, (int)(0.5 × ATK + talAdjust(3 × rank)), KO 1, Hate 1, …)` (`:29995-30018`). No SP gain per hit (the hit result is not checked). `hitCount` counts the slashes whose box found at least one enemy (`:30033-30039`).
+- **Last Blade** (#354): see the next entry. Without it the skill ends after the last slash.
+- Client tooltips: EN "… dealing 3x7 [6x9 / 9x11] extra damage to the targets in front." / TH "ท่าฟันดาบต่อเนื่องอย่างรวดเร็วอยู่กับที่ของหมาป่า (7 [9 / 11] hits)" (`WolfSkill_eng.cs:748-770`, `WolfSkill_thai.cs:781-803`). The "3 / 6 / 9" is the `talAdjust(3 × rank)` base; the tooltip omits `0.5 × ATK`.
+
+### wlf_lastBlade1 (#354) — passive (verified 2026-10-01)
+
+- **Metadata:** reqLv 32, reqBn 21; MP 0, SP 0; passive (`decode_skilldata.py`; own body `WolfSkill.cs:816-821`).
+- **Effect** (`Wolf.cs:30281-30292`, finisher `:30072-30170`): after Blade Song's last slash, Wolf plays `bladeSong4` and, after 0.3 s, every enemy in a longer box `FindRecTarget(pos, forward, 1, 2, 10, 3) × rangeMod` (10 m long) takes `hit(354, t, (int)(0.6 × ATK + talAdjust(45 + 5 × hitCount)), KO 5, Hate 1, …)` (`:30129-30152`), `hitCount` = Blade Song slashes that found a target (max 7 / 9 / 11 → `talAdjust(80 / 90 / 100)`). Plays a motion-blur camera effect for the local player.
+- Client tooltips: TH "เพิ่มการโจมตีครั้งสุดท้ายให้กับ BladeSong (45 + hits x 5)" (`WolfSkill_thai.cs:814`); no English entry exists in `WolfSkill_eng.cs`. Matches the code; the tooltip omits `0.6 × ATK` and KO 5.
+
+### wlf_bloodFang5 (#403) — Class-C passive (verified 2026-10-01)
+
+- Documented in the Blade Fang entry above (**Blood Fang (403)** bullet): Lv 55 / Bn 0, requires Blade Fang 3; adds 6 inside each slash's `talAdjust`, widens the box from half-width 1 → 2 and lengthens it 4 → 5 (`Wolf.cs:25766-26237`). The tooltip's "doubles the damage range" is only true for the width.
+
+### wlf_artBreaker5 (#423) — Class-C active (verified 2026-10-01)
+
+- **Metadata:** reqLv 70, reqBn 3; MP 0; SP **−30** (red); target, enemy, `cType artCancel`; requires Art Cancel 2 (`rSkill = 324`, `WolfSkill.cs:1266`).
+- **Cooldown:** `addTimeOut("artCancel", agiAdjust(120))` (`Wolf.cs:34161`), the same key as Art Cancel. Like Feral Assault and Dual Brand, a Double Art proc skips it **only with Sublime Art (#431)** (`:34146-34166`); without #431 the cooldown starts anyway.
+- **Hit** (`$RPC_artBreaker$29659`, `Wolf.cs:33808-34410`): after a 1 s cast, on the owner's client, if the target is within **30 m** (`sqrMagnitude <= 900`; otherwise MISS and "Target too far", `:33983-33994`): `hit(423, target, ATK + talAdjust(30), KO 0, 0, …)` (`:34008`). On a landed hit: +1 SP and the same `artCancel` status as Art Cancel (`:34031-34036`). Then 0.3 s recovery.
+- **Passive part:** while learned, Art Cancel's lock cleanse and TAL base each gain +1 level (`Wolf.cs:27488`, `:27647`).
+- Client tooltips: EN (key `"wlf_artBreaker 5"`, with a stray space) "Skill that deal damage and cancle enemy skill form distant. Increase level of ArtCancel by 1." / TH "ท่าที่ทำความเสียหายและยกเลิก ท่าของเป้าหมายได้จากระยะไกล เพิ่มระดับของ ArtCancel อีก 1" (`WolfSkill_eng.cs:1001`, `WolfSkill_thai.cs:1034`).
+
+### wlf_mirrorBlade5 (#433) — Class-C active (verified 2026-10-01)
+
+- **Metadata:** reqLv 75, reqBn 4; MP 0; SP **−30** (red); target, enemy, `cType mirrorBlade` (`decode_skilldata.py`).
+- **Cooldown:** `agiAdjust(120)` (`Wolf.cs:34991`); a Double Art proc skips it only with Sublime Art (#431) (`:34807-34815`), the same rule as Art Breaker.
+- **Effect** (`$RPC_mirrorBlade$29672`, `Wolf.cs:34410-35020`): Wolf stands in place (`moveSpeed 0`); 0.2 s after the cast it records its HP (`:34588`), then 0.8 s + 0.4 s later the owner's client deals `RPC_AddEffectDamage(433, clamp(recordedHP − currentHP, 0, 1999), 0, 0, …)` to the locked target (`:34673-34710`). So it returns the **net HP lost during that 1.2 s window**, capped at **1,999**, as purple Effect Damage (no dodge, no ATK/TAL, no `defAdjust`). Healing inside the window lowers it; no damage taken means 0. No range check in the coroutine.
+- Client tooltips: EN "Perform a counter move that returns all taken damage to one target enemy ." / TH "โจมตีสวนกลับค่าความเสียหายไปให้ศัตรูที่อยู่ที่ล็อคเอาไว้" (`WolfSkill_eng.cs:1012`, `WolfSkill_thai.cs:1045`). They omit the 1.2 s window and the 1,999 cap.
+
+## Open questions & card mismatches (2026-10-01)
+
+**Card mismatches** (cards in `index.html` vs the entries above; not patched):
+1. `wolf_noKo`, `wolf_impulse`, `wolf_lastBlade` have no `passive:true` and no `desc`; `wolf_noKo` has no `lckProc` (base 20 / 40 / 60).
+2. `wolf_artCancel` has no `maxRank` (2 ranks) and `wolf_bladeSong` none (3 ranks); neither has `cost` or `desc`.
+3. `wolf_secondWind` and `wolf_mirrorBlade` have no `cost` and no `desc`.
+4. `wolf_artBreaker` has no `cd` (`agiAdjust(120)` on the shared `artCancel` key), no `cost` and no `desc`.
+
+**Open questions:** none from this pass.
