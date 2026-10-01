@@ -73,7 +73,7 @@ below for why they were initially left out and then given their own rows.
 - **`sacredSageTechnique1`/`2` (cast as `RPC_sacredSage`) land cleanly on their own dedicated passive
   tail in `getSkill()` (`setReq(28,16); mode=passive; break`, `PandaSkill.cs:1575-1585`, reached by
   natural empty-fallthrough from both ranks) — and independently, `Panda.cs`'s `RPC_sacredSage` handler
-  (`Panda.cs:9211`) sets `this.mChar.sp = 0` (or `50` with the `heavenBreath5` passive, `hasSkill(404)`)
+  (`Panda.cs:9211`) sets `this.mChar.sp = 0` (or `50` with Revised Skill, `hasSkill(404)`; corrected 2026-10-01, #404 is `revisedSkill5`, Heaven Breath is #443)
   and heals HP via `RPC_AddHeal(352+sLv, 50+50*sLv, ...)` at `Panda.cs:9429` — with no `addTimeOut` call
   anywhere in the method.** Two independent lines of evidence (clean passive metadata, and a genuinely
   cooldown-free resource-gated handler) both confirm exclusion — matching the eng description "refocus
@@ -751,3 +751,83 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - Knockout (KO): `60` (instant knockdown)
   - Hit Count: `1`
   - Focused Art: does not apply (no SP scaling in formula).
+
+### Focused Spirit (`panda_focusedSpirit`, skills #261/#262) (verified 2026-10-01)
+
+- **Passive**, R1 Lv 24 / Bn 15, R2 Lv 27 / Bn 18, no MP/SP (`decode_skilldata.py`, `pnd_focusedSpirit1-2`).
+- `getFocusedSpiritLv()` = 2 with #262, 1 with #261, else 0; `getFocusedSpiritDmg()` = `0.3 × current SP × level` as a float (`Panda.cs:8962-8971`). It is read only by Combo: every stage adds it inside the coefficient bracket, `(int)(c × (getCritPlus(ATK) + FS))` (`:15320`, `:15528`, `:16191`, `:16394`, `:16978`, `:17130`, `:17269`, `:17858`, `:18425`), and Aura Blast adds it outside the crit, `(int)(getCritPlus((int)(1.25 × ATK)) + FS)` (`:18652`). So a normal Combo hit gains `c × 0.3 × SP × level` (e.g. stage 5 at 100 SP, rank 2: `0.85 × 60` = 51), not the full 30% / 60% of SP. No other `Panda.cs` or core-file consumer (`CharacterControl.cs:4407` / `:4468` / `:23141` `hasSkill(261-262)` are Whale and Penguin branches).
+- SP is read at the moment the stage computes its damage, after earlier hits' `sp + 1`.
+- Client tooltips: EN "Passively add 30% [60%] of Panda's current sp to its normal attack's damage." / TH "เพิ่มพลังโจมตีให้การโจมตีปกติ ตามค่าพลัง sp (30% [60%] sp)" (`PandaSkill_eng.cs:484`, `:495`; `PandaSkill_thai.cs:506`, `:517`). The tooltip omits the per-stage coefficient.
+
+### Sp Transfer (`panda_spTransfer`, skills #341/#342) (verified 2026-10-01)
+
+- **Active**, R1 Lv 16 / Bn 4, R2 Lv 20 / Bn 8, MP 0, SP **−15 / −30** (red, consumed), mode target / ally, `cType spTransfer` (`decode_skilldata.py`). Casting it on yourself is refused with "Cannot use spTransfer on yourself" and the cost refunded (`Panda.cs:6717-6728`).
+- **Cooldown:** `addTimeOut("spTransfer", agiAdjust(30))` (`Panda.cs:36153`). No cast bar.
+- **Sequence** (`$RPC_spTransfer$25574`, `Panda.cs:35899-36480`): Panda stops (`moveSpeed 0`) and plays `spTransfer`; after 0.5 s a bolt effect spawns (`:36080`) and 0.3 s later (`mTransferTime`, `:36090`, `:36290`) the owner's client sends `target.RPC_AddHeal(1, 0, 0, nSp, 0, 0, panda)` (`:36329`) with **`nSp = 15 × rank`** (+ `floor(0.25 × Panda Lv)` with Heaven Breath #443). So the target receives it about 0.8 s after the cast. No distance check inside the coroutine.
+- Client tooltips: EN "Transfer 15 [30] sp from Panda to any friendly target." / TH "ถ่ายพลัง sp ส่วนหนึ่งให้กับ เป้าหมาย (15 [30] sp)" (`PandaSkill_eng.cs:726`, `:737`; `PandaSkill_thai.cs:748`, `:759`). Matches the code.
+
+### Sacred Sage Technique (`panda_sacredSageTechnique`, skills #343/#344) (verified 2026-10-01)
+
+- **Passive**, R1 Lv 24 / Bn 12, R2 Lv 28 / Bn 16, no MP/SP (`decode_skilldata.py`).
+- **Trigger** (Charge Attack loop, `Panda.cs:19125-19323`): while `myCommand == "cAttack1"`, once per second and only when `Game.mGameType > 4` (real game modes; `<= 4` skips the whole tick, `:19140`), Panda gains `clamp(ceil(0.02 × chargeLv × ATK), 2 × chargeLv, 4 × chargeLv)` SP, with `chargeLv` = 1 + #112 + #113 (`:19161-19190`). If SP is then **above 100** and **HP < max HP** and #343 is learned, the owner's client fires `RPC_sacredSage(level)` (level 2 with #344) (`:19195-19247`).
+- **Effect** (`RPC_sacredSage`, `Panda.cs:9211-9441`): SP is set to **0**, or to **50** when the Panda has **#404 Revised Skill** (`:9315-9334`; #404 is `pnd_revisedSkill5`, not Heaven Breath). Then `RPC_AddHeal(352 + level, 50 + 50 × level, 0, …)` = **100 / 150 HP** (`:9429`). With Heaven Breath (#443) the heal becomes `50 + 50 × level + 2 × Lv` HP and `floor(0.1 × Lv)` MP (`:9335-9380`), with the `heavenBreath_ring` effect and the message "Heaven Breath Technique!" instead of "Sacred Sage Technique!".
+- No cooldown: it can fire again on the next tick that pushes SP back above 100 (from 50 with Revised Skill, a few ticks later).
+- Client tooltips: EN "Enables Panda to refocus his over-charged sp into 100 [150] hp." / TH "… ฟื้นพลังชีวิตโดยอัตโนมัติเมื่อ ชาร์จ sp เกิน 100 (+100 [+150] hp)" (`PandaSkill_eng.cs:748`, `:759`; `PandaSkill_thai.cs:770`, `:781`). They omit the HP-below-max gate, the SP reset and the Revised Skill 50.
+
+### Mystic Sage (`panda_mysticSage`, skills #371/#372) (verified 2026-10-01)
+
+- **Passive**, R1 Lv 35 / Bn 23, R2 Lv 40 / Bn 25, no MP/SP (`decode_skilldata.py`).
+- **Hook** (direct-damage `AddDamage` coroutine, `CharacterControl.cs:31986-32133`, after HP has already been reduced; see [12Tails-Mechanics-Reference.md §2.7](12Tails-Mechanics-Reference.md#27-type-specific-flat-reduction--captaincrab) for the order): on the Panda's own client, with #371, no `mysticSage` lockout, none of `sleep` / `snowMan` / `petrify` / `paralysis`, `hp > 0`, **SP full (`sp >= msp`)** and the hit's damage **> 100**. Then "Mystic Sage!", `addTimeOut("mysticSage", 18 − 6 × level)` = **12 / 6 s** (flat, no `agiAdjust`), and the `mysticSage_hit` double effect (`Panda.cs:9570`).
+- **Effect:** it is a delayed **heal-back**, not a reduction: the coroutine waits 1 s, then `RPC_AddHeal(370 + level, ceil(0.5 × damage), 0, …)` (`CharacterControl.cs:30304`, `:32219`). The full hit lands first, so a hit that kills is not saved. Only the `RPC_AddDamage` path triggers it; Effect Damage (`RPC_AddEffectDamage`) never does.
+- Client tooltips: EN "Passively creates a double that takes half of 100 or more damage for Panda every 12 [6] seconds." / TH "สร้างร่างแยกออกมารับความเสียหายครึ่งหนึ่ง… ทุก 12 [6] วินาที เมื่อได้รับความเสียหายมากกว่า 100" (`PandaSkill_eng.cs:858`, `:869`; `PandaSkill_thai.cs:880`, `:891`). The tooltip omits the full-SP requirement and the 1 s delay.
+
+### Aura Blast (`panda_auraBlast`, skill #401) (verified 2026-10-01)
+
+- **Class-C passive**, Lv 55 / Bn 0, no MP/SP (`decode_skilldata.py`; `getAuraBlastLv()` = `hasSkill(401)`, `Panda.cs:9679`).
+- Only in Combo stage 5 and only when `Game.mGameType > 4` (`Panda.cs:18267-18300` voice, `:18430-18465` effect): the stage's trapezoid box is replaced by `FindAreaTarget(Panda, 2, 3)` (radius 2 m, height 3 m, no `rangeMod`, `:18629`) and each target takes `hit(5, t, (int)(getCritPlus((int)(1.25 × ATK)) + Focused Spirit), KO 1, …)` (`:18652`) instead of `0.85 × (…)`. Landed hits keep the usual `onNormalAttackHit`, `sp + 1`, `ComboPlus()` and `ShadowFist` (`:18658-18678`). Also summarised in the Combo entry above.
+- Client tooltips: EN "Changes the final combo of Panda's normal attack to an area attack." / TH "ทำให้การโจมตีครั้งสุดท้ายของ แพนด้าระเบิดเพื่อทำความเสียหายรอบตัว" (`PandaSkill_eng.cs:880`, `PandaSkill_thai.cs:902`). They omit the 1.25×ATK raise.
+
+### Aura Field (`panda_auraField`, skill #411) (verified 2026-10-01)
+
+- **Class-C passive**, Lv 60 / Bn 1, no MP/SP (`decode_skilldata.py`; `getAuraFieldLv()` = `hasSkill(411)`, `Panda.cs:9686`).
+- Same Charge Attack tick as Sacred Sage (once per second, real game modes only, `Panda.cs:19257-19318`): each client checks its **own** player (`Game.mPlayer`); if that player is not this Panda, is on the Panda's layer (an ally) and within **8 m** (`sqrMagnitude < 64`), it gains `clamp(ceil(0.005 × chargeLv × Panda ATK), 1, chargeLv)` SP. That is a quarter of the Panda's own unclamped gain, but the clamps differ (Panda 2-4 × chargeLv, ally 1 to chargeLv), so the ally gets 25-50% of what the Panda gets. A field effect is drawn at charge start (`:19060`).
+- Client tooltips: EN "Enable Panda's sp charge to effect all allies around him, restoring 20% sp to them." / TH "ทำให้ท่าชาร์จของแพนด้าส่งผล 20% แก่เพื่อนโดยรอบ" (`PandaSkill_eng.cs:891`, `PandaSkill_thai.cs:913`). Code wins: the share is the formula above, not 20%.
+
+### Roll Around (`panda_rollAround`, skill #421) (verified 2026-10-01)
+
+- **Class-C active**, Lv 70 / Bn 3, MP **6**, SP **−24** (red), mode instant / self, `cType roll` (`decode_skilldata.py`).
+- **Cooldown:** `addTimeOut("roll", agiAdjust(60))` (`Panda.cs:20497`) = the **same key as Roll**, so each puts the other on cooldown. No cast bar.
+- **Sequence** (`$RPC_rollAround$25221`, `Panda.cs:20159-20700`): `removeLockStatus(5)` on cast and again every 0.5 s (`:20292-20303`, `:20518`) for **6 s** (`mRollTimer`, `:20650`). The owner steers with the movement keys (camera-relative, `moveSpeed` lerps to `runSpeed`, `:20343-20397`); with no key held it slows to 0. Pressing attack starts Combo stage 1 (or releases Delay Qi) and ends the roll (`Panda.cs:7655-7665` → `:7896-7930`).
+- **Protection** while `actionState == "attack"` and `myCommand == "rollAround"`:
+  - every `hit()` against Panda is evaded, 100%, no LCK roll (`CharacterControl.cs:3099-3126`, EVADE; mechanics reference §2.8);
+  - every `RPC_AddEffectDamage` is refused with IMMUNE (−84) (`CharacterControl.cs:6150-6160`);
+  - every `RPC_AddStatus` that gets past the earlier resist checks is refused with IMMUNE (−84) (`CharacterControl.cs:13441-13465`). There is no buff/debuff filter on this check, so friendly buffs are refused too.
+  - Direct `RPC_AddDamage` calls that bypass `hit()` (some projectiles, see §2.8 "Not dodgeable") are not covered.
+- `removeLockStatus(5)` clears `groundLock`, `needlePrison`, `sticky`, `frost` and `lightBind` of level ≤ 5 (see Cat Backflip's entry in the Cat reference for the function).
+- Client tooltips: EN "Perform a special controllable roll that evades most attacks. Also helps remove all lv.5 lock status." / TH "ท่าที่ทำให้แพนด้ากลิ้งไปมาตามการบังคับ ป้องกันความเสียหายและสถานะทางลบต่างๆ แก้สถานะล๊อกที่ต่ำกว่าระดับ 6" (`PandaSkill_eng.cs:902`, `PandaSkill_thai.cs:924`).
+
+### Combo Link (`panda_comboLink`, skill #442) (verified 2026-10-01)
+
+- **Class-C active**, Lv 85 / Bn 6, MP 0, SP **−50** (red), mode instant / self, `cType comboLink` (`decode_skilldata.py`).
+- **Gate:** `n = clamp(GameGui.getCurrentComboHit(), 0, 512)` (`Panda.cs:6187`); `getCurrentComboHit()` is the on-screen combo counter, 0 once 3 s have passed since its last update (`GameGui.cs:10727`). The counter is **per target**: in the direct-damage `AddDamage` coroutine, every hit on a character whose attacker is on the local player's team (`attacker.layer == Game.mTeam + 7`) adds 1 to that character's count when it lands within 2 s of the previous one (otherwise the count restarts at 1), and from 3 hits on it sends `newGameCombo(count, total damage)` (`CharacterControl.cs:31712-31790`). `newGameCombo` keeps the larger count while the display is under 2 s old (`GameGui.cs:10670-10700`). So `n` is the current team combo on one target, counting hits from any teammate; Effect Damage does not count. With `n <= 0`: "ComboLink is not available." and `returnMPSP` (`Panda.cs:6192-6208`).
+- **Cooldown:** `addTimeOut("comboLink", agiAdjust(240))` (`Panda.cs:40663`). 0.4 s + 0.4 s animation (`:40720-40750`).
+- **Effect:** `RPC_AddStatus("atkUp", 5, chaAdjust(6), n, Panda)` on the owner's client (`Panda.cs:40570`), message "ComboLink: +n combo". `atkUp` adds `deltaAtk(sValue)` = **+n ATK** (and removes `atkDown`) for `chaAdjust(6)` s (`CharacterControl.cs:33176-33190`); Buff + Physical (`StatusData.cs:6380`, `:5229`).
+- Client tooltips: EN "Temporary adds team's current comboes to Panda's attack power. (max +512 atk, 6 Sec.)" / TH "… เท่ากับจำนวน Combo ของทุกคนในทีมรวมกัน (1Combo:1Atk Max 512, 6 Sec)" (`PandaSkill_eng.cs:979`, `PandaSkill_thai.cs:1001`).
+
+### Heaven Breath (`panda_heavenBreath`, skill #443) (verified 2026-10-01)
+
+- **Class-C passive**, Lv 85 / Bn 6, no MP/SP (`decode_skilldata.py`). The only two `hasSkill(443)` sites in `Panda.cs`:
+  - **Sacred Sage** heal `50 + 50 × level + 2 × Lv` HP and `floor(0.1 × Lv)` MP (`Panda.cs:9335-9380`).
+  - **Sp Transfer** gives `15 × rank + floor(0.25 × Lv)` SP (`Panda.cs:36329`).
+  - The `hasSkill(443)` checks in `CharacterControl.cs` (`:4232`, `:11985`, `:12019`) are other classes' branches.
+- Client tooltips: EN "Increase SacredSage and SpTransfer's effects by Panda's current level." / TH "เพิ่มผลฟื้นฟู hp และ mp ของ SacredSage และ sp ของ SpTransfer ตามเลเวล" (`PandaSkill_eng.cs:1034`, `PandaSkill_thai.cs:1056`).
+
+## Open questions & card mismatches (2026-10-01)
+
+**Card mismatches** (cards in `index.html` vs the entries above; not patched):
+1. `panda_focusedSpirit`, `panda_sacredSageTechnique`, `panda_mysticSage`, `panda_auraBlast`, `panda_auraField`, `panda_heavenBreath` have no `passive:true` and no `desc`.
+2. `panda_spTransfer` has no `maxRank` (source has 2 ranks), no `cost` (−15 / −30 red SP) and no `desc`.
+3. `panda_rollAround` has no `cd` (`agiAdjust(60)`, shared with Roll), no `cost` (6 MP, −24 red SP) and no `desc`.
+4. `panda_comboLink` has no `cost` (−50 red SP), no `status` (`atkUp` Lv 5) and no `desc`.
+
+**Open questions:** none after the 2026-10-01 pass (Combo Link's combo source was traced to `CharacterControl.cs:31712-31790`).
