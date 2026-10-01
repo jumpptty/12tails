@@ -1301,6 +1301,15 @@ let checkedEffectProc = 0;
   inputs.lck.value = "150"; deps.wallPuncture = 4;
   const expected = sandbox.lckAdjustChance(40, 150) / 100, rate = purpleRate(sweep, 4000);
   check(`Wall Puncture 4 @ LCK 150 proc rate ~${expected}`, Math.abs(rate - expected) < 0.04, rate.toFixed(3));
+  // Whale Combo (Whale.cs:16238-16394): one Wall Puncture roll per swing; a proc replaces the hit with Effect Damage and skips getCritPlus (effectProc.noCrit).
+  const wc = byId("whale_nAttack");
+  sandbox._skillRanks[wc.id] = 2; sandbox._selectSkill(wc);
+  deps.wallPuncture = 4; deps.whaleGearChampion = 1; inputs.lck.value = "300";
+  { let purple = 0, purpleCrit = 0, whiteCrit = 0; for (let i = 0; i < 3000; i++) { sandbox._rollOneHit(wc, 2, undefined, false, 0); if (ep.lastPurple()) { purple++; if (ep.lastCrit()) purpleCrit++; } else if (ep.lastCrit()) whiteCrit++; }
+    check("Whale Combo: Wall Puncture procs happen", purple > 0, purple);
+    check("Whale Combo: a purple Wall Puncture hit never crits", purpleCrit === 0, purpleCrit);
+    check("Whale Combo: white hits still crit with Champion gear", whiteCrit > 0, whiteCrit); }
+  deps.wallPuncture = 0; deps.whaleGearChampion = 0;
   const mega = byId("whale_megalodon");
   check("Megalodon Pull group always purple", purpleRate(mega, 50, 0) === 1);
   check("Megalodon Bite group always white", purpleRate(mega, 50, 1) === 0);
@@ -1828,7 +1837,7 @@ let checkedCritView = 0;
   const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
   const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
-  check("the cards that model crit are Bison Combo, Chameleon Left Stride and Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_leftStride,chameleon_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,wolf_nAttack", critCards.join());
+  check("the cards that model crit are Bison Combo, Chameleon Left Stride and Combo, Rabbit Combo, Sheep Book Bash, Sheep Combo, Whale Combo and Wolf Combo", critCards.join() === "bison_nAttack,chameleon_leftStride,chameleon_nAttack,rabbit_nAttack,sheep_bookBash,sheep_nAttack,whale_nAttack,wolf_nAttack", critCards.join());
   const RAB = ["rabHyperShot", "rabBouncing", "rabShotgun", "rabW59", "rabWeapon", "rabEquip", "rabExtravagance"];
   const savedRab = RAB.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDist = rb.getDistance("combo");
   cv.set(false);

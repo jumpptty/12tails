@@ -193,7 +193,8 @@ Purple = the Effect Damage path: no dodge, no `damagePlus`/`dmgAdjust`/`defAdjus
 * **Final range:** replace = `[min(white,purple), max(white,purple)]` when chance > 0; bonus = `[white min, white max + bonus]` (minus one bonus if a `status` bonus can't hit the first tick). Purple ends drawn with `.dmg-effect` (not for `dmgGroups` cards).
 * **Sim totals:** gold total (`dmgdigit_y0–9`) with white/purple sub-totals (`.sk-mix-parts`, purple hidden at 0); each popup white or purple.
 * **Implementation:** `rollOneHit(..., opts)` sets `lastRollPurple`; `revealMultiHit` adds bonuses and splits totals. `[RANGE/SIM]` + `[EFFECTPROC ERROR]`.
-* **Still to wire at each card's `/sd` pass:** Whale Combo 1–3 (replace), Mole Smart Shell (bonus 30: Time Nuke, Stun Grenade, Mine, Stun Mine), Panda Combo 1–5 (Shadow Fist). Need their own design: Bison Colossal Weapon (splash onto other targets), Bat Merciless Drain (uncertain condition).
+* **`effectProc.noCrit:true`** (replace only, Whale Combo): the purple roll skips `critProc` and the purple range uses the raw range before the crit (`range.noCritRange`).
+* **Still to wire at each card's `/sd` pass:** Mole Smart Shell (bonus 30: Time Nuke, Stun Grenade, Mine, Stun Mine), Panda Combo 1–5 (Shadow Fist). Need their own design: Bison Colossal Weapon (splash onto other targets), Bat Merciless Drain (uncertain condition).
 
 ### Header controls, crit and toggle-driven purple (`dmgControls` / `critProc` / `effectDamageDep`)
 
