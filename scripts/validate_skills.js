@@ -1010,7 +1010,7 @@ let checkedPanelMarkup = 0;
 let checkedSummonFeed = 0;
 {
   const byId = id => SKILLS.find(x => x.id === id);
-  const DEP_IDS = ["doubleBot", "synchroMole2", "hiddenTurret", "fireSoul", "earthSoul", "aegisOfEarth"];
+  const DEP_IDS = ["doubleBot", "synchroMole", "hiddenTurret", "fireSoul", "earthSoul", "aegisOfEarth"];
   const saved = DEP_IDS.map(id => [id, sandbox._depRanks[id]]);
   const glow = (id, deps) => {
     DEP_IDS.forEach(d => { sandbox._depRanks[d] = deps[d] !== undefined ? deps[d] : 0; });
@@ -1023,12 +1023,12 @@ let checkedSummonFeed = 0;
   try {
     // Barrel Bot: Double Bot feeds LV, Synchro Mole feeds TAL (into ATK/DEF)
     const bb = "mole_barrelBot_punch";
-    expectKey("Barrel Bot, both deps on", glow(bb, { doubleBot: 1, synchroMole2: 1 }), "lv", true);
-    expectKey("Barrel Bot, both deps on", glow(bb, { doubleBot: 1, synchroMole2: 1 }), "tal", true);
+    expectKey("Barrel Bot, both deps on", glow(bb, { doubleBot: 1, synchroMole: 2 }), "lv", true);
+    expectKey("Barrel Bot, both deps on", glow(bb, { doubleBot: 1, synchroMole: 2 }), "tal", true);
     expectKey("Barrel Bot, Double Bot only", glow(bb, { doubleBot: 1 }), "lv", true);
     expectKey("Barrel Bot, Double Bot only", glow(bb, { doubleBot: 1 }), "tal", false);
-    expectKey("Barrel Bot, Synchro Mole only", glow(bb, { synchroMole2: 1 }), "tal", true);
-    expectKey("Barrel Bot, Synchro Mole only", glow(bb, { synchroMole2: 1 }), "lv", false);
+    expectKey("Barrel Bot, Synchro Mole only", glow(bb, { synchroMole: 2 }), "tal", true);
+    expectKey("Barrel Bot, Synchro Mole only", glow(bb, { synchroMole: 2 }), "lv", false);
     expectKey("Barrel Bot, deps off", glow(bb, {}), "lv", false);
     expectKey("Barrel Bot, deps off", glow(bb, {}), "tal", false);
     // Auto Gyro Gun: Hidden Turret feeds LV
@@ -1043,7 +1043,7 @@ let checkedSummonFeed = 0;
     expectKey("Titanic Earth Pulse, Aegis of Earth on", glow("monkey_titanicEarthPulse", { aegisOfEarth: 2 }), "vit", true);
     expectKey("Titanic Earth Pulse, no VIT feed", glow("monkey_titanicEarthPulse", {}), "vit", false);
     // A skill with no summon is unaffected however the deps are set
-    const plainOn = glow("penguin_frozenBlast", { doubleBot: 1, synchroMole2: 1, hiddenTurret: 1, fireSoul: 1, earthSoul: 1, aegisOfEarth: 3 });
+    const plainOn = glow("penguin_frozenBlast", { doubleBot: 1, synchroMole: 2, hiddenTurret: 1, fireSoul: 1, earthSoul: 1, aegisOfEarth: 3 });
     const plainOff = glow("penguin_frozenBlast", {});
     checkedSummonFeed++;
     if ([...plainOn].sort().join() !== [...plainOff].sort().join()) { console.error("[SUMMON FEED ERROR] a non-summon skill's glow changed with summon dependencies"); errorCount++; }
@@ -1330,6 +1330,12 @@ let checkedEffectProc = 0;
     check("TNT 1 + Super TNT at Lv 100 base 50", sandbox.moleTntBase(1, 1) === 50, sandbox.moleTntBase(1, 1));
     check("TNT 4 without Super TNT base 60", sandbox.moleTntBase(4, 0) === 60, sandbox.moleTntBase(4, 0));
     inputs.lv.value = lvSaved; }
+  // Mole Synchro Mole (CharacterControl.cs:37772-37777): summon ATK/DEF + floor(0.5 x rank x Mole TAL). TAL 101: rank 1 +50, rank 2 +101.
+  check("Barrel Bot 4 + Synchro Mole 1 (TAL 101) ATK 110", sandbox.barrelBotOwnStats(false, 1, 100, 101, 0, 4).atk === 110, sandbox.barrelBotOwnStats(false, 1, 100, 101, 0, 4).atk);
+  check("Barrel Bot 4 + Synchro Mole 2 (TAL 101) DEF 161", sandbox.barrelBotOwnStats(false, 2, 100, 101, 0, 4).def === 161, sandbox.barrelBotOwnStats(false, 2, 100, 101, 0, 4).def);
+  check("Auto Gyro Gun 4 + Synchro Mole 1 (TAL 101) ATK 90", sandbox.autoGyroGunOwnStats(4, false, 1, 0, 100, 101).atk === 90, sandbox.autoGyroGunOwnStats(4, false, 1, 0, 100, 101).atk);
+  // Mole Chopper (Mole.cs:33794, :33957-33986): 10 ticks, +10 Barrel Cannon ring hits with #443.
+  { const ch = byId("mole_chopper"); check("Chopper 10 hits, 20 with Barrel Cannon", ch.hitCount(1, false, false) === 10 && ch.hitCount(1, false, true) === 20); }
   const mega = byId("whale_megalodon");
   check("Megalodon Pull group always purple", purpleRate(mega, 50, 0) === 1);
   check("Megalodon Bite group always white", purpleRate(mega, 50, 1) === 0);

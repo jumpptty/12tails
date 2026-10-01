@@ -509,6 +509,50 @@ Raw Damage calc chip to support it (the app's history is in git).
 - SP 50 **blue**, Lv 85/Bn 6, target. CD `agiAdjust(120)` (`:40199`).
 - `RPC_barrelCannon` (`:39835-40300`): starts `RPC_cannonForm` on the bot (`:39989-40038`) and on the Double Bot second bot (`:40053-40104`). `RPC_cannonForm` (`BarrelBot.cs:5377-5800`): the bot stands still and fires at the Mole's target every 0.5 s (`:5544`, `:5743`) until 10 shells (`mCannonCount >= 10`, `:5716`) or the target is gone; each shell is the cannon hit above. Passive part: CannonLv for the bot (`:13035`); the tooltip's "bombing attack on Mole's Chopper" is covered under Chopper.
 
+### mol_megaPunch1-2 (Mega Punch, #331-332) (verified 2026-10-01)
+
+- SP 15/18 **blue**, Lv/Bn 9/3, 15/5. CD `agiAdjust(30)` (`:32662`).
+- `RPC_megaPunch` (`:32251-32700`): `hitDmg = floor(0.5 × ATK + talAdjust(10 × sLv))`, KO 5 (`:32478-32483`); Mega Drill #433: both `floor(1.5 ×)` (`:32488-32499`); `FindRecTarget(pos, fwd, 1, 1, 3, 3)` (2 m wide, `:32513`); `hit(330 + sLv, t, hitDmg, hitKo, …)` (`:32536`). Gives the Barrel Bot its punch (PunchLv, see Barrel Bot). Tooltip "10/20 dmg, 5 ko" matches the TAL part.
+
+### mol_megaHammer1-2 (Mega Hammer, #333-334) (verified 2026-10-01)
+
+- **SP 18/24 blue**, Lv/Bn 21/7, 27/9. The card's former SP 18/20 was wrong. CD `agiAdjust(30)` (`:33228`).
+- `RPC_megaHammer` (`:32865-33260`): `hitDmg = floor(0.5 × ATK + talAdjust(12 × sLv))`, KO `10 × sLv` (`:33071-33076`); Mega Drill: both `floor(1.5 ×)` (`:33081-33092`); `FindRecTarget(pos, fwd, 1.5, 1.5, 3, 3)` (3 m wide, `:33106`); `hit(332 + sLv, …)` (`:33129`).
+
+### mol_chopper1-3 (Chopper, #341-343) (verified 2026-10-01)
+
+- SP 20/24/28 **blue**, Lv/Bn 16/4, 20/8, 24/12. CD `agiAdjust(45)` (`:34019`).
+- `RPC_chopper` (`:33450-34180`): flies forward at `5 + sLv` m/s (`:33690`); `hitDmg = (int)(0.3 × ATK + talAdjust(5 × sLv))` (`:33749`); 10 ticks (`i >= 10` exit, `:33794`), each `FindRecTarget(pos, fwd, 1, 1, 3, 2)` (`:33890`) and `hit(340 + sLv, t, hitDmg, KO 1, …)` (`:33913`), `sp + 1` per target hit. **Barrel Cannon #443:** every tick also `FindAreaTarget(pos, 5, 1)` and `hit(443, t, talAdjust(20), KO 0, …)` (`:33957-33986`). Card: Barrel Cannon dep adds a 10-hit group (new `MOLE_BARRELCANNON_DEP`).
+
+### mol_missile1-4 (Missile, #351-354) (verified 2026-10-01)
+
+- MP 12/16/20/24, Lv/Bn 20/12, 24/15, 28/18, 32/21. CD `agiAdjust(60)` (`:34777`).
+- `RPC_missile` (`:34236-34800`): `sLv` missiles (`:34614`) fanned like the bot's (`:34383-34504`), each locked on a random living enemy from `FindAreaTarget(pos, 32, 10)` (`:34604`). `Mole_missile.cs`: homing `RotateTowards 0.3` (`:162`); on contact `target.defAdjust(talAdjust(30))`, `RPC_AddDamage(1, …, KO 3, …)` (`:349-369`) — no `dmgAdjust`.
+
+### mol_heavyBuilt1-2 (Heavy Built, #361-362) (verified 2026-10-01)
+
+- Passive, Lv/Bn 24/15, 28/18. `getHeavyBuiltLv()` (`:13213`): MHP `ceil(MHP × (1 + 0.5 × lv))` after the other stat changes for Auto Gyro Gun (`:12203`), Barrel Bot (`:12765`) and King Kaiser (`:35925`). Thai tooltip rank 2 says 50 %; English and code say 100 %.
+
+### mol_synchroMole1-2 (Synchro Mole, #363-364) (verified 2026-10-01)
+
+- MP 15/25, **SP −25 (red) at both ranks**, Lv/Bn 30/21, 33/24. The card's former SP 25/35 was wrong. CD `agiAdjust(300)`.
+- `RPC_synchroMole` (`:13220-13300`): `RPC_AddStatus("synchroMole", sLv, chaAdjust(30), value = Mole TAL)` on the Mole, and the same status for `chaAdjust(30) + 1` s on every own `AutoGyroGun1-5` / `BarrelBot1-5` summon present at cast (not King Kaiser / War Factory). Non-Mole, non-Robots targets refuse it (`CharacterControl.cs:12466-12470`).
+- Effect (`CharacterControl.cs:37714-37777`): `deltaAtk/deltaDef(+floor(0.5 × sLv × value))` on the summons; removal subtracts the same (`:16978-17025`), and the Mole's own removal calls `RPC_synchroMole0`, which strips it from its summons (`Mole.cs:13514-13560`). Buff + State status (`StatusData.cs:4938`, `:6746`).
+- **App fix:** the summon-stat toggle was Rank 2 only (`floor(TAL)`); it is now a 0-2 rank toggle (`floor(0.5 × rank × TAL)`), id `synchroMole`.
+
+### mol_doubleBot5 (Double Bot, #423) (verified 2026-10-01)
+
+- Passive, Lv 70/Bn 3. Barrel Bot: keeps the previous bot as a second bot (`:12415-12430`) and adds `(int)(0.5 × Lv)` to every stat, MHP `10 × VIT` (`:12708-12725`); Barrel Cannon commands both bots (`:40053-40104`). Tooltip matches.
+
+### mol_advanceRepair5 (Advance Repair, #431) (verified 2026-10-01)
+
+- SP −10 (red), Lv 75/Bn 4, ally target. Cast check (`doSkill`, `:7048-7150`): the target must be `Robots` or `Structure` race and within 2 m (edge distance), else MP/SP returned. CD `agiAdjust(30)` (`:36716`).
+- `RPC_advanceRepair` (`:36263-36900`): channel; every 1 s `sp − 1` and `target.hp = min(hp + 150, mhp)` (direct, no heal modifiers, `:36681-36689`); stops on movement input, target farther than 2 m, or SP below 5 (`:36573-36631`). Passive part: Reload's extra reset list (see Reload).
+
+### mol_geniusInvention5 (Genius Invention, #421) (verified 2026-10-01)
+
+- Passive, Lv 70/Bn 3. Workshop tier 5 (`CompoundGui.cs:1249`, `:1852`). Item cooldowns for a Mole with #421 (`GameGui.cs:32730-32790`): firework 3 → 1 s, bomb 30 → 15 s. (`CharacterControl.cs:13421` and the other classes' #421 hooks are not Mole's.)
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
