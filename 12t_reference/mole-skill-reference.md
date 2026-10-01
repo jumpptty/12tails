@@ -400,6 +400,38 @@ Raw Damage calc chip to support it (the app's history is in git).
 - **MP 35**, no SP, Lv 85/Bn 6. The card's former "free" cost was wrong. CD `agiAdjust(150)` (`:38662`).
 - Trap prop lives `chaAdjust(90)` (`Mole_flameCarnival.cs:30`), fires `RPC_flameCarnival_fire` on an enemy-layer contact (`:69-79`). Fire (`:38844-39324`): 20 pulses (`i < 20`, `:39033`), `FindAreaTarget(pos, Clamp(2 + i, 3, 5), 2, 130816)` (every layer); each target without `insight` and not `Robots`/`Structure` takes direct `RPC_AddDamage(442, talAdjust(10), …)` (no `dmgAdjust`/`defAdjust`), halved for same-layer targets with Smart Shell (`:39102-39150`).
 
+### mol_flameTurret1-3 (Flame Turret, #241-243) (verified 2026-10-01)
+
+- SP −24/−28/−32 (red), Lv/Bn 16/4, 20/8, 24/12, instant self. CD `agiAdjust(120)` (`:28225`).
+- `RPC_flameTurret` (`:27714-28462`): the Mole itself stands as the turret (`moveSpeed 0`) for `chaAdjust(5)` s (`:27935`); left/right input turns it 45° (`RPC_flameTurret_rotate`, `:28078-28130`). Every 0.25 s (`mUpdateTimer = Time.time + 0.25`) `FindRecTarget(pos + fwd, fwd, 1, 2, 12, 4, enemy layers)` (`:28144-28149`); each target that is not `Robots`/`Structure` takes direct `RPC_AddDamage(231 + sLv, talAdjust(5 × sLv), KO 0, …)` (`:28188-28200`) — no `dmgAdjust`/`defAdjust`, no `insight` check. Tooltip "5/10/15 × 20" matches.
+
+### mol_fireBarrage1-2 (Fire Barrage, #251, #253) (verified 2026-10-01)
+
+- **MP 10/15, SP 20/30 blue**, Lv/Bn 20/12, 28/18. The card's former MP 10/20, SP 20/35 was wrong. CD `agiAdjust(120)` (`:28602`).
+- `RPC_fireBarrage_fire` (`:29181-29290`): rank 1 one aircraft effect, rank 2 three (±30°, `:29181-29204`) — visual only. 4 waves (`i >= 4` exit, `:29228`), all at the same point: `FindAreaTarget(mPos, 2 × sLv + 1, 3, enemy layers)` (`:29240`), `hit(250 + sLv, t, talAdjust(5 + 10 × sLv), KO 1, …)` (`:29259`), no falloff. **Card correction:** 4 hits at both ranks (was 4 × 3 at rank 2). Tooltip "15/25 × 4" matches.
+
+### mol_bombardment1-2 (Bombardment, #252, #254) (verified 2026-10-01)
+
+- **MP 20/30, SP 35/55 blue**, Lv/Bn 24/15, 32/21. The card's former MP 20/35, SP 35/50 was wrong. CD `agiAdjust(180)` (`:29483`), fired after a 4 s wait (`:29700`).
+- `RPC_bombardment_fire` (`:29738-30110`): 5 strikes (`i >= 5` exit, `:29902`) at `mPos + tDir × (3i − 6)` (`:29912`), i.e. −6/−3/0/+3/+6 m along the line.
+- `RPC_bombardment_hit` (`:30119-30490`): `FindAreaTarget(pos, 4 + ExtraPowderLv, 5, enemy layers)` (`:30333`); rank 2 adds two more areas at `(±3, 0, −3)` rotated to `tDir`, merged with `Math.combineArray` (de-duplicates, `Math.cs:335-420`), so one strike hits a target once (`:30338-30349`). `hit(252 + sLv, t, talAdjust(10 + 15 × sLv), KO 1, …)` (`:30383`); `hitDistance` is computed (`:30373`) but **not used** — no falloff.
+- **Card:** hit count 3 (a target at the aim point is inside the 0 and ±3 m strikes; ±6 m needs radius ≥ 6, i.e. Extra Powder). Was 5 × 3. **Tooltip discrepancy:** "35/55 dmg × 5"; code base 25/40.
+
+### mol_napalm5 (Napalm, #412) (verified 2026-10-01)
+
+- SP −40 (red), Lv 60/Bn 1, target. CD `agiAdjust(150)` (`:37392`).
+- `RPC_napalm` (`:36935-37520`): 5 shells (`i < 5`, `:37173`) aimed at the target and at the target + world offsets `(±5, 0, ±5)` (≈7.07 m diagonally, `:37190-37200`); mortar arc, `life = 5 × rangeMod` (`:13714-13750`); a shell bursts on any non-own-layer collider (`Mole_napalm.cs:42-70`).
+- `RPC_napalm_hit` (`:37586-37800`): 6 ticks (`i >= 6` exit, `:37659`) 0.5 s apart (`:37798`); `FindAreaTarget(pos, 4 + ExtraPowderLv, 4, enemy layers)` (`:37669-37679`); tick 1 `talAdjust(30)`, ticks 2-6 `talAdjust(5)` (`:37684`); targets that are not `Robots`/`Structure` take direct `RPC_AddDamage(31, dmg, KO 0, …)` (`:37723-37735`).
+- **Card correction:** one pool per target (pools are ≈7 m apart, radius 4-7), so 6 hits = 30 + 5 × 5 (was 5 pools × 6 = 30 hits).
+
+### mol_cannonExpert5 (Cannon Expert, #401) (verified 2026-10-01)
+
+- Passive, Lv 55/Bn 0. Combo only: damage `0.5 → 0.6 × ATK` (`Mole_nAttack.cs:161`) and falloff factor `0.5 → 0.25` (edge 75 %, `Mole_nAttack.cs:252-260`). Tooltip "+20 % and −50 % penalty" matches.
+
+### mol_skyShaker5 (Sky Shaker, #413) (verified 2026-10-01)
+
+- Passive, Lv 60/Bn 1. Sky Drill only (`:31974`, `:32085-32120`): `totalDigTime = FloorToInt(Time.time − actionTime)` (`:31795`); `FindAreaTarget(Mole pos, 5, 5 × rangeMod, enemy layers)`; `hit(413, t, 8 + totalDigTime, KO 8 + totalDigTime, …)` — normal `hit()` path (`dmgAdjust`/`defAdjust`). Tooltip matches.
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
