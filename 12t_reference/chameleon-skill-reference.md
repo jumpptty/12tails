@@ -316,6 +316,44 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 - Passive, Lv 75/Bn 4. In `onNormalAttackHit` (`Chameleon.cs:47330-47640`, called only from the Combo/Clear Arrow projectile, `Chameleon_nAttack.cs:702`) `doubleEffect = 2`: it multiplies the base chance (inside `lckAdjust`) of Heart Bow charm, Plunger Bow sticky, Salamander Bow burn, Golden Bow heavy, Time Bow restore and the Mummy (plague) / Frozen (MP drain) / Poseidon (HP drain) pools, and doubles the charm, sticky, burn, heavy and plague durations. Paper Bow `happy3` (`lckAdjust(12)`), BD Bow heal (`lckAdjust(3)`) and Demonic Bow (flat 13%) are not multiplied.
 - TTO: the Poseidon set HP Drain is a flat 20% (40% with Double Effect), see Server Balance Variations.
 
+### chm_immunity1-2 (Immunity, #121-122) (verified 2026-10-01)
+
+- MP 3/5, Lv/Bn 6/2, 12/4, instant, self. CD `agiAdjust(120)` (`Chameleon.cs:19009`).
+- `RPC_immunity` (`Chameleon.cs:18689-19240`): `RPC_AddStatus("immunity", 2 × sLv + (SkinShift #421 ? 1 : 0), chaAdjust(12), 0, …)` (`:18876`) → level 2/4, 3/5 with Skin Shift learned. Status `immunity` is in [12Tails-Mechanics-Reference.md §4.2](12Tails-Mechanics-Reference.md#42-status-classification-cleanse-system-statusdatacs) (blocks statuses of level ≤ its own, buffs included).
+- **Fatal Strike gate:** `doSkill` refuses Fatal Strike ("Cannot add fatalStrike while immune") and returns the MP/SP when `getStatusLv("immunity") >= FatalStrikeLv + (ExtraArrows #403 ? 1 : 0)` (`Chameleon.cs:7904`).
+- **Tooltip:** Thai "Immunity2/4" matches; English "immune1 … lv2" is off by one rank.
+
+### chm_skinShift5 (Skin Shift, #421) (verified 2026-10-01)
+
+- MP 10, SP −10 (red), Lv 70/Bn 3, instant. Shares the `immunity` cooldown key: `addTimeOut("immunity", agiAdjust(120))` (`Chameleon.cs:34978`).
+- `RPC_skinShift` (`:34709-35336`): collects every status in `mStatusList` that is **not** `isSystemStatus` (debuffs and buffs alike, including its own `immunity`) and removes them, then the owner client takes `RPC_AddDamage(1, CeilToInt(0.1 × hp), …)` (`:35150-35229`) — direct damage, so the target's `hitMod` applies. It gives no status of its own; the "+1 Immunity level" is the passive hook in `RPC_immunity` (`:18876`).
+
+### chm_perfectBlend1-2 (Perfect Blend, #211-212) (verified 2026-10-01)
+
+- SP −8/−12 (red), no MP, Lv/Bn 5/1, 11/3, instant, self. CD `agiAdjust(60)` (`Chameleon.cs:20780`). The card's former MP 12 / SP 8-14 were wrong.
+- `RPC_perfectBlend` (`:20438-20960`): stops (`moveSpeed = 0`), then `RPC_AddStatus("blend", sLv, chaAdjust(2 × sLv + (EraseSenses #412 ? 4 : 0)), 0, …)` (`:20687`) and `isBlend = true`. `blend` is described under Charge Attack; it breaks on the next action.
+- **Tooltip discrepancy:** "(3 sec)" at rank 2; code base 4 s.
+
+### chm_trueInvisibility1-2 (True Invisibility, #213-214) (verified 2026-10-01)
+
+- MP 12/20, Lv/Bn 17/5, 23/7, target ally. Cast `magAdjust(3 + sLv)` = 4/5 s, CD `agiAdjust(90)` (`RPC_cast1` dispatcher, `Chameleon.cs:18283-18294`, `:18368-18380`). The card's former cast 5 s and SP cost were wrong.
+- `RPC_trueInvisibility_cast` (`:20960-21406`): the selected ally (or self) gets `RPC_AddStatus("invisible", sLv, chaAdjust(4 + 4 × sLv + (EraseSenses ? 4 : 0)), talAdjust(10 × sLv), …)` (`:21155`).
+- **Status `invisible`** (Buff, Magical): apply removes `blend` (`CharacterControl.cs:36942-36950`); monster AI and the GUI target picker skip it (`GameGui.cs:3865`); it is not removed by attacking or casting (no `removeStatus("invisible")` in any attack path). It is removed by `hide`, `holyWolf`, `awareness`, `petrify`, `fireAvatar`, `earthForm`, `snowMan`, `cosmicRift`, `cosmicFriday` (`CharacterControl.cs:32825`–`:39054`) and by Thunder Dragon (`Chameleon.cs:38265`). The `talAdjust(10 × sLv)` status value has no reader in the decompiled source.
+
+### chm_massInvisibility1-2 (Mass Invisibility, #261-262) (verified 2026-10-01)
+
+- MP 28/36, Lv/Bn 24/15, 27/18, instant. Cast `magAdjust(4 + 2 × sLv)` = 6/8 s, CD `agiAdjust(300)` (`Chameleon.cs:18300-18311`). The card's former MP 28/38 and cast 8 s at rank 1 were wrong.
+- `RPC_massInvisibility_cast` (`:24389-24837`): every child tagged `Player` of the caster's team container (`transform.parent`, no range limit, caster included; see [12Tails-Mechanics-Reference.md §4.6](12Tails-Mechanics-Reference.md#46-team-containers-and-team-wide-skills-gamecs)) gets `RPC_AddStatus("invisible", sLv, chaAdjust(4 × sLv + 4), talAdjust(20 × sLv), …)` (`:24575`). No Erase Senses term.
+
+### chm_silentWalk5 (Silent Walk, #411) (verified 2026-10-01)
+
+- Passive, Lv 60/Bn 1. While holding Charge Attack the Chameleon can walk, `moveSpeed` lerped toward 2 (`Chameleon.cs:16526-16600`), and every Charge Attack swing adds `floor(0.1 × Lv)` (`:16991-16997`). Its CharacterControl `hasSkill(411)` hits (`:4059`, `:30869`, `:30936`) are Bison/Whale code, not Chameleon.
+
+### chm_eraseSenses5 (Erase Senses, #412) (verified 2026-10-01)
+
+- Passive, Lv 60/Bn 1. `+4` s base duration for Perfect Blend (`Chameleon.cs:20687`) and True Invisibility (`:21155`), not Mass Invisibility. On `blend` apply, other teams' renderers of the Chameleon are switched off instead of the camouflage shader (`CharacterControl.cs:36665-36700`). The radar icon of an enemy Chameleon with #412 is not drawn while it has `blend` or `invisible` (`GameGui.cs:5466-5497`, `displayPlayerIcon`).
+- **Tooltip discrepancy:** "+50%" duration; the code adds a flat 4 s (+200% / +100% for Perfect Blend, +50% / +33% for True Invisibility).
+
 ### chm_tormentRain1 (Torment Rain): arrow barrage (verified 2026-09-30)
 
 - `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target. CD `agiAdjust(3)` (`:25659`).
