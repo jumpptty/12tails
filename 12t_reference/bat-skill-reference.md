@@ -374,13 +374,13 @@ Follow-up verification:
 
 ## Open questions & card mismatches (2026-10-01)
 
-**Card mismatches** (cards in `index.html` vs the entries above; not patched):
-1. `bat_shadowGaze` `cost.mp` is `[11, 13, 19, 23]`; the source is 11 / **15** / 19 / 23.
-2. `bat_echoes` has `ko:"0"`; each orb hit is KO 1. Its `dmg` is the first hit only; each bounce is `talAdjust` 20 lower.
-3. `bat_dreamBurst` `desc` says the burst hits enemies around the Bat as true magic damage; the code hits only the drained target with a normal `hit()`.
-4. `bat_mirageOrb` `desc` says the orb breaks after 10 hits; the code breaks it after the 11th (total `> 60L − 10`), and an orb damages one enemy per 0.5 s.
-5. `bat_mimic` has `duration: [60, 90]`; the code is a flat `chaAdjust(60)` for both ranks.
-6. `bat_allMimic` `desc` says it copies the Basic, A and B passives; Basic skills (ID < 200) are already copied by Mimic, and All Mimic adds every Tree A / B skill (IDs 200-399), active or passive.
+**Card mismatches** (cards in `index.html` vs the entries above):
+1. ~~`bat_shadowGaze` `cost.mp` rank 2 was 13~~ → fixed to 15 (2026-10-01).
+2. ~~`bat_echoes` `ko:"0"`~~ → fixed to `"1"`, and the `desc` now says each bounce deals `talAdjust(20 + 20 × levels left)` (2026-10-01). Still open: `dmg` / `hitCount` model only the first hit of each orb.
+3. ~~`bat_dreamBurst` / `bat_cAttack` `desc` described an area burst of true magic damage~~ → fixed: an explosion on the drained target (2026-10-01).
+4. ~~`bat_mirageOrb` `desc` "10 hits"~~ → fixed to 11 in the base and ToT `desc` (2026-10-01).
+5. ~~`bat_mimic` `duration: [60, 90]`~~ → fixed to `60` (2026-10-01).
+6. ~~`bat_allMimic` `desc` "copies Basic, A and B passives"~~ → fixed: copies every Tree A / B skill; Basic is already copied by Mimic (2026-10-01).
 
 **Open questions (need a live check):**
 1. Illusion Effect: whether HP / MP drained by a clone's `w_bat56` / `w_bat66` proc reaches the real Bat. `sID` is the clone (`Bat_illusion.cs:7565`, `:7589`); the card says the Bat receives it.

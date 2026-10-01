@@ -552,8 +552,8 @@ All use Gaos's own stats (§2.2). AI choice (`Gaos_AI.cs:840-1030`, `num` = dist
 
 ### 4.23 Open questions & card mismatches (2026-10-01)
 
-**Card mismatches** (cards in `index.html` vs the entries above; not patched):
-1. `monkey_blazingFire` `desc` gives the Blazing Form box as "2→3m"; `FindRecTarget(…, 2, 3, …)` takes half-widths, so it is 4 → 6 m wide.
+**Card mismatches** (cards in `index.html` vs the entries above):
+1. ~~`monkey_blazingFire` `desc` Blazing Form box "2→3m"~~ → fixed to "กว้าง 4→6m" (4 → 6 m wide; `FindRecTarget` half-widths 2, 3) (2026-10-01).
 
 **Doc corrections made in this pass:** §1 rows for Ground Lock (`talAdjust(12 + 8×sLv)`, KO 1) and Planet Breaker (see §4.9). The other §1 rows were not re-verified in this pass.
 
