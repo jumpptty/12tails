@@ -275,6 +275,47 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 
 - Passive, Lv 55/Bn 0. Fatal Strike's status level +1 and arrow count 5 → 10 (`Chameleon.cs:26313`). Also raises the Immunity gate before Fatal Strike (`:7904`, see Fatal Strike).
 
+### chm_poisonArrow1-4 (Poison Arrow, #231-234): poison on Combo hits (verified 2026-10-01)
+
+- **Metadata:** passive, Lv/Bn 9/3, 15/5, 21/7, 27/9. `getPoisonArrowLv()` 0-4 (`Chameleon.cs:8804-8856`).
+- **Roll (`Chameleon_nAttack.cs:713-789`, after a landed Combo / Clear Arrow hit):** `Random.Range(0,100) < lckAdjust(8 + 4 × lv)` (12/16/20/24). Target not `eRace.Robots`: `RPC_AddStatus("poison", Clamp(currentPoisonLv + 1 + (RustyDecay #432 ? 1 : 0), 0, IncreasedPoisonLv + 1), Damage.getDebuff(8 + 2 × IncreasedPoisonLv, cha, targetCha), 0, …)`. Robots: nothing, unless Rusty Decay is learned, then the same formula applies `rust` instead.
+- **Status `poison`:** Debuff (`StatusData.cs:7406`) + Physical (`:5457`). Tick (`CharacterControl.cs:9208-9240`): every 4 s while alive, owner client, `RPC_AddEffectDamage(1, 10 × lv − 1, …)`. `RPC_AddStatus` rejects it while the target has `venomShock` (`:11265-11273`); some bug types (FlowerBug, FudaBug, WormBug) reject it (`:12725-12800`).
+- **Status `rust`:** Debuff (`:7418`) + Physical (`:5469`); tick `RPC_AddEffectDamage(1, 15 × lv, …)` every 4 s (`:9241-9270`); rejected while `rustyDecay` is on the target (`:11340-11348`).
+- **Tooltip:** chance 12-24% and "(9/4 dps, 8 sec)" match (poison 1 = 9 per 4 s).
+
+### chm_increasedPoison1-3 (Increased Poison, #241-243) and chm_deadlyVenom5 (Deadly Venom, #442) (verified 2026-10-01)
+
+- Increased Poison: passive, Lv/Bn 16/4, 20/8, 24/12. `getIncreasedPoisonLv()` returns 1-3, and **5 whenever Deadly Venom is learned** (`Chameleon.cs:8857-8909`). It sets the poison/rust level cap `lv + 1` and duration `getDebuff(8 + 2 × lv)` for Poison Arrow and Poison Volley (`Chameleon_nAttack.cs:741-773`, `Chameleon.cs:23318-23340`).
+- Deadly Venom: passive, Lv 85/Bn 6. Cap 6, base duration 18 s; also `getPiercingVenomLv()` = 2 (`Chameleon.cs:8912`), even without Piercing Venom.
+- **Tooltip discrepancy:** English "+2/4/6 s" matches; Thai "+2 sec" at every rank does not.
+
+### chm_piercingVenom1 (Piercing Venom, #244) (verified 2026-10-01)
+
+- Passive, Lv 28/Bn 16. `getPiercingVenomLv()` = 1 (2 with Deadly Venom) (`Chameleon.cs:8912`). Combo/Clear Arrow `+ 6 × lv × target poison lv` (`Chameleon_nAttack.cs:499-502`) and each Charge Attack swing the same (`Chameleon.cs:17003`, `:17036`).
+- **Tooltip discrepancy:** "+4 dmg per poison lv" (`ChameleonSkill_thai.cs:431`); the code adds 6.
+
+### chm_poisonVolley1-2 (Poison Volley, #251-252) (verified 2026-10-01)
+
+- MP 6/9, SP −12/−18 (red), Lv/Bn 20/12, 24/15, instant. CD `agiAdjust(60)` (`Chameleon.cs:23494`). The card's former MP 6/12, SP 12/24 were wrong.
+- `RPC_poisonVolley` (`Chameleon.cs:23037-23758`): 0.3 s wind-up, then one pass over `FindRecTarget(pos, forward, 1, 8, 12, 4)` (owner client): `hit(252 + sLv, t, (int)(0.5 × ATK), KO 1, 0, 0.5 × away)` (`:23312`); on a landed hit `poison` at `Clamp(currentLv + sLv, 0, IncreasedPoisonLv + 1)`, raised to at least `sLv`, for `getDebuff(8 + 2 × IncreasedPoisonLv)` (`:23318-23345`). No race check, so Robots are poisoned too.
+
+### chm_venomShock1-2 (Venom Shock, #253-254) (verified 2026-10-01)
+
+- MP 12/24, SP −24/−30 (red), Lv/Bn 28/18, 32/21. CD `agiAdjust(90)` (`Chameleon.cs:24089`). The card's former SP 24/36 was wrong. Needs a selected target (`doSkill` does nothing with no target, `Chameleon.cs:8016-8020`).
+- `RPC_venomShock` (`:23758-24389`): `tChar.RPC_AddStatus("venomShock", sLv, 12, 0, …)` (`:23956`), 12 s, not wrapped or contested.
+- **Status `venomShock`** (Debuff `StatusData.cs:7412` + Physical `:5463`), apply `CharacterControl.cs:36972-37030`: if the target has `poison` with more than 1 s left, `RPC_AddEffectDamage(252 + sLv, CeilToInt(0.25 × (0.5 × sLv + 0.5) × (10 × poisonLv − 1) × secondsLeft), …)`, then `poison` is removed. `0.25 × (10 × lv − 1)` is the poison damage per second, so this is 100% / 150% of the poison damage still to come. While `venomShock` lasts, new `poison` is rejected.
+
+### chm_rustyDecay5 (Rusty Decay, #432) (verified 2026-10-01)
+
+- MP 24, SP −30 (red), Lv 75/Bn 4, needs a target. CD `agiAdjust(90)` (`Chameleon.cs:35656`). `RPC_AddStatus("rustyDecay", 2, 12, 0, …)` (`:35523`).
+- **Status `rustyDecay`** (Debuff `:7424` + Physical `:5475`), apply `CharacterControl.cs:37142-37200`: `CeilToInt(0.25 × 1.5 × 15 × rustLv × secondsLeft)` Effect Damage when `rust` has more than 1 s left, then `rust` is removed; blocks new `rust` for 12 s. The level is fixed at 2, so it is always 150%.
+- **Passive part:** Poison Arrow adds 2 levels per proc instead of 1, and gives Robots `rust` (`Chameleon_nAttack.cs:741`, `:762-783`).
+
+### chm_doubleEffect5 (Double Effect, #431) (verified 2026-10-01)
+
+- Passive, Lv 75/Bn 4. In `onNormalAttackHit` (`Chameleon.cs:47330-47640`, called only from the Combo/Clear Arrow projectile, `Chameleon_nAttack.cs:702`) `doubleEffect = 2`: it multiplies the base chance (inside `lckAdjust`) of Heart Bow charm, Plunger Bow sticky, Salamander Bow burn, Golden Bow heavy, Time Bow restore and the Mummy (plague) / Frozen (MP drain) / Poseidon (HP drain) pools, and doubles the charm, sticky, burn, heavy and plague durations. Paper Bow `happy3` (`lckAdjust(12)`), BD Bow heal (`lckAdjust(3)`) and Demonic Bow (flat 13%) are not multiplied.
+- TTO: the Poseidon set HP Drain is a flat 20% (40% with Double Effect), see Server Balance Variations.
+
 ### chm_tormentRain1 (Torment Rain): arrow barrage (verified 2026-09-30)
 
 - `RPC_tormentRain_fire` (`Chameleon.cs:25872-26159`): after a 0.8 s wait, every enemy in `FindAreaTarget(hitPos, 8, 10, enemyLayer)` takes `hit(273, target, (int)(0.5 × ATK + talAdjust(60)), KO 1, 0, zero)` (`:26039-26067`), one hit per target. CD `agiAdjust(3)` (`:25659`).
@@ -779,3 +820,4 @@ See `player-reference-tool/CLAUDE.md`'s own dated section for the full implement
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Torment Rain | `(int)(0.5 × ATK + talAdjust(60))` per target (`Chameleon.cs:26039`). | Damage is plain 100% of ATK, no `talAdjust` term (user-reported 2026-09-30; card `servers.tto`: `dmg "0"`, `atkCoeff 1`). |
+| Double Effect | Poseidon Bow +12% / Poseidon Helmet +8% HP Drain chance goes through `lckAdjust(doubleEffect × pool)` (`Chameleon.cs:47620-47630`). | Flat 20% for the full set, 40% with Double Effect, no `lckAdjust` (user-reported 2026-09-28, see [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md); card `servers.tto.changeNote`). |

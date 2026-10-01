@@ -1847,18 +1847,18 @@ let checkedCritView = 0;
   // crit view ceil(1.8f x 44) = 80; Bulls Eye with Critical Plus 4: ceil(2.4f x 44) = 106; Fatal Strike 4 + Extra Arrows adds 6 x 5 = 30.
   {
     const chm = sk("chameleon_nAttack");
-    const CHM = ["chmCritPlus", "chmBullsEye", "chmFatalStrike", "chmExtraArrows", "chmGearWeapon", "chmGearMantis", "chmPiercingVenom", "chmTargetPoison", "bowMastery"];
+    const CHM = ["criticalPlus", "bullsEye", "fatalStrike", "extraArrows", "chmGearWeapon", "chmGearMantis", "piercingVenom", "chmTargetPoison", "bowMastery"];
     const savedChm = CHM.map(id => [id, deps[id]]);
     const chmSet = (o) => CHM.forEach(id => { deps[id] = o[id] || 0; });
     inputs.atk.value = "128"; inputs.lck.value = "0";
     chmSet({}); cv.set(false); select(chm, 4); check("Chameleon Combo rank 4 raw is 44", rng(chm, 4).join() === "44,44", rng(chm, 4).join());
     select(chm, 1); check("Chameleon Combo rank 1 raw is 54", rng(chm, 1).join() === "54,54", rng(chm, 1).join());
     cv.set(true); select(chm, 4); check("Chameleon Combo crit view is ceil(1.8 x 44) = 80", rng(chm, 4).join() === "80,80", rng(chm, 4).join());
-    chmSet({ chmCritPlus: 4, chmBullsEye: 1 }); select(chm, 4); check("Chameleon Combo Bulls Eye crit is ceil(2.4 x 44) = 106", rng(chm, 4).join() === "106,106", rng(chm, 4).join());
+    chmSet({ criticalPlus: 4, bullsEye: 1 }); select(chm, 4); check("Chameleon Combo Bulls Eye crit is ceil(2.4 x 44) = 106", rng(chm, 4).join() === "106,106", rng(chm, 4).join());
     cv.set(false); select(chm, 4); check("Chameleon Combo with Critical Plus spans 44-106", rng(chm, 4).join() === "44,106", rng(chm, 4).join());
-    chmSet({ chmFatalStrike: 4, chmExtraArrows: 1 }); select(chm, 4); check("Chameleon Combo Fatal Strike 4 + Extra Arrows adds 30", rng(chm, 4).join() === "74,74", rng(chm, 4).join());
-    chmSet({ chmPiercingVenom: 2, chmTargetPoison: 6 }); select(chm, 4); check("Chameleon Combo Deadly Venom x poison 6 adds 72", rng(chm, 4).join() === "116,116", rng(chm, 4).join());
-    chmSet({ chmGearWeapon: 2, chmGearMantis: 1, chmCritPlus: 4 }); check("Chameleon crit base Mantis Bow R + Mantis set + Critical Plus 4 = 32", sandbox._chameleonCritBase() === 32, sandbox._chameleonCritBase());
+    chmSet({ fatalStrike: 4, extraArrows: 1 }); select(chm, 4); check("Chameleon Combo Fatal Strike 4 + Extra Arrows adds 30", rng(chm, 4).join() === "74,74", rng(chm, 4).join());
+    chmSet({ piercingVenom: 2, chmTargetPoison: 6 }); select(chm, 4); check("Chameleon Combo Deadly Venom x poison 6 adds 72", rng(chm, 4).join() === "116,116", rng(chm, 4).join());
+    chmSet({ chmGearWeapon: 2, chmGearMantis: 1, criticalPlus: 4 }); check("Chameleon crit base Mantis Bow R + Mantis set + Critical Plus 4 = 32", sandbox._chameleonCritBase() === 32, sandbox._chameleonCritBase());
     savedChm.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
     cv.set(false);
   }
