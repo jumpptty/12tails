@@ -453,7 +453,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 ### bsn_colossalWeapon1-2 (Colossal Weapon, #361-362): Combo splash (verified 2026-09-29)
 
-- reqLv/reqBn 24/15, 27/18, mode passive. The splash after each Combo stage is documented in the Combo entry above (`Bison.cs:14930-15029`, `:17362-17461`, `:17652-17749`, `getColossalWeaponLv()` `:8947`): Effect Damage `ceil(0.2 * lv * highestStageDamage)` (20% / 40%) to every target within 8 m (height 4; 6 for spin and Added Swing) of a point 1 m ahead that the stage did not hit. It has no card formula because it depends on the stage's highest hit; the card describes it.
+- reqLv/reqBn 24/15, 27/18, mode passive. The splash after each Combo stage is documented in the Combo entry above (`Bison.cs:14930-15029`, `:17362-17461`, `:17652-17749`, `getColossalWeaponLv()` `:8947`): Effect Damage `ceil(0.2 * lv * highestStageDamage)` (20% / 40%) to every target within 8 m (height 4; 6 for spin and Added Swing) of a point 1 m ahead that the stage did not hit. Bible (2026-10-01, user-chosen design): the Combo card has a Colossal Weapon 0-2 toggle and, while it is on, a purple line under Final Damage per stage: `ceil(0.2 × lv × that stage's after-DEF range)` against the selected enemy (`hit()` returns the post-`dmgAdjust`/`defAdjust`, pre-`hitMod` value, `CharacterControl.cs:3566-3571`), before the splashed target's own `hitMod`. Final and Test stay single-target.
 - Tooltip "splash 20% (40%) of its damage to all enemies within 8m" matches; it omits that already-hit targets are excluded.
 
 ### bsn_colossalArmor1-2 (Colossal Armor, #363-364): damage retaliation (verified 2026-09-29)

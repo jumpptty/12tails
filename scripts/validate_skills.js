@@ -1318,6 +1318,12 @@ let checkedEffectProc = 0;
   // Bat Merciless Drain (#421): +66 Effect Damage per Drain Life tick on a target left with no mpDrain / spDrain (Bat.cs:22233-22257).
   { const dl = byId("bat_cAttack"); deps.mercilessDrain = 1; check("Drain Life + Merciless Drain on a dry target: bonus 66", ep.bonus(dl, 3, 0) === 66, ep.bonus(dl, 3, 0));
     deps.mercilessDrain = 0; check("Drain Life without Merciless Drain: no bonus", ep.bonus(dl, 3, 0) === 0, ep.bonus(dl, 3, 0)); }
+  // Bison Colossal Weapon (#361-362): splash line under Final Damage, only while the dep is on (user design 2026-10-01).
+  { const bc = byId("bison_nAttack"); sandbox._skillRanks[bc.id] = 2;
+    deps.colossalWeapon = 2; sandbox._calcRangeFor = undefined; sandbox._selectSkill(bc); const on = sandbox._getRenderedHeroHtml();
+    check("Colossal Weapon 2: splash line shown with Stage 1", on.includes('data-role="splash-line"') && /Stage 1 <span class="dmg-effect">\d/.test(on));
+    deps.colossalWeapon = 0; sandbox._calcRangeFor = undefined; sandbox._selectSkill(bc); const off = sandbox._getRenderedHeroHtml();
+    check("Colossal Weapon off: no splash line", !off.includes('data-role="splash-line"')); }
   const mega = byId("whale_megalodon");
   check("Megalodon Pull group always purple", purpleRate(mega, 50, 0) === 1);
   check("Megalodon Bite group always white", purpleRate(mega, 50, 1) === 0);
