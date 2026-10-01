@@ -337,10 +337,10 @@ Consolidated ground-truth reference for Monkey skill damage formulas, status pro
 | **Ja - Detonate** | 1 | — | `talAdjust(25×sLv)` | 5 | 1 | Commanded manual explosion of Ja. |
 | **Runic Flame** (`runicFlame`) | 1 | 30 MP, all SP | `talAdjust(24)` | 0 | Variable | Leaves flame trail while running. Duration = `floor(sp × 0.2)` sec. |
 | **World Ignition** (`worldIgnition`) | 2 | [40, 50] MP, [30, 40] SP (red) | `talAdjust(80 + 40×sLv)` | 10 | 1 | Massive radial firestorm. Ignites all targets hit. |
-| **Ground Lock** (`groundLock`) | 4 | [12, 16, 20, 24] MP | `talAdjust(25 + 25×sLv)` | 0 | 1 | Earth projectile rooting enemies in area. |
+| **Ground Lock** (`groundLock`) | 4 | [12, 16, 20, 24] MP | `talAdjust(12 + 8×sLv)` (corrected 2026-10-01, `Monkey.cs:30625`) | 1 | 1 | Earth projectile rooting enemies in area. |
 | **Gadina** (`gadina`) | 4 | [30, 45, 60, 75] MP | Main Summon | 0 | — | Spawns Gadina golem mount/companion (`ownStatsGadina`). Base HP/ATK/DEF scale with rank. |
 | **Gadina - Normal Attack** | 1 | — | `1.0×Gadina ATK` | 2 | 1 | Automated Gadina melee slam. |
-| **Gadina - Planet Breaker** | 1 | 40 MP, 60 SP (red) | Inner: `talAdjust(150)`<br>Outer: `talAdjust(50)` | 10 (Inner)<br>5 (Outer) | 1 | Gadina ground slam with two damage rings (Inner circle 4m, Outer ring 10m). |
+| **Gadina - Planet Breaker** | 1 | 35 SP (red) | Inner: Gadina ATK (+ Titan Sword share)<br>Outer: flat 5 | 10 (Inner)<br>5 (Outer) | 3 | Corrected 2026-10-01: three pulses, inner radius 5 m, outer ring 5-12 m. See §4.9. |
 | **Gadina - Titanic Earth Pulse** | 1 | 40 MP, 60 SP (red) | `0.35 × Gadina4 Current HP` | 10 | 5 | Sacrifices Gadina4. Gravity pulse expanding 1m to 5m over 5 ticks (max 1999/tick). |
 | **Stone Hammer** (`stoneHammer`) | 4 | [12, 20, 28, 36] MP | `talAdjust(20 + 25×sLv)`<br>*(+30 with Stone Sentinel)* | 20 / 30 / 40 / 50<br>*(+10 with Sentinel)* | 1 | Cylinder AoE (radius `1 + 0.5×sLv` m, height 6m). Channel interruptible. |
 | **Buiten Hou Hou** (`buiten`) | 4 | [20, 30, 40, 50] MP | Summon Totem | 0 | — | Deploys Buiten totem buffing allies / attacking nearby targets. |
@@ -424,6 +424,140 @@ overwrite any of those eight combat stats. These supersede the previous shifted-
   - Internal cooldown: 1.0s.
   - Proc roll: `Random(0, 100) < lckAdjust(12)`. At LCK 0, base chance is 12% (rises to ~21% at LCK 100).
   - Grants `4 * fireRuneLv` MP and `4 * fireRuneLv` SP on successful damage triggers.
+
+## 4. Summon commands, passives and summon moves (verified 2026-10-01)
+
+Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/MonkeySkill.cs`; skill IDs from `MonkeySkill.cs`'s skill tree. Server deltas are in §3 below.
+
+### 4.1 Summon Attack (`monkey_summonAttack`, #121)
+- reqLv 6, reqBn 2; SP **−1** (red); target, enemy. Lock `addTimeOut("summonAttack", 3)`, flat (`Monkey.cs:22321`).
+- `$RPC_summonAttack` (`Monkey.cs:22000-22330`) forwards `RPC_summonAttack(target)` to the active Phoenix, Gadina, Ja or Gaos, which clears its hate list and adds **1200** hate on the target (`Phoenix.cs:1890-1910`, `Gadina.cs:2082-2110`, `Ja.cs:1117-1137`, `Gaos.cs:1823-1851`). Buiten shows "Buiten try to attack but it has no arms!" and Lavu "Lavu can only attack by holding attack button" (`Monkey.cs:22162-22181`).
+- Client tooltip: EN "Order Monkey's summon to attack the target." (`MonkeySkill_eng.cs:110`).
+
+### 4.2 Summon Defense (`monkey_summonDefense`, #122)
+- reqLv 12, reqBn 4; SP **−1** (red); instant, self. Lock `addTimeOut("summonDefense", 3)` (`Monkey.cs:22838`).
+- Forwarded only to Phoenix, Gadina and Ja (`Monkey.cs:22641-22736`); there is no Gaos branch, Buiten shows "Buiten is trying its best!", Lavu "Lavu cannot defense" (`:22743-22766`). The summon, if standing or running, clears its hate list and sets its AI to `defense` (`Phoenix.cs:1941-1993`, `Gadina.cs:2162-2210`, `Ja.cs:1168-1220`).
+- Client tooltip: EN "Order Monkey's summon to stop and return to him." (`MonkeySkill_eng.cs:121`).
+
+### 4.3 Unsummon (`monkey_unsummon`, #123)
+- reqLv 18, reqBn 6; SP **−10** (red); instant, self. Lock `addTimeOut("unSummon", 3)` (`Monkey.cs:23449`).
+- `$RPC_unsummon` (`Monkey.cs:22987-23460`): Lavu returns `25 × Lavu level + 50` MP regardless of state (`:23130-23136`); any other summon returns MP only while its `hp > 0` (`:23149`): Phoenix 12 / 20 / 27 / 35, Ja 7 / 15 / 22 / 30, Gadina 13 / 23 / 33 / 43, Buiten 12 / 19 / 26 / 33, Gaos 75 (`:23166-23358`). Then the summon gets `SendMessage("unsummon")`.
+- Client tooltip: EN "Recall Monkey's summon from the field, returning half of its mp summoning cost." (`MonkeySkill_eng.cs:132`).
+
+### 4.4 Summon Release (`monkey_summonRelease`, #124)
+- reqLv 24, reqBn 8; SP **−30** (red); instant, self. Lock `addTimeOut("summonRelease", 3)` (`Monkey.cs:23826`).
+- Buiten and Lavu are simply unsummoned (no MP back). Phoenix, Gadina, Ja and Gaos get `summonRelease` (`Monkey.cs:23720-23743`): `isSummon = false`, layer and original layer **15**, and +1200 hate on the Monkey (`Phoenix.cs:2028-2056`, `Gadina.cs:2259-2295`, `Ja.cs:1244-1272`, `Gaos.cs:2002-2041`).
+- Client tooltip: EN "Release Monkey's bond with his summon, making it a neutral enemy." (`MonkeySkill_eng.cs:143`).
+
+### 4.5 Phoenix - Fireball (`monkey_phoenix_fireBall`, Phoenix's normal attack)
+- Interval (`Phoenix.cs:2540-2582`): with Rapid Fire (#221-#223), `mag = clamp((0.1 × RF + 0.1) × Monkey MAG, 1, 512)` and `addTimeOut("nAttack", clamp(5 − mag / 32, 0.1, 5))` (integer division); without it 5 s.
+- Hit (`Phoenix_fireBall.cs:189-290`): `num = Phoenix talAdjust(40)`; with Intense Fire `+ floor((0.1 × IF + 0.1) × Monkey talAdjust(40))`; `hit(1, t, num, KO 1, …)`; with Intense Fire, `burn` Lv IF for `getDebuff(4, Phoenix CHA, target CHA)`. A landed hit also calls the Monkey's Fire Rune (`:317`).
+
+### 4.6 Intense Fire (`monkey_intenseFire`, #231-#233)
+- Passive, reqLv/Bn 9/3, 17/5, 25/7. Level passed to Phoenix on summon (`Monkey.cs:11729-11740`).
+- Phoenix Fireball and Sky Crimson add `floor((0.1 × lv + 0.1) × Monkey talAdjust(40))` = 20 / 30 / 40% (`Phoenix_fireBall.cs:241`, `Phoenix_skyCrimson_fire.cs:219`); both Fireballs apply `burn` at level lv (Monkey's Fireball: `Monkey_fireBall.cs:203-255`, level 5 in Fire Avatar), duration `getDebuff(4)`.
+- Client tooltips: EN "Add 20% [30 / 40%] to phoenix damage (increases with Monkey's tal.) Also enables Monkey's and phoenix' fireball to inflict burn1 [2 / 3] status." (`MonkeySkill_eng.cs:352-374`). Matches.
+
+### 4.7 Fire Rune (`monkey_fireRune`, #261-#263)
+- Passive, reqLv/Bn 22/12, 28/16, 34/20.
+- `FireRune()` (`Monkey.cs:12273-12320`, owner only): with level lv > 0, at most once per **1 s**, `Random.Range(0,100) < lckAdjust(12)` restores `4 × lv` MP and SP (`RPC_AddHeal(260 + lv, 0, 4lv, 4lv)`), "FireRune!". Called on dealing hits: Combo stages, Fireball, Blazing Arrow, Flash Fire, Fire Avatar attacks, Monkey's Fireball projectile and Phoenix's Fireball (`Monkey.cs:20060`, `:26569`, `:28199`, `:28632`, `:38557-38963`, `Monkey_fireBall.cs:261`, `Phoenix_fireBall.cs:317`).
+- Client tooltips: EN "Gives Monkey 20% chance to restore 4 [8 / 12] sp and 4 [8 / 12] mp everytime he or his fire summon deals damage to any target." (`MonkeySkill_eng.cs:484-506`). Code wins: base 12, LCK-scaled, 1 s lockout.
+
+### 4.8 Gadina - Normal Attack (`monkey_gadina_nAttack`) and Titan Sword (`monkey_titanSword`, #321-#323)
+- **Titan Sword:** passive, reqLv/Bn 7/2, 15/4, 23/6. On summon `EquipSword(rank)` adds **+20 / +35 / +50** to Gadina ATK (`Gadina.cs:544-601`); `getSwordLv()` returns the rank (0-3) (`:338-403`).
+- **Gadina's attack** (`$RPC_nAttack1-4`, by Gadina form, `Gadina.cs:2540-4910`): 1 / 2 / 3 / 3 hits for forms 1-4, interval `agiAdjust(3 / 3 / 4 / 4)` on Gadina's AGI (`:2780`, `:3394`, `:4139`, `:4901`). Each hit `hit(1, t, (int)(0.5 × hitAtk), KO = sword rank, hate = same, …)` with `hitAtk = Gadina ATK + floor((0.1 × sword + 0.1) × Monkey ATK)` from sword rank 1 (`:2605-2665`).
+- Client tooltips: EN "Upgrades Gadina's sword to lv.2 [3 / 4]. Gives +20 [40 / 60] atk and makes it deal 2 [3 / 4] ko." (`MonkeySkill_eng.cs:638-660`). Code wins: +20 / 35 / 50 ATK and KO 1 / 2 / 3.
+
+### 4.9 Gadina - Planet Breaker (`monkey_planetBreaker`, #324)
+- reqLv 31, reqBn 8; SP **−35** (red). Needs Gadina4 ("Planet Breaker can only be used with Gadina4", `Monkey.cs:31755-31761`). Gadina's `addTimeOut("planetBreaker", agiAdjust(60))` (`Gadina.cs:5802`).
+- `$RPC_planetBreaker` (`Gadina.cs:5403-5885`): **3 pulses** (`i < 3`); each pulse, enemies in `FindAreaTarget(Gadina, 5 × rangeMod, 3 × rangeMod)` take `hit(11, t, Gadina ATK + Titan Sword share, KO 10, …)` pulled toward Gadina; enemies within 12 m but outside that circle take `hit(12, t, 5, KO 5, …)` with a stronger pull (`:5589-5698`).
+- Client tooltip: EN "Command Forth form Gadina to use ultimate sowrd attack. Deal damage to adjacent area." (`MonkeySkill_eng.cs:671`).
+
+### 4.10 Aegis of Earth (`monkey_aegisOfEarth`, #331-#333)
+- Passive, reqLv/Bn 9/3, 17/5, 25/7.
+  - Gadina DEF **+20 / +35 / +50** (`EquipShield`, `Gadina.cs:715-772`);
+  - Gadina VIT `+floor((0.1 × rank + 0.1) × Monkey base VIT)` (`Gadina.cs:6154-6160`);
+  - Ground Lock's contested base `3 → 3 + rank` s (`Monkey.cs:30608`).
+- Client tooltips: EN "Upgrades Gadina's shield to lv.2 [3 / 4]. Gives +20 [40 / 60] def and increases Monkey's ground lock duration to 4 [5 / 6] seconds." (`MonkeySkill_eng.cs:682-704`). Code wins on DEF (20 / 35 / 50); the duration is the CHA-contested base.
+
+### 4.11 Earth Rune (`monkey_earthRune`, #361-#363)
+- Passive, reqLv/Bn 22/12, 28/16, 34/20. `EarthRune()` (`Monkey.cs:13539-13584`): same roll as Fire Rune (`lckAdjust(12)`, 1 s lockout, `4 × lv` MP and SP), but it runs from the owner's `Update` when the **Monkey takes damage** (`myDamage == −1`, `Monkey.cs:236-242`). No summon calls it.
+- Client tooltips: EN "Gives Monkey a 20% chance to restore 4 [8 / 12] SP and 4 [8 / 12] MP everytime he or his earth summon gets hit." (`MonkeySkill_eng.cs:814-836`). Code wins: LCK-scaled 12 base, and only the Monkey's own hits taken.
+
+### 4.12 Mike Blink (`monkey_mikeBlink`, #401)
+- Passive, reqLv 55, reqBn 0.
+  - Combo stages 1 and 2 and both blink strikes use `(int)((0.5 + 0.1) × ATK)` instead of `0.5 × ATK` (`Monkey.cs:19962`, `:20576`, `:36000`, `:36606`).
+  - In real game modes, a normal attack on a locked enemy more than **12 m** away runs `RPC_mikeBlink1` instead of stage 1 (`Monkey.cs:10073-10139`). Blink strike 1 box `FindRecTarget(mPos + tDir − 3·hitDir, tDir, 1, 1, 4, 2)` (2 m × 4 m); strike 2 `FindAreaTarget(…, 1, 3)` (`:35995`, `:36601`).
+- Client tooltip: EN "Enables Mike to attack enemy from a distance. Also increases its damage by 20%." (`MonkeySkill_eng.cs:880`). Matches (+0.1 ATK on 0.5).
+
+### 4.13 Mike Circle (`monkey_mikeCircle`, #411)
+- Passive, reqLv 60, reqBn 1. HP Transfer's charge level becomes **5** (`getChargeAttackLv`, `Monkey.cs:10827-10848`): the Monkey pays `2 × 5 − 1` = 9 HP per tick and the target heals `floor((1 + 0.02 × ATK) × 10)` (`:21084-21094`). Every 0.5 s while channelling, enemies in `FindAreaTarget(target, 3 × rangeMod, 2 × rangeMod)` take `hit(411, t, (int)(0.5 × ATK), KO 1, …)` (`:21383-21435`), with a Mike effect on the target.
+- Client tooltip: EN "Increases HpTransfer to 8:10 hp and call out Mikes to circle around its target, dealing damage to nearby enemies." (`MonkeySkill_eng.cs:891`). Code: 9 HP cost.
+
+### 4.14 Auto Instant (`monkey_autoInstant`, #431)
+- Passive, reqLv 75, reqBn 4. In the cast routine (`Monkey.cs:25002-25062`): without `instantCast`, `Random.Range(0,100) < lckAdjust(12)` sets the cast time to 0. Fire Avatar, Earth Form, Volcanic Eruption and Summon Gaos have `canInstantCast = false` unless #431 is learned (`:25330-25423`), so only with it can `instantCast` or the proc skip their cast bars.
+- Client tooltip: EN "Gives Monkey a 12% chance to instantly cast any spell. Also enables 'Instant Cast' to be used with any C skills." (`MonkeySkill_eng.cs:913`). Matches (LCK-scaled).
+
+### 4.15 Instant Blaze (`monkey_instantBlaze`, #412)
+- reqLv 60, reqBn 1; MP 12; SP **−12** (red); instant. Needs Phoenix4 ("That skill need Phoenix4", `Monkey.cs:8376-8420`). Monkey lock `agiAdjust(30)` (`:37601`); a Phoenix4 summoned with #412 also gets skill 412 and uses the move by itself (`Monkey.cs:11669-11681`, `Phoenix_AI.cs:1057`), with its own `agiAdjust(30)` lock (`Phoenix.cs:3231`).
+- `$RPC_instantBlaze` (`Phoenix.cs:2685-3170`): 4 waves; each hits `FindRecTarget(Phoenix − forward, forward, 2, 2, 3, 3)` (4 m wide, 3 m long from 1 m behind, 3 m high) with `hit(21, t, Phoenix talAdjust(80), KO 1)` and `burn` Lv 4 for `getDebuff(8, Phoenix CHA, target CHA)`; after the last wave Phoenix heals 200 HP.
+- Client tooltip: EN "Enables phoenix's new blazing attack. Activate this to use it instantly." (`MonkeySkill_eng.cs:946`).
+
+### 4.16 Fire Soul (`monkey_fireSoul`, #422) and Earth Soul (`monkey_earthSoul`, #423)
+- Passives, reqLv 70, reqBn 3. On summon, Phoenix (Fire Soul, `Phoenix.cs:4902-4953`) or Gadina (Earth Soul, `Gadina.cs:6171-6218`) adds `floor(0.1 × form × Monkey base stat)` to each of its 8 stats (form 1-4; Phoenix forms 5 / 6 use 5 / 6) and recomputes MHP as `10 × VIT`. The other `hasSkill` sites only draw the soul rings (`Monkey.cs:11365`, `:12588`, `:14375`).
+- Client tooltips: EN "Passively adds 40% of Monkey's level to the summoned Phoenix [Gadina] basic stats." (`MonkeySkill_eng.cs:957`, `:1012`). Code wins: 10% per form level, of each Monkey base stat.
+
+### 4.17 Fire Avatar - Fireball (`monkey_fireAvatar_fireBall`) and Blazing Fire (`monkey_blazingFire`, #442)
+- **Fire Avatar Fireball** (`$RPC_phoenixArmor_nAttack`, `Monkey.cs:38728-39198`): level = 1, +1 for each of 3 / 6 / 9 s since the Monkey's last action (max 4), fired through `RPC_fireBall_fire`; the hit is the Monkey Fireball (`talAdjust(20 + 20 × lv (+20 Fire Keep))`, KO 1, `burn` Lv 5 for `getDebuff(4)`, Fire Rune). Lock `addTimeOut("nAttack", 1)`.
+- **Blazing Fire:** passive, reqLv 85, reqBn 6.
+  - Flash Fire gets `+10` inside `talAdjust(8 + 8 × rank)` (`Monkey.cs:28598`).
+  - Charging in Fire Avatar (needs #442, ≥ 6 MP and 6 SP, `:10208-10238`) runs Blazing Form (`Monkey.cs:39351-40035`): every 0.3 s it costs 3 SP / 3 MP (2 with Revised Skill / Revised Magic) and hits `FindRecTarget(pos − forward, forward, 2, 3, 3, 3)` (4 m → 6 m wide, 3 m long, 3 m high) with `hit(442, t, talAdjust(100), KO 0)`; `burn` Lv 4 for `getDebuff(8)` only on a target without `burn`. Release: `addTimeOut("blazingForm", 6)`.
+- Client tooltip: EN "Enables FireAvartar to perform its charging attack. Also increases damage of all FlashFire spells." (`MonkeySkill_eng.cs:979`).
+
+### 4.18 Second Stone (`monkey_secondStone`, #403)
+- Passive, reqLv 55, reqBn 0. Ground Lock's `groundLock` level becomes rank **+ 2** (`Monkey.cs:30619`). 3 s after the Ground Lock hit, if the target still has `groundLock`, a stone strikes the hit point: `hit(403, t, talAdjust(48), KO 10)` on everything in `FindAreaTarget(hitPos, 0.5, 1)` (`$RPC_groundLock_hit`, `Monkey.cs:30858-31168`).
+- Client tooltip: EN "Add 2 seconds to 'groundlock' duration and adds a second impact that deals 10 ko to it." (`MonkeySkill_eng.cs:990`). Code wins: +2 status levels, not +2 s.
+
+### 4.19 Earth Guard (`monkey_earthGuard`, #413)
+- reqLv 60, reqBn 1; MP 15; SP **−15** (red); instant. Needs Gadina4 (`Monkey.cs:8439`). Gadina's lock `agiAdjust(60)` (`Gadina.cs:5304`); a Gadina4 summoned with #413 also gets skill 413 and its AI can use it (`Monkey.cs:12892-12904`, `Gadina_AI.cs:1115`).
+- With a locked target, the target gets `RPC_AddDamage(-1, 0, 0, 1000, …)` from Gadina: **+1000 hate**, no damage (`Monkey.cs:37919-37958`). Gadina (`$RPC_earthGuard`, `Gadina.cs:5028-5370`) stops (`moveSpeed 0`) in its guard pose and **6 times, 2 s apart**, heals `ceil(0.2 × (MHP − HP))` (skipped at full HP).
+- Client tooltip: EN "Enables Gadina4 to guard and restore its hp. Activate this to use it instantly." (`MonkeySkill_eng.cs:1001`).
+
+### 4.20 Earth Form - Normal Attack (`monkey_earthForm_nAttack`)
+- `$RPC_gadinaArmor_nAttack1-3` (`Monkey.cs:40994-42595`), each with a flat `addTimeOut("nAttack", 1)`:
+  - stage 1: two punches, each `FindAreaTarget(pos ± 0.5 right + 1.5 forward, 2, 3)`, `hit(1 / 4331, t, ATK, KO 5, hate ATK)`;
+  - stage 2: two hits (`i < 2`) in `FindAreaTarget(pos, 4, 3)`, `hit(4332, t, ATK, KO 3)`;
+  - stage 3: one hit in `FindAreaTarget(pos + 3 × forward, 3, 3)`, `hit(4333, t, 2 × ATK, KO 20)`.
+
+### 4.21 Stone Sentinel (`monkey_stoneSentinel`, #443)
+- Passive, reqLv 85, reqBn 6.
+  - **Stone Hammer:** `+30` inside `talAdjust` and `+10` KO (`Monkey.cs:33458-33463`).
+  - **Sentinel Guard:** charging in Earth Form needs #443 ("Require Stone Sentinal Skill"), ≥ 10 MP and 10 SP and no `sentinalGuard` lock (`Monkey.cs:10282-10327`). While held (`$RPC_gadinaArmor_sentinalGuard`, `:42635-43066`): every 3 s, MP −10 (−8 with Revised Magic #414) and `RPC_AddHeal(ceil(0.2 × MHP))`. While `myCommand == "sentinalGuard"`, direct hits are halved and KO is 0 (`CharacterControl.cs:4721-4738`). Release: `addTimeOut("sentinalGuard", 6)` (`Monkey.cs:42872`, `:43264`).
+- Client tooltip: EN "Enables EarthForm to charge, reducing damage by half and gradually restoring its hp. Also adds 30 damage and 10 ko to StoneHammer" (`MonkeySkill_eng.cs:1034`). Matches.
+
+### 4.22 Gaos moves (`monkey_gaos_nAttack1`, `monkey_gaos_nAttack2`, `monkey_gaos_tailSpin`, `monkey_gaos_fire`, `monkey_gaos_rampage`)
+All use Gaos's own stats (§2.2). AI choice (`Gaos_AI.cs:840-1030`, `num` = distance to the target's collider edge):
+- **Rampage:** `num > 9`, HP < 50% and `rampage` free.
+- **Fire:** `num > 12` and `goasFire` free.
+- **Tail Spin:** `num < 6` and `cAttack` free.
+- **Normal attacks:** `num < 5` and `nAttack` free, 50/50 between I and II.
+
+| Move | Area | Hit | Lock |
+|---|---|---|---|
+| Normal Attack I (`$RPC_nAttack1`) | `FindRecTarget(pos, fwd, 2, 3, 7, …)` = 4 → 6 m wide, 7 m long | `hit(1, ATK, KO 3)` | `nAttack` 3 s (`Gaos.cs:2318-2450`) |
+| Normal Attack II (`$RPC_nAttack2`) | `FindAreaTarget(pos + (1.2 right, 2 forward), 5, 3)` | `hit(1, (int)(0.6 × ATK), KO 3)` | `nAttack` 3 s (`:2718-2833`) |
+| Tail Spin (`$RPC_tailSpin`) | 4 waves, `FindAngleTarget(pos, dir, 6 + i, 120°, 4)` (6 → 9 m) | `hit(1, (int)(0.8 × ATK), KO 10)` per wave | `cAttack` 15 s (`:3183-3332`) |
+| Fire (`$RPC_gaosFire`) | impact `FindAreaTarget(hitPos, 8, 4)` | `hit(1, talAdjust(140), KO 5)` | `goasFire` 9 s (`:1765-1785`, `:3700`) |
+| Rampage (`$RPC_rampage`) | every 0.4 s, `FindAreaTarget(pos + 5 × fwd, 5, 3)` | `hit(31, ATK, KO 10)` | `rampage` 30 s (`:4400-4450`) |
+
+### 4.23 Open questions & card mismatches (2026-10-01)
+
+**Card mismatches** (cards in `index.html` vs the entries above; not patched):
+1. `monkey_blazingFire` `desc` gives the Blazing Form box as "2→3m"; `FindRecTarget(…, 2, 3, …)` takes half-widths, so it is 4 → 6 m wide.
+
+**Doc corrections made in this pass:** §1 rows for Ground Lock (`talAdjust(12 + 8×sLv)`, KO 1) and Planet Breaker (see §4.9). The other §1 rows were not re-verified in this pass.
+
+**Open questions:** none from this pass.
 
 ---
 
