@@ -355,6 +355,51 @@ or flat expressions before this pass; a new `atkCoeff` field (paired with the pr
 previously-unexercised `--stat-atk` CSS token) was added to `renderDmgFormula`, `rollOneHit`, and the
 Raw Damage calc chip to support it (the app's history is in git).
 
+### mol_mine1-4 (Landmine, #201-204) (verified 2026-10-01)
+
+- MP 3/5/7/9, Lv/Bn 3/0, 9/1, 15/2, 21/3, instant. CD `agiAdjust(15)`, `agiAdjust(8)` with Mine Lover #402 (`:23891-23905`).
+- Mine prop `Mole_mine` lives `chaAdjust(60)` s (`Mole_mine.cs:38`) and triggers on a `Player`/`Enemy` collider of another layer (`:192-201`).
+- `RPC_mine_hit` (`:10529-10738`): `FindAreaTarget(pos, 4 + ExtraPowderLv, 4)` (enemy layers); `num = talAdjust(10 × sLv + 10)`, `floor(1.25 ×)` with Mine Lover; every target **without `insight`** takes `hit(200 + sLv, t, num, KO 1, …)` — no distance falloff; then the triggered mine is destroyed. Smart Shell: `RPC_smartShell_hit` (see Smart Shell).
+- Tooltip "10/20/30/40 dmg"; code base 20/30/40/50.
+
+### mol_stunMine1-2 (Stun Mine, #231-232) (verified 2026-10-01)
+
+- **MP 5/10, no SP**, Lv/Bn 9/3, 15/5. The card's former 5 MP + SP 10/15 was wrong. CD `agiAdjust(45)`, `agiAdjust(23)` with Mine Lover (`:26680-26694`).
+- `RPC_stunMine_hit` (`:11026-11265`): `FindAreaTarget(pos, 4 + ExtraPowderLv, 4, 130816)` — **every character layer**, so allies and the Mole are included; KO `10 × (sLv + (Grenade Cluster #432 ? 1 : 0))`, `floor(1.25 ×)` with Mine Lover; `hit(242 + sLv, t, 0, KO, …)` on every target without `insight`; with Smart Shell a same-layer target gets `KO 5 × sLv` instead. **No status is applied** (no `RPC_AddStatus` in Mole for it; the old card note "3 s paralysis" had no source).
+
+### mol_stunGrenade1-2 (Stun Grenade, #233-234) (verified 2026-10-01)
+
+- MP 5/10, SP −10/−15 (red), Lv/Bn 21/7, 27/9. CD `agiAdjust(60)` (`:27516`).
+- Projectile speed 15, `life = 3 × rangeMod` (`Mole_stunGrenade.cs:28-92`, `:11272-11345`), `mLv = sLv + GrenadeCluster`. On contact: `FindAreaTarget(point, 6 × rangeMod, 4, 130816)` (every layer, no `insight` check); `hit(242 + mLv, t, 0, KO 10 × mLv, …)`; with Smart Shell same-layer targets get `KO 5 × mLv` and enemy-layer targets also `RPC_AddEffectDamage(264, 30)` (`Mole_stunGrenade.cs:200-290`).
+
+### mol_smartShell1 (Smart Shell, #264) (verified 2026-10-01)
+
+- Passive, Lv 33/Bn 24. The +30 Effect Damage and same-layer halving are documented in the Class C passive sweep below (re-checked this pass). Flame Carnival: halving only (`:39113-39125`).
+
+### mol_mineLover5 (Mine Lover, #402) (verified 2026-10-01)
+
+- Passive, Lv 55/Bn 0. Landmine damage `floor(1.25 ×)` (`:10614-10620`) and base CD 15 → 8; Stun Mine KO `floor(1.25 ×)` and base CD 45 → 23. Tooltip "+50% and −50%" vs code ×1.25 and the replaced cooldowns.
+
+### mol_grenadeCluster5 (Grenade Cluster, #432) (verified 2026-10-01)
+
+- MP 10, SP −40 (red), Lv 75/Bn 4, instant. CD `agiAdjust(120)` (`:38123`).
+- `RPC_grenadeCluster` (`:37853-38333`): 8 grenades (`i < 8`, `:38002`), each `rotateH(forward + random tilt, 45 × i)` (`:38009`); speed 6, `life = 5 × rangeMod` (`Mole_grenadeCluster.cs:28-88`, `:13787-13841`). On the first enemy contact: radius `(int)(4 + 0.5 × ExtraPowderLv)` (`:179`), height 3; `floor((1 − 0.5 × d / r) × (ATK + talAdjust(30)))`, `hit(342, t, …, KO 10, …)`. No crit. A target is normally reached by one grenade.
+- Passive part: Stun Mine / Stun Grenade KO level +1 (above).
+
+### mol_timeNuke1-2 (Time Nuke, #271-272) (verified 2026-10-01)
+
+- MP 45/60, SP −45/−60 (red), Lv/Bn 35/23, 40/25. CD `agiAdjust(360)` (`:30786`).
+- `Mole_timeNuke` (993 lines): fixed 60 s countdown with an on-screen timer (`:29-75`); then `$detonate` (`:129-370`): `mDamage = talAdjust(100 × mLv + 50)` (`:334`), range `R = 20 + ExtraPowderLv` (`:882`), mask `130818` (every layer, `:892`); 4 rings 0.1 s apart (`i < 4`, `:279`), ring `i` = `FindAreaTarget(pos, floor(0.25 × (i + 1) × R), 5)`; each target without `insight` takes `hit(270 + mLv, t, floor(mDamage × (1 − 0.8 × d / R)), KO 3, …)` — halved for same-layer targets and `+ RPC_AddEffectDamage(264, 30)` for others when Smart Shell is learned (`:297-317`). Without Smart Shell allies and the Mole take the full hit. A target within `0.25 R` of the centre is in all 4 rings.
+
+### mol_detonate1 (Detonate, #273) (verified 2026-10-01)
+
+- MP 24, SP −24 (red), Lv 45/Bn 27. CD `agiAdjust(360)` (`:31268`). Refused with "Cannot find TimeNuke to detonate" and MP/SP returned when no Time Nuke exists (`doSkill`, `Mole.cs:6740-6750`). Detonating early: `mDamage = floor(mDamage × Clamp(elapsedWholeSeconds × 0.0166, 0.1, 0.99))` (`Mole_timeNuke.cs:185`, `:336`).
+
+### mol_flameCarnival5 (Flame Carnival, #442) (verified 2026-10-01)
+
+- **MP 35**, no SP, Lv 85/Bn 6. The card's former "free" cost was wrong. CD `agiAdjust(150)` (`:38662`).
+- Trap prop lives `chaAdjust(90)` (`Mole_flameCarnival.cs:30`), fires `RPC_flameCarnival_fire` on an enemy-layer contact (`:69-79`). Fire (`:38844-39324`): 20 pulses (`i < 20`, `:39033`), `FindAreaTarget(pos, Clamp(2 + i, 3, 5), 2, 130816)` (every layer); each target without `insight` and not `Robots`/`Structure` takes direct `RPC_AddDamage(442, talAdjust(10), …)` (no `dmgAdjust`/`defAdjust`), halved for same-layer targets with Smart Shell (`:39102-39150`).
+
 ## Summary table
 
 | Skill | maxRank | Cost (Base) | cd/castTime/duration rank-variance | dmg (`sLv`=rank) | dmgNote | dmgDep / dmgMultDep | hitCount |
