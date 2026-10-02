@@ -30,6 +30,7 @@ Mandatory rules, UI conventions, card schemas, verification pipeline and file-sa
   * `[statusName]` / `[statusName3]` → purple hoverable status (trailing digits are literal text).
   * `^^term^^` → teal glossary link (see Mechanic glossary below).
   * Stat names may use `<span class='dmg-agi'>AGI</span>` (`.dmg-tal/atk/def/agi/vit/int/cha/lck`).
+  * Server `changeNote` bullets start with a tag that `formatServerNote()` turns into a chip: `[Buff]` green, `[Nerf]` red, `[Adjust]` / `[Rework]` blue, `[Fix]` violet (a server bug fix, e.g. ToT Chameleon crit gear). Bullets are separated by `\n`, not `<br>`.
 * **Status keywords (`STATUS_CLASS_MAP`, `STATUS_DESC_MAP`, declared just before `const SKILLS`):**
   * `STATUS_CLASS_MAP` is the single source for a status's classification string (e.g. `"Debuff, Magical, Lock"`). Add an entry only after checking `StatusData.cs`'s `is*Status` functions **and** the generic per-status switch in `CharacterControl.cs` (§3.0 item 4). An unmapped name renders as plain bracket text (= still needs research).
   * `STATUS_DESC_MAP` gives the optional 2nd popup line: a string, or `(sLv) => string` for level-scaled effects (`getStatusDesc(name, sLv)` passes `null` for `[name]` with no digits → formula in words; a number → computed value). Verify values at the **apply site**, not the `removeStatus()` mirror.
