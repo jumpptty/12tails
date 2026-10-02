@@ -116,6 +116,7 @@ const exposeInjection = `
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
+  window._getUsedPlayerStatKeys = getUsedPlayerStatKeys;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, lv: lvEl };
   window._statVal = statVal;
@@ -2390,6 +2391,29 @@ console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
     else checkedLive++;
   }
   console.log(`Verified ${checkedLive} liveCheck markers.`);
+}
+
+// durAdjust:"tal" (Stun Mine on BB, Mole_stunMine.cs:60): the duration chip runs talAdjust with the player's TAL,
+// ignores CHA, wears the TAL colour (.sk-stat-dur-tal) and makes TAL (not CHA) glow.
+{
+  let ok = 0;
+  const fail = (m) => { console.error(`[DUR ADJUST ERROR] ${m}`); errorCount++; };
+  for (const sk of SKILLS.filter(s => s.durAdjust === "tal")) {
+    const chaEl = sandbox._root.querySelector('[data-role="cha"]');
+    const saved = [sandbox._statInputs.tal.value, chaEl.value];
+    const durText = () => { const h = sandbox._getRenderedHeroHtml(); const i = h.indexOf('class="sk-stat sk-stat-dur'); return i < 0 ? "" : h.slice(i, i + 2000); };
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    sandbox._statInputs.tal.value = "0"; chaEl.value = "0"; sandbox._selectSkill(sk); const a = durText();
+    sandbox._statInputs.tal.value = "200"; sandbox._selectSkill(sk); const b = durText();
+    chaEl.value = "200"; sandbox._selectSkill(sk); const c = durText();
+    [sandbox._statInputs.tal.value, chaEl.value] = saved;
+    if (!a.includes("sk-stat-dur-tal")) fail(`${sk.id}: duration chip lacks the TAL class`);
+    else if (a === b) fail(`${sk.id}: duration does not change with TAL`);
+    else if (b !== c) fail(`${sk.id}: duration changes with CHA`);
+    else if (!sandbox._getUsedPlayerStatKeys || ![...sandbox._getUsedPlayerStatKeys(sk)].includes("tal") || [...sandbox._getUsedPlayerStatKeys(sk)].includes("cha")) fail(`${sk.id}: stat glow should be TAL, not CHA`);
+    else ok++;
+  }
+  console.log(`Verified ${ok} talAdjust duration chips.`);
 }
 
 // tooltipNote (GEMINI.md §2): every Thai-tooltip mismatch lives in the card's tooltipNote and renders as the styled
