@@ -429,6 +429,11 @@ All sixteen below are `mode = passive` with no MP/SP (`scripts/decode_skilldata.
 **Open questions (need a live check):**
 1. Over Presence radius: set by the prefab's trigger collider (EN tooltip 6 m, TH 10 m).
 
+### Geometry notes (verified 2026-10-02)
+
+- **Flying Shield:** `$RPC_flyingShield` spawns the `flyingShield` effect at the Whale (`createEffect`, `Whale.cs:24642-25213`) and the hit comes from `Whale_flyingShield.OnTriggerEnter` (`Whale_flyingShield.cs:126`); the flight path is the effect's animation, with no distance in code.
+- **Homing Shield** lives `chaAdjust(3)` s (`Whale.cs:10431`); Bubble Shield and Homing Shield have no distance gate (40 m target lock).
+
 ## Server Balance Variations
 
 Base engine (BigBug) values are documented above; this section lists private-server deltas.

@@ -660,6 +660,12 @@ Every Rabbit card description was first written from the client tooltips, then t
 - **Not modeled on the cards (verified findings with no card field):** From the Above's air shot (same Hyper Shot rule, not a separate card mode); a single target being hit by several ricochet segments of Bouncing Bullet (needs wall geometry); the `w_rab59` faster attack as damage per second; Ten Shot per-angle hit count; Bunny Bargain in `ArenaShopGui` ignoring Skill Bargain; New Order's `Game.useCoin = false` in `Start()` (`Rabbit.cs:114-120`, traced 2026-10-01: `Game.useCoin` is the "one NPC coin per stage" lock, set when a coin is used (`Rabbit.cs:46916`, every class has the same line), checked in the coin dispatch ("Can only use one coin per stage.", `GameGui.cs:36636`) and already cleared by `Game.nextGame()` at every stage change (`Game.cs:295-323`); the Rabbit's own reset only runs when its player object is created in a mission, so in normal play it changes nothing); Alchemist Lab recipe lists per level; Contract unit stats (Light Panther / Leopard / Golem base stats are not decoded).
 - **Resolved 2026-09-29:** Truce Trading is a purchase negotiation (see the economy section above); the old "invulnerable trading zone" table row was wrong.
 
+### Geometry notes (verified 2026-10-02)
+
+- **Mix / Shake potions:** `Rabbit + rotateH(1.5 × dir, i × angle)`, angle 120° (72° for 5 Mix potions with Extra Potion) (`Rabbit.cs:23886-23925`, Shake `:24802`): 1.5 m from the Rabbit, evenly spaced.
+- **Contract spawn:** Panthers and Leopards at `getSpawnVector(pos + up, TransformDirection(∓1.5, −1, 2.6))`, the Golem at `(0, −1, 3)` (`Rabbit.cs:40423-40464`).
+- **Diamond Shot** uses the same `16 + 5 × getNormalAttackLv()` raycast as Maim Shot (`Rabbit.cs:38258-38263`). Truce Trading has no distance gate (40 m target lock).
+
 ## Server Balance Variations (TTO)
 
 | Skill | Original BigBug baseline | TTO delta |

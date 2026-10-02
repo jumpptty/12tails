@@ -526,6 +526,12 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 
 ---
 
+### Geometry notes (verified 2026-10-02)
+
+- **Mana Missile flight:** `life = 3 × rangeMod` (`Penguin.cs:10236`); `Penguin_manaMissile` flies at 12 m/s (`Penguin_manaMissile.cs:26`) and turns toward the target with `RotateTowards(…, 0.15, 1)` (`:128`).
+- **Mana Vortex:** spawns at `getSpawnVector(pos + 2·up, 5·forward − 2·up)` (`Penguin.cs:27133`); radius `12 + 4 × sLv` around the vortex (`ManaVortex.cs:229`, `:673`, level set at `:1008`).
+- **Target spells** (MP Transfer, Mana Burn, Snow Man, Snow Ball, Absolute Zero) have no distance gate in `Penguin.cs`, so the 40 m target lock applies.
+
 ## Server Balance Variations
 
 ### Tailstopia Online (TTO)

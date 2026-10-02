@@ -454,6 +454,10 @@ Entries are being written skill by skill; every skill shown in the app needs one
 
 ---
 
+### Geometry notes (verified 2026-10-02)
+
+- **Combo boxes:** every stage uses `FindRecTarget(pos − rangeMod·forward, forward, w, w, 3·rangeMod, 2·rangeMod)` with half-width `w = 1·rangeMod` for stages 1-3 (`Cat.cs:16520`, `:17318`, `:18001`, `:18244`) and `2·rangeMod` for stage 4 (`:18972`, `:19213`): 3 m long starting 1 m behind the Cat, 2 m wide (4 m on stage 4), 2 m high.
+
 ## Server Balance Variations
 
 ### Twelve Tails Online (TTO)

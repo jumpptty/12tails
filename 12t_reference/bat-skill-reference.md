@@ -407,6 +407,13 @@ Follow-up verification:
 1. Illusion Effect: whether HP / MP drained by a clone's `w_bat56` / `w_bat66` proc reaches the real Bat. `sID` is the clone (`Bat_illusion.cs:7565`, `:7589`); the card says the Bat receives it.
 2. Illusion Effect: the tooltip says clones give SP back to the Bat; the code's `sp++` is on the clone's own character and is not gated by #401.
 
+### Geometry notes (verified 2026-10-02)
+
+- **Shadow Illusion spawn:** clone 1 at `getSpawnVector(Bat + up, TransformDirection(−1.5, −1, 2.6))`, clone 2 at `(+1.5, −1, 2.6)`, each passed through `getExpandPos(…, 1, 0.5)` (`Bat.cs:31511-31559`): 2.6 m in front, 1.5 m to each side.
+- **Switch / Shadow Sacrifice:** no distance check; Switch picks an existing clone (`Bat.cs:7861-7951`, `RPC_switch` `:13272-13410`), Shadow Sacrifice drains every clone (`:14100-14350`).
+- **Target spells:** the local cast switch (`Bat.cs:7000-9600`) has no distance gate besides Mirage Orb's 6 m spacing (`:9349`), so curses, Dream spells, Charm, Mimic, Dark Stalker, Soul Eater, Paranoia and Nefarious Whip reach the 40 m target lock ([12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)). Nightmare and Mind Control check `sqrMagnitude > 1600` / `<= 1600` themselves (`:28939`, `:37491`).
+- **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target.
+
 ## Server Balance Variations (ToT patch notes, 2026)
 
 Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.

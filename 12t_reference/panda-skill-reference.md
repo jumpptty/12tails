@@ -858,6 +858,11 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Qi Strike | Charge 2 / 3 / 4 s by rank. | 2 s at every rank (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Delay Qi | Held-punch buff 3 s. | 6 s (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 
+### Geometry notes (verified 2026-10-02)
+
+- **Lotus Palm / Heaven Palm** only need a target (`num != 0`, `Panda.cs:6688`); `$RPC_lotusPalm` hits the locked target with no distance check (`:39066-39638`), so the 40 m target lock applies.
+- **Roll:** `moveSpeed = 4 + 3·sLv` for 0.1 s, then `6 + 4·sLv` for 0.7 s along `forward` (`$RPC_roll`, `Panda.cs:19870-20125`). The ground distance depends on the movement code, so cards state the direction only.
+
 ## Server Balance Variations (ToT patch notes, 2026)
 
 Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.

@@ -629,6 +629,16 @@ The BigBug-side skill formulas, status logic, and geometry remain documented in 
   - Damage coefficient reduced by -20% (from 35% HP to 28% HP of Gadina4).
   - Gadina automatically warps to Monkey and tracks facing angle until fired.
 
+### Geometry notes (verified 2026-10-02)
+
+- **Fireball (Monkey, Fire Avatar):** `Monkey_fireBall` sets `velocity = (0, 0, 30)` (`Monkey_fireBall.cs:26`, `:51`), no homing, and `RPC_fireBall_fire` gives `life = 2 × rangeMod` (`Monkey.cs:11278`): 30 m/s, 60 m.
+- **Phoenix fireball:** same 30 m/s (`Phoenix_fireBall.cs:26`) and `life = 2 × rangeMod` (`Phoenix.cs:1661`, `:1822`). The AI fires whenever `nAttack` is off cooldown at its current target, at any distance (`Phoenix_AI.cs:1078-1100`).
+- **Summon AI radii:** Phoenix, Ja and Gadina scan `Hate.findEnemies(pos, 24)` once a second and take a target within 12 m (`sqrMagnitude < 144`) (`Phoenix_AI.cs:1260`, `:1393`; `Ja_AI.cs:1208`, `:1341`; `Gadina_AI.cs:1365`, `:1498`).
+- **Phoenix spawn burst:** `FindAreaTarget(Phoenix, 3 + 0.5 × summonLv, 3)` (`Phoenix.cs:5014`).
+- **Runic Flame / Runic Sand:** checked every 0.2 s; a new segment drops once the Monkey is `sqrMagnitude ≥ 2.5` (≈ 1.58 m) from the previous one (`Monkey.cs:12413`, `:13679`); the segment's hit size is its prefab trigger collider.
+- **Titanic Earth Pulse:** `$i` starts at 0 (`Monkey.cs:32840`), each tick hits `FindAreaTarget(hitPos, i + 1, 6)` (`:32710`) and loops while `i < 5` (`:32762`) with a 0.2 s wait: five rings of radius 1-5 m.
+- **Summon commands** (Summon Defense, Unsummon, Summon Release) forward to the summon with no distance check (§4.2-4.4); Summon Soul has no gate, so 40 m target lock.
+
 ## Server Balance Variations (ToT patch notes, 2026)
 
 Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
