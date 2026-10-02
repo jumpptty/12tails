@@ -27,10 +27,11 @@ empty. You have to hex-decode the raw binary directly.
    (~line 29675 on): `Name(str), Type(str), Lv, Skin, Race, hp, sp, mp, ko, mhp, msp, mmp,
    mko, atk, def, agi, vit, mag, cha, tal, lck, weight, runSpeed(float), weapon(str)...` — the
    8 main stats are `atk, def, agi, vit, mag, cha, tal, lck` (8 consecutive int32s). Note: the
-   source also declares a `Texture mTargetAvartar` field between `Race` and `hp`, but it
-   consumes **zero** serialized bytes — don't add a gap for it (confirmed by hex-dump: `hp`
-   starts exactly 4 bytes after `Race`). If the order has changed from the above, update
-   `scripts/decode_stats.ps1`'s `$FieldNames` array to match before trusting output.
+   source also declares a `Texture mTargetAvartar` field between `Race` and `hp`, and it **does**
+   take 8 serialized bytes: a PPtr, int32 fileID + int32 pathID in this Unity 3.5.7f6 build
+   (re-verified 2026-10-02 on First Whale, `resources.assets` pathID 80634: `Lv 150, Skin 0,
+   Race 1, 11, 170, hp 60000 …`). An earlier version of this doc said zero bytes; decodes made
+   that way are shifted by two fields. `scripts/decode_stats.ps1` skips the PPtr.
 
 2. **Find the right binary file first, don't brute-force every file.** `12TailsOnline_Data/` has
    `resources.assets`, `level0..level200+`, and 270+ `sharedassets*.assets` — running the decoder
@@ -110,8 +111,10 @@ empty. You have to hex-decode the raw binary directly.
    Symptom of a bad decode that slipped through: absurd values like `1701736302`,
    `1084227584`, `1073741824` — these are ASCII text bytes misread as int32, always in the
    ~1–2 billion range, unmistakable once seen. Sanity-check any new target's whole row shape
-   against a known-good reference, e.g. `FrostTower`: Lv 50, mhp 300, atk 300, def 30, agi 60,
-   vit 60, mag 60, cha 300, tal 60, lck 60.
+   against a known-good reference, e.g. `FrostTower`: Lv 50, mhp 3000, atk 60, def 60, agi 60,
+   vit 300, mag 60, cha 60, tal 60, lck 60, or First Whale (`Movah`): Lv 150, mhp 60000, atk 300,
+   def 350, agi 50, vit 60000, mag 50, cha 300, tal 300, lck 150. (The FrostTower row this doc
+   used to give was the two-field-shifted decode.)
 
    **For a player summon/pet (not a wild monster), cross-check against source before trusting any
    field** — its own `<Summon>.cs` may explicitly overwrite some stats at spawn/equip time (e.g. via
@@ -134,3 +137,17 @@ empty. You have to hex-decode the raw binary directly.
 PowerShell only (`scripts/decode_stats.ps1`, byte-level decode) — field order comes straight
 from grepping `CharacterControl.cs` in this repo, no DLL decompilation step needed here.
 `Race = 6` means Structure (confirmed against `AncientBug`/tower units).
+
+## Bulk extraction (every unit at once)
+
+The old client data is at `D:
+tails
+TailsOnline_Data` (git-ignored; the install under
+`C:Program Files (x86)TalesofTailsgame` is now the new ToT build, whose bundles are encrypted).
+UnityPy 1.25 loads all 543 files in seconds and resolves each MonoBehaviour's `m_Script`, so every
+`CharacterControl` can be found without name searches: read the object with `read(check_read=False)`
+(no type trees in this build), keep those whose script `m_ClassName == "CharacterControl"`, and parse
+`get_raw_data()`: header `m_GameObject` PPtr (8) + `m_Enabled` (4) + `m_Script` PPtr (8) + `m_Name`
+string, then the fields above. 2026-10-02: 2,164 components, 2,155 valid, 307 unit types, 332
+distinct rows; the Bible's monster stats page (`MONSTER_STATS`) is built from them
+(see `12t_reference/12Tails-Mechanics-Reference.md`, "Monster stats").

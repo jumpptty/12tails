@@ -117,6 +117,7 @@ const exposeInjection = `
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
   window._getUsedPlayerStatKeys = getUsedPlayerStatKeys;
+  window._monsterStats = MONSTER_STATS; window._mountMonsterStats = mountMonsterStats;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, lv: lvEl };
   window._statVal = statVal;
@@ -2414,6 +2415,23 @@ console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
     else ok++;
   }
   console.log(`Verified ${ok} talAdjust duration chips.`);
+}
+
+// Monster stats page (MONSTER_STATS, decoded from 12TailsOnline_Data): renders one table row per entry, every row is
+// within the decoder's sane ranges, and First Whale still equals the hand-verified enemy preset.
+{
+  const fail = (m) => { console.error(`[MONSTER STATS ERROR] ${m}`); errorCount++; };
+  const M = sandbox._monsterStats;
+  if (!Array.isArray(M) || M.length < 300) fail(`expected 300+ rows, got ${M && M.length}`);
+  else {
+    M.forEach((r, i) => { if (r.length !== 20 || r[3] < 0 || r[3] > 999 || r[2] < 0 || r[2] > 6 || r.slice(4, 17).some(v => !Number.isInteger(v) || v < 0 || v > 500000)) fail(`row ${i} (${r[0]}) out of range`); });
+    const fw = M.find(r => r[1] === "FirstWhale"), p = sandbox._enemyPresets.find(e => e.id === "firstwhale");
+    if (!fw || !p || [fw[8], fw[9], fw[10], fw[11], fw[12], fw[13], fw[14], fw[15]].join() !== [p.atk, p.def, p.agi, p.vit, p.int, p.cha, p.tal, p.lck].join()) fail("First Whale row does not match the verified preset");
+    const reg = {}; const root = makeSmartRoot(); root.querySelector = (sel) => reg[sel] || (reg[sel] = Object.assign(makeEl(), { value: "" }));
+    try { sandbox._mountMonsterStats(root); const n = (reg['[data-role="body"]'].innerHTML.match(/<tr>/g) || []).length; if (n !== M.length) fail(`page rendered ${n} of ${M.length} rows`); }
+    catch (e) { fail("page threw: " + e.message); }
+  }
+  console.log(`Verified monster stats page (${M ? M.length : 0} rows).`);
 }
 
 // tooltipNote (GEMINI.md §2): every Thai-tooltip mismatch lives in the card's tooltipNote and renders as the styled

@@ -668,6 +668,15 @@ upgrade/synthesis odds are not recoverable from this assembly.
 
 ---
 
+### 5.2 Monster stats (all CharacterControl units, verified 2026-10-02)
+
+- **Source:** the original client data, `D:\12tails\12TailsOnline_Data` (Unity 3.5.7f6; git-ignored). The install under `C:\Program Files (x86)\TalesofTails\game` is now the new ToT build (IL2CPP, encrypted `TTOENC01` bundles) and has no readable monster data; TailsTopia's bundles are wrapped too (`TTOBND1`). Neither was decrypted.
+- **Method:** UnityPy 1.25 loads all 543 files (`resources.assets`, `level0-270`, `sharedassets0-270.assets`) together so each MonoBehaviour's `m_Script` resolves; every component whose script is `CharacterControl` is parsed from its raw bytes: `m_GameObject` PPtr (8) + `m_Enabled` (4) + `m_Script` PPtr (8) + `m_Name`, then `Name`, `Type` (length-prefixed, 4-byte aligned), `Lv`, `Skin`, `Race`, `mTargetAvartar` (PPtr, **8 bytes**), `hp sp mp ko mhp msp mmp mko atk def agi vit mag cha tal lck weight` (int32), `runSpeed` (float), `weapon armor accessory` (strings), the declaration order of `CharacterControl.cs:29675-29753`.
+- **Validation:** printable ASCII strings, `0 ≤ Lv ≤ 999`, `0 ≤ Race ≤ 20`, every int stat in `0..500000`. 2,164 components found, 2,155 valid (9 rejected), 307 unit types, 332 distinct (Name, Type, stats) rows. Checks: First Whale (`Movah`, `resources.assets` pathID 80634) = Lv 150, MHP 60000, ATK 300, DEF 350, AGI 50, VIT 60000, MAG 50, CHA 300, TAL 300, LCK 150, MKO 400, identical to the hand-verified Bible preset; all nine enemy presets match their units.
+- **What a row is:** one unit + stat set. Multi-part bosses carry one `CharacterControl` per part with its own `Name` (e.g. Nemesis Head / Body, Ancient Bug hands, Ewiniar tails); a few units have map-specific copies with different stats (e.g. Mok legs 6000 / 9000 HP, two Ancient Bug part sets). `hp/mp/sp/ko` are the starting values and `mhp/mmp/msp/mko` the maxima; the page shows the maxima. `Race` is `eRace` (0 NPC, 1 Tails, 2 Plants, 3 Bugs, 4 Robots, 5 Elementals, 6 Structure). Units whose own script overwrites stats at spawn (summons, e.g. Gadina ATK/DEF, Ja HP) keep their prefab numbers here; their cards use the source.
+- **No monster ID:** `CharacterControl` has no ID field; the only number is the runtime `ActorNr` assigned at spawn.
+- **Bible:** `MONSTER_STATS` (320 rows; the 12 player-class templates are left out) drives the monster stats page (`mountMonsterStats`, TOOLS id `monster-stats`); `[MONSTER STATS ERROR]` re-checks the ranges, the number of rows rendered and the First Whale row.
+
 ## 6. Worked example (sanity check)
 
 A Cat (TAL 100, LCK 50) casts the AoE skill `talAdjust(50) + 200` at a target with DEF 50, LCK 30,

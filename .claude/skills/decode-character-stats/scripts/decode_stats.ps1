@@ -29,7 +29,10 @@ $bytes  = [IO.File]::ReadAllBytes($AssetPath)
 $latin1 = [System.Text.Encoding]::GetEncoding("ISO-8859-1")   # byte-preserving 1:1 string view
 $text   = $latin1.GetString($bytes)
 
-# Declaration order after Name/Type (Sep-2024 build; re-verify per SKILL.md step 1)
+# Declaration order after Name/Type (Sep-2024 build; re-verify per SKILL.md step 1).
+# `mTargetAvartar` is a Texture PPtr between Race and hp: int32 fileID +
+# int32 pathID. It must be skipped before reading the scalar CharacterControl
+# fields below (CharacterControl.cs:29686-29693).
 $FieldNames = @('Lv','Skin','Race','hp','sp','mp','ko','mhp','msp','mmp','mko','atk','def','agi','vit','mag','cha','tal','lck')
 
 function Read-Int32([byte[]]$b, [int]$off) {
@@ -60,15 +63,22 @@ function Try-DecodeAt([byte[]]$b, [int]$nameOff) {
     $type = $latin1.GetString($b, $typeOff + 4, $typeLen)
     $typePad = [int]([Math]::Ceiling($typeLen / 4.0) * 4)
 
-    $statsOff = $typeOff + 4 + $typePad
+    $headerOff = $typeOff + 4 + $typePad
+    # The three scalar fields precede the PPtr: Lv, Skin, Race.
+    $avatarOff = $headerOff + 12
+    $avatarFileID = Read-Int32 $b $avatarOff
+    $avatarPathID = Read-Int32 $b ($avatarOff + 4)
+    if ($null -eq $avatarFileID -or $null -eq $avatarPathID) { return $null }
+    $statsOff = $avatarOff + 8
     $vals = New-Object int[] 19
     for ($i = 0; $i -lt 19; $i++) {
-        $v = Read-Int32 $b ($statsOff + $i * 4)
+        $valueOff = if ($i -lt 3) { $headerOff + $i * 4 } else { $statsOff + ($i - 3) * 4 }
+        $v = Read-Int32 $b $valueOff
         if ($null -eq $v) { return $null }
         $vals[$i] = $v
     }
 
-    $row = [ordered]@{ Name = $name; Type = $type; ByteOffset = $nameOff }
+    $row = [ordered]@{ Name = $name; Type = $type; ByteOffset = $nameOff; TargetAvatarFileID = $avatarFileID; TargetAvatarPathID = $avatarPathID }
     for ($i = 0; $i -lt 19; $i++) { $row[$FieldNames[$i]] = $vals[$i] }
 
     # validation (see SKILL.md step 4)
