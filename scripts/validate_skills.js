@@ -2296,6 +2296,58 @@ let checkedDepStrip = 0;
   if (!loose.includes('data-dep-id="zzLoose"')) fail("renderDmgToggle with no sink must return the button HTML"); else checkedDepStrip++;
 }
 console.log(`Verified ${checkedDepStrip} dependency strip checks.`);
+
+// Chameleon attack simulator (mountChameleonSim): gear per server, crit totals, server popups, per-server gear memory.
+// BB / TTO follow Chameleon_nAttack.cs:517-668 (G.Marshal Bow +4, Mantis R set 5/4/3); ToT is the user-reported fix
+// (Marshal 5/4/3, Champion 7/6/5, no Mantis). See chameleon-skill-reference.md, Server Balance Variations.
+let checkedChmSim = 0;
+{
+  const fail = (msg) => { console.error(`[CHM SIM ERROR] ${msg}`); errorCount++; };
+  const ok = (cond, msg) => { if (cond) checkedChmSim++; else fail(msg); };
+  const run = (code) => vm.runInContext(code, sandbox);
+  // crit totals from the item tables
+  const total = (srv, ids) => run(`[${ids.map(([list, id]) => `chmItemCrit(${list}.find(x => x.id === "${id}"), "${srv}")`).join(",")}].reduce((a, b) => a + b, 0)`);
+  ok(total("og", [["CHM_WEAPONS", "mantisBow"], ["CHM_HELMETS", "mantisHat"], ["CHM_ARMORS", "mantisSuit"]]) === 12, "BB Mantis R set should total 12");
+  ok(total("og", [["CHM_WEAPONS", "marshalBow"]]) === 4, "BB G.Marshal Bow should be 4");
+  ok(total("tot", [["CHM_WEAPONS", "marshalBow"], ["CHM_HELMETS", "marshalHelmet"], ["CHM_ARMORS", "marshalArmor"]]) === 12, "ToT Marshal set should total 12");
+  ok(total("tot", [["CHM_WEAPONS", "championBow"], ["CHM_HELMETS", "championHelmet"], ["CHM_ARMORS", "championArmor"]]) === 18, "ToT Champion set should total 18");
+  ok(total("tot", [["CHM_WEAPONS", "mantisBow"]]) === 0, "Mantis gives no crit on ToT");
+  // mount with recording stubs
+  const reg = new Map(), popups = [];
+  const mk = () => { const e = makeEl(); e.listeners = {}; e.addEventListener = (t, fn) => { e.listeners[t] = fn; }; e.querySelectorAll = () => []; return e; };
+  const root = mk(); root.querySelector = (sel) => { if (!reg.has(sel)) reg.set(sel, mk()); return reg.get(sel); };
+  const doc = sandbox.document, saved = { add: doc.addEventListener, rem: doc.removeEventListener, ce: doc.createElement, body: doc.body };
+  doc.addEventListener = () => {}; doc.removeEventListener = () => {}; doc.createElement = () => mk(); doc.body = { appendChild: (el) => popups.push(el) };
+  try {
+    run("mountChameleonSim")(root); checkedChmSim++;
+    const opts = (sel) => (reg.get(sel).innerHTML.match(/value="([^"]+)"/g) || []).map(s => s.slice(7, -1));
+    const click = (srv) => reg.get("#chmServerToggle").listeners.click({ target: { closest: () => ({ dataset: { server: srv } }) } });
+    const pick = (sel, v) => { reg.get(sel).value = v; reg.get(sel).listeners.change(); };
+    const now = () => ["#chmWepSelect", "#chmHelSelect", "#chmArmSelect"].map(s => reg.get(s).value).join("/");
+    const has = (sel, ids) => ids.every(id => opts(sel).includes(id)), lacks = (sel, ids) => ids.every(id => !opts(sel).includes(id));
+    ok(has("#chmWepSelect", ["marshalBow", "mantisBow"]) && lacks("#chmWepSelect", ["championBow"]), "BB weapons: Marshal + Mantis, no Champion");
+    ok(has("#chmArmSelect", ["mantisSuit"]) && lacks("#chmArmSelect", ["championArmor", "marshalArmor"]), "BB armors: Mantis only");
+    pick("#chmWepSelect", "mantisBow"); pick("#chmHelSelect", "mantisHat");
+    const bbSet = now();
+    let n = popups.length; click("tot");
+    ok(has("#chmWepSelect", ["marshalBow", "championBow"]) && lacks("#chmWepSelect", ["mantisBow"]), "ToT weapons: Marshal + Champion, no Mantis");
+    ok(has("#chmHelSelect", ["marshalHelmet", "championHelmet"]) && lacks("#chmHelSelect", ["mantisHat"]), "ToT helmets: Marshal + Champion");
+    const pop = popups.length > n ? popups[popups.length - 1].innerHTML : "";
+    ok(pop.includes("Tales of Tail (ToT)") && pop.includes("sk-tag-fix"), "ToT opens the crit-gear [Fix] popup");
+    pick("#chmArmSelect", "championArmor");
+    ok(reg.get("#chmArmDesc").textContent === "+6% Critical Chance", "ToT Champion Armor desc +6%");
+    const totSet = now();
+    n = popups.length; click("og");
+    ok(popups.length === n, "BB opens no popup");
+    ok(now() === bbSet, `BB gear restored after a ToT visit (${now()} vs ${bbSet})`);
+    click("tot"); ok(now() === totSet, `ToT gear restored (${now()} vs ${totSet})`);
+    n = popups.length; click("tto");
+    ok(popups.length > n && popups[popups.length - 1].innerHTML.includes("Tailstopia Online (TTO)"), "TTO opens its popup");
+    click("og");
+  } catch (e) { fail("simulator threw: " + e.message); }
+  Object.assign(doc, { addEventListener: saved.add, removeEventListener: saved.rem, createElement: saved.ce, body: saved.body });
+}
+console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
