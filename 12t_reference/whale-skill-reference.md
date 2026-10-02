@@ -424,8 +424,9 @@ All sixteen below are `mode = passive` with no MP/SP (`scripts/decode_skilldata.
 
 ### 4.17 Open questions & card mismatches (2026-10-01)
 
-**Card mismatches** (cards in `index.html` vs the entries above; not patched):
-1. `whale_shieldBash`, `whale_culinaryTongue`, `whale_superSize`, `whale_autoShield`, `whale_lastHope`, `whale_overPresence`, `whale_hardenSkin`, `whale_entendedWave`, `whale_gourmetHeart`, `whale_megaSize`, `whale_overWeight`, `whale_spiralBlast`, `whale_divingPress` are bare cards: no `passive:true` and no `desc`.
+**Card mismatches:** fixed 2026-10-02. Every Whale card now has `desc` (passives also `passive:true`), and the costs that disagreed with `decode_skilldata.py` were corrected: Bubble Shield MP 6/10/14/18, Rejuvenate MP 10/14/18/22 with no SP, Whale Wave SP 12/15, Mal Storm MP 16/24 + 20 red SP, Call To Arm free, Salvation MP 24/32, Megalodon MP 45/65 + 20/30 red SP, Bubble Burst 10 MP + 10 red SP, Bowling Whale 45 MP + 45 red SP, Grand Tide 30 MP + 60 blue SP.
+
+**Remaining card item:** `WHALE_REDUCED_CAST_DEP` halves the cast time without the code's floor (`floor(0.5 × base)` before `magAdjust`, §1), so e.g. Bubble Shield 4.5 s shows 2.25 s instead of 2 s.
 
 **Open questions (need a live check):**
 1. Over Presence radius: set by the prefab's trigger collider (EN tooltip 6 m, TH 10 m).

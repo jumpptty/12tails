@@ -7,7 +7,7 @@ below for why they were initially left out and then given their own rows.
 
 | Skill ID | Display Name | Max Rank | CD Base | CD Wrapped (agiAdjust) | revisedArt Exempt | Duration Base | Duration Wrapped (chaAdjust) |
 |---|---|---|---|---|---|---|---|
-| roll | Roll | 2 | 60 | true | false | — | — |
+| roll | Roll | 2 | 30 | true | false | — | — |
 | threeSteps | Three Steps | 2 | 30 | true | false | — | — |
 | rushingFalcon | Rushing Falcon | 2 | 30 | true | false | — | — |
 | qiStrike | Qi Strike | 3 | 90 | true | false | — | — |
@@ -239,8 +239,7 @@ below for why they were initially left out and then given their own rows.
   documented in the Monkey doc). Duration cells for all seventeen skills listed above are `—`.
 
 ### CD citations
-- `roll` CD: `Panda.cs:19955` — `addTimeOut("roll", agiAdjust((float)30))` (rank 1); max rank:
-  `Panda.cs:20497` — `this.$self_$25229.mChar.addTimeOut("roll", this.$self_$25229.mChar.agiAdjust((float)60));`
+- `roll` CD: `Panda.cs:19955` — `addTimeOut("roll", agiAdjust((float)30))`, the only `addTimeOut` in `$RPC_roll$25212`, so **both ranks** (corrected 2026-10-02). `Panda.cs:20497` (`agiAdjust(60)`) is inside `$RPC_rollAround$25221`, i.e. Roll Around's cooldown on the same `"roll"` key, not Roll rank 2.
 - `threeSteps` CD: `Panda.cs:21519` — `this.$self_$25253.mChar.addTimeOut("threeSteps", this.$self_$25253.mChar.agiAdjust(30f));`
 - `rushingFalcon` CD: `Panda.cs:22587` — `this.$self_$25274.mChar.addTimeOut("rushingFalcon", this.$self_$25274.mChar.agiAdjust(30f));`
 - `qiStrike` CD: `Panda.cs:23123` — `this.$self_$25285.mChar.addTimeOut("qiStrike", this.$self_$25285.mChar.agiAdjust((float)90));` (single shared cast site for all 3 ranks; fixed literal, not rank-scaled)
@@ -822,12 +821,28 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - The `hasSkill(443)` checks in `CharacterControl.cs` (`:4232`, `:11985`, `:12019`) are other classes' branches.
 - Client tooltips: EN "Increase SacredSage and SpTransfer's effects by Panda's current level." / TH "เพิ่มผลฟื้นฟู hp และ mp ของ SacredSage และ sp ของ SpTransfer ตามเลเวล" (`PandaSkill_eng.cs:1034`, `PandaSkill_thai.cs:1056`).
 
+### Roll (`panda_roll`, skills #121/#122) (verified 2026-10-02)
+
+- **Active**, R1 Lv 6 / Bn 2, R2 Lv 12 / Bn 4, MP 0, SP **−5 / −8** (red), instant / self, `cType roll` (`decode_skilldata.py`).
+- **Cooldown:** `addTimeOut("roll", agiAdjust(30))` for both ranks (`Panda.cs:19955`); Roll Around writes the same key with 60 s, so each blocks the other.
+- **Sequence** (`$RPC_roll$25212`, `Panda.cs:19727-20128`): `moveSpeed = 6 + 4 × sLv`, `removeLockStatus(2 × sLv)` (levels ≤ 2 / ≤ 4), then after 0.1 s `moveSpeed = 4 + 3 × sLv` for 0.7 s, then standby: about **0.8 s** in all.
+- **Evasion:** while `actionState == "attack"` and `myCommand == "roll"`, every `hit()` on the Panda is evaded with no LCK roll (`CharacterControl.cs:3108-3115`, `RPC_AddDamage(-82)`), the same branch as Roll Around. Unlike Roll Around, Effect Damage and statuses are not blocked.
+- Client tooltips: EN "Roll and evade attack. Remove all movement's negative status that is lower than Lv3 [Lv5]." / TH "… ที่ตำกว่าระดับ3(6m) [5(9m)]" (`PandaSkill_eng.cs:114`, `:125`; `PandaSkill_thai.cs:114`, `:125`). Matches.
+
+### Combo Plus (`panda_comboPlus`, skills #241-#244) (verified 2026-10-02)
+
+- **Passive**, reqLv/Bn 16/4, 20/8, 24/12, 28/16 (`decode_skilldata.py`).
+- `ComboPlus()` (`Panda.cs:8791-8848`): with #241, `num = 1 + #242 + #243 + #244`, then `RPC_AddStatus("comboPlus", num, chaAdjust(6), 0, self)`. Called on every landed Combo stage (`:15397` … `:18673`) and every landed Three Steps hit (`$RPC_threeStep`, `:21018`, `:21200`); no other skill calls it.
+- **Stacking** (`RPC_AddStatus` refresh, `CharacterControl.cs:14050-14055`): `sValue = min(old + sLv, 10 × sLv)`, so **+rank ATK per hit, up to +10 / 20 / 30 / 40**; removal `deltaAtk(-sValue)` (`:15775-15779`).
+- Client tooltips: EN "Temporary increases Panda's attack by 1 [2 / 3 / 4] everytime he hits with a normal attack or a StikeMaster skill (max +10 [20 / 30 / 40] atk)." / TH "(+1 atk, 6 sec, 10 max)" … (`PandaSkill_eng.cs:400-433`, `PandaSkill_thai.cs:422-455`). Matches; "StikeMaster" in practice is only Three Steps.
+
+### Charge Attack (`panda_cAttack`, skills #111-#113) (verified 2026-10-02)
+
+- **Passive** ranks, reqLv/Bn 4/1, 10/2, 16/3 (`decode_skilldata.py`). The SP gain per tick is the Sacred Sage entry's formula: `clamp(ceil(0.02 × chargeLv × ATK), 2 × chargeLv, 4 × chargeLv)` once per second, `chargeLv` = 1 + #112 + #113 (`Panda.cs:19161-19190`), real game modes only.
+- Client tooltips: EN "Gives Panda the ability to charge up its sp. (2~4 [4~8 / 6~12] sp/sec.)" (`PandaSkill_eng.cs:81-103`). Matches the clamps.
+
 ## Open questions & card mismatches (2026-10-01)
 
-**Card mismatches** (cards in `index.html` vs the entries above; not patched):
-1. `panda_focusedSpirit`, `panda_sacredSageTechnique`, `panda_mysticSage`, `panda_auraBlast`, `panda_auraField`, `panda_heavenBreath` have no `passive:true` and no `desc`.
-2. `panda_spTransfer` has no `maxRank` (source has 2 ranks), no `cost` (−15 / −30 red SP) and no `desc`.
-3. `panda_rollAround` has no `cd` (`agiAdjust(60)`, shared with Roll), no `cost` (6 MP, −24 red SP) and no `desc`.
-4. `panda_comboLink` has no `cost` (−50 red SP), no `status` (`atkUp` Lv 5) and no `desc`.
+**Card mismatches:** all fixed 2026-10-02 (every Panda card now has `desc`; Sp Transfer, Roll Around and Combo Link got their costs; Roll's `cd` corrected 60 → 30). Combo Link's `atkUp` is described in text, not linked: the app's `atkUp` popup describes Cat's percentage boost, but Combo Link's is a flat `+n` ATK.
 
 **Open questions:** none after the 2026-10-01 pass (Combo Link's combo source was traced to `CharacterControl.cs:31712-31790`).

@@ -744,12 +744,27 @@ if (this.hasSkill(421))
 - Needs Charge Attack rank 3 (`getSkySlasherLv() = hasSkill(411) && hasSkill(113)`, `Wolf.cs:9106-9108`). It raises the charge rank to 4 (above) and adds a **12 s release**: releasing a charge held for 12 s or longer runs `RPC_skySlasher` instead of the normal release (`Wolf.cs:8059-8090`).
 - `$RPC_skySlasher$29610` (`Wolf.cs:31736-31769`): the same 30 m trapezoid as the Charge Attack, each target takes **one** `hit(411, t, 5 × ATK, KO 0)`.
 
+### wlf_counter1-2 (#331/#332) — active, rank family (verified 2026-10-02)
+
+- **Metadata:** MP 0, SP **−2 / −3** (red), instant, enemy, `cType counter` (`decode_skilldata.py`).
+- **Stance** (`$RPC_counter1$29519`, `Wolf.cs:27912-28290`): Wolf stops, plays `counter1`, records `mTempHp = hp`, then checks every 0.2 s for **0.8 s**. As soon as `hp < mTempHp`, `mCounterDmg = mTempHp − hp` and it starts `RPC_counter2(…, sLv)` (`:28211-28230`). With no HP lost the stance just ends.
+- **Strike** (`RPC_counter2`): `addTimeOut("counter", agiAdjust(30))` (`Wolf.cs:28686`), then `RPC_AddEffectDamage(330 + sLv, (int)(0.5 × ATK + sLv × mCounterDmg))` to every enemy in `FindRecTarget(pos − 2·rangeMod·fwd, fwd, 2, 2, 5, 3) × rangeMod` (`:28506`): 4 m wide, 5 m long starting 2 m behind, 3 m high. Purple Effect Damage. Impulse (#333/#334) calls the same strike.
+- Client tooltips: EN "Perform a counter move that returns 100% [200%] damage taken to the enemies in front." (`WolfSkill_eng.cs:664`, `:675`). Matches; it omits the `0.5 × ATK` and the 0.8 s window.
+
+### wlf_holySword5 / wlf_holyArmor5 (#432 / #442) — Class-C actives (verified 2026-10-02)
+
+- **Metadata:** each MP **40**, SP **−40** (red), instant, self (`decode_skilldata.py`). Cooldown and duration in the tables above (`agiAdjust(240)`, `chaAdjust(24)`).
+- **Value:** Holy Sword's status value is the equipped weapon's ATK, `itemData.att[0] + equipment[0].att[0]` (`Wolf.cs:32956`); Holy Armor's is the armor's DEF, `att[1]` of `equipment[1]` (`:33471`). The apply handler adds it with `deltaAtk` / `deltaDef` (`CharacterControl.cs:34264-34362`), i.e. **+100% of that item's ATK / DEF**; Holy Sword also removes `darkEdge`. Both fuse into `holyWolf` (entry above).
+- **Double Art:** skipped cooldown only with Sublime Art (#431) (`Wolf.cs:33059`, `:33574`).
+- Client tooltips: EN "… increasing its attack [defense] power by 100% for 12 seconds." / TH "(+100% atk, 30 Sec)" (`WolfSkill_eng.cs:961`, `:972`; `WolfSkill_thai.cs:994`, `:1005`). Code: `chaAdjust(24)`, neither 12 nor 30.
+
+### wlf_finalEclipse1 (#373) and wlf_sublimeArt5 (#431) — passives (verified 2026-10-02)
+
+- **Final Eclipse** fires in `doBeginCharge` (`Wolf.cs:7847-7940`), i.e. when the charge button is pressed, not on a dash: Wolf standing or running, `#373`, `lunarEclipse` level `L > 0` and `sp >= 2L` → SP −`2L` (−`L` with Revised Skill #404) and `RPC_feralStrike(…, 2L)` instead of charging, with no cooldown. (The Feral Strike entry's "dodge dash" wording is imprecise; this is the trigger.) Tooltip TH "เปลี่ยนการโจมตี Charge … ให้เป็น FeralStrike" matches.
+- **Sublime Art:** the `RPC_doubleArt` coroutine gives `RPC_AddHeal(431, 0, 5, 5, …)` = **+5 MP / +5 SP** per Double Art proc (`Wolf.cs:18383`), and Holy Sword, Holy Armor, Art Breaker, Mirror Blade, Feral Assault and Dual Brand only skip their cooldown on a proc with #431 (`:33059`, `:33574`, `:34152`, `:34815`, `:35408`, `:36671`).
+
 ## Open questions & card mismatches (2026-10-01)
 
-**Card mismatches** (cards in `index.html` vs the entries above; not patched):
-1. `wolf_noKo`, `wolf_impulse`, `wolf_lastBlade` have no `passive:true` and no `desc`; `wolf_noKo` has no `lckProc` (base 20 / 40 / 60).
-2. `wolf_artCancel` has no `maxRank` (2 ranks) and `wolf_bladeSong` none (3 ranks); neither has `cost` or `desc`.
-3. `wolf_secondWind` and `wolf_mirrorBlade` have no `cost` and no `desc`.
-4. `wolf_artBreaker` has no `cd` (`agiAdjust(120)` on the shared `artCancel` key), no `cost` and no `desc`.
+**Card mismatches:** all fixed 2026-10-02 (every Wolf card now has `desc`; No KO and Impulse got `lckProc`; Art Cancel, Counter, Blade Song got `maxRank` and costs; Second Wind, Holy Sword, Holy Armor, Mirror Blade and Art Breaker got costs; Art Breaker got its `cd`).
 
 **Open questions:** none from this pass.
