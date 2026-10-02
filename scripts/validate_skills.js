@@ -2391,6 +2391,29 @@ console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
   }
   console.log(`Verified ${checkedLive} liveCheck markers.`);
 }
+
+// tooltipNote (GEMINI.md §2): every Thai-tooltip mismatch lives in the card's tooltipNote and renders as the styled
+// "ⓘ คำอธิบายในเกมไม่ตรงกับโค้ด: ..." line (at least one rank); a red __…คำอธิบายในเกม…__ line inside a desc is not allowed.
+{
+  let checkedTip = 0;
+  const INLINE = /__[^_]*(คำอธิบายในเกม|คำอธิบายภาษา|tooltip|Tooltip|ในเกมระบุ|ในเกมบอก)[^_]*__/;
+  for (const sk of SKILLS) {
+    const variants = [sk, ...Object.values(sk.servers || {})];
+    for (let r = 1; r <= (sk.maxRank || 1); r++) for (const v of variants) {
+      let d = ""; try { d = typeof v.desc === "function" ? String(v.desc(r, null) || "") : String(v.desc || ""); } catch (e) {}
+      if (INLINE.test(d)) { console.error(`[TOOLTIP NOTE ERROR] ${sk.id} rank ${r}: tooltip mismatch written inline in desc; move it to tooltipNote`); errorCount++; r = 99; break; }
+    }
+    if (!sk.tooltipNote) continue;
+    let shown = false;
+    for (let r = 1; r <= (sk.maxRank || 1) && !shown; r++) {
+      sandbox._skillRanks[sk.id] = r; sandbox._selectSkill(sk);
+      shown = sandbox._getRenderedHeroHtml().includes('<span class="sk-tooltip-note">ⓘ คำอธิบายในเกมไม่ตรงกับโค้ด: ');
+    }
+    if (!shown) { console.error(`[TOOLTIP NOTE ERROR] ${sk.id}: tooltipNote set but no styled line rendered at any rank`); errorCount++; }
+    else checkedTip++;
+  }
+  console.log(`Verified ${checkedTip} tooltipNote lines (and no inline tooltip lines in any desc).`);
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
