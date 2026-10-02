@@ -480,7 +480,7 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 
 | Skill | ToT change |
 |---|---|
-| Brute Strength | base 5 / 10 / 15 / 20 → 10 / 15 / 20 / 25 (note only; the Combo / Charge / Over Swing coefficients are not re-modelled) |
+| Brute Strength | base 5 / 10 / 15 / 20 → 10 / 15 / 20 / 25. The code adds 5% per level to the ATK coefficient, so ToT is modelled as one extra level: `bisonBruteEff(lv)` = lv + 1 on ToT (Raw Strength ×5 applies to that), used by Combo, Charge Attack and Over Swing (which carry a ToT note) |
 | Fury Trance | triggers below 80 / 60 / 40% HP (was 60 / 40 / 20) |
 | Over Power | base cooldown −50% (600 → 300 s); replaces the earlier −30% |
 | Iron Shield / Diamond Shield | base duration 6 → 4 s |

@@ -788,8 +788,8 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Blade Fang | base 12 / 18 / 24 → 16 / 22 / 28 (`talAdjust(10 + 6·sLv + 6·Blood Fang)`) |
 | Counter | SP 2 / 3 → 6 / 8 |
 | Sublime Art | Double Art proc restores 7 MP / 7 SP (was 5 / 5) |
-| Holy Wolf (Holy Sword + Holy Armor) | −33% damage taken; MP regen from max MP; regen every 6 s (was 8); no stat bonus from Holy Sword / Holy Armor while fused |
+| Holy Wolf (Holy Sword + Holy Armor) | −33% damage taken; MP regen from max MP; regen every 6 s (was 8); no stat bonus from Holy Sword / Holy Armor while fused (ToT `[holyWolf]` popup via `STATUS_DESC_SERVER`) |
 | Dual Brand | base cooldown −40% (120 → 72 s) |
-| Twin Resonance | wider hit box; one heavy hit instead of several; wave duration and speed +50%; base cooldown −50% (240 → 120 s); KO 10 (raised to 40, then 10 in the 12/09 hot fix) |
+| Twin Resonance | wider hit box; one heavy hit instead of several; wave duration and speed +50%; base cooldown −50% (240 → 120 s); KO 10 (raised to 40, then 10 in the 12/09 hot fix). The single hit has no published formula: the ToT card shows the BB formula with a `liveCheck` marker |
 | Cross Break / Grand Cross | KO 10 / 20 / 30; Grand Cross cooldown equal to Cross Break (already modelled) |
 | Provoke | 9 → 6 s (10/09) then back to 9 s (12/09): no net change |
