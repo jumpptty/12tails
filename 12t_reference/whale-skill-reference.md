@@ -272,7 +272,7 @@ Costs from `scripts/decode_skilldata.py DecompiledSource/WhaleSkill.cs` (negativ
 | Flying Shield | 2 | 0 / +16, +20 | 45 (−15) | 0 | — | `floor(0.5·sLv·DEF) + talAdjust(10·sLv)` (`Whale_flyingShield.cs:210`) | 5·sLv |
 | Homing Shield (#422) | 1 | 0 / −24 | 120 (−40) | 0 | `chaAdjust(3)` | `0.5×DEF + talAdjust(20)` per pass (§3.15) | 10 |
 | Swallow | 2 | 0 / −10, −15 | 90 | 0 | contested 12 (15 Wonder Belly) | `FindRecTarget(pos, fwd, 1, 1, 2, 3)` (2 m wide × 2 m); needs `recieveForce` and a target **shorter than the Whale** (else RESIST); pulls toward the Whale with force `sLv (+1)`, `swallow` on the target, `gobble` (sValue = `ceil(0.5 × target weight)`) on the Whale (`Whale.cs:25726-25894`) | — |
-| Gobble Up | 1 | 0 / −5 | 60 | 0 | — | needs a swallowed target ("mouth is empty!"); `FindAreaTarget(target, 3, 3)`, `hit(233, talAdjust(30), KO 15)` (`Whale.cs:26263-26286`) | 15 |
+| Gobble Up (`gobbleUp`) | 1 | 0 / −5 | 60 | 0 | — | needs a swallowed target ("mouth is empty!"); `FindAreaTarget(target, 3, 3)`, `hit(233, talAdjust(30), KO 15)` (`Whale.cs:26263-26286`) | 15 |
 | Peninsula Impale | 2 | 0 / −18, −24 | 90 (−30) | 0 | — | `2 + 4·sLv` stabs (6 / 10), each `0.5×ATK + talAdjust(5·sLv + 5 (+10 Asunder))` (`Whale.cs:27000`) | 1 |
 | Peninsula Round | 2 | 10, 15 / −21, −30 | 120 (−40) | 0 | — | 5 / 7 hits (every 4th step of `12 + 8·sLv`), each `0.5×ATK + talAdjust(5·sLv + 5)` (`Whale.cs:28129`) | 1 |
 | 12th Kingdom Knight | 2 | 0 / −45, −65 | 600 | 0 | `chaAdjust(60)` | `2 + 2·sLv` knights (4 / 6); knight hit `(int)(0.2×ATK + 10·sLv)` (§3.15) | 1 |
@@ -282,7 +282,7 @@ Costs from `scripts/decode_skilldata.py DecompiledSource/WhaleSkill.cs` (negativ
 | Rejuvenate | 4 | 10 / 14 / 18 / 22 / 0 | 90 | 4 / 4.5 / 5 / 5.5 | `chaAdjust(18)` | every 4 s `6·Lv + 6 + floor(0.004·Lv·MaxHP)`, Lv = rank (+1 with Revitalize) (`CharacterControl.cs:8874-8898`) | — |
 | Whale Wave | 2 | 0 / −12, −15 | 60 | 0 | — | radius 6 m, `ceil(talAdjust(floor(weight × (0.5 + 0.5·sLv))) × (1 − 0.05 × distance))` (`Whale.cs:31973`) | 5·sLv |
 | Mal Storm | 2 | 16, 24 / −20, −20 | 60 | 0 | — | 4 strikes (`i < 4`), radius 8 m, each `talAdjust(20·sLv + 10)` (`Whale.cs:32663-32736`) | 1 |
-| Call To Arm | 1 | 0 / 0 (reqLv 24, reqBn 15) | 120 | 5 | — | teleports to the lowest-HP ally; then `FindAreaTarget(Whale, 12, 3)`, `hit(361, talAdjust(30), KO 10, hate 10)` (`Whale.cs:33198-33221`) | 10 |
+| Call To Arm (`callToArm`) | 1 | 0 / 0 (reqLv 24, reqBn 15) | 120 | 5 | — | teleports to the lowest-HP ally; then `FindAreaTarget(Whale, 12, 3)`, `hit(361, talAdjust(30), KO 10, hate 10)` (`Whale.cs:33198-33221`) | 10 |
 | Salvation | 2 | 24 / 32 / 0 | 240 | 5 | `chaAdjust(2·sLv + 2)` = 4 / 6 | invulnerability to every living teammate except the Whale (§1) | — |
 | Megalodon | 2 | 45 / 65 / −20, −30 | 240 | 6 / 8 | — | 4 pull ticks + 2 bites `talAdjust(100·sLv + 100)` (§3.15) | 1 |
 | Bubble Burst (#403) | 1 | 10 / −10 | 60 | 0 | — | detonates the Whale's Bubble Shields (§1) | — |

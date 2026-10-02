@@ -57,15 +57,14 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `this.$self_$25037.EOxsb7GTOK.addTimeOut("mount", (float)12);` — sits inside the universal
   ride-a-mount action shared by every class. `MonkeySkill.cs` has no `cType`/`getSkill()` entry for
   `"mount"` at all, confirming it isn't part of Monkey's learnable roster.
-- **`mnk_damageCast1`/`mnk_damageCast2` are dead/unused entries in `getSkill()` — excluded, not
-  passives, not real active skills.** Each sets `setReq(...)` but the branch falls out of the
-  if/elseif chain without ever assigning `mode`/`cType` (`MonkeySkill.cs:48-66`), and a full-file grep
-  of `Monkey.cs` for `RPC_damageCast` and the literal `"damageCast"` returns zero matches — there is no
-  cast site anywhere. The eng description ("Makes Mike circle around Monkey when he is charging or
-  casting spell, dealing 50%/100% normal attack damage", `MonkeySkill_eng.cs:48`, `59`) describes the
-  same "Mike circling" mechanic that the Class-C passive `mnk_mikeCircle5` later upgrades
-  (`MonkeySkill_eng.cs:895`: "call out Mikes to circle around its target") — `damageCast1`/`2` are the
-  base tier of that passive proc chain, not a standalone castable skill. Excluded entirely.
+- **`mnk_damageCast1`/`mnk_damageCast2` (#102/#103) are a real 2-rank passive, not a castable skill
+  (corrected 2026-10-02).** The `getSkill()` branch sets `setReq(...)` without assigning `mode`/`cType`
+  (`MonkeySkill.cs:48-66`) because it is never cast. An earlier note here called it dead code after a
+  grep for `RPC_damageCast`/`"damageCast"` found nothing; that grep missed `getDamageCastLv()`
+  (`Monkey.cs:10820-10823`, `hasSkill(103) ? 2 : hasSkill(102) ? 1 : 0`), which is read by the HP Transfer
+  channel (`:20986`), the shared spell-cast coroutine `RPC_cast` (`:25122`) and the Lavu `RPC_upheaval`
+  command (`:35415`). Matches the eng tooltip "when he is charging or casting spell"
+  (`MonkeySkill_eng.cs:48`, `59`). Mechanics in `# Damage & Mechanics` §1.
 - **Thirteen skills — `fireBall`, `phoenix`, `ja`, `worldIgnition`, `groundLock`, `gadina`,
   `stoneHammer`, `buiten` (buitenHouHou), `lavu`, `fireAvatar`, `earthForm`, `volcanicEruption`,
   `summonGaos` — all cast through one shared coroutine, `RPC_cast(string sType, Vector3 mPos, Vector3
@@ -144,9 +143,8 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   to gate the wrong thing), has not been independently re-verified. Not changed pending that check —
   `bat-skill-reference.md`'s and `whale-skill-reference.md`'s own citations for those
   two skills stand as-is for now.
-- **`fireBall`'s cooldown is conditionally halved by a separate passive (`hasSkill(402)`, almost
-  certainly `rapidFire3`, "Reduces fireballs' casting and cooldown by 3 and 6 seconds" per
-  `MonkeySkill_eng.cs:334`) when cast without a target lock — this table reports the un-passived base
+- **`fireBall`'s cooldown is conditionally halved by a separate passive (`hasSkill(402)` =
+  `mnk_fireKeep5`, `MonkeySkill.cs:3231`; Rapid Fire is #221-#223, see §4.5a) when cast without a target lock — this table reports the un-passived base
   value.** `Monkey.cs:25153` — `this.$mTimeOut$24451 = 18 + this.$sLv$24473 * 3 - this.$mRapidFireLv$24453 * 3;`
   (base formula, `$mRapidFireLv$24453` from `getRapidFireLv()` at `Monkey.cs:25127`) — at max rank
   (`sLv=4`, unpassived `rapidFireLv=0`): `18 + 12 - 0 = 30`, reported. `Monkey.cs:25158-25170` then
@@ -248,7 +246,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   passives), `blazingFire5` (FireAvatar charge-attack unlock), `secondStone5` (groundLock/stoneHammer
   upgrade), `stoneSentinel5` (EarthForm charge/guard unlock), `revisedSkill5`/`revisedMagic5`/
   `revisedArt5` (flat sp/mp/cooldown-reduction modifiers for other skills). Also excluded:
-  `mnk_damageCast1`/`2` (dead/unused entries, see dedicated note above) and `mnk_nAttack1`/
+  `mnk_damageCast1`/`2` (passive, no cooldown — see dedicated note above) and `mnk_nAttack1`/
   `mnk_cAttack1`-`4` (blanket exclusion).
 
 ### CD citations
@@ -327,7 +325,7 @@ Costs from `scripts/decode_skilldata.py DecompiledSource/MonkeySkill.cs` (negati
 |---|---|---|---|---|---|---|
 | **Combo** (`nAttack`, #101) | 1 | — | `(int)((0.5 + 0.1 Mike Blink) × ATK)` through `getCritPlus` (`floor(0.75 ×)` with `w_mnk59`) | 1 (+1 Earth Form) | 2 | Two chained stages (`Monkey.cs:19962`, `:20576`); lock 1.5 s each. One learnable rank, not three. |
 | **HP Transfer** (`cAttack`, #111-#114) | 4 | costs HP, not MP/SP: `2·lv − 1` HP per second (9 with Mike Circle) | heals the target `floor((1 + 0.02×ATK) × 2·lv)` per second (doubled when the target is the Monkey's own summon) | 0 | per second | Target within 30 m; needs HP above the cost and a target below max HP (`Monkey.cs:21084-21275`). |
-| **Damage Cast** (#102/#103) | 2 | passive | while channelling HP Transfer, every 0.4 s enemies within 2 m take `hit(2 + lv, getCritPlus((int)(0.25·lv·ATK)))` | 1 | per 0.4 s | Not a buff and costs nothing (`Monkey.cs:21299-21339`); also fires from the Fire Avatar / Earth Form attack paths (`:25644`, `:35102`). |
+| **Damage Cast** (`damageCast`, #102/#103) | 2 | passive | while channelling HP Transfer, every 0.4 s enemies within 2 m take `hit(2 + lv, getCritPlus((int)(0.25·lv·ATK)))` | 1 | per 0.4 s | Not a buff and costs nothing (`Monkey.cs:21299-21339`); the same hit also fires while casting any `RPC_cast` spell (`:25644`) and during the Lavu Upheaval command (`:35102`, there **without** `getCritPlus`). |
 | **Instant Cast** (`instantCast`) | 2 | 25, 40 / −15, −20 | buff: casts become instant, one level spent per cast (§ status notes) | — | — | |
 | **Fireball** (`fireBall`) | 4 | 9, 14, 19, 24 / 0 | `talAdjust(20 + 20·sLv (+20 Fire Keep))` (`Monkey_fireBall.cs:200`) | 1 | 1 | `hit(200 + lv)`; `burn` with Intense Fire. |
 | **Phoenix** (`phoenix`) | 4 | 25, 40, 55, 70 / 0 | summon | — | — | Own stats (`ownStatsPhoenix`). |
@@ -453,6 +451,12 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 ### 4.5 Phoenix - Fireball (`monkey_phoenix_fireBall`, Phoenix's normal attack)
 - Interval (`Phoenix.cs:2540-2582`): with Rapid Fire (#221-#223), `mag = clamp((0.1 × RF + 0.1) × Monkey MAG, 1, 512)` and `addTimeOut("nAttack", clamp(5 − mag / 32, 0.1, 5))` (integer division); without it 5 s.
 - Hit (`Phoenix_fireBall.cs:189-290`): `num = Phoenix talAdjust(40)`; with Intense Fire `+ floor((0.1 × IF + 0.1) × Monkey talAdjust(40))`; `hit(1, t, num, KO 1, …)`; with Intense Fire, `burn` Lv IF for `getDebuff(4, Phoenix CHA, target CHA)`. A landed hit also calls the Monkey's Fire Rune (`:317`).
+
+### 4.5a Rapid Fire (`monkey_rapidFire`, #221-#223)
+- Passive, reqLv/Bn 7/2, 15/4, 23/6 (`decode_skilldata.py`). `getRapidFireLv()` returns 3 / 2 / 1 / 0 for #223 / #222 / #221 / none (`Monkey.cs:11763-11800`); the level is passed to Phoenix on summon (`Monkey.cs:11724`, `Phoenix.cs:4788`).
+- **Phoenix attack speed:** see §4.5 interval — `mag = clamp((0.1 × lv + 0.1) × Monkey MAG, 1, 512)` = 20 / 30 / 40% of Monkey MAG (`Phoenix.cs:2562-2568`).
+- **Monkey's Fireball:** cast time `4 + sLv − lv` and cooldown `18 + 3·sLv − 3·lv`, i.e. −1 / −2 / −3 s cast and **−3 / −6 / −9 s** cooldown (`Monkey.cs:25148`, `:25153`).
+- Client tooltips: EN "Makes phoenix attack 20% [30 / 40%] faster (increases with Monkey's int.) Reduces fireballs' casting and cooldown by 1 [2 / 3] and 2 [4 / 6] seconds." (`MonkeySkill_eng.cs:308-340`). Code wins: cooldown −3 / −6 / −9, not −2 / −4 / −6.
 
 ### 4.6 Intense Fire (`monkey_intenseFire`, #231-#233)
 - Passive, reqLv/Bn 9/3, 17/5, 25/7. Level passed to Phoenix on summon (`Monkey.cs:11729-11740`).
