@@ -440,3 +440,15 @@ None open. Resolved 2026-10-01 (user decisions):
 4. **War Capital HP:** decoded from the prefab: 1500 HP, all stats 150.
 5. **Saw Machine:** the card counts the 3 front swings.
 6. **Tooltip mismatches** are shown on the cards in red (`__…__`), with the code value used: Landmine, Bombardment, Mine Lover, Super TNT, Speed Drill, Heavy Built (Thai rank 2), Charge Attack (English lock levels), King Kaiser HP.
+
+## Server Balance Variations (ToT patch notes, 2026)
+
+Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
+
+| Skill | ToT change |
+|---|---|
+| Flame Turret | base cooldown −50% (120 → 60 s); can be cancelled with a normal attack or another Class A skill |
+| Fire Barrage | cooldown −20% (120 → 96 s); damage range +20%; resets Blast Throw |
+| Bombardment | cooldown −35% (180 → 117 s); damage range +20%; resets Blast Throw |
+| Mine Lover | reworked into the active "Blast Throw" (bomb cooldown down, all damage +50%, throws a bomb that explodes on landing), 20 red SP / 10 MP |
+| Napalm | can damage Machine / Structure targets; can no longer damage characters that are dodging |

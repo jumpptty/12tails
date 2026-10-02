@@ -776,3 +776,20 @@ if (this.hasSkill(421))
 |---|---|---|
 | Counter | `RPC_AddEffectDamage(330 + sLv, (int)(0.5 × ATK + sLv × HP lost))` (`Wolf.cs:28506`). | Returns 100% / 200% of the HP lost, no ATK term (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Impulse | Fires the same `RPC_counter2` strike at Impulse's level: `0.5 × ATK + lv × damage taken` (`CharacterControl.cs:31950-31966`, `Wolf.cs:28506`). | Same TTO change as Counter: 100% / 200% of the damage taken, no ATK term (user-reported 2026-10-02; card `servers.tto`). |
+
+## Server Balance Variations (ToT patch notes, 2026)
+
+Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
+
+| Skill | ToT change |
+|---|---|
+| Double Art | chance 6 / 12 / 18 / 24 → 5 / 10 / 15 / 20 |
+| Second Wind | usable below 35% HP (was 25%) |
+| Blade Fang | base 12 / 18 / 24 → 16 / 22 / 28 (`talAdjust(10 + 6·sLv + 6·Blood Fang)`) |
+| Counter | SP 2 / 3 → 6 / 8 |
+| Sublime Art | Double Art proc restores 7 MP / 7 SP (was 5 / 5) |
+| Holy Wolf (Holy Sword + Holy Armor) | −33% damage taken; MP regen from max MP; regen every 6 s (was 8); no stat bonus from Holy Sword / Holy Armor while fused |
+| Dual Brand | base cooldown −40% (120 → 72 s) |
+| Twin Resonance | wider hit box; one heavy hit instead of several; wave duration and speed +50%; base cooldown −50% (240 → 120 s); KO 10 (raised to 40, then 10 in the 12/09 hot fix) |
+| Cross Break / Grand Cross | KO 10 / 20 / 30; Grand Cross cooldown equal to Cross Break (already modelled) |
+| Provoke | 9 → 6 s (10/09) then back to 9 s (12/09): no net change |

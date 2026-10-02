@@ -406,3 +406,11 @@ Follow-up verification:
 **Open questions (need a live check):**
 1. Illusion Effect: whether HP / MP drained by a clone's `w_bat56` / `w_bat66` proc reaches the real Bat. `sID` is the clone (`Bat_illusion.cs:7565`, `:7589`); the card says the Bat receives it.
 2. Illusion Effect: the tooltip says clones give SP back to the Bat; the code's `sp++` is on the clone's own character and is not gated by #401.
+
+## Server Balance Variations (ToT patch notes, 2026)
+
+Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
+
+| Skill | ToT change |
+|---|---|
+| Mirage Orb | allies inside the orb take 4 / 6 / 8 / 10% less damage by rank (replaces the earlier "−0.1 hitMod" note) |

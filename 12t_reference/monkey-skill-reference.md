@@ -628,3 +628,13 @@ The BigBug-side skill formulas, status logic, and geometry remain documented in 
   - Projectile speed increased by +33% (15 m/s → 19.95 m/s).
   - Damage coefficient reduced by -20% (from 35% HP to 28% HP of Gadina4).
   - Gadina automatically warps to Monkey and tracks facing angle until fired.
+
+## Server Balance Variations (ToT patch notes, 2026)
+
+Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
+
+| Skill | ToT change |
+|---|---|
+| Fire Avatar | biggest fireball every 2nd attack (12/09 hot fix; 10/09 said every 3rd) |
+| Earth Form | punch animation +25% (12/09; 10/09 said +20%) |
+| Stone Sentinel | charge cooldown 10 s (6 → 5 on 10/09, then 10 on 12/09) |

@@ -473,3 +473,16 @@ Private-server values are documented from the Bible skill-detail schema; BigBug 
 | Over Power | 600s base cooldown. | Base cooldown reduced to 420s. |
 
 Source of server delta: `12t_projects/bible/index.html:8972`.
+
+## Server Balance Variations (ToT patch notes, 2026)
+
+Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
+
+| Skill | ToT change |
+|---|---|
+| Brute Strength | base 5 / 10 / 15 / 20 → 10 / 15 / 20 / 25 (note only; the Combo / Charge / Over Swing coefficients are not re-modelled) |
+| Fury Trance | triggers below 80 / 60 / 40% HP (was 60 / 40 / 20) |
+| Over Power | base cooldown −50% (600 → 300 s); replaces the earlier −30% |
+| Iron Shield / Diamond Shield | base duration 6 → 4 s |
+| Spin Hack | charge range bonus 40% → 50% (the card models +2 m radius from code) |
+| Hold Charge | charge time reduced to 4 s / 8 hits |

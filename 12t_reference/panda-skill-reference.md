@@ -857,3 +857,20 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 | Climbing Cliff / Crumbling Mountain | Target must be at least 3 m tall. | Also usable on a Whale with Mega Size (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Qi Strike | Charge 2 / 3 / 4 s by rank. | 2 s at every rank (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Delay Qi | Held-punch buff 3 s. | 6 s (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+
+## Server Balance Variations (ToT patch notes, 2026)
+
+Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.
+
+| Skill | ToT change |
+|---|---|
+| Resistance | 8 / 12 / 16 / 20 → 4 / 8 / 12 / 16 (10/09) → 6 / 10 / 14 / 18 (12/09) |
+| Tiger Toss | KO → 6 (post says from 3; the code card has 5); base damage +10% (note only) |
+| Tiger Pounce | KO 10 → 12; base damage +10% (note only) |
+| Rising Dragons | rank 2 SP 60 → 55; size +20%; base damage +10% (note only) |
+| Wind & Cloud | base damage +50% (10/09) → +60% (12/09) (note only) |
+| Rain & Storm | base damage +30% (note only) |
+| Lotus Palm | base cooldown −30% (75 → 52.5 s; replaces the earlier −10%); +15 KO (5 → 20); +10% evasion while casting |
+| Heaven Palm | base cooldown −30% (150 → 105 s; replaces the earlier −10%); +2 KO per hit (1 → 3); +10% evasion while casting |
+| Mystic Sage | cooldown 12 / 6 → 10 / 5 s |
+| Combo Link | casting grants the maximum Combo Plus stack at once; Combo Plus maximum +1 level |
