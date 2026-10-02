@@ -2258,6 +2258,18 @@ let checkedDepStrip = 0;
     else if (keys.some((k, i) => i > 0 && k < keys[i - 1])) { console.error(`[DEP ORDER ERROR] ${sk.id}: strip not in ascending skill ID order: ${keys.join(", ")}`); errorCount++; }
     else checkedDepStrip++;
   }
+  // 8. a server desc (servers.tto / tot .desc) must differ from the base desc at some rank. ttoDesc() swaps a phrase of the
+  //    base text; if that phrase is reworded later the swap silently does nothing and the server card shows stale values.
+  {
+    const txt = (d, r) => typeof d === "function" ? d(r, 0) : d;
+    for (const sk of SKILLS) if (sk.servers) for (const srv in sk.servers) {
+      const d = sk.servers[srv].desc; if (!d) continue;
+      let differs = false;
+      for (let r = 1; r <= (sk.maxRank || 1) && !differs; r++) { try { differs = txt(d, r) !== txt(sk.desc, r); } catch (e) { differs = true; } }
+      if (!differs) { console.error(`[SERVER DESC ERROR] ${sk.id}: servers.${srv}.desc is identical to the base desc at every rank (a ttoDesc phrase swap no longer matches?)`); errorCount++; }
+      else checkedDepStrip++;
+    }
+  }
   // 7. every card except the "sup_" support skills has an internal skill ID (new cards need an entry in SKILL_INTERNAL_ID)
   {
     const table = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
