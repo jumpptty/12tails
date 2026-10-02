@@ -448,6 +448,7 @@ Revised Art is a flat 12% of the cooldown while each AGI point's cut shrinks as 
   all-around circle of radius `TargetRange` centred on `pos` (debug outline drawn as an octagon at `TargetRange`), with
   the target's collider edge nearest `pos` (`transform.position + radius·dir`) tested against it; `TargetHeight` is the
   height. Cards quote it as `รัศมี <TargetRange>m สูง <TargetHeight>m`.
+- **`rangeMod` (hit-area scale, verified 2026-10-02):** a per-character float, `1` by default (`CharacterControl.cs:154`, field `:29900`), raised on apply by `lunarEclipse` (+0.4 × sLv, `:34248`), `enrage` (+0.1, `:34738`), `titanForm` (+0.3 × sLv, `:35234`) and `enlarge` (+0.1 × sLv, `:37344`), lowered by `reduce` (−0.1 × sLv, `:37264`), each reversed in `removeStatus` (`:15150-16766`). Many skill hit boxes, radii and projectile lifetimes multiply their sizes by the caster's `rangeMod` (summons and bots use their own); others use plain numbers. Cards write a scaled size as `N×rangeMod m` (lifetimes as `N×rangeMod วินาที`) and leave unscaled sizes as `Nm`; a box can mix both (e.g. Whale Combo width `3×rangeMod m`, length `4m`).
 
 ### 4.1 Status effect catalog (StatusData.getStatusCode, StatusData.cs)
 Each status maps to a sequential integer code. Grouped by function:

@@ -377,7 +377,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_kingKaiser_nAttack (King Kaiser normal attack) (verified 2026-10-01)
 
 - `KingKaiser.doNormalAttack` (`KingKaiser.cs:900-930`): when `nAttack` is ready; at Kaiser level ≥ 2 and a target farther than 10 m (`sqrMagnitude > 100`) it fires Kaiser Cannon instead.
-- `RPC_nAttack` (`KingKaiser.cs:1471-2270`): 3 swings, `addTimeOut("nAttack", 4)` (`:2179`): `FindRecTarget(pos + right, fwd, 2, 2, 5, 3)` → `hit(1, t, ATK, KO 1)` (`:1657-1680`), `FindRecTarget(pos, fwd, 1.5, 1.5, 4, 3)` → `hit(2, t, (int)(1.2 × ATK), KO 1)` (`:1862-1885`), `FindRecTarget(pos + (−1, 0.5, −2), fwd, 2.5, 2.5, 6, 3)` → `hit(3, t, (int)(1.3 × ATK), KO 1)` (`:2008-2031`); Kaiser `sp + 1` per target on swings 1 and 3 (`:1686`, `:2037`).
+- `RPC_nAttack` (`KingKaiser.cs:1471-2270`): 3 swings, `addTimeOut("nAttack", 4)` (`:2179`): `FindRecTarget(pos + right, fwd, 2, 2, 5, 3)` → `hit(1, t, ATK, KO 1)` (`:1657-1680`), `FindRecTarget(pos, fwd, 1.5, 1.5, 4, 3)` → `hit(2, t, (int)(1.2 × ATK), KO 1)` (`:1862-1885`), `FindRecTarget(pos + (−1, 0.5, −2), fwd, 2.5, 2.5, 6, 2)` → `hit(3, t, (int)(1.3 × ATK), KO 1)` (`:2008-2031`); Kaiser `sp + 1` per target on swings 1 and 3 (`:1686`, `:2037`).
 
 ### mol_kingKaiser_missile (Kaiser Cannon) (verified 2026-10-01)
 
