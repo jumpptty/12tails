@@ -354,7 +354,7 @@ Source of server deltas: `12t_projects/bible/index.html:10761,10769`.
 | Accessory (hat) | `c_all43` / `c_all44`: +3 | `c_all58`: +5 |
 | **Full set** | **12 → `lckAdjust(12)`** | **18 → `lckAdjust(18)`** |
 
-The crit multiplies the truncated raw value before `hit()` (or before Dark Edge's Effect Damage). Item names: `WeaponData_eng.cs`, `ArmorData_eng.cs`, `AccessoryData_eng.cs`. The Bible's Combo card has G. Marshal Sword / G. Champion Sword toggles that assume the full set.
+The crit multiplies the truncated raw value before `hit()` (or before Dark Edge's Effect Damage). Item names: `WeaponData_eng.cs`, `ArmorData_eng.cs`, `AccessoryData_eng.cs`. The Bible's Combo card has two gear toggles, weapon (off / Marshal +5 / Champion +7) and armor + helmet (off / Marshal +7 / Champion +11), summed by `wolfComboCritBase()`; the same split is used on the Bison, Mole, Panda, Whale and Sheep crit cards (2026-10-02).
 
 ### wlf_feralInstinct1-4 (skills #311-#314) — passive (verified 2026-09-24)
 

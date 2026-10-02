@@ -1305,12 +1305,12 @@ let checkedEffectProc = 0;
   // Whale Combo (Whale.cs:16238-16394): one Wall Puncture roll per swing; a proc replaces the hit with Effect Damage and skips getCritPlus (effectProc.noCrit).
   const wc = byId("whale_nAttack");
   sandbox._skillRanks[wc.id] = 2; sandbox._selectSkill(wc);
-  deps.wallPuncture = 4; deps.whaleGearChampion = 1; inputs.lck.value = "300";
+  deps.wallPuncture = 4; deps.whaleGearWeapon = 2; deps.whaleGearEquip = 2; inputs.lck.value = "300";
   { let purple = 0, purpleCrit = 0, whiteCrit = 0; for (let i = 0; i < 3000; i++) { sandbox._rollOneHit(wc, 2, undefined, false, 0); if (ep.lastPurple()) { purple++; if (ep.lastCrit()) purpleCrit++; } else if (ep.lastCrit()) whiteCrit++; }
     check("Whale Combo: Wall Puncture procs happen", purple > 0, purple);
     check("Whale Combo: a purple Wall Puncture hit never crits", purpleCrit === 0, purpleCrit);
     check("Whale Combo: white hits still crit with Champion gear", whiteCrit > 0, whiteCrit); }
-  deps.wallPuncture = 0; deps.whaleGearChampion = 0;
+  deps.wallPuncture = 0; deps.whaleGearWeapon = 0; deps.whaleGearEquip = 0;
   // Mole Smart Shell (#264): +30 Effect Damage per enemy hit on Mine, Stun Mine, Stun Grenade, Time Nuke (Mole.cs:11583, Mole_stunGrenade.cs:285, Mole_timeNuke.cs:767).
   ["mole_mine", "mole_stunMine", "mole_stunGrenade", "mole_timeNuke"].forEach(id => { const m = byId(id);
     deps.smartShell = 1; check(`${id} Smart Shell bonus 30`, ep.bonus(m, 1, 0) === 30, ep.bonus(m, 1, 0));
@@ -1431,7 +1431,7 @@ let checkedWolfCombo = 0;
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "wolf_nAttack");
-  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion", "wolfKatana"];
+  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearWeapon", "wolfGearEquip", "wolfKatana"];
   const savedDeps = IDS.map(id => [id, deps[id]]);
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
@@ -1455,14 +1455,18 @@ let checkedWolfCombo = 0;
   inputs.atk.value = "200"; inputs.lck.value = "150";
   const rate = (o, n) => { setDeps(o); select(3); let c = 0, p = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, 3, undefined, false, 0); if (ep.lastCrit()) c++; if (ep.lastPurple()) p++; } return { c: c / n, p: p / n }; };
   check("no gear never crits", rate({}, 500).c === 0);
-  [["wolfGearMarshal", 12], ["wolfGearChampion", 18]].forEach(([id, base]) => {
-    const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate({ [id]: 1 }, 4000).c;
-    check(`${id} crit rate ~${want} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
+  // Gear crit by slot: weapon Marshal 5 / Champion 7, armor + helmet Marshal 7 / Champion 11 (Wolf.cs:14044-14188).
+  [[{ wolfGearWeapon: 1 }, 5], [{ wolfGearEquip: 2 }, 11], [{ wolfGearWeapon: 1, wolfGearEquip: 1 }, 12], [{ wolfGearWeapon: 2, wolfGearEquip: 2 }, 18], [{ wolfGearWeapon: 1, wolfGearEquip: 2 }, 16]].forEach(([o, base]) => {
+    setDeps(o); check(`crit base ${JSON.stringify(o)} = ${base}`, sandbox.wolfComboCritBase() === base, sandbox.wolfComboCritBase());
+  });
+  [[{ wolfGearWeapon: 1, wolfGearEquip: 1 }, 12], [{ wolfGearWeapon: 2, wolfGearEquip: 2 }, 18]].forEach(([o, base]) => {
+    const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate(o, 4000).c;
+    check(`${JSON.stringify(o)} crit rate ~${want} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
   });
   check("Dark Edge off is white", rate({}, 200).p === 0);
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
   check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : "w");'));
-  check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\][, ]/.test(html));
+  check("Katana and the crit sword switch each other off", html.includes('const DEP_EXCLUSIVE = { wolfKatana: ["wolfGearWeapon"], wolfGearWeapon: ["wolfKatana"],'));
   // Katana (w_wlf59, Wolf.cs:15159-15175, :15990-16001, :16693, :17409, :17727): crit first, then floor(0.75x), stage 2 ceil(0.5x).
   // Hand-computed at ATK 200, LCK 0, Feral off: raw (int)(c x 200) = 100 / 100 / 100 / 80 / 120.
   {
@@ -1473,10 +1477,10 @@ let checkedWolfCombo = 0;
     setDeps({ wolfKatana: 1 }); select(3);
     got = stageRanges(); check("Katana stages 75/50/75/60/90", got === "75-75,50-50,75-75,60-60,90-90", got);
     // Champion set + Katana: crit can happen, so the top is the crit case: floor(0.75 x floor(1.8 x 100)) = 135, stage 2 ceil(0.5 x 180) = 90.
-    setDeps({ wolfKatana: 1, wolfGearChampion: 1 }); select(3);
+    setDeps({ wolfKatana: 1, wolfGearEquip: 2 }); select(3);
     got = stageRanges(); check("Katana + Champion stage tops 135/90/135/108/162", got === "75-135,50-90,75-135,60-108,90-162", got);
     check("Katana keeps hat + armor crit only (Champion 11, Marshal 7)", sandbox.wolfComboCritBase() === 11, sandbox.wolfComboCritBase());
-    setDeps({ wolfKatana: 1, wolfGearMarshal: 1 }); check("Katana + Marshal crit base 7", sandbox.wolfComboCritBase() === 7, sandbox.wolfComboCritBase());
+    setDeps({ wolfKatana: 1, wolfGearEquip: 1 }); check("Katana + Marshal crit base 7", sandbox.wolfComboCritBase() === 7, sandbox.wolfComboCritBase());
     setDeps({ wolfKatana: 1 }); select(3);
     let lo = Infinity, hi = -Infinity; for (let i = 0; i < 100; i++) { const x = sandbox._rollOneHit(sk, 3, undefined, false, 1); lo = Math.min(lo, x); hi = Math.max(hi, x); }
     check("Katana stage 2 Test roll never exceeds its raw-50 final range", lo >= 0 && hi <= sandbox._finalRangeForRange(sandbox._calcRangeFor(sk.dmgGroups[1].dmg, sandbox._resolveGroupAtkCoeff(sk, sk.dmgGroups[1]), sk.dmgGroups[1]))[1], `${lo}-${hi}`);
@@ -1484,8 +1488,9 @@ let checkedWolfCombo = 0;
   // Range vs simulator, every toggle combination, both stat profiles.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
-    [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => ["", "wolfGearMarshal", "wolfGearChampion"].forEach(gear => [0, 1].forEach(kt => {
-      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de, wolfKatana: kt }; if (gear) o[gear] = 1;
+    [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => [{}, { wolfGearWeapon: 1, wolfGearEquip: 1 }, { wolfGearWeapon: 2, wolfGearEquip: 2 }, { wolfGearEquip: 2 }].forEach(gearO => [0, 1].forEach(kt => {
+      const gear = Object.keys(gearO).map(k => k + gearO[k]).join("+");
+      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de, wolfKatana: kt, ...gearO };
       setDeps(o);
       for (let r = 1; r <= 3; r++) {
         select(r);
@@ -1510,7 +1515,7 @@ let checkedBisonCombo = 0;
   const inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedBisonCombo++; if (!ok) { console.error(`[BISON COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "bison_nAttack");
-  const IDS = ["bruteStrength", "rawStrength", "improvedSwing", "addedSwing", "overPride", "bisonSpinForce", "bisonGearMarshal", "bisonGearChampion"];
+  const IDS = ["bruteStrength", "rawStrength", "improvedSwing", "addedSwing", "overPride", "bisonSpinForce", "bisonGearWeapon", "bisonGearEquip"];
   const savedDeps = IDS.map(id => [id, deps[id]]), saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
@@ -1538,12 +1543,12 @@ let checkedBisonCombo = 0;
   // Crit chip only with gear; forced spin shows the spin rows.
   setDeps({}); select(4);
   check("no crit chip without gear", !sandbox._getRenderedHeroHtml().includes("โอกาส Critical"));
-  setDeps({ bisonGearChampion: 1 }); select(4);
+  setDeps({ bisonGearWeapon: 2, bisonGearEquip: 2 }); select(4);
   check("crit chip with Champion gear", sandbox._getRenderedHeroHtml().includes("โอกาส Critical") && sk.critProc.chance() === 18);
   // Range vs simulator for every stage including the spin and Added Swing, with Raw Strength and gear on.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
-    [{}, { bruteStrength: 4, rawStrength: 1, bisonGearChampion: 1 }].forEach(base => {
+    [{}, { bruteStrength: 4, rawStrength: 1, bisonGearWeapon: 2, bisonGearEquip: 2 }].forEach(base => {
       setDeps({ ...base, bisonSpinForce: 1, addedSwing: 1 }); select(4);
       sk.dmgGroups.forEach((g, gi) => {
         if (sandbox._resolveGroupHitCount(sk, g) === 0) return;
@@ -1887,8 +1892,8 @@ let checkedCritView = 0;
   // stage 1 punch 2 never crits; Aura Blast 125 + 30 = 155, crit floor(1.8 x 125) + 30 = 255.
   {
     const pc = sk("panda_nAttack"), g = pc.dmgGroups, sp0 = sandbox._pandaSp.get();
-    const savedP = ["focusedSpirit", "auraBlast", "pandaGearChampion", "pandaGearMarshal"].map(id => [id, deps[id]]);
-    inputs.atk.value = "100"; sandbox._pandaSp.set(50); deps.focusedSpirit = 2; deps.auraBlast = 1; deps.pandaGearChampion = 1; deps.pandaGearMarshal = 0;
+    const savedP = ["focusedSpirit", "auraBlast", "pandaGearWeapon", "pandaGearEquip"].map(id => [id, deps[id]]);
+    inputs.atk.value = "100"; sandbox._pandaSp.set(50); deps.focusedSpirit = 2; deps.auraBlast = 1; deps.pandaGearWeapon = 2; deps.pandaGearEquip = 2;
     cv.set(false); select(pc, 4);
     const gr = (i) => sandbox._calcRangeFor(g[i].dmg, undefined, g[i]).slice(0, 2).join();
     check("Panda stage 1 hit 1 spans 26-42 with Champion gear", gr(0) === "26,42", gr(0));
