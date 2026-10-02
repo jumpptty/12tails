@@ -2348,6 +2348,18 @@ let checkedChmSim = 0;
   Object.assign(doc, { addEventListener: saved.add, removeEventListener: saved.rem, createElement: saved.ce, body: saved.body });
 }
 console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
+
+// liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
+// the description box ("⚠ ยังไม่ยืนยันในเกม: ...").
+{
+  let checkedLive = 0;
+  for (const sk of SKILLS.filter(s => s.liveCheck)) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk);
+    if (!sandbox._getRenderedHeroHtml().includes('<span class="sk-live-check">⚠ ยังไม่ยืนยันในเกม: ')) { console.error(`[LIVE CHECK ERROR] ${sk.id}: liveCheck set but no marker rendered`); errorCount++; }
+    else checkedLive++;
+  }
+  console.log(`Verified ${checkedLive} liveCheck markers.`);
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
