@@ -2349,6 +2349,37 @@ let checkedChmSim = 0;
 }
 console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
 
+// Server changes page (mountServerChanges): one row per card with a servers.<srv>.changeNote, chips rendered,
+// a row opens #skill-details/<id>?server=<srv>, inline status / skill links do not navigate.
+{
+  const fail = (msg) => { console.error(`[SERVER PAGE ERROR] ${msg}`); errorCount++; };
+  let checked = 0;
+  const reg = new Map();
+  const mk = () => { const e = makeEl(); e.listeners = {}; e.addEventListener = (t, fn) => { e.listeners[t] = fn; }; e.querySelectorAll = () => []; return e; };
+  const root = mk(); root.querySelector = (sel) => { if (!reg.has(sel)) reg.set(sel, mk()); return reg.get(sel); };
+  const savedHash = sandbox.location && sandbox.location.hash;
+  if (!sandbox.location) sandbox.location = { hash: "" };
+  try {
+    vm.runInContext("mountServerChanges", sandbox)(root);
+    const api = root._serverChanges, list = reg.get('[data-role="list"]');
+    for (const srv of ["tto", "tot"]) {
+      api.setServer(srv);
+      const want = SKILLS.filter(s => { const o = (s.servers && s.servers[srv]) || (srv === "tot" ? s.ps : null); return o && o.changeNote; }).length;
+      const rows = (list.innerHTML.match(/class="svc-item"/g) || []).length;
+      if (rows !== want || want === 0) fail(`${srv}: ${rows} rows, want ${want}`); else checked++;
+      if (!/sk-tag-(buff|nerf|adjust|fix)/.test(list.innerHTML)) fail(`${srv}: no change-note chips rendered`); else checked++;
+    }
+    const row = { dataset: { skill: "wolf_counter" } };
+    list.listeners.click({ target: { closest: (sel) => sel === ".svc-item" ? row : null } });
+    if (sandbox.location.hash !== "#skill-details/wolf_counter?server=tot") fail(`row click sets hash ${sandbox.location.hash}`); else checked++;
+    sandbox.location.hash = "";
+    list.listeners.click({ target: { closest: (sel) => sel.includes(".sk-status") ? {} : row } });
+    if (sandbox.location.hash !== "") fail("clicking a status inside a note navigated away"); else checked++;
+  } catch (e) { fail("page threw: " + e.message); }
+  if (savedHash !== undefined) sandbox.location.hash = savedHash;
+  console.log(`Verified ${checked} server changes page checks.`);
+}
+
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
 // the description box ("⚠ ยังไม่ยืนยันในเกม: ...").
 {
