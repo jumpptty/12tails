@@ -1663,7 +1663,8 @@ let checkedRabbitShot = 0;
   check("Combo lists its dependencies", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].every(id => heroC.includes(`data-dep-id="${id}"`)));
   // ---- Dependency order on Combo and the merged Hyper Shot + Snipe Mastery dep
   const strip = heroC.match(/data-dep-id="(rab[A-Za-z0-9]+)"/g).map(s => s.slice(13, -1));
-  check("Combo dependency strip order: Bouncing, Hyper+Snipe, Extravagance, gear, Gatling Gun, shotgun", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
+  // Skill toggles by internal ID (Hyper Shot #131, Customized Shotgun #353, Bouncing Bullet #401, Extravagance #443), then gear and the Gatling Gun.
+  check("Combo dependency strip order: Hyper+Snipe, shotgun, Bouncing, Extravagance, gear, Gatling Gun", ["rabHyperShot", "rabShotgun", "rabBouncing", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
   check("Customized Shotgun is a plain on/off toggle (rank 1 and 2 only change the hit box)", combo.dmgControls.find(d => d.id === "rabShotgun").maxRank === 1);
   check("Hyper Shot is one 0..5 dep whose rank-5 icon exists (rank 5 = Snipe Mastery)", combo.dmgControls[1].id === "rabHyperShot" && combo.dmgControls[1].maxRank === 5 && !!sandbox.SKILL_ICONS.rabbit_hyperShot5 && [1, 2, 3, 4].every(n => sandbox.SKILL_ICONS["rabbit_hyperShot" + n]));
   check("no separate Snipe Mastery dependency remains", !/rabSnipe|RABBIT_SNIPE_DEP/.test(html));
@@ -2246,6 +2247,17 @@ let checkedDepStrip = 0;
     if (html.includes("sk-summon-toggles") && /<div class="sk-summon-toggles[^"]*">\s*<\/div>/.test(html)) fail(`${sk.id}: empty .sk-summon-toggles container left in the summon header`); else checkedDepStrip++;
     // 3. no empty strip
     if (strip && items === 0) fail(`${sk.id}: empty .sk-dep-strip rendered`); else checkedDepStrip++;
+    // 6. skill toggles ascend by internal skill ID; non-skill toggles (empty key) come after them
+    const keys = [...strip.matchAll(/<div class="sk-dep-item" data-dep-order="(\d*)"/g)].map(m => m[1] === "" ? Infinity : +m[1]);
+    if (keys.length !== items) { console.error(`[DEP ORDER ERROR] ${sk.id}: ${items - keys.length} strip item(s) without data-dep-order`); errorCount++; }
+    else if (keys.some((k, i) => i > 0 && k < keys[i - 1])) { console.error(`[DEP ORDER ERROR] ${sk.id}: strip not in ascending skill ID order: ${keys.join(", ")}`); errorCount++; }
+    else checkedDepStrip++;
+  }
+  // 7. every card except the "sup_" support skills has an internal skill ID (new cards need an entry in SKILL_INTERNAL_ID)
+  {
+    const table = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
+    const missing = SKILLS.filter(s => table[s.id] === undefined && !String(s.icon || "").startsWith("sup_")).map(s => s.id);
+    if (missing.length) { console.error(`[DEP ORDER ERROR] cards with no SKILL_INTERNAL_ID entry: ${missing.join(", ")}`); errorCount++; } else checkedDepStrip++;
   }
   const byId = (id) => SKILLS.find(s => s.id === id);
   const stripOf = (id, server) => { if (server) sandbox._setServer(server); const sk = byId(id); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk); const h = splitStrip(sandbox._getRenderedHeroHtml()).strip; sandbox._setServer("og"); return h; };
