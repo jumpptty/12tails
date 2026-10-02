@@ -774,3 +774,4 @@ if (this.hasSkill(421))
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Counter | `RPC_AddEffectDamage(330 + sLv, (int)(0.5 × ATK + sLv × HP lost))` (`Wolf.cs:28506`). | Returns 100% / 200% of the HP lost, no ATK term (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Impulse | Fires the same `RPC_counter2` strike at Impulse's level: `0.5 × ATK + lv × damage taken` (`CharacterControl.cs:31950-31966`, `Wolf.cs:28506`). | Same TTO change as Counter: 100% / 200% of the damage taken, no ATK term (user-reported 2026-10-02; card `servers.tto`). |
