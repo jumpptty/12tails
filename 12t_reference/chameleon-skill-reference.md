@@ -530,8 +530,11 @@ Each of the eight Slayer cards is its own skill: own reqLv/reqBn, own race, own 
 
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
-| Torment Rain | `(int)(0.5 × ATK + talAdjust(60))` per target (`Chameleon.cs:26039`). | Damage is plain 100% of ATK, no `talAdjust` term (user-reported 2026-09-30; card `servers.tto`: `dmg "0"`, `atkCoeff 1`). |
+| Torment Rain | `(int)(0.5 × ATK + talAdjust(60))` per target (`Chameleon.cs:26039`). | Damage is plain 100% of ATK, no `talAdjust` term (user-reported 2026-09-30; card `servers.tto`: `dmg "0"`, `atkCoeff 1`). Hit enemies also get `poison` per Increased Poison / Deadly Venom (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Double Effect | Poseidon Bow +12% / Poseidon Helmet +8% HP Drain chance goes through `lckAdjust(doubleEffect × pool)` (`Chameleon.cs:47717-47729`). | Flat 20% for the full set, 40% with Double Effect, no `lckAdjust` (user-reported 2026-09-28, see [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md); card `servers.tto.changeNote`). |
+| Silent Walk | While charging, `moveSpeed = Lerp(moveSpeed, 2, 4 × Time.deltaTime)` (`Chameleon.cs:16579`): walk speed 2, easing rate 4. | Speed 4 → 4.5 (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). Which code value this is was not identified: the 4 in the code is the easing rate, the target speed is 2. |
+| Charge Attack | No poison on the volley. | Gets Poison Arrow, Increased Poison and Deadly Venom (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Quick Fire | No poison on the shots. | Gets Poison Arrow, Increased Poison and Deadly Venom (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 
 ### ToT
 

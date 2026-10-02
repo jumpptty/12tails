@@ -425,6 +425,7 @@ Private-server values are documented from the Bible skill-detail schema; the Big
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Auto Gyro Gun | No simultaneous-turret limit is represented on the original card. | Cap is 8 guns without Hidden Turret or 12 with Hidden Turret. |
+| Smart Shell | Allies inside the blast take half: Stun Mine / Stun Grenade KO halved, Time Nuke / Flame Carnival damage halved (Smart Shell entry above). | Does not reduce damage dealt to allies (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | King Kaiser; King Kaiser - Normal Attack / Kaiser Cannon / Kaiser Beam | MHP 2000, then Heavy Built applies `ceil(MHP×(1+0.5×rank))` → 2000 / 3000 / 4000. | **Nerf:** MHP is fixed at 1500 and Heavy Built does not apply. The server selector is present on the parent and all three child cards because their shared own-stat block changes. |
 
 Source of server delta: `12t_projects/bible/index.html:9160`.

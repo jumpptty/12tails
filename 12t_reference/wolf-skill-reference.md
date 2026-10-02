@@ -768,3 +768,9 @@ if (this.hasSkill(421))
 **Card mismatches:** all fixed 2026-10-02 (every Wolf card now has `desc`; No KO and Impulse got `lckProc`; Art Cancel, Counter, Blade Song got `maxRank` and costs; Second Wind, Holy Sword, Holy Armor, Mirror Blade and Art Breaker got costs; Art Breaker got its `cd`).
 
 **Open questions:** none from this pass.
+
+## Server Balance Variations (TTO)
+
+| Skill | Original BigBug baseline | TTO delta |
+|---|---|---|
+| Counter | `RPC_AddEffectDamage(330 + sLv, (int)(0.5 × ATK + sLv × HP lost))` (`Wolf.cs:28506`). | Returns 100% / 200% of the HP lost, no ATK term (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |

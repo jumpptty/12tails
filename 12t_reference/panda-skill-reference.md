@@ -846,3 +846,14 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 **Card mismatches:** all fixed 2026-10-02 (every Panda card now has `desc`; Sp Transfer, Roll Around and Combo Link got their costs; Roll's `cd` corrected 60 → 30). Combo Link's `atkUp` is described in text, not linked: the app's `atkUp` popup describes Cat's percentage boost, but Combo Link's is a flat `+n` ATK.
 
 **Open questions:** none after the 2026-10-01 pass (Combo Link's combo source was traced to `CharacterControl.cs:31712-31790`).
+
+## Server Balance Variations (TTO)
+
+| Skill | Original BigBug baseline | TTO delta |
+|---|---|---|
+| Rain & Storm | No status on hit. | Hit enemies get `cut` Lv 2 / 4 by skill rank (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Ashura (Ashura Fist) | KO 5 per hit. | KO 10 (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Combo Link | `atkUp` value = current combo, clamped to 512 (`Panda.cs:6187`, Combo Link entry above): +1 ATK per combo, max +512. | +10 ATK per combo, max +520 (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Climbing Cliff / Crumbling Mountain | Target must be at least 3 m tall. | Also usable on a Whale with Mega Size (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Qi Strike | Charge 2 / 3 / 4 s by rank. | 2 s at every rank (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Delay Qi | Held-punch buff 3 s. | 6 s (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
