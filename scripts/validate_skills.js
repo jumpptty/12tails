@@ -44,25 +44,30 @@ if (Number.isNaN(Date.parse(changelogTime))) {
   console.error(`[CHANGELOG ERROR] Newest entry has an invalid ISO timestamp: '${changelogTime}'.`);
   process.exit(1);
 }
-let headSubject = '';
-let trackedTreeDirty = false;
+// Per AGENTS.md the gate covers commits that touch index.html only: compare against the latest commit that changed
+// index.html (not HEAD), and require a new entry only while index.html itself has pending changes. Doc-only commits
+// (12t_reference/, GEMINI.md, scripts/) need no changelog entry.
+const repoRoot = path.resolve(__dirname, '..');
+const INDEX_REL = '12t_projects/bible/index.html';
+let indexSubject = '';
+let indexDirty = false;
 try {
-  headSubject = execFileSync('git', ['log', '-1', '--format=%s'], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8' }).trim();
-  execFileSync('git', ['diff', '--quiet', 'HEAD', '--'], { cwd: path.resolve(__dirname, '..'), stdio: 'ignore' });
+  indexSubject = execFileSync('git', ['log', '-1', '--format=%s', '--', INDEX_REL], { cwd: repoRoot, encoding: 'utf8' }).trim();
+  execFileSync('git', ['diff', '--quiet', 'HEAD', '--', INDEX_REL], { cwd: repoRoot, stdio: 'ignore' });
 } catch (error) {
-  trackedTreeDirty = true;
+  indexDirty = true;
 }
-if (trackedTreeDirty && changelogSubject === headSubject) {
-  console.error(`[CHANGELOG ERROR] Tracked changes are pending but CHANGELOG_DATA still names HEAD: '${headSubject}'. Prepend the planned commit subject before validating.`);
+if (indexDirty && changelogSubject === indexSubject) {
+  console.error(`[CHANGELOG ERROR] index.html has pending changes but CHANGELOG_DATA still names its last commit: '${indexSubject}'. Prepend the planned commit subject before validating.`);
   process.exit(1);
 }
-if (!trackedTreeDirty && changelogSubject !== headSubject) {
-  console.error(`[CHANGELOG ERROR] Newest CHANGELOG_DATA entry '${changelogSubject}' does not match HEAD '${headSubject}'. Update the panel before pushing.`);
+if (!indexDirty && changelogSubject !== indexSubject) {
+  console.error(`[CHANGELOG ERROR] Newest CHANGELOG_DATA entry '${changelogSubject}' does not match the last commit that touched index.html ('${indexSubject}'). Update the panel before pushing.`);
   process.exit(1);
 }
-console.log(trackedTreeDirty
+console.log(indexDirty
   ? `CHANGELOG PENDING: '${changelogSubject}' is prepared for the next commit.`
-  : `CHANGELOG CURRENT: '${changelogSubject}' matches HEAD.`);
+  : `CHANGELOG CURRENT: '${changelogSubject}' matches the last commit that touched index.html.`);
 
 // Soft reminder (non-blocking, unlike the CHANGELOG gate above): index.html
 // changing without GEMINI.md changing alongside it isn't necessarily wrong --
@@ -75,14 +80,14 @@ console.log(trackedTreeDirty
 // checkpoints as the CHANGELOG gate (before commit, before push).
 try {
   const repoRoot = path.resolve(__dirname, '..');
-  const changedFiles = trackedTreeDirty
+  const changedFiles = indexDirty
     ? execFileSync('git', ['diff', '--name-only', 'HEAD', '--'], { cwd: repoRoot, encoding: 'utf8' })
     : execFileSync('git', ['diff', '--name-only', 'HEAD~1', 'HEAD', '--'], { cwd: repoRoot, encoding: 'utf8' });
   const files = changedFiles.split('\n').filter(Boolean);
   const touchedIndex = files.some(f => f.endsWith('12t_projects/bible/index.html'));
   const touchedGemini = files.some(f => f.endsWith('12t_projects/bible/GEMINI.md'));
   if (touchedIndex && !touchedGemini) {
-    console.log(`[GEMINI.md REMINDER] index.html changed without GEMINI.md changing in the same ${trackedTreeDirty ? 'working tree diff' : 'commit'} -- if this introduced or changed a convention (new desc markdown, a new schema field, a new chip/layout mechanism), document it there before ${trackedTreeDirty ? 'committing' : 'pushing'}. If it's just desc text or a new card following existing patterns, no action needed.`);
+    console.log(`[GEMINI.md REMINDER] index.html changed without GEMINI.md changing in the same ${indexDirty ? 'working tree diff' : 'commit'} -- if this introduced or changed a convention (new desc markdown, a new schema field, a new chip/layout mechanism), document it there before ${indexDirty ? 'committing' : 'pushing'}. If it's just desc text or a new card following existing patterns, no action needed.`);
   }
 } catch (error) {
   // Best-effort only (e.g. HEAD~1 doesn't exist yet on a repo's first commit) --
@@ -1173,7 +1178,7 @@ function cardFieldMap(source) {
   }
   return map;
 }
-if (trackedTreeDirty) {
+if (indexDirty) {
   let headHtml = null;
   try {
     headHtml = execFileSync('git', ['show', 'HEAD:12t_projects/bible/index.html'], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
