@@ -748,6 +748,7 @@ if (this.hasSkill(421))
 
 - **Metadata:** MP 0, SP **−2 / −3** (red), instant, enemy, `cType counter` (`decode_skilldata.py`).
 - **Stance** (`$RPC_counter1$29519`, `Wolf.cs:27912-28290`): Wolf stops, plays `counter1`, records `mTempHp = hp`, then checks every 0.2 s for **0.8 s**. As soon as `hp < mTempHp`, `mCounterDmg = mTempHp − hp` and it starts `RPC_counter2(…, sLv)` (`:28211-28230`). With no HP lost the stance just ends.
+- **No cooldown on a whiff (re-checked 2026-10-02):** the only `addTimeOut("counter", …)` in the source is in the strike (`Wolf.cs:28686`); the stance (`RPC_counter1`) sets none, so a Counter that catches no hit can be cast again at once (paying its SP again). Impulse uses the same strike.
 - **Strike** (`RPC_counter2`): `addTimeOut("counter", agiAdjust(30))` (`Wolf.cs:28686`), then `RPC_AddEffectDamage(330 + sLv, (int)(0.5 × ATK + sLv × mCounterDmg))` to every enemy in `FindRecTarget(pos − 2·rangeMod·fwd, fwd, 2, 2, 5, 3) × rangeMod` (`:28506`): 4 m wide, 5 m long starting 2 m behind, 3 m high. Purple Effect Damage. Impulse (#333/#334) calls the same strike.
 - Client tooltips: EN "Perform a counter move that returns 100% [200%] damage taken to the enemies in front." (`WolfSkill_eng.cs:664`, `:675`). Matches; it omits the `0.5 × ATK` and the 0.8 s window.
 
