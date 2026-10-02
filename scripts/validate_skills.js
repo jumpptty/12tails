@@ -1431,12 +1431,12 @@ let checkedWolfCombo = 0;
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "wolf_nAttack");
-  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion"];
+  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearMarshal", "wolfGearChampion", "wolfKatana"];
   const savedDeps = IDS.map(id => [id, deps[id]]);
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
-  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
+  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 6));
   // Coefficients: Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
   setDeps({ wolfFeralInstinct: 4, wildHeart: 1 }); select(3);
   const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
@@ -1463,11 +1463,29 @@ let checkedWolfCombo = 0;
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
   check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : "w");'));
   check("Marshal and Champion switch each other off", /const DEP_EXCLUSIVE = \{ wolfGearMarshal: \["wolfGearChampion"\], wolfGearChampion: \["wolfGearMarshal"\][, ]/.test(html));
+  // Katana (w_wlf59, Wolf.cs:15159-15175, :15990-16001, :16693, :17409, :17727): crit first, then floor(0.75x), stage 2 ceil(0.5x).
+  // Hand-computed at ATK 200, LCK 0, Feral off: raw (int)(c x 200) = 100 / 100 / 100 / 80 / 120.
+  {
+    inputs.atk.value = "200"; inputs.lck.value = "0";
+    const stageRanges = () => sk.dmgGroups.map(g => sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g)).map(r => r[0] + "-" + r[1]).join(",");
+    setDeps({}); select(3);
+    let got = stageRanges(); check("no Katana stages 100/100/100/80/120", got === "100-100,100-100,100-100,80-80,120-120", got);
+    setDeps({ wolfKatana: 1 }); select(3);
+    got = stageRanges(); check("Katana stages 75/50/75/60/90", got === "75-75,50-50,75-75,60-60,90-90", got);
+    // Champion set + Katana: crit can happen, so the top is the crit case: floor(0.75 x floor(1.8 x 100)) = 135, stage 2 ceil(0.5 x 180) = 90.
+    setDeps({ wolfKatana: 1, wolfGearChampion: 1 }); select(3);
+    got = stageRanges(); check("Katana + Champion stage tops 135/90/135/108/162", got === "75-135,50-90,75-135,60-108,90-162", got);
+    check("Katana keeps hat + armor crit only (Champion 11, Marshal 7)", sandbox.wolfComboCritBase() === 11, sandbox.wolfComboCritBase());
+    setDeps({ wolfKatana: 1, wolfGearMarshal: 1 }); check("Katana + Marshal crit base 7", sandbox.wolfComboCritBase() === 7, sandbox.wolfComboCritBase());
+    setDeps({ wolfKatana: 1 }); select(3);
+    let lo = Infinity, hi = -Infinity; for (let i = 0; i < 100; i++) { const x = sandbox._rollOneHit(sk, 3, undefined, false, 1); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+    check("Katana stage 2 Test roll never exceeds its raw-50 final range", lo >= 0 && hi <= sandbox._finalRangeForRange(sandbox._calcRangeFor(sk.dmgGroups[1].dmg, sandbox._resolveGroupAtkCoeff(sk, sk.dmgGroups[1]), sk.dmgGroups[1]))[1], `${lo}-${hi}`);
+  }
   // Range vs simulator, every toggle combination, both stat profiles.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
-    [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => ["", "wolfGearMarshal", "wolfGearChampion"].forEach(gear => {
-      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de }; if (gear) o[gear] = 1;
+    [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => ["", "wolfGearMarshal", "wolfGearChampion"].forEach(gear => [0, 1].forEach(kt => {
+      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de, wolfKatana: kt }; if (gear) o[gear] = 1;
       setDeps(o);
       for (let r = 1; r <= 3; r++) {
         select(r);
@@ -1476,10 +1494,10 @@ let checkedWolfCombo = 0;
           const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g));
           let lo = Infinity, hi = -Infinity;
           for (let i = 0; i < 400; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false, gi); lo = Math.min(lo, x); hi = Math.max(hi, x); }
-          check(`range/sim rank ${r} ${g.label} feral ${f} wh ${wh} de ${de} gear ${gear || "none"} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+          check(`range/sim rank ${r} ${g.label} feral ${f} wh ${wh} de ${de} gear ${gear || "none"} katana ${kt} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
         });
       }
-    }))));
+    })))));
   });
   inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
