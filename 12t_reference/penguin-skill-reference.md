@@ -154,7 +154,7 @@ dropped the luck-roll `R` term and the `ceil`/`clamp` wrappers) — always check
 memory of this file, if a number looks off. One Penguin-specific override: `agiAdjust` gets a further
 `×0.88` on cooldowns if `hasSkill(424)` ("revisedArt5") — 424 excludes nAttack/cAttack/emoticon/consumable-item cooldowns.
 - `focusIntellect` buff (from `pgn_focusIntellect5`, 421): consumed once by the caster's next damage spell as ×(1+0.01×(INT-100)), then removed.
-- `multiCast` status: granted by `doubleCast1`(sLv1)/`tripleCast2`(sLv2) (Basic tier) and by a 12% `lckAdjust` roll on **blink** casts once `doubleSpell5` (431) is learned (NOT "any spell" despite tooltip). Consumed 1 stack per subsequent cast of a `isDoubleSpell`-flagged skill (manaMissile, manaVortex-family exceptions apply — see below), firing one free extra cast. `iceBlock` uses a different multiplicative model (`mBlockCount = sLv + sLv×multiCastLv`, single-shot consumption).
+- `multiCast` status: granted by `doubleCast1`(sLv1)/`tripleCast2`(sLv2) (Basic tier) and, once `doubleSpell5` (431) is learned and the Penguin has no `multiCast`, by a `lckAdjust(12)` roll (`multiCast` Lv 1, flat 3 s) on every `isDoubleSpell` cast through `RPC_cast1` (Mana Missile, Mana Burn, Falling Comets, Frozen Blast, Arctic Wind, Ice Block; `Penguin.cs:20108`) and in the Blink (`:23163`, written as guard clauses) and Falling Stars (`:25500`) coroutines. Corrected 2026-10-03: an earlier version said Blink only. Consumed 1 stack per subsequent cast of a `isDoubleSpell`-flagged skill (manaMissile, manaVortex-family exceptions apply — see below), firing one free extra cast. `iceBlock` uses a different multiplicative model (`mBlockCount = sLv + sLv×multiCastLv`, single-shot consumption).
 - Global Class C economy passives (apply to EVERY other active skill, not tier-scoped): `revisedSkill5` (404) = 50% SP cost reduction on cast; `revisedMagic5` (414) = 20% MP cost reduction on cast; `revisedArt5` (424) = 12% cooldown reduction (excludes basic attacks/consumables).
 - No skill in the entire class has a coded cast-range gate (no "Target too far" check anywhere in Penguin.cs) — every targeted skill is `Range: Locked-on`; self/AoE-anchored skills are `Range: none` (radius stated separately, not as a Range chip).
 
@@ -261,7 +261,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 - No damage. Teleport distance `3×sLv+2` = 5m/8m (matches tooltip). Removes `lockStatus` level ≤ `2×sLv`. Ignores collision along a forward cone (base3/top3/length6/height2) during the move.
 - Range: n/a (self-movement, not a targeted skill).
 - `isDoubleSpell=true` (multiCast-eligible — a full second teleport).
-- **doubleSpell5(431)'s 12% multiCast-grant roll specifically triggers off blink casts**, not universally.
+- **doubleSpell5(431)'s 12% multiCast-grant roll** fires on Blink casts here, and also on every `isDoubleSpell` `RPC_cast1` cast and on Falling Stars (see the `multiCast` note above).
 
 ### pgn_mpTransfer1/2 (231/233) — active, RANK FAMILY (sLv1/sLv2)
 - reqLv 9/25, MP 30/60, SP 0, mode target, cType mpTransfer

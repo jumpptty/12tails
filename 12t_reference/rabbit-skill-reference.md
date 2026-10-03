@@ -617,7 +617,7 @@ Requirements (decode): Bunny Bargain Lv 5/11/17/23 (Bn 1/3/5/7), Special Deal Lv
 
 **New Order (`newOrder5`, `hasSkill(444)`)**
 - Every summon a Rabbit owner spawns gets `floor(1.5 ×)` on `hp, mhp, mp, mmp, atk, def, agi, vit, mag, cha, tal, lck` (Contract units, `Rabbit.cs:11798-11837`; generic summon event `CharacterControl.cs:29517-29584`).
-- Coin items: a coin whose `lv <= ceil(0.5 × PlayerData.Rank)` is used without being consumed (mana still costs 5, `GameGui.cs:36780-36803`). The Thai tooltip adds "use new coins when Rabbit returns to the scene" (not traced).
+- Coin items: a coin whose `lv <= ceil(0.5 × PlayerData.Rank)` is used without being consumed (mana still costs 5, `GameGui.cs:36780-36803`). The "mana" is the stage's shared pool `Game.mGameMana` ("Require 5 mana"), not the player's MP, and `PlayerData.Rank` is the account Rank (the value item levels are checked against, `CharacterDataClass.cs:3306`), not the character level. The Thai tooltip adds "use new coins when Rabbit returns to the scene" (not traced).
 
 **Truce Trading (`truceTrading1-2`, `RPC_truceTrading1`)**
 - Both ranks cast for `magAdjust(12)` seconds with a cast bar (one assignment, `Rabbit.cs:34425-34437`), not `6 / 12`; MP `20 / 30` (decode). The attempt succeeds when `LCK × sLv > Random.Range(0, target.hp)` (`:34105-34111`, needs `!target.isTraded`), i.e. the chance is `min(1, LCK × rank / target HP)`. On success it fires `RPC_truceTrading_fire<rank>` (`:34123`).

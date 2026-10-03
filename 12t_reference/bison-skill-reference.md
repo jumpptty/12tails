@@ -353,7 +353,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 ### bsn_powerHammer1-2 (Power Hammer, #302/#304): hammer conversion (verified 2026-09-29)
 
-- reqLv/reqBn 9/1 and 21/3, mode passive. `getPowerHammerLv()` (`Bison.cs:8192-8236`): 0 unless `isHammer()` (weapon is one of `w_bsn5`, `w_bsn15`, `w_bsn19`, `w_bsn22`, `w_bsn24`, `w_bsn25`, `:8284-8327`), then 1 with #302, 2 with #304. Effect described under Power Cleave: hammer branch, KO `10 x min(hammerLv, cleaveLv)`, no talAdjust, no hate, force x3.
+- reqLv/reqBn 9/1 and 21/3, mode passive. `getPowerHammerLv()` (`Bison.cs:8192-8236`): 0 unless `isHammer()` (weapon is one of `w_bsn5` Stone Hammer, `w_bsn15` Toy Hammer, `w_bsn19` BD Hammer, `w_bsn22` Defender Hammer, `w_bsn24` Defender Hammer V, `w_bsn25` Champion Barbell, `:8284-8327`; names from `WeaponData.cs`), then 1 with #302, 2 with #304. Effect described under Power Cleave: hammer branch, KO `10 x min(hammerLv, cleaveLv)`, no talAdjust, no hate, force x3.
 
 ### bsn_powerReel5 (Power Reel, #403): Power Cleave +50%, hate, cut and pull (verified 2026-09-29)
 

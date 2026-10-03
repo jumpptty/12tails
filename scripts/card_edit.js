@@ -26,7 +26,7 @@ function findCard(src, id) {
   return scanCard(src, ms[0].index);
 }
 
-// Walks from the card's "{" to its matching "}", skipping strings and template literals (with ${} nesting).
+// Walks from the card's "{" to its matching "}", skipping strings, template literals (with ${} nesting) and comments.
 // Returns { start, end, fields: [{ key, keyStart, valueStart, valueEnd }] } for depth-1 "key: value" pairs.
 function scanCard(src, start) {
   let depth = 0, q = null;
@@ -42,6 +42,9 @@ function scanCard(src, start) {
       continue;
     }
     if (c === '"' || c === "'" || c === "`") { q = c; continue; }
+    // Comments may contain quotes or backticks (mole_tnt), so skip them whole.
+    if (c === "/" && src[i + 1] === "/") { const e = src.indexOf("\n", i); i = e < 0 ? src.length : e; continue; }
+    if (c === "/" && src[i + 1] === "*") { const e = src.indexOf("*/", i + 2); i = e < 0 ? src.length : e + 1; continue; }
     if (depth === 1 && !cur) {
       const m = /^([A-Za-z_$][\w$]*)\s*:/.exec(src.slice(i, i + 64));
       if (m && /[\s,{]/.test(src[i - 1])) { cur = { key: m[1], keyStart: i, valueStart: i + m[0].length }; i += m[0].length - 1; continue; }
@@ -136,6 +139,11 @@ const SKILLS = [
   assert.ok(s.includes('desc:"v"'), "replace");
   assertParses(s);
   assert.throws(() => assertParses(s.replace('desc:"v"', 'desc:"v\nw"')), /breaks the page script/);
+  const cm = `{ id:"c_one", dmg:"1", // a \`sLv\` note with a backtick
+    /* and a "quote */ ko:"2", desc:"d" }`;
+  const card = findCard(cm, "c_one");
+  assert.deepStrictEqual(card.fields.map(f => f.key), ["id", "dmg", "ko", "desc"], "comments are skipped");
+  assert.ok(setField(cm, "c_one", "desc", '"e"').includes('desc:"e" }'), "set-field after a comment");
   console.log("card_edit selftest: all checks passed");
 }
 
