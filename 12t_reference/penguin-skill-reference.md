@@ -335,6 +335,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - Cast: flat `magAdjust(3)` all ranks.
 - Damage: `talAdjust(sLv×12+18)×(1+0.01×focusIntellect)`, falloff-scaled by distance (`1-0.5×clamp(dist/hitRange,0,1)`). KO 1, Hate 0. On hit: +1 SP to caster.
 - Applies `ice` status (slow, `moveMod -= 0.1+0.1×sLv`) level sLv, duration `chaAdjust(3)` (uncontested: scales with Penguin's CHA/LCK, enemy CHA has no effect).
+- **Tooltip mismatch (found 2026-10-03):** TH "(30dmg, 2sec)" … "(66dmg, 2sec)" (`PenguinSkill_thai.cs:543-576`) gives a 2 s slow; the code applies `ice` for `chaAdjust(3)` (`Penguin.cs:29536`). Card `tooltipNote`.
 - Range: AoE radius `2+sLv+(hasSkill(403)?2:0)` (6m→8m at max with frozenBreak5), self-centered, no cast-range gate, no target-lock required.
 - Class C mods: `frozenBreak5`(403) — +2m radius, and if target already has `ice`, bonus defense-ignoring `RPC_AddEffectDamage(403, 15×iceLv)` "Frozen Break!" burst.
 - `isDoubleSpell=true`.

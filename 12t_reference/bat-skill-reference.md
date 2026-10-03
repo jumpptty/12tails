@@ -375,6 +375,7 @@ Follow-up verification:
 ### bat_guardianOfTheNight1-2 (#271/#272) — active, rank family (verified 2026-10-01)
 
 - reqLv/Bn 35/23, 40/25; MP **70 / 90**; SP **−35 / −45** (red); instant, self (`decode_skilldata.py`). Cooldown `agiAdjust(600)` (`Bat.cs:30200`); status duration `chaAdjust(30 × rank)` (60 at rank 2).
+- **Tooltip mismatch (found 2026-10-03):** TH "(60 sec)" / "(90 sec)" (`BatSkill_thai.cs:532`, `:543`); the code is `chaAdjust(30 / 60)` (`Bat.cs:30592`). Card `tooltipNote`.
 - **Cast time:** `magAdjust(3 × rank + 7)` = **10 / 13 s** (`Bat.cs:30052`), then `RPC_guardianOfTheNight_cast` summons the boss (`:30163`).
 - **Boss melee** (`Bat_guardianOfTheNight.cs:848-1333`): `FindAreaTarget(boss, 4, 3)`, `hit(270 + rank, t, 66 × rank + 33, KO 3, 0, …)` = 99 / 165. Its AI loop, search radius and cast chance are in "Follow-up verification" above. Its other attack animations were not traced (no further `hit()` or Effect Damage call exists in that file).
 

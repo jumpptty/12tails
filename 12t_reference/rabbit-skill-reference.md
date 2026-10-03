@@ -201,7 +201,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `Rabbit.cs:114-120`), a state pre-arm on login (matching the Panda `fuujinKen`/`raijinKen` preemptive-
   `addTimeOut` precedent) — matches the real cast site exactly (`Rabbit.cs:40652`,
   `agiAdjust((float)180)`). Not a discrepancy.
-- **`bounce` applies a fixed `hide` status buff for 4s (Rank 1) / 8s (Rank 2)** (`Rabbit.cs:21068-21073`):
+- **`bounce` keeps Rabbit airborne for a fixed 4s (Rank 1) / 8s (Rank 2)** (`Rabbit.cs:21068-21073`). The `hide` status itself is set to `4×sLv + 1` (5 / 9 s), but `mBounceTimer = Time.time + 4×sLv` (`:21073`) triggers `RPC_bounce0` (landing, `:21114`), and landing calls `removeStatus("hide")` (`:21566`), so the effective duration is 4 / 8 s. **Tooltip mismatch (found 2026-10-03):** TH "(5 sec)" / "(10 sec)" (`RabbitSkill_thai.cs:114`, `:125`); card `tooltipNote`. Status call:
   `this.$self_$26924.mChar.StartCoroutine_Auto(this.$self_$26924.mChar.addStatus("hide", 1, 4 * this.$sLv$26923 + 1, 0, this.$self_$26924.mChar.ActorNr));`
   and sets `mBounceTimer = Time.time + 4 * sLv`. Fixed duration (not CHA-adjusted).
 - **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`,
@@ -463,7 +463,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Target Restrictions:** Cannot target self (`num == mChar.ActorNr`, `:6848`), machines (`Race == eRace.Robots`, `:6874`), or structures (`Race == eRace.Structure`, `:6887`).
 * **Range & Cooldown:** Range `16 + 5 * getNormalAttackLv()` (21m base at Combo Lv.1, up to 36m at Combo Lv.4, `:28183`). Cooldown `agiAdjust(30)` (`:28570`). Instant cast.
 * **Instant Remedy Cleanse:** Cast immediately applies `[remedy]` Lv.1 for 1s on target (`tChar.RPC_AddStatus("remedy", 1, 1, 0, ...)`, `:28282`). `remedy` iterates all statuses on target and calls `reduceStatusLv(sType, 1)` on all non-State, non-System debuffs (`CharacterControl.cs:37397-37485`), reducing each by 1 level (all Lv.1 debuffs are fully cleansed).
-* **Status `immunity`:** Target receives `[immunity]` with level `mImmunityLv` and duration `chaAdjust(15 + mLv * 5)` where `mLv = 1 + getMedicalEnhancementLv()` (1–4) (`Rabbit.cs:28287`). Duration: 20s (base), 25s, 30s, 35s. Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5705`, `:6668`) — Buff, Magical.
+* **Status `immunity`:** Target receives `[immunity]` with level `mImmunityLv` and duration `chaAdjust(15 + mLv * 5)` where `mLv = 1 + getMedicalEnhancementLv()` (1–4) (`Rabbit.cs:28287`). Duration: 20s (base), 25s, 30s, 35s. **Tooltip mismatch (found 2026-10-03):** TH "immunity1 (15 sec)" (`RabbitSkill_thai.cs:477`); card `tooltipNote`. Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5705`, `:6668`) — Buff, Magical.
   * **Level Stacking:** Shooting a target with current `immunity` level `< mLv` increments status level by +1 (`mImmunityLv++`); capped at `mLv`.
   * **Mechanics:** While active, `RPC_AddStatus` intercepts any incoming status where `this.getStatusLv("immunity") >= sLv` (`CharacterControl.cs:12671`), displays `-84` (Immune text), and aborts application.
   * **Exemptions:** Does not block `death`, `remedy`, `immunity`, or system statuses (`isSystemStatus`). Does not block direct damage or heals (`RPC_AddHeal`).
@@ -514,6 +514,7 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
 * **Effect:** Returns rank 1, 2, or 3 based on highest learned tier. Used exclusively by `mLv = 1 + getMedicalEnhancementLv()` in `RPC_medicalShot`:
   * Increases maximum status level cap for Immune Shot, Boost Shot, Heat Shot, and Life Shot from Lv.1 to Lv.2, Lv.3, or Lv.4.
   * Extends status duration by `+5s` per rank (`chaAdjust(base + mLv * 5)`).
+  * **Tooltip mismatch (found 2026-10-03):** TH "(lv.2, +10 sec)" / "(lv.3, +10 sec)" / "(lv.4, +10 sec)" (`RabbitSkill_thai.cs:521-543`); the code adds +5 / +10 / +15 s. The levels match. Card `tooltipNote` (ranks 1 and 3).
 
 
 ### rab_miracleBlend1 — active, single rank
