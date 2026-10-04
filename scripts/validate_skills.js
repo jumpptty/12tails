@@ -548,9 +548,10 @@ SKILLS.forEach(sk => {
 // the visible aggregate LCK chip and simulation are assembled separately in
 // renderHero(). Compare the rendered hero with deliberately changed Monkey
 // attack/talent/luck inputs so a missing renderHero own-stat override cannot
-// pass unnoticed again.
+// pass unnoticed again. Rabbit's Contract mercenary moves (ownStatsMerc) get
+// the same check: they attack through the mercenary's own stats.
 let checkedGaosHeroRouting = 0;
-SKILLS.filter(sk => sk.ownStatsGaos && sk.id !== "monkey_summonGaos").forEach(sk => {
+SKILLS.filter(sk => (sk.ownStatsGaos && sk.id !== "monkey_summonGaos") || (sk.ownStatsMerc && !sk.mercParent)).forEach(sk => {
   const ctx = `${sk.class} > ${sk.name} (${sk.id})`;
   for (let r = 1; r <= (sk.maxRank || 1); r++) {
     try {
@@ -573,7 +574,7 @@ SKILLS.filter(sk => sk.ownStatsGaos && sk.id !== "monkey_summonGaos").forEach(sk
       lck.value = DATA_ROLE_DEFAULTS.lck;
       checkedGaosHeroRouting++;
       if (gaosBaseline !== monkeyMutated) {
-        console.error(`[GAOS OWN-STATS ERROR] ${ctx} Rank ${r}: rendered formula/simulation changed when Monkey ATK/TAL/LCK changed`);
+        console.error(`[GAOS OWN-STATS ERROR] ${ctx} Rank ${r}: rendered formula/simulation changed when the player's ATK/TAL/LCK changed`);
         errorCount++;
       }
     } catch (e) {

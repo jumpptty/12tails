@@ -615,6 +615,37 @@ Requirements (decode): Bunny Bargain Lv 5/11/17/23 (Bn 1/3/5/7), Special Deal Lv
 - Units live 300 s (Light* `Awake()`, see the Duration citations above). The pre-arm `addTimeOut("contract", agiAdjust(180))` in `Start()` (`:105`) runs unconditionally in real game modes (`Game.mGameType > 4`); the `hasSkill(444)` check after it only guards `Game.useCoin = false` (`:114-120`), so the older note that the pre-arm is "gated by `hasSkill(444)`" was wrong.
 - **Coins:** with Contract, using an NPC coin item has a `Random.Range(0,100) <= lckAdjust(30)` chance to not consume the coin (`GameGui.cs:36812-36835`); the tooltip says 50%. Using a coin always costs 5 game mana (`Game.mGameMana >= 5`, `:36735-36835`) and needs `|coin.lv| <= PlayerData.Rank`.
 
+**Contract mercenaries (`lightPanther`, `lightLeopard`, `lightGolem`, verified 2026-10-04)**
+- **Stats:** prefab stats, from the `MONSTER_STATS` decode in the Bible; no `Light*.cs` overwrites them.
+
+  | Unit | HP | ATK | DEF | AGI | VIT | MAG | CHA | TAL | LCK | SP |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | LightPanther | 1,100 | 112 | 54 | 52 | 110 | 22 | 25 | 32 | 16 | 22 |
+  | LightLeopard | 2,400 | 204 | 45 | 43 | 240 | 30 | 49 | 42 | 70 | 20 |
+  | LightGolem | 10,000 | 176 | 115 | 65 | 2,000 | 80 | 45 | 88 | 24 | 10 |
+
+- **New Order:** multiplies every stat except SP by 1.5, floored (see New Order below). Every move is a `hit()` from the mercenary's own CharacterControl: its own ATK / TAL / LCK, then `dmgAdjust` / `defAdjust`.
+- **AI:** all three target `Hate.findClosestEnemy(pos, 20)`, the closest enemy within 20 m (`LightPantherAI.cs:1031`, `LightLeopardAI.cs:1139`, `LightGolemAI.cs:1027`). With no move in range they run to the target. Lifespan is 300 s (`Light*.cs:44`).
+- **`lightPanther_nAttack`** (`LightPanther.cs:1695-1844`):
+  - Hits 3 times, at loop steps 3, 6 and 10. Every other step skips the hit (raw guard `if (i != 3) if (i != 6) if (i != 10) goto skip`).
+  - Each hit: `FindRecTarget(pos, forward, 1, 1, 3, 2)` (2 m wide, 3 m long, 2 m tall) and `hit(1, (int)(0.5 × ATK), KO 1)`.
+  - Cooldown `2.5 + 0.1 × Random.Range(0, 10)` = 2.5–3.4 s.
+  - Used when the target is within 3 m (`sqrMagnitude − extents² < 9`, `LightPantherAI.cs:1320`).
+- **`lightPanther_javelin`** (`LightPanther.cs:2278`, `Panther_javelin.cs:188`):
+  - The spear is thrown on a trajectory at speed 24 toward the target's bounds centre, with a life of `3 × rangeMod` s.
+  - On every enemy collider it touches: `hit(11, (int)(0.5 × ATK + talAdjust(20)), KO 5)`. The projectile is not destroyed on a hit, so it pierces. It stops at layer 0 (the ground).
+  - Cooldown 12 s. Used when the target is 6–30 m away (`36 < d² < 900`, `LightPantherAI.cs:1276-1282`).
+- **`lightLeopard_nAttack`** (`LightLeopard.cs:1524-1656`): one `FindRecTarget(pos, forward, 2, 2, 2, 2)` (4 m wide, 2 m long), `hit(1, ATK, KO 2)`. Cooldown 3 s. Used within 2 m (`d² < 4`).
+- **`lightLeopard_leoSmash`** (`LightLeopard.cs:1898-2051`):
+  - One `FindRecTarget(pos, forward, 1, 1, 3, 3)` (2 m wide, 3 m long), `hit(1, ATK + talAdjust(20), KO 20)`.
+  - Spends `sp − 10` on cast. Cooldown 6 s.
+  - Checked before the normal attack, within 2 m and only while `sp > 20` (`LightLeopardAI.cs:1282`).
+  - The Leopard starts at SP 20 (New Order does not raise SP). It only gains SP from damage taken (+1 per instance). So it needs one hit before the first Smash, and 10 more before each one after.
+- **`lightGolem_nAttack`** (`LightGolem.cs:1326-2247`): one of three picks by `Random.Range(0, 100)` (`LightGolemAI.cs:1189-1213`), used within 3 m. Each is one `hit(1, ATK, KO 1)` per target, and the Golem gets `sp + 1` per target hit.
+  - `> 60` (39%), `RPC_nAttack1`: `FindRecTarget(pos − 1 up, forward, 2·rangeMod, 2·rangeMod, 4·rangeMod, 3·rangeMod)`. Cooldown 1 s.
+  - `31-60` (30%), `RPC_nAttack2`: the same box at `pos + 1 up`. Cooldown 0.5 s.
+  - `0-30` (31%), `RPC_nAttack3`: `FindAreaTarget(pos + 2.5 forward, 2, 3)`. Cooldown 0.5 s.
+
 **New Order (`newOrder5`, `hasSkill(444)`)**
 - Every summon a Rabbit owner spawns gets `floor(1.5 ×)` on `hp, mhp, mp, mmp, atk, def, agi, vit, mag, cha, tal, lck` (Contract units, `Rabbit.cs:11798-11837`; generic summon event `CharacterControl.cs:29517-29584`).
 - Coin items: a coin whose `lv <= ceil(0.5 × PlayerData.Rank)` is used without being consumed (mana still costs 5, `GameGui.cs:36780-36803`). The "mana" is the stage's shared pool `Game.mGameMana` ("Require 5 mana"), not the player's MP, and `PlayerData.Rank` is the account Rank (the value item levels are checked against, `CharacterDataClass.cs:3306`), not the character level. The Thai tooltip adds "use new coins when Rabbit returns to the scene" (not traced).
