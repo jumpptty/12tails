@@ -418,6 +418,36 @@ Raw Damage calc chip to support it (the app's history is in git).
 - `OnWarCapital` (`:43591-43930`): every 24 s, if `FindAreaTarget(Mole pos, 36, 10)` finds enemies (`:43842-43880`), `RPC_warCapital_fire` (`:43981-44270`) fires 8 missiles 0.15 s apart, each at a random target + up to 2 m random offset (`:43749-43806`). `RPC_warMissile_hit` (`:14589-14660`): `FindAreaTarget(point, 1, 1)`, `hit(−4444, t, talAdjust(50), KO 3, …)`. Tooltip "50 dmg × 8, Hp 1500" matches.
 - **Whose stats (re-checked 2026-10-02):** `RPC_warMissile_hit` is a method of the Mole script and calls `this.mChar.hit(-4444, t, this.mChar.talAdjust(50), 3, …)` (`Mole.cs:14658`), so the damage uses the **Mole's** TAL and LCK; the base's own stats feed nothing. Card: reference-only "War Capital Stats" table (`warCapitalOwnStats()`), every cell shown as not used; the damage formula reads the player's TAL.
 
+### Mole-only mounts: moleTank (Mole's Tank, `o_mol2`) and gigaCannon (Giga Cannon, `o_mol3`) (verified 2026-10-04)
+These are mount items, not skills: no skill number, no MP/SP cost.
+- **Items** (`MountData.cs:421-460`): `o_mol2` "Mole's Tank" is item Lv 35; `o_mol3` "Giga Cannon" is item Lv 60.
+- **Using the item** (`GameGui.cs:36296-36377`):
+  - Both refuse a non-Mole ("Only moles can use this mount.").
+  - Stage mana is `5` for the tank and `50` for the Giga Cannon, charged only when `Game.mGameType > 3` (`:36500-36560`).
+  - The English tooltip's "Uses 20 mana" for the tank is wrong (`MountData_eng.cs:191`). The Thai string says 5.
+  - Giga Cannon also needs `hasSkill(421)` Genius Invention ("Require geniusInvention skill."), is refused when `mGameType <= 3` ("Cannot use mount here"), and allows one per team: any `GigaCannon` already on the player's layer blocks it ("Only one GagaCannon is allowed per team.", also re-checked in `Mole.cs:50128-50182`).
+- **Cast:** `Mole.RPC_useMount` casts `magAdjust(6)` for every Mole mount (`Mole.cs:50331-50337`). `CharacterControl` then loads `MoleTank` / `GigaCannon` (`:45450-45462`) as a player-controlled `isTransform` character and calls `onMount(rider)`.
+- **Stats** (`MoleTank.cs` / `GigaCannon.cs` `onMount`):
+  - Each stat is the rider's `getNoDeltaStat` (base, no buff deltas).
+  - Tank: DEF +50, VIT +50. Giga Cannon: DEF +50, VIT +500.
+  - `mhp = 10 × vit`, `mmp = 3 × mag`, `msp = floor(0.2 × tal) + 10`.
+  - `mko = floor(def / 3) + 10` (tank) or `+ 150` (Giga Cannon).
+  - Current HP / MP / SP / KO copy the rider's fractions.
+  - So every hit uses the Mole's base ATK and LCK.
+- **moleTank_cannon** (`MoleTank.cs` `RPC_nAttack`, `MoleTank_nAttack.cs`):
+  - Normal attack while `moveSpeed <= 2`, disabled when `Game.mGameType < 4`. Cooldown `addTimeOut("nAttack", 0.5)`.
+  - The shell flies at 36 for `2 × rangeMod` s and explodes on the first collider not on the tank's layer.
+  - Explosion: `FindAreaTarget(hit − 0.5 up, 5, 3)`, `hit(1, ATK, KO 1)` per target.
+- **moleTank_ram** (`RPC_rAttack`):
+  - Triggered by a normal attack while `moveSpeed > 2`, or by any charge. Shares the `nAttack` timeout and sets it to 2 s.
+  - Dashes at speed 6. Six checks 0.15 s apart, each `FindRecTarget(pos, forward, 1, 1, 3, 3)` (2 m wide, 3 m long) with `hit(1, (int)(0.75 × ATK), KO 4)`, so up to 6 hits on a target that stays in front.
+- **gigaCannon_shot** (`GigaCannon.cs` `RPC_nAttack` / `RPC_nAttack_hit`):
+  - The turret never moves. Horizontal input turns `cannon1` at 12°/s; vertical input sets `cannon2` elevation, clamped to 30-90°.
+  - Cooldown `addTimeOut("nAttack", 6)`, with an on-screen countdown (`OnGUI`). `RPC_create` sets the same 6 s timeout, so the first shot also waits.
+  - Projectile: `mVelocity (0, 0, 30)` with a gravity Rigidbody (prefab `nAttack_fire`), life 6 s. On a 45° shot over flat ground that is about 92 m.
+  - Explosion: `FindAreaTarget(hit − up, 24, 6)`, `hit(1, floor(1200 × (1 − 0.5 × dist / 24)), KO 10)`, i.e. 1,200 at the centre down to 600 at 24 m, then the usual `dmgAdjust` / `defAdjust`.
+  - Charging only shows "GigaCannon doesn't need charge attack!".
+
 ## Server Balance Variations (TTO)
 
 Private-server values are documented from the Bible skill-detail schema; the BigBug decompile remains the original-server baseline.

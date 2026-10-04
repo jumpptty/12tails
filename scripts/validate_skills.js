@@ -2273,10 +2273,11 @@ let checkedDepStrip = 0;
       else checkedDepStrip++;
     }
   }
-  // 7. every card except the "sup_" support skills has an internal skill ID (new cards need an entry in SKILL_INTERNAL_ID)
+  // 7. every card except the "sup_" support skills and mount items (mount:true, no skill number) has an internal skill ID
+  //    (new cards need an entry in SKILL_INTERNAL_ID)
   {
     const table = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
-    const missing = SKILLS.filter(s => table[s.id] === undefined && !String(s.icon || "").startsWith("sup_")).map(s => s.id);
+    const missing = SKILLS.filter(s => table[s.id] === undefined && !String(s.icon || "").startsWith("sup_") && !s.mount).map(s => s.id);
     if (missing.length) { console.error(`[DEP ORDER ERROR] cards with no SKILL_INTERNAL_ID entry: ${missing.join(", ")}`); errorCount++; } else checkedDepStrip++;
   }
   const byId = (id) => SKILLS.find(s => s.id === id);
