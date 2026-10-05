@@ -1019,9 +1019,10 @@ let checkedPanelMarkup = 0;
   check("stat presets autosave: no save / clear buttons", count("preset-save") === 0 && count("preset-clear") === 0);
   {
     const m = html.match(/const CLASS_STORY_ART = (\{[^\n]*\});/);
-    const keys = m ? Object.keys(JSON.parse(m[1])) : [];
+    const storyArt = m ? JSON.parse(m[1]) : {};
     ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
-      check(`CLASS_STORY_ART is missing the ${c} portrait (the PRESET window cards)`, keys.includes(c)));
+      check(`CLASS_STORY_ART needs 5 colour portraits for ${c} (one per PRESET card)`,
+        Array.isArray(storyArt[c]) && storyArt[c].length === 5 && storyArt[c].every(s => /^data:image\/webp;base64,/.test(s))));
   }
   check("stat presets must keep their localStorage key (renaming it would drop every saved preset)", html.includes('"12t-bible-stat-presets"'));
 }
