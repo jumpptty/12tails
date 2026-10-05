@@ -1,0 +1,2 @@
+# Shell scripts (Claude Code hooks) must keep LF on every machine; a CRLF copy breaks sh.
+*.sh text eol=lf
