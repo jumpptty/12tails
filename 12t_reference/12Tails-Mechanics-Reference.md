@@ -177,11 +177,14 @@ forceAdjust(v)= forceMod * v        // knockback vector scaling
 ### 2.3 Defender side — `defAdjust(d)` (CharacterControl.cs:20524)
 The **live mitigation formula**:
 ```
-N     = clamp(DEF + R, 1, 512)               // R uses the DEFENDER's luck
-light = max( d - 0.5 * N , 1 )               // flat armor component
-heavy = max( d * (1 - N/(N + 64)) , 1 )      // percentage component
+N     = clamp(DEF + R, 1, 512)                       // R uses the DEFENDER's luck
+light = max( (int)( d - 0.5 * N ) , 1 )              // flat armor component, truncated to int (num2)
+heavy = max( (int)( d * (1 - N/(N + 64)) ) , 1 )     // percentage component, truncated to int (num3)
 taken = ceil( 0.35 * light + 0.65 * heavy )
 ```
+Both parts are `int` locals (`num2`, `num3`, `CharacterControl.cs:20524-20570`), so each is truncated **before** the
+35/65 mix; only the mix is rounded up. Using the un-truncated parts overshoots by 1 on some inputs (found 2026-10-06
+while fitting TTO Gorgon Shot readings). The Bible's `defAdjustAtRoll` already truncates both parts.
 Interpretation: 35% of the hit is reduced by flat armor (`−DEF/2`), 65% by a diminishing-returns percentage
 (`DEF/(DEF+64)`). DEF has *no* hard cap on usefulness but the percentage term saturates (e.g. DEF 64 → −50% on
 the heavy part; DEF 192 → −75%).
