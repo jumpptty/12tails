@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Safe, field-level edits to SKILLS cards in 12t_projects/bible/index.html (GEMINI.md §1: never retype a whole card).
+// Safe, field-level edits to SKILLS cards in 12t_projects/bible/index.html (12t_projects/bible/CLAUDE.md §1: never retype a whole card).
 //
 //   node scripts/card_edit.js add-field   <cardId> <key> <js-source>        add a top-level field (fails if present)
 //   node scripts/card_edit.js set-field   <cardId> <key> <js-source>        replace a top-level field's value

@@ -6,7 +6,7 @@ description: Research and implement a 12 Tails Online skill into the Bible skill
 
 When this command is invoked with `/sd <Class> <Skill Name>` (or `/skill <Class> <Skill Name>`):
 
-Execute the full **Skill Verification & Quality Assurance Pipeline** defined in [12t_projects/bible/GEMINI.md §3](12t_projects/bible/GEMINI.md#3-skill-verification--quality-assurance-pipeline):
+Execute the full **Skill Verification & Quality Assurance Pipeline** defined in [.claude/skills/bible-skill-research/SKILL.md](../../.claude/skills/bible-skill-research/SKILL.md), on top of the core rules in [12t_projects/bible/CLAUDE.md](../../12t_projects/bible/CLAUDE.md):
 
 ---
 
@@ -28,12 +28,12 @@ Output a structured review table containing:
 2. **Source Code Proof & Citations:** Exact snippets and `file:line` references for dispatch, modifiers, hit loops, and status applications.
 3. **Client In-Game Tooltips:** Thai and English tooltips cited from `*Skill_thai.cs` and `*Skill_eng.cs`.
 4. **Proposed Header Description (`desc`):** Authentic client phrasing as baseline, qualitative over quantitative, dynamic highlights with `**bold**`, clear mention of hidden mechanics and verified geometries.
-5. **Proposed Card Schema:** Complete `SKILLS` JavaScript object ready for `12t_projects/bible/index.html` (following `12t_projects/bible/GEMINI.md`).
+5. **Proposed Card Schema:** Complete `SKILLS` JavaScript object ready for `12t_projects/bible/index.html` (following the `bible-card-fields` and `bible-desc-writing` rules, `.claude/skills/bible-card-fields/SKILL.md` / `.claude/skills/bible-desc-writing/SKILL.md`).
 
 ---
 
 ## 3. Implementation & Validation (Upon User Confirmation)
-1. Update card definition in `12t_projects/bible/index.html` using out-of-process Node patch scripts (adhering to `12t_projects/bible/GEMINI.md §1`).
+1. Update card definition in `12t_projects/bible/index.html` using out-of-process Node patch scripts (adhering to `12t_projects/bible/CLAUDE.md` §1).
 2. Ensure reciprocal `compatSkills` links on all related skills.
 3. Prepend planned commit subject to `CHANGELOG_DATA` in `index.html`.
 4. Run `node scripts/validate_skills.js` to ensure 100% integrity pass before committing.

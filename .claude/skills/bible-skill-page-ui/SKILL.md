@@ -1,0 +1,56 @@
+---
+name: bible-skill-page-ui
+description: "Use when changing the skill details page behaviour or layout in 12t_projects/bible/index.html: the dependency strip and dep toggles (depSink, DEP_EXCLUSIVE, ordering), the delta motion (light balls, flips, pings, heroSnapshot/heroDelta), the player/enemy stat panels and class badge, stat-input glow, phone layout, deep links (#skill-details/...), the Buff/Debuff popup and server toggles."
+---
+
+# Bible: skill details page UI and behaviour
+
+Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../12t_projects/bible/CLAUDE.md)).
+
+## Phone layout
+* **Phone layout (<900px, `html.tool-wide-hero`):** no `fitStageToScreen()` scaling; page scrolls; one column (search + card + related first, stats panels after via `order:1`); Test popup fixed at `top:26vh`; stat tooltips under the value (`positionStatTooltips()`); `.view` `animation-fill-mode:none` (its transform would break `position:fixed`). <560px: LCK-variance and Final chips full width.
+
+## Delta motion and dependency strip
+* **Delta motion (2026-10-05):** `renderHero()` is a wrapper: `heroSnapshot()` → `renderHeroNow()` (the real rebuild) → next frame `heroDelta()`. Changed `.sk-stat` / `.sk-dmg` chips, `.sk-cost-badge`s, desc `.sk-val`s and desc `[status]` keywords get `.sk-delta` (gold flash + expanding outline ring); tooltip text counts as part of a field, so a tooltip-only change also triggers. A `button[data-dep-id]` whose rank, on-state or icon changed flips. Better (rank up, or on): `.sk-dep-flip-on` and a three-dot gold comet (`.sk-shot`, WAAPI arc) flies from the icon to every changed field, nearest first, pinging it on impact. Worse (rank down / off): each field flashes red (`.sk-delta-down`), a red comet (`.sk-shot.is-red`) flies from it back into the icon, and the icon's `.sk-dep-flip-off` is delayed so it turns grey as the last one lands. With no dep source, if exactly one stat input (player 8 + LV, enemy 8; `statInputs()`) changed, comets glow in that stat's `--stat-<key>` colour and fields ping with `.sk-delta-stat` (`--delta-c`); the direction follows the stat, not the value it drives: higher stat = input → fields (more AGI still shoots out although the cooldown drops), lower = fields → input. Fires on every keystroke. Several stats at once (enemy preset) fall back to the gold flicker. Flicker lengths: ping 1.4 s, text 1.6 s. When any `.sk-dmg-formula` in a `.sk-dmg-row` changed, the row's changed chips are replaced by the row itself (formula + Raw + Final = one block, one comet, one ping). Deps in `WORSE_WHEN_ON` (inside `heroDelta`: `wolfKatana`, `rabW59`, both ×0.75 weapons) count as worse when switched on (red comets in) and better when switched off; the flip class always follows the button's real on-state. The clicked dep button always flips, even when its icon and stored rank don't change (capture-phase click on `displayEl` → `depClicked`). While the server pop-up is open the comparison is held (`deltaHeld`) and `hideServerPopup()` plays it against the state before the first switch. `depClicked` / `deltaHeld` are `var` and the group selectors live inside `deltaFields()`, because `renderHero()` can run before those lines during mount. Rank / server / buff changes with no dep source just ping in a 30 ms cascade; switching skills plays nothing. Fields are matched by order within each group, popups excluded. Plays under reduced motion too (user request, same as the Test floats). New value-bearing chips should use one of those classes to join in; keep the edit inside `renderHeroNow()`.
+* **Dependency strip (`depSink` / `renderDepStrip`, spec `docs/superpowers/specs/2026-09-26-dep-strip-design.md`):** every dep button lives in one `.sk-dep-strip` under the description.
+  * Range exactly `0..1` → toggle; anything else → rank selector. `renderDmgToggle` on `0..N` jumps off ↔ max unless the dep sets `cycleRanks:true`.
+  * Item = 40px icon (grayscale when off) + `label` + effect tags `CD CAST DUR CHANCE DMG HITS KO SHIELD STATS INFO`, coloured by stat. A dep used at several sites shows once with merged tags.
+  * A rank dep may give `iconFor(rank)` / `labelFor(rank)` when its icon or label is not `<icon base><rank>` (Chameleon Piercing Venom / Deadly Venom, target poison level 0-6, crit bow). A duration/cd dep may give `addFor(rank)` for a non-linear addend (Increased Poison 0-3 / Deadly Venom: +2/4/6/10 s). Name a passive's dep id after its card (`increasedPoison` → `chameleon_increasedPoison`) so `[DEP BACKLOG]` resolves it.
+  * **Order:** `renderDepStrip()` sorts skill toggles ascending by internal skill ID (`SKILL_INTERNAL_ID`, card id -> lowest `commandNum` of the family in `<Class>Skill.cs` `getSkillTree()`). A toggle is matched to a card by `<class>_<dep id>`, `common_<dep id>`, or its icon key without the rank digit. Gear, target-condition and mode toggles (`DEP_NOT_SKILL`, or no match, or the selected card itself) follow in insertion order. Each item carries `data-dep-order`; a new card needs a `SKILL_INTERNAL_ID` entry (`[DEP ORDER ERROR]`); a new condition toggle that borrows a skill icon goes in `DEP_NOT_SKILL`.
+  * Add deps via `renderDmgToggle(dep, TAG)`, `renderDmgRankToggle(dep, TAG)`, `renderDepBlock(dep, rank, "", TAG)`, or `depSinkAdd(dep, TAG, html)`. Non-dep controls (SP/HP/weight/height inputs, Nine Steps rows) stay in the damage header. `[DEP STRIP ERROR]`.
+
+## Class Badge in the Player Stat Panel
+
+* `.sk-class-badge` opens the player panel: class portrait + name + caption "ค่าสถานะตัวละครของคุณ". Portraits come from `CLASS_PORTRAITS` (96×96 colour PNGs from `minimal_class_icons/bg_removed/<Class>.png`), not `CLASS_ART` (the line-art backdrop). `updateClassBadge(cls)` is called from `renderHero()`; Common skills show the caption only; 40px portrait under `max-height:820px`. A new class needs a portrait (`[PORTRAIT ERROR]`). The Revised Art button sits at the badge's right end.
+* **Enemy badge** (`.sk-class-badge.sk-enemy-badge`): its own red card above the enemy stats with preset icon, name, caption "ค่าสถานะตัวละครเป้าหมาย" and the immunities "i" button. Clicking the icon opens a 3-column `ENEMY_PRESETS` picker (closes on choice / outside click / Esc); choosing writes the values and clears "Custom". Hand-edits show "?" + "Custom". Ctrl+Z (outside text fields) undoes enemy changes, 20 deep (`selectEnemyPreset` / `undoEnemyChange`). Long names shrink via `fitEnemyName` (≥9/≥12/≥14 chars → 13/12/10.5px). Enemy panel is always visible; its stat grid keeps an empty first cell to align with the player's CHAR LV column.
+* Captions never wrap (`white-space:nowrap`; Thai has no spaces). `[PANEL ERROR]` guards the structure (no toggle, arrows or `.sk-controls-actions` row).
+
+## Player Stat Input Highlighting (Stat Signature Accents)
+
+1. `getUsedPlayerStatKeys(skill)` reads `cdWrapped`, `castWrapped`, `durWrapped`, `dmg`, `atkCoeff`, `defCoeff`, `lckProc`, deps.
+2. `.sk-stat-glow-<key>` uses `--sg-color` for border/label/number and a static glow.
+3. CHAR LV glows only when its controlling dep is on (`getDepRank(dep) === dep.maxRank`).
+4. LCK glows only on a direct read (`lckProc`, literal `lckCoeff`, `lckAdjust()` in formula text), not for rolls inside `*Adjust`.
+5. Summon sub-moves exclude player ATK/TAL/AGI per ownership flags (`ownStats`, `ownStatsDmgOnly`, `ownStatsKaiser`, `ownStatsPhoenix`, `phoenixFireballCd`).
+6. **Summon stat feed** (`getSummonFeedPlayerStatKeys`): a player stat glows when its feeding dep is on **and** the fed summon stat is in `getUsedOwnStatKeys(skill)`. Feeds: Double Bot / Hidden Turret: CHAR LV → all; Synchro Mole: TAL → ATK/DEF; Phoenix Fire Soul: each stat → same (INT → MAG); Gadina Earth Soul: same 8-stat feed; Aegis of Earth: VIT → VIT. VIT also feeds MHP (`10×vit`). King Kaiser, Gaos, Ja and the Rabbit Contract mercenaries feed nothing. `[SUMMON FEED ERROR]`.
+
+## Deep Links to Skill Cards
+
+* Site: `https://jumpptty.github.io/12tails/12t_projects/bible/` (repo-root `index.html` forwards the hash).
+* Format `#skill-details/<skillId>[?server=tot|tto]`; a server the skill has no override for is dropped. Legacy `#skill-cooldown-lookup` also accepts an id.
+* `route()` → `container._selectSkillById(id, server)`; unknown id → empty search view; deep link skips search auto-focus.
+* `selectSkill()`, server buttons and selection clearing call `syncSkillHash()` (`history.replaceState`: no history entries, no GoatCounter hits).
+* GoatCounter stays tool-level (`getGoatPath()` strips after the tool id).
+* Not possible on static hosting: path-style URLs, per-skill link previews.
+* Validator §3b drives the real `route()`.
+
+## Buff / Debuff Popup: Server Toggle & Quick Switches
+
+1. **Popup server (`bdServer`: og/tot/tto):** own selector, independent of `currentServer`, session-only; decides which entries exist and their values.
+2. **Per-entry server data:** `STAT_BUFFS` / `MOD_DEFS` entries may carry `servers:{tto:{...}, tot:{hidden:true}}` and/or `onlyServers:[...]`. `bdResolve(entry, server?)` returns the effective entry or `null`; the lists, `statBonus()`, `playerDamageModCalc()`, `enemyHitModCalc()`, `finalMultCountCalc()` all use it. Selections are kept by id across servers. Only verified values.
+3. **Quick switches (`buffsSuspended` / `debuffsSuspended`):** suspend a whole side without clearing it; dims the button, popup shows `Off`; session-only.
+4. **Character Hit Mod tool (`chm*`)** is separate: reads `MOD_DEFS` directly, has its own server toggle (`simState.server`, `#chmServerToggle`; `chmModOnServer()`; TTO opens `showChmServerPopup()` with `CHM_TTO_NOTE`). On TTO its inline `maxRAtk`/`maxRDef` rolls are 0 and the Poseidon HP Drain chance skips `chmLckAdjust`. **Its damage math does not use `tdlRoll`; mirror TTO changes by hand.**
+5. **Final multipliers:** `STAT_BUFFS` `mult:{int:1.24}` = final multiplier after additive buffs (`floor((base+additive)×mult)`, epsilon-guarded), shown as `+N`. Uses: `recurrentNova5` (ToT only), TTO `honor4` (+50 CHA). **Final Multiplier section is ToT-only** (`finalMult1-3` `onlyServers:["tot"]`; custom `finalMult` via `finalMultOnServer()`; entries kept). Badges count only entries `bdResolve` keeps. `[FINAL MULT ERROR]`.
+6. **Custom buffs/debuffs:** `+ Add` per section; `{id, kind, name, stat?, value}` in `localStorage["12t-bible-custom-bd"]` (ON/OFF is session state, new = ON). Kinds: `stat` (int ≥ 0, one stat or `all`, additive before `mult`), `dmgMod` ([-10,10]), `finalMult` (0–1000%, ToT only, one `ceil` step after the built-in 5% stacks), `hitMod` ([-10,10]), `enemyStat` (int, |N| ≤ 9999). Rules in `validateCustomBd()` (name required, ≤24 chars; storage re-validated on load). Names HTML-escaped.
+7. **Enemy stat changes:** `enemyVal(el)` (typed value + net change, not floored; formulas clamp) replaces every direct enemy CHA/LCK/DEF read. Panel shows `+N = total` / red `-N = total` (`.sk-stat-bonus.neg`). `finalMultiplierAdjust(dmg, x)` takes a step count (CHM) or an array of percent steps.
+8. **`ENEMY_STAT_DEBUFFS`** (same shape as `STAT_BUFFS`, `enemyStatBonus()`, toggles `bd-estat`): first entry `shame6` (Bat Shame Lv.6, -60 CHA).

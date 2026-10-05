@@ -1,0 +1,92 @@
+---
+name: bible-damage-model
+description: "Use when changing how a Bible skill card computes damage: dmg formulas, Raw/Final ranges, the Test simulator (rollOneHit, calcRangeFor), crit (critProc, crit view, critProc.post), purple Effect Damage (effectProc, effectDamageDep), LCK-difference damage, rawModel cards (Rabbit, Sheep, Chameleon, Panda), dmgMult, TTO no-LCK rolls, Cat Power, Open Wound, Panda SP/target inputs."
+---
+
+# Bible: damage formulas, ranges and the Test simulator
+
+Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../12t_projects/bible/CLAUDE.md)).
+
+## Crit view, dmgMult, critProc.post
+* **Crit view ("ดูสูตรคริ"):** a card with `critProc` or `rawModel.critBase` (Wolf Combo, Bison Combo, Sheep Book Bash, Sheep Combo, Rabbit Combo) shows a toggle in the damage header (`data-role="crit-view"`, session-only top-level `critFormulaView`). While on, the card shows the crit-proc case: `renderOneDmgFormula` wraps the formula as `⌊1.8 × (…)⌋` (`rawModel` cards draw their own through `formulaItems` ctx `crit`, so the Rabbit shotgun closes the bracket before its Hyper Shot term), Raw and Final ranges are the crit case at both ends, and Test always rolls a crit. It works whatever the gear (the view is hypothetical); `critViewOn(skill)` is the single check. `[CRIT VIEW ERROR]` pins the card list, the formula text, the ranges and range-vs-simulator in the view.
+* **`dmgMult: <number>`** (usually inside `servers.<srv>`): a whole-damage multiplier for patch notes that say "+X% base damage" with no formula, applied after the raw value like `dmgMultDep` (`Math.trunc`) in the Test roll, the range and the formula numbers. Used for ToT Panda Tiger Toss / Rising Dragons / Wind & Cloud / Rain & Storm.
+* **`critProc.post(v, group)` / `critProc.postLabel(group)`** (Wolf Combo's Katana, `w_wlf59`): a monotonic step applied to the crit-rolled raw value, before `hit()` / Effect Damage (and before Dark Edge's `effectLckRoll`). `rollOneHit`, `calcRangeFor` (both ends and `noCritRange`) and `renderOneDmgFormula` all apply it; `postLabel` returns `[open, factor, close]` to wrap the formula (`⌊0.75 × (…)⌋`, `⌈0.5 × (…)⌉`), or `null` when off. Per-stage variants read a flag on the `dmgGroups` entry (`katana:"half"`).
+
+## Test button and server cards
+* **Test uses the server card:** every Test entry point (`revealMultiHit`, the main and per-group Test buttons) starts with `const selected = activeSimSkill()` (= `getActiveSkill(selected, currentServer)`), so `servers.tto` / `servers.tot` damage overrides reach the roll. `[SERVER SIM ERROR]` rolls every server damage override inside its own range.
+* **Test button (`simulateBtnHtml()`):** the only filled gold pill (`--gold` bg, `--ink` text), full width under Final. Labels `ทดสอบดาเมจ` / `ทดสอบฮีล` / `ทดสอบ Hate`; starburst icon (✚ for heals); hit count `×10 ฮิต` / `×3–5 ฮิต` / none for single-hit. Per-mode buttons `small:true`. `.is-new` pulses until any Test is clicked (`markSimSeen()`, `localStorage["12t-bible-sim-seen"]` in try/catch; off under reduced motion). `[TEST BUTTON ERROR]`.
+
+## Class-wide damage rules (Cat Power, TTO no-LCK, Open Wound)
+* **Cat Power series (`CAT_POWER_DEP`, id `catPower`, 0..4 = Off / +10% / +20% / +30% / +70%):** base engine applies Power One/Two/Three/Seven/Super Seven to all Cat damage (`CharacterControl.cs:2838-3010`), shared state across Cat cards.
+  * **TTO (user-reported):** only Tree A (Gambler) skills, via `isCatPowerApplicable(skill, server)`. Every non-Class-A Cat damage card carries `servers:{tto:{changeNote:"• [NERF] Power 1 2 3 7 and Super Seven มีผลกับแค่สาย Class A"}}` (add it to every new Tree B / Class C damage card); Combo drops Power Seven/Super Seven from `desc`/`compatSkills` on TTO and vice versa. `[CAT POWER TTO ERROR]`.
+* **TTO: no LCK roll in `talAdjust`/`dmgAdjust`/`defAdjust` (user-reported):** implemented once as `tdlRoll(R)` (0 on TTO) inside `talAdjustAtRoll`, `dmgAdjustAtRoll`, `defAdjustAtRoll`. Always call these cores, never re-implement the formula. `agiAdjust`/`chaAdjust`/`magAdjust` and inline rolls (`effectLckRoll`) keep their roll. `usesTdlRoll(skill)` offers TTO automatically. The changes popup does not mention it (user decision). `[TTO NO-LCK ERROR]`; a new runtime formula variable needs adding to the sweep's `needsVars`.
+* **Open Wound (`CAT_OPENWOUND_PROC`, id `openWound`, default off):** on = target assumed at Disarm 2 + Bleed 2 → `30×(2+2)` = 120 purple per landed hit; on Disarm/Bleed it also adds +3 s to the contested duration. `desc` ends with `**Open Wound:** ดาเมจม่วงเพิ่มเติมทุกฮิต`, or with `effectProc.hits`: `**Open Wound:** ดาเมจม่วงเพิ่มเติม__เฉพาะฮิตที่ x,y__`. Combo uses `catComboOpenWoundLine`.
+
+## Damage model details
+
+### Purple Effect Damage mixed into normal hits (`effectProc`)
+
+Purple = the Effect Damage path: no dodge, no `damagePlus`/`dmgAdjust`/`defAdjust`, no direct-hit reduction, `hitMod` rounded **down** ([12Tails-Mechanics-Reference.md §2.9](../../../12t_reference/12Tails-Mechanics-Reference.md)). KO not simulated.
+
+* **`effectProc: {mode:"replace", chance:(rank)=>base%, dmg?}`:** hit turns purple instead of white when `floor(random×100) < lckAdjust(base)`. `dmg` overrides the purple formula. Pair with a `lckProc` (`simulate:false`). Whale Sweep / Javelin / Peninsula Impale via `WHALE_WALLPUNCTURE_DEP` (0–4) / `WHALE_WALLPUNCTURE_LCK`.
+* **`effectProc: {mode:"bonus", amount:(rank,{LV})=>n, status?, preset?, controls?}`:** extra purple on top of each white hit (0 when off). `status`: only while the target has that status (checked before the hit's own proc). `preset`: 0/1 dep "target already has it". `controls`: header deps. Used by Arctic Wind (Deadly Frost), Frozen Blast (Frozen Break × `PENGUIN_TARGET_ICE_DEP`), Panda via `PANDA_SHADOWFIST_PROC`.
+* **`effectProc.hits: [n,...]` or `(rank)=>[...]`:** 1-based hit numbers (across all `dmgGroups`) that get the bonus; absent = all. Finishing Blow `[3]` (`Cat.cs:38923`); Combo skips hit 2 with Hidden Blade on (`Cat.cs:17390-17507`).
+* **`dmgGroups[i].effectDamage:true`:** the whole group is purple (Megalodon pull ticks); its range is tagged `.purple`.
+* **Final range:** replace = `[min(white,purple), max(white,purple)]` when chance > 0; bonus = `[white min, white max + bonus]` (minus one bonus if a `status` bonus can't hit the first tick). Purple ends drawn with `.dmg-effect` (not for `dmgGroups` cards).
+* **Sim totals:** gold total (`dmgdigit_y0–9`) with white/purple sub-totals (`.sk-mix-parts`, purple hidden at 0); each popup white or purple.
+* **Implementation:** `rollOneHit(..., opts)` sets `lastRollPurple`; `revealMultiHit` adds bonuses and splits totals. `[RANGE/SIM]` + `[EFFECTPROC ERROR]`.
+* **`effectProc.noCrit:true`** (replace only, Whale Combo): the purple roll skips `critProc` and the purple range uses the raw range before the crit (`range.noCritRange`).
+* **Mole Smart Shell** (`MOLE_SMARTSHELL_PROC`, bonus 30): Mine, Stun Mine, Stun Grenade, Time Nuke; enemies with [insight] are skipped.
+* **rawModel per group** (Panda Combo): `parts(rank, {ATK, LV, group})` and `formulaItems(rank, {..., group})` receive the `dmgGroups` entry; `parts` may return `noCrit` (a hit without `getCritPlus`) or `critTotal` (the whole crit outcome when the crit wraps only part of the formula, e.g. Panda `(int)(c × (floor(1.8 ATK) + Focused Spirit))`).
+* **Bat Merciless Drain** (`BAT_MERCILESS_PROC`, bonus 66 on Drain Life, one toggle = learned + the target has no SP/MP left to drain).
+* **`splashLine: {label, pct(), stageName?(key)}`** (Bison Colossal Weapon): damage a stage sends to the *other* targets it did not hit, shown as a purple line under Final Damage (`data-role="splash-line"`), `ceil(pct × the stage's after-DEF range)` per stage (groups sharing `procStage` are one stage). It never enters Final or Test.
+
+### Header controls, crit and toggle-driven purple (`dmgControls` / `critProc` / `effectDamageDep`)
+
+* **`dmgControls:[dep,...]`:** deps rendered in the damage header (0/1 → toggle, wider → rank icon) for cards whose formulas read several deps (Wolf Combo).
+* **`DEP_EXCLUSIVE`** (global): turning one on switches off the listed ids (G. Marshal ↔ G. Champion sets).
+* **`critProc:{chance:(rank)=>base, mult}`:** crit on the truncated raw before `hit()`/Effect Damage, `floor(random×100) < lckAdjust(base)` → `floor(mult×raw)`; range max = crit max when base > 0. Pair with `lckProc` (`simulate:false`). Wolf Combo: Marshal 12 / Champion 18, `mult 1.8`.
+* **`effectDamageDep: dep`:** while on, the whole card is purple. Always check purple via `skillEffectDamageOn(skill)`, not `skill.effectDamage`.
+* **`effectLckRoll:true`:** purple hit adds `Random(0, ceil(0.2×LCK))` after the crit; range adds `lckSpreadRange(LCK)[1]`.
+* `[WOLF COMBO ERROR]` checks Wolf Combo across every dep/gear combination.
+
+### LCK-Difference Damage (`lckDiffCoeff` / `lckDiffDep`)
+
+Reads player LCK and the enemy panel's LCK.
+* **`lckDiffCoeff:(rank)=>k`:** adds `Random(0, k×max(LCK−enemyLCK, 0))`; raises the raw max only. Formula term `.dmg-lck`, shown `0~max`, caption `(k×ΔLCK)`.
+* **`lckDiffDep:{...dep, coeff}`:** adds unclamped `coeff×(LCK−enemyLCK)` after the first truncation, shifting both ends; shown `− n` when negative; shares state by `dep.id` with a `lckProc.dep`.
+* **`lckDiffOwn:true`:** roll on own LCK only (enemy LCK treated as 0, caption `k×LCK`). **`lckDiffExclusive:true`:** max lowered by one (`Random.Range(int,int)` excludes the top).
+* `[LCK FLOOR]` runs these with the dep off.
+
+### Range-vs-Simulator Consistency (`[RANGE/SIM]`)
+
+The Final range (`finalRangeForRange(calcRangeFor(text))`) and the simulator (`rollOneHit`) must agree; the validator rolls 2000× per rank (deps default and all off, zero and high stat profiles).
+* Change `rollOneHit` and `calcRangeFor`/`afterDefForRange` together. The simulator is usually right, but not always: inside `rollOneHit`, `ATK`/`TAL`/`LCK` are reassigned for own-stats skills, so re-read `atkEl`/`talEl`/`lckEl` for the player's value.
+* **`range.foldedSpread`:** the final-max base is the raw max minus exactly what was folded in (`0` for `talAdjust`, `rMax` for flat ATK).
+* `KNOWN_RANGE_SIM_MISMATCH` suppresses known cases (currently none). Never widen a range to pass.
+
+### Panda Current SP, Focused Art & target inputs
+
+* **`usesFocusedArt:true`** only after the cast site calls `getFocusedArtDmg()` (`0.5×SP×lv`, `Panda.cs:10841`); never inferred. Controls sim, formula row, range and SP input. Verified: Three Steps, Rushing Falcon. Not Wind & Cloud.
+* **`hasCurrentSp:true`:** shows the SP input without Focused Art (Ashura Fist reads global `pandaCurrentSp` in a function `dmg`).
+* **Current SP input:** one pill `.sk-current-sp-wrap` in `.sk-dmg-head .sk-dmg-toggles`, `<input type="text" inputmode="numeric" pattern="[0-9]*" class="sk-current-sp-input" maxlength="3">`, clamped 0–100 live, default `pandaCurrentSp = 50`. Keystrokes update `.sk-dmg-value` / `.sk-dmg-calc` / `.sk-dmg-final` in place without re-creating the input.
+* **Term order** in `renderOneDmgFormula`: TAL terms, then ATK, then Focused Art `+ 0.2×SP` in `.dmg-sp` outside the ATK bracket.
+* **`dmgSub`** (string or `(rank)=>string`) also captions a `talAdjust(N)` base when N is not constant.
+* **Two `talAdjust` terms** (`talAdjust(A) + talAdjust(B)`, Crushing Monolith): each rolls and truncates separately, never merged; second captioned by `tal2Sub`.
+* **Target inputs:** `targetHpInput:true` (global `pandaTargetHp`, default 1000) feeds `lckProc.calc`; `lckProc.baseText(rank, LCK)`. `targetWeightInput:true` (`tWeight`, 0–59, while Tiger Pounce is on). `targetHeightInput:true` (`tHeight10 = round(h×10)`, while Crushing Monolith is on). Substituted in `substituteDmgVars()`.
+* **`backpackInputs:true`:** shows live `น้ำหนัก` and `ไอเทม` inputs for Backpack; `bagWeight` is substituted in its base `dmg` formula while `bagItemCount` drives Big Bag's linked `dmgDep` addend. Both update formula, raw damage, final damage, and Test simulation without re-rendering; `dmgRankDep` provides the shared Big Bag toggle.
+* **`jaDetonateInputs:true`:** shows live `Ja HP` and `ระยะ` inputs for Ja - Detonate; `jaHp` and `jaDistance` are substituted in its flat base formula. Distance is live-clamped to that rank's `4 + 2×sLv` blast radius; the KO badge recalculates independently from current Ja HP.
+* **Nine Steps (`PANDA_NINESTEPS_DEP`):** off = one row (base group hitCount 3); on = base group hitCount 0 and three step groups `Step 1 (1x)` / `Step 2 (2x)` / `Step 3 (3x)` via `stepMult`, resolved in `resolveGroupValue`.
+
+### Exact raw damage from code: `rawModel` (Rabbit Combo / Charge Attack)
+
+For a card whose raw damage mixes several separately truncated terms that the arithmetic-only `dmg` text can't express (Rabbit Combo: `floor(0.75 × floor(0.5 ATK)) + floor(distance × Hyper Shot)`, Charge Attack: float32 Dead Shot multiplier), set `dmg:"0"` and:
+* **`rawModel.critMult()` / `rawModel.critRound: "ceil"`** (Chameleon Combo): the crit value is `rawCritValue(skill, crit)`, by default `floor(1.8 × crit)`; Chameleon's arrow is `CeilToInt(num × 1.8f)` or `× (1.8f + 0.15f × Critical Plus)` with Bulls Eye, in float32. Its `formulaItems` draws the crit as `⌈…⌉`; `[CRIT VIEW ERROR]` pins the goldens.
+* **`rawModel: { parts(rank, {ATK, LV}), critBase?(), usedStats?() }`.** `parts` returns `{crit, plain}`: `crit` is the part `getCritPlus` wraps (a crit gives `floor(1.8 × crit)`), `plain` is added afterwards, untouched (the shotgun's reversed Hyper Shot). `critBase()` is the gear crit chance base before `lckAdjust`; omit it for a skill with no crit (Charge Attack). `usedStats()` lists the player inputs that should glow (`["atk"]`, plus `"lv"` for a live Bouncing Bullet). The range chip (`calcRangeForBase`), the Test roll (`rollOneHit`) and the formula grid all read the same `parts`, so they cannot drift; never re-derive the value in a second place. Remove `atkCoeff` when adding a `rawModel` (validate with `--allow-field-loss=<id>:atkCoeff`). A `rawModel` counts as damage for `usesTdlRoll`, so the card gets the TTO toggle and its range and Test roll go through the TTO no-LCK cores (`[TTO NO-LCK ERROR]` sweeps it).
+* **`formulaItems(rank, {ATK, LV})`** now receives the live ATK/LV (existing cards ignore the second argument).
+* **`rabbitShotInputs: "combo" | "charge"`** renders the header **distance** box (`data-role="rabbit-distance"`, metres from Rabbit to the hit point, clamped to the mode's range: Combo `16 + 5 × rank` m, Bouncing Bullet `20 + 5 × rank`, shotgun 13, Charge Attack `20 + 5 × Combo lv`), and for `"charge"` the Dead Shot **aim-time slider** (`data-role="rabbit-aim"`, 0–4 s, dimmed with `is-idle` unless head shot and Dead Shot are both on). State lives in top-level `rabbitComboDistance`, `rabbitChargeDistance`, `rabbitAimTime` (distance is per card so switching cards never clobbers the other); listeners refresh the formula, raw and final chips live through `refreshLiveDamage()`.
+* **`sheepChargeInputs:true`** (Sheep Charge Attack) renders the header **charge-time slider** (`data-role="sheep-charge"`, 0 s to `sheepChargeMaxTime(rank, ATK)` = the first held time that reaches the cap, step 0.1; top-level `sheepChargeTime`, `null` = full charge that follows the max; dragging to the right end sets `null`). Under 2 s the release makes no attack, so the raw damage is 0. The card is a `rawModel` (`sheepChargeParts` / `sheepChargeFormulaItems`): `n = floor(held − 0.8)`, `(int)Clamp((1 + 0.2 × Benediction) × n × ATK, ATK, 100 × Lv)` + 100 with White Burst, both deps in `dmgControls`. `[SHEEP CHARGE ERROR]` pins the goldens.
+* **Deps (model block before `effectDamageDep`; Combo shows them by internal skill ID: Hyper Shot + Snipe Mastery, Customized Shotgun, Bouncing Bullet, Extravagance, then gear and Gatling Gun):** `RABBIT_BOUNCING_DEP`, `RABBIT_HYPERSHOT_DEP` (one 0..5 icon: ranks 1-4 = Hyper Shot level, rank 5 = Hyper Shot 4 + Snipe Mastery, art key `rabbit_hyperShot5`; Charge Attack shares it and ignores rank 5), `RABBIT_SHOTGUN_DEP` (on/off, default off: Customized Shotgun rank 1 and 2 differ only in hit-box width, so Combo does not need the level), `RABBIT_W59_DEP` (the "Gatling Gun"), `RABBIT_WEAPON_DEP` (0..2: off / Marshal crossbow +5 / Champion golden shotgun +7 crit; icon keys `item_rabWeapon1` / `item_rabWeapon2`) and `RABBIT_EQUIP_DEP` (0..2: off / Marshal armor + hat +7 / Champion +11; `item_rabEquip1` / `item_rabEquip2`), so a full set is 12 / 18 and the equipment can be tested with the Gatling Gun, `RABBIT_COMBO_LV_DEP`, `RABBIT_HEADSHOT_DEP`, `RABBIT_DEADSHOT_DEP`, `RABBIT_EXTRAVAGANCE_DEP`. Gear, w_rab59, Customized Shotgun and Extravagance default off. `DEP_EXCLUSIVE` makes the crit weapon, w_rab59 (Gatling Gun) and the shotgun mode mutually exclusive (all three weapons are outside `isShotgun()` or are the shotgun itself); crit equipment (armor + hat) is not exclusive with anything; **rank-cycle buttons now honour `DEP_EXCLUSIVE` too** (Crit Weapon and Crit Equipment are 0..2 rank deps). The crit chip is `secondaryLckProc` with `show:()=>rabbitCritBase()>0`.
+* **Rifle vs shotgun crit order differs in the game:** rifle Combo, ricochet and From the Above wrap `hitDmg + hyper` in `getCritPlus`; the shotgun wraps only `(int)(0.5 ATK)` and adds Hyper Shot after (so `plain`).
+* **Validator `[RABBIT SHOT ERROR]`:** hand-computed golden values for both cards (worked out from the source expressions, not from the code under test), gear crit bases and rate, exclusivity symmetry, header markup, stat glow, and a range-vs-simulator sweep over toggle combinations, distances and aim times at two stat profiles.
+* **Extravagance is a skill dependency, not a Buff popup entry:** a card with `extravagance:true` shows `RABBIT_EXTRAVAGANCE_DEP`; there is no amount input because every Rabbit build uses it at its cap. `statBonus("atk")` adds `RABBIT_EXTRAVAGANCE_ATK` (512) to the ATK input for the selected flagged card only (so it also shows as the usual `+N = total` chip and feeds every range, Test roll and `rawModel`). Flagged: Combo, Charge Attack, Maim Shot, Bounce, Gil Shot, Four Shot, Circle Shot, Shooting Array, Ten Shot; skills that never read ATK (Gorgon Shot, Acidic Field, Diamond Shot, Millionaire, Backpack) are not flagged. Flagged cards do not repeat it in their `desc` (the dependency strip already names it); they link to the Extravagance card in `compatSkills`.

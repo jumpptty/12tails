@@ -70,7 +70,7 @@ console.log(indexDirty
   : `CHANGELOG CURRENT: '${changelogSubject}' matches the last commit that touched index.html.`);
 
 // Soft reminder (non-blocking, unlike the CHANGELOG gate above): index.html
-// changing without GEMINI.md changing alongside it isn't necessarily wrong --
+// changing without the rulebook changing alongside it isn't necessarily wrong --
 // most edits (desc text, a new card following existing patterns) don't touch
 // any documented convention -- but it's exactly the case that let the
 // Status Keyword Rendering section silently drift out of date behind the
@@ -85,9 +85,10 @@ try {
     : execFileSync('git', ['diff', '--name-only', 'HEAD~1', 'HEAD', '--'], { cwd: repoRoot, encoding: 'utf8' });
   const files = changedFiles.split('\n').filter(Boolean);
   const touchedIndex = files.some(f => f.endsWith('12t_projects/bible/index.html'));
-  const touchedGemini = files.some(f => f.endsWith('12t_projects/bible/GEMINI.md'));
-  if (touchedIndex && !touchedGemini) {
-    console.log(`[GEMINI.md REMINDER] index.html changed without GEMINI.md changing in the same ${indexDirty ? 'working tree diff' : 'commit'} -- if this introduced or changed a convention (new desc markdown, a new schema field, a new chip/layout mechanism), document it there before ${indexDirty ? 'committing' : 'pushing'}. If it's just desc text or a new card following existing patterns, no action needed.`);
+  // The rulebook is 12t_projects/bible/CLAUDE.md (core) + .claude/skills/bible-*/SKILL.md (topics) since 2026-10-05.
+  const touchedRules = files.some(f => f.endsWith('12t_projects/bible/CLAUDE.md') || /\.claude\/skills\/bible-[^/]+\/SKILL\.md$/.test(f));
+  if (touchedIndex && !touchedRules) {
+    console.log(`[RULEBOOK REMINDER] index.html changed without the Bible rulebook (12t_projects/bible/CLAUDE.md or a .claude/skills/bible-* skill) changing in the same ${indexDirty ? 'working tree diff' : 'commit'} -- if this introduced or changed a convention (new desc markdown, a new schema field, a new chip/layout mechanism), document it in the skill that owns the topic before ${indexDirty ? 'committing' : 'pushing'}. If it's just desc text or a new card following existing patterns, no action needed.`);
   }
 } catch (error) {
   // Best-effort only (e.g. HEAD~1 doesn't exist yet on a repo's first commit) --

@@ -9,6 +9,15 @@
             "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-decompiled-and-data.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-index-git.sh\""
+          }
+        ]
       }
     ]
   }
