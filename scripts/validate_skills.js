@@ -996,7 +996,7 @@ let checkedPanelMarkup = 0;
   const check = (label, ok) => { checkedPanelMarkup++; if (!ok) { console.error(`[PANEL ERROR] ${label}`); errorCount++; } };
   check("stats panel template not found", panel.length > 0);
   const count = (needle) => panel.split(needle).length - 1;
-  check("player caption should appear exactly once", count("ค่าสถานะตัวละครของคุณ") === 1);
+  check("the player caption was replaced by the PRESET button (2026-10-05) and must stay removed", count("ค่าสถานะตัวละครของคุณ") === 0);
   check("enemy caption should appear exactly once", count("ค่าสถานะตัวละครเป้าหมาย") === 1);
   check("enemy show/hide toggle must stay removed", count("enemystat-toggle") === 0);
   check("the old .sk-controls-actions button row must stay removed", count("sk-controls-actions") === 0);
@@ -1013,6 +1013,17 @@ let checkedPanelMarkup = 0;
   check("the enemy icon must be a button (click = opens the preset picker)", enemyBadge.includes('<button type="button" class="sk-enemy-cycle-icon-wrap" data-role="enemy-cycle-display"'));
   check("the enemy preset picker must live inside the enemy badge", enemyBadge.includes('data-role="enemy-picker"'));
   check("the enemy prev/next arrows must stay removed", count("enemy-prev") === 0 && count("enemy-next") === 0);
+  // Stat presets (2026-10-05): a PRESET n button in the player badge opens the 5-card window; no slot bar, no save / clear buttons.
+  check("the PRESET button must be inside the player badge", playerBadge.includes('data-role="preset-open"'));
+  check("the old stat preset slot bar must stay removed (presets live in the PRESET window)", count("preset-row") === 0 && count("preset-slots") === 0);
+  check("stat presets autosave: no save / clear buttons", count("preset-save") === 0 && count("preset-clear") === 0);
+  {
+    const m = html.match(/const CLASS_STORY_ART = (\{[^\n]*\});/);
+    const keys = m ? Object.keys(JSON.parse(m[1])) : [];
+    ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
+      check(`CLASS_STORY_ART is missing the ${c} portrait (the PRESET window cards)`, keys.includes(c)));
+  }
+  check("stat presets must keep their localStorage key (renaming it would drop every saved preset)", html.includes('"12t-bible-stat-presets"'));
 }
 // 3k. Summon stat-feed glow (getSummonFeedPlayerStatKeys, 2026-09-19): a character stat glows in the player
 // panel when a dependency feeds it into a summon stat AND the selected skill's chips read that summon stat.
