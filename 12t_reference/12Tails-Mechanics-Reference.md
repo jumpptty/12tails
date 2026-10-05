@@ -63,6 +63,28 @@ When max HP/MP changes, current HP/MP is **rescaled proportionally** so the % st
 - `skillBonus` — small flat bonuses from owning certain passive skills.
 - `equipment.att[i]` — gear stat bonuses (see §5).
 
+#### Status window display: ATK row includes `damageMod` (client display bug, verified 2026-10-05)
+The status window (`GameGui.cs:12327-12366`) draws 8 rows, each as a big number plus a coloured `+X` / `- X` column:
+- **Big number:** `getBaseStat(9+i)` for DEF…LCK (`:12348`), but for **ATK only** `Mathf.FloorToInt(damageMod * getBaseStat(9))` (`:12340`).
+- **± column:** `getAddStat(9+i) = getStat(9+i) - getBaseStat(9+i)` (`CharacterControl.cs:23385`), i.e. real stat (`atk`, `def`, …) minus base. Never multiplied.
+- **Base (`getBaseStat`, `CharacterControl.cs:22680`, own player, not transformed):** `getBStat + getBonus + typeLevelStat`, plus Stat Plus #141-144 (+2 per rank, all stats), Whale VIT +15/rank (#131-134), Cat AGI +5/rank (#131-134), Penguin MAG +10/rank (#121-124) and TAL +10/rank (#261-264). Gear, buffs and `deltaAtk` effects (e.g. Bison Over Power) land in the ± column.
+
+So a `damageMod` change moves the displayed ATK although the real `atk` used by formulas is unchanged; `damageMod` multiplies final damage in `dmgAdjust` (§2.2) for every `hit()` regardless of the stat the formula used, and is skipped by direct `RPC_AddDamage` callers (§2.9). Statuses that change `damageMod` (apply / remove sites in `CharacterControl.cs`):
+
+| Status | Δ damageMod | Apply | Remove | Player source |
+|---|---|---|---|---|
+| valor | +(0.02 + 0.02×sLv) | :33988 | :15072 | Wolf Brave Spirit (`Wolf.cs:20489`) |
+| enrage | +(0.04 + 0.04×sLv) | :34732 | :15431 | Bison Enrage (`Bison.cs:20973`) |
+| drunken | −0.1 | :35393 | :15790 | Panda Drunken Fist + Drunken Plus (`Panda.cs:32591`) |
+| reduce | +0.05×sLv | :37258 | :16695 | Rabbit Miracle Blend (`Rabbit_potion.cs:390`) |
+| enlarge | −0.05×sLv | :37338 | :16769 | Rabbit Miracle Blend (`Rabbit_potion.cs:402`) |
+| miracleDrop | +(0.1 + 0.1×sLv) | :37671 | :16959 | Rabbit Miracle Blend + Miracle Drop (`Rabbit_potion.cs:438`) |
+| sealOfAttack | +0.1 | :39688 | :17905 | Sheep Seal (`Sheep_seal.cs:268`) |
+| sealOfEarth | +0.05 | :39710 | :17927 | Sheep Seal (`Sheep_seal.cs:292`) |
+| sealOfHeaven | +0.15 | :39725 | :17942 | Sheep Seal (`Sheep_seal.cs:304`) |
+
+The Bible flags this with a `bbBug` on Enrage, Brave Spirit, Drunken Fist, Miracle Blend and Seal, and a Common entry in `BB_ISSUES_EXTRA`. The transformed (`isTransform`) path of the window was not traced.
+
 ### 1.4 Class growth & level scaling (CharacterData.cs)
 **Per-class base stats** `getTypeStat(type)` (CharacterData.cs:218–493), in `ATK,DEF,AGI,VIT,MAG,CHA,TAL,LCK` order:
 
