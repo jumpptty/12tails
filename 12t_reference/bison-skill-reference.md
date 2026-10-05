@@ -170,6 +170,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - **Metadata:** single-rank passive, Lv 75/Bn 4, with no MP/SP cost (`BisonSkill.cs`, decoded with `scripts/decode_skilldata.py`).
 - **Proc:** when Raw Strength is learned, every `getBruteStrengthLv()` evaluation rolls `lckAdjust(12)`; on success, the resolved Brute Strength level is multiplied by 5 (`Bison.cs:7361-7393`). This scales only the Brute Strength contribution, not the full attack damage.
 - **Per-attack resolution:** because consumers cache the getter result at the start of their execution, multi-hit Combo stages and Over Swing reuse one proc result across their hits (`Bison.cs:17173`, `:18270`, `:25241-25326`).
+- **Bible card (2026-10-05, user request):** Combo, Charge Attack and Over Swing have one Brute Strength toggle 0-5; rank 5 = Brute Strength 4 + Raw Strength (the Brute level in every formula stops at 4, and the 12% `lckAdjust` chance turns on only at rank 5). Raw Strength without all four Brute Strength ranks is not modelled.
 - **Tooltip discrepancy:** the English tooltip says it has a 12% chance to increase normal/charged damage by 100% (`BisonSkill_eng.cs:911-919`); the real chance is LCK-adjusted and the real effect is a fivefold Brute Strength level.
 
 ### bsn_cAttack1-2 (Charge Attack, #111-112): spinning charged attack (verified 2026-09-29)

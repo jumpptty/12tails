@@ -1430,18 +1430,18 @@ console.log(`Verified ${checkedOverPowerAtk} Over Power stat panel checks.`);
 // 3o-ii. atkCoeffProc shows its ATK term as "min~max" in both the talAdjust branch (Over Swing) and the
 // flat-ATK branch (Charge Attack, dmg:"0"), only while its dep is on.
 {
-  const deps = sandbox._depRanks, saved = deps.rawStrength;
+  const deps = sandbox._depRanks, saved = deps.bruteStrength;   // Raw Strength = Brute Strength rank 5
   const check = (label, ok) => { if (!ok) { console.error(`[ATK PROC RANGE ERROR] ${label}`); errorCount++; } };
   ["bison_overSwing", "bison_cAttack"].forEach(id => {
     const sk = SKILLS.find(s => s.id === id);
     sandbox._skillRanks[id] = sk.maxRank;
-    deps.rawStrength = 1; sandbox._selectSkill(sk);
+    deps.bruteStrength = 5; sandbox._selectSkill(sk);
     const on = sandbox._getRenderedHeroHtml();
     check(`${id} shows min~max ATK with Raw Strength on`, /\d+~\d+/.test(on) && on.includes("ATK / "));
-    deps.rawStrength = 0; sandbox._selectSkill(sk);
+    deps.bruteStrength = 4; sandbox._selectSkill(sk);
     check(`${id} shows a single ATK value with Raw Strength off`, !sandbox._getRenderedHeroHtml().includes("ATK / "));
   });
-  if (saved === undefined) delete deps.rawStrength; else deps.rawStrength = saved;
+  if (saved === undefined) delete deps.bruteStrength; else deps.bruteStrength = saved;
 }
 console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 // 3o. Wolf Combo (2026-09-24, GEMINI.md "critProc / effectDamageDep"): Feral Instinct coefficients, hit counts,
@@ -1536,7 +1536,7 @@ let checkedBisonCombo = 0;
   const inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedBisonCombo++; if (!ok) { console.error(`[BISON COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "bison_nAttack");
-  const IDS = ["bruteStrength", "rawStrength", "improvedSwing", "addedSwing", "overPride", "bisonSpinForce", "bisonGearWeapon", "bisonGearEquip"];
+  const IDS = ["bruteStrength", "improvedSwing", "addedSwing", "overPride", "bisonSpinForce", "bisonGearWeapon", "bisonGearEquip"];
   const savedDeps = IDS.map(id => [id, deps[id]]), saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
@@ -1569,7 +1569,7 @@ let checkedBisonCombo = 0;
   // Range vs simulator for every stage including the spin and Added Swing, with Raw Strength and gear on.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
-    [{}, { bruteStrength: 4, rawStrength: 1, bisonGearWeapon: 2, bisonGearEquip: 2 }].forEach(base => {
+    [{}, { bruteStrength: 5, bisonGearWeapon: 2, bisonGearEquip: 2 }].forEach(base => {
       setDeps({ ...base, bisonSpinForce: 1, addedSwing: 1 }); select(4);
       sk.dmgGroups.forEach((g, gi) => {
         if (sandbox._resolveGroupHitCount(sk, g) === 0) return;
