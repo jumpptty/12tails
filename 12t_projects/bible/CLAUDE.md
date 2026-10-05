@@ -32,3 +32,4 @@ After adding or changing a convention, update the file that owns that topic (not
 
 * **Self-contained single file** that runs by double-click, no server.
 * **"Ledger" design system:** lacquer ground `#141311`, brass-gold `#d4af37`, oxblood `#8b1e1e`, high-contrast type.
+* **Theme (2026-10-05, user):** dark by default. `<script id="themeBoot">` in `<head>` sets `data-theme` before first paint from `localStorage["12t-bible-theme"]` (only `"light"` overrides) and wires the sun / moon button `#btnTheme` at the right end of the hub bar. Style every colour for both `:root[data-theme="dark"]` and `[data-theme="light"]`; the `prefers-color-scheme` blocks stay for completeness but the attribute is always set. Every extra `<script>` must carry an attribute (an id): the validator runs the main app script as the text from the first plain `<script>` tag to the last closing tag, so a bare script tag, or that literal tag text in a comment, breaks it.
