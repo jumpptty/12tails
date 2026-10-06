@@ -14,6 +14,7 @@ Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../
   * `__value__` → oxblood bold (`.sk-val-red`, `var(--seal)`) for downsides/warnings.
   * `[statusName]` / `[statusName3]` → purple hoverable status (trailing digits are literal text).
   * `^^term^^` → teal glossary link (see Mechanic glossary below).
+  * `{{credit:id}}` → a small gold **scroll** button (`.sk-credit`) that opens the co-author pop-up (ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล) scrolled to that `CONTRIBUTORS` entry. **Convention (user 2026-10-06):** when a finding came from a fan, put the token right after the text of that finding **everywhere it appears** (the `desc`, `bbBug`, `tooltipNote`, `liveCheck` or `BB_ISSUES_EXTRA` text; the BB issues page renders the same strings, so it gets the scroll too), and add the fan to `CONTRIBUTORS` with a Thai explanation. `[CREDIT ERROR]` fails a token with no entry.
   * Stat names may use `<span class='dmg-agi'>AGI</span>` (`.dmg-tal/atk/def/agi/vit/int/cha/lck`).
   * Server `changeNote` bullets start with a tag that `formatServerNote()` turns into a chip: `[Buff]` green, `[Nerf]` red, `[Adjust]` / `[Rework]` blue, `[Fix]` violet (a server bug fix, e.g. ToT Chameleon crit gear). Bullets are separated by `\n`, not `<br>`.
 * **Status keywords (`STATUS_CLASS_MAP`, `STATUS_DESC_MAP`, declared just before `const SKILLS`):**

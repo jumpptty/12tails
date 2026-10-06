@@ -122,6 +122,7 @@ const exposeInjection = `
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
   window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, enemyDef: enemyDefEl, lv: lvEl };
   window._ttoMagic = { ids: TTO_MAGIC_DMG };
+  window._credits = { list: CONTRIBUTORS, render: renderRichText };
   window._statVal = statVal;
   window._selectEnemyPreset = selectEnemyPreset;
   window._enemyPresets = ENEMY_PRESETS;
@@ -2295,6 +2296,18 @@ let checkedTtoNoLck = 0;
   if (dist.length !== 10 || dist[9].label !== "9" || dist[0].pct !== 10) { console.error(`[LCK DIST ERROR] LCK 50 gave ${dist.map(d => d.label).join(",")}`); errorCount++; } else checkedTtoNoLck++;
 }
 console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
+// Contributor credits: every {{credit:id}} token in the file names a CONTRIBUTORS entry (unique ids, a name and at least
+// one Thai line each), and the token renders as the scroll button.
+{
+  const fail = (msg) => { console.error(`[CREDIT ERROR] ${msg}`); errorCount++; };
+  const list = sandbox._credits.list, ids = list.map(c => c.id);
+  if (new Set(ids).size !== ids.length) fail("duplicate CONTRIBUTORS id");
+  list.forEach(c => { if (!c.id || !c.name || !Array.isArray(c.what) || !c.what.length || !c.what.every(t => /[฀-๿]/.test(t))) fail(`entry ${c.id || "?"} needs id, name and Thai "what" lines`); });
+  const used = [...new Set([...html.matchAll(/\{\{credit:([a-z0-9_-]+)\}\}/gi)].map(m => m[1].toLowerCase()))].filter(id => id !== "id");   // "id" = the placeholder in code comments
+  used.forEach(id => { if (!ids.includes(id)) fail(`{{credit:${id}}} has no CONTRIBUTORS entry`); });
+  if (used.length && !sandbox._credits.render(`x {{credit:${used[0]}}}`).includes(`class="sk-credit" data-credit="${used[0]}"`)) fail("credit token does not render as .sk-credit");
+  console.log(`Verified contributor credits: ${list.length} contributor(s), ${used.length} credited id(s) in use.`);
+}
 // 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
 // .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;
