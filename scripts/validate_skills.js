@@ -2372,8 +2372,9 @@ let checkedTtoNoLck = 0;
   sandbox._setServer("og");
   [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value] = saved;
 }
-// TTO Magic Damage (TTO_MAGIC_DMG): on TTO a magic card at enemy DEF 2n-1 must equal the same card at DEF n with
-// the magic rule off (half DEF rounded up), and BB must ignore the rule. Every listed id must be a real card.
+// TTO Magic Damage (TTO_MAGIC_DMG): on TTO a magic card at enemy DEF 2n must equal the same card at DEF n with the
+// magic rule off (exact half, no rounding: user readings 2026-10-06, pinned below), and BB must ignore the rule.
+// Every listed id must be a real card.
 {
   const fail = (msg) => { console.error(`[TTO MAGIC ERROR] ${msg}`); errorCount++; };
   const ins = sandbox._statInputs, magic = sandbox._ttoMagic.ids;
@@ -2394,18 +2395,18 @@ let checkedTtoNoLck = 0;
   for (const sk of SKILLS.filter(s => magic.has(s.id) && sandbox._usesTdlRoll(s) && !/Vortex|InventoryWeight/.test(String(s.dmg)))) {
     sandbox._skillRanks[sk.id] = sk.maxRank || 1;
     try {
-      const magicRange = rangesAt(sk, "tto", 101);
+      const magicRange = rangesAt(sk, "tto", 102);
       magic.delete(sk.id);
-      const halfRange = rangesAt(sk, "tto", 51), fullRange = rangesAt(sk, "tto", 101), bbOff = rangesAt(sk, "og", 101);
+      const halfRange = rangesAt(sk, "tto", 51), fullRange = rangesAt(sk, "tto", 102), bbOff = rangesAt(sk, "og", 102);
       magic.add(sk.id);
-      if (magicRange !== halfRange) fail(`${sk.id} on tto: DEF 101 gives ${magicRange}, expected the DEF 51 range ${halfRange}`); else checkedTtoNoLck++;
-      if (rangesAt(sk, "og", 101) !== bbOff) fail(`${sk.id}: the magic rule changes the BB range`); else checkedTtoNoLck++;
+      if (magicRange !== halfRange) fail(`${sk.id} on tto: DEF 102 gives ${magicRange}, expected the DEF 51 range ${halfRange}`); else checkedTtoNoLck++;
+      if (rangesAt(sk, "og", 102) !== bbOff) fail(`${sk.id}: the magic rule changes the BB range`); else checkedTtoNoLck++;
       if (magicRange !== fullRange) halved++;
     } catch (e) { magic.add(sk.id); fail(`${sk.id}: range threw ${e.message}`); }
   }
   // Guards the sweep: if no card's range moves with DEF, the comparison above proves nothing.
   if (halved < 20) fail(`only ${halved} magic cards move with enemy DEF, so the half-DEF sweep proves nothing`);
-  // Dep-gated magic (ttoMagicDep: Gyro shots with Synchro Mole): with the dep on, TTO DEF 101 must equal the same card
+  // Dep-gated magic (ttoMagicDep: Gyro shots with Synchro Mole): with the dep on, TTO DEF 102 must equal the same card
   // with the field removed at DEF 51; with it off, the field must change nothing.
   const gated = SKILLS.filter(s => s.ttoMagicDep);
   if (!gated.some(s => s.id === "mole_autoGyroGun_nAttack")) fail("mole_autoGyroGun_nAttack lost its ttoMagicDep (Synchro Mole)");
@@ -2415,15 +2416,31 @@ let checkedTtoNoLck = 0;
     sandbox._skillRanks[sk.id] = sk.maxRank || 1;
     try {
       sandbox._depRanks[dep.id] = dep.maxRank;
-      const on = rangesAt(sk, "tto", 101);
-      if (on !== plainAt(51)) fail(`${sk.id}: ${dep.id} on, TTO DEF 101 should match half DEF`); else checkedTtoNoLck++;
-      if (on === plainAt(101)) fail(`${sk.id}: DEF does not move the range, the check proves nothing`); else checkedTtoNoLck++;
+      const on = rangesAt(sk, "tto", 102);
+      if (on !== plainAt(51)) fail(`${sk.id}: ${dep.id} on, TTO DEF 102 should match half DEF`); else checkedTtoNoLck++;
+      if (on === plainAt(102)) fail(`${sk.id}: DEF does not move the range, the check proves nothing`); else checkedTtoNoLck++;
       sandbox._depRanks[dep.id] = 0;
-      if (rangesAt(sk, "tto", 101) !== plainAt(101)) fail(`${sk.id}: ${dep.id} off, TTO should use full DEF`); else checkedTtoNoLck++;
+      if (rangesAt(sk, "tto", 102) !== plainAt(102)) fail(`${sk.id}: ${dep.id} off, TTO should use full DEF`); else checkedTtoNoLck++;
     } catch (e) { fail(`${sk.id}: range threw ${e.message}`); }
     if (savedRank === undefined) delete sandbox._depRanks[dep.id]; else sandbox._depRanks[dep.id] = savedRank;
   }
-  console.log(`Verified TTO Magic Damage: ${magic.size} listed skills, ${halved} damage cards hit against half DEF, ${gated.length} dep-gated.`);
+  // Live readings (user, TTO, 2026-10-06): Gorgon Shot at TAL 101, LCK 0 on both sides, no buffs. Odd DEFs 5 and 15
+  // separate the exact half from ceil (ceil gives 146 / 139) and 177 at rank 2 rules out floor (173).
+  const GORGON_READINGS = { 2: [[2, 299], [112, 201], [177, 172], [200, 165], [300, 138]], 1: [[2, 149], [5, 147], [15, 140], [112, 96], [177, 79], [200, 74], [300, 56]] };
+  const gorgon = SKILLS.find(s => s.id === "rabbit_gorgonShot");
+  if (!gorgon) fail("rabbit_gorgonShot card missing");
+  else {
+    const savedRank = sandbox._skillRanks[gorgon.id];
+    ins.tal.value = "101";
+    for (const [rank, rows] of Object.entries(GORGON_READINGS)) for (const [def, want] of rows) {
+      sandbox._skillRanks[gorgon.id] = Number(rank);
+      sandbox._setServer("tto"); ins.enemyDef.value = String(def); sandbox._selectSkill(gorgon);
+      const r = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(gorgon, Number(rank))));
+      if (r[0] !== want || r[1] !== want) fail(`Gorgon Shot rank ${rank} at DEF ${def} on TTO: ${JSON.stringify(r)}, game shows ${want}`); else checkedTtoNoLck++;
+    }
+    if (savedRank === undefined) delete sandbox._skillRanks[gorgon.id]; else sandbox._skillRanks[gorgon.id] = savedRank;
+  }
+  console.log(`Verified TTO Magic Damage: ${magic.size} listed skills, ${halved} damage cards hit against half DEF, ${gated.length} dep-gated, ${Object.values(GORGON_READINGS).flat().length} Gorgon Shot readings.`);
   sandbox._setServer("og");
   [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value, ins.enemyDef.value] = saved;
 }

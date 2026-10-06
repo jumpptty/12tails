@@ -191,7 +191,7 @@ the heavy part; DEF 192 → −75%).
 
 > **Server Difference (TTO Magic Damage, user-reported live change 2026-10-06, not in the decompiled client):** on
 > Tailstopia Online a hit from a skill tagged **Magic** goes through the same `dmgAdjust` → `defAdjust` → `hitMod`
-> pipeline, but `defAdjust` uses **half the defender's DEF**: `N = clamp(ceil(DEF / 2) + R, 1, 512)` (R is 0 on TTO,
+> pipeline, but `defAdjust` uses **half the defender's DEF, not rounded**: `N = clamp(DEF / 2 + R, 1, 512)` (R is 0 on TTO,
 > see §2.1). The BigBug client has no magic/physical split; the tag is TTO's own. **Which skills:** the official
 > TailsTopia skill simulator (`https://tailstopia.online/skill-simulator`, login required) gives every skill a
 > `dmgType` of `Physical`, `Magic`, `Effect`, `Heal` or `None` (labels กายภาพ / เวทมนตร์ / สถานะ / ฟื้นฟู); read
@@ -199,8 +199,18 @@ the heavy part; DEF 192 → −75%).
 > skill, Rabbit Gorgon Shot, Chameleon Slayers). The full list is `TTO_MAGIC_DMG` in the Bible `index.html`.
 > **Conditional:** Mole's Auto Gyro Gun shots are Magic while **Synchro Mole** is on (user-reported 2026-10-06; the
 > simulator tags Synchro Mole itself as Magic).
-> **Unverified:** the rounding of the half (`ceil` is the user's best estimate, 2026-10-06); the Gorgon Shot readings
-> that established the half-DEF rule were not saved and should be re-recorded here when re-measured.
+> **Measured (user, TTO, 2026-10-06):** Rabbit Gorgon Shot (`talAdjust(50 × sLv)`) at TAL 101 (base 302 / 151), LCK 0
+> on both sides, no buffs, first hit on a fresh target (petrify lowers DEF afterwards). The rest of `defAdjust` is
+> unchanged, both parts still truncated to `int` (see above):
+>
+> | Target DEF | 2 | 5 | 15 | 112 | 177 | 200 | 300 |
+> |---|---|---|---|---|---|---|---|
+> | Rank 2 (base 302) | 299 | | | 201 | 172 | 165 | 138 |
+> | Rank 1 (base 151) | 149 | 147 | 140 | 96 | 79 | 74 | 56 |
+>
+> All 12 match `DEF / 2` exactly. The odd DEFs settle the rounding: `ceil(DEF / 2)` gives 146 at DEF 5 and 139 at DEF 15,
+> and `floor(DEF / 2)` gives 173 at DEF 177 (rank 2). Full DEF (the BigBug formula) gives 158 at DEF 112 (rank 2).
+> `scripts/validate_skills.js` pins these readings (`[TTO MAGIC ERROR]`).
 
 > **Alternate / legacy formula** `Damage.getDamage(d, def)` (Damage.cs:262):
 > `ceil( 0.25*d + 0.75*d*(1 − def/(def+64)) )` — a simpler 25/75 split with **no** flat term and **no** luck roll.
