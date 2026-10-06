@@ -2234,6 +2234,27 @@ let checkedCao = 0;
     if (o.cha + o.agi !== want) caoFail(`known total cd ${cdB} dur ${dB} persev ${p} revArt ${r}: ${o.cha + o.agi}, want ${want}`); else checkedCao++;
   });
 
+  // LCK + cycle chance (2026-10-06): every cast rolls R = 0..ceil(0.2 LCK)-1 separately for AGI and CHA. At 100% the
+  // LCK value must change nothing; below it, the result must be the cheapest pair that cycles on at least that share
+  // of the roll pairs (independent brute force over every CHA, AGI and roll pair).
+  const bShare = (cdB, dB, p, r, cha, agi, m) => { let n = 0; for (let ra = 0; ra < m; ra++) for (let rc = 0; rc < m; rc++) if (bCd(cdB, agi + ra, r) <= bDur(dB, cha + rc, p)) n++; return n; };
+  for (const [cdB, dB, p, r] of [[120, 8, 0, false], [120, 8, 2, true], [300, 15, 2, true]]) {
+    const base = sandbox.caoOptimal(cdB, dB, p, r);
+    for (const lck of [0, 37, 150]) {
+      const o = sandbox.caoOptimal(cdB, dB, p, r, lck, 100);
+      if (o.cha !== base.cha || o.agi !== base.agi) caoFail(`cd ${cdB} dur ${dB}: LCK ${lck} at 100% gives ${o.cha}/${o.agi}, LCK 0 gives ${base.cha}/${base.agi}`); else checkedCao++;
+    }
+    for (const [lck, pct] of [[150, 50], [60, 80]]) {
+      const m = Math.max(1, Math.ceil(0.2 * lck)), need = Math.max(1, Math.ceil(pct / 100 * m * m - 1e-9));
+      let best = Infinity;
+      for (let c = 0; c <= 512; c++) { let a = 0; while (bShare(cdB, dB, p, r, c, a, m) < need) a++; if (c + a < best) best = c + a; if (c >= best) break; }
+      const o = sandbox.caoOptimal(cdB, dB, p, r, lck, pct);
+      if (o.cha + o.agi !== best) caoFail(`cd ${cdB} dur ${dB} LCK ${lck} ${pct}%: total ${o.cha + o.agi}, brute force ${best}`); else checkedCao++;
+      if (bShare(cdB, dB, p, r, o.cha, o.agi, m) < need) caoFail(`cd ${cdB} dur ${dB} LCK ${lck} ${pct}%: ${o.cha}/${o.agi} cycles below ${pct}%`); else checkedCao++;
+      if (o.cha + o.agi > base.cha + base.agi) caoFail(`cd ${cdB} dur ${dB} LCK ${lck} ${pct}%: costs more than 100%`); else checkedCao++;
+    }
+  }
+
   // Real mount with a recording stub root.
   const reg = new Map(), rootListeners = {}, docListeners = [];
   const caoRoot = makeEl();
