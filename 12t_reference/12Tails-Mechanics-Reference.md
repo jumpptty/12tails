@@ -387,6 +387,20 @@ which dispatches to the per-class `*Skill.cs` table. The `*Skill.cs` files only 
   Requires and **consumes** SP on cast (`GameGui.cs:37782–37807`: `mChar.sp += cSP`). Its cost is halved by Revised Skill (#404, `Mathf.CeilToInt(cSP * 0.5f)`). Rendered in-game as red text `new Color(1f, 0.2f, 0.2f)` (`GameGui.cs:22032`, `Guix.cs:3301`). Standard for almost all physical skills.
 * **Blue SP (Activation Threshold / Gate-Only, `cSP > 0` / `skillClass.setSP(X)`):**
   Checks that the player currently possesses at least that amount of SP (`GameGui.cs:37609`), but **does NOT consume SP** on cast (the `cSP < 0` deduction branch in `GameGui.cs:37782` is bypassed). Rendered in-game as cyan-blue text `new Color(0.2f, 0.6f, 1f)` (`GameGui.cs:22054`, `Guix.cs:3288`). (e.g. Whale's `rejuvenate` Ranks 3–4 requiring 12 SP without spending it).
+#### Cost is paid on the press, not on the cast (verified 2026-10-06)
+GameGui's skill-press coroutine checks cooldown (`TimeOut!`), SP, MP, Mana and `isSpecialForm` / `isTransform`
+(`GameGui.cs:37596-37667`), then `SendMessage("doSkill", …)` to the character and **immediately deducts the cost**
+(`:37929-37980` for target mode, `:37748-37823` for the others). It has no `actionState` gate, and the class
+`doSkill` returns nothing to it, so when the class code refuses (wrong state, no target) the MP/SP is lost unless
+that class refunds it explicitly (e.g. Chameleon Fatal Strike under Immunity, `Chameleon.cs:7904`). Example:
+Chameleon Skin Shift pressed while casting ([chameleon-skill-reference.md](chameleon-skill-reference.md)).
+
+#### Who a skill can target (verified 2026-10-06)
+Only `eSkillMode.target` skills get the layer check: `target: enemy` refuses an ally ("Cannot Target Ally!"),
+`target: ally` refuses an enemy (`GameGui.cs:37884-37919`); `target: all` has none. Instant-mode skills pass the
+current selection as is (`:37726-37752`). The ally-cycle key selects the player first (`:2214`), so `all`-target
+and instant skills can be used on yourself (Whale Swallow on itself rolls Auto Shield 9 times; Chameleon Venom
+Shock on an ally is a poison block; see the class references).
 
 ### 3.2 Skill damage model
 Damage values are hardcoded at each skill's execution site (in the class combat script, e.g. `Cat.cs`, and in
