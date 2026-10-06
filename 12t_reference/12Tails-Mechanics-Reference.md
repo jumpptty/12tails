@@ -189,6 +189,19 @@ Interpretation: 35% of the hit is reduced by flat armor (`−DEF/2`), 65% by a d
 (`DEF/(DEF+64)`). DEF has *no* hard cap on usefulness but the percentage term saturates (e.g. DEF 64 → −50% on
 the heavy part; DEF 192 → −75%).
 
+> **Server Difference (TTO Magic Damage, user-reported live change 2026-10-06, not in the decompiled client):** on
+> Tailstopia Online a hit from a skill tagged **Magic** goes through the same `dmgAdjust` → `defAdjust` → `hitMod`
+> pipeline, but `defAdjust` uses **half the defender's DEF**: `N = clamp(ceil(DEF / 2) + R, 1, 512)` (R is 0 on TTO,
+> see §2.1). The BigBug client has no magic/physical split; the tag is TTO's own. **Which skills:** the official
+> TailsTopia skill simulator (`https://tailstopia.online/skill-simulator`, login required) gives every skill a
+> `dmgType` of `Physical`, `Magic`, `Effect`, `Heal` or `None` (labels กายภาพ / เวทมนตร์ / สถานะ / ฟื้นฟู); read
+> 2026-10-06: 75 skill families are `Magic` (e.g. Wolf Crusader, Monkey Fireball, every Penguin mana / star / ice
+> skill, Rabbit Gorgon Shot, Chameleon Slayers). The full list is `TTO_MAGIC_DMG` in the Bible `index.html`.
+> **Conditional:** Mole's Auto Gyro Gun shots are Magic while **Synchro Mole** is on (user-reported 2026-10-06; the
+> simulator tags Synchro Mole itself as Magic).
+> **Unverified:** the rounding of the half (`ceil` is the user's best estimate, 2026-10-06); the Gorgon Shot readings
+> that established the half-DEF rule were not saved and should be re-recorded here when re-measured.
+
 > **Alternate / legacy formula** `Damage.getDamage(d, def)` (Damage.cs:262):
 > `ceil( 0.25*d + 0.75*d*(1 − def/(def+64)) )` — a simpler 25/75 split with **no** flat term and **no** luck roll.
 > The instance `defAdjust` (35/65 split, +luck, +flat armor) is what real player/mob combat uses; `getDamage`

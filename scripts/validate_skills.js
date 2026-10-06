@@ -120,7 +120,8 @@ const exposeInjection = `
   window._getUsedPlayerStatKeys = getUsedPlayerStatKeys;
   window._monsterStats = MONSTER_STATS; window._mountMonsterStats = mountMonsterStats;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
-  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, lv: lvEl };
+  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, enemyDef: enemyDefEl, lv: lvEl };
+  window._ttoMagic = { ids: TTO_MAGIC_DMG };
   window._statVal = statVal;
   window._selectEnemyPreset = selectEnemyPreset;
   window._enemyPresets = ENEMY_PRESETS;
@@ -1486,7 +1487,7 @@ let checkedWolfCombo = 0;
   });
   check("Dark Edge off is white", rate({}, 200).p === 0);
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
-  check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : "w");'));
+  check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : plainColor);'));
   check("Katana and the crit sword switch each other off", html.includes('const DEP_EXCLUSIVE = { wolfKatana: ["wolfGearWeapon"], wolfGearWeapon: ["wolfKatana"],'));
   // Katana (w_wlf59, Wolf.cs:15159-15175, :15990-16001, :16693, :17409, :17727): crit first, then floor(0.75x), stage 2 ceil(0.5x).
   // Hand-computed at ATK 200, LCK 0, Feral off: raw (int)(c x 200) = 100 / 100 / 100 / 80 / 120.
@@ -2216,6 +2217,61 @@ let checkedTtoNoLck = 0;
   if (bbVaries < 50) fail(`only ${bbVaries} cards vary with enemy LCK on BB, so the TTO sweep proves nothing`);
   sandbox._setServer("og");
   [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value] = saved;
+}
+// TTO Magic Damage (TTO_MAGIC_DMG): on TTO a magic card at enemy DEF 2n-1 must equal the same card at DEF n with
+// the magic rule off (half DEF rounded up), and BB must ignore the rule. Every listed id must be a real card.
+{
+  const fail = (msg) => { console.error(`[TTO MAGIC ERROR] ${msg}`); errorCount++; };
+  const ins = sandbox._statInputs, magic = sandbox._ttoMagic.ids;
+  const saved = [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value, ins.enemyDef.value];
+  ins.atk.value = "200"; ins.tal.value = "80"; ins.lck.value = "0"; ins.enemyLck.value = "0";
+  for (const id of magic) if (!SKILLS.some(s => s.id === id)) fail(`${id} is in TTO_MAGIC_DMG but has no card`);
+  // Test popup draws magic hits with the aqua digit set
+  for (let n = 0; n < 10; n++) if (!/^data:image\/png;base64,iVBORw0KGgo/.test(SKILL_ICONS["dmgdigit_a" + n] || "")) fail(`aqua digit texture dmgdigit_a${n} missing or not a PNG`);
+  const rangesAt = (sk, server, def) => {
+    sandbox._setServer(server); ins.enemyDef.value = String(def);
+    sandbox._selectSkill(sk);
+    const parts = sk.dmgGroups
+      ? sk.dmgGroups.map(g => sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g)))
+      : [sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, sk.maxRank || 1)))];
+    return JSON.stringify(parts);
+  };
+  let halved = 0;
+  for (const sk of SKILLS.filter(s => magic.has(s.id) && sandbox._usesTdlRoll(s) && !/Vortex|InventoryWeight/.test(String(s.dmg)))) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    try {
+      const magicRange = rangesAt(sk, "tto", 101);
+      magic.delete(sk.id);
+      const halfRange = rangesAt(sk, "tto", 51), fullRange = rangesAt(sk, "tto", 101), bbOff = rangesAt(sk, "og", 101);
+      magic.add(sk.id);
+      if (magicRange !== halfRange) fail(`${sk.id} on tto: DEF 101 gives ${magicRange}, expected the DEF 51 range ${halfRange}`); else checkedTtoNoLck++;
+      if (rangesAt(sk, "og", 101) !== bbOff) fail(`${sk.id}: the magic rule changes the BB range`); else checkedTtoNoLck++;
+      if (magicRange !== fullRange) halved++;
+    } catch (e) { magic.add(sk.id); fail(`${sk.id}: range threw ${e.message}`); }
+  }
+  // Guards the sweep: if no card's range moves with DEF, the comparison above proves nothing.
+  if (halved < 20) fail(`only ${halved} magic cards move with enemy DEF, so the half-DEF sweep proves nothing`);
+  // Dep-gated magic (ttoMagicDep: Gyro shots with Synchro Mole): with the dep on, TTO DEF 101 must equal the same card
+  // with the field removed at DEF 51; with it off, the field must change nothing.
+  const gated = SKILLS.filter(s => s.ttoMagicDep);
+  if (!gated.some(s => s.id === "mole_autoGyroGun_nAttack")) fail("mole_autoGyroGun_nAttack lost its ttoMagicDep (Synchro Mole)");
+  for (const sk of gated) {
+    const dep = sk.ttoMagicDep, savedRank = sandbox._depRanks[dep.id];
+    const plainAt = (def) => { delete sk.ttoMagicDep; try { return rangesAt(sk, "tto", def); } finally { sk.ttoMagicDep = dep; } };
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1;
+    try {
+      sandbox._depRanks[dep.id] = dep.maxRank;
+      const on = rangesAt(sk, "tto", 101);
+      if (on !== plainAt(51)) fail(`${sk.id}: ${dep.id} on, TTO DEF 101 should match half DEF`); else checkedTtoNoLck++;
+      if (on === plainAt(101)) fail(`${sk.id}: DEF does not move the range, the check proves nothing`); else checkedTtoNoLck++;
+      sandbox._depRanks[dep.id] = 0;
+      if (rangesAt(sk, "tto", 101) !== plainAt(101)) fail(`${sk.id}: ${dep.id} off, TTO should use full DEF`); else checkedTtoNoLck++;
+    } catch (e) { fail(`${sk.id}: range threw ${e.message}`); }
+    if (savedRank === undefined) delete sandbox._depRanks[dep.id]; else sandbox._depRanks[dep.id] = savedRank;
+  }
+  console.log(`Verified TTO Magic Damage: ${magic.size} listed skills, ${halved} damage cards hit against half DEF, ${gated.length} dep-gated.`);
+  sandbox._setServer("og");
+  [ins.atk.value, ins.tal.value, ins.lck.value, ins.enemyLck.value, ins.enemyDef.value] = saved;
 }
 // Final Multiplier is ToT-only (MOD_DEFS onlyServers), built-in and custom alike: steps only with the popup on ToT.
 {
