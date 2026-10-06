@@ -225,8 +225,10 @@ Follow-up verification:
 
 - Passive ranks, reqLv/Bn 1/0, 2/1, 3/2 (`decode_skilldata.py`). `doNormalAttack` (`Bat.cs:10020-10300`): stage 2 needs #101 (pressed 0.3-0.6 s after stage 1), stage 3 needs #102 (after 0.9 s); otherwise stage 1 when the `nAttack` lock is free. Locks: stage 1 and 2 `addTimeOut("nAttack", 1.5)` (`:20367`, `:20659`), stage 3 `2` s (`:21074`), all flat.
 - **Each stage fires a bolt** (`RPC_nAttack_fire1`, `Bat.cs:10746`): one `nAttack_fire` projectile from 1.3 m up / 1 m ahead, `life = 1.25 × rangeMod` s (`:10762`). With #103, stage 3 calls `RPC_nAttack_fire2` instead: three bolts, offset ±1 m sideways and turned ±15° (`:10836-10868`). Bolts home on the locked target only with the `w_bat59` weapon (`:10765-10788`; `Bat_nAttack.InitHoming`, turn 0.1 rad every 0.1 s).
-- **Hit** (`Bat_nAttack.OnTriggerEnter`, `Bat_nAttack.cs:138-366`, on the Bat's own client): first enemy collider touched; `num = (int)(0.5 × ATK)`, `floor(0.75 ×)` with `w_bat59`, then `getCritPlus` (gear crit), `hit(1, t, num, KO 1, 0, …)`. On a landed hit: `onNormalAttackHit` (weapon procs), +1 SP, and with Amplify Damage (#251-#254) `amplifyDamage` at that level for `getDebuff(3)` s (`:276-363`).
-- Shadow Illusion clones repeat every stage from their own position (`Bat.cs:10086-10112`, `:10191-10217`, `:10266-10290`).
+- **Hit** (`Bat_nAttack.OnTriggerEnter`, `Bat_nAttack.cs:138-366`, on the Bat's own client): first enemy collider touched; `num = (int)(0.5 × ATK)`, `floor(0.75 ×)` with `w_bat59`, then `getCritPlus` (gear crit, standard table, `Bat.cs:19389`), `hit(1, t, num, KO 1, 0, …)`. On a landed hit: `onNormalAttackHit` (weapon procs), +1 SP, and with Amplify Damage (#251-#254) `amplifyDamage` at that level for `getDebuff(3)` s (`:276-363`).
+- Shadow Illusion clones repeat every stage from their own position (`Bat.cs:10086-10112`, `:10191-10217`, `:10266-10290`); with #103 their stage 3 also fires three bolts (`Bat_illusion.cs:3895-3914`, the clone has the Bat's skill list). A clone copies the Bat's ATK / LCK / gear at summon (`Bat_illusion.cs:60-120`), its `damageMod` is `clamp(0.25 + 0.25n, 0.5, 1)` (`Bat_illusion.cs:151`), and its bolt (`Bat_illusionFire.cs`) has no `w_bat59` cut and only crits with Illusion Effect.
+- **Card (2026-10-06, user):** a `BAT_COMBO_ILLUSION_DEP` rank toggle (0-4 = Shadow Illusion level; 1 clone at rank 1, 2 from rank 2) adds a `Shadow Illusion` group with `stage hits × clones` hits, `damageMod` 0.5 / 0.5 / 0.75 / 1 instead of the player's buffs, and `critOff` unless `BAT_COMBO_ILLUSIONEFFECT_DEP` is on.
+- **Card (2026-10-06):** `BAT_COMBO_GEAR` controls: crit Wand (G. Marshal +5 / G. Champion +7), crit armor + hat (+7 / +11) and Homing Wand (`w_bat59`, "A wand that is precise in striking…", `WeaponData_eng.cs:5764`; `floor(0.75x)` before the crit, exclusive with the crit Wand).
 - Client tooltips: EN "…ability to use her normal attack's second [third] strike." / "Changes Bat's third combo into a three-way projectile attack." (`BatSkill_eng.cs:31-53`). Matches.
 
 ### bat_cAttack1-3 (Drain Life, #111-#113) (verified 2026-10-01)
@@ -389,10 +391,56 @@ Follow-up verification:
 - reqLv 70, reqBn 3; no cost. `Chiroptophobia()` runs from the Bat's own `Update`, at most once per **1 s** (`Bat.cs:13166-13241`): every enemy within `FindAreaTarget(Bat, 12, 5)` gets `chiroptophobia` at level `blind Lv + confuse Lv` for 60 s, only when that is higher than the level it already holds.
 - The status ticks every 1.5 s for `RPC_AddEffectDamage(422, 7 × Lv + 7)`, attributed to the Bat, and is removed when the target has neither `blind` nor `confuse`, when the Bat is gone, or when the Bat is more than 13 m away (`CharacterControl.cs:9674-9759`).
 
-### bat_blackServant5 (Black Servant, #434) — Class-C active (verified 2026-10-01)
+### bat_blackServant5 (Black Servant, #444) — Class-C active (verified 2026-10-01)
 
 - reqLv 85, reqBn 6; MP **66**; SP **−66** (red); target, enemy. Cooldown `agiAdjust(180)` (`Bat.cs:44579`).
 - Target must be a **dead hero-type player** (`isHeroType`, `isPlayer`, `actionState == "dead"`, else "Can only cast on player", `Bat.cs:8468-8511`). The cast adds the matching `Shadow<Class>_AI` component (Wolf, Bison, Panda, Whale, Cat, Chameleon, … `:44954-45055`) and applies `blackServant` Lv 5 for `getDebuff(90)`; status effects are in the table above.
+- **Zombie AI (verified 2026-10-06):** `Bat.cs:44954-45175` adds `Shadow<Type>_AI` by `hitChar.Type` and sends `AddAISummoner(Bat)`; the AI runs from its own `Update` unless `isControlled` (`ShadowWolf_AI.cs:50-86`). All 12 files share the same frame (the constants are identical in every file):
+  - **Idle:** if the Bat is more than **6 m** away (`sqrMagnitude > 36`) it runs to the Bat, else `AI_idle(3, 1)` / `AI_patrol(1, 0.25)` (`ShadowWolf_AI.cs:125-160`). `AI_visionCheck` once per second: `Hate.findEnemies(pos, 40, layer)`, skipping Plants / Structure for a Tails-race body, dead targets, `invisible` and `blend` (`:821-1075`); a hit sets `isAlert` and `addHate(5)`.
+  - **Alert:** drops the fight when the Bat is more than **30 m** away (`sqrMagnitude > 900`, `:192-202`); else `getHateTarget(5, 50)` (`:689`) and `AI_attack(10, 0)`.
+  - **Decision:** distance = flat distance − target `collider.bounds.extents.x`. A fixed priority list of `sp > N` → `hasSkill(<exact rank ID>)` → range → `isTimeOut(key) == 0` → `StartCoroutine(RPC_<skill>(…, sLv))` with a **hard-coded `sLv`**; otherwise the basic attack, otherwise run to the target. `hasSkill` is an exact `mSkillList` match (`CharacterControl.cs:21498`).
+  - **No cost:** MP / SP are only deducted by the player input path (`GameGui.cs:37780-37830`), so AI casts pay nothing and SP stays above the threshold; cooldowns are set inside each `RPC_` coroutine (e.g. `Wolf.cs:26381`, `RPC_cast1` `Penguin.cs:19869`), and `RPC_cast1` keeps its cast bar (`Penguin.cs:19475`). The combo chain never checks the Combo ranks (no `hasSkill(10x)` in any AI file).
+  - Priority lists below: `sp >` threshold, skill, cast sLv, [condition; requirement when it differs from the cast rank].
+
+#### bat_zombieWolf — Zombie Wolf (`ShadowWolf_AI.cs:1395-2028`)
+60 Lunar Eclipse 1 [needs #372 = rank 2]; 55 Grand Cross 1 [reads `mGrandCrossMark`]; 50 Blade Song 3 [<4 m]; 45 Cross Break 3 [<3]; 40 Feral Strike 4 [<4]; 35 Armor Break 2 [<2]; 30 Counter 2 [<2]; 25 Power Break 2 [<3]; 20 Art Cancel 2 [<3]; 15 Crusader 4 [<2]; 10 Blade Fang 3 [<2; needs #304, which Wolf does not have, so never]; 5 Brave Spirit 4; else Combo 1 → 2 (0.8 s) → 3 (0.6 s) at <2 m.
+- **BB bug:** the Grand Cross gate is `UnityRuntimeServices.GetProperty(wolf, "mGrandCrossMark")` (`:1445`); Wolf's public field is `mGrandMark` (`Wolf.cs:14427`) and no `mGrandCrossMark` exists anywhere in the source, so the duck-typed lookup throws and ends that decision pass. Whenever SP > 55 and Lunar Eclipse is not taken, the Wolf zombie does nothing (no lower skill, no Combo, no movement).
+
+#### bat_zombieBison — Zombie Bison (`ShadowBison_AI.cs:1415-2023`)
+60 Titan Form 2; 55 Over Power 2; 50 Earth Smasher 2 [<3]; 45 Trample 2 [<4; needs #212 = Slam 2]; 40 Earth Rupture 2 [<9]; 35 Far Stun 2 [8-32]; 30 Iron Shield 1; 25 Knock Down 4 [<1]; 20 Warcry 2; 15 Slam 2 [<1]; 10 Power Cleave 2 [<1]; 5 Enrage 4 [no `enrage`]; else Combo at <1 m, hit 3 = `Random.Range(0,100) < 60` ? `nAttack3` : spin `nAttack4` (flat, no LCK).
+
+#### bat_zombiePanda — Zombie Panda (`ShadowPanda_AI.cs:1571-2200`)
+90 Heaven Palm 2 [12-24]; 55 Ashura 2; 50 Rain & Storm 2 [<3]; 45 Rising Dragons 2 [<2]; 40 Stasis Blow 2 [<3]; 35 Rising Vortex 2 [<3]; 30 Stasis Blow 2 [<3] (listed twice); 25 Pummel 2 [<2]; 20 Water Crane 2 [<2]; 15 Rushing Falcon 2 [<4]; 10 Drunken Fist 2 [<1]; 5 Three Steps 2 [<2]; else Combo at <1 m, up to 5 stages while the centre distance stays ≤ 1 m.
+- **BB bug:** Three Steps checks `isTimeOut("threeStep")`; the skill sets `"threeSteps"` (`Panda.cs:21519`), so its cooldown never blocks the AI.
+
+#### bat_zombieWhale — Zombie Whale (`ShadowWhale_AI.cs:1392-2028`)
+90 Megalodon 2 [<32]; 85 12th Kingdom Knight 2 [<32, self]; 50 Mal Storm 2 [<2]; 45 Peninsula Round 2 [<2]; 40 Whale Wave 2 [<2]; 35 Peninsula Impale 2 [<2]; 30 Rejuvenate 4 [self, no `rejuvenate`]; 25 Shield Rush 2 [<2]; 20 Hydro Blast 4 [>4]; 15 Javelin 2 [4-12]; 10 Bubble Shield 4 [self, no `bubbleShield`]; 5 Sweep 2 [<2]; else Combo 3 stages at <1 m.
+
+#### bat_zombieCat — Zombie Cat (`ShadowCat_AI.cs:1504-2119`)
+90 Grand Casino Arcade 2; 60 Delta Strike 2 [<3]; 50 Moon Storm 2 [<4]; 45 Damage Roulette 2 [<4]; 40 Bleed 2 [<1]; 35 Lucky Dice 2 [<4]; 30 Reverse Thrust 2 [<1]; 25 Life Gamble (sLv 2) [hp < floor(0.6 mhp); needs #223]; 20 Forward Lunge 2 [<3]; 15 Fate Draw 4 [<18]; 10 Flying Dagger 4 [<18]; 5 Lucky Card 4; else Combo at <2 m, up to 4 stages while the centre distance stays ≤ 2 m.
+
+#### bat_zombieChameleon — Zombie Chameleon (`ShadowChameleon_AI.cs:1374-2096`)
+All inside `distance < 18`, else run. 65 Final Entrapment 2; 60 All Slain 2; 55 Venom Shock 2 [target `poison` Lv ≥ 4]; 40 All Tail Slayer [#362]; 45 Poison Volley 2 [<5]; 40 Tail Slayer [#342]; 35 Mass Shot 2 [<4]; 30 Right Stride 2; 25 Needle Prison 2 [target without `needlePrison`]; 20 Left Stride 2; 15 True Invisibility 2 [self, no `invisible`]; 10 Fatal Strike 4; 5 Quick Fire 4; else an `nAttack1` volley when `nAttack` is free (stands facing the target while it is not).
+
+#### bat_zombieRabbit — Zombie Rabbit (`ShadowRabbit_AI.cs:859-1540`)
+A plain method, not a coroutine. All inside `distance < 18`, else run. 90 Millionaire 2 [<6]; 85 Gorgon Shot 2; 50 Shooting Array 2; 45 Rapid Trance 1; 40 Circle Shot 2 [<7]; 35 Acidic Field 2; 30 Four Shot 2; 25 Sticky Gum 2; 20 Backpack 2 [<2]; 15 Mix 4; 10 Gil Shot 4; 5 Maim Shot 4; else one `RPC_nAttack` shot when free, standing still while it is not.
+- **BB bug:** Millionaire and Shooting Array check `isTimeOut("RPC_millionaire")` / `("RPC_shootingArray")` (`:889`, `:978`); the skills set `"millionaire"` / `"shootingArray"` (`Rabbit.cs:36869`, `:35766`), so neither cooldown ever blocks the AI.
+
+#### bat_zombieMole — Zombie Mole (`ShadowMole_AI.cs:1443-1970`)
+55 Time Nuke 2; 45 Flame Turret 2 [2-8; needs #243 = rank 3]; 40 Missile 4 [<12]; 35 Stun Grenade 2 [6-12]; 30 Chopper 3 [<7]; 25 TNT 2 [14-18; needs #224 = TNT 4; key `"tnt2"` matches `Mole.cs:26180`]; 20 Mega Hammer 2 [<2]; 15 `RPC_mortarShot` sLv **4** [needs #214 = Bunker 2; `2 × sLv + 1` = 9 shells]; 10 Mega Punch 2 [<2]; 5 Mine 4; else Combo at <2 m: `nAttack1`, then `RPC_nAttack2` twice while ≤ 12 m (stage 3 replays stage 2).
+
+#### bat_zombieMonkey — Zombie Monkey (`ShadowMonkey_AI.cs:1355-1687`)
+All inside `distance < 5`, else run. 55 World Ignition 2; 50 Runic Sand [#364]; 45 Runic Flame [#264]; 40 Stone Hammer 4; 35 Flash Fire 4 [<4]; 10 Ground Lock 4; 5 Fireball 4; else Combo 2 stages.
+
+#### bat_zombiePenguin — Zombie Penguin (`ShadowPenguin_AI.cs:1401-1975`)
+All inside `distance < 32`, else run. 60 Arctic Emperor 2 [<4]; 55 Meteora 2; 50 Absolute Zero 2 [<3]; 45 Falling Comets 2; 40 Tornado 3 [<12; needs #344 = Typhoon]; 35 Falling Stars 2; 30 Ice Shield 4 [self]; 25 Mana Burn 2; 20 Arctic Wind 3 [<3; needs #314 = Arctic Frost]; 15 Mana Arc 4 [<3]; 10 Frozen Blast 4; 5 Mana Missile 4; else Combo 3 stages.
+- **BB bug:** Ice Shield checks `isTimeOut("arcticWind")` instead of `"iceShield"`, so its own cooldown never blocks it; it repeats whenever Arctic Wind is off cooldown.
+
+#### bat_zombieSheep — Zombie Sheep (`ShadowSheep_AI.cs:1373-1968`)
+All inside `distance < 24`, else run. 60 Soul of Arms 2; 55 Holy Light 2 [mp > 100]; 50 Reverse 2 [self, no `reverse`]; 45 Over Heal 2 [on the enemy target, when `tChar.hp == tChar.mhp`]; 40 Divinity Spear 2; 35 Sleep 2 [target without `sleep`]; 30 Divinity Sword 2; 25 All Heal 2 [self hp < floor(0.4 mhp)]; 20 Feather 2 [self, no `feather`]; 15 Bless 4 [self, no `bless`]; 10 Light Bind 4; 5 Heal 4 [self, hp < floor(0.8 mhp)]; else Combo 2 stages. Every heal / buff goes on the zombie itself, never the Bat.
+
+#### bat_zombieBat — Zombie Bat (`ShadowBat_AI.cs:1401-1852`)
+All inside `distance < 32`, else run. 55 Doom 2; 45 Echoes 2; 40 Phantasm Blast 2; 35 Curse 2 [needs #234 = Curse 4]; 30 Dream Dazzle 2; 25 Corruption 2; 20 Confusion 2; 15 Shadow Gaze 4; 10 Blind 2; 5 Phantom Bane 4; else Combo 3 stages.
 
 ## Open questions & card mismatches (2026-10-01)
 

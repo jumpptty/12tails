@@ -202,7 +202,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 | Added 1st / 2nd | same as the spin (`:18318`, `:18353`, `:18608`, `:18643`) | 5 / 6 radius (`:18313`, `:18603`) | `OverPride` / `1 + OverPride` |
 
 - **Gear crit (`getCritPlus`, `Bison.cs:13801-13950`):** weapon `w_bsn43`/`w_bsn44` +5, `w_bsn58` +7; armor `a_all43`/`a_all44` +4, `a_all58` +6; accessory `c_all43`/`c_all44` +3, `c_all58` +5. `Random.Range(0,100) < lckAdjust(sum)` → `floor(1.8 × raw)`. Full supreme-commander set = 12, full champion set = 18 (same shape as Wolf). Names: `WeaponData_eng.cs:796`, `:807`, `:917`.
-- **Weapon `w_bsn59`** ("a hammer that can create such void…", `WeaponData_eng.cs:928`), not modelled in the Bible: every stage first pulls enemies within 6 m (`RPC_AddDamage(1, -1, …, 5×direction)`, `Bison.cs:14669-14720`) and scales raw damage by `floor(0.75×)` (`:14780-14787`).
+- **Weapon `w_bsn59` Vacuum Hammer** ("a hammer that can create such void…", `WeaponData_eng.cs:928`), modelled on Combo since 2026-10-06 (`BSN_W59_DEP`, `critProc.post`, exclusive with the crit axe): every stage first pulls enemies within 6 m (`RPC_AddDamage(1, -1, …, 5×direction)`, `Bison.cs:14669-14720`) and scales the damage by `floor(0.75×)` (`:14780-14787`) **after** `getCritPlus` (`hitDmg = getCritPlus(…)` at `:14776`).
 - **Colossal Weapon (#361-362, `getColossalWeaponLv()` 0-2, `Bison.cs:8947`):** after each stage, every target within 8 m (height 4; 6 for spin/Added Swing) of a point 1 m ahead that the stage did **not** hit takes Effect Damage `ceil(0.2 × lv × highest damage dealt by that stage)` (`:14930-15029`, `:17362-17461`, `:17652-17749`).
 - **SP:** +1 per stage that hits (`:14896` etc.).
 

@@ -57,8 +57,9 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `lckAdjust(learnedRank * 6)`: the proc fires `RPC_doubleArt` and returns `false`; the ordinary
   path returns `true`. Most active casts skip `addTimeOut` on a proc. **Feral Assault and Dual Brand
   require Sublime Art (#431) as well**: on a Double Art proc, their cooldown still starts if
-  `hasSkill(431)` is false (`Wolf.cs:35400-35412`, `:36665-36680`). Twin Resonance needs no
-  Sublime Art check (`Wolf.cs:37207-37213`). The cooldown table reports the normal base values.
+  `hasSkill(431)` is false (`Wolf.cs:35400-35412`, `:36665-36680`). **BB bug:** Twin Resonance has no
+  Sublime Art check (`Wolf.cs:37207-37213` calls only `getDoubleArt()`), so Double Art resets it without #431,
+  unlike every other Class-C skill (Holy Sword, Holy Armor, Art Breaker, Mirror Blade, Feral Assault, Dual Brand). The cooldown table reports the normal base values.
 - **`doubleArt1`-`4`, `statPlus1`-`4`, `weaponPlus1`-`4`, `armorPlus1`-`4`, `noKo1`-`3`, `perseverance1`-`2`,
   `feralInstinct1`-`4`, `impulse1`-`2`, `lastBlade1`, `finalEclipse1` are confirmed passives** (self-buff/
   chance-proc/equipment-scaling flavor text, `WolfSkill_eng.cs:99-120` (perseverance), `:165-208`

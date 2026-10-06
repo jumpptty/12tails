@@ -199,6 +199,7 @@ memory of this file, if a number looks off. One Penguin-specific override: `agiA
 ### pgn_nAttack1 (101) / pgn_nAttack2 (102) — passive, combo unlockers
 - No MP/SP/CD of their own. nAttack1 unlocks combo hit 2, nAttack2 unlocks hit 3.
 - All 3 combo stages share ONE damage formula: `hit(1, target, 0.5×ATK, 1, 0, 0.3×forward)` — no per-stage scaling.
+- **Gear crit and Staff of Time (`w_pgn59`, verified 2026-10-06):** the projectile (`Penguin_nAttack.cs`) takes `num = floor(0.75 × num)` with `w_pgn59` (`:115`; the same block slows the ball to 0.01 m/s, "Staff of time. The energy ball from this staff will move slowly.", `WeaponData_eng.cs:5280`), then `penguin.getCritPlus(num)` on contact (`:256`; standard table, `Penguin.cs:16239`), then `hit(1, …, num, 1, 0, 0.3×forward)` (`:294`). Card: `PGN_COMBO_GEAR` (crit Staff ↔ Staff of Time exclusive, crit armor + hat).
 - `hasSkill(401)` ("spreadShot5", Class C): 20% chance (hits 1-2) / 40% chance (hit 3, `lckAdjust`) to fire 3 spread projectiles instead of one.
 
 ### pgn_cAttack1-4 (111/112/113/114) — passive, charge-attack rank

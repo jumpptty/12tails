@@ -356,13 +356,15 @@ RPC_AddEffectDamage  ── separate path: hitMod only
 
 ### 2.10 Equipment critical hit — `getCritPlus` (verified 2026-09-29)
 
-Every class with crit gear wraps some raw damage values in its own `getCritPlus(nDmg)` before calling `hit()` (Wolf `Wolf.cs:14160-14186`, Bison `Bison.cs:13801-13950`, Sheep `Sheep.cs:16494-16640`, Rabbit `Rabbit.cs:16471-16600`; identical shape):
+Every class with crit gear wraps some raw damage values in its own `getCritPlus(nDmg)` before calling `hit()` (Wolf `Wolf.cs:14160-14186`, Bison `Bison.cs:13801-13950`, Sheep `Sheep.cs:16494-16640`, Rabbit `Rabbit.cs:16471-16600`, Cat `Cat.cs:15410`, Monkey `Monkey.cs:19061`, Penguin `Penguin.cs:16239`, Bat `Bat.cs:19389`; identical shape):
 
 - **Gear sum** `n`: weapon `w_<cls>43`/`44` +5, `w_<cls>58` +7; armor `a_all43`/`44` +4, `a_all58` +6; hat `c_all43`/`44` +3, `c_all58` +5. Full Marshal (supreme commander) set = 12, full Champion set = 18; there is no other source of crit in these functions.
 - **Roll:** `Random.Range(0, 100) < lckAdjust(n)` (`lckAdjust` as in §2.4, LCK clamped to 1-512); each call rolls on its own. `n = 0` never crits.
 - **Effect:** `FloorToInt(1.8 × nDmg)` on the raw value only. The result still goes through `hit()` → `dmgAdjust` → `defAdjust` → `hitMod`, so final damage is not exactly 1.8x.
 - **Example chances** (LCK 0 / 128 / 512): Marshal 12 → 12% / 23% / 45%; Champion 18 → 18% / 33% / 57%.
-- **Where the wrap sits differs per skill:** Rabbit rifle Combo, the ricochet and From the Above wrap `hitDmg + Hyper Shot`; the Customized Shotgun wraps only `(int)(0.5 × ATK)` and adds Hyper Shot after; Rabbit Charge Attack has no `getCritPlus` at all. Modeled in the Bible on Wolf Combo, Bison Combo, Sheep Book Bash and Rabbit Combo (`critProc` / `rawModel.critBase`, "ดูสูตรคริ" toggle that shows the card as a crit hit).
+- **Where the wrap sits differs per skill:** Rabbit rifle Combo, the ricochet and From the Above wrap `hitDmg + Hyper Shot`; the Customized Shotgun wraps only `(int)(0.5 × ATK)` and adds Hyper Shot after; Rabbit Charge Attack has no `getCritPlus` at all; Cat's Hidden Blade replacement hit skips it too (`Cat.cs:16622`).
+- **Lv 60 weapon `w_<cls>59` and the crit (verified 2026-10-06):** on Cat, Monkey, Penguin, Bat, Rabbit, Sheep, Mole and Whale Combo the weapon's `floor(0.75 × raw)` comes **before** `getCritPlus` (`Cat.cs:16525`, `Monkey.cs:19984`, `Penguin_nAttack.cs:115`, `Bat_nAttack.cs:217`, `Whale.cs:16169-16180`), so a crit is `floor(1.8 × floor(0.75 × raw))`; on Wolf (Katana), Bison (Vacuum Hammer, `Bison.cs:14776-14787`) and Panda (Force Gauntlet, `Panda.cs:15333-15349`) it scales the **already crit-rolled** value. Chameleon's Power Bow only raises the hit force (no damage change). The Lv 60 weapon and the crit weapon share the weapon slot, so the Champion crit set with it tops out at 11. All twelve are modelled on the Combo cards.
+- Modeled in the Bible on Wolf Combo, Bison Combo, Sheep Book Bash, Rabbit Combo and Cat / Monkey / Penguin / Bat Combo (`critProc` / `rawModel.critBase`, "ดูสูตรคริ" toggle that shows the card as a crit hit).
 
 ## 3. Skills
 

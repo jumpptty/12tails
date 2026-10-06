@@ -108,7 +108,7 @@ Per-skill entries (`### mol_<name>`) are the verified 2026-10-01 pass; they take
 ### mol_nAttack1-4 (Combo, #101-104): one cannon shell per stage (verified 2026-10-01)
 
 - Passive, Lv/Bn 1/0, 2/1, 3/2, 4/3. Stage `n + 1` needs #10n and a press within the stage window (`doNormalAttack`, `:9515-9800`); `addTimeOut("nAttack", 1.5)` (`:20602`, `:20901`). Up to 5 shells at Combo 4.
-- Each stage fires one `RPC_nAttack_fire` shell (`:20473`, `:21235`), `ProjectileControl.life = 10 × rangeMod` (`:10089`), speed 15 (`Mole_nAttack.cs:20-34`). Star Cannon (`w_mol59`) fires two shells at ±9° instead (`:20419-20464`).
+- Each stage fires one `RPC_nAttack_fire` shell (`:20473`, `:21235`), `ProjectileControl.life = 10 × rangeMod` (`:10089`), speed 15 (`Mole_nAttack.cs:20-34`). Double Cannon (`w_mol59`, `WeaponData.cs:15046`; the card once called it Star Cannon) fires two shells at ±9° instead (`:20419-20464`). Modelled on Combo (`MOL_W59_DEP`, `critProc.pre`): the chip shows one shell.
 - **Hit (`Mole_nAttack.cs:90-175`):** on touching an enemy, `num = (int)((0.5 + 0.1 if Cannon Expert #401) × ATK)`, `floor(0.75 ×)` with `w_mol59`, then `mole.getCritPlus(num)` (standard Marshal 12 / Champion 18 table, `:19229-19378`); explosion `FindAreaTarget(point, (4 + ExtraPowderLv) × rangeMod, 4)`; each target takes `hit(1, t, floor(num × (1 − 0.5 × d / r)), KO 1, …)` (falloff `0.25` with Cannon Expert), `onNormalAttackHit`, `sp++`.
 - **Card:** `atkCoeff` 0.5 / 0.6 with Cannon Expert, hit count Combo + 1, `critProc` with gear deps; value is the centre of the blast.
 

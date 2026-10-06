@@ -1559,7 +1559,7 @@ let checkedComboGear = 0;
     const IDS = [k + "GearWeapon", k + "GearEquip", k + "W59", ...ALL];
     IDS.forEach(d => { if (!(d in savedDeps)) savedDeps[d] = deps[d]; });
     const setDeps = (o) => IDS.forEach(d => { deps[d] = o[d] || 0; });
-    check(`${id} has critProc.pre, lckProc and the 3 gear controls`, !!(sk && sk.critProc && sk.critProc.pre && sk.lckProc && sk.dmgControls && sk.dmgControls.map(d => d.id).join() === IDS.slice(0, 3).join()));
+    check(`${id} has critProc.pre, lckProc and the 3 gear controls`, !!(sk && sk.critProc && sk.critProc.pre && sk.lckProc && sk.dmgControls && sk.dmgControls.map(d => d.id).join().includes(IDS.slice(0, 3).join())));
     check(`${id}: Lv 60 weapon and crit weapon switch each other off`, html.includes(`${k}W59: ["${k}GearWeapon"], ${k}GearWeapon: ["${k}W59"]`));
     [[{}, 0], [{ [k + "GearWeapon"]: 1 }, 5], [{ [k + "GearWeapon"]: 2 }, 7], [{ [k + "GearEquip"]: 1 }, 7], [{ [k + "GearEquip"]: 2 }, 11], [{ [k + "GearWeapon"]: 2, [k + "GearEquip"]: 2 }, 18], [{ [k + "W59"]: 1, [k + "GearEquip"]: 2 }, 11]].forEach(([o, base]) => {
       setDeps(o); check(`${id} crit base ${JSON.stringify(o)} = ${base}`, sk.critProc.chance(1) === base, sk.critProc.chance(1));
@@ -1613,6 +1613,77 @@ let checkedComboGear = 0;
   Object.entries(savedDeps).forEach(([d, v]) => { if (v === undefined) delete deps[d]; else deps[d] = v; });
 }
 console.log(`Verified ${checkedComboGear} Combo crit gear / Lv 60 weapon checks (Cat, Monkey, Penguin, Bat).`);
+// 3o-ii-b. Lv 60 weapons of Bison / Panda / Whale / Mole / Sheep Combo (2026-10-06) and Bat Combo's Shadow Illusion clones.
+// Before the crit: Whale Star Spear, Mole Double Cannon, Sheep Holy Orb; after the crit: Bison Vacuum Hammer, Panda Force Gauntlet
+// (Panda.cs:15338, Bison.cs:14776-14787). Clones: (int)(0.5 ATK), no Homing Wand cut, crit only with Illusion Effect, damageMod 0.5-1.
+let checkedComboW59 = 0;
+{
+  const inputs = sandbox._statInputs, deps = sandbox._depRanks;
+  const check = (label, ok, got) => { checkedComboW59++; if (!ok) { console.error(`[COMBO W59 ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const saved = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDeps = {};
+  const touch = (ids) => ids.forEach(d => { if (!(d in savedDeps)) savedDeps[d] = deps[d]; });
+  const select = (sk, r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
+  const rawOf = (sk, gi) => { const g = sk.dmgGroups ? sk.dmgGroups[gi] : undefined; const r = g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g) : sandbox._calcRangeFor(sk.dmg); return r[0] + "-" + r[1]; };
+  const sweep = (sk, maxR, tag) => {
+    [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
+      inputs.atk.value = atk; inputs.lck.value = lck;
+      for (let r = 1; r <= maxR; r++) {
+        select(sk, r);
+        (sk.dmgGroups || [undefined]).forEach((g, gi) => {
+          if (g && sandbox._resolveGroupHitCount(sk, g) === 0) return;
+          const fin = sandbox._finalRangeForRange(g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g) : sandbox._calcRangeFor(sk.dmg));
+          let lo = Infinity, hi = -Infinity;
+          for (let i = 0; i < 300; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false, g ? gi : undefined); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+          check(`${sk.id} range/sim ${tag} rank ${r} group ${gi} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+        });
+      }
+    });
+  };
+  // [card, w59 id, crit weapon id, crit equip id, maxRank, raw at ATK 200 / LCK 0: off, weapon on, weapon on + Champion armor]
+  [["whale_nAttack", "whlW59", "whaleGearWeapon", "whaleGearEquip", 2, "100-100", "75-75", "75-135"],
+   ["mole_nAttack", "molW59", "moleGearWeapon", "moleGearEquip", 4, "100-100", "75-75", "75-135"],
+   ["sheep_nAttack", "shpW59", "sheepGearWeapon", "sheepGearEquip", 2, "100-100", "75-75", "75-135"],
+   ["bison_nAttack", "bsnW59", "bisonGearWeapon", "bisonGearEquip", 4, "100-100", "75-75", "75-135"],
+   ["panda_nAttack", "pndW59", "pandaGearWeapon", "pandaGearEquip", 4, "40-40", "30-30", "30-54"]].forEach(([id, w, gw, ge, maxR, off, on, onCrit]) => {
+    const sk = SKILLS.find(x => x.id === id);
+    const ids = [w, gw, ge, "bruteStrength", "bisonSpinForce", "addedSwing", "colossalWeapon", "focusedSpirit", "auraBlast", "cannonExpert", "wallPuncture", "overPride", "improvedSwing"];
+    touch(ids);
+    const setDeps = (o) => ids.forEach(d => { deps[d] = o[d] || 0; });
+    check(`${id} shows the ${w} toggle`, !!(sk.dmgControls && sk.dmgControls.some(d => d.id === w)));
+    check(`${id}: ${w} and the crit weapon switch each other off`, html.includes(`${w}: ["${gw}"]`) && html.includes(`${gw}: ["${w}"]`));
+    inputs.atk.value = "200"; inputs.lck.value = "0";
+    [[{}, off], [{ [w]: 1 }, on], [{ [w]: 1, [ge]: 2 }, onCrit]].forEach(([o, want]) => { setDeps(o); select(sk, 1); const got = rawOf(sk, 0); check(`${id} raw ${JSON.stringify(o)}`, got === want, got); });
+    setDeps({ [w]: 1, [ge]: 2 }); sweep(sk, maxR, "weapon+armor");
+    setDeps({});
+  });
+  { // Panda Aura Blast keeps its own formula under Force Gauntlet: 1.25 x 200 = 250.
+    const sk = SKILLS.find(x => x.id === "panda_nAttack"); touch(["pndW59", "auraBlast"]);
+    deps.pndW59 = 1; deps.auraBlast = 1; inputs.atk.value = "200"; inputs.lck.value = "0"; select(sk, 4);
+    const gi = sk.dmgGroups.findIndex(g => g.aura); check("Panda Aura Blast not cut by Force Gauntlet", rawOf(sk, gi) === "250-250", rawOf(sk, gi));
+    deps.pndW59 = 0; deps.auraBlast = 0;
+  }
+  { // Bat clones
+    const sk = SKILLS.find(x => x.id === "bat_nAttack");
+    const ids = ["shadowIllusion", "illusionEffect", "batGearWeapon", "batGearEquip", "batW59"]; touch(ids);
+    const setDeps = (o) => ids.forEach(d => { deps[d] = o[d] || 0; });
+    [[0, 3, 5], [1, 3, 10], [2, 3, 15], [4, 1, 6]].forEach(([si, r, want]) => { setDeps({ shadowIllusion: si }); select(sk, r); check(`Bat Combo hits, Shadow Illusion ${si} rank ${r}`, sk.hitCount(r) === want, sk.hitCount(r)); });
+    inputs.atk.value = "200"; inputs.lck.value = "0";
+    setDeps({ shadowIllusion: 4, batW59: 1, batGearEquip: 2 }); select(sk, 3);
+    check("Bat hit: Homing Wand then crit", rawOf(sk, 0) === "75-135", rawOf(sk, 0));
+    check("clone hit: no Homing Wand cut, no crit without Illusion Effect", rawOf(sk, 1) === "100-100", rawOf(sk, 1));
+    setDeps({ shadowIllusion: 4, batW59: 1, batGearEquip: 2, illusionEffect: 1 }); select(sk, 3);
+    check("clone hit crits with Illusion Effect", rawOf(sk, 1) === "100-180", rawOf(sk, 1));
+    [1, 2, 3, 4].forEach(si => { setDeps({ shadowIllusion: si }); check(`clone damageMod at Shadow Illusion ${si}`, sk.dmgGroups[1].damageMod() === [0, 0.5, 0.5, 0.75, 1][si], sk.dmgGroups[1].damageMod()); });
+    // damageMod reaches Final: a 0.5 clone ends below the Bat's own hit at the same raw value.
+    setDeps({ shadowIllusion: 1 }); select(sk, 3);
+    const fb = sandbox._finalRangeForRange(sandbox._calcRangeFor("0", 0.5, sk.dmgGroups[0])), fc = sandbox._finalRangeForRange(sandbox._calcRangeFor("0", 0.5, sk.dmgGroups[1]));
+    check("clone Final uses its own damageMod", fc[1] < fb[1], `${fc} vs ${fb}`);
+    [{ shadowIllusion: 4 }, { shadowIllusion: 2, illusionEffect: 1, batGearWeapon: 2, batGearEquip: 2 }, { shadowIllusion: 3, batW59: 1, batGearEquip: 1 }].forEach(o => { setDeps(o); sweep(sk, 3, JSON.stringify(o)); });
+  }
+  inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
+  Object.entries(savedDeps).forEach(([d, v]) => { if (v === undefined) delete deps[d]; else deps[d] = v; });
+}
+console.log(`Verified ${checkedComboW59} Combo Lv 60 weapon (Bison, Panda, Whale, Mole, Sheep) and Bat Shadow Illusion checks.`);
 // 3o-iii. Bison Combo (2026-09-29): stage/spin/Added Swing hit counts (groupVariant), per-stage Raw Strength
 // coefficients, inclusive spin/Over Pride chances, Over Pride KO, the gear crit chip, and range vs simulator.
 let checkedBisonCombo = 0;
