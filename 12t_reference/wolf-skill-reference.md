@@ -761,7 +761,7 @@ if (this.hasSkill(421))
 
 ### wlf_finalEclipse1 (#373) and wlf_sublimeArt5 (#431) — passives (verified 2026-10-02)
 
-- **Final Eclipse** fires in `doBeginCharge` (`Wolf.cs:7847-7940`), i.e. when the charge button is pressed, not on a dash: Wolf standing or running, `#373`, `lunarEclipse` level `L > 0` and `sp >= 2L` → SP −`2L` (−`L` with Revised Skill #404) and `RPC_feralStrike(…, 2L)` instead of charging, with no cooldown. (The Feral Strike entry's "dodge dash" wording is imprecise; this is the trigger.) Tooltip TH "เปลี่ยนการโจมตี Charge … ให้เป็น FeralStrike" matches.
+- **Final Eclipse** fires in `doBeginCharge` (`Wolf.cs:7847-7940`), i.e. when the charge button is pressed, not on a dash: Wolf standing or running, `#373`, `lunarEclipse` level `L > 0` and `sp >= 2L` → SP −`L`, but **−`2L` with Revised Skill #404** (`Wolf.cs:7917-7936`: `if (hasSkill(404)) sp -= statusLv * 2; else sp -= statusLv;`, junk predicates evaluated, none inverts the branch) and `RPC_feralStrike(…, 2L)` instead of charging, with no cooldown. **BB bug (corrected 2026-10-06, the 2026-10-02 entry had the branches swapped):** Revised Skill doubles this SP cost instead of halving it; the `sp >= 2L` gate is the same either way. Card: `bbBug`. (The Feral Strike entry's "dodge dash" wording is imprecise; this is the trigger.) Tooltip TH "เปลี่ยนการโจมตี Charge … ให้เป็น FeralStrike" matches.
 - **Sublime Art:** the `RPC_doubleArt` coroutine gives `RPC_AddHeal(431, 0, 5, 5, …)` = **+5 MP / +5 SP** per Double Art proc (`Wolf.cs:18383`), and Holy Sword, Holy Armor, Art Breaker, Mirror Blade, Feral Assault and Dual Brand only skip their cooldown on a proc with #431 (`:33059`, `:33574`, `:34152`, `:34815`, `:35408`, `:36671`).
 
 ## Open questions & card mismatches (2026-10-01)
