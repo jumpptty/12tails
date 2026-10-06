@@ -705,6 +705,31 @@ Item creation is the **Compound** system (`CompoundData.cs`, `CompoundGui.cs`, `
 holds recipe data only; there is **no client-side success-rate formula** — success is resolved server-side. So
 upgrade/synthesis odds are not recoverable from this assembly.
 
+#### Special-page slot checks: Renew / Reslot / Add Slot / Replica (verified 2026-10-06, `CompoundGui.cs`)
+Recipes are `s_rnw` (Renew), `s_rsl` (Reslot), `s_asl` (Add Slot), `s_rpc` (Replica), each in tiers `1-4`; the
+tier is the recipe key's last digit and the level cap is **`tier × 30`** (30 / 60 / 90 / 120; tooltips
+`SpecialData`: "fake weapon or fake accessories level 30 / 60 / 90 / 120 or under"). All checks are client-side
+GUI gates when an item is dropped into a slot (`RenderIngredientMenu`, `:3659-4560`) or the button is pressed
+(`RenderRecipeMenu`, `:2822-2930`); junk predicates evaluated.
+- **Blue slot (C.Item, the base item)** — Reslot / Add Slot / Replica (`IL_1372`, `:3999-4104`): heading must be
+  `w` / `a` / `c` ("Only for weapon, armor, or accessory"), then **`Mathf.Abs(ItemData.lv) > tier × 30` → "Item
+  level too high"** (`:4040`). Add Slot also needs the instance `lv == 0` ("Need to reslot before adding", `:4060`).
+  Renew (`:4110-4212`) accepts any equipment heading `w a c b t p` ("Only equipment can be used") with the same
+  `Abs(lv) ≤ tier × 30` cap (`:4172`).
+- **Red slot (Replica, the item whose stats are copied)** — Replica only (`:4382-4500`): heading `w` / `a` / `c`,
+  then **`ItemData.lv <= tier × 30`** with **no `Mathf.Abs`** (`:4446`, else "Item level too high", `:4480`).
+- **RP / Champion items have a negative `lv`:** the supreme-commander (Marshal, "RP") sets `#43` / `#44` (Blue /
+  Red) and the Champion set `#58`: weapons `w_<cls>43/44 = −58`, `w_<cls>58 = −68`; `a_all43/44` and
+  `c_all43/44 = −53`, `a_all58` / `c_all58 = −63` (`WeaponData.cs`, `ArmorData.cs`, `AccessoryData.cs`; the only
+  negative-level equipment). So in the **blue** slot they count by their absolute level (Champion weapon 68 needs
+  tier 3), but in the **red** slot the negative level always passes: **any RP / Champion item can be the Replica
+  source at every tier**. There is no RP/Champion check in the code; it is purely the missing `Abs`.
+- **Same type and class** (Replica only, on pressing compound, `:2912-2924`): the first 5 characters of the two
+  item keys must match (`getString(name, 0, 5)`), i.e. the same equipment letter **and** the same class code
+  (`w_wlf` with `w_wlf`, `a_all` with `a_all`), else "Items not the same type". One check covers both "same
+  equipment type" and "same class / no-class".
+- The result itself (what Replica copies) is decided server-side by `CompoundItem`; not recoverable here.
+
 ---
 
 ### 5.2 Monster stats (all CharacterControl units, verified 2026-10-02)
