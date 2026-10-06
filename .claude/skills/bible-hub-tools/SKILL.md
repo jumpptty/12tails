@@ -23,3 +23,8 @@ Tile "อยากสกิลวน ใช้แต้มน้อยสุด�
 * **Budget advice (not shown in UI):** uptime ∝ `(CHA+66.67)×(AGI+128)`, so keep CHA ~61 ahead of AGI until CHA hits target. "AGI first" was tested and is wrong.
 * **Undo:** Ctrl+Z restores toggle/rank state (50 deep) only while visible (`root.hidden` guard). Text inputs: snapshot on focus, commit on blur/change; Ctrl+Z inside a field is the field's own.
 * `[CAO ERROR]`.
+
+## Hub bar: contributors (ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล)
+* **Button `#btnCredits`** (two-person icon, gold) sits inside `.hub-note`, right after the Discord name, so it shares the note's `@media (max-width:860px){.hub-note{display:none}}` and is hidden on narrow screens (user 2026-10-06: "right next to" the note).
+* **Modal `#creditsModal`** reuses the donate modal classes (`.donate-backdrop` / `.donate-popup` / `.donate-head` / `.donate-close`); title ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล; closes on ×, backdrop click, Esc.
+* **Data `CONTRIBUTORS`** (end of the main script): `[{ name, what: [..] }]`, one entry per pen name the user provides, in the user's order; rendered with `textContent` (never HTML). Empty list shows `ยังไม่มีรายชื่อ`. Add a fan's finding here only when the user names them; the mechanic itself still goes in the reference / card as usual.
