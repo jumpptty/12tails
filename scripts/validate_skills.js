@@ -2161,7 +2161,7 @@ let checkedCatPowerTto = 0;
   const fbl = SKILLS.find(s => s.id === "cat_finishingBlow");
   if (!/sk-tip-red[^>]*>เฉพาะฮิตที่ 3</.test(heroOf(fbl, "og"))) fail("cat_finishingBlow: Open Wound line must say hit 3 only in red"); else checkedCatPowerTto++;
   const cmb = SKILLS.find(s => s.id === "cat_nAttack");
-  const cmbHtml = heroOf(cmb, "og");
+  const cmbHtml = heroOf(cmb, "og").replace(/<span class="sk-nobr">([^<]*)<\/span>/g, "$1");   // loanword glue is markup only
   if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || !cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง")) fail("cat_nAttack: Open Wound line must say every hit and that stage 2 after a Hidden Blade backstab gets no purple damage"); else checkedCatPowerTto++;
   const ttoCombo = heroOf(cmb, "tto");
   if (ttoCombo.includes("Power Seven")) fail("cat_nAttack on tto still mentions Power Seven"); else checkedCatPowerTto++;
