@@ -1098,6 +1098,18 @@ let checkedEnemyCycle = 0;
   sandbox._undoEnemyChange();
   check("second undo goes back to the start", sandbox._selectedEnemyId() === startId);
   check("undo with an empty stack does nothing", sandbox._undoEnemyChange() === false);
+  // Monster search (2026-10-06): any MONSTER_STATS row can be the target as "m:<index>".
+  check("picker has the monster search box", pickerHtml.includes('data-role="enemy-search"'));
+  const hits = sandbox.searchMonsters("crab");
+  const rows = sandbox._monsterStats;
+  check("search finds CaptainCrab by name", hits.some(i => rows[i][1] === "CaptainCrab"));
+  check("search skips NPCs and empty queries", sandbox.searchMonsters("").length === 0 && sandbox.searchMonsters("jerboa").length === 0);
+  const ci = hits.find(i => rows[i][1] === "CaptainCrab"), mon = sandbox.enemyById("m:" + ci);
+  check("a monster target takes its stats from the row", mon && mon.monster && mon.def === rows[ci][9] && mon.lck === rows[ci][15] && mon.int === rows[ci][12]);
+  sandbox._selectEnemyPreset("m:" + ci);
+  check("choosing a monster selects it and writes its DEF", sandbox._selectedEnemyId() === "m:" + ci && String(sandbox._statInputs.enemyDef.value) === String(rows[ci][9]));
+  check("undo after a monster goes back to the preset", sandbox._undoEnemyChange() && sandbox._selectedEnemyId() === startId);
+  check("an unknown monster id is ignored", sandbox.enemyById("m:999999") === null);
 }
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
 // reciprocated -- if A lists B, B must list A back).
