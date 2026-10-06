@@ -14,6 +14,7 @@ Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../
 * **`bbBug: "<Thai text>"`** (card field): the BigBug client code itself misbehaves (a cooldown that is never checked, a bonus that is never applied, a level table that stops growing). Renders red as `🐞 บั๊กของตัวเกม (BB): …` (`.sk-bb-bug`). Cite the source in the class reference.
 
 ## General card rules
+* **No duration notes (`durNote`, abolished 2026-10-06, user):** the ℹ popup on Duration chips is gone (all 52 notes and the render code removed). Whatever a duration needs explaining goes in the skill `desc`; label the chip with `durLabel` / `secondaryDuration.label` (`"ระยะเวลา " + descriptor`, e.g. "ระยะเวลา Venom Shock").
 * **Basic attacks, charge attacks and passives** get cards only when the user asks.
 * **Vertical collapse:** never render an empty `.sk-hero-stats` or `.sk-dmg-row`, no artificial min-heights.
 * **`dmgGroups`:** must also declare top-level `dmg`/`atkCoeff`/`ko` mirroring the primary group (else `evalArith("")` SyntaxError). Sequential groups' `hitCount`s must sum to the top-level `hitCount(rank, dmgDepOn, hitCountDepOn)` for every dep combination (`[DMGGROUPS HITCOUNT ERROR]`); `dmgModes:true` cards are exempt. Declare `ko` per group when groups differ (`getGroupKOInfo()` splits/merges chips).
