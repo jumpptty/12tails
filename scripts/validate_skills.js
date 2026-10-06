@@ -1543,6 +1543,76 @@ let checkedWolfCombo = 0;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
 }
 console.log(`Verified ${checkedWolfCombo} Wolf Combo (Feral Instinct / gear crit / Dark Edge) checks.`);
+// 3o-ii. Combo crit gear + Lv 60 weapon (2026-10-06), Cat / Monkey / Penguin / Bat: standard getCritPlus table, w_<cls>59
+// floor(0.75x) before the crit (Monkey also KO +2), the weapon slot exclusive with the crit weapon, and range vs simulator.
+// Cat Combo: the crit wraps only the normal raw hit, before Power; Hidden Blade's hit never crits (Cat.cs:16530, :16622, :16694).
+let checkedComboGear = 0;
+{
+  const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
+  const check = (label, ok, got) => { checkedComboGear++; if (!ok) { console.error(`[COMBO GEAR ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
+  const ALL = ["catPower", "catComboHidden", "catComboCharge", "catComboNoChance", "earthForm"];
+  const savedDeps = {};
+  const select = (sk, r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
+  [["cat", "cat_nAttack", 3], ["mnk", "monkey_nAttack", 1], ["pgn", "penguin_nAttack", 2], ["bat", "bat_nAttack", 3]].forEach(([k, id, maxR]) => {
+    const sk = SKILLS.find(x => x.id === id);
+    const IDS = [k + "GearWeapon", k + "GearEquip", k + "W59", ...ALL];
+    IDS.forEach(d => { if (!(d in savedDeps)) savedDeps[d] = deps[d]; });
+    const setDeps = (o) => IDS.forEach(d => { deps[d] = o[d] || 0; });
+    check(`${id} has critProc.pre, lckProc and the 3 gear controls`, !!(sk && sk.critProc && sk.critProc.pre && sk.lckProc && sk.dmgControls && sk.dmgControls.map(d => d.id).join() === IDS.slice(0, 3).join()));
+    check(`${id}: Lv 60 weapon and crit weapon switch each other off`, html.includes(`${k}W59: ["${k}GearWeapon"], ${k}GearWeapon: ["${k}W59"]`));
+    [[{}, 0], [{ [k + "GearWeapon"]: 1 }, 5], [{ [k + "GearWeapon"]: 2 }, 7], [{ [k + "GearEquip"]: 1 }, 7], [{ [k + "GearEquip"]: 2 }, 11], [{ [k + "GearWeapon"]: 2, [k + "GearEquip"]: 2 }, 18], [{ [k + "W59"]: 1, [k + "GearEquip"]: 2 }, 11]].forEach(([o, base]) => {
+      setDeps(o); check(`${id} crit base ${JSON.stringify(o)} = ${base}`, sk.critProc.chance(1) === base, sk.critProc.chance(1));
+    });
+    // ATK 200, LCK 0: raw floor(0.5 x 200) = 100; weapon floor(0.75 x 100) = 75; crit top floor(1.8 x 75) = 135.
+    inputs.atk.value = "200"; inputs.lck.value = "0";
+    const g0 = sk.dmgGroups ? sk.dmgGroups[0] : undefined;
+    const rng = () => { const r = g0 ? sandbox._calcRangeFor(g0.dmg, sandbox._resolveGroupAtkCoeff(sk, g0), g0) : sandbox._calcRangeFor(sk.dmg); return r[0] + "-" + r[1]; };
+    [[{}, "100-100"], [{ [k + "W59"]: 1 }, "75-75"], [{ [k + "W59"]: 1, [k + "GearEquip"]: 2 }, "75-135"], [{ [k + "GearWeapon"]: 2, [k + "GearEquip"]: 2 }, "100-180"]].forEach(([o, want]) => {
+      setDeps(o); select(sk, maxR); const got = rng(); check(`${id} raw range ${JSON.stringify(o)}`, got === want, got);
+    });
+    setDeps({ [k + "W59"]: 1 }); select(sk, maxR);
+    check(`${id} formula shows the 0.75 weapon scale`, /0\.75/.test(sandbox._getRenderedHeroHtml()));
+    if (k === "cat") {
+      // Power Seven after the crit: floor(1.7 x 75) = 127, floor(1.7 x 135) = 229.
+      setDeps({ catW59: 1, catGearEquip: 2, catPower: 4 }); select(sk, 3); let got = rng(); check("Cat: Power multiplies after the crit", got === "127-229", got);
+      // Charge +10/level after Power, never crit-multiplied: 127+50 / 229+50.
+      setDeps({ catW59: 1, catGearEquip: 2, catPower: 4, catComboCharge: 4 }); select(sk, 3); got = rng(); check("Cat: Charge adds after the crit", got === "177-279", got);
+      setDeps({ catGearWeapon: 2, catGearEquip: 2, catComboHidden: 1 }); select(sk, 3);
+      let c = 0; for (let i = 0; i < 300; i++) { sandbox._rollOneHit(sk, 3, undefined, false, 0); if (ep.lastCrit()) c++; }
+      check("Cat: Hidden Blade's hit never crits", c === 0, c);
+    }
+    if (k === "mnk") {
+      [[{}, 1], [{ earthForm: 1 }, 2], [{ mnkW59: 1 }, 3], [{ earthForm: 1, mnkW59: 1 }, 4]].forEach(([o, want]) => {
+        setDeps(o); select(sk, 1); check(`Monkey Combo KO ${JSON.stringify(o)}`, sandbox._getKOValue(sk, 1) === want, sandbox._getKOValue(sk, 1));
+      });
+    }
+    // crit rate at LCK 150 with the full Champion set
+    inputs.lck.value = "150"; setDeps({ [k + "GearWeapon"]: 2, [k + "GearEquip"]: 2 }); select(sk, maxR);
+    { let c = 0; const n = 4000; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, maxR, undefined, false, g0 ? 0 : undefined); if (ep.lastCrit()) c++; }
+      const want = sandbox.lckAdjustChance(18, 150) / 100; check(`${id} Champion set crit rate ~${want}`, Math.abs(c / n - want) < 0.03, (c / n).toFixed(3)); }
+    // range vs simulator
+    [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
+      inputs.atk.value = atk; inputs.lck.value = lck;
+      [{}, { [k + "W59"]: 1 }, { [k + "GearWeapon"]: 2, [k + "GearEquip"]: 2 }, { [k + "W59"]: 1, [k + "GearEquip"]: 1 }, ...(k === "cat" ? [{ catW59: 1, catGearEquip: 2, catPower: 4, catComboCharge: 2 }, { catGearEquip: 2, catComboHidden: 3 }] : [])].forEach(o => {
+        setDeps(o);
+        for (let r = 1; r <= maxR; r++) {
+          select(sk, r);
+          (sk.dmgGroups || [undefined]).forEach((g, gi) => {
+            if (g && sandbox._resolveGroupHitCount(sk, g) === 0) return;
+            const fin = sandbox._finalRangeForRange(g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g) : sandbox._calcRangeFor(sk.dmg));
+            let lo = Infinity, hi = -Infinity;
+            for (let i = 0; i < 300; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false, g ? gi : undefined); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+            check(`${id} range/sim rank ${r} group ${gi} ${JSON.stringify(o)} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+          });
+        }
+      });
+    });
+  });
+  inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
+  Object.entries(savedDeps).forEach(([d, v]) => { if (v === undefined) delete deps[d]; else deps[d] = v; });
+}
+console.log(`Verified ${checkedComboGear} Combo crit gear / Lv 60 weapon checks (Cat, Monkey, Penguin, Bat).`);
 // 3o-iii. Bison Combo (2026-09-29): stage/spin/Added Swing hit counts (groupVariant), per-stage Raw Strength
 // coefficients, inclusive spin/Over Pride chances, Over Pride KO, the gear crit chip, and range vs simulator.
 let checkedBisonCombo = 0;
@@ -1922,7 +1992,7 @@ let checkedCritView = 0;
   const rng = (s, r) => { const g = s.dmgGroups ? s.dmgGroups.find(x => sandbox._resolveGroupHitCount(s, x) !== 0) : null; return g ? sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(s, g), g) : sandbox._calcRangeFor(sandbox._getDmgText(s, r)); };
   const roll = (s, r) => s.dmgGroups ? sandbox._rollOneHit(s, r, undefined, false, s.dmgGroups.findIndex(x => sandbox._resolveGroupHitCount(s, x) !== 0)) : sandbox._rollOneHit(s, r, undefined, false);
   const critCards = SKILLS.filter(s => s.critProc || (s.rawModel && s.rawModel.critBase)).map(s => s.id).sort();
-  const EXPECTED_CRIT_CARDS = ["bison_nAttack", "chameleon_leftStride", "chameleon_nAttack", "mole_nAttack", "panda_nAttack", "rabbit_nAttack", "sheep_bookBash", "sheep_nAttack", "whale_nAttack", "wolf_nAttack"];
+  const EXPECTED_CRIT_CARDS = ["bat_nAttack", "bison_nAttack", "cat_nAttack", "chameleon_leftStride", "chameleon_nAttack", "mole_nAttack", "monkey_nAttack", "panda_nAttack", "penguin_nAttack", "rabbit_nAttack", "sheep_bookBash", "sheep_nAttack", "whale_nAttack", "wolf_nAttack"];
   check("the cards that model crit are " + EXPECTED_CRIT_CARDS.join(", "), critCards.join() === EXPECTED_CRIT_CARDS.join(), critCards.join());
   // Panda Combo goldens (Panda.cs:15320, :15528, :18652): ATK 100, SP 50, Focused Spirit 2 -> FS 30; stage 1 trunc(0.2 x 130) = 26, crit trunc(0.2 x (180 + 30)) = 42;
   // stage 1 punch 2 never crits; Aura Blast 125 + 30 = 155, crit floor(1.8 x 125) + 30 = 255.
@@ -1942,7 +2012,7 @@ let checkedCritView = 0;
   const savedRab = RAB.map(id => [id, deps[id]]), savedIn = { atk: inputs.atk.value, lck: inputs.lck.value }, savedDist = rb.getDistance("combo");
   cv.set(false);
   critCards.forEach(id => check(`${id} shows the crit view button`, heroOf(id).includes('data-role="crit-view"')));
-  ["rabbit_cAttack", "cat_nAttack", "wolf_provoke", "bison_cAttack"].forEach(id => check(`${id} has no crit view button`, !heroOf(id).includes('data-role="crit-view"')));
+  ["rabbit_cAttack", "cat_forwardLunge", "wolf_provoke", "bison_cAttack"].forEach(id => check(`${id} has no crit view button`, !heroOf(id).includes('data-role="crit-view"')));
   // formula drawn as a crit, only while the view is on
   critCards.forEach(id => {
     cv.set(false); const off = heroOf(id);
@@ -1973,7 +2043,7 @@ let checkedCritView = 0;
     savedChm.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
     cv.set(false);
   }
-  cv.set(true); check("crit view does not change a card that has no crit", !heroOf("rabbit_cAttack").includes("⌊") && !heroOf("cat_nAttack").includes("⌊"));
+  cv.set(true); check("crit view does not change a card that has no crit", !heroOf("rabbit_cAttack").includes("⌊") && !heroOf("cat_forwardLunge").includes("⌊"));
   // Rabbit Combo goldens: ATK 128, rank 1, 16 m, no deps -> raw 64, crit floor(1.8 x 64) = 115
   inputs.atk.value = "128"; inputs.lck.value = "128";
   const rabSet = (o) => RAB.forEach(id => { deps[id] = o[id] || 0; });
