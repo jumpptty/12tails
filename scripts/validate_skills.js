@@ -251,6 +251,16 @@ try {
 }
 
 const SKILLS = sandbox.SKILLS;
+// Formula brackets are CSS-drawn spans since 2026-10-07 (.dmg-br-floor-l …); checks below read them back as the glyphs.
+const BR_GLYPH = { "floor-l": "⌊", "floor-r": "⌋", "ceil-l": "⌈", "ceil-r": "⌉", "paren-l": "(", "paren-r": ")" };
+const brToGlyph = (html) => String(html).replace(/<span class="dmg-br dmg-br-([a-z]+-[lr])"[^>]*><\/span>/g, (_, k) => BR_GLYPH[k] || "");
+// A setter, because sections that re-mount the page assign these functions again.
+for (const fn of ["_renderOneDmgFormula", "_getRenderedHeroHtml"]) {
+  let wrapped = null;
+  const wrap = (f) => { wrapped = typeof f === "function" ? (...args) => brToGlyph(f(...args)) : f; };
+  wrap(sandbox[fn]);
+  Object.defineProperty(sandbox, fn, { configurable: true, get: () => wrapped, set: wrap });
+}
 const SKILL_ICONS = sandbox.SKILL_ICONS;
 
 if (!Array.isArray(SKILLS) || !SKILL_ICONS) {
