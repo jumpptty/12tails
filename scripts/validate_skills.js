@@ -2029,7 +2029,8 @@ let checkedBisonStun = 0;
   const check = (label, ok, got) => { checkedBisonStun++; if (!ok) { console.error(`[BISON STUN ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const on = SKILLS.find(s => s.id === "bison_onslaught"), pc = SKILLS.find(s => s.id === "bison_prideCrusher"), mc = SKILLS.find(s => s.id === "bison_magmaClutter");
   const saved = [bs.getHate(), bs.getWeight()];
-  check("Onslaught is direct damage with a hate input and no TTO toggle", on.bisonHateInputs === true && on.penetrating === true && !sandbox._usesTdlRoll(on));
+  // Every card with a damage Test has the TTO toggle since 2026-10-07 (user); Onslaught has no roll, so TTO equals OG.
+  check("Onslaught is direct damage with a hate input", on.bisonHateInputs === true && on.penetrating === true);
   // [label, hate, Onslaught damage, Pride Crusher hate part]
   [
     ["hate 100", 100, 10, 20], ["hate 105 rounds Onslaught up", 105, 11, 21], ["hate 1", 1, 1, 0], ["hate 0", 0, 0, 0],
