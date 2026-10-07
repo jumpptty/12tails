@@ -461,7 +461,7 @@ All inside `distance < 32`, else run. 55 Doom 2; 45 Echoes 2; 40 Phantasm Blast 
 - **Shadow Illusion spawn:** clone 1 at `getSpawnVector(Bat + up, TransformDirection(−1.5, −1, 2.6))`, clone 2 at `(+1.5, −1, 2.6)`, each passed through `getExpandPos(…, 1, 0.5)` (`Bat.cs:31511-31559`): 2.6 m in front, 1.5 m to each side.
 - **Switch / Shadow Sacrifice:** no distance check; Switch picks an existing clone (`Bat.cs:7861-7951`, `RPC_switch` `:13272-13410`), Shadow Sacrifice drains every clone (`:14100-14350`).
 - **Target spells:** the local cast switch (`Bat.cs:7000-9600`) has no distance gate besides Mirage Orb's 6 m spacing (`:9349`), so curses, Dream spells, Charm, Mimic, Dark Stalker, Soul Eater, Paranoia and Nefarious Whip reach the 40 m target lock ([12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)). Nightmare and Mind Control check `sqrMagnitude > 1600` / `<= 1600` themselves (`:28939`, `:37491`).
-- **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target.
+- **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target (flat, no height limit); every living character found counts, the target included. Damage: `RPC_AddEffectDamage(434, Mathf.Clamp(num × 100, 100, 1000))` (`Bat.cs:14692`), so **100 minimum** (the target alone) and **1000 maximum** (10 or more).
 
 ## Server Balance Variations (ToT patch notes, 2026)
 
