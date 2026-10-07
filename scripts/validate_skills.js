@@ -2499,6 +2499,47 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   if (used.length && !sandbox._credits.render(`x {{credit:${used[0]}}}`).includes(`class="sk-credit" data-credit="${used[0]}"`)) fail("credit token does not render as .sk-credit");
   console.log(`Verified contributor credits: ${list.length} contributor(s), ${used.length} credited id(s) in use.`);
 }
+// Bold spacing (user 2026-10-07): a **gold** / __red__ token in a card desc (every rank, server and dep rank) or a
+// status popup text (STATUS_DESC_MAP / STATUS_DESC_SERVER) never touches a letter or digit, and has no double space
+// beside it. Punctuation and <br> may touch it.
+{
+  const fail = (where, ctx, why) => { console.error(`[BOLD SPACING ERROR] ${where}: ${why} :: ${ctx}`); errorCount++; };
+  const isWord = (ch) => !!ch && /[\p{L}\p{N}\p{M}]/u.test(ch);
+  const seen = new Set();
+  let tokens = 0;
+  const check = (where, str) => {
+    if (typeof str !== "string") return;
+    for (const t of str.matchAll(/(\*\*|__)([\s\S]+?)\1/g)){
+      tokens++;
+      const a = t.index, b = a + t[0].length, why = [];
+      if (isWord(str[a - 1])) why.push("no space before");
+      if (str[a - 1] === " " && str[a - 2] === " ") why.push("double space before");
+      if (isWord(str[b])) why.push("no space after");
+      if (str[b] === " " && str[b + 1] === " ") why.push("double space after");
+      const ctx = str.slice(Math.max(0, a - 12), b + 12);
+      if (why.length && !seen.has(where + ctx)){ seen.add(where + ctx); fail(where, ctx, why.join(", ")); }
+    }
+  };
+  for (const s of SKILLS){
+    const variants = [["desc", s.desc], ...Object.entries(s.servers || {}).filter(([, o]) => o && o.desc !== undefined).map(([k, o]) => [`servers.${k}.desc`, o.desc])];
+    for (const [field, d] of variants) for (const srv of ["og", "tot", "tto"]){
+      sandbox._setServer(srv);
+      for (let r = 0; r <= (s.maxRank || 1); r++) for (const dr of [null, 0, 1, 2, 3, 4, 5]){
+        let str; try { str = typeof d === "function" ? d(r, dr) : d; } catch (e) { continue; }
+        check(`${s.id} ${field}`, str);
+      }
+    }
+  }
+  sandbox._setServer("og");
+  const SDM = vm.runInContext("STATUS_DESC_MAP", sandbox), SDS = vm.runInContext("STATUS_DESC_SERVER", sandbox);
+  const statusEntries = [...Object.entries(SDM).map(([k, v]) => [`STATUS_DESC_MAP.${k}`, v]),
+    ...Object.entries(SDS).flatMap(([srv, m]) => Object.entries(m).map(([k, v]) => [`STATUS_DESC_SERVER.${srv}.${k}`, v]))];
+  for (const [where, v] of statusEntries) for (const sLv of [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) for (const lck of [null, 0, 128]){
+    let str; try { str = typeof v === "function" ? v(sLv, lck) : v; } catch (e) { continue; }
+    check(where, str);
+  }
+  console.log(`Verified bold spacing: ${tokens} rendered bold tokens in card descs and ${statusEntries.length} status texts.`);
+}
 // 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
 // .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;
