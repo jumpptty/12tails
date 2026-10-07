@@ -510,8 +510,16 @@ Revised Art is a flat 12% of the cooldown while each AGI point's cut shrinks as 
   (`2×BaseWidth`) and `TargetHeight` as the height.
 - **Circle hit areas — `Damage.FindAreaTarget(pos, TargetRange, TargetHeight, layerMask)`** (`Damage.cs:963`): an
   all-around circle of radius `TargetRange` centred on `pos` (debug outline drawn as an octagon at `TargetRange`), with
-  the target's collider edge nearest `pos` (`transform.position + radius·dir`) tested against it; `TargetHeight` is the
-  height. Cards quote it as `รัศมี <TargetRange>m สูง <TargetHeight>m`.
+  the target's collider edge nearest `pos` (`transform.position + radius·dir`) tested against it on the flat (y ignored,
+  `Damage.cs:1058-1085`); `TargetHeight` is the height: the target's capsule must overlap the vertical band
+  `[pos.y − 0.5×TargetHeight, pos.y + TargetHeight]` (`Damage.cs:1108`, `:1124`), the same band as the box test above.
+  Cards quote it as `รัศมี <TargetRange>m สูง <TargetHeight>m`.
+- **Other range checks (verified 2026-10-07):** `Hate.findEnemies` / `Hate.findFriends` / `Hate.findClosestEnemy`
+  compare `Math.vFlat(tPos − pos).sqrMagnitude` with `tRange²` (`Hate.cs:64`, `:192`, `:325`): a flat circle with **no
+  height limit** (cards: `รัศมี Nm (ไม่จำกัดความสูง)`). `Damage.FindClosestTarget` (`Damage.cs:1976`) and inline
+  `(a − b).sqrMagnitude < N²` checks (Ja / Phoenix / Gadina AI attack range, Wolf Impulse, Panda Aura Field, Penguin Mana
+  Field) use the full 3D vector: a **sphere** (cards: `ทรงกลมรัศมี Nm`). Prefab trigger volumes take their shape from the
+  collider (`SphereCollider` = sphere, e.g. Bat Mirage Orb radius 1, Bison Overlord radius 10 before the parent's scale).
 - **`rangeMod` (hit-area scale, verified 2026-10-02):** a per-character float, `1` by default (`CharacterControl.cs:154`, field `:29900`), raised on apply by `lunarEclipse` (+0.4 × sLv, `:34248`), `enrage` (+0.1, `:34738`), `titanForm` (+0.3 × sLv, `:35234`) and `enlarge` (+0.1 × sLv, `:37344`), lowered by `reduce` (−0.1 × sLv, `:37264`), each reversed in `removeStatus` (`:15150-16766`). Many skill hit boxes, radii and projectile lifetimes multiply their sizes by the caster's `rangeMod` (summons and bots use their own); others use plain numbers. Cards write a scaled size as `N×rangeMod m` (lifetimes as `N×rangeMod วินาที`) and leave unscaled sizes as `Nm`; a box can mix both (e.g. Whale Combo width `3×rangeMod m`, length `4m`).
 
 ### 4.1 Status effect catalog (StatusData.getStatusCode, StatusData.cs)
