@@ -2744,7 +2744,9 @@ console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
   const M = sandbox._monsterStats;
   if (!Array.isArray(M) || M.length < 300) fail(`expected 300+ rows, got ${M && M.length}`);
   else {
-    M.forEach((r, i) => { if (r.length !== 20 || r[3] < 0 || r[3] > 999 || r[2] < 0 || r[2] > 6 || r.slice(4, 17).some(v => !Number.isInteger(v) || v < 0 || v > 500000)) fail(`row ${i} (${r[0]}) out of range`); });
+    M.forEach((r, i) => { if (r.length !== 22 || (r[20] !== null && !(r[20] >= 0)) || (r[21] !== null && !(r[21] > 0)) || r[3] < 0 || r[3] > 999 || r[2] < 0 || r[2] > 6 || r.slice(4, 17).some(v => !Number.isInteger(v) || v < 0 || v > 500000)) fail(`row ${i} (${r[0]}) out of range`); });
+    // Collider size (RippedAssets prefabs, 2026-10-07): spot values.
+    for (const [t, h, rad] of [["LionBug_y", 2, 1], ["GoldenKingBug", 4, 2], ["Fay", 4, 0.9], ["NinjaBug_b", 1, 0.3]]) { const r = M.find(x => x[1] === t); if (!r || r[20] !== h || r[21] !== rad) fail(`${t} collider should be h${h} r${rad}, got ${r && r[20]} / ${r && r[21]}`); }
     const fw = M.find(r => r[1] === "FirstWhale"), p = sandbox._enemyPresets.find(e => e.id === "firstwhale");
     if (!fw || !p || [fw[8], fw[9], fw[10], fw[11], fw[12], fw[13], fw[14], fw[15]].join() !== [p.atk, p.def, p.agi, p.vit, p.int, p.cha, p.tal, p.lck].join()) fail("First Whale row does not match the verified preset");
     const reg = {}; const root = makeSmartRoot(); root.querySelector = (sel) => reg[sel] || (reg[sel] = Object.assign(makeEl(), { value: "" }));
