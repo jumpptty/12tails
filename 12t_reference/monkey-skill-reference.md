@@ -580,7 +580,7 @@ The existing Titanic Earth Pulse notes below are retained. This catalog is the c
 - **Phoenix Fireball / Rapid Fire / Intense Fire:** Phoenix attack-speed INT scaling 20/30/40% → 40/60/80%; Intense Fire bonus 20/30/40% → 60/80/100% of Monkey `talAdjust(40)`.
 - **Sky Crimson:** Intense Fire bonus becomes 60/80/100%; Fire Soul reduces cooldown to 12s.
 - **Blazing Arrow:** red SP 48 → 45; Phoenix charges from the caster, can aim until fired, skips mount/skill animation, rebirth becomes 100%, and Fire Soul reduces cooldown to 60s.
-- **Flash Fire:** base damage 16/24/32/40 → 8/16/24/32; radius 5m → 6.5m.
+- **Flash Fire:** base damage 16/24/32/40 → 8/16/24/32; radius 5m → 6.5m (`5×rangeMod` → `6.5×rangeMod`). Height assumed unchanged at `3×rangeMod` (user 2026-10-07: "likely unchanged", not confirmed in game).
 - **Ja:** resets Phoenix cooldown on cast.
 - **Fire Rune:** proc chance 20% → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
 - **Fire Keep:** maximum stored Fireballs 2 → 3.
@@ -612,7 +612,7 @@ The existing Titanic Earth Pulse notes below are retained. This catalog is the c
 
 #### TTO changes
 
-- **Titanic Earth Pulse:** animation 4s → 2s; structure damage is 2×; pulse hitboxes 1/2/3/4m → 3/4/5/6m; projectile hitbox 0.25m² → 0.5m².
+- **Titanic Earth Pulse:** animation 4s → 2s; structure damage is 2×; pulse hitboxes 1/2/3/4/5m → 3/4/5/6/7m (5th wave 7m: user 2026-10-07, the patch note listed only 4); projectile hitbox 0.25m² → 0.5m².
 - **Fire Soul / Earth Soul:** each adds one summon slot.
 - **Fire Avatar / Earth Form:** normal skill casting is allowed while transformed.
 

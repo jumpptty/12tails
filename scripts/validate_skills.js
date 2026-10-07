@@ -2539,11 +2539,12 @@ let checkedDepStrip = 0;
   // 8. a server desc (servers.tto / tot .desc) must differ from the base desc at some rank. ttoDesc() swaps a phrase of the
   //    base text; if that phrase is reworded later the swap silently does nothing and the server card shows stale values.
   {
-    const txt = (d, r) => typeof d === "function" ? d(r, 0) : d;
+    //    A server change may only show while a dep is on (ToT Intense Fire % on Phoenix - Fireball), so dep ranks 0-3 count too.
+    const txt = (d, r, dr) => typeof d === "function" ? d(r, dr) : d;
     for (const sk of SKILLS) if (sk.servers) for (const srv in sk.servers) {
       const d = sk.servers[srv].desc; if (!d) continue;
       let differs = false;
-      for (let r = 1; r <= (sk.maxRank || 1) && !differs; r++) { try { differs = txt(d, r) !== txt(sk.desc, r); } catch (e) { differs = true; } }
+      for (let r = 1; r <= (sk.maxRank || 1) && !differs; r++) for (let dr = 0; dr <= 3 && !differs; dr++) { try { differs = txt(d, r, dr) !== txt(sk.desc, r, dr); } catch (e) { differs = true; } }
       if (!differs) { console.error(`[SERVER DESC ERROR] ${sk.id}: servers.${srv}.desc is identical to the base desc at every rank (a ttoDesc phrase swap no longer matches?)`); errorCount++; }
       else checkedDepStrip++;
     }
