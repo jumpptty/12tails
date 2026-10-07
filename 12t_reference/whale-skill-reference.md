@@ -396,6 +396,7 @@ All sixteen below are `mode = passive` with no MP/SP (`scripts/decode_skilldata.
 ### 4.12 Mega Size (`whale_megaSize`, #431)
 - reqLv 75, reqBn 4. `CharacterDataClass.updateData()` (`CharacterDataClass.cs:738-750`): **+40 VIT, +400 max HP, +10 weight**, on top of Super Size. The status window's base-VIT display (`getBaseStat(12)`) only adds Super Size, not Mega Size (`CharacterControl.cs:22951-22990`).
 - Client tooltips: EN "Makes Whale even bigger in size. Adds 40 vitality and increases his weight by 10." / TH "เพิ่ม 40Vit และ 10Weight ให้กับวาฬ" (`WhaleSkill_eng.cs:902`, `WhaleSkill_thai.cs:933`). Matches.
+- **Body size (verified 2026-10-07):** Super Size ranks and Mega Size each count 1 toward `n` (0-5). On spawn (`Game.cs:2735-2810`) and on learning (`CharacterControl.cs:21080-21215`) the Whale gets model scale `0.8 + 0.05n`, CharacterController height `2 + 0.1n` and radius `0.6 + 0.05n` (0.60 → 0.85 m), overriding the prefab radius 0.8. So the tooltip's "bigger" is real, separate from the weight/VIT bonus.
 
 ### 4.13 Peninsula Asunder (`whale_peninsulaAsunder`, #442)
 - reqLv 85, reqBn 6. Fully traced in §3.15 ("Peninsula Asunder", "Peninsula Impale", "Peninsula Round"): Impale box `3 × 12 m` (from `2 × 6`) with `+10` inside `talAdjust` and auto-turn toward the locked target before each stab; Round box `6 m wide × 5 m` from 1 m behind (from `3 × 4`).
