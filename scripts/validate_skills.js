@@ -6,7 +6,7 @@
  * 2. Icon existence in SKILL_ICONS and PNG header validity (89 50 4E 47 0D 0A 1A 0A).
  * 3. Array bounds for per-rank properties (cd, castTime, duration).
  * 4. Effect damage / penetrating damage flag alignment.
- * 5. LCK-invariant floor: the "รวมการแกว่งค่า LCK" (Total LCK Variance) chip's own
+ * 5. LCK-invariant floor: the Raw chip ("ดาเมจดิบ", formerly "รวมการแกว่งค่า LCK")'s own
  *    minimum, computed by the REAL index.html `calcRangeFor` (exposed via a debug
  *    hook, not re-derived here to avoid drifting out of sync with it), must never
  *    move when the player's LCK stat changes -- LCK is a swing ABOVE a fixed floor,
