@@ -49,6 +49,10 @@ Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../
 * Not possible on static hosting: path-style URLs, per-skill link previews.
 * Validator §3b drives the real `route()`.
 
+## Server Change Pop-up
+
+* **Once per card visit (2026-10-07, user):** a server button opens that server change pop-up only the first time it is switched to on the current card (`serverPopupSeen = {id, srv:Set}`, reset when the server row is clicked on a different card). Switching back and forth stays quiet; clicking the already selected server still opens it on purpose.
+
 ## Buff / Debuff Popup: Server Toggle & Quick Switches
 
 1. **Popup server (`bdServer`: og/tot/tto):** own selector, independent of `currentServer`, session-only; decides which entries exist and their values.
