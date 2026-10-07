@@ -2541,6 +2541,27 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   }
   console.log(`Verified bold spacing: ${tokens} rendered bold tokens in card descs and ${statusEntries.length} status texts.`);
 }
+// Unmodelled formulas (2026-10-07, user): after substituteDmgVars a dmg text may only hold numbers, operators and
+// talAdjust(...). Words mean a value the Test cannot see (Nova Flare's "Vortex HP", Hydro Blast's "TargetWeight").
+{
+  let checked = 0;
+  for (const sk of SKILLS){
+    const variants = [sk, ...Object.values(sk.servers || {}).map(o => Object.assign({}, sk, o))];
+    for (const c of variants){
+      if (!(c.dmg || c.dmgGroups) || c.rawModel) continue;
+      const texts = c.dmgGroups ? c.dmgGroups.map(g => g.dmg) : [c.dmg];
+      for (const t of texts){
+        let sub = String(sandbox._substituteDmgVars(t, c, c.maxRank || 1)).replace(/talAdjust\(/g, "(");
+        if (c.phoenixFireball || c.ownStatsPhoenix) sub = sub.replace(/\b(Phoenix|Monkey|Floor)\b/g, "");
+        if (/[ก-๙]/.test(sub)) continue;   // Thai description: shown as text, never simulated (no TTO toggle either)
+        const left = sub.replace(/[0-9+\-*/.()×÷%, ]/g, "");
+        if (left) { console.error(`[UNMODELLED FORMULA ERROR] ${sk.id}: "${String(t).slice(0, 60)}" keeps "${left}"; model it with dmgInputs / a function dmg`); errorCount++; }
+        else checked++;
+      }
+    }
+  }
+  console.log(`Verified ${checked} damage formulas have no unmodelled words.`);
+}
 // 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
 // .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;
