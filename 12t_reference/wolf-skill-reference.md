@@ -736,14 +736,17 @@ if (this.hasSkill(421))
 
 ### wlf_cAttack1-3 (Charge Attack, #111-#113) (verified 2026-10-01)
 
-- Passive ranks (charge rank 1 / 2 / 3). `doBeginCharge` (`Wolf.cs:7847-7960`) needs #111; while held, SP drains by `statusLv × 2` (halved with Revised Skill #404) per tick once the charge status is up.
+- Passive ranks (charge rank 1 / 2 / 3), MP 0 / SP 0 at every rank (`decode_skilldata.py`). **The charge itself costs no SP (corrected 2026-10-07):** the earlier note that SP drains by `statusLv × 2` while held was a misreading. That block (`doBeginCharge`, `Wolf.cs:7880-7931`) reads `getStatusLv("lunarEclipse")` and needs Final Eclipse (#373): it is the Feral Strike conversion when a charge starts during Lunar Eclipse, the same code as the Final Eclipse `Revised Skill` swap bug. A full search of `Wolf.cs` finds only those two SP-spending writes (`:7923`, `:7931`), and the charge coroutine `$RPC_cAttack1$29320` (`:18501-19250`) spends none.
+- **Release gate** (`doReleaseCharge`, `Wolf.cs:8056-8115`): only when `Game.mGameType > 4` and the charge was held 3 s or more (`actionTime + 3 <= Time.time`); anything shorter, or any mode with `mGameType <= 4`, runs `RPC_cAttack0` (cancel, no attack). Then Sky Slasher (below) or the normal `RPC_cAttack2`.
 - **Release** (`$RPC_cAttack2`, `Wolf.cs:19261-19904`): `cTime = clamp(ceil(held seconds − 0.8), 0, 2 × chargeRank)` (`:19731`; `getChargeAttackLv()` = rank, `3 + Sky Slasher` at rank 3, `:8382-8421`). Strikes: hit 1 always, hit 2 when `cTime ≥ 4`, hit 3 when `cTime ≥ 6` (`:19517`, `:19592`). Each strike is `hit(11, t, ATK, KO 0)` in `FindRecTarget(pos − rangeMod·fwd − 2 up, fwd, 2·rangeMod, 6·rangeMod, 30·rangeMod, 6·rangeMod)`: a trapezoid 4 → 12 m wide, **30 m** long (`:19434-19485`).
-- Without #113 a rank-2 charge tops out at 2 strikes and rank 1 at 1; a full rank-3 charge (≥ 6.8 s held) gives 3.
+- Without #113 a rank-2 charge tops out at 2 strikes and rank 1 at 1. **Hold times (corrected 2026-10-07):** `cTime = ceil(held − 0.8)` is read only at `:19517` / `:19592` / `:19731`, so strike 2 needs `ceil(held − 0.8) ≥ 4`, i.e. held **more than 3.8 s**, and strike 3 needs `≥ 6`, i.e. held **more than 5.8 s**. The earlier 4.8 s / 6.8 s figures were one second too high. No live check was made, so a user reading that contradicts this wins.
+- Hit-box height is `TargetHeight = 6 × rangeMod` (the sixth `FindRecTarget` argument).
 
 ### wlf_skySlasher5 (Sky Slasher, #411) — Class-C passive (verified 2026-10-01)
 
 - Needs Charge Attack rank 3 (`getSkySlasherLv() = hasSkill(411) && hasSkill(113)`, `Wolf.cs:9106-9108`). It raises the charge rank to 4 (above) and adds a **12 s release**: releasing a charge held for 12 s or longer runs `RPC_skySlasher` instead of the normal release (`Wolf.cs:8059-8090`).
-- `$RPC_skySlasher$29610` (`Wolf.cs:31736-31769`): the same 30 m trapezoid as the Charge Attack, each target takes **one** `hit(411, t, 5 × ATK, KO 0)`.
+- `$RPC_skySlasher$29610` (`Wolf.cs:31736-31769`): the same 30 m trapezoid as the Charge Attack (`FindRecTarget(pos − rangeMod·fwd − 2 up, fwd, 2·rangeMod, 6·rangeMod, 30·rangeMod, 6·rangeMod)`, so 4 → 12 × rangeMod wide, 30 × rangeMod long, **6 × rangeMod high**, `:31746`), each target takes **one** `hit(411, t, 5 × ATK, KO 0)` (`:31769`): no `getCritPlus`, so it never crits; KO is also forced to 0 while `myCommand == "cAttack1"` (`CharacterControl.cs:4071`). Gate: `Game.mGameType > 4` (missions / arena) plus held 12 s (`actionTime + 12 <= Time.time`, `Wolf.cs:8056-8092`). No SP / MP cost and no cooldown write in the coroutine.
+- Client tooltips: EN "Enables Wolf to release a more powerful air-slashing wave after charging for 12 seconds." (`WolfSkill_eng.cs:880`) / TH "เปลี่ยนท่าชาร์จขั้นสามของหมาป่าให้เป็นท่า SkySlasher เมื่อชาร์จเกิน 12 วินาที" (`WolfSkill_thai.cs:917`). Both omit the damage; "เกิน" versus `<=` is immaterial.
 
 ### wlf_counter1-2 (#331/#332) — active, rank family (verified 2026-10-02)
 
