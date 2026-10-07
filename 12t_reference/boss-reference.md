@@ -2,7 +2,7 @@
 
 Ground truth for the Bible **Boss Guide** page. Every value below is read from `DecompiledSource/`. Line numbers are in the original files; the coroutine bodies were read with the junk-predicate evaluator (constant `if (A - B op C)` checks resolved, dead branches dropped). Damage pipeline terms (`hit()`, `RPC_AddEffectDamage`, `talAdjust`, `getDebuff`, `defAdjust`) are defined in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md).
 
-Common engine rules that both bosses rely on:
+Common engine rules that the bosses rely on:
 
 - **SP gain:** every damage instance a character takes runs `ApplyDamage()`, which does `sp++` (`CharacterControl.cs:2117-2122`). Outside combat actions SP drifts back to `msp` by 1 per ~1 s (`:1945-1990`, only while `standby`/`run` and 2 s after the last action when above `msp`).
 - **Target pickers:** `getRandomHateTarget(maxRange)` (`CharacterControl.cs:8514`) returns a **random** living hate-list entry within `maxRange` m, so the amount of Hate does not matter. `getHateTarget(prefer, maxRange)` (`:8034`) returns the entry with the highest `hate − time + maxRange − |prefer − distance|` within `maxRange`, i.e. the top-Hate attacker with a small bonus for standing about `prefer` m away.
@@ -150,3 +150,34 @@ The landing points come from integrating the decoded physics (gravity −9.8, dr
 - **`OnBladeSwitch`:** the blade animation plays, then a 0.5 s wait, then `FindAreaTarget(blade, 20, 6, mask 32768)` (enemy layer only, `:3690`). Each part in range takes `RPC_AddDamage(9733, 3499)` (`:3735`): flat, no DEF.
 - **Reset:** after 12 s both switches reset.
 - So one player can pre-arm one switch and fire the blade from the other when Ewiniar is near the stern. That is 3,499 per part, up to 17,495 (28% of HP) when all five parts are caught.
+
+---
+
+## Shadow God Zera ×3 (`FakeShadowGod`) — 9/6 Shadow God Zera, phase 2
+
+Fought in `M906_ShadowGodZera2` (phase 1 is `M906_ShadowGodZera1`). The scene holds **three** `FakeShadowGod` actors; the mission re-creates each scene actor with `createActor` and keeps the three gods in three slots (`M906_ShadowGodZera2.cs:1145-1190`). They start hidden (`onHide`) and fade in during the intro (`StartGame`, `:2847-2877`). Story line before the fight: "A Truth is a Lie. A Lie is a truth. What you see might be delusive." (`M906_ShadowGodZera_eng.cs`). The win condition is sent by the server (`onGameComplete`), not decided in the client.
+
+### Stats and immunities (`FakeShadowGod.cs:25-133`)
+
+Set in `Awake()` for every copy: **HP 333,333**, KO 999, ATK 605, DEF 454, AGI 320, VIT 33,333, INT (`mag`) 766, CHA 999, TAL 899, LCK 300 (prefab: Lv 333, MP 9,999, SP 999, weight 100, **run speed 0**, Elementals, see the monster stats page). The three copies are identical and each has its own HP. `mImmuneList` (`Start()`): `artCancel`, `swallow`, `paralysis`, `needlePrison`, `invisible`, `petrify`, `snowMan`, `snowBall`, `sleep`, `charm`, `mindControl`, `coma`. At 0 HP the owner client plays `RPC_dead` (fade out, destroyed after 6 s) and fires mission event 9064 (`:179-219`, `M906_ShadowGodZera2.cs:1351`).
+
+### AI (`FakeShadowGod_AI.cs`)
+
+- Idle (not alert): `AI_idle(3)` then `AI_visionCheck`: `Hate.findEnemies(pos, 90)` once per second (flat, no height limit); Elementals skip Plants / Bugs / Structure, invisible and blend targets (`:116-126`, `:734-990`).
+- Alert loop: `AI_selectTarget(1)` → `AI_turn(4, 2)` → `AI_attack(10)` (`:150-161`). `AI_turn` moves the phase start back by `Random(0, 2)`, so the turn lasts **2-4 s**. Target = `getRandomHateTarget(120)` (`:427`): a random living Hate-list entry within 120 m.
+- `AI_attack` (`:523-705`), no distance check: `nAttack` ready → **Doom Fire**; else `randomCast` ready → **Random Cast**; else stand and turn toward the target. The god never walks (`moveSpeed 0`).
+
+### Moves (`FakeShadowGod.cs`)
+
+| Move | Timing | Hit | Area | Extra | Lock |
+|---|---|---|---|---|---|
+| Doom Fire (`RPC_nAttack` `:676`, `RPC_nAttack_fire` `:683`; name from its `doomFire` effect) | 2 s windup; the fire is placed at the target's position at that moment and hits 0.5 s later; 2 s recovery | every other-layer character in `FindAreaTarget(pos, 2, 4)` gets `RPC_AddEffectDamage(1, 300)` | circle r 2 m, h 4 m at the target | Effect Damage 300: no DEF, no dodge, no KO | `nAttack` 12 s |
+| Random Cast (`RPC_randomCast`, `:690`) | cast 1.6 s + 0.4 s, then 1.5 s recovery | the chosen target gets `RPC_AddStatus("coma", 1, 13, target.hp)` | single target, any range | not a `hit()`: cannot be dodged, no CHA contest | `randomCast` 6 s |
+
+`coma` (Debuff, Magical: `StatusData.cs:6035`, `:7652`; not re-applied while active, `CharacterControl.cs:11865`): on apply a living target's **HP becomes 13** (`:42013-42030`); on removal (expiry or cleanse) a living target below the stored value gets back the HP it had when hit (`:18895-18905`).
+
+### Mission mechanics (`M906_ShadowGodZera2.cs`)
+
+- **Shadow Crystals** (`ShadowCrystal.cs`): HP 1,300 (`:41`), Structure race, no attacks. Each crystal death sends event 9063 (`:1336`); when the count reaches 0, `MachineGodCoreExplosionEvent` runs (`:416-440`, `:2396-2565`): the core explosion effect at (0, 56, 0), **0.5 s** later every `FakeShadowGod` runs `onMachineGodCoreExplosion`, then **5 s** later three new crystals spawn at SpawnPoint1-3.
+- **`onMachineGodCoreExplosion`** (`FakeShadowGod.cs:2394-2590`): the god goes `ko` (`getHit`); 1 s later the owner applies `RPC_AddDamage(99, 19999)` to itself (direct damage, no DEF); then 1.5 s, a cast animation, 1.6 s, the cast effect, 2 s, back to standby: **6.1 s** without acting. Each explosion takes 19,999 from every living god, so crystals alone need 17 explosions (333,333 / 19,999 = 16.7).
+- **Shade waves** (`GameEventUpdate`, `:280-370`): while a `FakeShadowGod` exists, every 30-60 s the owner spawns one Shade at each of SpawnPoint4-6 (each 50/50 `Shade1` BabyShade or `Shade2` PhantomShade), skipped while 12 or more Shades are alive (the counter only counts Shades, `:1185-1190`; event 9062 on death).
