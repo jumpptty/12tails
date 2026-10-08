@@ -2802,7 +2802,7 @@ console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
     let shown = false;
     for (let r = 1; r <= (sk.maxRank || 1) && !shown; r++) {
       sandbox._skillRanks[sk.id] = r; sandbox._selectSkill(sk);
-      shown = sandbox._getRenderedHeroHtml().includes('<span class="sk-tooltip-note">ⓘ คำอธิบายในเกมไม่ตรงกับโค้ด: ');
+      shown = sandbox._getRenderedHeroHtml().includes('<span class="sk-tooltip-note"><b>ⓘ คำอธิบายในเกมไม่ตรงกับโค้ด:</b> ');
     }
     if (!shown) { console.error(`[TOOLTIP NOTE ERROR] ${sk.id}: tooltipNote set but no styled line rendered at any rank`); errorCount++; }
     else checkedTip++;
@@ -2870,7 +2870,7 @@ let checkedUnintended = 0;
     const mine = sandbox.bbIssueItems().filter(i => i.s === sk && i.kind === "unintended");
     check("a card's `unintended` shows on the BB issues page as kind unintended", mine.length === 1 && mine[0].text.includes("ทดสอบ"));
     sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk);
-    check("the card shows the gold ⚡ note", sandbox._getRenderedHeroHtml().includes('class="sk-unintended">⚡ พฤติกรรมที่ไม่ตั้งใจ (BB):'));
+    check("the card shows the gold ⚡ note", sandbox._getRenderedHeroHtml().includes('class="sk-unintended"><b>⚡ พฤติกรรมที่ไม่ตั้งใจ (BB):</b>'));
   } finally { if (had === undefined) delete sk.unintended; else sk.unintended = had; }
   sandbox._selectSkill(sk);
   check("the note is gone again once the field is removed (or stays only if a real card sets it)", had !== undefined || !sandbox._getRenderedHeroHtml().includes("sk-unintended\">"));
