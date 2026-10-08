@@ -1476,21 +1476,19 @@ let checkedWolfCombo = 0;
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "wolf_nAttack");
-  const IDS = ["wolfFeralInstinct", "wildHeart", "wolfDarkEdgeOn", "wolfGearWeapon", "wolfGearEquip", "wolfKatana"];
+  const IDS = ["wolfFeralInstinct", "wolfDarkEdgeOn", "wolfGearWeapon", "wolfGearEquip", "wolfKatana"];
   const savedDeps = IDS.map(id => [id, deps[id]]);
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
-  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 6));
-  // Coefficients: Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
-  setDeps({ wolfFeralInstinct: 4, wildHeart: 1 }); select(3);
+  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
+  // Coefficients: one 0-5 toggle, rank 5 = Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
+  setDeps({ wolfFeralInstinct: 5 }); select(3);
   const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral 4 + Wild Heart coefficients", coeffs === "0.75,0.75,0.75,0.6,0.9", coeffs);
   setDeps({}); select(3);
   const c0 = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral off coefficients", c0 === "0.5,0.5,0.5,0.4,0.6", c0);
-  setDeps({ wolfFeralInstinct: 0, wildHeart: 1 }); select(3);
-  check("Wild Heart without Feral Instinct adds nothing", sk.dmgGroups.every(g => sandbox._resolveGroupAtkCoeff(sk, g) === (g.label.includes("ฮิตแรก") ? 0.4 : g.label.includes("ฮิตสอง") ? 0.6 : 0.5)));
   // Hit counts 2 / 3 / 5.
   [2, 3, 5].forEach((want, i) => { select(i + 1); const got = sk.dmgGroups.reduce((a, g) => a + sandbox._resolveGroupHitCount(sk, g), 0); check(`rank ${i + 1} hit count`, got === want && sk.hitCount(i + 1) === want, got); });
   // KO 1, and 0 under Dark Edge.
@@ -1533,9 +1531,9 @@ let checkedWolfCombo = 0;
   // Range vs simulator, every toggle combination, both stat profiles.
   [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
     inputs.atk.value = atk; inputs.lck.value = lck;
-    [0, 2, 4].forEach(f => [0, 1].forEach(wh => [0, 1].forEach(de => [{}, { wolfGearWeapon: 1, wolfGearEquip: 1 }, { wolfGearWeapon: 2, wolfGearEquip: 2 }, { wolfGearEquip: 2 }].forEach(gearO => [0, 1].forEach(kt => {
+    [0, 2, 4, 5].forEach(f => [0, 1].forEach(de => [{}, { wolfGearWeapon: 1, wolfGearEquip: 1 }, { wolfGearWeapon: 2, wolfGearEquip: 2 }, { wolfGearEquip: 2 }].forEach(gearO => [0, 1].forEach(kt => {
       const gear = Object.keys(gearO).map(k => k + gearO[k]).join("+");
-      const o = { wolfFeralInstinct: f, wildHeart: wh, wolfDarkEdgeOn: de, wolfKatana: kt, ...gearO };
+      const o = { wolfFeralInstinct: f, wolfDarkEdgeOn: de, wolfKatana: kt, ...gearO };
       setDeps(o);
       for (let r = 1; r <= 3; r++) {
         select(r);
@@ -1547,7 +1545,7 @@ let checkedWolfCombo = 0;
           check(`range/sim rank ${r} ${g.label} feral ${f} wh ${wh} de ${de} gear ${gear || "none"} katana ${kt} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
         });
       }
-    })))));
+    }))));
   });
   inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
   savedDeps.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
