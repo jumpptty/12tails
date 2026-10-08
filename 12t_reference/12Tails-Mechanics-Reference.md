@@ -777,6 +777,29 @@ GUI gates when an item is dropped into a slot (`RenderIngredientMenu`, `:3659-45
 - **Collider size (2026-10-07):** each row also carries the unit's `CharacterController` **height** and **radius** (`r[20]`, `r[21]`), read from the ripped YAML (`RippedAssets/ExportedProject/Assets`, 608 prefab / scene files, 2,327 colliders) by the collider's own object name; prefab and every map copy agree, so a map copy never changes the size. These are the unscaled component values, which is what the hit tests read (`FindAreaTarget` uses `characterController.radius` / `.height`, §4); a few boss parts sit under a scaled bone (Ancient Bug hands ×1.5, Sky Bug ×1.6, Earth Avatar ×5) and look bigger than these numbers. Multi-part bosses map row → part by name (Ancient Bug Head / Hand_L / Hand_R, Nemesis bodyArmor / head, Reef Bug Head, Ewiniar body1 / head / tail2 / tail5, Mok head / foot / tail5); 4 rows stay empty because no part maps unambiguously: SkyBug (Head), EarthAvatar (Base) / (Body), Nemesis (A). Abbreviated types use the scene object names (`NinjaBug_b` = `NinjaBug_blue`, `StingBug_g` = `StingBug_green`, `Liger_m` = `Liger_mallet`, `KingKaiser` = `KingKaiser_b`). No monster script changes its collider at runtime (only the player Whale and Mole do). Soccer Ball has height 0 (a sphere of radius 0.2).
 - **Bible:** `MONSTER_STATS` (320 rows; the 12 player-class templates are left out) drives the monster stats page (`mountMonsterStats`, TOOLS id `monster-stats`); `[MONSTER STATS ERROR]` re-checks the ranges, the number of rows rendered and the First Whale row.
 
+### 5.4 NPC shop buy and sell prices (verified 2026-10-08)
+
+Both prices start from the same `ItemData.getItemData(name).price` (`ShopGui.cs:2245` for the buy list, `:4075` for the item in your bag); `lv` is the Rabbit's Bunny Bargain level (0 for every other class, see the [rabbit-skill-reference.md](rabbit-skill-reference.md) Bunny Bargain entry):
+
+```
+buy  = floor( (1 - 0.05 x lv) x price )         (ShopGui.cs:2269; only when lv > 0, price > 0)
+sell = ceil ( price x (0.3 + 0.015 x lv) )       (ShopGui.cs:4080), then x quantity (:3621)
+```
+
+So a normal player **sells for 30% of the buy price** (buy 100 g, sell 30 g, a 3.33 : 1 spread). A Rabbit with Bunny Bargain 4 pays 80% and sells for 36%; with Skill Bargain (+1 level) it pays 75% and sells for 37.5%. Sell values are rounded **up**, buy prices **down**. Items priced in Jil (negative price) use the absolute value. Only the NPC shop does this; the Arena shop has its own list (`ArenaShopGui.cs:1010`).
+
+### 5.5 Frozen Wing / Frozen Mask: mpSap, mpDrain and manaBurn resist (verified 2026-10-08)
+
+The male trinket **Frozen Wing** (`t_mal56`, Lv 45, +3 ATK / MAG / CHA / TAL, `TrinketData.cs:3846-3876`) and its female counterpart **Frozen Mask** (`t_fem56`) give the wearer a resist roll against exactly three statuses: `mpSap`, `mpDrain` and `manaBurn` (`CharacterControl.cs:13919-13941` route them to `:14255-14279`, inside `RPC_AddStatus`). Each application attempt rolls `Random.Range(0, 100) < lckAdjust(24)` with the wearer's own LCK; on a success the status is **not applied** and the RESIST popup fires (`RPC_AddDamage(-83, ...)`, which also counts as a hit, see [whale-skill-reference.md §3.16](whale-skill-reference.md)).
+
+| Wearer LCK | 0-1 | 50 | 100 | 128 | 200 | 300 | 400 | 512 |
+|---|---|---|---|---|---|---|---|---|
+| Resist chance | 24% | 32% | 38% | 41% | 48% | 55% | 61% | 65% |
+
+(`lckAdjust(24)` = `floor(100 x X / (X - 24 + 100))`, `X = 24 x (1 + 0.01 x clamp(LCK, 1, 512))`, see §2.4.) Mana Vortex's `mpSap` (Penguin) is one of the statuses covered. **The roll does not look at `sLv`** (verified 2026-10-08): the block (`:14255-14279`) reads only the trinket and the wearer's LCK, and the only `sLv` comparisons in that stage of `RPC_AddStatus` come after it (the same-status merge, `:14023-14153`). A level 1 and a level 5 `manaBurn` are resisted equally often; the level-based gates (Dispell, Clear, Dissolute, Immunity) are earlier, separate checks.
+
+**A resisted status takes its MP loss with it (verified 2026-10-08):** the loss lives only in the status' apply handler, which never runs when `RPC_AddStatus` returns early. `mpSap`: `mp -= sValue` (`CharacterControl.cs:33443-33450`). `mpDrain`: takes `min(sValue, mp)` **and** heals the caster by the same amount (`:33543-33595`), so the caster gets nothing either. `manaBurn`: `mp -= sValue` **and** the missing-MP damage `RPC_AddDamage(232, defAdjust(100 x missing MP / MMP))` (`:38572-38595`), so the damage is gone too; Penguin's Mana Burn has no other effect (`Penguin.cs:24675-24705`: its whole cast is `RPC_AddStatus("manaBurn", sLv, 1, 20 x sLv + 5 ...)`). **One exception, Mana Vortex:** the pillar's own payout is written right after the `RPC_AddStatus("mpSap", ...)` call and is not conditioned on it (`ManaVortex.cs:275-286`): whenever the target has more than `4 x level` MP the Penguin gains `4 x level` MP (capped at its MMP) and the `hit(1, ..., 12 x level + 12)` damage lands, so a Frozen Wing wearer loses no MP but still feeds the pillar.
+
 ## 6. Worked example (sanity check)
 
 A Cat (TAL 100, LCK 50) casts the AoE skill `talAdjust(50) + 200` at a target with DEF 50, LCK 30,
