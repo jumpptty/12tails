@@ -1394,7 +1394,8 @@ let checkedEffectProc = 0;
   deps.frozenBreak = 1; deps.targetIce = 3; check("Frozen Break bonus = 15 x target ice level", ep.bonus(fb, 1, 0) === 45, ep.bonus(fb, 1, 0));
   deps.frozenBreak = 0; check("no Frozen Break, no bonus", ep.bonus(fb, 1, 0) === 0, ep.bonus(fb, 1, 0));
   const wm = byId("panda_waterMonkey");
-  deps.shadowFist = 4; deps.spiritFist = 1; check("Shadow Fist 4 + Spirit Fist at Lv 100 = 12 + 16", ep.bonus(wm, 1, 100) === 28, ep.bonus(wm, 1, 100));
+  deps.shadowFist = 5; check("Shadow Fist 4 + Spirit Fist (rank 5) at Lv 100 = 12 + 16", ep.bonus(wm, 1, 100) === 28, ep.bonus(wm, 1, 100));
+  deps.shadowFist = 4; check("Shadow Fist 4 alone at Lv 100 = 12", ep.bonus(wm, 1, 100) === 12, ep.bonus(wm, 1, 100));
   deps.shadowFist = 0; check("Shadow Fist 0, no bonus", ep.bonus(wm, 1, 100) === 0, ep.bonus(wm, 1, 100));
   // Cat Open Wound (#443): 30 x (target disarm Lv + bleed Lv) per landed hit, gated by the passive; hit-number gating (Cat.cs:10404, 17390-17507, 38717-39031).
   const ow = byId("cat_flyingDagger"), fbl = byId("cat_finishingBlow"), cmb = byId("cat_nAttack");
@@ -2931,6 +2932,21 @@ let checkedHue = 0;
       }
     }
     for (const k of ["h", "s"]) for (let i = 0; i < 10; i++) check("digit dmgdigit_" + k + i + " present", /^data:image\/png;base64,iVBORw0KGgo/.test(SKILL_ICONS["dmgdigit_" + k + i] || ""));
+    // Formula captions (2026-10-08): a term that is not a talAdjust constant carries a caption; Hate-driven terms wear the hate accent.
+    for (const [id, cap] of [["bison_onslaught", "0.1Hate"], ["bison_prideCrusher", "0.2Hate"]]) {
+      const sk = byId(id); sandbox._skillRanks[id] = sk.maxRank; sandbox._selectSkill(sk);
+      const h = sandbox._getRenderedHeroHtml();
+      check(id + " formula shows its Hate term in the hate accent with the caption " + cap, h.includes("dmg-hate") && h.includes("(" + cap + ")"));
+    }
+    { // Bubble Burst (2026-10-08): damage = the shield HP left; the box defaults to the average full rank 4 Bubble Shield from the Whale's TAL.
+      const sk = byId("whale_bubbleBurst"); sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk);
+      const h = sandbox._getRenderedHeroHtml();
+      const full = h.match(/data-key="burstShieldHp"[^>]*value="(\d+)"/), term = h.match(/<span class="dmg-shield"[^>]*>(\d+)<\/span>/);
+      check("Bubble Burst has a shield HP box that is not shield coloured and a shield coloured formula term", !!(full && term && full[1] === term[1]) && !/sk-current-sp-input[^>]*dmg-shield|dmg-shield[^>]*sk-current-sp-input/.test(h), full && term ? full[1] + " / " + term[1] : "missing");
+      const lo = sandbox._rollOneHit(sk, 1, 0, false);
+      check("Bubble Burst Test rolls the shield HP left (effect damage)", lo === Number(full && full[1]), lo);
+    }
+    { const sk = byId("cat_finishingBlow"); sandbox._skillRanks[sk.id] = sk.maxRank; sandbox._selectSkill(sk); check("a flat formula number carries a caption", sandbox._getRenderedHeroHtml().includes("(ค่าคงที่)")); }
     check("hate Test digits use the indigo set and shield Test digits the grey set", html.includes('selected.isHate ? "h" : isShieldOnly(selected) ? "s"'));
   } finally {
     sandbox._setServer("og");
