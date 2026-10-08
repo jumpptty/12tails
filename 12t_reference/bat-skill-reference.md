@@ -198,6 +198,9 @@ Values verified in `CharacterControl.cs` (per-tick handler / add site / removal 
 | `guardianOfTheNight` | marker for the summoned boss; `RPC_RemoveStatus` is issued together with `RPC_guardian_unsummon` | `Bat.cs:12436-12437` |
 | `massCast` | Mass Cast spread hook reads `getStatusLv("massCast")` | `Bat.cs:11447` |
 
+KO interactions of `nightmare` (verified 2026-10-08, user report; see [12Tails-Mechanics-Reference.md §4.2.2](12Tails-Mechanics-Reference.md)): unlike `petrify`, a nightmared target **can** take KO damage (`nightmare` is not among the statuses that zero `nKo`, and its own tick carries KO 0, `CharacterControl.cs:9666`). If it is knocked down, `actionState = "ko"` replaces `"nightmare"`; Nightmare applied to an already knocked-down target does the same in reverse. Either way (no second knock-down animation, user live report) the target moves and acts normally while the status (damage tick) keeps running; the code path that frees the movement was not traced.
+
+
 Open item: `nightmare` blocks on `snowMan`/`snowBall`/`petrify` (`CharacterControl.cs:11790-11835`) look like the *reverse* of the add-site `removeStatus("snowMan")`. Not resolved; the popup states only the add-site behaviour.
 
 Additional Bat statuses (same popup pass):
