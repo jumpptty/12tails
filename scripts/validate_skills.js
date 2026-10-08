@@ -2857,6 +2857,28 @@ let checkedChipTarget = 0;
   check("inverted contested duration (Bat Doom) FALLS as CHA rises", mono(c => sandbox.debuffAdjust(60, 2, c), 0, 512, 4, "down"));
 }
 console.log(`Verified ${checkedChipTarget} stat chip target checks.`);
+// 3t. BB issues page: the "Unintended behavior" type (2026-10-08). A card's `unintended` text must reach the page as kind
+// "unintended" and show as the gold note on the card; the filter and tag exist. A temporary note is put on one card and removed
+// again, so this passes with no real entries yet.
+let checkedUnintended = 0;
+{
+  const check = (label, ok) => { checkedUnintended++; if (!ok) { console.error(`[UNINTENDED ERROR] ${label}`); errorCount++; } };
+  const sk = SKILLS.find(s => s.id === "whale_bubbleBurst");
+  const had = sk.unintended;
+  sk.unintended = "ทดสอบ **1**";
+  try {
+    const mine = sandbox.bbIssueItems().filter(i => i.s === sk && i.kind === "unintended");
+    check("a card's `unintended` shows on the BB issues page as kind unintended", mine.length === 1 && mine[0].text.includes("ทดสอบ"));
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk);
+    check("the card shows the gold ⚡ note", sandbox._getRenderedHeroHtml().includes('class="sk-unintended">⚡ พฤติกรรมที่ไม่ตั้งใจ (BB):'));
+  } finally { if (had === undefined) delete sk.unintended; else sk.unintended = had; }
+  sandbox._selectSkill(sk);
+  check("the note is gone again once the field is removed (or stays only if a real card sets it)", had !== undefined || !sandbox._getRenderedHeroHtml().includes("sk-unintended\">"));
+  check("the BB issues page has its filter button", html.includes('["unintended", "พฤติกรรมที่ไม่ตั้งใจ"]'));
+  check("the BB issues page counts and tags the new type", html.includes('unintended: "⚡ พฤติกรรมที่ไม่ตั้งใจ"') && html.includes("ไม่ตั้งใจ \" + nUn"));
+  check("an empty category says so instead of showing a blank page", html.includes("ยังไม่มีรายการในหมวดนี้"));
+}
+console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
