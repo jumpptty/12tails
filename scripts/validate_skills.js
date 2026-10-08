@@ -2963,6 +2963,13 @@ let checkedHue = 0;
       sandbox._depRanks.shadowIllusion = 0; sandbox._selectSkill(sk);
       let one = 0; for (let i = 0; i < 1; i++) one += sandbox._rollOneHit(sk, 3, i, false);
       check("Drain Life without clones is the Bat alone (24)", one === 24, one);
+      // Dream Burst: the Bat and each clone also burst the drained target every 8 - lv s (normal hit, talAdjust(16 + 4 x lv), KO 1 + lv).
+      sandbox._depRanks.shadowIllusion = 3; sandbox._depRanks.dreamBurst = 2; sandbox._selectSkill(sk);
+      const hits = sk.dmgGroups.reduce((n, g) => n + sandbox._resolveGroupHitCount(sk, g), 0);
+      check("Drain Life with Dream Burst 2 and two clones: 1 + 2 drain hits and 1 + 2 burst hits", hits === 6 && sk.hitCount(3) === 6, hits);
+      const hb = sandbox._getRenderedHeroHtml();
+      check("Drain Life shows the Dream Burst groups with the 6 s interval and KO 3", hb.includes("Dream Burst (ทุก 6 วินาที)") && hb.includes('ko-value">3'));
+      sandbox._depRanks.dreamBurst = 0; delete sandbox._depRanks.dreamBurst;
       inp.atk.value = savedAtk; delete sandbox._depRanks.shadowIllusion;
     }
     { const sk = byId("cat_finishingBlow"); sandbox._skillRanks[sk.id] = sk.maxRank; sandbox._selectSkill(sk); check("a flat formula number carries a caption", sandbox._getRenderedHeroHtml().includes("(ค่าคงที่)")); }
