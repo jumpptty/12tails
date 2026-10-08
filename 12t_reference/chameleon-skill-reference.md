@@ -538,6 +538,7 @@ Each of the eight Slayer cards is its own skill: own reqLv/reqBn, own race, own 
 | Silent Walk | While charging, `moveSpeed = Lerp(moveSpeed, 2, 4 × Time.deltaTime)` (`Chameleon.cs:16579`): walk speed 2, easing rate 4. | Walk speed while charging 2 → 4.5 m/s (user-reported 2026-10-02 as "4 → 4.5"; the user confirmed it means the target speed, since the code's 4 is only the easing rate; server-side, card `servers.tto` on Silent Walk and Charge Attack). |
 | Charge Attack | No poison on the volley. | Gets Poison Arrow, Increased Poison and Deadly Venom (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Quick Fire | No poison on the shots. | Gets Poison Arrow, Increased Poison and Deadly Venom (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Bow Mastery (Class C, rank 5 icon) | Combo fires one arrow per attack command (`doNormalAttack`, `Chameleon.cs:5996-6057`). | Holding the attack button keeps firing normal attacks (does not work once Charge Attack is learned), but there is **no auto lock**: the Chameleon keeps its direction and the player must attack again to change it (user-reported 2026-10-08; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 
 ### ToT
 
