@@ -2946,6 +2946,13 @@ let checkedHue = 0;
       const lo = sandbox._rollOneHit(sk, 1, 0, false);
       check("Bubble Burst Test rolls the shield HP left (effect damage)", lo === Number(full && full[1]), lo);
     }
+    // An ATK-driven formula term keeps the ATK colour on Effect Damage cards (Drain Life, Wolf Combo with Dark Edge), user 2026-10-08.
+    for (const [id, dep] of [["bat_cAttack", null], ["wolf_nAttack", "wolfDarkEdgeOn"]]) {
+      const sk = byId(id); sandbox._skillRanks[sk.id] = sk.maxRank; if (dep) sandbox._depRanks[dep] = 1; sandbox._selectSkill(sk);
+      const h = sandbox._getRenderedHeroHtml(); const fi = h.indexOf("sk-dmg-formula"), part = h.slice(fi, h.indexOf("sk-dmg-calc", fi));
+      check(id + " ATK term is red, not purple, while the card is Effect Damage", part.includes('class="dmg-atk"') && !part.includes('class="dmg-effect"'));
+      if (dep) sandbox._depRanks[dep] = 0;
+    }
     { const sk = byId("cat_finishingBlow"); sandbox._skillRanks[sk.id] = sk.maxRank; sandbox._selectSkill(sk); check("a flat formula number carries a caption", sandbox._getRenderedHeroHtml().includes("(ค่าคงที่)")); }
     check("hate Test digits use the indigo set and shield Test digits the grey set", html.includes('selected.isHate ? "h" : isShieldOnly(selected) ? "s"'));
   } finally {
