@@ -1508,7 +1508,7 @@ let checkedWolfCombo = 0;
   });
   check("Dark Edge off is white", rate({}, 200).p === 0);
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
-  check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : (skillEffectDamageOn(selected) ? "p" : plainColor);'));
+  check("Test total digits turn purple with Dark Edge", html.includes('const digitColor = selected.isHeal ? "g" : selected.isHate ? "h" : isShieldOnly(selected) ? "s" : (skillEffectDamageOn(selected) ? "p" : plainColor);'));
   check("Katana and the crit sword switch each other off", html.includes('const DEP_EXCLUSIVE = { wolfKatana: ["wolfGearWeapon"], wolfGearWeapon: ["wolfKatana"],'));
   // Katana (w_wlf59, Wolf.cs:15159-15175, :15990-16001, :16693, :17409, :17727): crit first, then floor(0.75x), stage 2 ceil(0.5x).
   // Hand-computed at ATK 200, LCK 0, Feral off: raw (int)(c x 200) = 100 / 100 / 100 / 80 / 120.
@@ -1542,7 +1542,7 @@ let checkedWolfCombo = 0;
           const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(sk, g), g));
           let lo = Infinity, hi = -Infinity;
           for (let i = 0; i < 400; i++) { const x = sandbox._rollOneHit(sk, r, undefined, false, gi); lo = Math.min(lo, x); hi = Math.max(hi, x); }
-          check(`range/sim rank ${r} ${g.label} feral ${f} wh ${wh} de ${de} gear ${gear || "none"} katana ${kt} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+          check(`range/sim rank ${r} ${g.label} feral ${f} de ${de} gear ${gear || "none"} katana ${kt} atk ${atk}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
         });
       }
     }))));
@@ -2878,7 +2878,7 @@ let checkedUnintended = 0;
 }
 console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
 // 3u. Raw / Final damage number colours (user 2026-10-08): white = all hits normal, purple = Effect Damage, aqua = TTO magic, gold = a mix
-// (a purple proc that is on), green = heal, indigo = hate, lime = shield. Decided from the computed hits, so a toggle recolours live.
+// (a purple proc that is on), green = heal, indigo = hate, grey = shield. Decided from the computed hits, so a toggle recolours live.
 let checkedHue = 0;
 {
   const check = (label, ok, got) => { checkedHue++; if (!ok) { console.error(`[HUE ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
@@ -2916,12 +2916,27 @@ let checkedHue = 0;
     r = hues("wolf_provoke");
     check("a hate card is indigo", r.raw[0] === "hate" && r.fin[0] === "hate", JSON.stringify(r));
     sandbox._skillRanks.penguin_iceShield = byId("penguin_iceShield").maxRank; sandbox._selectSkill(byId("penguin_iceShield"));
-    check("the shield pool is lime", /sk-stat-value sk-hue-shield/.test(sandbox._getRenderedHeroHtml()));
+    check("the shield pool is grey", /sk-stat-value sk-hue-shield/.test(sandbox._getRenderedHeroHtml()));
+    // Shield cards (2026-10-08): Formula + โล่ดิบ + โล่จริง (= the raw range, no DEF step) + a Test that rolls the pool in grey digits.
+    for (const id of ["penguin_iceShield", "penguin_snowMan", "whale_bubbleShield"]) {
+      const sk = byId(id); sandbox._skillRanks[id] = sk.maxRank; sandbox._selectSkill(sk);
+      const h = sandbox._getRenderedHeroHtml();
+      const m = h.match(/โล่ดิบ<\/p>[\s\S]*?sk-hue-shield">([^<]+)<\//), f = h.match(/โล่จริง<\/p>[\s\S]*?sk-hue-shield">([^<]+)<\//);
+      check(id + " shows โล่ดิบ and โล่จริง with the same range", !!(m && f && m[1] === f[1]), m && f ? m[1] + " / " + f[1] : "missing");
+      check(id + " has the ทดสอบโล่ button and no old LCK label", h.includes("ทดสอบโล่") && !h.includes("รวมการแกว่งค่า LCK"));
+      if (m) {
+        const [lo, hi] = m[1].replace(/,/g, "").split(/[~–]/).map(Number); const top = hi === undefined ? lo : hi;
+        let ok = true; for (let i = 0; i < 300; i++) { const v = sandbox._rollOneHit(sk, sk.maxRank, 0, false); if (!(Number.isInteger(v) && v >= lo && v <= top)) { ok = false; break; } }
+        check(id + " Test rolls stay inside the shield range", ok, m[1]);
+      }
+    }
+    for (const k of ["h", "s"]) for (let i = 0; i < 10; i++) check("digit dmgdigit_" + k + i + " present", /^data:image\/png;base64,iVBORw0KGgo/.test(SKILL_ICONS["dmgdigit_" + k + i] || ""));
+    check("hate Test digits use the indigo set and shield Test digits the grey set", html.includes('selected.isHate ? "h" : isShieldOnly(selected) ? "s"'));
   } finally {
     sandbox._setServer("og");
     Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
   }
-  check("the hate and shield colours exist in both themes", [/--stat-hate:#4338ca/, /--stat-hate:#818cf8/, /--stat-shield:#4d7c0f/, /--stat-shield:#a3e635/].every(re => re.test(html)));
+  check("the hate and shield colours exist in both themes", [/--stat-hate:#4338ca/, /--stat-hate:#818cf8/, /--stat-shield:#6b7280/, /--stat-shield:#a1a1aa/].every(re => re.test(html)));
 }
 console.log(`Verified ${checkedHue} damage number colour checks.`);
 console.log("=== AUDIT SUMMARY ===");
