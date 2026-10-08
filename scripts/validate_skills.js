@@ -2809,6 +2809,54 @@ console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
   }
   console.log(`Verified ${checkedTip} tooltipNote lines (and no inline tooltip lines in any desc).`);
 }
+// 3s. Stat chip target value (2026-10-08, bible-skill-page-ui "Target value on a stat chip"): the sandbox has no real DOM, so the
+// editor itself is not run here. This guards what it stands on: (1) the file's line endings (a stray \r\r\n or a lone LF in a CRLF
+// file makes git store the whole 15 MB file as changed), (2) the pieces of the source the feature needs, (3) the chip markup it
+// reads (every Cooldown / Cast Time / Duration / chance chip keeps a .sk-stat-value), (4) the formula directions its binary
+// search relies on (Bat Doom's inverted contested duration is the one that runs the other way).
+let checkedChipTarget = 0;
+{
+  const check = (label, ok, got) => { checkedChipTarget++; if (!ok) { console.error(`[CHIP TARGET ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  // (1) line endings
+  const crlf = (html.match(/\r\n/g) || []).length, loneLf = (html.match(/(?<!\r)\n/g) || []).length, loneCr = (html.match(/\r(?!\n)/g) || []).length;
+  check("index.html has no lone CR (a '\\r\\r\\n' left by a scripted edit)", loneCr === 0, loneCr);
+  check("index.html is not mixed CRLF / LF", crlf === 0 || loneLf === 0, `${crlf} CRLF, ${loneLf} lone LF`);
+  // (2) source pieces
+  check("renderHeroNow calls setupStatTarget()", /setupStatTooltipInteractions\(\);\s*setupStatTarget\(\);/.test(html));
+  check("TARGET_STAT maps AGI / INT / CHA / TAL / LCK", /const TARGET_STAT = \{ agi: agiEl, int: intEl, cha: chaEl, tal: talEl, lck: lckEl \}/.test(html));
+  check("AGI has no cap in the target search", /const TARGET_HI = \{ agi: 1000000,/.test(html));
+  check("the chip direction is measured (Doom is inverted)", html.includes("info.dec = a > b"));
+  const ap = html.slice(html.indexOf("function applyTarget("), html.indexOf("function openTargetEdit("));
+  check("applyTarget pushes an undo step before it writes the stat", ap.includes("presetPushUndo()") && ap.indexOf("presetPushUndo()") < ap.indexOf("el.value = r.stat"));
+  check("applyTarget clamps to the reachable range and says so", ap.includes("Math.min(Math.max(wanted, lo), hi)") && ap.includes("เกินที่ทำได้"));
+  check("the probability tooltip is hover only (no click-to-pin)", !html.includes('wrap.classList.toggle("pinned"'));
+  const hov = (html.match(/\.sk-target-chip:hover[^{]*\{[^}]*\}/g) || []).join(" ");
+  check("chip hover only glows the number (no transform: the stat tooltips are position:fixed)", hov.includes("text-shadow") && !/transform|background|box-shadow/.test(hov), hov.slice(0, 80));
+  // (3) chip markup the editor reads
+  const CHIP = /<div class="sk-stat sk-stat-(?:cd|cd-secondary|cast|dur|dur2|lck\d?)\b/g;
+  let chips = 0;
+  for (const sk of SKILLS) {
+    sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk);
+    const h = sandbox._getRenderedHeroHtml();
+    const starts = [...h.matchAll(CHIP)].map(m => m.index);
+    starts.forEach((at, i) => {
+      const next = h.indexOf('<div class="sk-stat ', at + 10);
+      const chunk = h.slice(at, next < 0 ? h.length : next);
+      chips++;
+      if (!chunk.includes('class="sk-stat-value')) check(`${sk.id}: a ${chunk.slice(10, 40)} chip has no .sk-stat-value for the editor to swap`, false);
+    });
+  }
+  check("the cards render at least 300 editable chips", chips >= 300, chips);
+  // (4) formula directions
+  const mono = (fn, from, to, step, dir) => { let prev = fn(from); for (let x = from + step; x <= to; x += step) { const v = fn(x); if (dir === "down" ? v > prev + 1e-9 : v < prev - 1e-9) return false; prev = v; } return true; };
+  check("agiAdjust falls as AGI rises", mono(a => sandbox.agiAdjustAtRoll(120, a, 0), 0, 1000, 8, "down"));
+  check("chaAdjust rises with CHA", mono(c => sandbox.chaAdjustAtRoll(6, c, 0), 0, 512, 4, "up"));
+  check("magAdjust (cast time) falls as INT rises", mono(m => sandbox.magAdjustAtRoll(8, m, 0), 0, 512, 4, "down"));
+  check("lckAdjust rises with LCK", mono(l => sandbox.lckAdjustChance(20, l), 0, 512, 4, "up"));
+  check("contested duration rises with CHA", mono(c => sandbox.debuffAdjust(60, c, 2), 0, 512, 4, "up"));
+  check("inverted contested duration (Bat Doom) FALLS as CHA rises", mono(c => sandbox.debuffAdjust(60, 2, c), 0, 512, 4, "down"));
+}
+console.log(`Verified ${checkedChipTarget} stat chip target checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
