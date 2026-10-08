@@ -55,3 +55,5 @@ Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../
 2. Resolution order: the card's `compatSkills`, then same class, then Common, then all classes.
 3. Numbers, percentages, timers and general phrases (`**+2m**`, `**50%**`, `**15 วินาที**`, `**Shame:**`) stay plain `.sk-val` gold.
 4. Style: gold text with a soft glow, stronger on hover, pointer, no underline.
+
+* **Hit-group names (`dmgGroups[].label`, 2026-10-08, user):** Thai, never English descriptions ("Main Hit", "Stage 1", "Finisher"). English stays only when it is the move's real name (Second Stone, Tiger Pounce, Aura Blast, Shadow Illusion). Combo stages are "ท่าที่ N", two hits of one stage "ฮิตแรก / ฮิตสอง". The Wolf Combo validator check reads those two words.

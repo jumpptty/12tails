@@ -1366,7 +1366,7 @@ let checkedEffectProc = 0;
   // Bison Colossal Weapon (#361-362): splash line under Final Damage, only while the dep is on (user design 2026-10-01).
   { const bc = byId("bison_nAttack"); sandbox._skillRanks[bc.id] = 2;
     deps.colossalWeapon = 2; sandbox._calcRangeFor = undefined; sandbox._selectSkill(bc); const on = sandbox._getRenderedHeroHtml();
-    check("Colossal Weapon 2: splash line shown with Stage 1", on.includes('data-role="splash-line"') && /Stage 1 <span class="dmg-effect">\d/.test(on));
+    check("Colossal Weapon 2: splash line shown with ท่าที่ 1", on.includes('data-role="splash-line"') && /ท่าที่ 1 <span class="dmg-effect">\d/.test(on));
     deps.colossalWeapon = 0; sandbox._calcRangeFor = undefined; sandbox._selectSkill(bc); const off = sandbox._getRenderedHeroHtml();
     check("Colossal Weapon off: no splash line", !off.includes('data-role="splash-line"')); }
   // Mole TNT (Mole.cs:26048): talAdjust((int)(20 + 10 x n + (Super TNT ? (0.1 n + 0.1) x Lv : 0))); at Lv 100: TNT 4 = 60 + 50 = 110, TNT 1 = 30 + 20 = 50.
@@ -1490,7 +1490,7 @@ let checkedWolfCombo = 0;
   const c0 = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
   check("Feral off coefficients", c0 === "0.5,0.5,0.5,0.4,0.6", c0);
   setDeps({ wolfFeralInstinct: 0, wildHeart: 1 }); select(3);
-  check("Wild Heart without Feral Instinct adds nothing", sk.dmgGroups.every(g => sandbox._resolveGroupAtkCoeff(sk, g) === (g.label.includes("first") ? 0.4 : g.label.includes("second") ? 0.6 : 0.5)));
+  check("Wild Heart without Feral Instinct adds nothing", sk.dmgGroups.every(g => sandbox._resolveGroupAtkCoeff(sk, g) === (g.label.includes("ฮิตแรก") ? 0.4 : g.label.includes("ฮิตสอง") ? 0.6 : 0.5)));
   // Hit counts 2 / 3 / 5.
   [2, 3, 5].forEach((want, i) => { select(i + 1); const got = sk.dmgGroups.reduce((a, g) => a + sandbox._resolveGroupHitCount(sk, g), 0); check(`rank ${i + 1} hit count`, got === want && sk.hitCount(i + 1) === want, got); });
   // KO 1, and 0 under Dark Edge.
