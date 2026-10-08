@@ -2953,6 +2953,18 @@ let checkedHue = 0;
       check(id + " ATK term is red, not purple, while the card is Effect Damage", part.includes('class="dmg-atk"') && !part.includes('class="dmg-effect"'));
       if (dep) sandbox._depRanks[dep] = 0;
     }
+    { // Drain Life + Shadow Illusion (2026-10-08): per tick the Bat ceil(1 x clamp) and each clone trunc(cloneMod x clamp) on the same ATK.
+      const sk = byId("bat_cAttack"), inp = sandbox._statInputs, savedAtk = inp.atk.value;
+      inp.atk.value = "200"; sandbox._depRanks.shadowIllusion = 3; sandbox._depRanks.darkIntention = 0; sandbox._skillRanks[sk.id] = 3; sandbox._selectSkill(sk);
+      let tot = 0; for (let i = 0; i < 3; i++) tot += sandbox._rollOneHit(sk, 3, i, false);
+      check("Drain Life rank 3, ATK 200, Shadow Illusion 3: Bat 24 + two clones 18 each = 60 per tick", tot === 60, tot);
+      const h = sandbox._getRenderedHeroHtml();
+      check("Drain Life shows the clone group and its damageMod caption", h.includes("Shadow Illusion") && h.includes("dmgMod ร่างแยก"));
+      sandbox._depRanks.shadowIllusion = 0; sandbox._selectSkill(sk);
+      let one = 0; for (let i = 0; i < 1; i++) one += sandbox._rollOneHit(sk, 3, i, false);
+      check("Drain Life without clones is the Bat alone (24)", one === 24, one);
+      inp.atk.value = savedAtk; delete sandbox._depRanks.shadowIllusion;
+    }
     { const sk = byId("cat_finishingBlow"); sandbox._skillRanks[sk.id] = sk.maxRank; sandbox._selectSkill(sk); check("a flat formula number carries a caption", sandbox._getRenderedHeroHtml().includes("(ค่าคงที่)")); }
     check("hate Test digits use the indigo set and shield Test digits the grey set", html.includes('selected.isHate ? "h" : isShieldOnly(selected) ? "s"'));
   } finally {

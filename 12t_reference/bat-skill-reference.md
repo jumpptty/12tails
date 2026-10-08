@@ -244,7 +244,7 @@ Follow-up verification:
   - `RPC_cAttack_hit` effect, +1 SP (`:22199`);
   - with Amplify Damage: `amplifyDamage` Lv for `getDebuff(3)` s (`:22204-22215`);
   - with Dream Burst: the burst (see its entry below).
-- Clones channel the same drain (`RPC_cAttack1`/`0` on each clone).
+- Clones channel the same drain (`RPC_cAttack1`/`0` on each clone). **Clone tick (verified 2026-10-08, `Bat_illusion.cs:4345-4392`, `:4680`):** every 1 s each clone rebuilds `hpDrainLv` from its copied skill list (1, 2 with #112, 3 with #113, +1 with #411) and `drainHp = clamp(ceil((0.03 + 0.03 × lv) × clone ATK), lv, 9 × lv)`, the clone's ATK being the Bat's at summon; it then applies `hpDrain` Lv `lv` for 1 s with value **`(int)(clone damageMod × drainHp)`** (truncated, the Bat's own tick is `ceil(damageMod × drainHp)`, `Bat.cs:22152`). The clone's `damageMod` is `clamp(0.25 + 0.25n, 0.5, 1)` (50 / 50 / 75 / 100%). Clones have no `mpDrain` / `spDrain` / Merciless 66 / Amplify Damage in this loop; they do fire their own Dream Burst (`:4637-4659`). **Bible:** `dmgGroups` Bat (`effectMod:"player"`, ceil) + Shadow Illusion (`clone:true`, `effectMod` = clone damageMod, `effectModRound:"trunc"`), clone count from `BAT_COMBO_ILLUSION_DEP`; Merciless 66 stays on the Bat hit (`effectProc.hits:[1]`).
 - Client tooltips: EN "…charge and drain HP from the target. (6% [9% / 12%] atk, 1~9 [2~18 / 3~27] dmg)" (`BatSkill_eng.cs:64-86`). Matches `0.03 + 0.03 × eLv` and the clamp.
 
 ### bat_drainMana1-3 (Drain Mana, #121-#123) (verified 2026-10-01)
