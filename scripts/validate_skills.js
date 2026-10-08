@@ -2344,10 +2344,10 @@ let checkedCatPowerTto = 0;
     if (!h.includes("Open Wound:") || !h.includes("เพิ่มเติม")) fail(`${sk.id}: no Open Wound bonus-damage line in the description`); else checkedCatPowerTto++;
   }
   const fbl = SKILLS.find(s => s.id === "cat_finishingBlow");
-  if (!/sk-tip-red[^>]*>เฉพาะฮิตที่ 3</.test(heroOf(fbl, "og"))) fail("cat_finishingBlow: Open Wound line must say hit 3 only in red"); else checkedCatPowerTto++;
+  { const fh = heroOf(fbl, "og"); if (!fh.includes("เพิ่มเติมทุกฮิต") || !/class="sk-unintended"[^>]*>[\s\S]*?ฮิตที่ 3/.test(fh) || fh.includes("เฉพาะฮิตที่ 3</")) fail("cat_finishingBlow: the Open Wound line says every hit and the hit 3 only gap sits in the unintended chip"); else checkedCatPowerTto++; }
   const cmb = SKILLS.find(s => s.id === "cat_nAttack");
   const cmbHtml = heroOf(cmb, "og").replace(/<span class="sk-nobr">([^<]*)<\/span>/g, "$1");   // loanword glue is markup only
-  if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || !cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง")) fail("cat_nAttack: Open Wound line must say every hit and that stage 2 after a Hidden Blade backstab gets no purple damage"); else checkedCatPowerTto++;
+  if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง") || !/class="sk-unintended"[^>]*>[\s\S]*?ไม่ติดฮิตที่ 2 เมื่อฟันหลังด้วย/.test(cmbHtml)) fail("cat_nAttack: Open Wound line says every hit and the stage 2 Hidden Blade gap sits in the unintended chip"); else checkedCatPowerTto++;
   const ttoCombo = heroOf(cmb, "tto");
   if (ttoCombo.includes("Power Seven")) fail("cat_nAttack on tto still mentions Power Seven"); else checkedCatPowerTto++;
   // Rabbit Miracle Blend (Rabbit_potion.cs:432-438): status duration chaAdjust(4 + 2 x Alchemist Lab rank) (4s unlearned), golden potion chip per bottle and per 4 bottles.
