@@ -2879,6 +2879,53 @@ let checkedUnintended = 0;
   check("an empty category says so instead of showing a blank page", html.includes("ยังไม่มีรายการในหมวดนี้"));
 }
 console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
+// 3u. Raw / Final damage number colours (user 2026-10-08): white = all hits normal, purple = Effect Damage, aqua = TTO magic, gold = a mix
+// (a purple proc that is on), green = heal, indigo = hate, lime = shield. Decided from the computed hits, so a toggle recolours live.
+let checkedHue = 0;
+{
+  const check = (label, ok, got) => { checkedHue++; if (!ok) { console.error(`[HUE ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
+  const byId = id => SKILLS.find(s => s.id === id);
+  const deps = sandbox._depRanks, savedDeps = Object.assign({}, deps);
+  const hues = (id, rank) => {
+    const sk = byId(id);
+    sandbox._skillRanks[id] = rank || sk.maxRank || 1; sandbox._selectSkill(sk);
+    const h = sandbox._getRenderedHeroHtml();
+    const grab = (cls) => { const i = h.indexOf(`sk-stat ${cls}`); if (i < 0) return []; const j = h.indexOf("sk-stat sk-dmg-", i + 10); const part = h.slice(i, j < 0 ? h.length : j); return [...part.matchAll(/class="sk-stat-value[^"]*?sk-hue-([a-z]+)/g)].map(m => m[1]); };
+    return { raw: grab("sk-dmg-calc"), fin: grab("sk-dmg-final") };
+  };
+  try {
+    sandbox._setServer("og");
+    let r = hues("penguin_tornado");
+    check("a plain damage card is white in both chips", r.raw[0] === "w" && r.fin[0] === "w", JSON.stringify(r));
+    r = hues("chameleon_thunderDragon");
+    check("an Effect Damage card is purple in both chips", r.raw[0] === "p" && r.fin[0] === "p", JSON.stringify(r));
+    r = hues("penguin_manaMissile");
+    check("a TTO magic card is white on OG", r.raw[0] === "w" && r.fin[0] === "w", JSON.stringify(r));
+    sandbox._setServer("tto");
+    r = hues("penguin_manaMissile");
+    check("a TTO magic card is aqua on TTO", r.raw[0] === "a" && r.fin[0] === "a", JSON.stringify(r));
+    sandbox._setServer("og");
+    deps.wallPuncture = 0;
+    r = hues("whale_javelin");
+    check("a purple proc that is off stays white", r.raw[0] === "w" && r.fin[0] === "w", JSON.stringify(r));
+    deps.wallPuncture = 4;
+    r = hues("whale_javelin");
+    check("a purple proc that is on makes the mix gold", r.raw[0] === "mix" && r.fin[0] === "mix", JSON.stringify(r));
+    r = hues("whale_megalodon");
+    check("groups that differ (purple pull, white bite): each line its own colour, the total gold", r.raw.includes("p") && r.raw.includes("w") && !r.fin.includes("w") , JSON.stringify(r));
+    r = hues("sheep_heal");
+    check("a heal is green", r.raw[0] === "heal" && r.fin[0] === "heal", JSON.stringify(r));
+    r = hues("wolf_provoke");
+    check("a hate card is indigo", r.raw[0] === "hate" && r.fin[0] === "hate", JSON.stringify(r));
+    sandbox._skillRanks.penguin_iceShield = byId("penguin_iceShield").maxRank; sandbox._selectSkill(byId("penguin_iceShield"));
+    check("the shield pool is lime", /sk-stat-value sk-hue-shield/.test(sandbox._getRenderedHeroHtml()));
+  } finally {
+    sandbox._setServer("og");
+    Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
+  }
+  check("the hate and shield colours exist in both themes", [/--stat-hate:#4338ca/, /--stat-hate:#818cf8/, /--stat-shield:#4d7c0f/, /--stat-shield:#a3e635/].every(re => re.test(html)));
+}
+console.log(`Verified ${checkedHue} damage number colour checks.`);
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);

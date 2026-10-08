@@ -101,3 +101,21 @@ For a card whose raw damage mixes several separately truncated terms that the ar
 * **Rifle vs shotgun crit order differs in the game:** rifle Combo, ricochet and From the Above wrap `hitDmg + hyper` in `getCritPlus`; the shotgun wraps only `(int)(0.5 ATK)` and adds Hyper Shot after (so `plain`).
 * **Validator `[RABBIT SHOT ERROR]`:** hand-computed golden values for both cards (worked out from the source expressions, not from the code under test), gear crit bases and rate, exclusivity symmetry, header markup, stat glow, and a range-vs-simulator sweep over toggle combinations, distances and aim times at two stat profiles.
 * **Extravagance is a skill dependency, not a Buff popup entry:** a card with `extravagance:true` shows `RABBIT_EXTRAVAGANCE_DEP`; there is no amount input because every Rabbit build uses it at its cap. `statBonus("atk")` adds `RABBIT_EXTRAVAGANCE_ATK` (512) to the ATK input for the selected flagged card only (so it also shows as the usual `+N = total` chip and feeds every range, Test roll and `rawModel`). Flagged: Combo, Charge Attack, Maim Shot, Bounce, Gil Shot, Four Shot, Circle Shot, Shooting Array, Ten Shot; skills that never read ATK (Gorgon Shot, Acidic Field, Diamond Shot, Millionaire, Backpack) are not flagged. Flagged cards do not repeat it in their `desc` (the dependency strip already names it); they link to the Extravagance card in `compatSkills`.
+
+### Raw / Final number colours (2026-10-08, user; validator §3u `[HUE ERROR]`)
+
+The numbers of the ดาเมจดิบ and ดาเมจจริง chips (and the per-group lines) take the colour of the hits behind them, decided from what the card computes now (`groupHue` / `cardHue` in the Raw chip block of `renderHeroNow`), so a toggle or a server switch recolours live:
+
+| Hits | Class | Colour |
+|---|---|---|
+| all normal | `sk-hue-w` | theme text colour (near-white on dark, dark brown on light) |
+| all Effect Damage (`skillEffectDamageOn`, a group with `effectDamage`, or an `effectProc` replace chance of 100%) | `sk-hue-p` | purple `--stat-effect` |
+| TTO magic card (`currentServer === "tto" && isTtoMagic`) | `sk-hue-a` | aqua `--stat-tal` |
+| a purple proc that is on (replace chance > 0, or a bonus > 0), or groups that differ | `sk-hue-mix` | gold |
+| heal | `sk-hue-heal` | `--stat-hp` green |
+| hate | `sk-hue-hate` | indigo `--stat-hate` (`#818cf8` dark, `#4338ca` light) |
+| shield pool (`รวมการแกว่งค่า LCK`) | `sk-hue-shield` | lime `--stat-shield` (`#a3e635` dark, `#4d7c0f` light) |
+
+* A proc that is off is white (or aqua); purple beats aqua on the same hits, like the Test floats; aqua plus a purple proc that is on is gold.
+* Multi-group cards: each group line has its own colour, the total follows the card-level rule (differing groups = gold).
+* The old purple tint on one end of a range is retired (gold now means "mixed"). The formula chip, the Test floats and the light-ball colours are unchanged. No tooltip or legend (user decision).
