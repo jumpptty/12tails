@@ -3072,6 +3072,7 @@ let checkedCredits = 0;
     check(`${c.id} #${i + 1}: the bold name is a skill link`, /class="sk-desc-skill-link"/.test(html), bolds[0]);
   }));
   const src = fs.readFileSync(targetPath, "utf8");
+  check("the pop-up height is measured by layout (offsetHeight), not getBoundingClientRect, which includes the opening scale and clipped the page when opened from a card", /function creditsSetHeight\(\) \{[^}]*act\.offsetHeight/.test(src) && !/function creditsSetHeight\(\) \{[^}]*getBoundingClientRect/.test(src));
   check("the pop-up renders items with renderRichText and handles clicks on a skill link", /li\.innerHTML = renderRichText\(t, null\)/.test(src) && /creditsBodyEl\.addEventListener\("click"/.test(src) && /closeCreditsModal\(\);\s*location\.hash = "skill-details\/"/.test(src));
 }
 console.log(`Verified ${checkedCredits} co-author page checks.`);
