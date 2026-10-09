@@ -1279,6 +1279,31 @@ if (indexDirty) {
   }
 }
 
+// Card cooldown vs the class reference table's "CD Base" (max rank). Catches a card whose cd drifted from
+// the decoded source (Falling Comets 30 vs 60, Blink 2 vs 12, 2026-10-09). Cards with no cd are skipped
+// (passives, step cards); the two below legitimately differ from the table.
+let checkedCdRef = 0;
+{
+  const CD_REF_EXEMPT = new Set(['cat_heartRipper', 'sheep_revive']);   // table row is Finishing Blow's 120 / a per-rank pair
+  const refDir = path.resolve(__dirname, '../12t_reference');
+  const byId = new Map(SKILLS.map(s => [s.id, s]));
+  fs.readdirSync(refDir).filter(f => f.endsWith('-skill-reference.md')).forEach(f => {
+    const cls = f.replace('-skill-reference.md', '');
+    fs.readFileSync(path.join(refDir, f), 'utf8').split('\n').forEach(line => {
+      const p = line.split('|').map(s => s.trim());
+      if (p.length < 6 || !/^[A-Za-z0-9_]+$/.test(p[1]) || !/^[\d.]+$/.test(p[4])) return;
+      const sk = byId.get(cls + '_' + p[1]);
+      if (!sk || sk.cd == null || CD_REF_EXEMPT.has(sk.id)) return;
+      checkedCdRef++;
+      const cardCd = Array.isArray(sk.cd) ? Math.max(...sk.cd) : sk.cd;
+      if (cardCd !== Number(p[4])) {
+        errorCount++;
+        console.error(`[CD REF ERROR] ${sk.id}: card cd ${JSON.stringify(sk.cd)} but ${f} says CD Base ${p[4]}`);
+      }
+    });
+  });
+}
+
 // Custom buff/debuff rules + final-multiplier maths (2026-09-20)
 let checkedCustomBd = 0;
 {
@@ -1319,6 +1344,7 @@ let checkedCustomBd = 0;
 
 console.log(`Evaluated ${checkedFormulas} formula permutations across all ranks and dependencies.`);
 console.log(`Verified ${checkedCustomBd} custom buff/debuff checks.`);
+console.log(`Verified ${checkedCdRef} card cooldowns against the class reference tables.`);
 console.log(`Verified ${checkedLckFloors} LCK-invariant-floor permutations.`);
 console.log(`Verified ${checkedGaosHeroRouting} Gaos own-stat render permutations.`);
 console.log(`Verified ${checkedDeepLinks} deep-link routing checks.`);
