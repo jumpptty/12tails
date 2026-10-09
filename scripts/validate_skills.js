@@ -3059,6 +3059,23 @@ let checkedUnintended = 0;
   check("an empty category says so instead of showing a blank page", html.includes("ยังไม่มีรายการในหมวดนี้"));
 }
 console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
+// Co-author page: each finding bolds only its parent skill (** **), which renders as a gold skill link; the pop-up renders the items as rich text.
+let checkedCredits = 0;
+{
+  const check = (label, ok, got) => { checkedCredits++; if (!ok) { errorCount++; console.error(`[CREDITS ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); } };
+  const C = vm.runInContext("CONTRIBUTORS", sandbox), rich = vm.runInContext("renderRichText", sandbox);
+  C.forEach(c => (c.what || []).forEach((w, i) => {
+    const bolds = (w.match(/\*\*[^*]+\*\*/g) || []);
+    if (c.special) return;
+    check(`${c.id} #${i + 1}: exactly one bold parent skill`, bolds.length === 1, bolds.length);
+    const html = rich(w, null);
+    check(`${c.id} #${i + 1}: the bold name is a skill link`, /class="sk-desc-skill-link"/.test(html), bolds[0]);
+  }));
+  const src = fs.readFileSync(targetPath, "utf8");
+  check("the pop-up renders items with renderRichText and handles clicks on a skill link", /li\.innerHTML = renderRichText\(t, null\)/.test(src) && /creditsBodyEl\.addEventListener\("click"/.test(src) && /closeCreditsModal\(\);\s*location\.hash = "skill-details\/"/.test(src));
+}
+console.log(`Verified ${checkedCredits} co-author page checks.`);
+
 // 3u. Raw / Final damage number colours (user 2026-10-08): white = all hits normal, purple = Effect Damage, aqua = TTO magic, gold = a mix
 // (a purple proc that is on), green = heal, indigo = hate, grey = shield. Decided from the computed hits, so a toggle recolours live.
 let checkedHue = 0;
