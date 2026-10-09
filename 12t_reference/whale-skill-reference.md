@@ -234,7 +234,7 @@ Verified from decompiled source (`DecompiledSource/Whale.cs`, `DecompiledSource/
     - `whale_homingShield`: `0.5 × DEF + talAdjust(20)`.
   - **Weight Scaling (Whale Wave & Hydro Blast)**:
     - `whale_whaleWave`: Ground smash dealing `talAdjust(WhaleWeight × (0.5 + 0.5×sLv))` scaled by distance from impact (100 / 150 TAL at base 100 weight).
-    - `whale_hydroBlast`: Vertical water geyser dealing `talAdjust(10×sLv + 10) + TargetWeight`.
+    - `whale_hydroBlast`: Vertical water geyser dealing `talAdjust(10×sLv + 10 (+20 Spiral Blast)) + TargetWeight` (`Whale.cs:10114`). **The weight term is not clamped anywhere** (verified 2026-10-09: `dmgAdjust` only clamps `damageMod` 0–5, `defAdjust` subtracts `0.5×DEF` with a floor of 1, `hitMod` is clamped 0–3, `CharacterControl.cs:20487-20560`, `:3765`), so the added damage is exactly the target's weight. The heaviest enemy in the monster data is **King Rodinia, weight 5000** (the next is 100), which is the Bible input's max.
 - **Healing & Protective Bubble Mechanics**:
   - `whale_rejuvenate`: Periodic regeneration ticking every 4s over 18s. Each tick restores `6×sLv + 6 + Floor(0.004 × sLv × TargetMaxHP)`.
   - `whale_revitalize`: casts `rejuvenate` level 3 on every Player-tagged member under the Whale's team parent (no distance check in the coroutine, `Whale.cs:36191-36236`), `chaAdjust(18)` s; each tick heals `6·3 + 6 + floor(0.004·3·MaxHP)` = `24 + floor(0.012 × MaxHP)`. While learned, the Whale's own Rejuvenate casts get +1 level (`Whale.cs:31336-31342`).
