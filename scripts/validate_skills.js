@@ -1448,6 +1448,15 @@ console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
   if (!ok) { errorCount++; console.error("[DEP LABEL ERROR] fitDepLabels is not wired after renderHeroNow / on resize, or .sk-dep-item-name still truncates with an ellipsis"); }
   console.log("Verified dependency toggle labels shrink instead of truncating.");
 }
+// fitDmgValues (the shrink-to-fit step for formulas and chip numbers) must run after the full render AND after both live-refresh paths (refreshLiveDamage and the Panda
+// boxes), and a formula still too wide at its floor scrolls inside its box: a slider or input that widens a formula used to spill out of the card on a phone.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), calls = (src.match(/fitDmgValues\(\);/g) || []).length;
+  const live = /fitDmgValues\(\);\s*\};\s*const pandaSpInput/.test(src) && /fitDmgValues\(\);\s*\};\s*pandaSpInput\.addEventListener\("input", updatePandaSpLive\)/.test(src);
+  const ok = /const fitDmgValues = \(\) =>/.test(src) && calls >= 3 && live && /\.sk-dmg-value\.sk-dmg-scroll\{[^}]*overflow-x:auto/.test(src);
+  if (!ok) { errorCount++; console.error(`[FORMULA FIT ERROR] fitDmgValues must run after the render and both live refreshes (${calls} calls) and .sk-dmg-scroll must scroll`); }
+  console.log("Verified formulas refit after live inputs and scroll when they cannot shrink.");
+}
 
 
 // Custom buff/debuff rules + final-multiplier maths (2026-09-20)
