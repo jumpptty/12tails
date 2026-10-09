@@ -1304,6 +1304,48 @@ let checkedCdRef = 0;
   });
 }
 
+// Whale Wave: min damage = ceil(talAdjust(floor(weight x (0.5 + 0.5 sLv))) x (1 - 0.05 x distance)) (Whale.cs:31978);
+// the distance is capped at the 6 m radius (9 m with Diving Press, which then floors 1.5x of the ceil'd value).
+let checkedWhaleWave = 0;
+{
+  const sk = SKILLS.find(s => s.id === "whale_whaleWave"), inp = vm.runInContext("DMG_INPUT_VALS", sandbox);
+  const F32 = Math.fround;
+  const check = (label, ok, got) => { checkedWhaleWave++; if (!ok) { errorCount++; console.error(`[WHALE WAVE ERROR] ${label}: got ${got}`); } };
+  const saved = { w: inp.whaleWeight, d: inp.whaleWaveDist }, savedDp = sandbox._depRanks.divingPress;
+  check("card has the weight and distance boxes", !!sk && (sk.dmgInputs || []).map(i => i.key).join() === "whaleWeight,whaleWaveDist");
+  if (sk) {
+    const minAt = (rank, w, d, dp) => {
+      inp.whaleWeight = w; inp.whaleWaveDist = d; sandbox._depRanks.divingPress = dp;
+      sandbox._skillRanks[sk.id] = rank; sandbox._selectSkill(sk);
+      return sandbox._calcRangeFor(sandbox._getDmgText(sk, rank))[0];
+    };
+    const tal = (rank, w) => minAt(rank, w, 0, 0);
+    [[1, 100, 100], [2, 100, 150], [2, 101, 151], [1, 37, 37], [2, 37, 55]].forEach(([r, w, n]) => {
+      sandbox._skillRanks[sk.id] = r; sandbox._selectSkill(sk); inp.whaleWeight = w; inp.whaleWaveDist = 0; sandbox._depRanks.divingPress = 0;
+      const want = sandbox._calcRangeFor(`talAdjust(${n})`)[0];
+      check(`rank ${r} weight ${w}: base talAdjust(${n})`, tal(r, w) === want, tal(r, w));
+    });
+    [[1, 100, 3], [2, 101, 6], [2, 100, 8]].forEach(([r, w, d]) => {
+      const base = tal(r, w), reach = 6;
+      check(`rank ${r} weight ${w} distance ${d}: ceil(base x (1 - 0.05 x min(d, 6)))`, minAt(r, w, d, 0) === Math.ceil(Math.fround(base * F32(1 - F32(F32(0.05) * Math.min(d, reach))))), minAt(r, w, d, 0));
+    });
+    const dpBase = minAt(2, 100, 0, sk.dmgMultDep.maxRank);   // Diving Press on, no falloff
+    check("Diving Press at distance 8: 1.5x of the ceil'd falloff value, reach 9", minAt(2, 100, 8, sk.dmgMultDep.maxRank) === Math.trunc(Math.ceil(Math.fround(Math.trunc(dpBase / 1.5) * F32(1 - F32(F32(0.05) * 8)))) * 1.5), minAt(2, 100, 8, sk.dmgMultDep.maxRank));
+  }
+  // The distance box's max follows Diving Press (6 m off, 9 m on): dmgIn clamps a stored 9 back to 6 when it is off.
+  const dmgInFn = vm.runInContext('dmgIn', sandbox);
+  inp.whaleWaveDist = 9; sandbox._depRanks.divingPress = 0;
+  check('distance box max is 6 m without Diving Press', dmgInFn('whaleWaveDist') === 6, dmgInFn('whaleWaveDist'));
+  sandbox._depRanks.divingPress = sk.dmgMultDep.maxRank;
+  check('distance box max is 9 m with Diving Press', dmgInFn('whaleWaveDist') === 9, dmgInFn('whaleWaveDist'));
+  // The falloff is its own term (ceil bracket, caption, the factor), not folded into the base / TAL numbers; hidden at distance 0.
+  const formulaAt = (d) => { inp.whaleWeight = 100; inp.whaleWaveDist = d; sandbox._depRanks.divingPress = 0; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk); return sandbox._renderOneDmgFormula(sk, 1, sandbox._getDmgText(sk, 1)); };
+  const at3 = formulaAt(3), at0 = formulaAt(0);
+  check('distance 3 draws its own term: caption, factor 0.85 and a ceil bracket', at3.includes('ระยะ 3m') && at3.includes('0.85') && at3.includes('⌈') && at3.includes('⌉'), at3.length);
+  check('distance 0 draws no distance term', !at0.includes('ระยะ 0m') && !at0.includes('⌈'), at0.length);
+  inp.whaleWeight = saved.w; inp.whaleWaveDist = saved.d; sandbox._depRanks.divingPress = savedDp;
+}
+console.log(`Verified ${checkedWhaleWave} Whale Wave weight / distance checks.`);
 // Every custom number box: integer limits, min <= def <= max (a function max is checked at both ends of its range).
 let checkedInputBoxes = 0;
 SKILLS.forEach(sk => (sk.dmgInputs || []).forEach(d => {
