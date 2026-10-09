@@ -13,3 +13,6 @@ node_modules/
 
 # Local donation artwork
 Donate.jpg
+
+# Backups made with git bundle (kept off the repo)
+*.bundle
