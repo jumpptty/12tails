@@ -1365,6 +1365,51 @@ console.log(`Verified ${checkedInputBoxes} custom input box limits.`);
 
 
 
+// Falling Comets scatter model (Penguin.cs:26266-26343 cast, :26808-26846 fire, :37542-37580 Giant fire, Damage.cs:1058-1085 FindAreaTarget).
+// Landing = whole metres -8..+7 per axis (-10..+9 with Giant Star); a comet hits when |d - collider radius| < R (R 6, Giant 9; the collider point nearest the
+// blast, Damage.cs:1058-1090) and deals floor(U x (1 - 0.5 d / R)), d = distance to the centre. The Bible assumes a 1 m radius monster (scatterCells(skill, radius) takes others). The cell counts below were counted by hand from those rules,
+// not by running the code under test:
+//   base, collider 1 m: d < 7 -> 7+9+11+(7 columns of 13)+11+9+7 = 145 of 256
+//   base, collider 15 m: 9 < d -> 7+10+6+2 = 25 of 256, plus the dead-centre cell = 26 (a zero offset has no direction, Vector3.normalized is zero,
+//     so the collider point collapses onto the centre and it hits; every other deep-inside cell misses, it is far from the collider edge)
+//   Giant, collider 1 m: d < 10 -> 305 of 400
+let checkedComets = 0;
+{
+  const sk = SKILLS.find(s => s.id === "penguin_fallingComets");
+  const check = (label, ok, got) => { checkedComets++; if (!ok) { errorCount++; console.error(`[COMET ERROR] ${label}: got ${got}`); } };
+  const gid = sk && sk.dmgMultDep ? sk.dmgMultDep.id : "giantStar", savedGiant = sandbox._depRanks[gid];
+  const hitsAt = (r, giant) => { sandbox._depRanks[gid] = giant ? 1 : 0; const c = sandbox._scatterCells(sk, r).cells; return { total: c.length, hits: c.filter(x => x.hit).length, cells: c }; };
+  const a = hitsAt(1, false), b = hitsAt(15, false), g = hitsAt(1, true);
+  check("base scatter is 16 x 16 whole metres", a.total === 256, a.total);
+  check("base, collider 1 m: 145 cells hit", a.hits === 145, a.hits);
+  check("base, collider 15 m: 26 cells hit (25 ring cells + the dead centre)", b.hits === 26, b.hits);
+  check("Giant Star scatter is 20 x 20 and 305 cells hit at 1 m", g.total === 400 && g.hits === 305, g.hits);
+  const at = (cells, x, z) => cells.find(c => c.x === x && c.z === z);
+  check("dead centre hits a small body for the full 100%", at(a.cells, 0, 0).hit && at(a.cells, 0, 0).mult === 1, JSON.stringify(at(a.cells, 0, 0)));
+  check("a cell deep inside a 15 m body, (1, 0), MISSES (the collider point is 14 m from the blast)", !at(b.cells, 1, 0).hit, JSON.stringify(at(b.cells, 1, 0)));
+  check("dead centre still hits a 15 m body (zero direction vector)", at(b.cells, 0, 0).hit && at(b.cells, 0, 0).mult === 1, JSON.stringify(at(b.cells, 0, 0)));
+  check("(3, 4) is 5 m out: 1 - 0.5 x 5 / 6 = 0.5833", Math.abs(at(a.cells, 3, 4).mult - 7 / 12) < 1e-6, at(a.cells, 3, 4).mult);
+  check("(-8, -8) hits a 15 m body with 1 - 0.5 x 11.314 / 6 = 0.0572", at(b.cells, -8, -8).hit && Math.abs(at(b.cells, -8, -8).mult - (1 - 0.5 * Math.sqrt(128) / 6)) < 1e-6, at(b.cells, -8, -8).mult);
+  check("Giant Star divides by 9: (3, 4) = 1 - 0.5 x 5 / 9", Math.abs(at(g.cells, 3, 4).mult - (1 - 2.5 / 9)) < 1e-6, at(g.cells, 3, 4).mult);
+  // The Raw range is the plain talAdjust range scaled by the worst / best reachable falloff, floored: farthest hit at 1 m is (6, 3), d = sqrt(45).
+  if (sk) {
+    sandbox._depRanks[gid] = 0; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk);
+    const text = sandbox._getDmgText(sk, 1), withModel = sandbox._calcRangeFor(text), flag = sk.scatterModel;
+    sk.scatterModel = false; const plain = sandbox._calcRangeFor(text); sk.scatterModel = flag;
+    const minMult = Math.fround(1 - Math.fround(0.5 * Math.fround(Math.fround(Math.sqrt(45)) / 6)));
+    check("Raw range = floor(plain range x [worst, best] falloff)", withModel[0] === Math.floor(Math.fround(plain[0] * minMult)) && withModel[1] === Math.floor(Math.fround(plain[1] * 1)), JSON.stringify([plain, withModel]));
+    const heroHtml = sandbox._getRenderedHeroHtml();
+    check("the card shows the hit odds for the fixed 1 m body (145 / 256 = 57%) and has no radius slider", heroHtml.includes("โดน 57% ต่อดวง") && !heroHtml.includes("comet-radius"), heroHtml.includes("comet-radius"));
+    const shared = [0, 1, 2, 3, 4, 5, 6, 7].map(() => sandbox._rollOneHit(sk, 1, 0, false, undefined, { talRoll: 3, scatterMult: 1 }));
+    check("a rolled comet hit with a shared talAdjust roll and a falloff is a positive whole number", shared.every(v => Number.isInteger(v) && v >= 1), JSON.stringify(shared));
+    const fullAvg = shared.reduce((s, v) => s + v, 0) / shared.length, farAvg = [0, 1, 2, 3, 4, 5, 6, 7].map(() => sandbox._rollOneHit(sk, 1, 0, false, undefined, { talRoll: 3, scatterMult: 0.3 })).reduce((s, v) => s + v, 0) / 8;
+    check("a far landing (falloff 0.3) deals less than a dead-centre one on the same cast roll", farAvg < fullAvg, farAvg + " vs " + fullAvg);
+    check("hit count range is 0 to 5 comets at rank 1 (a comet can miss)", JSON.stringify(sandbox._dmgHitCountRange) === "[0,5]", JSON.stringify(sandbox._dmgHitCountRange));
+  }
+  sandbox._depRanks[gid] = savedGiant;
+}
+console.log(`Verified ${checkedComets} Falling Comets scatter checks.`);
+
 // Custom buff/debuff rules + final-multiplier maths (2026-09-20)
 let checkedCustomBd = 0;
 {
