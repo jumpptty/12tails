@@ -1304,6 +1304,25 @@ let checkedCdRef = 0;
   });
 }
 
+// Every custom number box: integer limits, min <= def <= max (a function max is checked at both ends of its range).
+let checkedInputBoxes = 0;
+SKILLS.forEach(sk => (sk.dmgInputs || []).forEach(d => {
+  checkedInputBoxes++;
+  const max = typeof d.max === 'function' ? d.max() : d.max;
+  if (!Number.isInteger(d.min) || !Number.isInteger(max) || d.min > max || (!d.auto && (d.def < d.min || d.def > max))) { errorCount++; console.error(`[INPUT BOX ERROR] ${sk.id}.${d.key}: min ${d.min}, def ${d.def}, max ${max}`); }
+}));
+console.log(`Verified ${checkedInputBoxes} custom input box limits.`);
+// A maxlength on a skill number box rejects the digit that would exceed it (999 box + typed 1 -> nothing happens) instead of letting the clamp
+// pull it to the max, so none of them may carry one.
+{
+  const tags = fs.readFileSync(targetPath, 'utf8').match(/<input[^>]*class="sk-current-sp-input"[^>]*>/g) || [];
+  const bad = tags.filter(x => /maxlength=/.test(x));
+  if (bad.length) { errorCount++; console.error(`[INPUT BOX ERROR] ${bad.length} skill number box(es) carry a maxlength: ${bad[0].slice(0, 120)}`); }
+  console.log(`Verified ${tags.length} skill number box tags have no maxlength.`);
+}
+
+
+
 // Custom buff/debuff rules + final-multiplier maths (2026-09-20)
 let checkedCustomBd = 0;
 {
