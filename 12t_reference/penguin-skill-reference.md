@@ -471,6 +471,7 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - reqLv 70, MP 10, SP -20 (red), instant, self, cType "blink". CD shares with blink.
 - Warps caster forward, removes lv.5 lock-status from self AND every player character (any faction) within 6m.
 - Also: dispell's applied level becomes `2×sLv+1` instead of `2×sLv` (matches tooltip "+1 to dispell level").
+- **Multi Cast (verified 2026-10-09):** the cast coroutine reads `getStatusLv("multiCast")`, spends one stack (`reduceStatusLv`, removes the status at 0) and fires `RPC_parallelShift_multiCast`, a second warp (`Penguin.cs:36704-36724`). There is no `doubleSpell5` check, so Double Cast / Triple Cast already double / triple it without learning Double Spell (the Double Spell roll only matters for getting `multiCast` for free). The card shows this on the bug chip (`bbBug`).
 
 ### pgn_frostSpike5 (423) — modifies iceShield
 - +charLv flat shield HP (matches tooltip). Secondary: 12% chance on full shield-absorb to AoE-apply `frost` (5m radius, `chaAdjust(2)`s) to nearby enemies — matches tooltip's "chance to unleash a freezing wind when hit."
