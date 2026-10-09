@@ -1409,6 +1409,46 @@ let checkedComets = 0;
   sandbox._depRanks[gid] = savedGiant;
 }
 console.log(`Verified ${checkedComets} Falling Comets scatter checks.`);
+// Chiroptophobia (Bat.cs:13166-13241, CharacterControl.cs:9660-9690): purple 7 x (blind Lv + confuse Lv) + 7 per tick, nothing when the target has neither.
+let checkedChiro = 0;
+{
+  const sk = SKILLS.find(s => s.id === "bat_chiroptophobia"), ids = ["chiroBlind", "chiroConfuse"], saved = ids.map(i => sandbox._depRanks[i]);
+  const check = (label, ok, got) => { checkedChiro++; if (!ok) { errorCount++; console.error(`[CHIROPTOPHOBIA ERROR] ${label}: got ${got}`); } };
+  check("Blind and Confuse go 0 to 3 (level 3 = skill Lv 2 + Shame, Bat.cs:32208) with their own level III icons", !!sk && (sk.dmgControls || []).every(d => d.maxRank === 3 && d.cycleRanks) && ["bat_blind3", "bat_confusion3"].every(k => /^data:image\/png;base64,/.test(SKILL_ICONS[k] || "")), sk && JSON.stringify((sk.dmgControls || []).map(d => d.maxRank)));
+  check("the card has Blind and Confuse toggles and no input box", !!sk && (sk.dmgControls || []).map(d => d.id).join() === "chiroBlind,chiroConfuse" && !sk.dmgInputs, sk && JSON.stringify((sk.dmgControls || []).map(d => d.id)));
+  if (sk) {
+    [[0, 0, "0"], [1, 0, "14"], [0, 2, "21"], [2, 2, "35"], [1, 2, "28"], [3, 0, "28"], [3, 3, "49"]].forEach(([b, c, want]) => {
+      sandbox._depRanks.chiroBlind = b; sandbox._depRanks.chiroConfuse = c; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk);
+      check(`Blind ${b} + Confuse ${c}: damage ${want}`, sandbox._getDmgText(sk, 1) === want, sandbox._getDmgText(sk, 1));
+    });
+    // Strip labels per level: Blind 1 / Blind 2 / Blind 3 (Shame), the same for Confuse.
+    [["chiroBlind", "Blind"], ["chiroConfuse", "Confuse"]].forEach(([dep, name]) => {
+      [[0, name], [1, name + " 1"], [2, name + " 2"], [3, name + " 3 (Shame)"]].forEach(([r, want]) => {
+        sandbox._depRanks.chiroBlind = 2; sandbox._depRanks.chiroConfuse = 2; sandbox._depRanks[dep] = r; sandbox._selectSkill(sk);
+        check(`${dep} level ${r}: the strip label is "${want}"`, sandbox._getRenderedHeroHtml().includes(`<span class="sk-dep-item-name">${want}</span>`), want);
+      });
+    });
+    [["chiroBlind", "bat_blind"], ["chiroConfuse", "bat_confusion"]].forEach(([dep, icon]) => {
+      sandbox._depRanks.chiroBlind = 2; sandbox._depRanks.chiroConfuse = 2; sandbox._depRanks[dep] = 3; sandbox._selectSkill(sk);
+      const html = sandbox._getRenderedHeroHtml(), at = (n) => SKILL_ICONS[icon + n].slice(40, 160);   // the compat tiles show the level-2 icon, so only the level-3 one is unique
+      sandbox._depRanks[dep] = 2; sandbox._selectSkill(sk);
+      const lower = sandbox._getRenderedHeroHtml();
+      check(`${dep}: the custom ${icon}3 icon shows at level 3 and not at level 2`, html.includes(at(3)) && !lower.includes(at(3)), html.includes(at(3)) + "/" + lower.includes(at(3)));
+    });
+    sandbox._depRanks.chiroBlind = 0; sandbox._depRanks.chiroConfuse = 0; sandbox._selectSkill(sk);
+    check("neither active: the formula is a plain 0, not 7 x 0 + 7", sandbox._renderOneDmgFormula(sk, 1, sandbox._getDmgText(sk, 1)).includes(">0<"), "formula");
+  }
+  ids.forEach((i, k) => { sandbox._depRanks[i] = saved[k]; });
+}
+console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
+// Dependency toggle labels shrink their font to fit (fitDepLabels, run after every render, on resize and when fonts load) instead of ending in an ellipsis.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), css = (src.match(/\.sk-dep-item-name\{[^}]*\}/) || [""])[0];
+  const ok = /function fitDepLabels\(\)/.test(src) && /renderHeroNow\(\);\s*fitDepLabels\(\);/.test(src) && /addEventListener\("resize", fitDepLabels\)/.test(src) && !/text-overflow/.test(css);
+  if (!ok) { errorCount++; console.error("[DEP LABEL ERROR] fitDepLabels is not wired after renderHeroNow / on resize, or .sk-dep-item-name still truncates with an ellipsis"); }
+  console.log("Verified dependency toggle labels shrink instead of truncating.");
+}
+
 
 // Custom buff/debuff rules + final-multiplier maths (2026-09-20)
 let checkedCustomBd = 0;

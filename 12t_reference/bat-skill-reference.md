@@ -392,6 +392,7 @@ Follow-up verification:
 ### bat_chiroptophobia5 (Chiroptophobia, #423) — Class-C passive (verified 2026-10-01)
 
 - reqLv 70, reqBn 3; no cost. `Chiroptophobia()` runs from the Bat's own `Update`, at most once per **1 s** (`Bat.cs:13166-13241`): every enemy within `FindAreaTarget(Bat, 12, 5)` gets `chiroptophobia` at level `blind Lv + confuse Lv` for 60 s, only when that is higher than the level it already holds.
+- **Each level is 0-3:** Blind and Confusion are applied at the skill level (1-2) plus 1 when the target has `shame` (`Bat.cs:32208`, `:32823`), and `Chiroptophobia()` adds `getStatusLv("blind") + getStatusLv("confuse")` (`:13241`), so the Bat's own curse level is at most 6 (3 + 3). Other sources of Blind / Confuse on a target are not modelled. The Bible toggles use custom level III icons (the game ships only I and II).
 - The status ticks every 1.5 s for `RPC_AddEffectDamage(422, 7 × Lv + 7)`, attributed to the Bat, and is removed when the target has neither `blind` nor `confuse`, when the Bat is gone, or when the Bat is more than 13 m away (`CharacterControl.cs:9674-9759`).
 
 ### bat_blackServant5 (Black Servant, #444) — Class-C active (verified 2026-10-01)
