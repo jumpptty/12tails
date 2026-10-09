@@ -300,7 +300,7 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 ### chm_poisonVolley1-2 (Poison Volley, #251-252) (verified 2026-10-01)
 
 - MP 6/9, SP −12/−18 (red), Lv/Bn 20/12, 24/15, instant. CD `agiAdjust(60)` (`Chameleon.cs:23494`). The card's former MP 6/12, SP 12/24 were wrong.
-- `RPC_poisonVolley` (`Chameleon.cs:23037-23758`): 0.3 s wind-up, then one pass over `FindRecTarget(pos, forward, 1, 8, 12, 4)` (owner client): `hit(252 + sLv, t, (int)(0.5 × ATK), KO 1, 0, 0.5 × away)` (`:23312`); on a landed hit `poison` at `Clamp(currentLv + sLv, 0, IncreasedPoisonLv + 1)`, raised to at least `sLv`, for `getDebuff(8 + 2 × IncreasedPoisonLv)` (`:23318-23345`). No race check, so Robots are poisoned too.
+- `RPC_poisonVolley` (`Chameleon.cs:23037-23758`): 0.3 s wind-up, then one pass over `FindRecTarget(pos, forward, 1, 8, 12, 4)` (owner client): `hit(252 + sLv, t, (int)(0.5 × ATK), KO 1, 0, 0.5 × away)` (`:23312`); on a landed hit `poison` at `Clamp(currentLv + sLv, 0, IncreasedPoisonLv + 1)`, raised to at least `sLv`, for `getDebuff(8 + 2 × IncreasedPoisonLv)` (`:23318-23345`). The skill itself has no race check, but `RPC_AddStatus` refuses `poison` on `Robots` with an IMMUNE (−84) pop-up (`CharacterControl.cs:10833-10927`, see 12Tails-Mechanics-Reference.md §4), so a Robot takes the hit and the All Slain list entry (`:23350`) but is **never poisoned** (corrected 2026-10-09; an earlier note here said Robots were poisoned).
 
 ### chm_venomShock1-2 (Venom Shock, #253-254) (verified 2026-10-01)
 
