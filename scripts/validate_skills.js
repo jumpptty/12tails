@@ -3055,10 +3055,19 @@ let checkedUnintended = 0;
   sandbox._selectSkill(sk);
   check("the note is gone again once the field is removed (or stays only if a real card sets it)", had !== undefined || !sandbox._getRenderedHeroHtml().includes("sk-unintended\">"));
   check("the BB issues page has its filter button", html.includes('["unintended", "พฤติกรรมที่ไม่ตั้งใจ"]'));
-  check("the BB issues page counts and tags the new type", html.includes('unintended: "⚡ พฤติกรรมที่ไม่ตั้งใจ"') && html.includes("ไม่ตั้งใจ \" + nUn"));
+  check("the BB issues page counts and tags the new type", html.includes('unintended: NOTE_ICO.unintended + "<span>พฤติกรรมที่ไม่ตั้งใจ</span>"') && html.includes("ไม่ตั้งใจ \" + nUn"));
   check("an empty category says so instead of showing a blank page", html.includes("ยังไม่มีรายการในหมวดนี้"));
 }
 console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
+// Note colours (user 2026-10-09): bug red (--seal), tooltip mismatch blue (--tip), unintended gold, so the three chips never look alike.
+{
+  const src = fs.readFileSync(targetPath, "utf8");
+  const tokens = (src.match(/--tip:#[0-9a-fA-F]{6};/g) || []).length;
+  const ok = tokens === 3 && /\.sk-note-tip\{ color:var\(--tip\); \}/.test(src) && /\.sk-note-bug\{ color:var\(--seal\); \}/.test(src) && /\.sk-note-unintended\{ color:var\(--gold\); \}/.test(src)
+    && /\.sk-tooltip-note, \.sk-tooltip-note \.sk-val\{ color:var\(--tip\); \}/.test(src) && /\.bbi-tag\.tip\{[^}]*var\(--tip\)/.test(src) && /r\.kind === "tip" \? " tip"/.test(src);
+  if (!ok) { errorCount++; console.error(`[NOTE COLOUR ERROR] --tip must exist in all 3 theme blocks (${tokens}) and the tooltip chip, note and BB issues tag must use it while bug stays red and unintended gold`); }
+  console.log("Verified the three note colours stay distinct.");
+}
 // Co-author page: each finding bolds only its parent skill (** **), which renders as a gold skill link; the pop-up renders the items as rich text.
 let checkedCredits = 0;
 {
