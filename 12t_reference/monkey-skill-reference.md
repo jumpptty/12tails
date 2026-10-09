@@ -424,6 +424,14 @@ overwrite any of those eight combat stats. These supersede the previous shifted-
   - Proc roll: `Random(0, 100) < lckAdjust(12)`. At LCK 0, base chance is 12% (rises to ~21% at LCK 100).
   - Grants `4 * fireRuneLv` MP and `4 * fireRuneLv` SP on successful damage triggers.
 
+### 2.6 Volcanic Eruption: where the volcano appears (verified 2026-10-09)
+
+- **Skill mode:** `mnk_volcanicEruption5` is `eSkillMode.target` / `eSkillTarget.enemy`, cType `volcanicEruption` (`MonkeySkill.cs:1548-1574`), so the cast needs a selected enemy.
+- **Position (`Monkey.cs:24942-24978`):** when the cast starts, the centre `dQs7x5UeNh` is set to the selected target's `transform.position` (`:24954`), and the target reference and `tID` are then cleared (`:24959`, `:24964`). Only if there is no target object is the centre `caster position + forward × 20` (`:24972`). The centre is never updated afterwards, so the volcano stays where the target stood when casting began, even if the target walks away while it is being cast.
+- **Ground-target gate (`Monkey.cs:8665-8725`, in the skill-use dispatcher, before the cast starts; found 2026-10-09 after the user reported the red warning):** with no target (`num == 0`) nothing is cast. With a target whose `Race` is not `Structure` and whose `recieveGravity` is false, the game shows the red message `"Can only used on ground target"` and calls `returnMPSP` (MP/SP refunded), no cast (`:8687-8703`). A `Structure` target skips the check, so it always works. `recieveGravity` is a per-unit flag (`CharacterControl.cs:29942`, true by default `:190`, read by `MovementUpdate` `:2637`): a unit with it false does not fall, i.e. is airborne. Code that clears it: the `DeathMount` / `MupoMount` leap moves (`DeathMount.cs:2159`, `MupoMount.cs:1801`, upward `vMovement` loops) and the `M906_ShadowGodZera1` boss script (`:1046`). Flying monsters most likely carry the flag in their serialized prefab data, which `DecompiledSource/` cannot show. So the gate is a flag test, not a height above ground in metres.
+- **Cast itself (`$RPC_volcanicEruption_cast`, `:43326-43861`):** no further ground test. The volcano effect is created at the stored position with `Quaternion.identity` (`:43506`) and the hits use `FindAreaTarget(centre, 12, 6, 130816)` (`:43589`). The in-game Thai tooltip says "...รอบฟื้นที่เป้าหมาย (channel)" (`MonkeySkill_thai.cs:1104`; "ฟื้น" reads as a typo of "พื้น", the target's area).
+- The card says where the volcano appears (the chosen target's position when casting starts, not following it) and the ground-target rule with the red message.
+
 ## 4. Summon commands, passives and summon moves (verified 2026-10-01)
 
 Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/MonkeySkill.cs`; skill IDs from `MonkeySkill.cs`'s skill tree. Server deltas are in §3 below.
