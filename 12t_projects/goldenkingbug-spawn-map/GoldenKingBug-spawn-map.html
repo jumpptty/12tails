@@ -63,7 +63,7 @@
   .strat .strat-row.idle .who, .strat .strat-row.idle .what{color:rgba(242,234,217,0.5)}
   .strat .strat-row.idle .what{font-size:17px}
   .strat .strat-hint{margin:6px 10px 4px; font-size:14px; line-height:1.4; color:rgba(242,234,217,0.55)}
-  .strat .sim-head{display:flex; justify-content:space-between; align-items:center; width:100%; padding:8px 10px; text-align:left; font-size:15px; margin-bottom:0}
+  .strat .sim-head{display:flex; justify-content:space-between; align-items:center; padding:0 2px; font-size:15px; color:#f0c860; font-family:'Chakra Petch','Prompt',sans-serif; font-weight:700}
   .strat .sim-head + .sim-top{margin-top:10px}
   .strat .sim-head .sim-time{font-size:14px}
   .strat .strat-skip{margin:2px 10px 12px; padding-top:10px; border-top:1px solid rgba(242,234,217,0.12); font-size:14px; color:rgba(242,234,217,0.55)}
@@ -429,7 +429,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
   // (ties: smaller worst case, then fewer players moving). Elimination: once 4 spots have been checked empty the 5th must hold the boss, so a plan
   // only needs to visit 4 spots; the time to know = min(arrival at the boss spot, arrival at the last of the other four). Model: 5 units/s walking, a spot is checked once the player is within 30 tunnel units of it
   // (times in the rows are seconds until that spot is checked); the party reports the instant the boss is seen.
-  var STRATS = {"1":{"r":[[[5,2],[1,5],[3,33],[2,73]]]},"2":{"r":[[[5,2],[1,5],[3,33]],[[4,33]]]},"3":{"r":[[[5,2],[1,5],[3,33]],[],[[2,9]]]},"4":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]]]},"5":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[]]},"6":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[],[]]},"7":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[],[],[]]},"8":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]]]},"9":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[]]},"10":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[]]},"11":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[],[]]},"12":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[],[],[]]}};
+  var STRATS = {"1":{"r":[[[5,2],[1,5],[3,33],[2,72]]]},"2":{"r":[[[5,2],[1,5],[3,33]],[[2,21]]]},"3":{"r":[[[1,1],[5,5]],[[2,21]],[[3,24]]]},"4":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]]]},"5":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[]]},"6":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[],[]]},"7":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[],[],[]]},"8":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]]]},"9":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[]]},"10":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[]]},"11":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[],[]]},"12":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[],[],[]]}};
   var selSlot = 0, selBoss = 0;   // selSlot: chosen player row; selBoss: boss spot clicked on the map (the one that was found)
   var stratEl = viewport.parentNode.querySelector(".strat");
   function stratColor(n) { return "#" + ("000000" + WARP_COLORS[(n - 1) % WARP_COLORS.length].toString(16)).slice(-6); }
@@ -441,7 +441,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     var multi = s.r.some(function (r) { return r.length > 1; });
     s.r.forEach(function (route, i) {
       var what = route.length
-        ? route.map(function (st, k) { return '<span class="step">' + (multi ? '<em>' + (k + 1) + '</em>' : '') + '<b>BOSS' + st[0] + '</b><i>' + st[1] + ' วิ</i></span>'; }).join('')
+        ? route.map(function (st, k) { return '<span class="step">' + (multi ? '<em>' + (k + 1) + '</em>' : '') + '<b>เช็ค BOSS' + st[0] + '</b><i>' + st[1] + ' วิ</i></span>'; }).join('')
         : 'ยืนรอ';
       html += '<div class="strat-row' + (route.length ? '' : ' idle') + (selSlot === i + 1 ? ' sel' : '') + '" data-slot="' + (i + 1) + '"><span class="sw" style="background:' + stratColor(i + 1) + '"></span><span class="who">P' + (i + 1) + '</span><span class="what">' + what + '</span></div>';
     });
@@ -457,7 +457,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     if (b) { partySize = Number(b.getAttribute("data-n")); updateParty(); return; }
     var a = e.target.closest && e.target.closest("button[data-act],button[data-speed],button[data-boss]");
     if (a) {
-      if (a.hasAttribute("data-act")) { var act = a.getAttribute("data-act"); if (act === "play") { simToggle(); renderStrat(); } else if (act === "toggle") { simOpen = !simOpen; renderStrat(); } else simReset(); }
+      if (a.hasAttribute("data-act")) { var act = a.getAttribute("data-act"); if (act === "play") { simToggle(); renderStrat(); } else simReset(); }
       else if (a.hasAttribute("data-speed")) { simSpeed = Number(a.getAttribute("data-speed")); renderStrat(); }
       else { simBossOpt = Number(a.getAttribute("data-boss")); simReset(); }
       return;
@@ -472,7 +472,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
   // 30 tunnel units of it. When anyone is within 30 units of the boss, everybody re-routes to it, and whoever gets within 30 units
   // first waits there (no one engages) until the whole party has gathered.
   var SIM_SPEED = 5, SIM_RADIUS = 30;
-  var simVerified = {}, simDeduced = false, simOpen = false;
+  var simVerified = {}, simDeduced = false;
   var simSpeed = 1, simBossOpt = 0, simState = "idle", simT = 0, simFound = -1, simDoneT = 0, simBoss = 0, simPlayers = [];
   // GKB-GRAPH-BEGIN
   // Walkway centre-line graph. The cave mesh's floor is a strip per tunnel with a vertex row on each wall, so the mesh edges run
@@ -485,12 +485,14 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
       if (wmap[key] === undefined) wmap[key] = i;
       rep[i] = wmap[key];
     }
-    for (i = 0; i < nV; i++) {   // floor height under each vertex (strips also have ceiling vertices)
-      var f = pos[3 * i + 1];
-      for (j = 0; j < nV; j++) if (pos[3 * j + 1] < f && Math.abs(pos[3 * j] - pos[3 * i]) < 4 && Math.abs(pos[3 * j + 2] - pos[3 * i + 2]) < 4) f = pos[3 * j + 1];
-      fy[i] = f;
+    for (i = 0; i < nV; i++) {   // a ceiling vertex has its floor vertex about 7 units straight below it; everything else is floor (tunnels stacked above or below do not matter)
+      fy[i] = 1;
+      for (j = 0; j < nV; j++) {
+        var dy = pos[3 * i + 1] - pos[3 * j + 1];
+        if (dy > 5.5 && dy < 8.5 && Math.abs(pos[3 * j] - pos[3 * i]) < 0.8 && Math.abs(pos[3 * j + 2] - pos[3 * i + 2]) < 0.8) { fy[i] = 0; break; }
+      }
     }
-    function isFloor(v) { return pos[3 * v + 1] - fy[v] < 0.5; }
+    function isFloor(v) { return fy[v] === 1; }
     var tris = [], ecount = {};
     function ek(a, b) { return a < b ? a * 4096 + b : b * 4096 + a; }
     for (t = 0; t < idx.length; t += 3) {
@@ -642,6 +644,17 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     for (i = 1; i < hits.length; i++) if (hits[i].distance - hits[i - 1].distance > 1) n++;   // our own ceiling is the first hit; a second layer means a tunnel above
     return (simCoverCache[key] = n >= 2);
   }
+  // Direction cue: white chevrons (">") that stream along the selected path toward its end.
+  var simChevGroup = new THREE.Group(); simChevGroup.visible = false; scene.add(simChevGroup);
+  var simChevShape = new THREE.Shape();
+  simChevShape.moveTo(0, 2.6); simChevShape.lineTo(2.7, -0.9); simChevShape.lineTo(1.7, -1.9); simChevShape.lineTo(0, 0.3); simChevShape.lineTo(-1.7, -1.9); simChevShape.lineTo(-2.7, -0.9); simChevShape.closePath();
+  var simChevGeo = new THREE.ShapeGeometry(simChevShape); simChevGeo.rotateX(Math.PI / 2); simChevGeo.scale(0.48, 1, 0.48);   // ~2.6 wide: sits inside the 3.2-wide ribbon
+  var simChevs = [];
+  for (var ci = 0; ci < 48; ci++) {
+    var cf = new THREE.Mesh(simChevGeo, simMat(0xffffff, 0.95));
+    cf.material.side = THREE.DoubleSide; cf.renderOrder = 9;
+    cf.visible = false; simChevGroup.add(cf); simChevs.push(cf);
+  }
   function simRibbon(mesh, pts, hw, rgb, aOn, aOff, anim) {
     var pos = [], col = [], idx = [], base = [], cum = [0], i, a, b, tx, tz, l, al, cov0 = pts.map(simCovered), cov = cov0.map(function (c, j) { return c || !!cov0[j - 1] || !!cov0[j + 1]; });   // widen by one point each side
     for (i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.sqrt(Math.pow(pts[i][0] - pts[i - 1][0], 2) + Math.pow(pts[i][2] - pts[i - 1][2], 2)));
@@ -657,7 +670,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx);
     mesh.geometry.dispose(); mesh.geometry = g;
     // distance still to walk from each point: the flow pattern is keyed to it so it stays put in the world while the marker advances
-    mesh.userData = anim ? { attr: g.attributes.color, base: base, u: cum.map(function (c) { return cum[cum.length - 1] - c; }) } : null;
+    mesh.userData = anim ? { pts: pts, cum: cum } : null;
   }
   // The path stops where the marker stops: 30 tunnel units short of the spot (or of the boss), not at its centre.
   function simCutS(leg, spot) {
@@ -698,22 +711,31 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     if (pl.kind === "search") chain(simLegEnds(pl.leg, cut), simLegPos(pl.leg, cut), pl.route.slice(pl.ri + 1));
     return pts;
   }
-  function simRouteAnim(now) {   // subtle flow along the path: brightness ramps up toward the walking direction, then drops, and drifts forward
-    var ud = simRouteFill.userData;
-    if (!simRouteFill.visible || !ud || reduceMotion) return;
-    var t = (now || 0) / 1000, arr = ud.attr.array, i, w, al;
-    for (i = 0; i < ud.base.length; i++) {
-      w = ud.u[i] / 16 + t * 0.9; w -= Math.floor(w);
-      al = ud.base[i] * (0.45 + 0.55 * (1 - w));
-      arr[8 * i + 3] = al; arr[8 * i + 7] = al;
+  function simRouteAnim(now) {   // chevrons keep a fixed spacing along the path and drift toward its end (phase measured from the end, so they stay put in the world while the marker walks)
+    var ud = simRouteFill.userData, n, k = 0;
+    if (!simRouteFill.visible || !ud) { simChevGroup.visible = false; return; }
+    var total = ud.cum[ud.cum.length - 1], SP = 14, phase = ((now || 0) / 1000 * 9) % SP;
+    for (n = 1; n < 400 && k < simChevs.length; n++) {
+      var d = total - (n * SP - phase);   // distance from the start of the path
+      if (d < 0) break;
+      if (n * SP - phase < 1.5) continue;
+      var j = 0; while (j < ud.cum.length - 2 && ud.cum[j + 1] <= d) j++;
+      var span = ud.cum[j + 1] - ud.cum[j], f = span > 0 ? Math.min(1, (d - ud.cum[j]) / span) : 0, p0 = ud.pts[j], p1 = ud.pts[j + 1];
+      var cx = p0[0] + (p1[0] - p0[0]) * f, cy = p0[1] + (p1[1] - p0[1]) * f - 0.7, cz = p0[2] + (p1[2] - p0[2]) * f, m = simChevs[k++];
+      m.position.set(cx, cy, cz); m.rotation.y = Math.atan2(p1[0] - p0[0], p1[2] - p0[2]);
+      var op = simCovered([cx, cy + 0.7, cz]) ? 0.28 : 0.95;
+      m.material.opacity = op; m.visible = true;
     }
-    ud.attr.needsUpdate = true;
+    for (; k < simChevs.length; k++) simChevs[k].visible = false;
+    simChevGroup.visible = true;
   }
   function simRouteUpdate() {
     var pts = simSelPts();
     if (!pts || pts.length < 2) { simRouteFill.visible = simRouteEdge.visible = false; return; }
     var c = new THREE.Color(WARP_COLORS[(selSlot - 1) % WARP_COLORS.length]);
-    simRibbon(simRouteFill, pts, 0.95, [c.r, c.g, c.b], 0.92, 0.22, true); simRibbon(simRouteEdge, pts, 1.6, [0, 0, 0], 0.5, 0.1, false);
+    simRibbon(simRouteFill, pts, 1.6, [c.r, c.g, c.b], 0.92, 0.22, true); simRibbon(simRouteEdge, pts, 2.1, [0, 0, 0], 0.5, 0.1, false);
+    var chevHex = (0.299 * c.r + 0.587 * c.g + 0.114 * c.b) > 0.62 ? 0x151515 : 0xffffff;   // dark chevrons on light lines, white on dark ones
+    simChevs.forEach(function (m) { m.material.color.setHex(chevHex); });
     simRouteFill.visible = simRouteEdge.visible = true;
   }
 
@@ -794,8 +816,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     if (!noRender) renderStrat();
   }
   function simHtml() {
-    var head = '<button type="button" class="sim-head" data-act="toggle"><span>' + (simOpen ? '▾' : '▸') + ' จำลองการค้นหา (ลองเล่น)</span><span class="sim-time"></span></button>';
-    if (!simOpen) return '<div class="strat-sim">' + head + '</div>';
+    var head = '<div class="sim-head"><span>จำลองการค้นหา</span><span class="sim-time"></span></div>';
     var h = '<div class="strat-sim">' + head + '<div class="sim-top"><button type="button" class="sim-play" data-act="play">' +
       (simState === "run" ? "หยุดชั่วคราว" : simState === "pause" ? "เล่นต่อ" : simState === "done" ? "เล่นใหม่" : "เริ่มจำลอง") +
       '</button><button type="button" data-act="reset">รีเซ็ต</button></div>';
