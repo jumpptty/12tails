@@ -12,7 +12,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0d0b09; }
   body {
-    font-family: "Candara", "Calibri", "Segoe UI", -apple-system, sans-serif;
+    font-family: -apple-system,"Segoe UI",'Prompt',system-ui,sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -21,8 +21,8 @@
 
   #viewport {
     position: fixed;
-    inset: 0;
-    width: 100vw;
+    inset: 0 340px 0 0;
+    width: calc(100vw - 340px);
     height: 100vh;
     background: var(--surface-sunken);
     touch-action: none;
@@ -34,79 +34,101 @@
 
   .viewport-hint {
     position: absolute; left: 14px; bottom: 12px;
-    font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
-    font-size: 10.5px; letter-spacing: 0.03em;
+    font-family: -apple-system,"Segoe UI",'Prompt',system-ui,sans-serif;
+    font-size: 13px; letter-spacing: 0.03em;
     color: rgba(242,234,217,0.55);
     pointer-events: none;
     text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     z-index: 2;
   }
 
-  .party-overlay {
-    position: absolute; top: 14px; right: 14px; z-index: 3;
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(20,18,16,0.72);
-    border: 1px solid rgba(242,234,217,0.22);
-    border-radius: 2px;
-    padding: 7px 10px;
-    backdrop-filter: blur(3px);
-    font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
-  }
-  .party-overlay .party-label {
-    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #f2ead9;
-  }
-  .party-overlay .stepper {
-    display: flex; align-items: center;
-    border: 1px solid rgba(242,234,217,0.22); border-radius: 2px; overflow: hidden;
-  }
-  .party-overlay .stepbtn {
-    font-family: inherit; font-size: 13px; line-height: 1; width: 24px; height: 24px;
-    background: rgba(242,234,217,0.08); color: #f2ead9; border: none; cursor: pointer;
-  }
-  .party-overlay .stepbtn:hover { background: rgba(209,165,60,0.28); color: var(--accent-strong); }
-  .party-overlay .stepbtn:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: -2px; }
-  .party-overlay .stepval {
-    font-size: 12px; min-width: 22px; text-align: center; color: #f2ead9;
-    border-left: 1px solid rgba(242,234,217,0.22); border-right: 1px solid rgba(242,234,217,0.22);
-    padding: 4px 0; font-variant-numeric: tabular-nums;
+  .strat { position: fixed; top: 0; right: 0; bottom: 0; width: 340px; }
+  .strat{box-sizing:border-box; display:flex; flex-direction:column; background:#14120f; border-left:1px solid rgba(242,234,217,0.16); color:#f2ead9; padding:18px 14px 22px; overflow:auto; font-family:-apple-system,"Segoe UI",'Prompt',system-ui,sans-serif; line-height:1.3}
+  .strat > *{flex:none}
+  .strat h3{margin:0 0 14px 6px; font-size:20px; letter-spacing:.02em; color:#f0c860}
+  .strat .strat-n{display:grid; grid-template-columns:repeat(6,1fr); gap:5px; margin:0 6px 14px}
+  .strat .strat-n button{font:inherit; font-size:14px; padding:6px 0; background:rgba(242,234,217,0.07); color:#f2ead9; border:1px solid rgba(242,234,217,0.2); border-radius:2px; cursor:pointer; font-variant-numeric:tabular-nums}
+  .strat .strat-n button:hover{background:rgba(209,165,60,0.25)}
+  .strat .strat-n button.on{background:#d1a53c; color:#14120f; border-color:#f0c860; font-weight:700}
+  .strat .strat-row{display:flex; align-items:flex-start; gap:12px; padding:14px 10px; border-top:1px solid rgba(242,234,217,0.12); border-left:3px solid transparent; cursor:pointer}
+  .strat .strat-row:hover{background:rgba(242,234,217,0.05)}
+  .strat .strat-row.sel{background:rgba(209,165,60,0.16); border-left-color:#f0c860}
+  .strat .strat-row .sw{width:16px; height:16px; border-radius:50%; flex:none; margin-top:7px; box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+  .strat .strat-row .who{font-weight:700; min-width:42px; font-size:24px; line-height:30px}
+  .strat .strat-row .what{flex:1; min-width:0; display:flex; flex-direction:column; gap:7px; font-size:20px; line-height:30px}
+  .strat .strat-row .step{display:flex; align-items:baseline; gap:10px}
+.strat .strat-row .step em{font-style:normal; flex:none; width:22px; height:22px; line-height:22px; text-align:center; border-radius:50%; background:rgba(240,200,96,0.16); color:#f0c860; font-size:13px; font-weight:700; align-self:center}
+.strat .strat-row .step b{color:#f0c860; font-size:20px}
+  .strat .strat-row .step i{font-style:normal; font-size:14px; color:rgba(242,234,217,0.6); margin-left:auto; padding-left:8px; white-space:nowrap}
+  .strat .strat-row.idle .who, .strat .strat-row.idle .what{color:rgba(242,234,217,0.5)}
+  .strat .strat-row.idle .what{font-size:17px}
+  .strat .strat-hint{margin:6px 10px 4px; font-size:14px; line-height:1.4; color:rgba(242,234,217,0.55)}
+  .strat .sim-head{display:flex; justify-content:space-between; align-items:center; width:100%; padding:8px 10px; text-align:left; font-size:15px; margin-bottom:0}
+  .strat .sim-head + .sim-top{margin-top:10px}
+  .strat .sim-head .sim-time{font-size:14px}
+  .strat .strat-skip{margin:2px 10px 12px; padding-top:10px; border-top:1px solid rgba(242,234,217,0.12); font-size:14px; color:rgba(242,234,217,0.55)}
+  .strat .strat-sim{position:sticky; bottom:-22px; z-index:2; margin:auto -14px -22px; padding:12px 20px 18px; background:#14120f; border-top:1px solid rgba(242,234,217,0.2)}
+    .strat .strat-sim button{font:inherit; font-size:14px; padding:6px 0; background:rgba(242,234,217,0.07); color:#f2ead9; border:1px solid rgba(242,234,217,0.2); border-radius:2px; cursor:pointer; font-variant-numeric:tabular-nums}
+    .strat .strat-sim button:hover{background:rgba(209,165,60,0.25)}
+    .strat .strat-sim button.on{background:#d1a53c; color:#14120f; border-color:#f0c860; font-weight:700}
+    .strat .sim-top{display:flex; align-items:center; gap:8px; margin-bottom:10px}
+    .strat .sim-top button{font-size:16px; padding:9px 14px}
+    .strat .sim-top .sim-play{flex:1; background:#d1a53c; color:#14120f; border-color:#f0c860; font-weight:700}
+    .strat .sim-top .sim-play:hover{background:#f0c860}
+    .strat .sim-time{margin-left:auto; font-size:16px; color:#f0c860; font-variant-numeric:tabular-nums; white-space:nowrap}
+    .strat .sim-line{display:flex; align-items:center; gap:5px; margin-bottom:8px}
+    .strat .sim-line > span{width:64px; flex:none; font-size:14px; color:rgba(242,234,217,0.6)}
+    .strat .sim-line button{flex:1; min-width:0}
+    .strat .sim-status{font-size:14px; line-height:1.4; color:#f2ead9; margin-top:2px}
+  .strat h3,   .strat .strat-n button,   .strat .strat-row .who,   .strat .strat-row .step b,   .strat .strat-sim button{font-family:'Chakra Petch','Prompt',sans-serif}
+  .strat .strat-row .step i,   .strat .sim-time{font-family:'JetBrains Mono','Chakra Petch',monospace}
+  @media (max-width: 760px) {
+    #viewport { inset: 0 0 auto 0; width: 100vw; height: 56vh; }
+    .strat { top: 56vh; left: 0; width: auto; border-left: 0; border-top: 1px solid rgba(242,234,217,0.16); }
   }
 
   .pin-label {
     position: absolute;
     transform: translate(-50%, -100%);
     display: flex; align-items: center; gap: 5px;
-    padding: 3px 7px 3px 5px;
+    padding: 5px 11px 5px 8px;
     border-radius: 2px;
     background: rgba(13,11,9,0.82);
     border: 1px solid rgba(209,165,60,0.55);
-    font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
-    font-size: 11px;
+    font-family: 'Chakra Petch','Prompt',sans-serif; font-weight: 700;
+    font-size: 16px; font-weight: 700;
     color: #f5eeda;
     white-space: nowrap;
     pointer-events: none;
     transition: opacity 120ms ease;
     z-index: 2;
   }
-  .pin-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-strong); flex: none; }
+  .pin-label .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent-strong); flex: none; }
   .pin-label.is-active { border-color: var(--accent-strong); background: rgba(209,165,60,0.85); color: #14120f; }
   .pin-label.is-active .dot { background: #14120f; }
-  .pin-label.warp { border-color: rgba(139,159,224,0.6); }
-  .pin-label.warp .dot { background: var(--accent-3); }
-  .pin-label.warp.is-active { border-color: var(--accent-3); background: rgba(139,159,224,0.88); color: #14120f; }
-  .pin-label.warp.is-active .dot { background: #14120f; }
+  .pin-label.warp {
+    transform: translate(-50%, -50%);
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #f4f7ff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.7);
+  }
+  .pin-label.warp.is-active {
+    color: #ffffff;
+    text-shadow: 0 0 9px rgba(93,150,255,0.95), 0 1px 3px rgba(0,0,0,0.9);
+    transform: translate(-50%, -50%) scale(1.14);
+  }
 </style>
 
 <div class="viewport" id="viewport">
-  <div class="party-overlay">
-    <span class="party-label">Players</span>
-    <div class="stepper">
-      <button class="stepbtn" id="partyMinus" type="button" aria-label="Decrease party size">–</button>
-      <span class="stepval" id="partyVal">2</span>
-      <button class="stepbtn" id="partyPlus" type="button" aria-label="Increase party size">+</button>
-    </div>
-  </div>
-  <div class="viewport-hint">drag to orbit &middot; scroll to zoom &middot; click a marker to focus it</div>
+  <div class="viewport-hint">drag to orbit &middot; scroll to zoom &middot; W A S D to move</div>
 </div>
+<aside class="strat" aria-label="Boss search strategy"></aside>
 <script>
 /**
  * @license
@@ -141,22 +163,34 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     { id: 5, x: -15.367018, y: 54.00174,  z: 57.7033    }
   ];
   var WARPS = [
-    { id: 1,  x: 4.874879,   y: 53.84034,  z: 29.290997  },
-    { id: 2,  x: 19.97211,   y: 60.28792,  z: 54.252857  },
-    { id: 3,  x: -40.27351,  y: 66.82654,  z: 42.480667  },
-    { id: 4,  x: -71.359634, y: 62.638912, z: -26.074797 },
-    { id: 5,  x: -15.460974, y: 61.093624, z: -85.794044 },
-    { id: 6,  x: 72.08416,   y: 53.328693, z: -36.12283  },
-    { id: 7,  x: 60.678734,  y: 52.53134,  z: 24.387995  },
-    { id: 8,  x: -2.5724514, y: 53.29139,  z: -29.7574   },
-    { id: 9,  x: -64.03221,  y: 65.16656,  z: 14.350688  },
-    { id: 10, x: 101.64702,  y: 57.312904, z: 28.007977  },
-    { id: 11, x: 59.059875,  y: 57.116184, z: -100.68854 },
-    { id: 12, x: -43.847187, y: 56.939987, z: 99.99732   }
+    { id: 1,  x: 4.874879,   y: 53.84034,  z: 29.290997,   ry: 0,           rw: 1           },
+    { id: 2,  x: 19.97211,   y: 60.28792,  z: 54.252857,   ry: -0.02462573, rw: 0.9996968   },
+    { id: 3,  x: -40.27351,  y: 66.82654,  z: 42.480667,   ry: 0.9717082,   rw: -0.23618464 },
+    { id: 4,  x: -71.359634, y: 62.638912, z: -26.074797,  ry: 0,           rw: 1           },
+    { id: 5,  x: -15.460974, y: 61.093624, z: -85.794044,  ry: 0,           rw: 1           },
+    { id: 6,  x: 72.08416,   y: 53.328693, z: -36.12283,   ry: 0,           rw: 1           },
+    { id: 7,  x: 60.678734,  y: 52.53134,  z: 24.387995,   ry: 0.32495195,  rw: 0.94573057  },
+    { id: 8,  x: -2.5724514, y: 53.29139,  z: -29.7574,    ry: 0.9990126,   rw: -0.044428676},
+    { id: 9,  x: -64.03221,  y: 65.16656,  z: 14.350688,   ry: 0.32963046,  rw: 0.94411004  },
+    { id: 10, x: 101.64702,  y: 57.312904, z: 28.007977,   ry: 0.95303935,  rw: -0.3028465  },
+    { id: 11, x: 59.059875,  y: 57.116184, z: -100.68854,  ry: 0.96350324,  rw: -0.26769674 },
+    { id: 12, x: -43.847187, y: 56.939987, z: 99.99732,    ry: -0.99685395, rw: 0.079260774 }
   ];
+  // ry/rw are the WarpPoint<id> GameObject's raw Unity m_LocalRotation (y, w) components,
+  // read from RippedAssets/ExportedProject/Assets/Scene/M946_GoldenKingBug.unity -- this is
+  // the exact orientation the game sets on the player transform when it teleports them to
+  // "WarpPoint" + slot (see M946_GoldenKingBug.cs ~line 2260). Every warp point is a pure
+  // yaw (x/z quaternion components are 0), so the Unity-space forward vector reduces to
+  // (2*rw*ry, 1-2*ry*ry) with no trig needed.
 
   POINTS.forEach(function (p) { p.x = -p.x; });
-  WARPS.forEach(function (p) { p.x = -p.x; });
+  WARPS.forEach(function (p) {
+    p.x = -p.x;
+    // Facing angle in this scene's (mirrored-x) space: negate the forward vector's x
+    // component the same way point positions are mirrored, then convert to a Y-axis
+    // rotation via atan2 so it can be applied directly as mesh.rotation.y.
+    p.facing = Math.atan2(-2 * p.rw * p.ry, 1 - 2 * p.ry * p.ry);
+  });
 
   var viewport = document.getElementById("viewport");
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -229,17 +263,77 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
 
   var warpGroup = new THREE.Group();
   var warpMeshes = {};
+
+  // One vibrant, distinct color per player slot so a caller can say "go to the pink one"
+  // during a voice raid. Hand-picked, not evenly spaced by hue -- human eyes compress
+  // greens/blues much more than reds/purples, so equal hue-steps left P1-P5 all reading
+  // as "green." Each entry here is a recognizable, sayable color name, chosen pairwise
+  // apart from its neighbors.
+  var WARP_COLORS = [
+    0xffffff, 0xffe600, 0xff8800, 0xff2b2b, 0xff4fd8, 0xa855f7,
+    0x3b82f6, 0x00e5ff, 0x00c2a8, 0x22c55e, 0xc6ff00, 0x8b1a1a
+  ];
+
+  // Plain pointed triangle, small base.
+  var facingShape = new THREE.Shape();
+  facingShape.moveTo(0, 9);
+  facingShape.lineTo(2.2, -6);
+  facingShape.lineTo(-2.2, -6);
+  facingShape.closePath();
+  var facingGeo = new THREE.ShapeGeometry(facingShape);
+  facingGeo.rotateX(Math.PI / 2);
+
+  // Arrows are painted onto the cave ceiling (not the floor) so they read from the
+  // default near-top-down camera. Each point's ceiling height varies with the cave's
+  // terrain, so raycast straight up from the point to the actual ceiling mesh rather
+  // than assuming a fixed Y.
+  caveMesh.updateMatrixWorld(true);
+  var ceilingRay = new THREE.Raycaster();
+  var upVec = new THREE.Vector3(0, 1, 0);
+  var ceilingClearance = 10;
+  function ceilingYAbove(x, y, z) {
+    ceilingRay.set(new THREE.Vector3(x, y, z), upVec);
+    var hits = ceilingRay.intersectObject(caveMesh);
+    return hits.length ? hits[0].point.y + ceilingClearance : y + 20;
+  }
+
   WARPS.forEach(function (p) {
     var mat = new THREE.MeshStandardMaterial({ color: 0x8b9fe0, emissive: 0x242c52, roughness: 0.4, metalness: 0.3, transparent: true, opacity: 1 });
     var core = new THREE.Mesh(new THREE.OctahedronGeometry(1.7, 0), mat);
     core.position.set(p.x, p.y, p.z);
     warpGroup.add(core);
-    warpMeshes[p.id] = { core: core, mat: mat };
+
+    // depthTest off + a high renderOrder keeps this always drawn on top of the cave mesh.
+    // The cave is one huge transparent mesh sorted back-to-front by a single per-object
+    // distance, which is a poor proxy for "what's actually nearest at this pixel" across
+    // a sprawling tunnel network -- at some orbit angles it draws after (and paints over)
+    // an arrow that is geometrically well in front of it. Since these arrows are meant to
+    // always read as a map annotation (never realistically occluded), skip depth testing
+    // against the terrain entirely instead of chasing sort order.
+    var facingMat = new THREE.MeshBasicMaterial({ color: WARP_COLORS[(p.id - 1) % WARP_COLORS.length], transparent: true, opacity: 1, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
+    var facing = new THREE.Mesh(facingGeo, facingMat);
+    facing.position.set(p.x, ceilingYAbove(p.x, p.y, p.z), p.z);
+    facing.rotation.y = p.facing;
+    facing.renderOrder = 10;
+    warpGroup.add(facing);
+    p.labelX = facing.position.x; p.labelY = facing.position.y; p.labelZ = facing.position.z;
+
+    var stemGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(p.x, p.y, p.z),
+      new THREE.Vector3(facing.position.x, facing.position.y, facing.position.z)
+    ]);
+    var stem = new THREE.Line(stemGeo, new THREE.LineBasicMaterial({ color: 0x8b9fe0, transparent: true, opacity: 0.3 }));
+    warpGroup.add(stem);
+
+    warpMeshes[p.id] = { core: core, mat: mat, facing: facing, facingMat: facingMat, stem: stem };
   });
   scene.add(warpGroup);
 
   var centroid = POINTS.reduce(function (a, p) { return { x: a.x + p.x / POINTS.length, y: a.y + p.y / POINTS.length, z: a.z + p.z / POINTS.length }; }, { x: 0, y: 0, z: 0 });
-  var target = new THREE.Vector3(centroid.x, centroid.y + 6, centroid.z);
+  // Start centred on the cave's own bounding box (the boss pins sit off to one side of it).
+  geo.computeBoundingBox();
+  var caveCenter = geo.boundingBox.getCenter(new THREE.Vector3()).add(caveMesh.position);
+  var target = new THREE.Vector3(caveCenter.x, centroid.y + 6, caveCenter.z);
   var initial = { radius: 273, theta: 0.78 + Math.PI * 135 / 180, phi: 0.16 };
   var spherical = { radius: initial.radius, theta: initial.theta, phi: initial.phi };
   var targetSpherical = { radius: initial.radius, theta: initial.theta, phi: initial.phi };
@@ -285,8 +379,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
       if (labelEls[k]) labelEls[k].classList.toggle("is-active", isOn);
     });
   }
-  function clearActive() { setActive(-1); }
-  function focusPoint(p) { animTo.set(p.x, p.y, p.z); setActive(p.id); }
+  function clearActive() { setActive(selBoss || -1); }
 
   POINTS.forEach(function (p) {
     var label = document.createElement("div");
@@ -295,11 +388,10 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     viewport.appendChild(label);
     labelEls[p.id] = label;
 
-    label.style.pointerEvents = "auto";
-    label.style.cursor = "pointer";
-    label.addEventListener("click", function () { focusPoint(p); });
+    label.style.pointerEvents = "auto"; label.style.cursor = "pointer";
     label.addEventListener("mouseenter", function () { setActive(p.id); });
     label.addEventListener("mouseleave", clearActive);
+    label.addEventListener("click", function () { selBoss = selBoss === p.id ? 0 : p.id; setActive(selBoss || -1); simRouteUpdate(); });
   });
 
   var warpLabelEls = {};
@@ -309,42 +401,425 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     Object.keys(warpMeshes).forEach(function (k) {
       var isOn = String(id) === k;
       var m = warpMeshes[k];
-      m.core.scale.setScalar(isOn ? 1.9 : (Number(k) <= partySize ? 1.3 : 0.55));
+      var s = isOn ? 1.9 : (Number(k) <= partySize ? 1.3 : 0.55);
+      m.core.scale.setScalar(s);
+      m.facing.scale.setScalar(s);
       if (warpLabelEls[k]) warpLabelEls[k].classList.toggle("is-active", isOn);
     });
   }
-  function clearActiveWarp() { setActiveWarp(-1); }
-  function focusWarpPoint(p) { animTo.set(p.x, p.y, p.z); setActiveWarp(p.id); }
+  function clearActiveWarp() { setActiveWarp(selSlot || -1); }
 
   WARPS.forEach(function (p) {
     var label = document.createElement("div");
     label.className = "pin-label warp";
-    label.innerHTML = '<span class="dot"></span>P' + p.id;
+    label.textContent = "P" + p.id;
     viewport.appendChild(label);
     warpLabelEls[p.id] = label;
 
     label.style.pointerEvents = "auto";
-    label.style.cursor = "pointer";
-    label.addEventListener("click", function () { focusWarpPoint(p); });
     label.addEventListener("mouseenter", function () { setActiveWarp(p.id); });
     label.addEventListener("mouseleave", clearActiveWarp);
   });
 
-  var partyVal = document.getElementById("partyVal");
-  var partyMinus = document.getElementById("partyMinus");
-  var partyPlus = document.getElementById("partyPlus");
+  // ---- Quick boss-search strategy (panel to the right of the map) ----
+  // The boss spawns on ONE of SpawnPoint1..5, uniformly (M946_GoldenKingBug.cs:1794 Random.Range(1, 6)); players are placed
+  // on WarpPoint<slot> (slot 1..N). Distances are shortest walks along the cave tunnels (Dijkstra over the cave mesh edges,
+  // each spot snapped to its nearest mesh vertex), not straight lines. For each party size the routes below were found by
+  // exhaustive search over every split + visiting order, minimising the mean distance until someone stands on the boss spot
+  // (ties: smaller worst case, then fewer players moving). Elimination: once 4 spots have been checked empty the 5th must hold the boss, so a plan
+  // only needs to visit 4 spots; the time to know = min(arrival at the boss spot, arrival at the last of the other four). Model: 5 units/s walking, a spot is checked once the player is within 30 tunnel units of it
+  // (times in the rows are seconds until that spot is checked); the party reports the instant the boss is seen.
+  var STRATS = {"1":{"r":[[[5,2],[1,5],[3,33],[2,73]]]},"2":{"r":[[[5,2],[1,5],[3,33]],[[4,33]]]},"3":{"r":[[[5,2],[1,5],[3,33]],[],[[2,9]]]},"4":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]]]},"5":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[]]},"6":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[],[]]},"7":{"r":[[[1,1],[5,5]],[],[[2,9]],[[3,9]],[],[],[]]},"8":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]]]},"9":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[]]},"10":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[]]},"11":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[],[]]},"12":{"r":[[[5,2]],[],[[2,9]],[[3,9]],[],[],[],[[1,3]],[],[],[],[]]}};
+  var selSlot = 0, selBoss = 0;   // selSlot: chosen player row; selBoss: boss spot clicked on the map (the one that was found)
+  var stratEl = viewport.parentNode.querySelector(".strat");
+  function stratColor(n) { return "#" + ("000000" + WARP_COLORS[(n - 1) % WARP_COLORS.length].toString(16)).slice(-6); }
+  function renderStrat() {
+    if (!stratEl) return;
+    var s = STRATS[partySize], html = '<h3>แผนหาบอสแมลงทอง</h3><div class="strat-n">';
+    for (var n = 1; n <= 12; n++) html += '<button type="button" data-n="' + n + '"' + (n === partySize ? ' class="on"' : '') + '>' + n + '</button>';
+    html += '</div>';
+    var multi = s.r.some(function (r) { return r.length > 1; });
+    s.r.forEach(function (route, i) {
+      var what = route.length
+        ? route.map(function (st, k) { return '<span class="step">' + (multi ? '<em>' + (k + 1) + '</em>' : '') + '<b>BOSS' + st[0] + '</b><i>' + st[1] + ' วิ</i></span>'; }).join('')
+        : 'ยืนรอ';
+      html += '<div class="strat-row' + (route.length ? '' : ' idle') + (selSlot === i + 1 ? ' sel' : '') + '" data-slot="' + (i + 1) + '"><span class="sw" style="background:' + stratColor(i + 1) + '"></span><span class="who">P' + (i + 1) + '</span><span class="what">' + what + '</span></div>';
+    });
+    html += '<div class="strat-hint">กดชื่อผู้เล่น = ดูเส้นทางที่ต้องเช็ค · กด BOSS บนแผนที่ด้วย = ดูทางสั้นที่สุดไปบอสตัวนั้น</div>';
+    var visited = {}; s.r.forEach(function (r) { r.forEach(function (st) { visited[st[0]] = true; }); });
+    for (var sk = 1; sk <= 5; sk++) if (!visited[sk]) html += '<div class="strat-skip">ไม่ต้องเช็ค BOSS' + sk + ' · ถ้า 4 จุดที่เหลือว่าง = บอสอยู่ตรงนั้น</div>';
+    html += simHtml();
+    stratEl.innerHTML = html;
+    simUpdateText();
+  }
+  if (stratEl) stratEl.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button[data-n]");
+    if (b) { partySize = Number(b.getAttribute("data-n")); updateParty(); return; }
+    var a = e.target.closest && e.target.closest("button[data-act],button[data-speed],button[data-boss]");
+    if (a) {
+      if (a.hasAttribute("data-act")) { var act = a.getAttribute("data-act"); if (act === "play") { simToggle(); renderStrat(); } else if (act === "toggle") { simOpen = !simOpen; renderStrat(); } else simReset(); }
+      else if (a.hasAttribute("data-speed")) { simSpeed = Number(a.getAttribute("data-speed")); renderStrat(); }
+      else { simBossOpt = Number(a.getAttribute("data-boss")); simReset(); }
+      return;
+    }
+    var r = e.target.closest && e.target.closest(".strat-row[data-slot]");
+    if (r) { var n = Number(r.getAttribute("data-slot")); selSlot = selSlot === n ? 0 : n; setActiveWarp(selSlot || -1); simRouteUpdate(); renderStrat(); }
+  });
+
+  // ---- Playable search simulation ----
+  // Markers walk the cave's own mesh graph (shortest paths over the collision mesh's edges, drawn on the floor), so they
+  // cannot cut through walls. Same model as the strategy table: 5 units/s, a spot counts as checked once the marker is within
+  // 30 tunnel units of it. When anyone is within 30 units of the boss, everybody re-routes to it, and whoever gets within 30 units
+  // first waits there (no one engages) until the whole party has gathered.
+  var SIM_SPEED = 5, SIM_RADIUS = 30;
+  var simVerified = {}, simDeduced = false, simOpen = false;
+  var simSpeed = 1, simBossOpt = 0, simState = "idle", simT = 0, simFound = -1, simDoneT = 0, simBoss = 0, simPlayers = [];
+  // GKB-GRAPH-BEGIN
+  // Walkway centre-line graph. The cave mesh's floor is a strip per tunnel with a vertex row on each wall, so the mesh edges run
+  // along the walls. Every edge that two floor triangles share crosses the strip; its midpoint lies in the middle of the walkway.
+  // Nodes = those midpoints (world coords, floor level); two nodes are linked when they sit on the same floor triangle.
+  function gkbBuildGraph(pos, idx, offY) {
+    var nV = pos.length / 3, i, j, k, t, wmap = {}, rep = new Int32Array(nV), fy = new Float64Array(nV);
+    for (i = 0; i < nV; i++) {   // weld duplicate vertices
+      var key = Math.round(pos[3 * i] * 50) + "," + Math.round(pos[3 * i + 1] * 50) + "," + Math.round(pos[3 * i + 2] * 50);
+      if (wmap[key] === undefined) wmap[key] = i;
+      rep[i] = wmap[key];
+    }
+    for (i = 0; i < nV; i++) {   // floor height under each vertex (strips also have ceiling vertices)
+      var f = pos[3 * i + 1];
+      for (j = 0; j < nV; j++) if (pos[3 * j + 1] < f && Math.abs(pos[3 * j] - pos[3 * i]) < 4 && Math.abs(pos[3 * j + 2] - pos[3 * i + 2]) < 4) f = pos[3 * j + 1];
+      fy[i] = f;
+    }
+    function isFloor(v) { return pos[3 * v + 1] - fy[v] < 0.5; }
+    var tris = [], ecount = {};
+    function ek(a, b) { return a < b ? a * 4096 + b : b * 4096 + a; }
+    for (t = 0; t < idx.length; t += 3) {
+      var a = rep[idx[t]], b = rep[idx[t + 1]], c = rep[idx[t + 2]];
+      if (a === b || b === c || a === c || !isFloor(a) || !isFloor(b) || !isFloor(c)) continue;
+      tris.push([a, b, c]);
+      for (k = 0; k < 3; k++) { var e = ek(tris[tris.length - 1][k], tris[tris.length - 1][(k + 1) % 3]); ecount[e] = (ecount[e] || 0) + 1; }
+    }
+    var nodeOf = {}, X = [], Y = [], Z = [], nb = [], wt = [];
+    for (var e2 in ecount) if (ecount[e2] >= 2) {
+      var ea = Math.floor(e2 / 4096), eb = e2 % 4096;
+      nodeOf[e2] = X.length;
+      X.push((pos[3 * ea] + pos[3 * eb]) / 2); Y.push((pos[3 * ea + 1] + pos[3 * eb + 1]) / 2 + offY); Z.push((pos[3 * ea + 2] + pos[3 * eb + 2]) / 2);
+      nb.push([]); wt.push([]);
+    }
+    for (i = 0; i < tris.length; i++) {
+      var ns = [];
+      for (k = 0; k < 3; k++) { var id = nodeOf[ek(tris[i][k], tris[i][(k + 1) % 3])]; if (id !== undefined) ns.push(id); }
+      for (j = 0; j < ns.length; j++) for (k = j + 1; k < ns.length; k++) {
+        var p = ns[j], q = ns[k], w = Math.sqrt(Math.pow(X[p] - X[q], 2) + Math.pow(Y[p] - Y[q], 2) + Math.pow(Z[p] - Z[q], 2));
+        nb[p].push(q); wt[p].push(w); nb[q].push(p); wt[q].push(w);
+      }
+    }
+    return { n: X.length, nb: nb, wt: wt, X: X, Y: Y, Z: Z };
+  }
+  // GKB-GRAPH-END
+  var simGraph = gkbBuildGraph(CAVE_MESH.positions, CAVE_MESH.indices, caveMesh.position.y);
+  function simNearest(x, y, z) {
+    var g = simGraph, best = 0, bd = Infinity;
+    for (var i = 0; i < g.n; i++) { var d = Math.pow(g.X[i] - x, 2) + Math.pow(g.Y[i] - y, 2) + Math.pow(g.Z[i] - z, 2); if (d < bd) { bd = d; best = i; } }
+    return best;
+  }
+  function simDijkstra(src) {   // dist to src + next hop toward src for every vertex
+    var g = simGraph, n = g.n, dist = new Float64Array(n), nxt = new Int32Array(n), done = new Uint8Array(n), i, c;
+    for (i = 0; i < n; i++) { dist[i] = Infinity; nxt[i] = -1; }
+    dist[src] = 0;
+    for (c = 0; c < n; c++) {
+      var u = -1, ud = Infinity;
+      for (i = 0; i < n; i++) if (!done[i] && dist[i] < ud) { ud = dist[i]; u = i; }
+      if (u < 0) break;
+      done[u] = 1;
+      for (i = 0; i < g.nb[u].length; i++) { var v = g.nb[u][i], nd = ud + g.wt[u][i]; if (nd < dist[v]) { dist[v] = nd; nxt[v] = u; } }
+    }
+    return { dist: dist, nxt: nxt };
+  }
+  var simSpotV = POINTS.map(function (p) { return simNearest(p.x, p.y, p.z); });
+  var simSpotD = simSpotV.map(simDijkstra);
+  function simPath(spot, v0, startPt) {
+    var T = simSpotD[spot], vs = [v0], v = v0, guard = 0, i, c;
+    while (v !== simSpotV[spot] && T.nxt[v] >= 0 && guard++ < 4000) { v = T.nxt[v]; vs.push(v); }
+    var g = simGraph, pts = vs.map(function (u) { return [g.X[u], g.Y[u] + 2.2, g.Z[u]]; });
+    if (startPt) pts[0] = startPt;
+    for (var pass = 0; pass < 2; pass++) {
+      var q = pts.map(function (p) { return p.slice(); });
+      for (i = 1; i < pts.length - 1; i++) for (c = 0; c < 3; c++) q[i][c] = (pts[i - 1][c] + 2 * pts[i][c] + pts[i + 1][c]) / 4;
+      pts = q;
+    }
+    var cum = [0];
+    for (i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.sqrt(Math.pow(pts[i][0] - pts[i - 1][0], 2) + Math.pow(pts[i][1] - pts[i - 1][1], 2) + Math.pow(pts[i][2] - pts[i - 1][2], 2)));
+    return { spot: spot, vs: vs, pts: pts, cum: cum, len: cum[cum.length - 1] };
+  }
+  function simSeg(leg, s) { var k = 0; while (k < leg.cum.length - 2 && leg.cum[k + 1] <= s) k++; return k; }
+  function simLegPos(leg, s) {
+    if (leg.pts.length < 2) return leg.pts[0];
+    var k = simSeg(leg, s), span = leg.cum[k + 1] - leg.cum[k], f = span > 0 ? Math.min(1, Math.max(0, (s - leg.cum[k]) / span)) : 0, a = leg.pts[k], b = leg.pts[k + 1];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+  function simLegDist(leg, s, spot) {   // tunnel distance from the marker to a spot, interpolated along the current edge
+    var D = simSpotD[spot].dist;
+    if (leg.vs.length < 2) return D[leg.vs[0]];
+    var k = simSeg(leg, s), span = leg.cum[k + 1] - leg.cum[k], f = span > 0 ? Math.min(1, Math.max(0, (s - leg.cum[k]) / span)) : 0;
+    return D[leg.vs[k]] + (D[leg.vs[k + 1]] - D[leg.vs[k]]) * f;
+  }
+  function simLegVertex(leg, s) { var k = simSeg(leg, s), f = leg.cum[k + 1] > leg.cum[k] ? (s - leg.cum[k]) / (leg.cum[k + 1] - leg.cum[k]) : 0; return leg.vs[Math.min(leg.vs.length - 1, f > 0.5 ? k + 1 : k)]; }
+
+  // scene objects (created once, shown only while a simulation exists)
+  var simGroup = new THREE.Group(); simGroup.visible = false; scene.add(simGroup);
+  var simMarkers = [], simLabelEls = [];
+  function simMat(color, opacity) { return new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: opacity, depthTest: false, depthWrite: false }); }
+  for (var si = 1; si <= 12; si++) {
+    var sm = new THREE.Mesh(facingGeo, simMat(WARP_COLORS[(si - 1) % WARP_COLORS.length], 1));
+    var shalo = new THREE.Mesh(facingGeo, simMat(0x000000, 0.6));   // dark outline so the arrow reads on the sand colour
+    sm.material.side = THREE.DoubleSide; shalo.material.side = THREE.DoubleSide;
+    sm.scale.setScalar(1.15); shalo.scale.setScalar(1.3); shalo.position.y = -0.05;
+    shalo.renderOrder = 11; sm.renderOrder = 12; sm.add(shalo); sm.visible = false; simGroup.add(sm); simMarkers.push(sm);
+    var sl = document.createElement("div"); sl.className = "pin-label warp"; sl.textContent = "P" + si; sl.style.opacity = "0"; sl.style.zIndex = "4"; viewport.appendChild(sl); simLabelEls.push(sl);
+  }
+  var simBossMesh = new THREE.Mesh(new THREE.SphereGeometry(4.6, 24, 24), simMat(0xff3b30, 0.4)); simBossMesh.renderOrder = 10; simBossMesh.visible = false; simGroup.add(simBossMesh);
+  var simBossLabel = document.createElement("div"); simBossLabel.className = "pin-label is-active"; simBossLabel.innerHTML = '<span class="dot"></span>เจอบอส!'; simBossLabel.style.opacity = "0"; simBossLabel.style.zIndex = "4"; viewport.appendChild(simBossLabel);
+
+  function simLegEnds(leg, s) { var k = simSeg(leg, s); return leg.vs.length < 2 ? [leg.vs[0]] : [leg.vs[k], leg.vs[k + 1]]; }
+  function simBestStart(cands, spot, p) {   // of the nodes around us, the one with the shortest walk (to it, then on to the spot)
+    var g = simGraph, D = simSpotD[spot].dist, best = cands[0], bc = Infinity;
+    cands.forEach(function (v) {
+      var c = Math.sqrt(Math.pow(g.X[v] - p[0], 2) + Math.pow(g.Y[v] + 2.2 - p[1], 2) + Math.pow(g.Z[v] - p[2], 2)) + D[v];
+      if (c < bc) { bc = c; best = v; }
+    });
+    return best;
+  }
+  function simStartLeg(pl, cands, startPt) {
+    pl.ri++;
+    if (pl.ri < pl.route.length) { pl.leg = simPath(pl.route[pl.ri], simBestStart(cands, pl.route[pl.ri], startPt), startPt); pl.s = 0; pl.kind = "search"; }
+    else { pl.kind = "idle"; pl.idlePos = startPt; pl.idleV = cands.reduce(function (a, b) { return simSpotD[simBoss].dist[b] < simSpotD[simBoss].dist[a] ? b : a; }, cands[0]); pl.leg = null; }
+  }
+  function simPos(pl) { return pl.leg ? simLegPos(pl.leg, pl.s) : pl.idlePos; }
+  function simInit() {
+    simBoss = simBossOpt === 0 ? Math.floor(Math.random() * 5) : simBossOpt - 1;
+    simT = 0; simFound = -1; simDoneT = 0; simPlayers = []; simVerified = {}; simDeduced = false;
+    simBossLabel.innerHTML = '<span class="dot"></span>เจอบอส!';
+    for (var i = 0; i < partySize; i++) {
+      var w = WARPS[i], pl = { i: i, route: STRATS[partySize].r[i].map(function (st) { return st[0] - 1; }), ri: -1, leg: null, s: 0, kind: "idle", arrived: false };
+      pl.heading = w.facing; simStartLeg(pl, [simNearest(w.x, w.y, w.z)], [w.x, w.y, w.z]);
+      simPlayers.push(pl);
+    }
+    var bp = POINTS[simBoss]; simBossMesh.position.set(bp.x, bp.y, bp.z); simBossMesh.material.opacity = 0.4; simBossMesh.scale.setScalar(1);
+    simGroup.visible = true; simBossMesh.visible = true; warpGroup.visible = false;
+    simMarkers.forEach(function (m, i) { m.visible = i < partySize; });
+    simPlayers.forEach(function (pl, i) { simPlace(pl, i); });
+    simCheck();
+    simRouteUpdate();
+  }
+  function simBossLeg(pl) {   // everybody heads for the boss from wherever they stand
+    var p = simPos(pl), cands = pl.leg ? simLegEnds(pl.leg, pl.s) : [pl.idleV];
+    pl.leg = simPath(simBoss, simBestStart(cands, simBoss, p), p); pl.s = 0; pl.kind = "boss";
+  }
+  function simCheck() {   // has anyone got the boss within sight?
+    if (simFound >= 0) return;
+    var seen = simPlayers.some(function (pl) {
+      var d = pl.leg ? simLegDist(pl.leg, pl.s, simBoss) : simSpotD[simBoss].dist[pl.idleV];
+      return d <= SIM_RADIUS;
+    });
+    if (seen) { simFound = simT; simPlayers.forEach(simBossLeg); }
+  }
+  // Selected player's walking path (strategy panel row): drawn as a ribbon down the middle of the walkway.
+  //  - before a run: warp point -> each spot of the route in order; during a run: what is left of it from where the marker stands;
+  //  - once the boss is found: the shortest way from where the marker stands to the boss.
+  var simRouteFill = new THREE.Mesh(new THREE.BufferGeometry(), simMat(0xffffff, 0.9)), simRouteEdge = new THREE.Mesh(new THREE.BufferGeometry(), simMat(0x000000, 0.5));
+  simRouteFill.material.side = simRouteEdge.material.side = THREE.DoubleSide;
+  simRouteFill.material.vertexColors = simRouteEdge.material.vertexColors = true;   // RGBA per vertex: dimmed where the path runs under another tunnel
+  simRouteFill.material.opacity = simRouteEdge.material.opacity = 1;
+  simRouteFill.renderOrder = 8; simRouteEdge.renderOrder = 7; simRouteFill.visible = simRouteEdge.visible = false;
+  scene.add(simRouteEdge); scene.add(simRouteFill);
+  var simCoverCache = {}, simRay = new THREE.Raycaster(), simUp = new THREE.Vector3(0, 1, 0), simRayO = new THREE.Vector3();
+  function simCovered(p) {   // is another stretch of cave stacked above this point (the path runs under a different tunnel)?
+    var key = Math.round(p[0] / 1.5) + "," + Math.round(p[2] / 1.5) + "," + Math.round(p[1] / 3);
+    if (simCoverCache[key] !== undefined) return simCoverCache[key];
+    simRay.set(simRayO.set(p[0], p[1] + 0.3, p[2]), simUp);
+    var hits = simRay.intersectObject(caveMesh), n = hits.length ? 1 : 0, i;
+    for (i = 1; i < hits.length; i++) if (hits[i].distance - hits[i - 1].distance > 1) n++;   // our own ceiling is the first hit; a second layer means a tunnel above
+    return (simCoverCache[key] = n >= 2);
+  }
+  function simRibbon(mesh, pts, hw, rgb, aOn, aOff, anim) {
+    var pos = [], col = [], idx = [], base = [], cum = [0], i, a, b, tx, tz, l, al, cov0 = pts.map(simCovered), cov = cov0.map(function (c, j) { return c || !!cov0[j - 1] || !!cov0[j + 1]; });   // widen by one point each side
+    for (i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.sqrt(Math.pow(pts[i][0] - pts[i - 1][0], 2) + Math.pow(pts[i][2] - pts[i - 1][2], 2)));
+    for (i = 0; i < pts.length; i++) {
+      a = pts[Math.max(0, i - 1)]; b = pts[Math.min(pts.length - 1, i + 1)];
+      tx = b[0] - a[0]; tz = b[2] - a[2]; l = Math.sqrt(tx * tx + tz * tz) || 1;
+      pos.push(pts[i][0] - tz / l * hw, pts[i][1] - 1, pts[i][2] + tx / l * hw, pts[i][0] + tz / l * hw, pts[i][1] - 1, pts[i][2] - tx / l * hw);
+      al = cov[i] ? aOff : aOn; base.push(al);
+      col.push(rgb[0], rgb[1], rgb[2], al, rgb[0], rgb[1], rgb[2], al);
+      if (i) { var o = 2 * (i - 1); idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx);
+    mesh.geometry.dispose(); mesh.geometry = g;
+    // distance still to walk from each point: the flow pattern is keyed to it so it stays put in the world while the marker advances
+    mesh.userData = anim ? { attr: g.attributes.color, base: base, u: cum.map(function (c) { return cum[cum.length - 1] - c; }) } : null;
+  }
+  // The path stops where the marker stops: 30 tunnel units short of the spot (or of the boss), not at its centre.
+  function simCutS(leg, spot) {
+    var D = simSpotD[spot].dist, k;
+    for (k = 0; k < leg.vs.length; k++) if (D[leg.vs[k]] <= SIM_RADIUS) {
+      if (k === 0) return 0;
+      var d0 = D[leg.vs[k - 1]], d1 = D[leg.vs[k]];
+      return leg.cum[k - 1] + (d0 - SIM_RADIUS) / (d0 - d1) * (leg.cum[k] - leg.cum[k - 1]);
+    }
+    return leg.len;
+  }
+  function simLegSlice(leg, s0, s1) {
+    var out = [simLegPos(leg, s0)], k;
+    for (k = 0; k < leg.cum.length; k++) if (leg.cum[k] > s0 + 1e-6 && leg.cum[k] < s1 - 1e-6) out.push(leg.pts[k]);
+    if (s1 > s0 + 1e-6) out.push(simLegPos(leg, s1));
+    return out;
+  }
+  function simSelPts() {
+    if (!selSlot || selSlot > partySize) return null;
+    var i = selSlot - 1, pts = [], leg, cut;
+    function chain(cands, startPt, spots) {
+      spots.forEach(function (sp) {
+        leg = simPath(sp, simBestStart(cands, sp, startPt), startPt); cut = simCutS(leg, sp);
+        var seg = simLegSlice(leg, 0, cut);
+        (pts.length ? seg.slice(1) : seg).forEach(function (q) { pts.push(q); });
+        startPt = simLegPos(leg, cut); cands = simLegEnds(leg, cut);
+      });
+    }
+    if (simState === "idle") {
+      var w = WARPS[i];
+      chain([simNearest(w.x, w.y, w.z)], [w.x, w.y, w.z], selBoss ? [selBoss - 1] : STRATS[partySize].r[i].map(function (st) { return st[0] - 1; }));
+      return pts;
+    }
+    var pl = simPlayers[i];
+    if (!pl || !pl.leg || pl.arrived) return null;
+    cut = simCutS(pl.leg, pl.kind === "boss" ? simBoss : pl.leg.spot);
+    pts = cut > pl.s ? simLegSlice(pl.leg, pl.s, cut) : [simPos(pl)];
+    if (pl.kind === "search") chain(simLegEnds(pl.leg, cut), simLegPos(pl.leg, cut), pl.route.slice(pl.ri + 1));
+    return pts;
+  }
+  function simRouteAnim(now) {   // subtle flow along the path: brightness ramps up toward the walking direction, then drops, and drifts forward
+    var ud = simRouteFill.userData;
+    if (!simRouteFill.visible || !ud || reduceMotion) return;
+    var t = (now || 0) / 1000, arr = ud.attr.array, i, w, al;
+    for (i = 0; i < ud.base.length; i++) {
+      w = ud.u[i] / 16 + t * 0.9; w -= Math.floor(w);
+      al = ud.base[i] * (0.45 + 0.55 * (1 - w));
+      arr[8 * i + 3] = al; arr[8 * i + 7] = al;
+    }
+    ud.attr.needsUpdate = true;
+  }
+  function simRouteUpdate() {
+    var pts = simSelPts();
+    if (!pts || pts.length < 2) { simRouteFill.visible = simRouteEdge.visible = false; return; }
+    var c = new THREE.Color(WARP_COLORS[(selSlot - 1) % WARP_COLORS.length]);
+    simRibbon(simRouteFill, pts, 0.95, [c.r, c.g, c.b], 0.92, 0.22, true); simRibbon(simRouteEdge, pts, 1.6, [0, 0, 0], 0.5, 0.1, false);
+    simRouteFill.visible = simRouteEdge.visible = true;
+  }
+
+  function simPlace(pl, i) {   // put the triangle on its spot and turn it toward where it is walking
+    var p = simPos(pl), m = simMarkers[i];
+    m.position.set(p[0], p[1], p[2]);
+    if (pl.leg && pl.leg.pts.length > 1 && pl.s < pl.leg.len) {
+      var tgt = pl.leg.pts[Math.min(pl.leg.pts.length - 1, simSeg(pl.leg, pl.s) + 1)], dx = tgt[0] - p[0], dz = tgt[2] - p[2];
+      if (dx * dx + dz * dz > 0.04) { var want = Math.atan2(dx, dz); pl.heading += Math.atan2(Math.sin(want - pl.heading), Math.cos(want - pl.heading)) * 0.2; }
+    }
+    m.rotation.y = pl.heading;
+  }
+  function simFrame(dt) {
+    if (simState !== "run") { simUpdateText(); return; }
+    var dtSim = dt * simSpeed, left = dtSim, step;
+    while (left > 1e-6) {   // small sub-steps so detection stays accurate at 8x
+      step = Math.min(left, 0.25); left -= step; simT += step;
+      simPlayers.forEach(function (pl) {
+        if (!pl.leg) return;
+        if (pl.arrived) return;
+        pl.s = Math.min(pl.leg.len, pl.s + SIM_SPEED * step);
+        if (pl.kind === "boss" && (pl.s >= pl.leg.len || simLegDist(pl.leg, pl.s, simBoss) <= SIM_RADIUS)) pl.arrived = true;   // wait at the edge of the ring
+      });
+      simCheck();   // first: did this step bring the boss into sight?
+      if (simFound < 0) simPlayers.forEach(function (pl) {   // otherwise move on to the next spot on the list
+        if (pl.kind === "search" && (simLegDist(pl.leg, pl.s, pl.leg.spot) <= SIM_RADIUS || pl.s >= pl.leg.len)) { simVerified[pl.leg.spot] = true; simStartLeg(pl, simLegEnds(pl.leg, pl.s), simPos(pl)); }
+      });
+      if (simFound < 0 && Object.keys(simVerified).length >= 4) {   // 4 spots checked empty: the last one must be the boss, same as someone spotting it
+        simDeduced = true; simFound = simT; simBossLabel.innerHTML = '<span class="dot"></span>ตรวจครบ 4 จุด · บอสอยู่ตรงนี้!';
+        simPlayers.forEach(simBossLeg);
+      }
+      if (simFound >= 0 && simPlayers.every(function (pl) { return pl.arrived; })) { simState = "done"; simDoneT = simT; renderStrat(); break; }
+    }
+    simPlayers.forEach(function (pl, i) { simPlace(pl, i); });
+    if (selSlot) simRouteUpdate();
+    if (simFound >= 0) { simBossMesh.material.opacity = 1; simBossMesh.scale.setScalar(reduceMotion ? 1.2 : 1.2 + 0.25 * Math.sin(simT * 6)); }
+    simUpdateText();
+  }
+  function simLabels(rect) {
+    var on = simState !== "idle", i, p, lx, ly;
+    for (i = 0; i < 12; i++) {
+      var el = simLabelEls[i];
+      if (!on || i >= partySize) { el.style.opacity = "0"; continue; }
+      vec.copy(simMarkers[i].position).project(camera);
+      el.style.left = ((vec.x * 0.5 + 0.5) * rect.width) + "px"; el.style.top = ((-vec.y * 0.5 + 0.5) * rect.height - 18) + "px";
+      el.style.opacity = vec.z > 1 ? "0" : "1";
+    }
+    if (on && simFound >= 0) {
+      vec.copy(simBossMesh.position).project(camera);
+      simBossLabel.style.left = ((vec.x * 0.5 + 0.5) * rect.width) + "px"; simBossLabel.style.top = ((-vec.y * 0.5 + 0.5) * rect.height - 26) + "px";
+      simBossLabel.style.opacity = vec.z > 1 ? "0" : "1";
+    } else simBossLabel.style.opacity = "0";
+  }
+  function simText() {
+    var b = "BOSS" + (simBoss + 1);
+    if (simState === "idle") return "กดเริ่มจำลอง เพื่อดูทีมออกตามหาบอส";
+    if (simState === "done") return "ทุกคนมารวมตัวครบ (ในรัศมี 30) ที่ " + simDoneT.toFixed(1) + " วิ · " + (simDeduced ? "รู้ว่าบอสอยู่ที่ " : "เจอบอสที่ ") + b + " ตอน " + simFound.toFixed(1) + " วิ";
+    if (simFound >= 0 && simDeduced) return "ตรวจแล้ว 4 จุดไม่เจอ → บอสอยู่ที่ " + b + " (ตอน " + simFound.toFixed(1) + " วิ) · ทุกคนกำลังเดินมารวมตัว";
+    if (simFound >= 0) return "เจอบอสที่ " + b + " ตอน " + simFound.toFixed(1) + " วิ · ทุกคนกำลังเดินมารวมตัว";
+    return "กำลังตามหาบอส… (ตรวจแล้ว " + Object.keys(simVerified).length + " จุด)";
+  }
+  function simUpdateText() {
+    if (!stratEl) return;
+    var t = stratEl.querySelector(".sim-time"), s = stratEl.querySelector(".sim-status");
+    if (t) t.textContent = simState === "idle" ? "" : simT.toFixed(1) + " วิ";
+    if (s) s.textContent = simText();
+  }
+  function simToggle() {
+    if (simState === "idle" || simState === "done") { simInit(); simState = "run"; }
+    else simState = simState === "run" ? "pause" : "run";
+  }
+  function simReset(noRender) {
+    simState = "idle"; simT = 0; simFound = -1; simPlayers = []; simVerified = {}; simDeduced = false;
+    simGroup.visible = false; simBossMesh.visible = false; warpGroup.visible = true;
+    for (var i = 0; i < 12; i++) simLabelEls[i].style.opacity = "0";
+    simBossLabel.style.opacity = "0";
+    simRouteUpdate();
+    if (!noRender) renderStrat();
+  }
+  function simHtml() {
+    var head = '<button type="button" class="sim-head" data-act="toggle"><span>' + (simOpen ? '▾' : '▸') + ' จำลองการค้นหา (ลองเล่น)</span><span class="sim-time"></span></button>';
+    if (!simOpen) return '<div class="strat-sim">' + head + '</div>';
+    var h = '<div class="strat-sim">' + head + '<div class="sim-top"><button type="button" class="sim-play" data-act="play">' +
+      (simState === "run" ? "หยุดชั่วคราว" : simState === "pause" ? "เล่นต่อ" : simState === "done" ? "เล่นใหม่" : "เริ่มจำลอง") +
+      '</button><button type="button" data-act="reset">รีเซ็ต</button></div>';
+    h += '<div class="sim-line"><span>ความเร็ว</span>' + [1, 2, 4, 8].map(function (v) { return '<button type="button" data-speed="' + v + '"' + (v === simSpeed ? ' class="on"' : '') + '>' + (v === 1 ? 'ปกติ' : v + '×') + '</button>'; }).join('') + '</div>';
+    h += '<div class="sim-line"><span>บอสเกิด</span>' + [0, 1, 2, 3, 4, 5].map(function (v) { return '<button type="button" data-boss="' + v + '"' + (v === simBossOpt ? ' class="on"' : '') + '>' + (v === 0 ? 'สุ่ม' : v) + '</button>'; }).join('') + '</div>';
+    return h + '<div class="sim-status"></div></div>';
+  }
 
   function updateParty() {
-    partyVal.textContent = partySize;
     WARPS.forEach(function (p) {
       var active = p.id <= partySize;
       var m = warpMeshes[p.id];
+      var s = active ? 1.3 : 0.55;
       m.mat.opacity = active ? 1 : 0.2;
-      m.core.scale.setScalar(active ? 1.3 : 0.55);
+      m.core.scale.setScalar(s);
+      m.facingMat.opacity = active ? 1 : 0.15;
+      m.facing.scale.setScalar(s);
+      m.stem.material.opacity = active ? 0.3 : 0.06;
     });
+    if (selSlot > partySize) selSlot = 0;
+    setActiveWarp(selSlot || -1);
+    simReset(true);
+    renderStrat();
   }
-  partyMinus.addEventListener("click", function () { partySize = Math.max(1, partySize - 1); updateParty(); });
-  partyPlus.addEventListener("click", function () { partySize = Math.min(12, partySize + 1); updateParty(); });
   updateParty();
 
   function resize() {
@@ -357,12 +832,36 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
   resize();
 
   var vec = new THREE.Vector3();
-  function tick() {
+  var keys = {};
+  function isTyping(e) { var t = e.target; return t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)); }
+  window.addEventListener("keydown", function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e) || !viewport.clientWidth) return;
+    var k = e.key.toLowerCase();
+    if (k === "w" || k === "a" || k === "s" || k === "d") { keys[k] = true; e.preventDefault(); }
+  });
+  window.addEventListener("keyup", function (e) { delete keys[e.key.toLowerCase()]; });
+  window.addEventListener("blur", function () { keys = {}; });
+  var lastT = 0;
+  function tick(now) {
+    var dt = Math.min(((now || 0) - lastT) / 1000, 0.1); lastT = now || 0;
+    var f = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), rt = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
+    if (f || rt) {
+      var sp = targetSpherical.radius * 0.9 * dt, st = Math.sin(spherical.theta), ct = Math.cos(spherical.theta);
+      animTo.x += (-st * f + ct * rt) * sp;
+      animTo.z += (-ct * f - st * rt) * sp;
+    }
     var lerpAmt = reduceMotion ? 1 : 0.12;
     spherical.theta += (targetSpherical.theta - spherical.theta) * lerpAmt;
     spherical.phi += (targetSpherical.phi - spherical.phi) * lerpAmt;
     spherical.radius += (targetSpherical.radius - spherical.radius) * lerpAmt;
     animTarget.lerp(animTo, lerpAmt);
+    if (selSlot && warpMeshes[selSlot]) {
+      var pulse = reduceMotion ? 2.2 : 2.2 + 0.4 * Math.sin((now || 0) / 170);
+      warpMeshes[selSlot].core.scale.setScalar(pulse);
+      warpMeshes[selSlot].facing.scale.setScalar(pulse);
+    }
+    simFrame(dt);
+    simRouteAnim(now);
 
     applyCamera();
     renderer.render(scene, camera);
@@ -379,16 +878,17 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
       el.style.opacity = behind ? "0" : "1";
     });
     WARPS.forEach(function (p) {
-      vec.set(p.x, p.y, p.z).project(camera);
+      vec.set(p.labelX, p.labelY, p.labelZ).project(camera);
       var lx = (vec.x * 0.5 + 0.5) * rect.width;
-      var ly = (-vec.y * 0.5 + 0.5) * rect.height - 12;
+      var ly = (-vec.y * 0.5 + 0.5) * rect.height;
       var behind = vec.z > 1;
       var benched = p.id > partySize;
       var el = warpLabelEls[p.id];
       el.style.left = lx + "px";
       el.style.top = ly + "px";
-      el.style.opacity = (behind || benched) ? "0" : "1";
+      el.style.opacity = (behind || benched || simState !== "idle") ? "0" : "1";
     });
+    simLabels(rect);
 
     requestAnimationFrame(tick);
   }
