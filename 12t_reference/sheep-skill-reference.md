@@ -626,4 +626,5 @@ Everything above is the BigBug original-engine baseline. No ToT deltas are known
 
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
+| Eden Sanctuary | `sanctuary` is applied to every character in the 18 m / 6 m area with no team filter, enemies included (`Sheep_edenSanctuary.cs:160-205`); the Thai tooltip says team members only. | Only team members get the damage-reduction status (user-reported 2026-10-12; the Thai tooltip is right on TTO). Card `servers.tto` has the changed desc and no tooltip note. How the server filters (party vs. friend check) is not decoded. |
 | Soul of Arms | No damage reduction while casting (`RPC_soulOfArms_cast`, `Sheep.cs:33696-34698`, touches no `hitMod`). | Magic and physical damage taken is reduced by 50% during the skill animation (user-reported 2026-09-30, card `servers.tto.changeNote`). How the server implements it (a `hitMod` change or a separate halving like `sanctuary`) is unknown, so the card states only the 50% reduction. |
