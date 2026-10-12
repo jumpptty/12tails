@@ -701,6 +701,60 @@ Every Rabbit card description was first written from the client tooltips, then t
 - **Contract spawn:** Panthers and Leopards at `getSpawnVector(pos + up, TransformDirection(∓1.5, −1, 2.6))`, the Golem at `(0, −1, 3)` (`Rabbit.cs:40423-40464`).
 - **Diamond Shot** uses the same `16 + 5 × getNormalAttackLv()` raycast as Maim Shot (`Rabbit.cs:38258-38263`). Truce Trading has no distance gate (40 m target lock).
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column`. Source: `RabbitSkill.getSkill` (`setReq`, `rSkill`) and `RabbitSkill.getSkillTree`.
+
+**Sharp Shooter** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | Long Shot 1 1/0 · Long Shot 2 2/0 · Long Shot 3 3/0 · Long Shot 4 4/0 |
+| 2 | Aimed Shot 1 4/1 · Aimed Shot 2 10/2 · Aimed Shot 3 16/3 · Stat Scan 22/4 |
+| 3 | Bunny Bounce 1 6/2 · Bunny Bounce 2 12/4 · — · — |
+| 4 | Hyper Shot 1 8/4 · Hyper Shot 2 16/6 · Hyper Shot 3 24/8 · Hyper Shot 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Alchemist Doctor** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Maim Shot 1 3/0 · Maim Shot 2 9/1 · Maim Shot 3 15/2 · Maim Shot 4 21/3 |
+| 2 | Mix 1 5/1 · Mix 2 11/3 · Mix 3 17/5 · Mix 4 23/7 |
+| 3 | Shake 1 7/2 · Shake 2 13/4 · Shake 3 19/6 · Miracle Blend 25/8 |
+| 4 | Alchemist Lab 1 9/3 · Alchemist Lab 2 15/5 · Alchemist Lab 3 21/7 · Alchemist Lab 4 27/9 |
+| 5 | Sticky Gum 1 16/4 · Sticky Gum 2 20/8 · Acidic Field 1 24/12 · Acidic Field 2 28/16 |
+| 6 | Immune Shot 20/12 · Boost Shot 24/15 · Heat Shot 28/18 · Life Shot 32/21 |
+| 7 | Medical Enhancement 1 24/15 · Medical Enhancement 2 27/18 · Medical Enhancement 3 30/21 · Rapid Trance 33/24 |
+| 8 | Gorgon Shot 1 35/23 · Gorgon Shot 2 40/25 · — · — |
+
+**Merchant** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Gil Shot 1 3/0 · Gil Shot 2 9/1 · Gil Shot 3 15/2 · Gil Shot 4 21/3 |
+| 2 | Bunny Bargain 1 5/1 · Bunny Bargain 2 11/3 · Bunny Bargain 3 17/5 · Bunny Bargain 4 23/7 |
+| 3 | Herb Finder 1 7/2 · Backpack 1 13/4 · Herb Finder 2 19/6 · Backpack 2 25/8 |
+| 4 | Four Shot 1 9/3 · Four Shot 2 15/5 · Circle Shot 1 21/7 · Circle Shot 2 27/9 |
+| 5 | Mall 1 16/4 · Mall 2 20/8 · Truce Trading & Co. 1 24/12 · Truce Trading & Co. 2 28/16 |
+| 6 | Shooting Array 1 20/12 · Shooting Array 2 24/15 · Customized Shotgun 1 28/18 · Customized Shotgun 2 28/22 |
+| 7 | Special Deal 1 24/15 · Special Deal 2 27/18 · Special Deal 3 30/21 · Special Deal 4 33/24 |
+| 8 | Millionaire 1 35/23 · Millionaire 2 40/25 · — · — |
+
+**Magistrate** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Bouncing Bullet 55/0 (needs 104) · Knee Shot 55/0 (needs 204) · Diamond Shot 55/0 (needs 304) · Revised Skill 55/0 |
+| 2 | Dead Shot 60/1 (needs 114) · Extra Potion 60/1 (needs 214) · Skill Bargain 60/1 (needs 314) · Revised Magic 60/1 |
+| 3 | From The Above 70/3 (needs 122) · Miracle Drop 70/3 (needs 224) · Big Bag 70/3 (needs 324) · Revised Art 70/3 |
+| 4 | Snipe Mastery 75/4 (needs 134) · Med Research 75/4 (needs 234) · Ten Shot 75/4 (needs 334) · Contract 75/4 (needs 243 + 343) |
+| 5 | Super Stat Plus 85/6 (needs 144) · Healing Field 85/6 (needs 244) · Extravagance 85/6 (needs 344) · New Order 85/6 (needs 434) |
+
+- **Skill names:** `nAttack` is shown as Long Shot (range +5 m per rank), `cAttack` as Aimed Shot; the first three cAttack ranks and Stat Scan share row 2.
+- **Class C prerequisites** are single skill numbers (`rSkill`): each C skill needs the last skill of its row in the tree above it (Bouncing Bullet 104, Dead Shot 114, From The Above 122, Snipe Mastery 134, Super Stat Plus 144, Knee Shot 204, Extra Potion 214, Miracle Drop 224, Med Research 234, Healing Field 244, Diamond Shot 304, Skill Bargain 314, Big Bag 324, Ten Shot 334, Extravagance 344); Contract needs Acidic Field I + Truce Trading I (243 + 343); New Order needs Contract (434). The four Revised / Stat skills of column 4 (404, 414, 424) have none.
+- **Checked against the 2014 community simulator** (Rain Niar's Rabbit SkillSimulator v3): 92 of 97 cells equal; the differences, where the game code wins: Long Shot II-IV need 0 points (the simulator said 1/2/3), Life Shot needs 21 points (22), Customized Shotgun II shows Lv 28 / 22 pts (32 / 22). **Needs a live check:** Customized Shotgun II has an empty `getSkill` branch (`RabbitSkill.cs:957`) that falls into a shared tail, so its Lv 28 is the decoder's result, not an explicit `setReq`; it breaks the row's +4 level pattern (20, 24, 28, **32**).
+
 ## Server Balance Variations (TTO)
 
 | Skill | Original BigBug baseline | TTO delta |

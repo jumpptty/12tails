@@ -486,6 +486,16 @@ Revised Art is a flat 12% of the cooldown while each AGI point's cut shrinks as 
 
 ---
 
+### 3.6 Skill learning rules (class skill window; verified 2026-10-12)
+
+Source: `CharacterDataClass.cs` `upgradeSkill` / `upgradeCSkill`, `GameGui.cs:16429-16560` (skill window states), `SkillClass.setReq` (`SkillClass.cs:108`, stores `rLv` and `rBn`). Used by the hub's Skill Simulator.
+
+* **Skill ids and grid:** a skill's command number is `tree*100 + row*10 + column` with trees 1 = Basic, 2 = Class A, 3 = Class B, 4 = Class C, rows 0-7, columns 1-4 (`<Class>Skill.getSkillTree`, e.g. `RabbitSkill.cs:2287`). The window counts the learned skills inside `tree*100+100 .. tree*100+199` as that tree's points (`GameGui.cs:16355`, field `mXacbsG6yTa`).
+* **Point pools:** Basic + A + B share one pool of `clamp(lv − 1, 0, 49)` (`upgradeSkill`, `CharacterDataClass.cs:4005`: refuses when `skillCount() >= that`). Class C has its own pool of `clamp(floor(0.2 × (lv − 50)), 0, 12)` (`upgradeCSkill`, `:4388`), i.e. one C point per 5 levels from Lv 55, 9 at Lv 95.
+* **Window states** (`GameGui.cs:16429-16560`): a skill is locked when `lv < rLv`; locked when the points already spent **in its own tree** are `< rBn`; locked when its `rSkill` is not learned (`rSkill > 99999` means two skills, `rSkill / 1000` and `rSkill % 1000`); and, for every skill below 400 whose command number does not end in 1, locked until the skill one number lower (the previous rank or the cell to its left) is learned. Class C skills have no left-cell rule.
+* **Reading `rBn`:** it is "skills already learned in this tree before this one" (first cell of a tree is 0). A learned set is reachable only if, with each tree's `rBn` values sorted ascending, the k-th value (from 0) is `≤ k`.
+* **Decoding caveat:** `rLv`/`rBn` come from `getSkill` (`python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs`); `rSkill` is a separate `skillClass.rSkill = N` line the decoder does not print (grep it in `<Class>Skill.cs`).
+
 ## 4. Hidden mechanics & special interactions
 
 - **Luck touches everything actually reachable.** The `R = Random(0, ceil(0.2*LCK))` spread is added inside

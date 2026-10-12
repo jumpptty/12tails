@@ -2882,6 +2882,71 @@ let checkedChmSim = 0;
 }
 console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
 
+// Skill simulator (skill-simulator tool, 2026-10-12): the Rabbit grid data and the learn rules (skillSimValid) against hand-derived expectations from the game code.
+let checkedRsim = 0;
+{
+  const fail = (msg) => { console.error(`[SKILL SIM ERROR] ${msg}`); errorCount++; };
+  const ok = (cond, msg) => { if (cond) checkedRsim++; else fail(msg); };
+  const SIM = vm.runInContext("SKILL_SIM", sandbox).rabbit, cellsFn = vm.runInContext("skillSimCells", sandbox), validFn = vm.runInContext("skillSimValid", sandbox), poolMax = vm.runInContext("skillSimPoolMax", sandbox), poolMaxC = vm.runInContext("skillSimPoolMaxC", sandbox);
+  const cells = cellsFn(SIM);
+  const valid = (ids, lv) => validFn(cells, SIM.length, new Set(ids), lv);
+  const tile = vm.runInContext("TOOLS", sandbox).find(x => x.id === "skill-simulator");
+  ok(tile && tile.title === "Skill Simulator" && tile.badgeRed && tile.badge === "กำลังพัฒนา ห้ามใช้จริง", "Skill Simulator tile keeps its name and the red in-development chip");
+  ok(SIM.length === 4 && SIM.every(t => t.rows.length >= 5 && t.rows.every(r => r.length === 4)), "Rabbit has 4 trees of 4-column rows");
+  const count = SIM.map(t => t.rows.flat().filter(Boolean).length).join("/");
+  ok(count === "18/30/30/20", `cells per tree ${count}, want 18/30/30/20 (Basic/A/B/C)`);
+  for (const id in cells) {
+    const c = cells[id];
+    ok(!!SKILL_ICONS[c.icon], `cell ${id} icon ${c.icon} missing`);
+    ok(c.req.every(r => cells[r]), `cell ${id} requires a skill that is not in the grid`);
+  }
+  // Point pools: Basic+A+B = clamp(lv-1, 0, 49); C = clamp(floor((lv-50)/5), 0, 12).
+  [[1, 0, 0], [10, 9, 0], [50, 49, 0], [60, 49, 2], [95, 49, 9]].forEach(([lv, m, mc]) => ok(poolMax(lv) === m && poolMaxC(lv) === mc, `pools at Lv ${lv}: ${poolMax(lv)}/${poolMaxC(lv)}, want ${m}/${mc}`));
+  ok(poolMaxC(54) === 0 && poolMaxC(55) === 1, "first C point arrives at Lv 55");
+  // Values read straight from RabbitSkill.getSkill (explicit setReq, checked by hand 2026-10-12): [reqLv, reqPoints].
+  [[104, 4, 0], [254, 32, 21], [353, 28, 18], [243, 24, 12], [434, 75, 4], [444, 85, 6], [272, 40, 25]].forEach(([id, lv, bn]) => ok(cells[id] && cells[id].lv === lv && cells[id].bn === bn, `cell ${id} should be Lv ${lv} / ${bn} pts, got ${cells[id] && cells[id].lv}/${cells[id] && cells[id].bn}`));
+  ok(cells[434].req.join() === "243,343" && cells[444].req.join() === "434", "Contract (434) needs Acidic Field I + Truce Trading I (rSkill 243343) and New Order (444) needs Contract");
+  // Screenshot scenario (Lv 10, 9 points): Maim Shot I + II learned, 7 left.
+  ok(valid([201, 202], 10) && !valid([201, 202, 203], 10), "Lv 10: Maim Shot I-II fine, III needs Lv 15");
+  ok(!valid([202], 10) && !valid([211], 10) && valid([201, 211], 10), "ranks need the rank before them; Mix I needs 1 point already in tree A");
+  ok(!valid([201], 2) && valid([201], 3), "Maim Shot I needs Lv 3");
+  // Pool limit: Lv 5 gives 4 points.
+  ok(valid([101, 102, 103, 104], 5) && !valid([101, 102, 103, 104, 201], 5), "Lv 5: 4 points in Basic fine, a 5th (tree A) is over the pool");
+  // Learn-order check: three skills that each need 2 points before them cannot be the only skills in the tree.
+  ok(!valid([203, 202, 201].filter(i => i !== 201), 20), "a tree cannot hold skills whose point requirement was never reached");
+  // C needs its own level, its own pool and the named skill; no previous-rank rule.
+  const b4 = [101, 102, 103, 104];
+  ok(valid([404], 55) && !valid([404], 54), "Revised Skill (404) needs Lv 55");
+  ok(!valid([401], 60) && valid([...b4, 401], 60) && !valid([...b4, 401, 404], 55), "Bouncing Bullet needs Long Shot IV; Lv 55 has only 1 C point");
+  // Contract (434): Acidic Field I + Truce Trading I, Lv 75, 4 other C skills. Build the prerequisites by learning in id order.
+  const learnTo = (set, tree, target) => { for (const id of Object.keys(cells).map(Number).filter(i => cells[i].tree === tree).sort((a, b) => a - b)) { if (set.has(target)) break; set.add(id); if (!valid(set, 95)) set.delete(id); } };
+  const full = new Set(b4); learnTo(full, 1, 243); learnTo(full, 2, 343); [401, 404, 414, 424, 434].forEach(i => full.add(i));
+  ok(valid(full, 95), "Contract build (Long Shot IV, A up to Acidic Field I, B up to Truce Trading I, 4 C skills + Contract) is legal at Lv 95");
+  ok(!valid(full, 74), "...and not at Lv 74 (Contract needs Lv 75)");
+  const noAcid = new Set(full); noAcid.delete(243); ok(!valid(noAcid, 95), "Contract without Acidic Field I is illegal");
+  const noTruce = new Set(full); noTruce.delete(343); ok(!valid(noTruce, 95), "Contract without Truce Trading I is illegal");
+  const noAim = new Set(full); noAim.delete(104); ok(!valid(noAim, 95), "Bouncing Bullet without Long Shot IV is illegal");
+  // One-click learning (skillSimAutoLearn): everything a skill needs is learned with it, nothing is removed, impossible requests return null.
+  const auto = vm.runInContext("skillSimAutoLearn", sandbox), A = (set, lv, id) => auto(cells, SIM.length, new Set(set), lv, id);
+  const treeCount = (s, tr) => [...s].filter(i => cells[i].tree === tr).length;
+  const life = A([], 95, 254);
+  ok(life && valid(life, 95) && [251, 252, 253, 254].every(i => life.has(i)) && treeCount(life, 1) === 22, "Life Shot (254) in one click: the 3 ranks before it plus enough Tree A skills for its 21 points (22 in total)");
+  ok(A([], 10, 254) === null, "Life Shot is out of reach at Lv 10 (Lv 32 and 21 points)");
+  const keep = A([101, 102], 95, 244);
+  ok(keep && keep.has(101) && keep.has(102) && keep.has(244) && valid(keep, 95), "one-click learning keeps what was already learned");
+  const contract = A([], 95, 434);
+  ok(contract && valid(contract, 95) && [243, 343, 434].every(i => contract.has(i)) && treeCount(contract, 3) === 5, "Contract in one click brings Acidic Field I, Truce Trading I and the 4 other C skills it needs (the cheapest ones)");
+  ok(A([], 74, 434) === null && A([], 95, 444) !== null && A([], 95, 444).has(434), "Contract needs Lv 75; New Order (444) in one click also learns Contract");
+  ok(A([], 4, 101) !== null && A([101], 95, 101) !== null && A([], 1, 201) === null, "a skill below the level is refused, a first rank learns alone");
+  // Clicking a learned skill (skillSimDrop): that rank and every rank above it go, and a build that would break is refused by the caller's valid().
+  const drop = vm.runInContext("skillSimDrop", sandbox), D = (set, id) => [...drop(new Set(set), id)].sort((a, b) => a - b).join();
+  ok(D([201, 202, 203, 204], 201) === "" && D([201, 202, 203, 204], 202) === "201" && D([201, 202, 203, 204], 204) === "201,202,203", "clicking rank 1 of 4 unlearns the skill; rank 2 leaves rank 1; rank 4 leaves rank 3");
+  ok(D([201], 201) === "" && D([101, 102, 201, 202], 101) === "201,202" && D([101, 102, 201, 202], 102) === "101,201,202", "a lone rank drops itself; other rows are untouched");
+  ok(D([401, 404], 401) === "404", "Class C skills have no ranks: the click drops the skill");
+  ok(!valid(drop(new Set([101, 102, 103, 104, 401]), 104), 95) && !valid(drop(new Set([101, 102, 103, 104, 401]), 102), 95) && valid(drop(new Set([101, 102, 103, 104]), 102), 95), "Long Shot cannot lose rank 4 while Bouncing Bullet needs it");
+}
+console.log(`Verified ${checkedRsim} skill simulator checks.`);
+
 // Server changes page (mountServerChanges): one row per card with a servers.<srv>.changeNote, chips rendered,
 // a row opens #skill-details/<id>?server=<srv>, inline status / skill links do not navigate.
 {
