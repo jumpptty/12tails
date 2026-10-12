@@ -3008,6 +3008,12 @@ let checkedRsim = 0;
   ok(bypass && bypass.has(202) && bypass.has(203) && !bypass.has(204), "clicking rank III of a locked row by hand is allowed (the bypass) and stops at rank III");
   const tight = {}; for (let r = 0; r < 8; r++) tight[20 + r] = 1;
   ok(AL([201], 95, 254, tight) === null, "when every row of the tree is locked at rank I, a skill that needs more points than that is refused");
+  // Plus markers (user 2026-10-12): Basic / A / B green = reached by levelling only its own row, red = other rows involved too; Class C stays yellow and single-click.
+  const MK = vm.runInContext("skillSimMarker", sandbox), M = (set, lv, id) => MK(cells, SIM.length, new Set(set), lv, id, {});
+  ok(M([], 95, 201) === "green" && M([], 95, 202) === "green" && M([], 95, 204) === "green", "Maim Shot I-IV: green (only its own row is levelled)");
+  ok(M([], 95, 211) === "red" && M([], 95, 254) === "red" && M([201], 95, 211) === "green", "Mix I needs one more skill in tree A: red, then green once Maim Shot I is learned; Life Shot: red");
+  ok(M([], 55, 404) === "yellow" && M([], 54, 404) === "" && M([], 1, 201) === "", "a Class C skill with nothing missing is yellow; out of level or of points: no marker");
+  ok(M([], 95, 401) === "" && M([101, 102, 103, 104], 95, 401) === "yellow", "Bouncing Bullet has no marker while Long Shot IV is missing (a Class C click never pulls other rows in), yellow once it is learned");
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
