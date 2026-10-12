@@ -301,6 +301,60 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 - **Client text:** Blade Fang says `+12×2`, `+18×3`, `+24×4` in Thai and English (`WolfSkill_thai.cs:572-604`, `WolfSkill_eng.cs:539-571`). Blood Fang says it doubles Blade Fang's range and adds 6 damage (`WolfSkill_thai.cs:1012-1016`, `WolfSkill_eng.cs:979-983`); the source's forward-range argument is **4 → 5**, while full target-finder width doubles **2 → 4**.
 
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Warrior, Paladin, Blade Master, Duel Blade). Source: `WolfSkill.getSkill` (`setReq`, `rSkill`) and `WolfSkill.getSkillTree`.
+
+**Warrior** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · N Attack 3 3/2 · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · — |
+| 3 | Perseverance 1 6/2 · Perseverance 2 12/4 · — · — |
+| 4 | Double Art 1 8/4 · Double Art 2 16/6 · Double Art 3 24/8 · Double Art 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Paladin** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Brave Spirit 1 3/0 · Brave Spirit 2 9/1 · Brave Spirit 3 15/2 · Brave Spirit 4 21/3 |
+| 2 | Crusader 1 5/1 · Crusader 2 11/3 · Crusader 3 17/5 · Crusader 4 23/7 |
+| 3 | Power Break 1 7/2 · Armor Break 1 13/4 · Power Break 2 19/6 · Armor Break 2 25/8 |
+| 4 | Weapon Plus 1 9/3 · Weapon Plus 2 15/5 · Weapon Plus 3 21/7 · Weapon Plus 4 27/9 |
+| 5 | Armor Plus 1 16/4 · Armor Plus 2 20/8 · Armor Plus 3 24/12 · Armor Plus 4 28/16 |
+| 6 | No Ko 1 20/12 · No Ko 2 24/15 · No Ko 3 28/18 · Second Wind 32/21 |
+| 7 | Cross Break 1 24/15 · Cross Break 2 27/18 · Cross Break 3 30/21 · Grand Cross 33/24 |
+| 8 | Mass Resurrection 1 35/25 · Mass Resurrection 2 40/27 · — · — |
+
+**Blade Master** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Blade Fang 1 3/0 · Blade Fang 2 9/1 · Blade Fang 3 15/2 · — |
+| 2 | Feral Instinct 1 5/1 · Feral Instinct 2 11/3 · Feral Instinct 3 17/5 · Feral Instinct 4 23/7 |
+| 3 | Provoke 1 7/2 · Provoke 2 13/4 · Art Cancel 1 19/6 · Art Cancel 2 25/8 |
+| 4 | Counter 1 9/3 · Counter 2 15/5 · Impulse 1 21/7 · Impulse 2 27/9 |
+| 5 | Feral Strike 1 16/4 · Feral Strike 2 20/8 · Feral Strike 3 24/12 · Feral Strike 4 28/16 |
+| 6 | Blade Song 1 20/12 · Blade Song 2 24/15 · Blade Song 3 28/18 · Last Blade 32/21 |
+| 7 | Dark Edge 1 24/15 · Dark Edge 2 27/18 · Dark Edge 3 30/21 · Dark Edge 4 33/24 |
+| 8 | Lunar Eclipse 1 35/23 · Lunar Eclipse 2 40/25 · Final Eclipse 45/27 · — |
+
+**Duel Blade** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Continuous Blade 55/0 (needs N Attack 3) · Glorious Spirit 55/0 (needs Brave Spirit 4) · Blood Fang 55/0 (needs Blade Fang 3) · Revised Skill 55/0 |
+| 2 | Sky Slasher 60/1 (needs C Attack 3) · Law Bringer 60/1 (needs Crusader 4) · Wild Heart 60/1 (needs Feral Instinct 4) · Revised Magic 60/1 |
+| 3 | Fortitude 70/3 (needs Perseverance 2) · Third Rend 70/3 (needs Armor Break 2) · Art Breaker 70/3 (needs Art Cancel 2) · Revised Art 70/3 |
+| 4 | Sublime Art 75/4 (needs Double Art 4) · Holy Sword 75/4 (needs Weapon Plus 4) · Mirror Blade 75/4 (needs Impulse 2) · Dual Brand 75/4 (needs No Ko 1 + Blade Song 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Holy Armor 85/6 (needs Armor Plus 4) · Feral Assault 85/6 (needs Feral Strike 4) · Twin Resonance 85/6 (needs Dual Brand) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Continuous Blade needs N Attack 3; Glorious Spirit needs Brave Spirit 4; Blood Fang needs Blade Fang 3; Sky Slasher needs C Attack 3; Law Bringer needs Crusader 4; Wild Heart needs Feral Instinct 4; Fortitude needs Perseverance 2; Third Rend needs Armor Break 2; Art Breaker needs Art Cancel 2; Sublime Art needs Double Art 4; Holy Sword needs Weapon Plus 4; Mirror Blade needs Impulse 2; Dual Brand needs No Ko 1 + Blade Song 1; Super Stat Plus needs Stat Plus 4; Holy Armor needs Armor Plus 4; Feral Assault needs Feral Strike 4; Twin Resonance needs Dual Brand.
+- **Checked against the 2014 community simulator** (Rain Niar's Wolf SkillSimulator V.3) **and TailsTailsSimulator.online/wolf**: 96 of 96 cells have the same Lv / points in all three.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

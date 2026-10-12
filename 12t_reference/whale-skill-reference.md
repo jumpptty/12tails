@@ -448,6 +448,61 @@ All sixteen below are `mode = passive` with no MP/SP (`scripts/decode_skilldata.
 - **Flying Shield:** `$RPC_flyingShield` spawns the `flyingShield` effect at the Whale (`createEffect`, `Whale.cs:24642-25213`) and the hit comes from `Whale_flyingShield.OnTriggerEnter` (`Whale_flyingShield.cs:126`); the flight path is the effect's animation, with no distance in code.
 - **Homing Shield** lives `chaAdjust(3)` s (`Whale.cs:10431`); Bubble Shield and Homing Shield have no distance gate (40 m target lock).
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Guardian, Aqua Knight, Ocean Templar, Grand Tide). Source: `WhaleSkill.getSkill` (`setReq`, `rSkill`) and `WhaleSkill.getSkillTree`.
+
+**Guardian** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · — · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · Shield Bash 22/4 |
+| 3 | Culinary Tongue 1 6/2 · Culinary Tongue 2 12/4 · — · — |
+| 4 | Super Size 1 8/4 · Super Size 2 16/6 · Super Size 3 24/8 · Super Size 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Aqua Knight** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Sweep 1 3/0 · Sweep 2 9/1 · Javelin 1 15/2 · Javelin 2 21/3 |
+| 2 | Honor 1 5/1 · Honor 2 11/3 · Honor 3 17/5 · Honor 4 23/7 |
+| 3 | Shield Rush 1 7/2 · Shield Rush 2 13/4 · Flying Shield 1 19/6 · Flying Shield 2 25/8 |
+| 4 | Swallow 1 9/3 · Swallow 2 15/5 · Gobble Up 21/7 · — |
+| 5 | Peninsula Impale 1 16/4 · Peninsula Impale 2 20/8 · Peninsula Round 1 24/12 · Peninsula Round 2 28/16 |
+| 6 | Wall Puncture 1 20/12 · Wall Puncture 2 24/15 · Wall Puncture 3 28/18 · Wall Puncture 4 32/21 |
+| 7 | Auto Shield 1 24/15 · Auto Shield 2 27/18 · Auto Shield 3 30/21 · Last Hope 33/24 |
+| 8 | 12th Kingdom Knight 1 35/23 · 12th Kingdom Knight 2 40/25 · Knight Of The Deep 45/27 · — |
+
+**Ocean Templar** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Bubble Shield 1 3/0 · Bubble Shield 2 9/1 · Bubble Shield 3 15/2 · Bubble Shield 4 21/3 |
+| 2 | Heavy Weight 1 5/1 · Heavy Weight 2 11/3 · Over Presence 1 17/5 · Over Presence 2 23/7 |
+| 3 | Hydro Blast 1 7/2 · Hydro Blast 2 13/4 · Hydro Blast 3 19/6 · Hydro Blast 4 25/8 |
+| 4 | Rejuvenate 1 9/3 · Rejuvenate 2 15/5 · Rejuvenate 3 18/7 · Rejuvenate 4 27/9 |
+| 5 | Whale Wave 1 16/4 · Whale Wave 2 20/8 · Mal Storm 1 24/12 · Mal Storm 2 28/16 |
+| 6 | Harden Skin 1 20/12 · Harden Skin 2 24/15 · Harden Skin 3 28/18 · Harden Skin 4 32/21 |
+| 7 | Call To Arm 24/15 · Salvation 1 27/18 · Salvation 2 30/21 · — |
+| 8 | Megalodon 1 35/25 · Megalodon 2 40/27 · Reduced Cast 45/29 · — |
+
+**Grand Tide** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Entended Wave 55/0 (needs N Attack 2) · Tide Cutter 55/0 (needs Javelin 2) · Bubble Burst 55/0 (needs Bubble Shield 4) · Revised Skill 55/0 |
+| 2 | Shield Reflect 60/1 (needs Shield Bash) · Honor Stand 60/1 (needs Honor 4) · Over Weight 60/1 (needs Over Presence 2) · Revised Magic 60/1 |
+| 3 | Gourmet Heart 70/3 (needs Culinary Tongue 2) · Homing Shield 70/3 (needs Flying Shield 2) · Spiral Blast 70/3 (needs Hydro Blast 4) · Revised Art 70/3 |
+| 4 | Mega Size 75/4 (needs Super Size 4) · Wonder Belly 75/4 (needs Gobble Up) · Revitalize 75/4 (needs Rejuvenate 4) · Bowling Whale 75/4 (needs Wall Puncture 1 + Harden Skin 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Peninsula Asunder 85/6 (needs Peninsula Round 2) · Diving Press 85/6 (needs Mal Storm 2) · Grand Tide 85/6 (needs Bowling Whale) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Entended Wave needs N Attack 2; Tide Cutter needs Javelin 2; Bubble Burst needs Bubble Shield 4; Shield Reflect needs Shield Bash; Honor Stand needs Honor 4; Over Weight needs Over Presence 2; Gourmet Heart needs Culinary Tongue 2; Homing Shield needs Flying Shield 2; Spiral Blast needs Hydro Blast 4; Mega Size needs Super Size 4; Wonder Belly needs Gobble Up; Revitalize needs Rejuvenate 4; Bowling Whale needs Wall Puncture 1 + Harden Skin 1; Super Stat Plus needs Stat Plus 4; Peninsula Asunder needs Peninsula Round 2; Diving Press needs Mal Storm 2; Grand Tide needs Bowling Whale.
+- **Checked against the 2014 community simulator** (Rain Niar's Whale SkillSimulator V.3) **and TailsTailsSimulator.online/whale**: 95 of 96 cells have the same Lv / points in all three; the differences (game code first):
+  - `rejuvenate3` (B): game **18/7**, both simulators 21/7. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations
 
 Base engine (BigBug) values are documented above; this section lists private-server deltas.

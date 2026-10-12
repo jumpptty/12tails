@@ -474,6 +474,64 @@ below for why they were initially left out and then given their own rows.
 - **Drain statuses:** on-hit Drain statuses (e.g. gear `hpDrain`) are debuffs, so they consume Safe Guard like any other debuff (accepted by the user 2026-10-01; not tested live).
 - **App Modeling:** card `panda_safeGuard` (`passive: true`, `cd: 180`, `cdWrapped: true`, `revisedArtExempt: false`, `compatSkills: ["panda_resistance"]`; Resistance links back).
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Martial Artist, Strike Master, Sage Fist, Storm Raider). Source: `PandaSkill.getSkill` (`setReq`, `rSkill`) and `PandaSkill.getSkillTree`.
+
+**Martial Artist** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/0 · N Attack 3 3/0 · N Attack 4 4/0 |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · — |
+| 3 | Roll 1 6/2 · Roll 2 12/4 · — · — |
+| 4 | Resistance 1 8/4 · Resistance 2 16/6 · Resistance 3 24/8 · Resistance 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Strike Master** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Three Steps 1 3/0 · Three Steps 2 9/1 · Rushing Falcon 1 15/2 · Rushing Falcon 2 21/3 |
+| 2 | Qi Strike 1 5/1 · Qi Strike 2 11/3 · Qi Strike 3 17/5 · Delay Qi 23/7 |
+| 3 | Pummel 1 7/2 · Tower Rush 1 13/4 · Pummel 2 19/6 · Tower Rush 2 25/8 |
+| 4 | Tiger Toss 9/3 · Tiger Pounce 15/5 · Climbing Cliff 21/7 · Crumbling Mountain 27/9 |
+| 5 | Combo Plus 1 16/4 · Combo Plus 2 20/8 · Combo Plus 3 24/12 · Combo Plus 4 28/16 |
+| 6 | Rising Vortex 1 20/12 · Rising Vortex 2 24/15 · Rising Dragons 1 28/18 · Rising Dragons 2 32/21 |
+| 7 | Focused Spirit 1 24/15 · Focused Spirit 2 27/18 · Focused Art 1 30/21 · Focused Art 2 33/24 |
+| 8 | Ashura 1 35/23 · Ashura 2 40/25 · — · — |
+
+**Sage Fist** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Drunken Fist 1 3/0 · Drunken Fist 2 9/1 · Drunken Plus 1 15/2 · Drunken Plus 2 21/3 |
+| 2 | Water Monkey 1 5/1 · Water Monkey 2 11/3 · Water Crane 1 17/5 · Water Crane 2 23/7 |
+| 3 | Stasis Blow 1 7/2 · Stasis Blow 2 13/4 · Death Blow 1 19/6 · Death Blow 2 25/8 |
+| 4 | Shadow Fist 1 9/3 · Shadow Fist 2 15/5 · Shadow Fist 3 21/7 · Shadow Fist 4 27/9 |
+| 5 | Sp Transfer 1 16/4 · Sp Transfer 2 20/8 · Sacred Sage Technique 1 24/12 · Sacred Sage Technique 2 28/16 |
+| 6 | Wind&cloud 1 20/12 · Wind&cloud 2 24/15 · Rain&storm 1 28/18 · Rain&storm 2 30/21 |
+| 7 | Lotus Palm 1 24/15 · Lotus Palm 2 27/18 · Heaven Palm 1 30/21 · Heaven Palm 2 33/24 |
+| 8 | Mystic Sage 1 35/23 · Mystic Sage 2 40/25 · — · — |
+
+**Storm Raider** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Aura Blast 55/0 (needs N Attack 4) · Nine Steps 55/0 (needs Rushing Falcon 2) · Drunken Spin 55/0 (needs Drunken Plus 2) · Revised Skill 55/0 |
+| 2 | Aura Field 60/1 (needs C Attack 3) · Qi Burst 60/1 (needs Delay Qi) · Time And Tide 60/1 (needs Water Crane 2) · Revised Magic 60/1 |
+| 3 | Roll Around 70/3 (needs Roll 2) · Ogre Impact 70/3 (needs Tower Rush 2) · Wind Walker 70/3 (needs Death Blow 2) · Revised Art 70/3 |
+| 4 | Safe Guard 75/4 (needs Resistance 4) · Crushing Monolith 75/4 (needs Crumbling Mountain) · Spirit Fist 75/4 (needs Shadow Fist 4) · Fuujin Ken 75/4 (needs Rising Vortex 1 + Wind&cloud 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Combo Link 85/6 (needs Combo Plus 4) · Heaven Breath 85/6 (needs Shadow Fist 4) · Raijin Ken 85/6 (needs Fuujin Ken) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Aura Blast needs N Attack 4; Nine Steps needs Rushing Falcon 2; Drunken Spin needs Drunken Plus 2; Aura Field needs C Attack 3; Qi Burst needs Delay Qi; Time And Tide needs Water Crane 2; Roll Around needs Roll 2; Ogre Impact needs Tower Rush 2; Wind Walker needs Death Blow 2; Safe Guard needs Resistance 4; Crushing Monolith needs Crumbling Mountain; Spirit Fist needs Shadow Fist 4; Fuujin Ken needs Rising Vortex 1 + Wind&cloud 1; Super Stat Plus needs Stat Plus 4; Combo Link needs Combo Plus 4; Heaven Breath needs Shadow Fist 4; Raijin Ken needs Fuujin Ken.
+- **Checked against the 2014 community simulator** (Rain Niar's Panda SkillSimulator V.3) **and TailsTailsSimulator.online/panda**: 93 of 97 cells have the same Lv / points in all three; the differences (game code first):
+  - `nAttack2` (Basic): game **2/0**, both simulators 2/1. Same in practice: each rank needs the rank before it, which already forces that many skills in the tree.
+  - `nAttack3` (Basic): game **3/0**, both simulators 3/2. Same in practice: each rank needs the rank before it, which already forces that many skills in the tree.
+  - `nAttack4` (Basic): game **4/0**, both simulators 4/3. Same in practice: each rank needs the rank before it, which already forces that many skills in the tree.
+  - `rain&storm2` (B): game **30/21**, both simulators 32/21. **Needs a live check:** the cell is an empty `getSkill` branch (no `setReq`), so the decoder's value comes from the shared tail it falls into.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

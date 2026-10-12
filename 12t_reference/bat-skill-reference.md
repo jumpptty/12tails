@@ -163,6 +163,62 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 # Damage & Mechanics
 
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Night Mage, ShadowCaller, DreamCaster, Black Queen). Source: `BatSkill.getSkill` (`setReq`, `rSkill`) and `BatSkill.getSkillTree`.
+
+**Night Mage** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · N Attack 3 3/2 · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/3 · C Attack 3 16/5 · — |
+| 3 | Drain Mana 1 8/2 · Drain Mana 2 16/4 · Drain Mana 3 24/6 · — |
+| 4 | Mass Cast 1 32/6 · Mass Cast 2 40/9 · — · — |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**ShadowCaller** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Phantom Bane 1 3/0 · Phantom Bane 2 11/1 · Phantom Bane 3 19/2 · Phantom Bane 4 27/3 |
+| 2 | Shadow Gaze 1 5/1 · Shadow Gaze 2 13/3 · Shadow Gaze 3 21/5 · Shadow Gaze 4 29/7 |
+| 3 | Dissolute 1 7/2 · Corruption 1 15/4 · Dissolute 2 23/6 · Corruption 2 31/8 |
+| 4 | Curse 1 9/3 · Curse 2 17/5 · Curse 3 25/7 · Curse 4 33/9 |
+| 5 | Echoes 1 12/4 · Echoes 2 20/8 · Nightmare 1 28/12 · Nightmare 2 36/16 |
+| 6 | Amplify Damage 1 17/6 · Amplify Damage 2 24/10 · Amplify Damage 3 31/14 · Amplify Damage 4 38/18 |
+| 7 | Doom 1 22/12 · Doom 2 28/16 · Shadow Mastery 1 34/20 · Shadow Mastery 2 40/24 |
+| 8 | Guardian Of The Night 1 35/23 · Guardian Of The Night 2 40/25 · — · — |
+
+**DreamCaster** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Mirage Orb 1 3/0 · Mirage Orb 2 11/1 · Mirage Orb 3 19/2 · Mirage Orb 4 27/3 |
+| 2 | Shadow Illusion 1 5/1 · Shadow Illusion 2 13/3 · Shadow Illusion 3 21/5 · Shadow Illusion 4 29/7 |
+| 3 | Blind 1 7/2 · Blind 2 15/4 · Confusion 1 23/6 · Confusion 2 31/8 |
+| 4 | Hate Transfer 1 9/3 · Hate Transfer 2 17/5 · Switch 25/7 · Swap 33/9 |
+| 5 | Dream Dazzle 1 12/4 · Dream Dazzle 2 20/8 · Phantasm Blast 1 28/12 · Phantasm Blast 2 36/16 |
+| 6 | Charm 1 17/6 · Charm 2 24/10 · Mind Control 1 31/14 · Mind Control 2 38/18 |
+| 7 | Dream Burst 1 22/15 · Dream Burst 2 28/18 · Dream Burst 3 34/21 · — |
+| 8 | Mimic 1 35/23 · Mimic 2 40/25 · All Mimic 45/27 · — |
+
+**Black Queen** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Illusion Effect 55/0 (needs N Attack 3) · Demon Bane 55/0 (needs Phantom Bane 4) · Distant Orb 55/0 (needs Mirage Orb 4) · Revised Skill 55/0 |
+| 2 | Dark Intention 60/1 (needs C Attack 3) · Demon Gaze 60/1 (needs Shadow Gaze 4) · Shadow Sacrifice 60/1 (needs Shadow Illusion 4) · Revised Magic 60/1 |
+| 3 | Merciless Drain 70/3 (needs Drain Mana 3) · Shame 70/3 (needs Corruption 2) · Chiroptophobia 70/3 (needs Confusion 2) · Revised Art 70/3 |
+| 4 | Auto Mass 75/4 (needs Mass Cast 2) · Dark Stalker 75/4 (needs Curse 4) · Paranoia 75/4 (needs Swap) · Nefarious Whip 75/4 (needs Nightmare 1 + Phantasm Blast 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Soul Eater 85/6 (needs Nightmare 2) · Shattering Dream 85/6 (needs Phantasm Blast 2) · Black Servant 85/6 (needs Nefarious Whip) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Illusion Effect needs N Attack 3; Demon Bane needs Phantom Bane 4; Distant Orb needs Mirage Orb 4; Dark Intention needs C Attack 3; Demon Gaze needs Shadow Gaze 4; Shadow Sacrifice needs Shadow Illusion 4; Merciless Drain needs Drain Mana 3; Shame needs Corruption 2; Chiroptophobia needs Confusion 2; Auto Mass needs Mass Cast 2; Dark Stalker needs Curse 4; Paranoia needs Swap; Nefarious Whip needs Nightmare 1 + Phantasm Blast 1; Super Stat Plus needs Stat Plus 4; Soul Eater needs Nightmare 2; Shattering Dream needs Phantasm Blast 2; Black Servant needs Nefarious Whip.
+- **Checked against the 2014 community simulator** (Rain Niar's Bat SkillSimulator V.3) **and TailsTailsSimulator.online/bat**: 93 of 95 cells have the same Lv / points in all three; the differences (game code first):
+  - `cAttack2` (Basic): game **10/3**, both simulators 10/2. **Needs a live check:** the cell is an empty `getSkill` branch (no `setReq`), so the decoder's value comes from the shared tail it falls into.
+  - `cAttack3` (Basic): game **16/5**, both simulators 16/3. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations (ToT & TTO)
 
 Private-server values below are documented from the Bible skill-detail schema, not the BigBug decompile; the original-server column is the BigBug baseline represented by that card.

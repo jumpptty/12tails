@@ -465,6 +465,60 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 - reqLv/reqBn 55/0, mode passive. See the Combo entry: `RPC_nAttack5` starts after `nAttack3` or the spin, on a press more than 2 s later, with no roll (`Bison.cs:5034-5067`); it is a two-hit spin (radius 5 then 6 x rangeMod, height 3; first hit 0 base KO) with the spin's damage coefficients (`:18313-18643`), and it also triggers Berserker Rush, Colossal Weapon and Over Pride like other stages.
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Berserker, Gladiator, Warlord, Molten Axe). Source: `BisonSkill.getSkill` (`setReq`, `rSkill`) and `BisonSkill.getSkillTree`.
+
+**Berserker** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · N Attack 3 3/2 · N Attack 4 4/3 |
+| 2 | C Attack 1 4/1 · C Attack 2 10/3 · Hold Charge 16/5 · — |
+| 3 | Blood Rage 1 6/2 · Blood Rage 2 12/4 · — · — |
+| 4 | Brute Strength 1 8/4 · Brute Strength 2 16/6 · Brute Strength 3 24/8 · Brute Strength 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Gladiator** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Enrage 1 3/0 · Enrage 2 9/1 · Enrage 3 15/2 · Enrage 4 21/3 |
+| 2 | Slam 1 5/1 · Slam 2 11/3 · Trample 1 17/5 · Trample 2 23/7 |
+| 3 | Knock Down 1 7/2 · Knock Down 2 13/4 · Knock Down 3 19/6 · Knock Down 4 25/8 |
+| 4 | Controlled Swing 9/3 · Improved Swing 1 15/5 · Improved Swing 2 21/7 · Improved Swing 3 27/9 |
+| 5 | Far Stun 1 16/4 · Far Stun 2 20/8 · Instant Rush 24/12 · — |
+| 6 | Berserker Rush 1 20/12 · Berserker Rush 2 24/15 · Berserker Rush 3 28/18 · Berserker Rush 4 32/21 |
+| 7 | Resting Glory 24/15 · Fury Trance 1 27/18 · Fury Trance 2 30/21 · Fury Trance 3 33/24 |
+| 8 | Over Power 1 35/23 · Over Power 2 40/25 · Over Swing 45/27 · — |
+
+**Warlord** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Power Cleave 1 3/0 · Power Hammer 1 9/1 · Power Cleave 2 15/2 · Power Hammer 2 21/3 |
+| 2 | Warcry 1 5/1 · Warcry 2 11/3 · Overlord 1 17/5 · Overlord 2 23/7 |
+| 3 | Over Pride 1 7/2 · Over Pride 2 13/5 · Over Pride 3 19/7 · Over Pride 4 25/9 |
+| 4 | Iron Skin 1 16/4 · Iron Skin 2 20/8 · Iron Skin 3 24/12 · Iron Shield 28/18 |
+| 5 | Diamond Skin 1 16/4 · Diamond Skin 2 20/8 · Diamond Skin 3 24/12 · Diamond Shield 28/18 |
+| 6 | Earth Rupture 1 20/12 · Earth Rupture 2 24/15 · Earth Smasher 1 28/18 · Earth Smasher 2 32/21 |
+| 7 | Colossal Weapon 1 24/15 · Colossal Weapon 2 27/18 · Colossal Armor 1 30/21 · Colossal Armor 2 33/24 |
+| 8 | Titan Form 1 35/23 · Titan Form 2 40/25 · — · — |
+
+**Molten Axe** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Added Swing 55/0 (needs N Attack 4) · Rage Control 55/0 (needs Enrage 4) · Power Reel 55/0 (needs Power Hammer 2) · Revised Skill 55/0 |
+| 2 | Solid Hold 60/1 (needs Hold Charge) · Aspect Of The Horde 60/1 (needs Trample 2) · Onslaught 60/1 (needs Overlord 2) · Revised Magic 60/1 |
+| 3 | Blood Bath 70/3 (needs Blood Rage 2) · Aftershock 70/3 (needs Knock Down 4) · Pride Crusher 70/3 (needs Over Pride 4) · Revised Art 70/3 |
+| 4 | Raw Strength 75/4 (needs Brute Strength 4) · Spin Hack 75/4 (needs Improved Swing 3) · Steel Skin 75/4 (needs Iron Shield) · Magma Clutter 75/4 (needs Berserker Rush 1 + Earth Rupture 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Mass Stun 85/6 (needs Instant Rush) · Mythril Skin 85/6 (needs Diamond Shield) · Calamity Hammer 85/6 (needs Magma Clutter) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Added Swing needs N Attack 4; Rage Control needs Enrage 4; Power Reel needs Power Hammer 2; Solid Hold needs Hold Charge; Aspect Of The Horde needs Trample 2; Onslaught needs Overlord 2; Blood Bath needs Blood Rage 2; Aftershock needs Knock Down 4; Pride Crusher needs Over Pride 4; Raw Strength needs Brute Strength 4; Spin Hack needs Improved Swing 3; Steel Skin needs Iron Shield; Magma Clutter needs Berserker Rush 1 + Earth Rupture 1; Super Stat Plus needs Stat Plus 4; Mass Stun needs Instant Rush; Mythril Skin needs Diamond Shield; Calamity Hammer needs Magma Clutter.
+- **Checked against the 2014 community simulator** (Rain Niar's Bison SkillSimulator V.3) **and TailsTailsSimulator.online/bison**: 97 of 97 cells have the same Lv / points in all three.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

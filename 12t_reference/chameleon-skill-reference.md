@@ -534,6 +534,62 @@ Each of the eight Slayer cards is its own skill: own reqLv/reqBn, own race, own 
 7. **Tooltip mismatches (cards follow code; details in each skill entry; since 2026-10-02 each card shows a red `__คำอธิบายในเกม…__` line, rank-gated where only some ranks differ):** Piercing Venom (+4 vs 6), All Slain rank 2 (150 vs `talAdjust(200)`), Erase Senses (+50% vs +4 s), Bow Mastery (+50% vs +33% speed), Added Fire Thai (+30% vs +40%), Needle Prison rank 2 English (2 vs 3 s), Perfect Blend rank 2 (3 vs 4 s), Increased Poison Thai (+2 s every rank), Combo damage-loss percentages.
 8. **Defaults:** the new Chameleon passive/gear toggles (Critical Plus, Bulls Eye, Fatal Strike, crit gear, Piercing Venom, …) start off, like every other dep, so Combo shows no crit until they are turned on.
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Hunter, Trickster, Slayer, Thunder Dragon). Source: `ChameleonSkill.getSkill` (`setReq`, `rSkill`) and `ChameleonSkill.getSkillTree`.
+
+**Hunter** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · N Attack 3 3/2 · N Attack 4 4/3 |
+| 2 | C Attack 1 4/1 · C Attack 2 10/3 · C Attack 3 16/5 · — |
+| 3 | Immunity 1 6/2 · Immunity 2 12/4 · — · — |
+| 4 | Far Reach 1 8/4 · Far Reach 2 16/6 · Far Reach 3 24/8 · Far Reach 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Trickster** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Quick Fire 1 3/0 · Quick Fire 2 9/1 · Quick Fire 3 15/2 · Quick Fire 4 21/3 |
+| 2 | Perfect Blend 1 5/1 · Perfect Blend 2 11/3 · True Invisibility 1 17/5 · True Invisibility 2 23/7 |
+| 3 | Needle Prison 1 7/2 · Mass Shot 1 13/4 · Needle Prison 2 19/6 · Mass Shot 2 25/8 |
+| 4 | Poison Arrow 1 9/3 · Poison Arrow 2 15/5 · Poison Arrow 3 21/7 · Poison Arrow 4 27/9 |
+| 5 | Increased Poison 1 16/4 · Increased Poison 2 20/8 · Increased Poison 3 24/12 · Piercing Venom 28/16 |
+| 6 | Poison Volley 1 20/12 · Poison Volley 2 24/15 · Venom Shock 1 28/18 · Venom Shock 2 32/21 |
+| 7 | Mass Invisibility 1 24/15 · Mass Invisibility 2 27/18 · Clear Arrow 30/21 · — |
+| 8 | Final Entrapment 1 35/23 · Final Entrapment 2 40/25 · Torment Rain 45/27 · — |
+
+**Slayer** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Fatal Strike 1 3/0 · Fatal Strike 2 9/1 · Fatal Strike 3 15/2 · Fatal Strike 4 21/3 |
+| 2 | Critical Plus 1 5/1 · Critical Plus 2 11/3 · Critical Plus 3 17/5 · Critical Plus 4 23/7 |
+| 3 | Left Stride 1 7/2 · Right Stride 1 13/4 · Left Stride 2 19/6 · Right Stride 2 25/8 |
+| 4 | Camp Fire 1 9/3 · Blood Burn 1 15/5 · Camp Fire 2 21/7 · Blood Burn 2 27/9 |
+| 5 | Bug Slayer 16/4 · Tail Slayer 20/8 · Elemental Slayer 24/12 · Machine Slayer 28/16 |
+| 6 | Improved Slayer 1 20/12 · Improved Slayer 2 24/15 · Improved Slayer 3 28/18 · Improved Slayer 4 32/21 |
+| 7 | All Bug Slayer 24/15 · All Tail Slayer 27/18 · All Elemental Slayer 30/21 · All Machine Slayer 33/24 |
+| 8 | All Slain 1 35/23 · All Slain 2 40/25 · — · — |
+
+**Thunder Dragon** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Bow Mastery 55/0 (needs N Attack 4) · Added Fire 55/0 (needs Quick Fire 4) · Extra Arrows 55/0 (needs Fatal Strike 4) · Revised Skill 55/0 |
+| 2 | Silent Walk 60/1 (needs C Attack 3) · Erase Senses 60/1 (needs True Invisibility 2) · Bulls Eye 60/1 (needs Critical Plus 4) · Revised Magic 60/1 |
+| 3 | Skin Shift 70/3 (needs Immunity 2) · Mass House Lock 70/3 (needs Mass Shot 2) · Double Strider 70/3 (needs Right Stride 2) · Revised Art 70/3 |
+| 4 | Double Effect 75/4 (needs Far Reach 4) · Rusty Decay 75/4 (needs Poison Arrow 4) · Tent 75/4 (needs Blood Burn 2) · Zero Shot 75/4 (needs Poison Volley 1 + Improved Slayer 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Deadly Venom 85/6 (needs Piercing Venom) · Mark Of Slayer 85/6 (needs Machine Slayer) · Thunder Dragon 85/6 (needs Zero Shot) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Bow Mastery needs N Attack 4; Added Fire needs Quick Fire 4; Extra Arrows needs Fatal Strike 4; Silent Walk needs C Attack 3; Erase Senses needs True Invisibility 2; Bulls Eye needs Critical Plus 4; Skin Shift needs Immunity 2; Mass House Lock needs Mass Shot 2; Double Strider needs Right Stride 2; Double Effect needs Far Reach 4; Rusty Decay needs Poison Arrow 4; Tent needs Blood Burn 2; Zero Shot needs Poison Volley 1 + Improved Slayer 1; Super Stat Plus needs Stat Plus 4; Deadly Venom needs Piercing Venom; Mark Of Slayer needs Machine Slayer; Thunder Dragon needs Zero Shot.
+- **Checked against the 2014 community simulator** (Rain Niar's Chameleon SkillSimulator V.3) **and TailsTailsSimulator.online/chameleon**: 95 of 97 cells have the same Lv / points in all three; the differences (game code first):
+  - `cAttack2` (Basic): game **10/3**, both simulators 10/2. **Needs a live check:** the cell is an empty `getSkill` branch (no `setReq`), so the decoder's value comes from the shared tail it falls into.
+  - `cAttack3` (Basic): game **16/5**, both simulators 16/3. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations
 
 | Skill | Original BigBug baseline | TTO delta |

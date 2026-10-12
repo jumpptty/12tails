@@ -653,6 +653,60 @@ The BigBug-side skill formulas, status logic, and geometry remain documented in 
 - **Titanic Earth Pulse:** `$i` starts at 0 (`Monkey.cs:32840`), each tick hits `FindAreaTarget(hitPos, i + 1, 6)` (`:32710`) and loops while `i < 5` (`:32762`) with a 0.2 s wait: five rings of radius 1-5 m.
 - **Summon commands** (Summon Defense, Unsummon, Summon Release) forward to the summon with no distance check (§4.2-4.4); Summon Soul has no gate, so 40 m target lock.
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Summoner, Pyromancer, Geomancer, Diablo). Source: `MonkeySkill.getSkill` (`setReq`, `rSkill`) and `MonkeySkill.getSkillTree`.
+
+**Summoner** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1/0 · Damage Cast 1 2/1 · Damage Cast 2 3/2 · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · C Attack 4 22/4 |
+| 3 | Summon Attack 6/2 · Summon Defense 12/4 · Unsummon 18/6 · Summon Release 24/8 |
+| 4 | Instant Cast 1 32/6 · Instant Cast 2 40/10 · — · — |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Pyromancer** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Fire Ball 1 3/0 · Fire Ball 2 11/1 · Fire Ball 3 19/2 · Fire Ball 4 27/3 |
+| 2 | Phoenix 1 5/1 · Phoenix 2 13/3 · Phoenix 3 21/5 · Phoenix 4 29/7 |
+| 3 | Rapid Fire 1 7/2 · Rapid Fire 2 15/4 · Rapid Fire 3 23/6 · Sky Crimson 31/8 |
+| 4 | Intense Fire 1 9/3 · Intense Fire 2 17/5 · Intense Fire 3 25/7 · Blazing Arrow 33/9 |
+| 5 | Flash Fire 1 12/4 · Flash Fire 2 20/8 · Flash Fire 3 28/12 · Flash Fire 4 36/16 |
+| 6 | Ja 1 17/6 · Ja 2 24/10 · Ja 3 31/14 · Ja 4 38/18 |
+| 7 | Fire Rune 1 22/12 · Fire Rune 2 28/16 · Fire Rune 3 34/20 · Runic Flame 40/24 |
+| 8 | World Ignition 1 35/23 · World Ignition 2 40/25 · — · — |
+
+**Geomancer** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Ground Lock 1 3/0 · Ground Lock 2 11/1 · Ground Lock 3 19/2 · Ground Lock 4 27/3 |
+| 2 | Gadina 1 5/1 · Gadina 2 13/3 · Gadina 3 21/5 · Gadina 4 29/7 |
+| 3 | Titan Sword 1 7/2 · Titan Sword 2 15/4 · Titan Sword 3 23/6 · Planet Breaker 31/8 |
+| 4 | Aegis Of Earth 1 9/3 · Aegis Of Earth 2 17/5 · Aegis Of Earth 3 25/7 · Titanic Earth Pulse 33/9 |
+| 5 | Stone Hammer 1 12/4 · Stone Hammer 2 20/8 · Stone Hammer 3 28/12 · Stone Hammer 4 36/16 |
+| 6 | Buiten Hou Hou 1 17/6 · Buiten Hou Hou 2 24/10 · Buiten Hou Hou 3 31/14 · Buiten Hou Hou 4 38/18 |
+| 7 | Earth Rune 1 22/12 · Earth Rune 2 28/16 · Earth Rune 3 34/20 · Runic Sand 40/24 |
+| 8 | Lavu 1 35/23 · Lavu 2 40/25 · — · — |
+
+**Diablo** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Mike Blink 55/0 (needs Damage Cast 2) · Fire Keep 55/0 (needs Fire Ball 4) · Second Stone 55/0 (needs Ground Lock 4) · Revised Skill 55/0 |
+| 2 | Mike Circle 60/1 (needs C Attack 4) · Instant Blaze 60/1 (needs Phoenix 4) · Earth Guard 60/1 (needs Gadina 4) · Revised Magic 60/1 |
+| 3 | Summon Soul 70/3 (needs Summon Release) · Fire Soul 70/3 (needs Sky Crimson) · Earth Soul 70/3 (needs Planet Breaker) · Revised Art 70/3 |
+| 4 | Auto Instant 75/4 (needs Instant Cast 2) · Fire Avatar 75/4 (needs Blazing Arrow) · Earth Form 75/4 (needs Titanic Earth Pulse) · Volcanic Eruption 75/4 (needs Fire Rune 1 + Earth Rune 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Blazing Fire 85/6 (needs Flash Fire 4) · Stone Sentinel 85/6 (needs Stone Hammer 4) · Summon Gaos 85/6 (needs Volcanic Eruption) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Mike Blink needs Damage Cast 2; Fire Keep needs Fire Ball 4; Second Stone needs Ground Lock 4; Mike Circle needs C Attack 4; Instant Blaze needs Phoenix 4; Earth Guard needs Gadina 4; Summon Soul needs Summon Release; Fire Soul needs Sky Crimson; Earth Soul needs Planet Breaker; Auto Instant needs Instant Cast 2; Fire Avatar needs Blazing Arrow; Earth Form needs Titanic Earth Pulse; Volcanic Eruption needs Fire Rune 1 + Earth Rune 1; Super Stat Plus needs Stat Plus 4; Blazing Fire needs Flash Fire 4; Stone Sentinel needs Stone Hammer 4; Summon Gaos needs Volcanic Eruption.
+- **Checked against the 2014 community simulator** (Rain Niar's Monkey SkillSimulator V.3) **and TailsTailsSimulator.online/monkey**: 97 of 97 cells have the same Lv / points in all three.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations (ToT patch notes, 2026)
 
 Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix 12/09/2026; latest value wins), read 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tot`.

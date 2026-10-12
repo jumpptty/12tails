@@ -565,6 +565,61 @@ Kept from the 2026-09-19..28 passes; the per-skill entries above point here. The
     - **All Cleanse (`Sheep.cs:25835`):** Increases status level by +1 (`sLv = 4 + 1 = 5`) and extends duration to flat 6s (`1 + 5`).
 
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Priest, Hierophant, Enchanter, Angelic Wing). Source: `SheepSkill.getSkill` (`setReq`, `rSkill`) and `SheepSkill.getSkillTree`.
+
+**Priest** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/0 · — · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · C Attack 4 22/4 |
+| 3 | Harmonic Diffuse 1 6/2 · Harmonic Diffuse 2 12/4 · Harmonic Diffuse 3 18/6 · Harmonic Diffuse 4 24/8 |
+| 4 | Free Cast 1 32/6 · Free Cast 2 40/10 · — · — |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Hierophant** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Heal 1 3/0 · Heal 2 11/1 · Heal 3 19/2 · Heal 4 27/3 |
+| 2 | Bless 1 5/1 · Bless 2 13/3 · Bless 3 21/5 · Bless 4 29/7 |
+| 3 | Quick Heal 1 7/2 · Quick Heal 2 15/4 · All Heal 1 23/6 · All Heal 2 31/8 |
+| 4 | Pacify 1 9/3 · Sleep 1 17/5 · Pacify 2 25/7 · Sleep 2 33/9 |
+| 5 | Clear 1 12/4 · Clear 2 20/8 · Cleanse 28/12 · All Cleanse 36/16 |
+| 6 | Over Heal 1 17/6 · Over Heal 2 24/10 · Revive 1 31/14 · Revive 2 38/18 |
+| 7 | Benediction 1 22/12 · Benediction 2 28/16 · Benediction 3 34/20 · Revert 40/24 |
+| 8 | Holy Light 1 35/23 · Holy Light 2 45/25 · — · — |
+
+**Enchanter** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Light Bind 1 3/0 · Light Bind 2 11/1 · Light Bind 3 19/2 · Light Bind 4 27/3 |
+| 2 | Illuminate 1 5/1 · Illuminate 2 13/3 · Illuminate 3 21/5 · Illuminate 4 29/7 |
+| 3 | Feather 1 7/2 · Feather 2 15/4 · All Feather 1 23/6 · All Feather 2 31/8 |
+| 4 | Divinity Sword 1 9/3 · Divinity Sword 2 17/5 · Divinity Spear 1 25/7 · Divinity Spear 2 33/9 |
+| 5 | Seal Of Attack 12/4 · Seal Of Defense 20/8 · Seal Of Earth 28/12 · Seal Of Heaven 36/16 |
+| 6 | Repel 1 17/6 · Repel 2 24/10 · Reverse 1 31/14 · Reverse 2 38/18 |
+| 7 | Karma 1 22/12 · Karma 2 28/16 · Karma 3 34/20 · Karma 4 40/24 |
+| 8 | Soul Of Arms 1 35/23 · Soul Of Arms 2 40/25 · — · — |
+
+**Angelic Wing** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Homing Light 55/0 (needs N Attack 2) · Radiant Heal 55/0 (needs Heal 4) · Intense Bind 55/0 (needs Light Bind 4) · Revised Skill 55/0 |
+| 2 | White Burst 60/1 (needs C Attack 4) · Gospel 60/1 (needs Bless 4) · Blinding Light 60/1 (needs Illuminate 4) · Revised Magic 60/1 |
+| 3 | Purifying Tear 70/3 (needs Harmonic Diffuse 4) · Ko Heal 70/3 (needs All Heal 2) · Floating Wing 70/3 (needs All Feather 2) · Revised Art 70/3 |
+| 4 | Return Cast 75/4 (needs Free Cast 2) · Lullaby 75/4 (needs Sleep 2) · Divinity Axe 75/4 (needs Divinity Spear 2) · Book Bash 75/4 (needs Benediction 1 + Karma 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Purify 85/6 (needs All Cleanse) · Eden Sanctuary 85/6 (needs Seal Of Heaven) · World Encarta 85/6 (needs Book Bash) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Homing Light needs N Attack 2; Radiant Heal needs Heal 4; Intense Bind needs Light Bind 4; White Burst needs C Attack 4; Gospel needs Bless 4; Blinding Light needs Illuminate 4; Purifying Tear needs Harmonic Diffuse 4; Ko Heal needs All Heal 2; Floating Wing needs All Feather 2; Return Cast needs Free Cast 2; Lullaby needs Sleep 2; Divinity Axe needs Divinity Spear 2; Book Bash needs Benediction 1 + Karma 1; Super Stat Plus needs Stat Plus 4; Purify needs All Cleanse; Eden Sanctuary needs Seal Of Heaven; World Encarta needs Book Bash.
+- **Checked against the 2014 community simulator** (Rain Niar's Sheep SkillSimulator V.3) **and TailsTailsSimulator.online/sheep**: 95 of 96 cells have the same Lv / points in all three; the differences (game code first):
+  - `nAttack2` (Basic): game **2/0**, both simulators 2/1. Same in practice: each rank needs the rank before it, which already forces that many skills in the tree.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations
 
 Everything above is the BigBug original-engine baseline. No ToT deltas are known for Sheep (checked 2026-09-30).

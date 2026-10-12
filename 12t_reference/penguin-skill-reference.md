@@ -539,6 +539,60 @@ Shared dispatcher note: most Class B skills route cooldown/cast-time through the
 - **Mana Vortex:** spawns at `getSpawnVector(pos + 2·up, 5·forward − 2·up)` (`Penguin.cs:27133`); radius `12 + 4 × sLv` around the vortex (`ManaVortex.cs:229`, `:673`, level set at `:1008`).
 - **Target spells** (MP Transfer, Mana Burn, Snow Man, Snow Ball, Absolute Zero) have no distance gate in `Penguin.cs`, so the 40 m target lock applies.
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Wizard, Astral Sage, Frost Mage, Cosmic Friday). Source: `PenguinSkill.getSkill` (`setReq`, `rSkill`) and `PenguinSkill.getSkillTree`.
+
+**Wizard** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · — · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · C Attack 4 22/4 |
+| 3 | Intellect 1 8/2 · Intellect 2 16/4 · Intellect 3 24/6 · Intellect 4 32/8 |
+| 4 | Double Cast 32/6 · Triple Cast 40/10 · — · — |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Astral Sage** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Mana Missile 1 3/0 · Mana Missile 2 11/1 · Mana Missile 3 19/2 · Mana Missile 4 27/3 |
+| 2 | Mana Arc 1 5/1 · Mana Arc 2 13/3 · Mana Arc 3 21/5 · Mana Arc 4 29/7 |
+| 3 | Dispell 1 7/2 · Blink 1 15/4 · Dispell 2 23/6 · Blink 2 31/8 |
+| 4 | Mp Transfer 1 9/3 · Mana Burn 1 17/5 · Mp Transfer 2 25/7 · Mana Burn 2 33/9 |
+| 5 | Falling Stars 1 12/4 · Falling Stars 2 20/8 · Falling Comets 1 28/12 · Falling Comets 2 36/16 |
+| 6 | Mana Vortex 1 17/6 · Mana Vortex 2 24/10 · Mana Vortex 3 31/14 · Nova Flare 38/18 |
+| 7 | Astral Talent 1 22/12 · Astral Talent 2 28/16 · Astral Talent 3 34/20 · Astral Talent 4 40/24 |
+| 8 | Meteora 1 35/23 · Meteora 2 40/25 · — · — |
+
+**Frost Mage** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Frozen Blast 1 3/0 · Frozen Blast 2 11/1 · Frozen Blast 3 19/2 · Frozen Blast 4 27/3 |
+| 2 | Arctic Wind 1 5/1 · Arctic Wind 2 13/3 · Arctic Wind 3 21/5 · Arctic Frost 29/7 |
+| 3 | Ice Shield 1 7/2 · Ice Shield 2 15/4 · Ice Shield 3 23/6 · Ice Shield 4 31/8 |
+| 4 | Ice Block 1 9/3 · Snow Man 1 17/5 · Ice Block 2 25/7 · Snow Man 2 33/9 |
+| 5 | Tornado 1 12/4 · Tornado 2 20/8 · Tornado 3 28/12 · Typhoon 36/16 |
+| 6 | Frost Bite 1 17/6 · Frost Bite 2 24/10 · Frost Bite 3 31/14 · Frost Bite 4 38/18 |
+| 7 | Absolute Zero 1 22/12 · Absolute Zero 2 28/16 · Blizzard 1 34/20 · Blizzard 2 40/24 |
+| 8 | Arctic Emperor 1 35/23 · Arctic Emperor 2 40/25 · — · — |
+
+**Cosmic Friday** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Spread Shot 55/0 (needs N Attack 2) · More Missile 55/0 (needs Mana Missile 4) · Frozen Break 55/0 (needs Frozen Blast 4) · Revised Skill 55/0 |
+| 2 | Mana Field 60/1 (needs C Attack 4) · Penguin Of Arc 60/1 (needs Mana Arc 4) · Deadly Frost 60/1 (needs Arctic Frost) · Revised Magic 60/1 |
+| 3 | Focus Intellect 70/3 (needs Intellect 4) · Parallel Shift 70/3 (needs Blink 2) · Frost Spike 70/3 (needs Ice Shield 4) · Revised Art 70/3 |
+| 4 | Double Spell 75/4 (needs Triple Cast) · Mana Surge 75/4 (needs Mana Burn 2) · Snow Ball 75/4 (needs Snow Man 2) · Cosmic Rift 75/4 (needs Astral Talent 1 + Absolute Zero 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Giant Star 85/6 (needs Falling Comets 2) · Ice Twister 85/6 (needs Typhoon) · Cosmic Friday 85/6 (needs Cosmic Rift) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Spread Shot needs N Attack 2; More Missile needs Mana Missile 4; Frozen Break needs Frozen Blast 4; Mana Field needs C Attack 4; Penguin Of Arc needs Mana Arc 4; Deadly Frost needs Arctic Frost; Focus Intellect needs Intellect 4; Parallel Shift needs Blink 2; Frost Spike needs Ice Shield 4; Double Spell needs Triple Cast; Mana Surge needs Mana Burn 2; Snow Ball needs Snow Man 2; Cosmic Rift needs Astral Talent 1 + Absolute Zero 1; Super Stat Plus needs Stat Plus 4; Giant Star needs Falling Comets 2; Ice Twister needs Typhoon; Cosmic Friday needs Cosmic Rift.
+- **Checked against the 2014 community simulator** (Rain Niar's Penguin SkillSimulator V.3) **and TailsTailsSimulator.online/penguin**: 96 of 96 cells have the same Lv / points in all three.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
 ## Server Balance Variations
 
 ### Tailstopia Online (TTO)

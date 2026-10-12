@@ -2944,6 +2944,36 @@ let checkedRsim = 0;
   ok(D([201], 201) === "" && D([101, 102, 201, 202], 101) === "201,202" && D([101, 102, 201, 202], 102) === "101,201,202", "a lone rank drops itself; other rows are untouched");
   ok(D([401, 404], 401) === "404", "Class C skills have no ranks: the click drops the skill");
   ok(!valid(drop(new Set([101, 102, 103, 104, 401]), 104), 95) && !valid(drop(new Set([101, 102, 103, 104, 401]), 102), 95) && valid(drop(new Set([101, 102, 103, 104]), 102), 95), "Long Shot cannot lose rank 4 while Bouncing Bullet needs it");
+  // Mole (added 2026-10-12): same rules, its own grid and prerequisites, read from MoleSkill.getSkill / getSkillTree.
+  const MOLE = vm.runInContext("SKILL_SIM", sandbox).mole, mcells = cellsFn(MOLE), mvalid = (ids, lv) => validFn(cells2(), 4, new Set(ids), lv);
+  function cells2(){ return mcells; }
+  const mcount = MOLE.map(t => t.rows.flat().filter(Boolean).length).join("/");
+  ok(MOLE.length === 4 && mcount === "17/30/30/20", `Mole cells per tree ${mcount}, want 17/30/30/20 (Engineer/Bomber/Machinist/War Machine)`);
+  ok(MOLE.map(t => t.name).join() === "Engineer,Bomber,Machinist,War Machine", "Mole tree names");
+  for (const id in mcells) { ok(!!SKILL_ICONS[mcells[id].icon], `Mole cell ${id} icon ${mcells[id].icon} missing`); ok(mcells[id].req.every(r => mcells[r]), `Mole cell ${id} requires a skill that is not in the grid`); }
+  const byLabel = (l) => +Object.keys(mcells).find(i => mcells[i].name === l);
+  const factory = byLabel("War Factory"), capital = byLabel("War Capital");
+  ok(mcells[factory].req.length === 2 && mcells[factory].lv === 75 && mcells[capital].req.join() === String(factory), "War Factory needs two skills from trees 2 and 3 (rSkill 243343) and War Capital needs War Factory");
+  const mauto = (set, lv, id) => auto(mcells, 4, new Set(set), lv, id);
+  const wf = mauto([], 95, factory);
+  ok(wf && mvalid([...wf], 95) && mauto([], 70, factory) === null && mauto([], 95, capital) && mauto([], 95, capital).has(factory), "Mole: War Factory in one click at Lv 95, refused at Lv 70, War Capital also brings War Factory");
+  // Values taken straight from MoleSkill (decoder + hand check): Extra Powder II / Heavy Built II come from an empty getSkill branch (Lv 28; the 2014 simulator and the TailsTails site say 27) and need a live check.
+  const lvOf = (l) => mcells[byLabel(l)] && mcells[byLabel(l)].lv + "/" + mcells[byLabel(l)].bn;
+  ok(lvOf("Extra Powder 1") === "24/15" && lvOf("Extra Powder 2") === "28/18" && lvOf("Extra Powder 3") === "30/21", "Extra Powder I-III Lv/points from the game code");
+  // All 12 classes (2026-10-12): every grid has the size the game code gives it, every icon exists, every prerequisite is in the grid,
+  // and each class's last Class C skill can be learned in one click at Lv 95 (not at Lv 50).
+  const ALL = vm.runInContext("SKILL_SIM", sandbox), NAMES = vm.runInContext("SKILL_SIM_NAMES", sandbox), ORDER = vm.runInContext("CLASS_ORDER", sandbox);
+  const SIZES = { rabbit: "18/30/30/20", mole: "17/30/30/20", bat: "15/30/30/20", bison: "17/30/30/20", cat: "17/30/30/20", chameleon: "17/30/30/20", monkey: "17/30/30/20", panda: "17/30/30/20", penguin: "16/30/30/20", sheep: "16/30/30/20", whale: "16/30/30/20", wolf: "16/30/30/20" };
+  ok(Object.keys(ALL).sort().join() === Object.keys(SIZES).sort().join() && ORDER.every(n => ALL[n.toLowerCase()] && NAMES[n.toLowerCase()] === n), "every class of the class gate has simulator data and a display name");
+  for (const cls in SIZES) {
+    const trees = ALL[cls], cs = cellsFn(trees);
+    ok(trees.length === 4 && trees.map(t => t.rows.flat().filter(Boolean).length).join("/") === SIZES[cls], `${cls}: cells per tree ${trees.map(t => t.rows.flat().filter(Boolean).length).join("/")}, want ${SIZES[cls]}`);
+    ok(trees.every(t => t.name), `${cls}: tree names`);
+    for (const id in cs) { ok(!!SKILL_ICONS[cs[id].icon], `${cls} cell ${id} icon ${cs[id].icon} missing`); ok(cs[id].req.every(r => cs[r]), `${cls} cell ${id} requires a skill that is not in the grid`); }
+    const lastC = Object.keys(cs).map(Number).filter(i => i >= 400).sort((a, b) => cs[b].lv - cs[a].lv || b - a)[0];
+    const got = auto(cs, 4, new Set(), 95, lastC);
+    ok(got && validFn(cs, 4, got, 95) && got.has(lastC) && auto(cs, 4, new Set(), 50, lastC) === null, `${cls}: the last Class C skill (${lastC}) in one click at Lv 95, refused at Lv 50`);
+  }
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 

@@ -460,6 +460,63 @@ Entries are being written skill by skill; every skill shown in the app needs one
 
 - **Combo boxes:** every stage uses `FindRecTarget(pos − rangeMod·forward, forward, w, w, 3·rangeMod, 2·rangeMod)` with half-width `w = 1·rangeMod` for stages 1-3 (`Cat.cs:16520`, `:17318`, `:18001`, `:18244`) and `2·rangeMod` for stage 4 (`:18972`, `:19213`): 3 m long starting 1 m behind the Cat, 2 m wide (4 m on stage 4), 2 m high.
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Treasure Hunter, Gambler, Assassin, Pirate King). Source: `CatSkill.getSkill` (`setReq`, `rSkill`) and `CatSkill.getSkillTree`.
+
+**Treasure Hunter** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · N Attack 3 3/2 · — |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · — |
+| 3 | Awareness 1 6/2 · Awareness 2 12/4 · Treasure Hunt 18/6 · — |
+| 4 | Feline Agility 1 8/4 · Feline Agility 2 19/6 · Feline Agility 3 24/8 · Feline Agility 4 32/10 |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Gambler** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Lucky Card 1 3/0 · Lucky Card 2 9/1 · Lucky Card 3 15/2 · Lucky Card 4 21/3 |
+| 2 | Fate Draw 1 5/1 · Fate Draw 2 11/3 · Fate Draw 3 17/5 · Fate Draw 4 23/7 |
+| 3 | Power Shuffle 1 7/2 · Power Shuffle 2 13/4 · Life Gamble 19/6 · Skill Gamble 25/8 |
+| 4 | Lucky Dice 1 9/3 · Lucky Dice 2 15/5 · Double Down 1 21/7 · Double Down 2 27/9 |
+| 5 | Power One 16/4 · Power Two 20/8 · Power Three 24/12 · Power Seven 28/16 |
+| 6 | Two Pair 1 20/12 · Two Pair 2 24/15 · Copycat 1 28/18 · Copycat 2 32/21 |
+| 7 | Damage Roulette 1 24/15 · Damage Roulette 2 27/18 · Nine Lives 1 30/21 · Nine Lives 2 33/24 |
+| 8 | Grand Casino Arcade 1 35/23 · Grand Casino Arcade 2 40/25 · — · — |
+
+**Assassin** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Flying Dagger 1 3/0 · Flying Dagger 2 9/1 · Flying Dagger 3 15/2 · Flying Dagger 4 21/3 |
+| 2 | Forward Lunge 1 5/1 · Reverse Thrust 1 11/3 · Forward Lunge 2 17/5 · Reverse Thrust 2 23/7 |
+| 3 | Backflip 1 7/2 · Backflip 2 13/4 · Heart Ripper 1 19/6 · Heart Ripper 2 25/8 |
+| 4 | Hidden Blade 1 9/3 · Hidden Blade 2 15/5 · Hidden Blade 3 21/7 · Hidden Blade 4 27/9 |
+| 5 | Disarm 1 16/4 · Disarm 2 20/8 · Bleed 1 24/12 · Bleed 2 28/16 |
+| 6 | Moon Blade 1 20/12 · Moon Blade 2 24/15 · Moon Storm 1 28/18 · Moon Storm 2 32/21 |
+| 7 | Evasion 1 24/15 · Evasion 2 27/18 · Evasion 3 30/21 · Vendetta 33/24 |
+| 8 | Delta Strike 1 35/23 · Delta Strike 2 40/25 · — · — |
+
+**Pirate King** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | No Chance 55/0 (needs N Attack 3) · Joker 55/0 (needs Lucky Card 4) · Three Knives 55/0 (needs Flying Dagger 4) · Revised Skill 55/0 |
+| 2 | Double Focus 60/1 (needs C Attack 3) · Lady Luck 60/1 (needs Fate Draw 4) · Backstab 60/1 (needs Reverse Thrust 2) · Revised Magic 60/1 |
+| 3 | Insight 70/3 (needs Treasure Hunt) · Even Odds 70/3 (needs Skill Gamble) · Finishing Blow 70/3 (needs Heart Ripper 2) · Revised Art 70/3 |
+| 4 | Swift Pace 75/4 (needs Feline Agility 4) · Roll The Dice 75/4 (needs Double Down 2) · Jagged Knife 75/4 (needs Hidden Blade 4) · Pillage Plunge 75/4 (needs Two Pair 1 + Moon Blade 1) |
+| 5 | Super Stat Plus 85/6 (needs Stat Plus 4) · Super Seven 85/6 (needs Power Seven) · Open Wound 85/6 (needs Bleed 2) · Support Fire 85/6 (needs Pillage Plunge) |
+
+- **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): No Chance needs N Attack 3; Joker needs Lucky Card 4; Three Knives needs Flying Dagger 4; Double Focus needs C Attack 3; Lady Luck needs Fate Draw 4; Backstab needs Reverse Thrust 2; Insight needs Treasure Hunt; Even Odds needs Skill Gamble; Finishing Blow needs Heart Ripper 2; Swift Pace needs Feline Agility 4; Roll The Dice needs Double Down 2; Jagged Knife needs Hidden Blade 4; Pillage Plunge needs Two Pair 1 + Moon Blade 1; Super Stat Plus needs Stat Plus 4; Super Seven needs Power Seven; Open Wound needs Bleed 2; Support Fire needs Pillage Plunge.
+- **Checked against the 2014 community simulator** (Rain Niar's Cat SkillSimulator V.3) **and TailsTailsSimulator.online/cat**: 94 of 97 cells have the same Lv / points in all three; the differences (game code first):
+  - `felineAgility2` (Basic): game **19/6**, both simulators 18/6. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
+  - `felineAgility3` (Basic): game **24/8**, both simulators 28/8. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
+  - `felineAgility4` (Basic): game **32/10**, both simulators 38/10. **Needs a live check:** the cell is an empty `getSkill` branch (no `setReq`), so the decoder's value comes from the shared tail it falls into.
+- The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site (it spells the second tree "Glambler"; the game's item names say Gambler, so Gambler is used).
+
 ## Server Balance Variations
 
 ### Twelve Tails Online (TTO)

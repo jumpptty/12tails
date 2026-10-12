@@ -494,7 +494,68 @@ Source: `CharacterDataClass.cs` `upgradeSkill` / `upgradeCSkill`, `GameGui.cs:16
 * **Point pools:** Basic + A + B share one pool of `clamp(lv − 1, 0, 49)` (`upgradeSkill`, `CharacterDataClass.cs:4005`: refuses when `skillCount() >= that`). Class C has its own pool of `clamp(floor(0.2 × (lv − 50)), 0, 12)` (`upgradeCSkill`, `:4388`), i.e. one C point per 5 levels from Lv 55, 9 at Lv 95.
 * **Window states** (`GameGui.cs:16429-16560`): a skill is locked when `lv < rLv`; locked when the points already spent **in its own tree** are `< rBn`; locked when its `rSkill` is not learned (`rSkill > 99999` means two skills, `rSkill / 1000` and `rSkill % 1000`); and, for every skill below 400 whose command number does not end in 1, locked until the skill one number lower (the previous rank or the cell to its left) is learned. Class C skills have no left-cell rule.
 * **Reading `rBn`:** it is "skills already learned in this tree before this one" (first cell of a tree is 0). A learned set is reachable only if, with each tree's `rBn` values sorted ascending, the k-th value (from 0) is `≤ k`.
+* **Cells that need a live check:** 12 cells (empty `getSkill` branches whose value is borrowed from a shared tail, and jumps to a shared `setReq` that the 2014 simulators contradict) are listed with the full simulator comparison in §3.7. The tool uses the game code for them; change a value only after the user confirms it in the live game.
 * **Decoding caveat:** `rLv`/`rBn` come from `getSkill` (`python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs`); `rSkill` is a separate `skillClass.rSkill = N` line the decoder does not print (grep it in `<Class>Skill.cs`).
+
+### 3.7 Skill Simulator discrepancies: game code vs the 2014 blog vs TailsTails (recorded 2026-10-12)
+
+Everything the hub's Skill Simulator was checked against, kept in one place so it can be recalled later. **Rule: the simulator always uses the game code.** A value changes only when the user confirms the live game shows something else (live observation beats decompiled code, AGENTS.md §3 item 4).
+
+* **Sources.** *Game code* = `<Class>Skill.getSkill` (decoded with `scripts/decode_skilldata.py`) and `getSkillTree`. *Blog* = Rain Niar's SkillSimulator V.3 per class (April 2014; the 3.1 versions from May 2015 are offline). *TailsTails* = tailstailssimulator.online/<class>. **The TailsTails data equals the blog's in every cell compared, so it is a copy and not independent confirmation.** Where the two simulators agree against the code, that proves nothing about the live game.
+* **Totals.** 1,159 cells compared over all 12 classes (grids of 15-18 / 30 / 30 / 20 cells); **1,139 equal in all three, 20 differ** (table A). Bison, Monkey, Penguin and Wolf have no difference at all.
+
+**A. The 20 cells whose Lv / points differ** (`Lv/points`, game code first; this is what the simulator uses)
+
+| Class | Skill | Cell | Game code | Blog | TailsTails | Kind |
+|---|---|---|---|---|---|---|
+| Rabbit | Long Shot II (`nAttack2`) | Basic r1c2 | **2/0** | 2/1 | 2/1 | no effect (rank chain) |
+| Rabbit | Long Shot III (`nAttack3`) | Basic r1c3 | **3/0** | 3/2 | 3/2 | no effect (rank chain) |
+| Rabbit | Long Shot IV (`nAttack4`) | Basic r1c4 | **4/0** | 4/3 | 4/3 | no effect (rank chain) |
+| Rabbit | Life Shot | A r6c4 | **32/21** | 32/22 | 32/22 | explicit `setReq` |
+| Rabbit | Customized Shotgun II (`customizedShotgun2`) | B r6c4 | **28/22** | 32/22 | 32/22 | empty branch (fall-through) |
+| Mole | Extra Powder II | A r7c2 | **28/18** | 27/18 | 27/18 | empty branch (fall-through) |
+| Mole | Heavy Built II | B r7c2 | **28/18** | 27/18 | 27/18 | empty branch (fall-through) |
+| Bat | Drain Life II (`cAttack2`) | Basic r2c2 | **10/3** | 10/2 | 10/2 | empty branch (fall-through) |
+| Bat | Drain Life III (`cAttack3`) | Basic r2c3 | **16/5** | 16/3 | 16/3 | jump to a shared `setReq` |
+| Cat | Feline Agility II | Basic r4c2 | **19/6** | 18/6 | 18/6 | jump to a shared `setReq` |
+| Cat | Feline Agility III | Basic r4c3 | **24/8** | 28/8 | 28/8 | jump to a shared `setReq` |
+| Cat | Feline Agility IV | Basic r4c4 | **32/10** | 38/10 | 38/10 | empty branch (fall-through) |
+| Chameleon | C Attack II | Basic r2c2 | **10/3** | 10/2 | 10/2 | empty branch (fall-through) |
+| Chameleon | C Attack III | Basic r2c3 | **16/5** | 16/3 | 16/3 | jump to a shared `setReq` |
+| Panda | Combo II (`nAttack2`) | Basic r1c2 | **2/0** | 2/1 | 2/1 | no effect (rank chain) |
+| Panda | Combo III (`nAttack3`) | Basic r1c3 | **3/0** | 3/2 | 3/2 | no effect (rank chain) |
+| Panda | Combo IV (`nAttack4`) | Basic r1c4 | **4/0** | 4/3 | 4/3 | no effect (rank chain) |
+| Panda | Rain & Storm II | B r6c4 | **30/21** | 32/21 | 32/21 | empty branch (fall-through) |
+| Sheep | Combo II (`nAttack2`) | Basic r1c2 | **2/0** | 2/1 | 2/1 | no effect (rank chain) |
+| Whale | Rejuvenate III | B r4c3 | **18/7** | 21/7 | 21/7 | jump to a shared `setReq` |
+
+Kinds: **explicit `setReq`** (1): the code states the value, the simulators are wrong (Rabbit Life Shot needs 21 points in `setReq(32, 21)` at `RabbitSkill.cs:580`, the simulators say 22). **no effect (rank chain)** (7): 0 points in the code against 1 / 2 / 3 in the simulators; a rank always needs the rank before it, so the rows that many skills anyway and nothing changes. **jump to a shared `setReq`** (5): the branch jumps to a shared `setReq` label, a defined path, but the simulators show another value (possibly an older server version; not known). **empty branch (fall-through)** (7): the branch has no `setReq` and no `goto`, so the decoder's value is whatever shared tail it falls into; the least certain.
+
+**To verify in the live game (12 cells):** every `jump` and `empty` row above. The skill window shows the Lv and, for a locked skill, `unknown: n/<points needed>` (read from `GameGui.cs:17167-17173`, not yet seen live). If the live game shows the simulators' value, fix that cell's `SKILL_SIM` entry and the class reference together.
+
+**B. Other data differences (not Lv / points)**
+
+* **SP / MP costs, Rabbit:** Millionaire I / II cost SP 50 / 75 in the code and in the Bible cards, MP 50 / 75 in both simulators; Diamond Shot costs SP 20 in the code, the simulators list none.
+* **SP / MP costs, Mole** (8 skills; the Bible cards follow the code): Detonate (SP 24 + MP 24) and Napalm (SP 40) are missing in the simulators; Mega Drill SP 36 and Barrel Cannon SP 50 against none / SP 36; King Kaiser SP 80 + MP 80 against SP 55 + MP 80; Flame Carnival MP 35 against SP 10; War Capital MP 100 + SP 50 against SP 50; Kaiser Cannon has no cost in the decoder output, SP 70 in the simulators. Full list: mole-skill-reference.md.
+* **SP / MP costs, the other 10 classes: not compared.** The simulator tool shows no costs, so this was skipped; do it before trusting any simulator's cost column.
+* **Names.** The simulators use the community names (Longshot, Aimed Shot, ExtraReward, Deadly Aim); the tool's cell labels are the game's skill keys split into words (`specialDeal` = Special Deal, `deadShot` = Dead Shot, `nAttack` is shown as Long Shot). They only appear in the accessibility label, because the tool has no tooltips.
+* **Tree names** (Sharp Shooter, Engineer, ...) exist only on the simulators and in the client art, not in the code. Taken from TailsTails; its Cat tree "Glambler" is spelled Gambler here (the game's item names say Gambler). Bat's trees read "ShadowCaller" and "DreamCaster" exactly as the site writes them; unverified.
+* **Level caps.** Blog 95, TailsTails 100, the tool 95, the game code has none (the Class C pool formula runs to Lv 110). Both simulators' extra Class C row ("EX" skills, 1 EX point at Lv 95, 2 at Lv 100) is ignored: the user says there are no EX skills.
+
+**C. Rule differences between the three**
+
+| | Game code / the hub tool | Blog 2014 | TailsTails |
+|---|---|---|---|
+| Class C points | `floor((lv-50)/5)`, **max 12** | same, no cap | same, no cap |
+| Learning | the tool: **one click learns every prerequisite** (ranks before it, required skills, enough points in the tree); the game: one skill at a time | one skill | one skill |
+| Unlearning | the tool: the clicked rank and the ranks above it go (rank 1 = unlearned), only if nothing needs them | only the top rank | only the top rank, a pop-up explains a refusal |
+| First skill of a tree | can go if the build stays legal | blocked while any other skill is learned | blocked while any other skill is learned |
+| Changing level | a build that no longer fits is cleared (undoable) | always clears everything | keeps the build, remaining points can go negative (red) |
+| Class C prerequisite | one named skill (`rSkill`) | every skill in the row | every skill in the row (same effect) |
+| Class C level | exact level is enough | the click is refused at exactly the level, though the `+` shows (blog bug) | exact level is enough |
+| Interface | no tooltips, no counts, no backdrop (user choice) | tooltips, per-class counts, backdrop | tooltips with a requirement checklist, per-class counts, backdrop |
+
+**D. Where each class is documented:** every class's table and its own differences are in `12t_reference/<class>-skill-reference.md`, section "Skill Tree Layout & Learn Requirements".
 
 ## 4. Hidden mechanics & special interactions
 

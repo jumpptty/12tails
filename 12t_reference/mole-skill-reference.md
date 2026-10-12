@@ -448,6 +448,60 @@ These are mount items, not skills: no skill number, no MP/SP cost.
   - Explosion: `FindAreaTarget(hit − up, 24, 6)`, `hit(1, floor(1200 × (1 − 0.5 × dist / 24)), KO 10)`, i.e. 1,200 at the centre down to 600 at 24 m, then the usual `dmgAdjust` / `defAdjust`.
   - Charging only shows "GigaCannon doesn't need charge attack!".
 
+## Skill Tree Layout & Learn Requirements
+
+Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Engineer, Bomber, Machinist, War Machine). Source: `MoleSkill.getSkill` (`setReq`, `rSkill`) and `MoleSkill.getSkillTree`.
+
+**Engineer** (tree 1)
+
+| Row | Cells |
+|---|---|
+| 1 | N Attack 1 1/0 · N Attack 2 2/1 · N Attack 3 3/2 · N Attack 4 4/3 |
+| 2 | C Attack 1 4/1 · C Attack 2 10/2 · C Attack 3 16/3 · — |
+| 3 | Gadgeteer 1 6/2 · Gadgeteer 2 12/4 · Gadgeteer 3 18/6 · Gadgeteer 4 24/8 |
+| 4 | Reload 1 32/6 · Reload 2 40/10 · — · — |
+| 5 | Stat Plus 1 10/4 · Stat Plus 2 20/6 · Stat Plus 3 30/8 · Stat Plus 4 40/10 |
+
+**Bomber** (tree 2)
+
+| Row | Cells |
+|---|---|
+| 1 | Mine 1 3/0 · Mine 2 9/1 · Mine 3 15/2 · Mine 4 21/3 |
+| 2 | Mortar Shot 1 5/1 · Mortar Shot 2 11/3 · Bunker 1 17/5 · Bunker 2 23/7 |
+| 3 | Tnt 1 7/2 · Tnt 2 13/4 · Tnt 3 19/6 · Tnt 4 25/8 |
+| 4 | Stun Mine 1 9/3 · Stun Mine 2 15/5 · Stun Grenade 1 21/7 · Stun Grenade 2 27/9 |
+| 5 | Flame Turret 1 16/4 · Flame Turret 2 20/8 · Flame Turret 3 24/12 · — |
+| 6 | Fire Barrage 1 20/12 · Bombardment 1 24/15 · Fire Barrage 2 28/18 · Bombardment 2 32/21 |
+| 7 | Extra Powder 1 24/15 · Extra Powder 2 28/18 · Extra Powder 3 30/21 · Smart Shell 33/24 |
+| 8 | Time Nuke 1 35/23 · Time Nuke 2 40/25 · Detonate 45/27 · — |
+
+**Machinist** (tree 3)
+
+| Row | Cells |
+|---|---|
+| 1 | Auto Gyro Gun 1 3/0 · Auto Gyro Gun 2 9/1 · Auto Gyro Gun 3 15/2 · Auto Gyro Gun 4 21/3 |
+| 2 | Speed Drill 1 5/1 · Speed Drill 2 11/3 · Sky Drill 1 17/5 · Sky Drill 2 23/7 |
+| 3 | Barrel Bot 1 7/2 · Barrel Bot 2 13/4 · Barrel Bot 3 19/6 · Barrel Bot 4 25/8 |
+| 4 | Mega Punch 1 9/3 · Mega Punch 2 15/5 · Mega Hammer 1 21/7 · Mega Hammer 2 27/9 |
+| 5 | Chopper 1 16/4 · Chopper 2 20/8 · Chopper 3 24/12 · — |
+| 6 | Missile 1 20/12 · Missile 2 24/15 · Missile 3 28/18 · Missile 4 32/21 |
+| 7 | Heavy Built 1 24/15 · Heavy Built 2 28/18 · Synchro Mole 1 30/21 · Synchro Mole 2 33/24 |
+| 8 | King Kaiser 35/23 · Kaiser Cannon 40/25 · Kaiser Beam 45/27 · — |
+
+**War Machine** (tree 4)
+
+| Row | Cells |
+|---|---|
+| 1 | Cannon Expert 55/0 (needs 104) · Mine Lover 55/0 (needs 204) · Hidden Turret 55/0 (needs 304) · Revised Skill 55/0 |
+| 2 | Super Dig 60/1 (needs 113) · Napalm 60/1 (needs 214) · Sky Shaker 60/1 (needs 314) · Revised Magic 60/1 |
+| 3 | Genius Invention 70/3 (needs 124) · Super TNT 70/3 (needs 224) · Double Bot 70/3 (needs 324) · Revised Art 70/3 |
+| 4 | Advance Repair 75/4 (needs 132) · Grenade Cluster 75/4 (needs 234) · Mega Drill 75/4 (needs 334) · War Factory 75/4 (needs 243 + 343) |
+| 5 | Super Stat Plus 85/6 (needs 144) · Flame Carnival 85/6 (needs 243) · Barrel Cannon 85/6 (needs 343) · War Capital 85/6 (needs 434) |
+
+- **Class C prerequisites** (`rSkill`, the last skill of the row above it): Cannon Expert 104, Super Dig 113, Genius Invention 124, Advance Repair 132, Super Stat Plus 144, Mine Lover 204, Napalm 214, Super TNT 224, Grenade Cluster 234, Flame Carnival 243, Hidden Turret 304, Sky Shaker 314, Double Bot 324, Mega Drill 334, Barrel Cannon 343; War Factory needs Flame Carnival's tree skill 243 and Barrel Cannon's 343 together (`rSkill 243343`); War Capital needs War Factory (434).
+- **Checked against the 2014 community simulator** (Rain Niar's Mole SkillSimulator V.3; the 3.1 versions are offline) **and TailsTailsSimulator.online/mole**: 95 of 97 cells have the same Lv / points in all three. The two differences: Extra Powder II and Heavy Built II are **Lv 28 / 18 pts in the game code and Lv 27 / 18 pts in both simulators** (the row pattern 24, 27, 30 fits their value). **Needs a live check:** both cells are empty `getSkill` branches (`MoleSkill.cs:580`, `:943`) with no `setReq` of their own, so the decoder's 28 comes from the shared tail they fall into, the same situation as Rabbit's Customized Shotgun II. Both outside simulators' grids are otherwise the same as the code (17 / 30 / 30 / 20 cells; the site's extra Class C row is ignored, the user says there are no EX skills).
+- **SP / MP cost differences** (decoder vs both simulators; the Bible cards already follow the decoder): Detonate 24 SP + 24 MP, Napalm SP 40, Mega Drill SP 36 and Barrel Cannon SP 50 are missing or different in the simulators (they list Mega Drill none, Barrel Cannon 36); King Kaiser SP 80 / MP 80 (simulators SP 55 / MP 80); Flame Carnival MP 35 (simulators SP 10); War Capital MP 100 + SP 50 (simulators SP 50 only); Kaiser Cannon is SP 70 in the simulators and has no cost in the decoder output. The simulator tool shows no costs, so none of these changed it.
+
 ## Server Balance Variations (TTO)
 
 Private-server values are documented from the Bible skill-detail schema; the BigBug decompile remains the original-server baseline.
