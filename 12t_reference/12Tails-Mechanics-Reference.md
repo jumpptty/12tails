@@ -501,7 +501,7 @@ Source: `CharacterDataClass.cs` `upgradeSkill` / `upgradeCSkill`, `GameGui.cs:16
 
 Everything the hub's Skill Simulator was checked against, kept in one place so it can be recalled later. **Rule: the simulator always uses the game code.** A value changes only when the user confirms the live game shows something else (live observation beats decompiled code, AGENTS.md §3 item 4).
 
-* **Sources.** *Game code* = `<Class>Skill.getSkill` (decoded with `scripts/decode_skilldata.py`) and `getSkillTree`. *Blog* = Rain Niar's SkillSimulator V.3 per class (April 2014; the 3.1 versions from May 2015 are offline). *TailsTails* = tailstailssimulator.online/<class>. **The TailsTails data equals the blog's in every cell compared, so it is a copy and not independent confirmation.** Where the two simulators agree against the code, that proves nothing about the live game.
+* **Sources.** *Game code* = `<Class>Skill.getSkill` (decoded with `scripts/decode_skilldata.py`) and `getSkillTree`. *Blog* = Rain Niar's SkillSimulator V.3 per class (April 2014; the 3.1 versions from May 2015 are offline). *TailsTails* = tailstailssimulator.online/<class>. **The TailsTails data equals the blog's in every cell compared, so it is a copy and not independent confirmation.** Where the two simulators agree against the code, that proves nothing about the live game. *TailsTopia* = the TTO server's own simulator (tailstopia.online/skill-simulator, login only, read through the user's Chrome); it carries the game's own fields and is compared in section E.
 * **Totals.** 1,159 cells compared over all 12 classes (grids of 15-18 / 30 / 30 / 20 cells); **1,139 equal in all three, 20 differ** (table A). Bison, Monkey, Penguin and Wolf have no difference at all.
 
 **A. The 20 cells whose Lv / points differ** (`Lv/points`, game code first; this is what the simulator uses)
@@ -531,7 +531,7 @@ Everything the hub's Skill Simulator was checked against, kept in one place so i
 
 Kinds: **explicit `setReq`** (1): the code states the value, the simulators are wrong (Rabbit Life Shot needs 21 points in `setReq(32, 21)` at `RabbitSkill.cs:580`, the simulators say 22). **no effect (rank chain)** (7): 0 points in the code against 1 / 2 / 3 in the simulators; a rank always needs the rank before it, so the rows that many skills anyway and nothing changes. **jump to a shared `setReq`** (5): the branch jumps to a shared `setReq` label, a defined path, but the simulators show another value (possibly an older server version; not known). **empty branch (fall-through)** (7): the branch has no `setReq` and no `goto`, so the decoder's value is whatever shared tail it falls into; the least certain.
 
-**To verify in the live game (12 cells):** every `jump` and `empty` row above. The skill window shows the Lv and, for a locked skill, `unknown: n/<points needed>` (read from `GameGui.cs:17167-17173`, not yet seen live). If the live game shows the simulators' value, fix that cell's `SKILL_SIM` entry and the class reference together.
+**To verify in the live game (12 cells; lower priority since section E: TailsTopia shows the game-code value for all of them, but it is the TTO server, not the original one):** every `jump` and `empty` row above. The skill window shows the Lv and, for a locked skill, `unknown: n/<points needed>` (read from `GameGui.cs:17167-17173`, not yet seen live). If the live game shows the simulators' value, fix that cell's `SKILL_SIM` entry and the class reference together.
 
 **B. Other data differences (not Lv / points)**
 
@@ -540,7 +540,7 @@ Kinds: **explicit `setReq`** (1): the code states the value, the simulators are 
 * **SP / MP costs, the other 10 classes: not compared.** The simulator tool shows no costs, so this was skipped; do it before trusting any simulator's cost column.
 * **Names.** The simulators use the community names (Longshot, Aimed Shot, ExtraReward, Deadly Aim); the tool's cell labels are the game's skill keys split into words (`specialDeal` = Special Deal, `deadShot` = Dead Shot, `nAttack` is shown as Long Shot). They only appear in the accessibility label, because the tool has no tooltips.
 * **Tree names** (Sharp Shooter, Engineer, ...) exist only on the simulators and in the client art, not in the code. Taken from TailsTails; its Cat tree "Glambler" is spelled Gambler here (the game's item names say Gambler). Bat's trees read "ShadowCaller" and "DreamCaster" exactly as the site writes them; unverified.
-* **Level caps.** Blog 95, TailsTails 100, the tool 95, the game code has none (the Class C pool formula runs to Lv 110). Both simulators' extra Class C row ("EX" skills, 1 EX point at Lv 95, 2 at Lv 100) is ignored: the user says there are no EX skills.
+* **Level caps.** Blog 95, TailsTails 100, **TailsTopia 110** (input 1-110, default 110), the tool 95, the game code has none (the Class C pool formula `clamp(floor(0.2*(lv-50)), 0, 12)` reaches its maximum of 12 at Lv 110). Lv 95 gives 9 Class C points, Lv 110 gives 12, so the cap changes what a build can hold. **Decided by the user 2026-10-12: BB 95 forever, TTO 95 for now, ToT 100** (the tool has a server gate and one entry per server in `SKILL_SIM_SERVERS`, so each server's cap and cell values are edited on their own; ToT's 100 gives 10 Class C points). Both simulators' extra Class C row ("EX" skills, 1 EX point at Lv 95, 2 at Lv 100) is ignored: the user says there are no EX skills.
 
 **C. Rule differences between the three**
 
@@ -554,6 +554,17 @@ Kinds: **explicit `setReq`** (1): the code states the value, the simulators are 
 | Class C prerequisite | one named skill (`rSkill`) | every skill in the row | every skill in the row (same effect) |
 | Class C level | exact level is enough | the click is refused at exactly the level, though the `+` shows (blog bug) | exact level is enough |
 | Interface | no tooltips, no counts, no backdrop (user choice) | tooltips, per-class counts, backdrop | tooltips with a requirement checklist, per-class counts, backdrop |
+
+**E. TailsTopia cross-check (read through the user's logged-in Chrome, 2026-10-12)**
+
+TailsTopia's page carries, for all 12 classes, the same fields as the game's `SkillClass`: `cmd`, `rLv`, `rBn`, `rSkill`, `cMP`, `cSP`. All 1,159 cells of the game grids were compared in the page itself.
+
+* **Level / points / prerequisite: 1,158 of 1,159 cells equal the game code, including all 20 cells of table A** (TailsTopia shows the game-code value, not the 2014 simulators' value, so the blog and TailsTails values are wrong or from an older server). Because the 12 `jump` / `empty` cells agree too, the decoder's fall-through reading is probably right, at least for TTO.
+* **The one difference: Panda Heaven Breath (cmd 443).** Game code: `rSkill = 334` (explicit, `PandaSkill.cs:1314`, the same value as Spirit Fist at `:1291`) = Shadow Fist IV. TailsTopia: `344` = Sacred Sage Technique II. Likely a copy-paste typo in the client that the TTO server fixed. **The tool uses the game code (334); live-check item 13.**
+* **SP / MP: all 1,159 cells equal the decoder values.** This settles section B for every class: Millionaire costs SP 50 / 75, Diamond Shot SP 20, and the Mole costs follow the game code (the blog and TailsTails cost columns were wrong). The costs of the 10 other classes, never compared before, are confirmed as well.
+* **Rules:** same pools (normal points `clamp(lv, 0, 50) - 1`, Class C `clamp(floor(0.2 * (lv - 50)), 0, 12)`) and the same gates (level, points already in the skill's own tree, `rSkill`, the rank before it for ids below 400). A level that no longer fits prunes only the skills that stop being learnable (the hub tool clears the whole build instead; undoable).
+* **Three extra Rabbit entries** (TailsTopia lists 101 Rabbit skills, the client 98): `mixshot` (cmd 452, Lv -1 / -1, needs 442), `thousandShot5` (453, Lv 120 / 7, needs 354) and `tradingWithWind5` (454, Lv 120 / 7, needs 444). Its own code gives them the "unknown" icon, so they have no client art; the tool ignores them (the user says there are no EX skills).
+* **How far to trust it:** TailsTopia is a TTO-server tool. Its agreement with the client code means TTO still has the original values in these cells; it is not the original BB server, and it is not a mechanical copy of the client (it differs once). It confirms the code, it does not replace a live check on BB.
 
 **D. Where each class is documented:** every class's table and its own differences are in `12t_reference/<class>-skill-reference.md`, section "Skill Tree Layout & Learn Requirements".
 

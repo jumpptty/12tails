@@ -530,6 +530,7 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
   - `nAttack3` (Basic): game **3/0**, both simulators 3/2. Same in practice: each rank needs the rank before it, which already forces that many skills in the tree.
   - `nAttack4` (Basic): game **4/0**, both simulators 4/3. Same in practice: each rank needs the rank before it, which already forces that many skills in the tree.
   - `rain&storm2` (B): game **30/21**, both simulators 32/21. **Needs a live check:** the cell is an empty `getSkill` branch (no `setReq`), so the decoder's value comes from the shared tail it falls into.
+- **Heaven Breath prerequisite (found 2026-10-12 against TailsTopia, the TTO server's simulator):** the game code says `rSkill = 334` (Shadow Fist IV, `PandaSkill.cs:1314`, the same as Spirit Fist), TailsTopia says `344` (Sacred Sage Technique II). Probably a copy-paste typo in the client fixed on TTO; the simulator tool uses the code on BB and ToT and TailsTopia's 344 on TTO (`SKILL_SIM_SERVERS.tto.patch.panda`). **BB / ToT need a live check.**
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
 
 ## Server Balance Variations (ToT)

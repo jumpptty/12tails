@@ -2974,6 +2974,28 @@ let checkedRsim = 0;
     const got = auto(cs, 4, new Set(), 95, lastC);
     ok(got && validFn(cs, 4, got, 95) && got.has(lastC) && auto(cs, 4, new Set(), 50, lastC) === null, `${cls}: the last Class C skill (${lastC}) in one click at Lv 95, refused at Lv 50`);
   }
+  // Servers (2026-10-12, user): BB 95 forever, TTO 95 for now, ToT 100. Each server has its own cap and its own cell patches (empty = same as BB).
+  const SRV = vm.runInContext("SKILL_SIM_SERVERS", sandbox);
+  ok(Object.keys(SRV).join() === "og,tot,tto" && SRV.og.cap === 95 && SRV.tto.cap === 95 && SRV.tot.cap === 100, "server caps: BB 95, ToT 100, TTO 95");
+  ok(poolMaxC(SRV.og.cap) === 9 && poolMaxC(SRV.tot.cap) === 10, "Class C points: 9 at Lv 95 (BB / TTO), 10 at Lv 100 (ToT)");
+  for (const k of Object.keys(SRV)) {
+    ok(!!SRV[k].name && !!SRV[k].full && !!SKILL_ICONS["server_" + k], `server ${k}: names and icon`);
+    for (const c of Object.keys(SRV[k].patch)) {
+      ok(!!ALL[c], `server ${k}: patch for an unknown class ${c}`);
+      const base = cellsFn(ALL[c]), pat = cellsFn(ALL[c], SRV[k].patch[c]);
+      for (const id in SRV[k].patch[c]) {
+        ok(!!base[id], `server ${k} ${c}: patch for a cell that is not in the grid (${id})`);
+        ok(pat[id].req.every(r => pat[r]) && Number.isInteger(pat[id].lv) && Number.isInteger(pat[id].bn), `server ${k} ${c} ${id}: patched values`);
+        ok(auto(pat, 4, new Set(), SRV[k].cap, +id) !== null, `server ${k} ${c} ${id}: still learnable in one click at Lv ${SRV[k].cap}`);
+      }
+    }
+  }
+  ok(cellsFn(ALL.panda)[443].req.join() === "334" && cellsFn(ALL.panda, SRV.og.patch.panda)[443].req.join() === "334" && cellsFn(ALL.panda, SRV.tto.patch.panda)[443].req.join() === "344", "Panda Heaven Breath needs Shadow Fist IV (334) on BB and in the game code, Sacred Sage Technique II (344) on TTO (TailsTopia)");
+  for (const cls in SIZES) {
+    const cs = cellsFn(ALL[cls], SRV.tot.patch[cls]);
+    const lastC = Object.keys(cs).map(Number).filter(i => i >= 400).sort((a, b) => cs[b].lv - cs[a].lv || b - a)[0];
+    ok(auto(cs, 4, new Set(), SRV.tot.cap, lastC) !== null, `ToT ${cls}: the last Class C skill in one click at Lv 100`);
+  }
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
