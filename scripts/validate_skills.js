@@ -2934,9 +2934,11 @@ let checkedRsim = 0;
   ok(A([], 10, 254) === null, "Life Shot is out of reach at Lv 10 (Lv 32 and 21 points)");
   const keep = A([101, 102], 95, 244);
   ok(keep && keep.has(101) && keep.has(102) && keep.has(244) && valid(keep, 95), "one-click learning keeps what was already learned");
-  const contract = A([], 95, 434);
-  ok(contract && valid(contract, 95) && [243, 343, 434].every(i => contract.has(i)) && treeCount(contract, 3) === 5, "Contract in one click brings Acidic Field I, Truce Trading I and the 4 other C skills it needs (the cheapest ones)");
-  ok(A([], 74, 434) === null && A([], 95, 444) !== null && A([], 95, 444).has(434), "Contract needs Lv 75; New Order (444) in one click also learns Contract");
+  // Class C is learned one skill at a time: refused while anything it needs is missing, added alone once everything is there.
+  ok(A([], 95, 434) === null && A([], 95, 444) === null && A([], 95, 401) === null && A([], 54, 404) === null && A([], 55, 404) !== null && A([], 55, 404).size === 1, "Class C skills are not one-click: refused while a prerequisite is missing, learned alone when nothing is needed");
+  const fullNoContract = new Set(full); fullNoContract.delete(434);
+  const again = A([...fullNoContract], 95, 434);
+  ok(again && again.size === full.size && validFn(cells, SIM.length, again, 95) && A([...fullNoContract], 74, 434) === null, "with everything it needs already learned, Contract is added alone (Lv 75 needed)");
   ok(A([], 4, 101) !== null && A([101], 95, 101) !== null && A([], 1, 201) === null, "a skill below the level is refused, a first rank learns alone");
   // Clicking a learned skill (skillSimDrop): that rank and every rank above it go, and a build that would break is refused by the caller's valid().
   const drop = vm.runInContext("skillSimDrop", sandbox), D = (set, id) => [...drop(new Set(set), id)].sort((a, b) => a - b).join();
@@ -2955,8 +2957,7 @@ let checkedRsim = 0;
   const factory = byLabel("War Factory"), capital = byLabel("War Capital");
   ok(mcells[factory].req.length === 2 && mcells[factory].lv === 75 && mcells[capital].req.join() === String(factory), "War Factory needs two skills from trees 2 and 3 (rSkill 243343) and War Capital needs War Factory");
   const mauto = (set, lv, id) => auto(mcells, 4, new Set(set), lv, id);
-  const wf = mauto([], 95, factory);
-  ok(wf && mvalid([...wf], 95) && mauto([], 70, factory) === null && mauto([], 95, capital) && mauto([], 95, capital).has(factory), "Mole: War Factory in one click at Lv 95, refused at Lv 70, War Capital also brings War Factory");
+  ok(mauto([], 95, factory) === null && mauto([], 95, capital) === null, "Mole: War Factory and War Capital are never one-click (Class C)");
   // Values taken straight from MoleSkill (decoder + hand check): Extra Powder II / Heavy Built II come from an empty getSkill branch (Lv 28; the 2014 simulator and the TailsTails site say 27) and need a live check.
   const lvOf = (l) => mcells[byLabel(l)] && mcells[byLabel(l)].lv + "/" + mcells[byLabel(l)].bn;
   ok(lvOf("Extra Powder 1") === "24/15" && lvOf("Extra Powder 2") === "28/18" && lvOf("Extra Powder 3") === "30/21", "Extra Powder I-III Lv/points from the game code");
@@ -2970,9 +2971,9 @@ let checkedRsim = 0;
     ok(trees.length === 4 && trees.map(t => t.rows.flat().filter(Boolean).length).join("/") === SIZES[cls], `${cls}: cells per tree ${trees.map(t => t.rows.flat().filter(Boolean).length).join("/")}, want ${SIZES[cls]}`);
     ok(trees.every(t => t.name), `${cls}: tree names`);
     for (const id in cs) { ok(!!SKILL_ICONS[cs[id].icon], `${cls} cell ${id} icon ${cs[id].icon} missing`); ok(cs[id].req.every(r => cs[r]), `${cls} cell ${id} requires a skill that is not in the grid`); }
-    const lastC = Object.keys(cs).map(Number).filter(i => i >= 400).sort((a, b) => cs[b].lv - cs[a].lv || b - a)[0];
-    const got = auto(cs, 4, new Set(), 95, lastC);
-    ok(got && validFn(cs, 4, got, 95) && got.has(lastC) && auto(cs, 4, new Set(), 50, lastC) === null, `${cls}: the last Class C skill (${lastC}) in one click at Lv 95, refused at Lv 50`);
+    // Class C is never one-click: its first skill (401) needs its prerequisite learned first (one click for that Basic / A / B skill), then it is added alone.
+    const need = cs[401].req[0], pre = auto(cs, 4, new Set(), 95, need), one = pre && auto(cs, 4, pre, 95, 401);
+    ok(need < 400 && pre && auto(cs, 4, new Set(), 95, 401) === null && one && one.size === pre.size + 1 && validFn(cs, 4, one, 95) && auto(cs, 4, pre, 54, 401) === null, `${cls}: Class C skill 401 is refused without its prerequisite, added alone with it, refused below Lv 55`);
   }
   // Servers (2026-10-12, user): BB 95 forever, TTO 95 for now, ToT 100. Each server has its own cap and its own cell patches (empty = same as BB).
   const SRV = vm.runInContext("SKILL_SIM_SERVERS", sandbox);
@@ -2986,15 +2987,15 @@ let checkedRsim = 0;
       for (const id in SRV[k].patch[c]) {
         ok(!!base[id], `server ${k} ${c}: patch for a cell that is not in the grid (${id})`);
         ok(pat[id].req.every(r => pat[r]) && Number.isInteger(pat[id].lv) && Number.isInteger(pat[id].bn), `server ${k} ${c} ${id}: patched values`);
-        ok(auto(pat, 4, new Set(), SRV[k].cap, +id) !== null, `server ${k} ${c} ${id}: still learnable in one click at Lv ${SRV[k].cap}`);
+        ok(+id >= 400 || auto(pat, 4, new Set(), SRV[k].cap, +id) !== null, `server ${k} ${c} ${id}: still learnable in one click at Lv ${SRV[k].cap}`);
       }
     }
   }
   ok(cellsFn(ALL.panda)[443].req.join() === "334" && cellsFn(ALL.panda, SRV.og.patch.panda)[443].req.join() === "334" && cellsFn(ALL.panda, SRV.tto.patch.panda)[443].req.join() === "344", "Panda Heaven Breath needs Shadow Fist IV (334) on BB and in the game code, Sacred Sage Technique II (344) on TTO (TailsTopia)");
   for (const cls in SIZES) {
     const cs = cellsFn(ALL[cls], SRV.tot.patch[cls]);
-    const lastC = Object.keys(cs).map(Number).filter(i => i >= 400).sort((a, b) => cs[b].lv - cs[a].lv || b - a)[0];
-    ok(auto(cs, 4, new Set(), SRV.tot.cap, lastC) !== null, `ToT ${cls}: the last Class C skill in one click at Lv 100`);
+    const pre = auto(cs, 4, new Set(), SRV.tot.cap, cs[401].req[0]);
+    ok(pre && auto(cs, 4, pre, SRV.tot.cap, 401) !== null, `ToT ${cls}: Class C skill 401 is added alone at Lv 100 once its prerequisite is learned`);
   }
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
