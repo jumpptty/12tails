@@ -2997,6 +2997,11 @@ let checkedRsim = 0;
     const pre = auto(cs, 4, new Set(), SRV.tot.cap, cs[401].req[0]);
     ok(pre && auto(cs, 4, pre, SRV.tot.cap, 401) !== null, `ToT ${cls}: Class C skill 401 is added alone at Lv 100 once its prerequisite is learned`);
   }
+  // Long press opens the skill card (user 2026-10-12): every cell resolves to an existing card id (Cat Power One / Two / Three open Power Seven).
+  const cardOf = vm.runInContext("skillSimCardId", sandbox), cardIds = new Set(vm.runInContext("SKILLS", sandbox).map(s => s.id));
+  const noCard = [], allSim = vm.runInContext("SKILL_SIM", sandbox);
+  for (const cl in allSim) for (const tr of allSim[cl]) for (const r of tr.rows) for (const x of r) if (x && !cardIds.has(cardOf(x[0]))) noCard.push(x[0]);
+  ok(noCard.length === 0 && cardOf("cat_powerTwo2") === "cat_powerSeven" && cardOf("rabbit_nAttack3") === "rabbit_nAttack" && cardOf("panda_rain&storm2") === "panda_rain&storm" && cardOf("statPlus2") === "common_statPlus" && cardOf("rabbit_revisedArt5") === "common_revisedArt", "long press: skill simulator cells map to skill card ids (" + noCard.join(",") + " have no card)");
   // Plus markers (user 2026-10-12): Basic / A / B green = reached by levelling only its own row, red = other rows involved too; Class C stays yellow and single-click.
   const MK = vm.runInContext("skillSimMarker", sandbox), M = (set, lv, id) => MK(cells, SIM.length, new Set(set), lv, id);
   ok(M([], 95, 201) === "green" && M([], 95, 202) === "green" && M([], 95, 204) === "green", "Maim Shot I-IV: green (only its own row is levelled)");
