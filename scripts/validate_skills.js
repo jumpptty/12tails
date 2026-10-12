@@ -2997,6 +2997,17 @@ let checkedRsim = 0;
     const pre = auto(cs, 4, new Set(), SRV.tot.cap, cs[401].req[0]);
     ok(pre && auto(cs, 4, pre, SRV.tot.cap, 401) !== null, `ToT ${cls}: Class C skill 401 is added alone at Lv 100 once its prerequisite is learned`);
   }
+  // Manual-click locks (user 2026-10-12): a row clicked by hand is pinned at that rank; auto-learn may not raise it, a manual click on a higher rank lifts the pin.
+  const setLock = vm.runInContext("skillSimSetLock", sandbox), AL = (set, lv, id, locks) => auto(cells, SIM.length, new Set(set), lv, id, locks);
+  ok(JSON.stringify(setLock({}, 202, false)) === '{"20":2}' && JSON.stringify(setLock({ 20: 2 }, 202, true)) === '{"20":1}' && JSON.stringify(setLock({ 20: 1 }, 201, true)) === "{}" && JSON.stringify(setLock({ 20: 2 }, 434, false)) === '{"20":2}', "locks: learning rank c pins the row at c, dropping rank c pins it at c-1 (none left = no lock), Class C is never locked");
+  const free = AL([201], 95, 254, {});
+  const pinned = AL([201], 95, 254, { 20: 1 });
+  ok(free && [202, 203, 204].some(i => free.has(i)), "without a lock the cheapest filler for Life Shot's 21 points includes Maim Shot II-IV (top row first)");
+  ok(pinned && [202, 203, 204].every(i => !pinned.has(i)) && validFn(cells, SIM.length, pinned, 95) && pinned.has(254), "with Maim Shot locked at rank I the filler skips Maim Shot II-IV and still reaches Life Shot");
+  const bypass = AL([201], 95, 203, { 20: 1 });
+  ok(bypass && bypass.has(202) && bypass.has(203) && !bypass.has(204), "clicking rank III of a locked row by hand is allowed (the bypass) and stops at rank III");
+  const tight = {}; for (let r = 0; r < 8; r++) tight[20 + r] = 1;
+  ok(AL([201], 95, 254, tight) === null, "when every row of the tree is locked at rank I, a skill that needs more points than that is refused");
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
