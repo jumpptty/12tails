@@ -114,7 +114,7 @@ const exposeInjection = `
   window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
   window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
-  window._reachNormalize = reachNormalize; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachProject = reachProject;
+  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachProject = reachProject;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
@@ -3584,6 +3584,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (p.anchor && !REACH_ANCHORS.includes(p.anchor)) bad(`${sk.id} rank ${r}: unknown anchor ${p.anchor}`);
         if (!p.unknown && p.shape !== "self" && !p.src) bad(`${sk.id} rank ${r}: missing src`);
         if (p.w2 !== undefined && !(typeof p.w2 === "number" && p.w2 > 0)) bad(`${sk.id} rank ${r}: w2 must be > 0, got ${p.w2}`);
+        if (p.rangeMod !== undefined && p.rangeMod !== true && p.rangeMod !== false && !(Array.isArray(p.rangeMod) && p.rangeMod.length && p.rangeMod.every(k => ["r", "w", "w2", "l", "h", "z0"].includes(k)))) bad(`${sk.id} rank ${r}: rangeMod must be true or a list of r w w2 l h z0, got ${JSON.stringify(p.rangeMod)}`);
         if (p.z0 !== undefined && typeof p.z0 !== "number") bad(`${sk.id} rank ${r}: z0 must be a number`);
         if (!p.unknown) for (const k of REACH_DIM[p.shape]) {
           const v = p[k];
@@ -3617,7 +3618,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   {
     const dr = sandbox._depRanks, saved = { ...dr };
     const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist"]) dr[k] = o[k] || 0; };
-    const P = (id, rank, o) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank); };
+    const P = (id, rank, o, rM) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank, rM); };
     const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
     try {
       for (const sk of SKILLS) if (sk.class === "Panda" && sk.reach) for (let r = 1; r <= (sk.maxRank || 1); r++) for (const st of [{}, { pndW59: 1 }, { auraBlast: 1 }, { pndW59: 1, auraBlast: 1, ogreImpact: 1, tigerPounce: 1, qiBurst: 1, shadowFist: 5 }]) {
@@ -3646,6 +3647,21 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_fuujinKen", 1); g("Fuujin Ken r12 h9", c[0].r === 12 && c[0].h === 9, c);
       c = P("panda_raijinKen", 1); g("Raijin Ken lock 35 + r8 h8", c[0].l === 35 && c[1].r === 8 && c[1].h === 8, c);
       c = P("panda_lotusPalm", 2); g("Lotus Palm 40 m lock", c[0].shape === "line" && c[0].l === 40, c);
+      // rangeMod (Enlarge 4 = x1.4, Reduce 4 = x0.6): only the sizes the Find* call multiplies by rangeMod scale
+      c = P("panda_nAttack", 4, {}, 1.4); g("Combo stage 5 at x1.4 (start offset scales too)", c[3].w === 8.4 && c[3].w2 === 4.48 && c[3].l === 5.6 && c[3].h === 4.2 && c[3].z0 === -1.4, c[3]);
+      c = P("panda_nAttack", 4, { pndW59: 1 }, 1.4); g("Force Gauntlet circles ignore rangeMod", c[0].r === 3 && c[3].r === 4, c);
+      c = P("panda_waterMonkey", 2, {}, 1.4); g("Water Monkey: height only", c[0].w === 4 && c[0].l === 2 && c[0].h === 4.2 && c[0].z0 === -1, c[0]);
+      c = P("panda_qiStrike", 1, { qiBurst: 1 }, 1.4); g("Qi Strike: 1×rangeMod + 5, width and height scale", c[0].l === 6.4 && c[0].w === 2.8 && c[0].h === 2.8, c[0]);
+      c = P("panda_stasisBlow", 2, {}, 0.6); g("Stasis Blow at x0.6: length and height", c[0].w === 2 && c[0].l === 2.4 && c[0].h === 1.2 && c[0].z0 === -2, c[0]);
+      c = P("panda_rushingFalcon", 2, {}, 1.4); g("Rushing Falcon: 0.5 m start is not scaled", c[0].w === 4.48 && c[0].z0 === -0.5, c[0]);
+      c = P("panda_ashura", 2, {}, 1.4); g("Ashura ignores rangeMod", c[0].r === 3, c[0]);
+      c = P("panda_heavenPalm", 2, {}, 1.4); g("Heaven Palm r6 x1.4", c[0].r === 8.4 && c[0].h === 2.8 && c[0].rm === 1.4, c[0]);
+      // the popup preview reads its own toggle state and leaves the card's alone
+      set({});
+      const qs = SKILLS.find(x => x.id === "panda_qiStrike");
+      c = sandbox._reachPartsWith(qs, 1, { qiBurst: 1, reachEnlarge: 4, reachReduce: 0 }); g("preview override: Qi Burst on at x1.4", c[0].l === 6.4, c[0]);
+      c = sandbox._reachNormalize(qs.reach, 1); g("card state untouched after a preview", c[0].l === 1 && dr.qiBurst === 0, c[0]);
+      c = sandbox._reachPartsWith(qs, 1, { qiBurst: 0, reachEnlarge: 0, reachReduce: 4 }); g("preview Reduce 4 = x0.6", c[0].l === 0.6 && c[0].w === 1.2, c[0]);
     } finally { for (const k of Object.keys(dr)) if (!(k in saved)) delete dr[k]; Object.assign(dr, saved); }
   }
   // reachControls: a plain dep (id, minRank, maxRank) or {dep, onRank, offRank}

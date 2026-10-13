@@ -1142,7 +1142,6 @@
     background:var(--gold); transform:scaleX(0); transform-origin:50% 50%;
     animation:unseal .6s .1s cubic-bezier(.2,.7,.2,1) forwards;
   }
-  @media (prefers-reduced-motion: reduce){.hub-bar::after{animation:none; transform:scaleX(1)}}
   @keyframes unseal{to{transform:scaleX(1)}}
   .brand{
     text-decoration:none; font-family:Georgia,"Iowan Old Style",'Prompt',serif;
@@ -1516,7 +1515,6 @@
   .credits-item.is-special.is-target{animation:creditsFlash 1.6s ease-out, creditsGlow 4.5s ease-in-out infinite}
   @keyframes creditsGlow{0%,100%{box-shadow:0 0 0 0 transparent} 50%{box-shadow:0 0 14px 0 color-mix(in srgb, var(--gold) 28%, transparent)}}
   @keyframes creditsSheen{0%,70%{transform:translateX(-120%)} 100%{transform:translateX(120%)}}
-  @media (prefers-reduced-motion:reduce){.credits-item.is-special, .credits-item.is-special::after{animation:none}}
   /* {{credit:id}} token: scroll icon after a credited finding */
   .sk-credit{display:inline-flex; align-items:center; vertical-align:-2px; margin:0 0 0 5px; padding:1px; background:none; border:none;
     color:var(--gold); cursor:pointer; border-radius:3px; transition:transform .18s cubic-bezier(.2,.7,.2,1)}
@@ -1539,7 +1537,6 @@
   @media (min-width:2400px) and (min-height:1300px){ html:not(.tool-fit-screen) .stage{zoom:1.5; padding-top:24px; padding-bottom:12px} }
   .view:not([hidden]){animation:viewIn .22s cubic-bezier(.2,.7,.2,1) both}
   @keyframes viewIn{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
-  @media (prefers-reduced-motion: reduce){.view:not([hidden]){animation:none}}
 
   /* ---- ledger index (menu) ----
      A grid of 2 chip-width columns, not a full-width row list — each entry
@@ -1816,7 +1813,6 @@
     .rsim-cell.is-learned:hover img{filter:brightness(1.12) drop-shadow(0 0 7px rgba(201,162,39,.95))}
   }
   .rsim-cell:active{transform:scale(.96)}
-  @media (prefers-reduced-motion:reduce){ .rsim-cell, .rsim-cell img{transition:none} .rsim-cell:hover, .rsim-cell:active{transform:none} .rsim-cell.is-prereq:not(.is-charging):not(.is-boom){animation:none; filter:brightness(1.2) saturate(1.1)} }
   .rsim-wip, .entry-beta-badge.entry-badge-red{background:#8b1e1e; color:#fff; border:1px solid #c2503c; box-shadow:none}
   .entry-title:has(.entry-badge-red){white-space:nowrap}
   .entry-beta-badge.entry-badge-red{font-size:9.5px; letter-spacing:0; padding:2px 7px; margin-left:8px}
@@ -2636,7 +2632,6 @@
   .bg-zone.bg-k-purple{ stroke-dasharray:5 3; }
   .bg-self circle{ fill:var(--text); } .bg-self path{ fill:var(--text); }
   .bg-map-wrap figcaption{ margin-top:6px; text-align:center; font-size:11px; color:var(--muted); }
-  @media (prefers-reduced-motion: reduce){ .bg-zone, .bg-move, .bg-rung, .bg-tab{ transition:none; } }
 
   /* sections */
   .bg-sec{ margin:22px 0 0; }
@@ -2728,7 +2723,6 @@
   .bg-saw-box{ margin:18px 0 0; padding:12px 14px 14px; border:1px solid var(--line); border-left:3px solid var(--stat-atk, #c0392b); border-radius:4px; background:var(--panel); }
   .bg-steps{ margin:0 0 12px; padding-left:20px; font-size:13px; line-height:1.55; color:var(--muted); }
   .bg-steps li + li{ margin-top:4px; }
-  @media (prefers-reduced-motion: reduce){ .bg-blast, .bg-tbl tr[data-cannon]{ transition:none; } }
 
   /* bb-issues page (BigBug client bugs + tooltip mismatches), reuses the .svc layout */
   .bbi-filter{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 14px; }
@@ -4345,10 +4339,9 @@
   .sk-simulate-btn .sk-sim-count{font-size:10.5px; font-weight:600; opacity:.72}
   .sk-simulate-btn.is-sm{width:auto; padding:4px 10px; font-size:11px}
   .sk-simulate-btn.is-sm svg{width:12px; height:12px}
-  /* First-time glow until any Test is clicked (simBtnSeen); none for reduced-motion users. */
+  /* First-time glow until any Test is clicked (simBtnSeen). Plays under reduced motion too (user 2026-10-13: bypass all reduced motion). */
   .sk-simulate-btn.is-new{animation:simGlow 1.8s ease-in-out infinite}
   @keyframes simGlow{0%,100%{box-shadow:0 1px 3px rgba(0,0,0,.4)} 50%{box-shadow:0 0 0 5px rgba(212,175,55,.28), 0 0 16px rgba(212,175,55,.55)}}
-  @media (prefers-reduced-motion: reduce){.sk-simulate-btn.is-new{animation:none}}
   /* Mods popup (2026-08-16): "Mods" button lives in .sk-dmg-final's own
      header row -- now literally .sk-dmg-head/.sk-dmg-toggles, the same
      classes Damage Formula/Raw Damage use, not a bespoke .sk-dmg-final-head
@@ -4704,7 +4697,10 @@
   .sk-reach-dep img{width:26px; height:26px; border-radius:4px; filter:grayscale(.8) brightness(1.2); transition:filter .15s ease}
   .sk-reach-dep.on{border-color:var(--gold); box-shadow:inset 0 0 0 1px var(--gold-soft)}
   .sk-reach-dep.on img{filter:brightness(1.22)}
-  .sk-reach-ball{position:absolute; left:0; top:0; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; pointer-events:none; z-index:2; background:radial-gradient(circle, #fff 0 25%, var(--ball) 55%, transparent 72%); box-shadow:0 0 10px 3px var(--ball)}
+  .sk-reach-fx{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:3}
+  .sk-reach-pips{display:inline-flex; gap:3px; margin-left:2px}
+  .sk-reach-pips i{width:6px; height:6px; border-radius:50%; border:1px solid var(--gold); opacity:.7}
+  .sk-reach-pips i.on{background:var(--gold); opacity:1}
   .sk-ko-badge{display:inline-flex; align-items:center; gap:3.75px; padding:1.25px 5px; border-radius:2.5px; background:var(--gold-soft); border:1px solid var(--gold); flex:0 0 auto}
   .sk-dmg-label-row .sk-ko-badge{margin-left:7px}
   /* TTO Magic Damage badge (2026-10-07, user): beside ดาเมจดิบ, aqua like the TTO magic damage floats (dmgdigit_a, TAL hue). */
@@ -5137,7 +5133,6 @@
   .sk-pip.pip-out{animation:skPipOut .35s ease-out}
   @keyframes skPipIn{0%{transform:scale(.4); box-shadow:0 0 0 0 rgba(212,175,55,.7)} 45%{transform:scale(1.4); box-shadow:0 0 4px 1px rgba(212,175,55,.6)} 100%{transform:scale(1); box-shadow:0 0 0 0 rgba(212,175,55,0)}}
   @keyframes skPipOut{0%{background:var(--gold); border-color:var(--gold); opacity:1; transform:scale(1.2)} 100%{background:transparent; border-color:var(--muted); opacity:.7; transform:scale(1)}}
-  @media (prefers-reduced-motion:reduce){.sk-pip.pip-in,.sk-pip.pip-out{animation:none}}
   /* Hero icon pips (user 2026-10-08): the skill icon has no off, so rank 1 is always lit; hung under the icon so the header does not grow. */
   .sk-hero-pips{position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:3px}
   .sk-hero-head:has(.sk-hero-pips){margin-bottom:22px}
@@ -7572,7 +7567,6 @@
     .entry-art{ right:-6px; width:110px; --entry-art-opacity:.14; }
     .entry-art:not(:first-of-type){ display:none; }
   }
-  @media (prefers-reduced-motion: reduce){ .entry-art{ transition:none; } }
   /* skill details tile: tilted grid of skill icons, feathered on the left behind the title */
   .entry-collage{ position:absolute; top:0; bottom:0; right:0; left:26%; overflow:hidden; pointer-events:none; z-index:1;
     opacity:var(--entry-collage-opacity, .3); transition:opacity .2s ease;
@@ -7588,7 +7582,6 @@
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .entry-collage{ --entry-collage-opacity:.24; --entry-collage-opacity-hover:.4; } }
   :root[data-theme="dark"] .entry-collage{ --entry-collage-opacity:.24; --entry-collage-opacity-hover:.4; }
   @media (max-width:600px){ .entry-collage{ left:40%; --entry-collage-opacity:.18; } }
-  @media (prefers-reduced-motion: reduce){ .entry-collage, .entry-collage-grid{ transition:none; } }
   .entry-art[data-k="Chameleon"]{ transform:scaleX(-1); -webkit-mask-image:linear-gradient(to left, transparent 0, #000 45%); mask-image:linear-gradient(to left, transparent 0, #000 45%); }
   .entry-art[data-k="Scale"]{ width:150px; background-position:center; }
   .entry-art[data-k="Dice"]{ width:180px; right:10px; background-position:center; --entry-art-opacity:.16; --entry-art-opacity-hover:.3; }
@@ -10444,6 +10437,7 @@ function getCharLv(){
   return getCharLvGlobal ? getCharLvGlobal() : 0;
 }
 function getDepRank(dep){
+  if (typeof reachDepOverride !== "undefined" && reachDepOverride && dep && dep.id in reachDepOverride) return reachDepOverride[dep.id];   // reach popup preview (never the card)
   if (getDepRankGlobal) return getDepRankGlobal(dep);
   return dep ? (dep.defaultRank !== undefined ? dep.defaultRank : dep.minRank) : 0;   // every skill dependency starts off (its minimum rank)
 }
@@ -10771,11 +10765,14 @@ function rawCritValue(skill, v){
 // Part: {shape: sphere|cylinder|box|cone|line|self, r, h, w, w2, l, angle, z0, anchor, label, rangeMod, src, unknown}; any number may be (rank)=>n,
 // and `reach` itself may be (rank)=>parts when other skills change the size.
 // Mesh space: metres, +y up, +z the caster's facing, origin at the caster's feet (target parts are drawn 6 m ahead: display only).
-function reachNormalize(reach, rank){
-  if (typeof reach === "function") reach = reach(rank);
+const REACH_RM_KEYS = ["r", "w", "w2", "l", "h"];
+function reachNormalize(reach, rank, rM = 1){
+  if (typeof reach === "function") reach = reach(rank, rM);
   return (Array.isArray(reach) ? reach : [reach]).map(p => {
     const o = Object.assign({}, p);
-    for (const k of ["r", "h", "w", "w2", "l", "angle", "z0"]) if (typeof o[k] === "function") o[k] = o[k](rank);
+    for (const k of ["r", "h", "w", "w2", "l", "angle", "z0"]) if (typeof o[k] === "function") o[k] = o[k](rank, rM);
+    if (o.rangeMod && rM !== 1) for (const k of (o.rangeMod === true ? REACH_RM_KEYS : o.rangeMod)) if (typeof o[k] === "number") o[k] = +(o[k] * rM).toFixed(3);
+    o.rm = o.rangeMod ? rM : 1;
     return o;
   });
 }
@@ -10881,7 +10878,9 @@ function reachPartLabel(p){
   if (p.anchor === "fist") dims.push("วัดจากมือ"); else if (p.anchor === "target") dims.push("รอบเป้าหมาย (แสดงที่ 6m)");
   if (p.z0) dims.push(p.z0 < 0 ? `เริ่มหลังตัว ${-p.z0}m` : `เริ่มหน้าตัว ${p.z0}m`);
   if (p.unknown) return `${p.label || REACH_SHAPE_TH[p.shape]}: ขนาดอยู่ใน prefab ยังไม่มีค่าที่ยืนยันได้`;
-  return `${p.label || REACH_SHAPE_TH[p.shape]}${dims.length ? ": " + dims.join(" · ") : ""}${p.rangeMod ? " × rangeMod" : ""}`;
+  const rmKeys = { r: "รัศมี", w: "กว้าง", w2: "กว้างปลาย", l: "ยาว", h: "สูง", z0: "จุดเริ่ม" };
+  const rm = p.rangeMod ? ` · คูณ rangeMod${p.rangeMod === true ? "" : " (" + p.rangeMod.map(k => rmKeys[k]).join(" ") + ")"}${p.rm && p.rm !== 1 ? " = ×" + p.rm : ""}` : "";
+  return `${p.label || REACH_SHAPE_TH[p.shape]}${dims.length ? ": " + dims.join(" · ") : ""}${rm}`;
 }
 // Decoded once per class: positions (m), texture pixel coords, triangles, face normals, the loaded skin.
 const reachModelCache = {};
@@ -11034,41 +11033,85 @@ function reachLerp(from, to, t){
   }
   return out;
 }
+// Body-size statuses that scale rangeMod (Rabbit Miracle Blend applies one of them at lv 1-4, Rabbit_potion.cs:390, :402):
+// enlarge +0.1 x lv (CharacterControl.cs:37344), reduce -0.1 x lv (:37264). Preview-only toggles, mutually exclusive here.
+const REACH_ENLARGE = { id: "reachEnlarge", label: "Enlarge", icon: "rabbit_miracleBlend4", minRank: 0, maxRank: 4 };
+const REACH_REDUCE = { id: "reachReduce", label: "Reduce", icon: "status_reduce", minRank: 0, maxRank: 4 };
+// Popup toggles never touch the card (user 2026-10-13): reach functions read their deps through this override while the popup evaluates them.
+let reachDepOverride = null;
+function reachPartsWith(skill, rank, over){
+  const prev = reachDepOverride;
+  reachDepOverride = over;
+  try { return reachNormalize(skill.reach, rank, +(1 + 0.1 * (over.reachEnlarge || 0) - 0.1 * (over.reachReduce || 0)).toFixed(2)); }
+  finally { reachDepOverride = prev; }
+}
 // Popup reach toggles: plain deps toggle min <-> max; {dep, onRank, offRank, label, icon} entries set those ranks (Spirit Fist = Shadow Fist 5).
 function reachToggleEntries(skill){
   return (skill.reachControls || []).map(c => c.dep
     ? { dep: c.dep, on: c.onRank, off: c.offRank, label: c.label, icon: c.icon }
     : { dep: c, on: c.maxRank, off: c.minRank, label: c.label, icon: c.icon });
 }
+// Points spread evenly along the projected edges of a range (panel coordinates), with the edge each one sits on.
+function reachOutline(parts, st, cv, panel, n){
+  const W = cv.clientWidth, H = cv.clientHeight, pr = panel.getBoundingClientRect(), cr = cv.getBoundingClientRect();
+  const ox = cr.left - pr.left, oy = cr.top - pr.top, segs = [];
+  parts.forEach((p, k) => {
+    if (p.unknown || p.shape === "self") return;
+    const m = reachMesh(p), col = REACH_COLORS[k % REACH_COLORS.length];
+    for (const [i, j] of m.edges){
+      const a = reachProject(m.verts[i], st.yaw, st.pitch, st.zoom, W, H), b = reachProject(m.verts[j], st.yaw, st.pitch, st.zoom, W, H);
+      segs.push({ a: [a[0] + ox, a[1] + oy], b: [b[0] + ox, b[1] + oy], col, len: Math.hypot(b[0] - a[0], b[1] - a[1]) });
+    }
+  });
+  const total = segs.reduce((s, g) => s + g.len, 0) || 1, step = total / n, pts = [];
+  let carry = step / 2;
+  segs.forEach((g, si) => {
+    g.samples = [];
+    for (let d = carry; d < g.len; d += step){ const t = d / g.len; g.samples.push(pts.length); pts.push({ x: g.a[0] + (g.b[0] - g.a[0]) * t, y: g.a[1] + (g.b[1] - g.a[1]) * t, seg: si, col: g.col }); }
+    carry = (carry - g.len) % step; if (carry < 0) carry += step;
+  });
+  // a segment shorter than the spacing lights with the sample nearest its middle
+  segs.forEach(g => { if (!g.samples.length && pts.length){ const mx = (g.a[0] + g.b[0]) / 2, my = (g.a[1] + g.b[1]) / 2; let best = 0, bd = Infinity; pts.forEach((q, i) => { const d = Math.hypot(q.x - mx, q.y - my); if (d < bd){ bd = d; best = i; } }); g.samples = [best]; } });
+  const cx = pts.reduce((s, q) => s + q.x, 0) / (pts.length || 1), cy = pts.reduce((s, q) => s + q.y, 0) / (pts.length || 1);
+  pts.forEach(q => { q.ang = Math.atan2(q.y - cy, q.x - cx); });
+  return { pts, segs, cx, cy };
+}
 function closeReachPopup(){
   const el = document.querySelector(".sk-reach-pop");
   if (el) el.remove();
   document.removeEventListener("keydown", closeReachPopup._esc);
 }
-// hooks (from the skill page): getRank(dep), setRank(dep, rank) (applies DEP_EXCLUSIVE and re-renders the card), skill() -> active card, rank()
-function openReachPopup(skill, rank, hooks){
+function openReachPopup(skill, rank){
   closeReachPopup();
-  let parts = reachNormalize(skill.reach, rank), items = parts.map(p => ({ part: p, alpha: 1 }));
+  const toggles = reachToggleEntries(skill);
+  const over = {};
+  for (const e of toggles) over[e.dep.id] = getDepRank(e.dep);   // start from the card's state, then stay local
+  over.reachEnlarge = 0; over.reachReduce = 0;
+  const scalesWithRm = () => [0, 1].some(s => reachPartsWith(skill, rank, Object.assign({}, over, s ? Object.fromEntries(toggles.map(e => [e.dep.id, e.on])) : {})).some(p => p.rangeMod));
+  const rankToggles = scalesWithRm() ? [REACH_ENLARGE, REACH_REDUCE] : [];
+  let parts = reachPartsWith(skill, rank, over), items = parts.map(p => ({ part: p, alpha: 1 }));
   const model = reachModel(skill.class);
-  const toggles = hooks ? reachToggleEntries(skill) : [];
   const pop = document.createElement("div");
   pop.className = "sk-reach-pop";
   const legend = () => parts.map((p, k) => `<span><i style="background:${REACH_COLORS[k % REACH_COLORS.length]}"></i>${reachPartLabel(p)}</span>`).join("");
-  const btnHtml = (e, k) => { const on = hooks.getRank(e.dep) === e.on; return `<button type="button" class="sk-reach-dep${on ? " on" : ""}" data-k="${k}" title="${e.label || e.dep.label}"><img src="${SKILL_ICONS[e.icon || e.dep.icon] || ""}" alt=""><span>${e.label || e.dep.label}</span></button>`; };
+  const pips = (d) => `<span class="sk-reach-pips">${Array.from({ length: d.maxRank }, (_, i) => `<i class="${i < over[d.id] ? "on" : ""}"></i>`).join("")}</span>`;
+  const btn = (key, label, icon, on, extra) => `<button type="button" class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" title="${label}"><img src="${SKILL_ICONS[icon] || ""}" alt=""><span>${label}</span>${extra || ""}</button>`;
+  const depsHtml = () => toggles.map((e, k) => btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, over[e.dep.id] === e.on))
+    .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, pips(d)))).join("");
   pop.innerHTML = `<div class="sk-reach-panel" role="dialog" aria-label="ระยะโจมตี">
     <div class="sk-reach-head"><span>${skill.name} · ระยะโจมตี</span><button type="button" data-role="reach-close">ปิด</button></div>
-    ${toggles.length ? `<div class="sk-reach-deps">${toggles.map(btnHtml).join("")}</div>` : ""}
+    ${toggles.length || rankToggles.length ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
-    <div class="sk-reach-hint">ลากเพื่อหมุน (ลากขึ้นเพื่อมองจากใต้ดิน) · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ดับเบิลคลิกเพื่อรีเซ็ต</div>
+    <div class="sk-reach-hint">ลากเพื่อหมุน (ลากขึ้นเพื่อมองจากใต้ดิน) · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ดับเบิลคลิกเพื่อรีเซ็ต · ปุ่มด้านบนใช้ดูตัวอย่างเท่านั้น ไม่เปลี่ยนการ์ด</div>
+    <canvas class="sk-reach-fx"></canvas>
   </div>`;
   document.body.appendChild(pop);
-  const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector("canvas");
+  const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
   const home = () => ({ yaw: -0.6, pitch: 0.5, zoom: Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))) });
   let st = home();
   const redraw = () => drawReach(cv, items, st, model);
   if (model && !model.ready) model.onready = redraw;
-  // drag / pinch / wheel; pitch runs below the ground too (user 2026-10-13: see how much of a box goes underground)
   const ptrs = new Map(); let pinch = 0;
   cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); });
   cv.addEventListener("pointermove", e => {
@@ -11088,69 +11131,93 @@ function openReachPopup(skill, rank, hooks){
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   cv.addEventListener("wheel", e => { e.preventDefault(); st.zoom = Math.max(6, Math.min(400, st.zoom * (e.deltaY < 0 ? 1.1 : 0.9))); redraw(); }, { passive: false });
   cv.addEventListener("dblclick", () => { st = home(); redraw(); });
-  // A reach toggle: a bigger range = gold light balls fly from the toggle into the shape, then it grows into the new range;
-  // a smaller range = it shrinks first, then red balls fly back into the toggle (the skill page's volley, inside the popup).
+
+  // The volley (user 2026-10-13: the light balls form the outline of the new range). Bigger range: gold sparks with trails sweep
+  // out of the toggle, land along the new range's edges in turn around the shape, and each edge lights up once all its sparks
+  // are in, while the shape grows underneath. Smaller range: the shape shrinks, its old edges flash red, then the sparks lift off
+  // them and stream back into the toggle. Plays whatever prefers-reduced-motion says (project rule).
   let busy = 0;
   const volume = (ps) => ps.reduce((s, p) => s + reachSize(p) * (p.r ? p.r : (p.w || 1)), 0);
-  const ballTarget = (ps) => {
-    const big = ps.filter(p => !p.unknown && p.shape !== "self").sort((a, b) => reachSize(b) - reachSize(a))[0];
-    const pr = panel.getBoundingClientRect(), cr = cv.getBoundingClientRect();
-    if (!big) return [cr.left - pr.left + cr.width / 2, cr.top - pr.top + cr.height / 2];
-    const m = reachMesh(big), c = m.verts.reduce((s, v) => [s[0] + v[0], s[1] + v[1], s[2] + v[2]], [0, 0, 0]).map(x => x / m.verts.length);
-    const q = reachProject(c, st.yaw, st.pitch, st.zoom, cv.clientWidth, cv.clientHeight);
-    return [cr.left - pr.left + q[0], cr.top - pr.top + q[1]];
-  };
-  const volley = (fromXY, toXY, color) => new Promise(done => {
-    const n = 5;
-    for (let k = 0; k < n; k++){
-      const b = document.createElement("span");
-      b.className = "sk-reach-ball"; b.style.setProperty("--ball", color);
-      panel.appendChild(b);
-      const jx = (Math.random() - 0.5) * 30, jy = (Math.random() - 0.5) * 20;
-      const mid = [(fromXY[0] + toXY[0]) / 2 + jx, Math.min(fromXY[1], toXY[1]) - 40 + jy];
-      const anim = b.animate([
-        { transform: `translate(${fromXY[0]}px, ${fromXY[1]}px) scale(.6)`, opacity: 0 },
-        { transform: `translate(${mid[0]}px, ${mid[1]}px) scale(1)`, opacity: 1, offset: 0.5 },
-        { transform: `translate(${toXY[0] + jx / 3}px, ${toXY[1] + jy / 3}px) scale(.8)`, opacity: 0.9 }
-      ], { duration: 520, delay: k * 70, easing: "cubic-bezier(.3,.6,.4,1)", fill: "both" });
-      anim.onfinish = () => { b.remove(); if (k === n - 1) done(); };
-    }
-  });
-  const morph = (from, to) => new Promise(done => {
-    const t0 = performance.now(), D = 520, ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-    const step = (now) => {
-      const t = Math.min(1, (now - t0) / D);
-      items = reachLerp(from, to, ease(t)); redraw();
-      if (t < 1) requestAnimationFrame(step); else done();
+  const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const bez = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1]];
+  const play = (before, after, srcXY, grows) => new Promise(done => {
+    const W = panel.clientWidth, H = panel.clientHeight, dpr = window.devicePixelRatio || 1;
+    fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr);
+    const g = fx.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const ring = reachOutline(grows ? after : before, st, cv, panel, 64);
+    const col = grows ? "#f2cf6b" : "#ef5350";
+    // launch order sweeps round the shape, starting from the side facing the toggle
+    const a0 = Math.atan2(srcXY[1] - ring.cy, srcXY[0] - ring.cx);
+    const order = ring.pts.map((q, i) => i).sort((i, j) => ((ring.pts[i].ang - a0 + 7 * Math.PI) % (2 * Math.PI)) - ((ring.pts[j].ang - a0 + 7 * Math.PI) % (2 * Math.PI)));
+    const SWEEP = 520, FLY = 560, MORPH0 = grows ? 260 : 0, MORPH = grows ? SWEEP + FLY - 260 : 480, BACK0 = grows ? 0 : 560;
+    const sparks = order.map((idx, k) => {
+      const q = ring.pts[idx], side = k % 2 ? 1 : -1, mid = [(srcXY[0] + q.x) / 2, (srcXY[1] + q.y) / 2];
+      const nx = -(q.y - srcXY[1]), ny = q.x - srcXY[0], nl = Math.hypot(nx, ny) || 1, bow = 40 + 30 * Math.sin(k * 1.7);
+      return { q, delay: BACK0 + (k / Math.max(1, order.length - 1)) * SWEEP, c: [mid[0] + side * nx / nl * bow, mid[1] + side * ny / nl * bow - 30] };
+    });
+    const landAt = (i) => sparks[order.indexOf(i)].delay + FLY;   // grow: when that sample's spark lands; shrink: when it leaves
+    const segTime = ring.segs.map(s => Math.max(...s.samples.map(landAt)));
+    const END = grows ? SWEEP + FLY + 380 : BACK0 + SWEEP + FLY + 80;
+    const t0 = performance.now();
+    const frame = (now) => {
+      const t = now - t0;
+      const mt = Math.max(0, Math.min(1, (t - MORPH0) / MORPH));
+      items = reachLerp(before, after, ease(mt)); redraw();
+      g.clearRect(0, 0, W, H);
+      g.lineCap = "round";
+      // edges: grow = light up once their sparks are in, then fade at the end; shrink = flash red, then dim as their sparks leave
+      ring.segs.forEach((s, i) => {
+        let a;
+        if (grows) a = t < segTime[i] ? 0 : Math.min(1, (t - segTime[i]) / 120) * (t > SWEEP + FLY ? Math.max(0, 1 - (t - SWEEP - FLY) / 380) : 1);
+        else a = (t < BACK0 ? Math.min(1, t / 150) : 1) * Math.max(0, 1 - Math.max(0, t - (segTime[i] - FLY)) / 220);
+        if (a <= 0.01) return;
+        g.globalAlpha = a; g.strokeStyle = col; g.shadowColor = col; g.shadowBlur = 14; g.lineWidth = 2.4;
+        g.beginPath(); g.moveTo(s.a[0], s.a[1]); g.lineTo(s.b[0], s.b[1]); g.stroke();
+      });
+      // sparks with trails
+      for (const sp of sparks){
+        const k = (t - sp.delay) / FLY;
+        if (k < 0 || k > 1.25) continue;
+        const from = grows ? srcXY : [sp.q.x, sp.q.y], to = grows ? [sp.q.x, sp.q.y] : srcXY;
+        // a tapered comet streak along its arc: wide and bright at the head, thin and faint at the tail, white-hot core
+        const head = Math.min(1, k), fade = k > 1 ? Math.max(0, 1 - (k - 1) / 0.25) : 1, N = 12, tr = [];
+        for (let j = 0; j <= N; j++) tr.push(bez(from, sp.c, to, ease(Math.max(0, head - j * 0.022))));
+        g.shadowColor = col; g.shadowBlur = 10; g.strokeStyle = col;
+        for (let j = N; j > 0; j--){
+          g.globalAlpha = fade * (1 - j / (N + 1)) * 0.9;
+          g.lineWidth = 3.2 * (1 - j / (N + 1)) + 0.4;
+          g.beginPath(); g.moveTo(tr[j][0], tr[j][1]); g.lineTo(tr[j - 1][0], tr[j - 1][1]); g.stroke();
+        }
+        g.globalAlpha = fade; g.fillStyle = "#fff"; g.shadowBlur = 14;
+        g.beginPath(); g.arc(tr[0][0], tr[0][1], 2.2, 0, 2 * Math.PI); g.fill();
+      }
+      g.globalAlpha = 1; g.shadowBlur = 0;
+      if (t < END) requestAnimationFrame(frame); else { g.clearRect(0, 0, W, H); done(); }
     };
-    requestAnimationFrame(step);
+    requestAnimationFrame(frame);
   });
-  pop.querySelectorAll(".sk-reach-dep").forEach(btn => btn.addEventListener("click", async () => {
+  const rebuildButtons = () => { const box = pop.querySelector(".sk-reach-deps"); if (box){ box.innerHTML = depsHtml(); wire(); } };
+  const wire = () => pop.querySelectorAll(".sk-reach-dep").forEach(b => b.addEventListener("click", async () => {
     if (busy) return;
     busy = 1;
-    const e = toggles[Number(btn.dataset.k)], wasOn = hooks.getRank(e.dep) === e.on;
-    const before = parts;
-    hooks.setRank(e.dep, wasOn ? e.off : e.on);
-    const after = reachNormalize(hooks.skill().reach, hooks.rank());
-    pop.querySelectorAll(".sk-reach-dep").forEach(b => b.classList.toggle("on", hooks.getRank(toggles[Number(b.dataset.k)].dep) === toggles[Number(b.dataset.k)].on));
-    btn.classList.remove("sk-dep-flip-on", "sk-dep-flip-off"); void btn.offsetWidth;
-    const pr = panel.getBoundingClientRect(), br = btn.getBoundingClientRect(), from = [br.left - pr.left + br.width / 2, br.top - pr.top + br.height / 2];
+    const key = b.dataset.key, before = parts;
+    if (key[0] === "t"){ const e = toggles[Number(key.slice(1))]; over[e.dep.id] = over[e.dep.id] === e.on ? e.off : e.on; }
+    else { const d = key === REACH_ENLARGE.id ? REACH_ENLARGE : REACH_REDUCE; over[d.id] = over[d.id] >= d.maxRank ? 0 : over[d.id] + 1; if (over[d.id]) over[d.id === REACH_ENLARGE.id ? REACH_REDUCE.id : REACH_ENLARGE.id] = 0; }
+    const after = reachPartsWith(skill, rank, over);
+    const pr = panel.getBoundingClientRect(), br = b.getBoundingClientRect(), src = [br.left - pr.left + br.width / 2, br.top - pr.top + br.height / 2];
     const grows = volume(after) >= volume(before);
-    if (grows){
-      btn.classList.add(wasOn ? "sk-dep-flip-off" : "sk-dep-flip-on");
-      await volley(from, ballTarget(after), "#f2cf6b");
-      await morph(before, after);
-    } else {
-      const to = ballTarget(before);
-      await morph(before, after);
-      await volley(to, from, "#ef5350");
-      btn.classList.add(wasOn ? "sk-dep-flip-off" : "sk-dep-flip-on");
-    }
+    rebuildButtons();
+    const nb = pop.querySelector(`.sk-reach-dep[data-key="${key}"]`);
+    const pop1 = (cls) => { if (nb){ nb.classList.remove("sk-dep-flip-on", "sk-dep-flip-off"); void nb.offsetWidth; nb.classList.add(cls); } };
+    if (grows) pop1(nb && nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off");
+    await play(before, after, src, grows);
+    if (!grows) pop1(nb && nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off");
     parts = after; items = parts.map(p => ({ part: p, alpha: 1 }));
     pop.querySelector(".sk-reach-legend").innerHTML = legend();
     redraw();
     busy = 0;
   }));
+  wire();
   pop.addEventListener("click", e => { if (e.target === pop || e.target.closest('[data-role="reach-close"]')) closeReachPopup(); });
   closeReachPopup._esc = e => { if (e.key === "Escape") closeReachPopup(); };
   document.addEventListener("keydown", closeReachPopup._esc);
@@ -15210,7 +15277,7 @@ const SKILLS = [
     { dmg:"0", ko:"1", pc:0.65, hitCount:(r)=>r>=3?1:0, label:"ท่าที่ 4" },
     { dmg:"0", ko:"1", pc:0.85, hitCount:(r)=>r>=4&&!getDepRank(PANDA_AURABLAST_DEP)?1:0, label:"ท่าที่ 5" },
     { dmg:"0", ko:"1", aura:true, hitCount:(r)=>r>=4&&getDepRank(PANDA_AURABLAST_DEP)?1:0, label:"Aura Blast" }
-  ], rawModel:{ parts:(rank,c)=>pandaComboParts(rank,c), critBase:()=>pandaCritBase(), usedStats:()=>["atk"] }, formulaItems:(rank,c)=>pandaComboFormulaItems(rank,c), hasCurrentSp:true, effectProc:PANDA_SHADOWFIST_PROC, dmgControls:[PANDA_FOCUSEDSPIRIT_DEP, PANDA_AURABLAST_DEP, PANDA_GEAR_WEAPON_DEP, PANDA_GEAR_EQUIP_DEP, PND_W59_DEP], secondaryLckProc:{ label:"โอกาส Critical", chance:()=>pandaCritBase(), show:()=>pandaCritBase()>0 }, desc:(rank)=>`ชกต่อเนื่องได้ **${rank+1} ท่า** ใส่ศัตรูทุกตัวในพื้นที่หน้าหมัด แต่ละครั้งที่โดนได้ **SP +1**<br>• ท่า 1 และ 2: ท่าละ **2 ครั้ง**<br>• ท่า 3: **3 ครั้ง**<br>• ท่า 4: **1 ครั้ง**<br>• ท่า 5: **1 ครั้ง**<br>**Focused Spirit:** บวก **0.3 × SP ปัจจุบัน × เลเวล** เข้าไปก่อนคูณสัมประสิทธิ์<br>**Aura Blast:** ท่า 5 เปลี่ยนเป็นระเบิดรอบหมัด ดาเมจ **1.25×ATK** + Focused Spirit<br>**Shadow Fist:** ^^ดาเมจม่วง^^ เพิ่มทุกครั้งที่โดน<br>**G. Marshal / G. Champion Knuckle** (อาวุธ **+5% / +7%**, ชุด + หมวก **+7% / +11%**): มีโอกาสคริติคอล คูณ **ATK x1.8** ก่อนคูณสัมประสิทธิ์ (ครั้งที่ 2 ของท่า 1 ไม่ติดคริ)<br>**Force Gauntlet:** ทุกท่าเปลี่ยนเป็นคลื่นรอบตัว ดาเมจ **×0.75** ปัดลง คิดหลังคริ (ไม่ลด **Aura Blast**) และใช้ช่องอาวุธแทนอาวุธคริ`, compatSkills:["panda_shadowFist","panda_spiritFist","panda_focusedSpirit","panda_auraBlast", "panda_comboPlus", "panda_rollAround"], reach:(rank) => { const fg = getDepRank(PND_W59_DEP) > 0, ab = getDepRank(PANDA_AURABLAST_DEP) > 0, p = []; const cyl = (r, h, label, src) => ({ shape: "cylinder", r, h, anchor: "self", label, src }); const box = (w, w2, l, h, z0, label, src) => ({ shape: "box", w, w2, l, h, z0, anchor: "fist", rangeMod: true, label, src }); const aura = { shape: "cylinder", r: 2, h: 3, anchor: "fist", label: "ท่า 5 (Aura Blast)", src: "Panda.cs:18629" }; if (fg) { p.push(cyl(3, 2, "ท่า 1-2 (Force Gauntlet)", "Panda.cs:15344, :15539, :16215, :16405")); if (rank >= 2) p.push(cyl(4, 3, "ท่า 3 (Force Gauntlet, ฮิตแรกสูง 2m)", "Panda.cs:17002, :17141, :17280")); if (rank >= 3) p.push(cyl(3, 3, "ท่า 4 (Force Gauntlet)", "Panda.cs:17869")); if (rank >= 4) p.push(ab ? aura : cyl(4, 3, "ท่า 5 (Force Gauntlet)", "Panda.cs:18495")); return p; } p.push(box(2, 2, 2, 1, 0, "ท่า 1-2", "Panda.cs:15357, :15552, :16228, :16418")); if (rank >= 2) p.push(box(2, 2, 3, 3, -1, "ท่า 3", "Panda.cs:17015, :17154, :17293")); if (rank >= 3) p.push(box(2, 2, 2, 2, -1, "ท่า 4", "Panda.cs:17882")); if (rank >= 4) p.push(ab ? aura : box(6, 3.2, 4, 3, -1, "ท่า 5", "Panda.cs:18508")); return p; }, reachControls:[PND_W59_DEP, PANDA_AURABLAST_DEP]},
+  ], rawModel:{ parts:(rank,c)=>pandaComboParts(rank,c), critBase:()=>pandaCritBase(), usedStats:()=>["atk"] }, formulaItems:(rank,c)=>pandaComboFormulaItems(rank,c), hasCurrentSp:true, effectProc:PANDA_SHADOWFIST_PROC, dmgControls:[PANDA_FOCUSEDSPIRIT_DEP, PANDA_AURABLAST_DEP, PANDA_GEAR_WEAPON_DEP, PANDA_GEAR_EQUIP_DEP, PND_W59_DEP], secondaryLckProc:{ label:"โอกาส Critical", chance:()=>pandaCritBase(), show:()=>pandaCritBase()>0 }, desc:(rank)=>`ชกต่อเนื่องได้ **${rank+1} ท่า** ใส่ศัตรูทุกตัวในพื้นที่หน้าหมัด แต่ละครั้งที่โดนได้ **SP +1**<br>• ท่า 1 และ 2: ท่าละ **2 ครั้ง**<br>• ท่า 3: **3 ครั้ง**<br>• ท่า 4: **1 ครั้ง**<br>• ท่า 5: **1 ครั้ง**<br>**Focused Spirit:** บวก **0.3 × SP ปัจจุบัน × เลเวล** เข้าไปก่อนคูณสัมประสิทธิ์<br>**Aura Blast:** ท่า 5 เปลี่ยนเป็นระเบิดรอบหมัด ดาเมจ **1.25×ATK** + Focused Spirit<br>**Shadow Fist:** ^^ดาเมจม่วง^^ เพิ่มทุกครั้งที่โดน<br>**G. Marshal / G. Champion Knuckle** (อาวุธ **+5% / +7%**, ชุด + หมวก **+7% / +11%**): มีโอกาสคริติคอล คูณ **ATK x1.8** ก่อนคูณสัมประสิทธิ์ (ครั้งที่ 2 ของท่า 1 ไม่ติดคริ)<br>**Force Gauntlet:** ทุกท่าเปลี่ยนเป็นคลื่นรอบตัว ดาเมจ **×0.75** ปัดลง คิดหลังคริ (ไม่ลด **Aura Blast**) และใช้ช่องอาวุธแทนอาวุธคริ`, compatSkills:["panda_shadowFist","panda_spiritFist","panda_focusedSpirit","panda_auraBlast", "panda_comboPlus", "panda_rollAround"], reach:(rank) => { const fg = getDepRank(PND_W59_DEP) > 0, ab = getDepRank(PANDA_AURABLAST_DEP) > 0, p = []; const RM = ["w", "w2", "l", "h", "z0"]; const cyl = (r, h, label, src) => ({ shape: "cylinder", r, h, anchor: "self", label, src }); const box = (w, w2, l, h, z0, label, src) => ({ shape: "box", w, w2, l, h, z0, anchor: "fist", rangeMod: RM, label, src }); const aura = { shape: "cylinder", r: 2, h: 3, anchor: "fist", label: "ท่า 5 (Aura Blast)", src: "Panda.cs:18629" }; if (fg) { p.push(cyl(3, 2, "ท่า 1-2 (Force Gauntlet)", "Panda.cs:15344, :15539, :16215, :16405")); if (rank >= 2) p.push(cyl(4, 3, "ท่า 3 (Force Gauntlet, ฮิตแรกสูง 2m)", "Panda.cs:17002, :17141, :17280")); if (rank >= 3) p.push(cyl(3, 3, "ท่า 4 (Force Gauntlet)", "Panda.cs:17869")); if (rank >= 4) p.push(ab ? aura : cyl(4, 3, "ท่า 5 (Force Gauntlet)", "Panda.cs:18495")); return p; } p.push(box(2, 2, 2, 1, 0, "ท่า 1-2", "Panda.cs:15357, :15552, :16228, :16418")); if (rank >= 2) p.push(box(2, 2, 3, 3, -1, "ท่า 3", "Panda.cs:17015, :17154, :17293")); if (rank >= 3) p.push(box(2, 2, 2, 2, -1, "ท่า 4", "Panda.cs:17882")); if (rank >= 4) p.push(ab ? aura : box(6, 3.2, 4, 3, -1, "ท่า 5", "Panda.cs:18508")); return p; }, reachControls:[PND_W59_DEP, PANDA_AURABLAST_DEP]},
   { id:"panda_cAttack", name:"Charge Attack", class:"Panda", icon:"panda_cAttack3", maxRank:3, passive:true, desc:(rank)=>`กดค้างเพื่อรวมพลังให้ตัวเอง ได้รับ SP ทุก **1 วินาที** = ATK × **${(0.02 * rank).toFixed(2)}** ปัดขึ้น (ต่ำสุด **${2 * rank}** สูงสุด **${4 * rank} SP** ต่อวินาที)<br>**Sacred Sage Technique** / **Aura Field:** ทำงานระหว่างชาร์จ`, compatSkills:["panda_sacredSageTechnique", "panda_auraField", "panda_shadowFist"] },
   { id:"panda_roll", name:"Roll", class:"Panda", icon:"panda_roll2", cd:30, cdWrapped:true, revisedArtExempt:false, maxRank:2, cost:{sp:[5,8],spType:"red"}, desc:(rank)=>`กลิ้งตัวเองไปข้างหน้าตามทิศที่หันอยู่ประมาณ **0.8 วินาที** ระหว่างกลิ้ง^^หลบการโจมตี^^ได้ทั้งหมด (ไม่สุ่ม LCK) และแก้สถานะล็อกระดับ **${2 * rank}** ลงมา: [groundLock] [needlePrison] [sticky] [frost] [lightBind]<br>__ใช้คูลดาวน์ร่วมกับ **Roll Around**__`, compatSkills:["panda_rollAround"] },
   { id:"panda_resistance", name:"Resistance", class:"Panda", icon:"panda_resistance4", maxRank:4, passive:true, chipCols:{lck2:1,lck:2,lck3:3}, lckProc:{ label:"โอกาสป้องกัน (System Debuff)", chance:[8,12,16,20], simulate:false }, tertiaryLckProc:{ label:"โอกาสป้องกัน (State Debuff)", chance:0, simulate:false, baseText:"Resistance / ชุดหนอน ไม่มีผล" }, secondaryLckProc:{ label:"โอกาสป้องกัน (Debuff ทั่วไป)", chance:[8,12,16,20], simulate:false, deps:[PANDA_GEAR_WORM_WEAPON_DEP, PANDA_GEAR_WORM_ARMOR_DEP, PANDA_GEAR_WORM_CAP_DEP], calc:(raw, L) => { const p1 = lckAdjustChance(raw, L), p2 = lckAdjustChance(pandaWormGearChance(), L); return Math.round(1000 - (100 - p1) * (100 - p2) / 10) / 10; }, baseText:(rank) => `base ${[8,12,16,20][rank - 1]}% + ชุดหนอน ${pandaWormGearChance()}%` }, desc:"เมื่อจะติด **Debuff** มีโอกาส **ป้องกัน** ไม่ให้สถานะนั้นติด ยกเว้น Debuff ประเภท **State** เช่น [artCancel] [grab] [petrify] [puncture] [cut] [blackServant] [bloodCarnage] [darkStalker] [elementalBound] [overPresence] [blueFlag] [redFlag]<br>• **ชุดแมลง (Worm):** มีโอกาสป้องกัน Debuff อีกแหล่งหนึ่ง ยกเว้นประเภท **State** และ **System** เช่น [lock] [hpDrain] [mpDrain] [spDrain] [mpSap]<br>• สองแหล่งนี้ __สุ่มแยกกันคนละครั้ง__ (สุ่ม Resistance ก่อน ถ้าไม่ติดจึงสุ่มชุดแมลง) ไม่ได้รวมโอกาสแล้วสุ่มครั้งเดียว", compatSkills:["panda_safeGuard"], servers:{ tot:{ lckProc:{ label:"โอกาสป้องกัน (System Debuff)", chance:[6,10,14,18], simulate:false }, secondaryLckProc:{ label:"โอกาสป้องกัน (Debuff ทั่วไป)", chance:[6,10,14,18], simulate:false, deps:[PANDA_GEAR_WORM_WEAPON_DEP, PANDA_GEAR_WORM_ARMOR_DEP, PANDA_GEAR_WORM_CAP_DEP], calc:(raw, L) => { const p1 = lckAdjustChance(raw, L), p2 = lckAdjustChance(pandaWormGearChance(), L); return Math.round(1000 - (100 - p1) * (100 - p2) / 10) / 10; }, baseText:(rank) => `base ${[6,10,14,18][rank - 1]}% + ชุดหนอน ${pandaWormGearChance()}%` }, changeNote:"• [Nerf] ลดโอกาสการแก้สถานะผิดปกติ [ 8 / 12 / 16 / 20 >> **6 / 10 / 14 / 18** ]" } } },
@@ -15226,7 +15293,7 @@ const SKILLS = [
     { dmg:"talAdjust(10×sLv)", atkCoeff:1.0, stepMult:2, dep:PANDA_NINESTEPS_DEP, hitCount:(rank,depOn)=>depOn?1:0, label:"ก้าวที่ 2 (2 ครั้ง)" },
     { dmg:"talAdjust(15×sLv)", atkCoeff:1.5, stepMult:3, dep:PANDA_NINESTEPS_DEP, hitCount:(rank,depOn)=>depOn?1:0, label:"ก้าวที่ 3 (3 ครั้ง)" }
   ], compatSkills:["panda_focusedArt","panda_nineSteps"], desc:(rank)=>`พุ่งกระโดดเตะไปข้างหน้าด้วยความเร็วสูงต่อเนื่อง **3 ครั้ง** เข้าโจมตีศัตรูในทิศทางที่กำหนด ดาเมจเพิ่มขึ้นตามค่า SP ปัจจุบันจาก **Focused Art** และคูณตามจำนวนฮิตที่โดนจาก **Nine Steps**`, reach:[{ shape: "box", w: 3.2, w2: 2, l: 2, h: 2, z0: -0.5, anchor: "fist", rangeMod: true, label: "เตะแรก", src: "Panda.cs:22102" }, { shape: "box", w: 2, l: 1, h: 2, anchor: "fist", rangeMod: true, label: "เตะที่ 2-3", src: "Panda.cs:22240, :22390" }] },
-  { id:"panda_qiStrike", name:"Qi Strike", class:"Panda", icon:"panda_qiStrike3", maxRank:3, cost:{sp:[15,18,21],spType:"red"}, cd:90, cdWrapped:true, castTime:[2,3,4], castWrapped:false, duration:3, durWrapped:true, durLabel:"ระยะเวลา Delay Qi", dep:PANDA_QIBURST_DEP, durPostAdd:3, revisedArtExempt:false, dmg:"0", atkCoeff:(rank)=>rank, ko:"10×sLv", usesFocusedArt:true, hasCurrentSp:true, dmgRankDep:PANDA_FOCUSEDART_DEP, desc:(rank)=>`ชาร์จ **${rank+1} วินาที** แล้วปล่อยหมัดตรงไปข้างหน้า ทำดาเมจรุนแรงตามค่า ATK<br>**Delay Qi:** ค้างหมัดไว้แทนการปล่อยทันที แล้วปล่อยเมื่อกดโจมตีครั้งถัดไป<br>**Qi Burst:** หมัดยาวขึ้นเป็นเส้นตรง<br>**Focused Art:** บวกดาเมจเพิ่มตามค่า SP ปัจจุบัน ณ ขณะโดนเป้าหมาย`, compatSkills:["panda_focusedArt","panda_qiBurst","panda_delayQi"], servers:{ tto:{ castTime:2, duration:6, desc:ttoDesc("panda_qiStrike", b => b.replace(/ชาร์จ \*\*\d+ วินาที\*\*/, "ชาร์จ **2 วินาที**")), changeNote:"• [Buff] ลดเวลาชาร์จเหลือ **2 วินาที** ทุกขั้น (จากเดิม 2 / 3 / 4 วินาที)\n• [Buff] เวลาบัฟ **Delay Qi** **3 → 6 วินาที**" } }, reach:() => { const qb = getDepRank(PANDA_QIBURST_DEP) ? 1 : 0; return [{ shape: "box", w: 2, l: 1 + 5 * qb, h: 2, anchor: "fist", rangeMod: true, label: qb ? "Qi Burst (1×rangeMod + 5m)" : undefined, src: "Panda.cs:23503" }]; }, reachControls:[PANDA_QIBURST_DEP] },
+  { id:"panda_qiStrike", name:"Qi Strike", class:"Panda", icon:"panda_qiStrike3", maxRank:3, cost:{sp:[15,18,21],spType:"red"}, cd:90, cdWrapped:true, castTime:[2,3,4], castWrapped:false, duration:3, durWrapped:true, durLabel:"ระยะเวลา Delay Qi", dep:PANDA_QIBURST_DEP, durPostAdd:3, revisedArtExempt:false, dmg:"0", atkCoeff:(rank)=>rank, ko:"10×sLv", usesFocusedArt:true, hasCurrentSp:true, dmgRankDep:PANDA_FOCUSEDART_DEP, desc:(rank)=>`ชาร์จ **${rank+1} วินาที** แล้วปล่อยหมัดตรงไปข้างหน้า ทำดาเมจรุนแรงตามค่า ATK<br>**Delay Qi:** ค้างหมัดไว้แทนการปล่อยทันที แล้วปล่อยเมื่อกดโจมตีครั้งถัดไป<br>**Qi Burst:** หมัดยาวขึ้นเป็นเส้นตรง<br>**Focused Art:** บวกดาเมจเพิ่มตามค่า SP ปัจจุบัน ณ ขณะโดนเป้าหมาย`, compatSkills:["panda_focusedArt","panda_qiBurst","panda_delayQi"], servers:{ tto:{ castTime:2, duration:6, desc:ttoDesc("panda_qiStrike", b => b.replace(/ชาร์จ \*\*\d+ วินาที\*\*/, "ชาร์จ **2 วินาที**")), changeNote:"• [Buff] ลดเวลาชาร์จเหลือ **2 วินาที** ทุกขั้น (จากเดิม 2 / 3 / 4 วินาที)\n• [Buff] เวลาบัฟ **Delay Qi** **3 → 6 วินาที**" } }, reach:(rank, rM) => { const qb = getDepRank(PANDA_QIBURST_DEP) ? 1 : 0; return [{ shape: "box", w: 2, l: +(1 * rM + 5 * qb).toFixed(3), h: 2, anchor: "fist", rangeMod: ["w", "h"], label: qb ? "Qi Burst (ยาว 1×rangeMod + 5m)" : "ยาว 1×rangeMod", src: "Panda.cs:23503" }]; }, reachControls:[PANDA_QIBURST_DEP] },
   { id:"panda_delayQi", name:"Delay Qi", class:"Panda", icon:"panda_delayQi1", maxRank:1, desc:"ทำให้ **Qi Strike** ค้างหมัดไว้แทนการปล่อยทันที (ระยะ/พื้นที่ตามการ์ด **Qi Strike**) แล้วปล่อยเมื่อกดโจมตีอีกครั้ง", compatSkills:["panda_qiStrike"], servers:{ tto:{ changeNote:"• [Buff] เวลาบัฟ Delay Qi **3 → 6 วินาที**" } } },
   { id:"panda_pummel", name:"Pummel", class:"Panda", icon:"panda_pummel2", maxRank:2, cost:{sp:[12,16],spType:"red"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(5×sLv)", atkCoeff:0.25, ko:"sLv", usesFocusedArt:true, hasCurrentSp:true, hitCount:()=>5, hitCountDep:PANDA_OGREIMPACT_DEP, dmgRankDep:PANDA_FOCUSEDART_DEP, compatSkills:["panda_focusedArt","panda_ogreImpact"], desc:()=>`พุ่งเข้าหาเป้าหมายแล้วต่อยรัวไปข้างหน้า **5 ครั้ง**<br>**Ogre Impact:** ดาเมจแรงขึ้น และขยายพื้นที่โจมตี<br>**Focused Art:** บวกดาเมจเพิ่มตามค่า SP ปัจจุบัน ณ ขณะโดนเป้าหมาย`, dmgGroups:[
     { dmg:"talAdjust(5×sLv)", atkCoeff:0.25, dep:PANDA_OGREIMPACT_DEP, hitCount:(rank,depOn)=>depOn?0:5 },
@@ -15258,10 +15325,10 @@ const SKILLS = [
   { id:"panda_ashura", name:"Ashura", class:"Panda", icon:"panda_ashura2", cd:300, cdWrapped:true, revisedArtExempt:false, duration:24, durWrapped:true, maxRank:2, cost:{mp:[25,35],sp:[90,90],spType:"red"}, status:{name:"ashura", sLv:(rank)=>rank, class:"Buff, State"}, dmg:(rank)=>"talAdjust("+Math.floor(0.25*(typeof pandaCurrentSp!=="undefined"?pandaCurrentSp:50)*rank)+")", dmgSub:(rank)=>(0.25*rank)+"SP", atkCoeff:0.5, ko:"5", hitCount:()=>2, hasCurrentSp:true, desc:(rank)=>`แปลงร่างเป็นเงาสีแดง ได้รับสถานะ [ashura${rank}]<br>**ท่าชาร์จ → หมัดอาชูร่า**: พุ่งไปข้างหน้า **3.6m** แล้วโจมตี **2 ครั้ง** แรงขึ้นตาม SP ปัจจุบัน จากนั้น __SP ลดเหลือ 0__`, bbBug:"หมัดอาชูร่าใช้ซ้ำต่อเนื่องได้ทันที แต่โค้ดเกมตั้งใจให้มีคูลดาวน์ **12 วินาที**", servers:{ tto:{ ko:"10", changeNote:"• [Buff] หมัดอาชูร่า (กดท่าชาร์จขณะเป็นอาชูร่า) KO **5 → 10**" } }, reach:[{ shape: "cylinder", r: 3, h: 3, z0: 3.6, anchor: "self", label: "หลังพุ่ง 3.6m (6 × 0.6 วินาที)", src: "Panda.cs:31197" }] },
   { id:"panda_drunkenFist", effectProc:PANDA_SHADOWFIST_PROC, name:"Drunken Fist", class:"Panda", icon:"panda_drunkenFist2", maxRank:2, cost:{mp:[4,6],sp:[10,12],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(3+3×sLv)", atkCoeff:0.4, ko:"1", hitCount:()=>4, dmgGroups:[{dmg:"talAdjust(3+3×sLv)", atkCoeff:0.4, hitCount:1, label:"ฮิต 1"}, {dmg:"talAdjust(3×sLv)", atkCoeff:0.4, hitCount:3, label:"ฮิต 2–4"}], compatSkills:["panda_drunkenPlus","panda_drunkenSpin", "panda_shadowFist", "panda_spiritFist"], desc:()=>`หมุนตัวโจมตีด้านหน้า **4 ครั้ง** ฮิตแรกแรงกว่าฮิตอื่น<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Drunken Plus:** มอบสถานะ [drunken${getDepRank(PANDA_DRUNKENPLUS_DEP) || ""}] ให้ตัวเอง<br>**Drunken Spin:** ศัตรูที่โดนติดสถานะ [drunk]`, tooltipNote:"คำอธิบายของ **Drunken Spin** บอกว่าท่านี้ดาเมจ **+6** แต่โค้ดจริงไม่มี", bbBug:"**บั๊กการแสดงผล:** หลังใช้สกิลนี้ ATK ในหน้าต่างสเตตัสจะดูเหมือนลดลง แต่ ATK จริงไม่เปลี่ยน __ห้ามใช้ค่านี้กรอกในช่องสเตตัส__", reach:[{ shape: "box", w: 2, l: 1, h: 2, anchor: "fist", rangeMod: true, src: "Panda.cs:31718, :31940, :32115, :32263" }] },
   { id:"panda_drunkenPlus", name:"Drunken Plus", class:"Panda", icon:"panda_drunkenPlus2", maxRank:2, passive:true, duration:12, durWrapped:true, durLabel:"ระยะเวลา Drunken", lckProc:{label:"โอกาส Evasion", chance:(rank)=>5*rank, simulate:false}, desc:(rank)=>`ทำให้ **Drunken Fist** มอบสถานะ [drunken${rank}] ให้ตัวเองทุกครั้งที่ใช้`, compatSkills:["panda_drunkenFist"] },
-  { id:"panda_waterMonkey", effectProc:PANDA_SHADOWFIST_PROC, name:"Water Monkey", class:"Panda", icon:"panda_waterMonkey2", maxRank:2, cost:{sp:[12,16],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"5×sLv", hitCount:()=>2, dmgRankDep:PANDA_TIMEANDTIDE_DEP, lckProc:{label:"โอกาส Evasion",chance:()=>getDepRank(PANDA_TIMEANDTIDE_DEP)>0?100:50,simulate:false}, compatSkills:["panda_timeAndTide","panda_spiritFist", "panda_shadowFist"], desc:()=>`โจมตีด้านหน้า **2 ครั้ง** มีโอกาส^^หลบการโจมตี^^ระหว่างกำลังปล่อยท่า<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Time and Tide:** เพิ่มดาเมจส่วนที่เป็น **TAL +50%** และการันตีโอกาสหลบ`, reach:() => { const sp = pndSpiritFist(); return [0, 1].map(i => ({ shape: "box", w: 2 * (2 + sp), l: 2 + sp, h: 3, z0: i * 2 - 1, anchor: "fist", label: "ฮิต " + (i + 1) + " (เฉพาะความสูง ×rangeMod)", src: "Panda.cs:33020" })); }, reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
+  { id:"panda_waterMonkey", effectProc:PANDA_SHADOWFIST_PROC, name:"Water Monkey", class:"Panda", icon:"panda_waterMonkey2", maxRank:2, cost:{sp:[12,16],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"5×sLv", hitCount:()=>2, dmgRankDep:PANDA_TIMEANDTIDE_DEP, lckProc:{label:"โอกาส Evasion",chance:()=>getDepRank(PANDA_TIMEANDTIDE_DEP)>0?100:50,simulate:false}, compatSkills:["panda_timeAndTide","panda_spiritFist", "panda_shadowFist"], desc:()=>`โจมตีด้านหน้า **2 ครั้ง** มีโอกาส^^หลบการโจมตี^^ระหว่างกำลังปล่อยท่า<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Time and Tide:** เพิ่มดาเมจส่วนที่เป็น **TAL +50%** และการันตีโอกาสหลบ`, reach:() => { const sp = pndSpiritFist(); return [0, 1].map(i => ({ shape: "box", w: 2 * (2 + sp), l: 2 + sp, h: 3, z0: i * 2 - 1, anchor: "fist", rangeMod: ["h"], label: "ฮิต " + (i + 1), src: "Panda.cs:33020" })); }, reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
   { id:"panda_waterCrane", effectProc:PANDA_SHADOWFIST_PROC, name:"Water Crane", class:"Panda", icon:"panda_waterCrane2", maxRank:2, cost:{sp:[14,18],spType:"blue"}, cd:30, cdWrapped:true, revisedArtExempt:false, dmg:"talAdjust(10×sLv)", atkCoeff:0.5, ko:"1", hitCount:()=>2, dmgRankDep:PANDA_TIMEANDTIDE_DEP, lckProc:{label:"โอกาส Evasion",chance:()=>getDepRank(PANDA_TIMEANDTIDE_DEP)>0?100:50,simulate:false}, compatSkills:["panda_timeAndTide","panda_spiritFist", "panda_shadowFist"], desc:()=>`โจมตีศัตรูรอบตัว **2 ครั้ง** มีโอกาส^^หลบการโจมตี^^ระหว่างกำลังปล่อยท่า<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Time and Tide:** เพิ่มดาเมจส่วนที่เป็น **TAL +50%** และการันตีโอกาสหลบ`, reach:() => [{ shape: "cylinder", r: 4 + pndSpiritFist(), h: 5, anchor: "self", rangeMod: true, src: "Panda.cs:33886" }], reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
-  { id:"panda_stasisBlow", effectProc:PANDA_SHADOWFIST_PROC, name:"Stasis Blow", class:"Panda", icon:"panda_stasisBlow2", cd:30, cdWrapped:true, revisedArtExempt:false, compatSkills:["panda_spiritFist","panda_windWalker", "panda_shadowFist"], maxRank:2, cost:{mp:[10,15],sp:[10,15],spType:"blue"}, duration:[3,5], durWrapped:true, durContested:true, status:{name:"paralysis", sLv:1, class:"Debuff, Physical"}, dmg:"talAdjust(5+5×sLv)", atkCoeff:0.4, ko:"1", hitCount:()=>1, desc:()=>`พุ่งทะลุเป้าหมายไปข้างหน้า **4.7m** แล้วสกัดจุด **1 ครั้ง** เป้าหมายที่ยืนนิ่งหรือวิ่งอยู่ (ไม่ได้กำลังโจมตี/ใช้ท่า) จะติดสถานะ [paralysis]<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Wind Walker:** เป้าหมายไกลเกิน **9m** จะวาร์ปไปอยู่หน้าเป้าหมาย **3m** (ไกลเกิน **16m** ใช้ไม่ได้ และคืน MP/SP)`, reach:() => { const sp = pndSpiritFist(); return [{ shape: "box", w: 2 * (1 + sp), l: 4 + sp, h: 2, z0: -2, anchor: "fist", rangeMod: true, label: "ความกว้างไม่คูณ rangeMod", src: "Panda.cs:34312" }]; }, reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
-  { id:"panda_deathBlow", effectProc:PANDA_SHADOWFIST_PROC, name:"Death Blow", class:"Panda", icon:"panda_deathBlow2", cd:30, cdWrapped:true, revisedArtExempt:false, compatSkills:["panda_spiritFist","panda_windWalker", "panda_shadowFist"], maxRank:2, cost:{mp:[15,20],sp:[18,24],spType:"blue"}, status:{name:"death", sLv:1, class:"Debuff, System"}, dmg:"talAdjust(5+10×sLv)", atkCoeff:0.4, ko:"1", hitCount:()=>1, targetHpInput:true, lckProc:{label:"โอกาส Death", chance:(rank)=>20*rank, simulate:false, calc:(c,LCK)=>{ const L = lckAdjustChance(c, LCK); const hp = Math.max(1, typeof pandaTargetHp !== "undefined" ? pandaTargetHp : 1000); return Math.floor(1000 * Math.min(L, hp) / hp) / 10; }, baseText:(rank,LCK)=>`ตายแน่นอนเมื่อ HP ≤ ${lckAdjustChance(20*rank, LCK ?? 0)}`}, desc:()=>`พุ่งทะลุเป้าหมายไปข้างหน้า **4.7m** แล้วสกัดจุดตาย **1 ครั้ง** ถ้าเป้าหมายยืนนิ่งหรือวิ่งอยู่ (ไม่ได้กำลังโจมตี/ใช้ท่า) มีโอกาสติดสถานะ [death] ยิ่ง HP ปัจจุบันของเป้าหมายน้อยยิ่งติดง่าย<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Wind Walker:** เป้าหมายไกลเกิน **9m** จะวาร์ปไปอยู่หน้าเป้าหมาย **3m** (ไกลเกิน **16m** ใช้ไม่ได้ และคืน MP/SP)`, tooltipNote:"คำอธิบายของ **Wind Walker** บอกว่าเพิ่มโอกาสติด [death] **2 เท่า** แต่โค้ดจริงไม่เพิ่ม", reach:() => { const sp = pndSpiritFist(); return [{ shape: "box", w: 2 * (1 + sp), l: 4 + sp, h: 2, z0: -2, anchor: "fist", rangeMod: true, label: "ความกว้างไม่คูณ rangeMod", src: "Panda.cs:35128" }]; }, reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
+  { id:"panda_stasisBlow", effectProc:PANDA_SHADOWFIST_PROC, name:"Stasis Blow", class:"Panda", icon:"panda_stasisBlow2", cd:30, cdWrapped:true, revisedArtExempt:false, compatSkills:["panda_spiritFist","panda_windWalker", "panda_shadowFist"], maxRank:2, cost:{mp:[10,15],sp:[10,15],spType:"blue"}, duration:[3,5], durWrapped:true, durContested:true, status:{name:"paralysis", sLv:1, class:"Debuff, Physical"}, dmg:"talAdjust(5+5×sLv)", atkCoeff:0.4, ko:"1", hitCount:()=>1, desc:()=>`พุ่งทะลุเป้าหมายไปข้างหน้า **4.7m** แล้วสกัดจุด **1 ครั้ง** เป้าหมายที่ยืนนิ่งหรือวิ่งอยู่ (ไม่ได้กำลังโจมตี/ใช้ท่า) จะติดสถานะ [paralysis]<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Wind Walker:** เป้าหมายไกลเกิน **9m** จะวาร์ปไปอยู่หน้าเป้าหมาย **3m** (ไกลเกิน **16m** ใช้ไม่ได้ และคืน MP/SP)`, reach:() => { const sp = pndSpiritFist(); return [{ shape: "box", w: 2 * (1 + sp), l: 4 + sp, h: 2, z0: -2, anchor: "fist", rangeMod: ["l", "h"], src: "Panda.cs:34312" }]; }, reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
+  { id:"panda_deathBlow", effectProc:PANDA_SHADOWFIST_PROC, name:"Death Blow", class:"Panda", icon:"panda_deathBlow2", cd:30, cdWrapped:true, revisedArtExempt:false, compatSkills:["panda_spiritFist","panda_windWalker", "panda_shadowFist"], maxRank:2, cost:{mp:[15,20],sp:[18,24],spType:"blue"}, status:{name:"death", sLv:1, class:"Debuff, System"}, dmg:"talAdjust(5+10×sLv)", atkCoeff:0.4, ko:"1", hitCount:()=>1, targetHpInput:true, lckProc:{label:"โอกาส Death", chance:(rank)=>20*rank, simulate:false, calc:(c,LCK)=>{ const L = lckAdjustChance(c, LCK); const hp = Math.max(1, typeof pandaTargetHp !== "undefined" ? pandaTargetHp : 1000); return Math.floor(1000 * Math.min(L, hp) / hp) / 10; }, baseText:(rank,LCK)=>`ตายแน่นอนเมื่อ HP ≤ ${lckAdjustChance(20*rank, LCK ?? 0)}`}, desc:()=>`พุ่งทะลุเป้าหมายไปข้างหน้า **4.7m** แล้วสกัดจุดตาย **1 ครั้ง** ถ้าเป้าหมายยืนนิ่งหรือวิ่งอยู่ (ไม่ได้กำลังโจมตี/ใช้ท่า) มีโอกาสติดสถานะ [death] ยิ่ง HP ปัจจุบันของเป้าหมายน้อยยิ่งติดง่าย<br>**Shadow Fist:** ทำ ^^ดาเมจม่วง^^ เพิ่มเติมทุกฮิต<br>**Spirit Fist:** ขยายพื้นที่โจมตี และเพิ่มดาเมจ **Shadow Fist**<br>**Wind Walker:** เป้าหมายไกลเกิน **9m** จะวาร์ปไปอยู่หน้าเป้าหมาย **3m** (ไกลเกิน **16m** ใช้ไม่ได้ และคืน MP/SP)`, tooltipNote:"คำอธิบายของ **Wind Walker** บอกว่าเพิ่มโอกาสติด [death] **2 เท่า** แต่โค้ดจริงไม่เพิ่ม", reach:() => { const sp = pndSpiritFist(); return [{ shape: "box", w: 2 * (1 + sp), l: 4 + sp, h: 2, z0: -2, anchor: "fist", rangeMod: ["l", "h"], src: "Panda.cs:35128" }]; }, reachControls:[{ dep: PANDA_SHADOWFIST_DEP, onRank: 5, offRank: 4, label: "Spirit Fist", icon: "panda_spiritFist5" }] },
   { id:"panda_shadowFist", name:"Shadow Fist", class:"Panda", icon:"panda_shadowFist4", maxRank:4, passive:true, dmg:"3×sLv", effectDamage:true, dmgDep:PANDA_SPIRITFIST_DEP, compatSkills:["panda_spiritFist","panda_nAttack", "panda_drunkenFist", "panda_waterMonkey", "panda_waterCrane", "panda_stasisBlow", "panda_deathBlow", "panda_cAttack", "panda_wind&cloud", "panda_rain&storm", "panda_lotusPalm", "panda_heavenPalm"], desc:(rank)=>`เพิ่ม ^^ดาเมจม่วง^^ ให้ **Combo**, **Charge Attack**, **Drunken Fist**, **Water Monkey**, **Water Crane**, **Stasis Blow**, **Death Blow**, **Wind & Cloud**, **Rain & Storm**, **Lotus Palm**, **Heaven Palm** ทุกฮิต<br><br>**Spirit Fist:** เพิ่ม ^^ดาเมจม่วง^^ อีก **0.16 × เลเวลแพนด้า** ปัดลง` },
   { id:"panda_spTransfer", name:"Sp Transfer", class:"Panda", icon:"panda_spTransfer2", cd:30, cdWrapped:true, revisedArtExempt:false, maxRank:2, cost:{sp:[15,30],spType:"red"}, desc:(rank)=>`ส่ง SP ให้เพื่อนที่เลือก **${15 * rank} SP** (ถึงเป้าหมายประมาณ **0.8 วินาที** หลังใช้) __ใช้กับตัวเองไม่ได้__<br>**Heaven Breath:** ส่งเพิ่มอีก **เลเวล ÷ 4** (ปัดลง)`, compatSkills:["panda_heavenBreath"] },
   { id:"panda_sacredSageTechnique", name:"Sacred Sage Technique", class:"Panda", icon:"panda_sacredSageTechnique2", maxRank:2, passive:true, isHeal:true, desc:(rank)=>`ระหว่าง **Charge Attack** ถ้า SP เกิน **100** และ HP ไม่เต็ม จะเปลี่ยน SP เป็นการฟื้นฟู **${50 + 50 * rank} HP** แล้ว SP เหลือ __0__ (**50** ถ้ามี **Revised Skill**) ไม่มีคูลดาวน์<br>**Heaven Breath:** ฟื้นฟูเพิ่ม **2 × เลเวล** HP และ **เลเวล ÷ 10** MP (ปัดลง)`, compatSkills:["panda_cAttack", "panda_heavenBreath"] },
@@ -22567,12 +22634,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const b = e.target.closest && e.target.closest('[data-role="reach-badge"]');
         if (!b || !selected || !displayEl.contains(b)) return;
         const sk = activeSimSkill();
-        if (sk && sk.reach) openReachPopup(sk, getSkillRank(selected), {
-          getRank: (d) => getDepRank(d),
-          setRank: (d, r) => { depRanks[d.id] = r; if (r > d.minRank) (DEP_EXCLUSIVE[d.id] || []).forEach(id => { depRanks[id] = 0; }); renderHero(); },
-          skill: () => activeSimSkill(),
-          rank: () => getSkillRank(selected),
-        });
+        if (sk && sk.reach) openReachPopup(sk, getSkillRank(selected));
       });
     }
 
@@ -27342,7 +27404,7 @@ function mountBossGuide(root){
     if (e.target.closest(".sk-status, .sk-mech-link, .sk-desc-skill-link")) return;
     const el = e.target.closest(".bg-move, .bg-rung"); if (!el) return;
     pinned = pinned === el.dataset.move ? null : el.dataset.move; light(pinned);
-    if (el.classList.contains("bg-rung")) page.querySelector(`.bg-move[data-move="${el.dataset.move}"]`)?.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (el.classList.contains("bg-rung")) page.querySelector(`.bg-move[data-move="${el.dataset.move}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
   const lightCannon = n => page.querySelectorAll("[data-cannon]").forEach(el => el.classList.toggle("on", el.dataset.cannon === n));
   page.addEventListener("pointerover", e => { const el = e.target.closest("[data-cannon]"); lightCannon(el ? el.dataset.cannon : null); });
@@ -29191,6 +29253,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T13:41:35.317Z","feat(bible): range popup toggles are preview only, Enlarge / Reduce rescale rangeMod reach, sparks trace the new range outline, and every animation ignores reduced motion"],
     ["2026-10-13T13:20:24.109Z","feat(bible): range popup shows the real Panda model in its idle pose, looks under the ground, and toggles reach skills with a light-ball volley"],
     ["2026-10-13T12:59:22.903Z","feat(panda): reach badge and 3D hit boxes for every Panda skill, reach text moves out of the descs"],
     ["2026-10-13T12:31:26.605Z","feat(bible): reach boxes can be trapezoids and start behind the caster, and draw the real vertical band"],

@@ -16,7 +16,7 @@ Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../
 
 ## Test button and server cards
 * **Test uses the server card:** every Test entry point (`revealMultiHit`, the main and per-group Test buttons) starts with `const selected = activeSimSkill()` (= `getActiveSkill(selected, currentServer)`), so `servers.tto` / `servers.tot` damage overrides reach the roll. `[SERVER SIM ERROR]` rolls every server damage override inside its own range.
-* **Test button (`simulateBtnHtml()`):** the only filled gold pill (`--gold` bg, `--ink` text), full width under Final. Labels `ทดสอบดาเมจ` / `ทดสอบฮีล` / `ทดสอบ Hate`; starburst icon (✚ for heals); hit count `×10 ฮิต` / `×3–5 ฮิต` / none for single-hit. Per-mode buttons `small:true`. `.is-new` pulses until any Test is clicked (`markSimSeen()`, `localStorage["12t-bible-sim-seen"]` in try/catch; off under reduced motion). `[TEST BUTTON ERROR]`.
+* **Test button (`simulateBtnHtml()`):** the only filled gold pill (`--gold` bg, `--ink` text), full width under Final. Labels `ทดสอบดาเมจ` / `ทดสอบฮีล` / `ทดสอบ Hate`; starburst icon (✚ for heals); hit count `×10 ฮิต` / `×3–5 ฮิต` / none for single-hit. Per-mode buttons `small:true`. `.is-new` pulses until any Test is clicked (`markSimSeen()`, `localStorage["12t-bible-sim-seen"]` in try/catch; plays under reduced motion too, user 2026-10-13). `[TEST BUTTON ERROR]`.
 
 ## Class-wide damage rules (Cat Power, TTO no-LCK, Open Wound)
 * **Cat Power series (`CAT_POWER_DEP`, id `catPower`, 0..4 = Off / +10% / +20% / +30% / +70%):** base engine applies Power One/Two/Three/Seven/Super Seven to all Cat damage (`CharacterControl.cs:2838-3010`), shared state across Cat cards.
