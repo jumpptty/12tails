@@ -13933,7 +13933,7 @@ const SKILLS = [
           const chance = [45, 60, 75][rank - 1];
           return `มีโอกาส **${chance}%** ที่จะฟื้น **${spGain} SP** และ **${mpGain} MP** เมื่อโจมตีโดนเป้าหมาย (สูงสุด **1 ครั้ง** ต่อ **1 วินาที**) จากแหล่งที่รองรับ: **โจมตีปกติ/คอมโบ**, **สกิลไฟ** (Fireball, Instant Blaze, Flash Fire, Mike Blink, Fire Keep, Phoenix Armor), ร่าง **Gadina Armor**, และลูกไฟของ **Phoenix** (Ja ไม่ติดผล)`;
         },
-        changeNote: "• [Buff] เพิ่มโอกาสติดของสกิล [ 20% >> **45%, 60%, 75%** ]\n• [Adjust] แก้ไขการเพิ่ม SP และ MP [ 4/4, 8/8, 12/12 >> **16/4, 22/6, 28/8** ]"
+        changeNote: "• [Buff] เพิ่มโอกาสติดของสกิล [ 12% >> **45%, 60%, 75%** ]\n• [Adjust] แก้ไขการเพิ่ม SP และ MP [ 4/4, 8/8, 12/12 >> **16/4, 22/6, 28/8** ]"
       }
     },
     desc: (rank) => "มีโอกาสฟื้น **" + (4 * rank) + " SP** และ **" + (4 * rank) + " MP** เมื่อโจมตีโดนเป้าหมาย (สูงสุด **1 ครั้ง** ต่อ **1 วินาที**) จากแหล่งที่รองรับ: **โจมตีปกติ/คอมโบ**, **สกิลไฟ** (Fireball, Instant Blaze, Flash Fire, Mike Blink, Fire Keep, Phoenix Armor), ร่าง **Gadina Armor**, และลูกไฟของ **Phoenix** (Ja ไม่ติดผล)", tooltipNote:"บอกว่ามีโอกาส **20%** คืน **4 / 8 / 12** SP/MP แต่โค้ดจริงคือฐาน **12%** (ปรับตาม LCK) และติดได้ **1 ครั้งต่อวินาที**"
@@ -14251,7 +14251,7 @@ const SKILLS = [
           const chance = [45, 60, 75][rank - 1];
           return "เมื่อ ลิง, Gadina หรือ Buiten ถูกโจมตี มีโอกาส **" + chance + "%** ที่จะฟื้น **" + spGain + " SP** และ **" + mpGain + " MP** ให้ลิง โดยโอกาสสำเร็จเพิ่มตาม LCK (Proc ได้สูงสุดหนึ่งครั้งต่อ **1 วินาที**)";
         },
-        changeNote: "• [Buff] เพิ่มโอกาสติดของสกิล [ 20% >> **45%, 60%, 75%** ]\n• [Adjust] แก้ไขการเพิ่ม MP SP [ 4/4, 8/8, 12/12 >> **16/4, 22/6, 28/8** ]"
+        changeNote: "• [Buff] เพิ่มโอกาสติดของสกิล [ 12% >> **45%, 60%, 75%** ]\n• [Adjust] แก้ไขการเพิ่ม MP SP [ 4/4, 8/8, 12/12 >> **16/4, 22/6, 28/8** ]"
       }
     },
     desc: (rank) => "เมื่อ ลิง, Gadina หรือ Buiten ถูกโจมตี มีโอกาสฟื้น **" + (4 * rank) + " SP** และ **" + (4 * rank) + " MP** ให้ลิง โดยโอกาสสำเร็จเพิ่มตาม LCK (Proc ได้สูงสุดหนึ่งครั้งต่อ **1 วินาที**)", tooltipNote:"บอกว่ามีโอกาส **20%** เมื่อลิงหรือซัมมอนดินโดนตี แต่โค้ดจริงคือฐาน **12%** (ปรับตาม LCK)"
@@ -28751,6 +28751,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T09:31:00.462Z","fix(monkey): correct ToT Rune proc baseline to 12 percent"],
     ["2026-10-13T08:18:52.945Z","fix(whale): mark Swallow self-target bug fixed on TTO"],
     ["2026-10-13T07:28:05.216Z","feat(bible): filter community guides by server and class"],
     ["2026-10-13T07:21:04.738Z","style(bible): credit guide authors in skill note headings"],

@@ -596,7 +596,7 @@ The existing Titanic Earth Pulse notes below are retained. This catalog is the c
 - **Blazing Arrow:** red SP 48 → 45; Phoenix charges from the caster, can aim until fired, skips mount/skill animation, rebirth becomes 100%, and Fire Soul reduces cooldown to 60s.
 - **Flash Fire:** base damage 16/24/32/40 → 8/16/24/32; radius 5m → 6.5m (`5×rangeMod` → `6.5×rangeMod`). Height assumed unchanged at `3×rangeMod` (user 2026-10-07: "likely unchanged", not confirmed in game).
 - **Ja:** resets Phoenix cooldown on cast.
-- **Fire Rune:** proc chance 20% → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
+- **Fire Rune:** proc base chance 12% (`lckAdjust(12)`; the tooltip says 20%) → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
 - **Fire Keep:** maximum stored Fireballs 2 → 3.
 - **Instant Blaze:** a 10s activation causes Phoenix Fireball impacts to deal AoE.
 - **Fire Soul:** Phoenix stat inheritance 10/20/30/40% → 30/40/50/60%; Sky Crimson / Blazing Arrow cooldowns become 12s / 60s.
@@ -612,7 +612,7 @@ The existing Titanic Earth Pulse notes below are retained. This catalog is the c
 - **Aegis of Earth:** Gadina DEF 20/35/50 → 30/55/80; Ground Lock duration extension removed.
 - **Titanic Earth Pulse:** red SP 60 → 45; damage 35% → 28% Gadina4 HP; projectile speed 15 → 19.95 m/s; charge behavior gains the same warp/aim/no-animation treatment as Blazing Arrow.
 - **Buiten Hou Hou:** resets Gadina cooldown on cast.
-- **Earth Rune:** proc chance 20% → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
+- **Earth Rune:** proc base chance 12% (`lckAdjust(12)`; the tooltip says 20%) → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
 - **Lavu:** base damage 30/50 → 50/100; entry animation 50% faster; its buff reduces incoming damage 15/25%; cooldown and MP/SP costs reduced.
 - **Mike Circle:** becomes a 3s-cooldown active retargetable ally-protection damage/heal command.
 - **Summon Soul:** red SP 30 → 10; Gaos Soul +40 ATK/DEF → +40 ATK/AGI/TAL.
