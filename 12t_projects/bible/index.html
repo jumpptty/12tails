@@ -27577,6 +27577,16 @@ function mountClassGuide(root){
   const simRoot = el("sim"), storageKey = "12t-bible-class-guide-draft";
   let mode = "gallery", current = null, draft = null, noteId = null, applying = false;
   const status = text => { el("status").textContent = text; };
+  let copyFeedbackTimer = null;
+  function showCopied(){
+    clearTimeout(copyFeedbackTimer);
+    const exportButton = button("export"), icon = exportButton.querySelector("svg");
+    icon.innerHTML = '<path d="M5 12l4 4L19 6"/>';
+    exportButton.setAttribute("aria-label", "คัดลอกแล้ว"); status("");
+    copyFeedbackTimer = setTimeout(() => {
+      icon.innerHTML = CLASS_GUIDE_BUTTON_ICONS.export; exportButton.removeAttribute("aria-label");
+    }, 1200);
+  }
   const editors = { description: classGuideMountEditor(field("description"), root.querySelector('[data-cg-editor="description"]'), status), noteText: classGuideMountEditor(el("noteText"), root.querySelector('[data-cg-editor="noteText"]'), status) };
   const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, patch: field("patch").value, description: field("description").value, build: sim.getBuild(), notes: { ...(draft ? draft.notes : {}) } });
   const saveDraft = () => {
@@ -27716,7 +27726,7 @@ function mountClassGuide(root){
       else if (mode !== "author") return;
       else if (act === "build" || act === "annotate") setAuthorInteraction(act);
       else if (act === "preview"){ saveDraft(); openGuide(draft, true); }
-      else if (act === "export"){ saveDraft(); await classGuideCopy(classGuideExport(collect())); status("คัดลอกโค้ดไกด์แล้ว"); }
+      else if (act === "export"){ saveDraft(); await classGuideCopy(classGuideExport(collect())); showCopied(); }
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
@@ -28671,6 +28681,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:23:39.579Z","style(bible): confirm guide copy with a brief checkmark"],
     ["2026-10-13T06:21:48.260Z","feat(bible): add submitted TTO Wolf community guide"],
     ["2026-10-13T06:18:51.792Z","style(bible): use black up arrows for skill learning"],
     ["2026-10-13T06:16:21.610Z","feat(bible): simplify guide clipboard export and paste import"],
