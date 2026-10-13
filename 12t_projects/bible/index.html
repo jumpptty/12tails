@@ -1762,10 +1762,10 @@
   .rsim-cell.is-can img{filter:grayscale(1) brightness(.75)}
   .rsim-cell.is-learned img{filter:drop-shadow(0 0 5px rgba(201,162,39,.75)); opacity:1}
   .rsim-cell:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
-  .rsim-plus{display:none; position:absolute; left:1px; bottom:1px; width:15px; height:15px; border-radius:50%; background:var(--gold); color:var(--ink); font:800 13px/15px 'Prompt', sans-serif; text-align:center; box-shadow:0 0 0 1px var(--ink)}
+  .rsim-plus{display:none; position:absolute; left:1px; bottom:1px; width:15px; height:15px; border-radius:50%; background:var(--gold); color:#000; font:800 13px/15px 'Prompt', sans-serif; text-align:center; box-shadow:0 0 0 1px var(--ink)}
   .rsim-cell.is-can .rsim-plus{display:block}
   .rsim-cell.can-green .rsim-plus{background:var(--pro)}
-  .rsim-cell.can-red .rsim-plus{background:var(--seal); color:var(--text)}
+  .rsim-cell.can-red .rsim-plus{background:var(--seal)}
   .rsim-cell{transition:transform .12s ease; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none}
   .rsim-tip{position:fixed; z-index:9000; pointer-events:none; padding:4px 10px; font:600 13px/1.3 'Prompt', sans-serif; color:var(--text); background:var(--panel); border:1px solid var(--gold); border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,.5); white-space:nowrap; opacity:0; transition:opacity .1s ease}
   .rsim-tip.show{opacity:1}
@@ -27836,7 +27836,7 @@ function mountSkillSimulator(root, options = {}){
           const img = document.createElement("img");
           if (!cells[id].placeholder) img.src = SKILL_ICONS[c[0]]; else img.hidden = true; img.alt = "";
           const plus = document.createElement("span");
-          plus.className = "rsim-plus"; plus.textContent = "+";
+          plus.className = "rsim-plus"; plus.textContent = "↑";
           const frame = document.createElement("span");
           frame.className = "rsim-frame"; frame.setAttribute("aria-hidden", "true");
           const star = document.createElement("span"); star.className = "cg-star"; star.textContent = "★"; star.hidden = true; star.setAttribute("aria-hidden", "true");
@@ -28669,6 +28669,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:18:51.792Z","style(bible): use black up arrows for skill learning"],
     ["2026-10-13T06:16:21.610Z","feat(bible): simplify guide clipboard export and paste import"],
     ["2026-10-13T06:13:09.724Z","fix(bible): keep guide level label and input inline"],
     ["2026-10-13T06:11:23.005Z","style(bible): simplify guide headings and credit preview author"],
