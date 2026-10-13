@@ -1719,6 +1719,21 @@
   .cg-note-editor .cg-rich-editor{min-height:140px}
   @media(max-width:760px){.cg-nav{width:100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
+  .cg-page[data-mode="reader"]{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px}
+  .cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:1/-1;grid-row:1;scroll-margin-top:64px}
+  .cg-page[data-mode="reader"] .rsim{margin-top:0;padding-top:0}
+  .cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:2;margin:14px 0 0;padding:12px 0 0;border:0;border-top:1px solid var(--line)}
+  .cg-page[data-mode="reader"] .cg-reader h2{display:inline;font-size:18px;margin-right:12px}
+  .cg-page[data-mode="reader"] .cg-byline{display:inline;font-size:12px;margin:0}
+  .cg-page[data-mode="reader"] .cg-prose{font-size:13px;margin:6px 0 0}
+  .cg-page[data-mode="reader"] .cg-prose:empty{display:none}
+  .cg-page[data-mode="reader"] .cg-reader .cg-kicker,.cg-page[data-mode="reader"] .cg-reader .cg-help,.cg-page[data-mode="reader"] .cg-heading>div{display:none}
+  .cg-page[data-mode="reader"] .cg-heading{grid-column:2;grid-row:2;align-self:start;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+  .cg-page[data-mode="reader"] .cg-status{grid-column:1/-1;grid-row:3;min-height:0;margin:8px 0 0}
+  .cg-page[data-mode="reader"] .cg-status:empty{display:none}
+  .cg-page[data-mode="reader"] [data-cg-act="returnAuthor"]{margin-top:10px}
+  @media(max-width:760px){.cg-page[data-mode="reader"]{grid-template-columns:minmax(0,1fr)}.cg-page[data-mode="reader"] .cg-heading{grid-column:1;grid-row:3;margin-top:10px;border-top:0;padding-top:0}.cg-page[data-mode="reader"] .cg-status{grid-row:4}.cg-page[data-mode="reader"] .cg-reader h2{display:block;margin:0 0 4px}}
+
   /* Skill simulator (skill-simulator tool, 2026-10-12) */
   html.tool-rsim .stage{max-width:min(1240px, 98vw)}
   html.tool-rsim .tool-shell{width:100%}
@@ -27557,7 +27572,7 @@ const CLASS_GUIDE_BUTTON_ICONS = {
 };
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 function mountClassGuide(root){
-  root.innerHTML = `<div class="cg-page">
+  root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><div class="cg-gallery" data-cg-role="guides"></div></section>
@@ -27574,7 +27589,7 @@ function mountClassGuide(root){
   const el = role => root.querySelector('[data-cg-role="' + role + '"]');
   const field = name => root.querySelector('[data-cg-field="' + name + '"]');
   const button = act => root.querySelector('[data-cg-act="' + act + '"]');
-  const simRoot = el("sim"), storageKey = "12t-bible-class-guide-draft";
+  const simRoot = el("sim"), guidePage = root.querySelector(".cg-page"), guideHeading = root.querySelector(".cg-heading"), storageKey = "12t-bible-class-guide-draft";
   let mode = "gallery", current = null, draft = null, noteId = null, applying = false;
   const status = text => { el("status").textContent = text; };
   let copyFeedbackTimer = null;
@@ -27613,6 +27628,12 @@ function mountClassGuide(root){
   const sim = simRoot._skillSim;
   sim.setInteraction("read");
   const switchMode = next => {
+    guidePage.dataset.mode = next;
+    if (next === "reader"){
+      guidePage.insertBefore(simRoot, guidePage.firstChild); guidePage.insertBefore(el("reader"), guideHeading);
+    } else {
+      guidePage.insertBefore(guideHeading, guidePage.firstChild); guidePage.insertBefore(el("reader"), simRoot); guidePage.insertBefore(simRoot, el("transfer"));
+    }
     mode = next; el("gallery").hidden = next !== "gallery"; el("author").hidden = next !== "author";
     el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close();
     el("noteEditor").hidden = true; status("");
@@ -27643,6 +27664,7 @@ function mountClassGuide(root){
     el("guideTitle").textContent = current.title || "ตัวอย่างไกด์";
     el("guideByline").textContent = [current.author || "ยังไม่ระบุผู้เขียน", SKILL_SIM_NAMES[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].name, "แพตช์ " + (current.patch || "ยังไม่ระบุ"), "Lv " + current.build.level].join(" · ");
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
+    requestAnimationFrame(() => { if (mode === "reader") simRoot.scrollIntoView({ block: "start" }); });
   }
   function renderGallery(){
     const list = el("guides"); list.textContent = "";
@@ -28681,6 +28703,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:45:54.748Z","style(bible): show skill builds first in guide reader view"],
     ["2026-10-13T06:23:39.579Z","style(bible): confirm guide copy with a brief checkmark"],
     ["2026-10-13T06:21:48.260Z","feat(bible): add submitted TTO Wolf community guide"],
     ["2026-10-13T06:18:51.792Z","style(bible): use black up arrows for skill learning"],
