@@ -10953,6 +10953,8 @@ function reachModel(cls){
           const u = (part.uv[t.i[0]][0] + part.uv[t.i[1]][0] + part.uv[t.i[2]][0]) / 3, v = (part.uv[t.i[0]][1] + part.uv[t.i[1]][1] + part.uv[t.i[2]][1]) / 3;
           const k = (Math.min(img.height - 1, Math.max(0, Math.floor((1 - v) * img.height))) * img.width + Math.min(img.width - 1, Math.max(0, Math.floor(u * img.width)))) * 4;
           t.rgb = [px[k], px[k + 1], px[k + 2]];
+          const lit = Math.max(0, t.n[0] * REACH_LIGHT[0] + t.n[1] * REACH_LIGHT[1] + t.n[2] * REACH_LIGHT[2]), kk = 0.86 * (0.58 + 0.42 * lit);   // the game's Diffuse material, colour 0.86
+          t.shade = 1 - kk; t.css = `rgb(${Math.round(t.rgb[0] * kk)},${Math.round(t.rgb[1] * kk)},${Math.round(t.rgb[2] * kk)})`;
         }
       } catch (e) { /* a tainted canvas only loses the seam fill */ }
       if (++loaded === defs.length){ out.ready = true; if (out.onready) out.onready(); }
@@ -10963,12 +10965,17 @@ function reachModel(cls){
   return (reachModelCache[cls] = out);
 }
 // One textured triangle: clip to it (grown half a pixel against seams) and draw the skin through the affine map uv -> screen.
-function reachTexTri(ctx, img, P, T, shade, rgb){
+function reachTexTri(ctx, img, P, T, shade, rgb, flat, css){
   const [x0, y0] = P[0], [x1, y1] = P[1], [x2, y2] = P[2], [u0, v0] = T[0], [u1, v1] = T[1], [u2, v2] = T[2];
   if (rgb){
-    const k = 1 - shade, c = `rgb(${Math.round(rgb[0] * k)},${Math.round(rgb[1] * k)},${Math.round(rgb[2] * k)})`;
-    ctx.fillStyle = c; ctx.strokeStyle = c; ctx.lineWidth = 1.2; ctx.lineJoin = "round";
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // one fill of a triangle grown by 0.7 px (covers the seams a stroke used to), in the colour computed once per triangle
+    const gx = (x0 + x1 + x2) / 3, gy = (y0 + y1 + y2) / 3, e = 0.7;
+    const d0 = Math.hypot(x0 - gx, y0 - gy) || 1, d1 = Math.hypot(x1 - gx, y1 - gy) || 1, d2 = Math.hypot(x2 - gx, y2 - gy) || 1;
+    ctx.fillStyle = css || `rgb(${Math.round(rgb[0] * (1 - shade))},${Math.round(rgb[1] * (1 - shade))},${Math.round(rgb[2] * (1 - shade))})`;
+    ctx.beginPath();
+    ctx.moveTo(x0 + (x0 - gx) / d0 * e, y0 + (y0 - gy) / d0 * e); ctx.lineTo(x1 + (x1 - gx) / d1 * e, y1 + (y1 - gy) / d1 * e); ctx.lineTo(x2 + (x2 - gx) / d2 * e, y2 + (y2 - gy) / d2 * e);
+    ctx.closePath(); ctx.fill();
+    if (flat) return;   // a few pixels across: the flat skin colour is what the texture would show
   }
   const det = (u1 - u0) * (v2 - v0) - (u2 - u0) * (v1 - v0);
   if (!det) return;
@@ -10976,20 +10983,22 @@ function reachTexTri(ctx, img, P, T, shade, rgb){
   const c = ((u1 - u0) * (x2 - x0) - (u2 - u0) * (x1 - x0)) / det, d = ((u1 - u0) * (y2 - y0) - (u2 - u0) * (y1 - y0)) / det;
   const cx = (x0 + x1 + x2) / 3, cy = (y0 + y1 + y2) / 3;
   const grow = (x, y) => { const dx = x - cx, dy = y - cy, l = Math.hypot(dx, dy) || 1; return [x + dx / l * 0.8, y + dy / l * 0.8]; };
+  // the patch of the skin this triangle covers, with a pixel of margin: drawImage rasterises only that rectangle
+  const sx = Math.max(0, Math.floor(Math.min(u0, u1, u2) - 1)), sy = Math.max(0, Math.floor(Math.min(v0, v1, v2) - 1));
+  const sw = Math.min(img.width, Math.ceil(Math.max(u0, u1, u2) + 1)) - sx, sh = Math.min(img.height, Math.ceil(Math.max(v0, v1, v2) + 1)) - sy;
+  if (sw <= 0 || sh <= 0) return;
   ctx.save();
   ctx.beginPath(); [P[0], P[1], P[2]].forEach((p, k) => { const g = grow(p[0], p[1]); k ? ctx.lineTo(g[0], g[1]) : ctx.moveTo(g[0], g[1]); }); ctx.closePath();
   ctx.clip();
-  ctx.save();
   ctx.transform(a, b, c, d, x0 - a * u0 - c * v0, y0 - b * u0 - d * v0);
-  ctx.drawImage(img, 0, 0);
+  ctx.drawImage(img, sx, sy, sw, sh, sx, sy, sw, sh);
   ctx.restore();
-  if (shade > 0.01){ ctx.fillStyle = `rgba(0,0,0,${shade.toFixed(3)})`; ctx.fill(); }
-  ctx.restore();
+  if (shade > 0.01){ ctx.fillStyle = `rgba(0,0,0,${shade.toFixed(3)})`; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.closePath(); ctx.fill(); }
 }
 // items: [{part, alpha}] (alpha < 1 while a range fades in or out). model: reachModel() or null (wireframe stand-in).
 function drawReach(cv, items, st, model){
-  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
-  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5), W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const ctx = cv.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
@@ -11026,7 +11035,7 @@ function drawReach(cv, items, st, model){
       if (nz <= 0) continue;
       const a = pp[t.i[0]], b = pp[t.i[1]], c = pp[t.i[2]];
       const lit = Math.max(0, t.n[0] * REACH_LIGHT[0] + t.n[1] * REACH_LIGHT[1] + t.n[2] * REACH_LIGHT[2]);
-      above.push({ kind: "tri", pts: [a, b, c], d: (a[2] + b[2] + c[2]) / 3, uv: t.i.map(i => [part.uv[i][0] * TW, (1 - part.uv[i][1]) * TH]), img: part.img, shade: 1 - 0.86 * (0.58 + 0.42 * lit), rgb: t.rgb });   // the game's Diffuse material, colour 0.86 (PandaEquipment.cs:2093)
+      above.push({ kind: "tri", pts: [a, b, c], d: (a[2] + b[2] + c[2]) / 3, uv: t.i.map(i => [part.uv[i][0] * TW, (1 - part.uv[i][1]) * TH]), img: part.img, shade: t.shade !== undefined ? t.shade : 1 - 0.86 * (0.58 + 0.42 * lit), rgb: t.rgb, css: t.css });   // the game's Diffuse material, colour 0.86 (PandaEquipment.cs:2093)
     }
     }
   } else {
@@ -11036,7 +11045,13 @@ function drawReach(cv, items, st, model){
   const paint = (list, dim) => {
     list.sort((a, b) => a.d - b.d);
     for (const it of list){
-      if (it.kind === "tri"){ ctx.globalAlpha = 1; ctx.setLineDash([]); reachTexTri(ctx, it.img, it.pts, it.uv, Math.min(0.95, it.shade + (dim ? 0.35 : 0)), it.rgb); continue; }
+      if (it.kind === "tri"){
+        const p0 = it.pts[0], p1 = it.pts[1], p2 = it.pts[2], minx = Math.min(p0[0], p1[0], p2[0]), maxx = Math.max(p0[0], p1[0], p2[0]), miny = Math.min(p0[1], p1[1], p2[1]), maxy = Math.max(p0[1], p1[1], p2[1]);
+        if (maxx < -4 || minx > W + 4 || maxy < -4 || miny > H + 4) continue;   // off the canvas: costs nothing
+        ctx.globalAlpha = 1; ctx.setLineDash([]);
+        reachTexTri(ctx, it.img, it.pts, it.uv, Math.min(0.95, it.shade + (dim ? 0.35 : 0)), it.rgb, maxx - minx < 7 && maxy - miny < 7, dim ? null : it.css);
+        continue;
+      }
       ctx.globalAlpha = it.alpha * (dim ? 0.55 : 1);
       if (it.kind === "face"){
         ctx.fillStyle = it.col + "26";
@@ -11181,7 +11196,9 @@ function openReachPopup(skill, rank){
   const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
   const home = () => ({ yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))), t: [0, 0, 0], tt: [0, 0, 0] });
   let st = home();
-  const redraw = () => drawReach(cv, items, st, model);
+  let drawQueued = 0;
+  const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model); };
+  const redraw = () => { if (!drawQueued) drawQueued = requestAnimationFrame(() => { drawQueued = 0; drawReach(cv, items, st, model); }); };   // a fast mouse sends several moves per frame
   if (model && !model.ready) model.onready = redraw;
   const ptrs = new Map(); let pinch = 0;
   cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); });
@@ -11218,7 +11235,7 @@ function openReachPopup(skill, rank){
     st.t[0] += (st.tt[0] - st.t[0]) * 0.12; st.t[1] += (st.tt[1] - st.t[1]) * 0.12;
     const settled = Math.hypot(st.tt[0] - st.t[0], st.tt[1] - st.t[1]) < 0.002;
     if (settled){ st.t[0] = st.tt[0]; st.t[1] = st.tt[1]; }
-    redraw();
+    drawNow();
     keyRaf = (held.size || !settled) ? requestAnimationFrame(keyStep) : 0;
   };
   const wake = () => { if (!keyRaf){ keyT = performance.now(); keyRaf = requestAnimationFrame(keyStep); } };
@@ -11246,7 +11263,7 @@ function openReachPopup(skill, rank){
   const FLY = 190, MORPH = 210, GLOW = 230;
   const play = (before, after, srcXY, grows) => {
     if (anim) cancelAnimationFrame(anim);
-    const W = panel.clientWidth, H = panel.clientHeight, dpr = window.devicePixelRatio || 1;
+    const W = panel.clientWidth, H = panel.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     if (fx.width !== Math.round(W * dpr) || fx.height !== Math.round(H * dpr)){ fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr); }
     const g = fx.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const ring = reachOutline(grows ? after : before, st, cv, panel, 48), col = grows ? "#f2cf6b" : "#ef5350";
@@ -11259,7 +11276,7 @@ function openReachPopup(skill, rank){
     const t0 = performance.now();
     const frame = (now) => {
       const t = now - t0;
-      items = reachLerp(before, after, ease(Math.max(0, Math.min(1, (t - MORPH0) / MORPH)))); redraw();
+      items = reachLerp(before, after, ease(Math.max(0, Math.min(1, (t - MORPH0) / MORPH)))); drawNow();
       g.clearRect(0, 0, W, H);
       const ga = t < GLOW0 ? 0 : Math.max(0, 1 - (t - GLOW0) / GLOW);
       if (ga > 0.01){
@@ -11332,7 +11349,7 @@ function openReachPopup(skill, rank){
       st.t = [0, 0, lerp(close.ty, 0, o)];
       const r = Math.max(0, Math.min(1, (t - HOLD - ORBIT - GAP) / REVEAL)), k = eio(r);
       items = r > 0 ? grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })) : parts.map(p => ({ part: p, alpha: 0 }));
-      redraw();
+      drawNow();
       if (t < TOTAL) introRaf = requestAnimationFrame(frame); else { introRaf = 0; endIntro(); }
     };
     introRaf = requestAnimationFrame(frame);
@@ -11344,7 +11361,7 @@ function openReachPopup(skill, rank){
     // no model: boxes fade in without the camera move
     items = parts.map(p => ({ part: p, alpha: 0 }));
     const t0 = performance.now();
-    const fade = (now) => { const k = Math.min(1, (now - t0) / 500); items = grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })); redraw(); if (k < 1) introRaf = requestAnimationFrame(fade); else { introRaf = 0; items = parts.map(p => ({ part: p, alpha: 1 })); redraw(); } };
+    const fade = (now) => { const k = Math.min(1, (now - t0) / 500); items = grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })); drawNow(); if (k < 1) introRaf = requestAnimationFrame(fade); else { introRaf = 0; items = parts.map(p => ({ part: p, alpha: 1 })); redraw(); } };
     introRaf = requestAnimationFrame(fade);
     closeReachPopup._intro = () => { if (introRaf) cancelAnimationFrame(introRaf); introRaf = 0; };
   }
@@ -29380,6 +29397,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T15:44:27.815Z","perf(bible): range popup redraws about 5 times faster: each triangle draws only its own patch of the skin, tiny ones a precomputed flat colour, off-canvas ones are skipped, one redraw per frame"],
     ["2026-10-13T15:38:55.796Z","feat(bible): range popup is much bigger on desktop and opens with a close-up of the character, zooming out round behind her before the hit boxes fade in"],
     ["2026-10-13T15:29:37.927Z","feat(bible): range popup puts each dimension label on its own edge without overlaps and the popup Cat wears her real hair"],
     ["2026-10-13T15:27:43.696Z","style(bible): range popup hint line is just W A S D"],
