@@ -114,6 +114,7 @@ const exposeInjection = `
   window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
   window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
+  window._reachNormalize = reachNormalize; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachProject = reachProject;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
@@ -3561,6 +3562,55 @@ let checkedHue = 0;
   check("the hate and shield colours exist in both themes", [/--stat-hate:#4338ca/, /--stat-hate:#818cf8/, /--stat-shield:#6b7280/, /--stat-shield:#a1a1aa/].every(re => re.test(html)));
 }
 console.log(`Verified ${checkedHue} damage number colour checks.`);
+
+// ---- reach (spec 2026-10-13): the range badge's structured hit-box data ----
+{
+  const REACH_SHAPES = ["sphere", "cylinder", "box", "cone", "line", "self"];
+  const REACH_ANCHORS = ["self", "target", "fist", "projectile"];
+  const REACH_DIM = { sphere: ["r"], cylinder: ["r", "h"], box: ["w", "l", "h"], cone: ["r", "angle"], line: ["l"], self: [] };
+  const REACH_DESC_RE = /รัศมี \*\*|ทรงกลมรัศมี|กว้าง \*\*/;
+  const bad = (m) => { console.error(`[REACH ERROR] ${m}`); errorCount++; };
+  let checkedReach = 0, reachBacklog = 0;
+  for (const sk of SKILLS) {
+    const maxRank = sk.maxRank || 1;
+    const descAt = (r) => typeof sk.desc === "function" ? sk.desc(r) : String(sk.desc || "");
+    if (!sk.reach) { if (REACH_DESC_RE.test(descAt(maxRank))) reachBacklog++; continue; }
+    for (let r = 1; r <= maxRank; r++) {
+      let parts;
+      try { parts = sandbox._reachNormalize(sk.reach, r); } catch (e) { bad(`${sk.id} rank ${r}: ${e.message}`); continue; }
+      for (const p of parts) {
+        checkedReach++;
+        if (!REACH_SHAPES.includes(p.shape)) { bad(`${sk.id} rank ${r}: unknown shape ${p.shape}`); continue; }
+        if (p.anchor && !REACH_ANCHORS.includes(p.anchor)) bad(`${sk.id} rank ${r}: unknown anchor ${p.anchor}`);
+        if (!p.unknown && p.shape !== "self" && !p.src) bad(`${sk.id} rank ${r}: missing src`);
+        if (!p.unknown) for (const k of REACH_DIM[p.shape]) {
+          const v = p[k];
+          if (!(v === "inf" && k === "h") && !(typeof v === "number" && v > 0)) bad(`${sk.id} rank ${r}: ${k} must be > 0, got ${v}`);
+        }
+      }
+      if (REACH_DESC_RE.test(descAt(r))) { console.error(`[REACH DESC ERROR] ${sk.id} rank ${r}: desc still states a size`); errorCount++; }
+    }
+  }
+  const ext = (vs, i) => +(Math.max(...vs.map(v => v[i])) - Math.min(...vs.map(v => v[i]))).toFixed(6);
+  const box = sandbox._reachMesh({ shape: "box", w: 2, l: 4, h: 1, anchor: "self" });
+  if (ext(box.verts, 0) !== 2 || ext(box.verts, 2) !== 4 || ext(box.verts, 1) !== 1) bad(`golden box extents ${ext(box.verts, 0)}x${ext(box.verts, 2)}x${ext(box.verts, 1)}`);
+  const sph = sandbox._reachMesh({ shape: "sphere", r: 3, anchor: "self" });
+  if (ext(sph.verts, 0) !== 6 || ext(sph.verts, 1) !== 6 || ext(sph.verts, 2) !== 6) bad(`golden sphere extents ${ext(sph.verts, 0)}x${ext(sph.verts, 1)}x${ext(sph.verts, 2)}`);
+  const cyl = sandbox._reachMesh({ shape: "cylinder", r: 2, h: 5, anchor: "self" });
+  if (ext(cyl.verts, 1) !== 5 || Math.abs(Math.max(...cyl.verts.map(v => Math.hypot(v[0], v[2]))) - 2) > 1e-6) bad("golden cylinder");
+  if (sandbox._reachBadgeText([{ shape: "sphere", r: 5 }]) !== "r 5m") bad("golden badge text sphere");
+  if (sandbox._reachBadgeText([{ shape: "box", w: 6, l: 2, h: 3 }]) !== "6×2×3") bad("golden badge text box");
+  if (sandbox._reachBadgeText([{ shape: "line", l: 40 }]) !== "40m") bad("golden badge text line");
+  if (sandbox._reachBadgeText([{ shape: "self" }]) !== "ตัวเอง") bad("golden badge text self");
+  if (sandbox._reachBadgeText([{ shape: "sphere", unknown: true }]) !== "?") bad("golden badge text unknown");
+  const pr = sandbox._reachProject([0, 0, 0], 0, 0, 10, 400, 300);
+  if (pr[0] !== 200) bad(`golden projection centre x ${pr[0]}`);
+  for (const needle of ['class="sk-reach-badge"', ".sk-reach-badge{", "function openReachPopup", ".sk-reach-pop{"]) {
+    if (!html.includes(needle)) bad(`page is missing ${needle}`);
+  }
+  if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.`);
+  console.log(`Verified ${checkedReach} reach parts.`);
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
