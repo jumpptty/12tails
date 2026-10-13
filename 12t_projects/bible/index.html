@@ -26990,6 +26990,45 @@ const TOOLS = [
     mount(root){ mountBbIssues(root); }
   },
   {
+    id: "stat-roll",
+    art: ["tool:Dice"],
+    title: "สุ่มค่าสเตตัสตอนสร้างตัวละคร",
+    shortTitle: "สุ่มสเตตัส",
+    category: "Calculator",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+    mounted: false,
+    mount(root){ mountStatRoll(root); }
+  },
+  {
+    id: "stat-gain",
+    art: ["skill:common_superStatPlus"],
+    title: "อัตราการเติบโตของค่าสเตตัส",
+    shortTitle: "อัตราเติบโต",
+    category: "Calculator",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V14M10 20V9M16 20V13M22 20V4"/></svg>',
+    mounted: false,
+    mount(root){ mountStatGain(root); }
+  },
+  {
+    id: "cha-agi-optimizer",
+    art: ["skill:wolf_lunarEclipse", "skill:rabbit_rapidTrance", "skill:chameleon_immunity"],
+    title: "อยากสกิลวน ใช้แต้มน้อยสุดเท่าไหร่",
+    shortTitle: "สกิลวน",
+    category: "Calculator",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    mounted: false,
+    mount(root){ mountChaAgiOptimizer(root); }
+  },
+  {
+    id: "goldenkingbug-map",
+    title: "แผนที่บอสแมลงทอง",
+    art: ["tool:GoldenKingBug"],
+    category: "Map",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    mounted: false,
+    mount(root){ mountGoldenKingBugMap(root); }
+  },
+  {
     id: "monster-stats",
     art: ["skill:rabbit_statScan"],
     title: "ค่าสถานะมอนสเตอร์",
@@ -26998,28 +27037,6 @@ const TOOLS = [
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4 0-7 3-7 7v4l-2 3h18l-2-3v-4c0-4-3-7-7-7z"/><circle cx="9.5" cy="10" r="1"/><circle cx="14.5" cy="10" r="1"/><path d="M9 20h6"/></svg>',
     mounted: false,
     mount(root){ mountMonsterStats(root); }
-  },
-  {
-    id: "boss-guide",
-    art: ["tool:DarkFalcon"],
-    badge: "Experimental",
-    title: "คู่มือบอส",
-    shortTitle: "คู่มือบอส",
-    category: "Guide",
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
-    mounted: false,
-    mount(root){ mountBossGuide(root); }
-  },
-  {
-    id: "chameleon-attack-sim",
-    art: ["tool:Chameleon"],
-    title: "จำลองการโจมตีปกติกิ้งก่า",
-    shortTitle: "จำลองกิ้งก่า",
-    category: "Simulator",
-    cls: "entry-chm",
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m14 10-6 6"/><path d="m20 4-6 6"/><path d="M14 4h6v6"/></svg>',
-    mounted: false,
-    mount(root){ mountChameleonSim(root); }
   },
   {
     id: "skill-simulator",
@@ -27034,43 +27051,26 @@ const TOOLS = [
     mount(root){ mountClassGuide(root); }
   },
   {
-    id: "cha-agi-optimizer",
-    art: ["skill:wolf_lunarEclipse", "skill:rabbit_rapidTrance", "skill:chameleon_immunity"],
-    title: "อยากสกิลวน ใช้แต้มน้อยสุดเท่าไหร่",
-    shortTitle: "สกิลวน",
-    category: "Calculator",
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    id: "chameleon-attack-sim",
+    art: ["tool:Chameleon"],
+    title: "จำลองการโจมตีปกติกิ้งก่า",
+    shortTitle: "จำลองกิ้งก่า",
+    category: "Simulator",
+    cls: "entry-chm",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m14 10-6 6"/><path d="m20 4-6 6"/><path d="M14 4h6v6"/></svg>',
     mounted: false,
-    mount(root){ mountChaAgiOptimizer(root); }
+    mount(root){ mountChameleonSim(root); }
   },
   {
-    id: "stat-gain",
-    art: ["skill:common_superStatPlus"],
-    title: "อัตราการเติบโตของค่าสเตตัส",
-    shortTitle: "อัตราเติบโต",
-    category: "Calculator",
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V14M10 20V9M16 20V13M22 20V4"/></svg>',
+    id: "boss-guide",
+    art: ["tool:DarkFalcon"],
+    badge: "Experimental",
+    title: "คู่มือบอส",
+    shortTitle: "คู่มือบอส",
+    category: "Guide",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
     mounted: false,
-    mount(root){ mountStatGain(root); }
-  },
-  {
-    id: "stat-roll",
-    art: ["tool:Dice"],
-    title: "สุ่มค่าสเตตัสตอนสร้างตัวละคร",
-    shortTitle: "สุ่มสเตตัส",
-    category: "Calculator",
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
-    mounted: false,
-    mount(root){ mountStatRoll(root); }
-  },
-  {
-    id: "goldenkingbug-map",
-    title: "แผนที่บอสแมลงทอง",
-    art: ["tool:GoldenKingBug"],
-    category: "Map",
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
-    mounted: false,
-    mount(root){ mountGoldenKingBugMap(root); }
+    mount(root){ mountBossGuide(root); }
   }
 ];
 
@@ -28766,6 +28766,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T09:45:35.226Z","style(bible): reorder hub tool tiles"],
     ["2026-10-13T09:42:30.909Z","feat(bible): add undo for guide skill notes"],
     ["2026-10-13T09:31:00.462Z","fix(monkey): correct ToT Rune proc baseline to 12 percent"],
     ["2026-10-13T08:18:52.945Z","fix(whale): mark Swallow self-target bug fixed on TTO"],
