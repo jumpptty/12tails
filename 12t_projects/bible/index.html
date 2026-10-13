@@ -10766,7 +10766,7 @@ function rawCritValue(skill, v){
 function reachNormalize(reach, rank){
   return (Array.isArray(reach) ? reach : [reach]).map(p => {
     const o = Object.assign({}, p);
-    for (const k of ["r", "h", "w", "l", "angle"]) if (typeof o[k] === "function") o[k] = o[k](rank);
+    for (const k of ["r", "h", "w", "w2", "l", "angle", "z0"]) if (typeof o[k] === "function") o[k] = o[k](rank);
     return o;
   });
 }
@@ -10782,20 +10782,21 @@ function reachBadgeText(parts){
   return `${p.l}m`;
 }
 function reachMesh(p){
-  const off = p.anchor === "fist" ? [0, 0, 1] : p.anchor === "target" ? [0, 0, 6] : [0, 0, 0];
+  const off = (p.anchor === "fist" ? [0, 0, 1] : p.anchor === "target" ? [0, 0, 6] : [0, 0, 0]).map((v, i) => i === 2 ? v + (p.z0 || 0) : v);
   const verts = [], edges = [], faces = [];
   const add = (x, y, z) => verts.push([x + off[0], y + off[1], z + off[2]]) - 1;
-  const tall = (h) => typeof h === "number" ? h : 6;
+  // Find* checks use the vertical band [pos.y - 0.5 H, pos.y + H] (Damage.cs:1108, :1567); an unlimited height is drawn as a tall column.
+  const band = (h) => typeof h === "number" ? [-0.5 * h, h] : [-3, 6];
   if (p.shape === "box"){
-    const hw = p.w / 2, hh = tall(p.h);
-    for (const y of [0, hh]) for (const [x, z] of [[-hw, 0], [hw, 0], [hw, p.l], [-hw, p.l]]) add(x, y, z);
+    const hw = p.w / 2, hw2 = (p.w2 !== undefined ? p.w2 : p.w) / 2;
+    for (const y of band(p.h)) for (const [x, z] of [[-hw, 0], [hw, 0], [hw2, p.l], [-hw2, p.l]]) add(x, y, z);
     for (let i = 0; i < 4; i++) edges.push([i, (i + 1) % 4], [4 + i, 4 + (i + 1) % 4], [i, 4 + i]);
     faces.push([0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]);
   } else if (p.shape === "sphere" || p.shape === "cylinder"){
     const N = 24, rings = p.shape === "sphere" ? 9 : 2;
     for (let j = 0; j < rings; j++){
       const t = p.shape === "sphere" ? -Math.PI / 2 + Math.PI * j / (rings - 1) : j / (rings - 1);
-      const y = p.shape === "sphere" ? 1 + p.r * Math.sin(t) : t * tall(p.h);
+      const y = p.shape === "sphere" ? 1 + p.r * Math.sin(t) : band(p.h)[0] + t * (band(p.h)[1] - band(p.h)[0]);
       const rad = p.shape === "sphere" ? p.r * Math.cos(t) : p.r;
       for (let i = 0; i < N; i++){ const a = 2 * Math.PI * i / N; add(rad * Math.cos(a), y, rad * Math.sin(a)); }
       for (let i = 0; i < N; i++) edges.push([j * N + i, j * N + (i + 1) % N]);
@@ -10827,10 +10828,11 @@ const REACH_SHAPE_TH = { sphere: "ทรงกลม", cylinder: "ทรงก�
 function reachPartLabel(p){
   const dims = [];
   if (p.r) dims.push(`รัศมี ${p.r}m`);
-  if (p.w) dims.push(`กว้าง ${p.w}m`);
+  if (p.w) dims.push(p.w2 !== undefined && p.w2 !== p.w ? `กว้าง ${p.w}→${p.w2}m` : `กว้าง ${p.w}m`);
   if (p.l) dims.push(`ยาว ${p.l}m`);
   if (p.h) dims.push(p.h === "inf" ? "สูง ไม่จำกัด" : `สูง ${p.h}m`);
   if (p.angle) dims.push(`มุม ${p.angle}°`);
+  if (p.z0) dims.push(p.z0 < 0 ? `เริ่มหลังตัว ${-p.z0}m` : `เริ่มหน้าตัว ${p.z0}m`);
   if (p.unknown) return `${p.label || REACH_SHAPE_TH[p.shape]}: ขนาดอยู่ใน prefab ยังไม่มีค่าที่ยืนยันได้`;
   return `${p.label || REACH_SHAPE_TH[p.shape]}${dims.length ? ": " + dims.join(" · ") : ""}${p.rangeMod ? " × rangeMod" : ""}`;
 }
@@ -28940,6 +28942,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T12:31:26.605Z","feat(bible): reach boxes can be trapezoids and start behind the caster, and draw the real vertical band"],
     ["2026-10-13T12:27:44.467Z","feat(bible): range badge with a 3D hit-box popup, driven by a structured reach field"],
     ["2026-10-13T09:45:35.226Z","style(bible): reorder hub tool tiles"],
     ["2026-10-13T09:42:30.909Z","feat(bible): add undo for guide skill notes"],

@@ -3583,6 +3583,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (!REACH_SHAPES.includes(p.shape)) { bad(`${sk.id} rank ${r}: unknown shape ${p.shape}`); continue; }
         if (p.anchor && !REACH_ANCHORS.includes(p.anchor)) bad(`${sk.id} rank ${r}: unknown anchor ${p.anchor}`);
         if (!p.unknown && p.shape !== "self" && !p.src) bad(`${sk.id} rank ${r}: missing src`);
+        if (p.w2 !== undefined && !(typeof p.w2 === "number" && p.w2 > 0)) bad(`${sk.id} rank ${r}: w2 must be > 0, got ${p.w2}`);
+        if (p.z0 !== undefined && typeof p.z0 !== "number") bad(`${sk.id} rank ${r}: z0 must be a number`);
         if (!p.unknown) for (const k of REACH_DIM[p.shape]) {
           const v = p[k];
           if (!(v === "inf" && k === "h") && !(typeof v === "number" && v > 0)) bad(`${sk.id} rank ${r}: ${k} must be > 0, got ${v}`);
@@ -3593,11 +3595,14 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   }
   const ext = (vs, i) => +(Math.max(...vs.map(v => v[i])) - Math.min(...vs.map(v => v[i]))).toFixed(6);
   const box = sandbox._reachMesh({ shape: "box", w: 2, l: 4, h: 1, anchor: "self" });
-  if (ext(box.verts, 0) !== 2 || ext(box.verts, 2) !== 4 || ext(box.verts, 1) !== 1) bad(`golden box extents ${ext(box.verts, 0)}x${ext(box.verts, 2)}x${ext(box.verts, 1)}`);
+  if (ext(box.verts, 0) !== 2 || ext(box.verts, 2) !== 4 || ext(box.verts, 1) !== 1.5) bad(`golden box extents ${ext(box.verts, 0)}x${ext(box.verts, 2)}x${ext(box.verts, 1)}`);
+  const trap = sandbox._reachMesh({ shape: "box", w: 6, w2: 3.2, l: 4, h: 3, anchor: "fist", z0: -1 });
+  const nearX = Math.max(...trap.verts.filter(v => Math.abs(v[2]) < 1e-9).map(v => v[0])), farX = Math.max(...trap.verts.filter(v => Math.abs(v[2] - 4) < 1e-9).map(v => v[0]));
+  if (nearX !== 3 || farX !== 1.6 || ext(trap.verts, 2) !== 4 || Math.min(...trap.verts.map(v => v[2])) !== 0 || ext(trap.verts, 1) !== 4.5) bad(`golden trapezoid near ${nearX} far ${farX}`);
   const sph = sandbox._reachMesh({ shape: "sphere", r: 3, anchor: "self" });
   if (ext(sph.verts, 0) !== 6 || ext(sph.verts, 1) !== 6 || ext(sph.verts, 2) !== 6) bad(`golden sphere extents ${ext(sph.verts, 0)}x${ext(sph.verts, 1)}x${ext(sph.verts, 2)}`);
   const cyl = sandbox._reachMesh({ shape: "cylinder", r: 2, h: 5, anchor: "self" });
-  if (ext(cyl.verts, 1) !== 5 || Math.abs(Math.max(...cyl.verts.map(v => Math.hypot(v[0], v[2]))) - 2) > 1e-6) bad("golden cylinder");
+  if (ext(cyl.verts, 1) !== 7.5 || Math.abs(Math.max(...cyl.verts.map(v => Math.hypot(v[0], v[2]))) - 2) > 1e-6) bad("golden cylinder");
   if (sandbox._reachBadgeText([{ shape: "sphere", r: 5 }]) !== "r 5m") bad("golden badge text sphere");
   if (sandbox._reachBadgeText([{ shape: "box", w: 6, l: 2, h: 3 }]) !== "6×2×3") bad("golden badge text box");
   if (sandbox._reachBadgeText([{ shape: "line", l: 40 }]) !== "40m") bad("golden badge text line");
