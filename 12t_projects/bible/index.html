@@ -1687,10 +1687,10 @@
   .rsim[data-interaction="read"] .rsim-pick:disabled{opacity:1;cursor:default}
   .rsim[data-interaction="annotate"] .rsim-cell:not(.is-placeholder):hover{box-shadow:0 0 0 2px var(--gold)}
   .cg-note-backdrop{position:fixed;inset:0;z-index:9999;background:#090807b8;display:grid;place-items:center;padding:20px}
-  .cg-note-card{position:relative;width:min(560px,100%);box-sizing:border-box;max-height:85dvh;overflow-y:auto;padding:28px;background:var(--panel);border:1px solid var(--gold);border-radius:6px;box-shadow:0 24px 80px #0009}
+  .cg-note-card{position:relative;width:min(620px,100%);box-sizing:border-box;max-height:85dvh;overflow-y:auto;padding:28px;background:var(--panel);border:1px solid var(--gold);border-radius:6px;box-shadow:0 24px 80px #0009}
   .cg-note-card h3{font-family:inherit;margin:8px 28px 16px 0;color:var(--gold);font-size:22px}
   .cg-note-close{position:absolute;right:12px;top:10px;border:0;background:none;color:var(--muted);font:24px sans-serif;cursor:pointer}
-  .cg-note-body{margin:0;font-size:14px}
+  .cg-note-body{margin:0;font-size:17px}
   .cg-note-body.is-waiting{opacity:0}
   @media(max-width:760px){.cg-heading{align-items:flex-start;flex-direction:column}.cg-fields,.cg-gallery{grid-template-columns:1fr}.cg-reader{padding-left:14px}.cg-note-card{padding:22px}}
 
@@ -1713,26 +1713,26 @@
   .cg-editor-wrap:focus-within{outline:2px solid var(--gold);outline-offset:2px}
   .cg-editor-tools{display:flex;align-items:center;gap:10px;padding:5px 9px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px}
   .cg-format-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--gold);font:inherit;cursor:pointer}
-  .cg-rich-editor{display:block;min-height:110px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);font:inherit;font-size:14px;line-height:1.9;outline:none}
+  .cg-rich-editor{display:block;min-height:110px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);font:inherit;font-size:17px;line-height:1.9;outline:none}
   .cg-rich-editor strong,.cg-rich-editor b{color:var(--gold);font-weight:700}
   .cg-rich-editor:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
   .cg-note-editor .cg-rich-editor{min-height:140px}
   @media(max-width:760px){.cg-nav{width:100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
-  .cg-page[data-mode="reader"]{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px}
-  .cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:1/-1;grid-row:1;scroll-margin-top:64px}
+  .cg-page[data-mode="reader"]{display:grid;grid-template-columns:clamp(260px,27%,320px) minmax(0,1fr);gap:12px 24px}
+  .cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:2;grid-row:2;min-width:0;scroll-margin-top:64px}
   .cg-page[data-mode="reader"] .rsim{margin-top:0;padding-top:0}
-  .cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:2;margin:14px 0 0;padding:12px 0 0;border:0;border-top:1px solid var(--line)}
-  .cg-page[data-mode="reader"] .cg-reader h2{display:inline;font-size:18px;margin-right:12px}
-  .cg-page[data-mode="reader"] .cg-byline{display:inline;font-size:12px;margin:0}
-  .cg-page[data-mode="reader"] .cg-prose{font-size:13px;margin:6px 0 0}
+  .cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:2;min-height:0;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;margin:0;padding:14px 20px 14px 16px;border:0;border-left:2px solid var(--gold);background:linear-gradient(90deg,#d4af3708,transparent)}
+  .cg-page[data-mode="reader"] .cg-reader h2{display:block;font-size:24px;line-height:1.45;margin:0 0 12px;overflow-wrap:anywhere}
+  .cg-page[data-mode="reader"] .cg-byline{display:block;font-size:13px;line-height:1.8;margin:0 0 22px}
+  .cg-page[data-mode="reader"] .cg-prose{font-size:17px;line-height:1.85;margin:0}
   .cg-page[data-mode="reader"] .cg-prose:empty{display:none}
   .cg-page[data-mode="reader"] .cg-reader .cg-kicker,.cg-page[data-mode="reader"] .cg-reader .cg-help,.cg-page[data-mode="reader"] .cg-heading>div{display:none}
-  .cg-page[data-mode="reader"] .cg-heading{grid-column:2;grid-row:2;align-self:start;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)}
-  .cg-page[data-mode="reader"] .cg-status{grid-column:1/-1;grid-row:3;min-height:0;margin:8px 0 0}
+  .cg-page[data-mode="reader"] .cg-heading{grid-column:1/-1;grid-row:1;justify-content:flex-end;margin:0;padding:0}
+  .cg-page[data-mode="reader"] .cg-status{grid-column:1/-1;grid-row:3;min-height:0;margin:0}
   .cg-page[data-mode="reader"] .cg-status:empty{display:none}
-  .cg-page[data-mode="reader"] [data-cg-act="returnAuthor"]{margin-top:10px}
-  @media(max-width:760px){.cg-page[data-mode="reader"]{grid-template-columns:minmax(0,1fr)}.cg-page[data-mode="reader"] .cg-heading{grid-column:1;grid-row:3;margin-top:10px;border-top:0;padding-top:0}.cg-page[data-mode="reader"] .cg-status{grid-row:4}.cg-page[data-mode="reader"] .cg-reader h2{display:block;margin:0 0 4px}}
+  .cg-page[data-mode="reader"] [data-cg-act="returnAuthor"]{margin-top:18px}
+  @media(max-width:760px){.cg-page[data-mode="reader"]{grid-template-columns:minmax(0,1fr);gap:10px}.cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:1;grid-row:2}.cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:3;padding:10px 14px}.cg-page[data-mode="reader"] .cg-reader h2{font-size:20px;margin-bottom:6px}.cg-page[data-mode="reader"] .cg-byline{margin-bottom:12px}.cg-page[data-mode="reader"] .cg-status{grid-row:4}}
 
   html.tool-guide-reader,html.tool-guide-reader body{height:100dvh;min-height:0;overflow:hidden}
   html.tool-guide-reader .hub-bar{padding:10px 18px}
@@ -27638,17 +27638,21 @@ function mountClassGuide(root){
   let readerFitFrame = null;
   function fitReader(){
     if (mode !== "reader" || root.hidden) return;
-    const width = guidePage.clientWidth, build = simRoot.querySelector(".rsim");
+    const width = simRoot.clientWidth, build = simRoot.querySelector(".rsim");
     if (!width || !build) return;
     const baseWidth = Math.max(640, width); build.style.width = baseWidth + "px";
     const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const infoHeight = el("reader").offsetHeight + 14, navHeight = guideHeading.offsetHeight + (window.innerWidth <= 760 ? 10 : 14);
-    const footerHeight = window.innerWidth <= 760 ? infoHeight + navHeight : Math.max(infoHeight, navHeight);
-    const available = Math.max(1, viewportHeight - guidePage.getBoundingClientRect().top - footerHeight - 16);
-    const height = build.offsetHeight, scale = Math.min(1, width / baseWidth, available / Math.max(1, height));
+    const mobile = window.innerWidth <= 760, gap = mobile ? 10 : 12;
+    const bounds = guidePage.getBoundingClientRect(), zoom = bounds.width / guidePage.clientWidth || 1;
+    const available = Math.max(1, (viewportHeight - bounds.top - 16) / zoom - guideHeading.offsetHeight - gap);
+    const infoHeight = mobile ? Math.min(190, available * .3) : available;
+    el("reader").style.height = infoHeight + "px";
+    const buildRoom = mobile ? Math.max(1, available - infoHeight - gap) : available;
+    const height = build.offsetHeight, scale = Math.min(1, width / baseWidth, buildRoom / Math.max(1, height));
     simRoot.style.setProperty("--cg-reader-scale", scale);
-    simRoot.style.height = Math.ceil(height * scale) + "px";
+    simRoot.style.height = (mobile ? Math.ceil(height * scale) : available) + "px";
   }
+
   function queueReaderFit(){
     if (readerFitFrame !== null) cancelAnimationFrame(readerFitFrame);
     readerFitFrame = requestAnimationFrame(() => { readerFitFrame = null; fitReader(); });
@@ -27660,9 +27664,9 @@ function mountClassGuide(root){
   const switchMode = next => {
     guidePage.dataset.mode = next;
     document.documentElement.classList.toggle("tool-guide-reader", next === "reader");
-    if (next !== "reader"){ simRoot.style.height = ""; simRoot.querySelector(".rsim").style.width = ""; }
+    if (next !== "reader"){ simRoot.style.height = ""; el("reader").style.height = ""; simRoot.querySelector(".rsim").style.width = ""; }
     if (next === "reader"){
-      guidePage.insertBefore(simRoot, guidePage.firstChild); guidePage.insertBefore(el("reader"), guideHeading);
+      guidePage.insertBefore(guideHeading, guidePage.firstChild); guidePage.insertBefore(el("reader"), simRoot);
     } else {
       guidePage.insertBefore(guideHeading, guidePage.firstChild); guidePage.insertBefore(el("reader"), simRoot); guidePage.insertBefore(simRoot, el("transfer"));
     }
@@ -28735,6 +28739,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T07:12:11.824Z","style(bible): give guide explanations a dedicated column"],
     ["2026-10-13T06:59:20.654Z","style(bible): fit guide reader builds into one screen"],
     ["2026-10-13T06:45:54.748Z","style(bible): show skill builds first in guide reader view"],
     ["2026-10-13T06:23:39.579Z","style(bible): confirm guide copy with a brief checkmark"],
