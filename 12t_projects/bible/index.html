@@ -11081,6 +11081,12 @@ function closeReachPopup(){
   const el = document.querySelector(".sk-reach-pop");
   if (el) el.remove();
   document.removeEventListener("keydown", closeReachPopup._esc);
+  if (closeReachPopup._keys){
+    document.removeEventListener("keydown", closeReachPopup._keys[0], true);
+    document.removeEventListener("keyup", closeReachPopup._keys[1], true);
+    closeReachPopup._keys[2]();
+    closeReachPopup._keys = null;
+  }
 }
 function openReachPopup(skill, rank){
   closeReachPopup();
@@ -11104,7 +11110,7 @@ function openReachPopup(skill, rank){
     ${toggles.length || rankToggles.length ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
-    <div class="sk-reach-hint">ลากเพื่อหมุน (ลากขึ้นเพื่อมองจากใต้ดิน) · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ดับเบิลคลิกเพื่อรีเซ็ต · ปุ่มด้านบนใช้ดูตัวอย่างเท่านั้น ไม่เปลี่ยนการ์ด</div>
+    <div class="sk-reach-hint">ลาก หรือกด A D หมุน · W S เงย / ก้ม (ลงไปมองจากใต้ดินได้) · Q E ซูม · Shift เร็วขึ้น · R รีเซ็ต · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ปุ่มด้านบนใช้ดูตัวอย่างเท่านั้น ไม่เปลี่ยนการ์ด</div>
     <canvas class="sk-reach-fx"></canvas>
   </div>`;
   document.body.appendChild(pop);
@@ -11132,6 +11138,35 @@ function openReachPopup(skill, rank){
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   cv.addEventListener("wheel", e => { e.preventDefault(); st.zoom = Math.max(6, Math.min(400, st.zoom * (e.deltaY < 0 ? 1.1 : 0.9))); redraw(); }, { passive: false });
   cv.addEventListener("dblclick", () => { st = home(); redraw(); });
+  // Keyboard (user 2026-10-13): A / D turn, W / S tilt (below the ground too), Q / E zoom, Shift = faster, R = reset. Arrow keys do the same
+  // so they no longer switch the skill behind the popup. Read by e.code, so a Thai keyboard layout works. Held keys run on a frame loop.
+  const KEYMAP = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "up", ArrowUp: "up", KeyS: "down", ArrowDown: "down", KeyQ: "out", KeyE: "in" };
+  const held = new Set(); let keyRaf = 0, keyT = 0, fast = false;
+  const keyStep = (now) => {
+    const dt = Math.min(0.05, (now - keyT) / 1000), sp = fast ? 2.6 : 1; keyT = now;
+    if (held.has("left")) st.yaw -= 1.7 * sp * dt;
+    if (held.has("right")) st.yaw += 1.7 * sp * dt;
+    if (held.has("up")) st.pitch = Math.min(1.45, st.pitch + 1.2 * sp * dt);
+    if (held.has("down")) st.pitch = Math.max(-1.45, st.pitch - 1.2 * sp * dt);
+    if (held.has("in")) st.zoom = Math.min(400, st.zoom * Math.pow(2.2 * sp, dt));
+    if (held.has("out")) st.zoom = Math.max(6, st.zoom / Math.pow(2.2 * sp, dt));
+    redraw();
+    keyRaf = held.size ? requestAnimationFrame(keyStep) : 0;
+  };
+  const onKeyDown = (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    fast = e.shiftKey;
+    if (e.code === "KeyR"){ e.preventDefault(); e.stopPropagation(); st = home(); redraw(); return; }
+    const a = KEYMAP[e.code];
+    if (!a) return;
+    e.preventDefault(); e.stopPropagation();
+    held.add(a);
+    if (!keyRaf){ keyT = performance.now(); keyRaf = requestAnimationFrame(keyStep); }
+  };
+  const onKeyUp = (e) => { const a = KEYMAP[e.code]; if (a) held.delete(a); fast = e.shiftKey; };
+  document.addEventListener("keydown", onKeyDown, true);
+  document.addEventListener("keyup", onKeyUp, true);
+  closeReachPopup._keys = [onKeyDown, onKeyUp, () => { held.clear(); if (keyRaf) cancelAnimationFrame(keyRaf); keyRaf = 0; }];
 
   // The volley (user 2026-10-13): ONE light ball, quick enough to click straight up to rank 4. Bigger range: a gold comet
   // flies from the toggle to the near side of the new range's outline, the outline flashes gold as it lands and the shape
@@ -29237,6 +29272,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T15:22:10.629Z","feat(bible): range popup can be steered with WASD (QE zoom, Shift faster, R reset) and the arrow keys stop switching skills behind it"],
     ["2026-10-13T14:16:46.608Z","feat(cat): reach badge, 3D hit boxes and the real Cat model for every Cat skill with a hit volume, and Panda boxes now start from the Panda herself"],
     ["2026-10-13T13:54:01.404Z","feat(bible): range popup plays one quick light ball per toggle and lets you click straight through to Enlarge / Reduce 4"],
     ["2026-10-13T13:41:35.317Z","feat(bible): range popup toggles are preview only, Enlarge / Reduce rescale rangeMod reach, sparks trace the new range outline, and every animation ignores reduced motion"],
