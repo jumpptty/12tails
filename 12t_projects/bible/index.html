@@ -1669,9 +1669,9 @@
   .cg-transfer .cg-code{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
   .cg-page .rsim{margin-top:24px}
   .cg-page .rsim-lv{width:56px;padding:4px 6px}
-  .cg-star{position:absolute;z-index:4;right:-5px;top:-7px;display:grid;place-items:center;width:28px;height:28px;border:1px solid #d4af37;border-radius:50%;background:#141311;color:#f5d76e;font-size:24px;line-height:1;text-shadow:0 1px 2px #000;box-shadow:0 2px 5px #000b;pointer-events:none;transition:color .25s,border-color .25s}
-  .rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:cg-star-pulse 2.6s ease-in-out infinite}
-  @keyframes cg-star-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.07);filter:brightness(1.18)}}
+  .cg-star{position:absolute;z-index:4;right:-3px;top:-4px;display:grid;place-items:center;width:20px;height:20px;border:1px solid #d4af37;border-radius:50%;background:#141311;color:#f5d76e;font-size:17px;line-height:1;text-shadow:0 1px 2px #000;box-shadow:0 2px 5px #000b;pointer-events:none;transition:color .25s,border-color .25s}
+  .rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:cg-star-pulse 3.6s ease-in-out infinite}
+  @keyframes cg-star-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.08);filter:brightness(1.25)}}
   .cg-prose strong,.cg-note-body strong,.cg-guide p strong{color:var(--gold);font-weight:700}
   .cg-star[hidden]{display:none}
   .rsim-cell.note-seen .cg-star{color:#a6976c;border-color:#786a46;text-shadow:none}
@@ -28576,6 +28576,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T04:41:28.541Z","style(bible): shrink guide stars and slow their pulse"],
     ["2026-10-13T04:27:36.234Z","feat(bible): polish guide note reveals and bold formatting"],
     ["2026-10-13T04:20:31.872Z","style(bible): make guide note stars easier to see"],
     ["2026-10-13T04:10:58.073Z","style(bible): localize class guide name and label server exports"],
