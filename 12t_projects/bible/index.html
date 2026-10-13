@@ -1670,6 +1670,9 @@
   .cg-page .rsim{margin-top:24px}
   .cg-page .rsim-lv{width:56px;padding:4px 6px}
   .cg-star{position:absolute;z-index:4;right:-5px;top:-7px;display:grid;place-items:center;width:28px;height:28px;border:1px solid #d4af37;border-radius:50%;background:#141311;color:#f5d76e;font-size:24px;line-height:1;text-shadow:0 1px 2px #000;box-shadow:0 2px 5px #000b;pointer-events:none;transition:color .25s,border-color .25s}
+  .rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:cg-star-pulse 2.6s ease-in-out infinite}
+  @keyframes cg-star-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.07);filter:brightness(1.18)}}
+  .cg-prose strong,.cg-note-body strong,.cg-guide p strong{color:var(--gold);font-weight:700}
   .cg-star[hidden]{display:none}
   .rsim-cell.note-seen .cg-star{color:#a6976c;border-color:#786a46;text-shadow:none}
   .rsim[data-interaction="read"] .rsim-actions,.rsim[data-interaction="read"] .rsim-clear{display:none}
@@ -1681,12 +1684,8 @@
   .cg-note-card h3{font-family:"Chakra Petch",sans-serif;margin:8px 28px 16px 0;color:var(--gold);font-size:22px}
   .cg-note-close{position:absolute;right:12px;top:10px;border:0;background:none;color:var(--muted);font:24px sans-serif;cursor:pointer}
   .cg-note-body{margin:0;font-size:14px}
-  .cg-note-rays{pointer-events:none}
-  .cg-note-rays i{position:fixed;left:0;top:0;width:30px;height:3px;border-radius:100%;background:linear-gradient(90deg,transparent,#d4af37,#fff5d6);box-shadow:0 0 12px #d4af37;opacity:0;animation:cg-light-volley .55s var(--delay) ease-in forwards}
-  .cg-note-card.is-revealing .cg-note-body{animation:cg-light-text .4s .45s both}
-  @keyframes cg-light-volley{0%{opacity:0;transform:translate(var(--sx),var(--sy)) rotate(var(--angle)) scaleX(.1)}20%{opacity:1}80%{opacity:1;transform:translate(var(--tx),var(--ty)) rotate(var(--angle)) scaleX(1.1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--angle)) scaleX(.1)}}
-  @keyframes cg-light-text{from{opacity:0;filter:blur(5px);color:var(--gold)}to{opacity:1;filter:blur(0);color:var(--text)}}
-  @media(prefers-reduced-motion:reduce){.cg-note-rays{display:none}.cg-note-card.is-revealing .cg-note-body{animation:none}.cg-star{transition:none}}
+  .cg-note-body.is-waiting{opacity:0}
+  @media(prefers-reduced-motion:reduce){.cg-star{transition:none}.rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:none}}
   @media(max-width:760px){.cg-heading{align-items:flex-start;flex-direction:column}.cg-fields,.cg-gallery{grid-template-columns:1fr}.cg-reader{padding-left:14px}.cg-note-card{padding:22px}}
 
   /* Skill simulator (skill-simulator tool, 2026-10-12) */
@@ -15424,6 +15423,30 @@ function simulateBtnHtml({ role, kind = "dmg", count = "", title = "", groupInde
   return `<button type="button" class="${cls}" data-role="${role}"${gi} title="${title}">${kind === "heal" ? SIM_ICON_HEAL : SIM_ICON_BLAST}<span>${label}</span>${count ? `<span class="sk-sim-count">×${count} ฮิต</span>` : ""}</button>`;
 }
 
+const shotTime = (a, b) => Math.min(620, 300 + Math.hypot(b.x - a.x, b.y - a.y) * 0.5);
+// A head and two trailing dots (a small comet) arcing from a to b; onHit runs when the head lands.
+// tone: falsy = gold, true = red, a CSS colour = a white core glowing in that colour.
+function fireShot(a, b, tone, onHit, host = document.body){
+  const active = [];
+  const dx = b.x - a.x, dy = b.y - a.y, lift = Math.min(90, 30 + Math.hypot(dx, dy) * 0.25), dur = shotTime(a, b);
+  const pts = [];
+  for (let s = 0; s <= 10; s++){
+    const u = s / 10;
+    pts.push({ offset: u, transform: `translate(${a.x + dx * u}px, ${a.y + dy * u - 4 * lift * u * (1 - u)}px) scale(${1.3 - 0.6 * u})` });
+  }
+  [0, 1, 2].forEach(k => {
+    const d = document.createElement("div"), size = 9 - k * 2.5;
+    d.className = "sk-shot" + (tone === true ? " is-red" : "");
+    d.style.cssText = `width:${size}px; height:${size}px; margin:${-size / 2}px 0 0 ${-size / 2}px; opacity:${1 - k * 0.3}`
+      + (typeof tone === "string" ? `; background:#fff; box-shadow:0 0 6px 2px ${tone}, 0 0 16px 6px ${tone}` : "");
+    host.appendChild(d);
+    const anim = d.animate(pts, { duration: dur, delay: k * 28, easing: "cubic-bezier(.45,0,.25,1)", fill: "both" });
+    active.push({ d, anim });
+    anim.onfinish = () => { d.remove(); if (k === 0 && onHit) onHit(); };
+  });
+  return () => active.forEach(({ d, anim }) => { anim.onfinish = null; anim.cancel(); d.remove(); });
+}
+
 function mountSkillCooldownLookup(root){
   root.innerHTML = `
     <div class="sk">
@@ -19321,26 +19344,6 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const lit = pips.filter(p => p.classList.contains("on"));
       return up ? (lit[lit.length - 1] || null) : (pips.find(p => p.classList.contains("pip-out")) || pips.find(p => !p.classList.contains("on")) || null);
     };
-    const shotTime = (a, b) => Math.min(620, 300 + Math.hypot(b.x - a.x, b.y - a.y) * 0.5);
-    // A head and two trailing dots (a small comet) arcing from a to b; onHit runs when the head lands.
-    // tone: falsy = gold, true = red, a CSS colour = a white core glowing in that colour.
-    function fireShot(a, b, tone, onHit){
-      const dx = b.x - a.x, dy = b.y - a.y, lift = Math.min(90, 30 + Math.hypot(dx, dy) * 0.25), dur = shotTime(a, b);
-      const pts = [];
-      for (let s = 0; s <= 10; s++){
-        const u = s / 10;
-        pts.push({ offset: u, transform: `translate(${a.x + dx * u}px, ${a.y + dy * u - 4 * lift * u * (1 - u)}px) scale(${1.3 - 0.6 * u})` });
-      }
-      [0, 1, 2].forEach(k => {
-        const d = document.createElement("div"), size = 9 - k * 2.5;
-        d.className = "sk-shot" + (tone === true ? " is-red" : "");
-        d.style.cssText = `width:${size}px; height:${size}px; margin:${-size / 2}px 0 0 ${-size / 2}px; opacity:${1 - k * 0.3}`
-          + (typeof tone === "string" ? `; background:#fff; box-shadow:0 0 6px 2px ${tone}, 0 0 16px 6px ${tone}` : "");
-        document.body.appendChild(d);
-        const anim = d.animate(pts, { duration: dur, delay: k * 28, easing: "cubic-bezier(.45,0,.25,1)", fill: "both" });
-        anim.onfinish = () => { d.remove(); if (k === 0 && onHit) onHit(); };
-      });
-    }
     // The clicked dependency button always flips, even when neither its icon nor a stored rank changes
     // (e.g. a stack count whose icon stays the same, or Cat Power, which keeps its state outside depRanks).
     // Capture phase: runs before the button's own handler, which re-renders synchronously.
@@ -27435,16 +27438,34 @@ function classGuideFilename(code){
   const { build } = classGuideImport(code);
   return "class-guide-" + build.server + "-" + build.classKey + ".json";
 }
+// Guide prose accepts only **bold** markup; authored HTML always remains escaped text.
+function classGuideRichText(text){
+  const safe = String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  return safe.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
+}
+function classGuideBoldEdit(value, start, end, maxLength){
+  if (start === end) return null;
+  let text = value.slice(start, end), from = start, to = end, selectionStart = start, selectionEnd;
+  if (text.startsWith("**") && text.endsWith("**") && text.length > 4){
+    text = text.slice(2, -2); selectionEnd = start + text.length;
+  } else if (value.slice(start - 2, start) === "**" && value.slice(end, end + 2) === "**"){
+    from -= 2; to += 2; selectionStart = from; selectionEnd = from + text.length;
+  } else {
+    selectionStart = start + 2; selectionEnd = end + 2; text = "**" + text + "**";
+  }
+  if (value.length - (to - from) + text.length > maxLength) return null;
+  return { text, from, to, selectionStart, selectionEnd };
+}
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page">
     <div class="cg-heading"><div><p class="cg-kicker">COMMUNITY BUILDS</p><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn" data-cg-act="gallery">ไกด์จากชุมชน</button><button type="button" class="rsim-btn" data-cg-act="author">สร้างไกด์</button></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><p class="cg-intro">บิลด์และเหตุผลจากผู้เล่น คลิกสกิลที่มีดาวเพื่ออ่านโน้ตจากผู้เขียน</p><div class="cg-gallery" data-cg-role="guides"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
-      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" maxlength="12000" rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea></label></div>
+      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
       <div class="cg-author-actions"><button type="button" class="rsim-btn" data-cg-act="build" aria-pressed="true">จัดบิลด์</button><button type="button" class="rsim-btn" data-cg-act="annotate" aria-pressed="false">เขียนโน้ตสกิล ★</button><button type="button" class="rsim-btn" data-cg-act="preview">ดูตัวอย่าง</button><button type="button" class="rsim-btn" data-cg-act="export">ส่งออกไกด์</button><button type="button" class="rsim-btn" data-cg-act="import">นำเข้าโค้ด</button></div>
       <p class="cg-help" data-cg-role="editHelp">คลิกเพื่อเรียนหรือถอนสกิล บันทึกร่างอัตโนมัติในเบราว์เซอร์นี้</p>
-      <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" maxlength="3000" rows="4"></textarea></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย</p><button type="button" class="rsim-btn" data-cg-act="saveNote">บันทึกโน้ต</button><button type="button" class="rsim-btn" data-cg-act="cancelNote">ปิด</button></section>
+      <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" rows="4"></textarea></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</p><button type="button" class="rsim-btn" data-cg-act="saveNote">บันทึกโน้ต</button><button type="button" class="rsim-btn" data-cg-act="cancelNote">ปิด</button></section>
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn" data-cg-act="returnAuthor" hidden>กลับไปแก้ไกด์</button></section>
     <section data-cg-role="sim" hidden></section>
@@ -27508,7 +27529,7 @@ function mountClassGuide(root){
     el("readerKind").textContent = preview ? "AUTHOR PREVIEW" : "COMMUNITY GUIDE";
     el("guideTitle").textContent = current.title || "ตัวอย่างไกด์";
     el("guideByline").textContent = [current.author || "ยังไม่ระบุผู้เขียน", SKILL_SIM_NAMES[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].name, "แพตช์ " + (current.patch || "ยังไม่ระบุ"), "Lv " + current.build.level].join(" · ");
-    el("guideDescription").textContent = current.description; button("returnAuthor").hidden = !preview;
+    el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
   }
   function renderGallery(){
     const list = el("guides"); list.textContent = "";
@@ -27519,7 +27540,7 @@ function mountClassGuide(root){
       const portrait = document.createElement("img"); portrait.src = CLASS_MINIMAL_ICONS[SKILL_SIM_NAMES[guide.build.classKey]] || ""; portrait.alt = "";
       const title = document.createElement("strong"); title.textContent = guide.title;
       const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author, "แพตช์ " + guide.patch].join(" · ");
-      const description = document.createElement("p"); description.textContent = guide.description;
+      const description = document.createElement("p"); description.innerHTML = classGuideRichText(guide.description);
       b.append(portrait, title, byline, description); b.addEventListener("click", () => openGuide(guide)); list.appendChild(b); validCount++;
     }
     if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = "ยังไม่มีไกด์จากชุมชน สร้างไกด์แล้วส่งออกโค้ดให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
@@ -27534,34 +27555,54 @@ function mountClassGuide(root){
     button("applyImport").hidden = kind !== "import"; button("copy").hidden = button("download").hidden = kind !== "export";
     el("code").focus();
   }
-  // The star sends a small volley of light into the author's text. Reopened notes show immediately.
+  // Reuse the skill-details note melt, arcing comet and text reveal. Reopens are immediate.
   const noteModal = document.createElement("div"); noteModal.className = "cg-note-backdrop"; noteModal.hidden = true;
-  noteModal.innerHTML = '<section class="cg-note-card" role="dialog" aria-modal="true" aria-labelledby="cgNoteTitle" tabindex="-1"><button type="button" class="cg-note-close" aria-label="ปิดโน้ต">×</button><p class="cg-kicker">★ AUTHOR’S NOTE</p><h3 id="cgNoteTitle"></h3><p class="cg-note-body"></p><div class="cg-note-rays" aria-hidden="true"></div></section>';
+  noteModal.innerHTML = '<section class="cg-note-card" role="dialog" aria-modal="true" aria-labelledby="cgNoteTitle" tabindex="-1"><button type="button" class="cg-note-close" aria-label="ปิดโน้ต">×</button><p class="cg-kicker">★ AUTHOR’S NOTE</p><h3 id="cgNoteTitle"></h3><p class="cg-note-body"></p></section>';
   document.body.appendChild(noteModal);
-  const noteCard = noteModal.querySelector(".cg-note-card"), noteClose = noteModal.querySelector(".cg-note-close"), noteBody = noteModal.querySelector(".cg-note-body"), rays = noteModal.querySelector(".cg-note-rays");
-  let noteOrigin = null;
-  const closeNote = () => { noteModal.hidden = true; rays.textContent = ""; if (noteOrigin && !root.hidden) noteOrigin.focus(); };
+  const noteClose = noteModal.querySelector(".cg-note-close"), noteBody = noteModal.querySelector(".cg-note-body");
+  let noteOrigin = null, stopNoteAnimation = () => {};
+  const closeNote = () => { stopNoteAnimation(); noteBody.classList.remove("is-waiting"); noteModal.hidden = true; if (noteOrigin && !root.hidden) noteOrigin.focus(); };
   noteClose.addEventListener("click", closeNote); noteModal.addEventListener("click", e => { if (e.target === noteModal) closeNote(); });
   noteModal.addEventListener("keydown", e => {
     if (e.key === "Escape"){ e.preventDefault(); closeNote(); }
     if (e.key === "Tab"){ e.preventDefault(); noteClose.focus(); }
   });
   function showNote(info){
-    noteOrigin = info.element; noteModal.querySelector("h3").textContent = info.cell.name; noteBody.textContent = info.text;
-    noteModal.hidden = false; noteCard.classList.remove("is-revealing"); rays.textContent = "";
+    stopNoteAnimation(); noteBody.classList.remove("is-waiting");
+    noteOrigin = info.element; noteModal.querySelector("h3").textContent = info.cell.name; noteBody.innerHTML = classGuideRichText(info.text);
+    noteModal.hidden = false;
     const reduce = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (info.first && !reduce){
-      const from = info.element.getBoundingClientRect(), to = noteBody.getBoundingClientRect();
-      for (let n = 0; n < 6; n++){
-        const ray = document.createElement("i"), x = from.left + from.width / 2, y = from.top + from.height / 2;
-        const tx = to.left + to.width / 2 + (n - 2.5) * 16, ty = to.top + 12 + (n % 3) * 8;
-        ray.style.setProperty("--sx", x + "px"); ray.style.setProperty("--sy", y + "px"); ray.style.setProperty("--tx", tx + "px"); ray.style.setProperty("--ty", ty + "px");
-        ray.style.setProperty("--angle", Math.atan2(ty - y, tx - x) * 180 / Math.PI + "deg"); ray.style.setProperty("--delay", n * 35 + "ms"); rays.appendChild(ray);
-      }
-      noteCard.classList.add("is-revealing");
-    }
+      const star = info.element.querySelector(".cg-star") || info.element, cr = star.getBoundingClientRect(), pr = noteBody.getBoundingClientRect();
+      const a = { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 }, to = { x: pr.left + 6, y: pr.top + Math.min(pr.height / 2, 14) }, tone = "rgb(255, 214, 102)";
+      noteBody.classList.add("is-waiting");
+      const ghost = document.createElement("div"); ghost.className = "sk-note-ghost";
+      ghost.style.cssText = "left:" + cr.left + "px; top:" + cr.top + "px; width:" + cr.width + "px; height:" + cr.height + "px; color:" + tone;
+      noteModal.appendChild(ghost);
+      const melt = ghost.animate([
+        { left: cr.left + "px", top: cr.top + "px", width: cr.width + "px", height: cr.height + "px", opacity: 1, backgroundColor: "transparent" },
+        { left: a.x - 4.5 + "px", top: a.y - 4.5 + "px", width: "9px", height: "9px", opacity: 1, backgroundColor: "#fff" }
+      ], { duration: 170, easing: "ease-in", fill: "forwards" });
+      let cancelShot = () => {}, reveal = null;
+      stopNoteAnimation = () => { melt.onfinish = null; melt.cancel(); ghost.remove(); cancelShot(); if (reveal) reveal.cancel(); };
+      melt.onfinish = () => {
+        ghost.remove();
+        cancelShot = fireShot(a, to, tone, () => {
+          noteBody.classList.remove("is-waiting");
+          reveal = noteBody.animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: 360, easing: "cubic-bezier(.3,.6,.3,1)" });
+        }, noteModal);
+      };
+    } else stopNoteAnimation = () => {};
     noteClose.focus();
   }
+  root.addEventListener("keydown", e => {
+    if (mode !== "author" || !(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== "b" || !e.target.matches('[data-cg-format="bold"]')) return;
+    e.preventDefault();
+    const input = e.target, edit = classGuideBoldEdit(input.value, input.selectionStart, input.selectionEnd, input.maxLength);
+    if (!edit) return;
+    input.setRangeText(edit.text, edit.from, edit.to, "select"); input.setSelectionRange(edit.selectionStart, edit.selectionEnd);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   root.addEventListener("input", e => { if (e.target.matches && e.target.matches("[data-cg-field]")) saveDraft(); });
   root.addEventListener("click", async e => {
     const target = e.target.closest("[data-cg-act]"); if (!target) return;
@@ -28535,6 +28576,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T04:27:36.234Z","feat(bible): polish guide note reveals and bold formatting"],
     ["2026-10-13T04:20:31.872Z","style(bible): make guide note stars easier to see"],
     ["2026-10-13T04:10:58.073Z","style(bible): localize class guide name and label server exports"],
     ["2026-10-13T03:53:42.193Z","feat(bible): turn skill simulator into community Class Guide"],

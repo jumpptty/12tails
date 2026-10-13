@@ -5,7 +5,7 @@ The **ไกด์แต่ละอาชีพ** tool replaces the Skill Simul
 ## For guide authors
 
 1. Open ไกด์แต่ละอาชีพ and choose **สร้างไกด์** (Create guide).
-2. Fill in the guide title, author name, game patch/version and build description.
+2. Fill in the guide title, author name, game patch/version and build description. Select text in the description or a skill note and press **Ctrl+B** (Cmd+B on Mac) to toggle bold gold emphasis. Formatting is stored as `**text**` in the portable code and shown in previews and published guides.
 3. Choose the server, class and level, then build using the existing skill grid. Normal learning and undo remain available in **จัดบิลด์** mode.
 4. Choose **เขียนโน้ตสกิล ★**, then click a skill to explain your choice. Notes can explain either selected or skipped skills. Save an empty note to remove its star. Each rank/cell has its own note.
 5. Choose **ดูตัวอย่าง** to check the locked reader view, then **กลับไปแก้ไกด์** to resume your draft.
@@ -55,12 +55,12 @@ Before publishing, run `node scripts/validate_skills.js`. Every embedded entry m
 
 * `server`: `og` (BB), `tot` or `tto`. `classKey`: lowercase class name.
 * `learned`: unique numeric cell IDs, including every learned lower rank and prerequisite; export sorts them. Cell IDs use the existing tree/row/column scheme. ToT EX cells are legal only on ToT.
-* `notes`: cell ID strings mapped to plain text. A note may target an unselected skill, but never an unknown or unpublished placeholder cell.
+* `notes`: cell ID strings mapped to text with optional `**bold gold**` emphasis. A note may target an unselected skill, but never an unknown or unpublished placeholder cell.
 * Required for export: title (up to 160 characters), author (120), patch (120). Description allows 12,000 characters; each note allows 3,000. The complete code allows 131,072 characters. JSON import never executes code or renders HTML from submissions.
 * `patch` is the author's version label. It does not select historical mechanics; allocation validation uses the tool's current rules for that server. Update the rules and guide data together when a server changes requirements.
 
 ## Reader interactions
 
-Readers cannot change the level, server, class, skills or points, reset the build, undo it or long-press into a skill card. Only starred skills open notes. The first reveal sends a volley of light from the skill into its note text and dims its star. Later clicks reopen the text immediately. Opening another guide resets the read-star state. Reduced motion shows the note without the volley. Notes support keyboard activation, Escape to close and return focus to the skill.
+Readers cannot change the level, server, class, skills or points, reset the build, undo it or long-press into a skill card. Only starred skills open notes. Unread stars pulse subtly as soon as a guide opens, until clicked. The first reveal uses the same star-to-ball melt, arcing light ball with two trailing dots and text wipe as skill-details notes, then keeps its star dimmed but visible. Later clicks reopen the text immediately. Opening another guide resets the read-star state. Reduced motion shows the note without the volley. Notes support keyboard activation, Escape to close and return focus to the skill.
 
 Exports keep the selected server in `build.server`; downloaded filenames also include its tag, for example `class-guide-tot-wolf.json`. Import restores this tag instead of using the browser’s current server selection.

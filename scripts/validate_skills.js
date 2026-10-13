@@ -3160,6 +3160,26 @@ let checkedRsim = 0;
   const norm = vm.runInContext("classGuideNormalize", sandbox), encode = vm.runInContext("classGuideExport", sandbox), decode = vm.runInContext("classGuideImport", sandbox);
   const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[CLASS GUIDE ERROR] " + msg); errorCount++; } };
   const rejects = (fn, msg) => { let threw=false;try{fn();}catch(e){threw=true;}ok(threw,msg); };
+  const rich = vm.runInContext("classGuideRichText", sandbox), bold = vm.runInContext("classGuideBoldEdit", sandbox);
+  ok(rich("Line **ทอง\nไทย** & <img src=x onerror=alert(1)>") === "Line <strong>ทอง\nไทย</strong> &amp; &lt;img src=x onerror=alert(1)&gt;", "bold multiline guide text renders without authored HTML");
+  ok(rich("unfinished **bold") === "unfinished **bold", "unfinished bold markers remain readable text");
+  const applyBold = (text, start, end, max=12000) => { const e=bold(text,start,end,max); return e && {value:text.slice(0,e.from)+e.text+text.slice(e.to),start:e.selectionStart,end:e.selectionEnd}; };
+  const emphasized = applyBold("before ไทย after",7,10);
+  ok(emphasized.value === "before **ไทย** after" && emphasized.start === 9 && emphasized.end === 12, "Ctrl+B emphasizes selected Thai text and keeps it selected");
+  const unbold = applyBold(emphasized.value,emphasized.start,emphasized.end);
+  ok(unbold.value === "before ไทย after" && unbold.start === 7 && unbold.end === 10, "second Ctrl+B removes surrounding emphasis");
+  ok(applyBold("**gold**",0,8).value === "gold", "Ctrl+B removes selected markers too");
+  ok(bold("text",1,1,3000) === null && bold("text",0,4,7) === null, "shortcut leaves empty selections and full fields unchanged");
+  const shotDoc = sandbox.document, createBefore = shotDoc.createElement, dots=[];
+  try {
+    shotDoc.createElement = () => { const d={style:{},removed:false,remove(){this.removed=true;},animate(frames,opts){this.frames=frames;this.opts=opts;return this.animation={cancel(){this.cancelled=true;}};}};dots.push(d);return d; };
+    let hits=0;const host={appendChild(){}};
+    const cancel=vm.runInContext("fireShot",sandbox)({x:10,y:20},{x:110,y:20},false,()=>hits++,host);
+    ok(dots.length === 3 && dots.every(d=>d.className === "sk-shot") && dots[0].frames[5].transform.includes("-35px"), "shared light ball has two trailing dots and an arcing flight");
+    dots[1].animation.onfinish();dots[2].animation.onfinish();ok(hits === 0,"trailing balls cannot reveal the note early");
+    dots[0].animation.onfinish();ok(hits === 1,"head arrival reveals the note exactly once");
+    cancel();ok(dots.every(d=>d.removed && d.animation.cancelled && !d.animation.onfinish),"closing a note cancels and removes every light ball");
+  } finally { shotDoc.createElement=createBefore; }
   const embedded = vm.runInContext("CLASS_GUIDES", sandbox);
   ok(Array.isArray(embedded), "embedded guides use a data array");
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
