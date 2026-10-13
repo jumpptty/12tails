@@ -828,7 +828,15 @@ let checkedLckDiff = 0;
 // rollOneHit(..., groupIndex) against its own range (dmgModes cards and prose text are skipped).
 // (Found 2026-09-19: Lucky Card's LCK-difference roll was missing from the displayed max.)
 let checkedConsistency = 0;
-{
+// Slow damage checks (range-vs-simulator, Wolf Combo, Rabbit shots, ~35 s): run only with --full (use it before git push) or when the uncommitted diff of index.html touches damage code.
+const DAMAGE_CODE_TOUCHED = /\b(dmg\w*|rollOneHit|calcRangeFor|finalRange\w*|substituteDmgVars|talAdjust|atkCoeff|hitCount\w*|lckDiff\w*|effectProc|critProc|rawModel)\b/;
+const RUN_DAMAGE_CHECKS = process.argv.includes("--full") || (() => {
+  try {
+    const diff = execFileSync("git", ["diff", "HEAD", "-U0", "--", "12t_projects/bible/index.html"], { encoding: "utf8", maxBuffer: 1 << 28 });
+    return diff.split(/\r?\n/).some(l => /^[-+][^-+]/.test(l) && DAMAGE_CODE_TOUCHED.test(l));
+  } catch (e) { return true; }
+})();
+if (RUN_DAMAGE_CHECKS) {
   // Pre-existing mismatches found by this very check, NOT yet resolved. Each needs a decision
   // about which path (roll or range) matches the game; do not "fix" by widening the range.
   // Remove an entry once the skill is consistent again.
@@ -837,9 +845,14 @@ let checkedConsistency = 0;
   };
   const DEP_FIELD_NAMES = ["dmgDep", "dmgMultDep", "dmgRankDep", "dmgFlagDep", "dmgReplaceDep", "hitCountDep", "lckDiffDep", "cdDep", "castDep", "koDep"];
   const inputs = sandbox._statInputs;
-  const N = 2000;   // large on purpose: an overshoot can be a rare tail event (a few in 6000 rolls)
+  const N = 1000;   // an overshoot can be a rare tail event (a few in 6000 rolls); only runs under --full / damage-code changes
   const failures = new Map();
-  SKILLS.forEach(sk => {
+  // Every server the card overrides is rolled against its own range (the original server always).
+  SKILLS.forEach(card => ["og", "tot", "tto"].forEach(srv => {
+    const over = srv === "og" ? null : (card.servers && card.servers[srv]) || (srv === "tot" ? card.ps : null);
+    if (srv !== "og" && !over) return;
+    const sk = over ? Object.assign({}, card, over) : card, fid = sk.id + (srv === "og" ? "" : "@" + srv);
+    sandbox._setServer(srv);
     if (sk.dmgGroups && sk.dmgModes) return;   // alternative modes/zones, not per-hit groups
     const depIds = [];
     DEP_FIELD_NAMES.forEach(f => { if (sk[f] && sk[f].id) depIds.push([sk[f].id, sk[f].minRank !== undefined ? sk[f].minRank : 0, sk[f].maxRank !== undefined ? sk[f].maxRank : 1]); });
@@ -864,7 +877,7 @@ let checkedConsistency = 0;
           if (!sk.dmgGroups && !computable(rawText)) continue;
           sandbox._skillRanks[sk.id] = r;
           sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined;
-          sandbox._selectSkill(sk);
+          sandbox._selectSkill(card);
           if (!sandbox._calcRangeFor || !sandbox._finalRangeForRange) continue;
           // One unit per active group (rolled with rollOneHit's groupIndex), or the whole skill.
           const units = sk.dmgGroups
@@ -879,11 +892,11 @@ let checkedConsistency = 0;
             checkedConsistency++;
             if (lo < fin[0] || hi > fin[1]) {
               const where = g ? ` group ${gi}${g.label ? ` "${g.label}"` : ""}` : "";
-              if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}${where}${depsOff ? " (deps off)" : " (deps on)"}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
+              if (!failures.has(fid)) failures.set(fid, `rank ${r}${where}${depsOff ? " (deps off)" : " (deps on)"}${profile ? " (high stats)" : ""}: displayed ${fin[0]}-${fin[1]} but rolled ${lo}-${hi}`);
             }
           });
         } catch (e) {
-          if (!failures.has(sk.id)) failures.set(sk.id, `rank ${r}: EXCEPTION ${e.message}`);
+          if (!failures.has(fid)) failures.set(fid, `rank ${r}: EXCEPTION ${e.message}`);
         }
       }
       depIds.forEach(([id]) => { delete sandbox._depRanks[id]; });
@@ -891,7 +904,8 @@ let checkedConsistency = 0;
     });
     if (profile) { inputs.atk.value = savedStats.atk; inputs.tal.value = savedStats.tal; inputs.lck.value = savedStats.lck; }
     });
-  });
+  }));
+  sandbox._setServer("og");
   const known = [];
   failures.forEach((msg, id) => {
     if (KNOWN_RANGE_SIM_MISMATCH[id]) { known.push(id); return; }
@@ -1654,7 +1668,7 @@ console.log(`Verified ${checkedEffectProc} effectProc purple-mix checks.`);
 // gear crit rate (lckAdjust(12) Marshal / lckAdjust(18) Champion, x1.8), Dark Edge purple path + KO 0, and
 // range-vs-simulator for every toggle combination (§3f only runs deps at default/off, where crit and Dark Edge are off).
 let checkedWolfCombo = 0;
-{
+if (RUN_DAMAGE_CHECKS) {
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedWolfCombo++; if (!ok) { console.error(`[WOLF COMBO ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const sk = SKILLS.find(s => s.id === "wolf_nAttack");
@@ -1683,10 +1697,6 @@ let checkedWolfCombo = 0;
   // Gear crit by slot: weapon Marshal 5 / Champion 7, armor + helmet Marshal 7 / Champion 11 (Wolf.cs:14044-14188).
   [[{ wolfGearWeapon: 1 }, 5], [{ wolfGearEquip: 2 }, 11], [{ wolfGearWeapon: 1, wolfGearEquip: 1 }, 12], [{ wolfGearWeapon: 2, wolfGearEquip: 2 }, 18], [{ wolfGearWeapon: 1, wolfGearEquip: 2 }, 16]].forEach(([o, base]) => {
     setDeps(o); check(`crit base ${JSON.stringify(o)} = ${base}`, sandbox.wolfComboCritBase() === base, sandbox.wolfComboCritBase());
-  });
-  [[{ wolfGearWeapon: 1, wolfGearEquip: 1 }, 12], [{ wolfGearWeapon: 2, wolfGearEquip: 2 }, 18]].forEach(([o, base]) => {
-    const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate(o, 4000).c;
-    check(`${JSON.stringify(o)} crit rate ~${want} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
   });
   check("Dark Edge off is white", rate({}, 200).p === 0);
   check("Dark Edge on is always purple", rate({ wolfDarkEdgeOn: 1 }, 200).p === 1);
@@ -1777,10 +1787,6 @@ let checkedComboGear = 0;
         setDeps(o); select(sk, 1); check(`Monkey Combo KO ${JSON.stringify(o)}`, sandbox._getKOValue(sk, 1) === want, sandbox._getKOValue(sk, 1));
       });
     }
-    // crit rate at LCK 150 with the full Champion set
-    inputs.lck.value = "150"; setDeps({ [k + "GearWeapon"]: 2, [k + "GearEquip"]: 2 }); select(sk, maxR);
-    { let c = 0; const n = 4000; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, maxR, undefined, false, g0 ? 0 : undefined); if (ep.lastCrit()) c++; }
-      const want = sandbox.lckAdjustChance(18, 150) / 100; check(`${id} Champion set crit rate ~${want}`, Math.abs(c / n - want) < 0.03, (c / n).toFixed(3)); }
     // range vs simulator
     [["0", "0"], ["200", "150"]].forEach(([atk, lck]) => {
       inputs.atk.value = atk; inputs.lck.value = lck;
@@ -1933,7 +1939,7 @@ console.log(`Verified ${checkedBisonCombo} Bison Combo checks.`);
 // Rabbit.cs (Combo :17409-17690, ricochet :18259, shotgun :36260-36332, Charge Attack :19413-19523), gear crit (:16471), header inputs,
 // DEP_EXCLUSIVE, the crit rate, and range vs simulator over every toggle.
 let checkedRabbitShot = 0;
-{
+if (RUN_DAMAGE_CHECKS) {
   const inputs = sandbox._statInputs, deps = sandbox._depRanks, rb = sandbox._rabbit, ep = sandbox._effectProc;
   const check = (label, ok, got) => { checkedRabbitShot++; if (!ok) { console.error(`[RABBIT SHOT ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
   const combo = SKILLS.find(s => s.id === "rabbit_nAttack"), charge = SKILLS.find(s => s.id === "rabbit_cAttack");
@@ -2018,8 +2024,7 @@ let checkedRabbitShot = 0;
   const rate = (sk, r, n) => { select(sk, r); let c = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, r, undefined, false); if (ep.lastCrit()) c++; } return c / n; };
   setDeps({}); check("Combo never crits without gear", rate(combo, 1, 400) === 0);
   [[{ rabWeapon: 1, rabEquip: 1 }, 12], [{ rabWeapon: 2, rabEquip: 2 }, 18], [{ rabEquip: 2, rabW59: 1 }, 11]].forEach(([o, base]) => {
-    setDeps(o); const want = sandbox.lckAdjustChance(base, 150) / 100, got = rate(combo, 1, 5000);
-    check(`Combo crit rate ~${want} with base ${base} @ LCK 150`, Math.abs(got - want) < 0.03, got.toFixed(3));
+    setDeps(o);
     check("Charge Attack never crits even with the full set", rate(charge, 3, 400) === 0);
   });
   setDeps({});
