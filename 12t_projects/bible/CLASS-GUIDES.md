@@ -1,10 +1,10 @@
-# Community Class Guides
+# ไกด์แต่ละอาชีพจากชุมชน
 
-The **Class Guide** tool replaces the Skill Simulator menu entry. Its existing `#skill-simulator` link remains valid. All twelve class grids, three servers, normal/C/EX point rules and original skill frames are reused.
+The **ไกด์แต่ละอาชีพ** tool replaces the Skill Simulator menu entry. Its existing `#skill-simulator` link remains valid. All twelve class grids, three servers, normal/C/EX point rules and original skill frames are reused.
 
 ## For guide authors
 
-1. Open Class Guide and choose **สร้างไกด์** (Create guide).
+1. Open ไกด์แต่ละอาชีพ and choose **สร้างไกด์** (Create guide).
 2. Fill in the guide title, author name, game patch/version and build description.
 3. Choose the server, class and level, then build using the existing skill grid. Normal learning and undo remain available in **จัดบิลด์** mode.
 4. Choose **เขียนโน้ตสกิล ★**, then click a skill to explain your choice. Notes can explain either selected or skipped skills. Save an empty note to remove its star. Each rank/cell has its own note.
@@ -62,3 +62,5 @@ Before publishing, run `node scripts/validate_skills.js`. Every embedded entry m
 ## Reader interactions
 
 Readers cannot change the level, server, class, skills or points, reset the build, undo it or long-press into a skill card. Only starred skills open notes. The first reveal sends a volley of light from the skill into its note text and dims its star. Later clicks reopen the text immediately. Opening another guide resets the read-star state. Reduced motion shows the note without the volley. Notes support keyboard activation, Escape to close and return focus to the skill.
+
+Exports keep the selected server in `build.server`; downloaded filenames also include its tag, for example `class-guide-tot-wolf.json`. Import restores this tag instead of using the browser’s current server selection.
