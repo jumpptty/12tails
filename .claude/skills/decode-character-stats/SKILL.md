@@ -151,3 +151,9 @@ UnityPy 1.25 loads all 543 files in seconds and resolves each MonoBehaviour's `m
 string, then the fields above. 2026-10-02: 2,164 components, 2,155 valid, 307 unit types, 332
 distinct rows; the Bible's monster stats page (`MONSTER_STATS`) is built from them
 (see `12t_reference/12Tails-Mechanics-Reference.md`, "Monster stats").
+
+## Receive flags (`recieveTarget` … `recieveGravity`), verified 2026-10-13
+
+Whether a unit can be hit, take Effect Damage, a status, knockback and so on is **not** the C# default (`true`, `CharacterControl.cs:165-174`): every prefab serialises its own value and that value wins. The ripped prefab YAML shows none of it, so never conclude a flag from `RippedAssets`. Layout in the raw `CharacterControl` data: the run of floats `mColor` (1, 1, 1, 1) + `damageMod`, `koMod`, `hateMod`, `forceMod`, `rangeMod`, `moveMod`, `hitMod` ends the float block; the first 7 consecutive `1.0f` (`00 00 80 3f`) found with `bytes.find` sit at `run`, `hitMod` is the next `1.0f` at `run + 28`, then `hpRegen` and `mpRegen` (two int32), and then **ten 4-byte aligned bools in declaration order**: `recieveTarget`, `recieveDamage`, `recieveEffectDamage`, `recieveMovement`, `recieveForce`, `recieveStatus`, `recieveHeal`, `recieveHate`, `recieveRevive`, `recieveGravity` (offset `run + 40`, `struct.unpack_from('<10i', raw, run + 40)`; ordinary monsters are all `1`). Sanity check: Wolf, First Whale and StingBug read ten ones. UnityPy: `m = obj.read(check_read=False)`; `m.m_Script.read()` (no `check_read` argument on a PPtr) to get `m_ClassName == 'CharacterControl'`. A full scan of `D:
+tails
+TailsOnline_Data` takes about 2 minutes. Result: 20 unit types have `recieveEffectDamage = 0` (list in [12Tails-Mechanics-Reference.md](../../../12t_reference/12Tails-Mechanics-Reference.md) §2.9).
