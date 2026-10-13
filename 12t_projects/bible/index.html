@@ -1642,9 +1642,10 @@
 
   /* Class Guide: community pages and authoring reuse the original game skill grid. */
   .cg-page [hidden], .cg-note-backdrop[hidden]{display:none !important}
+  .cg-page,.cg-note-card{font-family:'Prompt',-apple-system,sans-serif}
   .cg-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:8px 0 18px}
-  .cg-heading h2,.cg-reader h2{font-family:"Chakra Petch",sans-serif;font-size:30px;color:var(--text);margin:0}
-  .cg-kicker{font-family:"Chakra Petch",sans-serif;color:var(--gold);font-size:11px;letter-spacing:.14em;margin:0 0 6px}
+  .cg-heading h2,.cg-reader h2{font-family:inherit;font-size:30px;color:var(--text);margin:0}
+  .cg-kicker{font-family:inherit;color:var(--gold);font-size:11px;letter-spacing:.14em;margin:0 0 6px}
   .cg-nav,.cg-author-actions{display:flex;flex-wrap:wrap;gap:8px}
   .cg-page .rsim-btn[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:var(--panel-2)}
   .cg-status{color:var(--gold);font-size:13px;min-height:1.4em;margin:0 0 10px}
@@ -1658,7 +1659,7 @@
   .cg-guide{position:relative;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);padding:20px 20px 20px 88px;font:inherit;cursor:pointer}
   .cg-guide:hover,.cg-guide:focus-visible{border-color:var(--gold)}
   .cg-guide img{position:absolute;left:18px;top:20px;width:52px;height:52px;object-fit:contain}
-  .cg-guide strong{font-family:"Chakra Petch",sans-serif;display:block;font-size:19px;color:var(--gold);margin-bottom:6px}
+  .cg-guide>strong{font-family:inherit;display:block;font-size:19px;color:var(--gold);margin-bottom:6px}
   .cg-guide span{font-size:12px;color:var(--muted)}
   .cg-guide p{font-size:13px;line-height:1.8;margin-bottom:0;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
@@ -1668,10 +1669,11 @@
   .cg-note-editor h3,.cg-transfer h3{margin:0 0 12px;color:var(--gold);font-family:"Chakra Petch",sans-serif}
   .cg-transfer .cg-code{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
   .cg-page .rsim{margin-top:24px}
+  .cg-page .rsim-tree-head h3{font-family:inherit}
   .cg-page .rsim-lv{width:56px;padding:4px 6px}
   .cg-star{position:absolute;z-index:4;right:-3px;top:-4px;display:grid;place-items:center;width:20px;height:20px;border:1px solid #d4af37;border-radius:50%;background:#141311;color:#f5d76e;font-size:17px;line-height:1;text-shadow:0 1px 2px #000;box-shadow:0 2px 5px #000b;pointer-events:none;transition:color .25s,border-color .25s}
   .rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:cg-star-pulse 3.6s ease-in-out infinite}
-  @keyframes cg-star-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.08);filter:brightness(1.25)}}
+  @keyframes cg-star-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.2);filter:brightness(1.55);box-shadow:0 0 10px #d4af3799,0 0 0 4px #d4af3728}}
   .cg-prose strong,.cg-note-body strong,.cg-guide p strong{color:var(--gold);font-weight:700}
   .cg-star[hidden]{display:none}
   .rsim-cell.note-seen .cg-star{color:#a6976c;border-color:#786a46;text-shadow:none}
@@ -1681,11 +1683,36 @@
   .rsim[data-interaction="annotate"] .rsim-cell:not(.is-placeholder):hover{box-shadow:0 0 0 2px var(--gold)}
   .cg-note-backdrop{position:fixed;inset:0;z-index:9999;background:#090807b8;display:grid;place-items:center;padding:20px}
   .cg-note-card{position:relative;width:min(560px,100%);box-sizing:border-box;max-height:85dvh;overflow-y:auto;padding:28px;background:var(--panel);border:1px solid var(--gold);border-radius:6px;box-shadow:0 24px 80px #0009}
-  .cg-note-card h3{font-family:"Chakra Petch",sans-serif;margin:8px 28px 16px 0;color:var(--gold);font-size:22px}
+  .cg-note-card h3{font-family:inherit;margin:8px 28px 16px 0;color:var(--gold);font-size:22px}
   .cg-note-close{position:absolute;right:12px;top:10px;border:0;background:none;color:var(--muted);font:24px sans-serif;cursor:pointer}
   .cg-note-body{margin:0;font-size:14px}
   .cg-note-body.is-waiting{opacity:0}
   @media(max-width:760px){.cg-heading{align-items:flex-start;flex-direction:column}.cg-fields,.cg-gallery{grid-template-columns:1fr}.cg-reader{padding-left:14px}.cg-note-card{padding:22px}}
+
+  .cg-page .cg-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 14px;font:inherit;font-size:13px;font-weight:500;line-height:1.4;border-radius:4px;white-space:normal;text-align:center;transition:background .15s,border-color .15s,color .15s}
+  .cg-btn svg,.cg-format-btn svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .cg-page .cg-btn-primary{background:var(--gold);border-color:var(--gold);color:#141311;font-weight:600;box-shadow:0 2px 7px #0003}
+  .cg-page .cg-btn-primary:hover:not(:disabled),.cg-page .cg-btn-primary:focus-visible{color:#141311;filter:brightness(1.12)}
+  .cg-page .cg-btn-secondary{background:var(--panel-2);border-color:var(--line);color:var(--text)}
+  .cg-page .cg-btn-quiet{background:transparent;border-color:transparent;color:var(--muted);padding-inline:10px}
+  .cg-page .cg-btn-quiet:hover{color:var(--text);background:var(--panel-2)}
+  .cg-page .cg-btn:focus-visible,.cg-format-btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  .cg-page .cg-btn-primary[aria-pressed="true"]{background:var(--gold);color:#141311}
+  .cg-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 0;border-block:1px solid var(--line)}
+  .cg-mode-switch,.cg-publish-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .cg-mode-switch{padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+  .cg-mode-switch .cg-btn{border:0;background:transparent;box-shadow:none}
+  .cg-mode-switch .cg-btn[aria-pressed="true"]{background:var(--panel-2);color:var(--gold)}
+  .cg-publish-actions{margin-left:auto}
+  .cg-editor-wrap{display:block;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--panel-2)}
+  .cg-editor-wrap:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+  .cg-editor-tools{display:flex;align-items:center;gap:10px;padding:5px 9px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px}
+  .cg-format-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--gold);font:inherit;cursor:pointer}
+  .cg-rich-editor{display:block;min-height:110px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);font:inherit;font-size:14px;line-height:1.9;outline:none}
+  .cg-rich-editor strong,.cg-rich-editor b{color:var(--gold);font-weight:700}
+  .cg-rich-editor:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
+  .cg-note-editor .cg-rich-editor{min-height:140px}
+  @media(max-width:760px){.cg-nav{width:100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
   /* Skill simulator (skill-simulator tool, 2026-10-12) */
   html.tool-rsim .stage{max-width:min(1240px, 98vw)}
@@ -27455,20 +27482,80 @@ function classGuideBoldEdit(value, start, end, maxLength){
   if (value.length - (to - from) + text.length > maxLength) return null;
   return { text, from, to, selectionStart, selectionEnd };
 }
+// Serialize only text, line breaks and bold from the live editor into portable guide markup.
+function classGuideReadEditor(node){
+  let text = "";
+  const children = Array.from(node.childNodes || []);
+  children.forEach((child, i) => {
+    if (child.nodeType === 3){ text += child.nodeValue; return; }
+    if (child.nodeType !== 1) return;
+    const tag = child.tagName.toUpperCase();
+    if (tag === "BR"){ text += "\n"; return; }
+    let value = classGuideReadEditor(child);
+    const block = ["DIV", "P", "LI"].includes(tag);
+    if (block && value === "\n") value = "";
+    if (block && text && !text.endsWith("\n")) text += "\n";
+    text += ["B", "STRONG"].includes(tag) && value ? "**" + value + "**" : value;
+    if (block && i < children.length - 1 && !text.endsWith("\n")) text += "\n";
+  });
+  return text.replace(/\u00a0/g, " ");
+}
+function classGuideMountEditor(backing, editor, notify){
+  let accepted = "", composing = false;
+  const set = value => { backing.value = value; editor.innerHTML = classGuideRichText(value); accepted = editor.innerHTML; };
+  const sync = () => {
+    const value = classGuideReadEditor(editor);
+    if (value.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
+    backing.value = value; accepted = editor.innerHTML; backing.dispatchEvent(new Event("input", { bubbles: true })); return true;
+  };
+  const bold = () => { editor.focus(); document.execCommand("bold", false); sync(); };
+  editor.addEventListener("input", e => { if (!composing && !e.isComposing) sync(); });
+  editor.addEventListener("compositionstart", () => { composing = true; });
+  editor.addEventListener("compositionend", () => { composing = false; sync(); });
+  editor.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "b"){ e.preventDefault(); bold(); }
+  });
+  const insertPlain = e => {
+    e.preventDefault(); const transfer = e.clipboardData || e.dataTransfer;
+    if (transfer){ document.execCommand("insertText", false, transfer.getData("text/plain")); sync(); }
+  };
+  editor.addEventListener("paste", insertPlain); editor.addEventListener("drop", insertPlain);
+  set(backing.value || ""); return { set, bold };
+}
+const CLASS_GUIDE_BUTTON_ICONS = {
+  reset:'<path d="M4 9a8 8 0 1 1 1 9M4 3v6h6"/>',
+  undo:'<path d="M8 4L3 9l5 5M3 9h11a7 7 0 0 1 0 14"/>',
+  clear:'<path d="M3 14l10-10 8 8-9 9H9zM7 10l8 8M12 21h10"/>',
+  gallery:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  author:'<path d="M14 4l6 6M4 20l4-1 12-12-5-5L3 14v7zM15 17h6m-3-3v6"/>',
+  build:'<path d="M4 5h6v5H4zM14 5h6v5h-6zM9 15h6v5H9zM7 10v3h10v-3M12 13v2"/>',
+  annotate:'<path d="M12 3l2.5 5 5.5.8-4 4 .9 5.7-4.9-2.7-4.9 2.7.9-5.7-4-4L9.5 8zM19 17l2 2-3 3"/>',
+  preview:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  export:'<path d="M14 3h7v7M21 3l-10 10M10 4H4v16h16v-6"/>',
+  import:'<path d="M3 12h12m-5-5l5 5-5 5M15 3h6v18h-6"/>',
+  saveNote:'<path d="M4 3h13l4 4v14H3V3zM7 3v6h9V3M7 21v-8h10v8"/>',
+  cancelNote:'<path d="M9 7L4 12l5 5M4 12h10a6 6 0 0 0 0-12"/>',
+  returnAuthor:'<path d="M8 4L3 9l5 5M3 9h8M13 18l7-7 3 3-7 7-4 1z"/>',
+  copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',
+  download:'<path d="M12 3v12m-5-5l5 5 5-5M4 16v5h16v-5"/>',
+  applyImport:'<path d="M3 4h11v6M3 4v16h18V10M9 13l4 4 8-10"/>',
+  closeTransfer:'<circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/>'
+};
+function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page">
-    <div class="cg-heading"><div><p class="cg-kicker">COMMUNITY BUILDS</p><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn" data-cg-act="gallery">ไกด์จากชุมชน</button><button type="button" class="rsim-btn" data-cg-act="author">สร้างไกด์</button></nav></div>
+    <div class="cg-heading"><div><p class="cg-kicker">COMMUNITY BUILDS</p><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><p class="cg-intro">บิลด์และเหตุผลจากผู้เล่น คลิกสกิลที่มีดาวเพื่ออ่านโน้ตจากผู้เขียน</p><div class="cg-gallery" data-cg-role="guides"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
-      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
-      <div class="cg-author-actions"><button type="button" class="rsim-btn" data-cg-act="build" aria-pressed="true">จัดบิลด์</button><button type="button" class="rsim-btn" data-cg-act="annotate" aria-pressed="false">เขียนโน้ตสกิล ★</button><button type="button" class="rsim-btn" data-cg-act="preview">ดูตัวอย่าง</button><button type="button" class="rsim-btn" data-cg-act="export">ส่งออกไกด์</button><button type="button" class="rsim-btn" data-cg-act="import">นำเข้าโค้ด</button></div>
+      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
+      <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
       <p class="cg-help" data-cg-role="editHelp">คลิกเพื่อเรียนหรือถอนสกิล บันทึกร่างอัตโนมัติในเบราว์เซอร์นี้</p>
-      <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" rows="4"></textarea></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</p><button type="button" class="rsim-btn" data-cg-act="saveNote">บันทึกโน้ต</button><button type="button" class="rsim-btn" data-cg-act="cancelNote">ปิด</button></section>
+      <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="noteText" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง"></span></span></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button></section>
     </section>
-    <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn" data-cg-act="returnAuthor" hidden>กลับไปแก้ไกด์</button></section>
+    <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
     <section data-cg-role="sim" hidden></section>
-    <section class="cg-transfer" data-cg-role="transfer" hidden><h3 data-cg-role="transferTitle"></h3><p class="cg-help" data-cg-role="transferHelp"></p><label>โค้ดไกด์<textarea class="cg-code" data-cg-role="code" rows="10" spellcheck="false" aria-label="โค้ดไกด์"></textarea></label><div class="cg-author-actions"><button type="button" class="rsim-btn" data-cg-act="copy">คัดลอกโค้ด</button><button type="button" class="rsim-btn" data-cg-act="download">ดาวน์โหลด JSON</button><button type="button" class="rsim-btn" data-cg-act="applyImport">นำเข้าไกด์</button><button type="button" class="rsim-btn" data-cg-act="closeTransfer">ปิด</button></div></section>
+    <section class="cg-transfer" data-cg-role="transfer" hidden><h3 data-cg-role="transferTitle"></h3><p class="cg-help" data-cg-role="transferHelp"></p><label>โค้ดไกด์<textarea class="cg-code" data-cg-role="code" rows="10" spellcheck="false" aria-label="โค้ดไกด์"></textarea></label><div class="cg-author-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copy">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="download">${classGuideButtonIcon("download")}<span>ดาวน์โหลด JSON</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="applyImport">${classGuideButtonIcon("applyImport")}<span>นำเข้าไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="closeTransfer">${classGuideButtonIcon("closeTransfer")}<span>ปิด</span></button></div></section>
   </div>`;
   const el = role => root.querySelector('[data-cg-role="' + role + '"]');
   const field = name => root.querySelector('[data-cg-field="' + name + '"]');
@@ -27476,6 +27563,7 @@ function mountClassGuide(root){
   const simRoot = el("sim"), storageKey = "12t-bible-class-guide-draft";
   let mode = "gallery", current = null, draft = null, noteId = null, applying = false;
   const status = text => { el("status").textContent = text; };
+  const editors = { description: classGuideMountEditor(field("description"), root.querySelector('[data-cg-editor="description"]'), status), noteText: classGuideMountEditor(el("noteText"), root.querySelector('[data-cg-editor="noteText"]'), status) };
   const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, patch: field("patch").value, description: field("description").value, build: sim.getBuild(), notes: { ...(draft ? draft.notes : {}) } });
   const saveDraft = () => {
     if (mode !== "author") return;
@@ -27483,6 +27571,7 @@ function mountClassGuide(root){
     try { localStorage.setItem(storageKey, JSON.stringify(draft)); } catch (e) { status("บันทึกร่างในเบราว์เซอร์ไม่ได้ กรุณาส่งออกโค้ดเก็บไว้"); }
   };
   mountSkillSimulator(simRoot, {
+    guideUI: true,
     onChange(build){
       if (mode !== "author" || !draft || applying) return;
       if (draft.build.classKey !== build.classKey){ draft.notes = {}; el("noteEditor").hidden = true; }
@@ -27492,8 +27581,8 @@ function mountClassGuide(root){
     },
     onNote(info){
       if (mode === "author"){
-        noteId = info.id; el("noteSkill").textContent = info.cell.name; el("noteText").value = draft.notes[info.id] || "";
-        el("noteEditor").hidden = false; el("noteText").focus();
+        noteId = info.id; el("noteSkill").textContent = info.cell.name; editors.noteText.set(draft.notes[info.id] || "");
+        el("noteEditor").hidden = false; root.querySelector('[data-cg-editor="noteText"]').focus();
       } else if (mode === "reader") showNote(info);
     }
   });
@@ -27511,7 +27600,8 @@ function mountClassGuide(root){
       try { draft = classGuideNormalize(JSON.parse(localStorage.getItem(storageKey)), { draft: true }); } catch (e) { draft = null; }
       if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", patch: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
     }
-    for (const name of ["title", "author", "patch", "description"]) field(name).value = draft[name];
+    for (const name of ["title", "author", "patch"]) field(name).value = draft[name];
+    editors.description.set(draft.description);
     applying = true;
     try { sim.loadBuild(draft.build); sim.setNotes(draft.notes); setAuthorInteraction("build"); } finally { applying = false; }
     saveDraft();
@@ -27593,16 +27683,11 @@ function mountClassGuide(root){
     } else stopNoteAnimation = () => {};
     noteClose.focus();
   }
-  root.addEventListener("keydown", e => {
-    if (mode !== "author" || !(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== "b" || !e.target.matches('[data-cg-format="bold"]')) return;
-    e.preventDefault();
-    const input = e.target, edit = classGuideBoldEdit(input.value, input.selectionStart, input.selectionEnd, input.maxLength);
-    if (!edit) return;
-    input.setRangeText(edit.text, edit.from, edit.to, "select"); input.setSelectionRange(edit.selectionStart, edit.selectionEnd);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+  root.addEventListener("pointerdown", e => { if (e.target.closest("[data-cg-bold]")) e.preventDefault(); });
   root.addEventListener("input", e => { if (e.target.matches && e.target.matches("[data-cg-field]")) saveDraft(); });
   root.addEventListener("click", async e => {
+    const format = e.target.closest("[data-cg-bold]");
+    if (format){ if (mode === "author") editors[format.dataset.cgBold].bold(); return; }
     const target = e.target.closest("[data-cg-act]"); if (!target) return;
     const act = target.dataset.cgAct;
     try {
@@ -27679,8 +27764,8 @@ function mountSkillSimulator(root, options = {}){
         <span class="rsim-field"><b>แต้มสาย C</b><output class="rsim-num" data-role="ptsC" title="คงเหลือ / สูงสุด"></output></span>
         <span class="rsim-field rsim-ex-pool" data-role="exPool" hidden><b>แต้ม EX</b><output class="rsim-num" data-role="ptsEx" title="คงเหลือ / สูงสุด"></output></span>
         <div class="rsim-actions">
-          <button type="button" class="rsim-btn" data-act="reset">รีเซ็ต</button>
-          <button type="button" class="rsim-btn" data-act="undo" title="ย้อนกลับ (Ctrl+Z)">ย้อนกลับ</button>
+          <button type="button" class="rsim-btn${options.guideUI ? " cg-btn cg-btn-quiet" : ""}" data-act="reset">${options.guideUI ? classGuideButtonIcon("reset") : ""}รีเซ็ต</button>
+          <button type="button" class="rsim-btn${options.guideUI ? " cg-btn cg-btn-secondary" : ""}" data-act="undo" title="ย้อนกลับ (Ctrl+Z)">${options.guideUI ? classGuideButtonIcon("undo") : ""}ย้อนกลับ</button>
         </div>
       </div>
       <div class="rsim-trees" data-role="trees"></div>
@@ -27712,6 +27797,7 @@ function mountSkillSimulator(root, options = {}){
     h.textContent = t.name;
     const clr = document.createElement("button");
     clr.type = "button"; clr.className = "rsim-btn rsim-clear"; clr.dataset.act = "clear"; clr.dataset.tree = ti; clr.textContent = "ล้าง";
+    if (options.guideUI){ clr.classList.add("cg-btn", "cg-btn-quiet"); clr.innerHTML = classGuideButtonIcon("clear") + "ล้าง"; }
     head.append(h, clr);
     sec.appendChild(head);
     const rows = t.rows.slice();
@@ -27967,7 +28053,7 @@ function mountSkillSimulator(root, options = {}){
   lvIn.addEventListener("keydown", (e) => { if (e.key === "Enter") lvIn.blur(); });
   document.addEventListener("keydown", (e) => {
     if (interaction !== "build" || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
-    if (e.target.closest && e.target.closest("input, textarea")) return;
+    if (e.target.closest && e.target.closest("input, textarea, [contenteditable]")) return;
     e.preventDefault();
     undo();
   });
@@ -28574,6 +28660,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:01:51.205Z","feat(bible): refine guide authoring and action hierarchy"],
     ["2026-10-13T04:44:39.055Z","style(bible): keep guide animations under reduced motion"],
     ["2026-10-13T04:41:28.541Z","style(bible): shrink guide stars and slow their pulse"],
     ["2026-10-13T04:27:36.234Z","feat(bible): polish guide note reveals and bold formatting"],

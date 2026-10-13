@@ -5,7 +5,7 @@ The **ไกด์แต่ละอาชีพ** tool replaces the Skill Simul
 ## For guide authors
 
 1. Open ไกด์แต่ละอาชีพ and choose **สร้างไกด์** (Create guide).
-2. Fill in the guide title, author name, game patch/version and build description. Select text in the description or a skill note and press **Ctrl+B** (Cmd+B on Mac) to toggle bold gold emphasis. Formatting is stored as `**text**` in the portable code and shown in previews and published guides.
+2. Fill in the guide title, author name, game patch/version and build description. Select text in the description or a skill note and press **Ctrl+B** (Cmd+B on Mac) to toggle bold gold emphasis. Bold gold appears immediately in the editor; the **ตัวหนาสีทอง** toolbar button does the same. Formatting is stored as `**text**` in the portable code and shown in previews and published guides. Pasted text is kept as plain text; Ctrl+Z inside the editor undoes text edits.
 3. Choose the server, class and level, then build using the existing skill grid. Normal learning and undo remain available in **จัดบิลด์** mode.
 4. Choose **เขียนโน้ตสกิล ★**, then click a skill to explain your choice. Notes can explain either selected or skipped skills. Save an empty note to remove its star. Each rank/cell has its own note.
 5. Choose **ดูตัวอย่าง** to check the locked reader view, then **กลับไปแก้ไกด์** to resume your draft.
