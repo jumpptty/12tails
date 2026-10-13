@@ -4684,8 +4684,9 @@
   .sk-reach-badge svg{width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:1.5}
   .sk-reach-pop{position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.55); padding:16px}
   .sk-reach-panel{background:var(--panel, #1c1a17); color:var(--text, #eee); border:1px solid var(--gold); border-radius:8px; padding:12px; width:min(92vw,520px); max-height:92vh; overflow:auto; box-shadow:0 8px 40px rgba(0,0,0,.6)}
-  .sk-reach-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; font-weight:700}
-  .sk-reach-head button{background:none; border:1px solid var(--gold); color:var(--gold); border-radius:4px; padding:2px 8px; cursor:pointer; font:inherit}
+  .sk-reach-head{display:flex; align-items:center; gap:22px; margin-bottom:8px; font-weight:700; flex-wrap:wrap}
+  .sk-reach-title{font-size:18px; flex:none}
+  .sk-reach-head > button{margin-left:auto; background:none; border:1px solid var(--gold); color:var(--gold); border-radius:4px; padding:2px 8px; cursor:pointer; font:inherit}
   .sk-reach-canvas{width:100%; aspect-ratio:4/3; display:block; border-radius:6px; background:rgba(0,0,0,.25); touch-action:none; cursor:grab}
   .sk-reach-canvas:active{cursor:grabbing}
   .sk-reach-legend{display:flex; flex-direction:column; gap:3px; margin-top:8px; font-size:12px}
@@ -4697,19 +4698,17 @@
     .sk-reach-canvas{aspect-ratio:auto; width:100%; height:max(380px, calc(95vh - 250px)); flex:0 0 auto}
     .sk-reach-legend{display:block; columns:2; column-gap:24px; font-size:13px}
     .sk-reach-legend span{display:block; break-inside:avoid; margin-bottom:3px}
-    .sk-reach-dep{font-size:13px}
-    .sk-reach-dep img{width:30px; height:30px}
-  }
+      }
   .sk-reach-panel{position:relative}
-  .sk-reach-deps{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px}
-  .sk-reach-dep{display:inline-flex; align-items:center; gap:6px; padding:3px 8px 3px 3px; border-radius:6px; border:1px solid var(--th-line, rgba(255,255,255,.15)); background:rgba(255,255,255,.04); color:inherit; font:inherit; font-size:12px; cursor:pointer}
-  .sk-reach-dep img{width:26px; height:26px; border-radius:4px; filter:grayscale(.8) brightness(1.2); transition:filter .15s ease}
-  .sk-reach-dep.on{border-color:var(--gold); box-shadow:inset 0 0 0 1px var(--gold-soft)}
-  .sk-reach-dep.on img{filter:brightness(1.22)}
+  .sk-reach-deps{display:flex; align-items:center; gap:20px; flex-wrap:wrap; flex:1; min-width:0}
+  .sk-reach-dep{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none}
+  .sk-reach-dep .sk-dep-toggle{display:block; height:56px}
+  .sk-reach-dep .sk-dep-toggle img{width:56px; height:56px}
+  .sk-reach-dep .sk-pip{display:block}
+  .sk-reach-dep-name{font-size:12px; font-weight:500; color:var(--muted)}
+  .sk-reach-dep.on .sk-reach-dep-name{color:var(--text)}
+  @media (max-width:560px){ .sk-reach-dep .sk-dep-toggle, .sk-reach-dep .sk-dep-toggle img{width:42px; height:42px} .sk-reach-head{gap:12px} }
   .sk-reach-fx{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:3}
-  .sk-reach-pips{display:inline-flex; gap:3px; margin-left:2px}
-  .sk-reach-pips i{width:6px; height:6px; border-radius:50%; border:1px solid var(--gold); opacity:.7}
-  .sk-reach-pips i.on{background:var(--gold); opacity:1}
   .sk-ko-badge{display:inline-flex; align-items:center; gap:3.75px; padding:1.25px 5px; border-radius:2.5px; background:var(--gold-soft); border:1px solid var(--gold); flex:0 0 auto}
   .sk-dmg-label-row .sk-ko-badge{margin-left:7px}
   /* TTO Magic Damage badge (2026-10-07, user): beside ดาเมจดิบ, aqua like the TTO magic damage floats (dmgdigit_a, TAL hue). */
@@ -10979,11 +10978,11 @@ function reachModel(cls){
 // smooth silhouettes. Reuses its buffers; only the model's screen box is touched.
 const reachBuf = { cap: 0, z: null, dat: null, cvs: null, octx: null, q: 1 };   // q = adaptive resolution
 function reachRender(ctx, model, P, st, W, H, dpr, dimK){
-  const tStart = performance.now(), proj = [];
+  const tStart = performance.now(), proj = [], ms = st.ms || 1;
   let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
   for (const part of model.parts){
     const pr = new Array(part.pos.length);
-    for (let i = 0; i < pr.length; i++){ const p = P(part.pos[i]); pr[i] = p; if (p[0] < bx0) bx0 = p[0]; if (p[0] > bx1) bx1 = p[0]; if (p[1] < by0) by0 = p[1]; if (p[1] > by1) by1 = p[1]; }
+    for (let i = 0; i < pr.length; i++){ const q = part.pos[i], p = P(ms === 1 ? q : [q[0] * ms, q[1] * ms, q[2] * ms]); pr[i] = p; if (p[0] < bx0) bx0 = p[0]; if (p[0] > bx1) bx1 = p[0]; if (p[1] < by0) by0 = p[1]; if (p[1] > by1) by1 = p[1]; }
     proj.push(pr);
   }
   bx0 = Math.max(0, Math.floor(bx0) - 2); by0 = Math.max(0, Math.floor(by0) - 2); bx1 = Math.min(W, Math.ceil(bx1) + 2); by1 = Math.min(H, Math.ceil(by1) + 2);
@@ -11116,7 +11115,7 @@ function drawReach(cv, items, st, model){
   // Painter's order across the ground: the far side of the ground first, so the part of a hit box under the ground shows through it.
   // A box face is drawn before the model when it is farther from the camera than the caster's centre, after it when nearer.
   above.sort((a, b) => a.d - b.d);
-  const md = modelOn ? P([0, model.top * 0.5, 0])[2] : -Infinity, behind = above.filter(it => it.d <= md), front = above.filter(it => it.d > md);
+  const md = modelOn ? P([0, model.top * 0.5 * (st.ms || 1), 0])[2] : -Infinity, behind = above.filter(it => it.d <= md), front = above.filter(it => it.d > md);
   const drawModel = (dimK) => { if (modelOn){ ctx.globalAlpha = 1; ctx.setLineDash([]); reachRender(ctx, model, P, st, W, H, dpr, dimK); } };
   if (camAbove){ paint(below, true); ground(); paint(behind, false); drawModel(1); paint(front, false); }
   else { paint(behind, true); drawModel(0.6); paint(front, true); ground(); paint(below, false); }
@@ -11226,14 +11225,13 @@ function openReachPopup(skill, rank){
   const pop = document.createElement("div");
   pop.className = "sk-reach-pop";
   const legend = () => parts.map((p, k) => `<span><i style="background:${REACH_COLORS[k % REACH_COLORS.length]}"></i>${reachPartLabel(p)}</span>`).join("");
-  const pips = (d) => `<span class="sk-reach-pips">${Array.from({ length: d.maxRank }, (_, i) => `<i class="${i < over[d.id] ? "on" : ""}"></i>`).join("")}</span>`;
-  const btn = (key, label, icon, on, extra) => `<button type="button" class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" title="${label}"><img src="${SKILL_ICONS[icon] || ""}" alt=""><span>${label}</span>${extra || ""}</button>`;
-  const rankPips = () => `<span class="sk-reach-pips">${Array.from({ length: maxRank }, (_, i) => `<i class="${i < rank ? "on" : ""}"></i>`).join("")}</span>`;
-  const depsHtml = () => (maxRank > 1 ? [btn("rank", "Rank " + rank, skill.icon, rank > 1, rankPips())] : []).concat(toggles.map((e, k) => btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, over[e.dep.id] === e.on)))
-    .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, pips(d)))).join("");
+  const pipRow = (n, filled) => `<span class="sk-dep-pips" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<span class="sk-pip${i < filled ? " on" : ""}"></span>`).join("")}</span>`;
+  const btn = (key, label, icon, on, nPips, filled) => `<div class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" role="button" tabindex="0" title="${label}"><span class="sk-dep-btncol"><span class="sk-dep-toggle${on ? " on" : ""}"><img src="${SKILL_ICONS[icon] || ""}" alt=""></span>${pipRow(nPips, filled)}</span><span class="sk-reach-dep-name">${label}</span></div>`;
+  const depsHtml = () => (maxRank > 1 ? [btn("rank", "Rank " + rank, skill.icon, true, maxRank, rank)] : [])   // a rank has no off state: always lit, pips = rank
+    .concat(toggles.map((e, k) => { const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
+    .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, d.maxRank, over[d.id]))).join("");
   pop.innerHTML = `<div class="sk-reach-panel" role="dialog" aria-label="ระยะโจมตี">
-    <div class="sk-reach-head"><span>${skill.name} · ระยะโจมตี</span><button type="button" data-role="reach-close">ปิด</button></div>
-    ${toggles.length || rankToggles.length || maxRank > 1 ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}
+    <div class="sk-reach-head"><span class="sk-reach-title">${skill.name}</span>${toggles.length || rankToggles.length || maxRank > 1 ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}<button type="button" data-role="reach-close">ปิด</button></div>
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
     <div class="sk-reach-hint">W A S D</div>
@@ -11241,7 +11239,8 @@ function openReachPopup(skill, rank){
   </div>`;
   document.body.appendChild(pop);
   const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
-  const home = () => ({ yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))), t: [0, 0, 0], tt: [0, 0, 0] });
+  const msNow = () => +(1 + 0.1 * ((over.reachEnlarge || 0) - (over.reachReduce || 0))).toFixed(2);   // the game scales the whole character by the same factor as rangeMod
+  const home = () => ({ ms: msNow(), yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))), t: [0, 0, 0], tt: [0, 0, 0] });
   let st = home();
   let drawQueued = 0;
   const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model); };
@@ -11308,7 +11307,7 @@ function openReachPopup(skill, rank){
   const easeOut = (x) => 1 - Math.pow(1 - x, 3);
   const bez = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1]];
   const FLY = 190, MORPH = 210, GLOW = 230;
-  const play = (before, after, srcXY, grows) => {
+  const play = (before, after, srcXY, grows, msFrom = 1, msTo = 1) => {
     if (anim) cancelAnimationFrame(anim);
     const W = panel.clientWidth, H = panel.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     if (fx.width !== Math.round(W * dpr) || fx.height !== Math.round(H * dpr)){ fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr); }
@@ -11323,7 +11322,8 @@ function openReachPopup(skill, rank){
     const t0 = performance.now();
     const frame = (now) => {
       const t = now - t0;
-      items = reachLerp(before, after, ease(Math.max(0, Math.min(1, (t - MORPH0) / MORPH)))); drawNow();
+      const mk = ease(Math.max(0, Math.min(1, (t - MORPH0) / MORPH)));
+      items = reachLerp(before, after, mk); st.ms = msFrom + (msTo - msFrom) * mk; drawNow();
       g.clearRect(0, 0, W, H);
       const ga = t < GLOW0 ? 0 : Math.max(0, 1 - (t - GLOW0) / GLOW);
       if (ga > 0.01){
@@ -11345,7 +11345,7 @@ function openReachPopup(skill, rank){
       }
       g.globalAlpha = 1; g.shadowBlur = 0;
       if (t < END) anim = requestAnimationFrame(frame);
-      else { anim = 0; g.clearRect(0, 0, W, H); items = after.map(p => ({ part: p, alpha: 1 })); redraw(); }
+      else { anim = 0; g.clearRect(0, 0, W, H); st.ms = msTo; items = after.map(p => ({ part: p, alpha: 1 })); redraw(); }
     };
     anim = requestAnimationFrame(frame);
   };
@@ -11357,7 +11357,7 @@ function openReachPopup(skill, rank){
     if (key === "rank"){ rank = rank >= maxRank ? 1 : rank + 1; }
     else if (key[0] === "t"){ const e = toggles[Number(key.slice(1))]; over[e.dep.id] = over[e.dep.id] === e.on ? e.off : e.on; }
     else { const d = key === REACH_ENLARGE.id ? REACH_ENLARGE : REACH_REDUCE; over[d.id] = over[d.id] >= d.maxRank ? 0 : over[d.id] + 1; if (over[d.id]) over[d.id === REACH_ENLARGE.id ? REACH_REDUCE.id : REACH_ENLARGE.id] = 0; }
-    const after = reachPartsWith(skill, rank, over);
+    const after = reachPartsWith(skill, rank, over), msFrom = st.ms || 1, msTo = msNow();
     const pr = panel.getBoundingClientRect(), br = b.getBoundingClientRect(), src = [br.left - pr.left + br.width / 2, br.top - pr.top + br.height / 2];
     const grows = volume(after) >= prevVol;
     parts = after;
@@ -11365,7 +11365,7 @@ function openReachPopup(skill, rank){
     pop.querySelector(".sk-reach-legend").innerHTML = legend();
     const nb = pop.querySelector(`.sk-reach-dep[data-key="${key}"]`);
     if (nb){ nb.classList.remove("sk-dep-flip-on", "sk-dep-flip-off"); void nb.offsetWidth; nb.classList.add(nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off"); }
-    play(before, after, src, grows);
+    play(before, after, src, grows, msFrom, msTo);
   }));
   wire();
   pop.addEventListener("click", e => { if (e.target === pop || e.target.closest('[data-role="reach-close"]')) closeReachPopup(); });
@@ -11389,21 +11389,26 @@ function openReachPopup(skill, rank){
     introing = true;
     const top = Math.max(...body.pos.map(q => q[1])), headY = model.focus || top * 0.86, end = home();
     const cz = cv.clientWidth / (model.view || top * 1.45), close = { yaw: 0, pitch: 0.06, zoom: cz, ty: headY - 0.15 * cv.clientHeight / cz };   // head a little above the middle
-    const HOLD = 520, ORBIT = 1500, GAP = 120, REVEAL = 700, TOTAL = HOLD + ORBIT + GAP + REVEAL;
-    const eio = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, lerp = (a, b, t) => a + (b - a) * t;
-    st = { yaw: close.yaw, pitch: close.pitch, zoom: close.zoom, t: [0, 0, close.ty], tt: [0, 0, 0] };
+    // One continuous move: a short beat on the close-up, the orbit + zoom-out, and the slow drift (0.1 rad/s) that fades in while the orbit is
+    // still easing out, so the camera never stops; the boxes appear on top of that motion. The clock waits until the skin is loaded.
+    const HOLD = 120, ORBIT = 1700, DRIFT_AT = HOLD + ORBIT * 0.55, DRIFT_RAMP = 1100, DRIFT_V = 0.1, REVEAL_AT = HOLD + ORBIT * 0.68, REVEAL = 850, TOTAL = REVEAL_AT + REVEAL;
+    const eio = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, lerp = (a, b, t) => a + (b - a) * t, clamp01 = (x) => Math.max(0, Math.min(1, x));
+    st = { ms: 1, yaw: close.yaw, pitch: close.pitch, zoom: close.zoom, t: [0, 0, close.ty], tt: [0, 0, 0] };
     items = parts.map(p => ({ part: p, alpha: 0 }));
-    const t0 = performance.now();
+    let t0 = performance.now(), last = t0, driftYaw = 0;
     const frame = (now) => {
-      const t = now - t0;
-      const o = eio(Math.max(0, Math.min(1, (t - HOLD) / ORBIT)));
-      st.yaw = lerp(close.yaw, end.yaw, o); st.pitch = lerp(close.pitch, end.pitch, o);
+      if (!model.ready){ t0 = now; last = now; drawNow(); introRaf = requestAnimationFrame(frame); return; }
+      const t = now - t0, dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const o = eio(clamp01((t - HOLD) / ORBIT)), vd = DRIFT_V * (() => { const x = clamp01((t - DRIFT_AT) / DRIFT_RAMP); return x * x * (3 - 2 * x); })();
+      driftYaw += vd * dt;
+      st.yaw = lerp(close.yaw, end.yaw, o) + driftYaw; st.pitch = lerp(close.pitch, end.pitch, o);
       st.zoom = Math.exp(lerp(Math.log(close.zoom), Math.log(end.zoom), o));   // zoom out evenly in log space
       st.t = [0, 0, lerp(close.ty, 0, o)];
-      const r = Math.max(0, Math.min(1, (t - HOLD - ORBIT - GAP) / REVEAL)), k = eio(r);
+      const r = clamp01((t - REVEAL_AT) / REVEAL), k = eio(r);
       items = r > 0 ? grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })) : parts.map(p => ({ part: p, alpha: 0 }));
       drawNow();
-      if (t < TOTAL) introRaf = requestAnimationFrame(frame); else { introRaf = 0; endIntro(); startAuto(); }
+      if (t < TOTAL) introRaf = requestAnimationFrame(frame);
+      else { introRaf = 0; introing = false; items = parts.map(p => ({ part: p, alpha: 1 })); drawNow(); startAuto(); }   // the view is NOT reset: the drift simply carries on
     };
     introRaf = requestAnimationFrame(frame);
     const anyInput = () => { endIntro(); stopAuto(); };
@@ -22293,7 +22298,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
             <div class="sk-hero-sub">
               <span class="sk-tag sk-hero-class" style="--tag-color:${CLASS_COLORS[selected.class]}">${selected.class}</span>
               ${renderCostBadges(activeSelected, rank)}
-              ${(() => { const rp = activeSelected.reach ? reachNormalize(activeSelected.reach, rank) : []; return rp.length ? `<button type="button" class="sk-reach-badge" data-role="reach-badge" title="ระยะโจมตี (ดูรูปทรง 3 มิติ)"><svg viewBox="0 0 16 16"><path d="M8 1 14 4.5v7L8 15 2 11.5v-7z"/><path d="M2 4.5 8 8l6-3.5M8 8v7"/></svg><span>${reachBadgeText(rp)}</span></button>` : ""; })()}
+              ${(() => { const rp = activeSelected.reach ? reachNormalize(activeSelected.reach, rank) : []; if (rp.length){ const cls = activeSelected.class; (window.requestIdleCallback || setTimeout)(() => { try { reachModel(cls); } catch (e) { /* model data missing: the preview shows the stand-in */ } }); } return rp.length ? `<button type="button" class="sk-reach-badge" data-role="reach-badge" title="ระยะโจมตี (ดูรูปทรง 3 มิติ)"><svg viewBox="0 0 16 16"><path d="M8 1 14 4.5v7L8 15 2 11.5v-7z"/><path d="M2 4.5 8 8l6-3.5M8 8v7"/></svg><span>${reachBadgeText(rp)}</span></button>` : ""; })()}
             </div>
           </div>
           ${heroDescHtml}
@@ -29451,6 +29456,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T16:03:30.708Z","feat(bible): range popup toggles sit in the title row in the normal skill dependency look, Enlarge / Reduce resize the character too, and the intro is one continuous move with a short first beat"],
     ["2026-10-13T15:55:47.927Z","feat(bible): range popup has a preview-only rank toggle for skills with several ranks"],
     ["2026-10-13T15:51:38.778Z","feat(bible): range popup model is rasterised by hand with adaptive resolution (no triangle seams, smooth camera-following lighting), opens further from her face and keeps drifting slowly round her until you touch it"],
     ["2026-10-13T15:44:27.815Z","perf(bible): range popup redraws about 5 times faster: each triangle draws only its own patch of the skin, tiny ones a precomputed flat colour, off-canvas ones are skipped, one redraw per frame"],
