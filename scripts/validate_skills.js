@@ -2891,7 +2891,7 @@ let checkedRsim = 0;
   const cells = cellsFn(SIM);
   const valid = (ids, lv) => validFn(cells, SIM.length, new Set(ids), lv);
   const tile = vm.runInContext("TOOLS", sandbox).find(x => x.id === "skill-simulator");
-  ok(tile && tile.title === "Skill Simulator" && tile.badgeRed && tile.badge === "กำลังพัฒนา ห้ามใช้จริง", "Skill Simulator tile keeps its name and the red in-development chip");
+  ok(tile && tile.title === "Class Guide" && tile.badgeRed && tile.badge === "กำลังพัฒนา ห้ามใช้จริง", "Class Guide tile keeps its name and the red in-development chip");
   ok(SIM.length === 4 && SIM.every(t => t.rows.length >= 5 && t.rows.every(r => r.length === 4)), "Rabbit has 4 trees of 4-column rows");
   const count = SIM.map(t => t.rows.flat().filter(Boolean).length).join("/");
   ok(count === "18/30/30/20", `cells per tree ${count}, want 18/30/30/20 (Basic/A/B/C)`);
@@ -3153,6 +3153,67 @@ let checkedRsim = 0;
     ok(html.includes(".rsim-ex-pool[hidden]{display:none;}") && html.includes(".rsim.locked .rsim-trees{visibility:hidden}") && !html.includes("\n.rsim-trees{visibility:hidden}"), "counter hidden CSS and gate visibility remain scoped");
   } catch(e){ok(false,"UI threw: " + e.message);}
   finally { doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;sandbox.openSimServerGate=saved.server;sandbox.openClassPickerModal=saved.gate;sandbox.setToolServer=saved.theme;sandbox.setTimeout=saved.timer;sandbox.clearTimeout=saved.cancel;sandbox.window.addEventListener=saved.winAdd;sandbox.window.open=saved.winOpen;sandbox.location.href=saved.href; }
+}
+
+// Class Guide portability and reader permissions: independent serialized fixtures.
+{
+  const norm = vm.runInContext("classGuideNormalize", sandbox), encode = vm.runInContext("classGuideExport", sandbox), decode = vm.runInContext("classGuideImport", sandbox);
+  const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[CLASS GUIDE ERROR] " + msg); errorCount++; } };
+  const rejects = (fn, msg) => { let threw=false;try{fn();}catch(e){threw=true;}ok(threw,msg); };
+  const embedded = vm.runInContext("CLASS_GUIDES", sandbox);
+  ok(Array.isArray(embedded), "embedded guides use a data array");
+  embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
+  const fixture = { format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",patch:"ToT 2026-10",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
+  const round = decode(encode(fixture));
+  ok(round.author === fixture.author && round.description === fixture.description && round.notes[103] === fixture.notes[103] && round.notes[201] === fixture.notes[201], "UTF-8, multiline notes and skipped-skill notes round-trip as plain text");
+  ok(round.build.learned.join() === "101,102,103,451", "export normalizes build ordering");
+  const change = patch => ({...fixture,...patch});
+  rejects(()=>decode("not JSON"),"reject malformed codes"); rejects(()=>decode("x".repeat(131073)),"limit import size");
+  rejects(()=>norm(change({version:2})),"reject unsupported format version"); rejects(()=>norm(change({author:""})),"require author for export"); rejects(()=>norm(change({patch:""})),"require game patch for export");
+  rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
+  rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
+  rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");
+  rejects(()=>norm(change({build:{...fixture.build,classKey:"constructor"}})),"reject inherited class names");
+  rejects(()=>norm(change({build:{...fixture.build,server:["tot"]}})),"require a string server key");
+  rejects(()=>norm(change({notes:{"999":"unknown"}})),"reject unknown note anchor");
+  rejects(()=>norm(change({notes:{"451":"x".repeat(3001)}})),"limit per-skill note length");
+  rejects(()=>norm(change({build:{...fixture.build,classKey:"cat",learned:[]},notes:{"452":"not published"}})),"reject unpublished EX note anchor");
+  ok(norm(change({title:"",author:"",patch:""}),{draft:true}).title === "", "allow unfinished local drafts");
+  // Mount the same real simulator in reader mode: clicks, controls, hold and level changes cannot mutate it.
+  const doc = sandbox.document, saved = {create:doc.createElement,add:doc.addEventListener,storage:sandbox.localStorage};
+  const mk = () => {
+    const e=makeEl(),classes=new Set(),registry=new Map();e.children=[];e.listeners={};
+    e.appendChild=c=>{e.children.push(c);return c;};e.append=(...cs)=>cs.forEach(e.appendChild);
+    Object.defineProperty(e,"textContent",{get:()=>e._text||"",set:v=>{e._text=v;e.children=[];}});
+    e.classList={add:c=>classes.add(c),remove:c=>classes.delete(c),toggle:(c,v)=>v?classes.add(c):classes.delete(c),contains:c=>classes.has(c)||e.className?.split(" ").includes(c)};
+    e.querySelectorAll=sel=>{if(registry.has('[data-role="trees"]'))return registry.get('[data-role="trees"]').querySelectorAll(sel);const found=[];const walk=n=>{for(const c of n.children){if(sel.startsWith(".")&&c.classList.contains(sel.slice(1)))found.push(c);walk(c);}};walk(e);return found;};
+    e.querySelector=sel=>{const child=e.querySelectorAll(sel)[0];if(child)return child;if(!registry.has(sel))registry.set(sel,mk());return registry.get(sel);};
+    e.addEventListener=(k,fn)=>{(e.listeners[k]||=[]).push(fn);};return e;
+  };
+  const root=mk(),select=root.querySelector;
+  const cell=id=>root.querySelectorAll(".rsim-cell").find(b=>+b.dataset.id===id),reveals=[];
+  const click=target=>root.listeners.click.forEach(fn=>fn({target:{closest:sel=>sel===".rsim-cell"?(target.dataset.id?target:null):sel==="[data-act]"?target:null}}));
+  const keys=[];
+  try {
+    doc.createElement=mk;doc.addEventListener=(type,fn)=>{if(type==="keydown")keys.push(fn);};sandbox.localStorage={getItem:()=>null,setItem:()=>{}};
+    vm.runInContext("mountSkillSimulator",sandbox)(root,{onNote:info=>reveals.push(info)});
+    root._skillSim.loadBuild(round.build);root._skillSim.setNotes(round.notes);root._skillSim.setInteraction("read");
+    const before=JSON.stringify(root._skillSim.getBuild());
+    click(cell(101));click(cell(103));click(cell(103));click(cell(201));
+    ok(reveals.length===3&&reveals[0].first&& !reveals[1].first&&cell(103).classList.contains("note-seen"),"first star reveal dims it; later clicks reopen the note");
+    ok(reveals[2].text===fixture.notes[201],"reader can open a note on a skipped skill");
+    for(const act of ["reset","undo","server","pick"])click({dataset:{act}});
+    const lv=select('[data-role="lv"]');lv.value="1";lv.listeners.change.forEach(fn=>fn());
+    keys.forEach(fn=>fn({ctrlKey:true,shiftKey:false,key:"z",target:{closest:()=>null},preventDefault:()=>{}}));
+    root.listeners.pointerdown.forEach(fn=>fn({target:{closest:()=>cell(103)},pointerType:"mouse",button:0,clientX:0,clientY:0}));
+    ok(JSON.stringify(root._skillSim.getBuild())===before,"reader clicks, level edits, undo and controls leave expert build unchanged");
+    ok(!cell(103).classList.contains("is-charging")&&lv.disabled,"reader disables long press and level editing");
+    root._skillSim.setInteraction("annotate");click(cell(202));
+    ok(reveals[reveals.length-1].id===202&&JSON.stringify(root._skillSim.getBuild())===before,"annotation selection does not learn skills");
+    root._skillSim.setInteraction("build");click(cell(201));
+    ok(root._skillSim.getBuild().learned.includes(201),"author build mode retains ordinary learning");
+  } catch(e){ok(false,"reader UI threw: "+e.message);}
+  finally{doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;}
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
