@@ -3195,7 +3195,6 @@ let checkedRsim = 0;
   for (const server of ["og", "tot", "tto"]){
     const tagged = {...fixture, patch:server + " patch", build:{...fixture.build,server,level:server === "tot" ? 100 : 95,learned:[101,102,103]}};
     const code = encode(tagged), restored = decode(code);
-    ok(vm.runInContext("classGuideFilename",sandbox)(code) === "class-guide-" + server + "-wolf.json", "download filename uses the exported " + server + " tag");
     ok(JSON.parse(code).build.server === server && restored.build.server === server && restored.build.level === tagged.build.level, "export/import preserve " + server + " server tag and level");
   }
   const change = patch => ({...fixture,...patch});

@@ -1667,6 +1667,11 @@
   .cg-prose,.cg-note-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
   .cg-note-editor,.cg-transfer{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:20px;margin:18px 0}
   .cg-note-editor h3,.cg-transfer h3{margin:0 0 12px;color:var(--gold);font-family:"Chakra Petch",sans-serif}
+  .cg-import-dialog{width:min(460px,calc(100vw - 40px));box-sizing:border-box;margin:auto;padding:24px;color:var(--text);font:inherit}
+  .cg-import-dialog::backdrop{background:#090807b8}
+  .cg-import-dialog .cg-help{margin:0}
+  .cg-import-error{color:var(--seal);font-size:13px;line-height:1.7;margin:8px 0 0}
+  .cg-import-error:empty{display:none}
   .cg-transfer .cg-code{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
   .cg-page .rsim{margin-top:24px}
   .cg-page .rsim-tree-head h3{font-family:inherit}
@@ -27460,9 +27465,16 @@ function classGuideImport(code){
   try { value = JSON.parse(code); } catch (e) { throw new Error("อ่านโค้ดไกด์ไม่ได้ กรุณาวาง JSON ที่ส่งออกจากไกด์แต่ละอาชีพ"); }
   return classGuideNormalize(value);
 }
-function classGuideFilename(code){
-  const { build } = classGuideImport(code);
-  return "class-guide-" + build.server + "-" + build.classKey + ".json";
+async function classGuideCopy(code){
+  if (typeof navigator !== "undefined" && navigator.clipboard){
+    try { await navigator.clipboard.writeText(code); return; } catch (e) { /* Offline browsers use the copy fallback below. */ }
+  }
+  const box = document.createElement("textarea"), focused = document.activeElement;
+  box.value = code; box.readOnly = true; box.style.cssText = "position:fixed;left:-9999px;top:0";
+  document.body.appendChild(box); box.select();
+  let copied = false;
+  try { copied = document.execCommand("copy"); } finally { box.remove(); if (focused) focused.focus(); }
+  if (!copied) throw new Error("คัดลอกโค้ดไม่ได้ กรุณาลองอีกครั้ง");
 }
 // Guide prose accepts only **bold** markup; authored HTML always remains escaped text.
 function classGuideRichText(text){
@@ -27531,7 +27543,7 @@ const CLASS_GUIDE_BUTTON_ICONS = {
   build:'<path d="M4 5h6v5H4zM14 5h6v5h-6zM9 15h6v5H9zM7 10v3h10v-3M12 13v2"/>',
   annotate:'<path d="M12 3l2.5 5 5.5.8-4 4 .9 5.7-4.9-2.7-4.9 2.7.9-5.7-4-4L9.5 8zM19 17l2 2-3 3"/>',
   preview:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-  export:'<path d="M14 3h7v7M21 3l-10 10M10 4H4v16h16v-6"/>',
+  export:'<path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7"/>',
   import:'<path d="M3 12h12m-5-5l5 5-5 5M15 3h6v18h-6"/>',
   saveNote:'<path d="M4 3h13l4 4v14H3V3zM7 3v6h9V3M7 21v-8h10v8"/>',
   cancelNote:'<path d="M9 7L4 12l5 5M4 12h10a6 6 0 0 0 0-12"/>',
@@ -27555,7 +27567,7 @@ function mountClassGuide(root){
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
     <section data-cg-role="sim" hidden></section>
-    <section class="cg-transfer" data-cg-role="transfer" hidden><h3 data-cg-role="transferTitle"></h3><p class="cg-help" data-cg-role="transferHelp"></p><label>โค้ดไกด์<textarea class="cg-code" data-cg-role="code" rows="10" spellcheck="false" aria-label="โค้ดไกด์"></textarea></label><div class="cg-author-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copy">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="download">${classGuideButtonIcon("download")}<span>ดาวน์โหลด JSON</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="applyImport">${classGuideButtonIcon("applyImport")}<span>นำเข้าไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="closeTransfer">${classGuideButtonIcon("closeTransfer")}<span>ปิด</span></button></div></section>
+    <dialog class="cg-transfer cg-import-dialog" data-cg-role="transfer" aria-labelledby="cgImportTitle"><button type="button" class="cg-note-close" data-cg-act="closeTransfer" aria-label="ปิด">×</button><h3 id="cgImportTitle">นำเข้าไกด์</h3><textarea class="cg-code" data-cg-role="code" rows="3" maxlength="131072" spellcheck="false" aria-label="วางโค้ดไกด์" placeholder="วางโค้ดไกด์ที่นี่"></textarea><p class="cg-help">วางโค้ดแล้วกด Enter</p><p class="cg-import-error" data-cg-role="importError" role="alert"></p></dialog>
   </div>`;
   const el = role => root.querySelector('[data-cg-role="' + role + '"]');
   const field = name => root.querySelector('[data-cg-field="' + name + '"]');
@@ -27590,7 +27602,7 @@ function mountClassGuide(root){
   sim.setInteraction("read");
   const switchMode = next => {
     mode = next; el("gallery").hidden = next !== "gallery"; el("author").hidden = next !== "author";
-    el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").hidden = true;
+    el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close();
     el("noteEditor").hidden = true; status("");
     button("gallery").setAttribute("aria-pressed", String(next === "gallery")); button("author").setAttribute("aria-pressed", String(next === "author"));
   };
@@ -27635,15 +27647,20 @@ function mountClassGuide(root){
     if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = "ยังไม่มีไกด์จากชุมชน สร้างไกด์แล้วส่งออกโค้ดให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
   }
-  function showTransfer(kind){
-    const code = kind === "export" ? classGuideExport(collect()) : "";
-    el("transfer").hidden = false;
-    el("transferTitle").textContent = kind === "export" ? "ส่งออกไกด์แต่ละอาชีพ" : "นำเข้าไกด์แต่ละอาชีพ";
-    el("transferHelp").textContent = kind === "export" ? "ไกด์สำหรับ " + SKILL_SIM_SERVERS[sim.getBuild().server].name + " — ส่งโค้ดนี้หรือไฟล์ JSON ให้ผู้ดูแลเพื่อเพิ่มไกด์เข้ารายการ" : "วางโค้ดไกด์เพื่อนำกลับมาแก้ไข ไกด์ในรายการชุมชนจะไม่ถูกเปลี่ยน";
-    el("code").readOnly = kind === "export"; el("code").value = code;
-    button("applyImport").hidden = kind !== "import"; button("copy").hidden = button("download").hidden = kind !== "export";
-    el("code").focus();
+  function showImport(){
+    el("code").value = ""; el("importError").textContent = "";
+    el("transfer").showModal(); el("code").focus();
   }
+  function confirmImport(){
+    try {
+      const imported = classGuideImport(el("code").value);
+      draft = imported; el("transfer").close(); startAuthor(); status("นำเข้าไกด์แล้ว");
+    } catch (e){ el("importError").textContent = e.message; }
+  }
+  el("code").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); if (mode === "author") confirmImport(); }
+  });
+  el("transfer").addEventListener("close", () => { if (mode === "author") button("import").focus(); });
   // Reuse the skill-details note melt, arcing comet and text reveal. Reopens are immediate.
   const noteModal = document.createElement("div"); noteModal.className = "cg-note-backdrop"; noteModal.hidden = true;
   noteModal.innerHTML = '<section class="cg-note-card" role="dialog" aria-modal="true" aria-labelledby="cgNoteTitle" tabindex="-1"><button type="button" class="cg-note-close" aria-label="ปิดโน้ต">×</button><p class="cg-kicker">★ AUTHOR’S NOTE</p><h3 id="cgNoteTitle"></h3><p class="cg-note-body"></p></section>';
@@ -27693,26 +27710,18 @@ function mountClassGuide(root){
     try {
       if (act === "gallery"){ saveDraft(); switchMode("gallery"); sim.setInteraction("read"); renderGallery(); }
       else if (act === "author" || act === "returnAuthor") startAuthor();
-      else if (act === "closeTransfer") el("transfer").hidden = true;
+      else if (act === "closeTransfer") el("transfer").close();
       else if (mode !== "author") return;
       else if (act === "build" || act === "annotate") setAuthorInteraction(act);
       else if (act === "preview"){ saveDraft(); openGuide(draft, true); }
-      else if (act === "export"){ saveDraft(); showTransfer("export"); }
-      else if (act === "import") showTransfer("import");
-      else if (act === "applyImport"){ const imported = classGuideImport(el("code").value); draft = imported; startAuthor(); status("นำเข้าไกด์แล้ว"); }
+      else if (act === "export"){ saveDraft(); await classGuideCopy(classGuideExport(collect())); status("คัดลอกโค้ดไกด์แล้ว"); }
+      else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
         if (text) draft.notes[noteId] = text; else delete draft.notes[noteId];
         sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true;
       } else if (act === "cancelNote") el("noteEditor").hidden = true;
-      else if (act === "copy"){
-        if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(el("code").value); status("คัดลอกโค้ดแล้ว"); }
-        else { el("code").focus(); el("code").select(); status("เลือกโค้ดแล้ว กด Ctrl+C เพื่อคัดลอก"); }
-      } else if (act === "download"){
-        const filename = classGuideFilename(el("code").value);
-        const url = URL.createObjectURL(new Blob([el("code").value], { type: "application/json;charset=utf-8" }));
-        const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
+
     } catch (e) { status(e.message); }
   });
   root._openGate = canClose => { if (mode === "author") simRoot._openGate(canClose); };
@@ -28660,6 +28669,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:16:21.610Z","feat(bible): simplify guide clipboard export and paste import"],
     ["2026-10-13T06:13:09.724Z","fix(bible): keep guide level label and input inline"],
     ["2026-10-13T06:11:23.005Z","style(bible): simplify guide headings and credit preview author"],
     ["2026-10-13T06:01:51.205Z","feat(bible): refine guide authoring and action hierarchy"],
