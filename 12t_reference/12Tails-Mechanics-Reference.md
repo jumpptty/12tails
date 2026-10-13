@@ -568,6 +568,20 @@ TailsTopia's page carries, for all 12 classes, the same fields as the game's `Sk
 
 **D. Where each class is documented:** every class's table and its own differences are in `12t_reference/<class>-skill-reference.md`, section "Skill Tree Layout & Learn Requirements".
 
+### 3.7 Skill-window icon containers (verified 2026-10-13)
+
+The skill window draws the original **iron frame for passive skills** and **wooden frame for every other mode**, then draws the transparent skill icon over the frame at the same 64 × 64 rectangle (`GameGui.cs:16993,16998-17018`). Assets are loaded from `GameGui/Icons/Common/ironFrame` and `GameGui/Icons/Common/woodenFrame` (`GameGui.cs:15618-15621`), exported as PNGs under `RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/common/`.
+
+```csharp
+if (skill.mode == eSkillMode.passive)
+    GUI.DrawTexture(rect, this.ToRcbXc2ylw); // ironFrame
+else
+    GUI.DrawTexture(rect, this.d2Gcbtu0WBe); // woodenFrame
+GUI.DrawTexture(rect, iconButtonClass.image);
+```
+
+`eSkillMode.passive` is enum value 0 (`eSkillMode.cs:8`); `SkillClass` does not assign `mode` in its constructor (`SkillClass.cs:12-49`), so an unset decoded mode also uses the iron frame. The Skill Simulator follows this rule for all classes using decoded per-cell modes.
+
 ## 4. Hidden mechanics & special interactions
 
 - **Luck touches everything actually reachable.** The `R = Random(0, ceil(0.2*LCK))` spread is added inside
