@@ -3648,6 +3648,27 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_lotusPalm", 2); g("Lotus Palm 40 m lock", c[0].shape === "line" && c[0].l === 40, c);
     } finally { for (const k of Object.keys(dr)) if (!(k in saved)) delete dr[k]; Object.assign(dr, saved); }
   }
+  // reachControls: a plain dep (id, minRank, maxRank) or {dep, onRank, offRank}
+  for (const sk of SKILLS) for (const c of sk.reachControls || []) {
+    const ok = c.dep ? (c.dep.id && Number.isInteger(c.onRank) && Number.isInteger(c.offRank) && c.onRank !== c.offRank && c.onRank <= c.dep.maxRank && c.offRank >= c.dep.minRank) : (c.id && Number.isInteger(c.minRank) && Number.isInteger(c.maxRank));
+    if (!ok) bad(`${sk.id}: bad reachControls entry ${JSON.stringify(c.dep ? { dep: c.dep.id, on: c.onRank, off: c.offRank } : c.id)}`);
+  }
+  // hero models: every embedded class model decodes to matching vertex / uv counts, in-range indices and a PNG skin
+  {
+    const re = /REACH_MODELS\.(\w+) = \{ v: "([^"]+)", uv: "([^"]+)", t: "([^"]+)", tex: "data:image\/png;base64,([^"]+)" \};/g;
+    let m, models = 0;
+    while ((m = re.exec(html))) {
+      models++;
+      const vb = Buffer.from(m[2], "base64"), ub = Buffer.from(m[3], "base64"), tb = Buffer.from(m[4], "base64"), png = Buffer.from(m[5], "base64");
+      const nv = vb.length / 6, nu = ub.length / 4, nt = tb.length / 6;
+      let maxI = 0; for (let i = 0; i < tb.length; i += 2) maxI = Math.max(maxI, tb.readUInt16LE(i));
+      let minY = Infinity, maxY = -Infinity; for (let i = 0; i < vb.length; i += 6) { const y = vb.readInt16LE(i + 2) / 1000; minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+      if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || png.readUInt32BE(0) !== 0x89504e47) bad(`model ${m[1]}: ${nv} verts, ${nu} uvs, ${nt} tris, max index ${maxI}`);
+      if (minY < -0.05 || maxY < 0.3) bad(`model ${m[1]}: stands from ${minY} to ${maxY} m (feet should be on the ground)`);
+      if (m[1] === "Panda" && (nv !== 1573 || nt !== 1212)) bad(`model Panda: ${nv} verts / ${nt} tris, the game mesh has 1573 / 1212`);
+    }
+    if (!models) bad("no REACH_MODELS entries found");
+  }
   if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.`);
   console.log(`Verified ${checkedReach} reach parts.`);
 }
