@@ -27544,9 +27544,9 @@ const CLASS_GUIDE_BUTTON_ICONS = {
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page">
-    <div class="cg-heading"><div><p class="cg-kicker">COMMUNITY BUILDS</p><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button></nav></div>
+    <div class="cg-heading"><div><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><p class="cg-intro">บิลด์และเหตุผลจากผู้เล่น คลิกสกิลที่มีดาวเพื่ออ่านโน้ตจากผู้เขียน</p><div class="cg-gallery" data-cg-role="guides"></div></section>
+    <section data-cg-role="gallery"><div class="cg-gallery" data-cg-role="guides"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
       <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
       <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
@@ -27615,7 +27615,7 @@ function mountClassGuide(root){
     current = classGuideNormalize(guide, { draft: preview }); switchMode("reader");
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes);
     setToolServer("skill-simulator", current.build.server);
-    el("readerKind").textContent = preview ? "AUTHOR PREVIEW" : "COMMUNITY GUIDE";
+    el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "COMMUNITY GUIDE";
     el("guideTitle").textContent = current.title || "ตัวอย่างไกด์";
     el("guideByline").textContent = [current.author || "ยังไม่ระบุผู้เขียน", SKILL_SIM_NAMES[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].name, "แพตช์ " + (current.patch || "ยังไม่ระบุ"), "Lv " + current.build.level].join(" · ");
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
@@ -28660,6 +28660,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:11:23.005Z","style(bible): simplify guide headings and credit preview author"],
     ["2026-10-13T06:01:51.205Z","feat(bible): refine guide authoring and action hierarchy"],
     ["2026-10-13T04:44:39.055Z","style(bible): keep guide animations under reduced motion"],
     ["2026-10-13T04:41:28.541Z","style(bible): shrink guide stars and slow their pulse"],
