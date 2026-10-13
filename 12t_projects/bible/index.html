@@ -27426,7 +27426,9 @@ function openSimServerGate({ current, canClose = true, onSelect }){
   simServerGateEl.classList.add("open");
 }
 ﻿// Community guides are data only. Paste each exported JSON object into this array.
-const CLASS_GUIDES = [];
+const CLASS_GUIDES = [
+  {"format":"12t-class-guide","version":1,"title":"หมาเจาะ Classic","author":"test123","patch":"1.57","description":"หมาเจาะ พ่อทุกสถาบัน","build":{"server":"tto","classKey":"wolf","level":95,"learned":[101,102,103,121,122,131,132,141,142,143,144,201,202,203,204,231,232,233,234,241,242,301,302,303,311,312,313,314,321,322,323,324,331,332,341,342,343,344,351,352,353,354,361,362,363,364,371,372,373,401,402,404,413,421,424,432,441,443]},"notes":{"364":"สกิลนี้วนง่ายกว่าร่างดำ","373":"พยายามให้สกิลนี้วน"}}
+];
 function classGuideNormalize(value, { draft = false } = {}){
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const object = o => o && typeof o === "object" && !Array.isArray(o);
@@ -28669,6 +28671,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:21:48.260Z","feat(bible): add submitted TTO Wolf community guide"],
     ["2026-10-13T06:18:51.792Z","style(bible): use black up arrows for skill learning"],
     ["2026-10-13T06:16:21.610Z","feat(bible): simplify guide clipboard export and paste import"],
     ["2026-10-13T06:13:09.724Z","fix(bible): keep guide level label and input inline"],

@@ -15,7 +15,7 @@ The draft is saved only in the author's current browser. Export the code to keep
 
 ## For the maintainer: embed submitted guides
 
-Locate `const CLASS_GUIDES = [];` in [index.html](index.html). Replace the empty array with exported **JSON objects**, separated by commas:
+Locate `const CLASS_GUIDES = [...]` in [index.html](index.html). Add exported **JSON objects** to the array, separated by commas:
 
 ```js
 const CLASS_GUIDES = [
@@ -26,7 +26,7 @@ const CLASS_GUIDES = [
 
 Paste the object itself, not a quoted JSON string, and do not include an outer array from another source. The guide's skill icons already live in the HTML; no image files need to accompany submissions. The tool remains a single offline HTML file.
 
-Only real submitted guides belong in this array. It starts empty: no invented experts or example builds are published. Valid guides appear in the community list with title, class, server, author and patch. Invalid entries are excluded and the page reports how many could not open. Imported author codes never add entries to this array automatically.
+Only real submitted guides belong in this array. The list contains user-submitted guides; do not invent experts or builds. Valid guides appear in the community list with title, class, server, author and patch. Invalid entries are excluded and the page reports how many could not open. Imported author codes never add entries to this array automatically.
 
 Before publishing, run `node scripts/validate_skills.js`. Every embedded entry must pass the schema and existing simulator allocation rules. Changes to `index.html` still need its usual backup/checkpoint and matching changelog entry.
 
