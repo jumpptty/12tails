@@ -11246,6 +11246,7 @@ function openReachPopup(skill, rank){
   const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model); };
   const redraw = () => { if (!drawQueued) drawQueued = requestAnimationFrame(() => { drawQueued = 0; drawReach(cv, items, st, model); }); };   // a fast mouse sends several moves per frame
   if (model && !model.ready) model.onready = redraw;
+  let zoomBy = () => {};
   const ptrs = new Map(); let pinch = 0;
   cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); });
   cv.addEventListener("pointermove", e => {
@@ -11253,9 +11254,10 @@ function openReachPopup(skill, rank){
     ptrs.set(e.pointerId, [e.clientX, e.clientY]);
     if (ptrs.size === 2){
       const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-      if (pinch) st.zoom = Math.max(6, Math.min(400, st.zoom * d / pinch));
+      if (pinch) zoomBy(d / pinch);
       pinch = d;
     } else {
+      if (e.clientX !== prev[0] || e.clientY !== prev[1]){ endIntro(); stopAuto(); }   // orbiting takes over the camera
       st.yaw += (e.clientX - prev[0]) * 0.01;
       st.pitch = Math.max(-1.45, Math.min(1.45, st.pitch + (e.clientY - prev[1]) * 0.01));
     }
@@ -11263,8 +11265,8 @@ function openReachPopup(skill, rank){
   });
   const up = e => { ptrs.delete(e.pointerId); pinch = 0; };
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
-  cv.addEventListener("wheel", e => { e.preventDefault(); st.zoom = Math.max(6, Math.min(400, st.zoom * (e.deltaY < 0 ? 1.1 : 0.9))); redraw(); }, { passive: false });
-  cv.addEventListener("dblclick", () => { st = home(); redraw(); });   // (the keyboard loop reads st each frame, so a reset also resets the pan)
+  cv.addEventListener("wheel", e => { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.1 : 0.9); redraw(); }, { passive: false });
+  cv.addEventListener("dblclick", () => { if (introing) return; st = home(); redraw(); });   // (the keyboard loop reads st each frame, so a reset also resets the pan)
   // Keyboard (user 2026-10-13: simple, like the Golden King Bug map): W / S walk the view forward / back, A / D strafe, mouse still
   // orbits and zooms. The look-at point eases toward its target (lerp 0.12 per frame, like the map) and the speed scales with what is
   // on screen. By e.code so a Thai layout works. Arrow keys do nothing here but are swallowed so they cannot switch the skill behind.
@@ -11379,7 +11381,8 @@ function openReachPopup(skill, rank){
     if (introRaf){ cancelAnimationFrame(introRaf); introRaf = 0; }
     if (introing){ introing = false; st = home(); items = parts.map(p => ({ part: p, alpha: 1 })); redraw(); }
   };
-  let introing = false;
+  let introing = false, zoomK = 1;   // zoomK: the user's wheel / pinch zoom while the intro owns the camera
+  zoomBy = (f) => { if (introing) zoomK = Math.max(0.2, Math.min(6, zoomK * f)); else st.zoom = Math.max(6, Math.min(400, st.zoom * f)); };
   // slow drift (0.1 rad/s, a lap a minute) round the caster once the intro is over; any pointer, wheel, key or toggle input stops it
   let autoRaf = 0, autoT = 0;
   const autoStep = (now) => { const dt = Math.min(0.05, (now - autoT) / 1000); autoT = now; st.yaw += 0.1 * dt; drawNow(); autoRaf = requestAnimationFrame(autoStep); };
@@ -11403,7 +11406,7 @@ function openReachPopup(skill, rank){
       const o = eio(clamp01((t - HOLD) / ORBIT)), vd = DRIFT_V * (() => { const x = clamp01((t - DRIFT_AT) / DRIFT_RAMP); return x * x * (3 - 2 * x); })();
       driftYaw += vd * dt;
       st.yaw = lerp(close.yaw, end.yaw, o) + driftYaw; st.pitch = lerp(close.pitch, end.pitch, o);
-      st.zoom = Math.exp(lerp(Math.log(close.zoom), Math.log(end.zoom), o));   // zoom out evenly in log space
+      st.zoom = Math.exp(lerp(Math.log(close.zoom), Math.log(end.zoom), o)) * zoomK;   // zoom out evenly in log space, with the user's zoom on top
       st.t = [0, 0, lerp(close.ty, 0, o)];
       const r = clamp01((t - REVEAL_AT) / REVEAL), k = eio(r);
       items = r > 0 ? grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })) : parts.map(p => ({ part: p, alpha: 0 }));
@@ -11412,10 +11415,9 @@ function openReachPopup(skill, rank){
       else { introRaf = 0; introing = false; items = parts.map(p => ({ part: p, alpha: 1 })); drawNow(); startAuto(); }   // the view is NOT reset: the drift simply carries on
     };
     introRaf = requestAnimationFrame(frame);
-    const anyInput = () => { endIntro(); stopAuto(); };
-    for (const ev of ["pointerdown", "wheel", "dblclick"]) cv.addEventListener(ev, anyInput, { capture: true });
-    document.addEventListener("keydown", anyInput, true);
-    closeReachPopup._intro = () => { if (introRaf) cancelAnimationFrame(introRaf); introRaf = 0; stopAuto(); document.removeEventListener("keydown", anyInput, true); };
+    const moveKey = (e) => { if (/^Key[WASD]$/.test(e.code) && !e.ctrlKey && !e.metaKey && !e.altKey){ endIntro(); stopAuto(); } };
+    document.addEventListener("keydown", moveKey, true);
+    closeReachPopup._intro = () => { if (introRaf) cancelAnimationFrame(introRaf); introRaf = 0; stopAuto(); document.removeEventListener("keydown", moveKey, true); };
   } else {
     // no model: boxes fade in without the camera move
     items = parts.map(p => ({ part: p, alpha: 0 }));
@@ -29456,6 +29458,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T16:09:30.846Z","fix(bible): in the range popup only W A S D and dragging stop the pan; scrolling and zooming keep it going"],
     ["2026-10-13T16:07:47.443Z","fix(bible): range popup toggles (rank, Enlarge / Reduce, skill deps) no longer stop the intro or the slow pan"],
     ["2026-10-13T16:03:30.708Z","feat(bible): range popup toggles sit in the title row in the normal skill dependency look, Enlarge / Reduce resize the character too, and the intro is one continuous move with a short first beat"],
     ["2026-10-13T15:55:47.927Z","feat(bible): range popup has a preview-only rank toggle for skills with several ranks"],
