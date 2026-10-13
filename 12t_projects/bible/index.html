@@ -4691,6 +4691,15 @@
   .sk-reach-legend{display:flex; flex-direction:column; gap:3px; margin-top:8px; font-size:12px}
   .sk-reach-legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px}
   .sk-reach-hint{margin-top:6px; font-size:11px; opacity:.65}
+  @media (min-width:900px){
+    .sk-reach-pop{padding:2.5vh 2vw}
+    .sk-reach-panel{width:min(96vw,1280px); max-height:95vh; display:flex; flex-direction:column}
+    .sk-reach-canvas{aspect-ratio:auto; width:100%; height:max(380px, calc(95vh - 250px)); flex:0 0 auto}
+    .sk-reach-legend{display:block; columns:2; column-gap:24px; font-size:13px}
+    .sk-reach-legend span{display:block; break-inside:avoid; margin-bottom:3px}
+    .sk-reach-dep{font-size:13px}
+    .sk-reach-dep img{width:30px; height:30px}
+  }
   .sk-reach-panel{position:relative}
   .sk-reach-deps{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px}
   .sk-reach-dep{display:inline-flex; align-items:center; gap:6px; padding:3px 8px 3px 3px; border-radius:6px; border:1px solid var(--th-line, rgba(255,255,255,.15)); background:rgba(255,255,255,.04); color:inherit; font:inherit; font-size:12px; cursor:pointer}
@@ -10863,9 +10872,9 @@ function reachDims(p){
 // Camera above the ground for pitch > 0, below it for pitch < 0. Returns [px, py, depth]; a larger depth is nearer the camera.
 function reachProject(v, yaw, pitch, zoom, w, h, t){
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const vx = v[0] - (t ? t[0] : 0), vz = v[2] - (t ? t[1] : 0);
+  const vx = v[0] - (t ? t[0] : 0), vz = v[2] - (t ? t[1] : 0), vy0 = v[1] - (t && t[2] ? t[2] : 0);
   const x1 = vx * cy + vz * sy, z1 = -vx * sy + vz * cy;
-  const y2 = v[1] * cp - z1 * sp, z2 = v[1] * sp + z1 * cp;
+  const y2 = vy0 * cp - z1 * sp, z2 = vy0 * sp + z1 * cp;
   return [w / 2 + x1 * zoom, h * 0.6 - y2 * zoom, z2];
 }
 // Split a polygon / segment at the ground plane y = 0 (Sutherland-Hodgman against one plane).
@@ -11135,6 +11144,7 @@ function closeReachPopup(){
   const el = document.querySelector(".sk-reach-pop");
   if (el) el.remove();
   document.removeEventListener("keydown", closeReachPopup._esc);
+  if (closeReachPopup._intro){ closeReachPopup._intro(); closeReachPopup._intro = null; }
   if (closeReachPopup._keys){
     document.removeEventListener("keydown", closeReachPopup._keys[0], true);
     document.removeEventListener("keyup", closeReachPopup._keys[1], true);
@@ -11169,7 +11179,7 @@ function openReachPopup(skill, rank){
   </div>`;
   document.body.appendChild(pop);
   const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
-  const home = () => ({ yaw: -0.6, pitch: 0.5, zoom: Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))), t: [0, 0], tt: [0, 0] });
+  const home = () => ({ yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))), t: [0, 0, 0], tt: [0, 0, 0] });
   let st = home();
   const redraw = () => drawReach(cv, items, st, model);
   if (model && !model.ready) model.onready = redraw;
@@ -11296,6 +11306,48 @@ function openReachPopup(skill, rank){
   pop.addEventListener("click", e => { if (e.target === pop || e.target.closest('[data-role="reach-close"]')) closeReachPopup(); });
   closeReachPopup._esc = e => { if (e.key === "Escape") closeReachPopup(); };
   document.addEventListener("keydown", closeReachPopup._esc);
+  // Intro. Skipped for a class with no model yet (a stick figure close-up is pointless): the boxes just fade in. Any input skips it.
+  let introRaf = 0;
+  const grown = (ps, k) => ps.map(p => { const o = Object.assign({}, p); for (const key of ["r", "w", "w2", "l", "z0"]) if (typeof o[key] === "number") o[key] = o[key] * k; if (typeof o.h === "number") o.h = o.h * k; return o; });
+  const endIntro = () => {
+    if (introRaf){ cancelAnimationFrame(introRaf); introRaf = 0; }
+    if (introing){ introing = false; st = home(); items = parts.map(p => ({ part: p, alpha: 1 })); redraw(); }
+  };
+  let introing = false;
+  const body = model && model.parts && model.parts[0];
+  if (body){
+    introing = true;
+    const top = Math.max(...body.pos.map(q => q[1])), headY = top * 0.86, end = home();
+    const cz = cv.clientWidth / (top * 0.85), close = { yaw: 0, pitch: 0.06, zoom: cz, ty: headY - 0.15 * cv.clientHeight / cz };   // head a little above the middle
+    const HOLD = 520, ORBIT = 1500, GAP = 120, REVEAL = 700, TOTAL = HOLD + ORBIT + GAP + REVEAL;
+    const eio = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, lerp = (a, b, t) => a + (b - a) * t;
+    st = { yaw: close.yaw, pitch: close.pitch, zoom: close.zoom, t: [0, 0, close.ty], tt: [0, 0, 0] };
+    items = parts.map(p => ({ part: p, alpha: 0 }));
+    const t0 = performance.now();
+    const frame = (now) => {
+      const t = now - t0;
+      const o = eio(Math.max(0, Math.min(1, (t - HOLD) / ORBIT)));
+      st.yaw = lerp(close.yaw, end.yaw, o); st.pitch = lerp(close.pitch, end.pitch, o);
+      st.zoom = Math.exp(lerp(Math.log(close.zoom), Math.log(end.zoom), o));   // zoom out evenly in log space
+      st.t = [0, 0, lerp(close.ty, 0, o)];
+      const r = Math.max(0, Math.min(1, (t - HOLD - ORBIT - GAP) / REVEAL)), k = eio(r);
+      items = r > 0 ? grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })) : parts.map(p => ({ part: p, alpha: 0 }));
+      redraw();
+      if (t < TOTAL) introRaf = requestAnimationFrame(frame); else { introRaf = 0; endIntro(); }
+    };
+    introRaf = requestAnimationFrame(frame);
+    for (const ev of ["pointerdown", "wheel", "dblclick"]) cv.addEventListener(ev, endIntro, { capture: true });
+    pop.querySelectorAll(".sk-reach-dep").forEach(b => b.addEventListener("click", endIntro, { capture: true }));
+    document.addEventListener("keydown", endIntro, { capture: true, once: true });
+    closeReachPopup._intro = () => { if (introRaf) cancelAnimationFrame(introRaf); introRaf = 0; document.removeEventListener("keydown", endIntro, true); };
+  } else {
+    // no model: boxes fade in without the camera move
+    items = parts.map(p => ({ part: p, alpha: 0 }));
+    const t0 = performance.now();
+    const fade = (now) => { const k = Math.min(1, (now - t0) / 500); items = grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })); redraw(); if (k < 1) introRaf = requestAnimationFrame(fade); else { introRaf = 0; items = parts.map(p => ({ part: p, alpha: 1 })); redraw(); } };
+    introRaf = requestAnimationFrame(fade);
+    closeReachPopup._intro = () => { if (introRaf) cancelAnimationFrame(introRaf); introRaf = 0; };
+  }
   redraw();
 }
 function critViewOn0(skill){ return !!(skill && (skill.critProc || (skill.rawModel && skill.rawModel.critBase))); }
@@ -29328,6 +29380,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T15:38:55.796Z","feat(bible): range popup is much bigger on desktop and opens with a close-up of the character, zooming out round behind her before the hit boxes fade in"],
     ["2026-10-13T15:29:37.927Z","feat(bible): range popup puts each dimension label on its own edge without overlaps and the popup Cat wears her real hair"],
     ["2026-10-13T15:27:43.696Z","style(bible): range popup hint line is just W A S D"],
     ["2026-10-13T15:26:06.037Z","feat(bible): range popup keys pan the view like the Golden King Bug map (W S forward / back, A D strafe) instead of orbiting it"],
