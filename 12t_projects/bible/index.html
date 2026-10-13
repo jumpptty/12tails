@@ -1655,13 +1655,17 @@
   .cg-page input,.cg-page textarea{width:100%;box-sizing:border-box;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:9px 11px;font:inherit;resize:vertical}
   .cg-page input:focus-visible,.cg-page textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .cg-description{grid-column:1/-1}
+  .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+  .cg-filters label{display:grid;gap:6px;min-width:180px;font-size:13px;color:var(--muted)}
+  .cg-filters select{box-sizing:border-box;width:100%;padding:9px 32px 9px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
+  .cg-filters select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  @media(max-width:480px){.cg-filters label{flex:1;min-width:140px}}
   .cg-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  .cg-guide{position:relative;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);padding:20px 20px 20px 88px;font:inherit;cursor:pointer}
+  .cg-guide{position:relative;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);min-height:104px;box-sizing:border-box;padding:20px 20px 20px 120px;font:inherit;cursor:pointer}
   .cg-guide:hover,.cg-guide:focus-visible{border-color:var(--gold)}
-  .cg-guide img{position:absolute;left:18px;top:20px;width:52px;height:52px;object-fit:contain}
+  .cg-guide img{position:absolute;left:8px;top:0;width:100px;height:100%;object-fit:contain}
   .cg-guide>strong{font-family:inherit;display:block;font-size:19px;color:var(--gold);margin-bottom:6px}
   .cg-guide span{font-size:12px;color:var(--muted)}
-  .cg-guide p{font-size:13px;line-height:1.8;margin-bottom:0;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
   .cg-prose,.cg-note-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
@@ -27583,7 +27587,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-gallery" data-cg-role="guides"></div></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
       <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
       <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
@@ -27702,19 +27706,26 @@ function mountClassGuide(root){
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
     window.scrollTo(0, 0); queueReaderFit();
   }
+  for (const [role, choices] of [["serverFilter", Object.entries(SKILL_SIM_SERVERS).map(([key, value]) => [key, value.name])], ["classFilter", Object.entries(SKILL_SIM_NAMES)]]){
+    const filter = el(role);
+    for (const [key, name] of choices){ const option = document.createElement("option"); option.value = key; option.textContent = name; filter.appendChild(option); }
+    filter.addEventListener("change", renderGallery);
+  }
   function renderGallery(){
     const list = el("guides"); list.textContent = "";
-    let validCount = 0, invalidCount = 0;
+    let validCount = 0, invalidCount = 0, totalCount = 0;
+    const server = el("serverFilter").value, classKey = el("classFilter").value;
     for (const raw of CLASS_GUIDES){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
+      totalCount++;
+      if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey)) continue;
       const b = document.createElement("button"); b.type = "button"; b.className = "cg-guide";
       const portrait = document.createElement("img"); portrait.src = CLASS_MINIMAL_ICONS[SKILL_SIM_NAMES[guide.build.classKey]] || ""; portrait.alt = "";
       const title = document.createElement("strong"); title.textContent = guide.title;
       const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author, "แพตช์ " + guide.patch].join(" · ");
-      const description = document.createElement("p"); description.innerHTML = classGuideRichText(guide.description);
-      b.append(portrait, title, byline, description); b.addEventListener("click", () => openGuide(guide)); list.appendChild(b); validCount++;
+      b.append(portrait, title, byline); b.addEventListener("click", () => openGuide(guide)); list.appendChild(b); validCount++;
     }
-    if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = "ยังไม่มีไกด์จากชุมชน สร้างไกด์แล้วส่งออกโค้ดให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
+    if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์หรืออาชีพอื่น" : "ยังไม่มีไกด์จากชุมชน สร้างไกด์แล้วส่งออกโค้ดให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
   }
   function showImport(){
@@ -28740,6 +28751,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T07:28:05.216Z","feat(bible): filter community guides by server and class"],
     ["2026-10-13T07:21:04.738Z","style(bible): credit guide authors in skill note headings"],
     ["2026-10-13T07:12:11.824Z","style(bible): give guide explanations a dedicated column"],
     ["2026-10-13T06:59:20.654Z","style(bible): fit guide reader builds into one screen"],
