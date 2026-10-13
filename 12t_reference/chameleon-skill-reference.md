@@ -606,3 +606,20 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 | Skill | Original BigBug baseline | ToT delta |
 |---|---|---|
 | Combo crit gear | `Chameleon_nAttack.cs:517-668`: weapon `w_chm43` / `w_chm44` (G.Marshal Bow, Blue / Red) +4, `w_chm48` (Mantis Bow R) +5; armor `a_chm43` +3, `a_chm48` (Mantis Suit R) +4; hat `c_chm43` +2, `c_chm48` (Mantis Hat R) +3. `a_chm43` / `c_chm43` exist nowhere else in the client (the Marshal armor / hat are the shared `a_all43-44` / `c_all43-44`, `ArmorData_eng.cs:59-70`, `AccessoryData_eng.cs:288-299`), and Champion (`w_chm58`, `a_all58`) is never tested, so on BB only the G.Marshal bow and the Mantis R set give crit. | Fixed (user-reported 2026-10-02): Marshal bow +5, Marshal hat + armor +7; Champion bow +7, hat +5, armor +6 (the standard table, matching the Chameleon Simulator's Champion values); Mantis gives no crit. Card: `servers.tot` with `CHAMELEON_TOT_WEAPON_DEP` / `CHAMELEON_TOT_EQUIP_DEP`; `chameleonCritBase()` switches on `currentServer`. BB and TTO keep the code values. The Chameleon attack simulator follows its own server toggle the same way: per-item `crit` / `servers` in `CHM_WEAPONS` / `CHM_HELMETS` / `CHM_ARMORS` (ToT: Marshal 5 / 4 / 3, Champion 7 / 6 / 5; BB / TTO: G.Marshal Bow 4, Mantis Bow / Suit / Hat R 5 / 4 / 3), dropdowns rebuilt on switch. |
+
+
+### ToT EX learning requirements (published simulator, 2026-10-13)
+
+Source: [ToT chameleon simulator dataset](https://talesoftails.net/data/skill-simulator/chameleon.json), with learning rules from [ToT simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). These are server-specific published simulator requirements, not BigBug decompiled mechanics or verified damage formulas. Icons were extracted from the site’s `/gamegui/skill-simulator/skills/` assets and embedded in the hub.
+
+| Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
+|---|---|---|---|---|---|
+| 451 | UpdamageMonter | 95 | 0 | None | Passive |
+| 452 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 453 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 454 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 461 | DowndamageMonter | 95 | 0 | None | Passive |
+
+Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.

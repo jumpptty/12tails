@@ -540,7 +540,7 @@ Kinds: **explicit `setReq`** (1): the code states the value, the simulators are 
 * **SP / MP costs, the other 10 classes: not compared.** The simulator tool shows no costs, so this was skipped; do it before trusting any simulator's cost column.
 * **Names.** The simulators use the community names (Longshot, Aimed Shot, ExtraReward, Deadly Aim); the tool's cell labels are the game's skill keys split into words (`specialDeal` = Special Deal, `deadShot` = Dead Shot, `nAttack` is shown as Long Shot). They only appear in the accessibility label, because the tool has no tooltips.
 * **Tree names** (Sharp Shooter, Engineer, ...) exist only on the simulators and in the client art, not in the code. Taken from TailsTails; its Cat tree "Glambler" is spelled Gambler here (the game's item names say Gambler). Bat's trees read "ShadowCaller" and "DreamCaster" exactly as the site writes them; unverified.
-* **Level caps.** Blog 95, TailsTails 100, **TailsTopia 110** (input 1-110, default 110), the tool 95, the game code has none (the Class C pool formula `clamp(floor(0.2*(lv-50)), 0, 12)` reaches its maximum of 12 at Lv 110). Lv 95 gives 9 Class C points, Lv 110 gives 12, so the cap changes what a build can hold. **Decided by the user 2026-10-12: BB 95 forever, TTO 95 for now, ToT 100** (the tool has a server gate and one entry per server in `SKILL_SIM_SERVERS`, so each server's cap and cell values are edited on their own; ToT's 100 gives 10 Class C points). Both simulators' extra Class C row ("EX" skills, 1 EX point at Lv 95, 2 at Lv 100) is ignored: the user says there are no EX skills.
+* **Level caps.** Blog 95, TailsTails 100, **TailsTopia 110** (input 1-110, default 110), the tool 95, the game code has none (the Class C pool formula `clamp(floor(0.2*(lv-50)), 0, 12)` reaches its maximum of 12 at Lv 110). Lv 95 gives 9 Class C points, Lv 110 gives 12, so the cap changes what a build can hold. **Decided by the user 2026-10-12: BB 95 forever, TTO 95 for now, ToT 100** (the tool has a server gate and one entry per server in `SKILL_SIM_SERVERS`, so each server's cap and cell values are edited on their own; ToT's 100 gives 10 Class C points). The original comparison excluded EX skills. On 2026-10-13 the user requested ToT EX skills; the tool now includes ToT’s published EX slots with a separate pool (see below).
 
 **C. Rule differences between the three**
 
@@ -567,6 +567,16 @@ TailsTopia's page carries, for all 12 classes, the same fields as the game's `Sk
 * **How far to trust it:** TailsTopia is a TTO-server tool. Its agreement with the client code means TTO still has the original values in these cells; it is not the original BB server, and it is not a mechanical copy of the client (it differs once). It confirms the code, it does not replace a live check on BB.
 
 **D. Where each class is documented:** every class's table and its own differences are in `12t_reference/<class>-skill-reference.md`, section "Skill Tree Layout & Learn Requirements".
+
+#### ToT EX skills (published simulator, 2026-10-13)
+
+The user requested ToT EX support for all 12 classes. Source: [ToT library](https://talesoftails.net/library), its public class datasets at `/data/skill-simulator/<class>.json` (for example [Wolf](https://talesoftails.net/data/skill-simulator/wolf.json)), and [the simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). This documents the published ToT simulator allocation rules, not BigBug engine formulas or live damage verification.
+
+* **Separate EX pool:** 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Each EX skill costs one EX point; ordinary pools remain normal = 49 and C = 10 at Lv 100.
+* **Five extra slots per class:** C row 6 columns 1–4 (hub cells 451–454), row 7 column 1 (461). Shared passive skills UpdamageMonter and DowndamageMonter unlock at Lv 95 and exclude each other. At most one of the three Lv 100 class choices (452–454) can be learned.
+* **Requirements:** class choices require six already-learned ordinary C skills plus all explicit dependencies from `customReqs` and `exPrereqs`. EX spending never satisfies ordinary C tree-point requirements; ordinary C spending does not consume EX points. EX is single-click, without automatic prerequisite filling.
+* **Availability:** Bat, Bison, Monkey, Panda, Penguin and Wolf publish three named class choices. Cat, Chameleon, Mole, Rabbit, Sheep and Whale still publish placeholder class choices. The hub leaves these unavailable while providing both shared passive choices for every class. Per-class names, levels and prerequisites are recorded in each class reference.
+* **Refunds / reset:** validate all three pools, explicit prerequisites, exclusions and ordinary C counts. Clearing a tree prunes skills losing explicit dependencies or tree-point thresholds repeatedly until the remaining layout is valid. The hub’s existing undo restores server, class, level and EX selections together. BB and TTO do not receive these ToT-only entries.
 
 ### 3.7 Skill-window icon containers (verified 2026-10-13)
 

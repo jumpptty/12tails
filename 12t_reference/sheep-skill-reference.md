@@ -628,3 +628,20 @@ Everything above is the BigBug original-engine baseline. No ToT deltas are known
 |---|---|---|
 | Eden Sanctuary | `sanctuary` is applied to every character in the 18 m / 6 m area with no team filter, enemies included (`Sheep_edenSanctuary.cs:160-205`); the Thai tooltip says team members only. | Only team members get the damage-reduction status (user-reported 2026-10-12; the Thai tooltip is right on TTO). Card `servers.tto` has the changed desc and no tooltip note. How the server filters (party vs. friend check) is not decoded. |
 | Soul of Arms | No damage reduction while casting (`RPC_soulOfArms_cast`, `Sheep.cs:33696-34698`, touches no `hitMod`). | Magic and physical damage taken is reduced by 50% during the skill animation (user-reported 2026-09-30, card `servers.tto.changeNote`). How the server implements it (a `hitMod` change or a separate halving like `sanctuary`) is unknown, so the card states only the 50% reduction. |
+
+
+### ToT EX learning requirements (published simulator, 2026-10-13)
+
+Source: [ToT sheep simulator dataset](https://talesoftails.net/data/skill-simulator/sheep.json), with learning rules from [ToT simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). These are server-specific published simulator requirements, not BigBug decompiled mechanics or verified damage formulas. Icons were extracted from the site’s `/gamegui/skill-simulator/skills/` assets and embedded in the hub.
+
+| Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
+|---|---|---|---|---|---|
+| 451 | UpdamageMonter | 95 | 0 | None | Passive |
+| 452 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 453 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 454 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 461 | DowndamageMonter | 95 | 0 | None | Passive |
+
+Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.

@@ -3016,6 +3016,116 @@ let checkedRsim = 0;
   ok(U([101, 102, 103, 104, 401], 104) === "red" && U([101, 102, 103, 104, 401], 101) === "red" && U([101, 102, 103, 104, 401], 401) === "green", "Class C protects its prerequisite and earlier ranks, while Class C itself can be removed");
   ok(U([101, 102, 103, 104], 104) === "green", "removing the dependent skill releases its prerequisite");
 }
+
+// ToT EX: published server allocation rules, independent pools and reset pruning.
+{
+  const EX = vm.runInContext("SKILL_SIM_EX", sandbox), ALL = vm.runInContext("SKILL_SIM", sandbox);
+  const cellsFn = vm.runInContext("skillSimCells", sandbox), valid = vm.runInContext("skillSimValid", sandbox), auto = vm.runInContext("skillSimAutoLearn", sandbox);
+  const pool = vm.runInContext("skillSimPoolMaxEx", sandbox), clear = vm.runInContext("skillSimClearTree", sandbox), unlearn = vm.runInContext("skillSimUnlearnMarker", sandbox);
+  const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[SKILL SIM ERROR] ToT EX: " + msg); errorCount++; } };
+  [[1,0],[94,0],[95,1],[99,1],[100,2]].forEach(([lv,n]) => ok(pool(lv) === n, "pool at level " + lv));
+  const expected = { bat:[[254],[354],[422]], bison:[[204,402,431,254],[354],[354]], monkey:[[254,402,432],[354,433],[372,403]], panda:[[254],[354],[364,443]], penguin:[[254,244],[354,413,443],[271,444]], wolf:[[254],[354],[422]] };
+  ok(Object.keys(EX).sort().join() === Object.keys(ALL).sort().join(), "all 12 classes covered");
+  for (const cls in EX){
+    const cs = cellsFn(ALL[cls], null, EX[cls]), base = cellsFn(ALL[cls]);
+    ok(EX[cls].map(c => c.id).join() === "451,452,453,454,461" && !base[451], cls + " ToT-only slots");
+    ok(valid(cs,4,new Set([451]),95) && valid(cs,4,new Set([461]),95) && !valid(cs,4,new Set([451]),94), cls + " passive level gates");
+    ok(!valid(cs,4,new Set([451,461]),100), cls + " passive mutual exclusion");
+    ok(!valid(base,4,new Set([451]),95), cls + " EX rejected outside ToT without throwing");
+    for (const c of EX[cls]){
+      ok(c.req.every(id => cs[id]), cls + " prerequisite ids for " + c.id);
+      if (!c.placeholder) ok(!!SKILL_ICONS[c.icon] && vm.runInContext("skillSimCardId", sandbox)(c.icon) === "", cls + " embedded icon and safe missing detail card " + c.id);
+      if (c.id === 451 || c.id === 461) continue;
+      ok(c.lv === 100 && c.bn === 6 && c.choice === "row5", cls + " class EX gate " + c.id);
+      if (!expected[cls]) { ok(c.placeholder && auto(cs,4,new Set(),100,c.id) === null, cls + " unpublished slot unavailable"); continue; }
+      ok(c.req.join() === expected[cls][c.id-452].join() && !c.placeholder, cls + " exact published prerequisites " + c.id);
+      // Build a viable ordinary layout, taking cheapest valid C choices when additional C points are needed.
+      let set = new Set();
+      const addCheapC = () => {
+        let best = null;
+        for (const id in base){
+          if (+id < 400 || set.has(+id)) continue;
+          let trial = new Set(set);
+          for (const r of cs[id].req) { if (r >= 400) { trial = null; break; } trial = auto(cs,4,trial,100,r); if (!trial) break; }
+          if (!trial) continue;
+          trial = auto(cs,4,trial,100,+id);
+          if (trial && (!best || trial.size < best.size)) best = trial;
+        }
+        if (!best) return false; set = best; return true;
+      };
+      const need = id => {
+        if (set.has(id)) return true;
+        if (id < 400) { const next = auto(cs,4,set,100,id); if (!next) return false; set = next; return true; }
+        if (!cs[id].req.every(need)) return false;
+        while ([...set].filter(i => i >= 400).length < cs[id].bn) if (!addCheapC()) return false;
+        const next = auto(cs,4,set,100,id); if (!next) return false; set = next; return true;
+      };
+      let ready = c.req.every(need);
+      while (ready && [...set].filter(i => i >= 400).length < 6) ready = addCheapC();
+      const learned = ready && auto(cs,4,set,100,c.id);
+      ok(learned && learned.size === set.size+1 && valid(cs,4,learned,100), cls + " class EX learns alone with viable prerequisites " + c.id);
+      if (!learned) continue;
+      ok(auto(cs,4,set,99,c.id) === null, cls + " class EX refuses level 99 " + c.id);
+      const plus = auto(cs,4,learned,100,451);
+      ok(plus && plus.size === learned.size+1 && valid(cs,4,plus,100), cls + " class EX plus passive uses 2 independent EX points " + c.id);
+      const other = c.id === 452 ? 453 : 452;
+      ok(!valid(cs,4,new Set([...learned,other]),100), cls + " only one class EX choice " + c.id);
+      for (const req of c.req) ok(unlearn(cs,4,learned,100,req) === "red", cls + " prerequisite refund protected " + req);
+      for (let tree=0;tree<4;tree++) ok(valid(cs,4,clear(cs,4,learned,100,tree),100), cls + " reset tree " + tree + " leaves valid EX layout " + c.id);
+      // With exactly six C skills, EX cannot subsidise removing an ordinary C point.
+      const ordinary = [...set].filter(i => i >= 400);
+      if (ordinary.length === 6) for (const id of ordinary) ok(unlearn(cs,4,learned,100,id) === "red", cls + " six-C threshold refund protected " + id);
+    }
+  }
+  // A minimal model isolates the two-way separation: neither pool can fund the other.
+  const model = {401:{id:401,tree:3,lv:55,bn:0,req:[]},402:{id:402,tree:3,lv:55,bn:1,req:[]},451:{id:451,tree:3,lv:95,bn:0,req:[],ex:true,exclude:[],choice:""}};
+  ok(!valid(model,4,new Set([402,451]),100), "EX point cannot satisfy an ordinary C tree threshold");
+  ok(valid(model,4,new Set([401,402,451]),100), "ordinary C thresholds unaffected by learned EX");
+}
+
+// Exercise the mounted simulator's controls without a browser or screenshots.
+{
+  const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[SKILL SIM ERROR] mounted EX: " + msg); errorCount++; } };
+  const doc = sandbox.document, saved = { create:doc.createElement, add:doc.addEventListener, storage:sandbox.localStorage, server:sandbox.openSimServerGate, gate:sandbox.openClassPickerModal, theme:sandbox.setToolServer };
+  let serverGate, classGate;
+  const mk = () => {
+    const e = makeEl(), classes = new Set(); e.children = []; e.listeners = {};
+    e.appendChild = c => { e.children.push(c); return c; }; e.append = (...cs) => cs.forEach(e.appendChild);
+    Object.defineProperty(e,"textContent",{get:()=>e._text || "",set:v=>{e._text=v;e.children=[];}});
+    e.classList = { add:c=>classes.add(c),remove:c=>classes.delete(c),toggle:(c,on)=>{if(on)classes.add(c);else classes.delete(c);},contains:c=>classes.has(c)||e.className?.split(" ").includes(c) };
+    e.addEventListener = (k,fn) => { (e.listeners[k] ||= []).push(fn); };
+    e.querySelectorAll = sel => { const found=[];const walk=n=>{for(const c of n.children){if(sel.startsWith(".")&&c.classList.contains(sel.slice(1)))found.push(c);walk(c);}};walk(e);return found; };
+    return e;
+  };
+  const root = mk(), registry = new Map();
+  root.querySelector = sel => { if (!registry.has(sel)) registry.set(sel,mk()); return registry.get(sel); };
+  root.querySelectorAll = sel => root.querySelector('[data-role="trees"]').querySelectorAll(sel);
+  const el = role => root.querySelector('[data-role="'+role+'"]');
+  const click = target => root.listeners.click.forEach(fn=>fn({target:{closest:sel=>sel === ".rsim-cell" ? (target.dataset.id ? target : null) : sel === "[data-act]" ? target : null}}));
+  const action = act => click({dataset:{act}});
+  const cell = id => root.querySelectorAll(".rsim-cell").find(c=>+c.dataset.id===id);
+  try {
+    doc.createElement = mk; doc.addEventListener = () => {};
+    sandbox.localStorage = {getItem:()=>JSON.stringify({srv:"tot",cls:"wolf"}),setItem:()=>{}};
+    sandbox.openSimServerGate = opts => {serverGate=opts;}; sandbox.openClassPickerModal = opts => {classGate=opts;}; sandbox.setToolServer = () => {};
+    vm.runInContext("mountSkillSimulator",sandbox)(root);
+    ok(!!cell(451) && !!cell(461) && !el("exPool").hidden && el("ptsEx").value === "2/2", "remembered ToT mount includes EX grid and pool");
+    click(cell(451));
+    ok(el("ptsEx").value === "1/2" && el("ptsC").value === "10/10" && el("pts").value === "49/49", "learning passive spends EX alone");
+    action("server"); serverGate.onSelect("og");
+    ok(!cell(451) && el("exPool").hidden && el("lv").value === 95, "switching to BB removes EX rows and hides counter");
+    action("undo");
+    ok(!!cell(451) && !el("exPool").hidden && el("ptsEx").value === "1/2" && cell(451).classList.contains("is-learned"), "undo restores ToT grid, EX selection and counter");
+    for (const name of vm.runInContext("CLASS_ORDER",sandbox)){
+      action("pick"); classGate.onSelect(name);
+      const placeholder = ["Cat","Chameleon","Mole","Rabbit","Sheep","Whale"].includes(name);
+      ok(!!cell(452) && !!cell(461) && cell(452).classList.contains("is-placeholder") === placeholder && cell(451).classList.contains("is-passive"), name + " mounts correct EX slots and frames");
+      if (placeholder){ click(cell(452)); ok(el("ptsEx").value === "2/2", name + " placeholder click cannot spend points"); }
+    }
+    ok(html.includes(".rsim-ex-pool[hidden]{display:none;}") && html.includes(".rsim.locked .rsim-trees{visibility:hidden}") && !html.includes("\n.rsim-trees{visibility:hidden}"), "counter hidden CSS and gate visibility remain scoped");
+  } catch(e){ok(false,"UI threw: " + e.message);}
+  finally { doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;sandbox.openSimServerGate=saved.server;sandbox.openClassPickerModal=saved.gate;sandbox.setToolServer=saved.theme; }
+}
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
 // Server changes page (mountServerChanges): one row per card with a servers.<srv>.changeNote, chips rendered,

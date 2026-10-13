@@ -541,3 +541,18 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Iron Shield / Diamond Shield | base duration 6 → 4 s |
 | Spin Hack | charge range bonus 40% → 50% (the card models +2 m radius from code) |
 | Hold Charge | charge time reduced to 4 s / 8 hits |
+
+
+### ToT EX learning requirements (published simulator, 2026-10-13)
+
+Source: [ToT bison simulator dataset](https://talesoftails.net/data/skill-simulator/bison.json), with learning rules from [ToT simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). These are server-specific published simulator requirements, not BigBug decompiled mechanics or verified damage formulas. Icons were extracted from the site’s `/gamegui/skill-simulator/skills/` assets and embedded in the hub.
+
+| Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
+|---|---|---|---|---|---|
+| 451 | UpdamageMonter | 95 | 0 | None | Passive |
+| 452 | RageKing5 | 100 | 6 | 204, 402, 431, 254 | Active |
+| 453 | EarthQuake5 | 100 | 6 | 354 | Active |
+| 454 | DesTroyer5 | 100 | 6 | 354 | Active |
+| 461 | DowndamageMonter | 95 | 0 | None | Passive |
+
+Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).

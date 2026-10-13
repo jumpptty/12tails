@@ -760,3 +760,20 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Contract | Mercenaries (Light Panther / Light Leopard / Light Golem) stand still where summoned. | They follow the owner and warp back beside the owner beyond 35 m, like coin-summoned characters (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+
+
+### ToT EX learning requirements (published simulator, 2026-10-13)
+
+Source: [ToT rabbit simulator dataset](https://talesoftails.net/data/skill-simulator/rabbit.json), with learning rules from [ToT simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). These are server-specific published simulator requirements, not BigBug decompiled mechanics or verified damage formulas. Icons were extracted from the site’s `/gamegui/skill-simulator/skills/` assets and embedded in the hub.
+
+| Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
+|---|---|---|---|---|---|
+| 451 | UpdamageMonter | 95 | 0 | None | Passive |
+| 452 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 453 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 454 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 461 | DowndamageMonter | 95 | 0 | None | Passive |
+
+Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.

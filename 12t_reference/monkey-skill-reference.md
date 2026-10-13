@@ -716,3 +716,18 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Fire Avatar | biggest fireball every 2nd attack (12/09 hot fix; 10/09 said every 3rd) |
 | Earth Form | punch animation +25% (12/09; 10/09 said +20%) |
 | Stone Sentinel | charge cooldown 10 s (6 → 5 on 10/09, then 10 on 12/09) |
+
+
+### ToT EX learning requirements (published simulator, 2026-10-13)
+
+Source: [ToT monkey simulator dataset](https://talesoftails.net/data/skill-simulator/monkey.json), with learning rules from [ToT simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). These are server-specific published simulator requirements, not BigBug decompiled mechanics or verified damage formulas. Icons were extracted from the site’s `/gamegui/skill-simulator/skills/` assets and embedded in the hub.
+
+| Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
+|---|---|---|---|---|---|
+| 451 | UpdamageMonter | 95 | 0 | None | Passive |
+| 452 | JaBurst5 | 100 | 6 | 254, 402, 432 | Active |
+| 453 | BuitenGuard5 | 100 | 6 | 354, 433 | Active |
+| 454 | RumBling5 | 100 | 6 | 372, 403 | Active |
+| 461 | DowndamageMonter | 95 | 0 | None | Passive |
+
+Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
