@@ -3086,8 +3086,11 @@ let checkedRsim = 0;
 // Exercise the mounted simulator's controls without a browser or screenshots.
 {
   const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[SKILL SIM ERROR] mounted EX: " + msg); errorCount++; } };
-  const doc = sandbox.document, saved = { create:doc.createElement, add:doc.addEventListener, storage:sandbox.localStorage, server:sandbox.openSimServerGate, gate:sandbox.openClassPickerModal, theme:sandbox.setToolServer };
-  let serverGate, classGate;
+  const doc = sandbox.document, saved = { create:doc.createElement, add:doc.addEventListener, storage:sandbox.localStorage, server:sandbox.openSimServerGate, gate:sandbox.openClassPickerModal, theme:sandbox.setToolServer, timer:sandbox.setTimeout, cancel:sandbox.clearTimeout, winAdd:sandbox.window.addEventListener, winOpen:sandbox.window.open, href:sandbox.location.href };
+  let serverGate, classGate, clock = 0, serial = 0;
+  const timers = new Map(), windowListeners = {}, opened = [];
+  const tick = ms => { const end = clock + ms; for (;;) { const due = [...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0]; if(!due)break;clock=due[1].at;timers.delete(due[0]);due[1].fn(); } clock=end; };
+  const emitWindow = type => (windowListeners[type] || []).forEach(fn=>fn({}));
   const mk = () => {
     const e = makeEl(), classes = new Set(); e.children = []; e.listeners = {};
     e.appendChild = c => { e.children.push(c); return c; }; e.append = (...cs) => cs.forEach(e.appendChild);
@@ -3106,10 +3109,35 @@ let checkedRsim = 0;
   const cell = id => root.querySelectorAll(".rsim-cell").find(c=>+c.dataset.id===id);
   try {
     doc.createElement = mk; doc.addEventListener = () => {};
+    sandbox.setTimeout = (fn,ms) => { const id=++serial;timers.set(id,{fn,at:clock+ms});return id; };
+    sandbox.clearTimeout = id => timers.delete(id);
+    sandbox.window.addEventListener = (type,fn) => { (windowListeners[type] ||= []).push(fn); };
+    sandbox.window.open = (...args) => opened.push(args); sandbox.location.href = "https://example.invalid/bible/#skill-simulator";
     sandbox.localStorage = {getItem:()=>JSON.stringify({srv:"tot",cls:"wolf"}),setItem:()=>{}};
     sandbox.openSimServerGate = opts => {serverGate=opts;}; sandbox.openClassPickerModal = opts => {classGate=opts;}; sandbox.setToolServer = () => {};
     vm.runInContext("mountSkillSimulator",sandbox)(root);
     ok(!!cell(451) && !!cell(461) && !el("exPool").hidden && el("ptsEx").value === "2/2", "remembered ToT mount includes EX grid and pool");
+    const down = target => root.listeners.pointerdown.forEach(fn=>fn({target:{closest:()=>target},pointerType:"mouse",button:0,clientX:0,clientY:0}));
+    const up = () => root.listeners.pointerup.forEach(fn=>fn({}));
+    // Repeated quick presses learn immediately, without starting animation or leaving tab timers.
+    for (const id of [101,102,103,111]){
+      down(cell(id)); tick(60); ok(!cell(id).classList.contains("is-charging"), "quick click has no hold animation");
+      up(); click(cell(id)); ok(cell(id).classList.contains("is-learned"), "rapid click learns rank " + id);
+    }
+    tick(600); ok(opened.length === 0 && timers.size === 0, "rapid learning leaves no delayed new tabs");
+    const beforeHold = el("pts").value;
+    down(cell(111)); tick(200); ok(cell(111).classList.contains("is-charging") && opened.length === 0, "deliberate hold receives feedback before opening");
+    tick(299); ok(opened.length === 0, "hold does not open before 500 ms");
+    tick(1); up(); click(cell(111));
+    ok(opened.length === 1 && opened[0][0].includes("#skill-details/wolf_") && opened[0][0].endsWith("?server=tot") && el("pts").value === beforeHold, "500 ms hold opens correct card once and suppresses learning click");
+    tick(400);
+    down(cell(111)); tick(200); emitWindow("pointerup"); tick(600);
+    ok(opened.length === 1 && !cell(111).classList.contains("is-charging"), "outside release cancels feedback and new tab");
+    down(cell(111)); tick(200); emitWindow("blur"); tick(600);
+    ok(opened.length === 1 && timers.size === 0, "window blur cancels pending hold");
+    down(cell(111)); root.listeners.pointermove.forEach(fn=>fn({clientX:9,clientY:0})); tick(600);
+    ok(opened.length === 1 && timers.size === 0, "drag beyond threshold cancels hold");
+    action("reset");
     click(cell(451));
     ok(el("ptsEx").value === "1/2" && el("ptsC").value === "10/10" && el("pts").value === "49/49", "learning passive spends EX alone");
     action("server"); serverGate.onSelect("og");
@@ -3124,7 +3152,7 @@ let checkedRsim = 0;
     }
     ok(html.includes(".rsim-ex-pool[hidden]{display:none;}") && html.includes(".rsim.locked .rsim-trees{visibility:hidden}") && !html.includes("\n.rsim-trees{visibility:hidden}"), "counter hidden CSS and gate visibility remain scoped");
   } catch(e){ok(false,"UI threw: " + e.message);}
-  finally { doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;sandbox.openSimServerGate=saved.server;sandbox.openClassPickerModal=saved.gate;sandbox.setToolServer=saved.theme; }
+  finally { doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;sandbox.openSimServerGate=saved.server;sandbox.openClassPickerModal=saved.gate;sandbox.setToolServer=saved.theme;sandbox.setTimeout=saved.timer;sandbox.clearTimeout=saved.cancel;sandbox.window.addEventListener=saved.winAdd;sandbox.window.open=saved.winOpen;sandbox.location.href=saved.href; }
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
