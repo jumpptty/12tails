@@ -27452,7 +27452,7 @@ function openSimServerGate({ current, canClose = true, onSelect }){
   }
   simServerGateEl.classList.add("open");
 }
-﻿// Community guides are data only. Paste each exported JSON object into this array.
+// Community guides are data only. Paste each exported JSON object into this array.
 const CLASS_GUIDES = [
   {"format":"12t-class-guide","version":1,"title":"หมาเจาะ Classic","author":"test123","patch":"1.57","description":"หมาเจาะ พ่อทุกสถาบัน","build":{"server":"tto","classKey":"wolf","level":95,"learned":[101,102,103,121,122,131,132,141,142,143,144,201,202,203,204,231,232,233,234,241,242,301,302,303,311,312,313,314,321,322,323,324,331,332,341,342,343,344,351,352,353,354,361,362,363,364,371,372,373,401,402,404,413,421,424,432,441,443]},"notes":{"364":"สกิลนี้วนง่ายกว่าร่างดำ","373":"พยายามให้สกิลนี้วน"}}
 ];
@@ -27590,7 +27590,7 @@ function mountClassGuide(root){
     <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
       <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
-      <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
+      <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="undoNote" title="ย้อนโน้ต (Ctrl+Z)" disabled>${classGuideButtonIcon("undo")}<span>ย้อนโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
       <p class="cg-help" data-cg-role="editHelp">คลิกเพื่อเรียนหรือถอนสกิล บันทึกร่างอัตโนมัติในเบราว์เซอร์นี้</p>
       <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="noteText" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง"></span></span></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button></section>
     </section>
@@ -27603,6 +27603,12 @@ function mountClassGuide(root){
   const button = act => root.querySelector('[data-cg-act="' + act + '"]');
   const simRoot = el("sim"), guidePage = root.querySelector(".cg-page"), guideHeading = root.querySelector(".cg-heading"), storageKey = "12t-bible-class-guide-draft";
   let mode = "gallery", current = null, draft = null, noteId = null, applying = false;
+  const noteUndo = [];
+  const syncNoteUndo = () => { button("undoNote").disabled = !noteUndo.length; };
+  const undoNote = () => {
+    if (mode !== "author" || !noteUndo.length) return;
+    draft.notes = JSON.parse(noteUndo.pop()); sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true; syncNoteUndo();
+  };
   const status = text => { el("status").textContent = text; };
   let copyFeedbackTimer = null;
   function showCopied(){
@@ -27625,7 +27631,7 @@ function mountClassGuide(root){
     guideUI: true,
     onChange(build){
       if (mode !== "author" || !draft || applying) return;
-      if (draft.build.classKey !== build.classKey){ draft.notes = {}; el("noteEditor").hidden = true; }
+      if (draft.build.classKey !== build.classKey){ draft.notes = {}; noteUndo.length = 0; syncNoteUndo(); el("noteEditor").hidden = true; }
       const cells = skillSimCells(SKILL_SIM[build.classKey], SKILL_SIM_SERVERS[build.server].patch[build.classKey], build.server === "tot" ? SKILL_SIM_EX[build.classKey] : null);
       for (const id in draft.notes) if (!cells[id] || cells[id].placeholder) delete draft.notes[id];
       simRoot._skillSim.setNotes(draft.notes); saveDraft();
@@ -27680,7 +27686,7 @@ function mountClassGuide(root){
     button("gallery").setAttribute("aria-pressed", String(next === "gallery")); button("author").setAttribute("aria-pressed", String(next === "author"));
   };
   function startAuthor(){
-    switchMode("author");
+    switchMode("author"); noteUndo.length = 0; syncNoteUndo();
     if (!draft){
       try { draft = classGuideNormalize(JSON.parse(localStorage.getItem(storageKey)), { draft: true }); } catch (e) { draft = null; }
       if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", patch: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
@@ -27782,6 +27788,11 @@ function mountClassGuide(root){
     } else stopNoteAnimation = () => {};
     noteClose.focus();
   }
+  document.addEventListener("keydown", e => {
+    if (mode !== "author" || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
+    if (sim.getInteraction() !== "annotate" || (e.target.closest && e.target.closest("input, textarea, [contenteditable]"))) return;
+    e.preventDefault(); undoNote();
+  });
   root.addEventListener("pointerdown", e => { if (e.target.closest("[data-cg-bold]")) e.preventDefault(); });
   root.addEventListener("input", e => { if (e.target.matches && e.target.matches("[data-cg-field]")) saveDraft(); });
   root.addEventListener("click", async e => {
@@ -27800,9 +27811,12 @@ function mountClassGuide(root){
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
+        const before = JSON.stringify(draft.notes);
         if (text) draft.notes[noteId] = text; else delete draft.notes[noteId];
+        if (JSON.stringify(draft.notes) !== before){ noteUndo.push(before); syncNoteUndo(); }
         sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true;
       } else if (act === "cancelNote") el("noteEditor").hidden = true;
+      else if (act === "undoNote") undoNote();
 
     } catch (e) { status(e.message); }
   });
@@ -28151,6 +28165,7 @@ function mountSkillSimulator(root, options = {}){
   window.addEventListener("resize", () => { if (!root.hidden && root.offsetParent) fitStageToScreen(); });
   root._skillSim = {
     getBuild,
+    getInteraction: () => interaction,
     getCells: () => ({ ...cells }),
     setInteraction(next){
       if (!["build", "annotate", "read"].includes(next)) throw new Error("โหมดไกด์ไม่ถูกต้อง");
@@ -28751,6 +28766,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T09:42:30.909Z","feat(bible): add undo for guide skill notes"],
     ["2026-10-13T09:31:00.462Z","fix(monkey): correct ToT Rune proc baseline to 12 percent"],
     ["2026-10-13T08:18:52.945Z","fix(whale): mark Swallow self-target bug fixed on TTO"],
     ["2026-10-13T07:28:05.216Z","feat(bible): filter community guides by server and class"],
