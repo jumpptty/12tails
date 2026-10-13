@@ -11111,7 +11111,7 @@ function openReachPopup(skill, rank){
     ${toggles.length || rankToggles.length ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
-    <div class="sk-reach-hint">ลากเพื่อหมุน (ลากขึ้นเพื่อมองจากใต้ดิน) · W A S D เลื่อนมุมมองไปมาเหมือนแผนที่ Golden King Bug · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ดับเบิลคลิกเพื่อรีเซ็ต · ปุ่มด้านบนใช้ดูตัวอย่างเท่านั้น ไม่เปลี่ยนการ์ด</div>
+    <div class="sk-reach-hint">W A S D</div>
     <canvas class="sk-reach-fx"></canvas>
   </div>`;
   document.body.appendChild(pop);
@@ -29275,6 +29275,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T15:27:43.696Z","style(bible): range popup hint line is just W A S D"],
     ["2026-10-13T15:26:06.037Z","feat(bible): range popup keys pan the view like the Golden King Bug map (W S forward / back, A D strafe) instead of orbiting it"],
     ["2026-10-13T15:22:10.629Z","feat(bible): range popup can be steered with WASD (QE zoom, Shift faster, R reset) and the arrow keys stop switching skills behind it"],
     ["2026-10-13T14:16:46.608Z","feat(cat): reach badge, 3D hit boxes and the real Cat model for every Cat skill with a hit volume, and Panda boxes now start from the Panda herself"],
