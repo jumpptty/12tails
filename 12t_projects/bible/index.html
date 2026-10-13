@@ -1734,6 +1734,14 @@
   .cg-page[data-mode="reader"] [data-cg-act="returnAuthor"]{margin-top:10px}
   @media(max-width:760px){.cg-page[data-mode="reader"]{grid-template-columns:minmax(0,1fr)}.cg-page[data-mode="reader"] .cg-heading{grid-column:1;grid-row:3;margin-top:10px;border-top:0;padding-top:0}.cg-page[data-mode="reader"] .cg-status{grid-row:4}.cg-page[data-mode="reader"] .cg-reader h2{display:block;margin:0 0 4px}}
 
+  html.tool-guide-reader,html.tool-guide-reader body{height:100dvh;min-height:0;overflow:hidden}
+  html.tool-guide-reader .hub-bar{padding:10px 18px}
+  html.tool-guide-reader .stage{width:100%;max-width:1240px;box-sizing:border-box;padding:10px 12px 8px}
+  .cg-page[data-mode="reader"] [data-cg-role="sim"]{position:relative}
+  .cg-page[data-mode="reader"] .rsim{position:absolute;top:0;left:50%;box-sizing:border-box;transform:translateX(-50%) scale(var(--cg-reader-scale,1));transform-origin:center top}
+  .cg-page[data-mode="reader"] .rsim-trees{grid-template-columns:repeat(4,minmax(0,1fr))}
+  @media(max-width:600px){.cg-page[data-mode="reader"] .rsim-trees{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
   /* Skill simulator (skill-simulator tool, 2026-10-12) */
   html.tool-rsim .stage{max-width:min(1240px, 98vw)}
   html.tool-rsim .tool-shell{width:100%}
@@ -27627,8 +27635,32 @@ function mountClassGuide(root){
   });
   const sim = simRoot._skillSim;
   sim.setInteraction("read");
+  let readerFitFrame = null;
+  function fitReader(){
+    if (mode !== "reader" || root.hidden) return;
+    const width = guidePage.clientWidth, build = simRoot.querySelector(".rsim");
+    if (!width || !build) return;
+    const baseWidth = Math.max(640, width); build.style.width = baseWidth + "px";
+    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const infoHeight = el("reader").offsetHeight + 14, navHeight = guideHeading.offsetHeight + (window.innerWidth <= 760 ? 10 : 14);
+    const footerHeight = window.innerWidth <= 760 ? infoHeight + navHeight : Math.max(infoHeight, navHeight);
+    const available = Math.max(1, viewportHeight - guidePage.getBoundingClientRect().top - footerHeight - 16);
+    const height = build.offsetHeight, scale = Math.min(1, width / baseWidth, available / Math.max(1, height));
+    simRoot.style.setProperty("--cg-reader-scale", scale);
+    simRoot.style.height = Math.ceil(height * scale) + "px";
+  }
+  function queueReaderFit(){
+    if (readerFitFrame !== null) cancelAnimationFrame(readerFitFrame);
+    readerFitFrame = requestAnimationFrame(() => { readerFitFrame = null; fitReader(); });
+  }
+  window.addEventListener("resize", queueReaderFit);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", queueReaderFit);
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(queueReaderFit).observe(guidePage);
+  if (document.fonts) document.fonts.ready.then(queueReaderFit);
   const switchMode = next => {
     guidePage.dataset.mode = next;
+    document.documentElement.classList.toggle("tool-guide-reader", next === "reader");
+    if (next !== "reader"){ simRoot.style.height = ""; simRoot.querySelector(".rsim").style.width = ""; }
     if (next === "reader"){
       guidePage.insertBefore(simRoot, guidePage.firstChild); guidePage.insertBefore(el("reader"), guideHeading);
     } else {
@@ -27664,7 +27696,7 @@ function mountClassGuide(root){
     el("guideTitle").textContent = current.title || "ตัวอย่างไกด์";
     el("guideByline").textContent = [current.author || "ยังไม่ระบุผู้เขียน", SKILL_SIM_NAMES[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].name, "แพตช์ " + (current.patch || "ยังไม่ระบุ"), "Lv " + current.build.level].join(" · ");
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
-    requestAnimationFrame(() => { if (mode === "reader") simRoot.scrollIntoView({ block: "start" }); });
+    window.scrollTo(0, 0); queueReaderFit();
   }
   function renderGallery(){
     const list = el("guides"); list.textContent = "";
@@ -27759,7 +27791,7 @@ function mountClassGuide(root){
     } catch (e) { status(e.message); }
   });
   root._openGate = canClose => { if (mode === "author") simRoot._openGate(canClose); };
-  root._classGuide = { openGuide, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery };
+  root._classGuide = { openGuide, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery, fitReader };
   renderGallery();
 }
 
@@ -28703,6 +28735,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:59:20.654Z","style(bible): fit guide reader builds into one screen"],
     ["2026-10-13T06:45:54.748Z","style(bible): show skill builds first in guide reader view"],
     ["2026-10-13T06:23:39.579Z","style(bible): confirm guide copy with a brief checkmark"],
     ["2026-10-13T06:21:48.260Z","feat(bible): add submitted TTO Wolf community guide"],
@@ -28820,6 +28853,7 @@ function showMenu(){
   crumbCurrent.textContent = "";
   document.title = "12 Tails Bible";
   document.documentElement.classList.remove("tool-fit-screen");
+  document.documentElement.classList.remove("tool-guide-reader");
   document.documentElement.classList.remove("tool-wide-hero");
   document.documentElement.classList.remove("tool-stat-gain");
   document.documentElement.classList.remove("tool-chm-sim");
@@ -28873,6 +28907,8 @@ function showTool(tool){
     setTimeout(() => softFocus(sInp), 60);
   }
   Object.values(toolContainers).forEach(el => { el.hidden = (el !== container); });
+  document.documentElement.classList.toggle("tool-guide-reader", tool.id === "skill-simulator" && container.querySelector('.cg-page[data-mode="reader"]') !== null);
+  if (tool.id === "skill-simulator" && container._classGuide) container._classGuide.fitReader();
   fitStageToScreen();
 }
 
