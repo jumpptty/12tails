@@ -3008,6 +3008,13 @@ let checkedRsim = 0;
   ok(M([], 95, 211) === "red" && M([], 95, 254) === "red" && M([201], 95, 211) === "green", "Mix I needs one more skill in tree A: red, then green once Maim Shot I is learned; Life Shot: red");
   ok(M([], 55, 404) === "yellow" && M([], 54, 404) === "" && M([], 1, 201) === "", "a Class C skill with nothing missing is yellow; out of level or of points: no marker");
   ok(M([], 95, 401) === "" && M([101, 102, 103, 104], 95, 401) === "yellow", "Bouncing Bullet has no marker while Long Shot IV is missing (a Class C click never pulls other rows in), yellow once it is learned");
+  // Learned frames follow the actual unlearn click, including rank removal and point prerequisites.
+  const UM = vm.runInContext("skillSimUnlearnMarker", sandbox), U = (set, id) => UM(cells, SIM.length, new Set(set), 95, id);
+  ok(U([], 201) === "" && U([201], 201) === "green", "unlearned frames stay neutral; an isolated learned skill is removable");
+  ok(U([201, 202], 201) === "green" && U([201, 202], 202) === "green", "removing a rank and its higher ranks is green when the remaining build is valid");
+  ok(U([201, 211], 201) === "red" && U([201, 211], 211) === "green", "Maim Shot stays red while Mix needs its tree point; Mix is removable");
+  ok(U([101, 102, 103, 104, 401], 104) === "red" && U([101, 102, 103, 104, 401], 101) === "red" && U([101, 102, 103, 104, 401], 401) === "green", "Class C protects its prerequisite and earlier ranks, while Class C itself can be removed");
+  ok(U([101, 102, 103, 104], 104) === "green", "removing the dependent skill releases its prerequisite");
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
