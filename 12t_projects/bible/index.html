@@ -11132,90 +11132,73 @@ function openReachPopup(skill, rank){
   cv.addEventListener("wheel", e => { e.preventDefault(); st.zoom = Math.max(6, Math.min(400, st.zoom * (e.deltaY < 0 ? 1.1 : 0.9))); redraw(); }, { passive: false });
   cv.addEventListener("dblclick", () => { st = home(); redraw(); });
 
-  // The volley (user 2026-10-13: the light balls form the outline of the new range). Bigger range: gold sparks with trails sweep
-  // out of the toggle, land along the new range's edges in turn around the shape, and each edge lights up once all its sparks
-  // are in, while the shape grows underneath. Smaller range: the shape shrinks, its old edges flash red, then the sparks lift off
-  // them and stream back into the toggle. Plays whatever prefers-reduced-motion says (project rule).
-  let busy = 0;
+  // The volley (user 2026-10-13): ONE light ball, quick enough to click straight up to rank 4. Bigger range: a gold comet
+  // flies from the toggle to the near side of the new range's outline, the outline flashes gold as it lands and the shape
+  // grows into it. Smaller range: the old outline flashes red, the shape shrinks, and a red comet flies back into the toggle.
+  // A click during an animation cancels it and morphs on from the shape on screen (no lock). Ignores prefers-reduced-motion.
+  let anim = 0;
   const volume = (ps) => ps.reduce((s, p) => s + reachSize(p) * (p.r ? p.r : (p.w || 1)), 0);
   const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
   const bez = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1]];
-  const play = (before, after, srcXY, grows) => new Promise(done => {
+  const FLY = 190, MORPH = 210, GLOW = 230;
+  const play = (before, after, srcXY, grows) => {
+    if (anim) cancelAnimationFrame(anim);
     const W = panel.clientWidth, H = panel.clientHeight, dpr = window.devicePixelRatio || 1;
-    fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr);
+    if (fx.width !== Math.round(W * dpr) || fx.height !== Math.round(H * dpr)){ fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr); }
     const g = fx.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const ring = reachOutline(grows ? after : before, st, cv, panel, 64);
-    const col = grows ? "#f2cf6b" : "#ef5350";
-    // launch order sweeps round the shape, starting from the side facing the toggle
-    const a0 = Math.atan2(srcXY[1] - ring.cy, srcXY[0] - ring.cx);
-    const order = ring.pts.map((q, i) => i).sort((i, j) => ((ring.pts[i].ang - a0 + 7 * Math.PI) % (2 * Math.PI)) - ((ring.pts[j].ang - a0 + 7 * Math.PI) % (2 * Math.PI)));
-    const SWEEP = 520, FLY = 560, MORPH0 = grows ? 260 : 0, MORPH = grows ? SWEEP + FLY - 260 : 480, BACK0 = grows ? 0 : 560;
-    const sparks = order.map((idx, k) => {
-      const q = ring.pts[idx], side = k % 2 ? 1 : -1, mid = [(srcXY[0] + q.x) / 2, (srcXY[1] + q.y) / 2];
-      const nx = -(q.y - srcXY[1]), ny = q.x - srcXY[0], nl = Math.hypot(nx, ny) || 1, bow = 40 + 30 * Math.sin(k * 1.7);
-      return { q, delay: BACK0 + (k / Math.max(1, order.length - 1)) * SWEEP, c: [mid[0] + side * nx / nl * bow, mid[1] + side * ny / nl * bow - 30] };
-    });
-    const landAt = (i) => sparks[order.indexOf(i)].delay + FLY;   // grow: when that sample's spark lands; shrink: when it leaves
-    const segTime = ring.segs.map(s => Math.max(...s.samples.map(landAt)));
-    const END = grows ? SWEEP + FLY + 380 : BACK0 + SWEEP + FLY + 80;
+    const ring = reachOutline(grows ? after : before, st, cv, panel, 48), col = grows ? "#f2cf6b" : "#ef5350";
+    // the ball lands on (or leaves from) the outline point nearest the toggle
+    const near = ring.pts.reduce((b, q) => Math.hypot(q.x - srcXY[0], q.y - srcXY[1]) < Math.hypot(b.x - srcXY[0], b.y - srcXY[1]) ? q : b, ring.pts[0] || { x: ring.cx, y: ring.cy });
+    const end = [near.x, near.y], from = grows ? srcXY : end, to = grows ? end : srcXY;
+    const ctrl = [(from[0] + to[0]) / 2 + (to[1] - from[1]) * 0.25, Math.min(from[1], to[1]) - 36];
+    // grow: fly, then morph + gold flash from the landing; shrink: red flash + morph, then fly back
+    const FLY0 = grows ? 0 : MORPH - 60, MORPH0 = grows ? FLY - 40 : 0, GLOW0 = grows ? FLY : 0, END = Math.max(FLY0 + FLY, MORPH0 + MORPH, GLOW0 + GLOW) + 20;
     const t0 = performance.now();
     const frame = (now) => {
       const t = now - t0;
-      const mt = Math.max(0, Math.min(1, (t - MORPH0) / MORPH));
-      items = reachLerp(before, after, ease(mt)); redraw();
+      items = reachLerp(before, after, ease(Math.max(0, Math.min(1, (t - MORPH0) / MORPH)))); redraw();
       g.clearRect(0, 0, W, H);
-      g.lineCap = "round";
-      // edges: grow = light up once their sparks are in, then fade at the end; shrink = flash red, then dim as their sparks leave
-      ring.segs.forEach((s, i) => {
-        let a;
-        if (grows) a = t < segTime[i] ? 0 : Math.min(1, (t - segTime[i]) / 120) * (t > SWEEP + FLY ? Math.max(0, 1 - (t - SWEEP - FLY) / 380) : 1);
-        else a = (t < BACK0 ? Math.min(1, t / 150) : 1) * Math.max(0, 1 - Math.max(0, t - (segTime[i] - FLY)) / 220);
-        if (a <= 0.01) return;
-        g.globalAlpha = a; g.strokeStyle = col; g.shadowColor = col; g.shadowBlur = 14; g.lineWidth = 2.4;
-        g.beginPath(); g.moveTo(s.a[0], s.a[1]); g.lineTo(s.b[0], s.b[1]); g.stroke();
-      });
-      // sparks with trails
-      for (const sp of sparks){
-        const k = (t - sp.delay) / FLY;
-        if (k < 0 || k > 1.25) continue;
-        const from = grows ? srcXY : [sp.q.x, sp.q.y], to = grows ? [sp.q.x, sp.q.y] : srcXY;
-        // a tapered comet streak along its arc: wide and bright at the head, thin and faint at the tail, white-hot core
-        const head = Math.min(1, k), fade = k > 1 ? Math.max(0, 1 - (k - 1) / 0.25) : 1, N = 12, tr = [];
-        for (let j = 0; j <= N; j++) tr.push(bez(from, sp.c, to, ease(Math.max(0, head - j * 0.022))));
-        g.shadowColor = col; g.shadowBlur = 10; g.strokeStyle = col;
+      const ga = t < GLOW0 ? 0 : Math.max(0, 1 - (t - GLOW0) / GLOW);
+      if (ga > 0.01){
+        g.lineCap = "round"; g.strokeStyle = col; g.shadowColor = col; g.shadowBlur = 14; g.lineWidth = 2.4; g.globalAlpha = ga;
+        g.beginPath(); for (const sg of ring.segs){ g.moveTo(sg.a[0], sg.a[1]); g.lineTo(sg.b[0], sg.b[1]); } g.stroke();
+      }
+      const k = (t - FLY0) / FLY;
+      if (k >= 0 && k <= 1.2){
+        const head = Math.min(1, k), fade = k > 1 ? Math.max(0, 1 - (k - 1) / 0.2) : 1, N = 14, tr = [];
+        for (let j = 0; j <= N; j++) tr.push(bez(from, ctrl, to, easeOut(Math.max(0, head - j * 0.03))));
+        g.shadowColor = col; g.shadowBlur = 12; g.strokeStyle = col; g.lineCap = "round";
         for (let j = N; j > 0; j--){
-          g.globalAlpha = fade * (1 - j / (N + 1)) * 0.9;
-          g.lineWidth = 3.2 * (1 - j / (N + 1)) + 0.4;
+          g.globalAlpha = fade * (1 - j / (N + 1));
+          g.lineWidth = 5 * (1 - j / (N + 1)) + 0.5;
           g.beginPath(); g.moveTo(tr[j][0], tr[j][1]); g.lineTo(tr[j - 1][0], tr[j - 1][1]); g.stroke();
         }
-        g.globalAlpha = fade; g.fillStyle = "#fff"; g.shadowBlur = 14;
-        g.beginPath(); g.arc(tr[0][0], tr[0][1], 2.2, 0, 2 * Math.PI); g.fill();
+        g.globalAlpha = fade; g.fillStyle = "#fff"; g.shadowBlur = 18;
+        g.beginPath(); g.arc(tr[0][0], tr[0][1], 3.6, 0, 2 * Math.PI); g.fill();
       }
       g.globalAlpha = 1; g.shadowBlur = 0;
-      if (t < END) requestAnimationFrame(frame); else { g.clearRect(0, 0, W, H); done(); }
+      if (t < END) anim = requestAnimationFrame(frame);
+      else { anim = 0; g.clearRect(0, 0, W, H); items = after.map(p => ({ part: p, alpha: 1 })); redraw(); }
     };
-    requestAnimationFrame(frame);
-  });
+    anim = requestAnimationFrame(frame);
+  };
+  // what is on screen right now, as parts (a cross-fade mid-way counts as its target)
+  const shownParts = () => items.every(it => it.alpha === 1) ? items.map(it => it.part) : parts;
   const rebuildButtons = () => { const box = pop.querySelector(".sk-reach-deps"); if (box){ box.innerHTML = depsHtml(); wire(); } };
-  const wire = () => pop.querySelectorAll(".sk-reach-dep").forEach(b => b.addEventListener("click", async () => {
-    if (busy) return;
-    busy = 1;
-    const key = b.dataset.key, before = parts;
+  const wire = () => pop.querySelectorAll(".sk-reach-dep").forEach(b => b.addEventListener("click", () => {
+    const key = b.dataset.key, before = shownParts(), prevVol = volume(parts);
     if (key[0] === "t"){ const e = toggles[Number(key.slice(1))]; over[e.dep.id] = over[e.dep.id] === e.on ? e.off : e.on; }
     else { const d = key === REACH_ENLARGE.id ? REACH_ENLARGE : REACH_REDUCE; over[d.id] = over[d.id] >= d.maxRank ? 0 : over[d.id] + 1; if (over[d.id]) over[d.id === REACH_ENLARGE.id ? REACH_REDUCE.id : REACH_ENLARGE.id] = 0; }
     const after = reachPartsWith(skill, rank, over);
     const pr = panel.getBoundingClientRect(), br = b.getBoundingClientRect(), src = [br.left - pr.left + br.width / 2, br.top - pr.top + br.height / 2];
-    const grows = volume(after) >= volume(before);
+    const grows = volume(after) >= prevVol;
+    parts = after;
     rebuildButtons();
-    const nb = pop.querySelector(`.sk-reach-dep[data-key="${key}"]`);
-    const pop1 = (cls) => { if (nb){ nb.classList.remove("sk-dep-flip-on", "sk-dep-flip-off"); void nb.offsetWidth; nb.classList.add(cls); } };
-    if (grows) pop1(nb && nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off");
-    await play(before, after, src, grows);
-    if (!grows) pop1(nb && nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off");
-    parts = after; items = parts.map(p => ({ part: p, alpha: 1 }));
     pop.querySelector(".sk-reach-legend").innerHTML = legend();
-    redraw();
-    busy = 0;
+    const nb = pop.querySelector(`.sk-reach-dep[data-key="${key}"]`);
+    if (nb){ nb.classList.remove("sk-dep-flip-on", "sk-dep-flip-off"); void nb.offsetWidth; nb.classList.add(nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off"); }
+    play(before, after, src, grows);
   }));
   wire();
   pop.addEventListener("click", e => { if (e.target === pop || e.target.closest('[data-role="reach-close"]')) closeReachPopup(); });
@@ -29253,6 +29236,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T13:54:01.404Z","feat(bible): range popup plays one quick light ball per toggle and lets you click straight through to Enlarge / Reduce 4"],
     ["2026-10-13T13:41:35.317Z","feat(bible): range popup toggles are preview only, Enlarge / Reduce rescale rangeMod reach, sparks trace the new range outline, and every animation ignores reduced motion"],
     ["2026-10-13T13:20:24.109Z","feat(bible): range popup shows the real Panda model in its idle pose, looks under the ground, and toggles reach skills with a light-ball volley"],
     ["2026-10-13T12:59:22.903Z","feat(panda): reach badge and 3D hit boxes for every Panda skill, reach text moves out of the descs"],
