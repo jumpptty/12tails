@@ -3690,18 +3690,30 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   }
   // hero models: every embedded class model decodes to matching vertex / uv counts, in-range indices and a PNG skin
   {
-    const re = /REACH_MODELS\.(\w+) = \{ v: "([^"]+)", uv: "([^"]+)", t: "([^"]+)", tex: "data:image\/png;base64,([^"]+)" \};/g;
+    // a model line is one object literal: { v, uv, t, tex, extra: [{ v, uv, t, tex }, ...] } (extra = static accessories such as hair)
+    const re = /REACH_MODELS\.(\w+) = (\{[^\n]*\});/g;
     let m, models = 0;
-    while ((m = re.exec(html))) {
-      models++;
-      const vb = Buffer.from(m[2], "base64"), ub = Buffer.from(m[3], "base64"), tb = Buffer.from(m[4], "base64"), png = Buffer.from(m[5], "base64");
+    const partInfo = (name, p, label) => {
+      const vb = Buffer.from(p.v, "base64"), ub = Buffer.from(p.uv, "base64"), tb = Buffer.from(p.t, "base64"), png = Buffer.from(String(p.tex).replace("data:image/png;base64,", ""), "base64");
       const nv = vb.length / 6, nu = ub.length / 4, nt = tb.length / 6;
       let maxI = 0; for (let i = 0; i < tb.length; i += 2) maxI = Math.max(maxI, tb.readUInt16LE(i));
       let minY = Infinity, maxY = -Infinity; for (let i = 0; i < vb.length; i += 6) { const y = vb.readInt16LE(i + 2) / 1000; minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-      if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || png.readUInt32BE(0) !== 0x89504e47) bad(`model ${m[1]}: ${nv} verts, ${nu} uvs, ${nt} tris, max index ${maxI}`);
-      if (minY < -0.05 || maxY < 0.3) bad(`model ${m[1]}: stands from ${minY} to ${maxY} m (feet should be on the ground)`);
-      if (m[1] === "Cat" && (nv !== 1687 || nt !== 1812)) bad(`model Cat: ${nv} verts / ${nt} tris, the game armor mesh has 1687 / 1812`);
-      if (m[1] === "Panda" && (nv !== 1573 || nt !== 1212)) bad(`model Panda: ${nv} verts / ${nt} tris, the game mesh has 1573 / 1212`);
+      if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || png.readUInt32BE(0) !== 0x89504e47) bad("model " + name + " " + label + ": " + nv + " verts, " + nu + " uvs, " + nt + " tris, max index " + maxI);
+      return { nv, nt, minY, maxY };
+    };
+    while ((m = re.exec(html))) {
+      models++;
+      let def; try { def = new Function("return " + m[2])(); } catch (e) { bad("model " + m[1] + ": the object literal does not parse: " + e.message); continue; }
+      const body = partInfo(m[1], def, "body");
+      if (body.minY < -0.05 || body.maxY < 0.3) bad("model " + m[1] + ": stands from " + body.minY + " to " + body.maxY + " m (feet should be on the ground)");
+      if (m[1] === "Cat" && (body.nv !== 1687 || body.nt !== 1812)) bad("model Cat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh has 1687 / 1812");
+      if (m[1] === "Panda" && (body.nv !== 1573 || body.nt !== 1212)) bad("model Panda: " + body.nv + " verts / " + body.nt + " tris, the game mesh has 1573 / 1212");
+      const extras = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i));
+      if (m[1] === "Cat") {
+        // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
+        if (extras.length !== 1 || extras[0].nv !== 248 || extras[0].nt !== 242) bad("model Cat: hair part should be the game's default accessory (248 verts / 242 tris), got " + JSON.stringify(extras));
+        else if (extras[0].minY < body.maxY - 0.6 || extras[0].maxY > body.maxY + 0.15) bad("model Cat: hair spans " + extras[0].minY + " to " + extras[0].maxY + " m, it should cover the head (body top " + body.maxY + " m)");
+      }
     }
     if (!models) bad("no REACH_MODELS entries found");
   }
