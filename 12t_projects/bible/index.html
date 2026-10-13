@@ -27745,6 +27745,7 @@ function mountClassGuide(root){
   });
   function showNote(info){
     stopNoteAnimation(); noteBody.classList.remove("is-waiting");
+    noteModal.querySelector(".cg-kicker").textContent = "★ " + ((current && current.author) || "AUTHOR") + "’S NOTE";
     noteOrigin = info.element; noteModal.querySelector("h3").textContent = info.cell.name; noteBody.innerHTML = classGuideRichText(info.text);
     noteModal.hidden = false;
     if (info.first){
@@ -28739,6 +28740,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T07:21:04.738Z","style(bible): credit guide authors in skill note headings"],
     ["2026-10-13T07:12:11.824Z","style(bible): give guide explanations a dedicated column"],
     ["2026-10-13T06:59:20.654Z","style(bible): fit guide reader builds into one screen"],
     ["2026-10-13T06:45:54.748Z","style(bible): show skill builds first in guide reader view"],
