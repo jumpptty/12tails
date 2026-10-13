@@ -11220,6 +11220,13 @@ function openReachPopup(skill, rank){
   const maxRank = skill.maxRank || 1;   // the preview's own rank toggle (preview only: the card keeps its rank)
   const scalesWithRm = () => Array.from({ length: maxRank }, (_, i) => i + 1).some(r => [0, 1].some(s => reachPartsWith(skill, r, Object.assign({}, over, s ? Object.fromEntries(toggles.map(e => [e.dep.id, e.on])) : {})).some(p => p.rangeMod)));
   const rankToggles = scalesWithRm() ? [REACH_ENLARGE, REACH_REDUCE] : [];
+  const rankMatters = maxRank > 1 && [0, 1].some(s2 => {
+    const ov = Object.assign({}, over, s2 ? Object.fromEntries(toggles.map(e => [e.dep.id, e.on])) : Object.fromEntries(toggles.map(e => [e.dep.id, e.off])));
+    const sig = (r) => JSON.stringify(reachPartsWith(skill, r, ov).map(p => [p.shape, p.r, p.w, p.w2, p.l, p.h, p.angle, p.z0, p.anchor, !!p.unknown]));
+    const first = sig(1);
+    for (let r = 2; r <= maxRank; r++) if (sig(r) !== first) return true;
+    return false;
+  });
   let parts = reachPartsWith(skill, rank, over), items = parts.map(p => ({ part: p, alpha: 1 }));
   const model = reachModel(skill.class);
   const pop = document.createElement("div");
@@ -11227,11 +11234,11 @@ function openReachPopup(skill, rank){
   const legend = () => parts.map((p, k) => `<span><i style="background:${REACH_COLORS[k % REACH_COLORS.length]}"></i>${reachPartLabel(p)}</span>`).join("");
   const pipRow = (n, filled) => `<span class="sk-dep-pips" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<span class="sk-pip${i < filled ? " on" : ""}"></span>`).join("")}</span>`;
   const btn = (key, label, icon, on, nPips, filled) => `<div class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" role="button" tabindex="0" title="${label}"><span class="sk-dep-btncol"><span class="sk-dep-toggle${on ? " on" : ""}"><img src="${SKILL_ICONS[icon] || ""}" alt=""></span>${pipRow(nPips, filled)}</span><span class="sk-reach-dep-name">${label}</span></div>`;
-  const depsHtml = () => (maxRank > 1 ? [btn("rank", "Rank " + rank, skill.icon, true, maxRank, rank)] : [])   // a rank has no off state: always lit, pips = rank
+  const depsHtml = () => (rankMatters ? [btn("rank", "Rank " + rank, skill.icon, true, maxRank, rank)] : [])   // a rank has no off state: always lit, pips = rank
     .concat(toggles.map((e, k) => { const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
     .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, d.maxRank, over[d.id]))).join("");
   pop.innerHTML = `<div class="sk-reach-panel" role="dialog" aria-label="ระยะโจมตี">
-    <div class="sk-reach-head"><span class="sk-reach-title">${skill.name}</span>${toggles.length || rankToggles.length || maxRank > 1 ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}<button type="button" data-role="reach-close">ปิด</button></div>
+    <div class="sk-reach-head"><span class="sk-reach-title">${skill.name}</span>${toggles.length || rankToggles.length || rankMatters ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}<button type="button" data-role="reach-close">ปิด</button></div>
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
     <div class="sk-reach-hint">W A S D</div>
@@ -29458,6 +29465,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T16:11:24.898Z","fix(bible): range popup only shows the rank toggle when the rank changes the shape"],
     ["2026-10-13T16:09:30.846Z","fix(bible): in the range popup only W A S D and dragging stop the pan; scrolling and zooming keep it going"],
     ["2026-10-13T16:07:47.443Z","fix(bible): range popup toggles (rank, Enlarge / Reduce, skill deps) no longer stop the intro or the slow pan"],
     ["2026-10-13T16:03:30.708Z","feat(bible): range popup toggles sit in the title row in the normal skill dependency look, Enlarge / Reduce resize the character too, and the intro is one continuous move with a short first beat"],
