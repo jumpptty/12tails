@@ -1685,7 +1685,6 @@
   .cg-note-close{position:absolute;right:12px;top:10px;border:0;background:none;color:var(--muted);font:24px sans-serif;cursor:pointer}
   .cg-note-body{margin:0;font-size:14px}
   .cg-note-body.is-waiting{opacity:0}
-  @media(prefers-reduced-motion:reduce){.cg-star{transition:none}.rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:none}}
   @media(max-width:760px){.cg-heading{align-items:flex-start;flex-direction:column}.cg-fields,.cg-gallery{grid-template-columns:1fr}.cg-reader{padding-left:14px}.cg-note-card{padding:22px}}
 
   /* Skill simulator (skill-simulator tool, 2026-10-12) */
@@ -27571,8 +27570,7 @@ function mountClassGuide(root){
     stopNoteAnimation(); noteBody.classList.remove("is-waiting");
     noteOrigin = info.element; noteModal.querySelector("h3").textContent = info.cell.name; noteBody.innerHTML = classGuideRichText(info.text);
     noteModal.hidden = false;
-    const reduce = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (info.first && !reduce){
+    if (info.first){
       const star = info.element.querySelector(".cg-star") || info.element, cr = star.getBoundingClientRect(), pr = noteBody.getBoundingClientRect();
       const a = { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 }, to = { x: pr.left + 6, y: pr.top + Math.min(pr.height / 2, 14) }, tone = "rgb(255, 214, 102)";
       noteBody.classList.add("is-waiting");
@@ -28576,6 +28574,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T04:44:39.055Z","style(bible): keep guide animations under reduced motion"],
     ["2026-10-13T04:41:28.541Z","style(bible): shrink guide stars and slow their pulse"],
     ["2026-10-13T04:27:36.234Z","feat(bible): polish guide note reveals and bold formatting"],
     ["2026-10-13T04:20:31.872Z","style(bible): make guide note stars easier to see"],
