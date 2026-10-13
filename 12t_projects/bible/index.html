@@ -11363,6 +11363,7 @@ function openReachPopup(skill, rank){
     parts = after;
     rebuildButtons();
     pop.querySelector(".sk-reach-legend").innerHTML = legend();
+    if (introing){ st.ms = msTo; return; }
     const nb = pop.querySelector(`.sk-reach-dep[data-key="${key}"]`);
     if (nb){ nb.classList.remove("sk-dep-flip-on", "sk-dep-flip-off"); void nb.offsetWidth; nb.classList.add(nb.classList.contains("on") ? "sk-dep-flip-on" : "sk-dep-flip-off"); }
     play(before, after, src, grows, msFrom, msTo);
@@ -11413,7 +11414,6 @@ function openReachPopup(skill, rank){
     introRaf = requestAnimationFrame(frame);
     const anyInput = () => { endIntro(); stopAuto(); };
     for (const ev of ["pointerdown", "wheel", "dblclick"]) cv.addEventListener(ev, anyInput, { capture: true });
-    pop.querySelectorAll(".sk-reach-dep").forEach(b => b.addEventListener("click", anyInput, { capture: true }));
     document.addEventListener("keydown", anyInput, true);
     closeReachPopup._intro = () => { if (introRaf) cancelAnimationFrame(introRaf); introRaf = 0; stopAuto(); document.removeEventListener("keydown", anyInput, true); };
   } else {
@@ -29456,6 +29456,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T16:07:47.443Z","fix(bible): range popup toggles (rank, Enlarge / Reduce, skill deps) no longer stop the intro or the slow pan"],
     ["2026-10-13T16:03:30.708Z","feat(bible): range popup toggles sit in the title row in the normal skill dependency look, Enlarge / Reduce resize the character too, and the intro is one continuous move with a short first beat"],
     ["2026-10-13T15:55:47.927Z","feat(bible): range popup has a preview-only rank toggle for skills with several ranks"],
     ["2026-10-13T15:51:38.778Z","feat(bible): range popup model is rasterised by hand with adaptive resolution (no triangle seams, smooth camera-following lighting), opens further from her face and keeps drifting slowly round her until you touch it"],
