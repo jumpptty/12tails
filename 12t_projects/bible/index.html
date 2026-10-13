@@ -1651,7 +1651,7 @@
   .cg-status{color:var(--gold);font-size:13px;min-height:1.4em;margin:0 0 10px}
   .cg-intro,.cg-help,.cg-byline{color:var(--muted);font-size:13px;line-height:1.8}
   .cg-fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:16px}
-  .cg-page label{display:grid;gap:6px;font-size:13px;color:var(--text)}
+  .cg-fields label,.cg-note-editor label,.cg-transfer label{display:grid;gap:6px;font-size:13px;color:var(--text)}
   .cg-page input,.cg-page textarea{width:100%;box-sizing:border-box;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:9px 11px;font:inherit;resize:vertical}
   .cg-page input:focus-visible,.cg-page textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .cg-description{grid-column:1/-1}
@@ -28660,6 +28660,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T06:13:09.724Z","fix(bible): keep guide level label and input inline"],
     ["2026-10-13T06:11:23.005Z","style(bible): simplify guide headings and credit preview author"],
     ["2026-10-13T06:01:51.205Z","feat(bible): refine guide authoring and action hierarchy"],
     ["2026-10-13T04:44:39.055Z","style(bible): keep guide animations under reduced motion"],
