@@ -3617,7 +3617,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
   {
     const dr = sandbox._depRanks, saved = { ...dr };
-    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist"]) dr[k] = o[k] || 0; };
+    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice"]) dr[k] = o[k] || 0; };
     const P = (id, rank, o, rM) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank, rM); };
     const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
     try {
@@ -3628,7 +3628,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_nAttack", 1); g("Combo 1 has stage 1-2 only", c.length === 1 && c[0].w === 2 && c[0].l === 2 && c[0].h === 1, c);
       c = P("panda_nAttack", 4, { auraBlast: 1 }); g("Aura Blast stage 5", c[3].shape === "cylinder" && c[3].r === 2 && c[3].h === 3, c[3]);
       c = P("panda_nAttack", 4, { pndW59: 1 }); g("Force Gauntlet circles", c.length === 4 && c[0].r === 3 && c[1].r === 4 && c[2].r === 3 && c[3].r === 4 && c[3].h === 3, c);
-      c = P("panda_nAttack", 4, { pndW59: 1, auraBlast: 1 }); g("Aura Blast ignores Force Gauntlet", c[3].r === 2 && c[3].anchor === "fist", c[3]);
+      c = P("panda_nAttack", 4, { pndW59: 1, auraBlast: 1 }); g("Aura Blast ignores Force Gauntlet", c[3].r === 2 && c[3].anchor === "self", c[3]);
       c = P("panda_qiStrike", 1, { qiBurst: 1 }); g("Qi Burst 1+5", c[0].l === 6 && c[0].w === 2, c);
       c = P("panda_pummel", 1, { ogreImpact: 1 }); g("Pummel Ogre Impact", c[0].w === 4 && c[0].l === 3 && c[0].h === 3 && !c[0].rangeMod, c);
       c = P("panda_towerRush", 1, { ogreImpact: 1 }); g("Tower Rush Ogre Impact", c[0].shape === "cylinder" && c[0].r === 4 && c[0].h === 6, c);
@@ -3656,6 +3656,25 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_rushingFalcon", 2, {}, 1.4); g("Rushing Falcon: 0.5 m start is not scaled", c[0].w === 4.48 && c[0].z0 === -0.5, c[0]);
       c = P("panda_ashura", 2, {}, 1.4); g("Ashura ignores rangeMod", c[0].r === 3, c[0]);
       c = P("panda_heavenPalm", 2, {}, 1.4); g("Heaven Palm r6 x1.4", c[0].r === 8.4 && c[0].h === 2.8 && c[0].rm === 1.4, c[0]);
+      // Cat (Cat.cs Find* calls; KOIRnET4pM is the Cat's own transform)
+      c = P("cat_nAttack", 1); g("Cat Combo 1: stages 1-2 box", c.length === 1 && c[0].w === 2 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === -1, c);
+      c = P("cat_nAttack", 3); g("Cat Combo 3: stage 4 is 4 wide", c.length === 3 && c[2].w === 4 && c[2].w2 === 4 && c[2].l === 3, c);
+      c = P("cat_nAttack", 3, {}, 1.4); g("Cat Combo x1.4 scales size and start offset", c[2].w === 5.6 && c[2].l === 4.2 && c[2].h === 2.8 && c[2].z0 === -1.4, c[2]);
+      c = P("cat_awareness", 2, {}, 1.4); g("Awareness r24 (not scaled), h3 x1.4", c[0].r === 24 && c[0].h === 4.2, c[0]);
+      c = P("cat_fateDraw", 4, {}, 1.4); g("Fate Draw r15 h3 both scale", c[0].r === 21 && c[0].h === 4.2, c[0]);
+      c = P("cat_doubleDown", 2); g("Double Down scan r24 + blast r1", c[0].r === 24 && c[0].h === 10 && c[1].r === 1 && c[1].h === 2 && c[1].anchor === "target", c);
+      c = P("cat_doubleDown", 2, { rollTheDice: 1 }); g("Roll the Dice doubles the blast", c[1].r === 2, c[1]);
+      c = P("cat_forwardLunge", 2); g("Forward Lunge 3 m flat hits + 4 m finisher", c[0].l === 3 && c[1].l === 4 && c[0].w === 2, c);
+      c = P("cat_reverseThrust", 2, {}, 1.4); g("Reverse Thrust drawn behind and scaled", c[0].z0 === -4.2 && c[0].l === 4.2, c[0]);
+      c = P("cat_heartRipper", 2, {}, 1.4); g("Heart Ripper r scales, h5 does not", c[0].r === 1.4 && c[0].h === 5, c[0]);
+      c = P("cat_moonBlade", 2, {}, 1.4); g("Moon Blade r4.2 / r5.6, h3", c[0].r === 4.2 && c[1].r === 5.6 && c[0].h === 3, c);
+      c = P("cat_moonStorm", 2); g("Moon Storm 6 rings every 1.5 m + a 12 m blast", c.length === 7 && c[5].z0 === 7.5 && c[6].z0 === 12 && c[6].r === 3, c);
+      c = P("cat_deltaStrike", 1); g("Delta Strike rank 1: 2 to 12 wide, 6 long", c[0].w === 2 && c[0].w2 === 12 && c[0].l === 6 && c[0].h === 6, c);
+      c = P("cat_deltaStrike", 2); g("Delta Strike rank 2: 2 to 18 wide, 8 long", c[0].w2 === 18 && c[0].l === 8, c);
+      c = P("cat_pillagePlunge", 1); g("Pillage Plunge hit box 4x4x2 from 2 m behind + 6 m pass-through", c[0].w === 4 && c[0].l === 4 && c[0].z0 === -2 && c[1].l === 6, c);
+      c = P("cat_supportFire", 1); g("Support Fire lands 24 to 47 m, r8 h3", c[0].z0 === 24 && c[1].z0 === 47 && c[0].r === 8 && c[0].h === 3, c);
+      c = P("cat_luckyCard", 4); g("Lucky Card 20 m", c[0].shape === "line" && c[0].l === 20, c);
+      c = P("cat_damageRoulette", 2); g("Damage Roulette r24 h12", c[0].r === 24 && c[0].h === 12, c);
       // the popup preview reads its own toggle state and leaves the card's alone
       set({});
       const qs = SKILLS.find(x => x.id === "panda_qiStrike");
@@ -3681,6 +3700,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       let minY = Infinity, maxY = -Infinity; for (let i = 0; i < vb.length; i += 6) { const y = vb.readInt16LE(i + 2) / 1000; minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
       if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || png.readUInt32BE(0) !== 0x89504e47) bad(`model ${m[1]}: ${nv} verts, ${nu} uvs, ${nt} tris, max index ${maxI}`);
       if (minY < -0.05 || maxY < 0.3) bad(`model ${m[1]}: stands from ${minY} to ${maxY} m (feet should be on the ground)`);
+      if (m[1] === "Cat" && (nv !== 1687 || nt !== 1812)) bad(`model Cat: ${nv} verts / ${nt} tris, the game armor mesh has 1687 / 1812`);
       if (m[1] === "Panda" && (nv !== 1573 || nt !== 1212)) bad(`model Panda: ${nv} verts / ${nt} tris, the game mesh has 1573 / 1212`);
     }
     if (!models) bad("no REACH_MODELS entries found");
