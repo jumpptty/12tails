@@ -3597,8 +3597,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   const box = sandbox._reachMesh({ shape: "box", w: 2, l: 4, h: 1, anchor: "self" });
   if (ext(box.verts, 0) !== 2 || ext(box.verts, 2) !== 4 || ext(box.verts, 1) !== 1.5) bad(`golden box extents ${ext(box.verts, 0)}x${ext(box.verts, 2)}x${ext(box.verts, 1)}`);
   const trap = sandbox._reachMesh({ shape: "box", w: 6, w2: 3.2, l: 4, h: 3, anchor: "fist", z0: -1 });
-  const nearX = Math.max(...trap.verts.filter(v => Math.abs(v[2]) < 1e-9).map(v => v[0])), farX = Math.max(...trap.verts.filter(v => Math.abs(v[2] - 4) < 1e-9).map(v => v[0]));
-  if (nearX !== 3 || farX !== 1.6 || ext(trap.verts, 2) !== 4 || Math.min(...trap.verts.map(v => v[2])) !== 0 || ext(trap.verts, 1) !== 4.5) bad(`golden trapezoid near ${nearX} far ${farX}`);
+  const nearX = Math.max(...trap.verts.filter(v => Math.abs(v[2] + 1) < 1e-9).map(v => v[0])), farX = Math.max(...trap.verts.filter(v => Math.abs(v[2] - 3) < 1e-9).map(v => v[0]));
+  if (nearX !== 3 || farX !== 1.6 || ext(trap.verts, 2) !== 4 || Math.min(...trap.verts.map(v => v[2])) !== -1 || ext(trap.verts, 1) !== 4.5) bad(`golden trapezoid near ${nearX} far ${farX}`);
   const sph = sandbox._reachMesh({ shape: "sphere", r: 3, anchor: "self" });
   if (ext(sph.verts, 0) !== 6 || ext(sph.verts, 1) !== 6 || ext(sph.verts, 2) !== 6) bad(`golden sphere extents ${ext(sph.verts, 0)}x${ext(sph.verts, 1)}x${ext(sph.verts, 2)}`);
   const cyl = sandbox._reachMesh({ shape: "cylinder", r: 2, h: 5, anchor: "self" });
@@ -3612,6 +3612,41 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   if (pr[0] !== 200) bad(`golden projection centre x ${pr[0]}`);
   for (const needle of ['class="sk-reach-badge"', ".sk-reach-badge{", "function openReachPopup", ".sk-reach-pop{"]) {
     if (!html.includes(needle)) bad(`page is missing ${needle}`);
+  }
+  // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
+  {
+    const dr = sandbox._depRanks, saved = { ...dr };
+    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist"]) dr[k] = o[k] || 0; };
+    const P = (id, rank, o) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank); };
+    const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
+    try {
+      for (const sk of SKILLS) if (sk.class === "Panda" && sk.reach) for (let r = 1; r <= (sk.maxRank || 1); r++) for (const st of [{}, { pndW59: 1 }, { auraBlast: 1 }, { pndW59: 1, auraBlast: 1, ogreImpact: 1, tigerPounce: 1, qiBurst: 1, shadowFist: 5 }]) {
+        for (const p of P(sk.id, r, st)) for (const k of ["r", "w", "l", "h"]) if (p[k] !== undefined && !(p[k] === "inf" || p[k] > 0)) bad(`${sk.id} rank ${r} ${JSON.stringify(st)}: ${k} = ${p[k]}`);
+      }
+      let c = P("panda_nAttack", 4); g("Combo 4 has 4 boxes", c.length === 4 && c[3].w === 6 && c[3].w2 === 3.2 && c[3].l === 4 && c[3].h === 3 && c[3].z0 === -1, c);
+      c = P("panda_nAttack", 1); g("Combo 1 has stage 1-2 only", c.length === 1 && c[0].w === 2 && c[0].l === 2 && c[0].h === 1, c);
+      c = P("panda_nAttack", 4, { auraBlast: 1 }); g("Aura Blast stage 5", c[3].shape === "cylinder" && c[3].r === 2 && c[3].h === 3, c[3]);
+      c = P("panda_nAttack", 4, { pndW59: 1 }); g("Force Gauntlet circles", c.length === 4 && c[0].r === 3 && c[1].r === 4 && c[2].r === 3 && c[3].r === 4 && c[3].h === 3, c);
+      c = P("panda_nAttack", 4, { pndW59: 1, auraBlast: 1 }); g("Aura Blast ignores Force Gauntlet", c[3].r === 2 && c[3].anchor === "fist", c[3]);
+      c = P("panda_qiStrike", 1, { qiBurst: 1 }); g("Qi Burst 1+5", c[0].l === 6 && c[0].w === 2, c);
+      c = P("panda_pummel", 1, { ogreImpact: 1 }); g("Pummel Ogre Impact", c[0].w === 4 && c[0].l === 3 && c[0].h === 3 && !c[0].rangeMod, c);
+      c = P("panda_towerRush", 1, { ogreImpact: 1 }); g("Tower Rush Ogre Impact", c[0].shape === "cylinder" && c[0].r === 4 && c[0].h === 6, c);
+      c = P("panda_tigerToss", 1, { tigerPounce: 1 }); g("Tiger Pounce landing", c.length === 2 && c[1].r === 3 && c[1].h === 6 && c[1].anchor === "target", c);
+      c = P("panda_waterMonkey", 2, { shadowFist: 5 }); g("Water Monkey Spirit Fist", c.length === 2 && c[0].w === 6 && c[0].l === 3 && c[0].z0 === -1 && c[1].z0 === 1, c);
+      c = P("panda_waterMonkey", 2); g("Water Monkey base", c[0].w === 4 && c[0].l === 2 && c[0].h === 3, c);
+      c = P("panda_stasisBlow", 2, { shadowFist: 5 }); g("Stasis Blow Spirit Fist", c[0].w === 4 && c[0].l === 5 && c[0].h === 2 && c[0].z0 === -2, c);
+      c = P("panda_waterCrane", 2, { shadowFist: 5 }); g("Water Crane Spirit Fist r5", c[0].r === 5 && c[0].h === 5, c);
+      c = P("panda_wind&cloud", 2); g("Wind & Cloud r3 h2", c[0].r === 3 && c[0].h === 2, c);
+      c = P("panda_rain&storm", 2, { shadowFist: 5 }); g("Rain & Storm Spirit Fist r6", c[0].r === 6, c);
+      c = P("panda_heavenPalm", 2, { shadowFist: 5 }); g("Heaven Palm rank 2 + Spirit Fist r7", c[0].r === 7 && c[0].h === 2, c);
+      c = P("panda_heavenPalm", 1); g("Heaven Palm rank 1 r4", c[0].r === 4, c);
+      c = P("panda_risingDragons", 2); g("Rising Dragons two cylinders", c.length === 2 && c[0].r === 3 && c[0].h === 6 && c[1].r === 4 && c[1].h === 3, c);
+      c = P("panda_rushingFalcon", 2); g("Rushing Falcon kicks", c[0].w === 3.2 && c[0].w2 === 2 && c[0].l === 2 && c[0].z0 === -0.5 && c[1].l === 1, c);
+      c = P("panda_ashura", 2); g("Ashura circle after the 3.6 m lunge", c[0].r === 3 && c[0].h === 3 && c[0].z0 === 3.6, c);
+      c = P("panda_fuujinKen", 1); g("Fuujin Ken r12 h9", c[0].r === 12 && c[0].h === 9, c);
+      c = P("panda_raijinKen", 1); g("Raijin Ken lock 35 + r8 h8", c[0].l === 35 && c[1].r === 8 && c[1].h === 8, c);
+      c = P("panda_lotusPalm", 2); g("Lotus Palm 40 m lock", c[0].shape === "line" && c[0].l === 40, c);
+    } finally { for (const k of Object.keys(dr)) if (!(k in saved)) delete dr[k]; Object.assign(dr, saved); }
   }
   if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.`);
   console.log(`Verified ${checkedReach} reach parts.`);
