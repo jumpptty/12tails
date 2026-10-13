@@ -10832,9 +10832,10 @@ function reachMesh(p){
   return { verts, edges, faces };
 }
 // Camera above the ground for pitch > 0, below it for pitch < 0. Returns [px, py, depth]; a larger depth is nearer the camera.
-function reachProject(v, yaw, pitch, zoom, w, h){
+function reachProject(v, yaw, pitch, zoom, w, h, t){
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const x1 = v[0] * cy + v[2] * sy, z1 = -v[0] * sy + v[2] * cy;
+  const vx = v[0] - (t ? t[0] : 0), vz = v[2] - (t ? t[1] : 0);
+  const x1 = vx * cy + vz * sy, z1 = -vx * sy + vz * cy;
   const y2 = v[1] * cp - z1 * sp, z2 = v[1] * sp + z1 * cp;
   return [w / 2 + x1 * zoom, h * 0.6 - y2 * zoom, z2];
 }
@@ -10947,7 +10948,7 @@ function drawReach(cv, items, st, model){
   const ctx = cv.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
-  const P = (v) => reachProject(v, st.yaw, st.pitch, st.zoom, W, H);
+  const P = (v) => reachProject(v, st.yaw, st.pitch, st.zoom, W, H, st.t);
   const above = [], below = [], tags = [];
   const camAbove = st.pitch >= 0;
   items.forEach(({ part: p, alpha }, k) => {
@@ -10999,11 +11000,11 @@ function drawReach(cv, items, st, model){
     ctx.globalAlpha = 1; ctx.setLineDash([]);
   };
   const ground = () => {
-    const R = 10, c = [[-R, 0, -R], [R, 0, -R], [R, 0, R], [-R, 0, R]].map(P);
+    const R = 10, gx = Math.round(st.t ? st.t[0] : 0), gz = Math.round(st.t ? st.t[1] : 0), c = [[gx - R, 0, gz - R], [gx + R, 0, gz - R], [gx + R, 0, gz + R], [gx - R, 0, gz + R]].map(P);
     ctx.fillStyle = camAbove ? "rgba(24,30,26,.62)" : "rgba(24,30,26,.45)";
     ctx.beginPath(); c.forEach((q, n) => n ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.10)"; ctx.lineWidth = 1;
-    for (let i = -R; i <= R; i++) for (const [a, b] of [[[i, 0, -R], [i, 0, R]], [[-R, 0, i], [R, 0, i]]]){
+    for (let i = -R; i <= R; i++) for (const [a, b] of [[[gx + i, 0, gz - R], [gx + i, 0, gz + R]], [[gx - R, 0, gz + i], [gx + R, 0, gz + i]]]){
       const pa = P(a), pb = P(b); ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
     }
   };
@@ -11060,7 +11061,7 @@ function reachOutline(parts, st, cv, panel, n){
     if (p.unknown || p.shape === "self") return;
     const m = reachMesh(p), col = REACH_COLORS[k % REACH_COLORS.length];
     for (const [i, j] of m.edges){
-      const a = reachProject(m.verts[i], st.yaw, st.pitch, st.zoom, W, H), b = reachProject(m.verts[j], st.yaw, st.pitch, st.zoom, W, H);
+      const a = reachProject(m.verts[i], st.yaw, st.pitch, st.zoom, W, H, st.t), b = reachProject(m.verts[j], st.yaw, st.pitch, st.zoom, W, H, st.t);
       segs.push({ a: [a[0] + ox, a[1] + oy], b: [b[0] + ox, b[1] + oy], col, len: Math.hypot(b[0] - a[0], b[1] - a[1]) });
     }
   });
@@ -11110,12 +11111,12 @@ function openReachPopup(skill, rank){
     ${toggles.length || rankToggles.length ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
-    <div class="sk-reach-hint">ลาก หรือกด A D หมุน · W S เงย / ก้ม (ลงไปมองจากใต้ดินได้) · Q E ซูม · Shift เร็วขึ้น · R รีเซ็ต · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ปุ่มด้านบนใช้ดูตัวอย่างเท่านั้น ไม่เปลี่ยนการ์ด</div>
+    <div class="sk-reach-hint">ลากเพื่อหมุน (ลากขึ้นเพื่อมองจากใต้ดิน) · W A S D เลื่อนมุมมองไปมาเหมือนแผนที่ Golden King Bug · เลื่อนล้อเมาส์ / บีบนิ้วเพื่อซูม · ดับเบิลคลิกเพื่อรีเซ็ต · ปุ่มด้านบนใช้ดูตัวอย่างเท่านั้น ไม่เปลี่ยนการ์ด</div>
     <canvas class="sk-reach-fx"></canvas>
   </div>`;
   document.body.appendChild(pop);
   const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
-  const home = () => ({ yaw: -0.6, pitch: 0.5, zoom: Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))) });
+  const home = () => ({ yaw: -0.6, pitch: 0.5, zoom: Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.map(reachSize)))), t: [0, 0], tt: [0, 0] });
   let st = home();
   const redraw = () => drawReach(cv, items, st, model);
   if (model && !model.ready) model.onready = redraw;
@@ -11137,37 +11138,39 @@ function openReachPopup(skill, rank){
   const up = e => { ptrs.delete(e.pointerId); pinch = 0; };
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   cv.addEventListener("wheel", e => { e.preventDefault(); st.zoom = Math.max(6, Math.min(400, st.zoom * (e.deltaY < 0 ? 1.1 : 0.9))); redraw(); }, { passive: false });
-  cv.addEventListener("dblclick", () => { st = home(); redraw(); });
-  // Keyboard (user 2026-10-13): A / D turn, W / S tilt (below the ground too), Q / E zoom, Shift = faster, R = reset. Arrow keys do the same
-  // so they no longer switch the skill behind the popup. Read by e.code, so a Thai keyboard layout works. Held keys run on a frame loop.
-  const KEYMAP = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "up", ArrowUp: "up", KeyS: "down", ArrowDown: "down", KeyQ: "out", KeyE: "in" };
-  const held = new Set(); let keyRaf = 0, keyT = 0, fast = false;
+  cv.addEventListener("dblclick", () => { st = home(); redraw(); });   // (the keyboard loop reads st each frame, so a reset also resets the pan)
+  // Keyboard (user 2026-10-13: simple, like the Golden King Bug map): W / S walk the view forward / back, A / D strafe, mouse still
+  // orbits and zooms. The look-at point eases toward its target (lerp 0.12 per frame, like the map) and the speed scales with what is
+  // on screen. By e.code so a Thai layout works. Arrow keys do nothing here but are swallowed so they cannot switch the skill behind.
+  const KEYMAP = { KeyW: "f", KeyS: "b", KeyA: "l", KeyD: "r" }, SWALLOW = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+  const held = new Set(); let keyRaf = 0, keyT = 0;
   const keyStep = (now) => {
-    const dt = Math.min(0.05, (now - keyT) / 1000), sp = fast ? 2.6 : 1; keyT = now;
-    if (held.has("left")) st.yaw -= 1.7 * sp * dt;
-    if (held.has("right")) st.yaw += 1.7 * sp * dt;
-    if (held.has("up")) st.pitch = Math.min(1.45, st.pitch + 1.2 * sp * dt);
-    if (held.has("down")) st.pitch = Math.max(-1.45, st.pitch - 1.2 * sp * dt);
-    if (held.has("in")) st.zoom = Math.min(400, st.zoom * Math.pow(2.2 * sp, dt));
-    if (held.has("out")) st.zoom = Math.max(6, st.zoom / Math.pow(2.2 * sp, dt));
+    const dt = Math.min(0.1, (now - keyT) / 1000); keyT = now;
+    const f = (held.has("f") ? 1 : 0) - (held.has("b") ? 1 : 0), rt = (held.has("r") ? 1 : 0) - (held.has("l") ? 1 : 0);
+    if (f || rt){
+      const sp = 0.3 * (cv.clientWidth / st.zoom) * dt, sy = Math.sin(st.yaw), cy = Math.cos(st.yaw);
+      st.tt[0] += (sy * f + cy * rt) * sp;
+      st.tt[1] += (-cy * f + sy * rt) * sp;
+    }
+    st.t[0] += (st.tt[0] - st.t[0]) * 0.12; st.t[1] += (st.tt[1] - st.t[1]) * 0.12;
+    const settled = Math.hypot(st.tt[0] - st.t[0], st.tt[1] - st.t[1]) < 0.002;
+    if (settled){ st.t[0] = st.tt[0]; st.t[1] = st.tt[1]; }
     redraw();
-    keyRaf = held.size ? requestAnimationFrame(keyStep) : 0;
+    keyRaf = (held.size || !settled) ? requestAnimationFrame(keyStep) : 0;
   };
+  const wake = () => { if (!keyRaf){ keyT = performance.now(); keyRaf = requestAnimationFrame(keyStep); } };
   const onKeyDown = (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    fast = e.shiftKey;
-    if (e.code === "KeyR"){ e.preventDefault(); e.stopPropagation(); st = home(); redraw(); return; }
+    if (SWALLOW.includes(e.code)){ e.preventDefault(); e.stopPropagation(); return; }
     const a = KEYMAP[e.code];
     if (!a) return;
     e.preventDefault(); e.stopPropagation();
-    held.add(a);
-    if (!keyRaf){ keyT = performance.now(); keyRaf = requestAnimationFrame(keyStep); }
+    held.add(a); wake();
   };
-  const onKeyUp = (e) => { const a = KEYMAP[e.code]; if (a) held.delete(a); fast = e.shiftKey; };
+  const onKeyUp = (e) => { const a = KEYMAP[e.code]; if (a) held.delete(a); };
   document.addEventListener("keydown", onKeyDown, true);
   document.addEventListener("keyup", onKeyUp, true);
   closeReachPopup._keys = [onKeyDown, onKeyUp, () => { held.clear(); if (keyRaf) cancelAnimationFrame(keyRaf); keyRaf = 0; }];
-
   // The volley (user 2026-10-13): ONE light ball, quick enough to click straight up to rank 4. Bigger range: a gold comet
   // flies from the toggle to the near side of the new range's outline, the outline flashes gold as it lands and the shape
   // grows into it. Smaller range: the old outline flashes red, the shape shrinks, and a red comet flies back into the toggle.
@@ -29272,6 +29275,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-13T15:26:06.037Z","feat(bible): range popup keys pan the view like the Golden King Bug map (W S forward / back, A D strafe) instead of orbiting it"],
     ["2026-10-13T15:22:10.629Z","feat(bible): range popup can be steered with WASD (QE zoom, Shift faster, R reset) and the arrow keys stop switching skills behind it"],
     ["2026-10-13T14:16:46.608Z","feat(cat): reach badge, 3D hit boxes and the real Cat model for every Cat skill with a hit volume, and Panda boxes now start from the Panda herself"],
     ["2026-10-13T13:54:01.404Z","feat(bible): range popup plays one quick light ball per toggle and lets you click straight through to Enlarge / Reduce 4"],
