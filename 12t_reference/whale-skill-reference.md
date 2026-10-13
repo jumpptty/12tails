@@ -508,6 +508,7 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 Base engine (BigBug) values are documented above; this section lists private-server deltas.
 
 ### Tailstopia Online (TTO)
+- **Swallow cannot target the caster; self-target bug fixed on TTO** (user-reported live behavior, 2026-10-13; server-side change, not visible in the BigBug decompiled client). The base self-target interaction documented above (`GameGui.cs:2214`, `Whale.cs:25912`, `CharacterControl.cs:4299-4315` and `:4406-4500`) no longer allows repeated Auto Shield rolls / SP recovery through self-swallow on TTO. The TTO Swallow description and bug note, and Auto Shield description, reflect this fix. This report does not establish a fix for the separate stale “mouth is full” issue or the Dissolute interactions; those remain documented. BigBug and ToT behavior are unchanged by this report.
 - **Honor Stand also adds +1 to Honor's `sLv`** (user-reported from live play, 2026-09-20; server-side change, not visible in `DecompiledSource/`). Base code (`Whale.cs:23500-23900`) uses the single cast `sLv` for the honor status level, so with the +1 all of these follow it: CHA `+10×sLv` (`CharacterControl.cs:35558`), KO reduction `10%×honorLv` (`:4400`), hate `floor((0.5×sLv+0.5)×CHA)` and taunt radius `18+6×sLv` (`Whale.cs:23876`). Example: rank 4 + Honor Stand → `[honor5]`, CHA +50, hate 300%, radius 48m. The bible card models this as `servers.tto` with an Honor Stand dependency toggle (default learned).
 
 
