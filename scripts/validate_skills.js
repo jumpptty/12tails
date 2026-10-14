@@ -3754,10 +3754,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       if (m[1] === "Cat" && (body.nv !== 1687 || body.nt !== 1812)) bad("model Cat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh has 1687 / 1812");
       if (m[1] === "Panda" && (body.nv !== 1573 || body.nt !== 1212)) bad("model Panda: " + body.nv + " verts / " + body.nt + " tris, the game mesh has 1573 / 1212");
       if (m[1] === "Wolf" && (body.nv !== 2054 || body.nt !== 1929)) bad("model Wolf: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Wolf_standard_tri) has 2054 / 1929");
+      if (m[1] === "Wolf") { const wx = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i)); if (wx.length !== 1 || wx[0].nv !== 382 || wx[0].nt !== 246) bad("model Wolf: extras should be the standard sword in both hands (2 x 191 verts / 2 x 123 tris), got " + JSON.stringify(wx)); }
       const extras = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i));
       if (m[1] === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
-        if (extras.length !== 1 || extras[0].nv !== 248 || extras[0].nt !== 242) bad("model Cat: hair part should be the game's default accessory (248 verts / 242 tris), got " + JSON.stringify(extras));
+        if (extras.length !== 2 || extras[0].nv !== 248 || extras[0].nt !== 242 || extras[1].nv !== 244 || extras[1].nt !== 140) bad("model Cat: extras should be the default hair (248 verts / 242 tris) and the standard knife (244 / 140), got " + JSON.stringify(extras));
         else if (extras[0].minY < body.maxY - 0.6 || extras[0].maxY > body.maxY + 0.15) bad("model Cat: hair spans " + extras[0].minY + " to " + extras[0].maxY + " m, it should cover the head (body top " + body.maxY + " m)");
       }
     }
