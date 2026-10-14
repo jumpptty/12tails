@@ -539,7 +539,7 @@
   }
   .sr-adv-btn:hover { color: var(--gold); }
   .sr-modal-backdrop {
-    position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.62); backdrop-filter: blur(2px);
+    position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.66);
     display: flex; align-items: center; justify-content: center; padding: 16px;
   }
   .sr-modal-backdrop[hidden] { display: none; }
@@ -1287,7 +1287,7 @@
   }
 
   /* ---- Changelog modal ---- */
-  .changelog-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.66); backdrop-filter:blur(3px)}
+  .changelog-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.72)}
   .changelog-backdrop[hidden]{display:none}
   .changelog-popup{width:min(560px,100%); max-height:min(720px,calc(100vh - 40px)); overflow:hidden; background:var(--panel); border:1px solid var(--gold); border-radius:6px; box-shadow:0 24px 70px rgba(0,0,0,.45); font-family:'Prompt',-apple-system,sans-serif}
   .changelog-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 20px 14px; border-bottom:1px solid var(--line)}
@@ -1316,7 +1316,7 @@
      (min(...,94vw,94vh*16/9)) so the box stays true 16:9 even on a short
      viewport instead of overflowing vertically -- see the mobile query
      at the bottom for when 16:9 itself stops making sense. */
-  .mech-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.66); backdrop-filter:blur(3px)}
+  .mech-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.72)}
   .mech-backdrop[hidden]{display:none}
   .mech-popup{width:min(1800px,94vw,calc(94vh * 16 / 9)); aspect-ratio:16/9; max-height:94vh; overflow:hidden; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--mech-kw, #8a6a1f); border-radius:10px; box-shadow:0 32px 90px rgba(0,0,0,.5); font-family:'Prompt',-apple-system,sans-serif}
   .mech-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 30px 18px; border-bottom:1px solid var(--line); flex:0 0 auto}
@@ -1432,7 +1432,7 @@
   .donate-backdrop[hidden]{display:none !important}
   .donate-backdrop{
     position:fixed; inset:0; z-index:100000;
-    background:rgba(0,0,0,.78); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+    background:rgba(0,0,0,.82);
     display:flex; align-items:center; justify-content:center; padding:20px;
   }
   .donate-popup{
@@ -1963,7 +1963,7 @@
   }
 
   .sg-gate{
-    position:fixed; inset:0; background:rgba(10,7,5,.84); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+    position:fixed; inset:0; background:rgba(10,7,5,.88);
     display:none; align-items:center; justify-content:center; z-index:9999; padding:16px;
     overflow-y:auto; -webkit-overflow-scrolling:touch; box-sizing:border-box;
   }
@@ -2398,7 +2398,7 @@
   }
   .sk-server-backdrop{
     position:fixed; top:0; left:0; width:100vw; height:100vh;
-    background:rgba(0, 0, 0, 0.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    background:rgba(0, 0, 0, 0.82);
     z-index:999998; display:flex; align-items:center; justify-content:center;
     padding:20px; box-sizing:border-box;
     animation:skBackdropFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -2410,7 +2410,7 @@
   }
   .sk-server-popup{
     position:relative; z-index:999999;
-    background:rgba(20, 19, 17, 0.98); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+    background:rgba(20, 19, 17, 0.98);
     border:1px solid var(--gold); border-top:4px solid var(--gold);
     border-radius:12px; padding:26px 30px;
     box-shadow:0 30px 90px rgba(0, 0, 0, 0.95), 0 0 50px rgba(212, 175, 55, 0.32);
@@ -4553,7 +4553,7 @@
   .sk-controls > div:has(> .sk-stat-bonus){position:relative}
   .sk-stats-panel > .sk-controls, .sk-enemystat-controls .sk-controls{row-gap:20px; padding-bottom:24px}
   .sk-bd-backdrop{
-    position:fixed; inset:0; z-index:20; background:rgba(0,0,0,.62); backdrop-filter:blur(2px);
+    position:fixed; inset:0; z-index:20; background:rgba(0,0,0,.66);
     display:flex; align-items:center; justify-content:center; padding:16px;
   }
   .sk-bd-popup{
@@ -29668,6 +29668,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-14T13:42:41.955Z","perf(bible): popups no longer blur the page behind them (the blurred backdrops made the server and Buff / Debuff popups lag); the validator now fails on backdrop-filter"],
     ["2026-10-14T04:26:13.387Z","fix(bible): range preview labels a trapezoid's length on the centre line (the distance between its bases), not on the slanted side"],
     ["2026-10-14T04:11:20.325Z","feat(bible): range preview shows target locks as a faint ground ring, 3D distance gates as a faint sphere, and a tube shape for collider projectiles"],
     ["2026-10-14T03:44:39.476Z","feat(bible): Wolf and Cat hold their standard weapons in the range preview"],

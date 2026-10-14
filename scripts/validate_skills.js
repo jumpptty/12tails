@@ -3817,6 +3817,19 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.`);
   console.log(`Verified ${checkedReach} reach parts.`);
 }
+// Popup lag guard (user 2026-10-14): a full-viewport backdrop-filter re-blurs the whole page behind it every frame while the popup animates in,
+// which made the server-balance popup and the Buff / Debuff panel lag very hard. Overlays dim with a plain rgba background instead.
+// The only allowed backdrop-filter is the theme variable (default none).
+{
+  let blurHits = 0;
+  for (const m of html.matchAll(/(?:^|[;{\s"'])(?:-webkit-)?backdrop-filter\s*:\s*([^;}"']+)/g)) {
+    const v = m[1].trim();
+    if (v === "none" || v.startsWith("var(--th-blur")) continue;
+    console.error(`[PERF ERROR] backdrop-filter '${v}' near char ${m.index}: overlays must not blur the page behind them (see bible-skill-page-ui "Popup performance").`);
+    errorCount++; blurHits++;
+  }
+  if (!blurHits) console.log("Verified no popup backdrop-filter blur.");
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
