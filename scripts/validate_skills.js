@@ -3586,6 +3586,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (p.w2 !== undefined && !(typeof p.w2 === "number" && p.w2 > 0)) bad(`${sk.id} rank ${r}: w2 must be > 0, got ${p.w2}`);
         if (p.rangeMod !== undefined && p.rangeMod !== true && p.rangeMod !== false && !(Array.isArray(p.rangeMod) && p.rangeMod.length && p.rangeMod.every(k => ["r", "w", "w2", "l", "h", "z0"].includes(k)))) bad(`${sk.id} rank ${r}: rangeMod must be true or a list of r w w2 l h z0, got ${JSON.stringify(p.rangeMod)}`);
         if (p.z0 !== undefined && typeof p.z0 !== "number") bad(`${sk.id} rank ${r}: z0 must be a number`);
+        if (p.x0 !== undefined && typeof p.x0 !== "number") bad(`${sk.id} rank ${r}: x0 must be a number`);
         if (p.y0 !== undefined && typeof p.y0 !== "number") bad(`${sk.id} rank ${r}: y0 must be a number`);
         if (!p.unknown) for (const k of REACH_DIM[p.shape]) {
           const v = p[k];
@@ -3635,7 +3636,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
   {
     const dr = sandbox._depRanks, saved = { ...dr };
-    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade"]) dr[k] = o[k] || 0; };
+    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade", "giantStar", "frozenBreak", "deadlyFrost", "frostSpike"]) dr[k] = o[k] || 0; };
     const P = (id, rank, o, rM) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank, rM); };
     const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
     try {
@@ -3726,6 +3727,34 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("wolf_feralAssault", 1); g("Feral Assault: 12 wide at the back narrowing to 6, 8 long from 6 m behind + r6 finisher, no rangeMod", c[0].w === 12 && c[0].w2 === 6 && c[0].l === 8 && c[0].z0 === -6 && c[1].r === 6 && !c[0].rangeMod, c);
       c = P("wolf_dualBrand", 1); g("Dual Brand r5 h3 circle (0.5 m ahead) + 4x5x4 box", c[0].r === 5 && c[0].h === 3 && c[0].z0 === 0.5 && c[1].w === 4 && c[1].l === 5 && c[1].h === 4, c);
       c = P("wolf_twinResonance", 1); g("Twin Resonance: 190 degree fan, r 1 + 0.8 x 39 = 32.2, h2", c[0].shape === "sector" && c[0].angle === 190 && c[0].r === 32.2 && c[0].h === 2, c);
+      // Penguin (Penguin.cs, ManaVortex.cs, Penguin_iceBlock.cs, Penguin_tornado.cs; sizes x rangeMod only where the card says rangeMod)
+      c = P("penguin_nAttack", 1); g("Penguin Combo: a 19.6 m projectile line (14 m/s x 1.4 s)", c.length === 1 && c[0].shape === "line" && c[0].l === 19.6, c);
+      c = P("penguin_nAttack", 1, {}, 1.4); g("Penguin Combo x1.4 = 27.44 m", c[0].l === 27.44, c[0]);
+      c = P("penguin_cAttack", 1); g("Mana Field: a 3D sphere r8 (sqrMagnitude < 64)", c.length === 1 && c[0].shape === "sphere" && c[0].r === 8, c);
+      c = P("panda_cAttack", 1); g("Aura Field: a 3D sphere r8 (sqrMagnitude < 64)", c.length === 1 && c[0].shape === "sphere" && c[0].r === 8, c);
+      c = P("penguin_manaMissile", 4); g("Mana Missile: 40 m lock ring + a 36 m flight line", c.length === 2 && c[0].shape === "ring" && c[0].r === 40 && c[1].shape === "line" && c[1].l === 36, c);
+      c = P("penguin_manaArc", 4); g("Mana Arc r3 h3", c[0].r === 3 && c[0].h === 3, c);
+      c = P("penguin_dispell", 2, {}, 1.4); g("Dispell r5 h3, both scale", c[0].r === 7 && c[0].h === 4.2, c[0]);
+      c = P("penguin_fallingStars", 2); g("Falling Stars rank 2: search r16 h6, burst r2 h4 at the target", c.length === 2 && c[0].r === 16 && c[0].h === 6 && c[1].r === 2 && c[1].h === 4 && c[1].anchor === "target", c);
+      c = P("penguin_fallingStars", 2, { giantStar: 1 }); g("Giant Star: burst r3, the search radius stays 16 (FloorToInt(1.5) = 1)", c[0].r === 16 && c[1].r === 3, c);
+      c = P("penguin_fallingComets", 1); g("Falling Comets: lock ring, scatter -8..+7 (15 square, z0 -8), blast r6 h4", c.length === 3 && c[1].w === 15 && c[1].z0 === -8 && c[1].x0 === -0.5 && c[2].r === 6 && c[2].h === 4, c);
+      c = P("penguin_fallingComets", 1, { giantStar: 1 }); g("Giant Star: scatter -10..+9 (19 square), blast r9", c[1].w === 19 && c[1].z0 === -10 && c[2].r === 9, c);
+      c = P("penguin_manaVortex", 3); g("Mana Vortex rank 3: r24 h6, 5 m ahead", c[0].r === 24 && c[0].h === 6 && c[0].z0 === 5, c);
+      c = P("penguin_novaFlare", 1); g("Nova Flare: the vortex radii 16 / 20 / 24", c.length === 3 && c[0].r === 16 && c[1].r === 20 && c[2].r === 24 && c.every(p => p.h === 6), c);
+      c = P("penguin_meteora", 2); g("Meteora rank 2: lock ring + r12 h6 at the target", c[1].r === 12 && c[1].h === 6 && c[1].anchor === "target", c);
+      c = P("penguin_frozenBlast", 4); g("Frozen Blast rank 4: r6 h3", c[0].r === 6 && c[0].h === 3, c);
+      c = P("penguin_frozenBlast", 4, { frozenBreak: 1 }); g("Frozen Break: +2 m", c[0].r === 8, c);
+      c = P("penguin_arcticWind", 3); g("Arctic Wind: 4 to 5 wide, 7 long, 3 high", c[0].w === 4 && c[0].w2 === 5 && c[0].l === 7 && c[0].h === 3, c);
+      c = P("penguin_arcticWind", 3, { deadlyFrost: 1 }); g("Deadly Frost: 11 long", c[0].l === 11, c);
+      c = P("penguin_iceShield", 1); g("Ice Shield: lock ring only", c.length === 1 && c[0].shape === "ring", c);
+      c = P("penguin_iceShield", 1, { frostSpike: 1 }); g("Frost Spike: r5 h3 around the holder", c.length === 2 && c[1].r === 5 && c[1].h === 3, c);
+      c = P("penguin_iceBlock", 2); g("Ice Block rank 2: 5 blocks 1.5 m apart, r12 h6, 1.5 m ahead", c.length === 5 && c[0].x0 === -3 && c[4].x0 === 3 && c.every(p => p.r === 12 && p.h === 6 && p.z0 === 1.5), c);
+      c = P("penguin_tornado", 3); g("Tornado rank 3: r3 h4 + a 30 m flat leash", c[0].r === 3 && c[0].h === 4 && c[1].shape === "ring" && c[1].r === 30, c);
+      c = P("penguin_blizzard", 2); g("Blizzard rank 2: r12 h6 round the target", c[1].r === 12 && c[1].h === 6, c);
+      c = P("penguin_arcticEmperor", 2); g("Arctic Emperor r8 h6", c[0].r === 8 && c[0].h === 6, c);
+      c = P("penguin_parallelShift", 1); g("Parallel Shift r6 h3", c[0].r === 6 && c[0].h === 3, c);
+      c = P("penguin_cosmicFriday", 1); g("Cosmic Friday r3 h3", c[0].r === 3 && c[0].h === 3, c);
+      for (const id of ["penguin_mpTransfer", "penguin_manaBurn", "penguin_snowMan", "penguin_absoluteZero", "penguin_snowBall"]) { c = P(id, 1); g(id + ": 40 m lock ring only", c.length === 1 && c[0].shape === "ring" && c[0].r === 40, c); }
       // preview toggles: Lunar Eclipse adds 0.4 per level to the Enlarge / Reduce factor, so Enlarge 4 + Lunar 1 = x1.8 and Lunar 2 alone = x1.8
       {
         const ct = SKILLS.find(x => x.id === "wolf_counter");
@@ -3768,6 +3797,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       if (m[1] === "Wolf" && (body.nv !== 2054 || body.nt !== 1929)) bad("model Wolf: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Wolf_standard_tri) has 2054 / 1929");
       if (m[1] === "Wolf") { const wx = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i)); if (wx.length !== 1 || wx[0].nv !== 382 || wx[0].nt !== 246) bad("model Wolf: extras should be the standard sword in both hands (2 x 191 verts / 2 x 123 tris), got " + JSON.stringify(wx)); }
       const extras = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i));
+      if (m[1] === "Penguin") {
+        // armors/Penguin_standard_tri.asset 1074 / 1212; extras = the standard hat c_pgn10 (Penguin_standardHat_tri 218 / 222, on the Hat1 bone with Euler(-20, -80, -115)) and the standard wand w_pgn10 (WP_Penguin_01 106 / 130, mount_Hand_L)
+        if (body.nv !== 1074 || body.nt !== 1212) bad("model Penguin: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Penguin_standard_tri) has 1074 / 1212");
+        if (extras.length !== 2 || extras[0].nv !== 218 || extras[0].nt !== 222 || extras[1].nv !== 106 || extras[1].nt !== 130) bad("model Penguin: extras should be the standard hat (218 / 222) and the standard wand (106 / 130), got " + JSON.stringify(extras));
+      }
       if (m[1] === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
         if (extras.length !== 2 || extras[0].nv !== 248 || extras[0].nt !== 242 || extras[1].nv !== 244 || extras[1].nt !== 140) bad("model Cat: extras should be the default hair (248 verts / 242 tris) and the standard knife (244 / 140), got " + JSON.stringify(extras));
