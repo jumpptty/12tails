@@ -11014,7 +11014,7 @@ function reachScene(id){
   const load = (uri) => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = uri; });
   const pix = (im) => { const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const g = c.getContext("2d"); g.drawImage(im, 0, 0); return { d: g.getImageData(0, 0, im.width, im.height).data, w: im.width, h: im.height }; };
   const T = d.terrain;
-  Promise.all(d.tex.map(t => load(t.uri)).concat([load(T.alpha.uri)], T.tiles.map(load))).then(ims => {
+  Promise.all(d.tex.map(t => load(t.uri)).concat([load(T.alpha.uri)], T.tiles.map(load))).then(async ims => {
     try {
       if (ims.some(im => !im)) throw new Error("image");
       const nt = d.tex.length;
@@ -11029,7 +11029,9 @@ function reachScene(id){
       // terrain texture: weights from the splat map (bilinear), colours from the four tiles repeating every T.tile metres
       const A = pix(ims[nt]), tiles = ims.slice(nt + 1).map(pix), SX = (T.nx - 1) * T.step, SZ = (T.nz - 1) * T.step, TW = 1024, TH = Math.round(TW * SZ / SX);
       const out = new Uint8ClampedArray(TW * TH * 4), a = T.alpha;
+      let tick = performance.now();   // the blend is ~1M pixels: yield every ~8 ms so it never freezes a frame (it runs right after a reach card is shown)
       for (let y = 0; y < TH; y++){
+        if (performance.now() - tick > 8){ await new Promise(r => setTimeout(r, 0)); tick = performance.now(); }
         const z = T.z0 + (y + 0.5) / TH * SZ, fz = Math.min(a.h - 1.001, Math.max(0, (z - a.z0) / a.px - 0.5)), j = fz | 0, vz = fz - j;
         for (let x = 0; x < TW; x++){
           const wx = T.x0 + (x + 0.5) / TW * SX, fx = Math.min(a.w - 1.001, Math.max(0, (wx - a.x0) / a.px - 0.5)), i = fx | 0, ux = fx - i;
@@ -29626,6 +29628,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-14T03:10:13.394Z","perf(bible): range popup scene warms up in short slices instead of one 130 ms freeze"],
     ["2026-10-14T02:51:44.826Z","fix(bible): range popup scene drops the border-line prop that drew as black dots"],
     ["2026-10-14T02:44:44.200Z","feat(bible): range popup marks the enemy start point 2, bold gold ภูมิคุ้มกัน label on Fire Avatar and Earth Form"],
     ["2026-10-14T01:23:39.857Z","feat(bible): range popup mission map and above / below ground heights, Blade Song damage, Bless Lv.1-6 icons, Earth Form immunities"],
