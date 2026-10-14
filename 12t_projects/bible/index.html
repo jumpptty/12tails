@@ -11098,7 +11098,7 @@ function reachSceneParts(s){
     const g = groups[key];
     parts.push({ pos: g.pos, tris: reachTris(g.pos, g.t), tu: Float32Array.from(g.tu), tv: Float32Array.from(g.tv), tex: s.texs[key], cut: !!d.tex[key].cut, fixed: true });
   }
-  return (s.bake = { parts });
+  return (s.bake = { parts, enemy: tf(d.spawns[1].x, d.spawns[1].gy, d.spawns[1].z) });   // enemy = start point 2 in popup space (drawReach marks it)
 }
 // The model is rasterised by hand into a pixel buffer (user 2026-10-13: no seams between connected triangles, better lighting):
 // one z-buffer for every part, barycentric coverage so a shared edge is drawn exactly once (no gaps, no overlaps), the skin sampled per
@@ -11255,6 +11255,18 @@ function drawReach(cv, items, st, model, scene){
   if (sceneParts){   // the scene fills the canvas, so it renders at the adaptive quality while moving and once more at full quality 220 ms after the last draw
     clearTimeout(reachBuf.settle);
     if (reachBuf.q < 1 && !reachBuf.force) reachBuf.settle = setTimeout(() => { if (!cv.isConnected) return; reachBuf.force = true; try { drawReach(cv, items, st, model, scene); } finally { reachBuf.force = false; } }, 220);
+  }
+  if (scene && scene.enemy){   // start point 2 = where the opponent starts the duel (user 2026-10-14): a ring on the ground, a pole and a pill with the distance
+    const E = scene.enemy, RED = "#ef5350", ring = Array.from({ length: 32 }, (_, i) => { const a = 2 * Math.PI * i / 32; return P([E[0] + 0.5 * Math.cos(a), E[1] + 0.02, E[2] + 0.5 * Math.sin(a)]); });
+    const base = P(E), top = P([E[0], E[1] + 3, E[2]]), txt = "ศัตรู · จุดเกิด 2 · " + (+Math.hypot(E[0], E[2]).toFixed(1)) + "m";
+    ctx.save(); ctx.globalAlpha = 1; ctx.setLineDash([]); ctx.lineWidth = 2.2; ctx.strokeStyle = RED; ctx.fillStyle = "rgba(239,83,80,.35)";
+    ctx.beginPath(); ring.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(base[0], base[1]); ctx.lineTo(top[0], top[1]); ctx.stroke();
+    ctx.font = "bold 12px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const w = ctx.measureText(txt).width + 12;
+    ctx.fillStyle = "rgba(12,12,14,.85)"; ctx.fillRect(top[0] - w / 2, top[1] - 24, w, 18); ctx.lineWidth = 1.2; ctx.strokeRect(top[0] - w / 2, top[1] - 24, w, 18);
+    ctx.fillStyle = RED; ctx.fillText(txt, top[0], top[1] - 14.5);
+    ctx.restore();
   }
   ctx.font = "bold 12px ui-monospace, monospace";
   ctx.textBaseline = "middle"; ctx.textAlign = "center";
@@ -15332,15 +15344,15 @@ const SKILLS = [
     compatSkills: ["monkey_phoenix", "monkey_fireBall", "monkey_fireAvatar_fireBall", "monkey_blazingFire", "monkey_autoInstant"],
     servers: {
       tto: {
-        desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การร่ายสกิล: สามารถร่ายสกิลได้ตามปกติขณะอยู่ในร่างนี้<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s** ไกลสุด **60×rangeMod m**) และเพิ่มระดับ Burn เป็น **เลเวล 5** อย่างถาวร<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• ภูมิคุ้มกัน: Burn, Snowman, Snowball และ KO",
+        desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การร่ายสกิล: สามารถร่ายสกิลได้ตามปกติขณะอยู่ในร่างนี้<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s** ไกลสุด **60×rangeMod m**) และเพิ่มระดับ Burn เป็น **เลเวล 5** อย่างถาวร<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• **ภูมิคุ้มกัน:** Burn, Snowman, Snowball และ KO",
         changeNote: "• [Buff] ขณะอยู่ในร่าง Fire Avatar สามารถร่ายสกิลได้"
       },
       tot: {
-        desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การใช้ไอเทม: สามารถกดใช้ยาทุกชนิดได้<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s** ไกลสุด **60×rangeMod m**) ทุกการโจมตีครั้งที่ **2** เป็นลูกไฟขนาดใหญ่ที่สุด และเพิ่มระดับ Burn เป็น **เลเวล 5** อย่างถาวร<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• ภูมิคุ้มกัน: Burn, Snowman, Snowball และ KO",
+        desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การใช้ไอเทม: สามารถกดใช้ยาทุกชนิดได้<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s** ไกลสุด **60×rangeMod m**) ทุกการโจมตีครั้งที่ **2** เป็นลูกไฟขนาดใหญ่ที่สุด และเพิ่มระดับ Burn เป็น **เลเวล 5** อย่างถาวร<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• **ภูมิคุ้มกัน:** Burn, Snowman, Snowball และ KO",
         changeNote: "• [Buff] ในขณะที่อยู่ในร่าง FireAvatar ลิงสามารถกดกินยาได้ทุกชนิด\n• [Adjust] เปลี่ยนจากการรอเวลาเพื่อชาร์จยิงไฟลูกใหญ่ >> ทุกๆ การโจมตีครั้งที่ **2** จะเป็นไฟบอลขนาดใหญ่ที่สุด"
       }
     },
-    desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s** ไกลสุด **60×rangeMod m**) และเพิ่มระดับ Burn เป็น **เลเวล 5** อย่างถาวร<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• ภูมิคุ้มกัน: Burn, Snowman, Snowball และ KO",
+    desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s** ไกลสุด **60×rangeMod m**) และเพิ่มระดับ Burn เป็น **เลเวล 5** อย่างถาวร<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• **ภูมิคุ้มกัน:** Burn, Snowman, Snowball และ KO",
     revisedArtExempt: false
   },
 
@@ -15484,15 +15496,15 @@ const SKILLS = [
     compatSkills: ["monkey_earthForm_nAttack", "monkey_stoneSentinel", "monkey_autoInstant", "monkey_nAttack", "monkey_gadina"],
     servers: {
       tto: {
-        desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การร่ายสกิล: สามารถร่ายสกิลได้ตามปกติขณะอยู่ในร่างนี้<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>• ภูมิคุ้มกัน: Petrify และ KO",
+        desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การร่ายสกิล: สามารถร่ายสกิลได้ตามปกติขณะอยู่ในร่างนี้<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>• **ภูมิคุ้มกัน:** Petrify และ KO",
         changeNote: "• [Buff] ขณะอยู่ในร่าง Earth Form สามารถร่ายสกิลได้"
       },
       tot: {
-        desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การใช้ไอเทม: สามารถกดใช้ยาทุกชนิดได้<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด และความเร็วแอนิเมชันการต่อยเพิ่มขึ้น **25%**<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>• ภูมิคุ้มกัน: Petrify และ KO (ไม่กระเด็นจากการโจมตีทางกายภาพทุกรูปแบบ)",
+        desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การใช้ไอเทม: สามารถกดใช้ยาทุกชนิดได้<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด และความเร็วแอนิเมชันการต่อยเพิ่มขึ้น **25%**<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>• **ภูมิคุ้มกัน:** Petrify และ KO (ไม่กระเด็นจากการโจมตีทางกายภาพทุกรูปแบบ)",
         changeNote: "• [Buff] ในขณะที่อยู่ในร่าง EarthForm ลิงสามารถกดกินยาได้ทุกชนิด\n• [Buff] เพิ่มความเร็วของอนิเมชั่นการต่อย **25%**\n• [Buff] ลิงจะไม่กระเด็นจากการโจมตีทางกายภาพทุกรูปแบบเมื่ออยู่ในร่าง EarthForm"
       }
     },
-    desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>• ภูมิคุ้มกัน: Petrify และ KO",
+    desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>• **ภูมิคุ้มกัน:** Petrify และ KO",
     revisedArtExempt: false
   },
 
@@ -29614,6 +29626,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-14T02:44:44.200Z","feat(bible): range popup marks the enemy start point 2, bold gold ภูมิคุ้มกัน label on Fire Avatar and Earth Form"],
     ["2026-10-14T01:23:39.857Z","feat(bible): range popup mission map and above / below ground heights, Blade Song damage, Bless Lv.1-6 icons, Earth Form immunities"],
     ["2026-10-13T16:11:24.898Z","fix(bible): range popup only shows the rank toggle when the rank changes the shape"],
     ["2026-10-13T16:09:30.846Z","fix(bible): in the range popup only W A S D and dragging stop the pan; scrolling and zooming keep it going"],
