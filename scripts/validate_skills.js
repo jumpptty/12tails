@@ -3751,7 +3751,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       // trimmed to a disc of 2 x the arena radius (arena = half the distance between the two border lines) round the arena centre; every prop origin is inside it
       if (!d.crop || Math.abs(d.crop.r - 2 * d.crop.arena) > 0.01) bad(`scene ${m[1]}: crop radius ${d.crop && d.crop.r} is not 2 x the arena radius ${d.crop && d.crop.arena}`);
       else for (const [q, ins] of d.inst.entries()) if (Math.hypot(ins[4] - d.crop.x, ins[12] - d.crop.z) > d.crop.r + 0.01) bad(`scene ${m[1]}: instance ${q} is outside the crop disc`);
-      if (m[1] === "M108" && (d.inst.length !== 19 || d.meshes.length !== 8 || Math.abs(d.crop.arena - 14.43) > 0.05)) bad(`scene M108: ${d.inst.length} props / ${d.meshes.length} meshes, arena radius ${d.crop.arena}; expected 19 / 8 / 14.43 (the visible static props inside 2 x the arena radius)`);
+      if (m[1] === "M108" && (d.inst.length !== 17 || d.meshes.length !== 7 || Math.abs(d.crop.arena - 14.43) > 0.05)) bad(`scene M108: ${d.inst.length} props / ${d.meshes.length} meshes, arena radius ${d.crop.arena}; expected 17 / 7 / 14.43 (the visible static props inside 2 x the arena radius; the two border-line props are left out on purpose)`);
     }
     if (!scenes) bad("no REACH_SCENES entries found");
   }
