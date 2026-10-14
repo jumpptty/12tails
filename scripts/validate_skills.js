@@ -3636,7 +3636,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
   {
     const dr = sandbox._depRanks, saved = { ...dr };
-    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade", "giantStar", "frozenBreak", "deadlyFrost", "frostSpike"]) dr[k] = o[k] || 0; };
+    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade", "giantStar", "frozenBreak", "deadlyFrost", "frostSpike", "entendedWave", "reachShieldBash", "reachKnightDeep", "tideCutter", "peninsulaAsunder", "spiralBlast", "divingPress"]) dr[k] = o[k] || 0; };
     const P = (id, rank, o, rM) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank, rM); };
     const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
     try {
@@ -3755,6 +3755,38 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("penguin_parallelShift", 1); g("Parallel Shift r6 h3", c[0].r === 6 && c[0].h === 3, c);
       c = P("penguin_cosmicFriday", 1); g("Cosmic Friday r3 h3", c[0].r === 3 && c[0].h === 3, c);
       for (const id of ["penguin_mpTransfer", "penguin_manaBurn", "penguin_snowMan", "penguin_absoluteZero", "penguin_snowBall"]) { c = P(id, 1); g(id + ": 40 m lock ring only", c.length === 1 && c[0].shape === "ring" && c[0].r === 40, c); }
+      // Whale (Whale.cs, Whale_overPresence.cs; sizes x rangeMod only where the card says rangeMod)
+      c = P("whale_nAttack", 1); g("Whale Combo rank 1: 3x4x2 box + the faint Star Spear sphere r9", c.length === 2 && c[0].w === 3 && c[0].l === 4 && c[0].h === 2 && c[1].shape === "sphere" && c[1].r === 9 && c[1].faint === true, c);
+      c = P("whale_nAttack", 2, { entendedWave: 1 }); g("Whale Combo rank 2 + Entended Wave: stages 1-2 3x7, stage 3 4x7, Star Spear r12", c.length === 3 && c[0].l === 7 && c[1].w === 4 && c[1].l === 7 && c[2].r === 12, c);
+      c = P("whale_nAttack", 2, {}, 1.4); g("Whale Combo x1.4: width and height scale, length does not", c[0].w === 4.2 && c[0].h === 2.8 && c[0].l === 4 && c[1].w === 5.6, c);
+      c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }); g("Charge Attack: Shield Bash r3 h3 (x rangeMod) + Knight of the Deep r4 h3", c.length === 2 && c[0].r === 3 && c[0].h === 3 && c[0].rangeMod === true && c[1].r === 4 && c[1].h === 3, c);
+      c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }, 1.4); g("Charge Attack x1.4: Shield Bash scales, Knight of the Deep does not", c[0].r === 4.2 && c[0].h === 4.2 && c[1].r === 4, c);
+      c = P("whale_cAttack", 1, { reachShieldBash: 0, reachKnightDeep: 1 }); g("Charge Attack with Shield Bash off keeps only the Knight cylinder", c.length === 1 && c[0].r === 4, c);
+      c = P("whale_sweep", 2); g("Sweep: first r4 h3, second r5 h3", c.length === 2 && c[0].r === 4 && c[0].h === 3 && c[1].r === 5 && c[1].h === 3, c);
+      c = P("whale_sweep", 2, { tideCutter: 1 }, 1.4); g("Tide Cutter: first r6 (radius does not scale), height and the second hit scale", c[0].r === 6 && c[0].h === 4.2 && c[1].r === 7 && c[1].h === 4.2, c);
+      c = P("whale_honor", 2); g("Honor rank 2: friends r15 h3, Hate r30 h6", c.length === 2 && c[0].r === 15 && c[0].h === 3 && c[1].r === 30 && c[1].h === 6, c);
+      c = P("whale_shieldRush", 1, {}, 1.4); g("Shield Rush 2x2x3 all x rangeMod", c[0].w === 2.8 && c[0].l === 2.8 && c[0].h === 4.2, c);
+      c = P("whale_swallow", 1); g("Swallow: 40 m lock ring + the 2x2x3 swallow box", c.length === 2 && c[0].shape === "ring" && c[0].r === 40 && c[1].w === 2 && c[1].l === 2 && c[1].h === 3, c);
+      c = P("whale_gobbleUp", 1); g("Gobble Up r3 h3 at the swallowed target", c[0].r === 3 && c[0].h === 3 && c[0].anchor === "target", c);
+      c = P("whale_peninsulaImpale", 2); g("Peninsula Impale 2x6x3", c[0].w === 2 && c[0].l === 6 && c[0].h === 3, c);
+      c = P("whale_peninsulaImpale", 2, { peninsulaAsunder: 1 }); g("Peninsula Asunder: 3x12", c[0].w === 3 && c[0].l === 12, c);
+      c = P("whale_peninsulaRound", 2); g("Peninsula Round 3x4x3 + a faint r20 redirect sphere", c.length === 2 && c[0].w === 3 && c[0].l === 4 && c[1].shape === "sphere" && c[1].r === 20 && c[1].faint === true, c);
+      c = P("whale_peninsulaRound", 2, { peninsulaAsunder: 1 }); g("Peninsula Asunder: 6x5 from 1 m behind", c[0].w === 6 && c[0].l === 5 && c[0].z0 === -1, c);
+      c = P("whale_12thKingdomKnight", 2); g("12th Kingdom Knight: faint sphere r8", c[0].shape === "sphere" && c[0].r === 8 && c[0].faint === true, c);
+      c = P("whale_hydroBlast", 4); g("Hydro Blast: lock ring + r1 h6 at the target", c.length === 2 && c[0].shape === "ring" && c[1].r === 1 && c[1].h === 6 && c[1].anchor === "target", c);
+      c = P("whale_hydroBlast", 4, { spiralBlast: 1 }); g("Spiral Blast: r2", c[1].r === 2, c);
+      c = P("whale_whaleWave", 2); g("Whale Wave r6 h3", c[0].r === 6 && c[0].h === 3, c);
+      c = P("whale_whaleWave", 2, { divingPress: 1 }, 1.4); g("Diving Press: r9, only the height scales", c[0].r === 9 && c[0].h === 4.2, c);
+      c = P("whale_malStorm", 2); g("Mal Storm r8 h5", c[0].r === 8 && c[0].h === 5, c);
+      c = P("whale_malStorm", 2, { divingPress: 1 }, 1.4); g("Diving Press: r12, height x1.4", c[0].r === 12 && c[0].h === 7, c);
+      c = P("whale_callToArm", 1); g("Call To Arm r12 h3", c[0].r === 12 && c[0].h === 3, c);
+      c = P("whale_megalodon", 2); g("Megalodon rank 2: lock ring, suction r5 h5, bite r7 h10", c.length === 3 && c[1].r === 5 && c[1].h === 5 && c[2].r === 7 && c[2].h === 10, c);
+      c = P("whale_bubbleBurst", 1); g("Bubble Burst: r12 h3 blast + the 200 m search (faint, not used for the zoom)", c.length === 2 && c[0].r === 12 && c[1].r === 200 && c[1].h === 50 && c[1].faint === true && c[1].noZoom === true && sandbox._reachBadgeText(c) === "r 12m", c);
+      c = P("whale_bowlingWhale", 1); g("Bowling Whale r3 h3", c[0].r === 3 && c[0].h === 3, c);
+      c = P("whale_grandTide", 1); g("Grand Tide 16x7x4 from 4 m behind", c[0].w === 16 && c[0].l === 7 && c[0].h === 4 && c[0].z0 === -4, c);
+      c = P("whale_overPresence", 2); g("Over Presence: the prefab's SphereCollider r6", c[0].shape === "sphere" && c[0].r === 6, c);
+      for (const id of ["whale_javelin", "whale_flyingShield"]) { c = P(id, 1); g(id + ": range lives in the prefab / animation, badge ?", c.length === 1 && c[0].unknown === true, c); }
+      for (const id of ["whale_bubbleShield", "whale_heavyWeight", "whale_rejuvenate", "whale_homingShield"]) { c = P(id, 1); g(id + ": 40 m lock ring only", c.length === 1 && c[0].shape === "ring" && c[0].r === 40, c); }
       // preview toggles: Lunar Eclipse adds 0.4 per level to the Enlarge / Reduce factor, so Enlarge 4 + Lunar 1 = x1.8 and Lunar 2 alone = x1.8
       {
         const ct = SKILLS.find(x => x.id === "wolf_counter");
@@ -3801,6 +3833,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         // armors/Penguin_standard_tri.asset 1074 / 1212; extras = the standard hat c_pgn10 (Penguin_standardHat_tri 218 / 222, on the Hat1 bone with Euler(-20, -80, -115)) and the standard wand w_pgn10 (WP_Penguin_01 106 / 130, mount_Hand_L)
         if (body.nv !== 1074 || body.nt !== 1212) bad("model Penguin: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Penguin_standard_tri) has 1074 / 1212");
         if (extras.length !== 2 || extras[0].nv !== 218 || extras[0].nt !== 222 || extras[1].nv !== 106 || extras[1].nt !== 130) bad("model Penguin: extras should be the standard hat (218 / 222) and the standard wand (106 / 130), got " + JSON.stringify(extras));
+      }
+      if (m[1] === "Whale") {
+        // armors/Whale_standard_tri.asset 1471 / 1692 (the standard armor, no hat); extras = standardLance in mount_Hand_R (WhaleEquipment.EquipWeapon nHand == 1, 141 / 76) and standardShield in mount_Hand_L (172 / 148), identity local transform
+        if (body.nv !== 1471 || body.nt !== 1692) bad("model Whale: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Whale_standard_tri) has 1471 / 1692");
+        if (extras.length !== 2 || extras[0].nv !== 141 || extras[0].nt !== 76 || extras[1].nv !== 172 || extras[1].nt !== 148) bad("model Whale: extras should be the standard lance (141 / 76) and the standard shield (172 / 148), got " + JSON.stringify(extras));
       }
       if (m[1] === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
