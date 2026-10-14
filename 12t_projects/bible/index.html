@@ -10888,7 +10888,9 @@ function reachDims(p){
     const hw = p.w / 2, hw2 = (p.w2 !== undefined ? p.w2 : p.w) / 2, lo = typeof p.h === "number" ? -0.5 * p.h : -3, top = typeof p.h === "number" ? p.h : 6;
     out.push({ text: f1(p.w) + "m", opts: [[V(-hw, top, 0), V(hw, top, 0)], ...(hw2 !== hw ? [] : [[V(-hw2, top, p.l), V(hw2, top, p.l)]])], pick: "low" });
     if (hw2 !== hw) out.push({ text: f1(p.w2) + "m", opts: [[V(-hw2, top, p.l), V(hw2, top, p.l)]], pick: "low" });
-    out.push({ text: f1(p.l) + "m", opts: [[V(-hw, top, 0), V(-hw2, top, p.l)], [V(hw, top, 0), V(hw2, top, p.l)]], pick: "right" });
+    // a trapezoid's length is TargetRange: the distance between its two parallel bases (Damage.cs:1437-1446: the far corners sit at z = TargetRange), NOT its slanted side,
+    // so the pill goes on the centre line from the middle of the near base to the middle of the far base (a rectangle's side edge is already perpendicular)
+    out.push({ text: f1(p.l) + "m", opts: hw2 !== hw ? [[V(0, top, 0), V(0, top, p.l)]] : [[V(-hw, top, 0), V(-hw2, top, p.l)], [V(hw, top, 0), V(hw2, top, p.l)]], pick: "right" });
     heightPills([[-hw, 0], [hw, 0], [hw2, p.l], [-hw2, p.l]]);
   } else if (p.shape === "cylinder"){
     const top = typeof p.h === "number" ? p.h : 6, ring = (a) => [p.r * Math.cos(a), p.r * Math.sin(a)];
@@ -29666,6 +29668,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-14T04:26:13.387Z","fix(bible): range preview labels a trapezoid's length on the centre line (the distance between its bases), not on the slanted side"],
     ["2026-10-14T04:11:20.325Z","feat(bible): range preview shows target locks as a faint ground ring, 3D distance gates as a faint sphere, and a tube shape for collider projectiles"],
     ["2026-10-14T03:44:39.476Z","feat(bible): Wolf and Cat hold their standard weapons in the range preview"],
     ["2026-10-14T03:30:27.957Z","feat(wolf): range preview for the Wolf class (3D model, reach on 22 cards, Lunar Eclipse range toggle, flat fan shape, ground offset)"],

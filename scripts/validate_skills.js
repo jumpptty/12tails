@@ -114,7 +114,7 @@ const exposeInjection = `
   window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
   window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
-  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachProject = reachProject;
+  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
@@ -3601,6 +3601,13 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   const trap = sandbox._reachMesh({ shape: "box", w: 6, w2: 3.2, l: 4, h: 3, anchor: "fist", z0: -1 });
   const nearX = Math.max(...trap.verts.filter(v => Math.abs(v[2] + 1) < 1e-9).map(v => v[0])), farX = Math.max(...trap.verts.filter(v => Math.abs(v[2] - 3) < 1e-9).map(v => v[0]));
   if (nearX !== 3 || farX !== 1.6 || ext(trap.verts, 2) !== 4 || Math.min(...trap.verts.map(v => v[2])) !== -1 || ext(trap.verts, 1) !== 4.5) bad(`golden trapezoid near ${nearX} far ${farX}`);
+  // a trapezoid's length label measures TargetRange (the distance between the two parallel bases, Damage.cs:1437-1446), so it sits on the centre line, not on the slanted side
+  {
+    const lenPill = (p) => sandbox._reachDims(p).find(d => /^[\d.]+m$/.test(d.text) && d.pick === "right" && d.opts.length >= 1 && Math.abs(Math.abs(d.opts[0][1][2] - d.opts[0][0][2]) - p.l) < 1e-9);
+    const trap = lenPill({ shape: "box", w: 2, w2: 18, l: 8, h: 6, anchor: "self" }), rect = lenPill({ shape: "box", w: 2, w2: 2, l: 8, h: 6, anchor: "self" });
+    if (!trap || trap.opts.length !== 1 || trap.opts[0][0][0] !== 0 || trap.opts[0][1][0] !== 0) bad("golden trapezoid length pill must run along the centre line (x = 0), not the slanted edge");
+    if (!rect || rect.opts.length !== 2) bad("golden rectangle length pill keeps its two side edges");
+  }
   const ringM = sandbox._reachMesh({ shape: "ring", r: 5, anchor: "self" });
   if (ext(ringM.verts, 0) !== 10 || ext(ringM.verts, 2) !== 10 || ext(ringM.verts, 1) !== 0 || ringM.faces.length !== 0) bad("golden ring r5: 10 x 10 on the ground, outline only");
   const tubeM = sandbox._reachMesh({ shape: "tube", r: 0.5, l: 6, anchor: "self" });
