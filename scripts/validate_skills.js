@@ -3717,6 +3717,44 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     }
     if (!models) bad("no REACH_MODELS entries found");
   }
+  // reach scenes (2026-10-14): the mission map behind the caster. Everything decodes, indices are in range, props stand on the terrain, both start points sit on it
+  {
+    const re = /REACH_SCENES\.(\w+) = (\{[^\n]*\});/g;
+    let m, scenes = 0;
+    const isPng = (u) => Buffer.from(String(u).replace("data:image/png;base64,", ""), "base64").readUInt32BE(0) === 0x89504e47;
+    while ((m = re.exec(html))) {
+      scenes++;
+      let d; try { d = new Function("return " + m[2])(); } catch (e) { bad("scene " + m[1] + ": the object literal does not parse: " + e.message); continue; }
+      const T = d.terrain, th = Buffer.from(T.h, "base64");
+      if (th.length !== T.nx * T.nz * 2) bad(`scene ${m[1]}: terrain has ${th.length / 2} heights, expected ${T.nx * T.nz}`);
+      if (!isPng(T.alpha.uri) || T.tiles.length !== 4 || !T.tiles.every(isPng)) bad(`scene ${m[1]}: terrain needs a splat map and 4 PNG tiles`);
+      if (!d.tex.every(t => isPng(t.uri))) bad(`scene ${m[1]}: a prop texture is not a PNG`);
+      const ground = (x, z) => { const i = Math.round((x - T.x0) / T.step), j = Math.round((z - T.z0) / T.step); return i < 0 || j < 0 || i >= T.nx || j >= T.nz ? null : th.readInt16LE((j * T.nx + i) * 2) / 100; };
+      if (d.spawns.length !== 2) bad(`scene ${m[1]}: ${d.spawns.length} start points, expected 2`);
+      for (const [k, s] of d.spawns.entries()) { const g = ground(s.x, s.z); if (g === null || Math.abs(g - s.gy) > 0.3) bad(`scene ${m[1]}: start point ${k + 1} is at y ${s.gy} but the terrain under it is ${g}`); }
+      d.meshes.forEach((mesh, i) => {
+        const nv = Buffer.from(mesh.v, "base64").length / 6, nu = Buffer.from(mesh.uv, "base64").length / 4, tb = Buffer.from(mesh.t, "base64");
+        let maxI = 0; for (let q = 0; q < tb.length; q += 2) maxI = Math.max(maxI, tb.readUInt16LE(q));
+        if (!Number.isInteger(nv) || nv !== nu || tb.length % 6 || maxI >= nv || !d.tex[mesh.tex]) bad(`scene ${m[1]}: mesh ${i} has ${nv} verts, ${nu} uvs, max index ${maxI}, skin ${mesh.tex}`);
+      });
+      for (const [q, ins] of d.inst.entries()) {
+        const g = ground(ins[4], ins[12]);
+        if (ins.length !== 13 || !d.meshes[ins[0]] || ins.some(v => !Number.isFinite(v))) { bad(`scene ${m[1]}: instance ${q} is malformed`); continue; }
+        // an origin may sit in a foundation below the ground (the ruins), but the prop's top must reach the terrain and its base must not float above it
+        const vb = Buffer.from(d.meshes[ins[0]].v, "base64");
+        let top = -Infinity, low = Infinity;
+        for (let i = 0; i < vb.length; i += 6) { const px = vb.readInt16LE(i) / 1000, py = vb.readInt16LE(i + 2) / 1000, pz = vb.readInt16LE(i + 4) / 1000, wy = ins[5] * px + ins[6] * py + ins[7] * pz + ins[8]; top = Math.max(top, wy); low = Math.min(low, wy); }
+        // M108 reuses M106's TerrainData (the game's own reference), so props on the rim (ruins, gates, tents far from the arena) are a few metres off it; the flat duel arena (22 m round a start point) is exact
+        const inArena = d.spawns.some(s => Math.hypot(ins[4] - s.x, ins[12] - s.z) < 22);
+        if (g === null || (inArena && (top < g - 0.5 || low > g + 1.5))) bad(`scene ${m[1]}: instance ${q} spans y ${low.toFixed(2)}..${top.toFixed(2)} over terrain ${g}`);
+      }
+      // trimmed to a disc of 2 x the arena radius (arena = half the distance between the two border lines) round the arena centre; every prop origin is inside it
+      if (!d.crop || Math.abs(d.crop.r - 2 * d.crop.arena) > 0.01) bad(`scene ${m[1]}: crop radius ${d.crop && d.crop.r} is not 2 x the arena radius ${d.crop && d.crop.arena}`);
+      else for (const [q, ins] of d.inst.entries()) if (Math.hypot(ins[4] - d.crop.x, ins[12] - d.crop.z) > d.crop.r + 0.01) bad(`scene ${m[1]}: instance ${q} is outside the crop disc`);
+      if (m[1] === "M108" && (d.inst.length !== 19 || d.meshes.length !== 8 || Math.abs(d.crop.arena - 14.43) > 0.05)) bad(`scene M108: ${d.inst.length} props / ${d.meshes.length} meshes, arena radius ${d.crop.arena}; expected 19 / 8 / 14.43 (the visible static props inside 2 x the arena radius)`);
+    }
+    if (!scenes) bad("no REACH_SCENES entries found");
+  }
   if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.`);
   console.log(`Verified ${checkedReach} reach parts.`);
 }
