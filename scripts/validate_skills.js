@@ -3565,9 +3565,9 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
 
 // ---- reach (spec 2026-10-13): the range badge's structured hit-box data ----
 {
-  const REACH_SHAPES = ["sphere", "cylinder", "box", "cone", "line", "self"];
+  const REACH_SHAPES = ["sphere", "cylinder", "box", "cone", "sector", "line", "self"];
   const REACH_ANCHORS = ["self", "target", "fist", "projectile"];
-  const REACH_DIM = { sphere: ["r"], cylinder: ["r", "h"], box: ["w", "l", "h"], cone: ["r", "angle"], line: ["l"], self: [] };
+  const REACH_DIM = { sphere: ["r"], cylinder: ["r", "h"], box: ["w", "l", "h"], cone: ["r", "angle"], sector: ["r", "angle", "h"], line: ["l"], self: [] };
   const REACH_DESC_RE = /รัศมี \*\*|ทรงกลมรัศมี|กว้าง \*\*/;
   const bad = (m) => { console.error(`[REACH ERROR] ${m}`); errorCount++; };
   let checkedReach = 0, reachBacklog = 0;
@@ -3586,6 +3586,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (p.w2 !== undefined && !(typeof p.w2 === "number" && p.w2 > 0)) bad(`${sk.id} rank ${r}: w2 must be > 0, got ${p.w2}`);
         if (p.rangeMod !== undefined && p.rangeMod !== true && p.rangeMod !== false && !(Array.isArray(p.rangeMod) && p.rangeMod.length && p.rangeMod.every(k => ["r", "w", "w2", "l", "h", "z0"].includes(k)))) bad(`${sk.id} rank ${r}: rangeMod must be true or a list of r w w2 l h z0, got ${JSON.stringify(p.rangeMod)}`);
         if (p.z0 !== undefined && typeof p.z0 !== "number") bad(`${sk.id} rank ${r}: z0 must be a number`);
+        if (p.y0 !== undefined && typeof p.y0 !== "number") bad(`${sk.id} rank ${r}: y0 must be a number`);
         if (!p.unknown) for (const k of REACH_DIM[p.shape]) {
           const v = p[k];
           if (!(v === "inf" && k === "h") && !(typeof v === "number" && v > 0)) bad(`${sk.id} rank ${r}: ${k} must be > 0, got ${v}`);
@@ -3600,6 +3601,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   const trap = sandbox._reachMesh({ shape: "box", w: 6, w2: 3.2, l: 4, h: 3, anchor: "fist", z0: -1 });
   const nearX = Math.max(...trap.verts.filter(v => Math.abs(v[2] + 1) < 1e-9).map(v => v[0])), farX = Math.max(...trap.verts.filter(v => Math.abs(v[2] - 3) < 1e-9).map(v => v[0]));
   if (nearX !== 3 || farX !== 1.6 || ext(trap.verts, 2) !== 4 || Math.min(...trap.verts.map(v => v[2])) !== -1 || ext(trap.verts, 1) !== 4.5) bad(`golden trapezoid near ${nearX} far ${farX}`);
+  const off0 = sandbox._reachMesh({ shape: "box", w: 2, l: 4, h: 6, y0: -2, anchor: "self" });
+  if (Math.min(...off0.verts.map(v => v[1])) !== -5 || Math.max(...off0.verts.map(v => v[1])) !== 4) bad("golden y0: a 6 m band lowered 2 m must span -5..4");
+  const sec = sandbox._reachMesh({ shape: "sector", r: 10, angle: 180, h: 2, anchor: "self" });
+  if (ext(sec.verts, 0) !== 20 || Math.max(...sec.verts.map(v => v[2])) !== 10 || Math.min(...sec.verts.map(v => v[2])) < -1e-9 || ext(sec.verts, 1) !== 3) bad("golden sector 180 deg r10 h2: wide 20, 10 ahead, none behind, band 3");
+  if (sandbox._reachBadgeText([{ shape: "sector", r: 32.2, angle: 190, h: 2 }]) !== "32.2m 190°") bad("golden badge text sector");
   const sph = sandbox._reachMesh({ shape: "sphere", r: 3, anchor: "self" });
   if (ext(sph.verts, 0) !== 6 || ext(sph.verts, 1) !== 6 || ext(sph.verts, 2) !== 6) bad(`golden sphere extents ${ext(sph.verts, 0)}x${ext(sph.verts, 1)}x${ext(sph.verts, 2)}`);
   const cyl = sandbox._reachMesh({ shape: "cylinder", r: 2, h: 5, anchor: "self" });
@@ -3617,7 +3623,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
   {
     const dr = sandbox._depRanks, saved = { ...dr };
-    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice"]) dr[k] = o[k] || 0; };
+    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade"]) dr[k] = o[k] || 0; };
     const P = (id, rank, o, rM) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank, rM); };
     const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
     try {
@@ -3675,6 +3681,45 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("cat_supportFire", 1); g("Support Fire lands 24 to 47 m, r8 h3", c[0].z0 === 24 && c[1].z0 === 47 && c[0].r === 8 && c[0].h === 3, c);
       c = P("cat_luckyCard", 4); g("Lucky Card 20 m", c[0].shape === "line" && c[0].l === 20, c);
       c = P("cat_damageRoulette", 2); g("Damage Roulette r24 h12", c[0].r === 24 && c[0].h === 12, c);
+      // Wolf (Wolf.cs Find* calls, HwwoC6K6XP = the Wolf's own transform; every size x rangeMod unless the line says otherwise)
+      c = P("wolf_nAttack", 1); g("Wolf Combo 1: stages 1-2 4x3x2 from 1 m behind", c.length === 1 && c[0].w === 4 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === -1, c);
+      c = P("wolf_nAttack", 3); g("Wolf Combo 3: stage 3 starts 1.5 m behind and is 3.5 long, stage 4 is 4 high", c.length === 3 && c[1].l === 3.5 && c[1].z0 === -1.5 && c[2].h === 4 && c[2].l === 3, c);
+      c = P("wolf_nAttack", 3, { wolfKatana: 1 }); g("Wolf Combo Katana: fixed 4x8, stage 3 3 to 4 wide 8.5 long, no rangeMod", c[0].l === 8 && c[0].w === 4 && c[1].w === 3 && c[1].w2 === 4 && c[1].l === 8.5 && c[1].z0 === -1.5 && c[2].h === 4 && !c[0].rangeMod, c);
+      c = P("wolf_nAttack", 3, { wolfKatana: 1 }, 1.8); g("Katana ignores rangeMod (Lunar Eclipse 2)", c[0].l === 8 && c[0].z0 === -1, c[0]);
+      c = P("wolf_nAttack", 2, {}, 1.4); g("Wolf Combo x1.4 scales size and start offset", c[1].l === 4.9 && c[1].z0 === -2.1 && c[1].w === 5.6 && c[1].h === 2.8, c[1]);
+      c = P("wolf_cAttack", 1); g("Charge Attack: 4 to 12 wide, 30 long, 6 high, band lowered 2 m", c[0].w === 4 && c[0].w2 === 12 && c[0].l === 30 && c[0].h === 6 && c[0].z0 === -1 && c[0].y0 === -2, c);
+      c = P("wolf_cAttack", 1, {}, 1.4); g("Charge Attack x1.4: sizes scale, the 2 m drop does not", c[0].l === 42 && c[0].w2 === 16.8 && c[0].h === 8.4 && c[0].z0 === -1.4 && c[0].y0 === -2, c[0]);
+      c = P("wolf_braveSpirit", 1, {}, 1.4); g("Brave Spirit r15 h3 both scale", c[0].r === 21 && c[0].h === 4.2, c[0]);
+      c = P("wolf_crusader", 1); g("Crusader 4x4x2 from 1 m behind", c[0].w === 4 && c[0].l === 4 && c[0].h === 2 && c[0].z0 === -1, c);
+      c = P("wolf_powerBreak", 1); g("Power Break rank 1: 2 wide, 4 long", c[0].w === 2 && c[0].l === 4 && c[0].h === 3, c);
+      c = P("wolf_powerBreak", 2); g("Power Break rank 2: 6 long", c[0].l === 6, c);
+      c = P("wolf_armorBreak", 1); g("Armor Break rank 1: 2 wide, 3 long", c[0].w === 2 && c[0].l === 3 && c[0].h === 3, c);
+      c = P("wolf_armorBreak", 2); g("Armor Break rank 2: 4 wide, 5 long", c[0].w === 4 && c[0].l === 5, c);
+      c = P("wolf_crossBreak", 3); g("Cross Break r5 h8", c[0].r === 5 && c[0].h === 8, c);
+      c = P("wolf_grandCross", 1); g("Grand Cross r6 h8 at the mark + 30 m command range", c.length === 2 && c[0].r === 6 && c[0].h === 8 && c[0].anchor === "target" && c[1].l === 30, c);
+      c = P("wolf_massResurrection", 2); g("Mass Resurrection r40 h12, band lowered 4 m", c[0].r === 40 && c[0].h === 12 && c[0].y0 === -4, c);
+      c = P("wolf_bladeFang", 3); g("Blade Fang 2x4x2 from 1 m behind", c[0].w === 2 && c[0].l === 4 && c[0].h === 2 && c[0].z0 === -1, c);
+      c = P("wolf_bladeFang", 3, { bloodFang: 1 }); g("Blood Fang: 4 wide 5 long", c[0].w === 4 && c[0].l === 5, c);
+      c = P("wolf_bladeFang", 3, { bloodFang: 1 }, 1.4); g("Blade Fang: only height and start scale", c[0].w === 4 && c[0].l === 5 && c[0].h === 2.8 && c[0].z0 === -1.4, c[0]);
+      c = P("wolf_artCancel", 2); g("Art Cancel 6x3x2 from 1 m behind", c[0].w === 6 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === -1, c);
+      c = P("wolf_counter", 2); g("Counter 4x5x3 from 2 m behind", c[0].w === 4 && c[0].l === 5 && c[0].h === 3 && c[0].z0 === -2, c);
+      c = P("wolf_impulse", 2); g("Impulse trigger sphere r3", c[0].shape === "sphere" && c[0].r === 3, c);
+      c = P("wolf_feralStrike", 4); g("Feral Strike 4x8x3 from 6 m behind", c[0].w === 4 && c[0].l === 8 && c[0].h === 3 && c[0].z0 === -6, c);
+      c = P("wolf_bladeSong", 3); g("Blade Song 2 to 4 wide, 6 long, 3 high", c.length === 1 && c[0].w === 2 && c[0].w2 === 4 && c[0].l === 6 && c[0].h === 3, c);
+      c = P("wolf_bladeSong", 3, { lastBlade: 1 }); g("Last Blade adds the 10 m finisher", c.length === 2 && c[1].l === 10 && c[1].w2 === 4, c);
+      c = P("wolf_thirdRend", 1); g("Third Rend 4x4x3 from the Wolf", c[0].w === 4 && c[0].l === 4 && c[0].h === 3 && !c[0].z0, c);
+      c = P("wolf_artBreaker", 1); g("Art Breaker 30 m", c[0].shape === "line" && c[0].l === 30, c);
+      c = P("wolf_provoke", 2); g("Provoke 40 m lock", c[0].shape === "line" && c[0].l === 40, c);
+      c = P("wolf_mirrorBlade", 1); g("Mirror Blade 40 m lock", c[0].shape === "line" && c[0].l === 40, c);
+      c = P("wolf_feralAssault", 1); g("Feral Assault: 12 wide at the back narrowing to 6, 8 long from 6 m behind + r6 finisher, no rangeMod", c[0].w === 12 && c[0].w2 === 6 && c[0].l === 8 && c[0].z0 === -6 && c[1].r === 6 && !c[0].rangeMod, c);
+      c = P("wolf_dualBrand", 1); g("Dual Brand r5 h3 circle (0.5 m ahead) + 4x5x4 box", c[0].r === 5 && c[0].h === 3 && c[0].z0 === 0.5 && c[1].w === 4 && c[1].l === 5 && c[1].h === 4, c);
+      c = P("wolf_twinResonance", 1); g("Twin Resonance: 190 degree fan, r 1 + 0.8 x 39 = 32.2, h2", c[0].shape === "sector" && c[0].angle === 190 && c[0].r === 32.2 && c[0].h === 2, c);
+      // preview toggles: Lunar Eclipse adds 0.4 per level to the Enlarge / Reduce factor, so Enlarge 4 + Lunar 1 = x1.8 and Lunar 2 alone = x1.8
+      {
+        const ct = SKILLS.find(x => x.id === "wolf_counter");
+        c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 2 }); g("preview Lunar Eclipse 2 = x1.8 on Counter", c[0].l === 9 && c[0].w === 7.2 && c[0].z0 === -3.6, c[0]);
+        c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 4, reachReduce: 0, reachLunar: 1 }); g("preview Enlarge 4 + Lunar 1 = x1.8", c[0].l === 9, c[0]);
+      }
       // the popup preview reads its own toggle state and leaves the card's alone
       set({});
       const qs = SKILLS.find(x => x.id === "panda_qiStrike");
@@ -3708,6 +3753,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       if (body.minY < -0.05 || body.maxY < 0.3) bad("model " + m[1] + ": stands from " + body.minY + " to " + body.maxY + " m (feet should be on the ground)");
       if (m[1] === "Cat" && (body.nv !== 1687 || body.nt !== 1812)) bad("model Cat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh has 1687 / 1812");
       if (m[1] === "Panda" && (body.nv !== 1573 || body.nt !== 1212)) bad("model Panda: " + body.nv + " verts / " + body.nt + " tris, the game mesh has 1573 / 1212");
+      if (m[1] === "Wolf" && (body.nv !== 2054 || body.nt !== 1929)) bad("model Wolf: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Wolf_standard_tri) has 2054 / 1929");
       const extras = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i));
       if (m[1] === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
