@@ -3883,6 +3883,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 1687 || body.nt !== 1838) bad("model Rabbit: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Rabbit_standard_tri) has 1687 / 1838");
         if (extras.length !== 2 || extras[0].nv !== 147 || extras[0].nt !== 296 || extras[1].nv !== 494 || extras[1].nt !== 290) bad("model Rabbit: extras should be the standard hat (147 / 296) and the standard gun (494 / 290), got " + JSON.stringify(extras));
       }
+      if (m[1] === "Bat") {
+        // armors/Bat_standard_tri 2351 / 2398 (no hat); extra = standardWand (175 / 98) in mount_Hand_L
+        if (body.nv !== 2351 || body.nt !== 2398) bad("model Bat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bat_standard_tri) has 2351 / 2398");
+        if (extras.length !== 1 || extras[0].nv !== 175 || extras[0].nt !== 98) bad("model Bat: the extra should be the standard wand (175 / 98), got " + JSON.stringify(extras));
+      }
       if (m[1] === "Boldas") {
         // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
         if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");
