@@ -121,7 +121,7 @@ const exposeInjection = `
   window._getUsedPlayerStatKeys = getUsedPlayerStatKeys;
   window._monsterStats = MONSTER_STATS; window._mountMonsterStats = mountMonsterStats;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
-  window._statInputs = { atk: atkEl, tal: talEl, lck: lckEl, enemyLck: enemyLckEl, enemyDef: enemyDefEl, lv: lvEl };
+  window._statInputs = { atk: atkEl, tal: talEl, agi: agiEl, int: intEl, cha: chaEl, lck: lckEl, enemyLck: enemyLckEl, enemyDef: enemyDefEl, lv: lvEl };
   window._ttoMagic = { ids: TTO_MAGIC_DMG };
   window._credits = { list: CONTRIBUTORS, render: renderRichText };
   window._statVal = statVal;
@@ -3227,6 +3227,68 @@ let checkedRsim = 0;
   rejects(()=>norm(change({notes:{"451":"x".repeat(3001)}})),"limit per-skill note length");
   rejects(()=>norm(change({build:{...fixture.build,classKey:"cat",learned:[]},notes:{"452":"not published"}})),"reject unpublished EX note anchor");
   ok(norm(change({title:"",author:"",patch:""}),{draft:true}).title === "", "allow unfinished local drafts");
+  // Recommended stats (user 2026-10-15): optional, any of the 8, integers 0-512, only filled ones stored.
+  { const gs = norm(change({stats:{lck:40,agi:77}}));
+    ok(Object.keys(gs.stats).join() === "agi,lck" && gs.stats.agi === 77 && gs.stats.lck === 40, "recommended stats keep only the filled stats, in a fixed order");
+    ok(!("stats" in norm(fixture)) && !("stats" in JSON.parse(encode(change({stats:{}})))) && !JSON.stringify(fixture).includes("stats"), "a guide without stats has no stats key (old guides export unchanged)");
+    const sr = decode(encode(change({stats:{atk:300,def:0,tal:120,agi:120,vit:90,cha:60,int:96,lck:40}})));
+    ok(Object.keys(sr.stats).join() === "atk,def,tal,agi,vit,cha,int,lck" && sr.stats.def === 0 && sr.stats.int === 96, "all 8 recommended stats round-trip through export / import (0 is a real value)");
+    for (const bad of [{foo:1},{agi:513},{agi:-1},{agi:1.5},{agi:"10"},{agi:null}]) rejects(()=>norm(change({stats:bad})),"reject stats " + JSON.stringify(bad));
+    rejects(()=>norm(change({stats:[120]})),"reject stats as an array"); rejects(()=>norm(change({stats:null})),"reject null stats");
+    ok(norm(change({title:"",author:"",patch:"",stats:{cha:5}}),{draft:true}).stats.cha === 5, "drafts keep recommended stats");
+  }
+  // Hover timings: the same numbers the skill-details chips show for that card and rank (revised art on, dependencies from the build).
+  { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
+    const strip = h => h.replace(/<[^>]*>/g,"").replace(/\s+/g,"").trim();
+    const chip = (h, cls) => { const i = h.indexOf("sk-stat " + cls); if (i < 0) return null; const m = /<div class="sk-stat-value[^"]*">([\s\S]*?)<\/div>/.exec(h.slice(i, i + 1500)); return m ? strip(m[1]) : null; };
+    const inp = sandbox._statInputs, st = {agi:77,int:45,cha:33,lck:40}, savedIn = {agi:inp.agi.value,int:inp.int.value,cha:inp.cha.value,lck:inp.lck.value};
+    inp.agi.value = "77"; inp.int.value = "45"; inp.cha.value = "33"; inp.lck.value = "40";
+    let compared = 0; const bad = [];
+    const compare = (sk, rank, ctx, depState, label) => {
+      const lines = T(sk.id, rank, st, ctx); if (!lines.length) return;
+      for (const id in depState) sandbox._depRanks[id] = depState[id];
+      sandbox._skillRanks[sk.id] = rank; sandbox._selectSkill(sk);
+      const h = sandbox._getRenderedHeroHtml(), want = { cd: chip(h, "sk-stat-cd"), cast: chip(h, "sk-stat-cast"), dur: chip(h, "sk-stat-dur") };
+      for (const l of lines){ if (want[l.kind] === l.text.replace(/\s+/g,"")) compared++; else bad.push(label + " " + sk.id + " r" + rank + " " + l.kind + " guide=" + l.text + " page=" + want[l.kind]); }
+      for (const id in depState) delete sandbox._depRanks[id];
+    };
+    try {
+      for (const sk of SKILLS){
+        const maxRank = sk.maxRank || 1;
+        for (const rank of new Set([1, maxRank])) compare(sk, rank, { server:"og", learnedByCard:new Map(), revisedArt:true }, {}, "no passives");
+        const deps = [sk.cdDep, sk.cdMultDep, sk.castDep, sk.dep].filter(Boolean);
+        for (const level of ["max","mid"]){
+          const learned = new Map(), depState = {};
+          for (const d of deps){ const card = d.icon ? cardOf(d.icon) : ""; if (!card) continue; const target = level === "max" ? d.maxRank : Math.max(d.minRank || 0, Math.floor(((d.minRank || 0) + d.maxRank) / 2)); learned.set(card, target); depState[d.id] = target; }
+          if (learned.size) compare(sk, maxRank, { server:"og", learnedByCard:learned, revisedArt:true }, depState, "passives " + level);
+        }
+      }
+    } catch (e) { bad.push("threw: " + e.message); }
+    finally { inp.agi.value = savedIn.agi; inp.int.value = savedIn.int; inp.cha.value = savedIn.cha; inp.lck.value = savedIn.lck; }
+    ok(bad.length === 0, "guide hover timings differ from the skill-details chips: " + bad.slice(0, 5).join(" | "));
+    ok(compared > 800, "guide hover timings compared against " + compared + " chips");
+    // Only fields whose stat is filled appear; LCK only widens; Revised Art only when the build learned it (and never for exempt skills).
+    const tri = SKILLS.find(c => c.cdWrapped && c.castWrapped && c.durWrapped && !c.cdDep && !c.cdMultDep && !c.castDep && !c.dep && !c.durContested && !c.durAdjust && !c.revisedArtExempt && !/Debuff/.test(String((c.status && c.status.class) || "")) && T(c.id, 1, {agi:1,int:1,cha:1}, { server:"og", learnedByCard:new Map(), revisedArt:false }).length === 3);
+    ok(!!tri, "a card with cooldown, cast time and buff duration exists for the gating checks");
+    if (tri){
+      const ctx0 = { server:"og", learnedByCard:new Map(), revisedArt:false }, kinds = (stats, ctx = ctx0) => T(tri.id, 1, stats, ctx).map(l => l.kind).join();
+      ok(kinds({}) === "" && kinds({agi:50}) === "cd" && kinds({int:50}) === "cast" && kinds({cha:50}) === "dur" && kinds({atk:300,lck:90}) === "" && kinds({cha:50,agi:50}) === "cd,dur", "hover shows only the fields whose AGI / INT / CHA is filled");
+      const val = (stats, ctx = ctx0, kind = "cd") => T(tri.id, 1, stats, ctx).find(l => l.kind === kind).text;
+      ok(!val({agi:50}).includes("–") && val({agi:50,lck:100}).includes("–"), "LCK widens the cooldown into a range, no LCK is a single value");
+      const withRA = parseFloat(val({agi:50}, { ...ctx0, revisedArt:true })), without = parseFloat(val({agi:50}));
+      ok(withRA <= without && withRA < without || without < 8, "Revised Art in the build shortens the cooldown");
+    }
+    const exempt = SKILLS.find(c => c.cdWrapped && c.revisedArtExempt && typeof (Array.isArray(c.cd) ? c.cd[0] : c.cd) === "number" && !c.cdDep && !c.cdMultDep && !Object.keys(c).some(k => /^ownStats/.test(k)) && T(c.id, 1, {agi:50}, { server:"og", learnedByCard:new Map(), revisedArt:false }).length);
+    if (exempt) ok(T(exempt.id, 1, {agi:50}, { server:"og", learnedByCard:new Map(), revisedArt:true })[0].text === T(exempt.id, 1, {agi:50}, { server:"og", learnedByCard:new Map(), revisedArt:false })[0].text, "Revised Art does not touch an exempt skill");
+    ok(T("bat_nightmare", 1, null, {}).length === 0 && T("no_such_card", 1, st, { server:"og", learnedByCard:new Map(), revisedArt:false }).length === 0, "no stats / unknown card give no hover lines");
+    const panel = vm.runInContext("classGuideStatsHtml", sandbox), editor = vm.runInContext("classGuideStatsEditorHtml", sandbox);
+    ok(panel(undefined) === "" && panel({}) === "" && (panel({agi:120}).match(/cg-stat-tile/g) || []).length === 1 && panel({agi:120}).includes("--stat-agi") && panel({agi:120}).includes(">120<") && !panel({agi:120}).includes("ATK"), "reader panel renders only the filled stats in their colour");
+    ok((panel({atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}).match(/cg-stat-tile/g) || []).length === 8, "reader panel can show all 8 stats");
+    ok((editor().match(/data-cg-stat=/g) || []).length === 8 && ["atk","def","tal","agi","vit","cha","int","lck"].every(k => editor().includes('data-cg-stat="' + k + '"') && editor().includes("--stat-" + k)), "editor row has all 8 stat inputs in their colours");
+    const hover = vm.runInContext("classGuideHoverLines", sandbox);
+    ok(hover(null, {}, {icon:"wolf_x",id:101}, true) === null && hover({stats:{agi:50}}, {}, {icon:"wolf_x",id:101}, false) === null && hover({}, {}, {icon:"wolf_x",id:101}, true) === null, "hover lines only for a learned skill of a guide with stats");
+  }
+
   // Mount the same real simulator in reader mode: clicks, controls, hold and level changes cannot mutate it.
   const doc = sandbox.document, saved = {create:doc.createElement,add:doc.addEventListener,storage:sandbox.localStorage};
   const mk = () => {
@@ -3255,11 +3317,28 @@ let checkedRsim = 0;
     keys.forEach(fn=>fn({ctrlKey:true,shiftKey:false,key:"z",target:{closest:()=>null},preventDefault:()=>{}}));
     root.listeners.pointerdown.forEach(fn=>fn({target:{closest:()=>cell(103)},pointerType:"mouse",button:0,clientX:0,clientY:0}));
     ok(JSON.stringify(root._skillSim.getBuild())===before,"reader clicks, level edits, undo and controls leave expert build unchanged");
-    ok(!cell(103).classList.contains("is-charging")&&lv.disabled,"reader disables long press and level editing");
+    ok(lv.disabled,"reader disables level editing");
     root._skillSim.setInteraction("annotate");click(cell(202));
     ok(reveals[reveals.length-1].id===202&&JSON.stringify(root._skillSim.getBuild())===before,"annotation selection does not learn skills");
     root._skillSim.setInteraction("build");click(cell(201));
     ok(root._skillSim.getBuild().learned.includes(201),"author build mode retains ordinary learning");
+    // Hover tip with timing lines (options.tipExtra): reader view only, for learned skills.
+    { const tip = mk(), savedGet = doc.getElementById, hadWidth = "innerWidth" in sandbox; doc.getElementById = id => id === "rsimTip" ? tip : makeEl(); sandbox.innerWidth = 1280;
+      try {
+        const root2 = mk(), calls = [];
+        vm.runInContext("mountSkillSimulator",sandbox)(root2,{tipExtra:(c,learned)=>{calls.push(c.id+":"+learned);return learned?[{label:"คูลดาวน์",text:"27s",stat:"agi"},{label:"เวลาร่าย",text:"1s",stat:"int"}]:null;}});
+        root2.querySelector('[data-role="lv"]');
+        root2._skillSim.loadBuild(round.build);
+        const cell2 = id => root2.querySelectorAll(".rsim-cell").find(b => +b.dataset.id === id);
+        const over = id => root2.listeners.mouseover.forEach(fn => fn({ target:{ closest: sel => sel === ".rsim-cell" ? cell2(id) : null }, sourceCapabilities:null }));
+        root2._skillSim.setInteraction("build"); over(101);
+        ok(calls.length === 0 && tip.children.length === 0, "builder hover shows only the name (no timing lines)");
+        root2._skillSim.setInteraction("read"); over(101);
+        ok(tip.children.length === 2 && tip.children[0].className === "rsim-tip-line" && tip.children[0].children[1].textContent === "27s", "view hover of a learned skill shows its timing lines");
+        over(201);
+        ok(tip.children.length === 0 && calls[calls.length - 1] === "201:false", "view hover of a skipped skill shows the name only");
+      } finally { doc.getElementById = savedGet; if (!hadWidth) delete sandbox.innerWidth; }
+    }
   } catch(e){ok(false,"reader UI threw: "+e.message);}
   finally{doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;}
 }

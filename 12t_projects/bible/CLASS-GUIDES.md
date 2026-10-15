@@ -7,9 +7,10 @@ The **ไกด์แต่ละอาชีพ** tool replaces the Skill Simul
 1. Open ไกด์แต่ละอาชีพ and choose **สร้างไกด์** (Create guide).
 2. Fill in the guide title, author name, game patch/version and build description. Select text in the description or a skill note and press **Ctrl+B** (Cmd+B on Mac) to toggle bold gold emphasis. Bold gold appears immediately in the editor; the **ตัวหนาสีทอง** toolbar button does the same. Formatting is stored as `**text**` in the portable code and shown in previews and published guides. Pasted text is kept as plain text; Ctrl+Z inside the editor undoes text edits.
 3. Choose the server, class and level, then build using the existing skill grid. Normal learning and undo remain available in **จัดบิลด์** mode.
-4. Choose **เขียนโน้ตสกิล ★**, then click a skill to explain your choice. Notes can explain either selected or skipped skills. Save an empty note to remove its star. Each rank/cell has its own note.
-5. Choose **ดูตัวอย่าง** to check the locked reader view, then **กลับไปแก้ไกด์** to resume your draft.
-6. Choose **ส่งออกไกด์** (link icon) to copy the guide code directly to the clipboard, then send it to the site maintainer. Choose **นำเข้าโค้ด**, paste the code into the small text box and press Enter to resume editing.
+4. Optionally fill **สเตตัสแนะนำ** (recommended stats): any of ATK, DEF, TAL, AGI, VIT, CHA, INT, LCK, whole numbers 0-512. A blank field is not stored and not shown to readers. AGI, INT and CHA (with LCK) also drive the hover timings in the reader view.
+5. Choose **เขียนโน้ตสกิล ★**, then click a skill to explain your choice. Notes can explain either selected or skipped skills. Save an empty note to remove its star. Each rank/cell has its own note.
+6. Choose **ดูตัวอย่าง** to check the locked reader view, then **กลับไปแก้ไกด์** to resume your draft.
+7. Choose **ส่งออกไกด์** (link icon) to copy the guide code directly to the clipboard, then send it to the site maintainer. Choose **นำเข้าโค้ด**, paste the code into the small text box and press Enter to resume editing.
 
 The draft is saved only in the author's current browser. Export the code to keep a portable copy. Creating a guide from the reader view starts an independent empty build or resumes the author's own draft; it does not edit an embedded expert guide.
 
@@ -48,6 +49,7 @@ Before publishing, run `node scripts/validate_skills.js`. Every embedded entry m
     "level": 100,
     "learned": [101, 102, 103, 451]
   },
+  "stats": { "agi": 120, "int": 96, "cha": 60, "lck": 40 },
   "notes": {
     "103": "Why this skill rank is selected.",
     "201": "Why this skill is skipped."
@@ -55,6 +57,7 @@ Before publishing, run `node scripts/validate_skills.js`. Every embedded entry m
 }
 ```
 
+* `stats` (optional): the author's recommended stats, any of `atk`, `def`, `tal`, `agi`, `vit`, `cha`, `int`, `lck`, each a whole number 0-512 (0 is a real value). Only filled stats are stored (fixed order), the key is left out when none is filled, and guides without it stay valid and export unchanged. An unknown key or a value outside 0-512 is rejected on import.
 * `server`: `og` (BB), `tot` or `tto`. `classKey`: lowercase class name.
 * `learned`: unique numeric cell IDs, including every learned lower rank and prerequisite; export sorts them. Cell IDs use the existing tree/row/column scheme. ToT EX cells are legal only on ToT.
 * `notes`: cell ID strings mapped to text with optional `**bold gold**` emphasis. A note may target an unselected skill, but never an unknown or unpublished placeholder cell.
@@ -63,6 +66,6 @@ Before publishing, run `node scripts/validate_skills.js`. Every embedded entry m
 
 ## Reader interactions
 
-Readers cannot change the level, server, class, skills or points, reset the build or undo it. Holding a skill for 0.5 s opens its skill card in a new tab, in this view only (the builder and the author's note editor never do). Only starred skills open notes. Unread stars pulse subtly as soon as a guide opens, until clicked. The first reveal uses the same star-to-ball melt, arcing light ball with two trailing dots and text wipe as skill-details notes, then keeps its star dimmed but visible. Later clicks reopen the text immediately. Opening another guide resets the read-star state. The star pulse and first-note animation play even when reduced motion is enabled. Notes support keyboard activation, Escape to close and return focus to the skill.
+Readers cannot change the level, server, class, skills or points, reset the build or undo it. Holding a skill for 0.5 s opens its skill card in a new tab, in this view only (the builder and the author's note editor never do). The left panel shows the recommended stats above the description: one tile per filled stat, the stat name and a large number in that stat's signature colour, no caption (nothing is drawn when none is filled). Hovering a skill the author learned adds timing lines under its name: **คูลดาวน์** from AGI, **เวลาร่าย** from INT and the buff **ระยะเวลา** from CHA, each only if that stat is filled; LCK turns them into the same min-max range as skill-details (a single value without LCK). The numbers come from the skill's own card and rank with the passives the build learned, and Revised Art (in the build) shortens cooldowns; debuffs and other contested durations, TAL-adjusted durations and summon-owned stats show nothing, and neither do skills the author skipped. Hover timings need a mouse (touch screens show no hover tip). Only starred skills open notes. Unread stars pulse subtly as soon as a guide opens, until clicked. The first reveal uses the same star-to-ball melt, arcing light ball with two trailing dots and text wipe as skill-details notes, then keeps its star dimmed but visible. Later clicks reopen the text immediately. Opening another guide resets the read-star state. The star pulse and first-note animation play even when reduced motion is enabled. Notes support keyboard activation, Escape to close and return focus to the skill.
 
 Exports keep the selected server in `build.server`. Import restores this tag instead of using the browser’s current server selection.

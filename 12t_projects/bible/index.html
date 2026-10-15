@@ -1652,6 +1652,20 @@
   .cg-page input,.cg-page textarea{width:100%;box-sizing:border-box;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:9px 11px;font:inherit;resize:vertical}
   .cg-page input:focus-visible,.cg-page textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .cg-description{grid-column:1/-1}
+  /* Recommended stats (user 2026-10-15): editor row, reader panel and hover lines all wear the stat's signature colour (--stat-*). */
+  .cg-stats{border:1px solid var(--line);border-radius:4px;padding:12px 14px 14px;margin:0 0 16px;background:var(--panel)}
+  .cg-stats legend{padding:0 6px;color:var(--gold);font-size:13px}
+  .cg-stats-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px}
+  .cg-stat-in{display:grid;gap:4px;font-size:12px;color:var(--c)}
+  .cg-stat-in b{font-size:11px;letter-spacing:.14em;font-weight:600}
+  .cg-page .cg-stat-in input{border-color:var(--c);padding:7px 8px;text-align:center;color:var(--text);-moz-appearance:textfield}
+  .cg-stat-in input::-webkit-outer-spin-button,.cg-stat-in input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .cg-stat-panel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 20px}
+  .cg-stat-panel[hidden]{display:none}
+  .cg-stat-tile{border-left:3px solid var(--c);border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--c) 11%,transparent);padding:6px 9px 7px;min-width:0}
+  .cg-stat-tile b{display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
+  .cg-stat-tile output{display:block;font-size:28px;line-height:1.1;font-weight:700;color:var(--c);font-variant-numeric:tabular-nums}
+  @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
   .cg-filters label{display:grid;gap:6px;min-width:180px;font-size:13px;color:var(--muted)}
   .cg-filters select{box-sizing:border-box;width:100%;padding:9px 32px 9px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
@@ -1794,6 +1808,8 @@
   .rsim-cell{transition:transform .12s ease; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none}
   .rsim-tip{position:fixed; z-index:9000; pointer-events:none; padding:4px 10px; font:600 13px/1.3 'Prompt', sans-serif; color:var(--text); background:var(--panel); border:1px solid var(--gold); border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,.5); white-space:nowrap; opacity:0; transition:opacity .1s ease}
   .rsim-tip.show{opacity:1}
+  .rsim-tip-line{display:flex;justify-content:space-between;gap:18px;margin-top:3px;font-size:12px;font-weight:600;color:var(--c)}
+  .rsim-tip-line b{font-variant-numeric:tabular-nums}
   .rsim-cell.is-prereq{animation:rsim-prereq-pulse 1.25s ease-in-out infinite}
   @keyframes rsim-prereq-pulse{0%,100%{filter:brightness(1) saturate(1)} 50%{filter:brightness(1.35) saturate(1.2)}}
   .rsim-cell.is-prereq img{filter:none}
@@ -10478,7 +10494,7 @@ function getCharLv(){
   return getCharLvGlobal ? getCharLvGlobal() : 0;
 }
 function getDepRank(dep){
-  if (typeof reachDepOverride !== "undefined" && reachDepOverride && dep && dep.id in reachDepOverride) return reachDepOverride[dep.id];   // reach popup preview (never the card)
+  if (typeof reachDepOverride !== "undefined" && reachDepOverride && dep){ if (typeof reachDepOverride === "function"){ const forced = reachDepOverride(dep); if (forced !== undefined) return forced; } else if (dep.id in reachDepOverride) return reachDepOverride[dep.id]; }   // reach popup preview (never the card)
   if (getDepRankGlobal) return getDepRankGlobal(dep);
   return dep ? (dep.defaultRank !== undefined ? dep.defaultRank : dep.minRank) : 0;   // every skill dependency starts off (its minimum rank)
 }
@@ -28601,6 +28617,86 @@ const CLASS_GUIDES = [
   {"id":1,"format":"12t-class-guide","version":1,"title":"หมาเจาะ Classic","author":"test123","patch":"1.57","description":"หมาเจาะ พ่อทุกสถาบัน","build":{"server":"tto","classKey":"wolf","level":95,"learned":[101,102,103,121,122,131,132,141,142,143,144,201,202,203,204,231,232,233,234,241,242,301,302,303,311,312,313,314,321,322,323,324,331,332,341,342,343,344,351,352,353,354,361,362,363,364,371,372,373,401,402,404,413,421,424,432,441,443]},"notes":{"364":"สกิลนี้วนง่ายกว่าร่างดำ","373":"พยายามให้สกิลนี้วน"}},
   {"id":2,"format":"12t-class-guide","version":1,"title":"กวิ้น PVE แท้","author":"หนมผิงช่วยเหลือประชาชน","patch":"ได้ทุกแพท","description":"กวิ้นสาย PVE แท้ 12/8 ลงทุกดันผ่านฉลุย แต่ PVP ไ่ม่ได้เลย (หากจะเอาไปลง 12/8 ควรมีเซตอิ้น)","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,111,112,121,122,123,124,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,232,233,241,242,243,244,251,261,262,263,271,301,311,312,313,314,321,322,323,324,331,341,342,343,361,402,404,413,421,422,424,434,441,442]},"notes":{"271":"เมเท 1 วิ อิ้นที่ 384"}}
 ];
+// Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
+const CLASS_GUIDE_STATS = [
+  { key: "atk", label: "ATK" },
+  { key: "def", label: "DEF" },
+  { key: "tal", label: "TAL" },
+  { key: "agi", label: "AGI" },
+  { key: "vit", label: "VIT" },
+  { key: "cha", label: "CHA" },
+  { key: "int", label: "INT" },
+  { key: "lck", label: "LCK" }
+];
+function classGuideStatsClean(raw){
+  if (raw === undefined) return {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("สเตตัสแนะนำไม่ถูกต้อง");
+  for (const key of Object.keys(raw)){
+    if (!CLASS_GUIDE_STATS.some(s => s.key === key)) throw new Error("สเตตัสแนะนำมีชื่อที่ไม่รู้จัก");
+    if (!Number.isInteger(raw[key]) || raw[key] < 0 || raw[key] > 512) throw new Error("สเตตัสแนะนำต้องเป็นจำนวนเต็ม 0–512");
+  }
+  const out = {};
+  for (const s of CLASS_GUIDE_STATS) if (Object.prototype.hasOwnProperty.call(raw, s.key)) out[s.key] = raw[s.key];   // fixed order
+  return out;
+}
+// Hover timings of a learned skill for a guide's recommended stats (reader view only). Mirrors the Cooldown / Cast Time / Duration chips of the skill-details page
+// for the same card and rank: agiAdjust / magAdjust / chaAdjust ranges (LCK widens them), the card's own dependency rules driven by what the build learned,
+// and Revised Art. A field appears only when its stat is filled (AGI, INT, CHA); LCK only widens. Debuff / contested durations, TAL-adjusted durations and summon-owned
+// stats are left out. ctx = { server, learnedByCard: Map(cardId -> learned rank count), revisedArt: bool }.
+function classGuideTimings(cardId, rank, stats, ctx){
+  const base = SKILLS.find(s => s.id === cardId);
+  if (!base || !stats || !ctx) return [];
+  if (Object.keys(base).some(k => /^ownStats/.test(k) && k !== "ownStatsDmgOnly") || base.mercParent) return [];
+  const over = (base.servers && base.servers[ctx.server]) || (ctx.server === "tot" ? base.ps : null);
+  const s = over ? Object.assign({}, base, over) : base;
+  const pick = v => typeof v === "function" ? v(rank) : (Array.isArray(v) ? v[rank - 1] : v);
+  const forced = dep => {
+    const card = dep.icon ? skillSimCardId(dep.icon) : "";
+    const n = card ? (ctx.learnedByCard.get(card) || 0) : 0;
+    return Math.min(Math.max(n, dep.minRank || 0), dep.maxRank === undefined ? n : dep.maxRank);
+  };
+  const rawDep = (v, dep, r) => {
+    if (!dep || dep.kind === "postMultiply") return v;
+    if (dep.kind === "replace") return r === dep.maxRank ? dep.replaceValue : v;
+    if (dep.addFor) return v + dep.addFor(r);
+    if (dep.perRank !== undefined) return v + dep.perRank * (r - (dep.minRank || 0));
+    return v;
+  };
+  const postDep = (range, dep, r) => dep && dep.kind === "postMultiply" ? range.map(v => Math.floor(v * dep.multipliers[r])) : range;
+  const text = range => { const a = fmtOne(range[0]), b = fmtOne(range[range.length - 1]); return a === b ? a : a + "–" + b; };
+  const LCK = stats.lck || 0, out = [];
+  const prev = reachDepOverride; reachDepOverride = forced;
+  try {
+    const cdBase = s.cd === undefined ? undefined : pick(s.cd);
+    if (stats.agi !== undefined && s.cdWrapped && typeof cdBase === "number"){
+      const d1 = s.cdDep, r1 = d1 ? getDepRank(d1) : 0, d2 = s.cdMultDep, r2 = d2 ? getDepRank(d2) : 0;
+      let range = agiAdjustRange(rawDep(cdBase, d1, r1), stats.agi, LCK);
+      range = postDep(postDep(range, d1, r1), d2, r2);
+      range = applyRevisedArt(range, ctx.revisedArt, s.revisedArtExempt);
+      out.push({ kind: "cd", label: "คูลดาวน์", text: text(range) + "s", stat: "agi" });
+    }
+    const castBase = s.castTime === undefined ? undefined : pick(s.castTime);
+    if (stats.int !== undefined && s.castWrapped && typeof castBase === "number"){
+      const dep = s.castDep, r = dep ? getDepRank(dep) : 0;
+      const rawCast = dep ? (dep.kind === "postMultiply" ? Math.floor(castBase * dep.multipliers[r]) : rawDep(castBase, dep, r)) : castBase;
+      const range = magAdjustRange(rawCast, stats.int, LCK);
+      const free = v => Math.abs(v - 0.1) < 0.001, a = range[0], b = range[range.length - 1];
+      const castText = free(a) && free(b) ? "ไร้หลอด" : fmtOne(a) === fmtOne(b) ? fmtOne(a) + "s" : free(a) ? "ไร้หลอด ~ " + fmtOne(b) + "s" : free(b) ? fmtOne(a) + " ~ ไร้หลอด" : fmtOne(a) + "–" + fmtOne(b) + "s";
+      out.push({ kind: "cast", label: "เวลาร่าย", text: castText, stat: "int" });
+    }
+    const durBase = s.duration === undefined ? undefined : pick(s.duration);
+    const isDebuff = /Debuff/.test(String((s.status && s.status.class) || ""));
+    if (stats.cha !== undefined && s.durWrapped && typeof durBase === "number" && !s.durContested && !s.hideDurationChip && !s.durationInfinite && (s.durAdjust || "cha") !== "tal" && !isDebuff){
+      const dep = s.dep, r = dep ? getDepRank(dep) : 0;
+      let range = chaAdjustRange(rawDep(durBase, dep, r), stats.cha, LCK);
+      const postAdd = s.durPostAdd ? (typeof s.durPostAdd === "function" ? s.durPostAdd(r) : (r ? s.durPostAdd : 0)) : 0;
+      if (postAdd) range = range.map(v => v + postAdd);
+      range = postDep(range, dep, r);
+      out.push({ kind: "dur", label: s.durLabel || "ระยะเวลา", text: text(range) + "s", stat: "cha" });
+    }
+  } finally { reachDepOverride = prev; }
+  return out;
+}
 // Every embedded guide has a running number "id" (1, 2, 3 ...; never reused, never renumbered) for its link #skill-simulator/<id>; a guide without one falls back to its position (user 2026-10-15: share a guide in Discord).
 function classGuideId(raw, index){ return String(raw && Number.isInteger(raw.id) && raw.id > 0 ? raw.id : index + 1); }
 function classGuideNormalize(value, { draft = false } = {}){
@@ -28619,6 +28715,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   const learned = new Set(b.learned);
   if (learned.size !== b.learned.length || !skillSimValid(cells, 4, learned, b.level)) throw new Error("ชุดสกิลไม่ผ่านเงื่อนไขเลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน");
   if (!object(value.notes) || Object.keys(value.notes).length > 120) throw new Error("รายการโน้ตสกิลไม่ถูกต้อง");
+  const stats = classGuideStatsClean(value.stats);
   const notes = {};
   for (const id of Object.keys(value.notes)){
     if (!/^[1-4][0-9][1-4]$/.test(id) || !own(cells, id) || cells[id].placeholder) throw new Error("โน้ตอ้างถึงสกิลที่ไม่มีในคลาสหรือเซิร์ฟเวอร์นี้");
@@ -28628,7 +28725,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   return { format: "12t-class-guide", version: 1,
     title: text(value.title, "ชื่อไกด์ ", 160, !draft), author: text(value.author, "ชื่อผู้เขียน ", 120, !draft),
     patch: text(value.patch, "แพตช์เกม ", 120, !draft), description: text(value.description, "คำอธิบายบิลด์ ", 12000, false),
-    build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b) }, notes };
+    build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b) }, ...(Object.keys(stats).length ? { stats } : {}), notes };
 }
 function classGuideExport(value){
   const code = JSON.stringify(classGuideNormalize(value), null, 2);
@@ -28730,6 +28827,31 @@ const CLASS_GUIDE_BUTTON_ICONS = {
   closeTransfer:'<circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/>'
 };
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
+// Editor row of the 8 recommended stats (blank = not recommended, not stored).
+function classGuideStatsEditorHtml(){
+  return '<fieldset class="cg-stats"><legend>สเตตัสแนะนำ (เว้นว่างได้ ช่องที่ว่างจะไม่แสดงในหน้าอ่าน)</legend><div class="cg-stats-grid">' + CLASS_GUIDE_STATS.map(s =>
+    '<label class="cg-stat-in" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><input type="number" min="0" max="512" step="1" inputmode="numeric" data-cg-stat="' + s.key + '" aria-label="' + s.label + ' แนะนำ" placeholder="—"></label>').join("") + '</div></fieldset>';
+}
+// Reader panel: only the filled stats, the stat name and a big number in the stat's signature colour (no caption, user 2026-10-15).
+function classGuideStatsHtml(stats){
+  return CLASS_GUIDE_STATS.filter(s => stats && s.key in stats).map(s =>
+    '<div class="cg-stat-tile" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><output>' + stats[s.key] + '</output></div>').join("");
+}
+// What the hover needs from the opened guide: its server, how many ranks of each skill the build learned, and whether Revised Art is among them.
+function classGuideReaderCtx(guide){
+  const b = guide.build;
+  const cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
+  const learnedByCard = new Map();
+  for (const id of b.learned){
+    const card = cells[id] ? skillSimCardId(cells[id].icon) : "";
+    if (card) learnedByCard.set(card, (learnedByCard.get(card) || 0) + 1);
+  }
+  return { server: b.server, learnedByCard, revisedArt: learnedByCard.has("common_revisedArt") };
+}
+function classGuideHoverLines(guide, ctx, cell, learned){
+  if (!guide || !guide.stats || !ctx || !learned) return null;
+  return classGuideTimings(skillSimCardId(cell.icon), cell.id < 400 ? cell.id % 10 : 1, guide.stats, ctx);
+}
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyLink" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกลิงก์ไกด์นี้</span></button></nav></div>
@@ -28737,11 +28859,12 @@ function mountClassGuide(root){
     <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
       <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
+      ${classGuideStatsEditorHtml()}
       <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="undoNote" title="ย้อนโน้ต (Ctrl+Z)" disabled>${classGuideButtonIcon("undo")}<span>ย้อนโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
       <p class="cg-help" data-cg-role="editHelp">คลิกเพื่อเรียนหรือถอนสกิล บันทึกร่างอัตโนมัติในเบราว์เซอร์นี้</p>
       <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="noteText" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง"></span></span></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button></section>
     </section>
-    <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
+    <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
     <section data-cg-role="sim" hidden></section>
     <dialog class="cg-transfer cg-import-dialog" data-cg-role="transfer" aria-labelledby="cgImportTitle"><button type="button" class="cg-note-close" data-cg-act="closeTransfer" aria-label="ปิด">×</button><h3 id="cgImportTitle">นำเข้าไกด์</h3><textarea class="cg-code" data-cg-role="code" rows="3" maxlength="131072" spellcheck="false" aria-label="วางโค้ดไกด์" placeholder="วางโค้ดไกด์ที่นี่"></textarea><p class="cg-help">วางโค้ดแล้วกด Enter</p><p class="cg-import-error" data-cg-role="importError" role="alert"></p></dialog>
   </div>`;
@@ -28768,7 +28891,17 @@ function mountClassGuide(root){
     }, 1200);
   }
   const editors = { description: classGuideMountEditor(field("description"), root.querySelector('[data-cg-editor="description"]'), status), noteText: classGuideMountEditor(el("noteText"), root.querySelector('[data-cg-editor="noteText"]'), status) };
-  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, patch: field("patch").value, description: field("description").value, build: sim.getBuild(), notes: { ...(draft ? draft.notes : {}) } });
+  const statInput = key => root.querySelector('[data-cg-stat="' + key + '"]');
+  const collectStats = () => {
+    const out = {};
+    for (const s of CLASS_GUIDE_STATS){
+      const raw = statInput(s.key).value.trim(); if (raw === "") continue;
+      const n = Math.round(Number(raw)); if (Number.isFinite(n)) out[s.key] = Math.min(512, Math.max(0, n));
+    }
+    return out;
+  };
+  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, patch: field("patch").value, description: field("description").value, build: sim.getBuild(), stats: collectStats(), notes: { ...(draft ? draft.notes : {}) } });
+  let readerCtx = null;
   const saveDraft = () => {
     if (mode !== "author") return;
     draft = collect();
@@ -28783,6 +28916,7 @@ function mountClassGuide(root){
       for (const id in draft.notes) if (!cells[id] || cells[id].placeholder) delete draft.notes[id];
       simRoot._skillSim.setNotes(draft.notes); saveDraft();
     },
+    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current, readerCtx, cell, learned) : null; },
     onNote(info){
       if (mode === "author"){
         noteId = info.id; el("noteSkill").textContent = info.cell.name; editors.noteText.set(draft.notes[info.id] || "");
@@ -28842,6 +28976,7 @@ function mountClassGuide(root){
       if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", patch: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
     }
     for (const name of ["title", "author", "patch"]) field(name).value = draft[name];
+    for (const s of CLASS_GUIDE_STATS) statInput(s.key).value = draft.stats && s.key in draft.stats ? draft.stats[s.key] : "";
     editors.description.set(draft.description);
     applying = true;
     try { sim.loadBuild(draft.build); sim.setNotes(draft.notes); setAuthorInteraction("build"); } finally { applying = false; }
@@ -28861,6 +28996,7 @@ function mountClassGuide(root){
     el("guideTitle").textContent = current.title || "ตัวอย่างไกด์";
     el("guideByline").textContent = [current.author || "ยังไม่ระบุผู้เขียน", SKILL_SIM_NAMES[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].name, "แพตช์ " + (current.patch || "ยังไม่ระบุ"), "Lv " + current.build.level].join(" · ");
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
+    el("guideStats").innerHTML = classGuideStatsHtml(current.stats); el("guideStats").hidden = !current.stats; readerCtx = classGuideReaderCtx(current);
     window.scrollTo(0, 0); queueReaderFit();
   }
   for (const [role, choices] of [["serverFilter", Object.entries(SKILL_SIM_SERVERS).map(([key, value]) => [key, value.name])], ["classFilter", Object.entries(SKILL_SIM_NAMES)]]){
@@ -28945,7 +29081,15 @@ function mountClassGuide(root){
     e.preventDefault(); undoNote();
   });
   root.addEventListener("pointerdown", e => { if (e.target.closest("[data-cg-bold]")) e.preventDefault(); });
-  root.addEventListener("input", e => { if (e.target.matches && e.target.matches("[data-cg-field]")) saveDraft(); });
+  root.addEventListener("input", e => {
+    if (!e.target.matches) return;
+    if (e.target.matches("[data-cg-stat]")){
+      const v = e.target.value;
+      if (v !== "" && Number(v) > 512) e.target.value = "512"; else if (v !== "" && Number(v) < 0) e.target.value = "0";
+      saveDraft(); return;
+    }
+    if (e.target.matches("[data-cg-field]")) saveDraft();
+  });
   root.addEventListener("click", async e => {
     const format = e.target.closest("[data-cg-bold]");
     if (format){ if (mode === "author") editors[format.dataset.cgBold].bold(); return; }
@@ -29288,6 +29432,13 @@ function mountSkillSimulator(root, options = {}){
     const c = cell && cells[cell.dataset.id];
     if (!c || (pressCell && cell === pressCell) || cell.classList.contains("is-boom")){ tipEl.classList.remove("show"); return; }
     tipEl.textContent = c.name;
+    // Class guide view: timing lines of a learned skill from the author's recommended stats (options.tipExtra, user 2026-10-15).
+    const extra = interaction === "read" && options.tipExtra ? options.tipExtra(c, state.learned.has(c.id)) : null;
+    if (extra) for (const line of extra){
+      const row = document.createElement("div"); row.className = "rsim-tip-line"; row.setAttribute("style", "--c:var(--stat-" + line.stat + ")");
+      const k = document.createElement("span"), v = document.createElement("b"); k.textContent = line.label; v.textContent = line.text;
+      row.append(k, v); tipEl.appendChild(row);
+    }
     const r = cell.getBoundingClientRect(), w = tipEl.offsetWidth;
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, r.left + r.width / 2 - w / 2)) + "px";
     tipEl.style.top = Math.max(4, r.top - tipEl.offsetHeight - 6) + "px";
@@ -29934,6 +30085,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T16:12:39.946Z","feat(bible): class guides get recommended stats for each of the 8 stats (editor row, reader left panel in each stat's colour) and hover cooldown, cast time and buff duration from AGI / INT / CHA / LCK"],
     ["2026-10-15T15:58:04.963Z","fix(bible): skill simulator long press opens the skill card only in the class guide view, not in the builder or the note editor"],
     ["2026-10-15T15:44:36.626Z","fix(bible): range preview plays Gaos Tail Spin at its real timing (first wave 0.6 s, then every 0.2 s)"],
     ["2026-10-15T12:49:13.580Z","fix(bible): range preview default zoom frames the whole Blazing Arrow chain and the runic trail (new fit part key)"],
