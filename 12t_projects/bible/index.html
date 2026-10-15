@@ -11300,6 +11300,7 @@ function reachRender(ctx, model, P, st, W, H, dpr, dimK){
   if (!reachBuf.force){ if (took > 10) reachBuf.q = Math.max(0.45, q * 0.86); else if (took < (scene ? 7 : 4.5) && q < 1) reachBuf.q = Math.min(1, q * 1.08); }   // a full-canvas scene never oversamples and settles to full quality once drawing stops (drawReach)
 }
 // items: [{part, alpha}] (alpha < 1 while a range fades in or out). model: reachModel() or null (wireframe stand-in).
+const reachTagMem = new WeakMap();   // per canvas: where each dimension label was drawn last frame
 function drawReach(cv, items, st, model, scene, seqT){
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5), W = cv.clientWidth, H = cv.clientHeight;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
@@ -11325,10 +11326,10 @@ function drawReach(cv, items, st, model, scene, seqT){
       const s = reachClipSeg(m.verts[i], m.verts[j], up);
       if (s){ const a = P(s[0]), b = P(s[1]); list.push({ kind: "edge", pts: [a, b], d: (a[2] + b[2]) / 2 + 0.001, col, alpha: faint ? alpha * 0.55 : alpha, under: !up, dash: faint }); }
     }
-    for (const d of reachDims(p)){
+    for (const [di, d] of reachDims(p).entries()){
       // pick the alternative edge that sits furthest right ("right") or lowest on screen ("low"): the outside of the shape, away from the caster
-      const opts = d.opts.map(([a, b]) => { const pa = P(a), pb = P(b), mx = (pa[0] + pb[0]) / 2, my = (pa[1] + pb[1]) / 2; return { pa, pb, mx, my, sc: d.pick === "low" ? my : mx }; }).sort((x, y) => y.sc - x.sc);
-      if (opts.length) tags.push({ opts, col, alpha, text: d.text });
+      const opts = d.opts.map(([a, b], ei) => { const pa = P(a), pb = P(b), mx = (pa[0] + pb[0]) / 2, my = (pa[1] + pb[1]) / 2; return { pa, pb, mx, my, ei, sc: d.pick === "low" ? my : mx }; }).sort((x, y) => y.sc - x.sc);
+      if (opts.length) tags.push({ opts, col, alpha, text: d.text, key: (p.sg !== undefined ? "g" + p.sg : "p" + k) + ":" + di });   // key: the same label of the same part group, whichever copy of a multi-hit part is on screen
     }
   });
   // the caster: the class model (rasterised below, between the boxes behind it and in front of it) or a wireframe stand-in
@@ -11389,18 +11390,35 @@ function drawReach(cv, items, st, model, scene, seqT){
   }
   ctx.font = "bold 12px ui-monospace, monospace";
   ctx.textBaseline = "middle"; ctx.textAlign = "center";
+  // Labels keep their identity from frame to frame (user 2026-10-15: Twin Resonance's labels jumped at every 0.4 s round): the same label (part group + dimension, numbered when several copies show at once)
+  // prefers the edge and the nudge it had, and glides to its new place (about 60 ms) instead of jumping.
+  const mem = reachTagMem.get(cv) || (reachTagMem.set(cv, new Map()), reachTagMem.get(cv)), nowMs = performance.now(), seen = {}, keep = new Map();
+  tags.sort((a, b) => b.alpha - a.alpha);   // the most visible copy of a label owns its identity and claims its place first; a fading copy neither blocks nor pushes anything
+  for (const t of tags){ const n = seen[t.key] = (seen[t.key] || 0) + 1; t.key += "#" + n; }
   const placed = [], clash = (x, y, w) => placed.some(r => x - w / 2 < r.x + r.w / 2 && x + w / 2 > r.x - r.w / 2 && y - 8 < r.y + 8 && y + 8 > r.y - 8);
   for (const t of tags){
-    const w = ctx.measureText(t.text).width + 10;
-    // the best edge whose pill is free; else the best edge, nudged down until it is
-    let pick = t.opts.find(o => !clash(o.mx, o.my, w)), my = pick ? pick.my : t.opts[0].my;
-    if (!pick){ pick = t.opts[0]; for (let k = 0; k < 8 && clash(pick.mx, my, w); k++) my += 17; }
-    placed.push({ x: pick.mx, y: my, w });
+    const w = ctx.measureText(t.text).width + 10, m = mem.get(t.key), faint = t.alpha < 0.45;
+    // the edge it had if that is still free, else the best free edge, else the best edge nudged down until it is free (trying the old nudge first)
+    let pick = (m && t.opts.find(o => o.ei === m.ei && !(clash(o.mx, o.my, w) && !faint))) || t.opts.find(o => !(clash(o.mx, o.my, w) && !faint)), nudge = 0, my = pick ? pick.my : t.opts[0].my;
+    if (!pick){
+      pick = (m && t.opts.find(o => o.ei === m.ei)) || t.opts[0];
+      const tries = (m && m.nudge ? [m.nudge] : []).concat([0, 1, 2, 3, 4, 5, 6, 7, 8].map(k => k * 17));
+      nudge = tries.find(d => !(clash(pick.mx, pick.my + d, w) && !faint)); if (nudge === undefined) nudge = 8 * 17;
+      my = pick.my + nudge;
+    }
+    let mx = pick.mx, pa = pick.pa, pb = pick.pb;
+    if (m && nowMs - m.t < 300){   // glide from where it was drawn last frame
+      const k = 1 - Math.exp(-(nowMs - m.t) / 60), lerp = (x, y) => x + (y - x) * k;
+      mx = lerp(m.mx, mx); my = lerp(m.my, my); pa = [lerp(m.pa[0], pa[0]), lerp(m.pa[1], pa[1])]; pb = [lerp(m.pb[0], pb[0]), lerp(m.pb[1], pb[1])];
+    }
+    keep.set(t.key, { ei: pick.ei, nudge, mx, my, pa, pb, t: nowMs });
+    if (!faint) placed.push({ x: mx, y: my, w });
     ctx.globalAlpha = t.alpha * 0.95; ctx.strokeStyle = t.col; ctx.lineWidth = 2.6; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(pick.pa[0], pick.pa[1]); ctx.lineTo(pick.pb[0], pick.pb[1]); ctx.stroke();
-    ctx.fillStyle = "rgba(12,12,14,.78)"; ctx.fillRect(pick.mx - w / 2, my - 8, w, 16);
-    ctx.fillStyle = t.col; ctx.fillText(t.text, pick.mx, my + 0.5);
+    ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
+    ctx.fillStyle = "rgba(12,12,14,.78)"; ctx.fillRect(mx - w / 2, my - 8, w, 16);
+    ctx.fillStyle = t.col; ctx.fillText(t.text, mx, my + 0.5);
   }
+  mem.clear(); keep.forEach((v, key) => mem.set(key, v));
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
   ctx.globalAlpha = 1;
 }
@@ -29776,6 +29794,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T05:00:17.178Z","fix(bible): range popup dimension labels no longer jump between hits (each label keeps its edge and nudge and glides to its new place, the most visible copy owns it, a fading copy neither blocks nor pushes others)"],
     ["2026-10-15T04:54:42.332Z","fix(bible): range popup shows Boldas 1 s after the opening camera move starts instead of when it ends"],
     ["2026-10-15T04:51:40.226Z","fix(bible): range popup keeps Boldas hidden during the opening camera move (the close-up caught a glimpse of him), he appears when the move ends"],
     ["2026-10-15T04:14:35.272Z","feat(bible): range popup has a replay button for the hit-by-hit animation, and switching a toggle no longer replays it (it jumps to the final picture so reaches can be compared)"],
