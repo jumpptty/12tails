@@ -3868,6 +3868,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 1471 || body.nt !== 1692) bad("model Whale: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Whale_standard_tri) has 1471 / 1692");
         if (extras.length !== 2 || extras[0].nv !== 141 || extras[0].nt !== 76 || extras[1].nv !== 172 || extras[1].nt !== 148) bad("model Whale: extras should be the standard lance (141 / 76) and the standard shield (172 / 148), got " + JSON.stringify(extras));
       }
+      if (m[1] === "Bison") {
+        // armors/Bison_standard_tri 2964 / 2165 (no hat); extra = standardAxe (Bison_standardAxe_tri 292 / 172) in HandMount_R
+        if (body.nv !== 2964 || body.nt !== 2165) bad("model Bison: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bison_standard_tri) has 2964 / 2165");
+        if (extras.length !== 1 || extras[0].nv !== 292 || extras[0].nt !== 172) bad("model Bison: the extra should be the standard axe (292 / 172), got " + JSON.stringify(extras));
+      }
       if (m[1] === "Boldas") {
         // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
         if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");

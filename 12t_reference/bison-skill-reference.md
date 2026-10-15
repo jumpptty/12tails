@@ -465,6 +465,27 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 
 - reqLv/reqBn 55/0, mode passive. See the Combo entry: `RPC_nAttack5` starts after `nAttack3` or the spin, on a press more than 2 s later, with no roll (`Bison.cs:5034-5067`); it is a two-hit spin (radius 5 then 6 x rangeMod, height 3; first hit 0 base KO) with the spin's damage coefficients (`:18313-18643`), and it also triggers Berserker Rush, Colossal Weapon and Over Pride like other stages.
 
+## Movement timelines (read 2026-10-15, for the range preview; nominal `moveMod` 1, not live-tested)
+
+Movement is `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`CharacterControl.cs:2722`); a speed set in a state runs until the next `Yield` returns. Legs are speed m/s × seconds; the exact lines are the coroutines named in each skill's section above (`Bison.cs`, `Bison_*.cs` companions).
+
+| Skill | Timeline | Hits |
+|---|---|---|
+| Combo stage 1 | 1 × 0.5 s | sector at 0.5 s |
+| Combo stage 2 | starts 0.7 s after cast; 2 × 0.5 s | box at +0.5 s |
+| Combo stage 3 | starts 1.4 s; 0 × 0.1 s then 4 × 0.5 s | box at +0.6 s |
+| Combo spin (rank 3+) | starts 1.4 s; 0 × 0.7 s then 5 × 0.3 s | circles at +0.7 s and +1.0 s |
+| Added Swing | starts 2.2 s; 0 × 1 s then 5 × 0.3 s | circles at +1.0 s and +1.3 s |
+| Charge Attack | 3 m/s throughout; 4 hits (8 with Spin Hack) every `2 × (0.2 − 0.033 × Improved Swing)` s | |
+| Slam | 0 × 0.2 s then 7 m/s | hits at 0.3 + 0.1 i s, rank + 1 hits |
+| Trample | −2 × 0.3 s, 7 × 0.6 s, then 9 m/s | phase 1 at 0.5 / 0.7 / 0.9 s, phase 2 at 1.1 + 0.2 i s |
+| Knock Down | 0 × 0.3 s, 1 × 0.4 s, 4 × 0.2 s | hit at 0.9 s |
+| Over Swing | 0 × 0.5 s then 3 × 0.2 s | circles at 0.5 s and 0.7 s |
+| Earth Smasher | 0 × 0.8 s then 2 × 0.6 s | hit at 1.4 s |
+| Magma Clutter | 5 × 0.3 s, 0 × 0.5 s, 5 × 0.2 s | circle at 0.3 s, box at 1.0 s |
+| Pride Crusher | 1 × 0.6 s | hit at 0.6 s |
+| Calamity Hammer | stands still | slam at 2.1 s, lava at 2.4 s |
+
 ## Skill Tree Layout & Learn Requirements
 
 Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Berserker, Gladiator, Warlord, Molten Axe). Source: `BisonSkill.getSkill` (`setReq`, `rSkill`) and `BisonSkill.getSkillTree`.
