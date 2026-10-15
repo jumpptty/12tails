@@ -7666,7 +7666,7 @@
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .entry-collage{ --entry-collage-opacity:.24; --entry-collage-opacity-hover:.4; } }
   :root[data-theme="dark"] .entry-collage{ --entry-collage-opacity:.24; --entry-collage-opacity-hover:.4; }
   @media (max-width:600px){ .entry-collage{ left:40%; --entry-collage-opacity:.18; } }
-  .entry-hero-side .entry-art{ top:10px; width:130px; right:calc(-10px + var(--i, 0) * 60px); --entry-art-opacity:.3; --entry-art-opacity-hover:.48; }
+  .entry-hero-side .entry-art{ top:10px; width:124px; right:calc(-22px + var(--i, 0) * 92px); --entry-art-opacity:.3; --entry-art-opacity-hover:.48; }
   .entry-art[data-k="Chameleon"]{ transform:scaleX(-1); -webkit-mask-image:linear-gradient(to left, transparent 0, #000 45%); mask-image:linear-gradient(to left, transparent 0, #000 45%); }
   .entry-art[data-k="Scale"]{ width:150px; background-position:center; }
   .entry-art[data-k="Dice"]{ width:180px; right:10px; background-position:center; --entry-art-opacity:.16; --entry-art-opacity-hover:.3; }
@@ -30690,6 +30690,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T18:03:41.020Z","fix(bible): the three class portraits on the ไกด์อาชีพ tile are spread further apart"],
     ["2026-10-15T18:02:28.048Z","feat(bible): class guides are renamed ไกด์อาชีพ and share the hub's hero row with skill details (3/5 + 2/5, featured gold chip over three random class portraits in random colour variants)"],
     ["2026-10-15T17:56:04.372Z","feat(bible): class guides are renamed ไกด์อาชีพ and sit in the hub's hero row beside skill details (a third of the row, featured gold chip with class portraits)"],
     ["2026-10-15T17:52:01.614Z","fix(bible): class guide note star shrinks with its skill icon (and its light ball with it), the note chip and title only appear when the ball lands, pinch zoom on phones no longer refits the build or opens a skill card"],
