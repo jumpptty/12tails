@@ -10429,7 +10429,7 @@ const CAT_OPENWOUND_PROC = { mode: "bonus", controls: [CAT_OPENWOUND_DEP], amoun
 const RABBIT_ALCHEMISTLAB_DEP = { id: "alchemistLab", label: "Alchemist Lab", icon: "rabbit_alchemistLab4", minRank: 0, maxRank: 4, perRank: 2 };
 const RABBIT_EXTRAPOTION_REACH_DEP = { id: "extraPotion", label: "Extra Potion", icon: "rabbit_extraPotion5", minRank: 0, maxRank: 1 };   // popup handle; shares the id of the Mix card's own dmgDep
 // Potion bottles sit 1.5 m from the Rabbit, evenly spaced (n bottles = 360/n degrees); each is a trigger box of side s (prefab BoxCollider)
-function rabbitPotionParts(n, s, prefab, src){ const out = [{ shape: "ring", r: 1.5, anchor: "self", faint: true, label: "ขวดยาวางบนพื้นห่างตัว 1.5 m (" + n + " ขวด ห่างกัน " + 360 / n + "°)", src }]; for (let i = 0; i < n; i++){ const a = 2 * Math.PI * i / n; out.push({ shape: "box", w: s, l: s, h: 1, x0: +(1.5 * Math.sin(a)).toFixed(2), z0: +(1.5 * Math.cos(a) - s / 2).toFixed(2), anchor: "self", label: "ขวดยา " + (i + 1) + " (กล่องจุดสัมผัส " + s + " × " + s + " × 1 m)", src: prefab }); } return out; }
+function rabbitPotionParts(n, s, prefab, src){ const out = [{ shape: "ring", r: 1.5, anchor: "self", faint: true, label: "ขวดยาวางบนพื้นห่างตัว 1.5 m (" + n + " ขวด ห่างกัน " + 360 / n + "°)", src }]; for (let i = 0; i < n; i++){ const a = 2 * Math.PI * i / n; out.push({ shape: "box", w: s, l: s, h: 1, yBand: [0, 1], x0: +(1.5 * Math.sin(a)).toFixed(2), z0: +(1.5 * Math.cos(a) - s / 2).toFixed(2), anchor: "self", label: "ขวดยา " + (i + 1) + " (กล่องจุดสัมผัส " + s + " × " + s + " × 1 m)", src: prefab }); } return out; }
 const RABBIT_MIRACLEDROP_DEP = { id: "miracleDrop", label: "Miracle Drop", icon: "rabbit_miracleDrop5", minRank: 0, maxRank: 1 };
 // Backstab (#413, Cat.cs:30304/30551/31386/31623): Forward Lunge and Reverse Thrust hitDmg *= 2 when the caster is behind the target.
 // Slayer race bonus (Chameleon.cs:31488-31610): raw hitDmg *= 2 when the target is the skill's race or has slayerMark.
@@ -10894,7 +10894,7 @@ function reachMesh(p){
   const yc = Math.cos((p.yaw || 0) * Math.PI / 180), ys = Math.sin((p.yaw || 0) * Math.PI / 180);   // yaw: the whole part turned about the caster (Rabbit Four Shot fires front / back / left / right)
   const add = (x, y, z) => { const X = x + off[0], Z = z + off[2]; return verts.push([X * yc + Z * ys, y + off[1], -X * ys + Z * yc]) - 1; };
   // Find* checks use the vertical band [pos.y - 0.5 H, pos.y + H] (Damage.cs:1108, :1567); an unlimited height is drawn as a tall column.
-  const band = (h) => typeof h === "number" ? [-0.5 * h, h] : [-3, 6];
+  const band = (h) => p.yBand ? p.yBand : typeof h === "number" ? [-0.5 * h, h] : [-3, 6];   // yBand [lo, hi] = the exact vertical extent of a trigger collider (a prefab BoxCollider), not a Find* band
   if (p.shape === "box"){
     const hw = p.w / 2, hw2 = (p.w2 !== undefined ? p.w2 : p.w) / 2;
     for (const y of band(p.h)) for (const [x, z] of [[-hw, 0], [hw, 0], [hw2, p.l], [-hw2, p.l]]) add(x, y, z);
@@ -10975,12 +10975,12 @@ function reachDims(p){
   // the game's vertical band is [anchor - 0.5 H, anchor + H] (Damage.cs:1108, :1567), the anchor lifted by y0: one pill for the part above the ground and one for the buried part (user 2026-10-14)
   const heightPills = (xzs) => {
     if (typeof p.h !== "number"){ out.push({ text: "∞", opts: xzs.map(([x, z]) => [V(x, 0, z), V(x, 6, z)]), pick: "right" }); return; }
-    const y0 = p.y0 || 0, wLo = y0 - 0.5 * p.h, wHi = y0 + p.h, W = (x, y, z) => [x + off[0], y, z + off[2]], from = Math.max(wLo, 0), to = Math.min(wHi, 0);
+    const y0 = p.y0 || 0, wLo = p.yBand ? p.yBand[0] : y0 - 0.5 * p.h, wHi = p.yBand ? p.yBand[1] : y0 + p.h, W = (x, y, z) => [x + off[0], y, z + off[2]], from = Math.max(wLo, 0), to = Math.min(wHi, 0);
     if (wHi > 0) out.push({ text: "เหนือพื้น " + f1(wHi - from) + "m", opts: xzs.map(([x, z]) => [W(x, from, z), W(x, wHi, z)]), pick: "right" });
     if (wLo < 0) out.push({ text: "ใต้พื้น " + f1(to - wLo) + "m", opts: xzs.map(([x, z]) => [W(x, wLo, z), W(x, to, z)]), pick: "right" });
   };
   if (p.shape === "box"){
-    const hw = p.w / 2, hw2 = (p.w2 !== undefined ? p.w2 : p.w) / 2, lo = typeof p.h === "number" ? -0.5 * p.h : -3, top = typeof p.h === "number" ? p.h : 6;
+    const hw = p.w / 2, hw2 = (p.w2 !== undefined ? p.w2 : p.w) / 2, lo = typeof p.h === "number" ? -0.5 * p.h : -3, top = p.yBand ? p.yBand[1] : typeof p.h === "number" ? p.h : 6;
     out.push({ text: f1(p.w) + "m", opts: [[V(-hw, top, 0), V(hw, top, 0)], ...(hw2 !== hw ? [] : [[V(-hw2, top, p.l), V(hw2, top, p.l)]])], pick: "low" });
     if (hw2 !== hw) out.push({ text: f1(p.w2) + "m", opts: [[V(-hw2, top, p.l), V(hw2, top, p.l)]], pick: "low" });
     // a trapezoid's length is TargetRange: the distance between its two parallel bases (Damage.cs:1437-1446: the far corners sit at z = TargetRange), NOT its slanted side,
@@ -15085,7 +15085,7 @@ const SKILLS = [
     durWrapped: true,
     status: { name: "runicFlame", sLv: () => 1, class: "Buff, Magical" },
     revisedArtExempt: false,
-    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งเปลวไฟตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ทำดาเมจใส่ศัตรูที่สัมผัส ตัวละ **1** ครั้งต่อชิ้น<br>__ใช้แล้วยกเลิก **Runic Sand**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicFlame.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
+    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งเปลวไฟตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ทำดาเมจใส่ศัตรูที่สัมผัส ตัวละ **1** ครั้งต่อชิ้น<br>__ใช้แล้วยกเลิก **Runic Sand**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, yBand: [0, 1], z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicFlame.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
   },
 
   {
@@ -15410,7 +15410,7 @@ const SKILLS = [
       { name: "groundLock", sLv: () => 1, class: "Debuff, Magical, Lock" }
     ],
     revisedArtExempt: false,
-    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งมือทรายตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ศัตรูที่สัมผัสและยังไม่ติด [groundLock] จะติด [groundLock1] นาน **2 วินาที** (ฐาน แข่งค่า CHA)<br>__ใช้แล้วยกเลิก **Runic Flame**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicSand.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
+    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งมือทรายตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ศัตรูที่สัมผัสและยังไม่ติด [groundLock] จะติด [groundLock1] นาน **2 วินาที** (ฐาน แข่งค่า CHA)<br>__ใช้แล้วยกเลิก **Runic Flame**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, yBand: [0, 1], z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicSand.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
   },
 
   {
@@ -29934,6 +29934,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T12:37:51.112Z","fix(bible): range preview draws trigger-collider boxes (Monkey runic pieces, Rabbit potions) over their exact 0-1 m height (new yBand part key), and its height labels follow it"],
     ["2026-10-15T12:31:31.780Z","fix(bible): range preview draws the 5-bottle Mix (Extra Potion) and 4-bottle Miracle Blend (Miracle Drop) potion layouts with toggles"],
     ["2026-10-15T12:29:20.376Z","fix(bible): range preview draws the Bat Combo bolt, the Monkey Runic Flame / Runic Sand pieces and the Rabbit potions at their real prefab sizes instead of ?"],
     ["2026-10-15T12:24:49.447Z","fix(bible): range preview for Cat Two Pair (target skill, 40 m lock ring); audit: every other active card without reach is a self, team or passive-modifier skill"],
