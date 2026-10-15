@@ -849,6 +849,15 @@ Blade Fang counts: `bladeFang_count` is 0 after the first hit, +1 at the start o
 
 **Twin Resonance** is not a moving box but a growing fan: 40 rounds, 0.4 s apart, each a 190° `FindAngleTarget` from the fixed cast point with search range `3 + 0.8 × i`, filtered to `1 + 0.8 × i` m (`Wolf.cs:37644`, `:37663-37668`, `:37714`): radius 1 m at t = 0 to 32.2 m at t = 15.6 s.
 
+### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+
+| Stage | Legs (m/s × s) | Hit at (m) | Source |
+|---|---|---|---|
+| 1 | 6 × 0.5 | 3.0 | `Wolf.cs:14980`, `:15178` |
+| 2 | 4 × 0.32 | 1.28 | `Wolf.cs:15838`, `:16009` |
+| 3 | 4 × 0.33 | 1.32 | `Wolf.cs:16477`, `:16712` |
+| 4 | 4 from t = 0.16 s: first hit at t = 0.14 s, second at 0.64 s | 0.56, 2.56 | `Wolf.cs:17257`, `:17428`, `:17746` |
+
 ## Open questions & card mismatches (2026-10-01)
 
 **Card mismatches:** all fixed 2026-10-02 (every Wolf card now has `desc`; No KO and Impulse got `lckProc`; Art Cancel, Counter, Blade Song got `maxRank` and costs; Second Wind, Holy Sword, Holy Armor, Mirror Blade and Art Breaker got costs; Art Breaker got its `cd`).

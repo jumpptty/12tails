@@ -487,6 +487,15 @@ The Cat moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`Char
 
 No movement before the hits (speed 0): Finishing Blow (it jumps back −8 × 0.2 only after its fourth hit, `Cat.cs:38995`), Delta Strike. Moon Storm's hit positions are fixed at `mPos + i × 1.5 m` and `mPos + 12 m` (the cast point, not the Cat; `Cat.cs:36415`, `:36521`).
 
+### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+
+| Stage | Legs (m/s × s) | Hit at (m) | Source |
+|---|---|---|---|
+| 1 | 3 × 0.2, then 9 × 0.2 | 2.4 | `Cat.cs:16866`, `:16361`, `:16520` |
+| 2 | 7 × 0.3 | 2.1 | `Cat.cs:17186`, `:17318` |
+| 3 | 4, hits every 0.2 s (two hits) | 0.8, 1.6 | `Cat.cs:17896`, `:18001`, `:18244` |
+| 4 | 6, hits every 0.2 s (two hits) | 1.2, 2.4 | `Cat.cs:18867`, `:18972`, `:19213` |
+
 ## Skill Tree Layout & Learn Requirements
 
 Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Treasure Hunter, Gambler, Assassin, Pirate King). Source: `CatSkill.getSkill` (`setReq`, `rSkill`) and `CatSkill.getSkillTree`.

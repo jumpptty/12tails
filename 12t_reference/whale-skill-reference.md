@@ -541,6 +541,14 @@ The Whale moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`Ch
 
 Not moving before their hit (speed 0, or the speed is set at the same instant as the hit): Charge Attack (`Whale.cs:19800`, `:19850`), Honor, Gobble Up, Whale Wave, Mal Storm, Call to Arm, Bubble Burst. **Not modelled:** Bowling Whale (a homing roll: `vMovement` is re-aimed at the target every frame and the speed eases toward `2 × distance`, `Whale.cs:36914-36940`, so the path depends on the target) and Grand Tide (a channel: speed 2 for the first second, then 3 while it lasts, a hit every second on a box 4 m behind to 3 m ahead of the Whale, `Whale.cs:37393`, `:37498`, `:37612`, `:37632`; its length depends on the player holding it and on MP / SP).
 
+### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+
+| Stage | Legs (m/s × s) | Hit at (m) | Source |
+|---|---|---|---|
+| 1 | 4 × 0.2 | 0.8 | `Whale.cs:16075`, `:16444` |
+| 2 | 4 × 0.2, pause 0.1 s, 4 × 0.2 (two hits) | 0.8, 1.6 | `Whale.cs:16891`, `:17353`, `:17334`, `:17698` |
+| 3 | 4 × 0.2 | 0.8 | `Whale.cs:18146`, `:18509` |
+
 ## Reach for the range preview (verified 2026-10-14)
 
 Sizes are in each card's `reach` field with `file:line`; this records the decisions that are not obvious from a size.
