@@ -7668,6 +7668,9 @@
   @media (max-width:600px){ .entry-collage{ left:40%; --entry-collage-opacity:.18; } }
   .entry-hero-side .entry-art{ top:8px; width:160px; right:8px; --entry-art-opacity:.3; --entry-art-opacity-hover:.48; transition:opacity .6s ease; }
   .entry-hero-side .entry-art.is-swapping{ opacity:0; }
+  /* each portrait rises gently into place over its 3 s (user 2026-10-16: option 1, slow drift-in) */
+  .entry-hero-side .entry-art.is-rising{ transform-origin:50% 100%; animation:entry-portrait-rise 3s cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes entry-portrait-rise{ from{ transform:translateY(8px) scale(.97); } to{ transform:none; } }
   .entry-art[data-k="Chameleon"]{ transform:scaleX(-1); -webkit-mask-image:linear-gradient(to left, transparent 0, #000 45%); mask-image:linear-gradient(to left, transparent 0, #000 45%); }
   .entry-art[data-k="Scale"]{ width:150px; background-position:center; }
   .entry-art[data-k="Dice"]{ width:180px; right:10px; background-position:center; --entry-art-opacity:.16; --entry-art-opacity-hover:.3; }
@@ -30642,7 +30645,7 @@ function skillIconCollage(){
 // ไกด์อาชีพ tile (user 2026-10-16): one random class in a random one of its five colour variants (CLASS_STORY_ART, the skill-details preset colours), new picks on every load.
 function classStoryArt(){
   const all = Object.keys(CLASS_STORY_ART), keys = [all[Math.floor(Math.random() * all.length)]];
-  return keys.map((cls, i) => { const v = CLASS_STORY_ART[cls]; return `<span class="entry-art" data-k="story" data-class="${cls}" aria-hidden="true" style="--i:${i}; background-image:url('${v[Math.floor(Math.random() * v.length)]}');"></span>`; }).join('');
+  return keys.map((cls, i) => { const v = CLASS_STORY_ART[cls]; return `<span class="entry-art is-rising" data-k="story" data-class="${cls}" aria-hidden="true" style="--i:${i}; background-image:url('${v[Math.floor(Math.random() * v.length)]}');"></span>`; }).join('');
 }
 toolGrid.innerHTML = TOOLS.map(t => {
   const artSrc = k => {
@@ -30689,7 +30692,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
     setTimeout(() => {
       const v = CLASS_STORY_ART[cls];
       art.style.backgroundImage = "url('" + v[Math.floor(Math.random() * v.length)] + "')"; art.dataset.class = cls;
-      art.classList.remove("is-swapping");
+      art.classList.remove("is-swapping", "is-rising"); void art.offsetWidth; art.classList.add("is-rising");   // restart the rise
     }, 600);
   }, 3000);
 })();
@@ -30707,6 +30710,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T18:08:27.626Z","feat(bible): each ไกด์อาชีพ tile portrait rises gently into place as it appears"],
     ["2026-10-15T18:06:06.713Z","feat(bible): the ไกด์อาชีพ tile portrait fades to another random class and colour every 3 seconds"],
     ["2026-10-15T18:04:50.635Z","fix(bible): the ไกด์อาชีพ tile shows one random class portrait (random colour variant) instead of three"],
     ["2026-10-15T18:04:09.918Z","fix(bible): the ไกด์อาชีพ tile drops its GUIDE tag line"],
