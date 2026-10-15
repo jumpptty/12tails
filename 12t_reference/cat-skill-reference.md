@@ -472,6 +472,21 @@ Entries are being written skill by skill; every skill shown in the app needs one
 - **Support Fire:** each shell is thrown to `24 + Random.Range(0, 24)` m (24..47) ahead with `getTrajectoryVector` (`:41212`) and bursts in `FindAreaTarget(hitPos, 8, 3)` (`:10825`). The cannons stand in a row 3 m apart (`(i × 3) − 10.5`, `:41060`); the Bible card draws only the near and far blast circles on the Cat's axis.
 - **Hidden Blade / Jagged Knife are not volumes:** the 45° (75° with #433) is `Quaternion.Angle` between the Cat's and the target's facings, so the cards keep it as desc text and have no `reach`.
 
+## Movement timelines (read 2026-10-15, for the range preview; nominal `moveMod` 1, not live-tested)
+
+The Cat moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`CharacterControl.cs:2722`); the speed set in a state runs until the next `Yield` returns. Distance moved from the cast point at each hit (forward is the facing; negative = backwards):
+
+| Skill | Legs (speed m/s × seconds) | Hit at (m) | Source |
+|---|---|---|---|
+| Forward Lunge | 9 until the finisher (a 0.3 s wind-up at 0 first); 4 small hits 0.1 s apart, finisher at 0.4 s (sets 12 only at the hit) | 0, 0.9, 1.8, 2.7; finisher 3.6 | `Cat.cs:30071`, `:30132`, `:30236`, `:30260`, `:30518`, `:30271` |
+| Reverse Thrust | −10 × 0.2, then 0 | −2.0 (both hits) | `Cat.cs:31158`, `:31315`, `:31353`, `:31577`, `:31590` |
+| Backflip | 4 × 0.25, then 6 + 4×rank (pass-through strip checked at the start of this leg) | 1.0 (strip only) | `Cat.cs:32171`, `:32198`, `:32208` |
+| Pillage Plunge | 24 × 0.1 (pass-through strip checked at 0, before the dash) | 2.4 (damage box) | `Cat.cs:40042`, `:40052`, `:40172`, `:40278` |
+| Heart Ripper | 2 × 0.2, then 0 | 0.4 (both hits) | `Cat.cs:33684`, `:33327`, `:33355`, `:33467` |
+| Moon Blade | 0.5 × 0.2, 2 × 0.1 per hit | 0.3, 0.5 | `Cat.cs:35975`, `:35611`, `:35679`, `:35781` |
+
+No movement before the hits (speed 0): Finishing Blow (it jumps back −8 × 0.2 only after its fourth hit, `Cat.cs:38995`), Delta Strike. Moon Storm's hit positions are fixed at `mPos + i × 1.5 m` and `mPos + 12 m` (the cast point, not the Cat; `Cat.cs:36415`, `:36521`).
+
 ## Skill Tree Layout & Learn Requirements
 
 Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Treasure Hunter, Gambler, Assassin, Pirate King). Source: `CatSkill.getSkill` (`setReq`, `rSkill`) and `CatSkill.getSkillTree`.
