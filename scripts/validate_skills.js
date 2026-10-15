@@ -3844,6 +3844,12 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 1471 || body.nt !== 1692) bad("model Whale: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Whale_standard_tri) has 1471 / 1692");
         if (extras.length !== 2 || extras[0].nv !== 141 || extras[0].nt !== 76 || extras[1].nv !== 172 || extras[1].nt !== 148) bad("model Whale: extras should be the standard lance (141 / 76) and the standard shield (172 / 148), got " + JSON.stringify(extras));
       }
+      if (m[1] === "Boldas") {
+        // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
+        if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");
+        if (extras.length !== 1 || extras[0].nv !== 308 || extras[0].nt !== 269) bad("model Boldas: the extra should be his sword (308 verts / 269 tris), got " + JSON.stringify(extras));
+        else if (extras[0].minY > -0.3) bad("model Boldas: the sword is planted tip down, it should reach below the feet, got " + extras[0].minY);
+      }
       if (m[1] === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
         if (extras.length !== 2 || extras[0].nv !== 248 || extras[0].nt !== 242 || extras[1].nv !== 244 || extras[1].nt !== 140) bad("model Cat: extras should be the default hair (248 verts / 242 tris) and the standard knife (244 / 140), got " + JSON.stringify(extras));
