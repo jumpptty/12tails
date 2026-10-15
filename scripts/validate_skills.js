@@ -3193,7 +3193,7 @@ let checkedRsim = 0;
   } finally { shotDoc.createElement=createBefore; }
   const embedded = vm.runInContext("CLASS_GUIDES", sandbox);
   ok(Array.isArray(embedded), "embedded guides use a data array");
-  { const ids = embedded.map((g, i) => (typeof g.id === "string" && /^[a-z0-9-]{1,40}$/.test(g.id)) ? g.id : "guide-" + (i + 1)); ok(new Set(ids).size === ids.length, "embedded guide ids are unique (link #skill-simulator/<id>): " + ids.join(", ")); embedded.forEach((g, i) => ok(typeof g.id === "string" && /^[a-z0-9-]{1,40}$/.test(g.id), "embedded guide " + (i + 1) + " has a stable id (a-z, 0-9, -)")); }
+  { const ids = embedded.map((g, i) => Number.isInteger(g.id) && g.id > 0 ? String(g.id) : String(i + 1)); ok(new Set(ids).size === ids.length, "embedded guide numbers are unique (link #skill-simulator/<number>): " + ids.join(", ")); embedded.forEach((g, i) => ok(Number.isInteger(g.id) && g.id > 0, "embedded guide " + (i + 1) + " has a running number id (1, 2, 3 ...)")); }
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
   const fixture = { format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",patch:"ToT 2026-10",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
   const round = decode(encode(fixture));
