@@ -3570,12 +3570,16 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   const REACH_ANCHORS = ["self", "target", "fist", "projectile"];
   const REACH_DIM = { sphere: ["r"], cylinder: ["r", "h"], box: ["w", "l", "h"], cone: ["r", "angle"], sector: ["r", "angle", "h"], ring: ["r"], tube: ["r", "l"], line: ["l"], self: [] };
   const REACH_DESC_RE = /รัศมี \*\*|ทรงกลมรัศมี|กว้าง \*\*/;
+  // Backlog (2026-10-15): the three phrases above missed most formats, so an active card (not a passive modifier, not a Zombie AI list) with no `reach` is also flagged when its desc states a size or range in any common form.
+  const REACH_BACKLOG_RE = /\*\*[\d.×+\-–\/ ]*\s*m\*\*|\d\s*m|รัศมี|กว้าง|ยาว/;
+  // No card is exempt (2026-10-15): an active card that states a size in its desc must carry a `reach`.
+  const REACH_BACKLOG_EXEMPT = new Set([]);
   const bad = (m) => { console.error(`[REACH ERROR] ${m}`); errorCount++; };
   let checkedReach = 0, reachBacklog = 0; const reachBacklogIds = [];
   for (const sk of SKILLS) {
     const maxRank = sk.maxRank || 1;
     const descAt = (r) => typeof sk.desc === "function" ? sk.desc(r) : String(sk.desc || "");
-    if (!sk.reach) { if (REACH_DESC_RE.test(descAt(maxRank))){ reachBacklog++; reachBacklogIds.push(sk.id); } continue; }
+    if (!sk.reach) { const dd = descAt(maxRank); if (REACH_DESC_RE.test(dd) || (!sk.passive && !/_zombie/.test(sk.id) && !REACH_BACKLOG_EXEMPT.has(sk.id) && REACH_BACKLOG_RE.test(dd.replace(/<br>/g, " ")))){ reachBacklog++; reachBacklogIds.push(sk.id); } continue; }
     for (let r = 1; r <= maxRank; r++) {
       let parts;
       try { parts = sandbox._reachNormalize(sk.reach, r); } catch (e) { bad(`${sk.id} rank ${r}: ${e.message}`); continue; }
