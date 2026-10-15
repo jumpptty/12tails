@@ -7666,7 +7666,8 @@
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .entry-collage{ --entry-collage-opacity:.24; --entry-collage-opacity-hover:.4; } }
   :root[data-theme="dark"] .entry-collage{ --entry-collage-opacity:.24; --entry-collage-opacity-hover:.4; }
   @media (max-width:600px){ .entry-collage{ left:40%; --entry-collage-opacity:.18; } }
-  .entry-hero-side .entry-art{ top:8px; width:160px; right:8px; --entry-art-opacity:.3; --entry-art-opacity-hover:.48; }
+  .entry-hero-side .entry-art{ top:8px; width:160px; right:8px; --entry-art-opacity:.3; --entry-art-opacity-hover:.48; transition:opacity .6s ease; }
+  .entry-hero-side .entry-art.is-swapping{ opacity:0; }
   .entry-art[data-k="Chameleon"]{ transform:scaleX(-1); -webkit-mask-image:linear-gradient(to left, transparent 0, #000 45%); mask-image:linear-gradient(to left, transparent 0, #000 45%); }
   .entry-art[data-k="Scale"]{ width:150px; background-position:center; }
   .entry-art[data-k="Dice"]{ width:180px; right:10px; background-position:center; --entry-art-opacity:.16; --entry-art-opacity-hover:.3; }
@@ -30676,6 +30677,22 @@ toolGrid.innerHTML = TOOLS.map(t => {
   </a></li>
 `;
 }).join("");
+// ไกด์อาชีพ tile (user 2026-10-16): every 3 s the portrait fades out and comes back as another random class in a random colour variant.
+(function(){
+  const art = toolGrid.querySelector(".entry-hero-side .entry-art");
+  if (!art || typeof CLASS_STORY_ART === "undefined" || typeof setInterval !== "function") return;   // the validator sandbox has no timers
+  const all = Object.keys(CLASS_STORY_ART);
+  setInterval(() => {
+    if (document.hidden || !art.offsetParent || all.length < 2) return;   // menu not shown, or phones (portrait hidden)
+    let cls; do cls = all[Math.floor(Math.random() * all.length)]; while (cls === art.dataset.class);
+    art.classList.add("is-swapping");
+    setTimeout(() => {
+      const v = CLASS_STORY_ART[cls];
+      art.style.backgroundImage = "url('" + v[Math.floor(Math.random() * v.length)] + "')"; art.dataset.class = cls;
+      art.classList.remove("is-swapping");
+    }, 600);
+  }, 3000);
+})();
 
   const CHANGELOG_ARCHIVE = {
   recent30Days: 300,
@@ -30690,6 +30707,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T18:06:06.713Z","feat(bible): the ไกด์อาชีพ tile portrait fades to another random class and colour every 3 seconds"],
     ["2026-10-15T18:04:50.635Z","fix(bible): the ไกด์อาชีพ tile shows one random class portrait (random colour variant) instead of three"],
     ["2026-10-15T18:04:09.918Z","fix(bible): the ไกด์อาชีพ tile drops its GUIDE tag line"],
     ["2026-10-15T18:03:41.020Z","fix(bible): the three class portraits on the ไกด์อาชีพ tile are spread further apart"],
