@@ -15905,7 +15905,7 @@ const SKILLS = [
     id: "monkey_gaos_tailSpin", name: "Gaos - Tail Spin", nameTha: "กาออส - กวาดหาง", class: "Monkey", icon: "monkey_summonGaos5", maxRank: 1,
     ownStatsGaos: true, cd: 15, revisedArtExempt: true, dmg: "0", atkCoeff: 0.8, ko: "10", hitCount: () => 4,
     desc: "กวาดหาง **4 ระลอก** เป็นพัดด้านหน้า AI ใช้เมื่อเป้าหมายใกล้กว่า **6m** และไม่ติดคูลดาวน์ **15 วินาที** มีสิทธิ์ก่อน Normal Attack ในระยะที่ซ้อนกัน (ต่ำกว่า **5m**)",
-    compatSkills: ["monkey_summonGaos", "monkey_gaos_nAttack1", "monkey_gaos_nAttack2", "monkey_gaos_fire", "monkey_gaos_rampage"], reach:() => [6, 7, 8, 9].map((r, i) => ({ shape: "sector", r, angle: 120, h: 4, anchor: "self", label: "ระลอกที่ " + (i + 1) + " รัศมี " + r + " m", src: "Gaos.cs:3313 (FindAngleTarget(pos, dir, 6 + i, 120, 4), i < 4)" })), reachModel:"Gaos"
+    compatSkills: ["monkey_summonGaos", "monkey_gaos_nAttack1", "monkey_gaos_nAttack2", "monkey_gaos_fire", "monkey_gaos_rampage"], reach:() => [6, 7, 8, 9].map((r, i) => ({ shape: "sector", r, angle: 120, h: 4, anchor: "self", at: +(0.6 + 0.2 * i).toFixed(1), label: "ระลอกที่ " + (i + 1) + " รัศมี " + r + " m (" + +(0.6 + 0.2 * i).toFixed(1) + " วินาที)", src: "Gaos.cs:3313 (FindAngleTarget(pos, dir, 6 + i, 120, 4), i < 4), :3378 (รอ 0.6 วินาที ก่อนระลอกแรก), :3384 (รอ 0.2 วินาที ระหว่างระลอก)" })), reachModel:"Gaos"
   },
 
   {
@@ -29934,6 +29934,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T15:44:36.626Z","fix(bible): range preview plays Gaos Tail Spin at its real timing (first wave 0.6 s, then every 0.2 s)"],
     ["2026-10-15T12:49:13.580Z","fix(bible): range preview default zoom frames the whole Blazing Arrow chain and the runic trail (new fit part key)"],
     ["2026-10-15T12:37:51.112Z","fix(bible): range preview draws trigger-collider boxes (Monkey runic pieces, Rabbit potions) over their exact 0-1 m height (new yBand part key), and its height labels follow it"],
     ["2026-10-15T12:31:31.780Z","fix(bible): range preview draws the 5-bottle Mix (Extra Potion) and 4-bottle Miracle Blend (Miracle Drop) potion layouts with toggles"],
