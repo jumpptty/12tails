@@ -3703,24 +3703,27 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("wolf_cAttack", 1); g("Charge Attack: 4 to 12 wide, 30 long, 6 high, band lowered 2 m", c[0].w === 4 && c[0].w2 === 12 && c[0].l === 30 && c[0].h === 6 && c[0].z0 === -1 && c[0].y0 === -2, c);
       c = P("wolf_cAttack", 1, {}, 1.4); g("Charge Attack x1.4: sizes scale, the 2 m drop does not", c[0].l === 42 && c[0].w2 === 16.8 && c[0].h === 8.4 && c[0].z0 === -1.4 && c[0].y0 === -2, c[0]);
       c = P("wolf_braveSpirit", 1, {}, 1.4); g("Brave Spirit r15 h3 both scale", c[0].r === 21 && c[0].h === 4.2, c[0]);
-      c = P("wolf_crusader", 1); g("Crusader 4x4x2 from 1 m behind", c[0].w === 4 && c[0].l === 4 && c[0].h === 2 && c[0].z0 === -1, c);
-      c = P("wolf_powerBreak", 1); g("Power Break rank 1: 2 wide, 4 long", c[0].w === 2 && c[0].l === 4 && c[0].h === 3, c);
+      c = P("wolf_crusader", 1); g("Crusader 4x4x2, hit after a 2.8 m dash (speed 7 x 0.4 s): starts 1.8 m ahead of the cast point", c.length === 1 && c[0].w === 4 && c[0].l === 4 && c[0].h === 2 && c[0].z0 === 1.8, c);
+      c = P("wolf_powerBreak", 1); g("Power Break rank 1: 2 wide, 4 long, after a 1.2 m dash (6 x 0.2 s)", c[0].w === 2 && c[0].l === 4 && c[0].h === 3 && c[0].z0 === 0.2, c);
       c = P("wolf_powerBreak", 2); g("Power Break rank 2: 6 long", c[0].l === 6, c);
-      c = P("wolf_armorBreak", 1); g("Armor Break rank 1: 2 wide, 3 long", c[0].w === 2 && c[0].l === 3 && c[0].h === 3, c);
+      c = P("wolf_armorBreak", 1); g("Armor Break rank 1: 2 wide, 3 long, after a 1.5 m dash (5 x 0.3 s)", c[0].w === 2 && c[0].l === 3 && c[0].h === 3 && c[0].z0 === 0.5, c);
       c = P("wolf_armorBreak", 2); g("Armor Break rank 2: 4 wide, 5 long", c[0].w === 4 && c[0].l === 5, c);
       c = P("wolf_crossBreak", 3); g("Cross Break r5 h8", c[0].r === 5 && c[0].h === 8, c);
       c = P("wolf_grandCross", 1); g("Grand Cross r6 h8 at the mark + a 3D 30 m command range (faint sphere)", c.length === 2 && c[0].r === 6 && c[0].h === 8 && c[0].anchor === "target" && c[1].shape === "sphere" && c[1].r === 30 && c[1].faint === true, c);
       c = P("wolf_massResurrection", 2); g("Mass Resurrection r40 h12, band lowered 4 m", c[0].r === 40 && c[0].h === 12 && c[0].y0 === -4, c);
-      c = P("wolf_bladeFang", 3); g("Blade Fang 2x4x2 from 1 m behind", c[0].w === 2 && c[0].l === 4 && c[0].h === 2 && c[0].z0 === -1, c);
-      c = P("wolf_bladeFang", 3, { bloodFang: 1 }); g("Blood Fang: 4 wide 5 long", c[0].w === 4 && c[0].l === 5, c);
-      c = P("wolf_bladeFang", 3, { bloodFang: 1 }, 1.4); g("Blade Fang: only height and start scale", c[0].w === 4 && c[0].l === 5 && c[0].h === 2.8 && c[0].z0 === -1.4, c[0]);
-      c = P("wolf_artCancel", 2); g("Art Cancel 6x3x2 from 1 m behind", c[0].w === 6 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === -1, c);
-      c = P("wolf_counter", 2); g("Counter 4x5x3 from 2 m behind", c[0].w === 4 && c[0].l === 5 && c[0].h === 3 && c[0].z0 === -2, c);
+      c = P("wolf_bladeFang", 3); g("Blade Fang rank 3: 2x4x2 boxes, 1 + rank = 4 hits at 2.4 / 3.6 / 5.4 / 7.2 m of dash", c.length === 4 && c.every((b, i) => b.w === 2 && b.l === 4 && b.h === 2 && Math.abs(b.z0 - (-1 + [2.4, 3.6, 5.4, 7.2][i])) < 1e-9), c);
+      c = P("wolf_bladeFang", 1, { bloodFang: 1 }); g("Blood Fang: 4 wide 5 long, rank 1 = 2 hits", c.length === 2 && c[0].w === 4 && c[0].l === 5, c);
+      c = P("wolf_bladeFang", 3, { bloodFang: 1 }, 1.4); g("Blade Fang: only height and start scale (the dash does not)", c[0].w === 4 && c[0].l === 5 && c[0].h === 2.8 && c[0].z0 === 1, c[0]);
+      c = P("wolf_artCancel", 2); g("Art Cancel 6x3x2, after a 6 m dash (10 x 0.6 s)", c[0].w === 6 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === 5, c);
+      c = P("wolf_counter", 2); g("Counter 4x5x3, 0.1 m back then 1.8 m forward = 1.7 m", c[0].w === 4 && c[0].l === 5 && c[0].h === 3 && c[0].z0 === -0.3, c);
       c = P("wolf_impulse", 2); g("Impulse trigger sphere r3", c[0].shape === "sphere" && c[0].r === 3, c);
       c = P("wolf_feralStrike", 4); g("Feral Strike: one 4x8x3 box, hit after a 4.8 m dash (speed 16 x 0.3 s), so it starts 1.2 m behind the cast point", c.length === 1 && c[0].w === 4 && c[0].l === 8 && c[0].h === 3 && c[0].z0 === -1.2, c);
       c = P("wolf_feralAssault", 1); g("Feral Assault: four 12-to-6 wide 8 long boxes 4.2 m apart (first at the cast point) + r6 finisher at 16.8 m, no rangeMod", c.length === 5 && c.slice(0, 4).every((b, i) => b.w === 12 && b.w2 === 6 && b.l === 8 && Math.abs(b.z0 - (-6 + 4.2 * i)) < 1e-9 && !b.rangeMod) && c[4].r === 6 && c[4].z0 === 16.8, c);
-      c = P("wolf_dualBrand", 1); g("Dual Brand r5 h3 circle (0.5 m ahead) + 4x5x4 box", c[0].r === 5 && c[0].h === 3 && c[0].z0 === 0.5 && c[1].w === 4 && c[1].l === 5 && c[1].h === 4, c);
-      c = P("wolf_twinResonance", 1); g("Twin Resonance: 190 degree fan, r 1 + 0.8 x 39 = 32.2, h2", c[0].shape === "sector" && c[0].angle === 190 && c[0].r === 32.2 && c[0].h === 2, c);
+      c = P("wolf_dualBrand", 1); g("Dual Brand: r5 h3 circle (0.5 m ahead) at 1.2 and 2.4 m of dash, 4x5x4 box at 3.8 and 5 m", c.length === 4 && c[0].r === 5 && c[0].h === 3 && c[0].z0 === 1.7 && c[1].z0 === 2.9 && c[2].w === 4 && c[2].l === 5 && c[2].h === 4 && c[2].z0 === 3.8 && c[3].z0 === 5, c);
+      c = P("wolf_thirdRend", 1); g("Third Rend 4x4x3 after a 1.1 m dash", c.length === 1 && c[0].w === 4 && c[0].l === 4 && c[0].h === 3 && c[0].z0 === 1.1, c);
+      c = P("wolf_bladeSong", 1); g("Blade Song 2 to 4 wide 6 long, 0.4 m behind the cast point", c.length === 1 && c[0].w === 2 && c[0].w2 === 4 && c[0].l === 6 && c[0].z0 === -0.4, c);
+      c = sandbox._reachPartsWith(SKILLS.find(x => x.id === "wolf_crusader"), 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 1 }); g("Lunar Eclipse 1: x1.4 size and start, and the 2.8 m dash scales with moveMod (+40%) = 3.92", c[0].z0 === 2.52, c);
+      c = P("wolf_twinResonance", 1); g("Twin Resonance: 190 degree fan h2 growing r 1 -> 32.2 over 40 rounds", c.length === 5 && c.every(b => b.shape === "sector" && b.angle === 190 && b.h === 2) && c[0].r === 1 && c[4].r === 32.2, c);
       // Penguin (Penguin.cs, ManaVortex.cs, Penguin_iceBlock.cs, Penguin_tornado.cs; sizes x rangeMod only where the card says rangeMod)
       c = P("penguin_nAttack", 1); g("Penguin Combo: a 19.6 m projectile line (14 m/s x 1.4 s)", c.length === 1 && c[0].shape === "line" && c[0].l === 19.6, c);
       c = P("penguin_nAttack", 1, {}, 1.4); g("Penguin Combo x1.4 = 27.44 m", c[0].l === 27.44, c[0]);
@@ -3784,7 +3787,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       // preview toggles: Lunar Eclipse adds 0.4 per level to the Enlarge / Reduce factor, so Enlarge 4 + Lunar 1 = x1.8 and Lunar 2 alone = x1.8
       {
         const ct = SKILLS.find(x => x.id === "wolf_counter");
-        c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 2 }); g("preview Lunar Eclipse 2 = x1.8 on Counter", c[0].l === 9 && c[0].w === 7.2 && c[0].z0 === -3.6, c[0]);
+        c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 2 }); g("preview Lunar Eclipse 2 = x1.8 on Counter", c[0].l === 9 && c[0].w === 7.2 && c[0].z0 === -0.54, c[0]);   // -3.6 (x1.8 start) + the 1.7 m dash x1.8 moveMod
         c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 4, reachReduce: 0, reachLunar: 1 }); g("preview Enlarge 4 + Lunar 1 = x1.8", c[0].l === 9, c[0]);
       }
       // the popup preview reads its own toggle state and leaves the card's alone

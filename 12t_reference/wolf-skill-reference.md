@@ -827,6 +827,28 @@ if (this.hasSkill(421))
 - **Final Eclipse** fires in `doBeginCharge` (`Wolf.cs:7847-7940`), i.e. when the charge button is pressed, not on a dash: Wolf standing or running, `#373`, `lunarEclipse` level `L > 0` and `sp >= 2L` → SP −`L`, but **−`2L` with Revised Skill #404** (`Wolf.cs:7917-7936`: `if (hasSkill(404)) sp -= statusLv * 2; else sp -= statusLv;`, junk predicates evaluated, none inverts the branch) and `RPC_feralStrike(…, 2L)` instead of charging, with no cooldown. **BB bug (corrected 2026-10-06, the 2026-10-02 entry had the branches swapped):** Revised Skill doubles this SP cost instead of halving it; the `sp >= 2L` gate is the same either way. Card: `bbBug`. (The Feral Strike entry's "dodge dash" wording is imprecise; this is the trigger.) Tooltip TH "เปลี่ยนการโจมตี Charge … ให้เป็น FeralStrike" matches.
 - **Sublime Art:** the `RPC_doubleArt` coroutine gives `RPC_AddHeal(431, 0, 5, 5, …)` = **+5 MP / +5 SP** per Double Art proc (`Wolf.cs:18383`), and Holy Sword, Holy Armor, Art Breaker, Mirror Blade, Feral Assault and Dual Brand only skip their cooldown on a proc with #431 (`:33059`, `:33574`, `:34152`, `:34815`, `:35408`, `:36671`).
 
+### Movement timelines (read 2026-10-15, for the range preview; nominal `moveMod` 1, not live-tested)
+
+The caster moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`CharacterControl.cs:2722`), `vMovement` = facing (set in each skill's first state). Each skill's coroutine sets `moveSpeed` in a state and holds it until the next `Yield(n, wait)` returns. Distance moved before each hit (t = seconds since the first speed was set; legs = speed m/s × seconds):
+
+| Skill | Legs before / between hits | Hit at (m from the cast point) | Source |
+|---|---|---|---|
+| Feral Strike | 16 × 0.3 | 4.8 | `Wolf.cs:29093`, `:29288` |
+| Crusader | 7 × 0.4 | 2.8 | `Wolf.cs:21134`, `:21179` |
+| Power Break | 6 × 0.2 | 1.2 | `Wolf.cs:21891`, `:21936` |
+| Armor Break | 5 × 0.3 | 1.5 | `Wolf.cs:22532`, `:22673` |
+| Art Cancel | 10 × 0.6 (set in the first state, stops at the hit) | 6.0 | `Wolf.cs:27650`, `:27465` |
+| Counter | −1 × 0.1, then 9 × 0.2 | 1.7 | `Wolf.cs:28710`, `:28431`, `:28467` |
+| Third Rend | 3 × 0.2, 2 × 0.1, 3 × 0.1 | 1.1 | `Wolf.cs:32223`, `:32250`, `:32277`, `:32317` |
+| Blade Fang | 12 × 0.2, then 6 until it stops; `1 + rank` hits at t = 0.2, 0.4, 0.7, 1.0, 1.3 | 2.4, 3.6, 5.4, 7.2, 9.0 | `Wolf.cs:25636`, `:25745`, `:26631`; hit states `:25766`, `:25973`, `:26214` |
+| Dual Brand | 4 until t = 0.6, 5 × 0.1, 9 × 0.2, 2 × 0.1, 1 × 0.1; hits at t = 0.3, 0.6 (r 5 circle), 0.8, 1.1 (box) | 1.2, 2.4, 3.8, 5.0 | `Wolf.cs:35914`, `:36156`, `:36251`, `:36401`, `:36461` |
+| Blade Song | −2 × 0.2 before the first hit, then 0 | −0.4 (every hit) | `Wolf.cs:29906`, `:29952` |
+| Feral Assault | floor(14 / moveMod) × moveMod per second: `moveMod` cancels out | 0, 4.2, 8.4, 12.6; ring at 16.8 | `Wolf.cs:35208` |
+
+Blade Fang counts: `bladeFang_count` is 0 after the first hit, +1 at the start of each following pair of states, and the skill stops (`moveSpeed = 0`) when `count >= sLv` at the checks in states 6 and 9 (`Wolf.cs:25827`, `:25933`, `:26055`, `:26174`, `:26627-26634`): `1 + sLv` hits. Not moving (checked, no `moveSpeed` above 0 in the hit coroutine): Brave Spirit, Charge Attack, Art Breaker, Mass Resurrection.
+
+**Twin Resonance** is not a moving box but a growing fan: 40 rounds, 0.4 s apart, each a 190° `FindAngleTarget` from the fixed cast point with search range `3 + 0.8 × i`, filtered to `1 + 0.8 × i` m (`Wolf.cs:37644`, `:37663-37668`, `:37714`): radius 1 m at t = 0 to 32.2 m at t = 15.6 s.
+
 ## Open questions & card mismatches (2026-10-01)
 
 **Card mismatches:** all fixed 2026-10-02 (every Wolf card now has `desc`; No KO and Impulse got `lckProc`; Art Cancel, Counter, Blade Song got `maxRank` and costs; Second Wind, Holy Sword, Holy Armor, Mirror Blade and Art Breaker got costs; Art Breaker got its `cd`).
