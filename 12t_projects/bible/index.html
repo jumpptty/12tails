@@ -4702,12 +4702,14 @@
   .sk-reach-dep .sk-dep-toggle{display:block; height:56px}
   .sk-reach-dep .sk-dep-toggle img{width:56px; height:56px}
   .sk-reach-dep .sk-pip{display:block}
-  .sk-reach-scenebox{display:flex}
+  .sk-reach-scenebox, .sk-reach-replaybox{display:flex}
+  .sk-reach-replay .sk-dep-toggle svg{display:block; width:56px; height:56px}
+  .sk-reach-replay:hover .sk-dep-toggle svg{filter:brightness(1.25)}
   .sk-reach-scene .sk-dep-toggle img{display:block; width:56px; height:56px; box-sizing:border-box; object-fit:cover; border-radius:9px; border:2px solid #d4af37; filter:grayscale(.8) brightness(.75)}
   .sk-reach-scene .sk-dep-toggle.on img{filter:none}
   .sk-reach-dep-name{font-size:12px; font-weight:500; color:var(--muted); text-shadow:0 1px 3px #000, 0 0 6px #000}
   .sk-reach-dep.on .sk-reach-dep-name{color:var(--text)}
-  @media (max-width:560px){ .sk-reach-dep .sk-dep-toggle, .sk-reach-dep .sk-dep-toggle img, .sk-reach-scene .sk-dep-toggle img{width:42px; height:42px} .sk-reach-head{gap:12px} .sk-reach-deps, .sk-reach-scenebox{order:2} .sk-reach-deps{flex:1 1 100%} }
+  @media (max-width:560px){ .sk-reach-dep .sk-dep-toggle, .sk-reach-dep .sk-dep-toggle img, .sk-reach-scene .sk-dep-toggle img, .sk-reach-replay .sk-dep-toggle svg{width:42px; height:42px} .sk-reach-head{gap:12px} .sk-reach-deps, .sk-reach-scenebox{order:2} .sk-reach-deps{flex:1 1 100%} }
   .sk-reach-fx{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:3}
   .sk-ko-badge{display:inline-flex; align-items:center; gap:3.75px; padding:1.25px 5px; border-radius:2.5px; background:var(--gold-soft); border:1px solid var(--gold); flex:0 0 auto}
   .sk-dmg-label-row .sk-ko-badge{margin-left:7px}
@@ -11505,6 +11507,7 @@ function openReachPopup(skill, rank){
   const pop = document.createElement("div");
   pop.className = "sk-reach-pop";
   const legend = () => parts.map((p, k) => p.sn > 1 && p.si > 0 ? "" : `<span><i style="background:${REACH_COLORS[(p.cg !== undefined ? p.cg : k) % REACH_COLORS.length]}"></i>${reachPartLabel(p)}${p.sn > 1 ? " · " + p.sn + " ครั้ง" : ""}</span>`).join("");
+  const replayBtn = () => reachSeqPlan(parts) ? `<div class="sk-reach-dep sk-reach-replay" data-role="reach-replay" role="button" tabindex="0" title="เล่นแอนิเมชันการตีซ้ำ"><span class="sk-dep-btncol"><span class="sk-dep-toggle on"><svg viewBox="0 0 56 56" aria-hidden="true"><rect x="2" y="2" width="52" height="52" rx="9" fill="#232220" stroke="#d4af37" stroke-width="2"/><path d="M37 17.3 A14 14 0 1 0 41.8 30.4" fill="none" stroke="#f2cf6b" stroke-width="4" stroke-linecap="round"/><path d="M31 9 L43 17 L32 24Z" fill="#f2cf6b"/><path d="M24 22 L36 28 L24 34Z" fill="#f2cf6b"/></svg></span></span><span class="sk-reach-dep-name">เล่นซ้ำ</span></div>` : "";
   const sceneBtn = () => !scn || scn.failed ? "" : `<div class="sk-reach-dep sk-reach-scene${scnOn ? " on" : ""}" data-role="reach-scene" role="button" tabindex="0" title="ฉากจริงของด่าน (One On One Bout)"><span class="sk-dep-btncol"><span class="sk-dep-toggle${scnOn ? " on" : ""}"><img src="${REACH_BOLDAS_ICON}" alt="Boldas"></span>${pipRow(1, scnOn ? 1 : 0)}</span><span class="sk-reach-dep-name">ฉาก M108</span></div>`;
   const pipRow = (n, filled) => `<span class="sk-dep-pips" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<span class="sk-pip${i < filled ? " on" : ""}"></span>`).join("")}</span>`;
   const btn = (key, label, icon, on, nPips, filled) => `<div class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" role="button" tabindex="0" title="${label}"><span class="sk-dep-btncol"><span class="sk-dep-toggle${on ? " on" : ""}"><img src="${SKILL_ICONS[icon] || ""}" alt=""></span>${pipRow(nPips, filled)}</span><span class="sk-reach-dep-name">${label}</span></div>`;
@@ -11512,7 +11515,7 @@ function openReachPopup(skill, rank){
     .concat(toggles.map((e, k) => { const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
     .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, d.maxRank, over[d.id]))).join("");
   pop.innerHTML = `<div class="sk-reach-panel" role="dialog" aria-label="ระยะโจมตี">
-    <div class="sk-reach-head">${toggles.length || rankToggles.length || rankMatters ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}<span class="sk-reach-scenebox">${sceneBtn()}</span></div>
+    <div class="sk-reach-head">${toggles.length || rankToggles.length || rankMatters ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}<span class="sk-reach-scenebox">${sceneBtn()}</span><span class="sk-reach-replaybox">${replayBtn()}</span></div>
     <canvas class="sk-reach-canvas"></canvas>
     <div class="sk-reach-legend">${legend()}</div>
     <div class="sk-reach-hint">W A S D</div>
@@ -11631,7 +11634,7 @@ function openReachPopup(skill, rank){
       }
       g.globalAlpha = 1; g.shadowBlur = 0;
       if (t < END) anim = requestAnimationFrame(frame);
-      else { anim = 0; g.clearRect(0, 0, W, H); st.ms = msTo; items = after.map(p => ({ part: p, alpha: 1 })); redraw(); startSeq(); }
+      else { anim = 0; g.clearRect(0, 0, W, H); st.ms = msTo; items = after.map(p => ({ part: p, alpha: 1 })); redraw(); }
     };
     anim = requestAnimationFrame(frame);
   };
@@ -11641,6 +11644,7 @@ function openReachPopup(skill, rank){
   let seqMode = null, seqRaf = 0, seqStart = 0;
   const seqArg = () => seqMode === null ? null : seqMode === "wait" ? -1 : (performance.now() - seqStart) / 1000;
   const armSeq = () => { cancelAnimationFrame(seqRaf); seqRaf = 0; seqMode = reachSeqPlan(parts) ? "wait" : null; };
+  const stopSeq = () => { cancelAnimationFrame(seqRaf); seqRaf = 0; seqMode = null; };
   const startSeq = () => {
     cancelAnimationFrame(seqRaf); seqRaf = 0;
     const plan = reachSeqPlan(parts);
@@ -11659,7 +11663,7 @@ function openReachPopup(skill, rank){
     const after = reachPartsWith(skill, rank, over), msFrom = st.ms || 1, msTo = msNow();
     const pr = panel.getBoundingClientRect(), br = b.getBoundingClientRect(), src = [br.left - pr.left + br.width / 2, br.top - pr.top + br.height / 2];
     const grows = volume(after) >= prevVol;
-    parts = after; armSeq();
+    parts = after; if (introing) armSeq(); else stopSeq(); refreshReplay();
     rebuildButtons();
     pop.querySelector(".sk-reach-legend").innerHTML = legend();
     if (introing){ st.ms = msTo; return; }
@@ -11675,6 +11679,9 @@ function openReachPopup(skill, rank){
     redraw();
   }); };
   wireScene();
+  const wireReplay = () => { const b = pop.querySelector('[data-role="reach-replay"]'); if (!b) return; const go = () => { if (!introing) startSeq(); }; b.addEventListener("click", go); b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); go(); } }); };
+  const refreshReplay = () => { const box = pop.querySelector(".sk-reach-replaybox"); if (box){ box.innerHTML = replayBtn(); wireReplay(); } };
+  wireReplay();
   pop.addEventListener("click", e => { if (e.target === pop) closeReachPopup(); });
   closeReachPopup._esc = e => { if (e.key === "Escape") closeReachPopup(); };
   document.addEventListener("keydown", closeReachPopup._esc);
@@ -29767,6 +29774,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T04:14:35.272Z","feat(bible): range popup has a replay button for the hit-by-hit animation, and switching a toggle no longer replays it (it jumps to the final picture so reaches can be compared)"],
     ["2026-10-15T04:09:04.351Z","fix(bible): range popup Enlarge toggle uses the game status icon for Enlarge instead of the Miracle Blend skill icon"],
     ["2026-10-15T04:04:26.387Z","fix(panda): range preview adds the dash and hit timing to Three Steps, Rushing Falcon, Pummel, Tower Rush, Tiger Toss, Wind & Cloud and Rain & Storm, Wolf Cross Break too (these cards had static boxes)"],
     ["2026-10-15T03:53:26.932Z","fix(bible): combo hit times follow the game schedule (every stage after the first waits until a fixed time from the combo start, e.g. Wolf 0.65 / 1.28 / 1.77 / 2.27 / 2.77 s), plus the waits before each stage moves"],
