@@ -14629,7 +14629,7 @@ const SKILLS = [
     hitCount: () => 2,
     revisedArtExempt: true,
     desc:"ปลดล็อกการโจมตีปกติครั้งที่ 2 ทั้งสองครั้งทำดาเมจเท่ากัน<br>• ครั้งที่ 1: กล่องด้านหน้าตัว<br>• ครั้งที่ 2: เริ่มห่างจากตัวไปด้านหน้า<br>**Mike Blink:** ดาเมจ **0.6×ATK** (ปกติ **0.5×ATK**)<br>**Earth Form:** KO **+1**<br>**G. Marshal / G. Champion Mike** (อาวุธ **+5% / +7%**, ชุด + หมวก **+7% / +11%**): มีโอกาสคริติคอล ดาเมจ **×1.8**<br>**Heavy Armor Mike:** ดาเมจ **×0.75** ปัดลง คิดก่อนคริ แต่ KO **+2** และใช้ช่องอาวุธแทนอาวุธคริ",
-    compatSkills: ["monkey_earthForm", "monkey_mikeBlink"], critProc:MNK_COMBO_GEAR.critProc, lckProc:MNK_COMBO_GEAR.lckProc, dmgControls:MNK_COMBO_GEAR.controls, reach:() => [{ shape: "box", w: 2, l: 7, h: 2, anchor: "self", label: "ครั้งที่ 1 หน้าตัว", src: "Monkey.cs:19957" }, { shape: "box", w: 3, l: 4, h: 2, anchor: "self", z0: 3.5, rangeMod: ["w", "l", "h"], label: "ครั้งที่ 2 เริ่มห่างจากตัว 3.5m", src: "Monkey.cs:20571" }]
+    compatSkills: ["monkey_earthForm", "monkey_mikeBlink"], critProc:MNK_COMBO_GEAR.critProc, lckProc:MNK_COMBO_GEAR.lckProc, dmgControls:MNK_COMBO_GEAR.controls, reach:() => [{ shape: "box", w: 2, l: 7, h: 2, anchor: "self", steps: () => reachPath([[0, 99]], [0.4]), label: "ครั้งที่ 1 หน้าตัว (0.4 วินาที)", src: "Monkey.cs:19957, :20229-20241 (Y2 0.2 s, Y3 0.2 s)" }, { shape: "box", w: 3, l: 4, h: 2, z0: 3.5, rangeMod: ["w", "l", "h"], anchor: "self", steps: () => reachPath([[0, 99]], [0.8]), label: "ครั้งที่ 2 เริ่มห่างจากตัว 3.5m (0.8 วินาที นับจากครั้งแรก)", src: "Monkey.cs:20571, :20770 (รอถึง actionTime + 0.5), :20764 (Y3 0.1 s), :20780 (Y4 0.2 s)" }]
   },
 
   {
@@ -15788,7 +15788,7 @@ const SKILLS = [
     ],
     revisedArtExempt: true,
     compatSkills: ["monkey_earthForm"],
-    desc:"โจมตีระยะประชิด **3** จังหวะ<br>• จังหวะ 1: ต่อย **2** ครั้ง แต่ละครั้งที่หน้าตัว<br>• จังหวะ 2: 2 ฮิต รอบตัว KO **3**<br>• จังหวะ 3: 1 ฮิต ที่หน้าตัว KO **20**", reach:() => [{ shape: "cylinder", r: 2, h: 3, x0: 0.5, z0: 1.5, anchor: "self", label: "จังหวะ 1 หมัดที่ 1", src: "Monkey.cs:41145" }, { shape: "cylinder", r: 2, h: 3, x0: -0.5, z0: 1.5, anchor: "self", label: "จังหวะ 1 หมัดที่ 2", src: "Monkey.cs:41222" }, { shape: "cylinder", r: 4, h: 3, anchor: "self", label: "จังหวะ 2 รอบตัว", src: "Monkey.cs:41924" }, { shape: "cylinder", r: 3, h: 3, z0: 3, anchor: "self", label: "จังหวะ 3 หน้าตัว 3m", src: "Monkey.cs:42453" }]
+    desc:"โจมตีระยะประชิด **3** จังหวะ<br>• จังหวะ 1: ต่อย **2** ครั้ง แต่ละครั้งที่หน้าตัว<br>• จังหวะ 2: 2 ฮิต รอบตัว KO **3**<br>• จังหวะ 3: 1 ฮิต ที่หน้าตัว KO **20**", reach:() => [{ shape: "cylinder", r: 2, h: 3, x0: 0.5, z0: 1.5, anchor: "self", steps: () => reachPath([[0, 99]], [0.3]), label: "จังหวะ 1 หมัดที่ 1 (0.3 วินาที)", src: "Monkey.cs:41145, :41534 (Y2 0.3 s)" }, { shape: "cylinder", r: 2, h: 3, x0: -0.5, z0: 1.5, anchor: "self", steps: () => reachPath([[0, 99]], [0.6]), label: "จังหวะ 1 หมัดที่ 2 (0.6 วินาที)", src: "Monkey.cs:41222, :41538 (Y3 0.3 s)" }, { shape: "cylinder", r: 4, h: 3, anchor: "self", steps: () => reachPath([[0, 99]], [1.3]), label: "จังหวะ 2 ฮิตที่ 1 รอบตัว (1.3 วินาที: รอถึง 0.9 + 0.2 + 0.2)", src: "Monkey.cs:41924, :42088 (รอถึง actionTime + 0.9), :42071-42077" }, { shape: "cylinder", r: 4, h: 3, anchor: "self", steps: () => reachPath([[0, 99]], [1.7]), label: "จังหวะ 2 ฮิตที่ 2 รอบตัว (1.7 วินาที)", src: "Monkey.cs:41924, :42059" }, { shape: "cylinder", r: 3, h: 3, z0: 3, anchor: "self", steps: () => reachPath([[0, 99]], [2.1]), label: "จังหวะ 3 หน้าตัว 3m (2.1 วินาที: รอถึง 1.7 + 0.4)", src: "Monkey.cs:42453, :42595 (รอถึง actionTime + 1.7), :42584 (Y3 0.4 s)" }]
   },
 
   {
@@ -29890,6 +29890,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T08:24:56.848Z","fix(monkey): range preview plays the Combo and the Earth Form combo at the game's real times (stage 2 and 3 wait until actionTime + 0.9 / 1.7 s, found in the dispatcher and the stage coroutines)"],
     ["2026-10-15T08:17:35.825Z","feat(monkey): range preview plays Gaos Rampage (1.8 s wind-up, 14 hits every 0.4 s while it charges forward) and documents which skills keep static hit boxes and why"],
     ["2026-10-15T08:16:11.473Z","feat(bible): range preview plays the real hit timing for Mole Flame Carnival (20 growing puffs), War Factory Saw Machine, Barrel Bot Normal Attack / Drill and the Light Leopard lunge"],
     ["2026-10-15T08:09:35.865Z","feat(mole): range preview plays King Kaiser's three slashes at their real times while the robot walks forward (0.7 / 1.7 / 2.4 s, 0.4 / 2.8 / 3.4 m) and the six Mole Tank ram checks every 0.15 s"],
