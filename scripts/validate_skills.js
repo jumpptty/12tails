@@ -3131,18 +3131,27 @@ let checkedRsim = 0;
       up(); click(cell(id)); ok(cell(id).classList.contains("is-learned"), "rapid click learns rank " + id);
     }
     tick(600); ok(opened.length === 0 && timers.size === 0, "rapid learning leaves no delayed new tabs");
+    // The builder never long-presses (user 2026-10-15): a hold gives no feedback, opens nothing, and the click still learns.
+    const beforeBuildHold = el("pts").value;
+    down(cell(111)); tick(200); ok(!cell(111).classList.contains("is-charging") && timers.size === 0, "builder hold has no feedback or timers");
+    tick(400); up(); ok(opened.length === 0 && el("pts").value === beforeBuildHold, "builder hold opens no card and spends nothing");
+    // The class guide view (read) is where a deliberate hold opens the skill card.
+    root._skillSim.setInteraction("read");
     const beforeHold = el("pts").value;
-    down(cell(111)); tick(200); ok(cell(111).classList.contains("is-charging") && opened.length === 0, "deliberate hold receives feedback before opening");
-    tick(299); ok(opened.length === 0, "hold does not open before 500 ms");
+    down(cell(111)); tick(200); ok(cell(111).classList.contains("is-charging") && opened.length === 0, "view: deliberate hold receives feedback before opening");
+    tick(299); ok(opened.length === 0, "view: hold does not open before 500 ms");
     tick(1); up(); click(cell(111));
-    ok(opened.length === 1 && opened[0][0].includes("#skill-details/wolf_") && opened[0][0].endsWith("?server=tot") && el("pts").value === beforeHold, "500 ms hold opens correct card once and suppresses learning click");
+    ok(opened.length === 1 && opened[0][0].includes("#skill-details/wolf_") && opened[0][0].endsWith("?server=tot") && el("pts").value === beforeHold, "view: 500 ms hold opens correct card once and the click after it is swallowed");
     tick(400);
     down(cell(111)); tick(200); emitWindow("pointerup"); tick(600);
-    ok(opened.length === 1 && !cell(111).classList.contains("is-charging"), "outside release cancels feedback and new tab");
+    ok(opened.length === 1 && !cell(111).classList.contains("is-charging"), "view: outside release cancels feedback and new tab");
     down(cell(111)); tick(200); emitWindow("blur"); tick(600);
-    ok(opened.length === 1 && timers.size === 0, "window blur cancels pending hold");
+    ok(opened.length === 1 && timers.size === 0, "view: window blur cancels pending hold");
     down(cell(111)); root.listeners.pointermove.forEach(fn=>fn({clientX:9,clientY:0})); tick(600);
-    ok(opened.length === 1 && timers.size === 0, "drag beyond threshold cancels hold");
+    ok(opened.length === 1 && timers.size === 0, "view: drag beyond threshold cancels hold");
+    root._skillSim.setInteraction("annotate");
+    down(cell(111)); tick(700); ok(opened.length === 1 && !cell(111).classList.contains("is-charging") && timers.size === 0, "note editor: hold opens nothing");
+    up(); root._skillSim.setInteraction("build");
     action("reset");
     click(cell(451));
     ok(el("ptsEx").value === "1/2" && el("ptsC").value === "10/10" && el("pts").value === "49/49", "learning passive spends EX alone");

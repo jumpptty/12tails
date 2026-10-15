@@ -29243,7 +29243,7 @@ function mountSkillSimulator(root, options = {}){
   }
   root._openGate = (canClose) => openServerGate(canClose, true);
 
-  // Long press (0.5 s, finger or mouse) opens the skill card in a new tab; the click that follows the release is swallowed.
+  // Long press (0.5 s, finger or mouse) opens the skill card in a new tab; the click that follows the release is swallowed. Class guide view (read) only: never in the builder or the author's note editor (user 2026-10-15).
   let pressTimer = 0, chargeTimer = 0, pressX = 0, pressY = 0, longDone = false;
   let pressCell = null;
   const pressEnd = () => {
@@ -29253,7 +29253,7 @@ function mountSkillSimulator(root, options = {}){
   root.addEventListener("pointerdown", (e) => {
     const cell = e.target.closest(".rsim-cell");
     longDone = false; pressEnd();
-    if (interaction !== "build" || !cell || (e.pointerType === "mouse" && e.button !== 0)) return;
+    if (interaction !== "read" || !cell || (e.pointerType === "mouse" && e.button !== 0)) return;
     const card = cell.dataset.card;
     if (!card) return;
     pressX = e.clientX; pressY = e.clientY;
@@ -29274,7 +29274,7 @@ function mountSkillSimulator(root, options = {}){
   // Releasing outside the tool or switching windows must not leave a new-tab timer running.
   window.addEventListener("pointerup", pressEnd); window.addEventListener("pointercancel", pressEnd);
   window.addEventListener("blur", pressEnd);
-  root.addEventListener("contextmenu", (e) => { if (e.target.closest(".rsim-cell")) e.preventDefault(); });
+  root.addEventListener("contextmenu", (e) => { if (interaction === "read" && e.target.closest(".rsim-cell")) e.preventDefault(); });
   // Hovering (or focusing) a Class C skill lights the skills it needs.
   const lightPrereq = (cell) => {
     treesEl.querySelectorAll(".is-prereq").forEach(b => b.classList.remove("is-prereq"));
@@ -29934,6 +29934,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T15:58:04.963Z","fix(bible): skill simulator long press opens the skill card only in the class guide view, not in the builder or the note editor"],
     ["2026-10-15T15:44:36.626Z","fix(bible): range preview plays Gaos Tail Spin at its real timing (first wave 0.6 s, then every 0.2 s)"],
     ["2026-10-15T12:49:13.580Z","fix(bible): range preview default zoom frames the whole Blazing Arrow chain and the runic trail (new fit part key)"],
     ["2026-10-15T12:37:51.112Z","fix(bible): range preview draws trigger-collider boxes (Monkey runic pieces, Rabbit potions) over their exact 0-1 m height (new yBand part key), and its height labels follow it"],
