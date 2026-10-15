@@ -29081,11 +29081,8 @@ async function classGuideRenderImage(guide, simRoot){
   const cellById = {}; model.forEach(t => t.rows.forEach(r => (r.slots || []).forEach(s => { if (s) cellById[s.id] = s; })));
   const noteIds = Object.keys(guide.notes || {}).map(Number).filter(id => cellById[id]).sort((a, z) => a - z);
   const areaX = P.margin + P.leftW + P.gutter, areaW = P.w - P.margin - areaX;
-  let plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: P.h - P.margin * 2 });
-  if (noteIds.length && plan.bottom > P.margin + (P.h - P.margin * 2) * 0.64) plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: (P.h - P.margin * 2) * 0.64 });
-  if (!noteIds.length){ const used = plan.bottom - P.margin; plan = classGuideImagePlan(model, { x: areaX, y: P.margin + (P.h - P.margin * 2 - used) / 2, w: areaW, h: used }); }
   const frameOf = passive => { const cell = simRoot.querySelector(passive ? ".rsim-cell.is-passive" : ".rsim-cell:not(.is-passive)") || simRoot.querySelector(".rsim-cell"); const m = cell && /url\(["']?([^"')]+)["']?\)/.exec(getComputedStyle(cell).getPropertyValue("--rsim-frame")); return m ? m[1] : ""; };
-  const need = new Set(); Object.values(cellById).forEach(c => { if (!c.placeholder) need.add(c.icon); });
+  const need = new Set(); Object.values(cellById).forEach(c => { if (!c.placeholder) need.add(c.icon); });   // every cell icon (the trees show them all)
   const [frameN, frameP, portrait, serverIcon] = await Promise.all([classGuideImageLoad(frameOf(false)), classGuideImageLoad(frameOf(true)), classGuideImageLoad(CLASS_MINIMAL_ICONS[SKILL_SIM_NAMES[b.classKey]]), classGuideImageLoad(SKILL_ICONS["server_" + b.server])]);
   const icons = {}; await Promise.all([...need].map(async key => { icons[key] = await classGuideImageLoad(SKILL_ICONS[key]); }));
   const grays = {};
@@ -29158,14 +29155,26 @@ async function classGuideRenderImage(guide, simRoot){
   if (serverIcon){ ctx.drawImage(serverIcon, tx, y + 7, 38, 38); tx += 48; }
   ctx.font = font(600, 24); ctx.fillStyle = muted; ctx.fillText("Lv." + b.level, tx, y + 35);
   y += 62;
-  const titleFont = () => font(700, 46);
-  const titleLines = classGuideImageClip(classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(() => titleFont()), segmenter), 2, lw, measureWith(() => titleFont()));
-  drawLines(titleLines, lx, y + 44, 58, () => titleFont(), { text, gold: text });
-  y += titleLines.length * 58 + 6;
-  // author (gold) · patch
-  ctx.font = font(600, 22); ctx.fillStyle = gold; const author = guide.author || "ยังไม่ระบุผู้เขียน"; ctx.fillText(author, lx, y + 22);
-  const aw = ctx.measureText(author).width; ctx.font = font(400, 22); ctx.fillStyle = muted; ctx.fillText(" · " + classGuideDateText(guide.date), lx + aw, y + 22);
-  y += 48;
+  // a long title steps down in size (46 -> 40 -> 34) before it is cut, up to 3 lines at the smallest
+  let titleSize = 46, titleLines;
+  for (const [size, maxLines] of [[46, 2], [40, 2], [34, 3]]){
+    titleSize = size; const tf = () => font(700, size);
+    const all = classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(tf), segmenter);
+    titleLines = classGuideImageClip(all, maxLines, lw, measureWith(tf));
+    if (all.length <= maxLines) break;
+  }
+  const titleLh = Math.round(titleSize * 1.26);
+  drawLines(titleLines, lx, y + titleSize * 0.96, titleLh, () => font(700, titleSize), { text, gold: text });
+  y += titleLines.length * titleLh + 6;
+  // author (gold) · date on one line, or the date under a long author name (the name is cut with "…" past the column)
+  const author = guide.author || "ยังไม่ระบุผู้เขียน", dateText = classGuideDateText(guide.date);
+  const authorFont = () => font(600, 22), dateFont = () => font(400, 22);
+  const authorFit = classGuideImageClip(classGuideImageWrap([{ text: author, gold: true, keep: false }], lw, measureWith(authorFont), segmenter), 1, lw, measureWith(authorFont))[0].map(r => r.text).join("");
+  ctx.font = authorFont(); const aw = ctx.measureText(authorFit).width; ctx.font = dateFont(); const dw = ctx.measureText(" · " + dateText).width;
+  ctx.font = authorFont(); ctx.fillStyle = gold; ctx.fillText(authorFit, lx, y + 22);
+  ctx.font = dateFont(); ctx.fillStyle = muted;
+  if (aw + dw <= lw){ ctx.fillText(" · " + dateText, lx + aw, y + 22); y += 48; }
+  else { ctx.fillText(dateText, lx, y + 54); y += 80; }
   // stats
   const filled = CLASS_GUIDE_STATS.filter(s => guide.stats && s.key in guide.stats);
   if (filled.length){
@@ -29184,6 +29193,34 @@ async function classGuideRenderImage(guide, simRoot){
   if (guide.description && maxLines > 0){
     const dl = classGuideImageClip(classGuideImageWrap(classGuideImageRuns(guide.description), lw, measureWith(descFont), segmenter), maxLines, lw, measureWith(descFont));
     drawLines(dl, lx, y + 26, lh, descFont, { text, gold });
+  }
+  // ---- layout of the right side: the densest notes arrangement that is needed, the trees get the rest ----
+  const fullH = P.h - P.margin * 2, notesBottom = P.h - P.margin;
+  const layoutNotes = (top, cols, fs, maxLines) => {
+    const colGap = 16, colW = (areaW - colGap * (cols - 1)) / cols, iconS = Math.round(fs * 2.4), nlh = Math.round(fs * 1.5), textW = colW - 14 - iconS - 12 - 12;
+    const noteFont = g => font(g ? 700 : 400, fs), colY = Array(cols).fill(top + 20), items = [];
+    for (const id of noteIds){
+      let col = 0; for (let c = 1; c < cols; c++) if (colY[c] < colY[col]) col = c;
+      const all = classGuideImageWrap(classGuideImageRuns(guide.notes[id]), textW, measureWith(noteFont), segmenter);
+      const lines = classGuideImageClip(all, Math.min(all.length, maxLines), textW, measureWith(noteFont));
+      const h = Math.max(iconS + 18, 10 + Math.round(fs * 1.65) + lines.length * nlh + 10);
+      items.push({ id, x: areaX + col * (colW + colGap), y: colY[col], w: colW, h, lines, fs, nlh, iconS });
+      colY[col] += h + 10;
+    }
+    return { top, items, bottom: Math.max(...colY) - 10, noteFont };
+  };
+  let plan, notePlan = null;
+  if (!noteIds.length){
+    plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: fullH });
+    const used = plan.bottom - P.margin; plan = classGuideImagePlan(model, { x: areaX, y: P.margin + (fullH - used) / 2, w: areaW, h: used });
+  } else {
+    // [tree height cap, columns, note font size, max lines per note]: tried in order until every note fits
+    const configs = [[0.64, 2, 18, 99], [0.64, 2, 18, 5], [0.6, 2, 17, 4], [0.6, 3, 17, 4], [0.56, 3, 16, 3], [0.52, 3, 15, 3], [0.5, 3, 15, 2], [0.46, 3, 14, 2]];
+    for (const [cap, cols, fs, maxLines] of configs){
+      plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: fullH * cap });
+      notePlan = layoutNotes(plan.bottom + 26, cols, fs, maxLines);
+      if (notePlan.bottom <= notesBottom) break;
+    }
   }
   // ---- trees ----
   const learned = new Set(b.learned), noted = new Set(noteIds);
@@ -29211,28 +29248,23 @@ async function classGuideRenderImage(guide, simRoot){
       }
     }
   }
-  // ---- notes: every note expanded, two columns of chips under the trees ----
-  if (noteIds.length){
-    const top = plan.bottom + 26, bottom = P.h - P.margin, colGap = 18, colW = (areaW - colGap) / 2, iconS = 46;
-    ctx.fillStyle = gold; ctx.font = font(600, 18); spaced(4); ctx.fillText("★ โน้ตจากผู้เขียน", areaX, top + 4); spaced(0);
-    const nameFont = () => font(600, 20), noteFont = g => font(g ? 700 : 400, 18), nlh = 27, textW = colW - 14 - iconS - 12 - 14;
-    const colY = [top + 18, top + 18]; let shown = 0;
-    for (const id of noteIds){
-      const col = colY[0] <= colY[1] ? 0 : 1, nx = areaX + col * (colW + colGap), ny = colY[col];
-      const all = classGuideImageWrap(classGuideImageRuns(guide.notes[id]), textW, measureWith(noteFont), segmenter);
-      const fit = Math.floor((bottom - ny - 12 - 30 - 10) / nlh);
-      if (fit < 1) break;
-      const lines = classGuideImageClip(all, Math.min(all.length, fit), textW, measureWith(noteFont)), c = cellById[id];
-      const h = Math.max(iconS + 20, 12 + 28 + lines.length * nlh + 10);
-      surface(nx, ny, colW, h, 4, false);
-      ctx.fillStyle = gold; ctx.fillRect(nx, ny, 3, h);
-      const img = icons[c.icon]; if (img) ctx.drawImage(img, nx + 14, ny + 10, iconS, iconS);
-      const textX = nx + 14 + iconS + 12;
-      ctx.font = nameFont(); ctx.fillStyle = gold; ctx.fillText(c.name, textX, ny + 32);
-      drawLines(lines, textX, ny + 32 + nlh, nlh, noteFont, { text, gold });
-      colY[col] = ny + h + 12; shown++;
+  // ---- notes: every note expanded as a chip, in the layout chosen above ----
+  if (notePlan){
+    ctx.fillStyle = gold; ctx.font = font(600, 18); spaced(4); ctx.fillText("★ โน้ตจากผู้เขียน", areaX, notePlan.top + 4); spaced(0);
+    const overflow = notePlan.bottom > notesBottom, limit = overflow ? notesBottom - 28 : notesBottom;
+    let shown = 0;
+    for (const it of notePlan.items){
+      if (it.y + it.h > limit) continue;
+      const c = cellById[it.id];
+      surface(it.x, it.y, it.w, it.h, 4, false);
+      ctx.fillStyle = gold; ctx.fillRect(it.x, it.y, 3, it.h);
+      const img = icons[c.icon]; if (img) ctx.drawImage(img, it.x + 14, it.y + 9, it.iconS, it.iconS);
+      const textX = it.x + 14 + it.iconS + 12, nameY = it.y + 8 + Math.round(it.fs * 1.3);
+      ctx.font = font(600, it.fs + 2); ctx.fillStyle = gold; ctx.fillText(c.name, textX, nameY);
+      drawLines(it.lines, textX, nameY + it.nlh, it.nlh, notePlan.noteFont, { text, gold });
+      shown++;
     }
-    if (shown < noteIds.length){ ctx.font = font(400, 17); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", P.w - P.margin, bottom); ctx.textAlign = "left"; }
+    if (shown < noteIds.length){ ctx.font = font(400, 17); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", P.w - P.margin, notesBottom - 4); ctx.textAlign = "left"; }
   }
   return canvas;
 }
@@ -30542,6 +30574,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T17:25:16.077Z","fix(bible): guide image export survives heavy guides: notes pick a denser layout (2 or 3 columns, smaller text, line cap, shorter trees) until all fit, a long author name puts the date on its own line, a long title shrinks before it is cut"],
     ["2026-10-15T17:15:01.212Z","feat(bible): class guides: note chips instead of the pop-up, short guide codes (12TG1., scripts/guide_code.js), guide date replaces the patch, 4K image export in the current theme, readers can try other stat values, highlight button, phone layout, copy-code button; skill-details cooldown honours server cdWrapped overrides"],
     ["2026-10-15T16:12:39.946Z","feat(bible): class guides get recommended stats for each of the 8 stats (editor row, reader left panel in each stat's colour) and hover cooldown, cast time and buff duration from AGI / INT / CHA / LCK"],
     ["2026-10-15T15:58:04.963Z","fix(bible): skill simulator long press opens the skill card only in the class guide view, not in the builder or the note editor"],
