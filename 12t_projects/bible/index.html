@@ -11380,6 +11380,10 @@ function reachRender(ctx, model, P, st, W, H, dpr, dimK){
   if (!reachBuf.force){ if (took > 10) reachBuf.q = Math.max(0.45, q * 0.86); else if (took < (scene ? 7 : 4.5) && q < 1) reachBuf.q = Math.min(1, q * 1.08); }   // a full-canvas scene never oversamples and settles to full quality once drawing stops (drawReach)
 }
 // items: [{part, alpha}] (alpha < 1 while a range fades in or out). model: reachModel() or null (wireframe stand-in).
+// Same volume = same shape and size, wherever it stands; same place = the same volume at the same spot (user 2026-10-15). A part in the same place as an earlier visible one is not drawn at all (nothing to see, only fighting boxes);
+// parts with the same volume at other places (Cat Moon Storm's six storms) are all drawn but only the first one carries the dimension labels.
+const reachVolKey = (p) => [p.shape, p.r, p.r0, p.w, p.w2, p.l, p.h, p.angle].join("|");
+const reachPlaceKey = (p) => reachVolKey(p) + "@" + [p.anchor, p.x0 || 0, p.y0 || 0, p.z0 || 0, p.yaw || 0, p.onEnemy ? 1 : 0].join("|");
 const reachTagMem = new WeakMap();   // per canvas: where each dimension label was drawn last frame
 function drawReach(cv, items, st, model, scene, seqT){
   { const ps = items.map(it => it.part), pl = reachOnEnemy(ps, scene && scene.bPos); if (pl !== ps) items = items.map((it, i) => ({ part: pl[i], alpha: it.alpha })); }   // an impact circle in lock range sits on Boldas
@@ -11392,9 +11396,16 @@ function drawReach(cv, items, st, model, scene, seqT){
   const above = [], below = [], tags = [];
   const camAbove = st.pitch >= 0;
   const cmap = reachColorMap(items.map(it => it.part)), seqOn = seqT !== null && seqT !== undefined, seqPlan = seqOn ? reachSeqPlan(items.map(it => it.part)) : null, vis = (p) => seqOn ? reachSeqVis(p, seqT, seqPlan) : (p.final === false ? 0 : 1);   // seqT: seconds into the hit-by-hit playback (null = the final picture)
+  const placeSeen = new Set(), volSeen = new Set(), skipDraw = new Set(), skipTags = new Set();
+  items.forEach(({ part: q, alpha: b0 }, k) => {   // visible parts in order: an exact repeat of a place is skipped, a repeat of a volume keeps its box but loses its labels
+    if (q.unknown || q.shape === "self" || b0 * vis(q) <= 0.001) return;
+    const pk = reachPlaceKey(q); if (placeSeen.has(pk)){ skipDraw.add(k); return; }
+    placeSeen.add(pk);
+    const vk = reachVolKey(q); if (volSeen.has(vk)) skipTags.add(k); else volSeen.add(vk);
+  });
   items.forEach(({ part: p, alpha: a0 }, k) => {
     const alpha = a0 * vis(p);
-    if (p.unknown || p.shape === "self" || alpha <= 0.001) return;
+    if (p.unknown || p.shape === "self" || alpha <= 0.001 || skipDraw.has(k)) return;
     const col = cmap[k], m = reachMesh(p), faint = !!p.faint || p.shape === "ring";
     for (const f of faint ? [] : m.faces){
       const poly = f.map(i => m.verts[i]);
@@ -11407,7 +11418,7 @@ function drawReach(cv, items, st, model, scene, seqT){
       const s = reachClipSeg(m.verts[i], m.verts[j], up);
       if (s){ const a = P(s[0]), b = P(s[1]); list.push({ kind: "edge", pts: [a, b], d: (a[2] + b[2]) / 2 + 0.001, col, alpha: faint ? alpha * 0.55 : alpha, under: !up, dash: faint }); }
     }
-    for (const [di, d] of reachDims(p).entries()){
+    for (const [di, d] of (skipTags.has(k) ? [] : reachDims(p)).entries()){
       // pick the alternative edge that sits furthest right ("right") or lowest on screen ("low"): the outside of the shape, away from the caster
       const opts = d.opts.map(([a, b], ei) => { const pa = P(a), pb = P(b), mx = (pa[0] + pb[0]) / 2, my = (pa[1] + pb[1]) / 2; return { pa, pb, mx, my, ei, sc: d.pick === "low" ? my : mx }; }).sort((x, y) => y.sc - x.sc);
       if (opts.length) tags.push({ opts, col, alpha, text: d.text, key: (p.sg !== undefined ? "g" + p.sg : "p" + k) + ":" + di });   // key: the same label of the same part group, whichever copy of a multi-hit part is on screen
@@ -29890,6 +29901,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T09:18:38.524Z","fix(bible): range preview draws a hit box that repeats another's exact place only once, and shows the dimension labels once for boxes of the same volume at different places (Cat Moon Storm, Rabbit Ten Shot)"],
     ["2026-10-15T08:33:21.861Z","fix(bible): range preview timing re-traced: Mole Chopper (first hit 1.3 s), Sky Drill, Thunder Dragon, Mole Tank Ram (six hits from 0 s), Chameleon Charge Attack, Eden Sanctuary; new: Rabbit Backpack, Barrel Bot Chopper, Light Panther slashes"],
     ["2026-10-15T08:24:56.848Z","fix(monkey): range preview plays the Combo and the Earth Form combo at the game's real times (stage 2 and 3 wait until actionTime + 0.9 / 1.7 s, found in the dispatcher and the stage coroutines)"],
     ["2026-10-15T08:17:35.825Z","feat(monkey): range preview plays Gaos Rampage (1.8 s wind-up, 14 hits every 0.4 s while it charges forward) and documents which skills keep static hit boxes and why"],
