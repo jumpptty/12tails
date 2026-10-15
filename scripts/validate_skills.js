@@ -3204,18 +3204,18 @@ let checkedRsim = 0;
   ok(Array.isArray(embedded), "embedded guides use a data array");
   { const ids = embedded.map((g, i) => Number.isInteger(g.id) && g.id > 0 ? String(g.id) : String(i + 1)); ok(new Set(ids).size === ids.length, "embedded guide numbers are unique (link #skill-simulator/<number>): " + ids.join(", ")); embedded.forEach((g, i) => ok(Number.isInteger(g.id) && g.id > 0, "embedded guide " + (i + 1) + " has a running number id (1, 2, 3 ...)")); }
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
-  const fixture = { format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",patch:"ToT 2026-10",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
+  const fixture = { format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
   const round = decode(encode(fixture));
   ok(round.author === fixture.author && round.description === fixture.description && round.notes[103] === fixture.notes[103] && round.notes[201] === fixture.notes[201], "UTF-8, multiline notes and skipped-skill notes round-trip as plain text");
   ok(round.build.learned.join() === "101,102,103,451", "export normalizes build ordering");
   for (const server of ["og", "tot", "tto"]){
-    const tagged = {...fixture, patch:server + " patch", build:{...fixture.build,server,level:server === "tot" ? 100 : 95,learned:[101,102,103]}};
+    const tagged = {...fixture, build:{...fixture.build,server,level:server === "tot" ? 100 : 95,learned:[101,102,103]}};
     const code = encode(tagged), restored = decode(code);
     ok(JSON.parse(code).build.server === server && restored.build.server === server && restored.build.level === tagged.build.level, "export/import preserve " + server + " server tag and level");
   }
   const change = patch => ({...fixture,...patch});
   rejects(()=>decode("not JSON"),"reject malformed codes"); rejects(()=>decode("x".repeat(131073)),"limit import size");
-  rejects(()=>norm(change({version:2})),"reject unsupported format version"); rejects(()=>norm(change({author:""})),"require author for export"); rejects(()=>norm(change({patch:""})),"require game patch for export");
+  rejects(()=>norm(change({version:2})),"reject unsupported format version"); rejects(()=>norm(change({author:""})),"require author for export"); rejects(()=>norm(change({date:""})),"require the guide date for export");rejects(()=>norm(change({date:"2026-02-30"})),"reject an impossible date");rejects(()=>norm(change({date:"16/10/2026"})),"reject a date in the wrong format");
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
   rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
   rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");
@@ -3226,7 +3226,21 @@ let checkedRsim = 0;
   rejects(()=>norm(change({notes:{"999":"unknown"}})),"reject unknown note anchor");
   rejects(()=>norm(change({notes:{"451":"x".repeat(3001)}})),"limit per-skill note length");
   rejects(()=>norm(change({build:{...fixture.build,classKey:"cat",learned:[]},notes:{"452":"not published"}})),"reject unpublished EX note anchor");
-  ok(norm(change({title:"",author:"",patch:""}),{draft:true}).title === "", "allow unfinished local drafts");
+  ok(norm(change({title:"",author:"",date:""}),{draft:true}).title === "", "allow unfinished local drafts");
+  { const old = {...fixture, patch:"1.57"}; delete old.date; const opened = decode(JSON.stringify(old)); ok(opened.date === "" && !("patch" in opened), "an old code with a patch and no date still opens in the editor (date asked again on export)"); rejects(()=>encode(opened), "export asks for the date"); }
+  // Short code (user 2026-10-16): the page's compact form and scripts/guide_code.js agree, and every embedded guide survives the round trip.
+  { if (!sandbox.btoa) sandbox.btoa = btoa; if (!sandbox.atob) sandbox.atob = atob;
+    const compact = vm.runInContext("classGuideCompact", sandbox), expand = vm.runInContext("classGuideExpand", sandbox), gc = require(path.join(__dirname, "guide_code.js"));
+    const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+    const withStats = norm({...fixture, stats:{agi:120,lck:40}});
+    ok(same(expand(compact(norm(fixture))), norm(fixture)) && same(expand(compact(withStats)), withStats), "compact guide form expands back to the same guide (page)");
+    ok(same(gc.expand(compact(withStats)), withStats) && same(expand(gc.compact(withStats)), withStats), "page and scripts/guide_code.js use the same compact form");
+    ok(same(norm(gc.decode(gc.encode(withStats))), withStats) && gc.encode(withStats).startsWith("12TG1.") && /^12TG1\.[A-Za-z0-9_-]+$/.test(gc.encode(withStats)), "guide_code encode / decode round-trips a guide into a 12TG1. code");
+    embedded.forEach((g, i) => { const n = norm(g); ok(same(norm(gc.decode(gc.encode(n))), n) && gc.encode(n).length < JSON.stringify(n, null, 2).length / 2, "embedded guide " + (i + 1) + " round-trips through a short code under half the JSON length"); });
+    const all = [101,102,103,104,111,121,131,141,191,194,201,294,301,394,401,411,421,431,441,451,454,461,491,494];
+    ok(same(expand(compact({...norm(fixture), build:{...norm(fixture).build, learned:all}})).build.learned, all), "the 160-bit skill set keeps every slot from 101 to 494");
+  }
+  { const dt = vm.runInContext("classGuideDateText", sandbox); ok(dt("2026-10-16") === "16 ต.ค. 2026" && dt("") === "ยังไม่ระบุวันที่", "guide date shows as day, Thai month, year"); }
   // Recommended stats (user 2026-10-15): optional, any of the 8, integers 0-512, only filled ones stored.
   { const gs = norm(change({stats:{lck:40,agi:77}}));
     ok(Object.keys(gs.stats).join() === "agi,lck" && gs.stats.agi === 77 && gs.stats.lck === 40, "recommended stats keep only the filled stats, in a fixed order");
@@ -3235,7 +3249,7 @@ let checkedRsim = 0;
     ok(Object.keys(sr.stats).join() === "atk,def,tal,agi,vit,cha,int,lck" && sr.stats.def === 0 && sr.stats.int === 96, "all 8 recommended stats round-trip through export / import (0 is a real value)");
     for (const bad of [{foo:1},{agi:513},{agi:-1},{agi:1.5},{agi:"10"},{agi:null}]) rejects(()=>norm(change({stats:bad})),"reject stats " + JSON.stringify(bad));
     rejects(()=>norm(change({stats:[120]})),"reject stats as an array"); rejects(()=>norm(change({stats:null})),"reject null stats");
-    ok(norm(change({title:"",author:"",patch:"",stats:{cha:5}}),{draft:true}).stats.cha === 5, "drafts keep recommended stats");
+    ok(norm(change({title:"",author:"",date:"",stats:{cha:5}}),{draft:true}).stats.cha === 5, "drafts keep recommended stats");
   }
   // Hover timings: the same numbers the skill-details chips show for that card and rank (revised art on, dependencies from the build).
   { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
@@ -3255,7 +3269,8 @@ let checkedRsim = 0;
     try {
       for (const sk of SKILLS){
         const maxRank = sk.maxRank || 1;
-        for (const rank of new Set([1, maxRank])) compare(sk, rank, { server:"og", learnedByCard:new Map(), revisedArt:true }, {}, "no passives");
+        for (const srv of ["og", "tot", "tto"]){ sandbox._setServer(srv); for (const rank of new Set([1, maxRank])) compare(sk, rank, { server:srv, learnedByCard:new Map(), revisedArt:true }, {}, srv + " no passives"); }
+        sandbox._setServer("og");
         const deps = [sk.cdDep, sk.cdMultDep, sk.castDep, sk.dep].filter(Boolean);
         for (const level of ["max","mid"]){
           const learned = new Map(), depState = {};
@@ -3266,7 +3281,7 @@ let checkedRsim = 0;
     } catch (e) { bad.push("threw: " + e.message); }
     finally { inp.agi.value = savedIn.agi; inp.int.value = savedIn.int; inp.cha.value = savedIn.cha; inp.lck.value = savedIn.lck; }
     ok(bad.length === 0, "guide hover timings differ from the skill-details chips: " + bad.slice(0, 5).join(" | "));
-    ok(compared > 800, "guide hover timings compared against " + compared + " chips");
+    ok(compared > 2400, "guide hover timings compared against " + compared + " chips (BB, ToT and TTO)");
     // Only fields whose stat is filled appear; LCK only widens; Revised Art only when the build learned it (and never for exempt skills).
     const tri = SKILLS.find(c => c.cdWrapped && c.castWrapped && c.durWrapped && !c.cdDep && !c.cdMultDep && !c.castDep && !c.dep && !c.durContested && !c.durAdjust && !c.revisedArtExempt && !/Debuff/.test(String((c.status && c.status.class) || "")) && T(c.id, 1, {agi:1,int:1,cha:1}, { server:"og", learnedByCard:new Map(), revisedArt:false }).length === 3);
     ok(!!tri, "a card with cooldown, cast time and buff duration exists for the gating checks");
@@ -3282,7 +3297,7 @@ let checkedRsim = 0;
     if (exempt) ok(T(exempt.id, 1, {agi:50}, { server:"og", learnedByCard:new Map(), revisedArt:true })[0].text === T(exempt.id, 1, {agi:50}, { server:"og", learnedByCard:new Map(), revisedArt:false })[0].text, "Revised Art does not touch an exempt skill");
     ok(T("bat_nightmare", 1, null, {}).length === 0 && T("no_such_card", 1, st, { server:"og", learnedByCard:new Map(), revisedArt:false }).length === 0, "no stats / unknown card give no hover lines");
     const panel = vm.runInContext("classGuideStatsHtml", sandbox), editor = vm.runInContext("classGuideStatsEditorHtml", sandbox);
-    ok(panel(undefined) === "" && panel({}) === "" && (panel({agi:120}).match(/cg-stat-tile/g) || []).length === 1 && panel({agi:120}).includes("--stat-agi") && panel({agi:120}).includes(">120<") && !panel({agi:120}).includes("ATK"), "reader panel renders only the filled stats in their colour");
+    ok(panel(undefined) === "" && panel({}) === "" && (panel({agi:120}).match(/cg-stat-tile/g) || []).length === 1 && panel({agi:120}).includes("--stat-agi") && panel({agi:120}).includes('value="120"') && panel({agi:120}).includes('data-cg-try="agi"') && !panel({agi:120}).includes("ATK"), "reader panel renders only the filled stats in their colour");
     ok((panel({atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}).match(/cg-stat-tile/g) || []).length === 8, "reader panel can show all 8 stats");
     ok((editor().match(/data-cg-stat=/g) || []).length === 8 && ["atk","def","tal","agi","vit","cha","int","lck"].every(k => editor().includes('data-cg-stat="' + k + '"') && editor().includes("--stat-" + k)), "editor row has all 8 stat inputs in their colours");
     const hover = vm.runInContext("classGuideHoverLines", sandbox);
@@ -3334,9 +3349,10 @@ let checkedRsim = 0;
         root2._skillSim.setInteraction("build"); over(101);
         ok(calls.length === 0 && tip.children.length === 0, "builder hover shows only the name (no timing lines)");
         root2._skillSim.setInteraction("read"); over(101);
-        ok(tip.children.length === 2 && tip.children[0].className === "rsim-tip-line" && tip.children[0].children[1].textContent === "27s", "view hover of a learned skill shows its timing lines");
+        const lines2 = () => tip.children.filter(c => c.className === "rsim-tip-line"), hint2 = () => tip.children.filter(c => c.className === "rsim-tip-hint");
+        ok(lines2().length === 2 && lines2()[0].children[1].textContent === "27s" && hint2().length === 1 && hint2()[0].textContent === "คลิกค้างเพื่อดูรายละเอียดเพิ่มเติม", "view hover of a learned skill shows its timing lines and the long-press hint");
         over(201);
-        ok(tip.children.length === 0 && calls[calls.length - 1] === "201:false", "view hover of a skipped skill shows the name only");
+        ok(lines2().length === 0 && hint2().length === 1 && calls[calls.length - 1] === "201:false", "view hover of a skipped skill shows the name and the long-press hint only");
       } finally { doc.getElementById = savedGet; if (!hadWidth) delete sandbox.innerWidth; }
     }
   } catch(e){ok(false,"reader UI threw: "+e.message);}

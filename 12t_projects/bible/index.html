@@ -19,11 +19,11 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula", ".sk-hero-desc", ".sk-dep-strip"],
     // flat panels and modals that never change fill on hover
-    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header"],
+    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree", ".cg-note-chip", ".cg-stats", ".cg-note-editor"],
     // clickable tiles whose own hover fill must keep winning
     tile: ["li:not(.entry-svc):not(.entry-bug):not(.entry-chm):not(.entry-wide) > .entry"],
     // clickable and raised (the --panel-2 level)
-    raised: [".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn"]
+    raised: [".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)"]
   };
   (function(){
     var G = 'html:is([data-sk-server="tto"],[data-sk-server="tot"]) ';
@@ -1638,8 +1638,8 @@
   .sg-head h2{font-size:17px; margin:0}
 
   /* Class Guide: community pages and authoring reuse the original game skill grid. */
-  .cg-page [hidden], .cg-note-backdrop[hidden]{display:none !important}
-  .cg-page,.cg-note-card{font-family:'Prompt',-apple-system,sans-serif}
+  .cg-page [hidden]{display:none !important}
+  .cg-page{font-family:'Prompt',-apple-system,sans-serif}
   .cg-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:8px 0 18px}
   .cg-heading h2,.cg-reader h2{font-family:inherit;font-size:30px;color:var(--text);margin:0}
   .cg-kicker{font-family:inherit;color:var(--gold);font-size:11px;letter-spacing:.14em;margin:0 0 6px}
@@ -1664,7 +1664,12 @@
   .cg-stat-panel[hidden]{display:none}
   .cg-stat-tile{border-left:3px solid var(--c);border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--c) 11%,transparent);padding:6px 9px 7px;min-width:0}
   .cg-stat-tile b{display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
-  .cg-stat-tile output{display:block;font-size:28px;line-height:1.1;font-weight:700;color:var(--c);font-variant-numeric:tabular-nums}
+  .cg-page .cg-stat-tile input.cg-stat-try{display:block;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:28px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
+  .cg-page .cg-stat-tile input.cg-stat-try:hover,.cg-page .cg-stat-tile input.cg-stat-try:focus{border-bottom-color:var(--c);outline:none}
+  .cg-stat-tile input.cg-stat-try::-webkit-outer-spin-button,.cg-stat-tile input.cg-stat-try::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .cg-stat-tile{cursor:text}
+  .cg-stat-tile.is-tried{box-shadow:inset 0 0 0 1px var(--c)}
+  .cg-stat-reset{grid-column:1/-1;justify-self:start;padding:2px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
   @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
   .cg-filters label{display:grid;gap:6px;min-width:180px;font-size:13px;color:var(--muted)}
@@ -1679,7 +1684,7 @@
   .cg-guide span{font-size:12px;color:var(--muted)}
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
-  .cg-prose,.cg-note-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
+  .cg-prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
   .cg-note-editor,.cg-transfer{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:20px;margin:18px 0}
   .cg-note-editor h3,.cg-transfer h3{margin:0 0 12px;color:var(--gold);font-family:"Chakra Petch",sans-serif}
   .cg-import-dialog{width:min(460px,calc(100vw - 40px));box-sizing:border-box;margin:auto;padding:24px;color:var(--text);font:inherit}
@@ -1694,20 +1699,24 @@
   .cg-star{position:absolute;z-index:4;right:-3px;top:-4px;display:grid;place-items:center;width:20px;height:20px;border:1px solid #d4af37;border-radius:50%;background:#141311;color:#f5d76e;font-size:17px;line-height:1;text-shadow:0 1px 2px #000;box-shadow:0 2px 5px #000b;pointer-events:none;transition:color .25s,border-color .25s}
   .rsim[data-interaction="read"] .has-note:not(.note-seen) .cg-star{animation:cg-star-pulse 3.6s ease-in-out infinite}
   @keyframes cg-star-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.2);filter:brightness(1.55);box-shadow:0 0 10px #d4af3799,0 0 0 4px #d4af3728}}
-  .cg-prose strong,.cg-note-body strong,.cg-guide p strong{color:var(--gold);font-weight:700}
+  .cg-prose strong,.cg-note-chip-text strong,.cg-guide p strong{color:var(--gold);font-weight:700}
   .cg-star[hidden]{display:none}
   .rsim-cell.note-seen .cg-star{color:#a6976c;border-color:#786a46;text-shadow:none}
-  .rsim[data-interaction="read"] .rsim-actions,.rsim[data-interaction="read"] .rsim-clear{display:none}
+  .rsim[data-interaction="read"] .rsim-actions,.rsim[data-interaction="read"] .rsim-clear,.rsim[data-interaction="read"] .rsim-bar,.rsim[data-interaction="read"] .rsim-wip{display:none}
   .rsim[data-interaction="read"] .rsim-cell:not(.has-note){cursor:default}
   .rsim[data-interaction="read"] .rsim-pick:disabled{opacity:1;cursor:default}
   .rsim[data-interaction="annotate"] .rsim-cell:not(.is-placeholder):hover{box-shadow:0 0 0 2px var(--gold)}
-  .cg-note-backdrop{position:fixed;inset:0;z-index:9999;background:#090807b8;display:grid;place-items:center;padding:20px}
-  .cg-note-card{position:relative;width:min(620px,100%);box-sizing:border-box;max-height:85dvh;overflow-y:auto;padding:28px;background:var(--panel);border:1px solid var(--gold);border-radius:6px;box-shadow:0 24px 80px #0009}
-  .cg-note-card h3{font-family:inherit;margin:8px 28px 16px 0;color:var(--gold);font-size:22px}
+  .cg-note-chips{display:grid;gap:10px;margin:22px 0 0}
+  .cg-note-chips-title{margin:0;font-family:inherit;font-size:12px;letter-spacing:.14em;font-weight:600;color:var(--gold)}
+  .cg-note-chip{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 4px 4px 0;background:var(--panel)}
+  .cg-note-chip-icon{width:44px;height:44px;border-radius:4px;display:block}
+  .cg-note-chip h4{margin:0 0 4px;font-family:inherit;font-size:15px;line-height:1.4;color:var(--gold)}
+  .cg-note-chip-text{margin:0;font-size:15px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
+  .cg-note-chip.is-waiting{background:transparent;border-color:rgba(212,175,55,.35)}
+  .cg-note-chip.is-waiting .cg-note-chip-icon,.cg-note-chip.is-waiting .cg-note-chip-body{opacity:0}
+  .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:1/-1;margin:4px 0 0}
   .cg-note-close{position:absolute;right:12px;top:10px;border:0;background:none;color:var(--muted);font:24px sans-serif;cursor:pointer}
-  .cg-note-body{margin:0;font-size:17px}
-  .cg-note-body.is-waiting{opacity:0}
-  @media(max-width:760px){.cg-heading{align-items:flex-start;flex-direction:column}.cg-fields,.cg-gallery{grid-template-columns:1fr}.cg-reader{padding-left:14px}.cg-note-card{padding:22px}}
+  @media(max-width:760px){.cg-heading{align-items:flex-start;flex-direction:column}.cg-fields,.cg-gallery{grid-template-columns:1fr}.cg-reader{padding-left:14px}}
 
   .cg-page .cg-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 14px;font:inherit;font-size:13px;font-weight:500;line-height:1.4;border-radius:4px;white-space:normal;text-align:center;transition:background .15s,border-color .15s,color .15s}
   .cg-btn svg,.cg-format-btn svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -1732,6 +1741,9 @@
   .cg-rich-editor strong,.cg-rich-editor b{color:var(--gold);font-weight:700}
   .cg-rich-editor:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
   .cg-note-editor .cg-rich-editor{min-height:140px}
+  .cg-format-btn.is-on{background:var(--gold);color:#141311;border-color:var(--gold)}
+  .cg-rich-editor.is-highlighting{cursor:text;box-shadow:inset 0 0 0 1px var(--gold)}
+  .cg-rich-editor.is-highlighting::selection,.cg-rich-editor.is-highlighting *::selection{background:rgba(212,175,55,.45)}
   @media(max-width:760px){.cg-nav{width:100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
   .cg-page[data-mode="reader"]{display:grid;grid-template-columns:clamp(260px,27%,320px) minmax(0,1fr);gap:12px 24px}
@@ -1740,6 +1752,12 @@
   .cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:2;min-height:0;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;margin:0;padding:14px 20px 14px 16px;border:0;border-left:2px solid var(--gold);background:linear-gradient(90deg,#d4af3708,transparent)}
   .cg-page[data-mode="reader"] .cg-reader h2{display:block;font-size:24px;line-height:1.45;margin:0 0 12px;overflow-wrap:anywhere}
   .cg-page[data-mode="reader"] .cg-byline{display:block;font-size:13px;line-height:1.8;margin:0 0 22px}
+  .cg-title-meta{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+  .cg-title-icon{flex:none;width:32px;height:32px;object-fit:contain}
+  .cg-title-server{width:26px;height:26px}
+  .cg-title-lv{font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap}
+  .cg-title-text{display:block;overflow-wrap:anywhere}
+  .cg-byline-author{color:var(--gold);font-weight:600}
   .cg-page[data-mode="reader"] .cg-prose{font-size:17px;line-height:1.85;margin:0}
   .cg-page[data-mode="reader"] .cg-prose:empty{display:none}
   .cg-page[data-mode="reader"] .cg-reader .cg-kicker,.cg-page[data-mode="reader"] .cg-reader .cg-help,.cg-page[data-mode="reader"] .cg-heading>div{display:none}
@@ -1750,13 +1768,30 @@
   .cg-page[data-mode="reader"] [data-cg-role="guideTitle"]{cursor:pointer;transition:color .2s}
   @media(max-width:760px){.cg-page[data-mode="reader"]{grid-template-columns:minmax(0,1fr);gap:10px}.cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:1;grid-row:2}.cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:3;padding:10px 14px}.cg-page[data-mode="reader"] .cg-reader h2{font-size:20px;margin-bottom:6px}.cg-page[data-mode="reader"] .cg-byline{margin-bottom:12px}.cg-page[data-mode="reader"] .cg-status{grid-row:4}}
 
-  html.tool-guide-reader,html.tool-guide-reader body{height:100dvh;min-height:0;overflow:hidden}
+  @media(min-width:761px){html.tool-guide-reader,html.tool-guide-reader body{height:100dvh;min-height:0;overflow:hidden}}
   html.tool-guide-reader .hub-bar{padding:10px 18px}
   html.tool-guide-reader .stage{width:100%;max-width:1240px;box-sizing:border-box;padding:10px 12px 8px}
   .cg-page[data-mode="reader"] [data-cg-role="sim"]{position:relative}
   .cg-page[data-mode="reader"] .rsim{position:absolute;top:0;left:50%;box-sizing:border-box;transform:translateX(-50%) scale(var(--cg-reader-scale,1));transform-origin:center top}
   .cg-page[data-mode="reader"] .rsim-trees{grid-template-columns:repeat(4,minmax(0,1fr))}
   @media(max-width:600px){.cg-page[data-mode="reader"] .rsim-trees{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  /* Phone reader (user 2026-10-15): no fit-to-screen scaling. The guide reads top to bottom as a normal page: title, stats, description, then the build at its natural size. */
+  @media(max-width:760px){
+    .cg-page[data-mode="reader"] .cg-reader{grid-row:2;height:auto !important;overflow:visible}
+    .cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-row:3;height:auto !important}
+    .cg-page[data-mode="reader"] .cg-status{grid-row:4}
+    .cg-page[data-mode="reader"] .rsim{position:static;transform:none;width:auto !important}
+    .cg-page[data-mode="reader"] .rsim{padding-inline:8px}
+    .cg-page .rsim-trees{align-items:stretch}
+    .cg-publish-actions .cg-btn{flex:1 1 calc(50% - 6px)}
+    .cg-page[data-mode="reader"] .rsim-trees{gap:8px}
+    .cg-page[data-mode="reader"] .rsim-tree{padding:8px 6px 6px}
+    .cg-nav{flex-wrap:wrap}
+    .cg-nav .cg-btn{flex:1 1 calc(50% - 8px);min-width:0;padding:9px 6px;gap:5px;font-size:12.5px;line-height:1.25}
+    .cg-nav .cg-btn svg{flex:none;width:15px;height:15px}
+    .cg-nav .cg-btn span{min-width:0;overflow-wrap:anywhere;text-align:center}
+  }
+  @media(max-width:340px){.cg-page[data-mode="reader"] .rsim-trees{grid-template-columns:minmax(0,1fr)}}
 
   /* Skill simulator (skill-simulator tool, 2026-10-12) */
   html.tool-rsim .stage{max-width:min(1240px, 98vw)}
@@ -1810,6 +1845,7 @@
   .rsim-tip.show{opacity:1}
   .rsim-tip-line{display:flex;justify-content:space-between;gap:18px;margin-top:3px;font-size:12px;font-weight:600;color:var(--c)}
   .rsim-tip-line b{font-variant-numeric:tabular-nums}
+  .rsim-tip-hint{margin-top:4px;font-size:11px;font-weight:400;color:var(--muted)}
   .rsim-cell.is-prereq{animation:rsim-prereq-pulse 1.25s ease-in-out infinite}
   @keyframes rsim-prereq-pulse{0%,100%{filter:brightness(1) saturate(1)} 50%{filter:brightness(1.35) saturate(1.2)}}
   .rsim-cell.is-prereq img{filter:none}
@@ -21335,23 +21371,25 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const rawCd = cdDep ? depRawValue(cdBase, cdDep, cdDepRank) : cdBase;
       const cdAGI = selected.cdPlayerStats ? monkeyAGI : AGI;
       const cdLCK = selected.cdPlayerStats ? monkeyLCK : LCK;
-      let cdRange = (selected.cdWrapped && !isCdString) ? agiAdjustRange(rawCd, cdAGI, cdLCK) : [rawCd];
+      const cdWrappedHere = activeSelected.cdWrapped !== undefined ? activeSelected.cdWrapped : selected.cdWrapped;   // a server override may make the cooldown AGI-scaled (ToT Mike Circle)
+      let cdRange = (cdWrappedHere && !isCdString) ? agiAdjustRange(rawCd, cdAGI, cdLCK) : [rawCd];
       if (cdDep) cdRange = depPostMultiply(cdRange, cdDep, cdDepRank);
       if (cdMultDep) cdRange = depPostMultiply(cdRange, cdMultDep, cdMultDepRank);
-      if (!isCdString) cdRange = applyRevisedArt(cdRange, revisedArtOn, selected.revisedArtExempt);
+      const raExempt = activeSelected.revisedArtExempt !== undefined ? activeSelected.revisedArtExempt : selected.revisedArtExempt;
+      if (!isCdString) cdRange = applyRevisedArt(cdRange, revisedArtOn, raExempt);
       const cdDepBlock = cdDep ? renderDepBlock(cdDep, cdDepRank, "", "CD") : "";
       const cdMultDepBlock = cdMultDep ? renderDepBlock(cdMultDep, cdMultDepRank, " sk-dep-secondary", "CD") : "";
       const cdPostFn = v => {
         if (cdDep) v = depPostMultiply([v], cdDep, cdDepRank)[0];
         if (cdMultDep) v = depPostMultiply([v], cdMultDep, cdMultDepRank)[0];
-        return applyRevisedArt([v], revisedArtOn, selected.revisedArtExempt)[0];
+        return applyRevisedArt([v], revisedArtOn, raExempt)[0];
       };
-      const cdDist = (selected.cdWrapped && !isCdString) ? lckDistribution(rawCd, cdAGI, cdLCK, agiAdjustAtRoll, cdPostFn) : null;
+      const cdDist = (cdWrappedHere && !isCdString) ? lckDistribution(rawCd, cdAGI, cdLCK, agiAdjustAtRoll, cdPostFn) : null;
       cdBlock = `
         <div class="sk-stat sk-stat-cd"${chipColStyle("cd")}>
           <p class="sk-stat-label">คูลดาวน์</p>
           <div class="sk-stat-value-wrap">
-            <div class="sk-stat-value${(selected.cdWrapped && !isCdString) ? "" : " unwrapped"}${isCdString ? " sk-stat-value-sm" : ""}">${isCdString ? rawCd : fmt(cdRange) + "s"}</div>
+            <div class="sk-stat-value${(cdWrappedHere && !isCdString) ? "" : " unwrapped"}${isCdString ? " sk-stat-value-sm" : ""}">${isCdString ? rawCd : fmt(cdRange) + "s"}</div>
             ${cdDist ? renderProbabilityTooltip(cdDist) : ""}
           </div>
           <p class="sk-stat-base">${isCdString ? "base cooldown" : ((activeSelected.cdWrapped ? "base" : "fixed") + " " + rawCd + "s" + depMultNote(cdDep, cdDepRank) + depMultNote(cdMultDep, cdMultDepRank))}</p>
@@ -28614,8 +28652,8 @@ function openSimServerGate({ current, canClose = true, onSelect }){
 }
 // Community guides are data only. Paste each exported JSON object into this array.
 const CLASS_GUIDES = [
-  {"id":1,"format":"12t-class-guide","version":1,"title":"หมาเจาะ Classic","author":"test123","patch":"1.57","description":"หมาเจาะ พ่อทุกสถาบัน","build":{"server":"tto","classKey":"wolf","level":95,"learned":[101,102,103,121,122,131,132,141,142,143,144,201,202,203,204,231,232,233,234,241,242,301,302,303,311,312,313,314,321,322,323,324,331,332,341,342,343,344,351,352,353,354,361,362,363,364,371,372,373,401,402,404,413,421,424,432,441,443]},"notes":{"364":"สกิลนี้วนง่ายกว่าร่างดำ","373":"พยายามให้สกิลนี้วน"}},
-  {"id":2,"format":"12t-class-guide","version":1,"title":"กวิ้น PVE แท้","author":"หนมผิงช่วยเหลือประชาชน","patch":"ได้ทุกแพท","description":"กวิ้นสาย PVE แท้ 12/8 ลงทุกดันผ่านฉลุย แต่ PVP ไ่ม่ได้เลย (หากจะเอาไปลง 12/8 ควรมีเซตอิ้น)","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,111,112,121,122,123,124,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,232,233,241,242,243,244,251,261,262,263,271,301,311,312,313,314,321,322,323,324,331,341,342,343,361,402,404,413,421,422,424,434,441,442]},"notes":{"271":"เมเท 1 วิ อิ้นที่ 384"}}
+  {"id":1,"format":"12t-class-guide","version":1,"title":"หมาเจาะ Classic","author":"test123","date":"2026-10-15","description":"หมาเจาะ พ่อทุกสถาบัน","build":{"server":"tto","classKey":"wolf","level":95,"learned":[101,102,103,121,122,131,132,141,142,143,144,201,202,203,204,231,232,233,234,241,242,301,302,303,311,312,313,314,321,322,323,324,331,332,341,342,343,344,351,352,353,354,361,362,363,364,371,372,373,401,402,404,413,421,424,432,441,443]},"notes":{"364":"สกิลนี้วนง่ายกว่าร่างดำ","373":"พยายามให้สกิลนี้วน"}},
+  {"id":2,"format":"12t-class-guide","version":1,"title":"กวิ้น PVE แท้","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-15","description":"กวิ้นสาย PVE แท้ 12/8 ลงทุกดันผ่านฉลุย แต่ PVP ไ่ม่ได้เลย (หากจะเอาไปลง 12/8 ควรมีเซตอิ้น)","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,111,112,121,122,123,124,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,232,233,241,242,243,244,251,261,262,263,271,301,311,312,313,314,321,322,323,324,331,341,342,343,361,402,404,413,421,422,424,434,441,442]},"notes":{"271":"เมเท 1 วิ อิ้นที่ 384"}}
 ];
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
@@ -28697,6 +28735,20 @@ function classGuideTimings(cardId, rank, stats, ctx){
   } finally { reachDepOverride = prev; }
   return out;
 }
+// Guide date (user 2026-10-16, replaces the free-text patch): the day the author wrote the build, YYYY-MM-DD, required to export. An old code's "patch" is ignored.
+function classGuideDateClean(raw, required){
+  if (raw === undefined || raw === "") { if (required) throw new Error("กรุณาใส่วันที่เขียนไกด์"); return ""; }
+  if (typeof raw !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) throw new Error("วันที่ต้องอยู่ในรูปแบบ ปี-เดือน-วัน");
+  const d = new Date(raw + "T00:00:00Z");
+  if (isNaN(d) || d.toISOString().slice(0, 10) !== raw || d.getUTCFullYear() < 2000) throw new Error("วันที่ไม่ถูกต้อง");
+  return raw;
+}
+const CLASS_GUIDE_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+function classGuideDateText(iso){
+  if (!iso) return "ยังไม่ระบุวันที่";
+  const [y, m, d] = iso.split("-").map(Number);
+  return d + " " + CLASS_GUIDE_MONTHS[m - 1] + " " + y;
+}
 // Every embedded guide has a running number "id" (1, 2, 3 ...; never reused, never renumbered) for its link #skill-simulator/<id>; a guide without one falls back to its position (user 2026-10-15: share a guide in Discord).
 function classGuideId(raw, index){ return String(raw && Number.isInteger(raw.id) && raw.id > 0 ? raw.id : index + 1); }
 function classGuideNormalize(value, { draft = false } = {}){
@@ -28724,7 +28776,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   }
   return { format: "12t-class-guide", version: 1,
     title: text(value.title, "ชื่อไกด์ ", 160, !draft), author: text(value.author, "ชื่อผู้เขียน ", 120, !draft),
-    patch: text(value.patch, "แพตช์เกม ", 120, !draft), description: text(value.description, "คำอธิบายบิลด์ ", 12000, false),
+    date: classGuideDateClean(value.date, !draft), description: text(value.description, "คำอธิบายบิลด์ ", 12000, false),
     build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b) }, ...(Object.keys(stats).length ? { stats } : {}), notes };
 }
 function classGuideExport(value){
@@ -28736,7 +28788,51 @@ function classGuideImport(code){
   if (typeof code !== "string" || code.length > 131072) throw new Error("โค้ดไกด์ยาวเกินกำหนด");
   let value;
   try { value = JSON.parse(code); } catch (e) { throw new Error("อ่านโค้ดไกด์ไม่ได้ กรุณาวาง JSON ที่ส่งออกจากไกด์แต่ละอาชีพ"); }
-  return classGuideNormalize(value);
+  return classGuideNormalize(value, { draft: true });
+}
+// Short guide code (user 2026-10-16): "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
+// tree x row x column slot, in base64url) as JSON, compressed with deflate-raw, in URL-safe base64 (A-Z a-z 0-9 - _).
+// Import takes both this and plain JSON. scripts/guide_code.js mirrors the format outside the browser (to embed a submitted guide as a JSON object).
+const CLASS_GUIDE_CODE_PREFIX = "12TG1.";
+const classGuideSlot = id => (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // cell id 101..494 -> 0..159
+function classGuideCompact(g){
+  const bits = new Uint8Array(20);
+  for (const id of g.build.learned){ const k = classGuideSlot(id); bits[k >> 3] |= 1 << (k & 7); }
+  let bin = ""; bits.forEach(x => { bin += String.fromCharCode(x); });
+  const o = { t: g.title, a: g.author, d: g.date, x: g.description, s: g.build.server, c: g.build.classKey, l: g.build.level, k: btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""), n: g.notes };
+  if (g.stats) o.v = g.stats;
+  return o;
+}
+function classGuideExpand(o){
+  if (!o || typeof o !== "object" || typeof o.k !== "string") return o;   // already the full form
+  let bin; try { bin = atob(o.k.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((o.k.length + 3) % 4)); } catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้อง"); }
+  const learned = [];
+  for (let k = 0; k < bin.length * 8 && k < 160; k++) if (bin.charCodeAt(k >> 3) & (1 << (k & 7))) learned.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1);
+  const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), notes: o.n || {} };
+  return g;
+}
+async function classGuidePack(value){
+  const json = JSON.stringify(classGuideCompact(classGuideNormalize(value)));
+  if (json.length > 131072) throw new Error("โค้ดไกด์ยาวเกินกำหนด กรุณาลดความยาวคำอธิบายหรือโน้ต");
+  if (typeof CompressionStream === "undefined") return json;   // very old browsers: the plain code still imports
+  const bytes = new Uint8Array(await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+  let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return CLASS_GUIDE_CODE_PREFIX + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function classGuideUnpack(code){
+  const text = String(code || "").trim();
+  if (!text.startsWith(CLASS_GUIDE_CODE_PREFIX)) return text;
+  if (typeof DecompressionStream === "undefined") throw new Error("เบราว์เซอร์นี้อ่านโค้ดย่อไม่ได้ กรุณาอัปเดตเบราว์เซอร์");
+  const body = text.slice(CLASS_GUIDE_CODE_PREFIX.length).replace(/\s+/g, "");
+  if (!/^[A-Za-z0-9_-]+$/.test(body)) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+  let bin;
+  try { bin = atob(body.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((body.length + 3) % 4)); } catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้อง"); }
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  try {
+    const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+    if (json.length > 131072) throw new Error("big");
+    return JSON.stringify(classGuideExpand(JSON.parse(json)));
+  } catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้องหรือไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด"); }
 }
 async function classGuideCopy(code){
   if (typeof navigator !== "undefined" && navigator.clipboard){
@@ -28767,6 +28863,13 @@ function classGuideBoldEdit(value, start, end, maxLength){
   if (value.length - (to - from) + text.length > maxLength) return null;
   return { text, from, to, selectionStart, selectionEnd };
 }
+// Highlight (user 2026-10-15): every bold run stands apart with a space before and after it (none at the start or end of a line, never doubled).
+function classGuideSpaceBold(value){
+  return String(value).replace(/\*\*([\s\S]+?)\*\*/g, (m, inner, at, all) => {
+    const before = all[at - 1], after = all[at + m.length];
+    return (before !== undefined && !/\s/.test(before) ? " " : "") + m + (after !== undefined && !/\s/.test(after) ? " " : "");
+  });
+}
 // Serialize only text, line breaks and bold from the live editor into portable guide markup.
 function classGuideReadEditor(node){
   let text = "";
@@ -28793,19 +28896,32 @@ function classGuideMountEditor(backing, editor, notify){
     if (value.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
     backing.value = value; accepted = editor.innerHTML; backing.dispatchEvent(new Event("input", { bubbles: true })); return true;
   };
-  const bold = () => { editor.focus(); document.execCommand("bold", false); sync(); };
+  // Highlight mode (user 2026-10-15, replaces Ctrl+B): with the highlight button on, every mouse / finger drag across text turns it bold gold
+  // (dragging across text that is already bold turns it back), and the bold part gets a space before and after it.
+  let highlighting = false;
+  const bold = () => {
+    editor.focus(); document.execCommand("bold", false);
+    const value = classGuideReadEditor(editor), spaced = classGuideSpaceBold(value);
+    if (spaced !== value && spaced.length <= backing.maxLength){ set(spaced); backing.dispatchEvent(new Event("input", { bubbles: true })); } else sync();
+  };
+  const setHighlight = on => { highlighting = !!on; editor.classList.toggle("is-highlighting", highlighting); return highlighting; };
+  const afterDrag = () => {
+    if (!highlighting) return;
+    const sel = window.getSelection && window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount || !editor.contains(sel.anchorNode) || !editor.contains(sel.focusNode)) return;
+    bold(); sel.removeAllRanges();
+  };
+  editor.addEventListener("mouseup", () => setTimeout(afterDrag, 0));
+  editor.addEventListener("touchend", () => setTimeout(afterDrag, 0));
   editor.addEventListener("input", e => { if (!composing && !e.isComposing) sync(); });
   editor.addEventListener("compositionstart", () => { composing = true; });
   editor.addEventListener("compositionend", () => { composing = false; sync(); });
-  editor.addEventListener("keydown", e => {
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "b"){ e.preventDefault(); bold(); }
-  });
   const insertPlain = e => {
     e.preventDefault(); const transfer = e.clipboardData || e.dataTransfer;
     if (transfer){ document.execCommand("insertText", false, transfer.getData("text/plain")); sync(); }
   };
   editor.addEventListener("paste", insertPlain); editor.addEventListener("drop", insertPlain);
-  set(backing.value || ""); return { set, bold };
+  set(backing.value || ""); return { set, bold, setHighlight, isHighlighting: () => highlighting };
 }
 const CLASS_GUIDE_BUTTON_ICONS = {
   reset:'<path d="M4 9a8 8 0 1 1 1 9M4 3v6h6"/>',
@@ -28822,6 +28938,7 @@ const CLASS_GUIDE_BUTTON_ICONS = {
   cancelNote:'<path d="M9 7L4 12l5 5M4 12h10a6 6 0 0 0 0-12"/>',
   returnAuthor:'<path d="M8 4L3 9l5 5M3 9h8M13 18l7-7 3 3-7 7-4 1z"/>',
   copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
   download:'<path d="M12 3v12m-5-5l5 5 5-5M4 16v5h16v-5"/>',
   applyImport:'<path d="M3 4h11v6M3 4v16h18V10M9 13l4 4 8-10"/>',
   closeTransfer:'<circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/>'
@@ -28833,9 +28950,12 @@ function classGuideStatsEditorHtml(){
     '<label class="cg-stat-in" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><input type="number" min="0" max="512" step="1" inputmode="numeric" data-cg-stat="' + s.key + '" aria-label="' + s.label + ' แนะนำ" placeholder="—"></label>').join("") + '</div></fieldset>';
 }
 // Reader panel: only the filled stats, the stat name and a big number in the stat's signature colour (no caption, user 2026-10-15).
+// The number is an input (user 2026-10-16): a reader may try other values; the hover timings follow, nothing is saved, and a reset button brings the author's values back.
 function classGuideStatsHtml(stats){
-  return CLASS_GUIDE_STATS.filter(s => stats && s.key in stats).map(s =>
-    '<div class="cg-stat-tile" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><output>' + stats[s.key] + '</output></div>').join("");
+  const shown = CLASS_GUIDE_STATS.filter(s => stats && s.key in stats);
+  if (!shown.length) return "";
+  return shown.map(s =>
+    '<label class="cg-stat-tile" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + stats[s.key] + '" aria-label="' + s.label + ' (ลองปรับเพื่อดูผลตอนชี้สกิล)"></label>').join("") + '<button type="button" class="cg-stat-reset" data-cg-act="resetStats" hidden>คืนค่าที่ผู้เขียนแนะนำ</button>';
 }
 // What the hover needs from the opened guide: its server, how many ranks of each skill the build learned, and whether Revised Art is among them.
 function classGuideReaderCtx(guide){
@@ -28852,19 +28972,299 @@ function classGuideHoverLines(guide, ctx, cell, learned){
   if (!guide || !guide.stats || !ctx || !learned) return null;
   return classGuideTimings(skillSimCardId(cell.icon), cell.id < 400 ? cell.id % 10 : 1, guide.stats, ctx);
 }
+// ---- Guide image export (user 2026-10-15) ----
+// A 16:9 landscape picture of a guide at 3840x2160 (4K), drawn on a canvas from the guide data, so phone and desktop give the same image (user 2026-10-16 revamp).
+// Left: icons + Lv, title, author and date, recommended stats, description. Right: the four trees side by side, then every author note expanded as chips under them.
+const CLASS_GUIDE_IMAGE = { w: 1920, h: 1080, scale: 2, margin: 44, leftW: 430, gutter: 36, treeGap: 18, pad: 14, head: 44 };   // drawn at 1920x1080 units, saved at 3840x2160 (4K)
+// The tree grid as plain data (mirrors buildTrees in mountSkillSimulator).
+function classGuideImageModel(classKey, server){
+  const trees = SKILL_SIM[classKey], cells = skillSimCells(trees, SKILL_SIM_SERVERS[server].patch[classKey], server === "tot" ? SKILL_SIM_EX[classKey] : null);
+  return trees.map((t, ti) => {
+    const rows = t.rows.slice();
+    if (ti === 3 && server === "tot"){
+      rows.push([451, 452, 453, 454].map(id => { const c = cells[id]; return [c.icon, c.name, c.lv, c.bn, c.req]; }));
+      const c = cells[461]; rows.push([[c.icon, c.name, c.lv, c.bn, c.req], 0, 0, 0]);
+    }
+    const out = [];
+    rows.forEach((row, r) => {
+      if (ti === 3 && r === t.rows.length) out.push({ heading: "ToT EX" });
+      out.push({ slots: row.map((c, k) => {
+        if (!c) return null;
+        const id = t.base + r * 10 + k + 1, cell = cells[id];
+        return { id, link: !!(row[k + 1] && !cell.ex), passive: cell.ex ? cell.type === "Passive" : SKILL_SIM_PASSIVE[classKey].includes(id), placeholder: !!cell.placeholder, icon: c[0], name: c[1] };
+      }) });
+    });
+    return { name: t.name, rows: out };
+  });
+}
+// Tree boxes: side by side in the middle block, all the same height, shrunk together when a class is too tall.
+function classGuideImagePlan(model, area){
+  const P = CLASS_GUIDE_IMAGE, n = model.length;
+  const treeW = (area.w - (n - 1) * P.treeGap) / n, slotW = (treeW - P.pad * 2) / 4;
+  const units = t => t.rows.reduce((sum, row) => sum + (row.heading ? 28 : slotW + 6), 0), tallest = Math.max(...model.map(units));
+  const k = Math.min(1, (area.h - P.pad * 2 - P.head) / tallest), h = tallest * k + P.pad * 2 + P.head;
+  const trees = model.map((t, i) => {
+    const x = area.x + i * (treeW + P.treeGap), cellsOut = [], links = [], headings = [];
+    const inner = treeW - P.pad * 2, sw = slotW * k, offset = (inner - sw * 4) / 2;
+    let y = area.y + P.pad + P.head;
+    t.rows.forEach(row => {
+      if (row.heading){ headings.push({ text: row.heading, x: x + P.pad, y: y + 20 * k }); y += 28 * k; return; }
+      row.slots.forEach((s, c) => {
+        if (!s) return;
+        const size = sw * 0.86, cellX = x + P.pad + offset + c * sw + (sw - size) / 2, cellY = y + (sw - size) / 2;
+        cellsOut.push({ ...s, x: cellX, y: cellY, size });
+        if (s.link) links.push({ x1: cellX + size / 2, x2: cellX + size / 2 + sw, y: y + sw / 2 });
+      });
+      y += sw + 6 * k;
+    });
+    return { name: t.name, x, y: area.y, w: treeW, h, cells: cellsOut, links, headings };
+  });
+  return { trees, bottom: area.y + h, slot: slotW * k };
+}
+// Description markup: **text** is bold gold.
+function classGuideImageRuns(text){
+  const runs = []; let last = 0, m;
+  const re = /\*\*([\s\S]+?)\*\*/g;
+  while ((m = re.exec(text))){ if (m.index > last) runs.push({ text: text.slice(last, m.index), gold: false }); runs.push({ text: m[1], gold: true }); last = m.index + m[0].length; }
+  if (last < text.length) runs.push({ text: text.slice(last), gold: false });
+  return runs;
+}
+// Greedy wrap for Thai and Latin: word boundaries (Intl.Segmenter when available), characters when one word is wider than a line; newlines kept.
+function classGuideImageWrap(runs, maxWidth, measure, segmenter){
+  const lines = [[]]; let x = 0;
+  const put = (text, gold) => { const line = lines[lines.length - 1], last = line[line.length - 1]; if (last && last.gold === gold) last.text += text; else line.push({ text, gold }); };
+  const newLine = () => { lines.push([]); x = 0; };
+  for (const run of runs) for (const part of run.text.split(/(\n)/)){
+    if (part === "\n"){ newLine(); continue; }
+    const tokens = run.keep ? [part] : segmenter ? Array.from(segmenter.segment(part), s => s.segment) : part.split(/(\s+)/).filter(Boolean);
+    for (const tok of tokens){
+      const w = measure(tok, run.gold);
+      if (x > 0 && x + w > maxWidth && tok.trim()) newLine();
+      if (x === 0 && !tok.trim() && lines[lines.length - 1].length === 0 && lines.length > 1) continue;
+      if (w > maxWidth){ for (const ch of tok){ const cw = measure(ch, run.gold); if (x > 0 && x + cw > maxWidth) newLine(); put(ch, run.gold); x += cw; } }
+      else { put(tok, run.gold); x += w; }
+    }
+  }
+  return lines;
+}
+// Keep the first maxLines lines; the last kept line ends with an ellipsis that still fits.
+function classGuideImageClip(lines, maxLines, maxWidth, measure){
+  if (lines.length <= maxLines) return lines;
+  if (maxLines <= 0) return [];
+  const out = lines.slice(0, maxLines), last = out[maxLines - 1].map(s => ({ ...s }));
+  const width = () => last.reduce((sum, s) => sum + measure(s.text, s.gold), 0) + measure("…", false);
+  while (last.length && width() > maxWidth){ const s = last[last.length - 1]; s.text = s.text.slice(0, -1); if (!s.text) last.pop(); }
+  last.push({ text: "…", gold: false }); out[maxLines - 1] = last;
+  return out;
+}
+function classGuideImageName(guide){
+  const slug = String(guide.title || "guide").trim().replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, "-").slice(0, 50) || "guide";
+  return "12tails-" + guide.build.classKey + "-" + guide.build.server + "-" + slug + ".png";
+}
+function classGuideImageLoad(src){
+  return new Promise(resolve => { if (!src) return resolve(null); const img = new Image(); img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = src; });
+}
+// A skipped skill looks the way it does in the build: grayscale, half brightness.
+function classGuideImageGray(img){
+  const c = document.createElement("canvas"); c.width = img.naturalWidth || 64; c.height = img.naturalHeight || 64;
+  const g = c.getContext("2d"); g.drawImage(img, 0, 0, c.width, c.height);
+  const d = g.getImageData(0, 0, c.width, c.height), px = d.data;
+  for (let i = 0; i < px.length; i += 4){ const v = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) * 0.5; px[i] = px[i + 1] = px[i + 2] = v; }
+  g.putImageData(d, 0, 0); return c;
+}
+// Draw the guide on a canvas (returned). simRoot supplies the two frame pictures (CSS values on the cells).
+async function classGuideRenderImage(guide, simRoot){
+  const P = CLASS_GUIDE_IMAGE, b = guide.build, css = getComputedStyle(document.documentElement), v = name => css.getPropertyValue(name).trim();
+  const FONT = "Prompt, 'Noto Sans Thai', Sarabun, sans-serif";
+  if (document.fonts && document.fonts.load) await Promise.all(["400", "600", "700"].map(w => document.fonts.load(w + " 24px Prompt", "กขคabc123").catch(() => null)));
+  const model = classGuideImageModel(b.classKey, b.server);
+  const cellById = {}; model.forEach(t => t.rows.forEach(r => (r.slots || []).forEach(s => { if (s) cellById[s.id] = s; })));
+  const noteIds = Object.keys(guide.notes || {}).map(Number).filter(id => cellById[id]).sort((a, z) => a - z);
+  const areaX = P.margin + P.leftW + P.gutter, areaW = P.w - P.margin - areaX;
+  let plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: P.h - P.margin * 2 });
+  if (noteIds.length && plan.bottom > P.margin + (P.h - P.margin * 2) * 0.64) plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: (P.h - P.margin * 2) * 0.64 });
+  if (!noteIds.length){ const used = plan.bottom - P.margin; plan = classGuideImagePlan(model, { x: areaX, y: P.margin + (P.h - P.margin * 2 - used) / 2, w: areaW, h: used }); }
+  const frameOf = passive => { const cell = simRoot.querySelector(passive ? ".rsim-cell.is-passive" : ".rsim-cell:not(.is-passive)") || simRoot.querySelector(".rsim-cell"); const m = cell && /url\(["']?([^"')]+)["']?\)/.exec(getComputedStyle(cell).getPropertyValue("--rsim-frame")); return m ? m[1] : ""; };
+  const need = new Set(); Object.values(cellById).forEach(c => { if (!c.placeholder) need.add(c.icon); });
+  const [frameN, frameP, portrait, serverIcon] = await Promise.all([classGuideImageLoad(frameOf(false)), classGuideImageLoad(frameOf(true)), classGuideImageLoad(CLASS_MINIMAL_ICONS[SKILL_SIM_NAMES[b.classKey]]), classGuideImageLoad(SKILL_ICONS["server_" + b.server])]);
+  const icons = {}; await Promise.all([...need].map(async key => { icons[key] = await classGuideImageLoad(SKILL_ICONS[key]); }));
+  const grays = {};
+  const canvas = document.createElement("canvas"); canvas.width = P.w * P.scale; canvas.height = P.h * P.scale;
+  const ctx = canvas.getContext("2d"); ctx.scale(P.scale, P.scale); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  const gold = v("--gold") || "#c9a227", text = v("--text") || "#ece4d6", muted = v("--muted") || "#b0a189", line = v("--line") || "#4a3a26", ink = v("--ink") || "#150f0c", panel = v("--panel") || "#1f1712", panel2 = v("--panel-2") || "#271c15";
+  const alpha = (hex, a) => { const m = /^#([0-9a-f]{6})$/i.exec(hex); if (!m) return hex; const n = parseInt(m[1], 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
+  const font = (weight, size) => weight + " " + size + "px " + FONT;
+  const spaced = px => { if ("letterSpacing" in ctx) ctx.letterSpacing = px + "px"; };
+  const segmenter = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter("th", { granularity: "word" }) : null;
+  const measureWith = fontFn => (s, g) => { ctx.font = fontFn(g); return ctx.measureText(s).width; };
+  const drawLines = (lines, x0, yStart, lh, fontFn, colors) => {
+    lines.forEach((ln, i) => { let x = x0; for (const s of ln){ ctx.font = fontFn(s.gold); ctx.fillStyle = s.gold ? colors.gold : colors.text; ctx.fillText(s.text, x, yStart + i * lh); x += ctx.measureText(s.text).width; } });
+  };
+  const box = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  // backdrop of the current look (user 2026-10-16: the image follows the app theme): BB ledger gradient, TTO night sky with stars, ToT veiled wallpaper
+  const look = document.documentElement.getAttribute("data-sk-server") || "og";
+  const urlOf = name => { const m = /url\(["']?([^"')]+)["']?\)/.exec(v(name)); return m ? m[1] : ""; };
+  if (look === "tto"){
+    const sky = ctx.createLinearGradient(0, 0, 0, P.h); sky.addColorStop(0, "#0b0c17"); sky.addColorStop(0.45, "#100e18"); sky.addColorStop(1, "#171009");
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, P.w, P.h);
+    const warm = ctx.createRadialGradient(P.w / 2, P.h * 1.12, 0, P.w / 2, P.h * 1.12, P.w * 0.6); warm.addColorStop(0, "rgba(240,130,40,.2)"); warm.addColorStop(1, "rgba(240,130,40,0)");
+    ctx.fillStyle = warm; ctx.fillRect(0, 0, P.w, P.h);
+    const stars = await classGuideImageLoad(urlOf("--tto-stars"));
+    if (stars){
+      const layer = document.createElement("canvas"); layer.width = P.w; layer.height = P.h; const lg = layer.getContext("2d");
+      for (let yy = 0; yy < P.h; yy += 512) for (let xx = 0; xx < P.w; xx += 512) lg.drawImage(stars, xx, yy, 512, 512);
+      lg.globalCompositeOperation = "destination-in"; const fade = lg.createLinearGradient(0, 0, 0, P.h * 0.8); fade.addColorStop(0.25, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)"); lg.fillStyle = fade; lg.fillRect(0, 0, P.w, P.h);
+      ctx.drawImage(layer, 0, 0, P.w, P.h);
+    }
+  } else if (look === "tot"){
+    ctx.fillStyle = "#050505"; ctx.fillRect(0, 0, P.w, P.h);
+    const wall = await classGuideImageLoad(urlOf("--tot-wallpaper"));
+    if (wall){ const sc = Math.max(P.w / wall.naturalWidth, P.h / wall.naturalHeight), ww = wall.naturalWidth * sc, wh = wall.naturalHeight * sc; ctx.drawImage(wall, (P.w - ww) / 2, (P.h - wh) / 2, ww, wh); }
+    ctx.fillStyle = v("--th-veil") || "rgba(0,0,0,.78)"; ctx.fillRect(0, 0, P.w, P.h);
+  } else {
+    const bg = ctx.createLinearGradient(0, 0, P.w, P.h); bg.addColorStop(0, ink); bg.addColorStop(1, panel);
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, P.w, P.h);
+    const glow = ctx.createRadialGradient(P.margin + 180, 110, 0, P.margin + 180, 110, 640); glow.addColorStop(0, alpha(gold, 0.13)); glow.addColorStop(1, alpha(gold, 0));
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, P.w, P.h);
+  }
+  // a container in the look's surface recipe (the same tokens THEME_SURFACES uses on the page): TTO solid panel + diagonal harlequin bands, ToT see-through glass, BB plain panel
+  const edge = v("--th-edge") || line;
+  const surface = (x, y, w, h, r, raised) => {
+    box(x, y, w, h, r);
+    if (look === "tot"){ ctx.fillStyle = v("--th-wash") || "rgba(255,255,255,.04)"; ctx.fill(); }
+    else { ctx.fillStyle = raised ? panel2 : panel; ctx.fill(); }
+    if (look === "tto"){
+      ctx.save(); box(x, y, w, h, r); ctx.clip(); ctx.fillStyle = "rgba(208,145,62,.035)";
+      const band = 14 * Math.SQRT2, step = 28 * Math.SQRT2;
+      for (const dir of [1, -1]) for (let t = -h - step; t < w + h + step; t += step){
+        ctx.beginPath();
+        if (dir > 0){ ctx.moveTo(x + t, y + h); ctx.lineTo(x + t + band, y + h); ctx.lineTo(x + t + band + h, y); ctx.lineTo(x + t + h, y); }
+        else { ctx.moveTo(x + t, y); ctx.lineTo(x + t + band, y); ctx.lineTo(x + t + band + h, y + h); ctx.lineTo(x + t + h, y + h); }
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+    box(x, y, w, h, r); ctx.strokeStyle = edge; ctx.lineWidth = 1.5; ctx.stroke();
+  };
+  // ---- info column ----
+  const lx = P.margin, lw = P.leftW;
+  ctx.fillStyle = alpha(gold, 0.05); ctx.fillRect(lx - 14, P.margin - 10, lw + 20, P.h - P.margin * 2 + 20);
+  ctx.fillStyle = gold; ctx.fillRect(lx - 14, P.margin - 10, 4, P.h - P.margin * 2 + 20);
+  let y = P.margin + 4;
+  // title: a row of the class icon, the server icon and Lv.N, then the name over the full column width
+  let tx = lx;
+  if (portrait){ ctx.drawImage(portrait, tx, y, 52, 52); tx += 60; }
+  if (serverIcon){ ctx.drawImage(serverIcon, tx, y + 7, 38, 38); tx += 48; }
+  ctx.font = font(600, 24); ctx.fillStyle = muted; ctx.fillText("Lv." + b.level, tx, y + 35);
+  y += 62;
+  const titleFont = () => font(700, 46);
+  const titleLines = classGuideImageClip(classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(() => titleFont()), segmenter), 2, lw, measureWith(() => titleFont()));
+  drawLines(titleLines, lx, y + 44, 58, () => titleFont(), { text, gold: text });
+  y += titleLines.length * 58 + 6;
+  // author (gold) · patch
+  ctx.font = font(600, 22); ctx.fillStyle = gold; const author = guide.author || "ยังไม่ระบุผู้เขียน"; ctx.fillText(author, lx, y + 22);
+  const aw = ctx.measureText(author).width; ctx.font = font(400, 22); ctx.fillStyle = muted; ctx.fillText(" · " + classGuideDateText(guide.date), lx + aw, y + 22);
+  y += 48;
+  // stats
+  const filled = CLASS_GUIDE_STATS.filter(s => guide.stats && s.key in guide.stats);
+  if (filled.length){
+    const tw = (lw - 12) / 2, th = 78;
+    filled.forEach((s, i) => {
+      const x = lx + (i % 2) * (tw + 12), yy = y + Math.floor(i / 2) * (th + 10), col = v("--stat-" + s.key) || gold;
+      ctx.fillStyle = alpha(col, 0.13); ctx.fillRect(x, yy, tw, th); ctx.fillStyle = col; ctx.fillRect(x, yy, 5, th);
+      ctx.font = font(600, 18); spaced(4); ctx.fillText(s.label, x + 18, yy + 26); spaced(0);
+      ctx.font = font(700, 44); ctx.fillText(String(guide.stats[s.key]), x + 18, yy + 68);
+    });
+    y += Math.ceil(filled.length / 2) * (th + 10) + 12;
+  }
+  // description: the rest of the column
+  const descFont = g => font(g ? 700 : 400, 23), lh = 36, footerY = P.h - P.margin;
+  const maxLines = Math.max(0, Math.floor((footerY - y) / lh));
+  if (guide.description && maxLines > 0){
+    const dl = classGuideImageClip(classGuideImageWrap(classGuideImageRuns(guide.description), lw, measureWith(descFont), segmenter), maxLines, lw, measureWith(descFont));
+    drawLines(dl, lx, y + 26, lh, descFont, { text, gold });
+  }
+  // ---- trees ----
+  const learned = new Set(b.learned), noted = new Set(noteIds);
+  for (const t of plan.trees){
+    surface(t.x, t.y, t.w, t.h, 6, true);
+    ctx.fillStyle = gold; ctx.font = font(700, 22); ctx.fillText(t.name, t.x + P.pad, t.y + P.pad + 24);
+    for (const h of t.headings){ ctx.font = font(600, 14); ctx.fillStyle = muted; spaced(3); ctx.fillText(h.text, h.x, h.y); spaced(0); }
+    ctx.strokeStyle = "#b8651e"; ctx.lineWidth = 3;
+    for (const l of t.links){ ctx.beginPath(); ctx.moveTo(l.x1, l.y); ctx.lineTo(l.x2, l.y); ctx.stroke(); }
+    for (const c of t.cells){
+      const frame = c.passive ? frameP : frameN;
+      if (frame) ctx.drawImage(frame, c.x, c.y, c.size, c.size);
+      if (c.placeholder){ ctx.fillStyle = muted; ctx.font = font(700, c.size * 0.5); ctx.textAlign = "center"; ctx.fillText("?", c.x + c.size / 2, c.y + c.size * 0.68); ctx.textAlign = "left"; }
+      else {
+        const img = icons[c.icon];
+        if (img){
+          if (learned.has(c.id)){ ctx.save(); ctx.shadowColor = "rgba(201,162,39,.75)"; ctx.shadowBlur = c.size * 0.14; ctx.drawImage(img, c.x, c.y, c.size, c.size); ctx.restore(); }
+          else { const g = grays[c.icon] || (grays[c.icon] = classGuideImageGray(img)); ctx.drawImage(g, c.x, c.y, c.size, c.size); }
+        }
+      }
+      if (noted.has(c.id)){
+        const r = c.size * 0.26, sx = c.x + c.size - 2, sy = c.y + 4;
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fillStyle = "#17120a"; ctx.fill(); ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = "#ffd666"; ctx.font = font(700, r * 1.3); ctx.textAlign = "center"; ctx.fillText("★", sx, sy + r * 0.45); ctx.textAlign = "left";
+      }
+    }
+  }
+  // ---- notes: every note expanded, two columns of chips under the trees ----
+  if (noteIds.length){
+    const top = plan.bottom + 26, bottom = P.h - P.margin, colGap = 18, colW = (areaW - colGap) / 2, iconS = 46;
+    ctx.fillStyle = gold; ctx.font = font(600, 18); spaced(4); ctx.fillText("★ โน้ตจากผู้เขียน", areaX, top + 4); spaced(0);
+    const nameFont = () => font(600, 20), noteFont = g => font(g ? 700 : 400, 18), nlh = 27, textW = colW - 14 - iconS - 12 - 14;
+    const colY = [top + 18, top + 18]; let shown = 0;
+    for (const id of noteIds){
+      const col = colY[0] <= colY[1] ? 0 : 1, nx = areaX + col * (colW + colGap), ny = colY[col];
+      const all = classGuideImageWrap(classGuideImageRuns(guide.notes[id]), textW, measureWith(noteFont), segmenter);
+      const fit = Math.floor((bottom - ny - 12 - 30 - 10) / nlh);
+      if (fit < 1) break;
+      const lines = classGuideImageClip(all, Math.min(all.length, fit), textW, measureWith(noteFont)), c = cellById[id];
+      const h = Math.max(iconS + 20, 12 + 28 + lines.length * nlh + 10);
+      surface(nx, ny, colW, h, 4, false);
+      ctx.fillStyle = gold; ctx.fillRect(nx, ny, 3, h);
+      const img = icons[c.icon]; if (img) ctx.drawImage(img, nx + 14, ny + 10, iconS, iconS);
+      const textX = nx + 14 + iconS + 12;
+      ctx.font = nameFont(); ctx.fillStyle = gold; ctx.fillText(c.name, textX, ny + 32);
+      drawLines(lines, textX, ny + 32 + nlh, nlh, noteFont, { text, gold });
+      colY[col] = ny + h + 12; shown++;
+    }
+    if (shown < noteIds.length){ ctx.font = font(400, 17); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", P.w - P.margin, bottom); ctx.textAlign = "left"; }
+  }
+  return canvas;
+}
+// Save it: touch devices with a share sheet share the image file, everything else downloads the PNG.
+async function classGuideSaveImage(guide, simRoot){
+  const canvas = await classGuideRenderImage(guide, simRoot);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error("สร้างรูปไม่สำเร็จ กรุณาลองอีกครั้ง");
+  const name = classGuideImageName(guide);
+  if (typeof File !== "undefined" && navigator.canShare && window.matchMedia && matchMedia("(pointer: coarse)").matches){
+    const file = new File([blob], name, { type: "image/png" });
+    if (navigator.canShare({ files: [file] })){
+      try { await navigator.share({ files: [file], title: guide.title || "12 Tails Bible" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
-    <div class="cg-heading"><div><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyLink" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกลิงก์ไกด์นี้</span></button></nav></div>
+    <div class="cg-heading"><div><h2>ไกด์แต่ละอาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์แต่ละอาชีพ"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gallery">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="author">${classGuideButtonIcon("author")}<span>สร้างไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyCode" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <section class="cg-author" data-cg-role="author" hidden>
-      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>แพตช์ / เวอร์ชันเกม<input data-cg-field="patch" maxlength="120" placeholder="ระบุแพตช์ที่ใช้กับบิลด์นี้"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</span></label></div>
+      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<input type="date" data-cg-field="date" required min="2000-01-01"></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" aria-pressed="false" title="เปิดโหมดไฮไลต์ แล้วลากเมาส์ (หรือนิ้ว) คลุมข้อความที่ต้องการ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ไฮไลต์</button><span>ลากคลุมข้อความเพื่อทำตัวหนาสีทอง</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span><span class="cg-help">กดปุ่มไฮไลต์ แล้วลากคลุมข้อความเพื่อทำตัวหนาสีทอง (ลากซ้ำบนตัวหนาเพื่อยกเลิก)</span></label></div>
       ${classGuideStatsEditorHtml()}
       <div class="cg-toolbar"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button></div><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="undoNote" title="ย้อนโน้ต (Ctrl+Z)" disabled>${classGuideButtonIcon("undo")}<span>ย้อนโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="export">${classGuideButtonIcon("export")}<span>ส่งออกไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="import">${classGuideButtonIcon("import")}<span>นำเข้าโค้ด</span></button></div></div>
       <p class="cg-help" data-cg-role="editHelp">คลิกเพื่อเรียนหรือถอนสกิล บันทึกร่างอัตโนมัติในเบราว์เซอร์นี้</p>
-      <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="noteText" title="ตัวหนาสีทอง (Ctrl+B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ตัวหนาสีทอง</button><span>Ctrl+B</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง"></span></span></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · เลือกข้อความแล้วกด Ctrl+B เพื่อเน้นตัวหนาสีทอง</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button></section>
+      <section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="noteText" aria-pressed="false" title="เปิดโหมดไฮไลต์ แล้วลากเมาส์ (หรือนิ้ว) คลุมข้อความที่ต้องการ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ไฮไลต์</button><span>ลากคลุมข้อความเพื่อทำตัวหนาสีทอง</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง"></span></span></label><p class="cg-help">เว้นว่างเพื่อลบดาว เพิ่มโน้ตให้สกิลที่ไม่ได้เลือกได้ด้วย · กดปุ่มไฮไลต์ แล้วลากคลุมข้อความเพื่อทำตัวหนาสีทอง</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button></section>
     </section>
-    <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
+    <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
     <section data-cg-role="sim" hidden></section>
     <dialog class="cg-transfer cg-import-dialog" data-cg-role="transfer" aria-labelledby="cgImportTitle"><button type="button" class="cg-note-close" data-cg-act="closeTransfer" aria-label="ปิด">×</button><h3 id="cgImportTitle">นำเข้าไกด์</h3><textarea class="cg-code" data-cg-role="code" rows="3" maxlength="131072" spellcheck="false" aria-label="วางโค้ดไกด์" placeholder="วางโค้ดไกด์ที่นี่"></textarea><p class="cg-help">วางโค้ดแล้วกด Enter</p><p class="cg-import-error" data-cg-role="importError" role="alert"></p></dialog>
   </div>`;
@@ -28900,8 +29300,8 @@ function mountClassGuide(root){
     }
     return out;
   };
-  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, patch: field("patch").value, description: field("description").value, build: sim.getBuild(), stats: collectStats(), notes: { ...(draft ? draft.notes : {}) } });
-  let readerCtx = null;
+  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, date: field("date").value, description: field("description").value, build: sim.getBuild(), stats: collectStats(), notes: { ...(draft ? draft.notes : {}) } });
+  let readerCtx = null, viewStats = null;   // viewStats: the reader's own try-out values (start as the author's)
   const saveDraft = () => {
     if (mode !== "author") return;
     draft = collect();
@@ -28916,7 +29316,7 @@ function mountClassGuide(root){
       for (const id in draft.notes) if (!cells[id] || cells[id].placeholder) delete draft.notes[id];
       simRoot._skillSim.setNotes(draft.notes); saveDraft();
     },
-    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current, readerCtx, cell, learned) : null; },
+    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current && viewStats ? { ...current, stats: viewStats } : current, readerCtx, cell, learned) : null; },
     onNote(info){
       if (mode === "author"){
         noteId = info.id; el("noteSkill").textContent = info.cell.name; editors.noteText.set(draft.notes[info.id] || "");
@@ -28929,8 +29329,10 @@ function mountClassGuide(root){
   let readerFitFrame = null;
   function fitReader(){
     if (mode !== "reader" || root.hidden) return;
+    if (typeof placeNoteChips === "function") placeNoteChips();
     const width = simRoot.clientWidth, build = simRoot.querySelector(".rsim");
     if (!width || !build) return;
+    if (window.innerWidth <= 760){ simRoot.style.height = ""; el("reader").style.height = ""; build.style.width = ""; simRoot.style.removeProperty("--cg-reader-scale"); return; }   // phones: plain scrolling page, see the phone reader CSS
     const baseWidth = Math.max(640, width); build.style.width = baseWidth + "px";
     const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const mobile = window.innerWidth <= 760, gap = mobile ? 10 : 12;
@@ -28962,20 +29364,22 @@ function mountClassGuide(root){
       guidePage.insertBefore(guideHeading, guidePage.firstChild); guidePage.insertBefore(el("reader"), simRoot); guidePage.insertBefore(simRoot, el("transfer"));
     }
     if (next !== "reader") currentId = null;
-    button("copyLink").hidden = next !== "reader" || !currentId;
+    button("copyCode").hidden = next !== "reader" || !currentId;
+    button("exportImage").hidden = next === "gallery";
     if (next !== "reader" && location.hash.indexOf("#skill-simulator/") === 0) history.replaceState(null, "", "#skill-simulator");   // leaving the reader: the address goes back to the tool
     mode = next; el("gallery").hidden = next !== "gallery"; el("author").hidden = next !== "author";
     el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close();
     el("noteEditor").hidden = true; status("");
     button("gallery").setAttribute("aria-pressed", String(next === "gallery")); button("author").setAttribute("aria-pressed", String(next === "author"));
+    if (typeof placeNoteChips === "function") placeNoteChips();   // leaving the reader puts the chips back into its (hidden) panel
   };
   function startAuthor(){
     switchMode("author"); noteUndo.length = 0; syncNoteUndo();
     if (!draft){
       try { draft = classGuideNormalize(JSON.parse(localStorage.getItem(storageKey)), { draft: true }); } catch (e) { draft = null; }
-      if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", patch: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
+      if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
     }
-    for (const name of ["title", "author", "patch"]) field(name).value = draft[name];
+    for (const name of ["title", "author", "date"]) field(name).value = draft[name] || "";
     for (const s of CLASS_GUIDE_STATS) statInput(s.key).value = draft.stats && s.key in draft.stats ? draft.stats[s.key] : "";
     editors.description.set(draft.description);
     applying = true;
@@ -28988,15 +29392,25 @@ function mountClassGuide(root){
     el("editHelp").textContent = next === "annotate" ? "คลิกสกิลเพื่อเพิ่มหรือแก้โน้ต ดาวจะปรากฏบนสกิลนั้น" : "คลิกเพื่อเรียนหรือถอนสกิล บันทึกร่างอัตโนมัติในเบราว์เซอร์นี้";
   }
   function openGuide(guide, preview = false, id = null){
-    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; switchMode("reader");
-    if (currentId){ history.replaceState(null, "", "#skill-simulator/" + currentId); button("copyLink").hidden = false; }   // the address bar now is the link to copy
+    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; switchMode("reader"); clearNoteChips(); placeNoteChips();
+    if (currentId){ history.replaceState(null, "", "#skill-simulator/" + currentId); button("copyCode").hidden = false; }   // the address bar now is the link to share; the button copies the guide code
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes);
     setToolServer("skill-simulator", current.build.server);
     el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "COMMUNITY GUIDE";
-    el("guideTitle").textContent = current.title || "ตัวอย่างไกด์";
-    el("guideByline").textContent = [current.author || "ยังไม่ระบุผู้เขียน", SKILL_SIM_NAMES[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].name, "แพตช์ " + (current.patch || "ยังไม่ระบุ"), "Lv " + current.build.level].join(" · ");
+    // Title (user 2026-10-15): a row of the class icon, the server icon and "Lv.95" above the guide name (the name gets the full width); the byline is the author in gold and the patch.
+    el("guideTitle").textContent = "";
+    const titleMeta = document.createElement("span"); titleMeta.className = "cg-title-meta";
+    for (const [src, alt, cls] of [[CLASS_MINIMAL_ICONS[SKILL_SIM_NAMES[current.build.classKey]], SKILL_SIM_NAMES[current.build.classKey], "cg-title-class"], [SKILL_ICONS["server_" + current.build.server], SKILL_SIM_SERVERS[current.build.server].name, "cg-title-server"]]){
+      if (!src) continue; const img = document.createElement("img"); img.src = src; img.alt = alt; img.title = alt; img.className = "cg-title-icon " + cls; titleMeta.appendChild(img);
+    }
+    const titleLv = document.createElement("span"); titleLv.className = "cg-title-lv"; titleLv.textContent = "Lv." + current.build.level; titleMeta.appendChild(titleLv);
+    const titleText = document.createElement("span"); titleText.className = "cg-title-text"; titleText.textContent = current.title || "ตัวอย่างไกด์";
+    el("guideTitle").append(titleMeta, titleText);
+    el("guideByline").textContent = "";
+    const authorEl = document.createElement("span"); authorEl.className = "cg-byline-author"; authorEl.textContent = current.author || "ยังไม่ระบุผู้เขียน";
+    el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;
-    el("guideStats").innerHTML = classGuideStatsHtml(current.stats); el("guideStats").hidden = !current.stats; readerCtx = classGuideReaderCtx(current);
+    el("guideStats").innerHTML = classGuideStatsHtml(current.stats); el("guideStats").hidden = !current.stats; readerCtx = classGuideReaderCtx(current); viewStats = current.stats ? { ...current.stats } : null;
     window.scrollTo(0, 0); queueReaderFit();
   }
   for (const [role, choices] of [["serverFilter", Object.entries(SKILL_SIM_SERVERS).map(([key, value]) => [key, value.name])], ["classFilter", Object.entries(SKILL_SIM_NAMES)]]){
@@ -29015,7 +29429,7 @@ function mountClassGuide(root){
       const b = document.createElement("button"); b.type = "button"; b.className = "cg-guide";
       const portrait = document.createElement("img"); portrait.src = CLASS_MINIMAL_ICONS[SKILL_SIM_NAMES[guide.build.classKey]] || ""; portrait.alt = "";
       const title = document.createElement("strong"); title.textContent = guide.title;
-      const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author, "แพตช์ " + guide.patch].join(" · ");
+      const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author, classGuideDateText(guide.date)].join(" · ");
       b.append(portrait, title, byline); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); list.appendChild(b); validCount++;
     }
     if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์หรืออาชีพอื่น" : "ยังไม่มีไกด์จากชุมชน สร้างไกด์แล้วส่งออกโค้ดให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
@@ -29025,9 +29439,9 @@ function mountClassGuide(root){
     el("code").value = ""; el("importError").textContent = "";
     el("transfer").showModal(); el("code").focus();
   }
-  function confirmImport(){
+  async function confirmImport(){
     try {
-      const imported = classGuideImport(el("code").value);
+      const imported = classGuideImport(await classGuideUnpack(el("code").value));
       draft = imported; el("transfer").close(); startAuthor(); status("นำเข้าไกด์แล้ว");
     } catch (e){ el("importError").textContent = e.message; }
   }
@@ -29035,45 +29449,67 @@ function mountClassGuide(root){
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); if (mode === "author") confirmImport(); }
   });
   el("transfer").addEventListener("close", () => { if (mode === "author") button("import").focus(); });
-  // Reuse the skill-details note melt, arcing comet and text reveal. Reopens are immediate.
-  const noteModal = document.createElement("div"); noteModal.className = "cg-note-backdrop"; noteModal.hidden = true;
-  noteModal.innerHTML = '<section class="cg-note-card" role="dialog" aria-modal="true" aria-labelledby="cgNoteTitle" tabindex="-1"><button type="button" class="cg-note-close" aria-label="ปิดโน้ต">×</button><p class="cg-kicker">★ AUTHOR’S NOTE</p><h3 id="cgNoteTitle"></h3><p class="cg-note-body"></p></section>';
-  document.body.appendChild(noteModal);
-  const noteClose = noteModal.querySelector(".cg-note-close"), noteBody = noteModal.querySelector(".cg-note-body");
-  let noteOrigin = null, stopNoteAnimation = () => {};
-  const closeNote = () => { stopNoteAnimation(); noteBody.classList.remove("is-waiting"); noteModal.hidden = true; if (noteOrigin && !root.hidden) noteOrigin.focus(); };
-  noteClose.addEventListener("click", closeNote); noteModal.addEventListener("click", e => { if (e.target === noteModal) closeNote(); });
-  noteModal.addEventListener("keydown", e => {
-    if (e.key === "Escape"){ e.preventDefault(); closeNote(); }
-    if (e.key === "Tab"){ e.preventDefault(); noteClose.focus(); }
-  });
+  // Author notes are permanent chips (user 2026-10-15, no pop-up): the star melts into the light ball, which arcs into a new chip (skill icon, name, note).
+  // A chip stays until the page reloads or another guide opens; clicking the skill again flashes its chip. Desktop: the chips sit in the left panel under
+  // the description; phones: under the build, and the page scrolls to the new chip so the flight is seen.
+  const noteChips = new Map();
+  let stopNoteAnimation = () => {};
+  const isPhone = () => window.innerWidth <= 760;
+  function placeNoteChips(){
+    const list = el("noteChips");
+    if (mode === "reader" && isPhone()){ if (list.parentNode !== guidePage || list.previousElementSibling !== simRoot) guidePage.insertBefore(list, simRoot.nextSibling); }
+    else if (list.parentNode !== el("reader")) el("reader").insertBefore(list, el("guideDescription").nextSibling);
+  }
+  function clearNoteChips(){
+    stopNoteAnimation(); stopNoteAnimation = () => {};
+    noteChips.forEach(chip => chip.remove()); noteChips.clear(); el("noteChips").hidden = true;
+  }
+  function makeNoteChip(info){
+    const chip = document.createElement("article"); chip.className = "cg-note-chip"; chip.dataset.id = info.id;
+    const icon = document.createElement("img"); icon.className = "cg-note-chip-icon"; icon.alt = ""; icon.src = SKILL_ICONS[info.cell.icon] || "";
+    const body = document.createElement("div"); body.className = "cg-note-chip-body";
+    const name = document.createElement("h4"); name.textContent = info.cell.name;
+    const text = document.createElement("p"); text.className = "cg-note-chip-text"; text.innerHTML = classGuideRichText(info.text);
+    body.append(name, text); chip.append(icon, body);
+    return chip;
+  }
   function showNote(info){
-    stopNoteAnimation(); noteBody.classList.remove("is-waiting");
-    noteModal.querySelector(".cg-kicker").textContent = "★ " + ((current && current.author) || "AUTHOR") + "’S NOTE";
-    noteOrigin = info.element; noteModal.querySelector("h3").textContent = info.cell.name; noteBody.innerHTML = classGuideRichText(info.text);
-    noteModal.hidden = false;
-    if (info.first){
-      const star = info.element.querySelector(".cg-star") || info.element, cr = star.getBoundingClientRect(), pr = noteBody.getBoundingClientRect();
-      const a = { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 }, to = { x: pr.left + 6, y: pr.top + Math.min(pr.height / 2, 14) }, tone = "rgb(255, 214, 102)";
-      noteBody.classList.add("is-waiting");
-      const ghost = document.createElement("div"); ghost.className = "sk-note-ghost";
-      ghost.style.cssText = "left:" + cr.left + "px; top:" + cr.top + "px; width:" + cr.width + "px; height:" + cr.height + "px; color:" + tone;
-      noteModal.appendChild(ghost);
-      const melt = ghost.animate([
-        { left: cr.left + "px", top: cr.top + "px", width: cr.width + "px", height: cr.height + "px", opacity: 1, backgroundColor: "transparent" },
-        { left: a.x - 4.5 + "px", top: a.y - 4.5 + "px", width: "9px", height: "9px", opacity: 1, backgroundColor: "#fff" }
-      ], { duration: 170, easing: "ease-in", fill: "forwards" });
-      let cancelShot = () => {}, reveal = null;
-      stopNoteAnimation = () => { melt.onfinish = null; melt.cancel(); ghost.remove(); cancelShot(); if (reveal) reveal.cancel(); };
-      melt.onfinish = () => {
-        ghost.remove();
-        cancelShot = fireShot(a, to, tone, () => {
-          noteBody.classList.remove("is-waiting");
-          reveal = noteBody.animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: 360, easing: "cubic-bezier(.3,.6,.3,1)" });
-        }, noteModal);
-      };
-    } else stopNoteAnimation = () => {};
-    noteClose.focus();
+    const list = el("noteChips"), existing = noteChips.get(info.id);
+    if (existing){
+      existing.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      existing.animate([{ boxShadow: "0 0 0 2px #d4af37, 0 0 18px rgba(212,175,55,.6)" }, { boxShadow: "0 0 0 0 rgba(212,175,55,0)" }], { duration: 900, easing: "ease-out" });
+      return;
+    }
+    placeNoteChips();
+    const chip = makeNoteChip(info); chip.classList.add("is-waiting");
+    list.hidden = false; list.appendChild(chip); noteChips.set(info.id, chip);
+    const star = info.element.querySelector(".cg-star") || info.element, tone = "rgb(255, 214, 102)";
+    const reveal = () => {
+      chip.classList.remove("is-waiting");
+      chip.animate([{ opacity: .35, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: "ease-out" });
+      chip.querySelector(".cg-note-chip-body").animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: 420, easing: "cubic-bezier(.3,.6,.3,1)" });
+    };
+    const fly = () => {
+      const cr = star.getBoundingClientRect(), pr = chip.querySelector(".cg-note-chip-icon").getBoundingClientRect();
+      const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+      const a = { x: clamp(cr.left + cr.width / 2, 8, innerWidth - 8), y: clamp(cr.top + cr.height / 2, 8, innerHeight - 8) }, to = { x: pr.left + pr.width / 2, y: pr.top + pr.height / 2 };
+      const starSeen = cr.width > 0 && cr.bottom > 0 && cr.top < innerHeight;
+      let cancelShot = () => {}, melt = null;
+      const shoot = () => { cancelShot = fireShot(a, to, tone, reveal); };
+      if (starSeen){
+        const ghost = document.createElement("div"); ghost.className = "sk-note-ghost";
+        ghost.style.cssText = "left:" + cr.left + "px; top:" + cr.top + "px; width:" + cr.width + "px; height:" + cr.height + "px; color:" + tone;
+        document.body.appendChild(ghost);
+        melt = ghost.animate([
+          { left: cr.left + "px", top: cr.top + "px", width: cr.width + "px", height: cr.height + "px", opacity: 1, backgroundColor: "transparent" },
+          { left: a.x - 4.5 + "px", top: a.y - 4.5 + "px", width: "9px", height: "9px", opacity: 1, backgroundColor: "#fff" }
+        ], { duration: 170, easing: "ease-in", fill: "forwards" });
+        melt.onfinish = () => { ghost.remove(); shoot(); };
+        stopNoteAnimation = () => { melt.onfinish = null; melt.cancel(); ghost.remove(); cancelShot(); reveal(); };
+      } else { shoot(); stopNoteAnimation = () => { cancelShot(); reveal(); }; }
+    };
+    if (isPhone()){ chip.scrollIntoView({ block: "nearest", behavior: "smooth" }); setTimeout(fly, 420); }
+    else { chip.scrollIntoView({ block: "nearest" }); fly(); }
   }
   document.addEventListener("keydown", e => {
     if (mode !== "author" || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
@@ -29089,29 +29525,48 @@ function mountClassGuide(root){
       saveDraft(); return;
     }
     if (e.target.matches("[data-cg-field]")) saveDraft();
+    if (e.target.matches("[data-cg-try]") && mode === "reader" && viewStats){
+      const key = e.target.dataset.cgTry, raw = e.target.value.trim();
+      const n = raw === "" ? current.stats[key] : Math.min(512, Math.max(0, Math.round(Number(raw)) || 0));
+      if (raw !== "" && String(n) !== raw) e.target.value = n;
+      viewStats[key] = n;
+      e.target.closest(".cg-stat-tile").classList.toggle("is-tried", n !== current.stats[key]);
+      button("resetStats").hidden = Object.keys(viewStats).every(k => viewStats[k] === current.stats[k]);
+    }
   });
   root.addEventListener("click", async e => {
     const format = e.target.closest("[data-cg-bold]");
-    if (format){ if (mode === "author") editors[format.dataset.cgBold].bold(); return; }
+    if (format){ if (mode === "author"){ const on = editors[format.dataset.cgBold].setHighlight(!editors[format.dataset.cgBold].isHighlighting()); format.setAttribute("aria-pressed", String(on)); format.classList.toggle("is-on", on); } return; }
     const titleEl = e.target.closest('[data-cg-role="guideTitle"]');   // hidden feature like the skill name in skill-details: click the guide title to copy "## [title](link)" (Discord heading + link)
     if (titleEl && mode === "reader" && currentId){ copyTitleLink(current.title, "#skill-simulator/" + currentId, titleEl); return; }
     const target = e.target.closest("[data-cg-act]"); if (!target) return;
     const act = target.dataset.cgAct;
     try {
       if (act === "gallery"){ saveDraft(); switchMode("gallery"); sim.setInteraction("read"); renderGallery(); }
-      else if (act === "copyLink"){
+      else if (act === "copyCode"){
         if (!currentId) return;
-        const base = /^https?:$/.test(location.protocol) ? location.href.split("#")[0] : "https://jumpptty.github.io/12tails/12t_projects/bible/";
-        await classGuideCopy("## [" + current.title + "](" + base + "#skill-simulator/" + currentId + ")");   // the Discord heading + link, same as the skill name in skill-details
-        const label = target.querySelector("span"), was = label.textContent; label.textContent = "คัดลอกลิงก์แล้ว";
+        await classGuideCopy(await classGuidePack(current));   // the short guide code: paste it into นำเข้าโค้ด in the editor to make an edited copy (user 2026-10-15)
+        const label = target.querySelector("span"), was = label.textContent; label.textContent = "คัดลอกโค้ดแล้ว";
         clearTimeout(copyFeedbackTimer); copyFeedbackTimer = setTimeout(() => { label.textContent = was; }, 1400);
+      }
+      else if (act === "exportImage"){
+        const g = mode === "author" ? (saveDraft(), classGuideNormalize(draft, { draft: true })) : current;
+        if (!g) return;
+        const label = target.querySelector("span"), was = label.textContent; label.textContent = "กำลังสร้างรูป…"; target.disabled = true;
+        try { await classGuideSaveImage(g, simRoot); } finally { label.textContent = was; target.disabled = false; }
+      }
+      else if (act === "resetStats"){
+        if (!current || !current.stats) return;
+        viewStats = { ...current.stats };
+        root.querySelectorAll("[data-cg-try]").forEach(i => { i.value = viewStats[i.dataset.cgTry]; i.closest(".cg-stat-tile").classList.remove("is-tried"); });
+        target.hidden = true;
       }
       else if (act === "author" || act === "returnAuthor") startAuthor();
       else if (act === "closeTransfer") el("transfer").close();
       else if (mode !== "author") return;
       else if (act === "build" || act === "annotate") setAuthorInteraction(act);
       else if (act === "preview"){ saveDraft(); openGuide(draft, true); }
-      else if (act === "export"){ saveDraft(); await classGuideCopy(classGuideExport(collect())); showCopied(); }
+      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); showCopied(); }
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
@@ -29439,6 +29894,8 @@ function mountSkillSimulator(root, options = {}){
       const k = document.createElement("span"), v = document.createElement("b"); k.textContent = line.label; v.textContent = line.text;
       row.append(k, v); tipEl.appendChild(row);
     }
+    // the view's long press opens the skill card: say so under every skill that has one (user 2026-10-16)
+    if (interaction === "read" && cellEls[c.id] && cellEls[c.id].dataset.card){ const hint = document.createElement("div"); hint.className = "rsim-tip-hint"; hint.textContent = "คลิกค้างเพื่อดูรายละเอียดเพิ่มเติม"; tipEl.appendChild(hint); }
     const r = cell.getBoundingClientRect(), w = tipEl.offsetWidth;
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, r.left + r.width / 2 - w / 2)) + "px";
     tipEl.style.top = Math.max(4, r.top - tipEl.offsetHeight - 6) + "px";
@@ -29492,7 +29949,7 @@ function mountSkillSimulator(root, options = {}){
     },
     setNotes(value){ notes = { ...value }; seenNotes.clear(); refreshNotes(); },
     loadBuild(build){
-      const checked = classGuideNormalize({ format: "12t-class-guide", version: 1, title: "", author: "", patch: "", description: "", build, notes: {} }, { draft: true }).build;
+      const checked = classGuideNormalize({ format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build, notes: {} }, { draft: true }).build;
       pressEnd(); longDone = false; srv = checked.server; cls = checked.classKey; trees = SKILL_SIM[cls]; cells = mkCells();
       state.lv = checked.level; state.learned = new Set(checked.learned); picked = true; undoStack.length = 0;
       notes = {}; seenNotes.clear(); buildTrees(); update();
@@ -30085,6 +30542,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T17:15:01.212Z","feat(bible): class guides: note chips instead of the pop-up, short guide codes (12TG1., scripts/guide_code.js), guide date replaces the patch, 4K image export in the current theme, readers can try other stat values, highlight button, phone layout, copy-code button; skill-details cooldown honours server cdWrapped overrides"],
     ["2026-10-15T16:12:39.946Z","feat(bible): class guides get recommended stats for each of the 8 stats (editor row, reader left panel in each stat's colour) and hover cooldown, cast time and buff duration from AGI / INT / CHA / LCK"],
     ["2026-10-15T15:58:04.963Z","fix(bible): skill simulator long press opens the skill card only in the class guide view, not in the builder or the note editor"],
     ["2026-10-15T15:44:36.626Z","fix(bible): range preview plays Gaos Tail Spin at its real timing (first wave 0.6 s, then every 0.2 s)"],

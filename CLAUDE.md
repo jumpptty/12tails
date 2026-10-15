@@ -28,6 +28,7 @@ node scripts/card_edit.js set-field <cardId> <key> <js-source> [--dry-run]   # a
 node scripts/card_edit.js --selftest
 
 python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode cd/castTime/MP/SP/reqLv per skill
+node scripts/guide_code.js decode <12TG1.code | file>          # turn a submitted class guide short code into the JSON object to embed (also: encode <json>, --selftest)
 ```
 
 ### Project skills and agents
