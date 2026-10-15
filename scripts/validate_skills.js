@@ -2898,6 +2898,7 @@ let checkedRsim = 0;
   const valid = (ids, lv) => validFn(cells, SIM.length, new Set(ids), lv);
   const tile = vm.runInContext("TOOLS", sandbox).find(x => x.id === "skill-simulator");
   ok(tile && tile.title === "ไกด์แต่ละอาชีพ" && !tile.badge && !/rsim-wip">/.test(html), "Class Guide tile keeps its name and has no in-development chip (removed user 2026-10-16)");
+  ok(/data-cg-role="sent"[^\n]*discord\.com\/users\/333828912830480386/.test(html) && /act === "export"\)\{[^\n]*el\("sent"\)\.showModal\(\)/.test(html) && !/act === "copyCode"[\s\S]{0,400}el\("sent"\)/.test(html), "Editor คัดลอกโค้ดไกด์ opens the send-to-maintainer pop-up (Discord jumpptty); the reader copy button does not");
   ok(SIM.length === 4 && SIM.every(t => t.rows.length >= 5 && t.rows.every(r => r.length === 4)), "Rabbit has 4 trees of 4-column rows");
   const count = SIM.map(t => t.rows.flat().filter(Boolean).length).join("/");
   ok(count === "18/30/30/20", `cells per tree ${count}, want 18/30/30/20 (Basic/A/B/C)`);

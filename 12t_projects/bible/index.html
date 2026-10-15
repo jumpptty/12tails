@@ -1690,6 +1690,8 @@
   .cg-import-dialog{width:min(460px,calc(100vw - 40px));box-sizing:border-box;margin:auto;padding:24px;color:var(--text);font:inherit}
   .cg-import-dialog::backdrop{background:#090807b8}
   .cg-import-dialog .cg-help{margin:0}
+  .cg-sent-dialog .cg-help{margin:0 0 18px;font-size:14px;line-height:1.7}
+  .cg-sent-dialog .cg-btn{width:100%}
   .cg-import-error{color:var(--seal);font-size:13px;line-height:1.7;margin:8px 0 0}
   .cg-import-error:empty{display:none}
   .cg-transfer .cg-code{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
@@ -29381,6 +29383,7 @@ function mountClassGuide(root){
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></section>
     <section data-cg-role="sim" hidden></section>
+    <dialog class="cg-transfer cg-import-dialog cg-sent-dialog" data-cg-role="sent" aria-labelledby="cgSentTitle"><button type="button" class="cg-note-close" data-cg-act="closeSent" aria-label="ปิด">×</button><h3 id="cgSentTitle">คัดลอกโค้ดไกด์แล้ว</h3><p class="cg-help">โค้ดไกด์อยู่ในคลิปบอร์ดของคุณแล้ว วางโค้ดนี้ส่งให้ <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a> ทาง Discord เพื่อนำไกด์ขึ้นหน้าไกด์จากชุมชน</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="closeSent">ตกลง</button></dialog>
     <dialog class="cg-transfer cg-import-dialog" data-cg-role="transfer" aria-labelledby="cgImportTitle"><button type="button" class="cg-note-close" data-cg-act="closeTransfer" aria-label="ปิด">×</button><h3 id="cgImportTitle">นำเข้าไกด์</h3><textarea class="cg-code" data-cg-role="code" rows="3" maxlength="131072" spellcheck="false" aria-label="วางโค้ดไกด์" placeholder="วางโค้ดไกด์ที่นี่"></textarea><p class="cg-help">วางโค้ดแล้วกด Enter</p><p class="cg-import-error" data-cg-role="importError" role="alert"></p></dialog>
   </div>`;
   const el = role => root.querySelector('[data-cg-role="' + role + '"]');
@@ -29483,7 +29486,7 @@ function mountClassGuide(root){
     button("exportImage").hidden = next === "gallery";
     if (next !== "reader" && location.hash.indexOf("#skill-simulator/") === 0) history.replaceState(null, "", "#skill-simulator");   // leaving the reader: the address goes back to the tool
     mode = next; el("gallery").hidden = next !== "gallery"; el("author").hidden = next !== "author";
-    el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close();
+    el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close(); el("sent").close();
     el("noteEditor").hidden = true; status("");
     button("gallery").setAttribute("aria-pressed", String(next === "gallery")); button("author").setAttribute("aria-pressed", String(next === "author"));
     if (typeof placeNoteChips === "function") placeNoteChips();   // leaving the reader puts the chips back into its (hidden) panel
@@ -29564,6 +29567,7 @@ function mountClassGuide(root){
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); if (mode === "author") confirmImport(); }
   });
   el("transfer").addEventListener("close", () => { if (mode === "author") button("import").focus(); });
+  el("sent").addEventListener("close", () => { if (mode === "author") button("export").focus(); });
   // Author notes are permanent chips (user 2026-10-15, no pop-up): the star melts into the light ball, which arcs into a new chip (skill icon, name, note).
   // A chip stays until the page reloads or another guide opens; clicking the skill again flashes its chip. Desktop: the chips sit in the left panel under
   // the description; phones: under the build, and the page scrolls to the new chip so the flight is seen.
@@ -29678,10 +29682,11 @@ function mountClassGuide(root){
       }
       else if (act === "author" || act === "returnAuthor") startAuthor();
       else if (act === "closeTransfer") el("transfer").close();
+      else if (act === "closeSent") el("sent").close();
       else if (mode !== "author") return;
       else if (act === "build" || act === "annotate") setAuthorInteraction(act);
       else if (act === "preview"){ saveDraft(); openGuide(draft, true); }
-      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); showCopied(); }
+      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); showCopied(); el("sent").showModal(); }   // editor only (user 2026-10-16): ask the author to send the copied code to the maintainer
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
@@ -30656,6 +30661,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T17:46:40.563Z","feat(bible): after คัดลอกโค้ดไกด์ in the guide editor, a pop-up asks the author to send the copied code to jumpptty on Discord"],
     ["2026-10-15T17:44:52.449Z","fix(bible): class guides drop the red กำลังพัฒนา ห้ามใช้จริง chip (in the tool and on the hub tile)"],
     ["2026-10-15T17:42:21.913Z","fix(bible): the guide editor's คัดลอกโค้ดไกด์ button uses the same copy icon as the reader's"],
     ["2026-10-15T17:39:29.395Z","fix(bible): class guide editor is tidier: no highlight or build help lines, no undo buttons (Ctrl+Z still undoes), import is a proper button, ส่งออกไกด์ becomes คัดลอกโค้ดไกด์"],
