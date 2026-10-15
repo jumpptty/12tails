@@ -3636,7 +3636,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
   {
     const dr = sandbox._depRanks, saved = { ...dr };
-    const set = (o) => { for (const k of ["pndW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade", "giantStar", "frozenBreak", "deadlyFrost", "frostSpike", "entendedWave", "reachShieldBash", "reachKnightDeep", "tideCutter", "peninsulaAsunder", "spiralBlast", "divingPress"]) dr[k] = o[k] || 0; };
+    const set = (o) => { for (const k of ["pndW59", "whlW59", "auraBlast", "ogreImpact", "tigerPounce", "qiBurst", "shadowFist", "rollTheDice", "wolfKatana", "bloodFang", "lastBlade", "giantStar", "frozenBreak", "deadlyFrost", "frostSpike", "entendedWave", "reachShieldBash", "reachKnightDeep", "tideCutter", "peninsulaAsunder", "spiralBlast", "divingPress"]) dr[k] = o[k] || 0; };
     const P = (id, rank, o, rM) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).reach, rank, rM); };
     const g = (label, ok, got) => { if (!ok) bad(`Panda golden ${label}${got !== undefined ? ": got " + JSON.stringify(got) : ""}`); };
     try {
@@ -3758,8 +3758,9 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("penguin_cosmicFriday", 1); g("Cosmic Friday r3 h3", c[0].r === 3 && c[0].h === 3, c);
       for (const id of ["penguin_mpTransfer", "penguin_manaBurn", "penguin_snowMan", "penguin_absoluteZero", "penguin_snowBall"]) { c = P(id, 1); g(id + ": 40 m lock ring only", c.length === 1 && c[0].shape === "ring" && c[0].r === 40, c); }
       // Whale (Whale.cs, Whale_overPresence.cs; sizes x rangeMod only where the card says rangeMod)
-      c = P("whale_nAttack", 1); g("Whale Combo rank 1: stage 1 at 0.8 m, stage 2 at 1.6 and 2.4 m, 3x4x2 boxes + the faint Star Spear sphere r9", c.length === 4 && c[0].w === 3 && c[0].l === 4 && c[0].h === 2 && nr(c[0].z0, 0.8) && nr(c[1].z0, 1.6) && nr(c[2].z0, 2.4) && c[3].shape === "sphere" && c[3].r === 9 && c[3].faint === true, c);
-      c = P("whale_nAttack", 2, { entendedWave: 1 }); g("Whale Combo rank 2 + Entended Wave: stages 1-2 3x7, stage 3 4x7, Star Spear r12", c.length === 5 && c[0].l === 7 && c[3].w === 4 && c[3].l === 7 && c[4].r === 12, c);
+      c = P("whale_nAttack", 1); g("Whale Combo rank 1: stage 1 at 0.8 m, stage 2 at 1.6 and 2.4 m, 3x4x2 boxes, no Star Spear sphere until its toggle is on", c.length === 3 && c[0].w === 3 && c[0].l === 4 && c[0].h === 2 && Math.abs(c[0].z0 - 0.8) < 0.011 && Math.abs(c[1].z0 - 1.6) < 0.011 && Math.abs(c[2].z0 - 2.4) < 0.011, c);
+      c = P("whale_nAttack", 1, { whlW59: 1 }); g("Star Spear on: the faint r9 sphere", c.length === 4 && c[3].shape === "sphere" && c[3].r === 9 && c[3].faint === true, c);
+      c = P("whale_nAttack", 2, { entendedWave: 1, whlW59: 1 }); g("Whale Combo rank 2 + Entended Wave: stages 1-2 3x7, stage 3 4x7, Star Spear r12", c.length === 5 && c[0].l === 7 && c[3].w === 4 && c[3].l === 7 && c[4].r === 12, c);
       c = P("whale_nAttack", 2, {}, 1.4); g("Whale Combo x1.4: width and height scale, length does not", c[0].w === 4.2 && c[0].h === 2.8 && c[0].l === 4 && c[3].w === 5.6, c);
       c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }); g("Charge Attack: Shield Bash r3 h3 (x rangeMod) + Knight of the Deep r4 h3", c.length === 2 && c[0].r === 3 && c[0].h === 3 && c[0].rangeMod === true && c[1].r === 4 && c[1].h === 3, c);
       c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }, 1.4); g("Charge Attack x1.4: Shield Bash scales, Knight of the Deep does not", c[0].r === 4.2 && c[0].h === 4.2 && c[1].r === 4, c);
