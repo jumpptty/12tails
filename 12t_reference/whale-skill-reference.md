@@ -528,6 +528,19 @@ Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 
 
 The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.
 
+## Movement timelines (read 2026-10-15, for the range preview; nominal `moveMod` 1, not live-tested)
+
+The Whale moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`CharacterControl.cs:2722`); the speed set in a state runs until the next `Yield` returns. Distance moved from the cast point at each hit:
+
+| Skill | Legs (speed m/s × seconds) | Hit at (m) | Source |
+|---|---|---|---|
+| Sweep | −0.5 × 0.2, −0.3 × 0.3, 0 × 0.5, 9 × 0.1 (hit 1 at t = 1.1 s, r 4/6), 6 × 0.3 (hit 2 at t = 1.4 s, r 5) | 0.71, 2.51 | `Whale.cs:22296`, `:21611`, `:21638`, `:21665`, `:21725`, `:21743`, `:21992` |
+| Shield Rush | 6 × rank × 0.1, then the hit | 0.6 × rank | `Whale.cs:24179`, `:24252` |
+| Peninsula Impale | 3 × 0.2, then 2 per second; a hit every 0.2 s, `2 + 4 × rank` hits | 0.6, 1.0, 1.4, ... (+0.4 each) | `Whale.cs:26732`, `:26813`, `:27076`, `:27433` |
+| Peninsula Round | 3 × 0.2, then stops; all hits at the stopped position | 0.6 | `Whale.cs:27670`, `:27697`, `:28099` |
+
+Not moving before their hit (speed 0, or the speed is set at the same instant as the hit): Charge Attack (`Whale.cs:19800`, `:19850`), Honor, Gobble Up, Whale Wave, Mal Storm, Call to Arm, Bubble Burst. **Not modelled:** Bowling Whale (a homing roll: `vMovement` is re-aimed at the target every frame and the speed eases toward `2 × distance`, `Whale.cs:36914-36940`, so the path depends on the target) and Grand Tide (a channel: speed 2 for the first second, then 3 while it lasts, a hit every second on a box 4 m behind to 3 m ahead of the Whale, `Whale.cs:37393`, `:37498`, `:37612`, `:37632`; its length depends on the player holding it and on MP / SP).
+
 ## Reach for the range preview (verified 2026-10-14)
 
 Sizes are in each card's `reach` field with `file:line`; this records the decisions that are not obvious from a size.
