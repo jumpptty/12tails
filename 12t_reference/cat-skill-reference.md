@@ -496,6 +496,8 @@ No movement before the hits (speed 0): Finishing Blow (it jumps back −8 × 0.2
 | 3 | 4, hits every 0.2 s (two hits) | 0.8, 1.6 | `Cat.cs:17896`, `:18001`, `:18244` |
 | 4 | 6, hits every 0.2 s (two hits) | 1.2, 2.4 | `Cat.cs:18867`, `:18972`, `:19213` |
 
+Stage totals: 2.4, 2.1, 1.6 (4 × 0.4). **Chained:** the range preview starts stage 2 at 2.4 m, stage 3 at 4.5 m, stage 4 at 6.1 m (assumes the next input comes straight after each stage ends and the player does not move in between).
+
 ## Skill Tree Layout & Learn Requirements
 
 Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Treasure Hunter, Gambler, Assassin, Pirate King). Source: `CatSkill.getSkill` (`setReq`, `rSkill`) and `CatSkill.getSkillTree`.

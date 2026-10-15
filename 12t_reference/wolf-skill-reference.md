@@ -858,6 +858,8 @@ Blade Fang counts: `bladeFang_count` is 0 after the first hit, +1 at the start o
 | 3 | 4 × 0.33 | 1.32 | `Wolf.cs:16477`, `:16712` |
 | 4 | 4 from t = 0.16 s: first hit at t = 0.14 s, second at 0.64 s | 0.56, 2.56 | `Wolf.cs:17257`, `:17428`, `:17746` |
 
+Stage totals (speed until it is 0 again): 3.075 (6 × 0.5, then 0.5 × 0.15, `Wolf.cs:15059`, `:15355`), 1.28, 1.32. **Chained:** the range preview starts stage 2 at 3.075 m, stage 3 at 4.355 m, stage 4 at 5.675 m from the cast point (each stage starts where the previous one stopped; assumes the next input comes straight after the stage ends and the player does not move in between).
+
 ## Open questions & card mismatches (2026-10-01)
 
 **Card mismatches:** all fixed 2026-10-02 (every Wolf card now has `desc`; No KO and Impulse got `lckProc`; Art Cancel, Counter, Blade Song got `maxRank` and costs; Second Wind, Holy Sword, Holy Armor, Mirror Blade and Art Breaker got costs; Art Breaker got its `cd`).

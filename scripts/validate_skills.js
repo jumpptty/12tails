@@ -3643,9 +3643,10 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       for (const sk of SKILLS) if (sk.class === "Panda" && sk.reach) for (let r = 1; r <= (sk.maxRank || 1); r++) for (const st of [{}, { pndW59: 1 }, { auraBlast: 1 }, { pndW59: 1, auraBlast: 1, ogreImpact: 1, tigerPounce: 1, qiBurst: 1, shadowFist: 5 }]) {
         for (const p of P(sk.id, r, st)) for (const k of ["r", "w", "l", "h"]) if (p[k] !== undefined && !(p[k] === "inf" || p[k] > 0)) bad(`${sk.id} rank ${r} ${JSON.stringify(st)}: ${k} = ${p[k]}`);
       }
-      let c = P("panda_nAttack", 4); g("Combo 4: stage 1 x2, 2 x2, 3 x3, 4, 5 = 9 boxes; stage 5 is 6 to 3.2 wide, 4 long, 3 high, 1 m behind, no dash", c.length === 9 && c[8].w === 6 && c[8].w2 === 3.2 && c[8].l === 4 && c[8].h === 3 && c[8].z0 === -1, c);
-      c = P("panda_nAttack", 1); g("Combo 1 has stages 1-2 only, 2 hits each: 0 / 1.0 m and 0.8 / 1.6 m of dash", c.length === 4 && c[0].w === 2 && c[0].l === 2 && c[0].h === 1 && c[0].z0 === 0 && c[1].z0 === 1 && c[2].z0 === 0.8 && c[3].z0 === 1.6, c);
-      c = P("panda_nAttack", 4, { auraBlast: 1 }); g("Aura Blast stage 5 (0.8 m back-step)", c[8].shape === "cylinder" && c[8].r === 2 && c[8].h === 3 && c[8].z0 === -0.8, c[8]);
+      const nr = (a, b) => Math.abs(a - b) < 0.011;   // the combo chain rounds every stage to 0.01 m
+      let c = P("panda_nAttack", 4); g("Combo 4: stage 1 x2, 2 x2, 3 x3, 4, 5 = 9 boxes; stage 5 is 6 to 3.2 wide, 4 long, 3 high, starting 9.3 m of chained dash on (-1 behind)", c.length === 9 && c[8].w === 6 && c[8].w2 === 3.2 && c[8].l === 4 && c[8].h === 3 && nr(c[8].z0, 8.3), c);
+      c = P("panda_nAttack", 1); g("Combo 1 has stages 1-2 only: 0 / 1.0 m, then 2.8 / 3.6 m (stage 2 starts after stage 1's 2.0 m)", c.length === 4 && c[0].w === 2 && c[0].l === 2 && c[0].h === 1 && nr(c[0].z0, 0) && nr(c[1].z0, 1) && nr(c[2].z0, 2.8) && nr(c[3].z0, 3.6), c);
+      c = P("panda_nAttack", 4, { auraBlast: 1 }); g("Aura Blast stage 5 (0.8 m back-step after the 9.3 m chain)", c[8].shape === "cylinder" && c[8].r === 2 && c[8].h === 3 && nr(c[8].z0, 8.5), c[8]);
       c = P("panda_nAttack", 4, { pndW59: 1 }); g("Force Gauntlet circles", c.length === 9 && c[0].r === 3 && c[4].r === 4 && c[7].r === 3 && c[8].r === 4 && c[8].h === 3, c);
       c = P("panda_nAttack", 4, { pndW59: 1, auraBlast: 1 }); g("Aura Blast ignores Force Gauntlet", c[8].r === 2 && c[8].anchor === "self", c[8]);
       c = P("panda_qiStrike", 1, { qiBurst: 1 }); g("Qi Burst 1+5", c[0].l === 6 && c[0].w === 2, c);
@@ -3670,7 +3671,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_raijinKen", 1); g("Raijin Ken flat lock ring r35 (vFlat) + r8 h8", c[0].shape === "ring" && c[0].r === 35 && c[1].r === 8 && c[1].h === 8, c);
       c = P("panda_lotusPalm", 2); g("Lotus Palm 40 m lock = a flat ring", c[0].shape === "ring" && c[0].r === 40, c);
       // rangeMod (Enlarge 4 = x1.4, Reduce 4 = x0.6): only the sizes the Find* call multiplies by rangeMod scale
-      c = P("panda_nAttack", 4, {}, 1.4); g("Combo stage 5 at x1.4 (start offset scales too)", c[8].w === 8.4 && c[8].w2 === 4.48 && c[8].l === 5.6 && c[8].h === 4.2 && c[8].z0 === -1.4, c[8]);
+      c = P("panda_nAttack", 4, {}, 1.4); g("Combo stage 5 at x1.4 (start offset scales, the chained dash does not)", c[8].w === 8.4 && c[8].w2 === 4.48 && c[8].l === 5.6 && c[8].h === 4.2 && nr(c[8].z0, 7.9), c[8]);
       c = P("panda_nAttack", 4, { pndW59: 1 }, 1.4); g("Force Gauntlet circles ignore rangeMod", c[0].r === 3 && c[8].r === 4, c);
       c = P("panda_waterMonkey", 2, {}, 1.4); g("Water Monkey: height only", c[0].w === 4 && c[0].l === 2 && c[0].h === 4.2 && c[0].z0 === -0.1, c[0]);
       c = P("panda_qiStrike", 1, { qiBurst: 1 }, 1.4); g("Qi Strike: 1×rangeMod + 5, width and height scale", c[0].l === 6.4 && c[0].w === 2.8 && c[0].h === 2.8, c[0]);
@@ -3679,9 +3680,9 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_ashura", 2, {}, 1.4); g("Ashura ignores rangeMod", c[0].r === 3, c[0]);
       c = P("panda_heavenPalm", 2, {}, 1.4); g("Heaven Palm r6 x1.4", c[0].r === 8.4 && c[0].h === 2.8 && c[0].rm === 1.4, c[0]);
       // Cat (Cat.cs Find* calls; KOIRnET4pM is the Cat's own transform)
-      c = P("cat_nAttack", 1); g("Cat Combo 1: stage 1 hits after a 2.4 m dash (3 x 0.2 + 9 x 0.2 s), stage 2 after 2.1 m (7 x 0.3 s)", c.length === 2 && c[0].w === 2 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === 1.4 && c[1].z0 === 1.1, c);
-      c = P("cat_nAttack", 3); g("Cat Combo 3: stage 4 is 4 wide, two hits at 1.2 and 2.4 m", c.length === 6 && c[4].w === 4 && c[4].w2 === 4 && c[4].l === 3 && c[4].z0 === 0.2 && c[5].z0 === 1.4, c);
-      c = P("cat_nAttack", 3, {}, 1.4); g("Cat Combo x1.4 scales size and start offset", c[4].w === 5.6 && c[4].l === 4.2 && c[4].h === 2.8 && c[4].z0 === -0.2, c[4]);
+      c = P("cat_nAttack", 1); g("Cat Combo 1: stage 1 after 2.4 m (3 x 0.2 + 9 x 0.2 s), stage 2 after 2.4 + 2.1 m", c.length === 2 && c[0].w === 2 && c[0].l === 3 && c[0].h === 2 && nr(c[0].z0, 1.4) && nr(c[1].z0, 3.5), c);
+      c = P("cat_nAttack", 3); g("Cat Combo 3: stage 4 is 4 wide, hits 1.2 and 2.4 m after the 6.1 m chain", c.length === 6 && c[4].w === 4 && c[4].w2 === 4 && c[4].l === 3 && nr(c[4].z0, 6.3) && nr(c[5].z0, 7.5), c);
+      c = P("cat_nAttack", 3, {}, 1.4); g("Cat Combo x1.4 scales size and start offset", c[4].w === 5.6 && c[4].l === 4.2 && c[4].h === 2.8 && nr(c[4].z0, 5.9), c[4]);
       c = P("cat_awareness", 2, {}, 1.4); g("Awareness r24 (not scaled), h3 x1.4", c[0].r === 24 && c[0].h === 4.2, c[0]);
       c = P("cat_fateDraw", 4, {}, 1.4); g("Fate Draw r15 h3 both scale", c[0].r === 21 && c[0].h === 4.2, c[0]);
       c = P("cat_doubleDown", 2); g("Double Down scan r24 + blast r1", c[0].r === 24 && c[0].h === 10 && c[1].r === 1 && c[1].h === 2 && c[1].anchor === "target", c);
@@ -3699,11 +3700,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("cat_luckyCard", 4); g("Lucky Card 20 m", c[0].shape === "line" && c[0].l === 20, c);
       c = P("cat_damageRoulette", 2); g("Damage Roulette r24 h12", c[0].r === 24 && c[0].h === 12, c);
       // Wolf (Wolf.cs Find* calls, HwwoC6K6XP = the Wolf's own transform; every size x rangeMod unless the line says otherwise)
-      c = P("wolf_nAttack", 1); g("Wolf Combo 1: stage 1 4x3x2 after a 3 m dash (6 x 0.5 s), stage 2 after 1.28 m (4 x 0.32 s)", c.length === 2 && c[0].w === 4 && c[0].l === 3 && c[0].h === 2 && c[0].z0 === 2 && c[1].z0 === 0.28, c);
-      c = P("wolf_nAttack", 3); g("Wolf Combo 3: stage 3 starts 1.5 m behind (+1.32 m dash) and is 3.5 long, stage 4 has a 4 high hit at 0.56 m and a 2 high hit at 2.56 m", c.length === 5 && c[2].l === 3.5 && c[2].z0 === -0.18 && c[3].h === 4 && c[3].l === 3 && c[3].z0 === -0.44 && c[4].h === 2 && c[4].z0 === 1.56, c);
-      c = P("wolf_nAttack", 3, { wolfKatana: 1 }); g("Wolf Combo Katana: fixed 4x8, stage 3 3 to 4 wide 8.5 long, no rangeMod", c.length === 5 && c[0].l === 8 && c[0].w === 4 && c[2].w === 3 && c[2].w2 === 4 && c[2].l === 8.5 && c[2].z0 === -0.18 && c[3].h === 4 && !c[0].rangeMod, c);
+      c = P("wolf_nAttack", 1); g("Wolf Combo 1: stage 1 4x3x2 after a 3 m dash (6 x 0.5 s), stage 2 after 3.075 + 1.28 m", c.length === 2 && c[0].w === 4 && c[0].l === 3 && c[0].h === 2 && nr(c[0].z0, 2) && nr(c[1].z0, 3.355), c);
+      c = P("wolf_nAttack", 3); g("Wolf Combo 3: stage 3 starts 1.5 m behind and is 3.5 long, stage 4 has a 4 high hit and a 2 high hit 2 m later (chain 5.675 m)", c.length === 5 && c[2].l === 3.5 && nr(c[2].z0, 4.175) && c[3].h === 4 && c[3].l === 3 && nr(c[3].z0, 5.235) && c[4].h === 2 && nr(c[4].z0, 7.235), c);
+      c = P("wolf_nAttack", 3, { wolfKatana: 1 }); g("Wolf Combo Katana: fixed 4x8, stage 3 3 to 4 wide 8.5 long, no rangeMod", c.length === 5 && c[0].l === 8 && c[0].w === 4 && c[2].w === 3 && c[2].w2 === 4 && c[2].l === 8.5 && nr(c[2].z0, 4.175) && c[3].h === 4 && !c[0].rangeMod, c);
       c = P("wolf_nAttack", 3, { wolfKatana: 1 }, 1.8); g("Katana ignores rangeMod (Lunar Eclipse 2)", c[0].l === 8 && c[0].z0 === 2, c[0]);
-      c = P("wolf_nAttack", 2, {}, 1.4); g("Wolf Combo x1.4 scales size and start offset (the dash does not)", c[2].l === 4.9 && c[2].z0 === -0.78 && c[2].w === 5.6 && c[2].h === 2.8, c[2]);
+      c = P("wolf_nAttack", 2, {}, 1.4); g("Wolf Combo x1.4 scales size and start offset (the chained dash does not)", c[2].l === 4.9 && nr(c[2].z0, 3.575) && c[2].w === 5.6 && c[2].h === 2.8, c[2]);
       c = P("wolf_cAttack", 1); g("Charge Attack: 4 to 12 wide, 30 long, 6 high, band lowered 2 m", c[0].w === 4 && c[0].w2 === 12 && c[0].l === 30 && c[0].h === 6 && c[0].z0 === -1 && c[0].y0 === -2, c);
       c = P("wolf_cAttack", 1, {}, 1.4); g("Charge Attack x1.4: sizes scale, the 2 m drop does not", c[0].l === 42 && c[0].w2 === 16.8 && c[0].h === 8.4 && c[0].z0 === -1.4 && c[0].y0 === -2, c[0]);
       c = P("wolf_braveSpirit", 1, {}, 1.4); g("Brave Spirit r15 h3 both scale", c[0].r === 21 && c[0].h === 4.2, c[0]);
@@ -3757,7 +3758,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("penguin_cosmicFriday", 1); g("Cosmic Friday r3 h3", c[0].r === 3 && c[0].h === 3, c);
       for (const id of ["penguin_mpTransfer", "penguin_manaBurn", "penguin_snowMan", "penguin_absoluteZero", "penguin_snowBall"]) { c = P(id, 1); g(id + ": 40 m lock ring only", c.length === 1 && c[0].shape === "ring" && c[0].r === 40, c); }
       // Whale (Whale.cs, Whale_overPresence.cs; sizes x rangeMod only where the card says rangeMod)
-      c = P("whale_nAttack", 1); g("Whale Combo rank 1: stage 1 (0.8 m dash), stage 2 hits at 0.8 and 1.6 m, 3x4x2 boxes + the faint Star Spear sphere r9", c.length === 4 && c[0].w === 3 && c[0].l === 4 && c[0].h === 2 && c[0].z0 === 0.8 && c[2].z0 === 1.6 && c[3].shape === "sphere" && c[3].r === 9 && c[3].faint === true, c);
+      c = P("whale_nAttack", 1); g("Whale Combo rank 1: stage 1 at 0.8 m, stage 2 at 1.6 and 2.4 m, 3x4x2 boxes + the faint Star Spear sphere r9", c.length === 4 && c[0].w === 3 && c[0].l === 4 && c[0].h === 2 && nr(c[0].z0, 0.8) && nr(c[1].z0, 1.6) && nr(c[2].z0, 2.4) && c[3].shape === "sphere" && c[3].r === 9 && c[3].faint === true, c);
       c = P("whale_nAttack", 2, { entendedWave: 1 }); g("Whale Combo rank 2 + Entended Wave: stages 1-2 3x7, stage 3 4x7, Star Spear r12", c.length === 5 && c[0].l === 7 && c[3].w === 4 && c[3].l === 7 && c[4].r === 12, c);
       c = P("whale_nAttack", 2, {}, 1.4); g("Whale Combo x1.4: width and height scale, length does not", c[0].w === 4.2 && c[0].h === 2.8 && c[0].l === 4 && c[3].w === 5.6, c);
       c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }); g("Charge Attack: Shield Bash r3 h3 (x rangeMod) + Knight of the Deep r4 h3", c.length === 2 && c[0].r === 3 && c[0].h === 3 && c[0].rangeMod === true && c[1].r === 4 && c[1].h === 3, c);

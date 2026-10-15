@@ -549,6 +549,8 @@ Not moving before their hit (speed 0, or the speed is set at the same instant as
 | 2 | 4 × 0.2, pause 0.1 s, 4 × 0.2 (two hits) | 0.8, 1.6 | `Whale.cs:16891`, `:17353`, `:17334`, `:17698` |
 | 3 | 4 × 0.2 | 0.8 | `Whale.cs:18146`, `:18509` |
 
+Stage totals: 0.8, 1.6. **Chained:** the range preview starts stage 2 at 0.8 m and stage 3 at 2.4 m (assumes the next input comes straight after each stage ends and the player does not move in between).
+
 ## Reach for the range preview (verified 2026-10-14)
 
 Sizes are in each card's `reach` field with `file:line`; this records the decisions that are not obvious from a size.

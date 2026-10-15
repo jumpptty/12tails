@@ -924,6 +924,8 @@ The warp (Wind Walker, target > 6 m) sets `position = mPos + tDir` in the second
 | 4 | 10 × 0.2 | 2.0 | `Panda.cs:17795`, `:17882` |
 | 5 | −4 set at the hit; Aura Blast circle 0.2 s later | 0 (box), −0.8 (Aura Blast r 2) | `Panda.cs:18391`, `:18508`, `:18629` |
 
+Stage totals: 2.0 (5 × 0.4), 1.8 (4 × 0.6, then −2 × 0.3 at `Panda.cs:16525`), 3.5 (5 × 0.7), 2.0. **Chained:** the range preview starts stage 2 at 2.0 m, stage 3 at 3.8 m, stage 4 at 7.3 m, stage 5 at 9.3 m (assumes the next input comes straight after each stage ends and the player does not move in between).
+
 Charge Attack (Aura Field sphere) does not move (speed 0, `Panda.cs:19339`).
 
 ## Open questions & card mismatches (2026-10-01)
