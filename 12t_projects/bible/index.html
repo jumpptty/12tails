@@ -10802,20 +10802,20 @@ function reachPath(legs, ts, base = 0, tbase = 0){   // base = metres already mo
 // A combo: stages [{ legs, end, start }] where each stage starts where the one before it stopped (end = seconds from the stage start until its speed is 0 again). start = seconds from the first stage's start: the game anchors every later stage to it (actionTime - Time.time + X waits), so the combo keeps one rhythm whenever you press inside the window.
 // Returns the start offset (m from the cast point) of every stage, plus one more for the stage after the last; pass it as the base of reachPath.
 function reachChain(stages){ let off = 0, tt = 0; const out = [0]; out.t = []; for (const st of stages){ const t0 = st.start !== undefined ? st.start : tt; out.t.push(t0); off += reachPath(st.legs, [st.end])[0]; tt = t0 + st.end; out.push(+off.toFixed(2)); } out.t.push(+tt.toFixed(3)); return out; }   // out.t = the seconds each stage starts at
-// Playback of a multi-hit skill (user 2026-10-15): parts with `at` (seconds, the game's own timing) are shown one hit at a time, a hit fading out as the next fades in, then every hit comes back together;
+// Playback of a multi-hit skill (user 2026-10-15): parts with `at` (seconds, the game's own timing) are shown one hit at a time, the next hit replacing the previous one instantly (no fade), then every hit comes back together;
 // a part with `final: false` is only part of the playback (Twin Resonance's 40 rounds: five of them stay in the final picture). Parts without `at` are always shown.
 function reachSeqPlan(parts){
   const ats = [...new Set(parts.filter(p => typeof p.at === "number").map(p => p.at))].sort((a, b) => a - b);
   if (ats.length < 2) return null;
-  const T = ats.map(a => +(a - ats[0]).toFixed(3)), gap = Math.min(...T.slice(1).map((x, i) => x - T[i])), fade = Math.max(0.05, Math.min(0.2, gap * 0.45)), hold = 0.7;
-  return { at: ats, T, fade, tEnd: T[T.length - 1] + hold, end: T[T.length - 1] + hold + 0.45 };
+  const T = ats.map(a => +(a - ats[0]).toFixed(3)), hold = 0.7;
+  return { at: ats, T, tEnd: T[T.length - 1] + hold, end: T[T.length - 1] + hold + 0.05 };
 }
-function reachSeqVis(p, tau, plan){
+function reachSeqVis(p, tau, plan){   // instant: the hit whose time was passed last is the only one shown (user 2026-10-15), then the final picture
   if (typeof p.at !== "number" || !plan) return 1;
   if (tau < 0) return 0;
-  const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }, k = plan.at.indexOf(p.at), last = k === plan.T.length - 1;
-  const phase = sm((tau - plan.T[k]) / plan.fade) * (last ? 1 : 1 - sm((tau - plan.T[k + 1]) / plan.fade));
-  return Math.max(phase, p.final === false ? 0 : sm((tau - plan.tEnd) / 0.45));
+  if (tau >= plan.tEnd) return p.final === false ? 0 : 1;
+  let cur = 0; for (let j = 0; j < plan.T.length; j++) if (plan.T[j] <= tau) cur = j;
+  return plan.at[cur] === p.at ? 1 : 0;
 }
 function reachNormalize(reach, rank, rM = 1){
   if (typeof reach === "function") reach = reach(rank, rM);
@@ -11391,8 +11391,8 @@ function drawReach(cv, items, st, model, scene, seqT){
   ctx.font = "bold 12px ui-monospace, monospace";
   ctx.textBaseline = "middle"; ctx.textAlign = "center";
   // Labels keep their identity from frame to frame (user 2026-10-15: Twin Resonance's labels jumped at every 0.4 s round): the same label (part group + dimension, numbered when several copies show at once)
-  // prefers the edge and the nudge it had, and glides to its new place (about 60 ms) instead of jumping.
-  const mem = reachTagMem.get(cv) || (reachTagMem.set(cv, new Map()), reachTagMem.get(cv)), nowMs = performance.now(), seen = {}, keep = new Map();
+  // prefers the edge and the nudge it had (no gliding: the hits switch instantly, so the labels must too).
+  const mem = reachTagMem.get(cv) || (reachTagMem.set(cv, new Map()), reachTagMem.get(cv)), seen = {}, keep = new Map();
   tags.sort((a, b) => b.alpha - a.alpha);   // the most visible copy of a label owns its identity and claims its place first; a fading copy neither blocks nor pushes anything
   for (const t of tags){ const n = seen[t.key] = (seen[t.key] || 0) + 1; t.key += "#" + n; }
   const placed = [], clash = (x, y, w) => placed.some(r => x - w / 2 < r.x + r.w / 2 && x + w / 2 > r.x - r.w / 2 && y - 8 < r.y + 8 && y + 8 > r.y - 8);
@@ -11406,12 +11406,8 @@ function drawReach(cv, items, st, model, scene, seqT){
       nudge = tries.find(d => !(clash(pick.mx, pick.my + d, w) && !faint)); if (nudge === undefined) nudge = 8 * 17;
       my = pick.my + nudge;
     }
-    let mx = pick.mx, pa = pick.pa, pb = pick.pb;
-    if (m && nowMs - m.t < 300){   // glide from where it was drawn last frame
-      const k = 1 - Math.exp(-(nowMs - m.t) / 60), lerp = (x, y) => x + (y - x) * k;
-      mx = lerp(m.mx, mx); my = lerp(m.my, my); pa = [lerp(m.pa[0], pa[0]), lerp(m.pa[1], pa[1])]; pb = [lerp(m.pb[0], pb[0]), lerp(m.pb[1], pb[1])];
-    }
-    keep.set(t.key, { ei: pick.ei, nudge, mx, my, pa, pb, t: nowMs });
+    const mx = pick.mx, pa = pick.pa, pb = pick.pb;
+    keep.set(t.key, { ei: pick.ei, nudge });
     if (!faint) placed.push({ x: mx, y: my, w });
     ctx.globalAlpha = t.alpha * 0.95; ctx.strokeStyle = t.col; ctx.lineWidth = 2.6; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
@@ -29794,6 +29790,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T06:00:48.991Z","fix(bible): range popup plays multi-hit skills with the next hit replacing the previous one instantly (no fade) and the dimension labels no longer glide, so two hits never share the screen"],
     ["2026-10-15T05:00:17.178Z","fix(bible): range popup dimension labels no longer jump between hits (each label keeps its edge and nudge and glides to its new place, the most visible copy owns it, a fading copy neither blocks nor pushes others)"],
     ["2026-10-15T04:54:42.332Z","fix(bible): range popup shows Boldas 1 s after the opening camera move starts instead of when it ends"],
     ["2026-10-15T04:51:40.226Z","fix(bible): range popup keeps Boldas hidden during the opening camera move (the close-up caught a glimpse of him), he appears when the move ends"],
