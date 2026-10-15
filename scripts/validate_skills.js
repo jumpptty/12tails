@@ -3890,6 +3890,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       }
       const SUMMON = { LightPanther: [1499, 1648], LightLeopard: [1526, 1652], LightGolem: [1403, 2440] };   // single-prefab summon meshes (Rabbit Mercenaries): Panther_tri / Leopard / LightGolem skinned meshes, no extras
       if (SUMMON[m[1]] && (body.nv !== SUMMON[m[1]][0] || body.nt !== SUMMON[m[1]][1] || extras.length)) bad("model " + m[1] + ": " + body.nv + " verts / " + body.nt + " tris / " + extras.length + " extras, expected " + SUMMON[m[1]].join(" / ") + " and none");
+      if (m[1] === "Chameleon") {
+        // armors/Chameleon_standard_tri 1783 / 1923; extras = starting goggle (58 / 66, Goggle bone Euler(-90,0,0)), standardBow (196 / 123, mount_Hand_L), standardArrow (38 / 32, mount_Hand_R)
+        if (body.nv !== 1783 || body.nt !== 1923) bad("model Chameleon: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Chameleon_standard_tri) has 1783 / 1923");
+        if (extras.length !== 3 || extras[0].nv !== 58 || extras[0].nt !== 66 || extras[1].nv !== 196 || extras[1].nt !== 123 || extras[2].nv !== 38 || extras[2].nt !== 32) bad("model Chameleon: extras should be goggle 58 / 66, bow 196 / 123, arrow 38 / 32, got " + JSON.stringify(extras));
+      }
       if (m[1] === "Boldas") {
         // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
         if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");
