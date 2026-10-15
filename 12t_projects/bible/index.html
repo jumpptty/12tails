@@ -11503,7 +11503,9 @@ function openReachPopup(skill, rank){
   const model = reachModel(skill.class);
   const scn = reachScene("M108");   // the mission map behind her (user 2026-10-14); scnOn: the scene is shown (always from start point 1)
   let scnOn = false;
-  const sceneNow = () => { if (scnOn && scn && scn.ready){ const b = reachSceneParts(scn), bo = reachBoldas(b.enemy, redraw); return bo ? { parts: b.parts.concat(bo), enemy: b.enemy, boldas: true } : b; } const fb = reachBoldas(REACH_BOLDAS_FLAT, redraw, true); return fb ? { parts: fb, extraOnly: true, gridTo: REACH_BOLDAS_FLAT[2] + 6 } : null; };   // scene off: Boldas still stands on the plain plane, the grid runs 6 m past him
+  const sceneNow = () => { const b0 = scnOn && scn && scn.ready ? reachSceneParts(scn) : null, bo = reachBoldas(b0 ? b0.enemy : REACH_BOLDAS_FLAT, redraw, !b0), show = bo && !introing;   // Boldas stays hidden during the opening camera move (user 2026-10-15: the close-up caught a glimpse of him); his model loads meanwhile
+    if (b0) return show ? { parts: b0.parts.concat(bo), enemy: b0.enemy, boldas: true } : b0;
+    return show ? { parts: bo, extraOnly: true, gridTo: REACH_BOLDAS_FLAT[2] + 6 } : null; };   // scene off: he still stands on the plain plane, the grid runs 6 m past him
   const pop = document.createElement("div");
   pop.className = "sk-reach-pop";
   const legend = () => parts.map((p, k) => p.sn > 1 && p.si > 0 ? "" : `<span><i style="background:${REACH_COLORS[(p.cg !== undefined ? p.cg : k) % REACH_COLORS.length]}"></i>${reachPartLabel(p)}${p.sn > 1 ? " · " + p.sn + " ครั้ง" : ""}</span>`).join("");
@@ -29774,6 +29776,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T04:51:40.226Z","fix(bible): range popup keeps Boldas hidden during the opening camera move (the close-up caught a glimpse of him), he appears when the move ends"],
     ["2026-10-15T04:14:35.272Z","feat(bible): range popup has a replay button for the hit-by-hit animation, and switching a toggle no longer replays it (it jumps to the final picture so reaches can be compared)"],
     ["2026-10-15T04:09:04.351Z","fix(bible): range popup Enlarge toggle uses the game status icon for Enlarge instead of the Miracle Blend skill icon"],
     ["2026-10-15T04:04:26.387Z","fix(panda): range preview adds the dash and hit timing to Three Steps, Rushing Falcon, Pummel, Tower Rush, Tiger Toss, Wind & Cloud and Rain & Storm, Wolf Cross Break too (these cards had static boxes)"],
