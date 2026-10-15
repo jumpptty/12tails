@@ -28238,8 +28238,6 @@ const TOOLS = [
   },
   {
     id: "skill-simulator",
-    badge: "กำลังพัฒนา ห้ามใช้จริง",
-    badgeRed: true,
     art: ["skill:rabbit_millionaire", "skill:rabbit_skillBargain"],
     title: "ไกด์แต่ละอาชีพ",
     shortTitle: "ไกด์แต่ละอาชีพ",
@@ -29736,7 +29734,6 @@ function mountSkillSimulator(root, options = {}){
 
   root.innerHTML = `
     <div class="rsim">
-      <div class="rsim-wip">กำลังพัฒนา ห้ามใช้จริง</div>
       <div class="rsim-bar">
         <button type="button" class="cls-picker-btn rsim-pick" data-act="server" aria-label="เลือกเซิร์ฟเวอร์">
           <img class="cls-picker-thumb" data-role="srvThumb" src="" alt="">
@@ -30659,6 +30656,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T17:44:52.449Z","fix(bible): class guides drop the red กำลังพัฒนา ห้ามใช้จริง chip (in the tool and on the hub tile)"],
     ["2026-10-15T17:42:21.913Z","fix(bible): the guide editor's คัดลอกโค้ดไกด์ button uses the same copy icon as the reader's"],
     ["2026-10-15T17:39:29.395Z","fix(bible): class guide editor is tidier: no highlight or build help lines, no undo buttons (Ctrl+Z still undoes), import is a proper button, ส่งออกไกด์ becomes คัดลอกโค้ดไกด์"],
     ["2026-10-15T17:29:26.373Z","feat(bible): class guide codes are about half as long again (format 2, TG2.: compact binary, Thai one byte per character); format 1 codes still import"],
