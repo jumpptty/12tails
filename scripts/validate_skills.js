@@ -3570,11 +3570,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   const REACH_DIM = { sphere: ["r"], cylinder: ["r", "h"], box: ["w", "l", "h"], cone: ["r", "angle"], sector: ["r", "angle", "h"], ring: ["r"], tube: ["r", "l"], line: ["l"], self: [] };
   const REACH_DESC_RE = /รัศมี \*\*|ทรงกลมรัศมี|กว้าง \*\*/;
   const bad = (m) => { console.error(`[REACH ERROR] ${m}`); errorCount++; };
-  let checkedReach = 0, reachBacklog = 0;
+  let checkedReach = 0, reachBacklog = 0; const reachBacklogIds = [];
   for (const sk of SKILLS) {
     const maxRank = sk.maxRank || 1;
     const descAt = (r) => typeof sk.desc === "function" ? sk.desc(r) : String(sk.desc || "");
-    if (!sk.reach) { if (REACH_DESC_RE.test(descAt(maxRank))) reachBacklog++; continue; }
+    if (!sk.reach) { if (REACH_DESC_RE.test(descAt(maxRank))){ reachBacklog++; reachBacklogIds.push(sk.id); } continue; }
     for (let r = 1; r <= maxRank; r++) {
       let parts;
       try { parts = sandbox._reachNormalize(sk.reach, r); } catch (e) { bad(`${sk.id} rank ${r}: ${e.message}`); continue; }
@@ -3873,6 +3873,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 2964 || body.nt !== 2165) bad("model Bison: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bison_standard_tri) has 2964 / 2165");
         if (extras.length !== 1 || extras[0].nv !== 292 || extras[0].nt !== 172) bad("model Bison: the extra should be the standard axe (292 / 172), got " + JSON.stringify(extras));
       }
+      if (m[1] === "Sheep") {
+        // armors/Sheep_standard_tri 2484 / 1888 (no hat); extra = standardBook (75 / 56) in mount_Hand_L
+        if (body.nv !== 2484 || body.nt !== 1888) bad("model Sheep: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Sheep_standard_tri) has 2484 / 1888");
+        if (extras.length !== 1 || extras[0].nv !== 75 || extras[0].nt !== 56) bad("model Sheep: the extra should be the standard book (75 / 56), got " + JSON.stringify(extras));
+      }
       if (m[1] === "Boldas") {
         // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
         if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");
@@ -3925,7 +3930,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     }
     if (!scenes) bad("no REACH_SCENES entries found");
   }
-  if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.`);
+  if (reachBacklog) console.log(`[REACH BACKLOG] ${reachBacklog} cards still state their reach in the desc.` + (process.argv.includes("--list-reach-backlog") ? " " + reachBacklogIds.join(", ") : ""));
   console.log(`Verified ${checkedReach} reach parts.`);
 }
 // Popup lag guard (user 2026-10-14): a full-viewport backdrop-filter re-blurs the whole page behind it every frame while the popup animates in,
