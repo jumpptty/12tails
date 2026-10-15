@@ -11650,7 +11650,7 @@ function openReachPopup(skill, rank){
   document.body.appendChild(pop);
   const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
   const msNow = () => skill.reachModel ? 1 : reachBodyScale(over, skill.class);   // the game scales the whole character by the same factor as rangeMod (plus the Whale body size, Titan Form's extra 0.2)
-  const home = () => ({ ms: msNow(), yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(8, Math.min(60, 110 / Math.max(2.5, ...parts.filter(p => !p.noZoom).map(reachSize)))), t: [0, 0, 0], tt: [0, 0, 0] });
+  const home = () => ({ ms: msNow(), yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(parts.some(p => p.fit) ? 3 : 8, Math.min(60, 110 / Math.max(2.5, ...parts.filter(p => !p.noZoom).map(p => Math.max(reachSize(p), p.fit || 0))))), t: [0, 0, 0], tt: [0, 0, 0] });   // fit: metres a chain of repeated parts reaches, so the default view frames all of it (the usual zoom never goes below 8)
   let st = home();
   let drawQueued = 0;
   const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model, sceneNow(), seqArg()); };
@@ -14966,7 +14966,7 @@ const SKILLS = [
     },
     revisedArtExempt: false,
     desc: "สละ Phoenix 4 ที่เรียกอยู่ แปลงร่างเป็นลูกศรเพลิงพุ่งทะลวงเป็นแนวไปข้างหน้า ด้วยพลัง TAL ของลิงเอง ศัตรูที่โดนจะติดสถานะเผาไหม้ และมีโอกาสตามค่า LCK ของลิงเองที่จะเรียก Phoenix 4 กลับมาทันทีหลังจบท่า",
-    compatSkills: ["monkey_phoenix", "monkey_fireSoul"], reach:() => [{ shape: "cylinder", r: 3.5, h: 3, z0: 2, anchor: "self", steps: Array.from({ length: 12 }, (_, i) => 3 * i), label: "วงกลม 12 วง ห่างกัน 3 m ตามแนวไปข้างหน้า (โดนพร้อมกันทั้งหมด)", src: "Monkey.cs:28161-28260 (FindAreaTarget(pos + (3i + 2) × dir, 3.5, 3), i < 12)" }]
+    compatSkills: ["monkey_phoenix", "monkey_fireSoul"], reach:() => [{ shape: "cylinder", r: 3.5, h: 3, z0: 2, fit: 38.5, anchor: "self", steps: Array.from({ length: 12 }, (_, i) => 3 * i), label: "วงกลม 12 วง ห่างกัน 3 m ตามแนวไปข้างหน้า (โดนพร้อมกันทั้งหมด)", src: "Monkey.cs:28161-28260 (FindAreaTarget(pos + (3i + 2) × dir, 3.5, 3), i < 12)" }]
   },
 
   {
@@ -15085,7 +15085,7 @@ const SKILLS = [
     durWrapped: true,
     status: { name: "runicFlame", sLv: () => 1, class: "Buff, Magical" },
     revisedArtExempt: false,
-    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งเปลวไฟตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ทำดาเมจใส่ศัตรูที่สัมผัส ตัวละ **1** ครั้งต่อชิ้น<br>__ใช้แล้วยกเลิก **Runic Sand**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, yBand: [0, 1], z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicFlame.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
+    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งเปลวไฟตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ทำดาเมจใส่ศัตรูที่สัมผัส ตัวละ **1** ครั้งต่อชิ้น<br>__ใช้แล้วยกเลิก **Runic Sand**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, yBand: [0, 1], fit: 7, z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicFlame.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
   },
 
   {
@@ -15410,7 +15410,7 @@ const SKILLS = [
       { name: "groundLock", sLv: () => 1, class: "Debuff, Magical, Lock" }
     ],
     revisedArtExempt: false,
-    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งมือทรายตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ศัตรูที่สัมผัสและยังไม่ติด [groundLock] จะติด [groundLock1] นาน **2 วินาที** (ฐาน แข่งค่า CHA)<br>__ใช้แล้วยกเลิก **Runic Flame**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, yBand: [0, 1], z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicSand.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
+    desc:"ใช้ SP ทั้งหมดที่มี วิ่งทิ้งมือทรายตามทาง **1** ชิ้นทุกครั้งที่ห่างจากชิ้นก่อน **1.58m** ได้นาน **1 วินาที** ต่อทุก **5 SP** ที่ใช้<br>• แต่ละชิ้นอยู่ได้ตามระยะเวลาในชิป ศัตรูที่สัมผัสและยังไม่ติด [groundLock] จะติด [groundLock1] นาน **2 วินาที** (ฐาน แข่งค่า CHA)<br>__ใช้แล้วยกเลิก **Runic Flame**__", reach:() => [{ shape: "box", w: 0.3, l: 1.2, h: 1, yBand: [0, 1], fit: 7, z0: -1.4, anchor: "self", steps: [0, -1.58, -3.16, -4.74], label: "ชิ้นที่ทิ้งไว้ทุก 1.58 m ตามทางวิ่ง (กล่องจุดสัมผัส 0.3 × 1.2 × 1 m วางห่างหลังจุดวาง; ภาพนี้ 4 ชิ้นล่าสุด)", src: "monkey/effects/runicSand.prefab (BoxCollider size 0.3, 1, 1.2 center 0, 0.5, -0.8), Monkey.cs:12431" }]
   },
 
   {
@@ -29934,6 +29934,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T12:49:13.580Z","fix(bible): range preview default zoom frames the whole Blazing Arrow chain and the runic trail (new fit part key)"],
     ["2026-10-15T12:37:51.112Z","fix(bible): range preview draws trigger-collider boxes (Monkey runic pieces, Rabbit potions) over their exact 0-1 m height (new yBand part key), and its height labels follow it"],
     ["2026-10-15T12:31:31.780Z","fix(bible): range preview draws the 5-bottle Mix (Extra Potion) and 4-bottle Miracle Blend (Miracle Drop) potion layouts with toggles"],
     ["2026-10-15T12:29:20.376Z","fix(bible): range preview draws the Bat Combo bolt, the Monkey Runic Flame / Runic Sand pieces and the Rabbit potions at their real prefab sizes instead of ?"],
