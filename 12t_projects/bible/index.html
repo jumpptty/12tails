@@ -10810,12 +10810,16 @@ function reachSeqPlan(parts){
   const ats = [...new Set(parts.filter(p => typeof p.at === "number").map(p => p.at))].sort((a, b) => a - b);
   if (ats.length < 2) return null;
   const T = ats.map(a => +(a - ats[0]).toFixed(3)), hold = 0.7;
-  return { at: ats, T, tEnd: T[T.length - 1] + hold, end: T[T.length - 1] + hold + 0.05 };
+  return { at: ats, T, tEnd: T[T.length - 1] + hold, end: T[T.length - 1] + hold + 0.5 };   // 0.45 s of fade-in for the final picture
 }
-function reachSeqVis(p, tau, plan){   // instant: the hit whose time was passed last is the only one shown (user 2026-10-15), then the final picture
+function reachSeqVis(p, tau, plan){   // instant: the hit whose time was passed last is the only one shown (user 2026-10-15), then the final picture fades in
   if (typeof p.at !== "number" || !plan) return 1;
   if (tau < 0) return 0;
-  if (tau >= plan.tEnd) return p.final === false ? 0 : 1;
+  if (tau >= plan.tEnd){   // the final picture: the other hits fade in (subtle, 0.45 s), the last hit just stays
+    if (p.final === false) return 0;
+    if (plan.at.indexOf(p.at) === plan.T.length - 1) return 1;
+    const x = Math.min(1, (tau - plan.tEnd) / 0.45); return x * x * (3 - 2 * x);
+  }
   let cur = 0; for (let j = 0; j < plan.T.length; j++) if (plan.T[j] <= tau) cur = j;
   return plan.at[cur] === p.at ? 1 : 0;
 }
@@ -29796,6 +29800,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T06:08:33.657Z","feat(bible): range popup fades the other hits back in (subtle, 0.45 s) when the hit-by-hit playback ends"],
     ["2026-10-15T06:03:22.545Z","feat(bible): range popup gives every hit of a multi-hit skill its own colour (10-colour palette) and the legend shows a chip per hit"],
     ["2026-10-15T06:00:48.991Z","fix(bible): range popup plays multi-hit skills with the next hit replacing the previous one instantly (no fade) and the dimension labels no longer glide, so two hits never share the screen"],
     ["2026-10-15T05:00:17.178Z","fix(bible): range popup dimension labels no longer jump between hits (each label keeps its edge and nudge and glides to its new place, the most visible copy owns it, a fading copy neither blocks nor pushes others)"],
