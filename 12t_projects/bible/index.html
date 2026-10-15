@@ -11007,12 +11007,20 @@ function reachPartLabel(p){
 // Decoded once per class: positions (m), texture pixel coords, triangles, face normals, the loaded skin.
 const reachModelCache = {};
 // Boldas on start point 2, facing the caster: his model turned half a turn about the vertical axis and moved to the marker; built once the model's skin has loaded
-let reachBoldasBake = null;
-function reachBoldas(enemy, onready){
+const reachBoldasBake = {}, REACH_BOLDAS_FLAT = [0, 0, 21.54];   // REACH_BOLDAS_FLAT = start point 2 of M108 in popup space on flat ground (the scene's own point is [0, -0.09, 21.54])
+function reachBoldas(enemy, onready, flat){
   const m = reachModel("Boldas");
   if (!m) return null;
-  if (!m.ready){ if (onready && !m.onready) m.onready = onready; return null; }
-  return reachBoldasBake || (reachBoldasBake = m.parts.map(p => { const pos = p.pos.map(q => [enemy[0] - q[0], enemy[1] + q[1], enemy[2] - q[2]]); return { pos, tris: reachTris(pos, p.t), tu: p.tu, tv: p.tv, tex: p.tex, fixed: true }; }));
+  if (!m.ready){ if (onready) m.onready = onready; return null; }
+  const key = enemy.join() + (flat ? "f" : "");
+  return reachBoldasBake[key] || (reachBoldasBake[key] = m.parts.map(p => {
+    let pos = p.pos.map(q => [enemy[0] - q[0], enemy[1] + q[1], enemy[2] - q[2]]), t = Array.from(p.t);
+    if (flat){   // on the plain ground plane his planted sword point would show through it: drop the triangles under the plane, flatten the rest onto it
+      const keep = []; for (let i = 0; i < t.length; i += 3) if ((pos[t[i]][1] + pos[t[i + 1]][1] + pos[t[i + 2]][1]) / 3 >= enemy[1]) keep.push(t[i], t[i + 1], t[i + 2]);
+      t = keep; pos = pos.map(q => q[1] < enemy[1] ? [q[0], enemy[1], q[2]] : q);
+    }
+    return { pos, tris: reachTris(pos, t), tu: p.tu, tv: p.tv, tex: p.tex, fixed: true };
+  }));
 }
 function reachModel(cls){
   const m = REACH_MODELS[cls];
@@ -11288,7 +11296,7 @@ function drawReach(cv, items, st, model, scene){
     }
   });
   // the caster: the class model (rasterised below, between the boxes behind it and in front of it) or a wireframe stand-in
-  const modelOn = !!(model && model.ready), sceneParts = scene ? scene.parts : null;
+  const modelOn = !!(model && model.ready), sceneParts = scene && !scene.extraOnly ? scene.parts : null, extraParts = scene && scene.extraOnly ? scene.parts : null;   // extraOnly: just Boldas on the plain ground plane (the scene is off)
   if (!modelOn){
     const man = reachMesh({ shape: "cylinder", r: 0.3, h: 1.2, anchor: "self" });
     for (const [i, j] of man.edges){ const s2 = reachClipSeg(man.verts[i], man.verts[j], true); if (s2){ const a2 = P(s2[0]), b2 = P(s2[1]); above.push({ kind: "edge", pts: [a2, b2], d: (a2[2] + b2[2]) / 2, col: "#ffffff", alpha: 0.8 }); } }
@@ -11308,19 +11316,20 @@ function drawReach(cv, items, st, model, scene){
     ctx.globalAlpha = 1; ctx.setLineDash([]);
   };
   const ground = () => {
-    const R = 10, gx = Math.round(st.t ? st.t[0] : 0), gz = Math.round(st.t ? st.t[1] : 0), c = [[gx - R, 0, gz - R], [gx + R, 0, gz - R], [gx + R, 0, gz + R], [gx - R, 0, gz + R]].map(P);
+    const R = 10, gx = Math.round(st.t ? st.t[0] : 0), gz = Math.round(st.t ? st.t[1] : 0), zTo = scene && scene.gridTo ? Math.max(gz + R, scene.gridTo) : gz + R;   // the 1 m grid runs a little past Boldas
+    const c = [[gx - R, 0, gz - R], [gx + R, 0, gz - R], [gx + R, 0, zTo], [gx - R, 0, zTo]].map(P);
     ctx.fillStyle = camAbove ? "rgba(24,30,26,.62)" : "rgba(24,30,26,.45)";
     ctx.beginPath(); c.forEach((q, n) => n ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.10)"; ctx.lineWidth = 1;
-    for (let i = -R; i <= R; i++) for (const [a, b] of [[[gx + i, 0, gz - R], [gx + i, 0, gz + R]], [[gx - R, 0, gz + i], [gx + R, 0, gz + i]]]){
-      const pa = P(a), pb = P(b); ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
-    }
+    const seg = (a2, b2) => { const pa = P(a2), pb = P(b2); ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke(); };
+    for (let i = -R; i <= R; i++) seg([gx + i, 0, gz - R], [gx + i, 0, zTo]);
+    for (let z = gz - R; z <= zTo; z++) seg([gx - R, 0, z], [gx + R, 0, z]);
   };
   // Painter's order across the ground: the far side of the ground first, so the part of a hit box under the ground shows through it.
   // A box face is drawn before the model when it is farther from the camera than the caster's centre, after it when nearer.
   above.sort((a, b) => a.d - b.d);
   const md = modelOn ? P([0, model.top * 0.5 * (st.ms || 1), 0])[2] : -Infinity, behind = above.filter(it => it.d <= md), front = above.filter(it => it.d > md);
-  const drawModel = (dimK) => { const all = (modelOn ? model.parts : []).concat(sceneParts || []); if (all.length){ ctx.globalAlpha = 1; ctx.setLineDash([]); reachRender(ctx, { parts: all }, P, st, W, H, dpr, dimK); } };
+  const drawModel = (dimK) => { const all = (modelOn ? model.parts : []).concat(sceneParts || []).concat(extraParts || []); if (all.length){ ctx.globalAlpha = 1; ctx.setLineDash([]); reachRender(ctx, { parts: all }, P, st, W, H, dpr, dimK); } };
   if (sceneParts){   // the scene's own terrain is the ground: it and the caster first, every box over them (a box is translucent)
     if (camAbove){ drawModel(1); paint(below, true); paint(above, false); }
     else { drawModel(0.6); paint(above, true); ground(); paint(below, false); }
@@ -11458,7 +11467,7 @@ function openReachPopup(skill, rank){
   const model = reachModel(skill.class);
   const scn = reachScene("M108");   // the mission map behind her (user 2026-10-14); scnOn: the scene is shown (always from start point 1)
   let scnOn = false;
-  const sceneNow = () => { if (!(scnOn && scn && scn.ready)) return null; const b = reachSceneParts(scn), bo = reachBoldas(b.enemy, redraw); return bo ? { parts: b.parts.concat(bo), enemy: b.enemy, boldas: true } : b; };
+  const sceneNow = () => { if (scnOn && scn && scn.ready){ const b = reachSceneParts(scn), bo = reachBoldas(b.enemy, redraw); return bo ? { parts: b.parts.concat(bo), enemy: b.enemy, boldas: true } : b; } const fb = reachBoldas(REACH_BOLDAS_FLAT, redraw, true); return fb ? { parts: fb, extraOnly: true, gridTo: REACH_BOLDAS_FLAT[2] + 6 } : null; };   // scene off: Boldas still stands on the plain plane, the grid runs 6 m past him
   const pop = document.createElement("div");
   pop.className = "sk-reach-pop";
   const legend = () => parts.map((p, k) => `<span><i style="background:${REACH_COLORS[(p.cg !== undefined ? p.cg : k) % REACH_COLORS.length]}"></i>${reachPartLabel(p)}</span>`).join("");
@@ -29706,6 +29715,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T03:31:25.379Z","feat(bible): range popup shows Boldas in both views (also on the plain ground plane) and the 1 m grid runs 6 m past him"],
     ["2026-10-15T03:28:47.197Z","feat(bible): range popup scene spawns Boldas with his sword on start point 2 (real skinned model, idle pose) and the scene toggle icon is a Boldas portrait"],
     ["2026-10-15T03:21:10.834Z","feat(whale): range popup Star Spear is a toggle (off by default) and the Super Size / Mega Size toggles are gone (they only resized the body, not rangeMod)"],
     ["2026-10-15T03:13:50.407Z","feat(bible): range preview chains normal attack combo stages (each stage starts where the previous one stopped, Wolf, Cat, Panda, Whale)"],
