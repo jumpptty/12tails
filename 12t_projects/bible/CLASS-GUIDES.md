@@ -26,6 +26,8 @@ const CLASS_GUIDES = [
 
 Paste the object itself, not a quoted JSON string, and do not include an outer array from another source. The guide's skill icons already live in the HTML; no image files need to accompany submissions. The tool remains a single offline HTML file.
 
+**Every embedded guide needs a short stable `"id"`** (lowercase a-z, 0-9 and `-`, at most 40 characters, unique), written first in the object, e.g. `{"id":"penguin-pve-pure","format":"12t-class-guide",...}`. It is not part of the portable format (the importer ignores it); it makes the link `index.html#skill-simulator/<id>`, which opens that guide straight in the reader view, and the reader has a **คัดลอกลิงก์ไกด์นี้** button that copies it for Discord. Never change an id after it was shared; the validator fails on a missing, malformed or duplicate id.
+
 Only real submitted guides belong in this array. The list contains user-submitted guides; do not invent experts or builds. Valid guides appear in the community list with title, class, server, author and patch. Invalid entries are excluded and the page reports how many could not open. Imported author codes never add entries to this array automatically.
 
 Before publishing, run `node scripts/validate_skills.js`. Every embedded entry must pass the schema and existing simulator allocation rules. Changes to `index.html` still need its usual backup/checkpoint and matching changelog entry.
