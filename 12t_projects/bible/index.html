@@ -11503,7 +11503,7 @@ function openReachPopup(skill, rank){
   const model = reachModel(skill.class);
   const scn = reachScene("M108");   // the mission map behind her (user 2026-10-14); scnOn: the scene is shown (always from start point 1)
   let scnOn = false;
-  const sceneNow = () => { const b0 = scnOn && scn && scn.ready ? reachSceneParts(scn) : null, bo = reachBoldas(b0 ? b0.enemy : REACH_BOLDAS_FLAT, redraw, !b0), show = bo && !introing;   // Boldas stays hidden during the opening camera move (user 2026-10-15: the close-up caught a glimpse of him); his model loads meanwhile
+  const sceneNow = () => { const b0 = scnOn && scn && scn.ready ? reachSceneParts(scn) : null, bo = reachBoldas(b0 ? b0.enemy : REACH_BOLDAS_FLAT, redraw, !b0), show = bo && (!introing || introAt >= 1000);   // Boldas stays hidden for the first second of the opening camera move (user 2026-10-15: the close-up caught a glimpse of him); his model loads meanwhile
     if (b0) return show ? { parts: b0.parts.concat(bo), enemy: b0.enemy, boldas: true } : b0;
     return show ? { parts: bo, extraOnly: true, gridTo: REACH_BOLDAS_FLAT[2] + 6 } : null; };   // scene off: he still stands on the plain plane, the grid runs 6 m past him
   const pop = document.createElement("div");
@@ -11694,7 +11694,7 @@ function openReachPopup(skill, rank){
     if (introRaf){ cancelAnimationFrame(introRaf); introRaf = 0; }
     if (introing){ introing = false; st = home(); items = parts.map(p => ({ part: p, alpha: 1 })); redraw(); startSeq(); }
   };
-  let introing = false, zoomK = 1;   // zoomK: the user's wheel / pinch zoom while the intro owns the camera
+  let introing = false, introAt = 0, zoomK = 1;   // zoomK: the user's wheel / pinch zoom while the intro owns the camera
   zoomBy = (f) => { if (introing) zoomK = Math.max(0.2, Math.min(6, zoomK * f)); else st.zoom = Math.max(6, Math.min(400, st.zoom * f)); };
   // slow drift (0.1 rad/s, a lap a minute) round the caster once the intro is over; any pointer, wheel, key or toggle input stops it
   let autoRaf = 0, autoT = 0;
@@ -11715,7 +11715,7 @@ function openReachPopup(skill, rank){
     let t0 = performance.now(), last = t0, driftYaw = 0;
     const frame = (now) => {
       if (!model.ready || (scnOn && scn && !scn.ready && !scn.failed)){ t0 = now; last = now; drawNow(); introRaf = requestAnimationFrame(frame); return; }
-      const t = now - t0, dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const t = now - t0, dt = Math.min(0.05, (now - last) / 1000); last = now; introAt = t;
       const o = eio(clamp01((t - HOLD) / ORBIT)), vd = DRIFT_V * (() => { const x = clamp01((t - DRIFT_AT) / DRIFT_RAMP); return x * x * (3 - 2 * x); })();
       driftYaw += vd * dt;
       st.yaw = lerp(close.yaw, end.yaw, o) + driftYaw; st.pitch = lerp(close.pitch, end.pitch, o);
@@ -29776,6 +29776,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T04:54:42.332Z","fix(bible): range popup shows Boldas 1 s after the opening camera move starts instead of when it ends"],
     ["2026-10-15T04:51:40.226Z","fix(bible): range popup keeps Boldas hidden during the opening camera move (the close-up caught a glimpse of him), he appears when the move ends"],
     ["2026-10-15T04:14:35.272Z","feat(bible): range popup has a replay button for the hit-by-hit animation, and switching a toggle no longer replays it (it jumps to the final picture so reaches can be compared)"],
     ["2026-10-15T04:09:04.351Z","fix(bible): range popup Enlarge toggle uses the game status icon for Enlarge instead of the Miracle Blend skill icon"],
