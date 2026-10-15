@@ -541,15 +541,15 @@ The Whale moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`Ch
 
 Not moving before their hit (speed 0, or the speed is set at the same instant as the hit): Charge Attack (`Whale.cs:19800`, `:19850`), Honor, Gobble Up, Whale Wave, Mal Storm, Call to Arm, Bubble Burst. **Not modelled:** Bowling Whale (a homing roll: `vMovement` is re-aimed at the target every frame and the speed eases toward `2 × distance`, `Whale.cs:36914-36940`, so the path depends on the target) and Grand Tide (a channel: speed 2 for the first second, then 3 while it lasts, a hit every second on a box 4 m behind to 3 m ahead of the Whale, `Whale.cs:37393`, `:37498`, `:37612`, `:37632`; its length depends on the player holding it and on MP / SP).
 
-### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+### Normal attack combo (hit times are seconds from the start of stage 1; stage k > 1 waits for its anchor, see the mechanics reference §4.8)
 
-| Stage | Legs (m/s × s) | Hit at (m) | Source |
-|---|---|---|---|
-| 1 | 4 × 0.2 | 0.8 | `Whale.cs:16075`, `:16444` |
-| 2 | 4 × 0.2, pause 0.1 s, 4 × 0.2 (two hits) | 0.8, 1.6 | `Whale.cs:16891`, `:17353`, `:17334`, `:17698` |
-| 3 | 4 × 0.2 | 0.8 | `Whale.cs:18146`, `:18509` |
+| Stage | Starts at | Own waits and movement (m/s × s) | Hit at (s) | Moved at the hit (m) | Source |
+|---|---|---|---|---|---|
+| 1 | 0 | wait 0.3, then 4 × 0.2 | 0.5 | 0.8 | `Whale.cs:16075`, `:16444` |
+| 2 | 0.8 | wait 0.2, 4 × 0.2, pause 0.1, 4 × 0.2 | 1.2, 1.5 | 0.8, 1.6 | `Whale.cs:16891`, `:17353`, `:17334`, `:17698`, `:17775` |
+| 3 | 1.8 | wait 0.3, then 4 × 0.2 | 2.3 | 0.8 | `Whale.cs:18146`, `:18509`, `:18589` |
 
-Stage totals: 0.8, 1.6. **Chained:** the range preview starts stage 2 at 0.8 m and stage 3 at 2.4 m (assumes the next input comes straight after each stage ends and the player does not move in between).
+Chained start offsets: stage 2 at 0.8, stage 3 at 2.4.
 
 ## Reach for the range preview (verified 2026-10-14)
 

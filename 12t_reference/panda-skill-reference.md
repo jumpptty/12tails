@@ -914,19 +914,17 @@ The Panda moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`Ch
 
 The warp (Wind Walker, target > 6 m) sets `position = mPos + tDir` in the second state (`Panda.cs:34198`, `:35015`); the preview draws from the position after the warp, i.e. it does not model the warp. Not moving before their hits: Rising Vortex, Heaven Palm (area at the target position `tPos`, `Panda.cs:40077`), Water Crane, Fuujin Ken, Raijin Ken, Charge Attack.
 
-### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+### Normal attack combo (hit times are seconds from the start of stage 1; stage k > 1 waits for its anchor, see the mechanics reference §4.8)
 
-| Stage | Legs (m/s × s) | Hit at (m) | Source |
-|---|---|---|---|
-| 1 | 5 set at the first hit, second hit 0.2 s later | 0, 1.0 | `Panda.cs:15254`, `:15344`, `:15357`, `:15539`, `:15552` |
-| 2 | 4, hits at 0.2 s and 0.4 s | 0.8, 1.6 | `Panda.cs:16025`, `:16228`, `:16418` |
-| 3 | 5 from t = 0, hits at 0.1, 0.3, 0.5 s | 0.5, 1.5, 2.5 | `Panda.cs:16908`, `:17015`, `:17154`, `:17293` |
-| 4 | 10 × 0.2 | 2.0 | `Panda.cs:17795`, `:17882` |
-| 5 | −4 set at the hit; Aura Blast circle 0.2 s later | 0 (box), −0.8 (Aura Blast r 2) | `Panda.cs:18391`, `:18508`, `:18629` |
+| Stage | Starts at | Own waits and movement (m/s × s) | Hit at (s) | Moved at the hit (m) | Source |
+|---|---|---|---|---|---|
+| 1 | 0 | wait 0.1, then 5 (hits at 0.1 and 0.3, stops at 0.5) | 0.1, 0.3 | 0, 1.0 | `Panda.cs:15254`, `:15344`, `:15357`, `:15539`, `:15552` |
+| 2 | 0.6 | 4 × 0.6, then −2 × 0.3 | 0.8, 1.0 | 0.8, 1.6 | `Panda.cs:16025`, `:16228`, `:16418`, `:16621` |
+| 3 | 1.5 | wait 0.1, then 5 × 0.7 | 1.7, 1.9, 2.1 | 0.5, 1.5, 2.5 | `Panda.cs:16908`, `:17015`, `:17154`, `:17293`, `:17501` |
+| 4 | 2.4 | wait 0.3, then 10 × 0.2 | 2.9 | 2.0 | `Panda.cs:17795`, `:17882`, `:18064` |
+| 5 | 3.0 | wait 0.3, then −4 × 0.2 | 3.3 (box), 3.5 (Aura Blast circle) | 0, −0.8 | `Panda.cs:18391`, `:18508`, `:18629`, `:18802` |
 
-Stage totals: 2.0 (5 × 0.4), 1.8 (4 × 0.6, then −2 × 0.3 at `Panda.cs:16525`), 3.5 (5 × 0.7), 2.0. **Chained:** the range preview starts stage 2 at 2.0 m, stage 3 at 3.8 m, stage 4 at 7.3 m, stage 5 at 9.3 m (assumes the next input comes straight after each stage ends and the player does not move in between).
-
-Charge Attack (Aura Field sphere) does not move (speed 0, `Panda.cs:19339`).
+Stage totals: 2.0, 1.8, 3.5, 2.0. Chained start offsets: stage 2 at 2.0, stage 3 at 3.8, stage 4 at 7.3, stage 5 at 9.3. Charge Attack (Aura Field sphere) does not move (speed 0, `Panda.cs:19339`).
 
 ## Open questions & card mismatches (2026-10-01)
 

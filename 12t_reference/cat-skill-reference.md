@@ -487,16 +487,16 @@ The Cat moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`Char
 
 No movement before the hits (speed 0): Finishing Blow (it jumps back −8 × 0.2 only after its fourth hit, `Cat.cs:38995`), Delta Strike. Moon Storm's hit positions are fixed at `mPos + i × 1.5 m` and `mPos + 12 m` (the cast point, not the Cat; `Cat.cs:36415`, `:36521`).
 
-### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+### Normal attack combo (hit times are seconds from the start of stage 1; stage k > 1 waits for its anchor, see the mechanics reference §4.8)
 
-| Stage | Legs (m/s × s) | Hit at (m) | Source |
-|---|---|---|---|
-| 1 | 3 × 0.2, then 9 × 0.2 | 2.4 | `Cat.cs:16866`, `:16361`, `:16520` |
-| 2 | 7 × 0.3 | 2.1 | `Cat.cs:17186`, `:17318` |
-| 3 | 4, hits every 0.2 s (two hits) | 0.8, 1.6 | `Cat.cs:17896`, `:18001`, `:18244` |
-| 4 | 6, hits every 0.2 s (two hits) | 1.2, 2.4 | `Cat.cs:18867`, `:18972`, `:19213` |
+| Stage | Starts at | Own waits and movement (m/s × s) | Hit at (s) | Moved at the hit (m) | Source |
+|---|---|---|---|---|---|
+| 1 | 0 | 3 × 0.2, then 9 × 0.2 | 0.4 | 2.4 | `Cat.cs:16866`, `:16361`, `:16520` |
+| 2 | 0.6 | wait 0.1, then 7 × 0.3 | 1.0 | 2.1 | `Cat.cs:17186`, `:17318`, `:17609` |
+| 3 | 1.2 | wait 0.1, then 4 (hits every 0.2 s) | 1.5, 1.7 | 0.8, 1.6 | `Cat.cs:17896`, `:18001`, `:18244`, `:18538` |
+| 4 | 1.7 | wait 0.1, then 6 (hits every 0.2 s) | 2.0, 2.2 | 1.2, 2.4 | `Cat.cs:18867`, `:18972`, `:19213`, `:19511` |
 
-Stage totals: 2.4, 2.1, 1.6 (4 × 0.4). **Chained:** the range preview starts stage 2 at 2.4 m, stage 3 at 4.5 m, stage 4 at 6.1 m (assumes the next input comes straight after each stage ends and the player does not move in between).
+Chained start offsets: stage 2 at 2.4, stage 3 at 4.5, stage 4 at 6.1.
 
 ## Skill Tree Layout & Learn Requirements
 

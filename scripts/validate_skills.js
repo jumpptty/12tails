@@ -3734,7 +3734,10 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         g("Playback: round 1 fades in alone, round 2 replaces it, the last round stays", vis(0, 0) === 0 && vis(0, 0.2) === 1 && vis(1, 0.2) === 0 && vis(0, 0.6) === 0 && vis(1, 0.6) === 1 && vis(39, 15.9) === 1 && vis(38, 15.9) === 0, [vis(0, 0.2), vis(1, 0.6), vis(39, 15.9)]);
         g("Playback end: only the rounds marked final come back, together", vis(0, 17) === 1 && vis(9, 17) === 1 && vis(39, 17) === 1 && vis(5, 17) === 0 && c[5].final === false && c[9].final === true, [vis(0, 17), vis(5, 17)]); }
       c = P("wolf_bladeFang", 3); g("Blade Fang hit times 0.2 / 0.4 / 0.7 / 1.0 s", [0.2, 0.4, 0.7, 1].every((t, i) => Math.abs(c[i].at - t) < 1e-9), c.map(b => b.at));
-      c = P("wolf_nAttack", 3); g("Wolf Combo hit times chain the stages: 0.5, 0.97, 1.3, 1.44, 1.94 s", [0.5, 0.97, 1.3, 1.44, 1.94].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
+      c = P("wolf_nAttack", 3); g("Wolf Combo hit times follow the game schedule (stage 2 anchored at 0.8 s, 3 at 1.44 s, 4 at 1.97 s): 0.65, 1.28, 1.77, 2.27, 2.77 s", [0.65, 1.28, 1.77, 2.27, 2.77].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
+      c = P("cat_nAttack", 3); g("Cat Combo hit times: 0.4, 1.0 (stage 2 anchored at 0.6), 1.5 / 1.7 (1.2), 2.0 / 2.2 (1.7) s", [0.4, 1.0, 1.5, 1.7, 2.0, 2.2].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
+      c = P("panda_nAttack", 4); g("Panda Combo hit times: 0.1 / 0.3, 0.8 / 1.0 (0.6), 1.7 / 1.9 / 2.1 (1.5), 2.9 (2.4), 3.3 (3.0) s", [0.1, 0.3, 0.8, 1.0, 1.7, 1.9, 2.1, 2.9, 3.3].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
+      c = P("whale_nAttack", 2); g("Whale Combo hit times: 0.5, 1.2 / 1.5 (stage 2 anchored at 0.8), 2.3 (1.8) s", [0.5, 1.2, 1.5, 2.3].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
       c = P("penguin_arcticWind", 3, { deadlyFrost: 1 }); g("Arctic Wind: 8 hits, 0.2 s apart", c.length === 8 && Math.abs(c[7].at - 1.4) < 1e-9, c.map(b => b.at));
       c = P("wolf_feralAssault", 1); g("Feral Assault: boxes at 0 / 0.3 / 0.6 / 0.9 s, the ring at 1.2 s", [0, 0.3, 0.6, 0.9, 1.2].every((t, i) => Math.abs(c[i].at - t) < 1e-9), c.map(b => b.at));
       c = P("wolf_twinResonance", 1);

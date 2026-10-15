@@ -849,16 +849,16 @@ Blade Fang counts: `bladeFang_count` is 0 after the first hit, +1 at the start o
 
 **Twin Resonance** is a moving crescent, not a filled fan: 40 rounds, 0.4 s apart, each a 190° band 2 m thick from the fixed cast point, inner radius `1 + 0.8 × i`, outer `3 + 0.8 × i` (`Wolf.cs:37644`, `:37668`, `:37714`): 1-3 m at t = 0 to 32.2-34.2 m at t = 15.6 s.
 
-### Normal attack combo (movement before each hit; stage = one coroutine, speed set in a state runs to the next `Yield`)
+### Normal attack combo (hit times are seconds from the start of stage 1; stage k > 1 waits for its anchor, see the mechanics reference §4.8)
 
-| Stage | Legs (m/s × s) | Hit at (m) | Source |
-|---|---|---|---|
-| 1 | 6 × 0.5 | 3.0 | `Wolf.cs:14980`, `:15178` |
-| 2 | 4 × 0.32 | 1.28 | `Wolf.cs:15838`, `:16009` |
-| 3 | 4 × 0.33 | 1.32 | `Wolf.cs:16477`, `:16712` |
-| 4 | 4 from t = 0.16 s: first hit at t = 0.14 s, second at 0.64 s | 0.56, 2.56 | `Wolf.cs:17257`, `:17428`, `:17746` |
+| Stage | Starts at | Own waits and movement (m/s × s) | Hit at (s) | Moved at the hit (m) | Source |
+|---|---|---|---|---|---|
+| 1 | 0 | wait 0.15, then 6 × 0.5, then 0.5 × 0.15 until it stops at 0.8 | 0.65 | 3.0 (3.075 in all) | `Wolf.cs:14980`, `:15059`, `:15178` |
+| 2 | 0.8 | wait 0.16, then 4 × 0.32 | 1.28 | 1.28 | `Wolf.cs:15838`, `:16009`, `:16267` |
+| 3 | 1.44 | 4 × 0.33 | 1.77 | 1.32 | `Wolf.cs:16477`, `:16712`, `:16959` |
+| 4 | 1.97 | wait 0.16, then 4 until it stops at +0.8 | 2.27 (0.56 m), 2.77 (2.56 m) | 2.56 | `Wolf.cs:17257`, `:17428`, `:17746`, `:18024` |
 
-Stage totals (speed until it is 0 again): 3.075 (6 × 0.5, then 0.5 × 0.15, `Wolf.cs:15059`, `:15355`), 1.28, 1.32. **Chained:** the range preview starts stage 2 at 3.075 m, stage 3 at 4.355 m, stage 4 at 5.675 m from the cast point (each stage starts where the previous one stopped; assumes the next input comes straight after the stage ends and the player does not move in between).
+Chained start offsets (metres from the cast point): stage 2 at 3.075, stage 3 at 4.355, stage 4 at 5.675 (assumes the press is inside the window and the player does not move in between).
 
 ## Open questions & card mismatches (2026-10-01)
 
