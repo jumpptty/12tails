@@ -3888,6 +3888,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 2351 || body.nt !== 2398) bad("model Bat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bat_standard_tri) has 2351 / 2398");
         if (extras.length !== 1 || extras[0].nv !== 175 || extras[0].nt !== 98) bad("model Bat: the extra should be the standard wand (175 / 98), got " + JSON.stringify(extras));
       }
+      const SUMMON = { LightPanther: [1499, 1648], LightLeopard: [1526, 1652], LightGolem: [1403, 2440] };   // single-prefab summon meshes (Rabbit Mercenaries): Panther_tri / Leopard / LightGolem skinned meshes, no extras
+      if (SUMMON[m[1]] && (body.nv !== SUMMON[m[1]][0] || body.nt !== SUMMON[m[1]][1] || extras.length)) bad("model " + m[1] + ": " + body.nv + " verts / " + body.nt + " tris / " + extras.length + " extras, expected " + SUMMON[m[1]].join(" / ") + " and none");
       if (m[1] === "Boldas") {
         // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
         if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");
@@ -3900,6 +3902,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         else if (extras[0].minY < body.maxY - 0.6 || extras[0].maxY > body.maxY + 0.15) bad("model Cat: hair spans " + extras[0].minY + " to " + extras[0].maxY + " m, it should cover the head (body top " + body.maxY + " m)");
       }
     }
+    for (const sk of SKILLS) if (sk.reachModel && !new RegExp("REACH_MODELS\." + sk.reachModel + " = ").test(html)) bad(sk.id + ": reachModel " + sk.reachModel + " has no REACH_MODELS entry");
     if (!models) bad("no REACH_MODELS entries found");
   }
   // reach scenes (2026-10-14): the mission map behind the caster. Everything decodes, indices are in range, props stand on the terrain, both start points sit on it
