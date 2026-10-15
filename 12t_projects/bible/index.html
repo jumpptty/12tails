@@ -1733,6 +1733,7 @@
   .cg-page[data-mode="reader"] .cg-status{grid-column:1/-1;grid-row:3;min-height:0;margin:0}
   .cg-page[data-mode="reader"] .cg-status:empty{display:none}
   .cg-page[data-mode="reader"] [data-cg-act="returnAuthor"]{margin-top:18px}
+  .cg-page[data-mode="reader"] [data-cg-role="guideTitle"]{cursor:pointer;transition:color .2s}
   @media(max-width:760px){.cg-page[data-mode="reader"]{grid-template-columns:minmax(0,1fr);gap:10px}.cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:1;grid-row:2}.cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:3;padding:10px 14px}.cg-page[data-mode="reader"] .cg-reader h2{font-size:20px;margin-bottom:6px}.cg-page[data-mode="reader"] .cg-byline{margin-bottom:12px}.cg-page[data-mode="reader"] .cg-status{grid-row:4}}
 
   html.tool-guide-reader,html.tool-guide-reader body{height:100dvh;min-height:0;overflow:hidden}
@@ -28940,6 +28941,8 @@ function mountClassGuide(root){
   root.addEventListener("click", async e => {
     const format = e.target.closest("[data-cg-bold]");
     if (format){ if (mode === "author") editors[format.dataset.cgBold].bold(); return; }
+    const titleEl = e.target.closest('[data-cg-role="guideTitle"]');   // hidden feature like the skill name in skill-details: click the guide title to copy "## [title](link)" (Discord heading + link)
+    if (titleEl && mode === "reader" && currentId){ copyTitleLink(current.title, "#skill-simulator/" + currentId, titleEl); return; }
     const target = e.target.closest("[data-cg-act]"); if (!target) return;
     const act = target.dataset.cgAct;
     try {
@@ -29922,6 +29925,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T09:41:15.566Z","feat(bible): clicking a class guide title copies it as a Discord heading link, the same as the skill name in skill-details"],
     ["2026-10-15T09:38:42.019Z","feat(bible): class guide links use a running number (#skill-simulator/1, /2 ...) instead of a slug"],
     ["2026-10-15T09:35:45.785Z","feat(bible): every class guide has a link #skill-simulator/<id> that opens it in the reader, with a copy-link button (for sharing in Discord); ids are validated"],
     ["2026-10-15T09:29:57.342Z","feat(bible): add the community class guide กวิ้น PVE แท้ (Penguin, TTO, Lv 95) by หนมผิงช่วยเหลือประชาชน"],
