@@ -114,7 +114,7 @@ const exposeInjection = `
   window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
   window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
-  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject; window._reachSeqPlan = reachSeqPlan; window._reachSeqVis = reachSeqVis;
+  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject; window._reachColor = reachColor; window._reachSeqPlan = reachSeqPlan; window._reachSeqVis = reachSeqVis;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
@@ -3737,6 +3737,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         g("Playback is instant: round 1 alone at 0 s, round 2 replaces it at 0.4 s, nothing before the start, only the last round just before the end", vis(0, -0.1) === 0 && vis(0, 0) === 1 && vis(1, 0) === 0 && vis(0, 0.39) === 1 && vis(0, 0.4) === 0 && vis(1, 0.4) === 1 && vis(1, 0.79) === 1 && vis(39, 15.9) === 1 && vis(38, 15.9) === 0, [vis(0, 0), vis(1, 0.4), vis(39, 15.9)]);
         g("Playback end: only the rounds marked final come back, together, instantly at tEnd", vis(0, 16.2) === 0 && vis(0, 16.3) === 1 && vis(9, 16.3) === 1 && vis(39, 16.3) === 1 && vis(5, 16.3) === 0 && c[5].final === false && c[9].final === true, [vis(0, 16.3), vis(5, 16.3)]); }
       c = P("wolf_bladeFang", 3); g("Blade Fang hit times 0.2 / 0.4 / 0.7 / 1.0 s", [0.2, 0.4, 0.7, 1].every((t, i) => Math.abs(c[i].at - t) < 1e-9), c.map(b => b.at));
+      g("Every hit of a multi-hit part has its own colour (Blade Fang 4 hits, Arctic Wind 8, Twin Resonance 40 rounds cycling a 10-colour palette), a single part keeps its group colour", new Set(c.map((b, k) => sandbox._reachColor(b, k))).size === 4 && new Set(P("penguin_arcticWind", 3, { deadlyFrost: 1 }).map((b, k) => sandbox._reachColor(b, k))).size === 8 && new Set(P("wolf_twinResonance", 1).map((b, k) => sandbox._reachColor(b, k))).size === 10 && sandbox._reachColor({ cg: 1 }, 0) === "#e8b84a", [...new Set(c.map((b, k) => sandbox._reachColor(b, k)))]);
       c = P("wolf_nAttack", 3); g("Wolf Combo hit times follow the game schedule (stage 2 anchored at 0.8 s, 3 at 1.44 s, 4 at 1.97 s): 0.65, 1.28, 1.77, 2.27, 2.77 s", [0.65, 1.28, 1.77, 2.27, 2.77].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
       c = P("cat_nAttack", 3); g("Cat Combo hit times: 0.4, 1.0 (stage 2 anchored at 0.6), 1.5 / 1.7 (1.2), 2.0 / 2.2 (1.7) s", [0.4, 1.0, 1.5, 1.7, 2.0, 2.2].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
       c = P("panda_nAttack", 4); g("Panda Combo hit times: 0.1 / 0.3, 0.8 / 1.0 (0.6), 1.7 / 1.9 / 2.1 (1.5), 2.9 (2.4), 3.3 (3.0) s", [0.1, 0.3, 0.8, 1.0, 1.7, 1.9, 2.1, 2.9, 3.3].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
