@@ -7670,7 +7670,11 @@
   .entry-hero-side .entry-art.is-swapping{ opacity:0; }
   /* each portrait rises gently into place over its 3 s (user 2026-10-16: option 1, slow drift-in) */
   .entry-hero-side .entry-art.is-rising{ transform-origin:50% 100%; animation:entry-portrait-rise 3s cubic-bezier(.22,.61,.36,1) both; }
-  @keyframes entry-portrait-rise{ from{ transform:translateY(8px) scale(.97); } to{ transform:none; } }
+  @keyframes entry-portrait-rise{ from{ transform:translateY(calc(var(--lift, 0px) + 8px)) scale(calc(var(--fx, 1) * .97), .97); } to{ transform:translateY(var(--lift, 0px)) scaleX(var(--fx, 1)); } }
+  /* these five sit low in their story art: lift them a little (user 2026-10-16) */
+  .entry-hero-side .entry-art:is([data-class="Monkey"],[data-class="Whale"],[data-class="Bat"],[data-class="Panda"],[data-class="Bison"]){ --lift:-12px; }
+  /* random mirror (--fx: -1, user 2026-10-16): the left-edge feather is drawn reversed so it still lands on the left after the flip */
+  .entry-hero-side .entry-art[data-flip]{ --fx:-1; -webkit-mask-image:linear-gradient(to left, transparent 0, #000 45%); mask-image:linear-gradient(to left, transparent 0, #000 45%); }
   /* and one gold light sweep across it, clipped to the portrait's own outline (user 2026-10-16: option 3) */
   .entry-hero-side .entry-art[data-k="story"]{ background-image:var(--portrait); }
   .entry-hero-side .entry-art[data-k="story"]::after{ content:""; position:absolute; inset:0; pointer-events:none;
@@ -30652,7 +30656,7 @@ function skillIconCollage(){
 // ไกด์อาชีพ tile (user 2026-10-16): one random class in a random one of its five colour variants (CLASS_STORY_ART, the skill-details preset colours), new picks on every load.
 function classStoryArt(){
   const all = Object.keys(CLASS_STORY_ART), keys = [all[Math.floor(Math.random() * all.length)]];
-  return keys.map((cls, i) => { const v = CLASS_STORY_ART[cls]; return `<span class="entry-art is-rising" data-k="story" data-class="${cls}" aria-hidden="true" style="--i:${i}; --portrait:url('${v[Math.floor(Math.random() * v.length)]}');"></span>`; }).join('');
+  return keys.map((cls, i) => { const v = CLASS_STORY_ART[cls]; return `<span class="entry-art is-rising" data-k="story" data-class="${cls}"${Math.random() < .5 ? ' data-flip=""' : ''} aria-hidden="true" style="--i:${i}; --portrait:url('${v[Math.floor(Math.random() * v.length)]}');"></span>`; }).join('');
 }
 toolGrid.innerHTML = TOOLS.map(t => {
   const artSrc = k => {
@@ -30698,7 +30702,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
     art.classList.add("is-swapping");
     setTimeout(() => {
       const v = CLASS_STORY_ART[cls];
-      art.style.setProperty("--portrait", "url('" + v[Math.floor(Math.random() * v.length)] + "')"); art.dataset.class = cls;
+      art.style.setProperty("--portrait", "url('" + v[Math.floor(Math.random() * v.length)] + "')"); art.dataset.class = cls; art.toggleAttribute("data-flip", Math.random() < .5);
       art.classList.remove("is-swapping", "is-rising"); void art.offsetWidth; art.classList.add("is-rising");   // restart the rise
     }, 600);
   }, 3000);
@@ -30717,6 +30721,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T18:13:00.545Z","fix(bible): ไกด์อาชีพ tile portraits are mirrored at random, and Monkey, Whale, Bat, Panda and Bison sit a little higher"],
     ["2026-10-15T18:09:43.785Z","feat(bible): a gold light sweep crosses each ไกด์อาชีพ tile portrait once as it rises in"],
     ["2026-10-15T18:08:27.626Z","feat(bible): each ไกด์อาชีพ tile portrait rises gently into place as it appears"],
     ["2026-10-15T18:06:06.713Z","feat(bible): the ไกด์อาชีพ tile portrait fades to another random class and colour every 3 seconds"],
