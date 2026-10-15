@@ -3235,8 +3235,16 @@ let checkedRsim = 0;
     const withStats = norm({...fixture, stats:{agi:120,lck:40}});
     ok(same(expand(compact(norm(fixture))), norm(fixture)) && same(expand(compact(withStats)), withStats), "compact guide form expands back to the same guide (page)");
     ok(same(gc.expand(compact(withStats)), withStats) && same(expand(gc.compact(withStats)), withStats), "page and scripts/guide_code.js use the same compact form");
-    ok(same(norm(gc.decode(gc.encode(withStats))), withStats) && gc.encode(withStats).startsWith("12TG1.") && /^12TG1\.[A-Za-z0-9_-]+$/.test(gc.encode(withStats)), "guide_code encode / decode round-trips a guide into a 12TG1. code");
-    embedded.forEach((g, i) => { const n = norm(g); ok(same(norm(gc.decode(gc.encode(n))), n) && gc.encode(n).length < JSON.stringify(n, null, 2).length / 2, "embedded guide " + (i + 1) + " round-trips through a short code under half the JSON length"); });
+    ok(same(norm(gc.decode(gc.encode1(withStats))), withStats) && /^12TG1\.[A-Za-z0-9_-]+$/.test(gc.encode1(withStats)), "format 1 codes (12TG1.) still decode");
+    embedded.forEach((g, i) => { const n = norm(g); ok(same(norm(gc.decode(gc.encode(n))), n) && gc.encode(n).length < gc.encode1(n).length * 0.7, "embedded guide " + (i + 1) + " round-trips through a format 2 code, well under the format 1 length"); });
+    // Format 2 (TG2., binary): the page and scripts/guide_code.js write the same bytes and read each other back, emoji and non-Thai text included.
+    { const bin = vm.runInContext("classGuideBinary", sandbox), fromBin = vm.runInContext("classGuideFromBinary", sandbox);
+      const odd = norm({...fixture, title:"Guide 🐺 **ทอง** ñ é 中文", author:"ผู้เขียน 🐺", description:"บรรทัด 1\nline 2 ✓", stats:{atk:0,lck:512}});
+      ok(same(Array.from(bin(odd)), Array.from(gc.classGuideBinary(odd))), "page and scripts/guide_code.js write identical format 2 bytes");
+      ok(same(norm(fromBin(bin(odd))), odd) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(odd)))), odd), "format 2 binary reads back emoji, accents, CJK, bold markers, newlines, stat 0 and 512");
+      ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode(odd)) && same(norm(gc.decode(gc.encode(odd))), odd), "guide_code encode writes a TG2. code that decodes to the same guide");
+      let threw = false; try { fromBin(bin(odd).subarray(0, 30)); } catch (e) { threw = true; } ok(threw, "a cut-off format 2 code is rejected, not misread");
+    }
     const all = [101,102,103,104,111,121,131,141,191,194,201,294,301,394,401,411,421,431,441,451,454,461,491,494];
     ok(same(expand(compact({...norm(fixture), build:{...norm(fixture).build, learned:all}})).build.learned, all), "the 160-bit skill set keeps every slot from 101 to 494");
   }

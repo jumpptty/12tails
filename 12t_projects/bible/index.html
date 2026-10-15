@@ -28790,10 +28790,10 @@ function classGuideImport(code){
   try { value = JSON.parse(code); } catch (e) { throw new Error("อ่านโค้ดไกด์ไม่ได้ กรุณาวาง JSON ที่ส่งออกจากไกด์แต่ละอาชีพ"); }
   return classGuideNormalize(value, { draft: true });
 }
-// Short guide code (user 2026-10-16): "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
+// Short guide code (user 2026-10-16). Exports use format 2 ("TG2.", binary, below); format 1 ("12TG1.") still imports: "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
 // tree x row x column slot, in base64url) as JSON, compressed with deflate-raw, in URL-safe base64 (A-Z a-z 0-9 - _).
 // Import takes both this and plain JSON. scripts/guide_code.js mirrors the format outside the browser (to embed a submitted guide as a JSON object).
-const CLASS_GUIDE_CODE_PREFIX = "12TG1.";
+const CLASS_GUIDE_CODE_PREFIX = "12TG1.", CLASS_GUIDE_CODE2_PREFIX = "TG2.";
 const classGuideSlot = id => (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // cell id 101..494 -> 0..159
 function classGuideCompact(g){
   const bits = new Uint8Array(20);
@@ -28811,16 +28811,102 @@ function classGuideExpand(o){
   const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), notes: o.n || {} };
   return g;
 }
+// Guide code format 2 (user 2026-10-16: shorter codes): "TG2." + base64url of [flag byte (0 stored, 1 deflate-raw)] + the guide as compact binary:
+//   byte  server index | class index << 2      (servers og tot tto; classes in CLASS_GUIDE_CLASS_KEYS order)
+//   byte  level
+//   20 bytes  learned skills, one bit per slot (tree-1)*40 + row*4 + (col-1)
+//   2 bytes   date as days since 2000-01-01 (little endian), 0xFFFF = none
+//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat
+//   text  title, author, description   (text = varint byte length + bytes: ASCII as is, Thai U+0E00-0E5B as one byte 0x80-0xDB, anything else 0xDC + varint code point)
+//   varint note count, then per note: slot byte + text
+const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
+const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
+const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
+function classGuideBinary(g){
+  const out = [], slot = id => (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);
+  const varint = n => { while (n >= 0x80){ out.push((n & 0x7F) | 0x80); n = Math.floor(n / 128); } out.push(n); };
+  const text = str => {
+    const body = [];
+    for (const ch of String(str || "")){
+      const cp = ch.codePointAt(0);
+      if (cp < 0x80) body.push(cp);
+      else if (cp >= 0x0E00 && cp <= 0x0E5B) body.push(0x80 + cp - 0x0E00);
+      else { body.push(0xDC); let n = cp; while (n >= 0x80){ body.push((n & 0x7F) | 0x80); n = Math.floor(n / 128); } body.push(n); }
+    }
+    varint(body.length); for (const x of body) out.push(x);
+  };
+  out.push(CLASS_GUIDE_SERVER_KEYS.indexOf(g.build.server) | CLASS_GUIDE_CLASS_KEYS.indexOf(g.build.classKey) << 2, g.build.level);
+  const bits = new Array(20).fill(0); for (const id of g.build.learned){ const k = slot(id); bits[k >> 3] |= 1 << (k & 7); }
+  for (const x of bits) out.push(x);
+  const days = g.date ? Math.round((Date.parse(g.date + "T00:00:00Z") - Date.UTC(2000, 0, 1)) / 864e5) : 0xFFFF;
+  out.push(days & 255, days >> 8);
+  const st = g.stats || {}; let mask = 0; CLASS_GUIDE_STAT_KEYS.forEach((k, i) => { if (k in st) mask |= 1 << i; }); out.push(mask);
+  CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st) out.push(st[k] & 255, st[k] >> 8); });
+  text(g.title); text(g.author); text(g.description);
+  const ids = Object.keys(g.notes || {}).map(Number).sort((a, b) => a - b);
+  varint(ids.length); for (const id of ids){ out.push(slot(id)); text(g.notes[id]); }
+  return Uint8Array.from(out);
+}
+function classGuideFromBinary(bytes){
+  let i = 0;
+  const need = n => { if (i + n > bytes.length) throw new Error("โค้ดไกด์ไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด"); };
+  const byte = () => { need(1); return bytes[i++]; };
+  const varint = () => { let n = 0, mul = 1, b; do { b = byte(); n += (b & 0x7F) * mul; mul *= 128; } while (b & 0x80 && mul < 2 ** 35); return n; };
+  const text = () => {
+    const len = varint(); need(len); const end = i + len; let s = "";
+    while (i < end){
+      const b = bytes[i++];
+      if (b < 0x80) s += String.fromCharCode(b);
+      else if (b <= 0xDB) s += String.fromCharCode(0x0E00 + b - 0x80);
+      else if (b === 0xDC){ let n = 0, mul = 1, c; do { if (i >= end) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); c = bytes[i++]; n += (c & 0x7F) * mul; mul *= 128; } while (c & 0x80); if (n > 0x10FFFF) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); s += String.fromCodePoint(n); }
+      else throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+    }
+    return s;
+  };
+  const head = byte(), server = CLASS_GUIDE_SERVER_KEYS[head & 3], classKey = CLASS_GUIDE_CLASS_KEYS[head >> 2], level = byte();
+  if (!server || !classKey) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+  need(20); const learned = [];
+  for (let k = 0; k < 160; k++) if (bytes[i + (k >> 3)] & (1 << (k & 7))) learned.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1);
+  i += 20;
+  const days = byte() | byte() << 8;
+  const date = days === 0xFFFF ? "" : new Date(Date.UTC(2000, 0, 1) + days * 864e5).toISOString().slice(0, 10);
+  const mask = byte(), stats = {};
+  CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)) stats[k] = byte() | byte() << 8; });
+  const title = text(), author = text(), description = text();
+  const count = varint(), notes = {};
+  for (let n = 0; n < count; n++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); notes[(Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1] = text(); }
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned }, ...(mask ? { stats } : {}), notes };
+}
 async function classGuidePack(value){
-  const json = JSON.stringify(classGuideCompact(classGuideNormalize(value)));
-  if (json.length > 131072) throw new Error("โค้ดไกด์ยาวเกินกำหนด กรุณาลดความยาวคำอธิบายหรือโน้ต");
-  if (typeof CompressionStream === "undefined") return json;   // very old browsers: the plain code still imports
-  const bytes = new Uint8Array(await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
-  let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return CLASS_GUIDE_CODE_PREFIX + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const g = classGuideNormalize(value);
+  if (JSON.stringify(g).length > 131072) throw new Error("โค้ดไกด์ยาวเกินกำหนด กรุณาลดความยาวคำอธิบายหรือโน้ต");
+  const raw = classGuideBinary(g);
+  let best = raw, flag = 0;
+  if (typeof CompressionStream !== "undefined"){
+    const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+    if (z.length < raw.length){ best = z; flag = 1; }
+  }
+  const all = new Uint8Array(best.length + 1); all[0] = flag; all.set(best, 1);
+  let bin = ""; for (let i = 0; i < all.length; i += 0x8000) bin += String.fromCharCode.apply(null, all.subarray(i, i + 0x8000));
+  return CLASS_GUIDE_CODE2_PREFIX + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 async function classGuideUnpack(code){
   const text = String(code || "").trim();
+  if (text.startsWith(CLASS_GUIDE_CODE2_PREFIX)){
+    const body = text.slice(CLASS_GUIDE_CODE2_PREFIX.length).replace(/\s+/g, "");
+    if (!/^[A-Za-z0-9_-]+$/.test(body)) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+    let bin; try { bin = atob(body.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((body.length + 3) % 4)); } catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้อง"); }
+    const all = Uint8Array.from(bin, c => c.charCodeAt(0));
+    if (!all.length || all[0] > 1) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+    let bytes = all.subarray(1);
+    if (all[0] === 1){
+      if (typeof DecompressionStream === "undefined") throw new Error("เบราว์เซอร์นี้อ่านโค้ดย่อไม่ได้ กรุณาอัปเดตเบราว์เซอร์");
+      try { bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer()); }
+      catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้องหรือไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด"); }
+    }
+    if (bytes.length > 131072) throw new Error("โค้ดไกด์ยาวเกินกำหนด");
+    return JSON.stringify(classGuideFromBinary(bytes));
+  }
   if (!text.startsWith(CLASS_GUIDE_CODE_PREFIX)) return text;
   if (typeof DecompressionStream === "undefined") throw new Error("เบราว์เซอร์นี้อ่านโค้ดย่อไม่ได้ กรุณาอัปเดตเบราว์เซอร์");
   const body = text.slice(CLASS_GUIDE_CODE_PREFIX.length).replace(/\s+/g, "");
@@ -30574,6 +30660,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T17:29:26.373Z","feat(bible): class guide codes are about half as long again (format 2, TG2.: compact binary, Thai one byte per character); format 1 codes still import"],
     ["2026-10-15T17:25:16.077Z","fix(bible): guide image export survives heavy guides: notes pick a denser layout (2 or 3 columns, smaller text, line cap, shorter trees) until all fit, a long author name puts the date on its own line, a long title shrinks before it is cut"],
     ["2026-10-15T17:15:01.212Z","feat(bible): class guides: note chips instead of the pop-up, short guide codes (12TG1., scripts/guide_code.js), guide date replaces the patch, 4K image export in the current theme, readers can try other stat values, highlight button, phone layout, copy-code button; skill-details cooldown honours server cdWrapped overrides"],
     ["2026-10-15T16:12:39.946Z","feat(bible): class guides get recommended stats for each of the 8 stats (editor row, reader left panel in each stat's colour) and hover cooldown, cast time and buff duration from AGI / INT / CHA / LCK"],
