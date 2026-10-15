@@ -558,7 +558,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 - **Execution Lifecycle & Hit Geometry:**
   - Coroutine: `$RPC_rushingFalcon$25258` (`Panda.cs:21885-22750`).
   - Movement & Timing:
-    - Dash forward at `moveSpeed = 8f` (state 2) then `moveSpeed = 6f` (states 3, 4, 5).
+    - Dash forward at `moveSpeed = 8f` (state 2), `6f` (state 3), `8f` (state 4), `6f` (state 5) (corrected 2026-10-15: state 4 sets 8, `Panda.cs:22227`).
     - Step 1: `FindRecTarget(pos − 0.5·forward, forward, 1.6·rangeMod, 1·rangeMod, 2·rangeMod, 2·rangeMod)` (`Panda.cs:22102`) — a trapezoid **3.2 m wide at the start narrowing to 2 m**, 2 m long, 2 m tall, starting 0.5 m behind Panda (width args are half-widths, see [Mechanics Reference §4](12Tails-Mechanics-Reference.md#4-hidden-mechanics--special-interactions)).
     - Step 2: `FindRecTarget(pos, forward, 1·rangeMod, 1·rangeMod, 1·rangeMod, 2·rangeMod)` (`Panda.cs:22240`) — **2 m wide, 1 m long, 2 m tall**.
     - Step 3: same box as step 2 (`Panda.cs:22390`).
@@ -911,6 +911,11 @@ The Panda moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`Ch
 | Drunken Fist | 3 × 0.5 (hits at 0.2 s and 0.5 s), 0 × 0.07, 7 × 0.13, 9 × 0.16; four hits at t = 0.2 / 0.5 / 0.70 / 0.86 | 0.6, 1.5, 2.41, 3.85 | `Panda.cs:32476`, `:31853`, `:32075`, `:32102`, `:32250`; hits `:31718`, `:31940`, `:32115`, `:32263` |
 | Water Monkey | 3 × 0.3, then stops; two hits at `position + 2×i − 1` (i = 0, 1) | 0.9 from the cast point, then +2 per hit | `Panda.cs:32853`, `:32880`, `:33020` |
 | Stasis Blow / Death Blow | 3 × 0.3 (0.2 s wait + 0.1 s), 10 × 0.2, then the hit | 2.9 (before any Wind Walker warp; total with the 10 × 0.1, 4 × 0.2 tail = 4.7 m) | `Panda.cs:34621`, `:34260`, `:34312`, `:35439`, `:35076`, `:35128` |
+| Three Steps | wait 0.1, 4 × 0.6 (hits at 0.4 and 0.7 s), stop 0.1, 5 × 0.5 (hit at 1.3 s) | 1.2, 2.4, 4.9 | `Panda.cs:20868`, `:21090`, `:21245`; hits `:20938`, `:21108`, `:21322` |
+| Rushing Falcon | wait 0.1, 8 × 0.2 (hit 1 at 0.3 s), 6 × 0.2 (hit 2 at 0.5 s), 8 × 0.2 (hit 3 at 0.7 s), 6 × 0.3 | 1.6, 2.8, 4.4 (6.2 in all) | `Panda.cs:22032`, `:22059`, `:22227`, `:22377`; hits `:22102`, `:22240`, `:22390` |
+| Pummel / Tower Rush / Tiger Toss | wait 0.1, 16 × 0.1, then the hit(s) at that spot (Pummel hits 5 times in place) | 1.6 | `Panda.cs:24448`, `:25319`, `:26009` |
+| Wind & Cloud (9 hits) | 3 × 0.6, stop 0.3, 1 × 0.3, stop 1.3, 2 × 0.4; hits at 0.3, 0.6, 1.2, 1.4, 1.8, 2.2, 2.6, 2.7, 2.9 s | 0.9, 1.8, 2.1, 2.1, 2.1, 2.1, 2.3, 2.5, 2.9 | `Panda.cs:36676`, `:36949`, `:37422` |
+| Rain & Storm (4 hits) | wait 0.2, 3 until 1.7 s, then 4 × 0.3; hits at 0.5, 1.1, 1.7, 2.0 s | 1.5, 3.3, 5.1, 6.3 | `Panda.cs:38294`, `:38554` |
 
 The warp (Wind Walker, target > 6 m) sets `position = mPos + tDir` in the second state (`Panda.cs:34198`, `:35015`); the preview draws from the position after the warp, i.e. it does not model the warp. Not moving before their hits: Rising Vortex, Heaven Palm (area at the target position `tPos`, `Panda.cs:40077`), Water Crane, Fuujin Ken, Raijin Ken, Charge Attack.
 

@@ -845,7 +845,7 @@ The caster moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`C
 | Blade Song | −2 × 0.2 before the first hit, then 0 | −0.4 (every hit) | `Wolf.cs:29906`, `:29952` |
 | Feral Assault | floor(14 / moveMod) × moveMod per second: `moveMod` cancels out | 0, 4.2, 8.4, 12.6; ring at 16.8 | `Wolf.cs:35208` |
 
-Blade Fang counts: `bladeFang_count` is 0 after the first hit, +1 at the start of each following pair of states, and the skill stops (`moveSpeed = 0`) when `count >= sLv` at the checks in states 6 and 9 (`Wolf.cs:25827`, `:25933`, `:26055`, `:26174`, `:26627-26634`): `1 + sLv` hits. Not moving (checked, no `moveSpeed` above 0 in the hit coroutine): Brave Spirit, Charge Attack, Art Breaker, Mass Resurrection.
+Blade Fang counts: `bladeFang_count` is 0 after the first hit, +1 at the start of each following pair of states, and the skill stops (`moveSpeed = 0`) when `count >= sLv` at the checks in states 6 and 9 (`Wolf.cs:25827`, `:25933`, `:26055`, `:26174`, `:26627-26634`): `1 + sLv` hits. Cross Break: wait 0.4 s, 5 × 0.4, 3 × 0.4, then its area hit: **3.2 m** (`Wolf.cs:23785`, `:23812`, `:23945`). Not moving (checked, no `moveSpeed` above 0 in the hit coroutine): Brave Spirit, Charge Attack, Art Breaker, Mass Resurrection.
 
 **Twin Resonance** is a moving crescent, not a filled fan: 40 rounds, 0.4 s apart, each a 190° band 2 m thick from the fixed cast point, inner radius `1 + 0.8 × i`, outer `3 + 0.8 × i` (`Wolf.cs:37644`, `:37668`, `:37714`): 1-3 m at t = 0 to 32.2-34.2 m at t = 15.6 s.
 
