@@ -114,7 +114,7 @@ const exposeInjection = `
   window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
   window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
-  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject; window._reachColor = reachColor; window._reachSeqPlan = reachSeqPlan; window._reachSeqVis = reachSeqVis;
+  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject; window._reachColor = reachColor; window._reachOnEnemy = reachOnEnemy; window._reachSeqPlan = reachSeqPlan; window._reachSeqVis = reachSeqVis;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
@@ -3731,6 +3731,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("wolf_thirdRend", 1); g("Third Rend 4x4x3 after a 1.1 m dash", c.length === 1 && c[0].w === 4 && c[0].l === 4 && c[0].h === 3 && c[0].z0 === 1.1, c);
       c = P("wolf_bladeSong", 1); g("Blade Song 2 to 4 wide 6 long, 0.4 m behind the cast point", c.length === 1 && c[0].w === 2 && c[0].w2 === 4 && c[0].l === 6 && c[0].z0 === -0.4, c);
       c = sandbox._reachPartsWith(SKILLS.find(x => x.id === "wolf_crusader"), 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 1 }); g("Lunar Eclipse 1: x1.4 size and start, and the 2.8 m dash scales with moveMod (+40%) = 3.92", c[0].z0 === 2.52, c);
+      { const E = [0, 0, 21.54], mp = P("penguin_meteora", 2), on = sandbox._reachOnEnemy(mp, E), gc = P("wolf_grandCross", 1);
+        g("Meteora with Boldas in the 40 m lock ring: the impact circle is centred on him (21.54 m), not 6 m ahead", on.find(p => p.shape === "cylinder").anchor === "self" && on.find(p => p.shape === "cylinder").z0 === 21.54 && on.find(p => p.shape === "cylinder").onEnemy === true && on.find(p => p.shape === "ring") === mp.find(p => p.shape === "ring"), on.map(p => [p.shape, p.anchor, p.z0]));
+        g("Meteora with Boldas out of the lock range (60 m): the usual 6 m ahead", sandbox._reachOnEnemy(mp, [0, 0, 60]) === mp && sandbox._reachOnEnemy(mp, null) === mp, 1);
+        g("Grand Cross uses the 3D 30 m sphere: Boldas at 21.54 m is in range, at 35 m he is not", sandbox._reachOnEnemy(gc, E)[0].onEnemy === true && sandbox._reachOnEnemy(gc, [0, 0, 35]) === gc, 1);
+        g("A skill with no lock marker (Tiger Toss) is left alone", (() => { const t = P("panda_tigerToss", 1, { tigerPounce: 1 }); return sandbox._reachOnEnemy(t, E) === t; })(), 1); }
       c = P("wolf_twinResonance", 1); g("Twin Resonance: 40 crescents (190 degrees, h2, 2 m thick: inner 1 + 0.8 x i, outer 3 + 0.8 x i), 0.4 s apart, five in the final picture", c.length === 40 && c.every((b, i) => b.shape === "sector" && b.angle === 190 && b.h === 2 && Math.abs(b.r0 - (1 + 0.8 * i)) < 0.051 && Math.abs(b.r - b.r0 - 2) < 0.0001 && Math.abs(b.at - 0.4 * i) < 0.0051) && c[0].r0 === 1 && c[0].r === 3 && c[39].r0 === 32.2 && c[39].r === 34.2 && c[39].at === 15.6 && c.filter(b => b.final !== false).length === 5, c.length);
       { const plan = sandbox._reachSeqPlan(c), vis = (i, t) => sandbox._reachSeqVis(c[i], t, plan);
         g("Twin Resonance playback: 40 phases 0.4 s apart, then 0.7 s of hold before the final picture", plan && plan.T.length === 40 && Math.abs(plan.tEnd - 16.3) < 1e-6, plan);

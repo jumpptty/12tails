@@ -10823,6 +10823,14 @@ function reachSeqVis(p, tau, plan){   // instant: the hit whose time was passed 
   let cur = 0; for (let j = 0; j < plan.T.length; j++) if (plan.T[j] <= tau) cur = j;
   return plan.at[cur] === p.at ? 1 : 0;
 }
+// Target skills (Meteora, Blizzard, Grand Cross ...): when Boldas stands inside the skill's lock range (its ring, or the faint 3D sphere) the player does not have to walk to him,
+// so the impact part is drawn centred on him instead of the usual 6 m ahead (user 2026-10-15). E = his position in popup space; parts without a lock marker are left alone.
+function reachOnEnemy(parts, E){
+  if (!E || !parts.some(p => p.anchor === "target")) return parts;
+  const dh = Math.hypot(E[0], E[2]), d3 = Math.hypot(E[0], E[1], E[2]);
+  if (!parts.some(l => (l.shape === "ring" && dh <= l.r) || (l.shape === "sphere" && l.faint && d3 <= l.r))) return parts;
+  return parts.map(p => p.anchor === "target" ? Object.assign({}, p, { anchor: "self", x0: (p.x0 || 0) + E[0], y0: (p.y0 || 0) + E[1], z0: (p.z0 || 0) + E[2], onEnemy: true }) : p);
+}
 function reachNormalize(reach, rank, rM = 1){
   if (typeof reach === "function") reach = reach(rank, rM);
   return (Array.isArray(reach) ? reach : [reach]).flatMap((p, pi) => {
@@ -11039,7 +11047,7 @@ function reachPartLabel(p){
   if (p.l) dims.push(`ยาว ${p.l}m`);
   if (p.h) dims.push(p.h === "inf" ? "สูง ไม่จำกัด" : `สูง ${p.h}m`);
   if (p.angle) dims.push(`มุม ${p.angle}°`);
-  if (p.anchor === "target") dims.push("รอบเป้าหมาย (แสดงที่ 6m)");
+  if (p.anchor === "target") dims.push("รอบเป้าหมาย (แสดงที่ 6m, หรือที่ Boldas ถ้าเขาอยู่ในระยะล็อก)");
   if (p.z0) dims.push(p.z0 < 0 ? `เริ่มหลังตัว ${-p.z0}m` : `เริ่มหน้าตัว ${p.z0}m`);
   if (p.y0) dims.push(p.y0 < 0 ? `ฐานต่ำกว่าเท้า ${-p.y0}m` : `ฐานสูงกว่าเท้า ${p.y0}m`);   // the Find* position is moved up / down before the vertical band is taken
   if (p.unknown) return `${p.label || REACH_SHAPE_TH[p.shape]}: ขนาดอยู่ใน prefab ยังไม่มีค่าที่ยืนยันได้`;
@@ -11311,6 +11319,7 @@ function reachRender(ctx, model, P, st, W, H, dpr, dimK){
 // items: [{part, alpha}] (alpha < 1 while a range fades in or out). model: reachModel() or null (wireframe stand-in).
 const reachTagMem = new WeakMap();   // per canvas: where each dimension label was drawn last frame
 function drawReach(cv, items, st, model, scene, seqT){
+  { const ps = items.map(it => it.part), pl = reachOnEnemy(ps, scene && scene.bPos); if (pl !== ps) items = items.map((it, i) => ({ part: pl[i], alpha: it.alpha })); }   // an impact circle in lock range sits on Boldas
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5), W = cv.clientWidth, H = cv.clientHeight;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const ctx = cv.getContext("2d");
@@ -11527,8 +11536,8 @@ function openReachPopup(skill, rank){
   const scn = reachScene("M108");   // the mission map behind her (user 2026-10-14); scnOn: the scene is shown (always from start point 1)
   let scnOn = false;
   const sceneNow = () => { const b0 = scnOn && scn && scn.ready ? reachSceneParts(scn) : null, bo = reachBoldas(b0 ? b0.enemy : REACH_BOLDAS_FLAT, redraw, !b0), show = bo && (!introing || introAt >= 1000);   // Boldas stays hidden for the first second of the opening camera move (user 2026-10-15: the close-up caught a glimpse of him); his model loads meanwhile
-    if (b0) return show ? { parts: b0.parts.concat(bo), enemy: b0.enemy, boldas: true } : b0;
-    return show ? { parts: bo, extraOnly: true, gridTo: REACH_BOLDAS_FLAT[2] + 6 } : null; };   // scene off: he still stands on the plain plane, the grid runs 6 m past him
+    if (b0) return show ? { parts: b0.parts.concat(bo), enemy: b0.enemy, boldas: true, bPos: b0.enemy } : b0;
+    return show ? { parts: bo, extraOnly: true, gridTo: REACH_BOLDAS_FLAT[2] + 6, bPos: REACH_BOLDAS_FLAT } : null; };   // scene off: he still stands on the plain plane, the grid runs 6 m past him
   const pop = document.createElement("div");
   pop.className = "sk-reach-pop";
   const chips = (p, k) => p.sn > 1 ? parts.filter(q => q.sg === p.sg && q.final !== false).slice(0, 10).map(q => `<i style="background:${reachColor(q, k)}"></i>`).join("").replace(/^/, '<b class="sk-reach-chips">') + "</b>" : `<i style="background:${reachColor(p, k)}"></i>`;   // one chip per hit of a multi-hit part
@@ -11627,7 +11636,7 @@ function openReachPopup(skill, rank){
     const W = panel.clientWidth, H = panel.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     if (fx.width !== Math.round(W * dpr) || fx.height !== Math.round(H * dpr)){ fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr); }
     const g = fx.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const ring = reachOutline(grows ? after : before, st, cv, panel, 48), col = grows ? "#f2cf6b" : "#ef5350";
+    const ring = reachOutline(reachOnEnemy(grows ? after : before, (sceneNow() || {}).bPos), st, cv, panel, 48), col = grows ? "#f2cf6b" : "#ef5350";
     // the ball lands on (or leaves from) the outline point nearest the toggle
     const near = ring.pts.reduce((b, q) => Math.hypot(q.x - srcXY[0], q.y - srcXY[1]) < Math.hypot(b.x - srcXY[0], b.y - srcXY[1]) ? q : b, ring.pts[0] || { x: ring.cx, y: ring.cy });
     const end = [near.x, near.y], from = grows ? srcXY : end, to = grows ? end : srcXY;
@@ -29800,6 +29809,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T06:16:23.583Z","feat(bible): range popup centres the impact circle of a target skill on Boldas when he is inside its lock range (Meteora, Blizzard, Grand Cross, Hydro Blast ...)"],
     ["2026-10-15T06:08:33.657Z","feat(bible): range popup fades the other hits back in (subtle, 0.45 s) when the hit-by-hit playback ends"],
     ["2026-10-15T06:03:22.545Z","feat(bible): range popup gives every hit of a multi-hit skill its own colour (10-colour palette) and the legend shows a chip per hit"],
     ["2026-10-15T06:00:48.991Z","fix(bible): range popup plays multi-hit skills with the next hit replacing the previous one instantly (no fade) and the dimension labels no longer glide, so two hits never share the screen"],
