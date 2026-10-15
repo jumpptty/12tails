@@ -900,6 +900,20 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 - **Passive** ranks, reqLv/Bn 4/1, 10/2, 16/3 (`decode_skilldata.py`). The SP gain per tick is the Sacred Sage entry's formula: `clamp(ceil(0.02 × chargeLv × ATK), 2 × chargeLv, 4 × chargeLv)` once per second, `chargeLv` = 1 + #112 + #113 (`Panda.cs:19161-19190`), real game modes only.
 - Client tooltips: EN "Gives Panda the ability to charge up its sp. (2~4 [4~8 / 6~12] sp/sec.)" (`PandaSkill_eng.cs:81-103`). Matches the clamps.
 
+## Movement timelines (read 2026-10-15, for the range preview; nominal `moveMod` 1, not live-tested)
+
+The Panda moves by `vMovement × moveSpeed × clamp(moveMod, 0.1, 2) × dt` (`CharacterControl.cs:2722`); the speed set in a state runs until the next `Yield` returns. Distance moved from the cast point at each hit:
+
+| Skill | Legs (speed m/s × seconds) | Hit at (m) | Source |
+|---|---|---|---|
+| Qi Strike | 16 × 0.2, then stops and hits | 3.2 | `Panda.cs:23680`, `:23475`, `:23503` |
+| Ashura Fist | 6 × 0.6, then stops; area r 3 | 3.6 (already on the card) | `Panda.cs:30987`, `:31009`, `:31197` |
+| Drunken Fist | 3 × 0.5 (hits at 0.2 s and 0.5 s), 0 × 0.07, 7 × 0.13, 9 × 0.16; four hits at t = 0.2 / 0.5 / 0.70 / 0.86 | 0.6, 1.5, 2.41, 3.85 | `Panda.cs:32476`, `:31853`, `:32075`, `:32102`, `:32250`; hits `:31718`, `:31940`, `:32115`, `:32263` |
+| Water Monkey | 3 × 0.3, then stops; two hits at `position + 2×i − 1` (i = 0, 1) | 0.9 from the cast point, then +2 per hit | `Panda.cs:32853`, `:32880`, `:33020` |
+| Stasis Blow / Death Blow | 3 × 0.3 (0.2 s wait + 0.1 s), 10 × 0.2, then the hit | 2.9 (before any Wind Walker warp; total with the 10 × 0.1, 4 × 0.2 tail = 4.7 m) | `Panda.cs:34621`, `:34260`, `:34312`, `:35439`, `:35076`, `:35128` |
+
+The warp (Wind Walker, target > 6 m) sets `position = mPos + tDir` in the second state (`Panda.cs:34198`, `:35015`); the preview draws from the position after the warp, i.e. it does not model the warp. Not moving before their hits: Rising Vortex, Heaven Palm (area at the target position `tPos`, `Panda.cs:40077`), Water Crane, Fuujin Ken, Raijin Ken, Charge Attack.
+
 ## Open questions & card mismatches (2026-10-01)
 
 **Card mismatches:** all fixed 2026-10-02 (every Panda card now has `desc`; Sp Transfer, Roll Around and Combo Link got their costs; Roll's `cd` corrected 60 → 30). Combo Link's `atkUp` is described in text, not linked: the app's `atkUp` popup describes Cat's percentage boost, but Combo Link's is a flat `+n` ATK.

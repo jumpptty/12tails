@@ -3649,12 +3649,15 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_nAttack", 4, { pndW59: 1 }); g("Force Gauntlet circles", c.length === 4 && c[0].r === 3 && c[1].r === 4 && c[2].r === 3 && c[3].r === 4 && c[3].h === 3, c);
       c = P("panda_nAttack", 4, { pndW59: 1, auraBlast: 1 }); g("Aura Blast ignores Force Gauntlet", c[3].r === 2 && c[3].anchor === "self", c[3]);
       c = P("panda_qiStrike", 1, { qiBurst: 1 }); g("Qi Burst 1+5", c[0].l === 6 && c[0].w === 2, c);
+      c = P("panda_qiStrike", 1); g("Qi Strike starts 3.2 m ahead (16 x 0.2 s)", c.length === 1 && c[0].z0 === 3.2, c);
+      c = P("panda_drunkenFist", 1); g("Drunken Fist: 4 hits at 0.6 / 1.5 / 2.41 / 3.85 m", c.length === 4 && [0.6, 1.5, 2.41, 3.85].every((d, i) => Math.abs(c[i].z0 - d) < 1e-9), c);
+      c = P("panda_deathBlow", 1); g("Death Blow = Stasis Blow: 0.9 m", c.length === 1 && c[0].z0 === 0.9, c);
       c = P("panda_pummel", 1, { ogreImpact: 1 }); g("Pummel Ogre Impact", c[0].w === 4 && c[0].l === 3 && c[0].h === 3 && !c[0].rangeMod, c);
       c = P("panda_towerRush", 1, { ogreImpact: 1 }); g("Tower Rush Ogre Impact", c[0].shape === "cylinder" && c[0].r === 4 && c[0].h === 6, c);
       c = P("panda_tigerToss", 1, { tigerPounce: 1 }); g("Tiger Pounce landing", c.length === 2 && c[1].r === 3 && c[1].h === 6 && c[1].anchor === "target", c);
-      c = P("panda_waterMonkey", 2, { shadowFist: 5 }); g("Water Monkey Spirit Fist", c.length === 2 && c[0].w === 6 && c[0].l === 3 && c[0].z0 === -1 && c[1].z0 === 1, c);
+      c = P("panda_waterMonkey", 2, { shadowFist: 5 }); g("Water Monkey Spirit Fist", c.length === 2 && c[0].w === 6 && c[0].l === 3 && c[0].z0 === -0.1 && c[1].z0 === 1.9, c);   // -1 / +1 plus a 0.9 m drift (3 x 0.3 s)
       c = P("panda_waterMonkey", 2); g("Water Monkey base", c[0].w === 4 && c[0].l === 2 && c[0].h === 3, c);
-      c = P("panda_stasisBlow", 2, { shadowFist: 5 }); g("Stasis Blow Spirit Fist", c[0].w === 4 && c[0].l === 5 && c[0].h === 2 && c[0].z0 === -2, c);
+      c = P("panda_stasisBlow", 2, { shadowFist: 5 }); g("Stasis Blow Spirit Fist", c[0].w === 4 && c[0].l === 5 && c[0].h === 2 && c[0].z0 === 0.9, c);   // -2 plus a 2.9 m dash (3 x 0.3 s + 10 x 0.2 s)
       c = P("panda_waterCrane", 2, { shadowFist: 5 }); g("Water Crane Spirit Fist r5", c[0].r === 5 && c[0].h === 5, c);
       c = P("panda_wind&cloud", 2); g("Wind & Cloud r3 h2", c[0].r === 3 && c[0].h === 2, c);
       c = P("panda_rain&storm", 2, { shadowFist: 5 }); g("Rain & Storm Spirit Fist r6", c[0].r === 6, c);
@@ -3669,9 +3672,9 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       // rangeMod (Enlarge 4 = x1.4, Reduce 4 = x0.6): only the sizes the Find* call multiplies by rangeMod scale
       c = P("panda_nAttack", 4, {}, 1.4); g("Combo stage 5 at x1.4 (start offset scales too)", c[3].w === 8.4 && c[3].w2 === 4.48 && c[3].l === 5.6 && c[3].h === 4.2 && c[3].z0 === -1.4, c[3]);
       c = P("panda_nAttack", 4, { pndW59: 1 }, 1.4); g("Force Gauntlet circles ignore rangeMod", c[0].r === 3 && c[3].r === 4, c);
-      c = P("panda_waterMonkey", 2, {}, 1.4); g("Water Monkey: height only", c[0].w === 4 && c[0].l === 2 && c[0].h === 4.2 && c[0].z0 === -1, c[0]);
+      c = P("panda_waterMonkey", 2, {}, 1.4); g("Water Monkey: height only", c[0].w === 4 && c[0].l === 2 && c[0].h === 4.2 && c[0].z0 === -0.1, c[0]);
       c = P("panda_qiStrike", 1, { qiBurst: 1 }, 1.4); g("Qi Strike: 1×rangeMod + 5, width and height scale", c[0].l === 6.4 && c[0].w === 2.8 && c[0].h === 2.8, c[0]);
-      c = P("panda_stasisBlow", 2, {}, 0.6); g("Stasis Blow at x0.6: length and height", c[0].w === 2 && c[0].l === 2.4 && c[0].h === 1.2 && c[0].z0 === -2, c[0]);
+      c = P("panda_stasisBlow", 2, {}, 0.6); g("Stasis Blow at x0.6: length and height", c[0].w === 2 && c[0].l === 2.4 && c[0].h === 1.2 && c[0].z0 === 0.9, c[0]);
       c = P("panda_rushingFalcon", 2, {}, 1.4); g("Rushing Falcon: 0.5 m start is not scaled", c[0].w === 4.48 && c[0].z0 === -0.5, c[0]);
       c = P("panda_ashura", 2, {}, 1.4); g("Ashura ignores rangeMod", c[0].r === 3, c[0]);
       c = P("panda_heavenPalm", 2, {}, 1.4); g("Heaven Palm r6 x1.4", c[0].r === 8.4 && c[0].h === 2.8 && c[0].rm === 1.4, c[0]);
