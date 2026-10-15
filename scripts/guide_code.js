@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Class guide short codes (12t_projects/bible, ไกด์แต่ละอาชีพ). Format 2 ("TG2.", what the page exports): the guide as compact binary
+// Class guide short codes (12t_projects/bible, ไกด์อาชีพ). Format 2 ("TG2.", what the page exports): the guide as compact binary
 // (see classGuideBinary below; Thai is one byte per character), deflated when that is shorter, URL-safe base64. Format 1 ("12TG1.": one-letter-key
 // JSON, deflate-raw) still decodes.
 // The page makes them (classGuidePack) and reads them (classGuideUnpack); this decodes one outside the browser, to embed a submitted guide

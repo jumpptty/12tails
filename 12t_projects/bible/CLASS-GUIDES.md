@@ -1,10 +1,10 @@
-# ไกด์แต่ละอาชีพจากชุมชน
+# ไกด์อาชีพจากชุมชน
 
-The **ไกด์แต่ละอาชีพ** tool replaces the Skill Simulator menu entry. Its existing `#skill-simulator` link remains valid. All twelve class grids, three servers, normal/C/EX point rules and original skill frames are reused.
+The **ไกด์อาชีพ** tool replaces the Skill Simulator menu entry. Its existing `#skill-simulator` link remains valid. All twelve class grids, three servers, normal/C/EX point rules and original skill frames are reused.
 
 ## For guide authors
 
-1. Open ไกด์แต่ละอาชีพ and choose **สร้างไกด์** (Create guide).
+1. Open ไกด์อาชีพ and choose **สร้างไกด์** (Create guide).
 2. Fill in the guide title, author name, the **date** you wrote the guide (required; it replaces the old free-text game patch) and the build description. To emphasise text, press **ไฮไลต์** in the editor toolbar so it lights up, then drag the mouse (or a finger) across the characters you want: they turn bold gold, and a space is added before and after them when they touch other text. Dragging across text that is already bold turns it back. Press **ไฮไลต์** again to stop. Formatting is stored as `**text**` in the code and shown in previews and published guides. Pasted text is kept as plain text; Ctrl+Z inside the editor undoes text edits.
 3. Choose the server, class and level, then build using the existing skill grid. Normal learning and undo remain available in **จัดบิลด์** mode.
 4. Optionally fill **สเตตัสแนะนำ** (recommended stats): any of ATK, DEF, TAL, AGI, VIT, CHA, INT, LCK, whole numbers 0-512. A blank field is not stored and not shown to readers. AGI, INT and CHA (with LCK) also drive the hover timings in the reader view.
