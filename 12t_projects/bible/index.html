@@ -10894,6 +10894,18 @@ function reachMesh(p){
     faces.push(Array.from({ length: N }, (_, i) => i), Array.from({ length: N }, (_, i) => N + i));
   } else if (p.shape === "sector"){   // a flat fan: apex at the anchor, an arc of `angle` degrees centred on +z, the usual vertical band (Wolf Twin Resonance)
     const M = 24, S = M + 2, half = p.angle * Math.PI / 360;
+    if (p.r0 > 0){   // a crescent: the part of the fan between an inner and an outer radius (Wolf Twin Resonance: only targets in the moving 2 m band are hit)
+      const SR = 2 * (M + 1), ys = band(p.h), O = (L, j) => L * SR + j, Q = (L, j) => L * SR + M + 1 + j;
+      for (const y of ys){ for (const rr of [p.r, p.r0]) for (let j = 0; j <= M; j++){ const t = -half + 2 * half * j / M; add(rr * Math.sin(t), y, rr * Math.cos(t)); } }
+      for (let L = 0; L < 2; L++){
+        for (let j = 0; j < M; j++){ edges.push([O(L, j), O(L, j + 1)], [Q(L, j), Q(L, j + 1)]); faces.push([O(L, j), O(L, j + 1), Q(L, j + 1), Q(L, j)]); }
+        edges.push([O(L, 0), Q(L, 0)], [O(L, M), Q(L, M)]);
+      }
+      for (const j of [0, M]) edges.push([O(0, j), O(1, j)], [Q(0, j), Q(1, j)]);
+      for (let j = 4; j < M; j += 4) edges.push([O(0, j), O(1, j)]);
+      for (let j = 0; j < M; j++) faces.push([O(0, j), O(0, j + 1), O(1, j + 1), O(1, j)], [Q(0, j), Q(0, j + 1), Q(1, j + 1), Q(1, j)]);
+      faces.push([O(0, 0), Q(0, 0), Q(1, 0), O(1, 0)], [O(0, M), Q(0, M), Q(1, M), O(1, M)]);
+    } else {
     for (const y of band(p.h)){ add(0, y, 0); for (let j = 0; j <= M; j++){ const t = -half + 2 * half * j / M; add(p.r * Math.sin(t), y, p.r * Math.cos(t)); } }
     for (let L = 0; L < 2; L++){
       for (let j = 0; j < M; j++){ edges.push([L * S + 1 + j, L * S + 2 + j]); faces.push([L * S, L * S + 1 + j, L * S + 2 + j]); }
@@ -10903,6 +10915,7 @@ function reachMesh(p){
     for (let j = 4; j < M; j += 4) edges.push([1 + j, S + 1 + j]);
     for (let j = 0; j < M; j++) faces.push([1 + j, 2 + j, S + 2 + j, S + 1 + j]);
     faces.push([0, 1, S + 1, S], [0, M + 1, S + M + 1, S]);
+    }
   } else if (p.shape === "line"){
     add(0, 0.5, 0); add(0, 0.5, p.l); edges.push([0, 1]);
   }
@@ -10950,6 +10963,7 @@ function reachDims(p){
     const hs = Math.sin(p.angle * Math.PI / 360) * p.r, hc = Math.cos(p.angle * Math.PI / 360) * p.r, top = typeof p.h === "number" ? p.h : 6;
     out.push({ text: f1(p.r) + "m", opts: [[V(0, top, 0), V(0, top, p.r)]], pick: "right" });
     out.push({ text: f1(p.angle) + "°", opts: [[V(-hs, top, hc), V(hs, top, hc)]], pick: "low" });
+    if (p.r0 > 0) out.push({ text: "ใน " + f1(p.r0) + "m", opts: [[V(0, top, 0), V(0, top, p.r0)]], pick: "right" });
     heightPills([[hs, hc], [-hs, hc], [0, p.r]]);
   } else if (p.shape === "line"){
     out.push({ text: f1(p.l) + "m", opts: [[V(0, 0.5, 0), V(0, 0.5, p.l)]], pick: "right" });
@@ -11008,7 +11022,7 @@ const REACH_COLORS = ["#5ec8e5", "#e8b84a", "#6fcf7a", "#d96bd0"];
 const REACH_SHAPE_TH = { sphere: "ทรงกลม", cylinder: "ทรงกระบอก", box: "กล่อง", cone: "กรวย", line: "เส้นตรง", self: "ตัวเอง", sector: "พัด", ring: "วงกลมบนพื้น", tube: "ท่อกระสุน" };
 function reachPartLabel(p){
   const dims = [];
-  if (p.r) dims.push(`รัศมี ${p.r}m`);
+  if (p.r) dims.push(p.r0 ? `รัศมี ${p.r0}–${p.r}m (หนา ${+(p.r - p.r0).toFixed(1)}m)` : `รัศมี ${p.r}m`);
   if (p.w) dims.push(p.w2 !== undefined && p.w2 !== p.w ? `กว้าง ${p.w}→${p.w2}m` : `กว้าง ${p.w}m`);
   if (p.l) dims.push(`ยาว ${p.l}m`);
   if (p.h) dims.push(p.h === "inf" ? "สูง ไม่จำกัด" : `สูง ${p.h}m`);
@@ -16149,7 +16163,7 @@ const SKILLS = [
   { id:"wolf_mirrorBlade", name:"Mirror Blade", class:"Wolf", icon:"wolf_mirrorBlade1", cd:120, cdWrapped:true, revisedArtExempt:false, maxRank:1, cost:{mp:0, sp:30, spType:"red"}, desc:"ยืนตั้งท่า **1.2 วินาที** แล้วคืน **HP ที่เสียไปในช่วงนั้น** เป็น ^^ดาเมจม่วง^^ ใส่เป้าหมายที่ล็อกไว้ (สูงสุด **1,999**)<br>__ถ้าไม่โดนดาเมจหรือฮีลกลับเต็ม จะไม่มีดาเมจ__", compatSkills:["wolf_sublimeArt"], reach:[{ shape: "ring", r: 40, anchor: "self", label: "ระยะล็อกเป้าหมาย (วงกลมแนวราบ ไม่จำกัดความสูง)", src: "12Tails-Mechanics-Reference.md §4 (GameGui.cs:37857-37880)" }] },
   { id:"wolf_feralAssault", name:"Feral Assault", class:"Wolf", icon:"wolf_feralAssault1", cd:180, cdWrapped:true, revisedArtExempt:false, maxRank:1, cost:{mp:0,sp:45,spType:"red"}, dmg:"talAdjust(60)", atkCoeff:0.5, ko:"6", hitCount:()=>5, dmgGroups:[{dmg:"talAdjust(60)",atkCoeff:0.5,hitCount:4,ko:"6",label:"พุ่ง ×4"},{dmg:"talAdjust(90)",atkCoeff:1,hitCount:1,ko:"6",label:"ฮิตจบ"}], desc:"พุ่งทะลุแนวศัตรู **4 ช่วง** แต่ละช่วงฟันแนวที่พุ่งผ่าน แล้วโจมตีปิดท้ายรอบตัว รวมได้สูงสุด **5 ฮิต** ต่อเป้าหมาย ลบสถานะ Lock ระดับไม่เกิน **5** ([groundLock], [needlePrison], [sticky], [frost], [lightBind])<br>**Sublime Art:** เมื่อ **Double Art** ติด สกิลนี้จะไม่เริ่มคูลดาวน์", compatSkills:["wolf_doubleArt","wolf_sublimeArt"], reach:(() => { const mm = () => Math.min(2, Math.max(0.1, 1 + 0.4 * ((reachDepOverride || {}).reachLunar || 0))), s = () => Math.floor(14 / mm()) * mm() * 0.3, at = (n) => { const a = [0, 1, 2, 3].map(i => +(i * s()).toFixed(2)).slice(0, n); a.at = [0, 0.3, 0.6, 0.9].slice(0, n); return a; }; return [{ shape: "box", w: 12, w2: 6, l: 8, h: 3, z0: -6, anchor: "self", label: "แต่ละช่วงพุ่ง (4 ช่วง, ยาวถอยหลังจากจุด 2m ข้างหน้า)", steps: () => at(4), src: "Wolf.cs:35633 (ตี), :35208 (moveSpeed 14 × 0.3 วินาที ต่อช่วง)" }, { shape: "cylinder", r: 6, h: 3, anchor: "self", label: "ปิดท้ายรอบตัว", steps: () => { const a = [+(4 * s()).toFixed(2)]; a.at = [1.2]; return a; }, src: "Wolf.cs:35547" }]; })() },
   { id:"wolf_dualBrand", name:"Dual Brand", class:"Wolf", icon:"wolf_dualBrand1", cd:120, cdWrapped:true, revisedArtExempt:false, maxRank:1, cost:{mp:24,sp:36,spType:"red"}, dmg:"talAdjust(24)", atkCoeff:1, ko:"0", hitCount:()=>4, desc:"ฟันรอบตัว **2 ครั้ง** แล้วฟันด้านหน้าอีก **2 ครั้ง** โดนเป้าหมายเดิมได้สูงสุด **4 ฮิต**<br>**Sublime Art:** เมื่อ **Double Art** ติด สกิลนี้จะไม่เริ่มคูลดาวน์", compatSkills:["wolf_doubleArt","wolf_sublimeArt"], servers:{ tot:{ cd:72, changeNote:"• [Buff] ลด Base Cooldown ลง **40%** (120 >> **72 วินาที**)" } }, reach:[{ shape: "cylinder", r: 5, h: 3, z0: 0.5, anchor: "self", label: "ฟันรอบตัว (2 ฮิตแรก)", steps: () => reachPath([[4, 0.6], [5, 0.1], [9, 0.1]], [0.3, 0.6]), src: "Wolf.cs:36019, :36169 (ตี), :35914 (moveSpeed 4), :36156 (5)" }, { shape: "box", w: 4, l: 5, h: 4, anchor: "self", label: "ฟันด้านหน้า (2 ฮิตหลัง)", steps: () => reachPath([[4, 0.6], [5, 0.1], [9, 0.1], [9, 0.1], [2, 0.1], [1, 0.1]], [0.8, 1.1]), src: "Wolf.cs:36319, :36496 (ตี), :36251 (moveSpeed 9), :36401 (2), :36461 (1)" }] },
-  { id:"wolf_twinResonance", name:"Twin Resonance", class:"Wolf", icon:"wolf_twinResonance1", cd:240, cdWrapped:true, revisedArtExempt:false, maxRank:1, cost:{mp:60,sp:60,spType:"red"}, dmg:"talAdjust(50)", atkCoeff:0.75, ko:"2", desc:"ปล่อยคลื่นดาบเป็นรูปพัดไปข้างหน้า ตรวจเป้าหมาย **40 รอบ** ห่างกันรอบละ **0.4 วินาที** พัดขยายออกทุกรอบ เป้าหมายที่อยู่ใกล้โดนซ้ำได้หลายฮิต สูตรดาเมจด้านล่างคิด **ต่อ 1 ฮิต** และคลื่นหยุดหากผู้ใช้ HP หรือ KO หมด", compatSkills:["wolf_doubleArt", "wolf_sublimeArt"], servers:{ tot:{ liveCheck:"__สูตรดาเมจ ToT ยังไม่ทราบ__: แพตช์เปลี่ยนเป็น**ดาเมจรุนแรงฮิตเดียว**แต่ไม่ได้บอกตัวเลข ค่าดาเมจ / Raw / Final ที่แสดงยังเป็น**สูตรเดิมของ BB**", cd:120, ko:"10", changeNote:"• [Buff] ปรับ HitBox กว้างขึ้น\n• [Buff] ลด Base Cooldown ลง **50%** (240 >> **120 วินาที**)\n• [Buff] เปลี่ยนจากดาเมจหลายฮิตเป็นดาเมจรุนแรง **ฮิตเดียว**\n• [Buff] เพิ่มระยะเวลาและความเร็วของเคลื่อนดาบ **50%**\n• [Buff] เพิ่ม KO ของสกิล [ 2 >> **10** ]" } }, bbBug:"สกิลนี้ติด **Double Art** (รีเซ็ตคูลดาวน์) ได้แม้ยังไม่ได้อัพ **Sublime Art** ทั้งที่เป็นสกิลสาย C เหมือน **Holy Sword**, **Holy Armor**, **Art Breaker**, **Mirror Blade**, **Feral Assault** และ **Dual Brand** ซึ่งต้องมี **Sublime Art** ก่อน Double Art ถึงจะรีเซ็ตคูลดาวน์ให้ได้", reach:[{ shape: "sector", r: 32.2, angle: 190, h: 2, anchor: "self", steps: () => Array.from({ length: 40 }, (_, i) => ({ r: +(1 + 0.8 * i).toFixed(1), at: +(0.4 * i).toFixed(2), final: [0, 9, 19, 29, 39].includes(i), label: "คลื่นพัดรอบที่ " + (i + 1) + " (ผ่านไป " + +(0.4 * i).toFixed(1) + " วินาที) รัศมี " + +(1 + 0.8 * i).toFixed(1) + "m" })), src: "Wolf.cs:37644 (FindAngleTarget, รัศมีค้นหา 3 + 0.8×i, กรองระยะ 1 + 0.8×i :37663-37668), :37714 (0.4 วินาที ต่อรอบ, 40 รอบ)" }] },
+  { id:"wolf_twinResonance", name:"Twin Resonance", class:"Wolf", icon:"wolf_twinResonance1", cd:240, cdWrapped:true, revisedArtExempt:false, maxRank:1, cost:{mp:60,sp:60,spType:"red"}, dmg:"talAdjust(50)", atkCoeff:0.75, ko:"2", desc:"ปล่อยคลื่นดาบรูปเสี้ยวพระจันทร์ (ครึ่งวงกลม **190°**) หนา **2m** พุ่งออกไปข้างหน้าครั้งละ **0.8m** ทุก **0.4 วินาที** รวม **40 รอบ** ศัตรูโดนเมื่อคลื่นผ่านตัว ศัตรูที่ยืนอยู่กับที่โดนประมาณ **2-3 ฮิต** ไม่ใช่ทั้ง 40 รอบ สูตรดาเมจด้านล่างคิด **ต่อ 1 ฮิต** และคลื่นหยุดหากผู้ใช้ HP หรือ KO หมด", compatSkills:["wolf_doubleArt", "wolf_sublimeArt"], servers:{ tot:{ liveCheck:"__สูตรดาเมจ ToT ยังไม่ทราบ__: แพตช์เปลี่ยนเป็น**ดาเมจรุนแรงฮิตเดียว**แต่ไม่ได้บอกตัวเลข ค่าดาเมจ / Raw / Final ที่แสดงยังเป็น**สูตรเดิมของ BB**", cd:120, ko:"10", changeNote:"• [Buff] ปรับ HitBox กว้างขึ้น\n• [Buff] ลด Base Cooldown ลง **50%** (240 >> **120 วินาที**)\n• [Buff] เปลี่ยนจากดาเมจหลายฮิตเป็นดาเมจรุนแรง **ฮิตเดียว**\n• [Buff] เพิ่มระยะเวลาและความเร็วของเคลื่อนดาบ **50%**\n• [Buff] เพิ่ม KO ของสกิล [ 2 >> **10** ]" } }, bbBug:"สกิลนี้ติด **Double Art** (รีเซ็ตคูลดาวน์) ได้แม้ยังไม่ได้อัพ **Sublime Art** ทั้งที่เป็นสกิลสาย C เหมือน **Holy Sword**, **Holy Armor**, **Art Breaker**, **Mirror Blade**, **Feral Assault** และ **Dual Brand** ซึ่งต้องมี **Sublime Art** ก่อน Double Art ถึงจะรีเซ็ตคูลดาวน์ให้ได้", reach:[{ shape: "sector", r: 34.2, r0: 32.2, angle: 190, h: 2, anchor: "self", steps: () => Array.from({ length: 40 }, (_, i) => ({ r: +(3 + 0.8 * i).toFixed(1), r0: +(1 + 0.8 * i).toFixed(1), at: +(0.4 * i).toFixed(2), final: [0, 9, 19, 29, 39].includes(i), label: "คลื่นเสี้ยวรอบที่ " + (i + 1) + " (ผ่านไป " + +(0.4 * i).toFixed(1) + " วินาที)" })), src: "Wolf.cs:37644 (FindAngleTarget, รัศมีค้นหา 3 + 0.8×i, 190°, สูง 2), :37668 (โดนเฉพาะที่ระยะ > 1 + 0.8×i จากจุดร่าย), :37714 (0.4 วินาที ต่อรอบ, 40 รอบ)" }] },
   
   // Common: shared passives with identical numeric skill IDs and mechanics
   // across all 12 classes (verified: same IDs/effects in Monkey.cs, CharacterControl.cs,
@@ -29747,6 +29761,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-15T03:47:53.256Z","fix(wolf): Twin Resonance is a moving 2 m thick crescent (hits only between 1 + 0.8 x i and 3 + 0.8 x i m, so about 2-3 hits per target, not 40), range preview draws it with a new inner radius on the fan shape"],
     ["2026-10-15T03:41:53.526Z","feat(bible): range popup plays multi-hit skills one hit at a time in the game timing (fade in / out), then shows every hit together; Twin Resonance plays all 40 rounds at 0.4 s"],
     ["2026-10-15T03:31:25.379Z","feat(bible): range popup shows Boldas in both views (also on the plain ground plane) and the 1 m grid runs 6 m past him"],
     ["2026-10-15T03:28:47.197Z","feat(bible): range popup scene spawns Boldas with his sword on start point 2 (real skinned model, idle pose) and the scene toggle icon is a Boldas portrait"],
