@@ -114,7 +114,7 @@ const exposeInjection = `
   window._resolveGroupAtkCoeff = resolveGroupAtkCoeff;
   window._resolveGroupHitCount = resolveGroupHitCount;
   window._getKOValue = getKOValue;
-  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject;
+  window._reachNormalize = reachNormalize; window._reachPartsWith = reachPartsWith; window._reachBadgeText = reachBadgeText; window._reachMesh = reachMesh; window._reachDims = reachDims; window._reachProject = reachProject; window._reachSeqPlan = reachSeqPlan; window._reachSeqVis = reachSeqVis;
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
@@ -3728,7 +3728,16 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("wolf_thirdRend", 1); g("Third Rend 4x4x3 after a 1.1 m dash", c.length === 1 && c[0].w === 4 && c[0].l === 4 && c[0].h === 3 && c[0].z0 === 1.1, c);
       c = P("wolf_bladeSong", 1); g("Blade Song 2 to 4 wide 6 long, 0.4 m behind the cast point", c.length === 1 && c[0].w === 2 && c[0].w2 === 4 && c[0].l === 6 && c[0].z0 === -0.4, c);
       c = sandbox._reachPartsWith(SKILLS.find(x => x.id === "wolf_crusader"), 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 1 }); g("Lunar Eclipse 1: x1.4 size and start, and the 2.8 m dash scales with moveMod (+40%) = 3.92", c[0].z0 === 2.52, c);
-      c = P("wolf_twinResonance", 1); g("Twin Resonance: 190 degree fan h2 growing r 1 -> 32.2 over 40 rounds", c.length === 5 && c.every(b => b.shape === "sector" && b.angle === 190 && b.h === 2) && c[0].r === 1 && c[4].r === 32.2, c);
+      c = P("wolf_twinResonance", 1); g("Twin Resonance: 40 rounds of the 190 degree h2 fan, r 1 + 0.8 x i, 0.4 s apart (true timing), five of them in the final picture", c.length === 40 && c.every((b, i) => b.shape === "sector" && b.angle === 190 && b.h === 2 && Math.abs(b.r - (1 + 0.8 * i)) < 0.051 && Math.abs(b.at - 0.4 * i) < 0.0051) && c[0].r === 1 && c[39].r === 32.2 && c[39].at === 15.6 && c.filter(b => b.final !== false).length === 5, c.length);
+      { const plan = sandbox._reachSeqPlan(c), vis = (i, t) => sandbox._reachSeqVis(c[i], t, plan);
+        g("Twin Resonance playback: 40 phases 0.4 s apart, a fade of 0.18 s, then 0.7 s of hold", plan && plan.T.length === 40 && Math.abs(plan.fade - 0.18) < 1e-9 && Math.abs(plan.tEnd - 16.3) < 1e-6, plan);
+        g("Playback: round 1 fades in alone, round 2 replaces it, the last round stays", vis(0, 0) === 0 && vis(0, 0.2) === 1 && vis(1, 0.2) === 0 && vis(0, 0.6) === 0 && vis(1, 0.6) === 1 && vis(39, 15.9) === 1 && vis(38, 15.9) === 0, [vis(0, 0.2), vis(1, 0.6), vis(39, 15.9)]);
+        g("Playback end: only the rounds marked final come back, together", vis(0, 17) === 1 && vis(9, 17) === 1 && vis(39, 17) === 1 && vis(5, 17) === 0 && c[5].final === false && c[9].final === true, [vis(0, 17), vis(5, 17)]); }
+      c = P("wolf_bladeFang", 3); g("Blade Fang hit times 0.2 / 0.4 / 0.7 / 1.0 s", [0.2, 0.4, 0.7, 1].every((t, i) => Math.abs(c[i].at - t) < 1e-9), c.map(b => b.at));
+      c = P("wolf_nAttack", 3); g("Wolf Combo hit times chain the stages: 0.5, 0.97, 1.3, 1.44, 1.94 s", [0.5, 0.97, 1.3, 1.44, 1.94].every((t, i) => Math.abs(c[i].at - t) < 0.0051), c.map(b => b.at));
+      c = P("penguin_arcticWind", 3, { deadlyFrost: 1 }); g("Arctic Wind: 8 hits, 0.2 s apart", c.length === 8 && Math.abs(c[7].at - 1.4) < 1e-9, c.map(b => b.at));
+      c = P("wolf_feralAssault", 1); g("Feral Assault: boxes at 0 / 0.3 / 0.6 / 0.9 s, the ring at 1.2 s", [0, 0.3, 0.6, 0.9, 1.2].every((t, i) => Math.abs(c[i].at - t) < 1e-9), c.map(b => b.at));
+      c = P("wolf_twinResonance", 1);
       // Penguin (Penguin.cs, ManaVortex.cs, Penguin_iceBlock.cs, Penguin_tornado.cs; sizes x rangeMod only where the card says rangeMod)
       c = P("penguin_nAttack", 1); g("Penguin Combo: a 19.6 m projectile line (14 m/s x 1.4 s)", c.length === 1 && c[0].shape === "line" && c[0].l === 19.6, c);
       c = P("penguin_nAttack", 1, {}, 1.4); g("Penguin Combo x1.4 = 27.44 m", c[0].l === 27.44, c[0]);
