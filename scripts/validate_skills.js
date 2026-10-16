@@ -3812,7 +3812,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       chameleon_quickFire: "arrows, hit time = flight time",
       chameleon_leftStride: "arrows, hit time = flight time", chameleon_rightStride: "arrows, hit time = flight time",
       mole_nAttack: "projectile", mole_mortarShot: "shells land one by one at different spots", mole_barrelBot_missile: "random targets", mole_missile: "random targets",
-      mole_kingKaiser_missile: "projectile", mole_napalm: "several shells landing at different spots", mole_barrelCannon: "several shells landing at different spots",
+      mole_kingKaiser_missile: "projectile", mole_napalm: "several shells landing at different spots",
       mole_warFactory_bazooka: "projectile", mole_warCapital: "AI-driven base",
       panda_climbingCliff: "single held target, no hit box", panda_crumblingMountain: "single held target, no hit box",
       penguin_nAttack: "projectile", penguin_manaMissile: "homing projectile", penguin_fallingComets: "random spots",
@@ -4075,7 +4075,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       if (def.base){   // a variant: the base model's parts plus its own extras (Monkey forms, Gadina 4 with its weapons)
         if (!new RegExp("REACH_MODELS\\." + def.base + " = ").test(html)) bad("model " + m[1] + ": base " + def.base + " has no REACH_MODELS entry");
         const vx = (def.extra || []).map((q, i) => partInfo(m[1], q, "extra " + i));
-        const PIN = { MonkeyEarthForm: [[2235, 1948]], MonkeyFireAvatar: [[2347, 3993]], Gadina4: [[443, 356], [541, 394]] };   // gadinaArmor_tri, phoenixArmor_tri; Gadina_Sword4 / Gadina_Shield4
+        const PIN = { MonkeyEarthForm: [[2235, 1948]], Gadina4: [[443, 356], [541, 394]] };   // gadinaArmor_tri, phoenixArmor_tri; Gadina_Sword4 / Gadina_Shield4
         if (PIN[m[1]] && JSON.stringify(vx.map(x => [x.nv, x.nt])) !== JSON.stringify(PIN[m[1]])) bad("model " + m[1] + ": extras " + JSON.stringify(vx.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(PIN[m[1]]));
         if (m[1] === "MonkeyEarthForm" && vx[0] && (vx[0].minY < 0 || vx[0].maxY > 2)) bad("model MonkeyEarthForm: the arms should float round the Monkey (0-2 m), got " + vx[0].minY + "-" + vx[0].maxY);
         continue;
@@ -4117,6 +4117,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 2351 || body.nt !== 2398) bad("model Bat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bat_standard_tri) has 2351 / 2398");
         if (extras.length !== 1 || extras[0].nv !== 175 || extras[0].nt !== 98) bad("model Bat: the extra should be the standard wand (175 / 98), got " + JSON.stringify(extras));
       }
+      if (m[1] === "MonkeyFireAvatar" && (body.nv !== 2347 || body.nt !== 3993 || extras.length)) bad("model MonkeyFireAvatar: the phoenixArmor body alone (it replaces the Monkey, user 2026-10-16) should be 2347 / 3993 with no extras, got " + body.nv + " / " + body.nt + " / " + extras.length);
       const GADINA = { Gadina1: [494, 406, 115, 120, 72, 48], Gadina2: [942, 694, 204, 184, 140, 128], Gadina3: [1889, 1310, 298, 252, 365, 260] };   // each form's own Gadina prefab, sword (mount_Hand_R) and shield (mount_Hand_L)
       if (GADINA[m[1]]){ const g = GADINA[m[1]]; if (body.nv !== g[0] || body.nt !== g[1] || extras.length !== 2 || extras[0].nv !== g[2] || extras[0].nt !== g[3] || extras[1].nv !== g[4] || extras[1].nt !== g[5]) bad("model " + m[1] + ": " + JSON.stringify([body.nv, body.nt].concat(...extras.map(x => [x.nv, x.nt]))) + ", expected " + g.join(" / ")); }
       const SUMMON = { LightPanther: [1499, 1648], LightLeopard: [1526, 1652], LightGolem: [1403, 2440], AutoGyroGun: [763, 652], BarrelBot: [1324, 1238], KingKaiser: [3830, 2828], MoleTank: [1724, 1420], GigaCannon: [1639, 1684], Phoenix: [1478, 1598], Ja: [526, 560], Gadina: [2453, 1694], Buiten: [860, 584], Gaos: [7130, 4446] };   // single-prefab summon meshes (Rabbit Mercenaries): Panther_tri / Leopard / LightGolem skinned meshes, no extras
