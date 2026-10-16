@@ -3267,6 +3267,17 @@ let checkedRsim = 0;
     const bin = vm.runInContext("classGuideBinary", sandbox), fromBin = vm.runInContext("classGuideFromBinary", sandbox), same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
     ok(["weapon","armor","hat","trinket","boot","pet"].every(k => Array.isArray(GD[k]) && GD[k].length) && GD.weapon.length > 500 && GD.pet.some(([id]) => id === "p_lcr"), "gear data covers all six slots (weapons 500+, pets as families)");
     ok(Object.values(GD).every(list => list.every(e => e.length === 2 && typeof e[0] === "string" && typeof e[1] === "string" && e[1])), "gear data holds only id and name (no stats or levels, user 2026-10-16)");
+    // gear picker order and nicknames (user 2026-10-16): GEAR_LV only orders the picker, GEAR_NICKNAMES replace the shown name but the game name still finds the item
+    { const LV = vm.runInContext("GEAR_LV", sandbox), NK = vm.runInContext("GEAR_NICKNAMES", sandbox), list = vm.runInContext("classGuideGearList", sandbox), key = vm.runInContext("classGuideGearSortKey", sandbox), gname = vm.runInContext("classGuideGearName", sandbox);
+      const allIds = new Set(Object.values(GD).flatMap(l => l.map(e => e[0])));
+      ok(Object.keys(LV).length > 1400 && Object.entries(LV).every(([id, lv]) => allIds.has(id) && Number.isInteger(lv)) && LV.w_wlf1 === 0 && LV.w_wlf44 === -58 && !("p_sob" in LV), "GEAR_LV: decoded itemClass.lv for listed items (negative = rank), pet families have none");
+      ok(Object.entries(NK).every(([id, n]) => allIds.has(id) && typeof n === "string" && n.trim() && n.length <= 60), "GEAR_NICKNAMES: listed items, non-empty names up to 60 characters");
+      const sorted = l => l.every((e, i) => { if (!i) return true; const x = key(l[i - 1][0]), y = key(e[0]); return x[0] < y[0] || (x[0] === y[0] && (x[1] < y[1] || (x[1] === y[1] && x[2] <= y[2]))); });
+      const w = list("weapon", "wolf");
+      ok(["weapon","armor","hat","trinket","boot","pet"].every(s => sorted(list(s, "wolf"))) && w.findIndex(e => e[0] === "w_wlf44") < w.findIndex(e => e[0] === "w_wlf41") && w[w.length - 1][0] === "w_wlf1" && w.findIndex(e => !NK[e[0]]) === w.filter(e => NK[e[0]]).length && NK.w_wlf62 === "70 ดด" && w[0][0] === "w_wlf62", "gear picker: nicknamed first, then no level data, then rank, then level, highest first");
+      NK.w_wlf1 = "ไม้ตีหมา"; const w2 = list("weapon", "wolf"); const nickOk = w2.findIndex(e => e[0] === "w_wlf1") < w2.findIndex(e => !NK[e[0]]) &&gname({ item: "w_wlf1" }) === "ไม้ตีหมา"; delete NK.w_wlf1;
+      ok(nickOk && html.includes('(GEAR_NICKNAMES[id] || "").toLowerCase().includes(q)') && html.includes("name.toLowerCase().includes(q) ||"), "a nicknamed item is listed first, shown by its nickname, and the search matches both names");
+    }
     const ids = new Set(Object.values(GD).flatMap(l => l.map(e => e[0]))); ok(Object.keys(GI).every(id => ids.has(id) && /^data:image\/webp;base64,/.test(GI[id])) && Object.keys(GI).length > 1400, "every gear icon belongs to a listed item and is an embedded WebP");
     const gear = { weapon:[{ item:"w_wlf10", replica:{ name:"ดาบใหม่ 🐺" }, stat:"atk" }, { name:"Brand New Blade" }, { item:"w_wlf11", replica:{ item:"w_wlf12" } }], hat:[{ item:"c_all1" }], trinket:[{ item:"t_all1" }], pet:[{ item:"p_lcr" }] };
     const withGear = norm(change({gear}));
