@@ -11681,7 +11681,7 @@ function reachPartsWith(skill, rank, over){
 function reachToggleEntries(skill){
   return (skill.reachControls || []).map(c => c.dep
     ? { dep: c.dep, on: c.onRank, off: c.offRank, label: c.label, icon: c.icon }
-    : { dep: c, on: c.maxRank, off: c.minRank, label: c.label, icon: c.icon });
+    : { dep: c, on: c.maxRank, off: c.minRank, label: c.label, icon: c.icon, cycle: (c.maxRank || 1) - (c.minRank || 0) > 1 });   // a multi-rank dep steps through its ranks in the popup (user 2026-10-16: Extra Powder was stuck at 3)
 }
 // Points spread evenly along the projected edges of a range (panel coordinates), with the edge each one sits on.
 function reachOutline(parts, st, cv, panel, n){
@@ -11760,7 +11760,7 @@ function openReachPopup(base, rank, srv0){
   const SRV_NAME = { og: "BB", tot: "ToT", tto: "TTO" };
   const depsHtml = () => (srvList.length > 1 ? srvList.map(sv => { const on = sv === srv || (sv === "og" && !srvList.includes(srv)); return btn("srv:" + sv, SRV_NAME[sv], "server_" + sv, on, 1, on ? 1 : 0); }) : [])
     .concat(rankMatters ? [btn("rank", "Rank " + rank, skill.icon, true, maxRank, rank)] : [])   // a rank has no off state: always lit, pips = rank
-    .concat(toggles.map((e, k) => { const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
+    .concat(toggles.map((e, k) => { if (e.cycle){ const lv = (over[e.dep.id] || 0) - (e.off || 0), n = e.on - (e.off || 0); return btn("t" + k, `${e.label || e.dep.label}${lv > 0 ? " " + over[e.dep.id] : ""}`, e.icon || e.dep.icon, lv > 0, n, lv); } const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
     .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, d.maxRank, over[d.id]))).join("");
   pop.innerHTML = `<div class="sk-reach-panel" role="dialog" aria-label="ระยะโจมตี">
     <div class="sk-reach-head">${toggles.length || rankToggles.length || rankMatters || srvList.length > 1 ? `<div class="sk-reach-deps">${depsHtml()}</div>` : ""}<span class="sk-reach-scenebox">${sceneBtn()}</span><span class="sk-reach-replaybox">${replayBtn()}</span></div>
@@ -11911,7 +11911,7 @@ function openReachPopup(base, rank, srv0){
     const key = b.dataset.key, before = shownParts(), prevVol = volume(parts);
     if (key === "rank"){ rank = rank >= maxRank ? 1 : rank + 1; }
     else if (key.startsWith("srv:")){ srv = key.slice(4); skill = reachSkillFor(base, srv); toggles = reachToggleEntries(skill); for (const e of toggles) if (over[e.dep.id] === undefined) over[e.dep.id] = getDepRank(e.dep); }
-    else if (key[0] === "t"){ const e = toggles[Number(key.slice(1))]; over[e.dep.id] = over[e.dep.id] === e.on ? e.off : e.on; }
+    else if (key[0] === "t"){ const e = toggles[Number(key.slice(1))]; over[e.dep.id] = e.cycle ? ((over[e.dep.id] || 0) >= e.on ? e.off : (over[e.dep.id] || 0) + 1) : (over[e.dep.id] === e.on ? e.off : e.on); }
     else { const d = [REACH_ENLARGE, REACH_REDUCE, REACH_LUNAR, REACH_ENRAGE, REACH_TITAN].find(x => x.id === key); over[d.id] = over[d.id] >= d.maxRank ? 0 : over[d.id] + 1; if (over[d.id] && (d === REACH_ENLARGE || d === REACH_REDUCE)) over[d === REACH_ENLARGE ? REACH_REDUCE.id : REACH_ENLARGE.id] = 0; if (over[d.id] && d === REACH_TITAN){ over.reachEnrage = 0; over.reachEnlarge = 0; } }
     const after = reachPartsWith(skill, rank, over), msFrom = st.ms || 1, msTo = msNow();
     const pr = panel.getBoundingClientRect(), br = b.getBoundingClientRect(), src = [br.left - pr.left + br.width / 2, br.top - pr.top + br.height / 2];
@@ -30837,6 +30837,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T03:25:40.842Z","fix(bible): multi-rank toggles in the reach preview step through every rank (Extra Powder 0-3, Improved Swing, Colossal Weapon, Far Reach, Improved Slayer, Rabbit Combo level) instead of jumping between off and max"],
     ["2026-10-16T02:51:05.199Z","feat(bible): reach preview gets a server toggle for skills whose hit box or hit count a server changes (Blizzard ToT 8 waves, Fire Barrage / Bombardment / Flash Fire / Planet Breaker / Spin Hack ToT, Titanic Earth Pulse and Honor TTO); Fire Barrage and Bombardment land 1 m in front of a target inside the 40 m lock"],
     ["2026-10-16T02:41:59.624Z","feat(bible): reach preview hit counter stays on screen after the playback (N / N), and single-hit skills get the strike flash and a 1 / 1 counter"],
     ["2026-10-16T02:26:41.983Z","fix(bible): reach preview plays every hit the damage sim counts, timed from the code, for 25 skills across Bison, Cat, Mole, Panda, Penguin, Whale and Wolf; Bowling Whale hits 23 times not 24"],
