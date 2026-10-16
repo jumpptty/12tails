@@ -1766,7 +1766,9 @@
   .cg-stat-panel[hidden]{display:none}
   .cg-stat-tile{border-left:3px solid var(--c);border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--c) 11%,transparent);padding:4px 8px 5px;min-width:0}
   .cg-stat-tile b{display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
-  .cg-page .cg-stat-tile input.cg-stat-try{display:block;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:19px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
+  .cg-stat-val{display:flex;align-items:baseline;gap:1px}   /* recommended stats are a ballpark (user 2026-10-16): a "~" before the number */
+  .cg-stat-approx{font-weight:700;font-size:17px;line-height:1.1;color:var(--c);opacity:.75}
+  .cg-page .cg-stat-tile input.cg-stat-try{display:block;flex:1;min-width:0;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:19px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
   .cg-page .cg-stat-tile input.cg-stat-try:hover,.cg-page .cg-stat-tile input.cg-stat-try:focus{border-bottom-color:var(--c);outline:none}
   .cg-stat-tile input.cg-stat-try::-webkit-outer-spin-button,.cg-stat-tile input.cg-stat-try::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .cg-stat-tile{cursor:text}
@@ -29531,7 +29533,7 @@ function classGuideStatsHtml(stats){
   const shown = CLASS_GUIDE_STATS.filter(s => stats && s.key in stats);
   if (!shown.length) return "";
   return shown.map(s =>
-    '<label class="cg-stat-tile" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + stats[s.key] + '" aria-label="' + s.label + ' (ลองปรับเพื่อดูผลตอนชี้สกิล)"></label>').join("") + '<button type="button" class="cg-stat-reset" data-cg-act="resetStats" hidden>คืนค่าที่ผู้เขียนแนะนำ</button>';
+    '<label class="cg-stat-tile" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><span class="cg-stat-approx" aria-hidden="true">~</span><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + stats[s.key] + '" aria-label="' + s.label + ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)"></span></label>').join("") + '<button type="button" class="cg-stat-reset" data-cg-act="resetStats" hidden>คืนค่าที่ผู้เขียนแนะนำ</button>';
 }
 // What the hover needs from the opened guide: its server, how many ranks of each skill the build learned, and whether Revised Art is among them.
 function classGuideReaderCtx(guide){
@@ -29789,7 +29791,7 @@ async function classGuideRenderImage(guide, simRoot){
       const x = lx + (i % per) * (tw + 8), yy = y + Math.floor(i / per) * (th + 8), col = v("--stat-" + s.key) || gold;
       ctx.fillStyle = alpha(col, 0.13); ctx.fillRect(x, yy, tw, th); ctx.fillStyle = col; ctx.fillRect(x, yy, 4, th);
       ctx.font = font(600, 13); spaced(3); ctx.fillText(s.label, x + 12, yy + 19); spaced(0);
-      ctx.font = font(700, 26); ctx.fillText(String(guide.stats[s.key]), x + 12, yy + 45);
+      ctx.font = font(700, 26); ctx.fillText("~" + guide.stats[s.key], x + 12, yy + 45);   // approximate, as on the screen
     });
     y += Math.ceil(filled.length / per) * (th + 8) + 10;
   }
@@ -31658,6 +31660,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T11:32:42.717Z","feat(bible): a class guide's recommended stats show a ~ before each number (and in the saved PNG), since they are a ballpark, not an exact target"],
     ["2026-10-16T11:29:52.779Z","feat(bible): a plain click on a class guide note's skill icon opens its skill details (no more long press)"],
     ["2026-10-16T11:25:57.684Z","feat(bible): the first Wolf class guide (หมาเจาะ Classic) is replaced with the new submitted version"],
     ["2026-10-16T11:14:51.000Z","fix(bible): the guide editor has its own link (#class-guide/write), so a page refresh keeps you in the editor instead of the guide list"],
