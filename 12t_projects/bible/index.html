@@ -19,7 +19,9 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula", ".sk-hero-desc", ".sk-dep-strip"],
     // flat panels and modals that never change fill on hover
-    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree", ".cg-note-chip", ".cg-stats", ".cg-gear-edit", ".cg-note-editor"],
+    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree", ".cg-note-chip", ".cg-stats", ".cg-gear-edit", ".cg-note-editor",
+      // the guide reader's side panels: info, notes column, description (user 2026-10-16: solid black boxes beside the see-through ToT trees)
+      ".cg-page[data-mode=\"reader\"] .cg-reader", ".cg-page[data-mode=\"reader\"] > .cg-note-chips", ".cg-page[data-mode=\"reader\"] > .cg-prose"],
     // clickable tiles whose own hover fill must keep winning
     tile: ["li:not(.entry-svc):not(.entry-bug):not(.entry-chm):not(.entry-wide):not(.entry-hero-side) > .entry"],
     // clickable and raised (the --panel-2 level)
@@ -31660,6 +31662,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T11:35:47.166Z","fix(bible): the class guide reader's info, description and notes panels wear the server look (see-through glass on ToT, the harlequin panel on TTO) instead of solid boxes"],
     ["2026-10-16T11:32:42.717Z","feat(bible): a class guide's recommended stats show a ~ before each number (and in the saved PNG), since they are a ballpark, not an exact target"],
     ["2026-10-16T11:29:52.779Z","feat(bible): a plain click on a class guide note's skill icon opens its skill details (no more long press)"],
     ["2026-10-16T11:25:57.684Z","feat(bible): the first Wolf class guide (หมาเจาะ Classic) is replaced with the new submitted version"],
