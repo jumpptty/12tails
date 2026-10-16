@@ -225,6 +225,8 @@ Raw Damage calc chip to support it (the app's history is in git).
 - **MP 10/15, SP 20/30 blue**, Lv/Bn 20/12, 28/18. The card's former MP 10/20, SP 20/35 was wrong. CD `agiAdjust(120)` (`:28602`).
 - `RPC_fireBarrage_fire` (`:29181-29290`): rank 1 one aircraft effect, rank 2 three (±30°, `:29181-29204`) — visual only. 4 waves (`i >= 4` exit, `:29228`), all at the same point: `FindAreaTarget(mPos, 2 × sLv + 1, 3, enemy layers)` (`:29240`), `hit(250 + sLv, t, talAdjust(5 + 10 × sLv), KO 1, …)` (`:29259`), no falloff. **Card correction:** 4 hits at both ranks (was 4 × 3 at rank 2). Tooltip "15/25 × 4" matches.
 
+- **Where it lands (traced 2026-10-16).** `mode instant`, `target enemy` (`decode_skilldata.py`); for an instant skill the UI still passes the current selection (`targetObject`, `GameGui.cs:37715-37735`). With a target, `mPos = target − (unit direction Mole → target)`, i.e. **1 m in front of the target** on the Mole's side, with no distance check of its own, so the reach is the **40 m target lock** (`Mole.cs:8539`, `:8552`). With no target and the cursor in the top 80 % of the screen, the cursor's ground point by a **40 m raycast from the camera** (`Math.getScreenPosition`, layer mask 5; a miss refunds with "Cannot find target position", `:8571`); otherwise **12 m straight ahead** (`:8596`). Bombardment uses the same three branches (`:8373`, `:8384`, `:8450`, `:8480`), so its 5-strike line also starts from the point 1 m in front of the target.
+
 ### mol_bombardment1-2 (Bombardment, #252, #254) (verified 2026-10-01)
 
 - **MP 20/30, SP 35/55 blue**, Lv/Bn 24/15, 32/21. The card's former MP 20/35, SP 35/50 was wrong. CD `agiAdjust(180)` (`:29483`), fired after a 4 s wait (`:29700`).

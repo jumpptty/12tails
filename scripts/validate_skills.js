@@ -3779,19 +3779,36 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       sheep_nAttack: "projectile", sheep_soulOfArms: "single locked target, no hit box", whale_12thKingdomKnight: "AI-driven knights"
     };
     const unexplained = [], stale = [];
-    for (const sk of SKILLS) {
+    const shortIds = new Set();
+    for (const srv of ["og", "tot", "tto"]) { sandbox._setServer(srv); for (const sk0 of SKILLS) {   // every server: a server change that adds hits must add them to the preview too (Blizzard ToT 8)
+      const ov = (sk0.servers && sk0.servers[srv]) || (srv === "tot" ? sk0.ps : null), sk = ov ? Object.assign({}, sk0, ov) : sk0;
       if (!sk.reach || sk.hitCountDuration) continue;
       const rank = sk.maxRank || 1;
       let hits = 1, parts = [];
-      try { hits = typeof sk.hitCount === "function" ? sk.hitCount(rank, false, false) : (sk.hitCount || 1); parts = sandbox._reachNormalize(sk.reach, rank); } catch (e) { bad(sk.id + " playback check threw: " + e.message); continue; }
+      try { hits = typeof sk.hitCount === "function" ? sk.hitCount(rank, false, false) : (sk.hitCount || 1); parts = sandbox._reachNormalize(sk.reach, rank); } catch (e) { bad(sk.id + " (" + srv + ") playback check threw: " + e.message); continue; }
       const timed = new Set(parts.filter(p => typeof p.at === "number").map(p => p.at)).size;
       const drawn = timed || (parts.some(p => !p.faint && p.shape !== "ring" && p.shape !== "self" && !p.unknown) ? 1 : 0);
       const short = hits > 1 && drawn < hits;
-      if (short && !REACH_STATIC_OK[sk.id]) unexplained.push(sk.id + " (sim " + hits + ", preview " + drawn + ")");
-      if (!short && REACH_STATIC_OK[sk.id]) stale.push(sk.id);
-    }
+      if (short) shortIds.add(sk.id);
+      if (short && !REACH_STATIC_OK[sk.id]) unexplained.push(sk.id + " " + srv + " (sim " + hits + ", preview " + drawn + ")");
+    } } sandbox._setServer("og");
+    for (const id of Object.keys(REACH_STATIC_OK)) if (!shortIds.has(id)) stale.push(id);
     if (unexplained.length) bad("reach preview plays fewer hits than the damage sim: " + unexplained.join(", "));
     if (stale.length) bad("REACH_STATIC_OK lists cards that no longer mismatch: " + stale.join(", "));
+    // Server balance changes that resize or retime a hit box (user 2026-10-16): the reach follows the server it is drawn for (reachSrv), and the popup offers those servers.
+    { const at = (id, srv, rank, o) => { sandbox._setServer(srv); const sk0 = SKILLS.find(x => x.id === id), ov = (sk0.servers && sk0.servers[srv]) || null, sk = ov ? Object.assign({}, sk0, ov) : sk0; const dr = sandbox._depRanks, saved = { ...dr }; Object.assign(dr, o || {}); try { return sandbox._reachNormalize(sk.reach, rank); } finally { for (const k of Object.keys(dr)) delete dr[k]; Object.assign(dr, saved); sandbox._setServer("og"); } };
+      const timedN = (ps) => new Set(ps.filter(p => typeof p.at === "number").map(p => p.at)).size, cyl = (ps) => ps.filter(p => p.shape === "cylinder");
+      const chk = [
+        ["Blizzard ToT rank 2 plays 8 waves, BB 6", timedN(at("penguin_blizzard", "tot", 2)) === 8 && timedN(at("penguin_blizzard", "og", 2)) === 6],
+        ["Flash Fire ToT 6.5 m, BB 5 m", cyl(at("monkey_flashFire", "tot", 4))[0].r === 6.5 && cyl(at("monkey_flashFire", "og", 4))[0].r === 5],
+        ["Fire Barrage ToT radius x1.2", cyl(at("mole_fireBarrage", "tot", 2))[0].r === 6 && cyl(at("mole_fireBarrage", "og", 2))[0].r === 5],
+        ["Planet Breaker ToT 6.25 / 15 m", cyl(at("monkey_planetBreaker", "tot", 1))[0].r === 6.25 && cyl(at("monkey_planetBreaker", "tot", 1)).some(p => p.r === 15)],
+        ["Titanic Earth Pulse TTO waves 3..7 m, BB 1..5 m", cyl(at("monkey_titanicEarthPulse", "tto", 1)).map(p => p.r).join() === "3,4,5,6,7" && cyl(at("monkey_titanicEarthPulse", "og", 1)).map(p => p.r).join() === "1,2,3,4,5"],
+        ["Honor TTO + Honor Stand: Hate radius one level up", cyl(at("whale_honor", "tto", 2, { honorStand: 1 }))[1].r === 36 && cyl(at("whale_honor", "og", 2, { honorStand: 1 }))[1].r === 30],
+        ["Bison Charge Attack + Spin Hack: ToT 7.5 m, BB 7 m", cyl(at("bison_cAttack", "tot", 2, { spinHack: 1 }))[0].r === 7.5 && cyl(at("bison_cAttack", "og", 2, { spinHack: 1 }))[0].r === 7]
+      ];
+      for (const [label, ok] of chk) if (!ok) bad("server reach: " + label);
+    }
     console.log("Reach playback vs damage sim: " + unexplained.length + " unexplained, " + Object.keys(REACH_STATIC_OK).length + " static on purpose");
   }
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
