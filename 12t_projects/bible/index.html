@@ -1901,7 +1901,6 @@
   /* hover: the icon grows a little, its glow brightens and it sits above the chip next to it (user 2026-10-16); the notes column padding leaves room so the bigger ring is never clipped */
   .cg-note-frame[data-card]:hover,.cg-note-frame[data-card]:focus-visible{z-index:2;transform:translateZ(0) scale(1.06);filter:brightness(1.12);box-shadow:0 0 0 2px var(--gold),0 0 0 4px var(--ink),0 0 0 5px rgba(201,162,39,.85),0 0 20px rgba(212,175,55,.75)}
   @media (prefers-reduced-motion: reduce){.cg-note-frame[data-card]{transition:none}}
-  .cg-note-frame.is-charging{animation:rsim-charge .35s cubic-bezier(.5,0,.9,.6) forwards}   /* hold: the same shake and swell as a grid cell */
   .cg-note-frame.is-boom{animation:rsim-boom .38s ease-out forwards;pointer-events:none}
   .cg-note-chips.is-pending .cg-note-chips-title{opacity:0}
   .cg-note-chips-title{transition:opacity .25s}
@@ -30459,22 +30458,14 @@ function mountClassGuide(root){
     if (mode === "reader" && (isPhone() || isSheet())){ if (list.parentNode !== guidePage || list.previousElementSibling !== simRoot) guidePage.insertBefore(list, simRoot.nextSibling); }
     else if (list.parentNode !== el("reader")) el("reader").insertBefore(list, el("guideDescription").nextSibling);
   }
-  // Hold a note's skill icon for 0.5 s (mouse or finger) to open its skill card in a new tab, the same gesture and effect as on the grid cells.
-  { let t1 = 0, t2 = 0, x0 = 0, y0 = 0, held = null;
-    const end = () => { clearTimeout(t1); clearTimeout(t2); t1 = t2 = 0; if (held){ held.classList.remove("is-charging"); held = null; } };
-    root.addEventListener("pointerdown", e => {
-      end(); const f = e.target.closest && e.target.closest(".cg-note-frame[data-card]");
-      if (!f || e.isPrimary === false || (e.pointerType === "mouse" && e.button !== 0)) return;
-      x0 = e.clientX; y0 = e.clientY; held = f;
-      t2 = setTimeout(() => { if (held === f) f.classList.add("is-charging"); }, 150);
-      t1 = setTimeout(() => {
-        t1 = 0; end(); f.classList.add("is-boom"); setTimeout(() => f.classList.remove("is-boom"), 400);
-        const srv = (current && current.build && current.build.server) || "og";
-        window.open(location.href.split("#")[0] + "#skill-details/" + encodeURIComponent(f.dataset.card) + "?server=" + srv, "_blank", "noopener");
-      }, 500);
-    });
-    root.addEventListener("pointermove", e => { if (t1 && Math.hypot(e.clientX - x0, e.clientY - y0) > 8) end(); });
-    root.addEventListener("pointerup", end); root.addEventListener("pointercancel", end); window.addEventListener("pointerup", end);
+  // Click (or Enter on) a note's skill icon to open its skill card in a new tab (user 2026-10-16: a plain click, no long press), with the grid cells' burst effect.
+  { const openCard = f => {
+      f.classList.add("is-boom"); setTimeout(() => f.classList.remove("is-boom"), 400);
+      const srv = (current && current.build && current.build.server) || "og";
+      window.open(location.href.split("#")[0] + "#skill-details/" + encodeURIComponent(f.dataset.card) + "?server=" + srv, "_blank", "noopener");
+    };
+    root.addEventListener("click", e => { const f = e.target.closest && e.target.closest(".cg-note-frame[data-card]"); if (f){ e.preventDefault(); openCard(f); } });
+    root.addEventListener("keydown", e => { if (e.key !== "Enter" && e.key !== " ") return; const f = e.target.closest && e.target.closest(".cg-note-frame[data-card]"); if (f){ e.preventDefault(); openCard(f); } });
   }
   function clearNoteChips(){
     stopNoteAnimation(); stopNoteAnimation = () => {};
@@ -30483,7 +30474,7 @@ function mountClassGuide(root){
   function makeNoteChip(info){
     const chip = document.createElement("article"); chip.className = "cg-note-item"; chip.dataset.id = info.id; chip.title = info.cell.name + ": " + String(info.text).replace(/\*\*/g, "");   // the whole note when the sheet layout cuts it short
     const frame = document.createElement("span"); frame.className = "cg-note-frame";
-    const card = skillSimCardId(info.cell.icon); if (card){ frame.dataset.card = card; frame.title = "คลิกค้างเพื่อดูรายละเอียดสกิล"; }   // hold to open the skill card (user 2026-10-16)
+    const card = skillSimCardId(info.cell.icon); if (card){ frame.dataset.card = card; frame.title = "คลิกเพื่อดูรายละเอียดสกิล"; frame.tabIndex = 0; frame.setAttribute("role", "link"); }   // click to open the skill card (user 2026-10-16)
     const src = SKILL_ICONS[info.cell.icon] || "";
     const bg = document.createElement("span"); bg.className = "cg-note-frame-bg"; bg.setAttribute("aria-hidden", "true"); if (src) bg.style.backgroundImage = 'url("' + src + '")';
     const icon = document.createElement("img"); icon.className = "cg-note-chip-icon"; icon.alt = ""; icon.src = src;
@@ -31667,6 +31658,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T11:29:52.779Z","feat(bible): a plain click on a class guide note's skill icon opens its skill details (no more long press)"],
     ["2026-10-16T11:25:57.684Z","feat(bible): the first Wolf class guide (หมาเจาะ Classic) is replaced with the new submitted version"],
     ["2026-10-16T11:14:51.000Z","fix(bible): the guide editor has its own link (#class-guide/write), so a page refresh keeps you in the editor instead of the guide list"],
     ["2026-10-16T10:23:24.642Z","fix(bible): the class guide tool's link is #class-guide (and #class-guide/<number> for a guide) instead of #skill-simulator; old links forward to the new address"],
