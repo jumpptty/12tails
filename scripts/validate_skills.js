@@ -3264,14 +3264,14 @@ let checkedRsim = 0;
   { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
     const strip = h => h.replace(/<[^>]*>/g,"").replace(/\s+/g,"").trim();
     const chip = (h, cls) => { const i = h.indexOf("sk-stat " + cls); if (i < 0) return null; const m = /<div class="sk-stat-value[^"]*">([\s\S]*?)<\/div>/.exec(h.slice(i, i + 1500)); return m ? strip(m[1]) : null; };
-    const inp = sandbox._statInputs, st = {agi:77,int:45,cha:33,lck:40}, savedIn = {agi:inp.agi.value,int:inp.int.value,cha:inp.cha.value,lck:inp.lck.value};
-    inp.agi.value = "77"; inp.int.value = "45"; inp.cha.value = "33"; inp.lck.value = "40";
+    const inp = sandbox._statInputs, st = {agi:77,int:45,cha:33,tal:58,lck:40}, savedIn = {agi:inp.agi.value,int:inp.int.value,cha:inp.cha.value,tal:inp.tal.value,lck:inp.lck.value};
+    inp.agi.value = "77"; inp.int.value = "45"; inp.cha.value = "33"; inp.tal.value = "58"; inp.lck.value = "40";
     let compared = 0; const bad = [];
     const compare = (sk, rank, ctx, depState, label) => {
       const lines = T(sk.id, rank, st, ctx); if (!lines.length) return;
       for (const id in depState) sandbox._depRanks[id] = depState[id];
       sandbox._skillRanks[sk.id] = rank; sandbox._selectSkill(sk);
-      const h = sandbox._getRenderedHeroHtml(), want = { cd: chip(h, "sk-stat-cd"), cast: chip(h, "sk-stat-cast"), dur: chip(h, "sk-stat-dur") };
+      const h = sandbox._getRenderedHeroHtml(), want = { cd: chip(h, "sk-stat-cd"), cast: chip(h, "sk-stat-cast"), dur: chip(h, "sk-stat-dur"), cd2: chip(h, "sk-stat-cd-secondary"), dur2: chip(h, "sk-stat-dur2"), lck: chip(h, 'sk-stat-lck"'), lck2: chip(h, "sk-stat-lck2"), lck3: chip(h, "sk-stat-lck3"), lck4: chip(h, "sk-stat-lck4") };
       for (const l of lines){ if (want[l.kind] === l.text.replace(/\s+/g,"")) compared++; else bad.push(label + " " + sk.id + " r" + rank + " " + l.kind + " guide=" + l.text + " page=" + want[l.kind]); }
       for (const id in depState) delete sandbox._depRanks[id];
     };
@@ -3288,11 +3288,11 @@ let checkedRsim = 0;
         }
       }
     } catch (e) { bad.push("threw: " + e.message); }
-    finally { inp.agi.value = savedIn.agi; inp.int.value = savedIn.int; inp.cha.value = savedIn.cha; inp.lck.value = savedIn.lck; }
+    finally { inp.agi.value = savedIn.agi; inp.int.value = savedIn.int; inp.cha.value = savedIn.cha; inp.tal.value = savedIn.tal; inp.lck.value = savedIn.lck; }
     ok(bad.length === 0, "guide hover timings differ from the skill-details chips: " + bad.slice(0, 5).join(" | "));
     ok(compared > 2400, "guide hover timings compared against " + compared + " chips (BB, ToT and TTO)");
     // Only fields whose stat is filled appear; LCK only widens; Revised Art only when the build learned it (and never for exempt skills).
-    const tri = SKILLS.find(c => c.cdWrapped && c.castWrapped && c.durWrapped && !c.cdDep && !c.cdMultDep && !c.castDep && !c.dep && !c.durContested && !c.durAdjust && !c.revisedArtExempt && !/Debuff/.test(String((c.status && c.status.class) || "")) && T(c.id, 1, {agi:1,int:1,cha:1}, { server:"og", learnedByCard:new Map(), revisedArt:false }).length === 3);
+    const tri = SKILLS.find(c => c.cdWrapped && c.castWrapped && c.durWrapped && !c.lckProc && !c.secondaryLckProc && !c.cdDep && !c.cdMultDep && !c.castDep && !c.dep && !c.durContested && !c.durAdjust && !c.revisedArtExempt && !/Debuff/.test(String((c.status && c.status.class) || "")) && T(c.id, 1, {agi:1,int:1,cha:1}, { server:"og", learnedByCard:new Map(), revisedArt:false }).length === 3);
     ok(!!tri, "a card with cooldown, cast time and buff duration exists for the gating checks");
     if (tri){
       const ctx0 = { server:"og", learnedByCard:new Map(), revisedArt:false }, kinds = (stats, ctx = ctx0) => T(tri.id, 1, stats, ctx).map(l => l.kind).join();

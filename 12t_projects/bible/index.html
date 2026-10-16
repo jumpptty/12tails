@@ -15670,6 +15670,7 @@ const SKILLS = [
     duration: 8,
     durContested: true,
     durContestedSource: "phoenix",
+    durLabel: "ระยะเวลา Burn",
     status: { name: "burn", sLv: () => 4, class: "Debuff, Magical" },
     dmg: "Phoenix talAdjust(80)",
     hitCount: () => 4,
@@ -15677,9 +15678,7 @@ const SKILLS = [
     revisedArtExempt: false,
     servers: {
       tot: {
-        duration: 10,
-        durContested: false,
-        durWrapped: true,
+        secondaryDuration: { duration: 10, durWrapped: false, label: "ระยะเวลาบัฟ Phoenix" },   // the ToT buff is a fixed 10 s; the main chip stays the contested burn duration (user 2026-10-16)
         desc: "กดใช้เพื่อเพิ่มความสามารถให้ **Phoenix** เป็นเวลา **10 วินาที** เมื่อลูกไฟของ Phoenix โจมตีโดนเป้าหมาย ลูกไฟจะสร้างดาเมจเป็นดาเมจ AoE รอบๆ จุดที่ลูกไฟตกกระทบ (patch note ไม่ระบุรัศมี)",
         changeNote: "• [Adjust] กดใช้เพื่อเพิ่มความสามารถให้ฟีนิกส์เป็นเวลา 10วิ เมื่อลูกไฟของฟีนิกส์โจมตีโดนเป้าหมาย ลูกไฟจะทำความเสียหายเป็นดาเมจ AOE รอบๆจุดที่ลูกไฟตกกระทบ"
       }
@@ -28733,12 +28732,18 @@ function classGuideStatsClean(raw){
 }
 // Hover timings of a learned skill for a guide's recommended stats (reader view only). Mirrors the Cooldown / Cast Time / Duration chips of the skill-details page
 // for the same card and rank: agiAdjust / magAdjust / chaAdjust ranges (LCK widens them), the card's own dependency rules driven by what the build learned,
-// and Revised Art. A field appears only when its stat is filled (AGI, INT, CHA); LCK only widens. Debuff / contested durations, TAL-adjusted durations and summon-owned
-// stats are left out. ctx = { server, learnedByCard: Map(cardId -> learned rank count), revisedArt: bool }.
+// and Revised Art. A field appears only when its stat is filled (AGI, INT, CHA; LCK adds the proc chances and widens the timings). Debuff / contested durations, TAL-adjusted durations and fields
+// the page computes from a summon's own stats are left out. TAL-adjusted durations read TAL; the second cooldown / duration chips are included. ctx = { server, learnedByCard: Map(cardId -> learned rank count), revisedArt: bool }.
 function classGuideTimings(cardId, rank, stats, ctx){
   const base = SKILLS.find(s => s.id === cardId);
   if (!base || !stats || !ctx) return [];
-  if (Object.keys(base).some(k => /^ownStats/.test(k) && k !== "ownStatsDmgOnly") || base.mercParent) return [];
+  // Summon cards: follow the skill-details page exactly (renderHeroNow's own-stat block), not the flag names (user 2026-10-16: Phoenix had no cooldown here).
+  // The page swaps AGI and LCK for the summon's own on Barrel Bot (ownStats), King Kaiser moves, Gaos moves and the mercenary move cards, so none of their
+  // fields can come from the guide's stats; ownStatsGadina swaps AGI only (cooldown); cdPlayerStats puts the cooldown back on the player.
+  // Phoenix, Auto Gyro Gun, Cannon Form (ownStatsDmgOnly), Summon Gaos and the mercenary summon cards (mercParent) keep the player's stats.
+  const swapAll = !!(base.ownStats || base.ownStatsKaiser || (base.ownStatsGaos && base.id !== "monkey_summonGaos") || (base.ownStatsMerc && !base.mercParent));
+  const cdFromPlayer = (!swapAll && !base.ownStatsGadina) || !!base.cdPlayerStats;
+  if (swapAll && !cdFromPlayer) return [];
   const over = (base.servers && base.servers[ctx.server]) || (ctx.server === "tot" ? base.ps : null);
   const s = over ? Object.assign({}, base, over) : base;
   const pick = v => typeof v === "function" ? v(rank) : (Array.isArray(v) ? v[rank - 1] : v);
@@ -28760,7 +28765,12 @@ function classGuideTimings(cardId, rank, stats, ctx){
   const prev = reachDepOverride; reachDepOverride = forced;
   try {
     const cdBase = s.cd === undefined ? undefined : pick(s.cd);
-    if (stats.agi !== undefined && s.cdWrapped && typeof cdBase === "number"){
+    if (base.phoenixFireballCd && s.cd !== undefined){   // Phoenix Fireball: Rapid Fire + Monkey INT, no AGI / LCK (the page's phoenixFireballCd branch, Phoenix.cs:2562-2573)
+      if (stats.int !== undefined){
+        const r = getDepRank(base.cdDep), mag = r > 0 ? Math.min(Math.max(((s.phoenixFireballRapidFireFactors || [])[r - 1] || 0) * stats.int, 1), 512) : 0;
+        out.push({ kind: "cd", label: "คูลดาวน์", text: fmtOne(r > 0 ? Math.min(Math.max(5 - mag / 32, 0.1), 5) : 5) + "s", stat: "int" });
+      }
+    } else if (cdFromPlayer && stats.agi !== undefined && s.cdWrapped && typeof cdBase === "number"){
       const d1 = s.cdDep, r1 = d1 ? getDepRank(d1) : 0, d2 = s.cdMultDep, r2 = d2 ? getDepRank(d2) : 0;
       let range = agiAdjustRange(rawDep(cdBase, d1, r1), stats.agi, LCK);
       range = postDep(postDep(range, d1, r1), d2, r2);
@@ -28768,7 +28778,7 @@ function classGuideTimings(cardId, rank, stats, ctx){
       out.push({ kind: "cd", label: "คูลดาวน์", text: text(range) + "s", stat: "agi" });
     }
     const castBase = s.castTime === undefined ? undefined : pick(s.castTime);
-    if (stats.int !== undefined && s.castWrapped && typeof castBase === "number"){
+    if (!swapAll && stats.int !== undefined && s.castWrapped && typeof castBase === "number"){
       const dep = s.castDep, r = dep ? getDepRank(dep) : 0;
       const rawCast = dep ? (dep.kind === "postMultiply" ? Math.floor(castBase * dep.multipliers[r]) : rawDep(castBase, dep, r)) : castBase;
       const range = magAdjustRange(rawCast, stats.int, LCK);
@@ -28777,14 +28787,38 @@ function classGuideTimings(cardId, rank, stats, ctx){
       out.push({ kind: "cast", label: "เวลาร่าย", text: castText, stat: "int" });
     }
     const durBase = s.duration === undefined ? undefined : pick(s.duration);
-    const isDebuff = /Debuff/.test(String((s.status && s.status.class) || ""));
-    if (stats.cha !== undefined && s.durWrapped && typeof durBase === "number" && !s.durContested && !s.hideDurationChip && !s.durationInfinite && (s.durAdjust || "cha") !== "tal" && !isDebuff){
+    const durTal = s.durAdjust === "tal", durStat = durTal ? "tal" : "cha";   // durAdjust "tal": talAdjust instead of chaAdjust (Stun Mine), the page's durTal
+    if (!swapAll && stats[durStat] !== undefined && s.durWrapped && typeof durBase === "number" && !s.durContested && !s.hideDurationChip && !s.durationInfinite){
       const dep = s.dep, r = dep ? getDepRank(dep) : 0;
-      let range = chaAdjustRange(rawDep(durBase, dep, r), stats.cha, LCK);
+      let range = (durTal ? talAdjustRange : chaAdjustRange)(rawDep(durBase, dep, r), stats[durStat], LCK);
       const postAdd = s.durPostAdd ? (typeof s.durPostAdd === "function" ? s.durPostAdd(r) : (r ? s.durPostAdd : 0)) : 0;
       if (postAdd) range = range.map(v => v + postAdd);
       range = postDep(range, dep, r);
-      out.push({ kind: "dur", label: s.durLabel || "ระยะเวลา", text: text(range) + "s", stat: "cha" });
+      out.push({ kind: "dur", label: s.durLabel || "ระยะเวลา", text: text(range) + "s", stat: durStat });
+    }
+    // second cooldown / duration chips (the page's secondaryCooldown / secondaryDuration); a Phoenix-sourced cooldown reads the Phoenix's own AGI, so it is left out
+    const cd2 = s.secondaryCooldown;
+    if (cd2 && cdFromPlayer && cd2.cdWrapped && cd2.source !== "phoenix" && stats.agi !== undefined){
+      const raw = pick(cd2.cd);
+      if (typeof raw === "number") out.push({ kind: "cd2", label: cd2.label || "Cooldown", text: text(applyRevisedArt(agiAdjustRange(raw, stats.agi, LCK), ctx.revisedArt, cd2.revisedArtExempt)) + "s", stat: "agi" });
+    }
+    const dur2 = s.secondaryDuration;
+    if (dur2 && !swapAll && dur2.durWrapped && !dur2.durContested && stats.cha !== undefined){
+      const raw = pick(dur2.duration);
+      if (typeof raw === "number"){ let range = chaAdjustRange(raw, stats.cha, LCK); if (dur2.durPostAdd) range = range.map(v => v + dur2.durPostAdd); out.push({ kind: "dur2", label: dur2.label || "ระยะเวลา", text: text(range) + "s", stat: "cha" }); }
+    }
+    // Proc chances from the recommended LCK (user 2026-10-16): the same numbers as the skill-details chance chips (lckProc, then the secondary / tertiary /
+    // quaternary chips with their show() gate); a chance that is 0% (its dependency not learned) is left out.
+    if (!swapAll && stats.lck !== undefined){
+      [["lck", s.lckProc, true], ["lck2", s.secondaryLckProc], ["lck3", s.tertiaryLckProc], ["lck4", s.quaternaryLckProc]].forEach(([kind, lp, main]) => {
+        if (!lp || (!main && lp.show && !lp.show())) return;
+        const dep = lp.dep, r = dep ? getDepRank(dep) : null;
+        const on = dep ? ((main && lp.depGates === false) || r > dep.minRank) : true;
+        if (!on) return;
+        const raw = typeof lp.chance === "function" ? lp.chance(rank, r) : pick(lp.chance);
+        const pct = lp.calc ? lp.calc(raw, LCK) : lckAdjustChance(raw, LCK);
+        if (pct) out.push({ kind, label: lp.label || "โอกาส", text: pct + "%", stat: "lck" });
+      });
     }
   } finally { reachDepOverride = prev; }
   return out;
@@ -30763,6 +30797,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T01:42:58.125Z","feat(bible): class guide hover shows proc chances from the recommended LCK, Phoenix and other summon timings the page computes from player stats, TAL durations and second chips; Instant Blaze duration chip is labelled Burn and ToT shows the fixed 10 s Phoenix buff"],
     ["2026-10-16T01:23:03.124Z","feat(bible): class guide notes show the skill icon outside the chip, round with a double gold ring and glow, the picture enlarged and faded into a blurred copy of itself (reader and exported PNG)"],
     ["2026-10-16T01:03:36.764Z","feat(bible): the reach preview flashes each hit as it lands and counts it (ฮิต n / N), so hits on the same spot read as separate; the ไกด์อาชีพ tile icon is an open book"],
     ["2026-10-15T18:13:00.545Z","fix(bible): ไกด์อาชีพ tile portraits are mirrored at random, and Monkey, Whale, Bat, Panda and Bison sit a little higher"],
