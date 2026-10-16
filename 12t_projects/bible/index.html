@@ -14955,6 +14955,7 @@ const SKILLS = [
     cd: 5,
     cdDep: MONKEY_RAPIDFIRE_CAST_DEP,
     phoenixFireballCd: true,
+    unintended: "ฟินิกซ์ยิงลูกไฟได้เร็วสุดราว **1.8 วินาที** ต่อลูก แม้ตัวจับเวลาของ **Rapid Fire** จะลดลงถึง **0.1 วินาที** เพราะหลังยิงแต่ละครั้ง ฟินิกซ์ติดท่ายิง **0.8 วินาที** แล้วยืนรอก่อนยิงลูกถัดไปอีก **1 วินาที** ลบด้วยค่าสุ่ม **0** ถึง **3 − เลเวล Rapid Fire** วินาที<br>ที่ **Rapid Fire** เลเวล 3 ค่าสุ่มเป็น **0** เสมอ จึงรอเต็ม **1 วินาที** ทุกครั้ง ส่วนเลเวล 2 รอเพียง **0–1 วินาที** (เฉลี่ย **0.5**) ทำให้เลเวล 2 ที่ INT สูงพอ ยิงได้เร็วกว่าเลเวล 3 โดยเฉลี่ย",
     phoenixFireballRapidFireFactors: [0.2, 0.3, 0.4],
     phoenixFireballIntenseFireFactors: [0.2, 0.3, 0.4],
     dmg: (rank, depRank) => depRank > 0
@@ -21395,17 +21396,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         // Phoenix.cs:2562–2573: Rapid Fire uses Monkey INT, not AGI/LCK.
         const cdDep = selected.cdDep;
         const cdDepRank = getDepRank(cdDep);
-        const rapidFireMag = cdDepRank > 0
-          ? Math.min(Math.max(phoenixFireballPassiveFactor(selected, "phoenixFireballRapidFireFactors", cdDepRank) * INT, 1), 512)
-          : 0;
-        const phoenixCd = cdDepRank > 0
-          ? Math.min(Math.max(5 - rapidFireMag / 32, 0.1), 5)
-          : 5;
+        // the time between two fireballs: the Rapid Fire timer, but never under the AI cycle (phoenixFireballInterval)
+        const phoenixIv = phoenixFireballInterval(cdDepRank, phoenixFireballPassiveFactor(selected, "phoenixFireballRapidFireFactors", cdDepRank), INT);
         cdBlock = `
           <div class="sk-stat sk-stat-cd"${chipColStyle("cd")}>
-            <p class="sk-stat-label">คูลดาวน์</p>
-            <div class="sk-stat-value unwrapped">${fmtOne(phoenixCd)}s</div>
-            <p class="sk-stat-base">base 5s · Rapid Fire + Monkey INT</p>
+            <p class="sk-stat-label">ยิงทุก</p>
+            <div class="sk-stat-value unwrapped">${phoenixFireballIntervalText(phoenixIv)}</div>
+            <p class="sk-stat-base">timer ${fmtOne(phoenixIv.timer)}s + รอบ AI · Rapid Fire + Monkey INT</p>
             ${renderDepBlock(cdDep, cdDepRank, "", "CD")}
           </div>
         `;
@@ -28730,6 +28727,16 @@ function classGuideStatsClean(raw){
   for (const s of CLASS_GUIDE_STATS) if (Object.prototype.hasOwnProperty.call(raw, s.key)) out[s.key] = raw[s.key];   // fixed order
   return out;
 }
+// Phoenix Fireball: the real time between two fireballs (user 2026-10-16; monkey-skill-reference §4.5). The Rapid Fire timer is
+// clamp(5 − floor(mag / 32), 0.1, 5) with mag = (int)clamp(factor × Monkey INT, 1, 512) (Phoenix.cs:2562-2573, integer division), 5 s without Rapid Fire;
+// but Phoenix_AI.cs:221-230 then needs the 0.8 s attack lock plus an idle of 1 − Random(0, 3 − RF) s before the next shot, so the interval is
+// max(timer, 0.8 + idle): idle is always 1 s at Rapid Fire 3 (a floor of about 1.8 s), 0–1 s below it. The 3–5 frames on top are left out.
+function phoenixFireballInterval(rf, factor, int){
+  const mag = rf > 0 ? Math.trunc(Math.min(Math.max(factor * int, 1), 512)) : 0;
+  const timer = rf > 0 ? Math.min(Math.max(5 - Math.floor(mag / 32), 0.1), 5) : 5;
+  return { timer, lo: Math.max(timer, 0.8 + Math.max(0, rf - 2)), hi: Math.max(timer, 1.8) };
+}
+function phoenixFireballIntervalText(iv){ const a = fmtOne(iv.lo), b = fmtOne(iv.hi); return (a === b ? a : a + "–" + b) + "s"; }
 // Hover timings of a learned skill for a guide's recommended stats (reader view only). Mirrors the Cooldown / Cast Time / Duration chips of the skill-details page
 // for the same card and rank: agiAdjust / magAdjust / chaAdjust ranges (LCK widens them), the card's own dependency rules driven by what the build learned,
 // and Revised Art. A field appears only when its stat is filled (AGI, INT, CHA; LCK adds the proc chances and widens the timings). Debuff / contested durations, TAL-adjusted durations and fields
@@ -28767,8 +28774,8 @@ function classGuideTimings(cardId, rank, stats, ctx){
     const cdBase = s.cd === undefined ? undefined : pick(s.cd);
     if (base.phoenixFireballCd && s.cd !== undefined){   // Phoenix Fireball: Rapid Fire + Monkey INT, no AGI / LCK (the page's phoenixFireballCd branch, Phoenix.cs:2562-2573)
       if (stats.int !== undefined){
-        const r = getDepRank(base.cdDep), mag = r > 0 ? Math.min(Math.max(((s.phoenixFireballRapidFireFactors || [])[r - 1] || 0) * stats.int, 1), 512) : 0;
-        out.push({ kind: "cd", label: "คูลดาวน์", text: fmtOne(r > 0 ? Math.min(Math.max(5 - mag / 32, 0.1), 5) : 5) + "s", stat: "int" });
+        const r = getDepRank(base.cdDep);
+        out.push({ kind: "cd", label: "ยิงทุก", text: phoenixFireballIntervalText(phoenixFireballInterval(r, (s.phoenixFireballRapidFireFactors || [])[r - 1] || 0, stats.int)), stat: "int" });
       }
     } else if (cdFromPlayer && stats.agi !== undefined && s.cdWrapped && typeof cdBase === "number"){
       const d1 = s.cdDep, r1 = d1 ? getDepRank(d1) : 0, d2 = s.cdMultDep, r2 = d2 ? getDepRank(d2) : 0;
@@ -30797,6 +30804,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T01:50:52.072Z","feat(bible): Phoenix Fireball shows the real time between shots (Rapid Fire timer, rounded like the game, but never under the Phoenix AI cycle of about 1.8 s at Rapid Fire 3), with the Rapid Fire 3 slowdown listed as unintended behaviour"],
     ["2026-10-16T01:42:58.125Z","feat(bible): class guide hover shows proc chances from the recommended LCK, Phoenix and other summon timings the page computes from player stats, TAL durations and second chips; Instant Blaze duration chip is labelled Burn and ToT shows the fixed 10 s Phoenix buff"],
     ["2026-10-16T01:23:03.124Z","feat(bible): class guide notes show the skill icon outside the chip, round with a double gold ring and glow, the picture enlarged and faded into a blurred copy of itself (reader and exported PNG)"],
     ["2026-10-16T01:03:36.764Z","feat(bible): the reach preview flashes each hit as it lands and counts it (ฮิต n / N), so hits on the same spot read as separate; the ไกด์อาชีพ tile icon is an open book"],

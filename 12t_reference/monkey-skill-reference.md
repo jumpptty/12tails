@@ -464,7 +464,22 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 - Client tooltip: EN "Release Monkey's bond with his summon, making it a neutral enemy." (`MonkeySkill_eng.cs:143`).
 
 ### 4.5 Phoenix - Fireball (`monkey_phoenix_fireBall`, Phoenix's normal attack)
-- Interval (`Phoenix.cs:2540-2582`): with Rapid Fire (#221-#223), `mag = clamp((0.1 × RF + 0.1) × Monkey MAG, 1, 512)` and `addTimeOut("nAttack", clamp(5 − mag / 32, 0.1, 5))` (integer division); without it 5 s.
+- Interval (`Phoenix.cs:2540-2582`): with Rapid Fire (#221-#223), `mag = clamp((0.1 × RF + 0.1) × Monkey MAG, 1, 512)` and `addTimeOut("nAttack", clamp(5 − mag / 32, 0.1, 5))` (integer division); without it 5 s. Monkey MAG is the summoner's `CharacterControl.mag` (`getStat(4)` + bonus, `CharacterControl.cs:1443`).
+- **That timer is only a minimum: the AI cycle sets a floor of about 1.8 s with Rapid Fire 3 (traced 2026-10-16; live play saw "around 2 s, never 0.1 s").** The Phoenix's AI is a separate component, `Phoenix_AI.cs`, not `Phoenix.cs`. While alert it runs one cumulative-timer cycle each frame (`Phoenix_AI.cs:221-230`): `AI_selectTarget(1, 0)` → `AI_idle(1, 3 − RF)` → `AI_attack(10, 0)` → `AI_resetTimer()`. Each phase owns the window `[sum of earlier lengths, + its own length)` of `t = Time.time − T0` (`GFAtwULm1A` accumulates, `ztutLDwPy9` = T0).
+  1. **The attack locks the Phoenix for 0.8 s.** `RPC_nAttack` sets `actionState = "attack"`, fires at `actionTime + 0.5` (`Phoenix.cs:2354`), then `Yield(3, WaitForSeconds(0.3))` (`:2634`) before `actionState = "standby"` (`:2301`). `AIControl` does nothing unless the state is `standby` or `run` (`Phoenix_AI.cs:101-114`), so the AI is frozen meanwhile.
+  2. **Starting an attack jumps to the end of the cycle.** When the `nAttack` timer is ready, `AI_attack` sets `T0 = Time.time − 10 − 2` (`:1084`), i.e. `t = 12`. The first frame back in standby, `AI_resetTimer` sees `t > 12` and restarts the cycle at `t = 0` (`:1221-1228`).
+  3. **Select target costs no time.** On entry it sets `T0 = Time.time − 1` (`:842`) and picks `getHateTarget(15, 40)`, so the same frame enters idle.
+  4. **Idle lasts `1 − r` s, where `r = Random.Range(0, 3 − RF)`.** On entry it does `T0 −= r` (`:670`), which moves the cycle forward. A draw of 1 or more skips idle. **Rapid Fire 3 makes `r` always 0, so idle is always the full 1 s.** RF 2: `r` is in [0, 1), idle averages 0.5 s. RF 1: `r` is in [0, 2), idle is 0 half the time, 0.25 s on average.
+  5. **Attack window `[2, 12)`:** fires the moment the `nAttack` timer is ready. Until then it backs off from targets closer than 5 m, otherwise it stands. Instant Blaze (#412, target < 5 m, its own timer) goes first.
+  - **Interval between fireballs ≈ max(timer, 0.8 + idle) + about 3–5 frames** (reset frame, select / idle entry frame, plus rounding at each wait).
+
+  | Rapid Fire | Timer reaches 0.1 s at | Timer at MAG 512 | Idle | Fastest real interval |
+  |---|---|---|---|---|
+  | 1 | MAG 800 (out of reach) | 2 s (mag 102) | 0–1 s, mean 0.25 s | about 2 s, set by the timer |
+  | 2 | MAG 534 | 1 s (mag 153) | 0–1 s, mean 0.5 s | 0.8–1.8 s, mean about 1.3 s once MAG ≥ 534 |
+  | 3 | MAG 400 | 0.1 s (mag 204) | always 1 s | **about 1.85 s, fixed** (0.8 + 1.0 + frames) |
+
+  So with enough MAG, Rapid Fire 3 is slower on average than Rapid Fire 2: `3 − RF` shrinks the random idle skip as the level rises. It looks like a sign slip (`AI_idle(1, 3 − lv)` was probably meant to shorten the idle). It is the client code as shipped, so treat it as unintended behaviour, not a typo in this doc. Other entries into the cycle: `RPC_summonAttack` (Monkey's attack command) calls `AI_setTimer(3)` (`Phoenix.cs:1925`) → `t = 3`, straight into the attack window, so the first shot after a command skips select and idle.
 - Hit (`Phoenix_fireBall.cs:189-290`): `num = Phoenix talAdjust(40)`; with Intense Fire `+ floor((0.1 × IF + 0.1) × Monkey talAdjust(40))`; `hit(1, t, num, KO 1, …)`; with Intense Fire, `burn` Lv IF for `getDebuff(4, Phoenix CHA, target CHA)`. A landed hit also calls the Monkey's Fire Rune (`:317`).
 
 ### 4.5a Rapid Fire (`monkey_rapidFire`, #221-#223)
