@@ -1727,7 +1727,7 @@
   .cg-set-tile > .cg-gear-ico img,.cg-set-tile > .cg-gear-ico .cg-gear-txticon{width:100%;height:100%}
   .cg-set-tile > .cg-gear-ico .cg-gear-txticon{font-size:10px}
   .cg-set-tile:has(.cg-set-rep){margin-bottom:8px}
-  .cg-set-rep{position:absolute;bottom:-8px;right:-9px;width:48%;aspect-ratio:1;box-sizing:content-box;padding:1px;border:0;border-radius:3px;background:#000a;display:grid;place-items:center}
+  .cg-set-rep{position:absolute;bottom:-8px;right:-9px;width:48%;aspect-ratio:1;box-sizing:content-box;padding:1px;border:0;border-radius:3px;background:none;display:grid;place-items:center;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 2px #000)}   /* no black square behind the Replica (user 2026-10-16), a soft shadow around its own outline instead */
   .cg-set-rep img,.cg-set-rep .cg-gear-txticon{width:100%;height:100%}
   .cg-set-rep .cg-gear-txticon{font-size:6px;padding:0;border-radius:2px}
   .cg-set-arrow{position:absolute;left:26%;bottom:-5px;width:38%;height:auto;overflow:visible;fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);pointer-events:none}
@@ -1887,7 +1887,7 @@
   @media(min-width:761px){
     html.tool-guide-author .hub-bar{padding:10px 18px}
     html.tool-guide-author body .stage{width:100%;max-width:none;box-sizing:border-box;padding:10px 24px 8px}
-    .cg-page[data-mode="author"]{display:grid;grid-template-columns:clamp(300px,26%,380px) auto;gap:12px 28px}
+    .cg-page[data-mode="author"]{display:grid;grid-template-columns:clamp(320px,30%,640px) auto;gap:12px 24px}   /* wider writing column on wide screens (user 2026-10-16: the description box was awkwardly small) */
     .cg-page[data-mode="author"] .cg-heading{grid-column:1/-1;grid-row:1;justify-content:flex-end;margin:0;padding:0}
     .cg-page[data-mode="author"] .cg-heading>div{display:none}
     .cg-page[data-mode="author"] .cg-status{grid-column:1/-1;grid-row:3;min-height:0;margin:0}
@@ -1897,7 +1897,7 @@
     .cg-page[data-mode="author"] .cg-fields > label:first-child{grid-column:1/-1}
     .cg-page[data-mode="author"] .cg-description{grid-template-rows:auto minmax(0,1fr);min-height:0}
     .cg-page[data-mode="author"] .cg-description .cg-editor-wrap{display:flex;flex-direction:column;min-height:0}
-    .cg-page[data-mode="author"] .cg-description .cg-rich-editor{flex:1;min-height:90px;overflow-y:auto;font-size:15px;line-height:1.75}
+    .cg-page[data-mode="author"] .cg-description .cg-rich-editor{flex:1;min-height:160px;overflow-y:auto;font-size:15px;line-height:1.75}
     .cg-page[data-mode="author"] .cg-author:has(.cg-note-editor:not([hidden])) .cg-description{display:none}   /* a note being written takes the description's place */
     .cg-page[data-mode="author"] .cg-toolbar{flex-direction:column;align-items:stretch;gap:8px;padding:10px 0}
     .cg-page[data-mode="author"] .cg-publish-actions{margin-left:0}
@@ -29687,8 +29687,7 @@ async function classGuideRenderImage(guide, simRoot){
           ctx.lineCap = "round"; ctx.lineJoin = "round";
           ctx.strokeStyle = "rgba(0,0,0,.75)"; ctx.lineWidth = 4.5; arrow();
           ctx.strokeStyle = gold; ctx.lineWidth = 2; arrow();
-          ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(rx - 2, ry - 2, rs + 4, rs + 4);
-          drawTile(c.replica, rx, ry, rs);
+          ctx.save(); ctx.shadowColor = "rgba(0,0,0,.9)"; ctx.shadowBlur = 3 * P.scale; drawTile(c.replica, rx, ry, rs); ctx.restore();   // no black square (user 2026-10-16), a soft shadow around the outline
         }
         if (c.stat){ ctx.fillStyle = v("--stat-" + c.stat) || gold; ctx.font = font(700, 13); ctx.fillText("ยัด " + classGuideStatLabel(c.stat), x, ty + ic + (c.replica ? 24 : 18)); }
       });
@@ -31408,6 +31407,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T08:40:57.456Z","fix(bible): class guide editor gets a wider writing column on wide screens (up to 640 px), so the description box is no longer awkwardly small; the Replica icon in the sets loses its black backdrop"],
     ["2026-10-16T07:28:12.656Z","feat(bible): landscape class guide reader and its PNG export as one rectangle: guide info, stats and sets top left, the skill grid beside it, author notes in a full-height column on the right and the description under the info and the grid, with small even gaps; a long description splits into pages; everything scales in proportion to the skill grid; hold a note's skill icon to open its skill card, and it grows on hover; tree names shrink gently with the build; one-row stat tiles and a tighter header"],
     ["2026-10-16T07:23:31.730Z","feat(bible): class guide editor fits one screen (stats and sets in a pop-up, page tabs vs page actions, build / notes switch above the trees, the note editor in the description's place, finishing buttons together, import asks before replacing a draft, ใช้ไกด์นี้เป็นต้นแบบ for visitors) and the preview is exactly the visitor view; recommended gear becomes เซ็ตแนะนำ, one row per set with the Replica on the item's corner and a curved arrow; the reader keeps its proportions on wide, short windows; smaller stat numbers; item picker centred; Shadow Strider and Shark (Orange) added from TTO"],
     ["2026-10-16T04:35:50.634Z","feat(bible): class guides get a recommended gear section (weapon, armor, hat, trinket, boot, pet; up to 3 ranked picks with game icons or a typed name; Replica source and ยัด stat on weapon, armor and hat), shown in the reader and the PNG; the landscape reader follows the PNG layout; the guide date is typed and shown as DD/MM/YYYY"],
