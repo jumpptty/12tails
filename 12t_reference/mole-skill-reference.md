@@ -553,3 +553,13 @@ Source: [ToT mole simulator dataset](https://talesoftails.net/data/skill-simulat
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
 The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.
+
+## Hit timing for the reach playback (traced 2026-10-16)
+
+Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
+
+- **Time Nuke:** the four rings r 5 / 10 / 15 / 20 one every 0.1 s (`Mole_timeNuke.cs:673-683`).
+- **Barrel Bot Chopper:** 4 swings (not 3), at 0.8 / 1.2 / 1.6 / 2.0 s: the loop runs while `i < 4` and only the last skips the 0.4 s wait (`BarrelBot.cs:3707`, `:3791`).
+- **King Kaiser Beam:** backs off 0.4 m (`moveSpeed −2` for 0.2 s), then 5 beams 0.3 s apart from 0.2 s (`KingKaiser.cs:3501-3538`).
+- **War Factory Roller Machine:** one crush at 0.6 s (`Mole.cs:42394`), then `moveSpeed 1` and a crush every 0.2 s while `i < 10` from 1.0 s (`:42597-42643`): 11 hits.
+- **Chopper + Barrel Cannon:** the blast (`:33963`) fires in the same frame as each slash (`:33913`), so 20 hits at 10 times.

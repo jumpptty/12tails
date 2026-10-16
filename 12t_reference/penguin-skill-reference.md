@@ -639,3 +639,9 @@ Every size below is in the card's `reach` field with its `file:line`; this list 
 - **Blink:** its only `FindRecTarget` (`Penguin.cs:22702`, base 3 / top 3 / 6 / 2) feeds `Physics.IgnoreCollision` for the warp; it is not a hit area, so Blink has no `reach` (the 3 x rank + 2 m dash stays in the desc). Parallel Shift has the same ignore box (`:36334`) next to its real r6 h3 ally circle.
 - **Projectiles:** Combo life `1.4 x rangeMod` at 14 m/s = 19.6 m x rangeMod (`Penguin.cs:9681`, `:11535`, `Penguin_nAttack.cs:103`); Mana Missile life `3 x rangeMod` at 12 m/s = 36 m x rangeMod of homing path (`Penguin.cs:10235`, `Penguin_manaMissile.cs:26`). Both colliders are under 0.5 m radius, so they stay `line` parts.
 - **Lock-only skills** (MP Transfer, Mana Burn, Snow Man, Absolute Zero, Snow Ball, Ice Shield, and the target skills above) draw the 40 m flat lock ring (`12Tails-Mechanics-Reference.md` section 4); `PetUpdate` / summon-AI `FindAreaTarget` calls (`Penguin.cs:14428-15932`) belong to pets and are not skills.
+
+## Hit timing for the reach playback (traced 2026-10-16)
+
+Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
+
+- **Blizzard:** 6 waves around the target, 1 s apart from 0.4 s (`Penguin.cs:34527-34571`).

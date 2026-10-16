@@ -565,3 +565,12 @@ Sizes are in each card's `reach` field with `file:line`; this records the decisi
 - **Lock-only skills** (Bubble Shield, Heavy Weight, Rejuvenate, Homing Shield, Hydro Blast, Megalodon, Swallow; all `mode target` in `WhaleSkill.cs`) draw the 40 m flat lock ring. Salvation and Revitalize hit every ally with no distance check and have no reach.
 - **Not hit areas:** `Whale.cs:37403` (a 400 m `FindAreaTarget` that only builds a collision-ignore list for Grand Tide), `:10726` (a camera distance), the pet AI circles `:13307-14811`, and the item / mount calls.
 - **Body size** (`Game.cs:2795`): `Whale_tri.localScale = 0.8 + 0.05 x (Super Size ranks + Mega Size)`, capsule height `2 + 0.1 n`, radius `0.6 + 0.05 n`; hit tests use the unscaled radius, so the popup's Super Size / Mega Size toggles only resize the model.
+
+## Hit timing for the reach playback (traced 2026-10-16)
+
+Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
+
+- **Peninsula Round:** after a 0.8 s wait and `moveSpeed 3` for 0.2 s, the loop steps every 0.1 s for `12 + 8 × sLv` steps and hits on every 4th (`Whale.cs:28000`, `i % 4 == 0`): 5 / 7 hits, 0.4 s apart from 1.0 s.
+- **Maelstrom:** 4 hits every 0.3 s from 0.7 s (`:32663-32686`).
+- **Megalodon:** suction (purple damage) 4 times 1 s apart (`:34897`), bite at 4.0 s (`:34846`) and again 1.5 s later (`:34692`): 6 hits.
+- **Bowling Whale:** rolls at `moveSpeed 7` from 0.5 s; from 1.0 s a 6 s timer (`:36743`) with damage whenever `Time.time > mDamageUpdate`, then `+0.25 s` (`:36779`): 23 hits at 1.25 … 6.75 s (not 24: the timer comparison is strict).

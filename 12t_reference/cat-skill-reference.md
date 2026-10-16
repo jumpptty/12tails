@@ -856,3 +856,13 @@ Source: [ToT cat simulator dataset](https://talesoftails.net/data/skill-simulato
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
 The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.
+
+## Hit timing for the reach playback (traced 2026-10-16)
+
+Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
+
+- **Reverse Thrust:** `moveSpeed −10` for 0.2 s from 0.1 s, then hits at 0.3 s (`Cat.cs:31353`) and 0.7 s (`:31590`), both 2 m behind the cast point.
+- **Heart Ripper:** `moveSpeed 2` for 0.2 s, hits at 0.2 s (`:33355`) and 0.6 s (`:33467`) at the same spot.
+- **Moon Storm:** 6 storms 0.1 s apart (`:36415`, `i < 6`), then the 12 m blast twice, 0.1 s apart (`:36521`, `j < 2`).
+- **Delta Strike:** the 0.3 / 0.8 / 1.3 s area checks deal no damage; 6 hits every 0.1 s from 2.1 s (`:37902`, `i < 6`) and the finisher at 2.9 s (`:37597`).
+- **Finishing Blow:** 0.3 / 0.6 / 1.1 / 1.4 s at the caster (`:38694`, `:38794`, `:38894`, `:39008`).

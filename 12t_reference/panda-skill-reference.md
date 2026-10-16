@@ -986,3 +986,14 @@ Source: [ToT panda simulator dataset](https://talesoftails.net/data/skill-simula
 | 461 | DowndamageMonter | 95 | 0 | None | Passive |
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+## Hit timing for the reach playback (traced 2026-10-16)
+
+Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
+
+- **Pummel:** wait 0.1 s, `moveSpeed 16` for 0.1 s, then 5 hits every 0.1 s while `i < 5` (`Panda.cs:24742-24783`); #422 widens the box for all of them.
+- **Tiger Toss / Tiger Pounce:** the grab at 0.2 s starts `RPC_tigerToss` (`:26142`); the throw lands 0.6 s later and the Pounce circle hits at 0.9 s (`:26805`).
+- **Rising Vortex:** 0.4 / 0.6 s (`:28832`, `:28947`). **Water Crane:** 0.7 / 0.9 s (`:33871-33886`, `i < 2`). **Ashura Fist:** 0.9 / 1.1 s after the 3.6 m dash (`:31118-31197`).
+- **Rising Dragons:** pin at 0.3 s (no damage, `:29580`), 8 uppercuts every 0.15 s from 0.6 s (`:30010`, `i < 8`), finisher at 2.1 s (`:29821`).
+- **Heaven Palm:** hits when the clock passes `hitTime` 1.2 → 1.8 → 2.2 → 2.6 s, at the target (`:39821-40054`, `:40077`).
+- **Fuujin Ken:** 20 hits every 0.4 s from 1.0 s (`:41352`, `i < 20`).

@@ -3762,6 +3762,38 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   for (const needle of ['class="sk-reach-badge"', ".sk-reach-badge{", "function openReachPopup", ".sk-reach-pop{"]) {
     if (!html.includes(needle)) bad(`page is missing ${needle}`);
   }
+  // Reach playback vs the damage sim (user 2026-10-16): a card whose damage sim counts N hits must play N timed hits in its reach preview (distinct `at` times),
+  // unless it is listed here with the reason its hits cannot be replayed honestly. A listed card that no longer mismatches fails too, so the list never goes stale.
+  {
+    const REACH_STATIC_OK = {
+      bat_nAttack: "projectile, hit time = flight time", bat_echoes: "bouncing projectile", bat_guardianOfTheNight: "AI-driven attacks",
+      bat_dreamDazzle: "single locked target, no hit box", bat_phantasmBlast: "single locked target, no hit box", bat_shatteringDream: "single locked target, no hit box",
+      cat_doubleDown: "random targets", cat_grandCasinoArcade: "random outcome / targets",
+      chameleon_cAttack: "hit count follows charge time (preview shows the first 6)", chameleon_quickFire: "arrows, hit time = flight time",
+      chameleon_leftStride: "arrows, hit time = flight time", chameleon_rightStride: "arrows, hit time = flight time",
+      mole_nAttack: "projectile", mole_mortarShot: "shells land one by one at different spots", mole_barrelBot_missile: "random targets", mole_missile: "random targets",
+      mole_kingKaiser_missile: "projectile", mole_napalm: "several shells landing at different spots", mole_barrelCannon: "several shells landing at different spots",
+      mole_warFactory_bazooka: "projectile", mole_warCapital: "AI-driven base",
+      panda_climbingCliff: "single held target, no hit box", panda_crumblingMountain: "single held target, no hit box",
+      penguin_nAttack: "projectile", penguin_manaMissile: "homing projectile", penguin_fallingComets: "random spots",
+      sheep_nAttack: "projectile", sheep_soulOfArms: "single locked target, no hit box", whale_12thKingdomKnight: "AI-driven knights"
+    };
+    const unexplained = [], stale = [];
+    for (const sk of SKILLS) {
+      if (!sk.reach || sk.hitCountDuration) continue;
+      const rank = sk.maxRank || 1;
+      let hits = 1, parts = [];
+      try { hits = typeof sk.hitCount === "function" ? sk.hitCount(rank, false, false) : (sk.hitCount || 1); parts = sandbox._reachNormalize(sk.reach, rank); } catch (e) { bad(sk.id + " playback check threw: " + e.message); continue; }
+      const timed = new Set(parts.filter(p => typeof p.at === "number").map(p => p.at)).size;
+      const drawn = timed || (parts.some(p => !p.faint && p.shape !== "ring" && p.shape !== "self" && !p.unknown) ? 1 : 0);
+      const short = hits > 1 && drawn < hits;
+      if (short && !REACH_STATIC_OK[sk.id]) unexplained.push(sk.id + " (sim " + hits + ", preview " + drawn + ")");
+      if (!short && REACH_STATIC_OK[sk.id]) stale.push(sk.id);
+    }
+    if (unexplained.length) bad("reach preview plays fewer hits than the damage sim: " + unexplained.join(", "));
+    if (stale.length) bad("REACH_STATIC_OK lists cards that no longer mismatch: " + stale.join(", "));
+    console.log("Reach playback vs damage sim: " + unexplained.length + " unexplained, " + Object.keys(REACH_STATIC_OK).length + " static on purpose");
+  }
   // Panda reach: every dependency state gives positive sizes, and hand-checked goldens from the Panda.cs Find* calls
   {
     const dr = sandbox._depRanks, saved = { ...dr };
@@ -3796,7 +3828,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("panda_rain&storm", 2, { shadowFist: 5 }); g("Rain & Storm Spirit Fist r6", c[0].r === 6, c);
       c = P("panda_heavenPalm", 2, { shadowFist: 5 }); g("Heaven Palm rank 2 + Spirit Fist r7", c[0].r === 7 && c[0].h === 2, c);
       c = P("panda_heavenPalm", 1); g("Heaven Palm rank 1 r4", c[0].r === 4, c);
-      c = P("panda_risingDragons", 2); g("Rising Dragons two cylinders", c.length === 2 && c[0].r === 3 && c[0].h === 6 && c[1].r === 4 && c[1].h === 3, c);
+      c = P("panda_risingDragons", 2); g("Rising Dragons: 8 uppercuts r3 h6 every 0.15 s from 0.6 s, then the r4 h3 finisher at 2.1 s", c.length === 9 && c.slice(0, 8).every((p, k) => p.r === 3 && p.h === 6 && Math.abs(p.at - (0.6 + 0.15 * k)) < 1e-6) && c[8].r === 4 && c[8].h === 3 && c[8].at === 2.1, c);
       c = P("panda_rushingFalcon", 2); g("Rushing Falcon: the 3.2-to-2 trapezoid (starts 0.5 m behind) after a 1.6 m dash (0.3 s), then 2x1x2 boxes at 2.8 m (0.5 s) and 4.4 m (0.7 s)", c.length === 3 && c[0].w === 3.2 && c[0].w2 === 2 && c[0].l === 2 && Math.abs(c[0].z0 - 1.1) < 1e-9 && c[1].l === 1 && Math.abs(c[1].z0 - 2.8) < 1e-9 && Math.abs(c[2].z0 - 4.4) < 1e-9 && [0.3, 0.5, 0.7].every((t, i) => Math.abs(c[i].at - t) < 1e-9), c);
       c = P("panda_ashura", 2); g("Ashura circle after the 3.6 m lunge", c[0].r === 3 && c[0].h === 3 && c[0].z0 === 3.6, c);
       c = P("panda_fuujinKen", 1); g("Fuujin Ken r12 h9", c[0].r === 12 && c[0].h === 9, c);
@@ -3824,7 +3856,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("cat_heartRipper", 2, {}, 1.4); g("Heart Ripper r scales, h5 does not, 0.4 m ahead (2 x 0.2 s)", c[0].r === 1.4 && c[0].h === 5 && c[0].z0 === 0.4, c[0]);
       c = P("cat_moonBlade", 2, {}, 1.4); g("Moon Blade r4.2 / r5.6, h3, at 0.3 and 0.5 m of drift", c[0].r === 4.2 && c[1].r === 5.6 && c[0].h === 3 && c[0].z0 === 0.3 && c[1].z0 === 0.5, c);
       c = P("cat_backflip", 2); g("Backflip pass-through strip 2x4x2 starts 1 m ahead (4 x 0.25 s)", c.length === 1 && c[0].l === 4 && c[0].z0 === 1, c);
-      c = P("cat_moonStorm", 2); g("Moon Storm 6 rings every 1.5 m + a 12 m blast", c.length === 7 && c[5].z0 === 7.5 && c[6].z0 === 12 && c[6].r === 3, c);
+      c = P("cat_moonStorm", 2); g("Moon Storm 6 rings every 1.5 m + the 12 m blast twice (0.6 / 0.7 s)", c.length === 8 && c[5].z0 === 7.5 && c[6].z0 === 12 && c[6].r === 3 && c[7].z0 === 12 && c[6].at === 0.6 && c[7].at === 0.7, c);
       c = P("cat_deltaStrike", 1); g("Delta Strike rank 1: 2 to 12 wide, 6 long", c[0].w === 2 && c[0].w2 === 12 && c[0].l === 6 && c[0].h === 6, c);
       c = P("cat_deltaStrike", 2); g("Delta Strike rank 2: 2 to 18 wide, 8 long", c[0].w2 === 18 && c[0].l === 8, c);
       c = P("cat_pillagePlunge", 1); g("Pillage Plunge hit box 4x4x2 from 2 m behind, after a 2.4 m dash (24 x 0.1 s) + 6 m pass-through at the start", c[0].w === 4 && c[0].l === 4 && c[0].z0 === 0.4 && c[1].l === 6 && !c[1].z0, c);
@@ -3858,7 +3890,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("wolf_feralAssault", 1); g("Feral Assault: four 12-to-6 wide 8 long boxes 4.2 m apart (first at the cast point) + r6 finisher at 16.8 m, no rangeMod", c.length === 5 && c.slice(0, 4).every((b, i) => b.w === 12 && b.w2 === 6 && b.l === 8 && Math.abs(b.z0 - (-6 + 4.2 * i)) < 1e-9 && !b.rangeMod) && c[4].r === 6 && c[4].z0 === 16.8, c);
       c = P("wolf_dualBrand", 1); g("Dual Brand: r5 h3 circle (0.5 m ahead) at 1.2 and 2.4 m of dash, 4x5x4 box at 3.8 and 5 m", c.length === 4 && c[0].r === 5 && c[0].h === 3 && c[0].z0 === 1.7 && c[1].z0 === 2.9 && c[2].w === 4 && c[2].l === 5 && c[2].h === 4 && c[2].z0 === 3.8 && c[3].z0 === 5, c);
       c = P("wolf_thirdRend", 1); g("Third Rend 4x4x3 after a 1.1 m dash", c.length === 1 && c[0].w === 4 && c[0].l === 4 && c[0].h === 3 && c[0].z0 === 1.1, c);
-      c = P("wolf_bladeSong", 1); g("Blade Song 2 to 4 wide 6 long, 0.4 m behind the cast point", c.length === 1 && c[0].w === 2 && c[0].w2 === 4 && c[0].l === 6 && c[0].z0 === -0.4, c);
+      c = P("wolf_bladeSong", 1); g("Blade Song 2 to 4 wide 6 long, 0.4 m behind the cast point, 7 slashes every 0.2 s at rank 1", c.length === 7 && c.every((p, k) => p.w === 2 && p.w2 === 4 && p.l === 6 && p.z0 === -0.4 && Math.abs(p.at - 0.2 * (k + 1)) < 1e-6), c);
       c = sandbox._reachPartsWith(SKILLS.find(x => x.id === "wolf_crusader"), 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 1 }); g("Lunar Eclipse 1: x1.4 size and start, and the 2.8 m dash scales with moveMod (+40%) = 3.92", c[0].z0 === 2.52, c);
       { const E = [0, 0, 21.54], mp = P("penguin_meteora", 2), on = sandbox._reachOnEnemy(mp, E), gc = P("wolf_grandCross", 1);
         g("Meteora with Boldas in the 40 m lock ring: the impact circle is centred on him (21.54 m), not 6 m ahead", on.find(p => p.shape === "cylinder").anchor === "self" && on.find(p => p.shape === "cylinder").z0 === 21.54 && on.find(p => p.shape === "cylinder").onEnemy === true && on.find(p => p.shape === "ring") === mp.find(p => p.shape === "ring"), on.map(p => [p.shape, p.anchor, p.z0]));
@@ -3928,7 +3960,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("whale_peninsulaImpale", 2); g("Peninsula Impale 2x6x3, rank 2 = 10 hits at 0.6, 1.0, ... 4.2 m", c.length === 10 && c[0].w === 2 && c[0].l === 6 && c[0].h === 3 && c[0].z0 === 0.6 && c[1].z0 === 1 && c[9].z0 === 4.2, c);
       c = P("whale_peninsulaImpale", 1); g("Peninsula Impale rank 1 = 6 hits", c.length === 6, c);
       c = P("whale_peninsulaImpale", 2, { peninsulaAsunder: 1 }); g("Peninsula Asunder: 3x12", c[0].w === 3 && c[0].l === 12, c);
-      c = P("whale_peninsulaRound", 2); g("Peninsula Round 3x4x3 after a 0.6 m dash + a faint r20 redirect sphere", c.length === 2 && c[0].w === 3 && c[0].l === 4 && c[0].z0 === 0.6 && c[1].shape === "sphere" && c[1].r === 20 && c[1].faint === true, c);
+      c = P("whale_peninsulaRound", 2); g("Peninsula Round 3x4x3 after a 0.6 m dash, 7 hits every 0.4 s at rank 2, + a faint r20 redirect sphere", c.length === 8 && c[0].w === 3 && c[0].l === 4 && c[0].z0 === 0.6 && c[6].z0 === 0.6 && c[0].at === 0.2 && c[6].at === 2.6 && c[7].shape === "sphere" && c[7].r === 20 && c[7].faint === true, c);
       c = P("whale_peninsulaRound", 2, { peninsulaAsunder: 1 }); g("Peninsula Asunder: 6x5 from 1 m behind, after the 0.6 m dash", c[0].w === 6 && c[0].l === 5 && c[0].z0 === -0.4, c);
       c = P("whale_12thKingdomKnight", 2); g("12th Kingdom Knight: faint sphere r8", c[0].shape === "sphere" && c[0].r === 8 && c[0].faint === true, c);
       c = P("whale_hydroBlast", 4); g("Hydro Blast: lock ring + r1 h6 at the target", c.length === 2 && c[0].shape === "ring" && c[1].r === 1 && c[1].h === 6 && c[1].anchor === "target", c);
@@ -3938,7 +3970,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("whale_malStorm", 2); g("Mal Storm r8 h5", c[0].r === 8 && c[0].h === 5, c);
       c = P("whale_malStorm", 2, { divingPress: 1 }, 1.4); g("Diving Press: r12, height x1.4", c[0].r === 12 && c[0].h === 7, c);
       c = P("whale_callToArm", 1); g("Call To Arm r12 h3", c[0].r === 12 && c[0].h === 3, c);
-      c = P("whale_megalodon", 2); g("Megalodon rank 2: lock ring, suction r5 h5, bite r7 h10", c.length === 3 && c[1].r === 5 && c[1].h === 5 && c[2].r === 7 && c[2].h === 10, c);
+      c = P("whale_megalodon", 2); g("Megalodon rank 2: lock ring, suction r5 h5 at 0 / 1 / 2 / 3 s, bite r7 h10 at 4 / 5.5 s", c.length === 7 && [1, 2, 3, 4].every((i, k) => c[i].r === 5 && c[i].h === 5 && c[i].at === k) && c[5].r === 7 && c[5].h === 10 && c[5].at === 4 && c[6].at === 5.5, c);
       c = P("whale_bubbleBurst", 1); g("Bubble Burst: r12 h3 blast + the 200 m search (faint, not used for the zoom)", c.length === 2 && c[0].r === 12 && c[1].r === 200 && c[1].h === 50 && c[1].faint === true && c[1].noZoom === true && sandbox._reachBadgeText(c) === "r 12m", c);
       c = P("whale_bowlingWhale", 1); g("Bowling Whale r3 h3", c[0].r === 3 && c[0].h === 3, c);
       c = P("whale_grandTide", 1); g("Grand Tide 16x7x4 from 4 m behind", c[0].w === 16 && c[0].l === 7 && c[0].h === 4 && c[0].z0 === -4, c);

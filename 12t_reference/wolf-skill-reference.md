@@ -904,3 +904,10 @@ Source: [ToT wolf simulator dataset](https://talesoftails.net/data/skill-simulat
 | 461 | DowndamageMonter | 95 | 0 | None | Passive |
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+## Hit timing for the reach playback (traced 2026-10-16)
+
+Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
+
+- **Charge Attack:** waves at 0.5 / 0.6 / 0.7 s, the 2nd and 3rd only with `cTime ≥ 4` / `≥ 6` (`Wolf.cs:19444-19634`).
+- **Blade Song:** steps back 0.4 m, slashes every 0.2 s from 0.9 s, `5 + 2 × sLv` times (`:30273`); Last Blade 0.3 s after the last slash (`:30129`).
