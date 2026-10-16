@@ -23,6 +23,7 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.";
 //   varint note count, then per note: slot byte + text
 //   optional gear block (older codes end before it): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3) and per choice
 //   a flag byte (bit 0 typed name, bit 1 has a Replica, bit 2 the Replica is a typed name, bits 4-7 stat index + 1) + text (item id or name) [+ Replica text]
+//   optional cover block (user 2026-10-16): 0x49, count byte (1-3), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
 const CLASS_GUIDE_GEAR_KEYS = ["weapon", "armor", "hat", "trinket", "boot", "pet"];
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
@@ -55,6 +56,7 @@ function classGuideBinary(g){
     let m = 0; CLASS_GUIDE_GEAR_KEYS.forEach((k, j) => { if (present.includes(k)) m |= 1 << j; }); out.push(0x47, m);
     for (const k of present){ out.push(gear[k].length); for (const c of gear[k]){ const r = c.replica; out.push((c.item ? 0 : 1) | (r ? 2 : 0) | (r && !r.item ? 4 : 0) | (c.stat ? CLASS_GUIDE_STAT_KEYS.indexOf(c.stat) + 1 : 0) << 4); text(c.item || c.name); if (r) text(r.item || r.name); } }
   }
+  const cover = g.cover || []; if (cover.length){ out.push(0x49, cover.length); for (const id of cover) out.push(slot(id)); }
   return Buffer.from(out);
 }
 function classGuideFromBinary(bytes){
@@ -85,9 +87,11 @@ function classGuideFromBinary(bytes){
   const title = text(), author = text(), description = text();
   const count = varint(), notes = {};
   for (let n = 0; n < count; n++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); notes[(Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1] = text(); }
-  let gear = null;
-  if (i < bytes.length){
-    if (byte() !== 0x47) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+  let gear = null, cover = null;
+  while (i < bytes.length){
+    const tag = byte();
+    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1); } continue; }
+    if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
       const n = byte(); if (n < 1 || n > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
@@ -96,7 +100,7 @@ function classGuideFromBinary(bytes){
       gear[CLASS_GUIDE_GEAR_KEYS[j]] = list;
     }
   }
-  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), notes };
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
 }
 
 // Same compact form as classGuideCompact / classGuideExpand in index.html: one-letter keys, learned skills as a 160-bit set (one bit per tree x row x column slot).
@@ -109,13 +113,14 @@ function compact(g){
   const o = { t: g.title, a: g.author, d: g.date, x: g.description, s: g.build.server, c: g.build.classKey, l: g.build.level, k: b64u(bits), n: g.notes };
   if (g.stats) o.v = g.stats;
   if (g.gear) o.g = g.gear;
+  if (g.cover) o.i = g.cover;
   return o;
 }
 function expand(o){
   if (!o || typeof o.k !== "string") return o;
   const bits = fromB64u(o.k), learned = [];
   for (let k = 0; k < bits.length * 8 && k < 160; k++) if (bits[k >> 3] & (1 << (k & 7))) learned.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1);
-  const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), notes: o.n || {} };
+  const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), ...(o.i !== undefined ? { cover: o.i } : {}), notes: o.n || {} };
   return g;
 }
 // encode = format 2 (what the page exports); encode1 = the older format 1
@@ -148,7 +153,7 @@ if (require.main === module){
   const read = a => (a && fs.existsSync(a)) ? fs.readFileSync(a, "utf8") : a;
   try {
     if (op === "--selftest"){
-      const g = { format: "12t-class-guide", version: 1, title: "ทดสอบ **ทอง**", author: "ผู้เขียน", date: "2026-10-16", description: "a\nb", build: { server: "tot", classKey: "wolf", level: 100, learned: [101, 102, 134, 211, 491, 494] }, stats: { agi: 120, lck: 40 }, gear: { weapon: [{ item: "w_wlf10", replica: { name: "ดาบใหม่ **ทดสอบ**" }, stat: "atk" }, { name: "Custom Blade" }], pet: [{ item: "p_lcr" }] }, notes: { "101": "โน้ต" } };
+      const g = { format: "12t-class-guide", version: 1, title: "ทดสอบ **ทอง**", author: "ผู้เขียน", date: "2026-10-16", description: "a\nb", build: { server: "tot", classKey: "wolf", level: 100, learned: [101, 102, 134, 211, 491, 494] }, stats: { agi: 120, lck: 40 }, gear: { weapon: [{ item: "w_wlf10", replica: { name: "ดาบใหม่ **ทดสอบ**" }, stat: "atk" }, { name: "Custom Blade" }], pet: [{ item: "p_lcr" }] }, cover: [134, 101, 494], notes: { "101": "โน้ต" } };
       const c = encode(g);
       if (JSON.stringify(decode(encode1(g))) !== JSON.stringify(g)) throw new Error("format 1 round trip failed");
       if (!c.startsWith(PREFIX2) || JSON.stringify(decode(c)) !== JSON.stringify(g) || JSON.stringify(decode(JSON.stringify(g))) !== JSON.stringify(g)) throw new Error("round trip failed");

@@ -3207,7 +3207,7 @@ let checkedRsim = 0;
   ok(Array.isArray(embedded), "embedded guides use a data array");
   { const ids = embedded.map((g, i) => Number.isInteger(g.id) && g.id > 0 ? String(g.id) : String(i + 1)); ok(new Set(ids).size === ids.length, "embedded guide numbers are unique (link #skill-simulator/<number>): " + ids.join(", ")); embedded.forEach((g, i) => ok(Number.isInteger(g.id) && g.id > 0, "embedded guide " + (i + 1) + " has a running number id (1, 2, 3 ...)")); }
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
-  const fixture = { format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
+  const fixture = { cover:[101],format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
   const round = decode(encode(fixture));
   ok(round.author === fixture.author && round.description === fixture.description && round.notes[103] === fixture.notes[103] && round.notes[201] === fixture.notes[201], "UTF-8, multiline notes and skipped-skill notes round-trip as plain text");
   ok(round.build.learned.join() === "101,102,103,451", "export normalizes build ordering");
@@ -3282,6 +3282,12 @@ let checkedRsim = 0;
     rejects(()=>norm(change({gear:{weapon:[{name:""}]}})), "reject an empty typed name"); rejects(()=>norm(change({gear:{weapon:[{name:"x".repeat(61)}]}})), "limit typed names to 60 characters");
     rejects(()=>norm(change({gear:{ring:[{name:"x"}]}})), "reject an unknown gear slot");
     ok(same(norm(change({title:"",author:"",date:"",gear:{weapon:[{item:"w_cat10"},{item:"w_wlf10"}]}}),{draft:true}).gear, {weapon:[{item:"w_wlf10"}]}), "drafts drop gear the class cannot use (class switched in the editor)");
+    // cover icons (user 2026-10-16): 1-3 skills of the guide's grid, in order; the codes carry them in an optional 0x49 block, page and script identical
+    { const withCover = norm(change({ cover: [102, 101] }));
+      ok(same(withCover.cover, [102, 101]) && same(norm(fromBin(bin(withCover))), withCover) && same(Array.from(bin(withCover)), Array.from(gc.classGuideBinary(withCover))) && same(norm(gc.decode(gc.encode(withCover))), withCover) && same(norm(decode(encode(change({ cover: [102, 101] })))), withCover), "cover icons round-trip through both code formats, page and scripts/guide_code.js identical");
+      rejects(() => norm(change({ cover: [101, 102, 103, 104] })), "reject a fourth cover icon");
+      rejects(() => norm(change({ cover: [999] })), "reject a cover icon that is not in the grid");
+      ok(same(norm(change({ title: "", author: "", date: "", cover: [101, 999, 101] }), { draft: true }).cover, [101]), "drafts drop cover icons the grid no longer has"); }
   }
   // Hover rank: a cell's rank counts the same skill's cells before it in its tree, never the column (Penguin Dispell 2 sits in column 3, user 2026-10-16).
   { const rankOf = vm.runInContext("skillSimCellRank", sandbox), cellsOf = vm.runInContext("(k, s) => skillSimCells(SKILL_SIM[k], SKILL_SIM_SERVERS[s].patch[k], s === 'tot' ? SKILL_SIM_EX[k] : null)", sandbox);
