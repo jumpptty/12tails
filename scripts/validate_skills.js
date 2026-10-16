@@ -4032,7 +4032,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("whale_bowlingWhale", 1); g("Bowling Whale r3 h3", c[0].r === 3 && c[0].h === 3, c);
       c = P("whale_grandTide", 1); g("Grand Tide 16x7x4 from 4 m behind", c[0].w === 16 && c[0].l === 7 && c[0].h === 4 && c[0].z0 === -4, c);
       c = P("whale_overPresence", 2); g("Over Presence: the prefab's SphereCollider r6", c[0].shape === "sphere" && c[0].r === 6, c);
-      for (const id of ["whale_javelin", "whale_flyingShield"]) { c = P(id, 1); g(id + ": range lives in the prefab / animation, badge ?", c.length === 1 && c[0].unknown === true, c); }
+      c = P("whale_flyingShield", 1); g("whale_flyingShield: range lives in the prefab / animation, badge ?", c.length === 1 && c[0].unknown === true, c);
+      c = P("whale_javelin", 1); g("whale_javelin: the traced flight, 10 timed 0.25 m boxes from the hand (2.2 m up) down to the ground ~20 m ahead", c.length === 10 && c.every(p => p.shape === "box" && p.w === 0.25) && c[0].yBand[1] > 2.2 && c[9].yBand[0] < 0.2 && c[9].z0 + c[9].l > 19 && c[9].z0 + c[9].l < 24 && c[0].at >= 0.5, c.slice(0, 2));
       for (const id of ["whale_bubbleShield", "whale_heavyWeight", "whale_rejuvenate", "whale_homingShield"]) { c = P(id, 1); g(id + ": 40 m lock ring only", c.length === 1 && c[0].shape === "ring" && c[0].r === 40, c); }
       // preview toggles: Lunar Eclipse adds 0.4 per level to the Enlarge / Reduce factor, so Enlarge 4 + Lunar 1 = x1.8 and Lunar 2 alone = x1.8
       {
