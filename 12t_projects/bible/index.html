@@ -11493,7 +11493,7 @@ function reachRender(ctx, model, P, st, W, H, dpr, dimK){
 const reachVolKey = (p) => [p.shape, p.r, p.r0, p.w, p.w2, p.l, p.h, p.angle].join("|");
 const reachPlaceKey = (p) => reachVolKey(p) + "@" + [p.anchor, p.x0 || 0, p.y0 || 0, p.z0 || 0, p.yaw || 0, p.onEnemy ? 1 : 0].join("|");
 const reachTagMem = new WeakMap();   // per canvas: where each dimension label was drawn last frame
-function drawReach(cv, items, st, model, scene, seqT){
+function drawReach(cv, items, st, model, scene, seqT, countOn){   // countOn: the hit counter stays once the first playback (or single-hit flash) has started
   { const ps = items.map(it => it.part), pl = reachOnEnemy(ps, scene && scene.bPos); if (pl !== ps) items = items.map((it, i) => ({ part: pl[i], alpha: it.alpha })); }   // an impact circle in lock range sits on Boldas
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5), W = cv.clientWidth, H = cv.clientHeight;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
@@ -11514,7 +11514,7 @@ function drawReach(cv, items, st, model, scene, seqT){
   items.forEach(({ part: p, alpha: a0 }, k) => {
     const alpha = a0 * vis(p);
     if (p.unknown || p.shape === "self" || alpha <= 0.001 || skipDraw.has(k)) return;
-    const col = cmap[k], m = reachMesh(p), faint = !!p.faint || p.shape === "ring", pz = seqHit && p.at === seqPlan.at[seqHit.cur] ? seqHit.pulse : 0;
+    const col = cmap[k], m = reachMesh(p), faint = !!p.faint || p.shape === "ring", pz = seqHit && p.at === seqPlan.at[seqHit.cur] ? seqHit.pulse : (!seqOn && st.pulse ? st.pulse : 0);   // st.pulse: the one strike of a single-hit skill
     for (const f of faint ? [] : m.faces){
       const poly = f.map(i => m.verts[i]);
       for (const [list, up] of [[above, true], [below, false]]){
@@ -11575,7 +11575,7 @@ function drawReach(cv, items, st, model, scene, seqT){
   else { paint(behind, true); drawModel(0.6); paint(front, true); ground(); paint(below, false); }
   if (sceneParts){   // the scene fills the canvas, so it renders at the adaptive quality while moving and once more at full quality 220 ms after the last draw
     clearTimeout(reachBuf.settle);
-    if (reachBuf.q < 1 && !reachBuf.force) reachBuf.settle = setTimeout(() => { if (!cv.isConnected) return; reachBuf.force = true; try { drawReach(cv, items, st, model, scene, seqT); } finally { reachBuf.force = false; } }, 220);
+    if (reachBuf.q < 1 && !reachBuf.force) reachBuf.settle = setTimeout(() => { if (!cv.isConnected) return; reachBuf.force = true; try { drawReach(cv, items, st, model, scene, seqT, countOn); } finally { reachBuf.force = false; } }, 220);
   }
   if (scene && scene.enemy){   // start point 2 = where the opponent starts the duel (user 2026-10-14): a ring on the ground, a pole and a pill with the distance
     const E = scene.enemy, RED = "#ef5350", ring = Array.from({ length: 32 }, (_, i) => { const a = 2 * Math.PI * i / 32; return P([E[0] + 0.5 * Math.cos(a), E[1] + 0.02, E[2] + 0.5 * Math.sin(a)]); });
@@ -11616,8 +11616,11 @@ function drawReach(cv, items, st, model, scene, seqT){
     ctx.fillStyle = t.col; ctx.fillText(t.text, mx, my + 0.5);
   }
   mem.clear(); keep.forEach((v, key) => mem.set(key, v));
-  if (seqHit){
-    const hk = items.findIndex(it => it.part.at === seqPlan.at[seqHit.cur]), hc = hk >= 0 ? cmap[hk] : "#d4af37", fs = 15 + 7 * seqHit.pulse, txt = "ฮิต " + (seqHit.cur + 1) + " / " + seqHit.n;
+  // hit counter (user 2026-10-16): pops with each hit during the playback, then stays as "N / N" in gold; a single-hit skill shows "1 / 1" (popping with its strike flash)
+  const cntPlan = seqPlan || reachSeqPlan(items.map(it => it.part)), cntN = cntPlan ? cntPlan.T.length : (items.some(it => !it.part.faint && it.part.shape !== "ring" && it.part.shape !== "self" && !it.part.unknown) ? 1 : 0);
+  const cnt = seqHit || (countOn && cntN && seqT !== -1 ? { cur: cntN - 1, n: cntN, pulse: st.pulse || 0 } : null);
+  if (cnt){
+    const hk = seqHit ? items.findIndex(it => it.part.at === seqPlan.at[seqHit.cur]) : -1, hc = hk >= 0 ? cmap[hk] : "#d4af37", fs = 15 + 7 * cnt.pulse, txt = "ฮิต " + (cnt.cur + 1) + " / " + cnt.n;
     ctx.font = "bold " + fs.toFixed(1) + "px ui-monospace, monospace"; ctx.globalAlpha = 1;
     const tw = ctx.measureText(txt).width + 20, cx = W / 2, cy = 30;
     ctx.fillStyle = "rgba(12,12,14,.85)"; ctx.fillRect(cx - tw / 2, cy - fs * 0.8, tw, fs * 1.6);
@@ -11761,8 +11764,8 @@ function openReachPopup(skill, rank){
   const home = () => ({ ms: msNow(), yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(parts.some(p => p.fit) ? 3 : 8, Math.min(60, 110 / Math.max(2.5, ...parts.filter(p => !p.noZoom).map(p => Math.max(reachSize(p), p.fit || 0))))), t: [0, 0, 0], tt: [0, 0, 0] });   // fit: metres a chain of repeated parts reaches, so the default view frames all of it (the usual zoom never goes below 8)
   let st = home();
   let drawQueued = 0;
-  const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model, sceneNow(), seqArg()); };
-  const redraw = () => { if (!drawQueued) drawQueued = requestAnimationFrame(() => { drawQueued = 0; drawReach(cv, items, st, model, sceneNow(), seqArg()); }); };   // a fast mouse sends several moves per frame
+  const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model, sceneNow(), seqArg(), countOn); };
+  const redraw = () => { if (!drawQueued) drawQueued = requestAnimationFrame(() => { drawQueued = 0; drawReach(cv, items, st, model, sceneNow(), seqArg(), countOn); }); };   // a fast mouse sends several moves per frame
   if (model && !model.ready) model.onready = redraw;
   if (scn && !scn.ready) scn.onready = redraw;
   let zoomBy = () => {};
@@ -11875,14 +11878,18 @@ function openReachPopup(skill, rank){
   // what is on screen right now, as parts (a cross-fade mid-way counts as its target)
   const shownParts = () => items.every(it => it.alpha === 1) ? items.map(it => it.part) : parts;
   // Hit-by-hit playback (user 2026-10-15): "wait" = the multi-hit parts stay hidden (opening move, toggle cross-fade), "run" = playing, null = the final picture
-  let seqMode = null, seqRaf = 0, seqStart = 0;
+  let seqMode = null, seqRaf = 0, seqStart = 0, countOn = false;
   const seqArg = () => seqMode === null ? null : seqMode === "wait" ? -1 : (performance.now() - seqStart) / 1000;
   const armSeq = () => { cancelAnimationFrame(seqRaf); seqRaf = 0; seqMode = reachSeqPlan(parts) ? "wait" : null; };
   const stopSeq = () => { cancelAnimationFrame(seqRaf); seqRaf = 0; seqMode = null; };
   const startSeq = () => {
-    cancelAnimationFrame(seqRaf); seqRaf = 0;
+    cancelAnimationFrame(seqRaf); seqRaf = 0; countOn = true;
     const plan = reachSeqPlan(parts);
-    if (!plan){ seqMode = null; redraw(); return; }
+    if (!plan){   // a single-hit skill: the same strike flash once, where the playback would start (user 2026-10-16)
+      seqMode = null; const t0 = performance.now() + 250;
+      const pulse = () => { if (!cv.isConnected) return; const x = (performance.now() - t0) / 250; st.pulse = x < 0 ? 0 : Math.max(0, 1 - x); drawNow(); if (x < 1) seqRaf = requestAnimationFrame(pulse); else { st.pulse = 0; seqRaf = 0; drawNow(); } };
+      seqRaf = requestAnimationFrame(pulse); return;
+    }
     seqMode = "run"; seqStart = performance.now() + 250;
     const frame = () => { if (!cv.isConnected) return; const t = (performance.now() - seqStart) / 1000; if (t < plan.end){ drawNow(); seqRaf = requestAnimationFrame(frame); } else { seqRaf = 0; seqMode = null; drawNow(); } };
     seqRaf = requestAnimationFrame(frame);
@@ -30818,6 +30825,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T02:41:59.624Z","feat(bible): reach preview hit counter stays on screen after the playback (N / N), and single-hit skills get the strike flash and a 1 / 1 counter"],
     ["2026-10-16T02:26:41.983Z","fix(bible): reach preview plays every hit the damage sim counts, timed from the code, for 25 skills across Bison, Cat, Mole, Panda, Penguin, Whale and Wolf; Bowling Whale hits 23 times not 24"],
     ["2026-10-16T01:57:10.586Z","fix(bible): Monkey reach playback follows the code for Gadina normal attack, Instant Blaze and Ground Lock, Gaos Rampage hits 14 times not 20; class guide hover takes a skill rank from its own cells (Penguin Dispell 2); Rapid Fire desc states the real fastest shot rate"],
     ["2026-10-16T01:50:52.072Z","feat(bible): Phoenix Fireball shows the real time between shots (Rapid Fire timer, rounded like the game, but never under the Phoenix AI cycle of about 1.8 s at Rapid Fire 3), with the Rapid Fire 3 slowdown listed as unintended behaviour"],
