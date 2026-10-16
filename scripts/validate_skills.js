@@ -3262,6 +3262,27 @@ let checkedRsim = 0;
     rejects(()=>norm(change({stats:[120]})),"reject stats as an array"); rejects(()=>norm(change({stats:null})),"reject null stats");
     ok(norm(change({title:"",author:"",date:"",stats:{cha:5}}),{draft:true}).stats.cha === 5, "drafts keep recommended stats");
   }
+  // Recommended gear (user 2026-10-16): up to 3 ranked picks per slot, a game item the class can use or a typed name; Replica + one upgrade stat only on weapon / armor / hat.
+  { const GD = vm.runInContext("GEAR_DATA", sandbox), GI = vm.runInContext("GEAR_ICONS", sandbox), gc = require(path.join(__dirname, "guide_code.js"));
+    const bin = vm.runInContext("classGuideBinary", sandbox), fromBin = vm.runInContext("classGuideFromBinary", sandbox), same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+    ok(["weapon","armor","hat","trinket","boot","pet"].every(k => Array.isArray(GD[k]) && GD[k].length) && GD.weapon.length > 500 && GD.pet.some(([id]) => id === "p_lcr"), "gear data covers all six slots (weapons 500+, pets as families)");
+    ok(Object.values(GD).every(list => list.every(e => e.length === 2 && typeof e[0] === "string" && typeof e[1] === "string" && e[1])), "gear data holds only id and name (no stats or levels, user 2026-10-16)");
+    const ids = new Set(Object.values(GD).flatMap(l => l.map(e => e[0]))); ok(Object.keys(GI).every(id => ids.has(id) && /^data:image\/webp;base64,/.test(GI[id])) && Object.keys(GI).length > 1400, "every gear icon belongs to a listed item and is an embedded WebP");
+    const gear = { weapon:[{ item:"w_wlf10", replica:{ name:"ดาบใหม่ 🐺" }, stat:"atk" }, { name:"Brand New Blade" }, { item:"w_wlf11", replica:{ item:"w_wlf12" } }], hat:[{ item:"c_all1" }], trinket:[{ item:"t_all1" }], pet:[{ item:"p_lcr" }] };
+    const withGear = norm(change({gear}));
+    ok(same(withGear.gear, gear), "a valid gear set normalizes unchanged (order item / name, replica, stat)");
+    ok(same(norm(decode(encode(change({gear})))), withGear), "gear round-trips through export / import");
+    ok(same(Array.from(bin(withGear)), Array.from(gc.classGuideBinary(withGear))) && same(norm(fromBin(bin(withGear))), withGear) && same(norm(gc.decode(gc.encode(withGear))), withGear), "gear round-trips through the format 2 code, page and scripts/guide_code.js identical");
+    ok(same(norm(fromBin(bin(norm(fixture)))), norm(fixture)) && !("gear" in norm(fixture)), "a guide without gear has no gear key and its code has no gear block (old codes decode unchanged)");
+    rejects(()=>norm(change({gear:{weapon:[{item:"w_cat10"}]}})), "reject another class's weapon");
+    rejects(()=>norm(change({gear:{weapon:[{item:"w_wlf10"},{item:"w_wlf11"},{item:"w_wlf12"},{item:"w_wlf14"}]}})), "reject a fourth pick");
+    rejects(()=>norm(change({gear:{trinket:[{item:"t_all1", stat:"atk"}]}})), "reject an upgrade stat on a trinket");
+    rejects(()=>norm(change({gear:{boot:[{item:"b_all1", replica:{name:"x"}}]}})), "reject a Replica on boots");
+    rejects(()=>norm(change({gear:{weapon:[{item:"w_wlf10", stat:"str"}]}})), "reject an unknown upgrade stat");
+    rejects(()=>norm(change({gear:{weapon:[{name:""}]}})), "reject an empty typed name"); rejects(()=>norm(change({gear:{weapon:[{name:"x".repeat(61)}]}})), "limit typed names to 60 characters");
+    rejects(()=>norm(change({gear:{ring:[{name:"x"}]}})), "reject an unknown gear slot");
+    ok(same(norm(change({title:"",author:"",date:"",gear:{weapon:[{item:"w_cat10"},{item:"w_wlf10"}]}}),{draft:true}).gear, {weapon:[{item:"w_wlf10"}]}), "drafts drop gear the class cannot use (class switched in the editor)");
+  }
   // Hover rank: a cell's rank counts the same skill's cells before it in its tree, never the column (Penguin Dispell 2 sits in column 3, user 2026-10-16).
   { const rankOf = vm.runInContext("skillSimCellRank", sandbox), cellsOf = vm.runInContext("(k, s) => skillSimCells(SKILL_SIM[k], SKILL_SIM_SERVERS[s].patch[k], s === 'tot' ? SKILL_SIM_EX[k] : null)", sandbox);
     const badRank = []; let checkedRank = 0;
