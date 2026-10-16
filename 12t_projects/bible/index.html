@@ -30305,7 +30305,10 @@ function mountClassGuide(root){
     if (next !== "reader") currentId = null;
     button("exportImage").hidden = next !== "reader";   // the editor has its own copy next to คัดลอกโค้ดไกด์
     if (next !== "reader"){ button("returnAuthor").hidden = true; button("useAsBase").hidden = true; }
-    if (next !== "reader" && location.hash.indexOf("#class-guide/") === 0) history.replaceState(null, "", "#class-guide");   // leaving the reader: the address goes back to the tool
+    if (location.hash.split("/")[0] === "#class-guide"){   // the editor has its own address (user 2026-10-16: a refresh must not drop the author back on the guide list); the list is the bare tool
+      const want = next === "author" ? "#class-guide/write" : next === "gallery" ? "#class-guide" : null;
+      if (want && location.hash !== want) history.replaceState(null, "", want);
+    }
     mode = next; el("gallery").hidden = next !== "gallery"; el("author").hidden = next !== "author";
     el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close(); el("sent").close(); el("start").close(); el("gearPicker").close(); gearPick = null; el("confirm").close(); confirmThen = null;
     el("noteEditor").hidden = true; status("");
@@ -30688,7 +30691,8 @@ function mountClassGuide(root){
     openGuide(guide, false, id); return true;
   };
   const showGallery = () => { saveDraft(); switchMode("gallery"); sim.setInteraction("read"); renderGallery(); };
-  root._classGuide = { openById, showGallery, openGuide, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery, fitReader };
+  const openAuthor = () => { if (mode !== "author") startAuthor(); };   // #class-guide/write: straight into the editor with the saved draft (no start dialog)
+  root._classGuide = { openById, showGallery, openAuthor, openGuide, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery, fitReader };
   renderGallery();
 }
 
@@ -31663,6 +31667,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T11:14:51.000Z","fix(bible): the guide editor has its own link (#class-guide/write), so a page refresh keeps you in the editor instead of the guide list"],
     ["2026-10-16T10:23:24.642Z","fix(bible): the class guide tool's link is #class-guide (and #class-guide/<number> for a guide) instead of #skill-simulator; old links forward to the new address"],
     ["2026-10-16T10:19:14.681Z","fix(bible): the class guide cover label and its count keep one line each, with the picked icons and ล้าง on the row under them"],
     ["2026-10-16T10:16:36.237Z","fix(bible): the class guide cover box is a plain label (เลือก 1-3 สกิลเป็นหน้าปก, no hover, no จำเป็น tag; the ล้าง button removes the picks)"],
@@ -31999,7 +32004,8 @@ function route(){
     const known = MECHANIC_DESC_MAP[(deepSkill || "").toLowerCase()];
     openMechanicPanel(known ? deepSkill : null, (parseInt(parts[2], 10) || 1) - 1);
   }
-  if (tool && tool.id === "class-guide" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { if (!toolContainers[tool.id]._classGuide.openById(deepSkill)){ toolContainers[tool.id]._classGuide.showGallery(); history.replaceState(null, "", "#class-guide"); } }   // #class-guide/<guide number>; an unknown number shows the list
+  if (tool && tool.id === "class-guide" && deepSkill === "write" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) toolContainers[tool.id]._classGuide.openAuthor();   // #class-guide/write = the guide editor
+  else if (tool && tool.id === "class-guide" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { if (!toolContainers[tool.id]._classGuide.openById(deepSkill)){ toolContainers[tool.id]._classGuide.showGallery(); history.replaceState(null, "", "#class-guide"); } }   // #class-guide/<guide number>; an unknown number shows the list
   if (tool && tool.id === "skill-details" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._selectSkillById) {
     toolContainers[tool.id]._selectSkillById(deepSkill, deepServer);
   }
