@@ -501,6 +501,7 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 ### 4.8 Gadina - Normal Attack (`monkey_gadina_nAttack`) and Titan Sword (`monkey_titanSword`, #321-#323)
 - **Titan Sword:** passive, reqLv/Bn 7/2, 15/4, 23/6. On summon `EquipSword(rank)` adds **+20 / +35 / +50** to Gadina ATK (`Gadina.cs:544-601`); `getSwordLv()` returns the rank (0-3) (`:338-403`).
 - **Gadina's attack** (`$RPC_nAttack1-4`, by Gadina form, `Gadina.cs:2540-4910`): 1 / 2 / 3 / 3 hits for forms 1-4, interval `agiAdjust(3 / 3 / 4 / 4)` on Gadina's AGI (`:2780`, `:3394`, `:4139`, `:4901`). Each hit `hit(1, t, (int)(0.5 × hitAtk), KO = sword rank, hate = same, …)` with `hitAtk = Gadina ATK + floor((0.1 × sword + 0.1) × Monkey ATK)` from sword rank 1 (`:2605-2665`).
+- **Hit timing and steps (traced 2026-10-16, the reach playback uses them):** every hit is the same box; Gadina moves between hits. Form 1: wait 0.2 s, `moveSpeed 4` for 0.2 s, hit at **0.4 s** (`Gadina.cs:2563`, `:2642`, `:2816-2825`). Form 2: wait 0.5 s, `6` for 0.2 s, stop 0.1 s, `6` for 0.3 s; hits at **0.6 s / 1.0 s** (`:3010-3448`). Forms 3-4 (identical routines): wait 0.4 s, `6` for 0.3 s, stop 0.2 s, `6` for 0.3 s, stop 0.2 s, `−3` for 0.1 s; hits at **0.6 s / 1.1 s / 1.5 s**, Gadina 1.2 / 3.0 / 3.3 m from where it started (`:3643-4207`, `:4405-4964`).
 - Client tooltips: EN "Upgrades Gadina's sword to lv.2 [3 / 4]. Gives +20 [40 / 60] atk and makes it deal 2 [3 / 4] ko." (`MonkeySkill_eng.cs:638-660`). Code wins: +20 / 35 / 50 ATK and KO 1 / 2 / 3.
 
 ### 4.9 Gadina - Planet Breaker (`monkey_planetBreaker`, #324)
@@ -536,6 +537,7 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 ### 4.15 Instant Blaze (`monkey_instantBlaze`, #412)
 - reqLv 60, reqBn 1; MP 12; SP **−12** (red); instant. Needs Phoenix4 ("That skill need Phoenix4", `Monkey.cs:8376-8420`). Monkey lock `agiAdjust(30)` (`:37601`); a Phoenix4 summoned with #412 also gets skill 412 and uses the move by itself (`Monkey.cs:11669-11681`, `Phoenix_AI.cs:1057`), with its own `agiAdjust(30)` lock (`Phoenix.cs:3231`).
 - `$RPC_instantBlaze` (`Phoenix.cs:2685-3170`): 4 waves; each hits `FindRecTarget(Phoenix − forward, forward, 2, 2, 3, 3)` (4 m wide, 3 m long from 1 m behind, 3 m high) with `hit(21, t, Phoenix talAdjust(80), KO 1)` and `burn` Lv 4 for `getDebuff(8, Phoenix CHA, target CHA)`; after the last wave Phoenix heals 200 HP.
+- **Wave timing (traced 2026-10-16):** the Phoenix stands for 0.5 s (`:3275`), then dashes at `moveSpeed 12` (`:2826`) and hits once every 0.2 s while `i < 4` (`:3281`, `:3148`): waves at **0.7 / 0.9 / 1.1 / 1.3 s**, 2.4 / 4.8 / 7.2 / 9.6 m along the dash. Then `moveSpeed 6`, the 200 HP heal (`:3167`), 0.2 s, stop, 0.1 s, standby.
 - Client tooltip: EN "Enables phoenix's new blazing attack. Activate this to use it instantly." (`MonkeySkill_eng.cs:946`).
 
 ### 4.16 Fire Soul (`monkey_fireSoul`, #422) and Earth Soul (`monkey_earthSoul`, #423)
@@ -583,7 +585,7 @@ All use Gaos's own stats (§2.2). AI choice (`Gaos_AI.cs:840-1030`, `num` = dist
 | Normal Attack II (`$RPC_nAttack2`) | `FindAreaTarget(pos + (1.2 right, 2 forward), 5, 3)` | `hit(1, (int)(0.6 × ATK), KO 3)` | `nAttack` 3 s (`:2718-2833`) |
 | Tail Spin (`$RPC_tailSpin`) | 4 waves, `FindAngleTarget(pos, dir, 6 + i, 120°, 4)` (6 → 9 m) | `hit(1, (int)(0.8 × ATK), KO 10)` per wave | `cAttack` 15 s (`:3183-3332`) |
 | Fire (`$RPC_gaosFire`) | impact `FindAreaTarget(hitPos, 8, 4)` | `hit(1, talAdjust(140), KO 5)` | `goasFire` 9 s (`:1765-1785`, `:3700`) |
-| Rampage (`$RPC_rampage`) | every 0.4 s, `FindAreaTarget(pos + 5 × fwd, 5, 3)` | `hit(31, ATK, KO 10)` | `rampage` 30 s (`:4400-4450`) |
+| Rampage (`$RPC_rampage`) | **14 hits**: first at 2.5 s (1.8 s + 0.2 s waits, then `mHitUpdate = now + 0.5`, `:4515`, `:4511`, `:4088`), then every 0.4 s while `actionTime + 8 > now` (`:4390`, `:4290`): 2.5 … 7.7 s; `FindAreaTarget(pos + 5 × fwd, 5, 3)` | `hit(31, ATK, KO 10)` | `rampage` 30 s (`:4400-4450`) |
 
 ### 4.23 Open questions & card mismatches (2026-10-01)
 

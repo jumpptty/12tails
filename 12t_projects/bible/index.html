@@ -14985,11 +14985,11 @@ const SKILLS = [
     passive: true,
     servers: {
       tot: {
-        desc: (rank) => { const intPerSec = [80, 53, 40][rank - 1]; return `ทำให้ **Phoenix** ยิงถี่ขึ้น: ปกติยิงทุก **5 วินาที** ทุก **${intPerSec} INT** ของลิงลดลง **1 วินาที** (ต่ำสุด **0.1 วินาที**) และช่วงพัก AI เหลือ **${3 - rank} วินาที**<br>ทำให้ **Fireball** เวลาร่าย **−${rank} วินาที** และคูลดาวน์ **−${3 * rank} วินาที**`; },
+        desc: (rank) => { const intPerSec = [80, 53, 40][rank - 1]; return `ทำให้ **Phoenix** ยิงถี่ขึ้น: ปกติยิงทุก **5 วินาที** ทุก **${intPerSec} INT** ของลิงลดลง **1 วินาที** (ต่ำสุด **0.1 วินาที**)<br>ทำให้ **Fireball** เวลาร่าย **−${rank} วินาที** และคูลดาวน์ **−${3 * rank} วินาที**<br>${rank === 3 ? "__แต่หลังยิงแต่ละครั้ง Phoenix ติดท่ายิง **0.8 วินาที** แล้วยืนพักเต็ม **1 วินาที** ทุกครั้ง จึงยิงได้เร็วสุดราว **1.8 วินาที** ต่อลูก ช้ากว่าเลเวล 2 โดยเฉลี่ย (ดู **Phoenix - Fireball**)__" : "__แต่หลังยิงแต่ละครั้ง Phoenix ติดท่ายิง **0.8 วินาที** แล้วยืนพักแบบสุ่ม **0–1 วินาที** จึงยิงได้เร็วสุด **0.8–1.8 วินาที** ต่อลูก__"}`; },
         changeNote: "• [Buff] เพิ่มความเร็วโจมตีให้กับ Phoenix ตามค่า INT ของลิงเป็น **[40%, 60%, 80%]** (จากเดิม 20%, 30%, 40% — คิดเป็นทุกๆ **[80, 53, 40] INT** ลดคูลดาวน์โจมตีลง 1 วินาที)"
       }
     },
-    desc:(rank) => { const intPerSec = [160, 107, 80][rank - 1]; return `ทำให้ **Phoenix** ยิงถี่ขึ้น: ปกติยิงทุก **5 วินาที** ทุก **${intPerSec} INT** ของลิงลดลง **1 วินาที** (ต่ำสุด **0.1 วินาที**) และช่วงพัก AI เหลือ **${3 - rank} วินาที**<br>ทำให้ **Fireball** เวลาร่าย **−${rank} วินาที** และคูลดาวน์ **−${3 * rank} วินาที**`; },
+    desc:(rank) => { const intPerSec = [160, 107, 80][rank - 1]; return `ทำให้ **Phoenix** ยิงถี่ขึ้น: ปกติยิงทุก **5 วินาที** ทุก **${intPerSec} INT** ของลิงลดลง **1 วินาที** (ต่ำสุด **0.1 วินาที**)<br>ทำให้ **Fireball** เวลาร่าย **−${rank} วินาที** และคูลดาวน์ **−${3 * rank} วินาที**<br>${rank === 3 ? "__แต่หลังยิงแต่ละครั้ง Phoenix ติดท่ายิง **0.8 วินาที** แล้วยืนพักเต็ม **1 วินาที** ทุกครั้ง จึงยิงได้เร็วสุดราว **1.8 วินาที** ต่อลูก ช้ากว่าเลเวล 2 โดยเฉลี่ย (ดู **Phoenix - Fireball**)__" : "__แต่หลังยิงแต่ละครั้ง Phoenix ติดท่ายิง **0.8 วินาที** แล้วยืนพักแบบสุ่ม **0–1 วินาที** จึงยิงได้เร็วสุด **0.8–1.8 วินาที** ต่อลูก__"}`; },
     compatSkills: ["monkey_phoenix", "monkey_fireBall", "monkey_phoenix_fireBall"], tooltipNote:"บอกว่าลดคูลดาวน์ Fireball **2 / 4 / 6 วินาที** แต่โค้ดจริงลด **3 / 6 / 9 วินาที**"
   },
 
@@ -15259,7 +15259,7 @@ const SKILLS = [
     },
     compatSkills: ["monkey_aegisOfEarth", "monkey_secondStone", "monkey_instantCast"],
     revisedArtExempt: false,
-    desc:(rank)=>`เรียกเสาหินพุ่งขึ้นใต้ศัตรูเป้าหมาย ทำดาเมจแล้วตรึงไว้กับที่ด้วย [groundLock${rank + (getDepRank(MNK_GROUNDLOCK_SECONDSTONE_DEP) ? 2 : 0)}] (ระยะเวลาฐาน แข่งค่า CHA)<br>**Aegis of Earth:** เวลาตรึงฐาน **+1 วินาที** ต่อเลเวล<br>**Second Stone:** เลเวลสถานะ **+2** และหลัง **3 วินาที** หินกระแทกซ้ำที่จุดเดิม ถ้าเป้าหมายยังติด [groundLock]`, reach:() => [REACH_LOCK40].concat(getDepRank(MNK_GROUNDLOCK_SECONDSTONE_DEP) > 0 ? [{ shape: "cylinder", r: 0.5, h: 1, anchor: "target", label: "หินกระแทกซ้ำที่จุดเดิม (หลัง 3 วินาที)", src: "Monkey.cs:31073" }] : []), reachControls:[MNK_GROUNDLOCK_SECONDSTONE_DEP]
+    desc:(rank)=>`เรียกเสาหินพุ่งขึ้นใต้ศัตรูเป้าหมาย ทำดาเมจแล้วตรึงไว้กับที่ด้วย [groundLock${rank + (getDepRank(MNK_GROUNDLOCK_SECONDSTONE_DEP) ? 2 : 0)}] (ระยะเวลาฐาน แข่งค่า CHA)<br>**Aegis of Earth:** เวลาตรึงฐาน **+1 วินาที** ต่อเลเวล<br>**Second Stone:** เลเวลสถานะ **+2** และหลัง **3 วินาที** หินกระแทกซ้ำที่จุดเดิม ถ้าเป้าหมายยังติด [groundLock]`, reach:() => [REACH_LOCK40].concat(getDepRank(MNK_GROUNDLOCK_SECONDSTONE_DEP) > 0 ? [{ shape: "cylinder", r: 0.5, h: 1, anchor: "target", faint: true, at: 0, label: "ฮิตหลัก: เสาหินใต้เป้าหมายที่ล็อกไว้ (ตัวเดียว)", src: "Monkey.cs:30858 (RPC_groundLock_hit)" }, { shape: "cylinder", r: 0.5, h: 1, anchor: "target", at: 3, label: "หินกระแทกซ้ำที่จุดเดิม (หลัง 3 วินาที)", src: "Monkey.cs:31168 (Y2 3 s), :31073" }] : []), reachControls:[MNK_GROUNDLOCK_SECONDSTONE_DEP]
   },
 
   {
@@ -15317,7 +15317,11 @@ const SKILLS = [
       }
     },
     desc: (rank)=>"Gadina ฟันศัตรูตรงหน้าเป็นแนวเส้นตรงจำนวน **"+[1,2,3,3][rank-1]+"** ครั้ง",
-    compatSkills: ["monkey_gadina", "monkey_titanSword", "monkey_earthSoul", "monkey_earthGuard"], reach:(rank) => [{ shape: "box", w: 2, l: [3, 4, 5, 5][rank - 1], h: 2, z0: -1, rangeMod: ["w", "l", "h", "z0"], anchor: "self", label: "ฟันเป็นแนวตรงด้านหน้า Gadina", src: "Gadina.cs:2642, :3724, :4486" }], reachModel:"Gadina"
+    compatSkills: ["monkey_gadina", "monkey_titanSword", "monkey_earthSoul", "monkey_earthGuard"], reach:(rank) => [{ shape: "box", w: 2, l: [3, 4, 5, 5][rank - 1], h: 2, z0: -1, rangeMod: ["w", "l", "h", "z0"], anchor: "self",
+      steps: () => rank === 1 ? reachPath([[0, 0.2], [4, 0.2], [0, 99]], [0.4])
+        : rank === 2 ? reachPath([[0, 0.5], [6, 0.2], [0, 0.1], [6, 0.3], [0, 99]], [0.6, 1.0])
+        : reachPath([[0, 0.4], [6, 0.3], [0, 0.2], [6, 0.3], [0, 0.2], [-3, 0.1], [0, 99]], [0.6, 1.1, 1.5]),
+      stepText: "Gadina ก้าวมา", label: "ฟันเป็นแนวตรงด้านหน้า Gadina", src: "Gadina.cs:2642 (rank 1: hit 0.4 s), :3091/:3235 (rank 2: 0.6 / 1.0 s), :3724/:3863/:4007 and :4486/:4625/:4769 (ranks 3-4: 0.6 / 1.1 / 1.5 s; moveSpeed 4 / 6 / −3 between)" }], reachModel:"Gadina"
   },
 
   {
@@ -15685,7 +15689,7 @@ const SKILLS = [
       }
     },
     desc: "สั่ง **Phoenix 4** ให้พุ่งตามทิศทางหรือเป้าหมาย กวาดพื้นที่ด้านหน้า เป็น **4 ระลอก** ด้วย TAL ของ Phoenix ทำให้เป้าหมายติด [burn4] และฟื้น HP ให้ Phoenix **200** หลังระลอกสุดท้าย; Phoenix จะใช้ท่านี้เองเมื่อศัตรูอยู่ในระยะ **5m เมื่อไม่ได้ติดคูลดาวน์ภายในของตัว Phoenix เองอยู่**",
-    compatSkills: ["monkey_phoenix"], reach:() => [{ shape: "box", w: 4, l: 3, h: 3, z0: -1, anchor: "self", label: "ระลอกละ 1 ครั้ง ทั้งหมด 4 ระลอก ที่ตัว Phoenix ขณะพุ่งไปข้างหน้า (เริ่มจากด้านหลัง 1 m)", src: "Phoenix.cs:2685-3170 (FindRecTarget(pos − forward, forward, 2, 2, 3, 3), i < 4)" }], reachModel:"Phoenix"
+    compatSkills: ["monkey_phoenix"], reach:() => [{ shape: "box", w: 4, l: 3, h: 3, z0: -1, anchor: "self", steps: () => reachPath([[0, 0.5], [12, 99]], [0.7, 0.9, 1.1, 1.3]), stepText: "Phoenix พุ่งมา", label: "ระลอกที่ตัว Phoenix ขณะพุ่ง (เริ่มจากด้านหลัง 1 m)", src: "Phoenix.cs:2942 (FindRecTarget(pos − forward, forward, 2, 2, 3, 3)), :3275 (Y2 0.5 s), :2826 (12 m/s), :3281 (every 0.2 s while i < 4)" }], reachModel:"Phoenix"
   },
 
   {
@@ -16023,7 +16027,7 @@ const SKILLS = [
 
   {
     id: "monkey_gaos_rampage", name: "Gaos - Rampage", nameTha: "กาออส - อาละวาด", class: "Monkey", icon: "monkey_summonGaos5", maxRank: 1,
-    ownStatsGaos: true, cd: 30, revisedArtExempt: true, dmg: "0", atkCoeff: 1, ko: "10", hitCount: () => 20,
+    ownStatsGaos: true, cd: 30, revisedArtExempt: true, dmg: "0", atkCoeff: 1, ko: "10", hitCount: () => 14,   // Gaos.cs:4515 + :4511 + :4088: first hit at 2.5 s, then every 0.4 s (:4390) while actionTime + 8 > now (:4290): 2.5 ... 7.7 s
     desc: "เมื่อ HP ของ Gaos เองต่ำกว่า **50%** ของ HP สูงสุด และเป้าหมายไกลกว่า **9m** จะพุ่งอาละวาด **8 วินาที** โจมตีทุก **0.4 วินาที** ในพื้นที่ด้านหน้า และทะลุผ่านตัวละครระหว่างพุ่ง (มีสิทธิ์ก่อน Fire ไม่ติดคูลดาวน์ **30 วินาที**)",
     compatSkills: ["monkey_summonGaos", "monkey_gaos_nAttack1", "monkey_gaos_nAttack2", "monkey_gaos_tailSpin", "monkey_gaos_fire"], reach:() => [{ shape: "cylinder", r: 5, h: 3, z0: 5, anchor: "self", steps: () => reachPath([[0, 1.8], [5, 0.2], [8, 99]], [2.5, 2.9, 3.3, 3.7, 4.1, 4.5, 4.9, 5.3, 5.7, 6.1, 6.5, 6.9, 7.3, 7.7]), label: "อาละวาด: ตีทุก 0.4 วินาที ที่จุดหน้าตัว 5m ขณะพุ่ง (รอ 1.8 วินาที แล้ววิ่ง 5 → 8 m/s ถึง 8 วินาที)", src: "Gaos.cs:4400, :4390 (0.4 s), :4088 (0.5 s), :4290 (8 s), :4515 (Y2 1.8 s), :4511 (Y3 0.2 s)" }], reachModel:"Gaos"
   },
@@ -29146,11 +29150,19 @@ function classGuideReaderCtx(guide){
     const card = cells[id] ? skillSimCardId(cells[id].icon) : "";
     if (card) learnedByCard.set(card, (learnedByCard.get(card) || 0) + 1);
   }
-  return { server: b.server, learnedByCard, revisedArt: learnedByCard.has("common_revisedArt") };
+  return { server: b.server, learnedByCard, revisedArt: learnedByCard.has("common_revisedArt"), cells };
+}
+// The skill rank a cell stands for = how many cells of the same skill sit at or before it in its tree (user 2026-10-16). Never the column (id % 10):
+// two skills can share a row in turns (Penguin Dispell 1, Blink 1, Dispell 2, Blink 2), so Dispell 2 sits in column 3.
+function skillSimCellRank(cells, id){
+  const card = skillSimCardId(cells[id].icon), tree = Math.floor(id / 100);
+  if (!card || cells[id].ex) return 1;   // EX slots and cells with no card have no ranks
+  let n = 0; for (const k of Object.keys(cells)){ const j = Number(k); if (Math.floor(j / 100) === tree && j <= id && cells[j] && skillSimCardId(cells[j].icon) === card) n++; }
+  return Math.max(1, n);
 }
 function classGuideHoverLines(guide, ctx, cell, learned){
   if (!guide || !guide.stats || !ctx || !learned) return null;
-  return classGuideTimings(skillSimCardId(cell.icon), cell.id < 400 ? cell.id % 10 : 1, guide.stats, ctx);
+  return classGuideTimings(skillSimCardId(cell.icon), ctx.cells ? skillSimCellRank(ctx.cells, cell.id) : 1, guide.stats, ctx);
 }
 // ---- Guide image export (user 2026-10-15) ----
 // A 16:9 landscape picture of a guide at 3840x2160 (4K), drawn on a canvas from the guide data, so phone and desktop give the same image (user 2026-10-16 revamp).
@@ -30804,6 +30816,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T01:57:10.586Z","fix(bible): Monkey reach playback follows the code for Gadina normal attack, Instant Blaze and Ground Lock, Gaos Rampage hits 14 times not 20; class guide hover takes a skill rank from its own cells (Penguin Dispell 2); Rapid Fire desc states the real fastest shot rate"],
     ["2026-10-16T01:50:52.072Z","feat(bible): Phoenix Fireball shows the real time between shots (Rapid Fire timer, rounded like the game, but never under the Phoenix AI cycle of about 1.8 s at Rapid Fire 3), with the Rapid Fire 3 slowdown listed as unintended behaviour"],
     ["2026-10-16T01:42:58.125Z","feat(bible): class guide hover shows proc chances from the recommended LCK, Phoenix and other summon timings the page computes from player stats, TAL durations and second chips; Instant Blaze duration chip is labelled Burn and ToT shows the fixed 10 s Phoenix buff"],
     ["2026-10-16T01:23:03.124Z","feat(bible): class guide notes show the skill icon outside the chip, round with a double gold ring and glow, the picture enlarged and faded into a blurred copy of itself (reader and exported PNG)"],

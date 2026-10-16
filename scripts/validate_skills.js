@@ -3260,6 +3260,17 @@ let checkedRsim = 0;
     rejects(()=>norm(change({stats:[120]})),"reject stats as an array"); rejects(()=>norm(change({stats:null})),"reject null stats");
     ok(norm(change({title:"",author:"",date:"",stats:{cha:5}}),{draft:true}).stats.cha === 5, "drafts keep recommended stats");
   }
+  // Hover rank: a cell's rank counts the same skill's cells before it in its tree, never the column (Penguin Dispell 2 sits in column 3, user 2026-10-16).
+  { const rankOf = vm.runInContext("skillSimCellRank", sandbox), cellsOf = vm.runInContext("(k, s) => skillSimCells(SKILL_SIM[k], SKILL_SIM_SERVERS[s].patch[k], s === 'tot' ? SKILL_SIM_EX[k] : null)", sandbox);
+    const badRank = []; let checkedRank = 0;
+    for (const k of Object.keys(vm.runInContext("SKILL_SIM", sandbox))) for (const srv of ["og", "tot"]){
+      const cells = cellsOf(k, srv);
+      for (const id of Object.keys(cells).map(Number)){ const c = cells[id]; const m = c && !c.placeholder && !c.ex && /(\d+)$/.exec(c.name || ""); if (!m) continue; checkedRank++; if (rankOf(cells, id) !== Number(m[1])) badRank.push(k + " " + srv + " " + id + " " + c.name + " -> " + rankOf(cells, id)); }
+    }
+    ok(badRank.length === 0 && checkedRank > 1000, "cell rank (counted, not the column) matches the rank number in every cell name: " + badRank.slice(0, 5).join(" | ") + " (checked " + checkedRank + ")");
+    const pc = cellsOf("penguin", "og"), dId = Object.keys(pc).map(Number).find(id => pc[id].icon === "penguin_dispell2");
+    ok(dId % 10 === 3 && rankOf(pc, dId) === 2, "Penguin Dispell 2 sits in column 3 and counts as rank 2");
+  }
   // Hover timings: the same numbers the skill-details chips show for that card and rank (revised art on, dependencies from the build).
   { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
     const strip = h => h.replace(/<[^>]*>/g,"").replace(/\s+/g,"").trim();
