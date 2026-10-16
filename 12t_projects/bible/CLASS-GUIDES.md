@@ -1,6 +1,6 @@
 # ไกด์อาชีพจากชุมชน
 
-The **ไกด์อาชีพ** tool replaces the Skill Simulator menu entry. Its existing `#skill-simulator` link remains valid. All twelve class grids, three servers, normal/C/EX point rules and original skill frames are reused.
+The **ไกด์อาชีพ** tool replaces the Skill Simulator menu entry. Its link is `#class-guide`; an old `#skill-simulator` link forwards there. All twelve class grids, three servers, normal/C/EX point rules and original skill frames are reused.
 
 ## For guide authors
 
@@ -31,7 +31,7 @@ const CLASS_GUIDES = [
 
 Paste the object itself, not a quoted JSON string, and do not include an outer array from another source. The guide's skill icons already live in the HTML; no image files need to accompany submissions. The tool remains a single offline HTML file.
 
-**Every embedded guide needs a running number `"id"`** (a positive integer: 1, 2, 3 ... in the order guides were added; unique, never reused, never renumbered), written first in the object, e.g. `{"id":3,"format":"12t-class-guide",...}`. It is not part of the portable format (the importer ignores it); it makes the link `index.html#skill-simulator/<number>`, which opens that guide straight in the reader view, and the address bar already holds that link (click the guide title in the reader to copy it as a Discord heading). The reader's **คัดลอกโค้ดไกด์** button copies the guide's portable code instead; pasting it into **นำเข้าโค้ด** in the editor makes an editable copy. Never change a number after it was shared (a removed guide leaves a gap); the validator fails on a missing or duplicate number.
+**Every embedded guide needs a running number `"id"`** (a positive integer: 1, 2, 3 ... in the order guides were added; unique, never reused, never renumbered), written first in the object, e.g. `{"id":3,"format":"12t-class-guide",...}`. It is not part of the portable format (the importer ignores it); it makes the link `index.html#class-guide/<number>`, which opens that guide straight in the reader view, and the address bar already holds that link (click the guide title in the reader to copy it as a Discord heading). The reader's **คัดลอกโค้ดไกด์** button copies the guide's portable code instead; pasting it into **นำเข้าโค้ด** in the editor makes an editable copy. Never change a number after it was shared (a removed guide leaves a gap); the validator fails on a missing or duplicate number.
 
 Only real submitted guides belong in this array. The list contains user-submitted guides; do not invent experts or builds. Valid guides appear in the community list with title, class, server, author and date. Invalid entries are excluded and the page reports how many could not open. Imported author codes never add entries to this array automatically.
 

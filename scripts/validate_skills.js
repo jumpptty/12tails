@@ -2890,7 +2890,7 @@ let checkedChmSim = 0;
 }
 console.log(`Verified ${checkedChmSim} Chameleon simulator checks.`);
 
-// Skill simulator (skill-simulator tool, 2026-10-12): the Rabbit grid data and the learn rules (skillSimValid) against hand-derived expectations from the game code.
+// Skill simulator (class-guide tool, 2026-10-12): the Rabbit grid data and the learn rules (skillSimValid) against hand-derived expectations from the game code.
 let checkedRsim = 0;
 {
   const fail = (msg) => { console.error(`[SKILL SIM ERROR] ${msg}`); errorCount++; };
@@ -2898,7 +2898,7 @@ let checkedRsim = 0;
   const SIM = vm.runInContext("SKILL_SIM", sandbox).rabbit, cellsFn = vm.runInContext("skillSimCells", sandbox), validFn = vm.runInContext("skillSimValid", sandbox), poolMax = vm.runInContext("skillSimPoolMax", sandbox), poolMaxC = vm.runInContext("skillSimPoolMaxC", sandbox);
   const cells = cellsFn(SIM);
   const valid = (ids, lv) => validFn(cells, SIM.length, new Set(ids), lv);
-  const tile = vm.runInContext("TOOLS", sandbox).find(x => x.id === "skill-simulator");
+  const tile = vm.runInContext("TOOLS", sandbox).find(x => x.id === "class-guide");
   ok(tile && tile.title === "ไกด์อาชีพ" && !tile.badge && !/rsim-wip">/.test(html), "Class Guide tile keeps its name and has no in-development chip (removed user 2026-10-16)");
   ok(/data-cg-role="sent"[^\n]*discord\.com\/users\/333828912830480386/.test(html) && /act === "export"\)\{[^\n]*el\("sent"\)\.showModal\(\)/.test(html) && !/act === "copyCode"[\s\S]{0,400}el\("sent"\)/.test(html), "Editor คัดลอกโค้ดไกด์ opens the send-to-maintainer pop-up (Discord jumpptty); the reader copy button does not");
   ok(SIM.length === 4 && SIM.every(t => t.rows.length >= 5 && t.rows.every(r => r.length === 4)), "Rabbit has 4 trees of 4-column rows");
@@ -3121,7 +3121,7 @@ let checkedRsim = 0;
     sandbox.setTimeout = (fn,ms) => { const id=++serial;timers.set(id,{fn,at:clock+ms});return id; };
     sandbox.clearTimeout = id => timers.delete(id);
     sandbox.window.addEventListener = (type,fn) => { (windowListeners[type] ||= []).push(fn); };
-    sandbox.window.open = (...args) => opened.push(args); sandbox.location.href = "https://example.invalid/bible/#skill-simulator";
+    sandbox.window.open = (...args) => opened.push(args); sandbox.location.href = "https://example.invalid/bible/#class-guide";
     sandbox.localStorage = {getItem:()=>JSON.stringify({srv:"tot",cls:"wolf"}),setItem:()=>{}};
     sandbox.openSimServerGate = opts => {serverGate=opts;}; sandbox.openClassPickerModal = opts => {classGate=opts;}; sandbox.setToolServer = () => {};
     vm.runInContext("mountSkillSimulator",sandbox)(root);
