@@ -3917,7 +3917,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("cat_deltaStrike", 1); g("Delta Strike rank 1: 2 to 12 wide, 6 long", c[0].w === 2 && c[0].w2 === 12 && c[0].l === 6 && c[0].h === 6, c);
       c = P("cat_deltaStrike", 2); g("Delta Strike rank 2: 2 to 18 wide, 8 long", c[0].w2 === 18 && c[0].l === 8, c);
       c = P("cat_pillagePlunge", 1); g("Pillage Plunge hit box 4x4x2 from 2 m behind, after a 2.4 m dash (24 x 0.1 s) + 6 m pass-through at the start", c[0].w === 4 && c[0].l === 4 && c[0].z0 === 0.4 && c[1].l === 6 && !c[1].z0, c);
-      c = P("cat_supportFire", 1); g("Support Fire lands 24 to 47 m, r8 h3", c[0].z0 === 24 && c[1].z0 === 47 && c[0].r === 8 && c[0].h === 3, c);
+      c = P("cat_supportFire", 1); g("Support Fire: an endless run of r8 h3 shells from the six cannon lanes, landing 20-28.1 m ahead (the game's lowered arc), first shot after the 1 s set-up", c.length === 48 && c.every(p => p.endless && p.r === 8 && p.h === 3 && [-7.5, -4.5, -1.5, 1.5, 4.5, 7.5].includes(p.x0) && p.z0 >= 20 && p.z0 <= 28.1) && Math.min(...c.map(p => p.at)) >= 1.6 && c.filter(p => p.final).length === 12, c.slice(0, 2));
       c = P("cat_luckyCard", 4); g("Lucky Card 20 m", c[0].shape === "line" && c[0].l === 20, c);
       c = P("cat_damageRoulette", 2); g("Damage Roulette r24 h12", c[0].r === 24 && c[0].h === 12, c);
       // Wolf (Wolf.cs Find* calls, HwwoC6K6XP = the Wolf's own transform; every size x rangeMod unless the line says otherwise)
@@ -3974,8 +3974,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       // Penguin (Penguin.cs, ManaVortex.cs, Penguin_iceBlock.cs, Penguin_tornado.cs; sizes x rangeMod only where the card says rangeMod)
       c = P("penguin_nAttack", 1); g("Penguin Combo: a 19.6 m projectile line (14 m/s x 1.4 s)", c.length === 1 && c[0].shape === "line" && c[0].l === 19.6, c);
       c = P("penguin_nAttack", 1, {}, 1.4); g("Penguin Combo x1.4 = 27.44 m", c[0].l === 27.44, c[0]);
-      c = P("penguin_cAttack", 1); g("Mana Field: a 3D sphere r8 (sqrMagnitude < 64)", c.length === 1 && c[0].shape === "sphere" && c[0].r === 8, c);
-      c = P("panda_cAttack", 1); g("Aura Field: a 3D sphere r8 (sqrMagnitude < 64)", c.length === 1 && c[0].shape === "sphere" && c[0].r === 8, c);
+      c = P("penguin_cAttack", 1); g("Mana Field: a 3D sphere r8 (sqrMagnitude < 64), ticking every 1 s while charging (endless)", c.length > 1 && c.every(p => p.shape === "sphere" && p.r === 8 && p.endless) && c[1].at - c[0].at === 1, c.slice(0, 2));
+      c = P("panda_cAttack", 1); g("Aura Field: a 3D sphere r8 (sqrMagnitude < 64), ticking every 1 s while charging (endless)", c.length > 1 && c.every(p => p.shape === "sphere" && p.r === 8 && p.endless) && c[1].at - c[0].at === 1, c.slice(0, 2));
       c = P("penguin_manaMissile", 4); g("Mana Missile: 40 m lock ring + a 36 m flight line", c.length === 2 && c[0].shape === "ring" && c[0].r === 40 && c[1].shape === "line" && c[1].l === 36, c);
       c = P("penguin_manaArc", 4); g("Mana Arc r3 h3", c[0].r === 3 && c[0].h === 3, c);
       c = P("penguin_dispell", 2, {}, 1.4); g("Dispell r5 h3, both scale", c[0].r === 7 && c[0].h === 4.2, c[0]);
@@ -4004,9 +4004,9 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("whale_nAttack", 1, { whlW59: 1 }); g("Star Spear on: the faint r9 sphere", c.length === 4 && c[3].shape === "sphere" && c[3].r === 9 && c[3].faint === true, c);
       c = P("whale_nAttack", 2, { entendedWave: 1, whlW59: 1 }); g("Whale Combo rank 2 + Entended Wave: stages 1-2 3x7, stage 3 4x7, Star Spear r12", c.length === 5 && c[0].l === 7 && c[3].w === 4 && c[3].l === 7 && c[4].r === 12, c);
       c = P("whale_nAttack", 2, {}, 1.4); g("Whale Combo x1.4: width and height scale, length does not", c[0].w === 4.2 && c[0].h === 2.8 && c[0].l === 4 && c[3].w === 5.6, c);
-      c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }); g("Charge Attack: Shield Bash r3 h3 (x rangeMod) + Knight of the Deep r4 h3", c.length === 2 && c[0].r === 3 && c[0].h === 3 && c[0].rangeMod === true && c[1].r === 4 && c[1].h === 3, c);
+      c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }); g("Charge Attack: Shield Bash r3 h3 (x rangeMod) + Knight of the Deep r4 h3", c.length > 2 && c[0].r === 3 && c[0].h === 3 && c[0].rangeMod === true && c.slice(1).every(p => p.r === 4 && p.h === 3 && p.endless) && c[2].at - c[1].at === 0.5, c.slice(0, 3));
       c = P("whale_cAttack", 1, { reachShieldBash: 1, reachKnightDeep: 1 }, 1.4); g("Charge Attack x1.4: Shield Bash scales, Knight of the Deep does not", c[0].r === 4.2 && c[0].h === 4.2 && c[1].r === 4, c);
-      c = P("whale_cAttack", 1, { reachShieldBash: 0, reachKnightDeep: 1 }); g("Charge Attack with Shield Bash off keeps only the Knight cylinder", c.length === 1 && c[0].r === 4, c);
+      c = P("whale_cAttack", 1, { reachShieldBash: 0, reachKnightDeep: 1 }); g("Charge Attack with Shield Bash off keeps only the Knight cylinder (endless, every 0.5 s)", c.length > 1 && c.every(p => p.r === 4 && p.endless), c.slice(0, 2));
       c = P("whale_sweep", 2); g("Sweep: first r4 h3 at 0.71 m (back-step then 9 x 0.1 s), second r5 h3 at 2.51 m", c.length === 2 && c[0].r === 4 && c[0].h === 3 && c[0].z0 === 0.71 && c[1].r === 5 && c[1].h === 3 && c[1].z0 === 2.51, c);
       c = P("whale_sweep", 2, { tideCutter: 1 }, 1.4); g("Tide Cutter: first r6 (radius does not scale), height and the second hit scale", c[0].r === 6 && c[0].h === 4.2 && c[1].r === 7 && c[1].h === 4.2, c);
       c = P("whale_honor", 2); g("Honor rank 2: friends r15 h3, Hate r30 h6", c.length === 2 && c[0].r === 15 && c[0].h === 3 && c[1].r === 30 && c[1].h === 6, c);
@@ -4058,17 +4058,28 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     // a model line is one object literal: { v, uv, t, tex, extra: [{ v, uv, t, tex }, ...] } (extra = static accessories such as hair)
     const re = /REACH_MODELS\.(\w+) = (\{[^\n]*\});/g;
     let m, models = 0;
+    // textures: a PNG or WebP data URL, "#name" (REACH_TEX, shared by several models) or "@Model" (that model's own skin); "base" variants reuse another model (user 2026-10-16)
+    const texM = html.match(/const REACH_TEX = (\{[^\n]*\});/), REACH_TEX = texM ? JSON.parse(texM[1]) : {};
+    const imgOk = (t) => { const tex = String(t); if (tex[0] === "#") return !!REACH_TEX[tex.slice(1)] && imgOk(REACH_TEX[tex.slice(1)]); if (tex[0] === "@") return new RegExp("REACH_MODELS\\." + tex.slice(1) + " = ").test(html); const b = Buffer.from(tex.replace(/^data:image\/(png|webp);base64,/, ""), "base64"); return b.readUInt32BE(0) === 0x89504e47 || (b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP"); };
     const partInfo = (name, p, label) => {
-      const vb = Buffer.from(p.v, "base64"), ub = Buffer.from(p.uv, "base64"), tb = Buffer.from(p.t, "base64"), png = Buffer.from(String(p.tex).replace("data:image/png;base64,", ""), "base64");
+      const vb = Buffer.from(p.v, "base64"), ub = Buffer.from(p.uv, "base64"), tb = Buffer.from(p.t, "base64");
       const nv = vb.length / 6, nu = ub.length / 4, nt = tb.length / 6;
       let maxI = 0; for (let i = 0; i < tb.length; i += 2) maxI = Math.max(maxI, tb.readUInt16LE(i));
       let minY = Infinity, maxY = -Infinity; for (let i = 0; i < vb.length; i += 6) { const y = vb.readInt16LE(i + 2) / 1000; minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-      if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || png.readUInt32BE(0) !== 0x89504e47) bad("model " + name + " " + label + ": " + nv + " verts, " + nu + " uvs, " + nt + " tris, max index " + maxI);
+      if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || !imgOk(p.tex)) bad("model " + name + " " + label + ": " + nv + " verts, " + nu + " uvs, " + nt + " tris, max index " + maxI);
       return { nv, nt, minY, maxY };
     };
     while ((m = re.exec(html))) {
       models++;
       let def; try { def = new Function("return " + m[2])(); } catch (e) { bad("model " + m[1] + ": the object literal does not parse: " + e.message); continue; }
+      if (def.base){   // a variant: the base model's parts plus its own extras (Monkey forms, Gadina 4 with its weapons)
+        if (!new RegExp("REACH_MODELS\\." + def.base + " = ").test(html)) bad("model " + m[1] + ": base " + def.base + " has no REACH_MODELS entry");
+        const vx = (def.extra || []).map((q, i) => partInfo(m[1], q, "extra " + i));
+        const PIN = { MonkeyEarthForm: [[2235, 1948]], MonkeyFireAvatar: [[2347, 3993]], Gadina4: [[443, 356], [541, 394]] };   // gadinaArmor_tri, phoenixArmor_tri; Gadina_Sword4 / Gadina_Shield4
+        if (PIN[m[1]] && JSON.stringify(vx.map(x => [x.nv, x.nt])) !== JSON.stringify(PIN[m[1]])) bad("model " + m[1] + ": extras " + JSON.stringify(vx.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(PIN[m[1]]));
+        if (m[1] === "MonkeyEarthForm" && vx[0] && (vx[0].minY < 0 || vx[0].maxY > 2)) bad("model MonkeyEarthForm: the arms should float round the Monkey (0-2 m), got " + vx[0].minY + "-" + vx[0].maxY);
+        continue;
+      }
       const body = partInfo(m[1], def, "body");
       if (body.minY < -0.05 || body.maxY < 0.3) bad("model " + m[1] + ": stands from " + body.minY + " to " + body.maxY + " m (feet should be on the ground)");
       if (m[1] === "Cat" && (body.nv !== 1687 || body.nt !== 1812)) bad("model Cat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh has 1687 / 1812");
@@ -4106,6 +4117,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (body.nv !== 2351 || body.nt !== 2398) bad("model Bat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bat_standard_tri) has 2351 / 2398");
         if (extras.length !== 1 || extras[0].nv !== 175 || extras[0].nt !== 98) bad("model Bat: the extra should be the standard wand (175 / 98), got " + JSON.stringify(extras));
       }
+      const GADINA = { Gadina1: [494, 406, 115, 120, 72, 48], Gadina2: [942, 694, 204, 184, 140, 128], Gadina3: [1889, 1310, 298, 252, 365, 260] };   // each form's own Gadina prefab, sword (mount_Hand_R) and shield (mount_Hand_L)
+      if (GADINA[m[1]]){ const g = GADINA[m[1]]; if (body.nv !== g[0] || body.nt !== g[1] || extras.length !== 2 || extras[0].nv !== g[2] || extras[0].nt !== g[3] || extras[1].nv !== g[4] || extras[1].nt !== g[5]) bad("model " + m[1] + ": " + JSON.stringify([body.nv, body.nt].concat(...extras.map(x => [x.nv, x.nt]))) + ", expected " + g.join(" / ")); }
       const SUMMON = { LightPanther: [1499, 1648], LightLeopard: [1526, 1652], LightGolem: [1403, 2440], AutoGyroGun: [763, 652], BarrelBot: [1324, 1238], KingKaiser: [3830, 2828], MoleTank: [1724, 1420], GigaCannon: [1639, 1684], Phoenix: [1478, 1598], Ja: [526, 560], Gadina: [2453, 1694], Buiten: [860, 584], Gaos: [7130, 4446] };   // single-prefab summon meshes (Rabbit Mercenaries): Panther_tri / Leopard / LightGolem skinned meshes, no extras
       if (SUMMON[m[1]] && (body.nv !== SUMMON[m[1]][0] || body.nt !== SUMMON[m[1]][1] || extras.length)) bad("model " + m[1] + ": " + body.nv + " verts / " + body.nt + " tris / " + extras.length + " extras, expected " + SUMMON[m[1]].join(" / ") + " and none");
       if (m[1] === "Chameleon") {
@@ -4135,7 +4148,12 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         else if (extras[0].minY < body.maxY - 0.6 || extras[0].maxY > body.maxY + 0.15) bad("model Cat: hair spans " + extras[0].minY + " to " + extras[0].maxY + " m, it should cover the head (body top " + body.maxY + " m)");
       }
     }
-    for (const sk of SKILLS) if (sk.reachModel && !new RegExp("REACH_MODELS\." + sk.reachModel + " = ").test(html)) bad(sk.id + ": reachModel " + sk.reachModel + " has no REACH_MODELS entry");
+    for (const sk of SKILLS) if (sk.reachModel){   // a key, or (rank) => key (Gadina 1-4)
+      const keys = typeof sk.reachModel === "function" ? Array.from({ length: sk.maxRank || 1 }, (_, i) => sk.reachModel(i + 1)) : [sk.reachModel];
+      for (const k of keys) if (!new RegExp("REACH_MODELS\\." + k + " = ").test(html)) bad(sk.id + ": reachModel " + k + " has no REACH_MODELS entry");
+    }
+    { const mk = (id) => { const sk = SKILLS.find(x => x.id === id); return sk && (typeof sk.reachModel === "function" ? [1, 2, 3, 4].map(r => sk.reachModel(r)).join() : sk.reachModel); };
+      if (mk("monkey_gadina") !== "Gadina1,Gadina2,Gadina3,Gadina4" || mk("monkey_fireAvatar") !== "MonkeyFireAvatar" || mk("monkey_earthForm_nAttack") !== "MonkeyEarthForm" || mk("monkey_planetBreaker") !== "Gadina4") bad("Monkey previews: Gadina follows its form, Fire Avatar and Earth Form show their form (user 2026-10-16)"); }
     if (!models) bad("no REACH_MODELS entries found");
   }
   // reach scenes (2026-10-14): the mission map behind the caster. Everything decodes, indices are in range, props stand on the terrain, both start points sit on it
