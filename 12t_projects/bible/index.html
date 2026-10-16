@@ -10936,6 +10936,12 @@ function reachSeqVis(p, tau, plan){   // instant: the hit whose time was passed 
   let cur = 0; for (let j = 0; j < plan.T.length; j++) if (plan.T[j] <= tau) cur = j;
   return plan.at[cur] === p.at ? 1 : 0;
 }
+// Each hit lands with a strike (user 2026-10-16: hits on the same spot looked like one box changing colour): the new hit's fill and a white edge flash for 0.25 s, and a "ฮิต n / N" counter pops.
+function reachSeqHit(tau, plan){
+  if (!plan || tau < 0 || tau >= plan.tEnd) return null;
+  let cur = 0; for (let j = 0; j < plan.T.length; j++) if (plan.T[j] <= tau) cur = j;
+  return { cur, n: plan.T.length, pulse: Math.max(0, 1 - (tau - plan.T[cur]) / 0.25) };
+}
 // Target skills (Meteora, Blizzard, Grand Cross ...): when Boldas stands inside the skill's lock range (its ring, or the faint 3D sphere) the player does not have to walk to him,
 // so the impact part is drawn centred on him instead of the usual 6 m ahead (user 2026-10-15). E = his position in popup space; parts without a lock marker are left alone.
 function reachOnEnemy(parts, E){
@@ -11491,7 +11497,7 @@ function drawReach(cv, items, st, model, scene, seqT){
   const P = (v) => reachProject(v, st.yaw, st.pitch, st.zoom, W, H, st.t);
   const above = [], below = [], tags = [];
   const camAbove = st.pitch >= 0;
-  const cmap = reachColorMap(items.map(it => it.part)), seqOn = seqT !== null && seqT !== undefined, seqPlan = seqOn ? reachSeqPlan(items.map(it => it.part)) : null, vis = (p) => seqOn ? reachSeqVis(p, seqT, seqPlan) : (p.final === false ? 0 : 1);   // seqT: seconds into the hit-by-hit playback (null = the final picture)
+  const cmap = reachColorMap(items.map(it => it.part)), seqOn = seqT !== null && seqT !== undefined, seqPlan = seqOn ? reachSeqPlan(items.map(it => it.part)) : null, vis = (p) => seqOn ? reachSeqVis(p, seqT, seqPlan) : (p.final === false ? 0 : 1), seqHit = seqOn ? reachSeqHit(seqT, seqPlan) : null;   // seqT: seconds into the hit-by-hit playback (null = the final picture)
   const placeSeen = new Set(), volSeen = new Set(), skipDraw = new Set(), skipTags = new Set();
   items.forEach(({ part: q, alpha: b0 }, k) => {   // visible parts in order: an exact repeat of a place is skipped, a repeat of a volume keeps its box but loses its labels
     if (q.unknown || q.shape === "self" || b0 * vis(q) <= 0.001) return;
@@ -11502,17 +11508,17 @@ function drawReach(cv, items, st, model, scene, seqT){
   items.forEach(({ part: p, alpha: a0 }, k) => {
     const alpha = a0 * vis(p);
     if (p.unknown || p.shape === "self" || alpha <= 0.001 || skipDraw.has(k)) return;
-    const col = cmap[k], m = reachMesh(p), faint = !!p.faint || p.shape === "ring";
+    const col = cmap[k], m = reachMesh(p), faint = !!p.faint || p.shape === "ring", pz = seqHit && p.at === seqPlan.at[seqHit.cur] ? seqHit.pulse : 0;
     for (const f of faint ? [] : m.faces){
       const poly = f.map(i => m.verts[i]);
       for (const [list, up] of [[above, true], [below, false]]){
         const c = reachClipPoly(poly, up);
-        if (c){ const pr = c.map(P); list.push({ kind: "face", pts: pr, d: pr.reduce((s, q) => s + q[2], 0) / pr.length, col, alpha }); }
+        if (c){ const pr = c.map(P); list.push({ kind: "face", pts: pr, d: pr.reduce((s, q) => s + q[2], 0) / pr.length, col, alpha, pz }); }
       }
     }
     for (const [i, j] of m.edges) for (const [list, up] of [[above, true], [below, false]]){
       const s = reachClipSeg(m.verts[i], m.verts[j], up);
-      if (s){ const a = P(s[0]), b = P(s[1]); list.push({ kind: "edge", pts: [a, b], d: (a[2] + b[2]) / 2 + 0.001, col, alpha: faint ? alpha * 0.55 : alpha, under: !up, dash: faint }); }
+      if (s){ const a = P(s[0]), b = P(s[1]); list.push({ kind: "edge", pts: [a, b], d: (a[2] + b[2]) / 2 + 0.001, col, alpha: faint ? alpha * 0.55 : alpha, under: !up, dash: faint, pz }); }
     }
     for (const [di, d] of (skipTags.has(k) ? [] : reachDims(p)).entries()){
       // pick the alternative edge that sits furthest right ("right") or lowest on screen ("low"): the outside of the shape, away from the caster
@@ -11531,11 +11537,12 @@ function drawReach(cv, items, st, model, scene, seqT){
     for (const it of list){
       ctx.globalAlpha = it.alpha * (dim ? 0.55 : 1);
       if (it.kind === "face"){
-        ctx.fillStyle = it.col + "26";
+        ctx.fillStyle = it.col + (it.pz ? Math.round(0x26 + 0x50 * it.pz).toString(16).padStart(2, "0") : "26");
         ctx.beginPath(); it.pts.forEach((q, n) => n ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fill();
       } else {
         ctx.strokeStyle = it.col; ctx.lineWidth = 1.4; ctx.setLineDash(it.under || it.dash ? [4, 3] : []);
         ctx.beginPath(); ctx.moveTo(it.pts[0][0], it.pts[0][1]); ctx.lineTo(it.pts[1][0], it.pts[1][1]); ctx.stroke();
+        if (it.pz){ ctx.globalAlpha = it.alpha * it.pz * (dim ? 0.55 : 1); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.4 + 2.6 * it.pz; ctx.stroke(); }
       }
     }
     ctx.globalAlpha = 1; ctx.setLineDash([]);
@@ -11603,6 +11610,14 @@ function drawReach(cv, items, st, model, scene, seqT){
     ctx.fillStyle = t.col; ctx.fillText(t.text, mx, my + 0.5);
   }
   mem.clear(); keep.forEach((v, key) => mem.set(key, v));
+  if (seqHit){
+    const hk = items.findIndex(it => it.part.at === seqPlan.at[seqHit.cur]), hc = hk >= 0 ? cmap[hk] : "#d4af37", fs = 15 + 7 * seqHit.pulse, txt = "ฮิต " + (seqHit.cur + 1) + " / " + seqHit.n;
+    ctx.font = "bold " + fs.toFixed(1) + "px ui-monospace, monospace"; ctx.globalAlpha = 1;
+    const tw = ctx.measureText(txt).width + 20, cx = W / 2, cy = 30;
+    ctx.fillStyle = "rgba(12,12,14,.85)"; ctx.fillRect(cx - tw / 2, cy - fs * 0.8, tw, fs * 1.6);
+    ctx.strokeStyle = hc; ctx.lineWidth = 1.5; ctx.strokeRect(cx - tw / 2, cy - fs * 0.8, tw, fs * 1.6);
+    ctx.fillStyle = hc; ctx.fillText(txt, cx, cy + 0.5);
+  }
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
   ctx.globalAlpha = 1;
 }
@@ -28208,7 +28223,7 @@ const TOOLS = [
     title: "ไกด์อาชีพ",
     shortTitle: "ไกด์อาชีพ",
     category: "",   // no tag line, like skill-details (user 2026-10-16)
-    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></svg>',
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',   // open book (user 2026-10-16)
     mounted: false,
     mount(root){ mountClassGuide(root); }
   },
@@ -30721,6 +30736,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T01:03:36.764Z","feat(bible): the reach preview flashes each hit as it lands and counts it (ฮิต n / N), so hits on the same spot read as separate; the ไกด์อาชีพ tile icon is an open book"],
     ["2026-10-15T18:13:00.545Z","fix(bible): ไกด์อาชีพ tile portraits are mirrored at random, and Monkey, Whale, Bat, Panda and Bison sit a little higher"],
     ["2026-10-15T18:09:43.785Z","feat(bible): a gold light sweep crosses each ไกด์อาชีพ tile portrait once as it rises in"],
     ["2026-10-15T18:08:27.626Z","feat(bible): each ไกด์อาชีพ tile portrait rises gently into place as it appears"],
