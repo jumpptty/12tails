@@ -2696,7 +2696,7 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   if (used.length && !sandbox._credits.render(`x {{credit:${used[0]}}}`).includes(`class="sk-credit" data-credit="${used[0]}"`)) fail("credit token does not render as .sk-credit");
   console.log(`Verified contributor credits: ${list.length} contributor(s), ${used.length} credited id(s) in use.`);
 }
-// Bold spacing (user 2026-10-07): a **gold** / __red__ token in a card desc (every rank, server and dep rank) or a
+// Bold spacing (user 2026-10-07; ^^glossary^^ links too, user 2026-10-16): a **gold** / __red__ / ^^glossary^^ token in a card desc (every rank, server and dep rank) or a
 // status popup text (STATUS_DESC_MAP / STATUS_DESC_SERVER) never touches a letter or digit, and has no double space
 // beside it. Punctuation and <br> may touch it.
 {
@@ -2706,7 +2706,7 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   let tokens = 0;
   const check = (where, str) => {
     if (typeof str !== "string") return;
-    for (const t of str.matchAll(/(\*\*|__)([\s\S]+?)\1/g)){
+    for (const t of [...str.matchAll(/(\*\*|__)([\s\S]+?)\1/g), ...str.matchAll(/(\^\^)([^^\n]+?)\1/g)]){   // ^^glossary^^ links in a separate pass (user 2026-10-16): inside a __red__ token the first pass never reaches them
       tokens++;
       const a = t.index, b = a + t[0].length, why = [];
       if (isWord(str[a - 1])) why.push("no space before");
@@ -2735,7 +2735,9 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
     let str; try { str = typeof v === "function" ? v(sLv, lck) : v; } catch (e) { continue; }
     check(where, str);
   }
-  console.log(`Verified bold spacing: ${tokens} rendered bold tokens in card descs and ${statusEntries.length} status texts.`);
+  // every ^^glossary^^ link anywhere in the page source (change notes, bug / tooltip notes, the glossary itself): a space or punctuation on each side
+  for (const t of html.matchAll(/\^\^([^^\n]{1,60}?)\^\^/g)){ const a = t.index, b = a + t[0].length, why = []; if (isWord(html[a - 1])) why.push("no space before"); if (isWord(html[b])) why.push("no space after"); if (why.length) fail("source", html.slice(Math.max(0, a - 12), b + 12), why.join(", ")); }
+  console.log(`Verified bold spacing: ${tokens} rendered bold / glossary tokens in card descs and ${statusEntries.length} status texts, plus every glossary link in the source.`);
 }
 // Unmodelled formulas (2026-10-07, user): after substituteDmgVars a dmg text may only hold numbers, operators and
 // talAdjust(...). Words mean a value the Test cannot see (Nova Flare's "Vortex HP", Hydro Blast's "TargetWeight").
