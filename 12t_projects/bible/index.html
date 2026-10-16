@@ -1693,7 +1693,7 @@
   .cg-stat-in b{font-size:11px;letter-spacing:.14em;font-weight:600}
   .cg-page .cg-stat-in input{border-color:var(--c);padding:7px 8px;text-align:center;color:var(--text);-moz-appearance:textfield}
   .cg-stat-in input::-webkit-outer-spin-button,.cg-stat-in input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .cg-stat-panel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 20px}
+  .cg-stat-panel{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:0 0 14px}   /* small tiles side by side (user 2026-10-16: they took too much height) */
   /* recommended gear (user 2026-10-16) */
   .cg-gear-edit{border:1px solid var(--line);border-radius:4px;padding:12px 14px 14px;margin:0 0 16px;background:var(--panel)}
   .cg-gear-edit legend{padding:0 6px;color:var(--gold);font-size:13px}
@@ -1762,9 +1762,9 @@
   @media (hover:none){.cg-set-ed .cg-gear-x{opacity:1}}
   @media (max-width:640px){.cg-set-ed{grid-template-columns:30px repeat(6,minmax(0,1fr));gap:6px}.cg-set-ed .cg-set-no{font-size:11px;white-space:normal}.cg-set-ed .cg-gear-name{display:none}.cg-set-add,.cg-set-off{width:100%;height:auto;aspect-ratio:1}.cg-extras-dialog .cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.cg-set-head{font-size:10.5px;line-height:1.2}.cg-page .cg-set-ed .cg-gear-stat-in{-webkit-appearance:none;appearance:none;padding:3px 0;font-size:8.5px;letter-spacing:-.02em;text-align:center;text-align-last:center}}
   .cg-stat-panel[hidden]{display:none}
-  .cg-stat-tile{border-left:3px solid var(--c);border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--c) 11%,transparent);padding:6px 9px 7px;min-width:0}
+  .cg-stat-tile{border-left:3px solid var(--c);border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--c) 11%,transparent);padding:4px 8px 5px;min-width:0}
   .cg-stat-tile b{display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
-  .cg-page .cg-stat-tile input.cg-stat-try{display:block;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:22px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
+  .cg-page .cg-stat-tile input.cg-stat-try{display:block;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:19px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
   .cg-page .cg-stat-tile input.cg-stat-try:hover,.cg-page .cg-stat-tile input.cg-stat-try:focus{border-bottom-color:var(--c);outline:none}
   .cg-stat-tile input.cg-stat-try::-webkit-outer-spin-button,.cg-stat-tile input.cg-stat-try::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .cg-stat-tile{cursor:text}
@@ -1820,6 +1820,12 @@
   .cg-note-chip h4{margin:0 0 4px;font-family:inherit;font-size:15px;line-height:1.4;color:var(--gold)}
   .cg-note-chip-text{margin:0;font-size:15px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
   .cg-note-item.is-waiting{opacity:0;pointer-events:none}
+  .cg-note-frame[data-card]{cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+  /* hover: the icon grows a little, its glow brightens and it sits above the chip next to it (user 2026-10-16); the notes column padding leaves room so the bigger ring is never clipped */
+  .cg-note-frame[data-card]:hover,.cg-note-frame[data-card]:focus-visible{z-index:2;transform:translateZ(0) scale(1.06);filter:brightness(1.12);box-shadow:0 0 0 2px var(--gold),0 0 0 4px var(--ink),0 0 0 5px rgba(201,162,39,.85),0 0 20px rgba(212,175,55,.75)}
+  @media (prefers-reduced-motion: reduce){.cg-note-frame[data-card]{transition:none}}
+  .cg-note-frame.is-charging{animation:rsim-charge .35s cubic-bezier(.5,0,.9,.6) forwards}   /* hold: the same shake and swell as a grid cell */
+  .cg-note-frame.is-boom{animation:rsim-boom .38s ease-out forwards;pointer-events:none}
   .cg-note-chips.is-pending .cg-note-chips-title{opacity:0}
   .cg-note-chips-title{transition:opacity .25s}
   .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:1/-1;margin:4px 0 0}
@@ -1859,9 +1865,9 @@
   .cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:2;grid-row:2;min-width:0;scroll-margin-top:64px}
   .cg-page[data-mode="reader"] .rsim{margin-top:0;padding-top:0}
   .cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:2;min-height:0;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;margin:0;padding:14px 20px 14px 16px;border:0;border-left:2px solid var(--gold);background:linear-gradient(90deg,#d4af3708,transparent)}
-  .cg-page[data-mode="reader"] .cg-reader h2{display:block;font-size:24px;line-height:1.45;margin:0 0 12px;overflow-wrap:anywhere}
-  .cg-page[data-mode="reader"] .cg-byline{display:block;font-size:13px;line-height:1.8;margin:0 0 22px}
-  .cg-title-meta{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+  .cg-page[data-mode="reader"] .cg-reader h2{display:block;font-size:24px;line-height:1.35;margin:0 0 4px;overflow-wrap:anywhere}
+  .cg-page[data-mode="reader"] .cg-byline{display:block;font-size:13px;line-height:1.8;margin:0 0 12px}
+  .cg-title-meta{display:flex;align-items:center;gap:8px;margin:0 0 2px}
   .cg-title-icon{flex:none;width:32px;height:32px;object-fit:contain}
   .cg-title-server{width:26px;height:26px}
   .cg-title-lv{font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap}
@@ -1913,14 +1919,39 @@
   /* Landscape reader = the exported PNG sheet (user 2026-10-16): full width, info panel 23.5% (PNG 430 of 1832), the four trees the same height, notes in two columns under the trees */
   @media (min-width:761px) and (orientation:landscape){
     html.tool-guide-reader body .stage{max-width:none;padding:10px 24px 8px}
-    .cg-page[data-mode="reader"]{grid-template-columns:max(280px,23.5%) auto;column-gap:36px}
-    .cg-page[data-mode="reader"] .cg-reader{grid-row:2 / span 2;border-left:3px solid var(--gold);background:var(--panel)}
-    .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:2;grid-row:3;align-self:start;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;align-content:start}
+    .cg-page[data-mode="reader"]{grid-template-columns:max(calc(280px * var(--cg-u,1)),min(23.5%,calc(520px * var(--cg-u,1)))) auto;column-gap:calc(12px * var(--cg-u,1))}   /* minimal gaps: the panels read as one rectangle */
+    .cg-page[data-mode="reader"] .cg-reader{grid-row:2;align-self:stretch;border-left:3px solid var(--gold);background:var(--panel);padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1))}
+    /* everything inside the panel and the notes column scales by the same factor (zoom keeps the layout real, unlike a transform) */
+    .cg-page[data-mode="reader"] .cg-reader > *,.cg-page[data-mode="reader"] > .cg-note-chips > *{zoom:var(--cg-u,1)}
+    .cg-page[data-mode="reader"] > .cg-prose{font-size:calc(17px * var(--cg-u,1))}
+    /* notes under the trees, laid out like the PNG (fitReader sets the columns, font, icon size and lines per note from the PNG's ladder) */
+    .cg-page[data-mode="reader"]{grid-template-rows:auto auto 1fr auto}   /* spare height from the tall panel and notes goes below the description, never between the trees and it */
+    .cg-page.cg-has-notes[data-mode="reader"]{grid-template-columns:max(calc(280px * var(--cg-u,1)),min(23.5%,calc(520px * var(--cg-u,1)))) auto var(--cg-notes-w,360px)}   /* three columns (user 2026-10-16): info | skill grid + description | notes */
+    .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:3;grid-row:2 / span 2;align-self:start;margin:0;display:grid;gap:calc(8px * var(--cg-u,1));align-content:start;box-sizing:border-box;padding:10px 10px 10px 12px;border-left:3px solid var(--gold);background:var(--panel);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+    /* the notes column is a visible panel here: its title always shows, with a hint until the first note is opened (user 2026-10-16: no empty-looking box) */
+    .cg-page[data-mode="reader"] > .cg-note-chips.is-pending .cg-note-chips-title{opacity:1}
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{order:-2}
+    .cg-page[data-mode="reader"] > .cg-note-chips.is-pending::before{content:"คลิกสกิลที่มี ★ เพื่ออ่านโน้ตจากผู้เขียน";order:-1;color:var(--muted);font-size:calc(13px * var(--cg-u,1));line-height:1.5}
+    .cg-page[data-mode="reader"] .rsim{padding:0}
+    .cg-page[data-mode="reader"] > .cg-prose.is-paged{overflow:hidden;column-fill:auto;padding-bottom:calc(30px * var(--cg-u,1))}
+    .cg-desc-pager{display:none}
+    .cg-page[data-mode="reader"] > .cg-desc-pager:not([hidden]){grid-column:1 / 3;grid-row:3;align-self:end;justify-self:end;z-index:1;display:flex;align-items:center;gap:calc(6px * var(--cg-u,1));margin:0 calc(10px * var(--cg-u,1)) calc(6px * var(--cg-u,1)) 0;font-size:calc(13px * var(--cg-u,1));color:var(--muted)}
+    .cg-desc-pager button{min-width:calc(26px * var(--cg-u,1));height:calc(24px * var(--cg-u,1));padding:0;border:1px solid var(--line);border-radius:4px;background:var(--panel-2);color:var(--gold);font:inherit;font-size:calc(15px * var(--cg-u,1));line-height:1;cursor:pointer}
+    .cg-desc-pager button:hover:not(:disabled),.cg-desc-pager button:focus-visible{border-color:var(--gold)}
+    .cg-desc-pager button:disabled{opacity:.35;cursor:default}   /* the tree boxes are the grid's edges, flush with the panels around them */
+    .cg-page[data-mode="reader"] > .cg-prose{grid-column:1 / 3;grid-row:3;align-self:start;margin:0;box-sizing:border-box;padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1));border-left:3px solid var(--gold);background:var(--panel);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}   /* the description under the skill grid */
+    /* the notes column scrolls, so it clips: the padding keeps the round icons ring and glow inside it (user 2026-10-16: their left edge was cut off) */
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{margin:0}
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-item{grid-template-columns:var(--cg-note-icon,60px) minmax(0,1fr)}
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-frame{width:var(--cg-note-icon,60px);height:var(--cg-note-icon,60px)}
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chip{min-height:var(--cg-note-icon,60px)}
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chip h4,.cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chip-text{font-size:var(--cg-note-fs,15px)}
+    .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chip-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--cg-note-lines,none);overflow:hidden}
     .cg-page[data-mode="reader"] > .cg-note-chips[hidden]{display:none}
     .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{grid-column:1/-1}
     .cg-page[data-mode="reader"] .cg-status{grid-row:4}
     .cg-page[data-mode="reader"] .rsim-trees{align-items:stretch}
-    .cg-page[data-mode="reader"] .rsim-tree h3{font-size:calc(17px / max(var(--cg-reader-scale,1), .35))}   /* the tree names keep a readable size however far the trees are scaled, like the PNG headings */
+    .cg-page[data-mode="reader"] .rsim-tree h3{font-size:var(--cg-tree-name,17px);}   /* the tree names shrink only gently with the build (17 px x the square root of the scale, set by fitReader; user 2026-10-16: at full size they looked oversized on a small build) */
   }
   html.tool-guide-reader .hub-bar{padding:10px 18px}
   html.tool-guide-reader .stage{width:100%;max-width:1240px;box-sizing:border-box;padding:10px 12px 8px}
@@ -29519,7 +29550,7 @@ async function classGuideRenderImage(guide, simRoot){
   const icons = {}; await Promise.all([...need].map(async key => { icons[key] = await classGuideImageLoad(SKILL_ICONS[key]); }));
   const grays = {};
   const canvas = document.createElement("canvas"); canvas.width = P.w * P.scale; canvas.height = P.h * P.scale;
-  const ctx = canvas.getContext("2d"); ctx.scale(P.scale, P.scale); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  let ctx = canvas.getContext("2d"); const mainCtx = ctx; ctx.scale(P.scale, P.scale); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
   const gold = v("--gold") || "#c9a227", text = v("--text") || "#ece4d6", muted = v("--muted") || "#b0a189", line = v("--line") || "#4a3a26", ink = v("--ink") || "#150f0c", panel = v("--panel") || "#1f1712", panel2 = v("--panel-2") || "#271c15";
   const alpha = (hex, a) => { const m = /^#([0-9a-f]{6})$/i.exec(hex); if (!m) return hex; const n = parseInt(m[1], 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
   const font = (weight, size) => weight + " " + size + "px " + FONT;
@@ -29576,11 +29607,15 @@ async function classGuideRenderImage(guide, simRoot){
     }
     box(x, y, w, h, r); ctx.strokeStyle = edge; ctx.lineWidth = 1.5; ctx.stroke();
   };
-  // ---- info column ----
-  const lx = P.margin, lw = P.leftW;
-  ctx.fillStyle = alpha(gold, 0.05); ctx.fillRect(lx - 14, P.margin - 10, lw + 20, P.h - P.margin * 2 + 20);
-  ctx.fillStyle = gold; ctx.fillRect(lx - 14, P.margin - 10, 4, P.h - P.margin * 2 + 20);
-  let y = P.margin + 4;
+  // ---- layout (user 2026-10-16: the same as the landscape reader, one rectangle): the guide info top left, the trees beside it, the notes in a full-height
+  // column on the right and the description under the info and the trees; every outer edge lines up and the rectangle sits centred. 1920 x 1080 units.
+  const G = 14, fullH = P.h - P.margin * 2, infoW = P.leftW, notesW = noteIds.length ? 400 : 0, bar = 3, panelPad = 16;
+  const gridX = P.margin + infoW + G, gridW = P.w - P.margin * 2 - infoW - G - (notesW ? notesW + G : 0), notesX = gridX + gridW + G;
+  // ---- info: drawn on its own layer first (its height sets the row), then laid on its panel
+  const infoLayer = document.createElement("canvas"); infoLayer.width = Math.ceil(infoW * P.scale); infoLayer.height = Math.ceil(fullH * P.scale);
+  ctx = infoLayer.getContext("2d"); ctx.scale(P.scale, P.scale); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high"; ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  const lx = bar + panelPad, lw = infoW - lx - panelPad;
+  let y = panelPad - 4;
   // title: a row of the class icon, the server icon and Lv.N, then the name over the full column width
   let tx = lx;
   if (portrait){ ctx.drawImage(portrait, tx, y, 52, 52); tx += 60; }
@@ -29610,14 +29645,14 @@ async function classGuideRenderImage(guide, simRoot){
   // stats
   const filled = CLASS_GUIDE_STATS.filter(s => guide.stats && s.key in guide.stats);
   if (filled.length){
-    const tw = (lw - 12) / 2, th = 66;   // smaller numbers (user 2026-10-16: save space)
+    const per = 4, tw = (lw - 8 * (per - 1)) / per, th = 52;   // one row of small tiles, as on the screen (user 2026-10-16)
     filled.forEach((s, i) => {
-      const x = lx + (i % 2) * (tw + 12), yy = y + Math.floor(i / 2) * (th + 10), col = v("--stat-" + s.key) || gold;
-      ctx.fillStyle = alpha(col, 0.13); ctx.fillRect(x, yy, tw, th); ctx.fillStyle = col; ctx.fillRect(x, yy, 5, th);
-      ctx.font = font(600, 18); spaced(4); ctx.fillText(s.label, x + 18, yy + 26); spaced(0);
-      ctx.font = font(700, 36); ctx.fillText(String(guide.stats[s.key]), x + 18, yy + 58);
+      const x = lx + (i % per) * (tw + 8), yy = y + Math.floor(i / per) * (th + 8), col = v("--stat-" + s.key) || gold;
+      ctx.fillStyle = alpha(col, 0.13); ctx.fillRect(x, yy, tw, th); ctx.fillStyle = col; ctx.fillRect(x, yy, 4, th);
+      ctx.font = font(600, 13); spaced(3); ctx.fillText(s.label, x + 12, yy + 19); spaced(0);
+      ctx.font = font(700, 26); ctx.fillText(String(guide.stats[s.key]), x + 12, yy + 45);
     });
-    y += Math.ceil(filled.length / 2) * (th + 10) + 12;
+    y += Math.ceil(filled.length / per) * (th + 8) + 10;
   }
   // recommended sets "เซ็ตแนะนำ" (user 2026-10-16): one row per set, the used slots as columns, a typed name drawn as its icon, a Replica as a small icon on the item's bottom-right corner with a curved arrow up into it, the ยัด stat under it
   const gearSlots = CLASS_GUIDE_GEAR_SLOTS.filter(g => guide.gear && guide.gear[g.key]);
@@ -29661,41 +29696,39 @@ async function classGuideRenderImage(guide, simRoot){
     }
     y += 6;
   }
-  // description: the rest of the column
-  const descFont = g => font(g ? 700 : 400, 23), lh = 36, footerY = P.h - P.margin;
-  const maxLines = Math.max(0, Math.floor((footerY - y) / lh));
-  if (guide.description && maxLines > 0){
-    const dl = classGuideImageClip(classGuideImageWrap(classGuideImageRuns(guide.description), lw, measureWith(descFont), segmenter), maxLines, lw, measureWith(descFont));
-    drawLines(dl, lx, y + 26, lh, descFont, { text, gold });
-  }
-  // ---- layout of the right side: the densest notes arrangement that is needed, the trees get the rest ----
-  const fullH = P.h - P.margin * 2, notesBottom = P.h - P.margin;
-  const layoutNotes = (top, cols, fs, maxLines) => {
-    const colGap = 16, colW = (areaW - colGap * (cols - 1)) / cols, iconS = Math.round(fs * 3.3), nlh = Math.round(fs * 1.5), textW = colW - iconS - 10 - 14 - 12;   // framed icon outside the chip (user 2026-10-16)
-    const noteFont = g => font(g ? 700 : 400, fs), colY = Array(cols).fill(top + 20), items = [];
+  const infoH = Math.min(fullH, Math.ceil(y + panelPad));
+  ctx = mainCtx;
+  // ---- description (measured), trees, and the rectangle's height
+  const descFont = g => font(g ? 700 : 400, 23), lh = 36, descW = infoW + G + gridW, descTextW = descW - bar - panelPad * 2;
+  const descLines = guide.description ? classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(descFont), segmenter) : [];
+  const descNatural = descLines.length ? descLines.length * lh + panelPad * 2 : 0, descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
+  const treeRoom = fullH - (descWanted ? descWanted + G : 0);
+  let plan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: treeRoom });
+  let row1 = Math.min(fullH, Math.max(infoH, plan.bottom - P.margin));
+  // notes: one column, the same ladder as the reader [font, lines per note]
+  const NOTE_STEPS = [[18, 99], [18, 6], [17, 5], [16, 4], [15, 3], [14, 3], [14, 2]];
+  const layoutNotes = (top, fs, maxLines) => {
+    const x0 = notesX + bar + 12, colW = notesW - bar - 12 - 12, iconS = Math.round(fs * 3.3), nlh = Math.round(fs * 1.5), textW = colW - iconS - 10 - 14 - 12;   // framed icon outside the chip
+    const noteFont = g => font(g ? 700 : 400, fs), items = []; let yy = top;
     for (const id of noteIds){
-      let col = 0; for (let c = 1; c < cols; c++) if (colY[c] < colY[col]) col = c;
       const all = classGuideImageWrap(classGuideImageRuns(guide.notes[id]), textW, measureWith(noteFont), segmenter);
       const lines = classGuideImageClip(all, Math.min(all.length, maxLines), textW, measureWith(noteFont));
       const h = Math.max(iconS, 10 + Math.round(fs * 1.65) + lines.length * nlh + 10);
-      items.push({ id, x: areaX + col * (colW + colGap), y: colY[col], w: colW, h, lines, fs, nlh, iconS });
-      colY[col] += h + 10;
+      items.push({ id, x: x0, y: yy, w: colW, h, lines, fs, nlh, iconS }); yy += h + 10;
     }
-    return { top, items, bottom: Math.max(...colY) - 10, noteFont };
+    return { top, items, bottom: yy - 10, noteFont };
   };
-  let plan, notePlan = null;
-  if (!noteIds.length){
-    plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: fullH });
-    const used = plan.bottom - P.margin; plan = classGuideImagePlan(model, { x: areaX, y: P.margin + (fullH - used) / 2, w: areaW, h: used });
-  } else {
-    // [tree height cap, columns, note font size, max lines per note]: tried in order until every note fits
-    const configs = [[0.64, 2, 18, 99], [0.64, 2, 18, 5], [0.6, 2, 17, 4], [0.6, 3, 17, 4], [0.56, 3, 16, 3], [0.52, 3, 15, 3], [0.5, 3, 15, 2], [0.46, 3, 14, 2]];
-    for (const [cap, cols, fs, maxLines] of configs){
-      plan = classGuideImagePlan(model, { x: areaX, y: P.margin, w: areaW, h: fullH * cap });
-      notePlan = layoutNotes(plan.bottom + 26, cols, fs, maxLines);
-      if (notePlan.bottom <= notesBottom) break;
-    }
-  }
+  const notesHead = panelPad + 22;   // the column title
+  const notesNeed = noteIds.length ? layoutNotes(0, 18, 99).bottom + notesHead + panelPad : 0;
+  const rectH = Math.min(fullH, Math.max(row1 + (descLines.length ? G + descWanted : 0), notesNeed));
+  if (!descLines.length) row1 = rectH;   // no description: the info and the trees run the full height
+  const rectTop = P.margin + Math.round((fullH - rectH) / 2);
+  plan = classGuideImagePlan(model, { x: gridX, y: rectTop, w: gridW, h: treeRoom });
+  for (const t of plan.trees) t.h = row1;   // every tree box ends with the info panel
+  // ---- info panel
+  surface(P.margin, rectTop, infoW, row1, 0, false); ctx.fillStyle = gold; ctx.fillRect(P.margin, rectTop, bar, row1);
+  const infoShown = Math.min(row1, infoH);
+  ctx.drawImage(infoLayer, 0, 0, infoW * P.scale, infoShown * P.scale, P.margin, rectTop, infoW, infoShown);
   // ---- trees ----
   const learned = new Set(b.learned), noted = new Set(noteIds);
   for (const t of plan.trees){
@@ -29722,10 +29755,21 @@ async function classGuideRenderImage(guide, simRoot){
       }
     }
   }
-  // ---- notes: every note expanded as a chip, in the layout chosen above ----
-  if (notePlan){
-    ctx.fillStyle = gold; ctx.font = font(600, 18); spaced(4); ctx.fillText("★ โน้ตจากผู้เขียน", areaX, notePlan.top + 4); spaced(0);
-    const overflow = notePlan.bottom > notesBottom, limit = overflow ? notesBottom - 28 : notesBottom;
+  // ---- description: under the info and the trees, down to the rectangle's bottom (a PNG cannot page, so a text that does not fit ends with "…")
+  if (descLines.length){
+    const dy = rectTop + row1 + G, dh = rectTop + rectH - dy;
+    surface(P.margin, dy, descW, dh, 0, false); ctx.fillStyle = gold; ctx.fillRect(P.margin, dy, bar, dh);
+    const maxLines = Math.max(1, Math.floor((dh - panelPad * 2) / lh));
+    drawLines(classGuideImageClip(descLines, maxLines, descTextW, measureWith(descFont)), P.margin + bar + panelPad, dy + panelPad + 25, lh, descFont, { text, gold });
+  }
+  // ---- notes: a full-height column of chips on the right
+  if (noteIds.length){
+    surface(notesX, rectTop, notesW, rectH, 0, false); ctx.fillStyle = gold; ctx.fillRect(notesX, rectTop, bar, rectH);
+    ctx.fillStyle = gold; ctx.font = font(600, 18); spaced(4); ctx.fillText("★ โน้ตจากผู้เขียน", notesX + bar + 12, rectTop + panelPad + 14); spaced(0);
+    const notesBottom = rectTop + rectH - panelPad;
+    let notePlan = null;
+    for (const [fs, maxLines] of NOTE_STEPS){ notePlan = layoutNotes(rectTop + notesHead, fs, maxLines); if (notePlan.bottom <= notesBottom) break; }
+    const overflow = notePlan.bottom > notesBottom, limit = overflow ? notesBottom - 26 : notesBottom;
     let shown = 0;
     for (const it of notePlan.items){
       if (it.y + it.h > limit) continue;
@@ -29755,7 +29799,7 @@ async function classGuideRenderImage(guide, simRoot){
       drawLines(it.lines, textX, nameY + it.nlh, it.nlh, notePlan.noteFont, { text, gold });
       shown++;
     }
-    if (shown < noteIds.length){ ctx.font = font(400, 17); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", P.w - P.margin, notesBottom - 4); ctx.textAlign = "left"; }
+    if (shown < noteIds.length){ ctx.font = font(400, 16); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", notesX + notesW - 12, notesBottom); ctx.textAlign = "left"; }
   }
   return canvas;
 }
@@ -29915,23 +29959,35 @@ function mountClassGuide(root){
   const sheetQuery = window.matchMedia("(min-width: 761px) and (orientation: landscape)"), isSheet = () => sheetQuery.matches;   // landscape reader = the PNG sheet (placeNoteChips, prefillNoteChips)
   function fitReader(){   // reader and editor: the build fits the space left of the window (editor: user 2026-10-16, no scrolling)
     if ((mode !== "reader" && mode !== "author") || root.hidden) return;
-    const author = mode === "author", panel = el(author ? "author" : "reader"), notesBox = el("noteChips");
+    const author = mode === "author", panel = el(author ? "author" : "reader"), notesBox = el("noteChips"), desc = el("guideDescription");
     if (!author && typeof placeNoteChips === "function") placeNoteChips();
     const build = simRoot.querySelector(".rsim");
     if (!build) return;
-    notesBox.style.width = "";
-    if (isPhone()){ simRoot.style.height = ""; simRoot.style.width = ""; panel.style.height = ""; build.style.width = ""; simRoot.style.removeProperty("--cg-reader-scale"); return; }   // phones: plain scrolling page, see the phone reader CSS
-    // the room is the page minus the left panel (not the build's own column: that is set to the shown build's width, so panel + build sit centred together, user 2026-10-16)
-    const width = Math.max(1, guidePage.clientWidth - panel.offsetWidth - (parseFloat(getComputedStyle(guidePage).columnGap) || 0)), gap = 12;
-    simRoot.style.removeProperty("--cg-reader-scale");   // measure with the tree names at their normal size: they grow with 1 / scale, and measuring them grown fed back into a smaller scale on every refit
+    guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-notes-w");
+    notesBox.style.width = ""; notesBox.style.maxHeight = ""; for (const v of ["--cg-note-fs", "--cg-note-icon", "--cg-note-lines"]) notesBox.style.removeProperty(v);
+    desc.style.width = ""; desc.style.maxHeight = ""; desc.style.height = ""; desc.classList.remove("is-paged"); desc.style.columnWidth = ""; desc.style.columnGap = ""; descPager.hidden = true; notesBox.style.height = ""; panel.style.alignSelf = "";
+    if (isPhone()){ simRoot.style.height = ""; simRoot.style.width = ""; panel.style.height = ""; build.style.width = ""; simRoot.style.removeProperty("--cg-reader-scale"); guidePage.style.removeProperty("--cg-u"); return; }   // phones: plain scrolling page, see the phone reader CSS
+    // Landscape reader: everything outside the skill grid (panel text, stat tiles, gear, notes, description, column widths) scales by one factor --cg-u
+    // (user 2026-10-16: nothing should keep a fixed size, all of it in proportion). The factor follows the skill grid itself: a skill cell is 43 px on a
+    // 1920 x 1080 screen, where the side panels were designed, so --cg-u = the cell's size on screen / 43. A first guess from the window, then one more pass.
+    const clampU = u => Math.min(1.3, Math.max(0.62, u));
+    const setU = u => { if (Math.abs(u - 1) > 0.001) guidePage.style.setProperty("--cg-u", u.toFixed(3)); else guidePage.style.removeProperty("--cg-u"); };
+    const uiGuess = !author && isSheet() ? clampU(Math.min(window.innerWidth / 1920, document.documentElement.clientHeight / 1080)) : 1;
+    setU(uiGuess);
+    const colGapNow = () => parseFloat(getComputedStyle(guidePage).columnGap) || 0, gap = 12;
+    // the room is the page minus the left panel (the build's own column is set to what it needs, so the columns sit centred together, user 2026-10-16)
+    let width = Math.max(1, guidePage.clientWidth - panel.offsetWidth - colGapNow());
+    simRoot.style.removeProperty("--cg-reader-scale"); simRoot.style.removeProperty("--cg-tree-name");   // measure with the tree names at their normal size (they change with the scale)
     const viewportHeight = document.documentElement.clientHeight;   // layout viewport: a pinch zoom must not shrink the build (user 2026-10-16)
     const bounds = guidePage.getBoundingClientRect(), zoom = bounds.width / guidePage.clientWidth || 1;
     const free = Math.max(1, (viewportHeight - bounds.top - 16) / zoom - guideHeading.offsetHeight - gap);
-    const sheet = !author && isSheet(), notesOn = sheet && !notesBox.hidden && notesBox.parentNode === guidePage;   // sheet: the notes sit under the trees
-    const notesAt = w => { if (!notesOn) return 0; notesBox.style.width = w + "px"; return notesBox.offsetHeight + gap; };
+    // Landscape reader, three columns (user 2026-10-16): guide name, author, stats and sets on the left; the skill grid in the middle with the description
+    // under it; the author notes in a column on the right (one column of chips, the font and lines per note step down until they fit, then the column scrolls).
+    const sheet = !author && isSheet(), notesOn = sheet && !notesBox.hidden && notesBox.parentNode === guidePage, descOn = sheet && desc.parentNode === guidePage && desc.textContent.trim() !== "";
+    const NOTE_LADDER = [[18, 99], [18, 6], [17, 5], [16, 4], [15, 3], [14, 3], [14, 2]];   // [font in PNG units (18 = 15 px here), lines per note]
     const heightAt = w => { build.style.width = w + "px"; return build.offsetHeight; };
-    // The icons grow with the build's width (86% of a cell), so the height is about linear in the width. Sheet: rather than scaling a wide build down (giant icons, tiny
-    // bars and names, user 2026-10-16), narrow it until it fits the height at full size; only below 640 px is it scaled.
+    // The icons grow with the build's width (86% of a cell), so the height is about linear in the width: rather than scaling a wide build down (giant icons,
+    // tiny bars and names), narrow it until it fits the height at full size; only below 640 px is it scaled.
     const fitWidth = (room, maxW) => {
       let w = Math.max(640, maxW), h = heightAt(w);
       if (h <= room || w <= 640) return [w, h];
@@ -29940,21 +29996,97 @@ function mountClassGuide(root){
       for (let k = 0; k < 3 && h > room && w > w2; k++){ w = Math.max(w2, Math.min(w - 1, Math.floor(w - (h - room) / slope))); h = heightAt(w); }
       return [w, h];
     };
-    let baseWidth, height, room = free, notesW = 0;
+    let baseWidth, height, room = free, midW = width, shownW = 0, scale = 1, sheetInfo = null;
+    const CELL_REF = 43;
+    const layoutSheet = u => {
+      setU(u);
+      guidePage.classList.toggle("cg-has-notes", notesOn);
+      panel.style.height = ""; panel.style.maxHeight = ""; panel.style.alignSelf = "start";   // measure the info panel's own height (it is stretched to the grid's row at the end)
+      const colGap = colGapNow(), panelW = panel.offsetWidth; width = Math.max(1, guidePage.clientWidth - panelW - colGap); midW = width;
+      if (notesOn){
+        const notesW = Math.round(Math.min(440, Math.max(300, guidePage.clientWidth * 0.2)) * u);   // the notes column scales with the rest
+        guidePage.style.setProperty("--cg-notes-w", notesW + "px"); notesBox.style.width = notesW + "px"; notesBox.style.maxHeight = "";
+        let fits = false;
+        for (const [fsPng, lines] of NOTE_LADDER){
+          const fsPx = Math.round(fsPng * 0.83 * 10) / 10;
+          notesBox.style.setProperty("--cg-note-fs", fsPx + "px"); notesBox.style.setProperty("--cg-note-icon", Math.round(fsPx * 3.3) + "px");   // the PNG's proportion (user 2026-10-16: they were a bit too big) notesBox.style.setProperty("--cg-note-lines", lines >= 99 ? "none" : lines);
+          if (notesBox.offsetHeight <= free){ fits = true; break; }
+        }
+        if (!fits) notesBox.style.maxHeight = free + "px";   // past the last step: the notes scroll in their own column
+        midW = Math.max(1, width - notesW - colGap);
+      }
+      let lastDescH = 0;
+      const fitIn = m => {   // the description spans the info panel and the middle column m wide; the build gets the height left
+        let descH = 0;
+        if (descOn){
+          desc.style.width = (panelW + colGap + m) + "px"; desc.style.maxHeight = ""; descH = Math.ceil(desc.getBoundingClientRect().height) + 1;   // rounded up: a fraction of a pixel short shows a scrollbar
+          const cap = Math.round(free * 0.3); if (descH > cap) descH = cap;   // a long description scrolls in its own box
+          desc.style.maxHeight = descH + "px"; descH += gap;
+        }
+        lastDescH = descH;
+        room = Math.max(1, free - descH);
+        [baseWidth, height] = fitWidth(room, midW);
+        return Math.min(1, midW / baseWidth, room / Math.max(1, height));
+      };
+      let k = fitIn(midW); shownW = Math.ceil(baseWidth * k);
+      if (descOn && shownW < midW - 1){ k = fitIn(shownW); shownW = Math.ceil(baseWidth * k); }   // the middle column closes in to the trees' width (user 2026-10-16: side panels closer); measured once more, no loop
+      const cell = build.querySelector(".rsim-cell");
+      return { k, panelW, colGap, panelH: panel.offsetHeight, buildH: height * k, descH: lastDescH, cellOnScreen: cell ? cell.offsetWidth * k : CELL_REF };
+    };
     if (sheet){
-      room = free - notesAt(width); [baseWidth, height] = fitWidth(room, width);
-      notesW = Math.min(width, baseWidth); const room2 = free - notesAt(notesW);   // the notes run under the build at its width (panel + build centred together); narrower notes are taller, so fit once more. Two fixed steps, no loop: the notes box has align-self:start, so it measures its own content
-      if (room2 < room){ room = room2; [baseWidth, height] = fitWidth(room, baseWidth); }
-    } else { baseWidth = author ? Math.max(640, Math.min(width, 1100)) : Math.max(640, width); height = heightAt(baseWidth); }   // editor: the normal width (up to 1100), then scaled as one piece
-    panel.style.height = free + "px";
-    let scale = Math.min(1, width / baseWidth, room / Math.max(1, height));
-    simRoot.style.setProperty("--cg-reader-scale", scale);
-    const grown = build.offsetHeight;   // the tree names are now bigger (capped at 1 / 0.35 in CSS): settle once so the build still fits
-    if (grown > height){ scale = Math.min(scale, room / grown); simRoot.style.setProperty("--cg-reader-scale", scale); }
-    simRoot.style.width = Math.max(notesW, Math.min(width, Math.ceil(baseWidth * scale))) + "px";
-    simRoot.style.height = room + "px";
+      // bigger side panels leave the grid less room, so the factor and the cell size depend on each other: settle on the balance point in a few
+      // halving steps, always from the same start, so every refit lands on the same layout
+      let u = uiGuess, r = layoutSheet(u);
+      // the info panel grows with the factor too, and it plus the description must fit the height: a second limit (panel height is proportional to the factor)
+      // third limit (user 2026-10-16: the panels form one rectangle): the info panel is no taller than the skill grid beside it
+      const target = r => clampU(Math.min(r.cellOnScreen / CELL_REF, r.panelH > 0 ? u * Math.max(1, free - r.descH) / r.panelH : 9, r.panelH > 0 ? u * Math.max(1, r.buildH) / r.panelH : 9));
+      for (let i = 0; i < 6; i++){ const t = target(r); if (Math.abs(t - u) < 0.02) break; u = clampU((u + t) / 2); r = layoutSheet(u); }
+      scale = r.k; sheetInfo = r;
+    } else { baseWidth = author ? Math.max(640, Math.min(width, 1100)) : Math.max(640, width); height = heightAt(baseWidth); scale = Math.min(1, midW / baseWidth, room / Math.max(1, height)); }   // editor: the normal width (up to 1100), then scaled as one piece
+    if (sheet) panel.style.maxHeight = free + "px"; else panel.style.height = free + "px";   // landscape: the panel keeps its own height (scrolls only if taller than the window)
+    const setScale = k => { simRoot.style.setProperty("--cg-reader-scale", k); simRoot.style.setProperty("--cg-tree-name", (17 / Math.sqrt(Math.max(k, 0.05))).toFixed(2) + "px"); };
+    setScale(scale);
+    const grown = build.offsetHeight;   // the tree names are now a little bigger: settle once so the build still fits
+    if (grown > height){ scale = Math.min(scale, room / grown); setScale(scale); }
+    simRoot.style.width = (sheet ? Math.max(1, Math.min(midW, shownW)) : Math.min(midW, Math.ceil(baseWidth * scale))) + "px";   // landscape: the middle column is the trees' width, the panels close in
+    simRoot.style.height = (sheet ? Math.ceil(height * scale) : room) + "px";   // the description starts right under the trees
+    if (sheet && sheetInfo){
+      // One rectangle (user 2026-10-16): the info panel stretches to the grid's row, the description fills the height left under the two (down to the
+      // bottom), and the notes column runs the full height, so every outer edge lines up and the bottoms meet.
+      panel.style.alignSelf = "";
+      const row2 = Math.max(Math.min(sheetInfo.panelH, free), Math.ceil(height * scale));
+      let bottom = row2;
+      if (descOn){   // as tall as its text, up to the room left (a tall screen then ends the rectangle higher instead of padding an empty box)
+        desc.style.width = (sheetInfo.panelW + sheetInfo.colGap + Math.max(1, Math.min(midW, shownW))) + "px";
+        desc.style.maxHeight = ""; desc.style.height = "";
+        const natural = Math.ceil(desc.getBoundingClientRect().height) + 1, roomLeft = Math.max(40, Math.floor(free - row2 - gap)), h = Math.min(natural, roomLeft);
+        desc.style.height = h + "px"; bottom = row2 + gap + h;
+        if (natural > roomLeft) layoutDescPages();   // too long: pages (user 2026-10-16) instead of a scrollbar
+      }
+      if (notesOn){ const nh = Math.floor(bottom); notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; }   // the notes column ends where the description ends
+    }
   }
 
+  // Description pages: the box becomes CSS columns exactly one box wide (the gap = the side padding, so every page starts one box further right);
+  // the pager flips scrollLeft by one box. The page is kept across refits and reset when another guide opens.
+  const descPager = document.createElement("div"); descPager.className = "cg-desc-pager"; descPager.hidden = true;
+  descPager.innerHTML = '<button type="button" data-cg-act="descPrev" aria-label="หน้าก่อน">‹</button><span data-cg-role="descPage"></span><button type="button" data-cg-act="descNext" aria-label="หน้าถัดไป">›</button>';
+  guidePage.appendChild(descPager);
+  let descPage = 0, descPages = 1;
+  function layoutDescPages(){
+    const desc = el("guideDescription"); desc.classList.add("is-paged");
+    const cs = getComputedStyle(desc), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    desc.style.columnWidth = Math.max(1, desc.clientWidth - padX) + "px"; desc.style.columnGap = padX + "px";
+    descPages = Math.max(1, Math.round(desc.scrollWidth / Math.max(1, desc.clientWidth)));
+    descPager.hidden = descPages < 2; showDescPage();
+  }
+  function showDescPage(){
+    const desc = el("guideDescription");
+    descPage = Math.max(0, Math.min(descPages - 1, descPage));
+    desc.scrollLeft = descPage * desc.clientWidth;
+    descPager.querySelector('[data-cg-role="descPage"]').textContent = (descPage + 1) + " / " + descPages;
+    descPager.querySelector('[data-cg-act="descPrev"]').disabled = descPage === 0; descPager.querySelector('[data-cg-act="descNext"]').disabled = descPage === descPages - 1;
+  }
   function queueReaderFit(){
     if (readerFitFrame !== null) cancelAnimationFrame(readerFitFrame);
     readerFitFrame = requestAnimationFrame(() => { readerFitFrame = null; fitReader(); });
@@ -29969,7 +30101,7 @@ function mountClassGuide(root){
   const switchMode = next => {
     guidePage.dataset.mode = next;
     document.documentElement.classList.toggle("tool-guide-reader", next === "reader"); document.documentElement.classList.toggle("tool-guide-author", next === "author");
-    simRoot.style.height = ""; simRoot.style.width = ""; el("noteChips").style.width = ""; el("reader").style.height = ""; el("author").style.height = ""; simRoot.querySelector(".rsim").style.width = ""; simRoot.style.removeProperty("--cg-reader-scale");
+    simRoot.style.height = ""; simRoot.style.width = ""; el("noteChips").style.width = ""; el("guideDescription").style.width = ""; el("guideDescription").style.maxHeight = ""; guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-u"); el("reader").style.height = ""; el("author").style.height = ""; simRoot.querySelector(".rsim").style.width = ""; simRoot.style.removeProperty("--cg-reader-scale");
     if (next === "reader"){
       guidePage.insertBefore(guideHeading, guidePage.firstChild); guidePage.insertBefore(el("reader"), simRoot);
     } else {
@@ -30007,7 +30139,7 @@ function mountClassGuide(root){
     el("editHelp").textContent = next === "annotate" ? "คลิกสกิลเพื่อเพิ่มหรือแก้โน้ต (สกิลที่ยังไม่ได้เลือกก็ได้) ดาวจะปรากฏบนสกิลนั้น" : ""; el("editHelp").hidden = next !== "annotate";
   }
   function openGuide(guide, preview = false, id = null){
-    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; switchMode("reader"); clearNoteChips(); placeNoteChips();
+    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
     if (currentId) history.replaceState(null, "", "#skill-simulator/" + currentId);   // the address bar now is the link to share
     setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากชุมชน
     button("useAsBase").hidden = preview;
@@ -30086,17 +30218,37 @@ function mountClassGuide(root){
   let stopNoteAnimation = () => {};
   // Landscape (not phones), user 2026-10-16: the reader follows the exported PNG: info panel left, the four trees filling the rest, the notes as two columns under them.
   function placeNoteChips(){
-    const list = el("noteChips");
+    const list = el("noteChips"), desc = el("guideDescription");
+    if (mode === "reader" && isSheet()){ if (desc.parentNode !== guidePage) guidePage.insertBefore(desc, simRoot.nextSibling); }   // three-column reader: the description sits under the skill grid
+    else if (desc.parentNode !== el("reader") || desc.previousElementSibling !== el("guideGear")) el("reader").insertBefore(desc, el("guideGear").nextSibling);
     if (mode === "reader" && (isPhone() || isSheet())){ if (list.parentNode !== guidePage || list.previousElementSibling !== simRoot) guidePage.insertBefore(list, simRoot.nextSibling); }
     else if (list.parentNode !== el("reader")) el("reader").insertBefore(list, el("guideDescription").nextSibling);
+  }
+  // Hold a note's skill icon for 0.5 s (mouse or finger) to open its skill card in a new tab, the same gesture and effect as on the grid cells.
+  { let t1 = 0, t2 = 0, x0 = 0, y0 = 0, held = null;
+    const end = () => { clearTimeout(t1); clearTimeout(t2); t1 = t2 = 0; if (held){ held.classList.remove("is-charging"); held = null; } };
+    root.addEventListener("pointerdown", e => {
+      end(); const f = e.target.closest && e.target.closest(".cg-note-frame[data-card]");
+      if (!f || e.isPrimary === false || (e.pointerType === "mouse" && e.button !== 0)) return;
+      x0 = e.clientX; y0 = e.clientY; held = f;
+      t2 = setTimeout(() => { if (held === f) f.classList.add("is-charging"); }, 150);
+      t1 = setTimeout(() => {
+        t1 = 0; end(); f.classList.add("is-boom"); setTimeout(() => f.classList.remove("is-boom"), 400);
+        const srv = (current && current.build && current.build.server) || "og";
+        window.open(location.href.split("#")[0] + "#skill-details/" + encodeURIComponent(f.dataset.card) + "?server=" + srv, "_blank", "noopener");
+      }, 500);
+    });
+    root.addEventListener("pointermove", e => { if (t1 && Math.hypot(e.clientX - x0, e.clientY - y0) > 8) end(); });
+    root.addEventListener("pointerup", end); root.addEventListener("pointercancel", end); window.addEventListener("pointerup", end);
   }
   function clearNoteChips(){
     stopNoteAnimation(); stopNoteAnimation = () => {};
     noteChips.forEach(chip => chip.remove()); noteChips.clear(); el("noteChips").hidden = true;
   }
   function makeNoteChip(info){
-    const chip = document.createElement("article"); chip.className = "cg-note-item"; chip.dataset.id = info.id;
+    const chip = document.createElement("article"); chip.className = "cg-note-item"; chip.dataset.id = info.id; chip.title = info.cell.name + ": " + String(info.text).replace(/\*\*/g, "");   // the whole note when the sheet layout cuts it short
     const frame = document.createElement("span"); frame.className = "cg-note-frame";
+    const card = skillSimCardId(info.cell.icon); if (card){ frame.dataset.card = card; frame.title = "คลิกค้างเพื่อดูรายละเอียดสกิล"; }   // hold to open the skill card (user 2026-10-16)
     const src = SKILL_ICONS[info.cell.icon] || "";
     const bg = document.createElement("span"); bg.className = "cg-note-frame-bg"; bg.setAttribute("aria-hidden", "true"); if (src) bg.style.backgroundImage = 'url("' + src + '")';
     const icon = document.createElement("img"); icon.className = "cg-note-chip-icon"; icon.alt = ""; icon.src = src;
@@ -30228,6 +30380,7 @@ function mountClassGuide(root){
         askReplace(() => { draft = base; startAuthor(); status("คัดลอกไกด์นี้มาเป็นต้นแบบแล้ว แก้ได้เลย"); });
       }
       else if (act === "confirmImport") await confirmImport();
+      else if (act === "descPrev" || act === "descNext"){ descPage += act === "descNext" ? 1 : -1; showDescPage(); }
       else if (act === "confirmYes"){ const fn = confirmThen; confirmThen = null; el("confirm").close(); if (fn) fn(); }
       else if (act === "confirmNo"){ confirmThen = null; el("confirm").close(); }
       else if (act === "deleteNote"){
@@ -31255,6 +31408,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T07:28:12.656Z","feat(bible): landscape class guide reader and its PNG export as one rectangle: guide info, stats and sets top left, the skill grid beside it, author notes in a full-height column on the right and the description under the info and the grid, with small even gaps; a long description splits into pages; everything scales in proportion to the skill grid; hold a note's skill icon to open its skill card, and it grows on hover; tree names shrink gently with the build; one-row stat tiles and a tighter header"],
     ["2026-10-16T07:23:31.730Z","feat(bible): class guide editor fits one screen (stats and sets in a pop-up, page tabs vs page actions, build / notes switch above the trees, the note editor in the description's place, finishing buttons together, import asks before replacing a draft, ใช้ไกด์นี้เป็นต้นแบบ for visitors) and the preview is exactly the visitor view; recommended gear becomes เซ็ตแนะนำ, one row per set with the Replica on the item's corner and a curved arrow; the reader keeps its proportions on wide, short windows; smaller stat numbers; item picker centred; Shadow Strider and Shark (Orange) added from TTO"],
     ["2026-10-16T04:35:50.634Z","feat(bible): class guides get a recommended gear section (weapon, armor, hat, trinket, boot, pet; up to 3 ranked picks with game icons or a typed name; Replica source and ยัด stat on weapon, armor and hat), shown in the reader and the PNG; the landscape reader follows the PNG layout; the guide date is typed and shown as DD/MM/YYYY"],
     ["2026-10-16T03:57:00.269Z","fix(bible): every ^^glossary^^ link has a space on each side (หลบการโจมตี, หลบ in 9 places), and the spacing check now covers glossary links everywhere"],
