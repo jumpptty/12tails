@@ -62,6 +62,7 @@ below for why they were initially left out and then given their own rows.
   `PandaSkill_eng.cs:136`, `:180`), landing on a shared `mode = eSkillMode.passive` tail
   (`resistance` → `IL_21A4`, `PandaSkill.cs:2139`; `statPlus` → `IL_1897`/`IL_2040`,
   `PandaSkill.cs:2113`/`2106`) with no `cType` and no `addTimeOut`/`RPC_<name>` anywhere in `Panda.cs`.
+- **Status classes (checked 2026-10-16, `StatusData.cs` is*Status lists):** `comboPlus` Buff, State (sLv = learned Combo Plus rank, `chaAdjust(6)`, re-applied on every landed Combo / Three Steps hit, `Panda.cs:8820-8848`); `delayQi` Buff, State; `hide` Buff, System (Raijin Ken's 1 s leap, `Panda.cs:41732`; what it does: Mechanics Reference §4.2).
 - **`delayQi1` is `mode = eSkillMode.passive` in `getSkill()` (`PandaSkill.cs:304`, own `break`) yet
   Panda.cs dispatches it as a real, directly-cast skill (`RPC_delayQi(vector, vector2, num2, 1/2/3)`,
   `ActionName == "RPC_delayQi1/2/3"` at `Panda.cs:2399/2411/2423`) with its own `RPC_AddStatus("delayQi",

@@ -202,7 +202,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
   `addTimeOut` precedent) — matches the real cast site exactly (`Rabbit.cs:40652`,
   `agiAdjust((float)180)`). Not a discrepancy.
 - **`bounce` keeps Rabbit airborne for a fixed 4s (Rank 1) / 8s (Rank 2)** (`Rabbit.cs:21068-21073`). The `hide` status itself is set to `4×sLv + 1` (5 / 9 s), but `mBounceTimer = Time.time + 4×sLv` (`:21073`) triggers `RPC_bounce0` (landing, `:21114`), and landing calls `removeStatus("hide")` (`:21566`), so the effective duration is 4 / 8 s. **Tooltip mismatch (found 2026-10-03):** TH "(5 sec)" / "(10 sec)" (`RabbitSkill_thai.cs:114`, `:125`); card `tooltipNote`. Status call:
-  `this.$self_$26924.mChar.StartCoroutine_Auto(this.$self_$26924.mChar.addStatus("hide", 1, 4 * this.$sLv$26923 + 1, 0, this.$self_$26924.mChar.ActorNr));`
+  `this.$self_$26924.mChar.StartCoroutine_Auto(this.$self_$26924.mChar.addStatus("hide", 1, 4 * this.$sLv$26923 + 1, 0, this.$self_$26924.mChar.ActorNr));` (`hide` = Buff, System; what it does: Mechanics Reference §4.2)
   and sets `mBounceTimer = Time.time + 4 * sLv`. Fixed duration (not CHA-adjusted).
 - **No `RPC_AddStatus`/`addStatus`/field-effect-lifetime call exists for**: `statScan`,
   `gilShot`, `backpack`, `fourShot`, `circleShot`,

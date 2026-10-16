@@ -697,6 +697,8 @@ Status effects are queried at runtime via static boolean predicates in `StatusDa
 | **`isShieldStatus(sType)`** | Active protective shields absorbing incoming damage. |
 | **`isSystemStatus(sType)`** | Internal engine statuses that cannot be modified or cleared by player abilities. |
 
+**`hide` (Buff, System; verified 2026-10-16).** A hidden character takes no damage at all: `CharacterControl.hit` returns 0 when the target has `hide` (`CharacterControl.cs:3046`, the same branch as `noDamage`), and Effect Damage skips it (`:6115`, `:6505`, `:6589`); it cannot be clicked as a target (`GameGui.cs:3877`, with `invisible` / `blend`) and its name label is hidden (`CharacterControl.cs:327`). Applied by Rabbit Bounce (`Rabbit.cs:21068`, `4 x sLv + 1` s), Panda Raijin Ken's leap (`Panda.cs:41732`, 1 s), and internally to the caster's own body while it controls a double or a robot: Bat Mimic (`Bat.cs:39312`) and Mole King Kaiser (`Mole.cs:36135`).
+
 **Debuffs that are also State (verified 2026-09-27).** `isDebuffStatus ∩ isStateStatus` (`StatusData.cs:7175`, `:4809`, junk predicates evaluated) = `artCancel`, `blackServant`, `bloodCarnage`, `blueFlag`, `cut`, `darkStalker`, `elementalBound`, `grab`, `overPresence`, `petrify`, `puncture`, `redFlag`. Any resist that filters `isDebuffStatus && !isStateStatus` (e.g. Panda Resistance `CharacterControl.cs:13512-13580`, the equipment debuff-resist branch `:13672`) cannot block these 12.
 
 **`lock`, `ko`, `death` statuses (verified 2026-09-27).** All three are Debuff + System only.
