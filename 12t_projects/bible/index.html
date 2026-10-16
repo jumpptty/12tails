@@ -11266,6 +11266,29 @@ function reachNormalize(reach, rank, rM = 1){
   });
 }
 function reachSize(p){ return Math.max(p.r || 0, p.l || 0, p.w || 0, typeof p.h === "number" ? p.h : 0); }
+// Default view (user 2026-10-16: "the closest zoom for every skill as long as the whole hit box / range / geometry can be seen"): every part's mesh points plus a
+// box for the caster's body are projected at the default pitch, the camera aims at their centre, and the zoom is the largest that keeps all of them on the canvas
+// (12% margin) at every yaw, because the camera drifts round after the intro. Parts with noZoom (a 200 m search) are left out.
+function reachFit(parts, bodyTop, W, H, pitch){
+  const pts = [];
+  for (const p of parts){ if (p.noZoom) continue; try { for (const v of reachMesh(p).verts) pts.push(v); } catch (e) {} }
+  const top = Math.max(0.5, bodyTop || 1.5);
+  for (const x of [-0.4, 0.4]) for (const z of [-0.4, 0.4]) for (const y of [0, top]) pts.push([x, y, z]);
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const v of pts){ x0 = Math.min(x0, v[0]); x1 = Math.max(x1, v[0]); z0 = Math.min(z0, v[2]); z1 = Math.max(z1, v[2]); y0 = Math.min(y0, v[1]); y1 = Math.max(y1, v[1]); }
+  const t = [(x0 + x1) / 2, (z0 + z1) / 2, (y0 + y1) / 2], M = 0.88;
+  let zoom = Infinity;
+  for (let k = 0; k < 24; k++){
+    const yaw = (2 * Math.PI * k) / 24;
+    for (const v of pts){
+      const q = reachProject(v, yaw, pitch, 1, 0, 0, t), dx = Math.abs(q[0]), dy = q[1];   // at zoom 1: x offset from the centre, y offset from the look line (screen-down positive)
+      if (dx > 1e-6) zoom = Math.min(zoom, (W / 2) * M / dx);
+      if (dy > 1e-6) zoom = Math.min(zoom, (H * 0.4 - 48) * M / dy);    // below the look line: 40% of the height, minus the legend
+      if (dy < -1e-6) zoom = Math.min(zoom, (H * 0.6 - 40) * M / -dy);  // above it: 60%, minus the hit counter
+    }
+  }
+  return { zoom: Math.max(4, Math.min(400, zoom)), t };
+}
 function reachBadgeText(parts){
   if (!parts.length) return "";
   if (parts.some(p => p.unknown)) return "?";
@@ -12084,7 +12107,7 @@ function openReachPopup(base, rank, srv0){
   document.body.appendChild(pop);
   const panel = pop.querySelector(".sk-reach-panel"), cv = pop.querySelector(".sk-reach-canvas"), fx = pop.querySelector(".sk-reach-fx");
   const msNow = () => skill.reachModel ? 1 : reachBodyScale(over, skill.class);   // the game scales the whole character by the same factor as rangeMod (plus the Whale body size, Titan Form's extra 0.2)
-  const home = () => ({ ms: msNow(), yaw: Math.PI - 0.5, pitch: 0.5, zoom: Math.max(1, Math.min(cv.clientWidth / 494, cv.clientHeight / 371) * 1.3) * Math.max(parts.some(p => p.fit) ? 3 : 8, Math.min(60, 110 / Math.max(2.5, ...parts.filter(p => !p.noZoom).map(p => Math.max(reachSize(p), p.fit || 0))))), t: [0, 0, 0], tt: [0, 0, 0] });   // fit: metres a chain of repeated parts reaches, so the default view frames all of it (the usual zoom never goes below 8)
+  const home = () => { const f = reachFit(parts, model && model.parts && model.parts[0] ? Math.max(...model.parts[0].pos.map(q => q[1])) * msNow() : 1.5, cv.clientWidth, cv.clientHeight, 0.5); return { ms: msNow(), yaw: Math.PI - 0.5, pitch: 0.5, zoom: f.zoom, t: f.t.slice(), tt: [f.t[0], f.t[1], 0] }; };   // the closest view that shows every part (reachFit)   // fit: metres a chain of repeated parts reaches, so the default view frames all of it (the usual zoom never goes below 8)
   let st = home();
   let drawQueued = 0;
   const drawNow = () => { if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; } drawReach(cv, items, st, model, sceneNow(), seqArg(), countOn); };
@@ -12289,7 +12312,7 @@ function openReachPopup(base, rank, srv0){
       driftYaw += vd * dt;
       st.yaw = lerp(close.yaw, end.yaw, o) + driftYaw; st.pitch = lerp(close.pitch, end.pitch, o);
       st.zoom = Math.exp(lerp(Math.log(close.zoom), Math.log(end.zoom), o)) * zoomK;   // zoom out evenly in log space, with the user's zoom on top
-      st.t = [0, 0, lerp(close.ty, 0, o)];
+      st.t = [lerp(0, end.t[0], o), lerp(0, end.t[1], o), lerp(close.ty, end.t[2], o)]; st.tt = [st.t[0], st.t[1], 0];
       const r = clamp01((t - REVEAL_AT) / REVEAL), k = eio(r);
       items = r > 0 ? grown(parts, 0.9 + 0.1 * k).map(p => ({ part: p, alpha: k })) : parts.map(p => ({ part: p, alpha: 0 }));
       drawNow();
@@ -15383,7 +15406,7 @@ const SKILLS = [
         changeNote: "• [Buff] IntenseFire เสริมพลังให้ลูกไฟของ SkyCrimson เพิ่มขึ้น [ 20/30/40% >> **60/80/100%** ]\n• [Buff] หากเรียนรู้ Fire Soul จะทำให้ Cooldown สกิล SkyCrimson ลดลงเหลือ 12 วิ"
       }
     },
-    compatSkills: ["monkey_phoenix", "monkey_intenseFire", "monkey_fireSoul"], reach:() => [{ shape: "ring", r: 24, anchor: "self", faint: true, label: "ศัตรูรอบตัว Phoenix ที่ถูกถล่ม", src: "Phoenix_skyCrimson_fire.cs" }, { shape: "line", l: 32, anchor: "self", faint: true, rangeMod: ["l"], label: "ลูกไฟพุ่งตรง 16 m/s นาน 2×rangeMod วินาที (ไกลสุด 32×rangeMod m)", src: "Phoenix_skyCrimson_fire.cs:28 (16 m/s); Phoenix.cs:1822 (life 2 x rangeMod), no gravity" }, { shape: "cylinder", r: 5, h: 3, anchor: "target", label: "รอบจุดที่ลูกไฟตก (ทีละลูก)", src: "Phoenix_skyCrimson_fire.cs:231" }], reachModel:"Phoenix"
+    compatSkills: ["monkey_phoenix", "monkey_intenseFire", "monkey_fireSoul"], reach:() => [{ shape: "ring", r: 24, anchor: "self", faint: true, label: "ศัตรูรอบตัว Phoenix ที่ถูกถล่ม", src: "Phoenix_skyCrimson_fire.cs" }, { shape: "cylinder", r: 5, h: 3, anchor: "target", label: "รอบจุดที่ลูกไฟตก (ทีละลูก): ลูกไฟเกิดห่างศัตรู 12 m ในแนวจากเหนือ Phoenix 20 m ลงมาหาศัตรู แล้วพุ่ง 16 m/s ถึงใน 0.75 วินาที", src: "Phoenix_skyCrimson_fire.cs:231; Phoenix.cs:3645-3665 (fireDir = target - Phoenix - 20 up, firePos = target - 12 x fireDir), :28 (16 m/s)" }], reachModel:"Phoenix"
   },
 
   {
@@ -16382,7 +16405,7 @@ const SKILLS = [
     id: "monkey_gaos_fire", name: "Gaos - Fire", nameTha: "กาออส - เพลิงลาวา", class: "Monkey", icon: "monkey_summonGaos5", maxRank: 1,
     ownStatsGaos: true, cd: 9, revisedArtExempt: true, dmg: "talAdjust(140)", ko: "5",
     desc: "ยิงเพลิงใส่เป้าหมายที่อยู่ไกลกว่า **12m** ระเบิดเป็นพื้นที่รอบจุดตก AI ใช้เมื่อเป้าหมายไกลกว่า **12m** และไม่ติดคูลดาวน์ **9 วินาที** เว้นแต่ Rampage พร้อมใช้งาน (จะถูกเลือกก่อน)",
-    compatSkills: ["monkey_summonGaos", "monkey_gaos_nAttack1", "monkey_gaos_nAttack2", "monkey_gaos_tailSpin", "monkey_gaos_rampage"], reach:() => [{ shape: "ring", r: 12, anchor: "self", faint: true, label: "ใช้เมื่อเป้าหมายไกลกว่านี้", src: "ข้อความในสกิล" }, { shape: "line", l: 90, anchor: "self", faint: true, label: "เพลิงพุ่งตรง 30 m/s นาน 3 วินาที (ไกลสุด 90 m)", src: "gaosFire.cs:26 (30 m/s); gaosFire ProjectileControl.life 3 s (client data, sharedassets17), no gravity" }, { shape: "cylinder", r: 8, h: 4, anchor: "target", label: "รอบจุดที่เพลิงระเบิด", src: "Gaos.cs:1765" }], reachModel:"Gaos"
+    compatSkills: ["monkey_summonGaos", "monkey_gaos_nAttack1", "monkey_gaos_nAttack2", "monkey_gaos_tailSpin", "monkey_gaos_rampage"], reach:() => [{ shape: "ring", r: 12, anchor: "self", faint: true, label: "ใช้เมื่อเป้าหมายไกลกว่านี้", src: "ข้อความในสกิล" }, { shape: "line", l: 90, y0: 4, z0: 6, anchor: "self", faint: true, label: "เพลิงพุ่งตรงจากปาก Gaos 30 m/s นาน 3 วินาที (ไกลสุด 90 m)", src: "gaosFire.cs:26 (30 m/s); gaosFire ProjectileControl.life 3 s (client data, sharedassets17), no gravity" }, { shape: "cylinder", r: 8, h: 4, anchor: "target", label: "รอบจุดที่เพลิงระเบิด", src: "Gaos.cs:1765" }], reachModel:"Gaos"
   },
 
   {
@@ -31794,6 +31817,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T17:29:03.637Z","fix(bible): Sky Crimson's fireballs drop onto each enemy from 12 m away instead of flying out from the Phoenix, Gaos's fire line starts at its mouth, and every range preview opens on the closest view that still shows all of its hit boxes and ranges"],
     ["2026-10-16T17:20:38.529Z","feat(bible): World Encarta's range preview centres its pulses on the Sheep, and Barrel Cannon, Barrel Bot's cannon, Gaos's fire and Sky Crimson show how far their shots can fly (45 / 45 / 90 / 32 m)"],
     ["2026-10-16T17:09:32.187Z","feat(bible): range previews play every repeating hit: Knight of the Deep, Aura Field, Mana Field, Chiroptophobia, Gaos's heat, the Rabbit fields and World Encarta until paused, Napalm (5 pools x 6), Barrel Cannon (10) and Mine Walker (24) in full; Fire Avatar replaces the Monkey model; Replenishment, Blood Carnage and Assassinate show the lender class (Rabbit, Bat, Cat)"],
     ["2026-10-16T17:06:31.962Z","feat(bible): the Cat Support Fire range preview marks the whole area its shells can land in"],

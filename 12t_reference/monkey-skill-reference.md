@@ -752,5 +752,5 @@ Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 
 
 ### Projectile travel (decoded 2026-10-16)
 
-- **Gaos fire** (`gaosFire.cs:26`): straight at 30 m/s, no gravity, `ProjectileControl.life` **3 s** (not set in code; the `gaosFire` prefab in the original client data, `sharedassets17.assets`), so at most **90 m**.
-- **Phoenix Sky Crimson** (`Phoenix_skyCrimson_fire.cs:28`): straight at 16 m/s, no gravity, `life = 2 × rangeMod` (`Phoenix.cs:1822`), so at most **32 × rangeMod m** (the prefab value 0 is overridden).
+- **Gaos fire** (`gaosFire.cs:26`): from Gaos's mouth (local (0, 4, 6), `Gaos.cs:3595-3600`) straight toward the target at 30 m/s, no gravity, `ProjectileControl.life` **3 s** (not set in code; the `gaosFire` prefab in the original client data, `sharedassets17.assets`), so at most **90 m**.
+- **Phoenix Sky Crimson** (`Phoenix.cs:3645-3665`): not a shot from the Phoenix. For each enemy hit, `fireDir = (enemy centre − Phoenix − 20 × up).normalized` and the fireball spawns at `enemy centre − 12 × fireDir`, i.e. 12 m back along a line coming down from 20 m above the Phoenix, then flies 16 m/s (`Phoenix_skyCrimson_fire.cs:28`, no gravity) into the enemy, arriving after 0.75 s. Its `life = 2 × rangeMod` (`Phoenix.cs:1822`, 32 × rangeMod m) is never the limit.
