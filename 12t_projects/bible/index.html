@@ -1796,8 +1796,6 @@
   .cg-import-dialog{width:min(460px,calc(100vw - 40px));box-sizing:border-box;margin:auto;padding:24px;color:var(--text);font:inherit}
   .cg-import-dialog::backdrop{background:#090807b8}
   .cg-import-dialog .cg-help{margin:0}
-  .cg-sent-dialog .cg-help{margin:0 0 18px;font-size:14px;line-height:1.7}
-  .cg-sent-dialog .cg-btn{width:100%}
   .cg-import-error{color:var(--seal);font-size:13px;line-height:1.7;margin:8px 0 0}
   .cg-import-error:empty{display:none}
   .cg-transfer .cg-code{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
@@ -29984,7 +29982,7 @@ const CLASS_GUIDE_STEPS = [
 ];
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
-    <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากชุมชน</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
+    <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}</nav>
@@ -29996,12 +29994,11 @@ function mountClassGuide(root){
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
       <div class="cg-toolbar"><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button></div></div>
-      <div class="cg-send" data-cg-role="send"><p class="cg-send-lead">เลือกได้ <b>อย่างใดอย่างหนึ่ง</b> หรือ <b>ทั้งสองอย่าง</b></p><div class="cg-send-opts"><section class="cg-send-opt"><h3>บันทึกเป็นรูป PNG</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></section><section class="cg-send-opt"><h3>ส่งโค้ดให้ <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a> เก็บในคัมภีร์ไบเบิ้ล</h3><ol class="cg-send-steps"><li>กด <b>คัดลอกโค้ดไกด์</b> โค้ดจะอยู่ในคลิปบอร์ด</li><li>เปิด Discord แล้วส่งข้อความหา <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a></li><li>วางโค้ด (Ctrl+V) แล้วส่ง ไกด์จะขึ้นหน้า <b>ไกด์จากชุมชน</b> เมื่อเพิ่มให้แล้ว</li></ol><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
+      <div class="cg-send" data-cg-role="send"><p class="cg-send-lead">เลือกได้ <b>อย่างใดอย่างหนึ่ง</b> หรือ <b>ทั้งสองอย่าง</b></p><div class="cg-send-opts"><section class="cg-send-opt"><h3>บันทึกเป็นรูป PNG</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></section><section class="cg-send-opt"><h3>ส่งโค้ดให้ <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a> เก็บในคัมภีร์ไบเบิ้ล</h3><ol class="cg-send-steps"><li>กด <b>คัดลอกโค้ดไกด์</b> โค้ดจะอยู่ในคลิปบอร์ด</li><li>เปิด Discord แล้วส่งข้อความหา <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a></li><li>วางโค้ด (Ctrl+V) แล้วส่ง ไกด์จะขึ้นหน้า <b>ไกด์จากผู้เล่น</b> เมื่อเพิ่มให้แล้ว</li></ol><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
       <template data-cg-role="modeSwitchTpl"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="cover" aria-pressed="false">${classGuideButtonIcon("cover")}<span>ไอคอนหน้าปก</span></button></div></template>
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><div class="cg-gear-panel" data-cg-role="guideGear" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p></section>
     <section data-cg-role="sim" hidden></section>
-    <dialog class="cg-transfer cg-import-dialog cg-sent-dialog" data-cg-role="sent" aria-labelledby="cgSentTitle"><button type="button" class="cg-note-close" data-cg-act="closeSent" aria-label="ปิด">×</button><h3 id="cgSentTitle">คัดลอกโค้ดไกด์แล้ว</h3><p class="cg-help">โค้ดไกด์อยู่ในคลิปบอร์ดของคุณแล้ว วางโค้ดนี้ส่งให้ <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a> ทาง Discord เพื่อนำไกด์ขึ้นหน้าไกด์จากชุมชน</p><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="closeSent">ตกลง</button></dialog>
     <dialog class="cg-transfer cg-gear-picker" data-cg-role="gearPicker" aria-labelledby="cgGearTitle"><button type="button" class="cg-note-close" data-cg-act="closeGear" aria-label="ปิด">×</button><h3 id="cgGearTitle" data-cg-role="gearTitle"></h3><input type="search" class="cg-gear-search" data-cg-role="gearSearch" placeholder="ค้นหาชื่อไอเทม" aria-label="ค้นหาชื่อไอเทม"><div class="cg-gear-grid" data-cg-role="gearGrid"></div><div class="cg-gear-typed"><input data-cg-role="gearTyped" maxlength="60" placeholder="ไอเทมใหม่ที่ยังไม่มีในรายการ: พิมพ์ชื่อ" aria-label="พิมพ์ชื่อไอเทมเอง"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gearUseTyped">ใช้ชื่อนี้</button></div></dialog>
     <dialog class="cg-transfer cg-import-dialog cg-start-dialog" data-cg-role="start" aria-labelledby="cgStartTitle"><button type="button" class="cg-note-close" data-cg-act="closeStart" aria-label="ปิด">×</button><h3 id="cgStartTitle">เขียนไกด์</h3>
       <div class="cg-start-options"><button type="button" class="cg-start-opt" data-cg-act="startNew">${classGuideButtonIcon("build")}<b>เริ่มไกด์ใหม่</b><small>เริ่มจากตารางสกิลว่าง ทีละขั้นตอน</small></button><button type="button" class="cg-start-opt" data-cg-act="startResume">${classGuideButtonIcon("author")}<b>เขียนต่อ</b><small data-cg-role="startResumeText"></small></button><button type="button" class="cg-start-opt" data-cg-act="startImport">${classGuideButtonIcon("import")}<b>นำเข้าโค้ดไกด์</b><small>วางโค้ดไกด์ที่มีอยู่ แล้วแก้ต่อ</small></button></div></dialog>
@@ -30314,7 +30311,7 @@ function mountClassGuide(root){
       if (want && location.hash !== want) history.replaceState(null, "", want);
     }
     mode = next; el("gallery").hidden = next !== "gallery"; el("author").hidden = next !== "author";
-    el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close(); el("sent").close(); el("start").close(); el("gearPicker").close(); gearPick = null; el("confirm").close(); confirmThen = null;
+    el("reader").hidden = next !== "reader"; simRoot.hidden = next === "gallery"; el("transfer").close(); el("start").close(); el("gearPicker").close(); gearPick = null; el("confirm").close(); confirmThen = null;
     el("noteEditor").hidden = true; status("");
     setTab(next === "gallery" ? "gallery" : next === "author" ? "author" : null);
     if (typeof placeNoteChips === "function") placeNoteChips();   // leaving the reader puts the chips back into its (hidden) panel
@@ -30379,11 +30376,11 @@ function mountClassGuide(root){
   function openGuide(guide, preview = false, id = null){
     current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
     if (currentId) history.replaceState(null, "", "#class-guide/" + currentId);   // the address bar now is the link to share
-    setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากชุมชน
+    setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
     button("useAsBase").hidden = preview;
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
     setToolServer("class-guide", current.build.server);
-    el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "COMMUNITY GUIDE";
+    el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "PLAYER GUIDE";
     // Title (user 2026-10-15): a row of the class icon, the server icon and "Lv.95" above the guide name (the name gets the full width); the byline is the author in gold and the patch.
     el("guideTitle").textContent = "";
     const titleMeta = document.createElement("span"); titleMeta.className = "cg-title-meta";
@@ -30421,7 +30418,7 @@ function mountClassGuide(root){
       const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author, classGuideDateText(guide.date)].join(" · ");
       b.append(portrait, title, byline); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); list.appendChild(b); validCount++;
     }
-    if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์หรืออาชีพอื่น" : "ยังไม่มีไกด์จากชุมชน กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
+    if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์หรืออาชีพอื่น" : "ยังไม่มีไกด์จากผู้เล่น กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
   }
   function showImport(){
@@ -30449,7 +30446,6 @@ function mountClassGuide(root){
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); confirmImport(); }
   });
   el("transfer").addEventListener("close", () => { if (mode === "author") button("export").focus(); });
-  el("sent").addEventListener("close", () => { if (mode === "author") button("export").focus(); });
   // Author notes are permanent chips (user 2026-10-15, no pop-up): the star melts into the light ball, which arcs into a new chip (skill icon, name, note).
   // A chip stays until the page reloads or another guide opens; clicking the skill again flashes its chip. Desktop: the chips sit in the left panel under
   // the description; phones: under the build, and the page scrolls to the new chip so the flight is seen.
@@ -30653,7 +30649,6 @@ function mountClassGuide(root){
       else if (act === "startNew"){ el("start").close(); askReplace(() => { draft = { format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} }; try { localStorage.setItem(stepKey, "1"); } catch (e) {} startAuthor(); status("เริ่มไกด์ใหม่แล้ว"); }); }
       else if (act === "startImport"){ el("start").close(); showImport(); }
       else if (act === "closeTransfer") el("transfer").close();
-      else if (act === "closeSent") el("sent").close();
       else if (act === "closeGear"){ el("gearPicker").close(); gearPick = null; }
       else if (act === "gearUseTyped"){ const n = el("gearTyped").value.trim(); if (!n){ status("พิมพ์ชื่อไอเทมก่อน"); return; } chooseGear({ name: n.slice(0, 60) }); }
       else if (mode !== "author") return;
@@ -30665,7 +30660,7 @@ function mountClassGuide(root){
         coverMissing = true; goStep(5); status("เลือกไอคอนหน้าปกอย่างน้อย 1 สกิล (สูงสุด 3) ก่อนคัดลอกโค้ดไกด์");
         el("coverRow").scrollIntoView({ block: "nearest" });
       }
-      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); copiedOnce = true; showCopied(); updateSteps(); el("sent").showModal(); }   // editor only (user 2026-10-16): ask the author to send the copied code to the maintainer
+      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); copiedOnce = true; showCopied(); updateSteps(); }   // no pop-up (user 2026-10-16): step 6 already says where to send it, the button's check mark confirms the copy
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
@@ -31663,6 +31658,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-16T13:28:38.930Z","fix(bible): the class guide list is called ไกด์จากผู้เล่น, and คัดลอกโค้ดไกด์ in the editor no longer opens a pop-up (its check mark confirms the copy)"],
     ["2026-10-16T13:22:06.752Z","feat(bible): class guide #3, a solo Monkey build on TTO (ลิง 2 ร่าง สายโซโล่ by CHilLs)"],
     ["2026-10-16T11:35:47.166Z","fix(bible): the class guide reader's info, description and notes panels wear the server look (see-through glass on ToT, the harlequin panel on TTO) instead of solid boxes"],
     ["2026-10-16T11:32:42.717Z","feat(bible): a class guide's recommended stats show a ~ before each number (and in the saved PNG), since they are a ballpark, not an exact target"],
