@@ -320,7 +320,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 ### mol_barrelBot_cannon (Barrel Bot Barrel Cannon, auto) (verified 2026-10-01)
 
-- `BarrelBot.RPC_cannon` (`BarrelBot.cs:5030-5340`), needs CannonLv (Mole has #443): CD `agiAdjust(9)` (`:5278`); shell (`BarrelBot_cannon.cs`) bursts on a non-own-layer collider → `RPC_cannon_hit` (`BarrelBot.cs:1840-1910`): `FindAreaTarget(hitPos, 3, 4, enemy layers)`, `hit(1, t, floor(1.5 × ATK), KO 1, …)`.
+- `BarrelBot.RPC_cannon` (`BarrelBot.cs:5030-5340`), needs CannonLv (Mole has #443): CD `agiAdjust(9)` (`:5278`); shell (`BarrelBot_cannon.cs`) bursts on a non-own-layer collider → `RPC_cannon_hit` (`BarrelBot.cs:1840-1910`): `FindAreaTarget(hitPos, 3, 4, enemy layers)`, `hit(1, t, floor(1.5 × ATK), KO 1, …)`. **Shell travel (decoded 2026-10-16):** the shell flies straight at 15 m/s (`BarrelBot_cannon.cs:26`, prefab rigidbody without gravity) for `ProjectileControl.life` = **3 s** (not set in code; read from `cannon_fire` in the original client data, `sharedassets16.assets`), so it reaches at most **45 m** from the bot. Same shell for Barrel Cannon #443.
 
 ### mol_barrelCannon5 (Barrel Cannon, #443) (verified 2026-10-01)
 

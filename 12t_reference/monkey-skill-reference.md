@@ -749,3 +749,8 @@ Source: [ToT monkey simulator dataset](https://talesoftails.net/data/skill-simul
 | 461 | DowndamageMonter | 95 | 0 | None | Passive |
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+### Projectile travel (decoded 2026-10-16)
+
+- **Gaos fire** (`gaosFire.cs:26`): straight at 30 m/s, no gravity, `ProjectileControl.life` **3 s** (not set in code; the `gaosFire` prefab in the original client data, `sharedassets17.assets`), so at most **90 m**.
+- **Phoenix Sky Crimson** (`Phoenix_skyCrimson_fire.cs:28`): straight at 16 m/s, no gravity, `life = 2 × rangeMod` (`Phoenix.cs:1822`), so at most **32 × rangeMod m** (the prefab value 0 is overridden).
