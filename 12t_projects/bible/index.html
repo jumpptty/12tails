@@ -29289,10 +29289,13 @@ function classGuideCoverClean(raw, cells, draft){
     if (!ok){ if (draft) continue; throw new Error("ไอคอนหน้าปกอ้างถึงสกิลที่ไม่มีในคลาสหรือเซิร์ฟเวอร์นี้"); }
     out.push(id);
   }
-  if (out.length > 3){ if (draft) out.length = 3; else throw new Error("ไอคอนหน้าปกเลือกได้ไม่เกิน 3 สกิล"); }
+  if (out.length > 5){ if (draft) out.length = 5; else throw new Error("ไอคอนหน้าปกเลือกได้ไม่เกิน 5 สกิล"); }   // up to 5 since user 2026-10-17 (was 3)
   return out;
 }
-const CLASS_GUIDE_COVER_SPOTS = { 1: [[0.12, 0.12, 0.76]], 2: [[0.02, 0.265, 0.47], [0.51, 0.265, 0.47]], 3: [[0.27, 0.03, 0.46], [0.03, 0.51, 0.46], [0.51, 0.51, 0.46]] };   // [left, top, size] as parts of the box: one big, two in a row, three in a triangle (user 2026-10-16)
+const CLASS_GUIDE_COVER_SPOTS = { 1: [[0.12, 0.12, 0.76]], 2: [[0.02, 0.265, 0.47], [0.51, 0.265, 0.47]], 3: [[0.27, 0.03, 0.46], [0.03, 0.51, 0.46], [0.51, 0.51, 0.46]],
+  // 4 and 5 (user 2026-10-17, picked from mocked options): 4 = a 2 x 2 grid, 5 = a pyramid of 2 over 3; all icons the same size, in pick order
+  4: [[0.02, 0.02, 0.47], [0.51, 0.02, 0.47], [0.02, 0.51, 0.47], [0.51, 0.51, 0.47]],
+  5: [[0.15, 0.08, 0.36], [0.49, 0.08, 0.36], [0.00, 0.52, 0.34], [0.33, 0.52, 0.34], [0.66, 0.52, 0.34]] };   // [left, top, size] as parts of the box: one big, two in a row, three in a triangle (user 2026-10-16)
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
@@ -29540,7 +29543,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   const stats = classGuideStatsClean(value.stats);
   const gear = classGuideGearClean(value.gear, b.classKey, draft);
   const cover = classGuideCoverClean(value.cover, cells, draft);
-  if (!draft && !cover.length) throw new Error("ไกด์ต้องมีไอคอนหน้าปกอย่างน้อย 1 สกิล (เลือกได้สูงสุด 3)");   // the cover is required (user 2026-10-16)
+  if (!draft && !cover.length) throw new Error("ไกด์ต้องมีไอคอนหน้าปกอย่างน้อย 1 สกิล (เลือกได้สูงสุด 5)");   // the cover is required (user 2026-10-16)
   const notes = {};
   for (const id of Object.keys(value.notes)){
     if (!/^[1-4][0-9][1-4]$/.test(id) || !own(cells, id) || cells[id].placeholder) throw new Error("โน้ตอ้างถึงสกิลที่ไม่มีในคลาสหรือเซิร์ฟเวอร์นี้");
@@ -29596,7 +29599,7 @@ function classGuideExpand(o){
 //   varint note count, then per note: slot byte + text
 //   optional gear block (user 2026-10-16; older codes simply end here): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3)
 //   and per choice a flag byte (bit 0 typed name, bit 1 has a Replica, bit 2 the Replica is a typed name, bits 4-7 stat index + 1) + text (item id or name) [+ Replica text]
-//   optional cover block (user 2026-10-16): 0x49, count byte (1-3), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
+//   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
@@ -29662,7 +29665,7 @@ function classGuideFromBinary(bytes){
   let gear = null, cover = null;
   while (i < bytes.length){
     const tag = byte();
-    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1); } continue; }
+    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1); } continue; }
     if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -30371,7 +30374,7 @@ function mountClassGuide(root){
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
       <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
-      <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-3 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
+      <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-5 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
       <div class="cg-toolbar"><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button></div></div>
@@ -30740,7 +30743,7 @@ function mountClassGuide(root){
     });
     const slots = el("coverSlots"); slots.textContent = "";
     const keys = draft ? classGuideCoverIcons({ ...draft, cover: list }) : [];
-    for (let i = 0; i < 3; i++){   // three slots: a picked skill's round icon, or a dashed circle with its number
+    for (let i = 0; i < 5; i++){   // five slots (user 2026-10-17, was three): a picked skill's round icon, or a dashed circle with its number
       const slot = document.createElement("span"); slot.className = "cg-cover-slot" + (keys[i] ? " is-filled" : "");
       if (keys[i]){ const ring = document.createElement("span"); ring.className = "cg-cover-ring"; ring.style.cssText = "inset:0"; const bg = document.createElement("span"); bg.style.backgroundImage = 'url("' + SKILL_ICONS[keys[i]] + '")'; const img = document.createElement("img"); img.src = SKILL_ICONS[keys[i]]; img.alt = ""; ring.append(bg, img); slot.appendChild(ring); }
       else slot.textContent = i + 1;
@@ -30757,7 +30760,7 @@ function mountClassGuide(root){
     saveDraft(); markCover();
   }
   function toggleCover(id){
-    coverChange(list => { const k = list.indexOf(id); if (k >= 0) list.splice(k, 1); else if (list.length < 3) list.push(id); else status("ไอคอนหน้าปกเลือกได้สูงสุด 3 สกิล คลิกสกิลที่เลือกไว้เพื่อเอาออกก่อน"); });
+    coverChange(list => { const k = list.indexOf(id); if (k >= 0) list.splice(k, 1); else if (list.length < 5) list.push(id); else status("ไอคอนหน้าปกเลือกได้สูงสุด 5 สกิล คลิกสกิลที่เลือกไว้เพื่อเอาออกก่อน"); });
   }
   function openGuide(guide, preview = false, id = null){
     current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
@@ -32175,6 +32178,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T08:33:11.021Z","feat(bible): a class guide cover takes up to 5 skill icons (4 in a 2 x 2 grid, 5 as a pyramid of 2 over 3)"],
     ["2026-10-17T08:24:02.126Z","feat(bible): ไกด์จากผู้เล่น becomes a medallion grid: round covers centred on 4-column cards with class and server chips and gold estimated readers; on phones the filters and cards go compact, 3 per row with at least 3 rows per page"],
     ["2026-10-17T08:07:44.817Z","feat(bible): each class guide counts its own views and shows its estimated readers live with a readers icon on its card and in its byline"],
     ["2026-10-17T05:47:17.805Z","fix(bible): Sheep PRESET colours 2-5 repainted like a colouring book: hair, horns and eyes filled inside their black outlines in the game colours, nothing spills onto her face"],

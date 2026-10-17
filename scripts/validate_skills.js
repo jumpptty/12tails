@@ -3295,10 +3295,13 @@ let checkedRsim = 0;
     rejects(()=>norm(change({gear:{weapon:[{name:""}]}})), "reject an empty typed name"); rejects(()=>norm(change({gear:{weapon:[{name:"x".repeat(61)}]}})), "limit typed names to 60 characters");
     rejects(()=>norm(change({gear:{ring:[{name:"x"}]}})), "reject an unknown gear slot");
     ok(same(norm(change({title:"",author:"",date:"",gear:{weapon:[{item:"w_cat10"},{item:"w_wlf10"}]}}),{draft:true}).gear, {weapon:[{item:"w_wlf10"}]}), "drafts drop gear the class cannot use (class switched in the editor)");
-    // cover icons (user 2026-10-16): 1-3 skills of the guide's grid, in order; the codes carry them in an optional 0x49 block, page and script identical
+    // cover icons (user 2026-10-16; up to 5 since 2026-10-17): 1-5 skills of the guide's grid, in order; the codes carry them in an optional 0x49 block, page and script identical
     { const withCover = norm(change({ cover: [102, 101] }));
       ok(same(withCover.cover, [102, 101]) && same(norm(fromBin(bin(withCover))), withCover) && same(Array.from(bin(withCover)), Array.from(gc.classGuideBinary(withCover))) && same(norm(gc.decode(gc.encode(withCover))), withCover) && same(norm(decode(encode(change({ cover: [102, 101] })))), withCover), "cover icons round-trip through both code formats, page and scripts/guide_code.js identical");
-      rejects(() => norm(change({ cover: [101, 102, 103, 104] })), "reject a fourth cover icon");
+      { const five = norm(change({ cover: [113, 101, 102, 103, 111] }));
+        ok(same(five.cover, [113, 101, 102, 103, 111]) && same(norm(fromBin(bin(five))), five) && same(norm(gc.decode(gc.encode(five))), five), "five cover icons keep their order through both code formats (page and script)"); }
+      rejects(() => norm(change({ cover: [101, 102, 103, 111, 112, 113] })), "reject a sixth cover icon (six real cells of the grid)");
+      ok([1, 2, 3, 4, 5].every(n => { const sp = vm.runInContext("CLASS_GUIDE_COVER_SPOTS", sandbox)[n]; return sp && sp.length === n && sp.every(([x, y, d]) => x >= 0 && y >= 0 && d > 0 && x + d <= 1.001 && y + d <= 1.001); }), "every cover count 1-5 has a layout that stays inside its box");
       rejects(() => norm(change({ cover: [999] })), "reject a cover icon that is not in the grid");
       ok(same(norm(change({ title: "", author: "", date: "", cover: [101, 999, 101] }), { draft: true }).cover, [101]), "drafts drop cover icons the grid no longer has"); }
   }

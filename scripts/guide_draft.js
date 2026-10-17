@@ -114,7 +114,7 @@ function build(draft){
     notes[id] = notes[id] ? notes[id] + "\n" + body : body;
   }
   const cover = (draft.cover || []).map(k => resolve(cells, learned, k));
-  if (!cover.length || cover.length > 3 || new Set(cover).size !== cover.length) throw new Error("cover needs 1-3 different skills");
+  if (!cover.length || cover.length > 5 || new Set(cover).size !== cover.length) throw new Error("cover needs 1-5 different skills");
   for (const [k, max] of [["title", 160], ["author", 120], ["description", 12000]]) if (String(draft[k] || "").length > max) throw new Error(k + " is longer than " + max + " characters");
   if (!String(draft.title || "").trim()) throw new Error("title is empty");
   const guide = {

@@ -36,7 +36,7 @@ Then run `node scripts/guide_draft.js build <draft.json> <guide.json>`. It appli
 - **Description:** the general part: the build's purpose, modes or arenas, playstyle, the key-skill summary. **Notes:** each skill-specific explanation goes on that skill (`notes`, keyed by skill name or cell id; a bare name means its highest learned rank). Text that only explains one skill leaves the description.
 - **Nicknames → skills:** match the author's Thai names to the layout names, using `12t_reference/<class>-skill-reference.md` when the link is not obvious (e.g. Monkey "ล็อค 6" = Ground Lock, whose lock Aegis Of Earth 3 raises to 6 s; "ท่าชาร์ตรวมร่างลิงดิน" that adds KO to Stone Hammer = Stone Sentinel). If a nickname stays unclear, keep the sentence in the description and say so to the user.
 - **Bold** with `**text**`, with a space before and after it (the editor adds those spaces), on the key points only: modes, key skills, numbers.
-- **Cover:** 1-3 skills, the ones the author calls the build's core, most important first.
+- **Cover:** 1-5 skills, the ones the author calls the build's core, most important first.
 - **Title:** short and in the community's style (class nickname + role or mode, e.g. ลิง PVP อารีน่าใหญ่). **Author:** only a name the user or the post gives; otherwise leave it empty and ask. **Date:** today unless given.
 - Limits: title 160, author 120, description 12000, each note 3000 characters.
 
