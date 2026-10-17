@@ -11,10 +11,14 @@ const path = require("path");
 
 const INDEX = path.join(__dirname, "..", "12t_projects", "bible", "index.html");
 const SITE = "https://jumpptty.goatcounter.com";
+// GoatCounter caches each counter URL for up to 4 hours (Cache-Control public, Expires +4 h; checked 2026-10-17: a cached answer was 3 h 55 min old and one
+// reader behind). The cache key includes the query and an unknown parameter is ignored, but `end` must be a date, so every run asks with its own far-future
+// end date (2100-01-01 plus the minutes since 1970, modulo 100 years): always a fresh count (Age 0) that still covers all time.
+const FRESH_END = new Date(Date.UTC(2100, 0, 1) + (Math.floor(Date.now() / 60000) % 36500) * 86400000).toISOString().slice(0, 10);
 const LINE = /^const CLASS_GUIDE_VIEWS = [^\r\n]*/m;   // the line body only: its CRLF ending stays untouched (index.html is CRLF)
 
 async function count(id){
-  const url = SITE + "/counter/" + encodeURIComponent("/bible/#class-guide/" + id) + ".json?start=2020-01-01";   // without start the counter answers 404 / 0 for every path (only TOTAL works); 2020 = all time
+  const url = SITE + "/counter/" + encodeURIComponent("/bible/#class-guide/" + id) + ".json?start=2020-01-01&end=" + FRESH_END;   // without start the counter answers 404 / 0 for every path (only TOTAL works); 2020 = all time
   const r = await fetch(url);
   if (r.status === 404) return 0;                              // no visit recorded yet
   if (!r.ok) throw new Error(url + " answered " + r.status);  // 403 = "Allow adding visitor counts" switched off in the GoatCounter settings

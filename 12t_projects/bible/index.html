@@ -19,7 +19,7 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula", ".sk-hero-desc", ".sk-dep-strip"],
     // flat panels and modals that never change fill on hover
-    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-stats", ".cg-gear-edit", ".cg-note-editor",
+    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
       ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".svc-item", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
     // clickable tiles whose own hover fill must keep winning
@@ -1742,7 +1742,8 @@
   .cg-stat-in b{font-size:11px;letter-spacing:.14em;font-weight:600}
   .cg-page .cg-stat-in input{border-color:var(--c);padding:7px 8px;text-align:center;color:var(--text);-moz-appearance:textfield}
   .cg-stat-in input::-webkit-outer-spin-button,.cg-stat-in input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .cg-stat-panel{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:0 0 14px}   /* small tiles side by side (user 2026-10-16: they took too much height) */
+  .cg-stat-panel{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 14px;margin:0 0 14px}   /* round dials side by side, centred (user 2026-10-17, as in step 2 and the PNG) */
+  .cg-stat-panel > .cg-stat-tile{flex:none;width:66px}
   /* recommended gear (user 2026-10-16) */
   .cg-gear-edit{border:1px solid var(--line);border-radius:4px;padding:12px 14px 14px;margin:0 0 16px;background:var(--panel)}
   .cg-gear-edit legend{padding:0 6px;color:var(--gold);font-size:13px}
@@ -1820,15 +1821,16 @@
   @media (hover:none){.cg-set-ed .cg-gear-x{opacity:1}}
   @media (max-width:640px){.cg-set-ed{grid-template-columns:30px repeat(6,minmax(0,1fr));gap:6px}.cg-set-ed .cg-set-no{font-size:11px;white-space:normal}.cg-set-ed .cg-gear-name{display:none}.cg-set-add,.cg-set-off{width:100%;height:auto;aspect-ratio:1}.cg-extras-dialog .cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.cg-set-head{font-size:10.5px;line-height:1.2}.cg-page .cg-set-ed .cg-gear-stat-in{-webkit-appearance:none;appearance:none;padding:3px 0;font-size:8.5px;letter-spacing:-.02em;text-align:center;text-align-last:center}}
   .cg-stat-panel[hidden]{display:none}
-  .cg-stat-tile{border-left:3px solid var(--c);border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--c) 11%,transparent);padding:4px 8px 5px;min-width:0}
-  .cg-stat-tile b{display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
-  .cg-stat-val{display:flex;align-items:baseline;gap:1px}   /* recommended stats are a ballpark (user 2026-10-16): a "~" before the number */
-  .cg-stat-approx{font-weight:700;font-size:17px;line-height:1.1;color:var(--c);opacity:.75}
+  .cg-stat-tile{display:grid;justify-items:center;gap:6px;min-width:0;padding:0;border:0;background:none}
+  .cg-stat-tile b{order:2;display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
+  .cg-stat-val{width:62px;height:62px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:1px;border:2px solid var(--c);border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),rgba(0,0,0,.35));box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent);transition:box-shadow .15s ease}   /* recommended stats are a ballpark (user 2026-10-16): a "~" before the number */
+  .cg-stat-approx{font-weight:700;font-size:13px;line-height:1;color:var(--c);opacity:.75}
   .cg-page .cg-stat-tile input.cg-stat-try{display:block;flex:1;min-width:0;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:19px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
   .cg-page .cg-stat-tile input.cg-stat-try:hover,.cg-page .cg-stat-tile input.cg-stat-try:focus{border-bottom-color:var(--c);outline:none}
   .cg-stat-tile input.cg-stat-try::-webkit-outer-spin-button,.cg-stat-tile input.cg-stat-try::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .cg-stat-tile{cursor:text}
-  .cg-stat-tile.is-tried{box-shadow:inset 0 0 0 1px var(--c)}
+  .cg-stat-tile.is-tried .cg-stat-val{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 45%,transparent),0 0 20px color-mix(in srgb,var(--c) 55%,transparent)}   /* a value the reader is trying out */
+  .cg-page .cg-stat-tile input.cg-stat-try{flex:none;width:3.1ch;font-size:18px;text-align:center}
   .cg-stat-reset{grid-column:1/-1;justify-self:start;padding:2px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
   @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
@@ -1935,10 +1937,10 @@
   .cg-send-previews{display:grid;grid-template-columns:minmax(0,720px);justify-content:center}   /* the full guide view alone, centred (the card moved to step 5, user 2026-10-17) */   /* the pair centred in the panel, the card centred against the view (user 2026-10-17) */
   .cg-send-previews figure{margin:0;display:grid;gap:6px;align-content:start}
   .cg-send-previews figcaption{font-size:12px;color:var(--muted);text-align:center}
-  .cg-cover-card{display:grid;justify-items:center;gap:6px;padding:16px 18px 20px;border:1px solid var(--line);border-radius:6px;background:var(--panel);text-align:center}
+  .cg-cover-card{display:grid;justify-items:center;gap:8px;margin-top:6px;padding:22px 24px 28px;border:1px solid var(--line);border-radius:6px;background:var(--panel);text-align:center}
   .cg-cover-card .cg-send-h{margin:0}
-  .cg-cover-card-sub{margin:0 0 6px;font-size:12.5px;color:var(--muted)}
-  .cg-cover-card-host{width:min(260px,100%);margin:0}
+  .cg-cover-card-sub{margin:0 0 12px;font-size:12.5px;color:var(--muted)}
+  .cg-cover-card-host{width:min(240px,100%);margin:0}
   .cg-cover-card-host:empty::before{content:"เลือกไอคอนหน้าปกเพื่อดูการ์ด";display:block;padding:40px 0;color:var(--muted);font-size:13px}
   .cg-send-thumb{position:relative;width:100%;aspect-ratio:16 / 9;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:3px;background:#140f0b;cursor:zoom-in;overflow:hidden;box-shadow:0 10px 22px -12px #000;transition:border-color .15s,transform .15s}
   .cg-send-thumb img{display:block;width:100%;height:100%;object-fit:contain}
@@ -1981,6 +1983,18 @@
   .cg-extras-panel .cg-set-ed .cg-set-no{padding-top:21px}
   .cg-extras-panel .cg-set-add,.cg-extras-panel .cg-set-off{width:54px;height:54px}
   .cg-extras-panel .cg-set-ed .cg-set-tile{max-width:54px}
+  /* Step 2 dials (user 2026-10-17, layout 5 of 10): each section a soft card with its title inside, the stats as round dials ringed in their colour, round gear sockets */
+  .cg-extras-panel{gap:16px;align-content:start}
+  .cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{border:0;border-radius:12px;padding:18px 22px 20px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.25));box-shadow:inset 0 0 0 1px rgba(201,162,39,.2),0 10px 24px -14px #000}
+  .cg-extras-panel .cg-stats legend,.cg-extras-panel .cg-gear-edit legend{float:left;width:100%;margin:0 0 14px;padding:0;font-size:15px;font-weight:600;color:var(--gold);letter-spacing:.02em}
+  .cg-extras-panel legend + *{clear:both}
+  .cg-extras-panel .cg-stats-grid{grid-template-columns:repeat(8,78px);justify-content:center;gap:22px}
+  .cg-extras-panel .cg-stat-in{justify-items:center;gap:8px}
+  .cg-extras-panel .cg-stat-in b{order:2}
+  .cg-page .cg-extras-panel .cg-stat-in input{width:70px;height:70px;box-sizing:border-box;border-radius:50%;border-width:2px;font-size:20px;font-weight:700;padding:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),rgba(0,0,0,.35));box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
+  .cg-page .cg-extras-panel .cg-stat-in input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent),0 0 18px color-mix(in srgb,var(--c) 45%,transparent);outline:none}
+  .cg-extras-panel .cg-set-add,.cg-extras-panel .cg-set-off{border-radius:50%}
+  @media (max-width:760px){.cg-extras-panel .cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px}.cg-page .cg-extras-panel .cg-stat-in input{width:62px;height:62px;font-size:18px}.cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{padding:14px 12px 16px}}
   .cg-step-tab:hover,.cg-step-tab:focus-visible{color:var(--text)}
   .cg-step-tab.is-done b{border-color:var(--pro,#5fb36b);color:var(--pro,#5fb36b)}
   .cg-step-tab.is-done b::after{content:"✓";position:absolute;margin:-14px 0 0 22px;font-size:11px;color:var(--pro,#5fb36b)}
@@ -2005,15 +2019,17 @@
   .cg-author:has(.cg-note-editor:not([hidden])) .cg-step-empty{display:none}
   .cg-page[data-mode="author"] .cg-fields > .cg-step-empty{grid-column:1/-1;align-self:start}
   .cg-page[data-mode="author"] .rsim-bar .cg-mode-switch{display:none}   /* the steps choose the grid's mode */
-  .cg-cover-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:56px;border-radius:6px}
-  .cg-cover-row > .cg-cover-pick-btn{flex:1 1 100%}   /* the label keeps its own row: the slots and ล้าง go under it, so the text never wraps (user 2026-10-16) */
+  .cg-cover-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"label clear" "slots slots";align-items:center;gap:16px 10px;min-height:56px;padding:4px 6px 8px;border-radius:6px}   /* the label with ล้าง beside it, the slots on their own row with room for the rings' gold edge and glow (user 2026-10-17: step 5 felt suffocating) */
+  .cg-cover-row > .cg-cover-pick-btn{grid-area:label}
+  .cg-cover-row > .cg-cover-slots{grid-area:slots}
+  .cg-cover-row > [data-cg-act="coverClear"]{grid-area:clear;align-self:stretch}
   .cg-cover-pick-btn b,.cg-cover-pick-btn small{white-space:nowrap}
   .cg-cover-row.is-missing .cg-cover-pick-btn{border-color:var(--seal,#e5483f);box-shadow:0 0 0 1px var(--seal,#e5483f)}
-  .cg-cover-slots{flex:none;display:flex;gap:8px}
+  .cg-cover-slots{display:flex;justify-content:space-between;gap:12px;padding:0 6px}   /* the five slots spread over the row */
   .cg-cover-slot{position:relative;flex:none;width:40px;height:40px;box-sizing:border-box;display:grid;place-items:center;border:1.5px dashed var(--line);border-radius:50%;color:var(--muted);font-size:13px;font-weight:700}
   .cg-cover-slot.is-filled{border:0}
   .cg-cover-slot .cg-cover-ring{position:absolute}
-  .cg-cover-pick-btn{flex:1;min-width:0;display:grid;gap:2px;padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2);color:var(--text);font:inherit;text-align:left}
+  .cg-cover-pick-btn{flex:1;min-width:0;display:grid;gap:3px;padding:10px 14px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2);color:var(--text);font:inherit;text-align:left}
   .cg-cover-pick-btn b{font-size:14px;font-weight:600;color:var(--gold)}
   .cg-cover-pick-btn small{font-size:12px;color:var(--muted)}
   .cg-page[data-mode="author"] .rsim-cell.cg-cover-pick{box-shadow:0 0 0 2px var(--gold),0 0 12px rgba(212,175,55,.6);border-radius:8px}
@@ -29537,7 +29553,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:26:07.152Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4,"16":0,"17":0,"18":0,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:38:30.599Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30308,14 +30324,19 @@ async function classGuideRenderImage(guide, simRoot){
   // stats
   const filled = CLASS_GUIDE_STATS.filter(s => guide.stats && s.key in guide.stats);
   if (filled.length){
-    const per = 4, tw = (lw - 8 * (per - 1)) / per, th = 52;   // one row of small tiles, as on the screen (user 2026-10-16)
+    const per = 4, cw = lw / per, R = 33, rowH = R * 2 + 40;   // round dials, up to 4 a row, as on the screen (user 2026-10-17)
     filled.forEach((s, i) => {
-      const x = lx + (i % per) * (tw + 8), yy = y + Math.floor(i / per) * (th + 8), col = v("--stat-" + s.key) || gold;
-      ctx.fillStyle = alpha(col, 0.13); ctx.fillRect(x, yy, tw, th); ctx.fillStyle = col; ctx.fillRect(x, yy, 4, th);
-      ctx.font = font(600, 13); spaced(3); ctx.fillText(s.label, x + 12, yy + 19); spaced(0);
-      ctx.font = font(700, 26); ctx.fillText("~" + guide.stats[s.key], x + 12, yy + 45);   // approximate, as on the screen
+      const inRow = Math.min(per, filled.length - Math.floor(i / per) * per), cx = lx + (lw - inRow * cw) / 2 + (i % per + 0.5) * cw,   // each row centred (user 2026-10-17)
+            cy = y + 4 + R + Math.floor(i / per) * rowH, col = v("--stat-" + s.key) || gold;
+      const g = ctx.createRadialGradient(cx, cy - R * 0.3, 0, cx, cy, R); g.addColorStop(0, "rgba(255,255,255,.06)"); g.addColorStop(1, "rgba(0,0,0,.35)");
+      ctx.save(); ctx.shadowColor = alpha(col, 0.45); ctx.shadowBlur = 14 * P.scale; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+      ctx.beginPath(); ctx.arc(cx, cy, R - 1.25, 0, Math.PI * 2); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
+      const val = String(guide.stats[s.key]); ctx.font = font(700, 15); const tw = ctx.measureText("~").width; ctx.font = font(700, 24); const vw = ctx.measureText(val).width, x0 = cx - (tw + vw) / 2;
+      ctx.fillStyle = col; ctx.globalAlpha = 0.75; ctx.font = font(700, 15); ctx.fillText("~", x0, cy + 6); ctx.globalAlpha = 1;   // approximate, as on the screen
+      ctx.font = font(700, 24); ctx.fillText(val, x0 + tw, cy + 8.5);
+      ctx.font = font(600, 13); spaced(3); ctx.textAlign = "center"; ctx.fillText(s.label, cx + 1.5, cy + R + 22); ctx.textAlign = "left"; spaced(0);
     });
-    y += Math.ceil(filled.length / per) * (th + 8) + 10;
+    y += 4 + Math.ceil(filled.length / per) * rowH - 12 + 18;
     closeBox(y - 18);
   }
   // recommended sets "เซ็ตแนะนำ" (user 2026-10-16): one row per set, the used slots as columns, a typed name drawn as its icon, a Replica as a small icon on the item's bottom-right corner with a curved arrow up into it, the ยัด stat under it
@@ -31086,7 +31107,7 @@ function mountClassGuide(root){
     .then(r => r.status === 404 ? { count: "0" } : r.ok ? r.json() : null)
     .then(j => j && j.count != null ? Number(String(j.count).replace(/[^\d]/g, "")) || 0 : null)
     .catch(() => null)
-    .then(n => n != null ? n : (CLASS_GUIDE_VIEWS.counts[id] != null ? CLASS_GUIDE_VIEWS.counts[id] : null)));   // blocked (ad / tracker blocker): the count saved at the last push (user 2026-10-17)
+    .then(n => { const snap = CLASS_GUIDE_VIEWS.counts[id]; return n == null ? (snap != null ? snap : null) : Math.max(n, snap || 0); }));   // blocked (ad / tracker blocker): the count saved at the last push (user 2026-10-17); counts only grow, so the snapshot also wins over a live answer GoatCounter cached before the push (it caches each counter up to 4 hours)
   // Shown as ESTIMATED READERS (user 2026-10-17): a guide is often read by a whole team of 5-7 around one screen, so the unique-visitor count is
   // multiplied by a fixed per-guide factor between 5.0 and 7.0 (about 6 on average; from the guide id, so it never changes between loads). 0 stays 0.
   const estimatedReaders = (id, visitors) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; return Math.round(visitors * (5 + (h % 201) / 100)); };
@@ -32447,6 +32468,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T13:27:42.140Z","feat(bible): recommended stats become round dials ringed in their colour in the guide editor (step 2, now soft cards with round gear sockets), the guide view and the PNG; step 5 gets room to breathe; reader counts are read fresh at every push and never show lower than that"],
     ["2026-10-17T13:23:36.637Z","feat(bible): class guide #20 TTO Mole ตุ่นป้อมแท้ by Kaneki; the guide editor drops its own เขียนไกด์ tab (it did nothing there)"],
     ["2026-10-17T13:08:39.153Z","feat(bible): the guide view's page buttons fold into one เมนูไกด์ button in the top bar with its own pop-up (what each choice does, keyboard and theme ready); the gallery drops its own tab and เขียนไกด์ becomes a gold call to action; Back from a guide returns to the guide list"],
     ["2026-10-17T12:33:37.561Z","feat(bible): class guide #19 TTO Bison ไบวอ PVE by Warisza; the guide view and PNG drop every container (open layout on a soft dark glow): author notes get thin gold dividers and bigger numbers, the description becomes a gold pull quote; more room between the top buttons and the guide"],
