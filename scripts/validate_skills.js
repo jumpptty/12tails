@@ -3028,6 +3028,30 @@ let checkedRsim = 0;
   ok(U([101, 102, 103, 104], 104) === "green", "removing the dependent skill releases its prerequisite");
 }
 
+// Expert guide building (2026-10-17): skillSimProblems lists exactly what skillSimValid rejects (empty <=> valid, all 12 classes with ToT EX, random builds),
+// every published guide is clean, the rules are named, and skillSimBudgetOk only checks the level and the pools.
+{
+  const ALL = vm.runInContext("SKILL_SIM", sandbox), EXS = vm.runInContext("SKILL_SIM_EX", sandbox), cellsFn = vm.runInContext("skillSimCells", sandbox), valid = vm.runInContext("skillSimValid", sandbox);
+  const probs = vm.runInContext("skillSimProblems", sandbox), budget = vm.runInContext("skillSimBudgetOk", sandbox), guideProbs = vm.runInContext("classGuideBuildProblems", sandbox), guides = vm.runInContext("CLASS_GUIDES", sandbox);
+  const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[SKILL SIM ERROR] expert mode: " + msg); errorCount++; } };
+  let seed = 20261017; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  let agree = 0, cases = 0;
+  for (const cls in ALL){
+    const cs = cellsFn(ALL[cls], null, EXS[cls]), names = ALL[cls].map(t => t.name), ids = Object.keys(cs).map(Number);
+    for (let k = 0; k < 80; k++){
+      const rate = [0.05, 0.2, 0.5, 0.9][k % 4], lv = [30, 95, 100, 120][(k >> 2) % 4], set = new Set(ids.filter(() => rnd() < rate));
+      cases++; if ((probs(cs, names, set, lv).length === 0) === valid(cs, 4, set, lv)) agree++;
+    }
+  }
+  ok(agree === cases, "problems empty exactly when the build is valid (" + agree + "/" + cases + " random builds)");
+  ok(guides.every(g => guideProbs(g.build).length === 0), "every published guide build has no problems");
+  const R = cellsFn(ALL.rabbit), rn = ALL.rabbit.map(t => t.name), rule = (set, lv) => probs(R, rn, new Set(set), lv).map(x => x.rule).sort().join();
+  const lower = Object.keys(R).map(Number).find(id => id < 400 && id % 10 === 2 && !R[id].req.length && R[id].bn === 0 && R[id - 1].bn === 0 && R[id].lv <= 95);
+  ok(lower && rule([lower], 95) === "lower", "a rank without the rank before it is a 'lower' problem");
+  const gated = Object.keys(R).map(Number).find(id => id < 400 && id % 10 === 1 && !R[id].req.length && R[id].bn > 0 && R[id].lv <= 95);
+  ok(gated && rule([gated], 95) === "tree" && probs(R, rn, new Set([gated]), 95)[0].text.includes(rn[R[gated].tree]), "a skill above its tree's rank threshold names the tree");
+  ok(gated && budget(R, new Set([gated]), 95) && !budget(R, new Set([gated]), R[gated].lv - 1), "the budget check ignores thresholds but keeps the level");
+}
 // ToT EX: published server allocation rules, independent pools and reset pruning.
 {
   const EX = vm.runInContext("SKILL_SIM_EX", sandbox), ALL = vm.runInContext("SKILL_SIM", sandbox);

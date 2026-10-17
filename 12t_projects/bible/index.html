@@ -2345,6 +2345,16 @@
   .rsim-cell.is-can .rsim-plus{display:block}
   .rsim-cell.can-green .rsim-plus{background:var(--pro)}
   .rsim-cell.can-red .rsim-plus{background:var(--seal)}
+  /* expert mode (user 2026-10-17): a brighter gold arrow; a skill breaking a rule wears a red ring once the build is checked; the check banner under the bar */
+  .rsim-cell.can-gold .rsim-plus{background:linear-gradient(180deg,#ffe08a,#d4af37);box-shadow:0 0 0 1px var(--ink),0 0 6px rgba(255,214,102,.85)}
+  .rsim-cell.is-invalid{outline:2px solid var(--seal);outline-offset:3px;border-radius:8px;box-shadow:0 0 12px rgba(229,72,63,.55)}
+  .rsim-expert-arrow{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:linear-gradient(180deg,#ffe08a,#d4af37);color:#140f0b;font:800 11px/1 'Prompt',sans-serif;box-shadow:0 0 0 1px var(--ink)}
+  .rsim-expert[aria-pressed="true"]{border-color:var(--gold) !important;color:var(--gold) !important;box-shadow:0 0 10px rgba(212,175,55,.4)}
+  .rsim-check{margin:-2px 0 12px;padding:9px 14px;border:1px solid rgba(95,174,90,.5);border-radius:8px;background:rgba(95,174,90,.08);color:var(--pro);font-size:13px;line-height:1.6}
+  .rsim-check[hidden]{display:none}
+  .rsim-check.is-bad{border-color:rgba(229,72,63,.55);background:rgba(229,72,63,.08);color:var(--text)}
+  .rsim-check.is-bad > b{color:var(--seal)}
+  .rsim-check ul{margin:4px 0 0;padding-left:20px;max-height:7.4em;overflow-y:auto}
   .rsim-cell{transition:transform .12s ease; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none}
   .rsim-tip{position:fixed; z-index:9000; pointer-events:none; padding:4px 10px; font:600 13px/1.3 'Prompt', sans-serif; color:var(--text); background:var(--panel); border:1px solid var(--gold); border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,.5); white-space:nowrap; opacity:0; transition:opacity .1s ease}
   .rsim-tip.show{opacity:1}
@@ -29285,6 +29295,48 @@ function skillSimValid(cells, treeCount, set, lv){
   for (const id of set) if (cells[id].ex && usedC < cells[id].bn) return false;
   return perTree.every(a => a.sort((x, y) => x - y).every((bn, k) => bn <= k));
 }
+// Expert guide building (user 2026-10-17). skillSimBudgetOk: only what an expert-mode draft must keep (every skill exists, the level allows it, no pool is
+// overspent). skillSimProblems: every rule a build breaks, one entry each ({ id, rule, text }), from the same rules as skillSimValid, so the list is empty
+// exactly when skillSimValid passes. names = the trees' names (for the rank-threshold lines).
+function skillSimBudgetOk(cells, set, lv){
+  let used = 0, usedC = 0, usedEx = 0;
+  for (const id of set){ const c = cells[id]; if (!c || c.placeholder || lv < c.lv) return false; if (c.ex) usedEx++; else if (id < 400) used++; else usedC++; }
+  return used <= skillSimPoolMax(lv) && usedC <= skillSimPoolMaxC(lv) && usedEx <= skillSimPoolMaxEx(lv);
+}
+function skillSimProblems(cells, names, set, lv){
+  const out = [], ids = [...set].sort((a, b) => a - b), name = id => cells[id] ? cells[id].name : "#" + id, add = (id, rule, text) => out.push({ id, rule, text });
+  let used = 0, usedC = 0, usedEx = 0;
+  for (const id of ids){
+    const c = cells[id];
+    if (!c){ add(id, "missing", "สกิล #" + id + " ไม่มีในคลาสนี้"); continue; }
+    if (c.placeholder){ add(id, "missing", name(id) + ": ยังไม่มีข้อมูลสกิลนี้"); continue; }
+    if (lv < c.lv) add(id, "level", name(id) + ": ต้องเลเวล " + c.lv);
+    if (id < 400 && id % 10 !== 1 && !set.has(id - 1)) add(id, "lower", name(id) + ": ต้องเรียน " + name(id - 1) + " ก่อน");
+    const miss = c.req.filter(x => !set.has(x)); if (miss.length) add(id, "req", name(id) + ": ต้องเรียน " + miss.map(name).join(", ") + " ก่อน");
+    if (c.ex){
+      usedEx++;
+      const clash = c.exclude.filter(x => set.has(x)); if (clash.length) add(id, "exclude", name(id) + ": เรียนคู่กับ " + clash.map(name).join(", ") + " ไม่ได้");
+      if (c.choice){ const other = ids.filter(x => x !== id && cells[x] && cells[x].ex && cells[x].choice === c.choice); if (other.length) add(id, "choice", name(id) + ": เลือกได้อย่างเดียวในกลุ่มเดียวกับ " + other.map(name).join(", ")); }
+    } else if (id < 400) used++; else usedC++;
+  }
+  if (used > skillSimPoolMax(lv)) add(null, "pool", "ใช้แต้มปกติเกิน (" + used + "/" + skillSimPoolMax(lv) + ")");
+  if (usedC > skillSimPoolMaxC(lv)) add(null, "pool", "ใช้แต้มสาย C เกิน (" + usedC + "/" + skillSimPoolMaxC(lv) + ")");
+  if (usedEx > skillSimPoolMaxEx(lv)) add(null, "pool", "ใช้แต้ม EX เกิน (" + usedEx + "/" + skillSimPoolMaxEx(lv) + ")");
+  for (const id of ids){ const c = cells[id]; if (c && c.ex && !c.placeholder && usedC < c.bn) add(id, "cbn", name(id) + ": ต้องใช้แต้มสาย C อย่างน้อย " + c.bn + " แต้ม (ตอนนี้ " + usedC + ")"); }
+  // the rank threshold: a skill needing bn needs at least bn learned skills of its tree with a lower requirement (the same as skillSimValid's sorted check)
+  for (const id of ids){
+    const c = cells[id]; if (!c || c.ex || c.placeholder) continue;
+    const have = ids.filter(x => cells[x] && !cells[x].ex && cells[x].tree === c.tree && cells[x].bn < c.bn).length;
+    if (have < c.bn) add(id, "tree", name(id) + ": ต้องเรียนสกิลในสาย " + names[c.tree] + " ก่อนอย่างน้อย " + c.bn + " สกิล (ตอนนี้ " + have + ")");
+  }
+  return out;
+}
+// The problems of a guide build (its own server and class), for the editor's export guard.
+function classGuideBuildProblems(b){
+  if (!b || !SKILL_SIM[b.classKey] || !SKILL_SIM_SERVERS[b.server]) return [];
+  const cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
+  return skillSimProblems(cells, SKILL_SIM[b.classKey].map(t => t.name), new Set(b.learned || []), b.level);
+}
 // Clearing a tree prunes dependent skills and lost tree-point requirements to a fixed point.
 function skillSimClearTree(cells, treeCount, learned, lv, tree){
   const next = new Set([...learned].filter(id => cells[id] && cells[id].tree !== tree));
@@ -29580,9 +29632,10 @@ const CLASS_GUIDES = [
   {"id":24,"cover":[443,344,342],"format":"12t-class-guide","version":1,"title":"คาว TAL","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,131,132,141,142,143,144,201,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,301,311,312,321,322,323,331,332,333,334,341,342,343,344,351,352,353,404,411,412,414,422,431,434,441,443]},"notes":{}},
   {"id":25,"cover":[423],"format":"12t-class-guide","version":1,"title":"คาว CHA Chirotophobia","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,321,322,323,324,331,332,333,334,404,411,414,421,422,423,431,441,442]},"notes":{}},
   {"id":26,"cover":[434],"format":"12t-class-guide","version":1,"title":"คาว CHA มีแซ่","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,241,242,243,244,251,252,253,254,261,262,263,301,311,312,321,322,323,324,331,332,333,334,341,342,343,351,404,411,414,421,422,431,434,441,442]},"notes":{}},
-  {"id":27,"cover":[373],"format":"12t-class-guide","version":1,"title":"คาวก็อป","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,211,212,213,214,221,222,241,301,302,303,304,311,312,313,314,321,322,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,371,372,373,403,404,411,412,421,424,431,441,443]},"notes":{}}
+  {"id":27,"cover":[373],"format":"12t-class-guide","version":1,"title":"คาวก็อป","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,211,212,213,214,221,222,241,301,302,303,304,311,312,313,314,321,322,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,371,372,373,403,404,411,412,421,424,431,441,443]},"notes":{}},
+  {"id":28,"cover":[272],"format":"12t-class-guide","version":1,"title":"คาว CHA กาเดี้ยนขั้น 2","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,321,322,331,332,333,334,351,404,411,414,421,422,431,432,441,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:03:01.988Z","counts":{"1":5,"2":9,"3":4,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":7,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:15:40.809Z","counts":{"1":5,"2":9,"3":4,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":7,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -29740,7 +29793,11 @@ function classGuideNormalize(value, { draft = false } = {}){
   const cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
   if (!Array.isArray(b.learned) || b.learned.length > 120 || b.learned.some(id => !Number.isInteger(id) || !own(cells, id))) throw new Error("รายการสกิลไม่ถูกต้อง");
   const learned = new Set(b.learned);
-  if (learned.size !== b.learned.length || !skillSimValid(cells, 4, learned, b.level)) throw new Error("ชุดสกิลไม่ผ่านเงื่อนไขเลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน");
+  if (learned.size !== b.learned.length) throw new Error("ชุดสกิลไม่ผ่านเงื่อนไขเลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน");
+  if (draft ? !skillSimBudgetOk(cells, learned, b.level) : !skillSimValid(cells, 4, learned, b.level)){   // a draft may be an expert-mode build still in progress (user 2026-10-17)
+    const p = skillSimProblems(cells, SKILL_SIM[b.classKey].map(t => t.name), learned, b.level);
+    throw new Error("ชุดสกิลไม่ผ่านเงื่อนไข" + (p.length ? ": " + p.slice(0, 3).map(x => x.text).join(" · ") + (p.length > 3 ? " และอีก " + (p.length - 3) + " ข้อ" : "") : "เลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน"));
+  }
   if (!object(value.notes) || Object.keys(value.notes).length > 120) throw new Error("รายการโน้ตสกิลไม่ถูกต้อง");
   const stats = classGuideStatsClean(value.stats);
   const gear = classGuideGearClean(value.gear, b.classKey, draft);
@@ -30710,6 +30767,9 @@ function mountClassGuide(root){
     draft.notes = JSON.parse(noteUndo.pop()); sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true; syncNoteUndo();
   };
   const status = text => { el("status").textContent = text; };
+  // An expert-mode build may be incomplete; it is never exported (user 2026-10-17): the editor goes back to step 3, where the check lists what is wrong.
+  const buildProblems = () => { try { return classGuideBuildProblems(draft && draft.build); } catch (e) { return []; } };
+  const guardBuild = () => { const p = buildProblems(); goStep(3); status("บิลด์ยังไม่ผ่านเงื่อนไข ส่งออกไม่ได้: " + p[0].text + (p.length > 1 ? " และอีก " + (p.length - 1) + " ข้อ" : "")); };
   let copyFeedbackTimer = null;
   function showCopied(){
     clearTimeout(copyFeedbackTimer);
@@ -30852,9 +30912,9 @@ function mountClassGuide(root){
   function updateSteps(){
     if (!draft) return;
     const d = draft, nNotes = Object.keys(d.notes || {}).length;
-    const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.date), !!((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)), !!(d.build && d.build.learned && d.build.learned.length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
+    const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.date), !!((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
     // step 6: what is still missing before the code can be sent
-    const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน และวันที่ (ขั้นที่ 1)"); if (!done[2]) miss.push("สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)");
+    const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน และวันที่ (ขั้นที่ 1)"); if (!done[2]) miss.push(buildProblems().length ? "บิลด์ที่ผ่านเงื่อนไข (ขั้นที่ 3)" : "สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)");
     el("sendCheck").textContent = miss.length ? "ยังขาด: " + miss.join(", ") : copiedOnce ? "เรียบร้อย ทำอีกอย่างต่อได้เลย" : "ไกด์พร้อมแล้ว";
     el("sendCheck").classList.toggle("is-missing", miss.length > 0);
     root.querySelectorAll("[data-cg-step-go]").forEach(b => { const k = +b.dataset.cgStepGo; b.setAttribute("aria-pressed", String(k === step)); b.classList.toggle("is-done", done[k - 1]); b.title = CLASS_GUIDE_STEPS[k - 1].label + (done[k - 1] ? " (เสร็จแล้ว)" : ""); });
@@ -31505,6 +31565,7 @@ function mountClassGuide(root){
         if (JSON.stringify(draft.notes) !== before){ noteUndo.push(before); syncNoteUndo(); }   // Ctrl+Z in annotate mode brings it back
         sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true;
       }
+      else if (act === "exportImage" && mode === "author" && (saveDraft(), buildProblems().length)) guardBuild();
       else if (act === "exportImage"){
         const g = mode === "author" ? (saveDraft(), classGuideNormalize(draft, { draft: true })) : current;
         if (!g) return;
@@ -31553,6 +31614,7 @@ function mountClassGuide(root){
         coverMissing = true; goStep(5); status("เลือกไอคอนหน้าปกอย่างน้อย 1 สกิล (สูงสุด 3) ก่อนคัดลอกโค้ดไกด์");
         el("coverRow").scrollIntoView({ block: "nearest" });
       }
+      else if (act === "export" && (saveDraft(), buildProblems().length)) guardBuild();
       else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); copiedOnce = true; showCopied(); updateSteps(); }   // copy only (user 2026-10-17: the button must not open Discord)   // no pop-up (user 2026-10-16): step 6 already says where to send it, the button's check mark confirms the copy
       else if (act === "import") showImport();
       else if (act === "saveNote"){
@@ -31604,6 +31666,20 @@ function mountSkillSimulator(root, options = {}){
   const push = () => { undoStack.push(snap()); if (undoStack.length > 50) undoStack.shift(); };
 
   const valid = (set, lv) => skillSimValid(cells, trees.length, set, lv);
+  // Expert mode (guide editor step 3, user 2026-10-17; remembered in this browser): see skillSimProblems. A Basic / A / B click takes its row up to that rank
+  // (gold arrow) as long as the level and the pools allow it; a C / EX click must not add a broken rule of its own; removing is always allowed.
+  let expert = false;
+  if (options.guideUI) try { expert = localStorage.getItem("12t-bible-guide-expert") === "1"; } catch (e) {}
+  const budgetOk = (set, lv) => skillSimBudgetOk(cells, set, lv);
+  const problems = (set, lv) => skillSimProblems(cells, trees.map(t => t.name), set, lv);
+  const isRowCell = id => id < 400 && !cells[id].ex;
+  const expertRow = id => { const next = new Set(state.learned); for (let i = id - (id % 10) + 1; i <= id; i++) if (cells[i]) next.add(i); return budgetOk(next, state.lv) ? next : null; };
+  const expertSingle = (id, before) => {
+    const next = new Set(state.learned); next.add(id);
+    if (!budgetOk(next, state.lv)) return null;
+    const had = new Set((before || problems(state.learned, state.lv)).map(x => x.id + ":" + x.rule));
+    return problems(next, state.lv).every(x => had.has(x.id + ":" + x.rule)) ? next : null;
+  };
 
   root.innerHTML = `
     <div class="rsim">
@@ -31623,10 +31699,12 @@ function mountSkillSimulator(root, options = {}){
         <span class="rsim-field"><b>แต้มสาย C</b><output class="rsim-num" data-role="ptsC" title="คงเหลือ / สูงสุด"></output></span>
         <span class="rsim-field rsim-ex-pool" data-role="exPool" hidden><b>แต้ม EX</b><output class="rsim-num" data-role="ptsEx" title="คงเหลือ / สูงสุด"></output></span>
         <div class="rsim-actions">
+          ${options.guideUI ? '<button type="button" class="rsim-btn cg-btn cg-btn-quiet rsim-expert" data-act="expert" aria-pressed="false" title="คลิกสกิลแล้วอัปทั้งแถวถึงขั้นนั้นทันที ไม่ต้องทำตามเงื่อนไขทีละขั้น ระบบตรวจบิลด์ให้เมื่อใช้แต้มครบ"><span class="rsim-expert-arrow" aria-hidden="true">↑</span><span>โหมดผู้เชี่ยวชาญ</span></button>' : ""}
           <button type="button" class="rsim-btn${options.guideUI ? " cg-btn cg-btn-quiet" : ""}" data-act="reset">${options.guideUI ? classGuideButtonIcon("reset") : ""}รีเซ็ต</button>
           ${options.guideUI ? "" : '<button type="button" class="rsim-btn" data-act="undo" title="ย้อนกลับ (Ctrl+Z)">ย้อนกลับ</button>'}
         </div>
       </div>
+      <div class="rsim-check" data-role="check" role="status" hidden></div>
       <div class="rsim-trees" data-role="trees"></div>
     </div>`;
   const lvIn = root.querySelector('[data-role="lv"]');
@@ -31725,7 +31803,7 @@ function mountSkillSimulator(root, options = {}){
     const oldCap = cap();
     srv = s; cells = mkCells();
     state.lv = state.lv === oldCap ? cap() : Math.min(state.lv, cap());
-    if (!valid(state.learned, state.lv)){ state.learned = new Set(); }
+    if (!(expert ? budgetOk : valid)(state.learned, state.lv)){ state.learned = new Set(); }
     buildTrees();
   }
 
@@ -31737,11 +31815,24 @@ function mountSkillSimulator(root, options = {}){
     out("ptsC").value = (poolMaxC(lv) - usedC) + "/" + poolMaxC(lv);
     out("exPool").hidden = srv !== "tot";
     out("ptsEx").value = (skillSimPoolMaxEx(lv) - usedEx) + "/" + skillSimPoolMaxEx(lv);
+    const expertBuild = expert && interaction === "build", nowProblems = interaction === "build" && (expert || !valid(set, lv)) ? problems(set, lv) : [];
+    // the check (user 2026-10-17): in expert mode once the normal points are spent; outside it whenever a build (made in expert mode) is broken
+    const showCheck = interaction === "build" && (expert ? used >= poolMax(lv) : nowProblems.length > 0), badIds = new Set(showCheck ? nowProblems.map(x => x.id) : []);
+    const check = out("check"); check.hidden = !showCheck; check.classList.toggle("is-bad", nowProblems.length > 0);
+    if (showCheck){
+      check.textContent = "";
+      const head = document.createElement("b"); head.textContent = nowProblems.length ? "บิลด์ยังไม่ผ่านเงื่อนไข ส่งออกไกด์ไม่ได้จนกว่าจะแก้ (" + nowProblems.length + " ข้อ)" : "✓ บิลด์ผ่านเงื่อนไขทั้งหมด";
+      check.appendChild(head);
+      if (nowProblems.length){ const ul = document.createElement("ul"); for (const x of nowProblems){ const li = document.createElement("li"); li.textContent = x.text; ul.appendChild(li); } check.appendChild(ul); }
+    }
+    const xb = root.querySelector('[data-act="expert"]'); if (xb){ xb.setAttribute("aria-pressed", String(expert)); xb.disabled = interaction !== "build"; }
     for (const id in cells){
       const c = cells[id], b = cellEls[id];
       const learned = set.has(+id);
-      const mark = learned || interaction === "annotate" ? "" : skillSimMarker(cells, trees.length, set, lv, +id), can = !!mark;   // read mode too: a guide with unspent points shows what they can still buy (user 2026-10-17)
-      const unlearnMark = interaction === "build" ? skillSimUnlearnMarker(cells, trees.length, set, lv, +id) : "";
+      const mark = learned || interaction === "annotate" ? "" : expertBuild ? (isRowCell(+id) ? (expertRow(+id) ? "gold" : "") : (expertSingle(+id, nowProblems) ? "yellow" : "")) : skillSimMarker(cells, trees.length, set, lv, +id), can = !!mark;
+      b.classList.toggle("can-gold", mark === "gold");
+      b.classList.toggle("is-invalid", badIds.has(+id));   // read mode too: a guide with unspent points shows what they can still buy (user 2026-10-17)
+      const unlearnMark = interaction !== "build" ? "" : expert && learned ? "green" : skillSimUnlearnMarker(cells, trees.length, set, lv, +id);   // expert mode: anything can be removed
       b.classList.toggle("learned-green", unlearnMark === "green");
       b.classList.toggle("learned-red", unlearnMark === "red");
       b.classList.toggle("is-learned", learned);
@@ -31778,14 +31869,15 @@ function mountSkillSimulator(root, options = {}){
     if (interaction !== "build") return;
     let next;
     const had = state.learned.has(id);
-    if (had){ next = skillSimDrop(state.learned, id); if (!valid(next, state.lv)) return; }
+    if (had){ next = skillSimDrop(state.learned, id); if (!expert && valid(state.learned, state.lv) && !valid(next, state.lv)) return; }   // a broken build (made in expert mode) can always shrink
+    else if (expert){ if (!(next = isRowCell(id) ? expertRow(id) : expertSingle(id))) return; }
     else if (!(next = skillSimAutoLearn(cells, trees.length, state.learned, state.lv, id))) return;
     push(); state.learned = next; update();
   }
   // Clearing a tree also drops anything in another tree that needed one of its skills.
   function clearTree(ti){
     if (interaction !== "build") return;
-    const next = skillSimClearTree(cells, trees.length, state.learned, state.lv, ti);
+    const next = expert ? new Set([...state.learned].filter(id => cells[id].tree !== ti)) : skillSimClearTree(cells, trees.length, state.learned, state.lv, ti);   // expert mode: only that tree goes; what needed it is flagged by the check
     if (next.size === state.learned.size) return;
     push(); state.learned = next;
     update();
@@ -31798,7 +31890,7 @@ function mountSkillSimulator(root, options = {}){
     const lv = Math.min(v, cap());
     if (lv !== state.lv){
       push(); state.lv = lv;
-      if (!valid(state.learned, lv)){ state.learned = new Set(); }
+      if (!(expert ? budgetOk : valid)(state.learned, lv)){ state.learned = new Set(); }
     }
     update();
   }
@@ -31929,6 +32021,7 @@ function mountSkillSimulator(root, options = {}){
     else if (act.dataset.act === "pick") openClassGate(true);
     else if (act.dataset.act === "server") openServerGate(true, false);
     else if (act.dataset.act === "clear") clearTree(+act.dataset.tree);
+    else if (act.dataset.act === "expert"){ expert = !expert; try { localStorage.setItem("12t-bible-guide-expert", expert ? "1" : "0"); } catch (e) {} update(); }
     else if (act.dataset.act === "reset" && state.learned.size){ push(); state.learned = new Set(); update(); }
   });
   lvIn.addEventListener("change", commitLevel);
@@ -31944,6 +32037,7 @@ function mountSkillSimulator(root, options = {}){
     getBuild,
     getInteraction: () => interaction,
     getCells: () => ({ ...cells }),
+    getProblems: () => problems(state.learned, state.lv),
     setInteraction(next){
       if (!["build", "annotate", "read"].includes(next)) throw new Error("โหมดไกด์ไม่ถูกต้อง");
       pressEnd(); longDone = false; interaction = next; update();
@@ -32564,6 +32658,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T16:12:38.652Z","feat(bible): guide editor step 3 has an expert mode: a gold arrow takes a skill row straight to that rank, the build is checked once the points are spent, and a build that breaks a rule cannot be exported; class guide #28 TTO Bat คาว CHA กาเดี้ยนขั้น 2 by Sugar"],
     ["2026-10-17T15:29:18.640Z","feat(bible): class guides #21 TTO Wolf หมาพุ่งรำดาบคลื่นดาบจากสำนัก IntelligentDolphin by Charlotta, #22 TTO Wolf หมาเจาะทอง by RYZEL, #23 TTO Sheep แกะ PVE by pearly.pear, #24 TTO Bat คาว TAL by Sugar, #25 TTO Bat คาว CHA Chirotophobia by Sugar, #26 TTO Bat คาว CHA มีแซ่ by Sugar and #27 TTO Bat คาวก็อป by Sugar"],
     ["2026-10-17T15:07:35.368Z","fix(bible): the guide PNG is trimmed to the guide (no wide empty margins on short or bare guides)"],
     ["2026-10-17T14:58:38.003Z","fix(bible): class guide reader counts update by themselves between pushes (at most about 10 minutes behind; GoatCounter's cache had kept them frozen for hours); the stat dials drop their ~ sign"],
