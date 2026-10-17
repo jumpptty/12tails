@@ -1787,6 +1787,8 @@
   .cg-stat-reset{grid-column:1/-1;justify-self:start;padding:2px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
   @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+  .cg-gallery-note{margin:0 0 0 auto;align-self:flex-end;max-width:100%;text-align:right;font-size:13px;color:var(--muted)}   /* user 2026-10-17: edits and removals on request, no username shown; top right, in the filter row, so more guides never push it down */
+  .cg-gallery-note a{color:var(--gold)}
   .cg-filters label{display:grid;gap:6px;min-width:180px;font-size:13px;color:var(--muted)}
   .cg-filters select{box-sizing:border-box;width:100%;padding:9px 32px 9px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
   .cg-filters select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -30204,7 +30206,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><section class="cg-card-preview" data-cg-role="cardPreview" hidden><small>การ์ดในหน้าไกด์จากผู้เล่น</small></section><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}</nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
@@ -31904,6 +31906,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T02:52:54.023Z","feat(bible): ไกด์จากผู้เล่น notes that authors can ask on Discord any time to edit or remove their guide"],
     ["2026-10-17T02:49:44.036Z","feat(bible): the guide preview also shows the guide's card as it will appear in ไกด์จากผู้เล่น"],
     ["2026-10-17T02:44:45.621Z","fix(bible): guide editor Ctrl+B works on a selection made in any direction (even dragged past the box), and Ctrl+Z / Ctrl+Y undo and redo bolding and typing; a guide with unspent skill points shows the simulator's ↑ markers and a เหลือ N แต้ม badge in the preview and the PNG, and the cover picker drops its count"],
     ["2026-10-17T02:37:54.000Z","feat(bible): class guide #6, a Chameleon build on TTO (ก่าสายยิง ระเบิดพิษ ซีโร่ช็อต by deawydew)"],
