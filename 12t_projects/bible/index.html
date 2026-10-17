@@ -19,9 +19,7 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula", ".sk-hero-desc", ".sk-dep-strip"],
     // flat panels and modals that never change fill on hover
-    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-chip", ".cg-stats", ".cg-gear-edit", ".cg-note-editor",
-      // the guide reader's side panels: info, notes column, description (user 2026-10-16: solid black boxes beside the see-through ToT trees)
-      ".cg-page[data-mode=\"reader\"] .cg-reader > .cg-reader-box", ".cg-page[data-mode=\"reader\"] .cg-reader > .cg-prose", ".cg-page[data-mode=\"reader\"] > .cg-note-chips", ".cg-page[data-mode=\"reader\"] > .cg-prose",
+    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-stats", ".cg-gear-edit", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
       ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".svc-item", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
     // clickable tiles whose own hover fill must keep winning
@@ -1870,14 +1868,13 @@
   .cg-note-frame{position:relative;width:60px;height:60px;border-radius:50%;overflow:hidden;transform:translateZ(0);box-shadow:0 0 0 2px var(--gold),0 0 0 4px var(--ink),0 0 0 5px rgba(201,162,39,.6),0 0 14px rgba(212,175,55,.45)}
   .cg-note-frame-bg{position:absolute;inset:0;background:center / 100% 100% no-repeat;transform:scale(1.8);filter:blur(10px) saturate(1.2)}
   .cg-note-chip{min-height:60px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-  /* Timeline (user 2026-10-17): a gold line joins the note icons top to bottom; each card's title starts with its number, the same as the pin on the grid */
-  .cg-note-item{position:relative}
-  .cg-note-item::before{content:"";position:absolute;z-index:0;left:calc(var(--cg-note-icon,60px) / 2 - 1px);top:-7px;bottom:-7px;width:2px;background:linear-gradient(var(--gold),rgba(201,162,39,.35))}
-  .cg-note-item:first-of-type::before{top:50%}
-  .cg-note-item:last-of-type::before{bottom:50%}
-  .cg-note-item:only-of-type::before{display:none}
+  /* Notes without boxes (user 2026-10-17, format B): no title, no box per note, a thin gold rule between notes; each title starts with its number, the same as the pin on the grid */
+  .cg-note-item{position:relative;align-items:start}
+  .cg-note-item + .cg-note-item{padding-top:10px;border-top:1px solid rgba(201,162,39,.45)}
+  .cg-note-chips .cg-note-chips-title{display:none}
+  .cg-note-chip{border:0;border-radius:0;background:none;padding:2px 0 0;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.8)}
   .cg-note-frame{z-index:1}
-  .cg-note-num{display:inline-grid;place-items:center;min-width:1.35em;height:1.35em;margin-right:.45em;padding:0 .2em;box-sizing:border-box;border-radius:999px;background:var(--gold);color:#140f0b;font-size:.8em;font-weight:700;vertical-align:.08em}
+  .cg-note-num{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;margin-right:.45em;padding:0 .2em;box-sizing:border-box;border-radius:999px;background:var(--gold);color:#140f0b;font-size:.92em;font-weight:800;line-height:1;vertical-align:.05em;text-shadow:none;box-shadow:0 0 0 1.5px #140f0b,0 0 8px rgba(212,175,55,.55)}   /* bigger and ringed (user 2026-10-17: 1-4 were hard to see) */
   .cg-note-chip-icon{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.3) translate(var(--ring-x,0%),var(--ring-y,0%));-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
   .cg-note-chip h4{margin:0 0 4px;font-family:inherit;font-size:15px;line-height:1.4;color:var(--gold)}
   .cg-note-chip-text{margin:0;font-size:15px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
@@ -2028,9 +2025,8 @@
   .cg-page[data-mode="reader"] [data-cg-role="sim"]{grid-column:2;grid-row:2;min-width:0;scroll-margin-top:64px}
   .cg-page[data-mode="reader"] .rsim{margin-top:0;padding-top:0}
   .cg-page[data-mode="reader"] .cg-reader{grid-column:1;grid-row:2;min-height:0;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;margin:0;padding:0;border:0;background:none;display:flex;flex-direction:column;gap:12px}
-  /* the left column is a stack of containers (user 2026-10-17): guide head, recommended stats, sets and, when it fits beside the trees, the description; fitReader marks the last one .is-fill so the column ends level with the trees */
+  /* the left column is a stack of parts (user 2026-10-17): guide head, recommended stats, sets and, when it fits beside the trees, the description; the open layout (below) draws no boxes, so nothing stretches */
   .cg-page[data-mode="reader"] .cg-reader > .cg-reader-box,.cg-page[data-mode="reader"] .cg-reader > .cg-prose{flex:none;margin:0;box-sizing:border-box;padding:14px 20px 14px 16px}
-  .cg-page[data-mode="reader"] .cg-reader > .is-fill{flex:1 0 auto}
   .cg-page[data-mode="reader"] .cg-reader-head > .cg-byline{margin-bottom:0}
   .cg-page[data-mode="reader"] .cg-reader-head{text-align:center}   /* the head box is usually short: centred (user 2026-10-17) */
   .cg-page[data-mode="reader"] .cg-reader-head .cg-title-meta{justify-content:center}
@@ -2106,7 +2102,7 @@
     /* notes under the trees, laid out like the PNG (fitReader sets the columns, font, icon size and lines per note from the PNG's ladder) */
     .cg-page[data-mode="reader"]{grid-template-rows:auto auto 1fr auto}   /* spare height from the tall panel and notes goes below the description, never between the trees and it */
     .cg-page.cg-has-notes[data-mode="reader"]{grid-template-columns:max(calc(280px * var(--cg-u,1)),min(23.5%,calc(520px * var(--cg-u,1)))) auto var(--cg-notes-w,360px)}   /* three columns (user 2026-10-16): info | skill grid + description | notes */
-    .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:3;grid-row:2 / span 2;align-self:start;margin:0;display:grid;gap:calc(8px * var(--cg-u,1));align-content:start;box-sizing:border-box;padding:10px 10px 10px 12px;border-left:3px solid var(--gold);background:var(--panel);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+    .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:3;grid-row:2 / span 2;align-self:start;margin:0;display:grid;gap:calc(8px * var(--cg-u,1));align-content:start;box-sizing:border-box;padding:30px 10px 16px 30px;margin-top:-26px !important;margin-left:-12px !important;border:0;background:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
     /* the notes column is a visible panel here: its title always shows, with a hint until the first note is opened (user 2026-10-16: no empty-looking box) */
     .cg-page[data-mode="reader"] > .cg-note-chips.is-pending .cg-note-chips-title{opacity:1}
     .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{order:-2}
@@ -2129,6 +2125,7 @@
     .cg-page[data-mode="reader"] > .cg-note-chips[hidden]{display:none}
     .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{grid-column:1/-1}
     .cg-page[data-mode="reader"] .cg-status{grid-row:4}
+    .cg-page[data-mode="reader"] .cg-heading{padding-bottom:calc(14px * var(--cg-u,1))}   /* the buttons stand apart from the guide (user 2026-10-17); padding, so fitReader's heading height counts it */
     .cg-page[data-mode="reader"] .rsim-tree h3{font-size:var(--cg-tree-name,17px);}   /* the tree names shrink only gently with the build (17 px x the square root of the scale, set by fitReader; user 2026-10-16: at full size they looked oversized on a small build) */
   }
   html.tool-guide-reader .hub-bar{padding:10px 18px}
@@ -2203,8 +2200,13 @@
   /* Gilded Frame (user 2026-10-17): every class guide container wears a double gold line with gold L corners, like an in-game window. It is a border-image
      (an inline SVG), so it stays put on the scrolling reader panels, is never clipped by their overflow, and leaves the server themes' backgrounds alone. */
   :root{--cg-gild:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='3.5' y='3.5' width='23' height='23' fill='none' stroke='%23c9a227' stroke-opacity='.6'/%3E%3Crect x='6.5' y='6.5' width='17' height='17' fill='none' stroke='%23c9a227' stroke-opacity='.22'/%3E%3Cpath d='M2 12V2h10M18 2h10v10M28 18v10H18M12 28H2V18' fill='none' stroke='%23e8c35a' stroke-width='2'/%3E%3C/svg%3E");--cg-gild-hi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='3.5' y='3.5' width='23' height='23' fill='none' stroke='%23c9a227' stroke-opacity='.95'/%3E%3Crect x='6.5' y='6.5' width='17' height='17' fill='none' stroke='%23c9a227' stroke-opacity='.22'/%3E%3Cpath d='M2 12V2h10M18 2h10v10M28 18v10H18M12 28H2V18' fill='none' stroke='%23ffe08a' stroke-width='2'/%3E%3C/svg%3E")}
-  .rsim-tree-body,.cg-guide,.cg-page[data-mode="reader"] .cg-reader > .cg-reader-box,.cg-page[data-mode="reader"] .cg-reader > .cg-prose,.cg-page[data-mode="reader"] > .cg-note-chips,.cg-page[data-mode="reader"] > .cg-prose{border-style:solid !important;border-width:1px !important;border-color:transparent !important;border-image:var(--cg-gild) 14 / 14px / 3px stretch;border-radius:3px;background-color:#1b130d;background-image:linear-gradient(180deg,#261b12,#140f0b);box-shadow:0 12px 24px -12px #000}
+  .rsim-tree-body,.cg-guide{border-style:solid !important;border-width:1px !important;border-color:transparent !important;border-image:var(--cg-gild) 14 / 14px / 3px stretch;border-radius:3px;background-color:#1b130d;background-image:linear-gradient(180deg,#261b12,#140f0b);box-shadow:0 12px 24px -12px #000}
   .cg-guide:hover,.cg-guide:focus-visible{border-image-source:var(--cg-gild-hi)}
+  /* Open layout (user 2026-10-17, variant 15 of a 15-way comparison): the guide view has no containers at all; text carries a soft dark shadow and a
+     soft dark glow sits behind the middle of the page so it reads on every wallpaper. The columns, fill and description placement work as before. */
+  .cg-page[data-mode="reader"] .cg-reader > .cg-reader-box,.cg-page[data-mode="reader"] .cg-reader > .cg-prose,.cg-page[data-mode="reader"] > .cg-prose,.cg-page[data-mode="reader"] .rsim-tree-body{border-image:none !important;border-color:transparent !important;background:none !important;box-shadow:none !important;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75)}
+  .cg-page[data-mode="reader"] .cg-reader > .cg-prose,.cg-page[data-mode="reader"] > .cg-prose{border-style:solid !important;border-width:0 0 0 3px !important;border-color:var(--gold) !important;background:linear-gradient(90deg,rgba(212,175,55,.08),transparent 60%) !important}   /* the description as a pull quote (user 2026-10-17, from variant 14) */
+  .cg-page[data-mode="reader"]{background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,.55),transparent 75%)}
   .cg-card-preview .cg-guide{border-image-source:var(--cg-gild)}
   /* Medallion Grid (user 2026-10-17): 4 columns (3 under 1100 px, 2 under 760 px), the round cover centred, title, chips, author and readers */
   .cg-page .cg-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -29496,9 +29498,10 @@ const CLASS_GUIDES = [
   {"id":15,"cover":[432],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PvE","author":"ChilLs","date":"2026-10-16","description":"","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,262,301,302,303,304,311,331,332,333,341,342,351,352,361,402,404,414,421,424,431,432,434,442]},"notes":{}},
   {"id":16,"cover":[454],"format":"12t-class-guide","version":1,"title":"ลิงดินเสา C","author":"BestEnd","date":"2026-10-06","description":"","build":{"server":"tot","classKey":"monkey","level":100,"learned":[101,102,111,121,122,123,124,131,132,141,142,143,144,201,202,203,204,211,212,213,214,251,301,302,303,304,311,312,313,314,321,322,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,371,372,403,404,413,421,431,433,434,441,443,444,451,454]},"notes":{}},
   {"id":17,"cover":[204],"format":"12t-class-guide","version":1,"title":"แกะลงดัน PVE","author":"SHIRANUI","date":"2026-10-13","description":"**AGI** / **VIT** / **TAL**","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,112,113,114,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,311,312,313,314,321,322,323,324,404,412,413,422,423,431,432,441,442]},"notes":{}},
-  {"id":18,"cover":[244,343,434,444],"format":"12t-class-guide","version":1,"title":"กวิ้นมือใหม่ Hybrid","author":"TAMAKO","date":"2026-10-17","description":"** Tal ตัน Int ตาม**","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,344,361,362,404,413,414,421,422,434,441,442,444]},"notes":{}}
+  {"id":18,"cover":[244,343,434,444],"format":"12t-class-guide","version":1,"title":"กวิ้นมือใหม่ Hybrid","author":"TAMAKO","date":"2026-10-17","description":"** Tal ตัน Int ตาม**","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,344,361,362,404,413,414,421,422,434,441,442,444]},"notes":{}},
+  {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T11:22:09.444Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4,"16":0,"17":0,"18":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:02:14.008Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4,"16":0,"17":0,"18":0,"19":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30164,6 +30167,10 @@ async function classGuideRenderImage(guide, simRoot){
     const glow = ctx.createRadialGradient(P.margin + 180, 110, 0, P.margin + 180, 110, 640); glow.addColorStop(0, alpha(gold, 0.13)); glow.addColorStop(1, alpha(gold, 0));
     ctx.fillStyle = glow; ctx.fillRect(0, 0, P.w, P.h);
   }
+  // the open layout's glow (user 2026-10-17): a soft dark ellipse behind the middle, as on the page
+  { ctx.save(); ctx.translate(P.w / 2, P.h * 0.45); ctx.scale(1, P.h / P.w); const R = P.w * 0.62, gl = ctx.createRadialGradient(0, 0, 0, 0, 0, R); gl.addColorStop(0, "rgba(0,0,0,.55)"); gl.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = gl; ctx.fillRect(-R, -R, R * 2, R * 2); ctx.restore(); }
+  const pullQuote = (x, y, w, h) => { const g = ctx.createLinearGradient(x, 0, x + w * 0.6, 0); g.addColorStop(0, "rgba(212,175,55,.08)"); g.addColorStop(1, "rgba(212,175,55,0)"); ctx.fillStyle = g; ctx.fillRect(x, y, w * 0.6, h); ctx.fillStyle = gold; ctx.fillRect(x, y, 3, h); };   // the description: a gold bar and a faint wash (user 2026-10-17)
+  const shadowed = fn => { ctx.save(); ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 6 * P.scale; ctx.shadowOffsetY = P.scale; fn(); ctx.restore(); };   // text straight on the backdrop
   // a container in the look's surface recipe (the same tokens THEME_SURFACES uses on the page): TTO solid panel + diagonal harlequin bands, ToT see-through glass, BB plain panel
   const edge = v("--th-edge") || line;
   const surface = (x, y, w, h, r, raised) => {
@@ -30349,11 +30356,11 @@ async function classGuideRenderImage(guide, simRoot){
       const all = classGuideImageWrap(classGuideImageRuns(guide.notes[id]), textW, measureWith(noteFont), segmenter);
       const lines = classGuideImageClip(all, Math.min(all.length, maxLines), textW, measureWith(noteFont));
       const h = Math.max(iconS, 10 + Math.round(fs * 1.65) + lines.length * nlh + 10);
-      items.push({ id, x: x0, y: yy, w: colW, h, lines, fs, nlh, iconS }); yy += h + 10;
+      items.push({ id, x: x0, y: yy, w: colW, h, lines, fs, nlh, iconS }); yy += h + 20;   // room for the gold rule between notes
     }
-    return { top, items, bottom: yy - 10, noteFont };
+    return { top, items, bottom: yy - 20, noteFont };
   };
-  const notesHead = panelPad + 22;   // the column title
+  const notesHead = 6;   // no column title any more (user 2026-10-17)
   const notesNeed = noteIds.length ? layoutNotes(0, 18, 99).bottom + notesHead + panelPad : 0;
   const rectH = Math.min(fullH, Math.max(row1 + (descLines.length ? G + descWanted : 0), notesNeed));
   if (!descLines.length) row1 = rectH;   // no description: the info and the trees run the full height
@@ -30362,11 +30369,12 @@ async function classGuideRenderImage(guide, simRoot){
   for (const t of plan.trees) t.h = row1;   // every tree box ends with the info panel
   // ---- info column: one box per section, the last one (or the description beside the trees) down to the row's bottom
   const leftBoxes = infoBoxes.map(bx => bx.slice());
-  if (descLeft) leftBoxes.push([infoH + G, row1]); else leftBoxes[leftBoxes.length - 1][1] = row1;
-  for (const [a, z] of leftBoxes){ const h = Math.min(z, row1) - a; if (h > 0){ surface(P.margin, rectTop + a, infoW, h, 0, false); gild(P.margin, rectTop + a, infoW, h); } }
+  if (descLeft) leftBoxes.push([infoH + G, row1]); else if (leftBoxes.length > 1) leftBoxes[leftBoxes.length - 1][1] = row1;   // the head box alone keeps its own height (user 2026-10-17)
+  // open layout: no boxes are drawn (leftBoxes still sets where the description goes)
   const infoShown = Math.min(row1, infoH);
-  ctx.drawImage(infoLayer, 0, 0, infoW * P.scale, infoShown * P.scale, P.margin, rectTop, infoW, infoShown);
-  if (descLeft) drawLines(classGuideImageClip(descLeftLines, Math.max(1, Math.floor((row1 - infoH - G - panelPad * 2) / lh)), lw, measureWith(descFont)), P.margin + lx, rectTop + infoH + G + panelPad + 25, lh, descFont, { text, gold });
+  shadowed(() => ctx.drawImage(infoLayer, 0, 0, infoW * P.scale, infoShown * P.scale, P.margin, rectTop, infoW, infoShown));
+  if (descLeft) pullQuote(P.margin, rectTop + infoH + G, infoW, Math.min(row1 - infoH - G, descLeftLines.length * lh + panelPad * 2));   // its own height, never stretched (user 2026-10-17)
+  if (descLeft) shadowed(() => drawLines(classGuideImageClip(descLeftLines, Math.max(1, Math.floor((row1 - infoH - G - panelPad * 2) / lh)), lw, measureWith(descFont)), P.margin + lx, rectTop + infoH + G + panelPad + 25, lh, descFont, { text, gold }));
   // ---- trees ----
   const learned = new Set(b.learned), noted = new Set(noteIds);
   // Unspent points (user 2026-10-17): the simulator's ↑ marker (green / red / yellow) on every skill they can still buy, read as the author's flex points.
@@ -30375,9 +30383,7 @@ async function classGuideRenderImage(guide, simRoot){
   for (const t of plan.trees){
     // The simulator's TailsTopia look (user 2026-10-17): ◆ name, a fading rule and learned/total above a rounded panel with a gold hairline, a dark ring and a deep shadow.
     const top = t.y + 40, R = 3, cellsEnd = t.cells.reduce((m, c) => Math.max(m, c.y + c.size), top), ph = Math.min(t.h - 40, cellsEnd + 18 - top);   // as tall as its skills, never stretched to the tallest tree (user 2026-10-17)
-    if (look !== "tot"){ ctx.save(); ctx.shadowColor = "rgba(0,0,0,.7)"; ctx.shadowBlur = 40 * P.scale; ctx.shadowOffsetY = 12 * P.scale; box(t.x, top, t.w, ph, R); ctx.fillStyle = panel2; ctx.fill(); ctx.restore(); }   // ToT keeps its glass (user 2026-10-17: the solid shadow fill hid it)
-    surface(t.x, top, t.w, ph, R, true);
-    gild(t.x, top, t.w, ph);
+    // open layout (user 2026-10-17): no tree box, the skills sit on the backdrop
     const counted = t.cells.filter(c => !c.placeholder && c.id < 450), have = counted.filter(c => learned.has(c.id)).length, countText = have + "/" + counted.length;
     const midY = t.y + 20, nameX = t.x + 22;
     ctx.save(); ctx.translate(t.x + 9, midY); ctx.rotate(Math.PI / 4); ctx.fillStyle = "rgba(208,145,62,.7)"; ctx.fillRect(-4, -4, 8, 8); ctx.restore();
@@ -30420,24 +30426,19 @@ async function classGuideRenderImage(guide, simRoot){
   // ---- description: under the info and the trees, down to the rectangle's bottom (a PNG cannot page, so a text that does not fit ends with "…")
   if (descLines.length){
     const dy = rectTop + row1 + G, dh = rectTop + rectH - dy;
-    surface(P.margin, dy, descW, dh, 0, false); gild(P.margin, dy, descW, dh);
     const maxLines = Math.max(1, Math.floor((dh - panelPad * 2) / lh));
-    drawLines(classGuideImageClip(descLines, maxLines, descTextW, measureWith(descFont)), P.margin + bar + panelPad, dy + panelPad + 25, lh, descFont, { text, gold });
+    pullQuote(P.margin, dy, descW, Math.min(dh, descNatural));
+    shadowed(() => drawLines(classGuideImageClip(descLines, maxLines, descTextW, measureWith(descFont)), P.margin + bar + panelPad, dy + panelPad + 25, lh, descFont, { text, gold }));
   }
   // ---- notes: a full-height column of chips on the right
   if (noteIds.length){
-    surface(notesX, rectTop, notesW, rectH, 0, false); gild(notesX, rectTop, notesW, rectH);
-    ctx.fillStyle = gold; ctx.font = font(600, 18); spaced(4); ctx.fillText("★ โน้ตจากผู้เขียน", notesX + bar + 12, rectTop + panelPad + 14); spaced(0);
     const notesBottom = rectTop + rectH - panelPad;
     let notePlan = null;
     for (const [fs, maxLines] of NOTE_STEPS){ notePlan = layoutNotes(rectTop + notesHead, fs, maxLines); if (notePlan.bottom <= notesBottom) break; }
     const overflow = notePlan.bottom > notesBottom, limit = overflow ? notesBottom - 26 : notesBottom;
     let shown = 0;
     const drawn = notePlan.items.filter(it => it.y + it.h <= limit);
-    if (drawn.length > 1){   // Timeline (user 2026-10-17): a gold line joins the icons
-      const lx = drawn[0].x + drawn[0].iconS / 2, y0 = drawn[0].y + drawn[0].h / 2, y1 = drawn[drawn.length - 1].y + drawn[drawn.length - 1].h / 2;
-      const g = ctx.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, gold); g.addColorStop(1, "rgba(201,162,39,.35)"); ctx.fillStyle = g; ctx.fillRect(lx - 1.25, y0, 2.5, y1 - y0);
-    }
+    drawn.slice(1).forEach(it => { ctx.fillStyle = "rgba(201,162,39,.45)"; ctx.fillRect(it.x, it.y - 10.5, it.w, 1.2); });   // format B (user 2026-10-17): a thin gold rule between notes
     for (const it of notePlan.items){
       if (it.y + it.h > limit) continue;
       const c = cellById[it.id];
@@ -30459,13 +30460,15 @@ async function classGuideRenderImage(guide, simRoot){
         ctx.drawImage(fc, cx - Z / 2, cy - Z / 2, Z, Z);
         ctx.restore();
       }
-      surface(bx, it.y, it.w - it.iconS - 10, it.h, 10, false);
-      const textX = bx + 14, nameY = it.y + 8 + Math.round(it.fs * 1.3);
-      const num = String(noteIds.indexOf(it.id) + 1), nr = (it.fs + 2) * 0.62, ncx = textX + nr, ncy = nameY - (it.fs + 2) * 0.36;
-      ctx.beginPath(); ctx.arc(ncx, ncy, nr, 0, Math.PI * 2); ctx.fillStyle = gold; ctx.fill();
-      ctx.font = font(700, Math.round((it.fs + 2) * 0.8)); ctx.fillStyle = "#140f0b"; ctx.textAlign = "center"; ctx.fillText(num, ncx, ncy + (it.fs + 2) * 0.28); ctx.textAlign = "left";
+      const textX = bx + 4, nameY = it.y + 8 + Math.round(it.fs * 1.3);   // no box (user 2026-10-17): the text sits on the backdrop with a soft shadow
+      const num = String(noteIds.indexOf(it.id) + 1), nr = (it.fs + 2) * 0.78, ncx = textX + nr, ncy = nameY - (it.fs + 2) * 0.36;
+      ctx.save(); ctx.shadowColor = "rgba(212,175,55,.55)"; ctx.shadowBlur = 8 * P.scale; ctx.beginPath(); ctx.arc(ncx, ncy, nr, 0, Math.PI * 2); ctx.fillStyle = gold; ctx.fill(); ctx.restore();
+      ctx.beginPath(); ctx.arc(ncx, ncy, nr, 0, Math.PI * 2); ctx.strokeStyle = "#140f0b"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.font = font(800, Math.round((it.fs + 2) * 0.92)); ctx.fillStyle = "#140f0b"; ctx.textAlign = "center"; ctx.fillText(num, ncx, ncy + (it.fs + 2) * 0.33); ctx.textAlign = "left";
+      ctx.save(); ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 6 * P.scale; ctx.shadowOffsetY = 1 * P.scale;
       ctx.font = font(600, it.fs + 2); ctx.fillStyle = gold; ctx.fillText(c.name, textX + nr * 2 + 8, nameY);
       drawLines(it.lines, textX, nameY + it.nlh, it.nlh, notePlan.noteFont, { text, gold });
+      ctx.restore();
       shown++;
     }
     if (shown < noteIds.length){ ctx.font = font(400, 16); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", notesX + notesW - 12, notesBottom); ctx.textAlign = "left"; }
@@ -30705,7 +30708,6 @@ function mountClassGuide(root){
     if (!build) return;
     guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-notes-w");
     notesBox.style.width = ""; notesBox.style.maxHeight = ""; for (const v of ["--cg-note-fs", "--cg-note-icon", "--cg-note-lines"]) notesBox.style.removeProperty(v);
-    for (const c of panel.children) c.classList.remove("is-fill");
     desc.style.width = ""; desc.style.maxHeight = ""; desc.style.height = ""; desc.classList.remove("is-paged"); desc.style.columnWidth = ""; desc.style.columnGap = ""; descPager.hidden = true; notesBox.style.height = ""; panel.style.alignSelf = "";
     if (isPhone()){ simRoot.style.height = ""; simRoot.style.width = ""; panel.style.height = ""; build.style.width = ""; simRoot.style.removeProperty("--cg-reader-scale"); guidePage.style.removeProperty("--cg-u"); return; }   // phones: plain scrolling page, see the phone reader CSS
     // Landscape reader: everything outside the skill grid (panel text, stat tiles, gear, notes, description, column widths) scales by one factor --cg-u
@@ -30817,9 +30819,7 @@ function mountClassGuide(root){
         desc.style.height = h + "px"; bottom = row2 + gap + h;
         if (natural > roomLeft) layoutDescPages();   // too long: pages (user 2026-10-16) instead of a scrollbar
       }
-      if (notesOn){ const nh = Math.floor(bottom); notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; }   // the notes column ends where the description ends
-      const boxes = [...panel.children].filter(c => (c.classList.contains("cg-reader-box") || c === desc) && getComputedStyle(c).display !== "none");
-      if (boxes.length) boxes[boxes.length - 1].classList.add("is-fill");   // the last container runs down to the trees' bottom (user 2026-10-17: no vacant space)
+      if (notesOn){ const nh = Math.floor(bottom - (parseFloat(getComputedStyle(notesBox).marginTop) || 0)); notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; }   // the notes column ends where the description ends
     }
   }
 
@@ -31188,7 +31188,7 @@ function mountClassGuide(root){
     let chip = noteChips.get(info.id);
     if (chip && !chip.classList.contains("is-waiting")){
       chip.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      chip.querySelector(".cg-note-chip").animate([{ boxShadow: "0 0 0 2px #d4af37, 0 0 18px rgba(212,175,55,.6)" }, { boxShadow: "0 0 0 0 rgba(212,175,55,0)" }], { duration: 900, easing: "ease-out" });
+      chip.animate([{ filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 900, easing: "ease-out" });
       return;
     }
     placeNoteChips();
@@ -31203,7 +31203,7 @@ function mountClassGuide(root){
       if (revealed) return; revealed = true;
       chip.classList.remove("is-waiting"); list.classList.remove("is-pending");
       chip.animate([{ opacity: 0, transform: "scale(.9)" }, { opacity: 1, transform: "none" }], { duration: 360, easing: "ease-out" });
-      chip.querySelector(".cg-note-chip").animate([{ boxShadow: "0 0 0 2px #d4af37, 0 0 22px rgba(212,175,55,.7)" }, { boxShadow: "0 0 0 0 rgba(212,175,55,0)" }], { duration: 360, easing: "ease-out" });
+      chip.animate([{ filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 360, easing: "ease-out" });
       chip.querySelector(".cg-note-chip-body").animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: 420, easing: "cubic-bezier(.3,.6,.3,1)" });
     };
     const fly = () => {
@@ -32358,6 +32358,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T12:33:37.561Z","feat(bible): class guide #19 TTO Bison ไบวอ PVE by Warisza; the guide view and PNG drop every container (open layout on a soft dark glow): author notes get thin gold dividers and bigger numbers, the description becomes a gold pull quote; more room between the top buttons and the guide"],
     ["2026-10-17T11:22:04.196Z","feat(bible): class guide #18 TTO Penguin กวิ้นมือใหม่ Hybrid by TAMAKO"],
     ["2026-10-17T11:17:05.285Z","feat(bible): Sheep Seal is now four cards: Seal of Attack and Seal of Defense (castable, shared cooldown), Seal of Earth and Seal of Heaven (learned unlocks for the mixed-colour fields)"],
     ["2026-10-17T10:55:44.673Z","feat(bible): class guide #17 TTO Sheep แกะลงดัน PVE by SHIRANUI; the guide view and PNG give the title, stats, sets and description their own boxes, and a short description sits beside the trees; the title box is centred"],
