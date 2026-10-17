@@ -3815,7 +3815,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     const REACH_STATIC_OK = {
       bat_nAttack: "projectile, hit time = flight time", bat_echoes: "bouncing projectile", bat_guardianOfTheNight: "AI-driven attacks",
       bat_dreamDazzle: "single locked target, no hit box", bat_phantasmBlast: "single locked target, no hit box", bat_shatteringDream: "single locked target, no hit box",
-      cat_doubleDown: "random targets", cat_grandCasinoArcade: "random outcome / targets",
+      cat_doubleDown: "random targets",
       chameleon_quickFire: "arrows, hit time = flight time",
       chameleon_leftStride: "arrows, hit time = flight time", chameleon_rightStride: "arrows, hit time = flight time",
       mole_nAttack: "projectile", mole_mortarShot: "shells land one by one at different spots", mole_barrelBot_missile: "random targets", mole_missile: "random targets",
