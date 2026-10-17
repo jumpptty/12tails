@@ -26,7 +26,7 @@ After adding or changing a convention, update the file that owns that topic (not
    * **Never run `git checkout` / `restore` / `reset` / `stash` on `index.html`.** Every patch script first copies the file to its scratch folder (`index.<timestamp>.bak`); recover from that copy.
    * **Never replace a whole card line.** Change only the specific fields (one `key:value`, one `compatSkills` id). Retyping a card silently drops fields.
    * `[FIELD LOSS ERROR]`: a card lost a field it had at `HEAD`. Deliberate removal: `--allow-field-loss=<cardId:field,...>`. `[DOC BACKLOG]` counts app skills with no class-reference entry (`--list-doc-backlog` lists them).
-4. **Changelog gate & verification:** before committing, prepend a `CHANGELOG_DATA.entries` item with the current ISO timestamp and the **exact planned commit subject**, then run `node scripts/validate_skills.js` (skills, formula permutations per rank and dep, icons).
+4. **Changelog gate & verification:** before every commit push, first run `node scripts/guide_views.js`. It refreshes `CLASS_GUIDE_VIEWS`, the class guide reader snapshot that ad-blocked browsers see (user 2026-10-17); a failure there only means the snapshot keeps its old numbers, so say so and carry on. Then, before committing, prepend a `CHANGELOG_DATA.entries` item with the current ISO timestamp and the **exact planned commit subject**, then run `node scripts/validate_skills.js` (skills, formula permutations per rank and dep, icons).
 
 ## 2. Deliverable basics
 

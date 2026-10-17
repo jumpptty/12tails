@@ -30,6 +30,7 @@ node scripts/card_edit.js --selftest
 python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode cd/castTime/MP/SP/reqLv per skill
 node scripts/guide_code.js decode <12TG1.code | file>          # turn a submitted class guide short code into the JSON object to embed (also: encode <json>, --selftest)
 node scripts/guide_draft.js layout <class> [server]            # a class's skill-sim rows with cell ids (also: build <draft.json> [out.json] -> checked guide + TG2 code, --selftest)
+node scripts/guide_views.js                                     # refresh CLASS_GUIDE_VIEWS (guide readers for ad-blocked browsers) from GoatCounter; run before every commit push (--dry-run: print only)
 ```
 
 ### Project skills and agents
