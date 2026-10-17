@@ -14,7 +14,7 @@ const SITE = "https://jumpptty.goatcounter.com";
 const LINE = /^const CLASS_GUIDE_VIEWS = [^\r\n]*/m;   // the line body only: its CRLF ending stays untouched (index.html is CRLF)
 
 async function count(id){
-  const url = SITE + "/counter/" + encodeURIComponent("/bible/#class-guide/" + id) + ".json";
+  const url = SITE + "/counter/" + encodeURIComponent("/bible/#class-guide/" + id) + ".json?start=2020-01-01";   // without start the counter answers 404 / 0 for every path (only TOTAL works); 2020 = all time
   const r = await fetch(url);
   if (r.status === 404) return 0;                              // no visit recorded yet
   if (!r.ok) throw new Error(url + " answered " + r.status);  // 403 = "Allow adding visitor counts" switched off in the GoatCounter settings
