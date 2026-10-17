@@ -1939,8 +1939,6 @@
   .cg-rich-editor:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
   .cg-note-editor .cg-rich-editor{min-height:140px}
   .cg-format-btn.is-on{background:var(--gold);color:#141311;border-color:var(--gold)}
-  .cg-rich-editor.is-highlighting{cursor:text;box-shadow:inset 0 0 0 1px var(--gold)}
-  .cg-rich-editor.is-highlighting::selection,.cg-rich-editor.is-highlighting *::selection{background:rgba(212,175,55,.45)}
   @media(max-width:760px){.cg-nav{width:100%}.cg-tabs,.cg-page-actions{flex:1 1 100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
   .cg-page[data-mode="reader"]{display:grid;grid-template-columns:clamp(260px,27%,320px) auto;gap:12px 24px}
@@ -2079,6 +2077,13 @@
   .rsim-num{min-width:64px; padding:3px 10px; text-align:center; background:#4a1612; border:1px solid #8b1e1e; border-radius:6px; color:#fff; font-family:'JetBrains Mono', monospace; font-weight:700}
   .rsim-actions{display:flex; gap:8px}
   .rsim .cls-picker-btn{height:40px}
+  .cg-picks{display:grid;gap:6px;font-size:13px}
+  .cg-fields > .cg-picks{grid-column:1/-1}
+  .cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr)}   /* pickers, then title / author / date, then the description */
+  .cg-picks > b{font-weight:500;color:var(--muted)}
+  .cg-picks-row{display:flex;flex-wrap:wrap;gap:8px}
+  .cg-picks .cls-picker-btn{height:44px}
+  .cg-page[data-mode="author"] .rsim-pick{display:none}   /* server and class are chosen in step 1 (user 2026-10-17) */
   .rsim .cls-picker-thumb{width:32px; height:32px}
   .rsim-ex-pool[hidden]{display:none;}
 .rsim-ex-heading{color:var(--gold);font-family:"Chakra Petch",sans-serif;font-size:13px;border-top:1px solid var(--line);padding-top:8px;margin-top:4px;}
@@ -29628,23 +29633,20 @@ function classGuideMountEditor(backing, editor, notify){
     if (value.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
     backing.value = value; accepted = editor.innerHTML; backing.dispatchEvent(new Event("input", { bubbles: true })); return true;
   };
-  // Highlight mode (user 2026-10-15, replaces Ctrl+B): with the highlight button on, every mouse / finger drag across text turns it bold gold
-  // (dragging across text that is already bold turns it back), and the bold part gets a space before and after it.
-  let highlighting = false;
+  // Bold like a word processor (user 2026-10-17): select text, then Ctrl+B / Cmd+B turns it bold gold (or back if it is already bold); the bold part
+  // gets a space before and after it. With nothing selected the keys do nothing.
   const bold = () => {
     editor.focus(); document.execCommand("bold", false);
     const value = classGuideReadEditor(editor), spaced = classGuideSpaceBold(value);
     if (spaced !== value && spaced.length <= backing.maxLength){ set(spaced); backing.dispatchEvent(new Event("input", { bubbles: true })); } else sync();
   };
-  const setHighlight = on => { highlighting = !!on; editor.classList.toggle("is-highlighting", highlighting); return highlighting; };
-  const afterDrag = () => {
-    if (!highlighting) return;
+  editor.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || (e.key || "").toLowerCase() !== "b" && e.code !== "KeyB") return;
+    e.preventDefault();   // never the browser's own bold toggle
     const sel = window.getSelection && window.getSelection();
     if (!sel || sel.isCollapsed || !sel.rangeCount || !editor.contains(sel.anchorNode) || !editor.contains(sel.focusNode)) return;
-    bold(); sel.removeAllRanges();
-  };
-  editor.addEventListener("mouseup", () => setTimeout(afterDrag, 0));
-  editor.addEventListener("touchend", () => setTimeout(afterDrag, 0));
+    bold();
+  });
   editor.addEventListener("input", e => { if (!composing && !e.isComposing) sync(); });
   editor.addEventListener("compositionstart", () => { composing = true; });
   editor.addEventListener("compositionend", () => { composing = false; sync(); });
@@ -29653,7 +29655,7 @@ function classGuideMountEditor(backing, editor, notify){
     if (transfer){ document.execCommand("insertText", false, transfer.getData("text/plain")); sync(); }
   };
   editor.addEventListener("paste", insertPlain); editor.addEventListener("drop", insertPlain);
-  set(backing.value || ""); return { set, bold, setHighlight, isHighlighting: () => highlighting };
+  set(backing.value || ""); return { set, bold };
 }
 const CLASS_GUIDE_BUTTON_ICONS = {
   reset:'<path d="M4 9a8 8 0 1 1 1 9M4 3v6h6"/>',
@@ -30128,7 +30130,7 @@ async function classGuideSaveImage(guide, simRoot){
 const CLASS_GUIDE_STEPS = [
   { label: "ข้อมูลไกด์", intro: "ตั้งชื่อไกด์ ใส่ชื่อผู้เขียน วันที่ และอธิบายจุดเด่น วิธีเล่น ข้อควรรู้ของบิลด์" },
   { label: "สเตตัสและเซ็ต", optional: true, intro: "" },
-  { label: "จัดบิลด์", intro: "", guide: ["เลือก <b>เซิร์ฟเวอร์</b>", "เลือก <b>เลเวล</b>", "เลือก <b>อาชีพ</b>", "อัปสกิลใน <b>Skill Simulator</b> ด้านขวา"] },
+  { label: "จัดบิลด์", intro: "", guide: ["เลือก <b>เลเวล</b>", "อัปสกิลใน <b>Skill Simulator</b> ด้านขวา"] },
   { label: "โน้ตสกิล", optional: true, intro: "", guide: ["<b>คลิกสกิล</b> ที่ต้องการเน้นใน <b>Skill Simulator</b> แล้วเขียนโน้ต"] },
   { label: "หน้าปกและตรวจ", intro: "เลือกไอคอนหน้าปก 1 ถึง 3 สกิลจากตาราง (จำเป็น) แล้วกด ดูตัวอย่าง เพื่อตรวจหน้าตาที่ผู้อ่านจะเห็น" },
   { label: "บันทึกและส่ง", intro: "" }
@@ -30142,7 +30144,7 @@ function mountClassGuide(root){
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
-      <div class="cg-fields"><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="description" aria-pressed="false" title="เปิดโหมดไฮไลต์ แล้วลากเมาส์ (หรือนิ้ว) คลุมข้อความที่ต้องการ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ไฮไลต์</button><span>ลากคลุมข้อความเพื่อทำตัวหนาสีทอง</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-editor-tools"><button type="button" class="cg-format-btn" data-cg-bold="noteText" aria-pressed="false" title="เปิดโหมดไฮไลต์ แล้วลากเมาส์ (หรือนิ้ว) คลุมข้อความที่ต้องการ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7a4 4 0 0 1 0 8H7zm0 8h8a4 4 0 0 1 0 8H7z"/></svg>ไฮไลต์</button><span>ลากคลุมข้อความเพื่อทำตัวหนาสีทอง</span></span><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
+      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
       <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-3 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
@@ -30162,6 +30164,11 @@ function mountClassGuide(root){
   const field = name => root.querySelector('[data-cg-field="' + name + '"]');
   const button = act => root.querySelector('[data-cg-act="' + act + '"]');
   const simRoot = el("sim"), guidePage = root.querySelector(".cg-page"), guideHeading = root.querySelector(".cg-heading"), storageKey = "12t-bible-class-guide-draft";
+  // Step 1 server / class pickers (user 2026-10-17): they press the simulator's own buttons (its gates do the rest) and mirror their icon and name.
+  const syncPicks = () => { for (const [mine, theirs] of [["pickSrv", "srv"], ["pickCls", "pick"]]){ const ti = simRoot.querySelector('[data-role="' + theirs + 'Thumb"]'), tn = simRoot.querySelector('[data-role="' + theirs + 'Name"]'), mi = root.querySelector('[data-cg-role="' + mine + 'Thumb"]'), mn = root.querySelector('[data-cg-role="' + mine + 'Name"]'); if (ti && mi && mi.getAttribute("src") !== ti.getAttribute("src")) mi.setAttribute("src", ti.getAttribute("src") || ""); if (tn && mn && mn.textContent !== tn.textContent) mn.textContent = tn.textContent; } };
+  if (typeof MutationObserver !== "undefined") new MutationObserver(syncPicks).observe(simRoot, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["src"] });
+  root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-cg-pick]"); if (!b) return; const t = simRoot.querySelector('[data-act="' + b.dataset.cgPick + '"]'); if (t) t.click(); });
+  setTimeout(syncPicks, 0);
   let step = 1, copiedOnce = false;
   let mode = "gallery", current = null, currentId = null, draft = null, noteId = null, applying = false;
   const noteUndo = [];
@@ -30728,7 +30735,6 @@ function mountClassGuide(root){
     if (sim.getInteraction() !== "annotate" || (e.target.closest && e.target.closest("input, textarea, [contenteditable]"))) return;
     e.preventDefault(); undoNote();
   });
-  root.addEventListener("pointerdown", e => { if (e.target.closest("[data-cg-bold]")) e.preventDefault(); });
   root.addEventListener("input", e => {
     if (!e.target.matches) return;
     if (e.target.matches("[data-cg-stat]")){
@@ -30770,8 +30776,6 @@ function mountClassGuide(root){
       const del = e.target.closest("[data-cg-gear-del]"); if (del){ const [slot, idx] = del.dataset.cgGearDel.split(":"); gearChange(gear => { if (gear[slot]) gear[slot].splice(+idx, 1); }); return; }
       const delRep = e.target.closest("[data-cg-gear-delrep]"); if (delRep){ const [slot, idx] = delRep.dataset.cgGearDelrep.split(":"); gearChange(gear => { const c = gear[slot] && gear[slot][+idx]; if (c) delete c.replica; }); return; }
     }
-    const format = e.target.closest("[data-cg-bold]");
-    if (format){ if (mode === "author"){ const on = editors[format.dataset.cgBold].setHighlight(!editors[format.dataset.cgBold].isHighlighting()); format.setAttribute("aria-pressed", String(on)); format.classList.toggle("is-on", on); } return; }
     const titleEl = e.target.closest('[data-cg-role="guideTitle"]');   // hidden feature like the skill name in skill-details: click the guide title to copy "## [title](link)" (Discord heading + link)
     if (titleEl && mode === "reader" && currentId){ copyTitleLink(current.title, "#class-guide/" + currentId, titleEl); return; }
     const target = e.target.closest("[data-cg-act]"); if (!target) return;
@@ -31828,6 +31832,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T02:17:07.692Z","feat(bible): the guide editor bolds like a word processor: select text and press Ctrl+B; the highlight button is gone; server and class are picked in step 1, so the gear step lists the right class's items"],
     ["2026-10-17T02:14:08.614Z","feat(bible): class guide #4, a Whale build on TTO (วาฬกลิ้ง by j3kch3n)"],
     ["2026-10-17T02:10:41.049Z","feat(bible): class guides and the Skill Simulator allow up to Lv 120 on ToT and TTO"],
     ["2026-10-17T02:06:06.820Z","feat(bible): class guides and the Skill Simulator allow up to Lv 110 on ToT and TTO, and the server picker no longer shows a max level"],
