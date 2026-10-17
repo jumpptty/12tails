@@ -1899,6 +1899,8 @@
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
   .cg-prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
+  .cg-prose > .cg-para{display:block;break-inside:avoid}   /* a line of the guide view's description: columns and pages break between them (user 2026-10-18) */
+  .cg-prose > .cg-para.is-head{break-after:avoid}   /* a heading line ends no column or page */
   .cg-note-editor,.cg-transfer{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:20px;margin:18px 0}
   .cg-note-editor h3,.cg-transfer h3{margin:0 0 12px;color:var(--gold);font-family:"Chakra Petch",sans-serif}
   .cg-import-dialog{width:min(460px,calc(100vw - 40px));box-sizing:border-box;margin:auto;padding:24px;color:var(--text);font:inherit}
@@ -2179,6 +2181,7 @@
     .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{order:-2}
     .cg-page[data-mode="reader"] > .cg-note-chips.is-pending::before{content:"คลิกสกิลที่มี ★ เพื่ออ่านโน้ตจากผู้เขียน";order:-1;color:var(--muted);font-size:calc(13px * var(--cg-u,1));line-height:1.5}
     .cg-page[data-mode="reader"] .rsim{padding:0}
+    .cg-page[data-mode="reader"] > .cg-prose.is-cols{column-gap:calc(36px * var(--cg-u,1));column-rule:1px solid rgba(201,162,39,.22)}   /* a wide box: the text in side-by-side columns before it shrinks or pages (user 2026-10-18) */
     .cg-page[data-mode="reader"] > .cg-prose.is-paged{overflow:hidden;column-fill:auto;padding-bottom:calc(30px * var(--cg-u,1))}
     .cg-desc-pager{display:none}
     .cg-page[data-mode="reader"] > .cg-desc-pager:not([hidden]){grid-column:1 / 3;grid-row:3;align-self:end;justify-self:end;z-index:1;display:flex;align-items:center;gap:calc(6px * var(--cg-u,1));margin:0 calc(10px * var(--cg-u,1)) calc(6px * var(--cg-u,1)) 0;font-size:calc(13px * var(--cg-u,1));color:var(--muted)}
@@ -29678,7 +29681,7 @@ const CLASS_GUIDES = [
   {"id":28,"cover":[272],"format":"12t-class-guide","version":1,"title":"คาว CHA กาเดี้ยนขั้น 2","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,321,322,331,332,333,334,351,404,411,414,421,422,431,432,441,442]},"notes":{}},
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000\n**📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์\nทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ** : https://youtu.be/HFbLmAUZWtw","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T17:53:46.022Z","counts":{"1":5,"2":10,"3":5,"4":3,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":9,"16":0,"17":2,"18":6,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0,"29":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T18:18:01.036Z","counts":{"1":6,"2":10,"3":6,"4":3,"5":6,"6":5,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":9,"16":0,"17":2,"18":7,"19":2,"20":2,"21":1,"22":1,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0,"29":1}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30050,6 +30053,17 @@ function classGuideRichText(text){
   const safe = String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   return safe.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
 }
+// The guide view's description, one block per line (user 2026-10-18): side-by-side columns and pages then never split a paragraph. **bold** that runs over
+// a line break is closed at the line's end and reopened on the next; an empty line keeps its height with a <br>.
+function classGuideParaHtml(text){
+  let open = false;
+  return classGuideRichText(text).split("\n").map(line => {
+    const after = (open ? 1 : 0) + (line.match(/<strong>/g) || []).length - (line.match(/<\/strong>/g) || []).length === 1;
+    const plain = line.replace(/<[^>]*>/g, "").trim(), head = plain.length > 0 && plain.length <= 60 && /[:：]$/.test(plain);   // a heading line ("Status Recommend:") stays with the next one
+    const html = '<span class="cg-para' + (head ? " is-head" : "") + '">' + (open ? "<strong>" : "") + (line || "<br>") + (after ? "</strong>" : "") + "</span>";
+    open = after; return html;
+  }).join("");
+}
 function classGuideBoldEdit(value, start, end, maxLength){
   if (start === end) return null;
   let text = value.slice(start, end), from = start, to = end, selectionStart = start, selectionEnd;
@@ -30281,7 +30295,7 @@ function classGuideImageWrap(runs, maxWidth, measure, segmenter){
   const put = (text, gold) => { const line = lines[lines.length - 1], last = line[line.length - 1]; if (last && last.gold === gold) last.text += text; else line.push({ text, gold }); };
   const newLine = () => { lines.push([]); x = 0; };
   for (const run of runs) for (const part of run.text.split(/(\n)/)){
-    if (part === "\n"){ newLine(); continue; }
+    if (part === "\n"){ newLine(); lines[lines.length - 1].para = true; continue; }   // a line break starts a paragraph (the PNG's description columns keep them whole)
     const tokens = run.keep ? [part] : segmenter ? Array.from(segmenter.segment(part), s => s.segment) : part.split(/(\s+)/).filter(Boolean);
     for (const tok of tokens){
       const w = measure(tok, run.gold);
@@ -30661,15 +30675,49 @@ async function classGuideRenderImage(guide, simRoot){
     const dy = rectTop + row1 + G, dh = rectTop + rectH - dy;
     // the largest size from 23 down to 15 at which the whole text fits the box (user 2026-10-17: a PNG tolerates more shrinking than the page); still too long:
     // cut with "…" and a last line pointing to the full guide on the website
-    let size = 23, sLh = lh, sFont = descFont, lines = descLines;
-    for (let f = 23; f >= 15; f--){
-      const fnt = g => font(g ? 700 : 400, f), flh = Math.round(f * 36 / 23), all = classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(fnt), segmenter);
-      size = f; sLh = flh; sFont = fnt; lines = all;
-      if (all.length * flh + panelPad * 2 <= dh) break;
+    // a wide box with short lines (user 2026-10-18, as on the page): at each size side-by-side columns first (each at least 38 em, up to 3, a faint rule between)
+    const colGapW = 40, blank = ln => !ln.some(run => run.text.trim());
+    // whole paragraphs per column (a paragraph longer than a column splits), at the lowest column height that holds them all; no empty line at a column's top
+    const descColumns = (all, c) => {
+      const paras = []; all.forEach((ln, i) => { if (i === 0 || ln.para) paras.push([]); paras[paras.length - 1].push(ln); });
+      const headOf = p => { const t = p.length === 1 ? p[0].map(run => run.text).join("").trim() : ""; return t.length > 0 && t.length <= 60 && /[:：]$/.test(t); };
+      for (let i = paras.length - 2; i >= 0; i--) if (headOf(paras[i])) paras.splice(i, 2, paras[i].concat(paras[i + 1]));   // a heading line ("Status Recommend:") travels with the next paragraph
+      for (let H = Math.max(1, Math.ceil(all.length / c)); H <= all.length; H++){
+        const out = [[]]; let ok = true;
+        for (const p of paras){
+          const rest = p.slice();
+          while (ok && rest.length){
+            const col = out[out.length - 1];
+            if (!col.length) while (rest.length && blank(rest[0])) rest.shift();
+            if (!rest.length) break;
+            if (rest.length <= H - col.length) col.push(...rest.splice(0));
+            else if (col.length && rest.length <= H){ if (out.length === c) ok = false; else out.push([]); }   // the whole paragraph moves to the next column
+            else { col.push(...rest.splice(0, H - col.length)); if (rest.length){ if (out.length === c) ok = false; else out.push([]); } }   // taller than a column: it splits
+          }
+          if (!ok) break;
+        }
+        if (ok) return out;
+      }
+      return [all];
+    };
+    let size = 23, sLh = lh, sFont = descFont, lines = descLines, cols = 1, colW = descTextW, fits = false;
+    for (let f = 23; f >= 15 && !fits; f--){
+      const fnt = g => font(g ? 700 : 400, f), flh = Math.round(f * 36 / 23), most = Math.max(1, Math.min(3, Math.floor((descTextW + colGapW) / (38 * f + colGapW))));
+      for (let c = 1; c <= most && !fits; c++){
+        const w = (descTextW - (c - 1) * colGapW) / c, all = classGuideImageWrap(classGuideImageRuns(guide.description), w, measureWith(fnt), segmenter);
+        size = f; sLh = flh; sFont = fnt; lines = all; cols = c; colW = w;
+        fits = (c > 1 ? Math.max(...descColumns(all, c).map(ch => ch.length)) : all.length) * flh + panelPad * 2 <= dh;
+      }
     }
-    const fits = lines.length * sLh + panelPad * 2 <= dh, maxLines = Math.max(1, Math.floor((dh - panelPad * 2) / sLh) - (fits ? 0 : 1));
-    pullQuote(P.margin, dy, descW, Math.min(dh, fits ? lines.length * sLh + panelPad * 2 : dh));
-    shadowed(() => drawLines(classGuideImageClip(lines, maxLines, descTextW, measureWith(sFont)), P.margin + bar + panelPad, dy + panelPad + Math.round(size * 25 / 23), sLh, sFont, { text, gold }));
+    if (!fits){ cols = 1; colW = descTextW; lines = classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(sFont), segmenter); }   // the cut is in one column
+    const chunks = cols > 1 ? descColumns(lines, cols) : [lines];
+    const usedLines = Math.max(...chunks.map(ch => ch.length)), maxLines = Math.max(1, Math.floor((dh - panelPad * 2) / sLh) - (fits ? 0 : 1));
+    pullQuote(P.margin, dy, descW, Math.min(dh, fits ? usedLines * sLh + panelPad * 2 : dh));
+    chunks.forEach((ch, c) => {
+      const cx = P.margin + bar + panelPad + c * (colW + colGapW);
+      if (c > 0){ ctx.fillStyle = "rgba(201,162,39,.22)"; ctx.fillRect(cx - colGapW / 2, dy + panelPad, 1, Math.min(dh - panelPad * 2, usedLines * sLh)); }
+      shadowed(() => drawLines(fits ? ch : classGuideImageClip(ch, maxLines, colW, measureWith(sFont)), cx, dy + panelPad + Math.round(size * 25 / 23), sLh, sFont, { text, gold }));
+    });
     if (!fits){ ctx.font = font(400, 16); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("อ่านคำอธิบายฉบับเต็มได้ในไกด์บนเว็บ 12 Tails Bible", P.margin + descW - panelPad, dy + dh - panelPad + 4); ctx.textAlign = "left"; }
   }
   // ---- notes: a full-height column of chips on the right
@@ -31010,8 +31058,8 @@ function mountClassGuide(root){
     const build = simRoot.querySelector(".rsim");
     if (!build) return;
     guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-notes-w");
-    notesBox.style.width = ""; notesBox.style.maxHeight = ""; for (const v of ["--cg-note-fs", "--cg-note-icon", "--cg-note-lines"]) notesBox.style.removeProperty(v);
-    desc.style.width = ""; desc.style.maxHeight = ""; desc.style.height = ""; desc.style.fontSize = ""; desc.style.gridColumn = ""; notesBox.style.paddingBottom = ""; descPager.style.gridColumn = ""; desc.classList.remove("is-paged"); desc.style.columnWidth = ""; desc.style.columnGap = ""; descPager.hidden = true; notesBox.style.height = ""; panel.style.alignSelf = "";
+    notesBox.style.width = ""; notesBox.style.maxHeight = ""; notesBox.style.overflow = ""; for (const v of ["--cg-note-fs", "--cg-note-icon", "--cg-note-lines"]) notesBox.style.removeProperty(v);
+    desc.style.width = ""; desc.style.maxHeight = ""; desc.style.height = ""; desc.style.fontSize = ""; desc.style.gridColumn = ""; notesBox.style.paddingBottom = ""; descPager.style.gridColumn = ""; desc.classList.remove("is-paged", "is-cols"); desc.style.columnWidth = ""; desc.style.columnGap = ""; desc.style.columnCount = ""; descPager.hidden = true; notesBox.style.height = ""; panel.style.alignSelf = "";
     if (isPhone()){ simRoot.style.height = ""; simRoot.style.width = ""; panel.style.height = ""; build.style.width = ""; simRoot.style.removeProperty("--cg-reader-scale"); guidePage.style.removeProperty("--cg-u"); return; }   // phones: plain scrolling page, see the phone reader CSS
     // Landscape reader: everything outside the skill grid (panel text, stat tiles, gear, notes, description, column widths) scales by one factor --cg-u
     // (user 2026-10-16: nothing should keep a fixed size, all of it in proportion). The factor follows the skill grid itself: a skill cell is 43 px on a
@@ -31076,7 +31124,7 @@ function mountClassGuide(root){
       const fitIn = m => {   // the description spans the info panel and the middle column m wide; the build gets the height left
         let descH = 0;
         if (descOn){
-          desc.style.width = (panelW + colGap + m) + "px"; desc.style.maxHeight = ""; descH = Math.ceil(desc.getBoundingClientRect().height) + 1;   // rounded up: a fraction of a pixel short shows a scrollbar
+          desc.style.width = (panelW + colGap + m) + "px"; desc.style.maxHeight = ""; descH = Math.ceil(desc.getBoundingClientRect().height / zoom) + 1;   // rounded up: a fraction of a pixel short shows a scrollbar
           const cap = Math.round(free * 0.3); if (descH > cap) descH = cap;   // a long description scrolls in its own box
           desc.style.maxHeight = descH + "px"; descH += gap;
         }
@@ -31131,14 +31179,25 @@ function mountClassGuide(root){
         if (descWide){ desc.style.gridColumn = "1 / -1"; descPager.style.gridColumn = "1 / -1"; }
         desc.style.maxHeight = ""; desc.style.height = "";
         const roomLeft = Math.max(40, Math.floor(free - row2 - gap)), u = parseFloat(getComputedStyle(guidePage).getPropertyValue("--cg-u")) || 1;
-        let natural = Math.ceil(desc.getBoundingClientRect().height) + 1;
+        // A wide box with short lines (user 2026-10-18: guide 29 paged on a 3440 px screen with most of the box empty): at each size the text first tries
+        // side-by-side columns, each at least 38 em wide (up to 3); then the font shrinks; only then does it page (in one column)
+        const measure = () => Math.ceil(desc.getBoundingClientRect().height / zoom) + 1;   // in page pixels: the rectangle includes the .stage zoom (1.3 / 1.5 on big screens), the room does not (user 2026-10-18)
+        const fitCols = () => {
+          desc.classList.remove("is-cols"); desc.style.columnCount = "";
+          let n = measure(); if (n <= roomLeft) return n;
+          const cs = getComputedStyle(desc), em = parseFloat(cs.fontSize) || 16, inner = desc.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          const most = Math.max(1, Math.min(3, Math.floor((inner + 2 * em) / (40 * em))));
+          for (let c = 2; c <= most; c++){ desc.classList.add("is-cols"); desc.style.columnCount = c; n = measure(); if (n <= roomLeft) return n; }
+          desc.classList.remove("is-cols"); desc.style.columnCount = ""; return measure();
+        };
+        let natural = fitCols();
         const floor = Math.floor(Math.max(13, 11 * u));   // the smallest size: 11 px x the panel scale, never under 13 px on screen
-        for (let px = Math.floor(17 * u) - 1; natural > roomLeft && px >= floor; px--){ desc.style.fontSize = px + "px"; natural = Math.ceil(desc.getBoundingClientRect().height) + 1; }   // a long text first shrinks before it pages (user 2026-10-17)
+        for (let px = Math.floor(17 * u) - 1; natural > roomLeft && px >= floor; px--){ desc.style.fontSize = px + "px"; natural = fitCols(); }   // a long text first shrinks before it pages (user 2026-10-17)
         const h = Math.min(natural, roomLeft);
         desc.style.height = h + "px"; bottom = row2 + gap + h;
         if (natural > roomLeft) layoutDescPages();   // too long: pages (user 2026-10-16) instead of a scrollbar
       }
-      if (notesOn){ const nh = descWide ? Math.ceil(notesEnd - notesLift) : Math.floor(bottom - notesLift); notesBox.style.paddingBottom = descWide ? "0" : ""; notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; }   // the notes column ends where the description ends
+      if (notesOn){ const nh = descWide ? Math.ceil(notesEnd - notesLift) : Math.floor(bottom - notesLift); notesBox.style.paddingBottom = descWide ? "0" : ""; notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; notesBox.style.overflow = notesBox.scrollHeight <= notesBox.clientHeight + 1 ? "visible" : ""; }   // the notes fit: nothing to scroll, so the last frame's rings and hover glow are never cut (user 2026-10-18)   // the notes column ends where the description ends
     }
   }
 
@@ -31283,7 +31342,7 @@ function mountClassGuide(root){
     const authorEl = document.createElement("span"); authorEl.className = "cg-byline-author"; authorEl.textContent = current.author || "ยังไม่ระบุผู้เขียน";
     el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
     if (currentId){ const sep = document.createElement("span"); sep.className = "cg-views-sep"; sep.textContent = " · "; el("guideByline").append(sep, viewBadge(currentId)); }
-    el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
+    el("guideDescription").innerHTML = classGuideParaHtml(current.description); button("returnAuthor").hidden = !preview;   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = current.stats ? { ...current.stats } : null;
     window.scrollTo(0, 0); queueReaderFit();
@@ -32794,6 +32853,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T18:18:01.319Z","fix(bible): on big screens (page zoom 1.3 / 1.5) the class guide view measured its description 30-50% too tall, so it shrank and paged for nothing (guide #29); a description in a wide box now flows into side-by-side columns (never splitting a paragraph) before its font shrinks or it pages, and the PNG does the same before it cuts; the last skill note's round frame and hover glow are no longer cut off"],
     ["2026-10-17T17:53:46.280Z","feat(bible): class guide #29 updated from its author's new code: CHA 250+ joins the recommended stats"],
     ["2026-10-17T17:45:31.898Z","fix(bible): the class guide PNG and its step-5 thumbnail show the picked support skills under the Basic tree, as the guide view does"],
     ["2026-10-17T17:38:20.306Z","feat(bible): class guide #29 TTO Bat ค้างคาว PVE Solo by Sasomu; recommended sets list the boots before the trinket, as in the game; a recommended stat can be typed as 250+ (shown as 250+ in the guide view and the PNG); a near-black item icon in the recommended sets (like the Lv 70 Bat trinket) gets a light rim instead of the dark outline"],
