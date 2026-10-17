@@ -2342,15 +2342,15 @@
   .rsim-cell.can-green .rsim-plus{background:var(--pro)}
   .rsim-cell.can-red .rsim-plus{background:var(--seal)}
   /* support skills (user 2026-10-17): a row under the Basic tree, the normal frame; an empty slot is a dimmed frame with +, the picker is a small pop-up */
-  .rsim-support-row[hidden]{display:none}
+  .rsim-support-row[hidden],.rsim-support-gap[hidden]{display:none}
+  .rsim-support-gap .rsim-slot::before{content:"";display:block;width:86%;aspect-ratio:1}   /* exactly one skill row tall, so it scales with the grid */
   .rsim-cell.rsim-support.is-empty .rsim-frame{opacity:.35}
   .rsim-cell.rsim-support.is-empty:hover .rsim-frame,.rsim-cell.rsim-support.is-empty:focus-visible .rsim-frame{opacity:.7}
   .rsim-support-plus{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);font:300 26px/1 'Prompt',sans-serif;text-shadow:0 0 8px rgba(212,175,55,.5)}
-  .rsim-support-pick{position:fixed;z-index:1300;width:min(380px,calc(100vw - 16px));box-sizing:border-box;padding:12px;border:1px solid rgba(201,162,39,.55);border-radius:10px;background:#15100b;box-shadow:0 18px 40px -12px #000;color:var(--text);font-family:'Prompt',sans-serif}
-  .rsim-support-pick > b{display:block;margin:0 0 8px;color:var(--gold);font-size:13px;font-weight:600}
+  .rsim-support-pick{position:fixed;z-index:1300;width:min(316px,calc(100vw - 16px));box-sizing:border-box;padding:12px;border:1px solid rgba(201,162,39,.55);border-radius:10px;background:#15100b;box-shadow:0 18px 40px -12px #000;color:var(--text);font-family:'Prompt',sans-serif}
   .rsim-support-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-  .rsim-support-opt{display:grid;justify-items:center;gap:4px;padding:6px 2px;border:1px solid transparent;border-radius:8px;background:none;color:var(--text);font:inherit;font-size:10.5px;line-height:1.2;text-align:center;cursor:pointer}
-  .rsim-support-opt img{width:40px;height:40px}
+  .rsim-support-opt{display:grid;place-items:center;padding:5px;border:1px solid transparent;border-radius:8px;background:none;color:var(--text);font:inherit;font-size:10.5px;line-height:1.2;text-align:center;cursor:pointer}
+  .rsim-support-opt img{width:60px;height:60px}
   .rsim-support-opt:hover,.rsim-support-opt:focus-visible{border-color:rgba(201,162,39,.6);background:rgba(212,175,55,.08);outline:none}
   .rsim-support-opt.is-on{border-color:var(--gold);background:rgba(212,175,55,.14)}
   .rsim-support-opt:disabled{opacity:.3;cursor:default}
@@ -29655,7 +29655,7 @@ const CLASS_GUIDES = [
   {"id":27,"cover":[373],"format":"12t-class-guide","version":1,"title":"คาวก็อป","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,211,212,213,214,221,222,241,301,302,303,304,311,312,313,314,321,322,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,371,372,373,403,404,411,412,421,424,431,441,443]},"notes":{}},
   {"id":28,"cover":[272],"format":"12t-class-guide","version":1,"title":"คาว CHA กาเดี้ยนขั้น 2","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,321,322,331,332,333,334,351,404,411,414,421,422,431,432,441,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:33:23.713Z","counts":{"1":5,"2":9,"3":5,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":9,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:40:09.036Z","counts":{"1":5,"2":9,"3":5,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":9,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31825,7 +31825,7 @@ function mountSkillSimulator(root, options = {}){
       });
       body.appendChild(rowEl);
     });
-    if (ti === 0){ const sup = document.createElement("div"); sup.className = "rsim-row rsim-support-row"; sup.dataset.role = "support"; body.appendChild(sup); }   // the support skills' row (renderSupport)
+    if (ti === 0){ const gap = document.createElement("div"); gap.className = "rsim-row rsim-support-gap"; gap.dataset.role = "supportGap"; gap.setAttribute("aria-hidden", "true"); gap.innerHTML = '<div class="rsim-slot"></div>'; const sup = document.createElement("div"); sup.className = "rsim-row rsim-support-row"; sup.dataset.role = "support"; body.append(gap, sup); }   // one blank skill row, then the support skills (user 2026-10-17)   // the support skills' row (renderSupport)
     treesEl.appendChild(sec);
   });
   cellEls = {};
@@ -31857,6 +31857,7 @@ function mountSkillSimulator(root, options = {}){
     row.textContent = "";
     const building = interaction === "build", show = building ? [0, 1] : state.support.map((_, k) => k);
     row.hidden = !show.length;
+    const gap = treesEl.querySelector('[data-role="supportGap"]'); if (gap) gap.hidden = row.hidden;   // the blank row goes with it
     for (let k = 0; k < 4; k++){
       const slot = document.createElement("div"); slot.className = "rsim-slot";
       if (show.includes(k)){
@@ -31883,13 +31884,12 @@ function mountSkillSimulator(root, options = {}){
   function openSupportPick(k, anchor){
     closeSupportPick();
     const pick = document.createElement("div"); pick.className = "rsim-support-pick"; pick.setAttribute("role", "dialog"); pick.setAttribute("aria-label", "เลือกสกิลซัพพอร์ต");
-    const head = document.createElement("b"); head.textContent = "สกิลซัพพอร์ต (เลือกได้ 2 สกิล)"; pick.appendChild(head);
     const grid = document.createElement("div"); grid.className = "rsim-support-grid";
     for (const id of Object.keys(supportCells).map(Number)){
       const c = supportCells[id], opt = document.createElement("button"); opt.type = "button"; opt.className = "rsim-support-opt" + (state.support[k] === id ? " is-on" : "");
       opt.disabled = state.support.includes(id) && state.support[k] !== id;
-      const img = document.createElement("img"); img.src = SKILL_ICONS[c.icon] || ""; img.alt = ""; const nm = document.createElement("span"); nm.textContent = c.name;
-      opt.append(img, nm);
+      const img = document.createElement("img"); img.src = SKILL_ICONS[c.icon] || ""; img.alt = ""; opt.title = c.name; opt.setAttribute("aria-label", c.name);   // icons only, bigger (user 2026-10-17); the name stays as the tooltip
+      opt.append(img);
       opt.addEventListener("click", () => { push(); const next = state.support.slice(); next[k] = id; state.support = next.filter(Boolean); closeSupportPick(); update(); });
       grid.appendChild(opt);
     }
@@ -32757,6 +32757,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T16:35:41.166Z","fix(bible): a blank skill row sits between the Basic tree and its support skills; the support skill picker shows bigger icons without names or heading"],
     ["2026-10-17T16:28:42.701Z","feat(bible): class guide skill simulator has two optional support skill slots under the Basic tree (every server; notes and cover icons work on them; shown in the guide view when picked)"],
     ["2026-10-17T16:18:05.905Z","fix(bible): a guide title only wraps at its spaces, never in the middle of a Thai word (guide view, gallery cards and the PNG); the guide pages' animations always play (reduced-motion gates removed, house rule)"],
     ["2026-10-17T16:12:38.652Z","feat(bible): guide editor step 3 has an expert mode: a gold arrow takes a skill row straight to that rank, the build is checked once the points are spent, and a build that breaks a rule cannot be exported; class guide #28 TTO Bat คาว CHA กาเดี้ยนขั้น 2 by Sugar"],
