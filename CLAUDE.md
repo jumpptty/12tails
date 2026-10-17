@@ -29,11 +29,13 @@ node scripts/card_edit.js --selftest
 
 python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode cd/castTime/MP/SP/reqLv per skill
 node scripts/guide_code.js decode <12TG1.code | file>          # turn a submitted class guide short code into the JSON object to embed (also: encode <json>, --selftest)
+node scripts/guide_draft.js layout <class> [server]            # a class's skill-sim rows with cell ids (also: build <draft.json> [out.json] -> checked guide + TG2 code, --selftest)
 ```
 
 ### Project skills and agents
 
 - `/sd`: skill-detail research and implementation workflow (`.claude/commands/sd.md`).
 - `decode-character-stats`: hex-decodes monster/unit base stats from the binary game data.
+- `guide-draft`: drafts a class guide (build, description, skill notes, TG2 code) from a Skill Simulator screenshot and the author's post.
 - `mechanics-researcher` agent: read-only tracing of formulas in `DecompiledSource/`.
 - Bible topic skills (auto-loaded by task): `bible-desc-writing`, `bible-card-fields`, `bible-damage-model`, `bible-skill-page-ui`, `bible-hub-tools`, `bible-skill-research`.

@@ -1792,6 +1792,10 @@
   .cg-filters label{display:grid;gap:6px;min-width:180px;font-size:13px;color:var(--muted)}
   .cg-filters select{box-sizing:border-box;width:100%;padding:9px 32px 9px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
   .cg-filters select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .cg-sort-wrap{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+  .cg-sort{box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer;white-space:nowrap}
+  .cg-sort:hover{border-color:var(--gold)}
+  .cg-sort:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   @media(max-width:480px){.cg-filters label{flex:1;min-width:140px}}
   .cg-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .cg-guide{position:relative;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);min-height:104px;box-sizing:border-box;padding:20px 20px 20px 120px;font:inherit;cursor:pointer}
@@ -30211,7 +30215,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><section class="cg-card-preview" data-cg-role="cardPreview" hidden><small>การ์ดในหน้าไกด์จากผู้เล่น</small></section><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}</nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
@@ -30647,11 +30651,17 @@ function mountClassGuide(root){
     const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author || "ยังไม่ระบุผู้เขียน", classGuideDateText(guide.date)].join(" · ");
     b.append(portrait, title, byline); return b;
   }
+  // Date sort (user 2026-10-17): newest first by default, the button flips it; same-day guides keep their running number order. Remembered per browser.
+  let sortNewest = true; try { sortNewest = localStorage.getItem("12t-bible-guide-sort") !== "oldest"; } catch (e) {}
+  const syncSort = () => { const b = el("sortDate"); b.textContent = sortNewest ? "ใหม่ → เก่า ↓" : "เก่า → ใหม่ ↑"; b.setAttribute("aria-label", sortNewest ? "เรียงจากใหม่ไปเก่า กดเพื่อเรียงจากเก่าไปใหม่" : "เรียงจากเก่าไปใหม่ กดเพื่อเรียงจากใหม่ไปเก่า"); };
+  el("sortDate").addEventListener("click", () => { sortNewest = !sortNewest; try { localStorage.setItem("12t-bible-guide-sort", sortNewest ? "newest" : "oldest"); } catch (e) {} syncSort(); renderGallery(); });
+  syncSort();
   function renderGallery(){
     const list = el("guides"); list.textContent = "";
     let validCount = 0, invalidCount = 0, totalCount = 0;
     const server = el("serverFilter").value, classKey = el("classFilter").value;
-    for (const [gi, raw] of CLASS_GUIDES.entries()){
+    const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && a.date) || "").localeCompare(String((z && z.date) || "")) || ia - ib; return sortNewest ? -d : d; });
+    for (const [gi, raw] of byDate){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
       totalCount++;
       if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey)) continue;
@@ -31911,6 +31921,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T03:27:58.369Z","feat(bible): ไกด์จากผู้เล่น sorts the guides by date, newest first, with a button to flip the order"],
     ["2026-10-17T02:57:34.795Z","feat(bible): class guides #7 to #11: on TTO Cat (แกรม PVP by มะกรูด), Bat (คาว TAL by SHIRANUI), Bat (คาว CHA by SHIRANUI) and Cat (แมวแกรมแทงใจ PVP by หนมผิงช่วยเหลือประชาชน); on ToT Cat (แมวเจาะ by HOUND)"],
     ["2026-10-17T02:52:54.023Z","feat(bible): ไกด์จากผู้เล่น notes that authors can ask on Discord any time to edit or remove their guide"],
     ["2026-10-17T02:49:44.036Z","feat(bible): the guide preview also shows the guide's card as it will appear in ไกด์จากผู้เล่น"],
