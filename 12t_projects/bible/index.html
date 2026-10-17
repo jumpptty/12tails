@@ -30832,7 +30832,8 @@ function mountClassGuide(root){
   const estimatedReaders = (id, visitors) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; return Math.round(visitors * (5 + (h % 201) / 100)); };
   const viewBadge = id => {
     const v = document.createElement("span"); v.className = "cg-views"; v.hidden = true; v.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19.5c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><circle cx="16.8" cy="8.6" r="2.6"/><path d="M16.4 13.7c2.7.2 4.6 2.1 5.1 5.3"/></svg><b></b>';
-    guideViews(id).then(n => { if (n == null) return; const r = estimatedReaders(id, n); v.querySelector("b").textContent = r.toLocaleString("th-TH"); v.setAttribute("aria-label", r.toLocaleString("th-TH") + " ผู้อ่าน"); v.hidden = false; });   // a people icon says readers; no long tooltip (user 2026-10-17)
+    guideViews(id).then(n => { if (!n) return; const r = estimatedReaders(id, n);   // nothing until the first reader is counted (user 2026-10-17: no "0" badges)
+    v.querySelector("b").textContent = r.toLocaleString("th-TH"); v.setAttribute("aria-label", r.toLocaleString("th-TH") + " ผู้อ่าน"); v.hidden = false; });   // a people icon says readers; no long tooltip (user 2026-10-17)
     return v;
   };
   function guideCard(guide, tag = "button", id = null){
@@ -32178,6 +32179,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T08:37:52.547Z","fix(bible): a class guide shows its readers only once it has some (no 0 badge)"],
     ["2026-10-17T08:33:11.021Z","feat(bible): a class guide cover takes up to 5 skill icons (4 in a 2 x 2 grid, 5 as a pyramid of 2 over 3)"],
     ["2026-10-17T08:24:02.126Z","feat(bible): ไกด์จากผู้เล่น becomes a medallion grid: round covers centred on 4-column cards with class and server chips and gold estimated readers; on phones the filters and cards go compact, 3 per row with at least 3 rows per page"],
     ["2026-10-17T08:07:44.817Z","feat(bible): each class guide counts its own views and shows its estimated readers live with a readers icon on its card and in its byline"],
