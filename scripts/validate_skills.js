@@ -2986,7 +2986,7 @@ let checkedRsim = 0;
   }
   // Servers (2026-10-12, user): BB 95 forever, TTO 95 for now, ToT 100. Each server has its own cap and its own cell patches (empty = same as BB).
   const SRV = vm.runInContext("SKILL_SIM_SERVERS", sandbox);
-  ok(Object.keys(SRV).join() === "og,tot,tto" && SRV.og.cap === 95 && SRV.tto.cap === 110 && SRV.tot.cap === 110, "server caps: BB 95, ToT 110, TTO 110 (user 2026-10-17)");
+  ok(Object.keys(SRV).join() === "og,tot,tto" && SRV.og.cap === 95 && SRV.tto.cap === 120 && SRV.tot.cap === 120, "server caps: BB 95, ToT 120, TTO 120 (user 2026-10-17)");
   ok(poolMaxC(95) === 9 && poolMaxC(100) === 10, "Class C points: 9 at Lv 95, 10 at Lv 100");
   for (const k of Object.keys(SRV)) {
     ok(!!SRV[k].name && !!SRV[k].full && !!SKILL_ICONS["server_" + k], `server ${k}: names and icon`);
