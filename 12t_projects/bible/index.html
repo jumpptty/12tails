@@ -23,14 +23,14 @@
       // the guide reader's side panels: info, notes column, description (user 2026-10-16: solid black boxes beside the see-through ToT trees)
       ".cg-page[data-mode=\"reader\"] .cg-reader", ".cg-page[data-mode=\"reader\"] > .cg-note-chips", ".cg-page[data-mode=\"reader\"] > .cg-prose",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".svc-item", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".svc-item", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
     // clickable tiles whose own hover fill must keep winning
     tile: ["li:not(.entry-svc):not(.entry-bug):not(.entry-chm):not(.entry-wide):not(.entry-hero-side) > .entry"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
     raised: [".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-icon-pick", ".cg-sort", ".cg-page-btn",
-      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".bbi-filter button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-compat-chip", ".sk-enemy-imm-chip", ".sk-server-badge"],
+      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".bbi-filter button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-compat-chip", ".sk-enemy-imm-chip", ".sk-server-badge"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17)
     popup: [".hub-theme-menu", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
@@ -1889,40 +1889,45 @@
   .cg-guide > .cg-cover{position:absolute;left:14px;top:50%;transform:translateY(-50%)}
   .cg-card-preview{display:grid;gap:4px;width:min(460px,100%);margin-right:auto}
   .cg-card-preview[hidden]{display:none}
-  .cg-card-preview > small{font-size:12px;color:var(--muted)}
+  .cg-card-preview > small,.cg-card-preview > figcaption{font-size:12px;color:var(--muted)}
   .cg-card-preview .cg-guide{cursor:default;border-color:var(--line)}   /* the gallery card as is, not clickable */
   /* editor steps (user 2026-10-16) */
   .cg-author .is-off-step{display:none !important}
   .cg-page[data-mode="author"] .cg-author:not([data-step="1"]):not([data-step="4"]) .cg-fields{display:none}   /* nothing of step 1 left in it: it must not take the column height */
   .cg-page[data-mode="author"] .cg-author[data-step="4"] .cg-fields{grid-template-rows:minmax(0,1fr)}
-  /* step 6 (user 2026-10-17): the gallery card and a small full-guide thumbnail side by side, the two send options below */
-  .cg-send{display:grid;gap:14px;align-content:start;grid-template-columns:auto minmax(0,1fr)}
-  .cg-send > .cg-send-card{grid-column:1;grid-row:1}
-  .cg-send > .cg-send-view{grid-column:2;grid-row:1;display:grid;gap:4px;align-content:start}
-  .cg-send > .cg-send-view > small{font-size:12px;color:var(--muted)}
-  .cg-send > :not(.cg-send-card):not(.cg-send-view){grid-column:1 / -1}
-  .cg-send-thumb{position:relative;width:min(100%,520px);aspect-ratio:16 / 9;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:3px;background:#140f0b;cursor:zoom-in;overflow:hidden;box-shadow:0 10px 22px -12px #000;transition:border-color .15s,transform .15s}
+  /* step 6 (user 2026-10-17, redesigned): a preview panel (gallery card + full-guide thumbnail), then two action cards; the send card leads */
+  .cg-send{display:grid;gap:16px;align-content:start}
+  .cg-send-preview{padding:16px 18px 18px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+  .cg-send-h{margin:0 0 12px;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--gold)}
+  .cg-send-previews{display:grid;grid-template-columns:240px minmax(0,640px);justify-content:center;gap:24px;align-items:center}   /* the pair centred in the panel, the card centred against the view (user 2026-10-17) */
+  .cg-send-previews figure{margin:0;display:grid;gap:6px;align-content:start}
+  .cg-send-previews figcaption{font-size:12px;color:var(--muted);text-align:center}
+  .cg-send .cg-send-card{width:auto;margin:0}
+  .cg-send-thumb{position:relative;width:100%;aspect-ratio:16 / 9;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:3px;background:#140f0b;cursor:zoom-in;overflow:hidden;box-shadow:0 10px 22px -12px #000;transition:border-color .15s,transform .15s}
   .cg-send-thumb img{display:block;width:100%;height:100%;object-fit:contain}
   .cg-send-thumb img:not([src]),.cg-send-thumb img[src=""]{visibility:hidden}
   .cg-send-thumb:hover:not(:disabled){border-color:var(--gold);transform:translateY(-1px)}
   .cg-send-thumb:disabled{cursor:progress}
   .cg-send-thumb-wait{position:absolute;inset:0;display:none;place-items:center;font-size:13px;color:var(--muted)}
   .cg-send-thumb.is-waiting .cg-send-thumb-wait{display:grid}
+  .cg-send-zoom{position:absolute;right:8px;bottom:8px;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(10,8,6,.75);box-shadow:0 0 0 1px rgba(201,162,39,.6);color:var(--gold)}
+  .cg-send-zoom svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .cg-send-thumb.is-waiting .cg-send-zoom{display:none}
+  .cg-send-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .cg-send-opt{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:1fr auto;column-gap:14px;row-gap:14px;align-items:start;padding:16px 18px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+  .cg-send-opt.is-main{border-color:rgba(201,162,39,.65);box-shadow:inset 0 0 0 1px rgba(201,162,39,.18)}
+  .cg-send-ic{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:rgba(201,162,39,.12);box-shadow:inset 0 0 0 1px rgba(201,162,39,.45);color:var(--gold)}
+  .cg-send-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .cg-send-txt h3{margin:2px 0 4px;font-family:inherit;font-size:17px;color:var(--gold)}
+  .cg-send-txt p{margin:0;font-size:13.5px;line-height:1.6;color:var(--muted)}
+  .cg-send-opt .cg-send-copy{grid-column:1 / -1;width:100%;min-height:46px;font-size:15px;margin:0}
+  @media(max-width:760px){.cg-send-previews,.cg-send-opts{grid-template-columns:minmax(0,1fr)}.cg-send .cg-send-card{justify-self:center;width:min(240px,100%)}}
   .cg-full-view{width:min(96vw,1700px);max-height:94vh;box-sizing:border-box;margin:auto;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:4px;background:#0b0907;overflow:auto}
   .cg-full-view::backdrop{background:rgba(0,0,0,.78)}
   .cg-full-view img{display:block;width:100%;height:auto}
   .cg-full-view .cg-note-close{z-index:1;color:#fff;text-shadow:0 1px 3px #000}
   @media(max-width:760px){.cg-send{grid-template-columns:minmax(0,1fr)}.cg-send > .cg-send-card,.cg-send > .cg-send-view{grid-column:1;grid-row:auto}.cg-send > .cg-send-card{justify-self:center}}
-  .cg-send-lead{margin:0;font-size:18px;color:var(--text)}
-  .cg-send-lead b{color:var(--gold)}
-  .cg-send-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-  .cg-send-opt{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
-  .cg-send-opt h3{margin:0;font-family:inherit;font-size:17px;color:var(--gold)}
-  .cg-send-opt > p{margin:0;font-size:14px;color:var(--muted)}
-  .cg-send-opt .cg-send-copy{margin-top:auto}
-  .cg-send-opt .cg-send-steps{border:0;background:none;padding:0 0 0 22px}
   .cg-send-steps{margin:0;padding:12px 14px 12px 34px;border:1px solid var(--line);border-radius:6px;background:var(--panel);font-size:14px;line-height:1.8}
-  .cg-send-copy{min-height:48px;font-size:15px}
   .cg-send-check{margin:0;font-size:13px;color:var(--pro,#5fb36b)}
   .cg-send-check.is-missing{color:var(--seal,#e5483f)}
   .cg-steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:4px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
@@ -29400,7 +29405,7 @@ const CLASS_GUIDES = [
   {"id":14,"cover":[354,443,444],"format":"12t-class-guide","version":1,"title":"ต่ายลูกซอง","author":"ตุ่นเพื่อ gattling ต่าย","date":"2026-10-10","description":"ต้องใช้ของกับ Stat มากหน่อยแต่พอใด้ **ยาเลือด C** ก่อแทบไม่ต้องรอคนเพื่อไปวีงลงมาโอแล้ว\nสามารถปรับปุรงใด้แต่สายนี้จะต้อง **อัพเบสีกแบบนี้เพื่อให้ลุกชองยีงเข้า** \nกับต้องมี **New Order** จะได้เรียก **ด้า**  **/Kaiser** มาช่วยตีบอส\nถ้าไม่กะจะยีงไกลเลยก่อเอาไปลงโดดใด้ (สายนี้ทำ **ดาเมจ AOE เยอะ** ยังไงก่อโดนมอนไล่ถ้าไม่มีวาฟ)\n\nถ้า stat จะแนะนำไปที่ **ATK AGI** กรณีนี้ **VIT TAL** จะไม่ค่อยจำเป็นมากถ้าจะเอาไป PvE เพราะเรากดยาเลือดกับ SP ใด้แต่ถ้าจะให้ง่าย **ควรมี SP พอกดยีง Shooting Array 2** ใด้ \n\nช่วงเวลแรกๆจะแนะนำไปเล่นยาก่อนแล้วค่อยรีทีหลัง\nแต่ถ้ากะจะเล่นสายนี้ไปเลยจะแนะนำอัพ ATK ให้ใด้ช่วง 40-60 แล้วไปอัพ AGI VIT เพื่อให้เดีนเวลง่าย","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,131,132,133,134,141,142,143,144,201,202,203,204,211,212,213,214,221,222,241,242,243,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,403,412,413,423,431,433,434,443,444]},"notes":{}},
   {"id":15,"cover":[432],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PvE","author":"ChilLs","date":"2026-10-16","description":"","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,262,301,302,303,304,311,331,332,333,341,342,351,352,361,402,404,414,421,424,431,432,434,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T08:52:36.610Z","counts":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T09:06:17.422Z","counts":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30261,7 +30266,7 @@ async function classGuideRenderImage(guide, simRoot){
   for (const t of plan.trees){
     // The simulator's TailsTopia look (user 2026-10-17): ◆ name, a fading rule and learned/total above a rounded panel with a gold hairline, a dark ring and a deep shadow.
     const top = t.y + 40, R = 3, cellsEnd = t.cells.reduce((m, c) => Math.max(m, c.y + c.size), top), ph = Math.min(t.h - 40, cellsEnd + 18 - top);   // as tall as its skills, never stretched to the tallest tree (user 2026-10-17)
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.7)"; ctx.shadowBlur = 40 * P.scale; ctx.shadowOffsetY = 12 * P.scale; box(t.x, top, t.w, ph, R); ctx.fillStyle = panel2; ctx.fill(); ctx.restore();
+    if (look !== "tot"){ ctx.save(); ctx.shadowColor = "rgba(0,0,0,.7)"; ctx.shadowBlur = 40 * P.scale; ctx.shadowOffsetY = 12 * P.scale; box(t.x, top, t.w, ph, R); ctx.fillStyle = panel2; ctx.fill(); ctx.restore(); }   // ToT keeps its glass (user 2026-10-17: the solid shadow fill hid it)
     surface(t.x, top, t.w, ph, R, true);
     gild(t.x, top, t.w, ph);
     const counted = t.cells.filter(c => !c.placeholder && c.id < 450), have = counted.filter(c => learned.has(c.id)).length, countText = have + "/" + counted.length;
@@ -30396,7 +30401,7 @@ function mountClassGuide(root){
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
       <div class="cg-toolbar"><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button></div></div>
-      <div class="cg-send" data-cg-role="send"><section class="cg-card-preview cg-send-card" data-cg-role="cardPreview"><small>การ์ดในหน้าไกด์จากผู้เล่น</small></section><section class="cg-send-view"><small>หน้าไกด์ (คลิกเพื่อดูเต็มจอ)</small><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span></button></section><p class="cg-send-lead">เลือกได้ <b>อย่างใดอย่างหนึ่ง</b> หรือ <b>ทั้งสองอย่าง</b></p><div class="cg-send-opts"><section class="cg-send-opt"><h3>บันทึกเป็นรูป PNG</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></section><section class="cg-send-opt"><h3>ส่งโค้ดให้ <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a> เก็บในคัมภีร์ไบเบิ้ล</h3><ol class="cg-send-steps"><li>กด <b>คัดลอกโค้ดไกด์</b> โค้ดจะอยู่ในคลิปบอร์ด</li><li>เปิด Discord แล้วส่งข้อความหา <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a></li><li>วางโค้ด (Ctrl+V) แล้วส่ง ไกด์จะขึ้นหน้า <b>ไกด์จากผู้เล่น</b> เมื่อเพิ่มให้แล้ว</li></ol><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
+      <div class="cg-send" data-cg-role="send"><section class="cg-send-preview"><h3 class="cg-send-h">ตัวอย่างก่อนส่ง</h3><div class="cg-send-previews"><figure class="cg-card-preview cg-send-card" data-cg-role="cardPreview"><figcaption>การ์ดในหน้าไกด์จากผู้เล่น</figcaption></figure><figure class="cg-send-view"><figcaption>หน้าไกด์ · คลิกเพื่อดูเต็มจอ</figcaption><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span><span class="cg-send-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></span></button></figure></div></section><div class="cg-send-opts"><section class="cg-send-opt"><span class="cg-send-ic">${classGuideButtonIcon("image")}</span><div class="cg-send-txt"><h3>บันทึกเป็นรูป PNG</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p></div><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></section><section class="cg-send-opt is-main"><span class="cg-send-ic">${classGuideButtonIcon("copy")}</span><div class="cg-send-txt"><h3>ส่งขึ้นหน้าไกด์จากผู้เล่น</h3><p>คัดลอกโค้ดไกด์ แล้ววาง (Ctrl+V) ส่งทาง <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>Discord</b></a> ไกด์จะขึ้นหน้าไกด์จากผู้เล่นเมื่อเพิ่มให้แล้ว</p></div><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
       <template data-cg-role="modeSwitchTpl"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="cover" aria-pressed="false">${classGuideButtonIcon("cover")}<span>ไอคอนหน้าปก</span></button></div></template>
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><div class="cg-gear-panel" data-cg-role="guideGear" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p></section>
@@ -31208,7 +31213,7 @@ function mountClassGuide(root){
         coverMissing = true; goStep(5); status("เลือกไอคอนหน้าปกอย่างน้อย 1 สกิล (สูงสุด 3) ก่อนคัดลอกโค้ดไกด์");
         el("coverRow").scrollIntoView({ block: "nearest" });
       }
-      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); copiedOnce = true; showCopied(); updateSteps(); }   // no pop-up (user 2026-10-16): step 6 already says where to send it, the button's check mark confirms the copy
+      else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); copiedOnce = true; showCopied(); updateSteps(); }   // copy only (user 2026-10-17: the button must not open Discord)   // no pop-up (user 2026-10-16): step 6 already says where to send it, the button's check mark confirms the copy
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
@@ -32219,6 +32224,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T08:57:41.823Z","feat(bible): the guide editor's last step is redesigned: a preview panel with the gallery card and the full guide, a save-as-PNG card and a send card whose button copies the guide code; ToT glass on its panels and on the PNG's skill trees, and gold primary buttons stay gold on ToT"],
     ["2026-10-17T08:40:48.516Z","feat(bible): browsers that block the live counter show each class guide's readers as of the last update; the guide editor shows the gallery card and a small full-guide view (click for full size) in step 6 (บันทึกและส่ง), so the preview matches the PNG again"],
     ["2026-10-17T08:37:52.547Z","fix(bible): a class guide shows its readers only once it has some (no 0 badge)"],
     ["2026-10-17T08:33:11.021Z","feat(bible): a class guide cover takes up to 5 skill icons (4 in a 2 x 2 grid, 5 as a pyramid of 2 over 3)"],
