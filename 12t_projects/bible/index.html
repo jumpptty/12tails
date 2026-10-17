@@ -2341,6 +2341,20 @@
   .rsim-cell.is-can .rsim-plus{display:block}
   .rsim-cell.can-green .rsim-plus{background:var(--pro)}
   .rsim-cell.can-red .rsim-plus{background:var(--seal)}
+  /* support skills (user 2026-10-17): a row under the Basic tree, the normal frame; an empty slot is a dimmed frame with +, the picker is a small pop-up */
+  .rsim-support-row[hidden]{display:none}
+  .rsim-cell.rsim-support.is-empty .rsim-frame{opacity:.35}
+  .rsim-cell.rsim-support.is-empty:hover .rsim-frame,.rsim-cell.rsim-support.is-empty:focus-visible .rsim-frame{opacity:.7}
+  .rsim-support-plus{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);font:300 26px/1 'Prompt',sans-serif;text-shadow:0 0 8px rgba(212,175,55,.5)}
+  .rsim-support-pick{position:fixed;z-index:1300;width:min(380px,calc(100vw - 16px));box-sizing:border-box;padding:12px;border:1px solid rgba(201,162,39,.55);border-radius:10px;background:#15100b;box-shadow:0 18px 40px -12px #000;color:var(--text);font-family:'Prompt',sans-serif}
+  .rsim-support-pick > b{display:block;margin:0 0 8px;color:var(--gold);font-size:13px;font-weight:600}
+  .rsim-support-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .rsim-support-opt{display:grid;justify-items:center;gap:4px;padding:6px 2px;border:1px solid transparent;border-radius:8px;background:none;color:var(--text);font:inherit;font-size:10.5px;line-height:1.2;text-align:center;cursor:pointer}
+  .rsim-support-opt img{width:40px;height:40px}
+  .rsim-support-opt:hover,.rsim-support-opt:focus-visible{border-color:rgba(201,162,39,.6);background:rgba(212,175,55,.08);outline:none}
+  .rsim-support-opt.is-on{border-color:var(--gold);background:rgba(212,175,55,.14)}
+  .rsim-support-opt:disabled{opacity:.3;cursor:default}
+  .rsim-support-remove{margin-top:8px;width:100%}
   /* expert mode (user 2026-10-17): a brighter gold arrow; a skill breaking a rule wears a red ring once the build is checked; the check banner under the bar */
   .rsim-cell.can-gold .rsim-plus{background:linear-gradient(180deg,#ffe08a,#d4af37);box-shadow:0 0 0 1px var(--ink),0 0 6px rgba(255,214,102,.85)}
   .rsim-cell.is-invalid{outline:2px solid var(--seal);outline-offset:3px;border-radius:8px;box-shadow:0 0 12px rgba(229,72,63,.55)}
@@ -29327,6 +29341,16 @@ function skillSimProblems(cells, names, set, lv){
   }
   return out;
 }
+// Support skills (user 2026-10-17): the 12 shared support skills as cells 901-912 (COMMON_SUPPORT_SKILL_IDS order), for the simulator's support row, notes and
+// cover icons. A guide picks up to two (build.support), on every server, with no requirement and no point cost.
+const CLASS_GUIDE_SUPPORT_FIRST = 901;
+let classGuideSupportCache = null;
+function classGuideSupportCells(){
+  if (classGuideSupportCache) return classGuideSupportCache;
+  const out = {};
+  COMMON_SUPPORT_SKILL_IDS.forEach((cid, k) => { const sk = SKILLS.find(x => x.id === cid); if (sk) out[CLASS_GUIDE_SUPPORT_FIRST + k] = { id: CLASS_GUIDE_SUPPORT_FIRST + k, name: sk.name, icon: sk.icon, card: cid, support: true, lv: 1, req: [] }; });
+  return (classGuideSupportCache = out);
+}
 // The problems of a guide build (its own server and class), for the editor's export guard.
 function classGuideBuildProblems(b){
   if (!b || !SKILL_SIM[b.classKey] || !SKILL_SIM_SERVERS[b.server]) return [];
@@ -29533,7 +29557,7 @@ const centreRingImg = img => { const sh = ringIconShift(img); img.style.setPrope
 document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
-  const b = g.build, cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
+  const b = g.build, cells = Object.assign({}, skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null), classGuideSupportCells());
   return g.cover.map(id => cells[id] && cells[id].icon).filter(k => k && SKILL_ICONS[k]);
 }
 function classGuideCoverEl(g, px){   // the cover arrangement as round framed icons (the note-chip ring), or null when the guide has none
@@ -29631,7 +29655,7 @@ const CLASS_GUIDES = [
   {"id":27,"cover":[373],"format":"12t-class-guide","version":1,"title":"คาวก็อป","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,211,212,213,214,221,222,241,301,302,303,304,311,312,313,314,321,322,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,371,372,373,403,404,411,412,421,424,431,441,443]},"notes":{}},
   {"id":28,"cover":[272],"format":"12t-class-guide","version":1,"title":"คาว CHA กาเดี้ยนขั้น 2","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,321,322,331,332,333,334,351,404,411,414,421,422,431,432,441,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:20:56.049Z","counts":{"1":5,"2":9,"3":5,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":8,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:33:23.713Z","counts":{"1":5,"2":9,"3":5,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":9,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -29795,20 +29819,26 @@ function classGuideNormalize(value, { draft = false } = {}){
     throw new Error("ชุดสกิลไม่ผ่านเงื่อนไข" + (p.length ? ": " + p.slice(0, 3).map(x => x.text).join(" · ") + (p.length > 3 ? " และอีก " + (p.length - 3) + " ข้อ" : "") : "เลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน"));
   }
   if (!object(value.notes) || Object.keys(value.notes).length > 120) throw new Error("รายการโน้ตสกิลไม่ถูกต้อง");
+  const sup = classGuideSupportCells(), cellsAll = Object.assign({}, cells, sup), support = [];   // support skills (user 2026-10-17): up to two, any server
+  if (b.support !== undefined){
+    if (!Array.isArray(b.support)) throw new Error("สกิลซัพพอร์ตไม่ถูกต้อง");
+    for (const id of b.support){ if (!sup[id] || support.includes(id)){ if (draft) continue; throw new Error("สกิลซัพพอร์ตไม่ถูกต้อง"); } support.push(id); }
+    if (support.length > 2){ if (draft) support.length = 2; else throw new Error("สกิลซัพพอร์ตเลือกได้ไม่เกิน 2 สกิล"); }
+  }
   const stats = classGuideStatsClean(value.stats);
   const gear = classGuideGearClean(value.gear, b.classKey, draft);
-  const cover = classGuideCoverClean(value.cover, cells, draft);
+  const cover = classGuideCoverClean(value.cover, cellsAll, draft);
   if (!draft && !cover.length) throw new Error("ไกด์ต้องมีไอคอนหน้าปกอย่างน้อย 1 สกิล (เลือกได้สูงสุด 5)");   // the cover is required (user 2026-10-16)
   const notes = {};
   for (const id of Object.keys(value.notes)){
-    if (!/^[1-4][0-9][1-4]$/.test(id) || !own(cells, id) || cells[id].placeholder) throw new Error("โน้ตอ้างถึงสกิลที่ไม่มีในคลาสหรือเซิร์ฟเวอร์นี้");
+    if (!/^([1-4][0-9][1-4]|9(0[1-9]|1[0-2]))$/.test(id) || !own(cellsAll, id) || cellsAll[id].placeholder) throw new Error("โน้ตอ้างถึงสกิลที่ไม่มีในคลาสหรือเซิร์ฟเวอร์นี้");
     const note = text(value.notes[id], "โน้ตสกิล ", 3000, false);
     if (note) notes[id] = note;
   }
   return { format: "12t-class-guide", version: 1,
     title: text(value.title, "ชื่อไกด์ ", 160, !draft), author: text(value.author, "ชื่อผู้เขียน ", 120, !draft),
     date: classGuideDateClean(value.date, !draft), description: text(value.description, "คำอธิบายบิลด์ ", 12000, false),
-    build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b) }, ...(Object.keys(stats).length ? { stats } : {}), ...(Object.keys(gear).length ? { gear } : {}), ...(cover.length ? { cover } : {}), notes };
+    build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b), ...(support.length ? { support } : {}) }, ...(Object.keys(stats).length ? { stats } : {}), ...(Object.keys(gear).length ? { gear } : {}), ...(cover.length ? { cover } : {}), notes };
 }
 function classGuideExport(value){
   const code = JSON.stringify(classGuideNormalize(value), null, 2);
@@ -29855,11 +29885,13 @@ function classGuideExpand(o){
 //   optional gear block (user 2026-10-16; older codes simply end here): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3)
 //   and per choice a flag byte (bit 0 typed name, bit 1 has a Replica, bit 2 the Replica is a typed name, bits 4-7 stat index + 1) + text (item id or name) [+ Replica text]
 //   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
+//   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
+//   byte 200-211 names a support skill (ids 901-912).
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
 function classGuideBinary(g){
-  const out = [], slot = id => (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);
+  const out = [], slot = id => id >= 901 ? 200 + id - 901 : (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // support skills 901-912 = slots 200-211
   const varint = n => { while (n >= 0x80){ out.push((n & 0x7F) | 0x80); n = Math.floor(n / 128); } out.push(n); };
   const text = str => {
     const body = [];
@@ -29887,6 +29919,7 @@ function classGuideBinary(g){
     for (const k of present){ out.push(gear[k].length); for (const c of gear[k]){ const r = c.replica; out.push((c.item ? 0 : 1) | (r ? 2 : 0) | (r && !r.item ? 4 : 0) | (c.stat ? CLASS_GUIDE_STAT_KEYS.indexOf(c.stat) + 1 : 0) << 4); text(c.item || c.name); if (r) text(r.item || r.name); } }
   }
   const cover = g.cover || []; if (cover.length){ out.push(0x49, cover.length); for (const id of cover) out.push(slot(id)); }
+  const support = g.build.support || []; if (support.length){ out.push(0x53, support.length); for (const id of support) out.push(id - 901); }
   return Uint8Array.from(out);
 }
 function classGuideFromBinary(bytes){
@@ -29915,12 +29948,14 @@ function classGuideFromBinary(bytes){
   const mask = byte(), stats = {};
   CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)) stats[k] = byte() | byte() << 8; });
   const title = text(), author = text(), description = text();
+  const unslot = k => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
-  for (let n = 0; n < count; n++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); notes[(Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1] = text(); }
-  let gear = null, cover = null;
+  for (let n = 0; n < count; n++){ notes[unslot(byte())] = text(); }
+  let gear = null, cover = null, support = null;
   while (i < bytes.length){
     const tag = byte();
-    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1); } continue; }
+    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
+    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
     if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -29930,7 +29965,7 @@ function classGuideFromBinary(bytes){
       gear[CLASS_GUIDE_GEAR_KEYS[j]] = list;
     }
   }
-  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
 }
 async function classGuidePack(value){
   const g = classGuideNormalize(value);
@@ -30156,6 +30191,7 @@ function skillSimCellRank(cells, id){
 }
 function classGuideHoverLines(guide, ctx, cell, learned){
   if (!guide || !guide.stats || !ctx || !learned) return null;
+  if (cell.support) return classGuideTimings(cell.card, 1, guide.stats, ctx);   // a support skill: its own card, one rank
   return classGuideTimings(skillSimCardId(cell.icon), ctx.cells ? skillSimCellRank(ctx.cells, cell.id) : 1, guide.stats, ctx);
 }
 // ---- Guide image export (user 2026-10-15) ----
@@ -30265,6 +30301,7 @@ async function classGuideRenderImage(guide, simRoot){
   if (document.fonts && document.fonts.load) await Promise.all(["400", "600", "700"].map(w => document.fonts.load(w + " 24px Prompt", "กขคabc123").catch(() => null)));
   const model = classGuideImageModel(b.classKey, b.server);
   const cellById = {}; model.forEach(t => t.rows.forEach(r => (r.slots || []).forEach(s => { if (s) cellById[s.id] = s; })));
+  { const sup = classGuideSupportCells(); for (const id of [...Object.keys(guide.notes || {}).map(Number), ...(guide.cover || [])]) if (sup[id]) cellById[id] = sup[id]; }   // support skills: their notes and cover icons, no row in the PNG
   const noteIds = Object.keys(guide.notes || {}).map(Number).filter(id => cellById[id]).sort((a, z) => a - z);
   const areaX = P.margin + P.leftW + P.gutter, areaW = P.w - P.margin - areaX;
   const frameOf = passive => { const cell = simRoot.querySelector(passive ? ".rsim-cell.is-passive" : ".rsim-cell:not(.is-passive)") || simRoot.querySelector(".rsim-cell"); const m = cell && /url\(["']?([^"')]+)["']?\)/.exec(getComputedStyle(cell).getPropertyValue("--rsim-frame")); return m ? m[1] : ""; };
@@ -30669,7 +30706,7 @@ async function classGuideSaveImage(guide, simRoot){
 const CLASS_GUIDE_STEPS = [
   { label: "ข้อมูลไกด์", intro: "ตั้งชื่อไกด์ ใส่ชื่อผู้เขียน วันที่ และอธิบายจุดเด่น วิธีเล่น ข้อควรรู้ของบิลด์" },
   { label: "สเตตัสและเซ็ต", optional: true, intro: "" },
-  { label: "จัดบิลด์", intro: "", guide: ["เลือก <b>เลเวล</b>", "อัปสกิลใน <b>Skill Simulator</b> ด้านขวา"] },
+  { label: "จัดบิลด์", intro: "", guide: ["เลือก <b>เลเวล</b>", "อัปสกิลใน <b>Skill Simulator</b> ด้านขวา", "เลือก <b>สกิลซัพพอร์ต</b> ได้ 2 ช่องใต้สายแรก (ไม่บังคับ)"] },
   { label: "โน้ตสกิล", optional: true, intro: "", guide: ["<b>คลิกสกิล</b> ที่ต้องการเน้นใน <b>Skill Simulator</b> แล้วเขียนโน้ต"] },
   { label: "หน้าปกและตรวจ", intro: "เลือกไอคอนหน้าปก 1 ถึง 5 สกิลจากตาราง (จำเป็น) การ์ดด้านล่างคือหน้าตาในหน้าไกด์จากผู้เล่น" },
   { label: "บันทึกและส่ง", intro: "" }
@@ -30860,7 +30897,7 @@ function mountClassGuide(root){
       if (mode !== "author" || !draft || applying) return;
       if (draft.build.classKey !== build.classKey){ draft.notes = {}; noteUndo.length = 0; syncNoteUndo(); el("noteEditor").hidden = true; draft.gear = classGuideGearClean(draft.gear, build.classKey, true); gearUndo.length = 0; renderGearEditor(); }   // gear the new class cannot use is dropped
       lastEditGear = false;
-      const cells = skillSimCells(SKILL_SIM[build.classKey], SKILL_SIM_SERVERS[build.server].patch[build.classKey], build.server === "tot" ? SKILL_SIM_EX[build.classKey] : null);
+      const cells = Object.assign({}, skillSimCells(SKILL_SIM[build.classKey], SKILL_SIM_SERVERS[build.server].patch[build.classKey], build.server === "tot" ? SKILL_SIM_EX[build.classKey] : null), classGuideSupportCells());   // support skills keep their notes and cover spot
       for (const id in draft.notes) if (!cells[id] || cells[id].placeholder) delete draft.notes[id];
       draft.cover = classGuideCoverClean(draft.build.classKey === build.classKey ? draft.cover : [], cells, true);   // another class: its slots are other skills, so the cover starts empty
       simRoot._skillSim.setNotes(draft.notes); saveDraft(); markCover(); queueReaderFit();   // another class can have taller trees
@@ -31417,7 +31454,7 @@ function mountClassGuide(root){
   function makeNoteChip(info){
     const chip = document.createElement("article"); chip.className = "cg-note-item"; chip.dataset.id = info.id; chip.title = info.cell.name + ": " + String(info.text).replace(/\*\*/g, "");   // the whole note when the sheet layout cuts it short
     const frame = document.createElement("span"); frame.className = "cg-note-frame";
-    const card = skillSimCardId(info.cell.icon); if (card){ frame.dataset.card = card; frame.title = "คลิกเพื่อดูรายละเอียดสกิล"; frame.tabIndex = 0; frame.setAttribute("role", "link"); }   // click to open the skill card (user 2026-10-16)
+    const card = info.cell.card || skillSimCardId(info.cell.icon); if (card){ frame.dataset.card = card; frame.title = "คลิกเพื่อดูรายละเอียดสกิล"; frame.tabIndex = 0; frame.setAttribute("role", "link"); }   // click to open the skill card (user 2026-10-16)
     const src = SKILL_ICONS[info.cell.icon] || "";
     const bg = document.createElement("span"); bg.className = "cg-note-frame-bg"; bg.setAttribute("aria-hidden", "true"); if (src) bg.style.backgroundImage = 'url("' + src + '")';
     const icon = document.createElement("img"); icon.className = "cg-note-chip-icon"; icon.alt = ""; icon.src = src;
@@ -31434,7 +31471,7 @@ function mountClassGuide(root){
   function prefillNoteChips(){
     if (!current) return;
     const ids = Object.keys(current.notes || {}).map(Number).sort((a, b) => a - b); if (!ids.length) return;
-    const cells = skillSimCells(SKILL_SIM[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].patch[current.build.classKey], current.build.server === "tot" ? SKILL_SIM_EX[current.build.classKey] : null);
+    const cells = Object.assign({}, skillSimCells(SKILL_SIM[current.build.classKey], SKILL_SIM_SERVERS[current.build.server].patch[current.build.classKey], current.build.server === "tot" ? SKILL_SIM_EX[current.build.classKey] : null), classGuideSupportCells());
     const list = el("noteChips"); list.classList.remove("is-pending"); list.hidden = false;
     for (const id of ids){ if (!cells[id]) continue; const chip = makeNoteChip({ id, cell: cells[id], text: current.notes[id] }); list.appendChild(chip); noteChips.set(id, chip); }
   }
@@ -31653,7 +31690,8 @@ function mountSkillSimulator(root, options = {}){
   let cls = "rabbit", trees = SKILL_SIM.rabbit, cells = skillSimCells(trees, SKILL_SIM_SERVERS[srv].patch[cls]);
   const mkCells = () => skillSimCells(trees, SKILL_SIM_SERVERS[srv].patch[cls], srv === "tot" ? SKILL_SIM_EX[cls] : null);
   const poolMax = skillSimPoolMax, poolMaxC = skillSimPoolMaxC;
-  const state = { lv: cap(), learned: new Set() };
+  const state = { lv: cap(), learned: new Set(), support: [] };   // support: up to two support skill ids (901-912), see classGuideSupportCells
+  const supportCells = classGuideSupportCells();
   // The chosen server and class are remembered (user 2026-10-12), so the two gates only open on the first visit; the build itself is not saved.
   try {
     const saved = JSON.parse(localStorage.getItem("12t-bible-skillsim") || "null");
@@ -31665,7 +31703,7 @@ function mountSkillSimulator(root, options = {}){
 
   // Undo (Ctrl+Z): every change pushes the previous state.
   const undoStack = [];
-  const snap = () => JSON.stringify({ srv, cls, lv: state.lv, learned: [...state.learned].sort((a, b) => a - b) });
+  const snap = () => JSON.stringify({ srv, cls, lv: state.lv, learned: [...state.learned].sort((a, b) => a - b), support: state.support });
   const push = () => { undoStack.push(snap()); if (undoStack.length > 50) undoStack.shift(); };
 
   const valid = (set, lv) => skillSimValid(cells, trees.length, set, lv);
@@ -31715,16 +31753,16 @@ function mountSkillSimulator(root, options = {}){
   const treesEl = out("trees");
   const undoBtn = root.querySelector('[data-act="undo"]');
 
-  const getBuild = () => ({ server: srv, classKey: cls, level: state.lv, learned: [...state.learned].sort((a,b) => a-b) });
+  const getBuild = () => ({ server: srv, classKey: cls, level: state.lv, learned: [...state.learned].sort((a,b) => a-b), ...(state.support.length ? { support: [...state.support] } : {}) });
   function refreshNotes(){
     const noteOrder = Object.keys(notes).filter(id => notes[id]).map(Number).sort((a, b) => a - b);
     for (const id in cellEls){
-      const b = cellEls[id], hasNote = !!notes[id];
+      const b = cellEls[id], hasNote = !!notes[id], cc = cells[id] || supportCells[id];
       b.classList.toggle("has-note", hasNote); b.classList.toggle("note-seen", seenNotes.has(+id));
       const pin = b.querySelector(".cg-star"), n = noteOrder.indexOf(+id) + 1;   // numbered pins (user 2026-10-17): the same number as the note in the list
       pin.hidden = !hasNote; pin.textContent = hasNote ? String(n) : "";
       if (b.dataset.baseLabel) b.setAttribute("aria-label", b.dataset.baseLabel + (hasNote ? " โน้ตข้อ " + n + " จากผู้เขียน" : ""));
-      b.setAttribute("aria-disabled", String(!!cells[id].placeholder || (interaction === "read" && !hasNote)));
+      b.setAttribute("aria-disabled", String(!!cc.placeholder || (interaction === "read" && !hasNote)));
       b.tabIndex = interaction === "read" && !hasNote ? -1 : 0;
     }
   }
@@ -31787,6 +31825,7 @@ function mountSkillSimulator(root, options = {}){
       });
       body.appendChild(rowEl);
     });
+    if (ti === 0){ const sup = document.createElement("div"); sup.className = "rsim-row rsim-support-row"; sup.dataset.role = "support"; body.appendChild(sup); }   // the support skills' row (renderSupport)
     treesEl.appendChild(sec);
   });
   cellEls = {};
@@ -31810,7 +31849,63 @@ function mountSkillSimulator(root, options = {}){
     buildTrees();
   }
 
-  function update(){    const lv = state.lv, set = state.learned;
+  // The support row (user 2026-10-17): two slots on the grid with the normal frame. Building: both slots (an empty one is a dimmed frame with +, a click opens
+  // the picker). Reading or writing notes: only the picked ones, and no row at all when there are none.
+  function renderSupport(){
+    for (const id of Object.keys(cellEls)) if (+id >= CLASS_GUIDE_SUPPORT_FIRST) delete cellEls[id];
+    const row = treesEl.querySelector('[data-role="support"]'); if (!row) return;
+    row.textContent = "";
+    const building = interaction === "build", show = building ? [0, 1] : state.support.map((_, k) => k);
+    row.hidden = !show.length;
+    for (let k = 0; k < 4; k++){
+      const slot = document.createElement("div"); slot.className = "rsim-slot";
+      if (show.includes(k)){
+        const id = state.support[k], c = id && supportCells[id];
+        const b = document.createElement("button"); b.type = "button"; b.className = "rsim-cell rsim-support"; if (building) b.dataset.supportSlot = k;
+        const frame = document.createElement("span"); frame.className = "rsim-frame"; frame.setAttribute("aria-hidden", "true");
+        if (c){
+          b.dataset.id = id; b.dataset.card = c.card; b.classList.add("is-learned");
+          const img = document.createElement("img"); img.src = SKILL_ICONS[c.icon] || ""; img.alt = "";
+          const star = document.createElement("span"); star.className = "cg-star"; star.hidden = true; star.setAttribute("aria-hidden", "true");
+          b.append(frame, img, star); b.dataset.baseLabel = c.name + " (สกิลซัพพอร์ต)"; b.setAttribute("aria-label", b.dataset.baseLabel); cellEls[id] = b;
+        } else {
+          b.classList.add("is-empty"); const plus = document.createElement("span"); plus.className = "rsim-support-plus"; plus.textContent = "+"; plus.setAttribute("aria-hidden", "true");
+          b.append(frame, plus); b.setAttribute("aria-label", "เลือกสกิลซัพพอร์ต (ไม่บังคับ)"); b.title = "สกิลซัพพอร์ต (ไม่บังคับ)";
+        }
+        slot.appendChild(b);
+      }
+      row.appendChild(slot);
+    }
+  }
+  // The support picker: the 12 support skills (the one in the other slot is greyed), plus remove for a filled slot.
+  let supportPick = null;
+  const closeSupportPick = () => { if (supportPick){ supportPick.remove(); supportPick = null; } };
+  function openSupportPick(k, anchor){
+    closeSupportPick();
+    const pick = document.createElement("div"); pick.className = "rsim-support-pick"; pick.setAttribute("role", "dialog"); pick.setAttribute("aria-label", "เลือกสกิลซัพพอร์ต");
+    const head = document.createElement("b"); head.textContent = "สกิลซัพพอร์ต (เลือกได้ 2 สกิล)"; pick.appendChild(head);
+    const grid = document.createElement("div"); grid.className = "rsim-support-grid";
+    for (const id of Object.keys(supportCells).map(Number)){
+      const c = supportCells[id], opt = document.createElement("button"); opt.type = "button"; opt.className = "rsim-support-opt" + (state.support[k] === id ? " is-on" : "");
+      opt.disabled = state.support.includes(id) && state.support[k] !== id;
+      const img = document.createElement("img"); img.src = SKILL_ICONS[c.icon] || ""; img.alt = ""; const nm = document.createElement("span"); nm.textContent = c.name;
+      opt.append(img, nm);
+      opt.addEventListener("click", () => { push(); const next = state.support.slice(); next[k] = id; state.support = next.filter(Boolean); closeSupportPick(); update(); });
+      grid.appendChild(opt);
+    }
+    pick.appendChild(grid);
+    if (state.support[k]){ const rm = document.createElement("button"); rm.type = "button"; rm.className = "rsim-btn rsim-support-remove"; rm.textContent = "เอาออก"; rm.addEventListener("click", () => { push(); state.support = state.support.filter((_, j) => j !== k); closeSupportPick(); update(); }); pick.appendChild(rm); }
+    document.body.appendChild(pick); supportPick = pick;
+    const ar = anchor.getBoundingClientRect(), pw = pick.offsetWidth, ph = pick.offsetHeight;
+    pick.style.left = Math.max(8, Math.min(document.documentElement.clientWidth - pw - 8, ar.left + ar.width / 2 - pw / 2)) + "px";
+    pick.style.top = (ar.bottom + 8 + ph < document.documentElement.clientHeight ? ar.bottom + 8 : Math.max(8, ar.top - ph - 8)) + "px";
+    const first = pick.querySelector(".rsim-support-opt:not(:disabled)"); if (first) first.focus();
+  }
+  document.addEventListener("pointerdown", e => { if (supportPick && !supportPick.contains(e.target) && !e.target.closest("[data-support-slot]")) closeSupportPick(); }, true);
+  document.addEventListener("keydown", e => { if (supportPick && e.key === "Escape") closeSupportPick(); });
+  function update(){
+    renderSupport();
+    const lv = state.lv, set = state.learned;
     let used = 0, usedC = 0, usedEx = 0;
     set.forEach(id => { if (cells[id].ex) usedEx++; else if (id < 400) used++; else usedC++; });
     lvIn.value = lv;
@@ -31904,7 +31999,7 @@ function mountSkillSimulator(root, options = {}){
     if (s.srv !== srv){ srv = s.srv; cells = mkCells(); setToolServer("class-guide", srv); }
     if (s.cls !== cls) setClass(s.cls);
     buildTrees();
-    state.lv = s.lv; state.learned = new Set(s.learned);
+    state.lv = s.lv; state.learned = new Set(s.learned); state.support = (s.support || []).slice();
     update();
   }
 
@@ -31980,7 +32075,7 @@ function mountSkillSimulator(root, options = {}){
   let tipEl = document.getElementById("rsimTip");
   if (!tipEl){ tipEl = document.createElement("div"); tipEl.id = "rsimTip"; tipEl.className = "rsim-tip"; document.body.appendChild(tipEl); }
   const showTip = (cell) => {
-    const c = cell && cells[cell.dataset.id];
+    const c = cell && (cells[cell.dataset.id] || supportCells[cell.dataset.id]);
     if (!c || (pressCell && cell === pressCell) || cell.classList.contains("is-boom")){ tipEl.classList.remove("show"); return; }
     tipEl.textContent = c.name;
     // Class guide view: timing lines of a learned skill from the author's recommended stats (options.tipExtra, user 2026-10-15).
@@ -32008,12 +32103,13 @@ function mountSkillSimulator(root, options = {}){
     const cell = e.target.closest(".rsim-cell");
     if (longDone){ longDone = false; return; }
     if (cell){
-      const id = +cell.dataset.id;
+      const id = +cell.dataset.id, info = cells[id] || supportCells[id];
+      if (interaction === "build" && cell.dataset.supportSlot !== undefined){ if (supportPick) closeSupportPick(); else openSupportPick(+cell.dataset.supportSlot, cell); return; }   // a support slot opens the picker
       if (interaction !== "build"){
-        if (cells[id].placeholder || (interaction === "read" && !notes[id])) return;
+        if (!info || info.placeholder || (interaction === "read" && !notes[id])) return;
         const first = !seenNotes.has(id);
         if (interaction === "read"){ seenNotes.add(id); refreshNotes(); }
-        if (options.onNote) options.onNote({ id, cell: cells[id], text: notes[id] || "", element: cell, first });
+        if (options.onNote) options.onNote({ id, cell: info, text: notes[id] || "", element: cell, first });
       } else toggle(id);
       return;
     }
@@ -32025,7 +32121,7 @@ function mountSkillSimulator(root, options = {}){
     else if (act.dataset.act === "server") openServerGate(true, false);
     else if (act.dataset.act === "clear") clearTree(+act.dataset.tree);
     else if (act.dataset.act === "expert"){ expert = !expert; try { localStorage.setItem("12t-bible-guide-expert", expert ? "1" : "0"); } catch (e) {} update(); }
-    else if (act.dataset.act === "reset" && state.learned.size){ push(); state.learned = new Set(); update(); }
+    else if (act.dataset.act === "reset" && (state.learned.size || state.support.length)){ push(); state.learned = new Set(); state.support = []; update(); }
   });
   lvIn.addEventListener("change", commitLevel);
   lvIn.addEventListener("keydown", (e) => { if (e.key === "Enter") lvIn.blur(); });
@@ -32043,13 +32139,13 @@ function mountSkillSimulator(root, options = {}){
     getProblems: () => problems(state.learned, state.lv),
     setInteraction(next){
       if (!["build", "annotate", "read"].includes(next)) throw new Error("โหมดไกด์ไม่ถูกต้อง");
-      pressEnd(); longDone = false; interaction = next; update();
+      pressEnd(); longDone = false; closeSupportPick(); interaction = next; update();
     },
     setNotes(value){ notes = { ...value }; seenNotes.clear(); refreshNotes(); },
     loadBuild(build){
       const checked = classGuideNormalize({ format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build, notes: {} }, { draft: true }).build;
       pressEnd(); longDone = false; srv = checked.server; cls = checked.classKey; trees = SKILL_SIM[cls]; cells = mkCells();
-      state.lv = checked.level; state.learned = new Set(checked.learned); picked = true; undoStack.length = 0;
+      state.lv = checked.level; state.learned = new Set(checked.learned); state.support = (checked.support || []).slice(); picked = true; undoStack.length = 0;
       notes = {}; seenNotes.clear(); buildTrees(); update();
     }
   };
@@ -32661,6 +32757,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T16:28:42.701Z","feat(bible): class guide skill simulator has two optional support skill slots under the Basic tree (every server; notes and cover icons work on them; shown in the guide view when picked)"],
     ["2026-10-17T16:18:05.905Z","fix(bible): a guide title only wraps at its spaces, never in the middle of a Thai word (guide view, gallery cards and the PNG); the guide pages' animations always play (reduced-motion gates removed, house rule)"],
     ["2026-10-17T16:12:38.652Z","feat(bible): guide editor step 3 has an expert mode: a gold arrow takes a skill row straight to that rank, the build is checked once the points are spent, and a build that breaks a rule cannot be exported; class guide #28 TTO Bat คาว CHA กาเดี้ยนขั้น 2 by Sugar"],
     ["2026-10-17T15:29:18.640Z","feat(bible): class guides #21 TTO Wolf หมาพุ่งรำดาบคลื่นดาบจากสำนัก IntelligentDolphin by Charlotta, #22 TTO Wolf หมาเจาะทอง by RYZEL, #23 TTO Sheep แกะ PVE by pearly.pear, #24 TTO Bat คาว TAL by Sugar, #25 TTO Bat คาว CHA Chirotophobia by Sugar, #26 TTO Bat คาว CHA มีแซ่ by Sugar and #27 TTO Bat คาวก็อป by Sugar"],

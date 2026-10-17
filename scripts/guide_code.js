@@ -24,12 +24,14 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.";
 //   optional gear block (older codes end before it): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3) and per choice
 //   a flag byte (bit 0 typed name, bit 1 has a Replica, bit 2 the Replica is a typed name, bits 4-7 stat index + 1) + text (item id or name) [+ Replica text]
 //   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
+//   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
+//   byte 200-211 names a support skill (ids 901-912).
 const CLASS_GUIDE_GEAR_KEYS = ["weapon", "armor", "hat", "trinket", "boot", "pet"];
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
 function classGuideBinary(g){
-  const out = [], slot = id => (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);
+  const out = [], slot = id => id >= 901 ? 200 + id - 901 : (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // support skills 901-912 = slots 200-211
   const varint = n => { while (n >= 0x80){ out.push((n & 0x7F) | 0x80); n = Math.floor(n / 128); } out.push(n); };
   const text = str => {
     const body = [];
@@ -57,6 +59,7 @@ function classGuideBinary(g){
     for (const k of present){ out.push(gear[k].length); for (const c of gear[k]){ const r = c.replica; out.push((c.item ? 0 : 1) | (r ? 2 : 0) | (r && !r.item ? 4 : 0) | (c.stat ? CLASS_GUIDE_STAT_KEYS.indexOf(c.stat) + 1 : 0) << 4); text(c.item || c.name); if (r) text(r.item || r.name); } }
   }
   const cover = g.cover || []; if (cover.length){ out.push(0x49, cover.length); for (const id of cover) out.push(slot(id)); }
+  const support = g.build.support || []; if (support.length){ out.push(0x53, support.length); for (const id of support) out.push(id - 901); }
   return Buffer.from(out);
 }
 function classGuideFromBinary(bytes){
@@ -85,12 +88,14 @@ function classGuideFromBinary(bytes){
   const mask = byte(), stats = {};
   CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)) stats[k] = byte() | byte() << 8; });
   const title = text(), author = text(), description = text();
+  const unslot = k => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
-  for (let n = 0; n < count; n++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); notes[(Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1] = text(); }
-  let gear = null, cover = null;
+  for (let n = 0; n < count; n++){ notes[unslot(byte())] = text(); }
+  let gear = null, cover = null, support = null;
   while (i < bytes.length){
     const tag = byte();
-    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1); } continue; }
+    if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
+    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
     if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -100,7 +105,7 @@ function classGuideFromBinary(bytes){
       gear[CLASS_GUIDE_GEAR_KEYS[j]] = list;
     }
   }
-  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
 }
 
 // Same compact form as classGuideCompact / classGuideExpand in index.html: one-letter keys, learned skills as a 160-bit set (one bit per tree x row x column slot).

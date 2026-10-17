@@ -3313,6 +3313,15 @@ let checkedRsim = 0;
     ok(same(norm(decode(encode(change({gear})))), withGear), "gear round-trips through export / import");
     ok(same(Array.from(bin(withGear)), Array.from(gc.classGuideBinary(withGear))) && same(norm(fromBin(bin(withGear))), withGear) && same(norm(gc.decode(gc.encode(withGear))), withGear), "gear round-trips through the format 2 code, page and scripts/guide_code.js identical");
     ok(same(norm(fromBin(bin(norm(fixture)))), norm(fixture)) && !("gear" in norm(fixture)), "a guide without gear has no gear key and its code has no gear block (old codes decode unchanged)");
+    // support skills (user 2026-10-17): up to two (ids 901-912), a note and a cover icon on one; a guide without them has no support key and no code block
+    { const base = norm(fixture), withSup = norm(change({ build: { ...base.build, support: [903, 911] }, notes: { ...base.notes, 903: "ซัพพอร์ต" }, cover: [903] }));
+      ok(same(withSup.build.support, [903, 911]) && withSup.notes[903] === "ซัพพอร์ต" && same(withSup.cover, [903]), "support skills, a note and a cover icon on one normalize unchanged");
+      ok(same(Array.from(bin(withSup)), Array.from(gc.classGuideBinary(withSup))) && same(norm(fromBin(bin(withSup))), withSup) && same(norm(gc.decode(gc.encode(withSup))), withSup), "support skills round-trip through the format 2 code, page and scripts/guide_code.js");
+      ok(!("support" in base.build) && !("support" in norm(fromBin(bin(base))).build), "a guide without support skills has no support key, before and after its code");
+      rejects(() => norm(change({ build: { ...base.build, support: [901, 902, 903] } })), "reject three support skills");
+      rejects(() => norm(change({ build: { ...base.build, support: [901, 901] } })), "reject the same support skill twice");
+      rejects(() => norm(change({ build: { ...base.build, support: [913] } })), "reject an unknown support skill");
+    }
     rejects(()=>norm(change({gear:{weapon:[{item:"w_cat10"}]}})), "reject another class's weapon");
     rejects(()=>norm(change({gear:{weapon:[{item:"w_wlf10"},{item:"w_wlf11"},{item:"w_wlf12"},{item:"w_wlf14"}]}})), "reject a fourth pick");
     rejects(()=>norm(change({gear:{trinket:[{item:"t_all1", stat:"atk"}]}})), "reject an upgrade stat on a trinket");
