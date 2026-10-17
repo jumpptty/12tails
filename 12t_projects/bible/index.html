@@ -1907,7 +1907,7 @@
   .cg-note-chip{min-height:60px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
   /* Notes without boxes (user 2026-10-17, format B): no title, no box per note, a thin gold rule between notes; each title starts with its number, the same as the pin on the grid */
   .cg-note-item{position:relative;align-items:start}
-  .cg-note-item + .cg-note-item{padding-top:10px;border-top:1px solid rgba(201,162,39,.45)}
+  .cg-note-item + .cg-note-item{padding-top:16px;border-top:1px solid rgba(201,162,39,.45)}   /* a little more air between notes (user 2026-10-17) */
   .cg-note-chips .cg-note-chips-title{display:none}
   .cg-note-chip{border:0;border-radius:0;background:none;padding:2px 0 0;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.8)}
   .cg-note-frame{z-index:1}
@@ -2153,7 +2153,7 @@
     /* notes under the trees, laid out like the PNG (fitReader sets the columns, font, icon size and lines per note from the PNG's ladder) */
     .cg-page[data-mode="reader"]{grid-template-rows:auto auto 1fr auto}   /* spare height from the tall panel and notes goes below the description, never between the trees and it */
     .cg-page.cg-has-notes[data-mode="reader"]{grid-template-columns:max(calc(280px * var(--cg-u,1)),min(23.5%,calc(520px * var(--cg-u,1)))) auto var(--cg-notes-w,360px)}   /* three columns (user 2026-10-16): info | skill grid + description | notes */
-    .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:3;grid-row:2 / span 2;align-self:start;margin:0;display:grid;gap:calc(8px * var(--cg-u,1));align-content:start;box-sizing:border-box;padding:30px 10px 16px 30px;margin-top:-26px !important;margin-left:-12px !important;border:0;background:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+    .cg-page[data-mode="reader"] > .cg-note-chips{grid-column:3;grid-row:2 / span 2;align-self:start;margin:0;display:grid;gap:calc(14px * var(--cg-u,1));align-content:start;box-sizing:border-box;padding:30px 10px 16px 30px;margin-top:-26px !important;margin-left:-12px !important;border:0;background:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
     /* the notes column is a visible panel here: its title always shows, with a hint until the first note is opened (user 2026-10-16: no empty-looking box) */
     .cg-page[data-mode="reader"] > .cg-note-chips.is-pending .cg-note-chips-title{opacity:1}
     .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{order:-2}
@@ -29553,7 +29553,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:38:30.599Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:42:23.505Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30414,9 +30414,9 @@ async function classGuideRenderImage(guide, simRoot){
       const all = classGuideImageWrap(classGuideImageRuns(guide.notes[id]), textW, measureWith(noteFont), segmenter);
       const lines = classGuideImageClip(all, Math.min(all.length, maxLines), textW, measureWith(noteFont));
       const h = Math.max(iconS, 10 + Math.round(fs * 1.65) + lines.length * nlh + 10);
-      items.push({ id, x: x0, y: yy, w: colW, h, lines, fs, nlh, iconS }); yy += h + 20;   // room for the gold rule between notes
+      items.push({ id, x: x0, y: yy, w: colW, h, lines, fs, nlh, iconS }); yy += h + 32;   // room for the gold rule between notes (a little more air, user 2026-10-17)
     }
-    return { top, items, bottom: yy - 20, noteFont };
+    return { top, items, bottom: yy - 32, noteFont };
   };
   const notesHead = 6;   // no column title any more (user 2026-10-17)
   const notesNeed = noteIds.length ? layoutNotes(0, 18, 99).bottom + notesHead + panelPad : 0;
@@ -30496,7 +30496,7 @@ async function classGuideRenderImage(guide, simRoot){
     const overflow = notePlan.bottom > notesBottom, limit = overflow ? notesBottom - 26 : notesBottom;
     let shown = 0;
     const drawn = notePlan.items.filter(it => it.y + it.h <= limit);
-    drawn.slice(1).forEach(it => { ctx.fillStyle = "rgba(201,162,39,.45)"; ctx.fillRect(it.x, it.y - 10.5, it.w, 1.2); });   // format B (user 2026-10-17): a thin gold rule between notes
+    drawn.slice(1).forEach(it => { ctx.fillStyle = "rgba(201,162,39,.45)"; ctx.fillRect(it.x, it.y - 16.5, it.w, 1.2); });   // format B (user 2026-10-17): a thin gold rule between notes
     for (const it of notePlan.items){
       if (it.y + it.h > limit) continue;
       const c = cellById[it.id];
@@ -32468,6 +32468,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T13:39:35.012Z","fix(bible): a little more space between author notes in the guide view and the PNG"],
     ["2026-10-17T13:27:42.140Z","feat(bible): recommended stats become round dials ringed in their colour in the guide editor (step 2, now soft cards with round gear sockets), the guide view and the PNG; step 5 gets room to breathe; reader counts are read fresh at every push and never show lower than that"],
     ["2026-10-17T13:23:36.637Z","feat(bible): class guide #20 TTO Mole ตุ่นป้อมแท้ by Kaneki; the guide editor drops its own เขียนไกด์ tab (it did nothing there)"],
     ["2026-10-17T13:08:39.153Z","feat(bible): the guide view's page buttons fold into one เมนูไกด์ button in the top bar with its own pop-up (what each choice does, keyboard and theme ready); the gallery drops its own tab and เขียนไกด์ becomes a gold call to action; Back from a guide returns to the guide list"],
