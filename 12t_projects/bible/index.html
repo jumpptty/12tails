@@ -1798,6 +1798,13 @@
   .cg-sort:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   @media(max-width:480px){.cg-filters label{flex:1;min-width:140px}}
   .cg-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .cg-pager{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .cg-pager[hidden]{display:none}
+  .cg-page-btn{min-width:36px;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
+  .cg-page-btn:hover:not(:disabled){border-color:var(--gold)}
+  .cg-page-btn[aria-current="page"]{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+  .cg-page-btn:disabled{opacity:.35;cursor:default}
+  .cg-page-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .cg-guide{position:relative;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);min-height:104px;box-sizing:border-box;padding:20px 20px 20px 120px;font:inherit;cursor:pointer}
   .cg-guide:hover,.cg-guide:focus-visible{border-color:var(--gold)}
   .cg-guide img{position:absolute;left:8px;top:0;width:100px;height:100%;object-fit:contain}
@@ -29262,7 +29269,8 @@ const CLASS_GUIDES = [
   {"id":11,"cover":[443],"format":"12t-class-guide","version":1,"title":"แมวเจาะ","author":"HOUND","date":"2026-10-15","description":"การอัพสกิลค่อนข้างยืดหยุ่น ทำไงก็ได้ **ให้มีสาย C เจาะกับสะท้อน**","build":{"server":"tot","classKey":"cat","level":100,"learned":[101,102,103,121,131,132,133,134,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,232,233,251,252,253,261,301,302,303,304,311,321,322,331,332,333,334,341,342,343,344,351,352,361,402,403,404,412,422,424,431,434,441,443,451]},"notes":{}},
   {"id":12,"cover":[434,421,304],"format":"12t-class-guide","version":1,"title":"ลิง PVP อารีน่าใหญ่ ไม่แปลงร่าง","author":"Bzz","date":"2026-10-15","description":"สายนี้จะเน้นไปทางอารีน่าจำนวนคนเยอะ ๆ อาทิ 5-5 , 7-7 , 10-10 , 12-12 บทบาทหลักของเราในอารีน่าพวกนี้คือ ลิงหรอยครับ มังกี้ วิท สไนเปอร์ สกิลที่สำคัญหลัก ๆ ต่อทีมก็คือ **ล็อค 6 กับซัมม่อนโซลและภูเขาไฟ\n**\n**ล็อค 6** เราสามารถล็อคขาแมว หมา หรือตัวละครที่มีสกิลหลุดล็อคได้ถ้าเจอล็อค 6 เข้าก็จะเป็นเป้านิ่งให้เราหรือเพื่อนในทีมตามทำดาเมจต่อได้ครับ (ยิ่งมี set cha ล็อคด้วยนี้คือ มื้ออร่อยเลย)\n\nภูเขาไฟ ดาบสองคมของลิง ถ้าใช้ถูกจังหวะก็พลิกสถานการณ์ แต่ถ้าใช้ผิดละก็ หุๆๆๆ ภูเขาไฟถือเป็นสกิลสำคัญมากในการทำลายเสาใน 5-5 , 10-10 แต่แน่นอนว่าชาวลิงอย่างเราจะต้องมีทีมที่เล่นเข้าขากันระดับนึงครับ เพื่อที่การร่ายภูเขาไฟของเราจะไม่เผาเพื่อนในทีมให้วอดวายไปด้วย อุกรี๊ดด และแน่นอนยิ่งเรามีสกิล **AutoInstant** ถ้าเราใช้ในจังหวะที่ถูกต้อง อย่างเช่นกำลังถูกทีมตรงข้ามตีกลับ เราก็จะเก็บคิลสวย ๆ เพื่อพลิกสถานการณ์ให้กับเพื่อนได้ด้วยครับ\n\nท่าชาร์ตรวมร่างของลิงดิน ผมว่าคงสงสัยกันล่ะสิว่าอัพมาทำไม ในเมื่อเราไม่เล่นรวมร่าง ถ้าเราเอาไปอ่านคำอธิบายสกิลดี ๆ จะเห็นว่า เขามีการเพิ่ม ko ให้กับท่า stone hammer ถึง 10ko  เท่ากับว่าหินนี้หลังอัพสามารถทำได้ถึง 60ko เทียบเท่ากับซับไบที่มีเวลตันแล้วนั้นเองครับ การทำ ko สำหรับลิงไฟคือพรอันประเสริฐครับ","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,231,232,233,241,242,243,244,251,252,253,254,261,301,302,303,304,311,312,331,332,333,341,342,343,344,351,352,353,361,402,403,404,414,421,431,434,441,443]},"notes":{"304":"ตัวละครที่มีสกิลหลุดล็อคได้ ถ้าเจอล็อค 6 เข้าก็จะเป็น **เป้านิ่ง** ให้เราหรือเพื่อนในทีมตามทำดาเมจต่อได้ครับ (ยิ่งมี **set cha** ล็อคด้วยนี้คือ มื้ออร่อยเลย)","431":"ใช้ในจังหวะที่ถูกต้อง อย่างเช่น **กำลังถูกทีมตรงข้ามตีกลับ** เราก็จะ **เก็บคิล** ได้สวย ๆ","434":"ถ้าใช้ถูกจังหวะก็พลิกสถานการณ์ ภูเขาไฟถือเป็นสกิลสำคัญมากในการ **ทำลายเสา** ใน 5-5 , 10-10","443":"เพิ่ม KO ให้กับท่า Stone Hammer ถึง **10 KO** เท่ากับว่าหินนี้หลังอัพทำได้ถึง **60 KO** เทียบเท่ากับซับไบที่มีเวลตัน"}},
   {"id":13,"cover":[271,402],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PVP 1-1","author":"Markki","date":"2026-10-05","description":"","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,102,111,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,271,301,302,303,304,331,332,333,341,342,351,352,402,403,404,414,421,424,431,432,442]},"notes":{}},
-  {"id":14,"cover":[354,443,444],"format":"12t-class-guide","version":1,"title":"ต่ายลูกซอง","author":"ตุ่นเพื่อ gattling ต่าย","date":"2026-10-10","description":"ต้องใช้ของกับ Stat มากหน่อยแต่พอใด้ **ยาเลือด C** ก่อแทบไม่ต้องรอคนเพื่อไปวีงลงมาโอแล้ว\nสามารถปรับปุรงใด้แต่สายนี้จะต้อง **อัพเบสีกแบบนี้เพื่อให้ลุกชองยีงเข้า** \nกับต้องมี **New Order** จะได้เรียก **ด้า**  **/Kaiser** มาช่วยตีบอส\nถ้าไม่กะจะยีงไกลเลยก่อเอาไปลงโดดใด้ (สายนี้ทำ **ดาเมจ AOE เยอะ** ยังไงก่อโดนมอนไล่ถ้าไม่มีวาฟ)\n\nถ้า stat จะแนะนำไปที่ **ATK AGI** กรณีนี้ **VIT TAL** จะไม่ค่อยจำเป็นมากถ้าจะเอาไป PvE เพราะเรากดยาเลือดกับ SP ใด้แต่ถ้าจะให้ง่าย **ควรมี SP พอกดยีง Shooting Array 2** ใด้ \n\nช่วงเวลแรกๆจะแนะนำไปเล่นยาก่อนแล้วค่อยรีทีหลัง\nแต่ถ้ากะจะเล่นสายนี้ไปเลยจะแนะนำอัพ ATK ให้ใด้ช่วง 40-60 แล้วไปอัพ AGI VIT เพื่อให้เดีนเวลง่าย","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,131,132,133,134,141,142,143,144,201,202,203,204,211,212,213,214,221,222,241,242,243,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,403,412,413,423,431,433,434,443,444]},"notes":{}}
+  {"id":14,"cover":[354,443,444],"format":"12t-class-guide","version":1,"title":"ต่ายลูกซอง","author":"ตุ่นเพื่อ gattling ต่าย","date":"2026-10-10","description":"ต้องใช้ของกับ Stat มากหน่อยแต่พอใด้ **ยาเลือด C** ก่อแทบไม่ต้องรอคนเพื่อไปวีงลงมาโอแล้ว\nสามารถปรับปุรงใด้แต่สายนี้จะต้อง **อัพเบสีกแบบนี้เพื่อให้ลุกชองยีงเข้า** \nกับต้องมี **New Order** จะได้เรียก **ด้า**  **/Kaiser** มาช่วยตีบอส\nถ้าไม่กะจะยีงไกลเลยก่อเอาไปลงโดดใด้ (สายนี้ทำ **ดาเมจ AOE เยอะ** ยังไงก่อโดนมอนไล่ถ้าไม่มีวาฟ)\n\nถ้า stat จะแนะนำไปที่ **ATK AGI** กรณีนี้ **VIT TAL** จะไม่ค่อยจำเป็นมากถ้าจะเอาไป PvE เพราะเรากดยาเลือดกับ SP ใด้แต่ถ้าจะให้ง่าย **ควรมี SP พอกดยีง Shooting Array 2** ใด้ \n\nช่วงเวลแรกๆจะแนะนำไปเล่นยาก่อนแล้วค่อยรีทีหลัง\nแต่ถ้ากะจะเล่นสายนี้ไปเลยจะแนะนำอัพ ATK ให้ใด้ช่วง 40-60 แล้วไปอัพ AGI VIT เพื่อให้เดีนเวลง่าย","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,131,132,133,134,141,142,143,144,201,202,203,204,211,212,213,214,221,222,241,242,243,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,403,412,413,423,431,433,434,443,444]},"notes":{}},
+  {"id":15,"cover":[432],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PvE","author":"ChilLs","date":"2026-10-16","description":"","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,262,301,302,303,304,311,331,332,333,341,342,351,352,361,402,404,414,421,424,431,432,434,442]},"notes":{}}
 ];
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
@@ -30218,7 +30226,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><section class="cg-card-preview" data-cg-role="cardPreview" hidden><small>การ์ดในหน้าไกด์จากผู้เล่น</small></section><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}</nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
@@ -30659,8 +30667,12 @@ function mountClassGuide(root){
   const syncSort = () => { const b = el("sortDate"); b.textContent = sortNewest ? "ใหม่ → เก่า ↓" : "เก่า → ใหม่ ↑"; b.setAttribute("aria-label", sortNewest ? "เรียงจากใหม่ไปเก่า กดเพื่อเรียงจากเก่าไปใหม่" : "เรียงจากเก่าไปใหม่ กดเพื่อเรียงจากใหม่ไปเก่า"); };
   el("sortDate").addEventListener("click", () => { sortNewest = !sortNewest; try { localStorage.setItem("12t-bible-guide-sort", sortNewest ? "newest" : "oldest"); } catch (e) {} syncSort(); renderGallery(); });
   syncSort();
-  function renderGallery(){
-    const list = el("guides"); list.textContent = "";
+  // Pages (user 2026-10-17): the gallery never scrolls; as many rows of cards as fit under the filters go on a page, the rest on page 2, 3 ...
+  // A filter or sort change goes back to page 1; a resize keeps the page (clamped).
+  let galleryPage = 0;
+  function renderGallery(keepPage){
+    if (keepPage !== true) galleryPage = 0;
+    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = "";
     let validCount = 0, invalidCount = 0, totalCount = 0;
     const server = el("serverFilter").value, classKey = el("classFilter").value;
     const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && a.date) || "").localeCompare(String((z && z.date) || "")) || ia - ib; return sortNewest ? -d : d; });
@@ -30668,11 +30680,31 @@ function mountClassGuide(root){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
       totalCount++;
       if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey)) continue;
-      const b = guideCard(guide); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); list.appendChild(b); validCount++;
+      const b = guideCard(guide); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); cards.push(b); validCount++;
+    }
+    let perPage = cards.length;
+    if (cards.length && list.offsetParent){
+      cards.forEach(c => list.appendChild(c));   // measured all together: a grid row is as tall as its tallest card
+      const cols = Math.max(1, getComputedStyle(list).gridTemplateColumns.split(" ").filter(Boolean).length);
+      const top = list.getBoundingClientRect().top + window.scrollY, room = window.innerHeight - top - 64;   // 64 = the pager and a little air
+      const fit = cards.filter(c => c.offsetTop - list.offsetTop + c.offsetHeight <= room).length;
+      perPage = Math.max(cols, Math.floor(fit / cols) * cols);
+      list.textContent = "";
+    } else if (cards.length) perPage = 8;   // not on screen yet: re-rendered when the tool is shown
+    const pages = Math.max(1, Math.ceil(cards.length / perPage));
+    galleryPage = Math.min(galleryPage, pages - 1);
+    cards.slice(galleryPage * perPage, (galleryPage + 1) * perPage).forEach(c => list.appendChild(c));
+    pager.textContent = ""; pager.hidden = pages < 2;
+    if (pages > 1){
+      const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); }); pager.appendChild(b); };
+      go(galleryPage - 1, "‹", "หน้าก่อน");
+      for (let n = 0; n < pages; n++) go(n, String(n + 1), "หน้า " + (n + 1), n === galleryPage);
+      go(galleryPage + 1, "›", "หน้าถัดไป");
     }
     if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์หรืออาชีพอื่น" : "ยังไม่มีไกด์จากผู้เล่น กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
   }
+  { let t = 0; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { if (mode === "gallery" && el("guides").offsetParent) renderGallery(true); }, 150); }); }
   function showImport(){
     el("code").value = ""; el("importError").textContent = "";
     el("transfer").showModal(); el("code").focus();
@@ -31924,6 +31956,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T03:56:24.974Z","feat(bible): ไกด์จากผู้เล่น no longer scrolls: the guides that fit the window make a page, with page buttons for the rest; class guide #15, a Monkey build on TTO (ลิงไฟ PvE by ChilLs)"],
     ["2026-10-17T03:52:03.259Z","feat(bible): class guide #14, a Rabbit build on TTO (ต่ายลูกซอง by ตุ่นเพื่อ gattling ต่าย)"],
     ["2026-10-17T03:44:35.174Z","fix(bible): class guide #8 (คาว TAL by SHIRANUI) is dated 13 Oct 2026"],
     ["2026-10-17T03:40:25.035Z","feat(bible): class guides #12 and #13, two Monkey builds on TTO (ลิง PVP อารีน่าใหญ่ ไม่แปลงร่าง by Bzz, ลิงไฟ PVP 1-1 by Markki); opening ไกด์อาชีพ from the menu always lands on ไกด์จากผู้เล่น, not the editor or the last guide read (the draft is kept)"],
