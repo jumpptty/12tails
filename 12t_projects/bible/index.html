@@ -1836,6 +1836,10 @@
   .cg-cover-ring > span{position:absolute;inset:0;background:center / 100% 100% no-repeat;transform:scale(1.8);filter:blur(10px) saturate(1.2)}
   .cg-cover-ring > img{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.24);-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
   .cg-guide > .cg-cover{position:absolute;left:14px;top:50%;transform:translateY(-50%)}
+  .cg-card-preview{display:grid;gap:4px;width:min(460px,100%);margin-right:auto}
+  .cg-card-preview[hidden]{display:none}
+  .cg-card-preview > small{font-size:12px;color:var(--muted)}
+  .cg-card-preview .cg-guide{cursor:default;border-color:var(--line)}   /* the gallery card as is, not clickable */
   /* editor steps (user 2026-10-16) */
   .cg-author .is-off-step{display:none !important}
   .cg-page[data-mode="author"] .cg-author:not([data-step="1"]):not([data-step="4"]) .cg-fields{display:none}   /* nothing of step 1 left in it: it must not take the column height */
@@ -30198,7 +30202,7 @@ const CLASS_GUIDE_STEPS = [
 ];
 function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
-    <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
+    <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><section class="cg-card-preview" data-cg-role="cardPreview" hidden><small>การ์ดในหน้าไกด์จากผู้เล่น</small></section><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><div class="cg-filters"><label>เซิร์ฟเวอร์<select data-cg-role="serverFilter"><option value="">ทุกเซิร์ฟเวอร์</option></select></label><label>อาชีพ<select data-cg-role="classFilter"><option value="">ทุกอาชีพ</option></select></label></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}</nav>
@@ -30526,7 +30530,7 @@ function mountClassGuide(root){
     }
     if (next !== "reader") currentId = null;
     button("exportImage").hidden = next !== "reader";   // the editor has its own copy next to คัดลอกโค้ดไกด์
-    if (next !== "reader"){ button("returnAuthor").hidden = true; button("useAsBase").hidden = true; }
+    if (next !== "reader"){ button("returnAuthor").hidden = true; button("useAsBase").hidden = true; el("cardPreview").hidden = true; }
     if (location.hash.split("/")[0] === "#class-guide"){   // the editor has its own address (user 2026-10-16: a refresh must not drop the author back on the guide list); the list is the bare tool
       const want = next === "author" ? "#class-guide/write" : next === "gallery" ? "#class-guide" : null;
       if (want && location.hash !== want) history.replaceState(null, "", want);
@@ -30599,6 +30603,7 @@ function mountClassGuide(root){
     if (currentId) history.replaceState(null, "", "#class-guide/" + currentId);   // the address bar now is the link to share
     setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
     button("useAsBase").hidden = preview;
+    { const box = el("cardPreview"); box.querySelectorAll(".cg-guide").forEach(n => n.remove()); box.hidden = !preview; if (preview) box.appendChild(guideCard(current, "div")); }
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
     setToolServer("class-guide", current.build.server);
     el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "PLAYER GUIDE";
@@ -30627,6 +30632,14 @@ function mountClassGuide(root){
     for (const [key, name] of choices){ const option = document.createElement("option"); option.value = key; option.textContent = name; filter.appendChild(option); }
     filter.addEventListener("change", renderGallery);
   }
+  // A guide's card in ไกด์จากผู้เล่น (cover icons, title, class · server · author · date); the preview shows the same card, not clickable (user 2026-10-17).
+  function guideCard(guide, tag = "button"){
+    const b = document.createElement(tag); if (tag === "button") b.type = "button"; b.className = "cg-guide";
+    const portrait = classGuideCoverEl(guide, 88) || document.createElement("span");   // the author's cover icons (required; the class portrait is no longer used, user 2026-10-16)
+    const title = document.createElement("strong"); title.textContent = guide.title || "ตัวอย่างไกด์";
+    const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author || "ยังไม่ระบุผู้เขียน", classGuideDateText(guide.date)].join(" · ");
+    b.append(portrait, title, byline); return b;
+  }
   function renderGallery(){
     const list = el("guides"); list.textContent = "";
     let validCount = 0, invalidCount = 0, totalCount = 0;
@@ -30635,11 +30648,7 @@ function mountClassGuide(root){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
       totalCount++;
       if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey)) continue;
-      const b = document.createElement("button"); b.type = "button"; b.className = "cg-guide";
-      const portrait = classGuideCoverEl(guide, 88) || document.createElement("span");   // the author's cover icons (required; the class portrait is no longer used, user 2026-10-16)
-      const title = document.createElement("strong"); title.textContent = guide.title;
-      const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author, classGuideDateText(guide.date)].join(" · ");
-      b.append(portrait, title, byline); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); list.appendChild(b); validCount++;
+      const b = guideCard(guide); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); list.appendChild(b); validCount++;
     }
     if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์หรืออาชีพอื่น" : "ยังไม่มีไกด์จากผู้เล่น กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
@@ -31895,6 +31904,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T02:49:44.036Z","feat(bible): the guide preview also shows the guide's card as it will appear in ไกด์จากผู้เล่น"],
     ["2026-10-17T02:44:45.621Z","fix(bible): guide editor Ctrl+B works on a selection made in any direction (even dragged past the box), and Ctrl+Z / Ctrl+Y undo and redo bolding and typing; a guide with unspent skill points shows the simulator's ↑ markers and a เหลือ N แต้ม badge in the preview and the PNG, and the cover picker drops its count"],
     ["2026-10-17T02:37:54.000Z","feat(bible): class guide #6, a Chameleon build on TTO (ก่าสายยิง ระเบิดพิษ ซีโร่ช็อต by deawydew)"],
     ["2026-10-17T02:32:32.497Z","feat(bible): class guide #5, a Panda build on TTO (ด้า Sage Solo ทุกดัน by NNK)"],
