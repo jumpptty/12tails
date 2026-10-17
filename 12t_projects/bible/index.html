@@ -1831,7 +1831,22 @@
   .cg-stat-tile{cursor:text}
   .cg-stat-tile.is-tried .cg-stat-val{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 45%,transparent),0 0 20px color-mix(in srgb,var(--c) 55%,transparent)}   /* a value the reader is trying out */
   .cg-page .cg-stat-tile input.cg-stat-try{flex:none;width:3.1ch;font-size:18px;text-align:center}
-  .cg-stat-reset{grid-column:1/-1;justify-self:start;padding:2px 0;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer}
+  /* the reader's own stat (user 2026-10-17): a dashed + dial opens a picker; an added stat is a dashed dial with no "~" */
+  .cg-stat-panel{position:relative}
+  .cg-stat-add-wrap{position:relative;flex:none}
+  .cg-stat-add-wrap[hidden]{display:none}
+  .cg-stat-add{width:66px;display:grid;justify-items:center;gap:6px;padding:0;border:0;background:none;color:var(--gold);font:inherit;cursor:pointer}
+  .cg-stat-add b{font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--muted)}
+  .cg-stat-add-dial{width:62px;height:62px;box-sizing:border-box;display:grid;place-items:center;border:2px dashed color-mix(in srgb,var(--gold) 55%,transparent);border-radius:50%;font-size:28px;font-weight:300;line-height:1;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+  .cg-stat-add:hover .cg-stat-add-dial,.cg-stat-add:focus-visible .cg-stat-add-dial,.cg-stat-add[aria-expanded="true"] .cg-stat-add-dial{border-color:var(--gold);box-shadow:0 0 14px rgba(212,175,55,.45);transform:scale(1.04)}
+  .cg-stat-add:focus-visible{outline:none}
+  .cg-stat-pick{position:absolute;z-index:30;top:calc(100% + 8px);left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:max-content;max-width:230px;padding:10px;border:1px solid rgba(201,162,39,.55);border-radius:10px;background:#15100b;box-shadow:0 14px 30px -10px #000}
+  .cg-stat-pick[hidden]{display:none}
+  .cg-stat-pick-opt{min-width:52px;padding:5px 10px;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:999px;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);font:inherit;font-size:12px;font-weight:700;letter-spacing:.12em;cursor:pointer}
+  .cg-stat-pick-opt:hover,.cg-stat-pick-opt:focus-visible{background:color-mix(in srgb,var(--c) 26%,transparent);border-color:var(--c);outline:none}
+  .cg-stat-tile.is-own .cg-stat-val{border-style:dashed}
+  .cg-stat-tile.is-own .cg-stat-approx{display:none}
+  .cg-page .cg-stat-tile.is-own input.cg-stat-try::placeholder{color:var(--c);opacity:.5}
   @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
   .cg-pickrow{display:grid;gap:6px;font-size:13px;color:var(--muted)}
@@ -29553,7 +29568,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:02:33.345Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:14:06.327Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30038,11 +30053,14 @@ function classGuideStatsEditorHtml(){
 }
 // Reader panel: only the filled stats, the stat name and a big number in the stat's signature colour (no caption, user 2026-10-15).
 // The number is an input (user 2026-10-16): a reader may try other values; the hover timings follow, nothing is saved, and a reset button brings the author's values back.
+function classGuideStatTile(s, value, own){
+  return '<label class="cg-stat-tile' + (own ? ' is-own is-tried' : '') + '" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><span class="cg-stat-approx" aria-hidden="true">~</span><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + (value == null ? "" : value) + '"' + (own ? ' placeholder="?"' : '') + ' aria-label="' + s.label + (own ? ' ที่คุณลองใส่เอง' : ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)') + '"></span></label>';
+}
+// The + dial (user 2026-10-17): the reader may add a stat the author did not recommend; it opens a picker of the stats not shown yet.
+const CLASS_GUIDE_STAT_ADD = '<span class="cg-stat-add-wrap"><button type="button" class="cg-stat-add" data-cg-act="addStat" aria-haspopup="true" aria-expanded="false" aria-label="ลองเพิ่มสเตตัสของคุณเอง"><span class="cg-stat-add-dial" aria-hidden="true">+</span><b>เพิ่ม</b></button><span class="cg-stat-pick" data-cg-role="statPick" hidden></span></span>';
 function classGuideStatsHtml(stats){
   const shown = CLASS_GUIDE_STATS.filter(s => stats && s.key in stats);
-  if (!shown.length) return "";
-  return shown.map(s =>
-    '<label class="cg-stat-tile" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><span class="cg-stat-approx" aria-hidden="true">~</span><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + stats[s.key] + '" aria-label="' + s.label + ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)"></span></label>').join("") + '<button type="button" class="cg-stat-reset" data-cg-act="resetStats" hidden>คืนค่าที่ผู้เขียนแนะนำ</button>';
+  return shown.map(s => classGuideStatTile(s, stats[s.key], false)).join("") + (shown.length < CLASS_GUIDE_STATS.length ? CLASS_GUIDE_STAT_ADD : "");   // no reset link (user 2026-10-17): a refresh brings the author's values back
 }
 // What the hover needs from the opened guide: its server, how many ranks of each skill the build learned, and whether Revised Art is among them.
 function classGuideReaderCtx(guide){
@@ -30395,13 +30413,14 @@ async function classGuideRenderImage(guide, simRoot){
   const infoH = Math.min(fullH, infoBoxes[infoBoxes.length - 1][1]);
   ctx = mainCtx;
   // ---- description (measured), trees, and the rectangle's height
-  const descFont = g => font(g ? 700 : 400, 23), lh = 36, descW = infoW + G + gridW, descTextW = descW - bar - panelPad * 2;
+  const descFont = g => font(g ? 700 : 400, 23), lh = 36;
+  let descW = infoW + G + gridW, descTextW = descW - bar - panelPad * 2;
   // beside the trees when it fits under the info boxes (user 2026-10-17, as in the reader): the trees then keep the full height
   const descLeftLines = guide.description ? classGuideImageWrap(classGuideImageRuns(guide.description), lw, measureWith(descFont), segmenter) : [];
   const fullPlan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: fullH });
   const descLeft = descLeftLines.length > 0 && infoH + G + descLeftLines.length * lh + panelPad * 2 <= Math.min(fullH, Math.max(infoH, fullPlan.bottom - P.margin));
-  const descLines = guide.description && !descLeft ? classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(descFont), segmenter) : [];
-  const descNatural = descLines.length ? descLines.length * lh + panelPad * 2 : 0, descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
+  let descLines = guide.description && !descLeft ? classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(descFont), segmenter) : [];
+  let descNatural = descLines.length ? descLines.length * lh + panelPad * 2 : 0, descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
   const treeRoom = fullH - (descWanted ? descWanted + G : 0);
   let plan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: treeRoom });
   let row1 = Math.min(fullH, Math.max(infoH, plan.bottom - P.margin));
@@ -30420,6 +30439,12 @@ async function classGuideRenderImage(guide, simRoot){
   };
   const notesHead = 6;   // no column title any more (user 2026-10-17)
   const notesNeed = noteIds.length ? layoutNotes(0, 18, 99).bottom + notesHead + panelPad : 0;
+  const descWide = noteIds.length > 0 && descLines.length > 0 && notesNeed - panelPad <= row1 + G;   // the last note ends above the description's top   // the notes end above the trees' bottom: the description runs under them too (user 2026-10-17)
+  if (descWide){
+    descW = P.w - P.margin * 2; descTextW = descW - bar - panelPad * 2;
+    descLines = classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(descFont), segmenter);
+    descNatural = descLines.length * lh + panelPad * 2; descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
+  }
   const rectH = Math.min(fullH, Math.max(row1 + (descLines.length ? G + descWanted : 0), notesNeed));
   if (!descLines.length) row1 = rectH;   // no description: the info and the trees run the full height
   const rectTop = P.margin + Math.round((fullH - rectH) / 2);
@@ -30499,7 +30524,7 @@ async function classGuideRenderImage(guide, simRoot){
   }
   // ---- notes: a full-height column of chips on the right
   if (noteIds.length){
-    const notesBottom = rectTop + rectH - panelPad;
+    const notesBottom = descWide ? rectTop + row1 + G - 2 : rectTop + rectH - panelPad;
     let notePlan = null;
     for (const [fs, maxLines] of NOTE_STEPS){ notePlan = layoutNotes(rectTop + notesHead, fs, maxLines); if (notePlan.bottom <= notesBottom) break; }
     const overflow = notePlan.bottom > notesBottom, limit = overflow ? notesBottom - 26 : notesBottom;
@@ -30595,6 +30620,12 @@ function mountClassGuide(root){
   const el = role => root.querySelector('[data-cg-role="' + role + '"]');
   const field = name => root.querySelector('[data-cg-field="' + name + '"]');
   const button = act => root.querySelector('[data-cg-act="' + act + '"]');
+  // The reader's try-out stats (user 2026-10-17): the + dial goes once all 8 show.
+  const syncStatTry = () => {
+    const box = root.querySelector('[data-cg-role="guideStats"]'); if (!box) return;
+    const wrap = box.querySelector(".cg-stat-add-wrap"); if (wrap) wrap.hidden = box.querySelectorAll("[data-cg-try]").length >= CLASS_GUIDE_STATS.length;
+  };
+  document.addEventListener("pointerdown", e => { const pick = root.querySelector('[data-cg-role="statPick"]'); if (pick && !pick.hidden && !e.target.closest(".cg-stat-add-wrap")){ pick.hidden = true; const b = root.querySelector('[data-cg-act="addStat"]'); if (b) b.setAttribute("aria-expanded", "false"); } }, true);
   // Guide menu (user 2026-10-17): in the guide view the page buttons fold into one top-bar pill so they do not distract from the guide. The pop-up lists
   // the ones the page would show, each with a line saying what it does, and runs the original (hidden) button, so every action keeps one code path.
   const menuBtn = document.createElement("button"); menuBtn.type = "button"; menuBtn.className = "cg-menu-btn"; menuBtn.setAttribute("aria-haspopup", "menu"); menuBtn.setAttribute("aria-expanded", "false"); menuBtn.setAttribute("aria-label", "เมนูไกด์");
@@ -30748,7 +30779,7 @@ function mountClassGuide(root){
       draft.cover = classGuideCoverClean(draft.build.classKey === build.classKey ? draft.cover : [], cells, true);   // another class: its slots are other skills, so the cover starts empty
       simRoot._skillSim.setNotes(draft.notes); saveDraft(); markCover(); queueReaderFit();   // another class can have taller trees
     },
-    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current && viewStats ? { ...current, stats: viewStats } : current, readerCtx, cell, learned) : null; },
+    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current && viewStats && Object.keys(viewStats).length ? { ...current, stats: viewStats } : current, readerCtx, cell, learned) : null; },
     onNote(info){
       if (mode === "author" && coverMode){ toggleCover(info.id); return; }
       if (mode === "author"){
@@ -30821,7 +30852,7 @@ function mountClassGuide(root){
     if (!build) return;
     guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-notes-w");
     notesBox.style.width = ""; notesBox.style.maxHeight = ""; for (const v of ["--cg-note-fs", "--cg-note-icon", "--cg-note-lines"]) notesBox.style.removeProperty(v);
-    desc.style.width = ""; desc.style.maxHeight = ""; desc.style.height = ""; desc.style.fontSize = ""; desc.classList.remove("is-paged"); desc.style.columnWidth = ""; desc.style.columnGap = ""; descPager.hidden = true; notesBox.style.height = ""; panel.style.alignSelf = "";
+    desc.style.width = ""; desc.style.maxHeight = ""; desc.style.height = ""; desc.style.fontSize = ""; desc.style.gridColumn = ""; notesBox.style.paddingBottom = ""; descPager.style.gridColumn = ""; desc.classList.remove("is-paged"); desc.style.columnWidth = ""; desc.style.columnGap = ""; descPager.hidden = true; notesBox.style.height = ""; panel.style.alignSelf = "";
     if (isPhone()){ simRoot.style.height = ""; simRoot.style.width = ""; panel.style.height = ""; build.style.width = ""; simRoot.style.removeProperty("--cg-reader-scale"); guidePage.style.removeProperty("--cg-u"); return; }   // phones: plain scrolling page, see the phone reader CSS
     // Landscape reader: everything outside the skill grid (panel text, stat tiles, gear, notes, description, column widths) scales by one factor --cg-u
     // (user 2026-10-16: nothing should keep a fixed size, all of it in proportion). The factor follows the skill grid itself: a skill cell is 43 px on a
@@ -30925,8 +30956,11 @@ function mountClassGuide(root){
       panel.style.alignSelf = "";
       const row2 = Math.max(Math.min(sheetInfo.panelH, free), Math.ceil(height * scale));
       let bottom = row2;
+      // the notes end above the trees' bottom (user 2026-10-17): the description also takes the width under them
+      const notesLift = notesOn ? (parseFloat(getComputedStyle(notesBox).marginTop) || 0) : 0, notesPadB = notesOn ? (parseFloat(getComputedStyle(notesBox).paddingBottom) || 0) : 0, notesEnd = notesOn ? notesBox.offsetHeight + notesLift - notesPadB : 0, descWide = descOn && notesOn && notesEnd <= row2 + gap;   // the notes' last line ends above the description's top
       if (descOn){   // as tall as its text, up to the room left (a tall screen then ends the rectangle higher instead of padding an empty box)
-        desc.style.width = (sheetInfo.panelW + sheetInfo.colGap + Math.max(1, Math.min(midW, shownW))) + "px";
+        desc.style.width = (sheetInfo.panelW + sheetInfo.colGap + Math.max(1, Math.min(midW, shownW)) + (descWide ? sheetInfo.colGap + (parseFloat(notesBox.style.width) || 0) : 0)) + "px";
+        if (descWide){ desc.style.gridColumn = "1 / -1"; descPager.style.gridColumn = "1 / -1"; }
         desc.style.maxHeight = ""; desc.style.height = "";
         const roomLeft = Math.max(40, Math.floor(free - row2 - gap)), u = parseFloat(getComputedStyle(guidePage).getPropertyValue("--cg-u")) || 1;
         let natural = Math.ceil(desc.getBoundingClientRect().height) + 1;
@@ -30936,7 +30970,7 @@ function mountClassGuide(root){
         desc.style.height = h + "px"; bottom = row2 + gap + h;
         if (natural > roomLeft) layoutDescPages();   // too long: pages (user 2026-10-16) instead of a scrollbar
       }
-      if (notesOn){ const nh = Math.floor(bottom - (parseFloat(getComputedStyle(notesBox).marginTop) || 0)); notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; }   // the notes column ends where the description ends
+      if (notesOn){ const nh = descWide ? Math.ceil(notesEnd - notesLift) : Math.floor(bottom - notesLift); notesBox.style.paddingBottom = descWide ? "0" : ""; notesBox.style.height = nh + "px"; notesBox.style.maxHeight = nh + "px"; }   // the notes column ends where the description ends
     }
   }
 
@@ -31082,7 +31116,7 @@ function mountClassGuide(root){
     el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
     if (currentId){ const sep = document.createElement("span"); sep.className = "cg-views-sep"; sep.textContent = " · "; el("guideByline").append(sep, viewBadge(currentId)); }
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
-    el("guideStats").innerHTML = classGuideStatsHtml(current.stats); el("guideStats").hidden = !current.stats;
+    el("guideStats").innerHTML = classGuideStatsHtml(current.stats); el("guideStats").hidden = false;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = current.stats ? { ...current.stats } : null;
     window.scrollTo(0, 0); queueReaderFit();
   }
@@ -31379,13 +31413,17 @@ function mountClassGuide(root){
     if (e.target.matches('[data-cg-field="date"]')) syncDateText();   // picked from the calendar
     if (e.target.matches("[data-cg-field]")) saveDraft();
     if (e.target.matches('[data-cg-role="gearSearch"]')){ renderGearGrid(); return; }
-    if (e.target.matches("[data-cg-try]") && mode === "reader" && viewStats){
-      const key = e.target.dataset.cgTry, raw = e.target.value.trim();
-      const n = raw === "" ? current.stats[key] : Math.min(512, Math.max(0, Math.round(Number(raw)) || 0));
-      if (raw !== "" && String(n) !== raw) e.target.value = n;
-      viewStats[key] = n;
-      e.target.closest(".cg-stat-tile").classList.toggle("is-tried", n !== current.stats[key]);
-      button("resetStats").hidden = Object.keys(viewStats).every(k => viewStats[k] === current.stats[k]);
+    if (e.target.matches("[data-cg-try]") && mode === "reader"){
+      if (!viewStats) viewStats = {};
+      const key = e.target.dataset.cgTry, raw = e.target.value.trim(), base = current.stats ? current.stats[key] : undefined, own = base === undefined;
+      if (raw === "" && own) delete viewStats[key];   // a stat the reader added: empty = not counted
+      else {
+        const n = raw === "" ? base : Math.min(512, Math.max(0, Math.round(Number(raw)) || 0));
+        if (raw !== "" && String(n) !== raw) e.target.value = n;
+        viewStats[key] = n;
+        e.target.closest(".cg-stat-tile").classList.toggle("is-tried", own || n !== base);
+      }
+      syncStatTry();
     }
   });
   root.addEventListener("change", e => {
@@ -31437,11 +31475,20 @@ function mountClassGuide(root){
         const label = target.querySelector("span"), was = label.textContent; label.textContent = "กำลังสร้างรูป…"; target.disabled = true;
         try { await classGuideSaveImage(g, simRoot); if (mode === "author"){ copiedOnce = true; updateSteps(); } } finally { label.textContent = was; target.disabled = false; }
       }
-      else if (act === "resetStats"){
-        if (!current || !current.stats) return;
-        viewStats = { ...current.stats };
-        root.querySelectorAll("[data-cg-try]").forEach(i => { i.value = viewStats[i.dataset.cgTry]; i.closest(".cg-stat-tile").classList.remove("is-tried"); });
-        target.hidden = true;
+      else if (act === "addStat"){   // the picker of stats not shown yet
+        const pick = el("statPick"), open = pick.hidden;
+        if (open){
+          const have = new Set([...el("guideStats").querySelectorAll("[data-cg-try]")].map(i => i.dataset.cgTry));
+          pick.innerHTML = CLASS_GUIDE_STATS.filter(st => !have.has(st.key)).map(st => '<button type="button" class="cg-stat-pick-opt" data-cg-act="pickStat" data-cg-stat="' + st.key + '" style="--c:var(--stat-' + st.key + ')">' + st.label + '</button>').join("");
+        }
+        pick.hidden = !open; target.setAttribute("aria-expanded", String(open));
+        if (open){ const first = pick.querySelector("button"); if (first) first.focus(); }
+      }
+      else if (act === "pickStat"){   // a dashed dial in that stat's colour, ready for the reader's number
+        const st = CLASS_GUIDE_STATS.find(x => x.key === target.dataset.cgStat); if (!st) return;
+        const wrap = el("guideStats").querySelector(".cg-stat-add-wrap"); el("statPick").hidden = true;
+        wrap.insertAdjacentHTML("beforebegin", classGuideStatTile(st, null, true));
+        const input = wrap.previousElementSibling.querySelector("input"); syncStatTry(); queueReaderFit(); input.focus();
       }
       else if (act === "returnAuthor") startAuthor();
       else if (act === "author"){   // a choice first (user 2026-10-16): continue the draft, start new, or import a code
@@ -32481,6 +32528,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T14:07:06.703Z","feat(bible): the guide view has a dashed + dial so readers can try a stat the author did not recommend (the skill hover follows, nothing is saved; no reset link); a guide description also uses the width under the notes when they end above the skill trees"],
     ["2026-10-17T13:54:05.118Z","fix(bible): a long guide description shrinks its font before it splits into pages (the PNG shrinks further before it cuts the text and points to the full guide); Cat Grand Casino Arcade range preview plays every spin (3 at rank 1, 5 at rank 2, every 2.7 seconds)"],
     ["2026-10-17T13:39:35.012Z","fix(bible): a little more space between author notes in the guide view and the PNG"],
     ["2026-10-17T13:27:42.140Z","feat(bible): recommended stats become round dials ringed in their colour in the guide editor (step 2, now soft cards with round gear sockets), the guide view and the PNG; step 5 gets room to breathe; reader counts are read fresh at every push and never show lower than that"],
