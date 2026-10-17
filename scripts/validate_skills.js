@@ -3239,7 +3239,9 @@ let checkedRsim = 0;
     ok(same(expand(compact(norm(fixture))), norm(fixture)) && same(expand(compact(withStats)), withStats), "compact guide form expands back to the same guide (page)");
     ok(same(gc.expand(compact(withStats)), withStats) && same(expand(gc.compact(withStats)), withStats), "page and scripts/guide_code.js use the same compact form");
     ok(same(norm(gc.decode(gc.encode1(withStats))), withStats) && /^12TG1\.[A-Za-z0-9_-]+$/.test(gc.encode1(withStats)), "format 1 codes (12TG1.) still decode");
-    embedded.forEach((g, i) => { const n = norm(g); ok(same(norm(gc.decode(gc.encode(n))), n) && gc.encode(n).length < gc.encode1(n).length * 0.7, "embedded guide " + (i + 1) + " round-trips through a format 2 code, well under the format 1 length"); });
+    ok(gc.encode(withStats).length < gc.encode1(withStats).length * 0.7, "format 2 codes are well under the format 1 length (fixture)");
+    // A long text-heavy guide deflates well in both formats (guide 12: 0.72), so an embedded guide only has to be shorter than its format 1 code (user 2026-10-17).
+    embedded.forEach((g, i) => { const n = norm(g); ok(same(norm(gc.decode(gc.encode(n))), n) && gc.encode(n).length < gc.encode1(n).length, "embedded guide " + (i + 1) + " round-trips through a format 2 code, shorter than its format 1 code"); });
     // Format 2 (TG2., binary): the page and scripts/guide_code.js write the same bytes and read each other back, emoji and non-Thai text included.
     { const bin = vm.runInContext("classGuideBinary", sandbox), fromBin = vm.runInContext("classGuideFromBinary", sandbox);
       const odd = norm({...fixture, title:"Guide 🐺 **ทอง** ñ é 中文", author:"ผู้เขียน 🐺", description:"บรรทัด 1\nline 2 ✓", stats:{atk:0,lck:512}});
