@@ -29575,7 +29575,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T15:02:20.042Z","counts":{"1":5,"2":9,"3":3,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":6,"16":0,"17":2,"18":5,"19":1,"20":1}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T15:21:42.540Z","counts":{"1":5,"2":9,"3":4,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":7,"16":0,"17":2,"18":5,"19":1,"20":1}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30093,7 +30093,7 @@ function classGuideHoverLines(guide, ctx, cell, learned){
   return classGuideTimings(skillSimCardId(cell.icon), ctx.cells ? skillSimCellRank(ctx.cells, cell.id) : 1, guide.stats, ctx);
 }
 // ---- Guide image export (user 2026-10-15) ----
-// A 16:9 landscape picture of a guide at 3840x2160 (4K), drawn on a canvas from the guide data, so phone and desktop give the same image (user 2026-10-16 revamp).
+// A landscape picture of a guide, laid out on a 1920x1080 (2x: 3840x2160) frame and then trimmed to the guide plus its margin (2026-10-17), drawn on a canvas from the guide data, so phone and desktop give the same image (user 2026-10-16 revamp).
 // Left: icons + Lv, title, author and date, recommended stats, description. Right: the four trees side by side, then every author note expanded as chips under them.
 const CLASS_GUIDE_IMAGE = { w: 1920, h: 1080, scale: 2, margin: 44, leftW: 430, gutter: 36, treeGap: 18, pad: 14, head: 52 };   // drawn at 1920x1080 units, saved at 3840x2160 (4K)
 // The tree grid as plain data (mirrors buildTrees in mountSkillSimulator).
@@ -30576,7 +30576,12 @@ async function classGuideRenderImage(guide, simRoot){
     if (shown < noteIds.length){ ctx.font = font(400, 16); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", notesX + notesW - 12, notesBottom); ctx.textAlign = "left"; }
   }
   ctx.restore();
-  return canvas;
+  // Trimmed to the content (user 2026-10-17: a short or bare guide left wide empty margins in the fixed frame): the picture keeps the usual margin round
+  // the guide's rectangle and nothing more, at the same 2x scale, so its size follows the guide instead of always being 16:9.
+  const usedW = infoW + G + gridW + (notesW ? G + notesW : 0), cropX = dx, cropY = Math.max(0, rectTop - P.margin), cropW = Math.min(P.w - cropX, usedW + P.margin * 2), cropH = Math.min(P.h - cropY, rectH + P.margin * 2);
+  const out = document.createElement("canvas"); out.width = Math.round(cropW * P.scale); out.height = Math.round(cropH * P.scale);
+  out.getContext("2d").drawImage(canvas, cropX * P.scale, cropY * P.scale, cropW * P.scale, cropH * P.scale, 0, 0, out.width, out.height);
+  return out;
 }
 // Save it: touch devices with a share sheet share the image file, everything else downloads the PNG.
 async function classGuideSaveImage(guide, simRoot){
@@ -32552,6 +32557,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T15:07:35.368Z","fix(bible): the guide PNG is trimmed to the guide (no wide empty margins on short or bare guides)"],
     ["2026-10-17T14:58:38.003Z","fix(bible): class guide reader counts update by themselves between pushes (at most about 10 minutes behind; GoatCounter's cache had kept them frozen for hours); the stat dials drop their ~ sign"],
     ["2026-10-17T14:25:14.996Z","fix(bible): the glowing + stat dial shows only on a guide with no stats; beside stat dials a small gold + ลองใส่สเตตัสอื่น pill under them opens the same picker; the estimated readers icon is now an eye, centred on the text beside it"],
     ["2026-10-17T14:18:55.611Z","fix(bible): a guide with little beside its skill trees no longer blows them up to giant icons (the skill cells are capped on the page and in the PNG)"],
