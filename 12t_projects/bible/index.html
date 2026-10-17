@@ -1223,7 +1223,6 @@
   .cg-menu-pop[hidden]{display:none}
   .cg-menu-pop::before{content:"";position:absolute;top:-7px;right:var(--cg-menu-notch,24px);width:12px;height:12px;background:#221810;border-left:1px solid rgba(201,162,39,.6);border-top:1px solid rgba(201,162,39,.6);transform:rotate(45deg)}   /* the notch points at the pill */
   @keyframes cg-menu-in{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion: reduce){.cg-menu-pop{animation:none}}
   .cg-menu-head{padding:0 8px 10px;margin-bottom:4px;border-bottom:1px solid rgba(201,162,39,.25)}
   .cg-menu-kicker,.cg-menu-group{display:block;font-size:10.5px;letter-spacing:2px;color:var(--muted)}
   .cg-menu-title{display:block;margin-top:2px;font-size:15px;font-weight:600;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1245,7 +1244,6 @@
   html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]:hover,html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]:focus-visible{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 0 0 1px rgba(0,0,0,.45),0 10px 22px -6px rgba(212,175,55,.9),0 0 24px rgba(212,175,55,.5) !important}
   html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]::after{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:cg-cta-shine 4.5s ease-in-out 1.2s infinite;pointer-events:none}
   @keyframes cg-cta-shine{0%{left:-60%}22%,100%{left:130%}}
-  @media (prefers-reduced-motion: reduce){html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]::after{animation:none;display:none}}
   .hub-theme-opt{
     width:48px; padding:4px 2px 3px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted);
     display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
@@ -1778,7 +1776,6 @@
   .cg-set-cell[data-cg-tip]{outline:none}
   .cg-set-cell[data-cg-tip] .cg-set-tile{transition:transform .15s ease,filter .15s ease}
   .cg-set-cell[data-cg-tip]:hover .cg-set-tile,.cg-set-cell[data-cg-tip]:focus-visible .cg-set-tile{transform:translateY(-2px);filter:brightness(1.12) drop-shadow(0 0 5px rgba(212,175,55,.45))}   /* hover: a small lift and gold glow (user 2026-10-16) */
-  @media (prefers-reduced-motion: reduce){.cg-set-cell[data-cg-tip] .cg-set-tile{transition:none}}
   .cg-set-tile{position:relative;display:block;width:100%;max-width:56px}   /* about 20% bigger (user 2026-10-16) */
   .cg-set-tile > .cg-gear-ico{display:block;width:100%;height:auto;aspect-ratio:1}
   .cg-set-tile > .cg-gear-ico img,.cg-set-tile > .cg-gear-ico .cg-gear-txticon{width:100%;height:100%}
@@ -1847,7 +1844,6 @@
   .cg-stat-add:hover .cg-stat-add-dial,.cg-stat-add:focus-visible .cg-stat-add-dial,.cg-stat-add[aria-expanded="true"] .cg-stat-add-dial{box-shadow:0 0 22px rgba(212,175,55,.65),inset 0 0 14px rgba(212,175,55,.2);transform:scale(1.06)}
   .cg-stat-add:hover .cg-stat-add-dial::before,.cg-stat-add:focus-visible .cg-stat-add-dial::before,.cg-stat-add[aria-expanded="true"] .cg-stat-add-dial::before{animation:cg-dial-turn 8s linear infinite}
   @keyframes cg-dial-turn{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion: reduce){.cg-stat-add .cg-stat-add-dial::before{animation:none !important}.cg-stat-add .cg-stat-add-dial{transition:none}}
   .cg-stat-add:focus-visible{outline:none}
   .cg-stat-pick{position:absolute;z-index:30;top:calc(100% + 8px);left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:max-content;max-width:230px;padding:10px;border:1px solid rgba(201,162,39,.55);border-radius:10px;background:#15100b;box-shadow:0 14px 30px -10px #000}
   .cg-stat-pick[hidden]{display:none}
@@ -2059,7 +2055,6 @@
   .cg-note-frame[data-card]{cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
   /* hover: the icon grows a little, its glow brightens and it sits above the chip next to it (user 2026-10-16); the notes column padding leaves room so the bigger ring is never clipped */
   .cg-note-frame[data-card]:hover,.cg-note-frame[data-card]:focus-visible{z-index:2;transform:translateZ(0) scale(1.06);filter:brightness(1.12);box-shadow:0 0 0 2px var(--gold),0 0 0 4px var(--ink),0 0 0 5px rgba(201,162,39,.85),0 0 20px rgba(212,175,55,.75)}
-  @media (prefers-reduced-motion: reduce){.cg-note-frame[data-card]{transition:none}}
   .cg-note-frame.is-boom{animation:rsim-boom .38s ease-out forwards;pointer-events:none}
   .cg-note-chips.is-pending .cg-note-chips-title{opacity:0}
   .cg-note-chips-title{transition:opacity .25s}
@@ -2113,6 +2108,7 @@
   .cg-title-lv{font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap}
   .cg-unspent{font-size:12px;font-weight:600;line-height:1;padding:4px 8px;border-radius:999px;color:var(--pro);border:1px solid currentColor;background:color-mix(in srgb, var(--pro) 12%, transparent);white-space:nowrap;cursor:help}
   .cg-title-text{display:block;overflow-wrap:anywhere}
+  .cg-word{display:inline-block;max-width:100%;overflow-wrap:anywhere}   /* a title chunk stays whole (classGuideTitleInto) */
   .cg-byline-author{color:var(--gold);font-weight:600}
   .cg-page[data-mode="reader"] .cg-prose{font-size:17px;line-height:1.85;margin:0}
   .cg-page[data-mode="reader"] .cg-prose:empty{display:none}
@@ -29635,7 +29631,7 @@ const CLASS_GUIDES = [
   {"id":27,"cover":[373],"format":"12t-class-guide","version":1,"title":"คาวก็อป","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,211,212,213,214,221,222,241,301,302,303,304,311,312,313,314,321,322,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,371,372,373,403,404,411,412,421,424,431,441,443]},"notes":{}},
   {"id":28,"cover":[272],"format":"12t-class-guide","version":1,"title":"คาว CHA กาเดี้ยนขั้น 2","author":"Sugar","date":"2026-09-22","description":"","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,111,112,113,121,122,123,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,321,322,331,332,333,334,351,404,411,414,421,422,431,432,441,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:15:40.809Z","counts":{"1":5,"2":9,"3":4,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":7,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T16:20:56.049Z","counts":{"1":5,"2":9,"3":5,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":8,"16":0,"17":2,"18":5,"19":1,"20":1,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30116,6 +30112,12 @@ const CLASS_GUIDE_BUTTON_ICONS = {
   cover:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
   menu:'<path d="M4 6h16M4 12h16M4 18h10"/><path d="M18.5 15.5l2.5 2.5-2.5 2.5-2.5-2.5z"/>'
 };
+// A guide title breaks only at the spaces its author typed (user 2026-10-17: Chrome's Thai line breaker split "กาเดี้ยน" mid-word): each chunk is an inline-block,
+// so the browser keeps it whole and only splits a chunk that is wider than the line by itself.
+function classGuideTitleInto(el, text){
+  el.textContent = "";
+  for (const part of String(text).split(/(\s+)/)){ if (!part) continue; if (/^\s+$/.test(part)){ el.append(" "); continue; } const w = document.createElement("span"); w.className = "cg-word"; w.textContent = part; el.appendChild(w); }
+}
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 // Editor row of the 8 recommended stats (blank = not recommended, not stored).
 function classGuideStatsEditorHtml(){
@@ -30395,11 +30397,12 @@ async function classGuideRenderImage(guide, simRoot){
   let titleSize = 46, titleLines;
   for (const [size, maxLines] of [[46, 2], [40, 2], [34, 3]]){
     titleSize = size; const tf = () => font(700, size);
-    const all = classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(tf), segmenter);
+    const all = classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(tf), null);   // spaces only, as on the page (a chunk wider than the line still splits)
     titleLines = classGuideImageClip(all, maxLines, lw, measureWith(tf));
     if (all.length <= maxLines) break;
   }
   const titleLh = Math.round(titleSize * 1.26), titleFont = () => font(700, titleSize), measureTitle = measureWith(titleFont);
+  titleLines = titleLines.map(ln => ln.map((run, k) => k === ln.length - 1 ? { ...run, text: run.text.replace(/\s+$/, "") } : run));   // the space a line broke at does not count when centring
   titleLines.forEach((ln, i) => { const w = ln.reduce((sum, run) => sum + measureTitle(run.text, false), 0); drawLines([ln], lx + Math.max(0, (lw - w) / 2), y + titleSize * 0.96 + i * titleLh, titleLh, titleFont, { text, gold: text }); });
   y += titleLines.length * titleLh + 6;
   // author (gold) · date on one line, or the date under a long author name (the name is cut with "…" past the column)
@@ -31201,7 +31204,7 @@ function mountClassGuide(root){
     const titleLv = document.createElement("span"); titleLv.className = "cg-title-lv"; titleLv.textContent = "Lv." + current.build.level; titleMeta.appendChild(titleLv);
     const unspent = classGuideUnspent(current.build);
     if (unspent.total){ const badge = document.createElement("span"); badge.className = "cg-unspent"; badge.textContent = "↑ เหลือ " + unspent.total + " แต้ม"; badge.title = unspent.detail + " (แต้มยืดหยุ่น อัปสกิลที่มีลูกศรได้ตามชอบ)"; titleMeta.appendChild(badge); }
-    const titleText = document.createElement("span"); titleText.className = "cg-title-text"; titleText.textContent = current.title || "ตัวอย่างไกด์";
+    const titleText = document.createElement("span"); titleText.className = "cg-title-text"; classGuideTitleInto(titleText, current.title || "ตัวอย่างไกด์");
     el("guideTitle").append(titleMeta, titleText);
     el("guideByline").textContent = "";
     const authorEl = document.createElement("span"); authorEl.className = "cg-byline-author"; authorEl.textContent = current.author || "ยังไม่ระบุผู้เขียน";
@@ -31263,7 +31266,7 @@ function mountClassGuide(root){
   function guideCard(guide, tag = "button", id = null){
     const b = document.createElement(tag); if (tag === "button") b.type = "button"; b.className = "cg-guide";
     const portrait = classGuideCoverEl(guide, 110) || document.createElement("span");   // the author's cover icons (required; the class portrait is no longer used, user 2026-10-16)
-    const title = document.createElement("strong"); title.textContent = guide.title || "ตัวอย่างไกด์";
+    const title = document.createElement("strong"); classGuideTitleInto(title, guide.title || "ตัวอย่างไกด์");
     // Medallion Grid (user 2026-10-17): class and server chips under the title, then the author, the date and the estimated readers
     const chip = (src, text) => { const c = document.createElement("span"); c.className = "cg-chip"; if (src){ const i = document.createElement("img"); i.src = src; i.alt = ""; c.appendChild(i); } c.append(text); return c; };
     const chips = document.createElement("span"); chips.className = "cg-guide-chips";
@@ -32658,6 +32661,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T16:18:05.905Z","fix(bible): a guide title only wraps at its spaces, never in the middle of a Thai word (guide view, gallery cards and the PNG); the guide pages' animations always play (reduced-motion gates removed, house rule)"],
     ["2026-10-17T16:12:38.652Z","feat(bible): guide editor step 3 has an expert mode: a gold arrow takes a skill row straight to that rank, the build is checked once the points are spent, and a build that breaks a rule cannot be exported; class guide #28 TTO Bat คาว CHA กาเดี้ยนขั้น 2 by Sugar"],
     ["2026-10-17T15:29:18.640Z","feat(bible): class guides #21 TTO Wolf หมาพุ่งรำดาบคลื่นดาบจากสำนัก IntelligentDolphin by Charlotta, #22 TTO Wolf หมาเจาะทอง by RYZEL, #23 TTO Sheep แกะ PVE by pearly.pear, #24 TTO Bat คาว TAL by Sugar, #25 TTO Bat คาว CHA Chirotophobia by Sugar, #26 TTO Bat คาว CHA มีแซ่ by Sugar and #27 TTO Bat คาวก็อป by Sugar"],
     ["2026-10-17T15:07:35.368Z","fix(bible): the guide PNG is trimmed to the guide (no wide empty margins on short or bare guides)"],
