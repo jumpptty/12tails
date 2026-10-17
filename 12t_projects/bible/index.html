@@ -1824,7 +1824,6 @@
   .cg-stat-tile{display:grid;justify-items:center;gap:6px;min-width:0;padding:0;border:0;background:none}
   .cg-stat-tile b{order:2;display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
   .cg-stat-val{width:62px;height:62px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:1px;border:2px solid var(--c);border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),rgba(0,0,0,.35));box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent);transition:box-shadow .15s ease}   /* recommended stats are a ballpark (user 2026-10-16): a "~" before the number */
-  .cg-stat-approx{font-weight:700;font-size:13px;line-height:1;color:var(--c);opacity:.75}
   .cg-page .cg-stat-tile input.cg-stat-try{display:block;flex:1;min-width:0;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:19px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
   .cg-page .cg-stat-tile input.cg-stat-try:hover,.cg-page .cg-stat-tile input.cg-stat-try:focus{border-bottom-color:var(--c);outline:none}
   .cg-stat-tile input.cg-stat-try::-webkit-outer-spin-button,.cg-stat-tile input.cg-stat-try::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -1854,7 +1853,6 @@
   .cg-stat-pick[hidden]{display:none}
   .cg-stat-pick-opt{min-width:52px;padding:5px 10px;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:999px;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);font:inherit;font-size:12px;font-weight:700;letter-spacing:.12em;cursor:pointer}
   .cg-stat-pick-opt:hover,.cg-stat-pick-opt:focus-visible{background:color-mix(in srgb,var(--c) 26%,transparent);border-color:var(--c);outline:none}
-  .cg-stat-tile.is-own .cg-stat-approx{display:none}
   .cg-page .cg-stat-tile.is-own input.cg-stat-try::placeholder{color:var(--c);opacity:.5}
   @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
@@ -29577,7 +29575,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:49:23.707Z","counts":{"1":5,"2":9,"3":3,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":6,"16":0,"17":2,"18":5,"19":1,"20":1}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T15:02:20.042Z","counts":{"1":5,"2":9,"3":3,"4":2,"5":5,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":3,"15":6,"16":0,"17":2,"18":5,"19":1,"20":1}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30063,7 +30061,7 @@ function classGuideStatsEditorHtml(){
 // Reader panel: only the filled stats, the stat name and a big number in the stat's signature colour (no caption, user 2026-10-15).
 // The number is an input (user 2026-10-16): a reader may try other values; the hover timings follow, nothing is saved, and a reset button brings the author's values back.
 function classGuideStatTile(s, value, own){
-  return '<label class="cg-stat-tile' + (own ? ' is-own is-tried' : '') + '" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><span class="cg-stat-approx" aria-hidden="true">~</span><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + (value == null ? "" : value) + '"' + (own ? ' placeholder="?"' : '') + ' aria-label="' + s.label + (own ? ' ที่คุณลองใส่เอง' : ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)') + '"></span></label>';
+  return '<label class="cg-stat-tile' + (own ? ' is-own is-tried' : '') + '" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + (value == null ? "" : value) + '"' + (own ? ' placeholder="?"' : '') + ' aria-label="' + s.label + (own ? ' ที่คุณลองใส่เอง' : ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)') + '"></span></label>';
 }
 // The + dial (user 2026-10-17): the reader may add a stat the author did not recommend; it opens a picker of the stats not shown yet.
 const CLASS_GUIDE_STAT_ADD = '<span class="cg-stat-add-wrap"><button type="button" class="cg-stat-add" data-cg-act="addStat" aria-haspopup="true" aria-expanded="false" aria-label="ลองเพิ่มสเตตัสของคุณเอง"><span class="cg-stat-add-dial" aria-hidden="true">+</span><span class="cg-stat-add-pill" aria-hidden="true">+ ลองใส่สเตตัสอื่น</span></button><span class="cg-stat-pick" data-cg-role="statPick" hidden></span></span>';
@@ -30361,9 +30359,8 @@ async function classGuideRenderImage(guide, simRoot){
       const g = ctx.createRadialGradient(cx, cy - R * 0.3, 0, cx, cy, R); g.addColorStop(0, "rgba(255,255,255,.06)"); g.addColorStop(1, "rgba(0,0,0,.35)");
       ctx.save(); ctx.shadowColor = alpha(col, 0.45); ctx.shadowBlur = 14 * P.scale; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill(); ctx.restore();
       ctx.beginPath(); ctx.arc(cx, cy, R - 1.25, 0, Math.PI * 2); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
-      const val = String(guide.stats[s.key]); ctx.font = font(700, 15); const tw = ctx.measureText("~").width; ctx.font = font(700, 24); const vw = ctx.measureText(val).width, x0 = cx - (tw + vw) / 2;
-      ctx.fillStyle = col; ctx.globalAlpha = 0.75; ctx.font = font(700, 15); ctx.fillText("~", x0, cy + 6); ctx.globalAlpha = 1;   // approximate, as on the screen
-      ctx.font = font(700, 24); ctx.fillText(val, x0 + tw, cy + 8.5);
+      const val = String(guide.stats[s.key]); ctx.font = font(700, 24); const vw = ctx.measureText(val).width, x0 = cx - vw / 2;   // no "~" (user 2026-10-17)
+      ctx.fillStyle = col; ctx.font = font(700, 24); ctx.fillText(val, x0, cy + 8.5);
       ctx.font = font(600, 13); spaced(3); ctx.textAlign = "center"; ctx.fillText(s.label, cx + 1.5, cy + R + 22); ctx.textAlign = "left"; spaced(0);
     });
     y += 4 + Math.ceil(filled.length / per) * rowH - 12 + 18;
@@ -31173,7 +31170,11 @@ function mountClassGuide(root){
     const send = () => { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: guideViewPath(id), title: title || "", event: false }); };
     if (window.goatcounter && window.goatcounter.count) send(); else window.addEventListener("load", send, { once: true });   // the script loads async
   };
-  const guideViews = id => guideViewCache[id] || (guideViewCache[id] = fetch(GUIDE_VIEW_SITE + "/counter/" + encodeURIComponent(guideViewPath(id)) + ".json?start=2020-01-01")   // without start the counter answers 404 / 0 for every path (only TOTAL works); 2020 = all time
+  // GoatCounter's public counter keeps serving the first answer it cached for a URL far past its 4 h Expires (checked 2026-10-17: a 5 h 16 min old answer read 3
+  // where the real count was 9). The query carries an end date that changes every 10 minutes (far in the future, so it still covers all time): readers in
+  // the same 10 minutes share one cached answer, and a count is never more than about 10 minutes old, with or without a push.
+  const guideViewEnd = () => new Date(Date.UTC(2100, 0, 1) + (Math.floor(Date.now() / 600000) % 36500) * 86400000).toISOString().slice(0, 10);
+  const guideViews = id => guideViewCache[id] || (guideViewCache[id] = fetch(GUIDE_VIEW_SITE + "/counter/" + encodeURIComponent(guideViewPath(id)) + ".json?start=2020-01-01&end=" + guideViewEnd())   // without start the counter answers 404 / 0 for every path (only TOTAL works); 2020 = all time
     .then(r => r.status === 404 ? { count: "0" } : r.ok ? r.json() : null)
     .then(j => j && j.count != null ? Number(String(j.count).replace(/[^\d]/g, "")) || 0 : null)
     .catch(() => null)
@@ -32551,6 +32552,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T14:58:38.003Z","fix(bible): class guide reader counts update by themselves between pushes (at most about 10 minutes behind; GoatCounter's cache had kept them frozen for hours); the stat dials drop their ~ sign"],
     ["2026-10-17T14:25:14.996Z","fix(bible): the glowing + stat dial shows only on a guide with no stats; beside stat dials a small gold + ลองใส่สเตตัสอื่น pill under them opens the same picker; the estimated readers icon is now an eye, centred on the text beside it"],
     ["2026-10-17T14:18:55.611Z","fix(bible): a guide with little beside its skill trees no longer blows them up to giant icons (the skill cells are capped on the page and in the PNG)"],
     ["2026-10-17T14:15:36.969Z","fix(bible): a stat the reader adds gets a solid dial like the author's; the + dial always glows, its dashed ring turns gently on hover, and it has no label"],
