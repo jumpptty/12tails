@@ -18,7 +18,7 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.";
 //   byte  level
 //   20 bytes  learned skills, one bit per slot (tree-1)*40 + row*4 + (col-1)
 //   2 bytes   date as days since 2000-01-01 (little endian), 0xFFFF = none
-//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat
+//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat; bit 15 = "or more" (shown as 250+, user 2026-10-18)
 //   text  title, author, description   (text = varint byte length + bytes: ASCII as is, Thai U+0E00-0E5B as one byte 0x80-0xDB, anything else 0xDC + varint code point)
 //   varint note count, then per note: slot byte + text
 //   optional gear block (older codes end before it): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3) and per choice
@@ -49,7 +49,7 @@ function classGuideBinary(g){
   const days = g.date ? Math.round((Date.parse(g.date + "T00:00:00Z") - Date.UTC(2000, 0, 1)) / 864e5) : 0xFFFF;
   out.push(days & 255, days >> 8);
   const st = g.stats || {}; let mask = 0; CLASS_GUIDE_STAT_KEYS.forEach((k, i) => { if (k in st) mask |= 1 << i; }); out.push(mask);
-  CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st) out.push(st[k] & 255, st[k] >> 8); });
+  const plus = g.statsPlus || []; CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st){ const v = st[k] | (plus.includes(k) ? 0x8000 : 0); out.push(v & 255, v >> 8); } });   // bit 15 = "or more" (250+)
   text(g.title); text(g.author); text(g.description);
   const ids = Object.keys(g.notes || {}).map(Number).sort((a, b) => a - b);
   varint(ids.length); for (const id of ids){ out.push(slot(id)); text(g.notes[id]); }
@@ -86,7 +86,7 @@ function classGuideFromBinary(bytes){
   const days = byte() | byte() << 8;
   const date = days === 0xFFFF ? "" : new Date(Date.UTC(2000, 0, 1) + days * 864e5).toISOString().slice(0, 10);
   const mask = byte(), stats = {};
-  CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)) stats[k] = byte() | byte() << 8; });
+  const statsPlus = []; CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)){ const v = byte() | byte() << 8; stats[k] = v & 0x7FFF; if (v & 0x8000) statsPlus.push(k); } });
   const title = text(), author = text(), description = text();
   const unslot = k => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
@@ -105,7 +105,7 @@ function classGuideFromBinary(bytes){
       gear[CLASS_GUIDE_GEAR_KEYS[j]] = list;
     }
   }
-  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
 }
 
 // Same compact form as classGuideCompact / classGuideExpand in index.html: one-letter keys, learned skills as a 160-bit set (one bit per tree x row x column slot).

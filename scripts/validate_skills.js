@@ -3321,6 +3321,11 @@ let checkedRsim = 0;
       rejects(() => norm(change({ build: { ...base.build, support: [901, 902, 903] } })), "reject three support skills");
       rejects(() => norm(change({ build: { ...base.build, support: [901, 901] } })), "reject the same support skill twice");
       rejects(() => norm(change({ build: { ...base.build, support: [913] } })), "reject an unknown support skill");
+      // "250+" (user 2026-10-18): the number stays a number, statsPlus lists the "or more" stats; bit 15 in the code, so older codes read the same
+      const withPlus = norm(change({ stats: { atk: 250, vit: 120 }, statsPlus: ["vit", "atk", "lck"] }));
+      ok(same(withPlus.stats, { atk: 250, vit: 120 }) && same(withPlus.statsPlus, ["atk", "vit"]), "statsPlus keeps only set stats, in the fixed stat order");
+      ok(same(Array.from(bin(withPlus)), Array.from(gc.classGuideBinary(withPlus))) && same(norm(fromBin(bin(withPlus))), withPlus) && same(norm(gc.decode(gc.encode(withPlus))), withPlus), "250+ round-trips through the format 2 code, page and scripts/guide_code.js");
+      rejects(() => norm(change({ stats: { atk: 250 }, statsPlus: "atk" })), "reject statsPlus that is not a list");
     }
     rejects(()=>norm(change({gear:{weapon:[{item:"w_cat10"}]}})), "reject another class's weapon");
     rejects(()=>norm(change({gear:{weapon:[{item:"w_wlf10"},{item:"w_wlf11"},{item:"w_wlf12"},{item:"w_wlf14"}]}})), "reject a fourth pick");
