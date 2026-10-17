@@ -1878,7 +1878,7 @@
   .cg-note-item:only-of-type::before{display:none}
   .cg-note-frame{z-index:1}
   .cg-note-num{display:inline-grid;place-items:center;min-width:1.35em;height:1.35em;margin-right:.45em;padding:0 .2em;box-sizing:border-box;border-radius:999px;background:var(--gold);color:#140f0b;font-size:.8em;font-weight:700;vertical-align:.08em}
-  .cg-note-chip-icon{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.24);-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
+  .cg-note-chip-icon{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.3) translate(var(--ring-x,0%),var(--ring-y,0%));-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
   .cg-note-chip h4{margin:0 0 4px;font-family:inherit;font-size:15px;line-height:1.4;color:var(--gold)}
   .cg-note-chip-text{margin:0;font-size:15px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
   .cg-note-item.is-waiting{opacity:0;pointer-events:none}
@@ -1886,7 +1886,7 @@
   .cg-cover{position:relative;display:inline-block;flex:none;width:var(--cg-cover,88px);height:var(--cg-cover,88px)}
   .cg-cover-ring{position:absolute;border-radius:50%;overflow:hidden;transform:translateZ(0);background:var(--ink);box-shadow:0 0 0 2px var(--gold),0 0 0 4px var(--ink),0 0 0 5px rgba(201,162,39,.6),0 0 12px rgba(212,175,55,.45)}
   .cg-cover-ring > span{position:absolute;inset:0;background:center / 100% 100% no-repeat;transform:scale(1.8);filter:blur(10px) saturate(1.2)}
-  .cg-cover-ring > img{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.24);-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
+  .cg-cover-ring > img{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.3) translate(var(--ring-x,0%),var(--ring-y,0%));-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
   .cg-guide > .cg-cover{position:absolute;left:14px;top:50%;transform:translateY(-50%)}
   .cg-card-preview{display:grid;gap:4px;width:min(460px,100%);margin-right:auto}
   .cg-card-preview[hidden]{display:none}
@@ -2057,7 +2057,7 @@
     .cg-page[data-mode="author"] .cg-heading>div{display:none}
     .cg-page[data-mode="author"] .cg-status{grid-column:1/-1;grid-row:3;min-height:0;margin:0}
     .cg-page[data-mode="author"] .cg-status:empty{display:none}
-    .cg-page[data-mode="author"] .cg-author{grid-column:1/-1;grid-row:2;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;padding:2px 6px 2px 2px}
+    .cg-page[data-mode="author"] .cg-author{grid-column:1/-1;grid-row:2;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;padding:5px 6px 5px 6px}   /* 5-6 px all round: focus rings (2 px outline + 2 px gap) were clipped at the left edge (user 2026-10-17) */
     .cg-page[data-mode="author"] .cg-fields{flex:1 1 auto;min-height:0;margin:0;gap:10px;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}   /* name, author and date on one row (user 2026-10-16) */
     .cg-page[data-mode="author"] .cg-fields > label:first-child{grid-column:auto}
     .cg-page[data-mode="author"] .cg-description{grid-template-rows:auto minmax(0,1fr);min-height:0}
@@ -29319,6 +29319,27 @@ const CLASS_GUIDE_COVER_SPOTS = { 1: [[0.12, 0.12, 0.76]], 2: [[0.02, 0.265, 0.4
   // 4 and 5 (user 2026-10-17, picked from mocked options): 4 = a 2 x 2 grid, 5 = a pyramid of 2 over 3; all icons the same size, in pick order
   4: [[0.02, 0.02, 0.47], [0.51, 0.02, 0.47], [0.02, 0.51, 0.47], [0.51, 0.51, 0.47]],
   5: [[0.15, 0.08, 0.36], [0.49, 0.08, 0.36], [0.00, 0.52, 0.34], [0.33, 0.52, 0.34], [0.66, 0.52, 0.34]] };   // [left, top, size] as parts of the box: one big, two in a row, three in a triangle (user 2026-10-16)
+// Gold ring icons (user 2026-10-17, option D of a mock): the art is zoomed to 130% (was 124%, which left the icon's own square edge inside the
+// ring) and centred on its visible pixels: the skill art sits on average 0.7 px left of centre in its 64 px image, 267 of 1249 icons by 1.5 px or
+// more. The shift is measured once per picture from its alpha box and cached; the page reads it as --ring-x / --ring-y, the PNG export directly.
+const RING_ICON_ZOOM = 1.30, ringShiftCache = new Map();
+function ringIconShift(img){   // the art centre's offset from the image centre, as parts of the image width / height
+  const key = img && (img.currentSrc || img.src); if (!key) return { x: 0, y: 0 };
+  if (ringShiftCache.has(key)) return ringShiftCache.get(key);
+  let out = { x: 0, y: 0 };
+  try {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (w && h){
+      const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, w, h).data; let x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40){ if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 >= 0) out = { x: ((x0 + x1 + 1) / 2 - w / 2) / w, y: ((y0 + y1 + 1) / 2 - h / 2) / h };
+    }
+  } catch (e) {}
+  ringShiftCache.set(key, out); return out;
+}
+const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
+document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
@@ -29406,7 +29427,7 @@ const CLASS_GUIDES = [
   {"id":14,"cover":[354,443,444],"format":"12t-class-guide","version":1,"title":"ต่ายลูกซอง","author":"ตุ่นเพื่อ gattling ต่าย","date":"2026-10-10","description":"ต้องใช้ของกับ Stat มากหน่อยแต่พอใด้ **ยาเลือด C** ก่อแทบไม่ต้องรอคนเพื่อไปวีงลงมาโอแล้ว\nสามารถปรับปุรงใด้แต่สายนี้จะต้อง **อัพเบสีกแบบนี้เพื่อให้ลุกชองยีงเข้า** \nกับต้องมี **New Order** จะได้เรียก **ด้า**  **/Kaiser** มาช่วยตีบอส\nถ้าไม่กะจะยีงไกลเลยก่อเอาไปลงโดดใด้ (สายนี้ทำ **ดาเมจ AOE เยอะ** ยังไงก่อโดนมอนไล่ถ้าไม่มีวาฟ)\n\nถ้า stat จะแนะนำไปที่ **ATK AGI** กรณีนี้ **VIT TAL** จะไม่ค่อยจำเป็นมากถ้าจะเอาไป PvE เพราะเรากดยาเลือดกับ SP ใด้แต่ถ้าจะให้ง่าย **ควรมี SP พอกดยีง Shooting Array 2** ใด้ \n\nช่วงเวลแรกๆจะแนะนำไปเล่นยาก่อนแล้วค่อยรีทีหลัง\nแต่ถ้ากะจะเล่นสายนี้ไปเลยจะแนะนำอัพ ATK ให้ใด้ช่วง 40-60 แล้วไปอัพ AGI VIT เพื่อให้เดีนเวลง่าย","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,131,132,133,134,141,142,143,144,201,202,203,204,211,212,213,214,221,222,241,242,243,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,403,412,413,423,431,433,434,443,444]},"notes":{}},
   {"id":15,"cover":[432],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PvE","author":"ChilLs","date":"2026-10-16","description":"","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,262,301,302,303,304,311,331,332,333,341,342,351,352,361,402,404,414,421,424,431,432,434,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T09:11:06.465Z","counts":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T09:32:02.358Z","counts":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30112,8 +30133,8 @@ async function classGuideRenderImage(guide, simRoot){
     if ("filter" in ctx) ctx.filter = "blur(" + (10 * u * P.scale).toFixed(1) + "px) saturate(1.2)";
     ctx.drawImage(img, cx - S * 0.9, cy - S * 0.9, S * 1.8, S * 1.8);
     if ("filter" in ctx) ctx.filter = "none";
-    const Z = S * 1.24, n = Math.ceil(Z * P.scale), fc = document.createElement("canvas"); fc.width = fc.height = n;
-    const fx = fc.getContext("2d"); fx.imageSmoothingQuality = "high"; fx.drawImage(img, 0, 0, n, n);
+    const Z = S * RING_ICON_ZOOM, n = Math.ceil(Z * P.scale), fc = document.createElement("canvas"); fc.width = fc.height = n;
+    const fx = fc.getContext("2d"); fx.imageSmoothingQuality = "high"; const sh = ringIconShift(img); fx.drawImage(img, -sh.x * n, -sh.y * n, n, n);   // centred on its art
     const fade = fx.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2); fade.addColorStop(0.62, "#000"); fade.addColorStop(0.92, "rgba(0,0,0,0)");
     fx.globalCompositeOperation = "destination-in"; fx.fillStyle = fade; fx.fillRect(0, 0, n, n);
     ctx.drawImage(fc, cx - Z / 2, cy - Z / 2, Z, Z);
@@ -30344,8 +30365,8 @@ async function classGuideRenderImage(guide, simRoot){
         if ("filter" in ctx) ctx.filter = "blur(" + (10 * u * P.scale).toFixed(1) + "px) saturate(1.2)";
         ctx.drawImage(img, cx - S * 0.9, cy - S * 0.9, S * 1.8, S * 1.8);
         if ("filter" in ctx) ctx.filter = "none";
-        const Z = S * 1.24, n = Math.ceil(Z * P.scale), fc = document.createElement("canvas"); fc.width = fc.height = n;
-        const fx = fc.getContext("2d"); fx.imageSmoothingQuality = "high"; fx.drawImage(img, 0, 0, n, n);
+        const Z = S * RING_ICON_ZOOM, n = Math.ceil(Z * P.scale), fc = document.createElement("canvas"); fc.width = fc.height = n;
+        const fx = fc.getContext("2d"); fx.imageSmoothingQuality = "high"; const sh = ringIconShift(img); fx.drawImage(img, -sh.x * n, -sh.y * n, n, n);   // centred on its art
         const fade = fx.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2); fade.addColorStop(0.62, "#000"); fade.addColorStop(0.92, "rgba(0,0,0,0)");
         fx.globalCompositeOperation = "destination-in"; fx.fillStyle = fade; fx.fillRect(0, 0, n, n);
         ctx.drawImage(fc, cx - Z / 2, cy - Z / 2, Z, Z);
@@ -32225,6 +32246,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T09:26:45.257Z","fix(bible): skill icons in the gold rings sit centred and zoom a little more, so no square edge shows (gallery, guide, notes, PNG); focus rings in the guide editor are no longer cut off at the left edge"],
     ["2026-10-17T09:08:44.860Z","fix(bible): the ToT and TTO looks finally apply their own colours (panels, text, gold, lines), so fields, buttons and tabs follow the server theme"],
     ["2026-10-17T08:57:41.823Z","feat(bible): the guide editor's last step is redesigned: a preview panel with the gallery card and the full guide, a save-as-PNG card and a send card whose button copies the guide code; ToT glass on its panels and on the PNG's skill trees, and gold primary buttons stay gold on ToT"],
     ["2026-10-17T08:40:48.516Z","feat(bible): browsers that block the live counter show each class guide's readers as of the last update; the guide editor shows the gallery card and a small full-guide view (click for full size) in step 6 (บันทึกและส่ง), so the preview matches the PNG again"],
