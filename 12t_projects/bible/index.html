@@ -29570,7 +29570,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:17:05.323Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:21:56.588Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30275,7 +30275,10 @@ async function classGuideRenderImage(guide, simRoot){
   // ---- layout (user 2026-10-16: the same as the landscape reader, one rectangle): the guide info top left, the trees beside it, the notes in a full-height
   // column on the right and the description under the info and the trees; every outer edge lines up and the rectangle sits centred. 1920 x 1080 units.
   const G = 14, fullH = P.h - P.margin * 2, infoW = P.leftW, notesW = noteIds.length ? 400 : 0, bar = 3, panelPad = 16;
-  const gridX = P.margin + infoW + G, gridW = P.w - P.margin * 2 - infoW - G - (notesW ? notesW + G : 0), notesX = gridX + gridW + G;
+  // the skill cells are capped like the page's (user 2026-10-17: a guide with no notes blew the trees up): a slot at most 58 units (about 15% over a normal
+  // guide's); the narrower picture is then centred (dx)
+  const gridFull = P.w - P.margin * 2 - infoW - G - (notesW ? notesW + G : 0), gridCap = model.length * (58 * 4 + P.pad * 2) + (model.length - 1) * P.treeGap;
+  const gridX = P.margin + infoW + G, gridW = Math.min(gridFull, gridCap), notesX = gridX + gridW + G, dx = Math.round((gridFull - gridW) / 2);
   // one round framed icon, the note-chip look (double gold ring, glow, a blurred 180% copy behind, the picture at 124% fading at its edge)
   const drawRing = (img, cx, cy, S) => {
     const u = S / 60, R = S / 2, disc = (r, fill) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); };
@@ -30414,6 +30417,7 @@ async function classGuideRenderImage(guide, simRoot){
   }
   const infoH = Math.min(fullH, infoBoxes[infoBoxes.length - 1][1]);
   ctx = mainCtx;
+  ctx.save(); ctx.translate(dx, 0);   // the capped picture sits centred
   // ---- description (measured), trees, and the rectangle's height
   const descFont = g => font(g ? 700 : 400, 23), lh = 36;
   let descW = infoW + G + gridW, descTextW = descW - bar - panelPad * 2;
@@ -30567,6 +30571,7 @@ async function classGuideRenderImage(guide, simRoot){
     }
     if (shown < noteIds.length){ ctx.font = font(400, 16); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("+ อีก " + (noteIds.length - shown) + " โน้ต อ่านต่อในไกด์", notesX + notesW - 12, notesBottom); ctx.textAlign = "left"; }
   }
+  ctx.restore();
   return canvas;
 }
 // Save it: touch devices with a share sheet share the image file, everything else downloads the PNG.
@@ -30889,6 +30894,14 @@ function mountClassGuide(root){
     const tabsH = author ? Math.max(el("steps").offsetHeight - guideHeading.offsetHeight, 0) : 0;
     let baseWidth, height, room = author ? Math.max(1, free - tabsH) : free, midW = width, shownW = 0, scale = 1, sheetInfo = null;
     const CELL_REF = 43;
+    // A cap on the skill cells (user 2026-10-17: a bare guide, no stats / sets / notes and a short description, blew the trees up to giant icons): a cell is
+    // at most 15% over its reference size x the window's scale, so a guide with little beside the trees shows a smaller, centred grid. The cell size is linear
+    // in the build's width, read from two widths; the window's scale (not the panel factor being tuned) keeps the cap fixed while the factor settles.
+    let cellLine = null;
+    const maxBuildW = () => {
+      if (!cellLine){ const cellAt = w => { heightAt(w); const c = build.querySelector(".rsim-cell"); return c ? c.offsetWidth : 0; }; const c1 = cellAt(800), c2 = cellAt(1600); cellLine = c2 > c1 ? { b: (c2 - c1) / 800, a: c1 - (c2 - c1) } : false; }
+      return cellLine ? Math.max(640, (CELL_REF * 1.15 * uiGuess - cellLine.a) / cellLine.b) : Infinity;
+    };
     const layoutSheet = u => {
       setU(u);
       guidePage.classList.toggle("cg-has-notes", notesOn);
@@ -30906,6 +30919,7 @@ function mountClassGuide(root){
         if (!fits) notesBox.style.maxHeight = free + "px";   // past the last step: the notes scroll in their own column
         midW = Math.max(1, width - notesW - colGap);
       }
+      midW = Math.min(midW, maxBuildW());   // never giant cells (see maxBuildW)
       let lastDescH = 0;
       const fitIn = m => {   // the description spans the info panel and the middle column m wide; the build gets the height left
         let descH = 0;
@@ -32530,6 +32544,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T14:18:55.611Z","fix(bible): a guide with little beside its skill trees no longer blows them up to giant icons (the skill cells are capped on the page and in the PNG)"],
     ["2026-10-17T14:15:36.969Z","fix(bible): a stat the reader adds gets a solid dial like the author's; the + dial always glows, its dashed ring turns gently on hover, and it has no label"],
     ["2026-10-17T14:07:06.703Z","feat(bible): the guide view has a dashed + dial so readers can try a stat the author did not recommend (the skill hover follows, nothing is saved; no reset link); a guide description also uses the width under the notes when they end above the skill trees"],
     ["2026-10-17T13:54:05.118Z","fix(bible): a long guide description shrinks its font before it splits into pages (the PNG shrinks further before it cuts the text and points to the full guide); Cat Grand Casino Arcade range preview plays every spin (3 at rank 1, 5 at rank 2, every 2.7 seconds)"],
