@@ -866,3 +866,8 @@ Seconds from the start of the move (or of the child routine named), read from th
 - **Moon Storm:** 6 storms 0.1 s apart (`:36415`, `i < 6`), then the 12 m blast twice, 0.1 s apart (`:36521`, `j < 2`).
 - **Delta Strike:** the 0.3 / 0.8 / 1.3 s area checks deal no damage; 6 hits every 0.1 s from 2.1 s (`:37902`, `i < 6`) and the finisher at 2.9 s (`:37597`).
 - **Finishing Blow:** 0.3 / 0.6 / 1.1 / 1.4 s at the caster (`:38694`, `:38794`, `:38894`, `:39008`).
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindAreaTarget(pos, 7, 3)`, `hit(1, (int)(0.75 × ATK), KO 1)`, cooldown 1.5 s (`:9102-9125, :9229`).
+- **mountDash** (normal attack while moving faster): projectile, `hit(25, (int)(1.5 × ATK), KO 3)`, cooldown 1.5 s (`:9610, :9680, :9786`).

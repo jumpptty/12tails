@@ -580,3 +580,8 @@ Seconds from the start of the move (or of the child routine named), read from th
 - **Maelstrom:** 4 hits every 0.3 s from 0.7 s (`:32663-32686`).
 - **Megalodon:** suction (purple damage) 4 times 1 s apart (`:34897`), bite at 4.0 s (`:34846`) and again 1.5 s later (`:34692`): 6 hits.
 - **Bowling Whale:** rolls at `moveSpeed 7` from 0.5 s; from 1.0 s a 6 s timer (`:36743`) with damage whenever `Time.time > mDamageUpdate`, then `+0.25 s` (`:36779`): 23 hits at 1.25 … 6.75 s (not 24: the timer comparison is strict).
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 4, 3, 4, 4)` (8 m wide at the mount, 6 m at the far end), `hit(24, ATK, KO 1)`, cooldown 1.5 s (`:8145-8168, :8277`).
+- **mountDash** (normal attack while moving faster): `FindRecTarget(pos + right, fwd, 1.5, 1.5, 8, 4)`, `hit(2, (int)(2.2 × ATK), KO 1)`, cooldown 1.5 s (`:8559-8582, :8691`).

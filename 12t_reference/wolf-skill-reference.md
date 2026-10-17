@@ -911,3 +911,8 @@ Seconds from the start of the move (or of the child routine named), read from th
 
 - **Charge Attack:** waves at 0.5 / 0.6 / 0.7 s, the 2nd and 3rd only with `cTime ≥ 4` / `≥ 6` (`Wolf.cs:19444-19634`).
 - **Blade Song:** steps back 0.4 m, slashes every 0.2 s from 0.9 s, `5 + 2 × sLv` times (`:30273`); Last Blade 0.3 s after the last slash (`:30129`).
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 1, 1, 3, 3)` (2 m wide, 3 m long, 3 m tall), `hit(1, (int)(0.75 × ATK), KO 1)`, cooldown 1.5 s (`PvpMount.cs:5037-5060, :5184`).
+- **mountDash** (normal attack while moving faster): rush at speed 16, then 8; `FindRecTarget(pos − 4 × fwd, fwd, 2, 2, 6, 3)`, `hit(21, (int)(1.5 × ATK), KO 1)`, cooldown 2 s (`:5463, :5696-5719, :5828`).

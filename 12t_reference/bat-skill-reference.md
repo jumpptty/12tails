@@ -545,3 +545,8 @@ Source: [ToT bat simulator dataset](https://talesoftails.net/data/skill-simulato
 | 461 | DowndamageMonter | 95 | 0 | None | Passive |
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): projectile (`PvpMount_bat_nAttack.cs`): `hit(1, (int)(0.5 × ATK), KO 1)` on the first target (`:167, :239`), cooldown 2 s (`PvpMount.cs:16748`).
+- **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6, 3)`, `hit(1, talAdjust(45), KO 1)`, and on a hit `curse` at `clamp(current + 1, 1, 4)` for `Damage.getDebuff(15, cha, target cha)`, cooldown 2 s (`:17067-17112, :17201`).

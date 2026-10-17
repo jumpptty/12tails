@@ -645,3 +645,8 @@ Every size below is in the card's `reach` field with its `file:line`; this list 
 Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
 
 - **Blizzard:** 6 waves around the target, 1 s apart from 0.4 s (`Penguin.cs:34527-34571`).
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): projectile (`PvpMount_penguin_nAttack.cs`): `hit(1, (int)(0.5 × ATK), KO 1)` on the first target, then `ice` at `clamp(current + 1, 1, 4)` for `Damage.getDebuff(3, cha, target cha)` (`:167, :239-257`), cooldown 1 s (`PvpMount.cs:15920`).
+- **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6 × rangeMod, 3 × rangeMod)`, `hit(1, talAdjust(30), KO 1)`, cooldown 1 s (`:16144-16167, :16259`).

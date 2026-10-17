@@ -565,3 +565,8 @@ Seconds from the start of the move (or of the child routine named), read from th
 - **King Kaiser Beam:** backs off 0.4 m (`moveSpeed −2` for 0.2 s), then 5 beams 0.3 s apart from 0.2 s (`KingKaiser.cs:3501-3538`).
 - **War Factory Roller Machine:** one crush at 0.6 s (`Mole.cs:42394`), then `moveSpeed 1` and a crush every 0.2 s while `i < 10` from 1.0 s (`:42597-42643`): 11 hits.
 - **Chopper + Barrel Cannon:** the blast (`:33963`) fires in the same frame as each slash (`:33913`), so 20 hits at 10 times.
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): shell (`PvpMount_mole_nAttack.cs`): explodes on contact, `FindAreaTarget(hit, 4, 4)` and `hit(1, ATK, KO 1)` (`:229-253`), cooldown 1 s (`PvpMount.cs:13148`).
+- **mountDash** (normal attack while moving faster): drops a bomb at its own position (`RPC_rAttack_mole_fire`) that explodes after 1 s: `FindAreaTarget(pos − 0.5 up, 4, 3)`, `hit(1, (int)(1.5 × ATK), KO 1)`, cooldown 0.5 s (`:13463, :13666-13689, :13751`).

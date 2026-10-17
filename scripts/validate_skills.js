@@ -2503,7 +2503,9 @@ let checkedCatPowerTto = 0;
 {
   const fail = (msg) => { console.error(`[CAT POWER TTO ERROR] ${msg}`); errorCount++; };
   const treeA = new Set(["cat_luckyCard","cat_fateDraw","cat_powerShuffle","cat_lifeGamble","cat_skillGamble","cat_luckyDice","cat_doubleDown","cat_powerOne","cat_powerTwo","cat_powerThree","cat_powerSeven","cat_twoPair","cat_copycat","cat_damageRoulette","cat_nineLives","cat_grandCasinoArcade"]);
-  const dmgCats = SKILLS.filter(s => s.class === "Cat" && (s.dmg || s.dmgGroups || s.comboModel));
+  const dmgCats = SKILLS.filter(s => s.class === "Cat" && !s.mount && (s.dmg || s.dmgGroups || s.comboModel));
+  // Mount attacks (user 2026-10-17) hit as the mount character (Type "none"), so Power never applies, on any server.
+  for (const sk of SKILLS.filter(s => s.class === "Cat" && s.mount)) for (const server of ["og", "tto"]) { sandbox._setServer(server); sandbox._depRanks.catPower = 4; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk); if (sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"')) fail(`${sk.id} on ${server}: a mount attack shows the Power toggle`); else checkedCatPowerTto++; }
   const savedPower = sandbox._depRanks.catPower;
   for (const sk of dmgCats) {
     if (!treeA.has(sk.id) && !(sk.servers && sk.servers.tto)) fail(`${sk.id}: non-Class-A Cat damage skill has no TTO server entry, so its TTO button is missing`); else checkedCatPowerTto++;

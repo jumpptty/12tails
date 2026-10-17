@@ -998,3 +998,8 @@ Seconds from the start of the move (or of the child routine named), read from th
 - **Rising Dragons:** pin at 0.3 s (no damage, `:29580`), 8 uppercuts every 0.15 s from 0.6 s (`:30010`, `i < 8`), finisher at 2.1 s (`:29821`).
 - **Heaven Palm:** hits when the clock passes `hitTime` 1.2 → 1.8 → 2.2 → 2.6 s, at the target (`:39821-40054`, `:40077`).
 - **Fuujin Ken:** 20 hits every 0.4 s from 1.0 s (`:41352`, `i < 20`).
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 1, 1, 3, 3)`, `hit(1, ATK, KO 1)`, cooldown 2 s (`:7184-7207, :7331`).
+- **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6, 3)`, `hit(1, ATK, KO 1)`, cooldown 1.5 s (`:7610-7633, :7737`).

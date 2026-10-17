@@ -583,3 +583,8 @@ Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 
 Seconds from the start of the move (or of the child routine named), read from the coroutine waits in order; every hit uses the box / circle already documented above. The Bible reach preview replays exactly these times.
 
 - **Calamity Hammer lava:** `OnCalamityHammer` fires `RPC_calamityHammer_fire` at the target 10 times, 1.5 s apart (`Bison.cs:32564` `i < 10`, `Yield 1.5`): with the first lava at 2.4 s, 2.4 … 15.9 s.
+
+### Riding mounts: mountAttack and mountDash (G. Marshal / G. Champion mount, verified 2026-10-17)
+Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
+- **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 3, 3, 3, 3)`, `hit(2, ATK, KO 1)`, cooldown 1.5 s (`:6198-6221, :6342`).
+- **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 8, 3)`, `hit(22, (int)(1.6 × ATK), KO 1)`, cooldown 1.5 s (`:6707-6730, :6839`).
