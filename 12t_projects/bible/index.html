@@ -1952,6 +1952,7 @@
   .cg-title-icon{flex:none;width:32px;height:32px;object-fit:contain}
   .cg-title-server{width:26px;height:26px}
   .cg-title-lv{font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap}
+  .cg-unspent{font-size:12px;font-weight:600;line-height:1;padding:4px 8px;border-radius:999px;color:var(--pro);border:1px solid currentColor;background:color-mix(in srgb, var(--pro) 12%, transparent);white-space:nowrap;cursor:help}
   .cg-title-text{display:block;overflow-wrap:anywhere}
   .cg-byline-author{color:var(--gold);font-weight:600}
   .cg-page[data-mode="reader"] .cg-prose{font-size:17px;line-height:1.85;margin:0}
@@ -29043,6 +29044,15 @@ function skillSimAutoLearn(cells, treeCount, learned, lv, target){
 }
 // Marker for an unlearned skill (user 2026-10-12). Basic / A / B: "green" = the click reaches it by levelling only its own row (the ranks before it),
 // "red" = the click works but other rows are levelled too (extra skills for its points). Class C stays single-click: "yellow" = it can be learned right now, alone. "" = the click does nothing.
+// A guide build's unspent points per pool (user 2026-10-17): the reader and the PNG show the total as a small badge ("↑ เหลือ N แต้ม").
+function classGuideUnspent(b){
+  const cells = skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
+  let used = 0, usedC = 0, usedEx = 0;
+  for (const id of b.learned){ const c = cells[id]; if (!c) continue; if (c.ex) usedEx++; else if (id < 400) used++; else usedC++; }
+  const normal = Math.max(skillSimPoolMax(b.level) - used, 0), c = Math.max(skillSimPoolMaxC(b.level) - usedC, 0), ex = b.server === "tot" ? Math.max(skillSimPoolMaxEx(b.level) - usedEx, 0) : 0;
+  const detail = [["แต้มปกติ", normal], ["แต้มสาย C", c], ["แต้ม EX", ex]].filter(([, n]) => n).map(([k, n]) => k + " " + n).join(" · ");
+  return { normal, c, ex, total: normal + c + ex, detail };
+}
 function skillSimMarker(cells, treeCount, learned, lv, target){
   const click = skillSimAutoLearn(cells, treeCount, learned, lv, target);
   if (!click) return "";
@@ -29628,28 +29638,58 @@ function classGuideReadEditor(node){
   return text.replace(/\u00a0/g, " ");
 }
 function classGuideMountEditor(backing, editor, notify){
-  let accepted = "", composing = false;
-  const set = value => { backing.value = value; editor.innerHTML = classGuideRichText(value); accepted = editor.innerHTML; };
+  let accepted = "", composing = false, applying = false;
+  // Own undo / redo (user 2026-10-17): re-rendering after a bold wipes the browser's undo, so the box keeps its history. Bold is one step; typing is
+  // grouped into bursts (a new step after 0.8 s idle). Ctrl+Z / Cmd+Z undo, Ctrl+Y / Ctrl+Shift+Z redo.
+  const undo = [], redo = []; let last = "", typing = false, typingTimer = 0;
+  const changed = () => backing.dispatchEvent(new Event("input", { bubbles: true }));
+  const render = value => { backing.value = value; editor.innerHTML = classGuideRichText(value); accepted = editor.innerHTML; last = value; };
+  const set = value => { render(value || ""); undo.length = 0; redo.length = 0; typing = false; };   // a new text (another note, a loaded draft) starts a new history
+  const remember = prev => { undo.push(prev); if (undo.length > 200) undo.shift(); redo.length = 0; };
   const sync = () => {
     const value = classGuideReadEditor(editor);
     if (value.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
-    backing.value = value; accepted = editor.innerHTML; backing.dispatchEvent(new Event("input", { bubbles: true })); return true;
+    if (value !== last){ if (!typing) remember(last); typing = true; clearTimeout(typingTimer); typingTimer = setTimeout(() => { typing = false; }, 800); }
+    backing.value = value; accepted = editor.innerHTML; last = value; changed(); return true;
+  };
+  const caretEnd = () => { const r = document.createRange(); r.selectNodeContents(editor); r.collapse(false); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); };
+  const step = (from, to) => { if (!from.length) return; to.push(last); render(from.pop()); typing = false; changed(); editor.focus(); caretEnd(); };
+  // The selection, whichever way it was made (left to right, right to left, or dragged past the edge of the box), cut to the box (user 2026-10-17).
+  const boxRange = () => {
+    const sel = window.getSelection && window.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
+    const r = sel.getRangeAt(0).cloneRange();   // a Range is always start-before-end, whatever direction the selection was made in
+    if (!r.intersectsNode(editor)) return null;
+    if (!editor.contains(r.startContainer)) r.setStart(editor, 0);
+    if (!editor.contains(r.endContainer)) r.setEnd(editor, editor.childNodes.length);
+    return r.collapsed ? null : r;
   };
   // Bold like a word processor (user 2026-10-17): select text, then Ctrl+B / Cmd+B turns it bold gold (or back if it is already bold); the bold part
   // gets a space before and after it. With nothing selected the keys do nothing.
   const bold = () => {
-    editor.focus(); document.execCommand("bold", false);
-    const value = classGuideReadEditor(editor), spaced = classGuideSpaceBold(value);
-    if (spaced !== value && spaced.length <= backing.maxLength){ set(spaced); backing.dispatchEvent(new Event("input", { bubbles: true })); } else sync();
+    const r = boxRange(); if (!r) return false;
+    const before = last; typing = false;
+    editor.focus(); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    applying = true; try { document.execCommand("bold", false); } finally { applying = false; }
+    const value = classGuideReadEditor(editor), spaced = classGuideSpaceBold(value), next = spaced.length <= backing.maxLength ? spaced : value;
+    if (next.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
+    if (next === before) return true;
+    remember(before);
+    if (next !== value) render(next); else { backing.value = next; accepted = editor.innerHTML; last = next; }
+    changed(); return true;
   };
-  editor.addEventListener("keydown", e => {
-    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || (e.key || "").toLowerCase() !== "b" && e.code !== "KeyB") return;
-    e.preventDefault();   // never the browser's own bold toggle
-    const sel = window.getSelection && window.getSelection();
-    if (!sel || sel.isCollapsed || !sel.rangeCount || !editor.contains(sel.anchorNode) || !editor.contains(sel.focusNode)) return;
-    bold();
-  });
-  editor.addEventListener("input", e => { if (!composing && !e.isComposing) sync(); });
+  // Keys at the page level (capture), so a selection that ends outside the box still counts; the page's own Ctrl+Z handlers skip editable targets.
+  document.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || composing || e.isComposing || !editor.offsetParent) return;
+    const k = (e.key || "").toLowerCase(), isB = (k === "b" || e.code === "KeyB") && !e.shiftKey, isZ = k === "z" || e.code === "KeyZ", isY = (k === "y" || e.code === "KeyY") && !e.shiftKey;
+    if (!isB && !isZ && !isY) return;
+    const focused = editor.contains(e.target) || editor.contains(document.activeElement);
+    if (isB){ if (!focused && !boxRange()) return; e.preventDefault(); e.stopImmediatePropagation(); bold(); return; }   // never the browser's own bold toggle
+    if (!focused) return;   // undo / redo only while working in this box
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (isZ && !e.shiftKey) step(undo, redo); else step(redo, undo);
+  }, true);
+  editor.addEventListener("input", e => { if (!composing && !e.isComposing && !applying) sync(); });
   editor.addEventListener("compositionstart", () => { composing = true; });
   editor.addEventListener("compositionend", () => { composing = false; sync(); });
   const insertPlain = e => {
@@ -29920,6 +29960,16 @@ async function classGuideRenderImage(guide, simRoot){
   if (coverKeys.length){ CLASS_GUIDE_COVER_SPOTS[coverKeys.length].forEach(([cx, cy, d], i) => drawRing(icons[coverKeys[i]], lx + (cx + d / 2) * rowH, y + (cy + d / 2) * rowH, d * rowH)); tx += rowH + 14; }
   if (serverIcon){ ctx.drawImage(serverIcon, tx, y + (rowH - 38) / 2, 38, 38); tx += 48; }
   ctx.font = font(600, 24); ctx.fillStyle = muted; ctx.fillText("Lv." + b.level, tx, y + rowH / 2 + 9);
+  const unspent = classGuideUnspent(b);
+  if (unspent.total){
+    const bx = tx + ctx.measureText("Lv." + b.level).width + 14, label = "↑ เหลือ " + unspent.total + " แต้ม", pro = v("--pro") || "#5fae5a";
+    ctx.font = font(600, 17); const bw = ctx.measureText(label).width + 22, bh = 30, by = y + (rowH - bh) / 2;
+    if (bx + bw <= lx + lw){
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, bh / 2); else ctx.rect(bx, by, bw, bh);
+      ctx.fillStyle = alpha(pro, 0.12); ctx.fill(); ctx.strokeStyle = pro; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = pro; ctx.fillText(label, bx + 11, by + bh / 2 + 6);
+    }
+  }
   y += rowH + 10;
   // a long title steps down in size (46 -> 40 -> 34) before it is cut, up to 3 lines at the smallest
   let titleSize = 46, titleLines;
@@ -30041,6 +30091,9 @@ async function classGuideRenderImage(guide, simRoot){
   ctx.drawImage(infoLayer, 0, 0, infoW * P.scale, infoShown * P.scale, P.margin, rectTop, infoW, infoShown);
   // ---- trees ----
   const learned = new Set(b.learned), noted = new Set(noteIds);
+  // Unspent points (user 2026-10-17): the simulator's ↑ marker (green / red / yellow) on every skill they can still buy, read as the author's flex points.
+  const simTrees = SKILL_SIM[b.classKey], simCells = skillSimCells(simTrees, SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null);
+  const markColor = { green: v("--pro") || "#5fae5a", red: v("--seal") || "#c0453a", yellow: gold };
   for (const t of plan.trees){
     surface(t.x, t.y, t.w, t.h, 6, true);
     ctx.fillStyle = gold; ctx.font = font(700, 22); ctx.fillText(t.name, t.x + P.pad, t.y + P.pad + 24);
@@ -30057,6 +30110,12 @@ async function classGuideRenderImage(guide, simRoot){
           if (learned.has(c.id)){ ctx.save(); ctx.shadowColor = "rgba(201,162,39,.75)"; ctx.shadowBlur = c.size * 0.14; ctx.drawImage(img, c.x, c.y, c.size, c.size); ctx.restore(); }
           else { const g = grays[c.icon] || (grays[c.icon] = classGuideImageGray(img)); ctx.drawImage(g, c.x, c.y, c.size, c.size); }
         }
+      }
+      const mark = c.placeholder || learned.has(c.id) || !simCells[c.id] ? "" : skillSimMarker(simCells, simTrees.length, learned, b.level, c.id);
+      if (mark){
+        const r = c.size * 0.13, mx = c.x + r + 1, my = c.y + c.size - r - 1;
+        ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.fillStyle = markColor[mark]; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = "#000"; ctx.font = font(800, r * 1.7); ctx.textAlign = "center"; ctx.fillText("↑", mx, my + r * 0.6); ctx.textAlign = "left";
       }
       if (noted.has(c.id)){
         const r = c.size * 0.26, sx = c.x + c.size - 2, sy = c.y + 4;
@@ -30523,7 +30582,7 @@ function mountClassGuide(root){
       slots.appendChild(slot);
     }
     const n = list.length;
-    el("coverHint").textContent = n ? "เลือกแล้ว " + n + " จาก 3 สกิล" : "คลิกสกิลในตารางด้านขวา";
+    el("coverHint").textContent = n ? "" : "คลิกสกิลในตารางด้านขวา";
     el("coverRow").classList.toggle("is-missing", !n && coverMissing);
     button("coverClear").hidden = !n;
   }
@@ -30551,6 +30610,8 @@ function mountClassGuide(root){
       if (!src) continue; const img = document.createElement("img"); img.src = src; img.alt = alt; img.title = alt; img.className = "cg-title-icon " + cls; titleMeta.appendChild(img);
     }
     const titleLv = document.createElement("span"); titleLv.className = "cg-title-lv"; titleLv.textContent = "Lv." + current.build.level; titleMeta.appendChild(titleLv);
+    const unspent = classGuideUnspent(current.build);
+    if (unspent.total){ const badge = document.createElement("span"); badge.className = "cg-unspent"; badge.textContent = "↑ เหลือ " + unspent.total + " แต้ม"; badge.title = unspent.detail + " (แต้มยืดหยุ่น อัปสกิลที่มีลูกศรได้ตามชอบ)"; titleMeta.appendChild(badge); }
     const titleText = document.createElement("span"); titleText.className = "cg-title-text"; titleText.textContent = current.title || "ตัวอย่างไกด์";
     el("guideTitle").append(titleMeta, titleText);
     el("guideByline").textContent = "";
@@ -31015,7 +31076,7 @@ function mountSkillSimulator(root, options = {}){
     for (const id in cells){
       const c = cells[id], b = cellEls[id];
       const learned = set.has(+id);
-      const mark = learned || interaction !== "build" ? "" : skillSimMarker(cells, trees.length, set, lv, +id), can = !!mark;
+      const mark = learned || interaction === "annotate" ? "" : skillSimMarker(cells, trees.length, set, lv, +id), can = !!mark;   // read mode too: a guide with unspent points shows what they can still buy (user 2026-10-17)
       const unlearnMark = interaction === "build" ? skillSimUnlearnMarker(cells, trees.length, set, lv, +id) : "";
       b.classList.toggle("learned-green", unlearnMark === "green");
       b.classList.toggle("learned-red", unlearnMark === "red");
@@ -31834,6 +31895,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T02:44:45.621Z","fix(bible): guide editor Ctrl+B works on a selection made in any direction (even dragged past the box), and Ctrl+Z / Ctrl+Y undo and redo bolding and typing; a guide with unspent skill points shows the simulator's ↑ markers and a เหลือ N แต้ม badge in the preview and the PNG, and the cover picker drops its count"],
     ["2026-10-17T02:37:54.000Z","feat(bible): class guide #6, a Chameleon build on TTO (ก่าสายยิง ระเบิดพิษ ซีโร่ช็อต by deawydew)"],
     ["2026-10-17T02:32:32.497Z","feat(bible): class guide #5, a Panda build on TTO (ด้า Sage Solo ทุกดัน by NNK)"],
     ["2026-10-17T02:17:07.692Z","feat(bible): the guide editor bolds like a word processor: select text and press Ctrl+B; the highlight button is gone; server and class are picked in step 1, so the gear step lists the right class's items"],
