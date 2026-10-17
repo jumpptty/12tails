@@ -1835,6 +1835,10 @@
   .cg-guide img{position:absolute;left:8px;top:0;width:100px;height:100%;object-fit:contain}
   .cg-guide>strong{font-family:inherit;display:block;font-size:19px;color:var(--gold);margin-bottom:6px}
   .cg-guide span{font-size:12px;color:var(--muted)}
+  .cg-views{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .cg-views[hidden]{display:none}
+  .cg-views svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .cg-views b{font-weight:600}
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
   .cg-prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
@@ -30709,6 +30713,7 @@ function mountClassGuide(root){
   }
   function openGuide(guide, preview = false, id = null){
     current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
+    if (currentId){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
     if (currentId) history.replaceState(null, "", "#class-guide/" + currentId);   // the address bar now is the link to share
     setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
     button("useAsBase").hidden = preview;
@@ -30731,6 +30736,7 @@ function mountClassGuide(root){
     el("guideByline").textContent = "";
     const authorEl = document.createElement("span"); authorEl.className = "cg-byline-author"; authorEl.textContent = current.author || "ยังไม่ระบุผู้เขียน";
     el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
+    if (currentId) el("guideByline").append(" · ", viewBadge(currentId));
     el("guideDescription").innerHTML = classGuideRichText(current.description); button("returnAuthor").hidden = !preview;   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats); el("guideStats").hidden = !current.stats;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = current.stats ? { ...current.stats } : null;
@@ -30758,12 +30764,34 @@ function mountClassGuide(root){
   }
   syncFilters();
   // A guide's card in ไกด์จากผู้เล่น (cover icons, title, class · server · author · date); the preview shows the same card, not clickable (user 2026-10-17).
-  function guideCard(guide, tag = "button"){
+  // Live view counts (user 2026-10-17). The tool's own page view stays /bible/#class-guide; each opened guide adds a hit for its own path, and the
+  // count comes from GoatCounter's public counter JSON, once per guide per page load. No count (localhost, the counter setting off, offline):
+  // the eye is simply not shown.
+  const GUIDE_VIEW_SITE = "https://jumpptty.goatcounter.com", guideViewPath = id => "/bible/#class-guide/" + id, guideViewCache = {};
+  const countGuideView = (id, title) => {
+    const send = () => { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: guideViewPath(id), title: title || "", event: false }); };
+    if (window.goatcounter && window.goatcounter.count) send(); else window.addEventListener("load", send, { once: true });   // the script loads async
+  };
+  const guideViews = id => guideViewCache[id] || (guideViewCache[id] = fetch(GUIDE_VIEW_SITE + "/counter/" + encodeURIComponent(guideViewPath(id)) + ".json")
+    .then(r => r.status === 404 ? { count: "0" } : r.ok ? r.json() : null)
+    .then(j => j && j.count != null ? Number(String(j.count).replace(/[^\d]/g, "")) || 0 : null)
+    .catch(() => null));
+  // Shown as ESTIMATED READERS (user 2026-10-17): a guide is often read by a whole team of 5-7 around one screen, so the unique-visitor count is
+  // multiplied by a fixed per-guide factor between 5.0 and 7.0 (about 6 on average; from the guide id, so it never changes between loads). 0 stays 0.
+  const estimatedReaders = (id, visitors) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; return Math.round(visitors * (5 + (h % 201) / 100)); };
+  const viewBadge = id => {
+    const v = document.createElement("span"); v.className = "cg-views"; v.hidden = true; v.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19.5c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><circle cx="16.8" cy="8.6" r="2.6"/><path d="M16.4 13.7c2.7.2 4.6 2.1 5.1 5.3"/></svg><b></b>';
+    guideViews(id).then(n => { if (n == null) return; const r = estimatedReaders(id, n); v.querySelector("b").textContent = r.toLocaleString("th-TH"); v.setAttribute("aria-label", r.toLocaleString("th-TH") + " ผู้อ่าน"); v.hidden = false; });   // a people icon says readers; no long tooltip (user 2026-10-17)
+    return v;
+  };
+  function guideCard(guide, tag = "button", id = null){
     const b = document.createElement(tag); if (tag === "button") b.type = "button"; b.className = "cg-guide";
     const portrait = classGuideCoverEl(guide, 88) || document.createElement("span");   // the author's cover icons (required; the class portrait is no longer used, user 2026-10-16)
     const title = document.createElement("strong"); title.textContent = guide.title || "ตัวอย่างไกด์";
     const byline = document.createElement("span"); byline.textContent = [SKILL_SIM_NAMES[guide.build.classKey], SKILL_SIM_SERVERS[guide.build.server].name, guide.author || "ยังไม่ระบุผู้เขียน", classGuideDateText(guide.date)].join(" · ");
-    b.append(portrait, title, byline); return b;
+    b.append(portrait, title, byline);
+    if (id) byline.append(" · ", viewBadge(id));
+    return b;
   }
   // Date sort (user 2026-10-17): newest first by default, the button flips it; same-day guides keep their running number order. Remembered per browser.
   let sortNewest = true; try { sortNewest = localStorage.getItem("12t-bible-guide-sort") !== "oldest"; } catch (e) {}
@@ -30783,7 +30811,7 @@ function mountClassGuide(root){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
       totalCount++;
       if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey)) continue;
-      const b = guideCard(guide); b.addEventListener("click", () => openGuide(guide, false, classGuideId(raw, gi))); cards.push(b); validCount++;
+      const gid = classGuideId(raw, gi), b = guideCard(guide, "button", gid); b.addEventListener("click", () => openGuide(guide, false, gid)); cards.push(b); validCount++;
     }
     let perPage = cards.length, cols = 1;
     if (cards.length && list.offsetParent){
@@ -32091,6 +32119,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T08:07:44.817Z","feat(bible): each class guide counts its own views and shows its estimated readers live with a readers icon on its card and in its byline"],
     ["2026-10-17T05:47:17.805Z","fix(bible): Sheep PRESET colours 2-5 repainted like a colouring book: hair, horns and eyes filled inside their black outlines in the game colours, nothing spills onto her face"],
     ["2026-10-17T04:09:09.726Z","feat(bible): the Skill Simulator takes the TailsTopia look: each tree's name, a rule and its learned/total above a rounded ringed panel, chunkier rank bars, and big gold point counts; the guide preview and the PNG export wear the same look; tree panels match heights only when two sit side by side; every class guide container wears a gilded frame, notes read as a timeline, and noted skills carry numbered pins instead of stars; ไกด์จากผู้เล่น filters by server and class icons in one click, and its buttons follow the server look; the ToT wallpaper is dimmer; every --panel box across the hub follows the server look (cards see-through or textured, menus and inputs stay solid); the guide gallery never scrolls even when fonts load late, and its tabs sit in the filter row"],
     ["2026-10-17T03:56:24.974Z","feat(bible): ไกด์จากผู้เล่น no longer scrolls: the guides that fit the window make a page, with page buttons for the rest; class guide #15, a Monkey build on TTO (ลิงไฟ PvE by ChilLs)"],
