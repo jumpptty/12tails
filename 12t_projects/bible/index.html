@@ -1836,15 +1836,17 @@
   .cg-stat-add-wrap{position:relative;flex:none}
   .cg-stat-add-wrap[hidden]{display:none}
   .cg-stat-add{width:66px;display:grid;justify-items:center;gap:6px;padding:0;border:0;background:none;color:var(--gold);font:inherit;cursor:pointer}
-  .cg-stat-add b{font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--muted)}
-  .cg-stat-add-dial{width:62px;height:62px;box-sizing:border-box;display:grid;place-items:center;border:2px dashed color-mix(in srgb,var(--gold) 55%,transparent);border-radius:50%;font-size:28px;font-weight:300;line-height:1;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
-  .cg-stat-add:hover .cg-stat-add-dial,.cg-stat-add:focus-visible .cg-stat-add-dial,.cg-stat-add[aria-expanded="true"] .cg-stat-add-dial{border-color:var(--gold);box-shadow:0 0 14px rgba(212,175,55,.45);transform:scale(1.04)}
+  .cg-stat-add-dial{position:relative;width:62px;height:62px;box-sizing:border-box;display:grid;place-items:center;border-radius:50%;font-size:28px;font-weight:300;line-height:1;box-shadow:0 0 14px rgba(212,175,55,.4),inset 0 0 12px rgba(212,175,55,.12);transition:box-shadow .25s ease,transform .25s ease}   /* always glowing (user 2026-10-17) */
+  .cg-stat-add-dial::before{content:"";position:absolute;inset:0;border:2px dashed var(--gold);border-radius:50%}   /* the dashed ring on its own layer, so only the ring turns on hover */
+  .cg-stat-add:hover .cg-stat-add-dial,.cg-stat-add:focus-visible .cg-stat-add-dial,.cg-stat-add[aria-expanded="true"] .cg-stat-add-dial{box-shadow:0 0 22px rgba(212,175,55,.65),inset 0 0 14px rgba(212,175,55,.2);transform:scale(1.06)}
+  .cg-stat-add:hover .cg-stat-add-dial::before,.cg-stat-add:focus-visible .cg-stat-add-dial::before,.cg-stat-add[aria-expanded="true"] .cg-stat-add-dial::before{animation:cg-dial-turn 8s linear infinite}
+  @keyframes cg-dial-turn{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.cg-stat-add .cg-stat-add-dial::before{animation:none !important}.cg-stat-add .cg-stat-add-dial{transition:none}}
   .cg-stat-add:focus-visible{outline:none}
   .cg-stat-pick{position:absolute;z-index:30;top:calc(100% + 8px);left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:max-content;max-width:230px;padding:10px;border:1px solid rgba(201,162,39,.55);border-radius:10px;background:#15100b;box-shadow:0 14px 30px -10px #000}
   .cg-stat-pick[hidden]{display:none}
   .cg-stat-pick-opt{min-width:52px;padding:5px 10px;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:999px;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);font:inherit;font-size:12px;font-weight:700;letter-spacing:.12em;cursor:pointer}
   .cg-stat-pick-opt:hover,.cg-stat-pick-opt:focus-visible{background:color-mix(in srgb,var(--c) 26%,transparent);border-color:var(--c);outline:none}
-  .cg-stat-tile.is-own .cg-stat-val{border-style:dashed}
   .cg-stat-tile.is-own .cg-stat-approx{display:none}
   .cg-page .cg-stat-tile.is-own input.cg-stat-try::placeholder{color:var(--c);opacity:.5}
   @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -29568,7 +29570,7 @@ const CLASS_GUIDES = [
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}},
   {"id":20,"cover":[304,364,443],"format":"12t-class-guide","version":1,"title":"ตุ่นป้อมแท้","author":"Kaneki","date":"2026-09-24","description":"","build":{"server":"tto","classKey":"mole","level":95,"learned":[101,102,103,111,112,113,131,132,141,142,143,144,201,202,203,204,211,212,213,214,231,232,233,234,301,302,303,304,311,312,321,322,323,324,331,332,333,334,341,342,343,351,352,353,354,361,362,363,364,403,404,412,423,424,431,433,441,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:14:06.327Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T14:17:05.323Z","counts":{"1":5,"2":7,"3":2,"4":2,"5":4,"6":4,"7":0,"8":1,"9":2,"10":2,"11":3,"12":2,"13":0,"14":2,"15":5,"16":0,"17":2,"18":3,"19":0,"20":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30057,7 +30059,7 @@ function classGuideStatTile(s, value, own){
   return '<label class="cg-stat-tile' + (own ? ' is-own is-tried' : '') + '" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><span class="cg-stat-approx" aria-hidden="true">~</span><input type="number" min="0" max="512" step="1" inputmode="numeric" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + (value == null ? "" : value) + '"' + (own ? ' placeholder="?"' : '') + ' aria-label="' + s.label + (own ? ' ที่คุณลองใส่เอง' : ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)') + '"></span></label>';
 }
 // The + dial (user 2026-10-17): the reader may add a stat the author did not recommend; it opens a picker of the stats not shown yet.
-const CLASS_GUIDE_STAT_ADD = '<span class="cg-stat-add-wrap"><button type="button" class="cg-stat-add" data-cg-act="addStat" aria-haspopup="true" aria-expanded="false" aria-label="ลองเพิ่มสเตตัสของคุณเอง"><span class="cg-stat-add-dial" aria-hidden="true">+</span><b>เพิ่ม</b></button><span class="cg-stat-pick" data-cg-role="statPick" hidden></span></span>';
+const CLASS_GUIDE_STAT_ADD = '<span class="cg-stat-add-wrap"><button type="button" class="cg-stat-add" data-cg-act="addStat" aria-haspopup="true" aria-expanded="false" aria-label="ลองเพิ่มสเตตัสของคุณเอง"><span class="cg-stat-add-dial" aria-hidden="true">+</span></button><span class="cg-stat-pick" data-cg-role="statPick" hidden></span></span>';
 function classGuideStatsHtml(stats){
   const shown = CLASS_GUIDE_STATS.filter(s => stats && s.key in stats);
   return shown.map(s => classGuideStatTile(s, stats[s.key], false)).join("") + (shown.length < CLASS_GUIDE_STATS.length ? CLASS_GUIDE_STAT_ADD : "");   // no reset link (user 2026-10-17): a refresh brings the author's values back
@@ -32528,6 +32530,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T14:15:36.969Z","fix(bible): a stat the reader adds gets a solid dial like the author's; the + dial always glows, its dashed ring turns gently on hover, and it has no label"],
     ["2026-10-17T14:07:06.703Z","feat(bible): the guide view has a dashed + dial so readers can try a stat the author did not recommend (the skill hover follows, nothing is saved; no reset link); a guide description also uses the width under the notes when they end above the skill trees"],
     ["2026-10-17T13:54:05.118Z","fix(bible): a long guide description shrinks its font before it splits into pages (the PNG shrinks further before it cuts the text and points to the full guide); Cat Grand Casino Arcade range preview plays every spin (3 at rank 1, 5 at rank 2, every 2.7 seconds)"],
     ["2026-10-17T13:39:35.012Z","fix(bible): a little more space between author notes in the guide view and the PNG"],
