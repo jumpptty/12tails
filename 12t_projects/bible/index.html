@@ -23,7 +23,7 @@
       // the guide reader's side panels: info, notes column, description (user 2026-10-16: solid black boxes beside the see-through ToT trees)
       ".cg-page[data-mode=\"reader\"] .cg-reader", ".cg-page[data-mode=\"reader\"] > .cg-note-chips", ".cg-page[data-mode=\"reader\"] > .cg-prose",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".svc-item", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".svc-item", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
     // clickable tiles whose own hover fill must keep winning
     tile: ["li:not(.entry-svc):not(.entry-bug):not(.entry-chm):not(.entry-wide):not(.entry-hero-side) > .entry"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
@@ -1900,10 +1900,14 @@
   .cg-send{display:grid;gap:16px;align-content:start}
   .cg-send-preview{padding:16px 18px 18px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
   .cg-send-h{margin:0 0 12px;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--gold)}
-  .cg-send-previews{display:grid;grid-template-columns:240px minmax(0,640px);justify-content:center;gap:24px;align-items:center}   /* the pair centred in the panel, the card centred against the view (user 2026-10-17) */
+  .cg-send-previews{display:grid;grid-template-columns:minmax(0,720px);justify-content:center}   /* the full guide view alone, centred (the card moved to step 5, user 2026-10-17) */   /* the pair centred in the panel, the card centred against the view (user 2026-10-17) */
   .cg-send-previews figure{margin:0;display:grid;gap:6px;align-content:start}
   .cg-send-previews figcaption{font-size:12px;color:var(--muted);text-align:center}
-  .cg-send .cg-send-card{width:auto;margin:0}
+  .cg-cover-card{display:grid;justify-items:center;gap:6px;padding:16px 18px 20px;border:1px solid var(--line);border-radius:6px;background:var(--panel);text-align:center}
+  .cg-cover-card .cg-send-h{margin:0}
+  .cg-cover-card-sub{margin:0 0 6px;font-size:12.5px;color:var(--muted)}
+  .cg-cover-card-host{width:min(260px,100%);margin:0}
+  .cg-cover-card-host:empty::before{content:"เลือกไอคอนหน้าปกเพื่อดูการ์ด";display:block;padding:40px 0;color:var(--muted);font-size:13px}
   .cg-send-thumb{position:relative;width:100%;aspect-ratio:16 / 9;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:3px;background:#140f0b;cursor:zoom-in;overflow:hidden;box-shadow:0 10px 22px -12px #000;transition:border-color .15s,transform .15s}
   .cg-send-thumb img{display:block;width:100%;height:100%;object-fit:contain}
   .cg-send-thumb img:not([src]),.cg-send-thumb img[src=""]{visibility:hidden}
@@ -1922,7 +1926,7 @@
   .cg-send-txt h3{margin:2px 0 4px;font-family:inherit;font-size:17px;color:var(--gold)}
   .cg-send-txt p{margin:0;font-size:13.5px;line-height:1.6;color:var(--muted)}
   .cg-send-opt .cg-send-copy{grid-column:1 / -1;width:100%;min-height:46px;font-size:15px;margin:0}
-  @media(max-width:760px){.cg-send-previews,.cg-send-opts{grid-template-columns:minmax(0,1fr)}.cg-send .cg-send-card{justify-self:center;width:min(240px,100%)}}
+  @media(max-width:760px){.cg-send-previews,.cg-send-opts{grid-template-columns:minmax(0,1fr)}}
   .cg-full-view{width:min(96vw,1700px);max-height:94vh;box-sizing:border-box;margin:auto;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:4px;background:#0b0907;overflow:auto}
   .cg-full-view::backdrop{background:rgba(0,0,0,.78)}
   .cg-full-view img{display:block;width:100%;height:auto}
@@ -11469,11 +11473,16 @@ function reachBadgeText(parts){
 }
 // Where a part's origin sits: z0 along the facing (+6 m for a target-anchored part), y0 up. A `tube` is a moving collider: its axis is at chest height (1 m) unless y0 says otherwise.
 function reachOff(p){ return [p.x0 || 0, p.y0 !== undefined ? p.y0 : (p.shape === "tube" ? 1 : 0), (p.anchor === "target" ? 6 : 0) + (p.z0 || 0)]; }
+// yaw turns the part about the caster (Rabbit Four Shot fires front / back / left / right; z0 and steps turn with it); the sideways offset x0 is added after the turn,
+// because the game spawns a side bolt at firePos + i x right in the caster's frame and only then turns it (Bat mount attack, PvpMount.cs:4355-4377).
+function reachTurn(p, off, x, y, z){
+  const yc = Math.cos((p.yaw || 0) * Math.PI / 180), ys = Math.sin((p.yaw || 0) * Math.PI / 180), Z = z + off[2];
+  return [x * yc + Z * ys + off[0], y + off[1], -x * ys + Z * yc];
+}
 function reachMesh(p){
   const off = reachOff(p);   // y0: the game moves the Find* position up / down before taking its vertical band (Charge Attack -2, Mass Resurrection -4)
   const verts = [], edges = [], faces = [];
-  const yc = Math.cos((p.yaw || 0) * Math.PI / 180), ys = Math.sin((p.yaw || 0) * Math.PI / 180);   // yaw: the whole part turned about the caster (Rabbit Four Shot fires front / back / left / right)
-  const add = (x, y, z) => { const X = x + off[0], Z = z + off[2]; return verts.push([X * yc + Z * ys, y + off[1], -X * ys + Z * yc]) - 1; };
+  const add = (x, y, z) => verts.push(reachTurn(p, off, x, y, z)) - 1;
   // Find* checks use the vertical band [pos.y - 0.5 H, pos.y + H] (Damage.cs:1108, :1567); an unlimited height is drawn as a tall column.
   const band = (h) => p.yBand ? p.yBand : typeof h === "number" ? [-0.5 * h, h] : [-3, 6];   // yBand [lo, hi] = the exact vertical extent of a trigger collider (a prefab BoxCollider), not a Find* band
   if (p.shape === "box"){
@@ -11551,12 +11560,12 @@ function reachMesh(p){
 // Each entry: {a, b, text, up}; `opts` lists alternative edges for the same measurement and the drawer picks the one on the outside of the screen.
 function reachDims(p){
   const off = reachOff(p), f1 = (n) => +(+n).toFixed(1);
-  const V = (x, y, z) => [x + off[0], y + off[1], z + off[2]];
+  const V = (x, y, z) => reachTurn(p, off, x, y, z);   // the pills follow the part's yaw (they drew an extra un-turned line on the Bat mount's side bolts)
   const hi = typeof p.h === "number" ? p.h : 6, out = [];
   // the game's vertical band is [anchor - 0.5 H, anchor + H] (Damage.cs:1108, :1567), the anchor lifted by y0: one pill for the part above the ground and one for the buried part (user 2026-10-14)
   const heightPills = (xzs) => {
     if (typeof p.h !== "number"){ out.push({ text: "∞", opts: xzs.map(([x, z]) => [V(x, 0, z), V(x, 6, z)]), pick: "right" }); return; }
-    const y0 = p.y0 || 0, wLo = p.yBand ? p.yBand[0] : y0 - 0.5 * p.h, wHi = p.yBand ? p.yBand[1] : y0 + p.h, W = (x, y, z) => [x + off[0], y, z + off[2]], from = Math.max(wLo, 0), to = Math.min(wHi, 0);
+    const y0 = p.y0 || 0, wLo = p.yBand ? p.yBand[0] : y0 - 0.5 * p.h, wHi = p.yBand ? p.yBand[1] : y0 + p.h, W = (x, y, z) => { const v = reachTurn(p, off, x, 0, z); v[1] = y; return v; }, from = Math.max(wLo, 0), to = Math.min(wHi, 0);
     if (wHi > 0) out.push({ text: "เหนือพื้น " + f1(wHi - from) + "m", opts: xzs.map(([x, z]) => [W(x, from, z), W(x, wHi, z)]), pick: "right" });
     if (wLo < 0) out.push({ text: "ใต้พื้น " + f1(to - wLo) + "m", opts: xzs.map(([x, z]) => [W(x, wLo, z), W(x, to, z)]), pick: "right" });
   };
@@ -29473,7 +29482,7 @@ const CLASS_GUIDES = [
   {"id":14,"cover":[354,443,444],"format":"12t-class-guide","version":1,"title":"ต่ายลูกซอง","author":"ตุ่นเพื่อ gattling ต่าย","date":"2026-10-10","description":"ต้องใช้ของกับ Stat มากหน่อยแต่พอใด้ **ยาเลือด C** ก่อแทบไม่ต้องรอคนเพื่อไปวีงลงมาโอแล้ว\nสามารถปรับปุรงใด้แต่สายนี้จะต้อง **อัพเบสีกแบบนี้เพื่อให้ลุกชองยีงเข้า** \nกับต้องมี **New Order** จะได้เรียก **ด้า**  **/Kaiser** มาช่วยตีบอส\nถ้าไม่กะจะยีงไกลเลยก่อเอาไปลงโดดใด้ (สายนี้ทำ **ดาเมจ AOE เยอะ** ยังไงก่อโดนมอนไล่ถ้าไม่มีวาฟ)\n\nถ้า stat จะแนะนำไปที่ **ATK AGI** กรณีนี้ **VIT TAL** จะไม่ค่อยจำเป็นมากถ้าจะเอาไป PvE เพราะเรากดยาเลือดกับ SP ใด้แต่ถ้าจะให้ง่าย **ควรมี SP พอกดยีง Shooting Array 2** ใด้ \n\nช่วงเวลแรกๆจะแนะนำไปเล่นยาก่อนแล้วค่อยรีทีหลัง\nแต่ถ้ากะจะเล่นสายนี้ไปเลยจะแนะนำอัพ ATK ให้ใด้ช่วง 40-60 แล้วไปอัพ AGI VIT เพื่อให้เดีนเวลง่าย","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,131,132,133,134,141,142,143,144,201,202,203,204,211,212,213,214,221,222,241,242,243,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,403,412,413,423,431,433,434,443,444]},"notes":{}},
   {"id":15,"cover":[432],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PvE","author":"ChilLs","date":"2026-10-16","description":"","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,262,301,302,303,304,311,331,332,333,341,342,351,352,361,402,404,414,421,424,431,432,434,442]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T10:24:33.964Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T10:37:59.795Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30454,7 +30463,7 @@ const CLASS_GUIDE_STEPS = [
   { label: "สเตตัสและเซ็ต", optional: true, intro: "" },
   { label: "จัดบิลด์", intro: "", guide: ["เลือก <b>เลเวล</b>", "อัปสกิลใน <b>Skill Simulator</b> ด้านขวา"] },
   { label: "โน้ตสกิล", optional: true, intro: "", guide: ["<b>คลิกสกิล</b> ที่ต้องการเน้นใน <b>Skill Simulator</b> แล้วเขียนโน้ต"] },
-  { label: "หน้าปกและตรวจ", intro: "เลือกไอคอนหน้าปก 1 ถึง 3 สกิลจากตาราง (จำเป็น) แล้วกด ดูตัวอย่าง เพื่อตรวจหน้าตาที่ผู้อ่านจะเห็น" },
+  { label: "หน้าปกและตรวจ", intro: "เลือกไอคอนหน้าปก 1 ถึง 5 สกิลจากตาราง (จำเป็น) การ์ดด้านล่างคือหน้าตาในหน้าไกด์จากผู้เล่น" },
   { label: "บันทึกและส่ง", intro: "" }
 ];
 function mountClassGuide(root){
@@ -30470,8 +30479,8 @@ function mountClassGuide(root){
       <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-5 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
-      <div class="cg-toolbar"><div class="cg-publish-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="preview">${classGuideButtonIcon("preview")}<span>ดูตัวอย่าง</span></button></div></div>
-      <div class="cg-send" data-cg-role="send"><section class="cg-send-preview"><h3 class="cg-send-h">ตัวอย่างก่อนส่ง</h3><div class="cg-send-previews"><figure class="cg-card-preview cg-send-card" data-cg-role="cardPreview"><figcaption>การ์ดในหน้าไกด์จากผู้เล่น</figcaption></figure><figure class="cg-send-view"><figcaption>หน้าไกด์ · คลิกเพื่อดูเต็มจอ</figcaption><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span><span class="cg-send-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></span></button></figure></div></section><div class="cg-send-opts"><section class="cg-send-opt"><span class="cg-send-ic">${classGuideButtonIcon("image")}</span><div class="cg-send-txt"><h3>บันทึกเป็นรูป PNG</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p></div><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></section><section class="cg-send-opt is-main"><span class="cg-send-ic">${classGuideButtonIcon("copy")}</span><div class="cg-send-txt"><h3>ส่งขึ้นหน้าไกด์จากผู้เล่น</h3><p>คัดลอกโค้ดไกด์ แล้ววาง (Ctrl+V) ส่งทาง <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>Discord</b></a> ไกด์จะขึ้นหน้าไกด์จากผู้เล่นเมื่อเพิ่มให้แล้ว</p></div><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
+      <section class="cg-cover-card" data-cg-role="coverCard"><h3 class="cg-send-h">การ์ดในหน้าไกด์จากผู้เล่น</h3><p class="cg-cover-card-sub">อัปเดตทันทีเมื่อเลือกหน้าปก</p><div class="cg-card-preview cg-cover-card-host" data-cg-role="cardPreview"></div></section>
+      <div class="cg-send" data-cg-role="send"><section class="cg-send-preview"><h3 class="cg-send-h">ตัวอย่างหน้าไกด์</h3><div class="cg-send-previews"><figure class="cg-send-view"><figcaption>หน้าไกด์ · คลิกเพื่อดูเต็มจอ</figcaption><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span><span class="cg-send-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></span></button></figure></div></section><div class="cg-send-opts"><section class="cg-send-opt"><span class="cg-send-ic">${classGuideButtonIcon("image")}</span><div class="cg-send-txt"><h3>บันทึกเป็นรูป PNG</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p></div><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("image")}<span>บันทึกเป็นรูป</span></button></section><section class="cg-send-opt is-main"><span class="cg-send-ic">${classGuideButtonIcon("copy")}</span><div class="cg-send-txt"><h3>ส่งขึ้นหน้าไกด์จากผู้เล่น</h3><p>คัดลอกโค้ดไกด์ แล้ววาง (Ctrl+V) ส่งทาง <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>Discord</b></a> ไกด์จะขึ้นหน้าไกด์จากผู้เล่นเมื่อเพิ่มให้แล้ว</p></div><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
       <template data-cg-role="modeSwitchTpl"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="cover" aria-pressed="false">${classGuideButtonIcon("cover")}<span>ไอคอนหน้าปก</span></button></div></template>
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><div class="cg-stat-panel" data-cg-role="guideStats" hidden></div><div class="cg-gear-panel" data-cg-role="guideGear" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p></section>
@@ -30606,23 +30615,28 @@ function mountClassGuide(root){
   sim.setInteraction("read");
   { const A = el("author");
     A.querySelectorAll(".cg-fields > label").forEach(l => { l.dataset.cgStep = "1"; });
-    el("noteEditor").dataset.cgStep = "4"; el("noteEmpty").dataset.cgStep = "0"; el("extras").dataset.cgStep = "2"; el("coverRow").dataset.cgStep = "5"; A.querySelector(".cg-toolbar").dataset.cgStep = "5"; el("send").dataset.cgStep = "6"; el("editHelp").dataset.cgStep = "0"; }
+    el("noteEditor").dataset.cgStep = "4"; el("noteEmpty").dataset.cgStep = "0"; el("extras").dataset.cgStep = "2"; el("coverRow").dataset.cgStep = "5"; el("coverCard").dataset.cgStep = "5"; el("send").dataset.cgStep = "6"; el("editHelp").dataset.cgStep = "0"; }
   const stepKey = "12t-bible-class-guide-step2";   // renamed when the steps were reordered (2026-10-16), so an old saved number does not open the wrong step
   function goStep(n){   // one step at a time (user 2026-10-16); the step decides what a click on the grid does
     step = Math.max(1, Math.min(CLASS_GUIDE_STEPS.length, n || 1));
     const A = el("author"); A.dataset.step = step; guidePage.dataset.cgGrid = step >= 3 && step <= 5 ? "on" : "off";   // the three grid steps sit together (user 2026-10-16)
     A.querySelectorAll("[data-cg-step]").forEach(e => e.classList.toggle("is-off-step", e.dataset.cgStep !== String(step)));
     if (step !== 4) el("noteEditor").hidden = true;
+    if (step === 5) fillCoverCard();
     if (step === 6) fillSendCard();
     setAuthorInteraction(step === 4 ? "annotate" : step === 5 ? "cover" : "build");
     try { localStorage.setItem(stepKey, String(step)); } catch (e) {}
     updateSteps(); queueReaderFit();
   }
   // Step 6 shows the guide's gallery card as it will appear in ไกด์จากผู้เล่น (user 2026-10-17: moved here from the preview, which must match the PNG)
-  function fillSendCard(){
-    const box = el("cardPreview"); box.querySelectorAll(".cg-guide").forEach(n => n.remove());
+  // Step 5's live gallery card (user 2026-10-17: one preview, beside the cover picker): rebuilt on every cover pick and when the step opens.
+  function fillCoverCard(){
+    const box = el("cardPreview"); box.textContent = "";
     let g = null; try { g = draft && classGuideNormalize(draft, { draft: true }); } catch (e) { g = null; }
     if (g) box.appendChild(guideCard(g, "div"));
+  }
+  function fillSendCard(){
+    let g = null; try { g = draft && classGuideNormalize(draft, { draft: true }); } catch (e) { g = null; }
     // the full guide view, small: the PNG export itself, so it always matches the preview and the saved image
     const thumb = el("sendThumb"), btn = button("openFullView"), ticket = ++sendViewTicket;
     btn.disabled = true; btn.classList.add("is-waiting");
@@ -30848,6 +30862,7 @@ function mountClassGuide(root){
   const coverUndo = [];
   function markCover(){
     const list = (mode === "author" && draft && draft.cover) || [];
+    if (mode === "author" && step === 5) fillCoverCard();
     simRoot.querySelectorAll(".rsim-cell").forEach(cell => {
       const k = list.indexOf(+cell.dataset.id); let tag = cell.querySelector(".cg-cover-no");
       cell.classList.toggle("cg-cover-pick", k >= 0);
@@ -32298,6 +32313,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T10:27:42.903Z","feat(bible): guide editor step 5 shows the live gallery card next to the cover picker (no preview button); step 6 shows the full guide view alone; Bat mount attack range shows its 3 bolts (no stray 4th line)"],
     ["2026-10-17T10:15:13.697Z","fix(bible): every mount projectile attack shows its real range (Bat's 3-bolt fan, Chameleon's piercing shot, Penguin, Sheep, Cat)"],
     ["2026-10-17T09:51:49.034Z","feat(bible): G. Marshal and G. Champion mount cards with every class's mount attack and dash attack (a toggle picks the mount and its +20 / +50 stats) and the G. Champion charge"],
     ["2026-10-17T09:51:34.804Z","fix(bible): every class guide shows in the gallery again (on some screen sizes 4 guides were on no page)"],
