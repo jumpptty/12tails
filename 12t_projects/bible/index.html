@@ -30,7 +30,7 @@
       ".cg-icon-pick", ".cg-sort", ".cg-page-btn",
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".bbi-filter button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-compat-chip", ".sk-enemy-imm-chip", ".sk-server-badge"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17)
-    popup: [".hub-theme-menu", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
+    popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
     field: [".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search"]
   };
@@ -1211,6 +1211,40 @@
     background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow);
   }
   .hub-theme-menu[hidden]{display:none}
+  /* Guide menu (user 2026-10-17): while a guide is open its page buttons fold into this top-bar pill and its pop-up, so nothing sits over the guide */
+  .cg-menu-btn{display:none}
+  html.tool-guide-reader .cg-menu-btn{display:inline-flex;align-items:center;gap:7px;flex:none;height:30px;padding:0 11px 0 10px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);border-radius:999px;background:color-mix(in srgb,var(--gold) 9%,transparent);color:var(--gold);font:600 12.5px 'Prompt',system-ui,sans-serif;letter-spacing:.2px;cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+  html.tool-guide-reader .cg-menu-btn:hover,html.tool-guide-reader .cg-menu-btn:focus-visible,html.tool-guide-reader .cg-menu-btn[aria-expanded="true"]{background:color-mix(in srgb,var(--gold) 18%,transparent);border-color:var(--gold);box-shadow:0 0 12px rgba(212,175,55,.35);outline:none}
+  .cg-menu-btn svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .cg-menu-btn .cg-menu-chev{width:10px;height:10px;transition:transform .2s ease}
+  .cg-menu-btn[aria-expanded="true"] .cg-menu-chev{transform:rotate(180deg)}
+  @media (max-width:720px){html.tool-guide-reader .cg-menu-btn{width:30px;padding:0;justify-content:center}.cg-menu-btn-label,.cg-menu-btn .cg-menu-chev{display:none}}
+  .cg-menu-pop{position:fixed;z-index:1250;width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:14px 10px 10px;border-style:solid;border-width:1px;border-color:transparent;border-image:var(--cg-gild) 14 / 14px / 3px stretch;background-color:#15100b;background-image:linear-gradient(180deg,#221810,#120d09);box-shadow:0 24px 48px -12px rgba(0,0,0,.85);color:var(--text);font-family:'Prompt',system-ui,sans-serif;transform-origin:calc(100% - var(--cg-menu-notch,24px)) -8px;animation:cg-menu-in .18s cubic-bezier(.2,.8,.2,1)}
+  .cg-menu-pop[hidden]{display:none}
+  .cg-menu-pop::before{content:"";position:absolute;top:-7px;right:var(--cg-menu-notch,24px);width:12px;height:12px;background:#221810;border-left:1px solid rgba(201,162,39,.6);border-top:1px solid rgba(201,162,39,.6);transform:rotate(45deg)}   /* the notch points at the pill */
+  @keyframes cg-menu-in{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.cg-menu-pop{animation:none}}
+  .cg-menu-head{padding:0 8px 10px;margin-bottom:4px;border-bottom:1px solid rgba(201,162,39,.25)}
+  .cg-menu-kicker,.cg-menu-group{display:block;font-size:10.5px;letter-spacing:2px;color:var(--muted)}
+  .cg-menu-title{display:block;margin-top:2px;font-size:15px;font-weight:600;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cg-menu-group{padding:8px 8px 4px}
+  .cg-menu-item{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center;width:100%;margin:0;padding:8px;border:0;border-radius:6px;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:background .15s ease}
+  .cg-menu-item:hover,.cg-menu-item:focus-visible{background:linear-gradient(90deg,rgba(212,175,55,.15),rgba(212,175,55,0) 85%);outline:none}
+  .cg-menu-ring{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--gold);background:radial-gradient(circle at 50% 35%,#2a1f15,#120d09);box-shadow:0 0 0 1.5px rgba(201,162,39,.75),0 0 0 3px #0c0907,0 0 0 4px rgba(201,162,39,.3);transition:box-shadow .15s ease,transform .15s ease}
+  .cg-menu-item:hover .cg-menu-ring,.cg-menu-item:focus-visible .cg-menu-ring{box-shadow:0 0 0 1.5px var(--gold),0 0 0 3px #0c0907,0 0 0 4px rgba(201,162,39,.6),0 0 14px rgba(212,175,55,.5);transform:scale(1.05)}
+  .cg-menu-ring svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .cg-menu-item.is-primary .cg-menu-ring{background:var(--gold);color:#140f0b}
+  .cg-menu-text b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+  .cg-menu-text small{display:block;margin-top:1px;font-size:11.5px;line-height:1.35;color:var(--muted)}
+  .cg-page[data-mode="reader"] .cg-heading .cg-nav{display:none}   /* the guide view's buttons live in the top-bar menu */
+  /* Gallery (user 2026-10-17): its own tab does nothing there, so it goes; เขียนไกด์ becomes the page's call to action: gold, a soft glow and a shine that sweeps across now and then */
+  .cg-page[data-mode="gallery"] [data-cg-act="gallery"]{display:none !important}
+  html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]{position:relative;overflow:hidden;isolation:isolate;padding:0 18px 0 14px;border:1px solid #f4dc96 !important;border-radius:999px;background:linear-gradient(135deg,#f6d77f,#d4af37 52%,#a8801b) !important;color:#1a120a !important;font-weight:700;letter-spacing:.2px;text-shadow:0 1px 0 rgba(255,240,200,.45);box-shadow:0 0 0 1px rgba(0,0,0,.45),0 6px 18px -6px rgba(212,175,55,.75),0 0 16px rgba(212,175,55,.3) !important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+  html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"] svg{stroke:#1a120a;stroke-width:2}
+  html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]:hover,html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]:focus-visible{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 0 0 1px rgba(0,0,0,.45),0 10px 22px -6px rgba(212,175,55,.9),0 0 24px rgba(212,175,55,.5) !important}
+  html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]::after{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:cg-cta-shine 4.5s ease-in-out 1.2s infinite;pointer-events:none}
+  @keyframes cg-cta-shine{0%{left:-60%}22%,100%{left:130%}}
+  @media (prefers-reduced-motion: reduce){html .cg-page[data-mode="gallery"] .cg-btn[data-cg-act="author"]::after{animation:none;display:none}}
   .hub-theme-opt{
     width:48px; padding:4px 2px 3px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted);
     display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
@@ -29501,7 +29535,7 @@ const CLASS_GUIDES = [
   {"id":18,"cover":[244,343,434,444],"format":"12t-class-guide","version":1,"title":"กวิ้นมือใหม่ Hybrid","author":"TAMAKO","date":"2026-10-17","description":"** Tal ตัน Int ตาม**","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,344,361,362,404,413,414,421,422,434,441,442,444]},"notes":{}},
   {"id":19,"cover":[372,334,344],"format":"12t-class-guide","version":1,"title":"ไบวอ PVE","author":"Warisza","date":"2026-10-09","description":"**โล่วน** ก็เล่นง่ายแล้วคับ","build":{"server":"tto","classKey":"bison","level":95,"learned":[101,102,103,121,122,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,251,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,371,372,403,404,412,413,422,423,433,442,443]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:02:14.008Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4,"16":0,"17":0,"18":0,"19":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-17T13:17:38.780Z","counts":{"1":1,"2":3,"3":1,"4":1,"5":2,"6":2,"7":0,"8":0,"9":1,"10":1,"11":2,"12":2,"13":0,"14":0,"15":4,"16":0,"17":0,"18":0,"19":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -29975,7 +30009,8 @@ const CLASS_GUIDE_BUTTON_ICONS = {
   download:'<path d="M12 3v12m-5-5l5 5 5-5M4 16v5h16v-5"/>',
   applyImport:'<path d="M3 4h11v6M3 4v16h18V10M9 13l4 4 8-10"/>',
   closeTransfer:'<circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/>',
-  cover:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>'
+  cover:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h10"/><path d="M18.5 15.5l2.5 2.5-2.5 2.5-2.5-2.5z"/>'
 };
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 // Editor row of the 8 recommended stats (blank = not recommended, not stored).
@@ -30528,6 +30563,52 @@ function mountClassGuide(root){
   const el = role => root.querySelector('[data-cg-role="' + role + '"]');
   const field = name => root.querySelector('[data-cg-field="' + name + '"]');
   const button = act => root.querySelector('[data-cg-act="' + act + '"]');
+  // Guide menu (user 2026-10-17): in the guide view the page buttons fold into one top-bar pill so they do not distract from the guide. The pop-up lists
+  // the ones the page would show, each with a line saying what it does, and runs the original (hidden) button, so every action keeps one code path.
+  const menuBtn = document.createElement("button"); menuBtn.type = "button"; menuBtn.className = "cg-menu-btn"; menuBtn.setAttribute("aria-haspopup", "menu"); menuBtn.setAttribute("aria-expanded", "false"); menuBtn.setAttribute("aria-label", "เมนูไกด์");
+  menuBtn.innerHTML = classGuideButtonIcon("menu") + '<span class="cg-menu-btn-label">เมนูไกด์</span><svg class="cg-menu-chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg>';
+  { const hub = document.querySelector(".hub-right"); if (hub) hub.insertBefore(menuBtn, hub.querySelector(".hub-btn-mechanic")); }
+  const menuPop = document.createElement("div"); menuPop.className = "cg-menu-pop"; menuPop.setAttribute("role", "menu"); menuPop.setAttribute("aria-label", "เมนูไกด์"); menuPop.hidden = true; document.body.appendChild(menuPop);
+  const MENU = [
+    { group: "ไกด์นี้" },
+    { act: "returnAuthor", icon: "returnAuthor", title: "กลับไปแก้ไกด์", sub: "หน้านี้คือสิ่งที่ผู้อ่านจะเห็น", primary: true },
+    { act: "exportImage", icon: "image", title: "บันทึกเป็นรูป", sub: "ภาพ PNG 4K พร้อมแชร์" },
+    { act: "useAsBase", icon: "import", title: "ใช้ไกด์นี้เป็นต้นแบบ", sub: "เปิดบิลด์นี้ในตัวเขียนไกด์ แล้วแก้ต่อได้เลย" },
+    { group: "ไปที่" },
+    { act: "gallery", icon: "gallery", title: "ไกด์จากผู้เล่น", sub: "กลับไปหน้ารวมไกด์ทั้งหมด" },
+    { act: "author", icon: "author", title: "เขียนไกด์", sub: "สร้างไกด์บิลด์ของคุณเอง" }
+  ];
+  const menuItems = () => [...menuPop.querySelectorAll(".cg-menu-item")];
+  const closeMenu = focusBack => { if (menuPop.hidden) return; menuPop.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); if (focusBack) menuBtn.focus(); };
+  const openMenu = () => {
+    const shown = MENU.filter(m => m.group || (button(m.act) && !button(m.act).hidden)).filter((m, i, a) => !m.group || (a[i + 1] && !a[i + 1].group));   // a group heading only when something is under it
+    menuPop.textContent = "";
+    const head = document.createElement("div"); head.className = "cg-menu-head"; head.innerHTML = '<span class="cg-menu-kicker">กำลังอ่าน</span><span class="cg-menu-title"></span>';
+    head.lastChild.textContent = (current && current.title) || "ไกด์"; menuPop.appendChild(head);
+    for (const m of shown){
+      if (m.group){ const g = document.createElement("span"); g.className = "cg-menu-group"; g.textContent = m.group; menuPop.appendChild(g); continue; }
+      const it = document.createElement("button"); it.type = "button"; it.className = "cg-menu-item" + (m.primary ? " is-primary" : ""); it.setAttribute("role", "menuitem"); it.dataset.menuAct = m.act;
+      it.innerHTML = '<span class="cg-menu-ring">' + classGuideButtonIcon(m.icon) + '</span><span class="cg-menu-text"><b></b><small></small></span>';
+      it.querySelector("b").textContent = m.title; it.querySelector("small").textContent = m.sub; menuPop.appendChild(it);
+    }
+    const r = menuBtn.getBoundingClientRect();
+    menuPop.style.top = Math.round(r.bottom + 12) + "px"; menuPop.style.right = Math.max(12, Math.round(window.innerWidth - r.right)) + "px";
+    menuPop.hidden = false;
+    const pr = menuPop.getBoundingClientRect(); menuPop.style.setProperty("--cg-menu-notch", Math.max(12, Math.round(pr.right - (r.left + r.width / 2) - 7)) + "px");   // the notch sits under the pill's middle
+    menuBtn.setAttribute("aria-expanded", "true");
+    const first = menuItems()[0]; if (first) first.focus();
+  };
+  menuBtn.addEventListener("click", () => { if (menuPop.hidden) openMenu(); else closeMenu(false); });
+  menuPop.addEventListener("click", e => { const it = e.target.closest(".cg-menu-item"); if (!it) return; closeMenu(false); const b = button(it.dataset.menuAct); if (b) b.click(); });
+  menuPop.addEventListener("keydown", e => {
+    const items = menuItems(), i = items.indexOf(document.activeElement);
+    if (e.key === "Escape"){ e.preventDefault(); closeMenu(true); }
+    else if (e.key === "ArrowDown" || e.key === "ArrowUp"){ e.preventDefault(); const n = items.length; if (n) items[((i < 0 ? -1 : i) + (e.key === "ArrowDown" ? 1 : n - 1) + (i < 0 && e.key === "ArrowUp" ? 1 : 0)) % n].focus(); }
+    else if (e.key === "Home" || e.key === "End"){ e.preventDefault(); const t = e.key === "Home" ? items[0] : items[items.length - 1]; if (t) t.focus(); }
+    else if (e.key === "Tab") closeMenu(false);
+  });
+  document.addEventListener("pointerdown", e => { if (!menuPop.hidden && !menuPop.contains(e.target) && !menuBtn.contains(e.target)) closeMenu(false); }, true);
+  window.addEventListener("hashchange", () => closeMenu(false)); window.addEventListener("resize", () => closeMenu(false));
   const simRoot = el("sim"), guidePage = root.querySelector(".cg-page"), guideHeading = root.querySelector(".cg-heading"), storageKey = "12t-bible-class-guide-draft";
   // Step 1 server / class pickers (user 2026-10-17): they press the simulator's own buttons (its gates do the rest) and mirror their icon and name.
   const syncPicks = () => { for (const [mine, theirs] of [["pickSrv", "srv"], ["pickCls", "pick"]]){ const ti = simRoot.querySelector('[data-role="' + theirs + 'Thumb"]'), tn = simRoot.querySelector('[data-role="' + theirs + 'Name"]'), mi = root.querySelector('[data-cg-role="' + mine + 'Thumb"]'), mn = root.querySelector('[data-cg-role="' + mine + 'Name"]'); if (ti && mi && mi.getAttribute("src") !== ti.getAttribute("src")) mi.setAttribute("src", ti.getAttribute("src") || ""); if (tn && mn && mn.textContent !== tn.textContent) mn.textContent = tn.textContent; } };
@@ -30937,7 +31018,12 @@ function mountClassGuide(root){
   function openGuide(guide, preview = false, id = null){
     current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
     if (currentId){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
-    if (currentId) history.replaceState(null, "", "#class-guide/" + currentId);   // the address bar now is the link to share
+    if (currentId){   // the address bar now is the link to share, and Back goes to the guide list (user 2026-10-17), never past it to the main menu
+      const want = "#class-guide/" + currentId, marked = history.state && history.state.cgGuide;
+      if (location.hash === want){ if (!marked){ history.replaceState(null, "", "#class-guide"); history.pushState({ cgGuide: 1 }, "", want); } }   // a shared link or a refresh: slip the list in under it once
+      else if (location.hash === "#class-guide") history.pushState({ cgGuide: 1 }, "", want);   // opened from the list
+      else history.replaceState({ cgGuide: 1 }, "", want);
+    }
     setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
     button("useAsBase").hidden = preview;
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
@@ -31292,6 +31378,7 @@ function mountClassGuide(root){
     const target = e.target.closest("[data-cg-act]"); if (!target) return;
     const act = target.dataset.cgAct;
     try {
+      if (act === "gallery" && mode === "reader" && history.state && history.state.cgGuide){ history.back(); return; }   // the list is the entry under this guide: step back to it (no duplicate entries)
       if (act === "gallery"){ saveDraft(); switchMode("gallery"); sim.setInteraction("read"); renderGallery(); }
       else if (act === "useAsBase"){   // this guide becomes the reader's own draft to edit (was: copy the code, then import it in the editor; user 2026-10-16 button review)
         if (!current) return;
@@ -32358,6 +32445,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-17T13:08:39.153Z","feat(bible): the guide view's page buttons fold into one เมนูไกด์ button in the top bar with its own pop-up (what each choice does, keyboard and theme ready); the gallery drops its own tab and เขียนไกด์ becomes a gold call to action; Back from a guide returns to the guide list"],
     ["2026-10-17T12:33:37.561Z","feat(bible): class guide #19 TTO Bison ไบวอ PVE by Warisza; the guide view and PNG drop every container (open layout on a soft dark glow): author notes get thin gold dividers and bigger numbers, the description becomes a gold pull quote; more room between the top buttons and the guide"],
     ["2026-10-17T11:22:04.196Z","feat(bible): class guide #18 TTO Penguin กวิ้นมือใหม่ Hybrid by TAMAKO"],
     ["2026-10-17T11:17:05.285Z","feat(bible): Sheep Seal is now four cards: Seal of Attack and Seal of Defense (castable, shared cooldown), Seal of Earth and Seal of Heaven (learned unlocks for the mixed-colour fields)"],
