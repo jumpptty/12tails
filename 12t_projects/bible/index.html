@@ -8083,13 +8083,17 @@
      each at a random depth (--z) so the tilt shows parallax; --tx / --ty (-1..1) come from the cursor on desktop */
   .ln-wallbox{perspective:1400px; display:grid; place-items:center}
   .ln-wall{--ic:min(5.2vw, calc((100dvh - var(--hub-h, 64px)) * .1)); display:grid; grid-template-columns:repeat(8, var(--ic)); gap:calc(var(--ic) * .19); transform-style:preserve-3d;
-    transform:rotateY(calc(-24deg + var(--tx, 0) * 7deg)) rotateX(calc(9deg - var(--ty, 0) * 4deg)) rotateZ(-4deg); transition:transform .8s cubic-bezier(.2,.7,.2,1)}
-  .ln-wall img{width:var(--ic); height:var(--ic); border-radius:calc(var(--ic) * .17); background:var(--panel); box-shadow:0 14px 24px rgba(0,0,0,.6);
-    transform:translateZ(var(--z, 0px)); animation:lnPop .5s calc(var(--i) * 14ms) cubic-bezier(.2,.7,.2,1) both}
+    transform:rotateY(calc(-24deg + var(--tx, 0) * 3.5deg)) rotateX(calc(9deg - var(--ty, 0) * 2deg)) rotateZ(-4deg); transition:transform .8s cubic-bezier(.2,.7,.2,1)}
+  .ln-tile{position:relative; display:block; width:var(--ic); height:var(--ic); border-radius:calc(var(--ic) * .17); background:var(--panel); box-shadow:0 14px 24px rgba(0,0,0,.6);
+    transform:translateZ(var(--z, 0px)); perspective:calc(var(--ic) * 6); animation:lnPop .5s calc(var(--i) * 14ms) cubic-bezier(.2,.7,.2,1) both}
   @keyframes lnPop{from{opacity:0; transform:translateZ(-120px)}}
-  .ln-wall img:nth-child(9n+4){box-shadow:0 0 0 2px var(--ln-hi), 0 20px 30px rgba(0,0,0,.7)}
-  .ln-wall img.is-flip{animation:lnFlip .6s cubic-bezier(.4,0,.2,1)}
-  @keyframes lnFlip{50%{transform:translateZ(calc(var(--z, 0px) + 30px)) rotateY(90deg); filter:brightness(1.8)} 65%{box-shadow:0 0 0 2px var(--ln-hi), 0 0 26px color-mix(in srgb, var(--gold) 70%, transparent)}}
+  .ln-tile:nth-child(9n+4){box-shadow:0 0 0 2px var(--ln-hi), 0 20px 30px rgba(0,0,0,.7)}
+  .ln-tile img{position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; display:block; backface-visibility:hidden}
+  /* a swap is one clean card flip (option B of 5 mocks, user 2026-10-18): the old icon turns away as the new one turns in on the back face; no flash, no glint */
+  .ln-tile .out{animation:lnFlipOut .7s cubic-bezier(.45,0,.25,1) both}
+  .ln-tile .nxt{animation:lnFlipIn .7s cubic-bezier(.45,0,.25,1) both}
+  @keyframes lnFlipOut{to{transform:rotateY(180deg)}}
+  @keyframes lnFlipIn{from{transform:rotateY(-180deg)}}
   .ln-fan{position:relative; width:420px; height:420px; max-width:100%}
   .ln-fan img{position:absolute; left:50%; top:50%; width:220px; height:220px; border-radius:36px; box-shadow:0 30px 50px rgba(0,0,0,.7), 0 0 0 2px color-mix(in srgb, var(--gold) 50%, transparent);
     transform:translate(-50%,-50%) rotate(calc((var(--i) - var(--mid)) * 16deg)) translateX(calc((var(--i) - var(--mid)) * 120px))}
@@ -29533,7 +29537,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:00:45.397Z","counts":{"1":11,"2":14,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":5,"12":2,"13":0,"14":9,"15":18,"16":3,"17":8,"18":17,"19":6,"20":12,"21":5,"22":4,"23":8,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:06:58.846Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":12,"21":5,"22":4,"23":8,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32924,13 +32928,16 @@ function mountLauncher(root){
   // Every 0.35-1.45 s (at random) one icon, sometimes two, flips to a skill not on the wall yet; paused while the menu is hidden.
   let wallTimer = 0;
   const startWall = wall => {
-    const imgs = [...wall.children];
+    const tiles = [...wall.children];
     const swap = () => {
       if (!wall.isConnected) return;
       if (!viewMenu.hidden && !document.hidden) for (let j = Math.random() < .25 ? 2 : 1; j > 0; j--) {
-        const img = imgs[Math.floor(Math.random() * imgs.length)]; if (img.classList.contains("is-flip")) continue;
-        const shown = new Set(imgs.map(x => x.dataset.k)); let k = pick(wallIcons); for (let n = 0; shown.has(k) && n < 20; n++) k = pick(wallIcons);
-        img.classList.add("is-flip"); setTimeout(() => { img.src = SKILL_ICONS[k]; img.dataset.k = k; }, 300); setTimeout(() => img.classList.remove("is-flip"), 620);
+        const t = tiles[Math.floor(Math.random() * tiles.length)]; if (t.classList.contains("is-swap")) continue;
+        const shown = new Set(tiles.map(x => x.dataset.k)); let k = pick(wallIcons); for (let n = 0; shown.has(k) && n < 20; n++) k = pick(wallIcons);
+        // the next icon is decoded first, then laid on the tile's back face; the old one goes when the 0.7 s flip ends
+        const cur = t.querySelector("img.cur"), nx = new Image(); nx.alt = ""; nx.src = SKILL_ICONS[k]; t.dataset.k = k; t.classList.add("is-swap");
+        (nx.decode ? nx.decode() : Promise.resolve()).catch(() => null).then(() => { if (!t.isConnected) return;
+          nx.className = "nxt"; cur.classList.add("out"); t.appendChild(nx); setTimeout(() => { cur.remove(); nx.className = "cur"; t.classList.remove("is-swap"); }, 740); });
       }
       wallTimer = setTimeout(swap, 350 + Math.random() * 1100);
     };
@@ -32953,7 +32960,7 @@ function mountLauncher(root){
       '<div class="ln-cta"><a class="ln-play" href="#' + t.id + '">เปิด<span aria-hidden="true">→</span></a></div>';
     clearInterval(guideTimer); clearTimeout(wallTimer);
     if (t.collage === "skills") {
-      art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + someIcons(phone() ? 25 : 48, wallIcons).map((k, j) => '<img style="--i:' + j + "; --z:" + Math.round(Math.random() * 100 - 20) + 'px" data-k="' + k + '" src="' + SKILL_ICONS[k] + '" alt="">').join("") + "</div></div>";
+      art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + someIcons(phone() ? 25 : 48, wallIcons).map((k, j) => '<span class="ln-tile" style="--i:' + j + "; --z:" + Math.round(Math.random() * 24 - 6) + 'px" data-k="' + k + '"><img class="cur" src="' + SKILL_ICONS[k] + '" alt=""></span>').join("") + "</div></div>";
       startWall(art.querySelector(".ln-wall"));
     }
     else if (t.collage === "classStory" && guides.length) {
@@ -33022,6 +33029,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T07:06:59.118Z","fix(bible): hub menu skill wall icons now swap with a clean card flip; the wall tilts toward the cursor even more gently and its tiles sit at nearly the same depth"],
     ["2026-10-18T07:00:45.578Z","fix(bible): hub menu skill wall tilts toward the cursor more gently; the class portrait on the ไกด์อาชีพ slide lifts slightly on hover without a glow"],
     ["2026-10-18T06:53:20.816Z","feat(bible): hub menu skill wall is larger, leans toward the cursor and keeps flipping icons to other skills; on the ไกด์อาชีพ slide the guide image opens that guide and the class portrait opens that class's guides on every server"],
     ["2026-10-18T04:29:23.137Z","fix(bible): hub menu on wide (21:9) screens keeps its text, art and filmstrip together in the middle; moving to the ไกด์อาชีพ slide no longer stutters (guide images are prepared ahead, between slides); no divider line under the top bar and no keyboard hint on the menu"],
