@@ -1694,14 +1694,12 @@
   .cg-set-tile{position:relative;display:block;width:100%;max-width:56px}   /* about 20% bigger (user 2026-10-16) */
   .cg-set-tile > .cg-gear-ico{display:block;width:100%;height:auto;aspect-ratio:1}
   .cg-set-tile > .cg-gear-ico img,.cg-set-tile > .cg-gear-ico .cg-gear-txticon{width:100%;height:100%}
-  .cg-set-tile > .cg-gear-ico img{filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 2px #000)}   /* the same dark outline as the Replica icon (user 2026-10-16) */
-  .cg-set-tile > .cg-gear-ico img.is-dark{filter:drop-shadow(0 0 1px rgba(255,240,215,.9)) drop-shadow(0 0 6px rgba(255,225,170,.45)) brightness(1.25)}   /* a near-black item (gearIconDark) gets a light rim instead, so it does not vanish on the dark sheet (user 2026-10-18, option D) */
+  .cg-set-tile > .cg-gear-ico img{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)}   /* a white outline on every item, the same as the Replica (user 2026-10-18: always white, the sheet behind is always dark) */
   .cg-set-tile > .cg-gear-ico .cg-gear-txticon{font-size:10px}
   .cg-set-tile:has(.cg-set-rep){margin-bottom:8px}
   .cg-set-cell > .cg-set-tile:not(:has(.cg-set-rep)) + .cg-gear-stat{margin-top:-.6em}   /* no Replica: the label tucks into the icon art's transparent margin (user 2026-10-16) */
-  .cg-set-rep{position:absolute;bottom:-8px;right:-9px;width:48%;aspect-ratio:1;box-sizing:content-box;padding:1px;border:0;border-radius:3px;background:none;display:grid;place-items:center;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 2px #000)}   /* no black square behind the Replica (user 2026-10-16), a soft shadow around its own outline instead */
+  .cg-set-rep{position:absolute;bottom:-8px;right:-9px;width:48%;aspect-ratio:1;box-sizing:content-box;padding:1px;border:0;border-radius:3px;background:none;display:grid;place-items:center;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)}   /* no black square behind the Replica (user 2026-10-16), a soft shadow around its own outline instead */
   .cg-set-rep img,.cg-set-rep .cg-gear-txticon{width:100%;height:100%}
-  .cg-set-rep:has(> img.is-dark){filter:drop-shadow(0 0 1px rgba(255,240,215,.9)) drop-shadow(0 0 3px rgba(255,225,170,.45)) brightness(1.25)}   /* a near-black Replica: the same light rim (user 2026-10-18) */
   .cg-set-rep .cg-gear-txticon{font-size:6px;padding:0;border-radius:2px}
   .cg-set-arrow{position:absolute;left:26%;bottom:-5px;width:38%;height:auto;overflow:visible;fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);pointer-events:none}
   /* editor dialog: the same grid with the slot names on top */
@@ -29569,25 +29567,6 @@ function ringIconShift(img){   // the art centre's offset from the image centre,
 }
 const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
 document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
-// A near-black gear icon disappeared into its black outline on the dark sheet (t_bat60, user 2026-10-18): the mean brightness of its opaque pixels is
-// measured once per picture and cached. Under GEAR_DARK_LUMA (out of 255; 17 of the 1,473 icons, t_bat60 = 17) the page gives it a light rim (img.is-dark), the PNG a light shadow.
-const GEAR_DARK_LUMA = 40, gearDarkCache = new Map();
-function gearIconDark(img){
-  const key = img && (img.currentSrc || img.src); if (!key) return false;
-  if (gearDarkCache.has(key)) return gearDarkCache.get(key);
-  let out = false;
-  try {
-    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-    if (w && h){
-      const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.drawImage(img, 0, 0);
-      const d = g.getImageData(0, 0, w, h).data; let sum = 0, n = 0;
-      for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40){ sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; }
-      out = n > 0 && sum / n < GEAR_DARK_LUMA;
-    }
-  } catch (e) {}
-  gearDarkCache.set(key, out); return out;
-}
-document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-set-tile img")) t.classList.toggle("is-dark", gearIconDark(t)); }, true);   // the reader's and the editor's sets, item and Replica
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = Object.assign({}, skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null), classGuideSupportCells());
@@ -29694,7 +29673,7 @@ const CLASS_GUIDES = [
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}},
   {"id":31,"cover":[264,434,444],"format":"12t-class-guide","version":1,"title":"หมา Paladin","author":"เว็บคุณก็เทพเกินครับ","date":"2026-10-18","description":"พอดีเห็นว่ายังไม่มีไกด์หมาพาลาเลยครับ อันนี้แบบที่ผมใช้","build":{"server":"tto","classKey":"wolf","level":100,"learned":[101,102,103,121,122,131,132,133,134,141,142,201,202,203,204,211,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,302,303,311,321,322,323,324,331,332,341,342,351,402,403,404,422,424,431,432,434,442,444],"support":[901,902]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T11:44:09.190Z","counts":{"1":17,"2":22,"3":17,"4":12,"5":28,"6":19,"7":9,"8":11,"9":11,"10":14,"11":13,"12":6,"13":3,"14":17,"15":26,"16":10,"17":16,"18":20,"19":15,"20":17,"21":11,"22":11,"23":16,"24":5,"25":6,"26":7,"27":6,"28":8,"29":15,"30":15,"31":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T11:54:24.399Z","counts":{"1":17,"2":23,"3":17,"4":12,"5":28,"6":20,"7":9,"8":11,"9":11,"10":15,"11":14,"12":6,"13":3,"14":18,"15":26,"16":11,"17":18,"18":21,"19":15,"20":18,"21":12,"22":11,"23":18,"24":5,"25":6,"26":7,"27":6,"28":9,"29":16,"30":16,"31":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30618,15 +30597,8 @@ async function classGuideRenderImage(guide, simRoot){
     ctx.fillStyle = gold; ctx.font = font(600, 18); ctx.fillText("เซ็ตแนะนำ", lx, y + 18); y += 30;
     const sets = Math.max(...gearSlots.map(g => guide.gear[g.key].length)), noW = 24, cellW = (lw - noW) / gearSlots.length, ic = Math.min(60, Math.floor((cellW - 18) * 1.2)), rs = Math.round(ic * 0.46), rowH = ic + 36;
     const clipText = (str, w) => { let t = str; while (t.length > 1 && ctx.measureText(t).width > w) t = t.slice(0, -1); return t === str ? t : t.slice(0, -1) + "…"; };
-    const outlined = (c, tx, ty, size, soft) => {   // the soft dark outline (user 2026-10-16), or a light rim for a near-black icon (user 2026-10-18, as on the page)
-      const im = c.item && gimg[c.item];
-      ctx.save();
-      if (im && gearIconDark(im)){
-        ctx.filter = "brightness(1.25)";
-        ctx.shadowColor = "rgba(255,225,170,.45)"; ctx.shadowBlur = soft * P.scale; drawTile(c, tx, ty, size);
-        ctx.shadowColor = "rgba(255,240,215,.9)"; ctx.shadowBlur = 1.5 * P.scale; drawTile(c, tx, ty, size);
-      } else { ctx.shadowColor = "rgba(0,0,0,.9)"; ctx.shadowBlur = 3 * P.scale; drawTile(c, tx, ty, size); }
-      ctx.restore();
+    const outlined = (c, tx, ty, size) => {   // a white outline on every tile, as on the page (user 2026-10-18: always white, the sheet is always dark)
+      ctx.save(); ctx.shadowColor = "#fff"; ctx.shadowBlur = 1.5 * P.scale; drawTile(c, tx, ty, size); drawTile(c, tx, ty, size); ctx.restore();
     };
     const drawTile = (c, tx, ty, size) => {   // the item's icon, or a typed item's name as its icon (centred, user 2026-10-16)
       const im = c.item && gimg[c.item];
@@ -30658,14 +30630,14 @@ async function classGuideRenderImage(guide, simRoot){
       gearSlots.forEach((g, j) => {
         const c = guide.gear[g.key][k]; if (!c) return;
         const x = lx + noW + j * cellW;
-        outlined(c, x, ty, ic, 6);   // the same outline as the Replica
+        outlined(c, x, ty, ic);   // the same outline as the Replica
         if (c.replica){   // the Replica sits on the item's bottom-right corner (user 2026-10-16) and a curved arrow runs from it up into the item
           const rx = x + ic - rs + 8, ry = ty + ic - rs + 8, ex = x + ic * 0.42, ey = ty + ic * 0.6;
           const arrow = () => { ctx.beginPath(); ctx.moveTo(rx - 1, ry + rs * 0.65); ctx.quadraticCurveTo(ex, ry + rs * 0.65, ex, ey); ctx.moveTo(ex - 4, ey + 5); ctx.lineTo(ex, ey - 1); ctx.lineTo(ex + 4, ey + 5); ctx.stroke(); };
           ctx.lineCap = "round"; ctx.lineJoin = "round";
           ctx.strokeStyle = "rgba(0,0,0,.75)"; ctx.lineWidth = 4.5; arrow();
           ctx.strokeStyle = gold; ctx.lineWidth = 2; arrow();
-          outlined(c.replica, rx, ry, rs, 3);   // no black square (user 2026-10-16), a soft outline
+          outlined(c.replica, rx, ry, rs);   // no black square (user 2026-10-16), the white outline
         }
         if (c.stat){ ctx.fillStyle = v("--stat-" + c.stat) || gold; ctx.font = font(700, 13); ctx.textAlign = "center"; ctx.fillText("ยัด " + classGuideStatLabel(c.stat), x + ic / 2, ty + ic + (c.replica ? 24 : 12)); ctx.textAlign = "left"; }   // centred under the icon, as on screen
       });
@@ -33363,6 +33335,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T11:53:20.663Z","fix(bible): class guide recommended sets: every item and Replica has a white outline, on the page and in the PNG (no more darkness check)"],
     ["2026-10-18T11:40:23.884Z","style(bible): small class pictures are the game's round class faces: the stat panel badge, the TTO magic damage tabs, the class buttons (Stat Roll, Stat Gain, Skill Simulator), the skill list heading and the guide gallery's class chips and filter; the big class pickers keep the full-body art"],
     ["2026-10-18T11:34:48.575Z","feat(bible): class guide #31 TTO Wolf หมา Paladin by เว็บคุณก็เทพเกินครับ"],
     ["2026-10-18T11:25:15.027Z","feat(bible): hub menu art for ค่าสถานะมอนสเตอร์: hovering the Stat Scan icon (now in a round gold ring) bursts a real monster's stats onto a slowly circling ring, which spiral back into the icon when the mouse leaves"],
