@@ -1158,15 +1158,19 @@
     animation:unseal .6s .1s cubic-bezier(.2,.7,.2,1) forwards;
   }
   @keyframes unseal{to{transform:scaleX(1)}}
-  /* logo (user 2026-10-18, option 06 "Tail Twelve" of 12 mocks): "12" in one gold stroke, the 2 flicking out into a tail,
-     TAILS / BIBLE stacked beside it; sized in em, so the phone rules below only change font-size */
+  /* logo (user 2026-10-18, option 06 "Tail Twelve" of 12 mocks): "12" in one gold stroke, the 2 flicking out into a tail; the text is
+     "Spine" (of 10 stacked mocks): a gold spine like a book's, then TAILS / BIBLE the same width, each line trimmed to its cap height so
+     the stack runs from the top of the 1 to the base of the 12. Sized in em, so the phone rules below only change font-size. */
   .brand{
     display:inline-flex; align-items:center; gap:.22em; text-decoration:none; font-family:'Prompt',sans-serif;
     font-size:19px; font-weight:700; line-height:1;
   }
   .brand-mark{display:block; flex:none; width:auto; height:1.7em}
-  .brand-word{display:flex; flex-direction:column; gap:.1em; font-size:.62em; letter-spacing:.16em}
-  .brand-word span:last-child{color:var(--gold)}
+  .brand-spine{flex:none; align-self:stretch; width:.06em; margin:.1em .06em; background:linear-gradient(transparent, #d4af37 18%, #d4af37 82%, transparent)}
+  .brand-word{display:flex; flex-direction:column; gap:.24em; font-size:.66em}
+  .brand-word span{display:block; white-space:nowrap; text-box:trim-both cap alphabetic}
+  .brand-word span:first-child{color:#f4ecdc; letter-spacing:.015em; margin-right:-.015em}   /* spaced to BIBLE's width */
+  .brand-word span:last-child{background:linear-gradient(180deg, #f6df98 10%, #d4af37 55%, #a07c26 95%); -webkit-background-clip:text; background-clip:text; color:transparent}
   .hub-note-link{color:inherit; text-decoration:none}
   .hub-note-link b{font-weight:600; color:var(--gold); text-shadow:0 0 6px rgba(212,175,55,.9), 0 0 14px rgba(212,175,55,.5)}
   .hub-note-link:hover b{text-shadow:0 0 8px var(--gold), 0 0 20px rgba(212,175,55,.8)}
@@ -8327,7 +8331,7 @@
 <body>
 
 <header class="hub-bar">
-  <a href="#" class="brand" aria-label="12 Tails Bible"><svg class="brand-mark" viewBox="8 6 110 78" aria-hidden="true"><defs><linearGradient id="brandGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6df98"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#9a7622"/></linearGradient></defs><g fill="none" stroke="url(#brandGold)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24 L30 12 L30 78"/><path d="M48 30 C48 12 78 10 80 28 C82 44 60 54 48 78 L82 78 C98 78 106 66 102 52"/></g><path d="M102 52 C96 40 102 26 116 22 C110 34 114 44 102 52Z" fill="url(#brandGold)"/></svg><span class="brand-word" aria-hidden="true"><span>TAILS</span><span>BIBLE</span></span></a>
+  <a href="#" class="brand" aria-label="12 Tails Bible"><svg class="brand-mark" viewBox="8 6 110 78" aria-hidden="true"><defs><linearGradient id="brandGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6df98"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#9a7622"/></linearGradient></defs><g fill="none" stroke="url(#brandGold)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24 L30 12 L30 78"/><path d="M48 30 C48 12 78 10 80 28 C82 44 60 54 48 78 L82 78 C98 78 106 66 102 52"/></g><path d="M102 52 C96 40 102 26 116 22 C110 34 114 44 102 52Z" fill="url(#brandGold)"/></svg><span class="brand-spine" aria-hidden="true"></span><span class="brand-word" aria-hidden="true"><span>TAILS</span><span>BIBLE</span></span></a>
   <p class="hub-note">ตรวจพบข้อมูลผิดพลาด แจ้ง Discord : <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a><button type="button" class="hub-btn-credits" id="btnCredits" aria-label="ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล" title="ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h10.5a2 2 0 0 1 2 2v1.5"/><path d="M6 4a2 2 0 0 0-2 2v1.5h4"/><path d="M8 7.5V18a2.5 2.5 0 0 0 2.5 2.5H18"/><path d="M18 20.5a2.5 2.5 0 0 0 2.5-2.5v-1H13v1a2.5 2.5 0 0 1-2.5 2.5"/><path d="M10.5 10.5h4M10.5 13.5h3"/><path d="M15.5 15 21 4.2c.8.9.8 2.3 0 3.6l-3.2 5.2"/></svg></button></p>
   <div class="hub-right">
     <nav class="crumb">
@@ -29647,7 +29651,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T09:49:48.272Z","counts":{"1":13,"2":16,"3":12,"4":9,"5":18,"6":13,"7":5,"8":9,"9":9,"10":9,"11":7,"12":3,"13":1,"14":10,"15":20,"16":4,"17":10,"18":19,"19":9,"20":14,"21":5,"22":5,"23":10,"24":3,"25":4,"26":3,"27":3,"28":6,"29":10,"30":9}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T10:09:01.039Z","counts":{"1":13,"2":17,"3":12,"4":10,"5":19,"6":14,"7":5,"8":9,"9":9,"10":9,"11":8,"12":3,"13":1,"14":11,"15":20,"16":5,"17":11,"18":19,"19":9,"20":14,"21":6,"22":5,"23":11,"24":3,"25":5,"26":4,"27":4,"28":6,"29":11,"30":11}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33180,6 +33184,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T10:09:01.291Z","feat(bible): logo text: a gold spine between the 12 and the words, TAILS in cream over BIBLE in the mark's gold gradient, both lines the same width and sitting inside the 12's height"],
     ["2026-10-18T09:49:48.521Z","feat(bible): new logo: the number 12 drawn in one gold stroke with the 2 flicking out into a tail, TAILS / BIBLE stacked beside it, and the same mark as the tab icon"],
     ["2026-10-18T09:29:36.146Z","fix(bible): two fonts only across the whole hub: Prompt for all text (the logo, headings, Chameleon simulator, boss guide included) and JetBrains Mono with Prompt behind it for numbers, so no more Georgia, Segoe UI, Consolas, Cinzel, Kanit or Tahoma Thai"],
     ["2026-10-18T09:21:39.892Z","feat(bible): ปรับสมดุลเซิร์ฟ and บั๊ก & คำอธิบาย pages redesigned: a class rail with the game's round hero icons, type chips that keep their counts when one is picked, search, and every skill in its in-game frame"],
