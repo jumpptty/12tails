@@ -103,7 +103,7 @@ let scriptCode = html.slice(scriptStart + 8, scriptEnd);
 // Expose internal functions and variables to window
 scriptCode = scriptCode.replace('const SKILLS =', 'window.SKILLS =');
 scriptCode = scriptCode.replace('const SKILL_ICONS =', 'window.SKILL_ICONS =');
-scriptCode = scriptCode.replace('const CLASS_PORTRAITS =', 'window.CLASS_PORTRAITS =');
+scriptCode = scriptCode.replace('const CLASS_HERO_ICONS =', 'window.CLASS_HERO_ICONS =');
 
 const exposeInjection = `
   window._getDmgText = getDmgText;
@@ -995,20 +995,21 @@ SKILLS.forEach(sk => {
     }
   }
 });
-// 3i. Class portraits for the stat panel badge (CLASS_PORTRAITS): every class a skill belongs to (other
-// than shared "Common" skills, which have no character art) needs a valid PNG portrait.
+// 3i. Round class faces (CLASS_HERO_ICONS, user 2026-10-18: the stat panel badge, the TTO magic tabs, the class
+// buttons, the roster heading, the guide gallery and the note pages): every class a skill belongs to (other than
+// shared "Common" skills, which have no character art) needs a valid WebP face.
 let checkedPortraits = 0;
 {
-  const portraits = sandbox.CLASS_PORTRAITS;
-  if (!portraits) { console.error("[PORTRAIT ERROR] CLASS_PORTRAITS is not defined"); errorCount++; }
+  const portraits = sandbox.CLASS_HERO_ICONS;
+  if (!portraits) { console.error("[PORTRAIT ERROR] CLASS_HERO_ICONS is not defined"); errorCount++; }
   else {
     [...new Set(SKILLS.map(sk => sk.class))].filter(c => c && c !== "Common").forEach(cls => {
       checkedPortraits++;
       const data = portraits[cls];
-      if (!data) { console.error(`[PORTRAIT ERROR] class "${cls}" has no CLASS_PORTRAITS entry`); errorCount++; return; }
-      const buf = Buffer.from(String(data).replace("data:image/png;base64,", ""), "base64");
-      if (!String(data).startsWith("data:image/png;base64,") || buf.length < 8 || !buf.subarray(0, 8).equals(pngHeader)) {
-        console.error(`[PORTRAIT ERROR] class "${cls}" portrait is not a valid PNG data URI`); errorCount++;
+      if (!data) { console.error(`[PORTRAIT ERROR] class "${cls}" has no CLASS_HERO_ICONS entry`); errorCount++; return; }
+      const buf = Buffer.from(String(data).replace("data:image/webp;base64,", ""), "base64");
+      if (!String(data).startsWith("data:image/webp;base64,") || buf.length < 12 || buf.toString("latin1", 0, 4) !== "RIFF" || buf.toString("latin1", 8, 12) !== "WEBP") {
+        console.error(`[PORTRAIT ERROR] class "${cls}" face is not a valid WebP data URI`); errorCount++;
       }
     });
   }

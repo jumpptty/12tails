@@ -17,7 +17,7 @@ After adding or changing a convention, update the file that owns that topic (not
 
 ## 1. Large File Handling & Crash Prevention Protocol (~15 MB)
 
-`index.html` embeds every game icon as base64 (`SKILL_ICONS`, currently ~lines 7,500–10,300; `CLASS_ART` / `CLASS_PORTRAITS` near ~22,100). Line numbers drift; locate blocks with `grep -o`.
+`index.html` embeds every game icon as base64 (`SKILL_ICONS`, currently ~lines 7,500–10,300; `CLASS_ART` / `CLASS_HERO_ICONS` / `CLASS_STORY_ART` near ~29,100). Line numbers drift; locate blocks with `grep -o`.
 
 1. **Zero base64 ingestion:** never read, grep or dump the base64 blocks. Inspect icon keys with a small Node scratch script that prints key names only.
 2. **Out-of-process patching:** every change to `index.html` is a small Node script in the scratch dir that loads the file, replaces the target in memory, writes it back and prints one confirmation line. No IDE edit tools on this file. For card fields use **`scripts/card_edit.js`** (`add-field` / `set-field` / `add-compat [--both]` / `replace`, `--dry-run`): it edits one card's top-level fields only (strings, template literals and `//` / `/* */` comments are skipped while scanning), backs the file up to `<os temp>/12t-bible-backups/` and refuses to save when the page script no longer parses (e.g. a raw line break inside a string). `node scripts/card_edit.js --selftest` checks it.
