@@ -8126,7 +8126,8 @@
   .ln-stripbar{position:relative; z-index:4; flex:none; display:flex; align-items:flex-end; justify-content:flex-end; gap:18px; min-width:0; padding:0 28px 26px}
   .ln-count{margin:0 0 6px; font:600 13px 'JetBrains Mono','Prompt',monospace; color:var(--muted); white-space:nowrap}
   .ln-count b{color:var(--ln-hi); font-size:20px}
-  .ln-strip{position:relative; display:flex; gap:8px; min-width:0; overflow-x:auto; padding-top:8px; scrollbar-width:none}
+  @media (max-width:1700px){ .ln-count{display:none} }   /* the main banners need the room; the filmstrip already marks the shown tool */
+  .ln-strip{position:relative; display:flex; align-items:flex-end; gap:8px; min-width:0; overflow-x:auto; padding-top:8px; scrollbar-width:none}
   .ln-strip::-webkit-scrollbar{display:none}
   .ln-th{--acc:var(--gold); position:relative; flex:0 0 104px; height:72px; border-radius:10px; overflow:hidden; border:1px solid var(--line); background-color:var(--panel); color:var(--text); text-decoration:none; transition:transform .2s, border-color .2s}
   .ln-th img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 15%; opacity:.55; transition:opacity .2s}
@@ -8141,6 +8142,22 @@
   .ln-th.is-on img{opacity:1}
   .ln-th.is-on i, .ln-seg.is-on i{animation:lnBar 7s linear forwards}
   .ln.is-paused .ln-th.is-on i, .ln.is-paused .ln-seg.is-on i{animation-play-state:paused}
+  /* the two main tools (user 2026-10-18, option E of 5 mocks): taller, wider banners with a moving backdrop and a gold left bar; the name sits on the left */
+  .ln-th.is-main{flex-basis:200px; height:96px; border-left:3px solid var(--gold); background-color:#120d0a}
+  .ln-th.is-main::after{background:linear-gradient(90deg, rgba(0,0,0,.82) 28%, transparent 78%)}
+  .ln-th.is-main span{right:auto; top:50%; bottom:auto; left:12px; max-width:62%; transform:translateY(-50%); font-size:16px}
+  .ln-mq{position:absolute; top:50%; left:0; display:flex; gap:6px; width:max-content; transform:translateY(-50%); animation:lnMq 40s linear infinite}
+  @keyframes lnMq{to{translate:-50% 0}}
+  .ln-mqi{position:relative; flex:none; width:64px; height:64px; background:var(--ln-wood) center / 100% 100% no-repeat}
+  .ln-mqi.is-passive{background-image:var(--ln-iron)}
+  .ln-th .ln-mqi img{position:static; display:block; width:100%; height:100%; opacity:1}
+  .ln-thpng{position:absolute; inset:0; background:center / 160% auto no-repeat; animation:lnKb 10s ease-in-out infinite alternate; transition:opacity .45s}
+  @keyframes lnKb{from{background-position:0% 0%} to{background-position:100% 35%}}
+  .ln-th img.ln-thpt{inset:auto; right:2px; bottom:-8px; width:auto; height:118%; object-fit:contain; opacity:1; transition:opacity .45s}
+  .ln-thpng.is-out, .ln-th img.ln-thpt.is-out{opacity:0}
+  /* every class / character portrait is cut flat somewhere: fade the left, right and bottom edges (user 2026-10-18) */
+  .ln-pt, .ln-gpt, .ln-th img.ln-thpt{-webkit-mask-image:linear-gradient(90deg, transparent, #000 16%, #000 90%, transparent), linear-gradient(180deg, #000 74%, transparent); -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(90deg, transparent, #000 16%, #000 90%, transparent), linear-gradient(180deg, #000 74%, transparent); mask-composite:intersect}
   @keyframes lnBar{from{transform:scaleX(0)} to{transform:scaleX(1)}}   /* transform, not width: the bars keep moving while the page is busy */
   /* big screens grow the text column and the filmstrip like the rest of the hub (the old menu zoomed 1.3 / 1.5 at the same sizes) */
   @media (min-width:1800px) and (min-height:1100px){ .ln-copy, .ln-strip, .ln-count{zoom:1.3} }
@@ -8178,6 +8195,8 @@
     .ln-strip{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); overflow:visible; padding-top:0}
     .ln-th{height:auto; aspect-ratio:2.1; transform:none !important}
     .ln-th:first-child{grid-column:1 / -1; aspect-ratio:4.4}   /* 11 tools in 2 columns: skill details takes the first row on its own */
+    .ln-th.is-main{height:auto}   /* phones: the banners size by width like every tile (a fixed height made the ratio set the width) */
+    .ln-th.is-main:first-child{aspect-ratio:3.6}
     .ln-th i{display:none}
     .ln-th span{font-size:14px; left:12px; bottom:10px}
     .ln-th img.is-portrait{object-position:50% 22%}
@@ -29541,7 +29560,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:21:50.197Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:31:28.905Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32880,7 +32899,9 @@ function mountLauncher(root){
     '<button type="button" class="ln-nav prev" aria-label="ก่อนหน้า">‹</button><button type="button" class="ln-nav next" aria-label="ถัดไป">›</button>' +
     '<section class="ln-copy"></section><div class="ln-art"></div></div>' +
     '<div class="ln-stripbar"><p class="ln-count" aria-hidden="true"></p><h2 class="ln-tools-h">เครื่องมือทั้งหมด</h2><nav class="ln-strip" aria-label="เครื่องมือทั้งหมด">' +
-    TOOLS.map((t, i) => { const a = thumbOf(t); return `<a class="ln-th" href="#${t.id}" data-i="${i}" style="--acc:${accentOf(t)}"><img class="is-${a.kind}" src="${a.src || ""}" alt="" decoding="async"><i></i><span>${t.shortTitle || t.title}</span></a>`; }).join("") +
+    TOOLS.map((t, i) => { const a = thumbOf(t), main = t.collage === "skills" || t.collage === "classStory";   // the two main tools get banners (filled once the frames are known)
+      const art = t.collage === "skills" ? '<div class="ln-mq"></div>' : t.collage === "classStory" ? '<div class="ln-thpng"></div><img class="ln-thpt" src="' + a.src + '" alt="">' : `<img class="is-${a.kind}" src="${a.src || ""}" alt="" decoding="async">`;
+      return `<a class="ln-th${main ? " is-main" : ""}" href="#${t.id}" data-i="${i}" style="--acc:${accentOf(t)}">${art}<i></i><span>${t.shortTitle || t.title}</span></a>`; }).join("") +
     '</nav></div><div class="ln-gsim" aria-hidden="true"><span class="rsim-cell"></span><span class="rsim-cell is-passive"></span></div>';
   if (typeof setInterval !== "function" || typeof matchMedia !== "function") return;   // the validator sandbox: markup only (no timers, no layout)
   const copy = root.querySelector(".ln-copy"), art = root.querySelector(".ln-art"), stage = root.querySelector(".ln-stage"), count = root.querySelector(".ln-count");
@@ -32898,12 +32919,12 @@ function mountLauncher(root){
   // ไกด์อาชีพ slide: newest guide first; each PNG renders once per visit (or again after a look change, the PNG follows the look)
   const guides = CLASS_GUIDES.map((g, k) => ({ g, id: classGuideId(g, k) })).filter(x => x.g && x.g.build && CLASS_STORY_ART[SKILL_SIM_NAMES[x.g.build.classKey]])
     .sort((a, b) => String(b.g.date || "").localeCompare(String(a.g.date || "")) || Number(b.id) - Number(a.id));
-  const pngs = new Map(); let gi = -1, guideTimer = 0;
+  const pngs = new Map(), readyPng = {}; let gi = -1, guideTimer = 0;
   const idle = fn => typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 300);
   const guidePng = x => { if (!pngs.has(x.id)) pngs.set(x.id, (async () => { try {
     const c = await classGuideRenderImage(classGuideNormalize(x.g), simBox), s = Math.min(1, 1280 / c.width), o = document.createElement("canvas");
     o.width = Math.round(c.width * s); o.height = Math.round(c.height * s); o.getContext("2d").drawImage(c, 0, 0, o.width, o.height);
-    const blob = await new Promise(r => o.toBlob(r, "image/webp", .86)); return blob ? URL.createObjectURL(blob) : null; } catch (e) { return null; } })()); return pngs.get(x.id); };
+    const blob = await new Promise(r => o.toBlob(r, "image/webp", .86)), url = blob ? URL.createObjectURL(blob) : null; if (url) readyPng[x.id] = url; return url; } catch (e) { return null; } })()); return pngs.get(x.id); };
   const showGuide = (box, fade) => {
     const x = guides[gi % guides.length]; if (!x) return;
     const paint = () => {
@@ -32939,6 +32960,8 @@ function mountLauncher(root){
   const cIcons = wallIcons.filter(k => simKind[k] && simKind[k].c);
   // each tile links to its skill card in skill details (user 2026-10-18); the name shows on hover. Mouse and touch only: the wall stays out of the tab order.
   const cardOfIcon = {}; SKILLS.forEach(c => { if (c.icon && !cardOfIcon[c.icon]) cardOfIcon[c.icon] = c; });
+  { const mq = root.querySelector(".ln-th.is-main .ln-mq");   // the skill details banner: a slow row of framed skill icons, twice for a seamless loop
+    if (mq) { const row = someIcons(12, wallIcons).map(k => '<div class="ln-mqi' + (simKind[k] && simKind[k].passive ? " is-passive" : "") + '"><img src="' + SKILL_ICONS[k] + '" alt=""></div>').join(""); mq.innerHTML = row + row; } }
   const skillNameOf = k => { const c = cardOfIcon[k]; return c ? String(c.name || c.nameTha || "").replace(/"/g, "&quot;") : ""; };
   const face = (k, cls) => '<span class="ln-face' + (simKind[k] && simKind[k].passive ? " is-passive" : "") + " " + cls + '"><img src="' + SKILL_ICONS[k] + '" alt=""></span>';
   const wallTiles = (cols, rows, bigs) => {
@@ -33026,7 +33049,7 @@ function mountLauncher(root){
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") { show(cur + (e.key === "ArrowRight" ? 1 : -1)); e.preventDefault(); }
     else if (e.key === "Enter" && !tg.closest("a, button")) location.hash = TOOLS[cur].id;
   });
-  new MutationObserver(() => { pngs.forEach(p => p.then(u => u && URL.revokeObjectURL(u))); pngs.clear(); const box = art.querySelector(".ln-g"); if (box) showGuide(box, false); })
+  new MutationObserver(() => { pngs.forEach(p => p.then(u => u && URL.revokeObjectURL(u))); pngs.clear(); for (const id in readyPng) delete readyPng[id]; const box = art.querySelector(".ln-g"); if (box) showGuide(box, false); })
     .observe(document.documentElement, { attributes: true, attributeFilter: ["data-sk-server"] });   // the PNG follows the look, so a look change re-renders it
   const hubBarEl = document.querySelector(".hub-bar");
   const refit = () => { if (hubBarEl) document.documentElement.style.setProperty("--hub-h", hubBarEl.offsetHeight + "px"); fitTitle(); };
@@ -33041,6 +33064,11 @@ function mountLauncher(root){
     for (let k = 1; k <= 2; k++) { const x = guides[(gi + k + guides.length) % guides.length]; if (!pngs.has(x.id)) { rendering = true; guidePng(x).then(() => { rendering = false; }); return; } }
   };
   setInterval(() => idle(pump), 700);
+  // the ไกด์อาชีพ banner: a guide image that is already rendered pans slowly behind that guide's class portrait; a new one every 3.5 s
+  { const png = root.querySelector(".ln-th.is-main .ln-thpng"); if (png) { const pt = png.parentElement.querySelector(".ln-thpt"); let ti = -1;
+    setInterval(() => { if (viewMenu.hidden) return; const ready = guides.filter(x => readyPng[x.id]); if (!ready.length || (ready.length === 1 && ti === 0)) return;
+      ti = (ti + 1) % ready.length; const x = ready[ti]; png.classList.add("is-out"); pt.classList.add("is-out");
+      setTimeout(() => { png.style.backgroundImage = "url('" + readyPng[x.id] + "')"; pt.src = storyOf(SKILL_SIM_NAMES[x.g.build.classKey]); png.classList.remove("is-out"); pt.classList.remove("is-out"); }, 450); }, 3500); } }
   show(0); refit();
 }
 mountLauncher($("#launch"));
@@ -33058,6 +33086,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T07:31:29.081Z","feat(bible): hub menu's รายละเอียดสกิล and ไกด์อาชีพ thumbs are larger banners (scrolling framed skill icons / a real guide image with its class portrait); every class portrait on the menu fades its cut edges"],
     ["2026-10-18T07:21:50.373Z","feat(bible): every skill on the hub menu's skill wall opens that skill in รายละเอียดสกิล (name on hover; the skill under the cursor stops swapping)"],
     ["2026-10-18T07:13:31.376Z","fix(bible): hub menu skill wall shows each skill in the game's own wood or iron frame (no box or gold ring), and a few Class C skills take a big 2 x 2 spot"],
     ["2026-10-18T07:06:59.118Z","fix(bible): hub menu skill wall icons now swap with a clean card flip; the wall tilts toward the cursor even more gently and its tiles sit at nearly the same depth"],
