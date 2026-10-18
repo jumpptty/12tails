@@ -4258,6 +4258,13 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   }
   if (!blurHits) console.log("Verified no popup backdrop-filter blur.");
 }
+// Font ban (user 2026-10-18: "Prompt looks better in all places"): the angular Chakra Petch was replaced by Prompt everywhere and must not come back.
+// Old changelog entries ("[<ISO date>", ...) may still name it; they are history.
+{
+  const fontHits = html.split(/\r?\n/).filter(ln => !/^\s*\["\d{4}-\d\d-\d\dT/.test(ln) && /Chakra[ +]Petch/i.test(ln));
+  for (const ln of fontHits) { console.error(`[FONT BAN ERROR] Chakra Petch is banned, use Prompt (12t_projects/bible/CLAUDE.md §2): ${ln.trim().slice(0, 140)}`); errorCount++; }
+  if (!fontHits.length) console.log("Verified no Chakra Petch (font ban).");
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);

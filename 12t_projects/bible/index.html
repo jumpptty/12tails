@@ -58,7 +58,7 @@
 </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,600;1,700&family=Kanit:wght@300;400;500&family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,600;1,700&family=Sarabun:wght@300;400;500&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
 <script data-goatcounter="https://jumpptty.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
@@ -1902,7 +1902,7 @@
   .cg-prose > .cg-para{display:block;break-inside:avoid}   /* a line of the guide view's description: columns and pages break between them (user 2026-10-18) */
   .cg-prose > .cg-para.is-head{break-after:avoid}   /* a heading line ends no column or page */
   .cg-note-editor,.cg-transfer{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:20px;margin:18px 0}
-  .cg-note-editor h3,.cg-transfer h3{margin:0 0 12px;color:var(--gold);font-family:"Chakra Petch",sans-serif}
+  .cg-note-editor h3,.cg-transfer h3{margin:0 0 12px;color:var(--gold);font-family:'Prompt',sans-serif}
   .cg-import-dialog{width:min(460px,calc(100vw - 40px));box-sizing:border-box;margin:auto;padding:24px;color:var(--text);font:inherit}
   .cg-import-dialog::backdrop{background:#090807b8}
   .cg-import-dialog .cg-help{margin:0}
@@ -2249,8 +2249,8 @@
   .cg-page[data-mode="author"] .rsim-pick{display:none}   /* server and class are chosen in step 1 (user 2026-10-17) */
   .rsim .cls-picker-thumb{width:32px; height:32px}
   .rsim-ex-pool[hidden]{display:none;}
-.rsim-ex-heading{color:var(--gold);font-family:"Chakra Petch",sans-serif;font-size:13px;border-top:1px solid var(--line);padding-top:8px;margin-top:4px;}
-.rsim-placeholder{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:24px "Chakra Petch",sans-serif;pointer-events:none;}
+.rsim-ex-heading{color:var(--gold);font-family:'Prompt',sans-serif;font-size:13px;border-top:1px solid var(--line);padding-top:8px;margin-top:4px;}
+.rsim-placeholder{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:24px 'Prompt',sans-serif;pointer-events:none;}
 .rsim-cell img[hidden]{display:none;}
 .rsim.locked .rsim-trees{visibility:hidden}
   #simServerGate .sg-gate-card{max-width:760px}
@@ -2762,12 +2762,12 @@
   .sk-class-badge-img{width:56px; height:56px; flex:none; object-fit:contain; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6))}
   .sk-class-badge-text{display:flex; flex-direction:column; min-width:0; line-height:1.25}
   .sk-class-badge-name{
-    font-family:'Chakra Petch', 'Prompt', sans-serif; font-size:15px; font-weight:700;
+    font-family:'Prompt', sans-serif; font-size:15px; font-weight:700;
     color:#ede8df; letter-spacing:0.6px; text-transform:uppercase; text-shadow:0 1px 2px rgba(0,0,0,0.5);
   }
   .sk-class-badge-name:empty{display:none}
   /* One line: Thai has no spaces, so a wrap would split a word mid-way ("...ของ / คุณ"). */
-  .sk-class-badge-sub{font-family:'Prompt', 'Chakra Petch', sans-serif; font-size:10.5px; color:#b3a898; white-space:nowrap}
+  .sk-class-badge-sub{font-family:'Prompt', sans-serif; font-size:10.5px; color:#b3a898; white-space:nowrap}
   @media (max-height: 820px){
     .sk-class-badge{gap:8px; padding:5px 12px 5px 8px; margin-bottom:6px}
     .sk-class-badge-img{width:40px; height:40px}
@@ -2781,14 +2781,14 @@
   }
   .sk-controls > div{text-align:center}
   .sk-controls label{
-    display:block; font-family:'Chakra Petch', 'Prompt', sans-serif;
+    display:block; font-family:'Prompt', sans-serif;
     font-size:11px; font-weight:600; color:#b3a898; margin:0 0 4px;
     letter-spacing:0.8px; text-transform:uppercase; text-shadow:0 1px 2px rgba(0,0,0,0.5);
   }
   .sk-controls input[type=number]{
     width:calc(5ch + 20px); background:rgba(12,11,9,0.85); color:#ede8df;
     border:1px solid rgba(212,175,55,0.25); border-radius:4px; padding:5px 4px;
-    font-size:15px; font-weight:600; font-family:'JetBrains Mono', 'Chakra Petch', monospace;
+    font-size:15px; font-weight:600; font-family:'JetBrains Mono', 'Prompt', monospace;
     letter-spacing:0.5px; outline:none; text-align:center;
     box-shadow:inset 0 1px 4px rgba(0,0,0,0.6);
     transition:border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
@@ -2905,7 +2905,7 @@
   }
   .sk-enemystat-controls .sk-controls, .sk-enemystat-controls .sk-class-badge{margin-bottom:0}
   .sk-enemystat-controls label{
-    font-family:'Chakra Petch', 'Prompt', sans-serif;
+    font-family:'Prompt', sans-serif;
     color:#ef5350; font-weight:600; letter-spacing:0.8px;
     text-shadow:0 0 6px rgba(239,68,68,0.3);
   }
@@ -3113,10 +3113,10 @@
   .mon-races button{ font:inherit; font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); cursor:pointer; }
   .mon-races button.active{ border-color:var(--gold); color:var(--gold); font-weight:700; }
   .mon-wrap{ overflow:auto; max-height:calc(100vh - 250px); min-height:240px; border:1px solid var(--line); border-radius:4px; background:var(--panel); }
-  .mon-table{ border-collapse:separate; border-spacing:0; width:100%; font-size:12.5px; line-height:1.3; font-family:'Chakra Petch','Prompt',system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+  .mon-table{ border-collapse:separate; border-spacing:0; width:100%; font-size:12.5px; line-height:1.3; font-family:'Prompt',system-ui,sans-serif; font-variant-numeric:tabular-nums; }
   .mon-table td:not(:first-child):not(.mon-race):not(.mon-src){ font-family:'JetBrains Mono',ui-monospace,Consolas,monospace; font-size:11.5px; font-weight:500; }
   .mon-table th{ letter-spacing:.3px; }
-  .mon-search, .mon-races button{ font-family:'Chakra Petch','Prompt',system-ui,sans-serif; }
+  .mon-search, .mon-races button{ font-family:'Prompt',system-ui,sans-serif; }
   .mon-table th, .mon-table td{ padding:3px 7px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
   .mon-table th{ position:sticky; top:0; z-index:2; background:var(--panel); color:var(--muted); font-weight:700; cursor:pointer; user-select:none; }
   .mon-table th.sorted{ color:var(--gold); }
@@ -3173,24 +3173,24 @@
   .bg-tab-sigil{ flex:0 0 40px; height:40px; display:grid; place-items:center; border-radius:50%; border:1px solid var(--line); color:var(--gold); }
   .bg-tab-sigil svg{ width:28px; height:28px; }
   .bg-tab-text{ display:flex; flex-direction:column; min-width:0; }
-  .bg-tab-name{ font:600 15px/1.2 'Chakra Petch','Prompt',sans-serif; letter-spacing:.06em; text-transform:uppercase; }
+  .bg-tab-name{ font:600 15px/1.2 'Prompt',sans-serif; letter-spacing:.06em; text-transform:uppercase; }
   .bg-tab-where{ font-size:12px; color:var(--muted); }
 
   /* hero: identity + stats on the left, range map on the right */
   .bg-hero{ display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, .95fr); gap:22px; align-items:start; padding:18px 18px 16px; border:1px solid var(--line); border-radius:6px; background:linear-gradient(135deg, var(--bg-acc-soft), transparent 55%), var(--panel); }
   @media (max-width:860px){ .bg-hero{ grid-template-columns:1fr; } }
   .bg-eyebrow{ margin:0 0 6px; font:500 11px/1.3 'JetBrains Mono',monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--bg-acc); }
-  .bg-name{ margin:0; font:600 clamp(30px, 5.2vw, 48px)/1 'Chakra Petch',sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--text); }
+  .bg-name{ margin:0; font:600 clamp(30px, 5.2vw, 48px)/1 'Prompt',sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--text); }
   .bg-name-th{ margin:6px 0 14px; font:400 15px/1.3 'Kanit','Prompt',sans-serif; color:var(--muted); }
   .bg-stats{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
   .bg-stat{ display:flex; flex-direction:column; gap:2px; padding:6px 9px; background:var(--panel); }
-  .bg-stat span{ font:600 10px/1 'Chakra Petch',sans-serif; letter-spacing:.12em; color:var(--muted); }
+  .bg-stat span{ font:600 10px/1 'Prompt',sans-serif; letter-spacing:.12em; color:var(--muted); }
   .bg-stat b{ font:600 15px/1.15 'JetBrains Mono',monospace; color:var(--text); font-variant-numeric:tabular-nums; }
   .bg-stat.c-hp b{ color:var(--stat-hp); } .bg-stat.c-atk b{ color:var(--stat-atk); } .bg-stat.c-def b{ color:var(--stat-def); }
   .bg-stat.c-tal b{ color:var(--stat-tal); } .bg-stat.c-cha b{ color:var(--stat-cha); } .bg-stat.c-lck b{ color:var(--stat-lck); }
   .bg-armor{ margin:10px 0 0; font-size:13px; }
   .bg-immune{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin:10px 0 0; font-size:12px; }
-  .bg-label{ font:600 10.5px/1 'Chakra Petch','Prompt',sans-serif; letter-spacing:.1em; color:var(--muted); margin-right:4px; }
+  .bg-label{ font:600 10.5px/1 'Prompt',sans-serif; letter-spacing:.1em; color:var(--muted); margin-right:4px; }
   .bg-chip{ padding:1px 7px; border-radius:999px; border:1px dashed var(--line); color:var(--muted); font:500 11px/1.5 'JetBrains Mono',monospace; text-decoration:line-through; text-decoration-color:var(--bg-acc-line); }
   .bg-none{ color:var(--muted); }
 
@@ -3199,7 +3199,7 @@
   .bg-hp-track{ position:relative; height:12px; border-radius:6px; margin:calc(var(--rows) * 16px + 6px) 0 4px; background:linear-gradient(90deg, var(--bg-acc) 0%, var(--bg-acc-soft) 100%); border:1px solid var(--bg-acc-line); }
   .bg-hp-mark{ position:absolute; top:calc(var(--rows) * -16px - 6px); bottom:-2px; width:0; }
   .bg-hp-mark i{ position:absolute; left:-1px; top:calc(var(--r) * 16px + 7px); bottom:0; width:2px; background:var(--text); }
-  .bg-hp-mark em{ position:absolute; top:calc(var(--r) * 16px); right:5px; white-space:nowrap; font:600 11px/14px 'Chakra Petch',sans-serif; font-style:normal; color:var(--text); }
+  .bg-hp-mark em{ position:absolute; top:calc(var(--r) * 16px); right:5px; white-space:nowrap; font:600 11px/14px 'Prompt',sans-serif; font-style:normal; color:var(--text); }
 
   .bg-hp-mark em small{ font:500 10px/14px 'JetBrains Mono',monospace; color:var(--muted); }
   .bg-hp-legend{ display:flex; justify-content:space-between; gap:8px; font-size:11px; color:var(--muted); }
@@ -3240,7 +3240,7 @@
   .bg-rung{ flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; text-align:left; font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:6px 10px; cursor:pointer; transition:border-color .15s, background .15s; }
   .bg-rung:focus-visible, .bg-move:focus-visible{ outline:2px solid var(--bg-acc); outline-offset:2px; }
   .bg-rung.lit, .bg-move.lit{ border-color:var(--bg-acc); background:linear-gradient(var(--bg-acc-soft), var(--bg-acc-soft)), var(--panel); }
-  .bg-rung-name{ font:600 13.5px/1.2 'Chakra Petch','Prompt',sans-serif; letter-spacing:.03em; min-width:110px; }
+  .bg-rung-name{ font:600 13.5px/1.2 'Prompt',sans-serif; letter-spacing:.03em; min-width:110px; }
   .bg-rung-when{ display:flex; flex-wrap:wrap; gap:4px; flex:1; }
   .bg-cond{ font-size:11.5px; padding:1px 7px; border-radius:3px; background:var(--panel-2, rgba(127,127,127,.1)); color:var(--text); white-space:nowrap; }
   .bg-rung-cd{ font:500 11px/1.2 'JetBrains Mono',monospace; color:var(--muted); white-space:nowrap; }
@@ -3250,13 +3250,13 @@
   .bg-move{ border:1px solid var(--line); border-left:3px solid var(--bg-acc-line); border-radius:4px; background:var(--panel); padding:10px 12px 12px; cursor:pointer; transition:border-color .15s, background .15s; }
   .bg-move.bg-k-purple{ border-left-style:dashed; }
   .bg-move header{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; }
-  .bg-move h4{ margin:0; font:600 15px/1.2 'Chakra Petch',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:var(--text); }
+  .bg-move h4{ margin:0; font:600 15px/1.2 'Prompt',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:var(--text); }
   .bg-move-th{ font:400 13px/1.2 'Kanit','Prompt',sans-serif; color:var(--muted); }
   .bg-danger{ order:3; margin-left:auto; color:var(--bg-acc); font-size:10px; letter-spacing:2px; }
   .bg-danger-off{ color:var(--line); }
   .bg-nums{ display:grid; grid-template-columns:1.5fr .8fr .9fr; gap:6px; margin:8px 0 6px; }
   .bg-nums div{ min-width:0; }
-  .bg-nums dt{ font:600 10px/1.2 'Chakra Petch','Prompt',sans-serif; letter-spacing:.08em; color:var(--muted); }
+  .bg-nums dt{ font:600 10px/1.2 'Prompt',sans-serif; letter-spacing:.08em; color:var(--muted); }
   .bg-nums dd{ margin:1px 0 0; font:600 13.5px/1.25 'JetBrains Mono',monospace; color:var(--text); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
   .bg-move.bg-k-purple .bg-nums dd:first-child{ color:var(--bg-acc); }
   .bg-formula{ margin:0 0 6px; font:500 11px/1.3 'JetBrains Mono',monospace; color:var(--muted); }
@@ -3290,7 +3290,7 @@
   .bg-sub{ margin:0 0 8px; font:600 14px/1.2 'Kanit','Prompt',sans-serif; color:var(--bg-acc); }
   .bg-ship-body .bg-sub:not(:first-child){ margin-top:16px; }
   .bg-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
-  .bg-tbl th{ text-align:left; font:600 10.5px/1.2 'Chakra Petch','Prompt',sans-serif; letter-spacing:.06em; color:var(--muted); padding:4px 8px; border-bottom:1px solid var(--line); }
+  .bg-tbl th{ text-align:left; font:600 10.5px/1.2 'Prompt',sans-serif; letter-spacing:.06em; color:var(--muted); padding:4px 8px; border-bottom:1px solid var(--line); }
   .bg-tbl td{ padding:5px 8px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
   .bg-tbl td:first-child b{ font-family:'JetBrains Mono',monospace; color:var(--gold); }
   .bg-tbl tr[data-cannon]{ cursor:default; transition:background .15s; }
@@ -3306,7 +3306,7 @@
   .bg-exp{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1px; margin:0; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
   @media (max-width:560px){ .bg-exp{ grid-template-columns:1fr; } .bg-fall b{ font-size:12.5px; } }
   .bg-exp div{ padding:6px 9px; background:var(--panel); }
-  .bg-exp dt{ font:600 10px/1.2 'Chakra Petch','Prompt',sans-serif; letter-spacing:.08em; color:var(--muted); }
+  .bg-exp dt{ font:600 10px/1.2 'Prompt',sans-serif; letter-spacing:.08em; color:var(--muted); }
   .bg-exp dd{ margin:2px 0 0; font:600 14px/1.2 'JetBrains Mono',monospace; color:var(--text); font-variant-numeric:tabular-nums; }
   .bg-saw-box{ margin:18px 0 0; padding:12px 14px 14px; border:1px solid var(--line); border-left:3px solid var(--stat-atk, #c0392b); border-radius:4px; background:var(--panel); }
   .bg-steps{ margin:0 0 12px; padding-left:20px; font-size:13px; line-height:1.55; color:var(--muted); }
@@ -4886,9 +4886,9 @@
      procLabel's own comment in revealMultiHit), so a name that only meant
      "frost" was itself part of the mistake worth cleaning up, not just the
      text inside it. */
-  /* Outlined popup text (user 2026-10-09, picked from five layouts): italic Chakra Petch, dark outline (paint-order keeps the fill whole) and a two-layer glow in the status colour,
+  /* Outlined popup text (user 2026-10-09, picked from five layouts; Prompt since 2026-10-18, the angular font is banned): italic Prompt, dark outline (paint-order keeps the fill whole) and a two-layer glow in the status colour,
      raised and tilted beside the digits like a game callout. One colour per status; the old label used the INT token (pink), so frost and crit looked the same. */
-  .sk-multihit-proc{--c:var(--gold); margin-left:3px; align-self:flex-start; transform:translateY(-3px) rotate(-4deg); transform-origin:left bottom; font:italic 700 12.5px 'Chakra Petch','Prompt',sans-serif; letter-spacing:.02em; color:var(--c); white-space:nowrap; -webkit-text-stroke:3px #120c09; paint-order:stroke fill; text-shadow:0 0 5px var(--c), 0 0 12px color-mix(in srgb, var(--c) 75%, transparent)}
+  .sk-multihit-proc{--c:var(--gold); margin-left:3px; align-self:flex-start; transform:translateY(-3px) rotate(-4deg); transform-origin:left bottom; font:italic 700 12.5px 'Prompt',sans-serif; letter-spacing:.02em; color:var(--c); white-space:nowrap; -webkit-text-stroke:3px #120c09; paint-order:stroke fill; text-shadow:0 0 5px var(--c), 0 0 12px color-mix(in srgb, var(--c) 75%, transparent)}
   .sk-multihit-total .sk-multihit-proc{font-size:17px; margin-left:5px; -webkit-text-stroke-width:3.5px}
   .sk-multihit-proc-frost{--c:#7dd3fc} .sk-multihit-proc-crit{--c:#fb923c} .sk-multihit-proc-multicast{--c:#c084fc} .sk-multihit-proc-miss{--c:#8b7d6b} .sk-multihit-proc-dist{--c:#b0a189}
   /* Per-status proc color (2026-08-21, user-requested: "paralysis yellow
@@ -4998,7 +4998,7 @@
   }
   /* Stat presets (2026-10-05): PRESET n button in the player badge opens a 5-card window; see the bible-skill-page-ui skill. */
   .sk-preset-open{align-self:flex-start; max-width:100%; overflow:hidden; text-overflow:ellipsis; margin-top:2px; padding:2px 8px; border-radius:4px; cursor:pointer; white-space:nowrap;
-    font:700 10.5px 'Chakra Petch','Prompt',sans-serif; letter-spacing:.8px; color:#141311; background:var(--gold); border:1px solid var(--gold);
+    font:700 10.5px 'Prompt',sans-serif; letter-spacing:.8px; color:#141311; background:var(--gold); border:1px solid var(--gold);
     box-shadow:0 0 6px rgba(212,175,55,.35); transition:filter .15s ease, box-shadow .15s ease}
   .sk-preset-open:hover{filter:brightness(1.12); box-shadow:0 0 10px rgba(212,175,55,.55)}
   .sk-preset-win{position:relative; z-index:999999; width:min(1120px, calc(100vw - 32px)); max-height:calc(100vh - 40px); overflow:auto; box-sizing:border-box;
@@ -5006,7 +5006,7 @@
     box-shadow:0 30px 90px rgba(0,0,0,0.95), 0 0 50px rgba(212,175,55,0.32); color:#ede8df; font-family:'Prompt',sans-serif;
     animation:skServerPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards}
   .sk-preset-win-head{display:flex; align-items:center; gap:12px; margin:0 0 16px}
-  .sk-preset-win-title{margin:0; font:700 20px 'Chakra Petch','Prompt',sans-serif; letter-spacing:1px; color:#f1e6c8}
+  .sk-preset-win-title{margin:0; font:700 20px 'Prompt',sans-serif; letter-spacing:1px; color:#f1e6c8}
   .sk-preset-win-x{margin-left:auto; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; flex:none; border-radius:6px; cursor:pointer; font-size:20px; line-height:1; color:#d8cfbd; background:transparent; border:1px solid rgba(212,175,55,.35)}
   .sk-preset-cards{display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:12px}
   .sk-preset-card{display:flex; flex-direction:column; gap:8px; min-width:0; padding:10px; border-radius:10px; background:rgba(255,255,255,.03); border:1px solid rgba(212,175,55,.2)}
@@ -5021,7 +5021,7 @@
   .sk-preset-card-art img{position:absolute; left:50%; bottom:0; height:100%; width:auto; transform:translateX(-50%); transition:transform .2s ease}
   .sk-preset-card-art:hover img{transform:translateX(-50%) scale(1.05)}
   .sk-preset-card.is-empty:not(.is-active) .sk-preset-card-art img{filter:brightness(.62) saturate(.8)}
-  .sk-preset-card-no{position:absolute; left:6px; top:6px; padding:1px 6px; border-radius:4px; font:700 11px 'Chakra Petch',sans-serif; letter-spacing:.8px; color:#141311; background:var(--gold)}
+  .sk-preset-card-no{position:absolute; left:6px; top:6px; padding:1px 6px; border-radius:4px; font:700 11px 'Prompt',sans-serif; letter-spacing:.8px; color:#141311; background:var(--gold)}
   .sk-preset-card-on{position:absolute; right:6px; top:6px; padding:1px 6px; border-radius:4px; font:600 10.5px 'Prompt',sans-serif; color:#141311; background:#4ade80}
   .sk-preset-card-name, .sk-preset-card-desc{width:100%; box-sizing:border-box; color:#ede8df; background:rgba(12,11,9,.85); border:1px solid rgba(212,175,55,.25); border-radius:5px; font-family:'Prompt',sans-serif; outline:none}
   .sk-preset-card-name{padding:6px 8px; font-size:14px; font-weight:600}
@@ -5100,7 +5100,7 @@
     position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
     padding:9px 12px 9px 10px; cursor:pointer; background:var(--bd-bg); color:var(--bd-label);
     border:1px solid var(--bd-edge); border-left:3px solid var(--bd-accent); border-radius:6px; box-shadow:var(--bd-shadow);
-    font-family:'Chakra Petch', 'Prompt', sans-serif; font-size:13px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+    font-family:'Prompt', sans-serif; font-size:13px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
     text-shadow:0 1px 2px rgba(0,0,0,0.5);
     transition:border-color .15s ease, color .15s ease, box-shadow .15s ease;
   }
@@ -5149,7 +5149,7 @@
     zoom:.8; width:100%; max-width:640px; max-height:calc((100vh - 32px) / .8); overflow:auto;
     background:var(--bd-bg), #14130f; border:1px solid var(--bd-edge); border-left:3px solid var(--bd-accent); border-radius:6px;
     box-shadow:var(--bd-shadow), 0 20px 60px rgba(0,0,0,0.6); padding:18px 20px 20px; display:flex; flex-direction:column; gap:18px;
-    font-family:'Chakra Petch', 'Prompt', sans-serif;
+    font-family:'Prompt', sans-serif;
   }
   .sk-bd-head{display:flex; align-items:center; gap:10px}
   .sk-bd-head svg{width:24px; height:24px; fill:color-mix(in srgb, var(--bd-accent) 35%, transparent); stroke:var(--bd-accent); stroke-width:2; stroke-linejoin:round}
@@ -5158,7 +5158,7 @@
   .sk-bd-close:hover{color:var(--bd-title)}
   .sk-bd-sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:8px}
   .sk-bd-sec-title{font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--bd-label)}
-  .sk-bd-readout{font-size:18px; font-weight:700; color:#ede8df; font-family:'JetBrains Mono', 'Chakra Petch', monospace; font-variant-numeric:tabular-nums}
+  .sk-bd-readout{font-size:18px; font-weight:700; color:#ede8df; font-family:'JetBrains Mono', 'Prompt', monospace; font-variant-numeric:tabular-nums}
   .sk-bd-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:8px}
   .sk-bd-item{
     display:flex; align-items:center; gap:12px; text-align:left; padding:10px 12px; cursor:pointer;
@@ -5173,7 +5173,7 @@
   .sk-bd-item.on img{filter:none; opacity:1}
   .sk-bd-item-text{display:flex; flex-direction:column; gap:2px; min-width:0}
   .sk-bd-item-name{font-size:13px; font-weight:700; line-height:1.25; letter-spacing:.3px}
-  .sk-bd-item-desc{font-size:12px; font-weight:600; color:var(--bd-accent); font-family:'JetBrains Mono', 'Chakra Petch', monospace; font-variant-numeric:tabular-nums; opacity:.7}
+  .sk-bd-item-desc{font-size:12px; font-weight:600; color:var(--bd-accent); font-family:'JetBrains Mono', 'Prompt', monospace; font-variant-numeric:tabular-nums; opacity:.7}
   .sk-bd-item.on .sk-bd-item-desc{opacity:1}
   .sk-bd-item-tag{margin-left:auto; flex:none; align-self:flex-start; font-size:9px; font-weight:700; letter-spacing:.6px; color:var(--bd-label); opacity:.7}
   .sk-bd-item.on .sk-bd-item-tag{color:var(--bd-accent); opacity:1}
@@ -5184,7 +5184,7 @@
   .sk-bd-pips .sk-pip:hover{transform:scale(1.25); border-color:var(--bd-accent); opacity:1}
   /* Custom buffs/debuffs (2026-09-20): add button, rows with edit/delete, inline form. */
   .sk-bd-sec-left{display:flex; align-items:baseline; gap:10px}
-  .sk-bd-add{border:1px solid var(--bd-edge); background:transparent; color:var(--bd-accent); font:600 10px 'Chakra Petch', 'Prompt', sans-serif; letter-spacing:.6px; text-transform:uppercase; padding:1px 8px; border-radius:4px; cursor:pointer}
+  .sk-bd-add{border:1px solid var(--bd-edge); background:transparent; color:var(--bd-accent); font:600 10px 'Prompt', sans-serif; letter-spacing:.6px; text-transform:uppercase; padding:1px 8px; border-radius:4px; cursor:pointer}
   .sk-bd-add:hover{border-color:var(--bd-accent); color:var(--bd-title)}
   .sk-bd-citem{position:relative; display:flex}
   .sk-bd-citem .sk-bd-item{flex:1; min-width:0}
@@ -5195,7 +5195,7 @@
   .sk-bd-cact button{border:none; background:none; color:var(--bd-label); font-size:14px; line-height:1; padding:2px 5px; cursor:pointer; opacity:.7}
   .sk-bd-cact button:hover{color:var(--bd-title); opacity:1}
   .sk-bd-form{grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px; border:1px dashed var(--bd-edge); border-radius:6px}
-  .sk-bd-in{background:rgba(12,11,9,0.85); color:#ede8df; border:1px solid var(--bd-edge); border-radius:4px; padding:5px 6px; font:600 12px 'Chakra Petch', 'Prompt', sans-serif; min-width:0}
+  .sk-bd-in{background:rgba(12,11,9,0.85); color:#ede8df; border:1px solid var(--bd-edge); border-radius:4px; padding:5px 6px; font:600 12px 'Prompt', sans-serif; min-width:0}
   .sk-bd-in:focus{outline:none; border-color:var(--bd-accent)}
   /* Custom stat picker: every option bold, each main stat in its signature accent, ALL in gold */
   .sk-bd-stat-sel, .sk-bd-stat-sel option{font-weight:800}
@@ -5210,7 +5210,7 @@
   .sk-bd-stat-sel option[value=lck], .sk-bd-stat-sel[data-stat=lck]{color:var(--stat-lck)}
   .sk-bd-in-name{flex:1 1 120px}
   .sk-bd-in-val{width:84px}
-  .sk-bd-fbtn{border:1px solid var(--bd-edge); background:transparent; color:var(--bd-label); font:700 11px 'Chakra Petch', 'Prompt', sans-serif; letter-spacing:.5px; text-transform:uppercase; padding:5px 10px; border-radius:4px; cursor:pointer}
+  .sk-bd-fbtn{border:1px solid var(--bd-edge); background:transparent; color:var(--bd-label); font:700 11px 'Prompt', sans-serif; letter-spacing:.5px; text-transform:uppercase; padding:5px 10px; border-radius:4px; cursor:pointer}
   .sk-bd-fbtn.is-primary{background:var(--bd-accent); border-color:var(--bd-accent); color:#14130f}
   .sk-bd-err{flex-basis:100%; color:#ff8a80; font-size:11px; font-weight:600}
   .sk-bd-empty{grid-column:1 / -1; margin:0; font-size:12px; color:var(--bd-label); opacity:.8}
@@ -29082,7 +29082,7 @@ function mountGoldenKingBugMap(root){
 .gkb-wrap .strat .strat-row.idle .who, .gkb-wrap .strat .strat-row.idle .what{color:rgba(242,234,217,0.5)}
 .gkb-wrap .strat .strat-row.idle .what{font-size:17px}
 .gkb-wrap .strat .strat-hint{margin:6px 10px 4px; font-size:14px; line-height:1.4; color:rgba(242,234,217,0.55)}
-.gkb-wrap .strat .sim-head{display:flex; justify-content:space-between; align-items:center; padding:0 2px; font-size:15px; color:#f0c860; font-family:'Chakra Petch','Prompt',sans-serif; font-weight:700}
+.gkb-wrap .strat .sim-head{display:flex; justify-content:space-between; align-items:center; padding:0 2px; font-size:15px; color:#f0c860; font-family:'Prompt',sans-serif; font-weight:700}
 .gkb-wrap .strat .sim-head + .sim-top{margin-top:10px}
 .gkb-wrap .strat .sim-head .sim-time{font-size:14px}
 .gkb-wrap .strat .strat-skip{margin:2px 10px 12px; padding-top:10px; border-top:1px solid rgba(242,234,217,0.12); font-size:14px; color:rgba(242,234,217,0.55)}
@@ -29099,13 +29099,13 @@ function mountGoldenKingBugMap(root){
 .gkb-wrap .strat .sim-line > span{width:64px; flex:none; font-size:14px; color:rgba(242,234,217,0.6)}
 .gkb-wrap .strat .sim-line button{flex:1; min-width:0}
 .gkb-wrap .strat .sim-status{font-size:14px; line-height:1.4; color:#f2ead9; margin-top:2px}
-.gkb-wrap .strat h3, .gkb-wrap .strat .strat-n button, .gkb-wrap .strat .strat-row .who, .gkb-wrap .strat .strat-row .step b, .gkb-wrap .strat .strat-sim button{font-family:'Chakra Petch','Prompt',sans-serif}
-.gkb-wrap .strat .strat-row .step i, .gkb-wrap .strat .sim-time{font-family:'JetBrains Mono','Chakra Petch',monospace}
+.gkb-wrap .strat h3, .gkb-wrap .strat .strat-n button, .gkb-wrap .strat .strat-row .who, .gkb-wrap .strat .strat-row .step b, .gkb-wrap .strat .strat-sim button{font-family:'Prompt',sans-serif}
+.gkb-wrap .strat .strat-row .step i, .gkb-wrap .strat .sim-time{font-family:'JetBrains Mono','Prompt',monospace}
 .gkb-wrap .strat{flex:none; width:340px}
 @media (max-width:760px){ .gkb-wrap{flex-direction:column; height:auto} .gkb-vp{flex:none; height:56vh} .gkb-wrap .strat{width:auto; border-left:0; border-top:1px solid rgba(242,234,217,0.16)} }
 .gkb-msg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(242,234,217,0.6); font:13px -apple-system,'Segoe UI','Prompt',system-ui,sans-serif; letter-spacing:.04em}
 .gkb-hint{position:absolute; left:14px; bottom:12px; font:13px -apple-system,'Segoe UI','Prompt',system-ui,sans-serif; letter-spacing:.03em; color:rgba(242,234,217,0.55); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); z-index:2}
-.gkb-vp .pin-label{position:absolute; transform:translate(-50%,-100%); display:flex; align-items:center; gap:5px; padding:5px 11px 5px 8px; border-radius:2px; background:rgba(13,11,9,0.82); border:1px solid rgba(209,165,60,0.55); font:700 16px 'Chakra Petch','Prompt',sans-serif; color:#f5eeda; white-space:nowrap; pointer-events:none; transition:opacity 120ms ease; z-index:2}
+.gkb-vp .pin-label{position:absolute; transform:translate(-50%,-100%); display:flex; align-items:center; gap:5px; padding:5px 11px 5px 8px; border-radius:2px; background:rgba(13,11,9,0.82); border:1px solid rgba(209,165,60,0.55); font:700 16px 'Prompt',sans-serif; color:#f5eeda; white-space:nowrap; pointer-events:none; transition:opacity 120ms ease; z-index:2}
 .gkb-vp .pin-label .dot{width:9px; height:9px; border-radius:50%; background:#f0c860; flex:none}
 .gkb-vp .pin-label.is-active{border-color:#f0c860; background:rgba(209,165,60,0.85); color:#14120f}
 .gkb-vp .pin-label.is-active .dot{background:#14120f}
@@ -32855,6 +32855,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T02:55:04.571Z","style(bible): Prompt replaces the angular Chakra Petch font everywhere (skill details, damage popups, monster stats, boss guide, class guides and the spawn map); the validator bans it"],
     ["2026-10-18T02:00:14.484Z","fix(bible): gallery card titles are gold and full size again (the word-wrap fix had turned them into small grey text)"],
     ["2026-10-17T18:38:54.506Z","feat(bible): class guide #30 TTO Whale ขี่คลื่นบรื้นๆ by DeetZ"],
     ["2026-10-17T18:29:57.538Z","feat(bible): class guide #29 replaced with its author's new version (Homing Wand and the dungeon video moved above the recommended stats)"],
