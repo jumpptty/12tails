@@ -5595,6 +5595,35 @@
   .sk-stats-panel .sk-controls > div:not([class*="sk-stat-glow-"]):not(:empty){opacity:.42; transition:opacity .15s ease}
   .sk-stats-panel .sk-controls > div:not([class*="sk-stat-glow-"]):hover,
   .sk-stats-panel .sk-controls > div:focus-within{opacity:1}
+  /* Stat dials (user 2026-10-18): both stat panels lose their box, and every stat is a ring with the number inside and
+     its name under it, like the class guide's stat dials. A stat the skill reads (.sk-stat-glow-*) gets a ring in its
+     colour and a white number; the others keep a faint ring (and fade, above). Enemy rings are tinted red so the two
+     sets stay apart without their panels. The buff / debuff bonus (.sk-stat-bonus, absolute under its wrapper) hangs
+     under the name. fitStatDials() shrinks a number longer than 3 digits so it stays inside its ring. */
+  .sk-stats-panel .sk-controls{background:none; border:0; border-radius:0; box-shadow:none; padding:2px 0 22px}
+  .sk-stats-panel .sk-controls > div{display:flex; flex-direction:column; align-items:center; gap:5px}
+  .sk-stats-panel .sk-controls label{order:1; margin:0}
+  .sk-stats-panel .sk-controls input[type=number]{
+    width:52px; height:52px; box-sizing:border-box; padding:0; border-radius:50%; text-align:center; font-size:15px;
+    color:#d8cfbd; border:1px solid rgba(212,175,55,.3);
+    background:radial-gradient(circle at 50% 30%, rgba(255,255,255,.07), rgba(12,11,9,.9) 72%);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
+  }
+  .sk-stats-panel .sk-enemystat-controls .sk-controls input[type=number]{border-color:rgba(239,68,68,.4)}
+  .sk-stats-panel .sk-controls input[type=number]:hover{border-color:rgba(212,175,55,.6)}
+  .sk-stats-panel .sk-controls > div[class^="sk-stat-glow-"] input[type=number]{
+    border:2px solid var(--sg-color); color:#fff;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.6), 0 0 9px color-mix(in srgb, var(--sg-color) 40%, transparent);
+  }
+  .sk-stats-panel .sk-controls input[type=number]:focus{border-color:#fff; color:#fff}
+  /* Shorter or narrower windows: 40 px dials and tighter rows, so the taller column does not shrink the page (measured
+     2026-10-18: at 1536 x 730 the 52 px dials scaled the page to 0.92, these keep it at 1). 16 px between rows still
+     clears the 15 px bonus line. */
+  @media (max-height:900px), (max-width:1300px){
+    .sk-stats-panel .sk-controls input[type=number]{width:40px; height:40px; font-size:12px}
+    .sk-stats-panel .sk-controls > div{gap:3px}
+    .sk-stats-panel .sk-controls{row-gap:16px; padding-bottom:18px}
+  }
   /* With a skill open the search row is slim and its text small and muted, so the skill's name shows big only once
      (the hero title); a magnifier says what the box is. Full-size desktop only: smaller screens already use 54 / 46 px,
      and the landing page's big search (.is-hero) keeps its look. */
@@ -17825,6 +17854,17 @@ function mountSkillCooldownLookup(root){
   const enemyIntEl = $('[data-role="enemyInt"]', root);
   const enemyLckEl = $('[data-role="enemyLck"]', root);
   const statsPanelEl = $('[data-role="stats-panel"]', root);
+  // Stat dials (user 2026-10-18): a number too wide for its ring shrinks in 0.5 px steps until it fits (enemy stats run
+  // to 4-5 digits, a solved AGI can be longer), like fitSearchText. Runs after every render and while typing.
+  function fitStatDials(){
+    if (!statsPanelEl) return;
+    statsPanelEl.querySelectorAll(".sk-controls input[type=number]").forEach(el => {
+      el.style.fontSize = "";
+      let size = parseFloat(getComputedStyle(el).fontSize) || 15;
+      while (el.scrollWidth > el.clientWidth && size > 6){ size -= 0.5; el.style.fontSize = size + "px"; }
+    });
+  }
+  if (statsPanelEl) statsPanelEl.addEventListener("input", fitStatDials);
   // Enemy preset cycle (2026-08-21, relocated from the Final Damage chip's
   // old 3-buttons-at-once .sk-enemy-btns row into this panel, per direct
   // user request -- see the cycleEnemyPreset/updateEnemyCycleDisplay
@@ -21832,6 +21872,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const carry = selected && idSeen === selected.id ? pingCarryCapture() : [];
       renderHeroNow();
       fitDepLabels();
+      fitStatDials();
       pingCarryApply(carry);
       idSeen = selected && selected.id;
       statSeen = statInputs().map(([, el]) => statNum(el));
@@ -29701,7 +29742,7 @@ const CLASS_GUIDES = [
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"stats":{"tal":"50%","agi":"50%"},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","replica":{"item":"w_whl65"},"stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","replica":{"item":"a_whl65"},"stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","replica":{"item":"c_whl65"},"stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}},
   {"id":31,"cover":[264,434,444],"format":"12t-class-guide","version":1,"title":"หมา Paladin","author":"เว็บคุณก็เทพเกินครับ","date":"2026-10-18","description":"พอดีเห็นว่ายังไม่มีไกด์หมาพาลาเลยครับ อันนี้แบบที่ผมใช้","build":{"server":"tto","classKey":"wolf","level":100,"learned":[101,102,103,121,122,131,132,133,134,141,142,201,202,203,204,211,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,302,303,311,321,322,323,324,331,332,341,342,351,402,403,404,422,424,431,432,434,442,444],"support":[901,902]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T13:52:47.714Z","counts":{"1":23,"2":29,"3":20,"4":14,"5":32,"6":25,"7":16,"8":13,"9":14,"10":19,"11":20,"12":6,"13":4,"14":23,"15":28,"16":14,"17":24,"18":28,"19":20,"20":24,"21":17,"22":17,"23":25,"24":5,"25":9,"26":9,"27":7,"28":11,"29":22,"30":20,"31":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T14:31:14.330Z","counts":{"1":23,"2":29,"3":20,"4":14,"5":32,"6":25,"7":16,"8":14,"9":15,"10":19,"11":20,"12":7,"13":4,"14":23,"15":28,"16":15,"17":24,"18":28,"19":21,"20":24,"21":17,"22":18,"23":25,"24":5,"25":9,"26":9,"27":7,"28":11,"29":22,"30":20,"31":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33363,6 +33404,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T14:30:48.945Z","style(bible): skill details stat panels become dials: no boxes, each stat a ring with its name under it, rings in the stat colour for the stats the skill uses, smaller dials on shorter windows so the page keeps its size, and long numbers shrink to fit"],
     ["2026-10-18T14:12:53.802Z","style(bible): cleaner skill details card: stats the skill does not use fade back, one level of boxes, 2 px colour edges, the description as a pull quote, a slim search row with the skill name shown big only once, and short chip rows fill their width"],
     ["2026-10-18T13:50:01.097Z","style(bible): skill details related-skills panel loses its boxes: each skill is a thin gold ring icon and its name (no box per row, no panel), the title ends in a fading gold rule, and hover lifts and turns the name gold"],
     ["2026-10-18T11:56:19.184Z","feat(bible): class guide #30 updated from its author's new code: TAL 50% and AGI 50% join the recommended stats, and set 2's weapon, armor and hat are Replicas of the แฟ 65 (Korean) set"],
