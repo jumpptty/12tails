@@ -88,6 +88,6 @@ Passives carry `status`, `cd`, `duration`, `lckProc`, `cost` or `ko` whenever so
 ## Compatible Skills Navigation (`compatSkills`) Conventions
 
 1. Every edge is reciprocated (A lists B ⇒ B lists A). Sibling mesh links allowed.
-2. Header exactly `<p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>` (Prompt, gold 14px). No `LINK`/`MASS CAST`/`MOVES` badges.
-3. `.sk-compat-item` 44px flex row; `img.sk-compat-icon` 42×42; `.sk-compat-name` `-webkit-line-clamp:2`.
+2. Header exactly `<p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>` (Prompt, gold 14px, then a fading gold rule via `::after`). No `LINK`/`MASS CAST`/`MOVES` badges.
+3. **Open layout (user 2026-10-18, B2 of 4 mocks): no panel and no box per row.** `.sk-compat-chip` has no background, border or theme surface (it left `THEME_SURFACES` and the skill card's `--glass-gradient` rule). Each `.sk-compat-item` (min 40 px, 28 px with more than 8 skills) is a thin gold ring `span.sk-compat-ring` (34 px, 22 px compact; 1 px gold edge, `img.sk-compat-icon` zoomed 1.3× and centred by `centreRingImg`) plus `.sk-compat-name` with a soft dark text shadow (the names sit on the page backdrop). **Nothing clips:** no `overflow:hidden` and no line clamp, so a long name grows its row; the ring edge, the name shadow and the hover lift stay whole (checked on BB / ToT / TTO, desktop rail and phone). **Hover** lifts the ring and the name 1 px (never the button itself), turns the name gold and brightens the ring; no glow, no fill. Keyboard focus: 2 px gold outline.
 4. Grids: many → `.sk-compat-grid` (`auto-fill, minmax(170px,1fr)`); 2–4 → `.sk-compat-few-grid` (`auto-fit`, one row); 1 → `.sk-compat-single-grid` (max 340px, `"คลิกเพื่อดูสกิล →"`).

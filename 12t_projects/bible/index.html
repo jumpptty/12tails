@@ -28,7 +28,7 @@
     raised: [".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-icon-pick", ".cg-sort", ".cg-page-btn",
-      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-compat-chip", ".sk-enemy-imm-chip", ".sk-server-badge"],
+      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17)
     popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
@@ -411,10 +411,9 @@
   #skTtoSky .lan-glow{position:absolute; left:-96px; top:-40px; width:192px; height:176px;
     background:radial-gradient(closest-side, rgba(255,150,50,.4), rgba(255,110,30,.12) 60%, transparent)}
   #skTtoSky .lan-i{position:absolute; max-width:none; background:var(--tto-lantern) center / 100% 100% no-repeat; filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}
-    /* Skill details, every look (incl. BB): the skill card and the related-skills panel take the stat input panel's see-through gradient;
-     inside the card the hero, the title box and the browse button drop to a faint wash. */
-  html.tool-wide-hero .tool-shell,
-  html.tool-wide-hero .sk-compat-chip{ background:var(--glass-gradient); }
+    /* Skill details, every look (incl. BB): the skill card takes the stat input panel's see-through gradient (the related-skills
+     panel has no box since 2026-10-18); inside the card the hero, the title box and the browse button drop to a faint wash. */
+  html.tool-wide-hero .tool-shell{ background:var(--glass-gradient); }
   html.tool-wide-hero .sk-hero,
   html.tool-wide-hero .sk-search,
   html.tool-wide-hero .sk-browse-btn:not(:hover){background:rgba(255,255,255,.03)}
@@ -4440,15 +4439,17 @@
     .sk-compat-rail .sk-compat-many-grid{grid-template-columns:repeat(2, 1fr)}
   }
 
-  /* Related / Compatible Skills Row (2026-09-14) */
+  /* Related / Compatible Skills Row (2026-09-14). Open layout since 2026-10-18 (user picked B2 of 4 mocks): no panel and
+     no box per row. Each skill is a thin gold ring (icon zoomed 1.3x and centred by centreRingImg, like the class guide
+     rings) and its name; the title ends in a fading gold rule. Nothing clips: a long name grows its row instead of being
+     clamped, so the name's shadow, the ring's 1 px edge and the hover lift stay whole. Hover lifts the ring and the name,
+     never the button itself (a moving hover target makes the cursor flicker at its edge), and adds no glow. */
   .sk-compat-row{margin-top:14px}
   .sk-compat-row:empty{display:none; margin:0}
-  .sk-compat-chip{
-    background:var(--panel); border:1px solid var(--line); border-radius:4px;
-    padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.25);
-  }
+  .sk-compat-chip{padding:0 2px}
   .sk-compat-title{
-    margin:0 0 10px 2px;
+    display:flex; align-items:center; gap:10px;
+    margin:0 0 8px;
     font-family:'Prompt',sans-serif;
     font-size:14px;
     font-weight:600;
@@ -4456,47 +4457,50 @@
     letter-spacing:.04em;
     line-height:1.2;
   }
+  .sk-compat-title::after{content:""; flex:1; height:1px; background:linear-gradient(90deg, rgba(212,175,55,.55), transparent)}
   .sk-compat-grid{
     display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));
-    gap:8px 10px;
+    gap:4px 10px;
   }
   .sk-compat-few-grid{
     grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
   }
   .sk-compat-many-grid{
-    grid-template-columns:repeat(2, 1fr); gap:5px 6px;
+    grid-template-columns:repeat(2, 1fr); gap:2px 10px;
   }
   .sk-compat-single-grid{
     grid-template-columns:1fr;
     max-width:340px;
   }
   .sk-compat-item{
-    display:flex; align-items:center; height:44px; padding:0 10px 0 0;
-    background:rgba(255,255,255,0.03); border:1px solid var(--line);
-    border-radius:6px; cursor:pointer; font-family:inherit; text-align:left;
-    overflow:hidden; transition:all .15s ease; box-sizing:border-box;
+    display:flex; align-items:center; min-height:40px; padding:0 2px;
+    background:none; border:0; border-radius:4px; color:inherit;
+    cursor:pointer; font-family:inherit; text-align:left; box-sizing:border-box;
   }
-  .sk-compat-item:hover{
-    background:rgba(212,175,55,0.08); border-color:var(--gold);
-    transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  .sk-compat-item > *{transition:transform .15s ease, color .15s ease, filter .15s ease}
+  .sk-compat-item:hover > *{transform:translateY(-1px)}
+  .sk-compat-item:hover .sk-compat-name{color:var(--gold)}
+  .sk-compat-item:hover .sk-compat-ring{filter:brightness(1.15)}
+  .sk-compat-item:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .sk-compat-ring{
+    position:relative; flex:none; width:34px; height:34px; border-radius:50%; overflow:hidden;
+    background:var(--ink); box-shadow:0 0 0 1px rgba(212,175,55,.75);
   }
-  .sk-compat-item img, .sk-compat-icon{
-    width:42px; height:42px; display:block; flex-shrink:0;
-    background:rgba(0,0,0,0.4); border-right:1px solid rgba(255,255,255,0.08);
+  .sk-compat-ring > img{
+    position:absolute; inset:0; width:100%; height:100%; display:block;
+    transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%));
   }
   .sk-compat-name{
-    flex:1; min-width:0; margin-left:9px;
+    flex:1; min-width:0; margin-left:10px; padding:3px 0;
     font-family:'Prompt',sans-serif;
-    font-size:14px; font-weight:500; color:var(--text); line-height:1.22;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
-    overflow:hidden; text-overflow:ellipsis; word-break:break-word;
+    font-size:14px; font-weight:500; color:var(--text); line-height:1.25;
+    text-shadow:0 1px 3px rgba(0,0,0,.8); overflow-wrap:break-word;
   }
-  .sk-compat-item:hover .sk-compat-name{color:var(--gold)}
-  .sk-compat-item-many{height:30px}
-  .sk-compat-item-many .sk-compat-icon{width:26px; height:26px}
-  .sk-compat-item-many .sk-compat-name{font-size:10px; margin-left:6px; line-height:1.15}
+  .sk-compat-item-many{min-height:28px}
+  .sk-compat-item-many .sk-compat-ring{width:22px; height:22px}
+  .sk-compat-item-many .sk-compat-name{font-size:10px; margin-left:7px; line-height:1.2}
   @media (max-width:768px){
-    .sk-compat-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px}
+    .sk-compat-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:4px 10px}
     .sk-compat-few-grid, .sk-compat-single-grid{max-width:100%}
   }
 
@@ -23564,7 +23568,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
 
         return `
           <button type="button" class="${itemClass}" data-skill-id="${sk.id}" title="${sk.name}">
-            <img src="${iconData}" alt="${sk.name}" class="sk-compat-icon">
+            <span class="sk-compat-ring"><img src="${iconData}" alt="" class="sk-compat-icon"></span>
             <span class="sk-compat-name">${sk.name}</span>
           </button>
         `;
@@ -29566,7 +29570,7 @@ function ringIconShift(img){   // the art centre's offset from the image centre,
   ringShiftCache.set(key, out); return out;
 }
 const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
-document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
+document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = Object.assign({}, skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null), classGuideSupportCells());
@@ -29673,7 +29677,7 @@ const CLASS_GUIDES = [
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"stats":{"tal":"50%","agi":"50%"},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","replica":{"item":"w_whl65"},"stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","replica":{"item":"a_whl65"},"stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","replica":{"item":"c_whl65"},"stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}},
   {"id":31,"cover":[264,434,444],"format":"12t-class-guide","version":1,"title":"หมา Paladin","author":"เว็บคุณก็เทพเกินครับ","date":"2026-10-18","description":"พอดีเห็นว่ายังไม่มีไกด์หมาพาลาเลยครับ อันนี้แบบที่ผมใช้","build":{"server":"tto","classKey":"wolf","level":100,"learned":[101,102,103,121,122,131,132,133,134,141,142,201,202,203,204,211,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,302,303,311,321,322,323,324,331,332,341,342,351,402,403,404,422,424,431,432,434,442,444],"support":[901,902]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T11:57:19.404Z","counts":{"1":17,"2":23,"3":17,"4":12,"5":28,"6":20,"7":10,"8":11,"9":11,"10":15,"11":15,"12":6,"13":3,"14":18,"15":26,"16":11,"17":18,"18":21,"19":16,"20":18,"21":12,"22":11,"23":18,"24":5,"25":6,"26":7,"27":6,"28":9,"29":16,"30":16,"31":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T13:52:47.714Z","counts":{"1":23,"2":29,"3":20,"4":14,"5":32,"6":25,"7":16,"8":13,"9":14,"10":19,"11":20,"12":6,"13":4,"14":23,"15":28,"16":14,"17":24,"18":28,"19":20,"20":24,"21":17,"22":17,"23":25,"24":5,"25":9,"26":9,"27":7,"28":11,"29":22,"30":20,"31":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33335,6 +33339,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T13:50:01.097Z","style(bible): skill details related-skills panel loses its boxes: each skill is a thin gold ring icon and its name (no box per row, no panel), the title ends in a fading gold rule, and hover lifts and turns the name gold"],
     ["2026-10-18T11:56:19.184Z","feat(bible): class guide #30 updated from its author's new code: TAL 50% and AGI 50% join the recommended stats, and set 2's weapon, armor and hat are Replicas of the แฟ 65 (Korean) set"],
     ["2026-10-18T11:53:20.663Z","fix(bible): class guide recommended sets: every item and Replica has a white outline, on the page and in the PNG (no more darkness check)"],
     ["2026-10-18T11:40:23.884Z","style(bible): small class pictures are the game's round class faces: the stat panel badge, the TTO magic damage tabs, the class buttons (Stat Roll, Stat Gain, Skill Simulator), the skill list heading and the guide gallery's class chips and filter; the big class pickers keep the full-body art"],
