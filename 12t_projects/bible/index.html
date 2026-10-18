@@ -8084,7 +8084,9 @@
   .ln-wallbox{perspective:1400px; display:grid; place-items:center}
   .ln-wall{--ic:min(5.2vw, calc((100dvh - var(--hub-h, 64px)) * .1)); display:grid; grid-template-columns:repeat(8, var(--ic)); grid-auto-rows:var(--ic); gap:calc(var(--ic) * .19); transform-style:preserve-3d;
     transform:rotateY(calc(-24deg + var(--tx, 0) * 3.5deg)) rotateX(calc(9deg - var(--ty, 0) * 2deg)) rotateZ(-4deg); transition:transform .8s cubic-bezier(.2,.7,.2,1)}
-  .ln-tile{position:relative; display:block; width:100%; height:100%; transform:translateZ(var(--z, 0px)); perspective:calc(var(--ic) * 6); animation:lnPop .5s calc(var(--i) * 14ms) cubic-bezier(.2,.7,.2,1) both}
+  .ln-tile{position:relative; display:block; width:100%; height:100%; transform:translateZ(var(--z, 0px)) translateY(var(--lift, 0px)); perspective:calc(var(--ic) * 6); cursor:pointer;
+    transition:transform .2s ease, filter .2s ease; animation:lnPop .5s calc(var(--i) * 14ms) cubic-bezier(.2,.7,.2,1) backwards}
+  .ln-tile:hover{--lift:-4px; filter:brightness(1.12)}   /* each tile opens its skill in skill details (user 2026-10-18); a subtle hover, no glow */
   @keyframes lnPop{from{opacity:0; transform:translateZ(-120px)}}
   /* each skill sits in the game's own frame like the skill simulator (wood = active, iron = passive; user 2026-10-18: no ring, no container);
      a face = frame + icon, so the frame turns over with its skill */
@@ -29539,7 +29541,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:13:31.026Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:21:50.197Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32935,6 +32937,9 @@ function mountLauncher(root){
   Object.keys(SKILL_SIM).forEach(cls => SKILL_SIM[cls].forEach((tree, ti) => tree.rows.forEach((row, ri) => row.forEach((c, ci) => {
     if (c) simKind[c[0]] = { passive: (SKILL_SIM_PASSIVE[cls] || []).includes(tree.base + ri * 10 + ci + 1), c: ti === 3 }; }))));
   const cIcons = wallIcons.filter(k => simKind[k] && simKind[k].c);
+  // each tile links to its skill card in skill details (user 2026-10-18); the name shows on hover. Mouse and touch only: the wall stays out of the tab order.
+  const cardOfIcon = {}; SKILLS.forEach(c => { if (c.icon && !cardOfIcon[c.icon]) cardOfIcon[c.icon] = c; });
+  const skillNameOf = k => { const c = cardOfIcon[k]; return c ? String(c.name || c.nameTha || "").replace(/"/g, "&quot;") : ""; };
   const face = (k, cls) => '<span class="ln-face' + (simKind[k] && simKind[k].passive ? " is-passive" : "") + " " + cls + '"><img src="' + SKILL_ICONS[k] + '" alt=""></span>';
   const wallTiles = (cols, rows, bigs) => {
     const used = Array.from({ length: rows }, () => Array(cols).fill(false)), spots = [];
@@ -32942,8 +32947,8 @@ function mountLauncher(root){
       if (used[r][c] || used[r][c + 1] || used[r + 1][c] || used[r + 1][c + 1]) continue; used[r][c] = used[r][c + 1] = used[r + 1][c] = used[r + 1][c + 1] = true; spots.push([c, r]); }
     const small = []; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!used[r][c]) small.push([c, r]);
     const bigKeys = someIcons(spots.length, cIcons.length ? cIcons : wallIcons), smallKeys = someIcons(small.length, wallIcons.filter(k => !bigKeys.includes(k)));
-    const tile = (k, c, r, big) => '<span class="ln-tile' + (big ? " is-big" : "") + '" style="grid-column:' + (c + 1) + (big ? " / span 2" : "") + "; grid-row:" + (r + 1) + (big ? " / span 2" : "") +
-      "; --i:" + (r * cols + c) + "; --z:" + Math.round(Math.random() * 24 - 6) + 'px" data-k="' + k + '">' + face(k, "cur") + "</span>";
+    const tile = (k, c, r, big) => '<a class="ln-tile' + (big ? " is-big" : "") + '" href="#skill-details/' + (cardOfIcon[k] ? cardOfIcon[k].id : "") + '" title="' + skillNameOf(k) + '" tabindex="-1" style="grid-column:' + (c + 1) + (big ? " / span 2" : "") + "; grid-row:" + (r + 1) + (big ? " / span 2" : "") +
+      "; --i:" + (r * cols + c) + "; --z:" + Math.round(Math.random() * 24 - 6) + 'px" data-k="' + k + '">' + face(k, "cur") + "</a>";
     return spots.map((p, j) => tile(bigKeys[j], p[0], p[1], true)).join("") + small.map((p, j) => tile(smallKeys[j], p[0], p[1], false)).join("");
   };
   // Every 0.35-1.45 s (at random) one icon, sometimes two, flips to a skill not on the wall yet; paused while the menu is hidden.
@@ -32953,10 +32958,10 @@ function mountLauncher(root){
     const swap = () => {
       if (!wall.isConnected) return;
       if (!viewMenu.hidden && !document.hidden) for (let j = Math.random() < .25 ? 2 : 1; j > 0; j--) {
-        const t = tiles[Math.floor(Math.random() * tiles.length)]; if (t.classList.contains("is-swap")) continue;
+        const t = tiles[Math.floor(Math.random() * tiles.length)]; if (t.classList.contains("is-swap") || t.matches(":hover")) continue;   // never swap the skill under the cursor
         const shown = new Set(tiles.map(x => x.dataset.k)), pool = t.classList.contains("is-big") && cIcons.length ? cIcons : wallIcons; let k = pick(pool); for (let n = 0; shown.has(k) && n < 20; n++) k = pick(pool);
         // the next icon is decoded first, then laid on the tile's back face; the old one goes when the 0.7 s flip ends
-        const cur = t.querySelector(".ln-face.cur"), pre = new Image(); pre.src = SKILL_ICONS[k]; t.dataset.k = k; t.classList.add("is-swap");
+        const cur = t.querySelector(".ln-face.cur"), pre = new Image(); pre.src = SKILL_ICONS[k]; t.dataset.k = k; t.classList.add("is-swap"); t.href = "#skill-details/" + (cardOfIcon[k] ? cardOfIcon[k].id : ""); t.title = cardOfIcon[k] ? (cardOfIcon[k].name || cardOfIcon[k].nameTha || "") : "";
         (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!t.isConnected) return;
           t.insertAdjacentHTML("beforeend", face(k, "nxt")); const nx = t.lastElementChild; cur.classList.add("out");
           setTimeout(() => { cur.remove(); nx.classList.replace("nxt", "cur"); t.classList.remove("is-swap"); }, 740); });
@@ -33011,7 +33016,9 @@ function mountLauncher(root){
   [stage, root.querySelector(".ln-stripbar")].forEach(el => { el.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") root.classList.add("is-paused"); }); el.addEventListener("pointerleave", () => root.classList.remove("is-paused")); });
   let sx = 0, sy = 0, swiping = false;   // swipe on the stage (phones): left = next, right = previous; a finger on it pauses the bars
   stage.addEventListener("pointerdown", e => { if (e.pointerType === "mouse") return; sx = e.clientX; sy = e.clientY; swiping = true; root.classList.add("is-paused"); });
-  stage.addEventListener("pointerup", e => { if (!swiping) return; swiping = false; root.classList.remove("is-paused"); const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) show(cur + (dx < 0 ? 1 : -1)); });
+  let swiped = false;
+  stage.addEventListener("pointerup", e => { if (!swiping) return; swiping = false; root.classList.remove("is-paused"); const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) { swiped = true; setTimeout(() => { swiped = false; }, 400); show(cur + (dx < 0 ? 1 : -1)); } });
+  stage.addEventListener("click", e => { if (swiped) { e.preventDefault(); e.stopPropagation(); swiped = false; } }, true);   // a swipe that ends on a wall tile does not open it
   stage.addEventListener("pointercancel", () => { swiping = false; root.classList.remove("is-paused"); });
   document.addEventListener("keydown", e => {
     if (viewMenu.hidden || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || document.querySelector('[aria-modal="true"]:not([hidden])')) return;
@@ -33051,6 +33058,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T07:21:50.373Z","feat(bible): every skill on the hub menu's skill wall opens that skill in รายละเอียดสกิล (name on hover; the skill under the cursor stops swapping)"],
     ["2026-10-18T07:13:31.376Z","fix(bible): hub menu skill wall shows each skill in the game's own wood or iron frame (no box or gold ring), and a few Class C skills take a big 2 x 2 spot"],
     ["2026-10-18T07:06:59.118Z","fix(bible): hub menu skill wall icons now swap with a clean card flip; the wall tilts toward the cursor even more gently and its tiles sit at nearly the same depth"],
     ["2026-10-18T07:00:45.578Z","fix(bible): hub menu skill wall tilts toward the cursor more gently; the class portrait on the ไกด์อาชีพ slide lifts slightly on hover without a glow"],
