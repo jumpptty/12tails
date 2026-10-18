@@ -8051,7 +8051,7 @@
   /* wide screens (21:9 and up, user 2026-10-18 on 3440 px): the stage, the filmstrip and the glow keep a 2.1 : 1 frame in the middle,
      so the text stays near the art instead of hugging the left edge; 16:9 and 16:10 windows are narrower than the frame and do not change */
   @media (min-width:901px){ .ln-stage, .ln-stripbar{width:100%; max-width:var(--ln-max); margin-inline:auto} .ln-glow{width:min(100%, var(--ln-max)); margin-inline:auto} }
-  .ln-copy{position:relative; z-index:2; max-width:620px}
+  .ln-copy{position:relative; z-index:2; width:fit-content; max-width:620px}   /* as wide as its widest line, so the action row's right end lines up with the text (user 2026-10-18) */
   .ln-kicker{display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--acc)}
   .ln-kicker::before{content:""; width:28px; height:2px; background:var(--acc)}
   .ln-badge{font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:2px 8px; border-radius:999px; background:#1e5e3a; color:#bdf2cf; border:1px solid #3bb273}
@@ -8059,16 +8059,20 @@
   .ln-title span{display:block; animation:lnUp .6s cubic-bezier(.2,.7,.2,1) both}
   @keyframes lnUp{from{opacity:0; transform:translateY(34px)}}
   .ln-desc{margin:0; font-size:18px; line-height:1.65; color:color-mix(in srgb, var(--text) 78%, var(--muted)); max-width:44ch; animation:lnUp .6s .08s cubic-bezier(.2,.7,.2,1) both}
-  .ln-fact{display:flex; align-items:baseline; gap:10px; margin:24px 0 0; animation:lnUp .6s .14s cubic-bezier(.2,.7,.2,1) both}
+  .ln-fact{display:flex; align-items:baseline; gap:10px; margin:0; animation:lnUp .6s .14s cubic-bezier(.2,.7,.2,1) both}
   .ln-fact b{font:600 44px/1 'JetBrains Mono','Prompt',monospace; color:var(--ln-hi)}
   .ln-fact span{color:var(--muted); font-size:15px}
-  .ln-cta{display:flex; align-items:center; gap:16px; margin-top:28px; animation:lnUp .6s .2s cubic-bezier(.2,.7,.2,1) both}
+  /* the count on the left and เปิด on the right of one row (user 2026-10-18); a slide with no count keeps the button on the left */
+  .ln-cta{display:flex; align-items:center; justify-content:space-between; gap:24px; margin-top:26px; animation:lnUp .6s .2s cubic-bezier(.2,.7,.2,1) both}
   .ln-play{display:inline-flex; align-items:center; justify-content:center; gap:14px; height:58px; padding:0 30px 0 34px; border-radius:12px; font-size:19px; font-weight:700; color:#1b130b; text-decoration:none;
     background:linear-gradient(180deg, var(--ln-hi), var(--gold)); box-shadow:0 0 0 1px var(--ln-hi), 0 12px 30px -8px color-mix(in srgb, var(--gold) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.5); transition:transform .15s, box-shadow .15s}
   .ln-play:hover, .ln-play:focus-visible{transform:translateY(-2px); box-shadow:0 0 0 1px var(--ln-hi), 0 18px 40px -8px color-mix(in srgb, var(--gold) 75%, transparent), inset 0 1px 0 rgba(255,255,255,.5)}
   .ln-play span{font-size:22px}
   .ln-art{position:relative; height:100%; min-height:0; display:grid; place-items:center; perspective:1400px}
   .ln-art > *{animation:lnArt .8s cubic-bezier(.2,.7,.2,1) both}
+  /* the art opens its tool as well (user 2026-10-18): a subtle lift on hover, moving it with translate only (cheap even without GPU), no glow */
+  .ln-artlink{position:relative; display:grid; place-items:center; width:100%; height:100%; cursor:pointer; transition:translate .2s ease-out}
+  .ln-artlink:hover, .ln-artlink:focus-visible{translate:0 -6px}
   @keyframes lnArt{from{opacity:0; transform:translateX(80px) scale(.96); filter:blur(10px)}}
   /* character busts are cut flat at the bottom (and some at the left): fade both edges */
   .ln-pt{height:min(62vh, 620px); width:auto; max-width:100%; object-fit:contain; filter:drop-shadow(0 40px 50px rgba(0,0,0,.75));
@@ -8189,7 +8193,7 @@
     .ln-gpng{left:2%; right:2%; top:6%; transform:none}
     .ln-gptl{height:62%; left:auto; right:-6%; bottom:-4%}
     .ln-gcap{display:none}
-    .ln-copy{position:absolute; left:0; right:0; bottom:0; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
+    .ln-copy{position:absolute; left:0; right:0; bottom:0; width:auto; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
     .ln-title{font-size:clamp(27px, 7.4vw, 40px); margin:8px 0 6px}
     .ln-desc{font-size:14.5px; line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
     .ln-fact{display:none}
@@ -29566,7 +29570,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:56:47.696Z","counts":{"1":12,"2":15,"3":12,"4":7,"5":16,"6":12,"7":5,"8":9,"9":9,"10":9,"11":6,"12":2,"13":0,"14":9,"15":20,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T08:02:08.743Z","counts":{"1":13,"2":15,"3":12,"4":7,"5":17,"6":12,"7":5,"8":9,"9":9,"10":9,"11":7,"12":3,"13":0,"14":9,"15":20,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33013,8 +33017,8 @@ function mountLauncher(root){
     root.style.setProperty("--acc", accentOf(t));
     copy.innerHTML = '<span class="ln-kicker">' + (LAUNCH_CATEGORY[t.category] || "เครื่องมือหลัก") + (t.badge ? ' <span class="ln-badge">' + t.badge + "</span>" : "") + "</span>" +
       '<h1 class="ln-title">' + lines(t.title).map((l, k) => '<span style="animation-delay:' + k * 70 + 'ms">' + l + "</span>").join("") + "</h1>" +
-      (t.desc ? '<p class="ln-desc">' + t.desc + "</p>" : "") + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") +
-      '<div class="ln-cta"><a class="ln-play" href="#' + t.id + '">เปิด<span aria-hidden="true">→</span></a></div>';
+      (t.desc ? '<p class="ln-desc">' + t.desc + "</p>" : "") +
+      '<div class="ln-cta">' + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") + '<a class="ln-play" href="#' + t.id + '">เปิด<span aria-hidden="true">→</span></a></div>';
     clearInterval(guideTimer); clearTimeout(wallTimer);
     if (t.collage === "skills") {
       art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? wallTiles(5, 5, 1) : wallTiles(8, 6, 3)) + "</div></div>";
@@ -33026,9 +33030,10 @@ function mountLauncher(root){
       guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); } }, 3500);
     } else {
       const arts = (t.art || []).filter(k => artSrc(k));
-      art.innerHTML = arts.length && arts.every(k => k.startsWith("skill:"))
+      const inner = arts.length && arts.every(k => k.startsWith("skill:"))
         ? '<div class="ln-fan" style="--mid:' + (arts.length - 1) / 2 + '" aria-hidden="true">' + arts.map((k, j) => '<img style="--i:' + j + '" src="' + artSrc(k) + '" alt="">').join("") + "</div>"
         : arts.length ? '<span class="ln-floor" aria-hidden="true"></span><img class="ln-pt" data-k="' + arts[0].replace(/^tool:/, "") + '" src="' + artSrc(arts[0]) + '" alt="">' : "";
+      art.innerHTML = inner ? '<a class="ln-artlink" href="#' + t.id + '" aria-label="เปิด ' + t.title + '">' + inner + "</a>" : "";   // the art opens its tool too
     }
     thumbs.forEach((b, k) => { b.classList.toggle("is-on", k === cur); restart(b.querySelector("i")); });
     segs.forEach((s, k) => { s.classList.toggle("is-on", k === cur); s.classList.toggle("is-done", k < cur); restart(s.querySelector("i")); });
@@ -33093,6 +33098,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T08:02:09.038Z","feat(bible): on the hub menu the big art of every tool opens it too, and เปิด sits at the right end of the count row, next to the art"],
     ["2026-10-18T07:56:47.961Z","fix(bible): hub menu skill wall is flat, and its big 2 x 2 Class C tiles have a little thickness"],
     ["2026-10-18T07:53:55.621Z","perf(bible): hub menu does much less work per frame (the cursor tilt only restyles the skill wall, and the ไกด์อาชีพ banner pans without repainting), so it stays smooth on slower PCs and without GPU acceleration"],
     ["2026-10-18T07:39:27.153Z","fix(bible): hovering the class portrait or the guide image on the hub menu's ไกด์อาชีพ slide responds instantly (no more repainting the whole picture on hover)"],
