@@ -21546,13 +21546,33 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       v.classList.add("sk-roll-host"); v.append(old, neu);
       clearTimeout(v.__rollTimer); v.__rollTimer = setTimeout(() => { if (neu.parentNode === v) rollSettle(v); }, 4000);
     }
+    // Changes in a row (user 2026-10-18): a chip that changes keeps showing the value it had on screen (its base, in rollBase)
+    // until its change plays, through every rebuild in between, so a second click before the first change played shows no
+    // jump and the first pill counts both. The value on screen is the snapshot's, or the last played one (rollShown) when it
+    // played after the snapshot was taken (a held snapshot, typing, is older). Keyed by skill and chip place (chipKey), since
+    // every click rebuilds the chips; a base left over after 4 s (the hold's own safety limit) is dropped, and a chip back at
+    // its base lets go at once (nothing to play). heroDelta sends its light to every chip with a base, so a change whose comet
+    // a quick rebuild cut off still plays with the next volley. var: see depClicked.
+    var rollBase = new Map(), rollShown = new Map(), dtagCur = new Map();
+    function chipKey(i){ return (selected && selected.id) + "|" + i; }
     // Every changed chip of the card, against the snapshot (fields matched by place, like the delta comparison).
     function rollHoldAll(prev){
       if (!prev.htmls || !prev.vals) return;
+      const now = Date.now();
       (deltaFields()[0] || []).forEach((el, i) => {
-        const was = prev.vals[0][i], olds = prev.htmls[0] && prev.htmls[0][i];
-        if (!olds || was === undefined || !el.matches(".sk-stat, .sk-summon-stat") || was === deltaText(el)) return;
-        Array.from(el.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP)).forEach((v, k) => { if (olds[k] !== undefined) rollHold(v, olds[k]); });
+        if (!el.matches(".sk-stat, .sk-summon-stat")) return;
+        const key = chipKey(i);
+        let base = rollBase.get(key);
+        if (base && now - base.at > 4000){ rollBase.delete(key); base = null; }
+        if (base && base.vals === deltaText(el)){ rollBase.delete(key); rollShown.set(key, Object.assign({}, base, { at: now })); return; }
+        if (!base){
+          const shown = rollShown.get(key), s = shown && shown.at > (prev.at || 0) ? shown
+            : { vals: prev.vals[0][i], txt: prev.nums && prev.nums[0] ? prev.nums[0][i] : undefined, htmls: prev.htmls[0] && prev.htmls[0][i] };
+          if (!s.htmls || s.vals === undefined || s.vals === deltaText(el)) return;
+          base = { vals: s.vals, txt: s.txt, htmls: s.htmls, at: now };
+          rollBase.set(key, base);
+        }
+        Array.from(el.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP)).forEach((v, k) => { if (base.htmls[k] !== undefined) rollHold(v, base.htmls[k]); });
       });
     }
     // On impact: the held old value rolls out and the new one rolls in (a value rebuilt mid-flight, with no hold, rolls from oldHtml).
@@ -21589,21 +21609,21 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const deltaNums = (txt) => { const s = String(txt).replace(/,/g, ""), v = (s.match(/\d+(?:\.\d+)?/g) || []).map(Number); if (/ไร้หลอด/.test(s)) v.unshift(0.1); return v; };
     const deltaAvg = (v) => v.reduce((x, y) => x + y, 0) / v.length;
     // The tag (user 2026-10-18): a pill on the chip at the end of the number's text, shown the moment the light lands, BEFORE
-    // the number rolls (changeOn holds the roll of a tagged chip for DTAG_LEAD), so the pill announces the change and the
+    // the number rolls (playChange holds the roll of a tagged chip for DTAG_LEAD), so the pill announces the change and the
     // number then follows. Spots, the first that stays inside the chip and clear of its other text wins (label and base line
     // judged by their text: their boxes span the whole chip): right after the number like a stock ticker ("73–80s ▼−30s"),
     // raised over its end, just under it, or the chip's top-right corner (narrow phone chips). "The end" is the further of
     // the old and the new value's ends, so the pill clears the old value still showing and the new one after the roll. The
     // ends are read with zero-width marks and offsetLeft / offsetTop up to the chip: layout offsets ignore the stage's scale
     // and the roll's motion, and the pill lives on the chip, outside the roll's clip. A better damage change shows gold, not
-    // ATK's red, which would read as a loss. Returns true when a pill was shown.
-    const DTAG_LEAD = 250;
-    function deltaTag(chip, v, oldTxt, color){
-      const txt = deltaValue(chip), a = deltaNums(oldTxt), b = deltaNums(txt);
-      if (!a.length || !b.length) return false;
+    // ATK's red, which would read as a loss. Returns the pill (null when there is none).
+    const DTAG_LEAD = 250, DTAG_LIFE = 1500, DTAG_MIN = 700, DTAG_FADE = 250;
+    function deltaTag(chip, v, baseTxt, color){
+      const txt = deltaValue(chip), a = deltaNums(baseTxt), b = deltaNums(txt);
+      if (!a.length || !b.length) return null;
       const d = deltaAvg(b) - deltaAvg(a);
-      if (!d) return false;
-      const both = txt + " " + oldTxt;   // the unit from either side: "ไร้หลอด" alone has none
+      if (!d) return null;
+      const both = txt + " " + baseTxt;   // the unit from either side: "ไร้หลอด" alone has none
       const unit = /%/.test(both) ? "%" : (/\ds\b|ไร้หลอด/.test(both) ? "s" : ""), m = Math.abs(d), up = d > 0;
       const num = (m >= 10 ? Math.round(m) : Math.round(m * 10) / 10).toLocaleString("en-US");
       const atk = (getComputedStyle(atkEl).getPropertyValue("--stat-atk") || "").trim();
@@ -21620,7 +21640,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const end = endNew && endOld ? { x: Math.max(endNew.x, endOld.x), y: endNew.y, h: endNew.h } : (endNew || endOld);
       const tag = document.createElement("span"); tag.setAttribute("aria-hidden", "true");
       tag.innerHTML = "<i>" + (up ? "▲" : "▼") + "</i>" + (up ? "+" : "−") + num + unit;
-      tag.style.setProperty("--dtag-c", color !== SHOT_RED && atk && color === atk ? SHOT_GOLD : color);
+      // the colour follows the net result (merged quick clicks: an up-then-down can end worse than its last step)
+      const lowerBetter = /คูลดาวน์|เวลาร่าย|cooldown|cast/i.test((chip.querySelector(".sk-stat-label") || {}).textContent || "");
+      const c = (lowerBetter ? d > 0 : d < 0) ? SHOT_RED : (color === SHOT_RED ? SHOT_GOLD : color);
+      tag.style.setProperty("--dtag-c", atk && c === atk ? SHOT_GOLD : c);
       chip.appendChild(tag);
       const textRects = (e) => { const rg = document.createRange(); rg.selectNodeContents(e); return Array.from(rg.getClientRects()); };
       const avoid = Array.from(chip.querySelectorAll(".sk-stat-label, .sk-stat-base, button, .sk-ko-badge, .sk-magic-badge"))
@@ -21642,28 +21665,60 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       };
       const spots = end ? ["ticker", "sup", "sub", "corner"] : ["corner"];
       if (!spots.some(s => { put(s); return clear(); })) put(end ? "sup" : "corner");   // nowhere clean: raised over the end
-      tag.animate([{ opacity: 0, transform: "translateX(-6px)", easing: "ease-out" }, { opacity: 1, transform: "translateX(0)", offset: 0.13 },
+      tag.__anim = tag.animate([{ opacity: 0, transform: "translateX(-6px)", easing: "ease-out" }, { opacity: 1, transform: "translateX(0)", offset: 0.13 },
                    { opacity: 1, transform: "translateX(0)", offset: 0.75, easing: "ease-in" }, { opacity: 0, transform: "translateX(2px)" }],
-                  { duration: 1500, easing: "linear", fill: "both" }).onfinish = () => tag.remove();
-      return true;
+                  { duration: DTAG_LIFE, easing: "linear", fill: "both" });
+      tag.__anim.onfinish = () => tag.remove();
+      return tag;
     }
-    // On impact (or as a worse field's red light leaves): each chip of the field rolls and tags against its value in the
-    // snapshot (same place on the card, see fieldPos). numUp is the field's direction, used when a chip's own numbers can't be read.
-    function changeOn(el, numUp, color, prev){
-      const plans = (el.classList.contains("sk-dmg-row") ? Array.from(el.children) : [el]).map(chip => {
-        if (!chip.isConnected || !chip.matches(".sk-stat, .sk-summon-stat")) return null;
-        const pos = fieldPos(chip);
-        if (!pos || pos.g === undefined) return null;
-        const oldTxt = prev.nums && prev.nums[pos.g] ? prev.nums[pos.g][pos.i] : undefined;
-        const olds = prev.htmls && prev.htmls[pos.g] ? prev.htmls[pos.g][pos.i] : undefined;
+    // On impact (or as a worse field's red light leaves) the field's change plays, unless (user 2026-10-18):
+    // - nothing waits on its chips (no base): an earlier pill already showed this change (a quick second click merged into it);
+    // - one of its chips shows a pill: the change waits for it (handOver). One waiting change per field at most; more clicks
+    //   while it waits merge into it (it plays against the live values).
+    // numUp is the field's direction, used when a chip's own numbers can't be read.
+    function changeOn(el, numUp, color){
+      const list = deltaFields()[0] || [];
+      const idx = (el.classList.contains("sk-dmg-row") ? Array.from(el.children) : [el])
+        .filter(chip => chip.isConnected && chip.matches(".sk-stat, .sk-summon-stat")).map(chip => list.indexOf(chip)).filter(i => i >= 0);
+      if (!idx.some(i => rollBase.has(chipKey(i)))) return;
+      const now = Date.now(), cur = idx.map(i => dtagCur.get(chipKey(i))).find(c => c && now < c.endsAt);
+      if (cur){ if (!cur.waiting) handOver(cur, idx, numUp, color); return; }
+      playChange(idx, numUp, color);
+    }
+    // The pill on screen plays as a whole but hands over early: it shows at least DTAG_MIN, then fades over DTAG_FADE instead of
+    // holding its full DTAG_LIFE, and the waiting change plays as it is gone. A pill already into its own fade-out (the last
+    // quarter of DTAG_LIFE) finishes it first.
+    function handOver(cur, idx, numUp, color){
+      cur.waiting = true;
+      const now = Date.now(), fade = Math.max(cur.shownAt + DTAG_MIN, now), tag = cur.tag, id = selected && selected.id;
+      const at = fade < cur.shownAt + DTAG_LIFE * 0.75 ? fade + DTAG_FADE : cur.endsAt;
+      setTimeout(() => {
+        const a = tag.__anim;
+        if (!tag.isConnected || !a || a.currentTime >= DTAG_LIFE * 0.75) return;   // gone, or fading on its own already
+        a.commitStyles(); a.cancel();
+        tag.animate({ opacity: 0, transform: "translateX(2px)" }, { duration: DTAG_FADE, easing: "ease-in", fill: "forwards" }).onfinish = () => tag.remove();
+      }, Math.max(0, at - DTAG_FADE - now));
+      setTimeout(() => { if (selected && selected.id === id) playChange(idx, numUp, color); }, at - now);
+    }
+    // Each chip of the field tags and rolls from its base to its live value (chips by place on the card, see chipKey).
+    function playChange(idx, numUp, color){
+      const now = Date.now(), list = deltaFields()[0] || [];
+      const plans = idx.map(i => {
+        const chip = list[i], key = chipKey(i), base = rollBase.get(key);
+        dtagCur.delete(key);
+        if (!chip || !base || !chip.matches(".sk-stat, .sk-summon-stat")) return null;
+        rollBase.delete(key);
+        rollShown.set(key, { vals: deltaText(chip), txt: deltaValue(chip), htmls: rollHtmls(chip), at: now });
         const vals = Array.from(chip.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP));
-        const a = deltaNums(oldTxt || ""), b = deltaNums(deltaValue(chip));
+        const a = deltaNums(base.txt || ""), b = deltaNums(deltaValue(chip));
         const up = a.length && b.length && deltaAvg(a) !== deltaAvg(b) ? deltaAvg(b) > deltaAvg(a) : numUp;
-        return { chip, oldTxt, olds, vals, up };
+        return { chip, key, base, vals, up };
       }).filter(Boolean);
       // pills first; the field's chips then roll together, DTAG_LEAD later when any of them shows a pill (Raw waits with Final)
-      const tagged = plans.map(p => p.chip.matches(".sk-stat") && p.vals.length === 1 && p.oldTxt !== undefined && deltaTag(p.chip, p.vals[0], p.oldTxt, color)).some(Boolean);
-      plans.forEach(p => { if (p.olds) p.vals.forEach((v, k) => { if (p.olds[k] !== undefined) rollPlay(v, p.olds[k], p.up, color, tagged ? DTAG_LEAD : 0); }); });
+      const tags = plans.map(p => p.chip.matches(".sk-stat") && p.vals.length === 1 && p.base.txt !== undefined ? deltaTag(p.chip, p.vals[0], p.base.txt, color) : null);
+      tags.forEach((tag, k) => { if (tag) dtagCur.set(plans[k].key, { tag, shownAt: now, endsAt: now + DTAG_LIFE, waiting: false }); });
+      const lead = tags.some(Boolean) ? DTAG_LEAD : 0;
+      plans.forEach(p => p.vals.forEach((v, k) => { if (p.base.htmls[k] !== undefined) rollPlay(v, p.base.htmls[k], p.up, color, lead); }));
     }
     // A click during a flash rebuilds the card and would cut it off (user 2026-10-05): before the rebuild, note every
     // field still flashing (by its place on the card); after it, the same field resumes its flash where it was
@@ -21701,6 +21756,15 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         el.dataset.pingCls = p.cls; el.dataset.pingAt = p.at;
         el.classList.add(p.cls);
       });
+    }
+    // A rebuild (the next click) does not cut a pill short either: it moves to the rebuilt chip at the same place, its animation
+    // running on (handOver may still end it early).
+    function dtagCarryCapture(){
+      return (deltaFields()[0] || []).map((el, i) => ({ i, tag: el.querySelector(":scope > .sk-dtag") })).filter(p => p.tag);
+    }
+    function dtagCarryApply(carry){
+      const list = deltaFields()[0] || [];
+      carry.forEach(p => { const el = list[p.i]; if (el && el.matches(".sk-stat")) el.appendChild(p.tag); });
     }
     const centerOf = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
     // Rank / dependency toggles shoot from their rank pips (user 2026-10-08), not from the icon: rank up = the last lit pip (the one that just
@@ -21779,14 +21843,14 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const clicked = depClicked; depClicked = null;
       const click = deltaClick && Date.now() - deltaClick.at < 1500 ? deltaClick : null; deltaClick = null;
       if (deltaHeld){ const p = deltaHeld; deltaHeld = null; return p; }
-      return { id: idSeen, server: serverSeen || currentServer, vals: deltaFields().map(list => list.map(deltaText)), deps: depStates(), clicked,
+      return { id: idSeen, at: Date.now(), server: serverSeen || currentServer, vals: deltaFields().map(list => list.map(deltaText)), deps: depStates(), clicked,
         stats: statSeen || statInputs().map(([, el]) => statNum(el)),
         click, rank: rankSeen && selected && rankSeen.id === selected.id ? rankSeen.r : null, bdN: bdNSeen || bdCounts(),
         nums: deltaFields().map(list => list.map(deltaValue)), htmls: deltaFields().map(list => list.map(rollHtmls)), magic: !!displayEl.querySelector(".sk-magic-badge:not(.sk-magic-wait):not(.sk-magic-out)"),
         magicHtml: (displayEl.querySelector(".sk-magic-badge:not(.sk-magic-out)") || {}).outerHTML || "" };
     }
     function heroDelta(prev){
-      if (!prev.id || !selected || prev.id !== selected.id) return;
+      if (!prev.id || !selected || prev.id !== selected.id){ rollBase.clear(); rollShown.clear(); dtagCur.clear(); return; }
       const magicNew = prev.magic ? null : displayEl.querySelector(".sk-magic-badge");
       if (magicNew) magicNew.classList.add("sk-magic-wait");
       rollHoldAll(prev);   // changed values show their old value until their light lands (or until the held volley plays)
@@ -21811,11 +21875,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const changed = [], dirOf = new Map(), numDirOf = new Map();
       deltaFields().forEach((list, g) => list.forEach((el, i) => {
         const was = prev.vals[g][i];
-        if (was === undefined || was === deltaText(el)) return;
+        // a value chip changed when it waits on its base (rollHoldAll: the value on screen, maybe older than the snapshot)
+        const chip = g === 0 && el.matches(".sk-stat, .sk-summon-stat"), base = chip ? rollBase.get(chipKey(i)) : null;
+        if (chip ? !base : (was === undefined || was === deltaText(el))) return;
         changed.push(el);
         let d = 0;
         if (g <= 1 && prev.nums){
-          const a = nums(prev.nums[g][i]), b = nums(deltaValue(el));
+          const a = nums(base ? base.txt || "" : prev.nums[g][i]), b = nums(deltaValue(el));
           // Compare averages, not sums: a range can collapse to one number (cooldown "12–14s" -> "4s" at high AGI), which
           // a sum read as unreadable, so a shorter cooldown fell back to "up" (user 2026-10-06). Equal counts: same sign.
           if (a.length && b.length){
@@ -21920,8 +21986,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
             setTimeout(() => {
               if (!t.el.isConnected) return;
               const pos = fieldPos(t.el);
-              if (up) fireShot(c, t, col || false, () => { const el = liveField(t.el, pos); if (el){ pingField(el, col ? "sk-delta-stat" : "sk-delta", col); changeOn(el, numUp, col || SHOT_GOLD, prev); } });
-              else { pingField(t.el, "sk-delta-down"); changeOn(t.el, numUp, SHOT_RED, prev); fireShot(t, c, true); }
+              if (up) fireShot(c, t, col || false, () => { const el = liveField(t.el, pos); if (el){ pingField(el, col ? "sk-delta-stat" : "sk-delta", col); changeOn(el, numUp, col || SHOT_GOLD); } });
+              else { pingField(t.el, "sk-delta-down"); changeOn(t.el, numUp, SHOT_RED); fireShot(t, c, true); }
             }, (up ? outDelay : 0) + i * 45);
           });
         return land;
@@ -21976,7 +22042,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           volley(centerOf(pip || from), up); return;
         }
       }
-      if (!src){ changed.forEach((el, i) => { if (el === magicNew) return revealMagic(el); if (el === magicGone) return magicOut(el); const worse = (dirOf.get(el) || 0) < 0, col = worse ? null : statColorFor(el), nd = numDirOf.get(el) || 0; setTimeout(() => { if (!el.isConnected) return; pingField(el, worse ? "sk-delta-down" : (col ? "sk-delta-stat" : "sk-delta"), col); changeOn(el, nd ? nd > 0 : !worse, worse ? SHOT_RED : (col || SHOT_GOLD), prev); }, i * 30); }); return; }
+      if (!src){ changed.forEach((el, i) => { if (el === magicNew) return revealMagic(el); if (el === magicGone) return magicOut(el); const worse = (dirOf.get(el) || 0) < 0, col = worse ? null : statColorFor(el), nd = numDirOf.get(el) || 0; setTimeout(() => { if (!el.isConnected) return; pingField(el, worse ? "sk-delta-down" : (col ? "sk-delta-stat" : "sk-delta"), col); changeOn(el, nd ? nd > 0 : !worse, worse ? SHOT_RED : (col || SHOT_GOLD)); }, i * 30); }); return; }
       // Dependency toggle: outward light leaves as the icon shows its lit face (180 ms in); when the toggle got worse the
       // icon holds its old face and turns over as the last inward comet lands.
       const c = centerOf(pipPoint(src.b.closest(".sk-dep-btncol"), src.up) || src.b);
@@ -22152,11 +22218,12 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     function renderHero(){
       setToolServer("skill-details", currentServer);   // auto look: the card's own server switch (cosmetic only)
       const prev = heroSnapshot();
-      const carry = selected && idSeen === selected.id ? pingCarryCapture() : [];
+      const same = selected && idSeen === selected.id, carry = same ? pingCarryCapture() : [], tags = same ? dtagCarryCapture() : [];
       renderHeroNow();
       fitDepLabels();
       fitStatDials();
       pingCarryApply(carry);
+      dtagCarryApply(tags);
       idSeen = selected && selected.id;
       statSeen = statInputs().map(([, el]) => statNum(el));
       serverSeen = currentServer;
@@ -30341,7 +30408,7 @@ const CLASS_GUIDES = [
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"stats":{"tal":"50%","agi":"50%"},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","replica":{"item":"w_whl65"},"stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","replica":{"item":"a_whl65"},"stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","replica":{"item":"c_whl65"},"stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}},
   {"id":31,"cover":[264,434,444],"format":"12t-class-guide","version":1,"title":"หมา Paladin","author":"เว็บคุณก็เทพเกินครับ","date":"2026-10-18","description":"พอดีเห็นว่ายังไม่มีไกด์หมาพาลาเลยครับ อันนี้แบบที่ผมใช้","build":{"server":"tto","classKey":"wolf","level":100,"learned":[101,102,103,121,122,131,132,133,134,141,142,201,202,203,204,211,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,302,303,311,321,322,323,324,331,332,341,342,351,402,403,404,422,424,431,432,434,442,444],"support":[901,902]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T16:03:17.783Z","counts":{"1":25,"2":33,"3":23,"4":14,"5":36,"6":29,"7":19,"8":15,"9":16,"10":23,"11":24,"12":8,"13":4,"14":28,"15":33,"16":16,"17":27,"18":32,"19":24,"20":30,"21":20,"22":21,"23":28,"24":6,"25":11,"26":12,"27":10,"28":13,"29":24,"30":22,"31":12}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T16:39:44.533Z","counts":{"1":25,"2":35,"3":23,"4":14,"5":36,"6":30,"7":19,"8":15,"9":16,"10":23,"11":24,"12":8,"13":4,"14":29,"15":33,"16":16,"17":28,"18":33,"19":24,"20":30,"21":20,"22":21,"23":29,"24":6,"25":11,"26":12,"27":10,"28":13,"29":24,"30":22,"31":14}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -34003,6 +34070,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T16:39:29.958Z","fix(bible): on skill details, quick clicks add up into one ▲ / ▼ pill, a click while a pill is showing waits for it to finish and then plays its own, and several stat changes in a row no longer leave Raw / Final stuck at the old number"],
     ["2026-10-18T16:12:29.592Z","fix(bible): on skill details chips the ▲ / ▼ change pill now pops in as the light lands, and the number rolls to its new value a moment after it (the pill was showing only once the roll had finished)"],
     ["2026-10-18T16:00:06.872Z","fix(bible): Improved Slayer steps one rank at a time on the All Slayer cards again, a cast time of 1s ↔ ไร้หลอด shows a −0.9s / +0.9s change pill, and switching server no longer pushes the old damage number past the chip's edge"],
     ["2026-10-18T15:48:20.194Z","fix(bible): the ▲ / ▼ change pill on skill details chips sits on the number (right after it, or just over its end when there is no room) instead of a far corner, and a better damage change shows gold instead of ATK red"],
