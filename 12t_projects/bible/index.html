@@ -5589,14 +5589,21 @@
   /* Change visuals (user 2026-10-18, replaced the chevron escalator): the odometer roll of a chip value and the floating
      delta tag, see changeOn(). While a roll runs the value clips to its box plus 4 px (slack for glyph tops, so the
      rolling numbers stay off the label and the button around them); a clip-path did not clip the GPU-animated layers, overflow: clip does. */
-  .sk-roll-host{position:relative; overflow:clip; overflow-clip-margin:4px}
+  .sk-roll-host{position:relative}
+  .sk-roll-host.is-rolling{overflow:clip; overflow-clip-margin:4px}   /* only while the numbers move (0.54 s), so a raised tag is never cut */
   .sk-roll-new{display:block}
   .sk-roll-old, .sk-roll-tint{position:absolute; left:0; right:0; top:0; pointer-events:none}
-  .sk-dtag{position:absolute; z-index:3; right:8px; pointer-events:none; white-space:nowrap; font:700 12px/1 'JetBrains Mono','Prompt',monospace;
-    color:var(--dtag-c); padding:4px 7px; border-radius:999px; background:rgba(20,16,12,.9);
-    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dtag-c) 55%, transparent); opacity:0}
-  .sk-dtag.is-up{top:6px}
-  .sk-dtag.is-down{bottom:6px}
+  /* The delta tag rides a zero-width anchor at the end of the number (height = the digits' cap height): right after it on
+     the same line like a stock ticker, or raised over its end (.is-sup) when that would run past the chip. A dark pill with
+     a thin ring in its colour (user 2026-10-18: a pill looks better than plain text). */
+  .sk-dtag-anchor{position:relative; display:inline-block; width:0; height:.74em; vertical-align:baseline}
+  .sk-dtag{position:absolute; z-index:3; left:8px; top:50%; margin-top:calc(-.5em - 3px); pointer-events:none; white-space:nowrap;
+    font:700 13px/1 'JetBrains Mono','Prompt',monospace; color:var(--dtag-c); padding:3px 7px; border-radius:999px;
+    background:rgba(20,16,12,.9); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dtag-c) 55%, transparent); opacity:0}
+  .sk-dtag i{font-style:normal; font-size:.75em; margin-right:3px; position:relative; top:-.06em}
+  .sk-dtag.is-sup{font-size:11px; padding:2px 6px; left:auto; right:0; top:auto; bottom:100%; margin:0 0 4px}
+  .sk-dtag.is-sub{font-size:11px; padding:2px 6px; left:auto; right:0; top:100%; bottom:auto; margin:4px 0 0}
+  .sk-dtag.is-corner{font-size:11px; padding:2px 6px; left:auto; right:8px; top:8px; bottom:auto; margin:0}   /* on the chip itself */
   .sk-stat, .sk-dmg{border-left:2px solid var(--chip-accent, var(--gold))}
   /* Clean pass (user 2026-10-18, picked from a live mock of the card).
      The stats this skill does not read (no .sk-stat-glow-*) fade back; hovering or typing in one brings it back. */
@@ -19101,7 +19108,7 @@ function mountSkillCooldownLookup(root){
         const g = v.closest(".sk-dmg-group"), gl = g && g.querySelector(".sk-dmg-group-label");
         const name = label + (gl ? " · " + gl.textContent.replace(/\s+/g, " ").trim() : (j ? " #" + (j + 1) : ""));
         const c = v.cloneNode(true);
-        c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove());   // a change roll still running
+        c.querySelectorAll(".sk-roll-old, .sk-roll-tint, .sk-dtag-anchor").forEach(n => n.remove());   // a change roll or tag still running
         c.querySelectorAll("img[alt]").forEach(im => im.replaceWith(im.alt));
         let key = name; seen[key] = (seen[key] || 0) + 1; if (seen[key] > 1) key += "#" + seen[key];
         out.push({ key, name, text: c.textContent.replace(/\s+/g, " ").trim(), lowerBetter: /คูลดาวน์|เวลาร่าย|cooldown|cast/i.test(label) });
@@ -21466,7 +21473,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // Tooltip text is part of a field's value, so a change that only shows up on hover still counts.
     function deltaText(el){
       const c = el.cloneNode(true);
-      c.querySelectorAll(".sk-dep-strip, button, .sk-ko-badge, .sk-magic-badge, .sk-roll-old, .sk-roll-tint, .sk-dtag").forEach(n => n.remove());
+      c.querySelectorAll(".sk-dep-strip, button, .sk-ko-badge, .sk-magic-badge, .sk-roll-old, .sk-roll-tint, .sk-dtag, .sk-dtag-anchor").forEach(n => n.remove());
       c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt));
       return c.textContent.replace(/\s+/g, " ").trim();
     }
@@ -21517,17 +21524,18 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       v.querySelectorAll(":scope > .sk-roll-old, :scope > .sk-roll-tint").forEach(n => n.remove());
       const neu = v.querySelector(":scope > .sk-roll-new");
       if (neu){ while (neu.firstChild) v.insertBefore(neu.firstChild, neu); neu.remove(); }
-      v.classList.remove("sk-roll-host");
+      v.classList.remove("sk-roll-host", "is-rolling");
     }
     // A field's value markup for the snapshot, without the layers of a roll still running.
     function rollHtmls(el){
-      return Array.from(el.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP)).map(v => { const c = v.cloneNode(true); rollSettle(c); return c.innerHTML; });
+      return Array.from(el.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP)).map(v => { const c = v.cloneNode(true); rollSettle(c); c.querySelectorAll(".sk-dtag-anchor").forEach(n => n.remove()); return c.innerHTML; });
     }
     // Right after a rebuild (heroDelta runs before the browser paints it) a changed value is frozen at its old value: the new
     // one is laid out but hidden, the old one drawn over it, so the number never shows its new value before its light lands.
     // A safety timer lets go after 4 s whatever happens (a hold must never stick).
     function rollHold(v, oldHtml){
       rollSettle(v);
+      v.querySelectorAll(".sk-dtag-anchor").forEach(n => n.remove());   // a tag from the last change goes with it
       if (v.innerHTML === oldHtml) return;
       const neu = document.createElement("span"); neu.className = "sk-roll-new"; neu.style.visibility = "hidden";
       while (v.firstChild) neu.appendChild(v.firstChild);
@@ -21556,6 +21564,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       }
       clearTimeout(v.__rollTimer);
       neu.style.visibility = "";
+      v.classList.add("is-rolling"); setTimeout(() => v.classList.remove("is-rolling"), 540);
       const E = { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" }, from = up ? "100%" : "-100%";
       old.animate([{ transform: "translateY(0)", opacity: 1 }, { transform: `translateY(${up ? "-100%" : "100%"})`, opacity: 0 }], E);
       neu.animate([{ transform: `translateY(${from})`, opacity: 0 }, { transform: "translateY(0)", opacity: 1 }], E);
@@ -21570,23 +21579,50 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     }
     const deltaNums = (txt) => (String(txt).replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
     const deltaAvg = (v) => v.reduce((x, y) => x + y, 0) / v.length;
-    function deltaTag(chip, oldTxt, color){
+    // The tag sits on the number (user 2026-10-18: pinned to the chip's corner it was far from it, on the border, and in a
+    // different corner per direction): a small pill (user 2026-10-18) right after the number's end on the same line, like a
+    // stock ticker ("73–80s ▼−30s"); when that would run past the chip, raised over the number's end; when that would cover
+    // the label, just under it; when nothing at the number's end is clear (narrow phone chips, where the number ends near the
+    // edge anyway), the chip's top-right corner level with the label. The first spot that stays inside the chip and clear of
+    // its other text (judged by the text itself: the label and base lines are full-width boxes) wins; rects are compared in
+    // the same screen space, so the stage's scale does not matter. It lives in a zero-width anchor at
+    // the end of the value's text, so it follows the text. It slides out of the number as the roll ends (540 ms), holds about
+    // a second and fades. A better damage change shows gold, not ATK's red, which would read as a loss.
+    function deltaTag(chip, v, oldTxt, color){
       const txt = deltaValue(chip), a = deltaNums(oldTxt), b = deltaNums(txt);
       if (!a.length || !b.length) return;
       const d = deltaAvg(b) - deltaAvg(a);
       if (!d) return;
-      const unit = /%/.test(txt) ? "%" : (/\ds\b/.test(txt) ? "s" : ""), m = Math.abs(d);
+      const unit = /%/.test(txt) ? "%" : (/\ds\b/.test(txt) ? "s" : ""), m = Math.abs(d), up = d > 0;
       const num = (m >= 10 ? Math.round(m) : Math.round(m * 10) / 10).toLocaleString("en-US");
-      chip.querySelectorAll(":scope > .sk-dtag").forEach(n => n.remove());
-      const tag = document.createElement("span"), up = d > 0;
-      tag.className = "sk-dtag " + (up ? "is-up" : "is-down"); tag.setAttribute("aria-hidden", "true");
-      tag.textContent = (up ? "▲ +" : "▼ −") + num + unit;
-      tag.style.setProperty("--dtag-c", color);
-      chip.appendChild(tag);
-      const s = up ? -1 : 1;
-      tag.animate([{ opacity: 0, transform: `translateY(${-s * 8}px) scale(.85)` }, { opacity: 1, transform: "translateY(0) scale(1)", offset: 0.18 },
-                   { opacity: 1, transform: `translateY(${s * 5}px)`, offset: 0.7 }, { opacity: 0, transform: `translateY(${s * 16}px)` }],
-                  { duration: 1500, easing: "ease-out", fill: "forwards" }).onfinish = () => tag.remove();
+      const atk = (getComputedStyle(atkEl).getPropertyValue("--stat-atk") || "").trim();
+      chip.querySelectorAll(".sk-dtag-anchor, :scope > .sk-dtag").forEach(n => n.remove());
+      const anchor = document.createElement("span"); anchor.className = "sk-dtag-anchor"; anchor.setAttribute("aria-hidden", "true");
+      const tag = document.createElement("span"); tag.className = "sk-dtag";
+      tag.innerHTML = "<i>" + (up ? "▲" : "▼") + "</i>" + (up ? "+" : "−") + num + unit;
+      tag.style.setProperty("--dtag-c", color !== SHOT_RED && atk && color === atk ? SHOT_GOLD : color);
+      anchor.appendChild(tag);
+      const neu = v.querySelector(":scope > .sk-roll-new");
+      (neu || v).appendChild(anchor);
+      const textRects = (e) => { const rg = document.createRange(); rg.selectNodeContents(e); return Array.from(rg.getClientRects()); };
+      const avoid = Array.from(chip.querySelectorAll(".sk-stat-label, .sk-stat-base, button, .sk-ko-badge, .sk-magic-badge"))
+        .filter(e => !e.contains(tag) && e.getClientRects().length)
+        .flatMap(e => e.matches(".sk-stat-label, .sk-stat-base") ? textRects(e) : [e.getBoundingClientRect()]);
+      const clear = () => {
+        // the new number is still rolling in (shifted by up to its height): judge the spot where the tag will settle
+        const r0 = tag.getBoundingClientRect(), dy = neu && neu.contains(tag) ? neu.getBoundingClientRect().top - v.getBoundingClientRect().top : 0;
+        const r = { left: r0.left, right: r0.right, top: r0.top - dy, bottom: r0.bottom - dy }, c = chip.getBoundingClientRect();
+        if (r.left < c.left + 4 || r.right > c.right - 6 || r.top < c.top + 2 || r.bottom > c.bottom - 2) return false;
+        return !avoid.some(a => r.left < a.right && a.left < r.right && r.top < a.bottom && a.top < r.bottom);
+      };
+      const spot = ["", " is-sup", " is-sub", " is-corner"].find(cls => {
+        (cls === " is-corner" ? chip : anchor).appendChild(tag);
+        tag.className = "sk-dtag" + cls; return clear();
+      });
+      if (spot === undefined){ anchor.appendChild(tag); tag.className = "sk-dtag is-sup"; }   // nowhere clean: raised over the number's end
+      tag.animate([{ opacity: 0, transform: "translateX(-6px)", easing: "ease-out" }, { opacity: 1, transform: "translateX(0)", offset: 0.16 },
+                   { opacity: 1, transform: "translateX(0)", offset: 0.73, easing: "ease-in" }, { opacity: 0, transform: "translateX(2px)" }],
+                  { duration: 1400, delay: 540, easing: "linear", fill: "both" }).onfinish = () => { anchor.remove(); tag.remove(); };
     }
     // On impact (or as a worse field's red light leaves): each chip of the field rolls and tags against its value in the
     // snapshot (same place on the card, see fieldPos). numUp is the field's direction, used when a chip's own numbers can't be read.
@@ -21600,8 +21636,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const vals = Array.from(chip.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP));
         const a = deltaNums(oldTxt || ""), b = deltaNums(deltaValue(chip));
         const up = a.length && b.length && deltaAvg(a) !== deltaAvg(b) ? deltaAvg(b) > deltaAvg(a) : numUp;
-        if (chip.matches(".sk-stat") && vals.length === 1 && oldTxt !== undefined) deltaTag(chip, oldTxt, color);
         if (olds) vals.forEach((v, k) => { if (olds[k] !== undefined) rollPlay(v, olds[k], up, color); });
+        if (chip.matches(".sk-stat") && vals.length === 1 && oldTxt !== undefined) deltaTag(chip, vals[0], oldTxt, color);
       });
     }
     // A click during a flash rebuilds the card and would cut it off (user 2026-10-05): before the rebuild, note every
@@ -21712,7 +21748,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       if (el.matches(".sk-ko-badge")) return (el.querySelector(".sk-ko-value") || el).textContent;
       if (el.matches(".sk-summon-stat")) return (el.querySelector(".sk-summon-stat-value") || el).textContent;
       return Array.from(el.querySelectorAll(".sk-stat-value")).filter(v => !v.closest(".sk-stat-tooltip, .sk-dmg-info-pop, .sk-status-tip"))
-        .map(v => { const c = v.cloneNode(true); c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove()); c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; }).join(" ");
+        .map(v => { const c = v.cloneNode(true); c.querySelectorAll(".sk-roll-old, .sk-roll-tint, .sk-dtag-anchor").forEach(n => n.remove()); c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; }).join(" ");
     }
     function heroSnapshot(){
       const clicked = depClicked; depClicked = null;
@@ -21952,7 +21988,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const chip = targetChip(info), v = chip && chip.querySelector(".sk-stat-value");
       if (!v) return null;
       const c = v.cloneNode(true);
-      c.querySelectorAll(".sk-stat-tooltip, .sk-roll-old, .sk-roll-tint").forEach(n => n.remove());
+      c.querySelectorAll(".sk-stat-tooltip, .sk-roll-old, .sk-roll-tint, .sk-dtag-anchor").forEach(n => n.remove());
       const t = c.textContent.replace(/,/g, "");
       const nums = (t.match(/\d+(?:\.\d+)?/g) || []).map(Number);
       if (/ไร้หลอด/.test(t)) nums.unshift(0.1);
@@ -22012,7 +22048,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     function openTargetEdit(chip){
       const info = targetInfo(chip), val = chip && chip.querySelector(".sk-stat-value");
       if (!info || !val || chip.classList.contains("sk-target-editing")) return;
-      rollSettle(val);   // a change roll still running would otherwise be saved and restored mid-way
+      rollSettle(val); val.querySelectorAll(".sk-dtag-anchor").forEach(n => n.remove());   // a running roll or tag would otherwise be saved and restored mid-way
       const now = chipNumber(info), saved = val.innerHTML;
       chip.classList.add("sk-target-editing");
       val.innerHTML = '<span class="sk-target-inline"><input class="sk-target-input" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="' + info.label + '"><span class="sk-target-unit">' + info.unit + '</span></span>';
@@ -30279,7 +30315,7 @@ const CLASS_GUIDES = [
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"stats":{"tal":"50%","agi":"50%"},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","replica":{"item":"w_whl65"},"stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","replica":{"item":"a_whl65"},"stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","replica":{"item":"c_whl65"},"stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}},
   {"id":31,"cover":[264,434,444],"format":"12t-class-guide","version":1,"title":"หมา Paladin","author":"เว็บคุณก็เทพเกินครับ","date":"2026-10-18","description":"พอดีเห็นว่ายังไม่มีไกด์หมาพาลาเลยครับ อันนี้แบบที่ผมใช้","build":{"server":"tto","classKey":"wolf","level":100,"learned":[101,102,103,121,122,131,132,133,134,141,142,201,202,203,204,211,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,302,303,311,321,322,323,324,331,332,341,342,351,402,403,404,422,424,431,432,434,442,444],"support":[901,902]},"notes":{}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T15:25:59.727Z","counts":{"1":25,"2":31,"3":22,"4":14,"5":34,"6":29,"7":17,"8":15,"9":15,"10":21,"11":22,"12":7,"13":4,"14":25,"15":31,"16":16,"17":26,"18":30,"19":23,"20":28,"21":19,"22":20,"23":27,"24":6,"25":10,"26":11,"27":9,"28":12,"29":23,"30":21,"31":11}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T15:49:48.343Z","counts":{"1":25,"2":33,"3":23,"4":14,"5":35,"6":29,"7":19,"8":15,"9":16,"10":22,"11":23,"12":7,"13":4,"14":26,"15":32,"16":16,"17":27,"18":32,"19":23,"20":29,"21":20,"22":21,"23":28,"24":6,"25":10,"26":12,"27":9,"28":13,"29":23,"30":22,"31":12}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33941,6 +33977,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T15:48:20.194Z","fix(bible): the ▲ / ▼ change pill on skill details chips sits on the number (right after it, or just over its end when there is no room) instead of a far corner, and a better damage change shows gold instead of ATK red"],
     ["2026-10-18T15:26:11.422Z","chore(bible): refresh the class guide reader counts shown when the live counter is blocked"],
     ["2026-10-18T15:12:43.000Z","feat(bible): Special Pet Info: the 40 pets with real effects, live for pet level 1–9 and LCK, with range, timing and where the game's tooltip is wrong"],
     ["2026-10-18T15:11:58.656Z","feat(bible): skill details chips show a change by rolling the number like an odometer, with a small ▲ / ▼ tag of how much it moved, when their light lands (no more chevrons); typing in a stat field plays one light volley when you finish instead of one per keystroke"],
