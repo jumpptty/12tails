@@ -35,6 +35,9 @@ Tile "อยากสกิลวน ใช้แต้มน้อยสุด�
 * **Undo:** Ctrl+Z restores toggle/rank state (50 deep) only while visible (`root.hidden` guard). Text inputs: snapshot on focus, commit on blur/change; Ctrl+Z inside a field is the field's own.
 * `[CAO ERROR]`.
 
+## Hub bar: logo
+* **Logo `.brand` (user 2026-10-18, option 06 "Tail Twelve" of 12 mocks, picked "pure"):** an inline SVG "12" drawn in one gold stroke (`#brandGold` gradient), the 2 flicking out into a tail, with TAILS / BIBLE stacked beside it in Prompt 700 (BIBLE gold). Sized in em from `.brand` font-size (19px; 15 / 13.5px on phones); the viewBox is trimmed to the art, so the gap is only the CSS `gap:.22em` (the user asked for it a bit tighter than the mock). The same mark is the tab icon (`<link rel="icon">` SVG data URI). `aria-label="12 Tails Bible"` carries the name.
+
 ## Hub bar: contributors (ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล)
 * **Button `#btnCredits`** (scroll-with-quill icon, gold; user picked variant 5 of the book / scroll set) sits inside `.hub-note`, right after the Discord name, so it shares the note's `@media (max-width:860px){.hub-note{display:none}}` and is hidden on narrow screens (user 2026-10-06: "right next to" the note).
 * **Modal `#creditsModal`** reuses the donate modal classes (`.donate-backdrop` / `.donate-popup` / `.donate-head` / `.donate-close`); title ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล; closes on ×, backdrop click, Esc.
