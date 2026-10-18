@@ -8041,11 +8041,16 @@
      every 7 s (paused while the mouse is over the stage or the strip). Phones (<= 900 px): the stage is a card with story bars, swipe and ‹ ›,
      and the filmstrip becomes a 2-column grid of every tool. html.hub-menu (set in showMenu) gives the menu the whole window. */
   html.hub-menu .stage{max-width:none; padding:0; zoom:1}
-  .ln{--acc:var(--gold); --ln-hi:color-mix(in srgb, var(--gold) 62%, #fff); position:relative; height:calc(100dvh - var(--hub-h, 64px)); min-height:500px; display:flex; flex-direction:column; overflow:hidden;
+  html.hub-menu .hub-bar{border-bottom-color:transparent}   /* no divider over the menu's stage (user 2026-10-18) */
+  html.hub-menu .hub-bar::after{display:none}
+  .ln{--acc:var(--gold); --ln-hi:color-mix(in srgb, var(--gold) 62%, #fff); --ln-max:calc((100dvh - var(--hub-h, 64px)) * 2.1); position:relative; height:calc(100dvh - var(--hub-h, 64px)); min-height:500px; display:flex; flex-direction:column; overflow:hidden;
     font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif}
   .ln-glow{position:absolute; inset:0; z-index:0; pointer-events:none; background:radial-gradient(45% 60% at 66% 50%, color-mix(in srgb, var(--acc) 22%, transparent), transparent 70%)}
   .ln-stage{position:relative; z-index:1; flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,42fr) minmax(0,58fr); align-items:center; gap:2vw; padding:0 5vw; touch-action:pan-y}
   .ln-segs, .ln-nav, .ln-tools-h{display:none}
+  /* wide screens (21:9 and up, user 2026-10-18 on 3440 px): the stage, the filmstrip and the glow keep a 2.1 : 1 frame in the middle,
+     so the text stays near the art instead of hugging the left edge; 16:9 and 16:10 windows are narrower than the frame and do not change */
+  @media (min-width:901px){ .ln-stage, .ln-stripbar{width:100%; max-width:var(--ln-max); margin-inline:auto} .ln-glow{width:min(100%, var(--ln-max)); margin-inline:auto} }
   .ln-copy{position:relative; z-index:2; max-width:620px}
   .ln-kicker{display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--acc)}
   .ln-kicker::before{content:""; width:28px; height:2px; background:var(--acc)}
@@ -8062,8 +8067,6 @@
     background:linear-gradient(180deg, var(--ln-hi), var(--gold)); box-shadow:0 0 0 1px var(--ln-hi), 0 12px 30px -8px color-mix(in srgb, var(--gold) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.5); transition:transform .15s, box-shadow .15s}
   .ln-play:hover, .ln-play:focus-visible{transform:translateY(-2px); box-shadow:0 0 0 1px var(--ln-hi), 0 18px 40px -8px color-mix(in srgb, var(--gold) 75%, transparent), inset 0 1px 0 rgba(255,255,255,.5)}
   .ln-play span{font-size:22px}
-  .ln-cta small{color:var(--muted); opacity:.75; font-size:13px}
-  .ln-cta kbd{font-family:'JetBrains Mono',monospace; border:1px solid var(--line); border-radius:5px; padding:1px 6px}
   .ln-art{position:relative; height:100%; min-height:0; display:grid; place-items:center; perspective:1400px}
   .ln-art > *{animation:lnArt .8s cubic-bezier(.2,.7,.2,1) both}
   @keyframes lnArt{from{opacity:0; transform:translateX(80px) scale(.96); filter:blur(10px)}}
@@ -8114,17 +8117,17 @@
   .ln-th::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 30%, rgba(0,0,0,.85))}
   .ln-th span, .ln-th i{position:absolute; z-index:1}
   .ln-th span{left:8px; right:6px; bottom:8px; font-size:11.5px; line-height:1.2; font-weight:600; text-shadow:0 1px 4px #000}
-  .ln-th i{left:0; top:0; height:3px; width:0; background:var(--acc)}
+  .ln-th i{left:0; top:0; height:3px; width:100%; background:var(--acc); transform:scaleX(0); transform-origin:0 50%}
   .ln-th:hover, .ln-th:focus-visible{transform:translateY(-4px)}
   .ln-th:hover img{opacity:.85}
   .ln-th.is-on{border-color:var(--acc); transform:translateY(-6px)}
   .ln-th.is-on img{opacity:1}
   .ln-th.is-on i, .ln-seg.is-on i{animation:lnBar 7s linear forwards}
   .ln.is-paused .ln-th.is-on i, .ln.is-paused .ln-seg.is-on i{animation-play-state:paused}
-  @keyframes lnBar{to{width:100%}}
+  @keyframes lnBar{from{transform:scaleX(0)} to{transform:scaleX(1)}}   /* transform, not width: the bars keep moving while the page is busy */
   /* big screens grow the text column and the filmstrip like the rest of the hub (the old menu zoomed 1.3 / 1.5 at the same sizes) */
-  @media (min-width:1800px) and (min-height:1100px){ .ln-copy, .ln-stripbar{zoom:1.3} }
-  @media (min-width:2400px) and (min-height:1300px){ .ln-copy, .ln-stripbar{zoom:1.5} }
+  @media (min-width:1800px) and (min-height:1100px){ .ln-copy, .ln-strip, .ln-count{zoom:1.3} }
+  @media (min-width:2400px) and (min-height:1300px){ .ln-copy, .ln-strip, .ln-count{zoom:1.5} }
   /* phones and small tablets: stage card (story bars, swipe, ‹ ›), then every tool as a 2-column grid */
   @media (max-width:900px){
     .ln{height:auto; min-height:0; overflow:visible; padding:4px 0 28px}
@@ -8132,8 +8135,8 @@
       background:radial-gradient(75% 55% at 50% 36%, color-mix(in srgb, var(--acc) 28%, var(--panel)), var(--ink) 78%); border:1px solid var(--line)}
     .ln-segs{display:flex; position:absolute; z-index:3; top:12px; left:14px; right:14px; gap:4px}
     .ln-seg{flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.18); overflow:hidden; position:relative}
-    .ln-seg i{position:absolute; inset:0 auto 0 0; width:0; background:var(--text)}
-    .ln-seg.is-done i{width:100%}
+    .ln-seg i{position:absolute; inset:0; background:var(--text); transform:scaleX(0); transform-origin:0 50%}
+    .ln-seg.is-done i{transform:none}
     .ln-nav{display:grid; place-items:center; position:absolute; z-index:3; top:30%; width:36px; height:36px; padding:0; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(10,7,5,.55); color:var(--text); font-size:18px; cursor:pointer}
     .ln-nav.prev{left:10px}
     .ln-nav.next{right:10px}
@@ -8150,7 +8153,7 @@
     .ln-copy{position:absolute; left:0; right:0; bottom:0; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
     .ln-title{font-size:clamp(27px, 7.4vw, 40px); margin:8px 0 6px}
     .ln-desc{font-size:14.5px; line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
-    .ln-fact, .ln-cta small{display:none}
+    .ln-fact{display:none}
     .ln-cta{margin-top:14px}
     .ln-play{width:100%; height:50px; font-size:17px}
     .ln-stripbar{display:block; padding:26px 12px 0}
@@ -29522,7 +29525,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T04:19:14.219Z","counts":{"1":10,"2":14,"3":10,"4":7,"5":13,"6":11,"7":2,"8":8,"9":8,"10":5,"11":5,"12":2,"13":0,"14":8,"15":15,"16":2,"17":8,"18":14,"19":5,"20":9,"21":5,"22":4,"23":7,"24":2,"25":3,"26":2,"27":2,"28":5,"29":8,"30":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T04:29:22.763Z","counts":{"1":10,"2":14,"3":10,"4":7,"5":13,"6":11,"7":2,"8":8,"9":8,"10":6,"11":5,"12":2,"13":0,"14":8,"15":15,"16":2,"17":8,"18":14,"19":6,"20":9,"21":5,"22":4,"23":7,"24":2,"25":3,"26":2,"27":3,"28":5,"29":8,"30":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32892,20 +32895,24 @@ function mountLauncher(root){
       box.querySelector(".ln-gpt").src = storyOf(cls);
       box.querySelector(".ln-gcap").innerHTML = "<b>" + esc(g.title) + "</b><span>โดย " + esc(g.author) + " · " + cls + " · " + (LAUNCH_SERVER[g.build.server] || "") + "</span>";
       png.hidden = false; png.classList.add("is-wait"); img.removeAttribute("src");
-      guidePng(x).then(url => { if (guides[gi % guides.length] !== x || !box.isConnected) return; if (url) { img.src = url; png.classList.remove("is-wait"); } else png.hidden = true; });
+      const stale = () => guides[gi % guides.length] !== x || !box.isConnected;
+      const apply = url => { if (stale()) return; if (!url) { png.hidden = true; return; } const pre = new Image(); pre.src = url;   // decoded before the swap, so the swap costs nothing
+        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); } }); };
+      // a render blocks the page for 0.1-0.3 s: a guide that is not ready yet (e.g. the slide picked right after load) renders after the entrance, not during it
+      if (pngs.has(x.id)) pngs.get(x.id).then(apply); else setTimeout(() => { if (!stale()) guidePng(x).then(apply); }, 900);
       box.classList.remove("is-out");
-      const next = guides[(gi + 1) % guides.length]; if (next) idle(() => guidePng(next));   // the next guide renders while this one shows
     };
     if (fade) { box.classList.add("is-out"); setTimeout(paint, 380); } else paint();
   };
-  let cur = 0;
+  let cur = 0, shownAt = 0;
   const show = i => {
     cur = (i + TOOLS.length) % TOOLS.length; const t = TOOLS[cur], fact = typeof t.fact === "function" ? t.fact() : null;
+    shownAt = performance.now();
     root.style.setProperty("--acc", accentOf(t));
     copy.innerHTML = '<span class="ln-kicker">' + (LAUNCH_CATEGORY[t.category] || "เครื่องมือหลัก") + (t.badge ? ' <span class="ln-badge">' + t.badge + "</span>" : "") + "</span>" +
       '<h1 class="ln-title">' + lines(t.title).map((l, k) => '<span style="animation-delay:' + k * 70 + 'ms">' + l + "</span>").join("") + "</h1>" +
       (t.desc ? '<p class="ln-desc">' + t.desc + "</p>" : "") + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") +
-      '<div class="ln-cta"><a class="ln-play" href="#' + t.id + '">เปิด<span aria-hidden="true">→</span></a><small><kbd>Enter</kbd> เปิด · <kbd>←</kbd> <kbd>→</kbd> เลือก</small></div>';
+      '<div class="ln-cta"><a class="ln-play" href="#' + t.id + '">เปิด<span aria-hidden="true">→</span></a></div>';
     clearInterval(guideTimer);
     if (t.collage === "skills") art.innerHTML = '<div class="ln-wall" aria-hidden="true">' + someIcons(phone() ? 25 : 35).map((s, k) => '<img style="--i:' + k + '" src="' + s + '" alt="">').join("") + "</div>";
     else if (t.collage === "classStory" && guides.length) {
@@ -32948,7 +32955,15 @@ function mountLauncher(root){
   const refit = () => { if (hubBarEl) document.documentElement.style.setProperty("--hub-h", hubBarEl.offsetHeight + "px"); fitTitle(); };
   root._refit = refit;
   addEventListener("resize", refit); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
-  if (guides[0]) setTimeout(() => idle(() => { if (!viewMenu.hidden) guidePng(guides[0]); }), 1500);   // the newest guide is ready by the time its slide comes up
+  // The next two guide images (one visit of the slide shows two) render ahead, one at a time, while another slide is settled on screen
+  // (user 2026-10-18: moving to the slide lagged): never during a slide's entrance and never on the guide slide itself.
+  let rendering = false, lastInput = 0;   // and only after 1.5 s without mouse / key / touch input, so a render never delays a click
+  ["pointermove", "pointerdown", "keydown", "wheel"].forEach(ev => addEventListener(ev, () => { lastInput = performance.now(); }, { capture: true, passive: true }));
+  const pump = () => {
+    if (rendering || viewMenu.hidden || !guides.length || TOOLS[cur].collage === "classStory" || performance.now() - shownAt < 1200 || performance.now() - lastInput < 1500) return;
+    for (let k = 1; k <= 2; k++) { const x = guides[(gi + k + guides.length) % guides.length]; if (!pngs.has(x.id)) { rendering = true; guidePng(x).then(() => { rendering = false; }); return; } }
+  };
+  setInterval(() => idle(pump), 700);
   show(0); refit();
 }
 mountLauncher($("#launch"));
@@ -32966,6 +32981,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T04:29:23.137Z","fix(bible): hub menu on wide (21:9) screens keeps its text, art and filmstrip together in the middle; moving to the ไกด์อาชีพ slide no longer stutters (guide images are prepared ahead, between slides); no divider line under the top bar and no keyboard hint on the menu"],
     ["2026-10-18T04:19:19.460Z","feat(bible): new hub menu: one tool at a time on a big stage with a filmstrip that moves on every 7 seconds (story bars, swipe and a tool grid on phones); the ไกด์อาชีพ slide shows the guides' own images with each guide's class portrait"],
     ["2026-10-18T03:04:36.352Z","feat(bible): class guide stats can be a share (50%) or ตัน / ตาม, shown as potion flasks in the author's order; the editor adds stats one at a time and stats and sets drag to reorder; dial text is white"],
     ["2026-10-18T02:55:04.571Z","style(bible): Prompt replaces the angular Chakra Petch font everywhere (skill details, damage popups, monster stats, boss guide, class guides and the spawn map); the validator bans it"],
