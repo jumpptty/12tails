@@ -17,11 +17,11 @@
      The rules are generated from it, so theming another element = adding its selector to the right group here. Nothing here names a look. */
   var THEME_SURFACES = {
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
-    chip: [".sk-stat", ".sk-dmg-formula", ".sk-hero-desc", ".sk-dep-strip"],
+    chip: [".sk-stat", ".sk-dmg-formula"],
     // flat panels and modals that never change fill on hover
     panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-hero", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
@@ -414,7 +414,6 @@
     /* Skill details, every look (incl. BB): the skill card takes the stat input panel's see-through gradient (the related-skills
      panel has no box since 2026-10-18); inside the card the hero, the title box and the browse button drop to a faint wash. */
   html.tool-wide-hero .tool-shell{ background:var(--glass-gradient); }
-  html.tool-wide-hero .sk-hero,
   html.tool-wide-hero .sk-search,
   html.tool-wide-hero .sk-browse-btn:not(:hover){background:rgba(255,255,255,.03)}
   h1,h2,h3,.entry-title{
@@ -2716,7 +2715,7 @@
   .sk-class-badge{
     display:flex; align-items:center; gap:12px; margin-bottom:8px; padding:8px 14px 8px 10px;
     background:linear-gradient(180deg, rgba(212,175,55,0.03) 0%, rgba(20,19,17,0.92) 100%);
-    border:1px solid rgba(212,175,55,0.2); border-left:3px solid var(--gold); border-radius:6px;
+    border:1px solid rgba(212,175,55,0.2); border-left:2px solid var(--gold); border-radius:6px;
     box-shadow:0 4px 16px rgba(0,0,0,0.35);
   }
   .sk-class-badge[hidden], .sk-class-badge-img[hidden]{display:none}
@@ -2736,7 +2735,7 @@
   }
   .sk-controls{
     background:linear-gradient(180deg, rgba(212,175,55,0.03) 0%, rgba(20,19,17,0.92) 100%);
-    border:1px solid rgba(212,175,55,0.2); border-left:3px solid var(--gold); border-radius:6px;
+    border:1px solid rgba(212,175,55,0.2); border-left:2px solid var(--gold); border-radius:6px;
     box-shadow:0 4px 16px rgba(0,0,0,0.35);
     padding:10px 14px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; align-items:end; margin-bottom:8px;
   }
@@ -2861,7 +2860,7 @@
   .sk-enemystat-controls{position:relative; display:flex; flex-direction:column; gap:8px; margin-bottom:8px}
   .sk-enemystat-controls .sk-controls, .sk-class-badge.sk-enemy-badge{
     background:linear-gradient(180deg, rgba(239,68,68,0.08) 0%, rgba(20,19,17,0.94) 100%);
-    border:1px solid rgba(239,68,68,0.35); border-left:3px solid #ef4444; border-radius:6px;
+    border:1px solid rgba(239,68,68,0.35); border-left:2px solid #ef4444; border-radius:6px;
     box-shadow:0 6px 20px rgba(0,0,0,0.4), inset 0 0 16px rgba(239,68,68,0.04);
   }
   .sk-enemystat-controls .sk-controls, .sk-enemystat-controls .sk-class-badge{margin-bottom:0}
@@ -3622,7 +3621,7 @@
     color:var(--muted);
   }
   .sk-empty-state{padding:40px 20px; text-align:center; color:var(--muted); font-size:14px}
-  .sk-hero{border:1px solid var(--line); border-radius:3px; background:var(--panel-2); padding:16px 20px}
+  .sk-hero{border:1px solid transparent; border-radius:3px; background:none; padding:16px 20px}
   .sk-hero-head{display:flex; align-items:center; gap:14px; margin-bottom:12px}
   .sk-hero-icon{width:56px; height:56px; border-radius:6px; flex:none}
   /* Caster badge (2026-08-21): for a "Barrel Bot - X" move whose icon was
@@ -3692,13 +3691,12 @@
   .sk-note-panel[hidden]{ display:none; }
   .sk-hero-desc{
     flex:1; min-width:0; margin-left:14px;
-    background:var(--panel);
-    border:1px solid var(--line);
+    background:linear-gradient(90deg, rgba(212,175,55,0.08), transparent 75%);
+    border:0;
     border-left:3px solid var(--gold);
-    border-radius:4px;
+    border-radius:0;
     padding:5px 12px;
     box-sizing:border-box;
-    box-shadow:0 1px 3px rgba(0,0,0,0.3);
     font-family:'Prompt',sans-serif;
     font-size:12px;
     line-height:1.42;
@@ -4000,7 +3998,7 @@
     color:var(--gold); text-shadow:0 0 4px rgba(212,175,55,0.4);
   }
 .sk-empty-state{padding:40px 20px; text-align:center; color:var(--muted); font-size:14px}
-  .sk-hero{border:1px solid var(--line); border-radius:3px; background:var(--panel-2); padding:16px 20px}
+  .sk-hero{border:1px solid transparent; border-radius:3px; background:none; padding:16px 20px}
   .sk-hero-head{display:flex; align-items:center; gap:14px; margin-bottom:12px}
   .sk-hero-icon{width:56px; height:56px; border-radius:6px; flex:none}
   /* Caster badge (2026-08-21): for a "Barrel Bot - X" move whose icon was
@@ -4045,13 +4043,12 @@
   .sk-hero-title{display:flex; flex-direction:column; gap:4px; min-width:0; flex-shrink:0}
   .sk-hero-desc{
     flex:1; min-width:0; margin-left:14px;
-    background:var(--panel);
-    border:1px solid var(--line);
+    background:linear-gradient(90deg, rgba(212,175,55,0.08), transparent 75%);
+    border:0;
     border-left:3px solid var(--gold);
-    border-radius:4px;
+    border-radius:0;
     padding:5px 12px;
     box-sizing:border-box;
-    box-shadow:0 1px 3px rgba(0,0,0,0.3);
     font-family:'Prompt',sans-serif;
     font-size:12px;
     line-height:1.42;
@@ -5135,7 +5132,7 @@
   .sk-bd-btn{
     position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
     padding:9px 12px 9px 10px; cursor:pointer; background:var(--bd-bg); color:var(--bd-label);
-    border:1px solid var(--bd-edge); border-left:3px solid var(--bd-accent); border-radius:6px; box-shadow:var(--bd-shadow);
+    border:1px solid var(--bd-edge); border-left:2px solid var(--bd-accent); border-radius:6px; box-shadow:var(--bd-shadow);
     font-family:'Prompt', sans-serif; font-size:13px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
     text-shadow:0 1px 2px rgba(0,0,0,0.5);
     transition:border-color .15s ease, color .15s ease, box-shadow .15s ease;
@@ -5586,12 +5583,39 @@
   .sk-hero-stats.sk-odds-row{grid-template-columns:repeat(5, 1fr); margin-top:12px}
   .sk-stat.sk-stat-odds{min-height:84px}
   .sk-stat-odds .sk-stat-value:not(.unwrapped){color:var(--stat-lck)}
-  /* Accent bar (2026-09-26, same treatment as .sk-hero-desc's gold bar): every chip gets a 3px left edge in its
-     signature colour: cooldown AGI green, cast INT, duration CHA, chances LCK, damage row / summon / dep strip gold. */
+  /* Accent bar (2026-09-26; 2 px since 2026-10-18, user): every chip gets a left edge in its signature colour:
+     cooldown AGI green, cast INT, duration CHA, chances LCK, damage row / summon gold. The dependency strip has none
+     since 2026-10-18 (it sits open between two gold hairlines). */
   /* Chevron escalator (user 2026-10-06, style 2): a scrolling chevron pattern behind a chip's value, inside its border
      (z-index -1 in the chip's isolated stacking context). The pattern is an SVG tile set per chip. */
   .sk-esc{position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:-1; background-repeat:repeat; opacity:0}
-  .sk-stat, .sk-dmg, .sk-dep-strip{border-left:3px solid var(--chip-accent, var(--gold))}
+  .sk-stat, .sk-dmg{border-left:2px solid var(--chip-accent, var(--gold))}
+  /* Clean pass (user 2026-10-18, picked from a live mock of the card).
+     The stats this skill does not read (no .sk-stat-glow-*) fade back; hovering or typing in one brings it back. */
+  .sk-stats-panel .sk-controls > div:not([class*="sk-stat-glow-"]):not(:empty){opacity:.42; transition:opacity .15s ease}
+  .sk-stats-panel .sk-controls > div:not([class*="sk-stat-glow-"]):hover,
+  .sk-stats-panel .sk-controls > div:focus-within{opacity:1}
+  /* With a skill open the search row is slim and its text small and muted, so the skill's name shows big only once
+     (the hero title); a magnifier says what the box is. Full-size desktop only: smaller screens already use 54 / 46 px,
+     and the landing page's big search (.is-hero) keeps its look. */
+  @media (min-height:821px) and (min-width:1301px){
+    .sk-search-bar-row:not(.is-hero){--sk-search-h:52px}
+  }
+  .sk-search-bar-row:not(.is-hero) .sk-search{
+    font-size:17px; color:var(--muted); padding-left:42px; border:0; border-bottom:1px solid rgba(212,175,55,.3); border-radius:0;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b0a189' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") 14px center / 18px no-repeat;
+  }
+  .sk-search-bar-row:not(.is-hero) .sk-search:focus{color:var(--text); border-bottom-color:var(--gold)}
+  @media (max-width:680px){
+    .sk-search-bar-row:not(.is-hero) .sk-search{padding-left:30px; background-position:9px center; background-size:15px}
+  }
+  /* A packed chip row with 1-3 chips fills its width on the damage row's 2 + 1 + 1 columns: one or two chips take
+     half each, three put the first on two columns. Rows with the Stats chip keep their own placement. */
+  @media (min-width:681px){
+    .sk-hero-stats.sk-stats-packed:not(:has(> .sk-stat-bb)):has(> .sk-stat:only-child) > .sk-stat,
+    .sk-hero-stats.sk-stats-packed:not(:has(> .sk-stat-bb)):has(> .sk-stat:nth-child(2):last-child) > .sk-stat,
+    .sk-hero-stats.sk-stats-packed:not(:has(> .sk-stat-bb)):has(> .sk-stat:nth-child(3):last-child) > .sk-stat:first-child{grid-column:span 2}
+  }
   .sk-stat-cd, .sk-stat-cd-secondary{--chip-accent:var(--stat-agi)}
   .sk-stat-cast{--chip-accent:var(--stat-int)}
   .sk-stat-dur, .sk-stat-dur2{--chip-accent:var(--stat-cha)}
@@ -5755,7 +5779,7 @@
      Each item = 40px icon + name + effect tag(s) coloured like the stat they change. */
   /* Boxed like a stat chip (.sk-stat: --panel, 1px --line, 3px radius, 12px 14px padding) and spaced like the chip rows
      (12px below the head and above the chips). The buttons are display:block so no inline baseline gap sits under the icon. */
-  .sk-dep-strip{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); align-items:center; gap:10px 18px; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--chip-accent, var(--gold)); border-radius:3px; padding:12px 14px; margin:0 0 12px}
+  .sk-dep-strip{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); align-items:center; gap:10px 18px; background:none; border:0; border-top:1px solid rgba(212,175,55,.16); border-bottom:1px solid rgba(212,175,55,.16); border-radius:0; padding:12px 14px; margin:0 0 12px}
   .sk-dep-item{display:flex; align-items:center; gap:8px; min-width:0}
   .sk-dep-item .sk-dep-toggle, .sk-dep-item .sk-dep-rank-icon{display:block; height:40px; flex:none}
   .sk-dep-item .sk-dep-toggle img, .sk-dep-item .sk-dep-rank-icon img{width:40px; height:40px}
@@ -33339,6 +33363,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T14:12:53.802Z","style(bible): cleaner skill details card: stats the skill does not use fade back, one level of boxes, 2 px colour edges, the description as a pull quote, a slim search row with the skill name shown big only once, and short chip rows fill their width"],
     ["2026-10-18T13:50:01.097Z","style(bible): skill details related-skills panel loses its boxes: each skill is a thin gold ring icon and its name (no box per row, no panel), the title ends in a fading gold rule, and hover lifts and turns the name gold"],
     ["2026-10-18T11:56:19.184Z","feat(bible): class guide #30 updated from its author's new code: TAL 50% and AGI 50% join the recommended stats, and set 2's weapon, armor and hat are Replicas of the แฟ 65 (Korean) set"],
     ["2026-10-18T11:53:20.663Z","fix(bible): class guide recommended sets: every item and Replica has a white outline, on the page and in the PNG (no more darkness check)"],
