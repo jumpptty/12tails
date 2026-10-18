@@ -3510,35 +3510,58 @@ let checkedRsim = 0;
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
-// Server changes page (mountServerChanges): one row per card with a servers.<srv>.changeNote, chips rendered,
-// a row opens #skill-details/<id>?server=<srv>, inline status / skill links do not navigate.
+// Server balance + BB issues pages (mountNotePage, redesign 2026-10-18): one row per card with a servers.<srv>.changeNote, every
+// line tagged, rows open #skill-details/<id>?server=<srv>, inline status / skill links do not navigate, and picking a type keeps the
+// other type chips' counts (user 2026-10-18: a picked chip zeroed the others).
 {
   const fail = (msg) => { console.error(`[SERVER PAGE ERROR] ${msg}`); errorCount++; };
   let checked = 0;
-  const reg = new Map();
-  const mk = () => { const e = makeEl(); e.listeners = {}; e.addEventListener = (t, fn) => { e.listeners[t] = fn; }; e.querySelectorAll = () => []; return e; };
-  const root = mk(); root.querySelector = (sel) => { if (!reg.has(sel)) reg.set(sel, mk()); return reg.get(sel); };
+  const mount = (fn) => {
+    const reg = new Map();
+    const mk = () => { const e = makeEl(); e.listeners = {}; e.addEventListener = (t, f) => { e.listeners[t] = f; }; e.querySelectorAll = () => []; return e; };
+    const root = mk(); root.querySelector = (sel) => { if (!reg.has(sel)) reg.set(sel, mk()); return reg.get(sel); };
+    vm.runInContext(fn, sandbox)(root);
+    const act = (a, v) => root.listeners.click({ target: { closest: (sel) => sel === "button[data-act]" ? { dataset: { act: a, v } } : null } });
+    const chips = () => Object.fromEntries([...reg.get(".nl-kinds").innerHTML.matchAll(/data-v="(\w+)".*?<b>(\d+)<\/b><\/button>/g)].map(m => [m[1], +m[2]]));
+    return { root, act, chips, list: () => reg.get(".nl-list").innerHTML, kinds: () => reg.get(".nl-kinds").innerHTML };
+  };
+  // picking one type leaves every other type chip's count as it was (and above 0), marks the pick, and a second click goes back to all
+  const facets = (p, kind) => {
+    const before = p.chips(); p.act("kind", kind); const after = p.chips(), others = Object.keys(before).filter(k => k !== "all" && k !== kind);
+    if (!others.length || others.some(k => after[k] !== before[k] || !(after[k] > 0))) fail(`picking ${kind} changed the other type counts: ${JSON.stringify(before)} -> ${JSON.stringify(after)}`); else checked++;
+    if (!new RegExp(`data-v="${kind}" class="is-on"`).test(p.kinds())) fail(`the picked type chip (${kind}) is not marked`); else checked++;
+    p.act("kind", kind);
+    if (!/data-v="all" class="is-on"/.test(p.kinds())) fail(`clicking ${kind} again did not go back to all`); else checked++;
+  };
   const savedHash = sandbox.location && sandbox.location.hash;
   if (!sandbox.location) sandbox.location = { hash: "" };
   try {
-    vm.runInContext("mountServerChanges", sandbox)(root);
-    const api = root._serverChanges, list = reg.get('[data-role="list"]');
+    const p = mount("mountServerChanges"), api = p.root._serverChanges;
     for (const srv of ["tto", "tot"]) {
       api.setServer(srv);
       const want = SKILLS.filter(s => { const o = (s.servers && s.servers[srv]) || (srv === "tot" ? s.ps : null); return o && o.changeNote; }).length;
-      const rows = (list.innerHTML.match(/class="svc-item"/g) || []).length;
+      const rows = (p.list().match(/class="nl-row"/g) || []).length;
       if (rows !== want || want === 0) fail(`${srv}: ${rows} rows, want ${want}`); else checked++;
-      if (!/sk-tag-(buff|nerf|adjust|fix)/.test(list.innerHTML)) fail(`${srv}: no change-note chips rendered`); else checked++;
+      const opens = [...p.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
+      if (opens.length !== want || !opens.every(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + srv))) fail(`${srv}: rows do not open the card on this server`); else checked++;
+      if (!/class="nl-tag is-svc" style="--kc:var\(--(pro|seal|tip)\)"/.test(p.list())) fail(`${srv}: no change-note tags rendered`); else checked++;
     }
-    const row = { dataset: { skill: "wolf_counter" } };
-    list.listeners.click({ target: { closest: (sel) => sel === ".svc-item" ? row : null } });
-    if (sandbox.location.hash !== "#skill-details/wolf_counter?server=tot") fail(`row click sets hash ${sandbox.location.hash}`); else checked++;
+    api.setServer("tto");
+    facets(p, "nerf");
+    const row = { dataset: { open: "#skill-details/wolf_counter?server=tot" } };
+    p.root.listeners.click({ target: { closest: (sel) => sel === "[data-open]" ? row : null } });
+    if (sandbox.location.hash !== row.dataset.open) fail(`row click sets hash ${sandbox.location.hash}`); else checked++;
     sandbox.location.hash = "";
-    list.listeners.click({ target: { closest: (sel) => sel.includes(".sk-status") ? {} : row } });
+    p.root.listeners.click({ target: { closest: (sel) => sel.includes(".sk-status") ? {} : sel === "[data-open]" ? row : null } });
     if (sandbox.location.hash !== "") fail("clicking a status inside a note navigated away"); else checked++;
+    // BB issues page: one tagged line per bbIssueItems() entry, the same facet rule
+    const b = mount("mountBbIssues"), items = sandbox.bbIssueItems();
+    const lines = (b.list().match(/class="nl-line"/g) || []).length;
+    if (lines !== items.length || !lines) fail(`BB issues: ${lines} lines, want ${items.length}`); else checked++;
+    facets(b, "bug");
   } catch (e) { fail("page threw: " + e.message); }
   if (savedHash !== undefined) sandbox.location.hash = savedHash;
-  console.log(`Verified ${checked} server changes page checks.`);
+  console.log(`Verified ${checked} server balance / BB issues page checks.`);
 }
 
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
@@ -3682,8 +3705,7 @@ let checkedUnintended = 0;
   } finally { if (had === undefined) delete sk.unintended; else sk.unintended = had; }
   sandbox._selectSkill(sk);
   check("the note is gone again once the field is removed (or stays only if a real card sets it)", had !== undefined || !sandbox._getRenderedHeroHtml().includes("sk-unintended\">"));
-  check("the BB issues page has its filter button", html.includes('["unintended", "พฤติกรรมที่ไม่ตั้งใจ"]'));
-  check("the BB issues page counts and tags the new type", html.includes('unintended: NOTE_ICO.unintended + "<span>พฤติกรรมที่ไม่ตั้งใจ</span>"') && html.includes("ไม่ตั้งใจ \" + nUn"));
+  check("the BB issues page has its type chip and gold ⚡ tag", html.includes('{ k: "unintended", label: "พฤติกรรมที่ไม่ตั้งใจ", short: "ไม่ตั้งใจ", color: "var(--gold)", ico: NOTE_ICO.unintended }'));
   check("an empty category says so instead of showing a blank page", html.includes("ยังไม่มีรายการในหมวดนี้"));
 }
 console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
@@ -3692,7 +3714,8 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   const src = fs.readFileSync(targetPath, "utf8");
   const tokens = (src.match(/--tip:#[0-9a-fA-F]{6};/g) || []).length;
   const ok = tokens === 3 && /\.sk-note-tip\{ color:var\(--tip\); \}/.test(src) && /\.sk-note-bug\{ color:var\(--seal\); \}/.test(src) && /\.sk-note-unintended\{ color:var\(--gold\); \}/.test(src)
-    && /\.sk-tooltip-note, \.sk-tooltip-note \.sk-val\{ color:var\(--tip\); \}/.test(src) && /\.bbi-tag\.tip\{[^}]*var\(--tip\)/.test(src) && /r\.kind === "tip" \? " tip"/.test(src);
+    && /\.sk-tooltip-note, \.sk-tooltip-note \.sk-val\{ color:var\(--tip\); \}/.test(src)
+    && src.includes('{ k: "bug", label: "บั๊กของตัวเกม", short: "บั๊ก", color: "var(--seal)"') && src.includes('{ k: "tip", label: "คำอธิบายไม่ตรง", short: "คำอธิบาย", color: "var(--tip)"') && src.includes('short: "ไม่ตั้งใจ", color: "var(--gold)"');
   if (!ok) { errorCount++; console.error(`[NOTE COLOUR ERROR] --tip must exist in all 3 theme blocks (${tokens}) and the tooltip chip, note and BB issues tag must use it while bug stays red and unintended gold`); }
   console.log("Verified the three note colours stay distinct.");
 }
