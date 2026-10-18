@@ -8092,6 +8092,9 @@
      a face = frame + icon, so the frame turns over with its skill */
   .ln-face{position:absolute; inset:0; background:var(--ln-wood) center / 100% 100% no-repeat; backface-visibility:hidden}
   .ln-face.is-passive{background-image:var(--ln-iron)}
+  /* the wall is flat (user 2026-10-18); the 2 x 2 Class C tiles get a little thickness: stacked 2 px edges that follow the frame's own shape, brown under wood, grey under iron */
+  .ln-tile.is-big .ln-face{filter:drop-shadow(0 2px 0 #6b4521) drop-shadow(0 2px 0 #4f3218) drop-shadow(0 2px 0 #36210f) drop-shadow(0 10px 12px rgba(0,0,0,.55))}
+  .ln-tile.is-big .ln-face.is-passive{filter:drop-shadow(0 2px 0 #6e6d72) drop-shadow(0 2px 0 #515055) drop-shadow(0 2px 0 #38373b) drop-shadow(0 10px 12px rgba(0,0,0,.55))}
   .ln-face img{display:block; width:100%; height:100%}
   /* a swap is one clean card flip (option B of 5 mocks, user 2026-10-18): the old icon turns away as the new one turns in on the back face; no flash, no glint */
   .ln-tile .out{animation:lnFlipOut .7s cubic-bezier(.45,0,.25,1) both}
@@ -29563,7 +29566,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:53:55.423Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":12,"7":4,"8":9,"9":9,"10":9,"11":6,"12":2,"13":0,"14":9,"15":20,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:56:47.696Z","counts":{"1":12,"2":15,"3":12,"4":7,"5":16,"6":12,"7":5,"8":9,"9":9,"10":9,"11":6,"12":2,"13":0,"14":9,"15":20,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32974,7 +32977,7 @@ function mountLauncher(root){
     const small = []; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!used[r][c]) small.push([c, r]);
     const bigKeys = someIcons(spots.length, cIcons.length ? cIcons : wallIcons), smallKeys = someIcons(small.length, wallIcons.filter(k => !bigKeys.includes(k)));
     const tile = (k, c, r, big) => '<a class="ln-tile' + (big ? " is-big" : "") + '" href="#skill-details/' + (cardOfIcon[k] ? cardOfIcon[k].id : "") + '" title="' + skillNameOf(k) + '" tabindex="-1" style="grid-column:' + (c + 1) + (big ? " / span 2" : "") + "; grid-row:" + (r + 1) + (big ? " / span 2" : "") +
-      "; --i:" + (r * cols + c) + "; --z:" + Math.round(Math.random() * 24 - 6) + 'px" data-k="' + k + '">' + face(k, "cur") + "</a>";
+      "; --i:" + (r * cols + c) + '" data-k="' + k + '">' + face(k, "cur") + "</a>";
     return spots.map((p, j) => tile(bigKeys[j], p[0], p[1], true)).join("") + small.map((p, j) => tile(smallKeys[j], p[0], p[1], false)).join("");
   };
   // Every 0.35-1.45 s (at random) one icon, sometimes two, flips to a skill not on the wall yet; paused while the menu is hidden.
@@ -33090,6 +33093,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T07:56:47.961Z","fix(bible): hub menu skill wall is flat, and its big 2 x 2 Class C tiles have a little thickness"],
     ["2026-10-18T07:53:55.621Z","perf(bible): hub menu does much less work per frame (the cursor tilt only restyles the skill wall, and the ไกด์อาชีพ banner pans without repainting), so it stays smooth on slower PCs and without GPU acceleration"],
     ["2026-10-18T07:39:27.153Z","fix(bible): hovering the class portrait or the guide image on the hub menu's ไกด์อาชีพ slide responds instantly (no more repainting the whole picture on hover)"],
     ["2026-10-18T07:31:29.081Z","feat(bible): hub menu's รายละเอียดสกิล and ไกด์อาชีพ thumbs are larger banners (scrolling framed skill icons / a real guide image with its class portrait); every class portrait on the menu fades its cut edges"],
