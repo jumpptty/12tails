@@ -8104,18 +8104,20 @@
   /* ไกด์อาชีพ (user 2026-10-18): a guide's own PNG export, tilted, with that guide's class portrait in front; a new guide every 3.5 s */
   .ln-g{position:relative; width:100%; height:100%; display:block; color:inherit; text-decoration:none}
   .ln-gpng{position:absolute; left:8%; right:0; top:12%; border-radius:12px; overflow:hidden; background:var(--panel); transform:perspective(1600px) rotateY(-13deg) rotateX(3deg); transform-origin:100% 50%;
-    box-shadow:0 0 0 1px color-mix(in srgb, var(--gold) 70%, transparent), 0 40px 70px -20px rgba(0,0,0,.85); transition:opacity .38s, box-shadow .2s}
+    box-shadow:0 0 0 1px color-mix(in srgb, var(--gold) 70%, transparent), 0 40px 70px -20px rgba(0,0,0,.85); transition:opacity .38s}
   .ln-gpng img{display:block; width:100%; height:auto}
   .ln-gpng.is-wait{aspect-ratio:2.45; background:linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%) 0 0 / 300% 100%; animation:lnWait 1.4s linear infinite}
   .ln-gpng.is-wait img{display:none}
   @keyframes lnWait{to{background-position:-150% 0}}
-  .ln-gpng:hover, .ln-gpng:focus-visible{box-shadow:0 0 0 2px var(--ln-hi), 0 40px 70px -20px rgba(0,0,0,.85)}
+  /* hover = a gold edge on its own layer that only fades in, so the big tilted image never repaints (user 2026-10-18: hover felt slow) */
+  .ln-gpng::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 2px var(--ln-hi); opacity:0; transition:opacity .12s; pointer-events:none}
+  .ln-gpng:hover::after, .ln-gpng:focus-visible::after{opacity:1}
   /* the portrait is its own link (that class's guides on every server, user 2026-10-18), with a subtle lift on hover */
   .ln-gptl{position:absolute; left:-4%; bottom:2%; height:60%; display:block; transition:opacity .38s, transform .38s}
-  .ln-gpt{display:block; height:100%; width:auto; filter:drop-shadow(0 24px 34px rgba(0,0,0,.75)); transition:filter .25s, transform .25s;
+  .ln-gpt{display:block; height:100%; width:auto; filter:drop-shadow(0 24px 34px rgba(0,0,0,.75)); transition:transform .15s ease-out; will-change:transform;
     -webkit-mask-image:linear-gradient(90deg, transparent, #000 12%), linear-gradient(180deg, #000 80%, transparent); -webkit-mask-composite:source-in;
     mask-image:linear-gradient(90deg, transparent, #000 12%), linear-gradient(180deg, #000 80%, transparent); mask-composite:intersect}
-  .ln-gptl:hover .ln-gpt, .ln-gptl:focus-visible .ln-gpt{transform:translateY(-4px); filter:drop-shadow(0 24px 34px rgba(0,0,0,.75)) brightness(1.06)}   /* no gold glow (user 2026-10-18) */
+  .ln-gptl:hover .ln-gpt, .ln-gptl:focus-visible .ln-gpt{transform:translateY(-4px)}   /* only a lift: animating the filter repainted the whole masked portrait every frame (user 2026-10-18: slow); no gold glow */
   .ln-gcap{position:absolute; right:2%; bottom:6%; max-width:56%; text-align:right; text-shadow:0 2px 10px rgba(0,0,0,.9); transition:opacity .38s}
   .ln-gcap b{display:block; font-size:22px; font-weight:700; line-height:1.3; color:var(--ln-hi)}
   .ln-gcap span{font-size:14px; color:var(--muted)}
@@ -29560,7 +29562,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:31:28.905Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T07:39:26.881Z","counts":{"1":12,"2":15,"3":11,"4":7,"5":16,"6":11,"7":3,"8":9,"9":9,"10":7,"11":6,"12":2,"13":0,"14":9,"15":19,"16":3,"17":9,"18":18,"19":6,"20":13,"21":5,"22":5,"23":9,"24":3,"25":3,"26":2,"27":3,"28":6,"29":9,"30":6}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33086,6 +33088,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T07:39:27.153Z","fix(bible): hovering the class portrait or the guide image on the hub menu's ไกด์อาชีพ slide responds instantly (no more repainting the whole picture on hover)"],
     ["2026-10-18T07:31:29.081Z","feat(bible): hub menu's รายละเอียดสกิล and ไกด์อาชีพ thumbs are larger banners (scrolling framed skill icons / a real guide image with its class portrait); every class portrait on the menu fades its cut edges"],
     ["2026-10-18T07:21:50.373Z","feat(bible): every skill on the hub menu's skill wall opens that skill in รายละเอียดสกิล (name on hover; the skill under the cursor stops swapping)"],
     ["2026-10-18T07:13:31.376Z","fix(bible): hub menu skill wall shows each skill in the game's own wood or iron frame (no box or gold ring), and a few Class C skills take a big 2 x 2 spot"],
