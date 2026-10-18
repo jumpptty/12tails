@@ -19,20 +19,20 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula"],
     // flat panels and modals that never change fill on hover
-    panel: [".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
+    panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
       ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-enemy-picker", ".sk-support-lv"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
+    raised: [".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-icon-pick", ".cg-sort", ".cg-page-btn",
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17)
     popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
-    field: [".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search"]
+    field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search"]
   };
   (function(){
     var G = 'html:is([data-sk-server="tto"],[data-sk-server="tot"]) ';
@@ -8448,6 +8448,116 @@
     .ln-nav.prev{left:auto; right:56px}
     .ln-strip{grid-template-columns:repeat(3, minmax(0,1fr))}
   }
+  /* ===== Special Pet Info (tool "pet-info", user 2026-10-18: layout A "Codex" of 4 mocks). Roster left, the chosen pet right.
+     Role colours live on .pi only (no new :root tokens). Hover = a small lift / brightness, never a glow. ===== */
+  html.tool-pets .stage{max-width:min(1400px, 98vw)}
+  .pi{--pi-atk:#e8734a; --pi-buff:#5bb8e0; --pi-react:var(--gold); --pi-res:var(--pro);
+    display:grid; grid-template-columns:300px minmax(0,1fr); gap:18px; align-items:start; color:var(--text); font-family:'Prompt',sans-serif}
+  .pi .pi-n{font-family:'JetBrains Mono','Prompt',monospace}
+  .pi-mute{color:var(--muted)}
+  .pi-roster{position:sticky; top:12px; max-height:calc(100vh - 110px); overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px}
+  .pi-gh{display:flex; justify-content:space-between; align-items:center; padding:10px 8px 6px; font-size:12.5px; letter-spacing:.04em; color:var(--pi-rc)}
+  .pi-it{display:flex; align-items:center; gap:10px; width:100%; border:0; border-left:3px solid transparent; background:transparent; color:inherit; font:inherit;
+    padding:5px 8px; border-radius:8px; cursor:pointer; text-align:left; transition:transform .12s, filter .12s}
+  .pi-it:hover{transform:translateX(2px); filter:brightness(1.15)}
+  .pi-it:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .pi-it.is-on{background:var(--gold-soft); border-left-color:var(--gold)}
+  .pi-it img{flex:none}
+  .pi-nm{flex:1; min-width:0; font-size:14px; line-height:1.2}
+  .pi-warn{color:var(--seal); font-size:12px}
+  .pi-k{display:inline-flex; align-items:center; gap:3px; font-size:12px; color:var(--muted)}
+  .pi-main{display:flex; flex-direction:column; gap:14px; min-width:0}
+  .pi-hero{display:flex; gap:18px; align-items:center; flex-wrap:wrap; background:linear-gradient(90deg, color-mix(in srgb, var(--pi-rc) 12%, transparent), transparent 55%), var(--panel);
+    border:1px solid var(--line); border-radius:12px; padding:16px 18px}
+  .pi-ring{width:96px; height:96px; flex:none; border-radius:50%; display:grid; place-items:center; background:var(--ink); border:2px solid var(--gold);
+    box-shadow:inset 0 0 0 4px var(--ink), inset 0 0 0 5px color-mix(in srgb, var(--gold) 50%, transparent)}
+  .pi-hd{flex:1; min-width:220px}
+  .pi-title{margin:0; font-size:28px; font-weight:600; line-height:1.15}
+  .pi-chips{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+  .pi-chip{display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:12px; color:var(--muted); white-space:nowrap}
+  .pi-chip.is-role{color:var(--pi-rc); border-color:color-mix(in srgb, var(--pi-rc) 55%, transparent)}
+  .pi-chip.is-purple{color:#c084fc; border-color:rgba(192,132,252,.55)}
+  .pi-chip.is-warn{color:var(--seal); border-color:color-mix(in srgb, var(--seal) 60%, transparent)}
+  .pi-vars{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+  .pi-var{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font:inherit; font-size:13px;
+    border-radius:999px; padding:2px 11px 2px 3px; cursor:pointer; transition:transform .12s, filter .12s}
+  .pi-var:hover{transform:translateY(-1px); filter:brightness(1.12)}
+  .pi-var.is-on{border-color:var(--gold); color:var(--text); background:var(--gold-soft)}
+  .pi-ctl{display:flex; flex-direction:column; align-items:flex-end; gap:10px; margin-left:auto}
+  .pi-lv{display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:999px; overflow:hidden}
+  .pi-lbl{font-size:12.5px; color:var(--muted); padding:0 8px 0 12px}
+  .pi-lv button{border:0; background:transparent; color:var(--muted); font-size:13px; padding:5px 10px; cursor:pointer}
+  .pi-lv button:hover{color:var(--text); filter:brightness(1.2)}
+  .pi-lv button.is-on{background:var(--gold); color:var(--ink); font-weight:700}
+  .pi-lck{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--muted)}
+  .pi-lck input{width:70px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; color:var(--stat-lck); font:600 14px 'JetBrains Mono','Prompt',monospace; padding:4px 8px}
+  .pi-desc{font-size:16px; line-height:1.75; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--pi-rc); border-radius:12px; padding:14px 18px; text-wrap:pretty}
+  .pi-tiles{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px}
+  .pi-tile{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; min-width:0}
+  .pi-tt{font-size:12.5px; color:var(--muted)}
+  .pi-tv{font-size:24px; font-weight:700; margin-top:2px; overflow-wrap:anywhere}
+  .pi-tv small{font-size:13px; font-weight:500; color:var(--muted); margin-left:5px}
+  .pi-viz{display:grid; grid-template-columns:minmax(260px, 360px) minmax(0,1fr); gap:14px; align-items:start}
+  .pi-viz.is-one{grid-template-columns:minmax(0, 520px)}
+  .pi-box{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; min-width:0}
+  .pi-bh{font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:6px}
+  .pi-bh b{color:var(--gold)}
+  .pi-svg{display:block; width:100%; height:auto}
+  .pi-svg text{font-family:'Prompt',sans-serif; font-size:11px; fill:var(--muted)}
+  .pi-svg .pi-sv-n{font-family:'JetBrains Mono','Prompt',monospace; font-size:10px; opacity:.75}
+  .pi-sv-ring{fill:none; stroke:var(--line); stroke-dasharray:3 5}
+  .pi-sv-ghost{fill:none; stroke:color-mix(in srgb, var(--muted) 35%, transparent)}
+  .pi-svg .pi-sv-gl{font-size:9.5px; opacity:.6}
+  .pi-sv-area{fill:color-mix(in srgb, var(--pi-rc) 16%, transparent); stroke:var(--pi-rc); stroke-width:2}
+  .pi-sv-area.is-sphere{stroke-dasharray:7 4}
+  .pi-sv-search{fill:none; stroke:var(--pi-rc); stroke-width:1.5; stroke-dasharray:6 5}
+  .pi-sv-pet{fill:var(--pi-rc)}
+  .pi-sv-you{fill:var(--text)}
+  .pi-svg .pi-sv-lab{fill:var(--text)}
+  .pi-tl{position:relative; height:76px; margin:4px 6px 0}
+  .pi-tl-axis{position:absolute; left:0; right:0; top:44px; height:2px; background:var(--line)}
+  .pi-tk{position:absolute; top:30px; width:2px; height:30px; margin-left:-1px; background:var(--pi-rc); border-radius:2px}
+  .pi-tk.is-sub{top:36px; height:16px; opacity:.75}
+  .pi-tk.is-mark{opacity:.35}
+  .pi-tl-lab{position:absolute; top:8px; transform:translateX(-50%); font:600 12px 'JetBrains Mono','Prompt',monospace; white-space:nowrap}
+  .pi-tl-sec{position:absolute; top:58px; transform:translateX(-50%); font:11px 'JetBrains Mono','Prompt',monospace; color:var(--muted)}
+  .pi-resgrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px}
+  .pi-res{display:flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--panel-2); color:inherit; font:inherit; font-size:13px;
+    border-radius:10px; padding:6px 8px; cursor:pointer; text-align:left; transition:transform .12s, filter .12s}
+  .pi-res:hover{transform:translateY(-1px); filter:brightness(1.12)}
+  .pi-res .pi-n{margin-left:auto; font-weight:700; font-size:15px; color:var(--pi-res)}
+  .pi-res.is-on{border-color:var(--gold)}
+  .pi-res.is-dead .pi-n{color:var(--seal)}
+  .pi-gvc{display:grid; grid-template-columns:1fr 1fr; border:1px solid color-mix(in srgb, var(--pro) 40%, transparent); border-radius:12px; overflow:hidden; font-size:14px; line-height:1.6}
+  .pi-gvc > div{padding:12px 16px; min-width:0}
+  .pi-game{color:var(--muted)}
+  .pi-code{background:color-mix(in srgb, var(--pro) 6%, transparent)}
+  .pi-gh2{font-size:12px; letter-spacing:.06em; margin-bottom:4px; color:var(--muted)}
+  .pi-code .pi-gh2{color:var(--pro)}
+  .pi-gvc.is-diff{border-color:color-mix(in srgb, var(--seal) 55%, transparent)}
+  .pi-gvc.is-diff .pi-code{background:color-mix(in srgb, var(--seal) 8%, transparent)}
+  .pi-gvc.is-diff .pi-code .pi-gh2{color:var(--seal)}
+  .pi-facts{display:flex; gap:8px 14px; flex-wrap:wrap; font-size:12.5px; color:var(--muted)}
+  .pi-facts > span{border-left:2px solid var(--line); padding-left:8px}
+  @media (max-width:760px){
+    .pi{grid-template-columns:minmax(0,1fr); gap:12px}
+    .pi-roster{position:sticky; top:0; z-index:3; max-height:none; overflow-x:auto; overflow-y:hidden; display:flex; gap:4px; padding:6px}
+    .pi-grp{display:flex; align-items:center; gap:2px; padding-right:6px; border-right:1px solid var(--line)}
+    .pi-gh{writing-mode:vertical-rl; transform:rotate(180deg); padding:2px; font-size:11px}
+    .pi-gh .pi-n{display:none}
+    .pi-it{width:auto; padding:4px; border-left:0; border-bottom:3px solid transparent; border-radius:8px}
+    .pi-it.is-on{border-bottom-color:var(--gold)}
+    .pi-it .pi-nm, .pi-it .pi-k, .pi-it .pi-warn{display:none}
+    .pi-hero{padding:12px}
+    .pi-ring{width:72px; height:72px}
+    .pi-ring img{width:56px; height:56px}
+    .pi-title{font-size:22px}
+    .pi-ctl{align-items:flex-start; margin-left:0}
+    .pi-lbl{padding:0 4px 0 10px}
+    .pi-lv button{padding:5px 7px}
+    .pi-tiles{grid-template-columns:repeat(2, minmax(0,1fr))}
+    .pi-viz, .pi-viz.is-one, .pi-gvc{grid-template-columns:minmax(0,1fr)}
+  }
 </style>
 </head>
 <body>
@@ -13430,6 +13540,9 @@ const COMMON_SUPPORT_SKILL_IDS = ["common_replenishment", "common_elementalBound
 // functions (see GEMINI.md Section 3.0) -- an unmapped [name] renders as
 // plain literal bracket text, which is the safe fallback for "not yet verified".
 const STATUS_CLASS_MAP = {
+  // Special Pet Info (2026-10-18): wash is only isMagicalStatus (StatusData.cs:5681); float is isMagicalStatus + isBuffStatus (:5885, :6944)
+  wash: "Magical",
+  float: "Buff, Magical",
   // StatusData.cs is*Status, checked 2026-10-02 (overLord is in none of them, so it stays unmapped)
   coma: "Debuff, Magical",
   lasthope: "Buff, State",
@@ -13648,6 +13761,10 @@ const STATUS_CLASS_MAP = {
 // [name3]/the card's own status.sLv was resolved (substituted -- show the
 // computed value for at-a-glance comprehension).
 const STATUS_DESC_MAP = {
+  // Special Pet Info (2026-10-18; 12Tails-Mechanics-Reference.md §4.9). wash: apply site CharacterControl.cs:36103-36189 removes every
+  // status that is both Physical and Buff (StatusData.cs:5220 ∩ :6323) with a level <= its own. float: apply :39790-39812, resist :13115-13185.
+  wash: (sLv) => `ทันทีที่ติด ลบบัฟสายกายภาพที่มีเลเวลไม่เกิน **${sLv != null ? sLv : "เลเวลของ wash"}** ออกทั้งหมด: [atkUp] [defUp] [agiUp] [vitUp] [magUp] [chaUp] [talUp] [lckUp] [berserkerRush] [blend] [damagePlus] [drunken] [enlarge] [furyTrance] [gobble] [hardenSkin] [reduce] [shield] Life Boost, Magic Boost และ Speed Boost`,
+  float: (sLv) => `ทันทีที่ติด ลบ heavy [groundLock] [needlePrison] [sticky] [frost] [lightBind]<br>ระหว่างนี้ ต้านทาน heavy [groundLock] [needlePrison] [sticky] [frost] [lightBind] และ [maim] ที่มีเลเวลไม่เกิน **${sLv != null ? 2 * sLv : "2×เลเวล"}**`,
   // coma (CharacterControl.cs:42013-42030 apply, :18895-18905 remove, :11865 not re-applied while active)
   coma: "HP ถูกตั้งเป็น **13** ทันทีที่ติด ถ้ารอดจนสถานะหมดหรือถูกล้าง HP จะคืนกลับเท่าตอนก่อนติด",
   // Apply branches in CharacterControl.cs (2026-10-02): lastHope deltaAtk/deltaDef(15 x sLv) :35898; swallow strips non-System
@@ -29206,6 +29323,17 @@ const TOOLS = [
     mount(root){ mountMonsterStats(root); }
   },
   {
+    id: "pet-info",
+    art: ["gear:p_mnb", "gear:p_mgb", "gear:p_sab", "gear:p_skr", "gear:p_sam"],   // pet icons (GEAR_ICONS) as a fan; placeholder until the user picks art (2026-10-18)
+    title: "Special Pet Info",
+    fact: () => [petInfoCount(), "ตัว"],
+    shortTitle: "Special Pet Info",
+    category: "Reference",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="10" r="2"/><circle cx="9.5" cy="5.5" r="2"/><circle cx="14.5" cy="5.5" r="2"/><circle cx="18.5" cy="10" r="2"/><path d="M12 11c-3 0-6 3.5-6 6.5 0 2 1.5 3 3.5 3 1 0 1.6-.5 2.5-.5s1.5.5 2.5.5c2 0 3.5-1 3.5-3 0-3-3-6.5-6-6.5z"/></svg>',   // paw print
+    mounted: false,
+    mount(root){ mountPetInfo(root); }
+  },
+  {
     id: "chameleon-attack-sim",
     art: ["tool:Chameleon"],
     title: "จำลองการโจมตีปกติกิ้งก่า",
@@ -29685,6 +29813,311 @@ const GEAR_LV = {"w_wlf1":0,"w_wlf2":2,"w_wlf5":5,"w_wlf10":12,"w_wlf11":14,"w_w
 // แฟ 65: the Lv 65 fashion (national costume) hat, armor and weapon of every class, id suffix 65 (Thai Sword, Thai OutFit, Thai Helmet, ...). วุธไทม์: the Lv 80 Time weapon of every class, w_<class>69.
 // แมลง ดล / แมลง ดด: the bug series (Ant, Bee, Scorpion, ...) of every class, id 47 = V (yellow star, Lv 50 / 52 / 54) and 48 = R (red star, Lv 52 / 54 / 56); Wolf's weapons are named one tier off in the game data (Scorpion Sword = V, Scorpion Sword V = R). วุธแข็ง: the Lv 60 Frozen weapon of every class, w_<class>56 (weapon only, not the Frozen Crown hat). วุธพิเศษ: the Lv 60 special weapon of every class, w_<class>59 (Katana, Gatling Gun, Shuriken, ...). วุธดันน้ำ: the Lv 70 Poseidon weapon of every class, w_<class>66 (weapon only); the Poseidon Helmet c_all66 (shared, Lv 61) = หมวกดันน้ำ. วุธ BD: the BD (birthday) weapon of every class, w_<class>19.
 const GEAR_NICKNAMES = {"w_rab61":"70 ดล","a_rab61":"70 ดล","c_rab61":"70 ดล","w_rab62":"70 ดด","a_rab62":"70 ดด","c_rab62":"70 ดด","w_rab51":"60 ดล","a_rab51":"60 ดล","c_rab51":"60 ดล","w_rab52":"60 ดด","a_rab52":"60 ดด","c_rab52":"60 ดด","w_rab42":"48 ดด","a_rab42":"48 ดด","c_rab42":"48 ดด","w_rab12":"12 ดด","a_rab12":"12 ดด","c_rab12":"12 ดด","w_mol61":"70 ดล","a_mol61":"70 ดล","c_mol61":"70 ดล","w_mol62":"70 ดด","a_mol62":"70 ดด","c_mol62":"70 ดด","w_mol51":"60 ดล","a_mol51":"60 ดล","c_mol51":"60 ดล","w_mol52":"60 ดด","a_mol52":"60 ดด","c_mol52":"60 ดด","w_mol42":"48 ดด","a_mol42":"48 ดด","c_mol42":"48 ดด","w_mol12":"12 ดด","a_mol12":"12 ดด","c_mol12":"12 ดด","w_bat61":"70 ดล","a_bat61":"70 ดล","c_bat61":"70 ดล","w_bat62":"70 ดด","a_bat62":"70 ดด","c_bat62":"70 ดด","w_bat51":"60 ดล","a_bat51":"60 ดล","c_bat51":"60 ดล","w_bat52":"60 ดด","a_bat52":"60 ดด","c_bat52":"60 ดด","w_bat42":"48 ดด","a_bat42":"48 ดด","c_bat42":"48 ดด","w_bat12":"12 ดด","a_bat12":"12 ดด","w_bsn61":"70 ดล","a_bsn61":"70 ดล","c_bsn61":"70 ดล","w_bsn62":"70 ดด","a_bsn62":"70 ดด","c_bsn62":"70 ดด","w_bsn51":"60 ดล","a_bsn51":"60 ดล","c_bsn51":"60 ดล","w_bsn52":"60 ดด","a_bsn52":"60 ดด","c_bsn52":"60 ดด","w_bsn42":"48 ดด","a_bsn42":"48 ดด","c_bsn42":"48 ดด","w_bsn12":"12 ดด","a_bsn12":"12 ดด","w_cat61":"70 ดล","a_cat61":"70 ดล","c_cat61":"70 ดล","w_cat62":"70 ดด","a_cat62":"70 ดด","c_cat62":"70 ดด","w_cat51":"60 ดล","a_cat51":"60 ดล","c_cat51":"60 ดล","w_cat52":"60 ดด","a_cat52":"60 ดด","c_cat52":"60 ดด","w_cat42":"48 ดด","a_cat42":"48 ดด","c_cat42":"48 ดด","w_cat12":"12 ดด","a_cat12":"12 ดด","c_cat12":"12 ดด","w_chm61":"70 ดล","a_chm61":"70 ดล","c_chm61":"70 ดล","w_chm62":"70 ดด","a_chm62":"70 ดด","c_chm62":"70 ดด","w_chm51":"60 ดล","a_chm51":"60 ดล","c_chm51":"60 ดล","w_chm52":"60 ดด","a_chm52":"60 ดด","c_chm52":"60 ดด","w_chm42":"48 ดด","a_chm42":"48 ดด","c_chm42":"48 ดด","w_chm12":"12 ดด","a_chm12":"12 ดด","c_chm12":"12 ดด","w_mnk61":"70 ดล","a_mnk61":"70 ดล","c_mnk61":"70 ดล","w_mnk62":"70 ดด","a_mnk62":"70 ดด","c_mnk62":"70 ดด","w_mnk51":"60 ดล","a_mnk51":"60 ดล","c_mnk51":"60 ดล","w_mnk52":"60 ดด","a_mnk52":"60 ดด","c_mnk52":"60 ดด","w_mnk42":"48 ดด","a_mnk42":"48 ดด","c_mnk42":"48 ดด","w_mnk12":"12 ดด","a_mnk12":"12 ดด","c_mnk12":"12 ดด","w_pnd61":"70 ดล","a_pnd61":"70 ดล","c_pnd61":"70 ดล","w_pnd62":"70 ดด","a_pnd62":"70 ดด","c_pnd62":"70 ดด","w_pnd51":"60 ดล","a_pnd51":"60 ดล","c_pnd51":"60 ดล","w_pnd52":"60 ดด","a_pnd52":"60 ดด","c_pnd52":"60 ดด","w_pnd42":"48 ดด","a_pnd42":"48 ดด","c_pnd42":"48 ดด","w_pnd12":"12 ดด","a_pnd12":"12 ดด","w_pgn61":"70 ดล","a_pgn61":"70 ดล","c_pgn61":"70 ดล","w_pgn62":"70 ดด","a_pgn62":"70 ดด","c_pgn62":"70 ดด","w_pgn51":"60 ดล","a_pgn51":"60 ดล","c_pgn51":"60 ดล","w_pgn52":"60 ดด","a_pgn52":"60 ดด","c_pgn52":"60 ดด","w_pgn42":"48 ดด","a_pgn42":"48 ดด","c_pgn42":"48 ดด","w_pgn12":"12 ดด","a_pgn12":"12 ดด","c_pgn12":"12 ดด","w_shp61":"70 ดล","a_shp61":"70 ดล","c_shp61":"70 ดล","w_shp62":"70 ดด","a_shp62":"70 ดด","c_shp62":"70 ดด","w_shp51":"60 ดล","a_shp51":"60 ดล","c_shp51":"60 ดล","w_shp52":"60 ดด","a_shp52":"60 ดด","c_shp52":"60 ดด","w_shp42":"48 ดด","a_shp42":"48 ดด","c_shp42":"48 ดด","w_shp12":"12 ดด","a_shp12":"12 ดด","w_whl61":"70 ดล","a_whl61":"70 ดล","c_whl61":"70 ดล","w_whl62":"70 ดด","a_whl62":"70 ดด","c_whl62":"70 ดด","w_whl51":"60 ดล","a_whl51":"60 ดล","c_whl51":"60 ดล","w_whl52":"60 ดด","a_whl52":"60 ดด","c_whl52":"60 ดด","w_whl42":"48 ดด","a_whl42":"48 ดด","c_whl42":"48 ดด","w_whl12":"12 ดด","a_whl12":"12 ดด","w_wlf61":"70 ดล","a_wlf61":"70 ดล","c_wlf61":"70 ดล","w_wlf62":"70 ดด","a_wlf62":"70 ดด","c_wlf62":"70 ดด","w_wlf51":"60 ดล","a_wlf51":"60 ดล","c_wlf51":"60 ดล","w_wlf52":"60 ดด","a_wlf52":"60 ดด","c_wlf52":"60 ดด","w_wlf42":"48 ดด","a_wlf42":"48 ดด","c_wlf42":"48 ดด","w_wlf12":"12 ดด","a_wlf12":"12 ดด","c_wlf12":"12 ดด","b_all32":"เท้าหนาม","b_all33":"เกี๊ยะเหล็ก","b_all_tto_shadowstrider":"เท้าเงา","b_all45":"เท้าชา","b_all51":"เท้าแดง 52","t_all81":"แหวน ATK 12","t_all82":"แหวน DEF 12","t_all83":"แหวน AGI 12","t_all84":"แหวน VIT 12","t_all85":"แหวน INT 12","t_all86":"แหวน CHA 12","t_all87":"แหวน TAL 12","t_all88":"แหวน LCK 12","t_rab60":"ประดับ 70","t_rab62":"ประดับ 70 ดด","t_mol60":"ประดับ 70","t_mol62":"ประดับ 70 ดด","t_bat60":"ประดับ 70","t_bat62":"ประดับ 70 ดด","t_bsn60":"ประดับ 70","t_bsn62":"ประดับ 70 ดด","t_cat60":"ประดับ 70","t_cat62":"ประดับ 70 ดด","t_chm60":"ประดับ 70","t_chm62":"ประดับ 70 ดด","t_mnk60":"ประดับ 70","t_mnk62":"ประดับ 70 ดด","t_pnd60":"ประดับ 70","t_pnd62":"ประดับ 70 ดด","t_pgn60":"ประดับ 70","t_pgn62":"ประดับ 70 ดด","t_shp60":"ประดับ 70","t_shp62":"ประดับ 70 ดด","t_whl60":"ประดับ 70","t_whl62":"ประดับ 70 ดด","t_wlf60":"ประดับ 70","t_wlf62":"ประดับ 70 ดด","p_sfb":"S. FlowerBug","p_sob":"S. LionBug","p_sgb":"S. RockBug","p_slb":"S. LeafBug","p_stb":"S. FatBug","p_spb":"S. PaperBug","p_swb":"S. WormBug","p_ssq":"S. StingQueen","p_snb":"S. NeonBug","p_lbd":"ALL 9","w_rab44":"วุธ RP","w_rab43":"วุธ RP","w_rab58":"วุธแชมป์","w_mol44":"วุธ RP","w_mol43":"วุธ RP","w_mol58":"วุธแชมป์","w_bat44":"วุธ RP","w_bat43":"วุธ RP","w_bat58":"วุธแชมป์","w_bsn44":"วุธ RP","w_bsn43":"วุธ RP","w_bsn58":"วุธแชมป์","w_cat44":"วุธ RP","w_cat43":"วุธ RP","w_cat58":"วุธแชมป์","w_chm44":"วุธ RP","w_chm43":"วุธ RP","w_chm58":"วุธแชมป์","w_mnk44":"วุธ RP","w_mnk43":"วุธ RP","w_mnk58":"วุธแชมป์","w_pnd44":"วุธ RP","w_pnd43":"วุธ RP","w_pnd58":"วุธแชมป์","w_pgn44":"วุธ RP","w_pgn43":"วุธ RP","w_pgn58":"วุธแชมป์","w_shp44":"วุธ RP","w_shp43":"วุธ RP","w_shp58":"วุธแชมป์","w_whl44":"วุธ RP","w_whl43":"วุธ RP","w_whl58":"วุธแชมป์","w_wlf44":"วุธ RP","w_wlf43":"วุธ RP","w_wlf58":"วุธแชมป์","a_all44":"ชุด RP","a_all43":"ชุด RP","c_all44":"หมวก RP","c_all43":"หมวก RP","a_all58":"ชุดแชมป์","c_all58":"หมวกแชมป์","w_rab65":"แฟ 65","a_rab65":"แฟ 65","c_rab65":"แฟ 65","w_mol65":"แฟ 65","a_mol65":"แฟ 65","c_mol65":"แฟ 65","w_bat65":"แฟ 65","a_bat65":"แฟ 65","c_bat65":"แฟ 65","w_bsn65":"แฟ 65","a_bsn65":"แฟ 65","c_bsn65":"แฟ 65","w_cat65":"แฟ 65","a_cat65":"แฟ 65","c_cat65":"แฟ 65","w_chm65":"แฟ 65","a_chm65":"แฟ 65","c_chm65":"แฟ 65","w_mnk65":"แฟ 65","a_mnk65":"แฟ 65","c_mnk65":"แฟ 65","w_pnd65":"แฟ 65","a_pnd65":"แฟ 65","c_pnd65":"แฟ 65","w_pgn65":"แฟ 65","a_pgn65":"แฟ 65","c_pgn65":"แฟ 65","w_shp65":"แฟ 65","a_shp65":"แฟ 65","c_shp65":"แฟ 65","w_whl65":"แฟ 65","a_whl65":"แฟ 65","c_whl65":"แฟ 65","w_wlf65":"แฟ 65","a_wlf65":"แฟ 65","c_wlf65":"แฟ 65","w_rab69":"วุธไทม์","w_mol69":"วุธไทม์","w_bat69":"วุธไทม์","w_bsn69":"วุธไทม์","w_cat69":"วุธไทม์","w_chm69":"วุธไทม์","w_mnk69":"วุธไทม์","w_pnd69":"วุธไทม์","w_pgn69":"วุธไทม์","w_shp69":"วุธไทม์","w_whl69":"วุธไทม์","w_wlf69":"วุธไทม์","w_rab47":"แมลง ดล","w_rab48":"แมลง ดด","a_rab47":"แมลง ดล","a_rab48":"แมลง ดด","c_rab47":"แมลง ดล","c_rab48":"แมลง ดด","w_mol47":"แมลง ดล","w_mol48":"แมลง ดด","a_mol47":"แมลง ดล","a_mol48":"แมลง ดด","c_mol47":"แมลง ดล","c_mol48":"แมลง ดด","w_bat47":"แมลง ดล","w_bat48":"แมลง ดด","a_bat47":"แมลง ดล","a_bat48":"แมลง ดด","c_bat47":"แมลง ดล","c_bat48":"แมลง ดด","w_bsn47":"แมลง ดล","w_bsn48":"แมลง ดด","a_bsn47":"แมลง ดล","a_bsn48":"แมลง ดด","c_bsn47":"แมลง ดล","c_bsn48":"แมลง ดด","w_cat47":"แมลง ดล","w_cat48":"แมลง ดด","a_cat47":"แมลง ดล","a_cat48":"แมลง ดด","c_cat47":"แมลง ดล","c_cat48":"แมลง ดด","w_chm47":"แมลง ดล","w_chm48":"แมลง ดด","a_chm47":"แมลง ดล","a_chm48":"แมลง ดด","c_chm47":"แมลง ดล","c_chm48":"แมลง ดด","w_mnk47":"แมลง ดล","w_mnk48":"แมลง ดด","a_mnk47":"แมลง ดล","a_mnk48":"แมลง ดด","c_mnk47":"แมลง ดล","c_mnk48":"แมลง ดด","w_pnd47":"แมลง ดล","w_pnd48":"แมลง ดด","a_pnd47":"แมลง ดล","a_pnd48":"แมลง ดด","c_pnd47":"แมลง ดล","c_pnd48":"แมลง ดด","w_pgn47":"แมลง ดล","w_pgn48":"แมลง ดด","a_pgn47":"แมลง ดล","a_pgn48":"แมลง ดด","c_pgn47":"แมลง ดล","c_pgn48":"แมลง ดด","w_shp47":"แมลง ดล","w_shp48":"แมลง ดด","a_shp47":"แมลง ดล","a_shp48":"แมลง ดด","c_shp47":"แมลง ดล","c_shp48":"แมลง ดด","w_whl47":"แมลง ดล","w_whl48":"แมลง ดด","a_whl47":"แมลง ดล","a_whl48":"แมลง ดด","c_whl47":"แมลง ดล","c_whl48":"แมลง ดด","w_wlf47":"แมลง ดล","w_wlf48":"แมลง ดด","a_wlf47":"แมลง ดล","a_wlf48":"แมลง ดด","c_wlf47":"แมลง ดล","c_wlf48":"แมลง ดด","w_rab56":"วุธแข็ง","w_mol56":"วุธแข็ง","w_bat56":"วุธแข็ง","w_bsn56":"วุธแข็ง","w_cat56":"วุธแข็ง","w_chm56":"วุธแข็ง","w_mnk56":"วุธแข็ง","w_pnd56":"วุธแข็ง","w_pgn56":"วุธแข็ง","w_shp56":"วุธแข็ง","w_whl56":"วุธแข็ง","w_wlf56":"วุธแข็ง","w_rab59":"วุธพิเศษ","w_mol59":"วุธพิเศษ","w_bat59":"วุธพิเศษ","w_bsn59":"วุธพิเศษ","w_cat59":"วุธพิเศษ","w_chm59":"วุธพิเศษ","w_mnk59":"วุธพิเศษ","w_pnd59":"วุธพิเศษ","w_pgn59":"วุธพิเศษ","w_shp59":"วุธพิเศษ","w_whl59":"วุธพิเศษ","w_wlf59":"วุธพิเศษ","w_rab66":"วุธดันน้ำ","w_mol66":"วุธดันน้ำ","w_bat66":"วุธดันน้ำ","w_bsn66":"วุธดันน้ำ","w_cat66":"วุธดันน้ำ","w_chm66":"วุธดันน้ำ","w_mnk66":"วุธดันน้ำ","w_pnd66":"วุธดันน้ำ","w_pgn66":"วุธดันน้ำ","w_shp66":"วุธดันน้ำ","w_whl66":"วุธดันน้ำ","w_wlf66":"วุธดันน้ำ","w_rab19":"วุธ BD","w_mol19":"วุธ BD","w_bat19":"วุธ BD","w_bsn19":"วุธ BD","w_cat19":"วุธ BD","w_chm19":"วุธ BD","w_mnk19":"วุธ BD","w_pnd19":"วุธ BD","w_pgn19":"วุธ BD","w_shp19":"วุธ BD","w_whl19":"วุธ BD","w_wlf19":"วุธ BD","c_all66":"หมวกดันน้ำ","t_all89":"แหวนดาว","t_all80":"แหวนโลก"};
+// ===== Special Pet Info (tool "pet-info", user 2026-10-18; spec docs/superpowers/specs/2026-10-18-special-pet-info-design.md) =====
+// Every pet whose code does more than stats. All values: 12Tails-Mechanics-Reference.md §4.9 (BB client code). N = pet level 1-9
+// (the digit at the end of the item id), L = the owner's LCK. Roster order = this array's order, grouped by role.
+// area.h: "rm3" = height 3 x the owner's rangeMod, a number = flat metres, "sphere" = a 3D sphere (MiniNemesis).
+// area.at: centre of the search: "you" (the owner), "pet", "kite", "spot" (MiniReef: search, then a blast where it lands).
+const PET_INFO_ROLES = {
+  atk: { th: "โจมตีเอง", color: "var(--pi-atk)" },
+  buff: { th: "บัฟและพื้นที่", color: "var(--pi-buff)" },
+  react: { th: "ทำงานเมื่อโดน", color: "var(--pi-react)" },
+  res: { th: "กันสถานะ", color: "var(--pi-res)" },
+};
+const PET_INFO_H = h => h === "rm3" ? "**3×rangeMod m**" : "**" + h + "m**";
+const PET_INFO_M = v => (Number.isInteger(v) ? String(v) : v.toFixed(1)) + "m";
+const PET_INFO_MAD_ALLY = "<br>__ถ้าไม่มีศัตรูในระยะ จะโจมตี **เพื่อนร่วมทีม** หรือ summon ของคุณที่อยู่ในระยะแทน__";
+const PET_INFO = [
+  // ---------------- attack on a timer ----------------
+  { id: "p_lmc", role: "atk", req: 31, every: N => 6, area: { r: N => 0.5 + 0.5 * N, h: "rm3", at: "pet", maxT: 1 },
+    hit: { color: "white", dmg: N => 31 + 4 * N }, value: N => String(31 + 4 * N),
+    desc: N => `ทุก **6 วินาที** ชกศัตรู **1** ตัวในรัศมี **${PET_INFO_M(0.5 + 0.5 * N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจขาว^^ **${31 + 4 * N}**` + PET_INFO_MAD_ALLY,
+    tip: { special: N => `mad punch lv.${N}`, th: "แครอนนักชกรุ่น Veggie Weight โจมตีหนักใส่คนที่เข้าใกล้" },
+    code: "ถ้าไม่มีศัตรูในระยะ จะชก **เพื่อนร่วมทีม** หรือ summon ของคุณแทน", flags: { ally: true } },
+  { id: "p_lmn", role: "atk", req: 31, every: N => 3, area: { r: N => 0.5 + 0.5 * N, h: "rm3", at: "pet", maxT: 1 },
+    hit: { color: "white", dmg: N => 11 + 4 * N }, value: N => String(11 + 4 * N),
+    desc: N => `ทุก **3 วินาที** ฟาดศัตรู **1** ตัวในรัศมี **${PET_INFO_M(0.5 + 0.5 * N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจขาว^^ **${11 + 4 * N}**` + PET_INFO_MAD_ALLY,
+    tip: { special: N => `mad fan lv.${N}`, th: "เป็ปปอนพัดกระดาษรุ่นเล่นตลก ฟาดเพรียะสนั่น โจมตีรัวใส่คนที่เข้าใกล้" },
+    code: "ถ้าไม่มีศัตรูในระยะ จะฟาด **เพื่อนร่วมทีม** หรือ summon ของคุณแทน", flags: { ally: true } },
+  { id: "p_lmo", role: "atk", req: 31, every: N => 9, area: { r: N => 3 + N, h: "rm3", at: "pet", maxT: 1 },
+    hit: { color: "purple", dmg: N => 6 + 3 * N }, value: N => String(6 + 3 * N),
+    desc: N => `ทุก **9 วินาที** เป่าฟองใส่ศัตรู **1** ตัวในรัศมี **${PET_INFO_M(3 + N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจม่วง^^ **${6 + 3 * N}**` + PET_INFO_MAD_ALLY,
+    tip: { special: N => `mad bubble lv.${N}`, th: "โคคอนจอมสูบไปป์ รุ่นเป่าฟองสบู่น้ำหอม โจมตีคนที่เข้าในระยะ" },
+    code: "ถ้าไม่มีศัตรูในระยะ จะเป่าใส่ **เพื่อนร่วมทีม** หรือ summon ของคุณแทน", flags: { ally: true } },
+  { id: "p_msb", role: "atk", req: 41, every: N => 21 - N, area: { r: N => 12, h: "rm3", at: "you", maxT: 3 },
+    hit: { color: "purple", dmg: N => 12 + 2 * N }, value: N => String(12 + 2 * N),
+    desc: N => `ทุก **${21 - N} วินาที** ผ่าสายฟ้าใส่ศัตรูสูงสุด **3** ตัวในรัศมี **12m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ตัวละ ^^ดาเมจม่วง^^ **${12 + 2 * N}**`,
+    tip: { special: N => `lightning lv.${N}`, th: "สกายบั๊กตัวจิ๊ว ที่มาพร้อมกับสายฟ้า" }, flags: {} },
+  { id: "p_mcb", role: "atk", req: 42, every: N => 21 - N, area: { r: N => 8, h: "rm3", at: "you", maxT: 2 },
+    hit: { color: "white", dmg: N => 20 + 4 * N, ko: N => 2 }, value: N => String(20 + 4 * N),
+    desc: N => `ทุก **${21 - N} วินาที** ปล่อยคริสตัลใส่ศัตรูสูงสุด **2** ตัวในรัศมี **8m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ตัวละ ^^ดาเมจขาว^^ **${20 + 4 * N}** KO **2**`,
+    tip: { special: N => `crystal drop lv.${N}`, th: "คริสตัลบั๊กตัวจิ๊ว ปล่อยคริสตัลใส่ผู้ไม่หวังดี ที่เข้ามาใกล้" }, flags: {} },
+  { id: "p_mab", role: "atk", req: 43, every: N => 21 - N, area: { r: N => 24, h: "rm3", at: "you", maxT: 1 },
+    hit: { color: "white", dmg: N => 24 + 4 * N, ko: N => 5, up: true }, value: N => String(24 + 4 * N),
+    desc: N => `ทุก **${21 - N} วินาที** แทงหนามใส่ศัตรู **1** ตัวในรัศมี **24m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ^^ดาเมจขาว^^ **${24 + 4 * N}** KO **5** และกระแทกเป้าหมายลอยขึ้น`,
+    tip: { special: N => `thorn strike lv.${N}`, th: "แมลงโบราณจอมหาเรื่อง แทงหนามใส่เป้าหมาย ในระยะไกล" }, flags: {} },
+  { id: "p_mrb", role: "atk", req: 44, every: N => 60, area: { r: N => 18, h: 4, at: "spot", maxT: Infinity, blast: 6, blastH: "rm3" },
+    hit: { color: "white", dmg: N => 40 + 20 * N, delay: 1 }, value: N => String(40 + 20 * N),
+    desc: N => `ทุก **60 วินาที** เล็งศัตรูตัวแรกที่เจอในรัศมี **18m** สูง **4m** รอบตัวเอง อีก **1 วินาที** ดาวตกลงตรงจุดนั้น ศัตรูทุกตัวในรัศมี **6m** สูง ${PET_INFO_H("rm3")} โดน ^^ดาเมจขาว^^ **${40 + 20 * N}**`,
+    tip: { special: N => `falling comet lv.${N}`, th: "รีฟบั๊กตัวเล็ก เหมาะสำหรับกับผู้ชอบ อธิฐานกับดาวหาง" }, flags: {} },
+  { id: "p_mmb", role: "atk", req: 45, every: N => 21 - N, area: { r: N => 6, h: "rm3", at: "you", maxT: Infinity },
+    hit: { color: "white", dmg: N => N + 4, ko: N => N + 4, up: true }, value: N => String(N + 4),
+    desc: N => `ทุก **${21 - N} วินาที** กระแทกศัตรูทุกตัวในรัศมี **6m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ^^ดาเมจขาว^^ **${N + 4}** KO **${N + 4}** และกระแทกเป้าหมายลอยขึ้น`,
+    tip: { special: N => `tails sweep lv.${N}`, th: "ม็อคบัคตัวจิ๋ว ตัวเล็กแต่แรงเยอะใช่ย่อย" }, flags: {} },
+  { id: "p_mgb", role: "atk", req: 46, every: N => 21 - N, area: { r: N => 18, h: 4, at: "you", maxT: 4 },
+    hit: { color: "white", dmg: (N, k = 1) => 12 + 4 * N + 4 * k, ko: N => 2 }, value: N => `${16 + 4 * N}–${28 + 4 * N}`,
+    desc: N => `ทุก **${21 - N} วินาที** แทงศัตรูสูงสุด **4** ตัวในรัศมี **18m** สูง **4m** รอบตัวเอง ตัวที่ 1–4 โดน ^^ดาเมจขาว^^ **${16 + 4 * N} / ${20 + 4 * N} / ${24 + 4 * N} / ${28 + 4 * N}** KO **2**`,
+    tip: { special: N => `multi strike lv.${N}`, th: "โกลเด้นคิงตัวจิ๋วจอมก่อกวน ชอบใช้หอกแทงรบกวนอยู่เรื่อย" }, flags: {} },
+  { id: "p_mnb", role: "atk", req: 47, every: N => 60 - N, area: { r: N => 9, h: "sphere", at: "you", maxT: 1 },
+    hit: { color: "white", dmg: N => 15 + 5 * N, hits: 4, tick: 0.4 }, value: N => `${15 + 5 * N}×4`,
+    desc: N => `ทุก **${60 - N} วินาที** ยิงลำแสงจากสัตว์เลี้ยงใส่ศัตรูที่ใกล้ที่สุดในทรงกลมรัศมี **9m** รอบตัวเอง ลำแสงอยู่ **2 วินาที** ทำ ^^ดาเมจขาว^^ **${15 + 5 * N}** ทุก **0.4 วินาที** รวม **4** ฮิต<br>• ฮิตที่ **2 วินาที** พอดีเกิดได้บ้างไม่ได้บ้าง เพราะลำแสงหายในจังหวะเดียวกัน`,
+    tip: { special: N => `chaos ray lv.${N}`, th: "เนเมซิสจิ๋วสุดโหด ยิงลำแสงใส่ชาวบ้านด้วยความโกรธ" }, flags: {} },
+  // ---------------- buffs and areas on a timer ----------------
+  { id: "p_all1", role: "buff", req: 0, every: N => 60, vl: "มานาภารกิจ", value: N => "+1",
+    desc: N => `ทุก **60 วินาที** ได้มานาภารกิจ **+1** (ปกติด่านให้ **+1** ทุก **12 วินาที**)`,
+    tip: { special: null, th: "ลูกโป่งที่ระลึก เพิ่ม mana ให้กับ AlphaTester และ Bug Catcher!" }, flags: { noLv: true } },
+  { id: "p_lcs", fam: "L. Saver ×3", role: "buff", req: 21, every: N => 32 - 2 * N, chance: N => 4 + 2 * N, value: N => `${4 + 2 * N}%`,
+    vars: [
+      { id: "p_lcs", label: "Carron", th: "แครอนหน่วยห่วงชูชีพกู้ภัย รายได้ทั้งหมดสมทบทุนผู้ประสบภัยน้ำท่วม" },
+      { id: "p_lms", label: "Mupo", th: "มูโป้พิเศษรุ่นห่วงชูชีพกู้ภัย รายได้ทั้งหมดสมทบทุนผู้ประสบภัยน้ำท่วม" },
+      { id: "p_lps", label: "Peppon", th: "เป็ปปอนพิเศษรุ่นห่วงชูชีพกู้ภัย รายได้ทั้งหมดสมทบทุนผู้ประสบภัยน้ำท่วม" }],
+    desc: N => `ทุก **${32 - 2 * N} วินาที** มีโอกาส **${4 + 2 * N}%** ได้ [float4] นาน **3 วินาที** (ค่า LCK ไม่ช่วย)`,
+    tip: { special: N => `+${2 + 2 * N}% Float` },
+    code: N => `โอกาสจริงคือ **${4 + 2 * N}%** ไม่ใช่ **${2 + 2 * N}%** และค่า LCK ไม่ช่วย`, flags: {} },
+  { id: "p_skm", role: "buff", req: 15, every: N => 15, chance: N => 30, value: N => "30%",
+    desc: N => `ทุก **15 วินาที** มีโอกาส **30%** ใส่ [wash4] ให้ตัวเอง (ค่า LCK ไม่ช่วย)<br>__ทำให้บัฟกายภาพของคุณเองหายไป ไม่ใช่ล้างดีบัฟ__`,
+    tip: { special: N => "wash 14%", th: "เมฆฝนปุ้มปุย อันสนใส ช่วยล้างสถานะ และลดน้ำหนัก" },
+    code: "โอกาส **30%** ทุก **15 วินาที** และ [wash] ลบ **บัฟ** ของคุณเอง ไม่ใช่ดีบัฟ", flags: { selfStrip: true, noLv: true } },
+  { id: "p_sfb", role: "buff", req: 0, every: N => 60, vl: "ค่าพลังทั้ง 8", value: N => "+8",
+    desc: N => `ทุก **60 วินาที** ได้ [bless1] นาน **${11 + N} วินาที**`,
+    tip: { special: N => `bless1 (${11 + N}sec)`, th: "แมลงดอกไม้สีขาวตัวเล็ก ส่งกลื่นหอมชวนสดชื่น" }, flags: {} },
+  { id: "p_sim", role: "buff", req: 30, every: N => 45, area: { r: N => 5, h: "rm3", at: "pet", maxT: Infinity }, vl: "ความเร็วศัตรู", value: N => "−30%",
+    desc: N => `ทุก **45 วินาที** ศัตรูทุกตัวในรัศมี **5m** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยงติด [ice2] นาน **${N + 1} วินาที**`,
+    tip: { special: N => `ice2 field (${1 + N}sec)`, th: "เพนกวิ้นน้ำแข็งไสที่มีชีวิต!!! กะดุ๊กๆๆๆๆๆเดินตามหลัง" }, flags: {} },
+  { id: "p_sam", role: "buff", req: 35, every: N => 120, vl: "ค่าเกราะ", value: N => String(15 + 15 * N),
+    desc: N => `ทุก **120 วินาที** ได้ [bubbleShield2] ค่าเกราะ **${15 + 15 * N}** นาน **${11 + N} วินาที**`,
+    tip: { special: N => `bubleShield2 (${15 + 15 * N}hp)`, th: "แอมโมไนท์ตัวจ้อย คอย ช่วยทำฟองอากาศ ปกป้องเจ้านาย" }, flags: {} },
+  { id: "p_spg", role: "buff", req: 41, trigger: N => `HP < ${11 + N}%`, vl: "ค่าเกราะ", value: N => String(30 + 10 * N),
+    desc: N => `เมื่อ HP ต่ำกว่า **${11 + N}%** ของ HP สูงสุด ได้ [iceShield2] ค่าเกราะ **${30 + 10 * N}** นาน **${11 + N} วินาที** เกิดได้ครั้งเดียวในทุก **60 วินาที**`,
+    tip: { special: N => `iceShield2 (${30 + 10 * N}hp, ${N + 11}%)`, th: "เพนกวิ้นสายเลือดแท้ที่ถูกจับย่อ ส่วน คอยช่วยเหลือเจ้านาย ยามวิกฤติ" }, flags: {} },
+  { id: "p_skr", fam: "S. Ninja Kite ×5", role: "buff", req: 25, every: N => 45 - 2 * N, area: { r: N => 15, h: "rm3", at: "kite", maxT: Infinity }, vl: "รัศมี", value: N => "15m",
+    vars: [
+      { id: "p_skr", label: "แดง", stat: "atk", th: "นินจาบัคบัคสีแดงผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" },
+      { id: "p_skg", label: "เขียว", stat: "agi", th: "นินจาบัคบัคสีเขียวผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" },
+      { id: "p_sky", label: "เหลือง", stat: "def", th: "นินจาบัคบัคสีเหลืองผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" },
+      { id: "p_skb", label: "ฟ้า", stat: "int", th: "นินจาบัคบัคสีฟ้าผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" },
+      { id: "p_skk", label: "ดำ", stat: "cha", th: "นินจาบัคบัคสีดำผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" }],
+    desc: N => `ทุก **${45 - 2 * N} วินาที** ศัตรูทุกตัวในรัศมี **15m** สูง ${PET_INFO_H("rm3")} รอบว่าวติด [awareness2] นาน **1 วินาที**`,
+    tip: { special: N => `awareness ${14 + N}m` },
+    code: N => `รัศมีจริง **15m** เสมอ ไม่ใช่ **${14 + N}m** เลเวลสัตว์ช่วยลดเวลารอแทน`, flags: {} },
+  // ---------------- reacting to what happens to you ----------------
+  { id: "p_sab", role: "react", req: 31, trigger: N => "HP หมด", chance: (N, L) => lckAdjustChance(3 + N, L) + 1, value: (N, L) => `${lckAdjustChance(3 + N, L) + 1}%`,
+    desc: (N, L) => `เมื่อ HP หมด มีโอกาส **${lckAdjustChance(3 + N, L) + 1}%** ฟื้นทันทีด้วย HP **1** แล้วฟื้น HP อีก **100** ครั้งเดียว โอกาสเพิ่มตามค่า LCK<br>• ต้องห่างจากครั้งก่อน (หรือจากตอนใส่สัตว์เลี้ยง) อย่างน้อย **12 วินาที**<br>__ถ้าติด [death] อยู่ จะไม่ฟื้น__ และถ้ามี [autoLife] อยู่ [autoLife] จะทำงานก่อน`,
+    tip: { special: N => `${3 + N}% autoRevive`, th: "อนุบิตัวน้อยผู้มาพร้อมกับพลัง แห่งวิญญาณแห่งความตาย" },
+    code: "โอกาสจริงมากกว่าที่คำนวณจากช่องข้อมูล **1%** และฟื้นได้ครั้งเดียวในทุก **12 วินาที**", flags: { lck: true } },
+  { id: "p_skz", role: "react", req: 15, trigger: N => "โดนฮิตเบา", chance: (N, L) => lckAdjustChance(30, L), value: (N, L) => `${lckAdjustChance(30, L)}%`,
+    desc: (N, L) => `ทุกครั้งที่โดน ^^ดาเมจขาว^^ ที่เหลือ **1–30** หลังหักเกราะ มีโอกาส **${lckAdjustChance(30, L)}%** ป้องกันจนเหลือ **0** โอกาสเพิ่มตามค่า LCK`,
+    tip: { special: N => `block 30 dmg ${14 + N}50%`, th: "ผีร่มน้อย ที่ช่วยกางตัวเอง เพื่อปกป้องเจ้านาย" },
+    code: "บล็อกเฉพาะฮิตที่แรงไม่เกิน **30** ด้วยโอกาสตั้งต้น **30%** (ตัวเลขในช่องข้อมูลพิมพ์เพี้ยน)", flags: { lck: true, noLv: true } },
+  { id: "p_spf", role: "react", req: 51, trigger: N => "โดนฮิตที่มี KO", chance: (N, L) => lckAdjustChance(4, L), value: (N, L) => `${lckAdjustChance(4, L)}%`,
+    desc: (N, L) => `ทุกครั้งที่โดน ^^ดาเมจขาว^^ ที่มี KO มีโอกาส **${lckAdjustChance(4, L)}%** ที่ฮิตนั้นไม่ติด KO เลย โอกาสเพิ่มตามค่า LCK`,
+    tip: { special: N => `${3 + N}% no ko`, th: "ลูกปลาโจรสลัดหน้าโฉด ยืนหยัดสู้กับเจ้านายไม่ให้ล้มง่ายๆ" },
+    code: "โอกาสตั้งต้น **4%** เสมอ เลเวลสัตว์ไม่มีผล", flags: { lck: true, lvUnused: true } },
+];
+// ---------------- anti-status: one roll when the status arrives ----------------
+[
+  ["p_lcr", "sleep", 3, "แครอนน้อยขาสั้น เดินต้วมเตี้ยม"], ["p_lmp", "maim", 3, "มูโป้น้อยจอมควบ ฝึกให้ดีปลาวาฬก็แบกพาวิ่งควบได้"],
+  ["p_lpp", "ice", 3, "เป็ปปอนน้อยจอมหมุน อนาคตนักบัลเลต์ปอนแน่นอน"], ["p_lct", "poison", 3, "แคคทอนน้อย เดินได้ด้วยขาก่อนที่จะฝังรากโตเป็นแคคทัน"],
+  ["p_lcc", "burn", 3, "โคคอนน้อยนักกระดึ๊บ น้ำมะพร้าวในปากดื่มได้นะ"], ["p_lpk", "curse", 3, "พัมพ์ก้อนน้อยจอมกลิ้ง กลิ้งหลุนๆๆกลุกๆๆ"],
+  ["p_lml", "cut", 3, "เมล่อนน้อย ช่วยป้องกันสถานะ cut ตามเลเวล"],
+  ["p_ldc", "lightBind", 5, "ผีแครอนน้อย คอยถอดหัวมาหลอกเหล่าสัตว์หาง"], ["p_ldm", "paralysis", 5, "ผีมูโป้น้อย อดีตจ้าวลมกรดแม้แต่ผิวหนังยังปลิวหลุดหมด"],
+  ["p_ldp", "petrify", 5, "ผีเป็ปปอนน้อย ชอบแอบตามเงียบๆ"], ["p_ldt", "groundLock", 5, "ผีแคกทอนน้อย มีชีวิตนิรันดร์ไม่มีวันตาย"],
+  ["p_ldn", "provoke", 5, "ผีโคคอนน้อย ถูกคืนชีพจากอุบัติเหตุกับระเบิด"], ["p_ldk", "nightmare", 5, "ผีพัมพ์ก้อนน้อย จะตามหลอกหลอนผู้เป็นเจ้าของจอบตลอดคืน"],
+].forEach(([id, status, base, th]) => PET_INFO.push({
+  id, role: "res", req: 0, status, base, trigger: N => "ติด " + status, chance: (N, L) => lckAdjustChance(base + N, L), value: (N, L) => `${lckAdjustChance(base + N, L)}%`,
+  desc: (N, L) => `ทุกครั้งที่จะติด [${status}] มีโอกาส **${lckAdjustChance(base + N, L)}%** ต้านทานได้ โอกาสเพิ่มตามค่า LCK`,
+  tip: { special: N => `+${base + N}% anti-${status.toLowerCase()}`, th }, flags: { lck: true } }));
+PET_INFO.push({ id: "p_lcp", role: "res", req: 0, status: "sleep", base: 0, trigger: N => "ติด sleep", chance: () => 0, value: () => "0%",
+  desc: () => `__ในโค้ดของเกม L. Carron (P) ไม่ได้ช่วยกัน [sleep] เลย แม้ช่องข้อมูลจะบอกไว้__`,
+  tip: { special: N => `+${6 + N}% anti-sleep`, th: "แครอนตัวน้อยสีม่วง หายากพิเศษ" },
+  code: "ไม่มีในโค้ด ไม่กันอะไรเลย", flags: { dead: true } });
+
+function petInfoFind(id){
+  for (const entry of PET_INFO) {
+    if (entry.id === id) return { entry, vi: 0 };
+    const vi = entry.vars ? entry.vars.findIndex(v => v.id === id) : -1;
+    if (vi >= 0) return { entry, vi };
+  }
+  return null;
+}
+function petInfoCount(){ return PET_INFO.reduce((n, p) => n + (p.flags.dead ? 0 : p.vars ? p.vars.length : 1), 0); }
+function petInfoWindow(entry, N){ return entry.every ? Math.max(60, entry.every(N)) : 0; }
+function petInfoFires(entry, N){ const out = []; if (!entry.every) return out; const e = entry.every(N), w = petInfoWindow(entry, N); for (let t = e; t <= w + 1e-9; t += e) out.push(t); return out; }
+// Derived, labelled on the page as "คำนวณ": damage in one minute when targets are always in range.
+function petInfoPerMin(entry, N, crowd){
+  if (!entry.hit) return 0;
+  let sum = 0;
+  for (let k = 1; k <= Math.min(entry.area.maxT, crowd); k++) sum += entry.hit.dmg(N, k) * (entry.hit.hits || 1);
+  return Math.round(sum * 60 / entry.every(N));
+}
+// ---- Special Pet Info: pure renderers (strings only, so validate_skills.js can render every pet in its sandbox) ----
+const PET_INFO_STAT = { atk: ["ATK", "var(--stat-atk)"], agi: ["AGI", "var(--stat-agi)"], def: ["DEF", "var(--stat-def)"], int: ["INT", "var(--stat-int)"], cha: ["CHA", "var(--stat-cha)"] };
+const PET_INFO_CLOCK = '<svg class="pi-clock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5V8l2.4 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+const petInfoEsc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+let PET_INFO_NAMES = null;
+function petInfoName(id){
+  if (!PET_INFO_NAMES) PET_INFO_NAMES = new Map(((GEAR_DATA && GEAR_DATA.pet) || []).map(([k, n]) => [k, n]));
+  return PET_INFO_NAMES.get(id) || id;
+}
+// Cleans a stored or linked state: unknown pet -> first entry, a variant id picks its variant, N 1-9 (default 9), L 0-999 (default 156).
+function petInfoState(raw){
+  const r = raw && typeof raw === "object" ? raw : {};
+  const hit = typeof r.sel === "string" ? petInfoFind(r.sel) : null;
+  const vi = {};
+  if (r.vi && typeof r.vi === "object") for (const p of PET_INFO) if (p.vars) { const i = r.vi[p.id]; if (Number.isInteger(i) && i >= 0 && i < p.vars.length) vi[p.id] = i; }
+  if (hit && hit.entry.vars && r.sel !== hit.entry.id) vi[hit.entry.id] = hit.vi;
+  const n = Math.round(Number(r.N)), l = Number(r.L);
+  return {
+    sel: hit ? hit.entry.id : PET_INFO[0].id, vi,
+    N: r.N == null || r.N === "" || !Number.isFinite(n) ? 9 : Math.min(9, Math.max(1, n)),
+    L: r.L == null || r.L === "" || !Number.isFinite(l) ? 156 : Math.min(999, Math.max(0, Math.round(l))),
+  };
+}
+const petInfoVar = (p, st) => p.vars ? p.vars[(st.vi && st.vi[p.id]) || 0] : null;
+const petInfoMark = p => p.flags.dead ? "ไม่ทำงาน" : p.flags.ally ? "โดนเพื่อนได้" : p.flags.selfStrip ? "ล้างบัฟตัวเอง" : p.code ? "ช่องข้อมูลผิด" : "";
+
+function petInfoRosterHtml(st){
+  return Object.keys(PET_INFO_ROLES).map(role => {
+    const list = PET_INFO.filter(p => p.role === role);
+    return `<div class="pi-grp" style="--pi-rc:${PET_INFO_ROLES[role].color}"><div class="pi-gh"><span>${PET_INFO_ROLES[role].th}</span><span class="pi-n">${list.length}</span></div>` +
+      list.map(p => {
+        const v = petInfoVar(p, st), id = v ? v.id : p.id, on = p.id === st.sel, mark = petInfoMark(p);
+        const right = p.every ? `<span class="pi-k">${PET_INFO_CLOCK}<span class="pi-n">${p.every(st.N)}</span></span>` : p.status ? `<span class="pi-k">${p.status}</span>` : "";
+        return `<button type="button" class="pi-it${on ? " is-on" : ""}" data-pet-sel="${p.id}"${on ? ' aria-current="true"' : ""}>` +
+          `<img src="${GEAR_ICONS[id] || ""}" alt="" width="32" height="32"><span class="pi-nm">${petInfoEsc(p.fam || petInfoName(id))}</span>` +
+          (mark ? `<span class="pi-warn" aria-label="${mark}">⚠</span>` : "") + right + `</button>`;
+      }).join("") + `</div>`;
+  }).join("");
+}
+
+function petInfoRangeSvg(p, N){
+  const S = 340, c = S / 2, R = 26, k = (S / 2 - 12) / R, a = p.area;
+  let g = "";
+  for (const m of [5, 10, 15, 20, 25]) g += `<circle class="pi-sv-ring" cx="${c}" cy="${c}" r="${m * k}"/><text class="pi-sv-n" x="${c + 4}" y="${c - m * k + 12}">${m}m</text>`;
+  if (p.role === "atk") PET_INFO.filter(q => q.role === "atk" && q !== p && q.area.at === "you").sort((x, y) => x.area.r(N) - y.area.r(N)).forEach((o, i) => {
+    const r = o.area.r(N) * k, ang = (14 + i * 26) * Math.PI / 180;   // each ring's name at its own angle, smallest ring first, so the names never pile up
+    g += `<circle class="pi-sv-ghost" cx="${c}" cy="${c}" r="${r}"/><text class="pi-sv-gl" x="${(c + r * Math.cos(ang) + 3).toFixed(1)}" y="${(c + r * Math.sin(ang) + 4).toFixed(1)}">${petInfoEsc(petInfoName(o.id))}</text>`;
+  });
+  const offs = { pet: [1.2, "สัตว์เลี้ยง"], kite: [1.6, "ว่าว"] }[a.at];
+  const cy = offs ? c + offs[0] * k : c;
+  if (a.at === "spot") {
+    const by = c - 11 * k;
+    g += `<circle class="pi-sv-search" cx="${c}" cy="${c}" r="${a.r(N) * k}"/><circle class="pi-sv-area" cx="${c}" cy="${by}" r="${a.blast * k}"/>` +
+      `<text class="pi-sv-lab" x="${c + a.blast * k + 4}" y="${by + 4}">ดาวตก ${a.blast}m</text><text class="pi-sv-lab" x="${c + 4}" y="${c + a.r(N) * k - 6}">หาเป้า ${a.r(N)}m</text>`;
+  } else {
+    g += `<circle class="pi-sv-area${a.h === "sphere" ? " is-sphere" : ""}" cx="${c}" cy="${cy}" r="${Math.max(2, a.r(N) * k)}"/>`;
+  }
+  if (offs) g += `<circle class="pi-sv-pet" cx="${c}" cy="${cy}" r="3.5"/><text class="pi-sv-lab" x="${c + 8}" y="${cy + 14}">${offs[1]}</text>`;
+  g += `<circle class="pi-sv-you" cx="${c}" cy="${c}" r="5"/><path class="pi-sv-you" d="M${c} ${c - 13} l4.5 7 h-9z"/><text class="pi-sv-lab" x="${c + 9}" y="${c + 4}">คุณ</text>`;
+  return `<svg class="pi-svg" viewBox="0 0 ${S} ${S}" role="img" aria-label="รัศมีตามสเกลจริง">${g}</svg>`;
+}
+
+function petInfoTimelineHtml(p, N, L){
+  const w = petInfoWindow(p, N), fx = petInfoFires(p, N), pct = t => (t / w * 100).toFixed(3) + "%";
+  let h = "";
+  fx.forEach((t, i) => {
+    if (p.hit && p.hit.delay) h += `<span class="pi-tk is-mark" style="left:${pct(t)}"></span><span class="pi-tk" style="left:${pct(t + p.hit.delay)}"></span>`;
+    else h += `<span class="pi-tk" style="left:${pct(t)}"></span>`;
+    if (p.hit && p.hit.hits) for (let j = 1; j < p.hit.hits; j++) h += `<span class="pi-tk is-sub" style="left:${pct(t + j * p.hit.tick)}"></span>`;
+    if (i < 8) h += `<span class="pi-tl-lab" style="left:${pct(t + ((p.hit && p.hit.delay) || 0))}">${petInfoEsc(p.value(N, L))}</span>`;
+  });
+  const step = w / 6;
+  for (let s = 0; s <= w + 1e-9; s += step) h += `<span class="pi-tl-sec" style="left:${pct(s)}">${Math.round(s)}</span>`;
+  const head = `ทำงาน <b class="pi-n">${fx.length}</b> ครั้งใน <b class="pi-n">${w}</b> วินาทีแรก (นับจากตอนเริ่มด่าน หรือตอนเปลี่ยนสัตว์เลี้ยง)` +
+    (p.hit ? `<br>ดาเมจต่อนาที (คำนวณ): 1 เป้า <b class="pi-n">${petInfoPerMin(p, N, 1).toLocaleString()}</b> · 5 เป้า <b class="pi-n">${petInfoPerMin(p, N, 5).toLocaleString()}</b> <span class="pi-mute">สมมติว่ามีศัตรูในระยะตลอด</span>` : "");
+  return `<div class="pi-box"><div class="pi-bh">${head}</div><div class="pi-tl" style="--pi-rc:${PET_INFO_ROLES[p.role].color}"><span class="pi-tl-axis"></span>${h}</div></div>`;
+}
+
+function petInfoDetailHtml(st){
+  const found = petInfoFind(st.sel) || { entry: PET_INFO[0] };
+  const p = found.entry, N = st.N, L = st.L, v = petInfoVar(p, st), id = v ? v.id : p.id, role = PET_INFO_ROLES[p.role];
+  const name = petInfoName(id), mark = petInfoMark(p);
+  const chips = [
+    `<span class="pi-chip is-role">${role.th}</span>`,
+    p.hit && p.hit.color === "purple" ? `<span class="pi-chip is-purple">ดาเมจม่วง</span>` : "",
+    mark ? `<span class="pi-chip is-warn">⚠ ${mark}</span>` : "",
+    p.req ? `<span class="pi-chip">เลเวลตัวละคร ${p.req}+</span>` : "",
+    `<span class="pi-chip pi-n">${id}</span>`,
+  ].join("");
+  const vars = p.vars ? `<div class="pi-vars">${p.vars.map((x, i) => `<button type="button" class="pi-var${x === v ? " is-on" : ""}" data-pet-var="${p.id}:${i}"><img src="${GEAR_ICONS[x.id] || ""}" alt="" width="28" height="28"><span>${petInfoEsc(x.label)}</span>` +
+    (x.stat ? `<span class="pi-n" style="color:${PET_INFO_STAT[x.stat][1]}">${PET_INFO_STAT[x.stat][0]} +7</span>` : "") + `</button>`).join("")}</div>` : "";
+  const lv = p.flags.noLv ? `<span class="pi-chip">อัปเลเวลสัตว์ไม่ได้</span>` : p.flags.lvUnused ? `<span class="pi-chip">เลเวลสัตว์ไม่มีผล</span>`
+    : `<div class="pi-lv" role="group" aria-label="เลเวลสัตว์เลี้ยง"><span class="pi-lbl">เลเวลสัตว์</span>${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button type="button" class="pi-n${n === N ? " is-on" : ""}" data-pet-lv="${n}">${n}</button>`).join("")}</div>`;
+  const lck = p.flags.lck ? `<label class="pi-lck">LCK <input type="number" inputmode="numeric" min="0" max="999" value="${L}" data-pet-lck>${L > 512 ? `<span class="pi-mute">คิดสูงสุด 512</span>` : ""}</label>` : "";
+  const unit = p.hit ? (p.hit.color === "purple" ? "ม่วง" : "ขาว") : "";
+  const tiles = p.role === "atk"
+    ? [["ทำงานทุก", p.every(N), "วินาที"], ["ดาเมจ", p.value(N, L), unit], ["เป้าหมาย", p.area.maxT === Infinity ? "ทุกตัว" : p.area.maxT, p.area.maxT === Infinity ? "" : "ตัว"], ["รัศมี", PET_INFO_M(p.area.blast || p.area.r(N)), ""]]
+    : [[p.every ? "ทำงานทุก" : "ทำงานเมื่อ", p.every ? p.every(N) : p.trigger(N), p.every ? "วินาที" : ""], [p.vl || "โอกาส", p.value(N, L), ""],
+       ["ใส่ได้ตั้งแต่", p.req ? "เลเวล " + p.req : "ทุกเลเวล", ""], ["เลเวลสัตว์", p.flags.noLv ? "อัปไม่ได้" : p.flags.lvUnused || p.flags.dead ? "ไม่มีผล" : "มีผล", ""]];
+  const tileHtml = `<div class="pi-tiles">${tiles.map(([t, val, u]) => `<div class="pi-tile"><div class="pi-tt">${t}</div><div class="pi-tv"><span class="pi-n">${petInfoEsc(val)}</span>${u ? `<small>${u}</small>` : ""}</div></div>`).join("")}</div>`;
+  const range = p.area ? `<div class="pi-box"><div class="pi-bh">มองจากด้านบน ตามสเกลจริง${p.role === "atk" ? " · วงจาง = Mini pet ตัวอื่น" : ""}${p.area.at === "pet" || p.area.at === "kite" ? " · ตำแหน่งสัตว์เลี้ยงในภาพเป็นตัวอย่าง" : ""}</div>${petInfoRangeSvg(p, N)}</div>` : "";
+  const tl = p.every ? petInfoTimelineHtml(p, N, L) : "";
+  const res = p.role === "res" ? `<div class="pi-box"><div class="pi-bh">สัตว์กันสถานะทั้งหมด ที่เลเวลสัตว์ <b class="pi-n">${N}</b> · LCK <b class="pi-n">${L}</b></div><div class="pi-resgrid">${
+    PET_INFO.filter(q => q.role === "res").map(q => `<button type="button" class="pi-res${q === p ? " is-on" : ""}${q.flags.dead ? " is-dead" : ""}" data-pet-sel="${q.id}"><img src="${GEAR_ICONS[q.id] || ""}" alt="" width="28" height="28"><span>${q.status}</span><span class="pi-n">${q.flags.dead ? "✗" : q.value(N, L)}</span></button>`).join("")}</div></div>` : "";
+  const code = typeof p.code === "function" ? p.code(N) : p.code;
+  const th = (v && v.th) || p.tip.th || "";
+  const gvc = `<div class="pi-gvc${code ? " is-diff" : ""}"><div class="pi-game"><div class="pi-gh2">เกมบอก</div>${p.tip.special ? `<div class="pi-n">${petInfoEsc(p.tip.special(N))}</div>` : ""}${th ? `<div class="pi-mute">${petInfoEsc(th)}</div>` : ""}</div>` +
+    `<div class="pi-code"><div class="pi-gh2">โค้ดจริง</div>${code ? renderRichText(code) : "ตรงกับที่ช่องข้อมูลในเกมบอก"}</div></div>`;
+  const facts = `<div class="pi-facts">${[
+    "ดาเมจของสัตว์เลี้ยงไม่ผ่าน DEF และไม่ขึ้นกับค่า TAL หรือ LCK แต่ ^^ดาเมจขาว^^ ยังโดนเกราะดูดซับได้",
+    "เอฟเฟกต์ที่ทำงานตามเวลา มีผลเฉพาะในภารกิจและ PvP (ไม่มีผลในเมือง แคมป์กิลด์ และภารกิจบางด่าน)",
+    "อัปเลเวลสัตว์เลี้ยงได้ **1–9** ที่ร้านสัตว์เลี้ยง",
+    "ข้อมูลจากโค้ดเกมต้นฉบับ (BB) เซิร์ฟอื่นอาจปรับไว้",
+  ].map(t => `<span>${renderRichText(t)}</span>`).join("")}</div>`;
+  return `<div class="pi-main" style="--pi-rc:${role.color}">` +
+    `<div class="pi-hero"><div class="pi-ring"><img src="${GEAR_ICONS[id] || ""}" alt="" width="72" height="72"></div>` +
+    `<div class="pi-hd"><h2 class="pi-title">${petInfoEsc(name)}</h2><div class="pi-chips">${chips}</div>${vars}</div><div class="pi-ctl">${lv}${lck}</div></div>` +
+    `<div class="pi-desc">${renderRichText(p.desc(N, L))}</div>${tileHtml}` +
+    (range || tl ? `<div class="pi-viz${range && tl ? "" : " is-one"}">${range}${tl}</div>` : "") + res + gvc + facts + `</div>`;
+}
+// ---- Special Pet Info: the page (roster left, the chosen pet right; layout A "Codex", user 2026-10-18) ----
+// State {sel, vi, N, L} is remembered in localStorage "12t-bible-pets"; #pet-info/<pet id> opens a pet (a variant id opens its family).
+function mountPetInfo(root){
+  const KEY = "12t-bible-pets";
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+  const linked = (location.hash || "").split("/");
+  let st = petInfoState(linked[0] === "#pet-info" && linked[1] && petInfoFind(linked[1]) ? Object.assign({}, saved, { sel: linked[1] }) : saved);
+  root.innerHTML = '<div class="pi"><nav class="pi-roster" aria-label="สัตว์เลี้ยงพิเศษ"></nav><div class="pi-detail"></div></div>';
+  const roster = root.querySelector(".pi-roster"), detail = root.querySelector(".pi-detail");
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+  // Re-rendering replaces the buttons, so give keyboard focus back to the same control (same data attribute, same panel).
+  const ATTR = { petSel: "data-pet-sel", petVar: "data-pet-var", petLv: "data-pet-lv", petLck: "data-pet-lck" };
+  const render = () => {
+    const a = document.activeElement, k = a && a.dataset && root.contains && root.contains(a) ? Object.keys(ATTR).find(x => a.dataset[x] != null) : null;
+    const box = k && a.closest ? (a.closest(".pi-roster") || a.closest(".pi-detail")) : null;
+    roster.innerHTML = petInfoRosterHtml(st); detail.innerHTML = petInfoDetailHtml(st); save();
+    if (box) { const el = box.querySelector(k === "petLck" ? "[data-pet-lck]" : `[${ATTR[k]}="${a.dataset[k]}"]`); if (el && el.focus) el.focus(); }
+  };
+  const linkTo = () => {
+    const p = petInfoFind(st.sel).entry, v = p.vars ? p.vars[st.vi[p.id] || 0] : null;
+    if ((location.hash || "").split("/")[0] === "#pet-info") history.replaceState(null, "", "#pet-info/" + (v ? v.id : p.id));
+  };
+  const select = id => { if (!petInfoFind(id)) return false; st = petInfoState(Object.assign({}, st, { sel: id })); render(); return true; };
+  root.addEventListener("click", e => {
+    const t = e.target.closest("[data-pet-sel],[data-pet-var],[data-pet-lv]");
+    if (!t) return;
+    const d = t.dataset;
+    if (d.petSel) { select(d.petSel); linkTo(); }
+    else if (d.petVar) { const [fam, i] = d.petVar.split(":"); st = petInfoState(Object.assign({}, st, { vi: Object.assign({}, st.vi, { [fam]: Number(i) }) })); render(); linkTo(); }
+    else if (d.petLv) { st = petInfoState(Object.assign({}, st, { N: d.petLv })); render(); }
+  });
+  root.addEventListener("change", e => {
+    if (e.target.matches && e.target.matches("[data-pet-lck]")) { st = petInfoState(Object.assign({}, st, { L: e.target.value })); render(); }
+  });
+  render();
+  root._petInfo = { openById: select };
+}
 const GEAR_INDEX = (() => { const m = {}; for (const [slot, list] of Object.entries(GEAR_DATA)) for (const [id, name] of list) m[id] = { slot, name }; return m; })();
 // An item the guide's class can use: its own items, the shared ones (all, and the gender trinkets / hats fem, mal); every pet.
 function classGuideGearAllowed(slot, id, classKey){
@@ -33281,9 +33714,9 @@ function mountLauncher(root){
   const someIcons = (n, from = skillIcons) => { const out = []; while (out.length < n) out.push(...shuffle(from)); return out.slice(0, n); };   // icon keys
   const classes = Object.keys(CLASS_STORY_ART);
   const storyOf = cls => pick(CLASS_STORY_ART[cls] || [""]);
-  const artSrc = k => k.startsWith("tool:") ? TOOL_ART[k.slice(5)] : k.startsWith("skill:") ? (c => c ? SKILL_ICONS[c.icon] : "")(SKILLS.find(s => s.id === k.slice(6))) : "";
+  const artSrc = k => k.startsWith("tool:") ? TOOL_ART[k.slice(5)] : k.startsWith("skill:") ? (c => c ? SKILL_ICONS[c.icon] : "")(SKILLS.find(s => s.id === k.slice(6))) : k.startsWith("gear:") ? (GEAR_ICONS[k.slice(5)] || "") : "";   // gear:<item id> = a GEAR_ICONS picture (Special Pet Info)
   const thumbOf = t => t.collage === "skills" ? { kind: "icon", src: SKILL_ICONS[pick(skillIcons)] } : t.collage === "classStory" ? { kind: "portrait", src: storyOf(pick(classes)) }
-    : { kind: String((t.art || [])[0] || "").startsWith("skill:") ? "icon" : "portrait", src: artSrc((t.art || [])[0] || "") };
+    : { kind: /^(skill|gear):/.test(String((t.art || [])[0] || "")) ? "icon" : "portrait", src: artSrc((t.art || [])[0] || "") };
   const accentOf = t => LAUNCH_ACCENT[t.cls] || "var(--gold)";
   const isMain = t => t.collage === "skills" || t.collage === "classStory";   // skill details and ไกด์อาชีพ
   root.innerHTML = '<div class="ln-glow" aria-hidden="true"></div>' +
@@ -33440,7 +33873,7 @@ function mountLauncher(root){
       guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); } }, 3500);
     } else {
       const arts = (t.art || []).filter(k => artSrc(k));
-      const inner = arts.length && arts.every(k => k.startsWith("skill:"))
+      const inner = arts.length && arts.every(k => /^(skill|gear):/.test(k))
         ? '<div class="ln-fan" style="--mid:' + (arts.length - 1) / 2 + '" aria-hidden="true">' + arts.map((k, j) => '<img style="--i:' + j + '" src="' + artSrc(k) + '" alt="">').join("") + "</div>"
         : arts.length ? '<span class="ln-floor" aria-hidden="true"></span><img class="ln-pt" data-k="' + arts[0].replace(/^tool:/, "") + '" src="' + artSrc(arts[0]) + '" alt="">' : "";
       art.innerHTML = inner ? '<a class="ln-artlink" href="#' + t.id + '" aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + inner + "</span></a>" : "";   // the art opens its tool too
@@ -33508,6 +33941,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T15:12:43.000Z","feat(bible): Special Pet Info: the 40 pets with real effects, live for pet level 1–9 and LCK, with range, timing and where the game's tooltip is wrong"],
     ["2026-10-18T15:11:58.656Z","feat(bible): skill details chips show a change by rolling the number like an odometer, with a small ▲ / ▼ tag of how much it moved, when their light lands (no more chevrons); typing in a stat field plays one light volley when you finish instead of one per keystroke"],
     ["2026-10-18T14:30:48.945Z","style(bible): skill details stat panels become dials: no boxes, each stat a ring with its name under it, rings in the stat colour for the stats the skill uses, smaller dials on shorter windows so the page keeps its size, and long numbers shrink to fit"],
     ["2026-10-18T14:12:53.802Z","style(bible): cleaner skill details card: stats the skill does not use fade back, one level of boxes, 2 px colour edges, the description as a pull quote, a slim search row with the skill name shown big only once, and short chip rows fill their width"],
@@ -33918,6 +34352,7 @@ function showTool(tool){
   document.documentElement.classList.toggle("tool-monsters", tool.id === "monster-stats");
   document.documentElement.classList.toggle("tool-notes", tool.id === "server-changes" || tool.id === "bb-issues");
   document.documentElement.classList.toggle("tool-boss", tool.id === "boss-guide");
+  document.documentElement.classList.toggle("tool-pets", tool.id === "pet-info");
   document.documentElement.classList.toggle("tool-rsim", tool.id === "class-guide");
   const container = getToolContainer(tool);
   if (!tool.mounted){ tool.mount(container); tool.mounted = true; }
@@ -33971,6 +34406,7 @@ function route(){
   if (tool && tool.id === "class-guide" && deepSkill === "write" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) toolContainers[tool.id]._classGuide.openAuthor();   // #class-guide/write = the guide editor
   else if (tool && tool.id === "class-guide" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { if (!toolContainers[tool.id]._classGuide.openById(deepSkill)){ toolContainers[tool.id]._classGuide.showGallery(); history.replaceState(null, "", "#class-guide"); } }   // #class-guide/<guide number>; an unknown number shows the list
   else if (tool && tool.id === "class-guide" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { const cg = toolContainers[tool.id]._classGuide; if (deepClass && cg.filterBy) { cg.filterBy(deepClass, ""); history.replaceState(null, "", "#class-guide"); } cg.showGallery(); }   // the bare tool link (menu tile, tool switcher) always opens ไกด์จากผู้เล่น, never a half-written guide or the last guide read (user 2026-10-17); the draft is saved and เขียนไกด์ resumes it
+  if (tool && tool.id === "pet-info" && toolContainers[tool.id] && toolContainers[tool.id]._petInfo) { const pi = toolContainers[tool.id]._petInfo; if (deepSkill && !pi.openById(deepSkill)) history.replaceState(null, "", "#pet-info"); }   // #pet-info/<pet id>; a variant id opens its family; an unknown id keeps the page and cleans the address
   if (tool && tool.id === "skill-details" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._selectSkillById) {
     toolContainers[tool.id]._selectSkillById(deepSkill, deepServer);
   }

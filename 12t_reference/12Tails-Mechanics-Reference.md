@@ -866,6 +866,75 @@ A combo is a fixed schedule from the first stage, not a chain of equal waits. In
 - **Each stage also has waits of its own before it moves or hits** (e.g. Wolf stage 2: 0.16 s, then `moveSpeed 4` for 0.32 s, then the hit). The first version of the range preview left these out and chained stages at the previous stage's last speed change, which made the combo about 0.2-0.5 s per hit too fast.
 - **Combo restart lock:** every stage adds `addTimeOut("nAttack", 1.5)` (`Wolf.cs:15435`, `:15760`, `:16482`, `:17179`); a new stage 1 is refused while it runs (`isTimeOut("nAttack")`, `:7814`).
 
+### 4.9 Pets: effects that are not stats (verified 2026-10-18)
+
+A pet is item slot 5 (`CharacterControl.cs:1497`, `this.pet = current.equipment[5].name`). Its stats are plain `att[]` gear stats (`PetData.getData`, `PetData.cs`; index order as §1.1). This section covers only pets whose code does something else. Pure stat pets (balloons except Bigbug, Smash / Soccer Ball, the four festival kites (weight only), L. BD Mellon, Cake Carron, Disco Peppon, S. RedPanda, S. Santa Skunk, S. ClownDemion, S. Doov, S. BarrelBot, the eight S. bug pets) are left out. `p_ssb` S. SamuraiBug has a `PetData` entry ("valor1 (14+N)m") but no prefab in any `<Class>Equipment.cs`, no shop entry and no code, so it never existed in game.
+
+**Pet level `N`.** The id ends in the level, `p_lmc1` … `p_lmc9` (`Stringf.getInteger` / `getLastDigit`; their bodies are a stub in the decompile, read as "trailing number" as in §4.2). Shops sell Lv 1 only (`ShopData.cs`). The pet shop upgrades one level at a time up to 9 (`PetShopGui.cs:1904`, "already reach maximum level"); the recipe is `PetShopData.getUpgradeItem` (`PetShopData.cs:123-670`), each material `clamp(floor(factor × N), 1, 99)` for the current `N` (`PetShopGui.cs:2003`). Pets with no recipe (S. Kumo, S. Karazo, the balloons and kites, S. RedPanda, …) stay Lv 1. The MiniBug recipes eat other MiniBugs (e.g. MiniNemesis needs `floor(0.5 × N)` MiniNemesis Lv 1).
+
+**Where the code lives.**
+- **Timed effects:** `PetUpdate()` in every hero script (`Bat.cs:17293-19221`; Bison `:11705`, Cat `:13320`, Chameleon `:12569`, Mole `:17136`, Monkey `:17023`, Panda `:12336`, Penguin `:14146`, Rabbit `:14433`, Sheep `:14398`, Whale `:13027`, Wolf `:11952`). The twelve copies were compared statement by statement (2026-10-18) and are identical. It runs from `Update()` only on the owner's client and only while `Game.mGameType > 4` (`Bat.cs:170-218`): normal missions (5) and the PvP arenas M981-M987 (7). In towns (3), guild camps (2) and the type-4 missions (M107, M207, M307, M407, M507, M607, M707, M807, M917, M927, M937) no timed pet effect runs. One timer per character: `+= Time.fixedDeltaTime` each tick, reset to 0 when the pet changes (`:17329-17350`) and when an effect fires. For every timed effect below the timer resets *before* the target search, so a cycle with no target in range is still spent.
+- **Visuals and delayed damage:** `RPC_petEffect` coroutine (`Bat.cs:51856-52676`).
+- **Reactive effects:** `RPC_AddDamage` (`CharacterControl.cs:5748-5821`, after `hitMod`, shields and trinket seals, just before the `AddDamage` coroutine), `RPC_AddStatus` (`:14167`, `getPetProtection` `:19722-20001`) and the death check in each hero's `Update()` (`Bat.cs:350-394`, same in all 12). These run in every game type.
+- **Damage path:** every pet hit is a direct `RPC_AddDamage` or `RPC_AddEffectDamage` with hate 0 (§2.9): no dodge, no `dmgAdjust`, no DEF, no TAL or LCK, only the target's `hitMod` and shields. Areas use `Damage.FindAreaTarget(centre, radius, height, mask)` (`Damage.cs:963-1162`): distance to the near edge of each target's `CharacterController`, Enemy-tagged objects listed before Player-tagged ones.
+
+**Timed attacks** (centre "you" = the owner's transform, `Bat.cs:57`; mask = every team layer except the owner's unless noted):
+
+| Pet (id, req Lv) | Every | Targets | Effect | Source |
+|---|---|---|---|---|
+| L. Mad Carron (`p_lmc`, 31) | 6 s | first unit within `0.5 + 0.5N` m of the **pet** | direct `31 + 4N` | `:17543-17682` |
+| L. Mad Peppon (`p_lmn`, 31) | 3 s | same, `0.5 + 0.5N` m | direct `11 + 4N` | `:17684-17824` |
+| L. Mad Cocon (`p_lmo`, 31) | 9 s | same, `3 + N` m | Effect Damage `6 + 3N` | `:17825-17965` |
+| MiniSkyBug (`p_msb`, 41) | `21 − N` s | up to 3 enemies within 12 m of you | Effect Damage `12 + 2N` each | `:18264-18386` |
+| MiniCrystalBug (`p_mcb`, 42) | `21 − N` s | up to 2 within 8 m | direct `20 + 4N`, KO 2 | `:18387-18509` |
+| MiniAncient (`p_mab`, 43) | `21 − N` s | 1 within 24 m | direct `24 + 4N`, KO 5, force `0.3 × up` | `:18510-18632` |
+| MiniReef (`p_mrb`, 44) | 60 s | first enemy within 18 m (height 4) marks the spot | 1 s later every enemy within 6 m of the spot: direct `40 + 20N` | `:18633-18733`, `:52030` |
+| MiniMok (`p_mmb`, 45) | `21 − N` s | **every** enemy within 6 m | direct `N + 4`, KO `N + 4`, force `0.3 × up` | `:18734-18835` |
+| MiniGolden (`p_mgb`, 46) | `21 − N` s | up to 4 within 18 m (height 4) | k-th target (k = 1..4): direct `12 + 4N + 4k`, KO 2 | `:18836-18958` |
+| MiniNemesis (`p_mnb`, 47) | `60 − N` s | closest living enemy within 9 m | Chaos Ray from the pet: direct `15 + 5N` every 0.4 s while the ray exists | `:18961-19031`, `:52063-52126`, `:52496-52546` |
+
+- **Heights and shapes:** every pet area above is `FindAreaTarget` with height `3 × rangeMod` (the owner's `rangeMod`; the window runs from `0.5 × height` below the centre to `height` above it, `Damage.cs:1140-1156`), except the MiniReef search and MiniGolden (height `4`, no `rangeMod`). MiniNemesis instead uses `FindClosestNonDeadTarget` (`Damage.cs:2061-2160`): a 3D sphere measured centre to centre, nearest living unit wins; the ray's re-aim uses the same search with 6 m.
+- **Chaos Ray length:** the `miniChaosRay` prefab's `EffectControl` has `life 2.0`, `afterLife 0` (decoded from `12TailsOnline_Data/resources.assets`, pathID 78457; the object is destroyed at `life + afterLife`, `EffectControl.cs:179-183`). The first tick is 0.4 s after the ray appears, so ticks land at 0.4 / 0.8 / 1.2 / 1.6 s; a tick at 2.0 s races the destroy in the same frame. The ray re-aims at the closest non-dead target within 6 m of the first target's position (`:52506`).
+- **L. Mad pets can hit allies:** their mask is `130816` (all team layers) where every other pet uses `130816 − (1 << own layer)`, and the only exclusion is the owner (`gameObject != this.gameObject`). `FindAreaTarget` lists Enemy-tagged units first, so a monster in range is always picked first, but with none in range the first Player-tagged unit in range (an ally, or your own summon) takes the hit. `RPC_AddDamage` has no team check (`:3680-3770`). Not live-checked.
+
+**Timed self / area effects:**
+
+| Pet (id, req Lv) | When | Effect | Source |
+|---|---|---|---|
+| Bigbug Balloon (`p_all1`) | every 60 s | `Game.mGameMana++` (+1 mission mana, the gold counter the stage adds +1 to every 12 s, e.g. `M101_CarronHunt.cs:235-238`), chat "Go Go AlphaTester!" | `Bat.cs:17370-17395` |
+| L. Carron / Mupo / Peppon Saver (`p_lcs` / `p_lms` / `p_lps`, 21) | every `32 − 2N` s, `Random(0,100) < 4 + 2N` (no LCK) | self `float` Lv 4, 3 s | `:19159-19186` |
+| S. Kumo (`p_skm`, 15, no upgrade) | every 15 s, `Random(0,100) < 30` (no LCK) | self `wash` Lv 4, 3 s | `:18027-18060` |
+| S. FlowerBug (`p_sfb`) | every 60 s | self `bless` Lv 1 (all 8 stats +8), `11 + N` s | `:18061-18091` |
+| S. Ice Mixer (`p_sim`, 30) | every 45 s | every enemy within 5 m of the pet: `ice` Lv 2 (move speed −30%), `N + 1` s | `:18092-18193` |
+| S. Ammonite (`p_sam`, 35) | every 120 s | self `bubbleShield` Lv 2, `11 + N` s, pool `15 + 15N` (absorbs half of each direct hit, §4.1) | `:18194-18224` |
+| S. IcePenguin (`p_spg`, 41) | HP below `(0.11 + 0.01N) × max HP` and 60 s since the last one | self `iceShield` Lv 2, `11 + N` s, `30 + 10N` HP | `:18225-18263` |
+| S. Ninja Kite r / g / y / b / k (`p_skr` / `skg` / `sky` / `skb` / `skk`, 25) | every `45 − 2N` s | every enemy within 15 m of the kite: `awareness` Lv 2, 1 s (removes `blend` and `invisible`, §4.1) | `:17996-18026` → `:19037-19157` |
+
+Durations are passed as is: no `chaAdjust`. Ice Mixer and the kites search with height `3 × rangeMod` like the attacks; the kite search is centred on the kite's x / z at the owner's height (`Bat.cs:19081`). All five kite prefabs contain the `SmallNinjaKite_tri/kite` child the code looks up (`RippedAssets/.../pet/smallNinjaKite_*.prefab`).
+- **`wash` strips your own buffs:** `wash` removes every status that is both Physical and Buff with a level ≤ the wash level (`CharacterControl.cs:36103-36189`; Whale's Spiral Blast puts it on the enemies it hits, see [whale-skill-reference.md](whale-skill-reference.md) §4.15). S. Kumo puts Lv 4 on its owner, so it removes the owner's `atkUp` … `lckUp`, `berserkerRush`, `blend`, `damagePlus`, `drunken`, `enlarge`, `furyTrance`, `gobble`, `hardenSkin`, `lifeBoost`, `magicBoost`, `reduce`, `shield`, `speedBoost` up to Lv 4 (`isPhysicalStatus` `StatusData.cs:5220` ∩ `isBuffStatus` `:6323`). Its Thai description says it "ช่วยล้างสถานะ" (cleanses statuses).
+- **`float` Lv 4:** on apply removes `heavy`, `groundLock`, `needlePrison`, `sticky`, `frost`, `lightBind` (`CharacterControl.cs:39790-39812`); while it lasts, a new `heavy`, `groundLock`, `needlePrison`, `sticky`, `frost`, `lightBind` or `maim` of level ≤ `2 × 4` is resisted (`-83`, `:13115-13185`).
+
+**Reactive effects:**
+
+| Pet (id, req Lv) | Trigger | Effect | Source |
+|---|---|---|---|
+| S. Anubi (`p_sab`, 31) | you reach 0 HP, the pet timer is ≥ 12 s, no `death` status | `Random(0,100) <= lckAdjust(3 + N)` (so `lckAdjust + 1` % ): HP set to 1, then `RPC_AddHeal(1, 100)`, timer reset, chat "Small Anubi doesn't want you to die!" Checked after Black Servant and Auto Life. | `Bat.cs:350-394` |
+| S. Karazo (`p_skz`, 15, no upgrade) | an incoming direct hit of 1-30 damage (after `hitMod` and shields) | `Random(0,100) < lckAdjust(30)`: deflect (`-85`), damage 0. `N` unused. | `CharacterControl.cs:5748-5790` |
+| S. PirateFish (`p_spf`, 51) | an incoming direct hit with KO > 0 | `Random(0,100) < lckAdjust(4)`: KO set to 0. `N` unused. | `:5791-5821` |
+| Anti-status pets (below) | a matching status arrives (after every other resist in `RPC_AddStatus`) | `Random(0,100) < lckAdjust(chance)`: resist (`-83`) | `:14167`, `:19722-20001` |
+
+Anti-status: `3 + N` for L. Carron `sleep`, L. Mupo `maim`, L. Peppon `ice`, L. Cacton `poison`, L. Cocon `burn`, L. Pumpkon `curse`, L. Mellon `cut`; `5 + N` for L. Dead Carron `lightBind`, L. Dead Mupo `paralysis`, L. Dead Peppon `petrify`, L. Dead Cacton `groundLock`, L. Dead Cocon `provoke`, L. Dead Pumpkon `nightmare`. `lckAdjust` is the owner's (§2.4). Karazo and PirateFish sit in `RPC_AddDamage`, so Effect Damage (§2.9) never triggers them. The six plain Little pets and S. RedPanda also post a chat line on a timer (Carron 240 s, Mupo 210 s, Peppon 300 s, Cacton 360 s, Cocon 300 s, Pumpkon 360 s, RedPanda 240 s; `Bat.cs:17408-17517`, `:19191-19200`, `:17966-17991`), with no other effect.
+
+**Tooltip vs code** (`PetData.cs` `special` line, shown in the item tooltip):
+- L. Carron (P) `p_lcp`: "+(6+N)% anti-sleep", but `getPetProtection` has no `p_lcp` case: no effect.
+- S. Kumo: "wash 14%" → 30% every 15 s, and `wash` strips the owner's physical buffs (above).
+- S. Karazo: "block 30 dmg (14+N)50%" (garbled) → `lckAdjust(30)` on hits of 30 or less.
+- S. PirateFish: "(3+N)% no ko" → `lckAdjust(4)`, level ignored.
+- Savers: "+(2+2N)% Float" → `4 + 2N` %, no LCK.
+- Ninja Kites: "awareness (14+N)m" → radius always 15 m; the level shortens the interval instead.
+- S. Anubi: "(3+N)% autoRevive" → `lckAdjust(3 + N) + 1` %, at most once per 12 s.
+- S. BarrelBot (a stat pet): "+4 tal" → TAL `4 + N`.
+
 ## Riding mounts: G. Marshal and G. Champion (verified 2026-10-17)
 Mount items any class can ride. In the app: `common_marshalMount`, `common_championMount`, `common_championMount_charge`, and per class `<class>_mountAttack` / `<class>_mountDash` (formulas in each class reference).
 - **Items** (`MountData.cs`): `o_all3` / `o_all4` = `PvpMount1` / `PvpMount2`, the blue and red armoured mupo ("+20 all stats", the G. Marshal pair, matching the (B) / (R) G. Marshal gear; the app shows the red one). `o_all5` = `G.Champion Mount`, the golden armoured mupo ("+50 all stats"). Item `lv` -60 / -70 = PvP rank.

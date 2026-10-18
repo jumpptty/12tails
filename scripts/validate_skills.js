@@ -3600,6 +3600,138 @@ console.log(`Verified ${checkedRsim} skill simulator checks.`);
   console.log(`Verified ${ok} talAdjust duration chips.`);
 }
 
+// Special Pet Info (spec docs/superpowers/specs/2026-10-18-special-pet-info-design.md): PET_INFO against values
+// transcribed from 12Tails-Mechanics-Reference.md §4.9, the renderers for every pet / level / LCK, and the tool wiring.
+{
+  const pf = (m) => { console.error(`[PET INFO ERROR] ${m}`); errorCount++; };
+  try {
+    const run = (code) => vm.runInContext(code, sandbox);
+    const P = run("PET_INFO"), find = run("petInfoFind"), perMin = run("petInfoPerMin"), count = run("petInfoCount");
+    const E = id => { const r = find(id); if (!r) pf(`no entry ${id}`); return r ? r.entry : null; };
+    const roles = ["atk", "buff", "react", "res"].map(r => P.filter(p => p.role === r).length).join("/");
+    if (roles !== "10/8/3/14") pf(`group sizes ${roles}, expected 10/8/3/14`);
+    if (count() !== 40) pf(`count ${count()}, expected 40`);
+    const FIX = [ // [id, N, every, dmg of target 1, radius, ko]
+      ["p_lmc", 1, 6, 35, 1], ["p_lmc", 9, 6, 67, 5], ["p_lmn", 9, 3, 47, 5], ["p_lmo", 1, 9, 9, 4], ["p_lmo", 9, 9, 33, 12],
+      ["p_msb", 1, 20, 14, 12], ["p_msb", 9, 12, 30, 12], ["p_mcb", 9, 12, 56, 8, 2], ["p_mab", 9, 12, 60, 24, 5],
+      ["p_mrb", 1, 60, 60, 6], ["p_mrb", 9, 60, 220, 6], ["p_mmb", 1, 20, 5, 6, 5], ["p_mmb", 9, 12, 13, 6, 13],
+      ["p_mgb", 1, 20, 20, 18, 2], ["p_mgb", 9, 12, 52, 18, 2], ["p_mnb", 1, 59, 20, 9], ["p_mnb", 9, 51, 60, 9],
+    ];
+    for (const [id, N, ev, d, r, ko] of FIX) {
+      const e = E(id); if (!e) continue;
+      if (e.every(N) !== ev) pf(`${id} N${N} every ${e.every(N)} != ${ev}`);
+      if (e.hit.dmg(N, 1) !== d) pf(`${id} N${N} dmg ${e.hit.dmg(N, 1)} != ${d}`);
+      const rr = e.area.blast || e.area.r(N); if (rr !== r) pf(`${id} N${N} radius ${rr} != ${r}`);
+      if (ko !== undefined && (e.hit.ko ? e.hit.ko(N) : 0) !== ko) pf(`${id} N${N} ko != ${ko}`);
+    }
+    if (E("p_mgb") && E("p_mgb").hit.dmg(9, 4) !== 64) pf("MiniGolden 4th target at N9 != 64");
+    if (perMin(E("p_mnb"), 9, 1) !== 282 || perMin(E("p_mgb"), 9, 5) !== 1160 || perMin(E("p_lmn"), 9, 1) !== 940) pf("per-minute values (expected 282 / 1160 / 940)");
+    const CH = { 0: { res3: [4, 12], res5: [6, 14], anubi: [5, 13], karazo: 30, pirate: 4 }, 156: { res3: [9, 25], res5: [14, 29], anubi: [10, 26], karazo: 52, pirate: 9 } };
+    for (const L of [0, 156]) {
+      const c = CH[L];
+      [[1, 0], [9, 1]].forEach(([N, i]) => {
+        if (E("p_lcr").chance(N, L) !== c.res3[i]) pf(`L. Carron N${N} L${L}: ${E("p_lcr").chance(N, L)} != ${c.res3[i]}`);
+        if (E("p_ldk").chance(N, L) !== c.res5[i]) pf(`L. Dead Pumpkon N${N} L${L}: ${E("p_ldk").chance(N, L)} != ${c.res5[i]}`);
+        if (E("p_sab").chance(N, L) !== c.anubi[i]) pf(`S. Anubi N${N} L${L}: ${E("p_sab").chance(N, L)} != ${c.anubi[i]}`);
+      });
+      if (E("p_skz").chance(1, L) !== c.karazo) pf(`S. Karazo L${L}`);
+      if (E("p_spf").chance(9, L) !== c.pirate) pf(`S. PirateFish L${L}`);
+    }
+    const B = (id, N, ev) => { const e = E(id); if (e && e.every(N) !== ev) pf(`${id} N${N} every ${e.every(N)} != ${ev}`); };
+    B("p_lcs", 1, 30); B("p_lcs", 9, 14); B("p_skm", 1, 15); B("p_sfb", 9, 60); B("p_sim", 9, 45); B("p_sam", 9, 120); B("p_skr", 1, 43); B("p_skr", 9, 27); B("p_all1", 1, 60);
+    const ky = find("p_sky"); if (!ky || ky.entry.id !== "p_skr" || ky.vi !== 2) pf("variant id p_sky does not open the kite family on index 2");
+    if (E("p_lcp") && !E("p_lcp").flags.dead) pf("L. Carron (P) must be flagged dead");
+    const GI = run("GEAR_ICONS");
+    for (const p of P) for (const id of (p.vars ? p.vars.map(v => v.id) : [p.id])) if (!GI[id]) pf(`no icon for ${id}`);
+    const SCM = run("STATUS_CLASS_MAP"), SDM = run("STATUS_DESC_MAP");
+    for (const s of ["wash", "float"]) if (!SCM[s] || !SDM[s]) pf(`no status popup for ${s}`);
+    if (SCM.wash !== "Magical" || SCM.float !== "Buff, Magical") pf("wash / float classification (StatusData.cs:5681, :5885, :6944)");
+    console.log(`Verified Special Pet Info data: ${P.length} roster entries, ${count()} pets.`);
+    // Renderers: every pet at levels 1 / 5 / 9 and LCK 0 / 156 / 999 renders with no raw markup, NaN or banned wording.
+    const st = run("petInfoState"), det = run("petInfoDetailHtml"), ros = run("petInfoRosterHtml");
+    // A rendered status is <span class="sk-status">[name]<popup …></span>: the brackets stay on screen, and the popup holds other
+    // statuses' texts (e.g. drunken's own "lckAdjust(5×เลเวล)%"), so judge this tool's own text with whole status spans removed.
+    const stripStatus = (html) => {
+      let out = "", i = 0;
+      for (;;) {
+        const s = html.indexOf('<span class="sk-status"', i); if (s < 0) return out + html.slice(i);
+        out += html.slice(i, s) + "[status]"; let d = 0, j = s;
+        for (;;) { const o = html.indexOf("<span", j), c = html.indexOf("</span>", j); if (c < 0) return out; if (o >= 0 && o < c) { d++; j = o + 5; } else { d--; j = c + 7; if (!d) break; } }
+        i = j;
+      }
+    };
+    let renders = 0;
+    for (const p of P) for (const N of [1, 5, 9]) for (const L of [0, 156, 999]) {
+      const vi = {}; if (p.vars) vi[p.id] = p.vars.length - 1;
+      const raw = det({ sel: p.id, vi, N, L }); renders++;
+      if ((raw.match(/class="sk-status"/g) || []).length < (p.desc(N, L).match(/\[[a-zA-Z]+\d*\]/g) || []).length) pf(`${p.id} a [status] in its text did not render as a status`);
+      const h = stripStatus(raw).replace(/\[status\]/g, "");
+      if (/NaN|undefined|\*\*|\^\^|__|\[[a-zA-Z]+\d*\]/.test(h)) pf(`${p.id} N${N} L${L} has raw markup or NaN: ${(h.match(/NaN|undefined|\*\*|\^\^|__|\[[a-zA-Z]+\d*\]/) || [])[0]}`);
+      if (/ดาเมจตรง|\d\s*วิ(?!นาที)|lckAdjust|chaAdjust|talAdjust/.test(h)) pf(`${p.id} wording: ${(h.match(/ดาเมจตรง|\d\s*วิ(?!นาที)|lckAdjust|chaAdjust|talAdjust/) || [])[0]}`);
+      if ((p.flags.noLv || p.flags.lvUnused) && /data-pet-lv=/.test(h)) pf(`${p.id} shows level pills although its level does nothing`);
+      if (!(p.flags.noLv || p.flags.lvUnused) && !/data-pet-lv="9"/.test(h)) pf(`${p.id} has no level pills`);
+      if (p.flags.lck && !/data-pet-lck/.test(h)) pf(`${p.id} uses LCK but has no LCK box`);
+      if (p.code && !/pi-gvc is-diff/.test(h)) pf(`${p.id} tooltip difference not shown`);
+      if (p.vars && (h.match(/data-pet-var=/g) || []).length !== p.vars.length) pf(`${p.id} variant buttons`);
+    }
+    const s1 = st({ sel: "p_sky", N: "x", L: -5 }); if (s1.sel !== "p_skr" || s1.vi.p_skr !== 2 || s1.N !== 9 || s1.L !== 0) pf(`petInfoState variant / clamp: ${JSON.stringify(s1)}`);
+    const s2 = st({ sel: "nope", N: 12, L: 4000 }); if (s2.sel !== P[0].id || s2.N !== 9 || s2.L !== 999) pf(`petInfoState fallback: ${JSON.stringify(s2)}`);
+    const s3 = st(null); if (s3.sel !== P[0].id || s3.N !== 9 || s3.L !== 156) pf(`petInfoState defaults: ${JSON.stringify(s3)}`);
+    const s4 = st({ sel: "p_skr", vi: { p_skr: 7, p_lcs: "a" }, N: 4.6, L: "200" }); if (s4.vi.p_skr !== undefined || s4.vi.p_lcs !== undefined || s4.N !== 5 || s4.L !== 200) pf(`petInfoState cleaning: ${JSON.stringify(s4)}`);
+    const rh = ros(st({})); if ((rh.match(/data-pet-sel=/g) || []).length !== P.length) pf("roster rows");
+    if (!/pi-it is-on[^>]*data-pet-sel="p_lmc"/.test(rh)) pf("roster marks the selected pet");
+    // Token spacing (bible-desc-writing): a **…** / __…__ / ^^…^^ token never touches a letter or digit.
+    const touch = /[\p{L}\p{N}\p{M}]/u;
+    for (const p of P) for (const N of [1, 9]) for (const t of [p.desc(N, 156), typeof p.code === "function" ? p.code(N) : p.code || ""]) {
+      for (const m of t.matchAll(/(\*\*|__|\^\^)(.+?)\1/g)) {
+        const before = t[m.index - 1] || "", after = t[m.index + m[0].length] || "";
+        if (touch.test(before) || touch.test(after)) pf(`${p.id} token spacing: …${t.slice(Math.max(0, m.index - 6), m.index + m[0].length + 6)}…`);
+      }
+    }
+    console.log(`Verified Special Pet Info renderers: ${renders} detail renders.`);
+    // Tool wiring: TOOLS entry, launcher art, mount with storage blocked or stale, deep links, a click and an LCK change.
+    const tool = run("TOOLS").find(t => t.id === "pet-info");
+    if (!tool) pf("no TOOLS entry pet-info");
+    else {
+      if (tool.title !== "Special Pet Info" || tool.category !== "Reference") pf("pet-info title / category");
+      const f = tool.fact && tool.fact(); if (!f || f[0] !== 40 || f[1] !== "ตัว") pf(`pet-info fact ${JSON.stringify(f)}`);
+      const art = tool.art || []; if (art.length !== 5 || !art.every(k => /^gear:/.test(k) && GI[k.slice(5)])) pf(`pet-info art ${JSON.stringify(art)}`);
+    }
+    const mkRoot = () => { const reg = new Map(), r = makeEl(); r.l = {}; r.addEventListener = (t, fn) => { r.l[t] = fn; };
+      r.querySelector = sel => { if (!reg.has(sel)) reg.set(sel, makeEl()); return reg.get(sel); }; return r; };
+    const mount = run("mountPetInfo");
+    sandbox.location.hash = "#pet-info/p_sky";
+    const r1 = mkRoot(); mount(r1);   // the sandbox has no localStorage: reading it throws, the mount must not
+    if (!r1._petInfo || !/S\. Ninja Kite \(y\)/.test(r1.querySelector(".pi-detail").innerHTML)) pf("deep link #pet-info/p_sky did not open the yellow kite");
+    if (!r1._petInfo.openById("p_mgb") || !/MiniGolden/.test(r1.querySelector(".pi-detail").innerHTML)) pf("openById p_mgb");
+    if (r1._petInfo.openById("nope") !== false) pf("openById of an unknown id must return false");
+    const click = (r, attrs) => r.l.click({ target: { closest: () => ({ dataset: attrs }) } });
+    click(r1, { petSel: "p_lcr" }); click(r1, { petLv: "1" });
+    if (!/class="pi-n is-on" data-pet-lv="1"/.test(r1.querySelector(".pi-detail").innerHTML)) pf("level click");
+    r1.l.change({ target: { matches: s => s === "[data-pet-lck]", value: "" } });
+    if (!/value="156"/.test(r1.querySelector(".pi-detail").innerHTML)) pf("a blank LCK box does not fall back to 156");
+    sandbox.localStorage = { getItem: () => '{"sel":"zzz","N":"q","L":"x","vi":{"p_skr":9}}', setItem: () => {} };
+    sandbox.location.hash = "#pet-info";
+    const r2 = mkRoot(); mount(r2);
+    if (!/L\. Mad Carron/.test(r2.querySelector(".pi-detail").innerHTML)) pf("stale stored state does not fall back to the first pet");
+    delete sandbox.localStorage; sandbox.location.hash = "skill-details";
+    // Final review (2026-10-18): the server looks' "raised" recipe must not repaint a selected control (it outranks .is-on).
+    const raised = (html.match(/raised: \[([^\]]*)\]/) || ["", ""])[1].match(/"\.pi-[^"]*"/g) || [];
+    for (const s of raised) if (!/:not\(\.is-on\)/.test(s)) pf(`THEME_SURFACES raised ${s} must exclude :not(.is-on)`);
+    // Keyboard focus survives a re-render: the control that was focused is focused again.
+    const r3 = mkRoot(); mount(r3); const d3 = r3.querySelector(".pi-detail"); let focused = null;
+    d3.querySelector = sel => ({ focus: () => { focused = sel; } });
+    r3.contains = () => true;
+    sandbox.document.activeElement = { dataset: { petLv: "3" }, closest: s => (s === ".pi-detail" ? d3 : null) };
+    click(r3, { petLv: "3" });
+    if (focused !== '[data-pet-lv="3"]') pf(`focus not restored after a level click (${focused})`);
+    delete sandbox.document.activeElement;
+    // Copy (final review): one clear footer sentence; anti-status tiles say "ติด <status>".
+    const lcr = det({ sel: "p_lcr", vi: {}, N: 9, L: 156 });
+    if (!/เอฟเฟกต์ที่ทำงานตามเวลา มีผลเฉพาะในภารกิจและ PvP/.test(lcr) || /ติด sleep/.test(lcr) === false) pf("footer / anti-status tile copy");
+  } catch (e) { pf(`section threw: ${e.message}`); }
+}
+
 // Monster stats page (MONSTER_STATS, decoded from 12TailsOnline_Data): renders one table row per entry, every row is
 // within the decoder's sane ranges, and First Whale still equals the hand-verified enemy preset.
 {
