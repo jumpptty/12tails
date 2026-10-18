@@ -8063,10 +8063,17 @@
   .ln-fact span{color:var(--muted); font-size:20px}
   /* the count on the left and เปิด on the right of one row (user 2026-10-18); a slide with no count keeps the button on the left */
   .ln-cta{display:flex; align-items:center; justify-content:space-between; gap:24px; margin-top:26px; animation:lnUp .6s .2s cubic-bezier(.2,.7,.2,1) both}
-  .ln-play{display:inline-flex; align-items:center; justify-content:center; gap:14px; height:58px; padding:0 30px 0 34px; border-radius:12px; font-size:19px; font-weight:700; color:#1b130b; text-decoration:none;
-    background:linear-gradient(180deg, var(--ln-hi), var(--gold)); box-shadow:0 0 0 1px var(--ln-hi), 0 12px 30px -8px color-mix(in srgb, var(--gold) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.5); transition:transform .15s, box-shadow .15s}
-  .ln-play:hover, .ln-play:focus-visible{transform:translateY(-2px); box-shadow:0 0 0 1px var(--ln-hi), 0 18px 40px -8px color-mix(in srgb, var(--gold) 75%, transparent), inset 0 1px 0 rgba(255,255,255,.5)}
-  .ln-play span{font-size:22px}
+  /* เปิด = a red wax seal with embossed gold text and a dashed ring (option A of 10 mocks, user 2026-10-18). The link stays put and the seal inside
+     tilts / grows on hover and squishes when pressed, so the cursor never flickers at its edge; dark shadows only, no gold glow */
+  .ln-play{flex:none; display:grid; place-items:center; width:112px; height:112px; color:var(--ln-hi); text-decoration:none; border-radius:50%}
+  .ln-play:focus-visible{outline:2px solid var(--ln-hi); outline-offset:4px}
+  .ln-seal{position:relative; display:grid; place-items:center; width:100%; height:100%; border-radius:50% 46% 53% 48% / 48% 54% 46% 52%; font-size:26px; font-weight:700;
+    background:radial-gradient(circle at 34% 28%, #c43b2c, #8b1e1e 55%, #5a0f0f); box-shadow:inset 0 -7px 12px rgba(0,0,0,.4), inset 0 5px 9px rgba(255,255,255,.14), 0 10px 16px rgba(0,0,0,.55);
+    transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+  .ln-seal::before{content:""; position:absolute; inset:12%; border-radius:50%; border:2px dashed color-mix(in srgb, var(--ln-hi) 45%, transparent)}
+  .ln-seal span{position:relative; text-shadow:0 -1px 0 rgba(0,0,0,.55), 0 1px 0 rgba(255,220,150,.25)}
+  .ln-play:hover .ln-seal, .ln-play:focus-visible .ln-seal{transform:rotate(-10deg) scale(1.05)}
+  .ln-play:active .ln-seal{transform:scale(.92)}
   .ln-art{position:relative; height:100%; min-height:0; display:grid; place-items:center; perspective:1400px}
   .ln-art > *{animation:lnArt .8s cubic-bezier(.2,.7,.2,1) both}
   /* the art opens its tool as well (user 2026-10-18): a subtle lift on hover, moving it with translate only (cheap even without GPU), no glow */
@@ -8203,8 +8210,9 @@
     .ln-copy{position:absolute; left:0; right:0; bottom:0; width:auto; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
     .ln-title{font-size:clamp(27px, 7.4vw, 40px); margin:8px 0 6px}
     .ln-fact{display:none}
-    .ln-cta{margin-top:14px}
-    .ln-play{width:100%; height:50px; font-size:17px}
+    .ln-cta{margin-top:10px; justify-content:flex-end}
+    .ln-play{width:74px; height:74px}
+    .ln-seal{font-size:18px}
     .ln-stripbar{display:block; padding:26px 12px 0}
     .ln-count{display:none}
     .ln-tools-h{display:block; margin:0 4px 10px; font-family:inherit; font-size:18px; font-weight:700; color:var(--text)}
@@ -8224,7 +8232,7 @@
     .ln-stage{height:400px}
     .ln-art{height:44%}
     .ln-title{font-size:26px}
-    .ln-play{height:46px}
+    .ln-play{width:66px; height:66px}
   }
   /* phones held sideways: the stage fills the screen, text left and art right */
   @media (max-width:900px) and (max-height:520px) and (orientation:landscape){
@@ -29565,7 +29573,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T08:11:12.074Z","counts":{"1":13,"2":16,"3":12,"4":7,"5":17,"6":12,"7":5,"8":9,"9":9,"10":9,"11":7,"12":3,"13":1,"14":10,"15":20,"16":4,"17":10,"18":18,"19":7,"20":14,"21":5,"22":5,"23":10,"24":3,"25":4,"26":3,"27":3,"28":6,"29":10,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T08:18:45.769Z","counts":{"1":13,"2":16,"3":12,"4":7,"5":17,"6":12,"7":5,"8":9,"9":9,"10":9,"11":7,"12":3,"13":1,"14":10,"15":20,"16":4,"17":10,"18":18,"19":7,"20":14,"21":5,"22":5,"23":10,"24":3,"25":4,"26":3,"27":3,"28":6,"29":10,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33016,7 +33024,7 @@ function mountLauncher(root){
     root.style.setProperty("--acc", accentOf(t));
     copy.innerHTML = (LAUNCH_CATEGORY[t.category] || t.badge ? '<span class="ln-kicker">' + (LAUNCH_CATEGORY[t.category] || "") + (t.badge ? ' <span class="ln-badge">' + t.badge + "</span>" : "") + "</span>" : "") +   // no เครื่องมือหลัก label (user 2026-10-18)
       '<h1 class="ln-title">' + lines(t.title).map((l, k) => '<span style="animation-delay:' + k * 70 + 'ms">' + l + "</span>").join("") + "</h1>" +
-      '<div class="ln-cta">' + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") + '<a class="ln-play" href="#' + t.id + '">เปิด<span aria-hidden="true">→</span></a></div>';
+      '<div class="ln-cta">' + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") + '<a class="ln-play" href="#' + t.id + '"><span class="ln-seal"><span>เปิด</span></span></a></div>';
     clearInterval(guideTimer); clearTimeout(wallTimer);
     if (t.collage === "skills") {
       art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? wallTiles(5, 5, 1) : wallTiles(8, 6, 3)) + "</div></div>";
@@ -33096,6 +33104,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T08:18:45.949Z","feat(bible): hub menu's เปิด button is a red wax seal with gold lettering (tilts on hover, squishes when pressed)"],
     ["2026-10-18T08:11:12.402Z","fix(bible): hub menu cursor no longer flickers over skills, thumbs and art (hover never moves what you point at, and the skill wall holds still under the cursor); no descriptions or เครื่องมือหลัก label, and a bigger count (655 สกิล)"],
     ["2026-10-18T08:02:09.038Z","feat(bible): on the hub menu the big art of every tool opens it too, and เปิด sits at the right end of the count row, next to the art"],
     ["2026-10-18T07:56:47.961Z","fix(bible): hub menu skill wall is flat, and its big 2 x 2 Class C tiles have a little thickness"],
