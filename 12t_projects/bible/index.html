@@ -1735,11 +1735,6 @@
   /* Recommended stats (user 2026-10-15): editor row, reader panel and hover lines all wear the stat's signature colour (--stat-*). */
   .cg-stats{border:1px solid var(--line);border-radius:4px;padding:12px 14px 14px;margin:0 0 16px;background:var(--panel)}
   .cg-stats legend{padding:0 6px;color:var(--gold);font-size:13px}
-  .cg-stats-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px}
-  .cg-stat-in{display:grid;gap:4px;font-size:12px;color:var(--c)}
-  .cg-stat-in b{font-size:11px;letter-spacing:.14em;font-weight:600}
-  .cg-page .cg-stat-in input{border-color:var(--c);padding:7px 8px;text-align:center;color:var(--text);-moz-appearance:textfield}
-  .cg-stat-in input::-webkit-outer-spin-button,.cg-stat-in input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .cg-stat-panel{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 14px;margin:0 0 14px}   /* round dials side by side, centred (user 2026-10-17, as in step 2 and the PNG) */
   .cg-stat-panel > .cg-stat-tile{flex:none;width:66px}
   /* recommended gear (user 2026-10-16) */
@@ -1803,6 +1798,11 @@
   .cg-set-ed .cg-set-cell{gap:4px;align-items:center;text-align:center}
   .cg-set-ed .cg-set-tile{max-width:62px}
   .cg-set-main{padding:0;border:0;background:none;cursor:pointer;border-radius:4px}
+  .cg-set-ed .cg-set-main{cursor:grab;touch-action:pan-y;-webkit-touch-callout:none}
+  .cg-set-ed .cg-set-cell.is-armed .cg-set-main{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(212,175,55,.55)}   /* drag up / down its slot column (user 2026-10-18); a click still opens the picker */
+  .cg-set-ed .cg-set-cell.is-dragging{position:relative;z-index:20}
+  .cg-set-ed .cg-set-cell.is-dragging .cg-set-main{cursor:grabbing;box-shadow:0 10px 22px rgba(0,0,0,.6),0 0 0 2px var(--gold)}
+  .cg-set-ed .cg-set-cell.is-drop .cg-set-main{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(212,175,55,.55)}
   .cg-set-main:hover,.cg-set-main:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .cg-set-ed .cg-set-rep{cursor:pointer}
   .cg-set-ed .cg-set-rep:hover,.cg-set-ed .cg-set-rep:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
@@ -1818,17 +1818,68 @@
   .cg-set-ed .cg-set-repdel{right:-22px;top:auto;bottom:-18px}
   .cg-set-ed .cg-set-cell:hover .cg-gear-x,.cg-set-ed .cg-set-cell:focus-within .cg-gear-x{opacity:1}
   @media (hover:none){.cg-set-ed .cg-gear-x{opacity:1}}
-  @media (max-width:640px){.cg-set-ed{grid-template-columns:30px repeat(6,minmax(0,1fr));gap:6px}.cg-set-ed .cg-set-no{font-size:11px;white-space:normal}.cg-set-ed .cg-gear-name{display:none}.cg-set-add,.cg-set-off{width:100%;height:auto;aspect-ratio:1}.cg-extras-dialog .cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.cg-set-head{font-size:10.5px;line-height:1.2}.cg-page .cg-set-ed .cg-gear-stat-in{-webkit-appearance:none;appearance:none;padding:3px 0;font-size:8.5px;letter-spacing:-.02em;text-align:center;text-align-last:center}}
+  @media (max-width:640px){.cg-set-ed{grid-template-columns:30px repeat(6,minmax(0,1fr));gap:6px}.cg-set-ed .cg-set-no{font-size:11px;white-space:normal}.cg-set-ed .cg-gear-name{display:none}.cg-set-add,.cg-set-off{width:100%;height:auto;aspect-ratio:1}.cg-set-head{font-size:10.5px;line-height:1.2}.cg-page .cg-set-ed .cg-gear-stat-in{-webkit-appearance:none;appearance:none;padding:3px 0;font-size:8.5px;letter-spacing:-.02em;text-align:center;text-align-last:center}}
   .cg-stat-panel[hidden]{display:none}
   .cg-stat-tile{display:grid;justify-items:center;gap:6px;min-width:0;padding:0;border:0;background:none}
   .cg-stat-tile b{order:2;display:block;font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--c)}
-  .cg-stat-val{width:62px;height:62px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:1px;border:2px solid var(--c);border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),rgba(0,0,0,.35));box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent);transition:box-shadow .15s ease}   /* recommended stats are a ballpark (user 2026-10-16): a "~" before the number */
+  .cg-stat-val{width:62px;height:62px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:1px;border:2px solid var(--c);border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),rgba(0,0,0,.35));box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent);transition:box-shadow .15s ease}
   .cg-page .cg-stat-tile input.cg-stat-try{display:block;flex:1;min-width:0;width:100%;padding:0;margin:0;border:0;border-bottom:1px dashed transparent;border-radius:0;background:transparent;font-family:inherit;font-weight:700;font-size:19px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums;-moz-appearance:textfield;resize:none}
   .cg-page .cg-stat-tile input.cg-stat-try:hover,.cg-page .cg-stat-tile input.cg-stat-try:focus{border-bottom-color:var(--c);outline:none}
   .cg-stat-tile input.cg-stat-try::-webkit-outer-spin-button,.cg-stat-tile input.cg-stat-try::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .cg-stat-tile{cursor:text}
   .cg-stat-tile.is-tried .cg-stat-val{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 45%,transparent),0 0 20px color-mix(in srgb,var(--c) 55%,transparent)}   /* a value the reader is trying out */
   .cg-page .cg-stat-tile input.cg-stat-try{flex:none;width:4.2ch;font-size:18px;text-align:center}   /* room for 250+ */
+  /* Stat flasks (user 2026-10-18, docs/superpowers/specs/2026-10-18-guide-stat-flasks-design.md): a share (N%) or ตัน / ตาม is a potion flask filled to its level
+     (ตัน full to the top with a crown, ตาม a fifth with a slow wave and no bubbles); numbers keep the ring. Every dial's text is white with a soft shadow. */
+  .cg-page .cg-stat-tile input.cg-stat-try{color:#fffaf0;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .cg-page .cg-stat-tile input.cg-stat-try::placeholder{color:#fffaf0;opacity:.55}
+  .cg-stat-tile{position:relative}
+  .cg-stat-val input{position:relative;z-index:2}
+  .cg-stat-val.is-flask{position:relative;overflow:hidden;box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent),inset 0 0 12px rgba(0,0,0,.6)}
+  .cg-page .cg-stat-val.is-flask input.cg-stat-try{-webkit-text-stroke:2.5px rgba(11,10,9,.45);paint-order:stroke fill;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+  .cg-page .cg-stat-tile[data-cg-word]:not(.is-tried) input.cg-stat-try{font-weight:600}
+  .cg-flask-liq{position:absolute;left:0;right:0;bottom:0;height:calc(var(--lv) * 100%);pointer-events:none}
+  .cg-stat-val:not(.is-flask) .cg-flask-liq{display:none}   /* a number the reader is trying out: the plain ring */
+  .cg-flask-body{position:absolute;inset:0;overflow:hidden;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 78%,transparent),color-mix(in srgb,var(--c) 55%,#000))}
+  .cg-flask-wave{position:absolute;left:0;bottom:100%;width:200%;height:7px;margin-bottom:-1px;animation:cg-flask-wave 2.4s linear infinite}
+  .cg-flask-wave path{fill:color-mix(in srgb,var(--c) 78%,transparent)}
+  .cg-flask-wave.is-back{height:9px;animation-duration:3.4s;animation-direction:reverse}
+  .cg-flask-wave.is-back path{fill:color-mix(in srgb,var(--c) 35%,transparent)}
+  .cg-flask-liq.is-slow .cg-flask-wave{animation-duration:4.2s}
+  .cg-flask-liq.is-slow .cg-flask-wave.is-back{animation-duration:5.6s}
+  @keyframes cg-flask-wave{to{transform:translateX(-50%)}}
+  .cg-flask-bub{position:absolute;bottom:-6px;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6);animation:cg-flask-bub 2.6s ease-in infinite}
+  @keyframes cg-flask-bub{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(calc(-1 * var(--h)));opacity:0}}
+  .cg-crown{position:absolute;top:-15px;left:50%;z-index:3;width:26px;height:15px;transform:translateX(-50%);filter:drop-shadow(0 0 4px rgba(212,175,55,.8));pointer-events:none}
+  .cg-stat-tile.is-tried .cg-crown{display:none}
+  .cg-stat-panel:has(.cg-crown){row-gap:18px}   /* a crown on a second-row flask clears the stat name above it */
+  /* Editor stats (user 2026-10-18): the author adds one stat at a time with the + dial; each is the reader's flask with the value typed into it,
+     the ตัน / ตาม pills under it and × to remove it; a line under them adds up the shares. */
+  .cg-stat-ed-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:20px 22px;padding-top:14px}
+  .cg-stat-ed{position:relative;display:grid;justify-items:center;gap:7px;width:84px}
+  .cg-stat-ed .cg-stat-tile{width:66px}
+  .cg-stat-ed{cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* drag to reorder (user 2026-10-18): anywhere on the flask, its input included; on touch a swipe still scrolls, a press-and-hold (300 ms) lifts the flask */
+  .cg-stat-ed input{-webkit-user-select:text;user-select:text}   /* older iOS Safari will not type into an input under user-select:none */
+  .cg-stat-ed.is-armed .cg-stat-val{transform:scale(1.06);transition:transform .15s}
+  .cg-stat-ed .cg-stat-tile,.cg-stat-ed input{cursor:inherit}
+  .cg-stat-ed input:focus{cursor:text}
+  .cg-stat-ed.is-dragging{z-index:20;cursor:grabbing}
+  .cg-stat-ed.is-dragging .cg-stat-val{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 45%,transparent),0 14px 26px rgba(0,0,0,.7),0 0 22px color-mix(in srgb,var(--c) 55%,transparent)}
+  .cg-stat-ed .cg-flask-liq{transition:height .7s cubic-bezier(.3,.7,.2,1)}
+  .cg-stat-ed .cg-stat-val:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 40%,transparent),0 0 18px color-mix(in srgb,var(--c) 50%,transparent)}
+  .cg-stat-ed.is-bad .cg-stat-val{border-color:#e5483f;box-shadow:0 0 0 3px rgba(229,72,63,.35)}
+  .cg-stat-x{position:absolute;top:-10px;right:0;z-index:4;width:20px;height:20px;display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:50%;background:rgba(20,19,17,.92);color:var(--muted);font:600 12px/1 sans-serif;cursor:pointer}
+  .cg-stat-x:hover,.cg-stat-x:focus-visible{border-color:#e5483f;color:#e5483f;outline:none}
+  .cg-stat-words{display:flex;gap:5px}
+  .cg-stat-word{padding:2px 9px;border:1px solid color-mix(in srgb,var(--c) 50%,transparent);border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;line-height:1.4;cursor:pointer}
+  .cg-stat-word[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c);color:#fff}
+  .cg-stat-word:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+  .cg-stat-ed-add .cg-stat-add{width:84px}
+  .cg-stat-add-cap{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--gold)}
+  .cg-stat-sum{margin:16px 0 0;text-align:center;font-size:13.5px;color:var(--muted)}
+  .cg-stat-sum[hidden]{display:none}
+  .cg-stat-sum .is-ok{color:var(--pro)}
+  .cg-stat-sum .is-warn{color:#e5483f}
   /* the reader's own stat (user 2026-10-17): a dashed + dial opens a picker; an added stat is a dashed dial with no "~" */
   .cg-stat-panel{position:relative}
   .cg-stat-add-wrap{position:relative;flex:none}
@@ -1852,7 +1903,6 @@
   .cg-stat-pick-opt{min-width:52px;padding:5px 10px;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:999px;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);font:inherit;font-size:12px;font-weight:700;letter-spacing:.12em;cursor:pointer}
   .cg-stat-pick-opt:hover,.cg-stat-pick-opt:focus-visible{background:color-mix(in srgb,var(--c) 26%,transparent);border-color:var(--c);outline:none}
   .cg-page .cg-stat-tile.is-own input.cg-stat-try::placeholder{color:var(--c);opacity:.5}
-  @media(max-width:760px){.cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .cg-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
   .cg-pickrow{display:grid;gap:6px;font-size:13px;color:var(--muted)}
   .cg-icons{display:flex;flex-wrap:wrap;gap:4px}
@@ -2000,7 +2050,6 @@
   .cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{margin:0}
   /* step 4 in the panel: tighter boxes so stats and all three set rows fit without scrolling */
   .cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{padding:8px 12px 10px}
-  .cg-extras-panel .cg-stats-grid{gap:8px}
   .cg-extras-panel .cg-set-ed{gap:10px 20px}
   .cg-extras-panel .cg-set-ed .cg-set-no{padding-top:21px}
   .cg-extras-panel .cg-set-add,.cg-extras-panel .cg-set-off{width:54px;height:54px}
@@ -2010,13 +2059,8 @@
   .cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{border:0;border-radius:12px;padding:18px 22px 20px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.25));box-shadow:inset 0 0 0 1px rgba(201,162,39,.2),0 10px 24px -14px #000}
   .cg-extras-panel .cg-stats legend,.cg-extras-panel .cg-gear-edit legend{float:left;width:100%;margin:0 0 14px;padding:0;font-size:15px;font-weight:600;color:var(--gold);letter-spacing:.02em}
   .cg-extras-panel legend + *{clear:both}
-  .cg-extras-panel .cg-stats-grid{grid-template-columns:repeat(8,78px);justify-content:center;gap:22px}
-  .cg-extras-panel .cg-stat-in{justify-items:center;gap:8px}
-  .cg-extras-panel .cg-stat-in b{order:2}
-  .cg-page .cg-extras-panel .cg-stat-in input{width:70px;height:70px;box-sizing:border-box;border-radius:50%;border-width:2px;font-size:20px;font-weight:700;padding:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),rgba(0,0,0,.35));box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
-  .cg-page .cg-extras-panel .cg-stat-in input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent),0 0 18px color-mix(in srgb,var(--c) 45%,transparent);outline:none}
   .cg-extras-panel .cg-set-add,.cg-extras-panel .cg-set-off{border-radius:50%}
-  @media (max-width:760px){.cg-extras-panel .cg-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px}.cg-page .cg-extras-panel .cg-stat-in input{width:62px;height:62px;font-size:18px}.cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{padding:14px 12px 16px}}
+  @media (max-width:760px){.cg-extras-panel .cg-stats,.cg-extras-panel .cg-gear-edit{padding:14px 12px 16px}}
   .cg-step-tab:hover,.cg-step-tab:focus-visible{color:var(--text)}
   .cg-step-tab.is-done b{border-color:var(--pro,#5fb36b);color:var(--pro,#5fb36b)}
   .cg-step-tab.is-done b::after{content:"✓";position:absolute;margin:-14px 0 0 22px;font-size:11px;color:var(--pro,#5fb36b)}
@@ -29636,6 +29680,9 @@ function classGuideGearTip(c){
   const rep = c.replica ? classGuideGearName(c.replica) : "";
   return classGuideGearName(c) + (rep ? " เรป " + rep : "");
 }
+function classGuideGearMove(list, from, to){   // a set item moved up or down its slot column, the others shift, no gaps (user 2026-10-18)
+  const out = list.slice(), [item] = out.splice(from, 1); out.splice(Math.max(0, Math.min(to, list.length - 1)), 0, item); return out;
+}
 function classGuideGearHtml(gear){
   if (!gear || !Object.keys(gear).length) return "";
   const slots = CLASS_GUIDE_GEAR_SLOTS.filter(g => gear[g.key]), sets = Math.max(...slots.map(g => gear[g.key].length));
@@ -29683,7 +29730,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T02:01:18.211Z","counts":{"1":10,"2":13,"3":9,"4":6,"5":12,"6":10,"7":2,"8":7,"9":7,"10":5,"11":5,"12":2,"13":0,"14":7,"15":15,"16":1,"17":7,"18":12,"19":5,"20":7,"21":4,"22":3,"23":6,"24":1,"25":2,"26":2,"27":2,"28":4,"29":7,"30":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T04:08:16.884Z","counts":{"1":10,"2":14,"3":9,"4":6,"5":12,"6":10,"7":2,"8":7,"9":7,"10":5,"11":5,"12":2,"13":0,"14":7,"15":15,"16":1,"17":7,"18":13,"19":5,"20":8,"21":4,"22":3,"23":6,"24":1,"25":2,"26":2,"27":2,"28":4,"29":7,"30":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -29695,16 +29742,45 @@ const CLASS_GUIDE_STATS = [
   { key: "int", label: "INT" },
   { key: "lck", label: "LCK" }
 ];
-function classGuideStatsClean(raw){
+// A recommended stat (user 2026-10-18): a whole number 0-512, a share "N%" (1-100) or one of the words in CLASS_GUIDE_STAT_WORDS.
+// The stats keep the author's order; the shares of a finished guide total 100. Shares and words never feed the hover timings.
+function classGuideStatsClean(raw, draft = false){
   if (raw === undefined) return {};
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("สเตตัสแนะนำไม่ถูกต้อง");
+  const out = {};
   for (const key of Object.keys(raw)){
     if (!CLASS_GUIDE_STATS.some(s => s.key === key)) throw new Error("สเตตัสแนะนำมีชื่อที่ไม่รู้จัก");
-    if (!Number.isInteger(raw[key]) || raw[key] < 0 || raw[key] > 512) throw new Error("สเตตัสแนะนำต้องเป็นจำนวนเต็ม 0–512");
+    if (!classGuideStatKind(raw[key])) throw new Error("สเตตัสแนะนำต้องเป็นจำนวนเต็ม 0–512, 1–100% หรือ ตัน / ตาม");
+    out[key] = raw[key];
   }
-  const out = {};
-  for (const s of CLASS_GUIDE_STATS) if (Object.prototype.hasOwnProperty.call(raw, s.key)) out[s.key] = raw[s.key];   // fixed order
+  const problem = draft ? null : classGuideStatsProblem(out);
+  if (problem) throw new Error(problem);
   return out;
+}
+const CLASS_GUIDE_STAT_WORDS = ["ตัน", "ตาม"];   // ตัน = max it out, ตาม = as needed (user 2026-10-18: only these two for now; the guide code stores the index)
+function classGuideStatKind(v){
+  if (Number.isInteger(v)) return v >= 0 && v <= 512 ? "num" : null;
+  if (typeof v !== "string") return null;
+  if (/^(100|[1-9]\d?)%$/.test(v)) return "pct";
+  return CLASS_GUIDE_STAT_WORDS.includes(v) ? "word" : null;
+}
+// How full the flask is: N% fills N/100, ตัน the whole flask, ตาม a fifth; null for a number (a plain dial).
+function classGuideStatLevel(v){ const k = classGuideStatKind(v); return k === "pct" ? parseInt(v, 10) / 100 : v === "ตัน" ? 1 : v === "ตาม" ? 0.2 : null; }
+function classGuideStatsProblem(stats){   // the shares must total exactly 100 (numbers and words are outside the count)
+  const pcts = Object.values(stats || {}).filter(v => classGuideStatKind(v) === "pct");
+  return !pcts.length || pcts.reduce((sum, v) => sum + parseInt(v, 10), 0) === 100 ? null : "สเตตัสแนะนำแบบ % ต้องรวมได้ 100";
+}
+function classGuideNumericStats(stats){   // what the hover timings may use: the numbers only, in the author's order
+  const out = {}; for (const [k, v] of Object.entries(stats || {})) if (classGuideStatKind(v) === "num") out[k] = v;
+  return Object.keys(out).length ? out : null;
+}
+// What the editor makes of a typed value (user 2026-10-18): "" (empty), { value, plus } or null (not a valid stat). "050%" becomes "50%", "250+" is 250 or more.
+function classGuideStatParse(raw){
+  const t = String(raw == null ? "" : raw).trim(); if (t === "") return "";
+  if (CLASS_GUIDE_STAT_WORDS.includes(t)) return { value: t, plus: false };
+  let m = /^0*(\d{1,3})%$/.exec(t); if (m){ const n = +m[1]; return n >= 1 && n <= 100 ? { value: n + "%", plus: false } : null; }
+  m = /^(\d{1,3})(\+?)$/.exec(t); if (m){ const n = +m[1]; return n <= 512 ? { value: n, plus: m[2] === "+" } : null; }
+  return null;
 }
 // Phoenix Fireball: the real time between two fireballs (user 2026-10-16; monkey-skill-reference §4.5). The Rapid Fire timer is
 // clamp(5 − floor(mag / 32), 0.1, 5) with mag = (int)clamp(factor × Monkey INT, 1, 512) (Phoenix.cs:2562-2573, integer division), 5 s without Rapid Fire;
@@ -29853,8 +29929,8 @@ function classGuideNormalize(value, { draft = false } = {}){
     for (const id of b.support){ if (!sup[id] || support.includes(id)){ if (draft) continue; throw new Error("สกิลซัพพอร์ตไม่ถูกต้อง"); } support.push(id); }
     if (support.length > 2){ if (draft) support.length = 2; else throw new Error("สกิลซัพพอร์ตเลือกได้ไม่เกิน 2 สกิล"); }
   }
-  const stats = classGuideStatsClean(value.stats);
-  const statsPlus = value.statsPlus === undefined ? [] : Array.isArray(value.statsPlus) ? CLASS_GUIDE_STATS.map(x => x.key).filter(k => value.statsPlus.includes(k) && k in stats) : (() => { throw new Error("สเตตัสแนะนำไม่ถูกต้อง"); })();   // "250+": the stats meant as "or more"
+  const stats = classGuideStatsClean(value.stats, draft);
+  const statsPlus = value.statsPlus === undefined ? [] : Array.isArray(value.statsPlus) ? CLASS_GUIDE_STATS.map(x => x.key).filter(k => value.statsPlus.includes(k) && classGuideStatKind(stats[k]) === "num") : (() => { throw new Error("สเตตัสแนะนำไม่ถูกต้อง"); })();   // "250+": the stats meant as "or more"
   const gear = classGuideGearClean(value.gear, b.classKey, draft);
   const cover = classGuideCoverClean(value.cover, cellsAll, draft);
   if (!draft && !cover.length) throw new Error("ไกด์ต้องมีไอคอนหน้าปกอย่างน้อย 1 สกิล (เลือกได้สูงสุด 5)");   // the cover is required (user 2026-10-16)
@@ -29908,7 +29984,7 @@ function classGuideExpand(o){
 //   byte  level
 //   20 bytes  learned skills, one bit per slot (tree-1)*40 + row*4 + (col-1)
 //   2 bytes   date as days since 2000-01-01 (little endian), 0xFFFF = none
-//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat; bit 15 = "or more" (shown as 250+, user 2026-10-18)
+//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat: a number 0-512 with bit 15 = "or more" (shown as 250+), or bit 14 + a share 1-100 ("N%"), or bit 13 + a word index (CLASS_GUIDE_STAT_WORDS: 0 ตัน, 1 ตาม) (user 2026-10-18)
 //   text  title, author, description   (text = varint byte length + bytes: ASCII as is, Thai U+0E00-0E5B as one byte 0x80-0xDB, anything else 0xDC + varint code point)
 //   varint note count, then per note: slot byte + text
 //   optional gear block (user 2026-10-16; older codes simply end here): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3)
@@ -29916,6 +29992,7 @@ function classGuideExpand(o){
 //   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
 //   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
 //   byte 200-211 names a support skill (ids 901-912).
+//   optional stat order block (user 2026-10-18): 0x4F, count byte, then one CLASS_GUIDE_STAT_KEYS index per stat in the author's order; written only when that order is not the fixed one, so older guides keep their exact code.
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
@@ -29938,7 +30015,7 @@ function classGuideBinary(g){
   const days = g.date ? Math.round((Date.parse(g.date + "T00:00:00Z") - Date.UTC(2000, 0, 1)) / 864e5) : 0xFFFF;
   out.push(days & 255, days >> 8);
   const st = g.stats || {}; let mask = 0; CLASS_GUIDE_STAT_KEYS.forEach((k, i) => { if (k in st) mask |= 1 << i; }); out.push(mask);
-  const plus = g.statsPlus || []; CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st){ const v = st[k] | (plus.includes(k) ? 0x8000 : 0); out.push(v & 255, v >> 8); } });   // bit 15 = "or more" (250+)
+  const plus = g.statsPlus || []; CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st){ const x = st[k], v = typeof x === "number" ? x | (plus.includes(k) ? 0x8000 : 0) : /%$/.test(x) ? parseInt(x, 10) | 0x4000 : CLASS_GUIDE_STAT_WORDS.indexOf(x) | 0x2000; out.push(v & 255, v >> 8); } });   // bit 15 = "or more" (250+), bit 14 = a share, bit 13 = a word
   text(g.title); text(g.author); text(g.description);
   const ids = Object.keys(g.notes || {}).map(Number).sort((a, b) => a - b);
   varint(ids.length); for (const id of ids){ out.push(slot(id)); text(g.notes[id]); }
@@ -29949,6 +30026,7 @@ function classGuideBinary(g){
   }
   const cover = g.cover || []; if (cover.length){ out.push(0x49, cover.length); for (const id of cover) out.push(slot(id)); }
   const support = g.build.support || []; if (support.length){ out.push(0x53, support.length); for (const id of support) out.push(id - 901); }
+  const order = Object.keys(st); if (order.join() !== CLASS_GUIDE_STAT_KEYS.filter(k => k in st).join()){ out.push(0x4F, order.length); for (const k of order) out.push(CLASS_GUIDE_STAT_KEYS.indexOf(k)); }   // the author's stat order (user 2026-10-18)
   return Uint8Array.from(out);
 }
 function classGuideFromBinary(bytes){
@@ -29975,16 +30053,20 @@ function classGuideFromBinary(bytes){
   const days = byte() | byte() << 8;
   const date = days === 0xFFFF ? "" : new Date(Date.UTC(2000, 0, 1) + days * 864e5).toISOString().slice(0, 10);
   const mask = byte(), stats = {};
-  const statsPlus = []; CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)){ const v = byte() | byte() << 8; stats[k] = v & 0x7FFF; if (v & 0x8000) statsPlus.push(k); } });
+  const statsPlus = []; CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)){ const v = byte() | byte() << 8, low = v & 0x1FFF;
+    if (v & 0x4000){ if (v & 0xA000 || low < 1 || low > 100) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); stats[k] = low + "%"; }   // a share (user 2026-10-18)
+    else if (v & 0x2000){ if (v & 0x8000 || low >= CLASS_GUIDE_STAT_WORDS.length) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); stats[k] = CLASS_GUIDE_STAT_WORDS[low]; }   // ตัน / ตาม
+    else { stats[k] = low; if (v & 0x8000) statsPlus.push(k); } } });
   const title = text(), author = text(), description = text();
   const unslot = k => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
   for (let n = 0; n < count; n++){ notes[unslot(byte())] = text(); }
-  let gear = null, cover = null, support = null;
+  let gear = null, cover = null, support = null, order = null;
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
     if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
+    if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= CLASS_GUIDE_STAT_KEYS.length || order.includes(k)) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); order.push(k); } continue; }   // the author's stat order (user 2026-10-18)
     if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -29994,6 +30076,7 @@ function classGuideFromBinary(bytes){
       gear[CLASS_GUIDE_GEAR_KEYS[j]] = list;
     }
   }
+  if (order){ const keys = order.map(k => CLASS_GUIDE_STAT_KEYS[k]); if (keys.length !== Object.keys(stats).length || keys.some(k => !(k in stats))) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); for (const k of keys){ const v = stats[k]; delete stats[k]; stats[k] = v; } }   // re-insert in the author's order
   return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
 }
 async function classGuidePack(value){
@@ -30195,20 +30278,51 @@ function classGuideTitleInto(el, text){
 }
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 // Editor row of the 8 recommended stats (blank = not recommended, not stored).
-function classGuideStatsEditorHtml(){
-  return '<fieldset class="cg-stats"><legend>สเตตัสแนะนำ (เว้นว่างได้ ช่องที่ว่างจะไม่แสดงในหน้าอ่าน)</legend><div class="cg-stats-grid">' + CLASS_GUIDE_STATS.map(s =>
-    '<label class="cg-stat-in" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><input type="text" inputmode="numeric" maxlength="4" data-cg-stat="' + s.key + '" aria-label="' + s.label + ' แนะนำ" placeholder="—"></label>').join("") + '</div></fieldset>';
+function classGuideStatsEditorHtml(){   // filled from the draft by renderStatEditor (user 2026-10-18: one stat at a time, no row of 8 boxes)
+  return '<fieldset class="cg-stats"><legend>สเตตัสแนะนำ (ไม่ใส่ก็ได้ กด + เพื่อเพิ่มทีละตัว)</legend><div class="cg-stat-ed-row" data-cg-role="statEd"></div><p class="cg-stat-sum" data-cg-role="statSum" aria-live="polite" hidden></p></fieldset>';
 }
-// Reader panel: only the filled stats, the stat name and a big number in the stat's signature colour (no caption, user 2026-10-15).
-// The number is an input (user 2026-10-16): a reader may try other values; the hover timings follow, nothing is saved, and a reset button brings the author's values back.
-function classGuideStatTile(s, value, own){
-  return '<label class="cg-stat-tile' + (own ? ' is-own is-tried' : '') + '" style="--c:var(--stat-' + s.key + ')"><b>' + s.label + '</b><span class="cg-stat-val"><input type="text" inputmode="numeric" maxlength="4" class="cg-stat-try" data-cg-try="' + s.key + '" value="' + (value == null ? "" : value) + '"' + (own ? ' placeholder="?"' : '') + ' aria-label="' + s.label + (own ? ' ที่คุณลองใส่เอง' : ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)') + '"></span></label>';
+const CLASS_GUIDE_STAT_ADD_ED = '<span class="cg-stat-add-wrap cg-stat-ed-add"><button type="button" class="cg-stat-add" data-cg-act="addEdStat" aria-haspopup="true" aria-expanded="false" aria-label="เพิ่มสเตตัสแนะนำ"><span class="cg-stat-add-dial" aria-hidden="true">+</span><span class="cg-stat-add-cap">เพิ่มสเตตัส</span></button><span class="cg-stat-pick" data-cg-role="edStatPick" hidden></span></span>';
+function classGuideStatEdHtml(s, value, plus){   // one editor flask: the reader's dial with the value typed into it, × to remove it, the ตัน / ตาม pills
+  return '<div class="cg-stat-ed" data-key="' + s.key + '" style="--c:var(--stat-' + s.key + ')">' + classGuideStatTile(s, value, plus, false, "data-cg-stat").replace('inputmode="numeric"', 'inputmode="text"') +   // a phone's number pad has no %
+    '<button type="button" class="cg-stat-x" data-cg-act="statDel" data-key="' + s.key + '" aria-label="ลบ ' + s.label + '">×</button><span class="cg-stat-words">' +
+    CLASS_GUIDE_STAT_WORDS.map(w => '<button type="button" class="cg-stat-word" data-cg-act="statWord" data-key="' + s.key + '" data-word="' + w + '" aria-pressed="' + (value === w) + '">' + w + '</button>').join("") + '</span></div>';
+}
+// Reader panel: the author's stats in the author's order, the stat name under a round dial (no caption, user 2026-10-15). A number is a ring; a share or
+// ตัน / ตาม is a potion flask filled to its level (user 2026-10-18). The value is an input (user 2026-10-16): a reader may type a number to try it; the hover
+// timings follow (numbers only), nothing is saved, and clearing it brings the author's value (and the flask) back. attr: data-cg-try (reader) or data-cg-stat (editor).
+const CLASS_GUIDE_FLASK_WAVES = '<svg class="cg-flask-wave is-back" viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0 4Q15 8 30 4T60 4T90 4T120 4V8H0Z"/></svg><svg class="cg-flask-wave" viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0 4Q15 0 30 4T60 4T90 4T120 4V8H0Z"/></svg>';
+let classGuideCrownN = 0;   // each crown gets its own gradient id: a url(#id) pointing at a crown inside a hidden view would not paint (user-visible bug 2026-10-18)
+const classGuideCrown = () => { const id = 'cgCrownGold' + (++classGuideCrownN); return '<svg class="cg-crown" viewBox="0 0 26 15" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a1"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#8a6a10"/></linearGradient></defs><path fill="url(#' + id + ')" d="M2 13L4 3l5.5 5L13 1l3.5 7L22 3l2 10z"/></svg>'; };
+function classGuideFlaskInner(value){   // liquid, two sliding waves and rising bubbles (round(level x 6), at least 2; ตัน 6, ตาม none)
+  const level = classGuideStatLevel(value); if (level == null) return "";
+  const n = value === "ตาม" ? 0 : value === "ตัน" ? 6 : Math.max(2, Math.round(level * 6)), h = Math.round(level * 62) + 6;
+  let bubs = ""; for (let j = 0; j < n; j++) bubs += '<i class="cg-flask-bub" style="left:' + (10 + j * 37 % 44) + 'px;animation-delay:' + (j * .53 % 2.6).toFixed(2) + 's;--h:' + h + 'px"></i>';
+  return '<span class="cg-flask-liq' + (value === "ตาม" ? ' is-slow' : '') + '" style="--lv:' + level + '" aria-hidden="true">' + CLASS_GUIDE_FLASK_WAVES + '<span class="cg-flask-body">' + bubs + '</span></span>';
+}
+function classGuideStatTile(s, value, plus, own, attr = "data-cg-try"){
+  const level = classGuideStatLevel(value), shown = value == null ? "" : value + (plus ? "+" : "");
+  return '<label class="cg-stat-tile' + (own ? ' is-own is-tried' : '') + '" style="--c:var(--stat-' + s.key + ')"' + (level == null ? '' : ' data-cg-level="' + level + '"' + (classGuideStatKind(value) === "word" ? ' data-cg-word="' + value + '"' : '')) + '><b>' + s.label + '</b>' +
+    (value === "ตัน" ? classGuideCrown() : '') + '<span class="cg-stat-val' + (level == null ? '' : ' is-flask') + '">' + classGuideFlaskInner(value) +
+    '<input type="text" inputmode="numeric" maxlength="4" class="cg-stat-try" ' + attr + '="' + s.key + '" value="' + classGuideEsc(shown) + '"' + (own ? ' placeholder="?"' : shown ? ' placeholder="' + classGuideEsc(shown) + '"' : '') + ' aria-label="' + s.label + (own ? ' ที่คุณลองใส่เอง' : ' ประมาณ (ลองปรับเพื่อดูผลตอนชี้สกิล)') + '"></span></label>';
+}
+// The flasks fill from empty when the stats appear (user 2026-10-18): 1.4 s each, 260 ms apart, a share counting up as it fills, ตัน's crown dropping in after.
+function classGuideFlaskFill(box){
+  [...box.querySelectorAll(".cg-stat-val.is-flask")].forEach((v, i) => {
+    const tile = v.closest(".cg-stat-tile"), liq = v.querySelector(".cg-flask-liq"), input = v.querySelector("input"), crown = tile.querySelector(".cg-crown"), delay = 250 + i * 260;
+    if (liq.animate) liq.animate([{ height: "0%" }, { height: +tile.dataset.cgLevel * 100 + "%" }], { duration: 1400, delay, easing: "cubic-bezier(.3,.7,.2,1)", fill: "backwards" });
+    if (crown && crown.animate) crown.animate([{ opacity: 0, transform: "translate(-50%,-10px) scale(.6)" }, { opacity: 1, transform: "translate(-50%,2px) scale(1.1)", offset: .7 }, { opacity: 1, transform: "translate(-50%,0) scale(1)" }], { duration: 600, delay: delay + 1200, easing: "ease-out", fill: "backwards" });
+    const m = /^(\d+)%$/.exec(input.value); if (!m || typeof requestAnimationFrame !== "function") return;
+    const to = +m[1], t0 = performance.now() + delay; let last = input.value = "0%";
+    const step = t => { if (input.value !== last || document.activeElement === input){ if (input.value === last) input.value = to + "%"; return; }   // the reader took over: stop
+      const k = Math.min(1, Math.max(0, (t - t0) / 1400)); last = input.value = Math.round(to * (1 - Math.pow(1 - k, 3))) + "%"; if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
 }
 // The + dial (user 2026-10-17): the reader may add a stat the author did not recommend; it opens a picker of the stats not shown yet.
 const CLASS_GUIDE_STAT_ADD = '<span class="cg-stat-add-wrap"><button type="button" class="cg-stat-add" data-cg-act="addStat" aria-haspopup="true" aria-expanded="false" aria-label="ลองเพิ่มสเตตัสของคุณเอง"><span class="cg-stat-add-dial" aria-hidden="true">+</span><span class="cg-stat-add-pill" aria-hidden="true">+ ลองใส่สเตตัสอื่น</span></button><span class="cg-stat-pick" data-cg-role="statPick" hidden></span></span>';
 function classGuideStatsHtml(stats, plus = []){
-  const shown = CLASS_GUIDE_STATS.filter(s => stats && s.key in stats);
-  return shown.map(s => classGuideStatTile(s, stats[s.key] + (plus.includes(s.key) ? "+" : ""), false)).join("") + (shown.length < CLASS_GUIDE_STATS.length ? CLASS_GUIDE_STAT_ADD : "");   // no reset link (user 2026-10-17): a refresh brings the author's values back
+  const shown = Object.keys(stats || {}).map(k => CLASS_GUIDE_STATS.find(s => s.key === k)).filter(Boolean);   // the author's order (user 2026-10-18)
+  return shown.map(s => classGuideStatTile(s, stats[s.key], plus.includes(s.key), false)).join("") + (shown.length < CLASS_GUIDE_STATS.length ? CLASS_GUIDE_STAT_ADD : "");   // no reset link (user 2026-10-17): a refresh brings the author's values back
 }
 // What the hover needs from the opened guide: its server, how many ranks of each skill the build learned, and whether Revised Art is among them.
 function classGuideReaderCtx(guide){
@@ -30495,18 +30609,38 @@ async function classGuideRenderImage(guide, simRoot){
   if (oneLine){ ctx.fillText(" · " + dateText, ax + aw, y + 22); y += 48; }
   else { ctx.fillText(dateText, lx + Math.max(0, (lw - dw1) / 2), y + 54); y += 80; }
   closeBox(y - 20);
-  // stats
-  const filled = CLASS_GUIDE_STATS.filter(s => guide.stats && s.key in guide.stats);
+  // stats: the author's order; a number is a ring, a share or ตัน / ตาม a still flask (user 2026-10-18); every value white with a soft shadow
+  const filled = Object.keys(guide.stats || {}).map(k => CLASS_GUIDE_STATS.find(s => s.key === k)).filter(Boolean);
+  const shade = (hex, k) => { const m = /^#([0-9a-f]{6})$/i.exec(hex); if (!m) return hex; const n = parseInt(m[1], 16); return "rgb(" + [n >> 16 & 255, n >> 8 & 255, n & 255].map(c => Math.round(c * k)).join(",") + ")"; };
+  const crownPath = typeof Path2D === "function" ? new Path2D("M2 13L4 3l5.5 5L13 1l3.5 7L22 3l2 10z") : null;
   if (filled.length){
-    const per = 4, cw = lw / per, R = 33, rowH = R * 2 + 40;   // round dials, up to 4 a row, as on the screen (user 2026-10-17)
+    const per = 4, cw = lw / per, R = 33, rowH = R * 2 + 40 + (filled.some((s, i) => i >= per && guide.stats[s.key] === "ตัน") ? 8 : 0);   // room for a crown on a second-row flask   // round dials, up to 4 a row, as on the screen (user 2026-10-17)
     filled.forEach((s, i) => {
       const inRow = Math.min(per, filled.length - Math.floor(i / per) * per), cx = lx + (lw - inRow * cw) / 2 + (i % per + 0.5) * cw,   // each row centred (user 2026-10-17)
             cy = y + 4 + R + Math.floor(i / per) * rowH, col = v("--stat-" + s.key) || gold;
       const g = ctx.createRadialGradient(cx, cy - R * 0.3, 0, cx, cy, R); g.addColorStop(0, "rgba(255,255,255,.06)"); g.addColorStop(1, "rgba(0,0,0,.35)");
       ctx.save(); ctx.shadowColor = alpha(col, 0.45); ctx.shadowBlur = 14 * P.scale; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+      const raw = guide.stats[s.key], level = classGuideStatLevel(raw);
+      if (level != null){   // the liquid up to its level, a gentle wave on top (none when full), a few bubbles (none for ตาม)
+        ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R - 2.5, 0, Math.PI * 2); ctx.clip();
+        const top = cy + R - level * 2 * R, amp = level < 1 ? 2.2 : 0, lg = ctx.createLinearGradient(0, top - amp, 0, cy + R);
+        lg.addColorStop(0, alpha(col, 0.78)); lg.addColorStop(1, shade(col, 0.55));
+        ctx.beginPath(); ctx.moveTo(cx - R, top); for (let x = -R; x <= R; x += 2) ctx.lineTo(cx + x, top + Math.sin(x / R * Math.PI * 2) * amp);
+        ctx.lineTo(cx + R, cy + R + 2); ctx.lineTo(cx - R, cy + R + 2); ctx.closePath(); ctx.fillStyle = lg; ctx.fill();
+        if (raw !== "ตาม"){ ctx.fillStyle = "rgba(255,255,255,.55)"; for (const [bx, by] of [[-0.35, 0.72], [0.18, 0.5], [0.4, 0.82]]){ ctx.beginPath(); ctx.arc(cx + bx * R, top + (cy + R - top) * by, 2, 0, Math.PI * 2); ctx.fill(); } }
+        ctx.restore();
+      }
       ctx.beginPath(); ctx.arc(cx, cy, R - 1.25, 0, Math.PI * 2); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
-      const val = String(guide.stats[s.key]) + ((guide.statsPlus || []).includes(s.key) ? "+" : ""); ctx.font = font(700, val.length > 3 ? 21 : 24); const vw = ctx.measureText(val).width, x0 = cx - vw / 2;   // no "~" (user 2026-10-17)
-      ctx.fillStyle = col; ctx.font = font(700, val.length > 3 ? 21 : 24); ctx.fillText(val, x0, cy + 8);
+      if (raw === "ตัน" && crownPath){   // the gold crown above the full flask
+        ctx.save(); ctx.translate(cx - 13, cy - R - 16); const cg = ctx.createLinearGradient(0, 0, 0, 15); cg.addColorStop(0, "#fbe7a1"); cg.addColorStop(0.55, "#d4af37"); cg.addColorStop(1, "#8a6a10");
+        ctx.shadowColor = "rgba(212,175,55,.8)"; ctx.shadowBlur = 4 * P.scale; ctx.fillStyle = cg; ctx.fill(crownPath); ctx.restore();
+      }
+      const word = classGuideStatKind(raw) === "word", val = String(raw) + ((guide.statsPlus || []).includes(s.key) ? "+" : ""), vf = font(word ? 600 : 700, val.length > 3 ? 21 : 24);   // no "~" (user 2026-10-17)
+      ctx.font = vf; const vw = ctx.measureText(val).width, x0 = cx - vw / 2;
+      ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 3 * P.scale; ctx.shadowOffsetY = 1 * P.scale;
+      if (level != null){ ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.strokeStyle = "rgba(11,10,9,.45)"; ctx.strokeText(val, x0, cy + 8); }
+      ctx.fillStyle = "#fffaf0"; ctx.fillText(val, x0, cy + 8); ctx.restore();
+      ctx.fillStyle = col;
       ctx.font = font(600, 13); spaced(3); ctx.textAlign = "center"; ctx.fillText(s.label, cx + 1.5, cy + R + 22); ctx.textAlign = "left"; spaced(0);
     });
     y += 4 + Math.ceil(filled.length / per) * rowH - 12 + 18;
@@ -30831,6 +30965,7 @@ function mountClassGuide(root){
     const box = root.querySelector('[data-cg-role="guideStats"]'); if (!box) return;
     const wrap = box.querySelector(".cg-stat-add-wrap"); if (wrap) wrap.hidden = box.querySelectorAll("[data-cg-try]").length >= CLASS_GUIDE_STATS.length;
   };
+  document.addEventListener("pointerdown", e => { const pick = root.querySelector('[data-cg-role="edStatPick"]'); if (pick && !pick.hidden && !e.target.closest(".cg-stat-ed-add")){ pick.hidden = true; const b = root.querySelector('[data-cg-act="addEdStat"]'); if (b) b.setAttribute("aria-expanded", "false"); } }, true);
   document.addEventListener("pointerdown", e => { const pick = root.querySelector('[data-cg-role="statPick"]'); if (pick && !pick.hidden && !e.target.closest(".cg-stat-add-wrap")){ pick.hidden = true; const b = root.querySelector('[data-cg-act="addStat"]'); if (b) b.setAttribute("aria-expanded", "false"); } }, true);
   // Guide menu (user 2026-10-17): in the guide view the page buttons fold into one top-bar pill so they do not distract from the guide. The pop-up lists
   // the ones the page would show, each with a line saying what it does, and runs the original (hidden) button, so every action keeps one code path.
@@ -30917,21 +31052,96 @@ function mountClassGuide(root){
     return isNaN(d) || d.toISOString().slice(0, 10) !== iso || +m[3] < 2000 ? null : iso;
   };
   const syncDateText = () => { el("dateText").value = dateIso2Dmy(field("date").value); };
-  const statInput = key => root.querySelector('[data-cg-stat="' + key + '"]');
-  const collectStats = () => {
-    const out = {};
-    for (const s of CLASS_GUIDE_STATS){
-      const raw = statInput(s.key).value.trim(); if (raw === "") continue;
-      const n = parseInt(raw, 10); if (Number.isFinite(n)) out[s.key] = Math.min(512, Math.max(0, n));
-    }
-    return out;
+  const collectStats = () => {   // the editor's flasks in their order (user 2026-10-18); an empty or invalid one is not stored
+    const stats = {}, statsPlus = [];
+    for (const input of el("statEd").querySelectorAll("input[data-cg-stat]")){ const p = classGuideStatParse(input.value); if (!p) continue; stats[input.dataset.cgStat] = p.value; if (p.plus) statsPlus.push(input.dataset.cgStat); }
+    return { stats, statsPlus };
   };
-  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, date: field("date").value, description: field("description").value, build: sim.getBuild(), stats: collectStats(), statsPlus: CLASS_GUIDE_STATS.map(x => x.key).filter(k => /\+$/.test(statInput(k).value.trim())), gear: JSON.parse(JSON.stringify((draft && draft.gear) || {})), cover: [...((draft && draft.cover) || [])], notes: { ...(draft ? draft.notes : {}) } });
+  const statEdInput = key => el("statEd").querySelector('.cg-stat-ed[data-key="' + key + '"] input');
+  const syncStatAdd = () => { const w = el("statEd").querySelector(".cg-stat-ed-add"); if (w) w.hidden = el("statEd").querySelectorAll(".cg-stat-ed").length >= CLASS_GUIDE_STATS.length; };
+  const prepStatEd = ed => {   // editor wording on the reader's input
+    const input = ed.querySelector("input"), st = CLASS_GUIDE_STATS.find(x => x.key === ed.dataset.key);
+    input.placeholder = "ใส่ค่า"; input.setAttribute("aria-label", st.label + " แนะนำ: ตัวเลข 0–512, 250+ หรือ 1–100%"); input.readOnly = classGuideStatKind(classGuideStatParse(input.value).value) === "word";
+  };
+  const paintStat = ed => {   // one editor flask after its value changed, in place (the caret stays): the level glides, the crown and pills follow
+    const input = ed.querySelector("input"), p = classGuideStatParse(input.value), value = p ? p.value : null, level = classGuideStatLevel(value);
+    const tile = ed.querySelector(".cg-stat-tile"), val = tile.querySelector(".cg-stat-val"), word = classGuideStatKind(value) === "word";
+    ed.classList.toggle("is-bad", p === null);
+    if (level != null){
+      const tmp = document.createElement("span"); tmp.innerHTML = classGuideFlaskInner(value); const fresh = tmp.firstChild;
+      let liq = val.querySelector(".cg-flask-liq");
+      if (!liq){ fresh.style.setProperty("--lv", 0); val.insertBefore(fresh, val.firstChild); liq = fresh; liq.getBoundingClientRect(); }
+      else { liq.className = fresh.className; liq.querySelector(".cg-flask-body").innerHTML = fresh.querySelector(".cg-flask-body").innerHTML; }
+      liq.style.setProperty("--lv", level); tile.dataset.cgLevel = level;
+    } else delete tile.dataset.cgLevel;
+    val.classList.toggle("is-flask", level != null);
+    if (word) tile.dataset.cgWord = value; else delete tile.dataset.cgWord;
+    const crown = tile.querySelector(".cg-crown"); if (value === "ตัน" && !crown) val.insertAdjacentHTML("beforebegin", classGuideCrown()); else if (value !== "ตัน" && crown) crown.remove();
+    input.readOnly = word;
+    ed.querySelectorAll(".cg-stat-word").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.word === value)));
+  };
+  const statTypo = () => !!el("statEd").querySelector(".cg-stat-ed.is-bad");   // a red-ringed value would be left out of the code silently
+  const STAT_TYPO = "สเตตัสแนะนำมีช่องที่ใส่ค่าไม่ถูก (กรอบสีแดง): ใส่ได้แค่ตัวเลข 0–512, 250+ หรือ 1–100% หรือกด ตัน / ตาม";
+  const renderStatSum = () => {   // the shares add up to 100 (exact copy, user 2026-10-18); a typo gets a hint
+    const parsed = [...el("statEd").querySelectorAll("input[data-cg-stat]")].map(i => classGuideStatParse(i.value)), pcts = parsed.filter(p => p && classGuideStatKind(p.value) === "pct"), bad = parsed.some(p => p === null);
+    const t = pcts.reduce((sum, p) => sum + parseInt(p.value, 10), 0), sum = el("statSum");
+    sum.innerHTML = (pcts.length ? 'รวม % ทั้งหมด: <b class="' + (t === 100 ? "is-ok" : "is-warn") + '">' + t + '%</b> ' + (t === 100 ? '<span class="is-ok">✓ ครบ 100</span>' : '<span class="is-warn">' + (t < 100 ? "ยังขาด " + (100 - t) : "เกินมา " + (t - 100)) + '</span>') : "")
+      + (bad ? (pcts.length ? " · " : "") + '<span class="is-warn">ใส่ได้แค่ตัวเลข 0–512, 250+ หรือ 1–100% หรือกด ตัน / ตาม</span>' : "");
+    sum.hidden = !sum.innerHTML;
+  };
+  function renderStatEditor(){   // the draft's stats as flasks in the author's order, then the + dial (user 2026-10-18)
+    const stats = (draft && draft.stats) || {}, plus = (draft && draft.statsPlus) || [];
+    el("statEd").innerHTML = Object.keys(stats).map(k => CLASS_GUIDE_STATS.find(x => x.key === k)).filter(Boolean).map(st => classGuideStatEdHtml(st, stats[st.key], plus.includes(st.key))).join("") + CLASS_GUIDE_STAT_ADD_ED;
+    el("statEd").querySelectorAll(".cg-stat-ed").forEach(prepStatEd); syncStatAdd(); renderStatSum();
+  }
+  // Drag to reorder the editor's flasks (user 2026-10-18): grab a flask anywhere, its input included (a plain click still types; the drag starts after
+  // 6 px), but not × or the ตัน / ตาม pills. The lifted flask follows the pointer, the others slide aside (FLIP), + stays last; the drop saves the order.
+  // Pointer events, so a finger works too. Offsets are layout pixels, so a page scaled to fit still tracks the pointer.
+  let statDrag = null;
+  let statUndo = [], lastEditStat = false;   // Ctrl+Z for ×, the ตัน / ตาม pills and reorder in the stat editor (user 2026-10-18); typing keeps the input's own undo
+  const statSnap = () => JSON.stringify([...el("statEd").querySelectorAll(".cg-stat-ed")].map(ed => [ed.dataset.key, ed.querySelector("input").value]));
+  const statChange = before => { if (before && statSnap() !== before){ statUndo.push(before); if (statUndo.length > 50) statUndo.shift(); lastEditStat = true; lastEditGear = false; lastEditCover = false; } };
+  const restoreStats = snap => {
+    const wrap = el("statEd").querySelector(".cg-stat-ed-add"); el("statEd").querySelectorAll(".cg-stat-ed").forEach(x => x.remove());
+    for (const [k, v] of JSON.parse(snap)){ const st = CLASS_GUIDE_STATS.find(x => x.key === k); if (!st) continue; wrap.insertAdjacentHTML("beforebegin", classGuideStatEdHtml(st, null, false)); const ed = wrap.previousElementSibling; ed.querySelector("input").value = v; prepStatEd(ed); paintStat(ed); }
+    syncStatAdd(); renderStatSum(); saveDraft();
+  };
+  const CLASS_GUIDE_TOUCH_HOLD = 300;   // ms a finger rests on a flask or set item before it lifts (user 2026-10-18 review: a swipe must still scroll on phones)
+  el("statEd").addEventListener("dragstart", e => e.preventDefault());   // no native text drag out of an input
+  el("statEd").addEventListener("pointerdown", e => {
+    const ed = e.target.closest(".cg-stat-ed"); if (!ed || e.target.closest("button") || mode !== "author" || e.button > 0) return;
+    statDrag = { ed, x0: e.clientX, y0: e.clientY, on: false, k: ed.getBoundingClientRect().width / (ed.offsetWidth || 1) || 1, touch: e.pointerType === "touch", t0: performance.now() };
+    if (statDrag.touch) statDrag.timer = setTimeout(() => { if (statDrag && statDrag.ed === ed && !statDrag.on) ed.classList.add("is-armed"); }, CLASS_GUIDE_TOUCH_HOLD);
+  });
+  document.addEventListener("pointermove", e => {
+    if (!statDrag) return;
+    const d = statDrag, t = d.ed, move = () => "translate(" + (e.clientX - d.x0) / d.k + "px," + (e.clientY - d.y0) / d.k + "px) scale(1.08)";
+    if (!d.on && d.touch && performance.now() - d.t0 < CLASS_GUIDE_TOUCH_HOLD){ if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 6){ clearTimeout(d.timer); statDrag = null; } return; }   // a quick swipe scrolls the page
+    if (!d.on){ if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 6) return; d.on = true; d.before = statSnap(); t.classList.remove("is-armed"); t.classList.add("is-dragging"); if (document.activeElement && t.contains(document.activeElement)) document.activeElement.blur(); const sel = window.getSelection && window.getSelection(); if (sel) sel.removeAllRanges(); }
+    e.preventDefault(); t.style.transform = move();
+    t.style.pointerEvents = "none"; const under = document.elementFromPoint(e.clientX, e.clientY), over = under && under.closest(".cg-stat-ed"); t.style.pointerEvents = "";
+    if (!over || over === t || over.parentNode !== t.parentNode) return;
+    const r = over.getBoundingClientRect(), ref = e.clientX > r.left + r.width / 2 ? over.nextElementSibling : over;
+    if (ref === t || ref === t.nextElementSibling) return;
+    const eds = [...el("statEd").querySelectorAll(".cg-stat-ed")], was = new Map(eds.map(x => [x, [x.offsetLeft, x.offsetTop]]));
+    t.parentNode.insertBefore(t, ref);
+    d.x0 += (t.offsetLeft - was.get(t)[0]) * d.k; d.y0 += (t.offsetTop - was.get(t)[1]) * d.k; t.style.transform = move();   // the lifted flask stays under the pointer
+    for (const x of eds){ if (x === t || !x.animate) continue; const [l, tp] = was.get(x), dx = l - x.offsetLeft, dy = tp - x.offsetTop; if (dx || dy) x.animate([{ transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" }], { duration: 220, easing: "ease-out" }); }
+  }, { passive: false });
+  const endStatDrag = () => {
+    if (!statDrag) return;
+    const t = statDrag.ed, was = statDrag.on, before = statDrag.before; clearTimeout(statDrag.timer); t.classList.remove("is-armed"); statDrag = null; if (!was) return;
+    const from = t.style.transform; t.style.transform = ""; t.classList.remove("is-dragging");
+    if (t.animate) t.animate([{ transform: from }, { transform: "none" }], { duration: 200, easing: "ease-out" });
+    saveDraft(); statChange(before);   // collectStats reads the flasks in their new order
+  };
+  document.addEventListener("pointerup", endStatDrag); document.addEventListener("pointercancel", endStatDrag);
+  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, date: field("date").value, description: field("description").value, build: sim.getBuild(), ...collectStats(), gear: JSON.parse(JSON.stringify((draft && draft.gear) || {})), cover: [...((draft && draft.cover) || [])], notes: { ...(draft ? draft.notes : {}) } });
   // Recommended gear editor (user 2026-10-16): per slot up to three ranked cards; a card opens the picker (the class's items + shared ones, game order, search,
   // or a typed name for a new item); weapon / armor / hat cards add a Replica source and one upgrade stat. Ctrl+Z undoes gear edits while a gear edit is the latest.
   let gearPick = null, lastEditGear = false;
   const gearUndo = [];
-  const gearChange = fn => { const before = JSON.stringify(draft.gear || {}); draft.gear = draft.gear || {}; fn(draft.gear); for (const k of Object.keys(draft.gear)) if (!draft.gear[k].length) delete draft.gear[k]; if (JSON.stringify(draft.gear) !== before){ gearUndo.push(before); if (gearUndo.length > 50) gearUndo.shift(); lastEditGear = true; } saveDraft(); renderGearEditor(); };
+  const gearChange = fn => { const before = JSON.stringify(draft.gear || {}); draft.gear = draft.gear || {}; fn(draft.gear); for (const k of Object.keys(draft.gear)) if (!draft.gear[k].length) delete draft.gear[k]; if (JSON.stringify(draft.gear) !== before){ gearUndo.push(before); if (gearUndo.length > 50) gearUndo.shift(); lastEditGear = true; lastEditStat = false; } saveDraft(); renderGearEditor(); };
   function renderGearEditor(){
     const gear = (draft && draft.gear) || {}, esc = classGuideEsc;
     const x = (cls, attr, label) => '<button type="button" class="cg-gear-x ' + cls + '" ' + attr + ' aria-label="' + label + '">×</button>';
@@ -30946,6 +31156,39 @@ function mountClassGuide(root){
         (g.ext ? '<select class="cg-gear-stat-in" data-cg-gear-stat="' + at + '" aria-label="สเตตัสที่ควรยัด"><option value="">ยัด —</option>' + CLASS_GUIDE_STATS.map(st => '<option value="' + st.key + '"' + (c.stat === st.key ? " selected" : "") + '>ยัด ' + st.label + '</option>').join("") + '</select>' : "") + '</span>';
     }).join("")).join("");
   }
+  // Drag a set item up or down its slot column (user 2026-10-18): grab its icon (a plain click still opens the picker; the drag starts after 6 px),
+  // drop it on another item of the same slot or below the last one; the others shift, its Replica and ยัด stat go with it, Ctrl+Z undoes it.
+  let gearDrag = null, gearDragDone = false;
+  el("gearEd").addEventListener("dragstart", e => e.preventDefault());
+  el("gearEd").addEventListener("pointerdown", e => {
+    const main = e.target.closest(".cg-set-main"); if (!main || mode !== "author" || e.button > 0) return;
+    const [slot, idx] = main.dataset.cgGearPick.split(":"), cell = main.closest(".cg-set-cell");
+    gearDrag = { cell, slot, from: +idx, to: null, x0: e.clientX, y0: e.clientY, on: false, k: cell.getBoundingClientRect().width / (cell.offsetWidth || 1) || 1, touch: e.pointerType === "touch", t0: performance.now() };
+    if (gearDrag.touch) gearDrag.timer = setTimeout(() => { if (gearDrag && gearDrag.cell === cell && !gearDrag.on) cell.classList.add("is-armed"); }, CLASS_GUIDE_TOUCH_HOLD);
+  });
+  document.addEventListener("pointermove", e => {
+    if (!gearDrag) return;
+    const d = gearDrag;
+    if (!d.on && d.touch && performance.now() - d.t0 < CLASS_GUIDE_TOUCH_HOLD){ if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 6){ clearTimeout(d.timer); gearDrag = null; } return; }   // a quick swipe scrolls the page
+    if (!d.on){ if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 6) return; d.on = true; d.cell.classList.remove("is-armed"); d.cell.classList.add("is-dragging"); }
+    e.preventDefault(); d.cell.style.transform = "translate(" + (e.clientX - d.x0) / d.k + "px," + (e.clientY - d.y0) / d.k + "px) scale(1.06)";
+    d.cell.style.pointerEvents = "none"; const under = document.elementFromPoint(e.clientX, e.clientY), hit = under && under.closest("[data-cg-gear-pick]"); d.cell.style.pointerEvents = "";
+    const [slot, idx] = hit && el("gearEd").contains(hit) ? hit.dataset.cgGearPick.split(":") : [], list = (draft && draft.gear && draft.gear[d.slot]) || [];
+    d.to = slot === d.slot ? Math.min(+idx, list.length - 1) : null;
+    el("gearEd").querySelectorAll(".is-drop").forEach(x => x.classList.remove("is-drop"));
+    const target = d.to != null && d.to !== d.from && el("gearEd").querySelector('[data-cg-gear-pick="' + d.slot + ":" + d.to + ':main"]'); if (target) target.closest(".cg-set-cell").classList.add("is-drop");
+  }, { passive: false });
+  const endGearDrag = () => {
+    if (!gearDrag) return;
+    const d = gearDrag; clearTimeout(d.timer); d.cell.classList.remove("is-armed"); gearDrag = null; if (!d.on) return;
+    gearDragDone = true; setTimeout(() => { gearDragDone = false; }, 0);   // the click that ends a drag does not open the picker
+    d.cell.style.transform = ""; d.cell.classList.remove("is-dragging"); el("gearEd").querySelectorAll(".is-drop").forEach(x => x.classList.remove("is-drop"));
+    if (d.to != null && d.to !== d.from) gearChange(gear => { if (gear[d.slot]) gear[d.slot] = classGuideGearMove(gear[d.slot], d.from, d.to); });
+  };
+  document.addEventListener("pointerup", endGearDrag); document.addEventListener("pointercancel", endGearDrag);
+  document.addEventListener("touchmove", e => { const d = statDrag || gearDrag; if (d && d.touch && performance.now() - d.t0 >= CLASS_GUIDE_TOUCH_HOLD && e.cancelable) e.preventDefault(); }, { passive: false });
+  root.addEventListener("contextmenu", e => { if ((statDrag && statDrag.touch) || (gearDrag && gearDrag.touch)) e.preventDefault(); });
+  el("gearEd").addEventListener("click", e => { if (gearDragDone){ e.preventDefault(); e.stopPropagation(); gearDragDone = false; } }, true);
   // the editor button says what is filled in (user 2026-10-16: stats and sets live in a dialog so the editor fits one screen)
   const syncExtrasSum = () => {
     const n = draft && draft.stats ? Object.keys(draft.stats).length : 0, gear = (draft && draft.gear) || {}, sets = Math.max(0, ...Object.values(gear).map(l => l.length));
@@ -30982,13 +31225,13 @@ function mountClassGuide(root){
     onChange(build){
       if (mode !== "author" || !draft || applying) return;
       if (draft.build.classKey !== build.classKey){ draft.notes = {}; noteUndo.length = 0; syncNoteUndo(); el("noteEditor").hidden = true; draft.gear = classGuideGearClean(draft.gear, build.classKey, true); gearUndo.length = 0; renderGearEditor(); }   // gear the new class cannot use is dropped
-      lastEditGear = false;
+      lastEditGear = false; lastEditStat = false;
       const cells = Object.assign({}, skillSimCells(SKILL_SIM[build.classKey], SKILL_SIM_SERVERS[build.server].patch[build.classKey], build.server === "tot" ? SKILL_SIM_EX[build.classKey] : null), classGuideSupportCells());   // support skills keep their notes and cover spot
       for (const id in draft.notes) if (!cells[id] || cells[id].placeholder) delete draft.notes[id];
       draft.cover = classGuideCoverClean(draft.build.classKey === build.classKey ? draft.cover : [], cells, true);   // another class: its slots are other skills, so the cover starts empty
       simRoot._skillSim.setNotes(draft.notes); saveDraft(); markCover(); queueReaderFit();   // another class can have taller trees
     },
-    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current && viewStats && Object.keys(viewStats).length ? { ...current, stats: viewStats } : current, readerCtx, cell, learned) : null; },
+    tipExtra(cell, learned){ return mode === "reader" ? classGuideHoverLines(current ? { ...current, stats: viewStats && Object.keys(viewStats).length ? viewStats : null } : current, readerCtx, cell, learned) : null; },
     onNote(info){
       if (mode === "author" && coverMode){ toggleCover(info.id); return; }
       if (mode === "author"){
@@ -31038,9 +31281,9 @@ function mountClassGuide(root){
   function updateSteps(){
     if (!draft) return;
     const d = draft, nNotes = Object.keys(d.notes || {}).length;
-    const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.date), !!((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
+    const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.date), !!(((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)) && !classGuideStatsProblem(d.stats) && !statTypo()), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
     // step 6: what is still missing before the code can be sent
-    const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน และวันที่ (ขั้นที่ 1)"); if (!done[2]) miss.push(buildProblems().length ? "บิลด์ที่ผ่านเงื่อนไข (ขั้นที่ 3)" : "สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)");
+    const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน และวันที่ (ขั้นที่ 1)"); if (!done[2]) miss.push(buildProblems().length ? "บิลด์ที่ผ่านเงื่อนไข (ขั้นที่ 3)" : "สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)"); if (classGuideStatsProblem(d.stats)) miss.push("สเตตัสแบบ % ที่รวมได้ 100 (ขั้นที่ 2)"); if (statTypo()) miss.push("สเตตัสที่ใส่ค่าไม่ถูก (ขั้นที่ 2)");
     el("sendCheck").textContent = miss.length ? "ยังขาด: " + miss.join(", ") : copiedOnce ? "เรียบร้อย ทำอีกอย่างต่อได้เลย" : "ไกด์พร้อมแล้ว";
     el("sendCheck").classList.toggle("is-missing", miss.length > 0);
     root.querySelectorAll("[data-cg-step-go]").forEach(b => { const k = +b.dataset.cgStepGo; b.setAttribute("aria-pressed", String(k === step)); b.classList.toggle("is-done", done[k - 1]); b.title = CLASS_GUIDE_STEPS[k - 1].label + (done[k - 1] ? " (เสร็จแล้ว)" : ""); });
@@ -31264,8 +31507,8 @@ function mountClassGuide(root){
     }
     for (const name of ["title", "author", "date"]) field(name).value = draft[name] || "";
     syncDateText();
-    for (const s of CLASS_GUIDE_STATS) statInput(s.key).value = draft.stats && s.key in draft.stats ? draft.stats[s.key] + ((draft.statsPlus || []).includes(s.key) ? "+" : "") : "";
-    gearUndo.length = 0; lastEditGear = false; renderGearEditor(); coverUndo.length = 0; lastEditCover = false;
+    renderStatEditor();
+    statUndo.length = 0; lastEditStat = false; gearUndo.length = 0; lastEditGear = false; renderGearEditor(); coverUndo.length = 0; lastEditCover = false;
     syncExtrasSum();
     editors.description.set(draft.description);
     applying = true;
@@ -31308,7 +31551,7 @@ function mountClassGuide(root){
   }
   function coverChange(fn){
     const before = JSON.stringify(draft.cover || []); draft.cover = (draft.cover || []).slice(); fn(draft.cover);
-    if (JSON.stringify(draft.cover) !== before){ coverUndo.push(before); if (coverUndo.length > 50) coverUndo.shift(); lastEditCover = true; lastEditGear = false; }
+    if (JSON.stringify(draft.cover) !== before){ coverUndo.push(before); if (coverUndo.length > 50) coverUndo.shift(); lastEditCover = true; lastEditGear = false; lastEditStat = false; }
     saveDraft(); markCover();
   }
   function toggleCover(id){
@@ -31345,8 +31588,8 @@ function mountClassGuide(root){
     el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
     if (currentId){ const sep = document.createElement("span"); sep.className = "cg-views-sep"; sep.textContent = " · "; el("guideByline").append(sep, viewBadge(currentId)); }
     el("guideDescription").innerHTML = classGuideParaHtml(current.description); button("returnAuthor").hidden = !preview;   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
-    el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
-    el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = current.stats ? { ...current.stats } : null;
+    el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false; classGuideFlaskFill(el("guideStats"));
+    el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = classGuideNumericStats(current.stats);   // shares and words are not numbers the hover can use
     window.scrollTo(0, 0); queueReaderFit();
   }
   // Icon filters (user 2026-10-17): ทั้งหมด plus one button per server and per class (CLASS_ORDER); one click filters, a click on the chosen icon goes back
@@ -31618,6 +31861,12 @@ function mountClassGuide(root){
     if (isPhone()){ chip.scrollIntoView({ block: "nearest", behavior: "smooth" }); setTimeout(fly, 420); }
     else { chip.scrollIntoView({ block: "nearest" }); fly(); }
   }
+  document.addEventListener("keydown", e => {   // stat undo (capture phase), while the latest edit was a stat ×, ตัน / ตาม or reorder
+    if (mode !== "author" || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z" || !lastEditStat || !statUndo.length) return;
+    if (e.target.closest && e.target.closest("input, textarea, [contenteditable]")) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    restoreStats(statUndo.pop()); if (!statUndo.length) lastEditStat = false;
+  }, true);
   document.addEventListener("keydown", e => {   // cover undo (capture phase), while the latest edit was a cover pick
     if (mode !== "author" || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z" || !lastEditCover || !coverUndo.length) return;
     if (e.target.closest && e.target.closest("input, textarea, [contenteditable]")) return;
@@ -31637,28 +31886,29 @@ function mountClassGuide(root){
   });
   root.addEventListener("input", e => {
     if (!e.target.matches) return;
-    if (e.target.matches("[data-cg-stat]")){   // digits and an optional final + ("250+" = 250 or more, user 2026-10-18), at most 512
-      const raw = e.target.value, digits = raw.replace(/\D/g, ""), plus = /\+\s*$/.test(raw) && digits !== "";
-      let v = digits === "" ? "" : String(Math.min(512, Number(digits))) + (plus ? "+" : "");
-      if (v !== raw) e.target.value = v;
-      saveDraft(); return;
-    }
+    if (e.target.matches("input[data-cg-stat]") && mode === "author"){ paintStat(e.target.closest(".cg-stat-ed")); renderStatSum(); saveDraft(); return; }   // 180, 250+, 50% (user 2026-10-18)
     if (e.target.matches('[data-cg-role="dateText"]')){ const t = e.target.value; if (!t.trim()) field("date").value = ""; else { const iso = dateDmy2Iso(t); if (iso) field("date").value = iso; } saveDraft(); return; }
     if (e.target.matches('[data-cg-field="date"]')) syncDateText();   // picked from the calendar
     if (e.target.matches("[data-cg-field]")) saveDraft();
     if (e.target.matches('[data-cg-role="gearSearch"]')){ renderGearGrid(); return; }
     if (e.target.matches("[data-cg-try]") && mode === "reader"){
       if (!viewStats) viewStats = {};
-      const key = e.target.dataset.cgTry, raw = e.target.value.trim(), base = current.stats ? current.stats[key] : undefined, own = base === undefined;
-      if (raw === "" && own) delete viewStats[key];   // a stat the reader added: empty = not counted
+      if (!/\d/.test(e.target.value)) e.target.value = "";   // no digit left (one Backspace on ตัน / ตาม, or letters): empty, so the author's value comes back
+      const key = e.target.dataset.cgTry, raw = e.target.value.trim(), base = current.stats ? current.stats[key] : undefined, own = base === undefined, tile = e.target.closest(".cg-stat-tile");
+      if (raw === "" && classGuideStatKind(base) !== "num"){ delete viewStats[key]; tile.classList.toggle("is-tried", own); }   // a stat the reader added, or the author's share / word: empty = not counted (the flask comes back)
       else {
         const n = raw === "" ? base : Math.min(512, Math.max(0, parseInt(raw.replace(/\D/g, ""), 10) || 0)), plus = /\+$/.test(raw);
         if (raw !== "" && String(n) + (plus ? "+" : "") !== raw) e.target.value = n + (plus ? "+" : "");   // a typed + stays ("250+"), the hover uses the number
         viewStats[key] = n;
-        e.target.closest(".cg-stat-tile").classList.toggle("is-tried", own || n !== base);
+        tile.classList.toggle("is-tried", own || n !== base);
       }
+      if (tile.dataset.cgLevel) tile.querySelector(".cg-stat-val").classList.toggle("is-flask", !tile.classList.contains("is-tried"));   // a tried number shows as the plain ring
       syncStatTry();
     }
+  });
+  root.addEventListener("change", e => {   // a valid typed stat is written the way it is stored ("050%" -> "50%")
+    if (!(e.target.matches && e.target.matches("input[data-cg-stat]")) || mode !== "author") return;
+    const p = classGuideStatParse(e.target.value); if (p){ const v = String(p.value) + (p.plus ? "+" : ""); if (v !== e.target.value){ e.target.value = v; paintStat(e.target.closest(".cg-stat-ed")); } }
   });
   root.addEventListener("change", e => {
     const sel = e.target.closest && e.target.closest("[data-cg-gear-stat]"); if (!sel || mode !== "author") return;
@@ -31703,12 +31953,29 @@ function mountClassGuide(root){
         if (JSON.stringify(draft.notes) !== before){ noteUndo.push(before); syncNoteUndo(); }   // Ctrl+Z in annotate mode brings it back
         sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true;
       }
+      else if ((act === "export" || act === "exportImage") && mode === "author" && (saveDraft(), classGuideStatsProblem(draft.stats) || statTypo())){ goStep(2); status(classGuideStatsProblem(draft.stats) || STAT_TYPO); }   // shares that do not total 100 (user 2026-10-18)
       else if (act === "exportImage" && mode === "author" && (saveDraft(), buildProblems().length)) guardBuild();
       else if (act === "exportImage"){
         const g = mode === "author" ? (saveDraft(), classGuideNormalize(draft, { draft: true })) : current;
         if (!g) return;
         const label = target.querySelector("span"), was = label.textContent; label.textContent = "กำลังสร้างรูป…"; target.disabled = true;
         try { await classGuideSaveImage(g, simRoot); if (mode === "author"){ copiedOnce = true; updateSteps(); } } finally { label.textContent = was; target.disabled = false; }
+      }
+      else if (act === "addEdStat"){   // the editor's picker of stats not added yet (user 2026-10-18)
+        const pick = el("edStatPick"), open = pick.hidden;
+        if (open){ const have = new Set([...el("statEd").querySelectorAll(".cg-stat-ed")].map(x => x.dataset.key)); pick.innerHTML = CLASS_GUIDE_STATS.filter(st => !have.has(st.key)).map(st => '<button type="button" class="cg-stat-pick-opt" data-cg-act="pickEdStat" data-key="' + st.key + '" style="--c:var(--stat-' + st.key + ')">' + st.label + '</button>').join(""); }
+        pick.hidden = !open; target.setAttribute("aria-expanded", String(open));
+        if (open){ const first = pick.querySelector("button"); if (first) first.focus(); }
+      }
+      else if (act === "pickEdStat"){   // an empty flask at the end, ready for its value (not stored until it has one)
+        const st = CLASS_GUIDE_STATS.find(x => x.key === target.dataset.key); if (!st || statEdInput(st.key)) return;
+        const wrap = el("statEd").querySelector(".cg-stat-ed-add"); el("edStatPick").hidden = true; wrap.querySelector(".cg-stat-add").setAttribute("aria-expanded", "false");
+        wrap.insertAdjacentHTML("beforebegin", classGuideStatEdHtml(st, null, false)); prepStatEd(wrap.previousElementSibling); syncStatAdd(); renderStatSum(); statEdInput(st.key).focus();
+      }
+      else if (act === "statDel"){ const ed = target.closest(".cg-stat-ed"); if (ed){ const before = statSnap(); ed.remove(); syncStatAdd(); renderStatSum(); saveDraft(); statChange(before); } }
+      else if (act === "statWord"){   // ตัน / ตาม: press again to clear
+        const ed = target.closest(".cg-stat-ed"), input = ed && ed.querySelector("input"); if (!input) return;
+        const before = statSnap(); input.value = input.value.trim() === target.dataset.word ? "" : target.dataset.word; paintStat(ed); renderStatSum(); saveDraft(); statChange(before); if (!input.value) input.focus();
       }
       else if (act === "addStat"){   // the picker of stats not shown yet
         const pick = el("statPick"), open = pick.hidden;
@@ -31722,7 +31989,7 @@ function mountClassGuide(root){
       else if (act === "pickStat"){   // a dashed dial in that stat's colour, ready for the reader's number
         const st = CLASS_GUIDE_STATS.find(x => x.key === target.dataset.cgStat); if (!st) return;
         const wrap = el("guideStats").querySelector(".cg-stat-add-wrap"); el("statPick").hidden = true; wrap.querySelector(".cg-stat-add").setAttribute("aria-expanded", "false");
-        wrap.insertAdjacentHTML("beforebegin", classGuideStatTile(st, null, true));
+        wrap.insertAdjacentHTML("beforebegin", classGuideStatTile(st, null, false, true));
         const input = wrap.previousElementSibling.querySelector("input"); syncStatTry(); queueReaderFit(); input.focus();
       }
       else if (act === "returnAuthor") startAuthor();
@@ -32855,6 +33122,7 @@ toolGrid.innerHTML = TOOLS.map(t => {
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T03:04:36.352Z","feat(bible): class guide stats can be a share (50%) or ตัน / ตาม, shown as potion flasks in the author's order; the editor adds stats one at a time and stats and sets drag to reorder; dial text is white"],
     ["2026-10-18T02:55:04.571Z","style(bible): Prompt replaces the angular Chakra Petch font everywhere (skill details, damage popups, monster stats, boss guide, class guides and the spawn map); the validator bans it"],
     ["2026-10-18T02:00:14.484Z","fix(bible): gallery card titles are gold and full size again (the word-wrap fix had turned them into small grey text)"],
     ["2026-10-17T18:38:54.506Z","feat(bible): class guide #30 TTO Whale ขี่คลื่นบรื้นๆ by DeetZ"],

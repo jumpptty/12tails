@@ -3275,14 +3275,52 @@ let checkedRsim = 0;
       ok(same(norm(fromBin(bin(odd))), odd) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(odd)))), odd), "format 2 binary reads back emoji, accents, CJK, bold markers, newlines, stat 0 and 512");
       ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode(odd)) && same(norm(gc.decode(gc.encode(odd))), odd), "guide_code encode writes a TG2. code that decodes to the same guide");
       let threw = false; try { fromBin(bin(odd).subarray(0, 30)); } catch (e) { threw = true; } ok(threw, "a cut-off format 2 code is rejected, not misread");
+      // Shares, ตัน / ตาม and the author's order (user 2026-10-18): bit 14 = share, bit 13 = word, an optional 0x4F order block; older codes read the same.
+      const OLD = "TG2.AdNNYWdAAwIMDJZqC3UYfzUwMHCF5-ekKaSXZqakMjoyMHgyMgAA";   // written by the pre-flask encoder: wolf, stats {atk:300,cha:250,lck:0}, statsPlus ["cha"]
+      const od = gc.decode(OLD);
+      ok(JSON.stringify(od.stats) === '{"atk":300,"cha":250,"lck":0}' && od.statsPlus.join() === "cha" && gc.encode(od) === OLD, "a pre-flask TG2 code decodes the same and re-encodes to the same string");
+      const flask = norm({...fixture, stats:{cha:"ตาม", agi:250, atk:"ตัน", vit:"70%", lck:"30%"}, statsPlus:["agi"]});
+      ok(same(Array.from(bin(flask)), Array.from(gc.classGuideBinary(flask))), "page and guide_code.js write the same bytes for shares, words and author order");
+      ok(same(norm(fromBin(bin(flask))), flask) && same(norm(gc.decode(gc.encode(flask))), flask), "shares, words, 250+ and the author's order round-trip through TG2");
+      const flaskNoPlus = norm({...fixture, stats:flask.stats});   // the decode-only 12TG1 compact form never carried statsPlus (250+), only stats
+      ok(same(expand(compact(flaskNoPlus)), flaskNoPlus), "the compact (12TG1) form keeps shares, words and order");
+      const base = bin(norm({...fixture, stats:{agi:250}}));   // byte 24 = stats mask (checked 2026-10-18), bytes 25-26 = AGI's value
+      ok(base[24] === 1 << 3, "TG2 layout: the stats mask is byte 24");
+      ok([0x6001, 0xC032, 0x4000, 0x4065, 0x2002].every(v => { const b = Uint8Array.from(base); b[25] = v & 255; b[26] = v >> 8; try { fromBin(b); return false; } catch (e) { return true; } }), "invalid share / word bits in a TG2 code are rejected");
+      // the order block is written last: [0x4F, 5, cha, agi, atk, vit, lck] for the flask guide (indices in CLASS_GUIDE_STAT_KEYS order)
+      { const fb = Array.from(bin(flask)), at = fb.length - 7, head = fb.slice(0, at), blk = fb.slice(at), throws = arr => { try { fromBin(Uint8Array.from(arr)); return false; } catch (e) { return true; } };
+        ok(blk[0] === 0x4F && blk[1] === 5 && !throws(fb), "TG2 layout: the flask guide ends with its 7-byte order block");
+        const bad = { duplicate: [...head, 0x4F, 5, blk[2], blk[2], blk[4], blk[5], blk[6]], indexEight: [...head, 0x4F, 5, blk[2], blk[3], blk[4], blk[5], 8], missingStat: [...head, 0x4F, 4, blk[2], blk[3], blk[4], blk[5]], extraUnsetStat: [...head, 0x4F, 6, ...blk.slice(2), 1], countZero: [...head, 0x4F, 0], twoBlocks: [...fb, ...blk] };
+        ok(Object.values(bad).every(throws), "malformed stat order blocks are rejected (duplicate, index 8, a missing or extra stat, count 0, two blocks)"); }
+      for (const v of ["max", "250", 513, -1, "0%", "ตัน "]) rejects(() => gc.encode({...flask, stats:{agi:v}}), "guide_code.js encode refuses stat value " + JSON.stringify(v));
     }
     const all = [101,102,103,104,111,121,131,141,191,194,201,294,301,394,401,411,421,431,441,451,454,461,491,494];
     ok(same(expand(compact({...norm(fixture), build:{...norm(fixture).build, learned:all}})).build.learned, all), "the 160-bit skill set keeps every slot from 101 to 494");
   }
   { const dt = vm.runInContext("classGuideDateText", sandbox); ok(dt("2026-10-16") === "16 ต.ค. 2026" && dt("") === "ยังไม่ระบุวันที่", "guide date shows as day, Thai month, year"); }
-  // Recommended stats (user 2026-10-15): optional, any of the 8, integers 0-512, only filled ones stored.
+  // Recommended stats (user 2026-10-15): optional, any of the 8, only filled ones stored. Since 2026-10-18 a value is an integer 0-512, a share "N%"
+  // (the shares of a finished guide total 100) or ตัน / ตาม, and the stats keep the author's order (docs/superpowers/specs/2026-10-18-guide-stat-flasks-design.md).
   { const gs = norm(change({stats:{lck:40,agi:77}}));
-    ok(Object.keys(gs.stats).join() === "agi,lck" && gs.stats.agi === 77 && gs.stats.lck === 40, "recommended stats keep only the filled stats, in a fixed order");
+    ok(Object.keys(gs.stats).join() === "lck,agi" && gs.stats.agi === 77 && gs.stats.lck === 40, "recommended stats keep the author's order");
+    const kind = vm.runInContext("classGuideStatKind", sandbox), level = vm.runInContext("classGuideStatLevel", sandbox);
+    const numeric = vm.runInContext("classGuideNumericStats", sandbox), problem = vm.runInContext("classGuideStatsProblem", sandbox);
+    const mixed = {agi:250, atk:"ตัน", vit:"70%", lck:"30%", cha:"ตาม"};
+    ok(JSON.stringify(norm(change({stats:mixed})).stats) === JSON.stringify(mixed), "numbers, shares and ตัน / ตาม mix in one guide, order kept");
+    for (const bad of [{agi:"0%"},{agi:"101%"},{agi:"050%"},{agi:"ตัน "},{agi:"max"},{agi:"50"},{agi:513},{agi:1.5},{agi:null}]) rejects(()=>norm(change({stats:bad})), "reject stat value " + JSON.stringify(bad));
+    rejects(()=>norm(change({stats:{atk:"50%",vit:"30%"}})), "a finished guide's shares must total 100");
+    ok(norm(change({title:"",author:"",date:"",stats:{atk:"50%"}}),{draft:true}).stats.atk === "50%", "drafts keep shares that do not total 100 yet");
+    ok(!("statsPlus" in norm(change({stats:{atk:"ตัน",agi:250},statsPlus:["atk"]}))) && norm(change({stats:{agi:250},statsPlus:["agi"]})).statsPlus.join() === "agi", "250+ applies to numbers only");
+    ok(kind(0) === "num" && kind(512) === "num" && kind("100%") === "pct" && kind("ตาม") === "word" && kind("250") === null && kind(513) === null, "stat kinds");
+    ok(level("100%") === 1 && level("30%") === 0.3 && level("ตัน") === 1 && level("ตาม") === 0.2 && level(250) === null, "flask levels");
+    ok(JSON.stringify(numeric(mixed)) === '{"agi":250}' && numeric({atk:"ตัน"}) === null, "only numbers reach the hover timings");
+    ok(problem({atk:"ตัน",vit:"70%",lck:"30%"}) === null && problem({vit:"70%"}) === "สเตตัสแนะนำแบบ % ต้องรวมได้ 100" && problem({agi:250}) === null, "the % total ignores numbers and words");
+    const tile = vm.runInContext("classGuideStatTile", sandbox), S = {key:"atk", label:"ATK"};
+    ok(/is-flask/.test(tile(S, "70%", false, false)) && /data-cg-level="0.7"/.test(tile(S, "70%", false, false)) && !/is-flask/.test(tile(S, 250, true, false)), "shares and words render as flasks, numbers as dials");
+    ok(/class="cg-crown"/.test(tile(S, "ตัน", false, false)) && !/class="cg-crown"/.test(tile(S, "ตาม", false, false)), "only ตัน wears the crown");
+    ok(/value="250\+"/.test(tile(S, 250, true, false)), "250+ still shows its plus");
+    { const id = h => (/linearGradient id="([^"]+)"/.exec(h) || [])[1]; const a = id(tile(S, "ตัน", false, false)), b = id(tile(S, "ตัน", false, false)); ok(a && b && a !== b, "every crown has its own gradient id (a crown in the hidden editor must not blank the guide view's)"); }
+    const parse = vm.runInContext("classGuideStatParse", sandbox);
+    ok(JSON.stringify([parse(""), parse(" 050% "), parse("250+"), parse("0"), parse("ตาม"), parse("101%"), parse("513"), parse("abc")]) === JSON.stringify(["", {value:"50%",plus:false}, {value:250,plus:true}, {value:0,plus:false}, {value:"ตาม",plus:false}, null, null, null]), "editor input parsing");
     ok(!("stats" in norm(fixture)) && !("stats" in JSON.parse(encode(change({stats:{}})))) && !JSON.stringify(fixture).includes("stats"), "a guide without stats has no stats key (old guides export unchanged)");
     const sr = decode(encode(change({stats:{atk:300,def:0,tal:120,agi:120,vit:90,cha:60,int:96,lck:40}})));
     ok(Object.keys(sr.stats).join() === "atk,def,tal,agi,vit,cha,int,lck" && sr.stats.def === 0 && sr.stats.int === 96, "all 8 recommended stats round-trip through export / import (0 is a real value)");
@@ -3294,6 +3332,8 @@ let checkedRsim = 0;
   { const GD = vm.runInContext("GEAR_DATA", sandbox), GI = vm.runInContext("GEAR_ICONS", sandbox), gc = require(path.join(__dirname, "guide_code.js"));
     const bin = vm.runInContext("classGuideBinary", sandbox), fromBin = vm.runInContext("classGuideFromBinary", sandbox), same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
     ok(["weapon","armor","hat","trinket","boot","pet"].every(k => Array.isArray(GD[k]) && GD[k].length) && GD.weapon.length > 500 && GD.pet.some(([id]) => id === "p_lcr"), "gear data covers all six slots (weapons 500+, pets as families)");
+    const mv = vm.runInContext("classGuideGearMove", sandbox);   // drag within a slot column (user 2026-10-18)
+    ok(JSON.stringify(mv(["a","b","c"], 0, 2)) === '["b","c","a"]' && JSON.stringify(mv(["a","b","c"], 2, 0)) === '["c","a","b"]' && JSON.stringify(mv(["a","b"], 0, 5)) === '["b","a"]', "gear moves within its column, others shift, no gaps");
     ok(Object.values(GD).every(list => list.every(e => e.length === 2 && typeof e[0] === "string" && typeof e[1] === "string" && e[1])), "gear data holds only id and name (no stats or levels, user 2026-10-16)");
     // gear picker order and nicknames (user 2026-10-16): GEAR_LV only orders the picker, GEAR_NICKNAMES replace the shown name but the game name still finds the item
     { const LV = vm.runInContext("GEAR_LV", sandbox), NK = vm.runInContext("GEAR_NICKNAMES", sandbox), list = vm.runInContext("classGuideGearList", sandbox), key = vm.runInContext("classGuideGearSortKey", sandbox), gname = vm.runInContext("classGuideGearName", sandbox);
@@ -3405,7 +3445,11 @@ let checkedRsim = 0;
     // no stats: only the reader's + dial (user 2026-10-17), no tile
     ok(!/cg-stat-tile/.test(panel(undefined)) && !/cg-stat-tile/.test(panel({})) && panel(undefined).includes('data-cg-act="addStat"') && (panel({agi:120}).match(/cg-stat-tile/g) || []).length === 1 && panel({agi:120}).includes("--stat-agi") && panel({agi:120}).includes('value="120"') && panel({agi:120}).includes('data-cg-try="agi"') && !panel({agi:120}).includes("ATK"), "reader panel renders only the filled stats in their colour");
     ok((panel({atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}).match(/cg-stat-tile/g) || []).length === 8 && !panel({atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}).includes('data-cg-act="addStat"'), "reader panel can show all 8 stats (and then has no + dial)");
-    ok((editor().match(/data-cg-stat=/g) || []).length === 8 && ["atk","def","tal","agi","vit","cha","int","lck"].every(k => editor().includes('data-cg-stat="' + k + '"') && editor().includes("--stat-" + k)), "editor row has all 8 stat inputs in their colours");
+    // Editor (user 2026-10-18): no row of 8 boxes; the author adds stats one at a time as flasks, each with × and the ตัน / ตาม pills.
+    const edFlask = vm.runInContext("classGuideStatEdHtml", sandbox);
+    ok(!/data-cg-stat=/.test(editor()) && editor().includes('data-cg-role="statEd"') && editor().includes('data-cg-role="statSum"'), "the editor starts with no stat boxes, only the flask row and the % total line");
+    ok(["atk","lck"].every(k => { const h = edFlask({key:k, label:k.toUpperCase()}, "30%", false); return h.includes('data-cg-stat="' + k + '"') && h.includes("--stat-" + k) && h.includes('data-cg-act="statDel"') && /data-word="ตัน"[^>]*aria-pressed="false"/.test(h) && /is-flask/.test(h); }) && /data-word="ตาม"[^>]*aria-pressed="true"/.test(edFlask({key:"cha", label:"CHA"}, "ตาม", false)), "an editor flask carries its colour, ×, and the ตัน / ตาม pills");
+    ok(/inputmode="text"/.test(edFlask({key:"atk", label:"ATK"}, "30%", false)) && /inputmode="numeric"/.test(vm.runInContext("classGuideStatTile", sandbox)({key:"atk", label:"ATK"}, 250, false, false)), "an editor flask opens the full keyboard (a phone's number pad has no %), the reader's try input stays numeric");
     const hover = vm.runInContext("classGuideHoverLines", sandbox);
     ok(hover(null, {}, {icon:"wolf_x",id:101}, true) === null && hover({stats:{agi:50}}, {}, {icon:"wolf_x",id:101}, false) === null && hover({}, {}, {icon:"wolf_x",id:101}, true) === null, "hover lines only for a learned skill of a guide with stats");
   }

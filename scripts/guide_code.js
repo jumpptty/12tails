@@ -18,7 +18,7 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.";
 //   byte  level
 //   20 bytes  learned skills, one bit per slot (tree-1)*40 + row*4 + (col-1)
 //   2 bytes   date as days since 2000-01-01 (little endian), 0xFFFF = none
-//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat; bit 15 = "or more" (shown as 250+, user 2026-10-18)
+//   byte  stats mask (bit i = CLASS_GUIDE_STAT_KEYS[i] is set), then 2 bytes (little endian) per set stat: a number 0-512 with bit 15 = "or more" (shown as 250+), or bit 14 + a share 1-100 ("N%"), or bit 13 + a word index (CLASS_GUIDE_STAT_WORDS: 0 ตัน, 1 ตาม) (user 2026-10-18)
 //   text  title, author, description   (text = varint byte length + bytes: ASCII as is, Thai U+0E00-0E5B as one byte 0x80-0xDB, anything else 0xDC + varint code point)
 //   varint note count, then per note: slot byte + text
 //   optional gear block (older codes end before it): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3) and per choice
@@ -26,10 +26,12 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.";
 //   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
 //   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
 //   byte 200-211 names a support skill (ids 901-912).
+//   optional stat order block (user 2026-10-18): 0x4F, count byte, then one CLASS_GUIDE_STAT_KEYS index per stat in the author's order; written only when that order is not the fixed one, so older guides keep their exact code.
 const CLASS_GUIDE_GEAR_KEYS = ["weapon", "armor", "hat", "trinket", "boot", "pet"];
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
+const CLASS_GUIDE_STAT_WORDS = ["ตัน", "ตาม"];   // the stat words by index (the page's CLASS_GUIDE_STAT_WORDS)
 function classGuideBinary(g){
   const out = [], slot = id => id >= 901 ? 200 + id - 901 : (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // support skills 901-912 = slots 200-211
   const varint = n => { while (n >= 0x80){ out.push((n & 0x7F) | 0x80); n = Math.floor(n / 128); } out.push(n); };
@@ -49,7 +51,8 @@ function classGuideBinary(g){
   const days = g.date ? Math.round((Date.parse(g.date + "T00:00:00Z") - Date.UTC(2000, 0, 1)) / 864e5) : 0xFFFF;
   out.push(days & 255, days >> 8);
   const st = g.stats || {}; let mask = 0; CLASS_GUIDE_STAT_KEYS.forEach((k, i) => { if (k in st) mask |= 1 << i; }); out.push(mask);
-  const plus = g.statsPlus || []; CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st){ const v = st[k] | (plus.includes(k) ? 0x8000 : 0); out.push(v & 255, v >> 8); } });   // bit 15 = "or more" (250+)
+  for (const [k, x] of Object.entries(st)) if (!(Number.isInteger(x) && x >= 0 && x <= 512) && !(typeof x === "string" && (/^(100|[1-9]\d?)%$/.test(x) || CLASS_GUIDE_STAT_WORDS.includes(x)))) throw new Error("invalid stat value for " + k + ": " + JSON.stringify(x));   // what the page would reject
+  const plus = g.statsPlus || []; CLASS_GUIDE_STAT_KEYS.forEach(k => { if (k in st){ const x = st[k], v = typeof x === "number" ? x | (plus.includes(k) ? 0x8000 : 0) : /%$/.test(x) ? parseInt(x, 10) | 0x4000 : CLASS_GUIDE_STAT_WORDS.indexOf(x) | 0x2000; out.push(v & 255, v >> 8); } });   // bit 15 = "or more" (250+), bit 14 = a share, bit 13 = a word
   text(g.title); text(g.author); text(g.description);
   const ids = Object.keys(g.notes || {}).map(Number).sort((a, b) => a - b);
   varint(ids.length); for (const id of ids){ out.push(slot(id)); text(g.notes[id]); }
@@ -60,6 +63,7 @@ function classGuideBinary(g){
   }
   const cover = g.cover || []; if (cover.length){ out.push(0x49, cover.length); for (const id of cover) out.push(slot(id)); }
   const support = g.build.support || []; if (support.length){ out.push(0x53, support.length); for (const id of support) out.push(id - 901); }
+  const order = Object.keys(st); if (order.join() !== CLASS_GUIDE_STAT_KEYS.filter(k => k in st).join()){ out.push(0x4F, order.length); for (const k of order) out.push(CLASS_GUIDE_STAT_KEYS.indexOf(k)); }   // the author's stat order (user 2026-10-18)
   return Buffer.from(out);
 }
 function classGuideFromBinary(bytes){
@@ -86,16 +90,20 @@ function classGuideFromBinary(bytes){
   const days = byte() | byte() << 8;
   const date = days === 0xFFFF ? "" : new Date(Date.UTC(2000, 0, 1) + days * 864e5).toISOString().slice(0, 10);
   const mask = byte(), stats = {};
-  const statsPlus = []; CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)){ const v = byte() | byte() << 8; stats[k] = v & 0x7FFF; if (v & 0x8000) statsPlus.push(k); } });
+  const statsPlus = []; CLASS_GUIDE_STAT_KEYS.forEach((k, j) => { if (mask & (1 << j)){ const v = byte() | byte() << 8, low = v & 0x1FFF;
+    if (v & 0x4000){ if (v & 0xA000 || low < 1 || low > 100) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); stats[k] = low + "%"; }   // a share (user 2026-10-18)
+    else if (v & 0x2000){ if (v & 0x8000 || low >= CLASS_GUIDE_STAT_WORDS.length) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); stats[k] = CLASS_GUIDE_STAT_WORDS[low]; }   // ตัน / ตาม
+    else { stats[k] = low; if (v & 0x8000) statsPlus.push(k); } } });
   const title = text(), author = text(), description = text();
   const unslot = k => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
   for (let n = 0; n < count; n++){ notes[unslot(byte())] = text(); }
-  let gear = null, cover = null, support = null;
+  let gear = null, cover = null, support = null, order = null;
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
     if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
+    if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= CLASS_GUIDE_STAT_KEYS.length || order.includes(k)) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); order.push(k); } continue; }   // the author's stat order (user 2026-10-18)
     if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -105,6 +113,7 @@ function classGuideFromBinary(bytes){
       gear[CLASS_GUIDE_GEAR_KEYS[j]] = list;
     }
   }
+  if (order){ const keys = order.map(k => CLASS_GUIDE_STAT_KEYS[k]); if (keys.length !== Object.keys(stats).length || keys.some(k => !(k in stats))) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); for (const k of keys){ const v = stats[k]; delete stats[k]; stats[k] = v; } }   // re-insert in the author's order
   return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
 }
 
@@ -162,6 +171,7 @@ if (require.main === module){
       const c = encode(g);
       if (JSON.stringify(decode(encode1(g))) !== JSON.stringify(g)) throw new Error("format 1 round trip failed");
       if (!c.startsWith(PREFIX2) || JSON.stringify(decode(c)) !== JSON.stringify(g) || JSON.stringify(decode(JSON.stringify(g))) !== JSON.stringify(g)) throw new Error("round trip failed");
+      { const f = { ...g, stats: { cha: "ตาม", agi: 250, atk: "ตัน", vit: "70%", lck: "30%" }, statsPlus: ["agi"] }, back = decode(encode(f)); if (JSON.stringify(back.stats) !== JSON.stringify(f.stats) || JSON.stringify(back.statsPlus) !== '["agi"]') throw new Error("stat shares / words / order round trip failed"); }
       console.log("guide_code selftest: all checks passed (" + JSON.stringify(g).length + " chars of JSON -> " + c.length + " chars of code)");
     } else if (op === "decode" && arg) console.log(JSON.stringify(decode(read(arg)), null, 2));
     else if (op === "encode" && arg) console.log(encode(read(arg)));
