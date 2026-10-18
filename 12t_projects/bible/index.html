@@ -5586,9 +5586,17 @@
   /* Accent bar (2026-09-26; 2 px since 2026-10-18, user): every chip gets a left edge in its signature colour:
      cooldown AGI green, cast INT, duration CHA, chances LCK, damage row / summon gold. The dependency strip has none
      since 2026-10-18 (it sits open between two gold hairlines). */
-  /* Chevron escalator (user 2026-10-06, style 2): a scrolling chevron pattern behind a chip's value, inside its border
-     (z-index -1 in the chip's isolated stacking context). The pattern is an SVG tile set per chip. */
-  .sk-esc{position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:-1; background-repeat:repeat; opacity:0}
+  /* Change visuals (user 2026-10-18, replaced the chevron escalator): the odometer roll of a chip value and the floating
+     delta tag, see changeOn(). While a roll runs the value clips to its box plus 4 px (slack for glyph tops, so the
+     rolling numbers stay off the label and the button around them); a clip-path did not clip the GPU-animated layers, overflow: clip does. */
+  .sk-roll-host{position:relative; overflow:clip; overflow-clip-margin:4px}
+  .sk-roll-new{display:block}
+  .sk-roll-old, .sk-roll-tint{position:absolute; left:0; right:0; top:0; pointer-events:none}
+  .sk-dtag{position:absolute; z-index:3; right:8px; pointer-events:none; white-space:nowrap; font:700 12px/1 'JetBrains Mono','Prompt',monospace;
+    color:var(--dtag-c); padding:4px 7px; border-radius:999px; background:rgba(20,16,12,.9);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dtag-c) 55%, transparent); opacity:0}
+  .sk-dtag.is-up{top:6px}
+  .sk-dtag.is-down{bottom:6px}
   .sk-stat, .sk-dmg{border-left:2px solid var(--chip-accent, var(--gold))}
   /* Clean pass (user 2026-10-18, picked from a live mock of the card).
      The stats this skill does not read (no .sk-stat-glow-*) fade back; hovering or typing in one brings it back. */
@@ -18976,6 +18984,7 @@ function mountSkillCooldownLookup(root){
         const g = v.closest(".sk-dmg-group"), gl = g && g.querySelector(".sk-dmg-group-label");
         const name = label + (gl ? " · " + gl.textContent.replace(/\s+/g, " ").trim() : (j ? " #" + (j + 1) : ""));
         const c = v.cloneNode(true);
+        c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove());   // a change roll still running
         c.querySelectorAll("img[alt]").forEach(im => im.replaceWith(im.alt));
         let key = name; seen[key] = (seen[key] || 0) + 1; if (seen[key] > 1) key += "#" + seen[key];
         out.push({ key, name, text: c.textContent.replace(/\s+/g, " ").trim(), lowerBetter: /คูลดาวน์|เวลาร่าย|cooldown|cast/i.test(label) });
@@ -21340,7 +21349,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // Tooltip text is part of a field's value, so a change that only shows up on hover still counts.
     function deltaText(el){
       const c = el.cloneNode(true);
-      c.querySelectorAll(".sk-dep-strip, button, .sk-ko-badge, .sk-magic-badge").forEach(n => n.remove());
+      c.querySelectorAll(".sk-dep-strip, button, .sk-ko-badge, .sk-magic-badge, .sk-roll-old, .sk-roll-tint, .sk-dtag").forEach(n => n.remove());
       c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt));
       return c.textContent.replace(/\s+/g, " ").trim();
     }
@@ -21374,33 +21383,109 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         restartClass(e, cls);
       });
     }
-    // Chevron escalator (user 2026-10-06, style 2; rain and the edge stack were tried and dropped): a tiled chevron
-    // pattern scrolls up behind a chip that got better, down behind one that got worse, in the colour of the light ball
-    // that reaches it (the stat tone or gold going out, red coming back). Stroke = 20% of the chevron size, half the
-    // rain's. Chips only, never the stat inputs (user 2026-10-06).
-    // ponytail: a rebuild mid-scroll drops it (the flash itself carries over), add a carry if it shows.
-    const ESC_CHIPS = ".sk-stat, .sk-dmg, .sk-summon-stat";
+    // Change visuals (user 2026-10-18, a mix of options 1 and 2 of 5 mocks; replaced the chevron escalator of 2026-10-06):
+    // where a light lands, the chip's value rolls like an odometer (the old value leaves upward when the number rose,
+    // downward when it fell, the new one rolls in, briefly in the light's colour) and a small tag with the change of the
+    // value's average ("▲ +302", "▼ −8.5s") rises or sinks at the chip's corner and fades. The direction is the number's
+    // own (a shorter cooldown rolls down), the colour the light ball's (the stat tone or gold going out, red coming back).
+    // Damage formula chips only flash (their numbers are a sum); a chip with several values (damage groups) rolls each but
+    // gets no tag; summon stat rows roll but get no tag (many change at once). transform / opacity only.
+    // While a roll runs, the old value and a coloured copy sit inside the value element, so every reader of chip text
+    // strips ".sk-roll-old, .sk-roll-tint, .sk-dtag" (deltaText, deltaValue, presetReadChips, chipNumber).
     const SHOT_GOLD = "rgb(255, 214, 102)", SHOT_RED = "rgb(255, 96, 76)";   // the .sk-shot / .sk-shot.is-red glow
-    function chevronEscalator(host, up, color){
-      if (!host || !host.isConnected || !color) return;
-      const old = host.querySelector(":scope > .sk-esc");
-      if (old) old.remove();
-      if (getComputedStyle(host).position === "static") host.style.position = "relative";
-      host.style.isolation = "isolate";
-      const H = host.clientHeight, size = Math.round(Math.max(14, Math.min(40, H * 0.4)));
-      const stroke = Math.max(2, Math.round(size * 0.2)), w = Math.round(size * 1.4), h = Math.round(size * 0.85);
-      const x0 = (w - size) / 2, x1 = w / 2, x2 = (w + size) / 2, yTip = up ? h / 2 - size / 4 : h / 2 + size / 4, yEnd = up ? h / 2 + size / 4 : h / 2 - size / 4;
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><path d='M${x0} ${yEnd} L${x1} ${yTip} L${x2} ${yEnd}' fill='none' stroke='${color}' stroke-width='${stroke}' stroke-linejoin='miter'/></svg>`;
-      const esc = document.createElement("div");
-      esc.className = "sk-esc";
-      esc.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-      const px = Math.round(Math.random() * w);
-      host.appendChild(esc);
-      esc.animate([{ opacity: 0, backgroundPosition: `${px}px 0px` }, { opacity: 0.45, offset: 0.2 }, { opacity: 0.45, offset: 0.75 },
-                   { opacity: 0, backgroundPosition: `${px}px ${(up ? -3 : 3) * h}px` }], { duration: 1100, easing: "linear" }).onfinish = () => esc.remove();
+    const ROLL_VALUES = ".sk-stat-value, .sk-summon-stat-value", ROLL_SKIP = ".sk-stat-tooltip, .sk-dmg-info-pop, .sk-status-tip";
+    // Ends a running roll at once: the old value and the coloured copy go, the new value is unwrapped.
+    function rollSettle(v){
+      if (!v) return;
+      v.querySelectorAll(":scope > .sk-roll-old, :scope > .sk-roll-tint").forEach(n => n.remove());
+      const neu = v.querySelector(":scope > .sk-roll-new");
+      if (neu){ while (neu.firstChild) v.insertBefore(neu.firstChild, neu); neu.remove(); }
+      v.classList.remove("sk-roll-host");
     }
-    function escalatorOn(el, up, color){
-      (el.classList.contains("sk-dmg-row") ? Array.from(el.children) : [el]).forEach(chip => { if (chip.matches(ESC_CHIPS)) chevronEscalator(chip, up, color); });
+    // A field's value markup for the snapshot, without the layers of a roll still running.
+    function rollHtmls(el){
+      return Array.from(el.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP)).map(v => { const c = v.cloneNode(true); rollSettle(c); return c.innerHTML; });
+    }
+    // Right after a rebuild (heroDelta runs before the browser paints it) a changed value is frozen at its old value: the new
+    // one is laid out but hidden, the old one drawn over it, so the number never shows its new value before its light lands.
+    // A safety timer lets go after 4 s whatever happens (a hold must never stick).
+    function rollHold(v, oldHtml){
+      rollSettle(v);
+      if (v.innerHTML === oldHtml) return;
+      const neu = document.createElement("span"); neu.className = "sk-roll-new"; neu.style.visibility = "hidden";
+      while (v.firstChild) neu.appendChild(v.firstChild);
+      const old = document.createElement("span"); old.className = "sk-roll-old"; old.setAttribute("aria-hidden", "true"); old.innerHTML = oldHtml;
+      v.classList.add("sk-roll-host"); v.append(old, neu);
+      clearTimeout(v.__rollTimer); v.__rollTimer = setTimeout(() => { if (neu.parentNode === v) rollSettle(v); }, 4000);
+    }
+    // Every changed chip of the card, against the snapshot (fields matched by place, like the delta comparison).
+    function rollHoldAll(prev){
+      if (!prev.htmls || !prev.vals) return;
+      (deltaFields()[0] || []).forEach((el, i) => {
+        const was = prev.vals[0][i], olds = prev.htmls[0] && prev.htmls[0][i];
+        if (!olds || was === undefined || !el.matches(".sk-stat, .sk-summon-stat") || was === deltaText(el)) return;
+        Array.from(el.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP)).forEach((v, k) => { if (olds[k] !== undefined) rollHold(v, olds[k]); });
+      });
+    }
+    // On impact: the held old value rolls out and the new one rolls in (a value rebuilt mid-flight, with no hold, rolls from oldHtml).
+    function rollPlay(v, oldHtml, up, color){
+      let neu = v.querySelector(":scope > .sk-roll-new"), old = v.querySelector(":scope > .sk-roll-old");
+      if (!neu || !old){
+        rollSettle(v);
+        if (v.innerHTML === oldHtml) return;
+        rollHold(v, oldHtml);
+        neu = v.querySelector(":scope > .sk-roll-new"); old = v.querySelector(":scope > .sk-roll-old");
+        if (!neu || !old) return;
+      }
+      clearTimeout(v.__rollTimer);
+      neu.style.visibility = "";
+      const E = { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" }, from = up ? "100%" : "-100%";
+      old.animate([{ transform: "translateY(0)", opacity: 1 }, { transform: `translateY(${up ? "-100%" : "100%"})`, opacity: 0 }], E);
+      neu.animate([{ transform: `translateY(${from})`, opacity: 0 }, { transform: "translateY(0)", opacity: 1 }], E);
+      if (color && !neu.querySelector("img")){
+        // a copy in the light's colour rolls in with the new value, then fades to show its normal colour
+        const tint = document.createElement("span"); tint.className = "sk-roll-tint"; tint.setAttribute("aria-hidden", "true");
+        tint.innerHTML = neu.innerHTML; tint.style.color = color; v.appendChild(tint);
+        tint.animate([{ transform: `translateY(${from})` }, { transform: "translateY(0)" }], E);
+        tint.animate([{ opacity: 0 }, { opacity: 1, offset: 0.25 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], { duration: 1300, easing: "ease-out", fill: "forwards" });
+      }
+      v.__rollTimer = setTimeout(() => { if (neu.parentNode === v) rollSettle(v); }, 1350);
+    }
+    const deltaNums = (txt) => (String(txt).replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
+    const deltaAvg = (v) => v.reduce((x, y) => x + y, 0) / v.length;
+    function deltaTag(chip, oldTxt, color){
+      const txt = deltaValue(chip), a = deltaNums(oldTxt), b = deltaNums(txt);
+      if (!a.length || !b.length) return;
+      const d = deltaAvg(b) - deltaAvg(a);
+      if (!d) return;
+      const unit = /%/.test(txt) ? "%" : (/\ds\b/.test(txt) ? "s" : ""), m = Math.abs(d);
+      const num = (m >= 10 ? Math.round(m) : Math.round(m * 10) / 10).toLocaleString("en-US");
+      chip.querySelectorAll(":scope > .sk-dtag").forEach(n => n.remove());
+      const tag = document.createElement("span"), up = d > 0;
+      tag.className = "sk-dtag " + (up ? "is-up" : "is-down"); tag.setAttribute("aria-hidden", "true");
+      tag.textContent = (up ? "▲ +" : "▼ −") + num + unit;
+      tag.style.setProperty("--dtag-c", color);
+      chip.appendChild(tag);
+      const s = up ? -1 : 1;
+      tag.animate([{ opacity: 0, transform: `translateY(${-s * 8}px) scale(.85)` }, { opacity: 1, transform: "translateY(0) scale(1)", offset: 0.18 },
+                   { opacity: 1, transform: `translateY(${s * 5}px)`, offset: 0.7 }, { opacity: 0, transform: `translateY(${s * 16}px)` }],
+                  { duration: 1500, easing: "ease-out", fill: "forwards" }).onfinish = () => tag.remove();
+    }
+    // On impact (or as a worse field's red light leaves): each chip of the field rolls and tags against its value in the
+    // snapshot (same place on the card, see fieldPos). numUp is the field's direction, used when a chip's own numbers can't be read.
+    function changeOn(el, numUp, color, prev){
+      (el.classList.contains("sk-dmg-row") ? Array.from(el.children) : [el]).forEach(chip => {
+        if (!chip.isConnected || !chip.matches(".sk-stat, .sk-summon-stat")) return;
+        const pos = fieldPos(chip);
+        if (!pos || pos.g === undefined) return;
+        const oldTxt = prev.nums && prev.nums[pos.g] ? prev.nums[pos.g][pos.i] : undefined;
+        const olds = prev.htmls && prev.htmls[pos.g] ? prev.htmls[pos.g][pos.i] : undefined;
+        const vals = Array.from(chip.querySelectorAll(ROLL_VALUES)).filter(v => !v.closest(ROLL_SKIP));
+        const a = deltaNums(oldTxt || ""), b = deltaNums(deltaValue(chip));
+        const up = a.length && b.length && deltaAvg(a) !== deltaAvg(b) ? deltaAvg(b) > deltaAvg(a) : numUp;
+        if (chip.matches(".sk-stat") && vals.length === 1 && oldTxt !== undefined) deltaTag(chip, oldTxt, color);
+        if (olds) vals.forEach((v, k) => { if (olds[k] !== undefined) rollPlay(v, olds[k], up, color); });
+      });
     }
     // A click during a flash rebuilds the card and would cut it off (user 2026-10-05): before the rebuild, note every
     // field still flashing (by its place on the card); after it, the same field resumes its flash where it was
@@ -21457,6 +21542,22 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // Snapshot held while the server pop-up is open; a rebuild during that time keeps comparing against it, so
     // closing the pop-up shows everything that differs from before the first switch. var: see depClicked.
     var deltaHeld = null;
+    // Typing in a stat field (user 2026-10-18): the card still updates on every keystroke, but the light volley waits until
+    // the typing is done (800 ms without a keystroke, Enter, or leaving the field: change) and then plays once against the
+    // values from before the first keystroke (held in deltaHeld like the pop-ups). Only real keystrokes hold it: a value
+    // written by code (the target solve, presets, enemy picks) dispatches an untrusted input and plays at once. var: see depClicked.
+    var statTyping = false, statTypingTimer = 0;
+    function statTypingFlush(){
+      clearTimeout(statTypingTimer); statTyping = false;
+      if (deltaHeld){ const p = deltaHeld; deltaHeld = null; requestAnimationFrame(() => heroDelta(p)); }
+    }
+    if (statsPanelEl){
+      statsPanelEl.addEventListener("input", (e) => {
+        if (!e.isTrusted || !e.target.matches("input[type=number]")) return;
+        statTyping = true; clearTimeout(statTypingTimer); statTypingTimer = setTimeout(statTypingFlush, 800);
+      }, true);
+      statsPanelEl.addEventListener("change", (e) => { if (statTyping && e.target.matches("input[type=number]")) statTypingFlush(); }, true);
+    }
     // Player and enemy stat inputs with their stat key (the key names the --stat-<key> colour).
     function statInputs(){
       return [["atk",atkEl],["def",defEl],["tal",talEl],["agi",agiEl],["vit",vitEl],["cha",chaEl],["int",intEl],["lck",lckEl],["lv",lvEl],
@@ -21494,7 +21595,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       if (el.matches(".sk-ko-badge")) return (el.querySelector(".sk-ko-value") || el).textContent;
       if (el.matches(".sk-summon-stat")) return (el.querySelector(".sk-summon-stat-value") || el).textContent;
       return Array.from(el.querySelectorAll(".sk-stat-value")).filter(v => !v.closest(".sk-stat-tooltip, .sk-dmg-info-pop, .sk-status-tip"))
-        .map(v => { const c = v.cloneNode(true); c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; }).join(" ");
+        .map(v => { const c = v.cloneNode(true); c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove()); c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; }).join(" ");
     }
     function heroSnapshot(){
       const clicked = depClicked; depClicked = null;
@@ -21503,14 +21604,16 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       return { id: idSeen, server: serverSeen || currentServer, vals: deltaFields().map(list => list.map(deltaText)), deps: depStates(), clicked,
         stats: statSeen || statInputs().map(([, el]) => statNum(el)),
         click, rank: rankSeen && selected && rankSeen.id === selected.id ? rankSeen.r : null, bdN: bdNSeen || bdCounts(),
-        nums: deltaFields().map(list => list.map(deltaValue)), magic: !!displayEl.querySelector(".sk-magic-badge:not(.sk-magic-wait):not(.sk-magic-out)"),
+        nums: deltaFields().map(list => list.map(deltaValue)), htmls: deltaFields().map(list => list.map(rollHtmls)), magic: !!displayEl.querySelector(".sk-magic-badge:not(.sk-magic-wait):not(.sk-magic-out)"),
         magicHtml: (displayEl.querySelector(".sk-magic-badge:not(.sk-magic-out)") || {}).outerHTML || "" };
     }
     function heroDelta(prev){
       if (!prev.id || !selected || prev.id !== selected.id) return;
       const magicNew = prev.magic ? null : displayEl.querySelector(".sk-magic-badge");
       if (magicNew) magicNew.classList.add("sk-magic-wait");
+      rollHoldAll(prev);   // changed values show their old value until their light lands (or until the held volley plays)
       if (document.querySelector('[data-role="server-popup"], [data-role="preset-popup"], [data-role="bd-backdrop"]')){ deltaHeld = prev; return; }
+      if (statTyping){ deltaHeld = prev; return; }   // typing in a stat field: plays once when it is done (statTypingFlush)
       let magicGone = null;
       const magicRow = prev.magic && prev.magicHtml && !displayEl.querySelector(".sk-magic-badge") && displayEl.querySelector(".sk-dmg-calc .sk-dmg-label-row");
       if (magicRow){
@@ -21524,8 +21627,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       // desc numbers and status keywords are unreadable (a desc number can mean anything).
       const LOWER_BETTER = /คูลดาวน์|เวลาร่าย|cooldown|cast/i;
       const nums = (t) => (String(t).replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
-      // numDirOf: which way the number itself moved (+1 / -1 / 0), for the escalator's arrows (user 2026-10-06: a shorter
-      // cooldown is better, but its arrows must point down). dirOf stays the better / worse judgement (colour, comets).
+      // numDirOf: which way the number itself moved (+1 / -1 / 0), for the change roll and tag (user 2026-10-06: a shorter
+      // cooldown is better, but it rolls down). dirOf stays the better / worse judgement (colour, comets).
       const changed = [], dirOf = new Map(), numDirOf = new Map();
       deltaFields().forEach((list, g) => list.forEach((el, i) => {
         const was = prev.vals[g][i];
@@ -21634,12 +21737,12 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
               return;
             }
             const col = up ? (tone || statColorFor(t.el)) : null;
-            const nd = numDirOf.get(t.el) || 0, numUp = nd ? nd > 0 : up;   // arrows follow the number; unreadable = better is up
+            const nd = numDirOf.get(t.el) || 0, numUp = nd ? nd > 0 : up;   // the roll follows the number; unreadable = better is up
             setTimeout(() => {
               if (!t.el.isConnected) return;
               const pos = fieldPos(t.el);
-              if (up) fireShot(c, t, col || false, () => { const el = liveField(t.el, pos); if (el){ pingField(el, col ? "sk-delta-stat" : "sk-delta", col); escalatorOn(el, numUp, col || SHOT_GOLD); } });
-              else { pingField(t.el, "sk-delta-down"); escalatorOn(t.el, numUp, SHOT_RED); fireShot(t, c, true); }
+              if (up) fireShot(c, t, col || false, () => { const el = liveField(t.el, pos); if (el){ pingField(el, col ? "sk-delta-stat" : "sk-delta", col); changeOn(el, numUp, col || SHOT_GOLD, prev); } });
+              else { pingField(t.el, "sk-delta-down"); changeOn(t.el, numUp, SHOT_RED, prev); fireShot(t, c, true); }
             }, (up ? outDelay : 0) + i * 45);
           });
         return land;
@@ -21694,7 +21797,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           volley(centerOf(pip || from), up); return;
         }
       }
-      if (!src){ changed.forEach((el, i) => { if (el === magicNew) return revealMagic(el); if (el === magicGone) return magicOut(el); const col = (dirOf.get(el) || 0) < 0 ? null : statColorFor(el); setTimeout(() => el.isConnected && pingField(el, (dirOf.get(el) || 0) < 0 ? "sk-delta-down" : (col ? "sk-delta-stat" : "sk-delta"), col), i * 30); }); return; }
+      if (!src){ changed.forEach((el, i) => { if (el === magicNew) return revealMagic(el); if (el === magicGone) return magicOut(el); const worse = (dirOf.get(el) || 0) < 0, col = worse ? null : statColorFor(el), nd = numDirOf.get(el) || 0; setTimeout(() => { if (!el.isConnected) return; pingField(el, worse ? "sk-delta-down" : (col ? "sk-delta-stat" : "sk-delta"), col); changeOn(el, nd ? nd > 0 : !worse, worse ? SHOT_RED : (col || SHOT_GOLD), prev); }, i * 30); }); return; }
       // Dependency toggle: outward light leaves as the icon shows its lit face (180 ms in); when the toggle got worse the
       // icon holds its old face and turns over as the last inward comet lands.
       const c = centerOf(pipPoint(src.b.closest(".sk-dep-btncol"), src.up) || src.b);
@@ -21732,7 +21835,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const chip = targetChip(info), v = chip && chip.querySelector(".sk-stat-value");
       if (!v) return null;
       const c = v.cloneNode(true);
-      c.querySelectorAll(".sk-stat-tooltip").forEach(n => n.remove());
+      c.querySelectorAll(".sk-stat-tooltip, .sk-roll-old, .sk-roll-tint").forEach(n => n.remove());
       const t = c.textContent.replace(/,/g, "");
       const nums = (t.match(/\d+(?:\.\d+)?/g) || []).map(Number);
       if (/ไร้หลอด/.test(t)) nums.unshift(0.1);
@@ -21792,6 +21895,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     function openTargetEdit(chip){
       const info = targetInfo(chip), val = chip && chip.querySelector(".sk-stat-value");
       if (!info || !val || chip.classList.contains("sk-target-editing")) return;
+      rollSettle(val);   // a change roll still running would otherwise be saved and restored mid-way
       const now = chipNumber(info), saved = val.innerHTML;
       chip.classList.add("sk-target-editing");
       val.innerHTML = '<span class="sk-target-inline"><input class="sk-target-input" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="' + info.label + '"><span class="sk-target-unit">' + info.unit + '</span></span>';
@@ -33404,6 +33508,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T15:11:58.656Z","feat(bible): skill details chips show a change by rolling the number like an odometer, with a small ▲ / ▼ tag of how much it moved, when their light lands (no more chevrons); typing in a stat field plays one light volley when you finish instead of one per keystroke"],
     ["2026-10-18T14:30:48.945Z","style(bible): skill details stat panels become dials: no boxes, each stat a ring with its name under it, rings in the stat colour for the stats the skill uses, smaller dials on shorter windows so the page keeps its size, and long numbers shrink to fit"],
     ["2026-10-18T14:12:53.802Z","style(bible): cleaner skill details card: stats the skill does not use fade back, one level of boxes, 2 px colour edges, the description as a pull quote, a slim search row with the skill name shown big only once, and short chip rows fill their width"],
     ["2026-10-18T13:50:01.097Z","style(bible): skill details related-skills panel loses its boxes: each skill is a thin gold ring icon and its name (no box per row, no panel), the title ends in a fading gold rule, and hover lifts and turns the name gold"],
