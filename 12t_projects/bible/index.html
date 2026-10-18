@@ -58,7 +58,7 @@
 </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,600;1,700&family=Sarabun:wght@300;400;500&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,600;1,700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <script data-goatcounter="https://jumpptty.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
@@ -323,9 +323,11 @@
     background:
       radial-gradient(900px 420px at 18% -12%, var(--gold-soft), transparent 65%),
       var(--ink);
-    font-family:-apple-system,"Segoe UI",'Prompt',system-ui,sans-serif;
+    font-family:'Prompt',sans-serif;
     min-height:100vh;
   }
+  /* two fonts only (user 2026-10-18): Prompt for text, JetBrains Mono with Prompt behind it for numbers; controls follow the page font */
+  button, input, select, textarea{font-family:inherit}
   /* ============================ SERVER THEMES (2026-10-10, user) ============================
      Purely cosmetic: html[data-sk-server] = og | tot | tto picks the look (JS: applyServerTheme, see the top-bar menu). "og" is the original Ledger
      look: none of the rules below apply to it. Every tool, panel and modal draws from the shared tokens, so a look is edited in ONE place:
@@ -416,11 +418,11 @@
   html.tool-wide-hero .sk-search,
   html.tool-wide-hero .sk-browse-btn:not(:hover){background:rgba(255,255,255,.03)}
   h1,h2,h3,.entry-title{
-    font-family:Georgia,"Iowan Old Style",'Prompt',serif;
+    font-family:'Prompt',sans-serif;
     text-wrap:balance;
   }
   a{color:inherit}
-  .num{font-family:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,monospace; font-variant-numeric:tabular-nums}
+  .num{font-family:"JetBrains Mono","Prompt",monospace; font-variant-numeric:tabular-nums}
   :focus-visible{outline:2px solid var(--gold); outline-offset:2px}
 
     /* ---- Stat Roll Calculator (Embedded Tool — Compact Option 2 Tabbed) ---- */
@@ -448,7 +450,7 @@
   .sr-title-full, .sg-title-full { display: inline; }
   .sr-header-title {
     margin: 0;
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 24px;
     font-weight: 700;
     color: var(--text);
@@ -578,7 +580,7 @@
     margin-bottom: 4px;
   }
   .sr-card-title {
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 15px;
     font-weight: 700;
     text-transform: uppercase;
@@ -1082,7 +1084,7 @@
   .sr-hero .sr-rec-card { padding: 22px 26px 18px; gap: 18px; }
   .sr-hero .sr-err-msg, .sr-hero .sr-guaranteed-msg { font-size: 15px; padding: 14px 16px; }
   .sr-rec-target {
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--text);
     font-variant-numeric: lining-nums;
   }
@@ -1090,7 +1092,7 @@
   .sr-rec-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px; align-items: end; }
   .sr-rec-fig + .sr-rec-fig { border-left: 1px solid var(--line); padding-left: 26px; }
   .sr-rec-num {
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -0.02em;
     font-variant-numeric: lining-nums tabular-nums; color: var(--text);
   }
@@ -1156,8 +1158,8 @@
   }
   @keyframes unseal{to{transform:scaleX(1)}}
   .brand{
-    text-decoration:none; font-family:Georgia,"Iowan Old Style",'Prompt',serif;
-    font-size:19px; font-weight:700; letter-spacing:.3px;
+    text-decoration:none; font-family:'Prompt',sans-serif;
+    font-size:19px; font-weight:700; letter-spacing:.6px;
   }
   .hub-note-link{color:inherit; text-decoration:none}
   .hub-note-link b{font-weight:600; color:var(--gold); text-shadow:0 0 6px rgba(212,175,55,.9), 0 0 14px rgba(212,175,55,.5)}
@@ -1165,7 +1167,7 @@
   .hub-note{
     margin:0; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     text-align:center; font-size:10.5px; color:var(--muted); opacity:.65;
-    font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif; white-space:nowrap;
+    font-family:'Prompt',sans-serif; white-space:nowrap;
   }
   .crumb{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
   .crumb-current{color:var(--gold); font-weight:600}
@@ -1186,7 +1188,7 @@
     display:inline-flex; align-items:center; justify-content:center;
     width:26px; height:26px; padding:0; margin:0; background:none;
     border:1px solid transparent; border-radius:50%; color:var(--gold);
-    font:600 15px/1 'JetBrains Mono',monospace; cursor:pointer; opacity:.8;
+    font:600 15px/1 'JetBrains Mono','Prompt',monospace; cursor:pointer; opacity:.8;
     transition:background .18s ease, border-color .18s ease, opacity .18s ease, transform .18s cubic-bezier(.2,.7,.2,1);
   }
   .hub-btn-changelog:hover{opacity:1; background:var(--gold-soft); border-color:var(--line); transform:rotate(-12deg)}
@@ -1203,7 +1205,7 @@
   .hub-btn-theme:active{transform:scale(.94)}
   .hub-btn-theme[data-auto="1"]::after{
     content:"A"; position:absolute; right:-3px; bottom:-3px; width:12px; height:12px; border-radius:50%;
-    background:var(--gold); color:#14110b; font:800 8px/12px 'Prompt',-apple-system,sans-serif; text-align:center;
+    background:var(--gold); color:#14110b; font:800 8px/12px 'Prompt',sans-serif; text-align:center;
   }
   .hub-btn-theme:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .hub-theme-menu{
@@ -1213,13 +1215,13 @@
   .hub-theme-menu[hidden]{display:none}
   /* Guide menu (user 2026-10-17): while a guide is open its page buttons fold into this top-bar pill and its pop-up, so nothing sits over the guide */
   .cg-menu-btn{display:none}
-  html.tool-guide-reader .cg-menu-btn{display:inline-flex;align-items:center;gap:7px;flex:none;height:30px;padding:0 11px 0 10px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);border-radius:999px;background:color-mix(in srgb,var(--gold) 9%,transparent);color:var(--gold);font:600 12.5px 'Prompt',system-ui,sans-serif;letter-spacing:.2px;cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+  html.tool-guide-reader .cg-menu-btn{display:inline-flex;align-items:center;gap:7px;flex:none;height:30px;padding:0 11px 0 10px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);border-radius:999px;background:color-mix(in srgb,var(--gold) 9%,transparent);color:var(--gold);font:600 12.5px 'Prompt',sans-serif;letter-spacing:.2px;cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
   html.tool-guide-reader .cg-menu-btn:hover,html.tool-guide-reader .cg-menu-btn:focus-visible,html.tool-guide-reader .cg-menu-btn[aria-expanded="true"]{background:color-mix(in srgb,var(--gold) 18%,transparent);border-color:var(--gold);box-shadow:0 0 12px rgba(212,175,55,.35);outline:none}
   .cg-menu-btn svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .cg-menu-btn .cg-menu-chev{width:10px;height:10px;transition:transform .2s ease}
   .cg-menu-btn[aria-expanded="true"] .cg-menu-chev{transform:rotate(180deg)}
   @media (max-width:720px){html.tool-guide-reader .cg-menu-btn{width:30px;padding:0;justify-content:center}.cg-menu-btn-label,.cg-menu-btn .cg-menu-chev{display:none}}
-  .cg-menu-pop{position:fixed;z-index:1250;width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:14px 10px 10px;border-style:solid;border-width:1px;border-color:transparent;border-image:var(--cg-gild) 14 / 14px / 3px stretch;background-color:#15100b;background-image:linear-gradient(180deg,#221810,#120d09);box-shadow:0 24px 48px -12px rgba(0,0,0,.85);color:var(--text);font-family:'Prompt',system-ui,sans-serif;transform-origin:calc(100% - var(--cg-menu-notch,24px)) -8px;animation:cg-menu-in .18s cubic-bezier(.2,.8,.2,1)}
+  .cg-menu-pop{position:fixed;z-index:1250;width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:14px 10px 10px;border-style:solid;border-width:1px;border-color:transparent;border-image:var(--cg-gild) 14 / 14px / 3px stretch;background-color:#15100b;background-image:linear-gradient(180deg,#221810,#120d09);box-shadow:0 24px 48px -12px rgba(0,0,0,.85);color:var(--text);font-family:'Prompt',sans-serif;transform-origin:calc(100% - var(--cg-menu-notch,24px)) -8px;animation:cg-menu-in .18s cubic-bezier(.2,.8,.2,1)}
   .cg-menu-pop[hidden]{display:none}
   .cg-menu-pop::before{content:"";position:absolute;top:-7px;right:var(--cg-menu-notch,24px);width:12px;height:12px;background:#221810;border-left:1px solid rgba(201,162,39,.6);border-top:1px solid rgba(201,162,39,.6);transform:rotate(45deg)}   /* the notch points at the pill */
   @keyframes cg-menu-in{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
@@ -1247,13 +1249,13 @@
   .hub-theme-opt{
     width:48px; padding:4px 2px 3px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted);
     display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
-    font:700 10px/1 'Prompt',-apple-system,sans-serif; letter-spacing:.04em;
+    font:700 10px/1 'Prompt',sans-serif; letter-spacing:.04em;
     transition:background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
   }
   .hub-theme-opt img{width:36px; height:36px; object-fit:contain; display:block; opacity:.5; filter:grayscale(100%); transition:all .15s ease; pointer-events:none}
   .hub-theme-auto{
     width:36px; height:36px; border-radius:50%; border:2px solid var(--gold); color:var(--gold); background:var(--gold-soft);
-    display:grid; place-items:center; font:800 17px/1 'Prompt',-apple-system,sans-serif; opacity:.7; transition:opacity .15s ease, box-shadow .15s ease;
+    display:grid; place-items:center; font:800 17px/1 'Prompt',sans-serif; opacity:.7; transition:opacity .15s ease, box-shadow .15s ease;
   }
   .hub-theme-opt:hover .hub-theme-auto{opacity:1}
   .hub-theme-opt.active .hub-theme-auto{opacity:1; box-shadow:0 0 8px rgba(212,175,55,.6)}
@@ -1334,9 +1336,9 @@
   /* ---- Changelog modal ---- */
   .changelog-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.72)}
   .changelog-backdrop[hidden]{display:none}
-  .changelog-popup{width:min(560px,100%); max-height:min(720px,calc(100vh - 40px)); overflow:hidden; background:var(--panel); border:1px solid var(--gold); border-radius:6px; box-shadow:0 24px 70px rgba(0,0,0,.45); font-family:'Prompt',-apple-system,sans-serif}
+  .changelog-popup{width:min(560px,100%); max-height:min(720px,calc(100vh - 40px)); overflow:hidden; background:var(--panel); border:1px solid var(--gold); border-radius:6px; box-shadow:0 24px 70px rgba(0,0,0,.45); font-family:'Prompt',sans-serif}
   .changelog-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 20px 14px; border-bottom:1px solid var(--line)}
-  .changelog-kicker{margin:0 0 3px; color:var(--gold); font:600 10px/1.2 'JetBrains Mono',monospace; letter-spacing:.12em}
+  .changelog-kicker{margin:0 0 3px; color:var(--gold); font:600 10px/1.2 'JetBrains Mono','Prompt',monospace; letter-spacing:.12em}
   .changelog-head h2{margin:0; color:var(--text); font-size:19px; line-height:1.2; font-weight:600}
   .changelog-close{width:30px; height:30px; border:1px solid var(--line); border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; font-size:16px; line-height:1; transition:color .15s ease, background .15s ease}
   .changelog-close:hover{background:var(--gold-soft); color:var(--gold)}
@@ -1345,8 +1347,8 @@
   .changelog-list{max-height:min(510px,calc(100vh - 208px)); overflow-y:auto; list-style:none; margin:0; padding:4px 20px 12px; counter-reset:updates}
   .changelog-list li{position:relative; padding:11px 0 11px 27px; border-bottom:1px solid color-mix(in srgb,var(--line) 64%,transparent); color:var(--text); font-size:12px; line-height:1.45}
   .changelog-list li:last-child{border-bottom:0}
-  .changelog-list li::before{content:attr(data-n); position:absolute; left:0; top:12px; color:var(--gold); font:600 10px/1.5 'JetBrains Mono',monospace}
-  .changelog-entry-time{display:block; margin-bottom:2px; color:var(--muted); font:500 10px/1.3 'JetBrains Mono',monospace}
+  .changelog-list li::before{content:attr(data-n); position:absolute; left:0; top:12px; color:var(--gold); font:600 10px/1.5 'JetBrains Mono','Prompt',monospace}
+  .changelog-entry-time{display:block; margin-bottom:2px; color:var(--muted); font:500 10px/1.3 'JetBrains Mono','Prompt',monospace}
   .changelog-more-wrap{padding:10px 20px 16px; border-top:1px solid var(--line); text-align:center}
   .changelog-more{min-width:132px; padding:7px 14px; border:1px solid var(--gold); border-radius:4px; background:var(--gold-soft); color:var(--gold); font:500 12px/1.3 'Prompt',sans-serif; cursor:pointer; transition:background .15s ease, color .15s ease}
   .changelog-more:hover{background:var(--gold); color:var(--panel)}
@@ -1363,7 +1365,7 @@
      at the bottom for when 16:9 itself stops making sense. */
   .mech-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.72)}
   .mech-backdrop[hidden]{display:none}
-  .mech-popup{width:min(1800px,94vw,calc(94vh * 16 / 9)); aspect-ratio:16/9; max-height:94vh; overflow:hidden; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--mech-kw, #8a6a1f); border-radius:10px; box-shadow:0 32px 90px rgba(0,0,0,.5); font-family:'Prompt',-apple-system,sans-serif}
+  .mech-popup{width:min(1800px,94vw,calc(94vh * 16 / 9)); aspect-ratio:16/9; max-height:94vh; overflow:hidden; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--mech-kw, #8a6a1f); border-radius:10px; box-shadow:0 32px 90px rgba(0,0,0,.5); font-family:'Prompt',sans-serif}
   .mech-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 30px 18px; border-bottom:1px solid var(--line); flex:0 0 auto}
   .mech-head h2{margin:0; color:var(--text); font-size:22px; line-height:1.25; font-weight:700}
   .mech-head-actions{display:flex; align-items:center; gap:10px; flex-shrink:0}
@@ -1406,7 +1408,7 @@
      not a bullet), reinforcing "this step has its own page." */
   .mech-slide-wrap{position:relative; flex:1; display:flex; align-items:stretch; min-height:0}
   .mech-slide{position:relative; flex:1; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:8px 96px 32px; box-sizing:border-box}
-  .mech-slide-watermark{position:absolute; top:-.12em; left:26px; font:800 min(260px,22vw)/1 'JetBrains Mono',monospace; color:var(--mech-kw, #8a6a1f); opacity:.08; user-select:none; pointer-events:none; z-index:0}
+  .mech-slide-watermark{position:absolute; top:-.12em; left:26px; font:800 min(260px,22vw)/1 'JetBrains Mono','Prompt',monospace; color:var(--mech-kw, #8a6a1f); opacity:.08; user-select:none; pointer-events:none; z-index:0}
   .mech-slide-eyebrow{position:relative; z-index:1; color:var(--mech-kw, #8a6a1f); font:600 13.5px/1 'JetBrains Mono','Prompt',monospace; letter-spacing:.04em; margin-bottom:14px}
   .mech-slide-title{position:relative; z-index:1; margin:0 0 20px; color:var(--text); font:700 clamp(22px,min(3.4vw,5vh),36px)/1.3 'Prompt',sans-serif}
   .mech-slide-divider{position:relative; z-index:1; width:64px; height:3px; border-radius:2px; background:var(--mech-kw, #8a6a1f); margin-bottom:24px}
@@ -1433,7 +1435,7 @@
      inside a step's title/body, written as `term` in MECHANIC_DESC_MAP --
      see renderMechCode(). Monospace here is fine (unlike Thai prose)
      since the wrapped text itself is always a Latin identifier. */
-  .mech-code{font:600 .82em/1 'JetBrains Mono',monospace; background:var(--mech-kw-bg, rgba(138,106,31,0.08)); border:1px solid var(--mech-kw-border, rgba(138,106,31,0.28)); border-radius:4px; padding:2px 7px; color:var(--mech-kw, #8a6a1f)}
+  .mech-code{font:600 .82em/1 'JetBrains Mono','Prompt',monospace; background:var(--mech-kw-bg, rgba(138,106,31,0.08)); border:1px solid var(--mech-kw-border, rgba(138,106,31,0.28)); border-radius:4px; padding:2px 7px; color:var(--mech-kw, #8a6a1f)}
 
   /* Below this width/height, a fixed 16:9 page either overflows or
      shrinks the type past legibility -- drop the aspect ratio and behave
@@ -1497,7 +1499,7 @@
   .donate-head-title-wrap{display:flex; align-items:center; gap:8px}
   .donate-head-icon{font-size:16px}
   .donate-head-title{
-    font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif;
+    font-family:'Prompt',sans-serif;
     font-size:14px; font-weight:600; color:var(--gold); margin:0;
   }
   .donate-close{
@@ -1509,7 +1511,7 @@
   .donate-close:hover{color:var(--text); background:rgba(255,255,255,.08); border-color:var(--line)}
   .donate-body{display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center}
   .donate-msg{
-    font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif;
+    font-family:'Prompt',sans-serif;
     font-size:clamp(10px,2.4vw,15px); line-height:1.7; color:var(--muted); margin:0; white-space:nowrap;
   }
   .donate-msg strong{color:var(--gold); font-weight:600}
@@ -1525,7 +1527,7 @@
   /* One co-author per page (user 2026-10-08), no scrolling: all pages share one grid cell, so the tallest page decides the font size
      (creditsFit() shrinks the text until it fits the screen) and the box height then follows the active page (creditsSetHeight()). */
   .credits-body{display:grid; box-sizing:border-box; padding:3px 3px 16px; margin:-3px -3px -16px; font-size:14px; max-height:calc(100dvh - 230px + 19px); overflow:hidden; transition:height .22s ease;
-    font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif}
+    font-family:'Prompt',sans-serif}
   .credits-item{grid-area:1 / 1; align-self:start; min-width:0; padding:10px 12px; transition:opacity .22s ease, transform .22s ease; border:1px solid var(--line); border-radius:6px; background:color-mix(in srgb, var(--gold) 4%, transparent)}
   .credits-name{margin:0; font-size:1.07em; font-weight:600; color:var(--gold)}
   .credits-what{margin:4px 0 0; padding-left:18px; font-size:.93em; line-height:1.6; color:var(--muted)}
@@ -1599,7 +1601,7 @@
 
   /* Class Guide: community pages and authoring reuse the original game skill grid. */
   .cg-page [hidden]{display:none !important}
-  .cg-page{font-family:'Prompt',-apple-system,sans-serif}
+  .cg-page{font-family:'Prompt',sans-serif}
   .cg-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:8px 0 18px}
   .cg-heading h2,.cg-reader h2{font-family:inherit;font-size:30px;color:var(--text);margin:0}
   .cg-kicker{font-family:inherit;color:var(--gold);font-size:11px;letter-spacing:.14em;margin:0 0 6px}
@@ -1665,7 +1667,7 @@
   /* เซ็ตแนะนำ (user 2026-10-16): a row per set; a Replica is a superscript icon with a curved arrow into the item */
   .cg-set-list{display:grid;gap:4px}
   .cg-set-row{display:grid;grid-template-columns:14px repeat(var(--cg-set-cols,6),minmax(0,1fr));gap:4px 10px;align-items:start;padding:12px 0 4px;border-top:1px solid var(--line)}
-  .cg-set-no{font:700 13px/1 ui-monospace,monospace;color:var(--gold);padding-top:14px}
+  .cg-set-no{font:700 13px/1 JetBrains Mono,Prompt,monospace;color:var(--gold);padding-top:14px}
   .cg-set-cell{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
   .cg-set-cell .cg-gear-stat{font-size:10.5px;white-space:nowrap;width:100%;max-width:56px;display:flex;justify-content:center}   /* centred under the icon at every width (user 2026-10-16); flex so a wider label overflows evenly */
   .cg-set-cell[data-cg-tip]{outline:none}
@@ -1858,7 +1860,7 @@
   .cg-import-dialog .cg-help{margin:0}
   .cg-import-error{color:var(--seal);font-size:13px;line-height:1.7;margin:8px 0 0}
   .cg-import-error:empty{display:none}
-  .cg-transfer .cg-code{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
+  .cg-transfer .cg-code{font-family:"JetBrains Mono","Prompt",monospace;font-size:12px;line-height:1.8;margin-bottom:12px}
   .cg-page .rsim{margin-top:24px}
   .cg-page .rsim-tree-head h3{font-family:inherit}
   .cg-page .rsim-lv{width:56px;padding:4px 6px}
@@ -2174,7 +2176,7 @@
   html.tool-rsim .stage{max-width:min(1240px, 98vw)}
   html.tool-rsim .tool-shell{width:100%}
   html.tool-rsim .tool-shell{background:none !important; border:0 !important; box-shadow:none !important}
-  .rsim{padding:16px 22px 22px; font-family:'Prompt', -apple-system, sans-serif}
+  .rsim{padding:16px 22px 22px; font-family:'Prompt', sans-serif}
   .rsim-bar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px; margin-bottom:12px}
   .rsim-field{display:flex; align-items:center; gap:8px; font-size:13px}
   .rsim-field b{color:var(--text); font-weight:600}
@@ -2357,7 +2359,7 @@
   .cg-page[data-mode="reader"] .rsim-trees{align-items:start}
   @media (min-width: 341px) and (max-width: 600px){ .cg-page[data-mode="reader"] .rsim-trees{align-items:stretch} }
   /* CHA / AGI Optimizer (cha-agi-optimizer tool, 2026-09-25) */
-  .cao{padding:16px 22px; font-family:'Prompt', -apple-system, sans-serif}
+  .cao{padding:16px 22px; font-family:'Prompt', sans-serif}
   .cao-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px}
   .cao-head h2{font-size:17px; margin:0}
   .cao-toggle{display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:4px 10px 4px 4px; color:var(--muted); font:inherit; font-size:13px; cursor:pointer}
@@ -2915,7 +2917,7 @@
     width:100%; height:100%; object-fit:contain; display:block; pointer-events:none;
   }
   .sk-server-badge{
-    font-family:'Prompt',-apple-system,sans-serif; font-size:12px; font-weight:700;
+    font-family:'Prompt',sans-serif; font-size:12px; font-weight:700;
     letter-spacing:0.5px; color:var(--gold); border:1px solid var(--line);
     background:var(--panel); border-radius:6px; padding:4px 10px;
     display:inline-flex; align-items:center; justify-content:center;
@@ -2979,11 +2981,11 @@
     display:flex; flex-direction:column; gap:3px;
   }
   .sk-server-popup-title{
-    font-family:'Prompt',-apple-system,sans-serif; font-size:18px; font-weight:700;
+    font-family:'Prompt',sans-serif; font-size:18px; font-weight:700;
     color:var(--gold); line-height:1.25; letter-spacing:0.3px;
   }
   .sk-server-popup-subtitle{
-    font-family:'Prompt',-apple-system,sans-serif; font-size:12px; color:var(--muted);
+    font-family:'Prompt',sans-serif; font-size:12px; color:var(--muted);
     line-height:1.3;
   }
   .sk-server-popup-close{
@@ -3000,7 +3002,7 @@
     margin:2px 0 4px 0;
   }
   .sk-server-popup-body{
-    font-family:'Prompt',-apple-system,sans-serif; font-size:14px; line-height:1.75;
+    font-family:'Prompt',sans-serif; font-size:14px; line-height:1.75;
     color:var(--text); white-space:pre-line;
   }
   .sk-val{
@@ -3010,7 +3012,7 @@
     color:var(--seal); font-weight:600;
   }
   .sk-server-popup-hint{
-    font-family:'Prompt',-apple-system,sans-serif; font-size:11px; color:rgba(255,255,255,0.35);
+    font-family:'Prompt',sans-serif; font-size:11px; color:rgba(255,255,255,0.35);
     text-align:right; margin-top:6px;
   }
   .sk-hero-class{cursor:pointer; transition:text-shadow .15s ease}
@@ -3046,10 +3048,10 @@
   .mon-races button{ font:inherit; font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); cursor:pointer; }
   .mon-races button.active{ border-color:var(--gold); color:var(--gold); font-weight:700; }
   .mon-wrap{ overflow:auto; max-height:calc(100vh - 250px); min-height:240px; border:1px solid var(--line); border-radius:4px; background:var(--panel); }
-  .mon-table{ border-collapse:separate; border-spacing:0; width:100%; font-size:12.5px; line-height:1.3; font-family:'Prompt',system-ui,sans-serif; font-variant-numeric:tabular-nums; }
-  .mon-table td:not(:first-child):not(.mon-race):not(.mon-src){ font-family:'JetBrains Mono',ui-monospace,Consolas,monospace; font-size:11.5px; font-weight:500; }
+  .mon-table{ border-collapse:separate; border-spacing:0; width:100%; font-size:12.5px; line-height:1.3; font-family:'Prompt',sans-serif; font-variant-numeric:tabular-nums; }
+  .mon-table td:not(:first-child):not(.mon-race):not(.mon-src){ font-family:'JetBrains Mono','Prompt',monospace; font-size:11.5px; font-weight:500; }
   .mon-table th{ letter-spacing:.3px; }
-  .mon-search, .mon-races button{ font-family:'Prompt',system-ui,sans-serif; }
+  .mon-search, .mon-races button{ font-family:'Prompt',sans-serif; }
   .mon-table th, .mon-table td{ padding:3px 7px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
   .mon-table th{ position:sticky; top:0; z-index:2; background:var(--panel); color:var(--muted); font-weight:700; cursor:pointer; user-select:none; }
   .mon-table th.sorted{ color:var(--gold); }
@@ -3080,17 +3082,17 @@
   :root[data-theme="dark"] .bg-page[data-boss="zera"]{ --bg-acc:#ec7fb6; --bg-acc-soft:rgba(236,127,182,.13); --bg-acc-line:rgba(236,127,182,.5); }
   .bg-cyc-steps{ list-style:none; counter-reset:cyc; margin:10px 0 4px; padding:0; display:grid; gap:8px; }
   .bg-cyc-steps li{ counter-increment:cyc; position:relative; padding:8px 10px 8px 38px; border:1px solid var(--bg-acc-line); border-radius:8px; background:var(--bg-acc-soft); }
-  .bg-cyc-steps li::before{ content:counter(cyc); position:absolute; left:10px; top:8px; width:20px; height:20px; border-radius:50%; background:var(--bg-acc); color:#fff; font:700 12px/20px 'JetBrains Mono',monospace; text-align:center; }
-  .bg-cyc-steps b{ font-family:'Kanit','Prompt',sans-serif; color:var(--bg-acc); }
-  .bg-cyc-time{ font:600 12px 'JetBrains Mono',monospace; opacity:.8; margin-left:6px; }
+  .bg-cyc-steps li::before{ content:counter(cyc); position:absolute; left:10px; top:8px; width:20px; height:20px; border-radius:50%; background:var(--bg-acc); color:#fff; font:700 12px/20px 'JetBrains Mono','Prompt',monospace; text-align:center; }
+  .bg-cyc-steps b{ font-family:'Prompt',sans-serif; color:var(--bg-acc); }
+  .bg-cyc-time{ font:600 12px 'JetBrains Mono','Prompt',monospace; opacity:.8; margin-left:6px; }
   .bg-cyc-steps p{ margin:3px 0 0; font-size:13.5px; line-height:1.6; }
   .bg-mech{ display:grid; gap:10px; }
   .bg-speed{ width:100%; border-collapse:collapse; margin:8px 0; font-size:13px; }
   .bg-speed th, .bg-speed td{ padding:5px 8px; border-bottom:1px solid var(--bg-acc-line); text-align:left; }
-  .bg-speed th{ font-family:'Kanit','Prompt',sans-serif; font-weight:600; color:var(--bg-acc); }
-  .bg-speed td:nth-child(2), .bg-speed td:nth-child(3){ font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+  .bg-speed th{ font-family:'Prompt',sans-serif; font-weight:600; color:var(--bg-acc); }
+  .bg-speed td:nth-child(2), .bg-speed td:nth-child(3){ font-family:'JetBrains Mono','Prompt',monospace; white-space:nowrap; }
   .bg-mech-item{ border:1px solid var(--bg-acc-line); border-radius:8px; padding:10px 12px; background:var(--bg-acc-soft); }
-  .bg-mech-item h4{ margin:0 0 4px; font-family:'Kanit','Prompt',sans-serif; font-size:15px; color:var(--bg-acc); }
+  .bg-mech-item h4{ margin:0 0 4px; font-family:'Prompt',sans-serif; font-size:15px; color:var(--bg-acc); }
   .bg-mech-item p{ margin:0; font-size:13.5px; line-height:1.6; }
   .bg-page[data-boss="ewiniar"]{ --bg-acc:#13798a; --bg-acc-soft:rgba(19,121,138,.11); --bg-acc-line:rgba(19,121,138,.45); }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .bg-page[data-boss="ewiniar"]{ --bg-acc:#5cd2e3; --bg-acc-soft:rgba(92,210,227,.13); --bg-acc-line:rgba(92,210,227,.5); } }
@@ -3112,19 +3114,19 @@
   /* hero: identity + stats on the left, range map on the right */
   .bg-hero{ display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, .95fr); gap:22px; align-items:start; padding:18px 18px 16px; border:1px solid var(--line); border-radius:6px; background:linear-gradient(135deg, var(--bg-acc-soft), transparent 55%), var(--panel); }
   @media (max-width:860px){ .bg-hero{ grid-template-columns:1fr; } }
-  .bg-eyebrow{ margin:0 0 6px; font:500 11px/1.3 'JetBrains Mono',monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--bg-acc); }
+  .bg-eyebrow{ margin:0 0 6px; font:500 11px/1.3 'JetBrains Mono','Prompt',monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--bg-acc); }
   .bg-name{ margin:0; font:600 clamp(30px, 5.2vw, 48px)/1 'Prompt',sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--text); }
-  .bg-name-th{ margin:6px 0 14px; font:400 15px/1.3 'Kanit','Prompt',sans-serif; color:var(--muted); }
+  .bg-name-th{ margin:6px 0 14px; font:400 15px/1.3 'Prompt',sans-serif; color:var(--muted); }
   .bg-stats{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
   .bg-stat{ display:flex; flex-direction:column; gap:2px; padding:6px 9px; background:var(--panel); }
   .bg-stat span{ font:600 10px/1 'Prompt',sans-serif; letter-spacing:.12em; color:var(--muted); }
-  .bg-stat b{ font:600 15px/1.15 'JetBrains Mono',monospace; color:var(--text); font-variant-numeric:tabular-nums; }
+  .bg-stat b{ font:600 15px/1.15 'JetBrains Mono','Prompt',monospace; color:var(--text); font-variant-numeric:tabular-nums; }
   .bg-stat.c-hp b{ color:var(--stat-hp); } .bg-stat.c-atk b{ color:var(--stat-atk); } .bg-stat.c-def b{ color:var(--stat-def); }
   .bg-stat.c-tal b{ color:var(--stat-tal); } .bg-stat.c-cha b{ color:var(--stat-cha); } .bg-stat.c-lck b{ color:var(--stat-lck); }
   .bg-armor{ margin:10px 0 0; font-size:13px; }
   .bg-immune{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin:10px 0 0; font-size:12px; }
   .bg-label{ font:600 10.5px/1 'Prompt',sans-serif; letter-spacing:.1em; color:var(--muted); margin-right:4px; }
-  .bg-chip{ padding:1px 7px; border-radius:999px; border:1px dashed var(--line); color:var(--muted); font:500 11px/1.5 'JetBrains Mono',monospace; text-decoration:line-through; text-decoration-color:var(--bg-acc-line); }
+  .bg-chip{ padding:1px 7px; border-radius:999px; border:1px dashed var(--line); color:var(--muted); font:500 11px/1.5 'JetBrains Mono','Prompt',monospace; text-decoration:line-through; text-decoration-color:var(--bg-acc-line); }
   .bg-none{ color:var(--muted); }
 
   /* HP bar: right = full HP; a move starts being used once HP drops below its mark */
@@ -3134,7 +3136,7 @@
   .bg-hp-mark i{ position:absolute; left:-1px; top:calc(var(--r) * 16px + 7px); bottom:0; width:2px; background:var(--text); }
   .bg-hp-mark em{ position:absolute; top:calc(var(--r) * 16px); right:5px; white-space:nowrap; font:600 11px/14px 'Prompt',sans-serif; font-style:normal; color:var(--text); }
 
-  .bg-hp-mark em small{ font:500 10px/14px 'JetBrains Mono',monospace; color:var(--muted); }
+  .bg-hp-mark em small{ font:500 10px/14px 'JetBrains Mono','Prompt',monospace; color:var(--muted); }
   .bg-hp-legend{ display:flex; justify-content:space-between; gap:8px; font-size:11px; color:var(--muted); }
 
   /* the range map */
@@ -3142,7 +3144,7 @@
   .bg-map{ display:block; width:100%; max-width:380px; margin:0 auto; overflow:visible; }
   .bg-grid circle{ fill:none; stroke:var(--line); stroke-dasharray:2 4; }
   .bg-grid line{ stroke:var(--line); stroke-opacity:.6; }
-  .bg-grid text, .bg-front{ fill:var(--muted); font:500 9px 'JetBrains Mono',monospace; }
+  .bg-grid text, .bg-front{ fill:var(--muted); font:500 9px 'JetBrains Mono','Prompt',monospace; }
   .bg-front{ font-family:'Prompt',sans-serif; font-size:9.5px; }
   .bg-zone{ fill:var(--bg-acc); fill-opacity:.05; stroke:var(--bg-acc); stroke-opacity:.28; stroke-width:1; transition:fill-opacity .2s, stroke-opacity .2s; }
   .bg-zone .bg-ray, .bg-zone .bg-dash{ stroke-width:2; stroke-dasharray:6 4; }
@@ -3156,7 +3158,7 @@
 
   /* sections */
   .bg-sec{ margin:22px 0 0; }
-  .bg-h{ margin:0 0 10px; font:500 18px/1.2 'Kanit','Prompt',sans-serif; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .bg-h{ margin:0 0 10px; font:500 18px/1.2 'Prompt',sans-serif; color:var(--text); display:flex; align-items:center; gap:10px; }
   .bg-h::after{ content:""; flex:1; height:1px; background:var(--line); }
   .bg-target{ margin:0 0 10px; font-size:13.5px; }
   .bg-note{ margin:8px 0 0; font-size:12.5px; color:var(--muted); }
@@ -3164,19 +3166,19 @@
   .bg-cyc{ min-width:64px; padding:6px 8px; border-radius:3px; background:var(--panel); border:1px solid var(--line); display:flex; flex-direction:column; gap:1px; }
   .bg-cyc:last-child{ border-color:var(--bg-acc-line); background:var(--bg-acc-soft); }
   .bg-cyc b{ font-size:12.5px; font-weight:600; color:var(--text); }
-  .bg-cyc i{ font:500 11px/1.2 'JetBrains Mono',monospace; font-style:normal; color:var(--muted); }
+  .bg-cyc i{ font:500 11px/1.2 'JetBrains Mono','Prompt',monospace; font-style:normal; color:var(--muted); }
 
   /* priority ladder: top rung is checked first */
   .bg-ladder{ list-style:none; margin:12px 0 0; padding:0; counter-reset:rung; display:flex; flex-direction:column; gap:4px; }
   .bg-ladder li{ counter-increment:rung; display:flex; align-items:stretch; gap:8px; }
-  .bg-ladder li::before{ content:counter(rung); flex:0 0 24px; display:grid; place-items:center; font:600 12px 'JetBrains Mono',monospace; color:var(--bg-acc); border-right:2px solid var(--bg-acc-line); }
+  .bg-ladder li::before{ content:counter(rung); flex:0 0 24px; display:grid; place-items:center; font:600 12px 'JetBrains Mono','Prompt',monospace; color:var(--bg-acc); border-right:2px solid var(--bg-acc-line); }
   .bg-rung{ flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; text-align:left; font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:6px 10px; cursor:pointer; transition:border-color .15s, background .15s; }
   .bg-rung:focus-visible, .bg-move:focus-visible{ outline:2px solid var(--bg-acc); outline-offset:2px; }
   .bg-rung.lit, .bg-move.lit{ border-color:var(--bg-acc); background:linear-gradient(var(--bg-acc-soft), var(--bg-acc-soft)), var(--panel); }
   .bg-rung-name{ font:600 13.5px/1.2 'Prompt',sans-serif; letter-spacing:.03em; min-width:110px; }
   .bg-rung-when{ display:flex; flex-wrap:wrap; gap:4px; flex:1; }
   .bg-cond{ font-size:11.5px; padding:1px 7px; border-radius:3px; background:var(--panel-2, rgba(127,127,127,.1)); color:var(--text); white-space:nowrap; }
-  .bg-rung-cd{ font:500 11px/1.2 'JetBrains Mono',monospace; color:var(--muted); white-space:nowrap; }
+  .bg-rung-cd{ font:500 11px/1.2 'JetBrains Mono','Prompt',monospace; color:var(--muted); white-space:nowrap; }
 
   /* move cards */
   .bg-moves{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; }
@@ -3184,15 +3186,15 @@
   .bg-move.bg-k-purple{ border-left-style:dashed; }
   .bg-move header{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; }
   .bg-move h4{ margin:0; font:600 15px/1.2 'Prompt',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:var(--text); }
-  .bg-move-th{ font:400 13px/1.2 'Kanit','Prompt',sans-serif; color:var(--muted); }
+  .bg-move-th{ font:400 13px/1.2 'Prompt',sans-serif; color:var(--muted); }
   .bg-danger{ order:3; margin-left:auto; color:var(--bg-acc); font-size:10px; letter-spacing:2px; }
   .bg-danger-off{ color:var(--line); }
   .bg-nums{ display:grid; grid-template-columns:1.5fr .8fr .9fr; gap:6px; margin:8px 0 6px; }
   .bg-nums div{ min-width:0; }
   .bg-nums dt{ font:600 10px/1.2 'Prompt',sans-serif; letter-spacing:.08em; color:var(--muted); }
-  .bg-nums dd{ margin:1px 0 0; font:600 13.5px/1.25 'JetBrains Mono',monospace; color:var(--text); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .bg-nums dd{ margin:1px 0 0; font:600 13.5px/1.25 'JetBrains Mono','Prompt',monospace; color:var(--text); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
   .bg-move.bg-k-purple .bg-nums dd:first-child{ color:var(--bg-acc); }
-  .bg-formula{ margin:0 0 6px; font:500 11px/1.3 'JetBrains Mono',monospace; color:var(--muted); }
+  .bg-formula{ margin:0 0 6px; font:500 11px/1.3 'JetBrains Mono','Prompt',monospace; color:var(--muted); }
   .bg-timing{ margin:0 0 6px; padding:3px 0 3px 8px; border-left:2px solid var(--line); font-size:12.5px; color:var(--text); }
   .bg-text{ margin:0; font-size:13px; line-height:1.55; color:var(--muted); }
   .bg-move.bg-k-move{ border-left-style:dotted; }
@@ -3215,17 +3217,17 @@
   .bg-can.on .bg-traj{ stroke-width:.8; }
   .bg-can-pt circle{ fill:var(--gold); stroke:var(--panel); stroke-width:.5; }
   .bg-can-pt.on circle{ r:2.6; }
-  .bg-can-n{ fill:var(--text); font-family:'JetBrains Mono',monospace; font-weight:600; }
+  .bg-can-n{ fill:var(--text); font-family:'JetBrains Mono','Prompt',monospace; font-weight:600; }
   .bg-saw-r{ fill:var(--stat-atk, #c0392b); fill-opacity:.1; stroke:var(--stat-atk, #c0392b); stroke-width:.45; }
   .bg-saw{ fill:var(--stat-atk, #c0392b); }
   .bg-sw rect{ fill:var(--text); }
   .bg-scale path{ fill:none; stroke:var(--muted); stroke-width:.4; }
-  .bg-sub{ margin:0 0 8px; font:600 14px/1.2 'Kanit','Prompt',sans-serif; color:var(--bg-acc); }
+  .bg-sub{ margin:0 0 8px; font:600 14px/1.2 'Prompt',sans-serif; color:var(--bg-acc); }
   .bg-ship-body .bg-sub:not(:first-child){ margin-top:16px; }
   .bg-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
   .bg-tbl th{ text-align:left; font:600 10.5px/1.2 'Prompt',sans-serif; letter-spacing:.06em; color:var(--muted); padding:4px 8px; border-bottom:1px solid var(--line); }
   .bg-tbl td{ padding:5px 8px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
-  .bg-tbl td:first-child b{ font-family:'JetBrains Mono',monospace; color:var(--gold); }
+  .bg-tbl td:first-child b{ font-family:'JetBrains Mono','Prompt',monospace; color:var(--gold); }
   .bg-tbl tr[data-cannon]{ cursor:default; transition:background .15s; }
   .bg-tbl tr.on{ background:var(--bg-acc-soft); }
   .bg-tbl tr:focus-visible{ outline:2px solid var(--bg-acc); outline-offset:-2px; }
@@ -3233,14 +3235,14 @@
   .bg-list li + li{ margin-top:3px; }
   .bg-fall{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:4px; margin:6px 0 10px; }
   .bg-fall div{ display:flex; flex-direction:column; gap:2px; padding:5px 7px 6px; border:1px solid var(--line); border-radius:3px; background:var(--panel); }
-  .bg-fall span{ font:500 10.5px/1 'JetBrains Mono',monospace; color:var(--muted); }
-  .bg-fall b{ font:600 14px/1.1 'JetBrains Mono',monospace; color:var(--text); }
+  .bg-fall span{ font:500 10.5px/1 'JetBrains Mono','Prompt',monospace; color:var(--muted); }
+  .bg-fall b{ font:600 14px/1.1 'JetBrains Mono','Prompt',monospace; color:var(--text); }
   .bg-fall i{ display:block; height:3px; border-radius:2px; width:calc(var(--w) * 100%); background:var(--gold); }
   .bg-exp{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1px; margin:0; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
   @media (max-width:560px){ .bg-exp{ grid-template-columns:1fr; } .bg-fall b{ font-size:12.5px; } }
   .bg-exp div{ padding:6px 9px; background:var(--panel); }
   .bg-exp dt{ font:600 10px/1.2 'Prompt',sans-serif; letter-spacing:.08em; color:var(--muted); }
-  .bg-exp dd{ margin:2px 0 0; font:600 14px/1.2 'JetBrains Mono',monospace; color:var(--text); font-variant-numeric:tabular-nums; }
+  .bg-exp dd{ margin:2px 0 0; font:600 14px/1.2 'JetBrains Mono','Prompt',monospace; color:var(--text); font-variant-numeric:tabular-nums; }
   .bg-saw-box{ margin:18px 0 0; padding:12px 14px 14px; border:1px solid var(--line); border-left:3px solid var(--stat-atk, #c0392b); border-radius:4px; background:var(--panel); }
   .bg-steps{ margin:0 0 12px; padding-left:20px; font-size:13px; line-height:1.55; color:var(--muted); }
   .bg-steps li + li{ margin-top:4px; }
@@ -3514,7 +3516,7 @@
   .sk-roster-empty-sub{font-size:13px; color:var(--muted)}
   .sk-search-hero .sk-search{
     padding: 16px 28px;
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 22px;
     font-weight: 700;
     text-align: center;
@@ -3529,7 +3531,7 @@
     box-shadow: 0 0 0 2px var(--gold-soft), 0 8px 32px rgba(201,162,39,0.35);
   }
   .sk-search-hero .sk-search::placeholder{
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     color: #c9a227;
     font-weight: 700;
     opacity: 0.75;
@@ -3546,7 +3548,7 @@
     font-size: 15.5px;
   }
   .sk-search-hero .sk-suggestion-name{
-    font-family: Georgia, "Iowan Old Style", 'Prompt', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 16px;
     font-weight: 700;
     color: var(--text);
@@ -3682,7 +3684,7 @@
     padding:5px 12px;
     box-sizing:border-box;
     box-shadow:0 1px 3px rgba(0,0,0,0.3);
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
     font-size:12px;
     line-height:1.42;
     color:var(--muted);
@@ -3694,7 +3696,7 @@
     display:flex; align-items:center; gap:9px 14px; flex-wrap:wrap;
     margin:14px 0; padding:12px 14px 11px;
     background:var(--panel); border:1px solid var(--gold); border-radius:4px;
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
   }
   .sk-support-lv label{
     font-size:11.5px; color:var(--gold); font-weight:600; white-space:nowrap;
@@ -3704,7 +3706,7 @@
     appearance:textfield; -moz-appearance:textfield;
     background:rgba(12,11,9,0.85); color:#ede8df;
     border:1px solid rgba(212,175,55,0.4); border-radius:4px; padding:3px 6px;
-    font:600 13px/1.2 'Prompt',-apple-system,"Segoe UI",sans-serif; text-align:center;
+    font:600 13px/1.2 'Prompt',sans-serif; text-align:center;
   }
   .sk-support-lv input[type=number]::-webkit-inner-spin-button,
   .sk-support-lv input[type=number]::-webkit-outer-spin-button{
@@ -3777,7 +3779,7 @@
   .sk-crit-btn{display:inline-flex; align-items:center; height:28px; padding:0 10px; border:1px solid var(--line); border-radius:4px; background:var(--panel); color:var(--gold); font-family:'Prompt',sans-serif; font-size:11px; font-weight:700; cursor:pointer; box-sizing:border-box}
   .sk-crit-btn.on{background:var(--gold); color:var(--ink); border-color:var(--gold)}
   .dmg-crit-wrap{display:inline-flex; align-items:stretch; gap:4px} .dmg-crit-wrap > .dmg-crit-mult{align-self:center}
-  .dmg-crit-mult{font-family:ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; font-weight:700; color:var(--gold)}
+  .dmg-crit-mult{font-family:'JetBrains Mono','Prompt',monospace; font-weight:700; color:var(--gold)}
   .sk-val-red{
     color:var(--seal);
     font-weight:600;
@@ -3810,7 +3812,7 @@
     border:1px solid var(--gold);
     border-radius:4px;
     padding:5px 10px;
-    font-family:'Prompt',-apple-system,sans-serif;
+    font-family:'Prompt',sans-serif;
     text-align:center;
     white-space:nowrap;
     width:max-content;
@@ -3879,7 +3881,7 @@
   .sk-hero-info summary{
     list-style:none; cursor:pointer; width:16px; height:16px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; font-size:11px;
-    line-height:1; font-family:-apple-system,"Segoe UI",'Prompt',system-ui,sans-serif;
+    line-height:1; font-family:'Prompt',sans-serif;
     color:var(--muted); border:1px solid var(--line); transition:color .15s, border-color .15s;
   }
   .sk-hero-info summary::-webkit-details-marker{display:none}
@@ -4035,7 +4037,7 @@
     padding:5px 12px;
     box-sizing:border-box;
     box-shadow:0 1px 3px rgba(0,0,0,0.3);
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
     font-size:12px;
     line-height:1.42;
     color:var(--muted);
@@ -4046,7 +4048,7 @@
     display:flex; align-items:center; gap:9px 14px; flex-wrap:wrap;
     margin:14px 0; padding:12px 14px 11px;
     background:var(--panel); border:1px solid var(--gold); border-radius:4px;
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
   }
   .sk-support-lv label{
     font-size:11.5px; color:var(--gold); font-weight:600; white-space:nowrap;
@@ -4056,7 +4058,7 @@
     appearance:textfield; -moz-appearance:textfield;
     background:rgba(12,11,9,0.85); color:#ede8df;
     border:1px solid rgba(212,175,55,0.4); border-radius:4px; padding:3px 6px;
-    font:600 13px/1.2 'Prompt',-apple-system,"Segoe UI",sans-serif; text-align:center;
+    font:600 13px/1.2 'Prompt',sans-serif; text-align:center;
   }
   .sk-support-lv input[type=number]::-webkit-inner-spin-button,
   .sk-support-lv input[type=number]::-webkit-outer-spin-button{
@@ -4113,7 +4115,7 @@
     border:1px solid var(--gold);
     border-radius:4px;
     padding:5px 10px;
-    font-family:'Prompt',-apple-system,sans-serif;
+    font-family:'Prompt',sans-serif;
     text-align:center;
     white-space:nowrap;
     width:max-content;
@@ -4184,7 +4186,7 @@
   .sk-hero-info summary{
     list-style:none; cursor:pointer; width:16px; height:16px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; font-size:11px;
-    line-height:1; font-family:-apple-system,"Segoe UI",'Prompt',system-ui,sans-serif;
+    line-height:1; font-family:'Prompt',sans-serif;
     color:var(--muted); border:1px solid var(--line); transition:color .15s, border-color .15s;
   }
   .sk-hero-info summary::-webkit-details-marker{display:none}
@@ -4280,7 +4282,7 @@
   .sk-stat-lck3{grid-column:2}
   .sk-stat-passive{grid-column:1; border-color:var(--gold) !important; background:linear-gradient(180deg, rgba(212,175,55,0.16) 0%, rgba(20,19,17,0.95) 100%) !important; box-shadow:inset 0 0 12px rgba(212,175,55,0.15), 0 2px 8px rgba(0,0,0,0.4)}
   .sk-stat-passive .sk-stat-label{color:var(--gold-soft); font-weight:600; letter-spacing:0.05em}
-  .sk-stat-value-passive{color:var(--gold) !important; font-family:'Cinzel', serif, -apple-system, sans-serif !important; font-size:20px !important; font-weight:700 !important; letter-spacing:0.1em !important; text-shadow:0 0 10px rgba(212,175,55,0.4)}
+  .sk-stat-value-passive{color:var(--gold) !important; font-family:'Prompt', sans-serif !important; font-size:20px !important; font-weight:700 !important; letter-spacing:0.1em !important; text-shadow:0 0 10px rgba(212,175,55,0.4)}
   .sk-stat-passive .sk-stat-base{color:var(--gold-soft); font-weight:500}
 
   /* 8-Position Grid Matrix & Custom Spans (2026-08-25, user-directed) */
@@ -4337,11 +4339,11 @@
   .sk-summon-badge{
     font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
     color:var(--gold); background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.35);
-    padding:2px 6px; border-radius:3px; line-height:1.3; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    padding:2px 6px; border-radius:3px; line-height:1.3; font-family:'Prompt',sans-serif;
   }
   .sk-summon-head .sk-stat-label{
     margin:0; font-size:11.5px; font-weight:600; color:var(--gold);
-    letter-spacing:.06em; text-transform:uppercase; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    letter-spacing:.06em; text-transform:uppercase; font-family:'Prompt',sans-serif;
   }
   .sk-summon-toggles{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
   .sk-summon-grid{display:grid; grid-template-columns:repeat(9, 1fr); gap:8px}
@@ -4381,19 +4383,19 @@
   .sk-summon-stat-label{
     font-size:10px; font-weight:600; color:var(--muted); letter-spacing:.05em;
     text-transform:uppercase; margin:0 0 4px 0; white-space:nowrap;
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
   }
   .sk-summon-stat-value{
     font-size:18px; font-weight:700; color:var(--gold); line-height:1.2;
     white-space:nowrap; font-variant-numeric:tabular-nums;
-    font-family:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,'Prompt',monospace;
+    font-family:'JetBrains Mono','Prompt',monospace;
   }
   .sk-summon-stat.sk-summon-stat-unused{opacity:.45}
   .sk-summon-stat.sk-summon-stat-unused .sk-summon-stat-value{color:var(--muted); font-weight:500}
   .sk-summon-caption{
     margin:10px 0 0 0; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.06);
     font-size:11px; color:var(--muted); line-height:1.4;
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
   }
   @media (max-width:768px){
     .sk-summon-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
@@ -4431,7 +4433,7 @@
   }
   .sk-compat-title{
     margin:0 0 10px 2px;
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
     font-size:14px;
     font-weight:600;
     color:var(--gold);
@@ -4468,7 +4470,7 @@
   }
   .sk-compat-name{
     flex:1; min-width:0; margin-left:9px;
-    font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;
+    font-family:'Prompt',sans-serif;
     font-size:14px; font-weight:500; color:var(--text); line-height:1.22;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
     overflow:hidden; text-overflow:ellipsis; word-break:break-word;
@@ -5041,7 +5043,7 @@
   .sk-preset-card-name{padding:6px 8px; font-size:14px; font-weight:600}
   .sk-preset-card-desc{padding:6px 8px; font-size:12px; line-height:1.45; resize:vertical; min-height:56px}
   .sk-preset-card-name:focus, .sk-preset-card-desc:focus{border-color:var(--gold)}
-  .sk-preset-card-stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px 6px; font:600 11px 'JetBrains Mono',monospace; color:#d8cfbd}
+  .sk-preset-card-stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px 6px; font:600 11px 'JetBrains Mono','Prompt',monospace; color:#d8cfbd}
   .sk-preset-card-stats span{white-space:nowrap}
   .sk-preset-card-stats b{font-weight:600; color:var(--sc, #8f8574)}   /* stat signature colour per stat */
   /* The PRESET window and its change pop-up are dark in both themes: use the bright (dark-theme) stat colours there. */
@@ -5072,14 +5074,14 @@
   .sk-preset-pop-title{margin:0 0 6px; font-size:24px; font-weight:600; color:#f1e6c8}
   .sk-preset-pop-sub{margin:0 0 20px; font-size:14px; color:#a89a7c}
   .sk-preset-pop-stats{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 24px}
-  .sk-preset-pop-stat{font:700 15px ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; padding:6px 12px; border-radius:4px; background:rgba(255,255,255,.05); border-left:3px solid var(--sc, var(--gold)); white-space:nowrap}
+  .sk-preset-pop-stat{font:700 15px 'JetBrains Mono','Prompt',monospace; padding:6px 12px; border-radius:4px; background:rgba(255,255,255,.05); border-left:3px solid var(--sc, var(--gold)); white-space:nowrap}
   .sk-preset-pop-bd{font-family:'Prompt',sans-serif; font-weight:500; font-size:14px}
   .sk-preset-pop-bd.is-on{--sc:#4ade80}
   .sk-preset-pop-bd.is-off{--sc:#f87171; opacity:.85}
   .sk-preset-pop-table{width:100%; border-collapse:collapse; font-size:15px}
   .sk-preset-pop-table th{text-align:left; font-size:12px; font-weight:500; color:#a89a7c; padding:6px 10px; border-bottom:1px solid rgba(212,175,55,.25); white-space:nowrap}
   .sk-preset-pop-table td{padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.06); vertical-align:middle}
-  .sk-preset-pop-table td.num{font:700 22px ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; line-height:1.2; white-space:nowrap}   /* same face and weight as the damage formula numbers */
+  .sk-preset-pop-table td.num{font:700 22px 'JetBrains Mono','Prompt',monospace; line-height:1.2; white-space:nowrap}   /* same face and weight as the damage formula numbers */
   .sk-preset-pop-table td.num.is-to{color:#f2cf6b}   /* the window is always dark, so a bright gold in both themes */
   .sk-preset-pop-table td:first-child{font-size:16px; font-weight:500}
   .sk-preset-pop-table .is-better{color:#4ade80}
@@ -5281,7 +5283,7 @@
      note in this file. Don't reintroduce either removed chip shape
      without being asked again. */
   /* Reach badge (2026-10-13): headline size of a skill's hit volume; opens .sk-reach-pop with the 3D shape. */
-  .sk-reach-badge{display:inline-flex; align-items:center; gap:3.75px; padding:1.25px 5px; border-radius:2.5px; background:var(--gold-soft); border:1px solid var(--gold); font-size:11.25px; font-weight:700; color:var(--gold); font-family:ui-monospace,monospace; cursor:pointer; flex:0 0 auto; line-height:1.2}
+  .sk-reach-badge{display:inline-flex; align-items:center; gap:3.75px; padding:1.25px 5px; border-radius:2.5px; background:var(--gold-soft); border:1px solid var(--gold); font-size:11.25px; font-weight:700; color:var(--gold); font-family:JetBrains Mono,Prompt,monospace; cursor:pointer; flex:0 0 auto; line-height:1.2}
   .sk-reach-badge:hover{box-shadow:0 0 8px var(--gold)}
   .sk-reach-badge svg{width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:1.5}
   .sk-reach-pop{position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.94); padding:0}
@@ -5365,7 +5367,7 @@
   .sk-ko-badge-inline{position:static}
   .sk-dmg-group-label-row{display:flex; align-items:center; justify-content:space-between; gap:8px}
   .sk-ko-label{font-size:7.5px; letter-spacing:.375px; text-transform:uppercase; color:var(--muted)}
-  .sk-ko-value{font-size:11.25px; font-weight:700; color:var(--gold); font-family:ui-monospace,monospace}
+  .sk-ko-value{font-size:11.25px; font-weight:700; color:var(--gold); font-family:JetBrains Mono,Prompt,monospace}
   /* Toggle icons scaled down from .sk-dep-toggle's default 28px -- this is
      explicitly the "small" chip, a full-size icon here would dominate it.
      Only ever populated by the nested .sk-ko-badge case today (Mega Punch/
@@ -5386,7 +5388,7 @@
      -- the shrink-loop (font-size fallback on overflow) is the mechanism
      doing the real work here, not vertical centering. min-width:0 still
      needed -- same flex-item shrink gotcha as everywhere else in this file. */
-  .sk-dmg-value{flex:1; min-width:0; font-size:30px; font-weight:700; font-family:ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; line-height:1.2; white-space:nowrap}
+  .sk-dmg-value{flex:1; min-width:0; font-size:30px; font-weight:700; font-family:'JetBrains Mono','Prompt',monospace; line-height:1.2; white-space:nowrap}
   .sk-dmg-value.sk-dmg-scroll{overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; scrollbar-color:var(--gold) transparent; padding-bottom:3px}   /* fitDmgValues: still too wide at the font floor, scroll inside the box */
   /* 2nd small line under the main Damage Formula (2026-08-22, Typhoon HP
      pilot) -- deliberately smaller/muted/normal-weight, the same visual
@@ -5399,7 +5401,7 @@
      original choice) put its text directly over the KO badge's own
      left-corner territory. Right-aligning moves it to the opposite corner,
      where nothing else in this chip lives. */
-  .sk-dmg-subline{position:absolute; right:14px; bottom:10px; font-size:13px; font-weight:400; color:var(--muted); font-family:ui-monospace,monospace; line-height:1; white-space:nowrap; pointer-events:none}
+  .sk-dmg-subline{position:absolute; right:14px; bottom:10px; font-size:13px; font-weight:400; color:var(--muted); font-family:JetBrains Mono,Prompt,monospace; line-height:1; white-space:nowrap; pointer-events:none}
   .sk-dmg-subline-label{color:var(--text); font-weight:700}
   /* Small inline caption after a substituted term inside .sk-dmg-subline
      (2026-08-23, "substituted value like the general damage formula"
@@ -5419,7 +5421,7 @@
   .sk-dmg-info summary{
     list-style:none; cursor:pointer; width:14px; height:14px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; font-size:10px;
-    line-height:1; font-family:-apple-system,"Segoe UI",'Prompt',system-ui,sans-serif;
+    line-height:1; font-family:'Prompt',sans-serif;
     color:var(--muted); border:1px solid var(--line);
   }
   .sk-dmg-info summary::-webkit-details-marker{display:none}
@@ -5481,8 +5483,8 @@
   .sk-mix-row{display:flex}
   .sk-mix-exp{display:flex; align-self:flex-start; margin:-6px 0 0 1px}
   .dmg-heal{color:var(--stat-hp); font-weight:700}
-  .dmg-text{color:var(--text); font-family:'Prompt',-apple-system,"Segoe UI",sans-serif}
-  .dmg-prose{font-family:'Prompt',-apple-system,"Segoe UI",sans-serif; font-weight:600}
+  .dmg-text{color:var(--text); font-family:'Prompt',sans-serif}
+  .dmg-prose{font-family:'Prompt',sans-serif; font-weight:600}
   /* Substituted-number Damage Formula (2026-08-19, user-redesigned): the big
      "hero number" per term (colored the same as the old symbolic coefficient
      spans -- .dmg-num/.dmg-atk/.dmg-tal/.dmg-term all reused unchanged, no
@@ -5534,7 +5536,7 @@
      row-gap above provides the row1-to-row2 spacing uniformly instead, so a
      caption's own vertical offset can't drift independently of it. */
   .dmg-term-sub{font-size:0.37em; font-weight:400; color:var(--muted); white-space:nowrap}
-  .sk-stat-label{font-size:11px; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); margin:0 0 5px; white-space:nowrap; font-family:'Prompt',-apple-system,"Segoe UI",sans-serif;}
+  .sk-stat-label{font-size:11px; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); margin:0 0 5px; white-space:nowrap; font-family:'Prompt',sans-serif;}
   /* max-width:100% (2026-08-16 fix): .sk-stat-value normally STRETCHES to
      its .sk-stat parent's full width for free (align-items:stretch is the
      flex default, and .sk-stat never overrides it) -- that's what makes the
@@ -5549,8 +5551,8 @@
      is never true). max-width:100% is a no-op for the stretch-based chips
      (100% of an already-100%-wide box) and gives the centered chip a real
      ceiling to shrink against. */
-  .sk-stat-value{font-size:30px; font-weight:700; color:var(--gold); line-height:1; font-family:ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; white-space:nowrap; max-width:100%}
-  .sk-instant-txt{font-family:'Prompt',-apple-system,"Segoe UI",sans-serif; font-weight:700; letter-spacing:0}
+  .sk-stat-value{font-size:30px; font-weight:700; color:var(--gold); line-height:1; font-family:'JetBrains Mono','Prompt',monospace; white-space:nowrap; max-width:100%}
+  .sk-instant-txt{font-family:'Prompt',sans-serif; font-weight:700; letter-spacing:0}
   .sk-stat-value.unwrapped{color:#e6e4df}
   .sk-stat-cd .sk-stat-value:not(.unwrapped), .sk-stat-cd-secondary .sk-stat-value:not(.unwrapped){color:var(--stat-agi)}
   .sk-stat-cast .sk-stat-value:not(.unwrapped){color:var(--stat-int)}
@@ -5626,17 +5628,17 @@
   .sk-stat-tooltip-col:first-child{padding-left:0}
   .sk-stat-tooltip-row{
     display:flex; justify-content:space-between; gap:14px; break-inside:avoid;
-    font-size:12.5px; font-family:ui-monospace,SFMono-Regular,Consolas,'Prompt',-apple-system,"Segoe UI",sans-serif; color:var(--text);
+    font-size:12.5px; font-family:'JetBrains Mono','Prompt',monospace; color:var(--text);
     padding:2px 0; white-space:nowrap;
   }
   .sk-stat-tooltip-row .sk-instant-txt{font-weight:500; font-size:12px}
   .sk-stat-tooltip-row span:last-child{color:var(--gold)}
   .sk-stat-base{font-size:13px; color:var(--muted); margin:4px 0 0; white-space:nowrap}
-  .sk-stat-egg{align-items:center; text-align:center; cursor:pointer; font:700 26px/1.3 'Prompt',-apple-system,"Segoe UI",sans-serif; color:var(--gold); border-style:dashed}
+  .sk-stat-egg{align-items:center; text-align:center; cursor:pointer; font:700 26px/1.3 'Prompt',sans-serif; color:var(--gold); border-style:dashed}
   .sk-stat-egg:hover{border-color:var(--gold); border-style:solid}
   .sk-egg-overlay{position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.8); cursor:zoom-out}
   .sk-egg-overlay img{max-width:100%; max-height:100%; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,.6)}
-  .sk-stat-exempt{font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif; font-size:12px; color:var(--muted); margin:4px 0 0; font-style:italic}
+  .sk-stat-exempt{font-family:'Prompt',sans-serif; font-size:12px; color:var(--muted); margin:4px 0 0; font-style:italic}
   /* Absolutely positioned into the box's own bottom-right corner (2026-08-14,
      user-requested), same reasoning/corner as .sk-ps-toggle above (the two
      never coexist on one box, confirmed by grep) -- previously a margin-top+
@@ -5751,7 +5753,7 @@
   .sk-hero-pips{position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:3px}
   .sk-hero-head:has(.sk-hero-pips){margin-bottom:22px}
   .sk-dep-item-text{display:flex; flex-direction:column; gap:3px; min-width:0}
-  .sk-dep-item-name{font-family:'Prompt',-apple-system,"Segoe UI",sans-serif; font-size:12px; color:var(--muted); max-width:100%; white-space:nowrap; overflow:hidden}   /* fitDepLabels() shrinks the font to fit, no ellipsis */
+  .sk-dep-item-name{font-family:'Prompt',sans-serif; font-size:12px; color:var(--muted); max-width:100%; white-space:nowrap; overflow:hidden}   /* fitDepLabels() shrinks the font to fit, no ellipsis */
   /* Desktop: 3 invisible columns so many deps line up in a tidy grid; under 900px (stacked phone layout) items just wrap. */
   @media (max-width:900px){ .sk-dep-strip{display:flex; flex-wrap:wrap} .sk-dep-item-name{max-width:180px} }
   .sk-dep-item-tags{display:flex; gap:8px}
@@ -5970,7 +5972,7 @@
     gap: 14px;
     width: 100%;
     color: #e5e5e5;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Prompt', sans-serif;
+    font-family: 'Prompt', sans-serif;
   }
   .chm-sim * { box-sizing: border-box; }
 
@@ -6013,7 +6015,7 @@
     image-rendering: pixelated;
   }
   .chm-header-title {
-    font-family: 'Cinzel', 'Prompt', -apple-system, sans-serif;
+    font-family: 'Prompt', sans-serif;
     font-size: clamp(16px, 1.6vw, 22px);
     font-weight: 700;
     color: #d4af37;
@@ -6306,7 +6308,7 @@
     text-overflow: ellipsis;
   }
   .chm-hero-prob-rate {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: clamp(16px, 1.6vw, 22px);
     font-weight: 800;
     color: #d4af37;
@@ -6347,7 +6349,7 @@
     min-width: 0;
   }
   .chm-card-title {
-    font-family: 'Cinzel', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 13.5px;
     font-weight: 700;
     color: #d4af37;
@@ -6363,7 +6365,7 @@
   .chm-server-toggle { display: flex; align-items: center; gap: 6px; }
   .chm-server-toggle .sk-server-btn { width: 38px; height: 38px; }
   .chm-card-badge {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 10px;
     color: #9ca3af;
     background: rgba(255, 255, 255, 0.05);
@@ -6636,7 +6638,7 @@
     box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
   }
   .chm-target-stat-pill {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 10px;
     font-weight: 700;
     color: #d4af37;
@@ -6679,7 +6681,7 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #f3f4f6;
     font-size: 12.5px;
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-weight: 600;
     padding: 5px 8px;
     border-radius: 4px;
@@ -6837,7 +6839,7 @@
   }
   .chm-dep-btn.active .chm-dep-label { color: #d4af37; }
   .chm-dep-status-tag {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 9px;
     font-weight: 700;
     padding: 3px 6px;
@@ -6882,7 +6884,7 @@
     width: 100%;
   }
   .chm-arena-idle-hint {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.8px;
@@ -7064,7 +7066,7 @@
     border: none;
     border-radius: 0;
     color: #ffffff;
-    font-family: 'Cinzel', serif;
+    font-family: 'Prompt', sans-serif;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.4px;
@@ -7130,7 +7132,7 @@
     border-radius: 0;
     color: #9ca3af;
     font-size: 9.5px;
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-weight: 700;
     padding: 4px 5px;
     cursor: pointer;
@@ -7189,7 +7191,7 @@
     text-overflow: ellipsis;
   }
   .chm-kpi-val {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: clamp(20px, 2vw, 26px);
     font-weight: 800;
     color: #d4af37;
@@ -7201,7 +7203,7 @@
     overflow: hidden;
   }
   .chm-kpi-val-total-dmg {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-variant-numeric: tabular-nums;
     font-size: clamp(22px, 2.2vw, 28px);
     line-height: 1.15;
@@ -7321,7 +7323,7 @@
     background: transparent;
     border: none;
     color: #fff;
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 11px;
     font-weight: 700;
     text-align: right;
@@ -7390,7 +7392,7 @@
     right: 155px;
     top: 24px;
     width: 320px;
-    font-family: "Berlin Sans FB", "Segoe UI", sans-serif;
+    font-family: "Prompt", sans-serif;
     font-size: 19px;
     font-weight: 900;
     color: #de6666;
@@ -7461,7 +7463,7 @@
     left: 4px;
     font-size: 10px;
     font-weight: 900;
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Prompt", sans-serif;
     color: #c4b595;
     text-shadow: 1px 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     z-index: 5;
@@ -7484,7 +7486,7 @@
     background: rgba(10, 12, 16, 0.92);
     border: 1px solid #0284c7;
     color: #38bdf8;
-    font-family: "Segoe UI", monospace;
+    font-family: "JetBrains Mono", "Prompt", monospace;
     font-size: 11px;
     font-weight: 900;
     line-height: 1;
@@ -7508,7 +7510,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Segoe UI", "Arial Black", sans-serif;
+    font-family: "Prompt", sans-serif;
     font-size: 20px;
     font-weight: 900;
     color: #ffffff;
@@ -7612,7 +7614,7 @@
     height: 30px;
     display: flex;
     align-items: center;
-    font-family: "Berlin Sans FB", "Segoe UI", sans-serif;
+    font-family: "Prompt", sans-serif;
     font-size: 15px;
     font-weight: 700;
     color: #ffffff;
@@ -7702,7 +7704,7 @@
     font-weight: 600;
     color: #9ca3af;
     margin-left: auto;
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     letter-spacing: 0.01em;
     flex-shrink: 0;
     padding-left: 4px;
@@ -7743,7 +7745,7 @@
     text-overflow: ellipsis;
   }
   .chm-badge-count {
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 15px;
     font-weight: 700;
     color: #f3f4f6;
@@ -7839,7 +7841,7 @@
     background: #0d0c0a;
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 6px;
-    font-family: monospace;
+    font-family: JetBrains Mono,Prompt,monospace;
     font-size: 11.5px;
     line-height: 1.45;
   }
@@ -7860,7 +7862,7 @@
     align-items: center;
     gap: 8px;
     padding: 5px 10px;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: 'JetBrains Mono', 'Prompt', monospace;
     font-size: 11.5px;
     white-space: nowrap;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -8114,7 +8116,7 @@
   html.hub-menu .hub-bar{border-bottom-color:transparent}   /* no divider over the menu's stage (user 2026-10-18) */
   html.hub-menu .hub-bar::after{display:none}
   .ln{--acc:var(--gold); --ln-hi:color-mix(in srgb, var(--gold) 62%, #fff); --ln-max:calc((100dvh - var(--hub-h, 64px)) * 2.1); position:relative; height:calc(100dvh - var(--hub-h, 64px)); min-height:500px; display:flex; flex-direction:column; overflow:hidden;
-    font-family:'Prompt',-apple-system,"Segoe UI",system-ui,sans-serif}
+    font-family:'Prompt',sans-serif}
   .ln-glow{position:absolute; inset:0; z-index:0; pointer-events:none; background:radial-gradient(45% 60% at 66% 50%, color-mix(in srgb, var(--acc) 22%, transparent), transparent 70%)}
   .ln-stage{position:relative; z-index:1; flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,42fr) minmax(0,58fr); align-items:center; gap:2vw; padding:0 5vw; touch-action:pan-y}
   .ln-segs, .ln-nav, .ln-tools-h{display:none}
@@ -12156,13 +12158,13 @@ function drawReach(cv, items, st, model, scene, seqT, countOn){   // countOn: th
     ctx.save(); ctx.globalAlpha = 1; ctx.setLineDash([]); ctx.lineWidth = 2.2; ctx.strokeStyle = RED; ctx.fillStyle = "rgba(239,83,80,.35)";
     ctx.beginPath(); ring.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fill(); ctx.stroke();
     if (!hasB){ ctx.beginPath(); ctx.moveTo(base[0], base[1]); ctx.lineTo(top[0], top[1]); ctx.stroke(); }
-    ctx.font = "bold 12px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "bold 12px JetBrains Mono, Prompt, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const w = ctx.measureText(txt).width + 12;
     ctx.fillStyle = "rgba(12,12,14,.85)"; ctx.fillRect(top[0] - w / 2, top[1] - 24, w, 18); ctx.lineWidth = 1.2; ctx.strokeRect(top[0] - w / 2, top[1] - 24, w, 18);
     ctx.fillStyle = RED; ctx.fillText(txt, top[0], top[1] - 14.5);
     ctx.restore();
   }
-  ctx.font = "bold 12px ui-monospace, monospace";
+  ctx.font = "bold 12px JetBrains Mono, Prompt, monospace";
   ctx.textBaseline = "middle"; ctx.textAlign = "center";
   // Labels keep their identity from frame to frame (user 2026-10-15: Twin Resonance's labels jumped at every 0.4 s round): the same label (part group + dimension, numbered when several copies show at once)
   // prefers the edge and the nudge it had (no gliding: the hits switch instantly, so the labels must too).
@@ -12194,7 +12196,7 @@ function drawReach(cv, items, st, model, scene, seqT, countOn){   // countOn: th
   const cnt = seqHit || (countOn && cntN && seqT !== -1 ? { cur: cntN - 1, n: cntN, pulse: st.pulse || 0 } : null);
   if (cnt){
     const hk = seqHit ? items.findIndex(it => it.part.at === seqPlan.at[seqHit.cur]) : -1, hc = hk >= 0 ? cmap[hk] : "#d4af37", fs = 15 + 7 * cnt.pulse, txt = cnt.endless ? "ฮิต " + cnt.count : "ฮิต " + (cnt.cur + 1) + " / " + cnt.n;
-    ctx.font = "bold " + fs.toFixed(1) + "px ui-monospace, monospace"; ctx.globalAlpha = 1;
+    ctx.font = "bold " + fs.toFixed(1) + "px JetBrains Mono, Prompt, monospace"; ctx.globalAlpha = 1;
     const tw = ctx.measureText(txt).width + 20, cx = W / 2, cy = 30;
     ctx.fillStyle = "rgba(12,12,14,.85)"; ctx.fillRect(cx - tw / 2, cy - fs * 0.8, tw, fs * 1.6);
     ctx.strokeStyle = hc; ctx.lineWidth = 1.5; ctx.strokeRect(cx - tw / 2, cy - fs * 0.8, tw, fs * 1.6);
@@ -17878,8 +17880,8 @@ function mountSkillCooldownLookup(root){
         <path d="M60 8 C35 25 15 50 18 82 C20 102 36 114 60 118 C84 114 100 102 102 82 C105 50 85 25 60 8 Z" fill="url(#totGrad)" opacity="0.15"/>
         <path d="M60 12 C38 28 22 52 24 80 C26 98 40 109 60 113 C80 109 94 98 96 80 C98 52 82 28 60 12 Z" stroke="url(#totGrad)" stroke-width="2.5" fill="none" filter="url(#totGlow)"/>
         <path d="M60 22 C48 40 38 60 42 80 C44 90 52 98 60 100 C68 98 76 90 78 80 C82 60 72 40 60 22 Z" fill="url(#totGrad)" opacity="0.25"/>
-        <text x="60" y="72" text-anchor="middle" font-family="'Prompt', -apple-system, sans-serif" font-weight="900" font-size="32" fill="url(#totGrad)" letter-spacing="1">ToT</text>
-        <text x="60" y="88" text-anchor="middle" font-family="'Prompt', -apple-system, sans-serif" font-weight="600" font-size="9" fill="#d4af37" letter-spacing="2" opacity="0.9">TALES OF TAIL</text>
+        <text x="60" y="72" text-anchor="middle" font-family="'Prompt', sans-serif" font-weight="900" font-size="32" fill="url(#totGrad)" letter-spacing="1">ToT</text>
+        <text x="60" y="88" text-anchor="middle" font-family="'Prompt', sans-serif" font-weight="600" font-size="9" fill="#d4af37" letter-spacing="2" opacity="0.9">TALES OF TAIL</text>
       </svg>`;
     }
     if (srv === "tto") {
@@ -17898,8 +17900,8 @@ function mountSkillCooldownLookup(root){
         <path d="M60 8 C35 25 15 50 18 82 C20 102 36 114 60 118 C84 114 100 102 102 82 C105 50 85 25 60 8 Z" fill="url(#ttoGrad)" opacity="0.15"/>
         <path d="M60 12 C38 28 22 52 24 80 C26 98 40 109 60 113 C80 109 94 98 96 80 C98 52 82 28 60 12 Z" stroke="url(#ttoGrad)" stroke-width="2.5" fill="none" filter="url(#ttoGlow)"/>
         <path d="M60 22 C48 40 38 60 42 80 C44 90 52 98 60 100 C68 98 76 90 78 80 C82 60 72 40 60 22 Z" fill="url(#ttoGrad)" opacity="0.25"/>
-        <text x="60" y="72" text-anchor="middle" font-family="'Prompt', -apple-system, sans-serif" font-weight="900" font-size="32" fill="#38bdf8" letter-spacing="1">TTO</text>
-        <text x="60" y="88" text-anchor="middle" font-family="'Prompt', -apple-system, sans-serif" font-weight="600" font-size="8.5" fill="#bae6fd" letter-spacing="1.5" opacity="0.9">TAILSTOPIA</text>
+        <text x="60" y="72" text-anchor="middle" font-family="'Prompt', sans-serif" font-weight="900" font-size="32" fill="#38bdf8" letter-spacing="1">TTO</text>
+        <text x="60" y="88" text-anchor="middle" font-family="'Prompt', sans-serif" font-weight="600" font-size="8.5" fill="#bae6fd" letter-spacing="1.5" opacity="0.9">TAILSTOPIA</text>
       </svg>`;
     }
     return `<svg class="sk-server-full-logo" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -17912,8 +17914,8 @@ function mountSkillCooldownLookup(root){
       </defs>
       <path d="M60 8 C35 25 15 50 18 82 C20 102 36 114 60 118 C84 114 100 102 102 82 C105 50 85 25 60 8 Z" fill="url(#ogGrad)" opacity="0.12"/>
       <path d="M60 12 C38 28 22 52 24 80 C26 98 40 109 60 113 C80 109 94 98 96 80 C98 52 82 28 60 12 Z" stroke="url(#ogGrad)" stroke-width="2.5" fill="none"/>
-      <text x="60" y="72" text-anchor="middle" font-family="'Prompt', -apple-system, sans-serif" font-weight="900" font-size="34" fill="#d4af37" letter-spacing="1">BB</text>
-      <text x="60" y="88" text-anchor="middle" font-family="'Prompt', -apple-system, sans-serif" font-weight="600" font-size="8" fill="#a1a1aa" letter-spacing="1.5" opacity="0.85">BIGBUG STUDIO</text>
+      <text x="60" y="72" text-anchor="middle" font-family="'Prompt', sans-serif" font-weight="900" font-size="34" fill="#d4af37" letter-spacing="1">BB</text>
+      <text x="60" y="88" text-anchor="middle" font-family="'Prompt', sans-serif" font-weight="600" font-size="8" fill="#a1a1aa" letter-spacing="1.5" opacity="0.85">BIGBUG STUDIO</text>
     </svg>`;
   }
 
@@ -26572,7 +26574,7 @@ function mountChameleonSim(root) {
                 <button type="button" class="chm-instant-chip" data-cnt="500">500</button>
                 <button type="button" class="chm-instant-chip" data-cnt="1000">1,000</button>
               </div>
-              <input type="number" id="chmInstantCountInput" value="100" min="1" max="5000" style="width:44px; background:#1c1b18; border:none; color:#fff; padding:4px 4px; border-radius:0; font-family:monospace; font-weight:700; font-size:10.5px; text-align:center;">
+              <input type="number" id="chmInstantCountInput" value="100" min="1" max="5000" style="width:44px; background:#1c1b18; border:none; color:#fff; padding:4px 4px; border-radius:0; font-family:JetBrains Mono,Prompt,monospace; font-weight:700; font-size:10.5px; text-align:center;">
               <button type="button" class="chm-fire-btn" id="chmSimulateInstantBtn">⚡ Simulate</button>
               <button type="button" class="sk-bd-btn is-buff chm-mods-open" id="chmModsBtn2" title="Damage modifiers (buffs/debuffs)"><span class="sk-bd-count" hidden></span><span>Mods</span></button>
               <button type="button" class="chm-reset-btn" id="chmResetBtn2">↺ Reset</button>
@@ -29012,7 +29014,7 @@ function mountGoldenKingBugMap(root){
 .gkb-vp{position:relative; flex:1; min-width:0; background:#0d0b09; touch-action:none; cursor:grab; overflow:hidden}
 .gkb-vp.dragging{cursor:grabbing}
 .gkb-vp canvas{display:block; width:100%; height:100%}
-.gkb-wrap .strat{box-sizing:border-box; display:flex; flex-direction:column; background:#14120f; border-left:1px solid rgba(242,234,217,0.16); color:#f2ead9; padding:18px 14px 22px; overflow:auto; font-family:-apple-system,"Segoe UI",'Prompt',system-ui,sans-serif; line-height:1.3}
+.gkb-wrap .strat{box-sizing:border-box; display:flex; flex-direction:column; background:#14120f; border-left:1px solid rgba(242,234,217,0.16); color:#f2ead9; padding:18px 14px 22px; overflow:auto; font-family:'Prompt',sans-serif; line-height:1.3}
 .gkb-wrap .strat > *{flex:none}
 .gkb-wrap .strat h3{margin:0 0 14px 6px; font-size:20px; letter-spacing:.02em; color:#f0c860}
 .gkb-wrap .strat .strat-n{display:grid; grid-template-columns:repeat(6,1fr); gap:5px; margin:0 6px 14px}
@@ -29053,8 +29055,8 @@ function mountGoldenKingBugMap(root){
 .gkb-wrap .strat .strat-row .step i, .gkb-wrap .strat .sim-time{font-family:'JetBrains Mono','Prompt',monospace}
 .gkb-wrap .strat{flex:none; width:340px}
 @media (max-width:760px){ .gkb-wrap{flex-direction:column; height:auto} .gkb-vp{flex:none; height:56vh} .gkb-wrap .strat{width:auto; border-left:0; border-top:1px solid rgba(242,234,217,0.16)} }
-.gkb-msg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(242,234,217,0.6); font:13px -apple-system,'Segoe UI','Prompt',system-ui,sans-serif; letter-spacing:.04em}
-.gkb-hint{position:absolute; left:14px; bottom:12px; font:13px -apple-system,'Segoe UI','Prompt',system-ui,sans-serif; letter-spacing:.03em; color:rgba(242,234,217,0.55); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); z-index:2}
+.gkb-msg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(242,234,217,0.6); font:13px 'Prompt',sans-serif; letter-spacing:.04em}
+.gkb-hint{position:absolute; left:14px; bottom:12px; font:13px 'Prompt',sans-serif; letter-spacing:.03em; color:rgba(242,234,217,0.55); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,.6); z-index:2}
 .gkb-vp .pin-label{position:absolute; transform:translate(-50%,-100%); display:flex; align-items:center; gap:5px; padding:5px 11px 5px 8px; border-radius:2px; background:rgba(13,11,9,0.82); border:1px solid rgba(209,165,60,0.55); font:700 16px 'Prompt',sans-serif; color:#f5eeda; white-space:nowrap; pointer-events:none; transition:opacity 120ms ease; z-index:2}
 .gkb-vp .pin-label .dot{width:9px; height:9px; border-radius:50%; background:#f0c860; flex:none}
 .gkb-vp .pin-label.is-active{border-color:#f0c860; background:rgba(209,165,60,0.85); color:#14120f}
@@ -29639,7 +29641,7 @@ const CLASS_GUIDES = [
   {"id":29,"cover":[103,421],"format":"12t-class-guide","version":1,"title":"ค้างคาว PVE Solo🩸","author":"Sasomu","date":"2026-09-29","description":"⚠️ **คำเตือน:** ใครสาย PVP ห้าม อัพตามเด็ดขาด!\n💥 **Concept สายนี้:**\nสาย Solo ลงได้ทุกดัน แต่ถ้าจะเอาไปลุย ดัน 12/5 (12/5 ไม่ต้องเอาอัลติออก) กับ 12/6 แนะนำให้ตัด อัลติ กับ สาปขั้น 2 ออก แล้วกด ดูด MP ให้เต็ม จากนั้นไปลง สาย C เอาดูด SP แล้วปรับเลือดเป็น 2000**\n** ทำ **Homing Wand** ด้วยหละชาวค้างคาว! **\nตัวอย่างการลงดันน้ำ :** https://youtu.be/HFbLmAUZWtw **\n\n📊 Status Recommend:**\n⚔️ Atk : 234 🩸 (สเตตัสทองคำ คำนวณมาแล้วว่า ดูดแรงที่สุด ที่ค่านี้ และตีปกติแรงมาก!)\n🧠 Int : 192 ⚡ (กดร่าย 1 วินาที ได้ทุกสกิล! ร่างเงา 4 / Curse 4 ไวปรื๊ด)\n🛡️ Vit : 120 🥪 (กินแซนด์วิชเลือดเด้งไป 1,600 อึด ถึก ยืนไหวสบายๆ)\n👑 Cha : 250+ ✨ แล้วแต่กำลังทรัพย์","build":{"server":"tto","classKey":"bat","level":95,"learned":[101,102,103,111,112,113,121,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,331,332,333,334,401,404,411,414,422,431,433,441,442],"support":[906,901]},"stats":{"atk":234,"vit":120,"cha":250,"int":192},"statsPlus":["cha"],"gear":{"weapon":[{"item":"w_bat59","replica":{"item":"w_bat56"},"stat":"atk"}],"armor":[{"item":"a_bat42","replica":{"item":"a_bat61"},"stat":"cha"}],"hat":[{"item":"c_bat42","replica":{"item":"c_bat61"},"stat":"cha"}],"trinket":[{"item":"t_bat60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_sfb"}]},"notes":{"264":"เอาสกิลนี้ออกหากจะไปลง **12/6**","271":"เอาสกิลนี้ออกหากจะไปลง **12/6**","421":"สกิลจำเป็นสำหรับ **12/6**"}},
   {"id":30,"cover":[444,253,362,431,434],"format":"12t-class-guide","version":1,"title":"ขี่คลื่นบรื้นๆ","author":"DeetZ","date":"2026-10-18","description":"ขี่คลื่นเท่จัด ปลัดบอก ขนาดลาออกยังโทรมาบอกว่าสุดจัด\n\nPVE โซโล่ทุกดันสบายๆ","build":{"server":"tto","classKey":"whale","level":100,"learned":[101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444],"support":[901,907]},"gear":{"weapon":[{"item":"w_whl48","replica":{"item":"w_whl61"},"stat":"tal"},{"item":"w_whl12","stat":"cha"}],"armor":[{"item":"a_whl48","replica":{"item":"a_whl61"},"stat":"tal"},{"item":"a_whl12","stat":"cha"}],"hat":[{"item":"c_whl48","replica":{"item":"c_whl61"},"stat":"tal"},{"item":"c_whl42","stat":"cha"}],"trinket":[{"item":"t_all87"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all45"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"362":"อมตะมี","421":"โซโล่ดันได้","431":"แทงค์ไหว","444":"ทั้งหมดนี่เพื่อขี่คลื่นเท่ๆ"}}
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T09:23:50.955Z","counts":{"1":13,"2":16,"3":12,"4":7,"5":17,"6":12,"7":5,"8":9,"9":9,"10":9,"11":7,"12":3,"13":1,"14":10,"15":20,"16":4,"17":10,"18":18,"19":7,"20":14,"21":5,"22":5,"23":10,"24":3,"25":4,"26":3,"27":3,"28":6,"29":10,"30":7}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T09:32:52.903Z","counts":{"1":13,"2":16,"3":12,"4":8,"5":17,"6":13,"7":5,"8":9,"9":9,"10":9,"11":7,"12":3,"13":1,"14":10,"15":20,"16":4,"17":10,"18":18,"19":8,"20":14,"21":5,"22":5,"23":10,"24":3,"25":4,"26":3,"27":3,"28":6,"29":10,"30":8}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30360,7 +30362,7 @@ function classGuideImageGray(img){
 // Draw the guide on a canvas (returned). simRoot supplies the two frame pictures (CSS values on the cells).
 async function classGuideRenderImage(guide, simRoot){
   const P = CLASS_GUIDE_IMAGE, b = guide.build, css = getComputedStyle(document.documentElement), v = name => css.getPropertyValue(name).trim();
-  const FONT = "Prompt, 'Noto Sans Thai', Sarabun, sans-serif";
+  const FONT = "'Prompt', sans-serif";
   if (document.fonts && document.fonts.load) await Promise.all(["400", "600", "700"].map(w => document.fonts.load(w + " 24px Prompt", "กขคabc123").catch(() => null)));
   const model = classGuideImageModel(b.classKey, b.server);
   { const sup = classGuideSupportCells(), picks = (b.support || []).filter(id => sup[id]);   // the support skills (user 2026-10-18: the step-5 thumbnail missed them): one blank row under the Basic tree, then the picks, as in the guide view
@@ -33172,6 +33174,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-18T09:29:36.146Z","fix(bible): two fonts only across the whole hub: Prompt for all text (the logo, headings, Chameleon simulator, boss guide included) and JetBrains Mono with Prompt behind it for numbers, so no more Georgia, Segoe UI, Consolas, Cinzel, Kanit or Tahoma Thai"],
     ["2026-10-18T09:21:39.892Z","feat(bible): ปรับสมดุลเซิร์ฟ and บั๊ก & คำอธิบาย pages redesigned: a class rail with the game's round hero icons, type chips that keep their counts when one is picked, search, and every skill in its in-game frame"],
     ["2026-10-18T08:49:29.052Z","fix(bible): hub menu skill wall shows the hand cursor over the whole of every icon (at the centre of some icons the wall behind it was picked instead)"],
     ["2026-10-18T08:26:22.612Z","fix(bible): on the hub menu only the two main tools (รายละเอียดสกิล, ไกด์อาชีพ) show the เปิด seal; the other tools open from their art or thumb"],

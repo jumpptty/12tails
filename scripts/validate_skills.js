@@ -4332,6 +4332,33 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   for (const ln of fontHits) { console.error(`[FONT BAN ERROR] Chakra Petch is banned, use Prompt (12t_projects/bible/CLAUDE.md §2): ${ln.trim().slice(0, 140)}`); errorCount++; }
   if (!fontHits.length) console.log("Verified no Chakra Petch (font ban).");
 }
+// Two fonts only (user 2026-10-18): every font list in the hub (CSS, inline styles, SVG font-family, canvas fonts) starts with Prompt
+// (text) or JetBrains Mono with Prompt behind it (numbers, so Thai inside stays Prompt instead of Tahoma), with only generic fallbacks
+// after it, and Google Fonts loads only those two families.
+{
+  const ALLOWED = new Set(["prompt", "jetbrains mono", "sans-serif", "monospace"]);
+  const ITEM = String.raw`(?:'[^'\n]*'|"[^"\n]*"|(?!(?:px|em|rem|vw|vh)\b)-?[A-Za-z][\w-]*(?:[ \t]+-?[A-Za-z][\w-]*)*)`;
+  const LIST = new RegExp(`(?<![\\w.%-])${ITEM}(?:[ \\t]*,[ \\t]*${ITEM})*`, "g");
+  const TRIGGER = /font-family\s*:\s*|font-family="|(?<![\w-])font\s*:\s*|\.font\s*=\s*["'`]|const FONT = "/g;
+  const bad = [];
+  html.split(/\r?\n/).forEach((ln, i) => {
+    if (ln.length > 6000 || !/font/i.test(ln) || /^\s*\["\d{4}-\d\d-\d\dT/.test(ln)) return;
+    for (const t of ln.matchAll(TRIGGER)) {
+      const from = t.index + t[0].length, seg = ln.slice(from, from + ln.slice(from).search(/[;}]|$/));
+      let hit = null;
+      for (const m of seg.matchAll(LIST)) { if (m[0].includes(",") || (/font-family/.test(t[0]) && m.index === 0 && /^(monospace|sans-serif|serif|system-ui)$/i.test(m[0]))) { hit = m[0]; break; } }
+      if (!hit) continue;
+      const fams = hit.split(/[ \t]*,[ \t]*/).map(x => x.replace(/^['"]|['"]$/g, "").trim().toLowerCase());
+      const ok = (fams[0] === "prompt" || (fams[0] === "jetbrains mono" && fams.includes("prompt"))) && fams.every(f => ALLOWED.has(f));
+      if (!ok) bad.push(`line ${i + 1}: ${hit}`);
+    }
+  });
+  const link = (html.match(/fonts\.googleapis\.com\/css2\?[^"']*/) || [""])[0];
+  const loaded = [...link.matchAll(/family=([^:&]+)/g)].map(m => m[1].replace(/\+/g, " "));
+  if (loaded.join(",") !== "Prompt,JetBrains Mono") bad.push(`Google Fonts loads ${loaded.join(", ") || "nothing"}`);
+  for (const b of bad) { console.error(`[FONT ERROR] two fonts only: Prompt for text, 'JetBrains Mono','Prompt',monospace for numbers (12t_projects/bible/CLAUDE.md §2): ${b.slice(0, 160)}`); errorCount++; }
+  if (!bad.length) console.log("Verified two fonts only (Prompt; JetBrains Mono with Prompt behind it).");
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
