@@ -165,7 +165,8 @@ function makeEl() {
     // didn't exercise until the LCK-invariance check below started calling
     // the real selectSkill()/renderHero() -- a plain object is enough, since
     // nothing ever reads these classNames back in this sandbox.
-    parentElement: { className: "", style: {}, classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false } },
+    parentElement: { className: "", style: {}, classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false }, querySelector: () => null, insertAdjacentHTML: ()=>{} },
+    getClientRects: () => [],
     parentNode: { className: "", style: {} },
     remove: ()=>{}, focus: ()=>{}, blur: ()=>{}, click: ()=>{},
     setAttribute: ()=>{}, getAttribute: () => null, removeAttribute: ()=>{},

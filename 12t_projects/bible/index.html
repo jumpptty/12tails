@@ -6024,225 +6024,239 @@
   }
 
   /* ============================================================
-     Chameleon attack sim: the Cockpit (user 2026-10-19, layout A of two mocks). Loadout on the left (gear medallions, stat dials,
-     round skill icons with rank arcs), the round arena (boss portrait inside its HP ring, cooldown sweeps, proc gauges) and the results on the right.
+     Chameleon attack sim: the Cockpit (user 2026-10-19, layout A of two mocks). Loadout on the left (gear, stat dials,
+     round skill icons with rank arcs), the round arena (boss in its HP ring, cooldown sweeps, proc gauges) and the results on the right.
+     Desktop (> 900 px): one screen, no scrolling (user 2026-10-19): the sim is laid out at 1560 x 960 and zoomed to the window
+     (chmFit sets --chm-z); the skills panel and the shot log take the spare height. Phones scroll as a normal page.
      ============================================================ */
-  .chm-sim { --chm-num: 'JetBrains Mono','Prompt',monospace; display: flex; flex-direction: column; gap: 14px; width: 100%; color: var(--text); font-family: 'Prompt', sans-serif; }
+  .chm-sim { --chm-num: 'JetBrains Mono','Prompt',monospace; display: flex; flex-direction: column; gap: 12px; width: 100%; color: var(--text); font-family: 'Prompt', sans-serif; }
   .chm-sim * { box-sizing: border-box; }
   .chm-sim [hidden] { display: none !important; }
   .chm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* round icon: the art inside a double gold ring; .off = greyed out */
-  .chm-ring { --s: 56px; position: relative; display: inline-grid; place-items: center; flex: none; width: var(--s); height: var(--s); border-radius: 50%;
-    background: radial-gradient(circle at 50% 40%, #2b2720, #15130f 70%);
-    box-shadow: 0 0 0 2px #0c0b09, 0 0 0 3.5px var(--gold), 0 0 0 5.5px #0c0b09, 0 6px 14px rgba(0,0,0,.5); transition: box-shadow .15s, filter .15s; }
-  .chm-ring > img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transform: scale(1.3);
-    -webkit-mask: radial-gradient(circle, #000 60%, transparent 71%); mask: radial-gradient(circle, #000 60%, transparent 71%); }
-  .chm-ring.off { box-shadow: 0 0 0 2px #0c0b09, 0 0 0 3.5px #4a4437, 0 0 0 5.5px #0c0b09; }
+  /* round icon, drawn like the skill details rings (.sk-compat-ring): one thin gold edge, the art at 1.3x centred on its visible pixels
+     (centreRingImg); .chm-ringw carries what sits outside the circle (rank arc, badge) */
+  .chm-ring { --s: 42px; position: relative; display: block; flex: none; width: var(--s); height: var(--s); border-radius: 50%; overflow: hidden;
+    background: var(--ink); box-shadow: 0 0 0 1px rgba(212,175,55,.75); transition: box-shadow .15s, filter .15s; }
+  .chm-ring > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform: scale(1.3) translate(var(--ring-x, 0%), var(--ring-y, 0%)); }
+  .chm-ring.off { box-shadow: 0 0 0 1px rgba(255,255,255,.18); }
   .chm-ring.off > img { filter: grayscale(1) brightness(.5); }
-  .chm-arc { position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px); overflow: visible; pointer-events: none; }
-  .chm-arc path { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 5; stroke-linecap: round; }
-  .chm-arc path.on { stroke: #f1d27a; }
+  .chm-ringw { position: relative; display: inline-block; flex: none; }
+  .chm-arc { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); overflow: visible; pointer-events: none; }
+  .chm-arc path { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 3; stroke-linecap: round; }
+  .chm-arc path.on { stroke: var(--gold); }
 
   /* header */
-  .chm-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .chm-hero { --s: 54px; }
-  .chm-title h2 { margin: 0; font-size: 26px; font-weight: 700; line-height: 1.2; color: var(--text); }
-  .chm-title span { font-size: 13px; color: var(--muted); }
+  .chm-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: none; }
+  .chm-hero { --s: 42px; }
+  .chm-title h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2; color: var(--text); }
+  .chm-title span { font-size: 12.5px; color: var(--muted); }
   .chm-top-sp, .chm-h-sp { flex: 1; }
-  .chm-actions { display: flex; align-items: center; gap: 10px; }
-  .chm-seg { display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
-  .chm-seg button { display: flex; align-items: center; gap: 7px; border: 0; background: none; color: var(--muted); font: 500 14px 'Prompt', sans-serif; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+  .chm-actions { display: flex; align-items: center; gap: 8px; }
+  .chm-seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+  .chm-seg button { display: flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--muted); font: 500 13.5px 'Prompt', sans-serif; padding: 6px 13px; border-radius: 999px; cursor: pointer; }
   .chm-seg button:hover { color: var(--text); }
   .chm-seg button.active { background: var(--gold); color: #1a1205; }
-  .chm-seg button img { width: 22px; height: 22px; border-radius: 50%; }
-  .chm-seg-sm button { font-size: 13px; padding: 5px 11px; }
+  .chm-seg button img { width: 20px; height: 20px; border-radius: 50%; }
+  .chm-seg-sm button { font-size: 12.5px; padding: 4px 10px; }
   .chm-sim .chm-server-toggle .sk-server-btn { width: auto; height: auto; box-shadow: none; opacity: 1; }
-  .chm-rbtn { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); color: var(--gold); font: 700 18px 'Prompt', sans-serif; cursor: pointer; }
-  .chm-rbtn svg { width: 20px; height: 20px; }
+  .chm-rbtn { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); color: var(--gold); font: 700 17px 'Prompt', sans-serif; cursor: pointer; }
+  .chm-rbtn svg { width: 19px; height: 19px; }
   .chm-rbtn:hover { border-color: var(--gold); }
   .chm-rbtn .chm-snd-off, #chmSoundToggleBtn.muted .chm-snd-on { display: none; }
   #chmSoundToggleBtn.muted .chm-snd-off { display: inline; }
   #chmSoundToggleBtn.muted { color: var(--muted); }
   .chm-rbtn.has-active { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
   .chm-rbtn .sk-bd-count { position: absolute; top: -4px; right: -4px; }
-  .chm-play { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; border: 0; cursor: pointer; color: #ffe9b0; font-size: 22px;
-    background: radial-gradient(circle at 40% 35%, #c43a3a, var(--seal, #8b1e1e) 70%); box-shadow: 0 0 0 2px #0c0b09, 0 0 0 4px var(--gold), 0 10px 22px rgba(139,30,30,.45); transition: transform .12s; }
+  .chm-play { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer; color: #ffe9b0; font-size: 19px;
+    background: radial-gradient(circle at 40% 35%, #c43a3a, var(--seal, #8b1e1e) 70%); box-shadow: 0 0 0 1px var(--gold), 0 8px 18px rgba(139,30,30,.4); transition: transform .12s; }
   .chm-play:hover { transform: scale(1.05); }
   .chm-play:active { transform: scale(.95); }
   .chm-play.firing { background: radial-gradient(circle at 40% 35%, #3a3a3a, #1b1b1b 70%); }
-  .chm-count { width: 72px; height: 40px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); text-align: center; font: 700 15px var(--chm-num); }
+  .chm-count { width: 68px; height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); text-align: center; font: 700 14px var(--chm-num); }
 
   /* layout */
-  .chm-cockpit { display: grid; grid-template-columns: minmax(480px, 540px) minmax(0, 1fr); gap: 16px; align-items: start; }
-  .chm-left, .chm-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .chm-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 14px; align-items: start; }
-  .chm-pane { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); padding: 16px 18px; }
-  .chm-h { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 15px; font-weight: 600; color: var(--gold); }
-  .chm-h small { font-size: 12.5px; font-weight: 400; color: var(--muted); }
-  .chm-badge { font-size: 12.5px; font-weight: 500; color: var(--text); padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); }
+  .chm-cockpit { display: grid; grid-template-columns: 520px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .chm-left, .chm-right { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .chm-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 12px; align-items: start; }
+  .chm-pane { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 12px 14px; min-width: 0; }
+  .chm-h { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--gold); }
+  .chm-h small { font-size: 12px; font-weight: 400; color: var(--muted); }
+  .chm-badge { font-size: 12px; font-weight: 500; color: var(--text); padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
 
   /* gear: the select lies invisibly over the whole item */
-  .chm-gear { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .chm-gear-it { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 10px; border-radius: 14px; background: rgba(0,0,0,.18); cursor: pointer; text-align: center; }
+  .chm-gear { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .chm-gear-it { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 6px 7px; border-radius: 12px; background: rgba(0,0,0,.18); cursor: pointer; text-align: center; }
   .chm-gear-it:hover, .chm-gear-it:focus-within { background: rgba(212,175,55,.08); }
   .chm-gear-it:focus-within { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .chm-gear-ring { --s: 66px; margin-bottom: 4px; }
-  .chm-gear-it b { font-size: 14px; font-weight: 600; line-height: 1.25; }
-  .chm-gear-desc { font-size: 12px; color: var(--muted); }
+  .chm-gear-ring { --s: 44px; }
+  .chm-gear-it b { font-size: 13px; font-weight: 600; line-height: 1.2; }
+  .chm-gear-desc { font-size: 11.5px; color: var(--muted); }
   .chm-gear-it select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: 14px 'Prompt', sans-serif; }
 
   /* stat dials */
-  .chm-dials { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-  .chm-dial { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-  .chm-dial-ring { position: relative; display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%;
+  .chm-dials { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .chm-dial { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .chm-dial-ring { position: relative; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%;
     background: conic-gradient(var(--c) calc(var(--p, 0) * 1%), rgba(255,255,255,.07) 0); }
-  .chm-dial-ring::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--panel-2); }
-  .chm-dial input { position: relative; width: 60px; border: 0; background: none; color: #fff; text-align: center; font: 700 19px var(--chm-num); -moz-appearance: textfield; }
+  .chm-dial-ring::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--panel-2); }
+  .chm-dial input { position: relative; width: 50px; border: 0; background: none; color: #fff; text-align: center; font: 700 16px var(--chm-num); -moz-appearance: textfield; }
   .chm-dial input::-webkit-inner-spin-button, .chm-dial input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .chm-dial input:focus { outline: none; }
   .chm-dial-ring:focus-within { box-shadow: 0 0 0 2px var(--c); }
-  .chm-dial b { font-size: 13px; font-weight: 600; color: var(--c); }
-  .chm-dial small { margin-top: -4px; font: 500 11.5px var(--chm-num); color: var(--muted); }
+  .chm-dial b { font-size: 12.5px; font-weight: 600; color: var(--c); }
+  .chm-dial small { margin-top: -3px; font: 500 11px var(--chm-num); color: var(--muted); }
 
   /* skills */
-  .chm-skills { display: flex; flex-direction: column; gap: 8px; }
-  .chm-grp { display: flex; align-items: center; gap: 12px; padding: 12px 12px 10px; border-radius: 14px; background: rgba(0,0,0,.18); }
-  .chm-grp-name { display: flex; align-items: center; gap: 6px; width: 62px; flex: none; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .chm-skills { display: flex; flex-direction: column; gap: 6px; }
+  .chm-grp { display: flex; align-items: center; gap: 10px; padding: 7px 10px 5px; border-radius: 12px; background: rgba(0,0,0,.18); }
+  .chm-grp-name { display: flex; align-items: center; gap: 6px; width: 58px; flex: none; font-size: 12px; font-weight: 600; color: var(--muted); }
   .chm-grp-name::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
-  .chm-grp-row { display: flex; gap: 4px; flex-wrap: wrap; }
-  .chm-sk { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 90px; padding: 4px 0 2px; border: 0; background: none; color: var(--text); cursor: pointer; font-family: 'Prompt', sans-serif; }
-  .chm-sk .chm-ring { --s: 52px; }
+  .chm-grp-row { display: flex; gap: 4px; }
+  .chm-sk { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 96px; padding: 4px 0 0; border: 0; background: none; color: var(--text); cursor: pointer; font-family: 'Prompt', sans-serif; }
   .chm-sk:hover .chm-ring { filter: brightness(1.15); }
   .chm-sk:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 10px; }
-  .chm-sk b { font-size: 12px; font-weight: 500; line-height: 1.2; text-align: center; }
-  .chm-sk small { margin-top: -6px; font-size: 11px; line-height: 1.2; color: var(--muted); text-align: center; }
+  .chm-sk b { font-size: 12px; font-weight: 500; line-height: 1.15; text-align: center; white-space: nowrap; }
+  .chm-sk small { margin-top: -5px; font-size: 11px; line-height: 1.15; color: var(--muted); text-align: center; white-space: nowrap; }
   .chm-sk[aria-pressed="false"] b { color: var(--muted); }
-  .chm-opts { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 4px 2px 0; }
-  .chm-opt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .chm-opts { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 2px 2px 0; }
+  .chm-opt { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
 
   /* arena */
-  .chm-arena { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 18px; padding: 20px 22px; overflow: hidden; }
-  .chm-arena::before { content: ""; position: absolute; inset: 0; background: radial-gradient(420px 300px at 50% 46%, rgba(139,30,30,.18), transparent 70%); pointer-events: none; }
-  .chm-cds { display: flex; flex-direction: column; gap: 22px; align-items: flex-start; }
-  .chm-cd { display: flex; align-items: center; gap: 14px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font-family: 'Prompt', sans-serif; padding: 0; }
-  .chm-cd-ring { --s: 74px; overflow: visible; }
-  .chm-cd-sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(10,9,7,.8) calc(var(--cd, 0) * 1%), transparent 0); pointer-events: none; }
-  .chm-cd-sec { position: absolute; inset: 0; display: grid; place-items: center; font: 700 21px var(--chm-num); color: #fff; text-shadow: 0 2px 6px #000; }
-  .chm-cd[data-state="off"] .chm-cd-sec { font: 600 13px 'Prompt', sans-serif; color: var(--muted); }
+  .chm-arena { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; padding: 14px 18px; overflow: hidden; }
+  .chm-arena::before { content: ""; position: absolute; inset: 0; background: radial-gradient(380px 260px at 50% 50%, rgba(139,30,30,.18), transparent 70%); pointer-events: none; }
+  .chm-cds { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+  .chm-cd { display: flex; align-items: center; gap: 12px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font-family: 'Prompt', sans-serif; padding: 0; }
+  .chm-cd-ring { --s: 62px; }
+  .chm-cd-sweep { position: absolute; inset: 0; background: conic-gradient(rgba(10,9,7,.8) calc(var(--cd, 0) * 1%), transparent 0); pointer-events: none; }
+  .chm-cd-sec { position: absolute; inset: 0; display: grid; place-items: center; font: 700 19px var(--chm-num); color: #fff; text-shadow: 0 2px 6px #000; }
+  .chm-cd[data-state="off"] .chm-cd-sec { font: 600 12.5px 'Prompt', sans-serif; color: var(--muted); }
+  .chm-cd[data-state="off"] .chm-cd-ring { box-shadow: 0 0 0 1px rgba(255,255,255,.18); }
   .chm-cd[data-state="off"] .chm-cd-ring > img { filter: grayscale(1) brightness(.5); }
-  .chm-cd[data-state="buff"] .chm-cd-ring { box-shadow: 0 0 0 2px #0c0b09, 0 0 0 3.5px #f1d27a, 0 0 0 5.5px #0c0b09, 0 0 18px rgba(241,210,122,.45); }
-  .chm-cd-badge { position: absolute; right: -6px; bottom: -4px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: var(--gold); color: #1a1205; font: 700 12.5px/24px var(--chm-num); text-align: center; box-shadow: 0 0 0 2px #0c0b09; }
-  .chm-cd-lbl b { display: block; font-size: 15px; }
-  .chm-cd-lbl small { font-size: 12.5px; color: var(--muted); }
-  .chm-boss { position: relative; width: 300px; height: 300px; display: grid; place-items: center; }
+  .chm-cd[data-state="buff"] .chm-cd-ring { box-shadow: 0 0 0 1px #f1d27a, 0 0 14px rgba(241,210,122,.5); }
+  .chm-cd-badge { position: absolute; right: -6px; bottom: -4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--gold); color: #1a1205; font: 700 12px/22px var(--chm-num); text-align: center; box-shadow: 0 0 0 2px var(--panel); }
+  .chm-cd-lbl b { display: block; font-size: 14px; }
+  .chm-cd-lbl small { font-size: 12px; color: var(--muted); }
+  .chm-boss { position: relative; width: 270px; height: 270px; display: grid; place-items: center; }
   .chm-hp, .chm-pips { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .chm-hp circle { fill: none; stroke-width: 12; }
+  .chm-hp circle { fill: none; stroke-width: 11; }
   .chm-hp-track { stroke: rgba(255,255,255,.07); }
   .chm-hp-lag, .chm-hp-fill { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 150px 150px; }
   .chm-hp-lag { stroke: rgba(255,214,140,.55); transition: stroke-dasharray .9s ease .25s; }
   .chm-hp-fill { stroke: #e04444; }
   .chm-boss.is-dead .chm-hp-lag, .chm-boss.is-dead .chm-hp-fill { stroke-opacity: 0; }
-  .chm-pips circle { fill: #2a2a20; stroke: #0c0b09; stroke-width: 3; }
+  .chm-pips circle { fill: #2a2a20; stroke: var(--panel); stroke-width: 3; }
   .chm-pips circle.on { fill: #84cc16; }
   .chm-pips circle.on.rust { fill: #d97706; }
-  .chm-face { position: relative; width: 226px; height: 226px; border-radius: 50%; overflow: hidden; background: #0c0b09; box-shadow: 0 0 0 3px #0c0b09, 0 0 0 5px rgba(212,175,55,.6), inset 0 0 40px rgba(0,0,0,.6); }
+  .chm-face { position: relative; width: 200px; height: 200px; border-radius: 50%; overflow: hidden; background: var(--ink); box-shadow: 0 0 0 1px rgba(212,175,55,.75); }
   .chm-face img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
-  .chm-face-custom { display: none; position: absolute; inset: 0; place-items: center; font: 700 72px 'Prompt', sans-serif; color: var(--gold); }
+  .chm-face-custom { display: none; position: absolute; inset: 0; place-items: center; font: 700 64px 'Prompt', sans-serif; color: var(--gold); }
   .chm-boss.is-custom .chm-face-custom { display: grid; }
   .chm-boss.is-dead .chm-face img { filter: grayscale(1) brightness(.45); }
   .chm-boss .chm-arena-lane { bottom: 46%; }
   .chm-boss .chm-lane-left { left: 34%; }
   .chm-boss .chm-lane-right { left: 66%; }
   .chm-boss .chm-lane-mid { bottom: 34%; }
-  .chm-hptxt { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); padding: 5px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap; font: 700 16px var(--chm-num); }
+  .chm-hptxt { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap; font: 700 15px var(--chm-num); }
   .chm-hptxt small { font-weight: 500; color: var(--muted); }
   .chm-hptxt .chm-dead { color: #ef4444; letter-spacing: .5px; }
-  .chm-ttk { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 999px; background: var(--gold); color: #1a1205; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-  .chm-target { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+  .chm-ttk { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); padding: 3px 12px; border-radius: 999px; background: var(--gold); color: #1a1205; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .chm-target { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
   .chm-tname { text-align: center; }
-  .chm-tname b { display: block; font-size: 21px; color: #ff8f8f; }
-  .chm-tname span { font-size: 12.5px; color: var(--muted); }
-  .chm-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-  .chm-chip { padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; font-size: 12px; color: var(--muted); }
+  .chm-tname b { display: block; font-size: 19px; color: #ff8f8f; line-height: 1.2; }
+  .chm-tname span { font-size: 12px; color: var(--muted); }
+  .chm-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .chm-chip { padding: 1px 9px; border-radius: 999px; border: 1px solid currentColor; font-size: 11.5px; color: var(--muted); }
   .chm-chip-def { color: var(--stat-def); }
   .chm-chip-lck { color: var(--stat-lck); }
-  .chm-fields { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-  .chm-field { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--muted); }
-  .chm-field select, .chm-field input { height: 34px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 500 13.5px 'Prompt', sans-serif; }
-  .chm-field input { width: 104px; font-family: var(--chm-num); font-weight: 700; }
-  .chm-gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin-top: 4px; }
-  .chm-g { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
-  .chm-g-w { position: relative; width: 84px; height: 84px; display: grid; place-items: center; }
+  .chm-fields { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .chm-field { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); }
+  .chm-field select, .chm-field input { height: 32px; padding: 0 9px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 500 13px 'Prompt', sans-serif; }
+  .chm-field input { width: 96px; font-family: var(--chm-num); font-weight: 700; }
+  .chm-gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
+  .chm-g { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; min-width: 0; }
+  .chm-g-w { position: relative; width: 66px; height: 66px; display: grid; place-items: center; }
   .chm-g-w svg { position: absolute; inset: 0; transform: rotate(-90deg); }
   .chm-g-w circle { fill: none; stroke-width: 6; }
   .chm-g-track { stroke: rgba(255,255,255,.08); }
   .chm-g-arc { stroke: var(--c); stroke-linecap: round; transition: stroke-dasharray .3s; }
-  .chm-g .chm-ring { --s: 48px; box-shadow: 0 0 0 2px #0c0b09; }
-  .chm-g b { font: 700 17px var(--chm-num); color: var(--c); }
-  .chm-g small { font-size: 11.5px; line-height: 1.3; color: var(--muted); }
+  .chm-g .chm-ring { --s: 40px; }
+  .chm-g b { font: 700 15px var(--chm-num); color: var(--c); }
+  .chm-g small { font-size: 10.5px; line-height: 1.25; color: var(--muted); }
 
   /* results */
-  .chm-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .chm-kpi { padding: 11px 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,.18); min-width: 0; }
-  .chm-kpi span { font-size: 12.5px; color: var(--muted); }
-  .chm-kpi b { display: block; margin: 2px 0; font: 700 26px var(--chm-num); overflow-wrap: anywhere; }
-  .chm-kpi-big b { font-size: 34px; color: #f1d27a; }
-  .chm-kpi small { font-size: 12px; color: var(--muted); }
-  .chm-counts-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .chm-count-it { display: flex; align-items: baseline; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.2); }
-  .chm-count-it small { font-size: 12px; color: var(--muted); }
-  .chm-count-it b { font: 700 13px var(--chm-num); }
-  .chm-dist { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: center; }
-  .chm-donut { position: relative; width: 150px; height: 150px; }
+  .chm-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .chm-kpi { padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(0,0,0,.18); min-width: 0; }
+  .chm-kpi span { font-size: 12px; color: var(--muted); }
+  .chm-kpi b { display: block; margin: 1px 0; font: 700 23px var(--chm-num); overflow-wrap: anywhere; }
+  .chm-kpi-big b { font-size: 29px; color: #f1d27a; }
+  .chm-kpi small { font-size: 11.5px; color: var(--muted); }
+  .chm-counts-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .chm-count-it { display: flex; align-items: baseline; gap: 6px; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.2); }
+  .chm-count-it small { font-size: 11.5px; color: var(--muted); }
+  .chm-count-it b { font: 700 12.5px var(--chm-num); }
+  .chm-dist { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 14px; align-items: center; }
+  .chm-donut { position: relative; width: 124px; height: 124px; }
   .chm-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .chm-donut circle { fill: none; stroke-width: 16; }
   .chm-donut-track { stroke: rgba(255,255,255,.06); }
   .chm-donut-seg { stroke-dasharray: 0 999; }
   .chm-donut-c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
-  .chm-donut-c small { font-size: 11px; color: var(--muted); }
-  .chm-donut-c b { font: 700 15px var(--chm-num); }
-  .chm-legend { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; }
-  .chm-lg { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 52px; align-items: center; gap: 8px; font-size: 13.5px; }
-  .chm-lg i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
-  .chm-lg b { font: 700 13px var(--chm-num); }
-  .chm-lg em { font: 500 12px var(--chm-num); font-style: normal; color: var(--muted); text-align: right; }
-  .chm-log { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
-  .chm-log summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+  .chm-donut-c small { font-size: 10.5px; color: var(--muted); }
+  .chm-donut-c b { font: 700 14px var(--chm-num); }
+  .chm-legend { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .chm-lg { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 50px; align-items: center; gap: 8px; font-size: 13px; }
+  .chm-lg i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+  .chm-lg b { font: 700 12.5px var(--chm-num); }
+  .chm-lg em { font: 500 11.5px var(--chm-num); font-style: normal; color: var(--muted); text-align: right; }
+  .chm-log { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .chm-log summary { cursor: pointer; font-size: 13px; color: var(--muted); }
   .chm-log summary:hover { color: var(--text); }
-  .chm-log-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 8px; }
-  .chm-log-search { flex: 1; min-width: 120px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 13px 'Prompt', sans-serif; }
-  .chm-log-scroll { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
-  .chm-lr { display: grid; grid-template-columns: 56px 56px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 5px 10px; border-radius: 9px; background: rgba(0,0,0,.18); font: 500 13px var(--chm-num); }
+  .chm-log-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 6px; }
+  .chm-log-search { flex: 1; min-width: 110px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 12.5px 'Prompt', sans-serif; }
+  .chm-log-scroll { display: flex; flex-direction: column; gap: 3px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+  .chm-lr { display: grid; grid-template-columns: 52px 52px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 3px 9px; border-radius: 8px; background: rgba(0,0,0,.18); font: 500 12.5px var(--chm-num); }
   .chm-lr > span:nth-child(2) { color: var(--muted); }
   .chm-lr b { text-align: right; }
   .chm-lr.is-crit b { color: #ffd54a; }
-  .chm-lr b small { margin-left: 6px; color: #c084fc; font-size: 11.5px; }
+  .chm-lr b small { margin-left: 6px; color: #c084fc; font-size: 11px; }
   .chm-tags { display: flex; align-items: center; gap: 4px; }
-  .chm-tags em { font-style: normal; font-size: 11.5px; color: #84cc16; margin-right: 2px; }
-  .chm-tag { width: 20px; height: 20px; border-radius: 50%; background: var(--i) center / 130% no-repeat; box-shadow: 0 0 0 1.5px var(--gold); }
-  .chm-log-empty { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }
+  .chm-tags em { font-style: normal; font-size: 11px; color: #84cc16; margin-right: 2px; }
+  .chm-tag { width: 18px; height: 18px; border-radius: 50%; background: var(--ink) var(--i) center / 130% no-repeat; box-shadow: 0 0 0 1px rgba(212,175,55,.75); }
+  .chm-log-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 12.5px; }
 
-  @media (max-width: 1280px) {
-    .chm-cockpit { grid-template-columns: minmax(0, 1fr); }
-    .chm-left { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    #chmSkillsCard { grid-column: 1 / -1; }
-    .chm-right { order: -1; }   /* one column: the arena first, the loadout under it */
+  /* desktop: one screen at a fixed 1560 x 960 composition, zoomed by chmFit; the spare height goes to the skills and the log */
+  @media (min-width: 901px) {
+    html.tool-chm-sim:root, html.tool-chm-sim:root body { height: 100dvh !important; min-height: 0 !important; overflow: hidden !important; }
+    html.tool-chm-sim:root .stage { width: auto !important; max-width: none !important; margin: 8px auto 0 !important; padding: 0 !important; zoom: 1 !important; }
+    html.tool-chm-sim:root .tool-shell { width: auto !important; max-width: none !important; }
+    .chm-sim { width: 1560px; height: 960px; margin-inline: auto; zoom: var(--chm-z, 1); }
+    .chm-cockpit { flex: 1; min-height: 0; align-items: stretch; }
+    .chm-left, .chm-right { min-height: 0; }
+    #chmSkillsCard { flex: 1; display: flex; flex-direction: column; }
+    #chmSkillsCard .chm-skills { flex: 1; justify-content: space-between; }
+    .chm-arena { flex: none; }
+    .chm-results { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+    .chm-results > .chm-pane { display: flex; flex-direction: column; min-height: 0; }
+    .chm-log { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .chm-log[open] .chm-log-scroll { flex: 1; min-height: 0; max-height: none; }
   }
   @media (max-width: 900px) {
-    .chm-left { grid-template-columns: minmax(0, 1fr); }
+    .chm-cockpit { grid-template-columns: minmax(0, 1fr); }
+    .chm-right { order: -1; }   /* the arena first, the loadout under it */
     .chm-arena { grid-template-columns: minmax(0, 1fr); justify-items: center; }
     .chm-cds { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .chm-grp-row { flex-wrap: wrap; }
   }
   @media (max-width: 560px) {
-    .chm-top { gap: 10px; }
-    .chm-title h2 { font-size: 20px; }
-    .chm-dials { grid-template-columns: repeat(3, 1fr); row-gap: 12px; }
+    .chm-top { gap: 8px; }
+    .chm-title h2 { font-size: 19px; }
+    .chm-dials { grid-template-columns: repeat(3, 1fr); row-gap: 10px; }
     .chm-gear { gap: 6px; }
-    .chm-gear-ring { --s: 54px; }
     .chm-grp { flex-direction: column; align-items: flex-start; }
-    .chm-boss { width: 260px; height: 260px; }
-    .chm-face { width: 196px; height: 196px; }
+    .chm-sk { width: 80px; }
+    .chm-sk b, .chm-sk small { white-space: normal; }
+    .chm-gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .chm-dist { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   }
 
@@ -6852,13 +6866,13 @@
   .ln-gpng.is-wait img{display:none}
   /* ใหม่ badge on a guide dated today (user 2026-10-19): a gold pill with a slow shine, astride the image's top edge at the right (the untilted side; on the
      image it covered the cover icons), so it shows on phones too; clicks pass through to the image */
-  .ln-gnew{position:absolute; top:calc(12% - 15px); right:3%; z-index:2; pointer-events:none; transition:opacity .38s; display:inline-flex; align-items:center; gap:6px; padding:5px 14px 5px 11px; border-radius:999px; overflow:hidden;
-    font-size:16px; font-weight:700; line-height:1; color:#2a1a05; background:linear-gradient(135deg, #fff1b8, var(--gold) 45%, #b8862b);
-    box-shadow:0 0 0 1px rgba(255,236,170,.75), 0 0 0 3px rgba(0,0,0,.35), 0 6px 16px rgba(0,0,0,.55)}
+  .ln-gnew{position:absolute; top:calc(12% - 15px); right:3%; z-index:2; pointer-events:none; transition:opacity .38s; display:inline-flex; align-items:center; gap:6px; padding:5px 14px 5px 11px; border-radius:999px;
+    font-size:16px; font-weight:700; line-height:1; color:#2a1a05; border:1px solid rgba(255,236,170,.8);
+    background:linear-gradient(100deg, transparent 38%, rgba(255,255,255,.7) 50%, transparent 62%) 220% 0 / 250% 100% no-repeat, linear-gradient(135deg, #fff1b8, var(--gold) 45%, #b8862b);
+    box-shadow:0 6px 16px rgba(0,0,0,.55); animation:lnNewShine 3.2s ease-in-out infinite}
   .ln-gnew[hidden]{display:none}
   .ln-gnew i{font-style:normal; font-size:13px; animation:lnNewStar 2.4s ease-in-out infinite}
-  .ln-gnew::after{content:""; position:absolute; top:0; bottom:0; left:0; width:40%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); transform:translateX(-120%); animation:lnNewShine 3.2s ease-in-out infinite}
-  @keyframes lnNewShine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+  @keyframes lnNewShine{0%,55%{background-position:220% 0, 0 0}100%{background-position:-120% 0, 0 0}}
   @keyframes lnNewStar{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(45deg)}}
   @keyframes lnWait{to{background-position:-150% 0}}
   /* hover = a gold edge on its own layer that only fades in, so the big tilted image never repaints (user 2026-10-18: hover felt slow) */
@@ -25303,11 +25317,11 @@ function mountChameleonSim(root) {
             <div class="chm-skills">
               ${CHM_SKILL_GROUPS.map(([g, c], gi) => `
               <div class="chm-grp" style="--c:${c}"><span class="chm-grp-name">${g}</span><div class="chm-grp-row">
-                ${CHM_SKILLS.filter(s => s.grp === gi).map(s => `<button type="button" class="chm-sk" id="${s.id}">${chmRing(s.icon)}<b>${s.name}</b><small data-sub></small></button>`).join('')}
+                ${CHM_SKILLS.filter(s => s.grp === gi).map(s => `<button type="button" class="chm-sk" id="${s.id}"><span class="chm-ringw">${chmRing(s.icon)}</span><b>${s.name}</b><small data-sub></small></button>`).join('')}
               </div></div>`).join('')}
               <div class="chm-opts">
                 <div class="chm-opt"><span>Fatal Strike</span><div class="chm-seg chm-seg-sm" id="chmFsModeSeg"><button type="button" data-fsmode="rotation">ตามคูลดาวน์</button><button type="button" data-fsmode="always">ติดตลอด</button></div></div>
-                <div class="chm-opt"><span>พิษตอนเริ่ม</span><div class="chm-seg chm-seg-sm" id="chmPoisonModeSeg"><button type="button" data-pmode="dynamic">เริ่มจาก 0</button><button type="button" data-pmode="max">เต็มตั้งแต่แรก</button></div></div>
+                <div class="chm-opt"><span>พิษตอนเริ่ม</span><div class="chm-seg chm-seg-sm" id="chmPoisonModeSeg"><button type="button" data-pmode="dynamic">0</button><button type="button" data-pmode="max">เต็ม</button></div></div>
               </div>
             </div>
           </section>
@@ -25318,7 +25332,7 @@ function mountChameleonSim(root) {
             <div class="chm-cds">
               ${[['Fs', 'Fatal Strike', CHM_ICONS.fatalStrike], ['Ls', 'Left Stride', SKILL_ICONS.chameleon_leftStride2]].map(([k, name, ic]) => `
               <button type="button" class="chm-cd" id="chmTf${k}Slot">
-                <span class="chm-ring chm-cd-ring"><img id="chmSlot${k}Icon" src="${ic}" alt=""><span class="chm-cd-sweep" id="chmSlot${k}CdOverlay"></span><span class="chm-cd-sec" id="chmSlot${k}CdText"></span>${k === 'Fs' ? '<span class="chm-cd-badge" id="chmSlotFsCharges" hidden></span>' : ''}</span>
+                <span class="chm-ringw"><span class="chm-ring chm-cd-ring"><img id="chmSlot${k}Icon" src="${ic}" alt=""><span class="chm-cd-sweep" id="chmSlot${k}CdOverlay"></span><span class="chm-cd-sec" id="chmSlot${k}CdText"></span></span>${k === 'Fs' ? '<span class="chm-cd-badge" id="chmSlotFsCharges" hidden></span>' : ''}</span>
                 <span class="chm-cd-lbl"><b>${name}</b><small id="chm${k}CdDesc"></small></span>
               </button>`).join('')}
             </div>
@@ -25459,8 +25473,8 @@ function mountChameleonSim(root) {
       const btn = $c(s.id), on = s.rank ? simState[s.rank] > 0 : !!simState[s.flag], ring = btn.querySelector('.chm-ring');
       btn.setAttribute('aria-pressed', String(on));
       ring.classList.toggle('off', !on);
-      const old = ring.querySelector('.chm-arc'); if (old) old.remove();
-      if (s.rank && s.max > 1) ring.insertAdjacentHTML('beforeend', chmArc(simState[s.rank], s.max));
+      const old = ring.parentElement.querySelector('.chm-arc'); if (old) old.remove();
+      if (s.rank && s.max > 1) ring.parentElement.insertAdjacentHTML('beforeend', chmArc(simState[s.rank], s.max));
       btn.title = s.name + (s.rank && s.max > 1 ? ' เลเวล ' + simState[s.rank] + ' (คลิกเพื่อเปลี่ยนเลเวล)' : on ? ' (เปิด)' : ' (ปิด)');
       btn.querySelector('[data-sub]').textContent = chmSkillSub(s, b);
     });
@@ -25777,6 +25791,18 @@ function mountChameleonSim(root) {
     const btn = e.target.closest('.sk-server-btn');
     if (btn && btn.dataset.server !== simState.server) chmDo(() => chmSetServer(btn.dataset.server, true));
   });
+
+  // One screen on desktop (user 2026-10-19): the 1560 x 960 composition is zoomed to the room under the hub bar (up to 1.5 on big screens); phones scroll
+  const chmSimEl = root.querySelector('.chm-sim');
+  function chmFit() {
+    if (!root.getClientRects().length) return;   // hidden tool: refit when it shows (the ResizeObserver below)
+    if (innerWidth <= 900) { chmSimEl.style.removeProperty('--chm-z'); return; }
+    const hub = document.querySelector('.hub-bar'), top = (hub ? hub.offsetHeight : 60) + 16;
+    chmSimEl.style.setProperty('--chm-z', Math.min(1.5, (innerWidth - 24) / 1560, (innerHeight - top) / 960).toFixed(3));
+  }
+  addEventListener('resize', chmFit);
+  if (typeof ResizeObserver === 'function') new ResizeObserver(chmFit).observe(root);
+  chmFit();
 
   // Same markup/classes as the skill tool's server popup (showServerPopup), which lives in another mount.
   const CHM_TTO_NOTE = "• [Adjust] ตัดค่าสุ่มจาก LCK ออกจาก `dmgAdjust` และ `defAdjust` (ดาเมจแต่ละนัดไม่แกว่งตาม LCK)\n"
@@ -27992,7 +28018,7 @@ function ringIconShift(img){   // the art centre's offset from the image centre,
   ringShiftCache.set(key, out); return out;
 }
 const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
-document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
+document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .chm-ring > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = Object.assign({}, skillSimCells(SKILL_SIM[b.classKey], SKILL_SIM_SERVERS[b.server].patch[b.classKey], b.server === "tot" ? SKILL_SIM_EX[b.classKey] : null), classGuideSupportCells());
@@ -28101,7 +28127,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T02:45:02.868Z","counts":{"1":37,"2":54,"3":33,"4":21,"5":49,"6":43,"7":28,"8":21,"9":23,"10":40,"11":35,"12":12,"13":5,"14":41,"15":49,"16":27,"17":50,"18":50,"19":30,"20":53,"21":29,"22":34,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":29,"32":4,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T02:51:52.080Z","counts":{"1":37,"2":54,"3":33,"4":21,"5":49,"6":43,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":29,"22":34,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":30,"32":5,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31796,6 +31822,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T02:49:41.626Z","feat(bible): the Chameleon attack sim fits one screen on desktop (a 1560 x 960 composition zoomed to the window, the skills and the shot log take the spare height; phones still scroll) and its round icons follow the skill details rings (one thin gold edge, the art centred); the menu's ใหม่ pill keeps smooth corners at any zoom"],
     ["2026-10-19T02:44:54.290Z","feat(bible): the menu's tool strip can be dragged sideways with the mouse (a finger already swipes it); letting go after a drag opens nothing"],
     ["2026-10-19T02:42:20.827Z","feat(bible): Deadly Venom shows the same unintended-behaviour note as Piercing Venom (on Robots the bonus is always 0: only poison counts, Robots cannot be poisoned, Rusty Decay's rust is not counted)"],
     ["2026-10-19T02:32:09.065Z","feat(bible): the Chameleon attack sim gets the Cockpit layout (gear medallions, stat dials and round skill icons with rank arcs on the left; the boss in a round HP ring with poison dots, round Fatal Strike / Left Stride cooldown sweeps and proc gauges, the results with a damage donut and a foldable shot log on the right), Thai labels, server looks and Ctrl+Z undo for every setting"],
