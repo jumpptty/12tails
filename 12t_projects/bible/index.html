@@ -28678,7 +28678,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T09:12:47.639Z","counts":{"1":45,"2":66,"3":37,"4":26,"5":58,"6":52,"7":36,"8":24,"9":27,"10":45,"11":43,"12":14,"13":6,"14":45,"15":55,"16":34,"17":56,"18":58,"19":37,"20":63,"21":33,"22":40,"23":47,"24":11,"25":20,"26":18,"27":12,"28":19,"29":36,"30":36,"31":37,"32":11,"33":18,"34":7,"35":9}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T10:06:27.588Z","counts":{"1":46,"2":67,"3":39,"4":27,"5":62,"6":54,"7":38,"8":24,"9":27,"10":49,"11":48,"12":15,"13":7,"14":46,"15":56,"16":37,"17":57,"18":59,"19":40,"20":65,"21":35,"22":40,"23":48,"24":11,"25":20,"26":18,"27":12,"28":19,"29":38,"30":37,"31":41,"32":12,"33":20,"34":9,"35":15}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -30615,7 +30615,7 @@ function mountClassGuide(root){
   let galleryPage = 0;
   function renderGallery(keepPage){
     if (keepPage !== true) galleryPage = 0;
-    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = "";
+    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = "";   // the fit below may have shrunk the grid
     let validCount = 0, invalidCount = 0, totalCount = 0;
     const server = filterServer, classKey = filterClass;
     const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && a.date) || "").localeCompare(String((z && z.date) || "")) || ia - ib; return sortNewest ? -d : d; });
@@ -30648,9 +30648,14 @@ function mountClassGuide(root){
     // were on no page, e.g. the Bat guides); the asked-for page is drawn once the size is known.
     const wantPage = galleryPage; galleryPage = 0;
     draw();
-    const floor = window.innerWidth <= 760 ? cols * 3 : cols;   // phones keep at least 3 rows per page (user 2026-10-17)
+    // Rows per page: phones at least 3 (user 2026-10-17); desktop at least 2, i.e. 4 x 2 = 8 guides (user 2026-10-19: a short window, e.g. 1280 x 720
+    // or a 125% display, showed one row of 4). When two rows do not fit, the cards shrink together (zoom on the grid, down to .7: they still fill the
+    // width) instead of dropping a row; only a window too short even for that falls back to one row.
+    const desk = window.innerWidth > 760, floor = desk ? cols * 2 : cols * 3;
     if (list.offsetParent && perPage < floor){ perPage = Math.min(cards.length, floor); draw(); }
     while (list.offsetParent && perPage > floor && overflows()){ perPage -= cols; draw(); }
+    for (let z = 0.97; desk && list.offsetParent && z >= 0.7 && overflows(); z -= 0.03) list.style.zoom = z.toFixed(2);
+    if (desk && list.offsetParent && perPage > cols && overflows()){ list.style.zoom = ""; perPage = cols; draw(); }
     if (wantPage){ galleryPage = wantPage; draw(); }
     function drawPager(){
       const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); }); pager.appendChild(b); };
@@ -32382,6 +32387,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T10:06:28.542Z","fix(bible): the class guide gallery shows at least 8 guides (4 x 2) on a desktop window: when two rows do not fit a short window the cards shrink together instead of dropping to one row of 4"],
     ["2026-10-19T09:12:48.384Z","style(bible): the Chameleon attack sim drops most of its boxes: only the arena keeps a frame, the settings and results sections are split by thin lines with nothing boxed inside, and the ToT / TTO looks keep their glass behind each section without the outline"],
     ["2026-10-19T08:21:11.117Z","feat(bible): the mechanic glossary is redesigned (one row per topic; a topic shows one step at a time with named step tabs, its example icons on a stage beside the text and a next-step button; never scrolls on desktop), and starting a new preset no longer closes the PRESET window"],
     ["2026-10-19T08:13:24.009Z","feat(bible): presets can be edited in the PRESET window and the preset change summary is redesigned (each change in large type, final damage only, a back button); no-scroll fixes: enemy search, skill tree tabs and paged search in skill details, shot log pages, a slimmer class rail, a fitted map strategy panel, CHA / AGI on one screen; leaving the Chameleon sim mid-tour no longer freezes page scrolling"],
