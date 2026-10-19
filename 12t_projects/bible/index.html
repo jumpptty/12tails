@@ -8341,6 +8341,16 @@
   .ln-gpng img{display:block; width:100%; height:auto}
   .ln-gpng.is-wait{aspect-ratio:2.45; background:linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%) 0 0 / 300% 100%; animation:lnWait 1.4s linear infinite}
   .ln-gpng.is-wait img{display:none}
+  /* ใหม่ badge on a guide dated today (user 2026-10-19): a gold pill with a slow shine, on the image's corner so it shows on phones too */
+  .ln-gnew{position:absolute; top:14px; left:14px; z-index:1; display:inline-flex; align-items:center; gap:6px; padding:5px 14px 5px 11px; border-radius:999px; overflow:hidden;
+    font-size:16px; font-weight:700; line-height:1; color:#2a1a05; background:linear-gradient(135deg, #fff1b8, var(--gold) 45%, #b8862b);
+    box-shadow:0 0 0 1px rgba(255,236,170,.75), 0 0 0 3px rgba(0,0,0,.35), 0 6px 16px rgba(0,0,0,.55)}
+  .ln-gnew[hidden]{display:none}
+  .ln-gnew i{font-style:normal; font-size:13px; animation:lnNewStar 2.4s ease-in-out infinite}
+  .ln-gnew::after{content:""; position:absolute; top:0; bottom:0; left:0; width:40%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); transform:translateX(-120%); animation:lnNewShine 3.2s ease-in-out infinite}
+  @keyframes lnNewShine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+  @keyframes lnNewStar{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(45deg)}}
+  @media (prefers-reduced-motion: reduce){.ln-gnew::after, .ln-gnew i{animation:none}}
   @keyframes lnWait{to{background-position:-150% 0}}
   /* hover = a gold edge on its own layer that only fades in, so the big tilted image never repaints (user 2026-10-18: hover felt slow) */
   .ln-gpng::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 2px var(--ln-hi); opacity:0; transition:opacity .12s; pointer-events:none}
@@ -33874,9 +33884,14 @@ function mountLauncher(root){
     const tooTall = () => phone() ? h.offsetHeight > lh() * 2.2 : spans.some(sp => sp.offsetHeight > lh() * 1.4);
     for (let px = parseFloat(getComputedStyle(h).fontSize), n = 0; tooTall() && px > 24 && n < 30; n++) { px -= 2; h.style.fontSize = px + "px"; } };
   // ไกด์อาชีพ slide: newest guide first; each PNG renders once per visit (or again after a look change, the PNG follows the look)
+  // Guides dated today (the visitor's calendar day) come first, every visit of the slide opens on one of them (in turn) and they wear a ใหม่ badge (user 2026-10-19)
+  const localDay = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const isToday = g => g.date === localDay();
   const guides = CLASS_GUIDES.map((g, k) => ({ g, id: classGuideId(g, k) })).filter(x => x.g && x.g.build && CLASS_STORY_ART[SKILL_SIM_NAMES[x.g.build.classKey]])
-    .sort((a, b) => String(b.g.date || "").localeCompare(String(a.g.date || "")) || Number(b.id) - Number(a.id));
-  const pngs = new Map(), readyPng = {}; let gi = -1, guideTimer = 0;
+    .sort((a, b) => isToday(b.g) - isToday(a.g) || String(b.g.date || "").localeCompare(String(a.g.date || "")) || Number(b.id) - Number(a.id));
+  const nToday = guides.filter(x => isToday(x.g)).length;
+  const pngs = new Map(), readyPng = {}; let gi = -1, feat = 0, guideTimer = 0;
+  const nextStart = () => nToday ? feat % nToday : gi + 1;   // where the next visit of the slide starts
   const idle = fn => typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 300);
   const guidePng = x => { if (!pngs.has(x.id)) pngs.set(x.id, (async () => { try {
     const c = await classGuideRenderImage(classGuideNormalize(x.g), simBox), s = Math.min(1, 1280 / c.width), o = document.createElement("canvas");
@@ -33890,6 +33905,7 @@ function mountLauncher(root){
       panel.href = "#class-guide/" + x.id; panel.setAttribute("aria-label", "เปิดไกด์ " + g.title);
       ptl.href = "#class-guide?class=" + g.build.classKey; ptl.setAttribute("aria-label", "ไกด์ " + cls + " ทุกเซิร์ฟเวอร์");
       box.querySelector(".ln-gpt").src = storyOf(cls);
+      box.querySelector(".ln-gnew").hidden = !isToday(g);
       box.querySelector(".ln-gcap").innerHTML = "<b>" + esc(g.title) + "</b><span>โดย " + esc(g.author) + " · " + cls + " · " + (LAUNCH_SERVER[g.build.server] || "") + "</span>";
       png.hidden = false; png.classList.add("is-wait"); img.removeAttribute("src");
       const stale = () => guides[gi % guides.length] !== x || !box.isConnected;
@@ -34000,8 +34016,8 @@ function mountLauncher(root){
       if (t.collage === "monsterOrbit") { LN_MON.fill(art.querySelector(".ln-orbit")); if (matchMedia("(hover: none)").matches) setTimeout(() => { const o = art.querySelector(".ln-orbit"); if (o) o.classList.add("is-hot"); }, 450); }
     }
     else if (t.collage === "classStory" && guides.length) {
-      art.innerHTML = '<div class="ln-g"><a class="ln-gpng is-wait" href="#class-guide"><img alt=""></a><a class="ln-gptl" href="#class-guide"><img class="ln-gpt" alt=""></a><span class="ln-gcap"></span></div>';
-      const box = art.querySelector(".ln-g"); gi++; showGuide(box, false);
+      art.innerHTML = '<div class="ln-g"><a class="ln-gpng is-wait" href="#class-guide"><img alt=""><span class="ln-gnew" hidden><i aria-hidden="true">✦</i>ใหม่</span></a><a class="ln-gptl" href="#class-guide"><img class="ln-gpt" alt=""></a><span class="ln-gcap"></span></div>';
+      const box = art.querySelector(".ln-g"); gi = nextStart(); if (nToday) feat++; showGuide(box, false);
       guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); } }, 3500);
     } else {
       const arts = (t.art || []).filter(k => artSrc(k));
@@ -34048,7 +34064,7 @@ function mountLauncher(root){
   ["pointermove", "pointerdown", "keydown", "wheel"].forEach(ev => addEventListener(ev, () => { lastInput = performance.now(); }, { capture: true, passive: true }));
   const pump = () => {
     if (rendering || viewMenu.hidden || !guides.length || TOOLS[cur].collage === "classStory" || performance.now() - shownAt < 1200 || performance.now() - lastInput < 1500) return;
-    for (let k = 1; k <= 2; k++) { const x = guides[(gi + k + guides.length) % guides.length]; if (!pngs.has(x.id)) { rendering = true; guidePng(x).then(() => { rendering = false; }); return; } }
+    for (let k = 0; k < 2; k++) { const x = guides[(nextStart() + k) % guides.length]; if (!pngs.has(x.id)) { rendering = true; guidePng(x).then(() => { rendering = false; }); return; } }
   };
   setInterval(() => idle(pump), 700);
   // the ไกด์อาชีพ banner: a guide image that is already rendered pans slowly behind that guide's class portrait; a new one every 3.5 s
@@ -34073,6 +34089,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T01:08:01.964Z","feat(bible): on the menu's ไกด์อาชีพ slide, guides dated today come first, every visit opens on one of them and they wear a gold ✦ ใหม่ badge"],
     ["2026-10-19T00:59:10.678Z","feat(bible): class guide #33 TTO Penguin กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ by หนมผิงช่วยเหลือประชาชน"],
     ["2026-10-19T00:58:20.300Z","feat(bible): class guide #32 TTO Sheep ProSupporter (No Basic) by TLa1K"],
     ["2026-10-18T16:53:06.254Z","fix(bible): the enemy picker pop-up on skill details is solid again in the ToT look (the stat dials behind it were showing through)"],
