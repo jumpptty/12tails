@@ -6154,7 +6154,7 @@
   .chm-pips { z-index: 2; pointer-events: none; }
   .chm-hp circle { fill: none; stroke-width: 11; }
   .chm-hp-track { stroke: rgba(255,255,255,.07); }
-  .chm-hp-lag, .chm-hp-fill { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 150px 150px; }
+  .chm-hp-track, .chm-hp-lag, .chm-hp-fill { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 150px 150px; }
   .chm-hp-lag { stroke: rgba(255,214,140,.55); transition: stroke-dasharray .9s ease .25s, transform .9s ease .25s; }
   .chm-hp-fill { stroke: #e04444; }
   .chm-boss.is-dead .chm-hp-lag, .chm-boss.is-dead .chm-hp-fill { stroke-opacity: 0; }
@@ -6170,8 +6170,8 @@
   .chm-boss .chm-lane-left { left: 34%; }
   .chm-boss .chm-lane-right { left: 66%; }
   .chm-boss .chm-lane-mid { bottom: 34%; }
-  .chm-hptxt { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap; font: 700 15px var(--chm-num); }
-  .chm-hptxt small { font-weight: 500; color: var(--muted); }
+  .chm-hptxt { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; padding: 4px 14px 5px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap; font: 700 16px/1.15 var(--chm-num); }
+  .chm-hptxt small { font-size: 11px; font-weight: 500; color: var(--muted); }
   .chm-hptxt .chm-dead { color: #ef4444; letter-spacing: .5px; }
   .chm-ttk { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); padding: 3px 12px; border-radius: 999px; background: var(--gold); color: #1a1205; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .chm-target { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
@@ -25275,7 +25275,7 @@ function mountChameleonSim(root) {
   const CHM_SVG_SOUND = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="chm-snd-on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="chm-snd-off" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const CHM_SVG_MODS = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
   const CHM_SVG_RESET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 3v5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const CHM_HP_R = 142, CHM_HP_C = 2 * Math.PI * CHM_HP_R, CHM_G_C = 2 * Math.PI * 40, CHM_D_C = 2 * Math.PI * 46;
+  const CHM_HP_R = 142, CHM_HP_C = 2 * Math.PI * CHM_HP_R, CHM_HP_ARC = 260, CHM_G_C = 2 * Math.PI * 40, CHM_D_C = 2 * Math.PI * 46;
 
   root.innerHTML = `
     <div class="chm-sim" style="--chm-ic-ls:url('${SKILL_ICONS.chameleon_leftStride2}');--chm-ic-fs:url('${CHM_ICONS.fatalStrike}');--chm-ic-crit:url('${CHM_ICONS.criticalPlus}');--chm-ic-poison:url('${CHM_ICONS.status_poison}');--chm-ic-drain:url('${CHM_ICONS.status_hpDrain}');--chm-ic-revert:url('${CHM_ICONS.sheep_revert1}')">
@@ -25352,7 +25352,7 @@ function mountChameleonSim(root) {
             </div>
             <div class="chm-boss" id="chmBossWrap">
               <svg class="chm-hp" viewBox="0 0 300 300" aria-hidden="true">
-                <circle cx="150" cy="150" r="${CHM_HP_R}" class="chm-hp-track"/>
+                <circle cx="150" cy="150" r="${CHM_HP_R}" class="chm-hp-track" style="stroke-dasharray:${CHM_HP_C * CHM_HP_ARC / 360} ${CHM_HP_C};transform:rotate(${-90 - CHM_HP_ARC / 2}deg)"/>
                 <circle cx="150" cy="150" r="${CHM_HP_R}" class="chm-hp-lag" id="chmHpLag"/>
                 <circle cx="150" cy="150" r="${CHM_HP_R}" class="chm-hp-fill" id="chmHpFill"/>
               </svg>
@@ -25581,11 +25581,12 @@ function mountChameleonSim(root) {
     const bMaxHp = simState.bossMaxHp || 70000;
     const bCurHp = Math.max(0, bMaxHp - Math.round(simState.totalDamage));
     const bHpPct = Math.max(0, Math.min(1, bCurHp / bMaxHp));
-    // the HP left is an arch centred on the top (user 2026-10-19: a ring draining clockwise read as a lopsided U); it shrinks from both ends toward the top
-    const dash = (CHM_HP_C * bHpPct) + ' ' + CHM_HP_C, turn = 'rotate(' + (-90 - 180 * bHpPct) + 'deg)';
+    // the HP left is an arch centred on the top of the open 260-degree gauge (user 2026-10-19: a full ring draining clockwise read as a lopsided U,
+    // and the HP text covered its start); it shrinks from both ends toward the top
+    const span = CHM_HP_ARC * bHpPct, dash = (CHM_HP_C * span / 360) + ' ' + CHM_HP_C, turn = 'rotate(' + (-90 - span / 2) + 'deg)';
     ['chmHpFill', 'chmHpLag'].forEach(id => { const c = $c(id); c.style.strokeDasharray = dash; c.style.transform = turn; });
     $c('chmBossWrap').classList.toggle('is-dead', bCurHp <= 0);
-    $c('chmTfHpText').innerHTML = bCurHp <= 0 ? '<b class="chm-dead">ล้มแล้ว</b>' : '<b>' + bCurHp.toLocaleString() + '</b><small> / ' + bMaxHp.toLocaleString() + ' · ' + (bHpPct * 100).toFixed(1) + '%</small>';
+    $c('chmTfHpText').innerHTML = bCurHp <= 0 ? '<b class="chm-dead">ล้มแล้ว</b>' : '<b>' + bCurHp.toLocaleString() + '</b><small>/ ' + bMaxHp.toLocaleString() + ' · ' + (bHpPct * 100).toFixed(1) + '%</small>';
     if (bCurHp <= 0 && !simState.bossDefeatedTime && simState.totalShots > 0) {
       simState.bossDefeatedTime = simState.totalTime;
       simState.bossDefeatedShots = simState.totalShots;
@@ -25597,7 +25598,7 @@ function mountChameleonSim(root) {
     // Poison stacks as dots along the bottom-right edge of the portrait (rust orange on Robots); the portrait edge is r 111 in the 300-unit box
     let pips = '';
     for (let i = 0; i < maxPoison; i++) {
-      const a = (12 + i * 13) * Math.PI / 180, x = 150 + 111 * Math.cos(a), y = 150 + 111 * Math.sin(a);
+      const a = (-8 + i * 13) * Math.PI / 180, x = 150 + 111 * Math.cos(a), y = 150 + 111 * Math.sin(a);
       pips += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8"${i < simState.currentPoisonStacks ? ` class="on${isRobot ? ' rust' : ''}"` : ''}/>`;
     }
     $c('chmPips').innerHTML = pips;
@@ -28156,7 +28157,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:29:18.934Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:33:18.401Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31851,6 +31852,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T03:33:09.603Z","fix(bible): the Chameleon attack sim's boss HP gauge is an open 260-degree arc with the HP text in its gap at the bottom (the text no longer covers the start of the bar)"],
     ["2026-10-19T03:29:10.205Z","feat(bible): the Chameleon attack sim gets a live simulation clock in its header (mm:ss.t, runs smoothly while shooting, exact when stopped), its boss HP ring drains evenly toward the top (an arch, not a lopsided U) and its Fatal Strike / Left Stride medallions lose the clock ticks"],
     ["2026-10-19T03:22:10.593Z","fix(bible): the Chameleon attack sim's Fatal Strike and Left Stride slots wear a gold medallion frame with clock ticks (grey when off, glowing while Fatal Strike charges last)"],
     ["2026-10-19T03:17:36.639Z","fix(bible): Chameleon attack sim round icons get a thicker gold edge and rank arc, and the poison stack dots move off the HP bar onto the bottom-right edge of the boss portrait"],
