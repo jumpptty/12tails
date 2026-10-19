@@ -7164,6 +7164,8 @@
   .pi-tv small{font-size:13px; font-weight:500; color:var(--muted); margin-left:5px}
   .pi-viz{display:grid; grid-template-columns:minmax(260px, 360px) minmax(0,1fr); gap:14px; align-items:start}
   .pi-viz.is-one{grid-template-columns:minmax(0, 520px)}
+  .pi-side{display:flex; flex-direction:column; gap:14px; min-width:0}   /* everything after the range map stacks beside it (user 2026-10-19: no page scroll on desktop) */
+  @media (min-width:761px){ html.tool-pets .stage{padding-bottom:0} }   /* the roster and the pet page end 12 px above the window's bottom (fit() in mountPetInfo) */
   .pi-box{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; min-width:0}
   .pi-bh{font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:6px}
   .pi-bh b{color:var(--gold)}
@@ -28198,7 +28200,8 @@ function petInfoDetailHtml(st){
     `<div class="pi-hero"><div class="pi-ring"><img src="${GEAR_ICONS[id] || ""}" alt="" width="72" height="72"></div>` +
     `<div class="pi-hd"><h2 class="pi-title">${petInfoEsc(name)}</h2><div class="pi-chips">${chips}</div>${vars}</div><div class="pi-ctl">${lv}${lck}</div></div>` +
     `<div class="pi-desc">${renderRichText(p.desc(N, L))}</div>${tileHtml}` +
-    (range || tl ? `<div class="pi-viz${range && tl ? "" : " is-one"}">${range}${tl}</div>` : "") + res + gvc + facts + `</div>`;
+    (range ? `<div class="pi-viz">${range}<div class="pi-side">${tl}${res}${gvc}${facts}</div></div>`   // with a range map the rest stacks beside it (user 2026-10-19)
+      : (tl ? `<div class="pi-viz is-one">${tl}</div>` : "") + res + gvc + facts) + `</div>`;
 }
 // ---- Special Pet Info: the page (roster left, the chosen pet right; layout A "Codex", user 2026-10-18) ----
 // State {sel, vi, N, L} is remembered in localStorage "12t-bible-pets"; #pet-info/<pet id> opens a pet (a variant id opens its family).
@@ -28217,7 +28220,7 @@ function mountPetInfo(root){
   const render = () => {
     const a = document.activeElement, k = a && a.dataset && root.contains && root.contains(a) ? Object.keys(ATTR).find(x => a.dataset[x] != null) : null;
     const box = k && a.closest ? (a.closest(".pi-roster") || a.closest(".pi-detail")) : null;
-    roster.innerHTML = petInfoRosterHtml(st, tab); detail.innerHTML = petInfoDetailHtml(st); save();
+    roster.innerHTML = petInfoRosterHtml(st, tab); detail.innerHTML = petInfoDetailHtml(st); save(); fit();
     if (box) { const el = box.querySelector(k === "petLck" ? "[data-pet-lck]" : `[${ATTR[k]}="${a.dataset[k]}"]`); if (el && el.focus) el.focus(); }
   };
   const linkTo = () => {
@@ -28237,13 +28240,17 @@ function mountPetInfo(root){
   root.addEventListener("change", e => {
     if (e.target.matches && e.target.matches("[data-pet-lck]")) { st = petInfoState(Object.assign({}, st, { L: e.target.value })); render(); }
   });
-  render();
-  // Desktop (user 2026-10-19: no scrolling): the roster is as tall as the window below its top, in page px under the big-screen zoom; the rows shrink to fit (CSS).
-  const fit = () => {
+  // Desktop (user 2026-10-19: no scrolling): the roster is as tall as the window below its top, in page px under the big-screen zoom (its rows shrink to fit in CSS),
+  // and a pet page taller than that is zoomed down to the same height. Phones scroll as before.
+  function fit(){
+    detail.style.zoom = "";
     const grid = root.querySelector(".pi"), r = grid.getBoundingClientRect(), z = r.height / grid.offsetHeight || 1;
     if (!r.height || !(window.innerHeight > 0) || window.innerWidth <= 760) { roster.style.height = ""; return; }
-    roster.style.height = Math.max(260, (window.innerHeight - r.top - window.scrollY - 12 * z) / z) + "px";
-  };
+    const room = Math.max(260, (window.innerHeight - r.top - window.scrollY - 12 * z) / z), h = detail.offsetHeight;
+    roster.style.height = room + "px";
+    if (h > room) detail.style.zoom = room / h;
+  }
+  render();
   if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe(root);   // also runs when the tool is shown
   window.addEventListener("resize", fit);
   root._petInfo = { openById: select };
@@ -28413,7 +28420,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T06:37:55.122Z","counts":{"1":42,"2":62,"3":34,"4":23,"5":53,"6":48,"7":35,"8":23,"9":25,"10":43,"11":41,"12":14,"13":5,"14":43,"15":51,"16":31,"17":53,"18":57,"19":32,"20":58,"21":32,"22":38,"23":45,"24":11,"25":19,"26":17,"27":12,"28":18,"29":34,"30":32,"31":34,"32":8,"33":12,"34":2,"35":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T06:47:25.682Z","counts":{"1":42,"2":62,"3":34,"4":23,"5":53,"6":48,"7":35,"8":23,"9":25,"10":43,"11":41,"12":14,"13":5,"14":43,"15":51,"16":31,"17":53,"18":57,"19":32,"20":58,"21":32,"22":38,"23":45,"24":11,"25":19,"26":17,"27":12,"28":18,"29":34,"30":32,"31":34,"32":8,"33":12,"34":2,"35":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32117,6 +32124,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T06:47:25.844Z","feat(bible): Special Pet Info fits one desktop screen: a pet with a range map stacks its timeline, game-vs-code strip and notes beside the map, the empty space under the tool is gone, and a pet page taller than a short window is zoomed down to fit"],
     ["2026-10-19T06:39:15.116Z","feat(bible): Special Pet Info's roster gets a tab per category (only the open one's pets show) and never scrolls on desktop: the panel fits the window and its rows shrink to fit"],
     ["2026-10-19T05:52:24.459Z","feat(bible): the PRESET window shows one preset at a time: folder tabs on top (face, number, name, in-use mark; click, arrow keys or drag to reorder), then the portrait with name / description / use, the stats as bars, the saved buffs and debuffs with their levels, and the popup server, quick switches and move buttons"],
     ["2026-10-19T05:16:54.593Z","feat(bible): the Buff / Debuff popups and the Chameleon sim's Mods popup become level tables that never scroll: one cell per level with its value, the row icon follows the picked level, 8 stat chips, custom entries as pills, undo; shorter rows, two columns or a zoom keep them on one screen"],
