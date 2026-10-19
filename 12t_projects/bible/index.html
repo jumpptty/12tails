@@ -7105,8 +7105,23 @@
     display:grid; grid-template-columns:300px minmax(0,1fr); gap:18px; align-items:start; color:var(--text); font-family:'Prompt',sans-serif}
   .pi .pi-n{font-family:'JetBrains Mono','Prompt',monospace}
   .pi-mute{color:var(--muted)}
-  .pi-roster{position:sticky; top:12px; max-height:calc(100vh - 110px); overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px}
-  .pi-gh{display:flex; justify-content:space-between; align-items:center; padding:10px 8px 6px; font-size:12.5px; letter-spacing:.04em; color:var(--pi-rc)}
+  /* Roster (user 2026-10-19): a tab per category, only the open one's pets show. On desktop the panel is as tall as the window below its top
+     (fit() in mountPetInfo, page px under the big-screen zoom) and the rows shrink to share it, so a category never scrolls. */
+  .pi-roster{position:sticky; top:12px; box-sizing:border-box; display:flex; flex-direction:column; gap:8px; overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px}
+  .pi-tabs{flex:none; display:grid; grid-template-columns:1fr 1fr; gap:6px}
+  .pi-tab{display:flex; justify-content:space-between; align-items:center; gap:6px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:transparent;
+    color:var(--pi-rc); font:inherit; font-size:12.5px; letter-spacing:.04em; cursor:pointer; transition:filter .12s}
+  .pi-tab:hover{filter:brightness(1.2)}
+  .pi-tab:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .pi-tab.is-on{border-color:var(--pi-rc); background:color-mix(in srgb, var(--pi-rc) 16%, transparent)}
+  .pi-grp{display:flex; flex-direction:column; gap:4px}
+  .pi-grp[hidden]{display:none}
+  @media (min-width:761px){
+    .pi-roster{height:calc(100vh - 110px)}   /* until fit() has measured */
+    .pi-grp{flex:1 1 0; min-height:0; container-type:size; --pi-row:min(48px, (100cqh - (var(--pi-rows) - 1) * 4px) / var(--pi-rows))}
+    .pi-grp > .pi-it{flex:none; height:var(--pi-row); padding-block:0}
+    .pi-grp > .pi-it img{width:auto; height:min(32px, var(--pi-row) - 6px)}
+  }
   .pi-it{display:flex; align-items:center; gap:10px; width:100%; border:0; border-left:3px solid transparent; background:transparent; color:inherit; font:inherit;
     padding:5px 8px; border-radius:8px; cursor:pointer; text-align:left; transition:transform .12s, filter .12s}
   .pi-it:hover{transform:translateX(2px); filter:brightness(1.15)}
@@ -7191,11 +7206,11 @@
   .pi-facts > span{border-left:2px solid var(--line); padding-left:8px}
   @media (max-width:760px){
     .pi{grid-template-columns:minmax(0,1fr); gap:12px}
-    .pi-roster{position:sticky; top:0; z-index:3; max-height:none; overflow-x:auto; overflow-y:hidden; display:flex; gap:4px; padding:6px}
-    .pi-grp{display:flex; align-items:center; gap:2px; padding-right:6px; border-right:1px solid var(--line)}
-    .pi-gh{writing-mode:vertical-rl; transform:rotate(180deg); padding:2px; font-size:11px}
-    .pi-gh .pi-n{display:none}
-    .pi-it{width:auto; padding:4px; border-left:0; border-bottom:3px solid transparent; border-radius:8px}
+    .pi-roster{position:sticky; top:0; z-index:3; gap:6px; overflow:visible; padding:6px}
+    .pi-tabs{grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px}
+    .pi-tab{flex-direction:column; justify-content:center; gap:0; padding:4px; font-size:11px; letter-spacing:0; line-height:1.25; text-align:center}
+    .pi-grp{flex-direction:row; align-items:center; gap:2px; overflow-x:auto; padding:4px}
+    .pi-it{width:auto; flex:none; padding:4px; border-left:0; border-bottom:3px solid transparent; border-radius:8px}
     .pi-it.is-on{border-bottom-color:var(--gold)}
     .pi-it .pi-nm, .pi-it .pi-k, .pi-it .pi-warn{display:none}
     .pi-hero{padding:12px}
@@ -28087,10 +28102,14 @@ function petInfoState(raw){
 const petInfoVar = (p, st) => p.vars ? p.vars[(st.vi && st.vi[p.id]) || 0] : null;
 const petInfoMark = p => p.flags.dead ? "ไม่ทำงาน" : p.flags.ally ? "โดนเพื่อนได้" : p.flags.selfStrip ? "ล้างบัฟตัวเอง" : p.code ? "ช่องข้อมูลผิด" : "";
 
-function petInfoRosterHtml(st){
-  return Object.keys(PET_INFO_ROLES).map(role => {
+// Roster (user 2026-10-19): one tab per category and only the open category's pets; every group stays in the HTML, the others hidden.
+// tab = the category picked by hand, else the selected pet's.
+function petInfoRosterHtml(st, tab){
+  const roles = Object.keys(PET_INFO_ROLES), open = roles.includes(tab) ? tab : petInfoFind(st.sel).entry.role;
+  return `<div class="pi-tabs">` + roles.map(role => `<button type="button" class="pi-tab${role === open ? " is-on" : ""}" data-pet-tab="${role}" aria-pressed="${role === open}" style="--pi-rc:${PET_INFO_ROLES[role].color}">` +
+    `<span>${PET_INFO_ROLES[role].th}</span><span class="pi-n">${PET_INFO.filter(p => p.role === role).length}</span></button>`).join("") + `</div>` + roles.map(role => {
     const list = PET_INFO.filter(p => p.role === role);
-    return `<div class="pi-grp" style="--pi-rc:${PET_INFO_ROLES[role].color}"><div class="pi-gh"><span>${PET_INFO_ROLES[role].th}</span><span class="pi-n">${list.length}</span></div>` +
+    return `<div class="pi-grp" style="--pi-rows:${list.length}"${role === open ? "" : " hidden"}>` +
       list.map(p => {
         const v = petInfoVar(p, st), id = v ? v.id : p.id, on = p.id === st.sel, mark = petInfoMark(p);
         const right = p.every ? `<span class="pi-k">${PET_INFO_CLOCK}<span class="pi-n">${p.every(st.N)}</span></span>` : p.status ? `<span class="pi-k">${p.status}</span>` : "";
@@ -28191,32 +28210,42 @@ function mountPetInfo(root){
   let st = petInfoState(linked[0] === "#pet-info" && linked[1] && petInfoFind(linked[1]) ? Object.assign({}, saved, { sel: linked[1] }) : saved);
   root.innerHTML = '<div class="pi"><nav class="pi-roster" aria-label="สัตว์เลี้ยงพิเศษ"></nav><div class="pi-detail"></div></div>';
   const roster = root.querySelector(".pi-roster"), detail = root.querySelector(".pi-detail");
+  let tab = null;   // the roster tab picked by hand; null = the selected pet's category
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   // Re-rendering replaces the buttons, so give keyboard focus back to the same control (same data attribute, same panel).
-  const ATTR = { petSel: "data-pet-sel", petVar: "data-pet-var", petLv: "data-pet-lv", petLck: "data-pet-lck" };
+  const ATTR = { petSel: "data-pet-sel", petVar: "data-pet-var", petLv: "data-pet-lv", petLck: "data-pet-lck", petTab: "data-pet-tab" };
   const render = () => {
     const a = document.activeElement, k = a && a.dataset && root.contains && root.contains(a) ? Object.keys(ATTR).find(x => a.dataset[x] != null) : null;
     const box = k && a.closest ? (a.closest(".pi-roster") || a.closest(".pi-detail")) : null;
-    roster.innerHTML = petInfoRosterHtml(st); detail.innerHTML = petInfoDetailHtml(st); save();
+    roster.innerHTML = petInfoRosterHtml(st, tab); detail.innerHTML = petInfoDetailHtml(st); save();
     if (box) { const el = box.querySelector(k === "petLck" ? "[data-pet-lck]" : `[${ATTR[k]}="${a.dataset[k]}"]`); if (el && el.focus) el.focus(); }
   };
   const linkTo = () => {
     const p = petInfoFind(st.sel).entry, v = p.vars ? p.vars[st.vi[p.id] || 0] : null;
     if ((location.hash || "").split("/")[0] === "#pet-info") history.replaceState(null, "", "#pet-info/" + (v ? v.id : p.id));
   };
-  const select = id => { if (!petInfoFind(id)) return false; st = petInfoState(Object.assign({}, st, { sel: id })); render(); return true; };
+  const select = id => { if (!petInfoFind(id)) return false; tab = null; st = petInfoState(Object.assign({}, st, { sel: id })); render(); return true; };
   root.addEventListener("click", e => {
-    const t = e.target.closest("[data-pet-sel],[data-pet-var],[data-pet-lv]");
+    const t = e.target.closest("[data-pet-sel],[data-pet-var],[data-pet-lv],[data-pet-tab]");
     if (!t) return;
     const d = t.dataset;
     if (d.petSel) { select(d.petSel); linkTo(); }
     else if (d.petVar) { const [fam, i] = d.petVar.split(":"); st = petInfoState(Object.assign({}, st, { vi: Object.assign({}, st.vi, { [fam]: Number(i) }) })); render(); linkTo(); }
     else if (d.petLv) { st = petInfoState(Object.assign({}, st, { N: d.petLv })); render(); }
+    else if (d.petTab) { tab = d.petTab; render(); }
   });
   root.addEventListener("change", e => {
     if (e.target.matches && e.target.matches("[data-pet-lck]")) { st = petInfoState(Object.assign({}, st, { L: e.target.value })); render(); }
   });
   render();
+  // Desktop (user 2026-10-19: no scrolling): the roster is as tall as the window below its top, in page px under the big-screen zoom; the rows shrink to fit (CSS).
+  const fit = () => {
+    const grid = root.querySelector(".pi"), r = grid.getBoundingClientRect(), z = r.height / grid.offsetHeight || 1;
+    if (!r.height || !(window.innerHeight > 0) || window.innerWidth <= 760) { roster.style.height = ""; return; }
+    roster.style.height = Math.max(260, (window.innerHeight - r.top - window.scrollY - 12 * z) / z) + "px";
+  };
+  if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe(root);   // also runs when the tool is shown
+  window.addEventListener("resize", fit);
   root._petInfo = { openById: select };
 }
 const GEAR_INDEX = (() => { const m = {}; for (const [slot, list] of Object.entries(GEAR_DATA)) for (const [id, name] of list) m[id] = { slot, name }; return m; })();
@@ -28384,7 +28413,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T05:52:23.683Z","counts":{"1":40,"2":60,"3":34,"4":23,"5":53,"6":47,"7":34,"8":22,"9":24,"10":42,"11":40,"12":13,"13":5,"14":43,"15":51,"16":31,"17":53,"18":55,"19":30,"20":58,"21":31,"22":38,"23":45,"24":10,"25":18,"26":16,"27":12,"28":17,"29":33,"30":32,"31":33,"32":7,"33":9,"34":1,"35":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T06:37:55.122Z","counts":{"1":42,"2":62,"3":34,"4":23,"5":53,"6":48,"7":35,"8":23,"9":25,"10":43,"11":41,"12":14,"13":5,"14":43,"15":51,"16":31,"17":53,"18":57,"19":32,"20":58,"21":32,"22":38,"23":45,"24":11,"25":19,"26":17,"27":12,"28":18,"29":34,"30":32,"31":34,"32":8,"33":12,"34":2,"35":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32088,6 +32117,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T06:39:15.116Z","feat(bible): Special Pet Info's roster gets a tab per category (only the open one's pets show) and never scrolls on desktop: the panel fits the window and its rows shrink to fit"],
     ["2026-10-19T05:52:24.459Z","feat(bible): the PRESET window shows one preset at a time: folder tabs on top (face, number, name, in-use mark; click, arrow keys or drag to reorder), then the portrait with name / description / use, the stats as bars, the saved buffs and debuffs with their levels, and the popup server, quick switches and move buttons"],
     ["2026-10-19T05:16:54.593Z","feat(bible): the Buff / Debuff popups and the Chameleon sim's Mods popup become level tables that never scroll: one cell per level with its value, the row icon follows the picked level, 8 stat chips, custom entries as pills, undo; shorter rows, two columns or a zoom keep them on one screen"],
     ["2026-10-19T05:06:23.747Z","feat(bible): two new class guides by หนมผิงช่วยเหลือประชาชน: #34 กระต่ายยากครอบจักรวาล 12/8 PVP (TTO Rabbit) and #35 PVE ชิลๆ ใช้ของน้อย (TTO Sheep)"],
