@@ -25,7 +25,7 @@
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
+    raised: [".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-icon-pick", ".cg-sort", ".cg-page-btn",
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
@@ -1949,6 +1949,7 @@
   .cg-send-txt h3{margin:2px 0 4px;font-family:inherit;font-size:17px;color:var(--gold)}
   .cg-send-txt p{margin:0;font-size:13.5px;line-height:1.6;color:var(--muted)}
   .cg-send-opt .cg-send-copy{grid-column:1 / -1;width:100%;min-height:46px;font-size:15px;margin:0}
+  @media(min-width:761px){.cg-send-previews{grid-template-columns:minmax(0, min(720px, max(300px, calc((100dvh - 440px) * 16 / 9))))}}   /* no scrolling on short desktop windows (user 2026-10-19): the preview gives up height so the send options stay in view */
   @media(max-width:760px){.cg-send-previews,.cg-send-opts{grid-template-columns:minmax(0,1fr)}}
   .cg-full-view{width:min(96vw,1700px);max-height:94vh;box-sizing:border-box;margin:auto;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:4px;background:#0b0907;overflow:auto}
   .cg-full-view::backdrop{background:rgba(0,0,0,.78)}
@@ -3297,6 +3298,14 @@
   .nl-rail-i.is-on{background:color-mix(in srgb, var(--gold) 14%, transparent); box-shadow:inset 3px 0 0 var(--gold)}
   .nl-rail-i.is-on em{color:var(--gold)}
   .nl-rail-i:disabled{opacity:.35; cursor:default; background:none}
+  /* short desktop windows (no scrolling, user 2026-10-19): smaller faces and no English line, so all 13 rows fit the rail */
+  @media (min-width:761px) and (max-height:860px){
+    .nl-rail{gap:1px; padding:6px}
+    .nl-rail-i{grid-template-columns:30px 1fr auto; column-gap:9px; row-gap:3px; padding:4px 8px 4px 5px}
+    .nl-rail-i .nl-face{width:30px; height:30px}
+    .nl-rail-n small{display:none}
+    .nl-rail-n b{font-size:13.5px}
+  }
   .nl-face{flex:none; display:block; width:40px; height:40px; border-radius:50%}   /* the game's own round hero icon (gamegui/icons/heroes/<Class>1.png) */
   .nl-face.is-all{background:conic-gradient(from 45deg, var(--pro), var(--tip), var(--gold), var(--seal), var(--pro)); -webkit-mask:radial-gradient(circle, transparent 38%, #000 40%); mask:radial-gradient(circle, transparent 38%, #000 40%)}
   .nl-face.is-common{background:radial-gradient(circle at 50% 40%, #4a3a26, #1a120c 70%); box-shadow:inset 0 0 0 2px #2e2218}
@@ -3484,6 +3493,23 @@
   @media (max-width: 440px) {
     .sk-roster-grid{grid-template-columns:repeat(2, 1fr); gap:6px}
   }
+  /* skill tree tabs, tighter cards and the pager (no scrolling, user 2026-10-19) */
+  .sk-roster-tabs{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px}
+  .sk-roster-tab{display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font:600 13px 'Prompt',sans-serif; cursor:pointer}
+  .sk-roster-tab b{font:700 12px 'JetBrains Mono','Prompt',monospace; color:var(--gold)}
+  .sk-roster-tab:hover{color:var(--text); border-color:var(--gold)}
+  .sk-roster-tab.is-on{background:var(--gold); border-color:var(--gold); color:#141311}
+  .sk-roster-tab.is-on b{color:#141311}
+  .sk-roster-card[hidden]{display:none}
+  .sk-roster-grid.is-tight{grid-template-columns:repeat(8, 1fr); gap:6px}
+  .sk-roster-grid.is-tight .sk-roster-card{min-height:78px; padding:6px 4px; gap:5px}
+  .sk-roster-grid.is-tight .sk-roster-icon{width:36px; height:36px}
+  .sk-roster-grid.is-tight .sk-roster-name{font-size:11px}
+  .sk-roster-pager{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px; font:600 13px 'JetBrains Mono','Prompt',monospace; color:var(--muted)}
+  .sk-roster-pager[hidden]{display:none}
+  .sk-roster-pager button{width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:15px; cursor:pointer}
+  .sk-roster-pager button:hover:not(:disabled){border-color:var(--gold); color:var(--gold)}
+  .sk-roster-pager button:disabled{opacity:.35; cursor:default}
   .sk-roster-card{
     background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
     padding:12px 8px 10px; color:var(--text); display:flex; flex-direction:column;
@@ -4753,7 +4779,13 @@
   .sk-enemy-search{grid-column:1 / -1; width:100%; box-sizing:border-box; padding:6px 8px; font-family:'Prompt',sans-serif; font-size:12px;
     background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:4px; outline:none}
   .sk-enemy-search:focus{border-color:var(--gold)}
-  .sk-enemy-results{grid-column:1 / -1; display:flex; flex-direction:column; gap:3px; max-height:220px; overflow:auto}
+  .sk-enemy-results{grid-column:1 / -1; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px}
+  .sk-enemy-picker.is-search{grid-template-columns:repeat(2, 200px)}
+  .sk-enemy-picker.is-search .sk-enemy-pick{display:none}   /* searching: the results take the presets' place (no scrolling, user 2026-10-19) */
+  .sk-enemy-picker.is-down{bottom:auto; top:calc(100% + 6px)}
+  .sk-enemy-result-txt{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.25}
+  .sk-enemy-result-more{grid-column:1 / -1; margin:2px 0 0; font-size:11px; color:var(--muted); text-align:center}
+  @media (max-width:560px){ .sk-enemy-picker.is-search{grid-template-columns:minmax(0, 1fr); width:min(300px, calc(100vw - 40px))} .sk-enemy-results{grid-template-columns:minmax(0, 1fr)} }
   .sk-enemy-results[hidden]{display:none}
   .sk-enemy-result{display:flex; align-items:center; gap:7px; padding:5px 7px; cursor:pointer; text-align:left;
     background:var(--panel); border:1px solid var(--line); border-radius:4px; color:var(--text); font-family:'Prompt',sans-serif; font-size:12px}
@@ -4762,7 +4794,7 @@
   .sk-enemy-result .sk-enemy-skull{width:18px; height:18px; flex:none; color:var(--muted)}
   .sk-enemy-result-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .sk-enemy-result-meta{flex:none; font-size:10.5px; color:var(--muted)}
-  .sk-enemy-result-none{margin:2px 0; font-size:12px; color:var(--muted); text-align:center}
+  .sk-enemy-result-none{grid-column:1 / -1; margin:2px 0; font-size:12px; color:var(--muted); text-align:center}
   [data-role="enemy-cycle-display"] .sk-enemy-skull{width:70%; height:70%; color:var(--muted)}
   .sk-enemy-info-popover{
     display:none; position:absolute; top:calc(100% + 6px); right:0;
@@ -5077,11 +5109,26 @@
   .sk-pw-lvpill{margin-left:auto; padding:2px 10px; border-radius:999px; border:1px solid var(--stat-lv); color:var(--stat-lv); font-size:13px}
   .sk-pw-lvpill b{font-family:'JetBrains Mono','Prompt',monospace}
   .sk-pw-bars{display:flex; flex-direction:column; gap:9px}
-  .sk-pw-bar{display:grid; grid-template-columns:38px minmax(0, 1fr) 44px; align-items:center; gap:8px; font-size:13px}
+  .sk-pw-bar{display:grid; grid-template-columns:38px minmax(0, 1fr) 58px; align-items:center; gap:8px; font-size:13px}
   .sk-pw-bar b{color:var(--sc)}
   .sk-pw-tr{height:10px; border-radius:5px; background:rgba(255,255,255,.06); overflow:hidden}
   .sk-pw-tr i{display:block; height:100%; border-radius:5px; background:var(--sc)}
-  .sk-pw-num{text-align:right; font:700 13px 'JetBrains Mono','Prompt',monospace}
+  .sk-pw-in{width:100%; min-width:0; box-sizing:border-box; padding:2px 4px; border:1px solid rgba(212,175,55,.14); border-radius:6px; background:transparent; color:#ede8df; text-align:right; font:700 13px 'JetBrains Mono','Prompt',monospace; outline:none; -moz-appearance:textfield; appearance:textfield}
+  .sk-pw-in::-webkit-inner-spin-button, .sk-pw-in::-webkit-outer-spin-button{-webkit-appearance:none; margin:0}
+  .sk-pw-in:hover{border-color:rgba(212,175,55,.32)}
+  .sk-pw-in:focus{border-color:var(--gold); background:rgba(12,11,9,.85)}
+  .sk-pw-lvpill .sk-pw-in{width:44px; color:inherit; text-align:center}
+  .sk-pw-editbtn{margin-left:auto; padding:2px 10px; border-radius:999px; border:1px dashed rgba(212,175,55,.5); background:none; color:#f1d27a; font:600 12px 'Prompt',sans-serif; cursor:pointer}
+  .sk-pw-editbtn:hover{border-style:solid}
+  .sk-pw-bdedit{grid-column:2 / 4; --lv-cw:46px; --lv-rh:30px; --lv-ring:24px; --lv-nw:170px}
+  .sk-pw-edhead{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+  .sk-pw-sides{display:flex; gap:2px; padding:3px; border-radius:999px; border:1px solid rgba(212,175,55,.16); background:#0f0e0c}
+  .sk-pw-sides button{border:0; background:none; color:#a39a86; font:600 13px 'Prompt',sans-serif; padding:4px 14px; border-radius:999px; cursor:pointer}
+  .sk-pw-sides button b{font-family:'JetBrains Mono','Prompt',monospace}
+  .sk-pw-sides button.is-on{background:var(--gold); color:#141311}
+  .sk-pw-bdedit.is-debuff .sk-pw-sides button.is-on{background:#e5534b; color:#fff}
+  .sk-pw-edhint{font-size:12px; color:#6f6858}
+  .sk-pw-done{margin-left:auto; height:32px; padding:0 18px; border:0; border-radius:8px; background:var(--gold); color:#141311; font:700 13px 'Prompt',sans-serif; cursor:pointer}
   .sk-pw-rows{display:flex; flex-direction:column; gap:8px}
   .sk-pw-rw{display:grid; grid-template-columns:34px minmax(0, 1fr) auto; align-items:center; gap:10px; font-size:14px}
   .sk-pw-rn{min-width:0; overflow:hidden; text-overflow:ellipsis}
@@ -5095,15 +5142,20 @@
   .sk-pw-none{margin:0; font-size:13px; color:#6f6858}
   .sk-pw-offtag{padding:0 8px; border-radius:999px; border:1px solid currentColor; font-size:11px; color:#f87171}
   .sk-pw-set{grid-column:2 / 4; display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px}
-  .sk-pw-srv{display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1px solid rgba(212,175,55,.16); font-size:13px; color:#a39a86}
-  .sk-pw-srv img{width:18px; height:18px; border-radius:50%}
-  .sk-pw-flag{display:inline-flex; align-items:center; gap:7px; font-size:13px; color:#a39a86}
+  .sk-pw-srvs{display:inline-flex; align-items:center; gap:5px; font-size:13px; color:#a39a86}
+  .sk-pw-sv{width:30px; height:30px; padding:2px; border-radius:50%; border:1px solid rgba(212,175,55,.16); background:none; cursor:pointer; opacity:.45}
+  .sk-pw-sv:first-of-type{margin-left:4px}
+  .sk-pw-sv:hover{opacity:.8}
+  .sk-pw-sv.is-on{opacity:1; border-color:var(--gold)}
+  .sk-pw-sv img{display:block; width:100%; height:100%; border-radius:50%}
+  .sk-pw-flag{display:inline-flex; align-items:center; gap:7px; padding:0; border:0; background:none; font:500 13px 'Prompt',sans-serif; color:#a39a86; cursor:pointer}
+  .sk-pw-flag:hover{color:#ede8df}
   .sk-pw-flag i{position:relative; width:26px; height:15px; border-radius:8px; background:var(--gold)}
   .sk-pw-flag i::after{content:""; position:absolute; top:2px; right:2px; width:11px; height:11px; border-radius:50%; background:#141311}
   .sk-pw-flag.is-off i{background:rgba(255,255,255,.15)}
   .sk-pw-flag.is-off i::after{right:auto; left:2px; background:#a39a86}
   .sk-pw-move{height:38px; padding:0 14px; border-radius:8px; border:1px solid rgba(212,175,55,.32); background:none; color:#a39a86; font:500 14px 'Prompt',sans-serif; cursor:pointer}
-  .sk-pw-move:first-of-type{margin-left:auto}
+  .sk-pw-move[data-step="-1"]{margin-left:auto}
   .sk-pw-move:hover:not(:disabled){color:#ede8df; border-color:var(--gold)}
   .sk-pw-move:disabled{opacity:.35; cursor:default}
   .sk-pw-empty{grid-column:2 / 4; display:grid; place-items:center; min-height:300px; text-align:center}
@@ -5111,7 +5163,9 @@
   .sk-pw-empty b{color:#f1d27a}
   @media (max-width:900px){
     .sk-pw-grid{grid-template-columns:minmax(0, 1fr); grid-template-rows:none; padding:10px}
-    .sk-pw-id, .sk-pw-set, .sk-pw-empty{grid-row:auto; grid-column:auto}
+    .sk-pw-id, .sk-pw-set, .sk-pw-empty, .sk-pw-bdedit{grid-row:auto; grid-column:auto}
+    .sk-pw-bdedit{--lv-nw:92px; --lv-cw:minmax(0, 1fr)}
+    .sk-pw-edhint{display:none}
     .sk-pw-empty{min-height:0}
     .sk-pw-art{height:170px}
     .sk-pw-tab{flex-direction:column; justify-content:center; gap:3px; height:auto; padding:6px 4px; font-size:11px}
@@ -5138,34 +5192,74 @@
   .sk-preset-confirm-yes{color:#fff; background:#dc2626; border:1px solid #dc2626}
   .sk-preset-win-reset:focus-visible, .sk-preset-confirm-actions button:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .sk-preset-open:focus-visible, .sk-preset-win-x:focus-visible, .sk-pw-tab:focus-visible, .sk-pw-art:focus-visible, .sk-pw-use:focus-visible, .sk-pw-move:focus-visible, .sk-preset-pop-close:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
-  .sk-preset-popup{position:relative; z-index:999999; width:min(880px, calc(100vw - 32px)); max-height:min(88vh, 860px); overflow:auto; box-sizing:border-box;
-    background:rgba(20,19,17,0.98); border:1px solid var(--gold); border-top:4px solid var(--gold); border-radius:12px; padding:30px 34px;
+  .sk-preset-popup{position:relative; z-index:999999; width:min(900px, calc(100vw - 32px)); overflow:hidden; box-sizing:border-box;
+    background:rgba(20,19,17,0.98); border:1px solid var(--gold); border-top:4px solid var(--gold); border-radius:12px; padding:24px 28px;
     box-shadow:0 30px 90px rgba(0,0,0,0.95), 0 0 50px rgba(212,175,55,0.32); color:#ede8df; font-family:'Prompt',sans-serif;
     animation:skServerPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards}
-  .sk-preset-pop-title{margin:0 0 6px; font-size:24px; font-weight:600; color:#f1e6c8}
-  .sk-preset-pop-sub{margin:0 0 20px; font-size:14px; color:#a89a7c}
-  .sk-preset-pop-stats{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 24px}
-  .sk-preset-pop-stat{font:700 15px 'JetBrains Mono','Prompt',monospace; padding:6px 12px; border-radius:4px; background:rgba(255,255,255,.05); border-left:3px solid var(--sc, var(--gold)); white-space:nowrap}
-  .sk-preset-pop-bd{font-family:'Prompt',sans-serif; font-weight:500; font-size:14px}
-  .sk-preset-pop-bd.is-on{--sc:#4ade80}
-  .sk-preset-pop-bd.is-off{--sc:#f87171; opacity:.85}
-  .sk-preset-pop-table{width:100%; border-collapse:collapse; font-size:15px}
-  .sk-preset-pop-table th{text-align:left; font-size:12px; font-weight:500; color:#a89a7c; padding:6px 10px; border-bottom:1px solid rgba(212,175,55,.25); white-space:nowrap}
-  .sk-preset-pop-table td{padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.06); vertical-align:middle}
-  .sk-preset-pop-table td.num{font:700 22px 'JetBrains Mono','Prompt',monospace; line-height:1.2; white-space:nowrap}   /* same face and weight as the damage formula numbers */
-  .sk-preset-pop-table td.num.is-to{color:#f2cf6b}   /* the window is always dark, so a bright gold in both themes */
-  .sk-preset-pop-table td:first-child{font-size:16px; font-weight:500}
-  .sk-preset-pop-table .is-better{color:#4ade80}
-  .sk-preset-pop-table .is-worse{color:#f87171}
-  .sk-preset-pop-empty{margin:0; font-size:13px; color:#a89a7c}
-  .sk-preset-pop-close{margin-top:24px; width:100%; padding:12px; border:0; border-radius:6px; background:var(--gold); color:#141311; font:600 14px 'Prompt',sans-serif; cursor:pointer}
-  @media (max-width:700px){ .sk-preset-popup{padding:20px 14px} .sk-preset-pop-table{font-size:13px} .sk-preset-pop-table td.num{font-size:16px} .sk-preset-pop-table th, .sk-preset-pop-table td{padding:8px 4px} }
-  @media (max-width:560px){ .sk-preset-pop-table, .sk-preset-pop-table thead, .sk-preset-pop-table tbody{display:block}
-    .sk-preset-pop-table tr{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); column-gap:8px; border-bottom:1px solid rgba(255,255,255,.06)}
-    .sk-preset-pop-table th, .sk-preset-pop-table td{border:0; padding:6px 0}
-    .sk-preset-pop-table th:first-child{display:none}
-    .sk-preset-pop-table td:first-child{grid-column:1 / -1; padding:10px 0 0; font-size:14px}
-    .sk-preset-pop-table td.num{white-space:normal; overflow-wrap:anywhere} }
+  /* Change summary (user 2026-10-19, variant 1 of 3 mocks): the change is the big number, before → after is the small line */
+  .sk-ps-hdr{display:flex; align-items:center; gap:14px}
+  .sk-ps-who{display:flex; align-items:center; gap:10px; min-width:0}
+  .sk-ps-who small{display:block; font-size:12px; font-weight:700; letter-spacing:.4px; color:#a39a86}
+  .sk-ps-who b{display:block; font-size:18px; color:#ede8df; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .sk-ps-who.is-to b{color:#f1d27a}
+  .sk-ps-face{flex:none; width:48px; height:48px; border-radius:50%; background:#26221c no-repeat; background-size:250% auto; background-position:34% 14%; box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+  .sk-ps-who.is-to .sk-ps-face{box-shadow:0 0 0 2px var(--gold)}
+  .sk-ps-arr{flex:none; font-size:22px; color:var(--gold)}
+  .sk-ps-ctx{margin-left:auto; text-align:right; font-size:14px; line-height:1.5; color:#a39a86}
+  .sk-ps-ctx b{color:#ede8df}
+  .sk-ps-sec{display:flex; align-items:center; gap:10px; margin:18px 0 10px; font-size:13px; font-weight:600; color:#f1d27a}
+  .sk-ps-sec::after{content:""; flex:1; height:1px; background:rgba(212,175,55,.16)}
+  .sk-ps-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px}
+  .sk-ps-card{min-width:0; padding:14px 16px; border-radius:12px; background:#1a1813; border:1px solid rgba(212,175,55,.16)}
+  .sk-ps-lbl{font-size:13px; color:#a39a86; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .sk-ps-delta{display:flex; align-items:baseline; flex-wrap:wrap; gap:2px 10px; margin-top:4px}
+  .sk-ps-delta b{font:700 30px 'JetBrains Mono','Prompt',monospace; line-height:1.15}
+  .sk-ps-delta span{font:700 15px 'JetBrains Mono','Prompt',monospace}
+  .sk-ps-ft{margin-top:4px; font:600 13px 'JetBrains Mono','Prompt',monospace; color:#a39a86}
+  .sk-ps-ft b{color:#ede8df}
+  .sk-ps-bars{display:flex; flex-direction:column; gap:3px; margin-top:10px}
+  .sk-ps-bars i{display:block; height:6px; border-radius:3px; background:rgba(255,255,255,.18)}
+  .sk-ps-bars i + i{background:#f2cf6b}
+  .sk-preset-popup .is-better{color:#4ade80}
+  .sk-preset-popup .is-worse{color:#f87171}
+  .sk-ps-two{display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:12px}
+  .sk-ps-box{min-width:0; padding:12px 14px; border-radius:12px; background:#1a1813; border:1px solid rgba(212,175,55,.16)}
+  .sk-ps-box h4{margin:0 0 8px; font-size:12px; font-weight:600; color:#a39a86}
+  .sk-ps-srow{display:grid; grid-template-columns:40px 70px minmax(0, 1fr); align-items:baseline; gap:8px; padding:3px 0}
+  .sk-ps-srow b{color:var(--sc); font-size:15px}
+  .sk-ps-d{font:700 19px 'JetBrains Mono','Prompt',monospace}
+  .sk-ps-srow .sk-ps-ft{margin:0}
+  .sk-ps-brow{display:flex; align-items:center; gap:10px; min-height:36px; font-size:14px}
+  .sk-ps-brow small{color:#a39a86; font-size:12px}
+  .sk-ps-ring{position:relative; flex:none; width:30px; height:30px; border-radius:50%; overflow:hidden; background:#0f0e0c; box-shadow:0 0 0 2px rgba(212,175,55,.9)}
+  .sk-ps-ring.r{box-shadow:0 0 0 2px rgba(229,83,75,.9)}
+  .sk-ps-ring.off{box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+  .sk-ps-ring img{position:absolute; inset:0; width:100%; height:100%; transform:scale(1.3)}
+  .sk-ps-ring.off img{filter:grayscale(1) brightness(.55)}
+  .sk-ps-glyph{display:grid; place-items:center; color:#f1d27a; font-size:14px}
+  .sk-ps-tag{margin-left:auto; flex:none; font-size:12px; font-weight:700}
+  .sk-ps-none{margin:0; font-size:13px; color:#6f6858}
+  .sk-ps-btns{display:flex; justify-content:flex-end; gap:10px; margin-top:20px}
+  .sk-ps-back{height:46px; padding:0 18px; border-radius:10px; border:1px solid rgba(212,175,55,.32); background:none; color:#a39a86; font:500 14px 'Prompt',sans-serif; cursor:pointer}
+  .sk-ps-back:hover{color:#ede8df; border-color:var(--gold)}
+  .sk-preset-pop-close{min-width:180px; height:46px; padding:0 22px; border:0; border-radius:10px; background:var(--gold); color:#141311; font:700 16px 'Prompt',sans-serif; cursor:pointer}
+  .sk-ps-back:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .sk-preset-popup.is-compact{padding:16px 20px}
+  .sk-preset-popup.is-compact .sk-ps-sec{margin:12px 0 8px}
+  .sk-preset-popup.is-compact .sk-ps-cards{grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px}
+  .sk-preset-popup.is-compact .sk-ps-card{padding:10px 12px}
+  .sk-preset-popup.is-compact .sk-ps-delta b{font-size:22px}
+  .sk-preset-popup.is-compact .sk-ps-bars{display:none}
+  .sk-preset-popup.is-compact .sk-ps-brow{min-height:30px}
+  .sk-preset-popup.is-compact .sk-ps-btns{margin-top:12px}
+  @media (max-width:900px){
+    .sk-preset-popup{max-height:calc(100vh - 32px); overflow:auto; padding:18px 16px}
+    .sk-ps-hdr{flex-wrap:wrap}
+    .sk-ps-ctx{width:100%; margin:0; text-align:left}
+    .sk-ps-two{grid-template-columns:minmax(0, 1fr)}
+    .sk-ps-cards{grid-template-columns:minmax(0, 1fr)}
+    .sk-ps-btns > *{flex:1; min-width:0}
+  }
   .sk-bd-row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; margin-bottom:8px}
   .sk-bd-cell{position:relative; display:flex; min-width:0}
   /* Compact so count + label + switch fit a half-width cell (the count badge takes the old icon's slot). */
@@ -6090,6 +6184,12 @@
      desktop composition (card + side stats panel, ~1420px) to fit the window, which shrinks it to
      ~25% on a phone. Under 900px: no scaling, normal page scroll, one column (search + card first,
      stats panels after), the Test popup as a fixed overlay, stat tooltips under their value (JS). */
+  /* CHA / AGI on phones: no fit scaling, the page scrolls as before */
+  @media (max-width: 899px){
+    html.tool-fit-screen.tool-cao{overflow-x:hidden; overflow-y:auto}
+    html.tool-fit-screen.tool-cao body{height:auto; min-height:100dvh; overflow:visible}
+    html.tool-cao .stage{transform:none !important; display:block}
+  }
   @media (max-width: 899px){
     html.tool-fit-screen.tool-wide-hero{overflow-x:hidden; overflow-y:auto}
     html.tool-fit-screen.tool-wide-hero body{height:auto; min-height:100dvh; overflow:visible}
@@ -6328,6 +6428,11 @@
   .chm-tags em { font-style: normal; font-size: 11px; color: #84cc16; margin-right: 2px; }
   .chm-tag { width: 18px; height: 18px; border-radius: 50%; background: var(--ink) var(--i) center / 130% no-repeat; box-shadow: 0 0 0 1.5px rgba(212,175,55,.9); }
   .chm-log-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 12.5px; }
+  .chm-log-pager { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font: 600 12px 'JetBrains Mono','Prompt',monospace; color: var(--muted); }
+  .chm-log-pager:empty { display: none; }
+  .chm-log-pager button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--text); font-size: 14px; line-height: 1; cursor: pointer; }
+  .chm-log-pager button:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+  .chm-log-pager button:disabled { opacity: .35; cursor: default; }
 
   /* desktop: one screen at a fixed 1560 x 960 composition, zoomed by chmFit; the spare height goes to the skills and the log */
   @media (min-width: 901px) {
@@ -12217,15 +12322,15 @@ function bdLvTable(sections){
 // shrink, so a squeezed two-column table would otherwise "fit"). With none fitting, the one that needs the least
 // shrinking is zoomed down to the window.
 const BD_LV_FIT = [[], ["is-compact"], ["is-two"], ["is-two", "is-compact"]];
-function bdLvFit(pop){
+function bdLvFit(pop, modes, gap){
   if (!pop || !pop.isConnected || typeof getComputedStyle !== "function") return;
-  const host = pop.parentElement, cs = getComputedStyle(host);
-  const availW = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const availH = host.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const host = pop.parentElement, cs = getComputedStyle(host), g = 2 * (gap || 0);
+  const availW = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - g;
+  const availH = host.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - g;
   const set = m => { pop.style.zoom = ""; pop.classList.remove("is-compact", "is-two"); m.forEach(c => pop.classList.add(c)); };
   const cellOk = () => Math.min(...[...pop.querySelectorAll(".sk-lv-c")].map(c => c.offsetWidth)) >= 26;
   let best = null;
-  for (const m of BD_LV_FIT){
+  for (const m of modes || BD_LV_FIT){
     set(m);
     if (m.length && !cellOk()) continue;
     const z = Math.min(1, availH / pop.offsetHeight, availW / pop.scrollWidth);
@@ -17177,6 +17282,50 @@ function mountSkillCooldownLookup(root){
     return SKILLS.map((s, i) => ({ s, i, r: rank(s) })).filter(x => x.r >= 0).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.s);
   }
 
+  // Skill tree tabs for a class roster (user 2026-10-19, no scrolling): the class's 4 Skill Simulator trees, matched by icon
+  // (a card's max-rank icon shares its stem with the tree's rank icons), then "อื่น ๆ" for mounts, summons and sub-skills.
+  const rosterTab = {}, rosterPage = { page: 0, key: "" }, searchPage = { page: 0, key: "" };
+  function rosterTrees(cls){
+    const key = typeof SKILL_SIM_NAMES !== "undefined" && Object.keys(SKILL_SIM_NAMES).find(k => SKILL_SIM_NAMES[k] === cls);
+    if (!key || !SKILL_SIM[key]) return null;
+    const stem = k => String(k || "").replace(/\d+$/, "");
+    const trees = SKILL_SIM[key].map(t => ({ name: t.name, stems: new Set(t.rows.flat().map(c => stem(c[0]))), ids: [] }));
+    const other = { name: "อื่น ๆ", ids: [] };
+    SKILLS.filter(sk => sk.class === cls).forEach(sk => { const t = trees.find(x => x.stems.has(stem(sk.icon))); (t || other).ids.push(sk.id); });
+    return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : []);
+  }
+  // No scrolling on desktop (user 2026-10-19): a roster or search grid taller than its box first packs its cards tighter
+  // (.is-tight), then shows one page at a time with ‹ n / N › under it. Phones keep the scroll.
+  function gridFitPaged(grid, state){
+    if (!grid || !grid.children || !grid.parentElement || typeof getComputedStyle !== "function") return;
+    const wrap = grid.parentElement, cards = Array.from(grid.children);
+    let pager = wrap.querySelector(".sk-roster-pager");
+    grid.classList.remove("is-tight"); grid.style.maxHeight = "";
+    cards.forEach(c => { c.hidden = false; });
+    const over = () => grid.scrollHeight > grid.clientHeight + 1;
+    if (window.innerWidth <= 900 || !over()) { if (pager) pager.hidden = true; return; }
+    grid.classList.add("is-tight");
+    if (!over()) { if (pager) pager.hidden = true; return; }
+    grid.style.maxHeight = Math.max(140, grid.clientHeight - 40) + "px";   // room for the pager under it
+    const cs = getComputedStyle(grid), gap = parseFloat(cs.rowGap) || 0, cols = cs.gridTemplateColumns.split(" ").length;
+    const h = Math.max(...cards.map(c => c.offsetHeight)), inner = grid.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+    const per = Math.max(cols, Math.floor((inner + gap) / (h + gap)) * cols), pages = Math.ceil(cards.length / per);
+    state.page = Math.max(0, Math.min(state.page || 0, pages - 1));
+    cards.forEach((c, i) => { c.hidden = i < state.page * per || i >= (state.page + 1) * per; });
+    if (!pager) {
+      wrap.insertAdjacentHTML("beforeend", '<div class="sk-roster-pager"><button type="button" data-pg="-1" aria-label="หน้าก่อน">‹</button><span></span><button type="button" data-pg="1" aria-label="หน้าถัดไป">›</button></div>');
+      pager = wrap.querySelector(".sk-roster-pager");
+      pager.addEventListener("click", (e) => { const b = e.target.closest("[data-pg]"); if (!b || b.disabled) return; state.page += Number(b.dataset.pg); gridFitPaged(grid, state); });
+    }
+    pager.hidden = false;
+    pager.querySelector("span").textContent = (state.page + 1) + " / " + pages;
+    pager.querySelector('[data-pg="-1"]').disabled = state.page === 0;
+    pager.querySelector('[data-pg="1"]').disabled = state.page >= pages - 1;
+  }
+  addEventListener("resize", () => {
+    const g = pickerRootEl && !pickerRootEl.hidden && pickerRootEl.querySelector(".sk-roster-grid");
+    if (g) gridFitPaged(g, pickerState === "global" ? searchPage : rosterPage);
+  });
   function renderPickerView(){
     if (!pickerRootEl) return;
     if (selected) {
@@ -17228,9 +17377,13 @@ function mountSkillCooldownLookup(root){
           if (targetSkill) selectSkill(targetSkill);
         });
       });
+      if (searchPage.key !== q) { searchPage.key = q; searchPage.page = 0; }
+      gridFitPaged(pickerRootEl.querySelector('.sk-roster-grid'), searchPage);
 
     } else if (pickerState === 'roster' && pickerClass) {
       const classSkills = SKILLS.filter(s => s.class === pickerClass);
+      const trees = rosterTrees(pickerClass), tabI = trees ? Math.min(rosterTab[pickerClass] || 0, trees.length - 1) : 0;
+      const shownSkills = trees ? trees[tabI].ids.map(id => classSkills.find(s => s.id === id)).filter(Boolean) : classSkills;
       const thName = CLASS_TH_NAMES[pickerClass] || pickerClass;
       const classIcon = (typeof CLASS_HERO_ICONS !== 'undefined' && CLASS_HERO_ICONS[pickerClass]) || (typeof CLASS_MINIMAL_ICONS !== 'undefined' && CLASS_MINIMAL_ICONS[pickerClass]) || '';   // round face; Common has none and keeps its arrow
 
@@ -17247,8 +17400,9 @@ function mountSkillCooldownLookup(root){
               <span class="sk-roster-count-badge">${classSkills.length} สกิล</span>
             </div>
           </div>
+          ${trees ? `<div class="sk-roster-tabs" role="tablist">${trees.map((t, i) => `<button type="button" class="sk-roster-tab${i === tabI ? " is-on" : ""}" data-roster-tab="${i}" role="tab" aria-selected="${i === tabI}">${t.name} <b>${t.ids.length}</b></button>`).join("")}</div>` : ""}
           <div class="sk-roster-grid">
-            ${classSkills.map(s => `
+            ${shownSkills.map(s => `
               <button type="button" class="sk-roster-card${!s.desc ? ' sk-roster-card--stub' : ''}" data-skill-id="${s.id}" title="${s.name}${!s.desc ? ' (no desc — pending research)' : ''}">
                 <img class="sk-roster-icon" src="${SKILL_ICONS[s.icon] || ''}" alt="${s.name}" loading="lazy">
                 <span class="sk-roster-name">${s.name}</span>
@@ -17278,6 +17432,11 @@ function mountSkillCooldownLookup(root){
           if (targetSkill) selectSkill(targetSkill);
         });
       });
+
+      $$('[data-roster-tab]', pickerRootEl).forEach(b => b.addEventListener('click', () => { rosterTab[pickerClass] = Number(b.dataset.rosterTab); renderPickerView(); }));
+      const rk = pickerClass + '|' + tabI;
+      if (rosterPage.key !== rk) { rosterPage.key = rk; rosterPage.page = 0; }
+      gridFitPaged(pickerRootEl.querySelector('.sk-roster-grid'), rosterPage);
 
       if (browseBtn) {
         browseBtn.hidden = false;
@@ -17496,14 +17655,22 @@ function mountSkillCooldownLookup(root){
     const box = enemyPickerEl.querySelector('[data-role="enemy-results"]'), inp = enemyPickerEl.querySelector('[data-role="enemy-search"]');
     if (!box || !inp) return;
     const q = inp.value.trim();
-    if (!q){ box.innerHTML = ""; box.hidden = true; return; }
-    const rows = searchMonsters(q);
+    if (!q){ box.innerHTML = ""; box.hidden = true; enemyPickerEl.classList.remove("is-search"); placeEnemyPicker(); return; }
+    // No scrolling (user 2026-10-19): while searching, the results take the presets' place, at most 12 in two columns
+    const rows = searchMonsters(q), MAX = 12;
     box.hidden = false;
-    box.innerHTML = rows.length ? rows.map(i => {
+    enemyPickerEl.classList.add("is-search");
+    box.innerHTML = rows.length ? rows.slice(0, MAX).map(i => {
       const r = MONSTER_STATS[i], id = "m:" + i, cur = !enemyStatsCustom && id === selectedEnemyId;
       const name = String(r[0]).trim().replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-      return `<button type="button" class="sk-enemy-result${cur ? " is-current" : ""}" data-enemy-id="${id}" role="option" aria-selected="${cur}">${ENEMY_SKULL_SVG}<span class="sk-enemy-result-name">${name}</span><span class="sk-enemy-result-meta">Lv ${r[3]} · HP ${r[4]}</span></button>`;
-    }).join("") : `<p class="sk-enemy-result-none">ไม่พบศัตรู</p>`;
+      return `<button type="button" class="sk-enemy-result${cur ? " is-current" : ""}" data-enemy-id="${id}" role="option" aria-selected="${cur}" title="${name}">${ENEMY_SKULL_SVG}<span class="sk-enemy-result-txt"><span class="sk-enemy-result-name">${name}</span><span class="sk-enemy-result-meta">Lv ${r[3]} · HP ${r[4]}</span></span></button>`;
+    }).join("") + (rows.length > MAX ? `<p class="sk-enemy-result-more">แสดง ${MAX} จาก ${rows.length >= 40 ? "40+" : rows.length} · พิมพ์เพิ่มเพื่อกรอง</p>` : "") : `<p class="sk-enemy-result-none">ไม่พบศัตรู</p>`;
+    placeEnemyPicker();
+  }
+  // The picker opens upward (the badge sits low); when that would run off the top of the window, it opens downward.
+  function placeEnemyPicker(){
+    enemyPickerEl.classList.remove("is-down");
+    if (enemyPickerWrap.classList.contains("active") && enemyPickerEl.getBoundingClientRect().top < 8) enemyPickerEl.classList.add("is-down");
   }
   function renderEnemyPicker(){
     enemyPickerEl.innerHTML = `<input type="text" class="sk-enemy-search" data-role="enemy-search" placeholder="ค้นหาศัตรู (ชื่อ)" aria-label="ค้นหาศัตรู" autocomplete="off" spellcheck="false"><div class="sk-enemy-results" data-role="enemy-results" hidden></div>` + ENEMY_PRESETS.map(p => {
@@ -17515,6 +17682,7 @@ function mountSkillCooldownLookup(root){
     e.stopPropagation();
     renderEnemyPicker();
     enemyPickerWrap.classList.toggle("active");
+    placeEnemyPicker();
     if (enemyPickerWrap.classList.contains("active")) softFocus(enemyPickerEl.querySelector('[data-role="enemy-search"]'));
   });
   enemyPickerEl.addEventListener("input", (e) => { if (e.target.matches('[data-role="enemy-search"]')) renderEnemySearchResults(); });
@@ -17628,62 +17796,27 @@ function mountSkillCooldownLookup(root){
     if (bdOpen) renderBdPopup();
   }
   // Names and rank transitions of what a swap changes in the Buff / Debuff popups (Option A: arrow pills).
-  function presetBdDiff(a, b){
-    if (!a || !b) return [];
-    const getRank = (src, id, defs) => {
-      if (!src) return 0;
-      if (Array.isArray(src)) return src.includes(id) ? (defs[id] ? (defs[id].maxRank || defs[id].level || 1) : 1) : 0;
-      if (typeof src === "object") return Math.max(0, Math.floor(Number(src[id]) || 0));
-      return 0;
-    };
-    const catDefs = {
-      stat: { defs: STAT_BUFFS, prefix: "บัฟ " },
-      pmod: { defs: MOD_DEFS, prefix: "บัฟ " },
-      emod: { defs: MOD_DEFS, prefix: "ดีบัฟ " },
-      estat: { defs: ENEMY_STAT_DEBUFFS, prefix: "ดีบัฟ " },
-    };
-    const out = [];
-    Object.keys(catDefs).forEach(k => {
-      const { defs, prefix } = catDefs[k];
-      const allIds = new Set([
-        ...Object.keys(typeof a[k] === "object" && !Array.isArray(a[k]) ? a[k] : {}),
-        ...Object.keys(typeof b[k] === "object" && !Array.isArray(b[k]) ? b[k] : {}),
-        ...(Array.isArray(a[k]) ? a[k] : []),
-        ...(Array.isArray(b[k]) ? b[k] : [])
-      ]);
-      allIds.forEach(id => {
-        const def = defs[id];
-        if (!def) return;
-        const rA = getRank(a[k], id, defs);
-        const rB = getRank(b[k], id, defs);
+  // What changed in the Buff / Debuff state between two presets, one row each (icon and name follow the level).
+  function presetSumBd(a, b){
+    const A = presetBdNorm(a), B = presetBdNorm(b), out = [];
+    [["stat", STAT_BUFFS, false], ["pmod", MOD_DEFS, false], ["emod", MOD_DEFS, true], ["estat", ENEMY_STAT_DEBUFFS, true]].forEach(([k, defs, red]) => {
+      new Set([...Object.keys(A[k]), ...Object.keys(B[k])]).forEach(id => {
+        const rA = A[k][id] || 0, rB = B[k][id] || 0;
         if (rA === rB) return;
-        const baseName = def.label || def.name || id;
-        if (rA === 0){
-          const nm = (typeof def.nameFor === "function") ? def.nameFor(rB) : (def.names && def.names[rB]) ? def.names[rB] : (rB > 1 ? `${baseName} (Lv.${rB})` : baseName);
-          out.push({ text: "+ " + prefix + nm, tone: "on" });
-        } else if (rB === 0){
-          const nm = (typeof def.nameFor === "function") ? def.nameFor(rA) : (def.names && def.names[rA]) ? def.names[rA] : (rA > 1 ? `${baseName} (Lv.${rA})` : baseName);
-          out.push({ text: "− " + prefix + nm, tone: "off" });
-        } else {
-          out.push({ text: prefix + baseName + " Lv." + rA + " → Lv." + rB, tone: rB > rA ? "on" : "off" });
-        }
+        const d = bdResolve(defs[id], B.server) || bdResolve(defs[id], A.server) || defs[id], r = rB || rA;
+        out.push({ icon: bdLvIcon(d, r), name: bdLvName(d, r), red, on: rB > 0, lv: rA && rB ? `Lv.${rA} → Lv.${rB}` : `Lv.${r}`,
+          tag: !rA ? "เปิด" : !rB ? "ปิด" : rB > rA ? "เพิ่ม" : "ลด", up: rB > rA });
       });
     });
-    // Final Multiplier
-    const fmA = Array.isArray(a.fmult) ? a.fmult.length : 0;
-    const fmB = Array.isArray(b.fmult) ? b.fmult.length : 0;
-    if (fmA !== fmB){
-      if (fmA === 0) out.push({ text: `+ บัฟ Final Multiplier (${fmB} stack${fmB > 1 ? "s" : ""})`, tone: "on" });
-      else if (fmB === 0) out.push({ text: `− บัฟ Final Multiplier (${fmA} stack${fmA > 1 ? "s" : ""})`, tone: "off" });
-      else out.push({ text: `บัฟ Final Multiplier ${fmA} stack${fmA > 1 ? "s" : ""} → ${fmB} stack${fmB > 1 ? "s" : ""}`, tone: fmB > fmA ? "on" : "off" });
-    }
-    // Custom entries
-    const custA = new Set(a.custom || []), custB = new Set(b.custom || []);
-    custB.forEach(id => { if (!custA.has(id)){ const e = customBd.find(x => x.id === id); out.push({ text: "+ กำหนดเอง " + (e ? e.name : id), tone: "on" }); } });
-    custA.forEach(id => { if (!custB.has(id)){ const e = customBd.find(x => x.id === id); out.push({ text: "− กำหนดเอง " + (e ? e.name : id), tone: "off" }); } });
-    if (a.server !== b.server) out.push({ text: "เซิร์ฟในป๊อปอัปบัฟ: " + String(a.server).toUpperCase() + " → " + String(b.server).toUpperCase(), tone: "" });
-    if (a.buffsOff !== b.buffsOff) out.push({ text: "บัฟทั้งหมด: " + (b.buffsOff ? "ปิด" : "เปิด"), tone: b.buffsOff ? "off" : "on" });
-    if (a.debuffsOff !== b.debuffsOff) out.push({ text: "ดีบัฟทั้งหมด: " + (b.debuffsOff ? "ปิด" : "เปิด"), tone: b.debuffsOff ? "off" : "on" });
+    const fm = o => o.fmult.filter(x => FINAL_MULT_MOD_IDS.includes(x)).length, fA = fm(A), fB = fm(B);
+    if (fA !== fB) out.push({ icon: "privateServer", name: "Final Multiplier", on: fB > 0, lv: fA && fB ? `${fA} → ${fB} ชั้น` : `${fA || fB} ชั้น`,
+      tag: !fA ? "เปิด" : !fB ? "ปิด" : fB > fA ? "เพิ่ม" : "ลด", up: fB > fA });
+    customBd.forEach(e => { const inA = A.custom.includes(e.id), inB = B.custom.includes(e.id);
+      if (inA !== inB) out.push({ custom: true, name: e.name, red: CUSTOM_BD_KINDS[e.kind] === "debuff", on: inB, lv: customVal(e), tag: inB ? "เปิด" : "ปิด", up: inB }); });
+    const SRV = { og: "BB", tot: "ToT", tto: "TTO" };
+    if (A.server !== B.server) out.push({ text: `ป๊อปอัปบัฟ ${SRV[A.server] || A.server} → ${SRV[B.server] || B.server}` });
+    if (A.buffsOff !== B.buffsOff) out.push({ text: "บัฟทั้งหมด", tag: B.buffsOff ? "ปิด" : "เปิด", up: !B.buffsOff });
+    if (A.debuffsOff !== B.debuffsOff) out.push({ text: "ดีบัฟทั้งหมด", tag: B.debuffsOff ? "ปิด" : "เปิด", up: !B.debuffsOff });
     return out;
   }
   function presetPushUndo(){ presetUndoStack.push({ at: Date.now(), data: JSON.stringify(presetData), stats: presetCurrent() }); if (presetUndoStack.length > 30) presetUndoStack.shift(); }
@@ -17693,6 +17826,9 @@ function mountSkillCooldownLookup(root){
     presetData = JSON.parse(s.data); presetSaveAll();
     presetWrite(s.stats); renderHero();
     if (document.querySelector('[data-role="preset-win-backdrop"]')) openPresetWindow(true, presetWinSel, true);   // an open PRESET window shows the restored order
+    // Undo with the change summary open (กลับไปชุดเดิม or Ctrl+Z): close it a frame later, after heroDelta has re-held its
+    // snapshot, so the held volley compares the state before the switch with the restored one and plays nothing.
+    if (document.querySelector('[data-role="preset-backdrop"]')) requestAnimationFrame(() => hidePresetPopup());
     return true;
   }
   function presetStatName(k){ return k === "lv" ? "LV" : k.toUpperCase(); }
@@ -17725,8 +17861,9 @@ function mountSkillCooldownLookup(root){
     closePresetWindow();
     if (!s){ presetPushUndo(); en.slots[i] = presetCurrent(); en.active = i; presetSaveAll(); renderPresetBar(); return; }
     if (en.active === i) return;
+    const from = en.active;
     presetPushUndo(); en.active = i; presetSaveAll();
-    presetApply(s, i, cls);
+    presetApply(s, i, cls, from);
   }
   function presetEsc(t){ return String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])); }
   // PRESET window (user 2026-10-19, variant 4 of 5 mocks): one preset at a time. Folder tabs on top (portrait face in its game
@@ -17734,7 +17871,31 @@ function mountSkillCooldownLookup(root){
   // the portrait with name / description / use button, the stats as bars, the saved buffs and debuffs with their levels, and
   // a strip with the slot's popup server, its two quick switches and ‹ ย้าย / ย้าย ›. sel = the preset to show (default the
   // one in use); focusTab = keep the keyboard on the tabs (tab click, arrows, reorder).
-  var presetWinSel = 0;
+  var presetWinSel = 0, presetWinEdit = false, presetWinSide = "buff", presetWinTyped = false;
+  // A slot's Buff / Debuff state with every rank map as {id: rank} (old slots stored id lists = max level) and both lists copied.
+  function presetBdNorm(bd){
+    const o = Object.assign({ server: "og", buffsOff: false, debuffsOff: false }, bd || {});
+    [["stat", STAT_BUFFS], ["estat", ENEMY_STAT_DEBUFFS], ["pmod", MOD_DEFS], ["emod", MOD_DEFS]].forEach(([k, defs]) => {
+      const src = o[k], m = {};
+      if (Array.isArray(src)) src.forEach(id => { if (defs[id]) m[id] = defs[id].maxRank || defs[id].level || 1; });
+      else if (src && typeof src === "object") Object.keys(src).forEach(id => { const r = Math.floor(Number(src[id]) || 0); if (defs[id] && r > 0) m[id] = r; });
+      o[k] = m;
+    });
+    o.custom = Array.isArray(o.custom) ? o.custom.slice() : [];
+    o.fmult = Array.isArray(o.fmult) ? o.fmult.slice() : [];
+    return o;
+  }
+  // Edit slot i's Buff / Debuff state in the window (user 2026-10-19). Undoable; the preset in use is the live set, so it is applied too.
+  function presetWinBdEdit(i, fn){
+    const en = presetEntry(presetClass()), s = en.slots[i];
+    if (!s) return;
+    presetPushUndo();
+    s.bd = presetBdNorm(s.bd);
+    fn(s.bd);
+    if (i === (en.active === null ? 0 : en.active)) { presetBdApply(s.bd); renderHero(); }
+    presetSaveAll(); renderPresetBar();
+    openPresetWindow(true, i, "none");
+  }
   // A slot's saved Buff / Debuff state as rows, read on the slot's own popup server (rank maps, or the old id lists = max level).
   function presetWinBd(bd){
     const srv = BD_SERVERS.includes(bd.server) ? bd.server : "og";
@@ -17762,6 +17923,7 @@ function mountSkillCooldownLookup(root){
   function openPresetWindow(quiet, sel, focusTab){
     const cls = presetClass();
     if (!cls) return;
+    const prevWin = document.querySelector('[data-role="preset-win"]'), prevScroll = quiet && prevWin ? prevWin.scrollTop : 0;
     closePresetWindow();
     const en = presetEntry(cls), act = en.active === null ? 0 : en.active;
     const i = presetWinSel = Number.isInteger(sel) && sel >= 0 && sel < PRESET_SLOTS ? sel : act;
@@ -17778,12 +17940,32 @@ function mountSkillCooldownLookup(root){
     if (s){
       const b = presetWinBd(s.bd || {});
       const top = Math.max(256, ...PRESET_STATS.slice(1).map(k => s[k]));   // bars against 256, or the highest stat when one is higher
-      const bars = PRESET_STATS.slice(1).map(k => `<div class="sk-pw-bar" style="--sc:var(--stat-${k})"><b>${presetStatName(k)}</b><span class="sk-pw-tr"><i style="width:${(Math.min(1, s[k] / top) * 100).toFixed(1)}%"></i></span><span class="sk-pw-num">${s[k]}</span></div>`).join("");
+      const statIn = k => `<input type="number" class="sk-pw-in" data-stat="${k}" min="0" value="${s[k]}" aria-label="${presetStatName(k)} ของ PRESET ${i + 1}">`;
+      const bars = PRESET_STATS.slice(1).map(k => `<div class="sk-pw-bar" style="--sc:var(--stat-${k})"><b>${presetStatName(k)}</b><span class="sk-pw-tr"><i data-k="${k}" style="width:${(Math.min(1, s[k] / top) * 100).toFixed(1)}%"></i></span>${statIn(k)}</div>`).join("");
       const list = (rows, red) => rows.length ? rows.map(r => `<div class="sk-pw-rw">${r.custom ? `<span class="sk-pw-ring sk-pw-glyph${red ? " r" : ""}">★</span>` : `<span class="sk-pw-ring${red ? " r" : ""}"><img src="${SKILL_ICONS[r.icon] || ""}" alt=""></span>`}<span class="sk-pw-rn">${presetEsc(r.name)}<small>${r.val}</small></span>${r.custom ? "" : `<span class="sk-pw-lv${red ? " r" : ""}">Lv.${r.lv}/${r.max}</span>`}</div>`).join("") : '<p class="sk-pw-none">ไม่มี</p>';
       const off = on => on ? ' <span class="sk-pw-offtag">ปิดอยู่</span>' : "";
-      tiles = `<div class="sk-pw-tile"><h4>สเตตัส<span class="sk-pw-lvpill">LV <b>${s.lv}</b></span></h4><div class="sk-pw-bars">${bars}</div></div>
-        <div class="sk-pw-tile"><h4>บัฟ${off(b.buffsOff)}</h4><div class="sk-pw-rows">${list(b.buffs, false)}</div><h4 class="r">ดีบัฟ${off(b.debuffsOff)}</h4><div class="sk-pw-rows">${list(b.debuffs, true)}</div></div>
-        <div class="sk-pw-tile sk-pw-set"><span class="sk-pw-srv"><img src="${SKILL_ICONS["server_" + b.srv] || ""}" alt="">ป๊อปอัปบัฟ: ${{ og: "BB", tot: "ToT", tto: "TTO" }[b.srv]}</span><span class="sk-pw-flag${b.buffsOff ? " is-off" : ""}"><i></i>บัฟ${b.buffsOff ? "ปิด" : "เปิด"}อยู่</span><span class="sk-pw-flag${b.debuffsOff ? " is-off" : ""}"><i></i>ดีบัฟ${b.debuffsOff ? "ปิด" : "เปิด"}อยู่</span>${move}</div>`;
+      const SRV_NAME = { og: "BB", tot: "ToT", tto: "TTO" };
+      const strip = `<div class="sk-pw-tile sk-pw-set"><span class="sk-pw-srvs">ป๊อปอัปบัฟ${BD_SERVERS.map(sv => `<button type="button" class="sk-pw-sv${sv === b.srv ? " is-on" : ""}" data-role="pw-srv" data-server="${sv}" title="${SRV_NAME[sv]}" aria-pressed="${sv === b.srv}"><img src="${SKILL_ICONS["server_" + sv] || ""}" alt="${SRV_NAME[sv]}"></button>`).join("")}</span><button type="button" class="sk-pw-flag${b.buffsOff ? " is-off" : ""}" data-role="pw-off" data-side="buff" aria-pressed="${!b.buffsOff}"><i></i>บัฟ${b.buffsOff ? "ปิด" : "เปิด"}อยู่</button><button type="button" class="sk-pw-flag${b.debuffsOff ? " is-off" : ""}" data-role="pw-off" data-side="debuff" aria-pressed="${!b.debuffsOff}"><i></i>ดีบัฟ${b.debuffsOff ? "ปิด" : "เปิด"}อยู่</button>${move}</div>`;
+      if (presetWinEdit){
+        // Buff / debuff edit view: the popup's level table, on this slot's own data and server
+        const bd = presetBdNorm(s.bd), srv = bd.server, get = k => ({ get: id => bd[k][id] || 0 });
+        const fmOn = !!bdResolve(MOD_DEFS[FINAL_MULT_MOD_IDS[0]], srv);
+        const pills = (kind, red) => { const list = customBd.filter(e => e.kind === kind); return list.length ? `<div class="sk-lv-cus">${list.map(e => { const on = bd.custom.includes(e.id); return `<span class="sk-lv-pill${on ? " on" : ""}${red ? " r" : ""}"><button type="button" data-role="pw-custom" data-id="${e.id}" aria-pressed="${on}">★ ${presetEsc(e.name)} <b>${customVal(e)}</b></button></span>`; }).join("")}</div>` : ""; };
+        const sideSecs = {
+          buff: [{ title: "สเตตัส", rows: bdRows("stat", Object.keys(STAT_BUFFS), STAT_BUFFS, get("stat"), srv), extra: pills("stat", false) },
+            { title: "Damage Mod", rows: bdRows("pmod", PLAYER_MOD_IDS, MOD_DEFS, get("pmod"), srv), extra: pills("dmgMod", false) }]
+            .concat(fmOn ? [{ title: "Final Multiplier &middot; PvE", rows: [bdFmultRow(bd.fmult.filter(id => FINAL_MULT_MOD_IDS.includes(id)).length)], extra: pills("finalMult", false) }] : []),
+          debuff: [{ title: "Target Hit Mod", red: true, rows: bdRows("emod", ENEMY_MOD_IDS, MOD_DEFS, get("emod"), srv), extra: pills("hitMod", true) },
+            { title: "สเตตัสเป้าหมาย", red: true, rows: bdRows("estat", Object.keys(ENEMY_STAT_DEBUFFS), ENEMY_STAT_DEBUFFS, get("estat"), srv), extra: pills("enemyStat", true) }]
+        };
+        const nOn = side => sideSecs[side].reduce((n, x) => n + x.rows.filter(r => r.rank > 0).length, 0)
+          + bd.custom.filter(id => { const e = customBd.find(x => x.id === id); return e && CUSTOM_BD_KINDS[e.kind] === side && (e.kind !== "finalMult" || fmOn); }).length;
+        tiles = `<div class="sk-pw-tile sk-pw-bdedit${presetWinSide === "debuff" ? " is-debuff" : ""}"><div class="sk-pw-edhead"><div class="sk-pw-sides">${["buff", "debuff"].map(sd => `<button type="button" class="${sd === presetWinSide ? "is-on" : ""}" data-role="pw-side" data-side="${sd}">${sd === "buff" ? "บัฟ" : "ดีบัฟ"} <b>${nOn(sd)}</b></button>`).join("")}</div><span class="sk-pw-edhint">คลิกช่องเพื่อเลือกเลเวล</span><button type="button" class="sk-pw-done" data-role="pw-done">เสร็จ</button></div>${bdLvTable(sideSecs[presetWinSide])}</div>${strip}`;
+      } else {
+        tiles = `<div class="sk-pw-tile"><h4>สเตตัส<span class="sk-pw-lvpill">LV ${statIn("lv")}</span></h4><div class="sk-pw-bars">${bars}</div></div>
+        <div class="sk-pw-tile"><h4>บัฟ${off(b.buffsOff)}<button type="button" class="sk-pw-editbtn" data-role="pw-edit">แก้ไขบัฟ / ดีบัฟ</button></h4><div class="sk-pw-rows">${list(b.buffs, false)}</div><h4 class="r">ดีบัฟ${off(b.debuffsOff)}</h4><div class="sk-pw-rows">${list(b.debuffs, true)}</div></div>
+        ${strip}`;
+      }
     } else {
       tiles = `<div class="sk-pw-tile sk-pw-empty"><p>${inUse ? "ยังไม่มีค่าที่บันทึก ชุดนี้จะเก็บสเตตัสและบัฟให้เองเมื่อแก้ค่าครั้งแรก" : "ยังไม่มีค่าที่บันทึก กด <b>เริ่มชุดนี้จากค่าปัจจุบัน</b> เพื่อเก็บสเตตัสและบัฟที่ใช้อยู่ตอนนี้ไว้ในชุดนี้"}</p></div><div class="sk-pw-tile sk-pw-set">${move}</div>`;
     }
@@ -17812,10 +17994,43 @@ function mountSkillCooldownLookup(root){
       if (tab) { openPresetWindow(true, Number(tab.dataset.slot), true); return; }
       const mv = e.target.closest('[data-role="preset-move"]');
       if (mv) { const to = i + Number(mv.dataset.step); if (to >= 0 && to < PRESET_SLOTS) presetMove(cls, i, to); return; }
-      if (e.target.closest('[data-role="preset-use"]')) presetUseSlot(i);
+      if (e.target.closest('[data-role="preset-use"]')) { presetUseSlot(i); return; }
+      if (e.target.closest('[data-role="pw-edit"]')) { presetWinEdit = true; openPresetWindow(true, i, "none"); return; }
+      if (e.target.closest('[data-role="pw-done"]')) { presetWinEdit = false; openPresetWindow(true, i, "none"); return; }
+      const sd = e.target.closest('[data-role="pw-side"]');
+      if (sd) { presetWinSide = sd.dataset.side; openPresetWindow(true, i, "none"); return; }
+      if (!s) return;
+      const cur = presetBdNorm(s.bd);
+      const sv = e.target.closest('[data-role="pw-srv"]');
+      if (sv) { if (sv.dataset.server !== cur.server) presetWinBdEdit(i, bd => { bd.server = sv.dataset.server; }); return; }
+      const off = e.target.closest('[data-role="pw-off"]');
+      if (off) { presetWinBdEdit(i, bd => { const k = off.dataset.side === "buff" ? "buffsOff" : "debuffsOff"; bd[k] = !bd[k]; }); return; }
+      const pc = e.target.closest('[data-role="pw-custom"]');
+      if (pc) { presetWinBdEdit(i, bd => { const at = bd.custom.indexOf(pc.dataset.id); if (at >= 0) bd.custom.splice(at, 1); else bd.custom.push(pc.dataset.id); }); return; }
+      const cell = e.target.closest('[data-role="bd-lv"]');
+      if (cell) {
+        const k = cell.dataset.kind, id = cell.dataset.id, lv = parseInt(cell.dataset.lv, 10) || 0;
+        if ((k === "fmult" ? cur.fmult.filter(x => FINAL_MULT_MOD_IDS.includes(x)).length : cur[k][id] || 0) === lv) return;
+        presetWinBdEdit(i, bd => { if (k === "fmult") bd.fmult = FINAL_MULT_MOD_IDS.slice(0, lv); else if (lv) bd[k][id] = lv; else delete bd[k][id]; });
+      }
     });
     // Name / description autosave on every keystroke (the window is only rebuilt by tabs, moves and reset, so focus stays put).
+    backdrop.addEventListener("focusin", (e) => { if (e.target.dataset && e.target.dataset.stat) presetWinTyped = false; });
+    backdrop.addEventListener("change", (e) => { const k = e.target.dataset && e.target.dataset.stat; if (k && s && e.target.value === "") e.target.value = s[k]; });
     backdrop.addEventListener("input", (e) => {
+      const k = e.target.dataset && e.target.dataset.stat;
+      if (k && s){
+        if (e.target.value === "") return;   // mid-edit; an empty field goes back to the saved value on change
+        const hi = k === "lv" ? Math.max(...Object.values(LEVEL_CAP)) : 9999;
+        const v = Math.min(hi, Math.max(0, Math.floor(Number(e.target.value) || 0)));
+        if (!presetWinTyped) { presetPushUndo(); presetWinTyped = true; }
+        s[k] = v;
+        if (inUse) { presetEls()[k].value = v; renderHero(); }
+        presetSaveAll(); renderPresetBar();
+        const top = Math.max(256, ...PRESET_STATS.slice(1).map(x => s[x]));
+        backdrop.querySelectorAll(".sk-pw-tr i[data-k]").forEach(b => { b.style.width = (Math.min(1, s[b.dataset.k] / top) * 100).toFixed(1) + "%"; });
+        return;
+      }
       const f = e.target.dataset && e.target.dataset.field;
       if (!f) return;
       en.labels[i][f] = e.target.value.slice(0, f === "name" ? PRESET_NAME_MAX : PRESET_DESC_MAX);
@@ -17850,8 +18065,9 @@ function mountSkillCooldownLookup(root){
     });
     backdrop.addEventListener("dragend", () => { dragFrom = null; clearDrag(); });
     document.body.appendChild(backdrop);
-    if (focusTab) { const t = backdrop.querySelector(".sk-pw-tab.is-on"); if (t) t.focus(); }
-    else softFocus(backdrop.querySelector(".sk-pw-name"));
+    if (prevScroll) backdrop.querySelector('[data-role="preset-win"]').scrollTop = prevScroll;
+    if (focusTab === true) { const t = backdrop.querySelector(".sk-pw-tab.is-on"); if (t) t.focus(); }
+    else if (focusTab !== "none") softFocus(backdrop.querySelector(".sk-pw-name"));
   }
   // Move a preset (stats, buffs, name, description) from position "from" to "to"; the others shift over and the one in
   // use stays selected wherever it ends up. Undoable with Ctrl+Z like a switch.
@@ -17894,7 +18110,7 @@ function mountSkillCooldownLookup(root){
     openPresetWindow(true);
   }
   function closePresetWindow(){ const b = document.querySelector('[data-role="preset-win-backdrop"]'); if (b) b.remove(); }
-  root.addEventListener("click", (e) => { if (e.target.closest('[data-role="preset-open"]')) openPresetWindow(); });
+  root.addEventListener("click", (e) => { if (e.target.closest('[data-role="preset-open"]')) { presetWinEdit = false; openPresetWindow(); } });
   // Autosave: a real edit of a player stat input (not a preset load, undo or skill switch) updates the selected slot.
   function presetAutosave(){
     const cls = presetClass();
@@ -17921,18 +18137,18 @@ function mountSkillCooldownLookup(root){
         c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove());   // a change roll still running
         c.querySelectorAll("img[alt]").forEach(im => im.replaceWith(im.alt));
         let key = name; seen[key] = (seen[key] || 0) + 1; if (seen[key] > 1) key += "#" + seen[key];
-        out.push({ key, name, text: c.textContent.replace(/\s+/g, " ").trim(), lowerBetter: /คูลดาวน์|เวลาร่าย|cooldown|cast/i.test(label) });
+        out.push({ key, name, raw: chip.classList.contains("sk-dmg-calc"), text: c.textContent.replace(/\s+/g, " ").trim(), lowerBetter: /คูลดาวน์|เวลาร่าย|cooldown|cast/i.test(label) });
       });
     });
     return out;
   }
-  function presetApply(vals, i, cls){
+  function presetApply(vals, i, cls, from){
     const before = presetReadChips(), statsBefore = presetCurrent();
     presetWrite(vals);
     renderHero();                       // heroDelta holds its flicker while the pop-up is open
     const after = presetReadChips();
     // No pop-up when nothing on the open skill changed (identical preset, or only stats this skill does not use).
-    if (presetChangeRows(before, after).length) showPresetPopup(i, cls, statsBefore, vals, before, after);
+    if (presetChangeRows(before, after).length) showPresetPopup(i, cls, statsBefore, vals, before, after, from);
   }
   function presetNum(n){ return parseFloat(n.toFixed(2)).toString(); }
   function presetSigned(n, unit = ""){ return (n > 0 ? "+" : n < 0 ? "−" : "±") + presetNum(Math.abs(n)) + unit; }
@@ -17942,41 +18158,66 @@ function mountSkillCooldownLookup(root){
       const b = bm.get(r.key);
       const nb = (b.text.replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
       const na = (r.text.replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
-      if (!nb.length || nb.length !== na.length) return { name: r.name, from: b.text, to: r.text, flat: "—", pct: "—", tone: "" };
+      if (!nb.length || nb.length !== na.length) return { name: r.name, raw: r.raw, dir: 0, from: b.text, to: r.text, flat: "—", pct: "—", tone: "" };
       const d = na.map((v, k) => v - nb[k]);
       const pcts = d.map((v, k) => nb[k] === 0 ? "—" : presetSigned(Math.round(v / nb[k] * 1000) / 10, "%"));
       const sum = d.reduce((s, v) => s + v, 0);
       const tone = sum === 0 ? "" : ((sum > 0) !== r.lowerBetter ? "is-better" : "is-worse");
-      return { name: r.name, from: b.text, to: r.text, flat: d.every(v => v === d[0]) ? presetSigned(d[0]) : d.map(v => presetSigned(v)).join(" ~ "),
+      return { name: r.name, raw: r.raw, dir: Math.sign(sum), nb, na, from: b.text, to: r.text, flat: d.every(v => v === d[0]) ? presetSigned(d[0]) : d.map(v => presetSigned(v)).join(" ~ "),
         pct: pcts.every(p => p === pcts[0]) ? pcts[0] : pcts.join(" ~ "), tone };
     });
   }
-  function showPresetPopup(i, cls, sb, sa, before, after){
+  // Change summary (user 2026-10-19, variant 1 of 3 mocks): from → to header (faces, numbers, names), then the open skill's
+  // changed values as cards with the change itself in large type (raw damage is left out, the final damage card covers it),
+  // then what changed in the preset: stats and buffs / debuffs. Never scrolls on a desktop window (bdLvFit: full size,
+  // compact, then a zoom). "กลับไปชุดเดิม" = Ctrl+Z (undoPreset closes this).
+  function showPresetPopup(i, cls, sb, sa, before, after, from){
     hidePresetPopup(true);
-    const esc = (t) => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
-    const rows = presetChangeRows(before, after);
-    const stats = PRESET_STATS.filter(k => sb[k] !== sa[k]).map(k =>
-      `<span class="sk-preset-pop-stat" style="--sc:var(--stat-${k})">${presetStatName(k)} ${sb[k]} → ${sa[k]} (${presetSigned(sa[k] - sb[k])})</span>`).join("")
-      + presetBdDiff(sb.bd, sa.bd).map(d => `<span class="sk-preset-pop-stat sk-preset-pop-bd${d.tone ? " is-" + d.tone : ""}">${esc(d.text)}</span>`).join("");
-    const table = rows.length
-      ? `<table class="sk-preset-pop-table"><thead><tr><th>ค่า</th><th>ก่อน</th><th>หลัง</th><th>เปลี่ยน</th><th>%</th></tr></thead><tbody>${rows.map(r =>
-          `<tr><td>${esc(r.name)}</td><td class="num">${esc(r.from)}</td><td class="num is-to">${esc(r.to)}</td><td class="num ${r.tone}">${r.flat}</td><td class="num ${r.tone}">${r.pct}</td></tr>`).join("")}</tbody></table>`
-      : `<p class="sk-preset-pop-empty">ไม่มีค่าใดของสกิลนี้เปลี่ยน (สเตตัสที่เปลี่ยนไม่ได้ใช้ในสกิลนี้)</p>`;
+    const esc = presetEsc, en = presetEntry(cls), pics = typeof CLASS_STORY_ART !== "undefined" ? CLASS_STORY_ART[cls] : null;
+    const who = (k, to) => { const none = k === null || k === undefined;
+      return `<div class="sk-ps-who${to ? " is-to" : ""}"><span class="sk-ps-face"${none ? "" : ` style="background-image:url('${(pics && pics[en.colors[k]]) || ""}')"`}></span><span><small>${none ? "ก่อนหน้า" : "PRESET " + (k + 1)}</small><b>${none ? "ค่าเดิม" : esc(en.labels[k].name || "ชุดที่ " + (k + 1))}</b></span></div>`; };
+    const cards = presetChangeRows(before, after).filter(r => !r.raw).map(r => {
+      const top = r.nb ? Math.max(...r.nb, ...r.na) : 0;
+      const bars = top > 0 ? `<div class="sk-ps-bars" aria-hidden="true"><i style="width:${(Math.max(...r.nb) / top * 100).toFixed(1)}%"></i><i style="width:${(Math.max(...r.na) / top * 100).toFixed(1)}%"></i></div>` : "";
+      const head = r.flat === "—" ? `<b>${esc(r.to)}</b>`
+        : `<b class="${r.tone}">${r.dir > 0 ? "▲ " : r.dir < 0 ? "▼ " : ""}${r.flat}</b>${r.pct !== "—" ? `<span class="${r.tone}">${r.pct}</span>` : ""}`;
+      return `<div class="sk-ps-card"><div class="sk-ps-lbl">${esc(r.name)}</div><div class="sk-ps-delta">${head}</div><div class="sk-ps-ft">${esc(r.from)} → <b>${esc(r.to)}</b></div>${bars}</div>`;
+    }).join("");
+    const stats = PRESET_STATS.filter(k => sb[k] !== sa[k]).map(k => { const d = sa[k] - sb[k];
+      return `<div class="sk-ps-srow" style="--sc:var(--stat-${k})"><b>${presetStatName(k)}</b><span class="sk-ps-d ${d > 0 ? "is-better" : "is-worse"}">${presetSigned(d)}</span><span class="sk-ps-ft">${sb[k]} → ${sa[k]}</span></div>`; }).join("");
+    const bds = presetSumBd(sb.bd, sa.bd).map(x => {
+      const tag = x.tag ? `<span class="sk-ps-tag ${x.up ? "is-better" : "is-worse"}">${x.tag}</span>` : "";
+      if (x.text) return `<div class="sk-ps-brow"><span>${esc(x.text)}</span>${tag}</div>`;
+      const cls2 = (x.red ? " r" : "") + (x.on ? "" : " off");
+      const ring = x.custom ? `<span class="sk-ps-ring sk-ps-glyph${cls2}">★</span>` : `<span class="sk-ps-ring${cls2}"><img src="${SKILL_ICONS[x.icon] || ""}" alt=""></span>`;
+      return `<div class="sk-ps-brow">${ring}<span>${esc(x.name)} <small>${esc(x.lv)}</small></span>${tag}</div>`;
+    }).join("");
+    const none = '<p class="sk-ps-none">ไม่เปลี่ยน</p>';
     const backdrop = document.createElement("div");
     backdrop.className = "sk-server-backdrop";
     backdrop.setAttribute("data-role", "preset-backdrop");
-    backdrop.innerHTML = `<div class="sk-preset-popup" data-role="preset-popup" role="dialog" aria-modal="true" aria-labelledby="skPresetPopTitle">
-      <h3 class="sk-preset-pop-title" id="skPresetPopTitle">เปลี่ยนเป็นชุดสเตตัสที่ ${i + 1}</h3>
-      <p class="sk-preset-pop-sub">${esc(cls)} · ผลกับสกิล <b>${esc(selected ? selected.name : "")}</b></p>
-      ${stats ? `<div class="sk-preset-pop-stats">${stats}</div>` : ""}
-      ${table}
-      <button type="button" class="sk-preset-pop-close" data-role="preset-pop-close">ตกลง</button>
+    backdrop.innerHTML = `<div class="sk-preset-popup" data-role="preset-popup" role="dialog" aria-modal="true" aria-label="เปลี่ยนเป็น PRESET ${i + 1}">
+      <div class="sk-ps-hdr">${who(from, false)}<span class="sk-ps-arr" aria-hidden="true">→</span>${who(i, true)}<div class="sk-ps-ctx">${esc((typeof CLASS_TH_NAMES !== "undefined" && CLASS_TH_NAMES[cls]) || cls)}<br>ผลกับสกิล <b>${esc(selected ? selected.name : "")}</b></div></div>
+      <div class="sk-ps-sec">ผลกับสกิลนี้</div>
+      ${cards ? `<div class="sk-ps-cards">${cards}</div>` : '<p class="sk-ps-none">ไม่มีค่าใดของสกิลนี้เปลี่ยน (สเตตัสที่เปลี่ยนไม่ได้ใช้ในสกิลนี้)</p>'}
+      ${stats || bds ? `<div class="sk-ps-sec">สิ่งที่เปลี่ยนในชุด</div><div class="sk-ps-two"><div class="sk-ps-box"><h4>สเตตัส</h4>${stats || none}</div><div class="sk-ps-box"><h4>บัฟ / ดีบัฟ</h4>${bds || none}</div></div>` : ""}
+      <div class="sk-ps-btns"><button type="button" class="sk-ps-back" data-role="preset-pop-back" title="Ctrl+Z">กลับไปชุดเดิม</button><button type="button" class="sk-preset-pop-close" data-role="preset-pop-close">ตกลง</button></div>
     </div>`;
     backdrop.addEventListener("click", (e) => { if (e.target === backdrop) hidePresetPopup(); });
     backdrop.querySelector('[data-role="preset-pop-close"]').addEventListener("click", () => hidePresetPopup());
+    backdrop.querySelector('[data-role="preset-pop-back"]').addEventListener("click", () => undoPreset());
     document.body.appendChild(backdrop);
+    presetPopFit();
     backdrop.querySelector('[data-role="preset-pop-close"]').focus();
   }
+  // Desktop windows never scroll the summary: full size, then compact, then zoomed to fit (16 px from the edges). Phones scroll it.
+  function presetPopFit(){
+    const pop = document.querySelector('[data-role="preset-popup"]');
+    if (!pop) return;
+    pop.style.zoom = ""; pop.classList.remove("is-compact");
+    if (innerWidth > 900) bdLvFit(pop, [[], ["is-compact"]], 16);
+  }
+  addEventListener("resize", presetPopFit);
   // silent: replacing the pop-up, so the held change pings wait for the new one instead of playing now.
   function hidePresetPopup(silent){
     const b = document.querySelector('[data-role="preset-backdrop"]');
@@ -23567,10 +23808,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   const buffSwitch = $('[data-role="buff-switch"]', root);
   const debuffSwitch = $('[data-role="debuff-switch"]', root);
   // Level table rows (bdLvTable): the popup server's built-in entries of one section, each with its level values.
-  function bdRows(kind, ids, defs, map){
+  function bdRows(kind, ids, defs, map, srv){
     const stat = kind === "stat" || kind === "estat";
     return ids.map(id => {
-      const d = bdResolve(defs[id]);
+      const d = bdResolve(defs[id], srv);
       if (!d) return null;
       const max = d.maxRank || d.level || 1;
       return { kind, id, def: d, rank: Math.min(Math.max(0, map.get(id) || 0), max), max,
@@ -25654,6 +25895,7 @@ function mountChameleonSim(root) {
                 <div class="chm-log-bar">
                   <div class="chm-seg chm-seg-sm">${[['all', 'ทั้งหมด'], ['crit', 'คริ'], ['poison', 'พิษ'], ['drain', 'ดูดเลือด'], ['revert', 'ฟื้นเต็ม']].map(([f, l]) => `<button type="button" class="chm-log-filter-btn${f === 'all' ? ' active' : ''}" data-filter="${f}">${l}</button>`).join('')}</div>
                   <input type="text" class="chm-log-search" id="chmLogSearch" placeholder="ค้นหา #นัด" aria-label="ค้นหานัด">
+                  <span class="chm-log-pager" id="chmLogPager"></span>
                 </div>
                 <div class="chm-log-scroll" id="chmLogScroll"></div>
               </details>
@@ -25883,10 +26125,12 @@ function mountChameleonSim(root) {
     mokbug2: 'Lv.84 · Advanced', goldenkingbug2: 'Lv.108 · บอส', carron: 'Lv.1', custom: '' };
 
   // The newest 200 shots that pass the filter (older ones stay in the sim's log); tags are round icons set once as CSS variables
+  var chmLogPage = 0, chmLogKey = '', chmLogPer = 12;   // var: updateUI can call renderLog before these lines run
+  $c('chmLogPager').addEventListener('click', (e) => { const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return; chmLogPage += Number(b.dataset.pg); renderLog(); });
   function renderLog() {
-    const wrap = $c('chmLogWrap');
+    const wrap = $c('chmLogWrap'), logPager = $c('chmLogPager');
     if (!wrap.open) return;
-    if (simState.log.length === 0) { logScroll.innerHTML = '<div class="chm-log-empty">ยังไม่มีบันทึก กด ▶ เพื่อเริ่มยิง</div>'; return; }
+    if (simState.log.length === 0) { logScroll.innerHTML = '<div class="chm-log-empty">ยังไม่มีบันทึก กด ▶ เพื่อเริ่มยิง</div>'; logPager.innerHTML = ''; return; }
     let rows = simState.log;
     if (simState.logFilter === 'crit') rows = rows.filter(e => e.isCrit);
     else if (simState.logFilter === 'poison') rows = rows.filter(e => e.poisonAdded > 0 || e.didPoison);
@@ -25894,15 +26138,28 @@ function mountChameleonSim(root) {
     else if (simState.logFilter === 'revert') rows = rows.filter(e => e.didRevert);
     const q = simState.logSearch.trim().toLowerCase().replace('#', '');
     if (q) rows = rows.filter(e => String(e.shot).includes(q) || ((q.includes('stride') || q.includes('ls')) && e.isStride) || (q.includes('fatal') && e.isFs) || (q.includes('crit') && e.isCrit));
-    if (rows.length === 0) { logScroll.innerHTML = '<div class="chm-log-empty">ไม่มีนัดที่ตรงกับตัวกรอง</div>'; return; }
-    logScroll.innerHTML = rows.slice(-200).reverse().map(e => `
+    if (rows.length === 0) { logScroll.innerHTML = '<div class="chm-log-empty">ไม่มีนัดที่ตรงกับตัวกรอง</div>'; logPager.innerHTML = ''; return; }
+    // No scrolling (user 2026-10-19): one page of the rows that fit the box, newest first, with ‹ n / N › in the bar
+    const key = simState.logFilter + '|' + q;
+    if (key !== chmLogKey) { chmLogKey = key; chmLogPage = 0; }
+    const all = rows.slice().reverse(), row = e => `
       <div class="chm-lr${e.isCrit ? ' is-crit' : ''}"><span>#${e.shot}</span><span>${e.time}</span><span class="chm-tags">${
         (e.isStride ? '<i class="chm-tag" style="--i:var(--chm-ic-ls)" data-card="chameleon_leftStride" title="Left Stride"></i>' : '')
         + (e.isFs ? '<i class="chm-tag" style="--i:var(--chm-ic-fs)" data-card="chameleon_fatalStrike" title="Fatal Strike"></i>' : '')
         + (e.isCrit ? `<i class="chm-tag" style="--i:var(--chm-ic-crit)" data-card="chameleon_criticalPlus" title="คริ ×${e.critMult}"></i>` : '')
         + ((e.poisonStacks > 0 || e.poisonAdded > 0) ? `<i class="chm-tag" style="--i:var(--chm-ic-poison)" data-card="chameleon_poisonArrow" title="พิษ ${e.poisonStacks}${e.poisonAdded ? ' (+' + e.poisonAdded + ')' : ''}"></i><em>${e.poisonStacks}</em>` : '')
         + (e.didRevert ? '<i class="chm-tag" style="--i:var(--chm-ic-revert)" title="ฟื้นเต็ม"></i>' : '')
-      }</span><b>${e.netDmg}${e.hpDrainDmg > 0 ? `<small>+${e.hpDrainDmg}</small>` : ''}</b></div>`).join('');
+      }</span><b>${e.netDmg}${e.hpDrainDmg > 0 ? `<small>+${e.hpDrainDmg}</small>` : ''}</b></div>`;
+    const draw = (per) => {
+      const pages = Math.max(1, Math.ceil(all.length / per));
+      chmLogPage = Math.max(0, Math.min(chmLogPage, pages - 1));
+      logScroll.innerHTML = all.slice(chmLogPage * per, chmLogPage * per + per).map(row).join('');
+      logPager.innerHTML = pages > 1 ? `<button type="button" data-pg="-1"${chmLogPage ? '' : ' disabled'} aria-label="ใหม่กว่า">‹</button><span>${chmLogPage + 1} / ${pages}</span><button type="button" data-pg="1"${chmLogPage < pages - 1 ? '' : ' disabled'} aria-label="เก่ากว่า">›</button>` : '';
+    };
+    draw(chmLogPer);
+    const first = logScroll.firstElementChild, mh = typeof getComputedStyle === 'function' ? parseFloat(getComputedStyle(logScroll).maxHeight) : NaN;
+    const H = isFinite(mh) ? mh : logScroll.clientHeight;   // phones cap the box at 320 px; desktop gives it the spare height
+    if (first && H > 0) { const per = Math.max(1, Math.floor((H + 3) / (first.offsetHeight + 3))); if (per !== chmLogPer) { chmLogPer = per; draw(per); } }
   }
   $c('chmLogWrap').addEventListener('toggle', renderLog);
 
@@ -26222,8 +26479,14 @@ function mountChameleonSim(root) {
     bdLvFit(wrap.querySelector('.sk-bd-popup'));
   }
   addEventListener('resize', () => { if (chmModsOpen && chmModalWrap) bdLvFit(chmModalWrap.querySelector('.sk-bd-popup')); });
-  // Leaving the sim (another tool, browser back) closes it, since it lives on <body> while open.
-  addEventListener('hashchange', () => setTimeout(() => { if (chmModsOpen && !root.getClientRects().length) { chmModsOpen = false; renderChmModsModal(); } }, 0));
+  // Leaving the sim (another tool, browser back) closes what lives on <body>: the Mods popup, and the first-visit tour, whose
+  // scroll lock and wheel / key blockers would otherwise freeze every other page (user 2026-10-19). The tour is not marked
+  // seen, so it comes back on the next visit.
+  addEventListener('hashchange', () => setTimeout(() => {
+    if (root.getClientRects().length) return;
+    if (chmModsOpen) { chmModsOpen = false; renderChmModsModal(); }
+    if (guideOverlayEl) closeChmGuide(true);
+  }, 0));
 
   const chmModsBtn = root.querySelector('#chmModsBtn');
   const chmModsBtn2 = root.querySelector('#chmModsBtn2');
@@ -26524,8 +26787,8 @@ function mountChameleonSim(root) {
     renderGuideStep(startIdx);
   }
 
-  function closeChmGuide() {
-    try {
+  function closeChmGuide(keepUnseen) {
+    if (!keepUnseen) try {
       localStorage.setItem(CHM_GUIDE_STORAGE_KEY, '1');
     } catch (e) {}
 
@@ -27556,8 +27819,24 @@ function mountGoldenKingBugMap(root){
     '<div class="gkb-hint">drag to orbit · scroll to zoom · W A S D to move</div>' +
     '<div class="gkb-msg">กำลังโหลดแผนที่…</div></div><aside class="strat"></aside></div>';
   const msg = root.querySelector(".gkb-msg");
-  gkbLoad().then(fn => { msg.remove(); fn(root); })
+  gkbLoad().then(fn => { msg.remove(); fn(root); gkbFitStrat(root); })
     .catch(() => { msg.textContent = "เบราว์เซอร์นี้เปิดแผนที่ไม่ได้ (ต้องรองรับ WebGL และ DecompressionStream)"; });
+}
+
+// No scrolling on a desktop window (user 2026-10-19): the strategy panel (drawn by the map module) shrinks its contents with
+// CSS zoom to its own height whenever they change or it resizes. Phones keep the scroll.
+function gkbFitStrat(root){
+  const strat = root.querySelector(".strat");
+  if (!strat || typeof ResizeObserver === "undefined") return;
+  const fit = () => {
+    strat.style.zoom = "";
+    if (window.innerWidth <= 900) return;
+    const z = strat.clientHeight / strat.scrollHeight;
+    if (z < 1) strat.style.zoom = Math.max(0.55, z * 0.98).toFixed(3);
+  };
+  new MutationObserver(fit).observe(strat, { childList: true, subtree: true, characterData: true });
+  new ResizeObserver(fit).observe(strat);
+  fit();
 }
 
 // Story-mode dialogue-portrait line art (outline-only, no color — extracted 2026-08-14
@@ -28420,7 +28699,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T06:47:25.682Z","counts":{"1":42,"2":62,"3":34,"4":23,"5":53,"6":48,"7":35,"8":23,"9":25,"10":43,"11":41,"12":14,"13":5,"14":43,"15":51,"16":31,"17":53,"18":57,"19":32,"20":58,"21":32,"22":38,"23":45,"24":11,"25":19,"26":17,"27":12,"28":18,"29":34,"30":32,"31":34,"32":8,"33":12,"34":2,"35":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T08:13:08.715Z","counts":{"1":43,"2":62,"3":35,"4":25,"5":56,"6":49,"7":35,"8":24,"9":26,"10":43,"11":41,"12":14,"13":6,"14":44,"15":53,"16":32,"17":55,"18":57,"19":34,"20":62,"21":32,"22":38,"23":46,"24":11,"25":19,"26":17,"27":12,"28":18,"29":35,"30":35,"31":35,"32":9,"33":13,"34":6,"35":8}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32124,6 +32403,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T08:13:24.009Z","feat(bible): presets can be edited in the PRESET window and the preset change summary is redesigned (each change in large type, final damage only, a back button); no-scroll fixes: enemy search, skill tree tabs and paged search in skill details, shot log pages, a slimmer class rail, a fitted map strategy panel, CHA / AGI on one screen; leaving the Chameleon sim mid-tour no longer freezes page scrolling"],
     ["2026-10-19T06:47:25.844Z","feat(bible): Special Pet Info fits one desktop screen: a pet with a range map stacks its timeline, game-vs-code strip and notes beside the map, the empty space under the tool is gone, and a pet page taller than a short window is zoomed down to fit"],
     ["2026-10-19T06:39:15.116Z","feat(bible): Special Pet Info's roster gets a tab per category (only the open one's pets show) and never scrolls on desktop: the panel fits the window and its rows shrink to fit"],
     ["2026-10-19T05:52:24.459Z","feat(bible): the PRESET window shows one preset at a time: folder tabs on top (face, number, name, in-use mark; click, arrow keys or drag to reorder), then the portrait with name / description / use, the stats as bars, the saved buffs and debuffs with their levels, and the popup server, quick switches and move buttons"],
@@ -32468,7 +32748,7 @@ function fitStageToScreen(){
   const stage = document.querySelector(".stage");
   // Any page that is not a fit-screen tool (the menu, CHM sim) must not keep a scale left over from a tool
   // (2026-09-26: the new 1.6x upscale leaked into the menu, which then slid under the hub bar).
-  if (document.documentElement.classList.contains("tool-chm-sim") || !document.documentElement.classList.contains("tool-fit-screen") || (document.documentElement.classList.contains("tool-rsim") && window.innerWidth < 900)){
+  if (document.documentElement.classList.contains("tool-chm-sim") || !document.documentElement.classList.contains("tool-fit-screen") || ((document.documentElement.classList.contains("tool-rsim") || document.documentElement.classList.contains("tool-cao")) && window.innerWidth < 900)){
     if (stage) stage.style.transform = "";
     return;
   }
@@ -32500,7 +32780,10 @@ const hubBar = document.querySelector(".hub-bar");
   // make the whole card jump in size; a card taller than that still shrinks to fit via scaleH.
   // Stat Gain (user 2026-10-10: "very small in my viewport") grows the same way, measured against a 600px reference height.
   const isStatGain = document.documentElement.classList.contains("tool-stat-gain");
-  const upscale = ((isSkillLookup || isStatGain) && window.innerWidth >= 900) ? Math.min(1.6, scaleW, availH / Math.max(compH, isStatGain ? 600 : 820)) : 1;
+  // CHA / AGI (user 2026-10-19: no scrolling): shrinks to fit like the others; on big screens it keeps the hub's old 1.3 / 1.5 zoom.
+  const isCao = document.documentElement.classList.contains("tool-cao");
+  const caoZoom = window.innerWidth >= 2400 && window.innerHeight >= 1300 ? 1.5 : (window.innerWidth >= 1800 && window.innerHeight >= 1100 ? 1.3 : 1);
+  const upscale = isCao ? caoZoom : ((isSkillLookup || isStatGain) && window.innerWidth >= 900) ? Math.min(1.6, scaleW, availH / Math.max(compH, isStatGain ? 600 : 820)) : 1;
   const scale = Math.min(Math.max(1, upscale), scaleH, scaleW);
 
   stage.style.transform = Math.abs(scale - 1) > 0.001 ? ("scale(" + scale + ")") : "none";
@@ -32531,6 +32814,7 @@ function showMenu(){
   document.documentElement.classList.remove("tool-guide-reader", "tool-guide-author");
   document.documentElement.classList.remove("tool-wide-hero");
   document.documentElement.classList.remove("tool-stat-gain");
+  document.documentElement.classList.remove("tool-cao");
   document.documentElement.classList.remove("tool-chm-sim");
   document.documentElement.classList.remove("tool-monsters");
   document.documentElement.classList.remove("tool-notes");
@@ -32561,7 +32845,8 @@ function showTool(tool){
   const short = tool.shortTitle || tool.title;
   crumbCurrent.innerHTML = '<span class="crumb-full">' + tool.title + '</span><span class="crumb-short">' + short + '</span>';
   document.title = "12 Tails Bible — " + tool.title;
-  document.documentElement.classList.toggle("tool-fit-screen", tool.id === "skill-details" || tool.id === "stat-gain" || tool.id === "stat-roll" || tool.id === "goldenkingbug-map" );
+  document.documentElement.classList.toggle("tool-fit-screen", tool.id === "skill-details" || tool.id === "stat-gain" || tool.id === "stat-roll" || tool.id === "goldenkingbug-map" || tool.id === "cha-agi-optimizer");
+  document.documentElement.classList.toggle("tool-cao", tool.id === "cha-agi-optimizer");
   document.documentElement.classList.toggle("tool-wide-hero", tool.id === "skill-details" || tool.id === "stat-roll");
   document.documentElement.classList.toggle("tool-stat-gain", tool.id === "stat-gain");
   document.documentElement.classList.toggle("tool-chm-sim", tool.id === "chameleon-attack-sim");
