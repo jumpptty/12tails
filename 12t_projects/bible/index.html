@@ -33,7 +33,7 @@
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
-    field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search"]
+    field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select"]
   };
   (function(){
     var G = 'html:is([data-sk-server="tto"],[data-sk-server="tot"]) ';
@@ -6077,6 +6077,9 @@
   .chm-clock small { font-size: 11px; line-height: 1; color: var(--muted); }
   .chm-clock b { font: 700 21px/1.1 var(--chm-num); color: var(--text); font-variant-numeric: tabular-nums; }
   .chm-clock.is-running b { color: #f1d27a; }
+  .chm-fps { display: flex; flex-direction: column; justify-content: center; gap: 2px; height: 44px; padding: 0 4px; }
+  .chm-fps small { font-size: 11px; line-height: 1; color: var(--muted); }
+  .chm-fps select { height: 26px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 500 13px 'Prompt', sans-serif; }
   .chm-count { width: 68px; height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); text-align: center; font: 700 14px var(--chm-num); }
 
   /* layout */
@@ -24695,6 +24698,7 @@ function mountChameleonSim(root) {
     maxHp: 3000,
     soundEnabled: true,
     poisonPhase: 0,   // where the target's 4 s poison clock stands at t = 0 (random per run)
+    fps: 0,           // frame rate of the live client being modelled; 0 = the code's exact waits (user 2026-10-19)
     selectedWeapon: 'poseidonBow',
     selectedHelmet: 'poseidonHelmet',
     selectedArmor: 'mantisSuit',
@@ -24750,6 +24754,18 @@ function mountChameleonSim(root) {
     logSearch: ''
   };
 
+  // Frame rate (user 2026-10-19). In the live client every WaitForSeconds ends on the first frame at or after its time, and an action that
+  // follows standby starts one frame later: input runs in Update, before coroutines resume, so the frame that sets standby has already
+  // checked the buttons. Frame lengths jitter about +-2 %, so a wait that is a whole number of frames (0.2 s at 60 fps) ends late about half
+  // the time. Cooldowns are end times on the real clock (addTimeOut / isTimeOut, CharacterControl.cs:20005-20102) and do not change.
+  const chmFrame = () => (0.98 + 0.04 * Math.random()) / simState.fps;
+  function chmWait(w) {   // a WaitForSeconds(w): its real length at the chosen frame rate
+    if (!simState.fps) return w;
+    let t = 0;
+    while (t < w - 1e-9) t += chmFrame();
+    return t;
+  }
+  const chmRestart = () => simState.fps ? chmFrame() : 0;   // the frame between standby and the next action
   let chmFsCdTotal = 0, chmLsCdTotal = 0;   // the cooldowns rolled at the last casts, for the arena's sweeps
   let laneLeft = null;
   let laneMid = null;
@@ -24928,18 +24944,22 @@ function mountChameleonSim(root) {
   }
 
   function castFatalStrike(bonuses, enemy) {
-    if (simState.fatalStrikeRank <= 0 || simState.lsCycle > 0) return;
+    if (simState.fatalStrikeRank <= 0 || simState.lsCycle > 0) return 0;
+    const start = chmRestart();
+    advanceSimTime(start, enemy);
     const fsRank = (simState.fatalStrikeRank > 0 && simState.extraArrows) ? Math.min(simState.fatalStrikeRank + 1, 5) : simState.fatalStrikeRank;
     const fsMaxCharges = simState.extraArrows ? 10 : 5;
     simState.fsCasts++;
     simState.fsCharges = fsMaxCharges;
     const rolledBaseCD = chmAgiAdjust(30, simState.agi, simState.lck);
     simState.fsRemainingCD = chmFsCdTotal = simState.revArt ? Math.ceil(0.88 * rolledBaseCD) : rolledBaseCD;
-    advanceSimTime(0.5, enemy); // RPC_fatalStrike: 0.3 s, the status, 0.2 s, then standby (Chameleon.cs:26159-26607)
+    const lock = chmWait(0.3) + chmWait(0.2);
+    advanceSimTime(lock, enemy); // RPC_fatalStrike: 0.3 s, the status, 0.2 s, then standby (Chameleon.cs:26159-26607)
     if (simState.isRunning) {
       soundMgr.play((Math.random() < 0.5) ? 'fatalStrike1' : 'fatalStrike2', 0.85);
       soundMgr.play('aura1', 0.75);
     }
+    return start + lock;
   }
 
   function getLeftStrideCD() {
@@ -25113,9 +25133,11 @@ function mountChameleonSim(root) {
   }
 
   function executeOneShot(bonuses, enemy) {
-    advanceSimTime(0.2, enemy);   // RPC_nAttack1: the arrow leaves 0.2 s in (Chameleon.cs:15380-16112)
+    const a = chmRestart() + chmWait(0.2), b = chmWait(0.1);
+    advanceSimTime(a, enemy);   // RPC_nAttack1: the arrow leaves 0.2 s in (Chameleon.cs:15380-16112)
     executeArrow(bonuses, enemy, false);
-    advanceSimTime(0.1, enemy);   // then 0.1 s more before standby; the nAttack timeout (1.5 - 0.3 x Combo = 0.3 s) ends at the same moment
+    advanceSimTime(b, enemy);   // then 0.1 s more before standby; the nAttack timeout (1.5 - 0.3 x Combo = 0.3 s) has ended by then
+    return a + b;
   }
 
   function runInstantSimulation(count) {
@@ -25128,20 +25150,15 @@ function mountChameleonSim(root) {
         castFatalStrike(bonuses, enemy);
       } else if (shouldCastLeftStride()) {
         // Left Stride 2 + Double Strider (RPC_leftStride): 0.366 s, a volley, 4 x (0.433 s, a volley), 0.2 s = 2.298 s, 10 arrows
+        advanceSimTime(chmRestart(), enemy);
         simState.lsCasts++;
         simState.lsRemainingCD = chmLsCdTotal = getLeftStrideCD();
-        // Cycle 1: 0.366s windup
-        advanceSimTime(0.366, enemy);
-        executeArrow(bonuses, enemy, true);
-        executeArrow(bonuses, enemy, true);
-        // Cycles 2 to 5: 0.433s each
-        for (let c = 2; c <= 5; c++) {
-          advanceSimTime(0.433, enemy);
+        for (let c = 1; c <= 5; c++) {
+          advanceSimTime(chmWait(c === 1 ? 0.366 : 0.433), enemy);
           executeArrow(bonuses, enemy, true);
-          executeArrow(bonuses, enemy, true);
+          executeArrow(bonuses, enemy, true, true);
         }
-        // Post-cast recovery: 0.200s
-        advanceSimTime(0.200, enemy);
+        advanceSimTime(chmWait(0.2), enemy);
       } else {
         executeOneShot(bonuses, enemy);
       }
@@ -25177,8 +25194,7 @@ function mountChameleonSim(root) {
 
     // Priority 1: Left Stride active channel in progress (ALL other skill casts locked out)
     if (simState.lsCycle >= 1 && simState.lsCycle <= 5) {
-      const dt = (simState.lsCycle === 1) ? 0.366 : 0.433;
-      advanceSimTime(dt, enemy);
+      advanceSimTime(simState.lsNextDt, enemy);
       // the Chameleon's arrow and the Double Strider clone's, in the same frame (Chameleon.cs:26943-27043)
       executeArrow(bonuses, enemy, true);
       executeArrow(bonuses, enemy, true, true);
@@ -25186,26 +25202,30 @@ function mountChameleonSim(root) {
 
       if (simState.lsCycle < 5) {
         simState.lsCycle++;
-        simState.timerId = setTimeout(stepInfinite, 433);
+        simState.lsNextDt = chmWait(0.433);
+        simState.timerId = setTimeout(stepInfinite, simState.lsNextDt * 1000);
       } else {
-        // Finished cycle 5 -> recovery 200ms
+        // the last volley -> 0.2 s, then standby
         simState.lsCycle = 0;
-        advanceSimTime(0.200, enemy);
-        simState.timerId = setTimeout(stepInfinite, 200);
+        const tail = chmWait(0.2);
+        advanceSimTime(tail, enemy);
+        simState.timerId = setTimeout(stepInfinite, tail * 1000);
       }
       return;
     }
 
     // Priority 2: Fatal Strike rotation (only cast when not channeling another skill)
     if (shouldCastFatalStrike()) {
-      castFatalStrike(bonuses, enemy);
+      const took = castFatalStrike(bonuses, enemy);
       updateUI();
-      simState.timerId = setTimeout(stepInfinite, 500);
+      simState.timerId = setTimeout(stepInfinite, took * 1000);
       return;
     }
 
     // Priority 3: Left Stride start trigger
     if (shouldCastLeftStride()) {
+      const start = chmRestart();
+      advanceSimTime(start, enemy);
       simState.lsCasts++;
       simState.lsRemainingCD = chmLsCdTotal = getLeftStrideCD();
       simState.lsCycle = 1;
@@ -25213,15 +25233,15 @@ function mountChameleonSim(root) {
         soundMgr.play((Math.random() < 0.5) ? 'leftStride1' : 'leftStride2', 0.95);
       }
       updateUI();
-      // Cycle 1 initial windup: 366ms
-      simState.timerId = setTimeout(stepInfinite, 366);
+      simState.lsNextDt = chmWait(0.366);   // the wait before the first volley
+      simState.timerId = setTimeout(stepInfinite, (start + simState.lsNextDt) * 1000);
       return;
     }
 
-    // Standard Normal Attack Shot (0.30s)
-    executeOneShot(bonuses, enemy);
+    // a normal shot (0.3 s, longer at a set frame rate)
+    const took = executeOneShot(bonuses, enemy);
     updateUI();
-    simState.timerId = setTimeout(stepInfinite, 300);
+    simState.timerId = setTimeout(stepInfinite, took * 1000);
   }
 
   function startInfinite() {
@@ -25284,6 +25304,7 @@ function mountChameleonSim(root) {
           ${['og', 'tot', 'tto'].map(s => `<button type="button" class="sk-server-btn${s === 'og' ? ' active' : ''}" data-server="${s}" title="${{ og: 'BB (BigBugStudio)', tot: 'Tales of Tail (ToT)', tto: 'Tailstopia Online (TTO)' }[s]}"><img src="${SKILL_ICONS['server_' + s]}" alt="">${{ og: 'BB', tot: 'ToT', tto: 'TTO' }[s]}</button>`).join('')}
         </div>
         <div class="chm-seg"><button type="button" class="active" id="chmModeInfiniteBtn">ยิงต่อเนื่อง</button><button type="button" id="chmModeInstantBtn">ยิงทันที</button></div>
+        <label class="chm-fps" title="เฟรมเรตของเกม: ทุกการรอในเกมจบที่เฟรม และการยิงนัดถัดไปเริ่มช้าไป 1 เฟรม จึงยิงช้ากว่าเวลาในโค้ด (ราว 10% ที่ 60 fps) คูลดาวน์ไม่เปลี่ยน"><small>เฟรมเรต</small><select id="chmFpsSelect">${[[0,'ไม่คิดเฟรม'], [30, '30 fps'], [60, '60 fps'], [120, '120 fps'], [144, '144 fps'], [240, '240 fps']].map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
         <div class="chm-clock" id="chmClockBox" title="เวลาในการจำลอง (นาที:วินาที)"><small>เวลาจำลอง</small><b id="chmClock">00:00.0</b></div>
         <div class="chm-actions" id="chmInfiniteActions">
           <button type="button" class="chm-rbtn" id="chmSoundToggleBtn" title="เสียง">${CHM_SVG_SOUND}</button>
@@ -25699,6 +25720,7 @@ function mountChameleonSim(root) {
     inpLevel.max = cap;
     if (simState.level > cap) { simState.level = cap; inpLevel.value = cap; }
   }
+  $c('chmFpsSelect').addEventListener('change', (e) => { simState.fps = Number(e.target.value) || 0; updateUI(); });
   inpLevel.addEventListener('input', () => { simState.level = Number(inpLevel.value) || 70; chmClampLevel(); updateUI(); });
   inpAtk.addEventListener('input', () => { simState.atk = Number(inpAtk.value) || 150; updateUI(); });
   inpLck.addEventListener('input', () => { simState.lck = Number(inpLck.value) || 40; updateUI(); });
@@ -25723,7 +25745,7 @@ function mountChameleonSim(root) {
   inpEnemyRace.addEventListener('change', () => { simState.customEnemyRace = inpEnemyRace.value; updateUI(); });
 
   // Undo (Ctrl+Z, 50 deep): every setting change, never the shots (user rule: undo wherever it makes sense)
-  const CHM_UNDO_KEYS = ['server', 'level', 'atk', 'lck', 'agi', 'vit', 'maxHp', 'selectedWeapon', 'selectedHelmet', 'selectedArmor', 'selectedEnemyId', 'bossMaxHp',
+  const CHM_UNDO_KEYS = ['server', 'fps', 'level', 'atk', 'lck', 'agi', 'vit', 'maxHp', 'selectedWeapon', 'selectedHelmet', 'selectedArmor', 'selectedEnemyId', 'bossMaxHp',
     'customEnemyDef', 'customEnemyLck', 'customEnemyRace', 'bowMastery', 'fatalStrikeRank', 'extraArrows', 'fatalStrikeMode', 'revArt', 'criticalPlusRank',
     'bullsEye', 'piercingVenomRank', 'deadlyVenom', 'poisonMode', 'poisonArrowRank', 'rustyDecay', 'doubleEffect', 'leftStrideActive'];
   const chmUndo = [];
@@ -25734,6 +25756,7 @@ function mountChameleonSim(root) {
   root.addEventListener('focusin', (e) => { if (e.target.matches('input:not(.chm-log-search):not(.chm-count), select')) chmFieldSnap = chmSnap(); });
   root.addEventListener('change', (e) => { if (chmFieldSnap && e.target.matches('input, select')) { if (chmFieldSnap !== chmSnap()) chmPush(chmFieldSnap); chmFieldSnap = chmSnap(); } });
   function chmSyncControls() {   // every control from simState
+    $c('chmFpsSelect').value = String(simState.fps || 0);
     inpLevel.value = simState.level; inpAtk.value = simState.atk; inpLck.value = simState.lck; inpAgi.value = simState.agi; inpVit.value = simState.vit;
     enemySelect.value = simState.selectedEnemyId; customEnemyRow.hidden = simState.selectedEnemyId !== 'custom';
     chmBossMaxHpInput.value = simState.bossMaxHp;
@@ -28151,7 +28174,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:58:05.060Z","counts":{"1":38,"2":56,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":51,"19":30,"20":55,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":30,"31":31,"32":6,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T04:13:33.342Z","counts":{"1":38,"2":57,"3":33,"4":21,"5":50,"6":44,"7":29,"8":21,"9":23,"10":40,"11":37,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":52,"19":30,"20":55,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":30,"31":31,"32":6,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31855,6 +31878,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T04:11:08.057Z","feat(bible): the Chameleon attack sim gets a frame-rate setting (off / 30 / 60 / 120 / 144 / 240 fps): every in-game wait then ends on a frame and the next action starts a frame later, as in the live client; cooldowns stay real-time"],
     ["2026-10-19T03:57:56.245Z","fix(bible): in the Chameleon attack sim the Double Strider clone's damage numbers get their own column beside the Chameleon's, and all numbers rise further so consecutive hits no longer pile up"],
     ["2026-10-19T03:48:34.062Z","fix(bible): Chameleon attack sim timing re-checked against the code: each normal arrow leaves 0.2 s into its 0.3 s cycle, the Double Strider clone fires at the same instant, poison / rust ticks follow the target's 4 s clock, and the kill time is taken at the killing hit (instant runs reported the run's end)"],
     ["2026-10-19T03:38:26.618Z","fix(bible): the Chameleon attack sim's four proc gauges stay in place when their values change"],
