@@ -8341,8 +8341,9 @@
   .ln-gpng img{display:block; width:100%; height:auto}
   .ln-gpng.is-wait{aspect-ratio:2.45; background:linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%) 0 0 / 300% 100%; animation:lnWait 1.4s linear infinite}
   .ln-gpng.is-wait img{display:none}
-  /* ใหม่ badge on a guide dated today (user 2026-10-19): a gold pill with a slow shine, on the image's corner so it shows on phones too */
-  .ln-gnew{position:absolute; top:14px; left:14px; z-index:1; display:inline-flex; align-items:center; gap:6px; padding:5px 14px 5px 11px; border-radius:999px; overflow:hidden;
+  /* ใหม่ badge on a guide dated today (user 2026-10-19): a gold pill with a slow shine, astride the image's top edge at the right (the untilted side; on the
+     image it covered the cover icons), so it shows on phones too; clicks pass through to the image */
+  .ln-gnew{position:absolute; top:calc(12% - 15px); right:3%; z-index:2; pointer-events:none; transition:opacity .38s; display:inline-flex; align-items:center; gap:6px; padding:5px 14px 5px 11px; border-radius:999px; overflow:hidden;
     font-size:16px; font-weight:700; line-height:1; color:#2a1a05; background:linear-gradient(135deg, #fff1b8, var(--gold) 45%, #b8862b);
     box-shadow:0 0 0 1px rgba(255,236,170,.75), 0 0 0 3px rgba(0,0,0,.35), 0 6px 16px rgba(0,0,0,.55)}
   .ln-gnew[hidden]{display:none}
@@ -8364,7 +8365,7 @@
   .ln-gcap{position:absolute; right:2%; bottom:6%; max-width:56%; text-align:right; text-shadow:0 2px 10px rgba(0,0,0,.9); transition:opacity .38s}
   .ln-gcap b{display:block; font-size:22px; font-weight:700; line-height:1.3; color:var(--ln-hi)}
   .ln-gcap span{font-size:14px; color:var(--muted)}
-  .ln-g.is-out .ln-gpng, .ln-g.is-out .ln-gcap{opacity:0}
+  .ln-g.is-out .ln-gpng, .ln-g.is-out .ln-gcap, .ln-g.is-out .ln-gnew{opacity:0}
   .ln-g.is-out .ln-gptl{opacity:0; transform:translateX(-24px)}
   .ln-gsim{position:absolute; left:-9999px; top:0; width:1px; height:1px; overflow:hidden}
   /* filmstrip */
@@ -8374,6 +8375,12 @@
   @media (max-width:1700px){ .ln-count{display:none} }   /* the main banners need the room; the filmstrip already marks the shown tool */
   .ln-strip{position:relative; display:flex; align-items:flex-end; gap:8px; min-width:0; overflow-x:auto; padding-top:8px; scrollbar-width:none}
   .ln-strip::-webkit-scrollbar{display:none}
+  .ln-sarrow{flex:none; align-self:flex-end; width:34px; height:72px; padding:0; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ln-hi);
+    font:700 26px/1 'Prompt',sans-serif; cursor:pointer; transition:border-color .2s, opacity .2s}
+  .ln-sarrow[hidden]{display:none}
+  .ln-sarrow:hover:not(:disabled), .ln-sarrow:focus-visible{border-color:var(--gold)}
+  .ln-sarrow:disabled{opacity:.3; cursor:default}
+  .ln-stripbar:has(.ln-sarrow:not([hidden])){gap:8px}
   .ln-th{--acc:var(--gold); position:relative; display:block; flex:0 0 104px; height:72px; color:var(--text); text-decoration:none}
   /* the thumb's look lives on .ln-thb, so a hover lift moves only the picture and the link (the hover target) stays put (user 2026-10-18: cursor flicker) */
   .ln-thb{position:absolute; inset:0; display:block; border-radius:10px; overflow:hidden; border:1px solid var(--line); background-color:var(--panel); transition:transform .2s, border-color .2s}
@@ -8432,6 +8439,7 @@
     .ln-gpng{left:2%; right:2%; top:6%; transform:none}
     .ln-gptl{height:62%; left:auto; right:-6%; bottom:-4%}
     .ln-gcap{display:none}
+    .ln-gnew{top:calc(6% - 13px); right:5%; font-size:14px; padding:4px 11px 4px 9px}
     .ln-copy{position:absolute; left:0; right:0; bottom:0; width:auto; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
     .ln-title{font-size:clamp(27px, 7.4vw, 40px); margin:8px 0 6px}
     .ln-fact{display:none}
@@ -30421,7 +30429,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-18T16:53:14.216Z","counts":{"1":25,"2":35,"3":23,"4":14,"5":37,"6":31,"7":19,"8":15,"9":16,"10":24,"11":25,"12":8,"13":4,"14":29,"15":33,"16":16,"17":28,"18":33,"19":24,"20":30,"21":20,"22":22,"23":29,"24":6,"25":11,"26":12,"27":10,"28":13,"29":24,"30":23,"31":14}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T01:18:22.684Z","counts":{"1":35,"2":52,"3":32,"4":20,"5":46,"6":42,"7":28,"8":20,"9":22,"10":39,"11":34,"12":12,"13":5,"14":39,"15":47,"16":25,"17":46,"18":48,"19":29,"20":49,"21":28,"22":30,"23":41,"24":10,"25":17,"26":16,"27":11,"28":16,"29":30,"30":28,"31":28,"32":0,"33":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -33865,11 +33873,11 @@ function mountLauncher(root){
     '<div class="ln-stage"><div class="ln-segs" aria-hidden="true">' + TOOLS.map(() => '<span class="ln-seg"><i></i></span>').join("") + '</div>' +
     '<button type="button" class="ln-nav prev" aria-label="ก่อนหน้า">‹</button><button type="button" class="ln-nav next" aria-label="ถัดไป">›</button>' +
     '<section class="ln-copy"></section><div class="ln-art"></div></div>' +
-    '<div class="ln-stripbar"><p class="ln-count" aria-hidden="true"></p><h2 class="ln-tools-h">เครื่องมือทั้งหมด</h2><nav class="ln-strip" aria-label="เครื่องมือทั้งหมด">' +
+    '<div class="ln-stripbar"><p class="ln-count" aria-hidden="true"></p><h2 class="ln-tools-h">เครื่องมือทั้งหมด</h2><button type="button" class="ln-sarrow prev" aria-label="เลื่อนรายการเครื่องมือไปทางซ้าย" hidden>‹</button><nav class="ln-strip" aria-label="เครื่องมือทั้งหมด">' +
     TOOLS.map((t, i) => { const a = thumbOf(t), main = isMain(t);   // the two main tools get banners (filled once the frames are known)
       const art = LN_ART[t.collage] ? LN_ART[t.collage]("thumb") : t.collage === "skills" ? '<div class="ln-mq"></div>' : t.collage === "classStory" ? '<div class="ln-thpng"></div><img class="ln-thpt" src="' + a.src + '" alt="">' : `<img class="is-${a.kind}" src="${a.src || ""}" alt="" decoding="async">`;
       return `<a class="ln-th${main ? " is-main" : ""}" href="#${t.id}" data-i="${i}" style="--acc:${accentOf(t)}"><div class="ln-thb">${art}<i></i><span>${t.shortTitle || t.title}</span></div></a>`; }).join("") +
-    '</nav></div><div class="ln-gsim" aria-hidden="true"><span class="rsim-cell"></span><span class="rsim-cell is-passive"></span></div>';
+    '</nav><button type="button" class="ln-sarrow next" aria-label="เลื่อนรายการเครื่องมือไปทางขวา" hidden>›</button></div><div class="ln-gsim" aria-hidden="true"><span class="rsim-cell"></span><span class="rsim-cell is-passive"></span></div>';
   if (typeof setInterval !== "function" || typeof matchMedia !== "function") return;   // the validator sandbox: markup only (no timers, no layout)
   const copy = root.querySelector(".ln-copy"), art = root.querySelector(".ln-art"), stage = root.querySelector(".ln-stage"), count = root.querySelector(".ln-count");
   const thumbs = [...root.querySelectorAll(".ln-th")], segs = [...root.querySelectorAll(".ln-seg")], simBox = root.querySelector(".ln-gsim");
@@ -34016,7 +34024,7 @@ function mountLauncher(root){
       if (t.collage === "monsterOrbit") { LN_MON.fill(art.querySelector(".ln-orbit")); if (matchMedia("(hover: none)").matches) setTimeout(() => { const o = art.querySelector(".ln-orbit"); if (o) o.classList.add("is-hot"); }, 450); }
     }
     else if (t.collage === "classStory" && guides.length) {
-      art.innerHTML = '<div class="ln-g"><a class="ln-gpng is-wait" href="#class-guide"><img alt=""><span class="ln-gnew" hidden><i aria-hidden="true">✦</i>ใหม่</span></a><a class="ln-gptl" href="#class-guide"><img class="ln-gpt" alt=""></a><span class="ln-gcap"></span></div>';
+      art.innerHTML = '<div class="ln-g"><a class="ln-gpng is-wait" href="#class-guide"><img alt=""></a><span class="ln-gnew" hidden><i aria-hidden="true">✦</i>ใหม่</span><a class="ln-gptl" href="#class-guide"><img class="ln-gpt" alt=""></a><span class="ln-gcap"></span></div>';
       const box = art.querySelector(".ln-g"); gi = nextStart(); if (nToday) feat++; showGuide(box, false);
       guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); } }, 3500);
     } else {
@@ -34058,6 +34066,13 @@ function mountLauncher(root){
   const refit = () => { if (hubBarEl) document.documentElement.style.setProperty("--hub-h", hubBarEl.offsetHeight + "px"); fitTitle(); };
   root._refit = refit;
   addEventListener("resize", refit); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+  // filmstrip arrows (user 2026-10-19: on smaller desktop windows the thumbs overflow): shown only while the strip is wider than its room, each scrolls it by most of a view
+  { const strip = root.querySelector(".ln-strip"), arrows = [...root.querySelectorAll(".ln-sarrow")];
+    const sync = () => { const over = !phone() && strip.scrollWidth > strip.clientWidth + 1;
+      arrows.forEach(a => { a.hidden = !over; }); if (!over) return;
+      arrows[0].disabled = strip.scrollLeft <= 1; arrows[1].disabled = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 1; };
+    arrows.forEach((a, k) => a.addEventListener("click", () => strip.scrollBy({ left: (k ? 1 : -1) * strip.clientWidth * 0.8, behavior: "smooth" })));
+    strip.addEventListener("scroll", sync, { passive: true }); addEventListener("resize", sync); if (typeof ResizeObserver === "function") new ResizeObserver(sync).observe(strip); sync(); }
   // The next two guide images (one visit of the slide shows two) render ahead, one at a time, while another slide is settled on screen
   // (user 2026-10-18: moving to the slide lagged): never during a slide's entrance and never on the guide slide itself.
   let rendering = false, lastInput = 0;   // and only after 1.5 s without mouse / key / touch input, so a render never delays a click
@@ -34089,6 +34104,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T01:17:52.422Z","feat(bible): the menu's tool strip gets ‹ › arrows when its tools overflow the window, and the ✦ ใหม่ badge moves onto the guide image's top edge so it no longer covers the cover icons"],
     ["2026-10-19T01:08:01.964Z","feat(bible): on the menu's ไกด์อาชีพ slide, guides dated today come first, every visit opens on one of them and they wear a gold ✦ ใหม่ badge"],
     ["2026-10-19T00:59:10.678Z","feat(bible): class guide #33 TTO Penguin กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ by หนมผิงช่วยเหลือประชาชน"],
     ["2026-10-19T00:58:20.300Z","feat(bible): class guide #32 TTO Sheep ProSupporter (No Basic) by TLa1K"],
