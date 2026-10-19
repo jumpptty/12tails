@@ -8351,7 +8351,6 @@
   .ln-gnew::after{content:""; position:absolute; top:0; bottom:0; left:0; width:40%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); transform:translateX(-120%); animation:lnNewShine 3.2s ease-in-out infinite}
   @keyframes lnNewShine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
   @keyframes lnNewStar{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(45deg)}}
-  @media (prefers-reduced-motion: reduce){.ln-gnew::after, .ln-gnew i{animation:none}}
   @keyframes lnWait{to{background-position:-150% 0}}
   /* hover = a gold edge on its own layer that only fades in, so the big tilted image never repaints (user 2026-10-18: hover felt slow) */
   .ln-gpng::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 2px var(--ln-hi); opacity:0; transition:opacity .12s; pointer-events:none}
@@ -34104,6 +34103,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T01:43:02.833Z","fix(bible): the menu ✦ ใหม่ badge always animates (it had a reduced-motion rule, which the Bible does not use)"],
     ["2026-10-19T01:20:16.324Z","fix(bible): class guide #33 กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ replaced with the author's updated code (one more skill learned)"],
     ["2026-10-19T01:17:52.422Z","feat(bible): the menu's tool strip gets ‹ › arrows when its tools overflow the window, and the ✦ ใหม่ badge moves onto the guide image's top edge so it no longer covers the cover icons"],
     ["2026-10-19T01:08:01.964Z","feat(bible): on the menu's ไกด์อาชีพ slide, guides dated today come first, every visit opens on one of them and they wear a gold ✦ ใหม่ badge"],
