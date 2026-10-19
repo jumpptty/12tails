@@ -6187,7 +6187,7 @@
   .chm-field { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); }
   .chm-field select, .chm-field input { height: 32px; padding: 0 9px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 500 13px 'Prompt', sans-serif; }
   .chm-field input { width: 96px; font-family: var(--chm-num); font-weight: 700; }
-  .chm-gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
+  .chm-gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 2px; width: 100%; align-self: stretch; }   /* full width, fixed slots: new values never re-centre the row */
   .chm-g { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; min-width: 0; }
   .chm-g-w { position: relative; width: 66px; height: 66px; display: grid; place-items: center; }
   .chm-g-w svg { position: absolute; inset: 0; transform: rotate(-90deg); }
@@ -6195,8 +6195,8 @@
   .chm-g-track { stroke: rgba(255,255,255,.08); }
   .chm-g-arc { stroke: var(--c); stroke-linecap: round; transition: stroke-dasharray .3s; }
   .chm-g .chm-ring { --s: 40px; }
-  .chm-g b { font: 700 15px var(--chm-num); color: var(--c); }
-  .chm-g small { font-size: 10.5px; line-height: 1.25; color: var(--muted); }
+  .chm-g b { font: 700 15px var(--chm-num); color: var(--c); font-variant-numeric: tabular-nums; }
+  .chm-g small { font-size: 10.5px; line-height: 1.25; color: var(--muted); white-space: nowrap; }
 
   /* results */
   .chm-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -28155,7 +28155,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:36:59.378Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:38:35.386Z","counts":{"1":38,"2":55,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":51,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31850,6 +31850,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T03:38:26.618Z","fix(bible): the Chameleon attack sim's four proc gauges stay in place when their values change"],
     ["2026-10-19T03:36:50.587Z","fix(bible): the Chameleon attack sim's poison dots sit exactly on the boss portrait's gold edge at every zoom"],
     ["2026-10-19T03:33:09.603Z","fix(bible): the Chameleon attack sim's boss HP gauge is an open 260-degree arc with the HP text in its gap at the bottom (the text no longer covers the start of the bar)"],
     ["2026-10-19T03:29:10.205Z","feat(bible): the Chameleon attack sim gets a live simulation clock in its header (mm:ss.t, runs smoothly while shooting, exact when stopped), its boss HP ring drains evenly toward the top (an arch, not a lopsided U) and its Fatal Strike / Left Stride medallions lose the clock ticks"],
