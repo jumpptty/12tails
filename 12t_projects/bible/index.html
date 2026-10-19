@@ -7053,6 +7053,23 @@
   @keyframes lnC3dSpin{from{rotate:y 0deg} to{rotate:y 360deg}}
   @keyframes lnC3dFace{from{rotate:y 0deg} to{rotate:y -360deg}}
   @media (max-width:900px){ .ln-c3d{width:100%; max-height:100%} }
+  /* BUG และ คำอธิบายผิดๆ (TOOLS bugs, user 2026-10-19): ladybugs wander round the portrait, one behind it and three in front. Each flies a looping
+     path (two ease-in-out translate swings of different lengths), turns to face the way it goes (scale -1 at each end of its x swing) and beats its
+     wings; only translate / scale / rotate animate (compositor), and the bugs never take the pointer, so the art still opens the page */
+  .ln-bugs{position:absolute; inset:0; pointer-events:none; container-type:size}
+  .ln-bug{position:absolute; translate:-50% -50%}
+  .ln-bug-x{display:block; animation:lnBugX var(--tx) ease-in-out var(--d) infinite alternate}
+  .ln-bug-y{display:block; animation:lnBugY var(--ty) ease-in-out calc(var(--d) * .6) infinite alternate}
+  .ln-bug-f{position:relative; display:block; width:calc(var(--s) * 1.47); height:var(--s); animation:lnBugFlip calc(var(--tx) * 2) linear var(--d) infinite}
+  .ln-bug-w{position:absolute; left:24%; bottom:50%; width:44%; height:80%; border-radius:50%; background:radial-gradient(ellipse at 50% 70%, rgba(236,244,255,.75), rgba(200,220,255,.22) 70%);
+    transform-origin:50% 100%; animation:lnBugWing .07s linear infinite alternate}
+  .ln-bug-w.is-dn{bottom:auto; top:50%; transform-origin:50% 0}
+  .ln-bug-b{position:relative; display:block; width:100%; height:100%; overflow:visible; animation:lnBugWob .5s ease-in-out infinite alternate}
+  @keyframes lnBugX{from{translate:calc(var(--ax) * -1) 0} to{translate:var(--ax) 0}}
+  @keyframes lnBugY{from{translate:0 calc(var(--ay) * -1)} to{translate:0 var(--ay)}}
+  @keyframes lnBugFlip{0%, 47%{scale:1 1} 53%, 97%{scale:-1 1} 100%{scale:1 1}}
+  @keyframes lnBugWing{to{scale:1 .2}}
+  @keyframes lnBugWob{from{rotate:-5deg} to{rotate:5deg}}
   /* skill wall (user 2026-10-18: larger, tilts toward the cursor, icons swap at irregular moments): 8 x 6 tiles sized to the window,
      flat (the tiles sit 1 px in front of the wall: on the wall's own plane hit testing picked the wall at the centre of some icons, so the cursor
      was not a hand there, user 2026-10-18); --tx / --ty (-1..1) come from the cursor on desktop */
@@ -7125,6 +7142,10 @@
   .ln-strip::-webkit-scrollbar{display:none}
   .ln-strip.is-drag{cursor:grabbing; user-select:none}
   .ln-strip.is-drag .ln-th{pointer-events:none}
+  /* reorder (user 2026-10-19): the lifted thumb rides above the rest and follows the pointer (inline translate); the others slide to their new slots */
+  .ln-strip.is-reorder, .ln-strip.is-reorder .ln-th{cursor:grabbing}
+  .ln-th.is-lift{z-index:3}
+  .ln-th.is-lift .ln-thb{translate:0 -6px; scale:1.06; box-shadow:0 14px 26px rgba(0,0,0,.6)}
   .ln-sarrow{flex:none; align-self:flex-end; width:34px; height:72px; padding:0; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ln-hi);
     font:700 26px/1 'Prompt',sans-serif; cursor:pointer; transition:border-color .2s, opacity .2s}
   .ln-sarrow[hidden]{display:none}
@@ -7229,6 +7250,7 @@
   /* ===== Special Pet Info (tool "pet-info", user 2026-10-18: layout A "Codex" of 4 mocks). Roster left, the chosen pet right.
      Role colours live on .pi only (no new :root tokens). Hover = a small lift / brightness, never a glow. ===== */
   html.tool-pets .stage{max-width:min(1400px, 98vw)}
+  html.tool-pets .tool-shell{background:none; border:0; box-shadow:none}   /* no tool frame round the page (user 2026-10-19), like the server balance / BUG pages */
   .pi{--pi-atk:#e8734a; --pi-buff:#5bb8e0; --pi-react:var(--gold); --pi-res:var(--pro);
     display:grid; grid-template-columns:300px minmax(0,1fr); gap:18px; align-items:start; color:var(--text); font-family:'Prompt',sans-serif}
   .pi .pi-n{font-family:'JetBrains Mono','Prompt',monospace}
@@ -7246,6 +7268,9 @@
   .pi-grp[hidden]{display:none}
   @media (min-width:761px){
     .pi-roster{height:calc(100vh - 110px)}   /* until fit() has measured */
+    /* no box round the roster on desktop (user 2026-10-19: it ran empty to the window's bottom): the tabs and rows stand on their own in every look
+       (this outranks the THEME_SURFACES glass); the padding stays so the focus rings are not clipped; phones keep the sticky bar's backing */
+    html body .pi .pi-roster{background:none; border-color:transparent; border-radius:0; -webkit-backdrop-filter:none; backdrop-filter:none}
     .pi-grp{flex:1 1 0; min-height:0; container-type:size; --pi-row:min(48px, (100cqh - (var(--pi-rows) - 1) * 4px) / var(--pi-rows))}
     .pi-grp > .pi-it{flex:none; height:var(--pi-row); padding-block:0}
     .pi-grp > .pi-it img{width:auto; height:min(32px, var(--pi-row) - 6px)}
@@ -17285,15 +17310,17 @@ function mountSkillCooldownLookup(root){
   }
 
   // Skill tree tabs for a class roster (user 2026-10-19, no scrolling): the class's 4 Skill Simulator trees, matched by icon
-  // (a card's max-rank icon shares its stem with the tree's rank icons), then "อื่น ๆ" for mounts, summons and sub-skills.
+  // (a card's max-rank icon shares its stem with the tree's rank icons), then "อื่น ๆ" for mounts, summons and sub-skills. A card whose icon is named
+  // apart from its cells (the race slayers' chameleon_slayer1-4 / allSlayer1-4, Buiten Hou Hou, Truce Trading & Co.; user 2026-10-19) is found
+  // through the cell -> card map the class guide uses (skillSimCardId).
   const rosterTab = {}, rosterPage = { page: 0, key: "" }, searchPage = { page: 0, key: "" };
   function rosterTrees(cls){
     const key = typeof SKILL_SIM_NAMES !== "undefined" && Object.keys(SKILL_SIM_NAMES).find(k => SKILL_SIM_NAMES[k] === cls);
     if (!key || !SKILL_SIM[key]) return null;
     const stem = k => String(k || "").replace(/\d+$/, "");
-    const trees = SKILL_SIM[key].map(t => ({ name: t.name, stems: new Set(t.rows.flat().map(c => stem(c[0]))), ids: [] }));
+    const trees = SKILL_SIM[key].map(t => { const cells = t.rows.flat().filter(Boolean); return { name: t.name, stems: new Set(cells.map(c => stem(c[0]))), cards: new Set(cells.map(c => skillSimCardId(c[0]))), ids: [] }; });
     const other = { name: "อื่น ๆ", ids: [] };
-    SKILLS.filter(sk => sk.class === cls).forEach(sk => { const t = trees.find(x => x.stems.has(stem(sk.icon))); (t || other).ids.push(sk.id); });
+    SKILLS.filter(sk => sk.class === cls).forEach(sk => { const t = trees.find(x => x.stems.has(stem(sk.icon))) || trees.find(x => x.cards.has(sk.id)); (t || other).ids.push(sk.id); });
     return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : []);
   }
   // No scrolling on desktop (user 2026-10-19): a roster or search grid taller than its box first packs its cards tighter
@@ -27647,6 +27674,7 @@ const TOOLS = [
     id: "bb-issues",
     title: "BUG และ คำอธิบายผิดๆ",
     art: ["tool:CyborgMole"],
+    bugs: true,   // ladybugs fly round the portrait on the menu (user 2026-10-19)
     shortTitle: "บั๊ก & คำอธิบาย",
     category: "Reference",
     cls: "entry-bug",
@@ -28707,7 +28735,7 @@ const CLASS_GUIDES = [
   {"id":38,"cover":[314,411,372],"format":"12t-class-guide","version":1,"title":"ลิงดินที่เล่นสนุกที่สุด รีบดูก่อนโดนลบ","author":"Pawee From BadBlack","date":"2026-10-19","description":"เป็นบิลด์ที่เลือดเยอะ ซัพเพื่อนได้ ทำดาเมจได้ดี และเป็นตัวที่ทำ Ko ได้โหดร้ายที่สุดในเกมปัจจุบัน \n\n**ผลงานที่โดดเด่น**\n• โซโล่ดันน้ำได้ใน 20 นาที \n• โซโล่ 12/6 ได้ใน 10 นาที \n\n**วิธีการลงสเตตัส\n** • เน้นลงที่ VIT เป็นหลัก ส่วนตัวผมลง VIT ให้มีพลังชีวิต 2700 ในเซ็ต VIT หลังจากได้บัฟครบจะมีพลังชีวิตที่ 3500 ถ้าใครคิดว่าเยอะไปก็เอาไปลงส่วนอื่นได้ตามชอบ\n• AGI ลงให้วิ่งเร็วอย่างน้อย 7 เพิ่มได้ตามความชอบ แต่ไม่ควรต่ำกว่านี้ เพราะจะมีผลต่อคูลดาวน์สกิลที่ต่อเนื่องด้วย\n• TAL ลงให้พอแค่มี min SP ไม่น้อยกว่า 42 ก็พอ เพราะหลังกด InstantCast ก็จะมี min SP เพิ่มเป็น 50 มากพอที่จะร่ายทุกสกิลของเราแล้ว \n  แล้วก็ไม่ต้องกังวลเรื่องความต่อเนื่อง เพราะ EarthRune จะรับจบให้แน่นอน อีกทั้งเรื่องความแรง การลง TAL ไม่ทำให้ลิงดินตีแรงขึ้นมากนัก เพราะฉะนั้น ให้ความสำคัญกับค่าพลังอื่นจะดีกว่า\n• สเตตัสที่เหลือนำไปลงให้กับ ATK เพื่อที่จะโจมตีแรงตอนขึ้นแขน อีกทั้งสายนี้จะใช้กาดิน่าเป็นดาเมจต่อเนื่อง ยิ่ง ATK เยอะ จะส่งผลให้กาดิน่าทำดาเมจแรงขึ้นตามไปด้วย\n\nทั้งนี้ เนื้อหาทั้งหมดเป็นเพียงความเห็นส่วนบุคคล คุณสามารถปรับแต่งและเห็นต่างได้ ยังไงก็ขอบคุณที่ให้ความสนใจนะครับ **ทุกถ้อยประโยคล้วนเขียนด้วยรัก**","build":{"server":"tot","classKey":"monkey","level":100,"learned":[101,111,112,113,114,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,361,362,371,372,403,404,411,413,421,423,431,433,441,443,451,454],"support":[901,906]},"gear":{"weapon":[{"item":"w_mnk69","replica":{"item":"w_mnk62"},"stat":"vit"},{"item":"w_mnk58","stat":"atk"},{"item":"w_mnk12","replica":{"item":"w_mnk65"},"stat":"cha"}],"armor":[{"item":"a_mnk48","replica":{"item":"a_mnk62"},"stat":"vit"},{"item":"a_all58","stat":"atk"},{"item":"a_mnk12","replica":{"item":"a_mnk65"},"stat":"cha"}],"hat":[{"item":"c_mnk48","replica":{"item":"c_mnk62"},"stat":"vit"},{"item":"c_all58","stat":"atk"},{"item":"c_mnk12","replica":{"item":"c_mnk65"},"stat":"cha"}],"trinket":[{"item":"t_mnk62"},{"item":"t_all81"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all32"},{"item":"b_all45"}],"pet":[{"item":"p_lbd"},{"item":"p_sob"},{"item":"p_swb"}]},"notes":{"132":"สกิลแกนหลักของเรา เพราะบวกค่าพลังให้เยอะมาก เรามี AGI เยอะและเซ็ต CHA เพื่อทำให้สามารถวนสกิลนี้ได้","222":"ถ้าต้องการรีดพลังโจมตี (ถึงจะแค่ 20) สามารถเปลี่ยนไปเลือกเอาฟีนิกซ์แทนได้ แต่ส่วนตัวผมใช้ท่านี้เพราะลิงร่างปกติจะมีสกิลทำดาเมจที่คูลดาวน์ไว ๆ แค่ 3 สกิล คือ FireBall, GroundLock และ StoneHammer เท่านั้น ก็เลยคิดว่าลดคูลดาวน์สกิลใช้งานสักหน่อยคงจะดีเหมือนกัน","314":"เราจะเป็น Summoner ที่แท้ทรู จะใช้กาดิน่าเป็นดาเมจ DPS ของลิงในหลายสถานการณ์ แล้วด้วยคูลดาวน์ที่ไวมาก ทำให้เราเบิร์สปืนใหญ่ได้บ่อย ๆ ด้วย\n**เพราะงั้นสนิทกันไว้นะ**","324":"ท่าหากิน กดบ่อยเท่าที่จะกดได้เลย ยิ่งสั่งให้มิเกะวนกาดิน่า มันจะยิ่งดึงมาทำดาเมจได้น่าประทับใจเลยครับ","334":"เราสามารถสั่งให้กาดิน่าใช้สกิลต่าง ๆ ระหว่างเป็นร่างปืนใหญ่ได้ เอาไปพลิกแพลงใช้กันนะครับ","362":"โน้ตเล็กน้อย จากการเล่น EarthRune แค่ขั้นสองก็เพียงพอแล้วที่จะทำให้ลิงมี MP และ SP เหลือใช้ เพราะงั้น EarthRune ขั้นสามไม่มีความจำเป็นแต่อย่างใด","372":"ตอนนี้ลาวูเราสามารถเรียกมาใช้เพื่อเป็นบัฟลดดาเมจ 25% ได้ เป็นมินิหมาทอง เพราะงั้นพยายามเรียกไว้ใช้ตลอดอย่าให้ขาดตอนนะครับ","423":"กาดิน่าจะได้ค่าพลังเพิ่มตามชุดที่เราใส่ตอนเรียก เพราะงั้นสามารถยืดหยุ่นตามสถานการณ์ได้\n\n• อยากให้ตีแรง ใส่ชุด ATK ตอนเรียก\n• อยากให้อึด ใส่ชุด VIT ตอนเรียก","454":"ไม้เด็ดของเรา เป็นท่าที่ดาเมจและ Ko มหาศาลมาก ใช้กวาดฝูงมอนหรือเบิร์สดาเมจบอสได้ดีมาก ขอให้สนุกนะครับ ขอบคุณที่อ่านจนจบ"}},
   {"id":39,"cover":[452,432,444],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PVE","author":"Tsukuyomi","date":"2026-10-19","description":"เน้น PVE อย่างลงดันน้ำโซโล่ 20 นาที\nพยายามให้วิ่งได้อย่างต่ำ 7 ของร่างหลัก","build":{"server":"tot","classKey":"monkey","level":100,"learned":[101,111,112,113,114,121,122,123,124,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,271,301,302,303,304,311,312,313,314,351,402,403,411,421,431,432,434,441,442,444,451,452]},"stats":{"vit":200,"tal":310,"agi":7},"gear":{"weapon":[{"item":"w_mnk48","replica":{"item":"w_mnk62"},"stat":"tal"},{"item":"w_mnk12","replica":{"item":"w_mnk65"},"stat":"cha"}],"armor":[{"item":"a_mnk48","replica":{"item":"a_mnk62"},"stat":"tal"},{"item":"a_mnk12","replica":{"item":"a_mnk65"},"stat":"cha"}],"hat":[{"item":"c_mnk48","replica":{"item":"c_mnk62"},"stat":"tal"},{"item":"c_mnk12","replica":{"item":"c_mnk65"},"stat":"cha"}],"trinket":[{"item":"t_mnk62"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"254":"ไว้ใช้ตอนเจอม่อนเน้นรุม","411":"ไว้ใช้กับจาให้อยู่นานกว่าเดิม","452":"ไว้ใช้ตอนจาใกล้ตาย"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T14:06:38.136Z","counts":{"1":53,"2":76,"3":40,"4":34,"5":67,"6":61,"7":45,"8":32,"9":31,"10":55,"11":55,"12":17,"13":8,"14":52,"15":59,"16":43,"17":64,"18":67,"19":45,"20":70,"21":42,"22":48,"23":54,"24":14,"25":23,"26":20,"27":14,"28":23,"29":45,"30":47,"31":48,"32":20,"34":17,"35":28,"36":6,"37":3,"38":1,"39":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T14:50:55.010Z","counts":{"1":56,"2":79,"3":41,"4":34,"5":69,"6":62,"7":45,"8":32,"9":31,"10":57,"11":56,"12":18,"13":8,"14":54,"15":60,"16":44,"17":66,"18":69,"19":48,"20":72,"21":44,"22":51,"23":55,"24":14,"25":23,"26":20,"27":14,"28":23,"29":45,"30":48,"31":52,"32":22,"34":20,"35":30,"36":10,"37":5,"38":6,"39":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32142,6 +32170,19 @@ const LN_ART = {
 const lnOrbit3d = (t, pt) => { const o = typeof t.orbit === "function" ? t.orbit().filter(x => x[0]) : [];
   return o.length ? '<div class="ln-c3d"><div class="ln-c3d-scene">' + pt + '<div class="ln-c3d-tilt" aria-hidden="true"><i class="ln-c3d-path"></i><div class="ln-c3d-ring">' +
     o.map(([s, c], j) => '<span class="ln-c3d-it" style="--a:' + (j * 360 / o.length).toFixed(1) + 'deg"><span class="ln-c3d-face" style="--c:' + c + '"><img src="' + s + '" alt=""></span></span>').join("") + "</div></div></div></div>" : pt; };
+// TOOLS bugs (user 2026-10-19, the BUG page): ladybugs round the portrait; lnBugs(t, 0) is the layer behind it, lnBugs(t, 1) the one in front
+const LN_BUGS = [   // [left %, top %, x swing (cqw), y swing (cqh), x period (s), y period (s), size (cqh), shell colour, behind, delay (s)]
+  [54, 30, 22, 11, 7.6, 4.4, 4.4, "#d8433a", 1, -2.3],
+  [44, 58, 28, 16, 9.2, 5.7, 6, "#e8473c", 0, -6.1],
+  [62, 40, 18, 20, 6.3, 3.8, 5, "#f08a2c", 0, -1.2],
+  [40, 26, 15, 9, 5.2, 7.1, 3.8, "#e9c143", 0, -3.7]];
+const LN_BUG_SVG = '<svg class="ln-bug-b" viewBox="0 0 44 30" aria-hidden="true"><g stroke="#1a1010" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M14 7 11 2M20 6v-5M26 7l3-5M14 23l-3 5M20 24v5M26 23l3 5"/><path d="M36 12q4-3 5-7M36 18q4 3 5 7"/></g>' +
+  '<circle cx="41" cy="5" r="1.4" fill="#1a1010"/><circle cx="41" cy="25" r="1.4" fill="#1a1010"/><ellipse cx="33" cy="15" rx="5.5" ry="6.5" fill="#1a1010"/><circle cx="35.5" cy="12" r="1.2" fill="#fff"/><circle cx="35.5" cy="18" r="1.2" fill="#fff"/>' +
+  '<ellipse cx="19" cy="15" rx="13" ry="10.5" style="fill:var(--b)" stroke="#5a1410" stroke-width="1.2"/><path d="M6 15h26" stroke="#1a1010" stroke-width="1.4"/>' +
+  '<g fill="#1a1010"><circle cx="13" cy="9.5" r="2.6"/><circle cx="13" cy="20.5" r="2.6"/><circle cx="23" cy="9" r="2.1"/><circle cx="23" cy="21" r="2.1"/></g><ellipse cx="15" cy="9" rx="5" ry="2" fill="#fff" opacity=".35"/></svg>';
+const lnBugs = (t, front) => !t.bugs ? "" : '<div class="ln-bugs" aria-hidden="true">' + LN_BUGS.filter(b => !b[8] === !!front).map(b =>
+  '<span class="ln-bug" style="left:' + b[0] + "%;top:" + b[1] + "%;--ax:" + b[2] + "cqw;--ay:" + b[3] + "cqh;--tx:" + b[4] + "s;--ty:" + b[5] + "s;--s:" + b[6] + "cqh;--b:" + b[7] + ";--d:" + b[9] + 's">' +
+  '<span class="ln-bug-x"><span class="ln-bug-y"><span class="ln-bug-f"><i class="ln-bug-w"></i><i class="ln-bug-w is-dn"></i>' + LN_BUG_SVG + "</span></span></span></span>").join("") + "</div>";
 const LN_MON = {
   keys: [["Lv", "#f3d77a", 3], ["HP", "#4ade80", 4], ["MP", "#60a5fa", 5], ["SP", "#f87171", 6], ["KO", "#e5e7eb", 7], ["ATK", "var(--stat-atk)", 8], ["DEF", "var(--stat-def)", 9],
     ["AGI", "var(--stat-agi)", 10], ["VIT", "var(--stat-vit)", 11], ["INT", "var(--stat-int)", 12], ["CHA", "var(--stat-cha)", 13], ["TAL", "var(--stat-tal)", 14], ["LCK", "var(--stat-lck)", 15]],
@@ -32166,6 +32207,12 @@ function mountLauncher(root){
     : { kind: /^(skill|gear):/.test(String((t.art || [])[0] || "")) ? "icon" : "portrait", src: artSrc((t.art || [])[0] || "") };
   const accentOf = t => LAUNCH_ACCENT[t.cls] || "var(--gold)";
   const isMain = t => t.collage === "skills" || t.collage === "classStory";   // skill details and ไกด์อาชีพ
+  // the visitor's own tool order (drag to reorder, user 2026-10-19): the two main tools keep their places, the others follow the saved ids, and a tool
+  // the saved list does not name (added later) comes after them in its usual order
+  const TOOL_ORDER_KEY = "12t-bible-tool-order";
+  try { const saved = JSON.parse(localStorage.getItem(TOOL_ORDER_KEY) || "null");
+    if (Array.isArray(saved)) { const rest = TOOLS.filter(t => !isMain(t)), mine = [...new Set(saved)].map(id => rest.find(t => t.id === id)).filter(Boolean), queue = mine.concat(rest.filter(t => !mine.includes(t)));
+      TOOLS.splice(0, TOOLS.length, ...TOOLS.map(t => isMain(t) ? t : queue.shift())); } } catch (_) {}
   root.innerHTML = '<div class="ln-glow" aria-hidden="true"></div>' +
     '<div class="ln-stage"><div class="ln-segs" aria-hidden="true">' + TOOLS.map(() => '<span class="ln-seg"><i></i></span>').join("") + '</div>' +
     '<button type="button" class="ln-nav prev" aria-label="ก่อนหน้า">‹</button><button type="button" class="ln-nav next" aria-label="ถัดไป">›</button>' +
@@ -32328,7 +32375,7 @@ function mountLauncher(root){
       const arts = (t.art || []).filter(k => artSrc(k));
       const inner = arts.length && arts.every(k => /^(skill|gear):/.test(k))
         ? '<div class="ln-fan" style="--mid:' + (arts.length - 1) / 2 + '" aria-hidden="true">' + arts.map((k, j) => '<img style="--i:' + j + '" src="' + artSrc(k) + '" alt="">').join("") + "</div>"
-        : arts.length ? '<span class="ln-floor" aria-hidden="true"></span>' + lnOrbit3d(t, '<img class="ln-pt" data-k="' + arts[0].replace(/^tool:/, "") + '" src="' + artSrc(arts[0]) + '" alt="">') : "";
+        : arts.length ? '<span class="ln-floor" aria-hidden="true"></span>' + lnBugs(t, 0) + lnOrbit3d(t, '<img class="ln-pt" data-k="' + arts[0].replace(/^tool:/, "") + '" src="' + artSrc(arts[0]) + '" alt="">') + lnBugs(t, 1) : "";
       art.innerHTML = inner ? '<a class="ln-artlink" href="#' + t.id + '" aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + inner + "</span></a>" : "";   // the art opens its tool too
     }
     thumbs.forEach((b, k) => { b.classList.toggle("is-on", k === cur); restart(b.querySelector("i")); });
@@ -32371,23 +32418,78 @@ function mountLauncher(root){
     arrows.forEach((a, k) => a.addEventListener("click", () => strip.scrollBy({ left: (k ? 1 : -1) * strip.clientWidth * 0.8, behavior: "smooth" })));
     strip.addEventListener("scroll", sync, { passive: true }); addEventListener("resize", sync); if (typeof ResizeObserver === "function") new ResizeObserver(sync).observe(strip); sync();
     // drag it sideways with the mouse too (user 2026-10-19); a finger already swipes it natively. Past 6 px it is a drag, and the click that ends a drag opens nothing.
-    let dragId = null, x0 = 0, s0 = 0, moved = false;
-    strip.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse" || e.button !== 0 || strip.scrollWidth <= strip.clientWidth + 1) return; dragId = e.pointerId; x0 = e.clientX; s0 = strip.scrollLeft; moved = false; });
+    let dragId = null, x0 = 0, s0 = 0, moved = false, reo = null;
+    const over = () => strip.scrollWidth > strip.clientWidth + 1;
+    const eatClick = () => { const eat = ev => { ev.preventDefault(); ev.stopPropagation(); }; strip.addEventListener("click", eat, { capture: true, once: true }); setTimeout(() => strip.removeEventListener("click", eat, true), 0); };
+    strip.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse" || e.button !== 0 || !over()) return; dragId = e.pointerId; x0 = e.clientX; s0 = strip.scrollLeft; moved = false; });
     strip.addEventListener("pointermove", e => {
       if (e.pointerId !== dragId) return;
       const dx = e.clientX - x0;
-      if (!moved && Math.abs(dx) > 6) { moved = true; strip.setPointerCapture(dragId); strip.classList.add("is-drag"); }
+      if (!moved && Math.abs(dx) > 6) { moved = true; strip.setPointerCapture(dragId); strip.classList.add("is-drag"); if (reo && !reo.on) { clearTimeout(reo.timer); reo = null; } }   // a scroll, not a reorder
       if (moved) strip.scrollLeft = s0 - dx;
     });
     const dragEnd = e => {
       if (e.pointerId !== dragId) return;
       dragId = null; strip.classList.remove("is-drag");
-      if (!moved) return;
-      const eat = ev => { ev.preventDefault(); ev.stopPropagation(); };
-      strip.addEventListener("click", eat, { capture: true, once: true });
-      setTimeout(() => strip.removeEventListener("click", eat, true), 0);
+      if (moved) eatClick();
     };
     strip.addEventListener("pointerup", dragEnd); strip.addEventListener("pointercancel", dragEnd);
+    // Reorder (user 2026-10-19): every tool but the two main ones can be moved, and the order is remembered (TOOL_ORDER_KEY). A press that rests 0.3 s
+    // lifts a thumb (mouse or finger; moving first still scrolls the strip, or the page on phones); with the mouse, a strip with nothing to scroll lifts
+    // it as soon as it is dragged. The strip holds the pointer (it never moves in the DOM), the lifted thumb follows it, the others slide into their new
+    // slots, and an overflowing strip scrolls along near either end. The movable thumbs all have one size, so the slots are measured once at the lift
+    // and only shifted by any scroll since (read off a main thumb, which never moves).
+    const rectOf = el => el.getBoundingClientRect();
+    const shift = r => { const n = rectOf(r.refEl); return [n.left - r.ref.left, n.top - r.ref.top]; };
+    const follow = () => {
+      const r = reo, [sx, sy] = shift(r), w = r.slots[0].width, h = r.slots[0].height, cx = r.x - r.gx + w / 2, cy = r.y - r.gy + h / 2;
+      let best = r.idx, bd = Infinity;
+      r.slots.forEach((s, j) => { const d = Math.hypot(s.left + sx + w / 2 - cx, s.top + sy + h / 2 - cy); if (d < bd) { bd = d; best = j; } });
+      if (best !== r.idx) {   // one DOM move, then each thumb that changed slot slides there from where it was
+        const before = new Map(r.list.map(el => [el, rectOf(el)])), list = r.list.slice(); list.splice(r.idx, 1); list.splice(best, 0, r.b);
+        strip.insertBefore(r.b, list[best + 1] || null); r.list = list; r.idx = best;
+        list.forEach((el, n) => { if (el === r.b) return; const f = before.get(el), s = r.slots[n], dx = (f.left - s.left - sx) / r.k, dy = (f.top - s.top - sy) / r.k;
+          if (Math.abs(dx) < .5 && Math.abs(dy) < .5) return;
+          el.style.transition = "none"; el.style.translate = dx + "px " + dy + "px"; void el.offsetWidth; el.style.transition = "translate .22s cubic-bezier(.2,.7,.2,1)"; el.style.translate = ""; });
+      }
+      const s = r.slots[r.idx]; r.b.style.translate = (r.x - r.gx - s.left - sx) / r.k + "px " + (phone() ? (r.y - r.gy - s.top - sy) / r.k : 0) + "px";
+    };
+    const edge = () => { const r = reo; if (r.raf || phone() || !over()) return;
+      const dir = () => { const sr = rectOf(strip); return r.x < sr.left + 48 ? -1 : r.x > sr.right - 48 ? 1 : 0; };
+      const step = () => { r.raf = 0; if (reo !== r || !dir()) return; strip.scrollLeft += dir() * 10; follow(); r.raf = requestAnimationFrame(step); };
+      if (dir()) r.raf = requestAnimationFrame(step); };
+    const lift = () => { const r = reo; clearTimeout(r.timer); r.on = true; dragId = null; strip.classList.remove("is-drag");
+      try { strip.setPointerCapture(r.id); } catch (_) {}
+      r.refEl = strip.querySelector(".ln-th.is-main") || strip; r.ref = rectOf(r.refEl);
+      r.list = [...strip.querySelectorAll(".ln-th:not(.is-main)")]; r.slots = r.list.map(rectOf); r.idx = r.list.indexOf(r.b);
+      r.k = r.slots[r.idx].width / (r.b.offsetWidth || 1) || 1; r.gx = r.x0 - r.slots[r.idx].left; r.gy = r.y0 - r.slots[r.idx].top;   // k: the big-screen zoom
+      r.b.classList.add("is-lift"); strip.classList.add("is-reorder"); root.classList.add("is-paused"); follow(); };
+    strip.addEventListener("pointerdown", e => {
+      const b = e.target.closest(".ln-th"); if (reo || !b || b.classList.contains("is-main") || (e.pointerType === "mouse" && e.button !== 0)) return;
+      reo = { id: e.pointerId, b, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, on: false, touch: e.pointerType !== "mouse", raf: 0 };
+      reo.timer = setTimeout(() => { if (reo && !reo.on) lift(); }, 300);
+    });
+    strip.addEventListener("pointermove", e => {
+      const r = reo; if (!r || e.pointerId !== r.id) return; r.x = e.clientX; r.y = e.clientY;
+      if (!r.on) { if (Math.hypot(r.x - r.x0, r.y - r.y0) <= 6) return;
+        if (r.touch || over()) { clearTimeout(r.timer); reo = null; return; }   // moved first: the strip (or the page) scrolls as before
+        lift(); }   // the mouse on a strip with nothing to scroll: dragging lifts the thumb at once
+      follow(); edge();
+    });
+    const drop = e => {
+      const r = reo; if (!r || e.pointerId !== r.id) return; reo = null; clearTimeout(r.timer); cancelAnimationFrame(r.raf); if (!r.on) return;
+      eatClick(); strip.classList.remove("is-reorder"); if (r.touch) root.classList.remove("is-paused");
+      r.b.classList.remove("is-lift"); r.b.style.transition = "translate .2s cubic-bezier(.2,.7,.2,1)"; r.b.style.translate = "";
+      setTimeout(() => r.list.forEach(el => { el.style.transition = ""; }), 260);
+      const curId = TOOLS[cur].id, els = [...strip.querySelectorAll(".ln-th")], order = els.map(el => TOOLS[+el.dataset.i]);
+      TOOLS.splice(0, TOOLS.length, ...order); thumbs.splice(0, thumbs.length, ...els); els.forEach((el, n) => { el.dataset.i = n; }); cur = TOOLS.findIndex(t => t.id === curId);
+      segs.forEach((s, n) => { s.classList.toggle("is-on", n === cur); s.classList.toggle("is-done", n < cur); });
+      count.innerHTML = "<b>" + String(cur + 1).padStart(2, "0") + "</b> / " + TOOLS.length;
+      try { localStorage.setItem(TOOL_ORDER_KEY, JSON.stringify(TOOLS.filter(t => !isMain(t)).map(t => t.id))); } catch (_) {}
+    };
+    strip.addEventListener("pointerup", drop); strip.addEventListener("pointercancel", drop);
+    strip.addEventListener("contextmenu", e => { if (reo) e.preventDefault(); });   // a long press on a phone would open the link menu
+    strip.addEventListener("touchmove", e => { if (reo && reo.on && e.cancelable) e.preventDefault(); }, { passive: false });   // a lifted thumb keeps the page still
     root.addEventListener("dragstart", e => e.preventDefault()); }   // the thumbs, the wall tiles and the art are links with pictures: no native drag ghost anywhere on the menu
   // The next two guide images (one visit of the slide shows two) render ahead, one at a time, while another slide is settled on screen
   // (user 2026-10-18: moving to the slide lagged): never during a slide's entrance and never on the guide slide itself.
@@ -32420,6 +32522,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T14:17:33.155Z","feat(bible): drag the tools on the menu into your own order (hold 0.3 s, or just drag when the strip fits; the two main tools stay first), remembered in this browser; ladybugs fly round the BUG page's portrait; Special Pet Info drops its outer frame, and on desktop the box around its pet list; in skill details the Chameleon race slayers, Buiten Hou Hou and Truce Trading sit in their own skill tree tabs (Slayer, Geomancer, Merchant), not อื่น ๆ"],
     ["2026-10-19T14:03:54.334Z","feat(bible): class guide #39 ToT Monkey ลิงไฟ PVE by Tsukuyomi"],
     ["2026-10-19T13:52:52.612Z","feat(bible): on the menu, the Chameleon attack sim's key numbers (Fatal Strike, crit, poison, HP drain, Left Stride, full restore) circle the Chameleon on a tilted 3D ring, passing behind and in front of it"],
     ["2026-10-19T13:46:26.320Z","fix(bible): the monster stats chips on the menu stay on their ring: they no longer drift a little further off it after every hover"],
