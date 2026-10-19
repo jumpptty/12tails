@@ -6317,6 +6317,8 @@
   /* arena */
   .chm-arena { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; padding: 14px 18px; overflow: hidden; }
   .chm-arena::before { content: ""; position: absolute; inset: 0; background: radial-gradient(380px 260px at 50% 50%, rgba(139,30,30,.18), transparent 70%); pointer-events: none; }
+  /* the arena has no frame either (user 2026-10-19), in every look: this outranks the THEME_SURFACES glass, which the other sections keep on ToT / TTO */
+  html body .chm-pane.chm-arena { border-color: transparent; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .chm-cds { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
   .chm-cd { display: flex; align-items: center; gap: 18px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font-family: 'Prompt', sans-serif; padding: 0; }
   .chm-cd-ring { --s: 60px; }
@@ -7213,10 +7215,7 @@
     .ln-gnew{top:calc(6% - 13px); right:5%; font-size:14px; padding:4px 11px 4px 9px}
     .ln-copy{position:absolute; left:0; right:0; bottom:0; width:auto; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
     .ln-title{font-size:clamp(27px, 7.4vw, 40px); margin:8px 0 6px}
-    .ln-fact{display:none}
-    .ln-cta{margin-top:10px; justify-content:flex-end}
-    .ln-play{width:74px; height:74px}
-    .ln-seal{font-size:18px}
+    .ln-fact, .ln-cta{display:none}   /* no count and no เปิด seal on phones (user 2026-10-19: the seal's own row pushed the title up); the grid below opens every tool */
     .ln-stripbar{display:block; padding:26px 12px 0}
     .ln-count{display:none}
     .ln-tools-h{display:block; margin:0 4px 10px; font-family:inherit; font-size:18px; font-weight:700; color:var(--text)}
@@ -7236,7 +7235,6 @@
     .ln-stage{height:400px}
     .ln-art{height:44%}
     .ln-title{font-size:26px}
-    .ln-play{width:66px; height:66px}
   }
   /* phones held sideways: the stage fills the screen, text left and art right */
   @media (max-width:900px) and (max-height:520px) and (orientation:landscape){
@@ -26292,7 +26290,35 @@ function mountChameleonSim(root) {
     renderChmModsModal();
     setToolServer("chameleon-attack-sim", simState.server);
     updateUI();
+    chmSaveSoon();
   }
+  // Remembered (user 2026-10-19): every setting the undo keeps (server, frame rate, stats, gear per server, target, skills, Mods) is saved in
+  // localStorage by name a moment after any click, change or typing in the sim (or its Mods popup, which sits on <body> while open) and
+  // restored when the sim mounts. A stale value (a key, server, enemy, race, mode, frame rate or mod the page no longer has, a value of
+  // another type) keeps its default. Shots and results are never saved.
+  const CHM_STORE_KEY = '12t-bible-chm-sim';
+  const chmStoreSnap = () => { const o = JSON.parse(chmSnap()); o.s = Object.fromEntries(CHM_UNDO_KEYS.map((k, i) => [k, o.s[i]])); return JSON.stringify(o); };
+  let chmSaved = '';
+  const chmSaveSoon = () => setTimeout(() => { const s = chmStoreSnap(); if (s === chmSaved) return; chmSaved = s; try { localStorage.setItem(CHM_STORE_KEY, s); } catch (_) {} }, 0);   // after every handler of the event
+  function chmLoad() {
+    let o; try { o = JSON.parse(localStorage.getItem(CHM_STORE_KEY) || 'null'); } catch (_) { return false; }
+    if (!o || typeof o !== 'object' || !o.s || typeof o.s !== 'object') return false;
+    const SRV = ['og', 'tot', 'tto'], ok = {
+      server: v => SRV.includes(v), selectedEnemyId: v => CHM_ENEMIES.some(([id]) => id === v), customEnemyRace: v => CHM_RACES.includes(v),
+      fatalStrikeMode: v => v === 'always' || v === 'rotation', poisonMode: v => v === 'dynamic' || v === 'max',
+      fps: v => [...$c('chmFpsSelect').options].some(op => Number(op.value) === v) };
+    CHM_SKILLS.forEach(s => { if (s.rank) ok[s.rank] = v => Number.isInteger(v) && v >= 0 && v <= s.max; });
+    CHM_UNDO_KEYS.forEach(k => { const v = o.s[k];
+      if (v == null || typeof v !== typeof simState[k] || (typeof v === 'number' && !Number.isFinite(v)) || (ok[k] && !ok[k](v))) return;
+      simState[k] = v; });
+    const ranks = l => Array.isArray(l) ? l.filter(x => Array.isArray(x) && MOD_DEFS[x[0]] && Number.isInteger(x[1]) && x[1] > 0) : [];
+    chmActivePlayerMods = new Map(ranks(o.p)); chmActiveEnemyMods = new Map(ranks(o.e));
+    chmActiveFinalMultMods = new Set(Array.isArray(o.f) ? o.f.filter(id => FINAL_MULT_MOD_IDS.includes(id)) : []);
+    if (o.g && typeof o.g === 'object') SRV.forEach(srv => { const g = o.g[srv]; if (g && typeof g === 'object')
+      chmGearByServer[srv] = { selectedWeapon: String(g.selectedWeapon || ''), selectedHelmet: String(g.selectedHelmet || ''), selectedArmor: String(g.selectedArmor || '') }; });
+    return true;
+  }
+  ['click', 'change', 'input'].forEach(ev => { root.addEventListener(ev, chmSaveSoon); const w = root.querySelector('#chmModsModalWrap'); if (w) w.addEventListener(ev, chmSaveSoon); });
   document.addEventListener('keydown', (e) => {
     if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return;
     if (!root.isConnected || !root.getClientRects().length || !chmUndo.length) return;   // only while the sim is on screen
@@ -26581,8 +26607,11 @@ function mountChameleonSim(root) {
 
   // Initial render
   simState.vit = 300;
+  const chmLoaded = chmLoad();
   chmSyncControls();
+  if (chmLoaded) { renderChmModsModal(); setToolServer("chameleon-attack-sim", simState.server); }
   resetSim();
+  chmSaved = chmStoreSnap();
 
   // ==========================================
   // 4-Step Guided Onboarding Tour (Chameleon Sim)
@@ -28735,7 +28764,7 @@ const CLASS_GUIDES = [
   {"id":38,"cover":[314,411,372],"format":"12t-class-guide","version":1,"title":"ลิงดินที่เล่นสนุกที่สุด รีบดูก่อนโดนลบ","author":"Pawee From BadBlack","date":"2026-10-19","description":"เป็นบิลด์ที่เลือดเยอะ ซัพเพื่อนได้ ทำดาเมจได้ดี และเป็นตัวที่ทำ Ko ได้โหดร้ายที่สุดในเกมปัจจุบัน \n\n**ผลงานที่โดดเด่น**\n• โซโล่ดันน้ำได้ใน 20 นาที \n• โซโล่ 12/6 ได้ใน 10 นาที \n\n**วิธีการลงสเตตัส\n** • เน้นลงที่ VIT เป็นหลัก ส่วนตัวผมลง VIT ให้มีพลังชีวิต 2700 ในเซ็ต VIT หลังจากได้บัฟครบจะมีพลังชีวิตที่ 3500 ถ้าใครคิดว่าเยอะไปก็เอาไปลงส่วนอื่นได้ตามชอบ\n• AGI ลงให้วิ่งเร็วอย่างน้อย 7 เพิ่มได้ตามความชอบ แต่ไม่ควรต่ำกว่านี้ เพราะจะมีผลต่อคูลดาวน์สกิลที่ต่อเนื่องด้วย\n• TAL ลงให้พอแค่มี min SP ไม่น้อยกว่า 42 ก็พอ เพราะหลังกด InstantCast ก็จะมี min SP เพิ่มเป็น 50 มากพอที่จะร่ายทุกสกิลของเราแล้ว \n  แล้วก็ไม่ต้องกังวลเรื่องความต่อเนื่อง เพราะ EarthRune จะรับจบให้แน่นอน อีกทั้งเรื่องความแรง การลง TAL ไม่ทำให้ลิงดินตีแรงขึ้นมากนัก เพราะฉะนั้น ให้ความสำคัญกับค่าพลังอื่นจะดีกว่า\n• สเตตัสที่เหลือนำไปลงให้กับ ATK เพื่อที่จะโจมตีแรงตอนขึ้นแขน อีกทั้งสายนี้จะใช้กาดิน่าเป็นดาเมจต่อเนื่อง ยิ่ง ATK เยอะ จะส่งผลให้กาดิน่าทำดาเมจแรงขึ้นตามไปด้วย\n\nทั้งนี้ เนื้อหาทั้งหมดเป็นเพียงความเห็นส่วนบุคคล คุณสามารถปรับแต่งและเห็นต่างได้ ยังไงก็ขอบคุณที่ให้ความสนใจนะครับ **ทุกถ้อยประโยคล้วนเขียนด้วยรัก**","build":{"server":"tot","classKey":"monkey","level":100,"learned":[101,111,112,113,114,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,301,302,303,304,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,361,362,371,372,403,404,411,413,421,423,431,433,441,443,451,454],"support":[901,906]},"gear":{"weapon":[{"item":"w_mnk69","replica":{"item":"w_mnk62"},"stat":"vit"},{"item":"w_mnk58","stat":"atk"},{"item":"w_mnk12","replica":{"item":"w_mnk65"},"stat":"cha"}],"armor":[{"item":"a_mnk48","replica":{"item":"a_mnk62"},"stat":"vit"},{"item":"a_all58","stat":"atk"},{"item":"a_mnk12","replica":{"item":"a_mnk65"},"stat":"cha"}],"hat":[{"item":"c_mnk48","replica":{"item":"c_mnk62"},"stat":"vit"},{"item":"c_all58","stat":"atk"},{"item":"c_mnk12","replica":{"item":"c_mnk65"},"stat":"cha"}],"trinket":[{"item":"t_mnk62"},{"item":"t_all81"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all32"},{"item":"b_all45"}],"pet":[{"item":"p_lbd"},{"item":"p_sob"},{"item":"p_swb"}]},"notes":{"132":"สกิลแกนหลักของเรา เพราะบวกค่าพลังให้เยอะมาก เรามี AGI เยอะและเซ็ต CHA เพื่อทำให้สามารถวนสกิลนี้ได้","222":"ถ้าต้องการรีดพลังโจมตี (ถึงจะแค่ 20) สามารถเปลี่ยนไปเลือกเอาฟีนิกซ์แทนได้ แต่ส่วนตัวผมใช้ท่านี้เพราะลิงร่างปกติจะมีสกิลทำดาเมจที่คูลดาวน์ไว ๆ แค่ 3 สกิล คือ FireBall, GroundLock และ StoneHammer เท่านั้น ก็เลยคิดว่าลดคูลดาวน์สกิลใช้งานสักหน่อยคงจะดีเหมือนกัน","314":"เราจะเป็น Summoner ที่แท้ทรู จะใช้กาดิน่าเป็นดาเมจ DPS ของลิงในหลายสถานการณ์ แล้วด้วยคูลดาวน์ที่ไวมาก ทำให้เราเบิร์สปืนใหญ่ได้บ่อย ๆ ด้วย\n**เพราะงั้นสนิทกันไว้นะ**","324":"ท่าหากิน กดบ่อยเท่าที่จะกดได้เลย ยิ่งสั่งให้มิเกะวนกาดิน่า มันจะยิ่งดึงมาทำดาเมจได้น่าประทับใจเลยครับ","334":"เราสามารถสั่งให้กาดิน่าใช้สกิลต่าง ๆ ระหว่างเป็นร่างปืนใหญ่ได้ เอาไปพลิกแพลงใช้กันนะครับ","362":"โน้ตเล็กน้อย จากการเล่น EarthRune แค่ขั้นสองก็เพียงพอแล้วที่จะทำให้ลิงมี MP และ SP เหลือใช้ เพราะงั้น EarthRune ขั้นสามไม่มีความจำเป็นแต่อย่างใด","372":"ตอนนี้ลาวูเราสามารถเรียกมาใช้เพื่อเป็นบัฟลดดาเมจ 25% ได้ เป็นมินิหมาทอง เพราะงั้นพยายามเรียกไว้ใช้ตลอดอย่าให้ขาดตอนนะครับ","423":"กาดิน่าจะได้ค่าพลังเพิ่มตามชุดที่เราใส่ตอนเรียก เพราะงั้นสามารถยืดหยุ่นตามสถานการณ์ได้\n\n• อยากให้ตีแรง ใส่ชุด ATK ตอนเรียก\n• อยากให้อึด ใส่ชุด VIT ตอนเรียก","454":"ไม้เด็ดของเรา เป็นท่าที่ดาเมจและ Ko มหาศาลมาก ใช้กวาดฝูงมอนหรือเบิร์สดาเมจบอสได้ดีมาก ขอให้สนุกนะครับ ขอบคุณที่อ่านจนจบ"}},
   {"id":39,"cover":[452,432,444],"format":"12t-class-guide","version":1,"title":"ลิงไฟ PVE","author":"Tsukuyomi","date":"2026-10-19","description":"เน้น PVE อย่างลงดันน้ำโซโล่ 20 นาที\nพยายามให้วิ่งได้อย่างต่ำ 7 ของร่างหลัก","build":{"server":"tot","classKey":"monkey","level":100,"learned":[101,111,112,113,114,121,122,123,124,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,271,301,302,303,304,311,312,313,314,351,402,403,411,421,431,432,434,441,442,444,451,452]},"stats":{"vit":200,"tal":310,"agi":7},"gear":{"weapon":[{"item":"w_mnk48","replica":{"item":"w_mnk62"},"stat":"tal"},{"item":"w_mnk12","replica":{"item":"w_mnk65"},"stat":"cha"}],"armor":[{"item":"a_mnk48","replica":{"item":"a_mnk62"},"stat":"tal"},{"item":"a_mnk12","replica":{"item":"a_mnk65"},"stat":"cha"}],"hat":[{"item":"c_mnk48","replica":{"item":"c_mnk62"},"stat":"tal"},{"item":"c_mnk12","replica":{"item":"c_mnk65"},"stat":"cha"}],"trinket":[{"item":"t_mnk62"},{"item":"t_all86"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_ssq"},{"item":"p_swb"}]},"notes":{"254":"ไว้ใช้ตอนเจอม่อนเน้นรุม","411":"ไว้ใช้กับจาให้อยู่นานกว่าเดิม","452":"ไว้ใช้ตอนจาใกล้ตาย"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T14:50:55.010Z","counts":{"1":56,"2":79,"3":41,"4":34,"5":69,"6":62,"7":45,"8":32,"9":31,"10":57,"11":56,"12":18,"13":8,"14":54,"15":60,"16":44,"17":66,"18":69,"19":48,"20":72,"21":44,"22":51,"23":55,"24":14,"25":23,"26":20,"27":14,"28":23,"29":45,"30":48,"31":52,"32":22,"34":20,"35":30,"36":10,"37":5,"38":6,"39":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T15:05:08.536Z","counts":{"1":58,"2":80,"3":42,"4":35,"5":70,"6":62,"7":45,"8":33,"9":32,"10":57,"11":57,"12":18,"13":8,"14":54,"15":61,"16":44,"17":66,"18":70,"19":50,"20":74,"21":45,"22":51,"23":55,"24":14,"25":23,"26":20,"27":14,"28":23,"29":45,"30":50,"31":53,"32":22,"34":20,"35":30,"36":11,"37":5,"38":8,"39":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32522,6 +32551,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T14:52:42.597Z","feat(bible): the Chameleon attack sim remembers its settings (server, stats, gear, target, skills and Mods) in this browser and its arena has no frame or fill any more; phones no longer show the เปิด seal on the menu's two main slides (its own row pushed the title up the card)"],
     ["2026-10-19T14:17:33.155Z","feat(bible): drag the tools on the menu into your own order (hold 0.3 s, or just drag when the strip fits; the two main tools stay first), remembered in this browser; ladybugs fly round the BUG page's portrait; Special Pet Info drops its outer frame, and on desktop the box around its pet list; in skill details the Chameleon race slayers, Buiten Hou Hou and Truce Trading sit in their own skill tree tabs (Slayer, Geomancer, Merchant), not อื่น ๆ"],
     ["2026-10-19T14:03:54.334Z","feat(bible): class guide #39 ToT Monkey ลิงไฟ PVE by Tsukuyomi"],
     ["2026-10-19T13:52:52.612Z","feat(bible): on the menu, the Chameleon attack sim's key numbers (Fatal Strike, crit, poison, HP drain, Left Stride, full restore) circle the Chameleon on a tilted 3D ring, passing behind and in front of it"],
