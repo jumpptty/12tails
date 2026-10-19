@@ -21,7 +21,7 @@
     // flat panels and modals that never change fill on hover
     panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
@@ -6073,6 +6073,10 @@
   .chm-play:hover { transform: scale(1.05); }
   .chm-play:active { transform: scale(.95); }
   .chm-play.firing { background: radial-gradient(circle at 40% 35%, #3a3a3a, #1b1b1b 70%); }
+  .chm-clock { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 118px; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+  .chm-clock small { font-size: 11px; line-height: 1; color: var(--muted); }
+  .chm-clock b { font: 700 21px/1.1 var(--chm-num); color: var(--text); font-variant-numeric: tabular-nums; }
+  .chm-clock.is-running b { color: #f1d27a; }
   .chm-count { width: 68px; height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); text-align: center; font: 700 14px var(--chm-num); }
 
   /* layout */
@@ -6128,17 +6132,14 @@
   .chm-cds { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
   .chm-cd { display: flex; align-items: center; gap: 18px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font-family: 'Prompt', sans-serif; padding: 0; }
   .chm-cd-ring { --s: 60px; }
-  /* the two cast skills wear a medallion (user 2026-10-19: more stylized than the plain rings): a polished gold band with a dark inner line,
-     clock ticks round it (they are cooldown timers); off = grey, Fatal Strike charges on = glowing */
+  /* the two cast skills wear a medallion (user 2026-10-19: more stylized than the plain rings): a polished gold band with a dark inner line;
+     off = grey, Fatal Strike charges on = glowing (the clock ticks round it were removed the same day, user) */
   .chm-cd .chm-cd-ring, .chm-cd[data-state] .chm-cd-ring { box-shadow: 0 0 0 2px #0c0b09; }
-  .chm-cd .chm-ringw::before, .chm-cd .chm-ringw::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; transition: filter .2s; }
+  .chm-cd .chm-ringw::before { content: ""; position: absolute; border-radius: 50%; pointer-events: none; transition: filter .2s; }
   .chm-cd .chm-ringw::before { inset: -6px; box-shadow: 0 4px 12px rgba(0,0,0,.6);
     background: conic-gradient(from 210deg, #fff3c4, #d2a23c 14%, #7c5718 30%, #f3d98a 48%, #a07426 64%, #fff3c4 80%, #d2a23c 92%, #fff3c4);
     -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5.5px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5.5px)); }
-  .chm-cd .chm-ringw::after { inset: -12px;
-    background: repeating-conic-gradient(rgba(241,210,122,.75) 0 2deg, transparent 2deg 30deg);
-    -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); }
-  .chm-cd[data-state="off"] .chm-ringw::before, .chm-cd[data-state="off"] .chm-ringw::after { filter: grayscale(1) brightness(.55); }
+  .chm-cd[data-state="off"] .chm-ringw::before { filter: grayscale(1) brightness(.55); }
   .chm-cd[data-state="buff"] .chm-ringw::before { filter: brightness(1.12) drop-shadow(0 0 7px rgba(241,210,122,.75)); }
   .chm-cd:not([data-state="off"]):not([data-state="buff"]):hover .chm-ringw::before { filter: brightness(1.15); }
   .chm-cd-sweep { position: absolute; inset: 0; background: conic-gradient(rgba(10,9,7,.8) calc(var(--cd, 0) * 1%), transparent 0); pointer-events: none; }
@@ -6154,7 +6155,7 @@
   .chm-hp circle { fill: none; stroke-width: 11; }
   .chm-hp-track { stroke: rgba(255,255,255,.07); }
   .chm-hp-lag, .chm-hp-fill { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 150px 150px; }
-  .chm-hp-lag { stroke: rgba(255,214,140,.55); transition: stroke-dasharray .9s ease .25s; }
+  .chm-hp-lag { stroke: rgba(255,214,140,.55); transition: stroke-dasharray .9s ease .25s, transform .9s ease .25s; }
   .chm-hp-fill { stroke: #e04444; }
   .chm-boss.is-dead .chm-hp-lag, .chm-boss.is-dead .chm-hp-fill { stroke-opacity: 0; }
   .chm-pips circle { fill: #2a2a20; stroke: #0c0b09; stroke-width: 3; }
@@ -25286,6 +25287,7 @@ function mountChameleonSim(root) {
           ${['og', 'tot', 'tto'].map(s => `<button type="button" class="sk-server-btn${s === 'og' ? ' active' : ''}" data-server="${s}" title="${{ og: 'BB (BigBugStudio)', tot: 'Tales of Tail (ToT)', tto: 'Tailstopia Online (TTO)' }[s]}"><img src="${SKILL_ICONS['server_' + s]}" alt="">${{ og: 'BB', tot: 'ToT', tto: 'TTO' }[s]}</button>`).join('')}
         </div>
         <div class="chm-seg"><button type="button" class="active" id="chmModeInfiniteBtn">ยิงต่อเนื่อง</button><button type="button" id="chmModeInstantBtn">ยิงทันที</button></div>
+        <div class="chm-clock" id="chmClockBox" title="เวลาในการจำลอง (นาที:วินาที)"><small>เวลาจำลอง</small><b id="chmClock">00:00.0</b></div>
         <div class="chm-actions" id="chmInfiniteActions">
           <button type="button" class="chm-rbtn" id="chmSoundToggleBtn" title="เสียง">${CHM_SVG_SOUND}</button>
           <button type="button" class="chm-rbtn chm-mods-open" id="chmModsBtn" title="บัฟ / ดีบัฟ">${CHM_SVG_MODS}<span class="sk-bd-count" hidden></span></button>
@@ -25442,6 +25444,20 @@ function mountChameleonSim(root) {
   const setText = (id, t) => { const el = $c(id); if (el) el.textContent = t; };
   const fmt = (n) => Math.round(n).toLocaleString();
 
+  // Simulation clock (user 2026-10-19): while shooting it runs on smoothly from the last shown time to the sim time of the latest step, which
+  // the step's own wait then plays out in real time; stopped (or after an instant run) it shows the exact sim time. Format mm:ss.t
+  const chmClockEl = $c('chmClock'), chmClockBox = $c('chmClockBox');
+  let ckFrom = 0, ckTo = 0, ckAt = 0, ckRate = 1, ckRaf = 0;
+  const chmClockText = (t) => { const d = Math.round(t * 10), m = Math.floor(d / 600); return String(m).padStart(2, '0') + ':' + ((d % 600) / 10).toFixed(1).padStart(4, '0'); };
+  const chmClockNow = () => simState.isRunning ? Math.min(ckTo, ckFrom + ckRate * (performance.now() - ckAt) / 1000) : ckTo;
+  function chmClockTick() { chmClockEl.textContent = chmClockText(chmClockNow()); ckRaf = simState.isRunning ? requestAnimationFrame(chmClockTick) : 0; }
+  function chmClockSync() {
+    if (simState.totalTime !== ckTo) { ckFrom = Math.min(chmClockNow(), simState.totalTime); ckTo = simState.totalTime; ckAt = performance.now(); ckRate = Math.max(1, (ckTo - ckFrom) / 0.3); }   // a step that held the clock (Left Stride wind-up) is caught up within 0.3 s
+    if (!simState.isRunning) ckFrom = ckTo;
+    chmClockBox.classList.toggle('is-running', simState.isRunning);
+    if (!ckRaf) chmClockTick();
+  }
+
   function updateControlButtons() {
     toggleFireBtn.classList.toggle('firing', simState.isRunning);
     fireBtnIcon.textContent = simState.isRunning ? '⏸' : '▶';
@@ -25508,6 +25524,7 @@ function mountChameleonSim(root) {
     const enemy = getEnemyInfo();
     const isRobot = enemy.race === 'Robots', canStack = chmCanStack(enemy);
     chmRenderSkills(bonuses);
+    chmClockSync();
 
     // Proc gauges
     const critMult = simState.bullsEye ? (1.8 + 0.15 * simState.criticalPlusRank).toFixed(2) : '1.80';
@@ -25564,9 +25581,9 @@ function mountChameleonSim(root) {
     const bMaxHp = simState.bossMaxHp || 70000;
     const bCurHp = Math.max(0, bMaxHp - Math.round(simState.totalDamage));
     const bHpPct = Math.max(0, Math.min(1, bCurHp / bMaxHp));
-    const dash = (CHM_HP_C * bHpPct) + ' ' + CHM_HP_C;
-    $c('chmHpFill').style.strokeDasharray = dash;
-    $c('chmHpLag').style.strokeDasharray = dash;
+    // the HP left is an arch centred on the top (user 2026-10-19: a ring draining clockwise read as a lopsided U); it shrinks from both ends toward the top
+    const dash = (CHM_HP_C * bHpPct) + ' ' + CHM_HP_C, turn = 'rotate(' + (-90 - 180 * bHpPct) + 'deg)';
+    ['chmHpFill', 'chmHpLag'].forEach(id => { const c = $c(id); c.style.strokeDasharray = dash; c.style.transform = turn; });
     $c('chmBossWrap').classList.toggle('is-dead', bCurHp <= 0);
     $c('chmTfHpText').innerHTML = bCurHp <= 0 ? '<b class="chm-dead">ล้มแล้ว</b>' : '<b>' + bCurHp.toLocaleString() + '</b><small> / ' + bMaxHp.toLocaleString() + ' · ' + (bHpPct * 100).toFixed(1) + '%</small>';
     if (bCurHp <= 0 && !simState.bossDefeatedTime && simState.totalShots > 0) {
@@ -28139,7 +28156,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:22:18.926Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:29:18.934Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31834,6 +31851,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T03:29:10.205Z","feat(bible): the Chameleon attack sim gets a live simulation clock in its header (mm:ss.t, runs smoothly while shooting, exact when stopped), its boss HP ring drains evenly toward the top (an arch, not a lopsided U) and its Fatal Strike / Left Stride medallions lose the clock ticks"],
     ["2026-10-19T03:22:10.593Z","fix(bible): the Chameleon attack sim's Fatal Strike and Left Stride slots wear a gold medallion frame with clock ticks (grey when off, glowing while Fatal Strike charges last)"],
     ["2026-10-19T03:17:36.639Z","fix(bible): Chameleon attack sim round icons get a thicker gold edge and rank arc, and the poison stack dots move off the HP bar onto the bottom-right edge of the boss portrait"],
     ["2026-10-19T02:49:41.626Z","feat(bible): the Chameleon attack sim fits one screen on desktop (a 1560 x 960 composition zoomed to the window, the skills and the shot log take the spare height; phones still scroll) and its round icons follow the skill details rings (one thin gold edge, the art centred); the menu's ใหม่ pill keeps smooth corners at any zoom"],
