@@ -24699,7 +24699,7 @@ function mountChameleonSim(root) {
     agi: 200,
     maxHp: 3000,
     soundEnabled: true,
-    poisonTickTimer: 0,
+    poisonPhase: 0,   // where the target's 4 s poison clock stands at t = 0 (random per run)
     selectedWeapon: 'poseidonBow',
     selectedHelmet: 'poseidonHelmet',
     selectedArmor: 'mantisSuit',
@@ -24880,7 +24880,7 @@ function mountChameleonSim(root) {
     simState.lsCasts = 0;
     simState.fsCasts = 0;
     simState.log = [];
-    simState.poisonTickTimer = 0;
+    simState.poisonPhase = Math.random() * 4;
     const maxPoison = simState.deadlyVenom ? 6 : 4;
     simState.currentPoisonStacks = (simState.poisonMode === 'max' && chmCanStack(getEnemyInfo())) ? maxPoison : 0;
     clearFloatingNumbers();
@@ -24890,7 +24890,9 @@ function mountChameleonSim(root) {
 
   function advanceSimTime(dt, enemy) {
     if (!chmCanStack(enemy)) simState.currentPoisonStacks = 0;
+    const clock0 = simState.totalTime + simState.poisonPhase;
     simState.totalTime += dt;
+    const ticks = Math.floor((clock0 + dt) / 4) - Math.floor(clock0 / 4);   // 4 s boundaries crossed in this step; the stacks only change at shots
     if (simState.fatalStrikeMode === 'rotation' && simState.fsRemainingCD > 0) {
       simState.fsRemainingCD = Math.max(0, simState.fsRemainingCD - dt);
     }
@@ -24899,22 +24901,27 @@ function mountChameleonSim(root) {
     }
     if (simState.currentPoisonStacks > 0) {
       const isRobot = (enemy.race === 'Robots');
-      simState.poisonTickTimer += dt;
-      if (simState.poisonTickTimer >= 4.0) {
-        simState.poisonTickTimer -= 4.0;
+      for (let k = 0; k < ticks; k++) {
         const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + chmModDelta(id, chmActiveEnemyMods), 0);
         const finalMultCount = chmFinalMultCount();
         const baseTick = isRobot ? (15 * simState.currentPoisonStacks) : (10 * simState.currentPoisonStacks - 1);
         const tickDmg = (baseTick > 0) ? finalMultiplierAdjust(hitModAdjustFloor(baseTick, enemyHitModValue), finalMultCount) : 0;
         if (tickDmg > 0) {
           simState.totalPoisonDoT += tickDmg;
+          simState.totalDamage += tickDmg;
+          chmCheckKill();
           if (simState.isRunning) {
             spawnDamageNumber(tickDmg, 'p', 14, 'right', 'dot');
           }
         }
       }
-    } else {
-      simState.poisonTickTimer = 0;
+    }
+  }
+  // the boss falls at the hit or tick that empties its HP (instant runs paint once, at the end, so this cannot wait for updateUI)
+  function chmCheckKill() {
+    if (!simState.bossDefeatedTime && simState.totalDamage >= (simState.bossMaxHp || 70000)) {
+      simState.bossDefeatedTime = simState.totalTime;
+      simState.bossDefeatedShots = simState.totalShots;
     }
   }
 
@@ -24949,7 +24956,7 @@ function mountChameleonSim(root) {
     return (simState.leftStrideActive && simState.lsRemainingCD <= 0 && simState.lsCycle === 0);
   }
 
-  function executeArrow(bonuses, enemy, isStride = false) {
+  function executeArrow(bonuses, enemy, isStride = false, echo = false) {
     const fsRank = (simState.fatalStrikeRank > 0 && simState.extraArrows) ? Math.min(simState.fatalStrikeRank + 1, 5) : simState.fatalStrikeRank;
     const fsBonus = 6 * fsRank;
     const maxPoison = simState.deadlyVenom ? 6 : 4;
@@ -25058,10 +25065,11 @@ function mountChameleonSim(root) {
 
     simState.totalShots++;
     simState.totalDamage = simState.totalBaseImpactDmg + simState.totalFatalStrikeDmg + simState.totalPiercingVenomDmg + simState.totalCritExtraDmg + simState.totalHpDrainDmg + simState.totalPoisonDoT;
+    chmCheckKill();
 
     if (simState.isRunning) {
-      // 1. Bow fire sound on shot
-      soundMgr.play('bowFire', 0.55);
+      // 1. Bow fire sound on shot (the clone's trails by 50 ms so the two arrows are heard apart)
+      if (echo) setTimeout(() => { if (simState.isRunning) soundMgr.play('bowFire', 0.55); }, 50); else soundMgr.play('bowFire', 0.55);
 
       // 2. White physical damage number (Left Lane: 24px crit or 19px normal)
       if (rollCrit) {
@@ -25110,8 +25118,9 @@ function mountChameleonSim(root) {
   }
 
   function executeOneShot(bonuses, enemy) {
-    advanceSimTime(0.3, enemy); // arrow shot takes 0.3s
+    advanceSimTime(0.2, enemy);   // RPC_nAttack1: the arrow leaves 0.2 s in (Chameleon.cs:15380-16112)
     executeArrow(bonuses, enemy, false);
+    advanceSimTime(0.1, enemy);   // then 0.1 s more before standby; the nAttack timeout (1.5 - 0.3 x Combo = 0.3 s) ends at the same moment
   }
 
   function runInstantSimulation(count) {
@@ -25123,7 +25132,7 @@ function mountChameleonSim(root) {
       if (shouldCastFatalStrike()) {
         castFatalStrike(bonuses, enemy);
       } else if (shouldCastLeftStride()) {
-        // Cast Left Stride 2 + Double Stride (10 arrows across 2.298s)
+        // Left Stride 2 + Double Strider (RPC_leftStride): 0.366 s, a volley, 4 x (0.433 s, a volley), 0.2 s = 2.298 s, 10 arrows
         simState.lsCasts++;
         simState.lsRemainingCD = chmLsCdTotal = getLeftStrideCD();
         // Cycle 1: 0.366s windup
@@ -25173,20 +25182,10 @@ function mountChameleonSim(root) {
     if (simState.lsCycle >= 1 && simState.lsCycle <= 5) {
       const dt = (simState.lsCycle === 1) ? 0.366 : 0.433;
       advanceSimTime(dt, enemy);
-      // 1. Chameleon fires primary arrow
+      // the Chameleon's arrow and the Double Strider clone's, in the same frame (Chameleon.cs:26943-27043)
       executeArrow(bonuses, enemy, true);
+      executeArrow(bonuses, enemy, true, true);
       updateUI();
-
-      // 2. Clone arrow slightly delayed (50ms) for distinct double-arrow auditory layering
-      if (simState.isRunning) {
-        setTimeout(() => {
-          if (!simState.isRunning) return;
-          executeArrow(bonuses, enemy, true);
-          updateUI();
-        }, 50);
-      } else {
-        executeArrow(bonuses, enemy, true);
-      }
 
       if (simState.lsCycle < 5) {
         simState.lsCycle++;
@@ -28155,7 +28154,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:38:35.386Z","counts":{"1":38,"2":55,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":51,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":4}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:48:42.864Z","counts":{"1":38,"2":55,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":51,"19":30,"20":55,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":30,"31":31,"32":6,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31850,6 +31849,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T03:48:34.062Z","fix(bible): Chameleon attack sim timing re-checked against the code: each normal arrow leaves 0.2 s into its 0.3 s cycle, the Double Strider clone fires at the same instant, poison / rust ticks follow the target's 4 s clock, and the kill time is taken at the killing hit (instant runs reported the run's end)"],
     ["2026-10-19T03:38:26.618Z","fix(bible): the Chameleon attack sim's four proc gauges stay in place when their values change"],
     ["2026-10-19T03:36:50.587Z","fix(bible): the Chameleon attack sim's poison dots sit exactly on the boss portrait's gold edge at every zoom"],
     ["2026-10-19T03:33:09.603Z","fix(bible): the Chameleon attack sim's boss HP gauge is an open 260-degree arc with the HP text in its gap at the bottom (the text no longer covers the start of the bar)"],
