@@ -5042,28 +5042,86 @@
   .sk-preset-win-head{display:flex; align-items:center; gap:12px; margin:0 0 16px}
   .sk-preset-win-title{margin:0; font:700 20px 'Prompt',sans-serif; letter-spacing:1px; color:#f1e6c8}
   .sk-preset-win-x{margin-left:auto; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; flex:none; border-radius:6px; cursor:pointer; font-size:20px; line-height:1; color:#d8cfbd; background:transparent; border:1px solid rgba(212,175,55,.35)}
-  .sk-preset-cards{display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:12px}
-  .sk-preset-card{display:flex; flex-direction:column; gap:8px; min-width:0; padding:10px; border-radius:10px; background:rgba(255,255,255,.03); border:1px solid rgba(212,175,55,.2)}
-  .sk-preset-card.is-active{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 18px rgba(212,175,55,.25)}
-  /* Reorder by dragging the portrait (presetMove): the dragged card fades, the card under the pointer shows where it lands. */
-  .sk-preset-card-art{cursor:grab}
-  .sk-preset-card.is-dragging{opacity:.35}
-  .sk-preset-card.is-drop{border-color:#4ade80; box-shadow:0 0 0 2px #4ade80, 0 0 18px rgba(74,222,128,.3)}
+  /* One preset at a time (user 2026-10-19, variant 4 of 5 mocks): folder tabs, then tiles. The open tab shares the tile area's fill. */
+  .sk-pw-tabs{display:flex; gap:4px; border-bottom:1px solid rgba(212,175,55,.45)}
+  .sk-pw-tab{position:relative; display:flex; align-items:center; gap:8px; flex:1; min-width:0; height:46px; padding:0 12px; border:1px solid rgba(212,175,55,.16); border-bottom:0; border-radius:10px 10px 0 0; background:rgba(255,255,255,.02); color:#a39a86; cursor:pointer; font:600 14px 'Prompt',sans-serif; white-space:nowrap}
+  .sk-pw-tab:hover{color:#ede8df}
+  .sk-pw-tab.is-on{height:47px; margin-bottom:-1px; background:#232017; border-color:rgba(212,175,55,.45); color:#ede8df}
+  .sk-pw-tab.is-empty .sk-pw-lbl{color:#6f6858}
+  .sk-pw-tab.is-dragging{opacity:.4}
+  .sk-pw-tab.is-drop{border-color:#4ade80; box-shadow:inset 0 0 0 1px #4ade80}
+  .sk-pw-face{flex:none; width:28px; height:28px; border-radius:50%; background:#26221c no-repeat; background-size:250% auto; background-position:34% 14%; box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+  .sk-pw-tab.is-on .sk-pw-face{box-shadow:0 0 0 2px var(--gold)}
+  .sk-pw-k{font:700 12px 'JetBrains Mono','Prompt',monospace; color:#f1d27a}
+  .sk-pw-lbl{min-width:0; overflow:hidden; text-overflow:ellipsis}
+  .sk-pw-live{margin-left:auto; flex:none; display:inline-flex; align-items:center; gap:5px; padding:1px 9px; border-radius:999px; background:rgba(74,222,128,.14); color:#4ade80; font-size:12px}
+  .sk-pw-live::before{content:""; width:6px; height:6px; border-radius:50%; background:#4ade80}
+  .sk-pw-grid{display:grid; grid-template-columns:300px minmax(0, 1fr) minmax(0, 1fr); grid-template-rows:1fr auto; gap:12px; padding:14px; background:#232017; border:1px solid rgba(212,175,55,.45); border-top:0; border-radius:0 0 12px 12px}
+  .sk-pw-tile{min-width:0; padding:14px; border-radius:12px; background:#1a1813; border:1px solid rgba(212,175,55,.16)}
+  .sk-pw-tile h4{display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:13px; font-weight:600; color:#f1d27a}
+  .sk-pw-tile h4.r{margin-top:14px; color:#f3a19b}
+  .sk-pw-id{grid-row:1 / 3; display:flex; flex-direction:column; gap:10px}
+  .sk-pw-art{position:relative; flex:none; height:220px; padding:0; border:0; border-radius:12px; overflow:hidden; background:radial-gradient(120% 90% at 50% 20%, #3a3122, #16130f 70%)}
+  button.sk-pw-art{cursor:pointer}
+  .sk-pw-art img{display:block; width:100%; height:100%; object-fit:cover; object-position:50% 8%; transition:transform .2s ease}
+  button.sk-pw-art:hover img{transform:scale(1.04)}
+  .sk-pw-art.is-empty img{filter:grayscale(.85) brightness(.55)}
+  .sk-pw-no{position:absolute; left:10px; top:10px; padding:2px 10px; border-radius:6px; background:var(--gold); color:#141311; font:700 13px 'Prompt',sans-serif}
+  .sk-pw-name, .sk-pw-desc{width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid rgba(212,175,55,.25); border-radius:8px; background:rgba(12,11,9,.85); color:#ede8df; font-family:'Prompt',sans-serif; outline:none}
+  .sk-pw-name{font-size:20px; font-weight:700; color:#f1e6c8}
+  .sk-pw-desc{flex:1; min-height:70px; font-size:14px; line-height:1.5; color:#d8cfbd; resize:none}
+  .sk-pw-name:focus, .sk-pw-desc:focus{border-color:var(--gold)}
+  .sk-pw-use{flex:none; height:46px; border:0; border-radius:10px; background:var(--gold); color:#141311; font:700 16px 'Prompt',sans-serif; cursor:pointer}
+  .sk-pw-use:disabled{cursor:default; background:transparent; border:1px solid var(--gold); color:var(--gold)}
+  .sk-pw-use.is-new{background:transparent; border:1px dashed rgba(212,175,55,.6); color:#f1d27a}
+  .sk-pw-lvpill{margin-left:auto; padding:2px 10px; border-radius:999px; border:1px solid var(--stat-lv); color:var(--stat-lv); font-size:13px}
+  .sk-pw-lvpill b{font-family:'JetBrains Mono','Prompt',monospace}
+  .sk-pw-bars{display:flex; flex-direction:column; gap:9px}
+  .sk-pw-bar{display:grid; grid-template-columns:38px minmax(0, 1fr) 44px; align-items:center; gap:8px; font-size:13px}
+  .sk-pw-bar b{color:var(--sc)}
+  .sk-pw-tr{height:10px; border-radius:5px; background:rgba(255,255,255,.06); overflow:hidden}
+  .sk-pw-tr i{display:block; height:100%; border-radius:5px; background:var(--sc)}
+  .sk-pw-num{text-align:right; font:700 13px 'JetBrains Mono','Prompt',monospace}
+  .sk-pw-rows{display:flex; flex-direction:column; gap:8px}
+  .sk-pw-rw{display:grid; grid-template-columns:34px minmax(0, 1fr) auto; align-items:center; gap:10px; font-size:14px}
+  .sk-pw-rn{min-width:0; overflow:hidden; text-overflow:ellipsis}
+  .sk-pw-rn small{display:block; font-size:12px; color:#a39a86}
+  .sk-pw-ring{position:relative; width:34px; height:34px; border-radius:50%; overflow:hidden; background:#0f0e0c; box-shadow:0 0 0 2px rgba(212,175,55,.9)}
+  .sk-pw-ring.r{box-shadow:0 0 0 2px rgba(229,83,75,.9)}
+  .sk-pw-ring img{position:absolute; inset:0; width:100%; height:100%; transform:scale(1.3)}
+  .sk-pw-glyph{display:grid; place-items:center; color:#f1d27a; font-size:15px}
+  .sk-pw-lv{font:700 13px 'JetBrains Mono','Prompt',monospace; color:#f1d27a}
+  .sk-pw-lv.r{color:#f3a19b}
+  .sk-pw-none{margin:0; font-size:13px; color:#6f6858}
+  .sk-pw-offtag{padding:0 8px; border-radius:999px; border:1px solid currentColor; font-size:11px; color:#f87171}
+  .sk-pw-set{grid-column:2 / 4; display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px}
+  .sk-pw-srv{display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1px solid rgba(212,175,55,.16); font-size:13px; color:#a39a86}
+  .sk-pw-srv img{width:18px; height:18px; border-radius:50%}
+  .sk-pw-flag{display:inline-flex; align-items:center; gap:7px; font-size:13px; color:#a39a86}
+  .sk-pw-flag i{position:relative; width:26px; height:15px; border-radius:8px; background:var(--gold)}
+  .sk-pw-flag i::after{content:""; position:absolute; top:2px; right:2px; width:11px; height:11px; border-radius:50%; background:#141311}
+  .sk-pw-flag.is-off i{background:rgba(255,255,255,.15)}
+  .sk-pw-flag.is-off i::after{right:auto; left:2px; background:#a39a86}
+  .sk-pw-move{height:38px; padding:0 14px; border-radius:8px; border:1px solid rgba(212,175,55,.32); background:none; color:#a39a86; font:500 14px 'Prompt',sans-serif; cursor:pointer}
+  .sk-pw-move:first-of-type{margin-left:auto}
+  .sk-pw-move:hover:not(:disabled){color:#ede8df; border-color:var(--gold)}
+  .sk-pw-move:disabled{opacity:.35; cursor:default}
+  .sk-pw-empty{grid-column:2 / 4; display:grid; place-items:center; min-height:300px; text-align:center}
+  .sk-pw-empty p{margin:0; max-width:420px; font-size:14px; line-height:1.6; color:#a39a86}
+  .sk-pw-empty b{color:#f1d27a}
+  @media (max-width:900px){
+    .sk-pw-grid{grid-template-columns:minmax(0, 1fr); grid-template-rows:none; padding:10px}
+    .sk-pw-id, .sk-pw-set, .sk-pw-empty{grid-row:auto; grid-column:auto}
+    .sk-pw-empty{min-height:0}
+    .sk-pw-art{height:170px}
+    .sk-pw-tab{flex-direction:column; justify-content:center; gap:3px; height:auto; padding:6px 4px; font-size:11px}
+    .sk-pw-tab.is-on{height:auto}
+    .sk-pw-lbl{max-width:100%}
+    .sk-pw-k{display:none}
+    .sk-pw-live{position:absolute; top:5px; right:6px; margin:0; padding:0; width:8px; height:8px; font-size:0; background:#4ade80}
+    .sk-pw-live::before{display:none}
+  }
   .sk-server-backdrop.is-quiet, .sk-server-backdrop.is-quiet .sk-preset-win{animation:none}
-  .sk-preset-card-art{position:relative; height:190px; border:0; padding:0; border-radius:8px; overflow:hidden; cursor:pointer;
-    background:radial-gradient(ellipse at 50% 75%, rgba(212,175,55,.22), rgba(12,11,9,.9) 70%)}
-  .sk-preset-card-art img{position:absolute; left:50%; bottom:0; height:100%; width:auto; transform:translateX(-50%); transition:transform .2s ease}
-  .sk-preset-card-art:hover img{transform:translateX(-50%) scale(1.05)}
-  .sk-preset-card.is-empty:not(.is-active) .sk-preset-card-art img{filter:brightness(.62) saturate(.8)}
-  .sk-preset-card-no{position:absolute; left:6px; top:6px; padding:1px 6px; border-radius:4px; font:700 11px 'Prompt',sans-serif; letter-spacing:.8px; color:#141311; background:var(--gold)}
-  .sk-preset-card-on{position:absolute; right:6px; top:6px; padding:1px 6px; border-radius:4px; font:600 10.5px 'Prompt',sans-serif; color:#141311; background:#4ade80}
-  .sk-preset-card-name, .sk-preset-card-desc{width:100%; box-sizing:border-box; color:#ede8df; background:rgba(12,11,9,.85); border:1px solid rgba(212,175,55,.25); border-radius:5px; font-family:'Prompt',sans-serif; outline:none}
-  .sk-preset-card-name{padding:6px 8px; font-size:14px; font-weight:600}
-  .sk-preset-card-desc{padding:6px 8px; font-size:12px; line-height:1.45; resize:vertical; min-height:56px}
-  .sk-preset-card-name:focus, .sk-preset-card-desc:focus{border-color:var(--gold)}
-  .sk-preset-card-stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px 6px; font:600 11px 'JetBrains Mono','Prompt',monospace; color:#d8cfbd}
-  .sk-preset-card-stats span{white-space:nowrap}
-  .sk-preset-card-stats b{font-weight:600; color:var(--sc, #8f8574)}   /* stat signature colour per stat */
   /* The PRESET window and its change pop-up are dark in both themes: use the bright (dark-theme) stat colours there. */
   .sk-preset-win, .sk-preset-popup{--stat-atk:#ef4444; --stat-def:#38bdf8; --stat-agi:#34d399; --stat-vit:#facc15; --stat-int:#f472b6;
     --stat-cha:#c084fc; --stat-tal:#22d3ee; --stat-lck:#fb923c; --stat-lv:#94a3b8; --stat-hp:#4ade80; --stat-hate:#818cf8; --stat-shield:#a1a1aa}
@@ -5079,12 +5137,7 @@
   .sk-preset-confirm-no{color:#ede8df; background:transparent; border:1px solid rgba(212,175,55,.45)}
   .sk-preset-confirm-yes{color:#fff; background:#dc2626; border:1px solid #dc2626}
   .sk-preset-win-reset:focus-visible, .sk-preset-confirm-actions button:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
-  .sk-preset-card-bd{font-size:11px; color:#a89a7c; min-height:15px}
-  .sk-preset-card-use{margin-top:auto; padding:7px; border-radius:6px; cursor:pointer; font:600 13px 'Prompt',sans-serif; color:#141311; background:var(--gold); border:0}
-  .sk-preset-card-use:disabled{cursor:default; color:var(--gold); background:transparent; border:1px solid var(--gold)}
-  .sk-preset-card.is-empty .sk-preset-card-use{color:#d8cfbd; background:transparent; border:1px dashed rgba(212,175,55,.5)}
-  @media (max-width:900px){ .sk-preset-cards{grid-template-columns:repeat(5, minmax(180px, 1fr)); overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:6px} .sk-preset-card{scroll-snap-align:start} }
-  .sk-preset-open:focus-visible, .sk-preset-win-x:focus-visible, .sk-preset-card-art:focus-visible, .sk-preset-card-use:focus-visible, .sk-preset-pop-close:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .sk-preset-open:focus-visible, .sk-preset-win-x:focus-visible, .sk-pw-tab:focus-visible, .sk-pw-art:focus-visible, .sk-pw-use:focus-visible, .sk-pw-move:focus-visible, .sk-preset-pop-close:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .sk-preset-popup{position:relative; z-index:999999; width:min(880px, calc(100vw - 32px)); max-height:min(88vh, 860px); overflow:auto; box-sizing:border-box;
     background:rgba(20,19,17,0.98); border:1px solid var(--gold); border-top:4px solid var(--gold); border-radius:12px; padding:30px 34px;
     box-shadow:0 30px 90px rgba(0,0,0,0.95), 0 0 50px rgba(212,175,55,0.32); color:#ede8df; font-family:'Prompt',sans-serif;
@@ -17622,6 +17675,7 @@ function mountSkillCooldownLookup(root){
     if (!s) return false;
     presetData = JSON.parse(s.data); presetSaveAll();
     presetWrite(s.stats); renderHero();
+    if (document.querySelector('[data-role="preset-win-backdrop"]')) openPresetWindow(true, presetWinSel, true);   // an open PRESET window shows the restored order
     return true;
   }
   function presetStatName(k){ return k === "lv" ? "LV" : k.toUpperCase(); }
@@ -17658,27 +17712,64 @@ function mountSkillCooldownLookup(root){
     presetApply(s, i, cls);
   }
   function presetEsc(t){ return String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])); }
-  function openPresetWindow(quiet){
+  // PRESET window (user 2026-10-19, variant 4 of 5 mocks): one preset at a time. Folder tabs on top (portrait face in its game
+  // colour, number, name, "ใช้" on the one in use; drag a tab onto another to reorder; ← / → step through them), then tiles:
+  // the portrait with name / description / use button, the stats as bars, the saved buffs and debuffs with their levels, and
+  // a strip with the slot's popup server, its two quick switches and ‹ ย้าย / ย้าย ›. sel = the preset to show (default the
+  // one in use); focusTab = keep the keyboard on the tabs (tab click, arrows, reorder).
+  var presetWinSel = 0;
+  // A slot's saved Buff / Debuff state as rows, read on the slot's own popup server (rank maps, or the old id lists = max level).
+  function presetWinBd(bd){
+    const srv = BD_SERVERS.includes(bd.server) ? bd.server : "og";
+    const rank = (src, id, d) => { const max = d.maxRank || d.level || 1;
+      return !src ? 0 : Math.min(max, Array.isArray(src) ? (src.includes(id) ? max : 0) : Math.max(0, Math.floor(Number(src[id]) || 0))); };
+    const rows = (src, defs, ids, stat) => ids.map(id => {
+      const d = bdResolve(defs[id], srv), r = d ? rank(src, id, d) : 0;
+      if (!r) return null;
+      const tag = stat ? bdLvStatTag(d) : null;
+      const val = !stat ? bdLvModVal(d, r) : (bdLvStatKey(d) ? bdLvStatVal(d, r) + " " + tag[0] : tag ? tag[0] : "");
+      return { icon: bdLvIcon(d, r), name: bdLvName(d, r), lv: r, max: d.maxRank || d.level || 1, val };
+    }).filter(Boolean);
+    const buffs = rows(bd.stat, STAT_BUFFS, Object.keys(STAT_BUFFS), true).concat(rows(bd.pmod, MOD_DEFS, PLAYER_MOD_IDS, false));
+    const fmOn = !!bdResolve(MOD_DEFS[FINAL_MULT_MOD_IDS[0]], srv);
+    const fm = fmOn && Array.isArray(bd.fmult) ? bd.fmult.filter(id => FINAL_MULT_MOD_IDS.includes(id)).length : 0;
+    if (fm) buffs.push({ icon: "privateServer", name: "Final Multiplier", lv: fm, max: 3, val: BD_LV_FMULT[fm - 1] });
+    const debuffs = rows(bd.emod, MOD_DEFS, ENEMY_MOD_IDS, false).concat(rows(bd.estat, ENEMY_STAT_DEBUFFS, Object.keys(ENEMY_STAT_DEBUFFS), true));
+    (Array.isArray(bd.custom) ? bd.custom : []).forEach(id => {
+      const e = customBd.find(x => x.id === id);
+      if (!e || (e.kind === "finalMult" && !fmOn)) return;
+      (CUSTOM_BD_KINDS[e.kind] === "debuff" ? debuffs : buffs).push({ custom: true, name: e.name, val: customVal(e) });
+    });
+    return { srv, buffs, debuffs, buffsOff: bd.buffsOff === true, debuffsOff: bd.debuffsOff === true };
+  }
+  function openPresetWindow(quiet, sel, focusTab){
     const cls = presetClass();
     if (!cls) return;
     closePresetWindow();
     const en = presetEntry(cls), act = en.active === null ? 0 : en.active;
-    const pics = typeof CLASS_STORY_ART !== "undefined" ? CLASS_STORY_ART[cls] : null;   // card N = game colour N
-    const cards = en.slots.map((s, i) => {
-      const lab = en.labels[i], on = act === i;
-      const nBd = s && s.bd ? ["stat", "pmod", "fmult", "emod", "estat", "custom"].reduce((n, k) => n + (Array.isArray(s.bd[k]) ? s.bd[k].length : 0), 0) : 0;
-      const stats = s ? PRESET_STATS.map(k => `<span style="--sc:var(--stat-${k})"><b>${presetStatName(k)}</b> ${s[k]}</span>`).join("") : "";
-      const use = on ? `<button type="button" class="sk-preset-card-use" disabled>กำลังใช้อยู่</button>`
-        : `<button type="button" class="sk-preset-card-use" data-role="preset-use">${s ? "ใช้ชุดนี้" : "เริ่มชุดนี้จากค่าปัจจุบัน"}</button>`;
-      return `<div class="sk-preset-card${on ? " is-active" : ""}${s ? "" : " is-empty"}" data-slot="${i}">
-        <button type="button" class="sk-preset-card-art" data-role="preset-use" draggable="true" title="คลิกเพื่อใช้ชุดนี้ · กดค้างแล้วลากไปซ้าย / ขวาเพื่อสลับลำดับ" aria-label="PRESET ${i + 1}">${pics && pics[en.colors[i]] ? `<img src="${pics[en.colors[i]]}" alt="">` : ""}<span class="sk-preset-card-no">PRESET ${i + 1}</span>${on ? `<span class="sk-preset-card-on">ใช้งานอยู่</span>` : ""}</button>
-        <input type="text" class="sk-preset-card-name" data-field="name" maxlength="${PRESET_NAME_MAX}" placeholder="ชื่อชุดที่ ${i + 1}" value="${presetEsc(lab.name)}" aria-label="ชื่อ PRESET ${i + 1}">
-        <textarea class="sk-preset-card-desc" data-field="desc" maxlength="${PRESET_DESC_MAX}" rows="3" placeholder="คำอธิบาย เช่น ใช้ตอนไหน ใส่ของอะไร" aria-label="คำอธิบาย PRESET ${i + 1}">${presetEsc(lab.desc)}</textarea>
-        <div class="sk-preset-card-stats">${stats || '<span style="grid-column:1/-1">ยังไม่มีค่าที่บันทึก</span>'}</div>
-        <div class="sk-preset-card-bd">${s ? (nBd ? "บัฟ / ดีบัฟ " + nBd + " รายการ" : "ไม่มีบัฟ / ดีบัฟ") : ""}</div>
-        ${use}
-      </div>`;
-    }).join("");
+    const i = presetWinSel = Number.isInteger(sel) && sel >= 0 && sel < PRESET_SLOTS ? sel : act;
+    const pics = typeof CLASS_STORY_ART !== "undefined" ? CLASS_STORY_ART[cls] : null;   // a preset shows game colour colors[position]
+    const pic = k => (pics && pics[en.colors[k]]) || "";
+    const label = k => en.labels[k].name || (en.slots[k] ? "ชุดที่ " + (k + 1) : "ว่าง");
+    const tabs = en.slots.map((slot, k) => `<button type="button" class="sk-pw-tab${k === i ? " is-on" : ""}${slot ? "" : " is-empty"}" data-role="preset-tab" data-slot="${k}" draggable="true" role="tab" aria-selected="${k === i}" title="PRESET ${k + 1} · ลากไปวางบนแท็บอื่นเพื่อสลับลำดับ"><span class="sk-pw-face" style="background-image:url('${pic(k)}')"></span><span class="sk-pw-k">${k + 1}</span><span class="sk-pw-lbl">${presetEsc(label(k))}</span>${k === act ? '<span class="sk-pw-live">ใช้</span>' : ""}</button>`).join("");
+    const s = en.slots[i], lab = en.labels[i], inUse = act === i;
+    const use = inUse ? `<button type="button" class="sk-pw-use" disabled>กำลังใช้อยู่</button>`
+      : `<button type="button" class="sk-pw-use${s ? "" : " is-new"}" data-role="preset-use">${s ? "ใช้ชุดนี้" : "เริ่มชุดนี้จากค่าปัจจุบัน"}</button>`;
+    const art = `<img src="${pic(i)}" alt=""><span class="sk-pw-no">PRESET ${i + 1}</span>`;
+    const move = `<button type="button" class="sk-pw-move" data-role="preset-move" data-step="-1"${i ? "" : " disabled"} title="ย้ายไปเป็นชุดก่อนหน้า">‹ ย้าย</button><button type="button" class="sk-pw-move" data-role="preset-move" data-step="1"${i < PRESET_SLOTS - 1 ? "" : " disabled"} title="ย้ายไปเป็นชุดถัดไป">ย้าย ›</button>`;
+    let tiles;
+    if (s){
+      const b = presetWinBd(s.bd || {});
+      const top = Math.max(256, ...PRESET_STATS.slice(1).map(k => s[k]));   // bars against 256, or the highest stat when one is higher
+      const bars = PRESET_STATS.slice(1).map(k => `<div class="sk-pw-bar" style="--sc:var(--stat-${k})"><b>${presetStatName(k)}</b><span class="sk-pw-tr"><i style="width:${(Math.min(1, s[k] / top) * 100).toFixed(1)}%"></i></span><span class="sk-pw-num">${s[k]}</span></div>`).join("");
+      const list = (rows, red) => rows.length ? rows.map(r => `<div class="sk-pw-rw">${r.custom ? `<span class="sk-pw-ring sk-pw-glyph${red ? " r" : ""}">★</span>` : `<span class="sk-pw-ring${red ? " r" : ""}"><img src="${SKILL_ICONS[r.icon] || ""}" alt=""></span>`}<span class="sk-pw-rn">${presetEsc(r.name)}<small>${r.val}</small></span>${r.custom ? "" : `<span class="sk-pw-lv${red ? " r" : ""}">Lv.${r.lv}/${r.max}</span>`}</div>`).join("") : '<p class="sk-pw-none">ไม่มี</p>';
+      const off = on => on ? ' <span class="sk-pw-offtag">ปิดอยู่</span>' : "";
+      tiles = `<div class="sk-pw-tile"><h4>สเตตัส<span class="sk-pw-lvpill">LV <b>${s.lv}</b></span></h4><div class="sk-pw-bars">${bars}</div></div>
+        <div class="sk-pw-tile"><h4>บัฟ${off(b.buffsOff)}</h4><div class="sk-pw-rows">${list(b.buffs, false)}</div><h4 class="r">ดีบัฟ${off(b.debuffsOff)}</h4><div class="sk-pw-rows">${list(b.debuffs, true)}</div></div>
+        <div class="sk-pw-tile sk-pw-set"><span class="sk-pw-srv"><img src="${SKILL_ICONS["server_" + b.srv] || ""}" alt="">ป๊อปอัปบัฟ: ${{ og: "BB", tot: "ToT", tto: "TTO" }[b.srv]}</span><span class="sk-pw-flag${b.buffsOff ? " is-off" : ""}"><i></i>บัฟ${b.buffsOff ? "ปิด" : "เปิด"}อยู่</span><span class="sk-pw-flag${b.debuffsOff ? " is-off" : ""}"><i></i>ดีบัฟ${b.debuffsOff ? "ปิด" : "เปิด"}อยู่</span>${move}</div>`;
+    } else {
+      tiles = `<div class="sk-pw-tile sk-pw-empty"><p>${inUse ? "ยังไม่มีค่าที่บันทึก ชุดนี้จะเก็บสเตตัสและบัฟให้เองเมื่อแก้ค่าครั้งแรก" : "ยังไม่มีค่าที่บันทึก กด <b>เริ่มชุดนี้จากค่าปัจจุบัน</b> เพื่อเก็บสเตตัสและบัฟที่ใช้อยู่ตอนนี้ไว้ในชุดนี้"}</p></div><div class="sk-pw-tile sk-pw-set">${move}</div>`;
+    }
     const backdrop = document.createElement("div");
     backdrop.className = "sk-server-backdrop" + (quiet ? " is-quiet" : "");
     backdrop.setAttribute("data-role", "preset-win-backdrop");
@@ -17686,54 +17777,64 @@ function mountSkillCooldownLookup(root){
       <div class="sk-preset-win-head"><h3 class="sk-preset-win-title" id="skPresetWinTitle">PRESET · ${presetEsc((typeof CLASS_TH_NAMES !== "undefined" && CLASS_TH_NAMES[cls]) || cls)}</h3>
         <button type="button" class="sk-preset-win-reset" data-role="preset-reset">รีเซ็ตเป็นค่าเริ่มต้น</button>
         <button type="button" class="sk-preset-win-x" data-role="preset-win-close" aria-label="ปิด">×</button></div>
-      <div class="sk-preset-cards">${cards}</div>
+      <div class="sk-pw-tabs" role="tablist">${tabs}</div>
+      <div class="sk-pw-grid">
+        <div class="sk-pw-tile sk-pw-id">${inUse ? `<div class="sk-pw-art${s ? "" : " is-empty"}">${art}</div>` : `<button type="button" class="sk-pw-art${s ? "" : " is-empty"}" data-role="preset-use" title="คลิกเพื่อใช้ชุดนี้" aria-label="ใช้ PRESET ${i + 1}">${art}</button>`}
+          <input type="text" class="sk-pw-name" data-field="name" maxlength="${PRESET_NAME_MAX}" placeholder="ชื่อชุดที่ ${i + 1}" value="${presetEsc(lab.name)}" aria-label="ชื่อ PRESET ${i + 1}">
+          <textarea class="sk-pw-desc" data-field="desc" maxlength="${PRESET_DESC_MAX}" rows="3" placeholder="คำอธิบาย เช่น ใช้ตอนไหน ใส่ของอะไร" aria-label="คำอธิบาย PRESET ${i + 1}">${presetEsc(lab.desc)}</textarea>
+          ${use}</div>
+        ${tiles}
+      </div>
     </div>`;
     backdrop.addEventListener("click", (e) => {
       if (e.target === backdrop || e.target.closest('[data-role="preset-win-close"]')) { closePresetWindow(); return; }
       if (e.target.closest('[data-role="preset-reset"]')) { presetConfirmReset(backdrop, cls); return; }
       if (e.target.closest('[data-role="preset-confirm-no"]') || e.target.matches(".sk-preset-confirm")) { backdrop.querySelector(".sk-preset-confirm").remove(); return; }
       if (e.target.closest('[data-role="preset-confirm-yes"]')) { presetReset(cls); return; }
-      const use = e.target.closest('[data-role="preset-use"]');
-      if (use) presetUseSlot(Number(use.closest(".sk-preset-card").dataset.slot));
+      const tab = e.target.closest('[data-role="preset-tab"]');
+      if (tab) { openPresetWindow(true, Number(tab.dataset.slot), true); return; }
+      const mv = e.target.closest('[data-role="preset-move"]');
+      if (mv) { const to = i + Number(mv.dataset.step); if (to >= 0 && to < PRESET_SLOTS) presetMove(cls, i, to); return; }
+      if (e.target.closest('[data-role="preset-use"]')) presetUseSlot(i);
     });
-    // Name / description autosave on every keystroke (the window is not re-rendered while open, so focus stays put).
+    // Name / description autosave on every keystroke (the window is only rebuilt by tabs, moves and reset, so focus stays put).
     backdrop.addEventListener("input", (e) => {
       const f = e.target.dataset && e.target.dataset.field;
       if (!f) return;
-      const i = Number(e.target.closest(".sk-preset-card").dataset.slot);
       en.labels[i][f] = e.target.value.slice(0, f === "name" ? PRESET_NAME_MAX : PRESET_DESC_MAX);
+      if (f === "name") { const t = backdrop.querySelector(".sk-pw-tab.is-on .sk-pw-lbl"); if (t) t.textContent = label(i); }
       presetSaveAll(); renderPresetBar();
     });
-    // Reorder: drag a portrait onto another card. Position is the number, so the leftmost card is always PRESET 1.
+    // Reorder: drag a tab onto another. Position is the number, so the leftmost tab is always PRESET 1.
     let dragFrom = null;
     const clearDrag = () => backdrop.querySelectorAll(".is-dragging, .is-drop").forEach(c => c.classList.remove("is-dragging", "is-drop"));
     backdrop.addEventListener("dragstart", (e) => {
-      const card = e.target.closest && e.target.closest(".sk-preset-card");
-      if (!card || !e.target.closest(".sk-preset-card-art")) return;
-      dragFrom = Number(card.dataset.slot);
-      card.classList.add("is-dragging");
+      const tab = e.target.closest && e.target.closest(".sk-pw-tab");
+      if (!tab) return;
+      dragFrom = Number(tab.dataset.slot);
+      tab.classList.add("is-dragging");
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", String(dragFrom));
     });
     backdrop.addEventListener("dragover", (e) => {
-      const card = e.target.closest && e.target.closest(".sk-preset-card");
-      if (dragFrom === null || !card) return;
+      const tab = e.target.closest && e.target.closest(".sk-pw-tab");
+      if (dragFrom === null || !tab) return;
       e.preventDefault();
-      backdrop.querySelectorAll(".is-drop").forEach(c => { if (c !== card) c.classList.remove("is-drop"); });
-      card.classList.toggle("is-drop", Number(card.dataset.slot) !== dragFrom);
+      backdrop.querySelectorAll(".is-drop").forEach(c => { if (c !== tab) c.classList.remove("is-drop"); });
+      tab.classList.toggle("is-drop", Number(tab.dataset.slot) !== dragFrom);
     });
     backdrop.addEventListener("drop", (e) => {
-      const card = e.target.closest && e.target.closest(".sk-preset-card");
-      if (dragFrom === null || !card) return;
+      const tab = e.target.closest && e.target.closest(".sk-pw-tab");
+      if (dragFrom === null || !tab) return;
       e.preventDefault();
-      const from = dragFrom, to = Number(card.dataset.slot);
+      const from = dragFrom, to = Number(tab.dataset.slot);
       dragFrom = null; clearDrag();
       if (to !== from) presetMove(cls, from, to);
     });
     backdrop.addEventListener("dragend", () => { dragFrom = null; clearDrag(); });
     document.body.appendChild(backdrop);
-    const first = backdrop.querySelector(".sk-preset-card.is-active .sk-preset-card-name") || backdrop.querySelector(".sk-preset-card-name");
-    softFocus(first);
+    if (focusTab) { const t = backdrop.querySelector(".sk-pw-tab.is-on"); if (t) t.focus(); }
+    else softFocus(backdrop.querySelector(".sk-pw-name"));
   }
   // Move a preset (stats, buffs, name, description) from position "from" to "to"; the others shift over and the one in
   // use stays selected wherever it ends up. Undoable with Ctrl+Z like a switch.
@@ -17745,7 +17846,7 @@ function mountSkillCooldownLookup(root){
     move(en.slots); move(en.labels); move(en.colors); move(order);   // the portrait colour travels with the preset
     if (en.active !== null) en.active = order.indexOf(en.active);
     presetSaveAll(); renderPresetBar();
-    openPresetWindow(true);
+    openPresetWindow(true, to, true);   // keep showing the moved preset
   }
   // Reset asks first, inside the window (Esc or a click outside the box cancels).
   function presetConfirmReset(backdrop, cls){
@@ -17872,6 +17973,15 @@ function mountSkillCooldownLookup(root){
     else if (document.querySelector(".sk-preset-confirm")) document.querySelector(".sk-preset-confirm").remove();   // Esc cancels the reset first
     else if (document.querySelector('[data-role="preset-win-backdrop"]')) closePresetWindow();
     else if (document.querySelector('[data-role="server-backdrop"]')) hideServerPopup();
+  });
+  // ← / → step through the presets while the PRESET window is open (never while typing a name or description).
+  document.addEventListener("keydown", (e) => {
+    if ((e.key !== "ArrowLeft" && e.key !== "ArrowRight") || !document.querySelector('[data-role="preset-win-backdrop"]')) return;
+    if (document.querySelector('[data-role="preset-backdrop"], .sk-preset-confirm')) return;
+    const ae = document.activeElement;
+    if (ae && ae.matches("input, textarea")) return;
+    e.preventDefault();
+    openPresetWindow(true, (presetWinSel + (e.key === "ArrowRight" ? 1 : PRESET_SLOTS - 1)) % PRESET_SLOTS, true);
   });
   const enemyInfoWrap = $('[data-role="enemy-info-wrap"]', root);
   const enemyInfoBtn = $('[data-role="enemy-info-btn"]', root);
@@ -23470,10 +23580,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
   // Custom entries have one level, so they wrap as on / off pills under their section (✎ edit, × delete).
+  function customVal(e){
+    if (e.kind === "stat" || e.kind === "enemyStat") return bdLvSigned(e.value) + " " + (e.stat === "all" ? "ทุกสเตตัส" : e.stat.toUpperCase());
+    return e.kind === "finalMult" ? "+" + e.value + "%" : bdLvSigned(+(e.value * 100).toFixed(2)) + "%";
+  }
   function customPill(e){
     const on = activeCustom.has(e.id), red = CUSTOM_BD_KINDS[e.kind] === "debuff", st = e.kind === "stat" || e.kind === "enemyStat";
-    const val = st ? bdLvSigned(e.value) + " " + (e.stat === "all" ? "ทุกสเตตัส" : e.stat.toUpperCase())
-      : e.kind === "finalMult" ? "+" + e.value + "%" : bdLvSigned(+(e.value * 100).toFixed(2)) + "%";
+    const val = customVal(e);
     const col = !on && st && e.stat !== "all" ? ` style="color:var(--stat-${e.stat})"` : "";
     return `<span class="sk-lv-pill${on ? " on" : ""}${red ? " r" : ""}"><button type="button" data-role="bd-custom" data-id="${e.id}" aria-pressed="${on}">★ ${bdEsc(e.name)} <b${col}>${val}</b></button><button type="button" class="sk-lv-pa" data-role="bd-edit" data-id="${e.id}" aria-label="แก้ไข ${bdEsc(e.name)}" title="แก้ไข">&#9998;</button><button type="button" class="sk-lv-pa" data-role="bd-del" data-id="${e.id}" aria-label="ลบ ${bdEsc(e.name)}" title="ลบ">&times;</button></span>`;
   }
@@ -23788,6 +23901,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const ae = document.activeElement;
     // Never while typing anywhere: the search box, a stat field, a preset name / description, a buff form field.
     if (root.hidden || ae === searchEl || (ae && (ae.matches("input, textarea, select") || ae.isContentEditable))) return;
+    if (document.querySelector('[data-role="preset-win-backdrop"]')) return;   // the PRESET window uses ← / → for its presets
     if (e.key === "ArrowLeft"){ e.preventDefault(); navigateSkill(-1); }
     else if (e.key === "ArrowRight"){ e.preventDefault(); navigateSkill(1); }
   });
@@ -28270,7 +28384,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T05:16:53.980Z","counts":{"1":38,"2":59,"3":34,"4":23,"5":51,"6":45,"7":31,"8":22,"9":24,"10":40,"11":38,"12":13,"13":5,"14":42,"15":51,"16":30,"17":51,"18":54,"19":30,"20":56,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":32,"31":32,"32":7,"33":7,"34":0,"35":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T05:52:23.683Z","counts":{"1":40,"2":60,"3":34,"4":23,"5":53,"6":47,"7":34,"8":22,"9":24,"10":42,"11":40,"12":13,"13":5,"14":43,"15":51,"16":31,"17":53,"18":55,"19":30,"20":58,"21":31,"22":38,"23":45,"24":10,"25":18,"26":16,"27":12,"28":17,"29":33,"30":32,"31":33,"32":7,"33":9,"34":1,"35":3}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31974,6 +32088,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T05:52:24.459Z","feat(bible): the PRESET window shows one preset at a time: folder tabs on top (face, number, name, in-use mark; click, arrow keys or drag to reorder), then the portrait with name / description / use, the stats as bars, the saved buffs and debuffs with their levels, and the popup server, quick switches and move buttons"],
     ["2026-10-19T05:16:54.593Z","feat(bible): the Buff / Debuff popups and the Chameleon sim's Mods popup become level tables that never scroll: one cell per level with its value, the row icon follows the picked level, 8 stat chips, custom entries as pills, undo; shorter rows, two columns or a zoom keep them on one screen"],
     ["2026-10-19T05:06:23.747Z","feat(bible): two new class guides by หนมผิงช่วยเหลือประชาชน: #34 กระต่ายยากครอบจักรวาล 12/8 PVP (TTO Rabbit) and #35 PVE ชิลๆ ใช้ของน้อย (TTO Sheep)"],
     ["2026-10-19T04:32:52.258Z","feat(bible): in the Chameleon attack sim, holding any icon that has a skill details card for 0.5 s opens that card in a new tab (skills, the Fatal Strike / Left Stride slots, the crit and poison gauges, the log tags, the class face = Combo), and the rank arcs sit evenly around their rings"],
