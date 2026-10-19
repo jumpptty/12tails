@@ -295,6 +295,7 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 ### chm_piercingVenom1 (Piercing Venom, #244) (verified 2026-10-01)
 
 - Passive, Lv 28/Bn 16. `getPiercingVenomLv()` = 1 (2 with Deadly Venom) (`Chameleon.cs:8912`). Combo/Clear Arrow `+ 6 × lv × target poison lv` (`Chameleon_nAttack.cs:499-502`) and each Charge Attack swing the same (`Chameleon.cs:17003`, `:17036`).
+- **Robots (verified 2026-10-19):** the bonus reads `getStatusLv("poison")` only, and `RPC_AddStatus` refuses `poison` on any `eRace.Robots` target (`CharacterControl.cs:10833`, IMMUNE −84), so on a Robot the bonus is always 0, even with Rusty Decay's `rust` on it.
 - **Tooltip discrepancy:** "+4 dmg per poison lv" (`ChameleonSkill_thai.cs:431`); the code adds 6.
 
 ### chm_poisonVolley1-2 (Poison Volley, #251-252) (verified 2026-10-01)
@@ -422,6 +423,7 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 
 - MP 6/8/10/12, SP 6/8/10/12 **blue** (threshold), Lv/Bn 3/0, 9/1, 15/2, 21/3, instant. CD `agiAdjust(30)` (`Chameleon.cs:26400`).
 - `RPC_fatalStrike` (`:26159-26607`): `RPC_AddStatus("fatalStrike", sLv + (ExtraArrows ? 1 : 0), chaAdjust(12), 5 + (ExtraArrows ? 5 : 0), …)` (`:26313`). The status value is an arrow counter: each `RPC_nAttack_fire` / `RPC_clearArrow_fire` reads the level, passes it to the arrow (`+6 × lv` damage) and decrements the value, removing the status at 0 (`:8494-8530`, `:9036-9077`). Left Stride arrows (and the Double Strider clone's) also use `RPC_nAttack_fire`, so they consume it too.
+- **Cast lock (verified 2026-10-19):** the coroutine sets `actionState = "attack"`, `myCommand = "fatalStrike"` and the cooldown, waits **0.3 s**, applies the status, waits **0.2 s**, then returns to `standby` (`Chameleon.cs:26159-26607`, yields `WaitForSeconds(0.3f)` / `(0.2f)`), so the Chameleon is busy for **0.5 s** per cast. The Bible's Chameleon attack sim used 0.7 s with no source until 2026-10-19.
 - **Status `fatalStrike`:** Buff (`StatusData.cs:6686`) + Magical (`:5717`); only a Chameleon can receive it (`CharacterControl.cs:12421`). No crit effect: the old card note "+5% Critical Rate" had no source.
 - **Immunity gate:** see Immunity (`Chameleon.cs:7904`).
 
@@ -429,6 +431,7 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 
 - SP −12/−18 (red), no MP, Lv/Bn 7/2, 19/6, instant (needs a target closer than `18 + 4 × FR`, `Chameleon.cs:7834`). CD `agiAdjust(60)` (`:27097`). The card's former MP 4 / SP 12 were wrong.
 - `RPC_leftStride` (`:26607-27821`): runs sideways at `runSpeed + 1` and fires `2 × sLv + 1` arrows (`:27058`) with `RPC_nAttack_fire` toward the target (`:26943-26982`), i.e. real Combo arrows: Combo damage at the learned Combo rank, crit, Fatal Strike, Piercing Venom, Poison Arrow, `sp++` and item procs all apply. Double Strider (#423) spawns a clone that fires the same arrow from its own position each time (`:26998-27043`).
+- **Timing (verified 2026-10-19):** the coroutine waits **0.366 s** before the first arrow, **0.433 s** between arrows and **0.2 s** after the last one before `standby` (`Chameleon.cs:26607-27821`, yields `WaitForSeconds(0.366f)` / `(0.433f)` / `(0.2f)`): 5 arrows at rank 2 take 0.366 + 4 × 0.433 + 0.2 = 2.298 s. The Double Strider clone fires at the same moments.
 - **Card:** `rawModel` = the Combo model with a Combo-rank dep; hit count `(2 × rank + 1) × 2` with Double Strider.
 
 ### chm_rightStride1-2 (Right Stride, #322, #324) (verified 2026-10-01)
