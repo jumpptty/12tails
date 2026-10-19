@@ -5179,55 +5179,86 @@
     display:flex; align-items:center; justify-content:center; padding:16px;
   }
   .sk-bd-popup{
-    /* zoom:.8 shrinks the popup and everything in it ~20%; max-height is divided by the same factor so it still fits the viewport */
-    zoom:.8; width:100%; max-width:640px; max-height:calc((100vh - 32px) / .8); overflow:auto;
+    /* level table (user 2026-10-19): sized by its content, never scrolls; bdLvFit() picks the layout (or a zoom) that fits */
+    --lv-cw:56px; --lv-rh:40px; --lv-ring:30px; --lv-nw:200px;
+    width:max-content; max-width:100%; overflow:hidden;
     background:var(--bd-bg), #14130f; border:1px solid var(--bd-edge); border-left:3px solid var(--bd-accent); border-radius:6px;
-    box-shadow:var(--bd-shadow), 0 20px 60px rgba(0,0,0,0.6); padding:18px 20px 20px; display:flex; flex-direction:column; gap:18px;
+    box-shadow:var(--bd-shadow), 0 20px 60px rgba(0,0,0,0.6); padding:14px 16px 16px; display:flex; flex-direction:column; gap:10px;
     font-family:'Prompt', sans-serif;
   }
+  .sk-bd-popup.is-compact{--lv-cw:48px; --lv-rh:32px; --lv-ring:24px}
   .sk-bd-head{display:flex; align-items:center; gap:10px}
   .sk-bd-head svg{width:24px; height:24px; fill:color-mix(in srgb, var(--bd-accent) 35%, transparent); stroke:var(--bd-accent); stroke-width:2; stroke-linejoin:round}
   .sk-bd-title{font-size:16px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--bd-title); text-shadow:0 1px 2px rgba(0,0,0,0.5)}
   .sk-bd-close{margin-left:auto; border:none; background:none; color:var(--bd-label); font-size:24px; line-height:1; cursor:pointer; padding:0 4px}
   .sk-bd-close:hover{color:var(--bd-title)}
-  .sk-bd-sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:8px}
-  .sk-bd-sec-title{font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--bd-label)}
-  .sk-bd-readout{font-size:18px; font-weight:700; color:#ede8df; font-family:'JetBrains Mono', 'Prompt', monospace; font-variant-numeric:tabular-nums}
-  .sk-bd-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:8px}
-  .sk-bd-item{
-    display:flex; align-items:center; gap:12px; text-align:left; padding:10px 12px; cursor:pointer;
-    background:rgba(12,11,9,0.85); border:1px solid var(--bd-edge); border-radius:4px; color:var(--bd-label);
-    box-shadow:inset 0 1px 4px rgba(0,0,0,0.6); font-family:inherit;
-    transition:border-color .15s ease, box-shadow .15s ease, color .15s ease;
+  .sk-bd-undo{margin-left:auto; width:32px; height:32px; flex:none; border-radius:50%; border:1px solid var(--bd-edge); background:none; color:var(--bd-label); font-size:16px; line-height:1; cursor:pointer}
+  .sk-bd-undo:hover:not(:disabled){color:var(--bd-title); border-color:var(--bd-accent)}
+  .sk-bd-undo:disabled{opacity:.35; cursor:default}
+  .sk-bd-undo + .sk-bd-close{margin-left:0}
+  /* Level table: one row per entry, one cell per level (bdLvTable). Two column groups sit one under the other, or side by side (.is-two). */
+  .sk-lv-grid{display:grid; grid-template-columns:var(--cols1); gap:4px; align-items:center}
+  .sk-lv-grid.g2{margin-top:4px}
+  .sk-lv-grid.g2 > .sk-lv-h{display:none}
+  .is-two .sk-lv-cols{display:flex; align-items:flex-start; gap:22px}
+  .is-two .sk-lv-grid{grid-template-columns:var(--cols2)}
+  .is-two .sk-lv-grid.g2{margin-top:0; padding-left:22px; border-left:1px solid var(--bd-edge)}
+  .is-two .sk-lv-grid.g2 > .sk-lv-h{display:block}
+  .is-two .sk-lv-grid > .x{display:none}
+  .sk-lv-h{font-size:12px; font-weight:600; color:#a39a86; text-align:center; padding-top:2px}
+  .sk-lv-h.l{text-align:left}
+  .sk-lv-sec{grid-column:1 / -1; display:flex; align-items:center; gap:10px; min-height:28px; padding-top:6px; font-size:13px; font-weight:600; color:#f1d27a}
+  .sk-lv-sec.r{color:#f3a19b}
+  .sk-lv-ro{margin-left:auto; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px}
+  .sk-lv-chip{display:inline-flex; align-items:center; justify-content:center; gap:4px; min-width:0; padding:1px 9px; border:1px solid currentColor; border-radius:999px; font-size:12px; white-space:nowrap}
+  .sk-lv-chip b{font-family:'JetBrains Mono','Prompt',monospace}
+  .sk-lv-chip.z{opacity:.35}
+  .sk-lv-sums{grid-column:1 / -1; display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:4px; padding-bottom:2px}
+  .sk-lv-n{display:flex; align-items:center; gap:9px; min-width:0; height:var(--lv-rh); font-size:14px; font-weight:600; color:#ede8df; white-space:nowrap}
+  .sk-lv-n.off{color:#a39a86}
+  .sk-lv-t{display:flex; flex-direction:column; min-width:0; line-height:1.15}
+  .sk-lv-t > span{overflow:hidden; text-overflow:ellipsis}
+  .sk-lv-t small{font-size:11px; font-weight:600}
+  .sk-lv-ring{position:relative; flex:none; width:var(--lv-ring); height:var(--lv-ring); border-radius:50%; overflow:hidden; background:#0f0e0c; box-shadow:0 0 0 2px rgba(212,175,55,.9)}
+  .sk-lv-ring.r{box-shadow:0 0 0 2px rgba(229,83,75,.9)}
+  .sk-lv-ring img{position:absolute; inset:0; width:100%; height:100%; transform:scale(1.3)}
+  .sk-lv-n.off .sk-lv-ring{box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+  .sk-lv-n.off .sk-lv-ring img{filter:grayscale(1) brightness(.5)}
+  .sk-lv-c{height:var(--lv-rh); min-width:0; padding:0; border:0; border-radius:9px; background:rgba(255,255,255,.035); color:#a39a86; font:700 13px 'JetBrains Mono','Prompt',monospace; cursor:pointer}
+  .sk-lv-c:hover{background:rgba(255,255,255,.08); color:#ede8df}
+  .sk-lv-c.o{font:600 12px 'Prompt', sans-serif}
+  .sk-lv-c.o.sel{background:#3a352c; color:#ede8df}
+  .sk-lv-c.sel:not(.o){background:var(--gold); color:#1a1205; box-shadow:0 0 14px rgba(212,175,55,.35)}
+  .sk-lv-c.sel.r:not(.o){background:#e5534b; color:#fff; box-shadow:0 0 14px rgba(229,83,75,.35)}
+  /* custom entries: one level each, so on / off pills that wrap under their section */
+  .sk-lv-cus{grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px; padding:2px 0 4px}
+  .sk-lv-pill{display:inline-flex; align-items:center; border:1px solid rgba(212,175,55,.32); border-radius:999px; background:rgba(255,255,255,.035); color:#a39a86; font-size:13px}
+  .sk-lv-pill button{border:0; background:none; color:inherit; font:inherit; cursor:pointer; padding:4px 3px 4px 12px; white-space:nowrap}
+  .sk-lv-pill b{margin-left:4px; font-family:'JetBrains Mono','Prompt',monospace}
+  .sk-lv-pill .sk-lv-pa{padding:4px 5px; font-size:14px; opacity:.7}
+  .sk-lv-pill .sk-lv-pa:last-child{padding-right:11px}
+  .sk-lv-pill .sk-lv-pa:hover{opacity:1}
+  .sk-lv-pill.on{background:var(--gold); border-color:var(--gold); color:#1a1205}
+  .sk-lv-pill.on.r{background:#e5534b; border-color:#e5534b; color:#fff}
+  @media (max-width:600px){
+    .sk-bd-popup, .sk-bd-popup.is-compact{--lv-nw:92px; --lv-cw:minmax(0, 1fr)}
+    .sk-bd-popup{--lv-ring:22px; --lv-rh:34px; padding:12px 10px}
+    .sk-bd-popup.is-compact{--lv-ring:20px; --lv-rh:28px}
+    .sk-bd-head{gap:6px}
+    .sk-bd-servers{margin-left:4px; gap:4px}
+    .sk-bd-servers .sk-server-btn{width:32px; height:32px}
+    .sk-lv-grid{gap:3px}
+    .sk-lv-n{gap:6px; font-size:11.5px; height:auto; min-height:var(--lv-rh); white-space:normal}
+    .sk-lv-t > span{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.1}
+    .sk-lv-t small{font-size:10px}
+    .sk-lv-c, .sk-lv-c.o{font-size:10.5px; border-radius:7px}
+    .sk-lv-lp{display:none}
+    .sk-lv-sec{font-size:12px; flex-wrap:wrap}
+    .sk-lv-sums{grid-template-columns:repeat(4, minmax(0, 1fr))}
+    .sk-lv-chip{font-size:11px; padding:1px 6px}
   }
-  .sk-bd-item img{width:48px; height:48px; flex:none; border-radius:8px; filter:grayscale(100%); opacity:.5; transition:filter .15s ease, opacity .15s ease}
-  .sk-bd-item:hover{border-color:var(--bd-accent)}
-  .sk-bd-item:hover img{opacity:.85}
-  .sk-bd-item.on{border-color:var(--bd-accent); color:#ede8df; box-shadow:0 0 6px var(--bd-glow), inset 0 1px 4px rgba(0,0,0,0.6)}
-  .sk-bd-item.on img{filter:none; opacity:1}
-  .sk-bd-item-text{display:flex; flex-direction:column; gap:2px; min-width:0}
-  .sk-bd-item-name{font-size:13px; font-weight:700; line-height:1.25; letter-spacing:.3px}
-  .sk-bd-item-desc{font-size:12px; font-weight:600; color:var(--bd-accent); font-family:'JetBrains Mono', 'Prompt', monospace; font-variant-numeric:tabular-nums; opacity:.7}
-  .sk-bd-item.on .sk-bd-item-desc{opacity:1}
-  .sk-bd-item-tag{margin-left:auto; flex:none; align-self:flex-start; font-size:9px; font-weight:700; letter-spacing:.6px; color:var(--bd-label); opacity:.7}
-  .sk-bd-item.on .sk-bd-item-tag{color:var(--bd-accent); opacity:1}
-  .sk-bd-pips{margin-left:auto; flex:none; align-self:center; display:flex; gap:4px; align-items:center; padding:4px 0}
-  .sk-bd-pips .sk-pip{width:12px; height:12px; border-radius:50%; box-sizing:border-box; border:1.5px solid var(--bd-label); opacity:.5; cursor:pointer; position:relative; transition:transform .12s ease, background-color .15s ease, border-color .15s ease, opacity .15s ease}
-  .sk-bd-pips .sk-pip::after{content:''; position:absolute; inset:-4px; border-radius:50%}
-  .sk-bd-pips .sk-pip.on{background:var(--bd-accent); border-color:var(--bd-accent); opacity:1}
-  .sk-bd-pips .sk-pip:hover{transform:scale(1.25); border-color:var(--bd-accent); opacity:1}
-  /* Custom buffs/debuffs (2026-09-20): add button, rows with edit/delete, inline form. */
-  .sk-bd-sec-left{display:flex; align-items:baseline; gap:10px}
-  .sk-bd-add{border:1px solid var(--bd-edge); background:transparent; color:var(--bd-accent); font:600 10px 'Prompt', sans-serif; letter-spacing:.6px; text-transform:uppercase; padding:1px 8px; border-radius:4px; cursor:pointer}
+  .sk-bd-add{border:1px dashed var(--bd-edge); background:transparent; color:var(--bd-accent); font:600 12px 'Prompt', sans-serif; padding:1px 10px; border-radius:999px; cursor:pointer}
   .sk-bd-add:hover{border-color:var(--bd-accent); color:var(--bd-title)}
-  .sk-bd-citem{position:relative; display:flex}
-  .sk-bd-citem .sk-bd-item{flex:1; min-width:0}
-  .sk-bd-glyph{width:48px; height:48px; flex:none; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px dashed var(--bd-edge); opacity:.7}
-  .sk-bd-glyph svg{width:26px; height:26px; fill:color-mix(in srgb, var(--bd-accent) 30%, transparent); stroke:var(--bd-accent); stroke-width:1.6; stroke-linejoin:round}
-  .sk-bd-item.on .sk-bd-glyph{opacity:1}
-  .sk-bd-cact{position:absolute; right:6px; bottom:4px; display:flex; gap:2px}
-  .sk-bd-cact button{border:none; background:none; color:var(--bd-label); font-size:14px; line-height:1; padding:2px 5px; cursor:pointer; opacity:.7}
-  .sk-bd-cact button:hover{color:var(--bd-title); opacity:1}
   .sk-bd-form{grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px; border:1px dashed var(--bd-edge); border-radius:6px}
   .sk-bd-in{background:rgba(12,11,9,0.85); color:#ede8df; border:1px solid var(--bd-edge); border-radius:4px; padding:5px 6px; font:600 12px 'Prompt', sans-serif; min-width:0}
   .sk-bd-in:focus{outline:none; border-color:var(--bd-accent)}
@@ -5247,9 +5278,7 @@
   .sk-bd-fbtn{border:1px solid var(--bd-edge); background:transparent; color:var(--bd-label); font:700 11px 'Prompt', sans-serif; letter-spacing:.5px; text-transform:uppercase; padding:5px 10px; border-radius:4px; cursor:pointer}
   .sk-bd-fbtn.is-primary{background:var(--bd-accent); border-color:var(--bd-accent); color:#14130f}
   .sk-bd-err{flex-basis:100%; color:#ff8a80; font-size:11px; font-weight:600}
-  .sk-bd-empty{grid-column:1 / -1; margin:0; font-size:12px; color:var(--bd-label); opacity:.8}
   .sk-stat-bonus.neg{color:#ef5350}
-  @media (max-width:520px){ .sk-bd-grid{grid-template-columns:1fr} }
   .sk-dmg-head{flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px}
   .sk-dmg-label-row{display:flex; align-items:center; gap:5px}
   /* Kills .sk-stat-label's own margin-bottom (meant for stacking above a
@@ -12038,6 +12067,105 @@ const ENEMY_MOD_IDS = ["reduceHit", "miracleDropHit", "amplifyDamage"];
 // not folded additively into damageMod or hitMod -- see finalMultiplierAdjust.
 const FINAL_MULT_MOD_IDS = ["finalMult1", "finalMult2", "finalMult3"];
 
+// ---- Buff / Debuff level tables (user 2026-10-19, variant 4 of 5 mocks) ------------------------------------
+// One row per entry, one cell per level holding that level's value; a click picks the level. Shared by the skill
+// details Buff / Debuff popups and the Chameleon sim's Mods popup. A row's icon and name follow its selected level
+// (Seal of Earth / Heaven, Amplify Damage 1-4, Honor Stand). No scrolling: bdLvFit() takes the first of full size,
+// shorter rows, two columns, two columns with shorter rows that fits the window, and zooms the popup down only when
+// none does.
+const BD_LV_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
+const BD_LV_FMULT = ["+5%", "2×5%", "3×5%"];
+const bdLvSigned = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v);
+function bdLvIcon(def, r){
+  if (r > 0 && typeof def.iconFor === "function") return def.iconFor(r);
+  if (r > 0 && def.icons && def.icons[r]) return def.icons[r];
+  return def.icon;
+}
+function bdLvName(def, r){
+  const n = r > 0 && typeof def.nameFor === "function" ? def.nameFor(r) : (def.names ? def.names[0] : (def.label || def.name || ""));
+  return String(n).replace(/ \(Lv\.\d+\)$/, "");
+}
+function bdLvStatKey(def){ return def.all ? "all" : BD_LV_KEYS.find(k => typeof def[k] === "number"); }
+function bdLvStatTag(def){
+  const k = bdLvStatKey(def);
+  if (k) return k === "all" ? ["ทุกสเตตัส", "var(--gold)"] : [k.toUpperCase(), `var(--stat-${k})`];
+  const m = def.mult && BD_LV_KEYS.find(x => def.mult[x]);
+  return m ? [`${m.toUpperCase()} ×${def.mult[m]} (คูณท้ายสุด)`, `var(--stat-${m})`] : null;
+}
+// Level i's value, read the same way as buffStatBonus() / enemyStatBonus() and the mod calcs.
+function bdLvStatVal(def, i){
+  if (typeof def.statFor === "function") return bdLvSigned(def.statFor(i));
+  const k = bdLvStatKey(def);
+  if (k) return bdLvSigned(def[k] / (def.maxRank || 1) * i);
+  const m = def.mult && BD_LV_KEYS.find(x => def.mult[x]);
+  return m ? "×" + def.mult[m] : "";
+}
+function bdLvModVal(def, i){
+  const d = def.deltas && def.deltas[i] !== undefined ? def.deltas[i] : (typeof def.deltaFor === "function" ? def.deltaFor(i) : def.delta / (def.maxRank || 1) * i);
+  return "+" + +(d * 100).toFixed(2) + "%";
+}
+// The 8 stat chips of a stat section, always in this order; val(k) = that stat's total change. A zero stays, dimmed, so no chip moves.
+function bdLvSums(val){
+  return BD_LV_KEYS.map(k => { const v = val(k); return `<span class="sk-lv-chip${v ? "" : " z"}" style="color:var(--stat-${k})">${k.toUpperCase()} <b>${bdLvSigned(v)}</b></span>`; }).join("");
+}
+// sections: [{ title, red, add, ro, sums, rows: [{ kind, id, def, rank, max, cells, tag }], extra, extraN }]. Built as two column
+// groups split where their heights are closest: one under the other normally, side by side in the popup's "is-two" layout.
+function bdLvTable(sections){
+  const N = Math.max(1, ...sections.flatMap(x => x.rows.map(r => r.max)));
+  const wt = x => x.rows.length + 1 + (x.sums ? 1 : 0) + Math.ceil((x.extraN || 0) / 3);
+  let k = sections.length, best = Infinity;
+  for (let i = 1; i < sections.length; i++){
+    const a = sections.slice(0, i).reduce((n, x) => n + wt(x), 0), b = sections.slice(i).reduce((n, x) => n + wt(x), 0);
+    if (Math.max(a, b) < best){ best = Math.max(a, b); k = i; }
+  }
+  const group = (list, second) => {
+    const n = Math.max(1, ...list.flatMap(x => x.rows.map(r => r.max)));   // this group's own level count (side by side)
+    const x = i => i > n ? " x" : "";
+    let h = `<div class="sk-lv-grid${second ? " g2" : ""}" style="--cols1:var(--lv-nw) repeat(${N + 1}, var(--lv-cw));--cols2:var(--lv-nw) repeat(${n + 1}, var(--lv-cw))">`
+      + `<span class="sk-lv-h l">เลเวล</span><span class="sk-lv-h">ปิด</span>`
+      + Array.from({ length: N }, (_, i) => `<span class="sk-lv-h${x(i + 1)}"><span class="sk-lv-lp">Lv.</span>${i + 1}</span>`).join("");
+    list.forEach(sec => {
+      const r1 = sec.red ? " r" : "";
+      h += `<div class="sk-lv-sec${r1}"><span>${sec.title}</span>${sec.add ? `<button type="button" class="sk-bd-add" data-role="bd-add" data-kind="${sec.add}" title="เพิ่มรายการเอง">+ เพิ่ม</button>` : ""}${sec.sums ? "" : `<span class="sk-lv-ro">${sec.ro || ""}</span>`}</div>`
+        + (sec.sums ? `<div class="sk-lv-sums">${sec.sums}</div>` : "");
+      sec.rows.forEach(r => {
+        const on = r.rank > 0, at = `data-role="bd-lv" data-kind="${r.kind}" data-id="${r.id}"`;
+        h += `<div class="sk-lv-n${on ? "" : " off"}"><span class="sk-lv-ring${r1}"><img src="${SKILL_ICONS[bdLvIcon(r.def, r.rank)] || SKILL_ICONS[r.def.icon] || ""}" alt=""></span><span class="sk-lv-t"><span>${bdLvName(r.def, r.rank)}</span>${r.tag ? `<small style="color:${r.tag[1]}">${r.tag[0]}</small>` : ""}</span></div>`
+          + `<button type="button" class="sk-lv-c o${on ? "" : " sel"}" ${at} data-lv="0" aria-pressed="${!on}">ปิด</button>`;
+        for (let i = 1; i <= N; i++){
+          h += i > r.max ? `<span class="sk-lv-e${x(i)}"></span>`
+            : `<button type="button" class="sk-lv-c${i === r.rank ? " sel" : ""}${r1}" ${at} data-lv="${i}" aria-pressed="${i === r.rank}" title="${bdLvName(r.def, i)} Lv.${i}">${r.cells[i - 1]}</button>`;
+        }
+      });
+      h += sec.extra || "";
+    });
+    return h + "</div>";
+  };
+  return `<div class="sk-lv-cols">${group(sections.slice(0, k), false)}${k < sections.length ? group(sections.slice(k), true) : ""}</div>`;
+}
+// No scrolling: the first layout that fits wins. A layout only counts while every level cell keeps 26 px (phone cells
+// shrink, so a squeezed two-column table would otherwise "fit"). With none fitting, the one that needs the least
+// shrinking is zoomed down to the window.
+const BD_LV_FIT = [[], ["is-compact"], ["is-two"], ["is-two", "is-compact"]];
+function bdLvFit(pop){
+  if (!pop || !pop.isConnected || typeof getComputedStyle !== "function") return;
+  const host = pop.parentElement, cs = getComputedStyle(host);
+  const availW = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const availH = host.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const set = m => { pop.style.zoom = ""; pop.classList.remove("is-compact", "is-two"); m.forEach(c => pop.classList.add(c)); };
+  const cellOk = () => Math.min(...[...pop.querySelectorAll(".sk-lv-c")].map(c => c.offsetWidth)) >= 26;
+  let best = null;
+  for (const m of BD_LV_FIT){
+    set(m);
+    if (m.length && !cellOk()) continue;
+    const z = Math.min(1, availH / pop.offsetHeight, availW / pop.scrollWidth);
+    if (z >= 1) return;
+    if (!best || z > best.z) best = { m, z };
+  }
+  set(best ? best.m : []);
+  if (best) pop.style.zoom = best.z.toFixed(3);
+}
+
 // ---- Custom buffs/debuffs (2026-09-20) --------------------------------------
 // User-created Buff/Debuff popup entries. Pure helpers live at global scope so
 // scripts/validate_skills.js can exercise them. Stored in localStorage (the list
@@ -16458,8 +16586,8 @@ function mountSkillCooldownLookup(root){
   // (deltaCha/deltaLck/... are plain `stat += n`, CharacterControl.cs:21027), the raw stat may go
   // negative; the formulas clamp it themselves (e.g. clamp(DEF + R, 1, 512)). The typed input itself
   // is never modified (the chip under it shows the change).
-  function enemyStatBonus(key){
-    if (debuffsSuspended) return 0;
+  function enemyStatBonus(key, force){
+    if (debuffsSuspended && !force) return 0;
     let n = 0;
     activeEnemyStatDebuffs.forEach((id, r) => {
       const b = bdResolve(ENEMY_STAT_DEBUFFS[id]);
@@ -16495,9 +16623,9 @@ function mountSkillCooldownLookup(root){
     const lv = getDepRank(BISON_OVER_POWER_DEP);
     return n + Math.min(Math.ceil(0.5 * lv * ((parseFloat(atkEl.value) || 0) + n)), 256 * lv);
   }
-  function buffStatBonus(key){
+  function buffStatBonus(key, force){
     let n = 0;
-    if (buffsSuspended) return 0;
+    if (buffsSuspended && !force) return 0;
     const mults = [];
     activeStatBuffs.forEach((id, r) => {
       const b = bdResolve(STAT_BUFFS[id]);
@@ -17341,9 +17469,10 @@ function mountSkillCooldownLookup(root){
       if (root.hidden) return;   // another tool is open; its own Ctrl+Z applies
       const tag = document.activeElement && document.activeElement.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;   // keep the field's own undo
-      // Newest first across the enemy picker and the stat presets.
-      const pe = presetUndoStack[presetUndoStack.length - 1], ee = enemyUndoStack[enemyUndoStack.length - 1];
-      if ((pe && (!ee || pe.at >= (ee.at || 0))) ? undoPreset() : undoEnemyChange()) e.preventDefault();
+      // Newest first across the enemy picker, the stat presets and the Buff / Debuff popups.
+      const tops = [[presetUndoStack, undoPreset], [enemyUndoStack, undoEnemyChange], [bdUndoStack, undoBd]].filter(([st]) => st.length);
+      tops.sort((a, b) => (b[0][b[0].length - 1].at || 0) - (a[0][a[0].length - 1].at || 0));
+      if (tops.length && tops[0][1]()) e.preventDefault();
     }
   });
   // ---- Stat presets (2026-10-05): up to 5 saved player stat sets per class, kept in localStorage ----
@@ -20595,7 +20724,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
             const st = from.getAttribute("aria-checked") || from.getAttribute("aria-pressed");
             if (st === "true" || st === "false") up = st === "true";
             else if (from.classList.contains("on") || from.classList.contains("active")) up = true;
-            else if (from.matches(".sk-bd-item, [data-role='revisedart']")) up = false;   // these show "on" when active
+            else if (from.matches("[data-role='revisedart']")) up = false;   // it shows "on" when active
           }
         }
         if (from && from.getClientRects().length){
@@ -23310,71 +23439,43 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   const debuffBtn = $('[data-role="debuff-open"]', root);
   const buffSwitch = $('[data-role="buff-switch"]', root);
   const debuffSwitch = $('[data-role="debuff-switch"]', root);
-  const modNum = v => "+" + String(+v.toFixed(2));
-  function bdItem(role, id, def, rank){
-    const max = def.maxRank || def.level || 1;
-    const curRank = Math.min(Math.max(0, rank || 0), max);
-    const on = curRank > 0;
-    const iconKey = (on && typeof def.iconFor === "function") ? def.iconFor(curRank)
-      : (on && def.icons && def.icons[curRank]) ? def.icons[curRank]
-      : def.icon;
-    const name = (on && typeof def.nameFor === "function") ? def.nameFor(curRank)
-      : (on && def.names && def.names[curRank]) ? def.names[curRank]
-      : (def.level ? `${def.label || def.name} (Lv.${def.level})` : (def.label || def.name));
-    const desc = (typeof def.descFor === "function") ? def.descFor(curRank) : def.desc;
-    let pips = "";
-    for (let i = 1; i <= max; i++) {
-      pips += `<span class="sk-pip${i <= curRank ? " on" : ""}" data-pip="${i}" aria-hidden="true"></span>`;
-    }
-    return `
-      <button type="button" class="sk-bd-item${on ? " on" : ""}" data-role="${role}" data-id="${id}" data-max="${max}" data-rank="${curRank}" aria-pressed="${on}">
-        <img src="${SKILL_ICONS[iconKey] || SKILL_ICONS[def.icon]}" alt="">
-        <span class="sk-bd-item-text"><span class="sk-bd-item-name">${name}</span><span class="sk-bd-item-desc">${desc}</span></span>
-        <span class="sk-bd-pips" data-role="bd-pips">${pips}</span>
-      </button>`;
+  // Level table rows (bdLvTable): the popup server's built-in entries of one section, each with its level values.
+  function bdRows(kind, ids, defs, map){
+    const stat = kind === "stat" || kind === "estat";
+    return ids.map(id => {
+      const d = bdResolve(defs[id]);
+      if (!d) return null;
+      const max = d.maxRank || d.level || 1;
+      return { kind, id, def: d, rank: Math.min(Math.max(0, map.get(id) || 0), max), max,
+        cells: Array.from({ length: max }, (_, i) => stat ? bdLvStatVal(d, i + 1) : bdLvModVal(d, i + 1)), tag: stat ? bdLvStatTag(d) : null };
+    }).filter(Boolean);
   }
-  function bdFinalMultItem(){
-    const count = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
-    const on = count > 0;
-    let pips = "";
-    for (let i = 1; i <= 3; i++) {
-      pips += `<span class="sk-pip${i <= count ? " on" : ""}" data-pip="${i}" aria-hidden="true"></span>`;
-    }
-    const desc = count === 0 ? "+5% per stack (up to 3 stacks)"
-      : count === 1 ? "+5% final damage"
-      : `+5% each time (${count} stacks, compounding)`;
-    return `
-      <button type="button" class="sk-bd-item${on ? " on" : ""}" data-role="bd-fmult" data-max="3" data-rank="${count}" aria-pressed="${on}">
-        <img src="${SKILL_ICONS["privateServer"]}" alt="">
-        <span class="sk-bd-item-text"><span class="sk-bd-item-name">Final Multiplier</span><span class="sk-bd-item-desc">${desc}</span></span>
-        <span class="sk-bd-pips" data-role="bd-pips">${pips}</span>
-      </button>`;
+  const bdFmultRow = n => ({ kind: "fmult", id: "fmult", def: { icon: "privateServer", label: "Final Multiplier" }, rank: n, max: 3, cells: BD_LV_FMULT });
+  // Undo (Ctrl+Z, or the popup's ↶): every popup change first pushes the popup state, custom entry list included, so a
+  // deleted entry comes back. Ctrl+Z takes the newest of this, the enemy picker and the preset stacks.
+  var bdUndoStack = [];
+  function bdPushUndo(){ bdUndoStack.push({ at: Date.now(), bd: presetBd(), custom: JSON.stringify(customBd) }); if (bdUndoStack.length > 50) bdUndoStack.shift(); }
+  function undoBd(){
+    const u = bdUndoStack.pop();
+    if (!u) return false;
+    customBd = JSON.parse(u.custom); saveCustomBd(customBd);
+    const seen = presetBdSeen;
+    presetBdApply(u.bd);
+    presetBdSeen = seen;   // so the preset autosave (renderPresetBar via renderHero) stores the restored state
+    renderHero();
+    return true;
   }
   const BD_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
   function bdEsc(s){
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
-  function customDesc(e){
-    const sign = e.value > 0 ? "+" : "";
-    if (e.kind === "stat" || e.kind === "enemyStat") return `${sign}${e.value} ${e.stat === "all" ? "ALL STATS" : e.stat.toUpperCase()}`;
-    if (e.kind === "finalMult") return `+${e.value}% final damage`;
-    return `${sign}${e.value} ${e.kind === "dmgMod" ? "dmgMod" : "hitMod"}`;
-  }
-  // Custom rows use a neutral inline glyph (no icon asset); edit/delete sit on the row.
-  function customItem(e){
-    const on = activeCustom.has(e.id);
-    return `
-      <div class="sk-bd-citem">
-        <button type="button" class="sk-bd-item${on ? " on" : ""}" data-role="bd-custom" data-id="${e.id}" aria-pressed="${on}">
-          <span class="sk-bd-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"></path></svg></span>
-          <span class="sk-bd-item-text"><span class="sk-bd-item-name">${bdEsc(e.name)}</span><span class="sk-bd-item-desc">${customDesc(e)}</span></span>
-          <span class="sk-bd-item-tag">${on ? "ON" : "OFF"}</span>
-        </button>
-        <span class="sk-bd-cact">
-          <button type="button" data-role="bd-edit" data-id="${e.id}" aria-label="Edit ${bdEsc(e.name)}" title="Edit">&#9998;</button>
-          <button type="button" data-role="bd-del" data-id="${e.id}" aria-label="Delete ${bdEsc(e.name)}" title="Delete">&times;</button>
-        </span>
-      </div>`;
+  // Custom entries have one level, so they wrap as on / off pills under their section (✎ edit, × delete).
+  function customPill(e){
+    const on = activeCustom.has(e.id), red = CUSTOM_BD_KINDS[e.kind] === "debuff", st = e.kind === "stat" || e.kind === "enemyStat";
+    const val = st ? bdLvSigned(e.value) + " " + (e.stat === "all" ? "ทุกสเตตัส" : e.stat.toUpperCase())
+      : e.kind === "finalMult" ? "+" + e.value + "%" : bdLvSigned(+(e.value * 100).toFixed(2)) + "%";
+    const col = !on && st && e.stat !== "all" ? ` style="color:var(--stat-${e.stat})"` : "";
+    return `<span class="sk-lv-pill${on ? " on" : ""}${red ? " r" : ""}"><button type="button" data-role="bd-custom" data-id="${e.id}" aria-pressed="${on}">★ ${bdEsc(e.name)} <b${col}>${val}</b></button><button type="button" class="sk-lv-pa" data-role="bd-edit" data-id="${e.id}" aria-label="แก้ไข ${bdEsc(e.name)}" title="แก้ไข">&#9998;</button><button type="button" class="sk-lv-pa" data-role="bd-del" data-id="${e.id}" aria-label="ลบ ${bdEsc(e.name)}" title="ลบ">&times;</button></span>`;
   }
   function customForm(kind){
     const f = bdForm, d = f.draft;
@@ -23394,15 +23495,18 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         ${f.error ? `<div class="sk-bd-err" role="alert">${bdEsc(f.error)}</div>` : ""}
       </div>`;
   }
-  // Custom rows of one kind + the open add/edit form for that kind (if any).
+  // Custom pills of one kind + the open add/edit form for that kind (if any); customN = their weight for the column split.
   function customBlock(kind){
-    return customBd.filter(e => e.kind === kind).map(customItem).join("") + (bdForm && bdForm.kind === kind ? customForm(kind) : "");
+    const list = customBd.filter(e => e.kind === kind);
+    return (list.length ? `<div class="sk-lv-cus">${list.map(customPill).join("")}</div>` : "") + (bdForm && bdForm.kind === kind ? customForm(kind) : "");
   }
+  const customN = kind => customBd.filter(e => e.kind === kind).length + (bdForm && bdForm.kind === kind ? 3 : 0);
   function saveCustomForm(){
     if (!bdForm) return;
     const d = bdForm.draft;
     const v = validateCustomBd({ kind: bdForm.kind, name: d.name, stat: d.stat, value: d.value });
     if (!v.ok){ bdForm.error = v.error; renderBdPopup(); return; }
+    bdPushUndo();
     if (bdForm.editId){
       const i = customBd.findIndex(x => x.id === bdForm.editId);
       if (i >= 0) customBd[i] = Object.assign({ id: bdForm.editId }, v.entry);
@@ -23415,42 +23519,40 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     bdForm = null;
     renderBdPopup(); updateBdButtons(); renderHero();
   }
-  function bdSection(title, readout, items, addKind){
-    return `
-      <section>
-        <div class="sk-bd-sec-head"><span class="sk-bd-sec-left"><span class="sk-bd-sec-title">${title}</span>${addKind ? `<button type="button" class="sk-bd-add" data-role="bd-add" data-kind="${addKind}" title="Add your own">+ Add</button>` : ""}</span>${readout ? `<span class="sk-bd-readout">${readout}</span>` : ""}</div>
-        <div class="sk-bd-grid">${items}</div>
-      </section>`;
-  }
   function renderBdPopup(){
     // fitStageToScreen() scales .stage with a transform, which turns it into the containing block
     // for position:fixed -- the backdrop would size to the stage, not the viewport. Host the popup on <body> while open.
     if (!bdOpen){ bdHost.innerHTML = ""; if (bdHost.parentNode === document.body) root.appendChild(bdHost); return; }
     if (bdHost.parentNode !== document.body) document.body.appendChild(bdHost);
-    const dmgMod = playerDamageModCalc(true);
-    const hitMod = enemyHitModCalc(true);
-    const fmPct = Math.round(finalMultCountCalc(true).reduce((s, p) => s + p, 0) * 100) / 100;
     const isBuff = bdOpen === "buff";
     const suspended = isBuff ? buffsSuspended : debuffsSuspended;
-    let body;
+    const chip = t => `<span class="sk-lv-chip">${t}</span>`;
+    const sec = (title, kind, rows, o) => Object.assign({ title, add: kind, rows, red: !isBuff, extra: customBlock(kind), extraN: customN(kind) }, o);
+    let sections;
     if (isBuff){
-      body =
-        bdSection("Stat Buffs", "", Object.keys(STAT_BUFFS).map(id => { const b = bdResolve(STAT_BUFFS[id]); return b ? bdItem("bd-stat", id, b, activeStatBuffs.get(id)) : ""; }).join("") + customBlock("stat"), "stat") +
-        bdSection("Damage Mod", dmgMod.toFixed(2), PLAYER_MOD_IDS.map(id => { const d = bdResolve(MOD_DEFS[id]); return d ? bdItem("bd-mod", id, d, activePlayerMods.get(id)) : ""; }).join("") + customBlock("dmgMod"), "dmgMod") +
-        (!finalMultOnServer() ? "" : bdSection("Final Multiplier &middot; PvE Only", fmPct === 0 ? "" : fmPct === 5 ? "+5%" : (customOn("finalMult").length === 0 ? `+5% × ${finalMultCountCalc(true).length}` : `+${fmPct}%`), bdFinalMultItem() + customBlock("finalMult"), "finalMult"));
+      const dm = playerDamageModCalc(true), steps = finalMultCountCalc(true), fmPct = Math.round(steps.reduce((t, p) => t + p, 0) * 100) / 100;
+      sections = [
+        sec("สเตตัส", "stat", bdRows("stat", Object.keys(STAT_BUFFS), STAT_BUFFS, activeStatBuffs), { sums: bdLvSums(k => buffStatBonus(k, true)) }),
+        sec("Damage Mod", "dmgMod", bdRows("pmod", PLAYER_MOD_IDS, MOD_DEFS, activePlayerMods), { ro: dm === 1 ? "" : chip("×" + dm.toFixed(2)) })
+      ];
+      if (finalMultOnServer()) sections.push(sec("Final Multiplier &middot; PvE", "finalMult", [bdFmultRow(FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length)],
+        { ro: fmPct === 0 ? "" : chip(fmPct === 5 ? "+5%" : (customOn("finalMult").length === 0 ? `+5% × ${steps.length}` : `+${fmPct}%`)) }));
     } else {
-      body =
-        bdSection("Target Hit Mod", hitMod.toFixed(2), ENEMY_MOD_IDS.map(id => { const d = bdResolve(MOD_DEFS[id]); return d ? bdItem("bd-mod", id, d, activeEnemyMods.get(id)) : ""; }).join("") + customBlock("hitMod"), "hitMod") +
-        bdSection("Enemy Stats", "", (Object.keys(ENEMY_STAT_DEBUFFS).map(id => { const b = bdResolve(ENEMY_STAT_DEBUFFS[id]); return b ? bdItem("bd-estat", id, b, activeEnemyStatDebuffs.get(id)) : ""; }).join("") + customBlock("enemyStat")) || `<p class="sk-bd-empty">No enemy stat changes yet &mdash; add one to raise or lower a target stat.</p>`, "enemyStat");
+      const hm = enemyHitModCalc(true);
+      sections = [
+        sec("Target Hit Mod", "hitMod", bdRows("emod", ENEMY_MOD_IDS, MOD_DEFS, activeEnemyMods), { ro: hm === 1 ? "" : chip("×" + hm.toFixed(2)) }),
+        sec("สเตตัสเป้าหมาย", "enemyStat", bdRows("estat", Object.keys(ENEMY_STAT_DEBUFFS), ENEMY_STAT_DEBUFFS, activeEnemyStatDebuffs), { sums: bdLvSums(k => enemyStatBonus(k, true)) })
+      ];
     }
     const svg = isBuff ? '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10"></polygon></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,21 21,14 19,3 5,3 3,14"></polygon></svg>';
     bdHost.innerHTML = `
       <div class="sk-bd-backdrop" data-role="bd-backdrop">
         <div class="sk-bd-popup ${isBuff ? "is-buff" : "is-debuff"}" role="dialog" aria-label="${isBuff ? "Buff" : "Debuff"}">
-          <div class="sk-bd-head">${svg}<span class="sk-bd-title">${isBuff ? "Buff" : "Debuff"}</span>${suspended ? '<span class="sk-bd-suspended">Off</span>' : ""}<div class="sk-bd-servers">${BD_SERVERS.map(srv => serverBtnHtml(srv, srv === bdServer, "bd-server")).join("")}</div><button type="button" class="sk-bd-close" data-role="bd-close" aria-label="Close">&times;</button></div>
-          ${body}
+          <div class="sk-bd-head">${svg}<span class="sk-bd-title">${isBuff ? "Buff" : "Debuff"}</span>${suspended ? '<span class="sk-bd-suspended">Off</span>' : ""}<div class="sk-bd-servers">${BD_SERVERS.map(srv => serverBtnHtml(srv, srv === bdServer, "bd-server")).join("")}</div><button type="button" class="sk-bd-undo" data-role="bd-undo" title="ย้อนกลับ (Ctrl+Z)" aria-label="ย้อนกลับ"${bdUndoStack.length ? "" : " disabled"}>&#8630;</button><button type="button" class="sk-bd-close" data-role="bd-close" aria-label="Close">&times;</button></div>
+          ${bdLvTable(sections)}
         </div>
       </div>`;
+    bdLvFit(bdHost.querySelector(".sk-bd-popup"));
   }
   function updateBdButtons(){
     const customSide = side => Object.keys(CUSTOM_BD_KINDS).filter(k => CUSTOM_BD_KINDS[k] === side).reduce((n, k) => n + customOn(k).length, 0);
@@ -23505,6 +23607,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (e.target.matches('[data-role="bd-backdrop"]') || e.target.closest('[data-role="bd-close"]')){
       bdClose(); return;
     }
+    if (e.target.closest('[data-role="bd-undo"]')){ undoBd(); return; }
     const cAdd = e.target.closest('[data-role="bd-add"]');
     if (cAdd){
       bdForm = { kind: cAdd.dataset.kind, editId: null, draft: { name: "", stat: "atk", value: "" }, error: "" };
@@ -23524,6 +23627,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const cDel = e.target.closest('[data-role="bd-del"]');
     if (cDel){
       const id = cDel.dataset.id;
+      bdPushUndo();
       customBd = customBd.filter(x => x.id !== id);
       activeCustom.delete(id);
       if (bdForm && bdForm.editId === id) bdForm = null;
@@ -23533,48 +23637,30 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const cTog = e.target.closest('[data-role="bd-custom"]');
     if (cTog){
       const id = cTog.dataset.id;
+      bdPushUndo();
       if (activeCustom.has(id)) activeCustom.delete(id); else activeCustom.add(id);
       renderBdPopup(); updateBdButtons(); renderHero(); return;
     }
     const srvBtn = e.target.closest('[data-role="bd-server"]');   // independent of the app theme: only the theme CHANGING moves it (listener below)
     if (srvBtn){
+      if (srvBtn.dataset.server === bdServer) return;
+      bdPushUndo();
       bdServer = srvBtn.dataset.server;
       renderBdPopup(); updateBdButtons(); renderHero(); return;
     }
-    const fmultItem = e.target.closest('[data-role="bd-fmult"]');
-    if (fmultItem){
-      const cur = FINAL_MULT_MOD_IDS.filter(id => activeFinalMultMods.has(id)).length;
-      const targetPip = e.target.closest('[data-pip]');
-      let next;
-      if (targetPip){
-        const p = parseInt(targetPip.dataset.pip, 10);
-        next = (cur === p ? 0 : p);
-      } else {
-        next = (cur + 1) % 4;
-      }
+    const cell = e.target.closest('[data-role="bd-lv"]');
+    if (!cell) return;
+    const id = cell.dataset.id, kind = cell.dataset.kind, lv = parseInt(cell.dataset.lv, 10) || 0;
+    const map = kind === "stat" ? activeStatBuffs : kind === "estat" ? activeEnemyStatDebuffs : kind === "pmod" ? activePlayerMods : activeEnemyMods;
+    const cur = kind === "fmult" ? FINAL_MULT_MOD_IDS.filter(x => activeFinalMultMods.has(x)).length : map.get(id);
+    if (cur === lv) return;
+    bdPushUndo();
+    if (kind === "fmult"){
       activeFinalMultMods.clear();
-      for (let i = 0; i < next; i++) activeFinalMultMods.add(FINAL_MULT_MOD_IDS[i]);
-      renderBdPopup(); updateBdButtons(); renderHero(); return;
-    }
-    const item = e.target.closest('[data-role="bd-mod"], [data-role="bd-stat"], [data-role="bd-estat"]');
-    if (!item) return;
-    const id = item.dataset.id;
-    const map = item.dataset.role === "bd-stat" ? activeStatBuffs
-      : item.dataset.role === "bd-estat" ? activeEnemyStatDebuffs
-      : (PLAYER_MOD_IDS.includes(id) ? activePlayerMods : activeEnemyMods);
-    const max = parseInt(item.dataset.max, 10) || 1;
-    const cur = map.get(id);
-    const targetPip = e.target.closest('[data-pip]');
-    let next;
-    if (targetPip){
-      const p = parseInt(targetPip.dataset.pip, 10);
-      next = (cur === p ? 0 : p);
+      for (let i = 0; i < lv; i++) activeFinalMultMods.add(FINAL_MULT_MOD_IDS[i]);
     } else {
-      next = (cur + 1) > max ? 0 : (cur + 1);
-    }
-    map.set(id, next);
-    if (id === "amplifyDamage") {
-      depRanks["amplifyDamage"] = next;
+      map.set(id, lv);
+      if (id === "amplifyDamage") depRanks["amplifyDamage"] = lv;
     }
     renderBdPopup(); updateBdButtons(); renderHero();
   });
@@ -23590,6 +23676,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && bdOpen) bdClose();
   });
+  addEventListener("resize", () => { if (bdOpen) bdLvFit(bdHost.querySelector(".sk-bd-popup")); });
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
@@ -25959,6 +26046,7 @@ function mountChameleonSim(root) {
   resetBtn2.addEventListener('click', resetSim);
 
   // Damage Modifiers Modal Render & Listeners
+  var chmModalWrap = null;   // on <body> while open: out of the sim's CSS zoom, so the popup fits the real window
   function renderChmModsModal() {
     // Count badge + glow on both Mods buttons, same as the skill tool's Buff/Debuff buttons.
     const onCount = (m) => [...m.values()].filter(r => r > 0).length;
@@ -25969,64 +26057,42 @@ function mountChameleonSim(root) {
       c.hidden = !modCount;
       c.textContent = modCount;
     });
-    const wrap = root.querySelector('#chmModsModalWrap');
+    const wrap = chmModalWrap || (chmModalWrap = root.querySelector('#chmModsModalWrap'));
     if (!wrap) return;
     if (!chmModsOpen) {
       wrap.innerHTML = '';
+      if (wrap.parentNode === document.body) root.querySelector('.chm-sim').appendChild(wrap);
       return;
     }
     const playerDamageModValue = 1 + PLAYER_MOD_IDS.reduce((sum, id) => sum + chmModDelta(id, chmActivePlayerMods), 0);
     const enemyHitModValue = 1 + ENEMY_MOD_IDS.reduce((sum, id) => sum + chmModDelta(id, chmActiveEnemyMods), 0);
     const finalMultCount = chmFinalMultCount();
 
-    // Same markup/classes as the skill tool's Buff/Debuff popup (bdItem / bdSection / renderBdPopup),
-    // which live inside mountSkillCooldownLookup, so they are mirrored here.
-    function chmModItem(id, rankMap) {
-      const def = MOD_DEFS[id];
-      const max = chmModMax(def);
-      const cur = Math.min(Math.max(0, rankMap.get(id) || 0), max);
-      const on = cur > 0;
-      const iconKey = (on && typeof def.iconFor === "function") ? def.iconFor(cur) : (on && def.icons && def.icons[cur]) ? def.icons[cur] : def.icon;
-      const name = (on && typeof def.nameFor === "function") ? def.nameFor(cur) : (on && def.names && def.names[cur]) ? def.names[cur] : (def.level ? `${def.label} (Lv.${def.level})` : def.label);
-      const desc = typeof def.descFor === "function" ? def.descFor(cur) : "";
-      let pips = "";
-      for (let p = 1; p <= max; p++) pips += `<span class="sk-pip${p <= cur ? " on" : ""}" data-pip="${p}" aria-hidden="true"></span>`;
-      return `
-        <button type="button" class="sk-bd-item${on ? " on" : ""}" data-role="chm-mod-toggle" data-mod-id="${id}" data-max="${max}" data-rank="${cur}" aria-pressed="${on}">
-          <img src="${SKILL_ICONS[iconKey] || SKILL_ICONS[def.icon]}" alt="">
-          <span class="sk-bd-item-text"><span class="sk-bd-item-name">${name}</span><span class="sk-bd-item-desc">${desc}</span></span>
-          <span class="sk-bd-pips">${pips}</span>
-        </button>`;
-    }
-    function chmFinalMultItem() {
-      const count = chmFinalMultCount();
-      let pips = "";
-      for (let p = 1; p <= 3; p++) pips += `<span class="sk-pip${p <= count ? " on" : ""}" data-pip="${p}" aria-hidden="true"></span>`;
-      const desc = count === 0 ? "+5% per stack (up to 3 stacks)" : count === 1 ? "+5% final damage" : `+5% each time (${count} stacks, compounding)`;
-      return `
-        <button type="button" class="sk-bd-item${count ? " on" : ""}" data-role="chm-fmult" data-max="3" data-rank="${count}" aria-pressed="${count > 0}">
-          <img src="${SKILL_ICONS["privateServer"]}" alt="">
-          <span class="sk-bd-item-text"><span class="sk-bd-item-name">Final Multiplier</span><span class="sk-bd-item-desc">${desc}</span></span>
-          <span class="sk-bd-pips">${pips}</span>
-        </button>`;
-    }
-    const chmSection = (title, readout, items) => `
-      <section>
-        <div class="sk-bd-sec-head"><span class="sk-bd-sec-left"><span class="sk-bd-sec-title">${title}</span></span><span class="sk-bd-readout">${readout}</span></div>
-        <div class="sk-bd-grid">${items}</div>
-      </section>`;
+    // The same level table as the skill tool's Buff / Debuff popups (bdLvTable / bdLvFit): a cell picks a level.
+    const chmRows = (kind, ids, map) => ids.map(id => {
+      const d = MOD_DEFS[id], max = chmModMax(d);
+      return { kind, id, def: d, rank: Math.min(map.get(id) || 0, max), max, cells: Array.from({ length: max }, (_, i) => bdLvModVal(d, i + 1)) };
+    });
+    const chip = (t) => `<span class="sk-lv-chip">${t}</span>`;
+    const sections = [{ title: 'Damage Mod', rows: chmRows('pmod', PLAYER_MOD_IDS, chmActivePlayerMods), ro: playerDamageModValue === 1 ? '' : chip('×' + playerDamageModValue.toFixed(2)) }];
+    if (FINAL_MULT_MOD_IDS.some(chmModOnServer)) sections.push({ title: 'Final Multiplier &middot; PvE', ro: finalMultCount ? chip(finalMultCount === 1 ? '+5%' : '+5% × ' + finalMultCount) : '',
+      rows: [{ kind: 'fmult', id: 'fmult', def: { icon: 'privateServer', label: 'Final Multiplier' }, rank: finalMultCount, max: 3, cells: BD_LV_FMULT }] });
+    sections.push({ title: 'Target Hit Mod', red: true, rows: chmRows('emod', ENEMY_MOD_IDS, chmActiveEnemyMods), ro: enemyHitModValue === 1 ? '' : chip('×' + enemyHitModValue.toFixed(2)) });
 
+    if (wrap.parentNode !== document.body) document.body.appendChild(wrap);
     wrap.innerHTML = `
       <div class="sk-bd-backdrop" data-role="chm-mods-backdrop">
         <div class="sk-bd-popup is-buff" role="dialog" aria-label="Mods">
-          <div class="sk-bd-head"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10"></polygon></svg><span class="sk-bd-title">Mods</span><button type="button" class="sk-bd-close" data-role="chm-mods-close" aria-label="Close">&times;</button></div>
-          ${chmSection("Damage Mod", playerDamageModValue.toFixed(2), PLAYER_MOD_IDS.map(id => chmModItem(id, chmActivePlayerMods)).join(""))}
-          ${!FINAL_MULT_MOD_IDS.some(chmModOnServer) ? "" : chmSection("Final Multiplier &middot; PvE Only", "+" + (5 * finalMultCount) + "%", chmFinalMultItem())}
-          ${chmSection("Target Hit Mod", enemyHitModValue.toFixed(2), ENEMY_MOD_IDS.map(id => chmModItem(id, chmActiveEnemyMods)).join(""))}
+          <div class="sk-bd-head"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10"></polygon></svg><span class="sk-bd-title">Mods</span><button type="button" class="sk-bd-undo" data-role="chm-mods-undo" title="ย้อนกลับ (Ctrl+Z)" aria-label="ย้อนกลับ"${chmUndo.length ? '' : ' disabled'}>&#8630;</button><button type="button" class="sk-bd-close" data-role="chm-mods-close" aria-label="Close">&times;</button></div>
+          ${bdLvTable(sections)}
         </div>
       </div>
     `;
+    bdLvFit(wrap.querySelector('.sk-bd-popup'));
   }
+  addEventListener('resize', () => { if (chmModsOpen && chmModalWrap) bdLvFit(chmModalWrap.querySelector('.sk-bd-popup')); });
+  // Leaving the sim (another tool, browser back) closes it, since it lives on <body> while open.
+  addEventListener('hashchange', () => setTimeout(() => { if (chmModsOpen && !root.getClientRects().length) { chmModsOpen = false; renderChmModsModal(); } }, 0));
 
   const chmModsBtn = root.querySelector('#chmModsBtn');
   const chmModsBtn2 = root.querySelector('#chmModsBtn2');
@@ -26041,30 +26107,23 @@ function mountChameleonSim(root) {
         renderChmModsModal();
         return;
       }
-      const pipOf = (el) => { const p = e.target.closest("[data-pip]"); return p ? parseInt(p.dataset.pip, 10) : 0; };
-      const fmult = e.target.closest('[data-role="chm-fmult"]');
-      if (fmult) {
-        const cur = chmFinalMultCount(), p = pipOf();
-        const next = p ? (cur === p ? 0 : p) : (cur + 1) % 4;
+      if (e.target.closest('[data-role="chm-mods-undo"]')) { if (chmUndo.length) chmRestore(chmUndo.pop()); return; }
+      const cell = e.target.closest('[data-role="bd-lv"]');
+      if (!cell) return;
+      const id = cell.dataset.id, lv = parseInt(cell.dataset.lv, 10) || 0;
+      if (cell.dataset.kind === 'fmult') {
+        if (lv === chmFinalMultCount()) return;
         chmPush(chmSnap());
         chmActiveFinalMultMods.clear();
-        for (let n = 0; n < next; n++) chmActiveFinalMultMods.add(FINAL_MULT_MOD_IDS[n]);
-        renderChmModsModal();
-        updateUI();
-        return;
+        for (let n = 0; n < lv; n++) chmActiveFinalMultMods.add(FINAL_MULT_MOD_IDS[n]);
+      } else {
+        const map = cell.dataset.kind === 'pmod' ? chmActivePlayerMods : chmActiveEnemyMods;
+        if ((map.get(id) || 0) === lv) return;
+        chmPush(chmSnap());
+        map.set(id, lv);
       }
-      const toggleBtn = e.target.closest('[data-role="chm-mod-toggle"]');
-      if (toggleBtn) {
-        const id = toggleBtn.getAttribute('data-mod-id');
-        const map = PLAYER_MOD_IDS.includes(id) ? chmActivePlayerMods : ENEMY_MOD_IDS.includes(id) ? chmActiveEnemyMods : null;
-        if (map) {
-          const max = parseInt(toggleBtn.dataset.max, 10) || 1, cur = map.get(id) || 0, p = pipOf();
-          chmPush(chmSnap());
-          map.set(id, p ? (cur === p ? 0 : p) : (cur + 1 > max ? 0 : cur + 1));
-          renderChmModsModal();
-          updateUI();
-        }
-      }
+      renderChmModsModal();
+      updateUI();
     });
   }
 
@@ -28211,7 +28270,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T04:33:01.145Z","counts":{"1":38,"2":58,"3":34,"4":22,"5":51,"6":44,"7":29,"8":21,"9":24,"10":40,"11":38,"12":12,"13":5,"14":42,"15":50,"16":30,"17":50,"18":53,"19":30,"20":56,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":31,"31":31,"32":7,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T05:16:53.980Z","counts":{"1":38,"2":59,"3":34,"4":23,"5":51,"6":45,"7":31,"8":22,"9":24,"10":40,"11":38,"12":13,"13":5,"14":42,"15":51,"16":30,"17":51,"18":54,"19":30,"20":56,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":32,"31":32,"32":7,"33":7,"34":0,"35":0}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31915,6 +31974,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T05:16:54.593Z","feat(bible): the Buff / Debuff popups and the Chameleon sim's Mods popup become level tables that never scroll: one cell per level with its value, the row icon follows the picked level, 8 stat chips, custom entries as pills, undo; shorter rows, two columns or a zoom keep them on one screen"],
     ["2026-10-19T05:06:23.747Z","feat(bible): two new class guides by หนมผิงช่วยเหลือประชาชน: #34 กระต่ายยากครอบจักรวาล 12/8 PVP (TTO Rabbit) and #35 PVE ชิลๆ ใช้ของน้อย (TTO Sheep)"],
     ["2026-10-19T04:32:52.258Z","feat(bible): in the Chameleon attack sim, holding any icon that has a skill details card for 0.5 s opens that card in a new tab (skills, the Fatal Strike / Left Stride slots, the crit and poison gauges, the log tags, the class face = Combo), and the rank arcs sit evenly around their rings"],
     ["2026-10-19T04:11:08.057Z","feat(bible): the Chameleon attack sim gets a frame-rate setting (off / 30 / 60 / 120 / 144 / 240 fps): every in-game wait then ends on a frame and the next action starts a frame later, as in the live client; cooldowns stay real-time"],
