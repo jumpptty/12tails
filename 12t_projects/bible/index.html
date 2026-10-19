@@ -6168,9 +6168,10 @@
   .chm-boss.is-custom .chm-face-custom { display: grid; }
   .chm-boss.is-dead .chm-face img { filter: grayscale(1) brightness(.45); }
   .chm-boss .chm-arena-lane { bottom: 46%; }
-  .chm-boss .chm-lane-left { left: 34%; }
-  .chm-boss .chm-lane-right { left: 66%; }
+  .chm-boss .chm-lane-left { left: 30%; }
+  .chm-boss .chm-lane-right { left: 78%; }
   .chm-boss .chm-lane-mid { bottom: 34%; }
+  .chm-boss .chm-fct-item.chm-fct-echo { left: calc(50% + 64px); }   /* the clone's numbers: their own column right of the Chameleon's (poison ticks moved out to 78%) */
   .chm-hptxt { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; padding: 4px 14px 5px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap; font: 700 16px/1.15 var(--chm-num); }
   .chm-hptxt small { font-size: 11px; font-weight: 500; color: var(--muted); }
   .chm-hptxt .chm-dead { color: #ef4444; letter-spacing: .5px; }
@@ -6522,7 +6523,7 @@
     display: flex;
     align-items: center;
     white-space: nowrap;
-    animation: chmFloatUp 1.6s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+    animation: chmFloatUp 1.3s cubic-bezier(0.22, 0.9, 0.36, 1) forwards;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
   }
   .chm-fct-item .sk-dmg-final-digit {
@@ -6531,7 +6532,7 @@
     pointer-events: none;
   }
   .chm-fct-item.chm-fct-crit {
-    animation: chmFloatUpCrit 1.7s cubic-bezier(0.18, 0.9, 0.32, 1) forwards;
+    animation: chmFloatUpCrit 1.4s cubic-bezier(0.22, 0.9, 0.36, 1) forwards;
     filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
   }
   .chm-fct-item.chm-fct-drain {
@@ -6556,15 +6557,12 @@
       opacity: 1;
       transform: translate(-50%, 0) scale(1);
     }
-    18% {
-      transform: translate(-50%, -7px) scale(1.05);
-    }
-    72% {
-      opacity: 0.9;
+    75% {
+      opacity: 0.95;
     }
     100% {
       opacity: 0;
-      transform: translate(-50%, -34px) scale(0.92);
+      transform: translate(-50%, -72px) scale(0.92);
     }
   }
   @keyframes chmFloatUpCrit {
@@ -6573,17 +6571,14 @@
       transform: translate(-50%, 0) scale(1.12);
     }
     15% {
-      transform: translate(-50%, -9px) scale(1.22);
+      transform: translate(-50%, -16px) scale(1.2);
     }
-    28% {
-      transform: translate(-50%, -14px) scale(1.1);
-    }
-    72% {
-      opacity: 0.92;
+    75% {
+      opacity: 0.95;
     }
     100% {
       opacity: 0;
-      transform: translate(-50%, -38px) scale(0.95);
+      transform: translate(-50%, -76px) scale(0.95);
     }
   }
 
@@ -25073,9 +25068,9 @@ function mountChameleonSim(root) {
 
       // 2. White physical damage number (Left Lane: 24px crit or 19px normal)
       if (rollCrit) {
-        spawnDamageNumber(finalImpact, 'w', 24, 'left', 'crit');
+        spawnDamageNumber(finalImpact, 'w', 24, 'left', 'crit', echo);
       } else {
-        spawnDamageNumber(finalImpact, 'w', 19, 'left', 'impact');
+        spawnDamageNumber(finalImpact, 'w', 19, 'left', 'impact', echo);
       }
 
       // 3. Authentic critical crunch hit sound
@@ -25085,13 +25080,13 @@ function mountChameleonSim(root) {
 
       // 4. HP Drain: Purple effect damage number (Middle Lane: 14px compact)
       if (didHpDrain && curHpDrainDmg > 0) {
-        spawnDamageNumber(curHpDrainDmg, 'p', 14, 'mid', 'drain');
+        spawnDamageNumber(curHpDrainDmg, 'p', 14, 'mid', 'drain', echo);
       }
 
       // 5. Revert Proc: Revert SFX and Green healing number (Middle Lane: 20px heal)
       if (didRevert) {
         soundMgr.play('revert', 0.85);
-        spawnDamageNumber(simState.maxHp, 'g', 20, 'mid', 'heal');
+        spawnDamageNumber(simState.maxHp, 'g', 20, 'mid', 'heal', echo);
       }
     }
 
@@ -25155,8 +25150,10 @@ function mountChameleonSim(root) {
     updateUI();
   }
 
-  function spawnDamageNumber(val, color, size, lane, type) {
+  // echo = the Double Strider clone's hit: drawn beside the Chameleon's and 50 ms after it, so the two numbers of a volley never sit on top of each other
+  function spawnDamageNumber(val, color, size, lane, type, echo = false) {
     if (!simState.isRunning || val <= 0) return;
+    if (echo) { setTimeout(() => spawnDamageNumber(val, color, size, lane, type + ' chm-fct-echo'), 50); return; }
     const laneEl = (lane === 'left') ? laneLeft : (lane === 'mid') ? laneMid : laneRight;
     if (!laneEl) return;
     const fct = document.createElement('div');
@@ -28154,7 +28151,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:48:42.864Z","counts":{"1":38,"2":55,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":51,"19":30,"20":55,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":30,"31":31,"32":6,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:58:05.060Z","counts":{"1":38,"2":56,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":51,"19":30,"20":55,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":30,"31":31,"32":6,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -28841,7 +28838,15 @@ function classGuideImageWrap(runs, maxWidth, measure, segmenter){
       const w = measure(tok, run.gold);
       if (x > 0 && x + w > maxWidth && tok.trim()) newLine();
       if (x === 0 && !tok.trim() && lines[lines.length - 1].length === 0 && lines.length > 1) continue;
-      if (w > maxWidth){ for (const ch of tok){ const cw = measure(ch, run.gold); if (x > 0 && x + cw > maxWidth) newLine(); put(ch, run.gold); x += cw; } }
+      if (w > maxWidth){   // wider than a line: break between Thai words first (a title chunk is split at spaces only), characters only inside a word that is still too wide
+        const pieces = typeof Intl !== "undefined" && Intl.Segmenter ? Array.from(new Intl.Segmenter("th", { granularity: "word" }).segment(tok), s => s.segment) : [tok];
+        for (const piece of pieces){
+          const pw = measure(piece, run.gold);
+          if (x > 0 && x + pw > maxWidth && piece.trim()) newLine();
+          if (pw > maxWidth){ for (const ch of piece){ const cw = measure(ch, run.gold); if (x > 0 && x + cw > maxWidth) newLine(); put(ch, run.gold); x += cw; } }
+          else { put(piece, run.gold); x += pw; }
+        }
+      }
       else { put(tok, run.gold); x += w; }
     }
   }
@@ -29010,13 +29015,14 @@ async function classGuideRenderImage(guide, simRoot){
     ctx.font = font(600, 17); ctx.fillStyle = pro; ctx.fillText(badgeLabel, bx + 11, by + bh / 2 + 6);
   }
   y += rowH + 10;
-  // a long title steps down in size (46 -> 40 -> 34) before it is cut, up to 3 lines at the smallest
+  // a long title steps down in size (46 -> 40 -> 34) before it is cut, up to 3 lines at the smallest; it also steps down while one chunk between spaces is wider
+  // than the line (user 2026-10-19: "กระต่ายยากครอบจักรวาล 12/8 PVP" fitted 2 lines at 46 only by cutting กระต่ายยากครอบจักรวาล mid-word)
   let titleSize = 46, titleLines;
   for (const [size, maxLines] of [[46, 2], [40, 2], [34, 3]]){
     titleSize = size; const tf = () => font(700, size);
-    const all = classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(tf), null);   // spaces only, as on the page (a chunk wider than the line still splits)
+    const all = classGuideImageWrap([{ text: guide.title || "ไกด์", gold: false }], lw, measureWith(tf), null);   // spaces only, as on the page (a chunk wider than the line at 34 splits between Thai words)
     titleLines = classGuideImageClip(all, maxLines, lw, measureWith(tf));
-    if (all.length <= maxLines) break;
+    if (all.length <= maxLines && String(guide.title || "ไกด์").split(/\s+/).every(w => measureWith(tf)(w, false) <= lw)) break;
   }
   const titleLh = Math.round(titleSize * 1.26), titleFont = () => font(700, titleSize), measureTitle = measureWith(titleFont);
   titleLines = titleLines.map(ln => ln.map((run, k) => k === ln.length - 1 ? { ...run, text: run.text.replace(/\s+$/, "") } : run));   // the space a line broke at does not count when centring
@@ -31849,6 +31855,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T03:57:56.245Z","fix(bible): in the Chameleon attack sim the Double Strider clone's damage numbers get their own column beside the Chameleon's, and all numbers rise further so consecutive hits no longer pile up"],
     ["2026-10-19T03:48:34.062Z","fix(bible): Chameleon attack sim timing re-checked against the code: each normal arrow leaves 0.2 s into its 0.3 s cycle, the Double Strider clone fires at the same instant, poison / rust ticks follow the target's 4 s clock, and the kill time is taken at the killing hit (instant runs reported the run's end)"],
     ["2026-10-19T03:38:26.618Z","fix(bible): the Chameleon attack sim's four proc gauges stay in place when their values change"],
     ["2026-10-19T03:36:50.587Z","fix(bible): the Chameleon attack sim's poison dots sit exactly on the boss portrait's gold edge at every zoom"],
