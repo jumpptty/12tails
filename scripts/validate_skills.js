@@ -151,10 +151,10 @@ function makeEl() {
     innerHTML: "",
     innerText: "",
     value: "0",
-    style: {},
+    style: { setProperty: ()=>{} },
     dataset: {},
     classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false },
-    appendChild: ()=>{},
+    appendChild: ()=>{}, insertAdjacentHTML: ()=>{},
     addEventListener: ()=>{},
     removeEventListener: ()=>{},
     querySelector: () => makeEl(),
@@ -165,7 +165,7 @@ function makeEl() {
     // didn't exercise until the LCK-invariance check below started calling
     // the real selectSkill()/renderHero() -- a plain object is enough, since
     // nothing ever reads these classNames back in this sandbox.
-    parentElement: { className: "", style: {} },
+    parentElement: { className: "", style: {}, classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false } },
     parentNode: { className: "", style: {} },
     remove: ()=>{}, focus: ()=>{}, blur: ()=>{}, click: ()=>{},
     setAttribute: ()=>{}, getAttribute: () => null, removeAttribute: ()=>{},
@@ -2879,7 +2879,7 @@ let checkedChmSim = 0;
     const pop = popups.length > n ? popups[popups.length - 1].innerHTML : "";
     ok(pop.includes("Tales of Tail (ToT)") && pop.includes("sk-tag-fix"), "ToT opens the crit-gear [Fix] popup");
     pick("#chmArmSelect", "championArmor");
-    ok(reg.get("#chmArmDesc").textContent === "+6% Critical Chance", "ToT Champion Armor desc +6%");
+    ok(reg.get("#chmArmDesc").textContent === "+6% คริ", "ToT Champion Armor desc +6% คริ");
     const totSet = now();
     n = popups.length; click("og");
     ok(popups.length === n, "BB opens no popup");
