@@ -4393,6 +4393,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         if (extras.length !== 1 || extras[0].nv !== 308 || extras[0].nt !== 269) bad("model Boldas: the extra should be his sword (308 verts / 269 tris), got " + JSON.stringify(extras));
         else if (extras[0].minY > -0.3) bad("model Boldas: the sword is planted tip down, it should reach below the feet, got " + extras[0].minY);
       }
+      // NPC coin summons (2026-10-19): each Resources prefab's own mesh on the first key of its default clip; Italus keeps his four WEP_Italus pistols (4 x 317 / 168) as one extra
+      const COIN_NPC = { Dwukphu: [1077, 1236, null], Razan: [1712, 1770, null], Italus: [2332, 1930, [1268, 672]] };   // Catfish_tri, Crocodile_tri, Italus_tri
+      if (COIN_NPC[m[1]]){ const [nv, nt, ex] = COIN_NPC[m[1]];
+        if (body.nv !== nv || body.nt !== nt) bad("model " + m[1] + ": " + body.nv + " verts / " + body.nt + " tris, the game mesh has " + nv + " / " + nt);
+        if (ex ? (extras.length !== 1 || extras[0].nv !== ex[0] || extras[0].nt !== ex[1]) : extras.length) bad("model " + m[1] + ": extras " + JSON.stringify(extras.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(ex ? [ex] : [])); }
       if (m[1] === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
         if (extras.length !== 2 || extras[0].nv !== 248 || extras[0].nt !== 242 || extras[1].nv !== 244 || extras[1].nt !== 140) bad("model Cat: extras should be the default hair (248 verts / 242 tris) and the standard knife (244 / 140), got " + JSON.stringify(extras));
