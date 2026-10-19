@@ -6883,6 +6883,8 @@
   @media (max-width:1700px){ .ln-count{display:none} }   /* the main banners need the room; the filmstrip already marks the shown tool */
   .ln-strip{position:relative; display:flex; align-items:flex-end; gap:8px; min-width:0; overflow-x:auto; padding-top:8px; scrollbar-width:none}
   .ln-strip::-webkit-scrollbar{display:none}
+  .ln-strip.is-drag{cursor:grabbing; user-select:none}
+  .ln-strip.is-drag .ln-th{pointer-events:none}
   .ln-sarrow{flex:none; align-self:flex-end; width:34px; height:72px; padding:0; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ln-hi);
     font:700 26px/1 'Prompt',sans-serif; cursor:pointer; transition:border-color .2s, opacity .2s}
   .ln-sarrow[hidden]{display:none}
@@ -28099,7 +28101,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T02:42:41.589Z","counts":{"1":37,"2":54,"3":33,"4":21,"5":49,"6":43,"7":28,"8":20,"9":22,"10":39,"11":35,"12":12,"13":5,"14":41,"15":49,"16":27,"17":50,"18":50,"19":30,"20":53,"21":29,"22":34,"23":44,"24":10,"25":17,"26":16,"27":12,"28":17,"29":31,"30":29,"31":29,"32":4,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T02:45:02.868Z","counts":{"1":37,"2":54,"3":33,"4":21,"5":49,"6":43,"7":28,"8":21,"9":23,"10":40,"11":35,"12":12,"13":5,"14":41,"15":49,"16":27,"17":50,"18":50,"19":30,"20":53,"21":29,"22":34,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":29,"32":4,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31743,7 +31745,26 @@ function mountLauncher(root){
       arrows.forEach(a => { a.hidden = !over; }); if (!over) return;
       arrows[0].disabled = strip.scrollLeft <= 1; arrows[1].disabled = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 1; };
     arrows.forEach((a, k) => a.addEventListener("click", () => strip.scrollBy({ left: (k ? 1 : -1) * strip.clientWidth * 0.8, behavior: "smooth" })));
-    strip.addEventListener("scroll", sync, { passive: true }); addEventListener("resize", sync); if (typeof ResizeObserver === "function") new ResizeObserver(sync).observe(strip); sync(); }
+    strip.addEventListener("scroll", sync, { passive: true }); addEventListener("resize", sync); if (typeof ResizeObserver === "function") new ResizeObserver(sync).observe(strip); sync();
+    // drag it sideways with the mouse too (user 2026-10-19); a finger already swipes it natively. Past 6 px it is a drag, and the click that ends a drag opens nothing.
+    let dragId = null, x0 = 0, s0 = 0, moved = false;
+    strip.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse" || e.button !== 0 || strip.scrollWidth <= strip.clientWidth + 1) return; dragId = e.pointerId; x0 = e.clientX; s0 = strip.scrollLeft; moved = false; });
+    strip.addEventListener("pointermove", e => {
+      if (e.pointerId !== dragId) return;
+      const dx = e.clientX - x0;
+      if (!moved && Math.abs(dx) > 6) { moved = true; strip.setPointerCapture(dragId); strip.classList.add("is-drag"); }
+      if (moved) strip.scrollLeft = s0 - dx;
+    });
+    const dragEnd = e => {
+      if (e.pointerId !== dragId) return;
+      dragId = null; strip.classList.remove("is-drag");
+      if (!moved) return;
+      const eat = ev => { ev.preventDefault(); ev.stopPropagation(); };
+      strip.addEventListener("click", eat, { capture: true, once: true });
+      setTimeout(() => strip.removeEventListener("click", eat, true), 0);
+    };
+    strip.addEventListener("pointerup", dragEnd); strip.addEventListener("pointercancel", dragEnd);
+    strip.addEventListener("dragstart", e => e.preventDefault()); }   // the thumbs are links with pictures: no native drag ghost
   // The next two guide images (one visit of the slide shows two) render ahead, one at a time, while another slide is settled on screen
   // (user 2026-10-18: moving to the slide lagged): never during a slide's entrance and never on the guide slide itself.
   let rendering = false, lastInput = 0;   // and only after 1.5 s without mouse / key / touch input, so a render never delays a click
@@ -31775,6 +31796,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T02:44:54.290Z","feat(bible): the menu's tool strip can be dragged sideways with the mouse (a finger already swipes it); letting go after a drag opens nothing"],
     ["2026-10-19T02:42:20.827Z","feat(bible): Deadly Venom shows the same unintended-behaviour note as Piercing Venom (on Robots the bonus is always 0: only poison counts, Robots cannot be poisoned, Rusty Decay's rust is not counted)"],
     ["2026-10-19T02:32:09.065Z","feat(bible): the Chameleon attack sim gets the Cockpit layout (gear medallions, stat dials and round skill icons with rank arcs on the left; the boss in a round HP ring with poison dots, round Fatal Strike / Left Stride cooldown sweeps and proc gauges, the results with a damage donut and a foldable shot log on the right), Thai labels, server looks and Ctrl+Z undo for every setting"],
     ["2026-10-19T02:21:05.019Z","feat(bible): Piercing Venom shows an unintended-behaviour note: on Robots it always adds 0 (it counts poison only, Robots cannot be poisoned, and Rusty Decay's rust is not counted); it also lists on the BB issues page"],
