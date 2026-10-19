@@ -6042,9 +6042,13 @@
   .chm-ring.off { box-shadow: 0 0 0 2px rgba(255,255,255,.2); }
   .chm-ring.off > img { filter: grayscale(1) brightness(.5); }
   .chm-ringw { position: relative; display: inline-block; flex: none; }
-  .chm-arc { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); overflow: visible; pointer-events: none; }
-  .chm-arc path { fill: none; stroke: rgba(255,255,255,.16); stroke-width: 6; stroke-linecap: round; }
-  .chm-arc path.on { stroke: var(--gold); }
+  .chm-sim [data-card] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .chm-hero-link { display: inline-block; flex: none; cursor: pointer; }
+  .chm-ring.is-charging, .chm-tag.is-charging { position: relative; z-index: 3; animation: rsim-charge .35s cubic-bezier(.5,0,.9,.6) forwards; }
+  .chm-ring.is-boom, .chm-tag.is-boom { position: relative; z-index: 3; pointer-events: none; animation: rsim-boom .38s ease-out forwards; }
+  /* 4 px band 1 px outside the ring's 2 px gold edge: inset -7px on the same box as the ring */
+  .chm-arc { position: absolute; inset: -7px; border-radius: 50%; pointer-events: none;
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); mask: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); }
 
   /* header */
   .chm-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: none; }
@@ -25267,18 +25271,18 @@ function mountChameleonSim(root) {
   const chmRing = (src, cls) => `<span class="chm-ring${cls ? ' ' + cls : ''}"><img src="${src || ''}" alt=""></span>`;
   // Skill buttons: one table drives the markup, the clicks and the on / off look (chmRenderSkills). rank = a 0..max state key, flag = a boolean key.
   const CHM_SKILLS = [
-    { grp: 0, id: 'chmFsRankBtn', icon: CHM_ICONS.fatalStrike, name: 'Fatal Strike', rank: 'fatalStrikeRank', max: 4 },
-    { grp: 0, id: 'chmExtraArrowsBtn', icon: CHM_ICONS.extraArrows, name: 'Extra Arrows', flag: 'extraArrows' },
-    { grp: 0, id: 'chmLeftStrideBtn', icon: SKILL_ICONS.chameleon_leftStride2, name: 'Left Stride', flag: 'leftStrideActive' },
-    { grp: 1, id: 'chmCritPlusRankBtn', icon: CHM_ICONS.criticalPlus, name: 'Critical Plus', rank: 'criticalPlusRank', max: 4 },
-    { grp: 1, id: 'chmBullsEyeBtn', icon: CHM_ICONS.bullsEye, name: "Bull's Eye", flag: 'bullsEye' },
-    { grp: 1, id: 'chmBowMasteryBtn', icon: CHM_ICONS.bowMastery, name: 'Bow Mastery', flag: 'bowMastery' },
-    { grp: 2, id: 'chmPoisonArrowRankBtn', icon: CHM_ICONS.poisonArrow, name: 'Poison Arrow', rank: 'poisonArrowRank', max: 4 },
-    { grp: 2, id: 'chmPVenomBtn', icon: CHM_ICONS.piercingVenom, name: 'Piercing Venom', rank: 'piercingVenomRank', max: 1 },
-    { grp: 2, id: 'chmDeadlyVenomBtn', icon: CHM_ICONS.deadlyVenom, name: 'Deadly Venom', flag: 'deadlyVenom' },
-    { grp: 2, id: 'chmRustyDecayBtn', icon: CHM_ICONS.rustyDecay, name: 'Rusty Decay', flag: 'rustyDecay' },
-    { grp: 3, id: 'chmDoubleEffectBtn', icon: CHM_ICONS.doubleEffect, name: 'Double Effect', flag: 'doubleEffect' },
-    { grp: 3, id: 'chmRevArtBtn', icon: CHM_ICONS.revisedArt, name: 'Revised Art', flag: 'revArt' }
+    { grp: 0, id: 'chmFsRankBtn', card: 'chameleon_fatalStrike', icon: CHM_ICONS.fatalStrike, name: 'Fatal Strike', rank: 'fatalStrikeRank', max: 4 },
+    { grp: 0, id: 'chmExtraArrowsBtn', card: 'chameleon_extraArrows', icon: CHM_ICONS.extraArrows, name: 'Extra Arrows', flag: 'extraArrows' },
+    { grp: 0, id: 'chmLeftStrideBtn', card: 'chameleon_leftStride', icon: SKILL_ICONS.chameleon_leftStride2, name: 'Left Stride', flag: 'leftStrideActive' },
+    { grp: 1, id: 'chmCritPlusRankBtn', card: 'chameleon_criticalPlus', icon: CHM_ICONS.criticalPlus, name: 'Critical Plus', rank: 'criticalPlusRank', max: 4 },
+    { grp: 1, id: 'chmBullsEyeBtn', card: 'chameleon_bullsEye', icon: CHM_ICONS.bullsEye, name: "Bull's Eye", flag: 'bullsEye' },
+    { grp: 1, id: 'chmBowMasteryBtn', card: 'chameleon_bowMastery', icon: CHM_ICONS.bowMastery, name: 'Bow Mastery', flag: 'bowMastery' },
+    { grp: 2, id: 'chmPoisonArrowRankBtn', card: 'chameleon_poisonArrow', icon: CHM_ICONS.poisonArrow, name: 'Poison Arrow', rank: 'poisonArrowRank', max: 4 },
+    { grp: 2, id: 'chmPVenomBtn', card: 'chameleon_piercingVenom', icon: CHM_ICONS.piercingVenom, name: 'Piercing Venom', rank: 'piercingVenomRank', max: 1 },
+    { grp: 2, id: 'chmDeadlyVenomBtn', card: 'chameleon_deadlyVenom', icon: CHM_ICONS.deadlyVenom, name: 'Deadly Venom', flag: 'deadlyVenom' },
+    { grp: 2, id: 'chmRustyDecayBtn', card: 'chameleon_rustyDecay', icon: CHM_ICONS.rustyDecay, name: 'Rusty Decay', flag: 'rustyDecay' },
+    { grp: 3, id: 'chmDoubleEffectBtn', card: 'chameleon_doubleEffect', icon: CHM_ICONS.doubleEffect, name: 'Double Effect', flag: 'doubleEffect' },
+    { grp: 3, id: 'chmRevArtBtn', card: 'common_revisedArt', icon: CHM_ICONS.revisedArt, name: 'Revised Art', flag: 'revArt' }
   ];
   const CHM_SKILL_GROUPS = [['ลูกธนู', 'var(--gold)'], ['คริติคอล', '#ffd54a'], ['พิษ', '#84cc16'], ['อื่นๆ', '#c084fc']];
   const CHM_ENEMIES = [['earthavatar', 'Earth Avatar'], ['darkfalcon', 'Shadow Italus'], ['reefbug2', 'ReefBugAdv'], ['nemesisbug_a', 'NemeAdv'],
@@ -25286,6 +25290,7 @@ function mountChameleonSim(root) {
   const CHM_RACES = ['Tails', 'Plants', 'Bugs', 'Elementals', 'Structure', 'Robots'];
   const CHM_GAUGES = [['Crit', CHM_ICONS.criticalPlus, '#ffd54a', 'คริ'], ['Drain', CHM_ICONS.status_hpDrain, '#c084fc', 'ดูดเลือด'],
     ['Poison', CHM_ICONS.status_poison, '#84cc16', 'พิษ'], ['Revert', CHM_ICONS.sheep_revert1, '#4ade80', 'ฟื้นเต็ม']];
+  const CHM_GAUGE_CARD = { Crit: 'chameleon_criticalPlus', Poison: 'chameleon_poisonArrow' };   // HP Drain and the full restore come from gear, which has no card
   const CHM_PARTS = [['Base', '#efe6d2', 'ลูกธนู'], ['Fatal', '#ef4444', 'Fatal Strike'], ['Pierce', '#16a34a', 'Piercing Venom'],
     ['Crit', '#ffd54a', 'คริติคอล'], ['Poison', '#84cc16', 'พิษ'], ['HpDrain', '#c084fc', 'ดูดเลือด']];
   const CHM_STATS = [['Level', 'เลเวล', 'var(--stat-lv)'], ['Vit', 'VIT', 'var(--stat-hp)'], ['Atk', 'ATK', 'var(--stat-atk)'], ['Lck', 'LCK', 'var(--stat-lck)'], ['Agi', 'AGI', 'var(--stat-agi)']];
@@ -25297,7 +25302,7 @@ function mountChameleonSim(root) {
   root.innerHTML = `
     <div class="chm-sim" style="--chm-ic-ls:url('${SKILL_ICONS.chameleon_leftStride2}');--chm-ic-fs:url('${CHM_ICONS.fatalStrike}');--chm-ic-crit:url('${CHM_ICONS.criticalPlus}');--chm-ic-poison:url('${CHM_ICONS.status_poison}');--chm-ic-drain:url('${CHM_ICONS.status_hpDrain}');--chm-ic-revert:url('${CHM_ICONS.sheep_revert1}')">
       <header class="chm-top">
-        ${chmRing(CLASS_HERO_ICONS.Chameleon, 'chm-hero')}
+        <span class="chm-hero-link" data-card="chameleon_nAttack" title="Combo · กดค้างเพื่อเปิดในรายละเอียดสกิล">${chmRing(CLASS_HERO_ICONS.Chameleon, 'chm-hero')}</span>
         <div class="chm-title"><h2>จำลองการโจมตีปกติกิ้งก่า</h2><span>คอมโบ 4 · ทุกนัดคิดตามโค้ดเกม</span></div>
         <div class="chm-top-sp"></div>
         <div class="chm-seg chm-server-toggle" id="chmServerToggle">
@@ -25349,7 +25354,7 @@ function mountChameleonSim(root) {
             <div class="chm-skills">
               ${CHM_SKILL_GROUPS.map(([g, c], gi) => `
               <div class="chm-grp" style="--c:${c}"><span class="chm-grp-name">${g}</span><div class="chm-grp-row">
-                ${CHM_SKILLS.filter(s => s.grp === gi).map(s => `<button type="button" class="chm-sk" id="${s.id}"><span class="chm-ringw">${chmRing(s.icon)}</span><b>${s.name}</b><small data-sub></small></button>`).join('')}
+                ${CHM_SKILLS.filter(s => s.grp === gi).map(s => `<button type="button" class="chm-sk" id="${s.id}" data-card="${s.card}"><span class="chm-ringw">${chmRing(s.icon)}</span><b>${s.name}</b><small data-sub></small></button>`).join('')}
               </div></div>`).join('')}
               <div class="chm-opts">
                 <div class="chm-opt"><span>Fatal Strike</span><div class="chm-seg chm-seg-sm" id="chmFsModeSeg"><button type="button" data-fsmode="rotation">ตามคูลดาวน์</button><button type="button" data-fsmode="always">ติดตลอด</button></div></div>
@@ -25363,7 +25368,7 @@ function mountChameleonSim(root) {
           <section class="chm-pane chm-arena" id="chmCombatArena">
             <div class="chm-cds">
               ${[['Fs', 'Fatal Strike', CHM_ICONS.fatalStrike], ['Ls', 'Left Stride', SKILL_ICONS.chameleon_leftStride2]].map(([k, name, ic]) => `
-              <button type="button" class="chm-cd" id="chmTf${k}Slot">
+              <button type="button" class="chm-cd" id="chmTf${k}Slot" data-card="${k === 'Fs' ? 'chameleon_fatalStrike' : 'chameleon_leftStride'}">
                 <span class="chm-ringw"><span class="chm-ring chm-cd-ring"><img id="chmSlot${k}Icon" src="${ic}" alt=""><span class="chm-cd-sweep" id="chmSlot${k}CdOverlay"></span><span class="chm-cd-sec" id="chmSlot${k}CdText"></span></span>${k === 'Fs' ? '<span class="chm-cd-badge" id="chmSlotFsCharges" hidden></span>' : ''}</span>
                 <span class="chm-cd-lbl"><b>${name}</b><small id="chm${k}CdDesc"></small></span>
               </button>`).join('')}
@@ -25396,7 +25401,7 @@ function mountChameleonSim(root) {
               </div>
               <div class="chm-gauges">
                 ${CHM_GAUGES.map(([k, ic, c, label]) => `
-                <div class="chm-g" style="--c:${c}"><span class="chm-g-w"><svg viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="40" class="chm-g-track"/><circle cx="46" cy="46" r="40" class="chm-g-arc" id="chmGauge${k}"/></svg>${chmRing(ic)}</span>
+                <div class="chm-g" style="--c:${c}"${CHM_GAUGE_CARD[k] ? ` data-card="${CHM_GAUGE_CARD[k]}" title="กดค้างเพื่อเปิดในรายละเอียดสกิล"` : ''}><span class="chm-g-w"><svg viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="40" class="chm-g-track"/><circle cx="46" cy="46" r="40" class="chm-g-arc" id="chmGauge${k}"/></svg>${chmRing(ic)}</span>
                   <b id="chmHero${k}Rate"></b><small><span>${label}</span><br><span id="chmHero${k}Sub"></span></small></div>`).join('')}
               </div>
             </div>
@@ -25484,16 +25489,16 @@ function mountChameleonSim(root) {
     combatArenaCard.classList.toggle('running', simState.isRunning);
   }
 
-  // Rank arc around a round icon: max segments, the first n lit
+  // Rank arc around a round icon: max segments from the top, the first n lit. A conic-gradient band masked to a thin ring on the ring's own
+  // box, so it stays concentric with the gold edge at every zoom (an SVG on its own grid drifted off it, user 2026-10-19)
   function chmArc(n, max) {
     if (max < 2) return '';
-    const R = 50, gap = 12, seg = (360 - gap * max) / max, pt = a => [50 + R * Math.cos(a * Math.PI / 180), 50 + R * Math.sin(a * Math.PI / 180)];
-    let h = '<svg class="chm-arc" viewBox="-6 -6 112 112" aria-hidden="true">';
+    const gap = 14, seg = (360 - gap * max) / max, stops = [];
     for (let i = 0; i < max; i++) {
-      const a0 = -90 + gap / 2 + i * (seg + gap), [x0, y0] = pt(a0), [x1, y1] = pt(a0 + seg);
-      h += `<path d="M${x0.toFixed(2)} ${y0.toFixed(2)} A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}"${i < n ? ' class="on"' : ''}/>`;
+      const a = (gap / 2 + i * (seg + gap)).toFixed(2), b = (gap / 2 + i * (seg + gap) + seg).toFixed(2), c = i < n ? 'var(--gold)' : 'rgba(255,255,255,.18)';
+      stops.push(`transparent ${a}deg`, `${c} ${a}deg ${b}deg`, `transparent ${b}deg`);
     }
-    return h + '</svg>';
+    return `<span class="chm-arc" aria-hidden="true" style="background:conic-gradient(${stops.join(', ')})"></span>`;
   }
   function chmSkillSub(s, b) {
     const on = s.rank ? simState[s.rank] > 0 : simState[s.flag];
@@ -25521,7 +25526,7 @@ function mountChameleonSim(root) {
       ring.classList.toggle('off', !on);
       const old = ring.parentElement.querySelector('.chm-arc'); if (old) old.remove();
       if (s.rank && s.max > 1) ring.parentElement.insertAdjacentHTML('beforeend', chmArc(simState[s.rank], s.max));
-      btn.title = s.name + (s.rank && s.max > 1 ? ' เลเวล ' + simState[s.rank] + ' (คลิกเพื่อเปลี่ยนเลเวล)' : on ? ' (เปิด)' : ' (ปิด)');
+      btn.title = s.name + (s.rank && s.max > 1 ? ' เลเวล ' + simState[s.rank] + ' (คลิกเพื่อเปลี่ยนเลเวล)' : on ? ' (เปิด)' : ' (ปิด)') + ' · กดค้างเพื่อเปิดในรายละเอียดสกิล';
       btn.querySelector('[data-sub]').textContent = chmSkillSub(s, b);
     });
     root.querySelectorAll('[data-fsmode]').forEach(x => x.classList.toggle('active', x.dataset.fsmode === simState.fatalStrikeMode));
@@ -25534,7 +25539,7 @@ function mountChameleonSim(root) {
     slot.dataset.state = state;
     sweep.style.setProperty('--cd', state === 'off' ? 100 : (total > 0 ? Math.min(100, 100 * left / total) : 0));
     sec.textContent = state === 'off' ? 'ปิด' : (left > 0 ? (left >= 1 ? Math.ceil(left) : left.toFixed(1)) : '');
-    slot.title = label;
+    slot.title = label + ' · กดค้างเพื่อเปิดในรายละเอียดสกิล';
   }
 
   function updateUI() {
@@ -25674,10 +25679,10 @@ function mountChameleonSim(root) {
     if (rows.length === 0) { logScroll.innerHTML = '<div class="chm-log-empty">ไม่มีนัดที่ตรงกับตัวกรอง</div>'; return; }
     logScroll.innerHTML = rows.slice(-200).reverse().map(e => `
       <div class="chm-lr${e.isCrit ? ' is-crit' : ''}"><span>#${e.shot}</span><span>${e.time}</span><span class="chm-tags">${
-        (e.isStride ? '<i class="chm-tag" style="--i:var(--chm-ic-ls)" title="Left Stride"></i>' : '')
-        + (e.isFs ? '<i class="chm-tag" style="--i:var(--chm-ic-fs)" title="Fatal Strike"></i>' : '')
-        + (e.isCrit ? `<i class="chm-tag" style="--i:var(--chm-ic-crit)" title="คริ ×${e.critMult}"></i>` : '')
-        + ((e.poisonStacks > 0 || e.poisonAdded > 0) ? `<i class="chm-tag" style="--i:var(--chm-ic-poison)" title="พิษ ${e.poisonStacks}${e.poisonAdded ? ' (+' + e.poisonAdded + ')' : ''}"></i><em>${e.poisonStacks}</em>` : '')
+        (e.isStride ? '<i class="chm-tag" style="--i:var(--chm-ic-ls)" data-card="chameleon_leftStride" title="Left Stride"></i>' : '')
+        + (e.isFs ? '<i class="chm-tag" style="--i:var(--chm-ic-fs)" data-card="chameleon_fatalStrike" title="Fatal Strike"></i>' : '')
+        + (e.isCrit ? `<i class="chm-tag" style="--i:var(--chm-ic-crit)" data-card="chameleon_criticalPlus" title="คริ ×${e.critMult}"></i>` : '')
+        + ((e.poisonStacks > 0 || e.poisonAdded > 0) ? `<i class="chm-tag" style="--i:var(--chm-ic-poison)" data-card="chameleon_poisonArrow" title="พิษ ${e.poisonStacks}${e.poisonAdded ? ' (+' + e.poisonAdded + ')' : ''}"></i><em>${e.poisonStacks}</em>` : '')
         + (e.didRevert ? '<i class="chm-tag" style="--i:var(--chm-ic-revert)" title="ฟื้นเต็ม"></i>' : '')
       }</span><b>${e.netDmg}${e.hpDrainDmg > 0 ? `<small>+${e.hpDrainDmg}</small>` : ''}</b></div>`).join('');
   }
@@ -25838,6 +25843,36 @@ function mountChameleonSim(root) {
     const btn = e.target.closest('.sk-server-btn');
     if (btn && btn.dataset.server !== simState.server) chmDo(() => chmSetServer(btn.dataset.server, true));
   });
+
+  // Long press (user 2026-10-19): holding any icon that has a skill details card for 0.5 s (finger or mouse) opens that card on the sim's server
+  // in a new tab, like the Skill Simulator's cells; the shake starts at 150 ms so a plain click (toggle, rank) never shows it, and the click
+  // that ends a long press is swallowed so it does not toggle anything.
+  let chmPressTimer = 0, chmChargeTimer = 0, chmPressX = 0, chmPressY = 0, chmPressEl = null, chmLongDone = false;
+  const chmPressEnd = () => {
+    clearTimeout(chmPressTimer); clearTimeout(chmChargeTimer); chmPressTimer = chmChargeTimer = 0;
+    if (chmPressEl) { chmPressEl.classList.remove('is-charging'); chmPressEl = null; }
+  };
+  root.addEventListener('pointerdown', (e) => {
+    chmLongDone = false; chmPressEnd();
+    const host = e.target.closest && e.target.closest('[data-card]');
+    if (!host || e.isPrimary === false || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const card = host.dataset.card, fx = host.querySelector('.chm-ring') || host;
+    chmPressX = e.clientX; chmPressY = e.clientY; chmPressEl = fx;
+    chmChargeTimer = setTimeout(() => { chmChargeTimer = 0; if (chmPressEl === fx) fx.classList.add('is-charging'); }, 150);
+    chmPressTimer = setTimeout(() => {
+      chmPressTimer = 0; clearTimeout(chmChargeTimer); chmChargeTimer = 0;
+      chmLongDone = true;
+      fx.classList.remove('is-charging'); chmPressEl = null;
+      fx.classList.add('is-boom');
+      setTimeout(() => fx.classList.remove('is-boom'), 400);
+      window.open(location.href.split('#')[0] + '#skill-details/' + encodeURIComponent(card) + '?server=' + simState.server, '_blank', 'noopener');
+    }, 500);
+  });
+  root.addEventListener('pointermove', (e) => { if (chmPressTimer && Math.hypot(e.clientX - chmPressX, e.clientY - chmPressY) > 8) chmPressEnd(); });
+  root.addEventListener('pointerup', chmPressEnd); root.addEventListener('pointercancel', chmPressEnd);
+  addEventListener('pointerup', chmPressEnd); addEventListener('pointercancel', chmPressEnd); addEventListener('blur', chmPressEnd);
+  root.addEventListener('click', (e) => { if (chmLongDone) { chmLongDone = false; e.preventDefault(); e.stopPropagation(); } }, true);
+  root.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('[data-card]')) e.preventDefault(); });
 
   // One screen on desktop (user 2026-10-19): the 1560 x 960 composition is zoomed to the room under the hub bar (up to 1.5 on big screens); phones scroll
   const chmSimEl = root.querySelector('.chm-sim');
@@ -28174,7 +28209,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T04:13:33.342Z","counts":{"1":38,"2":57,"3":33,"4":21,"5":50,"6":44,"7":29,"8":21,"9":23,"10":40,"11":37,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":52,"19":30,"20":55,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":30,"31":31,"32":6,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T04:33:01.145Z","counts":{"1":38,"2":58,"3":34,"4":22,"5":51,"6":44,"7":29,"8":21,"9":24,"10":40,"11":38,"12":12,"13":5,"14":42,"15":50,"16":30,"17":50,"18":53,"19":30,"20":56,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":31,"31":31,"32":7,"33":5}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31878,6 +31913,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T04:32:52.258Z","feat(bible): in the Chameleon attack sim, holding any icon that has a skill details card for 0.5 s opens that card in a new tab (skills, the Fatal Strike / Left Stride slots, the crit and poison gauges, the log tags, the class face = Combo), and the rank arcs sit evenly around their rings"],
     ["2026-10-19T04:11:08.057Z","feat(bible): the Chameleon attack sim gets a frame-rate setting (off / 30 / 60 / 120 / 144 / 240 fps): every in-game wait then ends on a frame and the next action starts a frame later, as in the live client; cooldowns stay real-time"],
     ["2026-10-19T03:57:56.245Z","fix(bible): in the Chameleon attack sim the Double Strider clone's damage numbers get their own column beside the Chameleon's, and all numbers rise further so consecutive hits no longer pile up"],
     ["2026-10-19T03:48:34.062Z","fix(bible): Chameleon attack sim timing re-checked against the code: each normal arrow leaves 0.2 s into its 0.3 s cycle, the Double Strider clone fires at the same instant, poison / rust ticks follow the target's 4 s clock, and the kill time is taken at the killing hit (instant runs reported the run's end)"],
