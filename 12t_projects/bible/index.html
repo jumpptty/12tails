@@ -28,7 +28,7 @@
     raised: [".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-icon-pick", ".cg-sort", ".cg-page-btn",
-      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".mech-index-tile", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
+      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
@@ -1369,81 +1369,80 @@
   .changelog-more[hidden]{display:none}
   @media(max-width:560px){.changelog-backdrop{padding:12px}.changelog-head{padding:16px}.changelog-summary{padding:11px 16px; display:block}.changelog-summary strong{display:block; margin-top:3px; text-align:left}.changelog-list{padding-left:16px; padding-right:16px}.changelog-list li{font-size:11.5px}}
 
-  /* ---- Mechanic-glossary modal (^^term^^ panels, added 2026-09-22;
-     revamped to a 16:9 "page" shell 2026-09-22, user-requested: each step
-     gets its own full page/center-stage treatment instead of a stacked
-     list, page ~3x the old footprint. Gold accent matching the rest of
-     the app. Width is capped against BOTH viewport axes at once
-     (min(...,94vw,94vh*16/9)) so the box stays true 16:9 even on a short
-     viewport instead of overflowing vertically -- see the mobile query
-     at the bottom for when 16:9 itself stops making sense. */
+  /* ---- Mechanic glossary modal (^^term^^ panels, #mechanicModal). Layout "C · สปอตไลต์" (user 2026-10-19, picked from 3 mocks; replaces the
+     2026-09-22 16:9 slide pages): the index is one full-width row per topic (big title, the topic art peeking in, the step names), a topic shows
+     one step at a time with named step tabs on top, the step's example icons (or the topic art) on a stage at the left and the text at the right,
+     then ‹ ก่อนหน้า / ถัดไป: <next step>. Desktop never scrolls: fitMechSlide() steps --mech-s down (to .7) until nothing marked data-mech-fit
+     overflows. Each topic has its own accent, --mech-acc via data-mech-acc (light and dark values; movespeed keeps the glossary gold). */
   .mech-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.72)}
   .mech-backdrop[hidden]{display:none}
-  .mech-popup{width:min(1800px,94vw,calc(94vh * 16 / 9)); aspect-ratio:16/9; max-height:94vh; overflow:hidden; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--mech-kw, #8a6a1f); border-radius:10px; box-shadow:0 32px 90px rgba(0,0,0,.5); font-family:'Prompt',sans-serif}
-  .mech-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 30px 18px; border-bottom:1px solid var(--line); flex:0 0 auto}
+  .mech-popup{--mech-s:1; --mech-acc:var(--mech-kw, #8a6a1f); width:min(1560px,94vw); height:min(860px,92vh); overflow:hidden; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:0 32px 90px rgba(0,0,0,.5); font-family:'Prompt',sans-serif}
+  [data-mech-acc="damagepipeline"]{--mech-acc:#5b4a36}
+  [data-mech-acc="evasion"]{--mech-acc:#1f8a73}
+  [data-mech-acc="effectdamage"]{--mech-acc:#6d3fc4}
+  [data-mech-acc="targeting"]{--mech-acc:var(--seal)}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) [data-mech-acc="damagepipeline"]{--mech-acc:#efe6d2}
+    :root:not([data-theme="light"]) [data-mech-acc="evasion"]{--mech-acc:#5fd0b5}
+    :root:not([data-theme="light"]) [data-mech-acc="effectdamage"]{--mech-acc:#b48cff}
+  }
+  :root[data-theme="dark"] [data-mech-acc="damagepipeline"]{--mech-acc:#efe6d2}
+  :root[data-theme="dark"] [data-mech-acc="evasion"]{--mech-acc:#5fd0b5}
+  :root[data-theme="dark"] [data-mech-acc="effectdamage"]{--mech-acc:#b48cff}
+  .mech-head{display:flex; align-items:center; gap:14px; padding:18px 28px; border-bottom:1px solid var(--line); flex:0 0 auto}
   .mech-head h2{margin:0; color:var(--text); font-size:22px; line-height:1.25; font-weight:700}
-  .mech-head-actions{display:flex; align-items:center; gap:10px; flex-shrink:0}
-  .mech-index-btn,.mech-close{width:38px; height:38px; border:none; border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; font-size:19px; line-height:1; transition:color .15s ease, background .15s ease}
-  .mech-index-btn:hover,.mech-close:hover{background:transparent; color:var(--mech-kw, #8a6a1f)}
-  /* Desktop: no scrollbars -- the 16:9 page + clamp()'d type sizing is
-     meant to fit its content without scrolling. overflow:hidden here
-     (not auto) so a rare overflow just clips instead of showing a
-     bar; the mobile query below switches this back to auto since a
-     full-height sheet on a small screen can genuinely run long. */
+  .mech-index-btn,.mech-close{flex:none; width:38px; height:38px; display:grid; place-items:center; padding:0; border:1px solid var(--line); border-radius:50%; background:transparent; color:var(--muted); font-size:15px; line-height:1; cursor:pointer; transition:color .15s ease, border-color .15s ease}
+  .mech-index-btn{font-size:17px}
+  .mech-index-btn[hidden]{display:none}
+  .mech-close{margin-left:auto}
+  .mech-index-btn:hover,.mech-close:hover{color:var(--mech-acc); border-color:var(--mech-acc)}
   .mech-stage{flex:1 1 auto; min-height:0; overflow:hidden; display:flex; flex-direction:column}
-
-  /* -- Index page: a grid of big chapter tiles, not a thin list -- one
-     "cover" per mechanic topic. No number badge (the header title above
-     already reads "คลังคำอธิบายกลไกเกม", a per-tile heading here would be
-     redundant) and no per-tile number (2026-09-22, user-requested: these
-     are named topics, not a numbered sequence -- ordinal position isn't
-     meaningful information here, unlike the steps inside a topic). The
-     topic name is the only thing on the tile now, so it's sized to
-     actually fill the card instead of sitting as a small label. */
-  .mech-index-wrap{margin:auto; padding:36px; width:100%; box-sizing:border-box}
-  .mech-index-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px}
-  .mech-index-tile{position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:10px; text-align:left; padding:32px 28px; min-height:132px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--text); cursor:pointer; transition:border-color .15s ease, background .15s ease, transform .15s ease}
-  .mech-index-tile:hover{border-color:var(--mech-kw, #8a6a1f); background:color-mix(in srgb,var(--mech-kw, #8a6a1f) 8%,var(--panel-2)); transform:translateY(-2px)}
-  .mech-index-tile-title,.mech-index-tile-meta{position:relative; z-index:1}
-  .mech-index-tile-title{font:700 26px/1.3 'Prompt',sans-serif}
-  /* Per-topic backdrop art (renderMechTileBg, 2026-09-22, user-supplied) --
-     bleeds off the tile's right edge, low opacity so the title/meta text
-     stays the readable foreground. Index-tile only (never the slide page),
-     per user request. */
-  .mech-index-tile-bg{position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:flex-end; pointer-events:none}
-  .mech-index-tile-bg-img{height:150%; width:auto; object-fit:contain; opacity:.16; transform:translate(28%,0) rotate(-8deg)}
-  .mech-index-tile-bg-img.mech-bg-target{height:95%; transform:translate(4%,0) rotate(-8deg)}
-  .mech-index-tile-bg-img.mech-bg-evade{transform:translate(-4%,0) rotate(-6deg) scaleY(.67)}
-  .mech-index-tile-bg-digits{display:flex; align-items:center; opacity:.14; transform:translate(14%,0) rotate(-6deg); filter:brightness(1.4)}
-  .mech-index-tile-meta{font:500 12.5px/1 'JetBrains Mono','Prompt',monospace; color:var(--muted)}
-
-  /* -- Slide page: one step at a time, center stage. The step number is
-     a giant translucent watermark behind the text (a ledger-page stamp,
-     not a bullet), reinforcing "this step has its own page." */
-  .mech-slide-wrap{position:relative; flex:1; display:flex; align-items:stretch; min-height:0}
-  .mech-slide{position:relative; flex:1; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:8px 96px 32px; box-sizing:border-box}
-  .mech-slide-watermark{position:absolute; top:-.12em; left:26px; font:800 min(260px,22vw)/1 'JetBrains Mono','Prompt',monospace; color:var(--mech-kw, #8a6a1f); opacity:.08; user-select:none; pointer-events:none; z-index:0}
-  .mech-slide-eyebrow{position:relative; z-index:1; color:var(--mech-kw, #8a6a1f); font:600 13.5px/1 'JetBrains Mono','Prompt',monospace; letter-spacing:.04em; margin-bottom:14px}
-  .mech-slide-title{position:relative; z-index:1; margin:0 0 20px; color:var(--text); font:700 clamp(22px,min(3.4vw,5vh),36px)/1.3 'Prompt',sans-serif}
-  .mech-slide-divider{position:relative; z-index:1; width:64px; height:3px; border-radius:2px; background:var(--mech-kw, #8a6a1f); margin-bottom:24px}
-  .mech-slide-body{position:relative; z-index:1; max-width:66ch; color:var(--text); font-size:clamp(20px,min(1.8vw,3.4vh),23px); font-weight:300; line-height:1.75}
-  /* 3-column real-skill-icon example row (renderMechExamples, 2026-09-22,
-     user-requested) -- a caption states each example's actual moveMod (or
-     equivalent) value rather than leaving it to inline prose. */
-  .mech-example-grid{position:relative; z-index:1; display:grid; grid-template-columns:repeat(3,minmax(0,180px)); gap:20px; margin:24px 0}
-  .mech-example-item{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px}
-  .mech-example-icon{width:var(--mech-icon,128px); height:var(--mech-icon,128px); border-radius:10px; object-fit:cover}
-  .mech-example-name{font:600 13px/1.3 'Prompt',sans-serif; color:var(--text)}
-  .mech-example-caption{font:700 14px/1 'JetBrains Mono','Prompt',monospace; color:var(--mech-kw, #8a6a1f)}
-
-  .mech-nav-btn{flex:0 0 auto; align-self:center; width:56px; border:none; background:transparent; color:var(--muted); font-size:34px; line-height:1; cursor:pointer; padding:10px 6px; transition:color .15s ease, transform .15s ease}
-  .mech-nav-btn:hover{color:var(--mech-kw, #8a6a1f); transform:scale(1.12)}
-  .mech-nav-btn[disabled]{opacity:.2; pointer-events:none}
-
-  .mech-dots{flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:9px; padding:0 0 26px}
-  .mech-dot{width:9px; height:9px; padding:0; border:none; border-radius:5px; background:var(--line); cursor:pointer; transition:all .15s ease}
-  .mech-dot:hover{background:var(--mech-kw-border, rgba(138,106,31,0.4))}
-  .mech-dot.is-active{width:28px; background:var(--mech-kw, #8a6a1f)}
+  /* the topic art (renderMechTileBg: the user's sneaker, the game's EVADE popup and damage digits, the target icon) */
+  .mech-art{display:flex; align-items:center; justify-content:center}
+  .mech-art .mech-index-tile-bg-img{height:100%; width:auto; max-width:100%; object-fit:contain}
+  .mech-art .mech-bg-evade{transform:scaleY(.67)}
+  .mech-art .mech-index-tile-bg-digits{display:flex}
+  .mech-art .sk-dmg-final-digit{height:var(--mech-dig, 48px) !important; width:auto}
+  /* index: one row per topic, each row in its topic's accent */
+  .mech-index{flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--mech-rows, 5), minmax(0,1fr))}
+  .mech-row{position:relative; display:flex; align-items:center; gap:calc(36px * var(--mech-s)); min-height:0; padding:0 calc(44px * var(--mech-s)); border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--text); font:inherit; text-align:left; overflow:hidden; cursor:pointer; transition:background .2s}
+  .mech-row:last-child{border-bottom:0}
+  .mech-row::before{content:""; position:absolute; inset:0 auto 0 0; width:4px; background:var(--mech-acc); transform:scaleY(0); transition:transform .2s}
+  .mech-row:hover,.mech-row:focus-visible{background:linear-gradient(90deg, color-mix(in srgb, var(--mech-acc) 11%, transparent), transparent 65%)}
+  .mech-row:focus-visible{outline:2px solid var(--gold); outline-offset:-3px}
+  .mech-row:hover::before,.mech-row:focus-visible::before{transform:scaleY(1)}
+  .mech-row-title{position:relative; z-index:1; flex:none; min-width:calc(380px * var(--mech-s)); font:700 calc(44px * var(--mech-s))/1.1 'Prompt',sans-serif; transition:color .2s}
+  .mech-row:hover .mech-row-title{color:var(--mech-acc)}
+  .mech-row-steps{position:relative; z-index:1; display:flex; flex-wrap:wrap; gap:4px 18px; max-width:46%; color:var(--muted); font:400 calc(14px * var(--mech-s))/1.5 'Prompt',sans-serif; opacity:.7; transition:opacity .2s}
+  .mech-row:hover .mech-row-steps{opacity:1}
+  .mech-row-count{position:relative; z-index:1; margin-left:auto; flex:none; font:600 calc(13px * var(--mech-s)) 'JetBrains Mono','Prompt',monospace; color:var(--mech-acc)}
+  .mech-row-art{position:absolute; right:calc(130px * var(--mech-s)); top:50%; height:130%; transform:translateY(-50%) rotate(-8deg); opacity:.2; pointer-events:none; --mech-dig:56px; transition:opacity .25s, transform .25s}
+  .mech-row:hover .mech-row-art{opacity:.45; transform:translateY(-50%) rotate(-4deg) scale(1.05)}
+  .mech-row-steps .mech-code,.mech-tab .mech-code,.mech-next .mech-code{font-size:.82em; padding:0 4px}
+  /* a topic: named step tabs, then the stage (examples or art) beside the text */
+  .mech-tabs{display:flex; padding:0 28px; border-bottom:1px solid var(--line); flex:none; overflow-x:auto; scrollbar-width:none}
+  .mech-tab{display:flex; align-items:center; gap:10px; flex:none; margin-bottom:-1px; padding:calc(14px * var(--mech-s)) calc(18px * var(--mech-s)); border:0; border-bottom:2px solid transparent; background:transparent; color:var(--muted); font:500 calc(14px * var(--mech-s))/1.35 'Prompt',sans-serif; text-align:left; cursor:pointer; transition:color .15s}
+  .mech-tab:hover{color:var(--text)}
+  .mech-tab.is-active{color:var(--text); border-bottom-color:var(--mech-acc)}
+  .mech-tab-no{flex:none; width:24px; height:24px; box-sizing:border-box; border-radius:50%; display:grid; place-items:center; border:1px solid currentColor; font:700 12px 'JetBrains Mono','Prompt',monospace}
+  .mech-tab.is-active .mech-tab-no{background:var(--mech-acc); border-color:var(--mech-acc); color:var(--panel)}
+  .mech-split{flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,40%) minmax(0,1fr)}
+  .mech-spot{display:grid; place-items:center; min-height:0; overflow:hidden; background:radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--mech-acc) 16%, transparent), transparent 62%), var(--panel-2); border-right:1px solid var(--line); --mech-dig:70px}
+  .mech-spot > .mech-art{height:46%; width:80%}
+  .mech-example-grid{--mech-icon:calc(116px * var(--mech-s)); display:flex; flex-wrap:wrap; justify-content:center; gap:calc(28px * var(--mech-s)); padding:24px}
+  .mech-example-item{display:flex; flex-direction:column; align-items:center; gap:6px; width:calc(var(--mech-icon) * 1.4); text-align:center}
+  .mech-example-icon{width:var(--mech-icon); height:var(--mech-icon); border-radius:12px; object-fit:cover}
+  .mech-example-name{font:600 calc(14px * var(--mech-s))/1.3 'Prompt',sans-serif; color:var(--text)}
+  .mech-example-caption{font:700 calc(14px * var(--mech-s))/1.2 'JetBrains Mono','Prompt',monospace; color:var(--mech-kw, #8a6a1f)}
+  .mech-text{display:flex; flex-direction:column; min-height:0; padding:calc(40px * var(--mech-s)) calc(56px * var(--mech-s)) calc(26px * var(--mech-s))}
+  .mech-slide-eyebrow{font:600 13px/1 'JetBrains Mono','Prompt',monospace; letter-spacing:.04em; color:var(--mech-acc)}
+  .mech-slide-title{margin:calc(10px * var(--mech-s)) 0 calc(18px * var(--mech-s)); color:var(--text); font:700 calc(32px * var(--mech-s))/1.3 'Prompt',sans-serif}
+  .mech-slide-body{flex:1; min-height:0; overflow:hidden; max-width:62ch; color:var(--text); font:300 calc(21px * var(--mech-s))/1.75 'Prompt',sans-serif}
+  .mech-nav{display:flex; justify-content:space-between; gap:12px; padding-top:calc(18px * var(--mech-s)); border-top:1px solid var(--line); flex:none}
+  .mech-nav-btn{border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--muted); padding:10px 18px; font:500 14px/1.3 'Prompt',sans-serif; cursor:pointer; transition:border-color .15s, color .15s}
+  .mech-nav-btn:hover:not([disabled]){border-color:var(--mech-acc); color:var(--text)}
+  .mech-nav-btn[disabled]{opacity:.35; cursor:default}
+  .mech-next b{color:var(--text); font-weight:600}
 
   /* Inline code term for real engine identifiers (dmgAdjust, hitMod, ...)
      inside a step's title/body, written as `term` in MECHANIC_DESC_MAP --
@@ -1451,42 +1450,33 @@
      since the wrapped text itself is always a Latin identifier. */
   .mech-code{font:600 .82em/1 'JetBrains Mono','Prompt',monospace; background:var(--mech-kw-bg, rgba(138,106,31,0.08)); border:1px solid var(--mech-kw-border, rgba(138,106,31,0.28)); border-radius:4px; padding:2px 7px; color:var(--mech-kw, #8a6a1f)}
 
-  /* Below this width/height, a fixed 16:9 page either overflows or
-     shrinks the type past legibility -- drop the aspect ratio and behave
-     like a full-height sheet instead (same "flexible design" reasoning
-     the user asked for, just at the other end of the viewport range). */
+  /* Phones (and very short windows): a full-screen sheet that scrolls (fitMechSlide skips it), the page behind scroll-locked (html.mech-open);
+     the index rows drop their step names, a topic puts the stage above the text. */
   @media(max-width:760px), (max-height:480px){
-    /* Phone polish (2026-09-24): full-screen sheet, content starts at the top (a centred flex column
-       that overflows is clipped ABOVE its scroll range, which cut off the step title), prev/next moved
-       into the bottom bar beside the dots so the text gets the full width, compact 3-column examples,
-       a faint top-right watermark, no auto-shrinking (fitMechSlide skips narrow screens), and the page
-       behind is scroll-locked (html.mech-open). */
     html.mech-open, html.mech-open body{overflow:hidden !important}
     .mech-backdrop{padding:0}
-    .mech-popup{position:relative; aspect-ratio:auto; width:100%; height:100dvh; max-height:100dvh; border-radius:0}
+    .mech-popup{width:100%; height:100dvh; max-height:100dvh; border-radius:0}
     .mech-head{padding:12px 12px 10px 16px}
     .mech-head h2{font-size:16px}
-    .mech-stage{overflow:hidden}
-    .mech-index-wrap{margin:0; padding:14px; overflow-y:auto}
-    .mech-index-grid{grid-template-columns:1fr; gap:10px}
-    .mech-index-tile{min-height:0; padding:18px}
-    .mech-index-tile-title{font-size:20px}
-    .mech-index-tile-bg-img, .mech-index-tile-bg-digits{opacity:.12}
-    .mech-slide-wrap{display:block; position:static; flex:1; min-height:0; overflow:hidden}
-    .mech-slide{height:100%; justify-content:flex-start; padding:14px 18px 20px; overflow-y:auto; scrollbar-width:thin}
-    .mech-slide-watermark{font-size:88px; left:auto; right:12px; top:4px; opacity:.14}
-    .mech-slide-eyebrow{font-size:12px}
-    .mech-slide-title{font-size:20px; margin:4px 0 12px}
-    .mech-slide-divider{margin-bottom:14px}
-    .mech-slide-body{font-size:16px; line-height:1.65}
-    .mech-example-grid{grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0}
-    .mech-example-icon{width:56px; height:56px}
-    .mech-example-name{font-size:11.5px}
-    .mech-example-caption{font-size:12px; line-height:1.3}
-    .mech-nav-btn{position:absolute; bottom:6px; width:48px; height:44px; font-size:28px; z-index:2}
-    .mech-nav-prev{left:8px}
-    .mech-nav-next{right:8px}
-    .mech-dots{min-height:56px; padding:0; border-top:1px solid var(--line)}
+    .mech-stage{overflow-y:auto; scrollbar-width:thin}
+    .mech-index{display:block}
+    .mech-row{width:100%; min-height:84px; padding:16px 18px; gap:12px}
+    .mech-row-title{min-width:0; font-size:22px}
+    .mech-row-steps{display:none}
+    .mech-row-art{right:72px; height:110%}
+    .mech-tabs{padding:0 8px}
+    .mech-tab{padding:10px 12px; font-size:13px}
+    .mech-split{display:block}
+    .mech-spot{border-right:0; border-bottom:1px solid var(--line); padding:8px 0; --mech-dig:44px}
+    .mech-spot > .mech-art{height:96px}
+    .mech-example-grid{--mech-icon:64px; gap:12px; padding:12px}
+    .mech-example-name,.mech-example-caption{font-size:12px}
+    .mech-text{padding:16px 18px 18px}
+    .mech-slide-title{font-size:20px; margin:6px 0 12px}
+    .mech-slide-body{font-size:16px; line-height:1.65; overflow:visible}
+    .mech-nav{padding-top:14px}
+    .mech-nav-btn{padding:9px 14px; font-size:13px; white-space:nowrap}
+    .mech-next{white-space:normal; text-align:right}
   }
 
   /* ---- Donate Modal ---- */
@@ -7383,11 +7373,9 @@
 <div class="mech-backdrop" id="mechanicModal" hidden aria-modal="true" role="dialog" aria-labelledby="mechanicModalTitle">
   <section class="mech-popup">
     <header class="mech-head">
+      <button type="button" class="mech-index-btn" id="btnMechanicIndex" aria-label="หัวข้อทั้งหมด" title="หัวข้อทั้งหมด" hidden>←</button>
       <h2 id="mechanicModalTitle">คลังคำอธิบายกลไกเกม</h2>
-      <div class="mech-head-actions">
-        <button type="button" class="mech-index-btn" id="btnMechanicIndex" aria-label="กลับไปหน้าดัชนี" title="กลับไปหน้าดัชนี">📖</button>
-        <button type="button" class="mech-close" id="btnMechanicModalClose" aria-label="ปิด">✕</button>
-      </div>
+      <button type="button" class="mech-close" id="btnMechanicModalClose" aria-label="ปิด">✕</button>
     </header>
     <div class="mech-stage" id="mechanicModalBody"></div>
   </section>
@@ -13093,39 +13081,22 @@ function renderMechExamples(examples){
   return `<div class="mech-example-grid">${items}</div>`;
 }
 
-// One step, full page ("center stage" -- 2026-09-22 revamp). The step
-// number doubles as a giant background watermark instead of a small
-// bullet, and prev/next + dots replace the old stacked list so a topic
-// with more steps doesn't just grow a taller page.
+// A step label inside a button (index row, tab, next button): the same markup, minus any link button inside it (no button in a button).
+function mechLabelHtml(label){ return renderRichText(renderMechCode(label)).replace(/<\/?button[^>]*>/g, ""); }
+// One step of a topic, layout "C · สปอตไลต์" (user 2026-10-19): named step tabs, the step's example icons (or the topic art) on a stage at the
+// left, the text at the right, then ‹ ก่อนหน้า / ถัดไป: <next step's name>. Examples always sit on the stage, so an inline {{examples}} marker is dropped.
 function renderMechSlide(entry, key, idx){
-  const total = entry.steps.length;
-  const step = entry.steps[idx];
+  const total = entry.steps.length, step = entry.steps[idx], next = entry.steps[idx + 1];
   const title = renderRichText(renderMechCode(step.label));
-  const rawBody = renderRichText(renderMechCode(step.body));
-  const examples = renderMechExamples(step.examples);
-  // A step can place its example icons mid-body with a literal {{examples}} marker
-  // in step.body (e.g. between two lines of a multi-line explanation) instead of
-  // always trailing the whole body block.
-  const examplesInline = examples && rawBody.indexOf("{{examples}}") >= 0;
-  const body = examplesInline ? rawBody.split("{{examples}}").join(examples) : rawBody;
-  const prevDisabled = idx <= 0;
-  const nextDisabled = idx >= total - 1;
-  const dots = entry.steps.map((s, i) =>
-    `<button type="button" class="mech-dot${i === idx ? " is-active" : ""}" aria-label="ไปขั้นตอนที่ ${i + 1}" onclick="openMechanicPanel('${key}', ${i})"></button>`
-  ).join("");
-  return `<div class="mech-slide-wrap">
-      <button type="button" class="mech-nav-btn mech-nav-prev" aria-label="ขั้นตอนก่อนหน้า" ${prevDisabled ? "disabled" : ""} onclick="openMechanicPanel('${key}', ${idx - 1})">‹</button>
-      <div class="mech-slide">
-        <div class="mech-slide-watermark" aria-hidden="true">${String(idx + 1).padStart(2, "0")}</div>
-        <div class="mech-slide-eyebrow">ขั้นตอนที่ ${idx + 1} จาก ${total}</div>
-        <h3 class="mech-slide-title">${title}</h3>
-        <div class="mech-slide-divider"></div>
-        <div class="mech-slide-body">${body}</div>
-        ${examplesInline ? "" : examples}
-      </div>
-      <button type="button" class="mech-nav-btn mech-nav-next" aria-label="ขั้นตอนถัดไป" ${nextDisabled ? "disabled" : ""} onclick="openMechanicPanel('${key}', ${idx + 1})">›</button>
-    </div>
-    <div class="mech-dots">${dots}</div>`;
+  const body = renderRichText(renderMechCode(step.body)).split("{{examples}}").join("");
+  const examples = renderMechExamples(step.examples), bg = renderMechTileBg(key);
+  const tabs = total > 1 ? `<div class="mech-tabs" role="tablist" aria-label="ขั้นตอน">${entry.steps.map((s, i) =>
+    `<button type="button" class="mech-tab${i === idx ? " is-active" : ""}" role="tab" aria-selected="${i === idx}" onclick="openMechanicPanel('${key}', ${i})"><span class="mech-tab-no">${i + 1}</span><span>${mechLabelHtml(s.label)}</span></button>`).join("")}</div>` : "";
+  return tabs + `<div class="mech-split"><div class="mech-spot">${examples || (bg ? `<span class="mech-art" aria-hidden="true">${bg}</span>` : "")}</div>` +
+    `<div class="mech-text"><div class="mech-slide-eyebrow">ขั้นตอนที่ ${idx + 1} จาก ${total}</div><h3 class="mech-slide-title">${title}</h3><div class="mech-slide-body" data-mech-fit>${body}</div>` +
+    `<div class="mech-nav"><button type="button" class="mech-nav-btn" ${idx > 0 ? "" : "disabled"} onclick="openMechanicPanel('${key}', ${idx - 1})">‹ ก่อนหน้า</button>` +
+    (next ? `<button type="button" class="mech-nav-btn mech-next" onclick="openMechanicPanel('${key}', ${idx + 1})">ถัดไป: <b>${mechLabelHtml(next.label)}</b> →</button>`
+      : `<button type="button" class="mech-nav-btn" onclick="openMechanicPanel(null)">หัวข้อทั้งหมด</button>`) + `</div></div></div>`;
 }
 
 // Per-topic index-tile backdrop art (2026-09-22, user-supplied) -- scoped
@@ -13144,20 +13115,17 @@ function renderMechTileBg(key){
   return "";
 }
 
+// Index, layout "C · สปอตไลต์" (user 2026-10-19): one full-width row per topic in its own accent: the title, the topic art peeking in, the step names.
 function renderMechanicIndex(){
   const keys = Object.keys(MECHANIC_DESC_MAP);
-  const tiles = keys.map((key) => {
-    const m = MECHANIC_DESC_MAP[key];
-    const bg = renderMechTileBg(key);
-    return `<button type="button" class="mech-index-tile" onclick="openMechanicPanel('${key}')">
-        ${bg ? `<span class="mech-index-tile-bg" aria-hidden="true">${bg}</span>` : ""}
-        <span class="mech-index-tile-title">${m.title}</span>
-        <span class="mech-index-tile-meta">${m.steps.length} ขั้นตอน</span>
-      </button>`;
+  const rows = keys.map((key) => {
+    const m = MECHANIC_DESC_MAP[key], bg = renderMechTileBg(key);
+    return `<button type="button" class="mech-row" data-mech-acc="${key}" onclick="openMechanicPanel('${key}')">` +
+      (bg ? `<span class="mech-art mech-row-art" aria-hidden="true">${bg}</span>` : "") +
+      `<span class="mech-row-title">${m.title}</span><span class="mech-row-steps">${m.steps.map(s => `<span>${mechLabelHtml(s.label)}</span>`).join("")}</span>` +
+      `<span class="mech-row-count">${m.steps.length} ขั้นตอน →</span></button>`;
   }).join("");
-  return `<div class="mech-index-wrap">
-      <div class="mech-index-grid">${tiles}</div>
-    </div>`;
+  return `<div class="mech-index" style="--mech-rows:${keys.length}">${rows}</div>`;
 }
 
 function openMechanicPanel(key, stepIdx){
@@ -13171,7 +13139,6 @@ function openMechanicPanel(key, stepIdx){
     const idx = Math.max(0, Math.min(stepIdx == null ? 0 : stepIdx, entry.steps.length - 1));
     titleEl.textContent = entry.title;
     body.innerHTML = renderMechSlide(entry, k, idx);
-    requestAnimationFrame(fitMechSlide);
     body.dataset.mechKey = k;
     body.dataset.mechStep = String(idx);
   } else {
@@ -13180,22 +13147,24 @@ function openMechanicPanel(key, stepIdx){
     delete body.dataset.mechKey;
     delete body.dataset.mechStep;
   }
+  const popup = backdrop.querySelector(".mech-popup"), indexBtn = document.getElementById("btnMechanicIndex");
+  if (popup){ if (entry) popup.dataset.mechAcc = k; else delete popup.dataset.mechAcc; }
+  if (indexBtn) indexBtn.hidden = !entry;
+  requestAnimationFrame(fitMechSlide);
   backdrop.hidden = false;
   document.documentElement.classList.add("mech-open");
 }
-// Shrinks example icons until the slide stops overflowing its fixed 16:9 box (no scrolling on desktop).
+// Desktop never scrolls (user 2026-10-19): --mech-s steps down from 1 to .7 until nothing marked data-mech-fit (the step text) overflows
+// (the index rows share the height evenly, and their art overflows on purpose); every size scales with it. Phones and very short windows scroll instead.
 function fitMechSlide(){
-  const slide = document.querySelector("#mechanicModalBody .mech-slide");
-  if (!slide) return;
-  const body = slide.querySelector(".mech-slide-body");
-  slide.style.removeProperty("--mech-icon");
-  if (body) body.style.removeProperty("font-size");
-  // Narrow screens scroll the slide instead of shrinking it (same breakpoint as the phone CSS).
+  const popup = document.querySelector("#mechanicModal .mech-popup");
+  if (!popup) return;
+  popup.style.setProperty("--mech-s", "1");
+  const tab = popup.querySelector(".mech-tab.is-active");
+  if (tab) tab.parentElement.scrollLeft = tab.offsetLeft - 8;   // the tab row scrolls sideways on phones: keep the open step's tab in view
   if (window.matchMedia("(max-width:760px), (max-height:480px)").matches) return;
-  for (let px = 120; px >= 48 && slide.scrollHeight > slide.clientHeight; px -= 8) slide.style.setProperty("--mech-icon", px + "px");
-  // Still overflowing with icons at the minimum (very short windows): shrink the body text, floor 15px.
-  if (!body) return;
-  for (let px = Math.floor(parseFloat(getComputedStyle(body).fontSize)) - 1; px >= 15 && slide.scrollHeight > slide.clientHeight; px--) body.style.fontSize = px + "px";
+  const over = () => [...popup.querySelectorAll("[data-mech-fit]")].some(b => b.scrollHeight > b.clientHeight + 1);
+  for (let s = 0.97; s >= 0.7 && over(); s -= 0.03) popup.style.setProperty("--mech-s", s.toFixed(2));
 }
 window.addEventListener("resize", fitMechSlide);
 // Copies "## [title](link)" (Discord heading + link) and flashes `el` gold. From file:// the hosted address is used.
@@ -17858,8 +17827,9 @@ function mountSkillCooldownLookup(root){
     const cls = presetClass();
     if (!cls) return;
     const en = presetEntry(cls), s = en.slots[i];
+    // a new set stays in the window, now showing what it saved (user 2026-10-19: เริ่มชุดนี้จากค่าปัจจุบัน closed the pop-up); loading a filled one closes it for the change summary
+    if (!s){ presetPushUndo(); en.slots[i] = presetCurrent(); en.active = i; presetSaveAll(); renderPresetBar(); openPresetWindow(true, i, "none"); return; }
     closePresetWindow();
-    if (!s){ presetPushUndo(); en.slots[i] = presetCurrent(); en.active = i; presetSaveAll(); renderPresetBar(); return; }
     if (en.active === i) return;
     const from = en.active;
     presetPushUndo(); en.active = i; presetSaveAll();
@@ -28699,7 +28669,7 @@ const CLASS_GUIDES = [
   {"id":34,"cover":[264,422,441,413,442],"format":"12t-class-guide","version":1,"title":"กระต่ายยากครอบจักรวาล 12/8 PVP","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"ตายยาแท้ลงดัน ลงด่าน 12/8 pvp ได้หมดเลย ชานาน ชาแน่น","build":{"server":"tto","classKey":"rabbit","level":95,"learned":[101,102,103,104,111,121,122,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,341,342,404,412,413,414,422,423,424,441,442],"support":[907,912]},"stats":{"cha":"ตัน","agi":"ตาม"},"gear":{"weapon":[{"item":"w_rab12","replica":{"item":"w_rab69"},"stat":"cha"},{"item":"w_rab12","replica":{"item":"w_rab65"},"stat":"cha"}],"armor":[{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"},{"item":"a_rab12","replica":{"item":"a_rab65"},"stat":"cha"}],"hat":[{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"},{"item":"c_rab12","replica":{"item":"c_rab65"},"stat":"cha"}],"trinket":[{"item":"t_all86"},{"item":"t_all86"}],"boot":[{"item":"b_all45"},{"item":"b_all45"}],"pet":[{"item":"p_swb"},{"item":"p_swb"}]},"notes":{}},
   {"id":35,"cover":[431,441,412,423,413],"format":"12t-class-guide","version":1,"title":"PVE ชิลๆ ใช้ของน้อย","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายซัพชิลๆไม่ต้องทำไรมาก","build":{"server":"tto","classKey":"sheep","level":95,"learned":[101,102,111,121,122,123,131,132,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,241,242,243,244,251,252,253,254,261,262,263,264,271,301,311,312,313,314,321,322,323,324,351,352,404,412,413,422,423,424,431,441,442],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม","vit":120},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"notes":{"231":"ใช้แล้วหลายๆครั้งค่อนข้างช่วย ถ้าไม่อยากได้ถอดลงสกิลอื่นได้ไม่ว่ากัน"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T08:13:08.715Z","counts":{"1":43,"2":62,"3":35,"4":25,"5":56,"6":49,"7":35,"8":24,"9":26,"10":43,"11":41,"12":14,"13":6,"14":44,"15":53,"16":32,"17":55,"18":57,"19":34,"20":62,"21":32,"22":38,"23":46,"24":11,"25":19,"26":17,"27":12,"28":18,"29":35,"30":35,"31":35,"32":9,"33":13,"34":6,"35":8}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T08:21:10.422Z","counts":{"1":44,"2":63,"3":36,"4":25,"5":56,"6":50,"7":35,"8":24,"9":26,"10":43,"11":42,"12":14,"13":6,"14":44,"15":54,"16":34,"17":55,"18":57,"19":34,"20":62,"21":32,"22":38,"23":46,"24":11,"25":19,"26":17,"27":12,"28":18,"29":35,"30":35,"31":36,"32":9,"33":13,"34":6,"35":8}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -32403,6 +32373,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T08:21:11.117Z","feat(bible): the mechanic glossary is redesigned (one row per topic; a topic shows one step at a time with named step tabs, its example icons on a stage beside the text and a next-step button; never scrolls on desktop), and starting a new preset no longer closes the PRESET window"],
     ["2026-10-19T08:13:24.009Z","feat(bible): presets can be edited in the PRESET window and the preset change summary is redesigned (each change in large type, final damage only, a back button); no-scroll fixes: enemy search, skill tree tabs and paged search in skill details, shot log pages, a slimmer class rail, a fitted map strategy panel, CHA / AGI on one screen; leaving the Chameleon sim mid-tour no longer freezes page scrolling"],
     ["2026-10-19T06:47:25.844Z","feat(bible): Special Pet Info fits one desktop screen: a pet with a range map stacks its timeline, game-vs-code strip and notes beside the map, the empty space under the tool is gone, and a pet page taller than a short window is zoomed down to fit"],
     ["2026-10-19T06:39:15.116Z","feat(bible): Special Pet Info's roster gets a tab per category (only the open one's pets show) and never scrolls on desktop: the panel fits the window and its rows shrink to fit"],
