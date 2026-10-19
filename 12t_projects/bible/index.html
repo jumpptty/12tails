@@ -6126,15 +6126,26 @@
   .chm-arena { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; padding: 14px 18px; overflow: hidden; }
   .chm-arena::before { content: ""; position: absolute; inset: 0; background: radial-gradient(380px 260px at 50% 50%, rgba(139,30,30,.18), transparent 70%); pointer-events: none; }
   .chm-cds { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
-  .chm-cd { display: flex; align-items: center; gap: 12px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font-family: 'Prompt', sans-serif; padding: 0; }
-  .chm-cd-ring { --s: 62px; }
+  .chm-cd { display: flex; align-items: center; gap: 18px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font-family: 'Prompt', sans-serif; padding: 0; }
+  .chm-cd-ring { --s: 60px; }
+  /* the two cast skills wear a medallion (user 2026-10-19: more stylized than the plain rings): a polished gold band with a dark inner line,
+     clock ticks round it (they are cooldown timers); off = grey, Fatal Strike charges on = glowing */
+  .chm-cd .chm-cd-ring, .chm-cd[data-state] .chm-cd-ring { box-shadow: 0 0 0 2px #0c0b09; }
+  .chm-cd .chm-ringw::before, .chm-cd .chm-ringw::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; transition: filter .2s; }
+  .chm-cd .chm-ringw::before { inset: -6px; box-shadow: 0 4px 12px rgba(0,0,0,.6);
+    background: conic-gradient(from 210deg, #fff3c4, #d2a23c 14%, #7c5718 30%, #f3d98a 48%, #a07426 64%, #fff3c4 80%, #d2a23c 92%, #fff3c4);
+    -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5.5px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 6px), #000 calc(100% - 5.5px)); }
+  .chm-cd .chm-ringw::after { inset: -12px;
+    background: repeating-conic-gradient(rgba(241,210,122,.75) 0 2deg, transparent 2deg 30deg);
+    -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); }
+  .chm-cd[data-state="off"] .chm-ringw::before, .chm-cd[data-state="off"] .chm-ringw::after { filter: grayscale(1) brightness(.55); }
+  .chm-cd[data-state="buff"] .chm-ringw::before { filter: brightness(1.12) drop-shadow(0 0 7px rgba(241,210,122,.75)); }
+  .chm-cd:not([data-state="off"]):not([data-state="buff"]):hover .chm-ringw::before { filter: brightness(1.15); }
   .chm-cd-sweep { position: absolute; inset: 0; background: conic-gradient(rgba(10,9,7,.8) calc(var(--cd, 0) * 1%), transparent 0); pointer-events: none; }
   .chm-cd-sec { position: absolute; inset: 0; display: grid; place-items: center; font: 700 19px var(--chm-num); color: #fff; text-shadow: 0 2px 6px #000; }
   .chm-cd[data-state="off"] .chm-cd-sec { font: 600 12.5px 'Prompt', sans-serif; color: var(--muted); }
-  .chm-cd[data-state="off"] .chm-cd-ring { box-shadow: 0 0 0 2px rgba(255,255,255,.2); }
-  .chm-cd[data-state="off"] .chm-cd-ring > img { filter: grayscale(1) brightness(.5); }
-  .chm-cd[data-state="buff"] .chm-cd-ring { box-shadow: 0 0 0 2px #f1d27a, 0 0 14px rgba(241,210,122,.5); }
-  .chm-cd-badge { position: absolute; right: -6px; bottom: -4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--gold); color: #1a1205; font: 700 12px/22px var(--chm-num); text-align: center; box-shadow: 0 0 0 2px var(--panel); }
+    .chm-cd[data-state="off"] .chm-cd-ring > img { filter: grayscale(1) brightness(.5); }
+    .chm-cd-badge { position: absolute; z-index: 1; right: -10px; bottom: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--gold); color: #1a1205; font: 700 12px/22px var(--chm-num); text-align: center; box-shadow: 0 0 0 2px var(--panel); }
   .chm-cd-lbl b { display: block; font-size: 14px; }
   .chm-cd-lbl small { font-size: 12px; color: var(--muted); }
   .chm-boss { position: relative; width: 270px; height: 270px; display: grid; place-items: center; }
@@ -28128,7 +28139,7 @@ const CLASS_GUIDES = [
   {"id":32,"cover":[264,901,214,314,344],"format":"12t-class-guide","version":1,"title":"ProSupporter (No Basic)","author":"TLa1K","date":"2026-10-19","description":"เป็นแกะสาย PVE ซัพพอร์ทเพื่อนได้ทุกรูปแบบ สามารถดึงศักยภาพของเพื่อนร่วมทีมได้ถึงขีดสุด\nจำเป็นต้องคำนวนระยะเวลาและมานาเพื่อวนใช้สกิลให้ได้ตลอดเวลา เหมาะสำหรับผู้เชี่ยวชาญขึ้นไป","build":{"server":"tto","classKey":"sheep","level":95,"learned":[201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,272,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,361,362,363,402,412,413,414,422,423,424,433,442],"support":[901,902]},"stats":{"int":192,"agi":"ตัน","vit":130,"tal":"ตาม"},"statsPlus":["vit"],"gear":{"weapon":[{"item":"w_shp69","replica":{"item":"w_shp12"},"stat":"tal"}],"armor":[{"item":"a_shp61","replica":{"item":"a_shp12"},"stat":"tal"}],"hat":[{"item":"c_shp61","replica":{"item":"c_shp42"},"stat":"tal"}],"trinket":[{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"}],"pet":[{"item":"p_lbd"}]},"notes":{"214":"ควรใช้เป็นสกิลแรกเมื่อเริ่ม บัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","264":"เมื่อลงดันหรือลงด่าน ควรคำนวนระยะเวลาการเคลียร์ให้พอดี เพื่อที่จะสามารถวนกลับมาใช้รีเวิสได้พอดีโดยไม่ขาดมานา ควรเริ่มใช้สกิลนี้ก่อนซัพกระต่าย","314":"เริ่มบัพที่ตัวเองก่อน และบัพเพื่อนตามลำดับห้องเพื่อง่ายต่อการแจกบัพและคำนวนระยะเวลา","344":"ต้องรีบวิ่งมาก่อนเพื่อนเพื่อปักเสา และประจำตำแหน่งแถวกลางซีลไว้ เพราะผุ้เล่นจะตอบสนองต่อซีลว่าเป็นจุดศูนย์กลางโดนอัตโนมัติ ทำให้ง่ายต่อฮีลและแจกบัพเพื่อน","422":"จำเป็นมากในการรักษาค่า KO เพื่อน ควรกด All Heal ให้ได้อย่างสม่ำเสมอ","901":"ควรใช้หลังรีเวิสคูลดาวน์ได้ครึ่งนึง ถ้าจำเป็นต้องใช้มานาจำนวนมาก"}},
   {"id":33,"cover":[343,421,441,132],"format":"12t-class-guide","version":1,"title":"กวิ้นพายุ Pve 12/8 สายพายุประหยัดงบ","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-19","description":"สายประหยัดเซตเดิมๆก็เล่นได้ 12/8 ดัน ไหวชิล","build":{"server":"tto","classKey":"penguin","level":95,"learned":[101,102,111,112,121,122,123,124,131,132,141,142,143,144,201,202,203,204,221,222,223,224,231,232,233,241,242,243,244,251,261,262,301,311,312,313,314,321,322,323,324,331,332,333,341,342,343,361,362,402,404,413,421,422,424,434,441,442],"support":[901,902]},"gear":{"weapon":[{"item":"w_pgn56"}],"armor":[{"item":"a_pgn61"}],"hat":[{"item":"c_pgn61"}],"trinket":[{"item":"t_pgn60"}],"boot":[{"item":"b_all51"}],"pet":[{"item":"p_lbd"}]},"notes":{}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:17:45.369Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-19T03:22:18.926Z","counts":{"1":38,"2":54,"3":33,"4":21,"5":50,"6":44,"7":28,"8":21,"9":23,"10":40,"11":36,"12":12,"13":5,"14":41,"15":49,"16":29,"17":50,"18":50,"19":30,"20":54,"21":30,"22":35,"23":44,"24":10,"25":18,"26":16,"27":12,"28":17,"29":31,"30":29,"31":31,"32":5,"33":2}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31823,6 +31834,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-19T03:22:10.593Z","fix(bible): the Chameleon attack sim's Fatal Strike and Left Stride slots wear a gold medallion frame with clock ticks (grey when off, glowing while Fatal Strike charges last)"],
     ["2026-10-19T03:17:36.639Z","fix(bible): Chameleon attack sim round icons get a thicker gold edge and rank arc, and the poison stack dots move off the HP bar onto the bottom-right edge of the boss portrait"],
     ["2026-10-19T02:49:41.626Z","feat(bible): the Chameleon attack sim fits one screen on desktop (a 1560 x 960 composition zoomed to the window, the skills and the shot log take the spare height; phones still scroll) and its round icons follow the skill details rings (one thin gold edge, the art centred); the menu's ใหม่ pill keeps smooth corners at any zoom"],
     ["2026-10-19T02:44:54.290Z","feat(bible): the menu's tool strip can be dragged sideways with the mouse (a finger already swipes it); letting go after a drag opens nothing"],
