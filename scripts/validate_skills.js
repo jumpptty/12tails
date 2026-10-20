@@ -3349,6 +3349,8 @@ let checkedRsim = 0;
     ok(/ความครบถ้วนของเนื้อหา/.test(tEd) && /3\.5/.test(tEd) && /25\/70/.test(tEd) && /2\/3/.test(tEd) && (tEd.match(/is-miss/g) || []).length === 3 && (tEd.match(/is-ok/g) || []).length === 1, "the editor pop-up names the score and shows 25/70 letters and 2/3 skills");
     ok(!/\/70|\/3 /.test(tGal) && (tGal.match(/is-miss/g) || []).length === 3, "the gallery pop-up lists the parts without the progress numbers");
     ok(!/\.title = done\.label/.test(html) && /data-cg-role="ratingStars"/.test(html), "no browser tooltip on the stars; the editor has its live stars line");
+    // the readers badge gets the same pop-up (user 2026-10-20); its "10 นาที" must match the counter query's 10-minute bucket (600000 ms)
+    ok(/const viewBadge = [^]{0,1500}classGuideTipBind\(v,/.test(html) && html.includes("อัปเดตทุก 10 นาที หรือนานกว่านั้นถ้าเปิด ad blocker") && html.includes("Math.floor(Date.now() / 600000)"), "the readers badge's pop-up says it updates every 10 minutes, longer with an ad blocker (matches the 600000 ms counter bucket)");
   }
   // Recommended stats (user 2026-10-15): optional, any of the 8, only filled ones stored. Since 2026-10-18 a value is an integer 0-512, a share "N%"
   // (the shares of a finished guide total 100) or ตัน / ตาม, and the stats keep the author's order (docs/superpowers/specs/2026-10-18-guide-stat-flasks-design.md).

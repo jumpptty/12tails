@@ -1871,14 +1871,14 @@
   .cg-rate-star{display:block;flex:none;width:13px;height:13px}
   .cg-rate-bg{fill:color-mix(in srgb,var(--gold) 22%,transparent)}
   .cg-rate-fg{fill:var(--gold)}
-  .cg-rate-tip{white-space:normal;min-width:200px;padding:7px 11px}
-  .cg-rate-tip-h{margin-bottom:4px;font-size:13px}
-  .cg-rate-tip-h b{color:var(--gold)}
-  .cg-rate-tip-line{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:500;line-height:1.55}
-  .cg-rate-tip-line i{flex:none;width:12px;font-style:normal;text-align:center}
-  .cg-rate-tip-line.is-ok i{color:var(--gold)}
-  .cg-rate-tip-line.is-miss{color:var(--muted)}
-  .cg-rate-tip-line b{margin-left:auto;padding-left:14px;font-weight:600;font-variant-numeric:tabular-nums}
+  .cg-tip{white-space:normal;min-width:200px;max-width:min(320px,calc(100vw - 8px));padding:7px 11px}
+  .cg-tip-h{margin-bottom:4px;font-size:13px}
+  .cg-tip-h b{color:var(--gold)}
+  .cg-tip-line{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:500;line-height:1.55}
+  .cg-tip-line i{flex:none;width:12px;font-style:normal;text-align:center}
+  .cg-tip-line.is-ok i{color:var(--gold)}
+  .cg-tip-line.is-miss{color:var(--muted)}
+  .cg-tip-line b{margin-left:auto;padding-left:14px;font-weight:600;font-variant-numeric:tabular-nums}
   .cg-editor-rating{grid-column:1/-1;justify-self:end;display:flex;align-items:center;gap:6px;padding:0 6px 2px;font-size:12px;line-height:1;color:var(--muted);cursor:help;user-select:none}   /* the editor's live stars, under the step tabs */
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
@@ -27501,28 +27501,28 @@ function classGuideCompleteness(g){
 // The stars' pop-up (user 2026-10-20: the page's own, not the browser tooltip; looks like the Skill Simulator's hover tip): the score, then one line per part.
 // progress = the editor: the description and the notes also show how far they are (25/70 ตัวอักษร, 2/3 สกิล).
 function classGuideRatingTip(done, progress){
-  return '<div class="cg-rate-tip-h">ความครบถ้วนของเนื้อหา <b>' + done.stars + '</b>/5</div>' + done.parts.map(p => '<div class="cg-rate-tip-line ' + (p.ok ? "is-ok" : "is-miss") + '"><i>' + (p.ok ? "✓" : "✗") + '</i><span>' + (p.ok || progress ? p.name : p.need) + '</span>'
+  return '<div class="cg-tip-h">ความครบถ้วนของเนื้อหา <b>' + done.stars + '</b>/5</div>' + done.parts.map(p => '<div class="cg-tip-line ' + (p.ok ? "is-ok" : "is-miss") + '"><i>' + (p.ok ? "✓" : "✗") + '</i><span>' + (p.ok || progress ? p.name : p.need) + '</span>'
     + (progress && p.unit ? '<b>' + (p.ok ? p.now : p.now + "/" + p.min) + " " + p.unit + '</b>' : "") + '</div>').join("");
 }
-let classGuideRateTipEl = null, classGuideRateTipOwner = null;
-function classGuideRatingHide(){ if (classGuideRateTipEl) classGuideRateTipEl.classList.remove("show"); classGuideRateTipOwner = null; }
-function classGuideRatingShow(el, done, progress){
-  if (!classGuideRateTipEl){
-    classGuideRateTipEl = document.createElement("div"); classGuideRateTipEl.className = "rsim-tip cg-rate-tip"; classGuideRateTipEl.setAttribute("aria-hidden", "true"); document.body.appendChild(classGuideRateTipEl);
-    // a click (a card opening its guide) or a tap elsewhere, and any scroll, close it; a tap on the editor's own stars toggles it in classGuideRatingBind
-    document.addEventListener("pointerdown", e => { if (classGuideRateTipOwner && (e.pointerType === "mouse" || !classGuideRateTipOwner.contains(e.target))) classGuideRatingHide(); }, true);
-    window.addEventListener("scroll", classGuideRatingHide, true);
+let classGuideTipEl = null, classGuideTipOwner = null;
+function classGuideTipHide(){ if (classGuideTipEl) classGuideTipEl.classList.remove("show"); classGuideTipOwner = null; }
+function classGuideTipShow(el, html){   // the shared pop-up (the stars, the readers badge): the Skill Simulator's hover tip look, above el (below when no room)
+  if (!classGuideTipEl){
+    classGuideTipEl = document.createElement("div"); classGuideTipEl.className = "rsim-tip cg-tip"; classGuideTipEl.setAttribute("aria-hidden", "true"); document.body.appendChild(classGuideTipEl);
+    // a click (a card opening its guide) or a tap elsewhere, and any scroll, close it; a tap on the editor's own stars toggles it in classGuideTipBind
+    document.addEventListener("pointerdown", e => { if (classGuideTipOwner && (e.pointerType === "mouse" || !classGuideTipOwner.contains(e.target))) classGuideTipHide(); }, true);
+    window.addEventListener("scroll", classGuideTipHide, true);
   }
-  const t = classGuideRateTipEl; t.innerHTML = classGuideRatingTip(done, progress);
+  const t = classGuideTipEl; t.innerHTML = html;
   const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
   t.style.left = Math.max(4, Math.min(document.documentElement.clientWidth - w - 4, r.left + r.width / 2 - w / 2)) + "px";
   t.style.top = (r.top - h - 6 >= 4 ? r.top - h - 6 : r.bottom + 6) + "px";
-  t.classList.add("show"); classGuideRateTipOwner = el;
+  t.classList.add("show"); classGuideTipOwner = el;
 }
-function classGuideRatingBind(el, get, progress){   // a mouse hover shows it; in the editor (progress) a tap toggles it too, for phones
-  el.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") classGuideRatingShow(el, get(), progress); });
-  el.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") classGuideRatingHide(); });
-  if (progress) el.addEventListener("pointerup", e => { if (e.pointerType !== "mouse"){ if (classGuideRateTipOwner === el) classGuideRatingHide(); else classGuideRatingShow(el, get(), progress); } });
+function classGuideTipBind(el, html, tap){   // html() = the pop-up's markup; a mouse hover shows it; with tap (the editor's stars) a tap toggles it too, for phones
+  el.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") classGuideTipShow(el, html()); });
+  el.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") classGuideTipHide(); });
+  if (tap) el.addEventListener("pointerup", e => { if (e.pointerType !== "mouse"){ if (classGuideTipOwner === el) classGuideTipHide(); else classGuideTipShow(el, html()); } });
 }
 const CLASS_GUIDE_STAR = "12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26", CLASS_GUIDE_STAR_HALF = "12,2 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26";
 function classGuideStarsHtml(stars){   // five small SVG stars (a half star is the left half of the outline filled), so no font has to carry a half-star glyph
@@ -28918,7 +28918,7 @@ function mountClassGuide(root){
     const c = draft.gear[slot] && draft.gear[slot][idx]; if (c){ const o = c.item ? { item: c.item } : { name: c.name }; if (c.replica) o.replica = c.replica; if (c.stat) o.stat = c.stat; draft.gear[slot][idx] = o; saveDraft(); }
     el("gearPicker").close(); gearPick = null;
   }
-  classGuideRatingBind(el("rating"), () => classGuideCompleteness(draft || {}), true);   // the editor's stars: hover or tap for what is missing and how far
+  classGuideTipBind(el("rating"), () => classGuideRatingTip(classGuideCompleteness(draft || {}), true), true);   // the editor's stars: hover or tap for what is missing and how far
   let readerCtx = null, viewStats = null;   // viewStats: the reader's own try-out values (start as the author's)
   const saveDraft = () => {
     if (mode !== "author") return;
@@ -29353,7 +29353,8 @@ function mountClassGuide(root){
   const viewBadge = id => {
     const v = document.createElement("span"); v.className = "cg-views"; v.hidden = true; v.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg><b></b>';
     guideViews(id).then(n => { if (!n) return; const r = estimatedReaders(id, n);   // nothing until the first reader is counted (user 2026-10-17: no "0" badges)
-    v.querySelector("b").textContent = r.toLocaleString("th-TH"); v.setAttribute("aria-label", r.toLocaleString("th-TH") + " ผู้อ่าน"); v.hidden = false; });   // a people icon says readers; no long tooltip (user 2026-10-17)
+    v.querySelector("b").textContent = r.toLocaleString("th-TH"); v.setAttribute("aria-label", r.toLocaleString("th-TH") + " ผู้อ่าน"); v.hidden = false; });   // a people icon says readers (user 2026-10-17); how fresh the number is sits in its pop-up (user 2026-10-20)
+    classGuideTipBind(v, () => '<div class="cg-tip-h">จำนวนผู้อ่าน</div><div class="cg-tip-line">อัปเดตทุก 10 นาที หรือนานกว่านั้นถ้าเปิด ad blocker</div>');   // 10 min = guideViewEnd's bucket; blocked = the hand-refreshed snapshot
     return v;
   };
   function guideCard(guide, tag = "button", id = null){
@@ -29370,7 +29371,7 @@ function mountClassGuide(root){
     const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = "· " + classGuideDateText(guide.date);
     who.appendChild(when); meta.appendChild(who);
     const done = classGuideCompleteness(guide), stars = document.createElement("span"); stars.className = "cg-rating"; stars.innerHTML = classGuideStarsHtml(done.stars);   // ความครบถ้วนของเนื้อหา (user 2026-10-20)
-    stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); classGuideRatingBind(stars, () => done, false); meta.appendChild(stars);
+    stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); classGuideTipBind(stars, () => classGuideRatingTip(done, false)); meta.appendChild(stars);
     if (id) meta.appendChild(viewBadge(id));
     b.append(portrait, title, chips, meta);
     return b;
@@ -31258,6 +31259,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T10:12:24.373Z","feat(bible): the guide readers count gets a pop-up: อัปเดตทุก 10 นาที หรือนานกว่านั้นถ้าเปิด ad blocker"],
     ["2026-10-20T10:06:02.210Z","feat(bible): the guide stars open the page's own pop-up (what is missing), and the editor shows them live under the step tabs with progress such as 20/70 letters"],
     ["2026-10-20T09:57:44.866Z","style(bible): the guide gallery text filters (ทั้งหมด, PVE, PVP) lose their box too: bold text, gold with a bar when chosen"],
     ["2026-10-20T09:43:47.838Z","feat(bible): guide gallery cards show ความครบถ้วนของเนื้อหา as 3 to 5 stars (half a star each for a 70+ letter description, notes on 3+ skills, stats and gear)"],
