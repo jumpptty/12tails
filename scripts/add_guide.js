@@ -2,13 +2,15 @@
 // Class guide manager (user 2026-10-20): add, replace or remove a guide in ไกด์อาชีพ without a Claude session.
 // With no arguments (or by double-clicking scripts/add_guide.cmd) it opens a page in the browser, served from this PC only: 127.0.0.1, a key made
 // at start-up on every request, and the Host and Origin checked, so no web page can drive it.
-// Every change goes through one pipeline: edit CLASS_GUIDES in 12t_projects/bible/index.html (one JSON object per line, CLASS-GUIDES.md), refresh
-// CLASS_GUIDE_VIEWS, prepend the changelog entry (also the commit subject), run the full validator (which also checks that a build is legal), then
-// commit and push. Any failure before the commit puts index.html back exactly as it was. It refuses while index.html has uncommitted work.
+// The page queues changes (user 2026-10-20: batch, e.g. add 2, replace 2, remove 1) and publishes the whole queue at once.
+// Every publish goes through one pipeline: apply the changes in order to CLASS_GUIDES in 12t_projects/bible/index.html (one JSON object per line,
+// CLASS-GUIDES.md), refresh CLASS_GUIDE_VIEWS, prepend one changelog entry (also the commit subject), run the full validator once (it also checks
+// that a build is legal), then make one commit and push. Any failure before the commit puts index.html back exactly as it was, so a batch goes
+// up whole or not at all. It refuses while index.html has uncommitted work.
 // * add: the next running id. * replace: the guide keeps its id (its link and view count), everything else comes from the new code.
 // * remove: the line becomes "// #N removed <date>: <title> by <author>", so the number is never given out again (ids are never reused).
-// * undo (page button or Ctrl+Z): the last change made since start-up is reversed the same way (an added guide is removed, a removed or
-//   replaced one comes back).
+// * undo (page button or Ctrl+Z): the last publish made since start-up, the whole batch, is reversed the same way (an added guide is removed,
+//   a removed or replaced one comes back).
 //
 //   node scripts/add_guide.js                       the page (--port <n>, --no-open)
 //   node scripts/add_guide.js add <code>            the same pipeline on the command line (a bare code also means add)
@@ -41,13 +43,17 @@ function readGuides(){
   const html = fs.readFileSync(FILE, "utf8"), eol = html.includes("\r\n") ? "\r\n" : "\n";
   const open = "const CLASS_GUIDES = [" + eol, start = html.indexOf(open), end = start < 0 ? -1 : html.indexOf(eol + "];", start);
   if (end < 0) throw new Error("CLASS_GUIDES was not found in " + REL);
-  const lines = html.slice(start + open.length, end).split(eol), guides = [], removed = [];
+  const lines = html.slice(start + open.length, end).split(eol);
+  return { html, eol, head: html.slice(0, start + open.length), tail: html.slice(end), lines, ...parse(lines) };
+}
+function parse(lines){
+  const guides = [], removed = [];
   lines.forEach((l, at) => {
     const t = l.trim(), r = t.match(/^\/\/ #(\d+) removed/);
     if (t.startsWith("{")) guides.push({ at, g: JSON.parse(t.replace(/,$/, "")) });
     else if (r) removed.push({ at, id: +r[1], text: t.slice(3) });
   });
-  return { html, eol, head: html.slice(0, start + open.length), tail: html.slice(end), lines, guides, removed };
+  return { guides, removed };
 }
 const nextId = (doc) => Math.max(0, ...doc.guides.map((x) => x.g.id), ...doc.removed.map((x) => x.id)) + 1;
 const guideLine = (id, g) => "  " + JSON.stringify({ id, ...g }).replace(/</g, "\\u003c") + ",";   // no "</script>" or "<!--" inside the page script
@@ -90,6 +96,20 @@ function plan(op, doc){
   }
   throw new Error("unknown action " + op.action);
 }
+// A batch: each change is planned on the lines the previous one left, so ids, duplicates and tombstones see the earlier changes.
+// Resolves to { lines, items: [{ action, id, subject }], subject, undo: [entries, in order] }.
+function planAll(ops, doc){
+  const items = [], undo = [];
+  ops.forEach((op, i) => {
+    let p;
+    try { p = plan(op, doc); } catch (e){ throw new Error(ops.length > 1 ? `รายการที่ ${i + 1}: ${e.message}` : e.message); }
+    items.push({ action: op.action, id: p.id, subject: p.subject }); if (p.undo) undo.push(p.undo);
+    doc = { ...doc, lines: p.lines, ...parse(p.lines) };
+  });
+  const subject = items.length === 1 ? items[0].subject
+    : subj(`${ops.some((o) => o.action === "add") ? "feat" : "fix"}(bible): class guides ${items.map((x) => x.subject.replace(/^(feat|fix)\(bible\): class guide /, "")).join("; ")}`);
+  return { lines: doc.lines, items, subject, undo };
+}
 
 // ---------- the pipeline ----------
 function preflight(push){
@@ -122,10 +142,11 @@ async function gitRetry(ui, ...a){
     }
   }
 }
-// ui = { step(key, text, state), log(text) }; resolves to { id, subject, url, undo, dry }
-async function apply(op, { dryRun = false, noPush = NO_PUSH } = {}, ui){
+// ops = the changes, in order; ui = { step(key, text, state), log(text) }; resolves to { items: [{ action, id, subject, url }], subject, undo, dry }
+async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
   ui.step("git", "ตรวจสถานะ git", "run");
-  const branch = preflight(!dryRun && !noPush), doc = readGuides(), p = plan(op, doc);
+  const branch = preflight(!dryRun && !noPush), doc = readGuides(), p = planAll(ops, doc);
+  const result = (extra) => ({ ...p, items: p.items.map((x) => ({ ...x, url: SITE + "#class-guide/" + x.id })), ...extra });
   ui.step("git", "ตรวจสถานะ git", "ok");
   ui.step("edit", "แก้ไฟล์ index.html", "run");
   const dir = path.join(os.tmpdir(), "12t-bible-backups"); fs.mkdirSync(dir, { recursive: true });
@@ -150,19 +171,19 @@ async function apply(op, { dryRun = false, noPush = NO_PUSH } = {}, ui){
       throw new Error("ไกด์ไม่ผ่านการตรวจ จึงไม่ได้อัปอะไรขึ้น และ index.html กลับเป็นเหมือนเดิมแล้ว");
     }
     ui.step("check", "ตรวจด้วย validator", "ok");
-    if (dryRun){ fs.copyFileSync(backup, FILE); return { ...p, url: SITE + "#class-guide/" + p.id, dry: true }; }
+    if (dryRun){ fs.copyFileSync(backup, FILE); return result({ dry: true }); }
     ui.step("commit", "commit", "run");
     const msg = path.join(dir, "commit-msg.txt"); fs.writeFileSync(msg, p.subject + "\n");
     await gitRetry(ui, "add", "--", REL); await gitRetry(ui, "commit", "-q", "-F", msg); committed = true;
     ui.step("commit", "commit", "ok");
-    if (noPush) return { ...p, url: SITE + "#class-guide/" + p.id };
+    if (noPush) return result();
     ui.step("push", "อัปขึ้น GitHub", "run");
     try { git("push", "-q", "origin", branch); } catch (e) {}   // the local tracking ref sometimes fails to update here; what counts is what GitHub has
     const sha = git("rev-parse", "HEAD"), remote = git("ls-remote", "origin", "refs/heads/" + branch).split(/\s+/)[0];
     if (remote !== sha){ ui.step("push", "อัปขึ้น GitHub", "fail"); throw new Error("commit ในเครื่องแล้ว แต่อัปขึ้น GitHub ไม่สำเร็จ ลองใหม่ภายหลังด้วย git push"); }
     try { git("update-ref", "refs/remotes/origin/" + branch, sha); } catch (e) {}
     ui.step("push", "อัปขึ้น GitHub", "ok");
-    return { ...p, url: SITE + "#class-guide/" + p.id };
+    return result();
   } catch (e){
     if (!committed){ try { git("reset", "-q", "--", REL); } catch (_) {} fs.copyFileSync(backup, FILE); }   // unstage too, or a failed commit leaves the new index.html staged
     throw e;
@@ -179,11 +200,11 @@ async function cli(words){
   else if (cmd === "delete") op = { action: "delete", id: +rest[0] };
   if (op && op.guide){ if (val("--modes")) op.guide.modes = pickModes(val("--modes").split(",").map((x) => x.trim().toLowerCase())); if (!(op.guide.modes || []).length) throw new Error("This code has no PVE / PVP tag (made with an older page). Add --modes pve, --modes pvp or --modes pve,pvp."); }
   else throw new Error("usage: see the header of scripts/add_guide.js");
-  const p = plan(op, readGuides());
+  const p = planAll([op], readGuides());
   console.log("\n  " + p.subject + "\n");
   if (!has("--dry-run") && !has("--yes") && !/^y/i.test((await ask("Publish this? (y/n) ")).trim())) throw new Error("Cancelled. Nothing was changed.");
-  const r = await apply(op, { dryRun: has("--dry-run") }, { step: (k, text, st) => { if (st !== "run") console.log((st === "ok" ? "  ok   " : st === "warn" ? "  !!   " : "  FAIL ") + text); }, log: (t) => console.log("    " + t.replace(/\n/g, "\n    ")) });
-  console.log(r.dry ? `\n✓ #${r.id} passed every check (dry run: index.html is back as it was).` : `\n✓ Done: ${r.subject}\n  ${r.url}`);
+  const r = await apply([op], { dryRun: has("--dry-run") }, { step: (k, text, st) => { if (st !== "run") console.log((st === "ok" ? "  ok   " : st === "warn" ? "  !!   " : "  FAIL ") + text); }, log: (t) => console.log("    " + t.replace(/\n/g, "\n    ")) });
+  console.log(r.dry ? `\n✓ #${r.items[0].id} passed every check (dry run: index.html is back as it was).` : `\n✓ Done: ${r.subject}\n  ${r.items[0].url}`);
 }
 
 // ---------- the page ----------
@@ -211,7 +232,7 @@ function serve(){
     }
     if (req.headers["x-key"] !== key || (req.headers.origin && req.headers.origin !== "http://" + host)){ res.writeHead(403); res.end(); return; }
     try {
-      if (req.method === "GET" && req.url === "/api/state") return json(res, 200, { ...pageData(), busy, undo: undos.length ? undos[undos.length - 1].text : null });
+      if (req.method === "GET" && req.url === "/api/state") return json(res, 200, { ...pageData(), busy, undo: undos.length ? undos[undos.length - 1].text : null });   // undos: one { entries, text } per publish
       if (req.method === "POST" && req.url === "/api/check"){
         const b = await body(req), doc = readGuides();
         try {
@@ -221,22 +242,29 @@ function serve(){
       }
       if (req.method === "POST" && (req.url === "/api/run" || req.url === "/api/undo")){
         if (busy) return json(res, 409, { error: "กำลังทำงานอื่นอยู่" });
-        const b = await body(req);
-        let op;
-        if (req.url === "/api/undo"){ if (!undos.length) return json(res, 400, { error: "ไม่มีอะไรให้ย้อนกลับ" }); op = { action: "undo", entry: undos[undos.length - 1] }; }
-        else if (b.action === "delete") op = { action: "delete", id: +b.id };
+        const b = await body(req), isUndo = req.url === "/api/undo", ops = [];
+        if (isUndo){ if (!undos.length) return json(res, 400, { error: "ไม่มีอะไรให้ย้อนกลับ" }); undos[undos.length - 1].entries.slice().reverse().forEach((entry) => ops.push({ action: "undo", entry })); }
         else {
-          const g = decodeCode(b.code); if (Array.isArray(b.modes)) g.modes = pickModes(b.modes);
-          if (!(g.modes || []).length) return json(res, 400, { error: "เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง" });
-          op = { action: b.action === "replace" ? "replace" : "add", id: +b.id, guide: g };
+          const items = Array.isArray(b.items) ? b.items : [];
+          if (!items.length) return json(res, 400, { error: "ไม่มีรายการ" });
+          for (const [i, it] of items.entries()){
+            if (it.action === "delete"){ ops.push({ action: "delete", id: +it.id }); continue; }
+            let g; try { g = decodeCode(it.code); } catch (e){ return json(res, 400, { error: `รายการที่ ${i + 1}: ${e.message}` }); }
+            if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
+            if (!(g.modes || []).length) return json(res, 400, { error: `รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง` });
+            ops.push({ action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g });
+          }
         }
         busy = true;
         res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
         const send = (o) => res.write(JSON.stringify(o) + "\n");
         try {
-          const r = await apply(op, { dryRun: !!b.dryRun }, { step: (k, text, state) => send({ type: "step", key: k, text, state }), log: (text) => send({ type: "log", text }) });
-          if (!r.dry){ if (op.action === "undo") undos.pop(); else if (r.undo) undos.push(r.undo); }
-          send({ type: "done", ok: true, dry: !!r.dry, id: r.id, subject: r.subject, url: r.url, action: op.action });
+          const r = await apply(ops, { dryRun: !!b.dryRun }, { step: (k, text, state) => send({ type: "step", key: k, text, state }), log: (text) => send({ type: "log", text }) });
+          if (!r.dry){
+            if (isUndo) undos.pop();
+            else if (r.undo.length) undos.push({ entries: r.undo, text: r.undo.length === 1 ? r.undo[0].text : `ย้อนกลับชุดล่าสุด ${r.undo.length} รายการ (${r.undo.map((u) => "#" + u.id).join(", ")})` });
+          }
+          send({ type: "done", ok: true, dry: !!r.dry, subject: r.subject, items: r.items });
         } catch (e){ send({ type: "done", ok: false, error: e.message }); }
         busy = false; res.end(); return;
       }
@@ -286,7 +314,7 @@ const PAGE = String.raw`<!doctype html>
   .banner{display:none; margin:0; padding:10px 24px; background:color-mix(in srgb,var(--seal) 18%,transparent); border-bottom:1px solid color-mix(in srgb,var(--seal) 50%,transparent); font-size:14px}
   .banner.is-on{display:flex; align-items:center; gap:12px}
   main{min-height:0; display:grid; grid-template-columns:minmax(360px,460px) minmax(0,1fr); gap:20px; padding:20px 24px}
-  .col{min-height:0; display:flex; flex-direction:column; gap:16px}
+  .col{min-height:0; overflow:auto; display:flex; flex-direction:column; gap:16px}
   .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px}
   .card h2{margin:0 0 12px; font-size:16px; font-weight:600; color:var(--gold-hi); display:flex; align-items:center; gap:10px}
   .card h2 .x{margin-left:auto}
@@ -334,11 +362,21 @@ const PAGE = String.raw`<!doctype html>
   .row{display:grid; grid-template-columns:52px 40px minmax(0,1fr) auto auto; align-items:center; gap:12px; padding:8px 10px; border:1px solid transparent; border-radius:10px; background:var(--panel-2)}
   .row:hover{border-color:var(--line)}
   .row.is-target{border-color:var(--gold)}
-  .row .no{font:700 14px var(--num); color:var(--gold-hi)}
+  .row .no, .qrow .no{font:700 14px var(--num); color:var(--gold-hi)}
   .row .face{width:40px; height:40px; box-shadow:0 0 0 1.5px var(--gold)}
-  .row .tt{min-width:0}
-  .row .tt b{display:block; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .row .tt small{display:block; color:var(--muted); font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .row .tt, .qrow .tt{min-width:0}
+  .row .tt b, .qrow .tt b{display:block; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .row .tt small, .qrow .tt small{display:block; color:var(--muted); font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .row .queued{font-size:12.5px; color:var(--gold-hi); white-space:nowrap}
+  .qlist{list-style:none; margin:0; padding:0; display:grid; gap:6px}
+  .qrow{display:grid; grid-template-columns:52px 44px 32px minmax(0,1fr) auto; align-items:center; gap:10px; padding:6px 8px; border-radius:10px; background:var(--panel-2)}
+  .qrow .face{width:32px; height:32px; box-shadow:0 0 0 1.5px var(--gold)}
+  .qa{padding:1px 0; border-radius:6px; font-size:12px; font-weight:600; text-align:center}
+  .qa-add{background:color-mix(in srgb,var(--pro) 20%,transparent); color:var(--pro)}
+  .qa-replace{background:color-mix(in srgb,var(--gold) 20%,transparent); color:var(--gold-hi)}
+  .qa-delete{background:color-mix(in srgb,var(--seal) 25%,transparent); color:#f0b3a6}
+  .qhint{padding:6px 2px; color:var(--muted); font-size:13.5px}
+  .qx:hover:not(:disabled){border-color:var(--seal); color:#f0b3a6}
   .views{font:500 12.5px var(--num); color:var(--muted); white-space:nowrap}
   .acts{display:flex; gap:6px}
   .acts .del:hover:not(:disabled){border-color:var(--seal); color:#f0b3a6}
@@ -349,8 +387,9 @@ const PAGE = String.raw`<!doctype html>
   .modal{position:fixed; inset:0; display:none; place-items:center; background:rgba(8,6,4,.7); z-index:10}
   .modal.is-on{display:grid}
   .modal .card{width:min(460px,92vw)}
-  .modal p{margin:0 0 16px; color:var(--muted)}
-  .modal p b{color:var(--text)}
+  .modal .mdtext{margin:0 0 16px; color:var(--muted)}
+  .modal .mdtext b{color:var(--text)}
+  .modal .mdtext ul{margin:0 0 10px; padding-left:18px; max-height:40vh; overflow:auto}
   .modal .row-actions{justify-content:flex-end}
   .modal .row-actions .btn-gold, .modal .row-actions .btn-red{flex:none}
   @media (max-width:900px){ main{grid-template-columns:minmax(0,1fr)} .app{height:auto} .list{overflow:visible} }
@@ -360,7 +399,7 @@ const PAGE = String.raw`<!doctype html>
 <div class="app">
   <header>
     <svg class="logo" viewBox="8 -10 110 110" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6df98"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#9a7622"/></linearGradient></defs><g fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24 L30 12 L30 78"/><path d="M48 30 C48 12 78 10 80 28 C82 44 60 54 48 78 L82 78 C98 78 106 66 102 52"/></g><path d="M102 52 C96 40 102 26 116 22 C110 34 114 44 102 52Z" fill="url(#g)"/></svg>
-    <h1>จัดการไกด์อาชีพ<small>เพิ่ม แทนที่ หรือลบไกด์ แล้วอัปขึ้น GitHub ให้เอง</small></h1>
+    <h1>จัดการไกด์อาชีพ<small>เพิ่ม แทนที่ หรือลบไกด์ได้ทีละหลายรายการ แล้วอัปขึ้น GitHub ในครั้งเดียว</small></h1>
     <span class="pill" id="pill"><i></i><span id="pillText">กำลังโหลด…</span></span>
     <button type="button" class="btn btn-sm undo" id="undoBtn" title="Ctrl+Z">↶ <span id="undoText"></span></button>
   </header>
@@ -373,7 +412,12 @@ const PAGE = String.raw`<!doctype html>
         <div class="preview" id="preview"><span class="face" id="pvFace"></span><div><b id="pvTitle"></b><span id="pvBy"></span><div class="meta" id="pvMeta"></div></div></div>
         <div class="msg" id="msg"></div>
         <div class="modes" id="modes" hidden><span>ไกด์นี้สำหรับ</span><button type="button" class="mbtn" data-m="pve" aria-pressed="false">PVE</button><button type="button" class="mbtn" data-m="pvp" aria-pressed="false">PVP</button><small id="modesHint"></small></div>
-        <div class="row-actions"><label class="chk"><input type="checkbox" id="dry"> ตรวจอย่างเดียว</label><button type="button" class="btn btn-gold" id="go" disabled>เพิ่มและอัปขึ้น GitHub</button></div>
+        <div class="row-actions"><button type="button" class="btn btn-gold" id="go" disabled>ใส่ในรายการ</button></div>
+      </section>
+      <section class="card" id="queue">
+        <h2>รายการที่จะอัป <span class="chip num" id="qCount">0</span><button type="button" class="btn btn-sm x" id="qUndo" title="Ctrl+Z" hidden>↶ ย้อน</button><button type="button" class="btn btn-sm" id="qClear" hidden>ล้าง</button></h2>
+        <ul class="qlist" id="qList"></ul>
+        <div class="row-actions"><label class="chk"><input type="checkbox" id="dry"> ตรวจอย่างเดียว</label><button type="button" class="btn btn-gold" id="publish" disabled>อัปขึ้น GitHub</button></div>
       </section>
       <section class="card" id="progress" hidden>
         <h2 id="progTitle">กำลังทำงาน</h2>
@@ -389,11 +433,13 @@ const PAGE = String.raw`<!doctype html>
     </section>
   </main>
 </div>
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle"><div class="card"><h2 id="mdTitle"></h2><p id="mdText"></p><div class="row-actions"><button type="button" class="btn" id="mdNo">ยกเลิก</button><button type="button" class="btn" id="mdYes"></button></div></div></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle"><div class="card"><h2 id="mdTitle"></h2><div class="mdtext" id="mdText"></div><div class="row-actions"><button type="button" class="btn" id="mdNo">ยกเลิก</button><button type="button" class="btn" id="mdYes"></button></div></div></div>
 <script>
-const KEY = "__KEY__", SRV = { og: "BB", tot: "ToT", tto: "TTO" }, STEPS = ["git", "edit", "views", "check", "commit", "push"];
+const KEY = "__KEY__", SRV = { og: "BB", tot: "ToT", tto: "TTO" }, ACT = { add: "เพิ่ม", replace: "แทนที่", delete: "ลบ" }, QKEY = "12t-guide-queue";
 const $ = (s) => document.querySelector(s);
-let state = null, mode = { kind: "add" }, check = null, checkTimer = 0, running = false, timer = 0;
+// queue = the changes waiting to be published together; qHist = earlier queues, for Ctrl+Z. The queue survives a reload (localStorage).
+let state = null, mode = { kind: "add" }, check = null, checkTimer = 0, running = false, timer = 0, queue = [], qHist = [];
+try { const q = JSON.parse(localStorage.getItem(QKEY) || "[]"); if (Array.isArray(q)) queue = q.filter((x) => x && ACT[x.action]); } catch (e) {}
 const api = (url, data) => fetch(url, { method: data ? "POST" : "GET", headers: { "X-Key": KEY, "Content-Type": "application/json" }, body: data ? JSON.stringify(data) : undefined });
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const dmy = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4) : (d || "ไม่ระบุวัน");
@@ -406,16 +452,29 @@ async function load(){
   $("#banner").classList.toggle("is-on", state.dirty);
   $("#undoBtn").classList.toggle("is-on", !!state.undo);
   $("#undoText").textContent = state.undo ? "ย้อนกลับ: " + state.undo : "";
-  renderList(); syncGo();
+  renderQueue(); renderList(); syncGo();
+}
+const queuedFor = (id) => queue.find((x) => x.action !== "add" && x.id === id);
+const addsBefore = (i) => queue.slice(0, i).filter((x) => x.action === "add").length;
+const plannedId = (x, i) => x.action === "add" ? state.next + addsBefore(i) : x.id;
+function saveQueue(){ try { localStorage.setItem(QKEY, JSON.stringify(queue)); } catch (e) {} }
+function setQueue(next){ qHist.push(queue); if (qHist.length > 50) qHist.shift(); queue = next; saveQueue(); renderQueue(); renderList(); showCheck(); }
+function qUndo(){ queue = qHist.pop(); saveQueue(); renderQueue(); renderList(); showCheck(); }
+function renderQueue(){
+  $("#qCount").textContent = queue.length;
+  $("#qList").innerHTML = queue.length ? queue.map((x, i) => '<li class="qrow"><span class="qa qa-' + x.action + '">' + ACT[x.action] + '</span><span class="no">#' + plannedId(x, i) + '</span><span class="face" style="background-image:url(' + face(x.classKey) + ')"></span><div class="tt"><b>' + esc(x.title) + '</b><small>' + esc(x.author) + ' · ' + cap(x.classKey) + ' · ' + SRV[x.server] + ' · ' + ((x.modes || []).map((m) => m.toUpperCase()).join("/") || "ไม่มีประเภท") + '</small></div><button type="button" class="btn btn-sm qx" data-qi="' + i + '" title="เอาออกจากรายการ" aria-label="เอาออกจากรายการ">✕</button></li>').join("")
+    : '<li class="qhint">ยังไม่มีรายการ วางโค้ดด้านบนเพื่อเพิ่มหรือแทนที่ หรือกด "ลบ" ที่ไกด์ทางขวา แล้วอัปทั้งหมดในครั้งเดียว</li>';
+  $("#qUndo").hidden = !qHist.length; $("#qClear").hidden = !queue.length;
+  document.querySelectorAll(".qx, #qUndo, #qClear").forEach((b) => b.disabled = running);
 }
 function renderList(){
   const q = $("#search").value.trim().toLowerCase().replace(/^#/, "");
   const rows = state.guides.filter((g) => !q || String(g.id) === q || (g.title + " " + g.author + " " + g.classKey + " " + SRV[g.server]).toLowerCase().includes(q));
   $("#count").textContent = state.guides.length;
-  $("#list").innerHTML = rows.length ? rows.map((g) => '<li class="row' + (mode.kind === "replace" && mode.id === g.id ? " is-target" : "") + '" data-id="' + g.id + '"><span class="no">#' + g.id + '</span><span class="face" style="background-image:url(' + face(g.classKey) + ')"></span><div class="tt"><b>' + esc(g.title) + '</b><small>' + esc(g.author) + ' · ' + cap(g.classKey) + ' · ' + SRV[g.server] + ' · ' + (g.modes.map((m) => m.toUpperCase()).join("/") || "ไม่มีประเภท") + ' · ' + dmy(g.date) + '</small></div><span class="views" title="ผู้เข้าชม (snapshot)">👁 ' + g.views + '</span><span class="acts"><button type="button" class="btn btn-sm" data-act="replace">แทนที่</button><button type="button" class="btn btn-sm del" data-act="delete">ลบ</button></span></li>').join("") : '<li class="empty">ไม่พบไกด์</li>';
+  $("#list").innerHTML = rows.length ? rows.map((g) => '<li class="row' + (mode.kind === "replace" && mode.id === g.id ? " is-target" : "") + '" data-id="' + g.id + '"><span class="no">#' + g.id + '</span><span class="face" style="background-image:url(' + face(g.classKey) + ')"></span><div class="tt"><b>' + esc(g.title) + '</b><small>' + esc(g.author) + ' · ' + cap(g.classKey) + ' · ' + SRV[g.server] + ' · ' + (g.modes.map((m) => m.toUpperCase()).join("/") || "ไม่มีประเภท") + ' · ' + dmy(g.date) + '</small></div><span class="views" title="ผู้เข้าชม (snapshot)">👁 ' + g.views + '</span><span class="acts">' + (queuedFor(g.id) ? '<span class="queued">ในรายการ: ' + ACT[queuedFor(g.id).action] + '</span>' : '<button type="button" class="btn btn-sm" data-act="replace">แทนที่</button><button type="button" class="btn btn-sm del" data-act="delete">ลบ</button>') + '</span></li>').join("") : '<li class="empty">ไม่พบไกด์</li>';
   $("#gone").hidden = !state.removed.length;
   $("#goneList").innerHTML = state.removed.map((t) => "<li>" + esc(t) + "</li>").join("");
-  document.querySelectorAll(".acts button").forEach((b) => b.disabled = running || state.dirty);
+  document.querySelectorAll(".acts button").forEach((b) => b.disabled = running);
 }
 function setMode(m){
   mode = m;
@@ -431,17 +490,26 @@ function showCheck(){
   if (!check) return syncGo();
   if (!check.ok){ msg.className = "msg err is-on"; msg.textContent = check.error; return syncGo(); }
   const g = check.guide;
-  $("#modes").hidden = false; document.querySelectorAll(".mbtn").forEach((b) => b.setAttribute("aria-pressed", String(g.modes.includes(b.dataset.m))));
-  $("#modesHint").textContent = g.modes.length ? "" : "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) เลือกให้ที่นี่ก่อนอัป";
+  $("#modes").hidden = false;
+  if (!check.shown){ check.shown = true; document.querySelectorAll(".mbtn").forEach((b) => b.setAttribute("aria-pressed", String(g.modes.includes(b.dataset.m)))); }   // only once per code, so a queue redraw keeps the user's picks
+  $("#modesHint").textContent = pressedModes().length ? "" : g.modes.length ? "เลือกอย่างน้อยหนึ่งอย่าง" : "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) เลือกให้ที่นี่ก่อนอัป";
   $("#pvFace").style.backgroundImage = "url(" + face(g.classKey) + ")"; $("#pvTitle").textContent = g.title; $("#pvBy").textContent = "โดย " + g.author;
-  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" : "จะได้เลข #") + check.id + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, dmy(g.date)].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
-  if (check.duplicate){ msg.className = "msg warn is-on"; msg.innerHTML = "ไกด์นี้มีอยู่แล้วเป็น <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> (ชื่อและผู้เขียนเดียวกัน)<br><button type='button' class='btn btn-sm' id='useReplace'>แทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>"; }
+  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, dmy(g.date)].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
+  if (check.duplicate && !queuedFor(check.duplicate.id)){ msg.className = "msg warn is-on"; msg.innerHTML = "ไกด์นี้มีอยู่แล้วเป็น <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> (ชื่อและผู้เขียนเดียวกัน)<br><button type='button' class='btn btn-sm' id='useReplace'>แทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>"; }
+  else if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = mode.kind === "replace" ? "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่" : "ไกด์นี้อยู่ในรายการแล้ว"; }
   syncGo();
 }
+// Why the code cannot be queued: already in the file (add), already queued (same title and author), or its target is already queued (replace).
+function blocked(){
+  if (!(check && check.ok)) return false;
+  if (mode.kind === "replace") return !!queuedFor(mode.id);
+  return !!check.duplicate || queue.some((x) => x.action !== "delete" && x.title === check.guide.title && x.author === check.guide.author);
+}
 function syncGo(){
-  const ok = !!(check && check.ok && !(check.duplicate && mode.kind === "add") && pressedModes().length);
-  $("#go").disabled = !ok || running || !state || state.dirty;
-  $("#go").textContent = $("#dry").checked ? "ตรวจอย่างเดียว" : mode.kind === "replace" ? "แทนที่และอัปขึ้น GitHub" : "เพิ่มและอัปขึ้น GitHub";
+  $("#go").disabled = !(check && check.ok && !blocked() && pressedModes().length) || running;
+  $("#go").textContent = mode.kind === "replace" ? "ใส่การแทนที่ #" + mode.id + " ในรายการ" : "ใส่ในรายการ";
+  $("#publish").disabled = !queue.length || running || !state || state.dirty;
+  $("#publish").textContent = $("#dry").checked ? "ตรวจอย่างเดียว (" + queue.length + " รายการ)" : "อัปขึ้น GitHub (" + queue.length + " รายการ)";
   $("#undoBtn").disabled = running || (state && state.dirty);
 }
 async function runCheck(){
@@ -460,7 +528,7 @@ function stepRow(key, text, st){
   else li.querySelector(".t").textContent = "";
 }
 async function run(url, data, title){
-  running = true; syncGo(); renderList();
+  running = true; syncGo(); renderList(); renderQueue();
   $("#progress").hidden = false; $("#progTitle").textContent = title; $("#steps").innerHTML = ""; $("#result").innerHTML = ""; $("#log").className = "log"; $("#log").textContent = "";
   let done = null;
   try {
@@ -485,8 +553,9 @@ async function run(url, data, title){
   if (!done) done = { ok: false, error: "ไม่ได้รับผลลัพธ์" };
   if (done.ok){
     $("#progTitle").textContent = done.dry ? "ผ่านการตรวจ" : "เสร็จแล้ว";
-    $("#result").innerHTML = done.dry ? "ไกด์ <b>#" + done.id + "</b> ผ่านการตรวจทั้งหมด (ตรวจอย่างเดียว ไม่ได้แก้ไฟล์ ไม่ได้ commit)" : esc(done.subject) + (done.action === "delete" ? "" : '<br><a href="' + esc(done.url) + '" target="_blank" rel="noopener">เปิดไกด์ #' + done.id + "</a> (ขึ้นเว็บภายใน 1-2 นาที)");
-    if (!done.dry){ if (url === "/api/run" && data.action !== "delete") setMode({ kind: "add" }); }
+    const links = done.items.filter((x) => x.action === "add" || x.action === "replace").map((x) => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">เปิดไกด์ #' + x.id + "</a>").join(" · ");
+    $("#result").innerHTML = done.dry ? "ผ่านการตรวจทั้งหมด " + done.items.length + " รายการ (ตรวจอย่างเดียว ไม่ได้แก้ไฟล์ ไม่ได้ commit)" : esc(done.subject) + (links ? "<br>" + links + " (ขึ้นเว็บภายใน 1-2 นาที)" : "");
+    if (!done.dry && url === "/api/run"){ queue = []; qHist = []; saveQueue(); }
   } else {
     $("#progTitle").textContent = "ไม่สำเร็จ";
     $("#result").innerHTML = '<span style="color:#f0b3a6">' + esc(done.error) + "</span>";
@@ -504,7 +573,10 @@ $("#mdYes").onclick = () => { const f = modalYes; closeModal(); if (f) f(); };
 $("#modal").onclick = (e) => { if (e.target === $("#modal")) closeModal(); };
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && $("#modal").classList.contains("is-on")) closeModal();
-  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !e.target.closest("textarea,input") && state && state.undo && !running && !state.dirty){ e.preventDefault(); undo(); }
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !e.target.closest("textarea,input") && !running && !$("#modal").classList.contains("is-on")){
+    if (qHist.length){ e.preventDefault(); qUndo(); }   // queue edits first; once the queue history is empty, the last publish
+    else if (state && state.undo && !state.dirty){ e.preventDefault(); undo(); }
+  }
 });
 function undo(){ ask("ย้อนกลับ", "<b>" + esc(state.undo) + "</b><br>จะ commit และอัปขึ้น GitHub เหมือนการเปลี่ยนแปลงปกติ", "ย้อนกลับ", false, () => run("/api/undo", {}, "กำลังย้อนกลับ")); }
 $("#undoBtn").onclick = undo;
@@ -516,17 +588,26 @@ $("#search").addEventListener("input", renderList);
 $("#cancelReplace").onclick = () => setMode({ kind: "add" });
 $("#msg").addEventListener("click", (e) => { if (e.target.id === "useReplace"){ const code = $("#code").value; setMode({ kind: "replace", id: check.duplicate.id }); $("#code").value = code; runCheck(); } });
 $("#go").onclick = () => {
-  const dry = $("#dry").checked, data = { action: mode.kind, id: mode.id, code: $("#code").value, modes: pressedModes(), dryRun: dry };
-  if (dry) return run("/api/run", data, "กำลังตรวจ");
-  const g = check.guide, rep = mode.kind === "replace";
-  ask(rep ? "แทนที่ไกด์ #" + mode.id : "เพิ่มไกด์ #" + check.id, "<b>" + esc(g.title) + "</b> โดย " + esc(g.author) + "<br>" + (rep ? "ไกด์เดิมจะถูกแทนที่ด้วยฉบับนี้ (เลขเดิม ลิงก์เดิม)" : "จะขึ้นหน้าไกด์จากผู้เล่น") + " แล้ว commit และอัปขึ้น GitHub", rep ? "แทนที่และอัปขึ้น" : "เพิ่มและอัปขึ้น", false, () => run("/api/run", data, rep ? "กำลังแทนที่" : "กำลังเพิ่ม"));
+  const g = check.guide;
+  setQueue([...queue, { action: mode.kind, id: mode.kind === "replace" ? mode.id : 0, code: $("#code").value, modes: pressedModes(), title: g.title, author: g.author, classKey: g.classKey, server: g.server }]);
+  setMode({ kind: "add" });
 };
 $("#list").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-act]"); if (!b || b.disabled) return;
   const id = +b.closest(".row").dataset.id, g = state.guides.find((x) => x.id === id);
   if (b.dataset.act === "replace") return setMode({ kind: "replace", id });
-  ask("ลบไกด์ #" + id, "<b>" + esc(g.title) + "</b> โดย " + esc(g.author) + "<br>ไกด์จะหายจากหน้าเว็บ เลข #" + id + " จะไม่ถูกใช้ซ้ำ (ย้อนกลับได้จากปุ่มย้อนกลับ)", "ลบและอัปขึ้น GitHub", true, () => run("/api/run", { action: "delete", id }, "กำลังลบ"));
+  setQueue([...queue, { action: "delete", id, title: g.title, author: g.author, classKey: g.classKey, server: g.server, modes: g.modes }]);
+  if (mode.kind === "replace" && mode.id === id) setMode({ kind: "add" });
 });
+$("#qList").addEventListener("click", (e) => { const b = e.target.closest("button[data-qi]"); if (b && !b.disabled) setQueue(queue.filter((x, i) => i !== +b.dataset.qi)); });
+$("#qClear").onclick = () => setQueue([]);
+$("#qUndo").onclick = qUndo;
+$("#publish").onclick = () => {
+  const items = queue.map(({ action, id, code, modes }) => ({ action, id, code, modes }));
+  if ($("#dry").checked) return run("/api/run", { items, dryRun: true }, "กำลังตรวจ " + items.length + " รายการ");
+  const list = queue.map((x, i) => "<li>" + ACT[x.action] + " <b>#" + plannedId(x, i) + "</b> " + esc(x.title) + " โดย " + esc(x.author) + "</li>").join("");
+  ask("อัปขึ้น GitHub " + items.length + " รายการ", "<ul>" + list + "</ul>ทั้งหมดเข้า commit เดียว ถ้ารายการใดไม่ผ่านการตรวจ จะไม่มีอะไรถูกอัปเลย (ย้อนกลับทั้งชุดได้จากปุ่มย้อนกลับ)", "อัปขึ้น GitHub", queue.some((x) => x.action === "delete"), () => run("/api/run", { items }, "กำลังอัป " + items.length + " รายการ"));
+};
 window.addEventListener("focus", () => { if (!running) load(); });
 load();
 </script>
@@ -535,5 +616,6 @@ load();
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--port" && args[i - 1] !== "--modes");
-if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });
+if (require.main !== module) module.exports = { planAll, readGuides };   // for tests
+else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });
 else serve();
