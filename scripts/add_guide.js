@@ -77,9 +77,7 @@ function decodeCode(text){
 function plan(op, doc){
   const lines = doc.lines.slice(), byId = (id) => doc.guides.find((x) => x.g.id === id);
   if (op.action === "add"){
-    const g = op.guide, same = doc.guides.find((x) => x.g.title === g.title && x.g.author === g.author);
-    if (same) throw new Error(`ไกด์นี้มีอยู่แล้วเป็น #${same.g.id} (ชื่อและผู้เขียนเดียวกัน) ใช้ "แทนที่" แทน`);
-    const id = nextId(doc); lines.push(guideLine(id, g));
+    const g = op.guide, id = nextId(doc); lines.push(guideLine(id, g));   // the same title and author as another guide is allowed (user 2026-10-20); the page only warns
     return { id, lines, subject: subj(`feat(bible): class guide #${id} ${label(g)}`), undo: { id, before: null, g, text: `ลบไกด์ #${id} ที่เพิ่งเพิ่ม` } };
   }
   if (op.action === "replace" || op.action === "delete"){
@@ -100,7 +98,7 @@ function plan(op, doc){
   }
   throw new Error("unknown action " + op.action);
 }
-// A batch: each change is planned on the lines the previous one left, so ids, duplicates and tombstones see the earlier changes.
+// A batch: each change is planned on the lines the previous one left, so ids and tombstones see the earlier changes.
 // Resolves to { lines, items: [{ action, id, subject }], subject, undo: [entries, in order] }.
 function planAll(ops, doc){
   const items = [], undo = [];
@@ -497,16 +495,15 @@ function showCheck(){
   $("#modesHint").textContent = pressedModes().length ? "" : g.modes.length ? "เลือกอย่างน้อยหนึ่งอย่าง" : "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) เลือกให้ที่นี่ก่อนอัป";
   $("#pvFace").style.backgroundImage = "url(" + face(g.classKey) + ")"; $("#pvTitle").textContent = g.title; $("#pvBy").textContent = "โดย " + g.author;
   $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, dmy(g.date) + (check.dateWas == null ? "" : check.dateWas ? " (แก้จาก " + dmy(check.dateWas) + " ที่เกินวันนี้)" : " (โค้ดไม่มีวันที่ ใช้วันนี้)")].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
-  if (check.duplicate && !queuedFor(check.duplicate.id)){ msg.className = "msg warn is-on"; msg.innerHTML = "ไกด์นี้มีอยู่แล้วเป็น <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> (ชื่อและผู้เขียนเดียวกัน)<br><button type='button' class='btn btn-sm' id='useReplace'>แทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>"; }
-  else if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = mode.kind === "replace" ? "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่" : "ไกด์นี้อยู่ในรายการแล้ว"; }
+  if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่"; }
+  else if (check.duplicate){   // a heads-up only: the same title and author may be uploaded again (user 2026-10-20)
+    msg.className = "msg warn is-on";
+    msg.innerHTML = "มีไกด์ชื่อและผู้เขียนเดียวกันอยู่แล้ว: <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> อัปเป็นไกด์ใหม่อีกอันได้" + (mode.kind === "add" && !queuedFor(check.duplicate.id) ? "<br><button type='button' class='btn btn-sm' id='useReplace'>หรือแทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>" : "");
+  }
   syncGo();
 }
-// Why the code cannot be queued: already in the file (add), already queued (same title and author), or its target is already queued (replace).
-function blocked(){
-  if (!(check && check.ok)) return false;
-  if (mode.kind === "replace") return !!queuedFor(mode.id);
-  return !!check.duplicate || queue.some((x) => x.action !== "delete" && x.title === check.guide.title && x.author === check.guide.author);
-}
+// Why the code cannot be queued: its replace target is already in the queue (one queued change per guide).
+function blocked(){ return !!(check && check.ok && mode.kind === "replace" && queuedFor(mode.id)); }
 function syncGo(){
   $("#go").disabled = !(check && check.ok && !blocked() && pressedModes().length) || running;
   $("#go").textContent = mode.kind === "replace" ? "ใส่การแทนที่ #" + mode.id + " ในรายการ" : "ใส่ในรายการ";
