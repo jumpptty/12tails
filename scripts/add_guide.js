@@ -109,6 +109,19 @@ const runNode = (file, extra) => new Promise((res) => {
   let out = ""; p.stdout.on("data", (d) => out += d); p.stderr.on("data", (d) => out += d);
   p.on("close", (status) => res({ status, out }));
 });
+// Google Drive, Defender or another git (VS Code) can hold a file in .git for a moment, and git outside a terminal gives up after ~70 ms
+// ("unable to write file .git/objects/..: Permission denied", "index.lock"): wait and try again.
+async function gitRetry(ui, ...a){
+  for (let i = 1; ; i++){
+    try { return git(...a); }
+    catch (e){
+      if (!/Permission denied|unable to (write|create)|\.lock/i.test(e.message)) throw e;
+      if (i === 4) throw new Error("git เขียนไฟล์ในโฟลเดอร์ .git ไม่ได้ (มีโปรแกรมอื่นจับไฟล์ไว้ เช่น Google Drive, Defender หรือ VS Code) ยังไม่ได้อัปอะไรขึ้น และ index.html กลับเป็นเหมือนเดิมแล้ว ลองใหม่อีกครั้ง\n" + e.message.trim().split("\n").slice(-2).join("\n"));
+      ui.log(`git ${a[0]}: มีโปรแกรมอื่นจับไฟล์ใน .git อยู่ รอแล้วลองใหม่ (${i + 1}/4)`);
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
 // ui = { step(key, text, state), log(text) }; resolves to { id, subject, url, undo, dry }
 async function apply(op, { dryRun = false, noPush = NO_PUSH } = {}, ui){
   ui.step("git", "ตรวจสถานะ git", "run");
@@ -140,7 +153,7 @@ async function apply(op, { dryRun = false, noPush = NO_PUSH } = {}, ui){
     if (dryRun){ fs.copyFileSync(backup, FILE); return { ...p, url: SITE + "#class-guide/" + p.id, dry: true }; }
     ui.step("commit", "commit", "run");
     const msg = path.join(dir, "commit-msg.txt"); fs.writeFileSync(msg, p.subject + "\n");
-    git("add", "--", REL); git("commit", "-q", "-F", msg); committed = true;
+    await gitRetry(ui, "add", "--", REL); await gitRetry(ui, "commit", "-q", "-F", msg); committed = true;
     ui.step("commit", "commit", "ok");
     if (noPush) return { ...p, url: SITE + "#class-guide/" + p.id };
     ui.step("push", "อัปขึ้น GitHub", "run");
@@ -151,7 +164,7 @@ async function apply(op, { dryRun = false, noPush = NO_PUSH } = {}, ui){
     ui.step("push", "อัปขึ้น GitHub", "ok");
     return { ...p, url: SITE + "#class-guide/" + p.id };
   } catch (e){
-    if (!committed) fs.copyFileSync(backup, FILE);
+    if (!committed){ try { git("reset", "-q", "--", REL); } catch (_) {} fs.copyFileSync(backup, FILE); }   // unstage too, or a failed commit leaves the new index.html staged
     throw e;
   }
 }
