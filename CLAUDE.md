@@ -31,6 +31,7 @@ python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode c
 node scripts/guide_code.js decode <12TG1.code | file>          # turn a submitted class guide short code into the JSON object to embed (also: encode <json>, --selftest)
 node scripts/guide_draft.js layout <class> [server]            # a class's skill-sim rows with cell ids (also: build <draft.json> [out.json] -> checked guide + TG2 code, --selftest)
 node scripts/guide_views.js                                     # refresh CLASS_GUIDE_VIEWS (guide readers for ad-blocked browsers) from GoatCounter; run before every commit push (--dry-run: print only)
+node scripts/add_guide.js [code] [--dry-run | --no-push]        # publish a submitted guide in one step: decode, next id, views, changelog, --full validator, commit, push (also scripts/add_guide.cmd, double-click)
 ```
 
 ### Project skills and agents

@@ -20,6 +20,8 @@ The draft is saved only in the author's current browser. Export the code to keep
 
 ## For the maintainer: embed submitted guides
 
+**One step, no Claude session (user 2026-10-20):** double-click `scripts/add_guide.cmd` (or run `node scripts/add_guide.js [code]`) and paste the code (an empty line reads the clipboard). It refuses while `index.html` has uncommitted work or when the same title and author are already in, decodes the code, shows the guide and asks before publishing, then adds the line with the next `"id"`, refreshes `CLASS_GUIDE_VIEWS`, prepends the changelog entry (`feat(bible): class guide #N <server> <Class> <title> by <author>`, the commit subject too), runs `validate_skills.js --full`, and commits and pushes. A failed check puts `index.html` back as it was. `--dry-run` checks without committing; `--no-push` commits without pushing. Replacing an existing guide is still done by hand (below).
+
 Locate `const CLASS_GUIDES = [...]` in [index.html](index.html). Submissions arrive as short codes: turn each into its JSON object with `node scripts/guide_code.js decode <code>` (it also accepts a file path, and `encode <json file>` goes the other way), then add the **JSON objects** to the array, separated by commas:
 
 ```js
