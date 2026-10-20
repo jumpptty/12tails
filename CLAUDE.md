@@ -19,7 +19,7 @@ AGENTS.md above is the source of truth; this section only maps it onto Claude Co
 ### Commands
 
 ```sh
-node scripts/validate_skills.js                         # the only "test suite": formulas, icons, rank arrays, changelog gate, field loss, doc backlog
+node scripts/validate_skills.js                         # the only "test suite": formulas, icons, rank arrays, field loss, doc backlog (no changelog check since 2026-10-20; the entry is still added by habit)
 node scripts/validate_skills.js --full                  # also runs the slow range-vs-simulator check (+~35 s); skipped by default unless the index.html diff touches damage code. Run it before every `git push`
 node scripts/validate_skills.js --list-doc-backlog      # also name every app skill missing from its <class>-skill-reference.md
 node scripts/validate_skills.js --allow-field-loss=<cardId:field,...>   # only for deliberate field removals

@@ -31,45 +31,15 @@ if (!fs.existsSync(targetPath)) {
 
 const html = fs.readFileSync(targetPath, 'utf8');
 
-// The player-facing update panel is static data, so it otherwise silently
-// drifts behind Git history. A dirty tracked tree must carry a newly prepared
-// top entry; a clean tree must have that entry match HEAD's commit subject.
-const changelogMatch = html.match(/const CHANGELOG_DATA\s*=\s*\{[\s\S]*?entries:\s*\[\s*\["([^"]+)","([^"]+)"\]/);
-if (!changelogMatch) {
-  console.error('[CHANGELOG ERROR] Could not read the newest CHANGELOG_DATA entry.');
-  process.exit(1);
-}
-const [, changelogTime, changelogSubject] = changelogMatch;
-if (Number.isNaN(Date.parse(changelogTime))) {
-  console.error(`[CHANGELOG ERROR] Newest entry has an invalid ISO timestamp: '${changelogTime}'.`);
-  process.exit(1);
-}
-// Per AGENTS.md the gate covers commits that touch index.html only: compare against the latest commit that changed
-// index.html (not HEAD), and require a new entry only while index.html itself has pending changes. Doc-only commits
-// (12t_reference/, GEMINI.md, scripts/) need no changelog entry.
+// Whether index.html has pending changes (the rulebook reminder below and the --full auto-run read it). The changelog gate that sat here
+// was removed at the user's request (2026-10-20: it hindered work in progress); a CHANGELOG_DATA entry is still added by habit with each
+// commit that touches index.html (12t_projects/bible/CLAUDE.md §1), just no longer enforced.
 const repoRoot = path.resolve(__dirname, '..');
 const INDEX_REL = '12t_projects/bible/index.html';
-let indexSubject = '';
 let indexDirty = false;
-try {
-  indexSubject = execFileSync('git', ['log', '-1', '--format=%s', '--', INDEX_REL], { cwd: repoRoot, encoding: 'utf8' }).trim();
-  execFileSync('git', ['diff', '--quiet', 'HEAD', '--', INDEX_REL], { cwd: repoRoot, stdio: 'ignore' });
-} catch (error) {
-  indexDirty = true;
-}
-if (indexDirty && changelogSubject === indexSubject) {
-  console.error(`[CHANGELOG ERROR] index.html has pending changes but CHANGELOG_DATA still names its last commit: '${indexSubject}'. Prepend the planned commit subject before validating.`);
-  process.exit(1);
-}
-if (!indexDirty && changelogSubject !== indexSubject) {
-  console.error(`[CHANGELOG ERROR] Newest CHANGELOG_DATA entry '${changelogSubject}' does not match the last commit that touched index.html ('${indexSubject}'). Update the panel before pushing.`);
-  process.exit(1);
-}
-console.log(indexDirty
-  ? `CHANGELOG PENDING: '${changelogSubject}' is prepared for the next commit.`
-  : `CHANGELOG CURRENT: '${changelogSubject}' matches the last commit that touched index.html.`);
+try { execFileSync('git', ['diff', '--quiet', 'HEAD', '--', INDEX_REL], { cwd: repoRoot, stdio: 'ignore' }); } catch (error) { indexDirty = true; }
 
-// Soft reminder (non-blocking, unlike the CHANGELOG gate above): index.html
+// Soft reminder (non-blocking): index.html
 // changing without the rulebook changing alongside it isn't necessarily wrong --
 // most edits (desc text, a new card following existing patterns) don't touch
 // any documented convention -- but it's exactly the case that let the
@@ -77,7 +47,7 @@ console.log(indexDirty
 // real implementation earlier in this project's history. This only nudges;
 // it never exits non-zero. Checks the working tree diff when dirty, or the
 // most recent commit's own diff when clean, so it fires at the same two
-// checkpoints as the CHANGELOG gate (before commit, before push).
+// checkpoints: before commit, before push.
 try {
   const repoRoot = path.resolve(__dirname, '..');
   const changedFiles = indexDirty
