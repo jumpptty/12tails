@@ -210,7 +210,7 @@ async function cli(words){
 // ---------- the page ----------
 function pageData(){
   const doc = readGuides(), html = doc.html, views = (() => { try { return JSON.parse((html.match(/^const CLASS_GUIDE_VIEWS = (\{.*?\});/m) || [])[1]).counts || {}; } catch (e){ return {}; } })();
-  let faces = {}; try { faces = JSON.parse((html.match(/^const CLASS_HERO_ICONS = (\{.*?\});/m) || [])[1]); } catch (e) {}
+  let faces = {}; try { faces = require("./bible_assets.js").loadAssets().CLASS_HERO_ICONS || {}; } catch (e) {}   // the class faces live in assets.js since 2026-10-20
   let dirty = false, branch = "?"; try { dirty = !!git("status", "--porcelain", "--", REL); branch = git("rev-parse", "--abbrev-ref", "HEAD"); } catch (e) {}
   return {
     branch, dirty, next: nextId(doc), push: !NO_PUSH, faces,
