@@ -1,5 +1,7 @@
-# Guide manager from the phone (docs/superpowers/specs/2026-10-20-guide-manager-mobile-design.md).
-# SPIKE (Task 1 of docs/superpowers/plans/2026-10-20-guide-manager-mobile.md): checks the GitHub side before the real steps go in (Task 3).
+# Guide manager from the phone (docs/superpowers/specs/2026-10-20-guide-manager-mobile-design.md): publishes a queue of class guide changes
+# sent by 12t_projects/guide-manager (GitHub mode, the user's key) through the same pipeline as scripts/add_guide.js on the PC, one stage per
+# step so the page can tick them. Every failure is one "gm-error" annotation and the outcome one "gm-result" annotation, which the page reads back.
+# Checked on GitHub 2026-10-20: this token's push is allowed on the protected branch and starts the Pages build by itself.
 name: guide-manager
 run-name: guide manager ${{ inputs.request }}
 on:
@@ -10,15 +12,11 @@ on:
         required: true
         type: string
       payload:
-        description: the queue as JSON
+        description: 'the queue as JSON: {"items":[{action,id,code,modes}]} or {"undo":{"sha":"<commit>"}}'
         required: true
         type: string
       dry:
-        description: check only
-        type: boolean
-        default: false
-      spike_push:
-        description: spike only, push one empty commit
+        description: check only (no commit, no push)
         type: boolean
         default: false
 permissions:
@@ -31,25 +29,32 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Bangkok
+      DRY: ${{ inputs.dry && '--dry-run' || '' }}
     steps:
       - name: ส่งงานให้ GitHub
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
       - name: ส่งงานให้ GitHub
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
       - name: ตรวจสถานะ git
-        run: sleep 5
-      - name: ตรวจด้วย validator
+        env:
+          PAYLOAD: ${{ inputs.payload }}
         run: |
-          echo "::error title=gm-error::line one%0A[CLASS GUIDE ERROR] line two"
-          node -e 'const pad = "x".repeat(5980); process.stdout.write("::notice title=gm-result::" + JSON.stringify({ ok: true, pad }) + "\n")'
-      - name: อัปขึ้น GitHub
-        if: ${{ inputs.spike_push }}
+          printf '%s' "$PAYLOAD" > "$RUNNER_TEMP/request.json"
+          node scripts/add_guide.js batch "$RUNNER_TEMP/request.json" --stage git $DRY
+      - name: แก้ไฟล์ index.html
+        run: node scripts/add_guide.js batch "$RUNNER_TEMP/request.json" --stage edit $DRY
+      - name: ตรวจด้วย validator
+        run: node scripts/add_guide.js batch "$RUNNER_TEMP/request.json" --stage check $DRY
+      - name: commit
+        if: ${{ !inputs.dry }}
         run: |
           export GIT_AUTHOR_NAME="$(git log -1 --format=%an)" GIT_AUTHOR_EMAIL="$(git log -1 --format=%ae)"
           export GIT_COMMITTER_NAME="github-actions[bot]" GIT_COMMITTER_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
-          git commit --allow-empty -q -m "chore(tools): guide manager push test"
-          git push origin HEAD:skill-cooldown-lookup
+          node scripts/add_guide.js batch "$RUNNER_TEMP/request.json" --stage commit
+      - name: อัปขึ้น GitHub
+        if: ${{ !inputs.dry }}
+        run: node scripts/add_guide.js batch "$RUNNER_TEMP/request.json" --stage push
