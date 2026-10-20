@@ -356,7 +356,11 @@ async function gmDecodeCode(text){
   let g;
   try { g = await gmDecode(code); }
   catch (e){ throw new Error("อ่านโค้ดไม่ได้ (" + e.message + "). ถ้าโค้ดถูกส่งทาง Discord นอกกล่องโค้ด เครื่องหมาย _ อาจหายไปเพราะกลายเป็นตัวเอียง ขอให้ผู้เขียนส่งใหม่ในกล่องโค้ด (```)"); }
-  if (!g || g.format !== "12t-class-guide" || !g.build || !g.title || !g.author) throw new Error("โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ");
+  return gmCheckGuide(g);
+}
+// A guide's shape, as add_guide.js decodeCode checks it: a legacy 12TG1 code can carry any class or server text (review 2026-10-20).
+function gmCheckGuide(g){
+  if (!g || g.format !== "12t-class-guide" || !g.build || !g.title || !g.author || !GM_CLASS_KEYS.includes(g.build.classKey) || !GM_SERVER_KEYS.includes(g.build.server)) throw new Error("โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ");
   return g;
 }
 // add_guide.js fixDate with the day passed in: a date later than today, or none, becomes today; returns the old date ("" for none) or null.
@@ -563,9 +567,11 @@ const plannedId = (x, i) => x.action === "add" ? state.next + addsBefore(i) : x.
 function saveQueue(){ try { localStorage.setItem(QKEY, JSON.stringify(queue)); } catch (e) {} }
 function setQueue(next){ qHist.push(queue); if (qHist.length > 50) qHist.shift(); queue = next; saveQueue(); renderQueue(); renderList(); showCheck(); }
 function qUndo(){ queue = qHist.pop(); saveQueue(); renderQueue(); renderList(); showCheck(); }
+// "Class · Server · PVE/PVP", escaped: a queue item comes back from localStorage and its fields from a pasted code (review 2026-10-20)
+const kindLine = (x) => esc(cap(String(x.classKey || ""))) + " · " + esc(SRV[x.server] || x.server) + " · " + (esc((Array.isArray(x.modes) ? x.modes : []).map((m) => String(m).toUpperCase()).join("/")) || "ไม่มีประเภท");
 function renderQueue(){
   $("#qCount").textContent = $("#tabBadge").textContent = queue.length; $("#tabBadge").hidden = !queue.length;
-  $("#qList").innerHTML = queue.length ? queue.map((x, i) => '<li class="qrow"><span class="qa qa-' + x.action + '">' + ACT[x.action] + '</span><span class="no">#' + plannedId(x, i) + '</span><span class="face" style="background-image:url(' + face(x.classKey) + ')"></span><div class="tt"><b>' + esc(x.title) + '</b><small>' + esc(x.author) + ' · ' + cap(x.classKey) + ' · ' + SRV[x.server] + ' · ' + ((x.modes || []).map((m) => m.toUpperCase()).join("/") || "ไม่มีประเภท") + '</small></div><button type="button" class="btn btn-sm qx" data-qi="' + i + '" title="เอาออกจากรายการ" aria-label="เอาออกจากรายการ">✕</button></li>').join("")
+  $("#qList").innerHTML = queue.length ? queue.map((x, i) => '<li class="qrow"><span class="qa qa-' + x.action + '">' + ACT[x.action] + '</span><span class="no">#' + esc(plannedId(x, i)) + '</span><span class="face" style="background-image:url(' + face(x.classKey) + ')"></span><div class="tt"><b>' + esc(x.title) + '</b><small>' + esc(x.author) + ' · ' + kindLine(x) + '</small></div><button type="button" class="btn btn-sm qx" data-qi="' + i + '" title="เอาออกจากรายการ" aria-label="เอาออกจากรายการ">✕</button></li>').join("")
     : '<li class="qhint">ยังไม่มีรายการ วางโค้ดด้านบนเพื่อเพิ่มหรือแทนที่ หรือกด "ลบ" ที่ไกด์ทางขวา แล้วอัปทั้งหมดในครั้งเดียว</li>';
   $("#qUndo").hidden = !qHist.length; $("#qClear").hidden = !queue.length;
   document.querySelectorAll(".qx, #qUndo, #qClear").forEach((b) => b.disabled = running);
@@ -574,7 +580,7 @@ function renderList(){
   const q = $("#search").value.trim().toLowerCase().replace(/^#/, "");
   const rows = state.guides.filter((g) => !q || String(g.id) === q || (g.title + " " + g.author + " " + g.classKey + " " + SRV[g.server]).toLowerCase().includes(q));
   $("#count").textContent = state.guides.length;
-  $("#list").innerHTML = rows.length ? rows.map((g) => '<li class="row' + (mode.kind === "replace" && mode.id === g.id ? " is-target" : "") + '" data-id="' + g.id + '"><span class="no">#' + g.id + '</span><span class="face" style="background-image:url(' + face(g.classKey) + ')"></span><div class="tt"><b>' + esc(g.title) + '</b><small>' + esc(g.author) + ' · ' + cap(g.classKey) + ' · ' + SRV[g.server] + ' · ' + (g.modes.map((m) => m.toUpperCase()).join("/") || "ไม่มีประเภท") + '<span class="d-date"> · ' + dmy(g.date) + '</span></small><small class="ph-only">' + dmy(g.date) + ' · 👁 ' + g.views + '</small></div><span class="views" title="ผู้เข้าชม (snapshot)">👁 ' + g.views + '</span><span class="acts">' + (queuedFor(g.id) ? '<span class="queued">ในรายการ: ' + ACT[queuedFor(g.id).action] + '</span>' : '<button type="button" class="btn btn-sm" data-act="replace">แทนที่</button><button type="button" class="btn btn-sm del" data-act="delete">ลบ</button>') + '</span></li>').join("") : '<li class="empty">ไม่พบไกด์</li>';
+  $("#list").innerHTML = rows.length ? rows.map((g) => '<li class="row' + (mode.kind === "replace" && mode.id === g.id ? " is-target" : "") + '" data-id="' + g.id + '"><span class="no">#' + g.id + '</span><span class="face" style="background-image:url(' + face(g.classKey) + ')"></span><div class="tt"><b>' + esc(g.title) + '</b><small>' + esc(g.author) + ' · ' + kindLine(g) + '<span class="d-date"> · ' + esc(dmy(g.date)) + '</span></small><small class="ph-only">' + esc(dmy(g.date)) + ' · 👁 ' + esc(g.views) + '</small></div><span class="views" title="ผู้เข้าชม (snapshot)">👁 ' + esc(g.views) + '</span><span class="acts">' + (queuedFor(g.id) ? '<span class="queued">ในรายการ: ' + ACT[queuedFor(g.id).action] + '</span>' : '<button type="button" class="btn btn-sm" data-act="replace">แทนที่</button><button type="button" class="btn btn-sm del" data-act="delete">ลบ</button>') + '</span></li>').join("") : '<li class="empty">ไม่พบไกด์</li>';
   $("#gone").hidden = !state.removed.length;
   $("#goneList").innerHTML = state.removed.map((t) => "<li>" + esc(t) + "</li>").join("");
   document.querySelectorAll(".acts button").forEach((b) => b.disabled = running);
@@ -647,7 +653,7 @@ async function run(kind, title, go){
   if (done.keyProblem){ $("#progress").hidden = true; return showKey(done.error); }   // the queue stays; publish again once the key is fixed
   if (done.ok){
     $("#progTitle").textContent = done.dry ? "ผ่านการตรวจ" : "เสร็จแล้ว";
-    const links = done.items.filter((x) => x.action === "add" || x.action === "replace").map((x) => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">เปิดไกด์ #' + x.id + "</a>").join(" · ");
+    const links = done.items.filter((x) => x.action === "add" || x.action === "replace").map((x) => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">เปิดไกด์ #' + esc(x.id) + "</a>").join(" · ");
     $("#result").innerHTML = done.dry ? "ผ่านการตรวจทั้งหมด " + done.items.length + " รายการ (ตรวจอย่างเดียว ไม่ได้แก้ไฟล์ ไม่ได้ commit)" : esc(done.subject) + (links ? "<br>" + links + " (ขึ้นเว็บภายใน 1-2 นาที)" : "");
     if (!done.dry && kind === "run"){ queue = []; qHist = []; saveQueue(); }
   } else {
@@ -699,7 +705,7 @@ $("#qUndo").onclick = qUndo;
 function publish(){
   const items = queue.map(({ action, id, code, modes }) => ({ action, id, code, modes }));
   if ($("#dry").checked){ showTab("queue"); return run("run", "กำลังตรวจ " + items.length + " รายการ", (on) => backend.run(items, true, on)); }
-  const list = queue.map((x, i) => "<li>" + ACT[x.action] + " <b>#" + plannedId(x, i) + "</b> " + esc(x.title) + " โดย " + esc(x.author) + "</li>").join("");
+  const list = queue.map((x, i) => "<li>" + ACT[x.action] + " <b>#" + esc(plannedId(x, i)) + "</b> " + esc(x.title) + " โดย " + esc(x.author) + "</li>").join("");
   ask("อัปขึ้น GitHub " + items.length + " รายการ", "<ul>" + list + "</ul>ทั้งหมดเข้า commit เดียว ถ้ารายการใดไม่ผ่านการตรวจ จะไม่มีอะไรถูกอัปเลย (ย้อนกลับทั้งชุดได้จากปุ่มย้อนกลับ)", "อัปขึ้น GitHub", queue.some((x) => x.action === "delete"), () => { showTab("queue"); run("run", "กำลังอัป " + items.length + " รายการ", (on) => backend.run(items, false, on)); });
 }
 $("#publish").onclick = publish;

@@ -4582,7 +4582,7 @@ if (gmHtml !== null) {
     const zlib = require("zlib"), gc = require(path.join(__dirname, "guide_code.js")), ag = require(path.join(__dirname, "add_guide.js"));
     const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response });
     vm.runInContext(block, ctx, { filename: GM_REL + " (gm-core)" });
-    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmParseGuides, gmSummary, gmFixDate, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
+    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmParseGuides, gmSummary, gmFixDate, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const throws = (fn) => { try { fn(); return ""; } catch (e) { return String(e.message || e); } };
     const finish = (code) => { const u = gm.gmUnpack(code); return gm.gmFinish(u, u.deflated ? zlib.inflateRawSync(u.bytes) : u.bytes); };
@@ -4627,6 +4627,10 @@ if (gmHtml !== null) {
     ok(same(gm.gmRunOutcome(run("completed", "failure"), [ann("gm-error", "ไกด์ไม่ผ่านการตรวจ\n[CLASS GUIDE ERROR] a\n[CLASS GUIDE ERROR] b")], SITE), { ok: false, error: "ไกด์ไม่ผ่านการตรวจ", log: ["[CLASS GUIDE ERROR] a", "[CLASS GUIDE ERROR] b"] }), "gm-error becomes the error and the log lines");
     ok(same(gm.gmRunOutcome(run("completed", "cancelled"), [], SITE), { ok: false, error: "งานถูกยกเลิก (มีงานอื่นรออยู่บน GitHub) ลองอัปใหม่" }), "a cancelled run says so");
     ok(same(gm.gmRunOutcome(run("completed", "failure"), [], SITE), { ok: false, error: "GitHub ทำงานไม่สำเร็จก่อนถึงขั้นตอนของไกด์ ดูรายละเอียดใน GitHub", runUrl: "https://github.com/jumpptty/12tails/actions/runs/1" }), "a run failing before the pipeline links to GitHub");
+    // review 2026-10-20: a legacy 12TG1 code can carry any class or server text, which the page puts into its HTML
+    { const g = doc.guides[0].g, evil = { ...g, build: { ...g.build, classKey: "<img src=x onerror=alert(1)>" } }, evil2 = { ...g, build: { ...g.build, server: "zz" } };
+      ok(/โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/.test(throws(() => gm.gmCheckGuide(evil))) && /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/.test(throws(() => gm.gmCheckGuide(evil2))), "gmCheckGuide refuses a class or server that is not a real one");
+      ok(doc.guides.every(({ g }) => !throws(() => gm.gmCheckGuide(g))), "gmCheckGuide accepts every embedded guide"); }
     ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
     if (!gmFailed) console.log(`Verified the guide manager page's own code reader and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
   }

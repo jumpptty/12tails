@@ -200,7 +200,7 @@ function decode(code){
   const out = zlib.inflateRawSync(fromB64u(body), { maxOutputLength: 131072 }).toString("utf8");
   return expand(JSON.parse(out));
 }
-module.exports = { PREFIX, PREFIX2, PREFIX3, encode, encode2, encode1, decode, toCjk, fromCjk, compact, expand, classGuideBinary, classGuideFromBinary };
+module.exports = { PREFIX, PREFIX2, PREFIX3, CLASS_GUIDE_CLASS_KEYS, CLASS_GUIDE_SERVER_KEYS, encode, encode2, encode1, decode, toCjk, fromCjk, compact, expand, classGuideBinary, classGuideFromBinary };
 
 if (require.main === module){
   const [op, arg] = process.argv.slice(2);

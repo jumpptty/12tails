@@ -26,7 +26,7 @@
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), http = require("http"), crypto = require("crypto"), readline = require("readline");
 const { execFileSync, spawn } = require("child_process");
-const { decode } = require("./guide_code.js");
+const { decode, CLASS_GUIDE_CLASS_KEYS, CLASS_GUIDE_SERVER_KEYS } = require("./guide_code.js");
 
 const ROOT = process.env.GM_ROOT ? path.resolve(process.env.GM_ROOT) : path.resolve(__dirname, ".."), REL = "12t_projects/bible/index.html", FILE = path.join(ROOT, REL);   // GM_ROOT: the self-test's throwaway repos
 const SITE = "https://jumpptty.github.io/12tails/12t_projects/bible/";
@@ -75,6 +75,7 @@ function decodeCode(text){
   try { g = decode(code); }
   catch (e){ throw new Error("อ่านโค้ดไม่ได้ (" + e.message + "). ถ้าโค้ดถูกส่งทาง Discord นอกกล่องโค้ด เครื่องหมาย _ อาจหายไปเพราะกลายเป็นตัวเอียง ขอให้ผู้เขียนส่งใหม่ในกล่องโค้ด (```)"); }
   if (!g || g.format !== "12t-class-guide" || !g.build || !g.title || !g.author) throw new Error("โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ");
+  if (!CLASS_GUIDE_CLASS_KEYS.includes(g.build.classKey) || !CLASS_GUIDE_SERVER_KEYS.includes(g.build.server)) throw new Error("โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ");   // a legacy 12TG1 code can carry any text there, and the page puts it into HTML (review 2026-10-20)
   return g;
 }
 // What a change does to the lines: { id, lines, subject, undo } (undo = how to take it back; none for an undo itself).
@@ -467,6 +468,12 @@ async function selftest(){
     assert.ok(errs[0].includes("ไกด์ไม่ผ่านการตรวจ") && errs[0].includes("%0A[CLASS GUIDE ERROR] fixture refuses FAILME"), errs[0]);
     const fresh = fixture();
     assert.strictEqual(stage(fresh, request(fresh, { items: [{ action: "delete", id: 9 }] }), "git").stdout.match(/^::error title=gm-error::(.*)$/m)[1], "ไม่มีไกด์ #9");
+  });
+  test("a code whose class or server is not a real one is refused (it would reach the page's HTML)", async () => {
+    const m = load(fixture()), bad = (build) => gc.encode1({ ...guide("T9", "A9"), build: { ...guide("T9", "A9").build, ...build } });
+    assert.throws(() => m.opsFromItems([{ action: "add", code: bad({ classKey: "<img src=x onerror=alert(1)>" }), modes: ["pve"] }]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
+    assert.throws(() => m.opsFromItems([{ action: "add", code: bad({ server: "zz" }), modes: ["pve"] }]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
+    assert.strictEqual(m.opsFromItems([{ action: "add", code: gc.encode1(guide("T9", "A9")), modes: ["pve"] }]).length, 1);
   });
   test("batch: annotations stay within GitHub's 4,096 characters", async () => {
     const unescape = (s) => s.replace(/%0D/g, "\r").replace(/%0A/g, "\n").replace(/%25/g, "%");
