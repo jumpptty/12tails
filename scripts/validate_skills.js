@@ -23,7 +23,9 @@ const vm = require('vm');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const targetPath = path.resolve(__dirname, '../12t_projects/bible/index.html');
+// --index <path> validates another copy of the page (with its assets.js beside it), e.g. a split made in the scratchpad
+const indexArg = process.argv.indexOf('--index');
+const targetPath = indexArg > 0 ? path.resolve(process.argv[indexArg + 1]) : path.resolve(__dirname, '../12t_projects/bible/index.html');
 if (!fs.existsSync(targetPath)) {
   console.error("Target index.html not found at:", targetPath);
   process.exit(1);
@@ -74,6 +76,26 @@ let scriptCode = html.slice(scriptStart + 8, scriptEnd);
 scriptCode = scriptCode.replace('const SKILLS =', 'window.SKILLS =');
 scriptCode = scriptCode.replace('const SKILL_ICONS =', 'window.SKILL_ICONS =');
 scriptCode = scriptCode.replace('const CLASS_HERO_ICONS =', 'window.CLASS_HERO_ICONS =');
+
+// assets.js (2026-10-20): the images, 3D previews and sounds live in a versioned assets.js beside index.html (scripts/bible_assets.js).
+// When index.html loads it, check its stamp, that it holds data only, and that index.html stays light, then run it ahead of the page.
+const bibleAssets = require('./bible_assets.js');
+let assetErrors = 0;
+const assetTag = html.match(bibleAssets.TAG_RE);
+if (assetTag) {
+  const assetsPath = path.join(path.dirname(targetPath), 'assets.js');
+  let assets;
+  try { assets = bibleAssets.loadAssets(assetsPath); } catch (e) {
+    console.error(`[ASSET FORMAT ERROR] ${assetsPath}: ${e.message}`);
+    process.exit(1);
+  }
+  const assetsBuf = fs.readFileSync(assetsPath), have = bibleAssets.stampOf(assetsBuf);
+  if (have !== assetTag[1]) { assetErrors++; console.error(`[ASSET VERSION ERROR] index.html asks for assets.js?v=${assetTag[1]} but the file is ${have}; run node scripts/bible_assets.js stamp`); }
+  const uriBytes = bibleAssets.dataUriBytes(html);
+  if (uriBytes > bibleAssets.ASSET_BUDGET) { assetErrors++; console.error(`[ASSET BUDGET ERROR] index.html embeds ${Math.round(uriBytes / 1024)} KB of data: URIs (limit ${bibleAssets.ASSET_BUDGET / 1024} KB); move them into assets.js (scripts/bible_assets.js)`); }
+  scriptCode = assetsBuf.toString('utf8') + '\n' + scriptCode;
+  console.log(`Verified assets.js: ${Object.keys(assets).length} containers, stamp ${have}`);
+}
 
 const exposeInjection = `
   window._getDmgText = getDmgText;
@@ -242,7 +264,7 @@ if (!Array.isArray(SKILLS) || !SKILL_ICONS) {
 
 console.log(`Auditing ${SKILLS.length} skills and ${Object.keys(SKILL_ICONS).length} icons...\n`);
 
-let errorCount = 0;
+let errorCount = assetErrors;
 let checkedFormulas = 0;
 let checkedLckFloors = 0;
 const lckEl = sandbox._root.querySelector('[data-role="lck"]');
@@ -1017,8 +1039,7 @@ let checkedPanelMarkup = 0;
   check("the old stat preset slot bar must stay removed (presets live in the PRESET window)", count("preset-row") === 0 && count("preset-slots") === 0);
   check("stat presets autosave: no save / clear buttons", count("preset-save") === 0 && count("preset-clear") === 0);
   {
-    const m = html.match(/const CLASS_STORY_ART = (\{[^\n]*\});/);
-    const storyArt = m ? JSON.parse(m[1]) : {};
+    const storyArt = vm.runInContext("CLASS_STORY_ART", sandbox);
     ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
       check(`CLASS_STORY_ART needs 5 colour portraits for ${c} (one per PRESET card)`,
         Array.isArray(storyArt[c]) && storyArt[c].length === 5 && storyArt[c].every(s => /^data:image\/webp;base64,/.test(s))));
@@ -4287,11 +4308,11 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // hero models: every embedded class model decodes to matching vertex / uv counts, in-range indices and a PNG skin
   {
     // a model line is one object literal: { v, uv, t, tex, extra: [{ v, uv, t, tex }, ...] } (extra = static accessories such as hair)
-    const re = /REACH_MODELS\.(\w+) = (\{[^\n]*\});/g;
-    let m, models = 0;
+    const REACH_MODELS = vm.runInContext("REACH_MODELS", sandbox);
+    let models = 0;
     // textures: a PNG or WebP data URL, "#name" (REACH_TEX, shared by several models) or "@Model" (that model's own skin); "base" variants reuse another model (user 2026-10-16)
-    const texM = html.match(/const REACH_TEX = (\{[^\n]*\});/), REACH_TEX = texM ? JSON.parse(texM[1]) : {};
-    const imgOk = (t) => { const tex = String(t); if (tex[0] === "#") return !!REACH_TEX[tex.slice(1)] && imgOk(REACH_TEX[tex.slice(1)]); if (tex[0] === "@") return new RegExp("REACH_MODELS\\." + tex.slice(1) + " = ").test(html); const b = Buffer.from(tex.replace(/^data:image\/(png|webp);base64,/, ""), "base64"); return b.readUInt32BE(0) === 0x89504e47 || (b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP"); };
+    const REACH_TEX = vm.runInContext("REACH_TEX", sandbox);
+    const imgOk = (t) => { const tex = String(t); if (tex[0] === "#") return !!REACH_TEX[tex.slice(1)] && imgOk(REACH_TEX[tex.slice(1)]); if (tex[0] === "@") return tex.slice(1) in REACH_MODELS; const b = Buffer.from(tex.replace(/^data:image\/(png|webp);base64,/, ""), "base64"); return b.readUInt32BE(0) === 0x89504e47 || (b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP"); };
     const partInfo = (name, p, label) => {
       const vb = Buffer.from(p.v, "base64"), ub = Buffer.from(p.uv, "base64"), tb = Buffer.from(p.t, "base64");
       const nv = vb.length / 6, nu = ub.length / 4, nt = tb.length / 6;
@@ -4300,75 +4321,74 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       if (!Number.isInteger(nv) || nv !== nu || !Number.isInteger(nt) || maxI >= nv || !imgOk(p.tex)) bad("model " + name + " " + label + ": " + nv + " verts, " + nu + " uvs, " + nt + " tris, max index " + maxI);
       return { nv, nt, minY, maxY };
     };
-    while ((m = re.exec(html))) {
+    for (const [name, def] of Object.entries(REACH_MODELS)) {
       models++;
-      let def; try { def = new Function("return " + m[2])(); } catch (e) { bad("model " + m[1] + ": the object literal does not parse: " + e.message); continue; }
       if (def.base){   // a variant: the base model's parts plus its own extras (Monkey forms, Gadina 4 with its weapons)
-        if (!new RegExp("REACH_MODELS\\." + def.base + " = ").test(html)) bad("model " + m[1] + ": base " + def.base + " has no REACH_MODELS entry");
-        const vx = (def.extra || []).map((q, i) => partInfo(m[1], q, "extra " + i));
+        if (!(def.base in REACH_MODELS)) bad("model " + name + ": base " + def.base + " has no REACH_MODELS entry");
+        const vx = (def.extra || []).map((q, i) => partInfo(name, q, "extra " + i));
         const PIN = { MonkeyEarthForm: [[2235, 1948]], Gadina4: [[443, 356], [541, 394]] };   // gadinaArmor_tri, phoenixArmor_tri; Gadina_Sword4 / Gadina_Shield4
-        if (PIN[m[1]] && JSON.stringify(vx.map(x => [x.nv, x.nt])) !== JSON.stringify(PIN[m[1]])) bad("model " + m[1] + ": extras " + JSON.stringify(vx.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(PIN[m[1]]));
-        if (m[1] === "MonkeyEarthForm" && vx[0] && (vx[0].minY < 0 || vx[0].maxY > 2)) bad("model MonkeyEarthForm: the arms should float round the Monkey (0-2 m), got " + vx[0].minY + "-" + vx[0].maxY);
+        if (PIN[name] && JSON.stringify(vx.map(x => [x.nv, x.nt])) !== JSON.stringify(PIN[name])) bad("model " + name + ": extras " + JSON.stringify(vx.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(PIN[name]));
+        if (name === "MonkeyEarthForm" && vx[0] && (vx[0].minY < 0 || vx[0].maxY > 2)) bad("model MonkeyEarthForm: the arms should float round the Monkey (0-2 m), got " + vx[0].minY + "-" + vx[0].maxY);
         continue;
       }
-      const body = partInfo(m[1], def, "body");
-      if (body.minY < -0.05 || body.maxY < 0.3) bad("model " + m[1] + ": stands from " + body.minY + " to " + body.maxY + " m (feet should be on the ground)");
-      if (m[1] === "Cat" && (body.nv !== 1687 || body.nt !== 1812)) bad("model Cat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh has 1687 / 1812");
-      if (m[1] === "Panda" && (body.nv !== 1573 || body.nt !== 1212)) bad("model Panda: " + body.nv + " verts / " + body.nt + " tris, the game mesh has 1573 / 1212");
-      if (m[1] === "Wolf" && (body.nv !== 2054 || body.nt !== 1929)) bad("model Wolf: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Wolf_standard_tri) has 2054 / 1929");
-      if (m[1] === "Wolf") { const wx = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i)); if (wx.length !== 1 || wx[0].nv !== 382 || wx[0].nt !== 246) bad("model Wolf: extras should be the standard sword in both hands (2 x 191 verts / 2 x 123 tris), got " + JSON.stringify(wx)); }
-      const extras = (def.extra || []).map((p, i) => partInfo(m[1], p, "extra " + i));
-      if (m[1] === "Penguin") {
+      const body = partInfo(name, def, "body");
+      if (body.minY < -0.05 || body.maxY < 0.3) bad("model " + name + ": stands from " + body.minY + " to " + body.maxY + " m (feet should be on the ground)");
+      if (name === "Cat" && (body.nv !== 1687 || body.nt !== 1812)) bad("model Cat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh has 1687 / 1812");
+      if (name === "Panda" && (body.nv !== 1573 || body.nt !== 1212)) bad("model Panda: " + body.nv + " verts / " + body.nt + " tris, the game mesh has 1573 / 1212");
+      if (name === "Wolf" && (body.nv !== 2054 || body.nt !== 1929)) bad("model Wolf: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Wolf_standard_tri) has 2054 / 1929");
+      if (name === "Wolf") { const wx = (def.extra || []).map((p, i) => partInfo(name, p, "extra " + i)); if (wx.length !== 1 || wx[0].nv !== 382 || wx[0].nt !== 246) bad("model Wolf: extras should be the standard sword in both hands (2 x 191 verts / 2 x 123 tris), got " + JSON.stringify(wx)); }
+      const extras = (def.extra || []).map((p, i) => partInfo(name, p, "extra " + i));
+      if (name === "Penguin") {
         // armors/Penguin_standard_tri.asset 1074 / 1212; extras = the standard hat c_pgn10 (Penguin_standardHat_tri 218 / 222, on the Hat1 bone with Euler(-20, -80, -115)) and the standard wand w_pgn10 (WP_Penguin_01 106 / 130, mount_Hand_L)
         if (body.nv !== 1074 || body.nt !== 1212) bad("model Penguin: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Penguin_standard_tri) has 1074 / 1212");
         if (extras.length !== 2 || extras[0].nv !== 218 || extras[0].nt !== 222 || extras[1].nv !== 106 || extras[1].nt !== 130) bad("model Penguin: extras should be the standard hat (218 / 222) and the standard wand (106 / 130), got " + JSON.stringify(extras));
       }
-      if (m[1] === "Whale") {
+      if (name === "Whale") {
         // armors/Whale_standard_tri.asset 1471 / 1692 (the standard armor, no hat); extras = standardLance in mount_Hand_R (WhaleEquipment.EquipWeapon nHand == 1, 141 / 76) and standardShield in mount_Hand_L (172 / 148), identity local transform
         if (body.nv !== 1471 || body.nt !== 1692) bad("model Whale: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Whale_standard_tri) has 1471 / 1692");
         if (extras.length !== 2 || extras[0].nv !== 141 || extras[0].nt !== 76 || extras[1].nv !== 172 || extras[1].nt !== 148) bad("model Whale: extras should be the standard lance (141 / 76) and the standard shield (172 / 148), got " + JSON.stringify(extras));
       }
-      if (m[1] === "Bison") {
+      if (name === "Bison") {
         // armors/Bison_standard_tri 2964 / 2165 (no hat); extra = standardAxe (Bison_standardAxe_tri 292 / 172) in HandMount_R
         if (body.nv !== 2964 || body.nt !== 2165) bad("model Bison: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bison_standard_tri) has 2964 / 2165");
         if (extras.length !== 1 || extras[0].nv !== 292 || extras[0].nt !== 172) bad("model Bison: the extra should be the standard axe (292 / 172), got " + JSON.stringify(extras));
       }
-      if (m[1] === "Sheep") {
+      if (name === "Sheep") {
         // armors/Sheep_standard_tri 2484 / 1888 (no hat); extra = standardBook (75 / 56) in mount_Hand_L
         if (body.nv !== 2484 || body.nt !== 1888) bad("model Sheep: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Sheep_standard_tri) has 2484 / 1888");
         if (extras.length !== 1 || extras[0].nv !== 75 || extras[0].nt !== 56) bad("model Sheep: the extra should be the standard book (75 / 56), got " + JSON.stringify(extras));
       }
-      if (m[1] === "Rabbit") {
+      if (name === "Rabbit") {
         // armors/Rabbit_standard_tri 1687 / 1838; extras = starting hat standardHat (147 / 296, Head bone Euler(0,-90,90)) and standardGun (494 / 290, mountHand_R)
         if (body.nv !== 1687 || body.nt !== 1838) bad("model Rabbit: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Rabbit_standard_tri) has 1687 / 1838");
         if (extras.length !== 2 || extras[0].nv !== 147 || extras[0].nt !== 296 || extras[1].nv !== 494 || extras[1].nt !== 290) bad("model Rabbit: extras should be the standard hat (147 / 296) and the standard gun (494 / 290), got " + JSON.stringify(extras));
       }
-      if (m[1] === "Bat") {
+      if (name === "Bat") {
         // armors/Bat_standard_tri 2351 / 2398 (no hat); extra = standardWand (175 / 98) in mount_Hand_L
         if (body.nv !== 2351 || body.nt !== 2398) bad("model Bat: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Bat_standard_tri) has 2351 / 2398");
         if (extras.length !== 1 || extras[0].nv !== 175 || extras[0].nt !== 98) bad("model Bat: the extra should be the standard wand (175 / 98), got " + JSON.stringify(extras));
       }
-      if (m[1] === "MonkeyFireAvatar" && (body.nv !== 2347 || body.nt !== 3993 || extras.length)) bad("model MonkeyFireAvatar: the phoenixArmor body alone (it replaces the Monkey, user 2026-10-16) should be 2347 / 3993 with no extras, got " + body.nv + " / " + body.nt + " / " + extras.length);
+      if (name === "MonkeyFireAvatar" && (body.nv !== 2347 || body.nt !== 3993 || extras.length)) bad("model MonkeyFireAvatar: the phoenixArmor body alone (it replaces the Monkey, user 2026-10-16) should be 2347 / 3993 with no extras, got " + body.nv + " / " + body.nt + " / " + extras.length);
       const GADINA = { Gadina1: [494, 406, 115, 120, 72, 48], Gadina2: [942, 694, 204, 184, 140, 128], Gadina3: [1889, 1310, 298, 252, 365, 260] };   // each form's own Gadina prefab, sword (mount_Hand_R) and shield (mount_Hand_L)
-      if (GADINA[m[1]]){ const g = GADINA[m[1]]; if (body.nv !== g[0] || body.nt !== g[1] || extras.length !== 2 || extras[0].nv !== g[2] || extras[0].nt !== g[3] || extras[1].nv !== g[4] || extras[1].nt !== g[5]) bad("model " + m[1] + ": " + JSON.stringify([body.nv, body.nt].concat(...extras.map(x => [x.nv, x.nt]))) + ", expected " + g.join(" / ")); }
+      if (GADINA[name]){ const g = GADINA[name]; if (body.nv !== g[0] || body.nt !== g[1] || extras.length !== 2 || extras[0].nv !== g[2] || extras[0].nt !== g[3] || extras[1].nv !== g[4] || extras[1].nt !== g[5]) bad("model " + name + ": " + JSON.stringify([body.nv, body.nt].concat(...extras.map(x => [x.nv, x.nt]))) + ", expected " + g.join(" / ")); }
       const SUMMON = { LightPanther: [1499, 1648], LightLeopard: [1526, 1652], LightGolem: [1403, 2440], AutoGyroGun: [763, 652], BarrelBot: [1324, 1238], KingKaiser: [3830, 2828], MoleTank: [1724, 1420], GigaCannon: [1639, 1684], Phoenix: [1478, 1598], Ja: [526, 560], Gadina: [2453, 1694], Buiten: [860, 584], Gaos: [7130, 4446] };   // single-prefab summon meshes (Rabbit Mercenaries): Panther_tri / Leopard / LightGolem skinned meshes, no extras
-      if (SUMMON[m[1]] && (body.nv !== SUMMON[m[1]][0] || body.nt !== SUMMON[m[1]][1] || extras.length)) bad("model " + m[1] + ": " + body.nv + " verts / " + body.nt + " tris / " + extras.length + " extras, expected " + SUMMON[m[1]].join(" / ") + " and none");
-      if (m[1] === "Chameleon") {
+      if (SUMMON[name] && (body.nv !== SUMMON[name][0] || body.nt !== SUMMON[name][1] || extras.length)) bad("model " + name + ": " + body.nv + " verts / " + body.nt + " tris / " + extras.length + " extras, expected " + SUMMON[name].join(" / ") + " and none");
+      if (name === "Chameleon") {
         // armors/Chameleon_standard_tri 1783 / 1923; extras = starting goggle (58 / 66, Goggle bone Euler(-90,0,0)), standardBow (196 / 123, mount_Hand_L), standardArrow (38 / 32, mount_Hand_R)
         if (body.nv !== 1783 || body.nt !== 1923) bad("model Chameleon: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Chameleon_standard_tri) has 1783 / 1923");
         if (extras.length !== 3 || extras[0].nv !== 58 || extras[0].nt !== 66 || extras[1].nv !== 196 || extras[1].nt !== 123 || extras[2].nv !== 38 || extras[2].nt !== 32) bad("model Chameleon: extras should be goggle 58 / 66, bow 196 / 123, arrow 38 / 32, got " + JSON.stringify(extras));
       }
-      if (m[1] === "Mole") {
+      if (name === "Mole") {
         // armors/Mole_standard_tri 1744 / 2014; extras = goggle (112 / 112, Head bone Euler(0,-90,90)) and the skinned standard cannon WP_Mole01 (465 / 418, mount_Cannon)
         if (body.nv !== 1744 || body.nt !== 2014) bad("model Mole: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Mole_standard_tri) has 1744 / 2014");
         if (extras.length !== 2 || extras[0].nv !== 112 || extras[0].nt !== 112 || extras[1].nv !== 465 || extras[1].nt !== 418) bad("model Mole: extras should be goggle 112 / 112 and cannon 465 / 418, got " + JSON.stringify(extras));
       }
-      if (m[1] === "Monkey") {
+      if (name === "Monkey") {
         // armors/Monkey_standard_tri 1506 / 1692; extras = starting bandana (110 / 152, Head bone Euler(0,-90,90)) and standardMike (258 / 220, mount_Summon)
         if (body.nv !== 1506 || body.nt !== 1692) bad("model Monkey: " + body.nv + " verts / " + body.nt + " tris, the game armor mesh (Monkey_standard_tri) has 1506 / 1692");
         if (extras.length !== 2 || extras[0].nv !== 110 || extras[0].nt !== 152 || extras[1].nv !== 258 || extras[1].nt !== 220) bad("model Monkey: extras should be bandana 110 / 152 and mike 258 / 220, got " + JSON.stringify(extras));
       }
-      if (m[1] === "Boldas") {
+      if (name === "Boldas") {
         // the opponent on start point 2: Boldas_tri 2306 / 1802 (skinned on the Liger_npc rig, idle pose) + his sword WEP_Boldas 308 vertices / 269 triangles, planted tip down (it reaches below the feet)
         if (body.nv !== 2306 || body.nt !== 1802) bad("model Boldas: " + body.nv + " verts / " + body.nt + " tris, the game mesh (Boldas_tri) has 2306 / 1802");
         if (extras.length !== 1 || extras[0].nv !== 308 || extras[0].nt !== 269) bad("model Boldas: the extra should be his sword (308 verts / 269 tris), got " + JSON.stringify(extras));
@@ -4376,10 +4396,10 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       }
       // NPC coin summons (2026-10-19): each Resources prefab's own mesh on the first key of its default clip; Italus keeps his four WEP_Italus pistols (4 x 317 / 168) as one extra
       const COIN_NPC = { Dwukphu: [1077, 1236, null], Razan: [1712, 1770, null], Italus: [2332, 1930, [1268, 672]] };   // Catfish_tri, Crocodile_tri, Italus_tri
-      if (COIN_NPC[m[1]]){ const [nv, nt, ex] = COIN_NPC[m[1]];
-        if (body.nv !== nv || body.nt !== nt) bad("model " + m[1] + ": " + body.nv + " verts / " + body.nt + " tris, the game mesh has " + nv + " / " + nt);
-        if (ex ? (extras.length !== 1 || extras[0].nv !== ex[0] || extras[0].nt !== ex[1]) : extras.length) bad("model " + m[1] + ": extras " + JSON.stringify(extras.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(ex ? [ex] : [])); }
-      if (m[1] === "Cat") {
+      if (COIN_NPC[name]){ const [nv, nt, ex] = COIN_NPC[name];
+        if (body.nv !== nv || body.nt !== nt) bad("model " + name + ": " + body.nv + " verts / " + body.nt + " tris, the game mesh has " + nv + " / " + nt);
+        if (ex ? (extras.length !== 1 || extras[0].nv !== ex[0] || extras[0].nt !== ex[1]) : extras.length) bad("model " + name + ": extras " + JSON.stringify(extras.map(x => [x.nv, x.nt])) + ", expected " + JSON.stringify(ex ? [ex] : [])); }
+      if (name === "Cat") {
         // hair = accessories/default: 248 verts / 242 tris, sitting on the head (above the shoulders, within a head's height of the body top)
         if (extras.length !== 2 || extras[0].nv !== 248 || extras[0].nt !== 242 || extras[1].nv !== 244 || extras[1].nt !== 140) bad("model Cat: extras should be the default hair (248 verts / 242 tris) and the standard knife (244 / 140), got " + JSON.stringify(extras));
         else if (extras[0].minY < body.maxY - 0.6 || extras[0].maxY > body.maxY + 0.15) bad("model Cat: hair spans " + extras[0].minY + " to " + extras[0].maxY + " m, it should cover the head (body top " + body.maxY + " m)");
@@ -4387,7 +4407,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     }
     for (const sk of SKILLS) if (sk.reachModel){   // a key, or (rank) => key (Gadina 1-4)
       const keys = typeof sk.reachModel === "function" ? Array.from({ length: sk.maxRank || 1 }, (_, i) => sk.reachModel(i + 1)) : [sk.reachModel];
-      for (const k of keys) if (!new RegExp("REACH_MODELS\\." + k + " = ").test(html)) bad(sk.id + ": reachModel " + k + " has no REACH_MODELS entry");
+      for (const k of keys) if (!(k in REACH_MODELS)) bad(sk.id + ": reachModel " + k + " has no REACH_MODELS entry");
     }
     { const mk = (id) => { const sk = SKILLS.find(x => x.id === id); return sk && (typeof sk.reachModel === "function" ? [1, 2, 3, 4].map(r => sk.reachModel(r)).join() : sk.reachModel); };
       if (mk("monkey_gadina") !== "Gadina1,Gadina2,Gadina3,Gadina4" || mk("monkey_fireAvatar") !== "MonkeyFireAvatar" || mk("monkey_earthForm_nAttack") !== "MonkeyEarthForm" || mk("monkey_planetBreaker") !== "Gadina4") bad("Monkey previews: Gadina follows its form, Fire Avatar and Earth Form show their form (user 2026-10-16)"); }
@@ -4395,39 +4415,37 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   }
   // reach scenes (2026-10-14): the mission map behind the caster. Everything decodes, indices are in range, props stand on the terrain, both start points sit on it
   {
-    const re = /REACH_SCENES\.(\w+) = (\{[^\n]*\});/g;
-    let m, scenes = 0;
+    let scenes = 0;
     const isPng = (u) => Buffer.from(String(u).replace("data:image/png;base64,", ""), "base64").readUInt32BE(0) === 0x89504e47;
-    while ((m = re.exec(html))) {
+    for (const [name, d] of Object.entries(vm.runInContext("REACH_SCENES", sandbox))) {
       scenes++;
-      let d; try { d = new Function("return " + m[2])(); } catch (e) { bad("scene " + m[1] + ": the object literal does not parse: " + e.message); continue; }
       const T = d.terrain, th = Buffer.from(T.h, "base64");
-      if (th.length !== T.nx * T.nz * 2) bad(`scene ${m[1]}: terrain has ${th.length / 2} heights, expected ${T.nx * T.nz}`);
-      if (!isPng(T.alpha.uri) || T.tiles.length !== 4 || !T.tiles.every(isPng)) bad(`scene ${m[1]}: terrain needs a splat map and 4 PNG tiles`);
-      if (!d.tex.every(t => isPng(t.uri))) bad(`scene ${m[1]}: a prop texture is not a PNG`);
+      if (th.length !== T.nx * T.nz * 2) bad(`scene ${name}: terrain has ${th.length / 2} heights, expected ${T.nx * T.nz}`);
+      if (!isPng(T.alpha.uri) || T.tiles.length !== 4 || !T.tiles.every(isPng)) bad(`scene ${name}: terrain needs a splat map and 4 PNG tiles`);
+      if (!d.tex.every(t => isPng(t.uri))) bad(`scene ${name}: a prop texture is not a PNG`);
       const ground = (x, z) => { const i = Math.round((x - T.x0) / T.step), j = Math.round((z - T.z0) / T.step); return i < 0 || j < 0 || i >= T.nx || j >= T.nz ? null : th.readInt16LE((j * T.nx + i) * 2) / 100; };
-      if (d.spawns.length !== 2) bad(`scene ${m[1]}: ${d.spawns.length} start points, expected 2`);
-      for (const [k, s] of d.spawns.entries()) { const g = ground(s.x, s.z); if (g === null || Math.abs(g - s.gy) > 0.3) bad(`scene ${m[1]}: start point ${k + 1} is at y ${s.gy} but the terrain under it is ${g}`); }
+      if (d.spawns.length !== 2) bad(`scene ${name}: ${d.spawns.length} start points, expected 2`);
+      for (const [k, s] of d.spawns.entries()) { const g = ground(s.x, s.z); if (g === null || Math.abs(g - s.gy) > 0.3) bad(`scene ${name}: start point ${k + 1} is at y ${s.gy} but the terrain under it is ${g}`); }
       d.meshes.forEach((mesh, i) => {
         const nv = Buffer.from(mesh.v, "base64").length / 6, nu = Buffer.from(mesh.uv, "base64").length / 4, tb = Buffer.from(mesh.t, "base64");
         let maxI = 0; for (let q = 0; q < tb.length; q += 2) maxI = Math.max(maxI, tb.readUInt16LE(q));
-        if (!Number.isInteger(nv) || nv !== nu || tb.length % 6 || maxI >= nv || !d.tex[mesh.tex]) bad(`scene ${m[1]}: mesh ${i} has ${nv} verts, ${nu} uvs, max index ${maxI}, skin ${mesh.tex}`);
+        if (!Number.isInteger(nv) || nv !== nu || tb.length % 6 || maxI >= nv || !d.tex[mesh.tex]) bad(`scene ${name}: mesh ${i} has ${nv} verts, ${nu} uvs, max index ${maxI}, skin ${mesh.tex}`);
       });
       for (const [q, ins] of d.inst.entries()) {
         const g = ground(ins[4], ins[12]);
-        if (ins.length !== 13 || !d.meshes[ins[0]] || ins.some(v => !Number.isFinite(v))) { bad(`scene ${m[1]}: instance ${q} is malformed`); continue; }
+        if (ins.length !== 13 || !d.meshes[ins[0]] || ins.some(v => !Number.isFinite(v))) { bad(`scene ${name}: instance ${q} is malformed`); continue; }
         // an origin may sit in a foundation below the ground (the ruins), but the prop's top must reach the terrain and its base must not float above it
         const vb = Buffer.from(d.meshes[ins[0]].v, "base64");
         let top = -Infinity, low = Infinity;
         for (let i = 0; i < vb.length; i += 6) { const px = vb.readInt16LE(i) / 1000, py = vb.readInt16LE(i + 2) / 1000, pz = vb.readInt16LE(i + 4) / 1000, wy = ins[5] * px + ins[6] * py + ins[7] * pz + ins[8]; top = Math.max(top, wy); low = Math.min(low, wy); }
         // M108 reuses M106's TerrainData (the game's own reference), so props on the rim (ruins, gates, tents far from the arena) are a few metres off it; the flat duel arena (22 m round a start point) is exact
         const inArena = d.spawns.some(s => Math.hypot(ins[4] - s.x, ins[12] - s.z) < 22);
-        if (g === null || (inArena && (top < g - 0.5 || low > g + 1.5))) bad(`scene ${m[1]}: instance ${q} spans y ${low.toFixed(2)}..${top.toFixed(2)} over terrain ${g}`);
+        if (g === null || (inArena && (top < g - 0.5 || low > g + 1.5))) bad(`scene ${name}: instance ${q} spans y ${low.toFixed(2)}..${top.toFixed(2)} over terrain ${g}`);
       }
       // trimmed to a disc of 2 x the arena radius (arena = half the distance between the two border lines) round the arena centre; every prop origin is inside it
-      if (!d.crop || Math.abs(d.crop.r - 2 * d.crop.arena) > 0.01) bad(`scene ${m[1]}: crop radius ${d.crop && d.crop.r} is not 2 x the arena radius ${d.crop && d.crop.arena}`);
-      else for (const [q, ins] of d.inst.entries()) if (Math.hypot(ins[4] - d.crop.x, ins[12] - d.crop.z) > d.crop.r + 0.01) bad(`scene ${m[1]}: instance ${q} is outside the crop disc`);
-      if (m[1] === "M108" && (d.inst.length !== 17 || d.meshes.length !== 7 || Math.abs(d.crop.arena - 14.43) > 0.05)) bad(`scene M108: ${d.inst.length} props / ${d.meshes.length} meshes, arena radius ${d.crop.arena}; expected 17 / 7 / 14.43 (the visible static props inside 2 x the arena radius; the two border-line props are left out on purpose)`);
+      if (!d.crop || Math.abs(d.crop.r - 2 * d.crop.arena) > 0.01) bad(`scene ${name}: crop radius ${d.crop && d.crop.r} is not 2 x the arena radius ${d.crop && d.crop.arena}`);
+      else for (const [q, ins] of d.inst.entries()) if (Math.hypot(ins[4] - d.crop.x, ins[12] - d.crop.z) > d.crop.r + 0.01) bad(`scene ${name}: instance ${q} is outside the crop disc`);
+      if (name === "M108" && (d.inst.length !== 17 || d.meshes.length !== 7 || Math.abs(d.crop.arena - 14.43) > 0.05)) bad(`scene M108: ${d.inst.length} props / ${d.meshes.length} meshes, arena radius ${d.crop.arena}; expected 17 / 7 / 14.43 (the visible static props inside 2 x the arena radius; the two border-line props are left out on purpose)`);
     }
     if (!scenes) bad("no REACH_SCENES entries found");
   }
