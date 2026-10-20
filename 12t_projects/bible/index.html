@@ -1865,6 +1865,10 @@
   .cg-views[hidden]{display:none}
   .cg-views svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .cg-views b{font-weight:600}
+  .cg-rating{display:inline-flex;align-items:center;gap:1px;line-height:1;vertical-align:-0.2em}   /* ความครบถ้วนของเนื้อหา (user 2026-10-20; not .cg-star, the corner star marker) */
+  .cg-rate-star{display:block;flex:none;width:13px;height:13px}
+  .cg-rate-bg{fill:color-mix(in srgb,var(--gold) 22%,transparent)}
+  .cg-rate-fg{fill:var(--gold)}
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
   .cg-prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
@@ -2299,7 +2303,7 @@
     .cg-page .cg-guide .cg-guide-meta{flex-direction:column;gap:3px;width:100%;min-width:0;font-size:11px;line-height:14px}
     .cg-page .cg-guide .cg-guide-by{display:block;width:100%;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .cg-page .cg-guide .cg-guide-date{display:none}
-    .cg-page .cg-views{font-size:11.5px}.cg-page .cg-views svg{width:13px;height:13px}
+    .cg-page .cg-views{font-size:11.5px}.cg-page .cg-views svg{width:13px;height:13px}.cg-page .cg-rate-star{width:11px;height:11px}
     .cg-page[data-mode="gallery"] .cg-heading{margin:0 0 4px;gap:0}
     .cg-page[data-mode="gallery"] .cg-heading h2{font-size:22px}
     .cg-page .cg-filters{gap:8px 10px;margin-bottom:10px}
@@ -27467,6 +27471,30 @@ function classGuideDateText(iso){
   const [y, m, d] = iso.split("-").map(Number);
   return d + " " + CLASS_GUIDE_MONTHS[m - 1] + " " + y;
 }
+// ความครบถ้วนของเนื้อหา (user 2026-10-20, gallery cards only): every guide starts at 3 stars (lower read as an insult) and gains half a star for each of
+// a description of 70+ letters (Thai vowel and tone marks and ** not counted, a run of spaces or line breaks counts once; the real descriptions split
+// into one-liners of 17-61 and explanations of 76+), 3+ skill notes (7 guides had 1-2, the rest 3-12), any recommended stat and any gear.
+const CLASS_GUIDE_DESC_MIN = 70, CLASS_GUIDE_NOTES_MIN = 3;
+function classGuideCompleteness(g){
+  const letters = [...String(g.description || "").replace(/\*\*/g, "").replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").replace(/\s+/g, " ").trim()].length;
+  const parts = [
+    ["คำอธิบาย", "คำอธิบาย " + CLASS_GUIDE_DESC_MIN + " ตัวอักษรขึ้นไป", letters >= CLASS_GUIDE_DESC_MIN],
+    ["โน้ตสกิล", "โน้ตสกิลอย่างน้อย " + CLASS_GUIDE_NOTES_MIN + " สกิล", Object.keys(g.notes || {}).length >= CLASS_GUIDE_NOTES_MIN],
+    ["สเตตัส", "สเตตัสแนะนำ", Object.keys(g.stats || {}).length > 0],
+    ["ไอเทม", "ไอเทมแนะนำ", Object.keys(g.gear || {}).length > 0]];
+  const have = parts.filter(p => p[2]), missing = parts.filter(p => !p[2]), stars = 3 + have.length / 2;
+  const label = "ความครบถ้วนของเนื้อหา " + stars + "/5" + (have.length ? " · มี" + have.map(p => p[0]).join(" ") : " · มีแค่บิลด์") + (missing.length ? " · ยังไม่มี" + missing.map(p => p[1]).join(" ") : "");
+  return { stars, label };
+}
+const CLASS_GUIDE_STAR = "12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26", CLASS_GUIDE_STAR_HALF = "12,2 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26";
+function classGuideStarsHtml(stars){   // five small SVG stars (a half star is the left half of the outline filled), so no font has to carry a half-star glyph
+  let out = "";
+  for (let i = 1; i <= 5; i++){
+    const kind = stars >= i ? "full" : stars >= i - 0.5 ? "half" : "empty";
+    out += '<svg class="cg-rate-star is-' + kind + '" viewBox="0 0 24 24" aria-hidden="true"><polygon class="cg-rate-bg" points="' + CLASS_GUIDE_STAR + '"/>' + (kind === "empty" ? "" : '<polygon class="cg-rate-fg" points="' + (kind === "half" ? CLASS_GUIDE_STAR_HALF : CLASS_GUIDE_STAR) + '"/>') + "</svg>";
+  }
+  return out;
+}
 // Every embedded guide has a running number "id" (1, 2, 3 ...; never reused, never renumbered) for its link #class-guide/<id>; a guide without one falls back to its position (user 2026-10-15: share a guide in Discord).
 function classGuideId(raw, index){ return String(raw && Number.isInteger(raw.id) && raw.id > 0 ? raw.id : index + 1); }
 function classGuideNormalize(value, { draft = false } = {}){
@@ -29300,7 +29328,10 @@ function mountClassGuide(root){
     const meta = document.createElement("span"); meta.className = "cg-guide-meta";
     const who = document.createElement("span"); who.className = "cg-guide-by"; who.textContent = guide.author || "ยังไม่ระบุผู้เขียน";
     const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = "· " + classGuideDateText(guide.date);
-    who.appendChild(when); meta.appendChild(who); if (id) meta.appendChild(viewBadge(id));
+    who.appendChild(when); meta.appendChild(who);
+    const done = classGuideCompleteness(guide), stars = document.createElement("span"); stars.className = "cg-rating"; stars.innerHTML = classGuideStarsHtml(done.stars);   // ความครบถ้วนของเนื้อหา (user 2026-10-20)
+    stars.title = done.label; stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); meta.appendChild(stars);
+    if (id) meta.appendChild(viewBadge(id));
     b.append(portrait, title, chips, meta);
     return b;
   }
@@ -31187,6 +31218,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T09:43:47.838Z","feat(bible): guide gallery cards show ความครบถ้วนของเนื้อหา as 3 to 5 stars (half a star each for a 70+ letter description, notes on 3+ skills, stats and gear)"],
     ["2026-10-20T09:15:13.578Z","feat(bible): class guide #51 TTO Wolf เจาะลงดัน เจาะแต้ๆ by Caramellys"],
     ["2026-10-20T09:00:38.791Z","feat(bible): class guide codes are now TG3: Chinese characters that Discord cannot format, about 2.3x shorter (average 451 to 196 characters, every guide fits one Discord message); TG2 and 12TG1 codes still import"],
     ["2026-10-20T08:32:28.109Z","fix(bible): opening the page from disk no longer sits blank: the GoatCounter script loads over https instead of a protocol-relative link that Windows looked up as a network share"],

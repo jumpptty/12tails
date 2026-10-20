@@ -3327,6 +3327,22 @@ let checkedRsim = 0;
     ok(same(expand(compact({...norm(fixture), build:{...norm(fixture).build, learned:all}})).build.learned, all), "the 160-bit skill set keeps every slot from 101 to 494");
   }
   { const dt = vm.runInContext("classGuideDateText", sandbox); ok(dt("2026-10-16") === "16 ต.ค. 2026" && dt("") === "ยังไม่ระบุวันที่", "guide date shows as day, Thai month, year"); }
+  // ความครบถ้วนของเนื้อหา (user 2026-10-20): 3 stars, + half a star each for a description of 70+ letters, 3+ skill notes, any stat, any gear; gallery cards only
+  { const comp = vm.runInContext("classGuideCompleteness", sandbox), starsHtml = vm.runInContext("classGuideStarsHtml", sandbox);
+    const base = { description: "", notes: {} }, three = { 101: "a", 102: "b", 111: "c" };
+    ok(comp(base).stars === 3 && comp({ ...base, description: "ก".repeat(70), notes: three, stats: { atk: 100 }, gear: { weapon: [{ item: "x" }] } }).stars === 5, "a build-only guide gets 3 stars, one with all four parts 5");
+    ok(comp({ ...base, description: "ก".repeat(69) }).stars === 3 && comp({ ...base, description: "ก".repeat(70) }).stars === 3.5, "a description counts from 70 letters");
+    ok(comp({ ...base, description: "กิ่".repeat(30) + "**" + " \n ".repeat(20) + "**" }).stars === 3, "Thai vowel and tone marks, ** and runs of spaces or line breaks don't make a description count");
+    ok(comp({ ...base, notes: { 101: "a", 102: "b" } }).stars === 3 && comp({ ...base, notes: three }).stars === 3.5, "skill notes count from 3 notes");
+    ok(comp({ ...base, stats: { agi: 250 } }).stars === 3.5 && comp({ ...base, gear: { pet: [{ item: "x" }] } }).stars === 3.5, "any recommended stat or gear adds half a star");
+    const c45 = comp({ ...base, description: "ก".repeat(70), notes: three, gear: { pet: [{ item: "x" }] } });
+    ok(c45.stars === 4.5 && /4\.5\/5/.test(c45.label) && /สเตตัส/.test(c45.label) && /ความครบถ้วนของเนื้อหา/.test(c45.label), "the stars' label names the score and what is still missing");
+    const h45 = starsHtml(4.5), h3 = starsHtml(3);
+    ok((h45.match(/is-full/g) || []).length === 4 && (h45.match(/is-half/g) || []).length === 1 && !/is-empty/.test(h45), "4.5 stars draw as 4 full and 1 half");
+    ok((h3.match(/is-full/g) || []).length === 3 && (h3.match(/is-empty/g) || []).length === 2 && !/is-half/.test(h3), "3 stars draw as 3 full and 2 empty");
+    ok(embedded.every(g => [3, 3.5, 4, 4.5, 5].includes(comp(norm(g)).stars)), "every embedded guide gets 3-5 stars in half steps");
+    ok(/function guideCard\([^]{0,2500}classGuideStarsHtml\(/.test(html) && html.split("classGuideStarsHtml(").length - 1 === 2, "the stars are drawn on the gallery card only (one call, in guideCard)");
+  }
   // Recommended stats (user 2026-10-15): optional, any of the 8, only filled ones stored. Since 2026-10-18 a value is an integer 0-512, a share "N%"
   // (the shares of a finished guide total 100) or ตัน / ตาม, and the stats keep the author's order (docs/superpowers/specs/2026-10-18-guide-stat-flasks-design.md).
   { const gs = norm(change({stats:{lck:40,agi:77}}));
