@@ -4,7 +4,7 @@
 // at start-up on every request, and the Host and Origin checked, so no web page can drive it.
 // The page queues changes (user 2026-10-20: batch, e.g. add 2, replace 2, remove 1) and publishes the whole queue at once.
 // Every publish goes through one pipeline: apply the changes in order to CLASS_GUIDES in 12t_projects/bible/index.html (one JSON object per line,
-// CLASS-GUIDES.md), refresh CLASS_GUIDE_VIEWS, prepend one changelog entry (also the commit subject), run the full validator once (it also checks
+// CLASS-GUIDES.md), prepend one changelog entry (also the commit subject), run the full validator once (it also checks
 // that a build is legal), then make one commit and push. Any failure before the commit puts index.html back exactly as it was, so a batch goes
 // up whole or not at all. It refuses while index.html has uncommitted work.
 // * add: the next running id. * replace: the guide keeps its id (its link and view count), everything else comes from the new code.
@@ -36,6 +36,10 @@ const clean = (s) => String(s).replace(/[<>\r\n]/g, " ").replace(/\s+/g, " ").tr
 const subj = (s) => s.replace(/\*\*|["\\<>]/g, "").replace(/\s+/g, " ").trim();   // the changelog entry is compared with the commit subject character for character
 const label = (g) => `${SERVER[g.build.server] || g.build.server} ${cap(g.build.classKey)} ${g.title} by ${g.author}`;
 const today = () => new Date().toISOString().slice(0, 10);
+const localToday = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };   // = classGuideToday() in the page
+// The validator refuses a guide date later than today (a Buddhist-era year such as 20/10/2569 also decodes to a wrapped 2031 date) or a missing
+// one, so such a date becomes today (user 2026-10-20). Returns the old date ("" when there was none), or null when the date was fine.
+function fixDate(g){ const t = localToday(); if (g.date && g.date <= t) return null; const was = g.date || ""; g.date = t; return was; }
 const MODES = ["pve", "pvp"], pickModes = (v) => MODES.filter((m) => Array.isArray(v) && v.includes(m));   // PVE / PVP, both allowed; a finished guide needs one (user 2026-10-20)
 
 // ---------- reading and changing CLASS_GUIDES ----------
@@ -159,14 +163,12 @@ async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
     out = out.slice(0, at + top.length) + "    " + JSON.stringify([new Date().toISOString(), p.subject]) + "," + doc.eol + out.slice(at + top.length);
     fs.writeFileSync(FILE, out);
     ui.step("edit", "แก้ไฟล์ index.html", "ok");
-    ui.step("views", "อัปเดตยอดเข้าชม", "run");
-    const v = await runNode("scripts/guide_views.js", []);
-    ui.step("views", v.status === 0 ? "อัปเดตยอดเข้าชม" : "อัปเดตยอดเข้าชม (ใช้ตัวเลขเดิม)", v.status === 0 ? "ok" : "warn");
     ui.step("check", "ตรวจด้วย validator", "run");
     const c = await runNode("scripts/validate_skills.js", ["--full"]);
     if (c.status !== 0){
       ui.step("check", "ตรวจด้วย validator", "fail");
-      const lines = c.out.split(/\r?\n/).filter((l) => /ERROR|Error/.test(l));
+      const all = c.out.split(/\r?\n/), tagged = all.filter((l) => /^\s*\[[A-Z0-9 _-]*ERROR\]/.test(l));   // the validator's own "[XYZ ERROR] ..." lines, not the source and stack lines under them
+      const lines = tagged.length ? tagged : all.filter((l) => /ERROR|Error/.test(l));
       ui.log((lines.length ? lines : c.out.trim().split(/\r?\n/).slice(-12)).slice(0, 14).join("\n"));
       throw new Error("ไกด์ไม่ผ่านการตรวจ จึงไม่ได้อัปอะไรขึ้น และ index.html กลับเป็นเหมือนเดิมแล้ว");
     }
@@ -198,7 +200,7 @@ async function cli(words){
   if (cmd === "add") op = { action: "add", guide: decodeCode(rest.join(" ") || await ask("Paste the guide code: ")) };
   else if (cmd === "replace") op = { action: "replace", id: +rest[0], guide: decodeCode(rest.slice(1).join(" ") || await ask("Paste the new code: ")) };
   else if (cmd === "delete") op = { action: "delete", id: +rest[0] };
-  if (op && op.guide){ if (val("--modes")) op.guide.modes = pickModes(val("--modes").split(",").map((x) => x.trim().toLowerCase())); if (!(op.guide.modes || []).length) throw new Error("This code has no PVE / PVP tag (made with an older page). Add --modes pve, --modes pvp or --modes pve,pvp."); }
+  if (op && op.guide){ const was = fixDate(op.guide); if (was !== null) console.log(`  Date ${was || "(none)"} is later than today or missing, so it is set to today (${op.guide.date}).`); if (val("--modes")) op.guide.modes = pickModes(val("--modes").split(",").map((x) => x.trim().toLowerCase())); if (!(op.guide.modes || []).length) throw new Error("This code has no PVE / PVP tag (made with an older page). Add --modes pve, --modes pvp or --modes pve,pvp."); }
   else throw new Error("usage: see the header of scripts/add_guide.js");
   const p = planAll([op], readGuides());
   console.log("\n  " + p.subject + "\n");
@@ -236,8 +238,8 @@ function serve(){
       if (req.method === "POST" && req.url === "/api/check"){
         const b = await body(req), doc = readGuides();
         try {
-          const g = decodeCode(b.code), same = doc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +b.replaceId);
-          return json(res, 200, { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date || "" }, id: b.replaceId ? +b.replaceId : nextId(doc), duplicate: same ? { id: same.g.id, title: same.g.title } : null });
+          const g = decodeCode(b.code), dateWas = fixDate(g), same = doc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +b.replaceId);
+          return json(res, 200, { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date }, dateWas, id: b.replaceId ? +b.replaceId : nextId(doc), duplicate: same ? { id: same.g.id, title: same.g.title } : null });
         } catch (e){ return json(res, 200, { ok: false, error: e.message }); }
       }
       if (req.method === "POST" && (req.url === "/api/run" || req.url === "/api/undo")){
@@ -250,7 +252,7 @@ function serve(){
           for (const [i, it] of items.entries()){
             if (it.action === "delete"){ ops.push({ action: "delete", id: +it.id }); continue; }
             let g; try { g = decodeCode(it.code); } catch (e){ return json(res, 400, { error: `รายการที่ ${i + 1}: ${e.message}` }); }
-            if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
+            fixDate(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
             if (!(g.modes || []).length) return json(res, 400, { error: `รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง` });
             ops.push({ action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g });
           }
@@ -494,7 +496,7 @@ function showCheck(){
   if (!check.shown){ check.shown = true; document.querySelectorAll(".mbtn").forEach((b) => b.setAttribute("aria-pressed", String(g.modes.includes(b.dataset.m)))); }   // only once per code, so a queue redraw keeps the user's picks
   $("#modesHint").textContent = pressedModes().length ? "" : g.modes.length ? "เลือกอย่างน้อยหนึ่งอย่าง" : "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) เลือกให้ที่นี่ก่อนอัป";
   $("#pvFace").style.backgroundImage = "url(" + face(g.classKey) + ")"; $("#pvTitle").textContent = g.title; $("#pvBy").textContent = "โดย " + g.author;
-  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, dmy(g.date)].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
+  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, dmy(g.date) + (check.dateWas == null ? "" : check.dateWas ? " (แก้จาก " + dmy(check.dateWas) + " ที่เกินวันนี้)" : " (โค้ดไม่มีวันที่ ใช้วันนี้)")].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
   if (check.duplicate && !queuedFor(check.duplicate.id)){ msg.className = "msg warn is-on"; msg.innerHTML = "ไกด์นี้มีอยู่แล้วเป็น <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> (ชื่อและผู้เขียนเดียวกัน)<br><button type='button' class='btn btn-sm' id='useReplace'>แทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>"; }
   else if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = mode.kind === "replace" ? "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่" : "ไกด์นี้อยู่ในรายการแล้ว"; }
   syncGo();

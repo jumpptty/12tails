@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Class guide reader snapshot (user 2026-10-17): every commit push refreshes CLASS_GUIDE_VIEWS in 12t_projects/bible/index.html with each guide's
+// Class guide reader snapshot (user 2026-10-17; by hand only since 2026-10-20, no longer run on commits): refreshes CLASS_GUIDE_VIEWS in 12t_projects/bible/index.html with each guide's
 // current GoatCounter visitor count, read from the public counter (no token). The page shows the live count when GoatCounter answers and this
 // snapshot when an ad / tracker blocker stops it, so blocked browsers still see the numbers as of the last push.
 //
-//   node scripts/guide_views.js            fetch every guide's count and rewrite the CLASS_GUIDE_VIEWS line (run before each commit push)
+//   node scripts/guide_views.js            fetch every guide's count and rewrite the CLASS_GUIDE_VIEWS line (by hand, when the snapshot should catch up)
 //   node scripts/guide_views.js --dry-run  print the counts, write nothing
 "use strict";
 const fs = require("fs");
