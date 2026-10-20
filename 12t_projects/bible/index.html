@@ -27,7 +27,7 @@
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
     raised: [".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
-      ".cg-icon-pick.is-all", ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",
+      ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
@@ -1819,13 +1819,15 @@
   .cg-icons{display:flex;flex-wrap:wrap;gap:4px}
   .cg-icon-pick{position:relative;display:grid;place-items:center;box-sizing:border-box;min-width:42px;height:42px;padding:3px;border:0;border-radius:6px;background:none;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;transition:border-color .15s,background-color .15s,transform .12s}   /* the server / class icons have no box (user 2026-10-20); .is-all (text) keeps one */
   .cg-icon-pick img{display:block;width:34px;height:34px;object-fit:contain}
-  .cg-icon-pick.is-all{padding:0 12px;border:1px solid var(--line);background:var(--panel)}
+  .cg-icon-pick.is-all{padding:0 8px;font-weight:700}   /* the text filters (ทั้งหมด, PVE / PVP): bold text, no box (user 2026-10-20), like the icon filters */
+  .cg-icon-pick.is-all:hover{color:var(--gold)}
   .cg-icon-pick:hover{border-color:var(--gold);transform:translateY(-1px)}
   .cg-icon-pick:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-  .cg-icon-pick.is-all[aria-pressed="true"]{border-color:var(--gold);background-color:color-mix(in srgb,var(--gold) 20%,var(--panel-2)) !important;box-shadow:inset 0 0 0 1px var(--gold);color:var(--gold);font-weight:600}
+  .cg-icon-pick.is-all[aria-pressed="true"]{color:var(--gold)}
   .cg-icon-pick:not(.is-all) img{transition:filter .15s}
   .cg-icon-pick:not(.is-all)[aria-pressed="true"] img{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--gold) 85%,transparent))}
-  .cg-icon-pick:not(.is-all)[aria-pressed="true"]::after{content:"";position:absolute;left:25%;right:25%;bottom:-3px;height:2px;border-radius:2px;background:var(--gold)}
+  .cg-icon-pick[aria-pressed="true"]::after{content:"";position:absolute;left:25%;right:25%;bottom:-3px;height:2px;border-radius:2px;background:var(--gold)}
+  .cg-icon-pick.is-all[aria-pressed="true"]::after{left:8px;right:8px;bottom:5px}   /* under the word, not the 42 px button */
   .cg-icon-pick.is-empty img{opacity:.35;filter:grayscale(1)}
   .cg-gallery-note{flex-basis:100%;margin:-4px 0 0;text-align:right;font-size:13px;color:var(--muted)}
   .cg-filters > .cg-nav{margin-left:auto;align-self:flex-end}
@@ -31218,6 +31220,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T09:57:44.866Z","style(bible): the guide gallery text filters (ทั้งหมด, PVE, PVP) lose their box too: bold text, gold with a bar when chosen"],
     ["2026-10-20T09:43:47.838Z","feat(bible): guide gallery cards show ความครบถ้วนของเนื้อหา as 3 to 5 stars (half a star each for a 70+ letter description, notes on 3+ skills, stats and gear)"],
     ["2026-10-20T09:15:13.578Z","feat(bible): class guide #51 TTO Wolf เจาะลงดัน เจาะแต้ๆ by Caramellys"],
     ["2026-10-20T09:00:38.791Z","feat(bible): class guide codes are now TG3: Chinese characters that Discord cannot format, about 2.3x shorter (average 451 to 196 characters, every guide fits one Discord message); TG2 and 12TG1 codes still import"],
