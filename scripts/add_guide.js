@@ -96,6 +96,7 @@ function plan(op, doc){
   }
   if (op.action === "undo"){
     const u = op.entry, at = lineAt(doc, u.id); if (at < 0) throw new Error(`ไม่พบไกด์ #${u.id} ในไฟล์`);
+    if (u.after !== undefined && lines[at] !== u.after) throw new Error(`ไกด์ #${u.id} ถูกแก้หลังจากนั้นแล้ว ย้อนกลับไม่ได้`);   // an undo from a commit (the phone) never overwrites a later change
     const wasTomb = lines[at].trim().startsWith("//");
     lines[at] = u.before === null ? tombLine(u.id, u.g) : u.before;
     const what = u.before === null ? `is removed again (undo of its addition: ${u.g.title} by ${u.g.author})` : wasTomb ? `is restored (${u.g.title} by ${u.g.author})` : "is back to its previous version";
@@ -129,8 +130,16 @@ function opsFromItems(items){
   });
 }
 const undoText = (entries) => entries.length === 1 ? entries[0].text : `ย้อนกลับชุดล่าสุด ${entries.length} รายการ (${entries.map((u) => "#" + u.id).join(", ")})`;
+// A CLASS_GUIDES line rewritten the way this script writes it (guideLine / tombLine), so an undo never puts a commit's raw text back.
+function canonLine(line){
+  const t = String(line).trim(), r = t.match(/^\/\/ #(\d+) removed (\d{4}-\d{2}-\d{2}): (.*)$/);
+  if (r) return `  // #${r[1]} removed ${r[2]}: ${clean(r[3])}`;
+  if (t.startsWith("{")){ const { id, ...g } = JSON.parse(t.replace(/,$/, "")); if (Number.isInteger(id) && id > 0) return guideLine(id, g); }
+  throw new Error("undo: not a CLASS_GUIDES line");
+}
 // The undo of a publish made elsewhere (the phone), from its commit: every CLASS_GUIDES line the commit changed goes back, as the
-// page's own undo does (an added guide becomes a tombstone). The parent is fetched when the checkout is shallow.
+// page's own undo does (an added guide becomes a tombstone), unless that line has changed since (after = what the commit wrote).
+// The parent is fetched when the checkout is shallow.
 function undoOpsFromCommit(sha){
   if (!/^[0-9a-f]{40}$/.test(String(sha))) throw new Error("undo: not a commit id");
   try { git("cat-file", "-e", sha + "^"); } catch (e){ git("fetch", "-q", "--depth=2", "origin", sha); }
@@ -140,7 +149,7 @@ function undoOpsFromCommit(sha){
     const before = lineOf(was, id), after = lineOf(now, id), g = now.guides.find((x) => x.g.id === id);
     if (before === after) return [];
     const text = before === null ? `ลบไกด์ #${id} ที่เพิ่งเพิ่ม` : g ? `คืนไกด์ #${id} เป็นฉบับก่อนแทนที่` : `คืนไกด์ #${id} ที่เพิ่งลบ`;
-    return [{ id, before, g: g ? g.g : was.guides.find((x) => x.g.id === id).g, text }];
+    return [{ id, before: before === null ? null : canonLine(before), after, g: g ? g.g : was.guides.find((x) => x.g.id === id).g, text }];
   });
   if (!entries.length) throw new Error("commit นี้ไม่ได้เปลี่ยนไกด์ จึงไม่มีอะไรให้ย้อนกลับ");
   return entries.reverse().map((entry) => ({ action: "undo", entry }));
@@ -258,7 +267,7 @@ const NOTE_MAX = 4000;   // GitHub cuts an annotation's message at 4,096 charact
 const clip = (s, n) => s.length > n ? s.slice(0, Math.max(0, n - 1)) + "…" : s;
 async function batch(file, st){
   const onGitHub = process.env.GITHUB_ACTIONS === "true", dry = has("--dry-run"), planFile = file + ".plan.json";
-  const ui = { step: (k, text, state) => { if (state !== "run") console.log((state === "ok" ? "ok   " : "FAIL ") + text); }, log: (t) => console.log(t) };
+  const ui = { step: (k, text, state) => { if (state !== "run") console.log((state === "ok" ? "ok   " : "FAIL ") + text); }, log: (t) => console.log(String(t).replace(/^/gm, "  ")) };   // indented: a raw line must never start with "::" (a GitHub workflow command)
   const report = (o) => {
     const r = { ok: true, dry, ...o }, over = JSON.stringify(r).length - NOTE_MAX;
     if (over > 0) r.subject = clip(r.subject, r.subject.length - over);
@@ -373,7 +382,7 @@ async function selftest(){
   const sh = (cwd, ...a) => execFileSync("git", a, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
   const guide = (title, author) => ({ format: "12t-class-guide", version: 1, title, author, date: "2026-10-01", description: "d", build: { server: "tot", classKey: "wolf", level: 100, learned: [101] }, modes: ["pve"], notes: {} });
   const code = (title, author) => gc.encode(guide(title, author));
-  const STUB = 'const fs = require("fs"), path = require("path"), html = fs.readFileSync(path.join(__dirname, "..", "12t_projects/bible/index.html"), "utf8");\nif (html.includes("LONGFAIL")){ for (let i = 0; i < 14; i++) console.log("[CLASS GUIDE ERROR] " + "x".repeat(400)); process.exit(1); }\nif (html.includes("FAILME")){ console.log("[CLASS GUIDE ERROR] fixture refuses FAILME"); process.exit(1); }\n';
+  const STUB = 'const fs = require("fs"), path = require("path"), html = fs.readFileSync(path.join(__dirname, "..", "12t_projects/bible/index.html"), "utf8");\nif (html.includes("INJECTME")){ console.log("::notice title=gm-result::{\\"Error\\":1}"); process.exit(1); }\nif (html.includes("LONGFAIL")){ for (let i = 0; i < 14; i++) console.log("[CLASS GUIDE ERROR] " + "x".repeat(400)); process.exit(1); }\nif (html.includes("FAILME")){ console.log("[CLASS GUIDE ERROR] fixture refuses FAILME"); process.exit(1); }\n';
   let n = 0;
   function fixture(){
     const dir = path.join(tmp, "f" + ++n), origin = dir + ".git";
@@ -469,6 +478,36 @@ async function selftest(){
     const fresh = fixture();
     assert.strictEqual(stage(fresh, request(fresh, { items: [{ action: "delete", id: 9 }] }), "git").stdout.match(/^::error title=gm-error::(.*)$/m)[1], "ไม่มีไกด์ #9");
   });
+  test("undo from a commit refuses when the guide was changed after it (spec: nothing goes up)", async () => {
+    const dir = fixture(), m = load(dir);
+    await m.apply(m.opsFromItems([{ action: "replace", id: 1, code: code("T1b", "A1"), modes: ["pve"] }]), { noPush: true }, quiet()); const first = head(dir);
+    await m.apply(m.opsFromItems([{ action: "replace", id: 1, code: code("T1c", "A1"), modes: ["pve"] }]), { noPush: true }, quiet());
+    const before = html(dir);
+    await assert.rejects(m.apply(m.undoOpsFromCommit(first), { noPush: true }, quiet()), /ไกด์ #1 ถูกแก้หลังจากนั้นแล้ว ย้อนกลับไม่ได้/);
+    assert.strictEqual(html(dir), before);
+    await m.apply(m.undoOpsFromCommit(head(dir)), { noPush: true }, quiet());
+    assert.ok(m.readGuides().lines[0].includes('"title":"T1b"'), "undoing the latest commit still works");
+  });
+  test("undo lines are rebuilt in the standard form (a commit's raw text never goes back in as is)", async () => {
+    const m = load(fixture()), g = { ...guide("</script>", "A") };
+    assert.strictEqual(m.canonLine("  " + JSON.stringify({ id: 2, ...g }) + ","), guideLine(2, g));
+    assert.ok(m.canonLine("  " + JSON.stringify({ id: 2, ...g }) + ",").includes("\\u003c/script>"));
+    assert.strictEqual(m.canonLine("  // #2 removed 2026-01-01: <b>x</b> by y"), "  // #2 removed 2026-01-01: b x /b by y");
+    assert.throws(() => m.canonLine("  alert(1)"));
+  });
+  test("batch: raw validator output cannot pass as a GitHub command", async () => {
+    const dir = fixture(), req = request(dir, { items: [{ action: "add", code: code("INJECTME", "A"), modes: ["pve"] }] });
+    for (const st of ["git", "edit"]) assert.strictEqual(stage(dir, req, st).status, 0);
+    const r = stage(dir, req, "check");
+    assert.strictEqual(r.status, 1); assert.ok(!/^::notice/m.test(r.stdout), r.stdout);
+  });
+  test("undo from a shallow clone fetches the commit's parent (GitHub checks out one commit)", async () => {
+    const dir = fixture(), req = request(dir, { items: batchItems });
+    for (const st of ["git", "edit", "check", "commit", "push"]) assert.strictEqual(stage(dir, req, st).status, 0);
+    const shallow = path.join(tmp, "shallow" + n);
+    sh(tmp, "clone", "-q", "--depth", "1", "-b", "main", "file://" + (dir + ".git").replace(/\\/g, "/"), shallow);
+    assert.deepStrictEqual(load(shallow).undoOpsFromCommit(head(dir)).map((o) => o.entry.id), [3, 2, 1]);
+  });
   test("a code whose class or server is not a real one is refused (it would reach the page's HTML)", async () => {
     const m = load(fixture()), bad = (build) => gc.encode1({ ...guide("T9", "A9"), build: { ...guide("T9", "A9").build, ...build } });
     assert.throws(() => m.opsFromItems([{ action: "add", code: bad({ classKey: "<img src=x onerror=alert(1)>" }), modes: ["pve"] }]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
@@ -507,7 +546,7 @@ async function selftest(){
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && !["--port", "--modes", "--stage"].includes(args[i - 1]));
-if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, fixDate, localToday, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
+if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, fixDate, localToday, canonLine, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
 else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
 else if (words[0] === "batch") batch(words[1], val("--stage"));
 else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });
