@@ -11,7 +11,7 @@ This repository is a reverse-engineering, mechanics-verification, and documentat
 * **No build, compile, or test step:** There is no npm build, cargo build, or webpack.
 * **Core activities:**
   1. Reading obfuscated decompiled C# source in `DecompiledSource/` to extract verified game formulas, stats, and skill logic.
-  2. Building/updating static, self-contained single-file deliverables (HTML infographics, calculators, interactive tools) in `12t_projects/`.
+  2. Building/updating static, self-contained single-file deliverables (HTML infographics, calculators, interactive tools) in `12t_projects/` (the Bible hub is `index.html` plus its `assets.js`).
   3. Documenting verified formulas and class stats in `12t_reference/`.
 
 ---
@@ -68,7 +68,7 @@ When reading `.cs` files in `DecompiledSource/`:
 
 ## 5. Universal Deliverable Conventions & Sub-Project Pointers
 
-* **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server.
+* **Self-Contained Single Files:** Every delivered tool under `12t_projects/` must be a self-contained HTML file (all CSS, JavaScript, data arrays, and inline SVGs/images embedded directly). It must open and run immediately in any browser by double-clicking without a web server. **Exception (user 2026-10-20):** the Bible hub is `index.html` plus a versioned `assets.js` beside it that holds its images, 3D models and sounds (`scripts/bible_assets.js`), so a page update doesn't make every visitor download them again. The two files together still open by double-click.
 * **Strict Ban on Routine Visual Checks:** Do NOT launch the browser subagent (`browser_subagent`) or capture visual screenshots for data additions, formula corrections, tooltip text, or small fixes. Verification must be performed strictly via automated test scripts (`node scripts/validate_skills.js`) and git diffs. Visual browser checks are strictly reserved for major layout/CSS redesigns or when explicitly requested by the user.
 * **Editing `index.html` safely (silent-loss prevention):** Never run `git checkout` / `git restore` / `git reset` / `git stash` on `index.html`, never replace a whole skill-card line, and back the file up (scratch dir) before every scripted edit; change only the specific fields you mean to. `node scripts/validate_skills.js` fails with `[FIELD LOSS ERROR]` when a card loses a field it had at `HEAD` (deliberate removals need `--allow-field-loss=<cardId:field,...>`) and reports `[DOC BACKLOG]` for app skills missing from their class reference. Full rules: [12t_projects/bible/CLAUDE.md](12t_projects/bible/CLAUDE.md) §1.
 * **Changelog entry (every commit that touches `12t_projects/bible/index.html`; a habit, no longer enforced):** before committing, prepend a `CHANGELOG_DATA.entries` item `["<current UTC ISO>", "<exact commit subject>"]` (newest first) in `index.html`. The validator stopped checking it on 2026-10-20 (user: the gate hindered work in progress), so nothing fails if it is forgotten; keep adding it anyway (user: "still update the commit note regularly"). Full rule: [12t_projects/bible/CLAUDE.md](12t_projects/bible/CLAUDE.md) §1. The panel numbers entries oldest = 01, newest first; "ดูเพิ่มเติม" reveals all remaining entries at once.

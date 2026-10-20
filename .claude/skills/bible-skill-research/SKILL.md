@@ -39,7 +39,7 @@ Present to the user: identity (source key, EN/TH name, planned id, class, max ra
 #### Step B1: Pre-Flight Passive Source Extraction
 Scan the 5 hook categories: (1) stat alteration (`getTypeStat`, `calTotalStat`, `calHp/Mp/Atk/Def/Speed`); (2) active-skill modifiers (cd, cast, MP/SP, hit count, projectiles); (3) status/proc hooks (`AttackHit`, `MagicHit`, `mod`); (4) AI/companion (`HeavyBuilt`, `SynchroMole`, `HiddenTurret`); (5) attack augmentation (`nAttack`, `cAttack`). List every active skill the passive alters.
 
-**Rank icons:** a `maxRank > 1` card needs every `<icon base><rank>` key (`[ICON RANK ERROR]`). Source: `RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills/<class>/<skill><rank>.png`, embedded as raw base64.
+**Rank icons:** a `maxRank > 1` card needs every `<icon base><rank>` key (`[ICON RANK ERROR]`). Source: `RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills/<class>/<skill><rank>.png`, embedded as raw base64 in `SKILL_ICONS` in `assets.js` (since 2026-10-20), then `node scripts/bible_assets.js stamp`.
 
 #### Step B2: Passive Review Table
 Hook excerpt (`file:line`), exact arithmetic, affected actives + proposed dep toggles, status profile, client tooltips, proposed card (bible-card-fields).

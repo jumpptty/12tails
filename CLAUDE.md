@@ -14,7 +14,7 @@ AGENTS.md above is the source of truth; this section only maps it onto Claude Co
 - **Root `index.html`** is only a redirect to `12t_projects/bible/`. The real hub is `12t_projects/bible/index.html` (multi-MB). Patch it out-of-process per [12t_projects/bible/CLAUDE.md §1](12t_projects/bible/CLAUDE.md), not with the Edit tool.
 - **Bible rulebook:** `12t_projects/bible/CLAUDE.md` holds the core rules (loaded when working in that folder); the topic rules are the `bible-*` project skills below. When a convention changes, update the skill that owns the topic. `GEMINI.md` there is only an index for Gemini / Antigravity, the user's fallback agent (Claude is used ~95% of the time); never put rules in it.
 - **No Artifact publishing:** this project is never published as an Artifact (user rule, 2026-10-06). "Push" means `git push` only.
-- **Git guard:** `.claude/hooks/guard-index-git.sh` denies `git checkout` / `restore` / `reset --hard` / `stash` commands that would touch `12t_projects/bible/index.html` (recover from the scratch-dir backup instead).
+- **Git guard:** `.claude/hooks/guard-index-git.sh` denies `git checkout` / `restore` / `reset --hard` / `stash` commands that would touch `12t_projects/bible/index.html` or its `assets.js` (recover from the scratch-dir backup instead).
 
 ### Commands
 
@@ -22,6 +22,9 @@ AGENTS.md above is the source of truth; this section only maps it onto Claude Co
 node scripts/validate_skills.js                         # the only "test suite": formulas, icons, rank arrays, field loss, doc backlog (no changelog check since 2026-10-20; the entry is still added by habit)
 node scripts/validate_skills.js --full                  # also runs the slow range-vs-simulator check (+~35 s); skipped by default unless the index.html diff touches damage code. Run it before every `git push`
 node scripts/validate_skills.js --list-doc-backlog      # also name every app skill missing from its <class>-skill-reference.md
+node scripts/validate_skills.js --index <copy>/index.html   # validate another copy of the page (its assets.js beside it)
+
+node scripts/bible_assets.js stamp                      # after any change to 12t_projects/bible/assets.js: re-stamp index.html's assets.js?v= (also: split, --selftest)
 node scripts/validate_skills.js --allow-field-loss=<cardId:field,...>   # only for deliberate field removals
 
 node scripts/card_edit.js set-field <cardId> <key> <js-source> [--dry-run]   # also: add-field, add-compat [--both], replace
