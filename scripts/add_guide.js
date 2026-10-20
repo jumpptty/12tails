@@ -20,12 +20,15 @@
 //     --no-push   commit, but do not push (also for the page)
 //     --yes       do not ask before publishing
 //     --modes pve,pvp   the guide's PVE / PVP tag when the code has none (or to change it)
+//   node scripts/add_guide.js batch <request.json> --stage git|edit|check|commit|push [--dry-run]
+//                                                   one stage of the same pipeline, for the guide-manager workflow (the phone; see batch())
+//   node scripts/add_guide.js --selftest            the pipeline on throwaway repos
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), http = require("http"), crypto = require("crypto"), readline = require("readline");
 const { execFileSync, spawn } = require("child_process");
 const { decode } = require("./guide_code.js");
 
-const ROOT = path.resolve(__dirname, ".."), REL = "12t_projects/bible/index.html", FILE = path.join(ROOT, REL);
+const ROOT = process.env.GM_ROOT ? path.resolve(process.env.GM_ROOT) : path.resolve(__dirname, ".."), REL = "12t_projects/bible/index.html", FILE = path.join(ROOT, REL);   // GM_ROOT: the self-test's throwaway repos
 const SITE = "https://jumpptty.github.io/12tails/12t_projects/bible/";
 const SERVER = { og: "BB", tot: "ToT", tto: "TTO" };
 const args = process.argv.slice(2), has = (f) => args.includes(f), val = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : undefined; };
@@ -43,8 +46,9 @@ function fixDate(g){ const t = localToday(); if (g.date && g.date <= t) return n
 const MODES = ["pve", "pvp"], pickModes = (v) => MODES.filter((m) => Array.isArray(v) && v.includes(m));   // PVE / PVP, both allowed; a finished guide needs one (user 2026-10-20)
 
 // ---------- reading and changing CLASS_GUIDES ----------
-function readGuides(){
-  const html = fs.readFileSync(FILE, "utf8"), eol = html.includes("\r\n") ? "\r\n" : "\n";
+const readGuides = () => parseDoc(fs.readFileSync(FILE, "utf8"));
+function parseDoc(html){
+  const eol = html.includes("\r\n") ? "\r\n" : "\n";
   const open = "const CLASS_GUIDES = [" + eol, start = html.indexOf(open), end = start < 0 ? -1 : html.indexOf(eol + "];", start);
   if (end < 0) throw new Error("CLASS_GUIDES was not found in " + REL);
   const lines = html.slice(start + open.length, end).split(eol);
@@ -112,6 +116,34 @@ function planAll(ops, doc){
     : subj(`${ops.some((o) => o.action === "add") ? "feat" : "fix"}(bible): class guides ${items.map((x) => x.subject.replace(/^(feat|fix)\(bible\): class guide /, "")).join("; ")}`);
   return { lines: doc.lines, items, subject, undo };
 }
+// The page's queue items ({ action, id, code, modes }) as changes; an error names its item.
+function opsFromItems(items){
+  if (!Array.isArray(items) || !items.length) throw new Error("ไม่มีรายการ");
+  return items.map((it, i) => {
+    if (it.action === "delete") return { action: "delete", id: +it.id };
+    let g; try { g = decodeCode(it.code); } catch (e){ throw new Error(`รายการที่ ${i + 1}: ${e.message}`); }
+    fixDate(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
+    if (!(g.modes || []).length) throw new Error(`รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง`);
+    return { action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g };
+  });
+}
+const undoText = (entries) => entries.length === 1 ? entries[0].text : `ย้อนกลับชุดล่าสุด ${entries.length} รายการ (${entries.map((u) => "#" + u.id).join(", ")})`;
+// The undo of a publish made elsewhere (the phone), from its commit: every CLASS_GUIDES line the commit changed goes back, as the
+// page's own undo does (an added guide becomes a tombstone). The parent is fetched when the checkout is shallow.
+function undoOpsFromCommit(sha){
+  if (!/^[0-9a-f]{40}$/.test(String(sha))) throw new Error("undo: not a commit id");
+  try { git("cat-file", "-e", sha + "^"); } catch (e){ git("fetch", "-q", "--depth=2", "origin", sha); }
+  const show = (rev) => parseDoc(execFileSync("git", ["show", rev + ":" + REL], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }));
+  const was = show(sha + "^"), now = show(sha), lineOf = (doc, id) => { const at = lineAt(doc, id); return at < 0 ? null : doc.lines[at]; };
+  const entries = [...now.guides.map((x) => ({ at: x.at, id: x.g.id })), ...now.removed].sort((a, b) => a.at - b.at).flatMap(({ id }) => {
+    const before = lineOf(was, id), after = lineOf(now, id), g = now.guides.find((x) => x.g.id === id);
+    if (before === after) return [];
+    const text = before === null ? `ลบไกด์ #${id} ที่เพิ่งเพิ่ม` : g ? `คืนไกด์ #${id} เป็นฉบับก่อนแทนที่` : `คืนไกด์ #${id} ที่เพิ่งลบ`;
+    return [{ id, before, g: g ? g.g : was.guides.find((x) => x.g.id === id).g, text }];
+  });
+  if (!entries.length) throw new Error("commit นี้ไม่ได้เปลี่ยนไกด์ จึงไม่มีอะไรให้ย้อนกลับ");
+  return entries.reverse().map((entry) => ({ action: "undo", entry }));
+}
 
 // ---------- the pipeline ----------
 function preflight(push){
@@ -144,49 +176,106 @@ async function gitRetry(ui, ...a){
     }
   }
 }
-// ops = the changes, in order; ui = { step(key, text, state), log(text) }; resolves to { items: [{ action, id, subject, url }], subject, undo, dry }
-async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
+// The pipeline in stages, so the guide-manager workflow (.github/workflows/guide-manager.yml) can run each as its own step and the phone can
+// tick them; apply() runs them in one go on this PC. ui = { step(key, text, state), log(text) }.
+function stageGit(ops, { fetch }, ui){
   ui.step("git", "ตรวจสถานะ git", "run");
-  const branch = preflight(!dryRun && !noPush), doc = readGuides(), p = planAll(ops, doc);
-  const result = (extra) => ({ ...p, items: p.items.map((x) => ({ ...x, url: SITE + "#class-guide/" + x.id })), ...extra });
+  const branch = preflight(fetch), doc = readGuides(), p = planAll(ops, doc);
   ui.step("git", "ตรวจสถานะ git", "ok");
+  return { branch, doc, p };
+}
+function stageEdit(doc, p, ui){
   ui.step("edit", "แก้ไฟล์ index.html", "run");
-  const dir = path.join(os.tmpdir(), "12t-bible-backups"); fs.mkdirSync(dir, { recursive: true });
-  const backup = path.join(dir, "index." + Date.now() + ".bak"); fs.copyFileSync(FILE, backup);
+  let out = doc.head + p.lines.join(doc.eol) + doc.tail;
+  const top = "  entries: [" + doc.eol, at = out.indexOf(top, out.indexOf("const CHANGELOG_DATA = {"));
+  if (at < 0) throw new Error("CHANGELOG_DATA was not found in " + REL);
+  out = out.slice(0, at + top.length) + "    " + JSON.stringify([new Date().toISOString(), p.subject]) + "," + doc.eol + out.slice(at + top.length);
+  fs.writeFileSync(FILE, out);
+  ui.step("edit", "แก้ไฟล์ index.html", "ok");
+}
+// The validator's own "[XYZ ERROR] ..." lines, not the source and stack lines under them.
+function validatorErrorLines(out){
+  const all = out.split(/\r?\n/), tagged = all.filter((l) => /^\s*\[[A-Z0-9 _-]*ERROR\]/.test(l));
+  const lines = tagged.length ? tagged : all.filter((l) => /ERROR|Error/.test(l));
+  return (lines.length ? lines : out.trim().split(/\r?\n/).slice(-12)).slice(0, 14);
+}
+async function stageCheck(ui){
+  ui.step("check", "ตรวจด้วย validator", "run");
+  const c = await runNode("scripts/validate_skills.js", ["--full"]);
+  if (c.status !== 0){
+    ui.step("check", "ตรวจด้วย validator", "fail");
+    const lines = validatorErrorLines(c.out);
+    ui.log(lines.join("\n"));
+    throw Object.assign(new Error("ไกด์ไม่ผ่านการตรวจ จึงไม่ได้อัปอะไรขึ้น และ index.html กลับเป็นเหมือนเดิมแล้ว"), { lines });
+  }
+  ui.step("check", "ตรวจด้วย validator", "ok");
+}
+const backupDir = () => { const dir = path.join(os.tmpdir(), "12t-bible-backups"); fs.mkdirSync(dir, { recursive: true }); return dir; };
+async function stageCommit(subject, ui){
+  ui.step("commit", "commit", "run");
+  const msg = path.join(backupDir(), "commit-msg.txt"); fs.writeFileSync(msg, subject + "\n");
+  await gitRetry(ui, "add", "--", REL); await gitRetry(ui, "commit", "-q", "-F", msg);
+  ui.step("commit", "commit", "ok");
+}
+function stagePush(branch, ui, failText = "commit ในเครื่องแล้ว แต่อัปขึ้น GitHub ไม่สำเร็จ ลองใหม่ภายหลังด้วย git push"){
+  ui.step("push", "อัปขึ้น GitHub", "run");
+  try { git("push", "-q", "origin", branch); } catch (e) {}   // the local tracking ref sometimes fails to update here; what counts is what GitHub has
+  const sha = git("rev-parse", "HEAD"), remote = git("ls-remote", "origin", "refs/heads/" + branch).split(/\s+/)[0];
+  if (remote !== sha){ ui.step("push", "อัปขึ้น GitHub", "fail"); throw new Error(failText); }
+  try { git("update-ref", "refs/remotes/origin/" + branch, sha); } catch (e) {}
+  ui.step("push", "อัปขึ้น GitHub", "ok");
+  return sha;
+}
+// ops = the changes, in order; resolves to { items: [{ action, id, subject, url }], subject, undo, dry }
+async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
+  const { branch, doc, p } = stageGit(ops, { fetch: !dryRun && !noPush }, ui);
+  const result = (extra) => ({ ...p, items: p.items.map((x) => ({ ...x, url: SITE + "#class-guide/" + x.id })), ...extra });
+  const backup = path.join(backupDir(), "index." + Date.now() + ".bak"); fs.copyFileSync(FILE, backup);
   let committed = false;
   try {
-    let out = doc.head + p.lines.join(doc.eol) + doc.tail;
-    const top = "  entries: [" + doc.eol, at = out.indexOf(top, out.indexOf("const CHANGELOG_DATA = {"));
-    if (at < 0) throw new Error("CHANGELOG_DATA was not found in " + REL);
-    out = out.slice(0, at + top.length) + "    " + JSON.stringify([new Date().toISOString(), p.subject]) + "," + doc.eol + out.slice(at + top.length);
-    fs.writeFileSync(FILE, out);
-    ui.step("edit", "แก้ไฟล์ index.html", "ok");
-    ui.step("check", "ตรวจด้วย validator", "run");
-    const c = await runNode("scripts/validate_skills.js", ["--full"]);
-    if (c.status !== 0){
-      ui.step("check", "ตรวจด้วย validator", "fail");
-      const all = c.out.split(/\r?\n/), tagged = all.filter((l) => /^\s*\[[A-Z0-9 _-]*ERROR\]/.test(l));   // the validator's own "[XYZ ERROR] ..." lines, not the source and stack lines under them
-      const lines = tagged.length ? tagged : all.filter((l) => /ERROR|Error/.test(l));
-      ui.log((lines.length ? lines : c.out.trim().split(/\r?\n/).slice(-12)).slice(0, 14).join("\n"));
-      throw new Error("ไกด์ไม่ผ่านการตรวจ จึงไม่ได้อัปอะไรขึ้น และ index.html กลับเป็นเหมือนเดิมแล้ว");
-    }
-    ui.step("check", "ตรวจด้วย validator", "ok");
+    stageEdit(doc, p, ui);
+    await stageCheck(ui);
     if (dryRun){ fs.copyFileSync(backup, FILE); return result({ dry: true }); }
-    ui.step("commit", "commit", "run");
-    const msg = path.join(dir, "commit-msg.txt"); fs.writeFileSync(msg, p.subject + "\n");
-    await gitRetry(ui, "add", "--", REL); await gitRetry(ui, "commit", "-q", "-F", msg); committed = true;
-    ui.step("commit", "commit", "ok");
+    await stageCommit(p.subject, ui); committed = true;
     if (noPush) return result();
-    ui.step("push", "อัปขึ้น GitHub", "run");
-    try { git("push", "-q", "origin", branch); } catch (e) {}   // the local tracking ref sometimes fails to update here; what counts is what GitHub has
-    const sha = git("rev-parse", "HEAD"), remote = git("ls-remote", "origin", "refs/heads/" + branch).split(/\s+/)[0];
-    if (remote !== sha){ ui.step("push", "อัปขึ้น GitHub", "fail"); throw new Error("commit ในเครื่องแล้ว แต่อัปขึ้น GitHub ไม่สำเร็จ ลองใหม่ภายหลังด้วย git push"); }
-    try { git("update-ref", "refs/remotes/origin/" + branch, sha); } catch (e) {}
-    ui.step("push", "อัปขึ้น GitHub", "ok");
+    stagePush(branch, ui);
     return result();
   } catch (e){
     if (!committed){ try { git("reset", "-q", "--", REL); } catch (_) {} fs.copyFileSync(backup, FILE); }   // unstage too, or a failed commit leaves the new index.html staged
     throw e;
+  }
+}
+
+// ---------- the workflow's batch command ----------
+// node scripts/add_guide.js batch <request.json> --stage git|edit|check|commit|push [--dry-run]
+// request: { "items": [{ action, id, code, modes }] } (the page's queue) or { "undo": { "sha": "<commit>" } }. The edit stage keeps what it
+// planned in <request.json>.plan.json for the later stages, since index.html has changed by then. On GitHub (GITHUB_ACTIONS=true) a failure
+// is one "gm-error" annotation (the message, then the validator's lines) and the last stage reports a "gm-result" annotation, which the
+// page reads back.
+const ghEscape = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+async function batch(file, st){
+  const onGitHub = process.env.GITHUB_ACTIONS === "true", dry = has("--dry-run"), planFile = file + ".plan.json";
+  const ui = { step: (k, text, state) => { if (state !== "run") console.log((state === "ok" ? "ok   " : "FAIL ") + text); }, log: (t) => console.log(t) };
+  const report = (o) => { const json = JSON.stringify({ ok: true, dry, ...o }); console.log(onGitHub ? "::notice title=gm-result::" + ghEscape(json) : json); };
+  try {
+    if (!["git", "edit", "check", "commit", "push"].includes(st)) throw new Error("--stage must be git, edit, check, commit or push");
+    const req = JSON.parse(fs.readFileSync(file, "utf8"));
+    const ops = () => req.undo ? undoOpsFromCommit(req.undo.sha) : opsFromItems(req.items);
+    const saved = () => JSON.parse(fs.readFileSync(planFile, "utf8"));
+    const summary = (s, sha) => ({ subject: s.subject, sha, items: s.items, undoText: dry ? null : s.undoText });   // a dry run leaves nothing to undo
+    if (st === "git") stageGit(ops(), { fetch: false }, ui);
+    if (st === "edit"){
+      const { branch, doc, p } = stageGit(ops(), { fetch: false }, { step(){}, log(){} });
+      fs.writeFileSync(planFile, JSON.stringify({ branch, subject: p.subject, items: p.items.map(({ action, id }) => ({ action, id })), undoText: !req.undo && p.undo.length ? undoText(p.undo) : null }));
+      stageEdit(doc, p, ui);
+    }
+    if (st === "check"){ await stageCheck(ui); if (dry) report(summary(saved(), null)); }
+    if (st === "commit") await stageCommit(saved().subject, ui);
+    if (st === "push"){ const s = saved(); report(summary(s, stagePush(s.branch, ui, "มีการเปลี่ยนแปลงบน GitHub ระหว่างทำงาน ลองใหม่อีกครั้ง"))); }
+  } catch (e){
+    const text = [e.message, ...(e.lines || [])].join("\n");
+    if (onGitHub) console.log("::error title=gm-error::" + ghEscape(text)); else console.error("✗ " + text);
+    process.exit(1);
   }
 }
 
@@ -244,17 +333,7 @@ function serve(){
         if (busy) return json(res, 409, { error: "กำลังทำงานอื่นอยู่" });
         const b = await body(req), isUndo = req.url === "/api/undo", ops = [];
         if (isUndo){ if (!undos.length) return json(res, 400, { error: "ไม่มีอะไรให้ย้อนกลับ" }); undos[undos.length - 1].entries.slice().reverse().forEach((entry) => ops.push({ action: "undo", entry })); }
-        else {
-          const items = Array.isArray(b.items) ? b.items : [];
-          if (!items.length) return json(res, 400, { error: "ไม่มีรายการ" });
-          for (const [i, it] of items.entries()){
-            if (it.action === "delete"){ ops.push({ action: "delete", id: +it.id }); continue; }
-            let g; try { g = decodeCode(it.code); } catch (e){ return json(res, 400, { error: `รายการที่ ${i + 1}: ${e.message}` }); }
-            fixDate(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
-            if (!(g.modes || []).length) return json(res, 400, { error: `รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง` });
-            ops.push({ action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g });
-          }
-        }
+        else { try { ops.push(...opsFromItems(b.items)); } catch (e){ return json(res, 400, { error: e.message }); } }
         busy = true;
         res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
         const send = (o) => res.write(JSON.stringify(o) + "\n");
@@ -262,7 +341,7 @@ function serve(){
           const r = await apply(ops, { dryRun: !!b.dryRun }, { step: (k, text, state) => send({ type: "step", key: k, text, state }), log: (text) => send({ type: "log", text }) });
           if (!r.dry){
             if (isUndo) undos.pop();
-            else if (r.undo.length) undos.push({ entries: r.undo, text: r.undo.length === 1 ? r.undo[0].text : `ย้อนกลับชุดล่าสุด ${r.undo.length} รายการ (${r.undo.map((u) => "#" + u.id).join(", ")})` });
+            else if (r.undo.length) undos.push({ entries: r.undo, text: undoText(r.undo) });
           }
           send({ type: "done", ok: true, dry: !!r.dry, subject: r.subject, items: r.items });
         } catch (e){ send({ type: "done", ok: false, error: e.message }); }
@@ -613,8 +692,133 @@ load();
 </body>
 </html>`;
 
+// ---------- self-test ----------
+// Throwaway repos in the temp folder (a work tree with a bare origin): a tiny CRLF index.html with guides #1 and #2, and a stub validator
+// that refuses any guide titled FAILME. Each repo gets a fresh copy of this module with GM_ROOT pointing at it; the batch stages run as child processes.
+async function selftest(){
+  const assert = require("assert"), { spawnSync } = require("child_process"), gc = require("./guide_code.js");
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gm-selftest-")), day = today();
+  const sh = (cwd, ...a) => execFileSync("git", a, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  const guide = (title, author) => ({ format: "12t-class-guide", version: 1, title, author, date: "2026-10-01", description: "d", build: { server: "tot", classKey: "wolf", level: 100, learned: [101] }, modes: ["pve"], notes: {} });
+  const code = (title, author) => gc.encode(guide(title, author));
+  const STUB = 'const fs = require("fs"), path = require("path");\nif (fs.readFileSync(path.join(__dirname, "..", "12t_projects/bible/index.html"), "utf8").includes("FAILME")){ console.log("[CLASS GUIDE ERROR] fixture refuses FAILME"); process.exit(1); }\n';
+  let n = 0;
+  function fixture(){
+    const dir = path.join(tmp, "f" + ++n), origin = dir + ".git";
+    fs.mkdirSync(path.join(dir, "12t_projects/bible"), { recursive: true }); fs.mkdirSync(path.join(dir, "scripts"));
+    fs.writeFileSync(path.join(dir, REL), ["<script>", "const CLASS_GUIDES = [", guideLine(1, guide("T1", "A1")), guideLine(2, guide("T2", "A2")), "];", "const CHANGELOG_DATA = {", "  entries: [", '    ["2026-01-01T00:00:00.000Z", "init"],', "  ],", "};", "</script>", ""].join("\r\n"));
+    fs.writeFileSync(path.join(dir, "scripts/validate_skills.js"), STUB);
+    sh(tmp, "init", "-q", "--bare", origin);
+    for (const a of [["init", "-q", "-b", "main"], ["config", "user.name", "Test"], ["config", "user.email", "test@example.com"], ["config", "core.autocrlf", "false"], ["add", "-A"], ["commit", "-q", "-m", "init"], ["remote", "add", "origin", origin], ["push", "-q", "-u", "origin", "main"]]) sh(dir, ...a);
+    return dir;
+  }
+  const load = (dir) => { delete require.cache[__filename]; process.env.GM_ROOT = dir; try { return require(__filename); } finally { delete process.env.GM_ROOT; } };
+  const quiet = () => { const logs = []; return { logs, step(){}, log: (t) => logs.push(t) }; };
+  const html = (dir) => fs.readFileSync(path.join(dir, REL), "utf8");
+  const head = (dir) => sh(dir, "rev-parse", "HEAD"), subject = (dir) => sh(dir, "log", "-1", "--format=%s");
+  const newestEntry = (dir) => JSON.parse(html(dir).split("\r\n")[html(dir).split("\r\n").indexOf("  entries: [") + 1].trim().replace(/,$/, ""))[1];
+  const stage = (dir, req, st, ...extra) => spawnSync(process.execPath, [__filename, "batch", req, "--stage", st, ...extra], { cwd: dir, env: { ...process.env, GM_ROOT: dir, GITHUB_ACTIONS: "true" }, encoding: "utf8" });
+  const request = (dir, obj) => { const f = path.join(dir, "..", path.basename(dir) + "-request.json"); fs.writeFileSync(f, JSON.stringify(obj)); return f; };
+  const notice = (out) => JSON.parse(((out.match(/^::notice title=gm-result::(.*)$/m) || [])[1]) || "null");
+  const pre = ["  " + JSON.stringify({ id: 1, ...guide("T1", "A1") }) + ",", "  " + JSON.stringify({ id: 2, ...guide("T2", "A2") }) + ","];
+  const batchItems = [{ action: "add", code: code("T3", "A3"), modes: ["pve"] }, { action: "replace", id: 1, code: code("T1b", "A1"), modes: ["pve"] }, { action: "delete", id: 2 }];
+  const batchSubject = "feat(bible): class guides #3 ToT Wolf T3 by A3; #1 is updated: ToT Wolf T1b by A1; #2 is removed (T2 by A2)";
+  const cases = [];
+  const test = (name, fn) => cases.push([name, fn]);
+
+  test("add: next id, changelog entry = commit subject, pushed", async () => {
+    const dir = fixture(), m = load(dir);
+    await m.apply(m.opsFromItems([{ action: "add", code: code("T3", "A3"), modes: ["pve"] }]), {}, quiet());
+    assert.ok(m.readGuides().lines.some((l) => l.startsWith('  {"id":3,')));
+    assert.strictEqual(newestEntry(dir), "feat(bible): class guide #3 ToT Wolf T3 by A3");
+    assert.strictEqual(subject(dir), "feat(bible): class guide #3 ToT Wolf T3 by A3");
+    assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
+  });
+  let batchLines = null, batchSha = null, batchDir = null;
+  test("batch: add + replace + delete in one commit", async () => {
+    const dir = batchDir = fixture(), m = load(dir);
+    await m.apply(m.opsFromItems(batchItems), { noPush: true }, quiet());
+    const lines = batchLines = m.readGuides().lines; batchSha = head(dir);
+    assert.ok(lines[0].startsWith('  {"id":1,"format"') && lines[0].includes('"title":"T1b"'));
+    assert.strictEqual(lines[1], `  // #2 removed ${day}: T2 by A2`);
+    assert.ok(lines[2].startsWith('  {"id":3,') && lines[2].includes('"title":"T3"'));
+    assert.strictEqual(subject(dir), batchSubject);
+    assert.strictEqual(newestEntry(dir), batchSubject);
+  });
+  test("a guide the validator refuses: index.html as it was, nothing committed", async () => {
+    const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir), ui = quiet();
+    await assert.rejects(m.apply(m.opsFromItems([{ action: "add", code: code("FAILME", "A9"), modes: ["pve"] }]), { noPush: true }, ui), /ไกด์ไม่ผ่านการตรวจ/);
+    assert.strictEqual(html(dir), before); assert.strictEqual(head(dir), sha);
+    assert.ok(ui.logs.join("\n").includes("[CLASS GUIDE ERROR] fixture refuses FAILME"));
+    assert.strictEqual(sh(dir, "status", "--porcelain"), "");
+  });
+  test("--dry-run: checked, then index.html as it was, no commit", async () => {
+    const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir);
+    const r = await m.apply(m.opsFromItems([{ action: "add", code: code("T3", "A3"), modes: ["pve"] }]), { dryRun: true }, quiet());
+    assert.strictEqual(r.dry, true); assert.strictEqual(html(dir), before); assert.strictEqual(head(dir), sha);
+  });
+  test("uncommitted work in index.html: refused", async () => {
+    const dir = fixture(), m = load(dir);
+    fs.appendFileSync(path.join(dir, REL), " ");
+    await assert.rejects(m.apply([{ action: "delete", id: 1 }], { noPush: true }, quiet()), /index\.html มีงานค้าง/);
+  });
+  test("undo from a commit: the batch is reversed, the added guide becomes a tombstone", async () => {
+    const m = load(batchDir), ops = m.undoOpsFromCommit(batchSha);
+    assert.deepStrictEqual(ops.map((o) => o.entry.id), [3, 2, 1]);
+    await m.apply(ops, { noPush: true }, quiet());
+    assert.deepStrictEqual(m.readGuides().lines, [...pre, `  // #3 removed ${day}: T3 by A3`]);
+  });
+  test("batch stages give the same file and subject as apply, and report it", async () => {
+    const dir = fixture(), req = request(dir, { items: batchItems });
+    let r;
+    for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, req, st); assert.strictEqual(r.status, 0, st + ": " + r.stdout + r.stderr); }
+    assert.deepStrictEqual(load(dir).readGuides().lines, batchLines);
+    assert.strictEqual(subject(dir), batchSubject);
+    assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
+    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: false, subject: batchSubject, sha: head(dir), items: [{ action: "add", id: 3 }, { action: "replace", id: 1 }, { action: "delete", id: 2 }], undoText: "ย้อนกลับชุดล่าสุด 3 รายการ (#3, #1, #2)" });
+    const undo = request(dir, { undo: { sha: head(dir) } });
+    for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, undo, st); assert.strictEqual(r.status, 0, "undo " + st + ": " + r.stdout + r.stderr); }
+    assert.deepStrictEqual(load(dir).readGuides().lines, [...pre, `  // #3 removed ${day}: T3 by A3`]);
+    assert.strictEqual(notice(r.stdout).undoText, null);
+  });
+  test("batch --dry-run reports at the check stage without a commit", async () => {
+    const dir = fixture(), req = request(dir, { items: [batchItems[0]] }), sha = head(dir);
+    let r;
+    for (const st of ["git", "edit", "check"]){ r = stage(dir, req, st, "--dry-run"); assert.strictEqual(r.status, 0, st + ": " + r.stdout + r.stderr); }
+    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: true, subject: "feat(bible): class guide #3 ToT Wolf T3 by A3", sha: null, items: [{ action: "add", id: 3 }], undoText: null });
+    assert.strictEqual(head(dir), sha);
+  });
+  test("batch: a refused guide reports one gm-error annotation with the validator's lines", async () => {
+    const dir = fixture(), req = request(dir, { items: [{ action: "add", code: code("FAILME", "A9"), modes: ["pve"] }] });
+    for (const st of ["git", "edit"]) assert.strictEqual(stage(dir, req, st).status, 0);
+    const r = stage(dir, req, "check"), errs = r.stdout.split(/\r?\n/).filter((l) => l.startsWith("::error title=gm-error::"));
+    assert.strictEqual(r.status, 1); assert.strictEqual(errs.length, 1);
+    assert.ok(errs[0].includes("ไกด์ไม่ผ่านการตรวจ") && errs[0].includes("%0A[CLASS GUIDE ERROR] fixture refuses FAILME"), errs[0]);
+    const fresh = fixture();
+    assert.strictEqual(stage(fresh, request(fresh, { items: [{ action: "delete", id: 9 }] }), "git").stdout.match(/^::error title=gm-error::(.*)$/m)[1], "ไม่มีไกด์ #9");
+  });
+  test("batch: a push GitHub rejects says the repo changed meanwhile", async () => {
+    const dir = fixture(), req = request(dir, { items: [batchItems[0]] }), other = path.join(tmp, "other" + n);
+    for (const st of ["git", "edit", "check", "commit"]) assert.strictEqual(stage(dir, req, st).status, 0);
+    sh(tmp, "clone", "-q", "-b", "main", dir + ".git", other); sh(other, "-c", "user.name=T", "-c", "user.email=t@example.com", "commit", "-q", "--allow-empty", "-m", "meanwhile"); sh(other, "push", "-q", "origin", "main");
+    const r = stage(dir, req, "push");
+    assert.strictEqual(r.status, 1); assert.match(r.stdout, /^::error title=gm-error::มีการเปลี่ยนแปลงบน GitHub ระหว่างทำงาน ลองใหม่อีกครั้ง/m);
+  });
+
+  let failed = 0;
+  for (const [name, fn] of cases){
+    try { await fn(); console.log("  ok   " + name); }
+    catch (e){ failed++; console.log("  FAIL " + name + "\n       " + String(e.message).split("\n").join("\n       ")); }
+  }
+  try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) {}
+  if (failed) throw new Error(`add_guide selftest: ${failed} of ${cases.length} failed`);
+  console.log(`add_guide selftest: all checks passed (${cases.length})`);
+}
+
 // ---------- start ----------
-const words = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--port" && args[i - 1] !== "--modes");
-if (require.main !== module) module.exports = { planAll, readGuides };   // for tests
+const words = args.filter((a, i) => !a.startsWith("--") && !["--port", "--modes", "--stage"].includes(args[i - 1]));
+if (require.main !== module) module.exports = { planAll, readGuides, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
+else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
+else if (words[0] === "batch") batch(words[1], val("--stage"));
 else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });
 else serve();
