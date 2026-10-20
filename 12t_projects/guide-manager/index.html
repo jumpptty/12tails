@@ -133,6 +133,7 @@
   .keycard .row-actions{margin:0}
   .keynote{margin:0; font-size:13px; color:var(--muted)}
   .app.needs-key :is(main, .tabs, .pubbar, .banner){display:none !important}
+  .prog-note{margin:12px 0 0; font-size:13px; color:var(--muted)}
   .pill[role="button"]{cursor:pointer}
   .pill[role="button"]:hover{border-color:var(--gold); color:var(--gold-hi)}
   /* Phones (layout B, user 2026-10-20): three tabs at the bottom, one card group each, and a publish bar above them while the queue has items */
@@ -216,6 +217,7 @@
         <ul class="steps" id="steps"></ul>
         <div class="result" id="result"></div>
         <pre class="log" id="log"></pre>
+        <p class="prog-note" id="progNote" hidden>ล็อกจอหรือปิดหน้านี้ได้ งานยังทำต่อบน GitHub เปิดกลับมาจะเห็นผล</p>
       </section>
     </div>
     <section class="card list-card">
@@ -399,10 +401,11 @@ function gmStepsFromJobs(jobs){
 // A finished run's outcome, in the shape of the local server's "done" message (null while it is still going).
 function gmRunOutcome(run, annotations, site){
   if (!run || run.status !== "completed") return null;
-  const res = (annotations || []).find((a) => a.title === "gm-result"), err = (annotations || []).find((a) => a.title === "gm-error");
-  if (res){ const r = JSON.parse(res.message); return { ok: true, dry: !!r.dry, subject: r.subject, sha: r.sha, undoText: r.undoText, items: r.items.map((x) => ({ ...x, url: site + "#class-guide/" + x.id })) }; }
+  const notes = annotations || [], res = run.conclusion === "success" && notes.find((a) => a.title === "gm-result"), err = notes.find((a) => a.title === "gm-error");   // a result counts only from a run that succeeded
+  if (res){ try { const r = JSON.parse(res.message); return { ok: true, dry: !!r.dry, subject: r.subject, sha: r.sha, undoText: r.undoText, items: r.items.map((x) => ({ ...x, url: site + "#class-guide/" + x.id })) }; } catch (e) {} }
   if (err){ const lines = err.message.split("\n"); return { ok: false, error: lines[0], log: lines.slice(1) }; }
-  if (run.conclusion === "cancelled") return { ok: false, error: "งานถูกยกเลิก (มีงานอื่นรออยู่บน GitHub) ลองอัปใหม่" };
+  if (run.conclusion === "cancelled") return { ok: false, error: "งานถูกยกเลิก (มีงานอื่นรออยู่บน GitHub) ลองอัปใหม่", runUrl: run.html_url };
+  if (run.conclusion === "success") return { ok: false, error: "งานบน GitHub จบแล้วแต่ไม่ได้รับผลลัพธ์ ตรวจใน GitHub ก่อนอัปซ้ำ", runUrl: run.html_url, unsure: true };   // it most likely published
   return { ok: false, error: "GitHub ทำงานไม่สำเร็จก่อนถึงขั้นตอนของไกด์ ดูรายละเอียดใน GitHub", runUrl: run.html_url };
 }
 function gmKeyProblem(status){
@@ -468,7 +471,9 @@ async function gh(path, { method = "GET", body, accept = "application/vnd.github
   if (res.status === 401) throw keyError(401);
   return res;
 }
-const ghJson = async (path) => { const res = await gh(path); if (!res.ok) throw new Error("GitHub ตอบ " + res.status); return res.json(); };
+const ghJson = async (path) => { const res = await gh(path); if (!res.ok) throw Object.assign(new Error("GitHub ตอบ " + res.status), { status: res.status }); return res.json(); };
+// A queue item's identity, so a finished publish takes out only what it sent (review 2026-10-20)
+const qsig = (x) => JSON.stringify([x.action, +x.id || 0, x.code || ""]);
 // Wait between polls; while the page is hidden (the phone asleep, another app) wait until it is visible again.
 function ghWait(ms){
   return new Promise((res) => {
@@ -483,38 +488,54 @@ async function ghStart(kind, dry, payload, on){
   const inputs = { request, payload: JSON.stringify(payload), dry: dry ? "true" : "false" };
   if (!gmPayloadFits(inputs)) return { ok: false, error: "รายการยาวเกินกว่าที่ส่งให้ GitHub ได้ในครั้งเดียว แบ่งอัปเป็นสองชุด" };
   on({ type: "step", key: "send", text: "ส่งงานให้ GitHub", state: "run" });
-  const res = await gh(`/repos/${GH.repo}/actions/workflows/${GH.workflow}/dispatches`, { method: "POST", body: { ref: GH.branch, inputs, return_run_details: true } });
-  if (res.status === 403 || res.status === 404) throw keyError(res.status);
-  if (res.status !== 200 && res.status !== 204) return { ok: false, error: "GitHub ไม่รับงาน (" + res.status + ")" };
-  const runId = res.status === 200 ? (await res.json().catch(() => ({}))).workflow_run_id || null : null;   // 200 + the run's id (seen 2026-10-20); 204 = find it by name
-  const pending = { request, runId, kind, dry, at: Date.now() };
+  // The run is recorded before GitHub is asked, so a tab closed during the request still finds it by name afterwards (review 2026-10-20).
+  const pending = { request, runId: null, kind, dry, at: Date.now(), sent: (payload.items || []).map(qsig) };
+  store.set(GPENDING, pending);
+  let res;
+  try { res = await gh(`/repos/${GH.repo}/actions/workflows/${GH.workflow}/dispatches`, { method: "POST", body: { ref: GH.branch, inputs, return_run_details: true } }); }
+  catch (e){ if (e.keyProblem){ store.set(GPENDING, null); throw e; } return ghFollow(pending, on, { send: "run" }); }   // no answer: GitHub may have it, so look for it by name
+  if (res.status === 403 || res.status === 404){ store.set(GPENDING, null); throw keyError(res.status); }
+  if (res.status !== 200 && res.status !== 204){ store.set(GPENDING, null); return { ok: false, error: "GitHub ไม่รับงาน (" + res.status + ")" }; }
+  pending.runId = res.status === 200 ? (await res.json().catch(() => ({}))).workflow_run_id || null : null;   // 200 + the run's id (seen 2026-10-20); 204 = find it by name
   store.set(GPENDING, pending);
   return ghFollow(pending, on, { send: "run" });
 }
-// shown = the step rows already sent, so a running row's timer is not restarted by every poll
+// Follows a run to its end. A dropped connection or a GitHub hiccup is retried (phones lose the network): the run goes on on GitHub
+// whatever the page sees, so only GitHub's own answer ends it (review 2026-10-20). shown = the step rows already sent, so a running
+// row's timer is not restarted by every poll.
 async function ghFollow(p, on, shown = {}){
-  let runId = p.runId, late = 0;
+  let runId = p.runId, late = 0, fails = 0;
   if (!shown.send){ shown.send = "run"; on({ type: "step", key: "send", text: "ส่งงานให้ GitHub", state: "run" }); }
-  for (const t0 = Date.now(); !runId; ){
-    const r = await ghJson(`/repos/${GH.repo}/actions/workflows/${GH.workflow}/runs?event=workflow_dispatch&per_page=20`);
-    const run = (r.workflow_runs || []).find((x) => x.display_title === "guide manager " + p.request);
-    if (run){ runId = run.id; store.set(GPENDING, { ...p, runId }); }
-    else if (Date.now() - t0 > 120000){ store.set(GPENDING, null); return { ok: false, error: "หางานบน GitHub ไม่เจอ ดูได้ในแท็บ Actions ของ repo 12tails" }; }
-    else await ghWait(3000);
-  }
+  const t0 = Date.now();
   for (;;){
-    const run = await ghJson(`/repos/${GH.repo}/actions/runs/${runId}`), jobs = await ghJson(`/repos/${GH.repo}/actions/runs/${runId}/jobs`);
-    for (const row of gmStepsFromJobs(jobs)) if (shown[row.key] !== row.state){ shown[row.key] = row.state; on({ type: "step", ...row }); }
-    const job = (jobs.jobs || [])[0], ann = run.status === "completed" && job ? await ghJson(`/repos/${GH.repo}/check-runs/${job.id}/annotations`) : [];
-    const done = gmRunOutcome(run, Array.isArray(ann) ? ann : [], GH.site);
-    if (done && !done.ok && run.conclusion === "success" && ++late < 5){ await ghWait(2000); continue; }   // a finished run's notes may arrive a moment late
+    let done = null;
+    try {
+      if (!runId){
+        const r = await ghJson(`/repos/${GH.repo}/actions/workflows/${GH.workflow}/runs?event=workflow_dispatch&per_page=20`);
+        const run = (r.workflow_runs || []).find((x) => x.display_title === "guide manager " + p.request);
+        if (run){ runId = run.id; store.set(GPENDING, { ...p, runId }); }
+        else if (Date.now() - t0 > 120000) done = { ok: false, error: "หางานบน GitHub ไม่เจอ ดูในแท็บ Actions ของ repo 12tails ก่อนอัปซ้ำ", runUrl: "https://github.com/" + GH.repo + "/actions" };
+      }
+      if (runId && !done){
+        const run = await ghJson(`/repos/${GH.repo}/actions/runs/${runId}`), jobs = await ghJson(`/repos/${GH.repo}/actions/runs/${runId}/jobs`);
+        for (const row of gmStepsFromJobs(jobs)) if (shown[row.key] !== row.state){ shown[row.key] = row.state; on({ type: "step", ...row }); }
+        const job = (jobs.jobs || [])[0], ann = run.status === "completed" && job ? await ghJson(`/repos/${GH.repo}/check-runs/${job.id}/annotations`) : [];
+        done = gmRunOutcome(run, Array.isArray(ann) ? ann : [], GH.site);
+        if (done && done.unsure && ++late < 5) done = null;   // a finished run's notes may arrive a moment late
+      }
+      if (fails){ fails = 0; on({ type: "status", text: "กำลังอัป" }); }
+    } catch (e){
+      if (e.keyProblem) throw e;
+      if (e.status === 404 && runId) done = { ok: false, error: "ไม่พบงานนี้บน GitHub แล้ว (อาจถูกลบ) ตรวจในแท็บ Actions ก่อนอัปซ้ำ", runUrl: "https://github.com/" + GH.repo + "/actions" };
+      else { fails++; on({ type: "status", text: "ต่อ GitHub ไม่ได้ กำลังลองใหม่…" }); await ghWait(Math.min(30000, 3000 * 2 ** Math.min(fails - 1, 4))); continue; }
+    }
     if (done){
       store.set(GPENDING, null);
       if (done.ok && !done.dry){ if (p.kind === "undo") store.set(GLAST, null); else if (done.undoText) store.set(GLAST, { sha: done.sha, text: done.undoText }); }
       if (done.log && done.log.length) on({ type: "log", text: done.log.join("\n") });
-      return done;
+      return { ...done, sent: p.sent };
     }
-    await ghWait(3000);
+    await ghWait(late ? 2000 : 3000);
   }
 }
 const githubBackend = {
@@ -560,6 +581,8 @@ async function load(){
   $("#undoText").textContent = state.undo ? "ย้อนกลับ: " + state.undo : "";
   $("#undoBtn").title = state.undo ? "ย้อนกลับ: " + state.undo + " (Ctrl+Z)" : "Ctrl+Z";   // phones show only the arrow
   renderQueue(); renderList(); syncGo();
+  const p = !running && backend.pending();   // a publish still going on GitHub (a reload, a sleeping phone, the network back) is followed again
+  if (p){ showTab("queue"); run(p.kind, p.kind === "undo" ? "กำลังย้อนกลับ" : p.dry ? "กำลังตรวจ" : "กำลังอัป", (on) => backend.resume(on)); }
 }
 const queuedFor = (id) => queue.find((x) => x.action !== "add" && x.id === id);
 const addsBefore = (i) => queue.slice(0, i).filter((x) => x.action === "add").length;
@@ -616,11 +639,11 @@ function blocked(){ return !!(check && check.ok && mode.kind === "replace" && qu
 function syncGo(){
   $("#go").disabled = !(check && check.ok && !blocked() && pressedModes().length) || running;
   $("#go").textContent = mode.kind === "replace" ? "ใส่การแทนที่ #" + mode.id + " ในรายการ" : "ใส่ในรายการ";
-  $("#publish").disabled = !queue.length || running || !state || state.dirty;
+  $("#publish").disabled = !queue.length || running || !state || state.dirty || !!backend.pending();
   $("#publish").textContent = $("#dry").checked ? "ตรวจอย่างเดียว (" + queue.length + " รายการ)" : "อัปขึ้น GitHub (" + queue.length + " รายการ)";
   $("#pubBar").hidden = !queue.length; $("#pubText").textContent = "รอ " + queue.length + " รายการ";   // the phone's publish bar mirrors the queue card's button
   $("#pubBtn").textContent = $("#publish").textContent; $("#pubBtn").disabled = $("#publish").disabled;
-  $("#undoBtn").disabled = running || (state && state.dirty);
+  $("#undoBtn").disabled = running || (state && state.dirty) || !!backend.pending();
 }
 async function runCheck(){
   const code = $("#code").value;
@@ -643,19 +666,20 @@ async function run(kind, title, go){
   $("#progress").hidden = false; $("#progTitle").textContent = title; $("#steps").innerHTML = ""; $("#result").innerHTML = ""; $("#log").className = "log"; $("#log").textContent = "";
   const on = (m) => {
     if (m.type === "step") stepRow(m.key, m.text, m.state);
+    else if (m.type === "status") $("#pillText").textContent = m.text;
     else if (m.type === "log"){ $("#log").classList.add("is-on"); $("#log").textContent += m.text + "\n"; }
   };
-  if (!LOCAL) $("#pillText").textContent = "กำลังอัป";
+  if (!LOCAL){ $("#pillText").textContent = "กำลังอัป"; $("#progNote").hidden = false; }
   let done = null;
   try { done = await go(on); } catch (e){ done = { ok: false, error: e.keyProblem ? e.message : "การเชื่อมต่อหลุด: " + e.message, keyProblem: e.keyProblem }; }
-  clearInterval(timer); running = false;
+  clearInterval(timer); running = false; $("#progNote").hidden = true;
   if (!done) done = { ok: false, error: "ไม่ได้รับผลลัพธ์" };
   if (done.keyProblem){ $("#progress").hidden = true; return showKey(done.error); }   // the queue stays; publish again once the key is fixed
   if (done.ok){
     $("#progTitle").textContent = done.dry ? "ผ่านการตรวจ" : "เสร็จแล้ว";
     const links = done.items.filter((x) => x.action === "add" || x.action === "replace").map((x) => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">เปิดไกด์ #' + esc(x.id) + "</a>").join(" · ");
     $("#result").innerHTML = done.dry ? "ผ่านการตรวจทั้งหมด " + done.items.length + " รายการ (ตรวจอย่างเดียว ไม่ได้แก้ไฟล์ ไม่ได้ commit)" : esc(done.subject) + (links ? "<br>" + links + " (ขึ้นเว็บภายใน 1-2 นาที)" : "");
-    if (!done.dry && kind === "run"){ queue = []; qHist = []; saveQueue(); }
+    if (!done.dry && kind === "run"){ queue = done.sent ? queue.filter((x) => !done.sent.includes(qsig(x))) : []; qHist = []; saveQueue(); }   // GitHub mode takes out only what it sent
   } else {
     $("#progTitle").textContent = "ไม่สำเร็จ";
     $("#result").innerHTML = '<span style="color:#f0b3a6">' + esc(done.error) + "</span>" + (done.runUrl ? ' <a href="' + esc(done.runUrl) + '" target="_blank" rel="noopener">เปิดใน GitHub</a>' : "");
@@ -727,11 +751,7 @@ if (!LOCAL){
   pill.onclick = forget; pill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); forget(); } });
 }
 // After loading, a publish still running from before a reload (or a sleeping phone) is followed to its end.
-async function start(){
-  await load();
-  const p = state && !running && backend.pending();
-  if (p){ showTab("queue"); run(p.kind, p.kind === "undo" ? "กำลังย้อนกลับ" : p.dry ? "กำลังตรวจ" : "กำลังอัป", (on) => backend.resume(on)); }
-}
+const start = load;
 start();
 </script>
 </body>
