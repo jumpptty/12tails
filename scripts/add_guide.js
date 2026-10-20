@@ -253,10 +253,16 @@ async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
 // is one "gm-error" annotation (the message, then the validator's lines) and the last stage reports a "gm-result" annotation, which the
 // page reads back.
 const ghEscape = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+const NOTE_MAX = 4000;   // GitHub cuts an annotation's message at 4,096 characters (seen 2026-10-20); a long batch subject is shortened to fit
+const clip = (s, n) => s.length > n ? s.slice(0, Math.max(0, n - 1)) + "…" : s;
 async function batch(file, st){
   const onGitHub = process.env.GITHUB_ACTIONS === "true", dry = has("--dry-run"), planFile = file + ".plan.json";
   const ui = { step: (k, text, state) => { if (state !== "run") console.log((state === "ok" ? "ok   " : "FAIL ") + text); }, log: (t) => console.log(t) };
-  const report = (o) => { const json = JSON.stringify({ ok: true, dry, ...o }); console.log(onGitHub ? "::notice title=gm-result::" + ghEscape(json) : json); };
+  const report = (o) => {
+    const r = { ok: true, dry, ...o }, over = JSON.stringify(r).length - NOTE_MAX;
+    if (over > 0) r.subject = clip(r.subject, r.subject.length - over);
+    const json = JSON.stringify(r); console.log(onGitHub ? "::notice title=gm-result::" + ghEscape(json) : json);
+  };
   try {
     if (!["git", "edit", "check", "commit", "push"].includes(st)) throw new Error("--stage must be git, edit, check, commit or push");
     const req = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -273,7 +279,7 @@ async function batch(file, st){
     if (st === "commit") await stageCommit(saved().subject, ui);
     if (st === "push"){ const s = saved(); report(summary(s, stagePush(s.branch, ui, "มีการเปลี่ยนแปลงบน GitHub ระหว่างทำงาน ลองใหม่อีกครั้ง"))); }
   } catch (e){
-    const text = [e.message, ...(e.lines || [])].join("\n");
+    const text = clip([e.message, ...(e.lines || [])].join("\n"), NOTE_MAX);
     if (onGitHub) console.log("::error title=gm-error::" + ghEscape(text)); else console.error("✗ " + text);
     process.exit(1);
   }
@@ -366,7 +372,7 @@ async function selftest(){
   const sh = (cwd, ...a) => execFileSync("git", a, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
   const guide = (title, author) => ({ format: "12t-class-guide", version: 1, title, author, date: "2026-10-01", description: "d", build: { server: "tot", classKey: "wolf", level: 100, learned: [101] }, modes: ["pve"], notes: {} });
   const code = (title, author) => gc.encode(guide(title, author));
-  const STUB = 'const fs = require("fs"), path = require("path");\nif (fs.readFileSync(path.join(__dirname, "..", "12t_projects/bible/index.html"), "utf8").includes("FAILME")){ console.log("[CLASS GUIDE ERROR] fixture refuses FAILME"); process.exit(1); }\n';
+  const STUB = 'const fs = require("fs"), path = require("path"), html = fs.readFileSync(path.join(__dirname, "..", "12t_projects/bible/index.html"), "utf8");\nif (html.includes("LONGFAIL")){ for (let i = 0; i < 14; i++) console.log("[CLASS GUIDE ERROR] " + "x".repeat(400)); process.exit(1); }\nif (html.includes("FAILME")){ console.log("[CLASS GUIDE ERROR] fixture refuses FAILME"); process.exit(1); }\n';
   let n = 0;
   function fixture(){
     const dir = path.join(tmp, "f" + ++n), origin = dir + ".git";
@@ -461,6 +467,18 @@ async function selftest(){
     assert.ok(errs[0].includes("ไกด์ไม่ผ่านการตรวจ") && errs[0].includes("%0A[CLASS GUIDE ERROR] fixture refuses FAILME"), errs[0]);
     const fresh = fixture();
     assert.strictEqual(stage(fresh, request(fresh, { items: [{ action: "delete", id: 9 }] }), "git").stdout.match(/^::error title=gm-error::(.*)$/m)[1], "ไม่มีไกด์ #9");
+  });
+  test("batch: annotations stay within GitHub's 4,096 characters", async () => {
+    const unescape = (s) => s.replace(/%0D/g, "\r").replace(/%0A/g, "\n").replace(/%25/g, "%");
+    const dir = fixture(), req = request(dir, { items: Array.from({ length: 12 }, (_, i) => ({ action: "add", code: code("T".repeat(390) + i, "A"), modes: ["pve"] })) });
+    let r;
+    for (const st of ["git", "edit", "check"]){ r = stage(dir, req, st, "--dry-run"); assert.strictEqual(r.status, 0, st + ": " + r.stderr); }
+    const msg = unescape(r.stdout.match(/^::notice title=gm-result::(.*)$/m)[1]), res = JSON.parse(msg);
+    assert.ok(msg.length <= 4096, "gm-result is " + msg.length); assert.strictEqual(res.items.length, 12); assert.ok(res.subject.endsWith("…"));
+    const bad = fixture(), breq = request(bad, { items: [{ action: "add", code: code("LONGFAIL", "A"), modes: ["pve"] }] });
+    for (const st of ["git", "edit"]) assert.strictEqual(stage(bad, breq, st).status, 0);
+    const err = unescape(stage(bad, breq, "check").stdout.match(/^::error title=gm-error::(.*)$/m)[1]);
+    assert.ok(err.length <= 4096 && err.startsWith("ไกด์ไม่ผ่านการตรวจ"), "gm-error is " + err.length);
   });
   test("batch: a push GitHub rejects says the repo changed meanwhile", async () => {
     const dir = fixture(), req = request(dir, { items: [batchItems[0]] }), other = path.join(tmp, "other" + n);

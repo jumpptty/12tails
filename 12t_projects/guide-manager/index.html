@@ -352,7 +352,7 @@ function gmParseGuides(html){
 }
 const gmSummary = (g, views) => ({ id: g.id, modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date || "", views: views[g.id] || 0 });
 const gmPayloadFits = (inputs) => JSON.stringify(inputs).length <= 65535;   // GitHub's limit on a workflow dispatch's inputs
-// The workflow's steps (.github/workflows/guide-manager.yml) as the page's step rows: only steps that have started, the two
+// The workflow's steps (.github/workflows/guide-manager.yml) as the page's step rows: only steps that are running or done, the two
 // ส่งงานให้ GitHub steps as one row, GitHub's own steps and the skipped ones (commit and push in a dry run) left out.
 const GM_STEPS = { "ส่งงานให้ GitHub": "send", "ตรวจสถานะ git": "git", "แก้ไฟล์ index.html": "edit", "ตรวจด้วย validator": "check", "commit": "commit", "อัปขึ้น GitHub": "push" };
 function gmStepsFromJobs(jobs){
@@ -362,7 +362,7 @@ function gmStepsFromJobs(jobs){
   rows.push({ key: "send", text: "ส่งงานให้ GitHub", state: send.some((s) => state(s) === "fail") ? "fail" : send.length && send.every((s) => state(s) === "ok") ? "ok" : "run" });
   for (const s of steps){
     const key = GM_STEPS[s.name];
-    if (!key || key === "send" || s.status === "queued" || s.conclusion === "skipped") continue;
+    if (!key || key === "send" || (s.status !== "in_progress" && s.status !== "completed") || s.conclusion === "skipped") continue;   // not started yet: "pending" (seen 2026-10-20) or "queued"
     rows.push({ key, text: s.name, state: state(s) });
   }
   return rows;
