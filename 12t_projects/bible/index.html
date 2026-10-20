@@ -2303,10 +2303,10 @@
   .cg-page .cg-guide .cg-guide-date{margin-left:4px}
   /* Phones (user 2026-10-17: only 2 guides fitted a page): compact filters and 3-column compact cards */
   @media(max-width:760px){
-    .cg-page .cg-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .cg-page .cg-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}   /* 2 columns (user 2026-10-20; 3 until then) */
     .cg-page .cg-guide{gap:6px;padding:12px 4px 10px}
-    .cg-page .cg-guide > .cg-cover{--cg-cover:64px !important}
-    .cg-page .cg-guide > strong{font-size:13px;line-height:1.25}
+    .cg-page .cg-guide > .cg-cover{--cg-cover:80px !important}
+    .cg-page .cg-guide > strong{font-size:14px;line-height:1.25}
     .cg-page .cg-guide .cg-chip{font-size:0;gap:0;padding:2px}                     /* icons only: the class and server icons say it */
     .cg-page .cg-guide .cg-chip img{width:16px;height:16px}
     .cg-page .cg-guide .cg-chip.is-mode{font-size:10.5px;line-height:16px;padding:1px 6px}   /* text, not an icon: keeps its words on phones */
@@ -6991,7 +6991,7 @@
   .ln{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent}
   .ln img, .ln a{-webkit-user-drag:none}
   .ln-glow{position:absolute; inset:0; z-index:0; pointer-events:none; background:radial-gradient(45% 60% at 66% 50%, color-mix(in srgb, var(--acc) 22%, transparent), transparent 70%)}
-  .ln-stage{position:relative; z-index:1; flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,42fr) minmax(0,58fr); align-items:center; gap:2vw; padding:0 5vw; touch-action:pan-y}
+  .ln-stage{cursor:pointer; position:relative; z-index:1; flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,42fr) minmax(0,58fr); align-items:center; gap:2vw; padding:0 5vw; touch-action:pan-y}
   .ln-segs, .ln-nav, .ln-tools-h{display:none}
   /* wide screens (21:9 and up, user 2026-10-18 on 3440 px): the stage, the filmstrip and the glow keep a 2.1 : 1 frame in the middle,
      so the text stays near the art instead of hugging the left edge; 16:9 and 16:10 windows are narrower than the frame and do not change */
@@ -7171,6 +7171,7 @@
   @keyframes lnNewShine{0%,55%{background-position:220% 0, 0 0}100%{background-position:-120% 0, 0 0}}
   @keyframes lnNewStar{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(45deg)}}
   @keyframes lnWait{to{background-position:-150% 0}}
+  @keyframes lnGpan{to{object-position:100% 50%}}   /* phones: the guide sheet pans left to right while it is shown (user 2026-10-20: fill the slide with the image) */
   /* hover = a gold edge on its own layer that only fades in, so the big tilted image never repaints (user 2026-10-18: hover felt slow) */
   .ln-gpng::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 2px var(--ln-hi); opacity:0; transition:opacity .12s; pointer-events:none}
   .ln-gpng:hover::after, .ln-gpng:focus-visible::after{opacity:1}
@@ -7260,10 +7261,17 @@
     .ln-wall{--ic:min(13vw, 54px); grid-template-columns:repeat(5, var(--ic))}
     .ln-fan{width:240px; height:240px}
     .ln-fan img{width:130px; height:130px; border-radius:24px; transform:translate(-50%,-50%) rotate(calc((var(--i) - var(--mid)) * 16deg)) translateX(calc((var(--i) - var(--mid)) * 64px))}
-    .ln-gpng{left:2%; right:2%; top:6%; transform:none}
-    .ln-gptl{height:62%; left:auto; right:-6%; bottom:-4%}
-    .ln-gcap{display:none}
-    .ln-gnew{top:calc(6% - 13px); right:5%; font-size:14px; padding:4px 11px 4px 9px}
+    /* ไกด์อาชีพ (user 2026-10-20: too much empty space): the guide image fills the top as a frame and pans across the sheet; the title and author
+       fill the band under it on the left, the class portrait stands at the right of that band */
+    .ln-gpng{left:0; right:0; top:4%; height:76%; transform:perspective(1100px) rotateY(-9deg) rotateX(3deg); transform-origin:100% 50%}   /* a slight tilt like the desktop frame (user 2026-10-20) */
+    .ln-gpng img{width:100%; height:100%; object-fit:cover; object-position:0 50%}
+    .ln-gpng:not(.is-wait) img{animation:lnGpan 2.8s ease-in-out .3s both}   /* restarts with each guide: is-wait comes back while the next one loads */
+    .ln-gpng.is-wait{aspect-ratio:auto}
+    .ln-gptl{height:66%; left:auto; right:-9%; bottom:-34%}
+    .ln-gcap{left:1%; right:auto; bottom:-26%; max-width:60%; text-align:left}
+    .ln-gcap b{font-size:17px; line-height:1.25}
+    .ln-gcap span{display:block; margin-top:2px; font-size:12px; line-height:1.35}
+    .ln-gnew{top:calc(4% - 13px); right:5%; font-size:14px; padding:4px 11px 4px 9px}
     .ln-copy{position:absolute; left:0; right:0; bottom:0; width:auto; max-width:none; padding:70px 18px 18px; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--ink) 92%, transparent) 34%)}
     .ln-title{font-size:clamp(27px, 7.4vw, 40px); margin:8px 0 6px}
     .ln-fact, .ln-cta{display:none}   /* no count and no เปิด seal on phones (user 2026-10-19: the seal's own row pushed the title up); the grid below opens every tool */
@@ -31135,6 +31143,7 @@ function mountLauncher(root){
   stage.addEventListener("pointerup", e => { if (!swiping) return; swiping = false; root.classList.remove("is-paused"); const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) { swiped = true; setTimeout(() => { swiped = false; }, 400); show(cur + (dx < 0 ? 1 : -1)); } });
   stage.addEventListener("click", e => { if (swiped) { e.preventDefault(); e.stopPropagation(); swiped = false; } }, true);   // a swipe that ends on a wall tile does not open it
   stage.addEventListener("pointercancel", () => { swiping = false; root.classList.remove("is-paused"); });
+  stage.addEventListener("click", e => { if (!e.defaultPrevented && !e.target.closest("a, button")) location.hash = "#" + TOOLS[cur].id; });   // empty stage space opens the shown tool's main page (user 2026-10-20: it did nothing)
   document.addEventListener("keydown", e => {
     if (viewMenu.hidden || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || document.querySelector('[aria-modal="true"]:not([hidden])')) return;
     const tg = e.target && e.target.closest ? e.target : document.body; if (tg.closest("input, textarea, select, [contenteditable]")) return;
@@ -31259,6 +31268,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T10:49:05.676Z","feat(bible): phone guide gallery in 2 columns; empty menu stage space opens the tool's main page; the phone ไกด์อาชีพ slide fills with a bigger, tilted, panning guide image and its title"],
     ["2026-10-20T10:12:24.373Z","feat(bible): the guide readers count gets a pop-up: อัปเดตทุก 10 นาที หรือนานกว่านั้นถ้าเปิด ad blocker"],
     ["2026-10-20T10:06:02.210Z","feat(bible): the guide stars open the page's own pop-up (what is missing), and the editor shows them live under the step tabs with progress such as 20/70 letters"],
     ["2026-10-20T09:57:44.866Z","style(bible): the guide gallery text filters (ทั้งหมด, PVE, PVP) lose their box too: bold text, gold with a bar when chosen"],
