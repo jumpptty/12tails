@@ -63,7 +63,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,600;1,700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <script data-goatcounter="https://jumpptty.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+        async src="https://gc.zgo.at/count.js"></script>
 <style>
   :root{
     --ink:#eae3d2;
@@ -31158,6 +31158,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T08:32:28.109Z","fix(bible): opening the page from disk no longer sits blank: the GoatCounter script loads over https instead of a protocol-relative link that Windows looked up as a network share"],
     ["2026-10-20T08:19:12.973Z","fix(bible): the launcher no longer freezes when assets.js fails to load (its icon wall kept waiting for skill icons that never came)"],
     ["2026-10-20T08:09:14.904Z","perf(bible): the embedded images, 3D models and sounds move to assets.js (25.9 MB); index.html drops to 3.9 MB, so a push that touches only the page costs returning visitors about 1.3 MB instead of 19 MB"],
     ["2026-10-20T07:52:29.159Z","style(bible): the class guide gallery's server and class icon filters lose their box (a gold glow and bar mark the chosen one); the text buttons keep theirs"],
