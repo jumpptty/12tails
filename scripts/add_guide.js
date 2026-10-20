@@ -482,7 +482,7 @@ async function selftest(){
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && !["--port", "--modes", "--stage"].includes(args[i - 1]));
-if (require.main !== module) module.exports = { planAll, readGuides, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
+if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, fixDate, localToday, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
 else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
 else if (words[0] === "batch") batch(words[1], val("--stage"));
 else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });

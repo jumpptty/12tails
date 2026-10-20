@@ -4571,6 +4571,64 @@ const gmHtml = fs.existsSync(gmPath) ? fs.readFileSync(gmPath, "utf8") : null;
     if (!gmBad) console.log("Verified the guide manager page: class faces match assets.js, connections limited, not indexed, two fonts only.");
   }
 }
+// The page's own reading of guide codes and of CLASS_GUIDES (its "gm-core" script, used on the phone where there is no add_guide.js) must agree
+// with scripts/guide_code.js and scripts/add_guide.js, and its reading of GitHub's run, job and annotation replies must give the right outcome.
+if (gmHtml !== null) {
+  let gmChecked = 0, gmFailed = 0;
+  const ok = (pass, msg) => { if (pass) gmChecked++; else { console.error(`[GUIDE MANAGER ERROR] gm-core: ${msg}`); errorCount++; gmFailed++; } };
+  const block = (gmHtml.match(/\/\/ gm-core start\r?\n([\s\S]*?)\/\/ gm-core end/) || [])[1];
+  if (!block) ok(false, "gm-core block not found (between // gm-core start and // gm-core end)");
+  else {
+    const zlib = require("zlib"), gc = require(path.join(__dirname, "guide_code.js")), ag = require(path.join(__dirname, "add_guide.js"));
+    const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response });
+    vm.runInContext(block, ctx, { filename: GM_REL + " (gm-core)" });
+    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmParseGuides, gmSummary, gmFixDate, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const throws = (fn) => { try { fn(); return ""; } catch (e) { return String(e.message || e); } };
+    const finish = (code) => { const u = gm.gmUnpack(code); return gm.gmFinish(u, u.deflated ? zlib.inflateRawSync(u.bytes) : u.bytes); };
+    const doc = ag.readGuides();
+    let decoded = 0;
+    for (const { g } of doc.guides) {
+      const { id, ...guide } = g;
+      for (const enc of [gc.encode, gc.encode2, gc.encode1]) { const code = enc(guide); if (same(finish(code), gc.decode(code))) decoded++; else ok(false, `guide #${id}: the page reads ${code.slice(0, 12)}… differently from guide_code.js`); }
+    }
+    ok(decoded === doc.guides.length * 3, `${decoded} of ${doc.guides.length * 3} codes read the same as guide_code.js`);
+    const { id: _id, ...first } = doc.guides[0].g, c3 = gc.encode(first), wrapped = "ไกด์ `" + c3.slice(0, 9) + " \n" + c3.slice(9) + "` จบ";
+    ok(same(finish(gm.gmFindCode(wrapped)), gc.decode(c3)), "a TG3 code pasted with chat text, a space and a line break is found and read");
+    const at = Math.floor(c3.length / 2), broken = c3.slice(0, at) + String.fromCharCode(c3.charCodeAt(at) ^ 1) + c3.slice(at + 1);   // a data character (the last ones may hold only padding bits)
+    ok(/คัดลอกใหม่/.test(throws(() => gm.gmUnpack(broken))) && /คัดลอกใหม่/.test(throws(() => gc.decode(broken))), "a TG3 code with one changed character is refused with the copy-again message, as guide_code.js refuses it");
+    for (const s of [wrapped, gc.encode2(first), gc.encode1(first), "no code here", ""]) ok(gm.gmFindCode(s) === ag.findCode(s), `gmFindCode and add_guide's findCode disagree on ${JSON.stringify(s.slice(0, 20))}`);
+    const pg = gm.gmParseGuides(html);
+    ok(same(pg.guides.map((x) => x.id), doc.guides.map((x) => x.g.id)) && same(pg.removed.map((x) => x.id), doc.removed.map((x) => x.id)) && pg.next === ag.nextId(doc), "gmParseGuides reads the same guides, removed numbers and next number as add_guide.js");
+    ok(same(gm.gmParseGuides(html.replace(/\r\n/g, "\n")).guides.map((x) => x.id), doc.guides.map((x) => x.g.id)), "gmParseGuides reads an LF copy too");
+    const views = vm.runInContext("CLASS_GUIDE_VIEWS", sandbox).counts || {}, g0 = doc.guides[0].g;
+    ok(same(gm.gmSummary(pg.guides[0].g, pg.views), { id: g0.id, modes: g0.modes || [], title: g0.title, author: g0.author, classKey: g0.build.classKey, server: g0.build.server, level: g0.build.level, date: g0.date || "", views: views[g0.id] || 0 }), "gmSummary gives the list row add_guide.js gives");
+    const day = ag.localToday(), next = new Date(Date.parse(day + "T00:00:00Z") + 864e5).toISOString().slice(0, 10);
+    for (const d of [day, next, "", "2031-07-05"]) { const a = { date: d }, b = { date: d }; ok(ag.fixDate(a) === gm.gmFixDate(b, day) && a.date === b.date, `gmFixDate and fixDate disagree on ${JSON.stringify(d)}`); }
+    const box = (n) => ({ payload: "x".repeat(n - '{"payload":""}'.length) });
+    ok(gm.gmPayloadFits(box(65535)) === true && gm.gmPayloadFits(box(65536)) === false, "gmPayloadFits: 65,535 characters fit, 65,536 do not");
+    // GitHub's replies, shaped as the REST API returns them (GET /actions/runs/{id}/jobs, /actions/runs/{id}, /check-runs/{job}/annotations)
+    const st = (name, status, conclusion = null) => ({ name, status, conclusion });
+    const job = (steps, status = "in_progress") => ({ total_count: 1, jobs: [{ id: 7, status, steps }] });
+    const pre = [st("Set up job", "completed", "success"), st("ส่งงานให้ GitHub", "completed", "success"), st("ส่งงานให้ GitHub", "completed", "success"), st("ตรวจสถานะ git", "completed", "success"), st("แก้ไฟล์ index.html", "completed", "success")];
+    const rows = (...r) => r.map(([key, state]) => ({ key, text: { send: "ส่งงานให้ GitHub", git: "ตรวจสถานะ git", edit: "แก้ไฟล์ index.html", check: "ตรวจด้วย validator", commit: "commit", push: "อัปขึ้น GitHub" }[key], state }));
+    ok(same(gm.gmStepsFromJobs({ total_count: 0, jobs: [] }), rows(["send", "run"])), "a queued run shows ส่งงานให้ GitHub running");
+    ok(same(gm.gmStepsFromJobs(job([st("Set up job", "completed", "success"), st("ส่งงานให้ GitHub", "completed", "success"), st("ส่งงานให้ GitHub", "in_progress"), st("ตรวจสถานะ git", "queued")])), rows(["send", "run"])), "the two ส่งงานให้ GitHub steps are one row, running until both are done");
+    ok(same(gm.gmStepsFromJobs(job([...pre, st("ตรวจด้วย validator", "in_progress"), st("commit", "queued"), st("อัปขึ้น GitHub", "queued"), st("Post ส่งงานให้ GitHub", "queued"), st("Complete job", "queued")])), rows(["send", "ok"], ["git", "ok"], ["edit", "ok"], ["check", "run"])), "mid-check: done rows ticked, the validator running, queued steps not shown yet");
+    ok(same(gm.gmStepsFromJobs(job([...pre, st("ตรวจด้วย validator", "completed", "success"), st("commit", "completed", "skipped"), st("อัปขึ้น GitHub", "completed", "skipped"), st("Complete job", "completed", "success")], "completed")), rows(["send", "ok"], ["git", "ok"], ["edit", "ok"], ["check", "ok"])), "a dry run: the skipped commit and push are not shown");
+    ok(same(gm.gmStepsFromJobs(job([...pre, st("ตรวจด้วย validator", "completed", "failure"), st("commit", "completed", "skipped"), st("อัปขึ้น GitHub", "completed", "skipped")], "completed")), rows(["send", "ok"], ["git", "ok"], ["edit", "ok"], ["check", "fail"])), "a failed validator step shows as failed");
+    const SITE = "https://jumpptty.github.io/12tails/12t_projects/bible/", run = (status, conclusion) => ({ status, conclusion, html_url: "https://github.com/jumpptty/12tails/actions/runs/1" });
+    const ann = (title, message) => ({ path: ".github", annotation_level: title === "gm-error" ? "failure" : "notice", title, message });
+    const result = { ok: true, dry: true, subject: "feat(bible): class guide #54 ToT Wolf T by A", sha: null, items: [{ action: "add", id: 54 }], undoText: null };
+    ok(gm.gmRunOutcome(run("in_progress", null), [], SITE) === null, "no outcome while the run is going");
+    ok(same(gm.gmRunOutcome(run("completed", "success"), [ann("Node.js 20 actions are deprecated", "x"), ann("gm-result", JSON.stringify(result))], SITE), { ok: true, dry: true, subject: result.subject, sha: null, undoText: null, items: [{ action: "add", id: 54, url: SITE + "#class-guide/54" }] }), "gm-result becomes the done message with guide links");
+    ok(same(gm.gmRunOutcome(run("completed", "failure"), [ann("gm-error", "ไกด์ไม่ผ่านการตรวจ\n[CLASS GUIDE ERROR] a\n[CLASS GUIDE ERROR] b")], SITE), { ok: false, error: "ไกด์ไม่ผ่านการตรวจ", log: ["[CLASS GUIDE ERROR] a", "[CLASS GUIDE ERROR] b"] }), "gm-error becomes the error and the log lines");
+    ok(same(gm.gmRunOutcome(run("completed", "cancelled"), [], SITE), { ok: false, error: "งานถูกยกเลิก (มีงานอื่นรออยู่บน GitHub) ลองอัปใหม่" }), "a cancelled run says so");
+    ok(same(gm.gmRunOutcome(run("completed", "failure"), [], SITE), { ok: false, error: "GitHub ทำงานไม่สำเร็จก่อนถึงขั้นตอนของไกด์ ดูรายละเอียดใน GitHub", runUrl: "https://github.com/jumpptty/12tails/actions/runs/1" }), "a run failing before the pipeline links to GitHub");
+    ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
+    if (!gmFailed) console.log(`Verified the guide manager page's own code reader and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
+  }
+}
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
