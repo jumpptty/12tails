@@ -122,6 +122,19 @@
   .modal .row-actions{justify-content:flex-end}
   .modal .row-actions .btn-gold, .modal .row-actions .btn-red{flex:none}
   @media (max-width:900px){ main{grid-template-columns:minmax(0,1fr)} .app{height:auto} .list{overflow:visible} }
+  /* GitHub mode (the page on GitHub Pages): the one-time key screen stands in for everything below the header */
+  .keycard{width:min(560px,calc(100% - 32px)); margin:24px auto; display:flex; flex-direction:column; gap:12px}
+  .keycard h2{margin:0}
+  .keycard .msg{margin:0}
+  .keysteps{margin:0; padding-left:20px; display:grid; gap:6px; color:var(--muted); font-size:14px}
+  .keysteps b{color:var(--text); font-weight:500}
+  .keysteps a{color:var(--gold-hi)}
+  .keyin{width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--ink); font:500 16px var(--num)}
+  .keycard .row-actions{margin:0}
+  .keynote{margin:0; font-size:13px; color:var(--muted)}
+  .app.needs-key :is(main, .tabs, .pubbar, .banner){display:none !important}
+  .pill[role="button"]{cursor:pointer}
+  .pill[role="button"]:hover{border-color:var(--gold); color:var(--gold-hi)}
   /* Phones (layout B, user 2026-10-20): three tabs at the bottom, one card group each, and a publish bar above them while the queue has items */
   .tabs, .pubbar, .row .tt .ph-only{display:none}
   @media (max-width:760px){
@@ -171,6 +184,18 @@
     <button type="button" class="btn btn-sm undo" id="undoBtn" title="Ctrl+Z">↶ <span id="undoText"></span></button>
   </header>
   <p class="banner" id="banner"><span>index.html มีงานค้างที่ยังไม่ได้ commit (เช่นงานของ Claude) จึงยังทำรายการไม่ได้ รอให้งานนั้นเสร็จก่อน</span><button type="button" class="btn btn-sm" id="recheck">ตรวจใหม่</button></p>
+  <section class="card keycard" id="keyCard" hidden>
+    <h2>ใส่กุญแจ GitHub (ครั้งแรกครั้งเดียว)</h2>
+    <div class="msg err" id="keyWhy"></div>
+    <ol class="keysteps">
+      <li>เปิด <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">หน้าสร้างกุญแจของ GitHub</a> (Fine-grained token)</li>
+      <li>Repository access เลือก <b>Only select repositories</b> แล้วเลือก <b>12tails</b> จากนั้นที่ Permissions ให้ <b>Actions: Read and write</b></li>
+      <li>กด Generate token แล้วคัดลอกกุญแจ (ขึ้นต้นด้วย github_pat_) มาวางด้านล่าง</li>
+    </ol>
+    <input class="keyin" id="keyIn" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false" aria-label="กุญแจ GitHub">
+    <div class="row-actions"><button type="button" class="btn btn-gold" id="keySave">บันทึกในเครื่องนี้</button></div>
+    <p class="keynote">กุญแจเก็บไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น และส่งไปที่ GitHub เท่านั้น ใครเปิดหน้านี้โดยไม่มีกุญแจจะแก้อะไรไม่ได้</p>
+  </section>
   <main>
     <div class="col">
       <section class="card" id="editor">
@@ -418,11 +443,112 @@ const localBackend = {
   check: async (code, replaceId) => (await api("/api/check", { code, replaceId })).json(),
   run: (items, dryRun, on) => stream("/api/run", dryRun ? { items, dryRun } : { items }, on),
   undo: (on) => stream("/api/undo", {}, on),
+  pending: () => null,
   resume: async () => null,
+  offline: "ติดต่อตัวจัดการไม่ได้ (ปิดหน้าต่างดำไปแล้ว?)",
 };
-const backend = localBackend;
+// githubBackend = the page on GitHub Pages (the phone): it reads index.html through the GitHub API, checks codes itself (gm-core) and
+// publishes by starting the guide-manager workflow (.github/workflows/guide-manager.yml) with the user's key, then follows the run.
+// localStorage: the key, the run still going (so a reload or a sleeping phone picks it up) and the last publish (for undo).
+const GH = { api: "https://api.github.com", repo: "jumpptty/12tails", branch: "skill-cooldown-lookup", workflow: "guide-manager.yml", site: "https://jumpptty.github.io/12tails/12t_projects/bible/" };
+const GKEY = "12t-gm-key", GPENDING = "12t-gm-pending", GLAST = "12t-gm-last";
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e){ return null; } },
+  set(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+const keyError = (status) => Object.assign(new Error(status ? gmKeyProblem(status) : "ยังไม่มีกุญแจ"), { keyProblem: true });
+async function gh(path, { method = "GET", body, accept = "application/vnd.github+json", cache = "no-store" } = {}){
+  const key = store.get(GKEY);
+  if (!key) throw keyError(0);
+  const res = await fetch(GH.api + path, { method, cache, headers: { Authorization: "Bearer " + key, Accept: accept, "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 401) throw keyError(401);
+  return res;
+}
+const ghJson = async (path) => { const res = await gh(path); if (!res.ok) throw new Error("GitHub ตอบ " + res.status); return res.json(); };
+// Wait between polls; while the page is hidden (the phone asleep, another app) wait until it is visible again.
+function ghWait(ms){
+  return new Promise((res) => {
+    if (document.visibilityState === "visible") return setTimeout(res, ms);
+    const v = () => { if (document.visibilityState !== "visible") return; document.removeEventListener("visibilitychange", v); res(); };
+    document.addEventListener("visibilitychange", v);
+  });
+}
+let ghDoc = null;   // the last index.html read: its guides, removed numbers, next number and views
+async function ghStart(kind, dry, payload, on){
+  const request = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  const inputs = { request, payload: JSON.stringify(payload), dry: dry ? "true" : "false" };
+  if (!gmPayloadFits(inputs)) return { ok: false, error: "รายการยาวเกินกว่าที่ส่งให้ GitHub ได้ในครั้งเดียว แบ่งอัปเป็นสองชุด" };
+  on({ type: "step", key: "send", text: "ส่งงานให้ GitHub", state: "run" });
+  const res = await gh(`/repos/${GH.repo}/actions/workflows/${GH.workflow}/dispatches`, { method: "POST", body: { ref: GH.branch, inputs, return_run_details: true } });
+  if (res.status === 403 || res.status === 404) throw keyError(res.status);
+  if (res.status !== 200 && res.status !== 204) return { ok: false, error: "GitHub ไม่รับงาน (" + res.status + ")" };
+  const runId = res.status === 200 ? (await res.json().catch(() => ({}))).workflow_run_id || null : null;   // 200 + the run's id (seen 2026-10-20); 204 = find it by name
+  const pending = { request, runId, kind, dry, at: Date.now() };
+  store.set(GPENDING, pending);
+  return ghFollow(pending, on, { send: "run" });
+}
+// shown = the step rows already sent, so a running row's timer is not restarted by every poll
+async function ghFollow(p, on, shown = {}){
+  let runId = p.runId, late = 0;
+  if (!shown.send){ shown.send = "run"; on({ type: "step", key: "send", text: "ส่งงานให้ GitHub", state: "run" }); }
+  for (const t0 = Date.now(); !runId; ){
+    const r = await ghJson(`/repos/${GH.repo}/actions/workflows/${GH.workflow}/runs?event=workflow_dispatch&per_page=20`);
+    const run = (r.workflow_runs || []).find((x) => x.display_title === "guide manager " + p.request);
+    if (run){ runId = run.id; store.set(GPENDING, { ...p, runId }); }
+    else if (Date.now() - t0 > 120000){ store.set(GPENDING, null); return { ok: false, error: "หางานบน GitHub ไม่เจอ ดูได้ในแท็บ Actions ของ repo 12tails" }; }
+    else await ghWait(3000);
+  }
+  for (;;){
+    const run = await ghJson(`/repos/${GH.repo}/actions/runs/${runId}`), jobs = await ghJson(`/repos/${GH.repo}/actions/runs/${runId}/jobs`);
+    for (const row of gmStepsFromJobs(jobs)) if (shown[row.key] !== row.state){ shown[row.key] = row.state; on({ type: "step", ...row }); }
+    const job = (jobs.jobs || [])[0], ann = run.status === "completed" && job ? await ghJson(`/repos/${GH.repo}/check-runs/${job.id}/annotations`) : [];
+    const done = gmRunOutcome(run, Array.isArray(ann) ? ann : [], GH.site);
+    if (done && !done.ok && run.conclusion === "success" && ++late < 5){ await ghWait(2000); continue; }   // a finished run's notes may arrive a moment late
+    if (done){
+      store.set(GPENDING, null);
+      if (done.ok && !done.dry){ if (p.kind === "undo") store.set(GLAST, null); else if (done.undoText) store.set(GLAST, { sha: done.sha, text: done.undoText }); }
+      if (done.log && done.log.length) on({ type: "log", text: done.log.join("\n") });
+      return done;
+    }
+    await ghWait(3000);
+  }
+}
+const githubBackend = {
+  async state(){
+    const res = await gh(`/repos/${GH.repo}/contents/12t_projects/bible/index.html?ref=${GH.branch}`, { accept: "application/vnd.github.raw+json", cache: "no-cache" });   // a repeat read is a free revalidation
+    if (!res.ok) throw new Error("อ่านรายการไกด์จาก GitHub ไม่ได้ (" + res.status + ")");
+    const doc = ghDoc = gmParseGuides(await res.text()), last = store.get(GLAST);
+    return { branch: "GitHub", dirty: false, next: doc.next, push: true, guides: doc.guides.map((x) => gmSummary(x.g, doc.views)).sort((a, b) => b.id - a.id), removed: doc.removed.map((r) => r.text).reverse(), undo: last ? last.text : null };
+  },
+  async check(code, replaceId){   // what add_guide.js /api/check answers
+    try {
+      if (!ghDoc) throw new Error("ยังโหลดรายการไกด์ไม่เสร็จ");
+      const g = await gmDecodeCode(code), dateWas = gmFixDate(g, gmLocalToday()), same = ghDoc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +replaceId);
+      return { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date }, dateWas, id: replaceId ? +replaceId : ghDoc.next, duplicate: same ? { id: same.g.id, title: same.g.title } : null };
+    } catch (e){ return { ok: false, error: e.message }; }
+  },
+  run: (items, dryRun, on) => ghStart("run", !!dryRun, { items }, on),
+  undo: (on) => { const last = store.get(GLAST); return last ? ghStart("undo", false, { undo: { sha: last.sha } }, on) : { ok: false, error: "ไม่มีอะไรให้ย้อนกลับ" }; },
+  pending: () => store.get(GPENDING),
+  resume: (on) => { const p = store.get(GPENDING); return p ? ghFollow(p, on) : null; },
+  offline: "ต่อ GitHub ไม่ได้",
+};
+const LOCAL = KEY !== "__" + "KEY__";   // add_guide.js fills in the key; on GitHub Pages the placeholder stays
+const backend = LOCAL ? localBackend : githubBackend;
+function showKey(why){
+  const was = $(".app").classList.contains("needs-key");
+  $(".app").classList.add("needs-key"); $("#keyCard").hidden = false;
+  $("#keyWhy").className = why ? "msg err is-on" : "msg err"; $("#keyWhy").textContent = why || "";
+  $("#pillText").textContent = "ยังไม่มีกุญแจ"; $("#pill").classList.add("is-warn");
+  if (!was){ $("#keyIn").value = ""; $("#keyIn").focus(); }
+}
 async function load(){
-  try { state = await backend.state(); } catch (e){ $("#pillText").textContent = "ติดต่อตัวจัดการไม่ได้ (ปิดหน้าต่างดำไปแล้ว?)"; $("#pill").classList.add("is-warn"); return; }
+  try { state = await backend.state(); }
+  catch (e){
+    if (e.keyProblem) return showKey(store.get(GKEY) ? e.message : "");
+    $("#pillText").textContent = backend.offline; $("#pill").classList.add("is-warn"); return;
+  }
+  $(".app").classList.remove("needs-key"); $("#keyCard").hidden = true;
   $("#pillText").innerHTML = '<span class="pill-branch">' + esc(state.branch) + " · </span>" + (state.dirty ? "มีงานค้าง" : state.push ? "พร้อม" : "ไม่อัปขึ้น GitHub");   // phones show only the status
   $("#pill").classList.toggle("is-warn", state.dirty);
   $("#banner").classList.toggle("is-on", state.dirty);
@@ -513,10 +639,12 @@ async function run(kind, title, go){
     if (m.type === "step") stepRow(m.key, m.text, m.state);
     else if (m.type === "log"){ $("#log").classList.add("is-on"); $("#log").textContent += m.text + "\n"; }
   };
+  if (!LOCAL) $("#pillText").textContent = "กำลังอัป";
   let done = null;
-  try { done = await go(on); } catch (e){ done = { ok: false, error: "การเชื่อมต่อหลุด: " + e.message }; }
+  try { done = await go(on); } catch (e){ done = { ok: false, error: e.keyProblem ? e.message : "การเชื่อมต่อหลุด: " + e.message, keyProblem: e.keyProblem }; }
   clearInterval(timer); running = false;
   if (!done) done = { ok: false, error: "ไม่ได้รับผลลัพธ์" };
+  if (done.keyProblem){ $("#progress").hidden = true; return showKey(done.error); }   // the queue stays; publish again once the key is fixed
   if (done.ok){
     $("#progTitle").textContent = done.dry ? "ผ่านการตรวจ" : "เสร็จแล้ว";
     const links = done.items.filter((x) => x.action === "add" || x.action === "replace").map((x) => '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">เปิดไกด์ #' + x.id + "</a>").join(" · ");
@@ -524,7 +652,7 @@ async function run(kind, title, go){
     if (!done.dry && kind === "run"){ queue = []; qHist = []; saveQueue(); }
   } else {
     $("#progTitle").textContent = "ไม่สำเร็จ";
-    $("#result").innerHTML = '<span style="color:#f0b3a6">' + esc(done.error) + "</span>";
+    $("#result").innerHTML = '<span style="color:#f0b3a6">' + esc(done.error) + "</span>" + (done.runUrl ? ' <a href="' + esc(done.runUrl) + '" target="_blank" rel="noopener">เปิดใน GitHub</a>' : "");
   }
   await load();
 }
@@ -583,8 +711,22 @@ function showTab(name){
   window.scrollTo(0, 0);
 }
 $("#tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
-window.addEventListener("focus", () => { if (!running) load(); });
-load();
+window.addEventListener("focus", () => { if (!running && !$(".app").classList.contains("needs-key")) load(); });
+// GitHub mode: the key screen, and the pill as the way to forget the key (another phone, a new key)
+$("#keySave").onclick = () => { const k = $("#keyIn").value.trim(); if (!k) return $("#keyIn").focus(); store.set(GKEY, k); $("#keyIn").value = ""; start(); };
+$("#keyIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#keySave").click(); });
+if (!LOCAL){
+  const pill = $("#pill"); pill.setAttribute("role", "button"); pill.tabIndex = 0; pill.title = "กุญแจ GitHub";
+  const forget = () => { if (running || !store.get(GKEY)) return; ask("กุญแจ GitHub", "เครื่องนี้ใช้กุญแจที่บันทึกไว้อัปไกด์ผ่าน GitHub ถ้าลืมกุญแจ ต้องใส่กุญแจใหม่ก่อนใช้งานต่อ", "ลืมกุญแจ", true, () => { store.set(GKEY, null); state = null; showKey(""); }); };
+  pill.onclick = forget; pill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); forget(); } });
+}
+// After loading, a publish still running from before a reload (or a sleeping phone) is followed to its end.
+async function start(){
+  await load();
+  const p = state && !running && backend.pending();
+  if (p){ showTab("queue"); run(p.kind, p.kind === "undo" ? "กำลังย้อนกลับ" : p.dry ? "กำลังตรวจ" : "กำลังอัป", (on) => backend.resume(on)); }
+}
+start();
 </script>
 </body>
 </html>
