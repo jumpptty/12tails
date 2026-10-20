@@ -27524,10 +27524,10 @@ function classGuideImport(code){
   try { value = JSON.parse(code); } catch (e) { throw new Error("อ่านโค้ดไกด์ไม่ได้ กรุณาวาง JSON ที่ส่งออกจากไกด์อาชีพ"); }
   return classGuideNormalize(value, { draft: true });
 }
-// Short guide code (user 2026-10-16). Exports use format 2 ("TG2.", binary, below); format 1 ("12TG1.") still imports: "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
+// Short guide code (user 2026-10-16). Exports use format 3 ("TG3": the format 2 bytes as CJK characters, below); formats 2 ("TG2.") and 1 ("12TG1.") still import. Format 1: "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
 // tree x row x column slot, in base64url) as JSON, compressed with deflate-raw, in URL-safe base64 (A-Z a-z 0-9 - _).
 // Import takes both this and plain JSON. scripts/guide_code.js mirrors the format outside the browser (to embed a submitted guide as a JSON object).
-const CLASS_GUIDE_CODE_PREFIX = "12TG1.", CLASS_GUIDE_CODE2_PREFIX = "TG2.";
+const CLASS_GUIDE_CODE_PREFIX = "12TG1.", CLASS_GUIDE_CODE2_PREFIX = "TG2.", CLASS_GUIDE_CODE3_PREFIX = "TG3";
 const classGuideSlot = id => (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // cell id 101..494 -> 0..159
 function classGuideCompact(g){
   const bits = new Uint8Array(20);
@@ -27653,6 +27653,29 @@ function classGuideFromBinary(bytes){
   if (order){ const keys = order.map(k => CLASS_GUIDE_STAT_KEYS[k]); if (keys.length !== Object.keys(stats).length || keys.some(k => !(k in stats))) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); for (const k of keys){ const v = stats[k]; delete stats[k]; stats[k] = v; } }   // re-insert in the author's order
   return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), ...(modes ? { modes } : {}), notes };
 }
+// Guide code format 3 (user 2026-10-20: Discord ate "_" pairs in TG2 codes as italics; shorter codes wanted): the format 2 bytes, bits in order, 14 per character
+// as U+4E00 + n (CJK: never Markdown, about 2.3x fewer characters), zero-padded, then one check character (CRC-16/CCITT of the bytes, low 14 bits).
+// Bit 1 of the flag byte says the padding held a whole extra byte, which the reader drops. Reading ignores everything outside U+4E00-U+8DFF, so spaces,
+// line breaks, backticks and the rest of a chat message don't matter. scripts/guide_code.js (toCjk / fromCjk) writes and reads the same characters.
+const CLASS_GUIDE_CJK0 = 0x4E00, CLASS_GUIDE_CODE_BROKEN = "โค้ดไกด์ไม่ถูกต้องหรือไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด";
+function classGuideCrc14(bytes){ let c = 0xFFFF; for (const b of bytes){ c ^= b << 8; for (let k = 0; k < 8; k++) c = c & 0x8000 ? ((c << 1) ^ 0x1021) & 0xFFFF : (c << 1) & 0xFFFF; } return c & 0x3FFF; }
+function classGuideToCjk(all){   // all[0] = the flag byte (bit 1 is set here when needed)
+  all = Uint8Array.from(all);
+  if (Math.floor(Math.ceil(all.length * 8 / 14) * 14 / 8) > all.length) all[0] |= 2;
+  let out = "", acc = 0, n = 0;
+  for (const b of all){ acc = (acc << 8) | b; n += 8; while (n >= 14){ n -= 14; out += String.fromCharCode(CLASS_GUIDE_CJK0 + ((acc >> n) & 0x3FFF)); } acc &= (1 << n) - 1; }
+  if (n) out += String.fromCharCode(CLASS_GUIDE_CJK0 + ((acc << (14 - n)) & 0x3FFF));
+  return out + String.fromCharCode(CLASS_GUIDE_CJK0 + classGuideCrc14(all));
+}
+function classGuideFromCjk(text){
+  const cs = [...String(text)].map(ch => ch.codePointAt(0) - CLASS_GUIDE_CJK0).filter(v => v >= 0 && v < 0x4000);
+  if (cs.length < 2) throw new Error(CLASS_GUIDE_CODE_BROKEN);
+  const check = cs.pop(), out = []; let acc = 0, n = 0;
+  for (const v of cs){ acc = (acc << 14) | v; n += 14; while (n >= 8){ n -= 8; out.push((acc >> n) & 255); } acc &= (1 << n) - 1; }
+  const all = Uint8Array.from(out), bytes = all[0] & 2 ? all.subarray(0, all.length - 1) : all;
+  if (!bytes.length || classGuideCrc14(bytes) !== check) throw new Error(CLASS_GUIDE_CODE_BROKEN);
+  return bytes;
+}
 async function classGuidePack(value){
   const g = classGuideNormalize(value);
   if (JSON.stringify(g).length > 131072) throw new Error("โค้ดไกด์ยาวเกินกำหนด กรุณาลดความยาวคำอธิบายหรือโน้ต");
@@ -27663,19 +27686,24 @@ async function classGuidePack(value){
     if (z.length < raw.length){ best = z; flag = 1; }
   }
   const all = new Uint8Array(best.length + 1); all[0] = flag; all.set(best, 1);
-  let bin = ""; for (let i = 0; i < all.length; i += 0x8000) bin += String.fromCharCode.apply(null, all.subarray(i, i + 0x8000));
-  return CLASS_GUIDE_CODE2_PREFIX + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return CLASS_GUIDE_CODE3_PREFIX + classGuideToCjk(all);
 }
 async function classGuideUnpack(code){
-  const text = String(code || "").trim();
-  if (text.startsWith(CLASS_GUIDE_CODE2_PREFIX)){
+  const text = String(code || "").trim(), at3 = text.indexOf(CLASS_GUIDE_CODE3_PREFIX);
+  let all = null;
+  if (at3 >= 0 && /[\u4E00-\u8DFF]/.test(text.slice(at3))){
+    all = classGuideFromCjk(text.slice(at3 + CLASS_GUIDE_CODE3_PREFIX.length));
+    if (all[0] > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+  } else if (text.startsWith(CLASS_GUIDE_CODE2_PREFIX)){
     const body = text.slice(CLASS_GUIDE_CODE2_PREFIX.length).replace(/\s+/g, "");
     if (!/^[A-Za-z0-9_-]+$/.test(body)) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     let bin; try { bin = atob(body.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((body.length + 3) % 4)); } catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้อง"); }
-    const all = Uint8Array.from(bin, c => c.charCodeAt(0));
+    all = Uint8Array.from(bin, c => c.charCodeAt(0));
     if (!all.length || all[0] > 1) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
+  }
+  if (all){
     let bytes = all.subarray(1);
-    if (all[0] === 1){
+    if (all[0] & 1){
       if (typeof DecompressionStream === "undefined") throw new Error("เบราว์เซอร์นี้อ่านโค้ดย่อไม่ได้ กรุณาอัปเดตเบราว์เซอร์");
       try { bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer()); }
       catch (e) { throw new Error("โค้ดไกด์ไม่ถูกต้องหรือไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด"); }
@@ -31158,6 +31186,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T09:00:38.791Z","feat(bible): class guide codes are now TG3: Chinese characters that Discord cannot format, about 2.3x shorter (average 451 to 196 characters, every guide fits one Discord message); TG2 and 12TG1 codes still import"],
     ["2026-10-20T08:32:28.109Z","fix(bible): opening the page from disk no longer sits blank: the GoatCounter script loads over https instead of a protocol-relative link that Windows looked up as a network share"],
     ["2026-10-20T08:19:12.973Z","fix(bible): the launcher no longer freezes when assets.js fails to load (its icon wall kept waiting for skill icons that never came)"],
     ["2026-10-20T08:09:14.904Z","perf(bible): the embedded images, 3D models and sounds move to assets.js (25.9 MB); index.html drops to 3.9 MB, so a push that touches only the page costs returning visitors about 1.3 MB instead of 19 MB"],

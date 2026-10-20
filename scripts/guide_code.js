@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Class guide short codes (12t_projects/bible, ไกด์อาชีพ). Format 2 ("TG2.", what the page exports): the guide as compact binary
-// (see classGuideBinary below; Thai is one byte per character), deflated when that is shorter, URL-safe base64. Format 1 ("12TG1.": one-letter-key
-// JSON, deflate-raw) still decodes.
+// Class guide short codes (12t_projects/bible, ไกด์อาชีพ). Format 3 ("TG3", what the page exports since 2026-10-20): the format 2 bytes written as CJK
+// characters, 14 bits each, plus a check character (see toCjk below), so Discord can't eat "_" pairs as italics and codes are about 2.3x shorter.
+// Format 2 ("TG2."): the guide as compact binary (see classGuideBinary below; Thai is one byte per character), deflated when that is shorter, URL-safe
+// base64; it still decodes, as does format 1 ("12TG1.": one-letter-key JSON, deflate-raw).
 // The page makes them (classGuidePack) and reads them (classGuideUnpack); this decodes one outside the browser, to embed a submitted guide
 // in CLASS_GUIDES as a JSON object (12t_projects/bible/CLASS-GUIDES.md).
 //
@@ -12,7 +13,7 @@
 const fs = require("fs");
 const zlib = require("zlib");
 
-const PREFIX = "12TG1.", PREFIX2 = "TG2.";
+const PREFIX = "12TG1.", PREFIX2 = "TG2.", PREFIX3 = "TG3";
 // Guide code format 2 (user 2026-10-16: shorter codes): "TG2." + base64url of [flag byte (0 stored, 1 deflate-raw)] + the guide as compact binary:
 //   byte  server index | class index << 2      (servers og tot tto; classes in CLASS_GUIDE_CLASS_KEYS order)
 //   byte  level
@@ -143,8 +144,35 @@ function expand(o){
   const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), ...(o.i !== undefined ? { cover: o.i } : {}), ...(o.m !== undefined ? { modes: o.m } : {}), notes: o.n || {} };
   return g;
 }
-// encode = format 2 (what the page exports); encode1 = the older format 1
+// Format 3 text layer (the page's classGuideToCjk / classGuideFromCjk): bits in order, 14 per character as U+4E00 + n, zero-padded, then one check character
+// (CRC-16/CCITT of the bytes, low 14 bits). Bit 1 of the flag byte says the padding held a whole extra byte, which the reader drops.
+// Reading ignores everything outside U+4E00-U+8DFF (spaces, line breaks, backticks, the text of a chat message).
+const CJK0 = 0x4E00, BAD3 = "โค้ดไกด์ไม่ถูกต้องหรือไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด";
+const crc14 = bytes => { let c = 0xFFFF; for (const b of bytes){ c ^= b << 8; for (let k = 0; k < 8; k++) c = c & 0x8000 ? ((c << 1) ^ 0x1021) & 0xFFFF : (c << 1) & 0xFFFF; } return c & 0x3FFF; };
+function toCjk(all){   // all[0] = the flag byte (bit 1 is set here when needed)
+  all = Buffer.from(all);
+  if (Math.floor(Math.ceil(all.length * 8 / 14) * 14 / 8) > all.length) all[0] |= 2;
+  let out = "", acc = 0, n = 0;
+  for (const b of all){ acc = (acc << 8) | b; n += 8; while (n >= 14){ n -= 14; out += String.fromCharCode(CJK0 + ((acc >> n) & 0x3FFF)); } acc &= (1 << n) - 1; }
+  if (n) out += String.fromCharCode(CJK0 + ((acc << (14 - n)) & 0x3FFF));
+  return out + String.fromCharCode(CJK0 + crc14(all));
+}
+function fromCjk(text){
+  const cs = [...String(text)].map(ch => ch.codePointAt(0) - CJK0).filter(v => v >= 0 && v < 0x4000);
+  if (cs.length < 2) throw new Error(BAD3);
+  const check = cs.pop(), out = []; let acc = 0, n = 0;
+  for (const v of cs){ acc = (acc << 14) | v; n += 14; while (n >= 8){ n -= 8; out.push((acc >> n) & 255); } acc &= (1 << n) - 1; }
+  const all = Buffer.from(out), bytes = all[0] & 2 ? all.subarray(0, all.length - 1) : all;
+  if (!bytes.length || crc14(bytes) !== check) throw new Error(BAD3);
+  return bytes;
+}
+const isCode3 = text => { const at = text.indexOf(PREFIX3); return at >= 0 && /[一-跿]/.test(text.slice(at)) ? at : -1; };
+// encode = format 3 (what the page exports); encode2 / encode1 = the older formats, still read
 function encode(json){
+  const g = typeof json === "string" ? JSON.parse(json) : json, raw = classGuideBinary(g), z = zlib.deflateRawSync(raw, { level: 9 });
+  return PREFIX3 + toCjk(Buffer.concat([Buffer.from([z.length < raw.length ? 1 : 0]), z.length < raw.length ? z : raw]));
+}
+function encode2(json){
   const g = typeof json === "string" ? JSON.parse(json) : json, raw = classGuideBinary(g), z = zlib.deflateRawSync(raw, { level: 9 });
   return PREFIX2 + b64u(Buffer.concat([Buffer.from([z.length < raw.length ? 1 : 0]), z.length < raw.length ? z : raw]));
 }
@@ -153,7 +181,13 @@ function encode1(json){
   return PREFIX + b64u(zlib.deflateRawSync(Buffer.from(text, "utf8"), { level: 9 }));
 }
 function decode(code){
-  const text = String(code).trim();
+  const text = String(code).trim(), at3 = isCode3(text);
+  if (at3 >= 0){
+    const all = fromCjk(text.slice(at3 + PREFIX3.length));
+    if (all[0] > 3) throw new Error("not a guide code");
+    let bytes; try { bytes = all[0] & 1 ? zlib.inflateRawSync(all.subarray(1), { maxOutputLength: 131072 }) : all.subarray(1); } catch (e){ throw new Error(BAD3); }
+    return classGuideFromBinary(bytes);
+  }
   if (text.startsWith(PREFIX2)){
     const all = fromB64u(text.slice(PREFIX2.length).replace(/\s+/g, ""));
     if (!all.length || all[0] > 1) throw new Error("not a guide code");
@@ -166,7 +200,7 @@ function decode(code){
   const out = zlib.inflateRawSync(fromB64u(body), { maxOutputLength: 131072 }).toString("utf8");
   return expand(JSON.parse(out));
 }
-module.exports = { PREFIX, PREFIX2, encode, encode1, decode, compact, expand, classGuideBinary, classGuideFromBinary };
+module.exports = { PREFIX, PREFIX2, PREFIX3, encode, encode2, encode1, decode, toCjk, fromCjk, compact, expand, classGuideBinary, classGuideFromBinary };
 
 if (require.main === module){
   const [op, arg] = process.argv.slice(2);
@@ -176,7 +210,10 @@ if (require.main === module){
       const g = { format: "12t-class-guide", version: 1, title: "ทดสอบ **ทอง**", author: "ผู้เขียน", date: "2026-10-16", description: "a\nb", build: { server: "tot", classKey: "wolf", level: 100, learned: [101, 102, 134, 211, 491, 494] }, stats: { agi: 120, lck: 40 }, gear: { weapon: [{ item: "w_wlf10", replica: { name: "ดาบใหม่ **ทดสอบ**" }, stat: "atk" }, { name: "Custom Blade" }], pet: [{ item: "p_lcr" }] }, cover: [134, 101, 494], notes: { "101": "โน้ต" } };
       const c = encode(g);
       if (JSON.stringify(decode(encode1(g))) !== JSON.stringify(g)) throw new Error("format 1 round trip failed");
-      if (!c.startsWith(PREFIX2) || JSON.stringify(decode(c)) !== JSON.stringify(g) || JSON.stringify(decode(JSON.stringify(g))) !== JSON.stringify(g)) throw new Error("round trip failed");
+      if (JSON.stringify(decode(encode2(g))) !== JSON.stringify(g)) throw new Error("format 2 round trip failed");
+      if (!c.startsWith(PREFIX3) || !/^[一-跿]+$/.test(c.slice(PREFIX3.length)) || JSON.stringify(decode("ไกด์ `" + c.slice(0, 9) + " \n" + c.slice(9) + "` จบ")) !== JSON.stringify(g)) throw new Error("format 3 code or its forgiving paste failed");
+      { const at = c.length - 2; let refused = false; try { decode(c.slice(0, at) + String.fromCharCode(c.charCodeAt(at) ^ 1) + c.slice(at + 1)); } catch (e){ refused = /คัดลอกใหม่/.test(e.message); } if (!refused) throw new Error("a changed TG3 character was not refused"); }
+      if (!c.startsWith(PREFIX3) || JSON.stringify(decode(c)) !== JSON.stringify(g) || JSON.stringify(decode(JSON.stringify(g))) !== JSON.stringify(g)) throw new Error("round trip failed");
       { const f = { ...g, stats: { cha: "ตาม", agi: 250, atk: "ตัน", vit: "70%", lck: "30%" }, statsPlus: ["agi"] }, back = decode(encode(f)); if (JSON.stringify(back.stats) !== JSON.stringify(f.stats) || JSON.stringify(back.statsPlus) !== '["agi"]') throw new Error("stat shares / words / order round trip failed"); }
       console.log("guide_code selftest: all checks passed (" + JSON.stringify(g).length + " chars of JSON -> " + c.length + " chars of code)");
     } else if (op === "decode" && arg) console.log(JSON.stringify(decode(read(arg)), null, 2));

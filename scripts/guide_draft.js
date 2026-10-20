@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Class guide drafts (12t_projects/bible, ไกด์อาชีพ; user 2026-10-17): turn a Skill Simulator screenshot read as a lit / dim grid into a guide, checked
-// with the page's own learn rules (SKILL_SIM, skillSimCells, skillSimValid, the point pools, loaded from index.html), and print its TG2 import code.
+// with the page's own learn rules (SKILL_SIM, skillSimCells, skillSimValid, the point pools, loaded from index.html), and print its TG3 import code.
 // Used by the guide-draft project skill (.claude/skills/guide-draft/SKILL.md).
 //
 //   node scripts/guide_draft.js layout <class> [server]     every tree, row by row: cell ids, names, Lv, tree points needed, required skills
-//   node scripts/guide_draft.js build <draft.json> [out.json]   check the draft, print the summary and the TG2 code (and write the guide JSON)
+//   node scripts/guide_draft.js build <draft.json> [out.json]   check the draft, print the summary and the TG3 code (and write the guide JSON)
 //   node scripts/guide_draft.js --selftest
 //
 // Draft JSON: { server, classKey, level, grid: [Basic rows, A rows, B rows, C rows], title, author, date?, description?, notes?, cover?, modes }
@@ -146,7 +146,7 @@ if (require.main === module){
       const draft = { server: "tto", classKey: "rabbit", level: 95, title: "t", author: "a", date: "2026-10-17", cover: [101], modes: ["pve"],
         grid: loadSim().SKILL_SIM.rabbit.map((t, i) => rowsOf(cellsFor(loadSim(), "rabbit", "tto").cells, i).filter(r => r.length).map((r, k) => i === 0 && k === 0 ? "1" + "0".repeat(r.length - 1) : "0".repeat(r.length))), notes: { 101: "n" } };
       const r = build(draft);
-      if (r.guide.build.learned.join() !== "101" || !r.code.startsWith("TG2.") || r.guide.notes[101] !== "n") throw new Error("one-cell build failed");
+      if (r.guide.build.learned.join() !== "101" || !r.code.startsWith("TG3") || r.guide.notes[101] !== "n") throw new Error("one-cell build failed");
       draft.grid[0][0] = "0" + draft.grid[0][0].slice(1).replace(/^0/, "1");
       let threw = false; try { build(draft); } catch (e){ threw = /cell before it/.test(e.message); }
       if (!threw) throw new Error("a rank without the one before it was accepted");

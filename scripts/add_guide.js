@@ -63,10 +63,10 @@ const nextId = (doc) => Math.max(0, ...doc.guides.map((x) => x.g.id), ...doc.rem
 const guideLine = (id, g) => "  " + JSON.stringify({ id, ...g }).replace(/</g, "\\u003c") + ",";   // no "</script>" or "<!--" inside the page script
 const tombLine = (id, g) => `  // #${id} removed ${today()}: ${clean(g.title)} by ${clean(g.author)}`;
 const lineAt = (doc, id) => doc.lines.findIndex((l) => { const t = l.trim(); return t.startsWith(`{"id":${id},`) || t.startsWith(`// #${id} removed`); });
-function findCode(text){ return (String(text || "").match(/(?:TG2|12TG1)\.[A-Za-z0-9_-]+/) || [])[0]; }
+function findCode(text){ return (String(text || "").match(/TG3[一-跿\s`]*[一-跿]|(?:TG2|12TG1)\.[A-Za-z0-9_-]+/) || [])[0]; }   // TG3 (2026-10-20) may carry spaces, line breaks and backticks from a chat message
 function decodeCode(text){
   const code = findCode(text);
-  if (!code) throw new Error("ไม่พบโค้ดไกด์ (ขึ้นต้นด้วย TG2.)");
+  if (!code) throw new Error("ไม่พบโค้ดไกด์ (ขึ้นต้นด้วย TG3 หรือ TG2.)");
   let g;
   try { g = decode(code); }
   catch (e){ throw new Error("อ่านโค้ดไม่ได้ (" + e.message + "). ถ้าโค้ดถูกส่งทาง Discord นอกกล่องโค้ด เครื่องหมาย _ อาจหายไปเพราะกลายเป็นตัวเอียง ขอให้ผู้เขียนส่งใหม่ในกล่องโค้ด (```)"); }
@@ -408,7 +408,7 @@ const PAGE = String.raw`<!doctype html>
     <div class="col">
       <section class="card" id="editor">
         <h2 id="edTitle">เพิ่มไกด์ใหม่<button type="button" class="btn btn-sm x" id="cancelReplace" hidden>ยกเลิก</button></h2>
-        <textarea id="code" placeholder="วางโค้ดไกด์ที่นี่ (TG2.…) จะวางทั้งข้อความที่ได้รับมาก็ได้" spellcheck="false"></textarea>
+        <textarea id="code" placeholder="วางโค้ดไกด์ที่นี่ (TG3… หรือ TG2.…) จะวางทั้งข้อความที่ได้รับมาก็ได้" spellcheck="false"></textarea>
         <div class="preview" id="preview"><span class="face" id="pvFace"></span><div><b id="pvTitle"></b><span id="pvBy"></span><div class="meta" id="pvMeta"></div></div></div>
         <div class="msg" id="msg"></div>
         <div class="modes" id="modes" hidden><span>ไกด์นี้สำหรับ</span><button type="button" class="mbtn" data-m="pve" aria-pressed="false">PVE</button><button type="button" class="mbtn" data-m="pvp" aria-pressed="false">PVP</button><small id="modesHint"></small></div>

@@ -1,11 +1,11 @@
 ---
 name: guide-draft
-description: Use when the user shares a Skill Simulator screenshot (often with a player's post or explanation) and wants a class guide drafted from it, i.e. the build read off the screenshot, a description and skill notes from the text, as a TG2 guide code for ไกด์อาชีพ.
+description: Use when the user shares a Skill Simulator screenshot (often with a player's post or explanation) and wants a class guide drafted from it, i.e. the build read off the screenshot, a description and skill notes from the text, as a TG3 guide code for ไกด์อาชีพ.
 ---
 
 # Draft a class guide from a screenshot
 
-Input: a screenshot of the Bible's Skill Simulator (class portrait picked, Lv box, point pools, the four trees), usually with the author's text (a Discord post, a chat message). Output: a checked guide JSON and its `TG2.` code, which the user imports in เขียนไกด์ → นำเข้า to review, or asks to embed.
+Input: a screenshot of the Bible's Skill Simulator (class portrait picked, Lv box, point pools, the four trees), usually with the author's text (a Discord post, a chat message). Output: a checked guide JSON and its `TG3` code (CJK characters, since 2026-10-20), which the user imports in เขียนไกด์ → นำเข้า to review, or asks to embed.
 
 Skip recommended stats and gear (user 2026-10-17): they come from the author in the editor, never from a guess.
 
@@ -44,4 +44,4 @@ Then run `node scripts/guide_draft.js build <draft.json> <guide.json>`. It appli
 
 ## 4. Hand it over
 
-Give the user the `TG2.` code, the build summary (class, server, Lv, tree counts, pools), the cover and notes chosen, the nickname mappings, and anything left open (author, unclear nicknames). Embed it in `CLASS_GUIDES` only when the user asks; then follow [12t_projects/bible/CLASS-GUIDES.md](../../../12t_projects/bible/CLASS-GUIDES.md) (next running `id`, `cover` after it) and the changelog gate.
+Give the user the `TG3` code, the build summary (class, server, Lv, tree counts, pools), the cover and notes chosen, the nickname mappings, and anything left open (author, unclear nicknames). Embed it in `CLASS_GUIDES` only when the user asks; then follow [12t_projects/bible/CLASS-GUIDES.md](../../../12t_projects/bible/CLASS-GUIDES.md) (next running `id`, `cover` after it) and the changelog gate.

@@ -3279,12 +3279,35 @@ let checkedRsim = 0;
       ok(same(Array.from(bin(odd)), Array.from(gc.classGuideBinary(odd))), "page and scripts/guide_code.js write identical format 2 bytes");
       rejects(()=>bin({...odd, date:"2569-10-20"}), "the page's format 2 encoder refuses a date its 2 bytes cannot hold (never wraps)"); rejects(()=>gc.classGuideBinary({...odd, date:"2569-10-20"}), "guide_code.js refuses it too");
       ok(same(norm(fromBin(bin(odd))), odd) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(odd)))), odd), "format 2 binary reads back emoji, accents, CJK, bold markers, newlines, stat 0 and 512");
-      ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode(odd)) && same(norm(gc.decode(gc.encode(odd))), odd), "guide_code encode writes a TG2. code that decodes to the same guide");
+      ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode2(odd)) && same(norm(gc.decode(gc.encode2(odd))), odd), "guide_code encode2 writes a TG2. code that still decodes to the same guide");
       let threw = false; try { fromBin(bin(odd).subarray(0, 30)); } catch (e) { threw = true; } ok(threw, "a cut-off format 2 code is rejected, not misread");
       // Shares, ตัน / ตาม and the author's order (user 2026-10-18): bit 14 = share, bit 13 = word, an optional 0x4F order block; older codes read the same.
       const OLD = "TG2.AdNNYWdAAwIMDJZqC3UYfzUwMHCF5-ekKaSXZqakMjoyMHgyMgAA";   // written by the pre-flask encoder: wolf, stats {atk:300,cha:250,lck:0}, statsPlus ["cha"]
       const od = gc.decode(OLD);
-      ok(JSON.stringify(od.stats) === '{"atk":300,"cha":250,"lck":0}' && od.statsPlus.join() === "cha" && gc.encode(od) === OLD, "a pre-flask TG2 code decodes the same and re-encodes to the same string");
+      ok(JSON.stringify(od.stats) === '{"atk":300,"cha":250,"lck":0}' && od.statsPlus.join() === "cha" && gc.encode2(od) === OLD, "a pre-flask TG2 code decodes the same and re-encodes to the same string");
+      // Format 3 (user 2026-10-20: Discord ate "_" pairs as italics): "TG3" + the same bytes at 14 bits per CJK character (U+4E00 + n) + one check character.
+      { const toCjk = vm.runInContext("classGuideToCjk", sandbox), fromCjk = vm.runInContext("classGuideFromCjk", sandbox), CJK = /^[一-跿]+$/;
+        let agree = true, back = true;
+        for (let len = 1; len <= 60; len++){
+          const bytes = Array.from({ length: len }, (_, i) => (i * 97 + len * 31) & (i ? 255 : 1));   // byte 0 is the flag byte: 0 or 1
+          const p = toCjk(Uint8Array.from(bytes)), n = gc.toCjk(Buffer.from(bytes));
+          if (p !== n || !CJK.test(p)) agree = false;
+          if (!same(Array.from(fromCjk(p)), Array.from(gc.fromCjk(n)).map(Number)) || !same(Array.from(fromCjk(p)).slice(1), bytes.slice(1)) || (fromCjk(p)[0] & 1) !== bytes[0]) back = false;
+        }
+        ok(agree, "page and scripts/guide_code.js write the same TG3 characters for 1-60 bytes, all in U+4E00-U+8DFF");
+        ok(back, "TG3 characters read back to the same bytes for every length 1-60 (the padding byte is dropped)");
+        const code = gc.encode(odd);
+        ok(code.startsWith("TG3") && CJK.test(code.slice(3)) && !/[_*~|`>#:\\-]/.test(code), "guide_code encode writes a TG3 code: CJK only, nothing Discord formats");
+        ok(same(norm(gc.decode(code)), odd), "a TG3 code decodes to the same guide");
+        const pasted = "ไกด์หมาของผม > " + "`" + code.slice(0, 20) + " \n " + code.slice(20, 40) + "\n" + code.slice(40) + "`" + " ขอบคุณครับ";
+        ok(same(norm(gc.decode(pasted)), odd), "a TG3 code still decodes inside a Discord message: text around it, backticks, spaces and line breaks");
+        const at = 3 + Math.floor((code.length - 3) / 2), broken = code.slice(0, at) + String.fromCharCode(code.charCodeAt(at) ^ 1) + code.slice(at + 1);
+        let msg = ""; try { gc.decode(broken); } catch (e) { msg = e.message; }
+        ok(/คัดลอกใหม่/.test(msg), "a TG3 code with one changed character is refused with the copy-again message (guide_code.js)");
+        rejects(() => fromCjk(broken.slice(3)), "the page refuses it too");
+        rejects(() => gc.decode(code.slice(0, -5)), "a TG3 code cut short is refused");
+        ok(embedded.every(g => { const n = norm(g), c3 = gc.encode(n); return c3.length < gc.encode2(n).length * 0.5 && c3.length <= 2000; }), "every embedded guide's TG3 code is under half its TG2 length and fits one Discord message (2000 characters)");
+      }
       const flask = norm({...fixture, stats:{cha:"ตาม", agi:250, atk:"ตัน", vit:"70%", lck:"30%"}, statsPlus:["agi"]});
       ok(same(Array.from(bin(flask)), Array.from(gc.classGuideBinary(flask))), "page and guide_code.js write the same bytes for shares, words and author order");
       ok(same(norm(fromBin(bin(flask))), flask) && same(norm(gc.decode(gc.encode(flask))), flask), "shares, words, 250+ and the author's order round-trip through TG2");
