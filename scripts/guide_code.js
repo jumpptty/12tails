@@ -27,10 +27,12 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.";
 //   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
 //   byte 200-211 names a support skill (ids 901-912).
 //   optional stat order block (user 2026-10-18): 0x4F, count byte, then one CLASS_GUIDE_STAT_KEYS index per stat in the author's order; written only when that order is not the fixed one, so older guides keep their exact code.
+//   optional mode block (user 2026-10-20): 0x4D, one byte: bit 0 PVE, bit 1 PVP (CLASS_GUIDE_MODES); written whenever a mode is set (a finished guide always has one).
 const CLASS_GUIDE_GEAR_KEYS = ["weapon", "armor", "hat", "trinket", "boot", "pet"];
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
+const CLASS_GUIDE_MODES = ["pve", "pvp"];   // what a guide is for, both allowed (user 2026-10-20)
 const CLASS_GUIDE_STAT_WORDS = ["ตัน", "ตาม"];   // the stat words by index (the page's CLASS_GUIDE_STAT_WORDS)
 function classGuideBinary(g){
   const out = [], slot = id => id >= 901 ? 200 + id - 901 : (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // support skills 901-912 = slots 200-211
@@ -49,6 +51,7 @@ function classGuideBinary(g){
   const bits = new Array(20).fill(0); for (const id of g.build.learned){ const k = slot(id); bits[k >> 3] |= 1 << (k & 7); }
   for (const x of bits) out.push(x);
   const days = g.date ? Math.round((Date.parse(g.date + "T00:00:00Z") - Date.UTC(2000, 0, 1)) / 864e5) : 0xFFFF;
+  if (g.date && !(days >= 0 && days < 0xFFFF)) throw new Error("date out of range: " + g.date);   // never wrap: 20/10/2569 (a Buddhist-era year) came out as 2031-07-05
   out.push(days & 255, days >> 8);
   const st = g.stats || {}; let mask = 0; CLASS_GUIDE_STAT_KEYS.forEach((k, i) => { if (k in st) mask |= 1 << i; }); out.push(mask);
   for (const [k, x] of Object.entries(st)) if (!(Number.isInteger(x) && x >= 0 && x <= 512) && !(typeof x === "string" && (/^(100|[1-9]\d?)%$/.test(x) || CLASS_GUIDE_STAT_WORDS.includes(x)))) throw new Error("invalid stat value for " + k + ": " + JSON.stringify(x));   // what the page would reject
@@ -64,6 +67,7 @@ function classGuideBinary(g){
   const cover = g.cover || []; if (cover.length){ out.push(0x49, cover.length); for (const id of cover) out.push(slot(id)); }
   const support = g.build.support || []; if (support.length){ out.push(0x53, support.length); for (const id of support) out.push(id - 901); }
   const order = Object.keys(st); if (order.join() !== CLASS_GUIDE_STAT_KEYS.filter(k => k in st).join()){ out.push(0x4F, order.length); for (const k of order) out.push(CLASS_GUIDE_STAT_KEYS.indexOf(k)); }   // the author's stat order (user 2026-10-18)
+  const modes = g.modes || []; if (modes.length){ let m = 0; CLASS_GUIDE_MODES.forEach((k, j) => { if (modes.includes(k)) m |= 1 << j; }); out.push(0x4D, m); }   // PVE / PVP (user 2026-10-20)
   return Buffer.from(out);
 }
 function classGuideFromBinary(bytes){
@@ -98,12 +102,13 @@ function classGuideFromBinary(bytes){
   const unslot = k => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
   for (let n = 0; n < count; n++){ notes[unslot(byte())] = text(); }
-  let gear = null, cover = null, support = null, order = null;
+  let gear = null, cover = null, support = null, order = null, modes = null;
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
     if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
     if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= CLASS_GUIDE_STAT_KEYS.length || order.includes(k)) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); order.push(k); } continue; }   // the author's stat order (user 2026-10-18)
+    if (tag === 0x4D && !modes){ const m = byte(); if (!m || m > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); modes = CLASS_GUIDE_MODES.filter((k, j) => m & (1 << j)); continue; }   // PVE / PVP (user 2026-10-20)
     if (tag !== 0x47 || gear) throw new Error("โค้ดไกด์ไม่ถูกต้อง");
     const m = byte(); gear = {};
     for (let j = 0; j < CLASS_GUIDE_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -114,7 +119,7 @@ function classGuideFromBinary(bytes){
     }
   }
   if (order){ const keys = order.map(k => CLASS_GUIDE_STAT_KEYS[k]); if (keys.length !== Object.keys(stats).length || keys.some(k => !(k in stats))) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); for (const k of keys){ const v = stats[k]; delete stats[k]; stats[k] = v; } }   // re-insert in the author's order
-  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), notes };
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), ...(modes ? { modes } : {}), notes };
 }
 
 // Same compact form as classGuideCompact / classGuideExpand in index.html: one-letter keys, learned skills as a 160-bit set (one bit per tree x row x column slot).
@@ -128,13 +133,14 @@ function compact(g){
   if (g.stats) o.v = g.stats;
   if (g.gear) o.g = g.gear;
   if (g.cover) o.i = g.cover;
+  if (g.modes) o.m = g.modes;
   return o;
 }
 function expand(o){
   if (!o || typeof o.k !== "string") return o;
   const bits = fromB64u(o.k), learned = [];
   for (let k = 0; k < bits.length * 8 && k < 160; k++) if (bits[k >> 3] & (1 << (k & 7))) learned.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1);
-  const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), ...(o.i !== undefined ? { cover: o.i } : {}), notes: o.n || {} };
+  const g = { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), ...(o.i !== undefined ? { cover: o.i } : {}), ...(o.m !== undefined ? { modes: o.m } : {}), notes: o.n || {} };
   return g;
 }
 // encode = format 2 (what the page exports); encode1 = the older format 1

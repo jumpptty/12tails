@@ -25,7 +25,8 @@ Write the draft JSON in the session scratchpad (never in the repo):
   "grid": [["100", "1100", "1111", "11", "1111"], ["..."], ["..."], ["0111", "0001", "1000", "1001", "1010"]],
   "title": "...", "author": "", "description": "...",
   "notes": { "Volcanic Eruption": "...", "304": "..." },
-  "cover": ["Volcanic Eruption", "Summon Soul", "Ground Lock"] }
+  "cover": ["Volcanic Eruption", "Summon Soul", "Ground Lock"],
+  "modes": ["pve"] }
 ```
 
 Then run `node scripts/guide_draft.js build <draft.json> <guide.json>`. It applies the page's own learn rules (`skillSimValid` and the pools, loaded from `index.html`) and names every broken rule. A broken rule almost always means a misread cell, so look at the screenshot again; never "fix" the build to make it pass. The summary prints the tree counts and pools; compare them with the screenshot's headers. Unspent points are fine (the page marks them as flex points).
@@ -37,6 +38,7 @@ Then run `node scripts/guide_draft.js build <draft.json> <guide.json>`. It appli
 - **Nicknames → skills:** match the author's Thai names to the layout names, using `12t_reference/<class>-skill-reference.md` when the link is not obvious (e.g. Monkey "ล็อค 6" = Ground Lock, whose lock Aegis Of Earth 3 raises to 6 s; "ท่าชาร์ตรวมร่างลิงดิน" that adds KO to Stone Hammer = Stone Sentinel). If a nickname stays unclear, keep the sentence in the description and say so to the user.
 - **Bold** with `**text**`, with a space before and after it (the editor adds those spaces), on the key points only: modes, key skills, numbers.
 - **Cover:** 1-5 skills, the ones the author calls the build's core, most important first.
+- **Modes (required, user 2026-10-20):** `"modes"` is `["pve"]`, `["pvp"]` or `["pve", "pvp"]`, from the title or the author's words (PVE: ลงดัน, ด่าน, บอส, โซโล่, ฟาร์ม; PVP: PVP, อารีน่า, 1/8, 3-3, 5-5, ฆ่าคน, วอร์). If neither is said, ask the user; never guess.
 - **Title:** short and in the community's style (class nickname + role or mode, e.g. ลิง PVP อารีน่าใหญ่). **Author:** only a name the user or the post gives; otherwise leave it empty and ask. **Date:** today unless given.
 - Limits: title 160, author 120, description 12000, each note 3000 characters.
 

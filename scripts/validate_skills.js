@@ -3237,7 +3237,7 @@ let checkedRsim = 0;
   ok(Array.isArray(embedded), "embedded guides use a data array");
   { const ids = embedded.map((g, i) => Number.isInteger(g.id) && g.id > 0 ? String(g.id) : String(i + 1)); ok(new Set(ids).size === ids.length, "embedded guide numbers are unique (link #skill-simulator/<number>): " + ids.join(", ")); embedded.forEach((g, i) => ok(Number.isInteger(g.id) && g.id > 0, "embedded guide " + (i + 1) + " has a running number id (1, 2, 3 ...)")); }
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
-  const fixture = { cover:[101],format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
+  const fixture = { cover:[101],modes:["pve"],format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
   const round = decode(encode(fixture));
   ok(round.author === fixture.author && round.description === fixture.description && round.notes[103] === fixture.notes[103] && round.notes[201] === fixture.notes[201], "UTF-8, multiline notes and skipped-skill notes round-trip as plain text");
   ok(round.build.learned.join() === "101,102,103,451", "export normalizes build ordering");
@@ -3249,6 +3249,12 @@ let checkedRsim = 0;
   const change = patch => ({...fixture,...patch});
   rejects(()=>decode("not JSON"),"reject malformed codes"); rejects(()=>decode("x".repeat(131073)),"limit import size");
   rejects(()=>norm(change({version:2})),"reject unsupported format version"); rejects(()=>norm(change({author:""})),"require author for export"); rejects(()=>norm(change({date:""})),"require the guide date for export");rejects(()=>norm(change({date:"2026-02-30"})),"reject an impossible date");rejects(()=>norm(change({date:"16/10/2026"})),"reject a date in the wrong format");
+  ok(html.split('<span>คัดลอกรูป</span></button>').length - 1 === 2 && html.includes('{ act: "copyImage", icon: "copy"') && vm.runInContext("CLASS_GUIDE_COPY_MAX", sandbox) < 10e6 && vm.runInContext("typeof classGuideCopyImage", sandbox) === "function", "คัดลอกรูป sits in the reader row, step 6 and the guide menu, and its 2K fallback starts below Discord's 10 MB");
+  { const day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10); const today = vm.runInContext("classGuideToday", sandbox)();   // user 2026-10-20: no guide date later than today, which also stops a Buddhist-era year
+    rejects(()=>norm(change({date:"2569-10-20"})),"reject a Buddhist-era year (20/10/2569 wrapped to 2031-07-05 in two codes)"); rejects(()=>norm(change({date:day(2)})),"reject a guide date after tomorrow (UTC)");
+    ok(norm(change({date:day(0)})).date === day(0) && norm(change({date:day(1)})).date === day(1), "today and tomorrow (UTC) pass, so a guide dated today in any time zone never looks future");
+    ok(norm(change({date:"2569-10-20"}),{draft:true}).date === "" && norm(change({date:day(400)}),{draft:true}).date === "", "a draft or an imported code drops a future date instead of failing to open");
+    ok(/^\d{4}-\d{2}-\d{2}$/.test(today) && today >= day(-1) && today <= day(1), "the editor's today is the local calendar day"); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
   rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
   rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");
@@ -3260,6 +3266,10 @@ let checkedRsim = 0;
   rejects(()=>norm(change({notes:{"451":"x".repeat(3001)}})),"limit per-skill note length");
   rejects(()=>norm(change({build:{...fixture.build,classKey:"cat",learned:[]},notes:{"452":"not published"}})),"reject unpublished EX note anchor");
   ok(norm(change({title:"",author:"",date:""}),{draft:true}).title === "", "allow unfinished local drafts");
+  rejects(()=>norm(change({modes:undefined})),"require PVE / PVP for export (user 2026-10-20)"); rejects(()=>norm(change({modes:[]})),"an empty PVE / PVP list is not a choice"); rejects(()=>norm(change({modes:["pvx"]})),"reject an unknown mode");
+  ok(norm(change({modes:undefined}),{draft:true}).modes === undefined && norm(change({modes:["pvx"]}),{draft:true}).modes === undefined, "a draft may lack PVE / PVP, and drops an unknown one");
+  ok(norm(change({modes:["pvp","pve"]})).modes.join() === "pve,pvp" && decode(encode(change({modes:["pve","pvp"]}))).modes.join() === "pve,pvp", "both modes are kept, in CLASS_GUIDE_MODES order, and survive export / import");
+  ok(embedded.every(g => Array.isArray(g.modes) && g.modes.length), "every embedded guide has PVE / PVP (user 2026-10-20)");
   { const old = {...fixture, patch:"1.57"}; delete old.date; const opened = decode(JSON.stringify(old)); ok(opened.date === "" && !("patch" in opened), "an old code with a patch and no date still opens in the editor (date asked again on export)"); rejects(()=>encode(opened), "export asks for the date"); }
   // Short code (user 2026-10-16): the page's compact form and scripts/guide_code.js agree, and every embedded guide survives the round trip.
   { if (!sandbox.btoa) sandbox.btoa = btoa; if (!sandbox.atob) sandbox.atob = atob;
@@ -3276,6 +3286,7 @@ let checkedRsim = 0;
     { const bin = vm.runInContext("classGuideBinary", sandbox), fromBin = vm.runInContext("classGuideFromBinary", sandbox);
       const odd = norm({...fixture, title:"Guide 🐺 **ทอง** ñ é 中文", author:"ผู้เขียน 🐺", description:"บรรทัด 1\nline 2 ✓", stats:{atk:0,lck:512}});
       ok(same(Array.from(bin(odd)), Array.from(gc.classGuideBinary(odd))), "page and scripts/guide_code.js write identical format 2 bytes");
+      rejects(()=>bin({...odd, date:"2569-10-20"}), "the page's format 2 encoder refuses a date its 2 bytes cannot hold (never wraps)"); rejects(()=>gc.classGuideBinary({...odd, date:"2569-10-20"}), "guide_code.js refuses it too");
       ok(same(norm(fromBin(bin(odd))), odd) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(odd)))), odd), "format 2 binary reads back emoji, accents, CJK, bold markers, newlines, stat 0 and 512");
       ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode(odd)) && same(norm(gc.decode(gc.encode(odd))), odd), "guide_code encode writes a TG2. code that decodes to the same guide");
       let threw = false; try { fromBin(bin(odd).subarray(0, 30)); } catch (e) { threw = true; } ok(threw, "a cut-off format 2 code is rejected, not misread");
@@ -3292,7 +3303,7 @@ let checkedRsim = 0;
       ok(base[24] === 1 << 3, "TG2 layout: the stats mask is byte 24");
       ok([0x6001, 0xC032, 0x4000, 0x4065, 0x2002].every(v => { const b = Uint8Array.from(base); b[25] = v & 255; b[26] = v >> 8; try { fromBin(b); return false; } catch (e) { return true; } }), "invalid share / word bits in a TG2 code are rejected");
       // the order block is written last: [0x4F, 5, cha, agi, atk, vit, lck] for the flask guide (indices in CLASS_GUIDE_STAT_KEYS order)
-      { const fb = Array.from(bin(flask)), at = fb.length - 7, head = fb.slice(0, at), blk = fb.slice(at), throws = arr => { try { fromBin(Uint8Array.from(arr)); return false; } catch (e) { return true; } };
+      { const fb = Array.from(bin({ ...flask, modes: undefined })), at = fb.length - 7,   /* checked without the PVE / PVP block, which comes after it (user 2026-10-20) */ head = fb.slice(0, at), blk = fb.slice(at), throws = arr => { try { fromBin(Uint8Array.from(arr)); return false; } catch (e) { return true; } };
         ok(blk[0] === 0x4F && blk[1] === 5 && !throws(fb), "TG2 layout: the flask guide ends with its 7-byte order block");
         const bad = { duplicate: [...head, 0x4F, 5, blk[2], blk[2], blk[4], blk[5], blk[6]], indexEight: [...head, 0x4F, 5, blk[2], blk[3], blk[4], blk[5], 8], missingStat: [...head, 0x4F, 4, blk[2], blk[3], blk[4], blk[5]], extraUnsetStat: [...head, 0x4F, 6, ...blk.slice(2), 1], countZero: [...head, 0x4F, 0], twoBlocks: [...fb, ...blk] };
         ok(Object.values(bad).every(throws), "malformed stat order blocks are rejected (duplicate, index 8, a missing or extra stat, count 0, two blocks)"); }

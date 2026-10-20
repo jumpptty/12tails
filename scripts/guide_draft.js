@@ -7,7 +7,7 @@
 //   node scripts/guide_draft.js build <draft.json> [out.json]   check the draft, print the summary and the TG2 code (and write the guide JSON)
 //   node scripts/guide_draft.js --selftest
 //
-// Draft JSON: { server, classKey, level, grid: [Basic rows, A rows, B rows, C rows], title, author, date?, description?, notes?, cover? }
+// Draft JSON: { server, classKey, level, grid: [Basic rows, A rows, B rows, C rows], title, author, date?, description?, notes?, cover?, modes }
 //   grid rows are strings of 1 (lit) / 0 (dim), one character per cell, left to right, top to bottom, exactly as the simulator draws them;
 //   on ToT the C tree's EX rows follow its 5 rows (row 6 = 451-454, row 7 = 461).
 //   notes / cover keys may be cell ids or skill names ("Volcano", or "Volcano 2" for one rank; a bare name means its highest learned rank).
@@ -23,7 +23,8 @@ function loadSim(){
   const a = s.indexOf("const SKILL_SIM = {"), b = s.indexOf("// Clearing a tree prunes", a);
   if (a < 0 || b < 0) throw new Error("index.html: SKILL_SIM block not found (anchors: 'const SKILL_SIM = {', '// Clearing a tree prunes')");
   const box = {};   // the block also adds the EX icons to SKILL_ICONS, so the sandbox gets an empty one
-  vm.runInNewContext(s.slice(a, b) + "\n;Object.assign(box, { SKILL_SIM, SKILL_SIM_NAMES, SKILL_SIM_EX, SKILL_SIM_SERVERS, skillSimCells, skillSimValid, skillSimPoolMax, skillSimPoolMaxC, skillSimPoolMaxEx });", { box, SKILL_ICONS: {} });
+  const cap = (s.match(/^const LEVEL_CAP = [^\r\n]*/m) || [""])[0];   // the block reads LEVEL_CAP (the server caps), defined elsewhere in index.html
+  vm.runInNewContext(cap + "\n" + s.slice(a, b) + "\n;Object.assign(box, { SKILL_SIM, SKILL_SIM_NAMES, SKILL_SIM_EX, SKILL_SIM_SERVERS, skillSimCells, skillSimValid, skillSimPoolMax, skillSimPoolMaxC, skillSimPoolMaxEx });", { box, SKILL_ICONS: {} });
   return box;
 }
 const TREE_NAMES = ["Basic", "A", "B", "C"];
@@ -115,17 +116,19 @@ function build(draft){
   }
   const cover = (draft.cover || []).map(k => resolve(cells, learned, k));
   if (!cover.length || cover.length > 5 || new Set(cover).size !== cover.length) throw new Error("cover needs 1-5 different skills");
+  const modes = ["pve", "pvp"].filter(m => (draft.modes || []).includes(m));   // what the guide is for, both allowed (user 2026-10-20)
+  if (!modes.length) throw new Error("modes needs pve and/or pvp: what the guide is for, from the author’s post");
   for (const [k, max] of [["title", 160], ["author", 120], ["description", 12000]]) if (String(draft[k] || "").length > max) throw new Error(k + " is longer than " + max + " characters");
   if (!String(draft.title || "").trim()) throw new Error("title is empty");
   const guide = {
     format: "12t-class-guide", version: 1, title: draft.title.trim(), author: String(draft.author || "").trim(),
     date: draft.date || new Date().toISOString().slice(0, 10), description: String(draft.description || "").trim(),
     build: { server: draft.server, classKey: draft.classKey, level: lv, learned: [...learned].sort((a, b) => a - b) },
-    cover, notes: Object.fromEntries(Object.keys(notes).map(Number).sort((a, b) => a - b).map(id => [id, notes[id]])),
+    cover, modes, notes: Object.fromEntries(Object.keys(notes).map(Number).sort((a, b) => a - b).map(id => [id, notes[id]])),
   };
   const lines = [
     sim.SKILL_SIM_NAMES[draft.classKey] + " on " + sim.SKILL_SIM_SERVERS[draft.server].name + " Lv " + lv + ": " + report.join(", ") + "; points " + pools,
-    "cover: " + cover.map(id => id + " " + cells[id].name).join(", "),
+    "cover: " + cover.map(id => id + " " + cells[id].name).join(", ") + " | modes: " + modes.map(m => m.toUpperCase()).join(" + "),
     "notes: " + (Object.keys(guide.notes).map(id => id + " " + cells[id].name).join(", ") || "none"),
   ];
   return { guide, code: encode(guide), summary: lines.join("\n") };
@@ -140,7 +143,7 @@ if (require.main === module){
       if (b) fs.writeFileSync(b, JSON.stringify(r.guide, null, 2) + "\n");
       console.log(r.summary + "\n\n" + r.code);
     } else if (op === "--selftest"){
-      const draft = { server: "tto", classKey: "rabbit", level: 95, title: "t", author: "a", date: "2026-10-17", cover: [101],
+      const draft = { server: "tto", classKey: "rabbit", level: 95, title: "t", author: "a", date: "2026-10-17", cover: [101], modes: ["pve"],
         grid: loadSim().SKILL_SIM.rabbit.map((t, i) => rowsOf(cellsFor(loadSim(), "rabbit", "tto").cells, i).filter(r => r.length).map((r, k) => i === 0 && k === 0 ? "1" + "0".repeat(r.length - 1) : "0".repeat(r.length))), notes: { 101: "n" } };
       const r = build(draft);
       if (r.guide.build.learned.join() !== "101" || !r.code.startsWith("TG2.") || r.guide.notes[101] !== "n") throw new Error("one-cell build failed");
