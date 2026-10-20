@@ -34,8 +34,10 @@ python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode c
 node scripts/guide_code.js decode <code | file>                # turn a submitted class guide short code (TG3, TG2. or 12TG1.) into the JSON object to embed (also: encode <json> -> TG3, --selftest)
 node scripts/guide_draft.js layout <class> [server]            # a class's skill-sim rows with cell ids (also: build <draft.json> [out.json] -> checked guide + TG3 code, --selftest)
 node scripts/guide_views.js                                     # refresh CLASS_GUIDE_VIEWS (guide readers for ad-blocked browsers) from GoatCounter; by hand only, NOT before commits since 2026-10-20 (user: the live API does the work) (--dry-run: print only)
-node scripts/add_guide.js                                       # class guide manager page (queue adds / replaces / removes, publish the batch in one go: views, changelog, --full validator, one commit, push; undo reverses the last batch); double-click scripts/add_guide.cmd
+node scripts/add_guide.js                                       # class guide manager page (queue adds / replaces / removes, publish the batch in one go: changelog, --full validator, one commit, push; undo reverses the last batch); double-click scripts/add_guide.cmd. The same page runs on the phone from GitHub Pages (12t_projects/guide-manager/, CLASS-GUIDES.md)
 node scripts/add_guide.js add <code> | replace <N> <code> | delete <N>  [--dry-run | --no-push | --yes]   # the same pipeline on the command line
+node scripts/add_guide.js batch <request.json> --stage git|edit|check|commit|push [--dry-run]   # one stage, for .github/workflows/guide-manager.yml (the phone)
+node scripts/add_guide.js --selftest                            # the pipeline, batch stages and undo-from-commit on throwaway repos
 ```
 
 ### Project skills and agents
