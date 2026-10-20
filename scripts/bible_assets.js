@@ -65,13 +65,16 @@ function split(html, manifest = MANIFEST){
     decl.set(name, { s, e });
   }
   const inDecl = (i) => [...decl.values()].some((d) => i >= d.s && i <= d.e);
-  // literal assignments that add to a container move with it; the rest (aliases such as S["d"] = S["a"]) stay in the page
-  const moved = new Map(), movedLines = new Set(), keptAliases = [];
+  // heavy literal assignments that add to a container move with it (a data URI, or a long base64 string such as a mesh whose texture is
+  // borrowed); the rest (aliases such as S["d"] = S["a"]) stay in the page. Report lines never show base64.
+  const heavy = (l) => dataUriBytes(l) > 0 || /"[A-Za-z0-9+/=]{200,}"/.test(l);
+  const show = (i) => `L${i + 1}: ` + lines[i].replace(URI_RE, "<uri>").replace(/"[A-Za-z0-9+/=]{40,}"/g, '"<b64>"').slice(0, 80);
+  const moved = new Map(), movedLines = new Set(), keptAliases = [], keptLines = [];
   for (const { name } of manifest){
     const list = [];
     lines.forEach((l, i) => {
       if (!inMain(i) || inDecl(i) || !(l.startsWith(name + ".") || l.startsWith(name + "[") || l.startsWith(`Object.assign(${name}, `))) return;
-      if (!dataUriBytes(l)){ keptAliases.push(`L${i + 1}: ${l.slice(0, 80)}`); return; }
+      if (!heavy(l)){ keptAliases.push(show(i)); keptLines.push(i); return; }
       try { new vm.Script(l); } catch (err) { throw new Error(`${name}: line ${i + 1} does not parse alone (${err.message})`); }
       list.push(i); movedLines.add(i);
     });
@@ -91,7 +94,7 @@ function split(html, manifest = MANIFEST){
   for (const [name, d] of decl){
     const list = moved.get(name), word = new RegExp(`\\b${name}\\b`);
     if (list.length) for (let i = d.e + 1; i < list[list.length - 1]; i++)
-      if (!movedLines.has(i) && !inDecl(i) && /^\S/.test(lines[i]) && !/^(\/\/|\/\*|\*)/.test(lines[i]) && word.test(lines[i])) readersBetween.push(`L${i + 1}: ${lines[i].slice(0, 80)}`);
+      if (!movedLines.has(i) && !inDecl(i) && /^\S/.test(lines[i]) && !/^(\/\/|\/\*|\*)/.test(lines[i]) && word.test(lines[i])) readersBetween.push(show(i));
   }
   // assets.js: one block per container, one entry per line for objects
   const A = [
@@ -119,6 +122,18 @@ function split(html, manifest = MANIFEST){
   const check = vm.createContext({ console: { warn: () => {}, log: () => {} } });
   vm.runInContext(assets + PRELUDE.join("\n") + "\n" + [...one.values()].join("\n"), check);
   for (const { name } of manifest) if (JSON.stringify(vm.runInContext(name, check)) !== JSON.stringify(values[name])) throw new Error(`self-check: ${name} differs after the split`);
+  // ...and with the kept lines (aliases) run where they stand, old and new end with the same containers: a kept line that sets a key a
+  // later moved line also sets would now run after it. Kept lines that need other page code are skipped in both runs.
+  const before = vm.createContext({}), after = vm.createContext({ console: { warn: () => {}, log: () => {} } });
+  vm.runInContext(assets + PRELUDE.join("\n"), after);
+  const order = [...stmts.map((st) => ({ at: st.at, old: st.text, now: one.get(st.at) })), ...keptLines.map((i) => ({ at: i, old: lines[i], now: lines[i], kept: true }))].sort((a, b) => a.at - b.at);
+  for (const st of order){
+    try { vm.runInContext(st.old, before); } catch (err) { if (st.kept) continue; throw err; }
+    if (st.now) vm.runInContext(st.now, after);
+  }
+  // values only: an alias that adds its own key between moved lines now adds it last, which changes the key order and nothing else
+  const canon = (v) => JSON.stringify(v, (k, x) => x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((key) => [key, x[key]])) : x);
+  for (const { name } of manifest) if (canon(before[name]) !== canon(vm.runInContext(name, after))) throw new Error(`self-check: the final value of ${name} would change (a kept line such as an alias sets a key that a later moved line also sets)`);
   return { html: out.join(eol), assets, report: { moved: movedLines.size + [...decl.values()].reduce((a, d) => a + d.e - d.s + 1, 0), keptAliases, readersBetween } };
 }
 
@@ -177,6 +192,18 @@ function selftest(){
   assert.throws(() => split(out.html, testManifest), /already/);
   assert.throws(() => split(fixture.replace("const B =", "  const B ="), testManifest), /column 0|not found/);
   assert.throws(() => split(fixture.replace(`R.a = {"tex"`, `R.a = {"q":missingName,"tex"`), testManifest), /not plain data/);
+  // a heavy literal line without a data URI (a mesh whose texture is borrowed, "@a") moves too; the report shows no base64
+  const MESH = "A".repeat(240), heavy = fixture.replace('S["d"] = S["a"];', `R.g = {"v":"${MESH}","tex":"@a"};\r\nS["d"] = S["a"];`), outH = split(heavy, testManifest);
+  const boxH = {}; vm.runInNewContext(outH.assets, boxH);
+  same(boxH.BIBLE_ASSETS.R.g, { v: MESH, tex: "@a" });
+  assert.ok(!outH.html.includes(MESH) && outH.report.keptAliases.length === 1);
+  assert.ok([...outH.report.keptAliases, ...outH.report.readersBetween].every((l) => !/[A-Za-z0-9+/=]{40}/.test(l)));
+  // a kept alias that sets a key a later moved line also sets would change the final value: refused
+  const inverted = fixture.replace('S["d"] = S["a"];', `S["e"] = S["a"];\r\nS["e"] = "${URI}Z";`);
+  assert.throws(() => split(inverted, testManifest), /final value/);
+  // an alias that only adds its own key between moved lines changes the key order, not a value: allowed
+  const interleaved = fixture.replace('S["d"] = S["a"];', "").replace("Object.assign(S, ", 'S["d"] = S["a"];\r\nObject.assign(S, ');
+  assert.doesNotThrow(() => split(interleaved, testManifest));
   // loadAssets accepts data only
   const tmp = path.join(require("os").tmpdir(), "bible_assets_selftest.js");
   fs.writeFileSync(tmp, out.assets); assert.deepStrictEqual(loadAssets(tmp).B, URI);
