@@ -1871,6 +1871,15 @@
   .cg-rate-star{display:block;flex:none;width:13px;height:13px}
   .cg-rate-bg{fill:color-mix(in srgb,var(--gold) 22%,transparent)}
   .cg-rate-fg{fill:var(--gold)}
+  .cg-rate-tip{white-space:normal;min-width:200px;padding:7px 11px}
+  .cg-rate-tip-h{margin-bottom:4px;font-size:13px}
+  .cg-rate-tip-h b{color:var(--gold)}
+  .cg-rate-tip-line{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:500;line-height:1.55}
+  .cg-rate-tip-line i{flex:none;width:12px;font-style:normal;text-align:center}
+  .cg-rate-tip-line.is-ok i{color:var(--gold)}
+  .cg-rate-tip-line.is-miss{color:var(--muted)}
+  .cg-rate-tip-line b{margin-left:auto;padding-left:14px;font-weight:600;font-variant-numeric:tabular-nums}
+  .cg-editor-rating{grid-column:1/-1;justify-self:end;display:flex;align-items:center;gap:6px;padding:0 6px 2px;font-size:12px;line-height:1;color:var(--muted);cursor:help;user-select:none}   /* the editor's live stars, under the step tabs */
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
   .cg-reader{margin-bottom:20px;border-left:3px solid var(--gold);padding:8px 20px}
   .cg-prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;color:var(--text)}
@@ -27479,14 +27488,41 @@ function classGuideDateText(iso){
 const CLASS_GUIDE_DESC_MIN = 70, CLASS_GUIDE_NOTES_MIN = 3;
 function classGuideCompleteness(g){
   const letters = [...String(g.description || "").replace(/\*\*/g, "").replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").replace(/\s+/g, " ").trim()].length;
-  const parts = [
-    ["คำอธิบาย", "คำอธิบาย " + CLASS_GUIDE_DESC_MIN + " ตัวอักษรขึ้นไป", letters >= CLASS_GUIDE_DESC_MIN],
-    ["โน้ตสกิล", "โน้ตสกิลอย่างน้อย " + CLASS_GUIDE_NOTES_MIN + " สกิล", Object.keys(g.notes || {}).length >= CLASS_GUIDE_NOTES_MIN],
-    ["สเตตัส", "สเตตัสแนะนำ", Object.keys(g.stats || {}).length > 0],
-    ["ไอเทม", "ไอเทมแนะนำ", Object.keys(g.gear || {}).length > 0]];
-  const have = parts.filter(p => p[2]), missing = parts.filter(p => !p[2]), stars = 3 + have.length / 2;
-  const label = "ความครบถ้วนของเนื้อหา " + stars + "/5" + (have.length ? " · มี" + have.map(p => p[0]).join(" ") : " · มีแค่บิลด์") + (missing.length ? " · ยังไม่มี" + missing.map(p => p[1]).join(" ") : "");
-  return { stars, label };
+  const parts = [   // now / min: how far a part is from counting (the editor's pop-up shows it for the description and the notes)
+    { key: "desc", name: "คำอธิบาย", need: "คำอธิบาย " + CLASS_GUIDE_DESC_MIN + " ตัวอักษรขึ้นไป", now: letters, min: CLASS_GUIDE_DESC_MIN, unit: "ตัวอักษร" },
+    { key: "notes", name: "โน้ตสกิล", need: "โน้ตสกิลอย่างน้อย " + CLASS_GUIDE_NOTES_MIN + " สกิล", now: Object.keys(g.notes || {}).length, min: CLASS_GUIDE_NOTES_MIN, unit: "สกิล" },
+    { key: "stats", name: "สเตตัส", need: "สเตตัสแนะนำ", now: Object.keys(g.stats || {}).length, min: 1 },
+    { key: "gear", name: "ไอเทม", need: "ไอเทมแนะนำ", now: Object.keys(g.gear || {}).length, min: 1 }];
+  parts.forEach(p => { p.ok = p.now >= p.min; });
+  const have = parts.filter(p => p.ok), missing = parts.filter(p => !p.ok), stars = 3 + have.length / 2;
+  const label = "ความครบถ้วนของเนื้อหา " + stars + "/5" + (have.length ? " · มี" + have.map(p => p.name).join(" ") : " · มีแค่บิลด์") + (missing.length ? " · ยังไม่มี" + missing.map(p => p.need).join(" ") : "");
+  return { stars, label, parts };
+}
+// The stars' pop-up (user 2026-10-20: the page's own, not the browser tooltip; looks like the Skill Simulator's hover tip): the score, then one line per part.
+// progress = the editor: the description and the notes also show how far they are (25/70 ตัวอักษร, 2/3 สกิล).
+function classGuideRatingTip(done, progress){
+  return '<div class="cg-rate-tip-h">ความครบถ้วนของเนื้อหา <b>' + done.stars + '</b>/5</div>' + done.parts.map(p => '<div class="cg-rate-tip-line ' + (p.ok ? "is-ok" : "is-miss") + '"><i>' + (p.ok ? "✓" : "✗") + '</i><span>' + (p.ok || progress ? p.name : p.need) + '</span>'
+    + (progress && p.unit ? '<b>' + (p.ok ? p.now : p.now + "/" + p.min) + " " + p.unit + '</b>' : "") + '</div>').join("");
+}
+let classGuideRateTipEl = null, classGuideRateTipOwner = null;
+function classGuideRatingHide(){ if (classGuideRateTipEl) classGuideRateTipEl.classList.remove("show"); classGuideRateTipOwner = null; }
+function classGuideRatingShow(el, done, progress){
+  if (!classGuideRateTipEl){
+    classGuideRateTipEl = document.createElement("div"); classGuideRateTipEl.className = "rsim-tip cg-rate-tip"; classGuideRateTipEl.setAttribute("aria-hidden", "true"); document.body.appendChild(classGuideRateTipEl);
+    // a click (a card opening its guide) or a tap elsewhere, and any scroll, close it; a tap on the editor's own stars toggles it in classGuideRatingBind
+    document.addEventListener("pointerdown", e => { if (classGuideRateTipOwner && (e.pointerType === "mouse" || !classGuideRateTipOwner.contains(e.target))) classGuideRatingHide(); }, true);
+    window.addEventListener("scroll", classGuideRatingHide, true);
+  }
+  const t = classGuideRateTipEl; t.innerHTML = classGuideRatingTip(done, progress);
+  const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  t.style.left = Math.max(4, Math.min(document.documentElement.clientWidth - w - 4, r.left + r.width / 2 - w / 2)) + "px";
+  t.style.top = (r.top - h - 6 >= 4 ? r.top - h - 6 : r.bottom + 6) + "px";
+  t.classList.add("show"); classGuideRateTipOwner = el;
+}
+function classGuideRatingBind(el, get, progress){   // a mouse hover shows it; in the editor (progress) a tap toggles it too, for phones
+  el.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") classGuideRatingShow(el, get(), progress); });
+  el.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") classGuideRatingHide(); });
+  if (progress) el.addEventListener("pointerup", e => { if (e.pointerType !== "mouse"){ if (classGuideRateTipOwner === el) classGuideRatingHide(); else classGuideRatingShow(el, get(), progress); } });
 }
 const CLASS_GUIDE_STAR = "12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26", CLASS_GUIDE_STAR_HALF = "12,2 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26";
 function classGuideStarsHtml(stars){   // five small SVG stars (a half star is the left half of the outline filled), so no font has to carry a half-star glyph
@@ -28596,7 +28632,7 @@ function mountClassGuide(root){
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyImage" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
     <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><span>เซิร์ฟเวอร์</span><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><span>อาชีพ</span><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><label class="cg-search-wrap"><span>ชื่อไกด์</span><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหา" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
-    <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}</nav>
+    <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}<div class="cg-editor-rating" data-cg-role="rating"><span>ความครบถ้วนของเนื้อหา</span><span class="cg-rating" data-cg-role="ratingStars" role="img"></span></div></nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
@@ -28882,6 +28918,7 @@ function mountClassGuide(root){
     const c = draft.gear[slot] && draft.gear[slot][idx]; if (c){ const o = c.item ? { item: c.item } : { name: c.name }; if (c.replica) o.replica = c.replica; if (c.stat) o.stat = c.stat; draft.gear[slot][idx] = o; saveDraft(); }
     el("gearPicker").close(); gearPick = null;
   }
+  classGuideRatingBind(el("rating"), () => classGuideCompleteness(draft || {}), true);   // the editor's stars: hover or tap for what is missing and how far
   let readerCtx = null, viewStats = null;   // viewStats: the reader's own try-out values (start as the author's)
   const saveDraft = () => {
     if (mode !== "author") return;
@@ -28949,6 +28986,7 @@ function mountClassGuide(root){
   function updateSteps(){
     if (!draft) return;
     const d = draft, nNotes = Object.keys(d.notes || {}).length;
+    { const rate = classGuideCompleteness(d), rs = el("ratingStars"); rs.innerHTML = classGuideStarsHtml(rate.stars); rs.setAttribute("aria-label", rate.label); }   // ความครบถ้วนของเนื้อหา, live while writing (user 2026-10-20)
     const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.date && d.modes && d.modes.length), !!(((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)) && !classGuideStatsProblem(d.stats) && !statTypo()), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
     // step 6: what is still missing before the code can be sent
     const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน วันที่ และ PVE / PVP (ขั้นที่ 1)"); if (!done[2]) miss.push(buildProblems().length ? "บิลด์ที่ผ่านเงื่อนไข (ขั้นที่ 3)" : "สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)"); if (classGuideStatsProblem(d.stats)) miss.push("สเตตัสแบบ % ที่รวมได้ 100 (ขั้นที่ 2)"); if (statTypo()) miss.push("สเตตัสที่ใส่ค่าไม่ถูก (ขั้นที่ 2)");
@@ -29332,7 +29370,7 @@ function mountClassGuide(root){
     const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = "· " + classGuideDateText(guide.date);
     who.appendChild(when); meta.appendChild(who);
     const done = classGuideCompleteness(guide), stars = document.createElement("span"); stars.className = "cg-rating"; stars.innerHTML = classGuideStarsHtml(done.stars);   // ความครบถ้วนของเนื้อหา (user 2026-10-20)
-    stars.title = done.label; stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); meta.appendChild(stars);
+    stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); classGuideRatingBind(stars, () => done, false); meta.appendChild(stars);
     if (id) meta.appendChild(viewBadge(id));
     b.append(portrait, title, chips, meta);
     return b;
@@ -31220,6 +31258,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-20T10:06:02.210Z","feat(bible): the guide stars open the page's own pop-up (what is missing), and the editor shows them live under the step tabs with progress such as 20/70 letters"],
     ["2026-10-20T09:57:44.866Z","style(bible): the guide gallery text filters (ทั้งหมด, PVE, PVP) lose their box too: bold text, gold with a bar when chosen"],
     ["2026-10-20T09:43:47.838Z","feat(bible): guide gallery cards show ความครบถ้วนของเนื้อหา as 3 to 5 stars (half a star each for a 70+ letter description, notes on 3+ skills, stats and gear)"],
     ["2026-10-20T09:15:13.578Z","feat(bible): class guide #51 TTO Wolf เจาะลงดัน เจาะแต้ๆ by Caramellys"],

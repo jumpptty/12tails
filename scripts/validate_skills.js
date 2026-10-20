@@ -3341,7 +3341,14 @@ let checkedRsim = 0;
     ok((h45.match(/is-full/g) || []).length === 4 && (h45.match(/is-half/g) || []).length === 1 && !/is-empty/.test(h45), "4.5 stars draw as 4 full and 1 half");
     ok((h3.match(/is-full/g) || []).length === 3 && (h3.match(/is-empty/g) || []).length === 2 && !/is-half/.test(h3), "3 stars draw as 3 full and 2 empty");
     ok(embedded.every(g => [3, 3.5, 4, 4.5, 5].includes(comp(norm(g)).stars)), "every embedded guide gets 3-5 stars in half steps");
-    ok(/function guideCard\([^]{0,2500}classGuideStarsHtml\(/.test(html) && html.split("classGuideStarsHtml(").length - 1 === 2, "the stars are drawn on the gallery card only (one call, in guideCard)");
+    ok(/function guideCard\([^]{0,2500}classGuideStarsHtml\(/.test(html) && /function updateSteps\(\)\{[^]{0,4000}classGuideStarsHtml\(/.test(html) && html.split("classGuideStarsHtml(").length - 1 === 3, "the stars are drawn on the gallery card and the editor's live line, nowhere else (not the reader)");
+    // The page's own pop-up, not the browser's tooltip (user 2026-10-20); in the editor it shows how far each part is from counting
+    const part = (c, key) => c.parts.find(p => p.key === key), mid = comp({ ...base, description: "ก".repeat(25), notes: { 101: "a", 102: "b" }, gear: { pet: [{ item: "x" }] } });
+    ok(part(mid, "desc").now === 25 && part(mid, "desc").min === 70 && !part(mid, "desc").ok && part(mid, "notes").now === 2 && part(mid, "notes").min === 3 && part(mid, "gear").ok && !part(mid, "stats").ok, "each part reports whether it counts and, for the description and notes, how far it is");
+    const tip = vm.runInContext("classGuideRatingTip", sandbox), tEd = tip(mid, true), tGal = tip(mid, false);
+    ok(/ความครบถ้วนของเนื้อหา/.test(tEd) && /3\.5/.test(tEd) && /25\/70/.test(tEd) && /2\/3/.test(tEd) && (tEd.match(/is-miss/g) || []).length === 3 && (tEd.match(/is-ok/g) || []).length === 1, "the editor pop-up names the score and shows 25/70 letters and 2/3 skills");
+    ok(!/\/70|\/3 /.test(tGal) && (tGal.match(/is-miss/g) || []).length === 3, "the gallery pop-up lists the parts without the progress numbers");
+    ok(!/\.title = done\.label/.test(html) && /data-cg-role="ratingStars"/.test(html), "no browser tooltip on the stars; the editor has its live stars line");
   }
   // Recommended stats (user 2026-10-15): optional, any of the 8, only filled ones stored. Since 2026-10-18 a value is an integer 0-512, a share "N%"
   // (the shares of a finished guide total 100) or ตัน / ตาม, and the stats keep the author's order (docs/superpowers/specs/2026-10-18-guide-stat-flasks-design.md).
