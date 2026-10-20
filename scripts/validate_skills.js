@@ -4522,8 +4522,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
 }
 // Two fonts only (user 2026-10-18): every font list in the hub (CSS, inline styles, SVG font-family, canvas fonts) starts with Prompt
 // (text) or JetBrains Mono with Prompt behind it (numbers, so Thai inside stays Prompt instead of Tahoma), with only generic fallbacks
-// after it, and Google Fonts loads only those two families.
-{
+// after it, and Google Fonts loads only those two families. fontProblems(text) lists what breaks that in one page.
+function fontProblems(html) {
   const ALLOWED = new Set(["prompt", "jetbrains mono", "sans-serif", "monospace"]);
   const ITEM = String.raw`(?:'[^'\n]*'|"[^"\n]*"|(?!(?:px|em|rem|vw|vh)\b)-?[A-Za-z][\w-]*(?:[ \t]+-?[A-Za-z][\w-]*)*)`;
   const LIST = new RegExp(`(?<![\\w.%-])${ITEM}(?:[ \\t]*,[ \\t]*${ITEM})*`, "g");
@@ -4544,8 +4544,32 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   const link = (html.match(/fonts\.googleapis\.com\/css2\?[^"']*/) || [""])[0];
   const loaded = [...link.matchAll(/family=([^:&]+)/g)].map(m => m[1].replace(/\+/g, " "));
   if (loaded.join(",") !== "Prompt,JetBrains Mono") bad.push(`Google Fonts loads ${loaded.join(", ") || "nothing"}`);
+  return bad;
+}
+{
+  const bad = fontProblems(html);
   for (const b of bad) { console.error(`[FONT ERROR] two fonts only: Prompt for text, 'JetBrains Mono','Prompt',monospace for numbers (12t_projects/bible/CLAUDE.md §2): ${b.slice(0, 160)}`); errorCount++; }
   if (!bad.length) console.log("Verified two fonts only (Prompt; JetBrains Mono with Prompt behind it).");
+}
+// Guide manager page (user 2026-10-20): the same page runs on this PC (scripts/add_guide.js serves it) and on the phone (GitHub Pages).
+// Its class faces are a copy of CLASS_HERO_ICONS (the phone never loads the 27 MB assets.js), so a repainted portrait must be copied there too.
+// It may talk only to its own server and api.github.com, and asks search engines to stay away.
+const GM_REL = "12t_projects/guide-manager/index.html", gmPath = path.join(repoRoot, GM_REL);
+const gmHtml = fs.existsSync(gmPath) ? fs.readFileSync(gmPath, "utf8") : null;
+{
+  let gmBad = 0;
+  const bad = (msg) => { console.error(`[GUIDE MANAGER ERROR] ${msg}`); errorCount++; gmBad++; };
+  if (gmHtml === null) bad(`${GM_REL} not found`);
+  else {
+    let faces = null; try { faces = JSON.parse((gmHtml.match(/^const FACES = (\{.*\});\r?$/m) || [])[1]); } catch (e) {}
+    const hero = vm.runInContext("window.CLASS_HERO_ICONS", sandbox) || {};
+    if (!faces) bad(`${GM_REL}: "const FACES = {…};" (one line) not found`);
+    else if (Object.keys(faces).length !== Object.keys(hero).length || Object.keys(hero).some((k) => faces[k] !== hero[k])) bad(`${GM_REL}: FACES differ from CLASS_HERO_ICONS in assets.js; copy them again`);
+    if (!/<meta http-equiv="Content-Security-Policy" content="[^"]*connect-src 'self' https:\/\/api\.github\.com[;"]/.test(gmHtml)) bad(`${GM_REL}: the Content-Security-Policy meta must limit connect-src to 'self' https://api.github.com`);
+    if (!gmHtml.includes('<meta name="robots" content="noindex">')) bad(`${GM_REL}: <meta name="robots" content="noindex"> is missing`);
+    for (const b of fontProblems(gmHtml)) bad(`${GM_REL}: two fonts only (Prompt; 'JetBrains Mono','Prompt',monospace for numbers): ${b.slice(0, 160)}`);
+    if (!gmBad) console.log("Verified the guide manager page: class faces match assets.js, connections limited, not indexed, two fonts only.");
+  }
 }
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
