@@ -129,6 +129,13 @@ function opsFromItems(items){
     return { action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g };
   });
 }
+// Two guides with the same content (key order, id and PVE / PVP left out: the page sets those), for the page's "nothing would change"
+// warning on a replacement (user 2026-10-20). The page's gmSameGuide does the same; the validator checks they agree.
+function sameGuide(a, b){
+  const norm = (v) => Array.isArray(v) ? v.map(norm) : v && typeof v === "object" ? Object.keys(v).sort().reduce((o, k) => (o[k] = norm(v[k]), o), {}) : v;
+  const strip = ({ id, modes, ...g }) => g;
+  return JSON.stringify(norm(strip(a))) === JSON.stringify(norm(strip(b)));
+}
 const undoText = (entries) => entries.length === 1 ? entries[0].text : `ย้อนกลับชุดล่าสุด ${entries.length} รายการ (${entries.map((u) => "#" + u.id).join(", ")})`;
 // A CLASS_GUIDES line rewritten the way this script writes it (guideLine / tombLine), so an undo never puts a commit's raw text back.
 function canonLine(line){
@@ -343,7 +350,8 @@ function serve(){
         const b = await body(req), doc = readGuides();
         try {
           const g = decodeCode(b.code), dateWas = fixDate(g), same = doc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +b.replaceId);
-          return json(res, 200, { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date }, dateWas, id: b.replaceId ? +b.replaceId : nextId(doc), duplicate: same ? { id: same.g.id, title: same.g.title } : null });
+          const target = b.replaceId ? doc.guides.find((x) => x.g.id === +b.replaceId) : null;
+          return json(res, 200, { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date }, dateWas, id: b.replaceId ? +b.replaceId : nextId(doc), duplicate: same ? { id: same.g.id, title: same.g.title } : null, unchanged: !!target && sameGuide(g, target.g) });
         } catch (e){ return json(res, 200, { ok: false, error: e.message }); }
       }
       if (req.method === "POST" && (req.url === "/api/run" || req.url === "/api/undo")){
@@ -546,7 +554,7 @@ async function selftest(){
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && !["--port", "--modes", "--stage"].includes(args[i - 1]));
-if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, fixDate, localToday, canonLine, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
+if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, fixDate, localToday, canonLine, sameGuide, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
 else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
 else if (words[0] === "batch") batch(words[1], val("--stage"));
 else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });

@@ -4582,7 +4582,7 @@ if (gmHtml !== null) {
     const zlib = require("zlib"), gc = require(path.join(__dirname, "guide_code.js")), ag = require(path.join(__dirname, "add_guide.js"));
     const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response });
     vm.runInContext(block, ctx, { filename: GM_REL + " (gm-core)" });
-    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmParseGuides, gmSummary, gmFixDate, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
+    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmSameGuide, gmParseGuides, gmSummary, gmFixDate, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const throws = (fn) => { try { fn(); return ""; } catch (e) { return String(e.message || e); } };
     const finish = (code) => { const u = gm.gmUnpack(code); return gm.gmFinish(u, u.deflated ? zlib.inflateRawSync(u.bytes) : u.bytes); };
@@ -4635,6 +4635,11 @@ if (gmHtml !== null) {
     { const g = doc.guides[0].g, evil = { ...g, build: { ...g.build, classKey: "<img src=x onerror=alert(1)>" } }, evil2 = { ...g, build: { ...g.build, server: "zz" } };
       ok(/โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/.test(throws(() => gm.gmCheckGuide(evil))) && /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/.test(throws(() => gm.gmCheckGuide(evil2))), "gmCheckGuide refuses a class or server that is not a real one");
       ok(doc.guides.every(({ g }) => !throws(() => gm.gmCheckGuide(g))), "gmCheckGuide accepts every embedded guide"); }
+    // user 2026-10-20: a replacement identical to the guide it replaces gets a warning (PVE/PVP and the id are left out: the page sets those)
+    { const g = doc.guides[0].g, reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(g).reverse()))), other = { ...g, title: g.title + " v2" }, modes = { ...g, modes: ["pvp"], id: 999 };
+      const pairs = [[g, reordered], [g, other], [g, modes], [g, { ...g, build: { ...g.build, level: g.build.level - 1 } }]];
+      ok(gm.gmSameGuide(g, reordered) && !gm.gmSameGuide(g, other) && gm.gmSameGuide(g, modes) && !gm.gmSameGuide(...pairs[3]), "gmSameGuide: same content in any key order, PVE/PVP and id left out, any real change counts");
+      ok(pairs.every(([a, b]) => gm.gmSameGuide(a, b) === ag.sameGuide(a, b)), "gmSameGuide and add_guide's sameGuide agree"); }
     ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
     if (!gmFailed) console.log(`Verified the guide manager page's own code reader and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
   }
