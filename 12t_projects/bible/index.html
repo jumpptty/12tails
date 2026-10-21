@@ -2300,8 +2300,12 @@
   @media(min-width:761px){.cg-fields > .cg-picks{grid-column:1/3}.cg-fields > .cg-modes{grid-column:3;grid-row:1}}   /* PVE / PVP beside the pickers, above the date (user 2026-10-20); phones stack them */
   .cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr)}   /* pickers, then title / author / date, then the description */
   .cg-picks > b{font-weight:500;color:var(--muted)}
-  .cg-picks-row{display:flex;flex-wrap:wrap;gap:8px}
-  .cg-picks .cls-picker-btn{height:44px}
+  .cg-picks-row{display:flex;flex-wrap:wrap;gap:8px 14px}
+  /* the round icons alone (user 2026-10-21): no box, no name, no ▾; the name shows on hover. !important beats the server themes' raised-control fill, and --th-blur:none turns off their glass blur */
+  .cg-picks .cls-picker-btn{height:auto;padding:0;gap:0;border:0;border-radius:50%;background:none !important;box-shadow:none !important;--th-blur:none}
+  .cg-picks .cls-picker-thumb{width:48px;height:48px;transition:filter .18s ease}
+  .cg-picks .cls-picker-btn:hover .cls-picker-thumb,.cg-picks .cls-picker-btn:focus-visible .cls-picker-thumb{filter:drop-shadow(0 2px 4px rgba(0,0,0,.45)) drop-shadow(0 0 6px color-mix(in srgb,var(--gold) 70%,transparent))}
+  .cg-picks .cls-picker-name,.cg-picks .cls-picker-arrow{display:none}
   .cg-page[data-mode="author"] .rsim-pick{display:none}   /* server and class are chosen in step 1 (user 2026-10-17) */
   .rsim .cls-picker-thumb{width:32px; height:32px}
   .rsim-ex-pool[hidden]{display:none;}
@@ -2346,8 +2350,8 @@
   .cg-page .cg-guide{display:grid;justify-items:center;align-content:start;text-align:center;gap:7px;min-height:0;padding:14px 12px 12px}
   .cg-page .cg-guide > .cg-cover{position:relative;left:auto;top:auto;transform:none;margin-bottom:2px;--cg-cover:100px !important}
   .cg-page .cg-guide > strong{margin:0;font-size:17px;line-height:1.3;overflow-wrap:anywhere}
-  .cg-guide-chips{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 12px}
-  .cg-page .cg-guide .cg-chip{display:inline-flex;align-items:center;gap:6px;padding:0;font-size:12px;line-height:18px;color:var(--text)}   /* class and server: icon and name, no pill (user 2026-10-21) */
+  .cg-guide-chips{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 8px}
+  .cg-page .cg-guide .cg-chip{display:inline-flex;align-items:center;padding:0;font-size:12px;line-height:18px;color:var(--text)}   /* class and server: the icon alone, no pill (user 2026-10-21) */
   .cg-page .cg-guide .cg-chip.is-mode{padding:2px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:rgba(255,255,255,.05);color:var(--gold);font-weight:600;letter-spacing:.02em}   /* PVE / PVP (user 2026-10-20) */
   .cg-page .cg-guide .cg-chip img{position:static;display:block;width:22px;height:22px;border-radius:50%;object-fit:contain}
   .cg-page .cg-guide .cg-guide-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;font-size:12px;line-height:18px;color:var(--muted)}
@@ -2365,7 +2369,6 @@
     .cg-page .cg-guide{gap:6px;padding:12px 4px 10px}
     .cg-page .cg-guide > .cg-cover{--cg-cover:80px !important}
     .cg-page .cg-guide > strong{font-size:14px;line-height:1.25}
-    .cg-page .cg-guide .cg-chip{font-size:0;gap:0}                     /* icons only: the class and server icons say it */
     .cg-page .cg-guide .cg-chip img{width:20px;height:20px}
     .cg-page .cg-guide .cg-chip.is-mode{font-size:10.5px;line-height:16px;padding:1px 6px}   /* text, not an icon: keeps its words on phones */
     .cg-page .cg-mode-pick .cg-icon-pick{height:30px;padding:0 10px;font-size:11.5px}
@@ -29007,7 +29010,7 @@ function mountClassGuide(root){
   window.addEventListener("hashchange", () => closeMenu(false)); window.addEventListener("resize", () => closeMenu(false));
   const simRoot = el("sim"), guidePage = root.querySelector(".cg-page"), guideHeading = root.querySelector(".cg-heading"), storageKey = "12t-bible-class-guide-draft";
   // Step 1 server / class pickers (user 2026-10-17): they press the simulator's own buttons (its gates do the rest) and mirror their icon and name.
-  const syncPicks = () => { for (const [mine, theirs] of [["pickSrv", "srv"], ["pickCls", "pick"]]){ const ti = simRoot.querySelector('[data-role="' + theirs + 'Thumb"]'), tn = simRoot.querySelector('[data-role="' + theirs + 'Name"]'), mi = root.querySelector('[data-cg-role="' + mine + 'Thumb"]'), mn = root.querySelector('[data-cg-role="' + mine + 'Name"]'); if (ti && mi && mi.getAttribute("src") !== ti.getAttribute("src")) mi.setAttribute("src", ti.getAttribute("src") || ""); if (tn && mn && mn.textContent !== tn.textContent) mn.textContent = tn.textContent; } };
+  const syncPicks = () => { for (const [mine, theirs] of [["pickSrv", "srv"], ["pickCls", "pick"]]){ const ti = simRoot.querySelector('[data-role="' + theirs + 'Thumb"]'), tn = simRoot.querySelector('[data-role="' + theirs + 'Name"]'), mi = root.querySelector('[data-cg-role="' + mine + 'Thumb"]'), mn = root.querySelector('[data-cg-role="' + mine + 'Name"]'); if (ti && mi && mi.getAttribute("src") !== ti.getAttribute("src")) mi.setAttribute("src", ti.getAttribute("src") || ""); if (tn && mn && mn.textContent !== tn.textContent){ mn.textContent = tn.textContent; mn.parentNode.title = tn.textContent; } } };   // the name is hidden, shown on hover (user 2026-10-21)
   if (typeof MutationObserver !== "undefined") new MutationObserver(syncPicks).observe(simRoot, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["src"] });
   root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-cg-pick]"); if (!b) return; const t = simRoot.querySelector('[data-act="' + b.dataset.cgPick + '"]'); if (t) t.click(); });
   setTimeout(syncPicks, 0);
@@ -29772,7 +29775,7 @@ function mountClassGuide(root){
     const portrait = classGuideCoverEl(guide, 110) || document.createElement("span");   // the author's cover icons (required; the class portrait is no longer used, user 2026-10-16)
     const title = document.createElement("strong"); classGuideTitleInto(title, guide.title || "ตัวอย่างไกด์");
     // Medallion Grid (user 2026-10-17): class and server chips under the title, then the author, the date and the estimated readers
-    const chip = (src, text) => { const c = document.createElement("span"); c.className = "cg-chip"; if (src){ const i = document.createElement("img"); i.src = src; i.alt = ""; c.appendChild(i); } c.append(text); return c; };
+    const chip = (src, text) => { const c = document.createElement("span"); c.className = "cg-chip"; if (src){ const i = document.createElement("img"); i.src = src; i.alt = text; c.title = text; c.appendChild(i); } else c.append(text); return c; };   // class and server: the icon alone, its name on hover (user 2026-10-21)
     const chips = document.createElement("span"); chips.className = "cg-guide-chips";
     chips.append(chip(CLASS_HERO_ICONS[SKILL_SIM_NAMES[guide.build.classKey]], SKILL_SIM_NAMES[guide.build.classKey]), chip(SKILL_ICONS["server_" + guide.build.server], SKILL_SIM_SERVERS[guide.build.server].name));
     for (const m of guide.modes || []){ const c = chip(null, m.toUpperCase()); c.classList.add("is-mode"); chips.appendChild(c); }   // PVE / PVP (user 2026-10-20)
@@ -31706,6 +31709,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T08:58:38.230Z","feat(bible): class guides: the class and server show as icons only (gallery cards and step 1 pickers: no name, box or ▾; the name on hover)"],
     ["2026-10-21T08:48:28.766Z","feat(bible): class guides: the description is one reference page (1500 x 330 at 19 px) scaled to every desktop, so its line breaks and pages are the same on every screen; the author picks 1, 2 or 3 columns; editor messages show in a toast instead of being cut off under the window; the description box is centred in its room in the editor and on the guide page; step 6 previews the guide page at six desktop window sizes; gallery cards show the class and server as bigger icons without a pill"],
     ["2026-10-21T07:37:47.588Z","feat(bible): class guides: editor step 1's typing box is the guide page's own description box on this screen (same size, columns, font and pages; replaces the PC / notebook / phone preview); the rating moves into the tab row; step 4 no longer shows a cut-off PVE / PVP box and step 6's last line fits"],
     ["2026-10-21T04:07:52.208Z","feat(bible): class guides: a reader's tried stats stay with each guide after a refresh (this browser only, no extra request), with a borderless ↺ คืนสู่ค่าแนะนำ link back to the author's values (Ctrl+Z undoes it)"],
