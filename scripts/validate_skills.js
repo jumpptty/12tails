@@ -1520,6 +1520,62 @@ console.log(`Verified ${checkedDurLabels} duration chip label checks.`);
 console.log(`Verified ${checkedPortraits} class portrait checks.`);
 console.log(`Verified ${checkedPanelMarkup} stat panel structure checks.`);
 console.log(`Verified ${checkedSummonFeed} summon stat-feed glow checks.`);
+// LCK glow follows what LCK really does (user 2026-10-21): a direct read glows fully (getUsed*StatKeys), numbers that move only through the
+// *Adjust LCK roll glow softly (getSoft*StatKeys: less than a main stat, more than the faded grey), and a card whose numbers never move with LCK
+// does neither (e.g. TTO, where talAdjust / dmgAdjust / defAdjust lost their roll). Measured on every card and server: LCK 0 against 200.
+let checkedLckGlow = 0, skippedLckGlow = 0, knownLckGlow = 0;
+// Soft glows whose roll is real but never reaches the shown numbers, checked by hand (2026-10-21). A card leaves this list when its display changes.
+const LCK_GLOW_HIDDEN = {
+  all: Object.fromEntries(["cat_luckyDice", "cat_grandCasinoArcade", "mole_stunMine", "mole_stunGrenade", "penguin_fallingComets", "rabbit_backpack", "whale_shieldBash"].map(id => [id,
+    // enemy side: the range's low end is fixed (raw damage from 0, a hit that can miss, or Shield Bash's raw = the player's DEF, which this check
+    // can't set) and its high end uses the target's roll at 0, so the target's LCK moves only the hits in between (ทดสอบดาเมจ), never the two ends
+    "the target's roll moves only the hits inside the range"])),
+  tto: Object.fromEntries(["chameleon_tormentRain", "mole_warFactory_sawMachine", "mole_warFactory_bazooka", "mole_warFactory_teslaCoil", "mole_warFactory_rollerMachine"].map(id => [id,
+    // TTO (no damage roll): a 3 s cooldown shown in whole seconds; the agiAdjust roll crosses a whole second only at some AGI values (AGI 30: 3s -> 2-3s)
+    "the cooldown roll crosses a whole second only at some AGI values"])),
+};
+if (RUN_DAMAGE_CHECKS) {
+  const inputs = sandbox._statInputs, bad = [], savedIn = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+  for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";   // known stats: earlier checks leave inputs changed (ATK 0 pins every hit at 1)
+  const soft = (fn, sk) => typeof sandbox[fn] === "function" ? sandbox[fn](sk) : new Set();
+  const neutral = SKILLS.find(x => x.passive && !x.dmg && !x.dmgGroups && x.cd === undefined && x.duration === undefined && !x.lckProc);
+  if (typeof sandbox.getSoftPlayerStatKeys !== "function" || typeof sandbox.getSoftEnemyStatKeys !== "function") bad.push("getSoftPlayerStatKeys / getSoftEnemyStatKeys are missing");
+  for (const srv of ["og", "tot", "tto"]) {
+    sandbox._setServer(srv);
+    for (const sk of SKILLS) {
+      try {
+        // a fresh render each time (another card first): a changed number otherwise leaves its delta-motion markup in the next render
+        const render = (p, e) => { inputs.lck.value = p; inputs.enemyLck.value = e; sandbox._selectSkill(neutral); sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+        const base = render("0", "0");
+        if (render("0", "0") !== base) { skippedLckGlow++; continue; }   // a card that draws something random each render can't be measured this way
+        const pHigh = render("200", "0"), pMoves = pHigh !== base, eMoves = render("200", "200") !== pHigh;   // enemy measured with the player at 200, so LCK-difference cards show
+        const usedP = sandbox.getUsedPlayerStatKeys(sk), usedE = sandbox.getUsedEnemyStatKeys(sk);
+        const pFull = usedP.has("lck"), pSoft = soft("getSoftPlayerStatKeys", sk).has("lck"), eFull = usedE.has("lck"), eSoft = soft("getSoftEnemyStatKeys", sk).has("lck");
+        // A soft glow rolls inside another stat's step, so it may show nothing exactly when that step shows nothing at these settings (no damage
+        // until a dep is on, a charge level of 0, a hit pinned at 1): then the stats it rolls with move nothing either and the glow stands.
+        const stepMoves = (keys) => keys.some(k => { const el = inputs[k], was = el.value; el.value = "0"; const a = render("200", "0"); el.value = "300"; const b = render("200", "0"); el.value = was; return a !== b; });
+        // ...or a roll with no room at the default stats (a hit pinned at 1, a chance at 100%): measured again at strong settings first
+        const strong = (fn) => ["400", "0"].some(val => { const keep = ["atk", "tal", "agi", "int", "cha", "enemyDef"].map(k => [k, inputs[k].value]); ["atk", "tal", "agi", "int", "cha"].forEach(k => { inputs[k].value = val; }); inputs.enemyDef.value = "0"; try { return fn(); } finally { keep.forEach(([k, x]) => { inputs[k].value = x; }); } });   // strong stats, then weak ones (a short cooldown's roll shows only at low AGI)
+        const pMovesStrong = () => strong(() => render("0", "0") !== render("200", "0")), eMovesStrong = () => strong(() => render("200", "0") !== render("200", "200"));
+        checkedLckGlow += 2;
+        const known = (LCK_GLOW_HIDDEN[srv === "tto" ? "tto" : "all"] || {})[sk.id];   // a real roll the shown numbers can't reveal, checked by hand
+        if (known) { knownLckGlow++; continue; }
+        if (pMoves && !pFull && !pSoft) bad.push(`${srv} ${sk.id}: the player's LCK moves the numbers but does not glow`);
+        if (!pMoves && pFull && !pMovesStrong()) bad.push(`${srv} ${sk.id}: the player's LCK glows fully but moves nothing`);
+        if (!pMoves && pSoft && !pMovesStrong() && stepMoves(["atk", "tal", "agi", "int", "cha"].filter(k => usedP.has(k)))) bad.push(`${srv} ${sk.id}: the player's LCK glows softly but moves nothing while the stats it rolls with do`);
+        if (eMoves && !eFull && !eSoft) bad.push(`${srv} ${sk.id}: the enemy's LCK moves the numbers but does not glow`);
+        if (!eMoves && eFull && !eMovesStrong()) bad.push(`${srv} ${sk.id}: the enemy's LCK glows fully but moves nothing`);
+        if (!eMoves && eSoft && !eMovesStrong() && stepMoves(["enemyDef"])) bad.push(`${srv} ${sk.id}: the enemy's LCK glows softly but moves nothing while DEF does`);
+      } catch (e) { bad.push(`${srv} ${sk.id}: ${e.message}`); }
+    }
+  }
+  for (const k of Object.keys(inputs)) inputs[k].value = savedIn[k];
+  sandbox._setServer("og");
+  bad.slice(0, +(process.env.LCK_GLOW_ALL || 40)).forEach(m => console.error("[LCK GLOW ERROR] " + m));
+  if (bad.length > 40) console.error(`[LCK GLOW ERROR] ... and ${bad.length - 40} more`);
+  errorCount += bad.length;
+  console.log(`Verified ${checkedLckGlow} LCK glow checks (LCK 0 vs 200, every card on every server; ${skippedLckGlow} random cards skipped, ${knownLckGlow} known hidden rolls).`);
+}
 // 3m. effectProc purple mix (2026-09-24, GEMINI.md "effectProc"): Wall Puncture replace-roll rate and rank-0 off,
 // Megalodon's purple Pull group, every bonus amount, and the gold total digits.
 let checkedEffectProc = 0;

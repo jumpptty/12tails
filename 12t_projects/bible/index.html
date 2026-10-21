@@ -5850,6 +5850,17 @@
     border:2px solid var(--sg-color); color:#fff;
     box-shadow:inset 0 2px 6px rgba(0,0,0,.6), 0 0 9px color-mix(in srgb, var(--sg-color) 40%, transparent);
   }
+  /* Soft LCK (user 2026-10-21): LCK that moves the numbers only through the luck roll inside an *Adjust wrapper (getSoftPlayerStatKeys /
+     getSoftEnemyStatKeys) glows a little: visibly less than a stat the formulas read (full ring above), more than the faded grey of a
+     stat the skill ignores (.42). Same specificity as the full ring, so it comes after it. */
+  .sk-stats-panel .sk-controls > div.is-soft{opacity:.8; transition:opacity .15s ease}
+  .sk-stats-panel .sk-controls > div.is-soft:hover, .sk-stats-panel .sk-controls > div.is-soft:focus-within{opacity:1}
+  .sk-stats-panel .sk-controls > div.is-soft label{color:color-mix(in srgb, var(--sg-color) 65%, var(--muted))}
+  .sk-stats-panel .sk-controls > div.is-soft input[type=number]{
+    border:1.5px solid color-mix(in srgb, var(--sg-color) 55%, transparent); color:#e9e2d3;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.6), 0 0 6px color-mix(in srgb, var(--sg-color) 18%, transparent);
+  }
+  .sk-stats-panel .sk-controls > div.is-soft input[type=number]:focus{border-color:#fff; color:#fff}
   .sk-stats-panel .sk-controls input[type=number]:focus{border-color:#fff; color:#fff}
   /* Shorter or narrower windows: 40 px dials and tighter rows, so the taller column does not shrink the page (measured
      2026-10-18: at 1536 x 730 the 52 px dials scaled the page to 0.92, these keep it at 1). 16 px between rows still
@@ -8290,7 +8301,8 @@ function getSummonFeedPlayerStatKeys(skill) {
 //              (Whale's Shield Rush/Flying Shield/Homing Shield) is the
 //              DEF-equivalent of `atkCoeff` -- a flat coefficient of the
 //              caster's own DEF added to the damage formula.
-//   lck     -- ONLY a direct read (lckProc's own chance chip). Removed
+//   lck     -- full glow ONLY on a direct read (a lckProc that can happen, lckOdds, an LCK difference); since 2026-10-21
+//              the ambient roll described next glows SOFTLY (getSoftPlayerStatKeys) instead of not at all. Removed
 //              2026-09-14: LCK previously also glowed alongside agi/int/cha/
 //              tal/atk/def any time their *Adjust wrapper ran at all, because
 //              agiAdjust/magAdjust/chaAdjust/talAdjust/dmgAdjust/defAdjust all
@@ -8333,6 +8345,10 @@ function getSummonFeedPlayerStatKeys(skill) {
 //              contributing yet). Mirrors phoenixFireballCd's own INT gate
 //              above -- both read the SAME live `getDepRank` used to render
 //              the dep's own on/off toggle chip, not a structural guess.
+// The real attacker is a summon with its own stat block (its ATK / TAL / LCK, not the player's): shared by the full and the soft glow.
+function skillSummonAttacker(skill) {
+  return !!(skill.ownStatsDmgOnly || skill.ownStatsKaiser || skill.ownStatsPhoenix || skill.ownStatsGadinaHP || skill.id === "monkey_phoenix" || skill.ownStatsGyro || (skill.ownStatsGaos && skill.id !== "monkey_summonGaos") || (skill.ownStatsMerc && !skill.mercParent));
+}
 function getUsedPlayerStatKeys(skill) {
   const used = new Set();
   const depOn = (dep) => !!dep && getDepRank(dep) === dep.maxRank;
@@ -8345,7 +8361,7 @@ function getUsedPlayerStatKeys(skill) {
   // too -- see getSummonFeedPlayerStatKeys. (This replaces the old ungated LV rules for ownStats/Gyro.)
   getSummonFeedPlayerStatKeys(skill).forEach(k => used.add(k));
   if (skill.ownStats) return used; // otherwise fully summon-sourced, none of the player's other inputs apply
-  const isSummonAttacker = !!(skill.ownStatsDmgOnly || skill.ownStatsKaiser || skill.ownStatsPhoenix || skill.ownStatsGadinaHP || skill.id === "monkey_phoenix" || skill.ownStatsGyro || (skill.ownStatsGaos && skill.id !== "monkey_summonGaos") || (skill.ownStatsMerc && !skill.mercParent));
+  const isSummonAttacker = skillSummonAttacker(skill);
   if (skill.cd !== undefined) {
     if (skill.phoenixFireballCd) { if (skill.cdDep && getDepRank(skill.cdDep) > 0) used.add("int"); }
     // ownStatsGadina (Gadina - Normal Attack): Cooldown's own agiAdjust
@@ -8358,6 +8374,7 @@ function getUsedPlayerStatKeys(skill) {
     // branch) -- ATK must keep glowing here, only AGI is wrong.
     else if (skill.cdWrapped && (!skill.ownStatsGadina || skill.cdPlayerStats)) used.add("agi");
   }
+  if (skill.secondaryCooldown && skill.secondaryCooldown.cdWrapped && !skill.ownStatsGadina) used.add("agi");   // e.g. Book Bash's mission lock (user 2026-10-21: it never glowed)
   if (skill.castTime !== undefined && skill.castWrapped) used.add("int");
   if (skill.duration !== undefined) {
     if (skill.durContested && skill.durContestedSource !== "phoenix") used.add("cha");
@@ -8376,7 +8393,7 @@ function getUsedPlayerStatKeys(skill) {
     if (hasAtk) used.add("atk");
     if (hasDef) used.add("def");
   }
-  if (skill.lckProc || skill.secondaryLckProc || skill.tertiaryLckProc || skill.quaternaryLckProc || skill.lckOdds) used.add("lck");
+  if ([skill.lckProc, skill.secondaryLckProc, skill.tertiaryLckProc, skill.quaternaryLckProc].some(lckProcLive) || skill.lckOdds || skill.lckDiffCoeff !== undefined) used.add("lck");
   return used;
 }
 
@@ -8385,15 +8402,58 @@ function getUsedPlayerStatKeys(skill) {
 //   def -- damage that goes through defAdjust (everything except heals/hate, `penetrating` and `effectDamage`).
 //   cha -- a contested duration (debuffAdjust vs the target's CHA), on the main or the secondary duration.
 //   lck -- ONLY a direct read (lckDiffCoeff: Lucky Card's Random(0, coef * (LCK - targetLCK)), Cat.cs:20845).
-//          The LCK roll defAdjust bakes in ambiently doesn't count, same rule as the player side.
+//          The LCK roll defAdjust bakes in ambiently glows softly instead (getSoftEnemyStatKeys, 2026-10-21), as on the player side.
 function getUsedEnemyStatKeys(skill) {
   const used = new Set();
   const hasDmg = skill.dmgGroups ? skill.dmgGroups.some(g => g.dmg) : !!skill.dmg;
   if (hasDmg && !skill.isHeal && !skill.isHate && !skill.penetrating && !skillEffectDamageOn(skill)) used.add("def");
   if (skill.duration !== undefined && skill.durContested) used.add("cha");
   if (skill.secondaryDuration && skill.secondaryDuration.durContested) used.add("cha");
-  if (skill.lckDiffCoeff !== undefined) used.add("lck");
+  if (skill.lckDiffCoeff !== undefined && !skill.lckDiffOwn) used.add("lck");   // lckDiffOwn (Lucky Dice): the roll reads the caster's LCK only
   return used;
+}
+// A luck proc reads LCK only while it can happen (user 2026-10-21): its dep on (as rollOneHit gates it) and a base chance above 0 at some rank,
+// since lckAdjustChance gives 0 for a 0 base whatever the LCK (the Combo crit with no crit gear: on TTO nothing else moves with LCK there).
+function lckProcLive(lp){
+  if (!lp) return false;
+  if (lp.dep && !(lp.depGates === false || getDepRank(lp.dep) > lp.dep.minRank)) return false;
+  if (lp.calc) return true;
+  const raw = typeof lp.chance === "function" ? lp.chance(99, lp.dep ? getDepRank(lp.dep) : null) : lp.chance;
+  return [].concat(raw).some(c => +c > 0);
+}
+// Soft LCK (user 2026-10-21, replacing "rolls inside *Adjust never glow" now that unread stats fade to grey): LCK whose only effect is the luck
+// roll baked into an *Adjust wrapper glows a little, visibly less than a stat the formulas read and more than the faded grey. agiAdjust / magAdjust /
+// chaAdjust keep their roll on every server; talAdjust / dmgAdjust (the attacker's roll) and defAdjust (the target's) lost it on TTO (tdlRoll).
+// The validator measures every card on every server (LCK 0 against 200) and holds these sets to it ([LCK GLOW ERROR]).
+// The damage groups that land at all and go through dmgAdjust / defAdjust: hitting now (hitCount > 0: Dream Burst waits for its dep), not
+// effect damage (RPC_AddEffectDamage skips both, Bat Charge Attack's bats) and not penetrating (a bare talAdjust).
+function liveRollDmgGroups(skill) {
+  if (skill.penetrating || skillEffectDamageOn(skill)) return [];
+  const groups = skill.dmgGroups || (skill.dmg ? [skill] : []);
+  const hits = (g) => { if (g === skill || typeof g.hitCount !== "function") return true; try { return g.hitCount(skill.maxRank || 1) > 0; } catch (e) { return true; } };
+  return groups.filter(g => g.dmg && hits(g) && !g.effectDamage && !g.penetrating);
+}
+function getSoftPlayerStatKeys(skill) {
+  const soft = new Set(), used = getUsedPlayerStatKeys(skill), tto = currentServer === "tto";
+  if (used.has("lck") || skill.ownStats) return soft;
+  const depOn = (dep) => !!dep && getDepRank(dep) === dep.maxRank;
+  // a summon rolls its own LCK, unless the player's LCK feeds it (Gadina's Earth Soul, Phoenix's Fire Soul)
+  const fed = !!((skill.ownStatsGadina || skill.ownStatsGadinaHP) && depOn(MONKEY_EARTHSOUL_DEP)) || !!((skill.ownStatsPhoenix || skill.id === "monkey_phoenix") && depOn(MONKEY_FIRESOUL_DEP));
+  const dmgRoll = !tto && (!skillSummonAttacker(skill) || fed)
+    && liveRollDmgGroups(skill).some(g => (!skill.dmgAdjustSkip && !skill.isHeal) || /talAdjust\(/.test(String(g.dmg)));   // dmgAdjust's roll (never on a heal), or talAdjust's
+  const roll = (used.has("agi") && (skill.cd !== undefined || !!skill.secondaryCooldown))   // agiAdjust
+    || ((fed || skill.ownStatsGadina) && skill.cd !== undefined && !!skill.cdWrapped)   // the summon's own agiAdjust: on a fed LCK; Gadina's is drawn with the player's LCK roll
+    || (used.has("int") && !!skill.castWrapped)   // magAdjust
+    || (skill.duration !== undefined && !!skill.durWrapped && !skill.durContested && (skill.durAdjust !== "tal" || !tto))   // chaAdjust (talAdjust off TTO)
+    || (!!skill.secondaryDuration && !!skill.secondaryDuration.durWrapped && !skill.secondaryDuration.durContested)
+    || dmgRoll;
+  if (roll) soft.add("lck");
+  return soft;
+}
+function getSoftEnemyStatKeys(skill) {
+  const soft = new Set(), used = getUsedEnemyStatKeys(skill);
+  if (!used.has("lck") && used.has("def") && currentServer !== "tto" && liveRollDmgGroups(skill).length) soft.add("lck");   // defAdjust's roll on the target's LCK
+  return soft;
 }
 
 // Shared by fmt() (mount-scoped, formats a whole range) and lckDistribution
@@ -19947,13 +20007,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const activeSelected = getActiveSkill(selected, currentServer);
     const rank = getSkillRank(selected);
     // Stat signature highlight (see .sk-stat-glow-* CSS + getUsedPlayerStatKeys()).
-    const usedPlayerStats = getUsedPlayerStatKeys(selected);
+    const usedPlayerStats = getUsedPlayerStatKeys(selected), softPlayerStats = getSoftPlayerStatKeys(selected);
     [["atk",atkEl],["def",defEl],["tal",talEl],["agi",agiEl],["vit",vitEl],["cha",chaEl],["int",intEl],["lck",lckEl],["lv",lvEl]].forEach(([key, el]) => {
-      el.parentElement.className = usedPlayerStats.has(key) ? `sk-stat-glow-${key}` : "";
+      el.parentElement.className = usedPlayerStats.has(key) ? `sk-stat-glow-${key}` : softPlayerStats.has(key) ? `sk-stat-glow-${key} is-soft` : "";
     });
-    const usedEnemyStats = getUsedEnemyStatKeys(selected);
+    const usedEnemyStats = getUsedEnemyStatKeys(selected), softEnemyStats = getSoftEnemyStatKeys(selected);
     [["atk",enemyAtkEl],["def",enemyDefEl],["tal",enemyTalEl],["agi",enemyAgiEl],["vit",enemyVitEl],["cha",enemyChaEl],["int",enemyIntEl],["lck",enemyLckEl]].forEach(([key, el]) => {
-      el.parentElement.className = usedEnemyStats.has(key) ? `sk-stat-glow-${key}` : "";
+      el.parentElement.className = usedEnemyStats.has(key) ? `sk-stat-glow-${key}` : softEnemyStats.has(key) ? `sk-stat-glow-${key} is-soft` : "";
     });
     const INT = statVal(intEl);
     const CHA = statVal(chaEl);
@@ -31277,6 +31337,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T01:37:05.278Z","feat(bible): skill details: LCK glows softly when it moves the numbers only through an Adjust roll (less than a main stat, more than the faded grey), measured on every card and server"],
     ["2026-10-20T23:59:27.524Z","feat(bible): class guides #59 TTO Panda แพนด้าคนนี้จะตามจีบจนกว่าคุณจะหยุดรัก by 1Hert.z; #60 TTO Panda AGI 295: Golden Ratio by BunSan"],
     ["2026-10-20T15:13:22.607Z","feat(bible): class guides #50 is updated: TTO Wolf Wolf - Paladin by Shibayami; #54 TTO Penguin กวิ้นพายุ 12/8 ลงด่านสายประหยัดงบ PVE by หนมผิงช่วยเหลือประชาชน; #55 TTO Wolf จะชาร์จอีกนานมั้ย ลืมสายนี้กันรึยัง by Caramellys; #56 TTO Monkey ลิง 2 ร่าง No Soul by ZoRution; #57 TTO Sheep แกะที่บ้านท่าน by เจ้าลูกเป็ด; #58 TTO Sheep แกะPVE สู้อาทาลุสมืด ดูมส์เดย์ by MAGNUS"],
     ["2026-10-20T15:04:06.700Z","fix(bible): class guide #49 is updated: TTO Monkey ลิงดินภูเขาไฟ by ChilLs"],
