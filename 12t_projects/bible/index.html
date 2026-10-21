@@ -8269,12 +8269,12 @@ function getUsedOwnStatKeys(skill) {
 // (mhp = 10 x vit), so a read of MHP counts as a read of VIT.
 function getSummonFeedPlayerStatKeys(skill) {
   const fed = new Set();
-  const isBarrelBot = !!(skill.ownStats || skill.ownStatsDmgOnly);
-  const isGyro = !!skill.ownStatsGyro;
+  const isBarrelBot = !!(skill.ownStats || skill.ownStatsDmgOnly || skill.id === "mole_barrelBot");
+  const isGyro = !!(skill.ownStatsGyro || skill.id === "mole_autoGyroGun");
   const isPhoenix = !!(skill.ownStatsPhoenix || skill.id === "monkey_phoenix");
   const isGadina = !!(skill.ownStatsGadina || skill.ownStatsGadinaHP);
   if (!isBarrelBot && !isGyro && !isPhoenix && !isGadina) return fed;
-  const used = getUsedOwnStatKeys(skill);
+  const used = summonCardShowsAllStats(skill) ? new Set(["mhp", "atk", "def", "agi", "vit", "mag", "cha", "tal", "lck"]) : getUsedOwnStatKeys(skill);   // a summon card shows all its stats as used
   const depOn = (dep) => !!dep && getDepRank(dep) === dep.maxRank;
   const SUMMON_KEYS = ["atk", "def", "agi", "vit", "mag", "cha", "tal", "lck"];
   const reads = (k) => used.has(k) || (k === "vit" && used.has("mhp"));
@@ -8402,16 +8402,26 @@ function getUsedPlayerStatKeys(skill) {
   if (skill.secondaryDuration !== undefined) {
     if (skill.secondaryDuration.durContested || skill.secondaryDuration.durWrapped) used.add("cha");
   }
-  const dmgTexts = (skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg, skill.shield]).filter(Boolean);
-  const hasTal = dmgTexts.some(t => /talAdjust\(/.test(t));
-  const hasAtk = skillHasCoeff(skill, "atkCoeff");
-  const hasDef = skillHasCoeff(skill, "defCoeff");
+  // live: the card as it stands (rank, deps), when the skill details page has mounted; otherwise the fields as written
+  let live = null; try { live = typeof liveStatReadsGlobal === "function" ? liveStatReadsGlobal(skill) : null; } catch (e) { live = null; }
+  const dmgTexts = (live ? live.texts : (skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg, skill.shield])).filter(Boolean).map(String);
+  const hasTal = dmgTexts.some(t => /talAdjust\((?!\s*0\s*\))/.test(t));   // talAdjust(0) reads nothing (Over Swing before Over Power)
+  // Gadina reads the player's ATK only through Titan Sword's per-hit bonus (Earth Soul's feed is getSummonFeedPlayerStatKeys)
+  const gadinaNoTitan = !!skill.ownStatsGadina && !skill.ownStatsGadinaHP && !(getDepRank(MNK_TITANSWORD_DEP) > 0);
+  const hasAtk = (live ? live.atk : skillHasCoeff(skill, "atkCoeff")) && !gadinaNoTitan;
+  const hasDef = live ? live.def : skillHasCoeff(skill, "defCoeff");
+  const hasCha = live ? live.cha : skillHasCoeff(skill, "chaCoeff");   // Nefarious Whip's 0.5CHA
   if (dmgTexts.some(t => /\bwbTick\b/.test(t))) used.add("vit");
   if (!isSummonAttacker) {
     if (hasTal) used.add("tal");
     if (hasAtk) used.add("atk");
     if (hasDef) used.add("def");
+    if (hasCha) used.add("cha");
   }
+  if (dmgTexts.some(t => /Monkey talAdjust\(/.test(t))) used.add("tal");   // Phoenix with Intense Fire adds the Monkey's own talAdjust
+  if (skill.comboModel && getDepRank(CAT_COMBO_HIDDEN_DEP) > 0) used.add("tal");   // Hidden Blade replaces Cat Combo's raw hit with talAdjust(10 x rank) (rollOneHit)
+  // a damage input on auto reads what its auto value reads (Bubble Burst: a full Bubble Shield, talAdjust(80))
+  (skill.dmgInputs || []).forEach(inp => { if (inp.autoStats && DMG_INPUT_VALS[inp.key] == null) inp.autoStats.forEach(k => used.add(k)); });
   if ([skill.lckProc, skill.secondaryLckProc, skill.tertiaryLckProc, skill.quaternaryLckProc].some(lckProcLive) || skill.lckOdds || skill.lckDiffCoeff !== undefined) used.add("lck");
   return used;
 }
@@ -8804,6 +8814,12 @@ const PENGUIN_DEADLY_FROST_DEP = { id: "deadlyFrost", label: "Deadly Frost",
   icon: "penguin_deadlyFrost5", minRank: 0, maxRank: 1 };
 const BAT_TTO_DEP = { id: "tto", label: "Tailstopia Online (TTO)", icon: "tto", minRank: 0, maxRank: 1 };
 let getDepRankGlobal = null;
+// The glow's live view of a card, set by the skill details mount (resolvers live there): see liveStatReadsGlobal below getDepRankGlobal = getDepRank.
+let liveStatReadsGlobal = null;
+// Summon cards whose stat block shows all nine stats as used (the block's own list; the stat glow's summon feeds read it too).
+function summonCardShowsAllStats(skill) {
+  return ["monkey_phoenix", "mole_barrelBot", "mole_kingKaiser", "mole_autoGyroGun", "monkey_summonGaos", "monkey_buiten", "monkey_ja", "monkey_gadina"].includes(skill.id) || !!skill.bbStatsInRow2 || !!skill.mercParent;
+}
 let getCharLvGlobal = null;
 // Current value of the Character LV input, for desc functions that show a level-computed number.
 function getCharLv(){
@@ -14819,7 +14835,7 @@ const SKILLS = [
   { id:"whale_homingShield", compatSkills:["whale_knightOfTheDeep"], name:"Homing Shield", class:"Whale", icon:"whale_homingShield1", maxRank:1, cost:{mp:0, sp:24, spType:"red"}, cd:120, cdWrapped:true, revisedArtExempt:false, cdDep:whaleKnightDep(-40), duration:3, durWrapped:true, defCoeff:0.5, dmg:"talAdjust(20)", ko:"10", status:{name:"noShield", sLv:1, class:"State"}, desc:()=>`ขว้างโล่ติดตามเป้าหมาย (เร็ว **12m/s** บินอยู่ได้ตามระยะเวลาของสกิล) โดนซ้ำทุกครั้งที่บินผ่าน ระหว่างนี้ตัวเองติด [noShield]<br>**Knight of the Deep:** ลดคูลดาวน์พื้นฐานสกิลนี้ **40 วินาที**`, reach:[{ shape: "ring", r: 40, anchor: "self", label: "ระยะล็อกเป้าหมาย (วงกลมแนวราบ ไม่จำกัดความสูง)", src: "12Tails-Mechanics-Reference.md §4 (GameGui.cs:37857-37880)" }] },
   { id:"whale_wonderBelly", name:"Wonder Belly", class:"Whale", icon:"whale_wonderBelly5", maxRank:1, passive:true, desc:`ทำให้ **Swallow** กลืนได้นานขึ้น (เวลาพื้นฐาน 12 → **15 วินาที**) และแรงดึง **+1** ต่อครั้ง<br>• ระหว่างมีเป้าหมายอยู่ในท้อง ([gobble]) ทุก **5 วินาที**: เพื่อนร่วมทีมฟื้นฟู HP / ศัตรูโดนดาเมจ **5%** ของ HP สูงสุดของตัวเอง (ปัดลง)<br>__นับ 5 วินาทีตามนาฬิกาเกม ไม่ได้นับจากตอนกลืน ครั้งแรกจึงมาได้ทุกเมื่อภายใน 5 วินาทีแรก__`, compatSkills:["whale_swallow", "whale_gobbleUp"], dmg:"wbTick", dmgSub:"0.5VIT", dmgAdjustSkip:true, ko:"0", duration:15, durWrapped:true, durContested:true, durLabel:"ระยะเวลา Swallow", hitCountDuration:5 },
   { id:"whale_peninsulaAsunder", compatSkills:["whale_peninsulaImpale","whale_peninsulaRound"], name:"Peninsula Asunder", class:"Whale", icon:"whale_peninsulaAsunder5", maxRank:1, passive:true, desc:"ทำให้ **Peninsula Impale** ระยะเพิ่มเป็น **กว้าง 3m × ยาว 12m** (ปกติ **2m × 6m**) ดาเมจฐาน **+10** ต่อฮิต (ก่อนคูณค่า TAL) และหันตามเป้าหมายที่ล็อกไว้ทุกครั้งที่แทง<br>ทำให้ **Peninsula Round** ระยะเพิ่มเป็น **กว้าง 6m × ยาว 5m** (ปกติ **3m × 4m**)" },
-  { id:"whale_bubbleBurst", name:"Bubble Burst", class:"Whale", icon:"whale_bubbleBurst1", maxRank:1, cost:{mp:10, sp:10, spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:()=>String(dmgIn("burstShieldHp")), dmgInputs:[{ key:"burstShieldHp", label:"HP โล่ที่เหลือ", title:"HP ที่เหลือของ Bubble Shield ตอนระเบิด (ค่าเริ่มต้น = โล่เต็ม เลเวล 4 ค่าเฉลี่ยจาก TAL และ LCK ของวาฬ ลบช่องออกเพื่อกลับไปใช้ค่านี้)", min:0, max:9999, def:0, auto:whaleBubbleFullPool }], formulaItems:()=>[{ value: dmgIn("burstShieldHp"), sub:"HP โล่ที่เหลือ", cls:"dmg-shield" }], effectDamage:true, ko:"0", hitCount:()=>1, desc:"ระเบิด **Bubble Shield** ทุกอันที่วาฬร่ายไว้ ทำ ^^ดาเมจม่วง^^ เท่ากับ **ค่าเกราะที่เหลือ** ใส่ศัตรูรอบเกราะ แล้วเกราะหายไป<br>**ติดตัว**: **Bubble Shield** ระดับ +1 และเกราะหนาขึ้น", compatSkills:["whale_bubbleShield"], bbBug:"ระเบิด [bubbleShield] ของวาฬตัวอื่นในทีมด้วย แต่ไม่ทำดาเมจ (โล่หายฟรี) ทำดาเมจเฉพาะโล่ที่ตัวเองร่าย {{credit:ravilion}}", reach:[{ shape: "cylinder", r: 12, h: 3, anchor: "target", label: "รอบเกราะแต่ละอัน", src: "Whale.cs:35874" }, { shape: "cylinder", r: 200, h: 50, faint: true, noZoom: true, anchor: "self", label: "ระยะหา Bubble Shield ที่ร่ายไว้", src: "Whale.cs:35811" }] },
+  { id:"whale_bubbleBurst", name:"Bubble Burst", class:"Whale", icon:"whale_bubbleBurst1", maxRank:1, cost:{mp:10, sp:10, spType:"red"}, cd:60, cdWrapped:true, revisedArtExempt:false, dmg:()=>String(dmgIn("burstShieldHp")), dmgInputs:[{ key:"burstShieldHp", autoStats:["tal"], label:"HP โล่ที่เหลือ", title:"HP ที่เหลือของ Bubble Shield ตอนระเบิด (ค่าเริ่มต้น = โล่เต็ม เลเวล 4 ค่าเฉลี่ยจาก TAL และ LCK ของวาฬ ลบช่องออกเพื่อกลับไปใช้ค่านี้)", min:0, max:9999, def:0, auto:whaleBubbleFullPool }], formulaItems:()=>[{ value: dmgIn("burstShieldHp"), sub:"HP โล่ที่เหลือ", cls:"dmg-shield" }], effectDamage:true, ko:"0", hitCount:()=>1, desc:"ระเบิด **Bubble Shield** ทุกอันที่วาฬร่ายไว้ ทำ ^^ดาเมจม่วง^^ เท่ากับ **ค่าเกราะที่เหลือ** ใส่ศัตรูรอบเกราะ แล้วเกราะหายไป<br>**ติดตัว**: **Bubble Shield** ระดับ +1 และเกราะหนาขึ้น", compatSkills:["whale_bubbleShield"], bbBug:"ระเบิด [bubbleShield] ของวาฬตัวอื่นในทีมด้วย แต่ไม่ทำดาเมจ (โล่หายฟรี) ทำดาเมจเฉพาะโล่ที่ตัวเองร่าย {{credit:ravilion}}", reach:[{ shape: "cylinder", r: 12, h: 3, anchor: "target", label: "รอบเกราะแต่ละอัน", src: "Whale.cs:35874" }, { shape: "cylinder", r: 200, h: 50, faint: true, noZoom: true, anchor: "self", label: "ระยะหา Bubble Shield ที่ร่ายไว้", src: "Whale.cs:35811" }] },
   { id:"whale_overWeight", name:"Over Weight", class:"Whale", icon:"whale_overWeight5", maxRank:1, passive:true, desc:"ทำให้ **Heavy Weight** และ **Over Presence** ระดับ +1", compatSkills:["whale_heavyWeight", "whale_overPresence"] },
   { id:"whale_spiralBlast", name:"Spiral Blast", class:"Whale", icon:"whale_spiralBlast5", maxRank:1, passive:true, desc:"ทำให้ **Hydro Blast** รัศมี 1m → **2m** แรงขึ้น และลบบัฟกายภาพ (Physical Buff) ของเป้าหมายที่ระดับไม่เกินระดับของ **Hydro Blast**", compatSkills:["whale_hydroBlast"], tooltipNote:"บอกว่าเพิ่มดาเมจ Hydro Blast **50%** แต่โค้ดจริงเพิ่ม **+20** ในฐาน talAdjust และล้างบัฟได้เฉพาะเลเวลไม่เกินขั้น Hydro Blast" },
   { id:"whale_revitalize", name:"Revitalize", class:"Whale", icon:"whale_revitalize1", maxRank:1, cost:{mp:60, sp:0}, castTime:6, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:180, cdWrapped:true, revisedArtExempt:false, duration:18, durWrapped:true, isHeal:true, dmg:() => String(((lv) => 6 * lv + 6 + Math.floor(Math.fround(Math.fround(Math.fround(0.004) * lv) * dmgIn("healTargetMhp"))))(3)), hitCount:() => 1, dmgInputs:[{ key:"healTargetMhp", label:"Max HP เป้าหมาย", title:"HP สูงสุดของเป้าหมายที่รับฮีล", min:0, max:99999, def:1280 }], formulaItems:() => [{ value:24, sub:"Rejuvenate เลเวล 3", cls:"dmg-num" }, { op:"+" }, { op:"⌊" }, { value:0.012, sub:"0.004 × 3", cls:"dmg-term", raw:true }, { op:"×" }, { value:dmgIn("healTargetMhp"), sub:"Max HP", cls:"dmg-num" }, { op:"⌋" }], desc:"ร่ายฟื้นฟูต่อเนื่องระดับ **3** ให้เพื่อนร่วมทีมทุกคน (ไม่จำกัดระยะ) ฟื้นฟู HP ทุก **4 วินาที**<br>**ติดตัว**: **Rejuvenate** ของวาฬระดับ +1<br>**Reduced Cast:** ลดเวลาร่าย", compatSkills:["whale_rejuvenate", "whale_reducedCast"] },
@@ -18813,6 +18829,19 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
 
   // Shared by both the Duration box's `dep` and the Cooldown box's `cdDep` —
   getDepRankGlobal = getDepRank;
+  // The glow's live view of a card (user 2026-10-21: Cat Combo with Hidden Blade on reads TAL and TAL did not glow): what its damage reads at the
+  // current rank and deps, through the resolvers rollOneHit uses -- the damage texts as they evaluate, and the ATK / DEF / CHA coefficients of
+  // the groups that hit now (a group without its own coefficient uses the card's, as in rollOneHit). getUsedPlayerStatKeys reads it.
+  liveStatReadsGlobal = (skill) => {
+    const rank = getSkillRank(skill);
+    const groups = skill.dmgGroups ? skill.dmgGroups.filter(g => +resolveGroupHitCount(skill, g) > 0) : null;
+    const coeff = (field, card) => groups
+      ? groups.some(g => +(g[field] !== undefined ? resolveGroupValue(skill, g, field) : (skill[field] !== undefined ? card() : 0)) !== 0)
+      : skill[field] !== undefined && +card() !== 0;
+    const texts = groups ? groups.map(g => String(g.dmg === undefined ? "" : g.dmg))
+      : [skill.dmg !== undefined ? String(getDmgText(skill, rank)) : "", skill.shield !== undefined ? String(typeof skill.shield === "function" ? skill.shield : resolveRank(skill.shield, rank)) : ""];
+    return { texts, atk: coeff("atkCoeff", () => resolveAtkCoeff(skill, rank)), def: coeff("defCoeff", () => resolveDefCoeff(skill, rank)), cha: coeff("chaCoeff", () => resolveChaCoeff(skill, rank)) };
+  };
   getCharLvGlobal = () => parseFloat(lvEl.value) || 0;
   // same schema (minRank/maxRank/perRank, or postMultiply/multipliers, or
   // replace/replaceValue), just applied to a different base stat.
@@ -20650,7 +20679,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         ? new Set(["mhp"])
         : (selected.id === "mole_warCapital")
         ? new Set()   // the missiles use the Mole's TAL, so every base stat is shown as not used
-        : (selected.id === "monkey_phoenix" || selected.id === "mole_barrelBot" || selected.id === "mole_kingKaiser" || selected.id === "mole_autoGyroGun" || selected.id === "monkey_summonGaos" || selected.id === "monkey_buiten" || selected.id === "monkey_ja" || selected.id === "monkey_gadina" || selected.bbStatsInRow2 || selected.mercParent)
+        : summonCardShowsAllStats(selected)
         ? new Set(["mhp","atk","def","agi","vit","mag","cha","tal","lck"])
         : getUsedOwnStatKeys(selected);
       // Ja's own ATK/DEF/AGI/VIT/MAG/CHA/TAL/LCK: pointer-corrected direct
@@ -31384,6 +31413,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T02:13:39.269Z","fix(bible): skill details: the stat glow follows the deps (Cat Combo with Hidden Blade lights TAL; Power Hammer, Over Power, Intense Fire, Titan Sword, Synchro Mole and others move it too), measured on every card and dep"],
     ["2026-10-21T01:48:21.643Z","fix(bible): skill details: Cat Combo's ATK glows (the ATK / DEF glow now reads coefficients on damage groups, not only the card's own)"],
     ["2026-10-21T01:40:30.536Z","feat(bible): class guides: ‹ › beside the gallery cards with a page count, ← / → turn pages (the gallery and a guide's description), the description's ‹ › sit on its edges, and skill tree names shrink instead of truncating"],
     ["2026-10-21T01:37:05.278Z","feat(bible): skill details: LCK glows softly when it moves the numbers only through an Adjust roll (less than a main stat, more than the faded grey), measured on every card and server"],

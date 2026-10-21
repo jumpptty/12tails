@@ -1538,14 +1538,15 @@ if (RUN_DAMAGE_CHECKS) {
   const inputs = sandbox._statInputs, bad = [], savedIn = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
   for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";   // known stats: earlier checks leave inputs changed (ATK 0 pins every hit at 1)
   const soft = (fn, sk) => typeof sandbox[fn] === "function" ? sandbox[fn](sk) : new Set();
-  const neutral = SKILLS.find(x => x.passive && !x.dmg && !x.dmgGroups && x.cd === undefined && x.duration === undefined && !x.lckProc);
+  // a fresh render goes through another card of the SAME class: a class switch loads that class's saved stat preset over the stats set here
+  const sameClass = (sk) => SKILLS.find(x => x.class === sk.class && x.id !== sk.id) || SKILLS.find(x => x.id !== sk.id);
   if (typeof sandbox.getSoftPlayerStatKeys !== "function" || typeof sandbox.getSoftEnemyStatKeys !== "function") bad.push("getSoftPlayerStatKeys / getSoftEnemyStatKeys are missing");
   for (const srv of ["og", "tot", "tto"]) {
     sandbox._setServer(srv);
     for (const sk of SKILLS) {
       try {
         // a fresh render each time (another card first): a changed number otherwise leaves its delta-motion markup in the next render
-        const render = (p, e) => { inputs.lck.value = p; inputs.enemyLck.value = e; sandbox._selectSkill(neutral); sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+        const render = (p, e) => { inputs.lck.value = p; inputs.enemyLck.value = e; sandbox._selectSkill(sameClass(sk)); sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
         const base = render("0", "0");
         if (render("0", "0") !== base) { skippedLckGlow++; continue; }   // a card that draws something random each render can't be measured this way
         const pHigh = render("200", "0"), pMoves = pHigh !== base, eMoves = render("200", "200") !== pHigh;   // enemy measured with the player at 200, so LCK-difference cards show
@@ -1583,7 +1584,7 @@ let checkedGroupGlow = 0;
   const groupCoeff = (sk, key) => (sk.dmgGroups || []).some(g => g[key] !== undefined && g[key] !== 0);
   const missing = [];
   for (const sk of SKILLS) {
-    if (sk.ownStats || (typeof sandbox.skillSummonAttacker === "function" && sandbox.skillSummonAttacker(sk))) continue;
+    if (sk.ownStats || sk.ownStatsGadina || (typeof sandbox.skillSummonAttacker === "function" && sandbox.skillSummonAttacker(sk))) continue;   // Gadina reads the player's ATK only through Titan Sword
     const used = sandbox.getUsedPlayerStatKeys(sk);
     if (groupCoeff(sk, "atkCoeff")) { checkedGroupGlow++; if (!used.has("atk")) missing.push(sk.id + " ATK"); }
     if (groupCoeff(sk, "defCoeff")) { checkedGroupGlow++; if (!used.has("def")) missing.push(sk.id + " DEF"); }
@@ -1594,6 +1595,7 @@ let checkedGroupGlow = 0;
   if (missing.length) { console.error(`[STAT GLOW ERROR] ${missing.length} stat(s) read by damage groups do not glow: ${missing.join(", ")}`); errorCount++; }
   console.log(`Verified ${checkedGroupGlow} damage-group ATK / DEF glow checks.`);
 }
+
 // 3m. effectProc purple mix (2026-09-24, GEMINI.md "effectProc"): Wall Puncture replace-roll rate and rank-0 off,
 // Megalodon's purple Pull group, every bonus amount, and the gold total digits.
 let checkedEffectProc = 0;
@@ -4717,6 +4719,47 @@ if (gmHtml !== null) {
     ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
     if (!gmFailed) console.log(`Verified the guide manager page's own code reader and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
   }
+}
+// Runs last: some deps sync the Buff / Debuff state (Amplify Damage writes the enemy debuff), which restoring their rank does not undo.
+// The full glow follows the deps (user 2026-10-21: Cat Combo with Hidden Blade on reads TAL, talAdjust(10 x rank), and TAL did not glow).
+// Measured: every card on BB with its default deps and with each dep its strip shows at its max rank, one at a time. A main stat (ATK, TAL,
+// AGI, INT, CHA) that moves the numbers from 0 to 300 must glow, and a glowing one must move them (re-measured with the other stats strong
+// and weak first, for a hit pinned at 1). The summon stat block's rows marked unused don't count: the card says they don't drive it.
+let checkedDepGlow = 0;
+if (RUN_DAMAGE_CHECKS) {
+  const inputs = sandbox._statInputs, deps = sandbox._depRanks, bad = [], savedIn = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+  const sameClass = (sk) => SKILLS.find(x => x.class === sk.class && x.id !== sk.id) || SKILLS.find(x => x.id !== sk.id);
+  const STATS = ["atk", "tal", "agi", "int", "cha"];
+  const strip = (h) => h.replace(/(sk-summon-stat-unused[^>]*>[\s\S]*?sk-summon-stat-value[^>]*>)[^<]*/g, "$1");   // unused summon rows' values
+  sandbox._setServer("og");
+  for (const sk of SKILLS) {
+    try {
+      for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";
+      const render = () => { sandbox._selectSkill(sameClass(sk)); sandbox._selectSkill(sk); return strip(sandbox._getRenderedHeroHtml()); };
+      const depList = [...new Map([...render().matchAll(/data-dep-id="([^"]+)"[^>]*?data-dep-max-rank="(\d+)"/g)].map(m => [m[1], +m[2]]))];
+      for (const [id, max] of [[null, 0], ...depList]) {
+        const was = id ? deps[id] : undefined;
+        if (id) deps[id] = max;
+        try {
+          render();   // warm-up: the first render after a dep change carries its pips' pop-in classes
+          const used = sandbox.getUsedPlayerStatKeys(sk);
+          const moves = (st) => { const keep = inputs[st].value; inputs[st].value = "0"; const a = render(); inputs[st].value = "300"; const b = render(); inputs[st].value = keep; return a !== b; };
+          const movesAnywhere = (st) => moves(st) || ["400", "0"].some(v => { const keep = STATS.filter(k => k !== st).map(k => [k, inputs[k].value]); keep.forEach(([k]) => { inputs[k].value = v; }); try { return moves(st); } finally { keep.forEach(([k, x]) => { inputs[k].value = x; }); } });
+          for (const st of STATS) {
+            checkedDepGlow++;
+            const m = moves(st), g = used.has(st), where = sk.id + (id ? " with " + id + " " + max : "");
+            if (m && !g) bad.push(`${where}: ${st.toUpperCase()} moves the numbers but does not glow`);
+            if (!m && g && !movesAnywhere(st)) bad.push(`${where}: ${st.toUpperCase()} glows but moves nothing`);
+          }
+        } finally { if (id) { if (was === undefined) delete deps[id]; else deps[id] = was; } }
+      }
+    } catch (e) { bad.push(`${sk.id}: ${e.message}`); }
+  }
+  for (const k of Object.keys(inputs)) inputs[k].value = savedIn[k];
+  bad.slice(0, 40).forEach(m => console.error("[STAT GLOW ERROR] " + m));
+  if (bad.length > 40) console.error(`[STAT GLOW ERROR] ... and ${bad.length - 40} more`);
+  errorCount += bad.length;
+  console.log(`Verified ${checkedDepGlow} stat glow checks across dep states (every card on BB, each dep at max).`);
 }
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
