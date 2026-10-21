@@ -8222,9 +8222,14 @@ function gadinaOwnStats(rank, titanSwordLv, aegisOfEarthLv, monkeyStats, earthSo
 //           HP bar, or a cast-time/duration figure for one of these
 //           own-stat entities, so these 5 always render as "not used" --
 //           that's the honest, correct answer, not a bug to fix later.
+// The card, or one of its damage groups, carries a non-zero coefficient of a stat (user 2026-10-21: Cat Combo keeps its 0.5ATK on each
+// combo hit, so a top-level-only test never lit its ATK).
+function skillHasCoeff(skill, key) {
+  return skill[key] !== undefined || (skill.dmgGroups || []).some(g => g[key] !== undefined && g[key] !== 0);
+}
 function getUsedOwnStatKeys(skill) {
   const used = new Set();
-  const hasAtk = skill.atkCoeff !== undefined;
+  const hasAtk = skillHasCoeff(skill, "atkCoeff");
   const dmgTexts = skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg];
   const hasTal = dmgTexts.some(t => t && /talAdjust\(/.test(t));
   const hasAgi = !!((skill.ownStats || skill.ownStatsGadina) && skill.cdWrapped && !skill.cdPlayerStats)
@@ -8399,8 +8404,8 @@ function getUsedPlayerStatKeys(skill) {
   }
   const dmgTexts = (skill.dmgGroups ? skill.dmgGroups.map(g => g.dmg) : [skill.dmg, skill.shield]).filter(Boolean);
   const hasTal = dmgTexts.some(t => /talAdjust\(/.test(t));
-  const hasAtk = skill.atkCoeff !== undefined;
-  const hasDef = skill.defCoeff !== undefined;
+  const hasAtk = skillHasCoeff(skill, "atkCoeff");
+  const hasDef = skillHasCoeff(skill, "defCoeff");
   if (dmgTexts.some(t => /\bwbTick\b/.test(t))) used.add("vit");
   if (!isSummonAttacker) {
     if (hasTal) used.add("tal");
@@ -31379,6 +31384,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T01:48:21.643Z","fix(bible): skill details: Cat Combo's ATK glows (the ATK / DEF glow now reads coefficients on damage groups, not only the card's own)"],
     ["2026-10-21T01:40:30.536Z","feat(bible): class guides: ‹ › beside the gallery cards with a page count, ← / → turn pages (the gallery and a guide's description), the description's ‹ › sit on its edges, and skill tree names shrink instead of truncating"],
     ["2026-10-21T01:37:05.278Z","feat(bible): skill details: LCK glows softly when it moves the numbers only through an Adjust roll (less than a main stat, more than the faded grey), measured on every card and server"],
     ["2026-10-20T23:59:27.524Z","feat(bible): class guides #59 TTO Panda แพนด้าคนนี้จะตามจีบจนกว่าคุณจะหยุดรัก by 1Hert.z; #60 TTO Panda AGI 295: Golden Ratio by BunSan"],

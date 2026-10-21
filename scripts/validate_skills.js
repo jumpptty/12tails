@@ -1576,6 +1576,24 @@ if (RUN_DAMAGE_CHECKS) {
   errorCount += bad.length;
   console.log(`Verified ${checkedLckGlow} LCK glow checks (LCK 0 vs 200, every card on every server; ${skippedLckGlow} random cards skipped, ${knownLckGlow} known hidden rolls).`);
 }
+// ATK / DEF on damage groups glow too (user 2026-10-21: Cat Combo's ATK never glowed; its 0.5ATK terms sit on its six combo hits, not on a
+// top-level atkCoeff). Every card whose groups carry a non-zero atkCoeff / defCoeff lights that stat, unless a summon with its own stats attacks.
+let checkedGroupGlow = 0;
+{
+  const groupCoeff = (sk, key) => (sk.dmgGroups || []).some(g => g[key] !== undefined && g[key] !== 0);
+  const missing = [];
+  for (const sk of SKILLS) {
+    if (sk.ownStats || (typeof sandbox.skillSummonAttacker === "function" && sandbox.skillSummonAttacker(sk))) continue;
+    const used = sandbox.getUsedPlayerStatKeys(sk);
+    if (groupCoeff(sk, "atkCoeff")) { checkedGroupGlow++; if (!used.has("atk")) missing.push(sk.id + " ATK"); }
+    if (groupCoeff(sk, "defCoeff")) { checkedGroupGlow++; if (!used.has("def")) missing.push(sk.id + " DEF"); }
+  }
+  const combo = SKILLS.find(s => s.id === "cat_nAttack");
+  checkedGroupGlow++;
+  if (!sandbox.getUsedPlayerStatKeys(combo).has("atk")) missing.unshift("cat_nAttack ATK (Cat Combo)");
+  if (missing.length) { console.error(`[STAT GLOW ERROR] ${missing.length} stat(s) read by damage groups do not glow: ${missing.join(", ")}`); errorCount++; }
+  console.log(`Verified ${checkedGroupGlow} damage-group ATK / DEF glow checks.`);
+}
 // 3m. effectProc purple mix (2026-09-24, GEMINI.md "effectProc"): Wall Puncture replace-roll rate and rank-0 off,
 // Megalodon's purple Pull group, every bonus amount, and the gold total digits.
 let checkedEffectProc = 0;
