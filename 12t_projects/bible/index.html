@@ -1795,6 +1795,13 @@
   .cg-stat-panel{position:relative}
   .cg-stat-add-wrap{position:relative;flex:none}
   .cg-stat-add-wrap[hidden]{display:none}
+  /* ↺ คืนสู่ค่าแนะนำ (user 2026-10-21): a plain text link, no box, shown while a stat differs from the author's */
+  .cg-stat-reset-row{flex-basis:100%;display:flex;justify-content:center;margin-top:-6px}
+  .cg-stat-reset-row[hidden]{display:none}
+  .cg-stat-reset{display:inline-flex;align-items:center;gap:5px;padding:2px 4px;border:0;border-radius:4px;background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:600;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.6);cursor:pointer;transition:color .15s ease}
+  .cg-stat-reset svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .cg-stat-reset:hover,.cg-stat-reset:focus-visible{color:var(--gold)}
+  .cg-stat-reset:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   /* once there is a stat dial (user 2026-10-17) the glowing + dial gives way to a small gold pill on its own centred line under the dials */
   .cg-stat-add-pill{display:none}
   .cg-stat-tile ~ .cg-stat-add-wrap{flex-basis:100%;display:flex;justify-content:center}
@@ -28212,7 +28219,7 @@ function classGuideStatEdHtml(s, value, plus){   // one editor flask: the reader
 }
 // Reader panel: the author's stats in the author's order, the stat name under a round dial (no caption, user 2026-10-15). A number is a ring; a share or
 // ตัน / ตาม is a potion flask filled to its level (user 2026-10-18). The value is an input (user 2026-10-16): a reader may type a number to try it; the hover
-// timings follow (numbers only), nothing is saved, and clearing it brings the author's value (and the flask) back. attr: data-cg-try (reader) or data-cg-stat (editor).
+// timings follow (numbers only), the tries are remembered per guide (classGuideTriesSave, user 2026-10-21), and clearing it brings the author's value (and the flask) back. attr: data-cg-try (reader) or data-cg-stat (editor).
 const CLASS_GUIDE_FLASK_WAVES = '<svg class="cg-flask-wave is-back" viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0 4Q15 8 30 4T60 4T90 4T120 4V8H0Z"/></svg><svg class="cg-flask-wave" viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0 4Q15 0 30 4T60 4T90 4T120 4V8H0Z"/></svg>';
 let classGuideCrownN = 0;   // each crown gets its own gradient id: a url(#id) pointing at a crown inside a hidden view would not paint (user-visible bug 2026-10-18)
 const classGuideCrown = () => { const id = 'cgCrownGold' + (++classGuideCrownN); return '<svg class="cg-crown" viewBox="0 0 26 15" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a1"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#8a6a10"/></linearGradient></defs><path fill="url(#' + id + ')" d="M2 13L4 3l5.5 5L13 1l3.5 7L22 3l2 10z"/></svg>'; };
@@ -28243,9 +28250,19 @@ function classGuideFlaskFill(box){
 }
 // The + dial (user 2026-10-17): the reader may add a stat the author did not recommend; it opens a picker of the stats not shown yet.
 const CLASS_GUIDE_STAT_ADD = '<span class="cg-stat-add-wrap"><button type="button" class="cg-stat-add" data-cg-act="addStat" aria-haspopup="true" aria-expanded="false" aria-label="ลองเพิ่มสเตตัสของคุณเอง"><span class="cg-stat-add-dial" aria-hidden="true">+</span><span class="cg-stat-add-pill" aria-hidden="true">+ ลองใส่สเตตัสอื่น</span></button><span class="cg-stat-pick" data-cg-role="statPick" hidden></span></span>';
+// The reader's tries are remembered per guide in this browser only (user 2026-10-21: no extra request): { "<guide id>": [[stat key, typed text], ...] }.
+const CLASS_GUIDE_TRIES_KEY = "12t-bible-guide-tries";
+function classGuideTriesClean(list){   // stored data, cleaned: known stats once each, typed numbers only (0-999, an optional final +; the input clamps to 512)
+  const seen = new Set();
+  return (Array.isArray(list) ? list : []).filter(p => Array.isArray(p) && CLASS_GUIDE_STATS.some(st => st.key === p[0]) && typeof p[1] === "string" && /^\d{1,3}\+?$/.test(p[1]) && !seen.has(p[0]) && seen.add(p[0])).map(p => [p[0], p[1]]);
+}
+function classGuideTriesAll(){ try { const o = JSON.parse(localStorage.getItem(CLASS_GUIDE_TRIES_KEY) || "{}"); return o && typeof o === "object" && !Array.isArray(o) ? o : {}; } catch (e) { return {}; } }
+function classGuideTriesLoad(id){ return classGuideTriesClean(classGuideTriesAll()[id]); }
+function classGuideTriesSave(id, list){ const all = classGuideTriesAll(); if (list.length) all[id] = list; else delete all[id]; try { localStorage.setItem(CLASS_GUIDE_TRIES_KEY, JSON.stringify(all)); } catch (e) {} }
+const CLASS_GUIDE_STAT_RESET = '<span class="cg-stat-reset-row" hidden><button type="button" class="cg-stat-reset" data-cg-act="resetStats" aria-label="คืนสู่ค่าแนะนำของผู้เขียน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>คืนสู่ค่าแนะนำ</button></span>';
 function classGuideStatsHtml(stats, plus = []){
   const shown = Object.keys(stats || {}).map(k => CLASS_GUIDE_STATS.find(s => s.key === k)).filter(Boolean);   // the author's order (user 2026-10-18)
-  return shown.map(s => classGuideStatTile(s, stats[s.key], plus.includes(s.key), false)).join("") + (shown.length < CLASS_GUIDE_STATS.length ? CLASS_GUIDE_STAT_ADD : "");   // no reset link (user 2026-10-17): a refresh brings the author's values back
+  return shown.map(s => classGuideStatTile(s, stats[s.key], plus.includes(s.key), false)).join("") + (shown.length < CLASS_GUIDE_STATS.length ? CLASS_GUIDE_STAT_ADD : "") + CLASS_GUIDE_STAT_RESET;   // the reset link is back (user 2026-10-21) now that the tries survive a refresh
 }
 // What the hover needs from the opened guide: its server, how many ranks of each skill the build learned, and whether Revised Art is among them.
 function classGuideReaderCtx(guide){
@@ -28910,10 +28927,24 @@ function mountClassGuide(root){
   const button = act => root.querySelector('[data-cg-act="' + act + '"]');
   const canCopyImage = classGuideCanCopyImage();
   root.querySelector('.cg-send-btns [data-cg-act="copyImage"]').hidden = !canCopyImage;
-  // The reader's try-out stats (user 2026-10-17): the + dial goes once all 8 show.
+  // The reader's try-out stats (user 2026-10-17): the + dial goes once all 8 show; ↺ คืนสู่ค่าแนะนำ shows while one differs from the author's (user 2026-10-21).
   const syncStatTry = () => {
     const box = root.querySelector('[data-cg-role="guideStats"]'); if (!box) return;
     const wrap = box.querySelector(".cg-stat-add-wrap"); if (wrap) wrap.hidden = box.querySelectorAll("[data-cg-try]").length >= CLASS_GUIDE_STATS.length;
+    const reset = box.querySelector(".cg-stat-reset-row"), off = !box.querySelector(".cg-stat-tile.is-tried");
+    if (reset && reset.hidden !== off){ reset.hidden = off; queueReaderFit(); }
+  };
+  // Remembered per guide (user 2026-10-21): the tiles that differ from the author's, as typed. A preview has no id and is not saved.
+  const triedList = () => [...root.querySelectorAll('[data-cg-role="guideStats"] [data-cg-try]')].flatMap(i => i.closest(".cg-stat-tile").classList.contains("is-tried") && i.value.trim() ? [[i.dataset.cgTry, i.value.trim()]] : []);
+  const saveTries = () => { if (mode === "reader" && currentId) classGuideTriesSave(String(currentId), triedList()); };
+  const restoreTries = list => {   // an added stat gets its dashed dial back; each value goes through the input handler like a typed one
+    const box = root.querySelector('[data-cg-role="guideStats"]'); if (!box) return;
+    for (const [key, raw] of list){
+      let input = box.querySelector('[data-cg-try="' + key + '"]');
+      if (!input){ const wrap = box.querySelector(".cg-stat-add-wrap"), st = CLASS_GUIDE_STATS.find(x => x.key === key); if (!wrap || !st) continue; wrap.insertAdjacentHTML("beforebegin", classGuideStatTile(st, null, false, true)); input = wrap.previousElementSibling.querySelector("input"); }
+      input.value = raw; input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    syncStatTry();
   };
   document.addEventListener("pointerdown", e => { const pick = root.querySelector('[data-cg-role="edStatPick"]'); if (pick && !pick.hidden && !e.target.closest(".cg-stat-ed-add")){ pick.hidden = true; const b = root.querySelector('[data-cg-act="addEdStat"]'); if (b) b.setAttribute("aria-expanded", "false"); } }, true);
   document.addEventListener("pointerdown", e => { const pick = root.querySelector('[data-cg-role="statPick"]'); if (pick && !pick.hidden && !e.target.closest(".cg-stat-add-wrap")){ pick.hidden = true; const b = root.querySelector('[data-cg-act="addStat"]'); if (b) b.setAttribute("aria-expanded", "false"); } }, true);
@@ -29171,7 +29202,7 @@ function mountClassGuide(root){
     el("gearPicker").close(); gearPick = null;
   }
   classGuideTipBind(el("rating"), () => classGuideRatingTip(classGuideCompleteness(draft || {}), true), true);   // the editor's stars: hover or tap for what is missing and how far
-  let readerCtx = null, viewStats = null;   // viewStats: the reader's own try-out values (start as the author's)
+  let readerCtx = null, viewStats = null, resetUndo = null;   // viewStats: the reader's own try-out values (start as the author's); resetUndo: the tries before ↺ คืนสู่ค่าแนะนำ, for Ctrl+Z
   const saveDraft = () => {
     if (mode !== "author") return;
     draft = collect(); syncExtrasSum(); updateSteps();
@@ -29578,7 +29609,7 @@ function mountClassGuide(root){
     if (currentId){ const sep = document.createElement("span"); sep.className = "cg-views-sep"; sep.textContent = " · "; el("guideByline").append(sep, viewBadge(currentId)); }
     el("guideDescription").innerHTML = classGuideParaHtml(current.description); button("returnAuthor").hidden = !preview; backBtn.lastChild.textContent = preview ? "กลับไปแก้ไกด์" : "ไกด์จากผู้เล่น"; backBtn.setAttribute("aria-label", backBtn.lastChild.textContent);   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false; classGuideFlaskFill(el("guideStats"));
-    el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = classGuideNumericStats(current.stats);   // shares and words are not numbers the hover can use
+    el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = classGuideNumericStats(current.stats); resetUndo = null; if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
     window.scrollTo(0, 0); queueReaderFit();
   }
   // Icon filters (user 2026-10-17): ทั้งหมด plus one button per server and per class (CLASS_ORDER); one click filters, a click on the chosen icon goes back
@@ -29900,6 +29931,11 @@ function mountClassGuide(root){
     if (sim.getInteraction() !== "annotate" || (e.target.closest && e.target.closest("input, textarea, [contenteditable]"))) return;
     e.preventDefault(); undoNote();
   });
+  document.addEventListener("keydown", e => {   // Ctrl+Z after ↺ คืนสู่ค่าแนะนำ brings the reader's tries back (inside a stat field Ctrl+Z stays the field's own)
+    if (mode !== "reader" || !resetUndo || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
+    if (e.target.closest && e.target.closest("input, textarea, [contenteditable]")) return;
+    e.preventDefault(); const list = resetUndo; resetUndo = null; restoreTries(list); queueReaderFit();
+  });
   document.addEventListener("keydown", e => {   // ← / → turn the page (user 2026-10-21): the description's pages in a guide, the list's pages in the gallery
     if ((e.key !== "ArrowLeft" && e.key !== "ArrowRight") || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.defaultPrevented || root.hidden || !root.offsetParent) return;
     if ((e.target.closest && e.target.closest("input, textarea, select, [contenteditable]")) || document.querySelector('dialog[open], [aria-modal="true"]:not([hidden])')) return;
@@ -29927,7 +29963,7 @@ function mountClassGuide(root){
         tile.classList.toggle("is-tried", own || n !== base);
       }
       if (tile.dataset.cgLevel) tile.querySelector(".cg-stat-val").classList.toggle("is-flask", !tile.classList.contains("is-tried"));   // a tried number shows as the plain ring
-      syncStatTry();
+      syncStatTry(); resetUndo = null; saveTries();
     }
   });
   root.addEventListener("change", e => {   // a valid typed stat is written the way it is stored ("050%" -> "50%")
@@ -30028,7 +30064,12 @@ function mountClassGuide(root){
         const st = CLASS_GUIDE_STATS.find(x => x.key === target.dataset.cgStat); if (!st) return;
         const wrap = el("guideStats").querySelector(".cg-stat-add-wrap"); el("statPick").hidden = true; wrap.querySelector(".cg-stat-add").setAttribute("aria-expanded", "false");
         wrap.insertAdjacentHTML("beforebegin", classGuideStatTile(st, null, false, true));
-        const input = wrap.previousElementSibling.querySelector("input"); syncStatTry(); queueReaderFit(); input.focus();
+        const input = wrap.previousElementSibling.querySelector("input"); resetUndo = null; syncStatTry(); queueReaderFit(); input.focus();
+      }
+      else if (act === "resetStats"){   // ↺ คืนสู่ค่าแนะนำ (user 2026-10-21): the author's stats again, the reader's added ones gone; Ctrl+Z brings the tries back
+        const box = el("guideStats"), tried = triedList(); resetUndo = tried.length ? tried : null;
+        box.innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); viewStats = classGuideNumericStats(current.stats); classGuideFlaskFill(box); syncStatTry(); saveTries(); queueReaderFit();
+        const add = box.querySelector(".cg-stat-add"); if (add && !add.closest("[hidden]")) add.focus({ preventScroll: true });   // not into a field, so Ctrl+Z reaches the undo below
       }
       else if (act === "returnAuthor") startAuthor();
       else if (act === "author"){   // a choice first (user 2026-10-16): continue the draft, start new, or import a code
@@ -31567,6 +31608,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T04:07:52.208Z","feat(bible): class guides: a reader's tried stats stay with each guide after a refresh (this browser only, no extra request), with a borderless ↺ คืนสู่ค่าแนะนำ link back to the author's values (Ctrl+Z undoes it)"],
     ["2026-10-21T03:56:04.833Z","feat(bible): class guide #61 TTO Sheep PVE ซัพดาเมจ SOLOดันได้ by คิมบก"],
     ["2026-10-21T03:52:13.276Z","fix(bible): boss guide: picking a target takes no time (Italus, Captain Crab and Zera showed 1 s), and the crab's ship-stage stand is 2-3 s, not 3"],
     ["2026-10-21T03:43:55.653Z","feat(bible): boss guide: Germanotta (Time's Memories boss 2: HP-gated Drain Life, Paranoia and Mind Control, a random target after every action, keeps its distance); BUG page: a Boss group with its Paranoia sync bug and unused target cap"],

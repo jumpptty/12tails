@@ -3547,6 +3547,10 @@ let checkedRsim = 0;
     // no stats: only the reader's + dial (user 2026-10-17), no tile
     ok(!/cg-stat-tile/.test(panel(undefined)) && !/cg-stat-tile/.test(panel({})) && panel(undefined).includes('data-cg-act="addStat"') && (panel({agi:120}).match(/cg-stat-tile/g) || []).length === 1 && panel({agi:120}).includes("--stat-agi") && panel({agi:120}).includes('value="120"') && panel({agi:120}).includes('data-cg-try="agi"') && !panel({agi:120}).includes("ATK"), "reader panel renders only the filled stats in their colour");
     ok((panel({atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}).match(/cg-stat-tile/g) || []).length === 8 && !panel({atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}).includes('data-cg-act="addStat"'), "reader panel can show all 8 stats (and then has no + dial)");
+    // the reader's tries survive a refresh (user 2026-10-21): stored per guide, cleaned on load, and ↺ คืนสู่ค่าแนะนำ starts hidden (all 8 stats too)
+    const triesClean = vm.runInContext("classGuideTriesClean", sandbox);
+    ok(JSON.stringify(triesClean([["agi","120"],["agi","130"],["xxx","1"],["cha","250+"],["lck","5%"],["def",7],"bad",["int","1234"],["vit",""]])) === JSON.stringify([["agi","120"],["cha","250+"]]) && !triesClean(null).length && !triesClean({}).length, "stored reader tries are cleaned: known stats once each, typed numbers only");
+    ok([{agi:120}, undefined, {atk:1,def:2,tal:3,agi:4,vit:5,cha:6,int:7,lck:8}].every(st => /<span class="cg-stat-reset-row" hidden><button type="button" class="cg-stat-reset" data-cg-act="resetStats"/.test(panel(st))), "the reader panel carries a hidden ↺ คืนสู่ค่าแนะนำ link");
     // Editor (user 2026-10-18): no row of 8 boxes; the author adds stats one at a time as flasks, each with × and the ตัน / ตาม pills.
     const edFlask = vm.runInContext("classGuideStatEdHtml", sandbox);
     ok(!/data-cg-stat=/.test(editor()) && editor().includes('data-cg-role="statEd"') && editor().includes('data-cg-role="statSum"'), "the editor starts with no stat boxes, only the flask row and the % total line");
