@@ -3260,6 +3260,8 @@ let checkedRsim = 0;
   ok(readEditor(tag("ROOT",tag("DIV",tx("a")),tag("DIV",tag("BR")),tag("DIV",tx("b")))) === "a\n\nb" && readEditor(tag("ROOT",tx("first"),tag("DIV",tag("BR")),tag("DIV",tx("x")))) === "first\n\nx", "rich editor keeps a blank line typed between two lines");
   const editHtml = vm.runInContext("classGuideEditHtml", sandbox);
   ok(editHtml("a\n\n**b**\nStatus:") === '<div>a</div><div><br></div><div><strong>b</strong></div><div class="is-head">Status:</div>' && editHtml("") === "", "the description editor renders one block per line, a heading line marked like the guide page");
+  // a click anywhere in a <label> goes to its first labelable element (user 2026-10-21: the column buttons came first, so every click in the box chose 1 column and stole the focus)
+  ok(/<label class="cg-description"><textarea data-cg-field="description"[^>]*\bhidden\b/.test(html), "the description label starts with its hidden textarea, so a click in the box never presses a column button");
   const emphasized = applyBold("before ไทย after",7,10);
   ok(emphasized.value === "before **ไทย** after" && emphasized.start === 9 && emphasized.end === 12, "Ctrl+B emphasizes selected Thai text and keeps it selected");
   const unbold = applyBold(emphasized.value,emphasized.start,emphasized.end);
@@ -3331,6 +3333,10 @@ let checkedRsim = 0;
       ok(same(Array.from(bin(odd)), Array.from(gc.classGuideBinary(odd))), "page and scripts/guide_code.js write identical format 2 bytes");
       rejects(()=>bin({...odd, date:"2569-10-20"}), "the page's format 2 encoder refuses a date its 2 bytes cannot hold (never wraps)"); rejects(()=>gc.classGuideBinary({...odd, date:"2569-10-20"}), "guide_code.js refuses it too");
       ok(same(norm(fromBin(bin(odd))), odd) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(odd)))), odd), "format 2 binary reads back emoji, accents, CJK, bold markers, newlines, stat 0 and 512");
+      // description columns (user 2026-10-21): 2 or 3 in block 0x43, 1 not stored (older codes unchanged); both codecs and format 1 agree
+      const cols3 = norm({...fixture, descCols:3});
+      ok(cols3.descCols === 3 && norm({...fixture, descCols:1}).descCols === undefined && same(Array.from(bin(norm(fixture))), Array.from(bin(norm({...fixture, descCols:1})))) && same(Array.from(bin(cols3)), Array.from(gc.classGuideBinary(cols3))) && same(norm(fromBin(bin(cols3))), cols3) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(cols3)))), cols3) && same(expand(gc.compact(cols3)), cols3) && same(gc.expand(compact(cols3)), cols3), "description columns round-trip in both codecs and format 1; one column writes nothing");
+      rejects(()=>norm({...fixture, descCols:4}), "a finished guide refuses 4 description columns"); ok(vm.runInContext("classGuideNormalize", sandbox)({...fixture, descCols:"x"}, { draft:true }).descCols === undefined, "a draft drops a bad column count");
       ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode2(odd)) && same(norm(gc.decode(gc.encode2(odd))), odd), "guide_code encode2 writes a TG2. code that still decodes to the same guide");
       let threw = false; try { fromBin(bin(odd).subarray(0, 30)); } catch (e) { threw = true; } ok(threw, "a cut-off format 2 code is rejected, not misread");
       // Shares, ตัน / ตาม and the author's order (user 2026-10-18): bit 14 = share, bit 13 = word, an optional 0x4F order block; older codes read the same.
