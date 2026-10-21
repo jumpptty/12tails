@@ -1984,7 +1984,7 @@
   .cg-send-txt p{margin:0;font-size:13.5px;line-height:1.6;color:var(--muted)}
   .cg-send-opt .cg-send-copy{grid-column:1 / -1;width:100%;min-height:46px;font-size:15px;margin:0}
   .cg-send-btns{grid-column:1 / -1;display:flex;gap:10px}.cg-send-btns .cg-send-copy{flex:1 1 0;min-width:0}
-  @media(min-width:761px){.cg-send-previews{grid-template-columns:minmax(0, min(720px, max(300px, calc((100dvh - 440px) * 16 / 9))))}}   /* no scrolling on short desktop windows (user 2026-10-19): the preview gives up height so the send options stay in view */
+  @media(min-width:761px){.cg-send-previews{grid-template-columns:minmax(0, min(720px, max(300px, calc((100dvh - 460px) * 16 / 9))))}}   /* no scrolling on short desktop windows (user 2026-10-19): the preview gives up height so the send options stay in view */
   @media(max-width:760px){.cg-send-previews,.cg-send-opts{grid-template-columns:minmax(0,1fr)}}
   .cg-full-view{width:min(96vw,1700px);max-height:94vh;box-sizing:border-box;margin:auto;padding:0;border:1px solid rgba(201,162,39,.6);border-radius:4px;background:#0b0907;overflow:auto}
   .cg-full-view::backdrop{background:rgba(0,0,0,.78)}
@@ -2044,7 +2044,7 @@
   .cg-cover-row > [data-cg-act="coverClear"]{grid-area:clear;align-self:stretch}
   .cg-cover-pick-btn b,.cg-cover-pick-btn small{white-space:nowrap}
   .cg-cover-row.is-missing .cg-cover-pick-btn{border-color:var(--seal,#e5483f);box-shadow:0 0 0 1px var(--seal,#e5483f)}
-  .cg-cover-slots{display:flex;justify-content:space-between;gap:12px;padding:0 6px}   /* the five slots spread over the row */
+  .cg-cover-slots{display:flex;justify-content:space-between;gap:6px;padding:0 6px}   /* space-between spreads them; 6 px keeps 5 slots inside a 260 px column (user 2026-10-21) */   /* the five slots spread over the row */
   .cg-cover-slot{position:relative;flex:none;width:40px;height:40px;box-sizing:border-box;display:grid;place-items:center;border:1.5px dashed var(--line);border-radius:50%;color:var(--muted);font-size:13px;font-weight:700}
   .cg-cover-slot.is-filled{border:0}
   .cg-cover-slot .cg-cover-ring{position:absolute}
@@ -2093,25 +2093,24 @@
   .cg-desc-pager > span{position:absolute;left:50%;bottom:max(4px, calc(6px * var(--cg-u,1)));transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums}
   .cg-desc-pager button:hover:not(:disabled),.cg-desc-pager button:focus-visible{border-color:var(--gold)}
   .cg-desc-pager button:disabled{opacity:.35;cursor:default}
-  /* Live description preview under the editor (user 2026-10-21): the guide page's description box at a typical size for the chosen screen, laid out by
-     classGuideDescFit / classGuideDescPages like the reader and scaled to the column. The box rules copy the reader's (.cg-page[data-mode="reader"] > .cg-prose
-     in the landscape block and the pull-quote look): keep them in step, the page count follows the font, line height and padding. */
-  .cg-desc-preview{grid-column:1/-1;display:grid;gap:6px;min-width:0}
-  .cg-desc-preview-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:13px}
-  .cg-desc-screens{display:flex;flex-wrap:wrap;gap:4px}
-  .cg-desc-screens button{padding:3px 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2);color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
-  .cg-desc-screens button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
-  .cg-desc-preview-sum{color:var(--muted);font-size:12px}
-  .cg-desc-frame{contain:inline-size;overflow:hidden;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}   /* contain: the box keeps its full layout width under the scale, which must not widen the column */
-  .cg-desc-frame[hidden]{display:none}
-  .cg-desc-sim{display:grid;width:max-content;transform-origin:0 0}
-  .cg-desc-sim > *{grid-area:1 / 1}
-  .cg-desc-sim > .cg-prose{margin:0;box-sizing:border-box;font-size:calc(17px * var(--cg-u,1));line-height:1.85;padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1));border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(212,175,55,.08),transparent 60%);text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75);overflow:hidden}
-  .cg-desc-sim > .cg-prose.is-cols{column-gap:calc(36px * var(--cg-u,1));column-rule:1px solid rgba(201,162,39,.22)}
-  .cg-desc-sim > .cg-prose.is-paged{column-fill:auto;padding-bottom:max(24px, calc(30px * var(--cg-u,1)));padding-left:max(46px, calc(56px * var(--cg-u,1)));padding-right:max(46px, calc(56px * var(--cg-u,1)))}
-  .cg-desc-sim > .cg-desc-pager:not([hidden]){display:block;position:relative;align-self:start;justify-self:start;z-index:1;pointer-events:none;font-size:max(12px, calc(13px * var(--cg-u,1)));color:var(--muted)}
-  @media(min-width:761px){.cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr) auto}}   /* picks, fields, the editor (takes the height), the preview */
-  @media(max-width:760px){.cg-desc-preview{display:none}}   /* a phone column is too narrow for a scaled PC box */
+  /* Step 1's live box (user 2026-10-21): on a desktop the description typing box is the guide page's own description box (size set by refreshDescLive from the
+     reader's layout of the draft). Its font, line height, padding, columns and pages copy the reader's (.cg-page[data-mode="reader"] > .cg-prose in the landscape
+     block and the pull-quote look): keep the two in step, the page count follows them. */
+  @media(min-width:761px){
+    .cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr)}   /* picks, fields, the description (takes the height) */
+    .cg-page[data-mode="author"] .cg-description.is-live{position:relative;justify-items:start}
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-editor-wrap{position:relative;display:block;flex:none;box-sizing:border-box;border:0;border-radius:0;background:none;overflow:visible;contain:none}
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-editor-wrap:focus-within{outline:none}
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor{box-sizing:border-box;width:100%;height:100%;min-height:0;overflow:hidden;font-size:calc(17px * var(--cg-u,1));line-height:1.85;padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1));border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(212,175,55,.08),transparent 60%);text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75);outline:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);outline-offset:0}   /* the dashed edge shows the typing area: the guide page draws only the gold bar */
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor:focus{outline:1px solid color-mix(in srgb,var(--gold) 75%,transparent)}
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor > div{break-inside:avoid}   /* a line is a paragraph, like .cg-para on the guide page */
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor > div.is-head{break-after:avoid}
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor.is-cols{column-gap:calc(36px * var(--cg-u,1));column-rule:1px solid rgba(201,162,39,.22)}
+    .cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor.is-paged{column-fill:auto;padding-bottom:max(24px, calc(30px * var(--cg-u,1)));padding-left:max(46px, calc(56px * var(--cg-u,1)));padding-right:max(46px, calc(56px * var(--cg-u,1)))}
+    .cg-description.is-live .cg-desc-pager:not([hidden]){display:block;position:absolute;inset:0;pointer-events:none;font-size:max(12px, calc(13px * var(--cg-u,1)));color:var(--muted)}
+  }
+  .cg-desc-live-note{margin-left:10px;font-size:12px;font-weight:400;color:var(--muted)}   /* beside คำอธิบายบิลด์ */
+  .cg-desc-live-note[hidden]{display:none}
   .cg-format-btn.is-on{background:var(--gold);color:#141311;border-color:var(--gold)}
   @media(max-width:760px){.cg-nav{width:100%}.cg-tabs,.cg-page-actions{flex:1 1 100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
@@ -2152,9 +2151,10 @@
   @media(min-width:761px){
     html.tool-guide-author .hub-bar{padding:10px 18px}
     html.tool-guide-author body .stage{width:100%;max-width:none;box-sizing:border-box;padding:10px 24px 8px}
-    .cg-page[data-mode="author"]{display:grid;grid-template-columns:minmax(0,1100px) auto;gap:8px 16px}
+    .cg-page[data-mode="author"]{display:grid;grid-template-columns:minmax(0,max(1100px,var(--cg-s1-w,0px))) auto;gap:8px 16px}   /* --cg-s1-w: step 1 widens to hold the guide page's description box (refreshDescLive) */
     .cg-page[data-mode="author"][data-cg-grid="on"]{grid-template-columns:clamp(260px,20vw,360px) auto auto;gap:8px 20px}   /* texts | grid (the grid's width, set by fitReader) */   /* one centred column: tabs, the skill grid in steps 2, 3 and 5, then the step (user 2026-10-16) */
-    .cg-page[data-mode="author"] .cg-steps{grid-column:1/-2;grid-row:1;padding:3px}   /* one slim row beside the gallery / editor switch (user 2026-10-16) */
+    .cg-page[data-mode="author"] .cg-steps{grid-column:1/-2;grid-row:1;padding:3px;grid-template-columns:repeat(6,minmax(0,1fr)) auto}
+    .cg-page[data-mode="author"] .cg-editor-rating{grid-column:-2/-1;grid-row:1;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;padding:0 6px 0 10px;font-size:10.5px;border-left:1px solid var(--line)}   /* ความครบถ้วนของเนื้อหา at the end of the tab row, the label over the stars (user 2026-10-21: on its own row it made the tabs taller) */   /* one slim row beside the gallery / editor switch (user 2026-10-16) */
     .cg-page[data-mode="author"] .cg-step-tab{grid-auto-flow:column;align-items:center;justify-content:center;gap:6px;padding:5px 4px;font-size:13px}
     .cg-page[data-mode="author"] .cg-step-tab b{width:22px;height:22px;font-size:12px}
     .cg-page[data-mode="author"] .cg-step-tab span{white-space:nowrap}
@@ -28033,14 +28033,8 @@ function classGuideRichText(text){
 }
 // The guide view's description, one block per line (user 2026-10-18): side-by-side columns and pages then never split a paragraph. **bold** that runs over
 // a line break is closed at the line's end and reopened on the next; an empty line keeps its height with a <br>.
-// The editor preview's screens (user 2026-10-21): a typical description box on each, from the published guides measured on 2026-10-21 (1920x1080: about
-// 1500 x 410 px at panel scale 0.85; 1366x768: 1100 x 230 at 0.7; a phone: 368 px wide at 17 px, never paged). The real box also depends on the guide's
-// stats, sets and notes, so the preview says โดยประมาณ.
-const CLASS_GUIDE_DESC_SCREENS = {
-  pc: { label: "จอ PC 1920×1080", short: "จอ PC", w: 1500, room: 410, u: 0.85 },
-  nb: { label: "โน้ตบุ๊ก 1366×768", short: "โน้ตบุ๊ก", w: 1100, room: 230, u: 0.7 },
-  phone: { label: "มือถือ", short: "มือถือ", w: 368, room: 0, u: 1 }
-};
+// Step 1's measuring pass lays the guide out with this long text, so the description gets its full box under the skill grid (user 2026-10-21).
+const CLASS_GUIDE_DESC_FILL = Array.from({ length: 50 }, () => "ข้อความทดสอบความยาวของคำอธิบาย ".repeat(4).trim()).join("\n");
 // The description's fit, shared by the reader (fitReader) and the editor's live preview (user 2026-10-21). A wide box with short lines (user 2026-10-18:
 // guide 29 paged on a 3440 px screen with most of the box empty): at each size the text first tries side-by-side columns, each at least 38 em wide (up to 3);
 // then the font shrinks (user 2026-10-17), down to 11 px x the panel scale u but never under 13 px; the caller pages it (classGuideDescPages) when the
@@ -28077,6 +28071,10 @@ function classGuideParaHtml(text){
     open = after; return html;
   }).join("");
 }
+// The description editor's lines as blocks (user 2026-10-21), like the guide page's .cg-para: on step 1's live box a paragraph never splits between pages.
+function classGuideEditHtml(text){
+  return text ? classGuideParaHtml(text).replace(/<span class="cg-para( is-head)?">/g, (m, head) => head ? '<div class="is-head">' : "<div>").replace(/<\/span>/g, "</div>") : "";
+}
 function classGuideBoldEdit(value, start, end, maxLength){
   if (start === end) return null;
   let text = value.slice(start, end), from = start, to = end, selectionStart = start, selectionEnd;
@@ -28111,17 +28109,17 @@ function classGuideReadEditor(node){
     if (block && value === "\n") value = "";
     if (block && text && !text.endsWith("\n")) text += "\n";
     text += ["B", "STRONG"].includes(tag) && value ? "**" + value + "**" : value;
-    if (block && i < children.length - 1 && !text.endsWith("\n")) text += "\n";
+    if (block && i < children.length - 1 && (!text.endsWith("\n") || value === "")) text += "\n";   // an empty line (Enter twice: <div><br></div>) keeps its own line break
   });
   return text.replace(/\u00a0/g, " ");
 }
-function classGuideMountEditor(backing, editor, notify){
+function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichText){   // toHtml: classGuideEditHtml for the description (paragraph blocks)
   let accepted = "", composing = false, applying = false;
   // Own undo / redo (user 2026-10-17): re-rendering after a bold wipes the browser's undo, so the box keeps its history. Bold is one step; typing is
   // grouped into bursts (a new step after 0.8 s idle). Ctrl+Z / Cmd+Z undo, Ctrl+Y / Ctrl+Shift+Z redo.
   const undo = [], redo = []; let last = "", typing = false, typingTimer = 0;
   const changed = () => backing.dispatchEvent(new Event("input", { bubbles: true }));
-  const render = value => { backing.value = value; editor.innerHTML = classGuideRichText(value); accepted = editor.innerHTML; last = value; };
+  const render = value => { backing.value = value; editor.innerHTML = toHtml(value); accepted = editor.innerHTML; last = value; };
   const set = value => { render(value || ""); undo.length = 0; redo.length = 0; typing = false; };   // a new text (another note, a loaded draft) starts a new history
   const remember = prev => { undo.push(prev); if (undo.length > 200) undo.shift(); redo.length = 0; };
   const sync = () => {
@@ -28905,7 +28903,7 @@ function mountClassGuide(root){
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
-      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-desc-preview" data-cg-role="descPreview" data-cg-step="1"><div class="cg-desc-preview-head"><b>ตัวอย่างในหน้าไกด์</b><div class="cg-desc-screens" role="group" aria-label="ขนาดจอ">${Object.entries(CLASS_GUIDE_DESC_SCREENS).map(([k, sc], i) => '<button type="button" data-cg-screen="' + k + '" aria-pressed="' + (i === 0) + '">' + sc.label + '</button>').join("")}</div><span class="cg-desc-preview-sum" data-cg-role="descPreviewSum"></span></div><div class="cg-desc-frame" hidden><div class="cg-desc-sim"><p class="cg-prose" data-cg-role="descPreviewBox"></p><div class="cg-desc-pager" hidden><button type="button" data-cg-pv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-pv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></div></div></div></div><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
+      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description"><span class="cg-desc-head">คำอธิบายบิลด์<small class="cg-desc-live-note" data-cg-role="descLiveNote" aria-live="polite" hidden></small></span><textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span><span class="cg-desc-pager" data-cg-role="descLivePager" hidden><button type="button" data-cg-lv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-lv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
       <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-5 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
@@ -29027,7 +29025,7 @@ function mountClassGuide(root){
       icon.innerHTML = CLASS_GUIDE_BUTTON_ICONS.copy; exportButton.removeAttribute("aria-label");
     }, 1200);
   }
-  const editors = { description: classGuideMountEditor(field("description"), root.querySelector('[data-cg-editor="description"]'), status), noteText: classGuideMountEditor(el("noteText"), root.querySelector('[data-cg-editor="noteText"]'), status) };
+  const editors = { description: classGuideMountEditor(field("description"), root.querySelector('[data-cg-editor="description"]'), status, classGuideEditHtml), noteText: classGuideMountEditor(el("noteText"), root.querySelector('[data-cg-editor="noteText"]'), status) };
   // Guide date (user 2026-10-16, standing rule: never show MM/DD/YYYY): the text field shows and takes DD/MM/YYYY (16/10/2026, 16-10-2026 or 16102026);
   // the native date input is only the calendar icon (Chromium ignores lang for its own text); both stay in sync, the stored value is the native YYYY-MM-DD.
   const dateIso2Dmy = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || "") ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : "";
@@ -29232,49 +29230,110 @@ function mountClassGuide(root){
   sim.setInteraction("read");
   { const A = el("author");
     A.querySelectorAll(".cg-fields > label").forEach(l => { l.dataset.cgStep = "1"; });
+    el("modesBox").dataset.cgStep = "1";   // PVE / PVP (user 2026-10-21: it showed in step 4's narrow column, cut off with a sideways scrollbar)
     el("noteEditor").dataset.cgStep = "4"; el("noteEmpty").dataset.cgStep = "0"; el("extras").dataset.cgStep = "2"; el("coverRow").dataset.cgStep = "5"; el("coverCard").dataset.cgStep = "5"; el("send").dataset.cgStep = "6"; el("editHelp").dataset.cgStep = "0"; }
-  // Live description preview under the editor (user 2026-10-21): the guide page's description box at a typical size for each screen
-  // (CLASS_GUIDE_DESC_SCREENS), laid out by the reader's own fit and pages and scaled to the column; the line beside the buttons counts the pages.
-  let descScreen = "pc", previewPage = 0, previewPages = 0, previewTimer = 0;
-  function queueDescPreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(renderDescPreview, 200); }
-  function renderDescPreview(){
-    const wrap = el("descPreview"), box = el("descPreviewBox"), sim = box.parentNode, frame = sim.parentNode, text = field("description").value;
-    if (mode !== "author" || !wrap.offsetParent) return;   // only while step 1 is on screen
-    frame.hidden = !text.trim(); previewPages = 0;
-    if (frame.hidden){ el("descPreviewSum").textContent = "พิมพ์คำอธิบายด้านบน แล้วดูหน้าตาในหน้าไกด์ได้ตรงนี้"; showPreviewPage(); return; }
-    box.innerHTML = classGuideParaHtml(text);
-    const maxH = Math.max(160, Math.round(window.innerHeight * 0.36)), pages = {};
-    const layout = key => {   // the box as that screen shows it; returns its pages (0: a phone scrolls instead)
-      const sc = CLASS_GUIDE_DESC_SCREENS[key], k = Math.min(1, frame.clientWidth / sc.w, sc.room ? maxH / sc.room : 1);
-      sim.style.setProperty("--cg-u", sc.u); sim.style.transform = "scale(" + k + ")";
-      box.classList.remove("is-cols", "is-paged"); for (const p of ["fontSize", "height", "columnCount", "columnWidth", "columnGap"]) box.style[p] = "";
-      box.style.width = sc.w + "px";
-      frame.style.overflowY = sc.room ? "hidden" : "auto";
-      if (!sc.room){ frame.style.height = Math.min(maxH, Math.ceil(box.offsetHeight * k)) + "px"; return 0; }   // the phone's text scrolls in the frame
-      const natural = classGuideDescFit(box, sc.room, sc.u, box.getBoundingClientRect().width / box.offsetWidth || 1);
-      box.style.height = Math.min(natural, sc.room) + "px"; frame.style.height = Math.ceil(box.offsetHeight * k) + "px";
-      return natural > sc.room ? classGuideDescPages(box) : 1;
-    };
-    for (const key of Object.keys(CLASS_GUIDE_DESC_SCREENS).filter(key => key !== descScreen).concat(descScreen)) pages[key] = layout(key);   // the chosen screen last, so the box shows it
-    el("descPreviewSum").textContent = Object.entries(CLASS_GUIDE_DESC_SCREENS).map(([key, sc]) => sc.short + ": " + (pages[key] ? pages[key] + " หน้า" : "เลื่อนอ่าน ไม่แบ่งหน้า")).join(" · ") + " (โดยประมาณ)";
-    previewPages = pages[descScreen];
-    const pager = sim.querySelector(".cg-desc-pager"); pager.style.width = box.offsetWidth + "px"; pager.style.height = box.offsetHeight + "px";
-    showPreviewPage();
+  // Step 1's description box is the guide page's own (user 2026-10-21, replaces the PC / notebook / phone preview): on a desktop the typing box takes the
+  // size the description gets on the guide page in this window, worked out from the guide as the other steps left it (stats, sets, build, notes), and the
+  // text is laid out by the reader's own fit and pages while it is typed. measureDescBox lays the guide out as a reader for a moment with a long filler
+  // text, so the description gets its full box under the skill grid: a description long enough to page pages exactly like this on the guide page; a
+  // shorter one is one page there too (the guide page then makes its box only as tall as the text).
+  let descLive = null, descRoom = 0, livePage = 0, livePages = 1, liveFrame = null, liveTimer = 0;
+  const liveLabel = root.querySelector(".cg-description"), liveWrap = liveLabel.querySelector(".cg-editor-wrap"), liveEd = liveWrap.querySelector('[data-cg-editor="description"]'), livePager = liveWrap.querySelector(".cg-desc-pager");
+  function measureDescBox(){   // { w, room, u } of the guide page's description box (layout px), or null; all in one task, so nothing is painted in between
+    if (mode !== "author" || !draft || isPhone() || !isSheet()) return null;
+    let g; try { g = classGuideNormalize({ ...draft, description: CLASS_GUIDE_DESC_FILL }, { draft: true }); } catch (e) { return null; }
+    const html = document.documentElement, keep = { current, currentId }, focus = document.activeElement, sel = window.getSelection();
+    const range = sel && sel.rangeCount && liveEd.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+    let out = null; const inter = sim.getInteraction();
+    current = g; currentId = null; descRoom = 0; sim.setInteraction("read");   // the reader view: no empty support slots, so the grid is as tall as on the guide page
+    mode = "reader"; guidePage.dataset.mode = "reader"; html.classList.replace("tool-guide-author", "tool-guide-reader"); el("reader").hidden = false; el("author").hidden = true;
+    fillReader(true); clearNoteChips(); placeNoteChips(); prefillNoteChips();
+    try {
+      fitReader();
+      const desc = el("guideDescription");
+      if (desc.parentNode === guidePage && descRoom > 0) out = { w: Math.round(parseFloat(desc.style.width) || desc.offsetWidth), room: descRoom, u: parseFloat(getComputedStyle(guidePage).getPropertyValue("--cg-u")) || 1 };
+    } finally {
+      current = keep.current; currentId = keep.currentId; sim.setInteraction(inter);
+      mode = "author"; guidePage.dataset.mode = "author"; html.classList.replace("tool-guide-reader", "tool-guide-author"); el("reader").hidden = true; el("author").hidden = false;
+      clearNoteChips(); placeNoteChips(); fitReader();
+      if (focus && focus !== document.activeElement && focus.focus) focus.focus({ preventScroll: true });
+      if (range){ sel.removeAllRanges(); sel.addRange(range); }
+    }
+    return out;
   }
-  function showPreviewPage(){
-    const box = el("descPreviewBox"), pager = box.parentNode.querySelector(".cg-desc-pager");
-    previewPage = Math.max(0, Math.min(previewPages - 1, previewPage)); pager.hidden = previewPages < 2; box.scrollLeft = previewPage * box.clientWidth;
-    pager.querySelector("span").textContent = (previewPage + 1) + " / " + previewPages;
-    pager.firstElementChild.disabled = previewPage === 0; pager.lastElementChild.disabled = previewPage >= previewPages - 1;
+  function liveReset(){ liveEd.classList.remove("is-cols", "is-paged"); for (const p of ["fontSize", "columnCount", "columnWidth", "columnGap", "height"]) liveEd.style[p] = ""; liveEd.scrollLeft = 0; }
+  function liveOff(){   // phones, a portrait window, other steps and modes: the ordinary editor
+    descLive = null; liveLabel.classList.remove("is-live"); guidePage.style.removeProperty("--cg-s1-w");
+    for (const p of ["width", "height", "zoom"]) liveWrap.style[p] = ""; liveWrap.style.removeProperty("--cg-u");
+    liveReset(); livePager.hidden = true; el("descLiveNote").hidden = true;
   }
-  el("descPreview").addEventListener("click", e => {
-    const screen = e.target.closest("[data-cg-screen]"), turn = e.target.closest("[data-cg-pv]");
-    if (screen){ descScreen = screen.dataset.cgScreen; previewPage = 0; el("descPreview").querySelectorAll("[data-cg-screen]").forEach(b => b.setAttribute("aria-pressed", String(b === screen))); renderDescPreview(); }
-    else if (turn){ previewPage += +turn.dataset.cgPv; showPreviewPage(); }
+  function refreshDescLive(){   // entering step 1, a resize, the fonts arriving: measure the guide page's box, then lay the text out in it
+    clearTimeout(liveTimer); if (liveFrame !== null){ cancelAnimationFrame(liveFrame); liveFrame = null; }
+    const box = mode === "author" && step === 1 ? measureDescBox() : null;
+    if (!box){ liveOff(); return; }
+    descLive = box; liveLabel.classList.add("is-live");
+    const cs = getComputedStyle(el("author"));
+    guidePage.style.setProperty("--cg-s1-w", Math.ceil(box.w + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + "px");   // the step's column widens to hold the box at its real size
+    layoutDescLive();
+  }
+  function layoutDescLive(){   // the text in the measured box: the reader's columns, then a smaller font, then pages
+    liveFrame = null;
+    if (!descLive || !liveEd.offsetParent) return;
+    const { w, room, u } = descLive;
+    liveWrap.style.setProperty("--cg-u", u); liveWrap.style.width = w + "px"; liveWrap.style.height = room + "px"; liveWrap.style.zoom = "";
+    const k = Math.min(1, liveLabel.clientWidth / w, (liveLabel.clientHeight - liveWrap.offsetTop) / room);   // a window too small for the real size: the box shrinks as one piece
+    if (k < 1) liveWrap.style.zoom = Math.max(0.3, k).toFixed(3);
+    liveReset();
+    for (const d of liveEd.children){ if (d.tagName !== "DIV") continue; const t = d.textContent.trim(); d.classList.toggle("is-head", t.length > 0 && t.length <= 60 && /[:：]$/.test(t)); }   // a heading line stays with the next one, as on the guide page
+    liveEd.style.height = "auto";   // measured at its natural height, like the reader (fitReader clears the height before the fit)
+    const natural = classGuideDescFit(liveEd, room, u, liveEd.getBoundingClientRect().width / Math.max(1, liveEd.offsetWidth));
+    liveEd.style.height = room + "px";
+    livePages = natural > room ? classGuideDescPages(liveEd) : 1;
+    showLivePage(livePage, true);
+    const note = el("descLiveNote"); note.hidden = false;
+    note.textContent = "กล่องนี้ขนาดเท่ากล่องคำอธิบายในหน้าไกด์บนจอนี้ (ขึ้นกับสเตตัส เซ็ต บิลด์ และโน้ตในขั้นอื่น)" + (liveEd.textContent.trim() ? " · " + livePages + " หน้า" : "");
+  }
+  function caretPage(fallback){   // the page holding the caret while the box is being typed in
+    const sel = window.getSelection();
+    if (livePages < 2 || document.activeElement !== liveEd || !sel || !sel.rangeCount || !liveEd.contains(sel.focusNode)) return fallback;
+    const r = document.createRange(); r.setStart(sel.focusNode, sel.focusOffset); r.collapse(true);
+    let rect = r.getClientRects()[0];
+    if (!rect){   // a caret between elements (an empty line, or the box's end after an undo): the start of the node after it, else the end of the node before it
+      const rects = n => { const rg = document.createRange(); rg.selectNodeContents(n); const l = rg.getClientRects(); return l.length ? l : n.getBoundingClientRect ? [n.getBoundingClientRect()] : []; };
+      const f = sel.focusNode, after = f.nodeType === 1 ? f.childNodes[sel.focusOffset] : null, before = f.nodeType === 1 ? f.childNodes[sel.focusOffset - 1] : null;
+      const list = after ? rects(after) : before ? rects(before) : rects(f.nodeType === 1 ? f : f.parentElement);
+      rect = list.length ? (after ? list[0] : list[list.length - 1]) : null;
+    }
+    if (!rect) return fallback;
+    const box = liveEd.getBoundingClientRect(), cw = liveEd.clientWidth || 1, pageW = box.width * cw / Math.max(1, liveEd.offsetWidth);   // one page = the box's inner width on screen
+    return Math.floor(liveEd.scrollLeft / cw + (rect.left - box.left) / Math.max(1, pageW) + 0.001);
+  }
+  function showLivePage(p, follow){
+    livePage = Math.max(0, Math.min(livePages - 1, follow ? caretPage(p) : p));
+    liveEd.scrollLeft = livePage * liveEd.clientWidth;
+    livePager.hidden = livePages < 2; livePager.querySelector("span").textContent = (livePage + 1) + " / " + livePages;
+    livePager.firstElementChild.disabled = livePage === 0; livePager.lastElementChild.disabled = livePage >= livePages - 1;
+  }
+  function queueDescLive(){ if (descLive && liveFrame === null) liveFrame = requestAnimationFrame(layoutDescLive); }   // the text changed: lay it out again in the same box
+  function queueDescMeasure(){ clearTimeout(liveTimer); liveTimer = setTimeout(() => requestAnimationFrame(refreshDescLive), 150); }   // the window changed: measure again
+  root.addEventListener("input", e => { if (e.target.matches && e.target.matches('[data-cg-field="description"]')) queueDescLive(); });
+  window.addEventListener("resize", queueDescMeasure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueDescMeasure);
+  document.addEventListener("selectionchange", () => { if (descLive && livePages > 1 && document.activeElement === liveEd) showLivePage(livePage, true); });   // typing or arrow keys past a page turn to the next
+  liveEd.addEventListener("scroll", () => { if (descLive && Math.abs(liveEd.scrollLeft - livePage * liveEd.clientWidth) > 1) showLivePage(livePage, true); });   // the browser scrolled the caret into view: back onto a whole page
+  // ‹ › while typing keep the caret in the box (focus never leaves it, so Ctrl+Z stays the box's own) and put it at the top of the new page, like Page Down
+  livePager.addEventListener("mousedown", e => { if (e.target.closest("[data-cg-lv]") && document.activeElement === liveEd) e.preventDefault(); });
+  livePager.addEventListener("click", e => {
+    const b = e.target.closest("[data-cg-lv]"); if (!b) return; e.preventDefault();
+    const typing = document.activeElement === liveEd;
+    showLivePage(livePage + +b.dataset.cgLv);
+    if (!typing) return;
+    const box = liveEd.getBoundingClientRect(), cs = getComputedStyle(liveEd), z = box.width / Math.max(1, liveEd.offsetWidth);
+    const x = box.left + (parseFloat(cs.paddingLeft) + 2) * z, y = box.top + (parseFloat(cs.paddingTop) + 4) * z;
+    const p = document.caretPositionFromPoint ? document.caretPositionFromPoint(x, y) : null, r = !p && document.caretRangeFromPoint ? document.caretRangeFromPoint(x, y) : null;
+    const node = p ? p.offsetNode : r && r.startContainer;
+    if (node && liveEd.contains(node)) window.getSelection().collapse(node, p ? p.offset : r.startOffset);
   });
-  root.addEventListener("input", e => { if (e.target.matches && e.target.matches('[data-cg-field="description"]')) queueDescPreview(); });
-  window.addEventListener("resize", queueDescPreview);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueDescPreview);
   const stepKey = "12t-bible-class-guide-step2";   // renamed when the steps were reordered (2026-10-16), so an old saved number does not open the wrong step
   function goStep(n){   // one step at a time (user 2026-10-16); the step decides what a click on the grid does
     step = Math.max(1, Math.min(CLASS_GUIDE_STEPS.length, n || 1));
@@ -29283,7 +29342,7 @@ function mountClassGuide(root){
     if (step !== 4) el("noteEditor").hidden = true;
     if (step === 5) fillCoverCard();
     if (step === 6) fillSendCard();
-    if (step === 1) queueDescPreview();
+    if (step === 1) requestAnimationFrame(refreshDescLive); else liveOff();   // step 1's box is the guide page's description box
     setAuthorInteraction(step === 4 ? "annotate" : step === 5 ? "cover" : "build");
     try { localStorage.setItem(stepKey, String(step)); } catch (e) {}
     updateSteps(); queueReaderFit();
@@ -29330,6 +29389,7 @@ function mountClassGuide(root){
   const sheetQuery = window.matchMedia("(min-width: 761px) and (orientation: landscape)"), isSheet = () => sheetQuery.matches;   // landscape reader = the PNG sheet (placeNoteChips, prefillNoteChips)
   function fitReader(){   // reader and editor: the build fits the space left of the window (editor: user 2026-10-16, no scrolling)
     if ((mode !== "reader" && mode !== "author") || root.hidden) return;
+    descRoom = 0;   // the description's room under the trees, for step 1's live box (measureDescBox)
     const author = mode === "author", panel = el(author ? "author" : "reader"), notesBox = el("noteChips"), desc = el("guideDescription");
     if (!author && typeof placeNoteChips === "function") placeNoteChips();
     const build = simRoot.querySelector(".rsim");
@@ -29457,6 +29517,7 @@ function mountClassGuide(root){
         desc.style.maxHeight = ""; desc.style.height = "";
         const roomLeft = Math.max(40, Math.floor(free - row2 - gap)), u = parseFloat(getComputedStyle(guidePage).getPropertyValue("--cg-u")) || 1;
         const natural = classGuideDescFit(desc, roomLeft, u, zoom);   // columns, then a smaller font; still too tall: pages (below)
+        descRoom = roomLeft;
         const h = Math.min(natural, roomLeft);
         desc.style.height = h + "px"; bottom = row2 + gap + h;
         if (natural > roomLeft) layoutDescPages();   // too long: pages (user 2026-10-16) instead of a scrollbar
@@ -29495,7 +29556,7 @@ function mountClassGuide(root){
   };
   const switchMode = next => {
     guidePage.dataset.mode = next;
-    if (next === "author") queueDescPreview();
+    if (next !== "author") liveOff();
     document.documentElement.classList.toggle("tool-guide-reader", next === "reader"); document.documentElement.classList.toggle("tool-guide-author", next === "author");
     simRoot.style.height = ""; simRoot.style.width = ""; el("noteChips").style.width = ""; el("guideDescription").style.width = ""; el("guideDescription").style.maxHeight = ""; guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-u"); el("reader").style.height = ""; el("author").style.height = ""; simRoot.querySelector(".rsim").style.width = ""; simRoot.style.removeProperty("--cg-reader-scale");
     if (next === "reader"){
@@ -29576,19 +29637,7 @@ function mountClassGuide(root){
   function toggleCover(id){
     coverChange(list => { const k = list.indexOf(id); if (k >= 0) list.splice(k, 1); else if (list.length < 5) list.push(id); else status("ไอคอนหน้าปกเลือกได้สูงสุด 5 สกิล คลิกสกิลที่เลือกไว้เพื่อเอาออกก่อน"); });
   }
-  function openGuide(guide, preview = false, id = null){
-    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
-    if (currentId){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
-    if (currentId){   // the address bar now is the link to share, and Back goes to the guide list (user 2026-10-17), never past it to the main menu
-      const want = "#class-guide/" + currentId, marked = history.state && history.state.cgGuide;
-      if (location.hash === want){ if (!marked){ history.replaceState(null, "", "#class-guide"); history.pushState({ cgGuide: 1 }, "", want); } }   // a shared link or a refresh: slip the list in under it once
-      else if (location.hash === "#class-guide") history.pushState({ cgGuide: 1 }, "", want);   // opened from the list
-      else history.replaceState({ cgGuide: 1 }, "", want);
-    }
-    setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
-    button("useAsBase").hidden = preview;
-    sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
-    setToolServer("class-guide", current.build.server);
+  function fillReader(preview){   // the guide panel for `current`: title row, byline, description, stats, sets (openGuide, and step 1's measuring pass)
     el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "PLAYER GUIDE";
     // Title (user 2026-10-15): a row of the class icon, the server icon and "Lv.95" above the guide name (the name gets the full width); the byline is the author in gold and the patch.
     el("guideTitle").textContent = "";
@@ -29607,9 +29656,27 @@ function mountClassGuide(root){
     const authorEl = document.createElement("span"); authorEl.className = "cg-byline-author"; authorEl.textContent = current.author || "ยังไม่ระบุผู้เขียน";
     el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
     if (currentId){ const sep = document.createElement("span"); sep.className = "cg-views-sep"; sep.textContent = " · "; el("guideByline").append(sep, viewBadge(currentId)); }
-    el("guideDescription").innerHTML = classGuideParaHtml(current.description); button("returnAuthor").hidden = !preview; backBtn.lastChild.textContent = preview ? "กลับไปแก้ไกด์" : "ไกด์จากผู้เล่น"; backBtn.setAttribute("aria-label", backBtn.lastChild.textContent);   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
-    el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false; classGuideFlaskFill(el("guideStats"));
-    el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear; readerCtx = classGuideReaderCtx(current); viewStats = classGuideNumericStats(current.stats); resetUndo = null; if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
+    el("guideDescription").innerHTML = classGuideParaHtml(current.description);
+    el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
+    el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear;
+  }
+  function openGuide(guide, preview = false, id = null){
+    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
+    if (currentId){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
+    if (currentId){   // the address bar now is the link to share, and Back goes to the guide list (user 2026-10-17), never past it to the main menu
+      const want = "#class-guide/" + currentId, marked = history.state && history.state.cgGuide;
+      if (location.hash === want){ if (!marked){ history.replaceState(null, "", "#class-guide"); history.pushState({ cgGuide: 1 }, "", want); } }   // a shared link or a refresh: slip the list in under it once
+      else if (location.hash === "#class-guide") history.pushState({ cgGuide: 1 }, "", want);   // opened from the list
+      else history.replaceState({ cgGuide: 1 }, "", want);
+    }
+    setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
+    button("useAsBase").hidden = preview;
+    sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
+    setToolServer("class-guide", current.build.server);
+    fillReader(preview);
+    button("returnAuthor").hidden = !preview; backBtn.lastChild.textContent = preview ? "กลับไปแก้ไกด์" : "ไกด์จากผู้เล่น"; backBtn.setAttribute("aria-label", backBtn.lastChild.textContent);   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
+    classGuideFlaskFill(el("guideStats"));
+    readerCtx = classGuideReaderCtx(current); viewStats = classGuideNumericStats(current.stats); resetUndo = null; if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
     window.scrollTo(0, 0); queueReaderFit();
   }
   // Icon filters (user 2026-10-17): ทั้งหมด plus one button per server and per class (CLASS_ORDER); one click filters, a click on the chosen icon goes back
@@ -31608,6 +31675,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T07:37:47.588Z","feat(bible): class guides: editor step 1's typing box is the guide page's own description box on this screen (same size, columns, font and pages; replaces the PC / notebook / phone preview); the rating moves into the tab row; step 4 no longer shows a cut-off PVE / PVP box and step 6's last line fits"],
     ["2026-10-21T04:07:52.208Z","feat(bible): class guides: a reader's tried stats stay with each guide after a refresh (this browser only, no extra request), with a borderless ↺ คืนสู่ค่าแนะนำ link back to the author's values (Ctrl+Z undoes it)"],
     ["2026-10-21T03:56:04.833Z","feat(bible): class guide #61 TTO Sheep PVE ซัพดาเมจ SOLOดันได้ by คิมบก"],
     ["2026-10-21T03:52:13.276Z","fix(bible): boss guide: picking a target takes no time (Italus, Captain Crab and Zera showed 1 s), and the crab's ship-stage stand is 2-3 s, not 3"],

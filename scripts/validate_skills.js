@@ -3256,6 +3256,10 @@ let checkedRsim = 0;
   ok(readEditor(tag("ROOT",tx("ก่อน "),tag("STRONG",tx("ไทย")),tag("DIV",tx("บรรทัดสอง")))) === "ก่อน **ไทย**\nบรรทัดสอง", "rich editor serializes bold and block line breaks into portable markup");
   ok(readEditor(tag("ROOT",tx("first"),tag("DIV",tag("BR")))) === "first\n", "rich editor handles the empty line created by Enter");
   ok(readEditor(tag("ROOT",tag("DIV",tx("one")),tag("DIV",tx("two")),tx("!"))) === "one\ntwo\n!", "rich editor keeps adjacent blocks and inline text on their intended lines");
+  // the description editor holds one block per line (user 2026-10-21: step 1's live box pages like the guide page), and a blank line survives the round trip
+  ok(readEditor(tag("ROOT",tag("DIV",tx("a")),tag("DIV",tag("BR")),tag("DIV",tx("b")))) === "a\n\nb" && readEditor(tag("ROOT",tx("first"),tag("DIV",tag("BR")),tag("DIV",tx("x")))) === "first\n\nx", "rich editor keeps a blank line typed between two lines");
+  const editHtml = vm.runInContext("classGuideEditHtml", sandbox);
+  ok(editHtml("a\n\n**b**\nStatus:") === '<div>a</div><div><br></div><div><strong>b</strong></div><div class="is-head">Status:</div>' && editHtml("") === "", "the description editor renders one block per line, a heading line marked like the guide page");
   const emphasized = applyBold("before ไทย after",7,10);
   ok(emphasized.value === "before **ไทย** after" && emphasized.start === 9 && emphasized.end === 12, "Ctrl+B emphasizes selected Thai text and keeps it selected");
   const unbold = applyBold(emphasized.value,emphasized.start,emphasized.end);
