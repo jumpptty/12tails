@@ -2079,6 +2079,32 @@
   .cg-rich-editor strong,.cg-rich-editor b{color:var(--gold);font-weight:700}
   .cg-rich-editor:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
   .cg-note-editor .cg-rich-editor{min-height:140px}
+  /* The description pager, the reader's (laid over the box in the landscape block below) and the editor preview's: ‹ › on the box's side edges, n / N at its bottom (user 2026-10-21) */
+  .cg-desc-pager button{position:absolute;top:50%;transform:translateY(-50%);pointer-events:auto;width:max(30px, calc(36px * var(--cg-u,1)));height:max(30px, calc(36px * var(--cg-u,1)));padding:0;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--gold);font:inherit;font-size:max(20px, calc(24px * var(--cg-u,1)));line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .cg-desc-pager > button:first-child{left:max(8px, calc(10px * var(--cg-u,1)))}
+  .cg-desc-pager > button:last-child{right:max(8px, calc(10px * var(--cg-u,1)))}
+  .cg-desc-pager > span{position:absolute;left:50%;bottom:max(4px, calc(6px * var(--cg-u,1)));transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .cg-desc-pager button:hover:not(:disabled),.cg-desc-pager button:focus-visible{border-color:var(--gold)}
+  .cg-desc-pager button:disabled{opacity:.35;cursor:default}
+  /* Live description preview under the editor (user 2026-10-21): the guide page's description box at a typical size for the chosen screen, laid out by
+     classGuideDescFit / classGuideDescPages like the reader and scaled to the column. The box rules copy the reader's (.cg-page[data-mode="reader"] > .cg-prose
+     in the landscape block and the pull-quote look): keep them in step, the page count follows the font, line height and padding. */
+  .cg-desc-preview{grid-column:1/-1;display:grid;gap:6px;min-width:0}
+  .cg-desc-preview-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:13px}
+  .cg-desc-screens{display:flex;flex-wrap:wrap;gap:4px}
+  .cg-desc-screens button{padding:3px 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2);color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+  .cg-desc-screens button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+  .cg-desc-preview-sum{color:var(--muted);font-size:12px}
+  .cg-desc-frame{contain:inline-size;overflow:hidden;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}   /* contain: the box keeps its full layout width under the scale, which must not widen the column */
+  .cg-desc-frame[hidden]{display:none}
+  .cg-desc-sim{display:grid;width:max-content;transform-origin:0 0}
+  .cg-desc-sim > *{grid-area:1 / 1}
+  .cg-desc-sim > .cg-prose{margin:0;box-sizing:border-box;font-size:calc(17px * var(--cg-u,1));line-height:1.85;padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1));border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(212,175,55,.08),transparent 60%);text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75);overflow:hidden}
+  .cg-desc-sim > .cg-prose.is-cols{column-gap:calc(36px * var(--cg-u,1));column-rule:1px solid rgba(201,162,39,.22)}
+  .cg-desc-sim > .cg-prose.is-paged{column-fill:auto;padding-bottom:max(24px, calc(30px * var(--cg-u,1)));padding-left:max(46px, calc(56px * var(--cg-u,1)));padding-right:max(46px, calc(56px * var(--cg-u,1)))}
+  .cg-desc-sim > .cg-desc-pager:not([hidden]){display:block;position:relative;align-self:start;justify-self:start;z-index:1;pointer-events:none;font-size:max(12px, calc(13px * var(--cg-u,1)));color:var(--muted)}
+  @media(min-width:761px){.cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr) auto}}   /* picks, fields, the editor (takes the height), the preview */
+  @media(max-width:760px){.cg-desc-preview{display:none}}   /* a phone column is too narrow for a scaled PC box */
   .cg-format-btn.is-on{background:var(--gold);color:#141311;border-color:var(--gold)}
   @media(max-width:760px){.cg-nav{width:100%}.cg-tabs,.cg-page-actions{flex:1 1 100%}.cg-nav .cg-btn{flex:1}.cg-toolbar{align-items:stretch}.cg-mode-switch,.cg-publish-actions{width:100%;margin-left:0}.cg-mode-switch .cg-btn,.cg-publish-actions .cg-btn{flex:1}.cg-editor-tools{flex-wrap:wrap}.cg-page .cg-author-actions .cg-btn{flex:1}}
 
@@ -2133,7 +2159,7 @@
     .cg-page[data-mode="author"] .cg-fields{flex:1 1 auto;min-height:0;margin:0;gap:10px;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}   /* name, author and date on one row (user 2026-10-16) */
     .cg-page[data-mode="author"] .cg-fields > label:first-child{grid-column:auto}
     .cg-page[data-mode="author"] .cg-description{grid-template-rows:auto minmax(0,1fr);min-height:0}
-    .cg-page[data-mode="author"] .cg-description .cg-editor-wrap{display:flex;flex-direction:column;min-height:0}
+    .cg-page[data-mode="author"] .cg-description .cg-editor-wrap{display:flex;flex-direction:column;min-height:0;contain:inline-size}   /* a long line wraps instead of widening the form (user 2026-10-21: the page's auto column grew to the line's full length) */
     .cg-page[data-mode="author"] .cg-description .cg-rich-editor{flex:1;min-height:160px;overflow-y:auto;font-size:15px;line-height:1.75}
     .cg-page[data-mode="author"] .cg-author:has(.cg-note-editor:not([hidden])) .cg-description{display:none}   /* a note being written takes the description's place */
     .cg-page[data-mode="author"] .cg-toolbar{flex-direction:column;align-items:stretch;gap:8px;padding:4px 0}
@@ -2177,12 +2203,7 @@
     .cg-desc-pager{display:none}
     /* laid over the paged description at its size (layoutDescPages): ‹ › on its side edges, n / N at the bottom (user 2026-10-21: the corner pager was too small to notice) */
     .cg-page[data-mode="reader"] > .cg-desc-pager:not([hidden]){grid-column:1 / 3;grid-row:3;align-self:start;justify-self:start;z-index:1;display:block;position:relative;margin:0;pointer-events:none;font-size:max(12px, calc(13px * var(--cg-u,1)));color:var(--muted)}
-    .cg-desc-pager button{position:absolute;top:50%;transform:translateY(-50%);pointer-events:auto;width:max(30px, calc(36px * var(--cg-u,1)));height:max(30px, calc(36px * var(--cg-u,1)));padding:0;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--gold);font:inherit;font-size:max(20px, calc(24px * var(--cg-u,1)));line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.45)}
-    .cg-desc-pager [data-cg-act="descPrev"]{left:max(8px, calc(10px * var(--cg-u,1)))}
-    .cg-desc-pager [data-cg-act="descNext"]{right:max(8px, calc(10px * var(--cg-u,1)))}
-    .cg-desc-pager [data-cg-role="descPage"]{position:absolute;left:50%;bottom:max(4px, calc(6px * var(--cg-u,1)));transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums}
-    .cg-desc-pager button:hover:not(:disabled),.cg-desc-pager button:focus-visible{border-color:var(--gold)}
-    .cg-desc-pager button:disabled{opacity:.35;cursor:default}   /* the tree boxes are the grid's edges, flush with the panels around them */
+    /* the tree boxes are the grid's edges, flush with the panels around them */
     .cg-page[data-mode="reader"] > .cg-prose{grid-column:1 / 3;grid-row:3;align-self:start;margin:0;box-sizing:border-box;padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1));border-left:3px solid var(--gold);background:var(--panel);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}   /* the description under the skill grid */
     /* the notes column scrolls, so it clips: the padding keeps the round icons ring and glow inside it (user 2026-10-16: their left edge was cut off) */
     .cg-page[data-mode="reader"] > .cg-note-chips .cg-note-chips-title{margin:0}
@@ -27937,6 +27958,41 @@ function classGuideRichText(text){
 }
 // The guide view's description, one block per line (user 2026-10-18): side-by-side columns and pages then never split a paragraph. **bold** that runs over
 // a line break is closed at the line's end and reopened on the next; an empty line keeps its height with a <br>.
+// The editor preview's screens (user 2026-10-21): a typical description box on each, from the published guides measured on 2026-10-21 (1920x1080: about
+// 1500 x 410 px at panel scale 0.85; 1366x768: 1100 x 230 at 0.7; a phone: 368 px wide at 17 px, never paged). The real box also depends on the guide's
+// stats, sets and notes, so the preview says โดยประมาณ.
+const CLASS_GUIDE_DESC_SCREENS = {
+  pc: { label: "จอ PC 1920×1080", short: "จอ PC", w: 1500, room: 410, u: 0.85 },
+  nb: { label: "โน้ตบุ๊ก 1366×768", short: "โน้ตบุ๊ก", w: 1100, room: 230, u: 0.7 },
+  phone: { label: "มือถือ", short: "มือถือ", w: 368, room: 0, u: 1 }
+};
+// The description's fit, shared by the reader (fitReader) and the editor's live preview (user 2026-10-21). A wide box with short lines (user 2026-10-18:
+// guide 29 paged on a 3440 px screen with most of the box empty): at each size the text first tries side-by-side columns, each at least 38 em wide (up to 3);
+// then the font shrinks (user 2026-10-17), down to 11 px x the panel scale u but never under 13 px; the caller pages it (classGuideDescPages) when the
+// natural height returned is still over the room. zoom = the box's size on screen over its layout size (the .stage zoom of 1.3 / 1.5 on big screens, the
+// preview's scale), so heights are read in layout pixels like the room (user 2026-10-18).
+function classGuideDescFit(desc, room, u, zoom){
+  const measure = () => Math.ceil(desc.getBoundingClientRect().height / zoom) + 1;
+  const fitCols = () => {
+    desc.classList.remove("is-cols"); desc.style.columnCount = "";
+    let n = measure(); if (n <= room) return n;
+    const cs = getComputedStyle(desc), em = parseFloat(cs.fontSize) || 16, inner = desc.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const most = Math.max(1, Math.min(3, Math.floor((inner + 2 * em) / (40 * em))));
+    for (let c = 2; c <= most; c++){ desc.classList.add("is-cols"); desc.style.columnCount = c; n = measure(); if (n <= room) return n; }
+    desc.classList.remove("is-cols"); desc.style.columnCount = ""; return measure();
+  };
+  let natural = fitCols();
+  for (let px = Math.floor(17 * u) - 1, floor = Math.floor(Math.max(13, 11 * u)); natural > room && px >= floor; px--){ desc.style.fontSize = px + "px"; natural = fitCols(); }
+  return natural;
+}
+// Description pages (user 2026-10-16): the box becomes CSS columns exactly one box wide (the gap = the side padding, so every page starts one box further
+// right); a pager flips scrollLeft by one box. Returns the page count.
+function classGuideDescPages(desc){
+  desc.classList.add("is-paged");
+  const cs = getComputedStyle(desc), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  desc.style.columnWidth = Math.max(1, desc.clientWidth - padX) + "px"; desc.style.columnGap = padX + "px";
+  return Math.max(1, Math.round(desc.scrollWidth / Math.max(1, desc.clientWidth)));
+}
 function classGuideParaHtml(text){
   let open = false;
   return classGuideRichText(text).split("\n").map(line => {
@@ -28764,7 +28820,7 @@ function mountClassGuide(root){
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
-      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
+      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description">คำอธิบายบิลด์<textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-desc-preview" data-cg-role="descPreview" data-cg-step="1"><div class="cg-desc-preview-head"><b>ตัวอย่างในหน้าไกด์</b><div class="cg-desc-screens" role="group" aria-label="ขนาดจอ">${Object.entries(CLASS_GUIDE_DESC_SCREENS).map(([k, sc], i) => '<button type="button" data-cg-screen="' + k + '" aria-pressed="' + (i === 0) + '">' + sc.label + '</button>').join("")}</div><span class="cg-desc-preview-sum" data-cg-role="descPreviewSum"></span></div><div class="cg-desc-frame" hidden><div class="cg-desc-sim"><p class="cg-prose" data-cg-role="descPreviewBox"></p><div class="cg-desc-pager" hidden><button type="button" data-cg-pv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-pv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></div></div></div></div><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
       <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-5 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
@@ -29078,6 +29134,48 @@ function mountClassGuide(root){
   { const A = el("author");
     A.querySelectorAll(".cg-fields > label").forEach(l => { l.dataset.cgStep = "1"; });
     el("noteEditor").dataset.cgStep = "4"; el("noteEmpty").dataset.cgStep = "0"; el("extras").dataset.cgStep = "2"; el("coverRow").dataset.cgStep = "5"; el("coverCard").dataset.cgStep = "5"; el("send").dataset.cgStep = "6"; el("editHelp").dataset.cgStep = "0"; }
+  // Live description preview under the editor (user 2026-10-21): the guide page's description box at a typical size for each screen
+  // (CLASS_GUIDE_DESC_SCREENS), laid out by the reader's own fit and pages and scaled to the column; the line beside the buttons counts the pages.
+  let descScreen = "pc", previewPage = 0, previewPages = 0, previewTimer = 0;
+  function queueDescPreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(renderDescPreview, 200); }
+  function renderDescPreview(){
+    const wrap = el("descPreview"), box = el("descPreviewBox"), sim = box.parentNode, frame = sim.parentNode, text = field("description").value;
+    if (mode !== "author" || !wrap.offsetParent) return;   // only while step 1 is on screen
+    frame.hidden = !text.trim(); previewPages = 0;
+    if (frame.hidden){ el("descPreviewSum").textContent = "พิมพ์คำอธิบายด้านบน แล้วดูหน้าตาในหน้าไกด์ได้ตรงนี้"; showPreviewPage(); return; }
+    box.innerHTML = classGuideParaHtml(text);
+    const maxH = Math.max(160, Math.round(window.innerHeight * 0.36)), pages = {};
+    const layout = key => {   // the box as that screen shows it; returns its pages (0: a phone scrolls instead)
+      const sc = CLASS_GUIDE_DESC_SCREENS[key], k = Math.min(1, frame.clientWidth / sc.w, sc.room ? maxH / sc.room : 1);
+      sim.style.setProperty("--cg-u", sc.u); sim.style.transform = "scale(" + k + ")";
+      box.classList.remove("is-cols", "is-paged"); for (const p of ["fontSize", "height", "columnCount", "columnWidth", "columnGap"]) box.style[p] = "";
+      box.style.width = sc.w + "px";
+      frame.style.overflowY = sc.room ? "hidden" : "auto";
+      if (!sc.room){ frame.style.height = Math.min(maxH, Math.ceil(box.offsetHeight * k)) + "px"; return 0; }   // the phone's text scrolls in the frame
+      const natural = classGuideDescFit(box, sc.room, sc.u, box.getBoundingClientRect().width / box.offsetWidth || 1);
+      box.style.height = Math.min(natural, sc.room) + "px"; frame.style.height = Math.ceil(box.offsetHeight * k) + "px";
+      return natural > sc.room ? classGuideDescPages(box) : 1;
+    };
+    for (const key of Object.keys(CLASS_GUIDE_DESC_SCREENS).filter(key => key !== descScreen).concat(descScreen)) pages[key] = layout(key);   // the chosen screen last, so the box shows it
+    el("descPreviewSum").textContent = Object.entries(CLASS_GUIDE_DESC_SCREENS).map(([key, sc]) => sc.short + ": " + (pages[key] ? pages[key] + " หน้า" : "เลื่อนอ่าน ไม่แบ่งหน้า")).join(" · ") + " (โดยประมาณ)";
+    previewPages = pages[descScreen];
+    const pager = sim.querySelector(".cg-desc-pager"); pager.style.width = box.offsetWidth + "px"; pager.style.height = box.offsetHeight + "px";
+    showPreviewPage();
+  }
+  function showPreviewPage(){
+    const box = el("descPreviewBox"), pager = box.parentNode.querySelector(".cg-desc-pager");
+    previewPage = Math.max(0, Math.min(previewPages - 1, previewPage)); pager.hidden = previewPages < 2; box.scrollLeft = previewPage * box.clientWidth;
+    pager.querySelector("span").textContent = (previewPage + 1) + " / " + previewPages;
+    pager.firstElementChild.disabled = previewPage === 0; pager.lastElementChild.disabled = previewPage >= previewPages - 1;
+  }
+  el("descPreview").addEventListener("click", e => {
+    const screen = e.target.closest("[data-cg-screen]"), turn = e.target.closest("[data-cg-pv]");
+    if (screen){ descScreen = screen.dataset.cgScreen; previewPage = 0; el("descPreview").querySelectorAll("[data-cg-screen]").forEach(b => b.setAttribute("aria-pressed", String(b === screen))); renderDescPreview(); }
+    else if (turn){ previewPage += +turn.dataset.cgPv; showPreviewPage(); }
+  });
+  root.addEventListener("input", e => { if (e.target.matches && e.target.matches('[data-cg-field="description"]')) queueDescPreview(); });
+  window.addEventListener("resize", queueDescPreview);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueDescPreview);
   const stepKey = "12t-bible-class-guide-step2";   // renamed when the steps were reordered (2026-10-16), so an old saved number does not open the wrong step
   function goStep(n){   // one step at a time (user 2026-10-16); the step decides what a click on the grid does
     step = Math.max(1, Math.min(CLASS_GUIDE_STEPS.length, n || 1));
@@ -29086,6 +29184,7 @@ function mountClassGuide(root){
     if (step !== 4) el("noteEditor").hidden = true;
     if (step === 5) fillCoverCard();
     if (step === 6) fillSendCard();
+    if (step === 1) queueDescPreview();
     setAuthorInteraction(step === 4 ? "annotate" : step === 5 ? "cover" : "build");
     try { localStorage.setItem(stepKey, String(step)); } catch (e) {}
     updateSteps(); queueReaderFit();
@@ -29258,20 +29357,7 @@ function mountClassGuide(root){
         if (descWide){ desc.style.gridColumn = "1 / -1"; descPager.style.gridColumn = "1 / -1"; }
         desc.style.maxHeight = ""; desc.style.height = "";
         const roomLeft = Math.max(40, Math.floor(free - row2 - gap)), u = parseFloat(getComputedStyle(guidePage).getPropertyValue("--cg-u")) || 1;
-        // A wide box with short lines (user 2026-10-18: guide 29 paged on a 3440 px screen with most of the box empty): at each size the text first tries
-        // side-by-side columns, each at least 38 em wide (up to 3); then the font shrinks; only then does it page (in one column)
-        const measure = () => Math.ceil(desc.getBoundingClientRect().height / zoom) + 1;   // in page pixels: the rectangle includes the .stage zoom (1.3 / 1.5 on big screens), the room does not (user 2026-10-18)
-        const fitCols = () => {
-          desc.classList.remove("is-cols"); desc.style.columnCount = "";
-          let n = measure(); if (n <= roomLeft) return n;
-          const cs = getComputedStyle(desc), em = parseFloat(cs.fontSize) || 16, inner = desc.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-          const most = Math.max(1, Math.min(3, Math.floor((inner + 2 * em) / (40 * em))));
-          for (let c = 2; c <= most; c++){ desc.classList.add("is-cols"); desc.style.columnCount = c; n = measure(); if (n <= roomLeft) return n; }
-          desc.classList.remove("is-cols"); desc.style.columnCount = ""; return measure();
-        };
-        let natural = fitCols();
-        const floor = Math.floor(Math.max(13, 11 * u));   // the smallest size: 11 px x the panel scale, never under 13 px on screen
-        for (let px = Math.floor(17 * u) - 1; natural > roomLeft && px >= floor; px--){ desc.style.fontSize = px + "px"; natural = fitCols(); }   // a long text first shrinks before it pages (user 2026-10-17)
+        const natural = classGuideDescFit(desc, roomLeft, u, zoom);   // columns, then a smaller font; still too tall: pages (below)
         const h = Math.min(natural, roomLeft);
         desc.style.height = h + "px"; bottom = row2 + gap + h;
         if (natural > roomLeft) layoutDescPages();   // too long: pages (user 2026-10-16) instead of a scrollbar
@@ -29280,17 +29366,13 @@ function mountClassGuide(root){
     }
   }
 
-  // Description pages: the box becomes CSS columns exactly one box wide (the gap = the side padding, so every page starts one box further right);
-  // the pager flips scrollLeft by one box. The page is kept across refits and reset when another guide opens.
+  // Description pages (classGuideDescPages): the pager flips scrollLeft by one box. The page is kept across refits and reset when another guide opens.
   const descPager = document.createElement("div"); descPager.className = "cg-desc-pager"; descPager.hidden = true;
   descPager.innerHTML = '<button type="button" data-cg-act="descPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)">‹</button><span data-cg-role="descPage"></span><button type="button" data-cg-act="descNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)">›</button>';
   guidePage.appendChild(descPager);
   let descPage = 0, descPages = 1;
   function layoutDescPages(){
-    const desc = el("guideDescription"); desc.classList.add("is-paged");
-    const cs = getComputedStyle(desc), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-    desc.style.columnWidth = Math.max(1, desc.clientWidth - padX) + "px"; desc.style.columnGap = padX + "px";
-    descPages = Math.max(1, Math.round(desc.scrollWidth / Math.max(1, desc.clientWidth)));
+    const desc = el("guideDescription"); descPages = classGuideDescPages(desc);
     descPager.hidden = descPages < 2; showDescPage();
     descPager.style.width = desc.offsetWidth + "px"; descPager.style.height = desc.offsetHeight + "px";   // the overlay covers the box exactly
   }
@@ -29314,6 +29396,7 @@ function mountClassGuide(root){
   };
   const switchMode = next => {
     guidePage.dataset.mode = next;
+    if (next === "author") queueDescPreview();
     document.documentElement.classList.toggle("tool-guide-reader", next === "reader"); document.documentElement.classList.toggle("tool-guide-author", next === "author");
     simRoot.style.height = ""; simRoot.style.width = ""; el("noteChips").style.width = ""; el("guideDescription").style.width = ""; el("guideDescription").style.maxHeight = ""; guidePage.classList.remove("cg-has-notes"); guidePage.style.removeProperty("--cg-u"); el("reader").style.height = ""; el("author").style.height = ""; simRoot.querySelector(".rsim").style.width = ""; simRoot.style.removeProperty("--cg-reader-scale");
     if (next === "reader"){
@@ -31416,6 +31499,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T03:16:55.447Z","feat(bible): class guides: a live description preview in the editor (step 1: the guide page's box on PC, notebook or phone with its pages, and a page count per screen); a long description line no longer widens the editor"],
     ["2026-10-21T03:12:56.628Z","fix(bible): the menu's tool strip shows every tool in Firefox / Zen (it shrank to 88 px and one thumb: the thumbs now carry an explicit width on desktop)"],
     ["2026-10-21T02:13:39.269Z","fix(bible): skill details: the stat glow follows the deps (Cat Combo with Hidden Blade lights TAL; Power Hammer, Over Power, Intense Fire, Titan Sword, Synchro Mole and others move it too), measured on every card and dep"],
     ["2026-10-21T01:48:21.643Z","fix(bible): skill details: Cat Combo's ATK glows (the ATK / DEF glow now reads coefficients on damage groups, not only the card's own)"],
