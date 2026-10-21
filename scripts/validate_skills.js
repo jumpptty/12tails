@@ -696,21 +696,8 @@ let checkedLckDiff = 0;
     const jokerBehind = rangeAt(4, 200, 102, 202, true);    // Joker is NOT clamped: -50 on both ends
     expect("negative diff + Joker reduces the min", jokerBehind[0] - behind[0], -50);
     expect("negative diff + Joker reduces the max", jokerBehind[1] - behind[1], -50);
-    // The real roll path (rollOneHit) draws its own random numbers, so compare
-    // AVERAGES over many rolls. Expected gaps are large next to the noise (one
-    // roll's spread is ~70, so 400 rolls give a standard error of ~3.5).
-    const avgRoll = (atk, lck, eLck, joker) => {
-      inputs.atk.value = String(atk); inputs.lck.value = String(lck); inputs.enemyLck.value = String(eLck);
-      sandbox._depRanks[sk.lckDiffDep.id] = joker ? 1 : 0;
-      sandbox._skillRanks[sk.id] = 4;
-      sandbox._selectSkill(sk);
-      let sum = 0;
-      for (let i = 0; i < 400; i++) sum += sandbox._rollOneHit(sk, 4);
-      return sum / 400;
-    };
     // Consistency: the Final Damage RANGE shown on the card must contain every simulated roll
-    // (the hero range and the Test/Simulate popup share the same pipeline stages), and its
-    // maximum must be reachable, not wildly above what rolls ever produce.
+    // (the hero range and the Test/Simulate popup share the same pipeline stages).
     const finalRangeAt = (rank, atk, lck, eLck, joker) => {
       inputs.atk.value = String(atk); inputs.lck.value = String(lck); inputs.enemyLck.value = String(eLck);
       sandbox._depRanks[sk.lckDiffDep.id] = joker ? 1 : 0;
@@ -726,16 +713,7 @@ let checkedLckDiff = 0;
       const { fin, lo, hi } = finalRangeAt(rk, atk, lck, eLck, jk);
       const tag = `rank ${rk}, ATK ${atk}, LCK ${lck} vs ${eLck}, Joker ${jk ? "on" : "off"}`;
       expect(`final range contains every roll (${tag}) [range ${fin[0]}-${fin[1]}, rolled ${lo}-${hi}]`, lo >= fin[0] && hi <= fin[1], true);
-      expect(`final range max is reachable (${tag}) [range max ${fin[1]}, top roll ${hi}]`, hi >= fin[1] * 0.85, true);
     });
-    const rollBase = avgRoll(200, 102, 102, false);
-    const rollLead = avgRoll(200, 102, 2, false);
-    expect("roll: an LCK lead adds a random 0..250 (mean ~+125, minus enemy-LCK mitigation noise)", rollLead - rollBase > 80, true);
-    const rollLeadJoker = avgRoll(200, 102, 2, true);
-    expect("roll: Joker with an LCK lead adds ~+50 on top", rollLeadJoker - rollLead > 35, true);
-    const rollBehind = avgRoll(200, 102, 202, false);
-    const rollBehindJoker = avgRoll(200, 102, 202, true);
-    expect("roll: Joker while BEHIND on LCK lowers damage by ~50 (unclamped)", rollBehindJoker - rollBehind < -35, true);
     sandbox._depRanks[sk.lckDiffDep.id] = 1;
     inputs.atk.value = "200"; inputs.lck.value = "102"; inputs.enemyLck.value = "2";
     sandbox._selectSkill(sk);
@@ -1596,7 +1574,7 @@ let checkedGroupGlow = 0;
   console.log(`Verified ${checkedGroupGlow} damage-group ATK / DEF glow checks.`);
 }
 
-// 3m. effectProc purple mix (2026-09-24, GEMINI.md "effectProc"): Wall Puncture replace-roll rate and rank-0 off,
+// 3m. effectProc purple mix (2026-09-24, GEMINI.md "effectProc"): Wall Puncture rank-0 off (no rate checks: user 2026-10-21, no statistical thresholds),
 // Megalodon's purple Pull group, every bonus amount, and the gold total digits.
 let checkedEffectProc = 0;
 {
@@ -1609,17 +1587,12 @@ let checkedEffectProc = 0;
   const sweep = byId("whale_sweep");
   sandbox._skillRanks[sweep.id] = sweep.maxRank; sandbox._selectSkill(sweep);
   deps.wallPuncture = 0; check("Wall Puncture 0 never procs", purpleRate(sweep, 500) === 0);
-  inputs.lck.value = "150"; deps.wallPuncture = 4;
-  const expected = sandbox.lckAdjustChance(40, 150) / 100, rate = purpleRate(sweep, 4000);
-  check(`Wall Puncture 4 @ LCK 150 proc rate ~${expected}`, Math.abs(rate - expected) < 0.04, rate.toFixed(3));
   // Whale Combo (Whale.cs:16238-16394): one Wall Puncture roll per swing; a proc replaces the hit with Effect Damage and skips getCritPlus (effectProc.noCrit).
   const wc = byId("whale_nAttack");
   sandbox._skillRanks[wc.id] = 2; sandbox._selectSkill(wc);
   deps.wallPuncture = 4; deps.whaleGearWeapon = 2; deps.whaleGearEquip = 2; inputs.lck.value = "300";
   { let purple = 0, purpleCrit = 0, whiteCrit = 0; for (let i = 0; i < 3000; i++) { sandbox._rollOneHit(wc, 2, undefined, false, 0); if (ep.lastPurple()) { purple++; if (ep.lastCrit()) purpleCrit++; } else if (ep.lastCrit()) whiteCrit++; }
-    check("Whale Combo: Wall Puncture procs happen", purple > 0, purple);
-    check("Whale Combo: a purple Wall Puncture hit never crits", purpleCrit === 0, purpleCrit);
-    check("Whale Combo: white hits still crit with Champion gear", whiteCrit > 0, whiteCrit); }
+    check("Whale Combo: a purple Wall Puncture hit never crits", purpleCrit === 0, purpleCrit); }
   deps.wallPuncture = 0; deps.whaleGearWeapon = 0; deps.whaleGearEquip = 0;
   // Mole Smart Shell (#264): +30 Effect Damage per enemy hit on Mine, Stun Mine, Stun Grenade, Time Nuke (Mole.cs:11583, Mole_stunGrenade.cs:285, Mole_timeNuke.cs:767).
   ["mole_mine", "mole_stunMine", "mole_stunGrenade", "mole_timeNuke"].forEach(id => { const m = byId(id);
@@ -2472,7 +2445,6 @@ let checkedCasino = 0;
     const tag = `LCK ${lck}, Power ${power} [range ${fin[0]}-${fin[1]}, rolled ${lo}-${hi}]`;
     if (lo < fin[0] || hi > fin[1]) casinoFail(`roll outside range: ${tag}`); else checkedCasino++;
     if (lck === 5 && (hi !== 0 || fin[1] !== 0)) casinoFail(`LCK 5 must always be Doom (0 damage): ${tag}`); else checkedCasino++;
-    if (lck === 255 && hi < fin[1] * 0.85) casinoFail(`range max not reachable: ${tag}`); else checkedCasino++;
   }
   inputs.lck.value = savedLck;
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
