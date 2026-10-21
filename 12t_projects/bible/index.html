@@ -7248,6 +7248,9 @@
   .ln.is-paused .ln-th.is-on i, .ln.is-paused .ln-seg.is-on i{animation-play-state:paused}
   /* the two main tools (user 2026-10-18, option E of 5 mocks): taller, wider banners with a moving backdrop and a gold left bar; the name sits on the left */
   .ln-th.is-main{flex-basis:200px; height:96px}
+  /* Firefox / Zen (user 2026-10-21): a flex row's size comes from its items' own width, which is 0 here (every child is absolute), not their
+     flex-basis, so the strip shrank to its 88 px of gaps and showed one thumb. An explicit width as well; phones keep their grid of tiles. */
+  @media (min-width:901px){ .ln-th{width:104px} .ln-th.is-main{width:200px} }
   .ln-th.is-main .ln-thb{border-left:3px solid var(--gold); background-color:#120d0a}
   .ln-th.is-main .ln-thb::after{background:linear-gradient(90deg, rgba(0,0,0,.82) 28%, transparent 78%)}
   .ln-th.is-main span{right:auto; top:50%; bottom:auto; left:12px; max-width:62%; transform:translateY(-50%); font-size:16px}
@@ -31413,6 +31416,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T03:12:56.628Z","fix(bible): the menu's tool strip shows every tool in Firefox / Zen (it shrank to 88 px and one thumb: the thumbs now carry an explicit width on desktop)"],
     ["2026-10-21T02:13:39.269Z","fix(bible): skill details: the stat glow follows the deps (Cat Combo with Hidden Blade lights TAL; Power Hammer, Over Power, Intense Fire, Titan Sword, Synchro Mole and others move it too), measured on every card and dep"],
     ["2026-10-21T01:48:21.643Z","fix(bible): skill details: Cat Combo's ATK glows (the ATK / DEF glow now reads coefficients on damage groups, not only the card's own)"],
     ["2026-10-21T01:40:30.536Z","feat(bible): class guides: ‹ › beside the gallery cards with a page count, ← / → turn pages (the gallery and a guide's description), the description's ‹ › sit on its edges, and skill tree names shrink instead of truncating"],
