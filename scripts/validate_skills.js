@@ -3260,6 +3260,8 @@ let checkedRsim = 0;
   ok(readEditor(tag("ROOT",tag("DIV",tx("a")),tag("DIV",tag("BR")),tag("DIV",tx("b")))) === "a\n\nb" && readEditor(tag("ROOT",tx("first"),tag("DIV",tag("BR")),tag("DIV",tx("x")))) === "first\n\nx", "rich editor keeps a blank line typed between two lines");
   const editHtml = vm.runInContext("classGuideEditHtml", sandbox);
   ok(editHtml("a\n\n**b**\nStatus:") === '<div>a</div><div><br></div><div><strong>b</strong></div><div class="is-head">Status:</div>' && editHtml("") === "", "the description editor renders one block per line, a heading line marked like the guide page");
+  // column breaks (user 2026-10-21: start in column 3 without typing 1 and 2): a line holding only ⇥ is an empty block the editor cannot type into, read back as the same line
+  ok(editHtml("⇥\n⇥\nC") === '<div class="is-colbreak" contenteditable="false">⇥</div><div class="is-colbreak" contenteditable="false">⇥</div><div>C</div>' && readEditor(tag("ROOT",tag("DIV",tx("⇥")),tag("DIV",tx("⇥")),tag("DIV",tx("C")))) === "⇥\n⇥\nC", "the description editor keeps column breaks as their own lines");
   // a click anywhere in a <label> goes to its first labelable element (user 2026-10-21: the column buttons came first, so every click in the box chose 1 column and stole the focus)
   ok(/<label class="cg-description"><textarea data-cg-field="description"[^>]*\bhidden\b/.test(html), "the description label starts with its hidden textarea, so a click in the box never presses a column button");
   const emphasized = applyBold("before ไทย after",7,10);
@@ -3336,6 +3338,8 @@ let checkedRsim = 0;
       // description columns (user 2026-10-21): 2 or 3 in block 0x43, 1 not stored (older codes unchanged); both codecs and format 1 agree
       const cols3 = norm({...fixture, descCols:3});
       ok(cols3.descCols === 3 && norm({...fixture, descCols:1}).descCols === undefined && same(Array.from(bin(norm(fixture))), Array.from(bin(norm({...fixture, descCols:1})))) && same(Array.from(bin(cols3)), Array.from(gc.classGuideBinary(cols3))) && same(norm(fromBin(bin(cols3))), cols3) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(cols3)))), cols3) && same(expand(gc.compact(cols3)), cols3) && same(gc.expand(compact(cols3)), cols3), "description columns round-trip in both codecs and format 1; one column writes nothing");
+      const brk = norm({...fixture, descCols:3, description:"⇥\n⇥\nสาม\n⇥\n\n"});
+      ok(brk.description === "⇥\n⇥\nสาม" && same(norm(fromBin(bin(brk))), brk) && same(norm(gc.classGuideFromBinary(Buffer.from(bin(brk)))), brk) && norm({...fixture, description:"⇥\n ⇥ \n"}).description === "", "column breaks: leading ones survive both codecs, trailing ones and a text of only breaks are dropped");
       rejects(()=>norm({...fixture, descCols:4}), "a finished guide refuses 4 description columns"); ok(vm.runInContext("classGuideNormalize", sandbox)({...fixture, descCols:"x"}, { draft:true }).descCols === undefined, "a draft drops a bad column count");
       ok(/^TG2\.[A-Za-z0-9_-]+$/.test(gc.encode2(odd)) && same(norm(gc.decode(gc.encode2(odd))), odd), "guide_code encode2 writes a TG2. code that still decodes to the same guide");
       let threw = false; try { fromBin(bin(odd).subarray(0, 30)); } catch (e) { threw = true; } ok(threw, "a cut-off format 2 code is rejected, not misread");

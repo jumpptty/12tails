@@ -2114,6 +2114,13 @@
   .cg-desc-ref{display:contents}   /* phones and the side panel: the description flows as before */
   .cg-desc-ref > .cg-para,.cg-description.is-live .cg-rich-editor > div{display:block;break-inside:avoid}
   .cg-desc-ref > .cg-para.is-head,.cg-description.is-live .cg-rich-editor > div.is-head{break-after:avoid}
+  /* a column break (user 2026-10-21): on the reference page (the desktop guide page, step 1's live box) an empty 0-height block that ends its column when
+     there are 2-3 columns; where the description is one column (phones, the side panel, the phone editor) a gap one line high (the mark itself, invisible),
+     none before the text or between two breaks in a row (empty columns) */
+  .cg-desc-ref > .cg-para.is-colbreak,.cg-rich-editor > div.is-colbreak{display:block;margin:0;padding:0;overflow:hidden;color:transparent;user-select:none}
+  .cg-desc-ref > .cg-para.is-colbreak:first-child,.cg-desc-ref > .is-colbreak + .is-colbreak,.cg-rich-editor > div.is-colbreak:first-child,.cg-rich-editor > .is-colbreak + .is-colbreak,
+  .cg-page[data-mode="reader"] > .cg-prose > .cg-desc-ref > .cg-para.is-colbreak,.cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor > div.is-colbreak{height:0;font-size:0;line-height:0}
+  .cg-desc-ref.has-cols > .cg-para.is-colbreak,.cg-rich-editor.has-cols > div.is-colbreak{break-after:column}
   @media(min-width:761px){
     .cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr)}   /* picks, fields, the description (takes the height) */
     .cg-page[data-mode="author"] .cg-description.is-live{position:relative;justify-items:center}   /* the page centred in the column, its heading row over it (user 2026-10-21) */
@@ -27778,6 +27785,14 @@ function classGuideStarsHtml(stars){   // five small SVG stars (a half star is t
 }
 // Every embedded guide has a running number "id" (1, 2, 3 ...; never reused, never renumbered) for its link #class-guide/<id>; a guide without one falls back to its position (user 2026-10-15: share a guide in Discord).
 function classGuideId(raw, index){ return String(raw && Number.isInteger(raw.id) && raw.id > 0 ? raw.id : index + 1); }
+// A column break (user 2026-10-21): a line holding only this mark ends its column, so an author can start in column 3 without filling 1 and 2 (step 1:
+// a click in an empty column adds the breaks). It counts only with 2-3 columns (.has-cols); a one-column view (phones, the PNG's one column) ignores it.
+function classGuideColBreak(){ return "⇥"; }
+function classGuideDescPlain(text){ return String(text || "").split("\n").filter(l => l.trim() !== classGuideColBreak()).join("\n"); }   // the text without its breaks
+function classGuideDescTrim(text){   // no break or blank line at the end (a click in an empty column that was never typed in)
+  const ls = String(text).split("\n"); while (ls.length && (!ls[ls.length - 1].trim() || ls[ls.length - 1].trim() === classGuideColBreak())) ls.pop();
+  return ls.join("\n").trim();
+}
 function classGuideNormalize(value, { draft = false } = {}){
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const object = o => o && typeof o === "object" && !Array.isArray(o);
@@ -27821,7 +27836,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   }
   return { format: "12t-class-guide", version: 1,
     title: text(value.title, "ชื่อไกด์ ", 160, !draft), author: text(value.author, "ชื่อผู้เขียน ", 120, !draft),
-    date: classGuideDateClean(value.date, !draft), description: text(value.description, "คำอธิบายบิลด์ ", 12000, false),
+    date: classGuideDateClean(value.date, !draft), description: classGuideDescTrim(text(value.description, "คำอธิบายบิลด์ ", 12000, false)),
     build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b), ...(support.length ? { support } : {}) }, ...(Object.keys(stats).length ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(Object.keys(gear).length ? { gear } : {}), ...(cover.length ? { cover } : {}), ...(modes.length ? { modes } : {}), ...(descCols > 1 ? { descCols } : {}), notes };
 }
 function classGuideExport(value){
@@ -28062,9 +28077,9 @@ const CLASS_GUIDE_DESC_PAGE = { w: 1500, h: 330 };
 function classGuideDescLayout(box, cols){   // box at the reference size; returns { pages, height } in the page's own px (a transform does not change them)
   const P = CLASS_GUIDE_DESC_PAGE, n = Math.max(1, Math.min(3, cols || 1));
   box.classList.remove("is-paged"); for (const p of ["height", "columnWidth", "columnGap"]) box.style[p] = "";
-  box.style.columnCount = n > 1 ? String(n) : "";
+  box.style.columnCount = n > 1 ? String(n) : ""; box.classList.toggle("has-cols", n > 1);   // column breaks count only with columns
   const natural = box.offsetHeight;
-  if (natural <= P.h + 1) return { pages: 1, height: Math.min(natural, P.h) };
+  if (natural <= P.h + 1 && box.scrollWidth <= box.clientWidth + 1) return { pages: 1, height: Math.min(natural, P.h) };   // column breaks past the last column spill sideways: those go to pages
   box.classList.add("is-paged"); box.style.columnCount = ""; box.style.height = P.h + "px";
   const cs = getComputedStyle(box), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), inner = box.clientWidth - padX;
   box.style.columnGap = padX + "px"; box.style.columnWidth = Math.floor((inner - (n - 1) * padX) / n) + "px";   // n columns a page; the gap = the side gutters, so a page turn is one box width
@@ -28075,6 +28090,7 @@ function classGuideDescLayout(box, cols){   // box at the reference size; return
 function classGuideParaHtml(text){
   let open = false;
   return classGuideRichText(text).split("\n").map(line => {
+    if (line.trim() === classGuideColBreak()) return '<span class="cg-para is-colbreak" aria-hidden="true">' + classGuideColBreak() + "</span>";   // a column break (screen readers skip it)
     const after = (open ? 1 : 0) + (line.match(/<strong>/g) || []).length - (line.match(/<\/strong>/g) || []).length === 1;
     const plain = line.replace(/<[^>]*>/g, "").trim(), head = plain.length > 0 && plain.length <= 60 && /[:：]$/.test(plain);   // a heading line ("Status Recommend:") stays with the next one
     const html = '<span class="cg-para' + (head ? " is-head" : "") + '">' + (open ? "<strong>" : "") + (line || "<br>") + (after ? "</strong>" : "") + "</span>";
@@ -28083,7 +28099,7 @@ function classGuideParaHtml(text){
 }
 // The description editor's lines as blocks (user 2026-10-21), like the guide page's .cg-para: on step 1's live box a paragraph never splits between pages.
 function classGuideEditHtml(text){
-  return text ? classGuideParaHtml(text).replace(/<span class="cg-para( is-head)?">/g, (m, head) => head ? '<div class="is-head">' : "<div>").replace(/<\/span>/g, "</div>") : "";
+  return text ? classGuideParaHtml(text).replace(/<span class="cg-para( is-head| is-colbreak)?"(?: aria-hidden="true")?>/g, (m, cls) => cls === " is-head" ? '<div class="is-head">' : cls ? '<div class="is-colbreak" contenteditable="false">' : "<div>").replace(/<\/span>/g, "</div>") : "";
 }
 // Step 6's desktop preview sizes (user 2026-10-21): the guide page's window area on common computer screens, shown next to the PNG.
 const CLASS_GUIDE_VIEWPORTS = [[1280, 720], [1366, 768], [1536, 864], [1920, 1080], [2560, 1440], [3440, 1440]];
@@ -28184,8 +28200,57 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     e.preventDefault(); const transfer = e.clipboardData || e.dataTransfer;
     if (transfer){ document.execCommand("insertText", false, transfer.getData("text/plain")); sync(); }
   };
-  editor.addEventListener("paste", insertPlain); editor.addEventListener("drop", insertPlain);
-  set(backing.value || ""); return { set, bold };
+  editor.addEventListener("paste", insertPlain);
+  // Drag and drop (user 2026-10-21: a selection can be dragged, e.g. to another column): the text lands under the pointer (api.dropSpot may first open a
+  // place there: step 1's empty columns), a drag inside the box moves it (Ctrl copies) with its bold, other drops bring plain text; one undo step, and the
+  // moved text stays selected. The old handler inserted at the selection itself, so a drag never moved anything.
+  let dragged = null;
+  editor.addEventListener("dragstart", () => { const r = boxRange(); dragged = r && editor.contains(r.startContainer) && editor.contains(r.endContainer) ? r : null; });
+  editor.addEventListener("dragend", () => { dragged = null; });
+  const caretFrom = (x, y) => {
+    if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+    const p = document.caretPositionFromPoint && document.caretPositionFromPoint(x, y); if (!p) return null;
+    const r = document.createRange(); r.setStart(p.offsetNode, p.offset); r.collapse(true); return r;
+  };
+  editor.addEventListener("drop", e => {
+    e.preventDefault(); const src = dragged; dragged = null;
+    if (composing) return;
+    let moved = "";
+    if (src){
+      const holder = document.createElement("div"); holder.appendChild(src.cloneContents()); moved = classGuideReadEditor(holder);
+      for (let x = src.commonAncestorContainer; x && x !== editor; x = x.parentNode) if (x.nodeType === 1 && /^(B|STRONG)$/.test(x.tagName)){ moved = "**" + moved + "**"; break; }   // a piece of one bold run
+    } else if (e.dataTransfer) moved = e.dataTransfer.getData("text/plain");
+    if (!moved) return;
+    let at = api.dropSpot && api.dropSpot(e);
+    if (!at){ at = caretFrom(e.clientX, e.clientY); if (!at || !editor.contains(at.startContainer) || (src && src.isPointInRange(at.startContainer, at.startOffset))) return; }   // outside the box, or onto itself
+    const T = "\uE000"; at.insertNode(document.createTextNode(T));
+    if (src && !e.ctrlKey) src.deleteContents();   // a live range: the mark keeps its place
+    const value = classGuideReadEditor(editor), next = value.replace(T, () => moved);
+    if (!value.includes(T)){ render(last); return; }
+    if (next.length > backing.maxLength){ render(last); notify("ข้อความยาวเกินกำหนด"); return; }
+    remember(last); typing = false; render(value.replace(T, () => T + moved + T));
+    const marks = [], walk = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);   // select the moved text between the two marks, then take the marks out
+    for (let t; (t = walk.nextNode());) for (let i = t.nodeValue.indexOf(T); i >= 0; i = t.nodeValue.indexOf(T, i + 1)) marks.push([t, i]);
+    if (marks.length === 2){
+      const [[n1, o1], [n2, o2]] = marks; n2.deleteData(o2, 1); n1.deleteData(o1, 1);
+      const r = document.createRange(); r.setStart(n1, o1); r.setEnd(n2, n1 === n2 ? o2 - 1 : o2);
+      editor.focus(); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    } else render(next);
+    backing.value = next; accepted = editor.innerHTML; last = next; changed();
+  });
+  // Column breaks (user 2026-10-21): the box as one block per line (drawn again from its text when typing left it otherwise), and a change to those lines
+  // as one undo step with the caret at the start of line `at`.
+  const lines = () => { if (!composing && classGuideReadEditor(editor) === last && editor.innerHTML !== toHtml(last)) render(last); return last ? last.split("\n") : []; };
+  const setLines = (list, at) => {
+    const next = list.join("\n");
+    if (next.length > backing.maxLength){ notify("ข้อความยาวเกินกำหนด"); return; }
+    if (next !== last){ remember(last); typing = false; render(next); changed(); }
+    editor.focus(); const line = editor.children[at];
+    if (line){ const r = document.createRange(); r.setStart(line, 0); r.collapse(true); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  };
+  const draw = list => { const keep = last; render(list.join("\n")); last = keep; };   // the box redrawn without an undo step of its own (the next change records the text before it)
+  const api = { set, bold, lines, setLines, draw, dropSpot: null };
+  set(backing.value || ""); return api;
 }
 const CLASS_GUIDE_BUTTON_ICONS = {
   reset:'<path d="M4 9a8 8 0 1 1 1 9M4 3v6h6"/>',
@@ -28674,7 +28739,8 @@ async function classGuideRenderImage(guide, simRoot){
   // beside the trees when it fits under the info boxes (user 2026-10-17, as in the reader): the trees then keep the full height
   const fullPlan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: fullH });
   const descLeft = false, descLeftLines = [];   // the description always sits under the trees, as on the guide page (user 2026-10-21)
-  let descLines = guide.description && !descLeft ? classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(descFont), segmenter) : [];
+  const descPlain = classGuideDescPlain(guide.description).trim();   // column breaks count only where it draws 2-3 columns (below)
+  let descLines = descPlain && !descLeft ? classGuideImageWrap(classGuideImageRuns(descPlain), descTextW, measureWith(descFont), segmenter) : [];
   let descNatural = descLines.length ? descLines.length * lh + panelPad * 2 : 0, descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
   const treeRoom = fullH - (descWanted ? descWanted + G : 0);
   let plan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: treeRoom });
@@ -28697,7 +28763,7 @@ async function classGuideRenderImage(guide, simRoot){
   const descWide = noteIds.length > 0 && descLines.length > 0 && notesNeed - panelPad <= row1 + G;   // the last note ends above the description's top   // the notes end above the trees' bottom: the description runs under them too (user 2026-10-17)
   if (descWide){
     descW = P.w - P.margin * 2; descTextW = descW - bar - panelPad * 2;
-    descLines = classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(descFont), segmenter);
+    descLines = classGuideImageWrap(classGuideImageRuns(descPlain), descTextW, measureWith(descFont), segmenter);
     descNatural = descLines.length * lh + panelPad * 2; descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
   }
   const rectH = Math.min(fullH, Math.max(row1 + (descLines.length ? G + descWanted : 0), notesNeed));
@@ -28767,15 +28833,17 @@ async function classGuideRenderImage(guide, simRoot){
     // the largest size from 23 down to 15 at which the whole text fits the box (user 2026-10-17: a PNG tolerates more shrinking than the page); still too long:
     // cut with "…" and a last line pointing to the full guide on the website
     // a wide box with short lines (user 2026-10-18, as on the page): at each size side-by-side columns first (each at least 38 em, up to 3, a faint rule between)
-    const colGapW = 40, blank = ln => !ln.some(run => run.text.trim());
+    const colGapW = 40, blank = ln => !ln.some(run => run.text.trim()), isBreak = p => p.length === 1 && p[0].map(run => run.text).join("").trim() === classGuideColBreak();
     // whole paragraphs per column (a paragraph longer than a column splits), at the lowest column height that holds them all; no empty line at a column's top
     const descColumns = (all, c) => {
       const paras = []; all.forEach((ln, i) => { if (i === 0 || ln.para) paras.push([]); paras[paras.length - 1].push(ln); });
       const headOf = p => { const t = p.length === 1 ? p[0].map(run => run.text).join("").trim() : ""; return t.length > 0 && t.length <= 60 && /[:：]$/.test(t); };
-      for (let i = paras.length - 2; i >= 0; i--) if (headOf(paras[i])) paras.splice(i, 2, paras[i].concat(paras[i + 1]));   // a heading line ("Status Recommend:") travels with the next paragraph
+      for (let i = paras.length - 2; i >= 0; i--) if (headOf(paras[i]) && !isBreak(paras[i + 1])) paras.splice(i, 2, paras[i].concat(paras[i + 1]));   // a heading line ("Status Recommend:") travels with the next paragraph
       for (let H = Math.max(1, Math.ceil(all.length / c)); H <= all.length; H++){
-        const out = [[]]; let ok = true;
+        const out = [[]]; let ok = true, over = false;
         for (const p of paras){
+          if (isBreak(p)){ if (out.length < c) out.push([]); else over = true; continue; }   // a column break (user 2026-10-21)
+          if (over){ ok = false; break; }
           const rest = p.slice();
           while (ok && rest.length){
             const col = out[out.length - 1];
@@ -28789,18 +28857,18 @@ async function classGuideRenderImage(guide, simRoot){
         }
         if (ok) return out;
       }
-      return [all];
+      return [all.filter(ln => !isBreak([ln]))];
     };
     let size = 23, sLh = lh, sFont = descFont, lines = descLines, cols = 1, colW = descTextW, fits = false;
     for (let f = 23; f >= 15 && !fits; f--){
       const fnt = g => font(g ? 700 : 400, f), flh = Math.round(f * 36 / 23), most = Math.max(1, Math.min(3, Math.floor((descTextW + colGapW) / (38 * f + colGapW))));
       for (let c = guide.descCols || 1; c <= (guide.descCols || 1) && !fits; c++){   // the author's columns (user 2026-10-21)
-        const w = (descTextW - (c - 1) * colGapW) / c, all = classGuideImageWrap(classGuideImageRuns(guide.description), w, measureWith(fnt), segmenter);
+        const w = (descTextW - (c - 1) * colGapW) / c, all = classGuideImageWrap(classGuideImageRuns(c > 1 ? guide.description : descPlain), w, measureWith(fnt), segmenter);
         size = f; sLh = flh; sFont = fnt; lines = all; cols = c; colW = w;
         fits = (c > 1 ? Math.max(...descColumns(all, c).map(ch => ch.length)) : all.length) * flh + panelPad * 2 <= dh;
       }
     }
-    if (!fits){ cols = 1; colW = descTextW; lines = classGuideImageWrap(classGuideImageRuns(guide.description), descTextW, measureWith(sFont), segmenter); }   // the cut is in one column
+    if (!fits){ cols = 1; colW = descTextW; lines = classGuideImageWrap(classGuideImageRuns(descPlain), descTextW, measureWith(sFont), segmenter); }   // the cut is in one column
     const chunks = cols > 1 ? descColumns(lines, cols) : [lines];
     const usedLines = Math.max(...chunks.map(ch => ch.length)), maxLines = Math.max(1, Math.floor((dh - panelPad * 2) / sLh) - (fits ? 0 : 1));
     pullQuote(P.margin, dy, descW, Math.min(dh, fits ? usedLines * sLh + panelPad * 2 : dh));
@@ -29300,6 +29368,54 @@ function mountClassGuide(root){
     livePager.firstElementChild.disabled = livePage === 0; livePager.lastElementChild.disabled = livePage >= livePages - 1;
   }
   function queueDescLive(){ if (liveFrame === null) liveFrame = requestAnimationFrame(layoutDescLive); }   // the text or the window changed: lay the page out again
+  // The live box's columns (user 2026-10-21): which one a screen x falls in, counted on across pages (page p holds columns p*n .. p*n + n - 1).
+  const isBreak = d => d.classList.contains("is-colbreak");
+  function liveCols(n){
+    const box = liveEd.getBoundingClientRect(), k = box.width / Math.max(1, liveEd.offsetWidth), cs = getComputedStyle(liveEd);
+    const padL = parseFloat(cs.paddingLeft), gap = parseFloat(cs.columnGap) || 0, inner = liveEd.clientWidth - padL - parseFloat(cs.paddingRight);
+    const pitch = (inner - (n - 1) * gap) / n + gap;   // a column and its gap; a page is n of them
+    const colAt = x => Math.max(0, Math.floor(((x - box.left) / k + liveEd.scrollLeft - padL + gap / 2) / pitch));
+    return { colOf: d => colAt((d.getClientRects()[0] || d.getBoundingClientRect()).left), pick: x => Math.min(colAt(x), livePage * n + n - 1) };
+  }
+  // A click in an empty column starts the text there (user 2026-10-21): column breaks fill the columns before it, one Ctrl+Z step. A column holding only a
+  // break gets a new line before it; a column with text is an ordinary click.
+  liveEd.addEventListener("mousedown", e => {
+    const n = (draft && draft.descCols) || 1;
+    if (!liveOn || n < 2 || e.button !== 0 || e.detail > 1) return;
+    let list = editors.description.lines(), kids = Array.from(liveEd.children);
+    const { colOf, pick } = liveCols(n), g = pick(e.clientX);
+    const lead = list.findIndex(l => l.trim()), skip = lead < 0 ? list.length : lead;   // blank lines before the text are dropped when the guide is saved: they fill no column
+    if (kids.some((d, i) => i >= skip && colOf(d) === g && !isBreak(d))) return;   // text there: an ordinary click
+    if (skip){ list = list.slice(skip); editors.description.draw(list); kids = Array.from(liveEd.children); }
+    const cols = kids.map(colOf);
+    if (kids.some((d, i) => cols[i] === g && !isBreak(d))) return;   // the text moved into this column: the click lands on it
+    let at = kids.findIndex((d, i) => cols[i] === g && isBreak(d));
+    if (at >= 0) list.splice(at, 0, "");
+    else {
+      const end = kids.length - 1, need = end < 0 ? g : g - cols[end] - (isBreak(kids[end]) ? 1 : 0);
+      if (need < 0 || (end < 0 && g === 0)) return;
+      for (let i = 0; i < need; i++) list.push(classGuideColBreak());
+      list.push(""); at = list.length - 1;
+    }
+    e.preventDefault(); editors.description.setLines(list, at);
+  });
+  // A drop in an empty column (user 2026-10-21: drag text to another column) opens it the same way, straight in the box (the dragged text's range must
+  // survive, so no redraw): a new line before the column's break, or breaks then a new line at the end. A column with text: the drop goes under the pointer.
+  editors.description.dropSpot = e => {
+    const n = (draft && draft.descCols) || 1; if (!liveOn || n < 2) return null;
+    const { colOf, pick } = liveCols(n), g = pick(e.clientX), kids = Array.from(liveEd.children), cols = kids.map(colOf);
+    const lead = kids.findIndex(d => isBreak(d) || d.textContent.trim()), skip = lead < 0 ? kids.length : lead;   // blank lines before the text fill no column
+    if (kids.some((d, i) => i >= skip && cols[i] === g && !isBreak(d))) return null;
+    const line = document.createElement("div"), j = kids.findIndex((d, i) => cols[i] === g && isBreak(d));
+    if (j >= 0) liveEd.insertBefore(line, kids[j]);
+    else {
+      const end = kids.length - 1, need = end < 0 ? g : g - cols[end] - (isBreak(kids[end]) ? 1 : 0);
+      if (need < 0) return null;
+      for (let i = 0; i < need; i++){ const m = document.createElement("div"); m.className = "is-colbreak"; m.contentEditable = "false"; m.textContent = classGuideColBreak(); liveEd.appendChild(m); }
+      liveEd.appendChild(line);
+    }
+    const r = document.createRange(); r.setStart(line, 0); r.collapse(true); return r;
+  };
   root.addEventListener("input", e => { if (e.target.matches && e.target.matches('[data-cg-field="description"]')){ lastEditCols = false; queueDescLive(); } });
   window.addEventListener("resize", queueDescLive);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueDescLive);
@@ -31709,6 +31825,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T09:26:48.433Z","feat(bible): class guides: with 2-3 description columns a click in an empty column starts the text there (column breaks, one Ctrl+Z step) and selected text can be dragged to another column; phones show a break as a one-line gap"],
     ["2026-10-21T08:58:38.230Z","feat(bible): class guides: the class and server show as icons only (gallery cards and step 1 pickers: no name, box or ▾; the name on hover)"],
     ["2026-10-21T08:48:28.766Z","feat(bible): class guides: the description is one reference page (1500 x 330 at 19 px) scaled to every desktop, so its line breaks and pages are the same on every screen; the author picks 1, 2 or 3 columns; editor messages show in a toast instead of being cut off under the window; the description box is centred in its room in the editor and on the guide page; step 6 previews the guide page at six desktop window sizes; gallery cards show the class and server as bigger icons without a pill"],
     ["2026-10-21T07:37:47.588Z","feat(bible): class guides: editor step 1's typing box is the guide page's own description box on this screen (same size, columns, font and pages; replaces the PC / notebook / phone preview); the rating moves into the tab row; step 4 no longer shows a cut-off PVE / PVP box and step 6's last line fits"],
