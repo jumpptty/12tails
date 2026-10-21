@@ -935,6 +935,12 @@ Anti-status: `3 + N` for L. Carron `sleep`, L. Mupo `maim`, L. Peppon `ice`, L. 
 - S. Anubi: "(3+N)% autoRevive" → `lckAdjust(3 + N) + 1` %, at most once per 12 s.
 - S. BarrelBot (a stat pet): "+4 tal" → TAL `4 + N`.
 
+### 4.10 Monster target pick: `getRandomHateTarget` (verified 2026-10-21)
+
+Boss AIs and moves (including Germanotta, 2026-10-21) are in [boss-reference.md](boss-reference.md).
+
+**`getRandomHateTarget(maxRange)` (`CharacterControl.cs:8514-8648`, engine-wide).** Makes `mHateList.length` draws of a uniformly random hate-list entry (with replacement) and returns the first that exists, is on an enemy layer (`layer > 7`, not its own), is alive and within `maxRange` horizontally. The hate amount plays no part, and it can return `null` by bad luck even when a valid entry exists.
+
 ## Riding mounts: G. Marshal and G. Champion (verified 2026-10-17)
 Mount items any class can ride. In the app: `common_marshalMount`, `common_championMount`, `common_championMount_charge`, and per class `<class>_mountAttack` / `<class>_mountDash` (formulas in each class reference).
 - **Items** (`MountData.cs`): `o_all3` / `o_all4` = `PvpMount1` / `PvpMount2`, the blue and red armoured mupo ("+20 all stats", the G. Marshal pair, matching the (B) / (R) G. Marshal gear; the app shows the red one). `o_all5` = `G.Champion Mount`, the golden armoured mupo ("+50 all stats"). Item `lv` -60 / -70 = PvP rank.

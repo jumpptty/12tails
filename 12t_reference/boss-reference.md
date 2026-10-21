@@ -6,7 +6,7 @@ Common engine rules that the bosses rely on:
 
 - **SP gain:** every damage instance a character takes runs `ApplyDamage()`, which does `sp++` (`CharacterControl.cs:2117-2122`). Outside combat actions SP drifts back to `msp` by 1 per ~1 s (`:1945-1990`, only while `standby`/`run` and 2 s after the last action when above `msp`).
 - **Target pickers:** `getRandomHateTarget(maxRange)` (`CharacterControl.cs:8514`) returns a **random** living hate-list entry within `maxRange` m, so the amount of Hate does not matter. `getHateTarget(prefer, maxRange)` (`:8034`) returns the entry with the highest `hate − time + maxRange − |prefer − distance|` within `maxRange`, i.e. the top-Hate attacker with a small bonus for standing about `prefer` m away.
-- **AI cycle:** each AI runs fixed-length phases (`AI_selectTarget`, `AI_idle`, `AI_attack` …) back to back; a phase that fires a skill ends early.
+- **AI cycle:** each AI runs fixed-length phases (`AI_selectTarget`, `AI_idle`, `AI_attack` …) back to back; a phase that fires a skill ends early. `AI_selectTarget` moves the phase clock to its own end on entry (`timer = Time.time − mTime − offset`, e.g. `DarkFalcon_AI.cs`, `FakeShadowGod_AI.cs`, `CaptainCrab_AI.cs`, `Germanotta_AI.cs:506`), so the target pick takes no time and the next phase starts in the same frame (checked 2026-10-21).
 
 ---
 
@@ -183,3 +183,41 @@ Set in `Awake()` for every copy: **HP 333,333**, KO 999, ATK 605, DEF 454, AGI 3
 - **Shade waves** (`GameEventUpdate`, `:280-370`): while a `FakeShadowGod` exists, every 30-60 s the owner spawns one Shade at each of SpawnPoint4-6 (each 50/50 `Shade1` BabyShade or `Shade2` PhantomShade), skipped while 12 or more Shades are alive (the counter only counts Shades, `:1185-1190`; event 9062 on death).
 - **Outrunning Doom Fire (verified 2026-10-07):** the fire is placed at the target position, then hits 0.5 s later; `FindAreaTarget` tests the point `centre + characterController.radius × dir` toward the fire (`Damage.cs:1095-1110`) against `sqrMagnitude < 2²`, so the centre must be **2 + radius** m away within 0.5 s: speed ≥ **4 + 2 × radius** m/s. Collider radii from the hero prefabs (`gameassets/characters/heroes/<class>/<Class>.prefab`, root scale 1): Cat / Monkey / Panda 0.2 → **4.4**; Bat / Chameleon / Mole / Penguin / Rabbit / Sheep / Wolf 0.3 → **4.6**; Bison 0.6 → **5.2**; Whale `0.6 + 0.05 × n` at spawn (see below) → **5.2-5.7**. `characterController.radius` is the unscaled component value, so body-scale statuses (`enlarge`, `titanForm` …) do not change it. Positions are those on the god owner client, so lag needs a margin.
 - **Whale size:** `n` = learned Super Size ranks (#131-134) + Mega Size (#431), 0-5; on spawn (`Game.cs:2735-2810`, also `:3507`, `:4364`) and on learning (`CharacterControl.cs:21080-21215`) the Whale gets model scale `0.8 + 0.05n`, controller height `2 + 0.1n` and **radius `0.6 + 0.05n`** (0.60 / 0.65 / 0.70 / 0.75 / 0.80 / 0.85 m), overriding the prefab 0.8. Super Size also adds +2 weight per rank and Mega Size +10, so each step needs more speed and gives less.
+
+---
+
+## Germanotta (`Germanotta`) — Time's Memories, boss 2 of 5
+
+`M938_TimesMemories` (story mission, Lv 72, up to 5 players, `MissionData.cs:8303-8315`): the bosses come in turn, "Boss#2: Germanotta" after Chrome Knight (`M938_TimesMemories.cs:2064`, `:2328`). Loaded from `GameAssets/Characters/Elementals/Germanotta/Germanotta` (`Game.cs:7088-7092`). Its drop "Germanotta Crown" is described as "Germanotta's reverse crown" (`KeyData.cs:841`, `KeyData_eng.cs:664`).
+
+### Stats and receive flags
+
+`Start()` sets **HP 17,000** and KO 999 (`Germanotta.cs:59-61`). The other stats come from the prefab (`MONSTER_STATS` row `Germanotta`): Lv 90, Elementals, MP 760, resting SP 40, ATK 170, DEF 130, AGI 170, VIT 1,700, INT 450, CHA 470, TAL 470, LCK 130, weight 6, run speed 4, collider height 5 / radius 1. No `mImmuneList`, but the prefab's receive flags (decoded 2026-10-21 from `resources.assets` and `level16`, both copies equal; method in the decode-character-stats skill, checked against ManaVortex) are `Target 1, Damage 1, EffectDamage 0, Movement 1, Force 1, Status 0, Heal 1, Hate 1, Revive 1, Gravity 1`: **it takes no status at all** (`RPC_AddStatus` returns at once when `!recieveStatus`, `CharacterControl.cs:10692-10697`) and **no Effect Damage** (Mechanics reference §2.9); it can be hit and knocked back.
+
+### AI (`Germanotta_AI.cs`)
+
+The AI runs on the owner only and only while `actionState` is `standby` or `run` (`:97-115`).
+
+- Not alert (`:116-152`): `AI_idle(2, 1)` → `AI_patrol(3, 2)` → vision check. Patrol walks toward `mOriginalPosition + 10 × Random.onUnitSphere` (y flattened, `:426`) for 3 s minus `Random(0, 2)`. Vision check every 1-2 s (`:1032`): `Hate.findEnemies(pos, 32)`; Elementals skip Plants / Bugs / Structure; skips dead, `recieveTarget = false`, `invisible` and `blend` units (`:1161-1243`). A unit within 12 m in any direction (`sqrMagnitude < 144`, `:1254`) or within 60° of the facing (`:1288`) becomes the target and gets 5 Hate (`:1270`, `:1310`).
+- Alert loop (`:154-172`): `AI_selectTarget(1, 0)` (instant, see the common rules) → `AI_patrol(3, 2)` → `AI_attack(7, 0)`. Target = `getRandomHateTarget(50)` (`:526`); none → leave combat and set `mOriginalPosition` to where it stands (`:537-552`). The patrol phase walks **1-3 s toward a random point within 10 m of `mOriginalPosition`**, not toward the target.
+- `AI_attack` (`:698-881`), every frame, first match wins, **no distance check on any move**:
+  1. HP ≤ 50% (8,500), the target `isPlayer`, `mindControl` ready → **Mind Control**.
+  2. HP ≤ 60% (10,200), `paranoia` ready → **Paranoia**.
+  3. HP < 70% (11,900), `drainLife` ready → **Drain Life**.
+  4. SP ≥ 50, `shadowGaze` ready → **Shadow Gaze**.
+  5. `nAttack` ready → **Normal attack**.
+  6. Otherwise: `d` (distance minus the target's collider half-width, `:693`) < 6 → **runs straight away from the target** (`:889-934`); else stands still facing it (`:936-978`). It never walks toward the target.
+- Every move and the normal attack end the attack phase (`timer = Time.time − mTime − offset`), so a new cycle and a new random target follow each action.
+- None of the moves spends SP; SP ≥ 50 is a gate only (resting SP 40, +1 per damage instance taken).
+
+### Moves (`Germanotta.cs`)
+
+| Move | Timing | Hit | Area | Extra | Lock |
+|---|---|---|---|---|---|
+| Normal attack (`RPC_nAttack` `:1591-1907`, `RPC_nAttack_fire` `:1181`, `Germanotta_nAttack.cs`) | 0.5 s, fire, 0.6 s | one homing orb (`firePos` = boss + 5 m up) at **each** living enemy in `FindAreaTarget(self, 60, 5)`, at most 6 (`fireCount`, `:1669-1757`); the orb turns toward its target's collider centre by `RotateTowards(…, 0.2 rad)` every 0.1 s (`Germanotta_nAttack.cs:85-106`) and is destroyed by the first collider of another layer (not layers 1 / 2); a `Player` / `Enemy` it touches takes `hit(1, ATK + talAdjust(45), KO 1, push 0.3)` (`:249`) | circle 60 m | landed hit: `curse` Lv 5 for `getDebuff(15)` (`:264-267`); orb speed and life are prefab values (not decoded) | `nAttack` 3 s |
+| Shadow Gaze (`RPC_shadowGaze`, `:2032-2312`) | 0.3 s, hit, 0.2 s | the rolled target only, any distance: `hit(11, talAdjust(70), KO 0)` (`:2130`) | single target | a 10 s `shadowRamp` colour effect on that player's own screen (`:2156-2169`) | `shadowGaze` 5 s |
+| Drain Life (`RPC_drainLife`, `:2418-2806`) | 0.5 s, then 12 applications 0.5 s apart, then 0.5 + 0.3 s (6.8 s in all) | every `GameObject` tagged `"Player"` in the scene, **no range** (`:2488`): `RPC_AddStatus("hpDrain", 4, 1, 133)` per living player per application (`:2707`) | everyone | per player 12 × 133 = **1,596** before the victim's `hitMod`, healed back to Germanotta (Mechanics reference §4.2, drain statuses); 5 players = 7,980 (47% of HP) | `drainLife` 30 s |
+| Paranoia (`RPC_paranoia` `:2939-3249`, `RPC_paranoia_hit` `:1302-1440`) | 0.6 s, hit, 0.4 s | every living enemy in `FindAreaTarget(self, 60, 5)` (`:3020`); `hitCount < 6` is never incremented, so there is no cap; each victim takes `RPC_AddEffectDamage(434, clamp(100 × N, 100, 1000))` with N = living characters of the victim's layer within 24 m (flat) of Germanotta (`Hate.findFriends`, the victim included); N = 0 → no damage (`:1375-1411`) | circle 60 m (damage counts 24 m) | a 10 s `darkRamp` colour effect on every client that runs the coroutine (`:3102-3107`) | `paranoia` 23 s |
+| Mind Control (`RPC_mindControl`, `:3373-3875`) | 0.6 s, hit, 0.4 s | the rolled target only, players only, any distance: adds the class's `Shadow<Class>_AI` (all 12, e.g. `ShadowWolf_AI`, which runs only while `isControlled`) and applies `mindControl` Lv 2 for `getDebuff(6, cha, target cha)` (`:3735`) | single target | — | `mindControl` 54 s |
+
+**BB bug:** the AI sends Paranoia's network event as `"RPC_dissolute"` (`Germanotta_AI.cs:770`), a name `ActionEvent` does not map (`Germanotta.cs:183-276`, event 0, nothing handles it), so other clients never run `RPC_paranoia`: they miss its cast and its `darkRamp`, which shows only on the boss owner's screen. The hits are sent separately (`"RPC_paranoia_hit"`) and still land.

@@ -3172,6 +3172,9 @@
   .bg-page[data-boss="zera"]{ --bg-acc:#8b2a5c; --bg-acc-soft:rgba(139,42,92,.11); --bg-acc-line:rgba(139,42,92,.45); }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .bg-page[data-boss="zera"]{ --bg-acc:#ec7fb6; --bg-acc-soft:rgba(236,127,182,.13); --bg-acc-line:rgba(236,127,182,.5); } }
   :root[data-theme="dark"] .bg-page[data-boss="zera"]{ --bg-acc:#ec7fb6; --bg-acc-soft:rgba(236,127,182,.13); --bg-acc-line:rgba(236,127,182,.5); }
+  .bg-page[data-boss="germanotta"]{ --bg-acc:#2f7d4f; --bg-acc-soft:rgba(47,125,79,.11); --bg-acc-line:rgba(47,125,79,.45); }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .bg-page[data-boss="germanotta"]{ --bg-acc:#6fdc9a; --bg-acc-soft:rgba(111,220,154,.13); --bg-acc-line:rgba(111,220,154,.5); } }
+  :root[data-theme="dark"] .bg-page[data-boss="germanotta"]{ --bg-acc:#6fdc9a; --bg-acc-soft:rgba(111,220,154,.13); --bg-acc-line:rgba(111,220,154,.5); }
   .bg-cyc-steps{ list-style:none; counter-reset:cyc; margin:10px 0 4px; padding:0; display:grid; gap:8px; }
   .bg-cyc-steps li{ counter-increment:cyc; position:relative; padding:8px 10px 8px 38px; border:1px solid var(--bg-acc-line); border-radius:8px; background:var(--bg-acc-soft); }
   .bg-cyc-steps li::before{ content:counter(cyc); position:absolute; left:10px; top:8px; width:20px; height:20px; border-radius:50%; background:var(--bg-acc); color:#fff; font:700 12px/20px 'JetBrains Mono','Prompt',monospace; text-align:center; }
@@ -25588,9 +25591,9 @@ function mountChameleonSim(root) {
 // cfg: state (shared with the caller; srv for the server page), kinds [{k, label, short?, color, ico?}], inKind(lineKind, k), tag(lineKind)
 // -> {text, color, ico?, cls?}, entries() -> [{cls, s, title, open, lines:[{kind, html}]}], perLine (count lines, not skills), unit,
 // kindKey / clsKey / srvKey (localStorage), servers {key: {short, name, count()}}, onServer(key), title, sub.
-const NOTE_CLASS_TH = { Bat: "ค้างคาว", Bison: "ไบซัน", Cat: "แมว", Chameleon: "กิ้งก่า", Mole: "ตุ่น", Monkey: "ลิง", Panda: "แพนด้า", Penguin: "เพนกวิน", Rabbit: "กระต่าย", Sheep: "แกะ", Whale: "วาฬ", Wolf: "หมาป่า", Common: "ทั่วไป" };
+const NOTE_CLASS_TH = { Bat: "ค้างคาว", Bison: "ไบซัน", Cat: "แมว", Chameleon: "กิ้งก่า", Mole: "ตุ่น", Monkey: "ลิง", Panda: "แพนด้า", Penguin: "เพนกวิน", Rabbit: "กระต่าย", Sheep: "แกะ", Whale: "วาฬ", Wolf: "หมาป่า", Common: "ทั่วไป", Boss: "บอส" };
 function mountNotePage(root, cfg){
-  const ORDER = [...CLASS_ORDER, "Common"], st = cfg.state;
+  const ORDER = [...CLASS_ORDER, "Common", "Boss"], st = cfg.state;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const load = (key, ok) => { try { const v = localStorage.getItem(key); return ok(v) ? v : "all"; } catch (e) { return "all"; } };
   const save = (key, v) => { try { localStorage.setItem(key, v); } catch (e) {} };
@@ -25698,6 +25701,8 @@ function mountServerChanges(root){
 const BB_ISSUES_EXTRA = [
   { cls: "Common", kind: "bug", title: "ATK ในหน้าต่างสเตตัส (บั๊กการแสดงผล)", text: "สถานะที่เปลี่ยน ^^dmgMod^^ ทำให้ ATK ในหน้าต่างสเตตัส**ดูเหมือน**เพิ่มหรือลดเท่านั้น (แค่การแสดงผล) ของจริงอยู่ที่ dmgMod ซึ่งมองไม่เห็นและไปคูณดาเมจตอนคำนวณ __ค่า ATK ที่แสดงหลังติดสถานะเหล่านี้จึงเอาไปคำนวณอะไรไม่ได้__" },
   { cls: "Common", kind: "bug", title: "atkAdjust (ระบบคำนวณ)", text: "ฟังก์ชัน **atkAdjust** มีอยู่ในโค้ดแต่ **ไม่ถูกเรียกใช้ที่ไหนเลย** สกิลที่คิดจาก ATK จึงใช้ค่า ATK ดิบ และได้การแกว่งค่า LCK จาก dmgAdjust / defAdjust เท่านั้น" },
+  { cls: "Boss", kind: "bug", title: "Germanotta: Paranoia ไม่ขึ้นที่เครื่องคนอื่น", open: "#boss-guide/germanotta", text: "ตอนบอสใช้ Paranoia เกมส่งคำสั่งท่าร่ายไปเครื่องผู้เล่นคนอื่นด้วยชื่อผิด เครื่องอื่นจึงไม่เห็นท่าร่าย และจอมืด **10 วินาที** ที่ควรขึ้นทุกเครื่องขึ้นแค่ที่เครื่องของผู้เล่นที่คุมบอส ดาเมจยังโดนตามปกติ เพราะส่งแยกกัน" },
+  { cls: "Boss", kind: "bug", title: "Germanotta: Paranoia ไม่จำกัดจำนวนเป้า", open: "#boss-guide/germanotta", text: "โค้ดของ Paranoia มีตัวนับจำกัดเป้าไว้ที่ **6** ตัว แต่ไม่เคยเพิ่มค่าตัวนับ จึงโดนศัตรูทุกตัวในรัศมี **60m** ไม่จำกัดจำนวน (ท่าตีปกติของบอสนับถูก ยิงสูงสุด **6** ลูก)" },
 ];
 function bbIssueItems(){
   const items = [];
@@ -25718,7 +25723,7 @@ function bbIssueItems(){
     }
     if (s.liveCheck) items.push({ s, cls: s.class, kind: "live", text: s.liveCheck });
   });
-  BB_ISSUES_EXTRA.forEach(e => items.push({ s: e.skill ? SKILLS.find(x => x.id === e.skill) : null, title: e.title, cls: e.cls, kind: e.kind, text: e.text }));
+  BB_ISSUES_EXTRA.forEach(e => items.push({ s: e.skill ? SKILLS.find(x => x.id === e.skill) : null, title: e.title, cls: e.cls, kind: e.kind, text: e.text, open: e.open }));
   return items;
 }
 // Icons of the three note kinds: the skill card chips and the bb-issues page tags share them.
@@ -25741,7 +25746,7 @@ function mountBbIssues(root){
       const k = KINDS.find(x => x.k === kind); return { text: k.short, color: k.color, ico: k.ico }; },
     entries: () => { const by = new Map();
       bbIssueItems().forEach(it => { const key = it.s ? it.s.id : "x:" + it.title;
-        if (!by.has(key)) by.set(key, { cls: it.cls, s: it.s, title: it.title || it.s.name, open: it.s ? "#skill-details/" + encodeURIComponent(it.s.id) + "?server=og" : "", lines: [] });
+        if (!by.has(key)) by.set(key, { cls: it.cls, s: it.s, title: it.title || it.s.name, open: it.s ? "#skill-details/" + encodeURIComponent(it.s.id) + "?server=og" : it.open || "", lines: [] });
         by.get(key).lines.push({ kind: it.kind, html: renderRichText(it.text, it.s) }); });
       return [...by.values()]; },
   });
@@ -26090,6 +26095,65 @@ const BOSS_GUIDE = [
       { h: "Shade เกิดเพิ่มเรื่อยๆ", text: "ตราบใดที่ยังมีเทพเงาเหลือ ทุก **30–60 วินาที** Shade เกิดเพิ่ม **3** ตัวที่จุดเกิดอีก 3 จุด (แต่ละตัวสุ่ม BabyShade หรือ PhantomShade) ไม่เกิดเพิ่มเมื่อมี Shade ครบ **12** ตัว" },
     ],
   },
+  {
+    id: "germanotta",
+    name: "Germanotta",
+    nameTh: "เจอร์มานอตต้า",
+    where: "Time's Memories",
+    whereTh: "บอสตัวที่ 2 จาก 5 ของด่าน Time's Memories",
+    sigil: "crown",
+    stats: { lv: 90, hp: 17000, ko: 999, atk: 170, def: 130, agi: 170, tal: 470, cha: 470, lck: 130, sp: 40 },
+    immune: [],
+    immuneAll: true,
+    hpNote: "__ไม่รับ ^^ดาเมจม่วง^^ เลย__ ทำดาเมจได้ด้วย ^^ดาเมจขาว^^ เท่านั้น (ยังโดนผลักกระเด็นได้)",
+    mapR: 60,
+    target: "สุ่ม **1** คนจากทุกคนในรายชื่อ Hate ในรัศมี **50m** ใหม่ทุกครั้งหลังใช้ท่า ปริมาณ Hate __ไม่มีผล__ · __ไม่เดินเข้าหาเป้าเลย__ ถ้าเป้าเข้ามาใกล้กว่า **6m** จะวิ่งหนี",
+    cycle: [
+      ["เลือกเป้า",0,"ทันที","สุ่มเป้า **1** คนจากรายชื่อ Hate ในรัศมี **50m** ปริมาณ Hate ไม่มีผล ไม่มีใครให้เลือก = เลิกสู้ และจุดที่ยืนอยู่กลายเป็นจุดเดิมใหม่"],
+      ["เดินสุ่ม",3,"1–3 วินาที","เดินไปจุดสุ่มรอบจุดเดิมห่างไม่เกิน **10m** นานแบบสุ่ม **1–3 วินาที** __ไม่ได้เดินไปหาเป้า__"],
+      ["ช่วงโจมตี",7,"สูงสุด 7 วินาที","ไล่เช็คท่าตามลำดับด้านล่างซ้ำไปเรื่อยๆ เจอท่าแรกที่เงื่อนไขครบก็ใช้ทันทีแล้วจบช่วงนี้ วนกลับไปสุ่มเป้าใหม่<br>• ระหว่างที่ยังไม่มีท่าพร้อม ถ้าเป้าเข้ามาใกล้กว่า **6m** วิ่งหนีออกจากเป้า ไม่งั้นยืนหันหาเป้า<br>• ตีปกติคูลดาวน์แค่ **3 วินาที** ช่วงนี้จึงแทบไม่เคยรอครบ **7 วินาที**"],
+    ],
+    cycleNote: "ก่อนเข้าสู้: ยืน **1–2 วินาที** สลับเดินสุ่มรอบจุดเกิด **1–3 วินาที** และมองหาศัตรูทุก **1–2 วินาที** เห็นเมื่อเข้ามาใกล้ภายใน **12m** ทางไหนก็ได้ หรืออยู่ด้านหน้าในมุม **60°** ซ้ายขวาภายใน **32m** (มองไม่เห็นตัวที่ติด [invisible] หรือ [blend])",
+    phases: [
+      { pct: 0.7, label: "Drain Life" },
+      { pct: 0.6, label: "Paranoia" },
+      { pct: 0.5, label: "Mind Control" },
+    ],
+    ladder: [
+      { move: "mindControl", when: ["HP ≤ 8,500 (50%)", "เป้าเป็นผู้เล่น"] },
+      { move: "paranoia", when: ["HP ≤ 10,200 (60%)"] },
+      { move: "drainLife", when: ["HP ต่ำกว่า 11,900 (70%)"] },
+      { move: "shadowGaze", when: ["SP บอส ≥ 50"] },
+      { move: "nAttack", when: ["คูลดาวน์พร้อม"] },
+    ],
+    ladderNote: "เช็คจากบนลงล่าง ท่าแรกที่เงื่อนไขครบจะถูกใช้ ไม่มีการสุ่มเลือกท่า และทุกท่า __ไม่เช็คระยะ__<br>• ท่าที่ปลดด้วย HP ใช้ซ้ำทุกครั้งที่คูลดาวน์พร้อม ตราบใดที่ HP ยังต่ำกว่าเส้น Drain Life ฟื้น HP ให้บอส จึงดัน HP กลับเหนือเส้นแล้วหยุดใช้ท่านั้นชั่วคราวได้<br>• SP ปกติของบอสคือ **40** ได้ **+1** ทุกครั้งที่โดนดาเมจ และค่อยๆ ลดกลับตอนว่าง Shadow Gaze จึงมาเมื่อบอสโดนตีถี่ๆ",
+    moves: [
+      { id: "mindControl", name: "Mind Control", th: "ควบคุมจิต", kind: "status", danger: 3, cd: 54, ko: "0",
+        timing: "ร่าย **0.6 วินาที** แล้วพัก **0.4 วินาที**",
+        text: "เป้าที่สุ่มได้ **1** คน (เฉพาะผู้เล่น) ติด [mindControl2] ไกลแค่ไหนก็โดน (ระยะเวลาฐาน **6 วินาที** แข่งค่า CHA กับบอสที่มี CHA **470**)<br>• ระหว่างติด เกมใช้ AI ของอาชีพนั้นบังคับตัวละครแทนผู้เล่น<br>• ไม่มีดาเมจ",
+        zone: [{ t: "mark", at: 11 }] },
+      { id: "paranoia", name: "Paranoia", th: "หวาดระแวง", kind: "purple", danger: 2, cd: 23, ko: "0",
+        dmgText: "100–1,000", formula: "100 × จำนวนคนฝั่งเดียวกันในรัศมี 24m รอบบอส (สูงสุด 1,000)",
+        timing: "ร่าย **0.6 วินาที** แล้วพัก **0.4 วินาที**",
+        text: "ศัตรูทุกตัวในรัศมี **60m** สูง **5m** รอบบอส ไม่จำกัดจำนวน โดน ^^ดาเมจม่วง^^ คนละ **100** × จำนวนตัวละครฝั่งเดียวกับเขาที่ยังไม่ตายและอยู่ในรัศมี **24m** รอบบอส (ไม่จำกัดความสูง นับตัวเองด้วย) สูงสุด **1,000**<br>• ทุกคนที่โดนได้ดาเมจเท่ากัน เช่น อยู่ใกล้บอส **5** คน = คนละ **500**<br>• ไม่มีใครฝั่งนั้นอยู่ใน **24m** เลย = ไม่มีดาเมจ",
+        zone: [{ t: "circle", r: 60 }, { t: "circle", r: 24 }] },
+      { id: "drainLife", name: "Drain Life", th: "ดูดชีวิต", kind: "purple", danger: 3, cd: 30, ko: "0",
+        dmg: { flat: 133, times: 12 },
+        timing: "ร่าย **0.5 วินาที** แล้วดูด **12** ครั้ง ทุก **0.5 วินาที** ท่าจบที่ **6.8 วินาที**",
+        text: "ผู้เล่น **ทุกคน** ในด่าน ไม่จำกัดระยะ ติด [hpDrain] ครั้งละ **133** รวม **1,596** ต่อคน และบอสฟื้น HP เท่าที่ดูดได้<br>• ผู้เล่น **5** คนโดนครบ บอสฟื้น **7,980** (**47%** ของ HP)",
+        zone: [{ t: "circle", r: 75 }] },
+      { id: "shadowGaze", name: "Shadow Gaze", th: "จ้องเงา", kind: "white", danger: 1, cd: 5, ko: "0",
+        dmg: { atk: 0, tal: 70, times: 1 },
+        timing: "ง้าง **0.3 วินาที** แล้วพัก **0.2 วินาที**",
+        text: "ตีเป้าที่สุ่มได้ **1** คนตรงตัว ไกลแค่ไหนก็โดน ไม่มี KO<br>• เป็น ^^ดาเมจขาว^^ จึง ^^หลบ^^ ได้",
+        zone: [{ t: "mark", at: 11 }] },
+      { id: "nAttack", name: "Normal Attack", th: "ลูกพลังติดตาม", kind: "white", danger: 1, cd: 3, ko: "1",
+        dmg: { atk: 1, tal: 45, times: 1 },
+        timing: "ง้าง **0.5 วินาที** ยิง แล้วพัก **0.6 วินาที**",
+        text: "ยิงลูกพลังติดตาม **1** ลูกต่อศัตรู **1** ตัว ทุกตัวในรัศมี **60m** สูง **5m** สูงสุด **6** ลูก ลูกออกจากเหนือตัวบอส **5m** และเลี้ยวตามเป้าได้ทีละราว **11°** ทุก **0.1 วินาที**<br>• ลูกแตกที่ตัวละครหรือสิ่งกีดขวางแรกที่ชน คนที่ขวางทางโดนแทนได้<br>• โดนแล้วติด [curse5] (ระยะเวลาฐาน **15 วินาที** แข่งค่า CHA กับบอส)<br>• เป็น ^^ดาเมจขาว^^ จึง ^^หลบ^^ ได้",
+        zone: [{ t: "circle", r: 60 }] },
+    ],
+  },
 ];
 
 function bgTalRange(p, s){
@@ -26099,6 +26163,7 @@ function bgTalRange(p, s){
   return [f(s.tal), f(s.tal + roll)];
 }
 function bgDmgText(m, s){
+  if (m.dmgText) return m.dmgText;
   const d = m.dmg; if (!d) return "—";
   const fmt = n => n.toLocaleString("en-US");
   let lo, hi;
@@ -26110,6 +26175,7 @@ function bgDmgText(m, s){
   return d.times > 1 ? one + " × " + d.times : one;
 }
 function bgFormula(m){
+  if (m.formula) return m.formula;
   const d = m.dmg; if (!d) return m.kind === "move" ? "เคลื่อนที่ ไม่มีดาเมจ" : "สถานะเท่านั้น";
   if (d.flat) return "คงที่ " + d.flat;
   const parts = [];
@@ -26118,6 +26184,7 @@ function bgFormula(m){
   return parts.join(" + ");
 }
 const BG_SIGILS = {
+  crown: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 11h32v6H8z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M8 17l2 20 7-11 7 13 7-13 7 11 2-20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><g fill="currentColor"><circle cx="24" cy="14" r="1.6"/><circle cx="10" cy="38.5" r="1.8"/><circle cx="24" cy="41" r="2.2"/><circle cx="38" cy="38.5" r="1.8"/></g></svg>',
   eyes: '<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 16c4-5 8-5 12 0-4 5-8 5-12 0z"/><path d="M32 16c4-5 8-5 12 0-4 5-8 5-12 0z"/><path d="M16 33c4-6 12-6 16 0-4 6-12 6-16 0z"/></g><g fill="currentColor"><circle cx="10" cy="16" r="1.6"/><circle cx="38" cy="16" r="1.6"/><circle cx="24" cy="33" r="2.2"/></g></svg>',
   wing: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 40c-2-6-2-12 0-18 2 6 2 12 0 18z" fill="currentColor"/><path d="M22 24C16 20 10 12 6 6c8 2 14 6 18 12M26 24c6-4 12-12 16-18-8 2-14 6-18 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M21 28c-5 0-11-3-15-7M27 28c5 0 11-3 15-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".7"/></svg>',
   serpent: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 34c4-6 10-6 14 0s10 6 14 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M6 41c4-3 8-3 12 0s8 3 12 0 8-3 12 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><path d="M30 31c1-9 0-16-5-21 6 0 11 4 12 10l4 1-4 3c0 3-1 6-3 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="31" cy="15.5" r="1.8" fill="currentColor"/></svg>',
@@ -26249,7 +26316,7 @@ function mountBossGuide(root){
           </div>
           ${b.hpNote ? `<p class="bg-armor">${rt(b.hpNote)}</p>` : ""}
           ${b.armor ? `<p class="bg-armor">${rt(`__ทุกฮิตตรงถูกหักเพิ่ม **${b.armor}** หลังหัก DEF__ (^^ดาเมจม่วง^^ ไม่โดนหัก)`)}</p>` : ""}
-          ${b.immune.length ? `<p class="bg-immune"><span class="bg-label">ไม่ติดสถานะ</span>${b.immune.map(x => `<span class="bg-chip">${x}</span>`).join("")}</p>` : `<p class="bg-immune"><span class="bg-label">ไม่ติดสถานะ</span><span class="bg-none">ไม่มี ติดได้ทุกสถานะ</span></p>`}
+          ${b.immuneAll ? `<p class="bg-immune"><span class="bg-label">ไม่ติดสถานะ</span><span class="bg-none">ทุกสถานะ ทั้งดีบัฟและบัฟ</span></p>` : b.immune.length ? `<p class="bg-immune"><span class="bg-label">ไม่ติดสถานะ</span>${b.immune.map(x => `<span class="bg-chip">${x}</span>`).join("")}</p>` : `<p class="bg-immune"><span class="bg-label">ไม่ติดสถานะ</span><span class="bg-none">ไม่มี ติดได้ทุกสถานะ</span></p>`}
           ${b.phases.length ? `<div class="bg-hp" aria-label="ท่าที่ปลดล็อกตาม HP ที่เหลือ">
             <div class="bg-hp-track" style="--rows:${b.phases.length}">${b.phases.map((p, i) => `<span class="bg-hp-mark" style="left:${(p.pct * 100).toFixed(1)}%;--r:${i}"><i></i><em>${p.label} <small>${Math.round(p.pct * 100)}%</small></em></span>`).join("")}</div>
             <div class="bg-hp-legend"><span>0%</span><span>ท่าใหม่เริ่มใช้เมื่อ HP ต่ำกว่าเส้น</span><span>100%</span></div>
@@ -31499,6 +31566,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T03:43:55.653Z","feat(bible): boss guide: Germanotta (Time's Memories boss 2: HP-gated Drain Life, Paranoia and Mind Control, a random target after every action, keeps its distance); BUG page: a Boss group with its Paranoia sync bug and unused target cap"],
     ["2026-10-21T03:16:55.447Z","feat(bible): class guides: a live description preview in the editor (step 1: the guide page's box on PC, notebook or phone with its pages, and a page count per screen); a long description line no longer widens the editor"],
     ["2026-10-21T03:12:56.628Z","fix(bible): the menu's tool strip shows every tool in Firefox / Zen (it shrank to 88 px and one thumb: the thumbs now carry an explicit width on desktop)"],
     ["2026-10-21T02:13:39.269Z","fix(bible): skill details: the stat glow follows the deps (Cat Combo with Hidden Blade lights TAL; Power Hammer, Over Power, Intense Fire, Titan Sword, Synchro Mole and others move it too), measured on every card and dep"],
