@@ -1851,6 +1851,16 @@
   @media(max-width:480px){.cg-filters label{flex:1;min-width:140px}}
   .cg-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .cg-pager{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .cg-page-count{align-self:center;margin-left:8px;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* ‹ › beside the cards (user 2026-10-21): outside the grid when the window has room, over its edges when it does not; phones keep the pager only */
+  .cg-gallery-wrap{position:relative}
+  .cg-gallery-edge{position:absolute;top:50%;transform:translateY(-50%);z-index:1;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--gold);font:inherit;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+  .cg-gallery-edge.is-prev{right:calc(100% + min(12px, (100vw - 100%) / 2 - 50px))}
+  .cg-gallery-edge.is-next{left:calc(100% + min(12px, (100vw - 100%) / 2 - 50px))}
+  .cg-gallery-edge:hover:not(:disabled),.cg-gallery-edge:focus-visible{border-color:var(--gold)}
+  .cg-gallery-edge:disabled{opacity:.35;cursor:default}
+  .cg-gallery-edge[hidden]{display:none}
+  @media(max-width:760px){.cg-gallery-edge{display:none}}
   .cg-pager[hidden]{display:none}
   .cg-page-btn{min-width:36px;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
   .cg-page-btn:hover:not(:disabled){border-color:var(--gold)}
@@ -2163,10 +2173,14 @@
     .cg-page[data-mode="reader"] > .cg-note-chips.is-pending::before{content:"คลิกสกิลที่มี ★ เพื่ออ่านโน้ตจากผู้เขียน";order:-1;color:var(--muted);font-size:calc(13px * var(--cg-u,1));line-height:1.5}
     .cg-page[data-mode="reader"] .rsim{padding:0}
     .cg-page[data-mode="reader"] > .cg-prose.is-cols{column-gap:calc(36px * var(--cg-u,1));column-rule:1px solid rgba(201,162,39,.22)}   /* a wide box: the text in side-by-side columns before it shrinks or pages (user 2026-10-18) */
-    .cg-page[data-mode="reader"] > .cg-prose.is-paged{overflow:hidden;column-fill:auto;padding-bottom:calc(30px * var(--cg-u,1))}
+    .cg-page[data-mode="reader"] > .cg-prose.is-paged{overflow:hidden;column-fill:auto;padding-bottom:max(24px, calc(30px * var(--cg-u,1)));padding-left:max(46px, calc(56px * var(--cg-u,1)));padding-right:max(46px, calc(56px * var(--cg-u,1)))}   /* side gutters: the pager's ‹ › never cover the text */
     .cg-desc-pager{display:none}
-    .cg-page[data-mode="reader"] > .cg-desc-pager:not([hidden]){grid-column:1 / 3;grid-row:3;align-self:end;justify-self:end;z-index:1;display:flex;align-items:center;gap:calc(6px * var(--cg-u,1));margin:0 calc(10px * var(--cg-u,1)) calc(6px * var(--cg-u,1)) 0;font-size:calc(13px * var(--cg-u,1));color:var(--muted)}
-    .cg-desc-pager button{min-width:calc(26px * var(--cg-u,1));height:calc(24px * var(--cg-u,1));padding:0;border:1px solid var(--line);border-radius:4px;background:var(--panel-2);color:var(--gold);font:inherit;font-size:calc(15px * var(--cg-u,1));line-height:1;cursor:pointer}
+    /* laid over the paged description at its size (layoutDescPages): ‹ › on its side edges, n / N at the bottom (user 2026-10-21: the corner pager was too small to notice) */
+    .cg-page[data-mode="reader"] > .cg-desc-pager:not([hidden]){grid-column:1 / 3;grid-row:3;align-self:start;justify-self:start;z-index:1;display:block;position:relative;margin:0;pointer-events:none;font-size:max(12px, calc(13px * var(--cg-u,1)));color:var(--muted)}
+    .cg-desc-pager button{position:absolute;top:50%;transform:translateY(-50%);pointer-events:auto;width:max(30px, calc(36px * var(--cg-u,1)));height:max(30px, calc(36px * var(--cg-u,1)));padding:0;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--gold);font:inherit;font-size:max(20px, calc(24px * var(--cg-u,1)));line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+    .cg-desc-pager [data-cg-act="descPrev"]{left:max(8px, calc(10px * var(--cg-u,1)))}
+    .cg-desc-pager [data-cg-act="descNext"]{right:max(8px, calc(10px * var(--cg-u,1)))}
+    .cg-desc-pager [data-cg-role="descPage"]{position:absolute;left:50%;bottom:max(4px, calc(6px * var(--cg-u,1)));transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums}
     .cg-desc-pager button:hover:not(:disabled),.cg-desc-pager button:focus-visible{border-color:var(--gold)}
     .cg-desc-pager button:disabled{opacity:.35;cursor:default}   /* the tree boxes are the grid's edges, flush with the panels around them */
     .cg-page[data-mode="reader"] > .cg-prose{grid-column:1 / 3;grid-row:3;align-self:start;margin:0;box-sizing:border-box;padding:calc(10px * var(--cg-u,1)) calc(14px * var(--cg-u,1));border-left:3px solid var(--gold);background:var(--panel);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}   /* the description under the skill grid */
@@ -2261,7 +2275,7 @@
   /* TailsTopia look (user 2026-10-17): the title row sits above a rounded panel with a gold hairline, a dark outer ring, a deep drop shadow and faint diagonal stripes */
   .rsim-tree{display:flex; flex-direction:column; min-width:0}
   .rsim-tree-head{display:flex; align-items:center; gap:8px; margin:0 0 8px; padding:0 4px; min-height:28px}
-  .rsim-tree-head h3{margin:0; font-size:17px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .rsim-tree-head h3{margin:0; font-size:17px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}   /* fitTreeNames() shrinks the font to fit; the ellipsis only below its 8 px floor */
   .rsim-tree-gem{flex:none; width:8px; height:8px; transform:rotate(45deg); background:rgba(208,145,62,.7)}
   .rsim-tree-rule{flex:1; min-width:10px; height:1px; margin-left:4px; background:linear-gradient(90deg, #d0913e, transparent)}
   .rsim-tree-count{flex:none; font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted)}
@@ -28708,7 +28722,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyImage" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><span>เซิร์ฟเวอร์</span><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><span>อาชีพ</span><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><label class="cg-search-wrap"><span>ชื่อไกด์</span><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหา" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><span>เซิร์ฟเวอร์</span><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><span>อาชีพ</span><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><label class="cg-search-wrap"><span>ชื่อไกด์</span><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหา" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery-wrap"><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><button type="button" class="cg-gallery-edge is-prev" data-cg-role="galleryPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)" hidden>‹</button><button type="button" class="cg-gallery-edge is-next" data-cg-role="galleryNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)" hidden>›</button></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}<div class="cg-editor-rating" data-cg-role="rating"><span>ความครบถ้วนของเนื้อหา</span><span class="cg-rating" data-cg-role="ratingStars" role="img"></span></div></nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
@@ -29188,7 +29202,7 @@ function mountClassGuide(root){
       scale = r.k; sheetInfo = r;
     } else { baseWidth = author ? 1100 : Math.max(640, width); height = heightAt(baseWidth); scale = Math.min(1, midW / baseWidth, room / Math.max(1, height)); }   // editor: the normal width (up to 1100), then scaled as one piece
     if (sheet) panel.style.maxHeight = free + "px"; else panel.style.height = (free - tabsH) + "px";   // editor: the step's column runs down from under the tabs   // landscape: the panel keeps its own height (scrolls only if taller than the window)
-    const setScale = k => { simRoot.style.setProperty("--cg-reader-scale", k); simRoot.style.setProperty("--cg-tree-name", (17 / Math.sqrt(Math.max(k, 0.05))).toFixed(2) + "px"); };
+    const setScale = k => { simRoot.style.setProperty("--cg-reader-scale", k); simRoot.style.setProperty("--cg-tree-name", (17 / Math.sqrt(Math.max(k, 0.05))).toFixed(2) + "px"); simRoot._skillSim.fitTreeNames(); };   // the names refit at their new size
     setScale(scale);
     const grown = build.offsetHeight;   // the tree names are now a little bigger: settle once so the build still fits
     if (grown > height){ scale = Math.min(scale, room / grown); setScale(scale); }
@@ -29232,7 +29246,7 @@ function mountClassGuide(root){
   // Description pages: the box becomes CSS columns exactly one box wide (the gap = the side padding, so every page starts one box further right);
   // the pager flips scrollLeft by one box. The page is kept across refits and reset when another guide opens.
   const descPager = document.createElement("div"); descPager.className = "cg-desc-pager"; descPager.hidden = true;
-  descPager.innerHTML = '<button type="button" data-cg-act="descPrev" aria-label="หน้าก่อน">‹</button><span data-cg-role="descPage"></span><button type="button" data-cg-act="descNext" aria-label="หน้าถัดไป">›</button>';
+  descPager.innerHTML = '<button type="button" data-cg-act="descPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)">‹</button><span data-cg-role="descPage"></span><button type="button" data-cg-act="descNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)">›</button>';
   guidePage.appendChild(descPager);
   let descPage = 0, descPages = 1;
   function layoutDescPages(){
@@ -29241,6 +29255,7 @@ function mountClassGuide(root){
     desc.style.columnWidth = Math.max(1, desc.clientWidth - padX) + "px"; desc.style.columnGap = padX + "px";
     descPages = Math.max(1, Math.round(desc.scrollWidth / Math.max(1, desc.clientWidth)));
     descPager.hidden = descPages < 2; showDescPage();
+    descPager.style.width = desc.offsetWidth + "px"; descPager.style.height = desc.offsetHeight + "px";   // the overlay covers the box exactly
   }
   function showDescPage(){
     const desc = el("guideDescription");
@@ -29461,6 +29476,7 @@ function mountClassGuide(root){
   // Pages (user 2026-10-17): the gallery never scrolls; as many rows of cards as fit under the filters go on a page, the rest on page 2, 3 ...
   // A filter or sort change goes back to page 1; a resize keeps the page (clamped).
   let galleryPage = 0;
+  for (const [role, step] of [["galleryPrev", -1], ["galleryNext", 1]]) el(role).addEventListener("click", () => { galleryPage += step; renderGallery(true); });
   function renderGallery(keepPage){
     if (keepPage !== true) galleryPage = 0;
     const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = "";   // the fit below may have shrunk the grid
@@ -29489,6 +29505,7 @@ function mountClassGuide(root){
       cards.slice(galleryPage * perPage, (galleryPage + 1) * perPage).forEach(c => list.appendChild(c));
       pager.textContent = ""; pager.hidden = pages < 2;
       if (pages > 1) drawPager();
+      for (const [role, n] of [["galleryPrev", galleryPage - 1], ["galleryNext", galleryPage + 1]]){ const b = el(role); b.hidden = pages < 2; b.disabled = n < 0 || n >= pages; }
     };
     // Still too tall once drawn (bigger text, a zoomed browser, a long title wrapping): one row fewer until the page fits (user 2026-10-17: it scrolled)
     const overflows = () => document.documentElement.scrollHeight > window.innerHeight + 1;   // the whole page, padding under the pager included
@@ -29516,6 +29533,7 @@ function mountClassGuide(root){
         go(n, String(n + 1), "หน้า " + (n + 1), n === galleryPage); prev = n;
       }
       go(galleryPage + 1, "›", "หน้าถัดไป");
+      const count = document.createElement("span"); count.className = "cg-page-count"; count.textContent = (galleryPage + 1) + " / " + pages; pager.appendChild(count);
     }
     if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? (filterTitle ? "ไม่มีไกด์ที่ชื่อตรงกับคำค้น ลองพิมพ์คำอื่นหรือล้างช่องค้นหา" : "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์ อาชีพ หรือประเภทอื่น") : "ยังไม่มีไกด์จากผู้เล่น กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
@@ -29693,6 +29711,14 @@ function mountClassGuide(root){
     if (mode !== "author" || root.hidden || !root.offsetParent || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
     if (sim.getInteraction() !== "annotate" || (e.target.closest && e.target.closest("input, textarea, [contenteditable]"))) return;
     e.preventDefault(); undoNote();
+  });
+  document.addEventListener("keydown", e => {   // ← / → turn the page (user 2026-10-21): the description's pages in a guide, the list's pages in the gallery
+    if ((e.key !== "ArrowLeft" && e.key !== "ArrowRight") || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.defaultPrevented || root.hidden || !root.offsetParent) return;
+    if ((e.target.closest && e.target.closest("input, textarea, select, [contenteditable]")) || document.querySelector('dialog[open], [aria-modal="true"]:not([hidden])')) return;
+    const pager = mode === "reader" ? descPager : mode === "gallery" ? el("pager") : null;
+    const btn = pager && !pager.hidden && pager.querySelector('button[aria-label="' + (e.key === "ArrowLeft" ? "หน้าก่อน" : "หน้าถัดไป") + '"]');
+    if (!btn || btn.disabled) return;
+    e.preventDefault(); btn.click();
   });
   root.addEventListener("input", e => {
     if (!e.target.matches) return;
@@ -29958,6 +29984,20 @@ function mountSkillSimulator(root, options = {}){
       b.tabIndex = interaction === "read" && !hasNote ? -1 : 0;
     }
   }
+  // A tree name never truncates (user 2026-10-21): its font shrinks until the name fits beside the ◆, the rule and the count (8 px floor; the CSS ellipsis is only the last resort).
+  function fitTreeNames(){
+    if (typeof document.createRange !== "function") return;
+    const range = document.createRange();
+    treesEl.querySelectorAll(".rsim-tree-head h3").forEach(h => {
+      h.style.fontSize = "";
+      range.selectNodeContents(h);
+      const over = () => range.getBoundingClientRect().width > h.getBoundingClientRect().width + 0.02;   // sub-pixel: scrollWidth / clientWidth round, so a name 0.45 px too wide passed and still showed "…"
+      let size = parseFloat(getComputedStyle(h).fontSize) || 17;
+      while (over() && size > 8){ size -= 0.5; h.style.fontSize = size + "px"; }
+    });
+  }
+  if (typeof ResizeObserver === "function") new ResizeObserver(() => requestAnimationFrame(fitTreeNames)).observe(treesEl);   // next frame: a smaller name can shorten the trees, which must not re-trigger inside the observer
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTreeNames);
   function buildTrees(){
   treesEl.textContent = "";
   trees.forEach((t, ti) => {
@@ -30022,6 +30062,7 @@ function mountSkillSimulator(root, options = {}){
   });
   cellEls = {};
   root.querySelectorAll(".rsim-cell").forEach(b => { cellEls[b.dataset.id] = b; });
+  fitTreeNames();
   }
   let cellEls = {};
   buildTrees();
@@ -30326,6 +30367,7 @@ function mountSkillSimulator(root, options = {}){
   window.addEventListener("resize", () => { if (!root.hidden && root.offsetParent) fitStageToScreen(); });
   root._skillSim = {
     getBuild,
+    fitTreeNames,
     getInteraction: () => interaction,
     getCells: () => ({ ...cells }),
     getProblems: () => problems(state.learned, state.lv),
@@ -31337,6 +31379,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-21T01:40:30.536Z","feat(bible): class guides: ‹ › beside the gallery cards with a page count, ← / → turn pages (the gallery and a guide's description), the description's ‹ › sit on its edges, and skill tree names shrink instead of truncating"],
     ["2026-10-21T01:37:05.278Z","feat(bible): skill details: LCK glows softly when it moves the numbers only through an Adjust roll (less than a main stat, more than the faded grey), measured on every card and server"],
     ["2026-10-20T23:59:27.524Z","feat(bible): class guides #59 TTO Panda แพนด้าคนนี้จะตามจีบจนกว่าคุณจะหยุดรัก by 1Hert.z; #60 TTO Panda AGI 295: Golden Ratio by BunSan"],
     ["2026-10-20T15:13:22.607Z","feat(bible): class guides #50 is updated: TTO Wolf Wolf - Paladin by Shibayami; #54 TTO Penguin กวิ้นพายุ 12/8 ลงด่านสายประหยัดงบ PVE by หนมผิงช่วยเหลือประชาชน; #55 TTO Wolf จะชาร์จอีกนานมั้ย ลืมสายนี้กันรึยัง by Caramellys; #56 TTO Monkey ลิง 2 ร่าง No Soul by ZoRution; #57 TTO Sheep แกะที่บ้านท่าน by เจ้าลูกเป็ด; #58 TTO Sheep แกะPVE สู้อาทาลุสมืด ดูมส์เดย์ by MAGNUS"],
