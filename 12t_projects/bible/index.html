@@ -6534,20 +6534,13 @@
   .chm-count-it { display: flex; align-items: baseline; gap: 6px; padding: 3px 4px; }
   .chm-count-it small { font-size: 11.5px; color: var(--muted); }
   .chm-count-it b { font: 700 12.5px var(--chm-num); }
-  .chm-dist { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 14px; align-items: center; }
-  .chm-donut { position: relative; width: 124px; height: 124px; }
-  .chm-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .chm-donut circle { fill: none; stroke-width: 16; }
-  .chm-donut-track { stroke: rgba(255,255,255,.06); }
-  .chm-donut-seg { stroke-dasharray: 0 999; }
-  .chm-donut-c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
-  .chm-donut-c small { font-size: 10.5px; color: var(--muted); }
-  .chm-donut-c b { font: 700 14px var(--chm-num); }
-  .chm-legend { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }
-  .chm-lg { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 50px; align-items: center; gap: 8px; font-size: 13px; }
-  .chm-lg i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
-  .chm-lg b { font: 700 12.5px var(--chm-num); }
-  .chm-lg em { font: 500 11.5px var(--chm-num); font-style: normal; color: var(--muted); text-align: right; }
+  .chm-h small b { font: 700 13px var(--chm-num); color: var(--text); }
+  .chm-bars { display: grid; gap: 6px; }
+  .chm-bar { display: grid; grid-template-columns: 112px minmax(0, 1fr) 64px 46px; align-items: center; gap: 10px; font-size: 13px; }
+  .chm-bar > i { height: 12px; border-radius: 0 6px 6px 0; background: rgba(255,255,255,.06); }   /* the track; bars start at its left edge */
+  .chm-bar s { display: block; width: 0; height: 100%; border-radius: 0 4px 4px 0; background: var(--c); }
+  .chm-bar b { font: 700 12.5px var(--chm-num); text-align: right; }
+  .chm-bar em { font: 500 11.5px var(--chm-num); font-style: normal; color: var(--muted); text-align: right; }
   .chm-log-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 8px; }
   .chm-log-head .chm-h { margin: 0; }
   .chm-log-bar { flex: 1 1 320px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -6581,6 +6574,7 @@
     .chm-arena { flex: none; }
     .chm-results { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: stretch; }
     .chm-results > .chm-pane { display: flex; flex-direction: column; min-height: 0; }
+    .chm-bars { flex: 1; grid-auto-rows: 1fr; }
     /* the log takes the rest of the height: newest first down the left column, then the right; renderLog sets --chm-log-rows to the rows that fit */
     .chm-log-scroll { flex: 1; min-height: 0; max-height: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--chm-log-rows, 10), max-content); grid-auto-flow: column; gap: 3px 24px; align-content: start; }
     .chm-log-empty { grid-column: 1 / -1; }
@@ -6601,7 +6595,6 @@
     .chm-sk { width: 80px; }
     .chm-sk b, .chm-sk small { white-space: normal; }
     .chm-gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .chm-dist { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   }
 
   /* Kept from the old Chameleon sim CSS (2026-10-19): the page layout, the floating damage numbers and the guided tour (also used by Stat Roll) */
@@ -24498,7 +24491,7 @@ function mountChameleonSim(root) {
   const CHM_SVG_SOUND = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="chm-snd-on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="chm-snd-off" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const CHM_SVG_MODS = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
   const CHM_SVG_RESET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 3v5h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const CHM_HP_R = 142, CHM_HP_C = 2 * Math.PI * CHM_HP_R, CHM_HP_ARC = 260, CHM_G_C = 2 * Math.PI * 40, CHM_D_C = 2 * Math.PI * 46;
+  const CHM_HP_R = 142, CHM_HP_C = 2 * Math.PI * CHM_HP_R, CHM_HP_ARC = 260, CHM_G_C = 2 * Math.PI * 40;
 
   root.innerHTML = `
     <div class="chm-sim" style="--chm-ic-ls:url('${SKILL_ICONS.chameleon_leftStride2}');--chm-ic-fs:url('${CHM_ICONS.fatalStrike}');--chm-ic-crit:url('${CHM_ICONS.criticalPlus}');--chm-ic-poison:url('${CHM_ICONS.status_poison}');--chm-ic-drain:url('${CHM_ICONS.status_hpDrain}');--chm-ic-revert:url('${CHM_ICONS.sheep_revert1}')">
@@ -24622,15 +24615,10 @@ function mountChameleonSim(root) {
                   .map(([k, label]) => `<span class="chm-count-it"><small>${label}</small><b id="chmBadge${k}">0</b></span>`).join('')}
               </div>
             </section>
-            <section class="chm-pane">
-              <div class="chm-h">ที่มาของดาเมจ</div>
-              <div class="chm-dist">
-                <span class="chm-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="46" class="chm-donut-track"/>
-                  ${CHM_PARTS.map(([k, c]) => `<circle cx="60" cy="60" r="46" class="chm-donut-seg" id="chmSeg${k}" style="stroke:${c}"/>`).join('')}</svg>
-                  <span class="chm-donut-c"><small>ดาเมจรวม</small><b id="chmTotalDistribLabel"></b></span></span>
-                <div class="chm-legend">
-                  ${CHM_PARTS.map(([k, c, label]) => `<div class="chm-lg" style="--c:${c}"><i></i><span${k === 'Poison' ? ' id="chmPoisonPartName"' : ''}>${label}</span><b id="chmVal${k === 'HpDrain' ? 'HpDrain' : k}Dmg"></b><em id="chmPct${k}"></em></div>`).join('')}
-                </div>
+            <section class="chm-pane chm-src">
+              <div class="chm-h">ที่มาของดาเมจ <small>ดาเมจรวม <b id="chmTotalDistribLabel"></b></small></div>
+              <div class="chm-bars">
+                ${CHM_PARTS.map(([k, c, label]) => `<div class="chm-bar" style="--c:${c}"><span${k === 'Poison' ? ' id="chmPoisonPartName"' : ''}>${label}</span><i><s id="chmBar${k}"></s></i><b id="chmVal${k}Dmg"></b><em id="chmPct${k}"></em></div>`).join('')}
               </div>
             </section>
             <section class="chm-pane chm-log">
@@ -24839,17 +24827,14 @@ function mountChameleonSim(root) {
     else chmPaintCd('Ls', simState.lsCycle > 0 ? 'buff' : simState.lsRemainingCD > 0 ? 'cd' : 'ready', simState.lsRemainingCD, chmLsCdTotal || simState.lsRemainingCD, 'Left Stride · คลิกเพื่อปิด');
     setText('chmLsCdDesc', simState.leftStrideActive ? '10 ลูก · คูลดาวน์ ' + bonuses.lsCdText : 'ปิด');
 
-    // Damage sources (donut)
+    // Damage sources: one bar each, scaled to the largest source; the % is the share of the total (user 2026-10-22: a donut was hard to measure)
     const totalDmg = Math.max(simState.totalDamage, 1);
     const parts = { Base: simState.totalBaseImpactDmg, Fatal: simState.totalFatalStrikeDmg, Pierce: simState.totalPiercingVenomDmg, Crit: simState.totalCritExtraDmg, Poison: simState.totalPoisonDoT, HpDrain: simState.totalHpDrainDmg };
-    let off = 0;
+    const maxPart = Math.max(1, ...Object.values(parts));
     CHM_PARTS.forEach(([k]) => {
-      const pct = parts[k] / totalDmg, L = CHM_D_C * pct, seg = $c('chmSeg' + k);
-      seg.style.strokeDasharray = Math.max(0, L - (L > 2 ? 1.5 : 0)) + ' ' + CHM_D_C;
-      seg.style.strokeDashoffset = -off;
-      off += L;
+      $c('chmBar' + k).style.width = (parts[k] / maxPart * 100) + '%';
       setText('chmVal' + k + 'Dmg', fmt(parts[k]));
-      setText('chmPct' + k, (pct * 100).toFixed(1) + '%');
+      setText('chmPct' + k, (parts[k] / totalDmg * 100).toFixed(1) + '%');
     });
     setText('chmPoisonPartName', isRobot ? 'สนิม' : 'พิษ');
     setText('chmTotalDistribLabel', grandTotal.toLocaleString());
@@ -31833,6 +31818,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-22T08:17:29.369Z","feat(bible): Chameleon attack sim: damage sources as one bar per source (name, bar against the largest source, damage, share) instead of the donut, the total in the heading"],
     ["2026-10-22T08:04:29.136Z","fix(bible): Chameleon attack sim: results and damage share side by side, the shot log a full-width pane under them in two columns; the log no longer sticks at 2 rows in continuous mode"],
     ["2026-10-22T07:53:36.619Z","feat(bible): class guide #67 ToT Chameleon ระเบิดพิษ 1/8 คมๆ by deawydew"],
     ["2026-10-22T07:26:01.341Z","fix(bible): the page runs again on iPhones older than iOS 16.4 (the hub menu title splitter used a regex lookbehind that old Safari cannot parse, which stopped the whole page script)"],
