@@ -6402,6 +6402,7 @@
   .chm-left > .chm-pane, .chm-results > .chm-pane { border-color: transparent; background: none; border-radius: 0; padding: 4px 8px; }
   .chm-left > .chm-pane + .chm-pane { border-top-color: var(--line); padding-top: 14px; }
   .chm-results > .chm-pane + .chm-pane { border-left-color: var(--line); padding-left: 20px; }
+  .chm-results > .chm-pane.chm-log { grid-column: 1 / -1; border-left-color: transparent; padding-left: 8px; border-top-color: var(--line); padding-top: 12px; }   /* the shot log spans both columns under the results and the damage share (user 2026-10-22) */
   html:is([data-sk-server="tto"],[data-sk-server="tot"]) .chm-left > .chm-pane,
   html:is([data-sk-server="tto"],[data-sk-server="tot"]) .chm-results > .chm-pane { border-color: transparent; border-radius: 16px; padding: 12px 14px; }
   .chm-h { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--gold); }
@@ -6547,10 +6548,9 @@
   .chm-lg i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
   .chm-lg b { font: 700 12.5px var(--chm-num); }
   .chm-lg em { font: 500 11.5px var(--chm-num); font-style: normal; color: var(--muted); text-align: right; }
-  .chm-log { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
-  .chm-log summary { cursor: pointer; font-size: 13px; color: var(--muted); }
-  .chm-log summary:hover { color: var(--text); }
-  .chm-log-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 6px; }
+  .chm-log-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 8px; }
+  .chm-log-head .chm-h { margin: 0; }
+  .chm-log-bar { flex: 1 1 320px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .chm-log-search { flex: 1; min-width: 110px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 12.5px 'Prompt', sans-serif; }
   .chm-log-scroll { display: flex; flex-direction: column; gap: 3px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
   .chm-lr { display: grid; grid-template-columns: 52px 52px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 3px 9px; border-radius: 8px; background: rgba(0,0,0,.18); font: 500 12.5px var(--chm-num); }
@@ -6579,10 +6579,11 @@
     #chmSkillsCard { flex: 1; display: flex; flex-direction: column; }
     #chmSkillsCard .chm-skills { flex: 1; justify-content: space-between; }
     .chm-arena { flex: none; }
-    .chm-results { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+    .chm-results { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: stretch; }
     .chm-results > .chm-pane { display: flex; flex-direction: column; min-height: 0; }
-    .chm-log { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    .chm-log[open] .chm-log-scroll { flex: 1; min-height: 0; max-height: none; }
+    /* the log takes the rest of the height: newest first down the left column, then the right; renderLog sets --chm-log-rows to the rows that fit */
+    .chm-log-scroll { flex: 1; min-height: 0; max-height: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--chm-log-rows, 10), max-content); grid-auto-flow: column; gap: 3px 24px; align-content: start; }
+    .chm-log-empty { grid-column: 1 / -1; }
   }
   @media (max-width: 900px) {
     .chm-cockpit { grid-template-columns: minmax(0, 1fr); }
@@ -24631,15 +24632,17 @@ function mountChameleonSim(root) {
                   ${CHM_PARTS.map(([k, c, label]) => `<div class="chm-lg" style="--c:${c}"><i></i><span${k === 'Poison' ? ' id="chmPoisonPartName"' : ''}>${label}</span><b id="chmVal${k === 'HpDrain' ? 'HpDrain' : k}Dmg"></b><em id="chmPct${k}"></em></div>`).join('')}
                 </div>
               </div>
-              <details class="chm-log" id="chmLogWrap" open>
-                <summary>บันทึกการยิง</summary>
+            </section>
+            <section class="chm-pane chm-log">
+              <div class="chm-log-head">
+                <div class="chm-h">บันทึกการยิง</div>
                 <div class="chm-log-bar">
                   <div class="chm-seg chm-seg-sm">${[['all', 'ทั้งหมด'], ['crit', 'คริ'], ['poison', 'พิษ'], ['drain', 'ดูดเลือด'], ['revert', 'ฟื้นเต็ม']].map(([f, l]) => `<button type="button" class="chm-log-filter-btn${f === 'all' ? ' active' : ''}" data-filter="${f}">${l}</button>`).join('')}</div>
                   <input type="text" class="chm-log-search" id="chmLogSearch" placeholder="ค้นหา #นัด" aria-label="ค้นหานัด">
                   <span class="chm-log-pager" id="chmLogPager"></span>
                 </div>
-                <div class="chm-log-scroll" id="chmLogScroll"></div>
-              </details>
+              </div>
+              <div class="chm-log-scroll" id="chmLogScroll"></div>
             </section>
           </div>
         </div>
@@ -24869,8 +24872,7 @@ function mountChameleonSim(root) {
   var chmLogPage = 0, chmLogKey = '', chmLogPer = 12;   // var: updateUI can call renderLog before these lines run
   $c('chmLogPager').addEventListener('click', (e) => { const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return; chmLogPage += Number(b.dataset.pg); renderLog(); });
   function renderLog() {
-    const wrap = $c('chmLogWrap'), logPager = $c('chmLogPager');
-    if (!wrap.open) return;
+    const logPager = $c('chmLogPager');
     if (simState.log.length === 0) { logScroll.innerHTML = '<div class="chm-log-empty">ยังไม่มีบันทึก กด ▶ เพื่อเริ่มยิง</div>'; logPager.innerHTML = ''; return; }
     let rows = simState.log;
     if (simState.logFilter === 'crit') rows = rows.filter(e => e.isCrit);
@@ -24898,11 +24900,11 @@ function mountChameleonSim(root) {
       logPager.innerHTML = pages > 1 ? `<button type="button" data-pg="-1"${chmLogPage ? '' : ' disabled'} aria-label="ใหม่กว่า">‹</button><span>${chmLogPage + 1} / ${pages}</span><button type="button" data-pg="1"${chmLogPage < pages - 1 ? '' : ' disabled'} aria-label="เก่ากว่า">›</button>` : '';
     };
     draw(chmLogPer);
-    const first = logScroll.firstElementChild, mh = typeof getComputedStyle === 'function' ? parseFloat(getComputedStyle(logScroll).maxHeight) : NaN;
-    const H = isFinite(mh) ? mh : logScroll.clientHeight;   // phones cap the box at 320 px; desktop gives it the spare height
-    if (first && H > 0) { const per = Math.max(1, Math.floor((H + 3) / (first.offsetHeight + 3))); if (per !== chmLogPer) { chmLogPer = per; draw(per); } }
+    const first = logScroll.firstElementChild, cs = typeof getComputedStyle === 'function' ? getComputedStyle(logScroll) : null, mh = cs ? parseFloat(cs.maxHeight) : NaN;
+    const H = isFinite(mh) ? mh : logScroll.clientHeight;   // phones cap the box at 320 px; desktop gives it the spare height (the layout's, never the rows': a box sized by its rows kept the log at 2 rows)
+    const cols = cs && cs.display === 'grid' ? cs.gridTemplateColumns.trim().split(/\s+/).length : 1;   // desktop lays the rows out in two columns
+    if (first && H > 0) { const fit = Math.max(1, Math.floor((H + 3) / (first.offsetHeight + 3))), per = fit * cols; logScroll.style.setProperty('--chm-log-rows', fit); if (per !== chmLogPer) { chmLogPer = per; draw(per); } }
   }
-  $c('chmLogWrap').addEventListener('toggle', renderLog);
 
   // Gear: the native select sits invisibly over each item, so a click opens it
   const chmGearByServer = {};   // server -> { selectedWeapon, selectedHelmet, selectedArmor }
@@ -31831,6 +31833,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-22T08:04:29.136Z","fix(bible): Chameleon attack sim: results and damage share side by side, the shot log a full-width pane under them in two columns; the log no longer sticks at 2 rows in continuous mode"],
     ["2026-10-22T07:53:36.619Z","feat(bible): class guide #67 ToT Chameleon ระเบิดพิษ 1/8 คมๆ by deawydew"],
     ["2026-10-22T07:26:01.341Z","fix(bible): the page runs again on iPhones older than iOS 16.4 (the hub menu title splitter used a regex lookbehind that old Safari cannot parse, which stopped the whole page script)"],
     ["2026-10-22T00:19:59.632Z","feat(bible): class guides #65 TTO Bison ไบกลา PVP by KiYoMi; #66 TTO Chameleon ก่าซอยยิก โซโล่ทุกคอนเท้น by Shippy"],
