@@ -31536,7 +31536,7 @@ function mountLauncher(root){
   const restart = el => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; };
   // two balanced title lines: at a space when the title has one, else between Thai words (the browser's own word segmenter)
   const seg = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter("th", { granularity: "word" }) : null;
-  const lines = s => { if (s.length < 15) return [s]; const w = / /.test(s) || !seg ? s.split(/(?<= )/) : [...seg.segment(s)].map(x => x.segment); let best = [s], d = 1e9;
+  const lines = s => { if (s.length < 15) return [s]; const w = / /.test(s) || !seg ? s.match(/[^ ]* |[^ ]+/g) : [...seg.segment(s)].map(x => x.segment); let best = [s], d = 1e9;
     for (let i = 1; i < w.length; i++) { const a = w.slice(0, i).join("").trim(), b = w.slice(i).join("").trim(); if (a && b && Math.abs(a.length - b.length) < d) { d = Math.abs(a.length - b.length); best = [a, b]; } } return best; };
   // Thai has no spaces to wrap at, so the title shrinks until each planned line fits on one line (two lines in total on phones)
   const fitTitle = () => { const h = copy.querySelector(".ln-title"); if (!h || !h.offsetParent) return; h.style.fontSize = ""; const spans = [...h.querySelectorAll("span")], lh = () => parseFloat(getComputedStyle(h).lineHeight);
@@ -31830,6 +31830,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-22T07:26:01.341Z","fix(bible): the page runs again on iPhones older than iOS 16.4 (the hub menu title splitter used a regex lookbehind that old Safari cannot parse, which stopped the whole page script)"],
     ["2026-10-22T00:19:59.632Z","feat(bible): class guides #65 TTO Bison ไบกลา PVP by KiYoMi; #66 TTO Chameleon ก่าซอยยิก โซโล่ทุกคอนเท้น by Shippy"],
     ["2026-10-21T10:09:17.866Z","fix(bible): class guide #63 is updated: TTO Chameleon ก่า ATK แหละ เพราะ ธนูดันน้ำมันแสดงผลออกยาก by ฉันอยากเล่นVIT AGI"],
     ["2026-10-21T10:07:02.739Z","fix(bible): class guide #64 is updated: TTO Cat PVE แมวก่อนจะรีไปเป็นแมวปืน by แบกฉันทีก่อนมีปืน"],
