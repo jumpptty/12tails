@@ -365,9 +365,6 @@ function gmCheckGuide(g){
   if (!g || g.format !== "12t-class-guide" || !g.build || !g.title || !g.author || !GM_CLASS_KEYS.includes(g.build.classKey) || !GM_SERVER_KEYS.includes(g.build.server)) throw new Error("โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ");
   return g;
 }
-// add_guide.js fixDate with the day passed in: a date later than today, or none, becomes today; returns the old date ("" for none) or null.
-function gmFixDate(g, today){ if (g.date && g.date <= today) return null; const was = g.date || ""; g.date = today; return was; }
-function gmLocalToday(){ const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
 // CLASS_GUIDES (one JSON object per line, "// #N removed …" for a removed guide) and the view counts, out of index.html's text.
 function gmParseGuides(html){
   const eol = html.includes("\r\n") ? "\r\n" : "\n", open = "const CLASS_GUIDES = [" + eol, start = html.indexOf(open), end = start < 0 ? -1 : html.indexOf(eol + "];", start);
@@ -381,10 +378,10 @@ function gmParseGuides(html){
   let views = {}; try { views = JSON.parse((html.match(/^const CLASS_GUIDE_VIEWS = (\{.*?\});/m) || [])[1]).counts || {}; } catch (e) {}
   return { guides, removed, next: Math.max(0, ...guides.map((x) => x.id), ...removed.map((x) => x.id)) + 1, views };
 }
-// Two guides with the same content (key order, id and PVE / PVP left out), as add_guide.js sameGuide: a replacement that changes nothing gets a warning (user 2026-10-20)
+// Two guides with the same content (key order, id, PVE / PVP and the upload stamp left out), as add_guide.js sameGuide: a replacement that changes nothing gets a warning (user 2026-10-20)
 function gmSameGuide(a, b){
   const norm = (v) => Array.isArray(v) ? v.map(norm) : v && typeof v === "object" ? Object.keys(v).sort().reduce((o, k) => (o[k] = norm(v[k]), o), {}) : v;
-  const strip = ({ id, modes, ...g }) => g;
+  const strip = ({ id, modes, date, published, ...g }) => g;
   return JSON.stringify(norm(strip(a))) === JSON.stringify(norm(strip(b)));
 }
 const gmSummary = (g, views) => ({ id: g.id, modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date || "", views: views[g.id] || 0 });
@@ -554,9 +551,9 @@ const githubBackend = {
   async check(code, replaceId){   // what add_guide.js /api/check answers
     try {
       if (!ghDoc) throw new Error("ยังโหลดรายการไกด์ไม่เสร็จ");
-      const g = await gmDecodeCode(code), dateWas = gmFixDate(g, gmLocalToday()), same = ghDoc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +replaceId);
+      const g = await gmDecodeCode(code), same = ghDoc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +replaceId);
       const target = replaceId ? ghDoc.guides.find((x) => x.id === +replaceId) : null;
-      return { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date }, dateWas, id: replaceId ? +replaceId : ghDoc.next, duplicate: same ? { id: same.g.id, title: same.g.title } : null, unchanged: !!target && gmSameGuide(g, target.g) };
+      return { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level }, id: replaceId ? +replaceId : ghDoc.next, duplicate: same ? { id: same.g.id, title: same.g.title } : null, unchanged: !!target && gmSameGuide(g, target.g) };
     } catch (e){ return { ok: false, error: e.message }; }
   },
   run: (items, dryRun, on) => ghStart("run", !!dryRun, { items }, on),
@@ -633,7 +630,7 @@ function showCheck(){
   if (!check.shown){ check.shown = true; document.querySelectorAll(".mbtn").forEach((b) => b.setAttribute("aria-pressed", String(g.modes.includes(b.dataset.m)))); }   // only once per code, so a queue redraw keeps the user's picks
   $("#modesHint").textContent = pressedModes().length ? "" : g.modes.length ? "เลือกอย่างน้อยหนึ่งอย่าง" : "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) เลือกให้ที่นี่ก่อนอัป";
   $("#pvFace").style.backgroundImage = "url(" + face(g.classKey) + ")"; $("#pvTitle").textContent = g.title; $("#pvBy").textContent = "โดย " + g.author;
-  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, dmy(g.date) + (check.dateWas == null ? "" : check.dateWas ? " (แก้จาก " + dmy(check.dateWas) + " ที่เกินวันนี้)" : " (โค้ดไม่มีวันที่ ใช้วันนี้)")].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
+  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, "วันที่ = เวลาที่อัปโหลด"].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
   if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่"; }
   else if (unchanged()){ msg.className = "msg warn is-on"; msg.textContent = "โค้ดนี้เหมือนไกด์ #" + mode.id + " ที่มีอยู่ทุกอย่าง แทนที่ไปก็ไม่มีอะไรเปลี่ยน ลองเช็กว่าได้โค้ดฉบับใหม่จากผู้เขียนแล้วหรือยัง"; }   // a heads-up only (user 2026-10-20)
   else if (check.duplicate){   // a heads-up only: the same title and author may be uploaded again (user 2026-10-20)

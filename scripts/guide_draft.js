@@ -7,7 +7,7 @@
 //   node scripts/guide_draft.js build <draft.json> [out.json]   check the draft, print the summary and the TG3 code (and write the guide JSON)
 //   node scripts/guide_draft.js --selftest
 //
-// Draft JSON: { server, classKey, level, grid: [Basic rows, A rows, B rows, C rows], title, author, date?, description?, notes?, cover?, modes }
+// Draft JSON: { server, classKey, level, grid: [Basic rows, A rows, B rows, C rows], title, author, description?, notes?, cover?, modes }
 //   grid rows are strings of 1 (lit) / 0 (dim), one character per cell, left to right, top to bottom, exactly as the simulator draws them;
 //   on ToT the C tree's EX rows follow its 5 rows (row 6 = 451-454, row 7 = 461).
 //   notes / cover keys may be cell ids or skill names ("Volcano", or "Volcano 2" for one rank; a bare name means its highest learned rank).
@@ -122,7 +122,7 @@ function build(draft){
   if (!String(draft.title || "").trim()) throw new Error("title is empty");
   const guide = {
     format: "12t-class-guide", version: 1, title: draft.title.trim(), author: String(draft.author || "").trim(),
-    date: draft.date || new Date().toISOString().slice(0, 10), description: String(draft.description || "").trim(),
+    description: String(draft.description || "").trim(),   // no date: the upload stamps it (user 2026-10-23)
     build: { server: draft.server, classKey: draft.classKey, level: lv, learned: [...learned].sort((a, b) => a - b) },
     cover, modes, notes: Object.fromEntries(Object.keys(notes).map(Number).sort((a, b) => a - b).map(id => [id, notes[id]])),
   };

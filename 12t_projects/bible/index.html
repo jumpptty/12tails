@@ -1635,12 +1635,6 @@
   .cg-status{color:var(--gold);font-size:13px;min-height:1.4em;margin:0 0 10px}
   .cg-intro,.cg-help,.cg-byline{color:var(--muted);font-size:13px;line-height:1.8}
   .cg-fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:16px}
-  .cg-date{position:relative;display:block}
-  .cg-page .cg-date input[type="text"]{width:100%;box-sizing:border-box;padding-right:40px}
-  .cg-page .cg-date .cg-date-pick{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;padding:0;margin:0;border:0;background:none;color:transparent;overflow:hidden;color-scheme:dark;cursor:pointer}
-  .cg-date .cg-date-pick::-webkit-datetime-edit,.cg-date .cg-date-pick::-webkit-inner-spin-button,.cg-date .cg-date-pick::-webkit-clear-button{display:none}
-  .cg-date .cg-date-pick::-webkit-calendar-picker-indicator{margin:0;padding:4px;cursor:pointer;opacity:.85}
-  .cg-date .cg-date-pick:hover::-webkit-calendar-picker-indicator{opacity:1}
   .cg-fields label,.cg-note-editor label,.cg-transfer label{display:grid;gap:6px;font-size:13px;color:var(--text)}
   .cg-page input,.cg-page textarea{width:100%;box-sizing:border-box;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:9px 11px;font:inherit;resize:vertical}
   .cg-page input:focus-visible,.cg-page textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -7236,7 +7230,7 @@
   .ln-gpng img{display:block; width:100%; height:auto}
   .ln-gpng.is-wait{aspect-ratio:2.45; background:linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%) 0 0 / 300% 100%; animation:lnWait 1.4s linear infinite}
   .ln-gpng.is-wait img{display:none}
-  /* ใหม่ badge on a guide dated today (user 2026-10-19): a gold pill with a slow shine, astride the image's top edge at the right (the untilted side; on the
+  /* ใหม่ badge on a guide uploaded in the last 24 hours (user 2026-10-19, 24 hours since upload 2026-10-23): a gold pill with a slow shine, astride the image's top edge at the right (the untilted side; on the
      image it covered the cover icons), so it shows on phones too; clicks pass through to the image */
   .ln-gnew{position:absolute; top:calc(12% - 15px); right:3%; z-index:2; pointer-events:none; transition:opacity .38s; display:inline-flex; align-items:center; gap:6px; padding:5px 14px 5px 11px; border-radius:999px;
     font-size:16px; font-weight:700; line-height:1; color:#2a1a05; border:1px solid rgba(255,236,170,.8);
@@ -27709,19 +27703,17 @@ function classGuideTimings(cardId, rank, stats, ctx){
   } finally { reachDepOverride = prev; }
   return out;
 }
-// Guide date (user 2026-10-16, replaces the free-text patch): the day the author wrote the build, YYYY-MM-DD, required to export. An old code's "patch" is ignored.
-function classGuideDateClean(raw, required){
-  if (raw === undefined || raw === "") { if (required) throw new Error("กรุณาใส่วันที่เขียนไกด์"); return ""; }
+// Guide date (user 2026-10-23, was typed by the author since 2026-10-16): the upload stamps it. add_guide.js stampGuide writes `date` (the day in Thailand, YYYY-MM-DD) and `published`
+// (UTC time of the upload, the ใหม่ badge checks it for 24 hours) into the CLASS_GUIDES entry; a code carries no date, and an old code's date or "patch" is dropped.
+function classGuideDateClean(raw){
+  if (raw === undefined || raw === "") return "";
   if (typeof raw !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) throw new Error("วันที่ต้องอยู่ในรูปแบบ ปี-เดือน-วัน");
   const d = new Date(raw + "T00:00:00Z");
   if (isNaN(d) || d.toISOString().slice(0, 10) !== raw || d.getUTCFullYear() < 2000) throw new Error("วันที่ไม่ถูกต้อง");
-  if (raw > new Date(Date.now() + 864e5).toISOString().slice(0, 10)){ if (required) throw new Error(classGuideDateLateText()); return ""; }   // a draft or an imported code drops it, so the author types it again
-  return raw;
+  return raw > new Date(Date.now() + 864e5).toISOString().slice(0, 10) ? "" : raw;   // a date later than tomorrow (UTC) is dropped; tomorrow stays, so an upload dated today in Thailand never looks future
 }
-// A guide date later than today is refused (user 2026-10-20). That one rule also stops a Buddhist-era year: two codes typed 20/10/2569, whose 2-byte day count wrapped to 2031-07-05.
-// The editor and its calendar stop at the author's own today; classGuideDateClean allows up to tomorrow in UTC, so a guide dated today anywhere never looks future to a reader in another time zone.
-function classGuideToday(){ const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
-function classGuideDateLateText(){ return "วันที่ต้องไม่เกินวันนี้ (ปี ค.ศ. เช่น " + new Date().getFullYear() + ")"; }
+// A guide is new for 24 hours after its upload (`published`, an ISO time in UTC; a guide without one, or one stamped in the future, is never new).
+function classGuideIsNew(g, now = Date.now()){ const t = g && typeof g.published === "string" ? Date.parse(g.published) : NaN; return t <= now + 6e4 && now - t < 864e5; }
 const CLASS_GUIDE_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 function classGuideDateText(iso){
   if (!iso) return "ยังไม่ระบุวันที่";
@@ -27832,7 +27824,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   }
   return { format: "12t-class-guide", version: 1,
     title: text(value.title, "ชื่อไกด์ ", 160, !draft), author: text(value.author, "ชื่อผู้เขียน ", 120, !draft),
-    date: classGuideDateClean(value.date, !draft), description: classGuideDescTrim(text(value.description, "คำอธิบายบิลด์ ", 12000, false)),
+    date: draft ? "" : classGuideDateClean(value.date), description: classGuideDescTrim(text(value.description, "คำอธิบายบิลด์ ", 12000, false)),
     build: { server: b.server, classKey: b.classKey, level: b.level, learned: [...learned].sort((a, b) => a - b), ...(support.length ? { support } : {}) }, ...(Object.keys(stats).length ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(Object.keys(gear).length ? { gear } : {}), ...(cover.length ? { cover } : {}), ...(modes.length ? { modes } : {}), ...(descCols > 1 ? { descCols } : {}), notes };
 }
 function classGuideExport(value){
@@ -28623,14 +28615,14 @@ async function classGuideRenderImage(guide, simRoot){
   titleLines.forEach((ln, i) => { const w = ln.reduce((sum, run) => sum + measureTitle(run.text, false), 0); drawLines([ln], lx + Math.max(0, (lw - w) / 2), y + titleSize * 0.96 + i * titleLh, titleLh, titleFont, { text, gold: text }); });
   y += titleLines.length * titleLh + 6;
   // author (gold) · date on one line, or the date under a long author name (the name is cut with "…" past the column)
-  const author = guide.author || "ยังไม่ระบุผู้เขียน", dateText = classGuideDateText(guide.date);
+  const author = guide.author || "ยังไม่ระบุผู้เขียน", dateText = guide.date ? classGuideDateText(guide.date) : "";
   const authorFont = () => font(600, 22), dateFont = () => font(400, 22);
   const authorFit = classGuideImageClip(classGuideImageWrap([{ text: author, gold: true, keep: false }], lw, measureWith(authorFont), segmenter), 1, lw, measureWith(authorFont))[0].map(r => r.text).join("");
-  ctx.font = authorFont(); const aw = ctx.measureText(authorFit).width; ctx.font = dateFont(); const dw = ctx.measureText(" · " + dateText).width, dw1 = ctx.measureText(dateText).width;
+  ctx.font = authorFont(); const aw = ctx.measureText(authorFit).width; ctx.font = dateFont(); const dw = dateText ? ctx.measureText(" · " + dateText).width : 0, dw1 = ctx.measureText(dateText).width;
   const oneLine = aw + dw <= lw, ax = lx + Math.max(0, (lw - (oneLine ? aw + dw : aw)) / 2);
   ctx.font = authorFont(); ctx.fillStyle = gold; ctx.fillText(authorFit, ax, y + 22);
   ctx.font = dateFont(); ctx.fillStyle = muted;
-  if (oneLine){ ctx.fillText(" · " + dateText, ax + aw, y + 22); y += 48; }
+  if (oneLine){ if (dateText) ctx.fillText(" · " + dateText, ax + aw, y + 22); y += 48; }
   else { ctx.fillText(dateText, lx + Math.max(0, (lw - dw1) / 2), y + 54); y += 80; }
   closeBox(y - 20);
   // stats: the author's order; a number is a ring, a share or ตัน / ตาม a still flask (user 2026-10-18); every value white with a soft shadow
@@ -28962,7 +28954,7 @@ function classGuideCopyImage(guide, simRoot, maxBytes = CLASS_GUIDE_COPY_MAX){
   return navigator.clipboard.write([new ClipboardItem({ "image/png": png })]).then(() => small);   // the item gets the promise at once (Safari needs the write started in the click)
 }
 const CLASS_GUIDE_STEPS = [
-  { label: "ข้อมูลไกด์", intro: "ตั้งชื่อไกด์ ใส่ชื่อผู้เขียน วันที่ และอธิบายจุดเด่น วิธีเล่น ข้อควรรู้ของบิลด์" },
+  { label: "ข้อมูลไกด์", intro: "ตั้งชื่อไกด์ ใส่ชื่อผู้เขียน และอธิบายจุดเด่น วิธีเล่น ข้อควรรู้ของบิลด์" },
   { label: "สเตตัสและเซ็ต", optional: true, intro: "" },
   { label: "จัดบิลด์", intro: "", guide: ["เลือก <b>เลเวล</b>", "อัปสกิลใน <b>Skill Simulator</b> ด้านขวา", "เลือก <b>สกิลซัพพอร์ต</b> ได้ 2 ช่องใต้สายแรก (ไม่บังคับ)"] },
   { label: "โน้ตสกิล", optional: true, intro: "", guide: ["<b>คลิกสกิล</b> ที่ต้องการเน้นใน <b>Skill Simulator</b> แล้วเขียนโน้ต"] },
@@ -28978,7 +28970,7 @@ function mountClassGuide(root){
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
-      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label>วันที่เขียนไกด์<span class="cg-date"><input type="text" data-cg-role="dateText" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป" aria-label="วันที่เขียนไกด์ (วัน/เดือน/ปี)"><input type="date" data-cg-field="date" min="2000-01-01" class="cg-date-pick" tabindex="-1" aria-label="เลือกวันที่จากปฏิทิน"></span></label><label class="cg-description"><textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-desc-head">คำอธิบายบิลด์<small class="cg-desc-live-note" data-cg-role="descLiveNote" aria-live="polite" hidden></small><span class="cg-desc-tools" data-cg-role="descTools" role="group" aria-label="จำนวนคอลัมน์ของคำอธิบาย">คอลัมน์<button type="button" data-cg-cols="1">1</button><button type="button" data-cg-cols="2">2</button><button type="button" data-cg-cols="3">3</button></span></span><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span><span class="cg-desc-pager" data-cg-role="descLivePager" hidden><button type="button" data-cg-lv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-lv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
+      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label class="cg-description"><textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-desc-head">คำอธิบายบิลด์<small class="cg-desc-live-note" data-cg-role="descLiveNote" aria-live="polite" hidden></small><span class="cg-desc-tools" data-cg-role="descTools" role="group" aria-label="จำนวนคอลัมน์ของคำอธิบาย">คอลัมน์<button type="button" data-cg-cols="1">1</button><button type="button" data-cg-cols="2">2</button><button type="button" data-cg-cols="3">3</button></span></span><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span><span class="cg-desc-pager" data-cg-role="descLivePager" hidden><button type="button" data-cg-lv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-lv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
       <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-5 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
@@ -29110,15 +29102,6 @@ function mountClassGuide(root){
   const editors = { description: classGuideMountEditor(field("description"), root.querySelector('[data-cg-editor="description"]'), status, classGuideEditHtml), noteText: classGuideMountEditor(el("noteText"), root.querySelector('[data-cg-editor="noteText"]'), status) };
   // Guide date (user 2026-10-16, standing rule: never show MM/DD/YYYY): the text field shows and takes DD/MM/YYYY (16/10/2026, 16-10-2026 or 16102026);
   // the native date input is only the calendar icon (Chromium ignores lang for its own text); both stay in sync, the stored value is the native YYYY-MM-DD.
-  const dateIso2Dmy = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || "") ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : "";
-  const dateDmy2Iso = text => {
-    const t = String(text || "").trim(), m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/.exec(t) || /^(\d{2})(\d{2})(\d{4})$/.exec(t);
-    if (!m) return null;
-    const iso = m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0"), d = new Date(iso + "T00:00:00Z");
-    return isNaN(d) || d.toISOString().slice(0, 10) !== iso || +m[3] < 2000 ? null : iso;
-  };
-  const syncDateText = () => { el("dateText").value = dateIso2Dmy(field("date").value); };
-  field("date").addEventListener("pointerdown", e => { e.currentTarget.max = classGuideToday(); });   // the calendar stops at today (read as it opens, so a page left open past midnight still offers the new day)
   const collectStats = () => {   // the editor's flasks in their order (user 2026-10-18); an empty or invalid one is not stored
     const stats = {}, statsPlus = [];
     for (const input of el("statEd").querySelectorAll("input[data-cg-stat]")){ const p = classGuideStatParse(input.value); if (!p) continue; stats[input.dataset.cgStat] = p.value; if (p.plus) statsPlus.push(input.dataset.cgStat); }
@@ -29203,7 +29186,7 @@ function mountClassGuide(root){
     saveDraft(); statChange(before);   // collectStats reads the flasks in their new order
   };
   document.addEventListener("pointerup", endStatDrag); document.addEventListener("pointercancel", endStatDrag);
-  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, date: field("date").value, modes: CLASS_GUIDE_MODES.filter(m => root.querySelector('[data-cg-mode="' + m + '"]').getAttribute("aria-pressed") === "true"), description: field("description").value, build: sim.getBuild(), ...collectStats(), gear: JSON.parse(JSON.stringify((draft && draft.gear) || {})), cover: [...((draft && draft.cover) || [])], ...(draft && draft.descCols > 1 ? { descCols: draft.descCols } : {}), notes: { ...(draft ? draft.notes : {}) } });
+  const collect = () => ({ format: "12t-class-guide", version: 1, title: field("title").value, author: field("author").value, modes: CLASS_GUIDE_MODES.filter(m => root.querySelector('[data-cg-mode="' + m + '"]').getAttribute("aria-pressed") === "true"), description: field("description").value, build: sim.getBuild(), ...collectStats(), gear: JSON.parse(JSON.stringify((draft && draft.gear) || {})), cover: [...((draft && draft.cover) || [])], ...(draft && draft.descCols > 1 ? { descCols: draft.descCols } : {}), notes: { ...(draft ? draft.notes : {}) } });
   // Recommended gear editor (user 2026-10-16): per slot up to three ranked cards; a card opens the picker (the class's items + shared ones, game order, search,
   // or a typed name for a new item); weapon / armor / hat cards add a Replica source and one upgrade stat. Ctrl+Z undoes gear edits while a gear edit is the latest.
   let gearPick = null, lastEditGear = false;
@@ -29523,9 +29506,9 @@ function mountClassGuide(root){
     if (!draft) return;
     const d = draft, nNotes = Object.keys(d.notes || {}).length;
     { const rate = classGuideCompleteness(d), rs = el("ratingStars"); rs.innerHTML = classGuideStarsHtml(rate.stars); rs.setAttribute("aria-label", rate.label); }   // ความครบถ้วนของเนื้อหา, live while writing (user 2026-10-20)
-    const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.date && d.modes && d.modes.length), !!(((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)) && !classGuideStatsProblem(d.stats) && !statTypo()), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
+    const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.modes && d.modes.length), !!(((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)) && !classGuideStatsProblem(d.stats) && !statTypo()), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
     // step 6: what is still missing before the code can be sent
-    const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน วันที่ และ PVE / PVP (ขั้นที่ 1)"); if (!done[2]) miss.push(buildProblems().length ? "บิลด์ที่ผ่านเงื่อนไข (ขั้นที่ 3)" : "สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)"); if (classGuideStatsProblem(d.stats)) miss.push("สเตตัสแบบ % ที่รวมได้ 100 (ขั้นที่ 2)"); if (statTypo()) miss.push("สเตตัสที่ใส่ค่าไม่ถูก (ขั้นที่ 2)");
+    const miss = []; if (!done[0]) miss.push("ชื่อไกด์ ชื่อผู้เขียน และ PVE / PVP (ขั้นที่ 1)"); if (!done[2]) miss.push(buildProblems().length ? "บิลด์ที่ผ่านเงื่อนไข (ขั้นที่ 3)" : "สกิลในบิลด์ (ขั้นที่ 3)"); if (!done[4]) miss.push("ไอคอนหน้าปก (ขั้นที่ 5)"); if (classGuideStatsProblem(d.stats)) miss.push("สเตตัสแบบ % ที่รวมได้ 100 (ขั้นที่ 2)"); if (statTypo()) miss.push("สเตตัสที่ใส่ค่าไม่ถูก (ขั้นที่ 2)");
     el("sendCheck").textContent = miss.length ? "ยังขาด: " + miss.join(", ") : copiedOnce ? "เรียบร้อย ทำอีกอย่างต่อได้เลย" : "ไกด์พร้อมแล้ว";
     el("sendCheck").classList.toggle("is-missing", miss.length > 0);
     root.querySelectorAll("[data-cg-step-go]").forEach(b => { const k = +b.dataset.cgStepGo; b.setAttribute("aria-pressed", String(k === step)); b.classList.toggle("is-done", done[k - 1]); b.title = CLASS_GUIDE_STEPS[k - 1].label + (done[k - 1] ? " (เสร็จแล้ว)" : ""); });
@@ -29729,11 +29712,10 @@ function mountClassGuide(root){
     switchMode("author"); noteUndo.length = 0; syncNoteUndo();
     if (!draft){
       try { draft = classGuideNormalize(JSON.parse(localStorage.getItem(storageKey)), { draft: true }); } catch (e) { draft = null; }
-      if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
+      if (!draft) draft = { format: "12t-class-guide", version: 1, title: "", author: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} };
     }
-    for (const name of ["title", "author", "date"]) field(name).value = draft[name] || "";
+    for (const name of ["title", "author"]) field(name).value = draft[name] || "";
     root.querySelectorAll("[data-cg-mode]").forEach(b => b.setAttribute("aria-pressed", String(!!(draft.modes && draft.modes.includes(b.dataset.cgMode)))));   // PVE / PVP (user 2026-10-20)
-    syncDateText();
     renderStatEditor();
     statUndo.length = 0; lastEditStat = false; gearUndo.length = 0; lastEditGear = false; renderGearEditor(); coverUndo.length = 0; lastEditCover = false;
     syncExtrasSum();
@@ -29915,7 +29897,7 @@ function mountClassGuide(root){
     const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = "";   // the fit below may have shrunk the grid
     let validCount = 0, invalidCount = 0, totalCount = 0;
     const server = filterServer, classKey = filterClass;
-    const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && a.date) || "").localeCompare(String((z && z.date) || "")) || ia - ib; return sortNewest ? -d : d; });
+    const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && (a.published || a.date)) || "").localeCompare(String((z && (z.published || z.date)) || "")) || ia - ib; return sortNewest ? -d : d; });
     for (const [gi, raw] of byDate){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
       totalCount++;
@@ -30161,8 +30143,6 @@ function mountClassGuide(root){
   root.addEventListener("input", e => {
     if (!e.target.matches) return;
     if (e.target.matches("input[data-cg-stat]") && mode === "author"){ paintStat(e.target.closest(".cg-stat-ed")); renderStatSum(); saveDraft(); return; }   // 180, 250+, 50% (user 2026-10-18)
-    if (e.target.matches('[data-cg-role="dateText"]')){ const t = e.target.value; if (!t.trim()) field("date").value = ""; else { const iso = dateDmy2Iso(t); if (iso && iso <= classGuideToday()) field("date").value = iso; } saveDraft(); return; }
-    if (e.target.matches('[data-cg-field="date"]')) syncDateText();   // picked from the calendar
     if (e.target.matches("[data-cg-field]")) saveDraft();
     if (e.target.matches('[data-cg-role="gearSearch"]')){ renderGearGrid(); return; }
     if (e.target.matches("[data-cg-try]") && mode === "reader"){
@@ -30190,15 +30170,6 @@ function mountClassGuide(root){
     gearChange(gear => { const c = gear[slot] && gear[slot][+idx]; if (!c) return; if (v) c.stat = v; else delete c.stat; });
   });
   root.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches && e.target.matches('[data-cg-role="gearTyped"]')){ e.preventDefault(); button("gearUseTyped").click(); } });
-  root.addEventListener("focusout", e => {   // leaving the date text: a valid date is rewritten as DD/MM/YYYY, anything else is put back with a hint
-    if (!e.target.matches || !e.target.matches('[data-cg-role="dateText"]')) return;
-    const t = e.target.value.trim();
-    const iso = t && dateDmy2Iso(t);
-    if (t && !iso) status("วันที่ต้องเป็น วัน/เดือน/ปี เช่น 16/10/2026");
-    else if (iso && iso > classGuideToday()) status(classGuideDateLateText());   // later than today, which also catches a Buddhist-era year (20/10/2569)
-    syncDateText();
-  });
-  root.addEventListener("change", e => { if (e.target.matches && e.target.matches('[data-cg-field="date"]')){ syncDateText(); saveDraft(); } });
   root.addEventListener("click", async e => {
     const tab = e.target.closest && e.target.closest("[data-cg-step-go]"); if (tab && mode === "author"){ goStep(+tab.dataset.cgStepGo); return; }
     if (mode === "author"){
@@ -30295,7 +30266,7 @@ function mountClassGuide(root){
       }
       else if (act === "closeStart") el("start").close();
       else if (act === "startResume"){ el("start").close(); startAuthor(); }
-      else if (act === "startNew"){ el("start").close(); askReplace(() => { draft = { format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} }; try { localStorage.setItem(stepKey, "1"); } catch (e) {} startAuthor(); status("เริ่มไกด์ใหม่แล้ว"); }); }
+      else if (act === "startNew"){ el("start").close(); askReplace(() => { draft = { format: "12t-class-guide", version: 1, title: "", author: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} }; try { localStorage.setItem(stepKey, "1"); } catch (e) {} startAuthor(); status("เริ่มไกด์ใหม่แล้ว"); }); }
       else if (act === "startImport"){ el("start").close(); showImport(); }
       else if (act === "closeTransfer") el("transfer").close();
       else if (act === "openFullView") el("fullView").showModal();
@@ -30307,7 +30278,7 @@ function mountClassGuide(root){
       else if (act === "coverClear") coverChange(list => { list.length = 0; });
       else if (act === "mode"){ target.setAttribute("aria-pressed", String(target.getAttribute("aria-pressed") !== "true")); el("modesBox").classList.remove("is-missing"); saveDraft(); }   // PVE / PVP, both allowed (user 2026-10-20)
       else if (act === "preview"){ saveDraft(); openGuide(draft, true); }
-      else if (act === "export" && !(draft && draft.title && draft.title.trim() && draft.author && draft.author.trim() && draft.date)){ goStep(1); status("ใส่ชื่อไกด์ ชื่อผู้เขียน และวันที่ก่อนคัดลอกโค้ดไกด์"); }
+      else if (act === "export" && !(draft && draft.title && draft.title.trim() && draft.author && draft.author.trim())){ goStep(1); status("ใส่ชื่อไกด์ และชื่อผู้เขียนก่อนคัดลอกโค้ดไกด์"); }
       else if (act === "export" && !(draft && draft.modes && draft.modes.length)){ goStep(1); el("modesBox").classList.add("is-missing"); status("เลือกว่าไกด์นี้สำหรับ PVE หรือ PVP (เลือกได้ทั้งสองอย่าง) ก่อนคัดลอกโค้ดไกด์"); }   // required (user 2026-10-20)
       else if (act === "export" && !(draft && draft.cover && draft.cover.length)){   // the cover is required to submit a guide (user 2026-10-16)
         coverMissing = true; goStep(5); status("เลือกไอคอนหน้าปกอย่างน้อย 1 สกิล (สูงสุด 3) ก่อนคัดลอกโค้ดไกด์");
@@ -30819,7 +30790,7 @@ function mountSkillSimulator(root, options = {}){
     },
     setNotes(value){ notes = { ...value }; seenNotes.clear(); refreshNotes(); },
     loadBuild(build){
-      const checked = classGuideNormalize({ format: "12t-class-guide", version: 1, title: "", author: "", date: "", description: "", build, notes: {} }, { draft: true }).build;
+      const checked = classGuideNormalize({ format: "12t-class-guide", version: 1, title: "", author: "", description: "", build, notes: {} }, { draft: true }).build;
       pressEnd(); longDone = false; srv = checked.server; cls = checked.classKey; trees = SKILL_SIM[cls]; cells = mkCells();
       state.lv = checked.level; state.learned = new Set(checked.learned); state.support = (checked.support || []).slice(); picked = true; undoStack.length = 0;
       notes = {}; seenNotes.clear(); buildTrees(); update();
@@ -31534,14 +31505,13 @@ function mountLauncher(root){
     const tooTall = () => phone() ? h.offsetHeight > lh() * 2.2 : spans.some(sp => sp.offsetHeight > lh() * 1.4);
     for (let px = parseFloat(getComputedStyle(h).fontSize), n = 0; tooTall() && px > 24 && n < 30; n++) { px -= 2; h.style.fontSize = px + "px"; } };
   // ไกด์อาชีพ slide: newest guide first; each PNG renders once per visit (or again after a look change, the PNG follows the look)
-  // Guides dated today (the visitor's calendar day) come first, every visit of the slide opens on one of them (in turn) and they wear a ใหม่ badge (user 2026-10-19)
-  const localDay = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-  const isToday = g => g.date === localDay();
+  // Guides uploaded in the last 24 hours (published, stamped by the upload) come first, every visit of the slide opens on one of them (in turn) and they wear a ใหม่ badge (user 2026-10-19; 24 hours since upload instead of dated today, user 2026-10-23)
+  const isNew = g => classGuideIsNew(g);
   const guides = CLASS_GUIDES.map((g, k) => ({ g, id: classGuideId(g, k) })).filter(x => x.g && x.g.build && CLASS_STORY_ART[SKILL_SIM_NAMES[x.g.build.classKey]])
-    .sort((a, b) => isToday(b.g) - isToday(a.g) || String(b.g.date || "").localeCompare(String(a.g.date || "")) || Number(b.id) - Number(a.id));
-  const nToday = guides.filter(x => isToday(x.g)).length;
+    .sort((a, b) => isNew(b.g) - isNew(a.g) || String(b.g.published || b.g.date || "").localeCompare(String(a.g.published || a.g.date || "")) || Number(b.id) - Number(a.id));
+  const nNew = guides.filter(x => isNew(x.g)).length;
   const pngs = new Map(), readyPng = {}; let gi = -1, feat = 0, guideTimer = 0;
-  const nextStart = () => nToday ? feat % nToday : gi + 1;   // where the next visit of the slide starts
+  const nextStart = () => nNew ? feat % nNew : gi + 1;   // where the next visit of the slide starts
   const idle = fn => typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 300);
   const guidePng = x => { if (!pngs.has(x.id)) pngs.set(x.id, (async () => { try {
     const c = await classGuideRenderImage(classGuideNormalize(x.g), simBox), s = Math.min(1, 1280 / c.width), o = document.createElement("canvas");
@@ -31555,7 +31525,7 @@ function mountLauncher(root){
       panel.href = "#class-guide/" + x.id; panel.setAttribute("aria-label", "เปิดไกด์ " + g.title);
       ptl.href = "#class-guide?class=" + g.build.classKey; ptl.setAttribute("aria-label", "ไกด์ " + cls + " ทุกเซิร์ฟเวอร์");
       box.querySelector(".ln-gpt").src = storyOf(cls);
-      box.querySelector(".ln-gnew").hidden = !isToday(g);
+      box.querySelector(".ln-gnew").hidden = !isNew(g);
       box.querySelector(".ln-gcap").innerHTML = "<b>" + esc(g.title) + "</b><span>โดย " + esc(g.author) + " · " + cls + " · " + (LAUNCH_SERVER[g.build.server] || "") + "</span>";
       png.hidden = false; png.classList.add("is-wait"); img.removeAttribute("src");
       const stale = () => guides[gi % guides.length] !== x || !box.isConnected;
@@ -31667,7 +31637,7 @@ function mountLauncher(root){
     }
     else if (t.collage === "classStory" && guides.length) {
       art.innerHTML = '<div class="ln-g"><a class="ln-gpng is-wait" href="#class-guide"><img alt=""></a><span class="ln-gnew" hidden><i aria-hidden="true">✦</i>ใหม่</span><a class="ln-gptl" href="#class-guide"><img class="ln-gpt" alt=""></a><span class="ln-gcap"></span></div>';
-      const box = art.querySelector(".ln-g"); gi = nextStart(); if (nToday) feat++; showGuide(box, false);
+      const box = art.querySelector(".ln-g"); gi = nextStart(); if (nNew) feat++; showGuide(box, false);
       guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); } }, 3500);
     } else {
       const arts = (t.art || []).filter(k => artSrc(k));
@@ -31821,6 +31791,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-22T18:06:30.404Z","feat(bible): a class guide's date is its upload time (the author no longer picks one), and the ใหม่ badge shows for 24 hours after the upload"],
     ["2026-10-22T13:08:07.194Z","feat(bible): class guide #70 TTO Sheep แกะอีเดน by หนมผิงช่วยเหลือประชาชน"],
     ["2026-10-22T12:00:58.275Z","feat(bible): class guide #69 TTO Rabbit กระต่ายซูมมมม โป้งง by 1Hert.z"],
     ["2026-10-22T11:42:03.820Z","feat(bible): class guide #68 TTO Chameleon ก่าสเลชั้้นสูง ไม่เหม็นคาวพวกธนูดันน้ำ by Iceteaser"],

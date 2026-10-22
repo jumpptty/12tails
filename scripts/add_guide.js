@@ -39,10 +39,15 @@ const clean = (s) => String(s).replace(/[<>\r\n]/g, " ").replace(/\s+/g, " ").tr
 const subj = (s) => s.replace(/\*\*|["\\<>]/g, "").replace(/\s+/g, " ").trim();   // the changelog entry is compared with the commit subject character for character
 const label = (g) => `${SERVER[g.build.server] || g.build.server} ${cap(g.build.classKey)} ${g.title} by ${g.author}`;
 const today = () => new Date().toISOString().slice(0, 10);
-const localToday = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };   // = classGuideToday() in the page
-// The validator refuses a guide date later than today (a Buddhist-era year such as 20/10/2569 also decodes to a wrapped 2031 date) or a missing
-// one, so such a date becomes today (user 2026-10-20). Returns the old date ("" when there was none), or null when the date was fine.
-function fixDate(g){ const t = localToday(); if (g.date && g.date <= t) return null; const was = g.date || ""; g.date = t; return was; }
+// The guide's date is the moment it is uploaded (user 2026-10-23): the author no longer picks one, and whatever date an old code carries is replaced.
+// `published` is that moment in UTC (the page's ใหม่ badge shows for 24 hours after it), `date` the calendar day in Thailand (UTC+7, whatever the
+// machine's time zone, so the phone's GitHub run and the PC agree). Both go right after the author.
+function stampGuide(g, now = new Date()){
+  const entries = Object.entries(g).filter(([k]) => k !== "date" && k !== "published");
+  entries.splice(entries.findIndex(([k]) => k === "author") + 1, 0, ["date", new Date(now.getTime() + 7 * 36e5).toISOString().slice(0, 10)], ["published", now.toISOString().slice(0, 19) + "Z"]);
+  for (const k of Object.keys(g)) delete g[k];
+  Object.assign(g, Object.fromEntries(entries));
+}
 const MODES = ["pve", "pvp"], pickModes = (v) => MODES.filter((m) => Array.isArray(v) && v.includes(m));   // PVE / PVP, both allowed; a finished guide needs one (user 2026-10-20)
 
 // ---------- reading and changing CLASS_GUIDES ----------
@@ -124,7 +129,7 @@ function opsFromItems(items){
   return items.map((it, i) => {
     if (it.action === "delete") return { action: "delete", id: +it.id };
     let g; try { g = decodeCode(it.code); } catch (e){ throw new Error(`รายการที่ ${i + 1}: ${e.message}`); }
-    fixDate(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
+    stampGuide(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
     if (!(g.modes || []).length) throw new Error(`รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง`);
     return { action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g };
   });
@@ -133,7 +138,7 @@ function opsFromItems(items){
 // warning on a replacement (user 2026-10-20). The page's gmSameGuide does the same; the validator checks they agree.
 function sameGuide(a, b){
   const norm = (v) => Array.isArray(v) ? v.map(norm) : v && typeof v === "object" ? Object.keys(v).sort().reduce((o, k) => (o[k] = norm(v[k]), o), {}) : v;
-  const strip = ({ id, modes, ...g }) => g;
+  const strip = ({ id, modes, date, published, ...g }) => g;   // the upload stamp (date, published) is set by the upload, not by the code
   return JSON.stringify(norm(strip(a))) === JSON.stringify(norm(strip(b)));
 }
 const undoText = (entries) => entries.length === 1 ? entries[0].text : `ย้อนกลับชุดล่าสุด ${entries.length} รายการ (${entries.map((u) => "#" + u.id).join(", ")})`;
@@ -310,7 +315,7 @@ async function cli(words){
   if (cmd === "add") op = { action: "add", guide: decodeCode(rest.join(" ") || await ask("Paste the guide code: ")) };
   else if (cmd === "replace") op = { action: "replace", id: +rest[0], guide: decodeCode(rest.slice(1).join(" ") || await ask("Paste the new code: ")) };
   else if (cmd === "delete") op = { action: "delete", id: +rest[0] };
-  if (op && op.guide){ const was = fixDate(op.guide); if (was !== null) console.log(`  Date ${was || "(none)"} is later than today or missing, so it is set to today (${op.guide.date}).`); if (val("--modes")) op.guide.modes = pickModes(val("--modes").split(",").map((x) => x.trim().toLowerCase())); if (!(op.guide.modes || []).length) throw new Error("This code has no PVE / PVP tag (made with an older page). Add --modes pve, --modes pvp or --modes pve,pvp."); }
+  if (op && op.guide){ stampGuide(op.guide); console.log(`  Date: the upload time (${op.guide.published}).`); if (val("--modes")) op.guide.modes = pickModes(val("--modes").split(",").map((x) => x.trim().toLowerCase())); if (!(op.guide.modes || []).length) throw new Error("This code has no PVE / PVP tag (made with an older page). Add --modes pve, --modes pvp or --modes pve,pvp."); }
   else throw new Error("usage: see the header of scripts/add_guide.js");
   const p = planAll([op], readGuides());
   console.log("\n  " + p.subject + "\n");
@@ -349,9 +354,9 @@ function serve(){
       if (req.method === "POST" && req.url === "/api/check"){
         const b = await body(req), doc = readGuides();
         try {
-          const g = decodeCode(b.code), dateWas = fixDate(g), same = doc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +b.replaceId);
+          const g = decodeCode(b.code), same = doc.guides.find((x) => x.g.title === g.title && x.g.author === g.author && x.g.id !== +b.replaceId);
           const target = b.replaceId ? doc.guides.find((x) => x.g.id === +b.replaceId) : null;
-          return json(res, 200, { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date }, dateWas, id: b.replaceId ? +b.replaceId : nextId(doc), duplicate: same ? { id: same.g.id, title: same.g.title } : null, unchanged: !!target && sameGuide(g, target.g) });
+          return json(res, 200, { ok: true, guide: { modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level }, id: b.replaceId ? +b.replaceId : nextId(doc), duplicate: same ? { id: same.g.id, title: same.g.title } : null, unchanged: !!target && sameGuide(g, target.g) });
         } catch (e){ return json(res, 200, { ok: false, error: e.message }); }
       }
       if (req.method === "POST" && (req.url === "/api/run" || req.url === "/api/undo")){
@@ -415,6 +420,14 @@ async function selftest(){
   const cases = [];
   const test = (name, fn) => cases.push([name, fn]);
 
+  test("an upload stamps the guide with its own date and time, whatever date the code carries (user 2026-10-23)", async () => {
+    const m = load(fixture()), g = { author: "A", date: "2020-01-01", published: "2020-01-01T00:00:00Z", title: "T" };
+    m.stampGuide(g, new Date("2026-10-22T18:30:05.999Z"));
+    assert.deepStrictEqual(Object.keys(g), ["author", "date", "published", "title"]);
+    assert.strictEqual(g.published, "2026-10-22T18:30:05Z"); assert.strictEqual(g.date, "2026-10-23");   // 01:30 on the 23rd in Thailand
+    const [it] = m.opsFromItems([{ action: "replace", id: 1, code: code("T1b", "A1"), modes: ["pve"] }]);
+    assert.ok(Math.abs(Date.parse(it.guide.published) - Date.now()) < 5000 && it.guide.date.length === 10);
+  });
   test("add: next id, changelog entry = commit subject, pushed", async () => {
     const dir = fixture(), m = load(dir);
     await m.apply(m.opsFromItems([{ action: "add", code: code("T3", "A3"), modes: ["pve"] }]), {}, quiet());
@@ -461,7 +474,8 @@ async function selftest(){
     const dir = fixture(), req = request(dir, { items: batchItems });
     let r;
     for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, req, st); assert.strictEqual(r.status, 0, st + ": " + r.stdout + r.stderr); }
-    assert.deepStrictEqual(load(dir).readGuides().lines, batchLines);
+    const unstamped = (ls) => ls.map((l) => l.replace(/"date":"[^"]*","published":"[^"]*"/, '"date":"D","published":"P"'));   // each run stamps its own upload time
+    assert.deepStrictEqual(unstamped(load(dir).readGuides().lines), unstamped(batchLines));
     assert.strictEqual(subject(dir), batchSubject);
     assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
     assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: false, subject: batchSubject, sha: head(dir), items: [{ action: "add", id: 3 }, { action: "replace", id: 1 }, { action: "delete", id: 2 }], undoText: "ย้อนกลับชุดล่าสุด 3 รายการ (#3, #1, #2)" });
@@ -554,7 +568,7 @@ async function selftest(){
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && !["--port", "--modes", "--stage"].includes(args[i - 1]));
-if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, fixDate, localToday, canonLine, sameGuide, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
+if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, stampGuide, canonLine, sameGuide, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
 else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
 else if (words[0] === "batch") batch(words[1], val("--stage"));
 else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });

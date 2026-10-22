@@ -3295,13 +3295,19 @@ let checkedRsim = 0;
   }
   const change = patch => ({...fixture,...patch});
   rejects(()=>decode("not JSON"),"reject malformed codes"); rejects(()=>decode("x".repeat(131073)),"limit import size");
-  rejects(()=>norm(change({version:2})),"reject unsupported format version"); rejects(()=>norm(change({author:""})),"require author for export"); rejects(()=>norm(change({date:""})),"require the guide date for export");rejects(()=>norm(change({date:"2026-02-30"})),"reject an impossible date");rejects(()=>norm(change({date:"16/10/2026"})),"reject a date in the wrong format");
+  rejects(()=>norm(change({version:2})),"reject unsupported format version"); rejects(()=>norm(change({author:""})),"require author for export"); ok(norm(change({date:""})).date === "" && !html.includes('data-cg-field="date"'), "a guide needs no date from the author, the editor has no date field (the upload stamps it, user 2026-10-23)");rejects(()=>norm(change({date:"2026-02-30"})),"reject an impossible date");rejects(()=>norm(change({date:"16/10/2026"})),"reject a date in the wrong format");
   ok(html.split('<span>คัดลอกรูป</span></button>').length - 1 === 2 && html.includes('{ act: "copyImage", icon: "copy"') && vm.runInContext("CLASS_GUIDE_COPY_MAX", sandbox) < 10e6 && vm.runInContext("typeof classGuideCopyImage", sandbox) === "function", "คัดลอกรูป sits in the reader row, step 6 and the guide menu, and its 2K fallback starts below Discord's 10 MB");
-  { const day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10); const today = vm.runInContext("classGuideToday", sandbox)();   // user 2026-10-20: no guide date later than today, which also stops a Buddhist-era year
-    rejects(()=>norm(change({date:"2569-10-20"})),"reject a Buddhist-era year (20/10/2569 wrapped to 2031-07-05 in two codes)"); rejects(()=>norm(change({date:day(2)})),"reject a guide date after tomorrow (UTC)");
-    ok(norm(change({date:day(0)})).date === day(0) && norm(change({date:day(1)})).date === day(1), "today and tomorrow (UTC) pass, so a guide dated today in any time zone never looks future");
-    ok(norm(change({date:"2569-10-20"}),{draft:true}).date === "" && norm(change({date:day(400)}),{draft:true}).date === "", "a draft or an imported code drops a future date instead of failing to open");
-    ok(/^\d{4}-\d{2}-\d{2}$/.test(today) && today >= day(-1) && today <= day(1), "the editor's today is the local calendar day"); }
+  { const day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);   // the embedded date is the upload day: no later than tomorrow (UTC), which also stops a Buddhist-era year
+    ok(norm(change({date:"2569-10-20"})).date === "", "a Buddhist-era year (20/10/2569 wrapped to 2031-07-05 in two codes) is dropped, not kept"); ok(norm(change({date:day(2)})).date === "", "a guide date after tomorrow (UTC) is dropped");
+    ok(norm(change({date:day(0)})).date === day(0) && norm(change({date:day(1)})).date === day(1), "today and tomorrow (UTC) pass, so a guide uploaded today in Thailand never looks future");
+    ok(norm(change({date:day(0)}),{draft:true}).date === "" && norm(change({date:"2569-10-20"}),{draft:true}).date === "", "the author's draft carries no date: an imported code's date is dropped (the upload stamps it)");
+    const isNew = vm.runInContext("classGuideIsNew", sandbox), t0 = Date.parse("2026-10-23T05:00:00Z"), at = (ms) => new Date(t0 + ms).toISOString().slice(0, 19) + "Z";
+    ok(isNew({ published: at(0) }, t0) && isNew({ published: at(0) }, t0 + 864e5 - 1000) && !isNew({ published: at(0) }, t0 + 864e5) && !isNew({ published: at(0) }, t0 + 864e5 + 1000), "a guide is new for 24 hours after its upload stamp");
+    ok(!isNew({ date: day(0) }, Date.now()) && !isNew({}, Date.now()) && !isNew(null, Date.now()) && !isNew({ published: "soon" }, Date.now()) && !isNew({ published: at(3 * 36e5) }, t0), "a guide with no stamp (every guide before 2026-10-23), a broken one or one stamped in the future is never new");
+    ok(isNew({ published: at(-1000) }, t0 - 5000) && !isNew({ published: at(3 * 36e5) }, t0), "a clock a few seconds behind the stamp still shows the badge");
+    ok(/const isNew = g => classGuideIsNew\(g\);/.test(html) && !/isToday|localDay\(/.test(html), "the home slide's ใหม่ badge and ordering use the 24-hour check, not the calendar day");
+    const bkk = (iso) => new Date(Date.parse(iso) + 7 * 36e5).toISOString().slice(0, 10);
+    vm.runInContext("CLASS_GUIDES", sandbox).forEach(g => { if (g && g.published !== undefined) ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(g.published) && !isNaN(Date.parse(g.published)) && g.date === bkk(g.published), "guide #" + g.id + " has a valid upload stamp whose date is that moment's day in Thailand"); }); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
   rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
   rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");
@@ -3317,7 +3323,7 @@ let checkedRsim = 0;
   ok(norm(change({modes:undefined}),{draft:true}).modes === undefined && norm(change({modes:["pvx"]}),{draft:true}).modes === undefined, "a draft may lack PVE / PVP, and drops an unknown one");
   ok(norm(change({modes:["pvp","pve"]})).modes.join() === "pve,pvp" && decode(encode(change({modes:["pve","pvp"]}))).modes.join() === "pve,pvp", "both modes are kept, in CLASS_GUIDE_MODES order, and survive export / import");
   ok(embedded.every(g => Array.isArray(g.modes) && g.modes.length), "every embedded guide has PVE / PVP (user 2026-10-20)");
-  { const old = {...fixture, patch:"1.57"}; delete old.date; const opened = decode(JSON.stringify(old)); ok(opened.date === "" && !("patch" in opened), "an old code with a patch and no date still opens in the editor (date asked again on export)"); rejects(()=>encode(opened), "export asks for the date"); }
+  { const old = {...fixture, patch:"1.57"}; delete old.date; const opened = decode(JSON.stringify(old)); ok(opened.date === "" && !("patch" in opened), "an old code with a patch and no date still opens in the editor"); ok(typeof encode(opened) === "string", "and exports without asking for a date"); }
   // Short code (user 2026-10-16): the page's compact form and scripts/guide_code.js agree, and every embedded guide survives the round trip.
   { if (!sandbox.btoa) sandbox.btoa = btoa; if (!sandbox.atob) sandbox.atob = atob;
     const compact = vm.runInContext("classGuideCompact", sandbox), expand = vm.runInContext("classGuideExpand", sandbox), gc = require(path.join(__dirname, "guide_code.js"));
@@ -3466,7 +3472,7 @@ let checkedRsim = 0;
     const gear = { weapon:[{ item:"w_wlf10", replica:{ name:"ดาบใหม่ 🐺" }, stat:"atk" }, { name:"Brand New Blade" }, { item:"w_wlf11", replica:{ item:"w_wlf12" } }], hat:[{ item:"c_all1" }], trinket:[{ item:"t_all1" }], pet:[{ item:"p_lcr" }] };
     const withGear = norm(change({gear}));
     ok(same(withGear.gear, gear), "a valid gear set normalizes unchanged (order item / name, replica, stat)");
-    ok(same(norm(decode(encode(change({gear})))), withGear), "gear round-trips through export / import");
+    ok(same({ ...norm(decode(encode(change({gear})))), date: "" }, { ...withGear, date: "" }), "gear round-trips through export / import (the import drops the date, user 2026-10-23)");
     ok(same(Array.from(bin(withGear)), Array.from(gc.classGuideBinary(withGear))) && same(norm(fromBin(bin(withGear))), withGear) && same(norm(gc.decode(gc.encode(withGear))), withGear), "gear round-trips through the format 2 code, page and scripts/guide_code.js identical");
     ok(same(norm(fromBin(bin(norm(fixture)))), norm(fixture)) && !("gear" in norm(fixture)), "a guide without gear has no gear key and its code has no gear block (old codes decode unchanged)");
     // support skills (user 2026-10-17): up to two (ids 901-912), a note and a cover icon on one; a guide without them has no support key and no code block
@@ -3493,7 +3499,7 @@ let checkedRsim = 0;
     ok(same(norm(change({title:"",author:"",date:"",gear:{weapon:[{item:"w_cat10"},{item:"w_wlf10"}]}}),{draft:true}).gear, {weapon:[{item:"w_wlf10"}]}), "drafts drop gear the class cannot use (class switched in the editor)");
     // cover icons (user 2026-10-16; up to 5 since 2026-10-17): 1-5 skills of the guide's grid, in order; the codes carry them in an optional 0x49 block, page and script identical
     { const withCover = norm(change({ cover: [102, 101] }));
-      ok(same(withCover.cover, [102, 101]) && same(norm(fromBin(bin(withCover))), withCover) && same(Array.from(bin(withCover)), Array.from(gc.classGuideBinary(withCover))) && same(norm(gc.decode(gc.encode(withCover))), withCover) && same(norm(decode(encode(change({ cover: [102, 101] })))), withCover), "cover icons round-trip through both code formats, page and scripts/guide_code.js identical");
+      ok(same(withCover.cover, [102, 101]) && same(norm(fromBin(bin(withCover))), withCover) && same(Array.from(bin(withCover)), Array.from(gc.classGuideBinary(withCover))) && same(norm(gc.decode(gc.encode(withCover))), withCover) && same({ ...norm(decode(encode(change({ cover: [102, 101] })))), date: "" }, { ...withCover, date: "" }), "cover icons round-trip through both code formats, page and scripts/guide_code.js identical");
       { const five = norm(change({ cover: [113, 101, 102, 103, 111] }));
         ok(same(five.cover, [113, 101, 102, 103, 111]) && same(norm(fromBin(bin(five))), five) && same(norm(gc.decode(gc.encode(five))), five), "five cover icons keep their order through both code formats (page and script)"); }
       rejects(() => norm(change({ cover: [101, 102, 103, 111, 112, 113] })), "reject a sixth cover icon (six real cells of the grid)");
@@ -4648,7 +4654,7 @@ if (gmHtml !== null) {
     const zlib = require("zlib"), gc = require(path.join(__dirname, "guide_code.js")), ag = require(path.join(__dirname, "add_guide.js"));
     const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response });
     vm.runInContext(block, ctx, { filename: GM_REL + " (gm-core)" });
-    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmSameGuide, gmParseGuides, gmSummary, gmFixDate, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
+    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmSameGuide, gmParseGuides, gmSummary, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const throws = (fn) => { try { fn(); return ""; } catch (e) { return String(e.message || e); } };
     const finish = (code) => { const u = gm.gmUnpack(code); return gm.gmFinish(u, u.deflated ? zlib.inflateRawSync(u.bytes) : u.bytes); };
@@ -4669,8 +4675,8 @@ if (gmHtml !== null) {
     ok(same(gm.gmParseGuides(html.replace(/\r\n/g, "\n")).guides.map((x) => x.id), doc.guides.map((x) => x.g.id)), "gmParseGuides reads an LF copy too");
     const views = vm.runInContext("CLASS_GUIDE_VIEWS", sandbox).counts || {}, g0 = doc.guides[0].g;
     ok(same(gm.gmSummary(pg.guides[0].g, pg.views), { id: g0.id, modes: g0.modes || [], title: g0.title, author: g0.author, classKey: g0.build.classKey, server: g0.build.server, level: g0.build.level, date: g0.date || "", views: views[g0.id] || 0 }), "gmSummary gives the list row add_guide.js gives");
-    const day = ag.localToday(), next = new Date(Date.parse(day + "T00:00:00Z") + 864e5).toISOString().slice(0, 10);
-    for (const d of [day, next, "", "2031-07-05"]) { const a = { date: d }, b = { date: d }; ok(ag.fixDate(a) === gm.gmFixDate(b, day) && a.date === b.date, `gmFixDate and fixDate disagree on ${JSON.stringify(d)}`); }
+    const stA = { id: 9, modes: ["pve"], date: "2026-10-23", published: "2026-10-22T17:59:00Z", title: "a", build: { x: 1 } }, stB = { title: "a", build: { x: 1 }, date: "2020-01-01", published: "2020-01-01T00:00:00Z" };
+    ok(ag.sameGuide(stA, stB) && gm.gmSameGuide(stA, stB) && !ag.sameGuide(stA, { ...stB, title: "b" }) && !gm.gmSameGuide(stA, { ...stB, title: "b" }), "a replacement code is compared without the upload stamp (date, published), in add_guide.js and in the page");
     const box = (n) => ({ payload: "x".repeat(n - '{"payload":""}'.length) });
     ok(gm.gmPayloadFits(box(65535)) === true && gm.gmPayloadFits(box(65536)) === false, "gmPayloadFits: 65,535 characters fit, 65,536 do not");
     // GitHub's replies, shaped as the REST API returns them (GET /actions/runs/{id}/jobs, /actions/runs/{id}, /check-runs/{job}/annotations)
