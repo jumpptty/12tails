@@ -4916,6 +4916,20 @@
      convention (align-items:center above) -- Final Damage was already the
      one centered chip in this row before this pass, that part isn't new. */
   .sk-dmg-final-controls{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px}
+  /* Final chip, variant 5 of 5 mocks (user 2026-10-23): the hit count hangs from the top edge as a tab (.sk-dmg-hits-tab), the
+     number reads "5,112 ~ 5,964" (fmtFinalRange: commas, a small muted ~ so the range no longer reads as a subtraction; a long one
+     shrinks to fit, fitFinalValues) and the main Test is a gold bar along the chip's bottom edge. Per-mode Test buttons stay pills. */
+  .sk-dmg-hits-tab{position:absolute; top:0; right:12px; padding:2px 9px 4px; border:1px solid var(--gold); border-top:0; border-radius:0 0 6px 6px; background:var(--gold-soft); font-size:11px; line-height:14px; color:var(--muted); white-space:nowrap; pointer-events:none}
+  .sk-dmg-hits-tab b{font-family:'JetBrains Mono','Prompt',monospace; font-weight:800; font-size:12px; color:var(--gold); margin-right:3px}
+  .sk-range-sep{font-family:'Prompt',sans-serif; font-weight:500; font-size:.55em; color:var(--muted); margin:0 .3em; position:relative; top:-.12em}
+  .sk-dmg-final.has-test-bar{padding-bottom:0}
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls{align-self:stretch; margin:auto -14px 0; padding-top:10px}
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn{position:relative; border-radius:0 0 2px 2px; box-shadow:none; padding:9px 12px; border-top:1px solid rgba(0,0,0,.25)}
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn:active{transform:none; filter:brightness(.94)}
+  /* the first-time glow pulses inside the bar (an opacity layer), since a ring outside it would spill past the chip */
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn.is-new{animation:none}
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn.is-new::after{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; box-shadow:inset 0 0 0 2px rgba(255,246,207,.85), inset 0 0 16px rgba(255,246,207,.5); opacity:0; animation:simBarGlow 1.8s ease-in-out infinite}
+  @keyframes simBarGlow{0%,100%{opacity:0} 50%{opacity:1}}
   /* Enemy preset cycle (2026-08-21) -- relocated here from the Final Damage
      chip's old .sk-enemy-btns row (3 buttons shown at once) into the Enemy
      Stats panel instead, per direct user request: one icon + prev/next
@@ -6355,6 +6369,7 @@
     .sk-dmg-row{gap:8px; margin-top:8px; min-height:118px}
     .sk-dmg{min-height:94px; padding:8px 10px}
     .sk-dmg-final{min-height:118px}
+    .sk-dmg-final.has-test-bar .sk-dmg-final-controls{margin:auto -10px 0; padding-top:8px}
     .sk-controls{padding:6px 10px; gap:8px; margin-bottom:6px}
     .sk-controls input[type=number]{font-size:12px; padding:3px 4px}
     .sk-revisedart img{width:36px; height:36px}
@@ -15395,6 +15410,14 @@ function simulateBtnHtml({ role, kind = "dmg", count = "", title = "", groupInde
   return `<button type="button" class="${cls}" data-role="${role}"${gi} title="${title}">${kind === "heal" ? SIM_ICON_HEAL : SIM_ICON_BLAST}<span>${label}</span>${count ? `<span class="sk-sim-count">×${count} ฮิต</span>` : ""}</button>`;
 }
 
+// Final chip number (user 2026-10-23, variant 5 of 5 mocks): thousands commas and a small muted "~" between the two ends,
+// because "5112–5964" read like a subtraction. A range whose ends match shows one number.
+function fmtFinalRange(range){
+  const one = (v) => parseFloat(Number(v).toFixed(2)).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const a = one(range[0]), b = one(range.length > 1 ? range[1] : range[0]);
+  return a === b ? a : `${a}<span class="sk-range-sep">~</span>${b}`;
+}
+
 const shotTime = (a, b) => Math.min(620, 300 + Math.hypot(b.x - a.x, b.y - a.y) * 0.5);
 // A head and two trailing dots (a small comet) arcing from a to b; onHit runs when the head lands.
 // tone: falsy = gold, true = red, a CSS colour = a white core glowing in that colour.
@@ -15784,6 +15807,17 @@ function mountSkillCooldownLookup(root){
   }
   window.addEventListener("resize", fitDepLabels);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitDepLabels);
+  // Final chip number (user 2026-10-23): a long range ("128,450~196,320") shrinks to fit its chip instead of running past it; 12px floor.
+  function fitFinalValues(){
+    if (typeof getComputedStyle !== "function") return;
+    displayEl.querySelectorAll(".sk-dmg-final .sk-stat-value").forEach(el => {
+      el.style.fontSize = "";
+      let size = parseFloat(getComputedStyle(el).fontSize) || 30;
+      while (el.scrollWidth > el.clientWidth && size > 12){ size -= 0.5; el.style.fontSize = size + "px"; }
+    });
+  }
+  window.addEventListener("resize", fitFinalValues);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitFinalValues);
   // Skill number boxes select their number on focus like the stat inputs, so a click is ready to type over (delegated: the boxes are re-rendered with the card).
   displayEl.addEventListener("focusin", (e) => { const el = e.target; if (el.matches && el.matches("input.sk-current-sp-input, input[data-role=supportLv]")) setTimeout(() => { if (document.activeElement === el) el.select(); }, 0); });
   const classBadgeEl = $('[data-role="class-badge"]', root);
@@ -19610,7 +19644,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       tag.style.setProperty("--dtag-c", atk && c === atk ? SHOT_GOLD : c);
       chip.appendChild(tag);
       const textRects = (e) => { const rg = document.createRange(); rg.selectNodeContents(e); return Array.from(rg.getClientRects()); };
-      const avoid = Array.from(chip.querySelectorAll(".sk-stat-label, .sk-stat-base, button, .sk-ko-badge, .sk-magic-badge"))
+      const avoid = Array.from(chip.querySelectorAll(".sk-stat-label, .sk-stat-base, button, .sk-ko-badge, .sk-magic-badge, .sk-dmg-hits-tab"))
         .filter(e => e.getClientRects().length)
         .flatMap(e => e.matches(".sk-stat-label, .sk-stat-base") ? textRects(e) : [e.getBoundingClientRect()]);
       const put = (spot) => {
@@ -20186,6 +20220,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const same = selected && idSeen === selected.id, carry = same ? pingCarryCapture() : [], tags = same ? dtagCarryCapture() : [];
       renderHeroNow();
       fitDepLabels();
+      fitFinalValues();
       fitStatDials();
       pingCarryApply(carry);
       dtagCarryApply(tags);
@@ -21474,13 +21509,14 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const enemyHitModValue = enemyHitModCalc();
         const finalMultCount = finalMultCountCalc();
         let simulateBtn = "";
+        let finalHitsTab = "";   // the hit count tab on the Final chip's top edge (user 2026-10-23)
         let finalDamageBody = `<p class="sk-dmg-final-hint">Pick a target</p>`;
         if (activeSelected.isHeal || activeSelected.isHate) {
           const finalRange = dmgCalcRange;
           simulateBtn = `
             ${simulateBtnHtml({ role: "simulate-hit", kind: activeSelected.isHate ? "hate" : "heal", title: activeSelected.isHate ? "Test hate transfer" : "Test heal" })}
           `;
-          finalDamageBody = `<div class="sk-stat-value${hueCls(cardHue())}">${fmt(finalRange)}</div>`;
+          finalDamageBody = `<div class="sk-stat-value${hueCls(cardHue())}">${fmtFinalRange(finalRange)}</div>`;
         } else if (selectedEnemy){
           // Full chain (2026-08-16, extended 2026-08-17 with Final
           // Multiplier): raw skill damage -> dmgAdjust (attacker's
@@ -21673,7 +21709,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
                       <p class="sk-dmg-group-label">${gLabel}</p>
                       ${simulateBtnHtml({ role: "simulate-group", groupIndex: gIdx, small: true, title: gSimTitle, count: gHitCount > 1 ? String(gHitCount) : "" })}
                     </div>
-                    <div class="sk-stat-value sk-stat-value-sm${hueCls(groupHue(g))}">${fmt(gTotal)}</div>
+                    <div class="sk-stat-value sk-stat-value-sm${hueCls(groupHue(g))}">${fmtFinalRange(gTotal)}</div>
                   </div>
                 `;
               }).join("")}</div>
@@ -21734,7 +21770,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           // hits a Typhoon click will actually roll -- that's now a genuine
           // simulation outcome, not knowable before clicking, so the title
           // doesn't claim a specific count at all.
-          // Hit count on the Test button: fixed "10", varying "3–5", none for single-hit skills or Typhoon's HP pool.
+          // Hit count on the Final chip's tab (user 2026-10-23; on the Test button before): fixed "10", varying "3–5", none for single-hit skills or Typhoon's HP pool.
           if (activeSelected.dmgGroups && groupVariantChance(activeSelected, rank, LCK) > 0 && !groupVariantForced(activeSelected, rank)){
             const sumFor = (alt) => {
               groupVariantAlt = alt;
@@ -21753,8 +21789,9 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           const simCountLabel = typhoonHp ? "" : activeSelected.dmgGroups ? (simTotalHits > 1 ? String(simTotalHits) : "") : (dmgHitCountMax > 1 ? dmgHitCountLabel.replace("-", "–") : "");
           const simulateTitle = typhoonHp ? "Test (rolls until the HP pool depletes)" : (dmgHitCountMax > 1 ? `Test ${dmgHitCountLabel} hits` : "Test one hit");
           simulateBtn = `
-            ${simulateBtnHtml({ role: "simulate-hit", title: simulateTitle, count: simCountLabel })}
+            ${simulateBtnHtml({ role: "simulate-hit", title: simulateTitle })}
           `;
+          finalHitsTab = simCountLabel ? `<span class="sk-dmg-hits-tab"><b>${simCountLabel}</b>ฮิต</span>` : "";
           // The Simulate popup (single number or multi-hit group) is NOT
           // rendered here at all -- unlike every other popup in this file,
           // it lives entirely in the persistent multiHitLayer (see that
@@ -21764,11 +21801,11 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           // this within the same second). The click handler below builds
           // that group directly, for single- and multi-hit skills alike
           // (2026-08-17, unified) -- nothing to do here on a normal render.
-          // The hit count lives on the Test button now (simulateBtnHtml, 2026-09-24); only Typhoon keeps a note,
+          // The hit count lives on the Final chip's tab (finalHitsTab, 2026-10-23); only Typhoon keeps a note,
           // because its range is "HP pool + one overshoot tick", not N hits summed.
           const finalNote = ""; // user 2026-09-26: no "HP pool + overshoot tick" caption under the Typhoon Test button
           // (The purple range-end tints are retired, user 2026-10-08: the whole number is gold when the hits are mixed, see cardHue.)
-          const finalRangeHtml = fmt(finalRange);
+          const finalRangeHtml = fmtFinalRange(finalRange);
           // splashLine (Bison Colossal Weapon, 2026-10-01): Effect Damage a stage sends to the OTHER targets it did not hit,
           // ceil(pct x the stage's highest hit() return); hit() returns the post-dmgAdjust/defAdjust, pre-hitMod value (CharacterControl.cs:3566-3571).
           // Shown per stage (groups sharing procStage are one stage), before the splashed target's own hitMod. Final / Test stay single-target.
@@ -21804,7 +21841,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         // so it's conditionally spliced in here rather than baked into
         // finalDamageBody the way it used to be).
         dmgFinalChip = `
-          <div class="sk-stat sk-dmg-final">
+          <div class="sk-stat sk-dmg-final${simulateBtn.trim() ? " has-test-bar" : ""}">
+            ${finalHitsTab}
             <div class="sk-dmg-head">
               <div class="sk-dmg-label-row"><p class="sk-stat-label">${activeSelected.isHeal ? "ฮีลจริง" : (activeSelected.isHate ? "ค่า Hate จริง" : "ดาเมจจริง")}</p></div>
               <div class="sk-dmg-toggles"></div>
@@ -21890,12 +21928,12 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         `;
         // Final shield: no DEF step for a shield pool, so (like heals and hate) the final is the raw range; it carries the Test button.
         shieldFinalChip = `
-          <div class="sk-stat sk-dmg-final">
+          <div class="sk-stat sk-dmg-final has-test-bar">
             <div class="sk-dmg-head">
               <div class="sk-dmg-label-row"><p class="sk-stat-label">โล่จริง</p></div>
               <div class="sk-dmg-toggles"></div>
             </div>
-            <div class="sk-stat-value sk-hue-shield">${fmt(shieldCalcRange)}</div>
+            <div class="sk-stat-value sk-hue-shield">${fmtFinalRange(shieldCalcRange)}</div>
             <div class="sk-dmg-final-controls">
               ${simulateBtnHtml({ role: "simulate-hit", kind: "shield", title: "Test shield" })}
             </div>
@@ -32082,6 +32120,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T08:30:15.162Z","style(bible): the Final damage box reads 5,112 ~ 5,964, shows its hit count as a tab on top and Test as a gold bar along the bottom"],
     ["2026-10-23T08:14:36.939Z","feat(bible): TTO Flame Turret can be ended early by pressing the skill again (today's TTO patch)"],
     ["2026-10-23T08:11:00.476Z","style(bible): the ☕ fly-home ball is smaller and stays visible over busy page details"],
     ["2026-10-23T08:06:46.043Z","feat(bible): closing the ☕ pop-up turns it into a light ball that flies back into the ☕ button"],

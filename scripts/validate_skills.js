@@ -1649,7 +1649,9 @@ let checkedEffectProc = 0;
   Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
 }
 // 3n. Test button (2026-09-24 redesign): Thai labels per kind, starburst vs cross icon, "×N ฮิต" count only when
-// there is one, the small per-mode variant, and the rendered main button on a multi-hit card.
+// there is one, the small per-mode variant, and the rendered main button on a multi-hit card. Final chip (user 2026-10-23,
+// variant 5 of 5 mocks): the main Test is a bar along the chip's bottom (has-test-bar) with no count of its own, the hit
+// count is the chip's top tab, and the number reads "5,112 ~ 5,964" (fmtFinalRange).
 let checkedTestBtn = 0;
 {
   const check = (label, ok) => { checkedTestBtn++; if (!ok) { console.error(`[TEST BUTTON ERROR] ${label}`); errorCount++; } };
@@ -1666,7 +1668,17 @@ let checkedTestBtn = 0;
   const sk = SKILLS.find(s => s.id === "whale_peninsulaImpale");
   sandbox._skillRanks[sk.id] = sk.maxRank; sandbox._selectSkill(sk);
   const hero = sandbox._getRenderedHeroHtml();
-  check("a multi-hit card renders the main Test button with its hit count", hero.includes('data-role="simulate-hit"') && hero.includes("×10 ฮิต"));
+  const fin = hero.slice(hero.indexOf("sk-stat sk-dmg-final"));
+  check("a multi-hit card renders the main Test button as the Final chip's bar", fin.startsWith("sk-stat sk-dmg-final has-test-bar") && fin.includes('data-role="simulate-hit"'));
+  const btnAt = fin.indexOf('data-role="simulate-hit"'), mainBtn = fin.slice(btnAt, fin.indexOf("</button>", btnAt));
+  check("the hit count sits on the Final chip's tab, not on the main Test button", fin.includes('<span class="sk-dmg-hits-tab"><b>10</b>ฮิต</span>') && btnAt > 0 && !mainBtn.includes("sk-sim-count"));
+  const f = sandbox.fmtFinalRange;
+  check("Final range reads 5,112 ~ 5,964 with a muted separator", f([5112, 5964]) === '5,112<span class="sk-range-sep">~</span>5,964');
+  check("Final range with equal ends or one value shows one number", f([4500, 4500]) === "4,500" && f([12.5]) === "12.5" && f([128450, 196320]) === '128,450<span class="sk-range-sep">~</span>196,320');
+  const healSk = SKILLS.find(s => s.isHeal && s.dmg);
+  if (healSk){ sandbox._skillRanks[healSk.id] = healSk.maxRank || 1; sandbox._selectSkill(healSk); const hh = sandbox._getRenderedHeroHtml(); const hf = hh.slice(hh.indexOf("sk-stat sk-dmg-final"));
+    check(`a heal card (${healSk.id}) has the Test bar and no hit tab`, hh.includes("sk-stat sk-dmg-final") && hf.startsWith("sk-stat sk-dmg-final has-test-bar") && !hf.includes("sk-dmg-hits-tab")); }
+  else check("a heal card exists for the Test bar check", false);
 }
 console.log(`Verified ${checkedTestBtn} Test button checks.`);
 // 3o. Over Swing's Over Power dep feeds the stat panel ATK: min(ceil(0.5 × Lv × ATK), 256 × Lv) (Bison.cs:24764);
