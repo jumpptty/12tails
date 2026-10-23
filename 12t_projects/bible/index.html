@@ -1581,6 +1581,45 @@
   .donate-row-date{color:var(--muted); font-size:12px}
   .donate-row-msg{margin:3px 0 0; color:var(--muted); font-size:13px; line-height:1.55; overflow-wrap:anywhere}
   .donate-empty{color:var(--muted); font-size:13px}
+  /* big screens (user 2026-10-23: the ☕ pop-up's text was too small there): the hub's own steps, 1800 × 1100 and 2400 × 1300; font sizes, not zoom (the pop-up's height is in dvh) */
+  @media (min-width:1800px) and (min-height:1100px){
+    .donate-main{max-width:720px}
+    .donate-main .donate-head-title{font-size:17px}
+    .donate-main .donate-head-icon{font-size:19px}
+    .donate-main .donate-msg{font-size:18px}
+    .donate-main .donate-tab{font-size:15px; padding:10px 12px}
+    .donate-main .donate-btn{font-size:16px}
+    .donate-main .donate-intro{font-size:17px}
+    .donate-main .donate-field{font-size:15px}
+    .donate-main .donate-form input, .donate-main .donate-form textarea{font-size:16px}
+    .donate-main .donate-form input[type="file"]{font-size:15px}
+    .donate-main .donate-status{font-size:15px}
+    .donate-main .donate-note, .donate-main .donate-qr-missing{font-size:14px}
+    .donate-main .donate-list-box{padding:16px 18px}
+    .donate-main .donate-row{padding:11px 0}
+    .donate-main .donate-row-name, .donate-main .donate-row-amt{font-size:18px}
+    .donate-main .donate-row-date, .donate-main .donate-row-count{font-size:14px}
+    .donate-main .donate-row-msg, .donate-main .donate-empty{font-size:16px}
+  }
+  @media (min-width:2400px) and (min-height:1300px){
+    .donate-main{max-width:820px}
+    .donate-main .donate-head-title{font-size:19px}
+    .donate-main .donate-head-icon{font-size:21px}
+    .donate-main .donate-msg{font-size:20px}
+    .donate-main .donate-tab{font-size:17px; padding:11px 14px}
+    .donate-main .donate-btn{font-size:17px}
+    .donate-main .donate-intro{font-size:19px}
+    .donate-main .donate-field{font-size:16px}
+    .donate-main .donate-form input, .donate-main .donate-form textarea{font-size:17px}
+    .donate-main .donate-form input[type="file"]{font-size:16px}
+    .donate-main .donate-status{font-size:16px}
+    .donate-main .donate-note, .donate-main .donate-qr-missing{font-size:15px}
+    .donate-main .donate-list-box{padding:18px 22px}
+    .donate-main .donate-row{padding:13px 0}
+    .donate-main .donate-row-name, .donate-main .donate-row-amt{font-size:20px}
+    .donate-main .donate-row-date, .donate-main .donate-row-count{font-size:15px}
+    .donate-main .donate-row-msg, .donate-main .donate-empty{font-size:18px}
+  }
   @media (max-width:560px){
     #donateModal{padding:10px}
     .donate-main{padding:14px; gap:12px; max-height:calc(100vh - 20px); max-height:calc(100dvh - 20px)}
@@ -32039,6 +32078,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T07:49:25.837Z","style(bible): ☕ pop-up text grows on large screens (the hub's 1800 × 1100 and 2400 × 1300 steps)"],
     ["2026-10-23T07:21:57.003Z","feat(bible): class guide #71 TTO Monkey ลิงไฟ PVE ไปได้ทุกที่ แม้ที่ที่ไม่มีเธอ by Oty"],
     ["2026-10-23T07:14:55.216Z","fix(bible): ☕ pop-up intro is one line (ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา 12 Tails Bible) and switching tabs no longer moves the pop-up"],
     ["2026-10-23T07:04:30.647Z","fix(bible): ☕ tab arrow keys no longer switch the skill behind the pop-up"],
