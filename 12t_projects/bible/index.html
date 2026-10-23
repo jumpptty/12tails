@@ -1485,6 +1485,8 @@
 
   /* ---- Donate Modal ---- */
   .donate-backdrop[hidden]{display:none !important}
+  /* closing the pop-up: its frame shrinks into a glowing point, then fireShot's light ball flies into the ☕ button (user 2026-10-23) */
+  .donate-fly-ghost{position:fixed; z-index:9998; pointer-events:none; border:1px solid var(--gold); border-radius:8px; background:rgba(255,214,102,.08); box-shadow:0 0 18px 4px rgba(255,214,102,.3)}
   .donate-backdrop{
     position:fixed; inset:0; z-index:100000;
     background:rgba(0,0,0,.82);
@@ -32077,6 +32079,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T08:06:46.043Z","feat(bible): closing the ☕ pop-up turns it into a light ball that flies back into the ☕ button"],
     ["2026-10-23T07:56:02.916Z","feat(bible): the ☕ pop-up opens by itself once per device, unless another pop-up is already up"],
     ["2026-10-23T07:49:25.837Z","style(bible): ☕ pop-up text grows on large screens (the hub's 1800 × 1100 and 2400 × 1300 steps)"],
     ["2026-10-23T07:21:57.003Z","feat(bible): class guide #71 TTO Monkey ลิงไฟ PVE ไปได้ทุกที่ แม้ที่ที่ไม่มีเธอ by Oty"],
@@ -32703,8 +32706,28 @@ function openDonateModal() {
 
 function closeDonateModal() {
   if (!donateModal) return;
+  const pop = donateModal.hidden ? null : donateModal.querySelector(".donate-main");
+  const from = pop && pop.getBoundingClientRect ? pop.getBoundingClientRect() : null;
   donateModal.hidden = true;
   document.body.style.overflow = "";
+  if (from && from.width) donateFlyHome(from);
+}
+
+// The closed pop-up turns into a light ball that flies back into the ☕ button (user 2026-10-23): its frame shrinks into a glowing point at
+// its centre, then the skill page's light ball (fireShot, gold, a size up) arcs to the button, which flashes as the ball lands.
+function donateFlyHome(from) {
+  const to = btnDonate && btnDonate.getBoundingClientRect ? btnDonate.getBoundingClientRect() : null;
+  if (!to || !to.width || !document.body.animate) return;
+  const a = { x: from.left + from.width / 2, y: from.top + from.height / 2 }, b = { x: to.left + to.width / 2, y: to.top + to.height / 2 };
+  const ghost = document.createElement("div");
+  ghost.className = "donate-fly-ghost";
+  Object.assign(ghost.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px" });
+  document.body.appendChild(ghost);
+  ghost.animate([{ transform: "scale(1)", opacity: 1, borderRadius: "8px" }, { transform: "scale(.04)", opacity: .9, borderRadius: "50%" }],
+    { duration: 160, easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" }).onfinish = () => ghost.remove();
+  setTimeout(() => fireShot(a, b, false, () => btnDonate.animate(
+    [{ transform: "scale(1)", filter: "brightness(1)" }, { transform: "scale(1.3)", filter: "brightness(1.8)" }, { transform: "scale(1)", filter: "brightness(1)" }],
+    { duration: 280, easing: "ease-out" }), document.body, 2.2), 120);
 }
 
 if (btnDonate) btnDonate.addEventListener("click", openDonateModal);

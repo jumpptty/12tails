@@ -3839,6 +3839,10 @@ async function donateChildTests(env) {
     && /function donateAutoBlocked\(\) \{[^\n]*\n[^\n]*\[aria-modal="true"\]:not\(\[hidden\]\):not\(#donateModal\), \.sg-gate\.open, dialog\[open\]/.test(html)
     && /elementsFromPoint\(w \/ 2, h \/ 2\)/.test(html) && (html.match(/^donateAutoOnce\(\);\r?$/gm) || []).length === 1,
     "the ☕ pop-up must open by itself once per device (DONATE_AUTO_KEY, set on every open) and stand down while another pop-up is up (donateAutoBlocked: aria-modal, .sg-gate.open, dialog[open], a full-screen layer)");
+  // closing it turns it into a light ball that flies back into the ☕ button (user 2026-10-23): closeDonateModal → donateFlyHome → fireShot to btnDonate
+  ok(/function closeDonateModal\(\) \{[\s\S]*?donateFlyHome\(from\);[\s\S]*?\n\}/.test(html)
+    && /function donateFlyHome\(from\) \{[\s\S]*?btnDonate[\s\S]*?fireShot\(a, b, false,[\s\S]*?\n\}/.test(html) && /\.donate-fly-ghost\{position:fixed;/.test(html),
+    "closing the ☕ pop-up must fly a light ball into the ☕ button (closeDonateModal → donateFlyHome → fireShot to btnDonate, .donate-fly-ghost)");
   // the three tabs (user 2026-10-23: the slip form and the donor list each get a tab, so they never crowd the QR card): role tab / tabpanel,
   // in this order, QR โอนเงิน selected in the markup; each panel holds its part (QR card, slip form with its intro and note, donor list)
   {
