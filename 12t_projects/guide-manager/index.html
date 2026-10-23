@@ -253,7 +253,7 @@
       </section>
       <section class="card donor-sec" id="donorCard">
         <h2>เพิ่มผู้สนับสนุน</h2>
-        <p class="dn-from" id="dnFrom" hidden>ข้อมูลจากลิงก์อนุมัติ ตรวจยอดและเวลากับแอปธนาคารก่อนใส่ในรายการ</p>
+        <p class="dn-from" id="dnFrom" hidden>ข้อมูลจากลิงก์อนุมัติ กรอกยอดและวันเวลาจากสลิป</p>
         <label class="fld"><span>ชื่อที่จะแสดง</span><input id="dnName" type="text" autocomplete="off" spellcheck="false"></label>
         <label class="fld"><span>ข้อความ (ไม่บังคับ)</span><textarea id="dnText" rows="2"></textarea></label>
         <div class="fld-row"><label class="fld"><span>ยอดเงิน (บาท)</span><input class="n-in" id="dnAmount" type="number" step="0.01" min="0" inputmode="decimal"></label><label class="fld"><span>วันและเวลาที่โอน (เวลาไทย)</span><input class="n-in" id="dnDate" type="datetime-local"></label></div>
@@ -477,13 +477,20 @@ function gmThaiMs(s){
   const same = t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d && t.getUTCHours() === h && t.getUTCMinutes() === mi;
   return same ? t.getTime() - 7 * 3600000 : NaN;
 }
-function gmCheckDonation(d, now = new Date()){
+// checkSlipDetails: the name and message a donor sends with the slip (user 2026-10-23: the owner types the amount and date from the slip)
+function gmCheckSlipDetails(d){
   d = d || {};
   const name = typeof d.name === "string" ? gmClean(d.name) : "", msg = typeof d.msg === "string" ? gmClean(d.msg) : (d.msg == null ? "" : null);
   if (!name) throw new Error("กรุณาใส่ชื่อ");
   if (gmLen(name) > GM_DONOR_LIMITS.name) throw new Error("ชื่อยาวเกิน " + GM_DONOR_LIMITS.name + " ตัวอักษร");
   if (msg === null) throw new Error("ข้อความไม่ถูกต้อง");
   if (gmLen(msg) > GM_DONOR_LIMITS.msg) throw new Error("ข้อความยาวเกิน " + GM_DONOR_LIMITS.msg + " ตัวอักษร");
+  return { name, msg };
+}
+// checkDonation: a whole donation as it is queued and published
+function gmCheckDonation(d, now = new Date()){
+  d = d || {};
+  const { name, msg } = gmCheckSlipDetails(d);
   const a = d.amount;
   if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > GM_DONOR_LIMITS.amountMax || Math.abs(a * 100 - gmSatang(a)) > 1e-6)
     throw new Error("ยอดเงินต้องมากกว่า 0 และไม่เกิน " + GM_DONOR_LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)");
@@ -516,16 +523,33 @@ function gmGroupDonors(donations){
   return [...by.values()].sort((a, b) => b.sat - a.sat || (a.first < b.first ? -1 : a.first > b.first ? 1 : 0))
     .map((r) => ({ id: r.id, name: r.name, msg: r.msg, total: r.sat / 100, count: r.count, date: r.date, first: r.first }));
 }
-// The อนุมัติ link's "#donor=<base64url of the UTF-8 JSON { name, msg, amount, date }>" -> that object, or null. Untrusted: anyone can make
-// such a link, so the caller runs gmCheckDonation on it and escapes what it shows.
+// fromFragment: the อนุมัติ link's "#donor=<base64url of the UTF-8 JSON { name, msg }>" -> { name, msg } plus the amount and / or date an
+// older link carried (the first slips' links had all four), or null. Untrusted: anyone can make such a link, so gmDonorFromLink checks it
+// and the page escapes what it shows.
 function gmFromFragment(hash){
   const m = String(hash || "").replace(/^#/, "").match(/^donor=([A-Za-z0-9_-]+)$/);
   if (!m) return null;
+  let d;
   try {
     let b = m[1].replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
-    const bin = atob(b), d = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
-    return d && typeof d === "object" && !Array.isArray(d) ? d : null;
+    const bin = atob(b);
+    d = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
   } catch (e){ return null; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return null;
+  const out = { name: d.name, msg: d.msg }, has = (k) => Object.prototype.hasOwnProperty.call(d, k);
+  if (has("amount")) out.amount = d.amount;
+  if (has("date")) out.date = d.date;
+  return out;
+}
+// What an อนุมัติ link fills in the donor card: the name and message checked like a slip (gmCheckSlipDetails), plus the amount and date
+// only when an older link carried both and they pass gmCheckDonation; otherwise those two stay empty for the owner to type from the slip.
+// Throws the Thai reason when the link cannot be read or its name or message is refused (then nothing is filled).
+function gmDonorFromLink(hash, now = new Date()){
+  const d = gmFromFragment(hash);
+  if (!d) throw new Error("อ่านข้อมูลในลิงก์ไม่ได้ (ลิงก์ไม่ครบหรือถูกแก้)");
+  const out = gmCheckSlipDetails(d);
+  if ("amount" in d || "date" in d){ try { const full = gmCheckDonation(d, now); out.amount = full.amount; out.date = full.date; } catch (e){ /* typed from the slip instead */ } }
+  return out;
 }
 // The donors (gmGroupDonors rows) whose latest name is this one, trimmed and case-insensitive: a repeat donor to offer "เพิ่มให้".
 const gmDonorKey = (name) => gmClean(name).toLowerCase();
@@ -958,20 +982,29 @@ $("#dnList").addEventListener("click", (e) => {
   const x = dnPublished().find((t) => t.k === b.dataset.k); if (!x) return;
   setQueue([...queue, { action: "donor-remove", k: x.k, name: x.name, amount: x.amount, date: x.date }]);
 });
-// The อนุมัติ link: #donor=<base64url JSON of { name, msg, amount, date }> (scripts/donors.js donorFragment). It is checked like a typed donation
-// and fills nothing when it fails; either way it is taken out of the address, so a reload or a saved shortcut does not bring it back.
+// The อนุมัติ link: #donor=<base64url JSON of { name, msg }> (scripts/donors.js donorFragment). gmDonorFromLink checks the name and message
+// like a slip and fills nothing when they fail. Since 2026-10-23 a donor sends no amount or date: the card leaves both empty (not now) with
+// the focus on the amount, for the owner to type from the slip; an older link that still carries a good amount and date fills them too.
+// Either way the link is taken out of the address, so a reload or a saved shortcut does not bring it back.
 function dnFromLink(){
   if (!/^#donor=/.test(location.hash)) return;
-  const d = gmFromFragment(location.hash);
+  const hash = location.hash;
   history.replaceState(null, "", location.pathname + location.search);
   dnReset();
   let ok = null;
-  try { if (!d) throw new Error("อ่านข้อมูลในลิงก์ไม่ได้ (ลิงก์ไม่ครบหรือถูกแก้)"); ok = gmCheckDonation(d); }
+  try { ok = gmDonorFromLink(hash); }
   catch (e){ dn.err = "ลิงก์อนุมัตินี้ใช้ไม่ได้: " + e.message; }
-  if (ok){ $("#dnName").value = ok.name; $("#dnText").value = ok.msg; $("#dnAmount").value = String(ok.amount); $("#dnDate").value = ok.date; $("#dnFrom").hidden = false; }
+  const typed = !!ok && ok.amount !== undefined;   // an older link: the amount and date came with it
+  if (ok){
+    $("#dnName").value = ok.name; $("#dnText").value = ok.msg;
+    $("#dnAmount").value = typed ? String(ok.amount) : ""; $("#dnDate").value = typed ? ok.date : "";
+    $("#dnFrom").textContent = typed ? "ข้อมูลจากลิงก์อนุมัติ ตรวจยอดและเวลากับแอปธนาคารก่อนใส่ในรายการ" : "ข้อมูลจากลิงก์อนุมัติ กรอกยอดและวันเวลาจากสลิป";
+    $("#dnFrom").hidden = false;
+  }
   showTab("donors");
   if (matchMedia("(min-width: 761px)").matches) $("#donorCard").scrollIntoView({ block: "start" });   // the wide layout has no tabs
   dnSync();
+  if (ok && !typed) $("#dnAmount").focus({ preventScroll: true });
 }
 window.addEventListener("hashchange", dnFromLink);
 window.addEventListener("focus", () => { if (!running && !$(".app").classList.contains("needs-key")) load(); });

@@ -1,11 +1,13 @@
 // The ☕ slip Worker: checks a donor's form and forwards it to a private Discord channel. Nothing is stored.
 // The webhook URL lives only in the Worker secret DISCORD_WEBHOOK_URL.
-import { LIMITS, checkDonation, donorFragment } from "../../../scripts/donors.js";
+// The form is the display name, an optional message and the slip (user 2026-10-23): the owner reads the amount and the transfer time off
+// the slip and types them into the guide manager. An "amount" or "date" field (a page cached from before) is ignored.
+import { LIMITS, checkSlipDetails, donorFragment } from "../../../scripts/donors.js";
 
 const SITE = "https://jumpptty.github.io";
 const MANAGER = SITE + "/12tails/12t_projects/guide-manager/";
 const ORIGINS = [SITE, "null"];   // "null": a double-clicked local copy of the page
-const FIELDS = ["name", "msg", "amount", "date"];   // the order checkDonation looks at them
+const FIELDS = ["name", "msg"];   // the order checkSlipDetails looks at them
 // file extensions only; which types are allowed comes from LIMITS.slipTypes
 const TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
@@ -26,11 +28,11 @@ function answer(status, body, origin){
   return new Response(JSON.stringify(body), { status, headers });
 }
 
-// which field checkDonation refused: test each one alone against known-good values
-function badField(d, now){
-  const ok = { name: "a", msg: "", amount: 1, date: new Date(now.getTime() + 7 * 3600000).toISOString().slice(0, 16) };
+// which field checkSlipDetails refused: test each one alone against known-good values
+function badField(d){
+  const ok = { name: "a", msg: "" };
   for (const f of FIELDS){
-    try { checkDonation({ ...ok, [f]: d[f] }, now); } catch (e){ return f; }
+    try { checkSlipDetails({ ...ok, [f]: d[f] }); } catch (e){ return f; }
   }
   return FIELDS[0];
 }
@@ -53,15 +55,13 @@ export async function handleSlip(request, env, deps){
   try { form = await request.formData(); } catch (e){ return answer(400, { ok: false, error: "missing" }, origin); }
 
   const text = (k) => { const v = form.get(k); return typeof v === "string" ? v : null; };
-  const slip = form.get("slip"), amountText = text("amount");
-  if (text("name") === null || text("date") === null || amountText === null || amountText.trim() === "" || !slip || typeof slip === "string")
-    return answer(400, { ok: false, error: "missing" }, origin);
+  const slip = form.get("slip");
+  if (text("name") === null || !slip || typeof slip === "string") return answer(400, { ok: false, error: "missing" }, origin);
 
-  const raw = { name: text("name"), msg: text("msg") || "", amount: Number(amountText), date: text("date") };
-  const now = deps.now();
+  const raw = { name: text("name"), msg: text("msg") || "" };
   let d;
-  try { d = checkDonation(raw, now); }
-  catch (e){ return answer(400, { ok: false, error: "invalid", field: badField(raw, now), message: e.message }, origin); }
+  try { d = checkSlipDetails(raw); }
+  catch (e){ return answer(400, { ok: false, error: "invalid", field: badField(raw), message: e.message }, origin); }
 
   if (!LIMITS.slipTypes.includes(slip.type)) return answer(400, { ok: false, error: "file-type" }, origin);
   if (slip.size > LIMITS.slipBytes) return answer(413, { ok: false, error: "file-size" }, origin);
@@ -73,10 +73,9 @@ export async function handleSlip(request, env, deps){
     content: "**[อนุมัติ](" + MANAGER + "#" + donorFragment(d) + ")**",
     embeds: [{
       title: "สลิปใหม่",
+      description: "ดูยอดและวันเวลาที่โอนจากสลิป แล้วกรอกเองในหน้าอนุมัติ",
       fields: [
         { name: "ชื่อ", value: escapeMd(d.name) },
-        { name: "ยอด", value: d.amount.toLocaleString("en-US") + " บาท" },
-        { name: "วันเวลาที่โอน", value: d.date.replace("T", " ") + " (เวลาไทย)" },
         { name: "ข้อความ", value: d.msg ? escapeMd(d.msg) : "-" },
       ],
       image: { url: "attachment://" + filename },

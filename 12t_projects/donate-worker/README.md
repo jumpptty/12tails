@@ -1,6 +1,6 @@
 # 12tails-donate: the ☕ slip Worker
 
-A tiny Cloudflare Worker. A donor fills in the form in the Bible's ☕ pop-up (display name, message, amount, date, slip image). The page sends it to this Worker (`POST /slip`), the Worker checks it and posts it to your private Discord channel through a webhook. The post carries the slip, the details and an **อนุมัติ** link that opens the guide manager with the donation already filled in. Nothing is stored anywhere.
+A tiny Cloudflare Worker. A donor fills in the form in the Bible's ☕ pop-up (display name, an optional message, the slip image). The page sends it to this Worker (`POST /slip`), the Worker checks it and posts it to your private Discord channel through a webhook. The post carries the slip, the name and message, and an **อนุมัติ** link that opens the guide manager with the name and message filled in; you read the amount and the transfer time off the slip and type them into the card there. Nothing is stored anywhere.
 
 The Discord webhook URL is a secret: it exists only as the Worker secret `DISCORD_WEBHOOK_URL`, never in a file of this repo.
 
@@ -42,8 +42,9 @@ To change the code later, run `npx wrangler deploy` again; the secret stays.
 
 - Only requests from `https://jumpptty.github.io` (and `null`, a double-clicked local copy of the page); any other origin gets 403 `origin`.
 - 2 requests per minute per IP (Workers Rate Limiting binding `SLIP_LIMIT`, set in `wrangler.toml`), otherwise 429 `rate`.
-- The limits in `scripts/donors.js`: name 1-40 characters, message up to 200, amount above 0 and up to 1,000,000 baht, date from 2020-01-01 to tomorrow, slip a JPEG, PNG or WebP up to 5 MB (the file's first bytes are checked too).
-- Answers are JSON: `{ "ok": true }` or `{ "ok": false, "error": ... }` with `error` one of `origin`, `method`, `missing`, `invalid` (plus `field` and a Thai `message`), `file-type`, `file-size`, `rate`, `discord`.
+- Three form fields: `name` (required), `msg` (optional) and `slip` (required). An `amount` or `date` field, sent by a page cached from before 2026-10-23, is ignored.
+- The limits in `scripts/donors.js` (`checkSlipDetails`): name 1-40 characters, message up to 200, slip a JPEG, PNG or WebP up to 5 MB (the file's first bytes are checked too).
+- Answers are JSON: `{ "ok": true }` or `{ "ok": false, "error": ... }` with `error` one of `origin`, `method`, `missing`, `invalid` (plus `field`, `name` or `msg`, and a Thai `message`), `file-type`, `file-size`, `rate`, `discord`.
 
 ## Android note
 

@@ -25,13 +25,22 @@ function thaiMs(s){
   return same ? t.getTime() - 7 * 3600000 : NaN;
 }
 
-function checkDonation(d, now = new Date()){
+// What a donor sends with the slip (user 2026-10-23: only the display name and the message; the owner reads the amount and the transfer time
+// off the slip): { name, msg } cleaned, or an Error with the Thai reason. checkDonation uses it for these two fields, so the rules exist once.
+function checkSlipDetails(d){
   d = d || {};
   const name = typeof d.name === "string" ? clean(d.name) : "", msg = typeof d.msg === "string" ? clean(d.msg) : (d.msg == null ? "" : null);
   if (!name) throw new Error("กรุณาใส่ชื่อ");
   if (len(name) > LIMITS.name) throw new Error("ชื่อยาวเกิน " + LIMITS.name + " ตัวอักษร");
   if (msg === null) throw new Error("ข้อความไม่ถูกต้อง");
   if (len(msg) > LIMITS.msg) throw new Error("ข้อความยาวเกิน " + LIMITS.msg + " ตัวอักษร");
+  return { name, msg };
+}
+
+// A whole donation as it is published (name, message, the amount and the transfer time the owner typed from the slip).
+function checkDonation(d, now = new Date()){
+  d = d || {};
+  const { name, msg } = checkSlipDetails(d);
   const a = d.amount;
   if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > LIMITS.amountMax || Math.abs(a * 100 - satang(a)) > 1e-6)
     throw new Error("ยอดเงินต้องมากกว่า 0 และไม่เกิน " + LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)");
@@ -73,24 +82,33 @@ function groupDonors(donations){
     .map((r) => ({ id: r.id, name: r.name, msg: r.msg, total: r.sat / 100, count: r.count, date: r.date, first: r.first }));
 }
 
+// The อนุมัติ link's fragment: "donor=<base64url of the UTF-8 JSON { name, msg }>" (the amount and date come off the slip, typed by the owner).
 const donorFragment = (d) => {
-  const bytes = new TextEncoder().encode(JSON.stringify({ name: d.name, msg: d.msg, amount: d.amount, date: d.date }));
+  const bytes = new TextEncoder().encode(JSON.stringify({ name: d.name, msg: d.msg }));
   let bin = ""; bytes.forEach((b) => { bin += String.fromCharCode(b); });
   return "donor=" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
+// a fragment -> { name, msg } plus the amount and / or date an older link carried (the first slips' links had all four), or null for garbage.
+// Untrusted (anyone can make such a link): the caller still checks every value.
 function fromFragment(hash){
   const m = String(hash || "").replace(/^#/, "").match(/^donor=([A-Za-z0-9_-]+)$/);
   if (!m) return null;
+  let d;
   try {
     let b = m[1].replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
-    const bin = atob(b), d = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
-    return d && typeof d === "object" && !Array.isArray(d) ? d : null;
+    const bin = atob(b);
+    d = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
   } catch (e){ return null; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return null;
+  const out = { name: d.name, msg: d.msg }, has = (k) => Object.prototype.hasOwnProperty.call(d, k);
+  if (has("amount")) out.amount = d.amount;
+  if (has("date")) out.date = d.date;
+  return out;
 }
 
 function selftest(){
   const assert = require("assert");
-  const { LIMITS, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment } = module.exports;
+  const { LIMITS, checkSlipDetails, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment } = module.exports;
   const now = new Date("2026-10-23T08:00:00Z");
   const base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" };
   const ok = (d) => checkDonation({ ...base, ...d }, now);
@@ -138,15 +156,45 @@ function selftest(){
       assert.deepStrictEqual(g[1], { id: "A", name: "new", msg: "hi", total: 150, count: 2, date: "2026-10-05T10:00", first: "2026-10-02T10:00" });
       assert.strictEqual(groupDonors([d("C", "c", "", 0.1, "2026-10-01T00:00"), d("C", "c", "", 0.2, "2026-10-02T00:00")])[0].total, 0.3);
     },
-    "fragment round trip"(){
-      const d = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #", amount: 12.5, date: "2026-10-23T14:05" };
+    "checkSlipDetails: the name and message rules only"(){
+      const sd = (d) => checkSlipDetails(d), badSd = (d, re) => assert.throws(() => sd(d), re);
+      assert.deepStrictEqual(sd({ name: "  ก้อง\n 🐱 ", msg: "a\r\n\r\n b" }), { name: "ก้อง 🐱", msg: "a b" });
+      assert.deepStrictEqual(sd({ name: "A" }), { name: "A", msg: "" });
+      // amount and date are not its business: whatever they hold, only { name, msg } comes back
+      assert.deepStrictEqual(sd({ name: "A", msg: "", amount: "abc", date: 5 }), { name: "A", msg: "" });
+      assert.strictEqual(sd({ name: "🐱".repeat(40) }).name.length, 80);
+      badSd({ name: "🐱".repeat(41) }, /40/);
+      badSd({ name: " \n " }, /ชื่อ/);
+      badSd(null, /ชื่อ/);
+      badSd({ name: 5 }, /ชื่อ/);
+      assert.strictEqual([...sd({ name: "A", msg: "ก".repeat(200) }).msg].length, 200);
+      badSd({ name: "A", msg: "ก".repeat(201) }, /200/);
+      badSd({ name: "A", msg: 5 }, /ข้อความไม่ถูกต้อง/);
+      // the same Thai messages as checkDonation, which uses it for these two fields
+      const msgOf = (fn, d) => { try { fn(d); return "ok"; } catch (e){ return e.message; } };
+      [{ name: "" }, { name: "🐱".repeat(41) }, { name: "A", msg: null }, { name: "A", msg: 5 }, { name: "A", msg: "ก".repeat(201) }]
+        .forEach((d) => assert.strictEqual(msgOf(sd, d), msgOf((x) => checkDonation({ ...base, ...x }, now), d)));
+    },
+    "fragment round trip: name and message only"(){
+      const d = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #" };
       const f = donorFragment(d);
       assert.ok(/^donor=[A-Za-z0-9_-]+$/.test(f));
       assert.deepStrictEqual(fromFragment("#" + f), d);
       assert.deepStrictEqual(fromFragment(f), d);
-      assert.strictEqual(fromFragment("#donor=@@@"), null);
-      assert.strictEqual(fromFragment("#x=1"), null);
-      assert.strictEqual(fromFragment(""), null);
+      // a whole donation in gives only its name and message back: the amount and date are read off the slip by the owner
+      assert.deepStrictEqual(fromFragment(donorFragment({ ...d, amount: 12.5, date: "2026-10-23T14:05" })), d);
+    },
+    "an older 4-field link still decodes"(){
+      const old = (o) => "#donor=" + Buffer.from(JSON.stringify(o), "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const four = { name: "ก้อง 🐱", msg: "ขอบคุณครับ", amount: 50, date: "2026-10-23T14:05" };
+      assert.deepStrictEqual(fromFragment(old(four)), four);
+      assert.deepStrictEqual(fromFragment(old({ name: "A", msg: "", amount: 5 })), { name: "A", msg: "", amount: 5 });
+      assert.deepStrictEqual(fromFragment(old({ date: "2026-10-23T14:05", msg: "m", name: "A", x: 1 })), { name: "A", msg: "m", date: "2026-10-23T14:05" });
+    },
+    "fromFragment gives null for garbage"(){
+      const raw = (s) => "#donor=" + Buffer.from(s, "latin1").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      ["#donor=@@@", "#x=1", "", null, "#donor=", raw("[1,2]"), raw('"text"'), raw("null"), raw("{bad json"), raw('{"name":"\xff"}')]
+        .forEach((h) => assert.strictEqual(fromFragment(h), null, String(h)));
     },
     "newKey"(){
       const s = new Set();
@@ -164,5 +212,5 @@ function selftest(){
   console.log("donors selftest: all checks passed (" + n + ")");
 }
 
-module.exports = { LIMITS, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment };
+module.exports = { LIMITS, checkSlipDetails, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment };
 if (require.main === module && process.argv.includes("--selftest")) selftest();

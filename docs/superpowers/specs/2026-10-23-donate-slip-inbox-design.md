@@ -10,7 +10,7 @@ Donors who want to be thanked by name can also send their slip from the pop-up. 
 
 - The ☕ pop-up: a thank-you text asking for support toward **development cost and future server cost**, the user's QR code, one **download** button for it, the optional slip form, and the donor list.
 - Giving money takes three steps and stays inside the Bible: tap ☕, download the QR, pay in the bank app.
-- Being listed is optional. The donor fills in a display name, a message, the amount and the date and time of the transfer, attaches the slip, and sends.
+- Being listed is optional. The donor fills in a display name and a message, attaches the slip, and sends (the amount and the transfer time come off the slip, user 2026-10-23).
 - Each slip pings the user in a private Discord channel with everything needed to check it, plus an **อนุมัติ** link.
 - Approving takes one link and one tap: the link opens the guide manager (`12t_projects/guide-manager/`, which already works on the phone) with the donor filled in, and publishing goes through the same GitHub pipeline as a guide.
 - The list in the pop-up shows name, amount, message and date, one row per donor (repeat donations merged into a total), biggest total first.
@@ -49,6 +49,8 @@ Donors who want to be thanked by name can also send their slip from the pop-up. 
 - **Wording:** development cost and future server cost, never AI.
 - **The user approves on Android** with the guide manager saved as a home-screen shortcut (Chrome). Discord on Android opens links in Chrome's custom tab, which shares Chrome's storage, so the อนุมัติ link should open the guide manager with the key already there. Verify this on the user's phone first; if it lands on the key screen, the README's fix is Discord's setting to open links in the external browser (my call: no paste-a-code fallback unless that fails).
 - **Past donors are listed at launch:** donors from the earlier AI-cost round go on the list from day one. The user supplies each name as it should be shown, the amount and the date (no message needed), and they are added with the new-donor card (or Claude adds them from the user's list in the first data commit).
+- **Donors send only name, message and slip** (user, 2026-10-23, after seeing the live form: "remove these fields, I will key them by myself in the phone app / manager"). The slip form has no amount and no date; the user reads both off the slip and types them into the guide manager's donor card before queueing. The อนุมัติ link carries only the name and message, so a card opened from it has the amount and date empty (not now). A published donation still has the amount and date.
+- **The pop-up is in tabs** (user, 2026-10-23: the slip section and the donor list "should be in a different tab in the pop-up so they don't fight for vertical space and visual clutter"). The thank-you text stays above three tabs: **QR โอนเงิน** (picked on every open), **ส่งสลิป** and **รายชื่อผู้สนับสนุน**.
 
 ## How it works
 
@@ -56,16 +58,17 @@ Donors who want to be thanked by name can also send their slip from the pop-up. 
 
 - The header stays ☕ สนับสนุนค่ากาแฟ. The body, top to bottom:
   1. **Thank-you text** replacing today's "no need to transfer more" note: why support helps (development cost, future server cost), and thanks. Keep the existing line with the Discord contact for reporting wrong data.
-  2. **The QR image** and one **ดาวน์โหลด QR** button.
-  3. **"อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?"** The optional slip form (below).
-  4. **รายชื่อผู้สนับสนุน:** the donor list (below).
+  2. **Three tabs** (user, 2026-10-23), the first one picked on every open:
+     - **QR โอนเงิน:** the QR image and one **ดาวน์โหลด QR** button.
+     - **ส่งสลิป:** the intro line **"อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?"**, the optional slip form (below) and its privacy note.
+     - **รายชื่อผู้สนับสนุน:** the donor list (below).
 - **Download:** a plain download of the QR file (for example `12tails-bible-qr.png`). On iPhone, where downloads land in Files and bank apps pick images from Photos, the button opens the share sheet with the image instead (Web Share API with a file), so "Save Image" puts it in Photos (my call). Any other browser without file sharing falls back to the plain download.
 - **The QR image** is the user's bank QR file, stored the way the Bible stores its other images (an `assets.js` container through `scripts/bible_assets.js`, or inline if it is small enough for the `ASSET_BUDGET`; builder's call).
 - The pop-up stays one scrolling panel on a phone; the form and list must not push the QR off the first screen.
 
 ### The slip form
 
-- Fields: **ชื่อที่จะแสดง** (required), **ข้อความ** (optional), **ยอดเงิน (บาท)** (required, a positive number), **วันและเวลาที่โอน** (required, defaults to now), **สลิป** (required, an image). Limits on lengths and file size are the builder's call; the same limits apply in the page and in the Worker.
+- Fields: **ชื่อที่จะแสดง** (required), **ข้อความ** (optional), **สลิป** (required, an image). No amount and no date (user, 2026-10-23): the user reads them off the slip. Limits on lengths and file size are the builder's call; the same limits apply in the page and in the Worker.
 - One line under the form says that the slip goes only to the Bible's maintainer, is never published, and that the name, message, amount and date appear after a check.
 - **Send:** the page posts the form to the Worker. Success replaces the form with a thank-you and "ชื่อจะขึ้นหลังตรวจสลิป". A failure says what went wrong in Thai (too large, wrong file type, too many sends, network) and keeps what was typed.
 - The page may shrink the slip image before sending (builder's call), as long as the slip stays readable.
@@ -73,15 +76,15 @@ Donors who want to be thanked by name can also send their slip from the pop-up. 
 ### The Worker (new folder, for example `12t_projects/donate-worker/`)
 
 - One endpoint that accepts the form, checks it, and forwards it to Discord. Nothing is stored.
-- **Checks:** all required fields present; name and message within the limits; amount a positive number within a sane maximum; date valid; the file really an image of an allowed type and size. A per-visitor rate limit (for example a few sends an hour; the mechanism is the builder's call, verified on the free plan).
+- **Checks:** the name and the slip present; name and message within the limits (an amount or date sent by an older cached page is ignored); the file really an image of an allowed type and size. A per-visitor rate limit (for example a few sends an hour; the mechanism is the builder's call, verified on the free plan).
 - **Allowed origins:** the Bible's GitHub Pages origin (`https://jumpptty.github.io`). Whether to also accept the `null` origin of a double-clicked local copy is the builder's call.
-- **The Discord message:** one webhook post with the slip as an attached image and an embed with the display name, message, amount and date. Mentions are disabled (`allowed_mentions` empty) so donor text cannot ping anyone, and the donor text cannot break the embed. It also includes the **อนุมัติ** link (below).
+- **The Discord message:** one webhook post with the slip as an attached image and an embed with the display name and message and a line asking the user to read the amount and date off the slip. Mentions are disabled (`allowed_mentions` empty) so donor text cannot ping anyone, and the donor text cannot break the embed. It also includes the **อนุมัติ** link (below).
 - **Secrets:** the webhook URL is a Worker secret, set by the user. The Worker's code, `wrangler.toml` and README are in the public repo with no secrets in them.
 - **Deploy:** with Wrangler from the repo or by pasting into the Cloudflare dashboard (builder's call). The README gives the user's setup steps in order.
 
 ### Approving: the guide manager (`12t_projects/guide-manager/index.html`, `scripts/add_guide.js`, `.github/workflows/guide-manager.yml`)
 
-- **The อนุมัติ link** opens the guide manager on GitHub Pages with the donor's name, message, amount and date in the URL fragment (after `#`, so they are not sent to any server). The page shows a donor card filled in from it: every field editable, with **ใส่ในรายการ** like a guide.
+- **The อนุมัติ link** opens the guide manager on GitHub Pages with the donor's name and message in the URL fragment (after `#`, so they are not sent to any server). The page shows a donor card filled in from it, with the amount and date empty for the user to type from the slip (an older link that also carried a valid amount and date fills those too): every field editable, with **ใส่ในรายการ** like a guide.
 - **Untrusted input:** the fragment is attacker-controllable (anyone can make such a link), so the page escapes every value, applies the same limits as the Worker, and publishes nothing by itself. The guide manager review of 2026-10-20 already treats pasted codes this way.
 - **Repeat donor:** when the name matches an existing donor (trimmed, case-insensitive), the card says so with that donor's total and count, and asks **เพิ่มให้ "<name>" (รวม ฿Y)** or **แยกเป็นคนใหม่**. Adding reuses that donor's `id`; separate gets a new one. With no match, a new `id` is made. The user can also pick an existing donor by hand when a returning donor typed a different name (my call).
 - **Publishing:** the queue gains a donor item type, for example `{ action: "donor-add", donor: { id, name, msg, amount, date } }`, sent through the existing workflow. `add_guide.js batch` gains the matching edit: add one entry to a new `DONORS` array in `index.html`, through the same stages (git, edit, check, commit, push), all or nothing, with undo as for guides.

@@ -21,7 +21,7 @@
     // flat panels and modals that never change fill on hover
     panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-tabs", ".donate-form-box", ".donate-list-box"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
@@ -1517,8 +1517,9 @@
     padding:0; transition:all .15s ease;
   }
   .donate-close:hover{color:var(--text); background:rgba(255,255,255,.08); border-color:var(--line)}
-  /* the ☕ pop-up (user 2026-10-23): text, the QR card and ดาวน์โหลด QR, the optional slip form (collapsed), the donor list. The body scrolls
-     inside the pop-up on small screens; the QR card is sized by the window height, so a 390 x 844 phone sees all of it as the pop-up opens. */
+  /* the ☕ pop-up (user 2026-10-23): the thank-you text, then three tabs: QR โอนเงิน (the QR card and ดาวน์โหลด QR, picked on every open),
+     ส่งสลิป (the optional slip form) and รายชื่อผู้สนับสนุน (the donor list). The body scrolls inside the pop-up on small screens; the QR card
+     is sized by the window height, so a 390 x 844 phone sees all of it as the pop-up opens. */
   .donate-main{max-width:600px; max-height:calc(100vh - 40px); max-height:calc(100dvh - 40px)}
   .donate-body{display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center}
   .donate-main .donate-body{overflow-y:auto; overscroll-behavior:contain; min-height:0; margin:-4px -8px; padding:4px 8px}
@@ -1540,20 +1541,21 @@
   .donate-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .donate-btn:disabled{opacity:.55; cursor:default}
   .donate-btn svg{width:16px; height:16px; flex:none}
+  .donate-tabs{display:flex; gap:4px; width:100%; padding:3px; background:var(--panel); border:1px solid var(--line); border-radius:6px}
+  .donate-tab{flex:1 1 auto; min-width:0; padding:8px 10px; border:0; border-radius:4px; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600; line-height:1.3; cursor:pointer; transition:color .15s ease, background-color .15s ease}
+  .donate-tab:hover:not([aria-selected="true"]){color:var(--text)}
+  .donate-tab[aria-selected="true"]{background:var(--gold); color:#141311}
+  .donate-tab:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+  .donate-tabpanel{width:100%}
+  .donate-tabpanel[hidden]{display:none}
   .donate-form-box, .donate-list-box{width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; text-align:left}
-  .donate-form-box > summary{display:flex; align-items:center; gap:10px; padding:11px 14px; cursor:pointer; list-style:none; color:var(--gold); font-weight:600; font-size:14px; border-radius:8px}
-  .donate-form-box > summary::-webkit-details-marker{display:none}
-  .donate-form-box > summary::before{content:""; display:inline-block; flex:none; width:6px; height:6px; margin-left:2px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); transition:transform .15s ease}
-  .donate-form-box[open] > summary::before{transform:rotate(45deg)}
-  .donate-form-box > summary:hover{filter:brightness(1.12)}
-  .donate-form-box > summary:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .donate-intro{margin:0; padding:12px 14px 8px; color:var(--gold); font-weight:600; font-size:14px}
   .donate-form{display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:2px 14px 12px}
   .donate-field{display:grid; gap:4px; min-width:0; font-size:13px; color:var(--muted)}
   .donate-field.is-wide, .donate-send-row{grid-column:1 / -1}
   .donate-form input, .donate-form textarea{width:100%; min-width:0; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:4px; padding:8px 10px; font:inherit; font-size:14px}
   .donate-form textarea{resize:vertical; min-height:58px}
   .donate-form input:focus-visible, .donate-form textarea:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
-  .donate-form .donate-num{font-family:'JetBrains Mono','Prompt',monospace; color-scheme:dark}
   .donate-form input[type="file"]{padding:6px; font-size:13px; cursor:pointer}
   .donate-form input[type="file"]::file-selector-button{font:inherit; margin-right:10px; padding:5px 12px; border:1px solid var(--line); border-radius:4px; background:transparent; color:var(--text); cursor:pointer}
   .donate-send-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
@@ -1563,7 +1565,6 @@
   .donate-status[data-kind="busy"]{color:var(--muted)}
   .donate-note{margin:0; padding:0 14px 12px; font-size:12px; line-height:1.6; color:var(--muted)}
   .donate-list-box{padding:12px 14px}
-  .donate-list-title{margin:0 0 8px; font-size:14px; font-weight:600; color:var(--gold)}
   .donate-list{list-style:none; margin:0; padding:0}
   .donate-row{padding:8px 0; border-top:1px solid var(--line)}
   .donate-row:first-child{padding-top:0; border-top:none}
@@ -7653,18 +7654,23 @@
         ร่วมสนับสนุนค่าพัฒนา <strong>12 Tails Bible</strong> และค่าเซิร์ฟเวอร์ในอนาคต ขอบคุณทุกการสนับสนุนครับ 🙏<br>
         ตรวจพบข้อมูลผิดพลาด แจ้ง Discord : <a class="donate-copy" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">jumpptty</a>
       </p>
-      <figure class="donate-qr">
-        <img id="donateQrImg" alt="QR พร้อมเพย์สำหรับสนับสนุน 12 Tails Bible" width="1080" height="1519" decoding="async">
-        <p class="donate-qr-missing" id="donateQrMissing" hidden>โหลดรูป QR ไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง</p>
-        <button type="button" class="donate-btn" id="btnDonateQr"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>ดาวน์โหลด QR</button>
-      </figure>
-      <details class="donate-form-box" id="donateFormBox">
-        <summary>อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?</summary>
+      <div class="donate-tabs" role="tablist" aria-label="สนับสนุน">
+        <button type="button" class="donate-tab" role="tab" id="donateTabQr" aria-controls="donatePanelQr" aria-selected="true" tabindex="0">QR โอนเงิน</button>
+        <button type="button" class="donate-tab" role="tab" id="donateTabSlip" aria-controls="donatePanelSlip" aria-selected="false" tabindex="-1">ส่งสลิป</button>
+        <button type="button" class="donate-tab" role="tab" id="donateTabList" aria-controls="donatePanelList" aria-selected="false" tabindex="-1">รายชื่อผู้สนับสนุน</button>
+      </div>
+      <div class="donate-tabpanel" role="tabpanel" id="donatePanelQr" aria-labelledby="donateTabQr">
+        <figure class="donate-qr">
+          <img id="donateQrImg" alt="QR พร้อมเพย์สำหรับสนับสนุน 12 Tails Bible" width="1080" height="1519" decoding="async">
+          <p class="donate-qr-missing" id="donateQrMissing" hidden>โหลดรูป QR ไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง</p>
+          <button type="button" class="donate-btn" id="btnDonateQr"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>ดาวน์โหลด QR</button>
+        </figure>
+      </div>
+      <div class="donate-tabpanel donate-form-box" role="tabpanel" id="donatePanelSlip" aria-labelledby="donateTabSlip" hidden>
+        <p class="donate-intro">อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?</p>
         <form class="donate-form" id="donateForm" novalidate>
           <label class="donate-field is-wide">ชื่อที่แสดง<input type="text" id="donateName" name="name" autocomplete="nickname" placeholder="ชื่อในเกมหรือชื่อเล่นก็ได้"></label>
           <label class="donate-field is-wide">ข้อความ (ไม่ใส่ก็ได้)<textarea id="donateMsg" name="msg" rows="2" placeholder="ฝากข้อความสั้น ๆ"></textarea></label>
-          <label class="donate-field">ยอดเงิน (บาท)<input type="text" id="donateAmount" name="amount" class="donate-num" inputmode="decimal" autocomplete="off" placeholder="100"></label>
-          <label class="donate-field">วันเวลาที่โอน<input type="datetime-local" id="donateDate" name="date" class="donate-num"></label>
           <label class="donate-field is-wide">รูปสลิป<input type="file" id="donateSlip" name="slip" accept="image/*"></label>
           <div class="donate-send-row">
             <button type="submit" class="donate-btn" id="btnDonateSend">ส่งสลิป</button>
@@ -7672,11 +7678,10 @@
           </div>
         </form>
         <p class="donate-note">สลิปจะส่งถึงผู้ดูแลเท่านั้น ไม่เผยแพร่ ชื่อที่แสดง ข้อความ ยอด และวันที่จะขึ้นในรายชื่อหลังตรวจสลิป ชื่อที่แสดงเป็นข้อมูลสาธารณะ</p>
-      </details>
-      <section class="donate-list-box" aria-labelledby="donateListTitle">
-        <h4 class="donate-list-title" id="donateListTitle">รายชื่อผู้สนับสนุน</h4>
+      </div>
+      <div class="donate-tabpanel donate-list-box" role="tabpanel" id="donatePanelList" aria-labelledby="donateTabList" hidden>
         <ol class="donate-list" id="donateList"></ol>
-      </section>
+      </div>
     </div>
   </div>
 </div>
@@ -27627,39 +27632,28 @@ const CLASS_GUIDE_VIEWS = {"at":"2026-10-20T06:32:04.913Z","counts":{"1":135,"2"
 // The ☕ donor list: format is scripts/donors.js; only the guide manager (scripts/add_guide.js) edits it, one approved donation per line.
 const DONORS = [
 ];
-// ☕ pop-up (user 2026-10-23): the QR card (DONATE_QR, in assets.js) to scan or save, an optional slip form that sends the slip to the user's
-// Discord through the Cloudflare Worker (12t_projects/donate-worker; it stores nothing), and the donor list from DONORS above. DONOR_LIMITS,
-// donorCheck and donorRows are scripts/donors.js's LIMITS, checkDonation and groupDonors word for word (the validator checks that they agree),
-// so nothing the Worker would refuse leaves the page. Dates are Thailand time (UTC+7) written YYYY-MM-DDTHH:MM.
+// ☕ pop-up (user 2026-10-23): three tabs under the thank-you text: QR โอนเงิน (the QR card, DONATE_QR in assets.js, to scan or save),
+// ส่งสลิป (an optional slip form of name, message and slip that goes to the user's Discord through the Cloudflare Worker,
+// 12t_projects/donate-worker, which stores nothing; the user reads the amount and date off the slip) and รายชื่อผู้สนับสนุน (the donor list
+// from DONORS above). DONOR_LIMITS, donorSlipCheck and donorRows are scripts/donors.js's LIMITS, checkSlipDetails and groupDonors word for
+// word (the validator checks that they agree), so nothing the Worker would refuse leaves the page. Dates are Thailand time (UTC+7).
 const DONATE_QR = BIBLE_ASSETS_IN.DONATE_QR || "";
 const DONATE_WORKER_URL = "https://12tails-donate.jumpthai.workers.dev/slip";
 const DONOR_LIMITS = { name: 40, msg: 200, amountMax: 1000000, slipBytes: 5242880, slipTypes: ["image/jpeg", "image/png", "image/webp"], dateMin: "2020-01-01T00:00" };
 // the Worker's error codes in Thai ("invalid" shows the Worker's own message, see donateErrorText); network = no answer or one that is not JSON
 const DONATE_ERRORS = { missing: "กรอกให้ครบทุกช่องและแนบสลิป", "file-type": "สลิปต้องเป็นรูป JPG, PNG หรือ WebP", "file-size": "รูปสลิปใหญ่เกิน 5 MB", rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่",
   origin: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", method: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", discord: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", network: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง" };
-// checkDonation: the cleaned donation, or an Error with the Thai reason (code points, so an emoji is never split; over-long text is refused, never cut)
-function donorCheck(d, now = new Date()){
-  const clean = (s) => String(s).replace(/\s+/g, " ").trim(), len = (s) => [...s].length, satang = (n) => Math.round(n * 100);
-  const thaiMs = (s) => {
-    const m = typeof s === "string" && s.match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)$/);
-    if (!m) return NaN;
-    const [y, mo, dd, h, mi] = m.slice(1).map(Number), t = new Date(Date.UTC(y, mo - 1, dd, h, mi));
-    const same = t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === dd && t.getUTCHours() === h && t.getUTCMinutes() === mi;
-    return same ? t.getTime() - 7 * 3600000 : NaN;
-  };
+// checkSlipDetails: what a donor sends with the slip, the display name and message cleaned, or an Error with the Thai reason (code points, so
+// an emoji is never split; over-long text is refused, never cut). The amount and the transfer time are read off the slip by the user.
+function donorSlipCheck(d){
+  const clean = (s) => String(s).replace(/\s+/g, " ").trim(), len = (s) => [...s].length;
   d = d || {};
   const name = typeof d.name === "string" ? clean(d.name) : "", msg = typeof d.msg === "string" ? clean(d.msg) : (d.msg == null ? "" : null);
   if (!name) throw new Error("กรุณาใส่ชื่อ");
   if (len(name) > DONOR_LIMITS.name) throw new Error("ชื่อยาวเกิน " + DONOR_LIMITS.name + " ตัวอักษร");
   if (msg === null) throw new Error("ข้อความไม่ถูกต้อง");
   if (len(msg) > DONOR_LIMITS.msg) throw new Error("ข้อความยาวเกิน " + DONOR_LIMITS.msg + " ตัวอักษร");
-  const a = d.amount;
-  if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > DONOR_LIMITS.amountMax || Math.abs(a * 100 - satang(a)) > 1e-6)
-    throw new Error("ยอดเงินต้องมากกว่า 0 และไม่เกิน " + DONOR_LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)");
-  const t = thaiMs(d.date);
-  if (isNaN(t)) throw new Error("วันเวลาที่โอนไม่ถูกต้อง (รูปแบบ YYYY-MM-DDTHH:MM)");
-  if (t < thaiMs(DONOR_LIMITS.dateMin) || t > now.getTime() + 24 * 3600000) throw new Error("วันเวลาที่โอนอยู่นอกช่วงที่รับ (ตั้งแต่ 2020-01-01 ถึงไม่เกินพรุ่งนี้)");
-  return { name, msg, amount: satang(a) / 100, date: d.date };
+  return { name, msg };
 }
 // groupDonors: one row per donor id with the latest name, the latest non-empty message, the total (summed in satang), the count, the latest
 // and first dates; biggest total first, then whoever first gave earlier
@@ -27676,15 +27670,6 @@ function donorRows(donations){
   return [...by.values()].sort((a, b) => b.sat - a.sat || (a.first < b.first ? -1 : a.first > b.first ? 1 : 0))
     .map((r) => ({ id: r.id, name: r.name, msg: r.msg, total: r.sat / 100, count: r.count, date: r.date, first: r.first }));
 }
-// amounts typed the Thai way ("1,000", "฿50", " 20 ", "50.5"): ฿, commas and spaces go, then a positive number with at most 2 decimals, else null
-function parseAmountInput(text){
-  const s = String(text == null ? "" : text).replace(/[\s,฿]/g, "");
-  if (!/^\d+(?:\.\d{1,2})?$/.test(s)) return null;
-  const n = Number(s);
-  return n > 0 ? n : null;
-}
-// now in Thailand as YYYY-MM-DDTHH:MM, the form's default transfer time
-const donateNow = (t = Date.now()) => new Date(t + 7 * 3600000).toISOString().slice(0, 16);
 // a slip straight from a phone camera (a 12 MB JPEG, an iPhone HEIC) is redrawn as a JPEG of at most 1600 px on the long side at quality 0.85
 async function shrinkSlip(file){
   const fail = () => new Error("อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่");
@@ -27741,8 +27726,7 @@ function donateErrorText(reply){
 // one slip to the Worker: a plain multipart POST (no custom headers, so no CORS preflight); resolves on { ok: true }, else throws the Thai text
 async function donateSend(d, slip){
   const body = new FormData();
-  body.append("name", d.name); body.append("msg", d.msg); body.append("amount", String(d.amount)); body.append("date", d.date);
-  body.append("slip", slip, "slip.jpg");
+  body.append("name", d.name); body.append("msg", d.msg); body.append("slip", slip, "slip.jpg");
   let reply = null;
   try { reply = await (await fetch(DONATE_WORKER_URL, { method: "POST", body })).json(); } catch (e) { reply = null; }
   if (!reply || reply.ok !== true) throw new Error(donateErrorText(reply));
@@ -27753,7 +27737,7 @@ async function donateSubmit(ui){
   if (ui.busy) return;
   const say = (text, kind) => { ui.status.textContent = text; ui.status.dataset.kind = kind; };
   let d;
-  try { d = donorCheck({ name: ui.name.value, msg: ui.msg.value, amount: parseAmountInput(ui.amount.value), date: ui.date.value.slice(0, 16) }); }
+  try { d = donorSlipCheck({ name: ui.name.value, msg: ui.msg.value }); }
   catch (e) { say(e.message, "error"); return; }
   const file = ui.slip.files && ui.slip.files[0];
   if (!file) { say(DONATE_ERRORS.missing, "error"); return; }
@@ -27762,7 +27746,7 @@ async function donateSubmit(ui){
     const slip = await shrinkSlip(file);
     if (slip.size > DONOR_LIMITS.slipBytes) throw new Error(DONATE_ERRORS["file-size"]);
     await donateSend(d, slip);
-    ui.name.value = ""; ui.msg.value = ""; ui.amount.value = ""; ui.slip.value = ""; ui.date.value = donateNow(); ui.dateEdited = false;
+    ui.name.value = ""; ui.msg.value = ""; ui.slip.value = "";
     say("ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นหลังตรวจสลิป", "ok");
   } catch (e) {
     const text = e && typeof e.message === "string" ? e.message : "";
@@ -27782,6 +27766,22 @@ function renderDonorList(list, rows = donorRows(DONORS)){
     add(top, "span", "donate-row-date", classGuideDateText(r.date.slice(0, 10)));
     if (r.msg) add(li, "p", "donate-row-msg", r.msg);
   });
+}
+// the pop-up's tabs (user 2026-10-23: the slip form and the donor list each get their own tab, so they never crowd the QR card): tabs and
+// panels in the same order; picking one only hides the other panels, so what was typed in the form stays. focus: for the arrow keys.
+function donateShowTab(tabs, panels, at, focus){
+  tabs.forEach((t, i) => { t.setAttribute("aria-selected", String(i === at)); t.tabIndex = i === at ? 0 : -1; });
+  panels.forEach((p, i) => { if (p) p.hidden = i !== at; });
+  if (focus && tabs[at]) tabs[at].focus();
+}
+// the arrow keys move along the tab bar (wrapping at the ends), Home and End jump to the first and last tab; each picks the tab it lands on
+function donateTabKey(e, tabs, panels){
+  const at = tabs.indexOf(e.target), n = tabs.length;
+  if (at < 0) return;
+  const to = e.key === "ArrowRight" ? (at + 1) % n : e.key === "ArrowLeft" ? (at + n - 1) % n : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : -1;
+  if (to < 0) return;
+  e.preventDefault();
+  donateShowTab(tabs, panels, to, true);
 }
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
@@ -32027,6 +32027,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T06:43:36.051Z","feat(bible): ☕ pop-up in tabs (QR, slip, donor list); donors send only name, message and slip, the owner keys amount and date in the guide manager"],
     ["2026-10-23T06:11:57.512Z","fix(bible): donation follow-ups: ignore .wrangler, scope guide mode buttons, date to the minute, doc notes"],
     ["2026-10-23T05:33:55.010Z","feat(bible): ☕ pop-up takes donations again: QR download, optional slip for the thank-you list, donor list"],
     ["2026-10-23T03:34:32.339Z","feat(bible): empty DONORS list for the ☕ donor thanks, checked by the validator"],
@@ -32624,7 +32625,9 @@ const donateModal = $("#donateModal");
 const btnDonateClose = $("#btnDonateClose");
 const btnDonateQr = $("#btnDonateQr");
 const donateForm = $("#donateForm");
-const donateUi = { name: $("#donateName"), msg: $("#donateMsg"), amount: $("#donateAmount"), date: $("#donateDate"), slip: $("#donateSlip"), btn: $("#btnDonateSend"), status: $("#donateStatus"), busy: false, dateEdited: false };
+const donateUi = { name: $("#donateName"), msg: $("#donateMsg"), slip: $("#donateSlip"), btn: $("#btnDonateSend"), status: $("#donateStatus"), busy: false };
+const donateTabs = Array.from(document.querySelectorAll("#donateModal [role=tab]"));   // QR โอนเงิน, ส่งสลิป, รายชื่อผู้สนับสนุน
+const donatePanels = donateTabs.map((t) => document.getElementById(t.getAttribute("aria-controls")));
 let donateReady = false;
 
 function openDonateModal() {
@@ -32637,7 +32640,7 @@ function openDonateModal() {
     if (btnDonateQr) btnDonateQr.disabled = !DONATE_QR;
     if (list) renderDonorList(list);
   }
-  if (donateUi.date && !donateUi.dateEdited) donateUi.date.value = donateNow();   // the transfer time defaults to now (Thailand) until the donor changes it
+  donateShowTab(donateTabs, donatePanels, 0);   // QR โอนเงิน on every open (the form keeps what was typed)
   donateModal.hidden = false;
   document.body.style.overflow = "hidden";
 }
@@ -32652,7 +32655,10 @@ if (btnDonate) btnDonate.addEventListener("click", openDonateModal);
 if (btnDonateClose) btnDonateClose.addEventListener("click", closeDonateModal);
 if (btnDonateQr) btnDonateQr.addEventListener("click", () => downloadQr());
 if (donateForm) donateForm.addEventListener("submit", (e) => { e.preventDefault(); donateSubmit(donateUi); });
-if (donateUi.date) donateUi.date.addEventListener("input", () => { donateUi.dateEdited = true; });
+donateTabs.forEach((t, i) => {
+  t.addEventListener("click", () => donateShowTab(donateTabs, donatePanels, i));
+  t.addEventListener("keydown", (e) => donateTabKey(e, donateTabs, donatePanels));
+});
 if (donateModal) {
   donateModal.addEventListener("click", (e) => {
     if (e.target === donateModal) closeDonateModal();

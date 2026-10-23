@@ -7,9 +7,9 @@ import donors from "../../scripts/donors.js";
 const { fromFragment, LIMITS } = donors;
 const SITE = "https://jumpptty.github.io";
 const WEBHOOK = "https://discord.test/api/webhooks/1/token";
-const now = new Date("2026-10-23T08:00:00Z");
 const JPEG = [0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0];
-const good = { name: "ก้อง 🐱", msg: "ขอบคุณครับ", amount: "50", date: "2026-10-23T14:05" };
+// what the pop-up sends since 2026-10-23: the display name, the message and the slip (the owner reads the amount and date off the slip)
+const good = { name: "ก้อง 🐱", msg: "ขอบคุณครับ" };
 
 function limiter(allowed){
   const seen = {};
@@ -19,7 +19,7 @@ function setup({ allowed = 100, discordStatus = 200 } = {}){
   const calls = [];
   // like workerd, the global fetch refuses any receiver but the global (called as deps.fetch() it would throw)
   const fetch = async function (url, init){ if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation"); calls.push({ url: String(url), init }); return new Response("{}", { status: discordStatus }); };
-  return { calls, env: { DISCORD_WEBHOOK_URL: WEBHOOK, SLIP_LIMIT: limiter(allowed) }, deps: { fetch, now: () => now } };
+  return { calls, env: { DISCORD_WEBHOOK_URL: WEBHOOK, SLIP_LIMIT: limiter(allowed) }, deps: { fetch } };
 }
 function slipFile(bytes = JPEG, type = "image/jpeg", size){
   const data = new Uint8Array(size || bytes.length);
@@ -35,9 +35,11 @@ function post({ origin = SITE, fields = good, slip = slipFile(), drop = [], meth
   return new Request("https://worker.test/slip", { method, headers, body: form });
 }
 const json = async (res) => res.json();
+const payloadOf = (call) => JSON.parse(call.init.body.get("payload_json"));
+const linkOf = (payload) => (payload.content.match(/^\*\*\[อนุมัติ\]\(https:\/\/jumpptty\.github\.io\/12tails\/12t_projects\/guide-manager\/#(donor=[A-Za-z0-9_-]+)\)\*\*$/) || [])[1];
 
 const cases = {
-  async "good send forwards one Discord post"(){
+  async "good send (name, message, slip) forwards one Discord post"(){
     const s = setup(), res = await handleSlip(post(), s.env, s.deps);
     assert.strictEqual(res.status, 200);
     assert.deepStrictEqual(await json(res), { ok: true });
@@ -45,18 +47,41 @@ const cases = {
     assert.strictEqual(res.headers.get("Content-Type"), "application/json");
     assert.strictEqual(s.calls.length, 1);
     assert.strictEqual(s.calls[0].url, WEBHOOK + "?wait=true");
-    const body = s.calls[0].init.body, payload = JSON.parse(body.get("payload_json"));
+    const body = s.calls[0].init.body, payload = payloadOf(s.calls[0]);
     assert.deepStrictEqual(payload.allowed_mentions, { parse: [] });
-    const m = payload.content.match(/^\*\*\[อนุมัติ\]\(https:\/\/jumpptty\.github\.io\/12tails\/12t_projects\/guide-manager\/#(donor=[A-Za-z0-9_-]+)\)\*\*$/);
-    assert.ok(m, payload.content);
-    assert.deepStrictEqual(fromFragment(m[1]), { name: "ก้อง 🐱", msg: "ขอบคุณครับ", amount: 50, date: "2026-10-23T14:05" });
+    const frag = linkOf(payload);
+    assert.ok(frag, payload.content);
+    assert.deepStrictEqual(fromFragment(frag), { name: "ก้อง 🐱", msg: "ขอบคุณครับ" });   // exactly the two fields
     assert.strictEqual(payload.embeds.length, 1);
     assert.strictEqual(payload.embeds[0].title, "สลิปใหม่");
-    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.name), ["ชื่อ", "ยอด", "วันเวลาที่โอน", "ข้อความ"]);
+    assert.ok(/ยอด/.test(payload.embeds[0].description) && /สลิป/.test(payload.embeds[0].description), payload.embeds[0].description);   // read the amount and date off the slip
+    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.name), ["ชื่อ", "ข้อความ"]);
+    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.value), ["ก้อง 🐱", "ขอบคุณครับ"]);
     assert.strictEqual(payload.embeds[0].image.url, "attachment://slip.jpg");
     const file = body.get("files[0]");
     assert.strictEqual(file.name, "slip.jpg");
     assert.deepStrictEqual([...new Uint8Array(await file.arrayBuffer())], JPEG);
+    // no message: still a send, shown as "-"
+    const bare = await handleSlip(post({ drop: ["msg"] }), s.env, s.deps);
+    assert.strictEqual(bare.status, 200);
+    const p2 = payloadOf(s.calls[1]);
+    assert.strictEqual(p2.embeds[0].fields[1].value, "-");
+    assert.deepStrictEqual(fromFragment(linkOf(p2)), { name: "ก้อง 🐱", msg: "" });
+  },
+  async "an older page that still sends amount and date: ignored, not in the Discord post"(){
+    const s = setup();
+    for (const extra of [{ amount: "50", date: "2026-10-23T14:05" }, { amount: "abc", date: "2019-01-01T00:00" }, { amount: "" }]){
+      const res = await handleSlip(post({ fields: { ...good, ...extra } }), s.env, s.deps);
+      assert.strictEqual(res.status, 200, JSON.stringify(extra));
+      assert.deepStrictEqual(await json(res), { ok: true });
+    }
+    assert.strictEqual(s.calls.length, 3);
+    s.calls.forEach((c) => {
+      const text = c.init.body.get("payload_json"), payload = JSON.parse(text);
+      assert.ok(!/2026-10-23 14:05|2026-10-23T14:05|2019-01-01|"50|abc/.test(text), text);
+      assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.name), ["ชื่อ", "ข้อความ"]);
+      assert.deepStrictEqual(fromFragment(linkOf(payload)), { name: "ก้อง 🐱", msg: "ขอบคุณครับ" });
+    });
   },
   async "other origin is refused"(){
     const s = setup(), res = await handleSlip(post({ origin: "https://evil.example" }), s.env, s.deps);
@@ -75,6 +100,15 @@ const cases = {
     assert.deepStrictEqual(await json(res), { ok: false, error: "missing" });
     assert.strictEqual(s.calls.length, 0);
   },
+  async "missing name"(){
+    const s = setup(), res = await handleSlip(post({ drop: ["name"] }), s.env, s.deps);
+    assert.strictEqual(res.status, 400);
+    assert.deepStrictEqual(await json(res), { ok: false, error: "missing" });
+    // a name of only spaces is there but empty: refused by checkSlipDetails with its Thai message
+    const blank = await json(await handleSlip(post({ fields: { ...good, name: " \n " } }), s.env, s.deps));
+    assert.deepStrictEqual([blank.error, blank.field, blank.message], ["invalid", "name", "กรุณาใส่ชื่อ"]);
+    assert.strictEqual(s.calls.length, 0);
+  },
   async "name of 41 characters"(){
     const s = setup(), res = await handleSlip(post({ fields: { ...good, name: "ก".repeat(41) } }), s.env, s.deps);
     const b = await json(res);
@@ -83,17 +117,15 @@ const cases = {
     assert.ok(b.message.includes("40"));
     assert.strictEqual(s.calls.length, 0);
   },
-  async "amount abc"(){
-    const s = setup(), res = await handleSlip(post({ fields: { ...good, amount: "abc" } }), s.env, s.deps);
+  async "message of 201 characters"(){
+    const s = setup(), res = await handleSlip(post({ fields: { ...good, msg: "ก".repeat(201) } }), s.env, s.deps);
     const b = await json(res);
-    assert.deepStrictEqual([b.ok, b.error, b.field], [false, "invalid", "amount"]);
-    assert.ok(b.message.includes("ยอดเงิน"));
-    const empty = await json(await handleSlip(post({ fields: { ...good, amount: "" } }), s.env, s.deps));
-    assert.strictEqual(empty.error, "missing");
-    const date = await json(await handleSlip(post({ fields: { ...good, date: "2019-01-01T00:00" } }), s.env, s.deps));
-    assert.deepStrictEqual([date.error, date.field], ["invalid", "date"]);
-    const msg = await json(await handleSlip(post({ fields: { ...good, msg: "ก".repeat(201) } }), s.env, s.deps));
-    assert.deepStrictEqual([msg.error, msg.field], ["invalid", "msg"]);
+    assert.strictEqual(res.status, 400);
+    assert.deepStrictEqual([b.ok, b.error, b.field], [false, "invalid", "msg"]);
+    assert.ok(b.message.includes("200"));
+    // a bad message with a good name still names msg, and the amount and date an old page sends never decide the field
+    const old = await json(await handleSlip(post({ fields: { ...good, msg: "ก".repeat(201), amount: "abc", date: "x" } }), s.env, s.deps));
+    assert.deepStrictEqual([old.error, old.field], ["invalid", "msg"]);
     assert.strictEqual(s.calls.length, 0);
   },
   async "pdf slip"(){
@@ -135,7 +167,7 @@ const cases = {
     assert.ok(payload.embeds[0].fields.every((f) => f.value.length > 0 && f.value.length <= 1024));
     // worst case: 200 characters that all need escaping stay under the embed limit
     await handleSlip(post({ fields: { ...good, msg: "*".repeat(200) } }), s.env, s.deps);
-    const long = JSON.parse(s.calls[1].init.body.get("payload_json")).embeds[0].fields[3].value;
+    const long = payloadOf(s.calls[1]).embeds[0].fields.find((f) => f.name === "ข้อความ").value;
     assert.ok(long.length <= 1024);
   },
   async "Discord 500"(){

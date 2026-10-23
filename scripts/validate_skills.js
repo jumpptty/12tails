@@ -3660,11 +3660,12 @@ console.log(`Verified ${checkedRsim} skill simulator checks.`);
   }
 }
 
-// The ☕ pop-up (user 2026-10-23): the QR card to scan or save, an optional slip form (sent through the Worker, 12t_projects/donate-worker)
-// and the donor list. Its copies of scripts/donors.js (DONOR_LIMITS, donorCheck, donorRows) must agree with it; the amount box reads amounts
-// typed the Thai way (Review Focus 3); a slip straight from a phone camera is redrawn as a small JPEG (Review Focus 2); the send button stays
-// disabled while a send runs (Review Focus 4) and any error keeps what was typed; donor values go in as text only; the text asks for
-// ค่าพัฒนา and never mentions AI; the QR card is in assets.js. The async code (shrinkSlip, the send, the download) runs in a child Node
+// The ☕ pop-up (user 2026-10-23): three tabs under the thank-you text, QR โอนเงิน (the QR card to scan or save, picked on every open),
+// ส่งสลิป (an optional slip form of name, message and slip, sent through the Worker, 12t_projects/donate-worker; the owner types the amount
+// and date from the slip in the guide manager) and รายชื่อผู้สนับสนุน (the donor list). Its copies of scripts/donors.js (DONOR_LIMITS,
+// donorSlipCheck, donorRows) must agree with it; a slip straight from a phone camera is redrawn as a small JPEG (Review Focus 2); the send
+// button stays disabled while a send runs (Review Focus 4) and any error keeps what was typed; donor values go in as text only; the text asks
+// for ค่าพัฒนา and never mentions AI; the QR card is in assets.js. The async code (shrinkSlip, the send, the download) runs in a child Node
 // process (donateChildTests below), because this validator is synchronous: the page's own functions, read from the sandbox as source, with
 // stubs for document, navigator, fetch and createImageBitmap.
 async function donateChildTests(env) {
@@ -3703,13 +3704,14 @@ async function donateChildTests(env) {
   env.setQr(""); const threwEmpty = await save(iphone); const emptySaves = shares.length + anchors.length; await save(pc); env.restoreQr();
   check(!threwEmpty && !emptySaves && !shares.length && !anchors.length, "downloadQr does nothing when DONATE_QR is empty (assets.js did not load)");
 
-  // donateSubmit: checks first (nothing obviously wrong leaves the page), the button disabled while a send runs, every error keeps the form
+  // donateSubmit: checks first (nothing obviously wrong leaves the page), the button disabled while a send runs, every error keeps the form.
+  // The form is the display name, the message and the slip (user 2026-10-23: the owner reads the amount and date off the slip).
   const mkUi = (v = {}) => {
-    const x = { name: "ก้อง 🐱", msg: "สู้ ๆ ครับ", amount: "1,000", date: env.donateNow(), file: { name: "IMG_0001.HEIC", type: "image/heic", size: 12e6 }, ...v };
-    return { busy: false, name: { value: x.name }, msg: { value: x.msg }, amount: { value: x.amount }, date: { value: x.date },
+    const x = { name: "ก้อง 🐱", msg: "สู้ ๆ ครับ", file: { name: "IMG_0001.HEIC", type: "image/heic", size: 12e6 }, ...v };
+    return { busy: false, name: { value: x.name }, msg: { value: x.msg },
       slip: { value: x.file ? "C:\\fakepath\\" + x.file.name : "", files: x.file ? [x.file] : [] }, btn: { disabled: false }, status: { textContent: "", dataset: {} } };
   };
-  const typed = (ui) => JSON.stringify([ui.name.value, ui.msg.value, ui.amount.value, ui.date.value, ui.slip.value, ui.slip.files.length]);
+  const typed = (ui) => JSON.stringify([ui.name.value, ui.msg.value, ui.slip.value, ui.slip.files.length]);
   const reply = (body) => ({ ok: !!body.ok, status: body.ok ? 200 : 400, json: async () => body });
   S.bmp = { width: 4000, height: 3000 }; S.blobBytes = 300000;
   {
@@ -3721,8 +3723,9 @@ async function donateChildTests(env) {
     await env.donateSubmit(ui); await tick();
     check(calls.length === 1 && during === true, `the send button is disabled while a send runs and a second tap sends nothing (Review Focus 4) (got ${calls.length} sends, disabled ${during})`);
     const c = calls[0] || { opts: {} }, b = c.opts.body, slip = b && typeof b.get === "function" ? b.get("slip") : null;
-    check(c.url === env.DONATE_WORKER_URL && c.opts.method === "POST" && !("headers" in c.opts) && b instanceof FormData && b.get("name") === "ก้อง 🐱" && b.get("msg") === "สู้ ๆ ครับ" && b.get("amount") === "1000" && b.get("date") === ui.date.value && slip && slip.type === "image/jpeg" && slip.size === 300000 && slip.name === "slip.jpg",
-      "the send is one POST of FormData (name, msg, amount as text, date, the redrawn slip.jpg) to DONATE_WORKER_URL with no custom headers");
+    const keys = b && typeof b.keys === "function" ? [...b.keys()] : [];
+    check(c.url === env.DONATE_WORKER_URL && c.opts.method === "POST" && !("headers" in c.opts) && b instanceof FormData && JSON.stringify(keys) === '["name","msg","slip"]' && b.get("name") === "ก้อง 🐱" && b.get("msg") === "สู้ ๆ ครับ" && slip && slip.type === "image/jpeg" && slip.size === 300000 && slip.name === "slip.jpg",
+      `the send is one POST of FormData with exactly name, msg and the redrawn slip.jpg (no amount, no date) to DONATE_WORKER_URL with no custom headers (got ${JSON.stringify(keys)})`);
     if (answer) answer(reply({ ok: false, error: "rate" }));
     await first;
     check(ui.status.textContent === env.DONATE_ERRORS.rate && ui.btn.disabled === false && !ui.busy && typed(ui) === before, `a rate reply shows "${env.DONATE_ERRORS.rate}", enables the send button again and keeps every field (got ${JSON.stringify(ui.status.textContent)})`);
@@ -3738,14 +3741,17 @@ async function donateChildTests(env) {
     check(sent === 1 && ui.status.textContent === want && typed(ui) === before && !ui.btn.disabled && !ui.busy, `${what} shows "${want}" and keeps every field (got ${JSON.stringify({ sent, status: ui.status.textContent })})`);
   }
   {
-    const { ui, sent, body } = await send({ amount: " ฿50.5 " }, () => reply({ ok: true }));
-    check(sent === 1 && body.get("amount") === "50.5" && ui.status.textContent === env.THANKS && !ui.name.value && !ui.msg.value && !ui.amount.value && !ui.slip.value && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(ui.date.value) && !ui.btn.disabled,
-      `a sent slip shows "${env.THANKS}" and clears the form for the next one (got ${JSON.stringify({ sent, status: ui.status.textContent, amount: body && body.get("amount") })})`);
+    const { ui, sent, body } = await send({ msg: "  สู้ ๆ\n ครับ " }, () => reply({ ok: true }));
+    check(sent === 1 && body.get("msg") === "สู้ ๆ ครับ" && ui.status.textContent === env.THANKS && !ui.name.value && !ui.msg.value && !ui.slip.value && !ui.btn.disabled,
+      `a sent slip (the message cleaned as checkSlipDetails does) shows "${env.THANKS}" and clears the form for the next one (got ${JSON.stringify({ sent, status: ui.status.textContent, msg: body && body.get("msg") })})`);
+  }
+  {
+    const { ui, sent, body } = await send({ msg: "" }, () => reply({ ok: true }));
+    check(sent === 1 && body.get("msg") === "" && ui.status.textContent === env.THANKS, `a slip with no message is sent (msg is optional) (got ${JSON.stringify({ sent, status: ui.status.textContent })})`);
   }
   const refusals = [
-    [{ amount: "abc" }, env.MSG.amount, "amount abc"], [{ amount: "0" }, env.MSG.amount, "amount 0"], [{ amount: "-5" }, env.MSG.amount, "amount -5"], [{ amount: "" }, env.MSG.amount, "no amount"],
     [{ name: " \n " }, env.MSG.name, "no name"], [{ name: "🐱".repeat(41) }, env.MSG.longName, "a 41-emoji name (refused with the limit, never cut)"], [{ msg: "ก".repeat(201) }, env.MSG.longMsg, "a 201-letter message"],
-    [{ date: "2019-12-31T23:59" }, env.MSG.range, "a transfer before 2020"], [{ date: "" }, env.MSG.badDate, "no transfer time"], [{ file: null }, env.DONATE_ERRORS.missing, "no slip"],
+    [{ file: null }, env.DONATE_ERRORS.missing, "no slip"],
   ];
   for (const [v, want, what] of refusals) {
     const { ui, before, sent } = await send(v, () => reply({ ok: true }));
@@ -3765,8 +3771,9 @@ async function donateChildTests(env) {
   const kind = (name) => { try { return vm.runInContext("typeof " + name, sandbox); } catch (e) { return "undefined"; } };
   const page = (name) => vm.runInContext(name, sandbox);
   const FAIL_TEXT = "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", THANKS = "ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นหลังตรวจสลิป", READ_ERROR = "อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่";
-  const need = { DONATE_QR: "string", DONATE_WORKER_URL: "string", DONOR_LIMITS: "object", DONATE_ERRORS: "object", donorCheck: "function", donorRows: "function", parseAmountInput: "function", donateNow: "function",
-    shrinkSlip: "function", downloadQr: "function", donateErrorText: "function", donateSend: "function", donateSubmit: "function", renderDonorList: "function" };
+  const need = { DONATE_QR: "string", DONATE_WORKER_URL: "string", DONOR_LIMITS: "object", DONATE_ERRORS: "object", donorSlipCheck: "function", donorRows: "function",
+    shrinkSlip: "function", downloadQr: "function", donateErrorText: "function", donateSend: "function", donateSubmit: "function", renderDonorList: "function",
+    donateShowTab: "function", donateTabKey: "function", openDonateModal: "function", closeDonateModal: "function", donateTabs: "object", donatePanels: "object" };
   const missing = Object.keys(need).filter((n) => kind(n) !== need[n]);
   ok(!missing.length, "the pop-up's code is missing from the main script: " + missing.join(", "));
   const have = (...names) => names.every((n) => !missing.includes(n));
@@ -3802,35 +3809,66 @@ async function donateChildTests(env) {
     let real = null; try { real = dl.parseDonors(html).donations.map((t) => t.x); } catch (e) {}
     ok(real !== null && same(rows(page("DONORS")), dl.groupDonors(real)), "donorRows(DONORS) gives other rows than groupDonors on the page's DONORS");
   }
-  const now = new Date("2026-10-23T08:00:00Z"), base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" }, v = (d) => ({ ...base, ...d });
-  const res = (fn, d) => { try { return { ok: fn(d, now) }; } catch (e) { return { err: String(e.message) }; } };
-  if (have("donorCheck")) {
-    const cases = [base, null, {}, v({ name: "  ก้อง\n 🐱 " }), v({ name: "🐱".repeat(40) }), v({ name: "🐱".repeat(41) }), v({ name: " \n " }), v({ name: 5 }), v({ msg: "ก".repeat(200) }), v({ msg: "ก".repeat(201) }), v({ msg: "a\r\n\r\n b" }), v({ msg: null }), v({ msg: undefined }), v({ msg: 5 }),
-      ...[50, 0.5, 1000000, 0, -1, 1.234, 1000000.01, "50", NaN, Infinity, 12.345, 0.1 + 0.2, null].map((amount) => v({ amount })),
-      ...["2026-10-23T14:05", "2026-10-25T00:00", "2019-12-31T23:59", "2026-02-30T10:00", "2026-10-23 14:05", 5, "", "2020-01-01T00:00", "2026-10-24T14:59", "2026-10-24T15:01"].map((date) => v({ date }))];
+  // donorSlipCheck = checkSlipDetails: the name and message rules the Worker applies (the amount and date are no longer the donor's to send)
+  const res = (fn, d) => { try { return { ok: fn(d) }; } catch (e) { return { err: String(e.message) }; } };
+  if (have("donorSlipCheck")) {
+    const cases = [{ name: "A" }, null, {}, { name: "  ก้อง\n 🐱 " }, { name: "🐱".repeat(40) }, { name: "🐱".repeat(41) }, { name: " \n " }, { name: 5 }, { name: "" },
+      ...["ก".repeat(200), "ก".repeat(201), "a\r\n\r\n b", null, undefined, 5, ""].map((msg) => ({ name: "A", msg })), { name: "A", msg: "m", amount: "abc", date: 5 }, { name: "A", amount: 50, date: "2026-10-23T14:05" }];
     let agree = 0;
-    for (const d of cases) { const a = res(page("donorCheck"), d), b = res(dl.checkDonation, d); if (same(a, b)) agree++; else ok(false, `donorCheck and checkDonation disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
-    ok(agree === cases.length, `donorCheck gives the same result or message as checkDonation on ${agree} of ${cases.length} cases`);
+    for (const d of cases) { const a = res(page("donorSlipCheck"), d), b = res(dl.checkSlipDetails, d); if (same(a, b)) agree++; else ok(false, `donorSlipCheck and checkSlipDetails disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
+    ok(agree === cases.length, `donorSlipCheck gives the same result or message as checkSlipDetails on ${agree} of ${cases.length} cases`);
   }
-  // Review Focus 3: amounts typed the Thai way
-  if (have("parseAmountInput")) {
-    const p = page("parseAmountInput");
-    for (const [text, want] of [["1,000", 1000], ["฿50", 50], [" 20 ", 20], ["50.5", 50.5], ["฿ 1,234.50", 1234.5], ["abc", null], ["0", null], ["-5", null], ["0.00", null], ["1.234", null], ["", null], ["1e3", null], [null, null]])
-      ok(p(text) === want, `parseAmountInput(${JSON.stringify(text)}) gives ${JSON.stringify(p(text))}, expected ${JSON.stringify(want)}`);
-  }
-  if (have("donateNow")) ok(page("donateNow")(Date.UTC(2026, 9, 23, 20, 30)) === "2026-10-24T03:30" && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(page("donateNow")()), "donateNow is not the time in Thailand (UTC+7) as YYYY-MM-DDTHH:MM");
+  ok(["parseAmountInput", "donateNow", "donorCheck"].every((n) => kind(n) === "undefined"), "parseAmountInput, donateNow and donorCheck must go: the slip form has no amount or date any more");
 
   // the pop-up's text: support for ค่าพัฒนา and future server cost, never AI; the brief's texts; no one-line (nowrap) message any more
   const modal = (html.match(/<div class="donate-backdrop" id="donateModal"[\s\S]*?\r?\n<\/div>\r?\n/) || [""])[0], modalText = modal.replace(/<[^>]*>/g, " ");
   ok(modal && modalText.includes("ค่าพัฒนา") && modalText.includes("ค่าเซิร์ฟเวอร์ในอนาคต") && !/\bAI\b/i.test(modalText) && !/\bAI\b/.test(modal), "the ☕ pop-up must ask for ค่าพัฒนา and ค่าเซิร์ฟเวอร์ในอนาคต and never mention AI");
   for (const s of ["ร่วมสนับสนุนค่าพัฒนา 12 Tails Bible และค่าเซิร์ฟเวอร์ในอนาคต ขอบคุณทุกการสนับสนุนครับ 🙏", "ดาวน์โหลด QR", "อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?", "สลิปจะส่งถึงผู้ดูแลเท่านั้น ไม่เผยแพร่ ชื่อที่แสดง ข้อความ ยอด และวันที่จะขึ้นในรายชื่อหลังตรวจสลิป ชื่อที่แสดงเป็นข้อมูลสาธารณะ", "รายชื่อผู้สนับสนุน", "https://discord.com/users/333828912830480386"])
     ok(modalText.replace(/\s+/g, " ").includes(s) || modal.includes(s), "the ☕ pop-up is missing " + JSON.stringify(s));
-  ok(/<details\b[^>]*class="[^"]*donate-form-box/.test(modal) && !/<details\b[^>]*\bopen\b[^>]*class="[^"]*donate-form-box/.test(modal), "the slip form sits in a collapsed <details class=\"donate-form-box\">");
+  // the three tabs (user 2026-10-23: the slip form and the donor list each get a tab, so they never crowd the QR card): role tab / tabpanel,
+  // in this order, QR โอนเงิน selected in the markup; each panel holds its part (QR card, slip form with its intro and note, donor list)
+  {
+    const attr = (tag, a) => (tag.match(new RegExp("\\s" + a + '="([^"]*)"')) || [])[1];
+    const tabs = [...modal.matchAll(/<button\b[^>]*\srole="tab"[^>]*>([\s\S]*?)<\/button>/g)].map((m) => ({ tag: m[0].slice(0, m[0].indexOf(">") + 1), label: m[1].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() }));
+    const panels = [...modal.matchAll(/<(?:div|section)\b[^>]*\srole="tabpanel"[^>]*>/g)].map((m) => ({ tag: m[0], at: m.index }));
+    const inside = (i) => panels[i] ? modal.slice(panels[i].at, i + 1 < panels.length ? panels[i + 1].at : modal.length) : "";
+    ok(/<div\b[^>]*\srole="tablist"/.test(modal) && same(tabs.map((t) => t.label), ["QR โอนเงิน", "ส่งสลิป", "รายชื่อผู้สนับสนุน"]), `the ☕ pop-up has a tablist of three tabs QR โอนเงิน, ส่งสลิป, รายชื่อผู้สนับสนุน (got ${JSON.stringify(tabs.map((t) => t.label))})`);
+    ok(tabs.length === 3 && same(tabs.map((t) => attr(t.tag, "aria-selected")), ["true", "false", "false"]) && same(tabs.map((t) => attr(t.tag, "tabindex") || "0"), ["0", "-1", "-1"]), "the QR โอนเงิน tab is the selected one in the markup (aria-selected, roving tabindex)");
+    ok(panels.length === 3 && tabs.length === 3 && tabs.every((t, i) => attr(t.tag, "aria-controls") && attr(t.tag, "aria-controls") === attr(panels[i].tag, "id") && attr(panels[i].tag, "aria-labelledby") === attr(t.tag, "id")), "each tab's aria-controls names its tabpanel (same order) and the panel is labelled by its tab");
+    ok(panels.length === 3 && !/\shidden\b/.test(panels[0].tag) && panels.slice(1).every((p) => /\shidden\b/.test(p.tag)), "only the QR panel shows in the markup; the slip and list panels start hidden");
+    ok(inside(0).includes('id="donateQrImg"') && inside(0).includes('id="btnDonateQr"'), "the QR card and ดาวน์โหลด QR are in the QR โอนเงิน panel");
+    ok(inside(1).includes('id="donateForm"') && inside(1).includes("อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?") && inside(1).includes('class="donate-note"'), "the slip form, its intro line and the privacy note are in the ส่งสลิป panel");
+    ok(inside(2).includes('id="donateList"'), "the donor list is in the รายชื่อผู้สนับสนุน panel");
+    ok(!/<details\b/.test(modal), "the slip form's <details> wrapper must go (the form has its own tab)");
+    const form = (modal.match(/<form\b[^>]*\sid="donateForm"[\s\S]*?<\/form>/) || [""])[0];
+    ok(same([...form.matchAll(/<(?:input|textarea|select)\b[^>]*\sname="([^"]+)"/g)].map((m) => m[1]), ["name", "msg", "slip"]), "the slip form's fields are exactly name, msg and slip (the owner types the amount and date from the slip)");
+  }
+  if (have("donateShowTab", "donateTabKey", "openDonateModal", "closeDonateModal", "donateTabs", "donatePanels")) {
+    const stub = () => ({ attrs: {}, tabIndex: 0, hidden: false, focused: false, value: "typed", setAttribute(k, x) { this.attrs[k] = String(x); }, getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }, focus() { this.focused = true; } });
+    const tabs = [stub(), stub(), stub()], panels = [stub(), stub(), stub()], show = page("donateShowTab"), key = page("donateTabKey");
+    const picked = () => tabs.findIndex((t) => t.attrs["aria-selected"] === "true");
+    const state = () => JSON.stringify([tabs.map((t) => [t.attrs["aria-selected"], t.tabIndex]), panels.map((p) => [p.hidden, p.value])]);
+    show(tabs, panels, 1);
+    ok(state() === JSON.stringify([[["false", -1], ["true", 0], ["false", -1]], [[true, "typed"], [false, "typed"], [true, "typed"]]]), `donateShowTab picks one tab (aria-selected, tabindex) and only hides the other panels, so what was typed stays (got ${state()})`);
+    const press = (from, k) => { show(tabs, panels, from); tabs.forEach((t) => { t.focused = false; }); let prevented = false; key({ key: k, target: tabs[from], preventDefault() { prevented = true; } }, tabs, panels); return [picked(), prevented, picked() >= 0 && tabs[picked()].focused]; };
+    const keys = [[0, "ArrowRight", 1], [2, "ArrowRight", 0], [0, "ArrowLeft", 2], [2, "ArrowLeft", 1], [2, "Home", 0], [0, "End", 2]];
+    ok(keys.every(([from, k, to]) => same(press(from, k), [to, true, true])) && same(press(1, "a"), [1, false, false]) && same(press(1, "toString"), [1, false, false]) && same(press(1, "Enter"), [1, false, false]),
+      "donateTabKey: the arrow keys (wrapping), Home and End move to a tab, pick it and focus it; other keys are left alone");
+    const live = page("donateTabs"), livePanels = page("donatePanels"), was = [live.slice(), livePanels.slice()];
+    try {
+      live.splice(0, live.length, ...tabs); livePanels.splice(0, livePanels.length, ...panels);
+      show(tabs, panels, 2); page("openDonateModal")();
+      const first = picked();
+      show(tabs, panels, 1); page("closeDonateModal")(); page("openDonateModal")(); page("closeDonateModal")();
+      ok(first === 0 && picked() === 0 && !panels[0].hidden && panels[1].hidden && panels[2].hidden, `every open of the pop-up picks QR โอนเงิน (got tab ${first}, then ${picked()})`);
+    } catch (e) { ok(false, "opening the pop-up threw: " + e.message); }
+    finally { live.splice(0, live.length, ...was[0]); livePanels.splice(0, livePanels.length, ...was[1]); }
+  }
   ok(!/\.donate-msg\{[^}]*white-space:nowrap/.test(html), "the .donate-msg{white-space:nowrap} rule must go (the message wraps now)");
   ok(/\.donate-qr img\[hidden\]\{display:none\}/.test(html), ".donate-qr img[hidden]{display:none} is missing: .donate-qr img{display:block} would keep an empty QR image on screen when assets.js did not load");
   ok(["DONATE_ERRORS", "donateSubmit", "renderDonorList"].every((n) => !missing.includes(n) && !/\bAI\b/.test(n === "DONATE_ERRORS" ? JSON.stringify(page(n)) : String(page(n)))), "the pop-up's script texts must not mention AI");
   const inSurfaces = (list, group) => { const m = html.match(new RegExp("\\n\\s*" + group + ": \\[([^\\]]*)\\]")); return !!m && list.every((s) => m[1].includes(JSON.stringify(s))); };
-  ok(inSurfaces([".donate-form-box", ".donate-list-box"], "panel") && inSurfaces([".donate-form input", ".donate-form textarea"], "field"), "the pop-up's new panels (.donate-form-box, .donate-list-box) and fields (.donate-form input / textarea) are not in THEME_SURFACES");
+  ok(inSurfaces([".donate-tabs", ".donate-form-box", ".donate-list-box"], "panel") && inSurfaces([".donate-form input", ".donate-form textarea"], "field"), "the pop-up's panels (.donate-tabs, .donate-form-box, .donate-list-box) and fields (.donate-form input / textarea) are not in THEME_SURFACES");
 
   // the donor list: donorRows(DONORS) as text only (names and messages are typed by donors), ×N only for a repeat donor, a Thai date
   if (have("renderDonorList")) {
@@ -3859,11 +3897,11 @@ async function donateChildTests(env) {
   }
 
   // the async code in a child process: the page's functions as source, the stubs they see, donateChildTests(env)
-  const childNames = ["DONATE_WORKER_URL", "DONOR_LIMITS", "DONATE_ERRORS", "donorCheck", "parseAmountInput", "donateNow", "shrinkSlip", "donateErrorText", "donateSend", "donateSubmit", "downloadQr"];
+  const childNames = ["DONATE_WORKER_URL", "DONOR_LIMITS", "DONATE_ERRORS", "donorSlipCheck", "shrinkSlip", "donateErrorText", "donateSend", "donateSubmit", "downloadQr"];
   if (have(...childNames)) {
     const decl = (name) => { const x = page(name); if (typeof x !== "function") return `const ${name} = ${JSON.stringify(x)};`; const s = String(x); return /^(async\s+)?function\b/.test(s) ? s : `const ${name} = ${s};`; };
-    const msg = (d) => res(dl.checkDonation, v(d)).err;
-    const env = { READ_ERROR, FAIL_TEXT, THANKS, MSG: { amount: msg({ amount: null }), name: msg({ name: " " }), longName: msg({ name: "🐱".repeat(41) }), longMsg: msg({ msg: "ก".repeat(201) }), range: msg({ date: "2019-12-31T23:59" }), badDate: msg({ date: "" }) } };
+    const msg = (d) => res(dl.checkSlipDetails, { name: "A", msg: "", ...d }).err;
+    const env = { READ_ERROR, FAIL_TEXT, THANKS, MSG: { name: msg({ name: " " }), longName: msg({ name: "🐱".repeat(41) }), longMsg: msg({ msg: "ก".repeat(201) }) } };
     const script = [
       "(async () => {",
       "  const S = { bmp: { width: 4000, height: 3000 }, bmpFail: false, blobBytes: 1234, blobNull: false, fetch: async () => { throw new Error('no fetch stub'); } }, log = [], anchors = [], shares = [];",
@@ -3877,7 +3915,7 @@ async function donateChildTests(env) {
       "  const QR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';",
       "  let DONATE_QR = QR;",
       ...childNames.map(decl),
-      "  const env = Object.assign(" + JSON.stringify(env) + ", { S, log, anchors, shares, shrinkSlip, donateSubmit, downloadQr, donateNow, DONATE_ERRORS, DONATE_WORKER_URL,",
+      "  const env = Object.assign(" + JSON.stringify(env) + ", { S, log, anchors, shares, shrinkSlip, donateSubmit, downloadQr, DONATE_ERRORS, DONATE_WORKER_URL,",
       "    setNav: (n) => { navigator = n; }, setQr: (q) => { DONATE_QR = q; }, restoreQr: () => { DONATE_QR = QR; }, dropBitmap: () => { createImageBitmap = undefined; }, restoreBitmap: () => { createImageBitmap = realBitmap; } });",
       "  const results = await (" + String(donateChildTests) + ")(env);",
       "  process.stdout.write(JSON.stringify(results));",
@@ -3888,7 +3926,7 @@ async function donateChildTests(env) {
     catch (e) { ok(false, "the async pop-up checks did not run: " + String(e.message).split("\n").slice(0, 3).join(" ")); }
     if (Array.isArray(results)) results.forEach((r) => ok(r.pass, r.msg));
   }
-  console.log(`Verified ${donateChecked} ☕ pop-up checks (donors.js copies, Thai amounts, slip redraw, send and errors, QR download, text-only donor list).`);
+  console.log(`Verified ${donateChecked} ☕ pop-up checks (donors.js copies, tabs, slip redraw, send and errors, QR download, text-only donor list).`);
 }
 
 // Server balance + BB issues pages (mountNotePage, redesign 2026-10-18): one row per card with a servers.<srv>.changeNote, every
@@ -4975,8 +5013,15 @@ if (gmHtml !== null) {
     // must give the same results and messages. The อนุมัติ link's fragment is untrusted: anyone can make one.
     try {
       const dl = require(path.join(__dirname, "donors.js"));
-      const dn = vm.runInContext("({ gmCheckDonation, GM_DONOR_LIMITS, gmParseDonors, gmFromFragment, gmGroupDonors, gmDonorMatches, gmDuplicateDonation, gmNewId })", ctx);
+      const dn = vm.runInContext("({ gmCheckSlipDetails, gmCheckDonation, GM_DONOR_LIMITS, gmParseDonors, gmFromFragment, gmDonorFromLink, gmGroupDonors, gmDonorMatches, gmDuplicateDonation, gmNewId })", ctx);
       ok(same(dn.GM_DONOR_LIMITS, dl.LIMITS), "GM_DONOR_LIMITS differ from LIMITS in scripts/donors.js");
+      // what a donor sends since 2026-10-23 (name and message only): gmCheckSlipDetails = checkSlipDetails, whatever amount / date ride along
+      const slipCases = [{ name: "A" }, null, {}, { name: "  ก้อง\n 🐱 " }, { name: "🐱".repeat(40) }, { name: "🐱".repeat(41) }, { name: " \n " }, { name: 5 }, ...["ก".repeat(200), "ก".repeat(201), "a\r\n\r\n b", null, undefined, 5, ""].map((msg) => ({ name: "A", msg })),
+        { name: "A", msg: "m", amount: "abc", date: 5 }, { name: "A", amount: 50, date: "2026-10-23T14:05" }];
+      const resSd = (fn, d) => { try { return { ok: fn(d) }; } catch (e) { return { err: String(e.message) }; } };
+      let sdAgree = 0;
+      for (const d of slipCases) { const a = resSd(dn.gmCheckSlipDetails, d), b = resSd(dl.checkSlipDetails, d); if (same(a, b)) sdAgree++; else ok(false, `gmCheckSlipDetails and checkSlipDetails disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
+      ok(sdAgree === slipCases.length, `gmCheckSlipDetails gives the same result or message as checkSlipDetails on ${sdAgree} of ${slipCases.length} cases`);
       // donors.js selftest's cases (now = 2026-10-23T08:00Z), and a few shapes a crafted link could carry
       const now = new Date("2026-10-23T08:00:00Z"), base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" }, v = (d) => ({ ...base, ...d });
       const cases = [base, null, {}, v({ name: "  ก้อง\n 🐱 " }), v({ name: "🐱".repeat(40) }), v({ name: "🐱".repeat(41) }), v({ name: " \n " }), v({ name: 5 }), v({ msg: "ก".repeat(200) }), v({ msg: "ก".repeat(201) }), v({ msg: "a\r\n\r\n b" }), v({ msg: null }), v({ msg: undefined }), v({ msg: 5 }),
@@ -4995,10 +5040,21 @@ if (gmHtml !== null) {
       const gd = (id, name, msg, amount, date) => ({ k: id + date, id, name, msg, amount, date });
       const sets = [[gd("A", "old", "hi", 100, "2026-10-02T10:00"), gd("B", "bee", "", 150, "2026-10-01T10:00"), gd("A", "new", "", 50, "2026-10-05T10:00")], [gd("C", "c", "", 0.1, "2026-10-01T00:00"), gd("C", "c", "", 0.2, "2026-10-02T00:00")], []];
       ok(sets.every((s) => same(dn.gmGroupDonors(s), dl.groupDonors(s))), "gmGroupDonors gives groupDonors' rows (merged by id, latest name and message, total in satang, biggest first)");
-      const fd = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #", amount: 12.5, date: "2026-10-23T14:05" }, frag = dl.donorFragment(fd);
-      ok(same(dn.gmFromFragment("#" + frag), fd) && same(dn.gmFromFragment(frag), fd), "gmFromFragment(donorFragment(d)) gives d back (Thai, emoji, &#=)");
-      const odd = ["#donor=@@@", "#x=1", "", null, "#donor=" + Buffer.from("[1,2]").toString("base64url"), "#donor=" + Buffer.from([0xff, 0xfe]).toString("base64url"), "#" + frag + "&x=1"];
+      // the อนุมัติ link: a new one carries { name, msg }; an older one (the first slips in the owner's Discord) also the amount and date
+      const fd = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #" }, frag = dl.donorFragment(fd);
+      const oldLink = (o) => "#donor=" + Buffer.from(JSON.stringify(o), "utf8").toString("base64url"), fd4 = { ...fd, amount: 12.5, date: "2026-10-23T14:05" };
+      const bothRead = (h) => { const a = dn.gmFromFragment(h); return same(a, dl.fromFragment(h)) ? a : { disagree: [a, dl.fromFragment(h)] }; };
+      ok(same(bothRead("#" + frag), fd) && same(bothRead(frag), fd), "gmFromFragment and fromFragment give a 2-field link's { name, msg } back (Thai, emoji, &#=)");
+      ok(same(bothRead(oldLink(fd4)), fd4) && same(bothRead(oldLink({ date: "2026-10-23T14:05", x: 1, name: "A", msg: "" })), { name: "A", msg: "", date: "2026-10-23T14:05" }), "gmFromFragment and fromFragment read an older 4-field link (amount and date kept, other keys dropped)");
+      const odd = ["#donor=@@@", "#x=1", "", null, "#donor=" + Buffer.from("[1,2]").toString("base64url"), "#donor=" + Buffer.from("null").toString("base64url"), "#donor=" + Buffer.from([0xff, 0xfe]).toString("base64url"), "#" + frag + "&x=1"];
       ok(odd.every((h) => dn.gmFromFragment(h) === null && dl.fromFragment(h) === null), "gmFromFragment gives null for anything but a donor link, as fromFragment does");
+      // what a link fills in the donor card: name and message checked like a slip; the amount and date only from an older link that passes
+      // gmCheckDonation (a new link leaves both empty for the owner to type from the slip); a link that fails fills nothing
+      const fromLink = (h) => { try { return { ok: dn.gmDonorFromLink(h, now) }; } catch (e) { return { err: String(e.message) }; } };
+      ok(same(fromLink("#" + frag), { ok: { name: fd.name, msg: fd.msg } }), "gmDonorFromLink on a new link fills only the name and message (amount and date stay empty)");
+      ok(same(fromLink(oldLink({ name: "  Kong ", msg: "", amount: 50, date: "2026-10-23T14:05" })), { ok: { name: "Kong", msg: "", amount: 50, date: "2026-10-23T14:05" } }), "gmDonorFromLink on an older link with a good amount and date fills all four");
+      ok([{ amount: "50", date: "2026-10-23T14:05" }, { amount: 50, date: "2019-01-01T00:00" }, { amount: 50 }].every((x) => same(fromLink(oldLink({ name: "Kong", msg: "", ...x })), { ok: { name: "Kong", msg: "" } })), "gmDonorFromLink drops an older link's amount and date unless both pass gmCheckDonation");
+      ok(same(fromLink("#donor=@@@"), { err: "อ่านข้อมูลในลิงก์ไม่ได้ (ลิงก์ไม่ครบหรือถูกแก้)" }) && same(fromLink(oldLink({ name: " ", msg: "", amount: 50, date: "2026-10-23T14:05" })), { err: "กรุณาใส่ชื่อ" }) && same(fromLink(oldLink({ name: "A", msg: "ก".repeat(201) })), { err: resSd(dl.checkSlipDetails, { name: "A", msg: "ก".repeat(201) }).err }), "gmDonorFromLink refuses an unreadable link and a bad name or message with the Thai reason");
       const rows = dl.groupDonors(sets[0]);
       ok(same(dn.gmDonorMatches(rows, "  NEW ").map((r) => r.id), ["A"]) && same(dn.gmDonorMatches(rows, "Bee").map((r) => r.id), ["B"]) && !dn.gmDonorMatches(rows, "old").length && !dn.gmDonorMatches(rows, " ").length, "gmDonorMatches: trimmed, case-insensitive, on a donor's latest name only");
       // Review Focus 5: the same อนุมัติ link opened twice
