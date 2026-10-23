@@ -3782,9 +3782,11 @@ async function donateChildTests(env) {
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const kind = (name) => { try { return vm.runInContext("typeof " + name, sandbox); } catch (e) { return "undefined"; } };
   const page = (name) => vm.runInContext(name, sandbox);
-  const FAIL_TEXT = "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", THANKS = "ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นหลังตรวจสลิป", READ_ERROR = "อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่";
+  const FAIL_TEXT = "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", THANKS = "ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นในรายชื่อผู้สนับสนุนหลังตรวจสลิป", READ_ERROR = "อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่";
   const need = { DONATE_QR: "string", DONATE_WORKER_URL: "string", DONOR_LIMITS: "object", DONATE_ERRORS: "object", donorSlipCheck: "function", donorRows: "function",
     shrinkSlip: "function", downloadQr: "function", donateErrorText: "function", donateSend: "function", donateSubmit: "function", renderDonorList: "function",
+    renderDonorThanks: "function", donorTicker: "function", donateThanksFit: "function", donateThanksUi: "object", DONATE_TICKER_SPEED: "number",
+    donorRecent: "function", donorListPages: "function", donateListPage: "function", donateListFit: "function", donateListUi: "object", donateTabShown: "function",
     donateShowTab: "function", donateTabKey: "function", openDonateModal: "function", closeDonateModal: "function", donateTabs: "object", donatePanels: "object" };
   const missing = Object.keys(need).filter((n) => kind(n) !== need[n]);
   ok(!missing.length, "the pop-up's code is missing from the main script: " + missing.join(", "));
@@ -3820,6 +3822,19 @@ async function donateChildTests(env) {
     ok(sets.every((s) => same(rows(s), dl.groupDonors(s))), "donorRows gives other rows than groupDonors on donors.js's test data (merged by id, latest name and message, total in satang, biggest first)");
     let real = null; try { real = dl.parseDonors(html).donations.map((t) => t.x); } catch (e) {}
     ok(real !== null && same(rows(page("DONORS")), dl.groupDonors(real)), "donorRows(DONORS) gives other rows than groupDonors on the page's DONORS");
+    // the list tab (user 2026-10-23): newest first by each donor's latest donation, the same minute keeping the bigger total first; the names line keeps donorRows' order
+    if (have("donorRecent")) {
+      const recent = page("donorRecent"), r = (id, total, date) => ({ id, name: id, msg: "", total, count: 1, date, first: date });
+      const input = [r("big", 500, "2026-10-23T15:29"), r("mid", 185, "2026-10-23T14:28"), r("tie", 100, "2026-10-24T09:00"), r("new", 50, "2026-10-24T09:00"), r("old", 20, "2026-10-01T00:00")], copy = JSON.stringify(input);
+      ok(same(recent(input).map((x) => x.id), ["tie", "new", "big", "mid", "old"]) && JSON.stringify(input) === copy && same(recent([]), []),
+        "donorRecent sorts the list rows newest first (a tie keeps the bigger total first) without changing the rows it was given");
+    }
+  }
+  if (have("donorListPages")) {
+    const pages = page("donorListPages");
+    const cases = [[[], 100, [0]], [[50, 50, 50], 150, [0]], [[50, 50, 50], 120, [0, 2]], [[50, 50, 50], 60, [0, 1, 2]], [[200, 30], 100, [0, 1]], [[30, 200, 30], 100, [0, 1, 2]], [[40, 40, 40, 40, 40], 100, [0, 2, 4]]];
+    const wrong = cases.filter(([h, room, want]) => !same(pages(h, room), want)).map(([h, room, want]) => `${JSON.stringify(h)} in ${room}: ${JSON.stringify(pages(h, room))}, expected ${JSON.stringify(want)}`);
+    ok(!wrong.length, "donorListPages (rows in order, as many as fit a page, at least one row a page, each page's first row) gives " + wrong.join("; "));
   }
   // donorSlipCheck = checkSlipDetails: the name and message rules the Worker applies (the amount and date are no longer the donor's to send)
   const res = (fn, d) => { try { return { ok: fn(d) }; } catch (e) { return { err: String(e.message) }; } };
@@ -3884,6 +3899,11 @@ async function donateChildTests(env) {
     const keys = [[0, "ArrowRight", 1], [2, "ArrowRight", 0], [0, "ArrowLeft", 2], [2, "ArrowLeft", 1], [2, "Home", 0], [0, "End", 2]];
     ok(keys.every(([from, k, to]) => same(press(from, k), [to, true, true, true])) && same(press(1, "a"), [1, false, false, false]) && same(press(1, "toString"), [1, false, false, false]) && same(press(1, "Enter"), [1, false, false, false]),
       "donateTabKey: the arrow keys (wrapping), Home and End move to a tab, pick it and focus it, and stop there (preventDefault + stopPropagation, so the skill page behind never sees them); other keys are left alone");
+    {
+      const seen = [], ev = (k, from) => ({ key: k, target: tabs[from], preventDefault() {}, stopPropagation() {} });
+      show(tabs, panels, 1); key(ev("ArrowRight", 1), tabs, panels, (at) => seen.push([at, picked()])); key(ev("a", 2), tabs, panels, (at) => seen.push([at, picked()]));
+      ok(same(seen, [[2, 2]]), `donateTabKey calls its shown(at) after a switch, with the new tab already picked, and not for other keys (got ${JSON.stringify(seen)})`);
+    }
     // the skill details page's document ← / → (navigateSkill) must stand down behind an open pop-up and for a key already handled
     const skillKeys = (html.match(/document\.addEventListener\("keydown", \(e\) => \{[^\n]*\r?\n(?:[^\n]*\r?\n){0,8}?[^\n]*navigateSkill\(-1\)/) || [""])[0];
     ok(skillKeys.includes("e.defaultPrevented") && skillKeys.includes(`document.querySelector('[aria-modal="true"]:not([hidden])')`), "the skill details page's ← / → handler must return for e.defaultPrevented and while an [aria-modal=\"true\"]:not([hidden]) pop-up is open (the ☕ tabs use the arrows)");
@@ -3897,7 +3917,37 @@ async function donateChildTests(env) {
     } catch (e) { ok(false, "opening the pop-up threw: " + e.message); }
     finally { live.splice(0, live.length, ...was[0]); livePanels.splice(0, livePanels.length, ...was[1]); }
   }
-  ok(!/\.donate-msg\{[^}]*white-space:nowrap/.test(html), "the .donate-msg{white-space:nowrap} rule must go (the message wraps now)");
+  // the donors' names under the thank-you line (user 2026-10-23: honour them on every open, not only on their tab; option E of five
+  // mocks, a ticker): a button between the message and the tabs, hidden until filled, that opens รายชื่อผู้สนับสนุน; filled on the first open,
+  // measured on every open and resize (names that do not fit loop); the list tab carries the donor count
+  ok(/<\/p>\s*<button type="button" class="donate-thanks" id="donateThanks" aria-controls="donatePanelList"[^>]*\shidden>[^\n]*id="donateThanksNames"[^\n]*<\/button>\s*<div class="donate-tabs"/.test(modal)
+    && /id="donateTabList"[^>]*>รายชื่อผู้สนับสนุน<span class="donate-tab-count" id="donateTabCount" hidden><\/span><\/button>/.test(modal),
+    "the ☕ pop-up needs the donors' names line (button#donateThanks, hidden, aria-controls donatePanelList, holding #donateThanksNames) between the thank-you line and the tabs, and the list tab's #donateTabCount");
+  ok(/function openDonateModal\(\) \{[\s\S]*?renderDonorThanks\(donateThanksUi\);[\s\S]*?donateModal\.hidden = false;\r?\n  donateThanksFit\(donateThanksUi\);[\s\S]*?\n\}/.test(html)
+    && /donateThanksUi\.box\.addEventListener\("click", \(\) => \{ const at = donateTabs\.length - 1; donateShowTab\(donateTabs, donatePanels, at\);/.test(html)
+    && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\)\{ donateThanksFit\(donateThanksUi\);/.test(html),
+    "the names line must be filled on the first open (renderDonorThanks), fitted on every open and resize (donateThanksFit), and open the รายชื่อผู้สนับสนุน tab when clicked");
+  // the list tab's pages (user 2026-10-23): a hidden ‹ n / N › pager under the list; laid out whenever the tab shows (click, arrow keys, the
+  // names line) and on resize; every open starts on the newest page
+  ok(/<ol class="donate-list" id="donateList"><\/ol>\s*<div class="donate-pager" id="donatePager" hidden><button type="button" class="donate-pager-btn" id="btnDonatePrev" aria-label="หน้าก่อน">‹<\/button><span class="donate-pager-num" id="donatePagerNum" aria-live="polite"><\/span><button type="button" class="donate-pager-btn" id="btnDonateNext" aria-label="หน้าถัดไป">›<\/button><\/div>\s*<\/div>/.test(modal),
+    "the รายชื่อผู้สนับสนุน panel needs its pager (#donatePager, hidden, ‹ หน้าก่อน, #donatePagerNum, › หน้าถัดไป) right under the list");
+  ok(/t\.addEventListener\("click", \(\) => \{ donateShowTab\(donateTabs, donatePanels, i\); donateTabShown\(i\); \}\);/.test(html)
+    && /t\.addEventListener\("keydown", \(e\) => donateTabKey\(e, donateTabs, donatePanels, donateTabShown\)\);/.test(html)
+    && /donateThanksUi\.box\.addEventListener\("click", \(\) => \{ const at = donateTabs\.length - 1; donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\); \}\)/.test(html)
+    && /function donateTabShown\(at\)\{\r?\n  if \(donatePanels\[at\] && donatePanels\[at\] === donateListUi\.box\) donateListFit\(donateListUi\);/.test(html)
+    && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\)\{ donateThanksFit\(donateThanksUi\); donateListFit\(donateListUi\); \} \}\);/.test(html)
+    && /function openDonateModal\(\) \{[\s\S]*?donateListUi\.rows = donorRecent\(donorRows\(DONORS\)\);[\s\S]*?donateListUi\.page = 0;[\s\S]*?\n\}/.test(html),
+    "the list must lay out its pages whenever its tab shows (click, arrow keys, the names line: donateTabShown → donateListFit) and on resize, hold its rows newest first (donorRecent) and open on page 1");
+  if (have("donorTicker", "DONATE_TICKER_SPEED")) {
+    const tick = page("donorTicker"), v = page("DONATE_TICKER_SPEED");
+    ok(tick(100, 200, 16) === null && tick(200, 200, 16) === null && same(tick(201, 200, 16), { shift: 217, dur: 217 / v }) && same(tick(500, 120, 16), { shift: 516, dur: 516 / v }) && v > 0,
+      "donorTicker: names that fit stand still (null); wider ones move by one set plus the gap to its copy, at DONATE_TICKER_SPEED px a second");
+  }
+  ok(/function donateThanksFit\(ui\)\{[\s\S]*?ui\.copy = ui\.set\.cloneNode\(true\);\r?\n  ui\.copy\.setAttribute\("aria-hidden", "true"\);[\s\S]*?\n\}/.test(html)
+    && /\.donate-thanks:hover \.donate-thanks-track, \.donate-thanks:focus-visible \.donate-thanks-track\{animation-play-state:paused\}/.test(html)
+    && /@media \(prefers-reduced-motion: reduce\)\{ \.donate-thanks\.is-running \.donate-thanks-track\{animation:none\} \}/.test(html),
+    "the names ticker must hide its second copy from screen readers, pause under the mouse and keyboard focus, and stand still under reduced motion");
+  ok(!/\.donate-msg\{[^}]*white-space:nowrap/.test(html),"the .donate-msg{white-space:nowrap} rule must go (the message wraps now)");
   ok(/\.donate-qr img\[hidden\]\{display:none\}/.test(html), ".donate-qr img[hidden]{display:none} is missing: .donate-qr img{display:block} would keep an empty QR image on screen when assets.js did not load");
   ok(["DONATE_ERRORS", "donateSubmit", "renderDonorList"].every((n) => !missing.includes(n) && !/\bAI\b/.test(n === "DONATE_ERRORS" ? JSON.stringify(page(n)) : String(page(n)))), "the pop-up's script texts must not mention AI");
   const inSurfaces = (list, group) => { const m = html.match(new RegExp("\\n\\s*" + group + ": \\[([^\\]]*)\\]")); return !!m && list.every((s) => m[1].includes(JSON.stringify(s))); };
@@ -3908,7 +3958,7 @@ async function donateChildTests(env) {
     const doc = sandbox.document, savedCreate = doc.createElement;
     let htmlWrites = 0;
     const node = (tag) => {
-      const n = { tagName: String(tag).toUpperCase(), className: "", children: [], _t: "", dataset: {}, appendChild(c) { this.children.push(c); return c; }, append(...cs) { cs.forEach((c) => this.children.push(typeof c === "string" ? { textContent: c, children: [], className: "" } : c)); }, insertAdjacentHTML() { htmlWrites++; } };
+      const n = { tagName: String(tag).toUpperCase(), className: "", children: [], _t: "", dataset: {}, attrs: {}, setAttribute(k, x) { this.attrs[k] = String(x); }, appendChild(c) { this.children.push(c); return c; }, append(...cs) { cs.forEach((c) => this.children.push(typeof c === "string" ? { textContent: c, children: [], className: "" } : c)); }, insertAdjacentHTML() { htmlWrites++; } };
       Object.defineProperty(n, "textContent", { get() { return this._t + this.children.map((c) => c.textContent).join(""); }, set(x) { this._t = String(x); this.children = []; } });
       Object.defineProperty(n, "innerHTML", { get() { return ""; }, set() { htmlWrites++; } });
       return n;
@@ -3925,6 +3975,33 @@ async function donateChildTests(env) {
       ok(txt(r1, "donate-row-amt") === "฿1,000" && txt(r2, "donate-row-amt") === "฿0.30" && txt(r1, "donate-row-count") === "×2" && txt(r2, "donate-row-count") === null, `renderDonorList amounts and repeat counts: ${JSON.stringify([txt(r1, "donate-row-amt"), txt(r2, "donate-row-amt"), txt(r1, "donate-row-count"), txt(r2, "donate-row-count")])}`);
       ok(txt(r1, "donate-row-date") === "23 ต.ค. 2026" && txt(r2, "donate-row-date") === "1 ต.ค. 2026", `renderDonorList dates: ${JSON.stringify([txt(r1, "donate-row-date"), txt(r2, "donate-row-date")])}`);
       ok(empty.children.length === 1 && empty.textContent === "ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ", `an empty list shows ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ (got ${JSON.stringify(empty.textContent)})`);
+      if (have("renderDonorThanks")) {
+        const ui = () => ({ box: node("button"), list: node("span"), count: node("span") }), two = ui(), none = ui(), real = ui();
+        const all = (n, cls, out = []) => { if (String(n.className).split(" ").includes(cls)) out.push(n); (n.children || []).forEach((c) => all(c, cls, out)); return out; };
+        const names = (u) => all(u.list, "donate-thanks-name").map((c) => c.textContent);
+        page("renderDonorThanks")(two, [{ id: "a", name: evil, msg: "", total: 1000, count: 2 }, { id: "b", name: "Mai", msg: "", total: 0.3, count: 1 }]);
+        page("renderDonorThanks")(none, []);
+        page("renderDonorThanks")(real);
+        const set = two.set, heart = set && set.children[0];
+        ok(htmlWrites === 0 && same(names(two), [evil, "Mai"]) && two.list.children.length === 1 && two.list.children[0] === two.track && two.track.children.length === 1 && two.track.children[0] === set
+          && heart && heart.className === "donate-thanks-heart" && heart.textContent === "♥" && heart.attrs["aria-hidden"] === "true" && two.copy === null,
+          "renderDonorThanks builds one set in the ticker's track: an aria-hidden ♥, then each name as typed (textContent only) in the rows' order");
+        ok(two.box.hidden === false && two.count.textContent === "2" && two.count.hidden === false && none.box.hidden === true && none.count.hidden === true && names(none).length === 0,
+          `renderDonorThanks shows the line and the tab count (number of donors) only when there is someone to thank (got ${JSON.stringify([two.box.hidden, two.count.textContent, none.box.hidden, none.count.hidden])})`);
+        ok(same(names(real), page("donorRows(DONORS)").map((r) => r.name)), "renderDonorThanks without rows shows donorRows(DONORS): every donor's latest name, biggest total first");
+      }
+      if (have("donateListPage")) {
+        const btn = () => ({ disabled: false, focused: false, focus() { this.focused = true; } });
+        const rowsN = (n) => Array.from({ length: n }, (_, i) => ({ id: "d" + i, name: "n" + i, msg: "", total: 10, count: 1, date: "2026-10-23T10:00", first: "2026-10-23T10:00" }));
+        const lui = { list: node("ol"), pager: { hidden: true }, num: node("span"), prev: btn(), next: btn(), rows: rowsN(5), pages: [0, 2, 4], page: 1 };
+        const shownNames = () => lui.list.children.map((li) => { const f = find(li, "donate-row-name"); return f ? f.textContent : null; });
+        const state = () => [shownNames(), lui.num.textContent, lui.pager.hidden, lui.prev.disabled, lui.next.disabled];
+        page("donateListPage")(lui); const mid = state();
+        lui.page = 2; page("donateListPage")(lui); const last = state();
+        lui.page = 0; lui.pages = [0]; page("donateListPage")(lui); const one = state();
+        ok(same(mid, [["n2", "n3"], "2 / 3", false, false, false]) && same(last, [["n4"], "3 / 3", false, false, true]) && same(one, [["n0", "n1", "n2", "n3", "n4"], "1 / 1", true, true, true]),
+          `donateListPage shows one page's rows, n / N, the arrows off at the ends and no pager for a single page (got ${JSON.stringify([mid, last, one])})`);
+      }
     } catch (e) { ok(false, "renderDonorList threw: " + e.message); }
     finally { doc.createElement = savedCreate; }
   }

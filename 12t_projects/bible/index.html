@@ -1522,7 +1522,7 @@
     padding:0; transition:all .15s ease;
   }
   .donate-close:hover{color:var(--text); background:rgba(255,255,255,.08); border-color:var(--line)}
-  /* the ☕ pop-up (user 2026-10-23): the thank-you text, then three tabs: QR โอนเงิน (the QR card and ดาวน์โหลด QR, picked on every open),
+  /* the ☕ pop-up (user 2026-10-23): the thank-you text, the donors' names, then three tabs: QR โอนเงิน (the QR card and ดาวน์โหลด QR, picked on every open),
      ส่งสลิป (the optional slip form) and รายชื่อผู้สนับสนุน (the donor list). The body scrolls inside the pop-up on small screens; the QR card
      is sized by the window height, so a 390 x 844 phone sees all of it as the pop-up opens. */
   .donate-main{max-width:600px; max-height:calc(100vh - 40px); max-height:calc(100dvh - 40px)}
@@ -1546,6 +1546,33 @@
   .donate-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .donate-btn:disabled{opacity:.55; cursor:default}
   .donate-btn svg{width:16px; height:16px; flex:none}
+  /* the donors' names under the thank-you line (user 2026-10-23: honour them on every open, not only on their tab; option E of five mocks):
+     ♥ and the names, biggest total first, on one line. When they do not fit, donateThanksFit adds a second copy and the line loops slowly
+     (a ticker, paused under the mouse or keyboard focus, standing still under reduced motion); .is-measuring lays it out at full width to measure it.
+     A click opens รายชื่อผู้สนับสนุน, whose tab shows the donor count. */
+  .donate-thanks{display:inline-flex; align-items:center; max-width:100%; margin:-6px 0 0; padding:2px 6px; border:0; border-radius:4px; background:none;
+    color:var(--text); font:inherit; font-size:14px; line-height:1.4; cursor:pointer}
+  .donate-thanks[hidden]{display:none}
+  .donate-thanks-names{display:block; min-width:0; overflow:hidden}
+  .donate-thanks-track{display:inline-flex; gap:16px; white-space:nowrap; vertical-align:top}
+  .donate-thanks-set{display:inline-flex; align-items:center; gap:8px; flex:none}
+  .donate-thanks-heart{color:var(--gold)}
+  .donate-thanks-name{font-weight:600; transition:color .15s ease}
+  .donate-thanks-name + .donate-thanks-name::before{content:"·"; margin-right:8px; color:var(--muted); font-weight:400}
+  .donate-thanks:hover .donate-thanks-name{color:var(--gold)}
+  .donate-thanks:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .donate-thanks.is-measuring, .donate-thanks.is-running{display:flex; width:100%}
+  .donate-thanks.is-measuring .donate-thanks-names, .donate-thanks.is-running .donate-thanks-names{flex:1 1 auto}
+  .donate-thanks.is-running .donate-thanks-names{-webkit-mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+    mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent)}
+  .donate-thanks.is-running .donate-thanks-track{animation:donateTicker var(--donate-dur, 20s) linear infinite}
+  .donate-thanks:hover .donate-thanks-track, .donate-thanks:focus-visible .donate-thanks-track{animation-play-state:paused}
+  @keyframes donateTicker{to{transform:translateX(calc(-1 * var(--donate-shift, 0px)))}}
+  @media (prefers-reduced-motion: reduce){ .donate-thanks.is-running .donate-thanks-track{animation:none} }
+  .donate-tab-count{display:inline-block; min-width:18px; margin-left:6px; padding:0 5px; border-radius:999px; background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--gold);
+    font-family:'JetBrains Mono','Prompt',monospace; font-size:11px; line-height:17px; text-align:center; vertical-align:1px}
+  .donate-tab-count[hidden]{display:none}
+  .donate-tab[aria-selected="true"] .donate-tab-count{background:#141311}
   .donate-tabs{display:flex; gap:4px; width:100%; padding:3px; background:var(--panel); border:1px solid var(--line); border-radius:6px}
   .donate-tab{flex:1 1 auto; min-width:0; padding:8px 10px; border:0; border-radius:4px; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600; line-height:1.3; cursor:pointer; transition:color .15s ease, background-color .15s ease}
   .donate-tab:hover:not([aria-selected="true"]){color:var(--text)}
@@ -1586,6 +1613,15 @@
   .donate-row-date{color:var(--muted); font-size:12px}
   .donate-row-msg{margin:3px 0 0; color:var(--muted); font-size:13px; line-height:1.55; overflow-wrap:anywhere}
   .donate-empty{color:var(--muted); font-size:13px}
+  /* the list's pages (user 2026-10-23): as many rows as fit the panel, so it never scrolls; ‹ n / N › under them, only with two pages or more */
+  .donate-pager{display:flex; align-items:center; justify-content:center; gap:14px; margin-top:10px}
+  .donate-pager[hidden]{display:none}
+  .donate-pager-btn{width:30px; height:30px; display:grid; place-items:center; padding:0; border:1px solid var(--line); border-radius:50%; background:transparent; color:var(--text);
+    font:inherit; font-size:18px; line-height:1; cursor:pointer; transition:color .15s ease, border-color .15s ease}
+  .donate-pager-btn:hover:not(:disabled){color:var(--gold); border-color:var(--gold)}
+  .donate-pager-btn:disabled{opacity:.4; cursor:default}
+  .donate-pager-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .donate-pager-num{min-width:52px; text-align:center; font-family:'JetBrains Mono','Prompt',monospace; font-size:13px; color:var(--muted)}
   /* big screens (user 2026-10-23: the ☕ pop-up's text was too small there): the hub's own steps, 1800 × 1100 and 2400 × 1300; font sizes, not zoom (the pop-up's height is in dvh) */
   @media (min-width:1800px) and (min-height:1100px){
     .donate-main{max-width:720px}
@@ -1593,6 +1629,8 @@
     .donate-main .donate-head-icon{font-size:19px}
     .donate-main .donate-msg{font-size:18px}
     .donate-main .donate-tab{font-size:15px; padding:10px 12px}
+    .donate-main .donate-thanks{font-size:17px}
+    .donate-main .donate-tab-count{font-size:13px; line-height:20px; min-width:22px}
     .donate-main .donate-btn{font-size:16px}
     .donate-main .donate-intro{font-size:17px}
     .donate-main .donate-field{font-size:15px}
@@ -1605,6 +1643,8 @@
     .donate-main .donate-row-name, .donate-main .donate-row-amt{font-size:18px}
     .donate-main .donate-row-date, .donate-main .donate-row-count{font-size:14px}
     .donate-main .donate-row-msg, .donate-main .donate-empty{font-size:16px}
+    .donate-main .donate-pager-btn{width:34px; height:34px; font-size:20px}
+    .donate-main .donate-pager-num{font-size:15px}
   }
   @media (min-width:2400px) and (min-height:1300px){
     .donate-main{max-width:820px}
@@ -1612,6 +1652,8 @@
     .donate-main .donate-head-icon{font-size:21px}
     .donate-main .donate-msg{font-size:20px}
     .donate-main .donate-tab{font-size:17px; padding:11px 14px}
+    .donate-main .donate-thanks{font-size:19px}
+    .donate-main .donate-tab-count{font-size:14px; line-height:22px; min-width:24px}
     .donate-main .donate-btn{font-size:17px}
     .donate-main .donate-intro{font-size:19px}
     .donate-main .donate-field{font-size:16px}
@@ -1624,11 +1666,14 @@
     .donate-main .donate-row-name, .donate-main .donate-row-amt{font-size:20px}
     .donate-main .donate-row-date, .donate-main .donate-row-count{font-size:15px}
     .donate-main .donate-row-msg, .donate-main .donate-empty{font-size:18px}
+    .donate-main .donate-pager-btn{width:38px; height:38px; font-size:22px}
+    .donate-main .donate-pager-num{font-size:16px}
   }
   @media (max-width:560px){
     #donateModal{padding:10px}
     .donate-main{padding:14px; gap:12px; max-height:calc(100vh - 20px); max-height:calc(100dvh - 20px)}
     .donate-form{grid-template-columns:1fr}
+    .donate-thanks{font-size:13px}
     .donate-form input, .donate-form textarea{font-size:16px}   /* 16 px: iOS zooms the page into a smaller field */
   }
   /* ---- Contributors (ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล, user 2026-10-06) ---- */
@@ -7717,10 +7762,11 @@
       <p class="donate-msg">
         ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา <strong>12 Tails Bible</strong> ขอบคุณทุกการสนับสนุนครับ 🙏
       </p>
+      <button type="button" class="donate-thanks" id="donateThanks" aria-controls="donatePanelList" title="ดูรายชื่อผู้สนับสนุนทั้งหมด" hidden><span class="donate-thanks-names" id="donateThanksNames"></span></button>
       <div class="donate-tabs" role="tablist" aria-label="สนับสนุน">
         <button type="button" class="donate-tab" role="tab" id="donateTabQr" aria-controls="donatePanelQr" aria-selected="true" tabindex="0">QR โอนเงิน</button>
         <button type="button" class="donate-tab" role="tab" id="donateTabSlip" aria-controls="donatePanelSlip" aria-selected="false" tabindex="-1">ส่งสลิป</button>
-        <button type="button" class="donate-tab" role="tab" id="donateTabList" aria-controls="donatePanelList" aria-selected="false" tabindex="-1">รายชื่อผู้สนับสนุน</button>
+        <button type="button" class="donate-tab" role="tab" id="donateTabList" aria-controls="donatePanelList" aria-selected="false" tabindex="-1">รายชื่อผู้สนับสนุน<span class="donate-tab-count" id="donateTabCount" hidden></span></button>
       </div>
       <div class="donate-panels">
       <div class="donate-tabpanel" role="tabpanel" id="donatePanelQr" aria-labelledby="donateTabQr">
@@ -7745,6 +7791,7 @@
       </div>
       <div class="donate-tabpanel donate-list-box" role="tabpanel" id="donatePanelList" aria-labelledby="donateTabList" hidden>
         <ol class="donate-list" id="donateList"></ol>
+        <div class="donate-pager" id="donatePager" hidden><button type="button" class="donate-pager-btn" id="btnDonatePrev" aria-label="หน้าก่อน">‹</button><span class="donate-pager-num" id="donatePagerNum" aria-live="polite"></span><button type="button" class="donate-pager-btn" id="btnDonateNext" aria-label="หน้าถัดไป">›</button></div>
       </div>
       </div>
     </div>
@@ -27726,7 +27773,7 @@ const DONORS = [
   {"k":"4a523d64","id":"044bce99","name":"hpsmk","msg":"Thank you so much, I see lots of passion in this thing","amount":50,"date":"2026-10-23T15:27"},
   {"k":"cb8e932b","id":"decf8560","name":"กระต่ายหิวเลือด โซ๊บๆ🐇🫦🩸","msg":"ตลอดไป","amount":500,"date":"2026-10-23T15:29"},
 ];
-// ☕ pop-up (user 2026-10-23): three tabs under the thank-you text: QR โอนเงิน (the QR card, DONATE_QR in assets.js, to scan or save),
+// ☕ pop-up (user 2026-10-23): the donors' names and three tabs under the thank-you text: QR โอนเงิน (the QR card, DONATE_QR in assets.js, to scan or save),
 // ส่งสลิป (an optional slip form of name, message and slip that goes to the user's Discord through the Cloudflare Worker,
 // 12t_projects/donate-worker, which stores nothing; the user reads the amount and date off the slip) and รายชื่อผู้สนับสนุน (the donor list
 // from DONORS above). DONOR_LIMITS, donorSlipCheck and donorRows are scripts/donors.js's LIMITS, checkSlipDetails and groupDonors word for
@@ -27841,14 +27888,19 @@ async function donateSubmit(ui){
     if (slip.size > DONOR_LIMITS.slipBytes) throw new Error(DONATE_ERRORS["file-size"]);
     await donateSend(d, slip);
     ui.name.value = ""; ui.msg.value = ""; ui.slip.value = "";
-    say("ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นหลังตรวจสลิป", "ok");
+    say("ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นในรายชื่อผู้สนับสนุนหลังตรวจสลิป", "ok");
   } catch (e) {
     const text = e && typeof e.message === "string" ? e.message : "";
     say(/[\u0E00-\u0E7F]/.test(text) ? text : DONATE_ERRORS.network, "error");   // our own reasons are Thai; anything else is the plain retry text
   } finally { ui.busy = false; ui.btn.disabled = false; }
 }
-// the donor list: donorRows(DONORS), text only (names and messages are typed by donors, so they never go through innerHTML)
-function renderDonorList(list, rows = donorRows(DONORS)){
+// the donor list (user 2026-10-23): the same rows, newest first (by each donor's latest donation; the same minute keeps the bigger total first);
+// the names line keeps biggest total first
+function donorRecent(rows){
+  return rows.slice().sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+// the donor list: donorRecent(donorRows(DONORS)) or one page of it, text only (names and messages are typed by donors, so they never go through innerHTML)
+function renderDonorList(list, rows = donorRecent(donorRows(DONORS))){
   const add = (parent, tag, cls, text) => { const el = document.createElement(tag); el.className = cls; if (text != null) el.textContent = text; parent.appendChild(el); return el; };
   list.textContent = "";
   if (!rows.length){ add(list, "li", "donate-empty", "ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ"); return; }
@@ -27861,6 +27913,81 @@ function renderDonorList(list, rows = donorRows(DONORS)){
     if (r.msg) add(li, "p", "donate-row-msg", r.msg);
   });
 }
+// the list's pages (user 2026-10-23): rows of these heights split into pages that fit room, at least one row a page; each page's first row
+function donorListPages(heights, room){
+  const starts = [0];
+  let used = 0;
+  heights.forEach((h, i) => {
+    if (i > starts[starts.length - 1] && used + h > room){ starts.push(i); used = 0; }
+    used += h;
+  });
+  return starts;
+}
+// one page of the list and its pager (‹ n / N ›, hidden with a single page); focus moves to the other arrow when its own turns off
+function donateListPage(ui){
+  const n = ui.pages.length, at = ui.page, start = ui.pages[at], end = at + 1 < n ? ui.pages[at + 1] : ui.rows.length;
+  renderDonorList(ui.list, ui.rows.slice(start, end));
+  ui.pager.hidden = n < 2;
+  ui.num.textContent = (at + 1) + " / " + n;
+  const prevFocused = document.activeElement === ui.prev, nextFocused = document.activeElement === ui.next;
+  ui.prev.disabled = at === 0;
+  ui.next.disabled = at === n - 1;
+  if (prevFocused && ui.prev.disabled && !ui.next.disabled) ui.next.focus();
+  if (nextFocused && ui.next.disabled && !ui.prev.disabled) ui.prev.focus();
+}
+// whenever the list tab shows and on resize while it shows: every row is laid out and measured, then split into the pages that fit the panel
+// (the QR panel's height less the box's padding and border, less the pager when one page is not enough), so the list never scrolls
+function donateListFit(ui){
+  if (!ui.box || ui.box.hidden || !ui.list || !ui.pager || !ui.box.parentElement || typeof getComputedStyle !== "function") return;
+  renderDonorList(ui.list, ui.rows);
+  const heights = Array.from(ui.list.children).map((li) => li.getBoundingClientRect().height), cs = getComputedStyle(ui.box);
+  let room = ui.box.parentElement.getBoundingClientRect().height - ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"].reduce((s, k) => s + (parseFloat(cs[k]) || 0), 0) - 1;
+  if (heights.reduce((s, h) => s + h, 0) > room){
+    ui.pager.hidden = false;
+    room -= ui.pager.getBoundingClientRect().height + (parseFloat(getComputedStyle(ui.pager).marginTop) || 0);
+  }
+  ui.pages = donorListPages(heights, room);
+  ui.page = Math.min(ui.page, ui.pages.length - 1);
+  donateListPage(ui);
+}
+// the names under the thank-you line (user 2026-10-23: honour the donors on every open, not only on their tab; option E of five mocks): ♥ and
+// every donor's latest name, biggest total first, text only, in one set inside the ticker's track; the list tab's count. Hidden while there is
+// nobody to thank.
+function renderDonorThanks(ui, rows = donorRows(DONORS)){
+  const add = (parent, cls, text) => { const el = document.createElement("span"); el.className = cls; el.textContent = text; parent.appendChild(el); return el; };
+  ui.list.textContent = "";
+  ui.track = add(ui.list, "donate-thanks-track", "");
+  ui.set = add(ui.track, "donate-thanks-set", "");
+  add(ui.set, "donate-thanks-heart", "♥").setAttribute("aria-hidden", "true");
+  rows.forEach((r) => add(ui.set, "donate-thanks-name", r.name));
+  ui.copy = null;
+  ui.box.hidden = !rows.length;
+  ui.count.textContent = rows.length ? String(rows.length) : "";
+  ui.count.hidden = !rows.length;
+}
+const DONATE_TICKER_SPEED = 28;   // px a second
+// the ticker for names wider than their room: it moves by one set plus the gap to the copy, then starts over; null when they fit
+function donorTicker(width, room, gap){
+  return width > room ? { shift: width + gap, dur: (width + gap) / DONATE_TICKER_SPEED } : null;
+}
+// on every open and resize (the room follows the window): measures the set against the line at full width (.is-measuring); names that do not
+// fit get a second copy (hidden from screen readers) and loop
+function donateThanksFit(ui){
+  if (!ui.box || ui.box.hidden || !ui.set || typeof getComputedStyle !== "function") return;
+  if (ui.copy){ ui.copy.remove(); ui.copy = null; }
+  ui.box.classList.remove("is-running");
+  ui.box.classList.add("is-measuring");
+  const room = ui.list.clientWidth, width = ui.set.offsetWidth, gap = parseFloat(getComputedStyle(ui.track).columnGap) || 0;
+  ui.box.classList.remove("is-measuring");
+  const run = room > 0 ? donorTicker(width, room, gap) : null;
+  if (!run) return;
+  ui.copy = ui.set.cloneNode(true);
+  ui.copy.setAttribute("aria-hidden", "true");
+  ui.track.appendChild(ui.copy);
+  ui.list.style.setProperty("--donate-shift", run.shift + "px");
+  ui.list.style.setProperty("--donate-dur", run.dur.toFixed(2) + "s");
+  ui.box.classList.add("is-running");
+}
 // the pop-up's tabs (user 2026-10-23: the slip form and the donor list each get their own tab, so they never crowd the QR card): tabs and
 // panels in the same order; picking one only hides the other panels, so what was typed in the form stays. focus: for the arrow keys.
 function donateShowTab(tabs, panels, at, focus){
@@ -27869,14 +27996,15 @@ function donateShowTab(tabs, panels, at, focus){
   if (focus && tabs[at]) tabs[at].focus();
 }
 // the arrow keys move along the tab bar (wrapping at the ends), Home and End jump to the first and last tab; each picks the tab it lands on.
-// The key stops here, so the skill details page's own ← / → never switch the skill behind the pop-up.
-function donateTabKey(e, tabs, panels){
+// The key stops here, so the skill details page's own ← / → never switch the skill behind the pop-up. shown(at) runs after the switch.
+function donateTabKey(e, tabs, panels, shown){
   const at = tabs.indexOf(e.target), n = tabs.length;
   if (at < 0) return;
   const to = e.key === "ArrowRight" ? (at + 1) % n : e.key === "ArrowLeft" ? (at + n - 1) % n : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : -1;
   if (to < 0) return;
   e.preventDefault(); e.stopPropagation();
   donateShowTab(tabs, panels, to, true);
+  if (shown) shown(to);
 }
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
@@ -32122,6 +32250,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T09:13:00.767Z","feat(bible): the ☕ pop-up honours donors: their names scroll under the thank-you line (biggest total first), the list tab shows the count and lists them newest first in pages"],
     ["2026-10-23T08:30:15.162Z","style(bible): the Final damage box reads 5,112 ~ 5,964, shows its hit count as a tab on top and Test as a gold bar along the bottom"],
     ["2026-10-23T08:14:36.939Z","feat(bible): TTO Flame Turret can be ended early by pressing the skill again (today's TTO patch)"],
     ["2026-10-23T08:11:00.476Z","style(bible): the ☕ fly-home ball is smaller and stays visible over busy page details"],
@@ -32732,6 +32861,9 @@ const donateForm = $("#donateForm");
 const donateUi = { name: $("#donateName"), msg: $("#donateMsg"), slip: $("#donateSlip"), btn: $("#btnDonateSend"), status: $("#donateStatus"), busy: false };
 const donateTabs = Array.from(document.querySelectorAll("#donateModal [role=tab]"));   // QR โอนเงิน, ส่งสลิป, รายชื่อผู้สนับสนุน
 const donatePanels = donateTabs.map((t) => document.getElementById(t.getAttribute("aria-controls")));
+const donateListUi = { box: $("#donatePanelList"), list: $("#donateList"), pager: $("#donatePager"), num: $("#donatePagerNum"), prev: $("#btnDonatePrev"), next: $("#btnDonateNext"),
+  rows: [], pages: [0], page: 0 };   // the donor list tab: its rows newest first, the pages that fit, the page shown
+const donateThanksUi = { box: $("#donateThanks"), list: $("#donateThanksNames"), count: $("#donateTabCount"), track: null, set: null, copy: null };   // the names under the thank-you line, the list tab's count
 let donateReady = false;
 
 function openDonateModal() {
@@ -32742,10 +32874,15 @@ function openDonateModal() {
     if (img) { if (DONATE_QR) img.src = DONATE_QR; else img.hidden = true; }
     if (miss) miss.hidden = !!DONATE_QR;
     if (btnDonateQr) btnDonateQr.disabled = !DONATE_QR;
-    if (list) renderDonorList(list);
+    donateListUi.rows = donorRecent(donorRows(DONORS));
+    if (list) renderDonorList(list, donateListUi.rows);
+    if (donateThanksUi.box && donateThanksUi.list && donateThanksUi.count) renderDonorThanks(donateThanksUi);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!donateModal.hidden) donateThanksFit(donateThanksUi); });   // measured again in the real font
   }
   donateShowTab(donateTabs, donatePanels, 0);   // QR โอนเงิน on every open (the form keeps what was typed)
+  donateListUi.page = 0;   // the list opens on its newest page
   donateModal.hidden = false;
+  donateThanksFit(donateThanksUi);
   document.body.style.overflow = "hidden";
   try { localStorage.setItem(DONATE_AUTO_KEY, "1"); } catch (e) {}   // seen: it never opens by itself again on this device
 }
@@ -32782,10 +32919,18 @@ if (btnDonate) btnDonate.addEventListener("click", openDonateModal);
 if (btnDonateClose) btnDonateClose.addEventListener("click", closeDonateModal);
 if (btnDonateQr) btnDonateQr.addEventListener("click", () => downloadQr());
 if (donateForm) donateForm.addEventListener("submit", (e) => { e.preventDefault(); donateSubmit(donateUi); });
+// after a tab switch: the list tab lays out its pages (it can only measure while it shows)
+function donateTabShown(at){
+  if (donatePanels[at] && donatePanels[at] === donateListUi.box) donateListFit(donateListUi);
+}
+if (donateThanksUi.box) donateThanksUi.box.addEventListener("click", () => { const at = donateTabs.length - 1; donateShowTab(donateTabs, donatePanels, at); donateTabShown(at); });   // the names open รายชื่อผู้สนับสนุน, the last tab
+window.addEventListener("resize", () => { if (donateModal && !donateModal.hidden){ donateThanksFit(donateThanksUi); donateListFit(donateListUi); } });
 donateTabs.forEach((t, i) => {
-  t.addEventListener("click", () => donateShowTab(donateTabs, donatePanels, i));
-  t.addEventListener("keydown", (e) => donateTabKey(e, donateTabs, donatePanels));
+  t.addEventListener("click", () => { donateShowTab(donateTabs, donatePanels, i); donateTabShown(i); });
+  t.addEventListener("keydown", (e) => donateTabKey(e, donateTabs, donatePanels, donateTabShown));
 });
+if (donateListUi.prev) donateListUi.prev.addEventListener("click", () => { if (donateListUi.page > 0){ donateListUi.page--; donateListPage(donateListUi); } });
+if (donateListUi.next) donateListUi.next.addEventListener("click", () => { if (donateListUi.page < donateListUi.pages.length - 1){ donateListUi.page++; donateListPage(donateListUi); } });
 if (donateModal) {
   donateModal.addEventListener("click", (e) => {
     if (e.target === donateModal) closeDonateModal();
