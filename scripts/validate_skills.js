@@ -3636,6 +3636,261 @@ let checkedRsim = 0;
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
+// The ☕ donor list (DONORS in index.html, edited only by scripts/add_guide.js): one approved donation per line, in the exact form
+// donors.js writes it, so a hand-edited spacing or key order shows up here. Reads the same page text as everything above (--index works).
+{
+  const donors = require('./donors.js');
+  const bad = (msg) => { console.error("[DONOR ERROR] " + msg); errorCount++; };
+  let parsed = null;
+  try { parsed = donors.parseDonors(html); } catch (e) { bad(e.message); }
+  if (parsed) {
+    const seen = new Set();
+    parsed.lines.forEach((l, i) => {
+      const at = "DONORS line " + (i + 1);
+      if (!l.trim().startsWith("{")) { bad(at + " is not a donation"); return; }
+      let x;
+      try { x = JSON.parse(l.trim().replace(/,$/, "")); } catch (e) { bad(at + " does not parse: " + e.message); return; }
+      if (!/^[0-9a-f]{8}$/.test(x.k)) bad(at + " has a bad k (8 hex characters)");
+      else if (seen.has(x.k)) bad(at + " repeats the key " + x.k); else seen.add(x.k);
+      if (!/^[0-9a-f]{8}$/.test(x.id)) bad(at + " has a bad id (8 hex characters)");
+      try { donors.checkDonation(x); } catch (e) { bad(at + ": " + e.message); return; }
+      if (l !== donors.donorLine(x)) bad(at + " is not in the form donors.js writes (spacing, key order or escaping)");
+    });
+    console.log(`Verified ${parsed.donations.length} donation(s) in DONORS.`);
+  }
+}
+
+// The ☕ pop-up (user 2026-10-23): the QR card to scan or save, an optional slip form (sent through the Worker, 12t_projects/donate-worker)
+// and the donor list. Its copies of scripts/donors.js (DONOR_LIMITS, donorCheck, donorRows) must agree with it; the amount box reads amounts
+// typed the Thai way (Review Focus 3); a slip straight from a phone camera is redrawn as a small JPEG (Review Focus 2); the send button stays
+// disabled while a send runs (Review Focus 4) and any error keeps what was typed; donor values go in as text only; the text asks for
+// ค่าพัฒนา and never mentions AI; the QR card is in assets.js. The async code (shrinkSlip, the send, the download) runs in a child Node
+// process (donateChildTests below), because this validator is synchronous: the page's own functions, read from the sandbox as source, with
+// stubs for document, navigator, fetch and createImageBitmap.
+async function donateChildTests(env) {
+  const { S, log, anchors, shares } = env, out = [], check = (pass, msg) => out.push({ pass: !!pass, msg });
+  const tick = () => new Promise((r) => setImmediate(r));
+  const settle = async (p) => { try { return { ok: await p }; } catch (e) { return { err: String(e && e.message) }; } };
+  // shrinkSlip turns a big image into a small JPEG: at most 1600 px on the long side, never upscaled, image/jpeg at quality 0.85
+  const shrink = async (w, h) => {
+    S.bmp = { width: w, height: h }; log.length = 0;
+    const r = await settle(env.shrinkSlip({ name: "IMG_0001.HEIC", type: "image/heic", size: 12e6 }));
+    return { r, blob: log.find((x) => x[0] === "toBlob"), draw: log.find((x) => x[0] === "draw"), closed: log.some((x) => x[0] === "close") };
+  };
+  for (const [w, h, W, H, what] of [[4000, 3000, 1600, 1200, "a 4000×3000 photo"], [3000, 4000, 1200, 1600, "a 3000×4000 photo"], [800, 600, 800, 600, "an 800×600 screenshot (never upscaled)"]]) {
+    const { r, blob, draw, closed } = await shrink(w, h);
+    check(r.ok && r.ok.type === "image/jpeg" && blob && blob[1] === "image/jpeg" && blob[2] === 0.85 && blob[3] === W && blob[4] === H && draw && draw[1].join() === "0,0," + W + "," + H && closed,
+      `shrinkSlip turns a big image into a small JPEG: ${what} must be drawn at ${W}×${H} and saved as image/jpeg at quality 0.85 (got ${JSON.stringify({ toBlob: blob, draw, closed, err: r.err })})`);
+  }
+  S.bmpFail = true; const undecodable = await settle(env.shrinkSlip({ name: "x.heic" })); S.bmpFail = false;
+  S.blobNull = true; const noBlob = (await shrink(4000, 3000)).r; S.blobNull = false;
+  env.dropBitmap(); const noApi = await settle(env.shrinkSlip({ name: "x.jpg" })); env.restoreBitmap();
+  check([undecodable, noBlob, noApi].every((r) => r.err === env.READ_ERROR), `shrinkSlip throws "${env.READ_ERROR}" when the browser cannot decode the file, gives no JPEG or has no createImageBitmap (got ${JSON.stringify([undecodable, noBlob, noApi])})`);
+
+  // downloadQr: the share sheet with the PNG on iPhones and iPads (บันทึกรูปภาพ puts it in Photos), a download link everywhere else
+  const iphone = { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1", platform: "iPhone", maxTouchPoints: 5, canShare: (d) => !!(d && d.files && d.files.length), share: async (d) => { shares.push(d); } };
+  const ipad = { ...iphone, userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15", platform: "MacIntel" };
+  const pc = { userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36", platform: "Win32", maxTouchPoints: 0, canShare: () => true, share: async (d) => { shares.push(d); } };
+  const save = async (nav) => { env.setNav(nav); anchors.length = 0; shares.length = 0; let threw = ""; try { env.downloadQr(); } catch (e) { threw = String(e && e.message); } await tick(); return threw; };
+  for (const [nav, what] of [[iphone, "an iPhone"], [ipad, "an iPad"]]) {
+    const threw = await save(nav), f = shares[0] && shares[0].files && shares[0].files[0];
+    check(!threw && shares.length === 1 && !anchors.length && f && f.name === "12tails-bible-qr.png" && f.type === "image/png" && f.size > 0, `downloadQr on ${what} opens the share sheet with one file 12tails-bible-qr.png (image/png) (got ${JSON.stringify({ threw, shares: shares.length, anchors })})`);
+  }
+  for (const [nav, what] of [[pc, "a PC (canShare true, still a download)"], [{ ...iphone, canShare: () => false }, "an iPhone that cannot share files"]]) {
+    const threw = await save(nav);
+    check(!threw && !shares.length && anchors.length === 1 && anchors[0].download === "12tails-bible-qr.png" && /^(blob|data):/.test(anchors[0].href), `downloadQr on ${what} downloads 12tails-bible-qr.png through a link (got ${JSON.stringify({ threw, shares: shares.length, anchors })})`);
+  }
+  env.setQr(""); const threwEmpty = await save(iphone); const emptySaves = shares.length + anchors.length; await save(pc); env.restoreQr();
+  check(!threwEmpty && !emptySaves && !shares.length && !anchors.length, "downloadQr does nothing when DONATE_QR is empty (assets.js did not load)");
+
+  // donateSubmit: checks first (nothing obviously wrong leaves the page), the button disabled while a send runs, every error keeps the form
+  const mkUi = (v = {}) => {
+    const x = { name: "ก้อง 🐱", msg: "สู้ ๆ ครับ", amount: "1,000", date: env.donateNow(), file: { name: "IMG_0001.HEIC", type: "image/heic", size: 12e6 }, ...v };
+    return { busy: false, name: { value: x.name }, msg: { value: x.msg }, amount: { value: x.amount }, date: { value: x.date },
+      slip: { value: x.file ? "C:\\fakepath\\" + x.file.name : "", files: x.file ? [x.file] : [] }, btn: { disabled: false }, status: { textContent: "", dataset: {} } };
+  };
+  const typed = (ui) => JSON.stringify([ui.name.value, ui.msg.value, ui.amount.value, ui.date.value, ui.slip.value, ui.slip.files.length]);
+  const reply = (body) => ({ ok: !!body.ok, status: body.ok ? 200 : 400, json: async () => body });
+  S.bmp = { width: 4000, height: 3000 }; S.blobBytes = 300000;
+  {
+    const calls = []; let answer = null;
+    S.fetch = (url, opts) => { calls.push({ url, opts }); return new Promise((r) => { answer = r; }); };
+    const ui = mkUi(), before = typed(ui), first = env.donateSubmit(ui);
+    for (let i = 0; i < 50 && !calls.length; i++) await tick();
+    const during = ui.btn.disabled;
+    await env.donateSubmit(ui); await tick();
+    check(calls.length === 1 && during === true, `the send button is disabled while a send runs and a second tap sends nothing (Review Focus 4) (got ${calls.length} sends, disabled ${during})`);
+    const c = calls[0] || { opts: {} }, b = c.opts.body, slip = b && typeof b.get === "function" ? b.get("slip") : null;
+    check(c.url === env.DONATE_WORKER_URL && c.opts.method === "POST" && !("headers" in c.opts) && b instanceof FormData && b.get("name") === "ก้อง 🐱" && b.get("msg") === "สู้ ๆ ครับ" && b.get("amount") === "1000" && b.get("date") === ui.date.value && slip && slip.type === "image/jpeg" && slip.size === 300000 && slip.name === "slip.jpg",
+      "the send is one POST of FormData (name, msg, amount as text, date, the redrawn slip.jpg) to DONATE_WORKER_URL with no custom headers");
+    if (answer) answer(reply({ ok: false, error: "rate" }));
+    await first;
+    check(ui.status.textContent === env.DONATE_ERRORS.rate && ui.btn.disabled === false && !ui.busy && typed(ui) === before, `a rate reply shows "${env.DONATE_ERRORS.rate}", enables the send button again and keeps every field (got ${JSON.stringify(ui.status.textContent)})`);
+  }
+  const send = async (v, answer) => { const calls = []; S.fetch = async (url, opts) => { calls.push(opts); return answer(); }; const ui = mkUi(v), before = typed(ui); await env.donateSubmit(ui); return { ui, before, sent: calls.length, body: calls[0] && calls[0].body }; };
+  for (const [answer, want, what] of [
+    [() => reply({ ok: false, error: "invalid", field: "name", message: "ชื่อยาวเกิน 40 ตัวอักษร" }), "ชื่อยาวเกิน 40 ตัวอักษร", "an invalid reply shows the Worker's message"],
+    [() => reply({ ok: false, error: "discord" }), env.FAIL_TEXT, "a discord reply"],
+    [() => { throw new TypeError("Failed to fetch"); }, env.FAIL_TEXT, "a network failure"],
+    [() => ({ ok: false, status: 502, json: async () => { throw new SyntaxError("Unexpected token <"); } }), env.FAIL_TEXT, "a reply that is not JSON"],
+  ]) {
+    const { ui, before, sent } = await send({}, answer);
+    check(sent === 1 && ui.status.textContent === want && typed(ui) === before && !ui.btn.disabled && !ui.busy, `${what} shows "${want}" and keeps every field (got ${JSON.stringify({ sent, status: ui.status.textContent })})`);
+  }
+  {
+    const { ui, sent, body } = await send({ amount: " ฿50.5 " }, () => reply({ ok: true }));
+    check(sent === 1 && body.get("amount") === "50.5" && ui.status.textContent === env.THANKS && !ui.name.value && !ui.msg.value && !ui.amount.value && !ui.slip.value && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(ui.date.value) && !ui.btn.disabled,
+      `a sent slip shows "${env.THANKS}" and clears the form for the next one (got ${JSON.stringify({ sent, status: ui.status.textContent, amount: body && body.get("amount") })})`);
+  }
+  const refusals = [
+    [{ amount: "abc" }, env.MSG.amount, "amount abc"], [{ amount: "0" }, env.MSG.amount, "amount 0"], [{ amount: "-5" }, env.MSG.amount, "amount -5"], [{ amount: "" }, env.MSG.amount, "no amount"],
+    [{ name: " \n " }, env.MSG.name, "no name"], [{ name: "🐱".repeat(41) }, env.MSG.longName, "a 41-emoji name (refused with the limit, never cut)"], [{ msg: "ก".repeat(201) }, env.MSG.longMsg, "a 201-letter message"],
+    [{ date: "2019-12-31T23:59" }, env.MSG.range, "a transfer before 2020"], [{ date: "" }, env.MSG.badDate, "no transfer time"], [{ file: null }, env.DONATE_ERRORS.missing, "no slip"],
+  ];
+  for (const [v, want, what] of refusals) {
+    const { ui, before, sent } = await send(v, () => reply({ ok: true }));
+    check(sent === 0 && ui.status.textContent === want && typed(ui) === before && !ui.btn.disabled, `${what} is refused on the page with "${want}", nothing sent, the form kept (got ${JSON.stringify({ sent, status: ui.status.textContent })})`);
+  }
+  S.bmpFail = true; const unread = await send({}, () => reply({ ok: true })); S.bmpFail = false;
+  check(unread.sent === 0 && unread.ui.status.textContent === env.READ_ERROR && typed(unread.ui) === unread.before && !unread.ui.btn.disabled, `a slip the browser cannot read is refused with "${env.READ_ERROR}" and the form kept (Review Focus 2) (got ${JSON.stringify(unread.ui.status.textContent)})`);
+  S.blobBytes = 5242881; const big = await send({}, () => reply({ ok: true })); S.blobBytes = 300000;
+  check(big.sent === 0 && big.ui.status.textContent === env.DONATE_ERRORS["file-size"] && typed(big.ui) === big.before, `a redrawn slip still over 5 MB is refused with "${env.DONATE_ERRORS["file-size"]}" without sending (got ${JSON.stringify(big.ui.status.textContent)})`);
+  return out;
+}
+{
+  const dl = require('./donors.js');
+  let donateChecked = 0;
+  const ok = (pass, msg) => { if (pass) donateChecked++; else { console.error("[DONATE ERROR] " + msg); errorCount++; } };
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const kind = (name) => { try { return vm.runInContext("typeof " + name, sandbox); } catch (e) { return "undefined"; } };
+  const page = (name) => vm.runInContext(name, sandbox);
+  const FAIL_TEXT = "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", THANKS = "ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นหลังตรวจสลิป", READ_ERROR = "อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่";
+  const need = { DONATE_QR: "string", DONATE_WORKER_URL: "string", DONOR_LIMITS: "object", DONATE_ERRORS: "object", donorCheck: "function", donorRows: "function", parseAmountInput: "function", donateNow: "function",
+    shrinkSlip: "function", downloadQr: "function", donateErrorText: "function", donateSend: "function", donateSubmit: "function", renderDonorList: "function" };
+  const missing = Object.keys(need).filter((n) => kind(n) !== need[n]);
+  ok(!missing.length, "the pop-up's code is missing from the main script: " + missing.join(", "));
+  const have = (...names) => names.every((n) => !missing.includes(n));
+
+  // DONATE_QR: the QR card in assets.js (a MANIFEST string container), declared like the other string containers
+  ok(bibleAssets.MANIFEST.some((m) => m.name === "DONATE_QR" && m.empty === ""), 'scripts/bible_assets.js MANIFEST has no { name: "DONATE_QR", empty: "" }');
+  ok(/^const DONATE_QR = BIBLE_ASSETS_IN\.DONATE_QR \|\| "";\r?$/m.test(html), 'index.html does not declare const DONATE_QR = BIBLE_ASSETS_IN.DONATE_QR || "";');
+  if (have("DONATE_QR")) { const q = page("DONATE_QR"), head = /^data:image\/png;base64,/.test(q) ? Buffer.from(q.slice(22, 54), "base64") : Buffer.alloc(0);
+    ok(/^data:image\//.test(q) && q.length > 1000 && head.subarray(0, 8).equals(pngHeader), "DONATE_QR is not a non-empty data:image/ PNG (the QR card goes in assets.js)"); }
+
+  // the Worker address and the error texts (every code the Worker answers has one; invalid shows the Worker's own message)
+  if (have("DONATE_WORKER_URL")) ok(page("DONATE_WORKER_URL") === "https://12tails-donate.jumpthai.workers.dev/slip", "DONATE_WORKER_URL is not https://12tails-donate.jumpthai.workers.dev/slip");
+  if (have("DONATE_ERRORS", "donateErrorText")) {
+    const E = page("DONATE_ERRORS"), t = page("donateErrorText");
+    const want = { missing: "กรอกให้ครบทุกช่องและแนบสลิป", "file-type": "สลิปต้องเป็นรูป JPG, PNG หรือ WebP", "file-size": "รูปสลิปใหญ่เกิน 5 MB", rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่", origin: FAIL_TEXT, method: FAIL_TEXT, discord: FAIL_TEXT };
+    for (const [code, text] of Object.entries(want)) ok(t({ ok: false, error: code }) === text, `donateErrorText for ${code} gives ${JSON.stringify(t({ ok: false, error: code }))}, expected ${JSON.stringify(text)}`);
+    ok(t({ ok: false, error: "invalid", field: "name", message: "ชื่อยาวเกิน 40 ตัวอักษร" }) === "ชื่อยาวเกิน 40 ตัวอักษร", "donateErrorText for invalid does not show the Worker's message");
+    ok([null, undefined, {}, { ok: false }, { ok: false, error: "toString" }, { ok: false, error: "invalid" }, { ok: false, error: "invalid", message: 5 }].every((r) => t(r) === FAIL_TEXT), `donateErrorText gives "${FAIL_TEXT}" for an unknown or empty reply`);
+    const codes = [...new Set([...fs.readFileSync(path.join(__dirname, "../12t_projects/donate-worker/src/handler.js"), "utf8").matchAll(/error: "([a-z-]+)"/g)].map((m) => m[1]))];
+    const uncovered = codes.filter((c) => c !== "invalid" && !Object.prototype.hasOwnProperty.call(E, c));
+    ok(codes.length >= 7 && !uncovered.length, "DONATE_ERRORS has no text for the Worker's error code(s) " + uncovered.join(", "));
+  }
+
+  // the page's copies of scripts/donors.js
+  if (have("DONOR_LIMITS")) {
+    ok(same(page("DONOR_LIMITS"), dl.LIMITS), "DONOR_LIMITS differ from LIMITS in scripts/donors.js");
+    ok(/^const DONOR_LIMITS = \{[^\r\n]*\};\r?$/m.test(html), "DONOR_LIMITS is not declared on one line");
+  }
+  if (have("donorRows")) {
+    const rows = page("donorRows"), gd = (id, name, msg, amount, date) => ({ k: id + date, id, name, msg, amount, date });
+    const sets = [[gd("A", "old", "hi", 100, "2026-10-02T10:00"), gd("B", "bee", "", 150, "2026-10-01T10:00"), gd("A", "new", "", 50, "2026-10-05T10:00")], [gd("C", "c", "", 0.1, "2026-10-01T00:00"), gd("C", "c", "", 0.2, "2026-10-02T00:00")], []];
+    ok(sets.every((s) => same(rows(s), dl.groupDonors(s))), "donorRows gives other rows than groupDonors on donors.js's test data (merged by id, latest name and message, total in satang, biggest first)");
+    let real = null; try { real = dl.parseDonors(html).donations.map((t) => t.x); } catch (e) {}
+    ok(real !== null && same(rows(page("DONORS")), dl.groupDonors(real)), "donorRows(DONORS) gives other rows than groupDonors on the page's DONORS");
+  }
+  const now = new Date("2026-10-23T08:00:00Z"), base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" }, v = (d) => ({ ...base, ...d });
+  const res = (fn, d) => { try { return { ok: fn(d, now) }; } catch (e) { return { err: String(e.message) }; } };
+  if (have("donorCheck")) {
+    const cases = [base, null, {}, v({ name: "  ก้อง\n 🐱 " }), v({ name: "🐱".repeat(40) }), v({ name: "🐱".repeat(41) }), v({ name: " \n " }), v({ name: 5 }), v({ msg: "ก".repeat(200) }), v({ msg: "ก".repeat(201) }), v({ msg: "a\r\n\r\n b" }), v({ msg: null }), v({ msg: undefined }), v({ msg: 5 }),
+      ...[50, 0.5, 1000000, 0, -1, 1.234, 1000000.01, "50", NaN, Infinity, 12.345, 0.1 + 0.2, null].map((amount) => v({ amount })),
+      ...["2026-10-23T14:05", "2026-10-25T00:00", "2019-12-31T23:59", "2026-02-30T10:00", "2026-10-23 14:05", 5, "", "2020-01-01T00:00", "2026-10-24T14:59", "2026-10-24T15:01"].map((date) => v({ date }))];
+    let agree = 0;
+    for (const d of cases) { const a = res(page("donorCheck"), d), b = res(dl.checkDonation, d); if (same(a, b)) agree++; else ok(false, `donorCheck and checkDonation disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
+    ok(agree === cases.length, `donorCheck gives the same result or message as checkDonation on ${agree} of ${cases.length} cases`);
+  }
+  // Review Focus 3: amounts typed the Thai way
+  if (have("parseAmountInput")) {
+    const p = page("parseAmountInput");
+    for (const [text, want] of [["1,000", 1000], ["฿50", 50], [" 20 ", 20], ["50.5", 50.5], ["฿ 1,234.50", 1234.5], ["abc", null], ["0", null], ["-5", null], ["0.00", null], ["1.234", null], ["", null], ["1e3", null], [null, null]])
+      ok(p(text) === want, `parseAmountInput(${JSON.stringify(text)}) gives ${JSON.stringify(p(text))}, expected ${JSON.stringify(want)}`);
+  }
+  if (have("donateNow")) ok(page("donateNow")(Date.UTC(2026, 9, 23, 20, 30)) === "2026-10-24T03:30" && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(page("donateNow")()), "donateNow is not the time in Thailand (UTC+7) as YYYY-MM-DDTHH:MM");
+
+  // the pop-up's text: support for ค่าพัฒนา and future server cost, never AI; the brief's texts; no one-line (nowrap) message any more
+  const modal = (html.match(/<div class="donate-backdrop" id="donateModal"[\s\S]*?\r?\n<\/div>\r?\n/) || [""])[0], modalText = modal.replace(/<[^>]*>/g, " ");
+  ok(modal && modalText.includes("ค่าพัฒนา") && modalText.includes("ค่าเซิร์ฟเวอร์ในอนาคต") && !/\bAI\b/i.test(modalText) && !/\bAI\b/.test(modal), "the ☕ pop-up must ask for ค่าพัฒนา and ค่าเซิร์ฟเวอร์ในอนาคต and never mention AI");
+  for (const s of ["ร่วมสนับสนุนค่าพัฒนา 12 Tails Bible และค่าเซิร์ฟเวอร์ในอนาคต ขอบคุณทุกการสนับสนุนครับ 🙏", "ดาวน์โหลด QR", "อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?", "สลิปจะส่งถึงผู้ดูแลเท่านั้น ไม่เผยแพร่ ชื่อที่แสดง ข้อความ ยอด และวันที่จะขึ้นในรายชื่อหลังตรวจสลิป ชื่อที่แสดงเป็นข้อมูลสาธารณะ", "รายชื่อผู้สนับสนุน", "https://discord.com/users/333828912830480386"])
+    ok(modalText.replace(/\s+/g, " ").includes(s) || modal.includes(s), "the ☕ pop-up is missing " + JSON.stringify(s));
+  ok(/<details\b[^>]*class="[^"]*donate-form-box/.test(modal) && !/<details\b[^>]*\bopen\b[^>]*class="[^"]*donate-form-box/.test(modal), "the slip form sits in a collapsed <details class=\"donate-form-box\">");
+  ok(!/\.donate-msg\{[^}]*white-space:nowrap/.test(html), "the .donate-msg{white-space:nowrap} rule must go (the message wraps now)");
+  ok(/\.donate-qr img\[hidden\]\{display:none\}/.test(html), ".donate-qr img[hidden]{display:none} is missing: .donate-qr img{display:block} would keep an empty QR image on screen when assets.js did not load");
+  ok(["DONATE_ERRORS", "donateSubmit", "renderDonorList"].every((n) => !missing.includes(n) && !/\bAI\b/.test(n === "DONATE_ERRORS" ? JSON.stringify(page(n)) : String(page(n)))), "the pop-up's script texts must not mention AI");
+  const inSurfaces = (list, group) => { const m = html.match(new RegExp("\\n\\s*" + group + ": \\[([^\\]]*)\\]")); return !!m && list.every((s) => m[1].includes(JSON.stringify(s))); };
+  ok(inSurfaces([".donate-form-box", ".donate-list-box"], "panel") && inSurfaces([".donate-form input", ".donate-form textarea"], "field"), "the pop-up's new panels (.donate-form-box, .donate-list-box) and fields (.donate-form input / textarea) are not in THEME_SURFACES");
+
+  // the donor list: donorRows(DONORS) as text only (names and messages are typed by donors), ×N only for a repeat donor, a Thai date
+  if (have("renderDonorList")) {
+    const doc = sandbox.document, savedCreate = doc.createElement;
+    let htmlWrites = 0;
+    const node = (tag) => {
+      const n = { tagName: String(tag).toUpperCase(), className: "", children: [], _t: "", dataset: {}, appendChild(c) { this.children.push(c); return c; }, append(...cs) { cs.forEach((c) => this.children.push(typeof c === "string" ? { textContent: c, children: [], className: "" } : c)); }, insertAdjacentHTML() { htmlWrites++; } };
+      Object.defineProperty(n, "textContent", { get() { return this._t + this.children.map((c) => c.textContent).join(""); }, set(x) { this._t = String(x); this.children = []; } });
+      Object.defineProperty(n, "innerHTML", { get() { return ""; }, set() { htmlWrites++; } });
+      return n;
+    };
+    const find = (n, cls) => { if (String(n.className).split(" ").includes(cls)) return n; for (const c of n.children || []) { const f = find(c, cls); if (f) return f; } return null; };
+    doc.createElement = node;
+    try {
+      const evil = '<img src=x onerror="alert(1)">', list = node("ol"), empty = node("ol");
+      page("renderDonorList")(list, [{ id: "a", name: evil, msg: "<b>สู้ ๆ</b> 🐱", total: 1000, count: 2, date: "2026-10-23T14:05", first: "2026-10-01T10:00" }, { id: "b", name: "Mai", msg: "", total: 0.3, count: 1, date: "2026-10-01T09:00", first: "2026-10-01T09:00" }]);
+      page("renderDonorList")(empty, []);
+      const [r1, r2] = list.children, txt = (r, cls) => { const f = r && find(r, cls); return f ? f.textContent : null; };
+      ok(htmlWrites === 0, "renderDonorList writes HTML: donor names and messages must go in with textContent only");
+      ok(list.children.length === 2 && txt(r1, "donate-row-name") === evil && txt(r1, "donate-row-msg") === "<b>สู้ ๆ</b> 🐱" && txt(r2, "donate-row-name") === "Mai" && txt(r2, "donate-row-msg") === null, "renderDonorList shows each name and message as typed (no message line when there is none)");
+      ok(txt(r1, "donate-row-amt") === "฿1,000" && txt(r2, "donate-row-amt") === "฿0.30" && txt(r1, "donate-row-count") === "×2" && txt(r2, "donate-row-count") === null, `renderDonorList amounts and repeat counts: ${JSON.stringify([txt(r1, "donate-row-amt"), txt(r2, "donate-row-amt"), txt(r1, "donate-row-count"), txt(r2, "donate-row-count")])}`);
+      ok(txt(r1, "donate-row-date") === "23 ต.ค. 2026" && txt(r2, "donate-row-date") === "1 ต.ค. 2026", `renderDonorList dates: ${JSON.stringify([txt(r1, "donate-row-date"), txt(r2, "donate-row-date")])}`);
+      ok(empty.children.length === 1 && empty.textContent === "ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ", `an empty list shows ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ (got ${JSON.stringify(empty.textContent)})`);
+    } catch (e) { ok(false, "renderDonorList threw: " + e.message); }
+    finally { doc.createElement = savedCreate; }
+  }
+
+  // the async code in a child process: the page's functions as source, the stubs they see, donateChildTests(env)
+  const childNames = ["DONATE_WORKER_URL", "DONOR_LIMITS", "DONATE_ERRORS", "donorCheck", "parseAmountInput", "donateNow", "shrinkSlip", "donateErrorText", "donateSend", "donateSubmit", "downloadQr"];
+  if (have(...childNames)) {
+    const decl = (name) => { const x = page(name); if (typeof x !== "function") return `const ${name} = ${JSON.stringify(x)};`; const s = String(x); return /^(async\s+)?function\b/.test(s) ? s : `const ${name} = ${s};`; };
+    const msg = (d) => res(dl.checkDonation, v(d)).err;
+    const env = { READ_ERROR, FAIL_TEXT, THANKS, MSG: { amount: msg({ amount: null }), name: msg({ name: " " }), longName: msg({ name: "🐱".repeat(41) }), longMsg: msg({ msg: "ก".repeat(201) }), range: msg({ date: "2019-12-31T23:59" }), badDate: msg({ date: "" }) } };
+    const script = [
+      "(async () => {",
+      "  const S = { bmp: { width: 4000, height: 3000 }, bmpFail: false, blobBytes: 1234, blobNull: false, fetch: async () => { throw new Error('no fetch stub'); } }, log = [], anchors = [], shares = [];",
+      "  const realBitmap = async (file) => { if (S.bmpFail) throw new DOMException('The source image could not be decoded.', 'InvalidStateError'); return { width: S.bmp.width, height: S.bmp.height, close(){ log.push(['close']); } }; };",
+      "  let createImageBitmap = realBitmap;",
+      "  const canvas = () => { const c = { width: 0, height: 0, getContext(){ return { fillStyle: '', fillRect(){}, drawImage(img, ...a){ log.push(['draw', a]); } }; }, toBlob(cb, type, q){ log.push(['toBlob', type, q, c.width, c.height]); cb(S.blobNull ? null : new Blob([new Uint8Array(S.blobBytes)], { type })); } }; return c; };",
+      "  const document = { createElement(tag){ if (String(tag).toLowerCase() === 'canvas') return canvas(); return { tagName: String(tag).toUpperCase(), style: {}, href: '', download: '', rel: '', click(){ anchors.push({ href: this.href, download: this.download }); }, remove(){} }; }, body: { appendChild(){}, removeChild(){}, style: {} } };",
+      "  let navigator = {};",
+      "  const fetch = (...a) => S.fetch(...a);",
+      "  const setTimeout = () => 0;",
+      "  const QR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';",
+      "  let DONATE_QR = QR;",
+      ...childNames.map(decl),
+      "  const env = Object.assign(" + JSON.stringify(env) + ", { S, log, anchors, shares, shrinkSlip, donateSubmit, downloadQr, donateNow, DONATE_ERRORS, DONATE_WORKER_URL,",
+      "    setNav: (n) => { navigator = n; }, setQr: (q) => { DONATE_QR = q; }, restoreQr: () => { DONATE_QR = QR; }, dropBitmap: () => { createImageBitmap = undefined; }, restoreBitmap: () => { createImageBitmap = realBitmap; } });",
+      "  const results = await (" + String(donateChildTests) + ")(env);",
+      "  process.stdout.write(JSON.stringify(results));",
+      "})().catch((e) => { process.stdout.write(JSON.stringify([{ pass: false, msg: 'the async checks threw: ' + String(e && e.stack || e) }])); });",
+    ].join("\n");
+    let results = null;
+    try { results = JSON.parse(execFileSync(process.execPath, ["-"], { input: script, encoding: "utf8", timeout: 60000, maxBuffer: 1 << 24 })); }
+    catch (e) { ok(false, "the async pop-up checks did not run: " + String(e.message).split("\n").slice(0, 3).join(" ")); }
+    if (Array.isArray(results)) results.forEach((r) => ok(r.pass, r.msg));
+  }
+  console.log(`Verified ${donateChecked} ☕ pop-up checks (donors.js copies, Thai amounts, slip redraw, send and errors, QR download, text-only donor list).`);
+}
+
 // Server balance + BB issues pages (mountNotePage, redesign 2026-10-18): one row per card with a servers.<srv>.changeNote, every
 // line tagged, rows open #skill-details/<id>?server=<srv>, inline status / skill links do not navigate, and picking a type keeps the
 // other type chips' counts (user 2026-10-18: a picked chip zeroed the others).
@@ -4652,7 +4907,7 @@ if (gmHtml !== null) {
   if (!block) ok(false, "gm-core block not found (between // gm-core start and // gm-core end)");
   else {
     const zlib = require("zlib"), gc = require(path.join(__dirname, "guide_code.js")), ag = require(path.join(__dirname, "add_guide.js"));
-    const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response });
+    const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response, crypto });
     vm.runInContext(block, ctx, { filename: GM_REL + " (gm-core)" });
     const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmSameGuide, gmParseGuides, gmSummary, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -4713,7 +4968,48 @@ if (gmHtml !== null) {
       ok(gm.gmSameGuide(g, reordered) && !gm.gmSameGuide(g, other) && gm.gmSameGuide(g, modes) && !gm.gmSameGuide(...pairs[3]), "gmSameGuide: same content in any key order, PVE/PVP and id left out, any real change counts");
       ok(pairs.every(([a, b]) => gm.gmSameGuide(a, b) === ag.sameGuide(a, b)), "gmSameGuide and add_guide's sameGuide agree"); }
     ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
-    if (!gmFailed) console.log(`Verified the guide manager page's own code reader and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
+    // user 2026-10-23: a batch result's donor items ({ action, k }) are no guides, so they get no #class-guide link
+    { const mixed = { ...result, items: [{ action: "add", id: 54 }, { action: "donor-add", k: "0a1b2c3d" }, { action: "donor-remove", k: "4e5f6a7b" }] }, out = gm.gmRunOutcome(run("completed", "success"), [ann("gm-result", JSON.stringify(mixed))], SITE);
+      ok(!!out && same(out.items, [{ action: "add", id: 54, url: SITE + "#class-guide/54" }, { action: "donor-add", k: "0a1b2c3d" }, { action: "donor-remove", k: "4e5f6a7b" }]), "a donor item in gm-result gets no guide link"); }
+    // The ☕ donor tab (user 2026-10-23): on the phone the page checks, reads and groups donations itself, so its copies of scripts/donors.js
+    // must give the same results and messages. The อนุมัติ link's fragment is untrusted: anyone can make one.
+    try {
+      const dl = require(path.join(__dirname, "donors.js"));
+      const dn = vm.runInContext("({ gmCheckDonation, GM_DONOR_LIMITS, gmParseDonors, gmFromFragment, gmGroupDonors, gmDonorMatches, gmDuplicateDonation, gmNewId })", ctx);
+      ok(same(dn.GM_DONOR_LIMITS, dl.LIMITS), "GM_DONOR_LIMITS differ from LIMITS in scripts/donors.js");
+      // donors.js selftest's cases (now = 2026-10-23T08:00Z), and a few shapes a crafted link could carry
+      const now = new Date("2026-10-23T08:00:00Z"), base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" }, v = (d) => ({ ...base, ...d });
+      const cases = [base, null, {}, v({ name: "  ก้อง\n 🐱 " }), v({ name: "🐱".repeat(40) }), v({ name: "🐱".repeat(41) }), v({ name: " \n " }), v({ name: 5 }), v({ msg: "ก".repeat(200) }), v({ msg: "ก".repeat(201) }), v({ msg: "a\r\n\r\n b" }), v({ msg: null }), v({ msg: undefined }), v({ msg: 5 }),
+        ...[50, 0.5, 1000000, 0, -1, 1.234, 1000000.01, "50", NaN, Infinity, 12.345, 0.1 + 0.2].map((amount) => v({ amount })),
+        ...["2026-10-23T14:05", "2026-10-25T00:00", "2019-12-31T23:59", "2026-02-30T10:00", "2026-10-23 14:05", 5, "2020-01-01T00:00", "2026-10-24T14:59", "2026-10-24T15:01"].map((date) => v({ date }))];
+      const res = (fn, d) => { try { return { ok: fn(d, now) }; } catch (e) { return { err: String(e.message) }; } };
+      let agree = 0;
+      for (const d of cases) { const a = res(dn.gmCheckDonation, d), b = res(dl.checkDonation, d); if (same(a, b)) agree++; else ok(false, `gmCheckDonation and checkDonation disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
+      ok(agree === cases.length, `gmCheckDonation gives the same result or message as checkDonation on ${agree} of ${cases.length} cases`);
+      const x1 = { k: "0a1b2c3d", id: "11111111", name: "ก้อง 🐱 </script>", msg: "hi", amount: 12.5, date: "2026-10-23T14:05" }, x2 = { ...x1, k: "4e5f6a7b", name: "B", msg: "", amount: 100 };
+      const fixture = (eol, xs) => ["<script>", "const CLASS_GUIDES = [", "];", "const DONORS = [", ...xs.map(dl.donorLine), "];", "</script>"].join(eol);
+      const readsSame = (h) => same(dn.gmParseDonors(h), dl.parseDonors(h).donations.map((t) => t.x));
+      ok(readsSame(html) && readsSame(html.replace(/\r\n/g, "\n")), "gmParseDonors reads the real page's DONORS as parseDonors does (CRLF and LF)");
+      ok(["\r\n", "\n"].every((eol) => readsSame(fixture(eol, [x1, x2])) && dn.gmParseDonors(fixture(eol, [x1, x2])).length === 2 && readsSame(fixture(eol, []))), "gmParseDonors reads a fixture (two donations, an empty block) as parseDonors does");
+      ok(/DONORS/.test(throws(() => dn.gmParseDonors("<script></script>"))), "gmParseDonors refuses a page without DONORS");
+      const gd = (id, name, msg, amount, date) => ({ k: id + date, id, name, msg, amount, date });
+      const sets = [[gd("A", "old", "hi", 100, "2026-10-02T10:00"), gd("B", "bee", "", 150, "2026-10-01T10:00"), gd("A", "new", "", 50, "2026-10-05T10:00")], [gd("C", "c", "", 0.1, "2026-10-01T00:00"), gd("C", "c", "", 0.2, "2026-10-02T00:00")], []];
+      ok(sets.every((s) => same(dn.gmGroupDonors(s), dl.groupDonors(s))), "gmGroupDonors gives groupDonors' rows (merged by id, latest name and message, total in satang, biggest first)");
+      const fd = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #", amount: 12.5, date: "2026-10-23T14:05" }, frag = dl.donorFragment(fd);
+      ok(same(dn.gmFromFragment("#" + frag), fd) && same(dn.gmFromFragment(frag), fd), "gmFromFragment(donorFragment(d)) gives d back (Thai, emoji, &#=)");
+      const odd = ["#donor=@@@", "#x=1", "", null, "#donor=" + Buffer.from("[1,2]").toString("base64url"), "#donor=" + Buffer.from([0xff, 0xfe]).toString("base64url"), "#" + frag + "&x=1"];
+      ok(odd.every((h) => dn.gmFromFragment(h) === null && dl.fromFragment(h) === null), "gmFromFragment gives null for anything but a donor link, as fromFragment does");
+      const rows = dl.groupDonors(sets[0]);
+      ok(same(dn.gmDonorMatches(rows, "  NEW ").map((r) => r.id), ["A"]) && same(dn.gmDonorMatches(rows, "Bee").map((r) => r.id), ["B"]) && !dn.gmDonorMatches(rows, "old").length && !dn.gmDonorMatches(rows, " ").length, "gmDonorMatches: trimmed, case-insensitive, on a donor's latest name only");
+      // Review Focus 5: the same อนุมัติ link opened twice
+      const list = [{ k: "0a1b2c3d", id: "11111111", name: "Kong", msg: "", amount: 50, date: "2026-10-23T14:05" }], again = { name: "Kong", msg: "ขอบคุณ", amount: 50, date: "2026-10-23T14:05" };
+      const qAdd = [{ action: "donor-add", donor: { id: "22222222", name: "Mai", msg: "", amount: 20, date: "2026-10-22T09:00" } }];
+      ok(dn.gmDuplicateDonation(again, list, []) === true && dn.gmDuplicateDonation({ name: "Mai", msg: "", amount: 20, date: "2026-10-22T09:00" }, [], qAdd) === true && dn.gmDuplicateDonation({ ...again, amount: 51 }, list, qAdd) === false, "gmDuplicateDonation finds the same donation in list or queue");
+      ok(dn.gmDuplicateDonation(again, list, [{ action: "donor-remove", k: "0a1b2c3d" }]) === false, "gmDuplicateDonation leaves out a donation queued for removal (remove, then add it again corrected)");
+      const ids = new Set(Array.from({ length: 200 }, () => dn.gmNewId()));
+      ok(ids.size === 200 && [...ids].every((s) => /^[0-9a-f]{8}$/.test(s)), "gmNewId gives 8 lowercase hex characters (200 without a repeat)");
+    } catch (e) { ok(false, e.message + " (donor checks)"); }
+    if (!gmFailed) console.log(`Verified the guide manager page's own code reader, donor rules and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
   }
 }
 // Runs last: some deps sync the Buff / Debuff state (Amplify Damage writes the enemy debuff), which restoring their rank does not undo.

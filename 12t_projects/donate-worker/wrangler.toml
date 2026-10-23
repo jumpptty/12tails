@@ -1,0 +1,10 @@
+name = "12tails-donate"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# 2 slips per minute per IP (Workers Rate Limiting binding). No secrets in this file:
+# the Discord webhook is set with `npx wrangler secret put DISCORD_WEBHOOK_URL`.
+[[ratelimits]]
+name = "SLIP_LIMIT"
+namespace_id = "1001"
+simple = { limit = 2, period = 60 }

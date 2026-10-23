@@ -11,6 +11,9 @@
 // * remove: the line becomes "// #N removed <date>: <title> by <author>", so the number is never given out again (ids are never reused).
 // * undo (page button or Ctrl+Z): the last publish made since start-up, the whole batch, is reversed the same way (an added guide is removed,
 //   a removed or replaced one comes back).
+// * donor-add / donor-remove (user 2026-10-23, the ☕ donor list): one line per approved donation in DONORS, written by scripts/donors.js, added
+//   at the end or simply taken out (no tombstone: a donor id is in no public link). A donor change makes no changelog entry (a batch with guides
+//   too gets the guides' entry only), and a removal's subject never names the donor.
 //
 //   node scripts/add_guide.js                       the page (--port <n>, --no-open)
 //   node scripts/add_guide.js add <code>            the same pipeline on the command line (a bare code also means add)
@@ -27,6 +30,7 @@
 const fs = require("fs"), path = require("path"), os = require("os"), http = require("http"), crypto = require("crypto"), readline = require("readline");
 const { execFileSync, spawn } = require("child_process");
 const { decode, CLASS_GUIDE_CLASS_KEYS, CLASS_GUIDE_SERVER_KEYS } = require("./guide_code.js");
+const { checkDonation, newKey, donorLine, parseDonors } = require("./donors.js");
 
 const ROOT = process.env.GM_ROOT ? path.resolve(process.env.GM_ROOT) : path.resolve(__dirname, ".."), REL = "12t_projects/bible/index.html", FILE = path.join(ROOT, REL);   // GM_ROOT: the self-test's throwaway repos
 const SITE = "https://jumpptty.github.io/12tails/12t_projects/bible/";
@@ -51,7 +55,7 @@ function stampGuide(g, now = new Date()){
 const MODES = ["pve", "pvp"], pickModes = (v) => MODES.filter((m) => Array.isArray(v) && v.includes(m));   // PVE / PVP, both allowed; a finished guide needs one (user 2026-10-20)
 
 // ---------- reading and changing CLASS_GUIDES ----------
-const readGuides = () => parseDoc(fs.readFileSync(FILE, "utf8"));
+const readGuides = () => { const doc = parseDoc(fs.readFileSync(FILE, "utf8")); return { ...doc, donors: parseDonors(doc.html) }; };   // donors: the DONORS block
 function parseDoc(html){
   const eol = html.includes("\r\n") ? "\r\n" : "\n";
   const open = "const CLASS_GUIDES = [" + eol, start = html.indexOf(open), end = start < 0 ? -1 : html.indexOf(eol + "];", start);
@@ -83,8 +87,41 @@ function decodeCode(text){
   if (!CLASS_GUIDE_CLASS_KEYS.includes(g.build.classKey) || !CLASS_GUIDE_SERVER_KEYS.includes(g.build.server)) throw new Error("โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ");   // a legacy 12TG1 code can carry any text there, and the page puts it into HTML (review 2026-10-20)
   return g;
 }
-// What a change does to the lines: { id, lines, subject, undo } (undo = how to take it back; none for an undo itself).
+// The ☕ donor list (DONORS): a donation's key k and its donor's id are 8 hex characters each.
+const isHex8 = (s) => typeof s === "string" && /^[0-9a-f]{8}$/.test(s);
+const isDonorOp = (op) => op.action === "donor-add" || op.action === "donor-remove" || (op.action === "undo" && op.entry.kind === "donor");
+const donationsIn = (lines) => lines.flatMap((l, at) => l.trim().startsWith("{") ? [{ at, x: JSON.parse(l.trim().replace(/,$/, "")) }] : []);   // as parseDonors reads them
+// What a donor change does to the DONORS lines: { k, donorLines, subject, undo }. An undo puts a removed line back at the end (the order only
+// matters between two donations of one donor in the same minute) and, like a guide undo, refuses when the line has changed since.
+function planDonor(op, d){
+  const lines = d.lines.slice(), find = (k) => d.donations.find((t) => t.x.k === k);
+  if (op.action === "donor-add"){
+    if (find(op.x.k)) throw new Error(`มีการสนับสนุนรหัส ${op.x.k} อยู่แล้ว`);
+    const line = donorLine(op.x); lines.push(line);
+    return { k: op.x.k, donorLines: lines, subject: subj(`feat(bible): ขอบคุณผู้สนับสนุน ${op.x.name}`), undo: { kind: "donor", k: op.x.k, before: null, after: line, text: "เอาการสนับสนุนที่เพิ่งเพิ่มออก" } };
+  }
+  if (op.action === "donor-remove"){
+    const t = find(op.k); if (!t) throw new Error(`ไม่มีการสนับสนุนรหัส ${op.k}`);
+    lines.splice(t.at, 1);
+    return { k: op.k, donorLines: lines, subject: "fix(bible): remove a donation", undo: { kind: "donor", k: op.k, before: d.lines[t.at], after: null, text: "คืนการสนับสนุนที่เพิ่งเอาออก" } };   // never the name: it may be going for privacy
+  }
+  const u = op.entry, t = find(u.k);
+  if ((t ? d.lines[t.at] : null) !== u.after) throw new Error("การสนับสนุนนี้ถูกแก้หลังจากนั้นแล้ว ย้อนกลับไม่ได้");
+  if (t) lines.splice(t.at, 1);
+  if (u.before !== null) lines.push(u.before);
+  return { k: u.k, donorLines: lines, subject: u.before === null ? "fix(bible): remove a donation" : "fix(bible): restore a donation", undo: null };
+}
+// A ☕ queue item as a change. The page picks the donor's id (an existing donor's, or a new one); the donation's own key is made here.
+function donorOp(it){
+  if (it.action === "donor-remove"){ if (!isHex8(it.k)) throw new Error("รหัสการสนับสนุนไม่ถูกต้อง"); return { action: "donor-remove", k: it.k }; }
+  const d = it.donor || {};
+  if (!isHex8(d.id)) throw new Error("รหัสผู้สนับสนุนไม่ถูกต้อง (ต้องเป็นตัวอักษร 0-9 a-f 8 ตัว)");
+  return { action: "donor-add", x: { k: newKey(), id: d.id, ...checkDonation(d) } };
+}
+
+// What a change does to the lines: { id, lines, subject, undo } (undo = how to take it back; none for an undo itself). A donor change: planDonor.
 function plan(op, doc){
+  if (isDonorOp(op)) return planDonor(op, doc.donors);
   const lines = doc.lines.slice(), byId = (id) => doc.guides.find((x) => x.g.id === id);
   if (op.action === "add"){
     const g = op.guide, id = nextId(doc); lines.push(guideLine(id, g));   // the same title and author as another guide is allowed (user 2026-10-20); the page only warns
@@ -109,25 +146,33 @@ function plan(op, doc){
   }
   throw new Error("unknown action " + op.action);
 }
-// A batch: each change is planned on the lines the previous one left, so ids and tombstones see the earlier changes.
-// Resolves to { lines, items: [{ action, id, subject }], subject, undo: [entries, in order] }.
+// A batch: each change is planned on the lines the previous one left, so ids and tombstones see the earlier changes. Guide changes work on the
+// CLASS_GUIDES lines and donor changes on the DONORS lines, each in queue order.
+// Resolves to { lines, donorLines, items: [{ action, id | k, subject }], subject, changelog, undo: [entries, in order] }. With donor items the
+// subject is every item's subject joined by "; ", and changelog is the subject the guides alone would give (null when there are none).
 function planAll(ops, doc){
   const items = [], undo = [];
   ops.forEach((op, i) => {
     let p;
     try { p = plan(op, doc); } catch (e){ throw new Error(ops.length > 1 ? `รายการที่ ${i + 1}: ${e.message}` : e.message); }
-    items.push({ action: op.action, id: p.id, subject: p.subject }); if (p.undo) undo.push(p.undo);
+    if (p.undo) undo.push(p.undo);
+    if (p.donorLines){ items.push({ action: op.action, k: p.k, subject: p.subject }); doc = { ...doc, donors: { ...doc.donors, lines: p.donorLines, donations: donationsIn(p.donorLines) } }; return; }
+    items.push({ action: op.action, id: p.id, subject: p.subject });
     doc = { ...doc, lines: p.lines, ...parse(p.lines) };
   });
-  const subject = items.length === 1 ? items[0].subject
-    : subj(`${ops.some((o) => o.action === "add") ? "feat" : "fix"}(bible): class guides ${items.map((x) => x.subject.replace(/^(feat|fix)\(bible\): class guide /, "")).join("; ")}`);
-  return { lines: doc.lines, items, subject, undo };
+  const gOps = ops.filter((o) => !isDonorOp(o)), gItems = items.filter((x) => !("k" in x));
+  const guides = gItems.length === 1 ? gItems[0].subject
+    : subj(`${gOps.some((o) => o.action === "add") ? "feat" : "fix"}(bible): class guides ${gItems.map((x) => x.subject.replace(/^(feat|fix)\(bible\): class guide /, "")).join("; ")}`);
+  const subject = gItems.length === items.length ? guides : items.map((x) => x.subject).join("; ");
+  return { lines: doc.lines, donorLines: doc.donors.lines, items, subject, changelog: gItems.length ? guides : null, undo };
 }
-// The page's queue items ({ action, id, code, modes }) as changes; an error names its item.
+// The page's queue items ({ action, id, code, modes }, { action: "donor-add", donor: { id, name, msg, amount, date } }, { action: "donor-remove", k })
+// as changes; an error names its item.
 function opsFromItems(items){
   if (!Array.isArray(items) || !items.length) throw new Error("ไม่มีรายการ");
   return items.map((it, i) => {
     if (it.action === "delete") return { action: "delete", id: +it.id };
+    if (it.action === "donor-add" || it.action === "donor-remove"){ try { return donorOp(it); } catch (e){ throw new Error(`รายการที่ ${i + 1}: ${e.message}`); } }
     let g; try { g = decodeCode(it.code); } catch (e){ throw new Error(`รายการที่ ${i + 1}: ${e.message}`); }
     stampGuide(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
     if (!(g.modes || []).length) throw new Error(`รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง`);
@@ -141,7 +186,7 @@ function sameGuide(a, b){
   const strip = ({ id, modes, date, published, ...g }) => g;   // the upload stamp (date, published) is set by the upload, not by the code
   return JSON.stringify(norm(strip(a))) === JSON.stringify(norm(strip(b)));
 }
-const undoText = (entries) => entries.length === 1 ? entries[0].text : `ย้อนกลับชุดล่าสุด ${entries.length} รายการ (${entries.map((u) => "#" + u.id).join(", ")})`;
+const undoText = (entries) => entries.length === 1 ? entries[0].text : `ย้อนกลับชุดล่าสุด ${entries.length} รายการ (${entries.map((u) => u.kind === "donor" ? "☕" : "#" + u.id).join(", ")})`;
 // A CLASS_GUIDES line rewritten the way this script writes it (guideLine / tombLine), so an undo never puts a commit's raw text back.
 function canonLine(line){
   const t = String(line).trim(), r = t.match(/^\/\/ #(\d+) removed (\d{4}-\d{2}-\d{2}): (.*)$/);
@@ -150,12 +195,12 @@ function canonLine(line){
   throw new Error("undo: not a CLASS_GUIDES line");
 }
 // The undo of a publish made elsewhere (the phone), from its commit: every CLASS_GUIDES line the commit changed goes back, as the
-// page's own undo does (an added guide becomes a tombstone), unless that line has changed since (after = what the commit wrote).
-// The parent is fetched when the checkout is shallow.
+// page's own undo does (an added guide becomes a tombstone), unless that line has changed since (after = what the commit wrote). DONORS lines
+// are matched by their key k the same way, and a line put back is rebuilt by donorLine. The parent is fetched when the checkout is shallow.
 function undoOpsFromCommit(sha){
   if (!/^[0-9a-f]{40}$/.test(String(sha))) throw new Error("undo: not a commit id");
   try { git("cat-file", "-e", sha + "^"); } catch (e){ git("fetch", "-q", "--depth=2", "origin", sha); }
-  const show = (rev) => parseDoc(execFileSync("git", ["show", rev + ":" + REL], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 }));
+  const show = (rev) => { const doc = parseDoc(execFileSync("git", ["show", rev + ":" + REL], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 })); return { ...doc, donors: doc.html.includes("const DONORS = [") ? parseDonors(doc.html) : { lines: [], donations: [] } }; };   // none before 2026-10-23
   const was = show(sha + "^"), now = show(sha), lineOf = (doc, id) => { const at = lineAt(doc, id); return at < 0 ? null : doc.lines[at]; };
   const entries = [...now.guides.map((x) => ({ at: x.at, id: x.g.id })), ...now.removed].sort((a, b) => a.at - b.at).flatMap(({ id }) => {
     const before = lineOf(was, id), after = lineOf(now, id), g = now.guides.find((x) => x.g.id === id);
@@ -163,8 +208,14 @@ function undoOpsFromCommit(sha){
     const text = before === null ? `ลบไกด์ #${id} ที่เพิ่งเพิ่ม` : g ? `คืนไกด์ #${id} เป็นฉบับก่อนแทนที่` : `คืนไกด์ #${id} ที่เพิ่งลบ`;
     return [{ id, before: before === null ? null : canonLine(before), after, g: g ? g.g : was.guides.find((x) => x.g.id === id).g, text }];
   });
-  if (!entries.length) throw new Error("commit นี้ไม่ได้เปลี่ยนไกด์ จึงไม่มีอะไรให้ย้อนกลับ");
-  return entries.reverse().map((entry) => ({ action: "undo", entry }));
+  const donor = (doc, k) => doc.donors.donations.find((t) => t.x.k === k);
+  const donorEntries = [...new Set([...now.donors.donations, ...was.donors.donations].map((t) => t.x.k))].flatMap((k) => {
+    const b = donor(was, k), a = donor(now, k), after = a ? now.donors.lines[a.at] : null;
+    if (b && a && was.donors.lines[b.at] === after) return [];
+    return [{ kind: "donor", k, before: b ? donorLine(b.x) : null, after, text: b ? "คืนการสนับสนุนที่เพิ่งเอาออก" : "เอาการสนับสนุนที่เพิ่งเพิ่มออก" }];
+  });
+  if (!entries.length && !donorEntries.length) throw new Error("commit นี้ไม่ได้เปลี่ยนไกด์ จึงไม่มีอะไรให้ย้อนกลับ");
+  return [...entries, ...donorEntries].reverse().map((entry) => ({ action: "undo", entry }));
 }
 
 // ---------- the pipeline ----------
@@ -209,9 +260,15 @@ function stageGit(ops, { fetch }, ui){
 function stageEdit(doc, p, ui){
   ui.step("edit", "แก้ไฟล์ index.html", "run");
   let out = doc.head + p.lines.join(doc.eol) + doc.tail;
-  const top = "  entries: [" + doc.eol, at = out.indexOf(top, out.indexOf("const CHANGELOG_DATA = {"));
-  if (at < 0) throw new Error("CHANGELOG_DATA was not found in " + REL);
-  out = out.slice(0, at + top.length) + "    " + JSON.stringify([new Date().toISOString(), p.subject]) + "," + doc.eol + out.slice(at + top.length);
+  if (JSON.stringify(p.donorLines) !== JSON.stringify(doc.donors.lines)){   // DONORS is found again in the new text: the guide lines before it may have moved it
+    const d = parseDonors(out);
+    out = d.head + p.donorLines.map((l) => l + d.eol).join("") + d.tail.slice(d.tail.startsWith(d.eol) ? d.eol.length : 0);   // an empty block's tail starts at "];"
+  }
+  if (p.changelog){   // the guides' part only: a donor change makes no changelog entry (user 2026-10-23)
+    const top = "  entries: [" + doc.eol, at = out.indexOf(top, out.indexOf("const CHANGELOG_DATA = {"));
+    if (at < 0) throw new Error("CHANGELOG_DATA was not found in " + REL);
+    out = out.slice(0, at + top.length) + "    " + JSON.stringify([new Date().toISOString(), p.changelog]) + "," + doc.eol + out.slice(at + top.length);
+  }
   fs.writeFileSync(FILE, out);
   ui.step("edit", "แก้ไฟล์ index.html", "ok");
 }
@@ -248,10 +305,10 @@ function stagePush(branch, ui, failText = "commit ในเครื่องแ
   ui.step("push", "อัปขึ้น GitHub", "ok");
   return sha;
 }
-// ops = the changes, in order; resolves to { items: [{ action, id, subject, url }], subject, undo, dry }
+// ops = the changes, in order; resolves to { items: [{ action, id, subject, url } | { action, k, subject }], subject, undo, dry }
 async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
   const { branch, doc, p } = stageGit(ops, { fetch: !dryRun && !noPush }, ui);
-  const result = (extra) => ({ ...p, items: p.items.map((x) => ({ ...x, url: SITE + "#class-guide/" + x.id })), ...extra });
+  const result = (extra) => ({ ...p, items: p.items.map((x) => "k" in x ? x : { ...x, url: SITE + "#class-guide/" + x.id }), ...extra });
   const backup = path.join(backupDir(), "index." + Date.now() + ".bak"); fs.copyFileSync(FILE, backup);
   let committed = false;
   try {
@@ -270,10 +327,10 @@ async function apply(ops, { dryRun = false, noPush = NO_PUSH } = {}, ui){
 
 // ---------- the workflow's batch command ----------
 // node scripts/add_guide.js batch <request.json> --stage git|edit|check|commit|push [--dry-run]
-// request: { "items": [{ action, id, code, modes }] } (the page's queue) or { "undo": { "sha": "<commit>" } }. The edit stage keeps what it
-// planned in <request.json>.plan.json for the later stages, since index.html has changed by then. On GitHub (GITHUB_ACTIONS=true) a failure
-// is one "gm-error" annotation (the message, then the validator's lines) and the last stage reports a "gm-result" annotation, which the
-// page reads back.
+// request: { "items": [{ action, id, code, modes } or a donor item, see opsFromItems] } (the page's queue) or { "undo": { "sha": "<commit>" } }.
+// The edit stage keeps what it planned (subject, changelog, items) in <request.json>.plan.json for the later stages, since index.html has
+// changed by then. On GitHub (GITHUB_ACTIONS=true) a failure is one "gm-error" annotation (the message, then the validator's lines) and the
+// last stage reports a "gm-result" annotation, which the page reads back.
 const ghEscape = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 const NOTE_MAX = 4000;   // GitHub cuts an annotation's message at 4,096 characters (seen 2026-10-20); a long batch subject is shortened to fit
 const clip = (s, n) => s.length > n ? s.slice(0, Math.max(0, n - 1)) + "…" : s;
@@ -294,7 +351,7 @@ async function batch(file, st){
     if (st === "git") stageGit(ops(), { fetch: false }, ui);
     if (st === "edit"){
       const { branch, doc, p } = stageGit(ops(), { fetch: false }, { step(){}, log(){} });
-      fs.writeFileSync(planFile, JSON.stringify({ branch, subject: p.subject, items: p.items.map(({ action, id }) => ({ action, id })), undoText: !req.undo && p.undo.length ? undoText(p.undo) : null }));
+      fs.writeFileSync(planFile, JSON.stringify({ branch, subject: p.subject, changelog: p.changelog, items: p.items.map(({ action, id, k }) => k === undefined ? { action, id } : { action, k }), undoText: !req.undo && p.undo.length ? undoText(p.undo) : null }));
       stageEdit(doc, p, ui);
     }
     if (st === "check"){ await stageCheck(ui); if (dry) report(summary(saved(), null)); }
@@ -334,6 +391,7 @@ function pageData(){
     branch, dirty, next: nextId(doc), push: !NO_PUSH,
     guides: doc.guides.map(({ g }) => ({ id: g.id, modes: g.modes || [], title: g.title, author: g.author, classKey: g.build.classKey, server: g.build.server, level: g.build.level, date: g.date || "", views: views[g.id] || 0 })).sort((a, b) => b.id - a.id),
     removed: doc.removed.map((r) => r.text).reverse(),
+    donations: doc.donors.donations.map(({ x }) => ({ k: x.k, id: x.id, name: x.name, msg: x.msg, amount: x.amount, date: x.date })),   // file order
   };
 }
 function serve(){
@@ -387,20 +445,22 @@ function serve(){
 }
 
 // ---------- self-test ----------
-// Throwaway repos in the temp folder (a work tree with a bare origin): a tiny CRLF index.html with guides #1 and #2, and a stub validator
-// that refuses any guide titled FAILME. Each repo gets a fresh copy of this module with GM_ROOT pointing at it; the batch stages run as child processes.
+// Throwaway repos in the temp folder (a work tree with a bare origin): a tiny CRLF index.html with guides #1 and #2 and one donation, and a stub
+// validator that refuses any guide titled FAILME. Each repo gets a fresh copy of this module with GM_ROOT pointing at it; the batch stages run as child processes.
 async function selftest(){
-  const assert = require("assert"), { spawnSync } = require("child_process"), gc = require("./guide_code.js");
+  const assert = require("assert"), { spawnSync } = require("child_process"), gc = require("./guide_code.js"), dn = require("./donors.js");
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gm-selftest-")), day = today();
   const sh = (cwd, ...a) => execFileSync("git", a, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
   const guide = (title, author) => ({ format: "12t-class-guide", version: 1, title, author, date: "2026-10-01", description: "d", build: { server: "tot", classKey: "wolf", level: 100, learned: [101] }, modes: ["pve"], notes: {} });
   const code = (title, author) => gc.encode(guide(title, author));
+  const OLD = { k: "aaaaaaaa", id: "11111111", name: "Old", msg: "", amount: 100, date: "2026-10-01T10:00" }, NEW = { id: "22222222", name: "New", msg: "ขอบคุณ", amount: 50, date: "2026-10-20T09:30" };
+  const donorAdd = (d) => ({ action: "donor-add", donor: { ...NEW, ...d } });
   const STUB = 'const fs = require("fs"), path = require("path"), html = fs.readFileSync(path.join(__dirname, "..", "12t_projects/bible/index.html"), "utf8");\nif (html.includes("INJECTME")){ console.log("::notice title=gm-result::{\\"Error\\":1}"); process.exit(1); }\nif (html.includes("LONGFAIL")){ for (let i = 0; i < 14; i++) console.log("[CLASS GUIDE ERROR] " + "x".repeat(400)); process.exit(1); }\nif (html.includes("FAILME")){ console.log("[CLASS GUIDE ERROR] fixture refuses FAILME"); process.exit(1); }\n';
   let n = 0;
   function fixture(){
     const dir = path.join(tmp, "f" + ++n), origin = dir + ".git";
     fs.mkdirSync(path.join(dir, "12t_projects/bible"), { recursive: true }); fs.mkdirSync(path.join(dir, "scripts"));
-    fs.writeFileSync(path.join(dir, REL), ["<script>", "const CLASS_GUIDES = [", guideLine(1, guide("T1", "A1")), guideLine(2, guide("T2", "A2")), "];", "const CHANGELOG_DATA = {", "  entries: [", '    ["2026-01-01T00:00:00.000Z", "init"],', "  ],", "};", "</script>", ""].join("\r\n"));
+    fs.writeFileSync(path.join(dir, REL), ["<script>", "const CLASS_GUIDES = [", guideLine(1, guide("T1", "A1")), guideLine(2, guide("T2", "A2")), "];", "const DONORS = [", dn.donorLine(OLD), "];", "const CHANGELOG_DATA = {", "  entries: [", '    ["2026-01-01T00:00:00.000Z", "init"],', "  ],", "};", "</script>", ""].join("\r\n"));
     fs.writeFileSync(path.join(dir, "scripts/validate_skills.js"), STUB);
     sh(tmp, "init", "-q", "--bare", origin);
     for (const a of [["init", "-q", "-b", "main"], ["config", "user.name", "Test"], ["config", "user.email", "test@example.com"], ["config", "core.autocrlf", "false"], ["add", "-A"], ["commit", "-q", "-m", "init"], ["remote", "add", "origin", origin], ["push", "-q", "-u", "origin", "main"]]) sh(dir, ...a);
@@ -411,6 +471,8 @@ async function selftest(){
   const html = (dir) => fs.readFileSync(path.join(dir, REL), "utf8");
   const head = (dir) => sh(dir, "rev-parse", "HEAD"), subject = (dir) => sh(dir, "log", "-1", "--format=%s");
   const newestEntry = (dir) => JSON.parse(html(dir).split("\r\n")[html(dir).split("\r\n").indexOf("  entries: [") + 1].trim().replace(/,$/, ""))[1];
+  const changelog = (dir) => { const ls = html(dir).split("\r\n"), at = ls.indexOf("  entries: ["); return ls.slice(at + 1, ls.indexOf("  ],", at)).map((l) => JSON.parse(l.trim().replace(/,$/, ""))[1]); };
+  const donorLines = (dir) => dn.parseDonors(html(dir)).lines, donations = (dir) => dn.parseDonors(html(dir)).donations.map((t) => t.x);
   const stage = (dir, req, st, ...extra) => spawnSync(process.execPath, [__filename, "batch", req, "--stage", st, ...extra], { cwd: dir, env: { ...process.env, GM_ROOT: dir, GITHUB_ACTIONS: "true" }, encoding: "utf8" });
   const request = (dir, obj) => { const f = path.join(dir, "..", path.basename(dir) + "-request.json"); fs.writeFileSync(f, JSON.stringify(obj)); return f; };
   const notice = (out) => JSON.parse(((out.match(/^::notice title=gm-result::(.*)$/m) || [])[1]) || "null");
@@ -555,6 +617,82 @@ async function selftest(){
     const r = stage(dir, req, "push");
     assert.strictEqual(r.status, 1); assert.match(r.stdout, /^::error title=gm-error::มีการเปลี่ยนแปลงบน GitHub ระหว่างทำงาน ลองใหม่อีกครั้ง/m);
   });
+  test("donor-add alone: a DONORS line, subject names the donor, no changelog entry", async () => {
+    const dir = fixture(), m = load(dir);
+    const r = await m.apply(m.opsFromItems([donorAdd({ name: " New\r\n" })]), { noPush: true }, quiet());   // checkDonation takes the line break out
+    const [old, added] = donations(dir);
+    assert.deepStrictEqual(old, OLD); assert.match(added.k, /^[0-9a-f]{8}$/); assert.deepStrictEqual(added, { k: added.k, ...NEW });
+    assert.deepStrictEqual(donorLines(dir), [dn.donorLine(OLD), dn.donorLine(added)]);
+    assert.deepStrictEqual(changelog(dir), ["init"]); assert.strictEqual(newestEntry(dir), "init");
+    assert.strictEqual(subject(dir), "feat(bible): ขอบคุณผู้สนับสนุน New");
+    assert.deepStrictEqual(r.items, [{ action: "donor-add", k: added.k, subject: "feat(bible): ขอบคุณผู้สนับสนุน New" }]);
+    assert.deepStrictEqual(m.readGuides().lines, pre);
+    assert.deepStrictEqual(m.pageData().donations, [OLD, added]);
+  });
+  test("donor-remove: the line goes, subject has no name", async () => {
+    const dir = fixture(), m = load(dir);
+    await assert.rejects(m.apply(m.opsFromItems([{ action: "donor-remove", k: "bbbbbbbb" }]), { noPush: true }, quiet()), /ไม่มีการสนับสนุนรหัส bbbbbbbb/);
+    await m.apply(m.opsFromItems([{ action: "donor-remove", k: "aaaaaaaa" }]), { noPush: true }, quiet());
+    assert.strictEqual(subject(dir), "fix(bible): remove a donation");
+    assert.ok(!html(dir).includes('"Old"')); assert.ok(html(dir).includes("];\r\nconst DONORS = [\r\n];\r\nconst CHANGELOG_DATA"), "an empty block, no blank line left");
+    assert.deepStrictEqual(changelog(dir), ["init"]);
+    await m.apply(m.opsFromItems([donorAdd()]), { noPush: true }, quiet());   // the real list starts empty
+    assert.ok(html(dir).includes("const DONORS = [\r\n" + dn.donorLine(donations(dir)[0]) + "\r\n];\r\nconst CHANGELOG_DATA"));
+  });
+  test("mixed batch: guide add + donor add", async () => {
+    const dir = fixture(), m = load(dir);
+    const r = await m.apply(m.opsFromItems([batchItems[0], donorAdd()]), { noPush: true }, quiet());
+    assert.strictEqual(subject(dir), "feat(bible): class guide #3 ToT Wolf T3 by A3; feat(bible): ขอบคุณผู้สนับสนุน New");
+    assert.deepStrictEqual(changelog(dir), ["feat(bible): class guide #3 ToT Wolf T3 by A3", "init"]);
+    assert.deepStrictEqual(r.items.map((x) => x.url || x.k), [SITE + "#class-guide/3", donations(dir)[1].k]);
+    assert.strictEqual(m.undoText(r.undo), "ย้อนกลับชุดล่าสุด 2 รายการ (#3, ☕)");
+    await m.apply(r.undo.slice().reverse().map((entry) => ({ action: "undo", entry })), { noPush: true }, quiet());   // the page's own undo
+    assert.deepStrictEqual(m.readGuides().lines, [...pre, `  // #3 removed ${day}: T3 by A3`]);
+    assert.deepStrictEqual(donorLines(dir), [dn.donorLine(OLD)]);
+    assert.strictEqual(subject(dir), "fix(bible): remove a donation; fix(bible): class guide #3 is removed again (undo of its addition: T3 by A3)");
+    assert.strictEqual(newestEntry(dir), "fix(bible): class guide #3 is removed again (undo of its addition: T3 by A3)");
+  });
+  test("a bad donor item names its position", async () => {
+    const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir);
+    await assert.rejects(async () => m.apply(m.opsFromItems([batchItems[0], donorAdd({ amount: 0 })]), { noPush: true }, quiet()), /รายการที่ 2: ยอดเงินต้องมากกว่า 0/);
+    for (const id of ["XYZ", "1111111G", 11111111, undefined]) assert.throws(() => m.opsFromItems([donorAdd({ id })]), /รายการที่ 1: รหัสผู้สนับสนุนไม่ถูกต้อง/);
+    assert.throws(() => m.opsFromItems([batchItems[0], { action: "donor-remove", k: "<b>" }]), /รายการที่ 2: รหัสการสนับสนุนไม่ถูกต้อง/);
+    assert.strictEqual(html(dir), before); assert.strictEqual(head(dir), sha);
+  });
+  test("undo from a commit reverses donor add and remove", async () => {
+    const dir = fixture(), m = load(dir), was = donorLines(dir);
+    await m.apply(m.opsFromItems([donorAdd(), { action: "donor-remove", k: "aaaaaaaa" }]), { noPush: true }, quiet()); const sha = head(dir);
+    assert.strictEqual(subject(dir), "feat(bible): ขอบคุณผู้สนับสนุน New; fix(bible): remove a donation");
+    const ops = m.undoOpsFromCommit(sha);
+    assert.deepStrictEqual(ops.map((o) => [o.entry.kind, o.entry.k, o.entry.text]), [["donor", "aaaaaaaa", "คืนการสนับสนุนที่เพิ่งเอาออก"], ["donor", donations(dir)[0].k, "เอาการสนับสนุนที่เพิ่งเพิ่มออก"]]);
+    await m.apply(ops, { noPush: true }, quiet());
+    assert.deepStrictEqual(donorLines(dir), was);
+    assert.strictEqual(subject(dir), "fix(bible): restore a donation; fix(bible): remove a donation"); assert.deepStrictEqual(changelog(dir), ["init"]);
+    await assert.rejects(m.apply(m.undoOpsFromCommit(sha), { noPush: true }, quiet()), /การสนับสนุนนี้ถูกแก้หลังจากนั้นแล้ว ย้อนกลับไม่ได้/);
+  });
+  test("batch stages: a donor-only request passes git→push", async () => {
+    const dir = fixture(), req = request(dir, { items: [donorAdd()] });
+    let r;
+    for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, req, st); assert.strictEqual(r.status, 0, st + ": " + r.stdout + r.stderr); }
+    const k = donations(dir)[1].k;
+    assert.deepStrictEqual(notice(r.stdout).items, [{ action: "donor-add", k }]);
+    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: false, subject: "feat(bible): ขอบคุณผู้สนับสนุน New", sha: head(dir), items: [{ action: "donor-add", k }], undoText: "เอาการสนับสนุนที่เพิ่งเพิ่มออก" });
+    assert.strictEqual(JSON.parse(fs.readFileSync(req + ".plan.json", "utf8")).changelog, null);
+    assert.deepStrictEqual(changelog(dir), ["init"]);
+    assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
+    const undo = request(dir, { undo: { sha: head(dir) } });
+    for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, undo, st); assert.strictEqual(r.status, 0, "undo " + st + ": " + r.stdout + r.stderr); }
+    assert.deepStrictEqual(donorLines(dir), [dn.donorLine(OLD)]); assert.strictEqual(subject(dir), "fix(bible): remove a donation"); assert.deepStrictEqual(changelog(dir), ["init"]);
+  });
+  test("a name with </script> stays escaped through the batch", async () => {
+    const dir = fixture(), req = request(dir, { items: [donorAdd({ name: "</script><!--x", msg: "<b>hi</b>" })] });
+    let r;
+    for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, req, st); assert.strictEqual(r.status, 0, st + ": " + r.stdout + r.stderr); }
+    const out = html(dir), x = donations(dir)[1];
+    assert.strictEqual(out.split("</script>").length, 2, "only the fixture's own closing tag"); assert.ok(!out.includes("<!--"));
+    assert.strictEqual(x.name, "</script><!--x"); assert.strictEqual(x.msg, "<b>hi</b>"); assert.strictEqual(donorLines(dir)[1], dn.donorLine(x));
+    assert.strictEqual(subject(dir), "feat(bible): ขอบคุณผู้สนับสนุน /script!--x"); assert.strictEqual(notice(r.stdout).subject, subject(dir));
+  });
 
   let failed = 0;
   for (const [name, fn] of cases){
@@ -568,7 +706,7 @@ async function selftest(){
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && !["--port", "--modes", "--stage"].includes(args[i - 1]));
-if (require.main !== module) module.exports = { planAll, readGuides, parse, nextId, findCode, stampGuide, canonLine, sameGuide, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
+if (require.main !== module) module.exports = { planAll, readGuides, parseDonors, pageData, parse, nextId, findCode, stampGuide, canonLine, sameGuide, opsFromItems, undoText, undoOpsFromCommit, validatorErrorLines, stageGit, stageEdit, stageCheck, stageCommit, stagePush, apply };   // for tests
 else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
 else if (words[0] === "batch") batch(words[1], val("--stage"));
 else if (words.length) cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });

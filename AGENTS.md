@@ -32,6 +32,7 @@ This repository is a reverse-engineering, mechanics-verification, and documentat
   * `penguin-skill-sheet/`: Interactive skill infographic.
   * `agi-cha-sweetspot/`: Interactive AGI/CHA stat sweetspot calculator.
   * `goldenkingbug-spawn-map/`: 3D Three.js spawn map.
+  * `donate-worker/`: Cloudflare Worker that checks a ☕ donor's slip form and forwards it to the owner's private Discord channel (with an อนุมัติ link into the guide manager). Stores nothing; the webhook is a Worker secret. Setup: its `README.md`.
   * `guide-manager/`: The class guide manager page (add / replace / remove guides in the Bible). Served by `scripts/add_guide.js` on the PC and by GitHub Pages for the phone, where it publishes through `.github/workflows/guide-manager.yml`. Rules: [12t_projects/bible/CLASS-GUIDES.md](12t_projects/bible/CLASS-GUIDES.md).
 * **`docs/superpowers/`**: Feature specs (`specs/`) and implementation plans (`plans/`).
 * **`RippedAssets/` & `12TailsOnline_Data/`**: Raw Unity asset ripper outputs and binary game data (git-ignored).

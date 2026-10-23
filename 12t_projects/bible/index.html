@@ -21,7 +21,7 @@
     // flat panels and modals that never change fill on hover
     panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
@@ -33,7 +33,7 @@
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
-    field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select"]
+    field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
   (function(){
     var G = 'html:is([data-sk-server="tto"],[data-sk-server="tot"]) ';
@@ -1517,14 +1517,70 @@
     padding:0; transition:all .15s ease;
   }
   .donate-close:hover{color:var(--text); background:rgba(255,255,255,.08); border-color:var(--line)}
+  /* the ☕ pop-up (user 2026-10-23): text, the QR card and ดาวน์โหลด QR, the optional slip form (collapsed), the donor list. The body scrolls
+     inside the pop-up on small screens; the QR card is sized by the window height, so a 390 x 844 phone sees all of it as the pop-up opens. */
+  .donate-main{max-width:600px; max-height:calc(100vh - 40px); max-height:calc(100dvh - 40px)}
   .donate-body{display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center}
+  .donate-main .donate-body{overflow-y:auto; overscroll-behavior:contain; min-height:0; margin:-4px -8px; padding:4px 8px}
   .donate-msg{
     font-family:'Prompt',sans-serif;
-    font-size:clamp(10px,2.4vw,15px); line-height:1.7; color:var(--muted); margin:0; white-space:nowrap;
+    font-size:clamp(13px,3.4vw,15px); line-height:1.65; color:var(--muted); margin:0; text-wrap:pretty;
   }
   .donate-msg strong{color:var(--gold); font-weight:600}
   .donate-copy{color:var(--gold); text-decoration:underline; text-underline-offset:3px}
   .donate-copy:hover{opacity:.8}
+  .donate-qr{margin:0; display:flex; flex-direction:column; align-items:center; gap:10px}
+  .donate-qr img{display:block; height:min(50vh,560px); height:min(50dvh,560px); width:auto; max-width:100%; aspect-ratio:1080/1519; object-fit:contain; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  .donate-qr img[hidden]{display:none}   /* assets.js did not load */
+  .donate-qr-missing{margin:0; font-size:13px; color:var(--muted)}
+  .donate-btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 18px; border:1px solid var(--gold); border-radius:6px; background:var(--gold); color:#141311;
+    font:inherit; font-size:14px; font-weight:600; line-height:1.2; cursor:pointer; transition:filter .15s ease, transform .15s ease}
+  .donate-btn:hover:not(:disabled), .donate-btn:focus-visible{filter:brightness(1.12)}
+  .donate-btn:active:not(:disabled){transform:translateY(1px)}
+  .donate-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .donate-btn:disabled{opacity:.55; cursor:default}
+  .donate-btn svg{width:16px; height:16px; flex:none}
+  .donate-form-box, .donate-list-box{width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; text-align:left}
+  .donate-form-box > summary{display:flex; align-items:center; gap:10px; padding:11px 14px; cursor:pointer; list-style:none; color:var(--gold); font-weight:600; font-size:14px; border-radius:8px}
+  .donate-form-box > summary::-webkit-details-marker{display:none}
+  .donate-form-box > summary::before{content:""; display:inline-block; flex:none; width:6px; height:6px; margin-left:2px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); transition:transform .15s ease}
+  .donate-form-box[open] > summary::before{transform:rotate(45deg)}
+  .donate-form-box > summary:hover{filter:brightness(1.12)}
+  .donate-form-box > summary:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .donate-form{display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:2px 14px 12px}
+  .donate-field{display:grid; gap:4px; min-width:0; font-size:13px; color:var(--muted)}
+  .donate-field.is-wide, .donate-send-row{grid-column:1 / -1}
+  .donate-form input, .donate-form textarea{width:100%; min-width:0; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:4px; padding:8px 10px; font:inherit; font-size:14px}
+  .donate-form textarea{resize:vertical; min-height:58px}
+  .donate-form input:focus-visible, .donate-form textarea:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+  .donate-form .donate-num{font-family:'JetBrains Mono','Prompt',monospace; color-scheme:dark}
+  .donate-form input[type="file"]{padding:6px; font-size:13px; cursor:pointer}
+  .donate-form input[type="file"]::file-selector-button{font:inherit; margin-right:10px; padding:5px 12px; border:1px solid var(--line); border-radius:4px; background:transparent; color:var(--text); cursor:pointer}
+  .donate-send-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .donate-status{margin:0; font-size:13px; line-height:1.5}
+  .donate-status[data-kind="error"]{color:var(--seal)}
+  .donate-status[data-kind="ok"]{color:var(--pro)}
+  .donate-status[data-kind="busy"]{color:var(--muted)}
+  .donate-note{margin:0; padding:0 14px 12px; font-size:12px; line-height:1.6; color:var(--muted)}
+  .donate-list-box{padding:12px 14px}
+  .donate-list-title{margin:0 0 8px; font-size:14px; font-weight:600; color:var(--gold)}
+  .donate-list{list-style:none; margin:0; padding:0}
+  .donate-row{padding:8px 0; border-top:1px solid var(--line)}
+  .donate-row:first-child{padding-top:0; border-top:none}
+  .donate-row:last-child{padding-bottom:0}
+  .donate-row-top{display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px}
+  .donate-row-name{flex:1 1 auto; min-width:0; color:var(--text); font-weight:600; overflow-wrap:anywhere}
+  .donate-row-amt{font-family:'JetBrains Mono','Prompt',monospace; color:var(--gold); font-weight:600}
+  .donate-row-count{font-family:'JetBrains Mono','Prompt',monospace; color:var(--muted); font-size:12px}
+  .donate-row-date{color:var(--muted); font-size:12px}
+  .donate-row-msg{margin:3px 0 0; color:var(--muted); font-size:13px; line-height:1.55; overflow-wrap:anywhere}
+  .donate-empty{color:var(--muted); font-size:13px}
+  @media (max-width:560px){
+    #donateModal{padding:10px}
+    .donate-main{padding:14px; gap:12px; max-height:calc(100vh - 20px); max-height:calc(100dvh - 20px)}
+    .donate-form{grid-template-columns:1fr}
+    .donate-form input, .donate-form textarea{font-size:16px}   /* 16 px: iOS zooms the page into a smaller field */
+  }
   /* ---- Contributors (ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล, user 2026-10-06) ---- */
   .hub-btn-credits{display:inline-flex; align-items:center; vertical-align:middle; margin:0 0 0 8px; padding:2px; background:none; border:none;
     color:var(--gold); cursor:pointer; border-radius:4px; transition:transform .18s cubic-bezier(.2,.7,.2,1)}
@@ -7584,7 +7640,7 @@
 </div>
 
 <div class="donate-backdrop" id="donateModal" hidden aria-modal="true" role="dialog" aria-labelledby="donateTitle">
-  <div class="donate-popup">
+  <div class="donate-popup donate-main">
     <div class="donate-head">
       <div class="donate-head-title-wrap">
         <span class="donate-head-icon">☕</span>
@@ -7594,17 +7650,38 @@
     </div>
     <div class="donate-body">
       <p class="donate-msg">
-        <strong>ขอบคุณผู้ใจดีทุกท่านที่ร่วมสนับสนุน</strong> 🙏<br>
-        ขอบคุณสำหรับกำลังใจและเสียงตอบรับเชิงบวกอย่างล้นหลาม<br>
-        ตอนนี้ยอดที่ได้รับเพียงพอสำหรับค่า AI ที่ใช้พัฒนา <strong>12 Tails Bible</strong> ให้เสร็จสมบูรณ์แล้ว<br>
-        จะพัฒนาและอัปเดตต่อเนื่อง ไม่จำเป็นต้องโอนเพิ่มแล้วนะครับ 😊<br>
+        ร่วมสนับสนุนค่าพัฒนา <strong>12 Tails Bible</strong> และค่าเซิร์ฟเวอร์ในอนาคต ขอบคุณทุกการสนับสนุนครับ 🙏<br>
         ตรวจพบข้อมูลผิดพลาด แจ้ง Discord : <a class="donate-copy" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">jumpptty</a>
       </p>
+      <figure class="donate-qr">
+        <img id="donateQrImg" alt="QR พร้อมเพย์สำหรับสนับสนุน 12 Tails Bible" width="1080" height="1519" decoding="async">
+        <p class="donate-qr-missing" id="donateQrMissing" hidden>โหลดรูป QR ไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง</p>
+        <button type="button" class="donate-btn" id="btnDonateQr"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>ดาวน์โหลด QR</button>
+      </figure>
+      <details class="donate-form-box" id="donateFormBox">
+        <summary>อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?</summary>
+        <form class="donate-form" id="donateForm" novalidate>
+          <label class="donate-field is-wide">ชื่อที่แสดง<input type="text" id="donateName" name="name" autocomplete="nickname" placeholder="ชื่อในเกมหรือชื่อเล่นก็ได้"></label>
+          <label class="donate-field is-wide">ข้อความ (ไม่ใส่ก็ได้)<textarea id="donateMsg" name="msg" rows="2" placeholder="ฝากข้อความสั้น ๆ"></textarea></label>
+          <label class="donate-field">ยอดเงิน (บาท)<input type="text" id="donateAmount" name="amount" class="donate-num" inputmode="decimal" autocomplete="off" placeholder="100"></label>
+          <label class="donate-field">วันเวลาที่โอน<input type="datetime-local" id="donateDate" name="date" class="donate-num"></label>
+          <label class="donate-field is-wide">รูปสลิป<input type="file" id="donateSlip" name="slip" accept="image/*"></label>
+          <div class="donate-send-row">
+            <button type="submit" class="donate-btn" id="btnDonateSend">ส่งสลิป</button>
+            <p class="donate-status" id="donateStatus" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+        <p class="donate-note">สลิปจะส่งถึงผู้ดูแลเท่านั้น ไม่เผยแพร่ ชื่อที่แสดง ข้อความ ยอด และวันที่จะขึ้นในรายชื่อหลังตรวจสลิป ชื่อที่แสดงเป็นข้อมูลสาธารณะ</p>
+      </details>
+      <section class="donate-list-box" aria-labelledby="donateListTitle">
+        <h4 class="donate-list-title" id="donateListTitle">รายชื่อผู้สนับสนุน</h4>
+        <ol class="donate-list" id="donateList"></ol>
+      </section>
     </div>
   </div>
 </div>
 
-<script src="assets.js?v=d8f51d2185" id="bibleAssets"></script>
+<script src="assets.js?v=590446cee3" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -27547,6 +27624,165 @@ const CLASS_GUIDES = [
   {"id":70,"format":"12t-class-guide","version":1,"title":"แกะอีเดน","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-22","description":"แกะสวนแสงสวรรค์ ลดดาเมจ อรรถประโยชน์ ควรมีซัพกวิ้นและซัพต่ายจ้า","build":{"server":"tto","classKey":"sheep","level":100,"learned":[101,102,111,121,122,131,141,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,301,302,311,312,313,314,321,322,323,324,341,342,343,344,351,352,353,402,404,412,413,414,422,423,424,442,443],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม"},"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"cover":[443,131,414,344,343],"modes":["pve"],"notes":{"131":"เอามาเพื่อมีโอกาสประหยัดมานามากขึ้น","344":"ปลดล็อคอีเดน","353":"โล่เขียวใช้ได้หลายสถานการณ์ อรรถประโยชน์","414":"ช่วยประหยัดมานา","443":"สำหรับเซิฟ TTO เท่านั้น ณ ปัจจุบันเพราะแกับัคแล้ว"}},
 ];
 const CLASS_GUIDE_VIEWS = {"at":"2026-10-20T06:32:04.913Z","counts":{"1":135,"2":189,"3":117,"4":87,"5":174,"6":155,"7":111,"8":66,"9":75,"10":134,"11":125,"12":59,"13":31,"14":114,"15":128,"16":93,"17":133,"18":167,"19":127,"20":213,"21":103,"22":120,"23":121,"24":39,"25":43,"26":35,"27":30,"28":48,"29":91,"30":128,"31":129,"32":110,"34":101,"35":132,"36":94,"37":48,"38":87,"39":75,"40":73,"41":13,"42":26,"43":17,"44":21,"45":15,"46":26}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+// The ☕ donor list: format is scripts/donors.js; only the guide manager (scripts/add_guide.js) edits it, one approved donation per line.
+const DONORS = [
+];
+// ☕ pop-up (user 2026-10-23): the QR card (DONATE_QR, in assets.js) to scan or save, an optional slip form that sends the slip to the user's
+// Discord through the Cloudflare Worker (12t_projects/donate-worker; it stores nothing), and the donor list from DONORS above. DONOR_LIMITS,
+// donorCheck and donorRows are scripts/donors.js's LIMITS, checkDonation and groupDonors word for word (the validator checks that they agree),
+// so nothing the Worker would refuse leaves the page. Dates are Thailand time (UTC+7) written YYYY-MM-DDTHH:MM.
+const DONATE_QR = BIBLE_ASSETS_IN.DONATE_QR || "";
+const DONATE_WORKER_URL = "https://12tails-donate.jumpthai.workers.dev/slip";
+const DONOR_LIMITS = { name: 40, msg: 200, amountMax: 1000000, slipBytes: 5242880, slipTypes: ["image/jpeg", "image/png", "image/webp"], dateMin: "2020-01-01T00:00" };
+// the Worker's error codes in Thai ("invalid" shows the Worker's own message, see donateErrorText); network = no answer or one that is not JSON
+const DONATE_ERRORS = { missing: "กรอกให้ครบทุกช่องและแนบสลิป", "file-type": "สลิปต้องเป็นรูป JPG, PNG หรือ WebP", "file-size": "รูปสลิปใหญ่เกิน 5 MB", rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่",
+  origin: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", method: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", discord: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", network: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง" };
+// checkDonation: the cleaned donation, or an Error with the Thai reason (code points, so an emoji is never split; over-long text is refused, never cut)
+function donorCheck(d, now = new Date()){
+  const clean = (s) => String(s).replace(/\s+/g, " ").trim(), len = (s) => [...s].length, satang = (n) => Math.round(n * 100);
+  const thaiMs = (s) => {
+    const m = typeof s === "string" && s.match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)$/);
+    if (!m) return NaN;
+    const [y, mo, dd, h, mi] = m.slice(1).map(Number), t = new Date(Date.UTC(y, mo - 1, dd, h, mi));
+    const same = t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === dd && t.getUTCHours() === h && t.getUTCMinutes() === mi;
+    return same ? t.getTime() - 7 * 3600000 : NaN;
+  };
+  d = d || {};
+  const name = typeof d.name === "string" ? clean(d.name) : "", msg = typeof d.msg === "string" ? clean(d.msg) : (d.msg == null ? "" : null);
+  if (!name) throw new Error("กรุณาใส่ชื่อ");
+  if (len(name) > DONOR_LIMITS.name) throw new Error("ชื่อยาวเกิน " + DONOR_LIMITS.name + " ตัวอักษร");
+  if (msg === null) throw new Error("ข้อความไม่ถูกต้อง");
+  if (len(msg) > DONOR_LIMITS.msg) throw new Error("ข้อความยาวเกิน " + DONOR_LIMITS.msg + " ตัวอักษร");
+  const a = d.amount;
+  if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > DONOR_LIMITS.amountMax || Math.abs(a * 100 - satang(a)) > 1e-6)
+    throw new Error("ยอดเงินต้องมากกว่า 0 และไม่เกิน " + DONOR_LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)");
+  const t = thaiMs(d.date);
+  if (isNaN(t)) throw new Error("วันเวลาที่โอนไม่ถูกต้อง (รูปแบบ YYYY-MM-DDTHH:MM)");
+  if (t < thaiMs(DONOR_LIMITS.dateMin) || t > now.getTime() + 24 * 3600000) throw new Error("วันเวลาที่โอนอยู่นอกช่วงที่รับ (ตั้งแต่ 2020-01-01 ถึงไม่เกินพรุ่งนี้)");
+  return { name, msg, amount: satang(a) / 100, date: d.date };
+}
+// groupDonors: one row per donor id with the latest name, the latest non-empty message, the total (summed in satang), the count, the latest
+// and first dates; biggest total first, then whoever first gave earlier
+function donorRows(donations){
+  const by = new Map(), satang = (n) => Math.round(n * 100);
+  donations.forEach((x) => {
+    let r = by.get(x.id);
+    if (!r) by.set(x.id, r = { id: x.id, name: x.name, msg: "", sat: 0, count: 0, date: x.date, first: x.date, msgDate: "" });
+    r.sat += satang(x.amount); r.count++;
+    if (x.date >= r.date){ r.date = x.date; r.name = x.name; }
+    if (x.date < r.first) r.first = x.date;
+    if (x.msg && x.date >= r.msgDate){ r.msgDate = x.date; r.msg = x.msg; }
+  });
+  return [...by.values()].sort((a, b) => b.sat - a.sat || (a.first < b.first ? -1 : a.first > b.first ? 1 : 0))
+    .map((r) => ({ id: r.id, name: r.name, msg: r.msg, total: r.sat / 100, count: r.count, date: r.date, first: r.first }));
+}
+// amounts typed the Thai way ("1,000", "฿50", " 20 ", "50.5"): ฿, commas and spaces go, then a positive number with at most 2 decimals, else null
+function parseAmountInput(text){
+  const s = String(text == null ? "" : text).replace(/[\s,฿]/g, "");
+  if (!/^\d+(?:\.\d{1,2})?$/.test(s)) return null;
+  const n = Number(s);
+  return n > 0 ? n : null;
+}
+// now in Thailand as YYYY-MM-DDTHH:MM, the form's default transfer time
+const donateNow = (t = Date.now()) => new Date(t + 7 * 3600000).toISOString().slice(0, 16);
+// a slip straight from a phone camera (a 12 MB JPEG, an iPhone HEIC) is redrawn as a JPEG of at most 1600 px on the long side at quality 0.85
+async function shrinkSlip(file){
+  const fail = () => new Error("อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่");
+  let bmp = null;
+  try { bmp = await createImageBitmap(file); } catch (e) { throw fail(); }
+  try {
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);   // a see-through PNG would turn black in a JPEG
+    g.drawImage(bmp, 0, 0, w, h);
+    const blob = await new Promise((done) => c.toBlob(done, "image/jpeg", 0.85));
+    if (!blob) throw fail();
+    return blob;
+  } catch (e) { throw fail(); }
+  finally { if (bmp && typeof bmp.close === "function") bmp.close(); }
+}
+// ดาวน์โหลด QR saves the card as 12tails-bible-qr.png: on iPhones and iPads through the share sheet (its บันทึกรูปภาพ puts the card in Photos,
+// where a bank app can read it), elsewhere through a download link. Nothing to save when assets.js did not load.
+function downloadQr(){
+  if (!DONATE_QR) return;
+  const name = "12tails-bible-qr.png", nav = typeof navigator === "object" && navigator ? navigator : {};
+  let blob = null;
+  try {
+    const bin = atob(DONATE_QR.slice(DONATE_QR.indexOf(",") + 1)), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    blob = new Blob([bytes], { type: "image/png" });
+  } catch (e) { blob = null; }
+  const link = () => {
+    const url = blob ? URL.createObjectURL(blob) : DONATE_QR, a = document.createElement("a");
+    a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+    document.body.appendChild(a); a.click(); a.remove();
+    if (blob) setTimeout(() => URL.revokeObjectURL(url), 30000);
+  };
+  const ios = /iPhone|iPad|iPod/.test(nav.userAgent || "") || (nav.platform === "MacIntel" && nav.maxTouchPoints > 1);
+  if (ios && blob && typeof File === "function" && typeof nav.canShare === "function" && typeof nav.share === "function") {
+    let file = null, can = false;
+    try { file = new File([blob], name, { type: "image/png" }); can = nav.canShare({ files: [file] }); } catch (e) { can = false; }
+    if (can) {
+      const shared = nav.share({ files: [file] });   // called straight from the click, which the share sheet needs
+      if (shared && typeof shared.catch === "function") shared.catch((e) => { if (!e || e.name !== "AbortError") link(); });
+      return;
+    }
+  }
+  link();
+}
+// the Thai text for a Worker reply that is not { ok: true }
+function donateErrorText(reply){
+  const code = reply && typeof reply.error === "string" ? reply.error : "";
+  if (code === "invalid" && typeof reply.message === "string" && reply.message) return reply.message;
+  return code && code !== "invalid" && Object.prototype.hasOwnProperty.call(DONATE_ERRORS, code) ? DONATE_ERRORS[code] : DONATE_ERRORS.network;
+}
+// one slip to the Worker: a plain multipart POST (no custom headers, so no CORS preflight); resolves on { ok: true }, else throws the Thai text
+async function donateSend(d, slip){
+  const body = new FormData();
+  body.append("name", d.name); body.append("msg", d.msg); body.append("amount", String(d.amount)); body.append("date", d.date);
+  body.append("slip", slip, "slip.jpg");
+  let reply = null;
+  try { reply = await (await fetch(DONATE_WORKER_URL, { method: "POST", body })).json(); } catch (e) { reply = null; }
+  if (!reply || reply.ok !== true) throw new Error(donateErrorText(reply));
+}
+// the form's send (ui = its fields, the send button and the status line): the page's own checks first, then the slip redrawn, then one send.
+// ui.busy and the disabled button keep a double tap from sending twice; every error keeps what was typed, a sent slip clears the form.
+async function donateSubmit(ui){
+  if (ui.busy) return;
+  const say = (text, kind) => { ui.status.textContent = text; ui.status.dataset.kind = kind; };
+  let d;
+  try { d = donorCheck({ name: ui.name.value, msg: ui.msg.value, amount: parseAmountInput(ui.amount.value), date: ui.date.value.slice(0, 16) }); }
+  catch (e) { say(e.message, "error"); return; }
+  const file = ui.slip.files && ui.slip.files[0];
+  if (!file) { say(DONATE_ERRORS.missing, "error"); return; }
+  ui.busy = true; ui.btn.disabled = true; say("กำลังส่ง…", "busy");
+  try {
+    const slip = await shrinkSlip(file);
+    if (slip.size > DONOR_LIMITS.slipBytes) throw new Error(DONATE_ERRORS["file-size"]);
+    await donateSend(d, slip);
+    ui.name.value = ""; ui.msg.value = ""; ui.amount.value = ""; ui.slip.value = ""; ui.date.value = donateNow(); ui.dateEdited = false;
+    say("ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นหลังตรวจสลิป", "ok");
+  } catch (e) {
+    const text = e && typeof e.message === "string" ? e.message : "";
+    say(/[\u0E00-\u0E7F]/.test(text) ? text : DONATE_ERRORS.network, "error");   // our own reasons are Thai; anything else is the plain retry text
+  } finally { ui.busy = false; ui.btn.disabled = false; }
+}
+// the donor list: donorRows(DONORS), text only (names and messages are typed by donors, so they never go through innerHTML)
+function renderDonorList(list, rows = donorRows(DONORS)){
+  const add = (parent, tag, cls, text) => { const el = document.createElement(tag); el.className = cls; if (text != null) el.textContent = text; parent.appendChild(el); return el; };
+  list.textContent = "";
+  if (!rows.length){ add(list, "li", "donate-empty", "ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ"); return; }
+  rows.forEach((r) => {
+    const li = add(list, "li", "donate-row"), top = add(li, "div", "donate-row-top");
+    add(top, "span", "donate-row-name", r.name);
+    add(top, "span", "donate-row-amt", "฿" + r.total.toLocaleString("en-US", { minimumFractionDigits: r.total % 1 ? 2 : 0, maximumFractionDigits: 2 }));
+    if (r.count > 1) add(top, "span", "donate-row-count", "×" + r.count);
+    add(top, "span", "donate-row-date", classGuideDateText(r.date.slice(0, 10)));
+    if (r.msg) add(li, "p", "donate-row-msg", r.msg);
+  });
+}
 // Recommended stats (user 2026-10-15): the author may fill any of the 8 stats; blanks are not stored and not shown.
 const CLASS_GUIDE_STATS = [
   { key: "atk", label: "ATK" },
@@ -31791,6 +32027,9 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T06:11:57.512Z","fix(bible): donation follow-ups: ignore .wrangler, scope guide mode buttons, date to the minute, doc notes"],
+    ["2026-10-23T05:33:55.010Z","feat(bible): ☕ pop-up takes donations again: QR download, optional slip for the thank-you list, donor list"],
+    ["2026-10-23T03:34:32.339Z","feat(bible): empty DONORS list for the ☕ donor thanks, checked by the validator"],
     ["2026-10-22T18:06:30.404Z","feat(bible): a class guide's date is its upload time (the author no longer picks one), and the ใหม่ badge shows for 24 hours after the upload"],
     ["2026-10-22T13:08:07.194Z","feat(bible): class guide #70 TTO Sheep แกะอีเดน by หนมผิงช่วยเหลือประชาชน"],
     ["2026-10-22T12:00:58.275Z","feat(bible): class guide #69 TTO Rabbit กระต่ายซูมมมม โป้งง by 1Hert.z"],
@@ -32383,9 +32622,22 @@ route();
 const btnDonate = $("#btnDonate");
 const donateModal = $("#donateModal");
 const btnDonateClose = $("#btnDonateClose");
+const btnDonateQr = $("#btnDonateQr");
+const donateForm = $("#donateForm");
+const donateUi = { name: $("#donateName"), msg: $("#donateMsg"), amount: $("#donateAmount"), date: $("#donateDate"), slip: $("#donateSlip"), btn: $("#btnDonateSend"), status: $("#donateStatus"), busy: false, dateEdited: false };
+let donateReady = false;
 
 function openDonateModal() {
   if (!donateModal) return;
+  if (!donateReady) {   // the first open: the QR card (or why it is missing) and the donor list
+    donateReady = true;
+    const img = $("#donateQrImg"), miss = $("#donateQrMissing"), list = $("#donateList");
+    if (img) { if (DONATE_QR) img.src = DONATE_QR; else img.hidden = true; }
+    if (miss) miss.hidden = !!DONATE_QR;
+    if (btnDonateQr) btnDonateQr.disabled = !DONATE_QR;
+    if (list) renderDonorList(list);
+  }
+  if (donateUi.date && !donateUi.dateEdited) donateUi.date.value = donateNow();   // the transfer time defaults to now (Thailand) until the donor changes it
   donateModal.hidden = false;
   document.body.style.overflow = "hidden";
 }
@@ -32398,6 +32650,9 @@ function closeDonateModal() {
 
 if (btnDonate) btnDonate.addEventListener("click", openDonateModal);
 if (btnDonateClose) btnDonateClose.addEventListener("click", closeDonateModal);
+if (btnDonateQr) btnDonateQr.addEventListener("click", () => downloadQr());
+if (donateForm) donateForm.addEventListener("submit", (e) => { e.preventDefault(); donateSubmit(donateUi); });
+if (donateUi.date) donateUi.date.addEventListener("input", () => { donateUi.dateEdited = true; });
 if (donateModal) {
   donateModal.addEventListener("click", (e) => {
     if (e.target === donateModal) closeDonateModal();

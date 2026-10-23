@@ -9,6 +9,8 @@ DecompiledSource/
 .claude/worktrees/
 .claude/settings.local.json
 node_modules/
+.wrangler/
+.dev.vars
 *.lnk
 
 # Local donation artwork

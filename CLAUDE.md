@@ -38,6 +38,10 @@ node scripts/add_guide.js                                       # class guide ma
 node scripts/add_guide.js add <code> | replace <N> <code> | delete <N>  [--dry-run | --no-push | --yes]   # the same pipeline on the command line
 node scripts/add_guide.js batch <request.json> --stage git|edit|check|commit|push [--dry-run]   # one stage, for .github/workflows/guide-manager.yml (the phone)
 node scripts/add_guide.js --selftest                            # the pipeline, batch stages and undo-from-commit on throwaway repos
+
+node 12t_projects/donate-worker/test.mjs                        # the ☕ slip Worker (fake Discord fetch + fake rate limiter); setup steps in 12t_projects/donate-worker/README.md
+node scripts/donors.js --selftest                               # the shared ☕ donation rules (scripts/donors.js)
+cd 12t_projects/donate-worker && npx wrangler deploy            # deploy the Worker (user only: needs their Cloudflare login; secret DISCORD_WEBHOOK_URL via `npx wrangler secret put`)
 ```
 
 ### Project skills and agents
