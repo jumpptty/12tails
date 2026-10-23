@@ -1487,6 +1487,9 @@
   .donate-backdrop[hidden]{display:none !important}
   /* closing the pop-up: its frame shrinks into a glowing point, then fireShot's light ball flies into the ☕ button (user 2026-10-23) */
   .donate-fly-ghost{position:fixed; z-index:9998; pointer-events:none; border:1px solid var(--gold); border-radius:8px; background:rgba(255,214,102,.08); box-shadow:0 0 18px 4px rgba(255,214,102,.3)}
+  /* the ball flies on its own top layer, with a thin dark rim and a brighter glow so it stays visible over icons, art and text (user 2026-10-23) */
+  .donate-fly-host{position:fixed; inset:0; z-index:100001; pointer-events:none}
+  .donate-fly-host .sk-shot{background:#fffdf2; box-shadow:0 0 0 1.5px rgba(40,24,0,.8), 0 0 8px 3px rgba(255,214,102,.95), 0 0 22px 9px rgba(255,170,40,.55)}
   .donate-backdrop{
     position:fixed; inset:0; z-index:100000;
     background:rgba(0,0,0,.82);
@@ -32079,6 +32082,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T08:11:00.476Z","style(bible): the ☕ fly-home ball is smaller and stays visible over busy page details"],
     ["2026-10-23T08:06:46.043Z","feat(bible): closing the ☕ pop-up turns it into a light ball that flies back into the ☕ button"],
     ["2026-10-23T07:56:02.916Z","feat(bible): the ☕ pop-up opens by itself once per device, unless another pop-up is already up"],
     ["2026-10-23T07:49:25.837Z","style(bible): ☕ pop-up text grows on large screens (the hub's 1800 × 1100 and 2400 × 1300 steps)"],
@@ -32714,7 +32718,8 @@ function closeDonateModal() {
 }
 
 // The closed pop-up turns into a light ball that flies back into the ☕ button (user 2026-10-23): its frame shrinks into a glowing point at
-// its centre, then the skill page's light ball (fireShot, gold, a size up) arcs to the button, which flashes as the ball lands.
+// its centre, then the skill page's light ball (fireShot, gold, 1.5×, a dark rim on its own top layer) arcs to the button, which flashes as it lands.
+let donateFlyHost = null;   // the ball's own top layer, made on the first close
 function donateFlyHome(from) {
   const to = btnDonate && btnDonate.getBoundingClientRect ? btnDonate.getBoundingClientRect() : null;
   if (!to || !to.width || !document.body.animate) return;
@@ -32725,9 +32730,10 @@ function donateFlyHome(from) {
   document.body.appendChild(ghost);
   ghost.animate([{ transform: "scale(1)", opacity: 1, borderRadius: "8px" }, { transform: "scale(.04)", opacity: .9, borderRadius: "50%" }],
     { duration: 160, easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" }).onfinish = () => ghost.remove();
+  if (!donateFlyHost){ donateFlyHost = document.createElement("div"); donateFlyHost.className = "donate-fly-host"; document.body.appendChild(donateFlyHost); }
   setTimeout(() => fireShot(a, b, false, () => btnDonate.animate(
     [{ transform: "scale(1)", filter: "brightness(1)" }, { transform: "scale(1.3)", filter: "brightness(1.8)" }, { transform: "scale(1)", filter: "brightness(1)" }],
-    { duration: 280, easing: "ease-out" }), document.body, 2.2), 120);
+    { duration: 280, easing: "ease-out" }), donateFlyHost, 1.5), 120);
 }
 
 if (btnDonate) btnDonate.addEventListener("click", openDonateModal);
