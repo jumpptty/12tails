@@ -399,6 +399,7 @@ Per-skill entries (`### chm_<name>`) are the verified 2026-10-01 pass; they take
 
 - MP 10/15, no SP, Lv/Bn 9/3, 21/7, instant. Cast `magAdjust(3 + sLv)` = 4/5 s, CD `agiAdjust(60)` (dispatcher `Chameleon.cs:18266-18277`). The card's former SP 24 and flat cast 5 s were wrong.
 - `RPC_campFire_cast` (`:29212-29654`): `RPC_campFire_create(pos, …, chaAdjust(30), sLv)` (`:29360-29378`). `Chameleon_campFire.Update` (`Chameleon_campFire.cs:52-183`): every 4 s on the owner client, every character on the owner's layer in `FindAreaTarget(pos, 9, 3)` whose `actionState == "emotion"` gets `RPC_AddHeal(1, ceil(f × mhp), ceil(f × mmp), 0, ceil(f × mko), 0, …)` with `f = 0.01 + 0.02 × sLv` (3% / 5%): HP, MP **and KO**.
+- **Sleep (traced 2026-10-19):** the tick checks `actionState == "emotion"` (`Chameleon_campFire.cs:157`), and the `sleep` status sets `actionState = "sleep"` (`CharacterControl.cs:39234`; back to `standby` when it ends, `:17787`). A sleeping ally gets no heal, even one who was sitting when put to sleep; they have to sit again after waking. Enemies are never affected (mask = the owner's layer only).
 
 ### chm_bloodBurn1-2 (Blood Burn, #332, #334) (verified 2026-10-01)
 
