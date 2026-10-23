@@ -3850,10 +3850,13 @@ async function donateChildTests(env) {
     const state = () => JSON.stringify([tabs.map((t) => [t.attrs["aria-selected"], t.tabIndex]), panels.map((p) => [p.hidden, p.value])]);
     show(tabs, panels, 1);
     ok(state() === JSON.stringify([[["false", -1], ["true", 0], ["false", -1]], [[true, "typed"], [false, "typed"], [true, "typed"]]]), `donateShowTab picks one tab (aria-selected, tabindex) and only hides the other panels, so what was typed stays (got ${state()})`);
-    const press = (from, k) => { show(tabs, panels, from); tabs.forEach((t) => { t.focused = false; }); let prevented = false; key({ key: k, target: tabs[from], preventDefault() { prevented = true; } }, tabs, panels); return [picked(), prevented, picked() >= 0 && tabs[picked()].focused]; };
+    const press = (from, k) => { show(tabs, panels, from); tabs.forEach((t) => { t.focused = false; }); let prevented = false, stopped = false; key({ key: k, target: tabs[from], preventDefault() { prevented = true; }, stopPropagation() { stopped = true; } }, tabs, panels); return [picked(), prevented, stopped, picked() >= 0 && tabs[picked()].focused]; };
     const keys = [[0, "ArrowRight", 1], [2, "ArrowRight", 0], [0, "ArrowLeft", 2], [2, "ArrowLeft", 1], [2, "Home", 0], [0, "End", 2]];
-    ok(keys.every(([from, k, to]) => same(press(from, k), [to, true, true])) && same(press(1, "a"), [1, false, false]) && same(press(1, "toString"), [1, false, false]) && same(press(1, "Enter"), [1, false, false]),
-      "donateTabKey: the arrow keys (wrapping), Home and End move to a tab, pick it and focus it; other keys are left alone");
+    ok(keys.every(([from, k, to]) => same(press(from, k), [to, true, true, true])) && same(press(1, "a"), [1, false, false, false]) && same(press(1, "toString"), [1, false, false, false]) && same(press(1, "Enter"), [1, false, false, false]),
+      "donateTabKey: the arrow keys (wrapping), Home and End move to a tab, pick it and focus it, and stop there (preventDefault + stopPropagation, so the skill page behind never sees them); other keys are left alone");
+    // the skill details page's document ← / → (navigateSkill) must stand down behind an open pop-up and for a key already handled
+    const skillKeys = (html.match(/document\.addEventListener\("keydown", \(e\) => \{[^\n]*\r?\n(?:[^\n]*\r?\n){0,8}?[^\n]*navigateSkill\(-1\)/) || [""])[0];
+    ok(skillKeys.includes("e.defaultPrevented") && skillKeys.includes(`document.querySelector('[aria-modal="true"]:not([hidden])')`), "the skill details page's ← / → handler must return for e.defaultPrevented and while an [aria-modal=\"true\"]:not([hidden]) pop-up is open (the ☕ tabs use the arrows)");
     const live = page("donateTabs"), livePanels = page("donatePanels"), was = [live.slice(), livePanels.slice()];
     try {
       live.splice(0, live.length, ...tabs); livePanels.splice(0, livePanels.length, ...panels);
