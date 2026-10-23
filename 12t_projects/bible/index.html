@@ -32078,6 +32078,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T07:56:02.916Z","feat(bible): the ☕ pop-up opens by itself once per device, unless another pop-up is already up"],
     ["2026-10-23T07:49:25.837Z","style(bible): ☕ pop-up text grows on large screens (the hub's 1800 × 1100 and 2400 × 1300 steps)"],
     ["2026-10-23T07:21:57.003Z","feat(bible): class guide #71 TTO Monkey ลิงไฟ PVE ไปได้ทุกที่ แม้ที่ที่ไม่มีเธอ by Oty"],
     ["2026-10-23T07:14:55.216Z","fix(bible): ☕ pop-up intro is one line (ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา 12 Tails Bible) and switching tabs no longer moves the pop-up"],
@@ -32698,6 +32699,7 @@ function openDonateModal() {
   donateShowTab(donateTabs, donatePanels, 0);   // QR โอนเงิน on every open (the form keeps what was typed)
   donateModal.hidden = false;
   document.body.style.overflow = "hidden";
+  try { localStorage.setItem(DONATE_AUTO_KEY, "1"); } catch (e) {}   // seen: it never opens by itself again on this device
 }
 
 function closeDonateModal() {
@@ -32724,6 +32726,36 @@ window.addEventListener("keydown", (e) => {
     closeDonateModal();
   }
 });
+
+// ☕ opens by itself once per device (user 2026-10-23): on the first visit, whatever link brought the visitor in, 1.5 s after the page
+// settles. If another pop-up is up then (the class guide builder's server / class gate, a first-visit guide, any dialog), it stays shut this
+// visit and tries the next one. Any open, by hand or by itself, counts as seen; without storage it never opens by itself.
+const DONATE_AUTO_KEY = "12t-bible-donate-seen";
+function donateAutoBlocked() {
+  if (document.querySelector('[aria-modal="true"]:not([hidden]):not(#donateModal), .sg-gate.open, dialog[open]')) return true;
+  const w = innerWidth, h = innerHeight;
+  for (const el of document.elementsFromPoint(w / 2, h / 2)) {   // any other full-screen layer above the page (z-index 100 or more) is someone else's pop-up
+    for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.position !== "fixed" || (parseInt(cs.zIndex, 10) || 0) < 100) continue;
+      const r = n.getBoundingClientRect();
+      if (r.width * r.height >= w * h * 0.5) return true;
+    }
+  }
+  return false;
+}
+function donateAutoOnce() {
+  let seen = true;
+  try { seen = localStorage.getItem(DONATE_AUTO_KEY) === "1"; } catch (e) {}
+  if (seen || !donateModal) return;
+  setTimeout(() => {
+    if (!donateModal.hidden || donateAutoBlocked()) return;
+    let saved = false;
+    try { localStorage.setItem(DONATE_AUTO_KEY, "1"); saved = true; } catch (e) {}
+    if (saved) openDonateModal();
+  }, 1500);
+}
+donateAutoOnce();
 
 const btnCredits = $("#btnCredits");
 const creditsModal = $("#creditsModal");
