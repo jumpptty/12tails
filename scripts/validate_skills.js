@@ -3934,8 +3934,8 @@ async function donateChildTests(env) {
   ok(/^mountMenuThanks\(\$\("#launch"\)\);/m.test(html) && /function mountMenuThanks\(root\)\{[\s\S]*?ขอบคุณผู้ร่วมสนับสนุน[\s\S]*?renderDonorThanks\(ui\);[\s\S]*?donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\);[\s\S]*?make\("ln-thanks", root, root\.firstChild\)[\s\S]*?make\("hub-thanks", hub, note \? note\.nextSibling : null\)[\s\S]*?classList\.toggle\("has-thanks", !uis\[0\]\.box\.hidden\);\r?\n\s*document\.documentElement\.classList\.add\("thanks-ready"\);[\s\S]*?\n\}/.test(html)
     && /if \(!root\)\{ document\.documentElement\.classList\.add\("thanks-ready"\); return null; \}/.test(html)
     && /@media \(min-width:901px\)\{\r?\n\s*\.donate-thanks\.ln-thanks\{display:none\}\r?\n\s*html:not\(\.thanks-ready\) \.hub-note\{visibility:hidden\}[^\n]*\r?\n\s*html\.has-thanks \.donate-thanks\.hub-thanks:not\(\[hidden\]\)\{display:inline-flex; animation:hubThanksTurn 20s linear infinite\}\r?\n\s*html\.has-thanks \.hub-note\{animation:hubNoteTurn 20s linear infinite\}/.test(html)
-    && /@keyframes hubThanksTurn\{0%, 67%\{opacity:1; visibility:visible\} 70%, 97%\{opacity:0; visibility:hidden\} 100%\{opacity:1; visibility:visible\}\}/.test(html)
-    && /@keyframes hubNoteTurn\{0%, 67%\{opacity:0; visibility:hidden\} 70%, 97%\{opacity:1; visibility:visible\} 100%\{opacity:0; visibility:hidden\}\}/.test(html)
+    && /@keyframes hubThanksTurn\{\s*0%, 67%\{opacity:1; visibility:visible; transform:translate\(-50%, -50%\);[^}]*\}\s*70%\{opacity:0; visibility:hidden; transform:translate\(-50%, calc\(-50% - 14px\)\)\}\s*70\.1%, 97%\{opacity:0; visibility:hidden; transform:translate\(-50%, calc\(-50% \+ 14px\)\);[^}]*\}\s*100%\{opacity:1; visibility:visible; transform:translate\(-50%, -50%\)\}\s*\}/.test(html)
+    && /@keyframes hubNoteTurn\{\s*0%, 67\.5%\{opacity:0; visibility:hidden; transform:translate\(-50%, calc\(-50% \+ 14px\)\);[^}]*\}\s*70\.5%, 97%\{opacity:1; visibility:visible; transform:translate\(-50%, -50%\);[^}]*\}\s*99\.9%\{opacity:0; visibility:hidden; transform:translate\(-50%, calc\(-50% - 14px\)\)\}/.test(html)
     && /:has\(\.hub-note:hover, \.hub-note:focus-within, \.hub-thanks:hover, \.hub-thanks:focus-visible\) :is\(\.hub-note, \.hub-thanks\)\{animation-play-state:paused\}/.test(html)
     && /\.donate-thanks\.hub-thanks\{display:none; position:absolute; left:50%; top:50%;/.test(html),
     "the ขอบคุณผู้ร่วมสนับสนุน line (mountMenuThanks after mountLauncher): at the very top taking turns with the Discord note on every desktop page (thanks first, 70 / 30, paused on hover), under the hub bar on phones, opening the list tab");
@@ -5046,6 +5046,14 @@ function fontProblems(html) {
   else if (!/font-size:12\.5px;/.test(note) || /opacity/.test(note) || !/\{ \.hub-note\{font-size:15px\} \}/.test(html) || !/\{ \.hub-note\{font-size:17px\} \}/.test(html)) fail("the Discord note must be 12.5 px (15 / 17 px on big screens), the size of the menu's thanks line, and not dimmed (no opacity)");
   else console.log("Verified the hub bar: no divider, Discord note at the thanks line's size.");
 }
+// The Final box's Test bar (user 2026-10-23): it covers the box's own borders (2 px gold accent left, 1 px right and bottom), so its corners are
+// the box's corners; inside the borders the accent ran down beside it and left a step at the corner
+{
+  const desk = /\.sk-dmg-final\.has-test-bar \.sk-dmg-final-controls\{align-self:stretch; margin:auto -15px -1px -16px;/.test(html), compact = /\.sk-dmg-final\.has-test-bar \.sk-dmg-final-controls\{margin:auto -11px -1px -12px;/.test(html);
+  const radius = /\.sk-dmg-final\.has-test-bar \.sk-dmg-final-controls > \.sk-simulate-btn\{position:relative; border-radius:0 0 3px 3px;/.test(html);
+  if (!desk || !compact || !radius) { console.error("[FINAL BAR ERROR] the Test bar must cover the Final box's borders (margins auto -15px -1px -16px, compact auto -11px -1px -12px) with the box's 3 px corners"); errorCount++; }
+  else console.log("Verified the Final box's Test bar covers the box's borders.");
+}
 // No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
 // prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).
 {
@@ -5102,8 +5110,8 @@ function fontProblems(html) {
     // the sound (user 2026-10-23): chords roll from the thick string to the thin one, THEME_TAB_ROLL apart, and the roll ends on the beat
     // (with the bass on the beat the melody came up to 75 ms late: "off tempo"); one shared voice (themeTabVoice) for the tab and the music
     const roll = kind("THEME_TAB_ROLL") === "number" ? page("THEME_TAB_ROLL") : -1, ahead = kind("THEME_TAB_AHEAD") === "number" ? page("THEME_TAB_AHEAD") : -1;
-    ok(roll > 0.005 && roll <= 0.04 && /lead = \(n - 1\) \* THEME_TAB_ROLL;/.test(html) && /notes\.forEach\(\(x, k\) => strike\(x, at - lead \+ k \* THEME_TAB_ROLL, !!b\.slur, themeTabWeight\(n, k\)\)\)/.test(html),
-      `notes struck together roll from the 6th string to the 1st, THEME_TAB_ROLL apart (5-40 ms; got ${roll}), ending on the beat, each weighted by themeTabWeight`);
+    ok(roll > 0 && roll <= 0.012 && /lead = \(n - 1\) \* THEME_TAB_ROLL \/ 2;/.test(html) && /notes\.forEach\(\(x, k\) => strike\(x, at - lead \+ k \* THEME_TAB_ROLL, !!b\.slur, themeTabWeight\(n, k\)\)\)/.test(html),
+      `notes struck together roll from the 6th string to the 1st, THEME_TAB_ROLL apart, centred on the beat and too short to hear as timing (user 2026-10-23, option 2: at most 12 ms; got ${roll}), each weighted by themeTabWeight`);
     ok(ahead >= 0.3 && ahead <= 1.5 && (html.match(/if \((S|M)\.time < now\) \1\.time = now \+ 0\.1;/g) || []).length === 2 && /voice\.play\(b, S\.time\);/.test(html) && /M\.voice\.play\(b, M\.time\);/.test(html),
       `both players schedule THEME_TAB_AHEAD ahead (0.3-1.5 s; got ${ahead}) through the shared voice and pick up from now after a stall`);
     // chord loudness (user 2026-10-23): first 1/√n a note (chords sounded forceful), then 1/n^¼ with the harp voice (too quiet), the lowest a
@@ -5124,10 +5132,18 @@ function fontProblems(html) {
     if (kind("mountThemeMusic") === "function") {
       const src = String(page("mountThemeMusic"));
       ok(/vol: 30,/.test(src) && page("THEME_MUSIC_KEY") === "12t-bible-music-vol" && !/start\(\);\s*\r?\n\s*paint\(\);\s*\r?\n\s*return M;/.test(src) && /paint\(\);\s*\r?\n\s*return M;/.test(src)
-        && /detail: "music"/.test(src) && /if \(e\.detail !== "music"\)\{ M\.resume = false; stop\(\); \}/.test(src) && /if \(document\.hidden\)\{ if \(M\.on\)\{ stop\(\); M\.resume = true; \} \} else if \(M\.resume\)/.test(src)
+        && /detail: "music"/.test(src) && /if \(e\.detail !== "music"\)\{ M\.resume = false; stop\(\); \}/.test(src)
         && /\.hub-music:hover \.hub-music-pop, \.hub-music:focus-within \.hub-music-pop, \.hub-music\.is-open \.hub-music-pop\{/.test(html) && /^mountThemeMusic\(\$\("#hubMusic"\)\);/m.test(html)
         && /document\.addEventListener\("theme-audio", \(e\) => \{ if \(e\.detail !== "tab"\) pause\(\); \}\);/.test(html) && /detail: "tab" \}\)\);/.test(html),
-        "mountThemeMusic: 30 % by default (12t-bible-music-vol), muted until clicked, a hover / focus / tap slider, never playing with the tab player, paused while the page is hidden");
+        "mountThemeMusic: 30 % by default (12t-bible-music-vol), muted until clicked, a hover / focus / tap slider, never playing with the tab player");
+      // both keep playing when the window is not focused (user 2026-10-23): no pause on a hidden page, and a 2.5 s look-ahead while hidden
+      // (timers fire about once a second there); 90 % of the PDF's 75 is the 100 % (67.5), the sheet data keeps 75
+      ok(!/visibilitychange/.test(src) && !/addEventListener\("visibilitychange", \(\) => \{ if \(document\.hidden\) pause\(\); \}\)/.test(html)
+        && (html.match(/horizon = now \+ themeTabAhead\(\);/g) || []).length === 2 && /const themeTabAhead = \(\) => typeof document !== "undefined" && document\.hidden \? 2\.5 : THEME_TAB_AHEAD;/.test(html),
+        "the tab and the music keep playing on a hidden page (no visibilitychange pause) and schedule 2.5 s ahead while hidden");
+      ok(page("THEME_TAB_BPM") === 67.5 && page("themeTabBpmText")(67.5) === "67.5" && /const sixteenth = \(\) => 60 \/ \(THEME_TAB_BPM \* opt\.speed \/ 100\) \/ 4;/.test(html) && /const six = 60 \/ THEME_TAB_BPM \/ 4,/.test(html)
+        && /saved\.v === 2 \? 1 : 0\.9/.test(html),
+        "the playback tempo at 100 % is 67.5 (90 % of the PDF's 75) for the tab and the music, and a speed saved before is rescaled once");
       const M = page("mountThemeMusic")(makeEl());   // on stubs: mounts muted, nothing scheduled
       ok(M && M.on === false && M.vol === 30 && M.voice === null, "mountThemeMusic mounts muted at 30 % with no sound made");
     } else ok(false, "mountThemeMusic is missing");
@@ -5137,12 +5153,12 @@ function fontProblems(html) {
     ok(tool && tool.category === "Music" && page("LAUNCH_CATEGORY").Music === "ดนตรี" && tool.title === "แท็บกีตาร์เพลงธีม" && same(tool.fact(), [45, "ห้อง"]) && tool.collage === "tabRun" && !tool.art,
       "TOOLS has theme-tab (แท็บกีตาร์เพลงธีม, category Music = ดนตรี, fact 45 ห้อง, menu art LN_ART.tabRun)");
     // the menu art (user 2026-10-23: running guitar tablature): the stage runs two copies (white digits, gold digits clipped to the playhead)
-    // at the song's tempo, 8 bars of 520 units in 19.2 s; the thumb is a still; ids carry the mode
+    // at the playback tempo, 8 bars of 520 units in 21.33 s (67.5 bpm); the thumb is a still; ids carry the mode
     try {
       const art = page("LN_ART"), st = art.tabRun("stage"), th = art.tabRun("thumb");
-      ok((st.match(/class="ln-tabrun-move" style="--run:-4160px;animation-duration:19\.2s"/g) || []).length === 2 && !/ln-tabrun-move/.test(th) && /id="stmask"/.test(st) && /id="ttmask"/.test(th)
+      ok((st.match(/class="ln-tabrun-move" style="--run:-4160px;animation-duration:21\.33s"/g) || []).length === 2 && !/ln-tabrun-move/.test(th) && /id="stmask"/.test(st) && /id="ttmask"/.test(th)
         && /clip-path="url\(#stlens\)"/.test(st) && /@keyframes lnTabRun\{to\{transform:translateX\(var\(--run\)\)\}\}/.test(html),
-        "LN_ART.tabRun: the stage runs two synced copies (white, and gold under the playhead) 4160 units in 19.2 s; the thumb is still; mask / clip ids carry the mode");
+        "LN_ART.tabRun: the stage runs two synced copies (white, and gold under the playhead) 4160 units in 21.33 s; the thumb is still; mask / clip ids carry the mode");
     } catch (e) { ok(false, "LN_ART.tabRun threw: " + e.message); }
     ok(/classList\.toggle\("tool-tab", tool\.id === "theme-tab"\)/.test(html) && /html\.tool-tab \.stage\{/.test(html), "showTool sets html.tool-tab for the tab's wide stage");
     const panel = (html.match(/\n\s*panel: \[([^\]]*)\]/) || [])[1] || "", raised = (html.match(/\n\s*raised: \[([^\]]*)\]/) || [])[1] || "";
@@ -5323,7 +5339,7 @@ if (RUN_DAMAGE_CHECKS) {
     try {
       for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";
       const render = () => { sandbox._selectSkill(sameClass(sk)); sandbox._selectSkill(sk); return strip(sandbox._getRenderedHeroHtml()); };
-      const depList = [...new Map([...render().matchAll(/data-dep-id="([^"]+)"[^>]*?data-dep-max-rank="(\d+)"/g)].map(m => [m[1], +m[2]]))];
+      const depList = [...new Map([...render().matchAll(/data-dep-id="([^"]+)"[^>]*?data-dep-(?:max-rank|toggle-on)="(\d+)"/g)].map(m => [m[1], +m[2]]))];
       for (const [id, max] of [[null, 0], ...depList]) {
         const was = id ? deps[id] : undefined;
         if (id) deps[id] = max;
@@ -5338,15 +5354,40 @@ if (RUN_DAMAGE_CHECKS) {
             if (m && !g) bad.push(`${where}: ${st.toUpperCase()} moves the numbers but does not glow`);
             if (!m && g && !movesAnywhere(st)) bad.push(`${where}: ${st.toUpperCase()} glows but moves nothing`);
           }
+          // LCK in every dep state too (user 2026-10-23: Cat Combo with No Chance reads +0.3 x LCK, and it did not light): fully or softly
+          checkedDepGlow++;
+          if (moves("lck") && !used.has("lck") && !sandbox.getSoftPlayerStatKeys(sk).has("lck")) bad.push(`${sk.id + (id ? " with " + id + " " + max : "")}: LCK moves the numbers but does not glow`);
         } finally { if (id) { if (was === undefined) delete deps[id]; else deps[id] = was; } }
       }
     } catch (e) { bad.push(`${sk.id}: ${e.message}`); }
   }
+  // TTO has no talAdjust / dmgAdjust / defAdjust luck roll, so a dep that reads LCK directly is the only way it can glow there: the same
+  // dep-by-dep LCK measurement on TTO (the No Chance case was BB-soft, TTO-dark)
+  sandbox._setServer("tto");
+  for (const sk of SKILLS) {
+    try {
+      for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";
+      const render = () => { sandbox._selectSkill(sameClass(sk)); sandbox._selectSkill(sk); return strip(sandbox._getRenderedHeroHtml()); };
+      const depList = [...new Map([...render().matchAll(/data-dep-id="([^"]+)"[^>]*?data-dep-(?:max-rank|toggle-on)="(\d+)"/g)].map(m => [m[1], +m[2]]))];
+      for (const [id, max] of [[null, 0], ...depList]) {
+        const was = id ? deps[id] : undefined;
+        if (id) deps[id] = max;
+        try {
+          render();
+          if ((LCK_GLOW_HIDDEN.tto || {})[sk.id]) continue;   // a real roll the shown numbers can't reveal (see the LCK glow check)
+          const keep = inputs.lck.value; inputs.lck.value = "0"; const a = render(); inputs.lck.value = "300"; const b = render(); inputs.lck.value = keep;
+          checkedDepGlow++;
+          if (a !== b && !sandbox.getUsedPlayerStatKeys(sk).has("lck") && !sandbox.getSoftPlayerStatKeys(sk).has("lck")) bad.push(`tto ${sk.id + (id ? " with " + id + " " + max : "")}: LCK moves the numbers but does not glow`);
+        } finally { if (id) { if (was === undefined) delete deps[id]; else deps[id] = was; } }
+      }
+    } catch (e) { bad.push(`tto ${sk.id}: ${e.message}`); }
+  }
+  sandbox._setServer("og");
   for (const k of Object.keys(inputs)) inputs[k].value = savedIn[k];
   bad.slice(0, 40).forEach(m => console.error("[STAT GLOW ERROR] " + m));
   if (bad.length > 40) console.error(`[STAT GLOW ERROR] ... and ${bad.length - 40} more`);
   errorCount += bad.length;
-  console.log(`Verified ${checkedDepGlow} stat glow checks across dep states (every card on BB, each dep at max).`);
+  console.log(`Verified ${checkedDepGlow} stat glow checks across dep states (every card on BB, each dep at max; LCK on TTO too).`);
 }
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {

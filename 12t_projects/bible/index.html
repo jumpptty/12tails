@@ -319,7 +319,17 @@
   }
 
   *{box-sizing:border-box}
-  html{overflow-y:scroll}
+  html{overflow-y:scroll; color-scheme:dark}   /* dark only (user 2026-10-10): the browser draws its own parts dark too, e.g. the phone's overlay page scrollbar (light thumb), which takes no custom colours (user 2026-10-23), native pickers and unstyled inner scrollbars */
+  /* page scrollbar, desktop only (user 2026-10-23): the window's own bar wears the look's tokens instead of Chrome's grey one (track --ink with a --line edge, dark brass thumb, --gold while hovered or dragged), so it follows BB / ToT / TTO; phones keep their overlay bars */
+  @media (hover:hover) and (pointer:fine){
+    html{--page-sb-thumb:color-mix(in srgb, var(--gold) 45%, var(--ink))}
+    html::-webkit-scrollbar{width:12px; height:12px}
+    html::-webkit-scrollbar-track{background:var(--ink); box-shadow:inset 1px 0 0 var(--line)}
+    html::-webkit-scrollbar-thumb{background:var(--page-sb-thumb); border:3px solid transparent; border-radius:6px; background-clip:padding-box}
+    html::-webkit-scrollbar-thumb:hover, html::-webkit-scrollbar-thumb:active{background-color:var(--gold)}
+    html::-webkit-scrollbar-corner{background:var(--ink)}
+    @supports not selector(::-webkit-scrollbar){ html{scrollbar-color:var(--page-sb-thumb) var(--ink)} }   /* Firefox: colours only */
+  }
   body{
     margin:0; color:var(--text);
     background:
@@ -4987,8 +4997,10 @@
   .sk-dmg-hits-tab b{font-family:'JetBrains Mono','Prompt',monospace; font-weight:800; font-size:12px; color:var(--gold); margin-right:3px}
   .sk-range-sep{font-family:'Prompt',sans-serif; font-weight:500; font-size:.55em; color:var(--muted); margin:0 .3em; position:relative; top:-.12em}
   .sk-dmg-final.has-test-bar{padding-bottom:0}
-  .sk-dmg-final.has-test-bar .sk-dmg-final-controls{align-self:stretch; margin:auto -14px 0; padding-top:10px}
-  .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn{position:relative; border-radius:0 0 2px 2px; box-shadow:none; padding:9px 12px; border-top:1px solid rgba(0,0,0,.25)}
+  /* the bar covers the box's own borders (2 px gold accent on the left, 1 px on the right and bottom), so its rounded corners are the box's
+     corners (user 2026-10-23: inside the borders, the accent ran down beside the bar and left a step at the corner) */
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls{align-self:stretch; margin:auto -15px -1px -16px; padding-top:10px}
+  .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn{position:relative; border-radius:0 0 3px 3px; box-shadow:none; padding:9px 12px; border-top:1px solid rgba(0,0,0,.25)}
   .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn:active{transform:none; filter:brightness(.94)}
   /* the first-time glow pulses inside the bar (an opacity layer), since a ring outside it would spill past the chip */
   .sk-dmg-final.has-test-bar .sk-dmg-final-controls > .sk-simulate-btn.is-new{animation:none}
@@ -6433,7 +6445,7 @@
     .sk-dmg-row{gap:8px; margin-top:8px; min-height:118px}
     .sk-dmg{min-height:94px; padding:8px 10px}
     .sk-dmg-final{min-height:118px}
-    .sk-dmg-final.has-test-bar .sk-dmg-final-controls{margin:auto -10px 0; padding-top:8px}
+    .sk-dmg-final.has-test-bar .sk-dmg-final-controls{margin:auto -11px -1px -12px; padding-top:8px}
     .sk-controls{padding:6px 10px; gap:8px; margin-bottom:6px}
     .sk-controls input[type=number]{font-size:12px; padding:3px 4px}
     .sk-revisedart img{width:36px; height:36px}
@@ -7245,7 +7257,7 @@
   .ln img, .ln a{-webkit-user-drag:none}
   .ln-glow{position:absolute; inset:0; z-index:0; pointer-events:none; background:radial-gradient(45% 60% at 66% 50%, color-mix(in srgb, var(--acc) 22%, transparent), transparent 70%)}
   .ln-stage{cursor:pointer; position:relative; z-index:1; flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,42fr) minmax(0,58fr); align-items:center; gap:2vw; padding:0 5vw; touch-action:pan-y}
-  .ln-segs, .ln-nav, .ln-tools-h{display:none}
+  .ln-segs, .ln-tools-h{display:none}
   /* wide screens (21:9 and up, user 2026-10-18 on 3440 px): the stage, the filmstrip and the glow keep a 2.1 : 1 frame in the middle,
      so the text stays near the art instead of hugging the left edge; 16:9 and 16:10 windows are narrower than the frame and do not change */
   @media (min-width:901px){ .ln-stage, .ln-stripbar{width:100%; max-width:var(--ln-max); margin-inline:auto} .ln-glow{width:min(100%, var(--ln-max)); margin-inline:auto} }
@@ -7320,7 +7332,7 @@
   @keyframes lnHgPileP{0%, 78%{opacity:0} 90%, 100%{opacity:1}}
   @keyframes lnHgStream{0%, 2%{opacity:0} 6%, 71%{opacity:1} 75%, 100%{opacity:0}}
   /* แท็บกีตาร์เพลงธีม (user 2026-10-23): the tab runs right to left at the song's tempo; the distance and duration are set inline by LN_ART.tabRun */
-  .ln-tabrun .ln-tabrun-move{animation:lnTabRun 19.2s linear infinite}
+  .ln-tabrun .ln-tabrun-move{animation:lnTabRun 21.33s linear infinite}
   @keyframes lnTabRun{to{transform:translateX(var(--run))}}
   @media (max-width:900px){ .ln-svgart, .ln-rain{height:100%} }
   /* ค่าสถานะมอนสเตอร์ (LN_ART.monsterOrbit): hovering the art (or .is-hot, phones) bursts the chips onto a ring that circles slowly
@@ -7446,7 +7458,7 @@
   /* filmstrip */
   /* ขอบคุณผู้ร่วมสนับสนุน (user 2026-10-23): the ☕ pop-up's names ticker (.donate-thanks) behind a gold label. Desktop (≥ 901 px): .hub-thanks at the
      very top, in the hub bar's middle, taking turns with the Discord note on every page: a 20 s cycle, the thanks 70 % (from the start) and the
-     note 30 %, 0.6 s cross-fades, the hidden one not clickable (visibility), both paused while either is hovered or focused; phones: .ln-thanks
+     note 30 %, rising swaps (below), the hidden one not clickable (visibility), both paused while either is hovered or focused; phones: .ln-thanks
      on the menu between the hub bar and the stage card. Two-class selectors so a running ticker's display:flex never shows the copy that should
      be hidden. Without donors (no html.has-thanks) the note stays still. */
   .ln-thanks-label{flex:none; margin-right:8px; color:var(--gold); font-weight:500}   /* gold (user 2026-10-23) */
@@ -7459,8 +7471,20 @@
     html.has-thanks .hub-note{animation:hubNoteTurn 20s linear infinite}
     html.has-thanks .hub-bar:has(.hub-note:hover, .hub-note:focus-within, .hub-thanks:hover, .hub-thanks:focus-visible) :is(.hub-note, .hub-thanks){animation-play-state:paused}
   }
-  @keyframes hubThanksTurn{0%, 67%{opacity:1; visibility:visible} 70%, 97%{opacity:0; visibility:hidden} 100%{opacity:1; visibility:visible}}
-  @keyframes hubNoteTurn{0%, 67%{opacity:0; visibility:hidden} 70%, 97%{opacity:1; visibility:visible} 100%{opacity:0; visibility:hidden}}
+  /* the swap rises (user 2026-10-23, option 2 "ลอยขึ้น" of five mocks: fade, rise, blur, gold wipe, flip board): the old line lifts 14 px and fades
+     while the new one rises 14 px into place a beat later; each move is 3 % of the cycle (0.6 s). The centring translate is part of every frame. */
+  @keyframes hubThanksTurn{
+    0%, 67%{opacity:1; visibility:visible; transform:translate(-50%, -50%); animation-timing-function:cubic-bezier(.4,0,.2,1)}
+    70%{opacity:0; visibility:hidden; transform:translate(-50%, calc(-50% - 14px))}
+    70.1%, 97%{opacity:0; visibility:hidden; transform:translate(-50%, calc(-50% + 14px)); animation-timing-function:cubic-bezier(.2,.7,.2,1)}
+    100%{opacity:1; visibility:visible; transform:translate(-50%, -50%)}
+  }
+  @keyframes hubNoteTurn{
+    0%, 67.5%{opacity:0; visibility:hidden; transform:translate(-50%, calc(-50% + 14px)); animation-timing-function:cubic-bezier(.2,.7,.2,1)}
+    70.5%, 97%{opacity:1; visibility:visible; transform:translate(-50%, -50%); animation-timing-function:cubic-bezier(.4,0,.2,1)}
+    99.9%{opacity:0; visibility:hidden; transform:translate(-50%, calc(-50% - 14px))}
+    100%{opacity:0; visibility:hidden; transform:translate(-50%, calc(-50% + 14px))}
+  }
   @media (min-width:1800px) and (min-height:1100px){ .donate-thanks.hub-thanks{font-size:15px} }
   @media (min-width:2400px) and (min-height:1300px){ .donate-thanks.hub-thanks{font-size:17px} }
   .ln-stripbar{position:relative; z-index:4; flex:none; display:flex; align-items:flex-end; justify-content:flex-end; gap:18px; min-width:0; padding:0 28px 26px}
@@ -7530,9 +7554,6 @@
     .ln-seg{flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.18); overflow:hidden; position:relative}
     .ln-seg i{position:absolute; inset:0; background:var(--text); transform:scaleX(0); transform-origin:0 50%}
     .ln-seg.is-done i{transform:none}
-    .ln-nav{display:grid; place-items:center; position:absolute; z-index:3; top:30%; width:36px; height:36px; padding:0; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(10,7,5,.55); color:var(--text); font-size:18px; cursor:pointer}
-    .ln-nav.prev{left:10px}
-    .ln-nav.next{right:10px}
     .ln-art{position:absolute; left:0; right:0; top:26px; height:56%; padding:0 40px}
     .ln-pt{height:100%; max-width:100%}
     .ln-floor{bottom:0; height:40px}
@@ -7578,8 +7599,6 @@
     .ln-stage{height:calc(100dvh - var(--hub-h, 64px) - 12px)}
     .ln-art{left:46%; top:24px; bottom:0; height:auto; padding:0}
     .ln-copy{top:0; right:54%; display:flex; flex-direction:column; justify-content:flex-end; padding:30px 18px 16px; background:none}
-    .ln-nav{top:auto; bottom:18px}
-    .ln-nav.prev{left:auto; right:56px}
     .ln-strip{grid-template-columns:repeat(3, minmax(0,1fr))}
   }
   /* ===== Special Pet Info (tool "pet-info", user 2026-10-18: layout A "Codex" of 4 mocks). Roster left, the chosen pet right.
@@ -8645,7 +8664,7 @@ function getSummonFeedPlayerStatKeys(skill) {
   const isBarrelBot = !!(skill.ownStats || skill.ownStatsDmgOnly || skill.id === "mole_barrelBot");
   const isGyro = !!(skill.ownStatsGyro || skill.id === "mole_autoGyroGun");
   const isPhoenix = !!(skill.ownStatsPhoenix || skill.id === "monkey_phoenix");
-  const isGadina = !!(skill.ownStatsGadina || skill.ownStatsGadinaHP);
+  const isGadina = !!(skill.ownStatsGadina || skill.ownStatsGadinaHP || skill.id === "monkey_gadina");
   if (!isBarrelBot && !isGyro && !isPhoenix && !isGadina) return fed;
   const used = summonCardShowsAllStats(skill) ? new Set(["mhp", "atk", "def", "agi", "vit", "mag", "cha", "tal", "lck"]) : getUsedOwnStatKeys(skill);   // a summon card shows all its stats as used
   const depOn = (dep) => !!dep && getDepRank(dep) === dep.maxRank;
@@ -8764,7 +8783,9 @@ function getUsedPlayerStatKeys(skill) {
     // genuinely DOES read the player's own ATK too, via Titan Sword's
     // dynamic per-hit bonus (see renderOneDmgFormula's ownStatsGadina
     // branch) -- ATK must keep glowing here, only AGI is wrong.
-    else if (skill.cdWrapped && (!skill.ownStatsGadina || skill.cdPlayerStats)) used.add("agi");
+    // a replace dep that sets the cooldown to 0 leaves agiAdjust nothing to change (Bat Shadow Mastery on the curses; Lady Luck's 30 and
+    // Demon Gaze's 20 still go through AGI)
+    else if (skill.cdWrapped && (!skill.ownStatsGadina || skill.cdPlayerStats) && !(skill.cdDep && skill.cdDep.kind === "replace" && skill.cdDep.replaceValue === 0 && getDepRank(skill.cdDep) === skill.cdDep.maxRank)) used.add("agi");
   }
   if (skill.secondaryCooldown && skill.secondaryCooldown.cdWrapped && !skill.ownStatsGadina) used.add("agi");   // e.g. Book Bash's mission lock (user 2026-10-21: it never glowed)
   if (skill.castTime !== undefined && skill.castWrapped) used.add("int");
@@ -8792,7 +8813,9 @@ function getUsedPlayerStatKeys(skill) {
     if (hasCha) used.add("cha");
   }
   if (dmgTexts.some(t => /Monkey talAdjust\(/.test(t))) used.add("tal");   // Phoenix with Intense Fire adds the Monkey's own talAdjust
-  if (skill.comboModel && getDepRank(CAT_COMBO_HIDDEN_DEP) > 0) used.add("tal");   // Hidden Blade replaces Cat Combo's raw hit with talAdjust(10 x rank) (rollOneHit)
+  if (skill.comboModel && getDepRank(CAT_COMBO_HIDDEN_DEP) > 0) used.add("tal");
+  if ((skill.dmgFocusIntellect || skill.shieldFocusIntellect) && getDepRank(PENGUIN_FOCUS_INTELLECT_DEP) === PENGUIN_FOCUS_INTELLECT_DEP.maxRank) used.add("int");   // Focus Intellect: x 0.01 x INT (rollOneHit)   // Hidden Blade replaces Cat Combo's raw hit with talAdjust(10 x rank) (rollOneHit)
+  if (skill.comboModel && getDepRank(CAT_COMBO_HIDDEN_DEP) === 0 && getDepRank(CAT_COMBO_NO_CHANCE_DEP) === CAT_COMBO_NO_CHANCE_DEP.maxRank) used.add("lck");   // No Chance: a fixed +0.3 x LCK on every Combo hit (rollOneHit), a direct read on every server (user 2026-10-23: on TTO, which has no luck roll, LCK did not light)
   // a damage input on auto reads what its auto value reads (Bubble Burst: a full Bubble Shield, talAdjust(80))
   (skill.dmgInputs || []).forEach(inp => { if (inp.autoStats && DMG_INPUT_VALS[inp.key] == null) inp.autoStats.forEach(k => used.add(k)); });
   if ([skill.lckProc, skill.secondaryLckProc, skill.tertiaryLckProc, skill.quaternaryLckProc].some(lckProcLive) || skill.lckOdds || skill.lckDiffCoeff !== undefined) used.add("lck");
@@ -8841,6 +8864,9 @@ function getSoftPlayerStatKeys(skill) {
   const depOn = (dep) => !!dep && getDepRank(dep) === dep.maxRank;
   // a summon rolls its own LCK, unless the player's LCK feeds it (Gadina's Earth Soul, Phoenix's Fire Soul)
   const fed = !!((skill.ownStatsGadina || skill.ownStatsGadinaHP) && depOn(MONKEY_EARTHSOUL_DEP)) || !!((skill.ownStatsPhoenix || skill.id === "monkey_phoenix") && depOn(MONKEY_FIRESOUL_DEP));
+  // Phoenix with Intense Fire adds the Monkey's own talAdjust, which rolls the player's LCK (off TTO); found by the dep-state check (2026-10-23)
+  let live = null; try { live = typeof liveStatReadsGlobal === "function" ? liveStatReadsGlobal(skill) : null; } catch (e) { live = null; }
+  const monkeyTal = !tto && !!live && live.texts.some(t => /Monkey talAdjust\(/.test(String(t)));
   const dmgRoll = !tto && (!skillSummonAttacker(skill) || fed)
     && liveRollDmgGroups(skill).some(g => (!skill.dmgAdjustSkip && !skill.isHeal) || /talAdjust\(/.test(String(g.dmg)));   // dmgAdjust's roll (never on a heal), or talAdjust's
   const roll = (used.has("agi") && (skill.cd !== undefined || !!skill.secondaryCooldown))   // agiAdjust
@@ -8848,7 +8874,9 @@ function getSoftPlayerStatKeys(skill) {
     || (used.has("int") && !!skill.castWrapped)   // magAdjust
     || (skill.duration !== undefined && !!skill.durWrapped && !skill.durContested && (skill.durAdjust !== "tal" || !tto))   // chaAdjust (talAdjust off TTO)
     || (!!skill.secondaryDuration && !!skill.secondaryDuration.durWrapped && !skill.secondaryDuration.durContested)
-    || dmgRoll;
+    || dmgRoll
+    || monkeyTal
+    || (!!skill.effectLckRoll && skillEffectDamageOn(skill));   // Dark Edge: Effect Damage adds its own Random(0, ceil(0.2 LCK)), on every server (Wolf.cs:15267)
   if (roll) soft.add("lck");
   return soft;
 }
@@ -29596,7 +29624,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyImage" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><span>เซิร์ฟเวอร์</span><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><span>อาชีพ</span><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><span>วันที่</span><button type="button" class="cg-sort" data-cg-role="sortDate"></button></div><label class="cg-search-wrap"><span>ชื่อไกด์</span><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหา" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery-wrap"><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><button type="button" class="cg-gallery-edge is-prev" data-cg-role="galleryPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)" hidden>‹</button><button type="button" class="cg-gallery-edge is-next" data-cg-role="galleryNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)" hidden>›</button></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><button type="button" class="cg-sort" data-cg-role="sortDate" title="เรียงตามวันที่"></button></div><label class="cg-search-wrap"><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหาชื่อไกด์" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery-wrap"><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><button type="button" class="cg-gallery-edge is-prev" data-cg-role="galleryPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)" hidden>‹</button><button type="button" class="cg-gallery-edge is-next" data-cg-role="galleryNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)" hidden>›</button></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}<div class="cg-editor-rating" data-cg-role="rating"><span>ความครบถ้วนของเนื้อหา</span><span class="cg-rating" data-cg-role="ratingStars" role="img"></span></div></nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
@@ -32019,12 +32047,19 @@ const THEME_TAB = {
   ]
 };
 const THEME_TAB_OPEN = [64, 59, 55, 50, 45, 40];   // MIDI notes of strings 1-6 in standard tuning
-const THEME_TAB_ROLL = 0.025;   // seconds between the notes of a beat, thickest string first (user 2026-10-23: a slight roll, not a strum; 14 ms, then "more gaps")
+const THEME_TAB_ROLL = 0.008;   // seconds between the notes of a beat, thickest string first, centred on the beat (user 2026-10-23: 14 ms, then 25 ms "more gaps", which bent the rhythm, so option 2: a roll too short to hear as timing; a 4-note chord spans −12 … +12 ms)
 // how loud each note of a beat plays (user 2026-10-23): chords first sounded forceful, so an n-note beat played at 1/√n a note; with the harp
 // voice that was too quiet ("multiple notes can play at higher volume"), so 1/n^¼ (a 4-note chord at 71 % a note); the lowest note (k = 0)
 // a little above the rest so the bass carries
 const themeTabWeight = (n, k) => n > 1 ? (k === 0 ? 1.15 : 1) / Math.pow(n, 0.25) : 1;
 const THEME_TAB_AHEAD = 0.6;   // seconds of music scheduled ahead (user 2026-10-23: it sounded off tempo; 150 ms was too little on a busy page)
+// while the page is hidden (another tab, a minimised window) timers fire about once a second, so the players schedule further ahead there
+// (user 2026-10-23: the song keeps playing when the window is not focused)
+const themeTabAhead = () => typeof document !== "undefined" && document.hidden ? 2.5 : THEME_TAB_AHEAD;
+// the playback tempo at 100 % (user 2026-10-23: the PDF's ♩ = 75 played 10 % slower "sounds really nice", so 90 % became the 100 %); the
+// sheet data keeps the PDF's 75. The tab, the hub bar's music and the menu art all run at it.
+const THEME_TAB_BPM = THEME_TAB.tempo * 0.9;
+const themeTabBpmText = (v) => String(Math.round(v * 2) / 2);   // to the half beat: 67.5
 // the volume slider's 0-100 to a gain: squared, so the slider moves evenly to the ear
 const themeTabVolume = (v) => Math.pow(Math.max(0, Math.min(100, v)) / 100, 2) * 1.5;
 const themeTabMidi = (s, f, capo = THEME_TAB.capo) => THEME_TAB_OPEN[s - 1] + capo + f;
@@ -32108,9 +32143,9 @@ function themeTabAudio(){
   return ctx;
 }
 // one player's sound: the harp voice's chain at its own volume (0-100), and the playing rules. Each string sounds one note at a time; a chord
-// change damps the strings the new chord does not play; notes struck together roll from the thick string to the thin one and the roll ends
-// on the beat, so the thinnest (the melody) is on time (user 2026-10-23: with the bass on the beat the melody came up to 75 ms late and the
-// song sounded off tempo); each at themeTabWeight; a hammer-on / pull-off plays softer and skips the pluck.
+// change damps the strings the new chord does not play; notes struck together roll from the thick string to the thin one, centred on the
+// beat (user 2026-10-23: a 25 ms roll with the bass on the beat made the melody late, ending it on the beat made the bass early; both bent
+// the rhythm, so now a roll too short to hear as timing); each at themeTabWeight; a hammer-on / pull-off plays softer and skips the pluck.
 // play(beat, at), click(at, level 0-2), volume(0-100), silence(); last = the beat played before (for the chord change).
 function themeTabVoice(volume){
   const ctx = themeTabAudio(); if (!ctx) return null;
@@ -32137,7 +32172,7 @@ function themeTabVoice(volume){
     strings[n.s] = track(src, g);
   };
   V.play = (b, at) => {
-    const notes = [...b.notes].sort((p, q) => q.s - p.s), n = notes.length, lead = (n - 1) * THEME_TAB_ROLL;
+    const notes = [...b.notes].sort((p, q) => q.s - p.s), n = notes.length, lead = (n - 1) * THEME_TAB_ROLL / 2;   // centred: half the roll before the beat, half after
     if (V.last && V.last.chord !== b.chord){ const keep = new Set(notes.map((x) => x.s)); Object.keys(strings).forEach((s) => { if (!keep.has(+s)){ release(strings[s], at - lead, 0.05); delete strings[s]; } }); }
     notes.forEach((x, k) => strike(x, at - lead + k * THEME_TAB_ROLL, !!b.slur, themeTabWeight(n, k)));
     V.last = b;
@@ -32163,7 +32198,7 @@ function mountThemeMusic(wrap){
   const btn = wrap.querySelector(".hub-music-btn"), range = wrap.querySelector(".hub-music-range"), pct = wrap.querySelector(".hub-music-pct"), song = themeTabParse(THEME_TAB);
   const M = { on: false, vol: 30, voice: null, timer: 0, idx: 0, time: 0, queue: [], resume: false, openT: 0 };
   try { const v = localStorage.getItem(THEME_MUSIC_KEY); if (v !== null && +v > 0 && +v <= 100) M.vol = Math.round(+v / 5) * 5; } catch (e) {}
-  const six = 60 / THEME_TAB.tempo / 4, rest = 12 - song.bars[song.bars.length - 1].len;
+  const six = 60 / THEME_TAB_BPM / 4, rest = 12 - song.bars[song.bars.length - 1].len;
   const icon = (on) => '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/>' +
     (on ? '<path class="hub-music-w" d="M16.5 8.5a5 5 0 0 1 0 7"/><path class="hub-music-w" d="M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9.5l5 5M22 9.5l-5 5"/>') + '</svg>';
   const paint = () => {
@@ -32172,7 +32207,7 @@ function mountThemeMusic(wrap){
   };
   // the song loops: after the last bar's held chord, the rest of its 6/8 bar, then bar 1 again
   const pump = () => {
-    const now = M.voice.ctx.currentTime, horizon = now + THEME_TAB_AHEAD;
+    const now = M.voice.ctx.currentTime, horizon = now + themeTabAhead();
     if (M.time < now) M.time = now + 0.1;   // a stalled page picks up from now
     while (M.queue.length && M.queue[0].at < now - 1) M.queue.shift();
     while (M.on && M.time < horizon){
@@ -32209,7 +32244,6 @@ function mountThemeMusic(wrap){
   });
   document.addEventListener("pointerdown", (e) => { if (!wrap.contains(e.target)) wrap.classList.remove("is-open"); });
   document.addEventListener("theme-audio", (e) => { if (e.detail !== "music"){ M.resume = false; stop(); } });
-  document.addEventListener("visibilitychange", () => { if (document.hidden){ if (M.on){ stop(); M.resume = true; } } else if (M.resume){ M.resume = false; start(); } });
   paint();
   return M;
 }
@@ -32235,7 +32269,9 @@ function mountThemeTab(root){
   const song = themeTabParse(THEME_TAB), G = THEME_TAB_G, KEY = "12t-bible-tab";
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
-  const opt = { speed: Math.min(150, Math.max(25, Math.round((+saved.speed || 100) / 5) * 5)), vol: Number.isFinite(+saved.vol) ? Math.min(100, Math.max(0, Math.round(+saved.vol / 5) * 5)) : 80,
+  // a speed saved before 90 % became the 100 % (no v: 2) is rescaled once, so it plays as it did (90 % -> 100 %)
+  const speed0 = (+saved.speed || 100) / (saved.v === 2 ? 1 : 0.9);
+  const opt = { v: 2, speed: Math.min(150, Math.max(25, Math.round(speed0 / 5) * 5)), vol: Number.isFinite(+saved.vol) ? Math.min(100, Math.max(0, Math.round(+saved.vol / 5) * 5)) : 80,
     loop: !!saved.loop, metro: !!saved.metro, count: !!saved.count };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(opt)); } catch (e) {} };
   const ico = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -32245,7 +32281,7 @@ function mountThemeTab(root){
   const chordList = Object.keys(THEME_TAB.shapes);
   root.innerHTML = '<div class="tt">' +
     '<header class="tt-head"><div><h2 class="tt-title">' + THEME_TAB.title + '</h2><p class="tt-sub">' + THEME_TAB.by + ' · เรียบเรียงโดย ' + THEME_TAB.arranger + '</p></div>' +
-      '<div class="tt-chips"><span class="tt-chip">Capo <b>' + THEME_TAB.capo + '</b></span><span class="tt-chip">♩ = <b>' + THEME_TAB.tempo + '</b></span><span class="tt-chip"><b>6/8</b></span><span class="tt-chip">จูนมาตรฐาน</span></div></header>' +
+      '<div class="tt-chips"><span class="tt-chip">Capo <b>' + THEME_TAB.capo + '</b></span><span class="tt-chip">♩ = <b>' + themeTabBpmText(THEME_TAB_BPM) + '</b></span><span class="tt-chip"><b>6/8</b></span><span class="tt-chip">จูนมาตรฐาน</span></div></header>' +
     '<div class="tt-bar" role="toolbar" aria-label="เล่นแท็บ">' +
       '<button type="button" class="tt-btn" data-act="home" aria-label="กลับไปต้นเพลง" title="กลับไปต้นเพลง">' + ICO.home + '</button>' +
       '<button type="button" class="tt-btn tt-play" data-act="play" aria-label="เล่น" title="เล่น / หยุด (Space)">' + ICO.play + '</button>' +
@@ -32265,7 +32301,7 @@ function mountThemeTab(root){
   const $r = (sel) => root.querySelector(sel), sheet = $r('[data-role="sheet"]'), fretBox = $r(".tt-fret"), btn = (a) => $r('[data-act="' + a + '"]');
   const speedIn = $r('[data-role="speed"]'), volIn = $r('[data-role="vol"]'), chordEls = [...root.querySelectorAll(".tt-chord")];
   const S = { playing: false, pos: 0, shown: -1, shownBar: -1, idx: 0, time: 0, timer: 0, raf: 0, queue: [], ending: false, endAt: 0, sel: null, row: -1 };
-  const sixteenth = () => 60 / (THEME_TAB.tempo * opt.speed / 100) / 4;
+  const sixteenth = () => 60 / (THEME_TAB_BPM * opt.speed / 100) / 4;
   const clock = (sec) => Math.floor(sec / 60) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
 
   // ---- fretboard (Guitar Pro's bottom panel): frets at real spacing (0-12, 0-9 on narrow screens), the capo, the notes sounding now;
@@ -32394,7 +32430,7 @@ function mountThemeTab(root){
   // schedule what falls in the next THEME_TAB_AHEAD seconds, so a busy page never makes the guitar stumble; a page that stalled longer (a
   // background tab) picks up from now instead of firing the missed notes all at once
   const pump = () => {
-    const now = voice.ctx.currentTime, horizon = now + THEME_TAB_AHEAD;
+    const now = voice.ctx.currentTime, horizon = now + themeTabAhead();
     if (S.time < now) S.time = now + 0.1;
     while (S.playing && !S.ending && S.time < horizon){
       const b = song.beats[S.idx], d = sixteenth();
@@ -32420,7 +32456,7 @@ function mountThemeTab(root){
     const p = btn("play"); p.innerHTML = S.playing ? ICO.pause : ICO.play; p.setAttribute("aria-label", S.playing ? "หยุด" : "เล่น");
     ["loop", "metro", "count"].forEach((a) => { btn(a).classList.toggle("is-on", opt[a]); btn(a).setAttribute("aria-pressed", String(opt[a])); });
     volIn.value = opt.vol; $r('[data-role="volpct"]').textContent = opt.vol + "%";
-    speedIn.value = opt.speed; $r('[data-role="pct"]').textContent = opt.speed + "%"; $r('[data-role="bpm"]').textContent = "♩ " + Math.round(THEME_TAB.tempo * opt.speed / 100);
+    speedIn.value = opt.speed; $r('[data-role="pct"]').textContent = opt.speed + "%"; $r('[data-role="bpm"]').textContent = "♩ " + themeTabBpmText(THEME_TAB_BPM * opt.speed / 100);
     $r('[data-role="total"]').textContent = clock(song.total * sixteenth());
     if (S.shown >= 0) $r('[data-role="time"]').textContent = clock(song.beats[S.shown].t * sixteenth());
   };
@@ -32489,7 +32525,6 @@ function mountThemeTab(root){
   });
   window.addEventListener("hashchange", () => setTimeout(() => { if (S.playing && !visible()) pause(); }, 0));   // leaving the tool stops the music
   document.addEventListener("theme-audio", (e) => { if (e.detail !== "tab") pause(); });   // the hub bar's music started
-  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
 
   // desktop: the sheet takes the window's height between the transport and the fretboard and scrolls itself; phones scroll the page
   const fit = () => {
@@ -32617,7 +32652,7 @@ const LN_ART = {
       });
       return s;
     }).join("")).join("");
-    const move = (inner) => stage ? `<g class="ln-tabrun-move" style="--run:-${L}px;animation-duration:${(BARS * 2.4).toFixed(1)}s">${inner}</g>` : inner;
+    const move = (inner) => stage ? `<g class="ln-tabrun-move" style="--run:-${L}px;animation-duration:${(BARS * 180 / THEME_TAB_BPM).toFixed(2)}s">${inner}</g>` : inner;   // a 6/8 bar = 3 beats at THEME_TAB_BPM
     return lnSvg(mode, `<defs>
       <linearGradient id="${p}tfade"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".14" stop-color="#fff"/><stop offset=".86" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
       <mask id="${p}tmask"><rect x="0" y="0" width="980" height="880" fill="url(#${p}tfade)"/></mask>
@@ -32697,7 +32732,7 @@ function mountLauncher(root){
       TOOLS.splice(0, TOOLS.length, ...TOOLS.map(t => isMain(t) ? t : queue.shift())); } } catch (_) {}
   root.innerHTML = '<div class="ln-glow" aria-hidden="true"></div>' +
     '<div class="ln-stage"><div class="ln-segs" aria-hidden="true">' + TOOLS.map(() => '<span class="ln-seg"><i></i></span>').join("") + '</div>' +
-    '<button type="button" class="ln-nav prev" aria-label="ก่อนหน้า">‹</button><button type="button" class="ln-nav next" aria-label="ถัดไป">›</button>' +
+    
     '<section class="ln-copy"></section><div class="ln-art"></div></div>' +
     '<div class="ln-stripbar"><p class="ln-count" aria-hidden="true"></p><h2 class="ln-tools-h">เครื่องมือทั้งหมด</h2><button type="button" class="ln-sarrow prev" aria-label="เลื่อนรายการเครื่องมือไปทางซ้าย" hidden>‹</button><nav class="ln-strip" aria-label="เครื่องมือทั้งหมด">' +
     TOOLS.map((t, i) => { const a = thumbOf(t), main = isMain(t);   // the two main tools get banners (filled once the frames are known)
@@ -32868,7 +32903,6 @@ function mountLauncher(root){
   };
   root.addEventListener("click", e => {
     const th = e.target.closest(".ln-th"); if (th && !phone() && +th.dataset.i !== cur) { e.preventDefault(); show(+th.dataset.i); }   // desktop: first click shows it, a click on the shown thumb opens it
-    if (e.target.closest(".ln-nav.prev")) show(cur - 1); else if (e.target.closest(".ln-nav.next")) show(cur + 1);
   });
   // only the visible progress bar (filmstrip on desktop, story bars on phones) advances the stage
   root.addEventListener("animationend", e => { if (e.animationName === "lnBar" && e.target.offsetParent && e.target.closest(".ln-th, .ln-seg").classList.contains("is-on")) show(cur + 1); });
@@ -33005,6 +33039,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T13:31:31.235Z","fix(bible): stat glows follow every dep toggle (No Chance LCK on TTO and five more); the guitar tab plays at 67.5 and keeps playing in the background; the top-bar swap rises; Test bar corner, gallery filter labels and phone menu arrows tidied"],
     ["2026-10-23T12:46:32.314Z","style(bible): no line under the top bar on any page; the Discord note is larger, undimmed and takes turns with the donor thanks (70/30, thanks first) on every page"],
     ["2026-10-23T12:14:47.048Z","feat(bible): แท็บกีตาร์เพลงธีม, a Guitar Pro style player for the 12 Tails main theme (jumpfingerstyle's tab note for note), a theme music button by the logo, and the donors thanked at the top of the menu"],
     ["2026-10-23T09:13:00.767Z","feat(bible): the ☕ pop-up honours donors: their names scroll under the thank-you line (biggest total first), the list tab shows the count and lists them newest first in pages"],
