@@ -21,17 +21,17 @@
     // flat panels and modals that never change fill on hover
     panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-tabs", ".donate-form-box", ".donate-list-box"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-tabs", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
+    raised: [".tt-btn:not(.is-on):not(.tt-play)", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
-    popup: [".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
+    popup: [".hub-music-pop", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
     field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
@@ -1188,6 +1188,27 @@
   .crumb-short{display:none}
   .crumb-full{display:inline}
   .hub-right{display:flex; align-items:center; gap:14px}
+  /* the music button (user 2026-10-23): by the logo, a speaker (crossed when muted; waves that breathe while it plays); hovering or focusing it
+     slides out a volume slider, a tap on a touch screen opens it for 4 s (.is-open). Hover = colour only, no glow. */
+  .hub-music{position:relative; display:flex; align-items:center; margin-right:auto}
+  html.tool-guide-reader .hub-music{margin-right:0}   /* the guide's back pill comes after it and takes the free space */
+  .hub-music-btn{flex:none; display:grid; place-items:center; width:30px; height:30px; padding:0; border:1px solid transparent; border-radius:50%; background:none; color:var(--muted);
+    cursor:pointer; transition:color .15s ease, border-color .15s ease}
+  .hub-music-btn svg{width:18px; height:18px}
+  .hub-music-btn:hover, .hub-music.is-on .hub-music-btn{color:var(--gold)}
+  .hub-music-btn:hover{border-color:var(--line)}
+  .hub-music-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .hub-music-w{animation:hubMusicW 1.6s ease-in-out infinite}
+  .hub-music-w + .hub-music-w{animation-delay:.3s}
+  @keyframes hubMusicW{50%{opacity:.3}}
+  .hub-music-pop{display:flex; align-items:center; gap:8px; width:0; overflow:hidden; opacity:0; pointer-events:none; transition:width .2s ease, opacity .2s ease, margin-left .2s ease}
+  .hub-music:hover .hub-music-pop, .hub-music:focus-within .hub-music-pop, .hub-music.is-open .hub-music-pop{width:150px; margin-left:6px; opacity:1; pointer-events:auto}
+  .hub-music-range{flex:none; width:100px; margin:0; accent-color:var(--gold)}
+  .hub-music-pct{min-width:2.8em; font-family:'JetBrains Mono','Prompt',monospace; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap}
+  @media (max-width:720px){   /* a narrow hub bar has no room beside the button: the slider drops below it */
+    .hub-music-pop{position:absolute; top:calc(100% + 8px); left:-6px; z-index:60; width:auto; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; visibility:hidden}
+    .hub-music:hover .hub-music-pop, .hub-music:focus-within .hub-music-pop, .hub-music.is-open .hub-music-pop{width:auto; margin-left:0; visibility:visible}
+  }
   .hub-btn-donate{
     display:inline-flex; align-items:center; justify-content:center;
     padding:4px; margin:0; background:none; border:none; box-shadow:none;
@@ -1548,7 +1569,7 @@
   .donate-btn svg{width:16px; height:16px; flex:none}
   /* the donors' names under the thank-you line (user 2026-10-23: honour them on every open, not only on their tab; option E of five mocks):
      ♥ and the names, biggest total first, on one line. When they do not fit, donateThanksFit adds a second copy and the line loops slowly
-     (a ticker, paused under the mouse or keyboard focus, standing still under reduced motion); .is-measuring lays it out at full width to measure it.
+     (a ticker, paused under the mouse or keyboard focus); .is-measuring lays it out at full width to measure it.
      A click opens รายชื่อผู้สนับสนุน, whose tab shows the donor count. */
   .donate-thanks{display:inline-flex; align-items:center; max-width:100%; margin:-6px 0 0; padding:2px 6px; border:0; border-radius:4px; background:none;
     color:var(--text); font:inherit; font-size:14px; line-height:1.4; cursor:pointer}
@@ -1568,7 +1589,6 @@
   .donate-thanks.is-running .donate-thanks-track{animation:donateTicker var(--donate-dur, 20s) linear infinite}
   .donate-thanks:hover .donate-thanks-track, .donate-thanks:focus-visible .donate-thanks-track{animation-play-state:paused}
   @keyframes donateTicker{to{transform:translateX(calc(-1 * var(--donate-shift, 0px)))}}
-  @media (prefers-reduced-motion: reduce){ .donate-thanks.is-running .donate-thanks-track{animation:none} }
   .donate-tab-count{display:inline-block; min-width:18px; margin-left:6px; padding:0 5px; border-radius:999px; background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--gold);
     font-family:'JetBrains Mono','Prompt',monospace; font-size:11px; line-height:17px; text-align:center; vertical-align:1px}
   .donate-tab-count[hidden]{display:none}
@@ -1742,8 +1762,8 @@
   @media (min-width:1800px) and (min-height:1100px){ html:not(.tool-fit-screen) .stage{zoom:1.3; padding-top:28px; padding-bottom:32px} }
   @media (min-width:2400px) and (min-height:1300px){ html:not(.tool-fit-screen) .stage{zoom:1.5; padding-top:24px; padding-bottom:12px} }
   /* top-right buttons (guide, changelog, donate, server look) grow with the page on big screens (user 2026-10-18: too small there) */
-  @media (min-width:1800px) and (min-height:1100px){ .hub-right,.cg-back-btn{zoom:1.3} }
-  @media (min-width:2400px) and (min-height:1300px){ .hub-right,.cg-back-btn{zoom:1.5} }
+  @media (min-width:1800px) and (min-height:1100px){ .hub-right,.cg-back-btn,.hub-music{zoom:1.3} }
+  @media (min-width:2400px) and (min-height:1300px){ .hub-right,.cg-back-btn,.hub-music{zoom:1.5} }
   .view:not([hidden]){animation:viewIn .22s cubic-bezier(.2,.7,.2,1) both}
   @keyframes viewIn{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
 
@@ -7302,6 +7322,9 @@
   @keyframes lnHgPile{0%{transform:translateY(330px)} 74%, 100%{transform:translateY(-36px)}}
   @keyframes lnHgPileP{0%, 78%{opacity:0} 90%, 100%{opacity:1}}
   @keyframes lnHgStream{0%, 2%{opacity:0} 6%, 71%{opacity:1} 75%, 100%{opacity:0}}
+  /* แท็บกีตาร์เพลงธีม (user 2026-10-23): the tab runs right to left at the song's tempo; the distance and duration are set inline by LN_ART.tabRun */
+  .ln-tabrun .ln-tabrun-move{animation:lnTabRun 19.2s linear infinite}
+  @keyframes lnTabRun{to{transform:translateX(var(--run))}}
   @media (max-width:900px){ .ln-svgart, .ln-rain{height:100%} }
   /* ค่าสถานะมอนสเตอร์ (LN_ART.monsterOrbit): hovering the art (or .is-hot, phones) bursts the chips onto a ring that circles slowly
      (the chips turn the other way, so they stay upright); on leave they spiral back into the ringed icon. A chip is centred with the translate
@@ -7424,6 +7447,19 @@
   .ln-g.is-out .ln-gptl{opacity:0; transform:translateX(-24px)}
   .ln-gsim{position:absolute; left:-9999px; top:0; width:1px; height:1px; overflow:hidden}
   /* filmstrip */
+  /* ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the ☕ pop-up's names ticker (.donate-thanks) behind a label. Desktop (≥ 901 px): .hub-thanks at
+     the very top, in the hub bar's middle in place of the Discord note while the menu shows (the note is back on tool pages); phones: .ln-thanks
+     between the hub bar and the stage card. Two-class selectors so a running ticker's display:flex never shows the copy that should be hidden. */
+  .ln-thanks-label{flex:none; margin-right:8px; color:var(--gold); font-weight:500}   /* gold (user 2026-10-23) */
+  .donate-thanks.ln-thanks{align-self:center; max-width:calc(100% - 32px); margin:0 16px 10px; font-size:12.5px}
+  .donate-thanks.hub-thanks{display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); margin:0; font-size:12.5px; max-width:min(620px, 44vw)}
+  @media (min-width:901px){
+    .donate-thanks.ln-thanks{display:none}
+    html.hub-menu.has-thanks .hub-note{display:none}
+    html.hub-menu.has-thanks .donate-thanks.hub-thanks:not([hidden]){display:inline-flex}
+  }
+  @media (min-width:1800px) and (min-height:1100px){ .donate-thanks.hub-thanks{font-size:15px} }
+  @media (min-width:2400px) and (min-height:1300px){ .donate-thanks.hub-thanks{font-size:17px} }
   .ln-stripbar{position:relative; z-index:4; flex:none; display:flex; align-items:flex-end; justify-content:flex-end; gap:18px; min-width:0; padding:0 28px 26px}
   .ln-count{margin:0 0 6px; font:600 13px 'JetBrains Mono','Prompt',monospace; color:var(--muted); white-space:nowrap}
   .ln-count b{color:var(--ln-hi); font-size:20px}
@@ -7615,6 +7651,97 @@
   .pi-viz.is-one{grid-template-columns:minmax(0, 520px)}
   .pi-side{display:flex; flex-direction:column; gap:14px; min-width:0}   /* everything after the range map stacks beside it (user 2026-10-19: no page scroll on desktop) */
   @media (min-width:761px){ html.tool-pets .stage{padding-bottom:0} }   /* the roster and the pet page end 12 px above the window's bottom (fit() in mountPetInfo) */
+  /* ---- แท็บกีตาร์เพลงธีม (theme-tab, user 2026-10-23): a Guitar Pro style player for the main theme. Head, transport, the chord
+     diagrams, the tab sheet (SVG rows, scrolls itself on desktop) and the fretboard; no tool frame, like the pet page ---- */
+  html.tool-tab .stage{max-width:min(1400px, 98vw)}
+  html.tool-tab .tool-shell{background:none; border:0; box-shadow:none}
+  @media (min-width:901px){ html.tool-tab .stage{padding-top:20px; padding-bottom:0} }
+  .tt{display:flex; flex-direction:column; gap:10px; color:var(--text)}
+  .tt-head{display:flex; align-items:flex-end; justify-content:space-between; gap:8px 20px; flex-wrap:wrap}
+  .tt-title{margin:0; font-size:22px; font-weight:700; line-height:1.25; color:var(--gold)}
+  .tt-sub{margin:2px 0 0; font-size:13px; color:var(--muted)}
+  .tt-chips{display:flex; gap:6px; flex-wrap:wrap}
+  .tt-chip{padding:3px 10px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--muted)}
+  .tt-chip b, .tt-speed b, .tt-pos b{font-family:'JetBrains Mono','Prompt',monospace; font-weight:600; color:var(--text)}
+  .tt-bar{position:sticky; top:var(--hub-h, 64px); z-index:5; display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px}
+  .tt-btn{flex:none; width:38px; height:38px; display:grid; place-items:center; padding:0; border:1px solid var(--line); border-radius:50%; background:var(--panel-2); color:var(--text);
+    cursor:pointer; transition:color .15s ease, border-color .15s ease, filter .15s ease, transform .15s ease}
+  .tt-btn svg{width:18px; height:18px}
+  .tt-btn:hover{color:var(--gold); border-color:var(--gold)}
+  .tt-btn:active{transform:translateY(1px)}
+  .tt-btn.is-on{background:var(--gold); border-color:var(--gold); color:#141311}
+  .tt-btn.tt-play{width:46px; height:46px; background:var(--gold); border-color:var(--gold); color:#141311}
+  .tt-btn.tt-play svg{width:20px; height:20px}
+  .tt-btn.tt-play:hover, .tt-btn.is-on:hover{color:#141311; filter:brightness(1.12)}
+  .tt-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .tt-speed{display:flex; align-items:center; gap:8px; margin-left:6px; font-size:13px; color:var(--muted)}
+  .tt-speed input{width:130px; accent-color:var(--gold)}
+  .tt-speed b{min-width:3.4em}
+  .tt-vol{margin-left:0}
+  .tt-vol input{width:100px}
+  .tt-vol-ico{display:inline-flex; color:var(--muted)}
+  .tt-vol-ico svg{width:18px; height:18px}
+  .tt-pos{margin-left:auto; font-size:13px; color:var(--muted); white-space:nowrap}
+  .tt-sep{margin:0 4px}
+  .tt-chords{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; scrollbar-width:thin}
+  .tt-chord{flex:none; margin:0; width:56px; padding:4px 4px 2px; border:1px solid transparent; border-radius:6px; text-align:center; transition:border-color .15s ease, background-color .15s ease}
+  .tt-chord figcaption{font-size:13px; font-weight:600; line-height:1.2}
+  .tt-chord svg{display:block; width:100%; height:auto}
+  .tt-chord.is-on{border-color:var(--gold); background:color-mix(in srgb, var(--gold) 12%, transparent)}
+  .tt-chord.is-on figcaption{color:var(--gold)}
+  .tt-dg-l{stroke:var(--muted); stroke-width:.7}
+  .tt-dg-nut{fill:var(--text)}
+  .tt-dg-dot{fill:var(--text)}
+  .tt-chord.is-on .tt-dg-dot{fill:var(--gold)}
+  .tt-dg-o{fill:none; stroke:var(--text); stroke-width:.9}
+  .tt-dg-x{fill:none; stroke:var(--text); stroke-width:.9}
+  .tt-sheet{position:relative; overflow-y:auto; scrollbar-gutter:stable; overscroll-behavior:contain; padding:4px 10px 8px; background:var(--panel); border:1px solid var(--line); border-radius:8px}
+  .tt-rowbox{position:relative}
+  .tt-row{display:block; width:100%; height:auto; overflow:visible}
+  .tt-row *{pointer-events:none}
+  .tt-row .tt-mbg{pointer-events:all; fill:transparent; cursor:pointer; transition:fill .15s ease}
+  .tt-mbg:hover{fill:color-mix(in srgb, var(--text) 4%, transparent)}
+  .tt-mbg.is-now{fill:color-mix(in srgb, var(--gold) 8%, transparent)}
+  .tt-mbg.is-sel{fill:color-mix(in srgb, var(--tip) 18%, transparent)}
+  .tt-line{fill:none; stroke:color-mix(in srgb, var(--muted) 55%, transparent); stroke-width:1}
+  .tt-bl{stroke:var(--muted); stroke-width:1}
+  .tt-bl-end{fill:var(--muted)}
+  .tt-fn{font-family:'JetBrains Mono','Prompt',monospace; font-size:12px; font-weight:600; fill:var(--text); text-anchor:middle}
+  .tt-beat.is-on .tt-fn{fill:var(--gold)}
+  .tt-cname{font-family:'Prompt',sans-serif; font-size:13px; font-weight:600; fill:var(--gold)}
+  .tt-mnum{font-family:'JetBrains Mono','Prompt',monospace; font-size:9px; fill:var(--muted)}
+  .tt-clef{font-family:'Prompt',sans-serif; font-size:12px; font-weight:700; fill:var(--muted); text-anchor:middle}
+  .tt-slur{fill:none; stroke:var(--muted); stroke-width:1}
+  .tt-slurl{font-family:'Prompt',sans-serif; font-size:9px; fill:var(--muted); text-anchor:middle}
+  .tt-stem{stroke:var(--muted); stroke-width:1}
+  .tt-beam, .tt-dot{fill:var(--muted)}
+  .tt-flag{fill:none; stroke:var(--muted); stroke-width:1.4}
+  .tt-cursor{position:absolute; top:0; left:0; width:2px; border-radius:1px; background:var(--gold); pointer-events:none}
+  .tt-hint{margin:-4px 0 0; font-size:12px; color:var(--muted)}
+  .tt-fret{padding:6px 10px; background:var(--panel); border:1px solid var(--line); border-radius:8px}
+  .tt-fret svg{display:block; width:100%; height:auto}
+  .tt-fb-wood{fill:color-mix(in srgb, var(--text) 6%, transparent)}
+  .tt-fb-inlay{fill:color-mix(in srgb, var(--text) 16%, transparent)}
+  .tt-fb-wire{stroke:color-mix(in srgb, var(--muted) 70%, transparent); stroke-width:1.5}
+  .tt-fb-nut{fill:var(--text)}
+  .tt-fb-capo{fill:var(--gold); opacity:.75}
+  .tt-fb-str{stroke:color-mix(in srgb, var(--text) 55%, transparent)}
+  .tt-fb-name{font-family:'Prompt',sans-serif; font-size:11px; fill:var(--muted); text-anchor:middle}
+  .tt-fb-dot circle{fill:color-mix(in srgb, var(--gold) 30%, var(--panel)); stroke:var(--gold); stroke-width:1}
+  .tt-fb-dot text{font-family:'JetBrains Mono','Prompt',monospace; font-size:9px; font-weight:700; fill:var(--text); text-anchor:middle}
+  .tt-fb-dot.is-now circle{fill:var(--gold)}
+  .tt-fb-dot.is-now text{fill:#141311}
+  @media (max-width:900px){
+    .tt-pos{margin-left:0}
+    .tt-speed input{width:110px}
+  }
+  @media (max-width:560px){
+    .tt-title{font-size:18px}
+    .tt-bar{gap:8px; padding:8px}
+    .tt-btn{width:34px; height:34px}
+    .tt-btn.tt-play{width:42px; height:42px}
+    .tt-speed{margin-left:0}
+  }
   .pi-box{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; min-width:0}
   .pi-bh{font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:6px}
   .pi-bh b{color:var(--gold)}
@@ -7680,6 +7807,7 @@
 
 <header class="hub-bar">
   <a href="#" class="brand" aria-label="12 Tails Bible"><svg class="brand-mark" viewBox="8 6 110 78" aria-hidden="true"><defs><linearGradient id="brandGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6df98"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#9a7622"/></linearGradient></defs><g fill="none" stroke="url(#brandGold)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24 L30 12 L30 78"/><path d="M48 30 C48 12 78 10 80 28 C82 44 60 54 48 78 L82 78 C98 78 106 66 102 52"/></g><path d="M102 52 C96 40 102 26 116 22 C110 34 114 44 102 52Z" fill="url(#brandGold)"/></svg><span class="brand-spine" aria-hidden="true"></span><span class="brand-word" aria-hidden="true"><span>TAILS</span><span>BIBLE</span></span></a>
+  <div class="hub-music" id="hubMusic"><button type="button" class="hub-music-btn" aria-pressed="false" aria-label="เปิดเพลงธีม" title="เพลงธีม 12 Tails Online"></button><div class="hub-music-pop"><input type="range" class="hub-music-range" min="0" max="100" step="5" value="0" aria-label="ระดับเสียงเพลงธีม"><b class="hub-music-pct"></b></div></div>
   <p class="hub-note">ตรวจพบข้อมูลผิดพลาด แจ้ง Discord : <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>jumpptty</b></a><button type="button" class="hub-btn-credits" id="btnCredits" aria-label="ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล" title="ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h10.5a2 2 0 0 1 2 2v1.5"/><path d="M6 4a2 2 0 0 0-2 2v1.5h4"/><path d="M8 7.5V18a2.5 2.5 0 0 0 2.5 2.5H18"/><path d="M18 20.5a2.5 2.5 0 0 0 2.5-2.5v-1H13v1a2.5 2.5 0 0 1-2.5 2.5"/><path d="M10.5 10.5h4M10.5 13.5h3"/><path d="M15.5 15 21 4.2c.8.9.8 2.3 0 3.6l-3.2 5.2"/></svg></button></p>
   <div class="hub-right">
     <nav class="crumb">
@@ -26775,6 +26903,17 @@ const TOOLS = [
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
     mounted: false,
     mount(root){ mountBossGuide(root); }
+  },
+  {
+    id: "theme-tab",
+    collage: "tabRun",   // drawn in code: LN_ART (user 2026-10-23: running guitar tablature; was the game's three guitar icons as a fan)
+    title: "แท็บกีตาร์เพลงธีม",
+    fact: () => [THEME_TAB.bars.length, "ห้อง"],
+    shortTitle: "แท็บกีตาร์",
+    category: "Music",
+    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    mounted: false,
+    mount(root){ mountThemeTab(root); }
   }
 ];
 
@@ -27987,6 +28126,35 @@ function donateThanksFit(ui){
   ui.list.style.setProperty("--donate-shift", run.shift + "px");
   ui.list.style.setProperty("--donate-dur", run.dur.toFixed(2) + "s");
   ui.box.classList.add("is-running");
+}
+// ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the ☕ pop-up's names line (renderDonorThanks, biggest total first; donateThanksFit runs it
+// as a ticker when the names do not fit) behind the label, in two copies. Desktop: .hub-thanks at the very top, in the hub bar's middle in place
+// of the Discord note while the menu shows (the note is back on every tool page); the user tried four mocks, then the band by the filmstrip,
+// and chose this. Phones: .ln-thanks between the hub bar and the stage card. CSS picks the copy; each fits whenever it shows or the window
+// width changes. A click opens ☕ on รายชื่อผู้สนับสนุน. Without donors neither shows and the note stays (html.has-thanks).
+function mountMenuThanks(root){
+  if (!root) return null;
+  const make = (cls, parent, before) => {
+    const box = document.createElement("button");
+    box.type = "button"; box.className = "donate-thanks " + cls; box.title = "ดูรายชื่อผู้สนับสนุนทั้งหมด";
+    box.innerHTML = '<span class="ln-thanks-label">ขอบคุณผู้ร่วมสนับสนุน</span><span class="donate-thanks-names"></span>';
+    parent.insertBefore(box, before);
+    const ui = { box, list: box.querySelector(".donate-thanks-names"), count: document.createElement("span"), track: null, set: null, copy: null, key: 0 };
+    renderDonorThanks(ui);
+    box.addEventListener("click", () => { openDonateModal(); const at = donateTabs.length - 1; donateShowTab(donateTabs, donatePanels, at); donateTabShown(at); });
+    return ui;
+  };
+  const hub = document.querySelector(".hub-bar"), note = hub && hub.querySelector(".hub-note");
+  const uis = [make("ln-thanks", root, root.firstChild)];
+  if (hub) uis.push(make("hub-thanks", hub, note ? note.nextSibling : null));
+  document.documentElement.classList.toggle("has-thanks", !uis[0].box.hidden);
+  const refit = (ui) => { const key = ui.box.offsetWidth ? window.innerWidth : 0; if (key && key !== ui.key) donateThanksFit(ui); ui.key = key; };
+  const all = () => uis.forEach(refit);
+  window.addEventListener("resize", all);
+  if (typeof ResizeObserver === "function") uis.forEach((ui) => new ResizeObserver(() => refit(ui)).observe(ui.box));   // e.g. the menu showing again
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { uis.forEach((ui) => { ui.key = 0; }); all(); });
+  all();
+  return uis;
 }
 // the pop-up's tabs (user 2026-10-23: the slip form and the donor list each get their own tab, so they never crowd the QR card): tabs and
 // panels in the same order; picking one only hides the other panels, so what was typed in the form stays. focus: for the arrow keys.
@@ -29479,7 +29647,7 @@ function mountClassGuide(root){
   { const hub = document.querySelector(".hub-right"); if (hub) hub.insertBefore(menuBtn, hub.querySelector(".hub-btn-mechanic")); }
   const backBtn = document.createElement("button"); backBtn.type = "button"; backBtn.className = "cg-menu-btn cg-back-btn";   // the reader's way back, top left (user 2026-10-20: was ไกด์จากผู้เล่น in the menu)
   backBtn.innerHTML = classGuideButtonIcon("back") + '<span class="cg-menu-btn-label"></span>';
-  { const brand = document.querySelector(".hub-bar .brand"); if (brand) brand.after(backBtn); }
+  { const at = document.querySelector(".hub-bar .hub-music") || document.querySelector(".hub-bar .brand"); if (at) at.after(backBtn); }   // after the music button, which stays by the logo
   backBtn.addEventListener("click", () => { const r = button("returnAuthor"); (r && !r.hidden ? r : button("gallery")).click(); });   // the preview goes back to the editor, a guide to the list
   const menuPop = document.createElement("div"); menuPop.className = "cg-menu-pop"; menuPop.setAttribute("role", "menu"); menuPop.setAttribute("aria-label", "เมนูไกด์"); menuPop.hidden = true; document.body.appendChild(menuPop);
   const MENU = [   // user 2026-10-20: the picture, then everything that starts a guide of your own; the list of guides is the back pill (top left)
@@ -31790,7 +31958,551 @@ const crumbCurrent = $("#crumbCurrent");
 // Phones (<= 900 px): the stage is a card with story bars, swipe and ‹ ›, and every tool sits in a 2-column grid that opens it directly.
 // The ไกด์อาชีพ slide shows the guides' own PNG export (classGuideRenderImage, newest guide first, one at a time in idle time, shrunk to
 // 1280 px wide and kept for the visit) with each guide's class portrait (CLASS_STORY_ART, a random colour).
-const LAUNCH_CATEGORY = { Reference: "ข้อมูลอ้างอิง", Calculator: "เครื่องคำนวณ", Map: "แผนที่", Simulator: "จำลอง", Guide: "คู่มือ" };
+// ---- แท็บกีตาร์เพลงธีม (theme-tab, user 2026-10-23): the 12 Tails Online main theme as a Guitar Pro style tab player ----
+// jumpfingerstyle's arrangement (their PDF: 45 bars of 6/8, ♩ = 75, capo on fret 2), read note for note from the PDF's own drawing (fret
+// digits, stems, beams, flags, dots, H / P arcs, chord names and diagrams), so this sheet is that PDF. A bar is its beats split by spaces:
+// string.fret notes joined by "+", ":" the length in 16ths, then "h" / "p" when the note is hammered on / pulled off; "[Chord]" before a
+// beat starts that chord. Shapes run from the 6th string to the 1st, as the diagrams do. The validator pins the bars: never edit one by hand.
+const THEME_TAB = {
+  title: "12 Tails Online Main Theme", by: "BigBug Studio", arranger: "jumpfingerstyle", tempo: 75, capo: 2,
+  shapes: { C: "x32010", G: "320003", Am: "x02210", Fmaj7: "xx3210", "G/B": "x2003x", F: "133211", G7: "320001", "A#": "x13331", "G#": "4xxx1x" },
+  bars: [
+    "[C]2.1+3.0+5.3:2 3.0:2 3.0:2 2.1:2 3.0:2 3.0:2",   // 1
+    "[C]2.1+5.3:2 3.0:2 3.0:2 3.2:2 2.0:2 2.1:1 2.3:1h",   // 2
+    "[C]2.1+3.0+5.3:2 3.0:2 3.0:2 2.1:2 3.0:2 3.0:2",   // 3
+    "[C]2.1+5.3:2 3.0:2 3.0:2 3.0:1 3.2:1h 3.0:2 4.3:2",   // 4
+    "[C]2.1+3.0+5.3:2 2.0:2 2.1:2 2.3:2 2.1:2 2.3:2",   // 5
+    "[G]1.0+2.3+3.0+6.3:2 2.3:2 1.0:2 1.1:2 1.0:2 2.3:2",   // 6
+    "[Am]2.1+3.2+5.0:2 2.0:2 2.1:2 2.3:2 2.1:2 2.3:2",   // 7
+    "[Fmaj7]1.0+2.1+3.2+4.3:2 1.1:2 1.3:2 1.3:6",   // 8
+    "[C]2.1+3.0+5.3:2 2.0:2 2.1:2 2.3+5.3:2 2.1:2 2.3:2",   // 9
+    "[G]1.0+2.3+3.0+6.3:2 2.3:2 1.0:2 1.1+6.3:2 1.0:2 2.3:2",   // 10
+    "[Am]2.1+3.2+5.0:2 2.0:2 2.1:2 2.3+5.0:2 2.1:2 2.3:2",   // 11
+    "[Fmaj7]1.0+2.1+3.2+4.3:2 1.1:2 1.3:2 1.3+4.3:3 1.0:1 2.3:1 2.1:1p",   // 12
+    "[C]2.1+3.0+5.3:4 4.2:2 3.0+5.3:2 4.2:2 3.0:2",   // 13
+    "[G/B]2.3+3.0+5.2:2 4.0:2 3.0:2 5.2:2 1.0:2 1.1:2",   // 14
+    "[Am]1.0+2.1+3.0+5.0:2 4.2:2 3.2:2 2.1+5.0:2 4.2:2 3.0:2",   // 15
+    "[F]3.2+4.3+6.1:2 5.3:2 4.3:2 6.1:2 3.0:2 4.3:2",   // 16
+    "[C]4.2+5.3:4 3.0:2 2.1+5.3:2 3.0:2 1.0:2",   // 17
+    "[G/B]2.3+3.0+5.2:2 4.0:2 3.0:2 5.2:2 2.0:1 2.1:1h 2.0:2",   // 18
+    "[Am]2.0+3.2+5.0:1 2.1:1h 2.0:2 3.2:2 5.0:2 4.2:2 2.0:2",   // 19
+    "[Am]2.1+3.2+5.0:2 2.0:2 2.1:2 2.3+5.0:2 1.0:2 1.1:2",   // 20
+    "[C]1.0+2.1+3.0+5.3:2 4.2:2 3.0:2 1.3+5.3:2 4.2:2 3.0:2",   // 21
+    "[G/B]2.3+3.0+5.2:2 4.0:2 3.0:2 5.2:2 1.0:2 1.1:2",   // 22
+    "[Am]1.0+2.1+3.0+5.0:2 4.2:2 3.2:2 2.1+5.0:2 4.2:2 2.0:2",   // 23
+    "[F]3.2+4.3+6.1:2 5.3:2 4.3:2 6.1:2 3.0:2 4.3:2",   // 24
+    "[C]4.2+5.3:4 3.0:2 2.1+5.3:2 4.2:2 1.0:2",   // 25
+    "[G/B]2.3+3.0+5.2:2 4.0:2 3.0:2 5.2:2 2.0:1 2.1:1h 2.0:2",   // 26
+    "[Am]2.0+3.2+5.0:1 2.1:1h 2.0:2 3.2:2 5.0:2 4.2:2 2.0:2",   // 27
+    "[Am]2.1+3.2+5.0:2 2.0:2 2.1:2 2.3+5.0:2 1.0:2 1.1:2",   // 28
+    "[Fmaj7]1.3+2.1+3.2+4.3:4 3.2:2 2.1:4 1.3:2",   // 29
+    "[G7]1.1+2.0+3.0+6.3:4 1.0:2 2.3:4 2.1:2",   // 30
+    "[Fmaj7]2.1+3.2+4.3:1 2.3:1h 2.1:2 2.0:2 2.1:6",   // 31
+    "[G]2.0+3.0+6.3:2 3.2:2 3.0:2 3.2:2 2.0:2 2.1:2",   // 32
+    "[Fmaj7]3.2+4.3:2 2.0:2 2.1:2h 3.2:2 2.0:2 2.1:2h",   // 33
+    "[C]3.0+4.2+5.3:2 2.0:2 2.1:2h 3.0:2 2.0:2 2.1:2",   // 34
+    "[G]3.0+4.0+6.3:2 2.0:2 2.3:2 2.3+6.3:2 2.1:2 2.0:2",   // 35
+    "[C]4.2+5.3:4 4.3:2 3.0+5.3:4 3.0:2",   // 36
+    "[F]3.2+4.3+6.1:2 3.2:2 3.2:2 3.2+6.1:2 2.0:2 3.2:2",   // 37
+    "[C]5.3:2 3.0:2 3.0:2 3.0+4.2+5.3:2 3.2:2 3.0:2",   // 38
+    "[G]6.3:2 2.3+3.0:2 2.3:2 2.3+6.3:2 2.1:2 2.0:2",   // 39
+    "[C]2.1+3.0+5.3:2 2.3:2 2.0:2 2.1:6",   // 40
+    "[C]5.3:2 3.0:2 2.1:2 2.3:2 3.0:2 1.0:2",   // 41
+    "[A#]5.1:2 3.0:2 2.1:2 2.3:2 3.0:2 1.0:2",   // 42
+    "[Am]5.0:2 3.0:2 2.1:2 2.3:2 3.0:2 1.0:2",   // 43
+    "[G#]6.4:2 3.0:2 2.1:2 [G]6.3:2 3.0:2 2.0:2",   // 44
+    "[C]2.1+3.0+5.3:6",   // 45
+  ]
+};
+const THEME_TAB_OPEN = [64, 59, 55, 50, 45, 40];   // MIDI notes of strings 1-6 in standard tuning
+const THEME_TAB_ROLL = 0.025;   // seconds between the notes of a beat, thickest string first (user 2026-10-23: a slight roll, not a strum; 14 ms, then "more gaps")
+// how loud each note of a beat plays (user 2026-10-23): chords first sounded forceful, so an n-note beat played at 1/√n a note; with the harp
+// voice that was too quiet ("multiple notes can play at higher volume"), so 1/n^¼ (a 4-note chord at 71 % a note); the lowest note (k = 0)
+// a little above the rest so the bass carries
+const themeTabWeight = (n, k) => n > 1 ? (k === 0 ? 1.15 : 1) / Math.pow(n, 0.25) : 1;
+const THEME_TAB_AHEAD = 0.6;   // seconds of music scheduled ahead (user 2026-10-23: it sounded off tempo; 150 ms was too little on a busy page)
+// the volume slider's 0-100 to a gain: squared, so the slider moves evenly to the ear
+const themeTabVolume = (v) => Math.pow(Math.max(0, Math.min(100, v)) / 100, 2) * 1.5;
+const themeTabMidi = (s, f, capo = THEME_TAB.capo) => THEME_TAB_OPEN[s - 1] + capo + f;
+const themeTabName = (c) => c.replace("#", "♯");
+// the bars as beats: i, bar, t = start in 16ths from the top, at = start inside the bar, dur, notes [{ s, f }], slur "h" / "p" / "", chord
+function themeTabParse(tab){
+  const bars = [], beats = []; let t = 0, chord = "";
+  tab.bars.forEach((src, bi) => {
+    const bar = { i: bi, t, beats: [] }; let at = 0;
+    for (const tok of src.trim().split(/\s+/)){
+      const m = tok.match(/^(?:\[([^\]]+)\])?(\d\.\d+(?:\+\d\.\d+)*):(\d+)([hp]?)$/);
+      if (!m) throw new Error("theme tab: bar " + (bi + 1) + " has a bad beat " + tok);
+      chord = m[1] || chord;
+      const b = { i: beats.length, bar: bi, t: t + at, at, dur: +m[3], slur: m[4], chord, notes: m[2].split("+").map((n) => ({ s: +n[0], f: +n.slice(2) })) };
+      bar.beats.push(b); beats.push(b); at += b.dur;
+    }
+    bar.len = at; bars.push(bar); t += at;
+  });
+  return { bars, beats, total: t };
+}
+// the marks under a bar, drawn as Guitar Pro draws 6/8: notes shorter than a quarter beam together inside each dotted-quarter half (a second
+// beam joins 16ths; the renderer gives a 16th beside a longer note a stub); a lone one gets flags; 3 and 6 sixteenths add a dot
+function themeTabRhythm(beats){
+  const out = beats.map((b) => ({ beams: 0, flags: 0, dot: b.dur === 3 || b.dur === 6, run: null }));
+  for (let i = 0; i < beats.length;){
+    if (beats[i].dur >= 4){ i++; continue; }
+    let j = i; const half = Math.floor(beats[i].at / 6);
+    while (j + 1 < beats.length && beats[j + 1].dur < 4 && Math.floor(beats[j + 1].at / 6) === half) j++;
+    if (j === i) out[i].flags = beats[i].dur === 1 ? 2 : 1;
+    else for (let k = i; k <= j; k++){ out[k].run = [i, j]; out[k].beams = beats[k].dur === 1 ? 2 : 1; }
+    i = j + 1;
+  }
+  return out;
+}
+// what still sounds at beat i, per string: the last note struck within the bar before it, back to the chord change (the player damps the
+// strings a new chord does not play); now = struck on beat i itself
+function themeTabRinging(beats, i){
+  const ring = {};
+  for (let k = i; k >= 0 && beats[k].t > beats[i].t - 12; k--){
+    beats[k].notes.forEach((n) => { if (!(n.s in ring)) ring[n.s] = { f: n.f, now: k === i }; });
+    if (k > 0 && beats[k - 1].chord !== beats[k].chord) break;
+  }
+  return ring;
+}
+// one note, voiced as a harp / music box (user 2026-10-23: preset 5 of six tone mocks; two Karplus-Strong guitar voicings before it sounded
+// harsh): up to 14 sine partials below 9 kHz of a string plucked 30 % of the way along, each a hair sharp of a whole multiple (a real
+// string's stiffness) and the higher ones fading faster, with no pluck noise, so it stays round. A 4 ms fade-in; 32 kHz mono, 3.4 s, peak 0.5.
+function themeTabPluck(ctx, midi){
+  const sr = 32000, f0 = 440 * Math.pow(2, (midi - 69) / 12), len = Math.round(sr * 3.4), buf = ctx.createBuffer(1, len, sr), out = buf.getChannelData(0);
+  for (let h = 1; h <= 14 && h * f0 < 9000; h++){
+    const f = h * f0 * Math.sqrt(1 + 0.00008 * h * h), w = 2 * Math.PI * f / sr, c = 2 * Math.cos(w), decay = Math.exp(-(0.9 + (h - 1) * 0.7) / 1.2 / sr);
+    let s1 = 0, s2 = -Math.sin(w), env = Math.abs(Math.sin(h * Math.PI * 0.3)) / Math.pow(h, 1.6);   // a sine by recurrence: s[n] = 2cos(w)·s[n-1] − s[n-2]
+    for (let i = 0; i < len; i++){ const s = c * s1 - s2; s2 = s1; s1 = s; out[i] += s * env; env *= decay; }
+  }
+  const fade = Math.round(sr * 0.004);
+  for (let i = 0; i < fade; i++) out[i] *= i / fade;
+  let peak = 0;
+  for (let i = 0; i < len; i++) if (Math.abs(out[i]) > peak) peak = Math.abs(out[i]);
+  const k = peak ? 0.5 / peak : 0;
+  for (let i = 0; i < len; i++) out[i] *= k;
+  return buf;
+}
+// the room (user 2026-10-23: more reverb, then "a bit less" with the harp voice): 2.5 s of stereo noise after a 22 ms pre-delay, its tail turning darker as it fades
+function themeTabRoom(ctx){
+  const sr = ctx.sampleRate, n = Math.round(sr * 2.5), pre = Math.round(sr * 0.022), b = ctx.createBuffer(2, n, sr);
+  for (let c = 0; c < 2; c++){
+    const d = b.getChannelData(c); let lp = 0;
+    for (let i = pre; i < n; i++){ const t = (i - pre) / (n - pre); lp += (0.65 - 0.55 * t) * (Math.random() * 2 - 1 - lp); d[i] = lp * Math.pow(1 - t, 2.2); }
+  }
+  return b;
+}
+// the theme's sound, shared by the tab player and the hub bar's music button (user 2026-10-23): one AudioContext, one buffer per pitch and
+// one room, made on the first play; each player gets its own voice (themeTabVoice) at its own volume
+const THEME_AUDIO = { ctx: null, bufs: new Map(), room: null };
+function themeTabAudio(){
+  if (THEME_AUDIO.ctx) return THEME_AUDIO.ctx;
+  const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return null;
+  const ctx = THEME_AUDIO.ctx = new Ctx(), song = themeTabParse(THEME_TAB);
+  new Set(song.beats.flatMap((b) => b.notes.map((n) => themeTabMidi(n.s, n.f)))).forEach((m) => THEME_AUDIO.bufs.set(m, themeTabPluck(ctx, m)));
+  THEME_AUDIO.room = themeTabRoom(ctx);
+  return ctx;
+}
+// one player's sound: the harp voice's chain at its own volume (0-100), and the playing rules. Each string sounds one note at a time; a chord
+// change damps the strings the new chord does not play; notes struck together roll from the thick string to the thin one and the roll ends
+// on the beat, so the thinnest (the melody) is on time (user 2026-10-23: with the bass on the beat the melody came up to 75 ms late and the
+// song sounded off tempo); each at themeTabWeight; a hammer-on / pull-off plays softer and skips the pluck.
+// play(beat, at), click(at, level 0-2), volume(0-100), silence(); last = the beat played before (for the chord change).
+function themeTabVoice(volume){
+  const ctx = themeTabAudio(); if (!ctx) return null;
+  const bus = ctx.createGain(), body = ctx.createBiquadFilter(), shelf = ctx.createBiquadFilter(), tone = ctx.createBiquadFilter(), comp = ctx.createDynamicsCompressor(),
+    room = ctx.createConvolver(), wet = ctx.createGain(), out = ctx.createGain();
+  bus.gain.value = 0.62;
+  body.type = "peaking"; body.frequency.value = 200; body.Q.value = 0.8; body.gain.value = 1;   // the harp voice's EQ (preset 5)
+  shelf.type = "highshelf"; shelf.frequency.value = 3000; shelf.gain.value = -3;
+  tone.type = "lowpass"; tone.frequency.value = 6000; tone.Q.value = 0.5;
+  comp.threshold.value = -16; comp.knee.value = 18; comp.ratio.value = 2.5; comp.attack.value = 0.008; comp.release.value = 0.25;   // rounds off what still peaks
+  room.buffer = THEME_AUDIO.room; wet.gain.value = 0.3;
+  out.gain.value = themeTabVolume(volume); out.connect(ctx.destination);   // the player's volume: guitar, room and metronome
+  bus.connect(body); body.connect(shelf); shelf.connect(tone); tone.connect(comp); comp.connect(out); comp.connect(room); room.connect(wet); wet.connect(out);
+  const V = { ctx, last: null }, strings = {}, live = new Set();
+  const track = (src, g) => { const v = { src, g }; live.add(v); src.onended = () => live.delete(v); return v; };
+  const release = (v, at, tc) => { v.g.gain.cancelScheduledValues(at); v.g.gain.setTargetAtTime(0, at, tc); try { v.src.stop(at + tc * 8); } catch (e) {} };
+  const strike = (n, at, legato, weight) => {
+    if (strings[n.s]) release(strings[n.s], at, 0.012);
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = THEME_AUDIO.bufs.get(themeTabMidi(n.s, n.f)); g.gain.value = (legato ? 0.5 : 0.85) * weight;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;   // a little width: bass strings a touch left, treble a touch right
+    if (pan){ pan.pan.value = (3.5 - n.s) * 0.09; src.connect(g); g.connect(pan); pan.connect(bus); } else { src.connect(g); g.connect(bus); }
+    src.start(at, legato ? 0.012 : 0);
+    strings[n.s] = track(src, g);
+  };
+  V.play = (b, at) => {
+    const notes = [...b.notes].sort((p, q) => q.s - p.s), n = notes.length, lead = (n - 1) * THEME_TAB_ROLL;
+    if (V.last && V.last.chord !== b.chord){ const keep = new Set(notes.map((x) => x.s)); Object.keys(strings).forEach((s) => { if (!keep.has(+s)){ release(strings[s], at - lead, 0.05); delete strings[s]; } }); }
+    notes.forEach((x, k) => strike(x, at - lead + k * THEME_TAB_ROLL, !!b.slur, themeTabWeight(n, k)));
+    V.last = b;
+  };
+  V.click = (at, level) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = [990, 1320, 1760][level];
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(level ? 0.45 : 0.25, at + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.05);
+    o.connect(g); g.connect(out); o.start(at); o.stop(at + 0.06); track(o, g);
+  };
+  V.volume = (v) => out.gain.setTargetAtTime(themeTabVolume(v), ctx.currentTime, 0.03);
+  V.silence = () => { const now = ctx.currentTime; live.forEach((v) => release(v, now, 0.02)); live.clear(); Object.keys(strings).forEach((s) => delete strings[s]); V.last = null; };
+  return V;
+}
+// the hub bar's music button (user 2026-10-23): the main theme, looping, on every page. Muted on every visit (a browser only starts sound
+// after a click anyway); a click starts it at the remembered volume (30 % the first time), another click mutes it. Hovering or focusing it
+// slides out a volume slider (a tap on a touch screen opens it for 4 s); sliding above 0 while muted starts the music, sliding to 0 mutes it.
+// The music and the tab player never play together: whichever starts stops the other ("theme-audio" event). Hiding the page pauses it and
+// showing the page again resumes it, from the beat that was due next.
+const THEME_MUSIC_KEY = "12t-bible-music-vol";
+function mountThemeMusic(wrap){
+  if (!wrap) return null;
+  const btn = wrap.querySelector(".hub-music-btn"), range = wrap.querySelector(".hub-music-range"), pct = wrap.querySelector(".hub-music-pct"), song = themeTabParse(THEME_TAB);
+  const M = { on: false, vol: 30, voice: null, timer: 0, idx: 0, time: 0, queue: [], resume: false, openT: 0 };
+  try { const v = localStorage.getItem(THEME_MUSIC_KEY); if (v !== null && +v > 0 && +v <= 100) M.vol = Math.round(+v / 5) * 5; } catch (e) {}
+  const six = 60 / THEME_TAB.tempo / 4, rest = 12 - song.bars[song.bars.length - 1].len;
+  const icon = (on) => '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/>' +
+    (on ? '<path class="hub-music-w" d="M16.5 8.5a5 5 0 0 1 0 7"/><path class="hub-music-w" d="M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9.5l5 5M22 9.5l-5 5"/>') + '</svg>';
+  const paint = () => {
+    btn.innerHTML = icon(M.on); btn.setAttribute("aria-pressed", String(M.on)); btn.setAttribute("aria-label", M.on ? "ปิดเพลงธีม" : "เปิดเพลงธีม");
+    wrap.classList.toggle("is-on", M.on); range.value = M.on ? M.vol : 0; pct.textContent = M.on ? M.vol + "%" : "ปิด";
+  };
+  // the song loops: after the last bar's held chord, the rest of its 6/8 bar, then bar 1 again
+  const pump = () => {
+    const now = M.voice.ctx.currentTime, horizon = now + THEME_TAB_AHEAD;
+    if (M.time < now) M.time = now + 0.1;   // a stalled page picks up from now
+    while (M.queue.length && M.queue[0].at < now - 1) M.queue.shift();
+    while (M.on && M.time < horizon){
+      const b = song.beats[M.idx];
+      M.voice.play(b, M.time); M.queue.push({ i: M.idx, at: M.time }); M.time += b.dur * six;
+      M.idx = (M.idx + 1) % song.beats.length;
+      if (!M.idx) M.time += rest * six;
+    }
+  };
+  const start = () => {
+    if (!M.voice) M.voice = themeTabVoice(M.vol);
+    if (!M.voice) return;
+    if (M.voice.ctx.state === "suspended") M.voice.ctx.resume();
+    document.dispatchEvent(new CustomEvent("theme-audio", { detail: "music" }));
+    M.on = true; M.voice.volume(M.vol); M.voice.last = null; M.queue = []; M.time = M.voice.ctx.currentTime + 0.1;
+    pump(); clearInterval(M.timer); M.timer = setInterval(pump, 50); paint();
+  };
+  const stop = () => {
+    if (!M.on) return;
+    const now = M.voice.ctx.currentTime, next = M.queue.find((q) => q.at > now);
+    if (next) M.idx = next.i;   // the beats already scheduled but not heard yet play again on the next start
+    M.on = false; clearInterval(M.timer); M.voice.silence(); M.queue = []; paint();
+  };
+  const peek = () => {   // touch screens have no hover: a tap shows the slider for 4 s
+    if (!window.matchMedia || !matchMedia("(hover: none)").matches) return;
+    wrap.classList.add("is-open"); clearTimeout(M.openT); M.openT = setTimeout(() => wrap.classList.remove("is-open"), 4000);
+  };
+  btn.addEventListener("click", () => { M.resume = false; M.on ? stop() : start(); peek(); });
+  range.addEventListener("input", () => {
+    const v = +range.value; M.resume = false; peek();
+    if (!v){ stop(); return; }
+    M.vol = v; try { localStorage.setItem(THEME_MUSIC_KEY, String(v)); } catch (e) {}
+    if (M.on){ M.voice.volume(v); paint(); } else start();
+  });
+  document.addEventListener("pointerdown", (e) => { if (!wrap.contains(e.target)) wrap.classList.remove("is-open"); });
+  document.addEventListener("theme-audio", (e) => { if (e.detail !== "music"){ M.resume = false; stop(); } });
+  document.addEventListener("visibilitychange", () => { if (document.hidden){ if (M.on){ stop(); M.resume = true; } } else if (M.resume){ M.resume = false; start(); } });
+  paint();
+  return M;
+}
+// a chord diagram as the PDF draws it// a chord diagram as the PDF draws it: × / ○ over the nut, a dot per fretted string, a bar across the strings that share the lowest fret
+function themeTabDiagram(shape){
+  const fr = [...shape].map((c) => c === "x" ? -1 : +c), on = fr.filter((f) => f > 0), b = on.length ? Math.min(...on) : 0;
+  const at = fr.map((f, i) => f === b ? i : -1).filter((i) => i >= 0), barre = b > 0 && at.length >= 2 && at[at.length - 1] - at[0] >= 2;
+  const X = (i) => 6 + i * 6, Y = (f) => 12 + f * 9;
+  let s = '<svg viewBox="0 0 42 58" aria-hidden="true"><rect class="tt-dg-nut" x="5.5" y="10" width="31" height="2.6"/>';
+  for (let k = 1; k <= 5; k++) s += `<line class="tt-dg-l" x1="6" x2="36" y1="${Y(k)}" y2="${Y(k)}"/>`;
+  for (let i = 0; i < 6; i++) s += `<line class="tt-dg-l" x1="${X(i)}" x2="${X(i)}" y1="11" y2="${Y(5)}"/>`;
+  if (barre) s += `<rect class="tt-dg-dot" x="${X(at[0]) - 2.6}" y="${Y(b) - 7.1}" width="${X(at[at.length - 1]) - X(at[0]) + 5.2}" height="5.2" rx="2.6"/>`;
+  fr.forEach((f, i) => {
+    if (f < 0) s += `<path class="tt-dg-x" d="M${X(i) - 2} 3.5l4 4M${X(i) + 2} 3.5l-4 4"/>`;
+    else if (f === 0) s += `<circle class="tt-dg-o" cx="${X(i)}" cy="5.5" r="2.1"/>`;
+    else if (!(barre && f === b)) s += `<circle class="tt-dg-dot" cx="${X(i)}" cy="${Y(f) - 4.5}" r="2.7"/>`;
+  });
+  return s + "</svg>";
+}
+// the sheet's geometry: G.y0 = top string, ls = string gap; stems run from under the staff to the beams
+const THEME_TAB_G = { left: 26, y0: 38, ls: 11, minBar: 130 };   // minBar: two bars a row on a 360 px phone, four on desktop
+function mountThemeTab(root){
+  const song = themeTabParse(THEME_TAB), G = THEME_TAB_G, KEY = "12t-bible-tab";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+  const opt = { speed: Math.min(150, Math.max(25, Math.round((+saved.speed || 100) / 5) * 5)), vol: Number.isFinite(+saved.vol) ? Math.min(100, Math.max(0, Math.round(+saved.vol / 5) * 5)) : 80,
+    loop: !!saved.loop, metro: !!saved.metro, count: !!saved.count };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(opt)); } catch (e) {} };
+  const ico = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const ICO = { home: ico('<path d="M6 5v14"/><path d="M18 6 9 12l9 6z" fill="currentColor"/>'), play: ico('<path d="M8 5v14l11-7z" fill="currentColor"/>'),
+    pause: ico('<path d="M8 5v14M16 5v14" stroke-width="3.2"/>'), loop: ico('<path d="M17 2l3 3-3 3"/><path d="M3 11V9a4 4 0 0 1 4-4h13"/><path d="M7 22l-3-3 3-3"/><path d="M21 13v2a4 4 0 0 1-4 4H4"/>'),
+    metro: ico('<path d="M9 3h6l3.5 18h-13z"/><path d="M12 15l5-9"/><path d="M8 15h8"/>'), count: ico('<path d="M5 12h3M16 12h3"/><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>') };
+  const chordList = Object.keys(THEME_TAB.shapes);
+  root.innerHTML = '<div class="tt">' +
+    '<header class="tt-head"><div><h2 class="tt-title">' + THEME_TAB.title + '</h2><p class="tt-sub">' + THEME_TAB.by + ' · เรียบเรียงโดย ' + THEME_TAB.arranger + '</p></div>' +
+      '<div class="tt-chips"><span class="tt-chip">Capo <b>' + THEME_TAB.capo + '</b></span><span class="tt-chip">♩ = <b>' + THEME_TAB.tempo + '</b></span><span class="tt-chip"><b>6/8</b></span><span class="tt-chip">จูนมาตรฐาน</span></div></header>' +
+    '<div class="tt-bar" role="toolbar" aria-label="เล่นแท็บ">' +
+      '<button type="button" class="tt-btn" data-act="home" aria-label="กลับไปต้นเพลง" title="กลับไปต้นเพลง">' + ICO.home + '</button>' +
+      '<button type="button" class="tt-btn tt-play" data-act="play" aria-label="เล่น" title="เล่น / หยุด (Space)">' + ICO.play + '</button>' +
+      '<button type="button" class="tt-btn" data-act="loop" aria-pressed="false" aria-label="เล่นวน" title="เล่นวน: ช่วงที่ลากเลือกบนแท็บ หรือทั้งเพลง">' + ICO.loop + '</button>' +
+      '<button type="button" class="tt-btn" data-act="metro" aria-pressed="false" aria-label="เมโทรนอม" title="เมโทรนอม">' + ICO.metro + '</button>' +
+      '<button type="button" class="tt-btn" data-act="count" aria-pressed="false" aria-label="นับก่อนเล่น" title="นับก่อนเล่น 1 ห้อง">' + ICO.count + '</button>' +
+      '<label class="tt-speed">ความเร็ว <input type="range" min="25" max="150" step="5" data-role="speed" aria-label="ความเร็ว"> <b data-role="pct"></b> <span data-role="bpm"></span></label>' +
+      '<label class="tt-speed tt-vol"><span class="tt-vol-ico" aria-hidden="true">' + ico('<path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>') + '</span>' +
+        '<input type="range" min="0" max="100" step="5" data-role="vol" aria-label="ระดับเสียง"> <b data-role="volpct"></b></label>' +
+      '<div class="tt-pos">ห้อง <b data-role="bar">1</b>/' + song.bars.length + ' <span class="tt-sep">·</span> <b data-role="time">0:00</b> / <span data-role="total"></span></div>' +
+    '</div>' +
+    '<div class="tt-chords">' + chordList.map((c) => '<figure class="tt-chord" data-c="' + c + '"><figcaption>' + themeTabName(c) + '</figcaption>' + themeTabDiagram(THEME_TAB.shapes[c]) + '</figure>').join("") + '</div>' +
+    '<div class="tt-sheet" data-role="sheet"></div>' +
+    '<p class="tt-hint">คลิกโน้ตเพื่อเริ่มเล่นจากตรงนั้น · ลากข้ามห้องเพื่อเลือกช่วงเล่นวน · Space เล่น / หยุด</p>' +
+    '<div class="tt-fret"></div>' +
+  '</div>';
+  const $r = (sel) => root.querySelector(sel), sheet = $r('[data-role="sheet"]'), fretBox = $r(".tt-fret"), btn = (a) => $r('[data-act="' + a + '"]');
+  const speedIn = $r('[data-role="speed"]'), volIn = $r('[data-role="vol"]'), chordEls = [...root.querySelectorAll(".tt-chord")];
+  const S = { playing: false, pos: 0, shown: -1, shownBar: -1, idx: 0, time: 0, timer: 0, raf: 0, queue: [], ending: false, endAt: 0, sel: null, row: -1 };
+  const sixteenth = () => 60 / (THEME_TAB.tempo * opt.speed / 100) / 4;
+  const clock = (sec) => Math.floor(sec / 60) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
+
+  // ---- fretboard (Guitar Pro's bottom panel): frets at real spacing (0-12, 0-9 on narrow screens), the capo, the notes sounding now;
+  // drawn to the panel's own width (about 104 units tall), again whenever the sheet is laid out for a new width ----
+  let FX = null, dots = null, fbW = 0;
+  const FY = (s) => 14 + (s - 1) * 15;
+  const drawFret = () => {
+    const w = Math.round(fretBox.clientWidth - 20); if (!(w >= 200) || w === fbW) return;
+    fbW = w;
+    const top = w < 600 ? 9 : 12, span = w - 56;
+    FX = (n) => 40 + span * (1 - Math.pow(2, -n / 12)) / (1 - Math.pow(2, -top / 12));
+    fretBox.innerHTML = '<svg viewBox="0 0 ' + w + ' 104" width="' + w + '" height="104" aria-hidden="true"><rect class="tt-fb-wood" x="' + FX(0) + '" y="6" width="' + (FX(top) - FX(0)) + '" height="90" rx="2"/>' +
+      [3, 5, 7, 9].filter((n) => n <= top).map((n) => '<circle class="tt-fb-inlay" cx="' + (FX(n - 1) + FX(n)) / 2 + '" cy="51" r="4"/>').join("") +
+      (top >= 12 ? '<circle class="tt-fb-inlay" cx="' + (FX(11) + FX(12)) / 2 + '" cy="36" r="4"/><circle class="tt-fb-inlay" cx="' + (FX(11) + FX(12)) / 2 + '" cy="66" r="4"/>' : "") +
+      Array.from({ length: top }, (_, n) => '<line class="tt-fb-wire" x1="' + FX(n + 1) + '" x2="' + FX(n + 1) + '" y1="6" y2="96"/>').join("") +
+      '<rect class="tt-fb-nut" x="' + (FX(0) - 4) + '" y="5" width="5" height="92"/>' +
+      '<rect class="tt-fb-capo" x="' + (FX(THEME_TAB.capo) - 10) + '" y="2" width="7" height="98" rx="3"/>' +
+      [1, 2, 3, 4, 5, 6].map((s) => '<line class="tt-fb-str" x1="' + (FX(0) - 2) + '" x2="' + FX(top) + '" y1="' + FY(s) + '" y2="' + FY(s) + '" style="stroke-width:' + (0.8 + s * 0.28) + '"/><text class="tt-fb-name" x="16" y="' + FY(s) + '" dy=".35em">' + ["e", "B", "G", "D", "A", "E"][s - 1] + '</text>').join("") +
+      '<g class="tt-fb-dots"></g></svg>';
+    dots = fretBox.querySelector(".tt-fb-dots");
+  };
+  const fretDots = (ring) => Object.entries(ring).map(([s, n]) => {
+    const r = THEME_TAB.capo + n.f, x = (FX(r - 1) + FX(r)) / 2, y = FY(+s);
+    return '<g class="tt-fb-dot' + (n.now ? " is-now" : "") + '"><circle cx="' + x + '" cy="' + y + '" r="7"/><text x="' + x + '" y="' + y + '" dy=".35em">' + n.f + '</text></g>';
+  }).join("");
+
+  // ---- the sheet: rows of bars as SVG, laid out again whenever the width changes ----
+  let W = 0, rows = [], beatEls = [], barEls = [], rowEls = [], cursor = null;
+  const geo = { beats: [], bars: [] };
+  const build = () => {
+    const w = Math.floor(sheet.clientWidth - 20);
+    if (!(w >= 120) || w === W) return;   // hidden (no width yet) or unchanged
+    W = w;
+    const per = Math.max(1, Math.min(4, Math.floor((w - G.left) / G.minBar))), mw = (w - G.left - 2) / per, yb = G.y0 + 5 * G.ls, by = yb + 25, H = by + 10;
+    rows = []; for (let i = 0; i < song.bars.length; i += per) rows.push(song.bars.slice(i, i + per));
+    sheet.innerHTML = rows.map((rb, r) => {
+      // a beat gets room by the square root of its length, as the PDF spaces them, so 16ths stay readable two bars to a phone row
+      const xsOf = new Map(), X = (bar, at) => {
+        if (!xsOf.has(bar.i)){
+          const x0 = G.left + (bar.i - rb[0].i) * mw, ws = bar.beats.map((b) => Math.sqrt(b.dur)), tot = ws.reduce((p, q) => p + q, 0), m = {};
+          let acc = 0; bar.beats.forEach((b, k) => { m[b.at] = x0 + 14 + acc / tot * (mw - 26); acc += ws[k]; }); xsOf.set(bar.i, m);
+        }
+        return xsOf.get(bar.i)[at];
+      };
+      const gaps = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+      let s = '<div class="tt-rowbox"><svg class="tt-row" data-r="' + r + '" viewBox="0 0 ' + w + ' ' + H + '" width="' + w + '" height="' + H + '">';
+      rb.forEach((bar) => {
+        const x0 = G.left + (bar.i - rb[0].i) * mw;
+        geo.bars[bar.i] = { row: r, x0, x1: x0 + mw };
+        s += '<rect class="tt-mbg" data-m="' + bar.i + '" x="' + x0 + '" y="' + (G.y0 - 30) + '" width="' + mw + '" height="' + (by - G.y0 + 36) + '"/>';
+        s += '<text class="tt-mnum" x="' + (x0 + 3) + '" y="' + (G.y0 - 5) + '">' + (bar.i + 1) + '</text>';
+        const marks = themeTabRhythm(bar.beats);
+        bar.beats.forEach((b, k) => {
+          const x = X(bar, b.at), m = marks[k], prevChord = b.i ? song.beats[b.i - 1].chord : "";
+          geo.beats[b.i] = { row: r, x };
+          if (k === 0 || b.chord !== prevChord) s +='<text class="tt-cname" x="' + (x - 4) + '" y="' + (G.y0 - 20) + '">' + themeTabName(b.chord) + '</text>';
+          s += '<g class="tt-beat" data-i="' + b.i + '">' + b.notes.map((n) => { gaps[n.s].push(x); return '<text class="tt-fn" x="' + x + '" y="' + (G.y0 + (n.s - 1) * G.ls) + '" dy=".35em">' + n.f + '</text>'; }).join("") + '</g>';
+          if (b.slur && k){ const px = X(bar, bar.beats[k - 1].at), mx = (px + x) / 2; s += '<path class="tt-slur" d="M' + (px + 3) + ' ' + (G.y0 - 5) + 'Q' + mx + ' ' + (G.y0 - 13) + ' ' + (x - 3) + ' ' + (G.y0 - 5) + '"/><text class="tt-slurl" x="' + mx + '" y="' + (G.y0 - 14) + '">' + b.slur.toUpperCase() + '</text>'; }
+          s += '<line class="tt-stem" x1="' + x + '" x2="' + x + '" y1="' + (yb + 6) + '" y2="' + by + '"/>';
+          if (m.dot) s += '<circle class="tt-dot" cx="' + (x + 4.5) + '" cy="' + (by - (m.run ? 6 : 1.5)) + '" r="1.4"/>';   // above the beam when beamed
+          for (let q = 0; q < m.flags; q++) s += '<path class="tt-flag" d="M' + x + ' ' + (by - q * 4) + 'q6 -2 6 -9"/>';
+          if (m.run && m.run[0] === k) s += '<rect class="tt-beam" x="' + x + '" y="' + (by - 2.6) + '" width="' + (X(bar, bar.beats[m.run[1]].at) - x) + '" height="2.6"/>';
+          if (m.beams === 2){
+            const nx = k < m.run[1] && marks[k + 1].beams === 2, pv = k > m.run[0] && marks[k - 1].beams === 2;
+            if (nx) s += '<rect class="tt-beam" x="' + x + '" y="' + (by - 6.6) + '" width="' + (X(bar, bar.beats[k + 1].at) - x) + '" height="2.6"/>';
+            else if (!pv) s += '<rect class="tt-beam" x="' + (k > m.run[0] ? x - 6 : x) + '" y="' + (by - 6.6) + '" width="6" height="2.6"/>';
+          }
+        });
+        const last = bar.i === song.bars.length - 1, x1 = x0 + mw;
+        s += last ? '<line class="tt-bl" x1="' + (x1 - 5) + '" x2="' + (x1 - 5) + '" y1="' + G.y0 + '" y2="' + yb + '"/><rect class="tt-bl-end" x="' + (x1 - 3) + '" y="' + G.y0 + '" width="3" height="' + (yb - G.y0) + '"/>'
+          : '<line class="tt-bl" x1="' + x1 + '" x2="' + x1 + '" y1="' + G.y0 + '" y2="' + yb + '"/>';
+      });
+      s += '<line class="tt-bl" x1="' + G.left + '" x2="' + G.left + '" y1="' + G.y0 + '" y2="' + yb + '"/>';
+      ["T", "A", "B"].forEach((c, k) => { s += '<text class="tt-clef" x="12" y="' + (G.y0 + 11 + k * 16.5) + '" dy=".35em">' + c + '</text>'; });
+      const end = G.left + rb.length * mw;
+      for (let st = 1; st <= 6; st++){
+        const y = G.y0 + (st - 1) * G.ls, cut = gaps[st].sort((a, b) => a - b);
+        let d = "", from = G.left;
+        cut.forEach((gx) => { if (gx - 6 > from) d += 'M' + from + ' ' + y + 'H' + (gx - 6); from = Math.max(from, gx + 6); });
+        if (end > from) d += 'M' + from + ' ' + y + 'H' + end;
+        s += '<path class="tt-line" d="' + d + '"/>';
+      }
+      return s + '</svg></div>';
+    }).join("") + '<div class="tt-cursor" aria-hidden="true"></div>';
+    drawFret();
+    rowEls = [...sheet.querySelectorAll(".tt-rowbox")]; beatEls = [...sheet.querySelectorAll(".tt-beat")]; barEls = [...sheet.querySelectorAll(".tt-mbg")]; cursor = $r(".tt-cursor");
+    const keep = S.shown < 0 ? S.pos : S.shown; S.shown = -1; S.shownBar = -1; S.row = -1;
+    paintSel(); show(keep, 0);
+  };
+  const paintSel = () => barEls.forEach((el, i) => el.classList.toggle("is-sel", !!S.sel && i >= S.sel[0] && i <= S.sel[1]));
+  // follow the playing row: the sheet scrolls itself on desktop (the row ends up second from the top), the page on phones
+  const follow = (r) => {
+    if (r === S.row) return; S.row = r;
+    const el = rowEls[r]; if (!el || !S.playing) return;
+    if (sheet.scrollHeight > sheet.clientHeight + 2){
+      const top = el.offsetTop, h = el.offsetHeight;
+      if (top < sheet.scrollTop || top + h > sheet.scrollTop + sheet.clientHeight) sheet.scrollTo({ top: Math.max(0, top - h - 4), behavior: "smooth" });
+    } else {
+      const rc = el.getBoundingClientRect();
+      if (rc.top < 80 || rc.bottom > window.innerHeight - 20) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  };
+  // the beat under the cursor: lit frets, the bar, its chord diagram, the fretboard, the bar / time readout; frac moves the cursor on
+  const show = (i, frac) => {
+    const b = song.beats[i]; if (!b || !cursor) return;
+    if (i !== S.shown){
+      if (beatEls[S.shown]) beatEls[S.shown].classList.remove("is-on");
+      if (beatEls[i]) beatEls[i].classList.add("is-on");
+      if (S.shownBar !== b.bar){ if (barEls[S.shownBar]) barEls[S.shownBar].classList.remove("is-now"); if (barEls[b.bar]) barEls[b.bar].classList.add("is-now"); S.shownBar = b.bar; }
+      chordEls.forEach((el) => el.classList.toggle("is-on", el.dataset.c === b.chord));
+      if (dots) dots.innerHTML = fretDots(themeTabRinging(song.beats, i));
+      $r('[data-role="bar"]').textContent = b.bar + 1;
+      $r('[data-role="time"]').textContent = clock(b.t * sixteenth());
+      S.shown = i; follow(geo.beats[i].row);
+    }
+    const g = geo.beats[i], nb = song.beats[i + 1], row = rowEls[g.row];
+    const to = nb && nb.bar === b.bar ? geo.beats[i + 1].x : geo.bars[b.bar].x1 - 6, k = row.clientWidth / W || 1;
+    cursor.style.transform = 'translate(' + (row.offsetLeft + (g.x + (to - g.x) * frac) * k - 1) + 'px,' + (row.offsetTop + (G.y0 - 8) * k) + 'px)';
+    cursor.style.height = (5 * G.ls + 16) * k + "px";
+  };
+
+  // ---- sound: the shared theme voice (themeTabVoice), made on the first play at this page's volume ----
+  let voice = null;
+  // the loop range: the dragged bars, else the whole song
+  const range = () => S.sel ? [song.bars[S.sel[0]].beats[0].i, song.bars[S.sel[1]].beats[song.bars[S.sel[1]].beats.length - 1].i] : [0, song.beats.length - 1];
+  // schedule what falls in the next THEME_TAB_AHEAD seconds, so a busy page never makes the guitar stumble; a page that stalled longer (a
+  // background tab) picks up from now instead of firing the missed notes all at once
+  const pump = () => {
+    const now = voice.ctx.currentTime, horizon = now + THEME_TAB_AHEAD;
+    if (S.time < now) S.time = now + 0.1;
+    while (S.playing && !S.ending && S.time < horizon){
+      const b = song.beats[S.idx], d = sixteenth();
+      voice.play(b, S.time);
+      if (opt.metro) for (let p = b.t + b.t % 2; p < b.t + b.dur; p += 2){ const inBar = p - song.bars[b.bar].t; voice.click(S.time + (p - b.t) * d, inBar === 0 ? 2 : inBar === 6 ? 1 : 0); }
+      S.queue.push({ at: S.time, i: S.idx, len: b.dur * d }); S.time += b.dur * d;
+      const [a, z] = range();
+      if (opt.loop && S.idx === z) S.idx = a;
+      else if (S.idx >= song.beats.length - 1){ S.ending = true; S.endAt = S.time; }
+      else S.idx++;
+    }
+  };
+  const tick = () => {
+    S.raf = 0; if (!S.playing) return;
+    const now = voice.ctx.currentTime - (voice.ctx.outputLatency || 0);
+    while (S.queue.length > 1 && S.queue[1].at <= now) S.queue.shift();
+    const q = S.queue[0];
+    if (q && q.at <= now) show(q.i, Math.min(1, (now - q.at) / q.len));
+    if (S.ending && now > S.endAt + 1.2){ pause(); seek(range()[0]); return; }
+    S.raf = requestAnimationFrame(tick);
+  };
+  const ui = () => {
+    const p = btn("play"); p.innerHTML = S.playing ? ICO.pause : ICO.play; p.setAttribute("aria-label", S.playing ? "หยุด" : "เล่น");
+    ["loop", "metro", "count"].forEach((a) => { btn(a).classList.toggle("is-on", opt[a]); btn(a).setAttribute("aria-pressed", String(opt[a])); });
+    volIn.value = opt.vol; $r('[data-role="volpct"]').textContent = opt.vol + "%";
+    speedIn.value = opt.speed; $r('[data-role="pct"]').textContent = opt.speed + "%"; $r('[data-role="bpm"]').textContent = "♩ " + Math.round(THEME_TAB.tempo * opt.speed / 100);
+    $r('[data-role="total"]').textContent = clock(song.total * sixteenth());
+    if (S.shown >= 0) $r('[data-role="time"]').textContent = clock(song.beats[S.shown].t * sixteenth());
+  };
+  const play = () => {
+    if (!voice) voice = themeTabVoice(opt.vol);
+    if (!voice) return;
+    const ctx = voice.ctx;
+    if (ctx.state === "suspended") ctx.resume();
+    document.dispatchEvent(new CustomEvent("theme-audio", { detail: "tab" }));   // the hub bar's music stops while the tab plays
+    const [a, z] = range();
+    if (opt.loop && S.sel && (S.pos < a || S.pos > z)) S.pos = a;   // looping a range starts inside it
+    S.playing = true; S.ending = false; S.queue = []; voice.last = null; S.idx = S.pos; S.row = -1;
+    const lead = 0.1 + (opt.count ? 12 * sixteenth() : 0);
+    if (opt.count) for (let k = 0; k < 6; k++) voice.click(ctx.currentTime + 0.1 + k * 2 * sixteenth(), k === 0 ? 2 : k === 3 ? 1 : 0);
+    S.time = ctx.currentTime + lead; pump(); S.timer = setInterval(pump, 50); tick(); ui();
+  };
+  const pause = () => {
+    if (!S.playing) return;
+    S.playing = false; clearInterval(S.timer); if (S.raf) cancelAnimationFrame(S.raf); S.raf = 0; voice.silence();
+    if (S.shown >= 0) S.pos = S.shown;
+    ui(); show(S.pos, 0);
+  };
+  const seek = (i) => { const was = S.playing; if (was) pause(); S.pos = Math.max(0, Math.min(song.beats.length - 1, i)); show(S.pos, 0); if (was) play(); };
+
+  // ---- clicks on the sheet: a click starts from the nearest beat, a drag across bars picks the loop range ----
+  let drag = null;
+  const barAt = (e) => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.classList && el.classList.contains("tt-mbg") && sheet.contains(el) ? +el.dataset.m : -1; };
+  sheet.addEventListener("pointerdown", (e) => {
+    const m = e.target.classList && e.target.classList.contains("tt-mbg") ? +e.target.dataset.m : -1;
+    if (m < 0 || e.button) return;
+    drag = { m, to: m, x: e.clientX, y: e.clientY, moved: false };
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 6) drag.moved = true;
+    const m = barAt(e);
+    if (drag.moved && m >= 0 && m !== drag.to){ drag.to = m; S.sel = [Math.min(drag.m, m), Math.max(drag.m, m)]; paintSel(); }
+  });
+  window.addEventListener("pointerup", (e) => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (d.moved && d.to !== d.m){ seek(song.bars[S.sel[0]].beats[0].i); return; }
+    if (e.shiftKey && S.shown >= 0){ const a = song.beats[S.shown].bar; S.sel = [Math.min(a, d.m), Math.max(a, d.m)]; paintSel(); return; }
+    if (d.moved) return;
+    S.sel = null; paintSel();
+    const bar = song.bars[d.m], row = rowEls[geo.bars[d.m].row], rc = row.getBoundingClientRect(), x = (e.clientX - rc.left) * (W / rc.width);
+    seek(bar.beats.reduce((best, b) => Math.abs(geo.beats[b.i].x - x) < Math.abs(geo.beats[best.i].x - x) ? b : best, bar.beats[0]).i);
+  });
+  window.addEventListener("pointercancel", () => { drag = null; });
+
+  // ---- the transport ----
+  root.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const a = b.dataset.act;
+    if (a === "play") S.playing ? pause() : play();
+    else if (a === "home") seek(range()[0]);
+    else { opt[a] = !opt[a]; save(); ui(); }
+  });
+  speedIn.addEventListener("input", () => { opt.speed = +speedIn.value; save(); ui(); });
+  volIn.addEventListener("input", () => { opt.vol = +volIn.value; save(); ui(); if (voice) voice.volume(opt.vol); });
+  const visible = () => !!root.offsetParent && !root.closest("[hidden]");
+  document.addEventListener("keydown", (e) => {
+    if (e.code !== "Space" || !visible() || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest && e.target.closest("input, textarea, select, button, [contenteditable]") || document.querySelector('[aria-modal="true"]:not([hidden])')) return;
+    e.preventDefault(); S.playing ? pause() : play();
+  });
+  window.addEventListener("hashchange", () => setTimeout(() => { if (S.playing && !visible()) pause(); }, 0));   // leaving the tool stops the music
+  document.addEventListener("theme-audio", (e) => { if (e.detail !== "tab") pause(); });   // the hub bar's music started
+  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+
+  // desktop: the sheet takes the window's height between the transport and the fretboard and scrolls itself; phones scroll the page
+  const fit = () => {
+    const r = sheet.getBoundingClientRect(), z = r.height / sheet.offsetHeight || 1;
+    if (!r.height || window.innerWidth <= 900){ sheet.style.height = ""; }
+    else {   // whole pixels, and only a real change: under the big-screen zoom the measured ratio wobbles, and each write would set off the next fit
+      const h = Math.round(Math.max(260, (window.innerHeight - r.top - window.scrollY) / z - fretBox.offsetHeight - $r(".tt-hint").offsetHeight - 30));
+      if (Math.abs((parseFloat(sheet.style.height) || 0) - h) > 2) sheet.style.height = h + "px";
+    }
+    build();
+  };
+  ui(); build();
+  if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe(root);   // also runs when the tool is shown
+  window.addEventListener("resize", fit);
+  root._themeTab = { play, pause, seek, song, state: S };
+}
+const LAUNCH_CATEGORY = { Reference: "ข้อมูลอ้างอิง", Calculator: "เครื่องคำนวณ", Map: "แผนที่", Simulator: "จำลอง", Guide: "คู่มือ", Music: "ดนตรี" };
 const LAUNCH_ACCENT = { "entry-svc": "var(--svc-chip-accent)", "entry-bug": "var(--bug-chip-accent)", "entry-chm": "var(--chm-chip-accent)" };
 const LAUNCH_SERVER = { og: "BB", tot: "ToT", tto: "TTO" };
 // Hub menu art drawn in code for four tools (user 2026-10-18, picked from 40 mocks: S5, R10, G5, L4). LN_ART[collage](mode) returns the
@@ -31876,6 +32588,44 @@ const LN_ART = {
         <path d="${bulb}" fill="url(#${p}hglass)" stroke="#f1e6cf" stroke-opacity=".75" stroke-width="3"/>
         <g fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".35"><path d="${shine}"/><path d="${shine}" transform="scale(-1 1)"/><path d="${shine}" transform="scale(1 -1)"/><path d="${shine}" transform="scale(-1 -1)"/></g>
         ${post(-150)}${post(150)}${plate(-280)}${plate(280)}`)}</g>`, "ln-hourglass");
+  },
+  // แท็บกีตาร์เพลงธีม (user 2026-10-23: "running guitar tablature"): the theme's first 8 bars (THEME_TAB, drawn like the tool's sheet) run
+  // right to left at the song's own tempo (2.4 s a bar) under a fixed gold playhead, on a dark sheet that fades out at both ends; a note turns
+  // gold while it passes the playhead (a second, gold copy of the digits clipped to the playhead's window). Three copies of the run side by
+  // side make the loop seamless. Only transform animates. The thumb is a still with the playhead on bar 1.
+  tabRun(mode) {
+    const p = mode[0], stage = mode === "stage", song = themeTabParse(THEME_TAB), BARS = 8, BW = 520, L = BARS * BW, top = 300, ls = 50, bot = top + 5 * ls, ph = 330;
+    const mono = "font-family=\"'JetBrains Mono','Prompt',monospace\" font-weight=\"700\" text-anchor=\"middle\"";
+    const run = (gold) => [-L, 0, L].map((off) => song.bars.slice(0, BARS).map((bar) => {
+      const x0 = ph - 34 + off + bar.i * BW, ws = bar.beats.map((b) => Math.sqrt(b.dur)), tot = ws.reduce((a, b) => a + b, 0), marks = themeTabRhythm(bar.beats);
+      let acc = 0; const xs = ws.map((w) => { const x = x0 + 34 + acc / tot * (BW - 60); acc += w; return x; });
+      let s = gold ? "" : `<line x1="${x0}" x2="${x0}" y1="${top}" y2="${bot}" stroke="#f1e6cf" stroke-opacity=".45" stroke-width="3"/><text x="${x0 + 8}" y="${top - 14}" font-family="'JetBrains Mono','Prompt',monospace" font-size="22" fill="#f1e6cf" fill-opacity=".5">${bar.i + 1}</text>`;
+      bar.beats.forEach((b, k) => {
+        const x = xs[k], m = marks[k];
+        if (!gold && (k === 0 || b.chord !== bar.beats[k - 1].chord)) s += `<text x="${x - 14}" y="${top - 52}" font-family="Prompt,sans-serif" font-size="44" font-weight="700" fill="#d4af37">${themeTabName(b.chord)}</text>`;
+        s += b.notes.map((n) => `<text x="${x}" y="${top + (n.s - 1) * ls}" dy=".35em" font-size="40" fill="${gold ? "#f3d77a" : "#f1e6cf"}" stroke="#150f0c" stroke-width="14" paint-order="stroke">${n.f}</text>`).join("");
+        if (gold) return;
+        s += `<line x1="${x}" x2="${x}" y1="${bot + 22}" y2="${bot + 84}" stroke="#f1e6cf" stroke-opacity=".55" stroke-width="3"/>`;
+        if (m.dot) s += `<circle cx="${x + 12}" cy="${bot + (m.run ? 66 : 80)}" r="4.5" fill="#f1e6cf" fill-opacity=".55"/>`;
+        for (let q = 0; q < m.flags; q++) s += `<path d="M${x} ${bot + 84 - q * 12}q16 -6 16 -26" fill="none" stroke="#f1e6cf" stroke-opacity=".55" stroke-width="4"/>`;
+        if (m.run && m.run[0] === k) s += `<rect x="${x}" y="${bot + 76}" width="${xs[m.run[1]] - x}" height="8" fill="#f1e6cf" fill-opacity=".55"/>`;
+        if (m.beams === 2 && k < m.run[1] && marks[k + 1].beams === 2) s += `<rect x="${x}" y="${bot + 62}" width="${xs[k + 1] - x}" height="8" fill="#f1e6cf" fill-opacity=".55"/>`;
+      });
+      return s;
+    }).join("")).join("");
+    const move = (inner) => stage ? `<g class="ln-tabrun-move" style="--run:-${L}px;animation-duration:${(BARS * 2.4).toFixed(1)}s">${inner}</g>` : inner;
+    return lnSvg(mode, `<defs>
+      <linearGradient id="${p}tfade"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".14" stop-color="#fff"/><stop offset=".86" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <mask id="${p}tmask"><rect x="0" y="0" width="980" height="880" fill="url(#${p}tfade)"/></mask>
+      <clipPath id="${p}tlens"><rect x="${ph - 30}" y="${top - 40}" width="60" height="${bot - top + 80}"/></clipPath></defs>
+      <g transform="rotate(-4 490 440)"><g mask="url(#${p}tmask)">
+        <rect x="-40" y="${top - 110}" width="1060" height="${bot - top + 230}" rx="28" fill="#150f0c" fill-opacity=".6" stroke="#d4af37" stroke-opacity=".25" stroke-width="2"/>
+        ${[0, 1, 2, 3, 4, 5].map((k) => `<line x1="0" x2="980" y1="${top + k * ls}" y2="${top + k * ls}" stroke="#f1e6cf" stroke-opacity=".3" stroke-width="3"/>`).join("")}
+        <g ${mono}>${move(run(false))}</g>
+        <rect x="${ph - 30}" y="${top - 40}" width="60" height="${bot - top + 80}" rx="10" fill="#d4af37" fill-opacity=".1"/>
+        <g clip-path="url(#${p}tlens)"><g ${mono}>${move(run(true))}</g></g>
+      </g>
+      <rect x="${ph - 3}" y="${top - 44}" width="6" height="${bot - top + 88}" rx="3" fill="#f3d77a"/></g>`, "ln-tabrun");
   },
   // ค่าสถานะมอนสเตอร์ (user 2026-10-18, M3 of 5 mocks): the Stat Scan icon in the class guide's round ring; on hover a real monster's 13 values
   // (Lv, HP, MP, SP, KO and the 8 stats) burst out onto a ring and circle slowly, and spiral back into the icon when the mouse leaves.
@@ -32236,6 +32986,7 @@ function mountLauncher(root){
   show(0); refit();
 }
 mountLauncher($("#launch"));
+mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23)
 
   const CHANGELOG_ARCHIVE = {
   recent30Days: 300,
@@ -32250,6 +33001,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T12:14:47.048Z","feat(bible): แท็บกีตาร์เพลงธีม, a Guitar Pro style player for the 12 Tails main theme (jumpfingerstyle's tab note for note), a theme music button by the logo, and the donors thanked at the top of the menu"],
     ["2026-10-23T09:13:00.767Z","feat(bible): the ☕ pop-up honours donors: their names scroll under the thank-you line (biggest total first), the list tab shows the count and lists them newest first in pages"],
     ["2026-10-23T08:30:15.162Z","style(bible): the Final damage box reads 5,112 ~ 5,964, shows its hit count as a tab on top and Test as a gold bar along the bottom"],
     ["2026-10-23T08:14:36.939Z","feat(bible): TTO Flame Turret can be ended early by pressing the skill again (today's TTO patch)"],
@@ -32782,6 +33534,7 @@ function showTool(tool){
   document.documentElement.classList.toggle("tool-notes", tool.id === "server-changes" || tool.id === "bb-issues");
   document.documentElement.classList.toggle("tool-boss", tool.id === "boss-guide");
   document.documentElement.classList.toggle("tool-pets", tool.id === "pet-info");
+  document.documentElement.classList.toggle("tool-tab", tool.id === "theme-tab");
   document.documentElement.classList.toggle("tool-rsim", tool.id === "class-guide");
   const container = getToolContainer(tool);
   if (!tool.mounted){ tool.mount(container); tool.mounted = true; }
@@ -32851,6 +33604,8 @@ function route(){
 
 window.addEventListener("hashchange", route);
 route();
+
+mountThemeMusic($("#hubMusic"));   // the hub bar's music button (user 2026-10-23)
 
 // Donate Modal wiring
 const btnDonate = $("#btnDonate");

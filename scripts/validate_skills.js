@@ -146,7 +146,7 @@ function makeEl() {
     style: { setProperty: ()=>{} },
     dataset: {},
     classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false },
-    appendChild: ()=>{}, insertAdjacentHTML: ()=>{},
+    appendChild: ()=>{}, insertAdjacentHTML: ()=>{}, insertBefore: (n) => n,
     addEventListener: ()=>{},
     removeEventListener: ()=>{},
     querySelector: () => makeEl(),
@@ -3927,6 +3927,13 @@ async function donateChildTests(env) {
     && /donateThanksUi\.box\.addEventListener\("click", \(\) => \{ const at = donateTabs\.length - 1; donateShowTab\(donateTabs, donatePanels, at\);/.test(html)
     && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\)\{ donateThanksFit\(donateThanksUi\);/.test(html),
     "the names line must be filled on the first open (renderDonorThanks), fitted on every open and resize (donateThanksFit), and open the รายชื่อผู้สนับสนุน tab when clicked");
+  // ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the same names line behind a label, mounted right after the launcher, in two copies:
+  // desktop .hub-thanks at the very top in place of the Discord note while the menu shows (the note is back on tool pages); phones .ln-thanks
+  // between the hub bar and the card; no donors = the note stays (html.has-thanks); a click opens ☕ on the list tab
+  ok(/^mountMenuThanks\(\$\("#launch"\)\);/m.test(html) && /function mountMenuThanks\(root\)\{[\s\S]*?ขอบคุณผู้ร่วมสนับสนุน[\s\S]*?renderDonorThanks\(ui\);[\s\S]*?donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\);[\s\S]*?make\("ln-thanks", root, root\.firstChild\)[\s\S]*?make\("hub-thanks", hub, note \? note\.nextSibling : null\)[\s\S]*?classList\.toggle\("has-thanks", !uis\[0\]\.box\.hidden\)[\s\S]*?\n\}/.test(html)
+    && /@media \(min-width:901px\)\{\r?\n\s*\.donate-thanks\.ln-thanks\{display:none\}\r?\n\s*html\.hub-menu\.has-thanks \.hub-note\{display:none\}\r?\n\s*html\.hub-menu\.has-thanks \.donate-thanks\.hub-thanks:not\(\[hidden\]\)\{display:inline-flex\}/.test(html)
+    && /\.donate-thanks\.hub-thanks\{display:none; position:absolute; left:50%; top:50%;/.test(html),
+    "the menu's ขอบคุณผู้ร่วมสนับสนุน line (mountMenuThanks after mountLauncher): at the very top in place of the Discord note on the desktop menu, under the hub bar on phones, opening the list tab");
   // the list tab's pages (user 2026-10-23): a hidden ‹ n / N › pager under the list; laid out whenever the tab shows (click, arrow keys, the
   // names line) and on resize; every open starts on the newest page
   ok(/<ol class="donate-list" id="donateList"><\/ol>\s*<div class="donate-pager" id="donatePager" hidden><button type="button" class="donate-pager-btn" id="btnDonatePrev" aria-label="หน้าก่อน">‹<\/button><span class="donate-pager-num" id="donatePagerNum" aria-live="polite"><\/span><button type="button" class="donate-pager-btn" id="btnDonateNext" aria-label="หน้าถัดไป">›<\/button><\/div>\s*<\/div>/.test(modal),
@@ -3944,9 +3951,8 @@ async function donateChildTests(env) {
       "donorTicker: names that fit stand still (null); wider ones move by one set plus the gap to its copy, at DONATE_TICKER_SPEED px a second");
   }
   ok(/function donateThanksFit\(ui\)\{[\s\S]*?ui\.copy = ui\.set\.cloneNode\(true\);\r?\n  ui\.copy\.setAttribute\("aria-hidden", "true"\);[\s\S]*?\n\}/.test(html)
-    && /\.donate-thanks:hover \.donate-thanks-track, \.donate-thanks:focus-visible \.donate-thanks-track\{animation-play-state:paused\}/.test(html)
-    && /@media \(prefers-reduced-motion: reduce\)\{ \.donate-thanks\.is-running \.donate-thanks-track\{animation:none\} \}/.test(html),
-    "the names ticker must hide its second copy from screen readers, pause under the mouse and keyboard focus, and stand still under reduced motion");
+    && /\.donate-thanks:hover \.donate-thanks-track, \.donate-thanks:focus-visible \.donate-thanks-track\{animation-play-state:paused\}/.test(html),
+    "the names ticker must hide its second copy from screen readers and pause under the mouse and keyboard focus");
   ok(!/\.donate-msg\{[^}]*white-space:nowrap/.test(html),"the .donate-msg{white-space:nowrap} rule must go (the message wraps now)");
   ok(/\.donate-qr img\[hidden\]\{display:none\}/.test(html), ".donate-qr img[hidden]{display:none} is missing: .donate-qr img{display:block} would keep an empty QR image on screen when assets.js did not load");
   ok(["DONATE_ERRORS", "donateSubmit", "renderDonorList"].every((n) => !missing.includes(n) && !/\bAI\b/.test(n === "DONATE_ERRORS" ? JSON.stringify(page(n)) : String(page(n)))), "the pop-up's script texts must not mention AI");
@@ -5025,6 +5031,115 @@ function fontProblems(html) {
   const bad = fontProblems(html);
   for (const b of bad) { console.error(`[FONT ERROR] two fonts only: Prompt for text, 'JetBrains Mono','Prompt',monospace for numbers (12t_projects/bible/CLAUDE.md §2): ${b.slice(0, 160)}`); errorCount++; }
   if (!bad.length) console.log("Verified two fonts only (Prompt; JetBrains Mono with Prompt behind it).");
+}
+// No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
+// prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).
+{
+  const hits = html.split(/\r?\n/).filter((ln) => /@media[^{]*prefers-reduced-motion|matchMedia\(\s*["'`][^"'`]*prefers-reduced-motion/.test(ln));
+  for (const ln of hits) { console.error(`[MOTION ERROR] no reduced-motion gates (12t_projects/bible/CLAUDE.md §2): ${ln.trim().slice(0, 140)}`); errorCount++; }
+  if (!hits.length) console.log("Verified no reduced-motion gates.");
+}
+// แท็บกีตาร์เพลงธีม (theme-tab, user 2026-10-23): jumpfingerstyle's PDF of the main theme, note for note. The pin catches any change to the
+// tempo, capo, chord shapes or a bar; change it only for a deliberate correction against the PDF.
+{
+  const THEME_TAB_PIN = "178b886e13dad1991561f8dd32f8e023b663083c0a766cbb4c14a93981ea207e";
+  let n = 0;
+  const ok = (pass, msg) => { if (pass) n++; else { console.error("[THEME TAB ERROR] " + msg); errorCount++; } };
+  const page = (name) => vm.runInContext(name, sandbox), kind = (name) => { try { return vm.runInContext("typeof " + name, sandbox); } catch (e) { return "undefined"; } };
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const names = ["THEME_TAB", "themeTabParse", "themeTabRhythm", "themeTabRinging", "themeTabMidi", "themeTabPluck", "themeTabDiagram", "mountThemeTab"];
+  const missing = names.filter((x) => kind(x) === "undefined");
+  ok(!missing.length, "missing from the main script: " + missing.join(", "));
+  if (!missing.length) {
+    const T = page("THEME_TAB"), hash = require("crypto").createHash("sha256").update(JSON.stringify({ tempo: T.tempo, capo: T.capo, shapes: T.shapes, bars: T.bars })).digest("hex");
+    ok(hash === THEME_TAB_PIN, `THEME_TAB changed (sha256 ${hash}): the tab must stay jumpfingerstyle's PDF note for note; update THEME_TAB_PIN only for a deliberate fix against the PDF`);
+    ok(T.tempo === 75 && T.capo === 2 && T.title === "12 Tails Online Main Theme" && T.arranger === "jumpfingerstyle", "THEME_TAB's tempo 75, capo 2, title and arranger");
+    let song = null;
+    try { song = page("themeTabParse")(T); } catch (e) { ok(false, "themeTabParse threw: " + e.message); }
+    if (song) {
+      const lens = song.bars.map((b) => b.len);
+      ok(song.bars.length === 45 && lens.slice(0, 44).every((l) => l === 12) && lens[44] === 6 && song.total === 534, `45 bars of 6/8 (12 sixteenths), the last a held dotted quarter (got ${song.bars.length} bars, lengths ${[...new Set(lens)].join("/")})`);
+      const bad = song.beats.filter((b) => !b.notes.length || b.notes.some((x) => x.s < 1 || x.s > 6 || x.f < 0 || x.f > 12) || new Set(b.notes.map((x) => x.s)).size !== b.notes.length || ![1, 2, 3, 4, 6].includes(b.dur));
+      ok(!bad.length, "every beat has notes on strings 1-6, frets 0-12, one note a string, and a length of 1, 2, 3, 4 or 6 sixteenths (bad: " + bad.slice(0, 3).map((b) => "bar " + (b.bar + 1)).join(", ") + ")");
+      const slurs = song.beats.filter((b) => b.slur);
+      ok(slurs.length === 11 && slurs.every((b) => b.notes.length === 1 && b.at > 0 && song.beats[b.i - 1].notes.some((x) => x.s === b.notes[0].s)) && slurs.filter((b) => b.slur === "p").length === 1,
+        `11 slurs (10 H, 1 P), each one note on the string of the beat before it in the same bar (got ${slurs.length})`);
+      ok(Object.values(T.shapes).every((s) => /^[x\d]{6}$/.test(s)) && song.beats.every((b) => T.shapes[b.chord]), "every chord in the bars has a 6-string shape");
+      const midi = page("themeTabMidi");
+      ok(midi(6, 0) === 42 && midi(1, 0) === 66 && midi(5, 3) === 50 && midi(2, 1) === 62, "themeTabMidi: standard tuning plus the capo on fret 2 (6th string open = F#2, MIDI 42)");
+      const rh = page("themeTabRhythm"), marks = (bar) => rh(song.bars[bar - 1].beats);
+      const pick = (bar, key) => marks(bar).map((m) => m[key]);
+      ok(same(pick(12, "beams"), [1, 1, 1, 1, 2, 2, 2]) && same(pick(12, "dot"), [false, false, false, true, false, false, false]) && same(pick(19, "beams"), [2, 2, 1, 1, 1, 1, 1])
+        && same(pick(13, "flags"), [0, 1, 0, 0, 0]) && same(pick(29, "flags"), [0, 1, 0, 1]) && same(pick(8, "dot"), [false, false, false, true]) && same(pick(8, "beams"), [1, 1, 1, 0]),
+        "themeTabRhythm draws the PDF's beams, flags and dots (bars 8, 12, 13, 19, 29)");
+      const g6 = song.bars[5].beats[0].i, ring = page("themeTabRinging")(song.beats, g6);
+      ok(same(Object.keys(ring).map(Number).sort(), [1, 2, 3, 6]) && Object.values(ring).every((r) => r.now), "themeTabRinging: the G chord of bar 6 damps the C before it (strings 1, 2, 3, 6 only)");
+      const dF = page("themeTabDiagram")(T.shapes.F), dC = page("themeTabDiagram")(T.shapes.C), dGs = page("themeTabDiagram")(T.shapes["G#"]);
+      ok(/<rect class="tt-dg-dot"/.test(dF) && !/<rect class="tt-dg-dot"/.test(dC) && (dGs.match(/tt-dg-x/g) || []).length === 4 && (dC.match(/tt-dg-o/g) || []).length === 2, "themeTabDiagram: a bar for F, none for C; 4 × on G♯, 2 ○ on C");
+      // the synth is in tune: the pitch of a rendered A3 (220 Hz), by autocorrelation with a parabolic peak, within 3 cents
+      const fake = { createBuffer: (c, len, sr) => { const d = new Float32Array(len); return { sampleRate: sr, getChannelData: () => d, d }; } };
+      const buf = page("themeTabPluck")(fake, 57), d = buf.d, sr = buf.sampleRate, lag0 = sr / 220, a0 = Math.round(sr * 0.3), win = 4000;
+      const ac = (L) => { let s = 0; for (let i = 0; i < win; i++) s += d[a0 + i] * d[a0 + i + L]; return s; };
+      let best = Math.round(lag0); for (let L = Math.round(lag0) - 3; L <= Math.round(lag0) + 3; L++) if (ac(L) > ac(best)) best = L;
+      const y1 = ac(best - 1), y2 = ac(best), y3 = ac(best + 1), lag = best + 0.5 * (y1 - y3) / (y1 - 2 * y2 + y3), cents = 1200 * Math.log2(lag0 / lag);
+      let peak = 0; for (const v of d) peak = Math.max(peak, Math.abs(v));
+      ok(Math.abs(cents) < 3 && Math.abs(peak - 0.5) < 0.01, `themeTabPluck: A3 sounds ${cents.toFixed(2)} cents off 220 Hz (max 3), peak ${peak.toFixed(3)} (0.5)`);
+    }
+    // the sound (user 2026-10-23): chords roll from the thick string to the thin one, THEME_TAB_ROLL apart, and the roll ends on the beat
+    // (with the bass on the beat the melody came up to 75 ms late: "off tempo"); one shared voice (themeTabVoice) for the tab and the music
+    const roll = kind("THEME_TAB_ROLL") === "number" ? page("THEME_TAB_ROLL") : -1, ahead = kind("THEME_TAB_AHEAD") === "number" ? page("THEME_TAB_AHEAD") : -1;
+    ok(roll > 0.005 && roll <= 0.04 && /lead = \(n - 1\) \* THEME_TAB_ROLL;/.test(html) && /notes\.forEach\(\(x, k\) => strike\(x, at - lead \+ k \* THEME_TAB_ROLL, !!b\.slur, themeTabWeight\(n, k\)\)\)/.test(html),
+      `notes struck together roll from the 6th string to the 1st, THEME_TAB_ROLL apart (5-40 ms; got ${roll}), ending on the beat, each weighted by themeTabWeight`);
+    ok(ahead >= 0.3 && ahead <= 1.5 && (html.match(/if \((S|M)\.time < now\) \1\.time = now \+ 0\.1;/g) || []).length === 2 && /voice\.play\(b, S\.time\);/.test(html) && /M\.voice\.play\(b, M\.time\);/.test(html),
+      `both players schedule THEME_TAB_AHEAD ahead (0.3-1.5 s; got ${ahead}) through the shared voice and pick up from now after a stall`);
+    // chord loudness (user 2026-10-23): first 1/√n a note (chords sounded forceful), then 1/n^¼ with the harp voice (too quiet), the lowest a
+    // touch above; a gentle compressor; each player's volume (0-100, squared to a gain) feeds its guitar, room and metronome through out
+    if (kind("themeTabWeight") === "function" && kind("themeTabVolume") === "function") {
+      const w = page("themeTabWeight"), v = page("themeTabVolume"), near = (a, b) => Math.abs(a - b) < 1e-9;
+      ok(w(1, 0) === 1 && near(w(4, 1), Math.pow(4, -0.25)) && near(w(2, 1), Math.pow(2, -0.25)) && w(4, 0) > w(4, 1) && w(4, 0) < 1 && near(v(0), 0) && v(100) > v(80) && near(v(50) / v(100), 0.25),
+        "themeTabWeight (1/n^¼ a note, the lowest a little louder) and themeTabVolume (0 = silent, squared)");
+    } else ok(false, "themeTabWeight / themeTabVolume are missing");
+    ok(/data-role="vol" aria-label="ระดับเสียง"/.test(html) && /ctx\.createDynamicsCompressor\(\)/.test(html) && /V\.volume = \(v\) => out\.gain\.setTargetAtTime\(themeTabVolume\(v\)/.test(html)
+      && /if \(voice\) voice\.volume\(opt\.vol\);/.test(html) && /g\.connect\(out\); o\.start\(at\)/.test(html),
+      "the tab's volume slider (ระดับเสียง) sets its voice's out, which its guitar, room and metronome all go through; the chain has a compressor");
+    // the hub bar's music button (user 2026-10-23): by the logo, muted on every visit (nothing starts it but a click or the slider), 30 % the
+    // first time, the volume remembered; a hover / focus slider; the music and the tab never play together; hidden page = paused
+    const hubMusic = (html.match(/<a href="#" class="brand"[^\n]*\r?\n\s*<div class="hub-music" id="hubMusic">[^\n]*<\/div><\/div>/) || [""])[0];
+    ok(/<button type="button" class="hub-music-btn" aria-pressed="false" aria-label="เปิดเพลงธีม"/.test(hubMusic) && /class="hub-music-range" min="0" max="100" step="5" value="0" aria-label="ระดับเสียงเพลงธีม"/.test(hubMusic),
+      "the music button and its slider sit right after the logo in the hub bar, muted in the markup");
+    if (kind("mountThemeMusic") === "function") {
+      const src = String(page("mountThemeMusic"));
+      ok(/vol: 30,/.test(src) && page("THEME_MUSIC_KEY") === "12t-bible-music-vol" && !/start\(\);\s*\r?\n\s*paint\(\);\s*\r?\n\s*return M;/.test(src) && /paint\(\);\s*\r?\n\s*return M;/.test(src)
+        && /detail: "music"/.test(src) && /if \(e\.detail !== "music"\)\{ M\.resume = false; stop\(\); \}/.test(src) && /if \(document\.hidden\)\{ if \(M\.on\)\{ stop\(\); M\.resume = true; \} \} else if \(M\.resume\)/.test(src)
+        && /\.hub-music:hover \.hub-music-pop, \.hub-music:focus-within \.hub-music-pop, \.hub-music\.is-open \.hub-music-pop\{/.test(html) && /^mountThemeMusic\(\$\("#hubMusic"\)\);/m.test(html)
+        && /document\.addEventListener\("theme-audio", \(e\) => \{ if \(e\.detail !== "tab"\) pause\(\); \}\);/.test(html) && /detail: "tab" \}\)\);/.test(html),
+        "mountThemeMusic: 30 % by default (12t-bible-music-vol), muted until clicked, a hover / focus / tap slider, never playing with the tab player, paused while the page is hidden");
+      const M = page("mountThemeMusic")(makeEl());   // on stubs: mounts muted, nothing scheduled
+      ok(M && M.on === false && M.vol === 30 && M.voice === null, "mountThemeMusic mounts muted at 30 % with no sound made");
+    } else ok(false, "mountThemeMusic is missing");
+    ok(/Math\.sin\(h \* Math\.PI \* 0\.3\)/.test(String(page("themeTabPluck"))) && /shelf\.type = "highshelf"/.test(html) && /wet\.gain\.value = 0\.3;/.test(html) && /Math\.round\(sr \* 2\.5\), pre = /.test(html),
+      "the harp / music box voice (sine partials of a string plucked 30 % along; user 2026-10-23, preset 5) and its room (2.5 s, wet 0.3) are kept");
+    const tool = page("TOOLS").find((t) => t.id === "theme-tab"), gi = page("GEAR_INDEX");
+    ok(tool && tool.category === "Music" && page("LAUNCH_CATEGORY").Music === "ดนตรี" && tool.title === "แท็บกีตาร์เพลงธีม" && same(tool.fact(), [45, "ห้อง"]) && tool.collage === "tabRun" && !tool.art,
+      "TOOLS has theme-tab (แท็บกีตาร์เพลงธีม, category Music = ดนตรี, fact 45 ห้อง, menu art LN_ART.tabRun)");
+    // the menu art (user 2026-10-23: running guitar tablature): the stage runs two copies (white digits, gold digits clipped to the playhead)
+    // at the song's tempo, 8 bars of 520 units in 19.2 s; the thumb is a still; ids carry the mode
+    try {
+      const art = page("LN_ART"), st = art.tabRun("stage"), th = art.tabRun("thumb");
+      ok((st.match(/class="ln-tabrun-move" style="--run:-4160px;animation-duration:19\.2s"/g) || []).length === 2 && !/ln-tabrun-move/.test(th) && /id="stmask"/.test(st) && /id="ttmask"/.test(th)
+        && /clip-path="url\(#stlens\)"/.test(st) && /@keyframes lnTabRun\{to\{transform:translateX\(var\(--run\)\)\}\}/.test(html),
+        "LN_ART.tabRun: the stage runs two synced copies (white, and gold under the playhead) 4160 units in 19.2 s; the thumb is still; mask / clip ids carry the mode");
+    } catch (e) { ok(false, "LN_ART.tabRun threw: " + e.message); }
+    ok(/classList\.toggle\("tool-tab", tool\.id === "theme-tab"\)/.test(html) && /html\.tool-tab \.stage\{/.test(html), "showTool sets html.tool-tab for the tab's wide stage");
+    const panel = (html.match(/\n\s*panel: \[([^\]]*)\]/) || [])[1] || "", raised = (html.match(/\n\s*raised: \[([^\]]*)\]/) || [])[1] || "";
+    ok([".tt-bar", ".tt-sheet", ".tt-fret"].every((x) => panel.includes(JSON.stringify(x))) && raised.includes('".tt-btn:not(.is-on):not(.tt-play)"'), "the tab's panels and buttons are in THEME_SURFACES");
+    // it mounts on stubs (no width yet, no storage) and builds its nine chord diagrams
+    try {
+      const root = makeEl(); page("mountThemeTab")(root);
+      ok((root.innerHTML.match(/class="tt-chord"/g) || []).length === 9 && root._themeTab && typeof root._themeTab.play === "function", "mountThemeTab builds the page with 9 chord diagrams and exposes _themeTab");
+    } catch (e) { ok(false, "mountThemeTab threw on stubs: " + e.message); }
+  }
+  console.log(`Verified ${n} guitar tab checks (the PDF pin, bars, rhythm marks, slurs, shapes, capo pitches, synth tuning, tool wiring).`);
 }
 // Guide manager page (user 2026-10-20): the same page runs on this PC (scripts/add_guide.js serves it) and on the phone (GitHub Pages).
 // Its class faces are a copy of CLASS_HERO_ICONS (the phone never loads the 27 MB assets.js), so a repainted portrait must be copied there too.
