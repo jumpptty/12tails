@@ -5165,6 +5165,7 @@
   .sk-dmg-group-list{display:flex; flex-direction:column; gap:10px; width:100%}
   .sk-dmg-group{display:flex; flex-direction:column; align-items:center; gap:2px}
   .sk-dmg-formula .sk-dmg-group{align-items:flex-start}
+  .sk-dmg-mode-label{flex:none; padding:1px 8px; border:1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius:999px; color:var(--gold); font-size:11px; font-weight:600; line-height:1.4}   /* a damage mode's row (dmgModeSkill) */
   .sk-dmg-group-label{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; margin:0}
   .sk-dmg-group-formula{font-size:22px}
   .sk-stat-value-sm{font-size:20px}
@@ -17735,6 +17736,14 @@ function mountSkillCooldownLookup(root){
     const p = Math.fround(Math.fround(m) * val);
     return g.effectModRound === "trunc" ? Math.trunc(p) : Math.ceil(p);
   }
+  // One damage mode of a dmgModes card as a skill of its own (user 2026-10-23: each mode gets its own damage row): the group's damage,
+  // ATK coefficient, KO and hits, no groups. A mode with no ATK term and no depLv drops the dmgRankDep toggle (Planet Breaker's outer
+  // ring is a flat 5, so Titan Sword, which works through Gadina's ATK, does nothing there).
+  function dmgModeSkill(skill, g){
+    const hc = g.hitCount, rankDep = (g.atkCoeff || 0) > 0 || /\bdepLv\b/.test(String(g.dmg));
+    return Object.assign({}, skill, { dmg: g.dmg, atkCoeff: g.atkCoeff, ko: g.ko !== undefined ? g.ko : skill.ko, hitCount: typeof hc === "function" ? hc : () => hc,
+      dmgGroups: undefined, dmgModes: undefined, dmgModeLabel: g.label, dmgRankDep: rankDep ? skill.dmgRankDep : undefined });
+  }
   function resolveGroupHitCount(skill, g){
     if (g.variant && (g.variant === "alt") !== groupVariantIsAlt(skill, getSkillRank(skill))) return 0;
     return resolveGroupValue(skill, g, "hitCount");
@@ -21199,6 +21208,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const heroPips = selected.maxRank > 1 ? pipsHtml(Math.min(8, selected.maxRank), rank, "hero|" + selected.id, "sk-dep-pips sk-hero-pips") : "";
     const heroIconHtml = `<div class="sk-hero-icon-wrap">${heroIconInner}${casterBadge}${heroPips}</div>`;
 
+    // The damage row for one skill object (the card, or one of its modes: see below).
+    const buildDmgBlock = (activeSelected) => {
     let dmgBlock = "";
     if (activeSelected.dmg || activeSelected.dmgGroups){
       const dmgFormula = renderDmgFormula(activeSelected, rank);
@@ -21403,6 +21414,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           <div class="sk-dmg-head">
             <div class="sk-dmg-label-row">
               <p class="sk-stat-label">${activeSelected.isHeal ? "สูตรฮีล" : (activeSelected.isHate ? "สูตรค่า Hate" : "สูตรดาเมจ")}</p>
+              ${activeSelected.dmgModeLabel ? `<span class="sk-dmg-mode-label">${activeSelected.dmgModeLabel}</span>` : ""}
               ${koBadge}
             </div>
             <div class="sk-dmg-toggles">${dmgToggles}</div>
@@ -21919,27 +21931,6 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           // a 2nd time here would double-count, unlike hitMod/Final
           // Multiplier which never touch the pool automatically at all.
           const typhoonHp = dmgFlagDepOn && activeSelected.dmgFlagDep && activeSelected.dmgFlagDep.hp;
-          if (activeSelected.dmgModes && activeSelected.dmgGroups){
-            finalDamageBody = `
-              <div class="sk-dmg-group-list">${activeSelected.dmgGroups.map((g, gIdx) => {
-                const gFinal = finalRangeForRange(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g), g));
-                const gHitCount = resolveGroupHitCount(activeSelected, g);
-                const gTotal = [gFinal[0] * gHitCount, gFinal[1] * gHitCount];
-                const gLabel = typeof g.label === "function" ? g.label(rank) : g.label;
-                const gSimTitle = gHitCount > 1 ? `Test ${gHitCount} hits` : "Test 1 hit";
-                return `
-                  <div class="sk-dmg-group">
-                    <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
-                      <p class="sk-dmg-group-label">${gLabel}</p>
-                      ${simulateBtnHtml({ role: "simulate-group", groupIndex: gIdx, small: true, title: gSimTitle, count: gHitCount > 1 ? String(gHitCount) : "" })}
-                    </div>
-                    <div class="sk-stat-value sk-stat-value-sm${hueCls(groupHue(g))}">${fmtFinalRange(gTotal)}</div>
-                  </div>
-                `;
-              }).join("")}</div>
-            `;
-            simulateBtn = "";
-          } else {
           let finalRange = activeSelected.dmgGroups
             ? activeSelected.dmgGroups.reduce((acc, g) => {
                 const gFinal = finalRangeForRange(calcRangeFor(g.dmg, resolveGroupAtkCoeff(activeSelected, g), g));
@@ -22050,7 +22041,6 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
             return parts.length ? `<p class="sk-splash-line" data-role="splash-line">${sl.label}: ${parts.join(" · ")}</p>` : "";
           })();
           finalDamageBody = `<div class="sk-stat-value${hueCls(cardHue())}">${finalRangeHtml}</div>${finalNote}${splashHtml}`;
-          }
         }
         // Header reuses .sk-dmg-head/.sk-dmg-label-row/.sk-dmg-toggles
         // verbatim, "Mods" occupying the toggles slot (2026-08-19,
@@ -22193,6 +22183,14 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       // since there's nothing else sharing the row here.
       dmgBlock = "";
     }
+    return dmgBlock;
+    };
+    // Damage modes are places to stand, never both in one hit (user 2026-10-23: Planet Breaker's inner / outer ring; the outer list is
+    // Math.subtractArray(12 m, inner), Gadina.cs): one complete row per mode, each with its own formula, raw, final and Test bar, whose
+    // Test rolls that group of the card (simulate-group).
+    const dmgBlock = activeSelected.dmgModes && activeSelected.dmgGroups
+      ? activeSelected.dmgGroups.map((g, i) => buildDmgBlock(dmgModeSkill(activeSelected, g)).replace('data-role="simulate-hit"', `data-role="simulate-group" data-group-index="${i}"`)).join("")
+      : buildDmgBlock(activeSelected);
 
     let compatBlock = "";
     const activeCompat = (activeSelected && activeSelected.compatSkills) || selected.compatSkills;
@@ -33060,6 +33058,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T15:02:10.973Z","feat(bible): Planet Breaker shows its inner and outer ring as two separate damage rows, each with its own formula, raw, final and Test bar"],
     ["2026-10-23T14:30:31.402Z","feat(bible): Knight of the Deep tests its own hold attack (moved off 12th Kingdom Knight's second mode); the ☕ tabs are icon cards with the donor count in the heart, the names line leaves the pop-up, and the QR and slip icons hop twice each when the thanks line opens the list; light balls read summon stats right mid-change (Heavy Built flew the wrong way); guide view counts refreshed"],
     ["2026-10-23T14:05:39.396Z","feat(bible): Knight of the Deep tests its own hold attack (moved off 12th Kingdom Knight's second mode); the ☕ tabs are icon cards with the donor count in the heart, the names line leaves the pop-up, and the QR and slip icons hop twice each when the thanks line opens the list"],
     ["2026-10-23T13:31:31.235Z","fix(bible): stat glows follow every dep toggle (No Chance LCK on TTO and five more); the guitar tab plays at 67.5 and keeps playing in the background; the top-bar swap rises; Test bar corner, gallery filter labels and phone menu arrows tidied"],

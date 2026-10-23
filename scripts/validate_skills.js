@@ -5115,6 +5115,45 @@ function fontProblems(html) {
     }
   }
 }
+// Damage modes (user 2026-10-23): a dmgModes card (Planet Breaker's inner / outer ring, never both in one pulse) shows one complete damage row
+// per mode, labelled with the mode, whose Test bar rolls that group (simulate-group); every Test of a mode lands inside its own row's Final.
+// (The range-vs-simulator sweep skips dmgModes cards, so this is their check.)
+{
+  const fail = (m) => { console.error("[MODE ROWS ERROR] " + m); errorCount++; };
+  const modeCards = SKILLS.filter((s) => s.dmgModes && s.dmgGroups);
+  const nums = (t) => (String(t).replace(/<span class="sk-range-sep">~<\/span>/g, "~").replace(/<[^>]+>/g, "").replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
+  let rowsChecked = 0;
+  modeCards.forEach((card) => ["og", "tot", "tto"].forEach((srv) => {
+    const over = srv === "og" ? null : card.servers && card.servers[srv];
+    if (srv !== "og" && !over) return;
+    const sk = over ? Object.assign({}, card, over) : card, other = SKILLS.find((s) => s.class === card.class && s.id !== card.id);
+    sandbox._setServer(srv);
+    sandbox._selectSkill(other); sandbox._selectSkill(card);
+    const rows = sandbox._getRenderedHeroHtml().split('<div class="sk-dmg-row">').slice(1);
+    const rank = card.maxRank;
+    if (rows.length !== sk.dmgGroups.length) { fail(`${card.id}@${srv}: ${rows.length} damage rows for ${sk.dmgGroups.length} modes`); return; }
+    rows.forEach((row, gi) => {
+      const g = sk.dmgGroups[gi], label = typeof g.label === "function" ? g.label(rank) : g.label;
+      const fin = (row.match(/sk-dmg-final[\s\S]*?<div class="sk-stat-value[^"]*">([\s\S]*?)<\/div>/) || [])[1];
+      const [lo, hi] = (() => { const v = nums(fin); return [v[0], v.length > 1 ? v[1] : v[0]]; })();
+      if (!row.includes(`<span class="sk-dmg-mode-label">${label}</span>`)) fail(`${card.id}@${srv} row ${gi + 1}: no mode label "${label}"`);
+      if (!row.includes(`data-role="simulate-group" data-group-index="${gi}"`) || row.includes('data-role="simulate-hit"')) fail(`${card.id}@${srv} row ${gi + 1}: its Test bar must roll group ${gi} (simulate-group)`);
+      if (!(lo >= 0) || !(hi >= lo)) { fail(`${card.id}@${srv} row ${gi + 1}: no Final range read (${JSON.stringify(fin)})`); return; }
+      const hc = typeof g.hitCount === "function" ? g.hitCount(rank) : g.hitCount;
+      let mn = Infinity, mx = -Infinity;
+      for (let n = 0; n < 600; n++) {
+        let sum = 0;
+        for (let h = 0; h < hc; h++) sum += sandbox._rollOneHit(sk, rank, h, false, gi);
+        mn = Math.min(mn, sum); mx = Math.max(mx, sum);
+      }
+      if (mn < lo || mx > hi) fail(`${card.id}@${srv} row ${gi + 1} (${label}): Test totals ${mn}~${mx} fall outside the row's Final ${lo}~${hi}`);
+      rowsChecked++;
+    });
+  }));
+  sandbox._setServer("og");
+  if (!modeCards.length) console.log("No dmgModes cards to check.");
+  else console.log(`Verified ${rowsChecked} damage-mode rows (one per mode, labelled, own Test, every Test total inside its row's Final).`);
+}
 // No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
 // prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).
 {
