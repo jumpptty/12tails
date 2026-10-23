@@ -1146,17 +1146,13 @@
     .sr-rec-lbl, .sr-rec-foot { font-size: 12.5px; }
   }
   /* ---- header ---- */
+  /* no line under the hub bar on any page (user 2026-10-23: "remove the gold thin line from every page"; the menu went without it on
+     2026-10-18): the gold ::after that drew itself out from the middle and the --line border under it are gone */
   .hub-bar{
     display:flex; align-items:center; justify-content:space-between; gap:16px;
     flex-wrap:nowrap; position:relative;
-    padding:18px 24px; border-bottom:1px solid var(--line);
+    padding:18px 24px;
   }
-  .hub-bar::after{
-    content:""; position:absolute; left:0; right:0; bottom:-1px; height:1px;
-    background:var(--gold); transform:scaleX(0); transform-origin:50% 50%;
-    animation:unseal .6s .1s cubic-bezier(.2,.7,.2,1) forwards;
-  }
-  @keyframes unseal{to{transform:scaleX(1)}}
   /* logo (user 2026-10-18, option 06 "Tail Twelve" of 12 mocks): "12" in one gold stroke, the 2 flicking out into a tail; the text is
      "Spine" (of 10 stacked mocks): a gold spine like a book's, then TAILS / BIBLE the same width, each line trimmed to its cap height so
      the stack runs from the top of the 1 to the base of the 12. Sized in em, so the phone rules below only change font-size. */
@@ -1180,9 +1176,12 @@
   .hub-note-link:hover b{text-shadow:0 0 8px var(--gold), 0 0 20px rgba(212,175,55,.8)}
   .hub-note{
     margin:0; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    text-align:center; font-size:10.5px; color:var(--muted); opacity:.65;
+    text-align:center; font-size:12.5px; color:var(--muted);
     font-family:'Prompt',sans-serif; white-space:nowrap;
   }
+  /* the Discord note is as big as the menu's thanks line that takes its place there (user 2026-10-23; it was 10.5 px), big-screen steps too, and no longer dimmed (it was at .65 opacity) */
+  @media (min-width:1800px) and (min-height:1100px){ .hub-note{font-size:15px} }
+  @media (min-width:2400px) and (min-height:1300px){ .hub-note{font-size:17px} }
   .crumb{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
   .crumb-current{color:var(--gold); font-weight:600}
   .crumb-short{display:none}
@@ -7238,8 +7237,6 @@
      every 7 s (paused while the mouse is over the stage or the strip). Phones (<= 900 px): the stage is a card with story bars, swipe and ‹ ›,
      and the filmstrip becomes a 2-column grid of every tool. html.hub-menu (set in showMenu) gives the menu the whole window. */
   html.hub-menu .stage{max-width:none; padding:0; zoom:1}
-  html.hub-menu .hub-bar{border-bottom-color:transparent}   /* no divider over the menu's stage (user 2026-10-18) */
-  html.hub-menu .hub-bar::after{display:none}
   .ln{--acc:var(--gold); --ln-hi:color-mix(in srgb, var(--gold) 62%, #fff); --ln-max:calc((100dvh - var(--hub-h, 64px)) * 2.1); position:relative; height:calc(100dvh - var(--hub-h, 64px)); min-height:500px; display:flex; flex-direction:column; overflow:hidden;
     font-family:'Prompt',sans-serif}
   /* nothing on the menu can be selected (user 2026-10-19): Ctrl+A, a double-click or a drag across the skill wall painted the browser's blue selection
@@ -7447,17 +7444,23 @@
   .ln-g.is-out .ln-gptl{opacity:0; transform:translateX(-24px)}
   .ln-gsim{position:absolute; left:-9999px; top:0; width:1px; height:1px; overflow:hidden}
   /* filmstrip */
-  /* ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the ☕ pop-up's names ticker (.donate-thanks) behind a label. Desktop (≥ 901 px): .hub-thanks at
-     the very top, in the hub bar's middle in place of the Discord note while the menu shows (the note is back on tool pages); phones: .ln-thanks
-     between the hub bar and the stage card. Two-class selectors so a running ticker's display:flex never shows the copy that should be hidden. */
+  /* ขอบคุณผู้ร่วมสนับสนุน (user 2026-10-23): the ☕ pop-up's names ticker (.donate-thanks) behind a gold label. Desktop (≥ 901 px): .hub-thanks at the
+     very top, in the hub bar's middle, taking turns with the Discord note on every page: a 20 s cycle, the thanks 70 % (from the start) and the
+     note 30 %, 0.6 s cross-fades, the hidden one not clickable (visibility), both paused while either is hovered or focused; phones: .ln-thanks
+     on the menu between the hub bar and the stage card. Two-class selectors so a running ticker's display:flex never shows the copy that should
+     be hidden. Without donors (no html.has-thanks) the note stays still. */
   .ln-thanks-label{flex:none; margin-right:8px; color:var(--gold); font-weight:500}   /* gold (user 2026-10-23) */
   .donate-thanks.ln-thanks{align-self:center; max-width:calc(100% - 32px); margin:0 16px 10px; font-size:12.5px}
   .donate-thanks.hub-thanks{display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); margin:0; font-size:12.5px; max-width:min(620px, 44vw)}
   @media (min-width:901px){
     .donate-thanks.ln-thanks{display:none}
-    html.hub-menu.has-thanks .hub-note{display:none}
-    html.hub-menu.has-thanks .donate-thanks.hub-thanks:not([hidden]){display:inline-flex}
+    html:not(.thanks-ready) .hub-note{visibility:hidden}   /* the thanks line comes first on a reload (user 2026-10-23): no flash of the note before the script decides */
+    html.has-thanks .donate-thanks.hub-thanks:not([hidden]){display:inline-flex; animation:hubThanksTurn 20s linear infinite}
+    html.has-thanks .hub-note{animation:hubNoteTurn 20s linear infinite}
+    html.has-thanks .hub-bar:has(.hub-note:hover, .hub-note:focus-within, .hub-thanks:hover, .hub-thanks:focus-visible) :is(.hub-note, .hub-thanks){animation-play-state:paused}
   }
+  @keyframes hubThanksTurn{0%, 67%{opacity:1; visibility:visible} 70%, 97%{opacity:0; visibility:hidden} 100%{opacity:1; visibility:visible}}
+  @keyframes hubNoteTurn{0%, 67%{opacity:0; visibility:hidden} 70%, 97%{opacity:1; visibility:visible} 100%{opacity:0; visibility:hidden}}
   @media (min-width:1800px) and (min-height:1100px){ .donate-thanks.hub-thanks{font-size:15px} }
   @media (min-width:2400px) and (min-height:1300px){ .donate-thanks.hub-thanks{font-size:17px} }
   .ln-stripbar{position:relative; z-index:4; flex:none; display:flex; align-items:flex-end; justify-content:flex-end; gap:18px; min-width:0; padding:0 28px 26px}
@@ -28128,12 +28131,12 @@ function donateThanksFit(ui){
   ui.box.classList.add("is-running");
 }
 // ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the ☕ pop-up's names line (renderDonorThanks, biggest total first; donateThanksFit runs it
-// as a ticker when the names do not fit) behind the label, in two copies. Desktop: .hub-thanks at the very top, in the hub bar's middle in place
-// of the Discord note while the menu shows (the note is back on every tool page); the user tried four mocks, then the band by the filmstrip,
-// and chose this. Phones: .ln-thanks between the hub bar and the stage card. CSS picks the copy; each fits whenever it shows or the window
+// as a ticker when the names do not fit) behind the label, in two copies. Desktop: .hub-thanks at the very top, in the hub bar's middle,
+// taking turns with the Discord note on every page (70 / 30, CSS; the user tried four mocks, then the band by the filmstrip, then the menu
+// only, and chose this). Phones: .ln-thanks on the menu between the hub bar and the stage card. CSS picks the copy; each fits whenever it shows or the window
 // width changes. A click opens ☕ on รายชื่อผู้สนับสนุน. Without donors neither shows and the note stays (html.has-thanks).
 function mountMenuThanks(root){
-  if (!root) return null;
+  if (!root){ document.documentElement.classList.add("thanks-ready"); return null; }
   const make = (cls, parent, before) => {
     const box = document.createElement("button");
     box.type = "button"; box.className = "donate-thanks " + cls; box.title = "ดูรายชื่อผู้สนับสนุนทั้งหมด";
@@ -28148,6 +28151,7 @@ function mountMenuThanks(root){
   const uis = [make("ln-thanks", root, root.firstChild)];
   if (hub) uis.push(make("hub-thanks", hub, note ? note.nextSibling : null));
   document.documentElement.classList.toggle("has-thanks", !uis[0].box.hidden);
+  document.documentElement.classList.add("thanks-ready");   // in the same task, so both turns start together, the thanks first
   const refit = (ui) => { const key = ui.box.offsetWidth ? window.innerWidth : 0; if (key && key !== ui.key) donateThanksFit(ui); ui.key = key; };
   const all = () => uis.forEach(refit);
   window.addEventListener("resize", all);
@@ -33001,6 +33005,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T12:46:32.314Z","style(bible): no line under the top bar on any page; the Discord note is larger, undimmed and takes turns with the donor thanks (70/30, thanks first) on every page"],
     ["2026-10-23T12:14:47.048Z","feat(bible): แท็บกีตาร์เพลงธีม, a Guitar Pro style player for the 12 Tails main theme (jumpfingerstyle's tab note for note), a theme music button by the logo, and the donors thanked at the top of the menu"],
     ["2026-10-23T09:13:00.767Z","feat(bible): the ☕ pop-up honours donors: their names scroll under the thank-you line (biggest total first), the list tab shows the count and lists them newest first in pages"],
     ["2026-10-23T08:30:15.162Z","style(bible): the Final damage box reads 5,112 ~ 5,964, shows its hit count as a tab on top and Test as a gold bar along the bottom"],

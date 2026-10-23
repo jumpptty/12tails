@@ -3927,13 +3927,18 @@ async function donateChildTests(env) {
     && /donateThanksUi\.box\.addEventListener\("click", \(\) => \{ const at = donateTabs\.length - 1; donateShowTab\(donateTabs, donatePanels, at\);/.test(html)
     && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\)\{ donateThanksFit\(donateThanksUi\);/.test(html),
     "the names line must be filled on the first open (renderDonorThanks), fitted on every open and resize (donateThanksFit), and open the รายชื่อผู้สนับสนุน tab when clicked");
-  // ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the same names line behind a label, mounted right after the launcher, in two copies:
-  // desktop .hub-thanks at the very top in place of the Discord note while the menu shows (the note is back on tool pages); phones .ln-thanks
-  // between the hub bar and the card; no donors = the note stays (html.has-thanks); a click opens ☕ on the list tab
-  ok(/^mountMenuThanks\(\$\("#launch"\)\);/m.test(html) && /function mountMenuThanks\(root\)\{[\s\S]*?ขอบคุณผู้ร่วมสนับสนุน[\s\S]*?renderDonorThanks\(ui\);[\s\S]*?donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\);[\s\S]*?make\("ln-thanks", root, root\.firstChild\)[\s\S]*?make\("hub-thanks", hub, note \? note\.nextSibling : null\)[\s\S]*?classList\.toggle\("has-thanks", !uis\[0\]\.box\.hidden\)[\s\S]*?\n\}/.test(html)
-    && /@media \(min-width:901px\)\{\r?\n\s*\.donate-thanks\.ln-thanks\{display:none\}\r?\n\s*html\.hub-menu\.has-thanks \.hub-note\{display:none\}\r?\n\s*html\.hub-menu\.has-thanks \.donate-thanks\.hub-thanks:not\(\[hidden\]\)\{display:inline-flex\}/.test(html)
+  // ขอบคุณผู้ร่วมสนับสนุน (user 2026-10-23): the same names line behind a label, mounted right after the launcher, in two copies: desktop
+  // .hub-thanks at the very top, taking turns with the Discord note on every page (20 s: thanks 70 % first, note 30 %, paused on hover / focus;
+  // the note hidden until the script decides, so a reload never flashes it first); phones .ln-thanks on the menu under the hub bar; no donors =
+  // the note stays still (html.has-thanks off); a click opens ☕ on the list tab
+  ok(/^mountMenuThanks\(\$\("#launch"\)\);/m.test(html) && /function mountMenuThanks\(root\)\{[\s\S]*?ขอบคุณผู้ร่วมสนับสนุน[\s\S]*?renderDonorThanks\(ui\);[\s\S]*?donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\);[\s\S]*?make\("ln-thanks", root, root\.firstChild\)[\s\S]*?make\("hub-thanks", hub, note \? note\.nextSibling : null\)[\s\S]*?classList\.toggle\("has-thanks", !uis\[0\]\.box\.hidden\);\r?\n\s*document\.documentElement\.classList\.add\("thanks-ready"\);[\s\S]*?\n\}/.test(html)
+    && /if \(!root\)\{ document\.documentElement\.classList\.add\("thanks-ready"\); return null; \}/.test(html)
+    && /@media \(min-width:901px\)\{\r?\n\s*\.donate-thanks\.ln-thanks\{display:none\}\r?\n\s*html:not\(\.thanks-ready\) \.hub-note\{visibility:hidden\}[^\n]*\r?\n\s*html\.has-thanks \.donate-thanks\.hub-thanks:not\(\[hidden\]\)\{display:inline-flex; animation:hubThanksTurn 20s linear infinite\}\r?\n\s*html\.has-thanks \.hub-note\{animation:hubNoteTurn 20s linear infinite\}/.test(html)
+    && /@keyframes hubThanksTurn\{0%, 67%\{opacity:1; visibility:visible\} 70%, 97%\{opacity:0; visibility:hidden\} 100%\{opacity:1; visibility:visible\}\}/.test(html)
+    && /@keyframes hubNoteTurn\{0%, 67%\{opacity:0; visibility:hidden\} 70%, 97%\{opacity:1; visibility:visible\} 100%\{opacity:0; visibility:hidden\}\}/.test(html)
+    && /:has\(\.hub-note:hover, \.hub-note:focus-within, \.hub-thanks:hover, \.hub-thanks:focus-visible\) :is\(\.hub-note, \.hub-thanks\)\{animation-play-state:paused\}/.test(html)
     && /\.donate-thanks\.hub-thanks\{display:none; position:absolute; left:50%; top:50%;/.test(html),
-    "the menu's ขอบคุณผู้ร่วมสนับสนุน line (mountMenuThanks after mountLauncher): at the very top in place of the Discord note on the desktop menu, under the hub bar on phones, opening the list tab");
+    "the ขอบคุณผู้ร่วมสนับสนุน line (mountMenuThanks after mountLauncher): at the very top taking turns with the Discord note on every desktop page (thanks first, 70 / 30, paused on hover), under the hub bar on phones, opening the list tab");
   // the list tab's pages (user 2026-10-23): a hidden ‹ n / N › pager under the list; laid out whenever the tab shows (click, arrow keys, the
   // names line) and on resize; every open starts on the newest page
   ok(/<ol class="donate-list" id="donateList"><\/ol>\s*<div class="donate-pager" id="donatePager" hidden><button type="button" class="donate-pager-btn" id="btnDonatePrev" aria-label="หน้าก่อน">‹<\/button><span class="donate-pager-num" id="donatePagerNum" aria-live="polite"><\/span><button type="button" class="donate-pager-btn" id="btnDonateNext" aria-label="หน้าถัดไป">›<\/button><\/div>\s*<\/div>/.test(modal),
@@ -5031,6 +5036,15 @@ function fontProblems(html) {
   const bad = fontProblems(html);
   for (const b of bad) { console.error(`[FONT ERROR] two fonts only: Prompt for text, 'JetBrains Mono','Prompt',monospace for numbers (12t_projects/bible/CLAUDE.md §2): ${b.slice(0, 160)}`); errorCount++; }
   if (!bad.length) console.log("Verified two fonts only (Prompt; JetBrains Mono with Prompt behind it).");
+}
+// The hub bar (user 2026-10-23): no line under it on any page (no bottom border, no gold ::after), and the Discord note as big as the menu's
+// thanks line that replaces it there (12.5 px, 15 / 17 px at the big-screen steps)
+{
+  const fail = (m) => { console.error("[HUB BAR ERROR] " + m); errorCount++; };
+  const bar = (html.match(/\n  \.hub-bar\{[^}]*\}/) || [""])[0], note = (html.match(/\n  \.hub-note\{[^}]*\}/) || [""])[0];
+  if (!bar || /border-bottom/.test(bar) || /\.hub-bar::after/.test(html) || /hub-bar\{[^}]*border-bottom/.test(html)) fail("the hub bar must have no bottom border and no ::after line on any page (user 2026-10-23)");
+  else if (!/font-size:12\.5px;/.test(note) || /opacity/.test(note) || !/\{ \.hub-note\{font-size:15px\} \}/.test(html) || !/\{ \.hub-note\{font-size:17px\} \}/.test(html)) fail("the Discord note must be 12.5 px (15 / 17 px on big screens), the size of the menu's thanks line, and not dimmed (no opacity)");
+  else console.log("Verified the hub bar: no divider, Discord note at the thanks line's size.");
 }
 // No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
 // prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).
