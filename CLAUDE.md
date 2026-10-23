@@ -20,7 +20,7 @@ AGENTS.md above is the source of truth; this section only maps it onto Claude Co
 
 ```sh
 node scripts/validate_skills.js                         # the only "test suite": formulas, icons, rank arrays, field loss, doc backlog (no changelog check since 2026-10-20; the entry is still added by habit)
-node scripts/validate_skills.js --full                  # also runs the slow range-vs-simulator check (+~35 s); skipped by default unless the index.html diff touches damage code. Run it before every `git push`
+node scripts/validate_skills.js --full                  # also runs the slow range-vs-simulator check (+~35 s); skipped by default unless the index.html diff touches damage code. Run it before every `git push` (except the guide manager's own publishes of guides and donors, which run the plain validator: they never touch damage code, user 2026-10-23)
 node scripts/validate_skills.js --list-doc-backlog      # also name every app skill missing from its <class>-skill-reference.md
 node scripts/validate_skills.js --index <copy>/index.html   # validate another copy of the page (its assets.js beside it)
 
@@ -34,7 +34,7 @@ python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode c
 node scripts/guide_code.js decode <code | file>                # turn a submitted class guide short code (TG3, TG2. or 12TG1.) into the JSON object to embed (also: encode <json> -> TG3, --selftest)
 node scripts/guide_draft.js layout <class> [server]            # a class's skill-sim rows with cell ids (also: build <draft.json> [out.json] -> checked guide + TG3 code, --selftest)
 node scripts/guide_views.js                                     # refresh CLASS_GUIDE_VIEWS (guide readers for ad-blocked browsers) from GoatCounter; by hand only, NOT before commits since 2026-10-20 (user: the live API does the work) (--dry-run: print only)
-node scripts/add_guide.js                                       # class guide manager page (queue adds / replaces / removes, publish the batch in one go: changelog, --full validator, one commit, push; undo reverses the last batch); double-click scripts/add_guide.cmd. The same page runs on the phone from GitHub Pages (12t_projects/guide-manager/, CLASS-GUIDES.md)
+node scripts/add_guide.js                                       # class guide manager page (queue adds / replaces / removes, publish the batch in one go: changelog, validator (plain, ~11 s), one commit, push; undo reverses the last batch); double-click scripts/add_guide.cmd. The same page runs on the phone from GitHub Pages (12t_projects/guide-manager/, CLASS-GUIDES.md)
 node scripts/add_guide.js add <code> | replace <N> <code> | delete <N>  [--dry-run | --no-push | --yes]   # the same pipeline on the command line
 node scripts/add_guide.js batch <request.json> --stage git|edit|check|commit|push [--dry-run]   # one stage, for .github/workflows/guide-manager.yml (the phone)
 node scripts/add_guide.js --selftest                            # the pipeline, batch stages and undo-from-commit on throwaway repos

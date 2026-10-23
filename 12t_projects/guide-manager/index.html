@@ -824,7 +824,7 @@ async function runCheck(){
 function stepRow(key, text, st){
   let li = document.querySelector('[data-step="' + key + '"]');
   if (!li){ li = document.createElement("li"); li.dataset.step = key; li.innerHTML = '<span class="dot"></span><span class="tx"></span><span class="t"></span>'; $("#steps").appendChild(li); }
-  li.className = st; li.querySelector(".tx").textContent = text + (key === "check" && st === "run" ? " (ประมาณ 1 นาที)" : "");
+  li.className = st; li.querySelector(".tx").textContent = text + (key === "check" && st === "run" ? " (ประมาณ 20 วินาที)" : "");
   li.querySelector(".dot").textContent = st === "ok" ? "✓" : st === "fail" ? "✕" : st === "warn" ? "!" : "";
   clearInterval(timer);
   if (st === "run"){ const t0 = Date.now(), el = li.querySelector(".t"); timer = setInterval(() => el.textContent = Math.round((Date.now() - t0) / 1000) + " วิ", 500); }

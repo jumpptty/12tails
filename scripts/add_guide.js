@@ -4,7 +4,7 @@
 // at start-up on every request, and the Host and Origin checked, so no web page can drive it.
 // The page queues changes (user 2026-10-20: batch, e.g. add 2, replace 2, remove 1) and publishes the whole queue at once.
 // Every publish goes through one pipeline: apply the changes in order to CLASS_GUIDES in 12t_projects/bible/index.html (one JSON object per line,
-// CLASS-GUIDES.md), prepend one changelog entry (also the commit subject), run the full validator once (it also checks
+// CLASS-GUIDES.md), prepend one changelog entry (also the commit subject), run the validator once (plain, not --full; it also checks
 // that a build is legal), then make one commit and push. Any failure before the commit puts index.html back exactly as it was, so a batch goes
 // up whole or not at all. It refuses while index.html has uncommitted work.
 // * add: the next running id. * replace: the guide keeps its id (its link and view count), everything else comes from the new code.
@@ -280,7 +280,7 @@ function validatorErrorLines(out){
 }
 async function stageCheck(ui){
   ui.step("check", "ตรวจด้วย validator", "run");
-  const c = await runNode("scripts/validate_skills.js", ["--full"]);
+  const c = await runNode("scripts/validate_skills.js", []);   // plain, not --full (user 2026-10-23): its extra damage-range check is for damage code, which guides and donors never touch
   if (c.status !== 0){
     ui.step("check", "ตรวจด้วย validator", "fail");
     const lines = validatorErrorLines(c.out);
