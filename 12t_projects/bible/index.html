@@ -1548,6 +1548,11 @@
   .donate-tab:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
   .donate-tabpanel{width:100%}
   .donate-tabpanel[hidden]{display:none}
+  /* switching tabs never moves the pop-up (user 2026-10-23): the QR panel sets the height and keeps its space, invisible, while another tab shows;
+     the slip and list panels sit on top of it and scroll inside it when longer */
+  .donate-panels{position:relative; width:100%; min-height:300px}
+  #donatePanelQr[hidden]{display:block; visibility:hidden}
+  #donatePanelSlip, #donatePanelList{position:absolute; inset:0 0 auto 0; max-height:100%; overflow-y:auto; overscroll-behavior:contain}
   .donate-form-box, .donate-list-box{width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; text-align:left}
   .donate-intro{margin:0; padding:12px 14px 8px; color:var(--gold); font-weight:600; font-size:14px}
   .donate-form{display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:2px 14px 12px}
@@ -7651,14 +7656,14 @@
     </div>
     <div class="donate-body">
       <p class="donate-msg">
-        ร่วมสนับสนุนค่าพัฒนา <strong>12 Tails Bible</strong> และค่าเซิร์ฟเวอร์ในอนาคต ขอบคุณทุกการสนับสนุนครับ 🙏<br>
-        ตรวจพบข้อมูลผิดพลาด แจ้ง Discord : <a class="donate-copy" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">jumpptty</a>
+        ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา <strong>12 Tails Bible</strong> ขอบคุณทุกการสนับสนุนครับ 🙏
       </p>
       <div class="donate-tabs" role="tablist" aria-label="สนับสนุน">
         <button type="button" class="donate-tab" role="tab" id="donateTabQr" aria-controls="donatePanelQr" aria-selected="true" tabindex="0">QR โอนเงิน</button>
         <button type="button" class="donate-tab" role="tab" id="donateTabSlip" aria-controls="donatePanelSlip" aria-selected="false" tabindex="-1">ส่งสลิป</button>
         <button type="button" class="donate-tab" role="tab" id="donateTabList" aria-controls="donatePanelList" aria-selected="false" tabindex="-1">รายชื่อผู้สนับสนุน</button>
       </div>
+      <div class="donate-panels">
       <div class="donate-tabpanel" role="tabpanel" id="donatePanelQr" aria-labelledby="donateTabQr">
         <figure class="donate-qr">
           <img id="donateQrImg" alt="QR พร้อมเพย์สำหรับสนับสนุน 12 Tails Bible" width="1080" height="1519" decoding="async">
@@ -7681,6 +7686,7 @@
       </div>
       <div class="donate-tabpanel donate-list-box" role="tabpanel" id="donatePanelList" aria-labelledby="donateTabList" hidden>
         <ol class="donate-list" id="donateList"></ol>
+      </div>
       </div>
     </div>
   </div>
@@ -32030,6 +32036,7 @@ mountLauncher($("#launch"));
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T07:14:55.216Z","fix(bible): ☕ pop-up intro is one line (ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา 12 Tails Bible) and switching tabs no longer moves the pop-up"],
     ["2026-10-23T07:04:30.647Z","fix(bible): ☕ tab arrow keys no longer switch the skill behind the pop-up"],
     ["2026-10-23T06:43:36.051Z","feat(bible): ☕ pop-up in tabs (QR, slip, donor list); donors send only name, message and slip, the owner keys amount and date in the guide manager"],
     ["2026-10-23T06:11:57.512Z","fix(bible): donation follow-ups: ignore .wrangler, scope guide mode buttons, date to the minute, doc notes"],

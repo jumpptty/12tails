@@ -3820,11 +3820,18 @@ async function donateChildTests(env) {
   }
   ok(["parseAmountInput", "donateNow", "donorCheck"].every((n) => kind(n) === "undefined"), "parseAmountInput, donateNow and donorCheck must go: the slip form has no amount or date any more");
 
-  // the pop-up's text: support for ค่าพัฒนา and future server cost, never AI; the brief's texts; no one-line (nowrap) message any more
+  // the pop-up's text: support for the development cost (user 2026-10-23: one line, no server-cost mention, no Discord line), never AI; the brief's texts;
+  // no one-line (nowrap) message any more
   const modal = (html.match(/<div class="donate-backdrop" id="donateModal"[\s\S]*?\r?\n<\/div>\r?\n/) || [""])[0], modalText = modal.replace(/<[^>]*>/g, " ");
-  ok(modal && modalText.includes("ค่าพัฒนา") && modalText.includes("ค่าเซิร์ฟเวอร์ในอนาคต") && !/\bAI\b/i.test(modalText) && !/\bAI\b/.test(modal), "the ☕ pop-up must ask for ค่าพัฒนา and ค่าเซิร์ฟเวอร์ในอนาคต and never mention AI");
-  for (const s of ["ร่วมสนับสนุนค่าพัฒนา 12 Tails Bible และค่าเซิร์ฟเวอร์ในอนาคต ขอบคุณทุกการสนับสนุนครับ 🙏", "ดาวน์โหลด QR", "อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?", "สลิปจะส่งถึงผู้ดูแลเท่านั้น ไม่เผยแพร่ ชื่อที่แสดง ข้อความ ยอด และวันที่จะขึ้นในรายชื่อหลังตรวจสลิป ชื่อที่แสดงเป็นข้อมูลสาธารณะ", "รายชื่อผู้สนับสนุน", "https://discord.com/users/333828912830480386"])
+  ok(modal && modalText.includes("ค่าใช้จ่ายในการพัฒนา") && !/\bAI\b/i.test(modalText) && !/\bAI\b/.test(modal), "the ☕ pop-up must ask for ค่าใช้จ่ายในการพัฒนา and never mention AI");
+  for (const s of ["ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา 12 Tails Bible ขอบคุณทุกการสนับสนุนครับ 🙏", "ดาวน์โหลด QR", "อยากให้ชื่อขึ้นในรายชื่อผู้สนับสนุน?", "สลิปจะส่งถึงผู้ดูแลเท่านั้น ไม่เผยแพร่ ชื่อที่แสดง ข้อความ ยอด และวันที่จะขึ้นในรายชื่อหลังตรวจสลิป ชื่อที่แสดงเป็นข้อมูลสาธารณะ", "รายชื่อผู้สนับสนุน"])
     ok(modalText.replace(/\s+/g, " ").includes(s) || modal.includes(s), "the ☕ pop-up is missing " + JSON.stringify(s));
+  // switching tabs never moves the pop-up (user 2026-10-23): the panels sit in .donate-panels, the QR panel keeps its space while hidden,
+  // the slip and list panels lie on top of it
+  ok(/<div class="donate-panels">\s*<div class="donate-tabpanel"[^>]*id="donatePanelQr"/.test(modal)
+    && /\.donate-panels\{position:relative;/.test(html) && /#donatePanelQr\[hidden\]\{display:block; visibility:hidden\}/.test(html)
+    && /#donatePanelSlip, #donatePanelList\{position:absolute;[^}]*max-height:100%;[^}]*overflow-y:auto/.test(html),
+    "the ☕ tab panels must sit in .donate-panels with the QR panel setting the height (hidden = visibility:hidden) and the other two on top of it, so switching tabs never moves the pop-up");
   // the three tabs (user 2026-10-23: the slip form and the donor list each get a tab, so they never crowd the QR card): role tab / tabpanel,
   // in this order, QR โอนเงิน selected in the markup; each panel holds its part (QR card, slip form with its intro and note, donor list)
   {
