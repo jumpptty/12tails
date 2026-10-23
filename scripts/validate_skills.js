@@ -3785,7 +3785,7 @@ async function donateChildTests(env) {
   const FAIL_TEXT = "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", THANKS = "ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นในรายชื่อผู้สนับสนุนหลังตรวจสลิป", READ_ERROR = "อ่านรูปสลิปไม่ได้ ลองถ่ายหน้าจอสลิปแล้วส่งใหม่";
   const need = { DONATE_QR: "string", DONATE_WORKER_URL: "string", DONOR_LIMITS: "object", DONATE_ERRORS: "object", donorSlipCheck: "function", donorRows: "function",
     shrinkSlip: "function", downloadQr: "function", donateErrorText: "function", donateSend: "function", donateSubmit: "function", renderDonorList: "function",
-    renderDonorThanks: "function", donorTicker: "function", donateThanksFit: "function", donateThanksUi: "object", DONATE_TICKER_SPEED: "number",
+    renderDonorThanks: "function", donorTicker: "function", donateThanksFit: "function", donateCountFill: "function", donateTabsNudge: "function", DONATE_TICKER_SPEED: "number",
     donorRecent: "function", donorListPages: "function", donateListPage: "function", donateListFit: "function", donateListUi: "object", donateTabShown: "function",
     donateShowTab: "function", donateTabKey: "function", openDonateModal: "function", closeDonateModal: "function", donateTabs: "object", donatePanels: "object" };
   const missing = Object.keys(need).filter((n) => kind(n) !== need[n]);
@@ -3917,16 +3917,26 @@ async function donateChildTests(env) {
     } catch (e) { ok(false, "opening the pop-up threw: " + e.message); }
     finally { live.splice(0, live.length, ...was[0]); livePanels.splice(0, livePanels.length, ...was[1]); }
   }
-  // the donors' names under the thank-you line (user 2026-10-23: honour them on every open, not only on their tab; option E of five
-  // mocks, a ticker): a button between the message and the tabs, hidden until filled, that opens รายชื่อผู้สนับสนุน; filled on the first open,
-  // measured on every open and resize (names that do not fit loop); the list tab carries the donor count
-  ok(/<\/p>\s*<button type="button" class="donate-thanks" id="donateThanks" aria-controls="donatePanelList"[^>]*\shidden>[^\n]*id="donateThanksNames"[^\n]*<\/button>\s*<div class="donate-tabs"/.test(modal)
-    && /id="donateTabList"[^>]*>รายชื่อผู้สนับสนุน<span class="donate-tab-count" id="donateTabCount" hidden><\/span><\/button>/.test(modal),
-    "the ☕ pop-up needs the donors' names line (button#donateThanks, hidden, aria-controls donatePanelList, holding #donateThanksNames) between the thank-you line and the tabs, and the list tab's #donateTabCount");
-  ok(/function openDonateModal\(\) \{[\s\S]*?renderDonorThanks\(donateThanksUi\);[\s\S]*?donateModal\.hidden = false;\r?\n  donateThanksFit\(donateThanksUi\);[\s\S]*?\n\}/.test(html)
-    && /donateThanksUi\.box\.addEventListener\("click", \(\) => \{ const at = donateTabs\.length - 1; donateShowTab\(donateTabs, donatePanels, at\);/.test(html)
-    && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\)\{ donateThanksFit\(donateThanksUi\);/.test(html),
-    "the names line must be filled on the first open (renderDonorThanks), fitted on every open and resize (donateThanksFit), and open the รายชื่อผู้สนับสนุน tab when clicked");
+  // the donors' names line left the pop-up (user 2026-10-23: "this is already everywhere", the hub bar on every page and the phone menu
+  // carry it): the thank-you line is followed by the tabs, and the list tab still carries the donor count, filled on the first open
+  ok(/<\/p>\s*<div class="donate-tabs"/.test(modal) && !/donate-thanks|donateThanks/.test(modal) && !/donateThanksUi/.test(html)
+    && /id="donateTabList"[^>]*><span class="donate-tab-icon donate-tab-heart"><svg [^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span class="donate-tab-count" id="donateTabCount" hidden><\/span><\/span><span>รายชื่อผู้สนับสนุน<\/span><\/button>/.test(modal),
+    "the ☕ pop-up must go straight from the thank-you line to the tabs (no names line, no donateThanksUi) and keep the list tab's #donateTabCount inside its heart");
+  // the tabs are icon cards (user 2026-10-23, "การ์ดไอคอน" of three mocks, without its sub-lines): an aria-hidden icon over each label (QR, slip,
+  // heart), every card its own box; opened from the thanks line onto รายชื่อผู้สนับสนุน, the QR and slip icons hop once (a plain open stays still)
+  ok(/id="donateTabQr"[^>]*><svg class="donate-tab-icon" [^>]*aria-hidden="true"[\s\S]*?<\/svg><span>QR โอนเงิน<\/span><\/button>/.test(modal)
+    && /id="donateTabSlip"[^>]*><svg class="donate-tab-icon" [^>]*aria-hidden="true"[\s\S]*?<\/svg><span>ส่งสลิป<\/span><\/button>/.test(modal)
+    && /\.donate-tabs\{display:flex; gap:8px; width:100%\}/.test(html) && /\.donate-tab\{flex:1 1 0;[^}]*border:1px solid var\(--line\); border-radius:8px;[^}]*background:var\(--panel-2\)/.test(html)
+    && /\.donate-tab\[aria-selected="true"\]\{background:var\(--gold\); border-color:var\(--gold\); color:#141311\}/.test(html),
+    "the ☕ tabs must be icon cards: an aria-hidden icon over the label on QR โอนเงิน and ส่งสลิป (the heart on the list), each card its own --panel-2 box, the picked one gold");
+  ok(/\.donate-tabs\.is-nudge \.donate-tab:nth-child\(-n\+2\) \.donate-tab-icon\{animation:donateTabHop \.5s [^;}]* \.35s 2 both\}/.test(html) && /@keyframes donateTabHop\{/.test(html)
+    && /\.donate-tabs\.is-nudge \.donate-tab:nth-child\(2\) \.donate-tab-icon\{animation-delay:1\.35s\}/.test(html)
+    && /function openDonateModal\(\) \{[\s\S]*?donateShowTab\(donateTabs, donatePanels, 0\);[^\n]*\r?\n  if \(donateTabBar\) donateTabBar\.classList\.remove\("is-nudge"\);[\s\S]*?\n\}/.test(html)
+    && /function mountMenuThanks\(root\)\{[\s\S]*?donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\); donateTabsNudge\(\); \}\);/.test(html)
+    && /function donateTabsNudge\(\)\{[\s\S]*?classList\.remove\("is-nudge"\);[\s\S]*?classList\.add\("is-nudge"\);[\s\S]*?\n\}/.test(html),
+    "the QR โอนเงิน icon must hop twice, then the ส่งสลิป icon twice (user 2026-10-23), when the thanks line opens ☕ on รายชื่อผู้สนับสนุน (donateTabsNudge), and every plain open must clear it");
+  ok(/function openDonateModal\(\) \{[\s\S]*?donateListUi\.rows = donorRecent\(donorRows\(DONORS\)\);[\s\S]*?if \(donateTabCount\) donateCountFill\(donateTabCount, donateListUi\.rows\.length\);[\s\S]*?\n\}/.test(html),
+    "the list tab's count must be filled on the first open (donateCountFill with the number of donors)");
   // ขอบคุณผู้ร่วมสนับสนุน (user 2026-10-23): the same names line behind a label, mounted right after the launcher, in two copies: desktop
   // .hub-thanks at the very top, taking turns with the Discord note on every page (20 s: thanks 70 % first, note 30 %, paused on hover / focus;
   // the note hidden until the script decides, so a reload never flashes it first); phones .ln-thanks on the menu under the hub bar; no donors =
@@ -3945,11 +3955,10 @@ async function donateChildTests(env) {
     "the รายชื่อผู้สนับสนุน panel needs its pager (#donatePager, hidden, ‹ หน้าก่อน, #donatePagerNum, › หน้าถัดไป) right under the list");
   ok(/t\.addEventListener\("click", \(\) => \{ donateShowTab\(donateTabs, donatePanels, i\); donateTabShown\(i\); \}\);/.test(html)
     && /t\.addEventListener\("keydown", \(e\) => donateTabKey\(e, donateTabs, donatePanels, donateTabShown\)\);/.test(html)
-    && /donateThanksUi\.box\.addEventListener\("click", \(\) => \{ const at = donateTabs\.length - 1; donateShowTab\(donateTabs, donatePanels, at\); donateTabShown\(at\); \}\)/.test(html)
     && /function donateTabShown\(at\)\{\r?\n  if \(donatePanels\[at\] && donatePanels\[at\] === donateListUi\.box\) donateListFit\(donateListUi\);/.test(html)
-    && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\)\{ donateThanksFit\(donateThanksUi\); donateListFit\(donateListUi\); \} \}\);/.test(html)
+    && /window\.addEventListener\("resize", \(\) => \{ if \(donateModal && !donateModal\.hidden\) donateListFit\(donateListUi\); \}\);/.test(html)
     && /function openDonateModal\(\) \{[\s\S]*?donateListUi\.rows = donorRecent\(donorRows\(DONORS\)\);[\s\S]*?donateListUi\.page = 0;[\s\S]*?\n\}/.test(html),
-    "the list must lay out its pages whenever its tab shows (click, arrow keys, the names line: donateTabShown → donateListFit) and on resize, hold its rows newest first (donorRecent) and open on page 1");
+    "the list must lay out its pages whenever its tab shows (click, arrow keys, the menu's thanks line: donateTabShown → donateListFit) and on resize, hold its rows newest first (donorRecent) and open on page 1");
   if (have("donorTicker", "DONATE_TICKER_SPEED")) {
     const tick = page("donorTicker"), v = page("DONATE_TICKER_SPEED");
     ok(tick(100, 200, 16) === null && tick(200, 200, 16) === null && same(tick(201, 200, 16), { shift: 217, dur: 217 / v }) && same(tick(500, 120, 16), { shift: 516, dur: 516 / v }) && v > 0,
@@ -3962,7 +3971,9 @@ async function donateChildTests(env) {
   ok(/\.donate-qr img\[hidden\]\{display:none\}/.test(html), ".donate-qr img[hidden]{display:none} is missing: .donate-qr img{display:block} would keep an empty QR image on screen when assets.js did not load");
   ok(["DONATE_ERRORS", "donateSubmit", "renderDonorList"].every((n) => !missing.includes(n) && !/\bAI\b/.test(n === "DONATE_ERRORS" ? JSON.stringify(page(n)) : String(page(n)))), "the pop-up's script texts must not mention AI");
   const inSurfaces = (list, group) => { const m = html.match(new RegExp("\\n\\s*" + group + ": \\[([^\\]]*)\\]")); return !!m && list.every((s) => m[1].includes(JSON.stringify(s))); };
-  ok(inSurfaces([".donate-tabs", ".donate-form-box", ".donate-list-box"], "panel") && inSurfaces([".donate-form input", ".donate-form textarea"], "field"), "the pop-up's panels (.donate-tabs, .donate-form-box, .donate-list-box) and fields (.donate-form input / textarea) are not in THEME_SURFACES");
+  ok(inSurfaces([".donate-form-box", ".donate-list-box"], "panel") && inSurfaces([".donate-form input", ".donate-form textarea"], "field") && !html.includes('".donate-tabs"')
+    && /\n\s*raised: \[[^\n]*"\.donate-tab:not\(\[aria-selected=\\"true\\"\]\)"/.test(html),
+    "the pop-up's panels (.donate-form-box, .donate-list-box), its tab cards not picked (.donate-tab:not([aria-selected=\"true\"]), raised; the bar itself has no box) and fields (.donate-form input / textarea) must be in THEME_SURFACES");
 
   // the donor list: donorRows(DONORS) as text only (names and messages are typed by donors), ×N only for a repeat donor, a Thai date
   if (have("renderDonorList")) {
@@ -3987,7 +3998,7 @@ async function donateChildTests(env) {
       ok(txt(r1, "donate-row-date") === "23 ต.ค. 2026" && txt(r2, "donate-row-date") === "1 ต.ค. 2026", `renderDonorList dates: ${JSON.stringify([txt(r1, "donate-row-date"), txt(r2, "donate-row-date")])}`);
       ok(empty.children.length === 1 && empty.textContent === "ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ", `an empty list shows ยังไม่มีรายชื่อ มาเป็นคนแรกกันครับ (got ${JSON.stringify(empty.textContent)})`);
       if (have("renderDonorThanks")) {
-        const ui = () => ({ box: node("button"), list: node("span"), count: node("span") }), two = ui(), none = ui(), real = ui();
+        const ui = () => ({ box: node("button"), list: node("span") }), two = ui(), none = ui(), real = ui();
         const all = (n, cls, out = []) => { if (String(n.className).split(" ").includes(cls)) out.push(n); (n.children || []).forEach((c) => all(c, cls, out)); return out; };
         const names = (u) => all(u.list, "donate-thanks-name").map((c) => c.textContent);
         page("renderDonorThanks")(two, [{ id: "a", name: evil, msg: "", total: 1000, count: 2 }, { id: "b", name: "Mai", msg: "", total: 0.3, count: 1 }]);
@@ -3997,8 +4008,15 @@ async function donateChildTests(env) {
         ok(htmlWrites === 0 && same(names(two), [evil, "Mai"]) && two.list.children.length === 1 && two.list.children[0] === two.track && two.track.children.length === 1 && two.track.children[0] === set
           && heart && heart.className === "donate-thanks-heart" && heart.textContent === "♥" && heart.attrs["aria-hidden"] === "true" && two.copy === null,
           "renderDonorThanks builds one set in the ticker's track: an aria-hidden ♥, then each name as typed (textContent only) in the rows' order");
-        ok(two.box.hidden === false && two.count.textContent === "2" && two.count.hidden === false && none.box.hidden === true && none.count.hidden === true && names(none).length === 0,
-          `renderDonorThanks shows the line and the tab count (number of donors) only when there is someone to thank (got ${JSON.stringify([two.box.hidden, two.count.textContent, none.box.hidden, none.count.hidden])})`);
+        ok(two.box.hidden === false && none.box.hidden === true && names(none).length === 0,
+          `renderDonorThanks shows the line only when there is someone to thank (got ${JSON.stringify([two.box.hidden, none.box.hidden])})`);
+        if (have("donateCountFill")) {
+          const c2 = node("span"), c0 = node("span");
+          const c3 = node("span");
+          page("donateCountFill")(c2, 2); page("donateCountFill")(c0, 0); page("donateCountFill")(c3, 120);
+          ok(c2.textContent === "2" && c2.hidden === false && c0.textContent === "" && c0.hidden === true && c2.dataset.len === "1" && c3.textContent === "120" && c3.dataset.len === "3",
+            `donateCountFill shows the number of donors in the list tab's heart, hidden at 0, with its digit count for the font (got ${JSON.stringify([c2.textContent, c2.hidden, c0.textContent, c0.hidden, c2.dataset.len, c3.dataset.len])})`);
+        }
         ok(same(names(real), page("donorRows(DONORS)").map((r) => r.name)), "renderDonorThanks without rows shows donorRows(DONORS): every donor's latest name, biggest total first");
       }
       if (have("donateListPage")) {
@@ -5053,6 +5071,49 @@ function fontProblems(html) {
   const radius = /\.sk-dmg-final\.has-test-bar \.sk-dmg-final-controls > \.sk-simulate-btn\{position:relative; border-radius:0 0 3px 3px;/.test(html);
   if (!desk || !compact || !radius) { console.error("[FINAL BAR ERROR] the Test bar must cover the Final box's borders (margins auto -15px -1px -16px, compact auto -11px -1px -12px) with the box's 3 px corners"); errorCount++; }
   else console.log("Verified the Final box's Test bar covers the box's borders.");
+}
+// The light balls' direction (user 2026-10-23: Auto Gyro Gun's Heavy Built 2 -> 0, then 0 -> 1 before it settled, flew the wrong way):
+// deltaValue reads a field's number for better / worse, and a held or rolling field carries its old value (.sk-roll-old) and a tint copy
+// (.sk-roll-tint) beside the new one, so every branch (stat chip, summon stat row, KO badge, cost badge) must read the new value alone.
+// Run on a small fake DOM: the page's own deltaValue, lifted out of mountSkillCooldownLookup.
+{
+  const fail = (m) => { console.error("[DELTA ERROR] " + m); errorCount++; };
+  const srcFn = (html.match(/\n    function deltaValue\(el\)\{[\s\S]*?\n    \}\r?\n/) || [""])[0];
+  if (!srcFn) fail("function deltaValue(el) not found");
+  else {
+    const classesOf = (n) => n.cls || [];
+    const matchOne = (n, s) => { s = s.trim(); if (s === "img[alt]") return n.tag === "IMG" && n.alt !== undefined; return s.startsWith(".") && classesOf(n).includes(s.slice(1)); };
+    const matches = (n, sel) => sel.split(",").some((s) => matchOne(n, s));
+    const mk = (tag, cls, kids = [], text = "") => {
+      const n = { tag, cls, kids, text, parent: null,
+        matches(sel) { return matches(this, sel); },
+        closest(sel) { for (let e = this; e; e = e.parent) if (e.matches && e.matches(sel)) return e; return null; },
+        querySelectorAll(sel) { const out = []; const walk = (e) => e.kids.forEach((k) => { if (k.matches(sel)) out.push(k); walk(k); }); walk(this); return out; },
+        querySelector(sel) { return this.querySelectorAll(sel)[0] || null; },
+        cloneNode() { const c = mk(this.tag, this.cls.slice(), this.kids.map((k) => k.cloneNode()), this.text); if (this.alt !== undefined) c.alt = this.alt; return c; },
+        remove() { if (this.parent) this.parent.kids = this.parent.kids.filter((k) => k !== this); },
+        replaceWith(t) { if (this.parent) this.parent.kids = this.parent.kids.map((k) => k === this ? mk("#text", [], [], String(t)) : k); },
+        get textContent() { return this.text + this.kids.map((k) => k.textContent).join(""); } };
+      kids.forEach((k) => { k.parent = n; });
+      return n;
+    };
+    // a value mid-change: the held old value and a tint copy beside the new one (rollHold / rollPlay)
+    const rolling = (cls, oldV, newV) => mk("SPAN", [cls, "sk-roll-host"], [mk("SPAN", ["sk-roll-old"], [mk("SPAN", ["sk-roll-in"], [], oldV)]), mk("SPAN", ["sk-roll-new"], [], newV), mk("SPAN", ["sk-roll-tint"], [mk("SPAN", ["sk-roll-in"], [], newV)])]);
+    let deltaValue = null;
+    try { deltaValue = new Function(srcFn + "\nreturn deltaValue;")(); } catch (e) { fail("deltaValue does not compile on its own: " + e.message); }
+    if (deltaValue) {
+      const nums = (t) => (String(t).replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || []).map(Number);
+      const cases = [
+        ["summon stat row (Auto Gyro Gun HP 400 -> 200)", mk("DIV", ["sk-summon-stat", "sk-summon-stat-mhp"], [mk("SPAN", ["sk-summon-stat-label"], [], "HP"), rolling("sk-summon-stat-value", "400", "200")]), [200]],
+        ["stat chip (cooldown 30s -> 20s)", mk("DIV", ["sk-stat", "sk-stat-cd"], [mk("P", ["sk-stat-label"], [], "คูลดาวน์"), rolling("sk-stat-value", "30s", "20s")]), [20]],
+        ["KO badge", mk("SPAN", ["sk-ko-badge"], [mk("SPAN", ["sk-ko-label"], [], "KO"), rolling("sk-ko-value", "10", "5")]), [5]],
+        ["cost badge", mk("SPAN", ["sk-cost-badge"], [rolling("sk-cost-num", "45", "30")]), [30]],
+      ];
+      const bad = cases.filter(([, el, want]) => { try { return JSON.stringify(nums(deltaValue(el))) !== JSON.stringify(want); } catch (e) { return true; } });
+      if (bad.length) fail("deltaValue must read only the new value of a field mid-change (no .sk-roll-old / .sk-roll-tint): " + bad.map(([name, el, want]) => `${name} read ${JSON.stringify((() => { try { return deltaValue(el); } catch (e) { return e.message; } })())}, want ${want}`).join("; "));
+      else console.log("Verified the light balls read each field's new value only (stat chip, summon stat row, KO badge, cost badge mid-change).");
+    }
+  }
 }
 // No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
 // prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).

@@ -21,11 +21,11 @@
     // flat panels and modals that never change fill on hover
     panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-tabs", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".tt-btn:not(.is-on):not(.tt-play)", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
+    raised: [".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
@@ -1576,10 +1576,10 @@
   .donate-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .donate-btn:disabled{opacity:.55; cursor:default}
   .donate-btn svg{width:16px; height:16px; flex:none}
-  /* the donors' names under the thank-you line (user 2026-10-23: honour them on every open, not only on their tab; option E of five mocks):
-     ♥ and the names, biggest total first, on one line. When they do not fit, donateThanksFit adds a second copy and the line loops slowly
-     (a ticker, paused under the mouse or keyboard focus); .is-measuring lays it out at full width to measure it.
-     A click opens รายชื่อผู้สนับสนุน, whose tab shows the donor count. */
+  /* the donors' names line (option E of five mocks, a ticker), shown by the hub bar and the phone menu (mountMenuThanks); it left the ☕ pop-up
+     on 2026-10-23 (user: "this is already everywhere"). ♥ and the names, biggest total first, on one line. When they do not fit,
+     donateThanksFit adds a second copy and the line loops slowly (paused under the mouse or keyboard focus); .is-measuring lays it out at full
+     width to measure it. A click opens ☕ on รายชื่อผู้สนับสนุน, whose tab shows the donor count. */
   .donate-thanks{display:inline-flex; align-items:center; max-width:100%; margin:-6px 0 0; padding:2px 6px; border:0; border-radius:4px; background:none;
     color:var(--text); font:inherit; font-size:14px; line-height:1.4; cursor:pointer}
   .donate-thanks[hidden]{display:none}
@@ -1598,15 +1598,27 @@
   .donate-thanks.is-running .donate-thanks-track{animation:donateTicker var(--donate-dur, 20s) linear infinite}
   .donate-thanks:hover .donate-thanks-track, .donate-thanks:focus-visible .donate-thanks-track{animation-play-state:paused}
   @keyframes donateTicker{to{transform:translateX(calc(-1 * var(--donate-shift, 0px)))}}
-  .donate-tab-count{display:inline-block; min-width:18px; margin-left:6px; padding:0 5px; border-radius:999px; background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--gold);
-    font-family:'JetBrains Mono','Prompt',monospace; font-size:11px; line-height:17px; text-align:center; vertical-align:1px}
+  /* the tabs are icon cards (user 2026-10-23, "การ์ดไอคอน" of three mocks, without its sub-lines): each its own box so the two tabs not picked
+     still read as buttons when a link opens รายชื่อผู้สนับสนุน; an icon over the label, the donor count inside the heart */
+  .donate-tabs{display:flex; gap:8px; width:100%}
+  .donate-tab{flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 8px 9px; border:1px solid var(--line); border-radius:8px;
+    background:var(--panel-2); color:var(--text); font:inherit; font-size:13px; font-weight:600; line-height:1.3; cursor:pointer; transition:border-color .15s ease, background-color .15s ease, color .15s ease}
+  .donate-tab:hover:not([aria-selected="true"]){border-color:var(--gold)}
+  .donate-tab[aria-selected="true"]{background:var(--gold); border-color:var(--gold); color:#141311}
+  .donate-tab:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .donate-tab-icon{display:block; position:relative; flex:none; width:24px; height:24px; color:var(--gold)}
+  .donate-tab[aria-selected="true"] .donate-tab-icon{color:#141311}
+  .donate-tab-heart{display:grid; place-items:center}
+  .donate-tab-heart svg{position:absolute; inset:0; width:100%; height:100%}
+  .donate-tab-count{position:relative; margin-top:-2px; color:#141311; font-family:'JetBrains Mono','Prompt',monospace; font-size:10.5px; font-weight:600; line-height:1}
+  .donate-tab-count[data-len="3"]{font-size:8px}
   .donate-tab-count[hidden]{display:none}
-  .donate-tab[aria-selected="true"] .donate-tab-count{background:#141311}
-  .donate-tabs{display:flex; gap:4px; width:100%; padding:3px; background:var(--panel); border:1px solid var(--line); border-radius:6px}
-  .donate-tab{flex:1 1 auto; min-width:0; padding:8px 10px; border:0; border-radius:4px; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600; line-height:1.3; cursor:pointer; transition:color .15s ease, background-color .15s ease}
-  .donate-tab:hover:not([aria-selected="true"]){color:var(--text)}
-  .donate-tab[aria-selected="true"]{background:var(--gold); color:#141311}
-  .donate-tab:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+  .donate-tab[aria-selected="true"] .donate-tab-count{color:var(--gold)}
+  /* opened straight onto รายชื่อผู้สนับสนุน (the hub bar / menu thanks line): the QR โอนเงิน icon hops twice, then the ส่งสลิป icon twice, then
+     both stop (user 2026-10-23) */
+  .donate-tabs.is-nudge .donate-tab:nth-child(-n+2) .donate-tab-icon{animation:donateTabHop .5s cubic-bezier(.3,.7,.2,1) .35s 2 both}
+  .donate-tabs.is-nudge .donate-tab:nth-child(2) .donate-tab-icon{animation-delay:1.35s}   /* after the QR icon's two hops */
+  @keyframes donateTabHop{0%, 100%{transform:none} 40%{transform:translateY(-5px)} 70%{transform:translateY(1px)}}
   .donate-tabpanel{width:100%}
   .donate-tabpanel[hidden]{display:none}
   /* switching tabs never moves the pop-up (user 2026-10-23): the QR panel sets the height and keeps its space, invisible, while another tab shows;
@@ -1657,9 +1669,10 @@
     .donate-main .donate-head-title{font-size:17px}
     .donate-main .donate-head-icon{font-size:19px}
     .donate-main .donate-msg{font-size:18px}
-    .donate-main .donate-tab{font-size:15px; padding:10px 12px}
-    .donate-main .donate-thanks{font-size:17px}
-    .donate-main .donate-tab-count{font-size:13px; line-height:20px; min-width:22px}
+    .donate-main .donate-tab{font-size:15px; padding:12px 10px 11px}
+    .donate-main .donate-tab-icon{width:28px; height:28px}
+    .donate-main .donate-tab-count{font-size:12px}
+    .donate-main .donate-tab-count[data-len="3"]{font-size:9.5px}
     .donate-main .donate-btn{font-size:16px}
     .donate-main .donate-intro{font-size:17px}
     .donate-main .donate-field{font-size:15px}
@@ -1680,9 +1693,10 @@
     .donate-main .donate-head-title{font-size:19px}
     .donate-main .donate-head-icon{font-size:21px}
     .donate-main .donate-msg{font-size:20px}
-    .donate-main .donate-tab{font-size:17px; padding:11px 14px}
-    .donate-main .donate-thanks{font-size:19px}
-    .donate-main .donate-tab-count{font-size:14px; line-height:22px; min-width:24px}
+    .donate-main .donate-tab{font-size:17px; padding:14px 12px 13px}
+    .donate-main .donate-tab-icon{width:32px; height:32px}
+    .donate-main .donate-tab-count{font-size:14px}
+    .donate-main .donate-tab-count[data-len="3"]{font-size:11px}
     .donate-main .donate-btn{font-size:17px}
     .donate-main .donate-intro{font-size:19px}
     .donate-main .donate-field{font-size:16px}
@@ -1702,7 +1716,8 @@
     #donateModal{padding:10px}
     .donate-main{padding:14px; gap:12px; max-height:calc(100vh - 20px); max-height:calc(100dvh - 20px)}
     .donate-form{grid-template-columns:1fr}
-    .donate-thanks{font-size:13px}
+    .donate-tabs{gap:6px}
+    .donate-tab{padding:9px 4px 8px; font-size:12px}
     .donate-form input, .donate-form textarea{font-size:16px}   /* 16 px: iOS zooms the page into a smaller field */
   }
   /* ---- Contributors (ผู้ช่วยเรียบเรียงคัมภีร์ไบเบิ้ล, user 2026-10-06) ---- */
@@ -7912,11 +7927,10 @@
       <p class="donate-msg">
         ร่วมสนับสนุนค่าใช้จ่ายในการพัฒนา <strong>12 Tails Bible</strong> ขอบคุณทุกการสนับสนุนครับ 🙏
       </p>
-      <button type="button" class="donate-thanks" id="donateThanks" aria-controls="donatePanelList" title="ดูรายชื่อผู้สนับสนุนทั้งหมด" hidden><span class="donate-thanks-names" id="donateThanksNames"></span></button>
       <div class="donate-tabs" role="tablist" aria-label="สนับสนุน">
-        <button type="button" class="donate-tab" role="tab" id="donateTabQr" aria-controls="donatePanelQr" aria-selected="true" tabindex="0">QR โอนเงิน</button>
-        <button type="button" class="donate-tab" role="tab" id="donateTabSlip" aria-controls="donatePanelSlip" aria-selected="false" tabindex="-1">ส่งสลิป</button>
-        <button type="button" class="donate-tab" role="tab" id="donateTabList" aria-controls="donatePanelList" aria-selected="false" tabindex="-1">รายชื่อผู้สนับสนุน<span class="donate-tab-count" id="donateTabCount" hidden></span></button>
+        <button type="button" class="donate-tab" role="tab" id="donateTabQr" aria-controls="donatePanelQr" aria-selected="true" tabindex="0"><svg class="donate-tab-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg><span>QR โอนเงิน</span></button>
+        <button type="button" class="donate-tab" role="tab" id="donateTabSlip" aria-controls="donatePanelSlip" aria-selected="false" tabindex="-1"><svg class="donate-tab-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span>ส่งสลิป</span></button>
+        <button type="button" class="donate-tab" role="tab" id="donateTabList" aria-controls="donatePanelList" aria-selected="false" tabindex="-1"><span class="donate-tab-icon donate-tab-heart"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3 1.7-1.8 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg><span class="donate-tab-count" id="donateTabCount" hidden></span></span><span>รายชื่อผู้สนับสนุน</span></button>
       </div>
       <div class="donate-panels">
       <div class="donate-tabpanel" role="tabpanel" id="donatePanelQr" aria-labelledby="donateTabQr">
@@ -9243,6 +9257,9 @@ const PENGUIN_FROSTSPIKE_DEP = { id: "frostSpike", label: "Frost Spike", icon: "
 const WHALE_ENTENDEDWAVE_DEP = { id: "entendedWave", label: "Entended Wave", icon: "whale_entendedWave5", minRank: 0, maxRank: 1 };
 const WHALE_REACH_SHIELDBASH_DEP = { id: "reachShieldBash", label: "Shield Bash", icon: "whale_shieldBash1", minRank: 0, maxRank: 1, defaultRank: 1 };
 const WHALE_REACH_KNIGHT_DEP = { id: "reachKnightDeep", label: "Knight of the Deep", icon: "whale_knightOfTheDeep1", minRank: 0, maxRank: 1, defaultRank: 1 };
+// 12th Kingdom Knight's rank on the Knight of the Deep card, whose hold attack hits floor(0.2 ATK + 15 x knights) (Whale.cs:29415). The knights
+// are 2 + 2 x sLv (:28414) and never leave early (the list only empties on unsummon, :9877), so the rank alone sets the count.
+const WHALE_KINGDOMKNIGHT_RANK_DEP = { id: "12thKingdomKnight", label: "12th Kingdom Knight", icon: "whale_12thKingdomKnight2", minRank: 1, maxRank: 2, defaultRank: 2 };
 // Smart Shell (#264, getSmartShellLv() 0/1, Mole.cs:11482-11484): each enemy-layer target without [insight] also takes RPC_AddEffectDamage(264, 30):
 // Mine / Stun Mine via RPC_smartShell_hit (radius 4 + Extra Powder, Mole.cs:11489-11588; Mole_mine.cs:396, Mole_stunMine.cs:396),
 // Stun Grenade per target (Mole_stunGrenade.cs:210-285), Time Nuke per target after its hit (Mole_timeNuke.cs:690-767).
@@ -15210,11 +15227,8 @@ const SKILLS = [
   { id:"whale_wallPuncture", name:"Wall Puncture", class:"Whale", icon:"whale_wallPuncture4", maxRank:4, passive:true, status:{ name:"puncture", sLv:(rank)=>rank, class:"Debuff, State" }, lckProc:{ label:"โอกาส ดาเมจม่วง", chance:(rank)=>10*rank, applies:"puncture" }, desc:(rank)=>`ทำให้สกิล **Combo**, **Javelin**, **Sweep**, และ **Peninsula Impale** มีโอกาสทำ ^^ดาเมจม่วง^^ แทน ^^ดาเมจขาว^^ และมอบสถานะ [puncture${rank}] ให้เป้าหมาย<br>• ฮิตของ **Combo** ที่กลายเป็นดาเมจม่วง __ไม่ติดผลพิเศษของอาวุธหรือหมวก__`, compatSkills:["whale_nAttack","whale_sweep","whale_peninsulaImpale","whale_javelin"], bbBug:"ฮิตของ **Combo** ที่กลายเป็นดาเมจม่วงจาก Wall Puncture __คริไม่ได้__ เพราะโค้ดข้ามการทอยคริของอุปกรณ์ ทั้งที่ดาเมจม่วงของหมาป่าตอนติด [darkEdge] ยังคริได้ตามปกติ" },
   { id:"whale_autoShield", name:"Auto Shield", class:"Whale", icon:"whale_autoShield3", maxRank:3, passive:true, lckProc:{label:"โอกาส ยกโล่", chance:[12,18,24], simulate:false}, desc:(rank)=>`เมื่อโดนโจมตีตรงขณะ __ไม่ได้ชาร์จโล่__ มีโอกาสยกโล่กันตัวเองอัตโนมัติ: ดาเมจครั้งนั้นลดลง **10 + 10 × ระดับ Charge Attack** และได้ **SP +${2 * rank}**<br>**Swallow:** ล็อกเป้าที่ตัวเองแล้วใช้ แรงดึงทั้ง **9** ครั้งนับเป็นการโดนโจมตี ทอยยกโล่และรับ SP ได้ทุกครั้ง {{credit:ravilion}}<br>__KO ไม่ลดลง__`, compatSkills:["whale_swallow"], unintended:"การต้านสถานะ (RESIST) ทุกครั้งนับเป็นการโดนโจมตี: ทอยติดได้ทุกครั้งแม้ไม่มีดาเมจ เช่น ตั้งโล่ขณะติด [dissolute] หรือสถานะถูกบล็อก และได้ SP ตามเลเวลทุกครั้งที่ติด", servers:{ tto:{ desc:ttoDesc("whale_autoShield", b => b.replace(/<br>\*\*Swallow:\*\*.*?\{\{credit:ravilion\}\}/, "")) } } },
   { id:"whale_lastHope", name:"Last Hope", class:"Whale", icon:"whale_lastHope1", maxRank:1, passive:true, isHeal:true, duration:12, desc:"ทุก **6 วินาที** นับเพื่อนร่วมทีมที่ตายอยู่ (สูงสุด **4** คน ไม่จำกัดระยะ)<br>**บัฟ:** ATK และ DEF **+15 ต่อคน** (สูงสุด **+60**) นาน **12 วินาที** ได้รับใหม่ทุกรอบตราบใดที่ยังมีเพื่อนตายอยู่<br>**ฮีล:** ฟื้น **400 HP ครั้งเดียวต่อเพื่อนที่ตาย** (เพื่อนที่ตายค้างอยู่ไม่ฮีลซ้ำ)", tooltipNote:"บอกว่าฮีล **10% ของ HP สูงสุด** และนับเพื่อน **ในระยะ** แต่โค้ดจริงฮีล **400** ต่อเพื่อนที่เพิ่งตาย และนับเพื่อน **ทั้งด่าน**" },
-  { id:"whale_12thKingdomKnight", compatSkills:["whale_knightOfTheDeep"], name:"12th Kingdom Knight", class:"Whale", icon:"whale_12thKingdomKnight2", maxRank:2, cost:{mp:0, sp:[45, 60], spType:"red"}, cd:600, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, atkCoeff:0.2, ko:"1", dmg:"10×sLv", hitCount:(rank)=>2+2*rank, desc:(rank)=>`ได้รับ [kingdomKnight${rank}]<br>**Knight of the Deep:** ขณะกดชาร์จ วาฬจะโจมตีรอบตัวทุก **0.5 วินาที** แรงขึ้นตามจำนวนอัศวิน (โหมด Charge)`, dmgModes:true, dmgGroups:[
-    { dmg:"10×sLv", atkCoeff:0.2, hitCount:(rank)=>2+2*rank, label:"อัตโนมัติ" },
-    { dmg:"30 + 30×sLv", atkCoeff:0.2, hitCount:1, label:"ชาร์จ" }
-  ], reach:[{ shape: "sphere", r: 8, faint: true, anchor: "self", label: "ระยะหาเป้าหมายของอัศวิน (ทรงกลม)", src: "Whale.cs:9729 (FindClosestTarget 8)" }] },
-  { id:"whale_knightOfTheDeep", name:"Knight of the Deep", class:"Whale", icon:"whale_knightOfTheDeep1", maxRank:1, passive:true, compatSkills:["whale_12thKingdomKnight","whale_cAttack","whale_sweep","whale_javelin","whale_shieldRush","whale_flyingShield","whale_peninsulaImpale","whale_peninsulaRound","whale_homingShield"], desc:"ระหว่างกดชาร์จ (ตั้งโล่) ขณะมีอัศวินจาก **12th Kingdom Knight** อยู่ จะโจมตีรอบตัวทุก 0.5 วินาที แรงขึ้นตามจำนวนอัศวินที่เหลือ แต่ใช้ SP เพิ่ม **1** ต่อครั้ง<br>ลดคูลดาวน์: **Sweep**, **Javelin** **-10 วินาที** / **Shield Rush**, **Flying Shield** **-15 วินาที** / **Peninsula Impale** **-30 วินาที** / **Peninsula Round**, **Homing Shield** **-40 วินาที**", tooltipNote:"บอกว่าลดคูลดาวน์ **Javelin** และ **Flying Shield** **18 วินาที** แต่โค้ดจริงลดหลายสกิลด้วยค่าต่างกัน (ดูในการ์ด)", reach:() => [{ shape: "cylinder", r: 4, h: 3, anchor: "self", loop: { start: 0, every: 0.5 }, label: "โจมตีรอบตัวทุก 0.5 วินาทีระหว่างตั้งโล่", src: "Whale.cs:29412; a hit, then 0.5 s (:29474), whale-skill-reference.md" }] },
+  { id:"whale_12thKingdomKnight", compatSkills:["whale_knightOfTheDeep"], name:"12th Kingdom Knight", class:"Whale", icon:"whale_12thKingdomKnight2", maxRank:2, cost:{mp:0, sp:[45, 60], spType:"red"}, cd:600, cdWrapped:true, revisedArtExempt:false, duration:60, durWrapped:true, atkCoeff:0.2, ko:"1", dmg:"10×sLv", hitCount:(rank)=>2+2*rank, desc:(rank)=>`ได้รับ [kingdomKnight${rank}]<br>**Knight of the Deep:** ขณะกดชาร์จ วาฬจะโจมตีรอบตัวทุก **0.5 วินาที** แรงขึ้นตามจำนวนอัศวิน`, reach:[{ shape: "sphere", r: 8, faint: true, anchor: "self", label: "ระยะหาเป้าหมายของอัศวิน (ทรงกลม)", src: "Whale.cs:9729 (FindClosestTarget 8)" }] },
+  { id:"whale_knightOfTheDeep", name:"Knight of the Deep", class:"Whale", icon:"whale_knightOfTheDeep1", maxRank:1, passive:true, dmgRankDep:WHALE_KINGDOMKNIGHT_RANK_DEP, dmg:"30 + 30×depLv", dmgSub:()=>"15 × อัศวิน " + (2 + 2*getDepRank(WHALE_KINGDOMKNIGHT_RANK_DEP)) + " ตัว", atkCoeff:0.2, ko:"1", compatSkills:["whale_12thKingdomKnight","whale_cAttack","whale_sweep","whale_javelin","whale_shieldRush","whale_flyingShield","whale_peninsulaImpale","whale_peninsulaRound","whale_homingShield"], desc:"ระหว่างกดชาร์จ (ตั้งโล่) ขณะมีอัศวินจาก **12th Kingdom Knight** อยู่ จะโจมตีรอบตัวทุก **0.5 วินาที** แรงขึ้นตามจำนวนอัศวิน แต่ใช้ SP เพิ่ม **1** ต่อครั้ง<br>ลดคูลดาวน์: **Sweep**, **Javelin** **-10 วินาที** / **Shield Rush**, **Flying Shield** **-15 วินาที** / **Peninsula Impale** **-30 วินาที** / **Peninsula Round**, **Homing Shield** **-40 วินาที**", tooltipNote:"บอกว่าลดคูลดาวน์ **Javelin** และ **Flying Shield** **18 วินาที** แต่โค้ดจริงลดหลายสกิลด้วยค่าต่างกัน (ดูในการ์ด)", reach:() => [{ shape: "cylinder", r: 4, h: 3, anchor: "self", loop: { start: 0, every: 0.5 }, label: "โจมตีรอบตัวทุก 0.5 วินาทีระหว่างตั้งโล่", src: "Whale.cs:29412; a hit, then 0.5 s (:29474), whale-skill-reference.md" }] },
   { id:"whale_bubbleShield", name:"Bubble Shield", class:"Whale", icon:"whale_bubbleShield4", maxRank:4, cost:{mp:[6, 10, 14, 18], sp:0}, castTime:4.5, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:30, cdWrapped:true, revisedArtExempt:false, duration:12, durWrapped:true, shield:"talAdjust(10×sLv + 20 + 20×depLv)", shieldRankDep:WHALE_BUBBLE_BURST_DEP, desc:(rank)=>`ร่ายฟองอากาศป้องกันให้เป้าหมายฝ่ายเดียวกันได้รับ [bubbleShield${rank}] ค่าเกราะตามสูตรด้านล่าง<br>__ไม่ระเบิดเมื่อหมดเวลาหรือแตก__<br>**Bubble Burst:** ระดับ +1 เกราะหนาขึ้น และสั่งระเบิดเกราะได้<br>**Reduced Cast:** ลดเวลาร่าย`, compatSkills:["whale_reducedCast", "whale_bubbleBurst"], reach:[{ shape: "ring", r: 40, anchor: "self", label: "ระยะล็อกเป้าหมาย (วงกลมแนวราบ ไม่จำกัดความสูง)", src: "12Tails-Mechanics-Reference.md §4 (GameGui.cs:37857-37880)" }] },
   { id:"whale_heavyWeight", name:"Heavy Weight", class:"Whale", icon:"whale_heavyWeight2", maxRank:2, cost:{mp:[10, 14], sp:0}, castTime:4, castWrapped:true, castDep:WHALE_REDUCED_CAST_DEP, cd:60, cdWrapped:true, revisedArtExempt:false, duration:15, durWrapped:true, durContested:true, desc:(rank)=>`ร่ายใส่เพื่อนหรือศัตรู ทำให้ติดสถานะ heavy ระดับ **${rank}**: น้ำหนัก **+${15 * rank}** ^^moveMod^^ **-${(0.1 * rank).toFixed(1)}** และความเร็ววิ่งสูงสุดลดลง **${rank}**<br>__ใส่เพื่อน: ระยะเวลาไม่แข่ง CHA__<br>**Over Weight:** ระดับ +1<br>**Reduced Cast:** ลดเวลาร่าย`, compatSkills:["whale_reducedCast", "whale_overWeight"], reach:[{ shape: "ring", r: 40, anchor: "self", label: "ระยะล็อกเป้าหมาย (วงกลมแนวราบ ไม่จำกัดความสูง)", src: "12Tails-Mechanics-Reference.md §4 (GameGui.cs:37857-37880)" }] },
   { id:"whale_overPresence", name:"Over Presence", class:"Whale", icon:"whale_overPresence2", maxRank:2, passive:true, desc:(rank)=>`สร้างออร่ารอบตัวตลอดเวลา ศัตรูที่เข้ามาในออร่าติด [overPresence${rank}] ทันที (ไม่สุ่ม ไม่แข่ง CHA) และหายเมื่อออกจากออร่า<br>**Over Weight:** ระดับ +1<br>__ติดได้นานสุด 60 วินาทีต่อการเข้าออร่าหนึ่งครั้ง ศัตรูที่ยืนอยู่ในออร่านานกว่านั้นจะหลุดสถานะ จนกว่าจะออกแล้วเข้ามาใหม่__`, compatSkills:["whale_overWeight"], tooltipNote:"บอกว่าลดความเร็ว **5% / 10%** ในระยะ **10m** แต่โค้ดจริงลด **10% ต่อเลเวลสถานะ** และรัศมีจริงของออร่า (ค่า SphereCollider ในโมเดล) คือ **6m**", reach:[{ shape: "sphere", r: 6, anchor: "self", rangeMod: ["r"], label: "ออร่าทรงกลมรอบตัว (วัดจากเท้าวาฬถึงขอบตัวศัตรู) ใหญ่และเล็กตามขนาดตัวจาก Enlarge / Reduce", src: "overPresence.prefab SphereCollider radius 6, centre 0, scale 1 (client data sharedassets4 and the rip); child of the Whale root (Whale.cs:9905-9952), which Enlarge / Reduce scale by 0.1 x level (CharacterControl.cs:16653, :16727); Whale_overPresence.cs OnTriggerEnter / OnTriggerExit" }] },
@@ -20035,13 +20049,17 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     function bdCounts(){
       return { buff: activeStatBuffs.size + activePlayerMods.size + (activeFinalMultMods.size > 0 ? 1 : 0), debuff: activeEnemyMods.size + activeEnemyStatDebuffs.size };
     }
-    // The value part of a field (chip values, a cost badge), without labels and tooltips, for better / worse per field.
+    // The value part of a field (chip values, a cost badge), without labels and tooltips, for better / worse per field. A field mid-change
+    // holds its old value (.sk-roll-old) and a tint copy (.sk-roll-tint) beside the new one, so every branch reads the new value alone
+    // (user 2026-10-23: a summon stat row read "400200200", so Heavy Built 2 -> 0 lowering the gun's HP flew out gold, and the next click's
+    // light took its direction from that).
     function deltaValue(el){
-      if (el.matches(".sk-cost-badge")) return el.textContent;
-      if (el.matches(".sk-ko-badge")) return (el.querySelector(".sk-ko-value") || el).textContent;
-      if (el.matches(".sk-summon-stat")) return (el.querySelector(".sk-summon-stat-value") || el).textContent;
+      const own = (v, alts) => { const c = v.cloneNode(true); c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove()); if (alts) c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; };
+      if (el.matches(".sk-cost-badge")) return own(el);
+      if (el.matches(".sk-ko-badge")) return own(el.querySelector(".sk-ko-value") || el);
+      if (el.matches(".sk-summon-stat")) return own(el.querySelector(".sk-summon-stat-value") || el);
       return Array.from(el.querySelectorAll(".sk-stat-value")).filter(v => !v.closest(".sk-stat-tooltip, .sk-dmg-info-pop, .sk-status-tip"))
-        .map(v => { const c = v.cloneNode(true); c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove()); c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; }).join(" ");
+        .map(v => own(v, true)).join(" ");
     }
     function heroSnapshot(){
       const clicked = depClicked; depClicked = null;
@@ -27936,7 +27954,7 @@ const CLASS_GUIDES = [
   {"id":70,"format":"12t-class-guide","version":1,"title":"แกะอีเดน","author":"หนมผิงช่วยเหลือประชาชน","date":"2026-10-22","description":"แกะสวนแสงสวรรค์ ลดดาเมจ อรรถประโยชน์ ควรมีซัพกวิ้นและซัพต่ายจ้า","build":{"server":"tto","classKey":"sheep","level":100,"learned":[101,102,111,121,122,131,141,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,301,302,311,312,313,314,321,322,323,324,341,342,343,344,351,352,353,402,404,412,413,414,422,423,424,442,443],"support":[901,907]},"stats":{"int":192,"tal":200,"agi":"ตาม"},"gear":{"weapon":[{"item":"w_shp56"},{"item":"w_shp69"}],"armor":[{"item":"a_shp61"},{"item":"a_shp61"}],"hat":[{"item":"c_shp61"},{"item":"c_shp61"}],"trinket":[{"item":"t_shp60"},{"item":"t_shp60"}],"boot":[{"item":"b_all_tto_shadowstrider"},{"item":"b_all51"}],"pet":[{"item":"p_lbd"},{"item":"p_lbd"}]},"cover":[443,131,414,344,343],"modes":["pve"],"notes":{"131":"เอามาเพื่อมีโอกาสประหยัดมานามากขึ้น","344":"ปลดล็อคอีเดน","353":"โล่เขียวใช้ได้หลายสถานการณ์ อรรถประโยชน์","414":"ช่วยประหยัดมานา","443":"สำหรับเซิฟ TTO เท่านั้น ณ ปัจจุบันเพราะแกับัคแล้ว"}},
   {"id":71,"format":"12t-class-guide","version":1,"title":"ลิงไฟ PVE ไปได้ทุกที่ แม้ที่ที่ไม่มีเธอ","author":"Oty","date":"2026-10-23","published":"2026-10-23T07:21:56Z","description":"ลืงไฟ เป็นตัวละครที่ดาเมจแรงมาก ทั้งระยะใกล้ และไกล (เมื่อแปลงร่าง)\nสามารถไปได้ทุกที่ ลงด่าน ลงบอส ลงดันเจี้ยนต่าง ๆ ก็สบาย\nอยากฟามอะไร ก็ไปได้ทุกที่ 8/5 9/2 11/1 12/2 12/3 โซโล่ฟิน ๆ หาของได้ยันเธอกลับมาขอคืนดี\n\n**สำคัญ - ** Status \n- อัพ Tal ให้ SP เริ่มต้น 60 ถือว่าเพียงพอแล้ว ไว้ใช้แปลงร่างตอนเริ่มด่านแบบไม่ต้องง้อใคร (ชอบแรง ๆ อัพเพิ่มได้ แต่ผมว่าไม่จำเป็นขนาดนั้น เพราะมี Ja + Summon Soul อยู่แล้ว)\n- อัพ Int ใว้ที่ 160 อย่างต่ำ เพื่อร่ายสกิลส่วนใหญ่แบบไร้หลอด (Fire Ball / Ground Lock / Stone Hammer) / \nแต่ผมคิดว่าอัพมากกว่าได้ยิ่งดี เพราะยิ่งมีมานาเยอะ จะยิ่งกดท่าชาร์จตอนแปลงร่างได้นานมากขึ้น \n- อัพ Agi ตามชอบ แต่แนะนำให้วิ่ง 6 - 6.5 ขึ้นไป - จะทำให้สกิลภูเขาไฟ สกิลแปลงร่างวนกลับมาไวขึ้น (เมื่อแปลงร่าง จะได้ +AGI 100 +TAL 100 - ยังไงก็วิ่งเร็วอยู่แล้ว)\n- อัพ Vit ไม่ต้องมาก ให้เลือดประมาณ 1200 - 1500 ตามสะดวก (กินแซนวิชเอา)\n**ทั้งหมดนี้ขึ้นอยู่ว่าเลือกใส่เซ็ตแบบไหน และยัดได้เท่าไหร่ สามารถนำไปปรับใช้ตามชอบได้ **\n(ถ้าใส่ 12ดด. ก็จะวิ่งเร็วอยู่แล้ว \nแต่ถ้าอยากเบียว ก็ใส่ชุด 70)\n\n\n1. เทคนิคการแปลงร่าง ของเซิฟเวอร์นี้ หลังจากมีการบัพให้ใช้สกิลตอนแปลงร่างแล้วได้\n  ซึ่งโดยปกติแล้ว เวลาแปลงร่าง ลิงจะเรียกจาออกมาเพื่อ Summon Soul ก่อน แล้วค่อยเรียกฟินิกส์ เพื่อแปลงร่าง\n  แต่ในเซิฟเวอร์นี้ เราไม่จำเป็นต้องทำแบบนั้นอีกต่อไป เราสามารถเรียกฟินิกซ์ออกมา แล้วแปลงร่างได้เลย \n  (SP เริ่มต้น 60) (สลับไปชุดแฟ 65 เพื่อให้การแปลงร่างนานขึ้นได้)\n  จากนั้นค่อยเรียกจา แล้ว Summon Soul จะทำให้ได้รับค่า TAL สูงสุด (Ja +40 / Soul +40 = 80 TAL ฟรี ๆ)\nดังนั้น การมีจาอยู่ข้าง ๆ ตลอดเวลา จะเรียกเอาศักยภาพ และดาเมจของลิงไฟออกมาได้สูงสุด ไม่ต่างอะไรกับตอนมีเธออยู่ใกล้ ๆ เลยล่ะ\n\n2. เทคนิคการเบิร์สง่าย ๆ \n   เมื่อเราไม่มีร่างฟินิกซ์ ดาเมจลิงไฟจะหายไปประมาณ 80% แต่นั่นไม่ได้หมายความว่าเราเบิสต์ไม่ได้\n   วิธีการก็ง่าย ๆ ดังนี้\n   มีจา และโซลจา - Fire Ball เก็บไว้ 2 ลูก (สาย C Fireball) - รอจน Fire Ball คูลดาวน์เสร็จ - Ground Lock - อันติ (World Ignition) - ร่าย Fire Ball แบบล๊อคเป้า - ยิง Fire Ball อีก 2 ลูก \n\n\n\n(3. เทคนิคลับ - อย่าลืมกดภูเขาไฟ และกาออสใส่เพื่อน)","build":{"server":"tto","classKey":"monkey","level":95,"learned":[101,102,111,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,271,301,302,303,304,311,331,332,333,341,342,351,352,361,402,403,404,421,431,432,434,442,444],"support":[901,912]},"stats":{"int":160,"agi":120,"tal":150},"statsPlus":["tal","agi","int"],"gear":{"weapon":[{"item":"w_mnk12","replica":{"item":"w_mnk56"},"stat":"tal"},{"item":"w_mnk52","stat":"tal"},{"item":"w_mnk12","replica":{"item":"w_mnk56"},"stat":"tal"}],"armor":[{"item":"a_mnk12","replica":{"item":"a_mnk61"},"stat":"tal"},{"item":"a_mnk52","stat":"tal"},{"item":"a_mnk61","stat":"tal"}],"hat":[{"item":"c_mnk12","replica":{"item":"c_mnk61"},"stat":"tal"},{"item":"c_mnk52","stat":"tal"},{"item":"c_mnk61","stat":"tal"}],"trinket":[{"item":"t_mnk60"},{"item":"t_mnk60"},{"item":"t_mnk60"}],"boot":[{"item":"b_all51"},{"item":"b_all51"},{"item":"b_all51"}]},"cover":[432,442,204,434,444],"modes":["pve"],"notes":{"214":"รู้ว่าลิงไฟไม่ต้องใช้ค่า ATK \nแต่กด Summon Soul ใส่คนอื่นได้นะ\n+40 ATK เลย","311":"ใช้เรียกมาทำ ko และ hate ได้ \nแม้สกิลจะแค่ขั้น 1","352":"อย่าลืมกดใช้ \nกดเถอะนะ \nคิดอะไรไม่ออก เรัยกมาแล้วกด Summon Soul ใส่ตัวเอง หรือซัพที่เลือดน้อย ๆ ก็ได้","421":"ใช้ใส่เพื่อนได้\nจำไว้เสมอ ว่าใข้ใส่เพื่อนได้ \nเอาใหม่นะ \n**\"ใช้ ใส่ เพื่อน ได้\"**\n\n(ค่า Cha ไม่มีผล \nบัพ 240 วิ เสมอ)","434":"กด Instant Cast ก่อนใช้เสมอ \n(เตือนแล้วนะ)\n\nเคลียมอนแบบฟิน ๆ \nแต่หน้าที่หลักคือกดใส่เพื่อน","444":"เมื่อกด Summon Soul \nจะได้ ATK 40 + DEF 40"}},
 ];
-const CLASS_GUIDE_VIEWS = {"at":"2026-10-20T06:32:04.913Z","counts":{"1":135,"2":189,"3":117,"4":87,"5":174,"6":155,"7":111,"8":66,"9":75,"10":134,"11":125,"12":59,"13":31,"14":114,"15":128,"16":93,"17":133,"18":167,"19":127,"20":213,"21":103,"22":120,"23":121,"24":39,"25":43,"26":35,"27":30,"28":48,"29":91,"30":128,"31":129,"32":110,"34":101,"35":132,"36":94,"37":48,"38":87,"39":75,"40":73,"41":13,"42":26,"43":17,"44":21,"45":15,"46":26}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
+const CLASS_GUIDE_VIEWS = {"at":"2026-10-23T14:26:24.422Z","counts":{"1":271,"2":391,"3":349,"4":200,"5":379,"6":332,"7":207,"8":111,"9":148,"10":233,"11":245,"12":130,"13":85,"14":234,"15":311,"16":177,"17":216,"18":318,"19":289,"20":515,"21":177,"22":206,"23":213,"24":59,"25":68,"26":67,"27":69,"28":89,"29":206,"30":290,"31":206,"32":223,"34":258,"35":298,"36":253,"37":128,"38":270,"39":213,"40":152,"41":79,"42":154,"43":126,"44":135,"45":135,"46":166,"47":61,"48":236,"49":138,"50":124,"51":183,"52":137,"53":223,"54":213,"55":150,"56":193,"57":108,"58":128,"59":102,"60":209,"61":141,"62":77,"63":130,"64":105,"65":59,"66":99,"67":49,"68":57,"69":44,"70":52,"71":44}};   // GoatCounter visitors per guide at the last push (scripts/guide_views.js); the page's fallback when the live counter is blocked
 // The ☕ donor list: format is scripts/donors.js; only the guide manager (scripts/add_guide.js) edits it, one approved donation per line.
 const DONORS = [
   {"k":"a98abbea","id":"d8234be2","name":"Primecode","msg":"a book for special one","amount":185,"date":"2026-10-23T14:28"},
@@ -28120,9 +28138,8 @@ function donateListFit(ui){
   ui.page = Math.min(ui.page, ui.pages.length - 1);
   donateListPage(ui);
 }
-// the names under the thank-you line (user 2026-10-23: honour the donors on every open, not only on their tab; option E of five mocks): ♥ and
-// every donor's latest name, biggest total first, text only, in one set inside the ticker's track; the list tab's count. Hidden while there is
-// nobody to thank.
+// the donors' names line of the hub bar and the phone menu (mountMenuThanks; it was the ☕ pop-up's until 2026-10-23, option E of five mocks):
+// ♥ and every donor's latest name, biggest total first, text only, in one set inside the ticker's track. Hidden while there is nobody to thank.
 function renderDonorThanks(ui, rows = donorRows(DONORS)){
   const add = (parent, cls, text) => { const el = document.createElement("span"); el.className = cls; el.textContent = text; parent.appendChild(el); return el; };
   ui.list.textContent = "";
@@ -28132,8 +28149,12 @@ function renderDonorThanks(ui, rows = donorRows(DONORS)){
   rows.forEach((r) => add(ui.set, "donate-thanks-name", r.name));
   ui.copy = null;
   ui.box.hidden = !rows.length;
-  ui.count.textContent = rows.length ? String(rows.length) : "";
-  ui.count.hidden = !rows.length;
+}
+// the รายชื่อผู้สนับสนุน tab's count: the number of donors, hidden while there is nobody
+function donateCountFill(el, n){
+  el.textContent = n ? String(n) : "";
+  el.hidden = !n;
+  el.dataset.len = String(String(n).length);   // it sits inside the heart: 3 digits take a smaller font
 }
 const DONATE_TICKER_SPEED = 28;   // px a second
 // the ticker for names wider than their room: it moves by one set plus the gap to the copy, then starts over; null when they fit
@@ -28158,7 +28179,7 @@ function donateThanksFit(ui){
   ui.list.style.setProperty("--donate-dur", run.dur.toFixed(2) + "s");
   ui.box.classList.add("is-running");
 }
-// ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the ☕ pop-up's names line (renderDonorThanks, biggest total first; donateThanksFit runs it
+// ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the donors' names line (renderDonorThanks, biggest total first; donateThanksFit runs it
 // as a ticker when the names do not fit) behind the label, in two copies. Desktop: .hub-thanks at the very top, in the hub bar's middle,
 // taking turns with the Discord note on every page (70 / 30, CSS; the user tried four mocks, then the band by the filmstrip, then the menu
 // only, and chose this). Phones: .ln-thanks on the menu between the hub bar and the stage card. CSS picks the copy; each fits whenever it shows or the window
@@ -28170,9 +28191,9 @@ function mountMenuThanks(root){
     box.type = "button"; box.className = "donate-thanks " + cls; box.title = "ดูรายชื่อผู้สนับสนุนทั้งหมด";
     box.innerHTML = '<span class="ln-thanks-label">ขอบคุณผู้ร่วมสนับสนุน</span><span class="donate-thanks-names"></span>';
     parent.insertBefore(box, before);
-    const ui = { box, list: box.querySelector(".donate-thanks-names"), count: document.createElement("span"), track: null, set: null, copy: null, key: 0 };
+    const ui = { box, list: box.querySelector(".donate-thanks-names"), track: null, set: null, copy: null, key: 0 };
     renderDonorThanks(ui);
-    box.addEventListener("click", () => { openDonateModal(); const at = donateTabs.length - 1; donateShowTab(donateTabs, donatePanels, at); donateTabShown(at); });
+    box.addEventListener("click", () => { openDonateModal(); const at = donateTabs.length - 1; donateShowTab(donateTabs, donatePanels, at); donateTabShown(at); donateTabsNudge(); });
     return ui;
   };
   const hub = document.querySelector(".hub-bar"), note = hub && hub.querySelector(".hub-note");
@@ -33039,6 +33060,8 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-23T14:30:31.402Z","feat(bible): Knight of the Deep tests its own hold attack (moved off 12th Kingdom Knight's second mode); the ☕ tabs are icon cards with the donor count in the heart, the names line leaves the pop-up, and the QR and slip icons hop twice each when the thanks line opens the list; light balls read summon stats right mid-change (Heavy Built flew the wrong way); guide view counts refreshed"],
+    ["2026-10-23T14:05:39.396Z","feat(bible): Knight of the Deep tests its own hold attack (moved off 12th Kingdom Knight's second mode); the ☕ tabs are icon cards with the donor count in the heart, the names line leaves the pop-up, and the QR and slip icons hop twice each when the thanks line opens the list"],
     ["2026-10-23T13:31:31.235Z","fix(bible): stat glows follow every dep toggle (No Chance LCK on TTO and five more); the guitar tab plays at 67.5 and keeps playing in the background; the top-bar swap rises; Test bar corner, gallery filter labels and phone menu arrows tidied"],
     ["2026-10-23T12:46:32.314Z","style(bible): no line under the top bar on any page; the Discord note is larger, undimmed and takes turns with the donor thanks (70/30, thanks first) on every page"],
     ["2026-10-23T12:14:47.048Z","feat(bible): แท็บกีตาร์เพลงธีม, a Guitar Pro style player for the 12 Tails main theme (jumpfingerstyle's tab note for note), a theme music button by the logo, and the donors thanked at the top of the menu"],
@@ -33658,7 +33681,16 @@ const donateTabs = Array.from(document.querySelectorAll("#donateModal [role=tab]
 const donatePanels = donateTabs.map((t) => document.getElementById(t.getAttribute("aria-controls")));
 const donateListUi = { box: $("#donatePanelList"), list: $("#donateList"), pager: $("#donatePager"), num: $("#donatePagerNum"), prev: $("#btnDonatePrev"), next: $("#btnDonateNext"),
   rows: [], pages: [0], page: 0 };   // the donor list tab: its rows newest first, the pages that fit, the page shown
-const donateThanksUi = { box: $("#donateThanks"), list: $("#donateThanksNames"), count: $("#donateTabCount"), track: null, set: null, copy: null };   // the names under the thank-you line, the list tab's count
+const donateTabCount = $("#donateTabCount");   // the list tab's donor count, inside its heart
+const donateTabBar = $("#donateModal .donate-tabs");
+// opened straight onto รายชื่อผู้สนับสนุน (the hub bar / menu thanks line): the QR โอนเงิน icon hops twice, then the ส่งสลิป icon twice, so a
+// visitor who came for the names also sees how to join them (user 2026-10-23); openDonateModal clears it, so a plain open stays still
+function donateTabsNudge(){
+  if (!donateTabBar) return;
+  donateTabBar.classList.remove("is-nudge");
+  void donateTabBar.offsetWidth;
+  donateTabBar.classList.add("is-nudge");
+}
 let donateReady = false;
 
 function openDonateModal() {
@@ -33671,13 +33703,12 @@ function openDonateModal() {
     if (btnDonateQr) btnDonateQr.disabled = !DONATE_QR;
     donateListUi.rows = donorRecent(donorRows(DONORS));
     if (list) renderDonorList(list, donateListUi.rows);
-    if (donateThanksUi.box && donateThanksUi.list && donateThanksUi.count) renderDonorThanks(donateThanksUi);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!donateModal.hidden) donateThanksFit(donateThanksUi); });   // measured again in the real font
+    if (donateTabCount) donateCountFill(donateTabCount, donateListUi.rows.length);
   }
   donateShowTab(donateTabs, donatePanels, 0);   // QR โอนเงิน on every open (the form keeps what was typed)
+  if (donateTabBar) donateTabBar.classList.remove("is-nudge");
   donateListUi.page = 0;   // the list opens on its newest page
   donateModal.hidden = false;
-  donateThanksFit(donateThanksUi);
   document.body.style.overflow = "hidden";
   try { localStorage.setItem(DONATE_AUTO_KEY, "1"); } catch (e) {}   // seen: it never opens by itself again on this device
 }
@@ -33718,8 +33749,7 @@ if (donateForm) donateForm.addEventListener("submit", (e) => { e.preventDefault(
 function donateTabShown(at){
   if (donatePanels[at] && donatePanels[at] === donateListUi.box) donateListFit(donateListUi);
 }
-if (donateThanksUi.box) donateThanksUi.box.addEventListener("click", () => { const at = donateTabs.length - 1; donateShowTab(donateTabs, donatePanels, at); donateTabShown(at); });   // the names open รายชื่อผู้สนับสนุน, the last tab
-window.addEventListener("resize", () => { if (donateModal && !donateModal.hidden){ donateThanksFit(donateThanksUi); donateListFit(donateListUi); } });
+window.addEventListener("resize", () => { if (donateModal && !donateModal.hidden) donateListFit(donateListUi); });
 donateTabs.forEach((t, i) => {
   t.addEventListener("click", () => { donateShowTab(donateTabs, donatePanels, i); donateTabShown(i); });
   t.addEventListener("keydown", (e) => donateTabKey(e, donateTabs, donatePanels, donateTabShown));
