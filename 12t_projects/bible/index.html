@@ -7458,7 +7458,7 @@
   @keyframes lnNewShine{0%,55%{background-position:220% 0, 0 0}100%{background-position:-120% 0, 0 0}}
   @keyframes lnNewStar{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(45deg)}}
   @keyframes lnWait{to{background-position:-150% 0}}
-  @keyframes lnGpan{to{object-position:100% 50%}}   /* phones: the guide sheet pans left to right while it is shown (user 2026-10-20: fill the slide with the image) */
+  @keyframes lnGpan{to{translate:calc(100cqw - 100%) 0}}   /* phones: the guide sheet pans left to right while it is shown (user 2026-10-20: fill the slide with the image) */
   /* hover = a gold edge on its own layer that only fades in, so the big tilted image never repaints (user 2026-10-18: hover felt slow) */
   .ln-gpng::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 2px var(--ln-hi); opacity:0; transition:opacity .12s; pointer-events:none}
   .ln-gpng:hover::after, .ln-gpng:focus-visible::after{opacity:1}
@@ -7584,7 +7584,8 @@
     /* ไกด์อาชีพ (user 2026-10-20: too much empty space): the guide image fills the top as a frame and pans across the sheet; the title and author
        fill the band under it on the left, the class portrait stands at the right of that band */
     .ln-gpng{left:0; right:0; top:4%; height:76%; transform:perspective(1100px) rotateY(-9deg) rotateX(3deg); transform-origin:100% 50%}   /* a slight tilt like the desktop frame (user 2026-10-20) */
-    .ln-gpng img{width:100%; height:100%; object-fit:cover; object-position:0 50%}
+    .ln-gpng{container-type:size}   /* cqw in lnGpan = the card width */
+    .ln-gpng img{width:auto; min-width:100%; max-width:none; height:100%; object-fit:cover; will-change:translate}   /* the pan moves the layer (user 2026-10-24: it stuttered mid-pan) */
     .ln-gpng:not(.is-wait) img{animation:lnGpan 2.8s ease-in-out .3s both}   /* restarts with each guide: is-wait comes back while the next one loads */
     .ln-gpng.is-wait{aspect-ratio:auto}
     .ln-gptl{height:66%; left:auto; right:-9%; bottom:-34%}
@@ -32847,10 +32848,8 @@ function mountLauncher(root){
       box.querySelector(".ln-gcap").innerHTML = "<b>" + esc(g.title) + "</b><span>โดย " + esc(g.author) + " · " + cls + " · " + (LAUNCH_SERVER[g.build.server] || "") + "</span>";
       png.hidden = false; png.classList.add("is-wait"); img.removeAttribute("src");
       const stale = () => guides[gi % guides.length] !== x || !box.isConnected;
-      // the next two guides render while this one pans (staggered, a render blocks the page 0.1-0.3 s), so their swaps find the image ready and their pans start on time (user 2026-10-24)
-      const warm = () => [1, 2].forEach(n => setTimeout(() => { if (stale()) return; const w = guides[(gi + n) % guides.length]; if (w && !pngs.has(w.id)) guidePng(w); }, n === 1 ? 500 : 1500));
       const apply = url => { if (stale()) return; if (!url) { png.hidden = true; return; } const pre = new Image(); pre.src = url;   // decoded before the swap, so the swap costs nothing
-        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); img.style.animation = "none"; void img.offsetWidth; img.style.animation = ""; warm(); } }); };   // a ready image takes is-wait off and on inside one frame, so the pan is restarted by hand (user 2026-10-24: guides 2 and 3 sat at the right end)
+        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); img.style.animation = "none"; void img.offsetWidth; img.style.animation = ""; } }); };   // a ready image takes is-wait off and on inside one frame, so the pan is restarted by hand (user 2026-10-24: guides 2 and 3 sat at the right end)
       // a render blocks the page for 0.1-0.3 s: a guide that is not ready yet (e.g. the slide picked right after load) renders after the entrance, not during it
       if (pngs.has(x.id)) pngs.get(x.id).then(apply); else setTimeout(() => { if (!stale()) guidePng(x).then(apply); }, 900);
       box.classList.remove("is-out");
@@ -32858,7 +32857,8 @@ function mountLauncher(root){
     if (fade) { box.classList.add("is-out"); setTimeout(paint, 380); } else paint();
   };
   // the first guide the slide will show renders while the first slide (skill details) is on screen, so its image is ready when the slide comes up (user 2026-10-24)
-  if (guides.length) setTimeout(() => idle(() => { const x = guides[nextStart() % guides.length]; if (x && !viewMenu.hidden && !document.hidden) guidePng(x); }), 1200);
+  // the three guides the slide will show render one by one during it (1.2 / 2.7 / 4.2 s), never while a guide pans (user 2026-10-24: a render mid-pan made it stutter)
+  if (guides.length) [0, 1, 2].forEach(n => setTimeout(() => idle(() => { const x = guides[(nextStart() + n) % guides.length]; if (x && !pngs.has(x.id) && !viewMenu.hidden && !document.hidden) guidePng(x); }), 1200 + n * 1500));
   // The skill wall uses full-size icons only (64 px and up; the few 32 px ones blur at wall size), read from each data URI's header.
   const iconWidth = uri => { try { const c = uri.indexOf(","), b = atob(uri.slice(c + 1, c + 49)), u = i => b.charCodeAt(i);
       if (b.slice(1, 4) === "PNG") return (u(16) << 24 | u(17) << 16 | u(18) << 8 | u(19)) >>> 0;
@@ -33117,6 +33117,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T16:43:17.629Z","fix(bible): hub showcase class guides pan smoothly on phones (GPU transform, and all three guides render during the skill details slide instead of mid-pan)"],
     ["2026-10-24T16:39:47.805Z","fix(bible): the skill details slide on phones uses smaller icons (6 by 8) that still fill the card"],
     ["2026-10-24T16:38:27.942Z","fix(bible): hub showcase class guides 2 and 3 pan again on phones, and the slide stops at the 3rd guide instead of flashing a 4th"],
     ["2026-10-24T16:32:53.578Z","feat(bible): the first class guide of the hub showcase renders while the skill details slide is on screen, so its image is ready when the slide comes up"],
