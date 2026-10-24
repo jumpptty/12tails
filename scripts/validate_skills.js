@@ -1640,6 +1640,7 @@ let checkedEffectProc = 0;
   deps.openWound = 1;
   check("Open Wound on = 30 x (Disarm 2 + Bleed 2) = 120 per hit", ep.bonus(ow, 1, 0) === 120, ep.bonus(ow, 1, 0));
   deps.openWound = 0; check("Open Wound off, no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  check("bbBugSee points at a card that owns the bug (bbBug) and the text names it", sandbox.SKILLS.filter(s => s.bbBugSee).every(s => { const o = sandbox.SKILLS.find(x => x.id === s.bbBugSee.id); return o && o.bbBug && s.bbBugSee.text && s.bbBugSee.text.toLowerCase().includes(o.name.toLowerCase()); }));
   check("Open Wound is one toggle: no separate target Disarm/Bleed deps", !sandbox.SKILLS.some(s => s.effectProc && s.effectProc.controls && s.effectProc.controls.some(d => /^catTarget/.test(d.id))));
   check("Finishing Blow carries the bonus on hit 3 only", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join() === "false,false,true,false", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join());
   check("a card without effectProc.hits carries it on every hit", ep.hitOk(ow, 1, 0) && ep.hitOk(ow, 1, 2));
