@@ -32857,6 +32857,8 @@ function mountLauncher(root){
     };
     if (fade) { box.classList.add("is-out"); setTimeout(paint, 380); } else paint();
   };
+  // the first guide the slide will show renders while the first slide (skill details) is on screen, so its image is ready when the slide comes up (user 2026-10-24)
+  if (guides.length) setTimeout(() => idle(() => { const x = guides[nextStart() % guides.length]; if (x && !viewMenu.hidden && !document.hidden) guidePng(x); }), 1200);
   // The skill wall uses full-size icons only (64 px and up; the few 32 px ones blur at wall size), read from each data URI's header.
   const iconWidth = uri => { try { const c = uri.indexOf(","), b = atob(uri.slice(c + 1, c + 49)), u = i => b.charCodeAt(i);
       if (b.slice(1, 4) === "PNG") return (u(16) << 24 | u(17) << 16 | u(18) << 8 | u(19)) >>> 0;
@@ -33114,6 +33116,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T16:32:53.578Z","feat(bible): the first class guide of the hub showcase renders while the skill details slide is on screen, so its image is ready when the slide comes up"],
     ["2026-10-24T16:29:09.457Z","feat(bible): the class guide slide in the hub showcase stays until the 3rd guide has finished panning, and guides 2 and 3 render during the 1st guide's pan"],
     ["2026-10-24T16:25:53.854Z","feat(bible): on phones the class guide slide fills its card with the guide sheet, fading under the title, instead of the tilted sheet"],
     ["2026-10-24T16:19:51.998Z","feat(bible): on phones the skill details slide fills its card with icons that fade under the title, and the class guide slide stretches down to the title band"],
