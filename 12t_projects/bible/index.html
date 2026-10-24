@@ -7616,11 +7616,11 @@
     .ln-title{font-size:26px}
   }
   /* phones held upright (user 2026-10-24): the skill wall fills the whole stage card and fades out where the title sits, so the title stays readable;
-     7 rows, tile size from the card width, slightly oversized and flat so the rotated corners are covered */
+     6 columns x 8 rows (user 2026-10-24: 5 x 7 looked too big), tile size from the card width, slightly oversized and flat so the rotated corners are covered */
   @media (max-width:900px) and (orientation:portrait){
     .ln-stage.is-wall .ln-art{inset:0; height:auto; padding:0}
     .ln-stage.is-wall .ln-wallbox{width:100%; height:100%; perspective:none; -webkit-mask-image:linear-gradient(180deg, #000 32%, rgba(0,0,0,.14) 74%); mask-image:linear-gradient(180deg, #000 32%, rgba(0,0,0,.14) 74%)}
-    .ln-stage.is-wall .ln-wall{--ic:calc((100vw - 24px) / 5.76); transform:rotateZ(-4deg) scale(1.12); transition:none}
+    .ln-stage.is-wall .ln-wall{--ic:calc((100vw - 24px) / 6.95); grid-template-columns:repeat(6, var(--ic)); transform:rotateZ(-4deg) scale(1.12); transition:none}
   }
   /* ไกด์อาชีพ on phones held upright (user 2026-10-24: too much empty space under the slide, option B of 3 mocks): the guide sheet fills the whole card and fades
      out under the title like the skill wall; the class portrait and the caption sit above the title band (z-index 3, over the copy's own fade) */
@@ -32850,7 +32850,7 @@ function mountLauncher(root){
       // the next two guides render while this one pans (staggered, a render blocks the page 0.1-0.3 s), so their swaps find the image ready and their pans start on time (user 2026-10-24)
       const warm = () => [1, 2].forEach(n => setTimeout(() => { if (stale()) return; const w = guides[(gi + n) % guides.length]; if (w && !pngs.has(w.id)) guidePng(w); }, n === 1 ? 500 : 1500));
       const apply = url => { if (stale()) return; if (!url) { png.hidden = true; return; } const pre = new Image(); pre.src = url;   // decoded before the swap, so the swap costs nothing
-        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); warm(); } }); };
+        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); img.style.animation = "none"; void img.offsetWidth; img.style.animation = ""; warm(); } }); };   // a ready image takes is-wait off and on inside one frame, so the pan is restarted by hand (user 2026-10-24: guides 2 and 3 sat at the right end)
       // a render blocks the page for 0.1-0.3 s: a guide that is not ready yet (e.g. the slide picked right after load) renders after the entrance, not during it
       if (pngs.has(x.id)) pngs.get(x.id).then(apply); else setTimeout(() => { if (!stale()) guidePng(x).then(apply); }, 900);
       box.classList.remove("is-out");
@@ -32952,7 +32952,7 @@ function mountLauncher(root){
     stage.classList.toggle("is-guide", t.collage === "classStory" && guides.length > 0);
     root.classList.toggle("is-guide-on", t.collage === "classStory" && guides.length > 0);
     if (t.collage === "skills") {
-      art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? (matchMedia("(orientation:portrait)").matches ? wallTiles(5, 7, 2) : wallTiles(5, 5, 1)) : wallTiles(8, 6, 3)) + "</div></div>";
+      art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? (matchMedia("(orientation:portrait)").matches ? wallTiles(6, 8, 2) : wallTiles(5, 5, 1)) : wallTiles(8, 6, 3)) + "</div></div>";
       startWall(art.querySelector(".ln-wall"));
     }
     else if (LN_ART[t.collage]) {   // drawn in code (LN_ART); the art opens its tool like the portraits do
@@ -32963,7 +32963,8 @@ function mountLauncher(root){
     else if (t.collage === "classStory" && guides.length) {
       art.innerHTML = '<div class="ln-g"><a class="ln-gpng is-wait" href="#class-guide"><img alt=""></a><span class="ln-gnew" hidden><i aria-hidden="true">✦</i>ใหม่</span><a class="ln-gptl" href="#class-guide"><img class="ln-gpt" alt=""></a><span class="ln-gcap"></span></div>';
       const box = art.querySelector(".ln-g"); gi = nextStart(); if (nNew) feat++; showGuide(box, false);
-      guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); } }, 3500);
+      let shown = 1;   // the slide shows three guides, then holds the last one until the bar ends (user 2026-10-24: a 4th one appeared briefly)
+      guideTimer = setInterval(() => { if (!root.classList.contains("is-paused") && !viewMenu.hidden) { gi++; showGuide(box, true); if (++shown >= 3) clearInterval(guideTimer); } }, 3500);
     } else {
       const arts = (t.art || []).filter(k => artSrc(k));
       const inner = arts.length && arts.every(k => /^(skill|gear):/.test(k))
@@ -33116,6 +33117,8 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T16:39:47.805Z","fix(bible): the skill details slide on phones uses smaller icons (6 by 8) that still fill the card"],
+    ["2026-10-24T16:38:27.942Z","fix(bible): hub showcase class guides 2 and 3 pan again on phones, and the slide stops at the 3rd guide instead of flashing a 4th"],
     ["2026-10-24T16:32:53.578Z","feat(bible): the first class guide of the hub showcase renders while the skill details slide is on screen, so its image is ready when the slide comes up"],
     ["2026-10-24T16:29:09.457Z","feat(bible): the class guide slide in the hub showcase stays until the 3rd guide has finished panning, and guides 2 and 3 render during the 1st guide's pan"],
     ["2026-10-24T16:25:53.854Z","feat(bible): on phones the class guide slide fills its card with the guide sheet, fading under the title, instead of the tilted sheet"],
