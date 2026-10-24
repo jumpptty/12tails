@@ -5116,6 +5116,27 @@ function fontProblems(html) {
     }
   }
 }
+// The exported guide PNG's tree names (user 2026-10-24): a long name ("Alchemist Doctor") ran into its learned/total count because the export drew
+// every name at a fixed 22 px. classGuideImageFitName shrinks it to fit (the page's fitTreeNames, 8 px floor), and the export must use it.
+{
+  const fail = (m) => { console.error("[PNG TREE NAME ERROR] " + m); errorCount++; };
+  let fit = null;
+  try { fit = vm.runInContext("classGuideImageFitName", sandbox); } catch (e) { fail("classGuideImageFitName is missing"); }
+  if (fit) {
+    const w = (n) => (px) => n * px * 0.55;   // a fake font: width grows with the size
+    const cases = [
+      ["fits at full size", fit(w(10), 200, 22), 22],
+      ["a long name shrinks until it fits", fit(w(20), 200, 22), 18],
+      ["never below the 8 px floor", fit(w(200), 50, 22), 8],
+    ];
+    const bad = cases.filter(([, got, want]) => got !== want);
+    const stillWide = w(20)(fit(w(20), 200, 22)) > 200;
+    if (bad.length || stillWide) fail("classGuideImageFitName: " + bad.map(([n, got, want]) => `${n}: got ${got}, want ${want}`).join("; ") + (stillWide ? "; the fitted name is still wider than the room" : ""));
+    else if (!/classGuideImageFitName\(px => \{ ctx\.font = font\(600, px\); return ctx\.measureText\(t\.name\)\.width; \}, t\.x \+ t\.w - 4 - cw - 10 - nameX - 10 - 24, 22\)/.test(html)
+      || /ctx\.font = font\(600, 22\); ctx\.fillStyle = text; ctx\.fillText\(t\.name/.test(html)) fail("the export must draw each tree name through classGuideImageFitName (room = column width less the count, gaps and a short rule), not at a fixed 22 px");
+    else console.log("Verified the exported guide image shrinks a long tree name to fit beside its count.");
+  }
+}
 // Damage modes (user 2026-10-23): a dmgModes card (Planet Breaker's inner / outer ring, never both in one pulse) shows one complete damage row
 // per mode, labelled with the mode, whose Test bar rolls that group (simulate-group); every Test of a mode lands inside its own row's Final.
 // (The range-vs-simulator sweep skips dmgModes cards, so this is their check.)

@@ -29136,6 +29136,13 @@ function classGuideImageWrap(runs, maxWidth, measure, segmenter){
   return lines;
 }
 // Keep the first maxLines lines; the last kept line ends with an ellipsis that still fits.
+// A tree name in the exported image never runs into its count (user 2026-10-24): the font shrinks in 0.5 px steps from `size` until the name
+// fits `maxWidth` (the page's fitTreeNames, same 8 px floor). measureAt(px) = the name's width at that size.
+function classGuideImageFitName(measureAt, maxWidth, size, floor = 8){
+  let s = size;
+  while (s > floor && measureAt(s) > maxWidth) s -= 0.5;
+  return s;
+}
 function classGuideImageClip(lines, maxLines, maxWidth, measure){
   if (lines.length <= maxLines) return lines;
   if (maxLines <= 0) return [];
@@ -29480,9 +29487,12 @@ async function classGuideRenderImage(guide, simRoot){
     const counted = t.cells.filter(c => !c.placeholder && c.id < 450), have = counted.filter(c => learned.has(c.id)).length, countText = have + "/" + counted.length;
     const midY = t.y + 20, nameX = t.x + 22;
     ctx.save(); ctx.translate(t.x + 9, midY); ctx.rotate(Math.PI / 4); ctx.fillStyle = "rgba(208,145,62,.7)"; ctx.fillRect(-4, -4, 8, 8); ctx.restore();
-    ctx.font = font(600, 22); ctx.fillStyle = text; ctx.fillText(t.name, nameX, midY + 8);
-    const nameEnd = nameX + ctx.measureText(t.name).width;
     ctx.font = font(400, 15); const cw = ctx.measureText(countText).width;
+    // the name shrinks to fit beside the count, keeping 10 px each side and a short stretch of the rule (the tree columns are narrow)
+    const nameSize = classGuideImageFitName(px => { ctx.font = font(600, px); return ctx.measureText(t.name).width; }, t.x + t.w - 4 - cw - 10 - nameX - 10 - 24, 22);
+    ctx.font = font(600, nameSize); ctx.fillStyle = text; ctx.fillText(t.name, nameX, midY + 8);
+    const nameEnd = nameX + ctx.measureText(t.name).width;
+    ctx.font = font(400, 15);
     ctx.fillStyle = muted; ctx.fillText(countText, t.x + t.w - 4 - cw, midY + 5);
     const r0 = nameEnd + 10, r1 = t.x + t.w - 4 - cw - 10;
     if (r1 - r0 > 8){ const g = ctx.createLinearGradient(r0, 0, r1, 0); g.addColorStop(0, "#d0913e"); g.addColorStop(1, "rgba(208,145,62,0)"); ctx.fillStyle = g; ctx.fillRect(r0, midY, r1 - r0, 1.2); }
@@ -33081,6 +33091,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T13:50:26.791Z","fix(bible): the exported guide image shrinks a long tree name to fit beside its count (Alchemist Doctor ran into 26/30)"],
     ["2026-10-24T11:00:26.699Z","feat(bible): class guide #75 ToT Monkey ลิงดิน อารีน่าใหญ่ (แซปป้า, 3-3, 5-5, 7-7, 10-10, 12-12) by Siege"],
     ["2026-10-24T09:13:01.797Z","feat(bible): class guide #74 TTO Penguin กวิ้นเมเท ลงโครอล สำหรับคนมีเพื่อน by Busair"],
     ["2026-10-24T08:15:11.120Z","feat(bible): class guide #73 TTO Wolf หมาพุ่ง Stat Plus เล่นเอาสังคม by Busair"],
