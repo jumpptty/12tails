@@ -7613,6 +7613,22 @@
     .ln-art{height:44%}
     .ln-title{font-size:26px}
   }
+  /* phones held upright (user 2026-10-24): the skill wall fills the whole stage card and fades out where the title sits, so the title stays readable;
+     7 rows, tile size from the card width, slightly oversized and flat so the rotated corners are covered */
+  @media (max-width:900px) and (orientation:portrait){
+    .ln-stage.is-wall .ln-art{inset:0; height:auto; padding:0}
+    .ln-stage.is-wall .ln-wallbox{width:100%; height:100%; perspective:none; -webkit-mask-image:linear-gradient(180deg, #000 32%, rgba(0,0,0,.14) 74%); mask-image:linear-gradient(180deg, #000 32%, rgba(0,0,0,.14) 74%)}
+    .ln-stage.is-wall .ln-wall{--ic:calc((100vw - 24px) / 5.76); transform:rotateZ(-4deg) scale(1.12); transition:none}
+  }
+  /* ไกด์อาชีพ on phones held upright (user 2026-10-24: too much empty space under the slide, option A of 3 mocks): the art area runs from the top bar down to the title
+     band, so the tilted sheet, the class portrait and the caption use the whole card instead of the top 56% */
+  @media (max-width:900px) and (orientation:portrait){
+    .ln-stage.is-guide .ln-art{top:20px; bottom:112px; height:auto; padding:0}
+    .ln-stage.is-guide .ln-gpng{top:0; height:76%}
+    .ln-stage.is-guide .ln-gptl{right:-6px; bottom:0; height:62%}
+    .ln-stage.is-guide .ln-gcap{left:14px; bottom:0; max-width:56%}
+    .ln-stage.is-guide .ln-gnew{top:-8px; right:14px}
+  }
   /* phones held sideways: the stage fills the screen, text left and art right */
   @media (max-width:900px) and (max-height:520px) and (orientation:landscape){
     .ln-stage{height:calc(100dvh - var(--hub-h, 64px) - 12px)}
@@ -32926,8 +32942,10 @@ function mountLauncher(root){
       // the เปิด seal only on the two main tools (user 2026-10-18); the others open from their art or thumb
       (fact || isMain(t) ? '<div class="ln-cta">' + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") + (isMain(t) ? '<a class="ln-play" href="#' + t.id + '"><span class="ln-seal"><span>เปิด</span></span></a>' : "") + "</div>" : "");
     clearInterval(guideTimer); clearTimeout(wallTimer);
+    stage.classList.toggle("is-wall", t.collage === "skills");
+    stage.classList.toggle("is-guide", t.collage === "classStory" && guides.length > 0);
     if (t.collage === "skills") {
-      art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? wallTiles(5, 5, 1) : wallTiles(8, 6, 3)) + "</div></div>";
+      art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? (matchMedia("(orientation:portrait)").matches ? wallTiles(5, 7, 2) : wallTiles(5, 5, 1)) : wallTiles(8, 6, 3)) + "</div></div>";
       startWall(art.querySelector(".ln-wall"));
     }
     else if (LN_ART[t.collage]) {   // drawn in code (LN_ART); the art opens its tool like the portraits do
@@ -33091,6 +33109,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T16:19:51.998Z","feat(bible): on phones the skill details slide fills its card with icons that fade under the title, and the class guide slide stretches down to the title band"],
     ["2026-10-24T13:50:26.791Z","fix(bible): the exported guide image shrinks a long tree name to fit beside its count (Alchemist Doctor ran into 26/30)"],
     ["2026-10-24T11:00:26.699Z","feat(bible): class guide #75 ToT Monkey ลิงดิน อารีน่าใหญ่ (แซปป้า, 3-3, 5-5, 7-7, 10-10, 12-12) by Siege"],
     ["2026-10-24T09:13:01.797Z","feat(bible): class guide #74 TTO Penguin กวิ้นเมเท ลงโครอล สำหรับคนมีเพื่อน by Busair"],
