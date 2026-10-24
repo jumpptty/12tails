@@ -7538,6 +7538,8 @@
   .ln-th.is-on .ln-thb{border-color:var(--acc); transform:translateY(-6px)}
   .ln-th.is-on img{opacity:1}
   .ln-th.is-on i, .ln-seg.is-on i{animation:lnBar 7s linear forwards}
+  /* the class guide slide stays until the 3rd guide has finished panning (user 2026-10-24): swaps at 0 / 3.5 / 7 s, + 0.38 s fade + 3.1 s pan = 10.5 s, 11 s with slack */
+  .ln.is-guide-on .ln-th.is-on i, .ln.is-guide-on .ln-seg.is-on i{animation-duration:11s}
   .ln.is-paused .ln-th.is-on i, .ln.is-paused .ln-seg.is-on i{animation-play-state:paused}
   /* the two main tools (user 2026-10-18, option E of 5 mocks): taller, wider banners with a moving backdrop and a gold left bar; the name sits on the left */
   .ln-th.is-main{flex-basis:200px; height:96px}
@@ -32845,8 +32847,10 @@ function mountLauncher(root){
       box.querySelector(".ln-gcap").innerHTML = "<b>" + esc(g.title) + "</b><span>โดย " + esc(g.author) + " · " + cls + " · " + (LAUNCH_SERVER[g.build.server] || "") + "</span>";
       png.hidden = false; png.classList.add("is-wait"); img.removeAttribute("src");
       const stale = () => guides[gi % guides.length] !== x || !box.isConnected;
+      // the next two guides render while this one pans (staggered, a render blocks the page 0.1-0.3 s), so their swaps find the image ready and their pans start on time (user 2026-10-24)
+      const warm = () => [1, 2].forEach(n => setTimeout(() => { if (stale()) return; const w = guides[(gi + n) % guides.length]; if (w && !pngs.has(w.id)) guidePng(w); }, n === 1 ? 500 : 1500));
       const apply = url => { if (stale()) return; if (!url) { png.hidden = true; return; } const pre = new Image(); pre.src = url;   // decoded before the swap, so the swap costs nothing
-        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); } }); };
+        (pre.decode ? pre.decode() : Promise.resolve()).catch(() => null).then(() => { if (!stale()) { img.src = url; png.classList.remove("is-wait"); warm(); } }); };
       // a render blocks the page for 0.1-0.3 s: a guide that is not ready yet (e.g. the slide picked right after load) renders after the entrance, not during it
       if (pngs.has(x.id)) pngs.get(x.id).then(apply); else setTimeout(() => { if (!stale()) guidePng(x).then(apply); }, 900);
       box.classList.remove("is-out");
@@ -32944,6 +32948,7 @@ function mountLauncher(root){
     clearInterval(guideTimer); clearTimeout(wallTimer);
     stage.classList.toggle("is-wall", t.collage === "skills");
     stage.classList.toggle("is-guide", t.collage === "classStory" && guides.length > 0);
+    root.classList.toggle("is-guide-on", t.collage === "classStory" && guides.length > 0);
     if (t.collage === "skills") {
       art.innerHTML = '<div class="ln-wallbox" aria-hidden="true"><div class="ln-wall">' + (phone() ? (matchMedia("(orientation:portrait)").matches ? wallTiles(5, 7, 2) : wallTiles(5, 5, 1)) : wallTiles(8, 6, 3)) + "</div></div>";
       startWall(art.querySelector(".ln-wall"));
@@ -33109,6 +33114,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T16:29:09.457Z","feat(bible): the class guide slide in the hub showcase stays until the 3rd guide has finished panning, and guides 2 and 3 render during the 1st guide's pan"],
     ["2026-10-24T16:25:53.854Z","feat(bible): on phones the class guide slide fills its card with the guide sheet, fading under the title, instead of the tilted sheet"],
     ["2026-10-24T16:19:51.998Z","feat(bible): on phones the skill details slide fills its card with icons that fade under the title, and the class guide slide stretches down to the title band"],
     ["2026-10-24T13:50:26.791Z","fix(bible): the exported guide image shrinks a long tree name to fit beside its count (Alchemist Doctor ran into 26/30)"],
