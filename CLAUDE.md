@@ -20,7 +20,7 @@ AGENTS.md above is the source of truth; this section only maps it onto Claude Co
 
 ```sh
 node scripts/validate_skills.js                         # the only "test suite": formulas, icons, rank arrays, field loss, doc backlog (no changelog check since 2026-10-20; the entry is still added by habit)
-node scripts/validate_skills.js --full                  # also runs the slow range-vs-simulator check (+~35 s); skipped by default unless the index.html diff touches damage code. Run it before every `git push` (except the guide manager's own publishes of guides and donors, which run the plain validator: they never touch damage code, user 2026-10-23)
+node scripts/validate_skills.js --full                  # also runs the slow range-vs-simulator check (+~35 s); skipped by default unless the index.html diff touches damage code. Run it before `git push` only when the commit touches damage code, formulas, ranges or the Test simulator; text, CSS, UI and small card fixes push after the plain validator (user 2026-10-24: too slow). The plain run auto-detects damage code in the *uncommitted* `index.html` diff, so validate before committing, not after. The guide manager's own publishes of guides and donors run the plain validator too (user 2026-10-23)
 node scripts/validate_skills.js --list-doc-backlog      # also name every app skill missing from its <class>-skill-reference.md
 node scripts/validate_skills.js --index <copy>/index.html   # validate another copy of the page (its assets.js beside it)
 
