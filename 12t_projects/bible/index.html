@@ -4450,14 +4450,17 @@
     position:absolute;
     bottom:calc(100% + 7px);
     left:50%;
-    transform:translateX(-50%);
+    transform:translateX(calc(-50% + var(--tip-dx, 0px)));
     background:#0f0a07;
     border:1px solid var(--gold);
     border-radius:4px;
     padding:5px 10px;
     font-family:'Prompt',sans-serif;
     text-align:center;
-    white-space:nowrap;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    max-width:min(300px, calc(100vw - 24px));
+    box-sizing:border-box;
     width:max-content;
     
     box-shadow:0 4px 14px rgba(0,0,0,0.8);
@@ -12405,6 +12408,18 @@ function renderStatusTip(cls, desc, lck, statusPath = []){
     .replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>'), lck, statusPath);
   return `<span class="sk-status-tip" onclick="event.stopPropagation()"><span class="sk-status-tip-type">${cls}</span>${desc ? `<span class="sk-status-tip-divider"></span><span class="sk-status-tip-desc">${desc}</span>` : ""}</span>`;
 }
+// Status tips are centred on their keyword; near a screen edge (phones) nudge them back inside.
+function clampStatusTip(kw){
+  const tip = kw && kw.querySelector(":scope > .sk-status-tip");
+  if (!tip) return;
+  tip.style.setProperty("--tip-dx", "0px");
+  const r = tip.getBoundingClientRect(), vw = document.documentElement.clientWidth, m = 8;
+  let dx = 0;
+  if (r.left < m) dx = m - r.left; else if (r.right > vw - m) dx = vw - m - r.right;
+  if (dx) tip.style.setProperty("--tip-dx", Math.round(dx) + "px");
+}
+document.addEventListener("mouseover", (e) => { const k = e.target.closest && e.target.closest(".sk-status"); if (k) clampStatusTip(k); });
+document.addEventListener("click", (e) => { const k = e.target.closest && e.target.closest(".sk-status"); if (k) requestAnimationFrame(() => clampStatusTip(k)); });
 let SKILL_MENTION_MAP = null;
 function buildSkillMentionMap() {
   if (SKILL_MENTION_MAP) return SKILL_MENTION_MAP;
@@ -33061,6 +33076,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-24T06:33:00.000Z","fix(bible): status keyword pop-ups wrap long descriptions and stay inside the screen on phones"],
     ["2026-10-23T17:22:34.744Z","feat(bible): class guide #72 TTO Penguin กวิ้น PVP 1/8 by Gastropoda"],
     ["2026-10-23T15:02:10.973Z","feat(bible): Planet Breaker shows its inner and outer ring as two separate damage rows, each with its own formula, raw, final and Test bar"],
     ["2026-10-23T14:30:31.402Z","feat(bible): Knight of the Deep tests its own hold attack (moved off 12th Kingdom Knight's second mode); the ☕ tabs are icon cards with the donor count in the heart, the names line leaves the pop-up, and the QR and slip icons hop twice each when the thanks line opens the list; light balls read summon stats right mid-change (Heavy Built flew the wrong way); guide view counts refreshed"],
