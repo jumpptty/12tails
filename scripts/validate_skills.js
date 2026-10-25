@@ -280,14 +280,15 @@ function checkIcon(key, context) {
     return;
   }
   const data = SKILL_ICONS[key];
-  if (!data.startsWith('data:image/png;base64,')) {
-    console.error(`[ICON ERROR] Icon '${key}' in ${context} does not have valid PNG data URI prefix`);
+  const isWebp = data.startsWith('data:image/webp;base64,');   // upscaled icons ship as WebP (Penguin first, 2026-10-25)
+  if (!isWebp && !data.startsWith('data:image/png;base64,')) {
+    console.error(`[ICON ERROR] Icon '${key}' in ${context} does not have valid PNG or WebP data URI prefix`);
     errorCount++;
     return;
   }
-  const buf = Buffer.from(data.replace('data:image/png;base64,', ''), 'base64');
-  if (buf.length < 8 || !buf.subarray(0, 8).equals(pngHeader)) {
-    console.error(`[ICON ERROR] Icon '${key}' in ${context} has corrupted PNG header`);
+  const buf = Buffer.from(data.replace(/^data:image\/(png|webp);base64,/, ''), 'base64');
+  if (isWebp ? (buf.length < 12 || buf.toString('latin1', 0, 4) !== 'RIFF' || buf.toString('latin1', 8, 12) !== 'WEBP') : (buf.length < 8 || !buf.subarray(0, 8).equals(pngHeader))) {
+    console.error(`[ICON ERROR] Icon '${key}' in ${context} has a corrupted ${isWebp ? 'WebP' : 'PNG'} header`);
     errorCount++;
   }
 }
@@ -1400,7 +1401,7 @@ let checkedChiro = 0;
 {
   const sk = SKILLS.find(s => s.id === "bat_chiroptophobia"), ids = ["chiroBlind", "chiroConfuse"], saved = ids.map(i => sandbox._depRanks[i]);
   const check = (label, ok, got) => { checkedChiro++; if (!ok) { errorCount++; console.error(`[CHIROPTOPHOBIA ERROR] ${label}: got ${got}`); } };
-  check("Blind and Confuse go 0 to 3 (level 3 = skill Lv 2 + Shame, Bat.cs:32208) with their own level III icons", !!sk && (sk.dmgControls || []).every(d => d.maxRank === 3 && d.cycleRanks) && ["bat_blind3", "bat_confusion3"].every(k => /^data:image\/png;base64,/.test(SKILL_ICONS[k] || "")), sk && JSON.stringify((sk.dmgControls || []).map(d => d.maxRank)));
+  check("Blind and Confuse go 0 to 3 (level 3 = skill Lv 2 + Shame, Bat.cs:32208) with their own level III icons", !!sk && (sk.dmgControls || []).every(d => d.maxRank === 3 && d.cycleRanks) && ["bat_blind3", "bat_confusion3"].every(k => /^data:image\/(png|webp);base64,/.test(SKILL_ICONS[k] || "")), sk && JSON.stringify((sk.dmgControls || []).map(d => d.maxRank)));
   check("the card has Blind and Confuse toggles and no input box", !!sk && (sk.dmgControls || []).map(d => d.id).join() === "chiroBlind,chiroConfuse" && !sk.dmgInputs, sk && JSON.stringify((sk.dmgControls || []).map(d => d.id)));
   if (sk) {
     [[0, 0, "0"], [1, 0, "14"], [0, 2, "21"], [2, 2, "35"], [1, 2, "28"], [3, 0, "28"], [3, 3, "49"]].forEach(([b, c, want]) => {
@@ -1416,7 +1417,7 @@ let checkedChiro = 0;
     });
     [["chiroBlind", "bat_blind"], ["chiroConfuse", "bat_confusion"]].forEach(([dep, icon]) => {
       sandbox._depRanks.chiroBlind = 2; sandbox._depRanks.chiroConfuse = 2; sandbox._depRanks[dep] = 3; sandbox._selectSkill(sk);
-      const html = sandbox._getRenderedHeroHtml(), at = (n) => SKILL_ICONS[icon + n].slice(40, 160);   // the compat tiles show the level-2 icon, so only the level-3 one is unique
+      const html = sandbox._getRenderedHeroHtml(), at = (n) => SKILL_ICONS[icon + n];   // the whole data URI identifies an icon (a slice of a WebP is not unique: the headers match); the compat tiles show the level-2 icon, so only the level-3 one is unique
       sandbox._depRanks[dep] = 2; sandbox._selectSkill(sk);
       const lower = sandbox._getRenderedHeroHtml();
       check(`${dep}: the custom ${icon}3 icon shows at level 3 and not at level 2`, html.includes(at(3)) && !lower.includes(at(3)), html.includes(at(3)) + "/" + lower.includes(at(3)));
