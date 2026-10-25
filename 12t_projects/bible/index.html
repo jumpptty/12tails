@@ -16129,6 +16129,7 @@ function mountSkillCooldownLookup(root){
 
   function getAvailableServers(skill) {
     if (!skill) return ["og"];
+    if (skill.onlyServer) return [skill.onlyServer];   // a server-exclusive skill (the coming-soon ToT EX / Reborn cards): only its own server's logo (user 2026-10-25)
     const srvs = [];
     if ((skill.servers && skill.servers.tto) || usesTdlRoll(skill)) srvs.push("tto");
     if ((skill.servers && skill.servers.tot) || skill.ps) srvs.push("tot");
@@ -16140,7 +16141,7 @@ function mountSkillCooldownLookup(root){
   function getActiveSkill(skill, serverKey) {
     if (!skill) return null;
     const avail = getAvailableServers(skill);
-    const activeSrv = avail.includes(serverKey) ? serverKey : "og";
+    const activeSrv = avail.includes(serverKey) ? serverKey : avail[avail.length - 1];   // BB is always last, an exclusive skill has only its own
     if (activeSrv === "og") return skill;
     const overrides = (skill.servers && skill.servers[activeSrv]) || (activeSrv === "tot" ? skill.ps : null);
     if (!overrides) return skill;
@@ -16388,7 +16389,7 @@ function mountSkillCooldownLookup(root){
       return;
     }
     const avail = getAvailableServers(skill);
-    const activeSrv = avail.includes(currentServer) ? currentServer : "og";
+    const activeSrv = avail.includes(currentServer) ? currentServer : avail[avail.length - 1];
     serverDepsEl.innerHTML = avail.map(srv => serverBtnHtml(srv, srv === activeSrv)).join("");
   }
 
@@ -19635,6 +19636,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
 
   function selectSkill(s){
     hasSelectedAnySkill = true;
+    if (s.onlyServer) currentServer = s.onlyServer; else if (selected && selected.onlyServer) currentServer = "og";   // an exclusive card opens on its own server; leaving it goes back to BB
     selected = s;
     presetOnSelect();
     hideServerPopup();
@@ -19681,7 +19683,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (id === "sheep_seal") id = "sheep_sealOfAttack";   // the one Seal card became four (user 2026-10-17); links shared before still open
     const s = SKILLS.find(x => x.id === id);
     if (!s) return false;
-    currentServer = (srv && getAvailableServers(s).includes(srv)) ? srv : "og";
+    currentServer = (srv && getAvailableServers(s).includes(srv)) ? srv : (s.onlyServer || "og");
     selectSkill(s);
     return true;
   };
@@ -27269,7 +27271,7 @@ const SKILL_SIM_REBORN_TREES = {};
 // only desc "เร็วๆนี้" (`soon: "tot" | "reborn"` marks it: roster tabs C (ToT) / C (RB), large desc). The id is the icon key without its rank digit, which is what the simulator's cell -> card link looks up (skillSimCardId).
 // When a skill is researched, replace its card here with a full one (drop `soon`) and it moves out of the tab.
 for (const key of Object.keys(SKILL_SIM_NAMES)){
-  const cls = SKILL_SIM_NAMES[key], add = (icon, name, passive, soon) => { const id = icon.replace(/d+$/, ""); if (SKILLS.some(s => s.id === id)) return; SKILLS.push(Object.assign({ id, name, class: cls, icon, maxRank: 1 }, passive ? { passive: true } : {}, { desc: "เร็วๆนี้", soon })); };
+  const cls = SKILL_SIM_NAMES[key], add = (icon, name, passive, soon) => { const id = icon.replace(/d+$/, ""); if (SKILLS.some(s => s.id === id)) return; SKILLS.push(Object.assign({ id, name, class: cls, icon, maxRank: 1 }, passive ? { passive: true } : {}, { desc: "เร็วๆนี้", soon, onlyServer: soon })); };
   for (const c of SKILL_SIM_EX[key] || []) if (!c.placeholder && SKILL_ICONS[c.icon]) add(c.icon, c.name, c.type === "Passive", "tot");
   for (const e of SKILL_SIM_REBORN_EXTRA[key] || []) add(e[1], e[2], !!e[6], "reborn");
 }
@@ -33190,6 +33192,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T09:03:48.292Z","feat(bible): server-exclusive skill cards show only their own server logo (ToT EX and Reborn C6 / C7 stubs)"],
     ["2026-10-25T08:41:40.063Z","feat(bible): coming-soon skill cards for the ToT EX and Reborn C6 / C7 skills, with C (ToT) and C (RB) roster tabs"],
     ["2026-10-25T08:21:32.017Z","feat(bible): Reborn server in the skill simulator and the class guide editor (Lv 150, own point pools, C6 / C7 rows with 8 new skills per class)"],
     ["2026-10-25T08:02:02.771Z","feat(bible): Reborn look (underwater wallpaper, glass, orange accent) and the 3D / scene textures as lossless WebP"],
