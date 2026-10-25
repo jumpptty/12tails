@@ -349,14 +349,14 @@
           embedded art. Edit a look here only. A new look = a new block here + its key in THEME_CHOICES and a server icon (JS).
        2. SURFACES: which elements get the recipe is the THEME_SURFACES registry in the boot script at the top of <head> (a plain list of
           selectors, grouped by behaviour). The CSS for them is generated from it, so theming one more element = adding one selector there.
-       3. EFFECT LAYERS (last part): the per-look decorations that are not surfaces (TTO stars + lanterns).
+       3. EFFECT LAYERS (last part): the per-look decorations that are not surfaces (none now: TTO's stars and lanterns went with its wallpaper, 2026-10-25).
 
      Surface recipe tokens (every look must define --th-edge; the others are optional and default to "no effect"):
        --th-solid    how much of the panel colour stays, 100% = solid (default), 0% = fully see-through
-       --th-wash     a translucent tint over a see-through surface          --th-texture  an image layer (TTO harlequin)
+       --th-wash     a translucent tint over a see-through surface          --th-texture  an image layer (unused: TTO's harlequin went with its wallpaper, 2026-10-25)
        --th-blur     backdrop blur of the surface                           --th-edge     border colour of surfaces (a surface keeps its coloured accents)
        --th-hover-edge / --th-hover-glow   chip hover                       --th-shell-bg the tool panel (.tool-shell) background
-       --th-page     the page background                                    --th-veil     darkening tint laid over the ToT wallpaper
+       --th-page     the page background                                    --th-veil     darkening tint laid over the wallpaper (ToT, TTO)
      Ambient layers sit at z-index:-1 and take no pointer events. */
   html{ --glass-gradient:linear-gradient(180deg, rgba(212,175,55,0.03) 0%, rgba(20,19,17,0.92) 100%); }
 
@@ -367,20 +367,13 @@
     --ink:#0a0a0a; --panel:#1f1914; --panel-2:#2a2118; --th-line:#5b4426; --line:var(--th-line);
     --text:#f3e7d3; --muted:#bfae8e; --gold:#d0913e; --gold-soft:rgba(208,145,62,.14);
     --shadow:0 1px 2px rgba(0,0,0,.6), 0 18px 40px -12px rgba(0,0,0,.7);
-    /* surface recipe: solid warm panels with the site's harlequin texture (two diagonal 14px bands) */
-    --th-edge:var(--th-line);
-    --th-texture:
-      repeating-linear-gradient(45deg, transparent 0 14px, rgba(208,145,62,.035) 14px 28px),
-      repeating-linear-gradient(-45deg, transparent 0 14px, rgba(208,145,62,.035) 14px 28px);
+    /* surface recipe (user 2026-10-25, copied from ToT): see-through glass over the wallpaper, a warm edge and gold hover; no backdrop blur */
+    --th-solid:0%; --th-wash:rgba(255,236,210,.045); --th-blur:none; --th-edge:rgba(208,145,62,.26);
+    --th-hover-edge:rgba(208,145,62,.55); --th-hover-glow:0 0 14px rgba(208,145,62,.18);
     --th-shell-bg:var(--glass-gradient);
-    /* page: night sky gradient + warm corner glows (stars and lanterns are the effect layers below) */
-    --th-page:
-      radial-gradient(38% 30% at 88% 0%, rgba(255,232,190,.1), transparent 70%),
-      radial-gradient(70% 38% at 50% 112%, rgba(240,130,40,.2), transparent 70%),
-      linear-gradient(#0b0c17 0%, #100e18 45%, #171009 100%);
-    /* embedded art: the site's own theme/stars.svg and theme/tailoween/jack-o-lantern.webp */
-    --tto-stars:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%20512%20512%22%3E%3Ccircle%20cx%3D%22268.5%22%20cy%3D%22111.9%22%20r%3D%223.2%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.1%22%2F%3E%3Ccircle%20cx%3D%22268.5%22%20cy%3D%22111.9%22%20r%3D%221.4%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.95%22%2F%3E%3Ccircle%20cx%3D%22356.7%22%20cy%3D%22381.2%22%20r%3D%221.06%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.76%22%2F%3E%3Ccircle%20cx%3D%22192.5%22%20cy%3D%22148.0%22%20r%3D%220.84%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.49%22%2F%3E%3Ccircle%20cx%3D%2227.1%22%20cy%3D%222.2%22%20r%3D%220.76%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.37%22%2F%3E%3Ccircle%20cx%3D%22333.3%22%20cy%3D%22490.0%22%20r%3D%220.64%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.44%22%2F%3E%3Ccircle%20cx%3D%22229.2%22%20cy%3D%2277.5%22%20r%3D%220.56%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.52%22%2F%3E%3Ccircle%20cx%3D%22409.4%22%20cy%3D%22276.4%22%20r%3D%220.58%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.68%22%2F%3E%3Ccircle%20cx%3D%22288.0%22%20cy%3D%22310.7%22%20r%3D%221.13%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.74%22%2F%3E%3Ccircle%20cx%3D%2272.9%22%20cy%3D%22128.2%22%20r%3D%220.83%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.66%22%2F%3E%3Ccircle%20cx%3D%2239.7%22%20cy%3D%22290.0%22%20r%3D%220.87%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.51%22%2F%3E%3Ccircle%20cx%3D%22417.1%22%20cy%3D%22111.2%22%20r%3D%221.11%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.77%22%2F%3E%3Ccircle%20cx%3D%22106.7%22%20cy%3D%22199.1%22%20r%3D%220.83%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.44%22%2F%3E%3Ccircle%20cx%3D%22302.2%22%20cy%3D%22492.8%22%20r%3D%220.77%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.47%22%2F%3E%3Ccircle%20cx%3D%22129.9%22%20cy%3D%22182.8%22%20r%3D%220.71%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.40%22%2F%3E%3Ccircle%20cx%3D%22327.6%22%20cy%3D%22277.8%22%20r%3D%220.46%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.47%22%2F%3E%3Ccircle%20cx%3D%22448.4%22%20cy%3D%22355.2%22%20r%3D%220.57%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.34%22%2F%3E%3Ccircle%20cx%3D%22259.5%22%20cy%3D%22336.0%22%20r%3D%220.62%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.56%22%2F%3E%3Ccircle%20cx%3D%22321.7%22%20cy%3D%22417.3%22%20r%3D%220.46%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.69%22%2F%3E%3Ccircle%20cx%3D%2224.4%22%20cy%3D%22257.8%22%20r%3D%220.51%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.38%22%2F%3E%3Ccircle%20cx%3D%22140.9%22%20cy%3D%22309.0%22%20r%3D%220.56%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.70%22%2F%3E%3Ccircle%20cx%3D%22393.6%22%20cy%3D%2236.9%22%20r%3D%220.47%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.61%22%2F%3E%3Ccircle%20cx%3D%22248.4%22%20cy%3D%22334.7%22%20r%3D%220.48%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.51%22%2F%3E%3Ccircle%20cx%3D%22154.3%22%20cy%3D%22373.4%22%20r%3D%220.87%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.33%22%2F%3E%3Ccircle%20cx%3D%22198.9%22%20cy%3D%22501.1%22%20r%3D%221.03%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.67%22%2F%3E%3Ccircle%20cx%3D%22151.1%22%20cy%3D%22154.3%22%20r%3D%221.03%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.83%22%2F%3E%3Ccircle%20cx%3D%22164.4%22%20cy%3D%22193.9%22%20r%3D%220.83%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.32%22%2F%3E%3Ccircle%20cx%3D%2210.2%22%20cy%3D%22469.0%22%20r%3D%220.47%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.42%22%2F%3E%3Ccircle%20cx%3D%22264.7%22%20cy%3D%22295.9%22%20r%3D%220.71%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.61%22%2F%3E%3Ccircle%20cx%3D%22379.1%22%20cy%3D%22450.0%22%20r%3D%220.61%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.45%22%2F%3E%3Ccircle%20cx%3D%22152.7%22%20cy%3D%22154.9%22%20r%3D%220.48%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.40%22%2F%3E%3Ccircle%20cx%3D%2282.0%22%20cy%3D%22159.5%22%20r%3D%220.77%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.66%22%2F%3E%3Ccircle%20cx%3D%22430.8%22%20cy%3D%22172.1%22%20r%3D%220.88%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.56%22%2F%3E%3Ccircle%20cx%3D%22444.3%22%20cy%3D%22139.5%22%20r%3D%220.76%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.40%22%2F%3E%3Ccircle%20cx%3D%22241.3%22%20cy%3D%224.8%22%20r%3D%220.71%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.50%22%2F%3E%3Ccircle%20cx%3D%22464.7%22%20cy%3D%22432.6%22%20r%3D%220.77%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.49%22%2F%3E%3Ccircle%20cx%3D%22298.0%22%20cy%3D%22443.3%22%20r%3D%221.28%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.69%22%2F%3E%3Ccircle%20cx%3D%22322.1%22%20cy%3D%22390.3%22%20r%3D%220.84%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.56%22%2F%3E%3Ccircle%20cx%3D%22114.7%22%20cy%3D%2229.5%22%20r%3D%220.59%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.48%22%2F%3E%3Ccircle%20cx%3D%22353.2%22%20cy%3D%22333.3%22%20r%3D%220.48%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.40%22%2F%3E%3Ccircle%20cx%3D%22227.8%22%20cy%3D%22146.7%22%20r%3D%220.55%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.53%22%2F%3E%3Ccircle%20cx%3D%22481.8%22%20cy%3D%22372.1%22%20r%3D%220.62%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.61%22%2F%3E%3Ccircle%20cx%3D%22184.0%22%20cy%3D%22338.4%22%20r%3D%220.80%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.43%22%2F%3E%3Ccircle%20cx%3D%22238.7%22%20cy%3D%22371.2%22%20r%3D%220.83%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.67%22%2F%3E%3Ccircle%20cx%3D%22181.9%22%20cy%3D%22106.1%22%20r%3D%220.70%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.49%22%2F%3E%3Ccircle%20cx%3D%22160.1%22%20cy%3D%22245.4%22%20r%3D%220.75%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.31%22%2F%3E%3Ccircle%20cx%3D%22184.3%22%20cy%3D%22100.3%22%20r%3D%220.70%22%20fill%3D%22%23dfe6ff%22%20opacity%3D%220.47%22%2F%3E%3Ccircle%20cx%3D%22503.2%22%20cy%3D%2260.0%22%20r%3D%220.48%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.69%22%2F%3E%3Ccircle%20cx%3D%22211.9%22%20cy%3D%22301.7%22%20r%3D%220.62%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.50%22%2F%3E%3Ccircle%20cx%3D%22499.8%22%20cy%3D%22379.5%22%20r%3D%220.67%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.39%22%2F%3E%3Ccircle%20cx%3D%22402.9%22%20cy%3D%22154.6%22%20r%3D%220.92%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.66%22%2F%3E%3Ccircle%20cx%3D%22467.1%22%20cy%3D%2210.3%22%20r%3D%220.88%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.58%22%2F%3E%3Ccircle%20cx%3D%22266.2%22%20cy%3D%22190.5%22%20r%3D%220.74%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.35%22%2F%3E%3Ccircle%20cx%3D%22270.4%22%20cy%3D%2248.1%22%20r%3D%221.30%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.70%22%2F%3E%3Ccircle%20cx%3D%22498.0%22%20cy%3D%2211.8%22%20r%3D%220.75%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.47%22%2F%3E%3Ccircle%20cx%3D%2284.5%22%20cy%3D%22180.7%22%20r%3D%220.45%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.57%22%2F%3E%3Ccircle%20cx%3D%22365.4%22%20cy%3D%22387.4%22%20r%3D%220.56%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.50%22%2F%3E%3Ccircle%20cx%3D%22139.5%22%20cy%3D%22182.5%22%20r%3D%221.14%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.72%22%2F%3E%3Ccircle%20cx%3D%22107.1%22%20cy%3D%22223.9%22%20r%3D%220.65%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.40%22%2F%3E%3Ccircle%20cx%3D%22406.5%22%20cy%3D%22484.4%22%20r%3D%221.22%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.74%22%2F%3E%3Ccircle%20cx%3D%22388.4%22%20cy%3D%22448.5%22%20r%3D%220.80%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.43%22%2F%3E%3Ccircle%20cx%3D%22200.4%22%20cy%3D%22159.6%22%20r%3D%220.69%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.46%22%2F%3E%3Ccircle%20cx%3D%2297.9%22%20cy%3D%22367.3%22%20r%3D%220.84%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.45%22%2F%3E%3Ccircle%20cx%3D%22311.5%22%20cy%3D%22465.8%22%20r%3D%220.91%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.77%22%2F%3E%3Ccircle%20cx%3D%22438.7%22%20cy%3D%22254.6%22%20r%3D%220.77%22%20fill%3D%22%23ffe6bd%22%20opacity%3D%220.36%22%2F%3E%3C%2Fsvg%3E");
-    --tto-lantern:url("data:image/webp;base64,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");
+    /* page: the user's Halloween wallpaper (TTO_WALLPAPER in assets.js, put on <html> as --tto-wallpaper by the script), static, under a dark veil */
+    --th-page:linear-gradient(var(--th-veil),var(--th-veil)), var(--tto-wallpaper, none) center / cover no-repeat, #0a0a0a;
+    --th-veil:rgba(0,0,0,0.72);
   }
   :root[data-theme][data-sk-server="tot"]{
     /* palette: Tales of Tails (talesoftails.net) */
@@ -406,22 +399,21 @@
   html:is([data-sk-server="tto"],[data-sk-server="tot"]) .sk-hero-desc{ z-index:3; }
 
   /* ---- 3. EFFECT LAYERS ---- */
-  /* TTO: tiled star sheet over the top of the page, lantern clusters in #skTtoSky (built by ensureServerBackdrops) */
-  html[data-sk-server="tto"] body::before{
-    content:""; position:fixed; left:0; right:0; top:0; height:80vh; z-index:-1; pointer-events:none;
-    background-image:var(--tto-stars), var(--tto-stars);
-    background-size:512px 512px, 347px 347px;
-    background-position:0 0, 173px 97px;
-    -webkit-mask-image:linear-gradient(#000 25%, transparent);
-    mask-image:linear-gradient(#000 25%, transparent);
+  /* none: the TTO star sheet and jack-o-lantern clusters were replaced by the wallpaper (user 2026-10-25) */
+  /* wallpaper credit (user 2026-10-25): the TTO wallpaper is fuWaa's art; a small caption in the corner of the viewport, on desktop and on phones, only while the TTO look is on */
+  #skWallCredit{display:none; position:fixed; right:18px; bottom:14px; z-index:20; pointer-events:none; padding:6px 14px; border-radius:999px; background:rgba(0,0,0,.45); border:1px solid rgba(208,145,62,.35); font:600 16px/1 'Prompt',sans-serif; letter-spacing:.05em; color:rgba(255,240,222,.92); text-shadow:0 1px 3px rgba(0,0,0,.9)}   /* bigger on desktop (user 2026-10-25: barely visible at 12 px) */
+  html[data-sk-server="tto"] #skWallCredit{display:block}
+  @media (max-width:760px){ #skWallCredit{right:10px; bottom:6px; padding:4px 10px; font-size:12px} }
+  /* TTO on PC (user 2026-10-25): the hub showcase is mirrored, art on the left and text on the right, so the wallpaper's characters (centre right) are not hidden behind the art; phones and the other looks keep the usual order */
+  @media (min-width:901px){
+    html[data-sk-server="tto"] .ln-stage{grid-template-columns:minmax(0,58fr) minmax(0,42fr)}
+    html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}
+    html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}
+    html[data-sk-server="tto"] .ln-glow{background:radial-gradient(45% 60% at 34% 50%, color-mix(in srgb, var(--acc) 22%, transparent), transparent 70%)}
+    html[data-sk-server="tto"] .ln-art > *{animation-name:lnArtL}
+    html[data-sk-server="tto"] .ln-pt{animation-name:lnArtL, lnFloat}
   }
-  #skTtoSky{display:none; position:fixed; inset:0; z-index:-1; pointer-events:none}
-  html[data-sk-server="tto"] #skTtoSky{display:block}
-  @media (max-width:999px){ html[data-sk-server="tto"] #skTtoSky{display:none} }
-  #skTtoSky .lan{position:absolute; bottom:20px; width:0; height:96px}
-  #skTtoSky .lan-glow{position:absolute; left:-96px; top:-40px; width:192px; height:176px;
-    background:radial-gradient(closest-side, rgba(255,150,50,.4), rgba(255,110,30,.12) 60%, transparent)}
-  #skTtoSky .lan-i{position:absolute; max-width:none; background:var(--tto-lantern) center / 100% 100% no-repeat; filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+  @keyframes lnArtL{from{opacity:0; transform:translateX(-80px) scale(.96); filter:blur(10px)}}
     /* Skill details, every look (incl. BB): the skill card takes the stat input panel's see-through gradient (the related-skills
      panel has no box since 2026-10-18); inside the card the hero, the title box and the browse button drop to a faint wash. */
   html.tool-wide-hero .tool-shell{ background:var(--glass-gradient); }
@@ -7984,7 +7976,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=47eb049d7f" id="bibleAssets"></script>
+<script src="assets.js?v=a4b3c0f0f3" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -8517,22 +8509,13 @@ try { const c0 = localStorage.getItem("12t-bible-theme-choice"); if (THEME_CHOIC
 const toolServers = {};   // each tool's own server switch, by tool id (only read in auto mode)
 let activeToolId = null;
 const lookServer = () => themeChoice === "auto" ? (toolServers[activeToolId] || "og") : themeChoice;
-function ensureServerBackdrops(srv){
-  if (srv === "tto" && !document.getElementById("skTtoSky")) {
-    const lan = (left, imgs) => '<div class="lan" style="left:' + left + '"><div class="lan-glow"></div>' + imgs.map(([w, bottom, side, off, flip]) =>
-    '<div class="lan-i" style="width:' + w + 'px;height:' + w + 'px;bottom:' + bottom + 'px;' + side + ':' + off + 'px' + (flip ? ';transform:scaleX(-1)' : '') + '"></div>').join("") + '</div>';
-    const sky = document.createElement("div");
-    sky.id = "skTtoSky"; sky.setAttribute("aria-hidden", "true");
-    sky.innerHTML = lan("calc(-18rem + 25vw)", [[64, 0, "left", -44], [48, 4, "left", 6], [40, 40, "left", -18]]) +
-                  lan("calc(18rem + 75vw)", [[56, 0, "right", -36, 1], [44, 12, "right", 10, 1]]);
-    document.body.appendChild(sky);
-  }
-}
+// TTO wallpaper (user 2026-10-25): assets.js holds it (a MANIFEST string container); the TTO look reads it as --tto-wallpaper (see --th-page), and the class guide image draws it too
+const TTO_WALLPAPER = BIBLE_ASSETS_IN.TTO_WALLPAPER || "";
+if (TTO_WALLPAPER) document.documentElement.style.setProperty("--tto-wallpaper", 'url("' + TTO_WALLPAPER + '")');
 function applyServerTheme(){
   try {
     const srv = lookServer();
     document.documentElement.setAttribute("data-sk-server", srv);
-    ensureServerBackdrops(srv);
     const names = { og: "BB (BigBugStudio)", tot: "Tales of Tail (ToT)", tto: "Tailstopia Online (TTO)" };
     const btn = document.getElementById("btnServerTheme");
     if (btn) {
@@ -29240,24 +29223,12 @@ async function classGuideRenderImage(guide, simRoot){
   };
   const box = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
-  // backdrop of the current look (user 2026-10-16: the image follows the app theme): BB ledger gradient, TTO night sky with stars, ToT veiled wallpaper
+  // backdrop of the current look (user 2026-10-16: the image follows the app theme): BB ledger gradient, TTO and ToT veiled wallpapers
   const look = document.documentElement.getAttribute("data-sk-server") || "og";
   const urlOf = name => { const m = /url\(["']?([^"')]+)["']?\)/.exec(v(name)); return m ? m[1] : ""; };
-  if (look === "tto"){
-    const sky = ctx.createLinearGradient(0, 0, 0, P.h); sky.addColorStop(0, "#0b0c17"); sky.addColorStop(0.45, "#100e18"); sky.addColorStop(1, "#171009");
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, P.w, P.h);
-    const warm = ctx.createRadialGradient(P.w / 2, P.h * 1.12, 0, P.w / 2, P.h * 1.12, P.w * 0.6); warm.addColorStop(0, "rgba(240,130,40,.2)"); warm.addColorStop(1, "rgba(240,130,40,0)");
-    ctx.fillStyle = warm; ctx.fillRect(0, 0, P.w, P.h);
-    const stars = await classGuideImageLoad(urlOf("--tto-stars"));
-    if (stars){
-      const layer = document.createElement("canvas"); layer.width = P.w; layer.height = P.h; const lg = layer.getContext("2d");
-      for (let yy = 0; yy < P.h; yy += 512) for (let xx = 0; xx < P.w; xx += 512) lg.drawImage(stars, xx, yy, 512, 512);
-      lg.globalCompositeOperation = "destination-in"; const fade = lg.createLinearGradient(0, 0, 0, P.h * 0.8); fade.addColorStop(0.25, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)"); lg.fillStyle = fade; lg.fillRect(0, 0, P.w, P.h);
-      ctx.drawImage(layer, 0, 0, P.w, P.h);
-    }
-  } else if (look === "tot"){
-    ctx.fillStyle = "#050505"; ctx.fillRect(0, 0, P.w, P.h);
-    const wall = await classGuideImageLoad(urlOf("--tot-wallpaper"));
+  if (look === "tot" || look === "tto"){
+    ctx.fillStyle = look === "tto" ? "#0a0a0a" : "#050505"; ctx.fillRect(0, 0, P.w, P.h);
+    const wall = await classGuideImageLoad(urlOf(look === "tto" ? "--tto-wallpaper" : "--tot-wallpaper"));
     if (wall){ const sc = Math.max(P.w / wall.naturalWidth, P.h / wall.naturalHeight), ww = wall.naturalWidth * sc, wh = wall.naturalHeight * sc; ctx.drawImage(wall, (P.w - ww) / 2, (P.h - wh) / 2, ww, wh); }
     ctx.fillStyle = v("--th-veil") || "rgba(0,0,0,.78)"; ctx.fillRect(0, 0, P.w, P.h);
   } else {
@@ -29270,23 +29241,12 @@ async function classGuideRenderImage(guide, simRoot){
   { ctx.save(); ctx.translate(P.w / 2, P.h * 0.45); ctx.scale(1, P.h / P.w); const R = P.w * 0.62, gl = ctx.createRadialGradient(0, 0, 0, 0, 0, R); gl.addColorStop(0, "rgba(0,0,0,.55)"); gl.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = gl; ctx.fillRect(-R, -R, R * 2, R * 2); ctx.restore(); }
   const pullQuote = (x, y, w, h) => { const g = ctx.createLinearGradient(x, 0, x + w * 0.6, 0); g.addColorStop(0, "rgba(212,175,55,.08)"); g.addColorStop(1, "rgba(212,175,55,0)"); ctx.fillStyle = g; ctx.fillRect(x, y, w * 0.6, h); ctx.fillStyle = gold; ctx.fillRect(x, y, 3, h); };   // the description: a gold bar and a faint wash (user 2026-10-17)
   const shadowed = fn => { ctx.save(); ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 6 * P.scale; ctx.shadowOffsetY = P.scale; fn(); ctx.restore(); };   // text straight on the backdrop
-  // a container in the look's surface recipe (the same tokens THEME_SURFACES uses on the page): TTO solid panel + diagonal harlequin bands, ToT see-through glass, BB plain panel
+  // a container in the look's surface recipe (the same tokens THEME_SURFACES uses on the page): TTO and ToT see-through glass, BB plain panel
   const edge = v("--th-edge") || line;
   const surface = (x, y, w, h, r, raised) => {
     box(x, y, w, h, r);
-    if (look === "tot"){ ctx.fillStyle = v("--th-wash") || "rgba(255,255,255,.04)"; ctx.fill(); }
+    if (look === "tot" || look === "tto"){ ctx.fillStyle = v("--th-wash") || "rgba(255,255,255,.04)"; ctx.fill(); }
     else { ctx.fillStyle = raised ? panel2 : panel; ctx.fill(); }
-    if (look === "tto"){
-      ctx.save(); box(x, y, w, h, r); ctx.clip(); ctx.fillStyle = "rgba(208,145,62,.035)";
-      const band = 14 * Math.SQRT2, step = 28 * Math.SQRT2;
-      for (const dir of [1, -1]) for (let t = -h - step; t < w + h + step; t += step){
-        ctx.beginPath();
-        if (dir > 0){ ctx.moveTo(x + t, y + h); ctx.lineTo(x + t + band, y + h); ctx.lineTo(x + t + band + h, y); ctx.lineTo(x + t + h, y); }
-        else { ctx.moveTo(x + t, y); ctx.lineTo(x + t + band, y); ctx.lineTo(x + t + band + h, y + h); ctx.lineTo(x + t + h, y + h); }
-        ctx.closePath(); ctx.fill();
-      }
-      ctx.restore();
-    }
     box(x, y, w, h, r); ctx.strokeStyle = edge; ctx.lineWidth = 1.5; ctx.stroke();
   };
   // Gilded Frame (user 2026-10-17): the page's border-image drawn by hand: an outer gold line, a faint inner one, gold L corners just outside.
@@ -29669,7 +29629,8 @@ async function classGuideRenderImage(guide, simRoot){
   // the guide's rectangle and nothing more, at the same 2x scale, so its size follows the guide instead of always being 16:9.
   const usedW = infoW + G + gridW + (notesW ? G + notesW : 0), cropX = dx, cropY = Math.max(0, rectTop - P.margin), cropW = Math.min(P.w - cropX, usedW + P.margin * 2), cropH = Math.min(P.h - cropY, rectH + P.margin * 2);
   const out = document.createElement("canvas"); out.width = Math.round(cropW * P.scale); out.height = Math.round(cropH * P.scale);
-  out.getContext("2d").drawImage(canvas, cropX * P.scale, cropY * P.scale, cropW * P.scale, cropH * P.scale, 0, 0, out.width, out.height);
+  const octx = out.getContext("2d"); octx.drawImage(canvas, cropX * P.scale, cropY * P.scale, cropW * P.scale, cropH * P.scale, 0, 0, out.width, out.height);
+  if (look === "tto"){ octx.save(); octx.font = font(600, 16 * P.scale); octx.textAlign = "right"; octx.textBaseline = "alphabetic"; octx.shadowColor = "rgba(0,0,0,.9)"; octx.shadowBlur = 4 * P.scale; octx.fillStyle = "rgba(255,236,210,.7)"; octx.fillText("cr. fuWaa", out.width - 16 * P.scale, out.height - 12 * P.scale); octx.restore(); }   // the wallpaper's artist (user 2026-10-25)
   return out;
 }
 // Save it: touch devices with a share sheet share the image file, everything else downloads the PNG.
@@ -33141,6 +33102,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T04:15:26.437Z","feat(bible): the TTO look is fuWaa's wallpaper under a dark veil with see-through glass panels like ToT, the PC hub showcase is mirrored in it, stars and lanterns removed"],
     ["2026-10-25T04:10:00.016Z","feat(bible): nicknamed gear icons upscaled to 128 px, a_rab62 icon added, Lucky Star Cutter nicknamed มีดดาว, Shadow Strider upscaled"],
     ["2026-10-25T04:12:13.642Z","feat(bible): status icons upscaled, every remaining PNG is WebP, CHM_ICONS duplicates aliased to the pictures stored elsewhere"],
     ["2026-10-25T04:11:13.642Z","feat(bible): skill icons of all 12 classes plus the Common and support skills upscaled to 128 px WebP"],
@@ -34045,5 +34007,6 @@ if (creditsModal){
   window.addEventListener("resize", () => { if (!creditsModal.hidden) creditsFit(); });
 }
 </script>
+<div id="skWallCredit">cr. fuWaa</div>
 </body>
 </html>

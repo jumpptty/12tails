@@ -4125,6 +4125,22 @@ async function donateChildTests(env) {
   console.log(`Verified ${checked} server balance / BB issues page checks.`);
 }
 
+// TTO wallpaper (user 2026-10-25): the TTO look is a wallpaper under a dark veil (TTO_WALLPAPER, a MANIFEST string container in assets.js, put on <html> as --tto-wallpaper);
+// the stars, lanterns and harlequin of the old look are gone, and the page declares the container like the other string containers.
+{
+  let n = 0; const bad = (m) => { console.error(`[TTO THEME ERROR] ${m}`); errorCount++; }, good = (c, m) => { if (c) n++; else bad(m); };
+  good(bibleAssets.MANIFEST.some((m) => m.name === "TTO_WALLPAPER" && m.empty === ""), 'scripts/bible_assets.js MANIFEST has no { name: "TTO_WALLPAPER", empty: "" }');
+  good(/^const TTO_WALLPAPER = BIBLE_ASSETS_IN\.TTO_WALLPAPER \|\| "";\r?$/m.test(html), 'index.html does not declare const TTO_WALLPAPER = BIBLE_ASSETS_IN.TTO_WALLPAPER || "";');
+  let wp = ""; try { wp = vm.runInContext("TTO_WALLPAPER", sandbox); } catch (e) {}
+  const bytes = /^data:image\/webp;base64,/.test(wp) ? Buffer.from(wp.slice(23), "base64") : Buffer.alloc(0);
+  good(bytes.length > 50000 && bytes.toString("latin1", 0, 4) === "RIFF" && bytes.toString("latin1", 8, 12) === "WEBP", "TTO_WALLPAPER is not a WebP data URI of a real picture (assets.js)");
+  const tto = (/:root\[data-theme\]\[data-sk-server="tto"\]\{[\s\S]*?\n  \}/.exec(html) || [""])[0];
+  good(/--th-page:[^;]*var\(--tto-wallpaper/.test(tto) && /--th-veil:/.test(tto) && /--th-solid:0%/.test(tto), "the TTO look must put --tto-wallpaper under --th-veil and use see-through surfaces");
+  good(!/skTtoSky|--tto-stars|--tto-lantern|ensureServerBackdrops/.test(html), "the old TTO stars / lanterns code is still in index.html");
+  good(html.includes('<div id="skWallCredit">cr. fuWaa</div>') && html.includes('html[data-sk-server="tto"] #skWallCredit{display:block}') && html.includes('octx.fillText("cr. fuWaa"'), "the wallpaper credit (cr. fuWaa) is missing: the page caption shown in the TTO look and/or the guide image text");
+  good(html.includes('html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}') && html.includes('html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}') && /@media \(min-width:901px\)\{\s*html\[data-sk-server="tto"\] \.ln-stage\{grid-template-columns:minmax\(0,58fr\) minmax\(0,42fr\)\}/.test(html), "the TTO look must mirror the hub showcase on PC (art left, text right, inside @media (min-width:901px))");
+  console.log(`Verified ${n} TTO wallpaper theme checks.`);
+}
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
 // the description box ("⚠ ยังไม่ยืนยันในเกม: ...").
 {
