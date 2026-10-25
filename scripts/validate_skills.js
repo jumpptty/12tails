@@ -110,6 +110,7 @@ const exposeInjection = `
   window._depRanks = depRanks;
   window._skillRanks = skillRanks;
   window._selectSkill = selectSkill;
+  window._getAvailableServers = getAvailableServers; window._getActiveSkill = getActiveSkill;
   window._getUsedPlayerStatKeys = getUsedPlayerStatKeys;
   window._monsterStats = MONSTER_STATS; window._mountMonsterStats = mountMonsterStats;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
@@ -3486,7 +3487,7 @@ let checkedRsim = 0;
     // server-specific gear (user 2026-10-25): GEAR_SERVERS items show only in that server's guides
     { const GS = vm.runInContext("GEAR_SERVERS", sandbox), glist = vm.runInContext("classGuideGearList", sandbox), gclean = vm.runInContext("classGuideGearClean", sandbox), allIds2 = new Set(Object.values(GD).flatMap(l => l.map(e => e[0])));
       const slotOf = (id) => Object.keys(GD).find(k => GD[k].some(e => e[0] === id)), has = (slot, cls, srv, id) => glist(slot, cls, srv).some(e => e[0] === id);
-      ok(Object.entries(GS).every(([id, srvs]) => allIds2.has(id) && Array.isArray(srvs) && srvs.length && srvs.every(x => ["og", "tot", "tto"].includes(x))) && GS.b_all_tto_shadowstrider && GS.b_all_tto_shadowstrider.join() === "tto", "GEAR_SERVERS: listed items with real server keys, Shadow Strider is TTO only");
+      ok(Object.entries(GS).every(([id, srvs]) => allIds2.has(id) && Array.isArray(srvs) && srvs.length && srvs.every(x => ["og", "tot", "tto", "reborn"].includes(x))) && GS.b_all_tto_shadowstrider && GS.b_all_tto_shadowstrider.join() === "tto", "GEAR_SERVERS: listed items with real server keys, Shadow Strider is TTO only");
       ok(has("boot", "wolf", "tto", "b_all_tto_shadowstrider") && !has("boot", "wolf", "og", "b_all_tto_shadowstrider") && !has("boot", "wolf", "tot", "b_all_tto_shadowstrider") && has("boot", "wolf", undefined, "b_all_tto_shadowstrider"), "the gear picker lists a TTO-only item for TTO guides and hides it for BB and ToT");
       const strict = (srv) => { try { gclean({ boot: [{ item: "b_all_tto_shadowstrider" }] }, "wolf", false, srv); return true; } catch (e) { return false; } };
       ok(strict("tto") && !strict("tot") && !strict("og") && JSON.stringify(gclean({ boot: [{ item: "b_all_tto_shadowstrider" }] }, "wolf", true, "tot")) === "{}" && gclean({ boot: [{ item: "b_all_tto_shadowstrider" }] }, "wolf", true, "tto").boot[0].item === "b_all_tto_shadowstrider", "a guide accepts a TTO-only item on TTO, refuses it on BB and ToT, and a draft drops it there");
@@ -4150,6 +4151,35 @@ async function donateChildTests(env) {
   good(html.includes('@media (max-width:760px){ html[data-sk-server="tto"] #skWallCredit{display:none} }'), "the cr. fuWaa caption must be hidden on phones (max-width 760px)");
   good(html.includes('html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}') && html.includes('html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}') && /@media \(min-width:901px\)\{\s*html\[data-sk-server="tto"\] \.ln-stage\{grid-template-columns:minmax\(0,58fr\) minmax\(0,42fr\)\}/.test(html), "the TTO look must mirror the hub showcase on PC (art left, text right, inside @media (min-width:901px))");
   console.log(`Verified ${n} TTO wallpaper theme checks.`);
+}
+// Reborn as the 4th server, infrastructure (user 2026-10-25): SERVER_INFO lists og / tot / tto / reborn, reborn is W.I.P. and its logo must be the stamped one while it is,
+// the server tab shows Reborn only for a card that has servers.reborn, and the hard-coded server name maps are gone. The look is enabled (2026-10-25); class guides, the Chameleon simulator and the
+// BB issues page are NOT enabled for Reborn yet (checked here so nobody enables one half way).
+{
+  let n = 0; const bad = (m) => { console.error(`[REBORN SERVER ERROR] ${m}`); errorCount++; }, good = (c, m) => { if (c) n++; else bad(m); };
+  let info = {}; try { info = vm.runInContext("SERVER_INFO", sandbox); } catch (e) {}
+  const keys = Object.keys(info);
+  good(keys.join() === "og,tot,tto,reborn" && keys.every((k) => info[k].short && info[k].full), "SERVER_INFO must list og, tot, tto and reborn (in that order) with short and full names");
+  const ic = (k) => String(SKILL_ICONS[k] || "");
+  good(/^data:image\/webp;base64,/.test(ic("server_reborn")) && /^data:image\/webp;base64,/.test(ic("server_reborn_clean")), "server_reborn and server_reborn_clean must both be WebP icons in assets.js");
+  good(info.reborn && (info.reborn.wip === true ? ic("server_reborn") !== ic("server_reborn_clean") : ic("server_reborn") === ic("server_reborn_clean")), "SERVER_INFO.reborn.wip and the logo must agree: wip true = server_reborn is the stamped logo, wip false = server_reborn equals server_reborn_clean (change both together)");
+  good(!/\{ og: "BB", tot: "ToT", tto: "TTO" \}/.test(html) && !html.includes('og: "BB (BigBugStudio)", tot: "Tales of Tail (ToT)"'), "a hard-coded server name map is back in index.html: use SERVER_INFO / SERVER_FULL / SERVER_SHORT");
+  { const plain = SKILLS.find((s) => !(s.servers && s.servers.reborn) && !s.ps), probe = Object.assign({}, plain, { servers: Object.assign({}, plain.servers, { reborn: { cd: 777 } }) });
+    const gas = sandbox._getAvailableServers, gact = sandbox._getActiveSkill;
+    good(typeof gas === "function" && !gas(plain).includes("reborn") && gas(probe).includes("reborn") && gas(probe).includes("og"), "a card lists Reborn as a server only when it has servers.reborn (and always keeps BB)");
+    good(typeof gact === "function" && gact(probe, "reborn").cd === 777 && gact(plain, "reborn") === plain, "the Reborn overrides apply to the active skill, and a card without Reborn data falls back to the base card"); }
+  good(!SKILLS.some((s) => s.servers && s.servers.reborn) || html.includes('SKILL_SIM_SERVERS = {') && /reborn: \{ name:/.test(html), "a card has servers.reborn: the page must also carry the Reborn simulator data (SKILL_SIM_SERVERS.reborn) before cards use it");
+  good(vm.runInContext('THEME_CHOICES.join()', sandbox) === "auto,og,tot,tto,reborn" && vm.runInContext('CLASS_GUIDE_SERVER_KEYS.join()', sandbox) === "og,tot,tto", "THEME_CHOICES must be auto,og,tot,tto,reborn; Reborn is not in the class guide server keys yet (index 3 of the guide code is reserved for it; enabling needs SKILL_SIM_SERVERS.reborn first)");
+  // the Reborn look (user 2026-10-25): REBORN_WALLPAPER (WebP) under a dark veil, see-through glass, orange accent, in every shared surface selector
+  good(bibleAssets.MANIFEST.some((m) => m.name === "REBORN_WALLPAPER" && m.empty === "") && html.includes('const REBORN_WALLPAPER = BIBLE_ASSETS_IN.REBORN_WALLPAPER || "";'), "REBORN_WALLPAPER must be a MANIFEST string container declared in index.html");
+  { let rw = ""; try { rw = vm.runInContext("REBORN_WALLPAPER", sandbox); } catch (e) {}
+    const rb = rw.startsWith("data:image/webp;base64,") ? Buffer.from(rw.slice(23), "base64") : Buffer.alloc(0);
+    good(rb.length > 50000 && rb.toString("latin1", 0, 4) === "RIFF" && rb.toString("latin1", 8, 12) === "WEBP", "REBORN_WALLPAPER is not a WebP data URI of a real picture (assets.js)"); }
+  { const i0 = html.indexOf(':root[data-theme][data-sk-server="reborn"]{'), blk = i0 < 0 ? "" : html.slice(i0, html.indexOf("\n  }", i0));
+    good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
+  good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && html.includes("var G = 'html:is([data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot");
+  good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
+  console.log(`Verified ${n} Reborn server infrastructure checks.`);
 }
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
 // the description box ("⚠ ยังไม่ยืนยันในเกม: ...").
@@ -4997,7 +5027,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // reach scenes (2026-10-14): the mission map behind the caster. Everything decodes, indices are in range, props stand on the terrain, both start points sit on it
   {
     let scenes = 0;
-    const isPng = (u) => Buffer.from(String(u).replace("data:image/png;base64,", ""), "base64").readUInt32BE(0) === 0x89504e47;
+    const isPng = (u) => { const b = Buffer.from(String(u).split("base64,")[1] || "", "base64"); return b.readUInt32BE(0) === 0x89504e47 || (b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP"); };   // PNG or lossless WebP (user 2026-10-25)
     for (const [name, d] of Object.entries(vm.runInContext("REACH_SCENES", sandbox))) {
       scenes++;
       const T = d.terrain, th = Buffer.from(T.h, "base64");

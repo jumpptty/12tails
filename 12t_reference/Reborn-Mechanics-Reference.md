@@ -4,7 +4,7 @@ Verified 2026-10-25, first pass. This file covers the **Reborn client**, a separ
 
 **Citation tags in this file:** `Reborn:X.cs:N` = `DecompiledSource_Reborn/Assembly-CSharp/X.cs` line N. `BB:X.cs:N` = the original client, `DecompiledSource/X.cs`. Every citation is tagged. Rules: [AGENTS.md](../AGENTS.md) §2 (citation build tags) and §4. Sections 1 to 6 hold only verified facts. Section 7 lists what the Reborn admin announced (evidence type: announcement, checked against the code only where marked). Anything only read, not traced, is in section 8.
 
-**Not a Bible server (yet):** the app has BB, ToT and TTO. Nothing here is shown in it. If Reborn becomes a server, move each verified class finding into that class's `## Server Balance Variations` section.
+**4th Bible server, in preparation (W.I.P.):** the app's infrastructure for it is in place (2026-10-25: server registry `SERVER_INFO`, W.I.P. logo, a server tab that shows only for cards with `servers.reborn`), but no card has Reborn data yet, so nothing in this file is shown in the app. When a skill's Reborn values are verified, give its card `servers.reborn` and move the finding into that class's `## Server Balance Variations (Reborn)` section.
 
 ## 1. Build and method
 

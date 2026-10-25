@@ -15,7 +15,7 @@ const zlib = require("zlib");
 
 const PREFIX = "12TG1.", PREFIX2 = "TG2.", PREFIX3 = "TG3";
 // Guide code format 2 (user 2026-10-16: shorter codes): "TG2." + base64url of [flag byte (0 stored, 1 deflate-raw)] + the guide as compact binary:
-//   byte  server index | class index << 2      (servers og tot tto; classes in CLASS_GUIDE_CLASS_KEYS order)
+//   byte  server index | class index << 2      (servers og tot tto, index 3 reserved for reborn; classes in CLASS_GUIDE_CLASS_KEYS order)
 //   byte  level
 //   20 bytes  learned skills, one bit per slot (tree-1)*40 + row*4 + (col-1)
 //   2 bytes   date as days since 2000-01-01 (little endian), 0xFFFF = none

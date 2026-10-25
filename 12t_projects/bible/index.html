@@ -11,8 +11,8 @@
   document.documentElement.setAttribute("data-theme", "dark");
   try { localStorage.removeItem("12t-bible-theme"); } catch (e) {}
   /* Look (2026-10-10, user): purely cosmetic. The top bar picks auto (the look follows the open tool's own server switch) or a fixed
-     og / tot / tto look, remembered here. It never selects a server inside a tool. */
-  try { localStorage.removeItem("12t-bible-server-theme"); var st = localStorage.getItem("12t-bible-theme-choice"); document.documentElement.setAttribute("data-sk-server", st === "tot" || st === "tto" ? st : "og"); } catch (e) { document.documentElement.setAttribute("data-sk-server", "og"); }
+     og / tot / tto / reborn look, remembered here. It never selects a server inside a tool. */
+  try { localStorage.removeItem("12t-bible-server-theme"); var st = localStorage.getItem("12t-bible-theme-choice"); document.documentElement.setAttribute("data-sk-server", st === "tot" || st === "tto" || st === "reborn" ? st : "og"); } catch (e) { document.documentElement.setAttribute("data-sk-server", "og"); }
   /* THEME SURFACES (2026-10-10, user): the one list of elements that wear a server look's "surface recipe" (tokens in the CSS block "SERVER THEMES").
      The rules are generated from it, so theming another element = adding its selector to the right group here. Nothing here names a look. */
   var THEME_SURFACES = {
@@ -36,7 +36,7 @@
     field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
   (function(){
-    var G = 'html:is([data-sk-server="tto"],[data-sk-server="tot"]) ';
+    var G = 'html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) ';
     var R = THEME_SURFACES;
     var sel = function(list, tail){ return list.map(function(x){ return G + x + (tail || ""); }).join(",\n"); };
     var all = [].concat(R.chip, R.panel, R.tile, R.raised, R.popup), direct = [].concat(R.panel, R.tile, R.raised);
@@ -341,7 +341,7 @@
   /* two fonts only (user 2026-10-18): Prompt for text, JetBrains Mono with Prompt behind it for numbers; controls follow the page font */
   button, input, select, textarea{font-family:inherit}
   /* ============================ SERVER THEMES (2026-10-10, user) ============================
-     Purely cosmetic: html[data-sk-server] = og | tot | tto picks the look (JS: applyServerTheme, see the top-bar menu). "og" is the original Ledger
+     Purely cosmetic: html[data-sk-server] = og | tot | tto | reborn picks the look (JS: applyServerTheme, see the top-bar menu). "og" is the original Ledger
      look: none of the rules below apply to it. Every tool, panel and modal draws from the shared tokens, so a look is edited in ONE place:
 
        1. THEME TOKENS (below): one :root[data-theme][data-sk-server="..."] block per look (that selector, so it outweighs :root[data-theme="dark"]). It holds the palette (--ink --panel --panel-2 --th-line --text --muted --gold
@@ -375,6 +375,19 @@
     --th-page:linear-gradient(var(--th-veil),var(--th-veil)), var(--tto-wallpaper, none) center / cover no-repeat, #0a0a0a;
     --th-veil:rgba(0,0,0,0.72);
   }
+  :root[data-theme][data-sk-server="reborn"]{
+      /* palette (user 2026-10-25): the Reborn logo's orange on a dark, slightly blue-black base that sits well on the underwater wallpaper */
+      --ink:#06090e; --panel:#10151c; --panel-2:#181f29; --th-line:#4a3a26; --line:var(--th-line);
+      --text:#f3eee6; --muted:#b3b2ae; --gold:#ef8a2a; --gold-soft:rgba(239,138,42,.14);
+      --shadow:0 1px 2px rgba(0,0,0,.65), 0 20px 44px -14px rgba(0,0,0,.8);
+      /* surface recipe (copied from TTO / ToT): see-through glass over the wallpaper, a warm orange edge and hover; no backdrop blur */
+      --th-solid:0%; --th-wash:rgba(255,244,230,.045); --th-blur:none; --th-edge:rgba(239,138,42,.26);
+      --th-hover-edge:rgba(239,138,42,.55); --th-hover-glow:0 0 14px rgba(239,138,42,.18);
+      --th-shell-bg:var(--glass-gradient);
+      /* page: the underwater temple wallpaper (REBORN_WALLPAPER in assets.js, put on <html> as --reborn-wallpaper by the script), static, under a dark veil */
+      --th-page:linear-gradient(var(--th-veil),var(--th-veil)), var(--reborn-wallpaper, none) center / cover no-repeat, #06090e;
+      --th-veil:rgba(0,0,0,0.66);
+    }
   :root[data-theme][data-sk-server="tot"]{
     /* palette: Tales of Tails (talesoftails.net) */
     --ink:#050505; --panel:#101012; --panel-2:#17171a; --th-line:#34343a; --line:var(--th-line);
@@ -392,11 +405,11 @@
   }
 
   /* page backdrop, whatever the look */
-  html:is([data-sk-server="tto"],[data-sk-server="tot"]) body{ background:var(--th-page); background-attachment:fixed; }
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) body{ background:var(--th-page); background-attachment:fixed; }
   /* the tool panel of every tool */
-  html:is([data-sk-server="tto"],[data-sk-server="tot"]) .tool-shell{ background:var(--th-shell-bg); }
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .tool-shell{ background:var(--th-shell-bg); }
   /* the skill description can show status pop-ups over the chips below it: keep it above them (surfaces are isolated, see THEME_SURFACES) */
-  html:is([data-sk-server="tto"],[data-sk-server="tot"]) .sk-hero-desc{ z-index:3; }
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc{ z-index:3; }
 
   /* ---- 3. EFFECT LAYERS ---- */
   /* none: the TTO star sheet and jack-o-lantern clusters were replaced by the wallpaper (user 2026-10-25) */
@@ -6605,8 +6618,8 @@
   .chm-left > .chm-pane + .chm-pane { border-top-color: var(--line); padding-top: 14px; }
   .chm-results > .chm-pane + .chm-pane { border-left-color: var(--line); padding-left: 20px; }
   .chm-results > .chm-pane.chm-log { grid-column: 1 / -1; border-left-color: transparent; padding-left: 8px; border-top-color: var(--line); padding-top: 12px; }   /* the shot log spans both columns under the results and the damage share (user 2026-10-22) */
-  html:is([data-sk-server="tto"],[data-sk-server="tot"]) .chm-left > .chm-pane,
-  html:is([data-sk-server="tto"],[data-sk-server="tot"]) .chm-results > .chm-pane { border-color: transparent; border-radius: 16px; padding: 12px 14px; }
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .chm-left > .chm-pane,
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .chm-results > .chm-pane { border-color: transparent; border-radius: 16px; padding: 12px 14px; }
   .chm-h { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--gold); }
   .chm-h small { font-size: 12px; font-weight: 400; color: var(--muted); }
   .chm-badge { font-size: 12px; font-weight: 500; color: var(--text); padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
@@ -7976,7 +7989,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=a4b3c0f0f3" id="bibleAssets"></script>
+<script src="assets.js?v=3316969252" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -8500,10 +8513,22 @@ let currentServer = "og";
 // Highest character level per server (user 2026-10-19): BB 95, ToT and TTO 110. Every level input in the hub reads this.
 const LEVEL_CAP = { og: 95, tot: 110, tto: 110 };
 // ---- Look (2026-10-10, user): purely cosmetic server theme ----
-// html[data-sk-server] = og | tot | tto drives the CSS "Server themes" block (palette, backdrop, glass panels) for every tool and modal.
+// html[data-sk-server] = og | tot | tto | reborn drives the CSS "Server themes" block (palette, backdrop, glass panels) for every tool and modal.
 // It NEVER selects a server inside a tool (skills / mechanics keep their own switches, default BB). The top-bar menu picks the choice:
-// auto (default) = the look follows the open tool's own server switch (setToolServer); og / tot / tto = fixed, whatever the tools do.
-const THEME_CHOICES = ["auto", "og", "tot", "tto"];
+// auto (default) = the look follows the open tool's own server switch (setToolServer); og / tot / tto / reborn = fixed, whatever the tools do.
+// Server registry (user 2026-10-25, Reborn infrastructure): the one list of the servers and their names. `og` = BB, the original client, is the base every other server
+// overrides (card.servers.<key>). `reborn` (12TailsReborn) is the 4th server and WORK IN PROGRESS (wip: true): its logo is the W.I.P.-stamped one, `server_reborn` in assets.js
+// (`server_reborn_clean` is the same logo without the stamp, to swap in when the user removes the W.I.P.; the validator keeps the flag and the icon in step).
+// It has a look (THEME_CHOICES, wallpaper REBORN_WALLPAPER) but is not in BD_SERVERS, the Chameleon simulator or the class guide server keys yet: its server tab shows only where a card has servers.reborn data.
+const SERVER_INFO = {
+  og:     { short: "BB",     full: "BB (BigBugStudio)" },
+  tot:    { short: "ToT",    full: "Tales of Tail (ToT)" },
+  tto:    { short: "TTO",    full: "Tailstopia Online (TTO)" },
+  reborn: { short: "Reborn", full: "Tails Reborn (12TailsReborn)", wip: true }
+};
+const SERVER_FULL = Object.fromEntries(Object.entries(SERVER_INFO).map(([k, v]) => [k, v.full]));
+const SERVER_SHORT = Object.fromEntries(Object.entries(SERVER_INFO).map(([k, v]) => [k, v.short]));
+const THEME_CHOICES = ["auto", "og", "tot", "tto", "reborn"];
 let themeChoice = "auto";
 try { const c0 = localStorage.getItem("12t-bible-theme-choice"); if (THEME_CHOICES.indexOf(c0) >= 0) themeChoice = c0; } catch (e) {}
 const toolServers = {};   // each tool's own server switch, by tool id (only read in auto mode)
@@ -8512,11 +8537,14 @@ const lookServer = () => themeChoice === "auto" ? (toolServers[activeToolId] || 
 // TTO wallpaper (user 2026-10-25): assets.js holds it (a MANIFEST string container); the TTO look reads it as --tto-wallpaper (see --th-page), and the class guide image draws it too
 const TTO_WALLPAPER = BIBLE_ASSETS_IN.TTO_WALLPAPER || "";
 if (TTO_WALLPAPER) document.documentElement.style.setProperty("--tto-wallpaper", 'url("' + TTO_WALLPAPER + '")');
+// Reborn wallpaper (user 2026-10-25): the same way, as --reborn-wallpaper
+const REBORN_WALLPAPER = BIBLE_ASSETS_IN.REBORN_WALLPAPER || "";
+if (REBORN_WALLPAPER) document.documentElement.style.setProperty("--reborn-wallpaper", 'url("' + REBORN_WALLPAPER + '")');
 function applyServerTheme(){
   try {
     const srv = lookServer();
     document.documentElement.setAttribute("data-sk-server", srv);
-    const names = { og: "BB (BigBugStudio)", tot: "Tales of Tail (ToT)", tto: "Tailstopia Online (TTO)" };
+    const names = SERVER_FULL;
     const btn = document.getElementById("btnServerTheme");
     if (btn) {
       const img = btn.querySelector("img"); if (img) img.src = SKILL_ICONS["server_" + srv];
@@ -8541,7 +8569,7 @@ function initServerTheme(){
     if (btn && !document.getElementById("serverThemeMenu")) {
       const menu = document.createElement("div");
       menu.id = "serverThemeMenu"; menu.className = "hub-theme-menu"; menu.hidden = true; menu.setAttribute("role", "menu");
-      const labels = { og: "BB", tot: "ToT", tto: "TTO" }, titles = { auto: "AUTO: ตามเซิร์ฟเวอร์ที่เลือกในเครื่องมือ (ค่าเริ่มต้น)", og: "BB (BigBugStudio)", tot: "Tales of Tail (ToT)", tto: "Tailstopia Online (TTO)" };
+      const labels = SERVER_SHORT, titles = Object.assign({ auto: "AUTO: ตามเซิร์ฟเวอร์ที่เลือกในเครื่องมือ (ค่าเริ่มต้น)" }, SERVER_FULL);
       menu.innerHTML = THEME_CHOICES.map(k => '<button type="button" class="hub-theme-opt" role="menuitemradio" data-theme-choice="' + k + '" title="' + titles[k] + '">' + (k === "auto" ? '<span class="hub-theme-auto" aria-hidden="true">A</span><span>AUTO</span>' : '<img src="' + SKILL_ICONS["server_" + k] + '" alt=""><span>' + labels[k] + '</span>') + '</button>').join("");
       document.body.appendChild(menu);
       const close = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
@@ -10513,7 +10541,7 @@ function openReachPopup(base, rank, srv0){
   const pipRow = (n, filled) => `<span class="sk-dep-pips" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<span class="sk-pip${i < filled ? " on" : ""}"></span>`).join("")}</span>`;
   const lvlIcon = (icon, lvl) => { const m = /^(.*\D)\d+$/.exec(icon || ""); return m && lvl > 0 && SKILL_ICONS[m[1] + lvl] ? m[1] + lvl : icon; };   // the rank icon shows the level being previewed (bison_enrage3, wolf_lunarEclipse1 ...), user 2026-10-15
   const btn = (key, label, icon, on, nPips, filled) => `<div class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" role="button" tabindex="0" title="${label}"><span class="sk-dep-btncol"><span class="sk-dep-toggle${on ? " on" : ""}"><img src="${SKILL_ICONS[nPips > 1 ? lvlIcon(icon, filled) : icon] || ""}" alt=""></span>${pipRow(nPips, filled)}</span><span class="sk-reach-dep-name">${label}</span></div>`;
-  const SRV_NAME = { og: "BB", tot: "ToT", tto: "TTO" };
+  const SRV_NAME = SERVER_SHORT;
   const depsHtml = () => (srvList.length > 1 ? srvList.map(sv => { const on = sv === srv || (sv === "og" && !srvList.includes(srv)); return btn("srv:" + sv, SRV_NAME[sv], "server_" + sv, on, 1, on ? 1 : 0); }) : [])
     .concat(rankMatters ? [btn("rank", "Rank " + rank, skill.icon, true, maxRank, rank)] : [])   // a rank has no off state: always lit, pips = rank
     .concat(toggles.map((e, k) => { if (e.cycle){ const lv = (over[e.dep.id] || 0) - (e.off || 0), n = e.on - (e.off || 0); return btn("t" + k, `${e.label || e.dep.label}${lv > 0 ? " " + over[e.dep.id] : ""}`, e.icon || e.dep.icon, lv > 0, n, lv); } const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
@@ -15600,6 +15628,7 @@ SKILL_ICONS["og"] = SKILL_ICONS["server_og"];
 SKILL_ICONS["server_tot"] = SKILL_ICONS["privateServer"];
 SKILL_ICONS["tot"] = SKILL_ICONS["server_tot"];
 SKILL_ICONS["tto"] = SKILL_ICONS["server_tto"];
+SKILL_ICONS["reborn"] = SKILL_ICONS["server_reborn"];
 initServerTheme();
 // Mechanic-glossary example icons: 256px upscales of the rank-0/I skill icons, numerals removed.
 // Evasion (EVADE) mechanic-glossary example icons: 256px upscales, numerals removed.
@@ -16082,11 +16111,7 @@ function mountSkillCooldownLookup(root){
   let privateServerOn = false;
   currentServer = "og";
 
-  const SERVER_LABELS = {
-    og: "BB (BigBugStudio)",
-    tot: "Tales of Tail (ToT)",
-    tto: "Tailstopia Online (TTO)"
-  };
+  const SERVER_LABELS = SERVER_FULL;
 
   // Damage that rolls LCK inside talAdjust/dmgAdjust/defAdjust, which TTO removed (see tdlRoll):
   // a talAdjust() in the formula, or any hit that goes through the normal dmgAdjust/defAdjust path.
@@ -16106,6 +16131,7 @@ function mountSkillCooldownLookup(root){
     const srvs = [];
     if ((skill.servers && skill.servers.tto) || usesTdlRoll(skill)) srvs.push("tto");
     if ((skill.servers && skill.servers.tot) || skill.ps) srvs.push("tot");
+    if (skill.servers && skill.servers.reborn) srvs.push("reborn");   // 4th server, shown only where a card has Reborn data (user 2026-10-25)
     srvs.push("og");
     return srvs;
   }
@@ -16976,7 +17002,7 @@ function mountSkillCooldownLookup(root){
       tag: !fA ? "เปิด" : !fB ? "ปิด" : fB > fA ? "เพิ่ม" : "ลด", up: fB > fA });
     customBd.forEach(e => { const inA = A.custom.includes(e.id), inB = B.custom.includes(e.id);
       if (inA !== inB) out.push({ custom: true, name: e.name, red: CUSTOM_BD_KINDS[e.kind] === "debuff", on: inB, lv: customVal(e), tag: inB ? "เปิด" : "ปิด", up: inB }); });
-    const SRV = { og: "BB", tot: "ToT", tto: "TTO" };
+    const SRV = SERVER_SHORT;
     if (A.server !== B.server) out.push({ text: `ป๊อปอัปบัฟ ${SRV[A.server] || A.server} → ${SRV[B.server] || B.server}` });
     if (A.buffsOff !== B.buffsOff) out.push({ text: "บัฟทั้งหมด", tag: B.buffsOff ? "ปิด" : "เปิด", up: !B.buffsOff });
     if (A.debuffsOff !== B.debuffsOff) out.push({ text: "ดีบัฟทั้งหมด", tag: B.debuffsOff ? "ปิด" : "เปิด", up: !B.debuffsOff });
@@ -17108,7 +17134,7 @@ function mountSkillCooldownLookup(root){
       const bars = PRESET_STATS.slice(1).map(k => `<div class="sk-pw-bar" style="--sc:var(--stat-${k})"><b>${presetStatName(k)}</b><span class="sk-pw-tr"><i data-k="${k}" style="width:${(Math.min(1, s[k] / top) * 100).toFixed(1)}%"></i></span>${statIn(k)}</div>`).join("");
       const list = (rows, red) => rows.length ? rows.map(r => `<div class="sk-pw-rw">${r.custom ? `<span class="sk-pw-ring sk-pw-glyph${red ? " r" : ""}">★</span>` : `<span class="sk-pw-ring${red ? " r" : ""}"><img src="${SKILL_ICONS[r.icon] || ""}" alt=""></span>`}<span class="sk-pw-rn">${presetEsc(r.name)}<small>${r.val}</small></span>${r.custom ? "" : `<span class="sk-pw-lv${red ? " r" : ""}">Lv.${r.lv}/${r.max}</span>`}</div>`).join("") : '<p class="sk-pw-none">ไม่มี</p>';
       const off = on => on ? ' <span class="sk-pw-offtag">ปิดอยู่</span>' : "";
-      const SRV_NAME = { og: "BB", tot: "ToT", tto: "TTO" };
+      const SRV_NAME = SERVER_SHORT;
       const strip = `<div class="sk-pw-tile sk-pw-set"><span class="sk-pw-srvs">ป๊อปอัปบัฟ${BD_SERVERS.map(sv => `<button type="button" class="sk-pw-sv${sv === b.srv ? " is-on" : ""}" data-role="pw-srv" data-server="${sv}" title="${SRV_NAME[sv]}" aria-pressed="${sv === b.srv}"><img src="${SKILL_ICONS["server_" + sv] || ""}" alt="${SRV_NAME[sv]}"></button>`).join("")}</span><button type="button" class="sk-pw-flag${b.buffsOff ? " is-off" : ""}" data-role="pw-off" data-side="buff" aria-pressed="${!b.buffsOff}"><i></i>บัฟ${b.buffsOff ? "ปิด" : "เปิด"}อยู่</button><button type="button" class="sk-pw-flag${b.debuffsOff ? " is-off" : ""}" data-role="pw-off" data-side="debuff" aria-pressed="${!b.debuffsOff}"><i></i>ดีบัฟ${b.debuffsOff ? "ปิด" : "เปิด"}อยู่</button>${move}</div>`;
       if (presetWinEdit){
         // Buff / debuff edit view: the popup's level table, on this slot's own data and server
@@ -28612,6 +28638,7 @@ function classGuideExpand(o){
 //   optional mode block (user 2026-10-20): 0x4D, one byte: bit 0 PVE, bit 1 PVP (CLASS_GUIDE_MODES); written whenever a mode is set (a finished guide always has one).
 //   optional description columns block (user 2026-10-21): 0x43, one byte 2 or 3; a one-column description writes none, so older codes are unchanged.
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
+// index 3 of the 2-bit server field is reserved for "reborn" (user 2026-10-25). Add it here AND in scripts/guide_code.js only together with SKILL_SIM_SERVERS.reborn (the Reborn skill tree data): a guide code with that server needs both.
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
 const CLASS_GUIDE_MODES = ["pve", "pvp"];   // what a guide is for, both allowed (user 2026-10-20)
@@ -29228,12 +29255,12 @@ async function classGuideRenderImage(guide, simRoot){
   };
   const box = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
-  // backdrop of the current look (user 2026-10-16: the image follows the app theme): BB ledger gradient, TTO and ToT veiled wallpapers
+  // backdrop of the current look (user 2026-10-16: the image follows the app theme): BB ledger gradient, TTO, ToT and Reborn veiled wallpapers
   const look = document.documentElement.getAttribute("data-sk-server") || "og";
   const urlOf = name => { const m = /url\(["']?([^"')]+)["']?\)/.exec(v(name)); return m ? m[1] : ""; };
-  if (look === "tot" || look === "tto"){
-    ctx.fillStyle = look === "tto" ? "#0a0a0a" : "#050505"; ctx.fillRect(0, 0, P.w, P.h);
-    const wall = await classGuideImageLoad(urlOf(look === "tto" ? "--tto-wallpaper" : "--tot-wallpaper"));
+  if (look !== "og"){
+    ctx.fillStyle = look === "tto" ? "#0a0a0a" : look === "reborn" ? "#06090e" : "#050505"; ctx.fillRect(0, 0, P.w, P.h);
+    const wall = await classGuideImageLoad(urlOf("--" + look + "-wallpaper"));
     if (wall){ const sc = Math.max(P.w / wall.naturalWidth, P.h / wall.naturalHeight), ww = wall.naturalWidth * sc, wh = wall.naturalHeight * sc; ctx.drawImage(wall, (P.w - ww) / 2, (P.h - wh) / 2, ww, wh); }
     ctx.fillStyle = v("--th-veil") || "rgba(0,0,0,.78)"; ctx.fillRect(0, 0, P.w, P.h);
   } else {
@@ -29250,7 +29277,7 @@ async function classGuideRenderImage(guide, simRoot){
   const edge = v("--th-edge") || line;
   const surface = (x, y, w, h, r, raised) => {
     box(x, y, w, h, r);
-    if (look === "tot" || look === "tto"){ ctx.fillStyle = v("--th-wash") || "rgba(255,255,255,.04)"; ctx.fill(); }
+    if (look !== "og"){ ctx.fillStyle = v("--th-wash") || "rgba(255,255,255,.04)"; ctx.fill(); }
     else { ctx.fillStyle = raised ? panel2 : panel; ctx.fill(); }
     box(x, y, w, h, r); ctx.strokeStyle = edge; ctx.lineWidth = 1.5; ctx.stroke();
   };
@@ -32605,7 +32632,7 @@ function mountThemeTab(root){
 }
 const LAUNCH_CATEGORY = { Reference: "ข้อมูลอ้างอิง", Calculator: "เครื่องคำนวณ", Map: "แผนที่", Simulator: "จำลอง", Guide: "คู่มือ", Music: "ดนตรี" };
 const LAUNCH_ACCENT = { "entry-svc": "var(--svc-chip-accent)", "entry-bug": "var(--bug-chip-accent)", "entry-chm": "var(--chm-chip-accent)" };
-const LAUNCH_SERVER = { og: "BB", tot: "ToT", tto: "TTO" };
+const LAUNCH_SERVER = SERVER_SHORT;
 // Hub menu art drawn in code for four tools (user 2026-10-18, picked from 40 mocks: S5, R10, G5, L4). LN_ART[collage](mode) returns the
 // markup: "stage" = the big, moving art; "thumb" = a still copy for the filmstrip. Every picture is a 980 x 880 box, the same shape on the
 // stage and in the thumb (the thumb crops it with slice). Ids carry the mode so the stage and its thumb never share a definition.
@@ -33108,6 +33135,8 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T08:02:02.771Z","feat(bible): Reborn look (underwater wallpaper, glass, orange accent) and the 3D / scene textures as lossless WebP"],
+    ["2026-10-25T07:47:15.317Z","feat(bible): infrastructure for Reborn as the 4th server (W.I.P. logo, server registry, data-driven server tab), invisible until a card has Reborn data"],
     ["2026-10-25T04:43:46.046Z","fix(bible): the cr. fuWaa wallpaper caption is hidden on phones (the desktop caption and the guide image credit stay)"],
     ["2026-10-25T04:34:37.527Z","feat(bible): server-specific gear (Shadow Strider, Shark Orange) is listed and accepted only in TTO class guides"],
     ["2026-10-25T04:15:26.437Z","feat(bible): the TTO look is fuWaa's wallpaper under a dark veil with see-through glass panels like ToT, the PC hub showcase is mirrored in it, stars and lanterns removed"],
