@@ -4231,6 +4231,14 @@ async function donateChildTests(env) {
     good(rt.every(s => s && s.cdDep && s.cdDep.id === "rapidTrance" && (s.castTime === undefined || (s.castDep && s.castDep.id === "rapidTrance"))), "Rapid Trance cooldown toggle on the ten skills it affects, and the cast toggle on the six with a cast bar");
     const ee = SKILLS.find(s => s.id === "rabbit_eagleEye");
     good(ee && ee.soon === "reborn" && (ee.compatSkills || []).includes("rabbit_mixshot") && !SKILLS.some(s => s.soon && /[0-9]$/.test(s.id)), "stub ids drop the rank digit (rabbit_eagleEye), so the simulator cell links them, and the Eagle Eye stub links Mix Shot back"); }
+  // a Reborn desc is the card's base desc plus the change (bible-desc-writing): it must share most of its words with that base desc. Catches an override
+  // that a patch put on the wrong card (user 2026-10-25: Mimic's Reborn text showed on Dark Intention, War Capital's on Monkey nAttack). Full reworks opt out with rebornRework:true.
+  { const words = (s) => new Set(String(s || "").replace(/<[^>]+>|[*_^\[\]()]/g, " ").split(/\s+/).filter((w) => w.length > 1));
+    const at = (d, r) => { try { return typeof d === "function" ? d(r, 0) : d; } catch (e) { return ""; } };
+    const bad = SKILLS.filter((s) => s.servers && s.servers.reborn && s.servers.reborn.desc && s.desc && !s.servers.reborn.rebornRework && !s.onlyServer).filter((s) => {
+      const a = words(at(s.desc, 1)), b = words(at(s.servers.reborn.desc, 1)); if (!a.size) return false;
+      let shared = 0; a.forEach((w) => { if (b.has(w)) shared++; }); return shared / a.size < 0.5; }).map((s) => s.id);
+    good(!bad.length, "Reborn desc shares less than half its words with the card's own base desc (an override on the wrong card?) on: " + bad.join(", ")); }
   console.log(`Verified ${n} Reborn server infrastructure checks.`);
 }
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
