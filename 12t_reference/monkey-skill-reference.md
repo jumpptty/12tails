@@ -598,71 +598,6 @@ All use Gaos's own stats (§2.2). AI choice (`Gaos_AI.cs:840-1030`, `num` = dist
 
 **Open questions:** none from this pass.
 
----
-
-## 3. Server Balance Variations (ToT & TTO)
-
-### Complete skill-detail catalog
-
-The existing Titanic Earth Pulse notes below are retained. This catalog is the complete private-server inventory from the Bible tool. BigBug is the baseline; these values are server-only observations maintained in `12t_projects/bible/index.html:9337-10461`, not decompiled behavior.
-
-#### ToT — Fire branch
-
-- **Instant Cast:** cooldown 240s → 180s; Rank 2 becomes unlimited instant casts during its 12s buff.
-- **Fireball:** a hit reduces all A-branch cooldowns by 1s.
-- **Phoenix:** cooldown 45s → 60s; can coexist with Gadina; hits reduce A-branch cooldowns by 1s; rebirth becomes guaranteed (100%, still 120s rebirth cooldown) instead of 12–30%.
-- **Phoenix Fireball / Rapid Fire / Intense Fire:** Phoenix attack-speed INT scaling 20/30/40% → 40/60/80%; Intense Fire bonus 20/30/40% → 60/80/100% of Monkey `talAdjust(40)`.
-- **Sky Crimson:** Intense Fire bonus becomes 60/80/100%; Fire Soul reduces cooldown to 12s.
-- **Blazing Arrow:** red SP 48 → 45; Phoenix charges from the caster, can aim until fired, skips mount/skill animation, rebirth becomes 100%, and Fire Soul reduces cooldown to 60s.
-- **Flash Fire:** base damage 16/24/32/40 → 8/16/24/32; radius 5m → 6.5m (`5×rangeMod` → `6.5×rangeMod`). Height assumed unchanged at `3×rangeMod` (user 2026-10-07: "likely unchanged", not confirmed in game).
-- **Ja:** resets Phoenix cooldown on cast.
-- **Fire Rune:** proc base chance 12% (`lckAdjust(12)`; the tooltip says 20%) → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
-- **Fire Keep:** maximum stored Fireballs 2 → 3.
-- **Instant Blaze:** a 10s activation causes Phoenix Fireball impacts to deal AoE.
-- **Fire Soul:** Phoenix stat inheritance 10/20/30/40% → 30/40/50/60%; Sky Crimson / Blazing Arrow cooldowns become 12s / 60s.
-- **Fire Avatar:** all potions usable; replace time-charged large Fireball with one on every third normal attack.
-- **Blazing Fire:** charge cooldown 6s → 2.5s; forward movement reduced 66%.
-
-#### ToT — Earth, Gadina, and other branch changes
-
-- **Ground Lock:** root 3s → 4s; damage 24/32/40/48 → 20/40/60/80; Second Stone adds 10 first-hit KO and +1s root.
-- **Gadina:** cooldown 45s → 60s; Rank 4 KO 20 → 40; attacks 50% faster; can coexist with Phoenix; KO range is limited around Gadina.
-- **Gadina normal attack / Titan Sword:** attack interval 4.0s/5.33s → 2.0s/2.67s; Titan Sword ATK 20/40/60 → 40/80/120 and KO 2/3/4 → 6/8/10.
-- **Planet Breaker:** pull/damage range +25%; Earth Soul reduces cooldown to 12s.
-- **Aegis of Earth:** Gadina DEF 20/35/50 → 30/55/80; Ground Lock duration extension removed.
-- **Titanic Earth Pulse:** red SP 60 → 45; damage 35% → 28% Gadina4 HP; projectile speed 15 → 19.95 m/s; charge behavior gains the same warp/aim/no-animation treatment as Blazing Arrow.
-- **Buiten Hou Hou:** resets Gadina cooldown on cast.
-- **Earth Rune:** proc base chance 12% (`lckAdjust(12)`; the tooltip says 20%) → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
-- **Lavu:** base damage 30/50 → 50/100; entry animation 50% faster; its buff reduces incoming damage 15/25%; cooldown and MP/SP costs reduced.
-- **Mike Circle:** becomes a 3s-cooldown active retargetable ally-protection damage/heal command.
-- **Summon Soul:** red SP 30 → 10; Gaos Soul +40 ATK/DEF → +40 ATK/AGI/TAL.
-- **Auto Instant:** Instant Cast Lv.2 → Lv.4; grants 40% MP reduction, +40 ATK/DEF/VIT/TAL, 1% max HP/s healing, and two C-branch casts.
-- **Earth Guard:** Gadina deals surrounding damage/KO for 10s, can move/attack, and cannot be healed.
-- **Earth Soul:** Gadina stat inheritance 10/20/30/40% → 30/40/50/60%; Planet Breaker / Titanic Earth Pulse cooldowns become 12s / 60s.
-- **Earth Form:** all potions usable; punch animation +20%; immune to physical knockback.
-- **Stone Sentinel:** charge cooldown 6s → 5s.
-- **Volcanic Eruption:** MP 150 → 100; enemies only; caster can move/use skills after 2s; requirement Fire Rune1/Earth Rune1 → Ja1/Buiten Hou Hou1.
-- **Summon Gaos:** MP 300 → 150; no ally burn; Gaos Soul +40 ATK/DEF → +40 ATK/AGI/TAL.
-
-#### TTO changes
-
-- **Titanic Earth Pulse:** animation 4s → 2s; structure damage is 2×; pulse hitboxes 1/2/3/4/5m → 3/4/5/6/7m (5th wave 7m: user 2026-10-07, the patch note listed only 4); projectile hitbox 0.25m² → 0.5m².
-- **Fire Soul / Earth Soul:** each adds one summon slot.
-- **Fire Avatar / Earth Form:** normal skill casting is allowed while transformed.
-
-The BigBug-side skill formulas, status logic, and geometry remain documented in the preceding sections and the cited decompiled source. Server-only changes above should be revised in step with the Bible schema.
-
-### Gadina - Titanic Earth Pulse
-* **Tailstopia Online (TTO):**
-  - Animation reduced from 4.0s to 2.0s.
-  - Structure damage multiplier increased to `2.0×`.
-  - Detonation hitboxes expanded to 3m / 4m / 5m / 6m.
-* **Tales of Tail (ToT):**
-  - SP cost reduced from 60 to 45 SP.
-  - Projectile speed increased by +33% (15 m/s → 19.95 m/s).
-  - Damage coefficient reduced by -20% (from 35% HP to 28% HP of Gadina4).
-  - Gadina automatically warps to Monkey and tracks facing angle until fired.
-
 ### Geometry notes (verified 2026-10-02)
 
 - **Fireball (Monkey, Fire Avatar):** `Monkey_fireBall` sets `velocity = (0, 0, 30)` (`Monkey_fireBall.cs:26`, `:51`), no homing, and `RPC_fireBall_fire` gives `life = 2 × rangeMod` (`Monkey.cs:11278`): 30 m/s, 60 m.
@@ -726,6 +661,75 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 - **Class C prerequisites** (`rSkill`, each is a single skill from the trees above or from Class C itself): Mike Blink needs Damage Cast 2; Fire Keep needs Fire Ball 4; Second Stone needs Ground Lock 4; Mike Circle needs C Attack 4; Instant Blaze needs Phoenix 4; Earth Guard needs Gadina 4; Summon Soul needs Summon Release; Fire Soul needs Sky Crimson; Earth Soul needs Planet Breaker; Auto Instant needs Instant Cast 2; Fire Avatar needs Blazing Arrow; Earth Form needs Titanic Earth Pulse; Volcanic Eruption needs Fire Rune 1 + Earth Rune 1; Super Stat Plus needs Stat Plus 4; Blazing Fire needs Flash Fire 4; Stone Sentinel needs Stone Hammer 4; Summon Gaos needs Volcanic Eruption.
 - **Checked against the 2014 community simulator** (Rain Niar's Monkey SkillSimulator V.3) **and TailsTailsSimulator.online/monkey**: 97 of 97 cells have the same Lv / points in all three.
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
+
+---
+
+## 3. Server Balance Variations (ToT)
+
+### Complete skill-detail catalog (ToT)
+
+The existing Titanic Earth Pulse notes below are retained. This catalog is the complete private-server inventory from the Bible tool. BigBug is the baseline; these values are server-only observations maintained in `12t_projects/bible/index.html:9337-10461`, not decompiled behavior.
+
+#### ToT — Fire branch
+
+- **Instant Cast:** cooldown 240s → 180s; Rank 2 becomes unlimited instant casts during its 12s buff.
+- **Fireball:** a hit reduces all A-branch cooldowns by 1s.
+- **Phoenix:** cooldown 45s → 60s; can coexist with Gadina; hits reduce A-branch cooldowns by 1s; rebirth becomes guaranteed (100%, still 120s rebirth cooldown) instead of 12–30%.
+- **Phoenix Fireball / Rapid Fire / Intense Fire:** Phoenix attack-speed INT scaling 20/30/40% → 40/60/80%; Intense Fire bonus 20/30/40% → 60/80/100% of Monkey `talAdjust(40)`.
+- **Sky Crimson:** Intense Fire bonus becomes 60/80/100%; Fire Soul reduces cooldown to 12s.
+- **Blazing Arrow:** red SP 48 → 45; Phoenix charges from the caster, can aim until fired, skips mount/skill animation, rebirth becomes 100%, and Fire Soul reduces cooldown to 60s.
+- **Flash Fire:** base damage 16/24/32/40 → 8/16/24/32; radius 5m → 6.5m (`5×rangeMod` → `6.5×rangeMod`). Height assumed unchanged at `3×rangeMod` (user 2026-10-07: "likely unchanged", not confirmed in game).
+- **Ja:** resets Phoenix cooldown on cast.
+- **Fire Rune:** proc base chance 12% (`lckAdjust(12)`; the tooltip says 20%) → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
+- **Fire Keep:** maximum stored Fireballs 2 → 3.
+- **Instant Blaze:** a 10s activation causes Phoenix Fireball impacts to deal AoE.
+- **Fire Soul:** Phoenix stat inheritance 10/20/30/40% → 30/40/50/60%; Sky Crimson / Blazing Arrow cooldowns become 12s / 60s.
+- **Fire Avatar:** all potions usable; replace time-charged large Fireball with one on every third normal attack.
+- **Blazing Fire:** charge cooldown 6s → 2.5s; forward movement reduced 66%.
+
+#### ToT — Earth, Gadina, and other branch changes
+
+- **Ground Lock:** root 3s → 4s; damage 24/32/40/48 → 20/40/60/80; Second Stone adds 10 first-hit KO and +1s root.
+- **Gadina:** cooldown 45s → 60s; Rank 4 KO 20 → 40; attacks 50% faster; can coexist with Phoenix; KO range is limited around Gadina.
+- **Gadina normal attack / Titan Sword:** attack interval 4.0s/5.33s → 2.0s/2.67s; Titan Sword ATK 20/40/60 → 40/80/120 and KO 2/3/4 → 6/8/10.
+- **Planet Breaker:** pull/damage range +25%; Earth Soul reduces cooldown to 12s.
+- **Aegis of Earth:** Gadina DEF 20/35/50 → 30/55/80; Ground Lock duration extension removed.
+- **Titanic Earth Pulse:** red SP 60 → 45; damage 35% → 28% Gadina4 HP; projectile speed 15 → 19.95 m/s; charge behavior gains the same warp/aim/no-animation treatment as Blazing Arrow.
+- **Buiten Hou Hou:** resets Gadina cooldown on cast.
+- **Earth Rune:** proc base chance 12% (`lckAdjust(12)`; the tooltip says 20%) → 45/60/75%; SP/MP restoration 4/4, 8/8, 12/12 → 16/4, 22/6, 28/8.
+- **Lavu:** base damage 30/50 → 50/100; entry animation 50% faster; its buff reduces incoming damage 15/25%; cooldown and MP/SP costs reduced.
+- **Mike Circle:** becomes a 3s-cooldown active retargetable ally-protection damage/heal command.
+- **Summon Soul:** red SP 30 → 10; Gaos Soul +40 ATK/DEF → +40 ATK/AGI/TAL.
+- **Auto Instant:** Instant Cast Lv.2 → Lv.4; grants 40% MP reduction, +40 ATK/DEF/VIT/TAL, 1% max HP/s healing, and two C-branch casts.
+- **Earth Guard:** Gadina deals surrounding damage/KO for 10s, can move/attack, and cannot be healed.
+- **Earth Soul:** Gadina stat inheritance 10/20/30/40% → 30/40/50/60%; Planet Breaker / Titanic Earth Pulse cooldowns become 12s / 60s.
+- **Earth Form:** all potions usable; punch animation +20%; immune to physical knockback.
+- **Stone Sentinel:** charge cooldown 6s → 5s.
+- **Volcanic Eruption:** MP 150 → 100; enemies only; caster can move/use skills after 2s; requirement Fire Rune1/Earth Rune1 → Ja1/Buiten Hou Hou1.
+- **Summon Gaos:** MP 300 → 150; no ally burn; Gaos Soul +40 ATK/DEF → +40 ATK/AGI/TAL.
+
+### Gadina - Titanic Earth Pulse (ToT)
+* **Tales of Tail (ToT):**
+  - SP cost reduced from 60 to 45 SP.
+  - Projectile speed increased by +33% (15 m/s → 19.95 m/s).
+  - Damage coefficient reduced by -20% (from 35% HP to 28% HP of Gadina4).
+  - Gadina automatically warps to Monkey and tracks facing angle until fired.
+
+## 3b. Server Balance Variations (TTO)
+
+### Complete skill-detail catalog (TTO)
+
+- **Titanic Earth Pulse:** animation 4s → 2s; structure damage is 2×; pulse hitboxes 1/2/3/4/5m → 3/4/5/6/7m (5th wave 7m: user 2026-10-07, the patch note listed only 4); projectile hitbox 0.25m² → 0.5m².
+- **Fire Soul / Earth Soul:** each adds one summon slot.
+- **Fire Avatar / Earth Form:** normal skill casting is allowed while transformed.
+
+The BigBug-side skill formulas, status logic, and geometry remain documented in the preceding sections and the cited decompiled source. Server-only changes above should be revised in step with the Bible schema.
+
+### Gadina - Titanic Earth Pulse (TTO)
+* **Tailstopia Online (TTO):**
+  - Animation reduced from 4.0s to 2.0s.
+  - Structure damage multiplier increased to `2.0×`.
+  - Detonation hitboxes expanded to 3m / 4m / 5m / 6m.
 
 ## Server Balance Variations (ToT patch notes, 2026)
 

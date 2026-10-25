@@ -221,20 +221,6 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
   - `cAttack3` (Basic): game **16/5**, both simulators 16/3. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
 
-## Server Balance Variations (ToT & TTO)
-
-Private-server values below are documented from the Bible skill-detail schema, not the BigBug decompile; the original-server column is the BigBug baseline represented by that card.
-
-| Skill | Server | Original BigBug baseline | Server delta |
-|---|---|---|---|
-| Mass Cast | TTO | The buff lasts 6 / 9 seconds. | Replaced duration-based spreading with exactly 1 / 2 affected casts at ranks 1 / 2. |
-| Mirage Orb | ToT | Allies in the orb receive no `hitMod` reduction. | Allies inside the orb receive `-0.1 hitMod`. |
-| Dream Dazzle | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
-| Phantasm Blast | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
-| Shattering Dream | TTO | Raises Dream Dazzle and Phantasm Blast by one level. | No longer grants either level increase. |
-
-Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910`.
-
 ### bat_shame — `shame` status on the target (enemy stat debuff)
 - **Level applied:** `5 + ((!target.hasStatus("shame")) ? 0 : 1)` (`Bat.cs:39685`) — Lv.5 on a fresh target, **Lv.6 when the target already has Shame** (a recast); the escalated level is then re-applied with `RPC_AddStatus("shame", lv, ...)`.
 - **Effect:** on add `deltaCha(-10 * sLv)` (`CharacterControl.cs:40938`), on removal `deltaCha(10 * sLv)` (`CharacterControl.cs:18460`) — the target's CHA drops by **50 (Lv.5) / 60 (Lv.6)**. Classified Debuff, Magical.
@@ -524,6 +510,29 @@ All inside `distance < 32`, else run. 55 Doom 2; 45 Echoes 2; 40 Phantasm Blast 
 - **Switch / Shadow Sacrifice:** no distance check; Switch picks an existing clone (`Bat.cs:7861-7951`, `RPC_switch` `:13272-13410`), Shadow Sacrifice drains every clone (`:14100-14350`).
 - **Target spells:** the local cast switch (`Bat.cs:7000-9600`) has no distance gate besides Mirage Orb's 6 m spacing (`:9349`), so curses, Dream spells, Charm, Mimic, Dark Stalker, Soul Eater, Paranoia and Nefarious Whip reach the 40 m target lock ([12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)). Nightmare and Mind Control check `sqrMagnitude > 1600` / `<= 1600` themselves (`:28939`, `:37491`).
 - **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target (flat, no height limit); every living character found counts, the target included. Damage: `RPC_AddEffectDamage(434, Mathf.Clamp(num × 100, 100, 1000))` (`Bat.cs:14692`), so **100 minimum** (the target alone) and **1000 maximum** (10 or more).
+
+## Server Balance Variations (ToT)
+
+Private-server values below are documented from the Bible skill-detail schema, not the BigBug decompile; the original-server column is the BigBug baseline represented by that card.
+
+| Skill | Server | Original BigBug baseline | Server delta |
+|---|---|---|---|
+| Mirage Orb | ToT | Allies in the orb receive no `hitMod` reduction. | Allies inside the orb receive `-0.1 hitMod`. |
+
+Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910`.
+
+## Server Balance Variations (TTO)
+
+Private-server values below are documented from the Bible skill-detail schema, not the BigBug decompile; the original-server column is the BigBug baseline represented by that card.
+
+| Skill | Server | Original BigBug baseline | Server delta |
+|---|---|---|---|
+| Mass Cast | TTO | The buff lasts 6 / 9 seconds. | Replaced duration-based spreading with exactly 1 / 2 affected casts at ranks 1 / 2. |
+| Dream Dazzle | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
+| Phantasm Blast | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
+| Shattering Dream | TTO | Raises Dream Dazzle and Phantasm Blast by one level. | No longer grants either level increase. |
+
+Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910`.
 
 ## Server Balance Variations (ToT patch notes, 2026)
 
