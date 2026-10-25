@@ -3483,6 +3483,15 @@ let checkedRsim = 0;
       ok(nickOk && html.includes('(GEAR_NICKNAMES[id] || "").toLowerCase().includes(q)') && html.includes("name.toLowerCase().includes(q) ||"), "a nicknamed item is listed first, shown by its nickname, and the search matches both names");
     }
     const ids = new Set(Object.values(GD).flatMap(l => l.map(e => e[0]))); ok(Object.keys(GI).every(id => ids.has(id) && /^data:image\/webp;base64,/.test(GI[id])) && Object.keys(GI).length > 1400, "every gear icon belongs to a listed item and is an embedded WebP");
+    // server-specific gear (user 2026-10-25): GEAR_SERVERS items show only in that server's guides
+    { const GS = vm.runInContext("GEAR_SERVERS", sandbox), glist = vm.runInContext("classGuideGearList", sandbox), gclean = vm.runInContext("classGuideGearClean", sandbox), allIds2 = new Set(Object.values(GD).flatMap(l => l.map(e => e[0])));
+      const slotOf = (id) => Object.keys(GD).find(k => GD[k].some(e => e[0] === id)), has = (slot, cls, srv, id) => glist(slot, cls, srv).some(e => e[0] === id);
+      ok(Object.entries(GS).every(([id, srvs]) => allIds2.has(id) && Array.isArray(srvs) && srvs.length && srvs.every(x => ["og", "tot", "tto"].includes(x))) && GS.b_all_tto_shadowstrider && GS.b_all_tto_shadowstrider.join() === "tto", "GEAR_SERVERS: listed items with real server keys, Shadow Strider is TTO only");
+      ok(has("boot", "wolf", "tto", "b_all_tto_shadowstrider") && !has("boot", "wolf", "og", "b_all_tto_shadowstrider") && !has("boot", "wolf", "tot", "b_all_tto_shadowstrider") && has("boot", "wolf", undefined, "b_all_tto_shadowstrider"), "the gear picker lists a TTO-only item for TTO guides and hides it for BB and ToT");
+      const strict = (srv) => { try { gclean({ boot: [{ item: "b_all_tto_shadowstrider" }] }, "wolf", false, srv); return true; } catch (e) { return false; } };
+      ok(strict("tto") && !strict("tot") && !strict("og") && JSON.stringify(gclean({ boot: [{ item: "b_all_tto_shadowstrider" }] }, "wolf", true, "tot")) === "{}" && gclean({ boot: [{ item: "b_all_tto_shadowstrider" }] }, "wolf", true, "tto").boot[0].item === "b_all_tto_shadowstrider", "a guide accepts a TTO-only item on TTO, refuses it on BB and ToT, and a draft drops it there");
+      ok(html.includes("classGuideGearClean(value.gear, b.classKey, draft, b.server)") && html.includes("classGuideGearList(gearPick.slot, classKey, bd.server)") && html.includes("else if (draft.build.server !== build.server)"), "the guide check, the picker and the editor's server change all pass the guide's server to the gear functions");
+    }
     const gear = { weapon:[{ item:"w_wlf10", replica:{ name:"ดาบใหม่ 🐺" }, stat:"atk" }, { name:"Brand New Blade" }, { item:"w_wlf11", replica:{ item:"w_wlf12" } }], hat:[{ item:"c_all1" }], trinket:[{ item:"t_all1" }], pet:[{ item:"p_lcr" }] };
     const withGear = norm(change({gear}));
     ok(same(withGear.gear, gear), "a valid gear set normalizes unchanged (order item / name, replica, stat)");

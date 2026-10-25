@@ -27795,17 +27795,21 @@ function mountPetInfo(root){
   root._petInfo = { openById: select };
 }
 const GEAR_INDEX = (() => { const m = {}; for (const [slot, list] of Object.entries(GEAR_DATA)) for (const [id, name] of list) m[id] = { slot, name }; return m; })();
-// An item the guide's class can use: its own items, the shared ones (all, and the gender trinkets / hats fem, mal); every pet.
-function classGuideGearAllowed(slot, id, classKey){
+// Items only one server has (user 2026-10-25): { id: [server keys] } with the guide's build.server keys (og = BB, tot, tto). The picker lists them only for that
+// server's guides and a guide of another server is refused (a draft drops them); an item not listed here is on every server. Add the id here when a server-only item is added to GEAR_DATA.
+const GEAR_SERVERS = {"b_all_tto_shadowstrider":["tto"],"p_tto_shark_o":["tto"]};
+// An item the guide's class can use: its own items, the shared ones (all, and the gender trinkets / hats fem, mal); every pet. `server` (optional) also hides the other servers' items.
+function classGuideGearAllowed(slot, id, classKey, server){
   const it = GEAR_INDEX[id]; if (!it || it.slot !== slot) return false;
+  const only = GEAR_SERVERS[id]; if (only && server && !only.includes(server)) return false;
   if (slot === "pet") return true;
   const c = id.slice(2, 5); return c === CLASS_GUIDE_GEAR_CODE[classKey] || c === "all" || c === "fem" || c === "mal";
 }
 // Picker order (user 2026-10-16): nicknamed items first; within each part, items with no level data, then rank-gated items (highest rank first), then by level, highest first; ties keep the game order.
 function classGuideGearSortKey(id){ const lv = GEAR_LV[id]; return [GEAR_NICKNAMES[id] ? 0 : 1, lv === undefined ? 0 : lv < 0 ? 1 : 2, lv === undefined ? 0 : lv < 0 ? lv : -lv]; }
-function classGuideGearList(slot, classKey){
+function classGuideGearList(slot, classKey, server){
   const key = new Map(GEAR_DATA[slot].map(([id]) => [id, classGuideGearSortKey(id)]));
-  return GEAR_DATA[slot].filter(([id]) => classGuideGearAllowed(slot, id, classKey)).sort((a, b) => { const x = key.get(a[0]), y = key.get(b[0]); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; });
+  return GEAR_DATA[slot].filter(([id]) => classGuideGearAllowed(slot, id, classKey, server)).sort((a, b) => { const x = key.get(a[0]), y = key.get(b[0]); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; });
 }
 function classGuideGearName(c){ return c ? (c.item ? GEAR_NICKNAMES[c.item] || GEAR_INDEX[c.item].name : c.name) : ""; }
 // gear = { slot: [choice, ... up to 3, ranked] }; choice = { item: id } (game data) or { name } (a new item typed by the author), plus on weapon / armor / hat
@@ -27865,14 +27869,14 @@ function classGuideCoverEl(g, px){   // the cover arrangement as round framed ic
   });
   return box;
 }
-function classGuideGearClean(raw, classKey, draft){
+function classGuideGearClean(raw, classKey, draft, server){
   if (raw === undefined) return {};
   const obj = o => o && typeof o === "object" && !Array.isArray(o);
   if (!obj(raw)) throw new Error("เซ็ตแนะนำไม่ถูกต้อง");
   for (const k of Object.keys(raw)) if (!CLASS_GUIDE_GEAR_KEYS.includes(k)) throw new Error("เซ็ตแนะนำมีช่องที่ไม่รู้จัก");
   const pick = (slot, v, what) => {
     if (!obj(v)) throw new Error(what + "ไม่ถูกต้อง");
-    if (typeof v.item === "string"){ if (classGuideGearAllowed(slot, v.item, classKey)) return { item: v.item }; if (draft) return null; throw new Error(what + "ไม่มีในเกม หรืออาชีพนี้ใช้ไม่ได้"); }
+    if (typeof v.item === "string"){ if (classGuideGearAllowed(slot, v.item, classKey, server)) return { item: v.item }; if (draft) return null; throw new Error(what + "ไม่มีในเกม อาชีพนี้ใช้ไม่ได้ หรือไม่มีในเซิร์ฟเวอร์นี้"); }
     if (typeof v.name === "string"){ const n = v.name.trim(); if (n && n.length <= 60) return { name: n }; if (draft && !n) return null; throw new Error(what + "ต้องมีชื่อ ไม่เกิน 60 ตัวอักษร"); }
     throw new Error(what + "ไม่ถูกต้อง");
   };
@@ -28537,7 +28541,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   }
   const stats = classGuideStatsClean(value.stats, draft);
   const statsPlus = value.statsPlus === undefined ? [] : Array.isArray(value.statsPlus) ? CLASS_GUIDE_STATS.map(x => x.key).filter(k => value.statsPlus.includes(k) && classGuideStatKind(stats[k]) === "num") : (() => { throw new Error("สเตตัสแนะนำไม่ถูกต้อง"); })();   // "250+": the stats meant as "or more"
-  const gear = classGuideGearClean(value.gear, b.classKey, draft);
+  const gear = classGuideGearClean(value.gear, b.classKey, draft, b.server);
   const cover = classGuideCoverClean(value.cover, cellsAll, draft);
   if (!draft && !cover.length) throw new Error("ไกด์ต้องมีไอคอนหน้าปกอย่างน้อย 1 สกิล (เลือกได้สูงสุด 5)");   // the cover is required (user 2026-10-16)
   // PVE / PVP (user 2026-10-20): a list of CLASS_GUIDE_MODES, both allowed; drafts drop anything unknown
@@ -29968,8 +29972,8 @@ function mountClassGuide(root){
   }
   function renderGearGrid(){
     if (!gearPick) return;
-    const q = el("gearSearch").value.trim().toLowerCase(), classKey = sim.getBuild().classKey;
-    const items = classGuideGearList(gearPick.slot, classKey).filter(([id, name]) => !q || name.toLowerCase().includes(q) || (GEAR_NICKNAMES[id] || "").toLowerCase().includes(q));   // the game name still finds a nicknamed item
+    const q = el("gearSearch").value.trim().toLowerCase(), bd = sim.getBuild(), classKey = bd.classKey;
+    const items = classGuideGearList(gearPick.slot, classKey, bd.server).filter(([id, name]) => !q || name.toLowerCase().includes(q) || (GEAR_NICKNAMES[id] || "").toLowerCase().includes(q));   // the game name still finds a nicknamed item
     el("gearGrid").innerHTML = items.length ? items.map(([id, name]) => { const nick = GEAR_NICKNAMES[id] !== name ? GEAR_NICKNAMES[id] : ""; return '<button type="button" class="cg-gear-opt' + (GEAR_NICKNAMES[id] ? " is-nick" : "") + '" data-cg-gear-item="' + id + '" title="' + classGuideEsc(nick ? nick + " (" + name + ")" : name) + '"><span class="cg-gear-ico">' + classGuideGearIcon({ item: id }) + '</span><span class="cg-gear-name">' + classGuideEsc(nick || name) + (nick ? '<small class="cg-gear-real">' + classGuideEsc(name) + '</small>' : "") + '</span>' + '</button>'; }).join("") : '<p class="cg-help">ไม่พบไอเทม ลองพิมพ์ชื่อเองด้านล่าง</p>';
   }
   function chooseGear(choice){
@@ -29991,7 +29995,8 @@ function mountClassGuide(root){
     guideUI: true,
     onChange(build){
       if (mode !== "author" || !draft || applying) return;
-      if (draft.build.classKey !== build.classKey){ draft.notes = {}; noteUndo.length = 0; syncNoteUndo(); el("noteEditor").hidden = true; draft.gear = classGuideGearClean(draft.gear, build.classKey, true); gearUndo.length = 0; renderGearEditor(); }   // gear the new class cannot use is dropped
+      if (draft.build.classKey !== build.classKey){ draft.notes = {}; noteUndo.length = 0; syncNoteUndo(); el("noteEditor").hidden = true; draft.gear = classGuideGearClean(draft.gear, build.classKey, true, build.server); gearUndo.length = 0; renderGearEditor(); }   // gear the new class cannot use is dropped
+      else if (draft.build.server !== build.server){ draft.gear = classGuideGearClean(draft.gear, build.classKey, true, build.server); gearUndo.length = 0; renderGearEditor(); }   // so is gear the new server does not have (user 2026-10-25)
       lastEditGear = false; lastEditStat = false;
       const cells = Object.assign({}, skillSimCells(SKILL_SIM[build.classKey], SKILL_SIM_SERVERS[build.server].patch[build.classKey], build.server === "tot" ? SKILL_SIM_EX[build.classKey] : null), classGuideSupportCells());   // support skills keep their notes and cover spot
       for (const id in draft.notes) if (!cells[id] || cells[id].placeholder) delete draft.notes[id];
@@ -33103,6 +33108,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T04:34:37.527Z","feat(bible): server-specific gear (Shadow Strider, Shark Orange) is listed and accepted only in TTO class guides"],
     ["2026-10-25T04:15:26.437Z","feat(bible): the TTO look is fuWaa's wallpaper under a dark veil with see-through glass panels like ToT, the PC hub showcase is mirrored in it, stars and lanterns removed"],
     ["2026-10-25T04:10:00.016Z","feat(bible): nicknamed gear icons upscaled to 128 px, a_rab62 icon added, Lucky Star Cutter nicknamed มีดดาว, Shadow Strider upscaled"],
     ["2026-10-25T04:12:13.642Z","feat(bible): status icons upscaled, every remaining PNG is WebP, CHM_ICONS duplicates aliased to the pictures stored elsewhere"],
