@@ -819,3 +819,50 @@ The three Lv 100 slots currently have placeholder names/art in the published dat
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `Physics.Raycast` 32 m (`:11627`), `hit(1, ATK, KO 1)` on the first collider, cooldown 2 s (`:11657, :11923`).
 - **mountDash** (normal attack while moving faster): the same 32 m raycast (`:12389`), `hit(1, 2 × ATK, KO 1)`, cooldown 2 s (`:12419, :12687`).
+
+## Server Balance Variations (Reborn)
+
+Build tag: every citation here is `Reborn:` (`DecompiledSource_Reborn/Assembly-CSharp/`), see [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) section 1. Reborn is a W.I.P. server in the Bible; none of this is on a card yet.
+
+### Eagle Eye (`rab_eagleEye5`, Class C row C6, skill id 451; verified 2026-10-25, not on a card yet)
+
+**Learning:** Lv 95, 8 skills already learned in the C tab, requires skills 401 and 411 (the Reborn simulator data, Reborn-Mechanics-Reference.md section 9). Passive: no MP, SP, cooldown, cast or status. The only patch note is the 2026-09-27 fix "Eagle Eye did not work" (section 7 there).
+
+**Client tooltip** (`Reborn:RabbitSkill_eng.cs:21`): "Gun and acid skills: reach, area, effect size and target range +35%. Not Backpack or potions." (the Thai text, `RabbitSkill_thai.cs:21`, is cut off in the decompile).
+
+**Mechanism:** one constant, `RebornC6.EagleEye = 1.35f` (`Reborn:RebornC6.cs:61`), read through three helpers (`:2208-2225`): `RabEye(cc)` = 1.35 when `cc.Type == "Rabbit"` and `cc.hasSkill(451)`, else 1; `RabEyeSq` = `RabEye²`; `RabReach(cc, reach)` = `RoundToInt(reach × RabEye)`. It only multiplies geometry (reach, radius, scale, distance gates). No damage, KO, chance or duration is changed. Nothing outside `Rabbit.cs`, `Rabbit_stickyGum.cs`, `Rabbit_acidicField.cs` and `GameGui.cs` calls it.
+
+**Skills scaled ×1.35** (the `$RPC_…` names are the iterator classes in `Reborn:Rabbit.cs`; BB has the same skills under the same names):
+
+| Skill (coroutine) | What is multiplied | Reborn:Rabbit.cs |
+|---|---|---|
+| Combo `nAttack` | raycast reach `20 + 5×normalAttackLv` and `16 + 5×normalAttackLv` (`RabReach`) | `:163`, `:184` |
+| Charge Attack, release `cAttack2` | raycast reach `20 + 5×normalAttackLv` | `:689` |
+| Bounce (`bounce0`) | effect scale; hit radius `3 m × rangeMod` (8 m, effect ×2.6 with skill 461) | `:1405`, `:1447` |
+| From The Above, Maim Shot, Medical Shots (Immune, Boost, Heat, Life; Mix Shot injection), Gil Shot, Diamond Shot | raycast reach `16 + 5×normalAttackLv` | `:1581`, `:1975`, `:3639`, `:4389`, `:6977` |
+| Sticky Gum | landing point 2 m ahead; field radius `(lv + 0.5)`; effect scale | `:3052`, `Rabbit_stickyGum.cs:57`, `:15789` |
+| Acidic Field | landing point 2 m ahead; field radius 12 m; effects | `:3206`, `Rabbit_acidicField.cs:57`, `:15816`, `:15829` |
+| Gorgon Shot | `SphereCastAll` radius 1, length 36 | `:4138` |
+| Four Shot | cone length `24 m × rangeMod` (width 2 m × rangeMod unchanged) | `:4962` |
+| Circle Shot | effect scale; radius `8 m × rangeMod` | `:5112`, `:5157` |
+| Shooting Array | hit radius `6 m × rangeMod` (four hit sites); ground-target limit 20 m, i.e. 27 m (`RabEyeSq` on `400`); effects | `:5996`, `:6038`, `:6061`, `:6095`, `:15100`, `:16137`, `:16153` |
+| Customized Shotgun | effect scale; rectangle length and width (the 4 m width is unchanged) | `:6241`, `:6254` |
+| Millionaire | effect scales; area `8 m × rangeMod` | `:6415`, `:6492`, `:6543`, `:6559` |
+| Ten Shot | cone length 24 m; effects | `:7131`, `:7283-7284`, `:7293-7294` |
+| Thousand Shot | effect scale; beam rectangle `2 × 2 × 24` | `:18038`, `:18068` |
+| Mix Shot target limit (`doSkill`) | ally distance gate 24 m, i.e. 32.4 m | `:14915` |
+
+**Not scaled** (no `RabEye` call): Backpack, Mall, the potions (`Rabbit_potion.cs`), Healing Field, Truce Trading. The charge release `cAttack0` and the charge start `cAttack1` have no raycast to scale. The numbers in `cAttack0/1/2` are coroutine names, not ranks.
+
+**Target selection (global to a Rabbit with 451, not only gun skills),** `Reborn:GameGui.cs`, with the BB values from [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md) section 4 ("Target-skill range"):
+
+| Distance | BB | Reborn + Eagle Eye | Code |
+|---|---|---|---|
+| Mouse hover ray | 30 m | 40 m (`RoundToInt(30 × 1.35 = 40.5)`; the rounding of the .5 is by hand, not run) | `:4922`, `RabEye` |
+| Right-click lock ray | 40 m | 54 m | `:4931`, `RabEye` |
+| Target drop (flat XZ distance from the camera target) | 40 m (`1600`) | 54 m | `:4967`, `1600 × RabEyeSq` |
+| Tab cycling (enemies `cycleEnemyTarget`, allies `cycleAllyTarget`; 3D distance, target must be on screen) | 36 m (`1296`) | 48.6 m (`1296 × 1.35² = 2361.96`, no rounding) | `:4379`, `:4383`, `:4398`; `:4815-4880` |
+
+So every target-mode skill a Rabbit casts can reach 54 m instead of 40 m, whatever the skill. The camera ray still starts at the camera, so the practical click range also depends on zoom and angle (BB note in the Mechanics Reference).
+
+**Open:** (1) the hover ray's `.5` rounding; (2) `RebornZone.Combat` gates the charge release: BB takes `cAttack2` whenever the aiming object exists (`DecompiledSource/Rabbit.cs:9309`), Reborn only `if (RebornZone.Combat && (bool)_2002)` (`Reborn:Rabbit.cs:15484`), otherwise the no-hit `cAttack0`; which maps count as Combat is not traced; (3) the Bible has no way yet to show a Reborn-only reach value, so the cards' `reach` badges stay BB until that is designed (user 2026-10-25: implement Eagle Eye with full per-skill quality later, document only for now).
