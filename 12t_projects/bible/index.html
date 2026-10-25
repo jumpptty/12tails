@@ -3840,6 +3840,7 @@
      real cards yet. Oxblood-red per the Ledger design system's own accent
      (AGENTS.md Section 4), not a new color. */
   .sk-roster-card--stub{border-color:#8b1e1e; box-shadow:0 0 0 1px rgba(139,30,30,0.35)}
+  .sk-hero-desc.sk-soon{font:800 clamp(17px,3vw,32px)/1.15 'Prompt',sans-serif; letter-spacing:.03em; text-align:center; color:var(--gold); padding-top:18px; padding-bottom:18px}   /* a coming-soon card (user 2026-10-25) */
   .sk-roster-card--stub:hover{border-color:#a8302f; box-shadow:0 6px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,30,30,0.5)}
   .sk-roster-icon{
     width:48px; height:48px; object-fit:contain;
@@ -16481,8 +16482,10 @@ function mountSkillCooldownLookup(root){
     const stem = k => String(k || "").replace(/\d+$/, "");
     const trees = SKILL_SIM[key].map((t, ti) => { const cells = t.rows.flat().filter(Boolean); return { name: ["Basic", "A", "B", "C"][ti] || t.name, full: t.name, stems: new Set(cells.map(c => stem(c[0]))), cards: new Set(cells.map(c => skillSimCardId(c[0]))), ids: [] }; });
     const other = { name: "อื่น ๆ", ids: [] };
-    SKILLS.filter(sk => sk.class === cls).forEach(sk => { const t = trees.find(x => x.stems.has(stem(sk.icon))) || trees.find(x => x.cards.has(sk.id)); (t || other).ids.push(sk.id); });
-    return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : []);
+    // coming-soon cards (SKILL_SIM_REBORN_EXTRA / SKILL_SIM_EX stubs) get their own tabs, named like the Class C tab they extend (user 2026-10-25)
+    const soonTabs = { tot: { name: "C (ToT)", full: "ToT EX", ids: [] }, reborn: { name: "C (RB)", full: "Tails Reborn C6 / C7", ids: [] } };
+    SKILLS.filter(sk => sk.class === cls).forEach(sk => { if (sk.soon){ soonTabs[sk.soon].ids.push(sk.id); return; } const t = trees.find(x => x.stems.has(stem(sk.icon))) || trees.find(x => x.cards.has(sk.id)); (t || other).ids.push(sk.id); });
+    return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : [], [soonTabs.tot, soonTabs.reborn].filter(t => t.ids.length));
   }
   // No scrolling on desktop (user 2026-10-19): a roster or search grid taller than its box first packs its cards tighter
   // (.is-tight), then shows one page at a time with ‹ n / N › under it. Phones keep the scroll.
@@ -16587,13 +16590,13 @@ function mountSkillCooldownLookup(root){
             <div class="sk-roster-title-wrap">
               ${classIcon ? `<img class="sk-roster-class-icon" src="${classIcon}" alt="${pickerClass}">` : ''}
               <h3 class="sk-roster-class-name">${thName} (${pickerClass})</h3>
-              <span class="sk-roster-count-badge">${classSkills.length} สกิล</span>
+              <span class="sk-roster-count-badge">${classSkills.filter(s => !s.soon).length} สกิล</span>
             </div>
           </div>
           ${trees ? `<div class="sk-roster-tabs" role="tablist">${trees.map((t, i) => `<button type="button" class="sk-roster-tab${i === tabI ? " is-on" : ""}" data-roster-tab="${i}" title="${t.full || t.name}" role="tab" aria-selected="${i === tabI}">${t.name} <b>${t.ids.length}</b></button>`).join("")}</div>` : ""}
           <div class="sk-roster-grid">
             ${shownSkills.map(s => `
-              <button type="button" class="sk-roster-card${!s.desc ? ' sk-roster-card--stub' : ''}" data-skill-id="${s.id}" title="${s.name}${!s.desc ? ' (no desc — pending research)' : ''}">
+              <button type="button" class="sk-roster-card${!s.desc || s.desc === 'เร็วๆนี้' ? ' sk-roster-card--stub' : ''}" data-skill-id="${s.id}" title="${s.name}${!s.desc || s.desc === 'เร็วๆนี้' ? ' (no desc — pending research)' : ''}">
                 <img class="sk-roster-icon" src="${SKILL_ICONS[s.icon] || ''}" alt="${s.name}" loading="lazy">
                 <span class="sk-roster-name">${s.name}</span>
               </button>
@@ -20815,7 +20818,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const noteChipsHtml = noteDefs.length
       ? `${closedDefs.length ? `<span class="sk-note-chips">${closedDefs.map(([k, , label]) => `<button type="button" class="sk-note-chip sk-note-${k}" data-note-toggle="${k}" aria-expanded="false">${NOTE_ICO[k]}<span>${label}</span></button>`).join("")}</span>` : ""}${noteDefs.map(([k, html]) => `<span class="sk-note-panel" data-note="${k}"${noteIsOpen(k) ? "" : " hidden"}>${html}</span>`).join("")}`
       : "";
-    const heroDescHtml = (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml || tipNoteHtml || bbBugHtml || unintendedHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}">${statusBadgeHtml}${descFormatted}${noteChipsHtml}${liveCheckHtml}${descDepToggle}</div>` : "";
+    const heroDescHtml = (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml || tipNoteHtml || bbBugHtml || unintendedHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}${activeSelected.soon ? " sk-soon" : ""}">${statusBadgeHtml}${descFormatted}${noteChipsHtml}${liveCheckHtml}${descDepToggle}</div>` : "";
     // Per-card chip repositioning (added 2026-09-19): a skill's own `chipCols`
     // field (sparse, e.g. {dur2: 2, lck: 4}) overrides that one chip's default
     // CSS grid-column via an inline style -- every other chip keeps using its
@@ -26880,7 +26883,7 @@ const TOOLS = [
     id: "skill-details",
     collage: "skills",
     title: "รายละเอียดสกิล",
-    fact: () => [SKILLS.length, "สกิล"],
+    fact: () => [SKILLS.filter(s => !s.soon).length, "สกิล"],   /* coming-soon stubs are not counted */
     shortTitle: "รายละเอียดสกิล",
     category: "",
     wide: true,
@@ -27262,6 +27265,14 @@ const SKILL_SIM_EX = {"bat":[{"id":451,"tree":3,"icon":"tot_ex_updamagemonter","
 // C7 = 461-464 (Lv 105), 8 skills needing 8 skills in the tab. [id, icon key, name, reqLv, reqPoints, [reqSkillIds], passive (1) or active (0)]. They take points from the C pool like any C skill.
 const SKILL_SIM_REBORN_EXTRA = {"wolf":[[451,"wolf_chargedFang5","Charged Fang",95,8,[401,411],1],[452,"wolf_guardianOath5","Guardian Oath",95,8,[254],0],[453,"wolf_bladeSymphony5","Blade Symphony",95,8,[354],1],[454,"wolf_alphaHowl5","Alpha Howl",95,8,[444],0],[461,"wolf_unyieldingOath5","Unyielding Oath",105,8,[122,421],1],[462,"wolf_trinityCross5","Trinity Cross",105,8,[264],1],[463,"wolf_eternalDarkEdge5","Eternal Dark Edge",105,8,[364],1],[464,"wolf_shadowPack5","Shadow Pack",105,8,[454],1]],"bison":[[451,"bison_savageMomentum5","Savage Momentum",95,8,[401,411],1],[452,"bison_crimsonThirst5","Crimson Thirst",95,8,[254],1],[453,"bison_gaiaFissure5","Gaia Fissure",95,8,[354],1],[454,"bison_stampede5","Stampede",95,8,[444],0],[461,"bison_crimsonEngine5","Crimson Engine",105,8,[122,421],1],[462,"bison_undyingFury5","Undying Fury",105,8,[264],1],[463,"bison_colossusUnbound5","Colossus Unbound",105,8,[364],1],[464,"bison_ragnarokQuake5","Ragnarok Quake",105,8,[454],0]],"panda":[[451,"panda_resonantFist5","Resonant Fist",95,8,[401,411],1],[452,"panda_dragonTyphoon5","Dragon Typhoon",95,8,[254],1],[453,"panda_windAndStrom5","Wind And Storm",95,8,[354],0],[454,"panda_hundredFists5","Hundred Fists",95,8,[444],0],[461,"panda_formlessPath5","Formless Path",105,8,[122,421],1],[462,"panda_spiritOverflow5","Spirit Overflow",105,8,[264],1],[463,"panda_fiveHeavenPalms5","Five Heaven Palms",105,8,[364],1],[464,"panda_asuraTrinity5","Asura Trinity",105,8,[454],0]],"whale":[[451,"whale_tidalReach5","Tidal Reach",95,8,[401,411],1],[452,"whale_abyssalPierce5","Abyssal Pierce",95,8,[254],1],[453,"whale_bulwarkChorus5","Bulwark Chorus",95,8,[354],1],[454,"whale_leviathanTide5","Leviathan Tide",95,8,[444],0],[461,"whale_oceanFeast5","Ocean Feast",105,8,[122,421],1],[462,"whale_lastBulwark5","Last Bulwark",105,8,[264],1],[463,"whale_podCall5","Pod Call",105,8,[363],0],[464,"whale_maelstromAbyss5","Maelstrom Abyss",105,8,[454],0]],"cat":[[451,"cat_predatorFocus5","Predator Focus",95,8,[401,411],1],[452,"cat_jackpotPair5","Jackpot Pair",95,8,[254],1],[453,"cat_lunarTempest5","Lunar Tempest",95,8,[354],1],[454,"cat_broadside5","Broadside",95,8,[444],0],[461,"cat_nightEye5","Night Eye",105,8,[123,421],1],[462,"cat_ninthLife5","Ninth Life",105,8,[264],1],[463,"cat_shadowUponShadow5","Shadow Upon Shadow",105,8,[364],0],[464,"cat_ghostGalleon5","Ghost Galleon",105,8,[454],0]],"chameleon":[[451,"chameleon_walkingArsenal5","Walking Arsenal",95,8,[401,411],1],[452,"chameleon_venomOverload5","Venom Overload",95,8,[254],1],[453,"chameleon_omniSlayer5","Omni Slayer",95,8,[354],1],[454,"chameleon_phantomBloom5","Phantom Bloom",95,8,[444],0],[461,"chameleon_adaptiveScale5","Adaptive Scale",105,8,[122,421],1],[462,"chameleon_veilOfHunt5","Veil Of Hunt",105,8,[263],0],[463,"chameleon_fourSeals5","Four Seals",105,8,[364],1],[464,"chameleon_venomApocalypse5","Venom Apocalypse",105,8,[454],0]],"mole":[[451,"mole_burrowRegen5","Burrow Regen",95,8,[401,411],1],[452,"mole_airStrike5","Air Strike",95,8,[254],0],[453,"mole_ICBM5","ICBM",95,8,[354],0],[454,"mole_overclockCore5","Giga Drill",95,8,[444],0],[461,"mole_reactorCore5","Reactor Core",105,8,[124,421],1],[462,"mole_smartWarhead5","Smart Warhead",105,8,[264],1],[463,"mole_ironOverdrive5","Iron Overdrive",105,8,[364],0],[464,"mole_totalWar5","Total War",105,8,[454],0]],"rabbit":[[451,"rabbit_eagleEye5","Eagle Eye",95,8,[401,411],1],[452,"rabbit_mixshot","Mix Shot",95,8,[254],0],[453,"rabbit_thousandShot5","Thousand Shot",95,8,[354],0],[454,"rabbit_tradingWithWind5","Trading With Wind",95,8,[444],0],[461,"rabbit_skyfallSniper5","Skyfall Sniper",105,8,[122,421],1],[462,"rabbit_fieldPharmacy5","Field Pharmacy",105,8,[264],1],[463,"rabbit_carronGambit5","Carron Gambit",105,8,[364],0],[464,"rabbit_bulletRain5","Bullet Rain",105,8,[454],0]],"monkey":[[451,"monkey_soulLink5","Soul Link",95,8,[401,411],1],[452,"monkey_jaOverdrive5","Ja Overdrive",95,8,[254],1],[453,"monkey_gaiaBulwark5","Gaia Bulwark",95,8,[354],1],[454,"monkey_twinSouls5","Twin Souls",95,8,[444],0],[461,"monkey_soulPact5","Soul Pact",105,8,[124,421],1],[462,"monkey_runicInferno5","Runic Inferno",105,8,[264],1],[463,"monkey_runicBastion5","Runic Bastion",105,8,[364],1],[464,"monkey_elementalSovereign5","Elemental Sovereign",105,8,[454],0]],"sheep":[[451,"sheep_zealousCharge5","Zealous Charge",95,8,[401,411],1],[452,"sheep_miracleAscension5","Miracle Ascension",95,8,[254],1],[453,"sheep_aegisOfFlock5","Aegis Of Flock",95,8,[354],1],[454,"sheep_heavensVerdict5","Heaven's Verdict",95,8,[444],0],[461,"sheep_perfectSerenity5","Perfect Serenity",105,8,[124,421],1],[462,"sheep_divineBenediction5","Divine Benediction",105,8,[264],1],[463,"sheep_karmicJudgment5","Karmic Judgment",105,8,[364],1],[464,"sheep_gatesOfEden5","Seraph Wings",105,8,[454],0]],"penguin":[[451,"penguin_manaConduit5","Mana Conduit",95,8,[401,411],1],[452,"penguin_blackhole5","Blackhole",95,8,[254],0],[453,"penguin_permafrost5","Permafrost",95,8,[354],1],[454,"penguin_supernova5","Supernova",95,8,[444],0],[461,"penguin_crownOfStars5","Crown Of Stars",105,8,[124,421],1],[462,"penguin_galacticStillness5","Galactic Stillness",105,8,[264],1],[463,"penguin_absoluteWinter5","Absolute Winter",105,8,[364],0],[464,"penguin_heatDeath5","Heat Death",105,8,[454],0]],"bat":[[451,"bat_vampiricSurge5","Vampiric Surge",95,8,[401,411],1],[452,"bat_terminalDecay5","Terminal Decay",95,8,[254],1],[453,"bat_puppeteer5","Puppeteer",95,8,[354],0],[454,"bat_eternalNight5","Eternal Night",95,8,[444],0],[461,"bat_endlessHunger5","Endless Hunger",105,8,[123,421],1],[462,"bat_doomsayer5","Doomsayer",105,8,[264],1],[463,"bat_nightmareCascade5","Nightmare Cascade",105,8,[363],1],[464,"bat_nocturneSovereign5","Nocturne Sovereign",105,8,[454],1]]};
 const SKILL_SIM_REBORN_TREES = {};
+// Coming-soon cards (user 2026-10-25): the ToT EX skills and Reborn's C6 / C7 skills already sit in the simulator and the class guides, so each gets a normal skill card with no data yet,
+// only desc "เร็วๆนี้" (`soon: "tot" | "reborn"` marks it: roster tabs C (ToT) / C (RB), large desc). The id is the icon key without its rank digit, which is what the simulator's cell -> card link looks up (skillSimCardId).
+// When a skill is researched, replace its card here with a full one (drop `soon`) and it moves out of the tab.
+for (const key of Object.keys(SKILL_SIM_NAMES)){
+  const cls = SKILL_SIM_NAMES[key], add = (icon, name, passive, soon) => { const id = icon.replace(/d+$/, ""); if (SKILLS.some(s => s.id === id)) return; SKILLS.push(Object.assign({ id, name, class: cls, icon, maxRank: 1 }, passive ? { passive: true } : {}, { desc: "เร็วๆนี้", soon })); };
+  for (const c of SKILL_SIM_EX[key] || []) if (!c.placeholder && SKILL_ICONS[c.icon]) add(c.icon, c.name, c.type === "Passive", "tot");
+  for (const e of SKILL_SIM_REBORN_EXTRA[key] || []) add(e[1], e[2], !!e[6], "reborn");
+}
 // The trees of a class on a server: BB's, plus the Reborn C6 / C7 rows on Reborn (cached per class).
 function skillSimTrees(server, classKey){
   const base = SKILL_SIM[classKey];
@@ -33179,6 +33190,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T08:41:40.063Z","feat(bible): coming-soon skill cards for the ToT EX and Reborn C6 / C7 skills, with C (ToT) and C (RB) roster tabs"],
     ["2026-10-25T08:21:32.017Z","feat(bible): Reborn server in the skill simulator and the class guide editor (Lv 150, own point pools, C6 / C7 rows with 8 new skills per class)"],
     ["2026-10-25T08:02:02.771Z","feat(bible): Reborn look (underwater wallpaper, glass, orange accent) and the 3D / scene textures as lossless WebP"],
     ["2026-10-25T07:47:15.317Z","feat(bible): infrastructure for Reborn as the 4th server (W.I.P. logo, server registry, data-driven server tab), invisible until a card has Reborn data"],

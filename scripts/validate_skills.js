@@ -1240,6 +1240,7 @@ if (indexDirty) {
   const perClass = new Map();
   SKILLS.forEach(sk => {
     const [cls, ...rest] = sk.id.split('_');
+    if (sk.soon) return;   // coming-soon stub cards (ToT EX, Reborn C6 / C7) carry no data yet, nothing to document
     if (cls === 'common') return;   // shared skills live once in 12Tails-Mechanics-Reference.md §3.5
     const base = rest.join('_');
     if (!perClass.has(cls)) {
@@ -2872,7 +2873,7 @@ let checkedDepStrip = 0;
   //    (new cards need an entry in SKILL_INTERNAL_ID)
   {
     const table = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
-    const missing = SKILLS.filter(s => table[s.id] === undefined && !String(s.icon || "").startsWith("sup_") && !s.mount).map(s => s.id);
+    const missing = SKILLS.filter(s => table[s.id] === undefined && !String(s.icon || "").startsWith("sup_") && !s.mount && !s.soon).map(s => s.id);
     if (missing.length) { console.error(`[DEP ORDER ERROR] cards with no SKILL_INTERNAL_ID entry: ${missing.join(", ")}`); errorCount++; } else checkedDepStrip++;
   }
   const byId = (id) => SKILLS.find(s => s.id === id);
@@ -3127,7 +3128,7 @@ let checkedRsim = 0;
     ok(!valid(base,4,new Set([451]),95), cls + " EX rejected outside ToT without throwing");
     for (const c of EX[cls]){
       ok(c.req.every(id => cs[id]), cls + " prerequisite ids for " + c.id);
-      if (!c.placeholder) ok(!!SKILL_ICONS[c.icon] && vm.runInContext("skillSimCardId", sandbox)(c.icon) === "", cls + " embedded icon and safe missing detail card " + c.id);
+      if (!c.placeholder) ok(!!SKILL_ICONS[c.icon] && (() => { const cid = vm.runInContext("skillSimCardId", sandbox)(c.icon), card = SKILLS.find(s => s.id === cid); return cid === "" || (card && card.soon === "tot"); })(), cls + " embedded icon, and no detail card or a coming-soon stub card " + c.id);
       if (c.id === 451 || c.id === 461) continue;
       ok(c.lv === 100 && c.bn === 6 && c.choice === "row5", cls + " class EX gate " + c.id);
       if (!expected[cls]) { ok(c.placeholder && auto(cs,4,new Set(),100,c.id) === null, cls + " unpublished slot unavailable"); continue; }
