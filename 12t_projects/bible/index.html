@@ -7428,9 +7428,8 @@
      a face = frame + icon, so the frame turns over with its skill */
   .ln-face{position:absolute; inset:0; background:var(--ln-wood) center / 100% 100% no-repeat; backface-visibility:hidden; transition:translate .2s ease}
   .ln-face.is-passive{background-image:var(--ln-iron)}
-  /* the wall is flat (user 2026-10-18); the 2 x 2 Class C tiles get a little thickness: stacked 2 px edges that follow the frame's own shape, brown under wood, grey under iron */
-  .ln-tile.is-big .ln-face{filter:drop-shadow(0 2px 0 #6b4521) drop-shadow(0 2px 0 #4f3218) drop-shadow(0 2px 0 #36210f) drop-shadow(0 10px 12px rgba(0,0,0,.55))}
-  .ln-tile.is-big .ln-face.is-passive{filter:drop-shadow(0 2px 0 #6e6d72) drop-shadow(0 2px 0 #515055) drop-shadow(0 2px 0 #38373b) drop-shadow(0 10px 12px rgba(0,0,0,.55))}
+  /* the wall is flat (user 2026-10-18); the 2 x 2 Class C tiles have no thickness (the stacked 2 px edges were removed, user 2026-10-25), only a soft ground shadow */
+  .ln-tile.is-big .ln-face{filter:drop-shadow(0 10px 12px rgba(0,0,0,.55))}
   .ln-face img{display:block; width:100%; height:100%}
   /* a swap is one clean card flip (option B of 5 mocks, user 2026-10-18): the old icon turns away as the new one turns in on the back face; no flash, no glint */
   .ln-tile .out{animation:lnFlipOut .7s cubic-bezier(.45,0,.25,1) both}
@@ -33131,6 +33130,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T04:09:13.642Z","fix(bible): the hub menu wall's 2 x 2 Class C tiles lose their stacked-edge thickness"],
     ["2026-10-25T02:25:31.797Z","feat(bible): server balance page gets a Common group with icons (TTO LCK removal, TTO gear procs without LCK, ToT level 95 stat cap); every Combo card is now named nAttack"],
     ["2026-10-25T02:05:27.199Z","feat(wolf): Combo TTO note: with Dark Edge on it keeps its LCK contribution"],
     ["2026-10-25T02:01:11.035Z","docs(bible): Ravilion's co-author entry lists each finding skill name first, without พบว่า"],
