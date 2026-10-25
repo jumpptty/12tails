@@ -30,3 +30,6 @@ Donate.jpg
 
 # Backups made with git bundle (kept off the repo)
 *.bundle
+# ToT +15 earring / +20 boots icon sources (shipped as 128 px WebP in assets.js GEAR_ICONS)
+/+15 acc/
+/+20 boots/
