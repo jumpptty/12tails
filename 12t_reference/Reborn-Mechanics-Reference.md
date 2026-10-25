@@ -163,3 +163,17 @@ None of the section 7.2 rows has been compared with the code yet. Each can be: f
 6. **Rebalanced skills in other classes:** only Panda constants were seen in code. The Discord channels were read (section 7): they name about 15 skills but give almost no numbers. Each named skill still needs a code comparison with the original (section 7.2), and the unnamed rebalances are only findable by a skill-by-skill diff.
 7. **Skill 462** (Panda): name.
 8. **New content:** the `*_C6` / `RebornC6` / `RebornC7` systems, the Zr classes, missions M994-M996, battle pass, guild war, mercenaries.
+
+## 9. Skill simulator on the Reborn website (read 2026-10-25, for the class guide editor)
+
+Source: `https://www.12tails-reborn.com/skills` (Next.js; its page script `/_next/static/chunks/app/skills/page-*.js`, rules in the module exported there, data in `/skills/data/<race>.json`, public static files). The site says its conditions and points per level are the ones the game uses. Race codes: wlf bsn pnd whl cat chm mol rab mnk shp pgn bat. Level range **1-150**.
+
+**Point pools (the site's `IE` and `GK`):**
+- Normal pool (Basic + A + B tabs) = `max(0, min(lv, 50) - 1) + (lv >= 60 ? min(floor((lv - 60) / 10) + 1, 10) : 0)`: 49 at Lv 50, then +1 at 60, 70, ... 150, so 59 at Lv 150.
+- C pool (tab 4, ids 4xx, including the new 45x / 46x) = `max(0, min(lv >= 55 ? floor((lv - 55) / 5) + 1 : 0, 80 - normalPool(lv)))`: +1 at 55, 60, ... (20 at Lv 150), capped so the two pools together never pass 80.
+
+**Learn rules** (same as BB plus the composite requirement): Lv >= `lv`; at least `bn` skills already learned in the same tab (`floor(id / 100)`); `rq` is 0, one skill id (< 999), or two ids packed as `a * 1000 + b` (> 99999, both needed); a non-first rank (`id % 10 != 1`, id < 400) needs `id - 1`. Removing a skill also removes everything that no longer qualifies.
+
+**Grid vs BB (compared cell by cell against the Bible's `SKILL_SIM`, all 12 classes):** identical Lv / bn / rq everywhere except (a) Panda Heaven Breath (443) needs 344 (the same patch as ToT and TTO), and (b) **8 new C-tab skills per class**, ids 451-454 (Lv 95, bn 8) and 461-464 (Lv 105, bn 8), all drawing from the C pool. Their `rq`: 451 = 401 + 411, 452 = 254, 453 = 354, 454 = 444; 461 = 122 + 421 (Cat 123 + 421, Mole 124 + 421, Bat 123 + 421, Monkey/Sheep/Penguin 124 + 421), 462 = 264, 463 = 364 (Whale and Bat 363, Chameleon 263 for 462), 464 = 454. Per-class names and modes are in the JSON (`n`, `md`, `ic`; mp / sp / cd are filled for the active ones, e.g. Wolf Alpha Howl 454: mp 50, sp -60). The new ids reuse the slots ToT uses for its EX skills.
+
+The raw JSON of the 12 races was kept in the session scratch folder; re-fetch from the URL above when implementing `SKILL_SIM_SERVERS.reborn`.

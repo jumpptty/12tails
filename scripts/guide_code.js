@@ -15,7 +15,7 @@ const zlib = require("zlib");
 
 const PREFIX = "12TG1.", PREFIX2 = "TG2.", PREFIX3 = "TG3";
 // Guide code format 2 (user 2026-10-16: shorter codes): "TG2." + base64url of [flag byte (0 stored, 1 deflate-raw)] + the guide as compact binary:
-//   byte  server index | class index << 2      (servers og tot tto, index 3 reserved for reborn; classes in CLASS_GUIDE_CLASS_KEYS order)
+//   byte  server index | class index << 2      (servers og tot tto reborn; classes in CLASS_GUIDE_CLASS_KEYS order)
 //   byte  level
 //   20 bytes  learned skills, one bit per slot (tree-1)*40 + row*4 + (col-1)
 //   2 bytes   date as days since 2000-01-01 (little endian), 0xFFFF = none
@@ -32,7 +32,7 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.", PREFIX3 = "TG3";
 //   optional description columns block (user 2026-10-21): 0x43, one byte 2 or 3; a one-column description writes none, so older codes are unchanged.
 const CLASS_GUIDE_GEAR_KEYS = ["weapon", "armor", "hat", "trinket", "boot", "pet"];
 const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
-const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto"];
+const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto", "reborn"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
 const CLASS_GUIDE_MODES = ["pve", "pvp"];   // what a guide is for, both allowed (user 2026-10-20)
 const CLASS_GUIDE_STAT_WORDS = ["ตัน", "ตาม"];   // the stat words by index (the page's CLASS_GUIDE_STAT_WORDS)

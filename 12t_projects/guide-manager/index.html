@@ -288,7 +288,7 @@
 // (a port of scripts/guide_code.js decode), read CLASS_GUIDES out of index.html (as add_guide.js does), and read GitHub's replies about a
 // guide-manager workflow run. No page access here: the validator runs this block on its own and checks it against the scripts.
 const GM_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chameleon", "monkey", "panda", "penguin", "sheep", "whale", "wolf"];
-const GM_SERVER_KEYS = ["og", "tot", "tto"], GM_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"], GM_MODES = ["pve", "pvp"];
+const GM_SERVER_KEYS = ["og", "tot", "tto", "reborn"], GM_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"], GM_MODES = ["pve", "pvp"];
 const GM_STAT_WORDS = ["ตัน", "ตาม"], GM_GEAR_KEYS = ["weapon", "armor", "hat", "trinket", "boot", "pet"];
 const GM_CJK0 = 0x4E00, GM_BAD3 = "โค้ดไกด์ไม่ถูกต้องหรือไม่ครบ กรุณาคัดลอกใหม่ทั้งหมด", GM_BAD = "โค้ดไกด์ไม่ถูกต้อง";
 function gmFindCode(text){ return (String(text || "").match(/TG3[一-跿\s`]*[一-跿]|(?:TG2|12TG1)\.[A-Za-z0-9_-]+/) || [])[0]; }

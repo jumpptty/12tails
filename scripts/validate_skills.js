@@ -3046,7 +3046,7 @@ let checkedRsim = 0;
   const SRV = vm.runInContext("SKILL_SIM_SERVERS", sandbox);
   const LVCAP = vm.runInContext("LEVEL_CAP", sandbox);
   ok(LVCAP.og === 95 && LVCAP.tot === 110 && LVCAP.tto === 110, "LEVEL_CAP: BB 95, ToT 110, TTO 110 (user 2026-10-19)");
-  ok(Object.keys(SRV).join() === "og,tot,tto" && ["og", "tot", "tto"].every(k => SRV[k].cap === LVCAP[k]), "server caps follow LEVEL_CAP (BB 95, ToT 110, TTO 110)");
+  ok(Object.keys(SRV).join() === "og,tot,tto,reborn" && ["og", "tot", "tto"].every(k => SRV[k].cap === LVCAP[k]) && SRV.reborn.cap === 150, "server caps follow LEVEL_CAP (BB 95, ToT 110, TTO 110) and Reborn 150");
   ok(poolMaxC(95) === 9 && poolMaxC(100) === 10, "Class C points: 9 at Lv 95, 10 at Lv 100");
   for (const k of Object.keys(SRV)) {
     ok(!!SRV[k].name && !!SRV[k].full && !!SKILL_ICONS["server_" + k], `server ${k}: names and icon`);
@@ -4169,7 +4169,7 @@ async function donateChildTests(env) {
     good(typeof gas === "function" && !gas(plain).includes("reborn") && gas(probe).includes("reborn") && gas(probe).includes("og"), "a card lists Reborn as a server only when it has servers.reborn (and always keeps BB)");
     good(typeof gact === "function" && gact(probe, "reborn").cd === 777 && gact(plain, "reborn") === plain, "the Reborn overrides apply to the active skill, and a card without Reborn data falls back to the base card"); }
   good(!SKILLS.some((s) => s.servers && s.servers.reborn) || html.includes('SKILL_SIM_SERVERS = {') && /reborn: \{ name:/.test(html), "a card has servers.reborn: the page must also carry the Reborn simulator data (SKILL_SIM_SERVERS.reborn) before cards use it");
-  good(vm.runInContext('THEME_CHOICES.join()', sandbox) === "auto,og,tot,tto,reborn" && vm.runInContext('CLASS_GUIDE_SERVER_KEYS.join()', sandbox) === "og,tot,tto", "THEME_CHOICES must be auto,og,tot,tto,reborn; Reborn is not in the class guide server keys yet (index 3 of the guide code is reserved for it; enabling needs SKILL_SIM_SERVERS.reborn first)");
+  good(vm.runInContext('THEME_CHOICES.join()', sandbox) === "auto,og,tot,tto,reborn" && vm.runInContext('CLASS_GUIDE_SERVER_KEYS.join()', sandbox) === "og,tot,tto,reborn", "THEME_CHOICES must be auto,og,tot,tto,reborn and the class guide server keys og,tot,tto,reborn (index 3 of the guide code)");
   // the Reborn look (user 2026-10-25): REBORN_WALLPAPER (WebP) under a dark veil, see-through glass, orange accent, in every shared surface selector
   good(bibleAssets.MANIFEST.some((m) => m.name === "REBORN_WALLPAPER" && m.empty === "") && html.includes('const REBORN_WALLPAPER = BIBLE_ASSETS_IN.REBORN_WALLPAPER || "";'), "REBORN_WALLPAPER must be a MANIFEST string container declared in index.html");
   { let rw = ""; try { rw = vm.runInContext("REBORN_WALLPAPER", sandbox); } catch (e) {}
@@ -4179,6 +4179,34 @@ async function donateChildTests(env) {
     good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
   good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && html.includes("var G = 'html:is([data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot");
   good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
+  // Reborn in the skill simulator and the class guide editor (user 2026-10-25; data read from 12tails-reborn.com/skills, Reborn-Mechanics-Reference.md section 9)
+  { const pools = vm.runInContext("SKILL_SIM_POOLS", sandbox), PR = pools.reborn, PB = pools.bb;
+    const at = (lv) => PR.normal(lv) + "/" + PR.c(lv);
+    good(at(1) === "0/0" && at(50) === "49/0" && at(55) === "49/1" && at(60) === "50/2" && at(150) === "59/20" && PR.ex(150) === 0, "Reborn pools: Lv 1 0/0, 50 49/0, 55 49/1, 60 50/2, 150 59/20 (the site's own numbers), no EX");
+    good(PR.c(70) + PR.normal(70) <= 80 && PB.normal(95) === 49 && PB.c(95) === 9 && PB.ex(100) === 2, "BB / ToT / TTO pools unchanged: 49 normal and 9 C at Lv 95, 2 EX at Lv 100");
+    const forEach = vm.runInContext("(fn) => Object.keys(SKILL_SIM).forEach(fn)", sandbox), cellsFor = vm.runInContext("skillSimCellsFor", sandbox), validFn = vm.runInContext("skillSimValid", sandbox), trees = vm.runInContext("skillSimTrees", sandbox), pass = vm.runInContext("skillSimPassive", sandbox);
+    let classes = 0, bad2 = 0;
+    forEach((cls) => {
+      classes++; const rb = cellsFor("reborn", cls), bb = cellsFor("og", cls);
+      const ids = [451, 452, 453, 454, 461, 462, 463, 464];
+      if (!ids.every((id) => rb[id] && rb[id].tree === 3 && !rb[id].ex && rb[id].bn === 8 && rb[id].lv === (id < 460 ? 95 : 105) && rb[id].req.length > 0 && SKILL_ICONS[rb[id].icon])) { console.error(`[REBORN SERVER ERROR] ${cls}: the C6 / C7 cells 451-454 / 461-464 are missing or incomplete on Reborn`); errorCount++; bad2++; }
+      if (ids.some((id) => bb[id]) || trees("og", cls) !== vm.runInContext("SKILL_SIM", sandbox)[cls] || trees("reborn", cls)[3].rows.length !== 7) { console.error(`[REBORN SERVER ERROR] ${cls}: BB must not get the Reborn rows (C tree 5 rows on BB, 7 on Reborn)`); errorCount++; bad2++; }
+      if (!Object.keys(bb).every((id) => rb[id] && rb[id].lv === bb[id].lv && rb[id].bn === bb[id].bn && (cls === "panda" && id === "443" ? true : rb[id].req.join() === bb[id].req.join()))) { console.error(`[REBORN SERVER ERROR] ${cls}: Reborn cells differ from BB beyond the known Panda patch`); errorCount++; bad2++; }
+      if (pass("reborn", cls).length < pass("og", cls).length) { console.error(`[REBORN SERVER ERROR] ${cls}: passive list shrank on Reborn`); errorCount++; bad2++; }
+    });
+    n += classes - bad2;
+    const rbp = cellsFor("reborn", "panda");
+    good(rbp[443].req.join() === "344" && cellsFor("og", "panda")[443].req.join() === "334", "Reborn Panda Heaven Breath (443) needs 344, BB 334");
+    // a legal Lv 150 Wolf build using the new rows: fill every skill the rules allow in id order and check the result validates and spends no more than the pools
+    const wolf = cellsFor("reborn", "wolf"), set = new Set(); let used = 0, usedC = 0; const order = Object.keys(wolf).map(Number).sort((a, b) => a - b);
+    let grew = true; while (grew) { grew = false; for (const id of order) { if (set.has(id)) continue; const t = new Set(set); t.add(id); const isC = id >= 400; if ((isC ? usedC + 1 > PR.c(150) : used + 1 > PR.normal(150))) continue; if (validFn(wolf, 4, t, 150)) { set.add(id); isC ? usedC++ : used++; grew = true; } } }
+    good(set.size > 0 && validFn(wolf, 4, set, 150) && !validFn(wolf, 4, new Set([...set, 464].filter((x) => x !== 454)), 150), "Reborn Wolf: a greedy Lv 150 build validates, and Shadow Pack (464) without Alpha Howl (454) does not");
+    good(!validFn(wolf, 4, new Set([451]), 150) && !validFn(wolf, 4, set, 94) && validFn(wolf, 4, new Set(), 150), "Reborn: a C6 skill alone, or a Lv 150 build at Lv 94, is refused");
+    const gc = require(path.join(__dirname, "guide_code.js")), g = { format: "12t-class-guide", version: 1, title: "t", author: "a", date: "2026-10-25", description: "", build: { server: "reborn", classKey: "wolf", level: 150, learned: [101, 102, 103] } };
+    let back = null; try { back = gc.decode(gc.encode(g)); } catch (e) {}
+    good(back && back.build.server === "reborn" && back.build.level === 150 && back.build.classKey === "wolf", "a guide code with server reborn and level 150 survives encode / decode (scripts/guide_code.js)");
+    good(typeof vm.runInContext("skillSimPools", sandbox) === "function" && vm.runInContext("CLASS_GUIDE_SERVER_KEYS", sandbox).indexOf("reborn") === 3, "the guide code server index of reborn is 3 (page and scripts/guide_code.js)");
+    good(gc.CLASS_GUIDE_SERVER_KEYS.join() === "og,tot,tto,reborn", "scripts/guide_code.js server keys must be og,tot,tto,reborn"); }
   console.log(`Verified ${n} Reborn server infrastructure checks.`);
 }
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
