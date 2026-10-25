@@ -4341,7 +4341,7 @@ async function donateChildTests(env) {
       const vi = {}; if (p.vars) vi[p.id] = p.vars.length - 1;
       const raw = det({ sel: p.id, vi, N, L }); renders++;
       if ((raw.match(/class="sk-status"/g) || []).length < (p.desc(N, L).match(/\[[a-zA-Z]+\d*\]/g) || []).length) pf(`${p.id} a [status] in its text did not render as a status`);
-      const h = stripStatus(raw).replace(/\[status\]/g, "");
+      const h = stripStatus(raw).replace(/\[status\]/g, "").replace(/data:[^"']*/g, "");   // pictures' base64 can spell "NaN" or "__" by chance (the 128 px Pumpkin icon, 2026-10-26)
       if (/NaN|undefined|\*\*|\^\^|__|\[[a-zA-Z]+\d*\]/.test(h)) pf(`${p.id} N${N} L${L} has raw markup or NaN: ${(h.match(/NaN|undefined|\*\*|\^\^|__|\[[a-zA-Z]+\d*\]/) || [])[0]}`);
       if (/ดาเมจตรง|\d\s*วิ(?!นาที)|lckAdjust|chaAdjust|talAdjust/.test(h)) pf(`${p.id} wording: ${(h.match(/ดาเมจตรง|\d\s*วิ(?!นาที)|lckAdjust|chaAdjust|talAdjust/) || [])[0]}`);
       if ((p.flags.noLv || p.flags.lvUnused) && /data-pet-lv=/.test(h)) pf(`${p.id} shows level pills although its level does nothing`);

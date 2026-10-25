@@ -34,6 +34,8 @@ The original clamps DEF, MAG, CHA and TAL, each with its LCK roll `Random(0, cei
 
 The LCK roll `Random(0, ceil(0.2 × LCK))` is still inside every one of these, unlike TTO.
 
+**Level growth has no cap (checked 2026-10-25):** `getTypeLevelStat` is the original formula unchanged, `floor((lv − 1) × (classBase + 3) × 0.083)` per stat (`Reborn:CharacterData.cs:155`-`:163`), and every player stat path passes the character's real level (`Reborn:CharacterDataClass.cs:247`, `Reborn:CharacterControl.cs:12608`). So the growth keeps rising linearly to the Lv 150 cap, unlike ToT's stop at Lv 95 ([12Tails-Mechanics-Reference.md §1.4](12Tails-Mechanics-Reference.md)). Per stat: class base 3 gives 46 / 54 / 74 at Lv 95 / 110 / 150, base 9 gives 93 / 108 / 148. The only fixed-level calls are Flame of Reggu's ATK buff (`+getTypeLevelStat(type, 50)[ATK]` on apply, `−getTypeLevelStat(type, 35)[ATK]` on removal, `Reborn:CharacterControl.cs:4149`, `:11172`), the same lines as the original (`BB:CharacterControl.cs:41659`, `:18659`). The only level-independent limits on the totals are the caps in the table above. The class base stats behind it are unchanged too: `getTypeStat` returns the original 12 rows exactly (`Reborn:CharacterData.cs:102`-`:153`, compared with [12Tails-Mechanics-Reference.md §1.4](12Tails-Mechanics-Reference.md)), and the character-creation roll is the same (`getNewRandomStat`: +1 on 4 random stats, −1 on 4, then +1 on all and clamp 3-12).
+
 `defAdjust(nDamage, nPierce)` (`Reborn:CharacterControl.cs:11796`) is a Reborn overload: DEF is multiplied by `1 − 0.01 × clamp(nPierce, 0, 100)` (floored, minimum 1) and the result may not exceed 3 × the normal `defAdjust(nDamage)`. Whether the original has this overload was not checked.
 
 ### 2.2 Item effect chances: ×1.3 and no LCK
@@ -112,6 +114,81 @@ A gear-effect system that exists only in Reborn (BB has no `RebornEffects`). Not
 - **Statuses:** no new ones. Reborn's 80 debuffs are BB's 80; 75 had Bible popups, and the other 5 (heavy, plague, inferno, loveBind, netherBane) are an all-server gap, not a Reborn change.
 - **In the Bible:** seals are not Buff / Debuff popup rows (their values are server data). The Reborn Common notes give the rules only. A seal table would need live data (an export of `/admin/effects` or plate tooltips read in game).
 - **Open:** the live table; whether labels show the chance before or after ×1.3 (the client never rescales a label, unlike built-in item text); whether Razan enforces `slots` or allows the same seal on two slots (`FlatOf` / `SumMag` / `SumChance` would count it twice); Seal Box rates; `vit_bane` a,b defaults (12, 0.5) and the race table; whether mercenaries carry seals.
+
+### 3.5 Reborn-only equipment (on hold for the Bible, 2026-10-25)
+
+**Status (user 2026-10-25):** these items are not usable in game yet, so none of them is in the Bible. Everything needed to add them is kept here (data) and in `D:\12tails-assets-archive\reborn-pending-gear-2026-10-25` (outside the repo): `add_seals.py` / `add_wing.py` put the Seals and Angel Wing into the class guide gear picker, `find.py` / `weapons.py` regenerate the lists from the client, and the viewers `reborn_gear.html` / `weapons.html` show them.
+
+- **How they were found:** every item code in Reborn's `WeaponData` / `ArmorData` / `AccessoryData` (hats) / `BootData` / `TrinketData` / `PetData` that the original's data files do not have: 48 codes (28 weapons, 1 hat, 6 boots, 13 trinkets, no armor or pet). The Ignis series also redefines 8 original weapon codes, listed with the weapons.
+- **Weapon stats** are the values the game ends up with: the item's block in `getData0`-`getData9`, then the Reborn override block at the top of `WeaponData.getData` (`Reborn:WeaponData.cs:24`-`:556`). `w_<class>70` is read as `w_<class>69` (`RebornModels.TimeBase`, `Reborn:RebornModels.cs:356`-`:380`) and gets " R" added to its name. No upgrade (+N) or seal included.
+- **Planned Bible gear entries** (the user's names, 2026-10-25): Seals `t_all_reborn101`-`108`, nickname `แหวน <STAT> 25`, `GEAR_LV` 100; Angel Wing `t_all_reborn110` named **Angel Wing** (the game data spells it "Angle Wing"), nickname `ปีก ALL 12`, `GEAR_LV` 90; all `GEAR_SERVERS` `["reborn"]`; icons = the rip's 128 px `gamegui/icons/items/trinket/all101`-`110.png` as WebP (no upscale). Weapons have no planned ids or nicknames yet.
+
+**Trinkets** (`Reborn:TrinketData.cs:1426`-`:1497`, weight 4 for the Seals, 1 for Angel Wing):
+
+| Code | Name | Lv | Stats |
+|---|---|---|---|
+| `t_all101` | Bloodflare Seal | 100 | ATK +25 |
+| `t_all102` | Deepfrost Seal | 100 | DEF +25 |
+| `t_all103` | Lifebloom Seal | 100 | AGI +25 |
+| `t_all104` | Dawnflare Seal | 100 | VIT +25 |
+| `t_all105` | Soulheart Seal | 100 | INT +25 |
+| `t_all106` | Voidshade Seal | 100 | CHA +25 |
+| `t_all107` | Skysurge Seal | 100 | TAL +25 |
+| `t_all108` | Sunforge Seal | 100 | LCK +25 |
+| `t_all110` | Angel Wing ("Angle Wing" in the data) | 90 | all 8 stats +12; special text "Sometime it make you fly.." (no code behind it; the class equipment files only attach the wing model) |
+
+**Zephyra (`w_<class>85`, all new codes):**
+
+| Code | Name | Lv | ATK | DEF | AGI | VIT | INT | CHA | TAL | LCK | Total |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `w_wlf85` | Zephyra Brand | 90 | 71 | - | 42 | - | 38 | - | - | 29 | 180 |
+| `w_bsn85` | Zephyra Axe | 90 | 78 | - | 40 | - | 34 | - | - | 28 | 180 |
+| `w_pnd85` | Zephyra Knuckle | 90 | 73 | - | 41 | - | 39 | - | - | 27 | 180 |
+| `w_whl85` | Zephyra Spear | 90 | 70 | - | 37 | - | 43 | - | - | 30 | 180 |
+| `w_cat85` | Zephyra Dagger | 90 | 67 | - | 45 | - | 34 | - | - | 34 | 180 |
+| `w_chm85` | Zephyra Bow | 90 | 70 | - | 41 | - | 39 | - | - | 30 | 180 |
+| `w_rab85` | Zephyra Rifle | 90 | 68 | - | 42 | - | 40 | - | - | 30 | 180 |
+| `w_mol85` | Zephyra Cannon | 90 | 68 | - | 41 | - | 42 | - | - | 29 | 180 |
+| `w_mnk85` | Zephyra Mike | 90 | 61 | - | 42 | - | 47 | - | - | 30 | 180 |
+| `w_shp85` | Zephyra Codex | 90 | 63 | - | 41 | - | 47 | - | - | 29 | 180 |
+| `w_pgn85` | Zephyra Staff | 90 | 62 | - | 39 | - | 50 | - | - | 29 | 180 |
+| `w_bat85` | Zephyra Wand | 90 | 64 | - | 41 | - | 46 | - | - | 29 | 180 |
+
+**Time … R (`w_<class>70`, the R version of the Lv 80 Time weapons; special "+2% revert" = `ItemChance(1)`):**
+
+| Code | Name | Lv | ATK | DEF | AGI | VIT | INT | CHA | TAL | LCK | Total |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `w_wlf70` | Time Swords R | 80 | 30 | 51 | 21 | 21 | - | 21 | - | - | 144 |
+| `w_bsn70` | Time Hammer R | 80 | 40 | 54 | 13 | 24 | - | 13 | - | - | 144 |
+| `w_pnd70` | Time Knuckle R | 80 | 34 | 47 | 23 | 18 | - | 22 | - | - | 144 |
+| `w_whl70` | Time Lance R | 80 | 21 | 60 | 13 | 27 | - | 23 | - | - | 144 |
+| `w_cat70` | Time Claws R | 80 | 28 | 45 | 34 | 15 | - | 22 | - | - | 144 |
+| `w_chm70` | Time Bow R | 80 | 28 | 45 | 30 | 15 | - | 26 | - | - | 144 |
+| `w_rab70` | Time Shotgun R | 80 | 30 | 45 | 23 | 17 | - | 29 | - | - | 144 |
+| `w_mol70` | Time Cannon R | 80 | 32 | 48 | 21 | 22 | - | 21 | - | - | 144 |
+| `w_mnk70` | Time Mike R | 80 | - | 40 | 15 | 17 | 21 | 28 | 23 | - | 144 |
+| `w_shp70` | Time Codex R | 80 | - | 35 | 22 | 19 | 20 | 31 | 17 | - | 144 |
+| `w_pgn70` | Time Staff R | 80 | - | 35 | 20 | 17 | 23 | 26 | 23 | - | 144 |
+| `w_bat70` | Time Wand R | 80 | - | 36 | 19 | 17 | 18 | 38 | 16 | - | 144 |
+
+**Ignis (`w_<class>81`; Wolf, Bison, Cat, Chameleon, Mole, Sheep, Penguin and Bat reuse the original Flaming weapon codes, renamed and re-statted):**
+
+| Code | Name | Lv | ATK | DEF | AGI | VIT | INT | CHA | TAL | LCK | Total |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `w_wlf81` | Ignis Brand (was Flaming Brand) | 90 | 128 | - | - | 31 | - | - | 21 | - | 180 |
+| `w_bsn81` | Ignis Axe (was Flaming Axe) | 90 | 140 | - | - | 24 | - | - | 16 | - | 180 |
+| `w_pnd81` | Ignis Knuckle | 90 | 130 | - | - | 30 | - | - | 20 | - | 180 |
+| `w_whl81` | Ignis Spear | 90 | 121 | - | - | 35 | - | - | 24 | - | 180 |
+| `w_cat81` | Ignis Dagger (was Flaming Dagger) | 90 | 117 | - | - | 28 | - | - | 35 | - | 180 |
+| `w_chm81` | Ignis Bow (was Flaming Bow) | 90 | 117 | - | - | 28 | - | - | 35 | - | 180 |
+| `w_rab81` | Ignis Rifle | 90 | 120 | - | - | 27 | - | - | 33 | - | 180 |
+| `w_mol81` | Ignis Cannon (was Flaming Cannon) | 90 | 122 | - | - | 26 | - | - | 32 | - | 180 |
+| `w_mnk81` | Ignis Mike | 90 | 104 | - | - | 27 | - | - | 49 | - | 180 |
+| `w_shp81` | Ignis Codex (was Flaming Scroll) | 90 | 105 | - | - | 26 | - | - | 49 | - | 180 |
+| `w_pgn81` | Ignis Staff (was Flaming Staff) | 90 | 100 | - | - | 28 | - | - | 52 | - | 180 |
+| `w_bat81` | Ignis Wand (was Flaming Wand) | 90 | 108 | - | - | 25 | - | - | 47 | - | 180 |
+
+**Other Reborn-only items** (name, level; no stats read): `c_allwht` Witch Hat Lv 61 (no icon in the client); `b_all4` Wing Boots Lv 0; `b_all34` Keroro Boots Lv 0; `b_all39` Sliper Boots Lv 39; `b_all67` Phantom Dash Boots Lv 65 (no icon in the client); `b_all68` Spiritweave Boots Lv 65 (no icon in the client); `b_all69` FireLord Boots Lv 69 (no icon in the client); `t_allGM` Aura For GM Lv 1 (no icon in the client); `t_allT1` Aura For Top 1 Lv 1 (no icon in the client); `t_all120` Wing of Light Lv 100 (no icon in the client); `t_all140` XiaFei Lv 99 (no icon in the client).
 
 ## 4. Units
 

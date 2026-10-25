@@ -28,7 +28,7 @@
     raised: [".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
-      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sg-lang-toggle", ".sg-server-toggle", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
+      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-music-pop", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
@@ -2725,30 +2725,6 @@
   .cao-big-wrap .cao-big{width:auto; flex:1 1 auto; min-width:0}
   .cao-big-unit{font-size:18px; font-weight:700}
   @media (max-width: 760px){ .cao{padding:12px} .cao-grid{grid-template-columns:1fr} }
-  .sg-lang-toggle{
-    display:inline-flex; background:var(--panel-2); border:1px solid var(--line);
-    border-radius:18px; padding:2px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);
-  }
-  .sg-lang-btn{
-    font-family:inherit; font-size:11px; font-weight:700; padding:3px 10px; border:none;
-    border-radius:14px; cursor:pointer; background:transparent; color:var(--muted);
-    transition:all 0.15s ease; letter-spacing:0.05em; line-height:1.2;
-  }
-  .sg-lang-btn:hover:not(.active){color:var(--text)}
-  .sg-lang-btn.active{background:var(--gold); color:#14110b; box-shadow:0 1px 4px rgba(0,0,0,0.25)}
-  .sg-head-actions{display:flex; align-items:center; gap:8px}
-  .sg-server-toggle{
-    display:inline-flex; background:var(--panel-2); border:1px solid var(--line);
-    border-radius:18px; padding:2px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);
-  }
-  .sg-server-btn{
-    width:34px; height:30px; padding:2px; border:none; border-radius:14px; cursor:pointer; background:transparent;
-    display:inline-flex; align-items:center; justify-content:center; transition:all 0.15s ease;
-  }
-  .sg-server-btn img{width:100%; height:100%; object-fit:contain; display:block; pointer-events:none; opacity:.4; filter:grayscale(100%); transition:all .15s ease}
-  .sg-server-btn:hover:not(.active) img{opacity:.8; filter:grayscale(20%)}
-  .sg-server-btn.active{background:var(--gold-soft); box-shadow:0 0 0 1px var(--gold)}
-  .sg-server-btn.active img{opacity:1; filter:drop-shadow(0 0 5px rgba(212,175,55,.6))}
   .sg-controls{
     background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
     padding:10px 14px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:12px; align-items:end;
@@ -2796,8 +2772,6 @@
       line-height: 1.2;
       margin: 0;
     }
-    .sg-lang-toggle { flex-shrink: 0; padding: 1px; }
-    .sg-lang-btn { font-size: 10px; padding: 2px 7px; }
     .sg-controls { padding: 8px 10px; gap: 8px; grid-template-columns: 1fr; }
     .sg-controls select, .sg-controls input { height: 38px; font-size: 13.5px; padding: 4px 8px; }
     .sg-results table { font-size: 12.5px; }
@@ -3113,18 +3087,19 @@
   /* 45px = 30px × 1.5 (2026-08-22, user-requested: "revisedArt icon size
      increase by 50%"). Since 2026-09-19 the button lives in the player class
      badge, where `.sk-class-badge .sk-revisedart img` sets its size. */
-  .sk-revisedart img{width:45px; height:45px; display:block; filter:grayscale(100%); opacity:.5; transition:opacity 0.15s ease, filter 0.15s ease}
-  .sk-class-badge .sk-revisedart{margin-left:auto; flex:none}
-  .sk-class-badge .sk-revisedart img{width:40px; height:40px}
-  .sk-revisedart.on img{filter:none; opacity:1}
-  .sk-revisedart:hover img{
-    opacity:.85;
-    filter:grayscale(80%) brightness(1.2);
-  }
-  .sk-revisedart.on:hover img{
-    opacity:1;
-    filter:brightness(1.22);
-  }
+  /* The icon sits in the class guide's skill-note ring (.cg-note-frame, user 2026-10-25): gold ring over a dark gap, the art
+     blurred behind it, the icon at 1.3x centred on its visible pixels (centreRingImg). Off = grey and dim; hover = brightness only. */
+  .sk-ra-frame{position:relative; display:block; width:45px; height:45px; border-radius:50%; overflow:hidden; transform:translateZ(0);
+    box-shadow:0 0 0 2px var(--gold), 0 0 0 4px var(--ink), 0 0 0 5px rgba(201,162,39,.6), 0 0 14px rgba(212,175,55,.45);
+    filter:grayscale(100%); opacity:.5; transition:opacity 0.15s ease, filter 0.15s ease}
+  .sk-ra-frame-bg{position:absolute; inset:0; background:center / 100% 100% no-repeat; transform:scale(1.8); filter:blur(10px) saturate(1.2)}
+  .sk-ra-icon{position:absolute; inset:0; width:100%; height:100%; display:block; transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%));
+    -webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%); mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
+  .sk-class-badge .sk-revisedart{margin-left:auto; flex:none; padding:5px}
+  .sk-class-badge .sk-revisedart .sk-ra-frame{width:40px; height:40px}
+  .sk-revisedart.on .sk-ra-frame{filter:none; opacity:1}
+  .sk-revisedart:hover .sk-ra-frame{opacity:.85; filter:grayscale(80%) brightness(1.2)}
+  .sk-revisedart.on:hover .sk-ra-frame{opacity:1; filter:brightness(1.15)}
   /* Enemy Stats row (2026-08-21) -- reuses .sk-controls' own flex layout
      (same class applied alongside this one), hidden via the native `hidden`
      attribute (same convention as .sk-suggestions elsewhere in this file).
@@ -6301,6 +6276,11 @@
   .sk-dep-flip-on img{animation:skDepFlipOn .3s ease-out backwards}
   .sk-dep-flip-off img{animation:skDepFlipOff .3s ease-out backwards}
   .sk-dep-flip-swap img{animation:skDepFlipSwap .3s ease-out backwards}
+  /* Revised Art's ring (.sk-ra-frame): the pop runs on the ring, never on the zoomed icon inside it (its transform is the 1.3x zoom) */
+  .sk-revisedart .sk-ra-icon{animation:none !important}
+  .sk-revisedart.sk-dep-flip-on .sk-ra-frame{animation:skDepFlipOn .3s ease-out backwards}
+  .sk-revisedart.sk-dep-flip-off .sk-ra-frame{animation:skDepFlipOff .3s ease-out backwards}
+  .sk-revisedart.sk-dep-flip-swap .sk-ra-frame{animation:skDepFlipSwap .3s ease-out backwards}
   @keyframes skDepFlipOn{0%{filter:grayscale(1); opacity:.5; transform:scale(1)} 40%{transform:scale(1.07)} 100%{filter:grayscale(0); opacity:1; transform:scale(1)}}
   @keyframes skDepFlipOff{0%{filter:grayscale(0); opacity:1; transform:scale(1)} 40%{transform:scale(1.07)} 100%{filter:grayscale(1); opacity:.5; transform:scale(1)}}
   @keyframes skDepFlipSwap{0%{transform:scale(1)} 40%{transform:scale(1.07)} 100%{transform:scale(1)}}
@@ -6473,8 +6453,8 @@
     .sk-dmg-final.has-test-bar .sk-dmg-final-controls{margin:auto -11px -1px -12px; padding-top:8px}
     .sk-controls{padding:6px 10px; gap:8px; margin-bottom:6px}
     .sk-controls input[type=number]{font-size:12px; padding:3px 4px}
-    .sk-revisedart img{width:36px; height:36px}
-    .sk-class-badge .sk-revisedart img{width:32px; height:32px}
+    .sk-revisedart .sk-ra-frame{width:36px; height:36px}
+    .sk-class-badge .sk-revisedart .sk-ra-frame{width:32px; height:32px}
     .sk-enemystat-controls{gap:6px; margin-bottom:6px}
     .sk-enemy-cycle-icon-wrap{width:40px; height:40px}
     .sk-stats-panel-floating{width:240px}
@@ -7990,7 +7970,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=8591786fba" id="bibleAssets"></script>
+<script src="assets.js?v=3412a295b9" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -16126,7 +16106,7 @@ function mountSkillCooldownLookup(root){
   const pickerRootEl = $('[data-role="picker-root"]', root);
   const barRowEl = $('[data-role="search-bar-row"]', root);
 
-  raBtn.innerHTML = `<img src="${SKILL_ICONS["revisedArt5"]}" alt="revisedArt5">`;
+  raBtn.innerHTML = `<span class="sk-ra-frame"><span class="sk-ra-frame-bg" aria-hidden="true" style="background-image:url('${SKILL_ICONS["revisedArt5"]}')"></span><img class="sk-ra-icon" src="${SKILL_ICONS["revisedArt5"]}" alt="revisedArt5"></span>`;
   let revisedArtOn = true;
   let privateServerOn = false;
   currentServer = "og";
@@ -20326,7 +20306,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       if (!src && prev.click && prev.click.sel === '[data-role="revisedart"]'){
         const from = document.querySelector(prev.click.sel);
         if (from && from.getClientRects().length){
-          const up = from.classList.contains("on"), img = from.querySelector("img");
+          const up = from.classList.contains("on"), img = from.querySelector(".sk-ra-frame") || from.querySelector("img");   // the animated part: the ring
           const flip = (cls) => { from.classList.remove("sk-dep-flip-on", "sk-dep-flip-off", "sk-dep-flip-swap"); restartClass(from, cls); };
           const c = centerOf(from);
           if (up){ if (img) img.style.animationDelay = "0ms"; flip("sk-dep-flip-on"); volley(c, true, { outDelay: 180 }); }
@@ -27976,7 +27956,7 @@ function ringIconShift(img){   // the art centre's offset from the image centre,
   ringShiftCache.set(key, out); return out;
 }
 const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
-document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .chm-ring > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
+document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .chm-ring > img, .sk-ra-icon")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = Object.assign({}, skillSimCellsFor(b.server, b.classKey), classGuideSupportCells());
@@ -29957,7 +29937,7 @@ function mountClassGuide(root){
   const syncStatAdd = () => { const w = el("statEd").querySelector(".cg-stat-ed-add"); if (w) w.hidden = el("statEd").querySelectorAll(".cg-stat-ed").length >= CLASS_GUIDE_STATS.length; };
   const prepStatEd = ed => {   // editor wording on the reader's input
     const input = ed.querySelector("input"), st = CLASS_GUIDE_STATS.find(x => x.key === ed.dataset.key);
-    input.placeholder = "ใส่ค่า"; input.setAttribute("aria-label", st.label + " แนะนำ: ตัวเลข 0–512, 250+ หรือ 1–100%"); input.readOnly = classGuideStatKind(classGuideStatParse(input.value).value) === "word";
+    input.placeholder = "ใส่ค่า"; input.setAttribute("aria-label", st.label + " แนะนำ: ตัวเลข 0–512, 250+ หรือ 1–100%"); input.readOnly = false;   // ตัน / ตาม stays editable (user 2026-10-26)
   };
   const paintStat = ed => {   // one editor flask after its value changed, in place (the caret stays): the level glides, the crown and pills follow
     const input = ed.querySelector("input"), p = classGuideStatParse(input.value), value = p ? p.value : null, level = classGuideStatLevel(value);
@@ -29973,7 +29953,6 @@ function mountClassGuide(root){
     val.classList.toggle("is-flask", level != null);
     if (word) tile.dataset.cgWord = value; else delete tile.dataset.cgWord;
     const crown = tile.querySelector(".cg-crown"); if (value === "ตัน" && !crown) val.insertAdjacentHTML("beforebegin", classGuideCrown()); else if (value !== "ตัน" && crown) crown.remove();
-    input.readOnly = word;
     ed.querySelectorAll(".cg-stat-word").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.word === value)));
   };
   const statTypo = () => !!el("statEd").querySelector(".cg-stat-ed.is-bad");   // a red-ringed value would be left out of the code silently
@@ -30989,7 +30968,11 @@ function mountClassGuide(root){
   });
   root.addEventListener("input", e => {
     if (!e.target.matches) return;
-    if (e.target.matches("input[data-cg-stat]") && mode === "author"){ paintStat(e.target.closest(".cg-stat-ed")); renderStatSum(); saveDraft(); return; }   // 180, 250+, 50% (user 2026-10-18)
+    if (e.target.matches("input[data-cg-stat]") && mode === "author"){   // 180, 250+, 50% (user 2026-10-18)
+      const was = e.target.closest(".cg-stat-tile").dataset.cgWord;   // it held ตัน / ตาม: typing replaces the word, Backspace clears it (user 2026-10-26)
+      if (was && e.target.value !== was) e.target.value = e.target.value.replace(/[^\d%+]/g, "");
+      paintStat(e.target.closest(".cg-stat-ed")); renderStatSum(); saveDraft(); return;
+    }
     if (e.target.matches("[data-cg-field]")) saveDraft();
     if (e.target.matches('[data-cg-role="gearSearch"]')){ renderGearGrid(); return; }
     if (e.target.matches("[data-cg-try]") && mode === "reader"){
@@ -31818,7 +31801,7 @@ function mountChaAgiOptimizer(root){
 
 function mountStatGain(root){
   let currentLang = "th";
-  let sgServer = "og"; // "og" (BigBug / No Cap) or "tot" (Tales of Tail / Lv.95 Cap)
+  let sgServer = "og"; // "og" (BigBug / No Cap), "tot" (Tales of Tail / Lv.95 Cap) or "reborn" (Tails Reborn / No Cap, max Lv 150)
 
   const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
   const COLOR = {ATK:"#c2503c",DEF:"#4f7fb8",AGI:"#5a9a63",VIT:"#c9a227",INT:"#b0568f",CHA:"#8a72b8",TAL:"#3f9a8c",LCK:"#a3862c"};
@@ -31831,26 +31814,6 @@ function mountStatGain(root){
   };
 
   const LANG = {
-    en: {
-      title: "Stat-Gain Calculator",
-      titleShort: "Stat Gain",
-      gateTitle: "Choose your class",
-      gateSub: "Sets the class used below.",
-      lblClass: "Class",
-      lblCur: "Current level",
-      lblTgt: "Target level",
-      thStat: "Stat",
-      thCur: "At current",
-      thTgt: "At target",
-      thGain: "Gained",
-      foot: "* Base level growth only. Excludes initial character creation rolls, passive skills (e.g. Stat Plus), and equipment.",
-      totNerf: "• [NERF] Stat growth stops increasing past Level 95 (Levels 96–110 grant no additional passive stats).",
-      totPopupSubtitle: "Stat balance change • Stat Gain",
-      msgInvalid: "Enter whole numbers (1–95 on BB, 1–110 on ToT) for both levels.",
-      msgTgtLow: (tgt, cur) => "Target level (" + tgt + ") must be ≥ current level (" + cur + ").",
-      full: {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"},
-      classes: {Wolf:"Wolf", Bison:"Bison", Panda:"Panda", Whale:"Whale", Cat:"Cat", Chameleon:"Chameleon", Rabbit:"Rabbit", Mole:"Mole", Monkey:"Monkey", Sheep:"Sheep", Penguin:"Penguin", Bat:"Bat"}
-    },
     th: {
       title: "อัตราการเติบโตของค่าสเตตัส",
       titleShort: "อัตราเติบโต",
@@ -31866,15 +31829,15 @@ function mountStatGain(root){
       foot: "* ไม่รวมค่าสเตตัสสุ่มเริ่มต้นตอนสร้างตัวละคร, สกิลติดตัว (เช่น Stat Plus) และอุปกรณ์สวมใส่",
       totNerf: "• [NERF] ค่าสเตตัสจะหยุดเติบโตตั้งแต่เลเวล 95 เป็นต้นไป (เลเวล 96–110 ไม่ได้รับสเตตัสเพิ่ม)",
       totPopupSubtitle: "การปรับสมดุลค่าสเตตัส • อัตราการเติบโตของค่าสเตตัส",
-      msgInvalid: "กรุณากรอกตัวเลขจำนวนเต็ม (BB 1–95, ToT 1–110) ทั้งสองช่อง",
+      msgInvalid: "กรุณากรอกตัวเลขจำนวนเต็ม (BB 1–95, ToT 1–110, RB 1–150) ทั้งสองช่อง",
       msgTgtLow: (tgt, cur) => "เลเวลเป้าหมาย (" + tgt + ") ต้องไม่น้อยกว่าเลเวลปัจจุบัน (" + cur + ")",
       full: {ATK:"Attack",DEF:"Defense",AGI:"Agility",VIT:"Vitality",INT:"Intelligence",CHA:"Charisma",TAL:"Talent",LCK:"Luck"},
       classes: {Wolf:"หมาป่า", Bison:"ไบซัน", Panda:"แพนด้า", Whale:"วาฬ", Cat:"แมว", Chameleon:"กิ้งก่า", Rabbit:"กระต่าย", Mole:"ตุ่น", Monkey:"ลิง", Sheep:"แกะ", Penguin:"เพนกวิน", Bat:"ค้างคาว"}
     }
   };
 
-  const maxLv = () => LEVEL_CAP[sgServer] || LEVEL_CAP.og;   // BB 95, ToT 110
-  // verified leveling formula: BigBug = uncapped up to MAX_LV; ToT = capped at 95
+  const maxLv = () => LEVEL_CAP[sgServer] || LEVEL_CAP.og;   // BB 95, ToT 110, Reborn 150
+  // verified leveling formula: BigBug = uncapped up to MAX_LV; ToT = capped at 95; Reborn = the BB formula, uncapped up to 150 (Reborn:CharacterData.cs:155)
   const gain = (lv, base) => {
     const effectiveLv = sgServer === "tot" ? Math.min(lv, 95) : lv;
     return Math.floor((effectiveLv - 1) * (base + 3) * 0.083);
@@ -31884,15 +31847,10 @@ function mountStatGain(root){
     <div class="sg">
       <div class="sg-head">
         <h2 data-role="title"><span class="sg-title-full">อัตราการเติบโตของค่าสเตตัส</span><span class="sg-title-short">การเติบโตสเตตัส</span></h2>
-        <div class="sg-head-actions">
-          <div class="sg-server-toggle" data-role="serverToggle">
-            <button type="button" class="sg-server-btn active" data-role="btnSrvOg" title="BigBugStudio (max Lv 95)"><img src="${SKILL_ICONS.server_og}" alt="BB"></button>
-            <button type="button" class="sg-server-btn" data-role="btnSrvTot" title="Tales of Tail (max Lv 110; stat growth stops at Lv 95)"><img src="${SKILL_ICONS.server_tot}" alt="ToT"></button>
-          </div>
-          <div class="sg-lang-toggle">
-            <button type="button" class="sg-lang-btn" data-role="btnEN">EN</button>
-            <button type="button" class="sg-lang-btn active" data-role="btnTH">TH</button>
-          </div>
+        <div class="sk-server-deps" data-role="serverToggle">
+          <button type="button" class="sk-server-btn active" data-server="og" title="BigBugStudio (max Lv 95)"><img src="${SKILL_ICONS.server_og}" alt="BB"></button>
+          <button type="button" class="sk-server-btn" data-server="tot" title="Tales of Tail (max Lv 110; stat growth stops at Lv 95)"><img src="${SKILL_ICONS.server_tot}" alt="ToT"></button>
+          <button type="button" class="sk-server-btn" data-server="reborn" title="Tails Reborn (max Lv 150; stat growth keeps rising to Lv 150)"><img src="${SKILL_ICONS.server_reborn}" alt="RB"></button>
         </div>
       </div>
 
@@ -31988,16 +31946,12 @@ function mountStatGain(root){
   const msg      = $('[data-role="msg"]', root);
   const art      = $('[data-role="art"]', root);
   const body     = $(".sg-body", root);
-  const btnEN    = $('[data-role="btnEN"]', root);
-  const btnTH    = $('[data-role="btnTH"]', root);
-  const btnSrvOg = $('[data-role="btnSrvOg"]', root);
-  const btnSrvTot= $('[data-role="btnSrvTot"]', root);
+  const srvBox   = $('[data-role="serverToggle"]', root);
 
   function setServer(srv, silent){
     const changed = sgServer !== srv;
     sgServer = srv;
-    btnSrvOg.classList.toggle("active", srv === "og");
-    btnSrvTot.classList.toggle("active", srv === "tot");
+    srvBox.querySelectorAll(".sk-server-btn").forEach(b => b.classList.toggle("active", b.dataset.server === srv));
     render();
     if (changed && srv === "tot" && !silent) {
       showStatGainBalancePopup();
@@ -32071,36 +32025,6 @@ function mountStatGain(root){
     openGainModal(false);
   }
 
-  function setLang(lang){
-    currentLang = lang;
-    const L = LANG[lang];
-    btnEN.classList.toggle("active", lang === "en");
-    btnTH.classList.toggle("active", lang === "th");
-
-    $('[data-role="title"]', root).innerHTML = `<span class="sg-title-full">${L.title}</span><span class="sg-title-short">${L.titleShort}</span>`;
-    if (crumbCurrent) {
-      crumbCurrent.innerHTML = `<span class="crumb-full">${L.title}</span><span class="crumb-short">${L.titleShort}</span>`;
-    }
-    $('[data-role="gateTitle"]', root).textContent = L.gateTitle;
-    $('[data-role="gateSub"]', root).textContent = L.gateSub;
-    $('[data-role="lblClass"]', root).textContent = L.lblClass;
-    $('[data-role="lblCur"]', root).textContent = L.lblCur;
-    $('[data-role="lblTgt"]', root).textContent = L.lblTgt;
-    $('[data-role="thStat"]', root).textContent = L.thStat;
-    $('[data-role="thCur"]', root).textContent = L.thCur;
-    $('[data-role="thTgt"]', root).textContent = L.thTgt;
-    $('[data-role="thGain"]', root).textContent = L.thGain;
-    $('[data-role="foot"]', root).textContent = L.foot;
-
-    for (const name of Object.keys(CLASSES)) {
-      const label = L.classes[name] || name;
-      if (selectOptions[name]) selectOptions[name].textContent = label;
-      if (typeof gateButtons !== "undefined" && gateButtons[name]) gateButtons[name].textContent = label;
-    }
-
-    render();
-  }
-
   function readLevel(el){
     const v = el.value.trim();
     if (v === "" || !/^\d+$/.test(v)) return null;
@@ -32159,10 +32083,10 @@ function mountStatGain(root){
   clsSel.addEventListener("change", render);
   curEl.addEventListener("input", () => { clampInput(curEl); render(); });
   tgtEl.addEventListener("input", () => { clampInput(tgtEl); render(); });
-  btnEN.addEventListener("click", () => setLang("en"));
-  btnTH.addEventListener("click", () => setLang("th"));
-  btnSrvOg.addEventListener("click", () => { setServer("og"); setToolServer("stat-gain", "og"); });
-  btnSrvTot.addEventListener("click", () => { setServer("tot"); setToolServer("stat-gain", "tot"); });   // auto look follows this switch (cosmetic only)
+  srvBox.addEventListener("click", (e) => {   // the auto look follows this switch (cosmetic only)
+    const b = e.target.closest(".sk-server-btn[data-server]"); if (!b) return;
+    setServer(b.dataset.server); setToolServer("stat-gain", b.dataset.server);
+  });
 }
 
 /* ============================================================
@@ -33234,6 +33158,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T17:11:54.766Z","feat(bible): sharper ToT-only skill and pet icons (128 px), Reborn on the stat growth page, Revised Art in the note ring, guide stats with ตัน / ตาม editable again, hub layout fixed after the Pet tool"],
     ["2026-10-25T16:22:13.913Z","feat(bible): Reborn C6/C7 skill icons now use the team's frameless art inside the original game frame (thin rim, C badge), 94 of 96"],
     ["2026-10-25T14:49:20.762Z","fix(bible): Reborn item-chance note: item text already shows the ×1.3 chance, and a set adds its chances before the roll"],
     ["2026-10-25T14:34:01.941Z","fix(bible): Reborn notes of Mimic and War Capital moved back from Dark Intention and Monkey nAttack, plus a validator guard for misplaced Reborn descs"],
@@ -33777,15 +33702,9 @@ function showMenu(){
   { const ln = document.getElementById("launch"); if (ln && ln._refit) requestAnimationFrame(ln._refit); }
   crumbCurrent.textContent = "";
   document.title = "12 Tails Bible";
-  document.documentElement.classList.remove("tool-fit-screen");
-  document.documentElement.classList.remove("tool-guide-reader", "tool-guide-author");
-  document.documentElement.classList.remove("tool-wide-hero");
-  document.documentElement.classList.remove("tool-stat-gain");
-  document.documentElement.classList.remove("tool-cao");
-  document.documentElement.classList.remove("tool-chm-sim");
-  document.documentElement.classList.remove("tool-monsters");
-  document.documentElement.classList.remove("tool-notes");
-  document.documentElement.classList.remove("tool-rsim");
+  // every page-level tool class goes, whatever the tool (a hand-kept list missed tool-pets, tool-boss and tool-tab, so the hub kept
+  // that tool's layout, e.g. the Pet tool's 1400 px stage, and the launcher tiles piled up; user 2026-10-26)
+  Array.from(document.documentElement.classList).filter(c => c.startsWith("tool-")).forEach(c => document.documentElement.classList.remove(c));
 }
 
 // Each mounted tool gets its own persistent container inside #toolMount,
