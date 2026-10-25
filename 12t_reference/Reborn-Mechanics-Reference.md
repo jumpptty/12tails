@@ -2,7 +2,7 @@
 
 Verified 2026-10-25, first pass. This file covers the **Reborn client**, a separate build with its own codebase. It is kept apart from the original-client docs on purpose: the same file name exists in both codebases with different line numbers.
 
-**Citation tags in this file:** `Reborn:X.cs:N` = `DecompiledSource_Reborn/Assembly-CSharp/X.cs` line N. `BB:X.cs:N` = the original client, `DecompiledSource/X.cs`. Every citation is tagged. Rules: [AGENTS.md](../AGENTS.md) §2 (citation build tags) and §4. Only verified facts are listed in sections 1 to 6; anything only read, not traced, is in section 7.
+**Citation tags in this file:** `Reborn:X.cs:N` = `DecompiledSource_Reborn/Assembly-CSharp/X.cs` line N. `BB:X.cs:N` = the original client, `DecompiledSource/X.cs`. Every citation is tagged. Rules: [AGENTS.md](../AGENTS.md) §2 (citation build tags) and §4. Sections 1 to 6 hold only verified facts. Section 7 lists what the Reborn admin announced (evidence type: announcement, checked against the code only where marked). Anything only read, not traced, is in section 8.
 
 **Not a Bible server (yet):** the app has BB, ToT and TTO. Nothing here is shown in it. If Reborn becomes a server, move each verified class finding into that class's `## Server Balance Variations` section.
 
@@ -111,13 +111,55 @@ Only Panda has been traced, and only the parts below.
 
 `RebornBalance`, `RebornEffects`, `RebornParty`, `RebornMerc`, `RebornBattlePass`, `RebornChatUi`, `RebornClearArrow`, `RebornC6*` and `RebornC7*` (with `*_C6` files for Bat, Bison, Cat, Chameleon, Mole, Monkey, Panda, Penguin), `Panda_Zr`, `Rabbit_Zr`, `RebornWaveGatePlaque` (676 KB), `MissionGui` (807 KB), guild war and mercenary classes.
 
-## 7. Open questions (read, not traced)
+## 7. Patch notes and announcements (Discord, read 2026-10-25)
+
+**Source:** the `Tails Reborn` Discord server, information category: `#📢┃ประกาศ` (announcements, Aug 9 to Oct 24), `#📰┃อัพเดท` (updates, Aug 4 to Oct 13) and `#🔧┃patch-notes` (Aug 6 to Oct 19, build ids such as `2026.09.27.1115-c7r13b`). All posts are by the server admins, in Thai. The beta ended 2026-08-17 and the open beta started 2026-08-18 18:00 with a full data wipe. These are the admin's own descriptions: **no numbers for most changes**, so each needs a code check before it is a fact. `#📰┃อัพเดท` is almost only economy, drops, EXP and inventory (nothing on skills except below).
+
+### 7.1 The balance statement (`#📢┃ประกาศ`, 2026-08-17, "ปรับสมดุล")
+
+| Announced | Code check |
+|---|---|
+| The LUK stat no longer multiplies the chance of **item effects**: the item text now equals the real chance (before, "16% HP drain" could proc 50%+ with high LUK). Skill chances are not touched; LUK still works on skills as before. | **Confirmed in code:** `lckItemAdjust(n)` = `ItemChance(n)` with no LCK (`Reborn:CharacterControl.cs:11882`), `lckAdjust` unchanged (`:11872`); section 2.2. The announcement does not mention the ×1.3 that `ItemChance` also applies. |
+| Stats of the **red-star 60/70 items** changed. | **Confirmed in code:** `ApplyRedStar` ×1.5 on every `att` except `att[1]` (`Reborn:ItemData.cs:73`, `Reborn:RebornBalance.cs:106`-`:166`); section 2.3. The announcement gives no factor. |
+| Bosses: level by tier, HP, and skill cooldown set to 20 seconds. | Not checked. |
+| Merchant skill **SpecialDeal** now affects open-world EXP, for the user and the party. | Not checked (class of "Merchant" not stated). |
+| **Sheep** buffs **Bless / Illuminate** become party-wide once Class C is upgraded. | Not checked; consistent with the party-roster ally system, section 2.5. |
+| **Monkey** **Summon Soul** becomes a party-wide skill. | Not checked. |
+
+### 7.2 Skill changes in `#🔧┃patch-notes` (class as stated by the admin)
+
+Most entries are bug fixes. Changes that touch skill behavior (Thai text paraphrased):
+
+| Date | Build id | Class | Skill | Announced |
+|---|---|---|---|---|
+| 2026-09-19 | `2026.09.19.1725-rootpincrash0919` | not stated | Focus | Focus now also adds damage to Double Cast / Triple Cast (only one skill benefits after Focus). |
+| 2026-09-19 | same | Bat | Mimic | Can no longer be used on open-world bosses and mini-bosses. |
+| 2026-09-24 | `2026.09.24.0800-doubleeffect-seal` | Rabbit | Trading With Wind | Uses 1 Suntide per cast as its text says; the text was corrected. |
+| 2026-09-24 | same | Chameleon | ClearArrow | Damage from the clear arrow no longer adds hate (poison and other skills still do). |
+| 2026-09-24 | same | Chameleon | Double Effect | Also raises the chance and the duration of Effects from sealing. |
+| 2026-09-27 | `2026.09.26.2103-machineid` | Sheep | Heaven's Verdict | "Balance": knockdown force and damage reduced (no numbers). |
+| 2026-09-27 | same | Rabbit | Eagle Eye, Trading With Wind | Fixes: Eagle Eye did not work; Trading With Wind hit only one target. |
+| 2026-09-27 | `2026.09.27.1115-c7r13b` | Mole | Iron Overdrive | The turret explosion now hits everyone within 6 m: enemies, party, non-party and the Mole (before, non-party players were not hit). |
+| 2026-09-27 | same | Rabbit | Bullet Rain | No longer hits friends, enemies only. |
+| 2026-09-27 | same | Cat | Shadow Upon Shadow | The clone's explosion now does normal damage, at both the shadow and the Cat's pre-swap position; each enemy is hit once. |
+| 2026-09-27 | same | Sheep | Divine Benediction | The overheal shield no longer appears in towns and camps, only in stages and combat zones. |
+| 2026-09-27 | same | Panda | Asura Trinity | Gets an initial cooldown. |
+| 2026-09-27 | `2026.09.27.2130-venom` | not stated | Veil of the Hunt | Becomes an active skill: party buff "หายตัวล่า" for 20 s; mole turrets do not attack holders of the buff. |
+| 2026-09-27 | same | not stated | Venom Apocalypse (poison rain) | At most 4 consecutive rains per press. |
+| 2026-09-27 | same | Penguin | HeatDeath | The ice shield no longer disappears when HeatDeath ends. |
+| 2026-09-27 | `2026.09.27.2219-reactor` | Mole | Reactor Core 5 | Bug and description fixed. |
+
+Other combat-relevant announcements: party size up to 8 (2026-08-19); open-world monsters reduced 20-50% (2026-08-19); open world always gives EXP, no level-gap rule, monster EXP adjusted instead (2026-09-10); starting max level set to 100 after a vote on 100 against 150 (2026-09-05, patch 2026-09-10); max RP 119,999 → 219,999 (2026-09-04); ranked PvP buff All Status +25 (2026-09-12). Class C row 6 (`C6`) skills went live 2026-09-10 and `C7` on 2026-09-27 (`...-c7r12`); the `RebornC6*` / `RebornC7*` and `*_C6` code files in section 6 are that content.
+
+None of the section 7.2 rows has been compared with the code yet. Each can be: find the skill in `Reborn:<Class>.cs` and its companion files and compare with the original (`BB:`).
+
+## 8. Open questions (read, not traced)
 
 1. **Constants that are inlined:** `LuckOnItemEffects`, `OverHealMaxHpCapEnabled`, `HealTalCap`, `PandaShadowFistDrySpMultiplier = 2`, `PandaShadowFistLeechPercent = 100`, `PandaSpTransferTalPerLevel = 5`, `PandaSkillHitSp = 1` (action code 349), `PandaSageSpDrainEnabled = false`, `PandaHeavenBreathTal/Sp = 10`. Their exact effects need a trace of the literal values in `Panda.cs` and `CharacterControl.cs`.
 2. **`RebornEffects`:** the data-driven item-effect table behind `CritPlus`, `ResistPlus`, `SumMag`; where its entries come from is not read.
 3. **Which item procs use `lckItemAdjust`:** only Chameleon crit is traced; the other 12 classes' gear procs are not.
 4. **`ItemClass.att[1]`:** why red-star scaling skips it (which stat it is).
 5. **Whether the original has a pierce `defAdjust` overload,** and the original `talHealAdjust` cap.
-6. **Rebalanced skills in other classes:** only Panda constants were seen. A skill-by-skill comparison is not done; the rebalance update channel on Discord is the planned source, then each named skill is checked in the code.
+6. **Rebalanced skills in other classes:** only Panda constants were seen in code. The Discord channels were read (section 7): they name about 15 skills but give almost no numbers. Each named skill still needs a code comparison with the original (section 7.2), and the unnamed rebalances are only findable by a skill-by-skill diff.
 7. **Skill 462** (Panda): name.
 8. **New content:** the `*_C6` / `RebornC6` / `RebornC7` systems, the Zr classes, missions M994-M996, battle pass, guild war, mercenaries.
