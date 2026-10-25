@@ -6,14 +6,8 @@ DecompiledSource/
 12TailsReborn_Data/
 DecompiledSource_Reborn/
 RippedAssets_Reborn/
-# Source image of the TTO wallpaper (the shipped copy is TTO_WALLPAPER in assets.js)
-/image.png
-# Source art of the Reborn logo (the shipped copies are server_reborn (W.I.P. stamp) and server_reborn_clean in assets.js)
-/RB_icon.png
-/RB_icon_wip.png
-# Source art of the Reborn look (shipped as REBORN_WALLPAPER in assets.js)
-/sea.png
-/novice.png
+# Frameless Reborn C6/C7 skill art from the Reborn team (shipped framed as 128 px WebP in assets.js SKILL_ICONS)
+/TailsArt/
 
 # Automation / browser test artifacts
 .playwright-mcp/
@@ -30,6 +24,3 @@ Donate.jpg
 
 # Backups made with git bundle (kept off the repo)
 *.bundle
-# ToT +15 earring / +20 boots icon sources (shipped as 128 px WebP in assets.js GEAR_ICONS)
-/+15 acc/
-/+20 boots/
