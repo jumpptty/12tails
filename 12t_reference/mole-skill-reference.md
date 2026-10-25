@@ -175,6 +175,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 - MP 3/5/7/9, Lv/Bn 3/0, 9/1, 15/2, 21/3, instant. CD `agiAdjust(15)`, `agiAdjust(8)` with Mine Lover #402 (`:23891-23905`).
 - Mine prop `Mole_mine` lives `chaAdjust(60)` s (`Mole_mine.cs:38`) and triggers on a `Player`/`Enemy` collider of another layer (`:192-201`).
 - `RPC_mine_hit` (`:10529-10738`): `FindAreaTarget(pos, 4 + ExtraPowderLv, 4)` (enemy layers); `num = talAdjust(10 × sLv + 10)`, `floor(1.25 ×)` with Mine Lover; every target **without `insight`** takes `hit(200 + sLv, t, num, KO 1, …)` — no distance falloff; then the triggered mine is destroyed. Smart Shell: `RPC_smartShell_hit` (see Smart Shell).
+- **When the damage is computed (traced 2026-10-25).** `talAdjust(10 × sLv + 10)` is read inside `RPC_mine_hit` (`:10609`), which `Mole_mine.cs:379` calls when something triggers the mine, so it uses the Mole's TAL **at detonation**. Only the skill level (`mLv`, passed to the call) and the position are fixed at deploy. The card carries a Pro Tip.
 - Tooltip "10/20/30/40 dmg"; code base 20/30/40/50.
 
 ### mol_stunMine1-2 (Stun Mine, #231-232) (verified 2026-10-01)
@@ -206,6 +207,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - MP 45/60, SP −45/−60 (red), Lv/Bn 35/23, 40/25. CD `agiAdjust(360)` (`:30786`).
 - `Mole_timeNuke` (993 lines): fixed 60 s countdown with an on-screen timer (`:29-75`); then `$detonate` (`:129-370`): `mDamage = talAdjust(100 × mLv + 50)` (`:334`), range `R = 20 + ExtraPowderLv` (`:882`), mask `130818` (every layer, `:892`); 4 rings 0.1 s apart (`i < 4`, `:279`), ring `i` = `FindAreaTarget(pos, floor(0.25 × (i + 1) × R), 5)`; each target without `insight` takes `hit(270 + mLv, t, floor(mDamage × (1 − 0.8 × d / R)), KO 3, …)` — halved for same-layer targets and `+ RPC_AddEffectDamage(264, 30)` for others when Smart Shell is learned (`:297-317`). Without Smart Shell allies and the Mole take the full hit. A target within `0.25 R` of the centre is in all 4 rings.
+- **When the damage is computed (traced 2026-10-25).** `mDamage = talAdjust(100 × mLv + 50)` is evaluated inside `$detonate` (`Mole_timeNuke.cs:865`), on the owner's client only (`mChar.isMine`, `:848`), i.e. **at detonation** (fuse end or Detonate), with the Mole's TAL at that moment. Only `mLv` and the fuse start time are fixed at deploy. The card carries a Pro Tip.
 
 ### mol_detonate1 (Detonate, #273) (verified 2026-10-01)
 
@@ -227,6 +229,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 - `RPC_fireBarrage_fire` (`:29181-29290`): rank 1 one aircraft effect, rank 2 three (±30°, `:29181-29204`) — visual only. 4 waves (`i >= 4` exit, `:29228`), all at the same point: `FindAreaTarget(mPos, 2 × sLv + 1, 3, enemy layers)` (`:29240`), `hit(250 + sLv, t, talAdjust(5 + 10 × sLv), KO 1, …)` (`:29259`), no falloff. **Card correction:** 4 hits at both ranks (was 4 × 3 at rank 2). Tooltip "15/25 × 4" matches.
 
 - **Where it lands (traced 2026-10-16).** `mode instant`, `target enemy` (`decode_skilldata.py`); for an instant skill the UI still passes the current selection (`targetObject`, `GameGui.cs:37715-37735`). With a target, `mPos = target − (unit direction Mole → target)`, i.e. **1 m in front of the target** on the Mole's side, with no distance check of its own, so the reach is the **40 m target lock** (`Mole.cs:8539`, `:8552`). With no target and the cursor in the top 80 % of the screen, the cursor's ground point by a **40 m raycast from the camera** (`Math.getScreenPosition`, layer mask 5; a miss refunds with "Cannot find target position", `:8571`); otherwise **12 m straight ahead** (`:8596`). Bombardment uses the same three branches (`:8373`, `:8384`, `:8450`, `:8480`), so its 5-strike line also starts from the point 1 m in front of the target.
+- **Timeline and when the damage is computed (traced 2026-10-25).** After the skill resolves, `RPC_fireBarrage` waits `WaitForSeconds(2)` (`Mole.cs:28819`) before it starts `RPC_fireBarrage_fire` (`:28612`); that coroutine spawns the aircraft and waits `1.3` s (`:29281`), then runs the 4 waves 0.1 s apart (`:29285`). Each wave runs `FindAreaTarget` (`:29240`) and `hit(…, talAdjust(5 + 10 × sLv), …)` (`:29259`) itself, owner's client only (`isMine`). Hits land **3.3 / 3.4 / 3.5 / 3.6 s after the cast**, each with the Mole's TAL and the targets in the area **at that wave**; only `sLv` and the aim point are fixed at the cast. The card carries a Pro Tip.
 
 ### mol_bombardment1-2 (Bombardment, #252, #254) (verified 2026-10-01)
 
@@ -234,6 +237,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 - `RPC_bombardment_fire` (`:29738-30110`): 5 strikes (`i >= 5` exit, `:29902`) at `mPos + tDir × (3i − 6)` (`:29912`), i.e. −6/−3/0/+3/+6 m along the line.
 - `RPC_bombardment_hit` (`:30119-30490`): `FindAreaTarget(pos, 4 + ExtraPowderLv, 5, enemy layers)` (`:30333`); rank 2 adds two more areas at `(±3, 0, −3)` rotated to `tDir`, merged with `Math.combineArray` (de-duplicates, `Math.cs:335-420`), so one strike hits a target once (`:30338-30349`). `hit(252 + sLv, t, talAdjust(10 + 15 × sLv), KO 1, …)` (`:30383`); `hitDistance` is computed (`:30373`) but **not used** — no falloff.
 - **Card:** hit count 3 (a target at the aim point is inside the 0 and ±3 m strikes; ±6 m needs radius ≥ 6, i.e. Extra Powder). Was 5 × 3. **Tooltip discrepancy:** "35/55 dmg × 5"; code base 25/40.
+- **Timeline and when the damage is computed (traced 2026-10-25).** After the skill resolves, `RPC_bombardment` waits `WaitForSeconds(4)` (`Mole.cs:29700`) before it starts `RPC_bombardment_fire` (`:29493`); that coroutine spawns the effects, waits `1.2` s (`:30071`), then starts one `RPC_bombardment_hit` per strike every 0.1 s (`:30073`, `:29929`). Each hit coroutine waits `0.2` s + `0.4` s (`:30447-30449`) and only then runs `FindAreaTarget` (`:30333`) and `hit(…, talAdjust(10 + 15 × sLv), …)` (`:30383`), owner's client only. Hits land **5.8 / 5.9 / 6.0 / 6.1 / 6.2 s after the cast**, each with the Mole's TAL and the targets in the area **at that strike**; only `sLv`, the aim point and the line direction are fixed at the cast. The card's "about 4 s" counts only the first wait. The card carries a Pro Tip.
 
 ### mol_napalm5 (Napalm, #412) (verified 2026-10-01)
 
