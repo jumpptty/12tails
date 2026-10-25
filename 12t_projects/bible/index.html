@@ -26180,7 +26180,7 @@ const COMMON_SERVER_NOTES = {
   ],
   // Reborn (user 2026-10-25): RebornBalance.CapStat (Reborn-Mechanics-Reference.md 2.1, 2.6). talHealAdjust equals talAdjust for a player.
   reborn: [
-    { title: "โอกาสติดผลของไอเทม", icon: "item_lck3", note: "• [Adjust] โอกาสติดผลของไอเทม (อาวุธ ชุด หมวก เครื่องประดับ สัตว์เลี้ยง) ไม่คิด **LCK** แล้ว แต่คูณ **×1.3** แทน (ปัดขึ้น) ตัวเลขในคำอธิบายไอเทมจึงเป็นค่าจริงก่อนคูณ โอกาสของสกิลยังคิด LCK ตามเดิม" },
+    { title: "โอกาสติดผลของไอเทม", icon: "item_lck3", note: "• [Adjust] โอกาสติดผลของไอเทมไม่คิด **LCK** แล้ว แต่คูณ **×1.3** แทน (ปัดขึ้น) คำอธิบายไอเทมแสดงค่าที่คูณแล้ว เช่น Poseidon Bow **+16%** (เดิม **+12%**) โอกาสของสกิลยังคิด LCK ตามเดิม\n• [Adjust] ชิ้นที่ให้ผลเดียวกันรวมโอกาสก่อนคูณ เช่น Poseidon Bow + Poseidon Helmet ได้ **26%** (ไม่ใช่ 16% + 11%)" },
     { title: "เพดานสเตตัส", icon: "superStatPlus", note: "• [Buff] **TAL**, **INT** และ **CHA** ของผู้เล่นไม่มีเพดาน **512** แล้ว (มอนสเตอร์ยังตันที่ 512) ดาเมจ ฮีล ระยะเวลา และเวลาร่ายที่คิดจากค่าเหล่านี้จึงโตต่อได้เกิน 512\n• [Buff] **DEF** ของผู้เล่นตันที่ **1024** (เดิม 512)\n• [Adjust] ฮีลที่คิดตาม TAL ใช้สูตรเดียวกับดาเมจทุกประการ จึงไม่มีเพดาน 512 เช่นกัน" },
   ],
 };
@@ -33234,6 +33234,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T14:49:20.762Z","fix(bible): Reborn item-chance note: item text already shows the ×1.3 chance, and a set adds its chances before the roll"],
     ["2026-10-25T14:34:01.941Z","fix(bible): Reborn notes of Mimic and War Capital moved back from Dark Intention and Monkey nAttack, plus a validator guard for misplaced Reborn descs"],
     ["2026-10-25T14:07:12.634Z","fix(bible): Reborn Panda review fixes (Shadow Fist x2 formula wrap and Sage-line purple bonus, wording), Sacred Sage note as one [Adjust], War Capital spawn cooldown"],
     ["2026-10-25T13:45:52.873Z","feat(bible): Reborn Panda: Sacred Sage Technique (full-bar trigger, TAL heal), Shadow Fist (x2 vs 0 SP toggle, full-SP leech) and the Sage-line SP steal, with descs"],

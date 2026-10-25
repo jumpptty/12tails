@@ -40,7 +40,9 @@ The LCK roll `Random(0, ceil(0.2 × LCK))` is still inside every one of these, u
 
 - `RebornBalance.ItemChance(n)` = `(n × 130 + 99) / 100` in integers, i.e. `ceil(1.3 × n)` (`Reborn:RebornBalance.cs:611`-`:618`). Examples: 3 → 4, 4 → 6, 6 → 8, 12 → 16, 14 → 19.
 - It wraps the printed chance in the item data: `Reborn:WeaponData.cs` 180 calls (e.g. `:638` `"+" + ItemChance(14) + "% player charm1"`), `Reborn:AccessoryData.cs` 52 (`:175` `ItemChance(12) + "% disarm resist"`), `Reborn:ArmorData.cs` 27 (`:55` `"+" + ItemChance(4) + "% critical"`), `Reborn:PetData.cs` 16, `Reborn:TrinketData.cs` 3, `Reborn:CharacterControl.cs` 1.
-- `CharacterControl.lckItemAdjust(n)` is just `RebornBalance.ItemChance(n)` (`Reborn:CharacterControl.cs:11882`): an item effect rolled through it gets ×1.3 and **no LCK**. The ordinary `lckAdjust` (`:11872`) is untouched. `LuckOnItemEffects = false` (`Reborn:RebornBalance.cs:74`) is the matching constant. Which item procs use `lckItemAdjust` was only traced for Chameleon crit (section 3.3).
+- `CharacterControl.lckItemAdjust(n)` is just `RebornBalance.ItemChance(n)` (`Reborn:CharacterControl.cs:11882`): an item effect rolled through it gets ×1.3 and **no LCK**. The ordinary `lckAdjust` (`:11872`) is untouched. `LuckOnItemEffects = false` (`Reborn:RebornBalance.cs:74`) is the matching constant.
+- So the printed number is the real chance: Poseidon Bow prints `ItemChance(12)` = **16%** (`Reborn:WeaponData.cs:1022`) and rolls `lckItemAdjust(12)` = 16% (BB prints 12% and rolls `lckAdjust(12)`).
+- A weapon and a hat with the same effect add their raw chances first and roll once, so ×1.3 is taken of the sum: Poseidon Bow + Poseidon Helmet = `ItemChance(12 + 8)` = **26%**, not 16% + 11% = 27% (Chameleon Double Effect: `ItemChance(40)` = 52%). Seen in each class's on-hit item block: `Reborn:Chameleon.cs:10641`-`:10696`, `Reborn:Rabbit.cs:10758`-`:10773`, `Reborn:Bat.cs:11385`-`:11400`, `Reborn:Wolf.cs:10644`-`:10659`, `Reborn:Penguin.cs:10589`-`:10604`. Chameleon crit also rolls through `lckItemAdjust` (section 3.3).
 
 ### 2.3 Red-star gear ×1.5
 
