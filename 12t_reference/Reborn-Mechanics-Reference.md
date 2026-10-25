@@ -182,6 +182,20 @@ Every announcement in 7.1 and 7.2 that touches a skill of the original game was 
 
 Not traced (not skills): the boss tier / HP / 20 s cooldown change of 7.1.
 
+### 7.4 Unannounced changes to original skills, found by diffing skill data and tooltips (2026-10-25)
+
+Every class's `<Class>Skill.cs` (setReq / setMPSP / mode / target / rSkill) and `<Class>Skill_eng.cs` were compared between the builds (string helpers decoded). Real differences, each then traced in code:
+
+| Skill | Verdict | What the code does |
+|---|---|---|
+| Sheep **Bless** / **Illuminate** with Gospel (412) / Blinding Light (413) | Nerf on cost | `SkillData.rbShpPartyBuff` (`Reborn:SkillData.cs:142-152`, run for every skill at `:106`) makes the skill `instant` and its MP `ceil(1.5 × MP)`. The Reborn tooltips of Gospel / Blinding Light say the party cast reaches allies "within 12m around Sheep"; the code uses `AlliesWholeMap` (`Reborn:Sheep.cs:1831`), so the tooltip is out of date. |
+| Mole **War Capital** | Nerf | Cost MP 100 → **250**, SP 50 → **100** (`BB:MoleSkill.cs:1587-1607`, `Reborn:MoleSkill.cs:503-511`); new lifetime `RebornLifeSeconds = 1800` s, the base sets its own HP to 0 after 30 min (`Reborn:Mole_warCapital.cs:175-181`, `:204-207`). Everything else identical: cast `magAdjust(24)`, cooldown `agiAdjust(300)`, fire loop 12 / 6 / 24 s, radius 36, height 10, 8 missiles × 0.25 s, `talAdjust(50)` KO 3 (`Reborn:Mole.cs:936-950`, `:7738-7802`, `:16557-16567`). Tooltips unchanged and silent on the lifetime. The base's own HP / stats are prefab data, not checked. |
+| Cat **Finishing Blow** | Adjust | Target `enemy` → `all` (`Reborn:CatSkill.cs:361-369`), so the GUI no longer refuses an ally (`Reborn:GameGui.cs:1294-1296`). The cast still needs a KO target (`Reborn:Cat.cs:13770-13792`): on a knocked-down ally the Cat teleports to it, starts the cooldown, and its hits use the enemy mask (`:7300-7304`), so the ally takes nothing and enemies on that spot are hit. Damage (799 × 3 + 199, KO 0), timing and Open Wound unchanged. Tooltips still say "enemy". |
+| Panda **Heaven Breath** (443) | Rework | BB: Sacred Sage heal `50 + 50·sLv + 2·Lv` HP and `floor(0.1·Lv)` MP, SP Transfer `+floor(0.25·Lv)` (`BB:Panda.cs:9377`, `:36329`). Reborn: TAL +10 and current SP +10 on learning (`Reborn:CharacterControl.cs:12120-12124`; the TAL is not written into the stored stats by client code, `CharacterDataClass.cs:1447-1471`, so whether it persists is server-side), max SP +10 (`RebornBalance.cs:573-580`), SP cap 140 (`:559-571`); Sage-line hits (actions 300-372) take `max(1, ceil(TAL/100))` SP from the target and the Panda gains the full amount (`CharacterControl.cs:7291-7310`); Sacred Sage heal `(50 + 50·sLv) × (1 + (TAL + LCK roll)/140)`, no MP (`Panda.cs:15641-15657`); Shadow Fist ×2 vs a 0-SP target and an HP leech of 100% of its damage at full SP (`Panda.cs:6754-6766`). Also for every Panda: Sacred Sage now fires at `sp >= rbSpMax` (BB `sp > 100`, `Panda.cs:1380`), and every Panda skill hit gives +1 SP (`CharacterControl.cs:7293`). |
+| Panda **SP Transfer** → **Sage Mind** | Rework | Both ranks are passive with no cost (`Reborn:PandaSkill.cs:213-225`), renamed `sageMind1/2` (`SkillData.cs:179-180`): TAL +5 per rank, +10 total, on learning (`CharacterControl.cs:12116-12119`), with the same not-stored caveat as Heaven Breath. BB: give an ally `15 × rank` SP, cooldown `agiAdjust(30)`. |
+
+Parser artifacts ignored: Twin Resonance, Calamity Hammer, Raijin Ken, Grand Tide, Support Fire, Thunder Dragon, Summon Gaos, World Encarta, Cosmic Friday, Black Servant and New Order look different only because the obfuscated BB file runs into the next skill; their data is identical. This diff cannot see a formula change with an unchanged tooltip; that needs a per-skill code diff.
+
 The section 7.2 rows about the new C6 / C7 skills have not been compared with the code (the original-skill rows are in 7.3). Each can be: find the skill in `Reborn:<Class>.cs` and its companion files and compare with the original (`BB:`).
 
 ## 8. Open questions (read, not traced)
