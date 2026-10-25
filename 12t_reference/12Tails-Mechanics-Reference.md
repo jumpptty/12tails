@@ -1,5 +1,7 @@
 # 12 Tails — Game Mechanics & Formula Reference
 
+> **Reborn (2026-10-25):** this file covers the original BB client and the ToT / TTO server differences. The Reborn client is a separate build with its own code; see [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md). Do not assume a rule here holds in Reborn.
+
 > Reverse-engineered from the decompiled client (`Assembly-UnityScript`). Every formula below was read
 > directly from source and stripped of the obfuscator's dead-code noise (junk predicates like
 > `if (163919 - 190023 != -26104) { ... }` wrapped around the real statements). Citations are `file:line`.
