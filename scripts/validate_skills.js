@@ -822,7 +822,7 @@ if (RUN_DAMAGE_CHECKS) {
   const N = 1000;   // an overshoot can be a rare tail event (a few in 6000 rolls); only runs under --full / damage-code changes
   const failures = new Map();
   // Every server the card overrides is rolled against its own range (the original server always).
-  SKILLS.forEach(card => ["og", "tot", "tto"].forEach(srv => {
+  SKILLS.forEach(card => ["og", "tot", "tto", "reborn"].forEach(srv => {   // reborn: user 2026-10-25
     const over = srv === "og" ? null : (card.servers && card.servers[srv]) || (srv === "tot" ? card.ps : null);
     if (srv !== "og" && !over) return;
     const sk = over ? Object.assign({}, card, over) : card, fid = sk.id + (srv === "og" ? "" : "@" + srv);
