@@ -403,7 +403,7 @@
   /* wallpaper credit (user 2026-10-25): the TTO wallpaper is fuWaa's art; a small caption in the corner of the viewport, on desktop and on phones, only while the TTO look is on */
   #skWallCredit{display:none; position:fixed; right:18px; bottom:14px; z-index:20; pointer-events:none; padding:6px 14px; border-radius:999px; background:rgba(0,0,0,.45); border:1px solid rgba(208,145,62,.35); font:600 16px/1 'Prompt',sans-serif; letter-spacing:.05em; color:rgba(255,240,222,.92); text-shadow:0 1px 3px rgba(0,0,0,.9)}   /* bigger on desktop (user 2026-10-25: barely visible at 12 px) */
   html[data-sk-server="tto"] #skWallCredit{display:block}
-  @media (max-width:760px){ #skWallCredit{right:10px; bottom:6px; padding:4px 10px; font-size:12px} }
+  @media (max-width:760px){ html[data-sk-server="tto"] #skWallCredit{display:none} }   /* hidden on phones (user 2026-10-25) */
   /* TTO on PC (user 2026-10-25): the hub showcase is mirrored, art on the left and text on the right, so the wallpaper's characters (centre right) are not hidden behind the art; phones and the other looks keep the usual order */
   @media (min-width:901px){
     html[data-sk-server="tto"] .ln-stage{grid-template-columns:minmax(0,58fr) minmax(0,42fr)}
@@ -33108,6 +33108,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T04:43:46.046Z","fix(bible): the cr. fuWaa wallpaper caption is hidden on phones (the desktop caption and the guide image credit stay)"],
     ["2026-10-25T04:34:37.527Z","feat(bible): server-specific gear (Shadow Strider, Shark Orange) is listed and accepted only in TTO class guides"],
     ["2026-10-25T04:15:26.437Z","feat(bible): the TTO look is fuWaa's wallpaper under a dark veil with see-through glass panels like ToT, the PC hub showcase is mirrored in it, stars and lanterns removed"],
     ["2026-10-25T04:10:00.016Z","feat(bible): nicknamed gear icons upscaled to 128 px, a_rab62 icon added, Lucky Star Cutter nicknamed มีดดาว, Shadow Strider upscaled"],

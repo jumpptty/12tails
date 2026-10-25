@@ -4147,6 +4147,7 @@ async function donateChildTests(env) {
   good(/--th-page:[^;]*var\(--tto-wallpaper/.test(tto) && /--th-veil:/.test(tto) && /--th-solid:0%/.test(tto), "the TTO look must put --tto-wallpaper under --th-veil and use see-through surfaces");
   good(!/skTtoSky|--tto-stars|--tto-lantern|ensureServerBackdrops/.test(html), "the old TTO stars / lanterns code is still in index.html");
   good(html.includes('<div id="skWallCredit">cr. fuWaa</div>') && html.includes('html[data-sk-server="tto"] #skWallCredit{display:block}') && html.includes('octx.fillText("cr. fuWaa"'), "the wallpaper credit (cr. fuWaa) is missing: the page caption shown in the TTO look and/or the guide image text");
+  good(html.includes('@media (max-width:760px){ html[data-sk-server="tto"] #skWallCredit{display:none} }'), "the cr. fuWaa caption must be hidden on phones (max-width 760px)");
   good(html.includes('html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}') && html.includes('html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}') && /@media \(min-width:901px\)\{\s*html\[data-sk-server="tto"\] \.ln-stage\{grid-template-columns:minmax\(0,58fr\) minmax\(0,42fr\)\}/.test(html), "the TTO look must mirror the hub showcase on PC (art left, text right, inside @media (min-width:901px))");
   console.log(`Verified ${n} TTO wallpaper theme checks.`);
 }
