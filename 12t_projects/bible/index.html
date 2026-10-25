@@ -7984,7 +7984,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=c3073933a8" id="bibleAssets"></script>
+<script src="assets.js?v=bad70a6cf1" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -24222,6 +24222,16 @@ function mountStatRoll(root) {
 const CHM_ICONS = BIBLE_ASSETS_IN.CHM_ICONS || {};
 // The mechanic-glossary evasion topic shows the poison status icon, which only lives in CHM_ICONS.
 SKILL_ICONS["status_poison"] = CHM_ICONS["status_poison"];
+// CHM_ICONS holds only what no other container has (the two status icons); the other 19 were copies of pictures stored elsewhere (user 2026-10-25), so the simulator's names are aliased here.
+{ const G = BIBLE_ASSETS_IN.GEAR_ICONS || {};   // GEAR_ICONS is declared further down the file
+  Object.assign(CHM_ICONS, {
+    poseidonBow: G.w_chm66, timeBow: G.w_chm69, poseidonHelmet: G.c_all66, championHelmet: G.c_all58,
+    championBow: SKILL_ICONS.item_chmChampionBow, championArmor: SKILL_ICONS.item_chmChampionSet,
+    nAttack: SKILL_ICONS.chameleon_nAttack4, bowMastery: SKILL_ICONS.chameleon_bowMastery5, fatalStrike: SKILL_ICONS.chameleon_fatalStrike4,
+    extraArrows: SKILL_ICONS.chameleon_extraArrows5, criticalPlus: SKILL_ICONS.chameleon_criticalPlus4, bullsEye: SKILL_ICONS.chameleon_bullsEye5,
+    piercingVenom: SKILL_ICONS.chameleon_piercingVenom1, deadlyVenom: SKILL_ICONS.chameleon_deadlyVenom5, poisonArrow: SKILL_ICONS.chameleon_poisonArrow4,
+    rustyDecay: SKILL_ICONS.chameleon_rustyDecay1, doubleEffect: SKILL_ICONS.chameleon_doubleEffect5, revisedArt: SKILL_ICONS.revisedArt, sheep_revert1: SKILL_ICONS.sheep_revert1,
+  }); }
 
 // Crit gear by server. BB / TTO follow Chameleon_nAttack.cs:517-668 (G.Marshal Bow +4, Mantis R set; Champion and
 // Marshal hat/armor are never matched). ToT fixed the check (user-reported 2026-10-02): standard Marshal 5/4/3 and
@@ -33130,6 +33140,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-25T04:12:13.642Z","feat(bible): status icons upscaled, every remaining PNG is WebP, CHM_ICONS duplicates aliased to the pictures stored elsewhere"],
     ["2026-10-25T04:11:13.642Z","feat(bible): skill icons of all 12 classes plus the Common and support skills upscaled to 128 px WebP"],
     ["2026-10-25T04:10:13.642Z","feat(bible): wooden and iron skill frames upscaled to 512 px WebP (the iron frame is the wooden one recolored)"],
     ["2026-10-25T04:09:13.642Z","fix(bible): the hub menu wall's 2 x 2 Class C tiles lose their stacked-edge thickness"],

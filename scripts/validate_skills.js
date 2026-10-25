@@ -1581,7 +1581,7 @@ let checkedEffectProc = 0;
 {
   const ep = sandbox._effectProc, inputs = sandbox._statInputs, deps = sandbox._depRanks;
   const check = (label, ok, got) => { checkedEffectProc++; if (!ok) { console.error(`[EFFECTPROC ERROR] ${label}${got !== undefined ? `: got ${got}` : ""}`); errorCount++; } };
-  for (let i = 0; i < 10; i++) check(`gold digit dmgdigit_y${i} present`, String(SKILL_ICONS["dmgdigit_y" + i] || "").startsWith("data:image/png"));
+  for (let i = 0; i < 10; i++) check(`gold digit dmgdigit_y${i} present`, /^data:image\/(png|webp);base64,/.test(String(SKILL_ICONS["dmgdigit_y" + i] || "")));
   const byId = id => SKILLS.find(s => s.id === id);
   const savedLck = inputs.lck.value, savedDeps = Object.assign({}, deps);
   const purpleRate = (sk, n, gi) => { let p = 0; for (let i = 0; i < n; i++) { sandbox._rollOneHit(sk, sk.maxRank, undefined, false, gi); if (ep.lastPurple()) p++; } return p / n; };
@@ -2657,7 +2657,7 @@ let checkedTtoNoLck = 0;
   ins.atk.value = "200"; ins.tal.value = "80"; ins.lck.value = "0"; ins.enemyLck.value = "0";
   for (const id of magic) if (!SKILLS.some(s => s.id === id)) fail(`${id} is in TTO_MAGIC_DMG but has no card`);
   // Test popup draws magic hits with the aqua digit set
-  for (let n = 0; n < 10; n++) if (!/^data:image\/png;base64,iVBORw0KGgo/.test(SKILL_ICONS["dmgdigit_a" + n] || "")) fail(`aqua digit texture dmgdigit_a${n} missing or not a PNG`);
+  for (let n = 0; n < 10; n++) if (!/^data:image\/(png;base64,iVBORw0KGgo|webp;base64,UklGR)/.test(SKILL_ICONS["dmgdigit_a" + n] || "")) fail(`aqua digit texture dmgdigit_a${n} missing or not a PNG / WebP`);
   const rangesAt = (sk, server, def) => {
     sandbox._setServer(server); ins.enemyDef.value = String(def);
     sandbox._selectSkill(sk);
@@ -4483,7 +4483,7 @@ let checkedHue = 0;
         check(id + " Test rolls stay inside the shield range", ok, m[1]);
       }
     }
-    for (const k of ["h", "s"]) for (let i = 0; i < 10; i++) check("digit dmgdigit_" + k + i + " present", /^data:image\/png;base64,iVBORw0KGgo/.test(SKILL_ICONS["dmgdigit_" + k + i] || ""));
+    for (const k of ["h", "s"]) for (let i = 0; i < 10; i++) check("digit dmgdigit_" + k + i + " present", /^data:image\/(png;base64,iVBORw0KGgo|webp;base64,UklGR)/.test(SKILL_ICONS["dmgdigit_" + k + i] || ""));
     // Formula captions (2026-10-08): a term that is not a talAdjust constant carries a caption; Hate-driven terms wear the hate accent.
     for (const [id, cap] of [["bison_onslaught", "0.1Hate"], ["bison_prideCrusher", "0.2Hate"]]) {
       const sk = byId(id); sandbox._skillRanks[id] = sk.maxRank; sandbox._selectSkill(sk);
