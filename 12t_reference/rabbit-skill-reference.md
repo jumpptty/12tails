@@ -824,6 +824,18 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 Build tag: every citation here is `Reborn:` (`DecompiledSource_Reborn/Assembly-CSharp/`), see [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) section 1. Reborn is a W.I.P. server in the Bible; none of this is on a card yet.
 
+### Mix Shot (`rab_mixshot`, Class C row C6, skill id 452; verified 2026-10-25, card `rabbit_mixshot`)
+
+**Learning and cost** (`Reborn:RabbitSkill.cs:527-535`): Lv 95, 8 skills in the C tab, requires skill 254 (Life Shot 4); `setMPSP(10, -30)` = MP 10 and **30 SP consumed** (a negative SP is refunded by `returnMPSP` when the cast fails, `Reborn:Rabbit.cs:15337`); mode `target`, target `ally`.
+
+**Client tooltip** (`Reborn:RabbitSkill_eng.cs:23`): "fires HeatShot + LifeShot + BoostShot at rank 5 into an ally (24 m range, 60 s cooldown)".
+
+**Cast** (`Reborn:Rabbit.cs:14885-14935`): no target returns silently; yourself, an unknown target, a Robot or a Structure give a message and refund; a target farther than `24 m × RabEye` (3D `Vector3.Distance`, 32.4 m with Eagle Eye, `:14915`) gives "Target is too far for mixshot" and refunds. Cooldown `addTimeOut("mixshot", agiAdjust(60))` only without the `rapidTrance` status (`:14919-14921`). Then the visual shot `RPC_medicalShot(…, 5)` and, with skill 452, `RebornC6.MixshotBuff(target, caster)` (`:14926-14929`).
+
+**Effect** (`Reborn:RebornC6.cs:2420-2428`): `n = 1 + Medical Enhancement level` (skills 261 / 262 / 263); on the target `heat` level 5 and `boost` level 5 for `chaAdjust(30 + 5n)`, `autoLife` level 5 for `chaAdjust(60 + 5n)`. It runs at cast, so the statuses land even if the bullet misses. The sLv 5 shot itself matches none of the medical-shot branches 1-4 (`Rabbit.cs:3630-3733`): no remedy, no Boost HP heal (`100 × lv`), no Heat SP (`10 × lv`); it only gives the usual +1 SP on hit, and the Field Pharmacy hook returns at once for it (`RebornC7Passive.RabPharmacy` accepts kinds 2-4 only, `:4361`).
+
+**Related skills** (all compared with BB 2026-10-25 and identical apart from Reborn's Eagle Eye and Field Pharmacy hooks): Medical Enhancement (durations), Heat / Boost / Life Shot (the statuses; Life Shot 4 is the requirement), Rapid Trance (no cooldown), Eagle Eye (24 m to 32.4 m). In the Bible their links to Mix Shot sit in `servers.reborn.compatSkills`; the card has Eagle Eye (desc + range popup), Rapid Trance (cooldown 0) and Medical Enhancement (both durations) toggles.
+
 ### Eagle Eye (`rab_eagleEye5`, Class C row C6, skill id 451; verified 2026-10-25, not on a card yet)
 
 **Learning:** Lv 95, 8 skills already learned in the C tab, requires skills 401 and 411 (the Reborn simulator data, Reborn-Mechanics-Reference.md section 9). Passive: no MP, SP, cooldown, cast or status. The only patch note is the 2026-09-27 fix "Eagle Eye did not work" (section 7 there).

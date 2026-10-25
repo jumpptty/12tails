@@ -56,6 +56,16 @@ A code is red-star (`IsRedStarCode`, `:119`-`:151`) when it is 7 characters, the
 
 `UsePartyRoster()` is `Game.mGameType <= 3` (`Reborn:RebornBalance.cs:192`). In that mode `Allies` (`:197`-`:251`) returns the caster, the party members' actors that pass `AllyAllowed`, and the caster's own mercenaries (`RebornMerc.AddMine`) unless the caster is charmed; in other modes it returns same-layer players found by `Damage.FindAreaTarget` plus own mercenaries. `AllyAllowed` (`:296`-`:342`): monsters are always allowed; a charmed or mind-controlled unit (`hasStatus("charm")`, `hasStatus("mindControl")`) on either side makes it false; otherwise a unit owned by another player is allowed only if that owner is in your party. `AllyNearRange = 12`, `AllyNearHeight = 3`; party name color green `(0, 1, 0.498)`, guild name `(1, 0, 0.482)`.
 
+### 2.6 Heals: `HealTalCap` and `OverHealMaxHpCapEnabled` traced (2026-10-25)
+
+`RebornBalance.HealTalCap = 0` and `OverHealMaxHpCapEnabled = true` (`Reborn:RebornBalance.cs:40`, `:52`) are `const`, so the compiler inlined them and no call site names them.
+
+- **`HealTalCap = 0` means no cap.** The same convention as `CapStat(v, isPlayer, playerCap)` (`Reborn:RebornBalance.cs:182`: a cap of 0 or less only applies `max(v, 1)`). It is the cap behind `talHealAdjust` (`Reborn:CharacterControl.cs:11861`): `max(tal + Random(0, ceil(0.2 × LCK)), 1)`, power × `(1 + 0.02 × that)`, no 512 clamp for anyone.
+- **The original has no `talHealAdjust`** (it was an open question): BB heals use the same `talAdjust` as damage, clamped to 1-512 (`BB:CharacterControl.cs:20640`). Reborn gave these heals the new uncapped function. Every caller found (all of `Reborn:*.cs`): Sheep `Sheep.cs:1674`, `:2013`, `:3215`, `:14008` (the `(1 + 0.15 × Benediction level) × (10 + 15 × lv)`-type heals; BB `Sheep.cs:10423` uses `talAdjust`), Bison `titanForm` `Bison.cs:5204` (`120 × lv + 80`; BB `Bison.cs:29797`), and the G. Marshal / G. Champion mounts `PvpMount.cs:3546`, `ChampionMount.cs:3594` (`10`; BB `PvpMount.cs:15341`). Other heals still call `talAdjust`, which for a player is uncapped as well (`CapStat(tal + roll, isPlayer, 0)`, section 2 above), so for players every TAL-scaled heal and damage is uncapped; the monster cap is 512 only.
+- **Flat heals do not use TAL at all.** Rabbit's Heat / Boost / Life Shot (`RPC_AddHeal(251, 100 × lv)`, `(251, 0, 0, 10 × lv)`, autoLife `200 × lv` and `100 × lv`) are fixed numbers, so `HealTalCap` cannot touch them: those five Rabbit skills are the same as BB (compared 2026-10-25).
+- **`OverHealMaxHpCapEnabled`:** no code reads it by name. `AddHeal` clamps HP to `mhp` in both builds (`BB:CharacterControl.cs:7444`, `Reborn:CharacterControl.cs:8256`, clamp `:8272`), so a heal never raises HP above max in either. The only overheal mechanic in Reborn is Sheep's: with skill 462, in a Combat zone, the part of a heal beyond the missing HP becomes a `benediction` shield, capped at `clamp(maxHP / 5, 1, 32000)` (`RebornC7Passive.ShpOverheal`, `Reborn:RebornC7Passive.cs:4561-4577`; the cap is `BenedictionCap` `:4552`). That 20% of max HP cap is the most likely meaning of the flag, but it is not proven, since the constant has no reader.
+- **`RPC_AddHeal` / `AddHeal` otherwise match BB** (the `provoke` block that zeroes a heal, HP clamp to `mhp`, MP to `mmp`, KO to `mko`, hate `2 × (HP + MP + SP actually healed)`). Reborn adds: two C7 hooks (`RebornC7Passive.BatHunger`, `SeraphSpread`, `Reborn:CharacterControl.cs:8192-8193`), a `ShpHealHate` hook on the hate (`:8300`), and the SP clamp: `rbSpMax = max(msp, rbSpCeiling)` (`:5983`) instead of BB's fixed 100 (`BB:CharacterControl.cs:7564`, `if (sp > 100)`; Reborn `:8286`); `rbSpCeiling` is 100 plus the Panda bonuses of 5.1.
+
 ## 3. Gear findings
 
 ### 3.1 Red star and item chance
@@ -159,11 +169,11 @@ None of the section 7.2 rows has been compared with the code yet. Each can be: f
 
 ## 8. Open questions (read, not traced)
 
-1. **Constants that are inlined:** `LuckOnItemEffects`, `OverHealMaxHpCapEnabled`, `HealTalCap`, `PandaShadowFistDrySpMultiplier = 2`, `PandaShadowFistLeechPercent = 100`, `PandaSpTransferTalPerLevel = 5`, `PandaSkillHitSp = 1` (action code 349), `PandaSageSpDrainEnabled = false`, `PandaHeavenBreathTal/Sp = 10`. Their exact effects need a trace of the literal values in `Panda.cs` and `CharacterControl.cs`.
+1. **Constants that are inlined:** `LuckOnItemEffects`, `PandaShadowFistDrySpMultiplier = 2`, `PandaShadowFistLeechPercent = 100`, `PandaSpTransferTalPerLevel = 5`, `PandaSkillHitSp = 1` (action code 349), `PandaSageSpDrainEnabled = false`, `PandaHeavenBreathTal/Sp = 10`. Their exact effects need a trace of the literal values in `Panda.cs` and `CharacterControl.cs`.
 2. **`RebornEffects`:** the data-driven item-effect table behind `CritPlus`, `ResistPlus`, `SumMag`; where its entries come from is not read.
 3. **Which item procs use `lckItemAdjust`:** only Chameleon crit is traced; the other 12 classes' gear procs are not.
 4. **`ItemClass.att[1]`:** why red-star scaling skips it (which stat it is).
-5. **Whether the original has a pierce `defAdjust` overload,** and the original `talHealAdjust` cap.
+5. **Whether the original has a pierce `defAdjust` overload.** (The original has no `talHealAdjust`: answered in 2.6.)
 6. **Rebalanced skills in other classes:** only Panda constants were seen in code. The Discord channels were read (section 7): they name about 15 skills but give almost no numbers. Each named skill still needs a code comparison with the original (section 7.2), and the unnamed rebalances are only findable by a skill-by-skill diff.
 7. **Skill 462** (Panda): name.
 8. **New content:** the `*_C6` / `RebornC6` / `RebornC7` systems, the Zr classes, missions M994-M996, battle pass, guild war, mercenaries.

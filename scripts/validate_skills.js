@@ -1110,24 +1110,34 @@ let checkedEnemyCycle = 0;
   check("an unknown monster id is ignored", sandbox.enemyById("m:999999") === null);
 }
 // 4. Audit compatSkills reciprocity (AGENTS.md Section 8: every edge must be
-// reciprocated -- if A lists B, B must list A back).
+// reciprocated -- if A lists B, B must list A back). Server-specific (user 2026-10-25): servers.<srv>.compatSkills replaces
+// the list on that server, and an edge must come back on the target's list for the same server (a card's base list counts on
+// every server it does not override; a server-exclusive card, onlyServer, is on its own server). A link to a server-exclusive
+// card from a card that is not exclusive belongs in that server's list only, never in the base list.
 const skillById = new Map(SKILLS.map(s => [s.id, s]));
+const compatFor = (s, srv) => { const o = srv && s.servers && s.servers[srv]; return Array.isArray(o && o.compatSkills) ? o.compatSkills : (Array.isArray(s.compatSkills) ? s.compatSkills : []); };
 SKILLS.forEach(sk => {
-  if (!Array.isArray(sk.compatSkills)) return;
-  const ctx = `${sk.class} > ${sk.name} (${sk.id})`;
-  sk.compatSkills.forEach(targetId => {
-    const target = skillById.get(targetId);
-    if (!target) {
-      console.error(`[COMPAT ERROR] ${ctx}: compatSkills references unknown id '${targetId}'`);
-      errorCount++;
-      return;
-    }
-    const targetCompat = Array.isArray(target.compatSkills) ? target.compatSkills : [];
-    if (!targetCompat.includes(sk.id)) {
-      console.error(`[COMPAT ERROR] ${ctx}: compatSkills -> '${targetId}' is not reciprocated ('${targetId}' does not list '${sk.id}' back)`);
-      errorCount++;
-    }
-  });
+  const lists = [[null, sk.compatSkills]].concat(Object.entries(sk.servers || {}).filter(([, o]) => o && Array.isArray(o.compatSkills)).map(([k, o]) => [k, o.compatSkills]));
+  for (const [srv, list] of lists) {
+    if (!Array.isArray(list)) continue;
+    const ctx = `${sk.class} > ${sk.name} (${sk.id})` + (srv ? ` [servers.${srv}]` : ""), side = srv || sk.onlyServer || null;
+    list.forEach(targetId => {
+      const target = skillById.get(targetId);
+      if (!target) {
+        console.error(`[COMPAT ERROR] ${ctx}: compatSkills references unknown id '${targetId}'`);
+        errorCount++;
+        return;
+      }
+      if (!srv && target.onlyServer && !sk.onlyServer) {
+        console.error(`[COMPAT ERROR] ${ctx}: links the ${target.onlyServer}-only card '${targetId}' in its base compatSkills; list it under servers.${target.onlyServer}.compatSkills`);
+        errorCount++;
+      }
+      if (!compatFor(target, side).includes(sk.id)) {
+        console.error(`[COMPAT ERROR] ${ctx}: compatSkills -> '${targetId}' is not reciprocated ('${targetId}' does not list '${sk.id}' back${side ? " on " + side : ""})`);
+        errorCount++;
+      }
+    });
+  }
 });
 
 // 5. Report standalone dep objects with no matching SKILLS card yet (AGENTS.md
@@ -4208,6 +4218,19 @@ async function donateChildTests(env) {
     good(back && back.build.server === "reborn" && back.build.level === 150 && back.build.classKey === "wolf", "a guide code with server reborn and level 150 survives encode / decode (scripts/guide_code.js)");
     good(typeof vm.runInContext("skillSimPools", sandbox) === "function" && vm.runInContext("CLASS_GUIDE_SERVER_KEYS", sandbox).indexOf("reborn") === 3, "the guide code server index of reborn is 3 (page and scripts/guide_code.js)");
     good(gc.CLASS_GUIDE_SERVER_KEYS.join() === "og,tot,tto,reborn", "scripts/guide_code.js server keys must be og,tot,tto,reborn"); }
+  // Rabbit Mix Shot (Reborn C6 452, user 2026-10-25): a Reborn-only card with the Eagle Eye range toggle (desc and reach), Rapid Trance (no cooldown) and
+  // Medical Enhancement (both durations), linked to its five BB skills only on Reborn; Rapid Trance's cooldown / cast toggle on the ten BB skills it affects
+  { const ms = SKILLS.find(s => s.id === "rabbit_mixshot"), set = (id, r) => { sandbox._depRanks[id] = r; };
+    good(ms && ms.onlyServer === "reborn" && !ms.soon && ms.cost.mp === 10 && ms.cost.sp === 30 && ms.cost.spType === "red" && ms.cd === 60 && ms.cdDep && ms.cdDep.id === "rapidTrance" && ms.cdDep.kind === "replace" && ms.cdDep.replaceValue === 0, "Mix Shot: Reborn-only, MP 10, SP 30 consumed, cooldown 60 s that Rapid Trance sets to 0");
+    good(ms && ms.descDep && ms.descDep.id === "eagleEye" && /\*\*24m\*\*/.test(ms.desc(1, 0)) && /\*\*32\.4m\*\*/.test(ms.desc(1, 1)) && /Rapid Trance/.test(ms.desc(1, 0)), "Mix Shot desc: 24m, 32.4m with Eagle Eye, and the Rapid Trance line");
+    let r0 = null, r1 = null; try { set("eagleEye", 0); r0 = ms.reach()[0].r; set("eagleEye", 1); r1 = ms.reach()[0].r; set("eagleEye", 0); } catch (e) {}
+    good(r0 === 24 && r1 === 32.4 && ms.reachControls && ms.reachControls[0].id === "eagleEye", "Mix Shot reach: a 24 m sphere, 32.4 m with the Eagle Eye toggle in the range popup");
+    const five = ["rabbit_medicalEnhancement", "rabbit_heatShot", "rabbit_boostShot", "rabbit_lifeShot", "rabbit_rapidTrance"].map(id => SKILLS.find(s => s.id === id));
+    good(five.every(s => s && !(s.compatSkills || []).includes("rabbit_mixshot") && s.servers && s.servers.reborn && s.servers.reborn.compatSkills.includes("rabbit_mixshot")), "the five BB skills link Mix Shot only in servers.reborn.compatSkills");
+    const rt = ["rabbit_mix", "rabbit_shake", "rabbit_miracleBlend", "rabbit_stickyGum", "rabbit_acidicField", "rabbit_healingField", "rabbit_immuneShot", "rabbit_boostShot", "rabbit_heatShot", "rabbit_lifeShot"].map(id => SKILLS.find(s => s.id === id));
+    good(rt.every(s => s && s.cdDep && s.cdDep.id === "rapidTrance" && (s.castTime === undefined || (s.castDep && s.castDep.id === "rapidTrance"))), "Rapid Trance cooldown toggle on the ten skills it affects, and the cast toggle on the six with a cast bar");
+    const ee = SKILLS.find(s => s.id === "rabbit_eagleEye");
+    good(ee && ee.soon === "reborn" && (ee.compatSkills || []).includes("rabbit_mixshot") && !SKILLS.some(s => s.soon && /[0-9]$/.test(s.id)), "stub ids drop the rank digit (rabbit_eagleEye), so the simulator cell links them, and the Eagle Eye stub links Mix Shot back"); }
   console.log(`Verified ${n} Reborn server infrastructure checks.`);
 }
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
