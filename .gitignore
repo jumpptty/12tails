@@ -2,6 +2,11 @@
 RippedAssets/
 12TailsOnline_Data/
 DecompiledSource/
+# The Reborn client and its decompile (user 2026-10-25: big folders travel by flash drive, not git)
+12TailsReborn_Data/
+DecompiledSource_Reborn/
+# Source image of the TTO wallpaper (the shipped copy is TTO_WALLPAPER in assets.js)
+/image.png
 
 # Automation / browser test artifacts
 .playwright-mcp/
