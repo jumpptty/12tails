@@ -5411,6 +5411,34 @@ function fontProblems(html) {
   if (!modeCards.length) console.log("No dmgModes cards to check.");
   else console.log(`Verified ${rowsChecked} damage-mode rows (one per mode, labelled, own Test, every Test total inside its row's Final).`);
 }
+// Desc icon lines (user 2026-10-26: icons on every run, aligned with the text). Every desc of every card, at every rank, desc dep rank and
+// server with its own desc, goes through the page's renderDescWithMods: an icon line must show an icon (a skill with an icon, or a
+// DESC_LINE_ICONS gear entry whose key exists), and the renderer / CSS pieces that keep icons and rows aligned must stay.
+{
+  const R = (code) => vm.runInContext(code, sandbox);
+  const render = R("renderDescWithMods"), DLI = R("DESC_LINE_ICONS");
+  const fail = (m) => { console.error(`[DESC LIST ERROR] ${m}`); errorCount++; };
+  for (const [label, key] of Object.entries(DLI)) if (!SKILL_ICONS[key]) fail(`DESC_LINE_ICONS["${label}"] -> "${key}" is not an icon in assets.js`);
+  if (R("DESC_MOD_MIN") !== 1) fail("DESC_MOD_MIN must be 1 (every run of icon lines gets its icons)");
+  if (!/\.sk-desc-mod-ico\{[^}]*margin-top:calc\(\.71em - 9px\)/.test(html)) fail(".sk-desc-mod-ico lost margin-top:calc(.71em - 9px), the rule that centres the icon on its first text line");
+  if (!/\.sk-desc-mods\.is-two\{[^}]*grid-auto-flow:column/.test(html)) fail(".sk-desc-mods.is-two lost its column-filling grid (rows aligned across both columns)");
+  const heroDepOf = (c) => c.descDep || c.dep || c.dmgRankDep || c.dmgDep || c.cdDep || null;
+  const ranksOf = (d) => { if (!d) return [null]; const a = []; for (let x = d.minRank || 0; x <= Math.min(d.maxRank || 1, 8); x++) a.push(x); return a; };
+  let lines = 0, texts = 0;
+  for (const s of SKILLS) {
+    const variants = [["base", s.desc, heroDepOf(s)]];
+    if (s.servers) for (const [srv, o] of Object.entries(s.servers)) if (o && o.desc !== undefined) variants.push([srv, o.desc, heroDepOf(Object.assign({}, s, o))]);
+    for (const [v, d, dep] of variants) for (let r = 1; r <= (s.maxRank || 1); r++) for (const dr of ranksOf(dep)) {
+      let t; try { t = typeof d === "function" ? d(r, dr) : d; } catch (e) { continue; }
+      if (!t) continue;
+      texts++;
+      const out = String(render(String(t), s, 128));
+      lines += (out.match(/class="sk-desc-mod"/g) || []).length;
+      if (/<span class="sk-desc-mod-ico"><\/span>/.test(out)) fail(`${s.id} (${v}, rank ${r}${dr === null ? "" : ", dep " + dr}): an icon line has no icon`);
+    }
+  }
+  console.log(`Verified ${lines} desc icon lines in ${texts} rendered descs (each with its icon; alignment rules in place).`);
+}
 // No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
 // prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).
 {
