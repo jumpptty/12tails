@@ -22876,9 +22876,9 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
             <h3 class="sk-hero-name">${selected.name}</h3>
             <div class="sk-hero-sub">
               <span class="sk-tag sk-hero-class" style="--tag-color:${CLASS_COLORS[selected.class]}">${selected.class}</span>
-              ${renderCostBadges(activeSelected, rank)}
               ${(() => { const rp = activeSelected.reach ? reachNormalize(activeSelected.reach, rank) : []; if (rp.length){ const cls = reachModelKey(activeSelected, rank); (window.requestIdleCallback || setTimeout)(() => { try { reachModel(cls); reachScene("M108"); } catch (e) { /* model data missing: the preview shows the stand-in */ } }); } return rp.length ? `<button type="button" class="sk-reach-badge" data-role="reach-badge" title="ระยะโจมตี (ดูรูปทรง 3 มิติ)"><svg viewBox="0 0 16 16"><path d="M8 1 14 4.5v7L8 15 2 11.5v-7z"/><path d="M2 4.5 8 8l6-3.5M8 8v7"/></svg><span>${reachBadgeText(rp)}</span></button>` : ""; })()}
             </div>
+            ${(() => { const c = renderCostBadges(activeSelected, rank); return c ? `<div class="sk-hero-sub sk-hero-costs">${c}</div>` : ""; })()}
           </div>
           ${heroDescHtml}
         </div>
@@ -33759,6 +33759,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T08:08:56.140Z","feat(bible): the skill card head beside the icon is three rows (name, class + range, resource costs) on every server, so the description gets more width"],
     ["2026-10-26T08:06:22.149Z","fix(bible): a server popup taller than the window (a change note plus several server-wide notes) scrolls inside the screen instead of running off both edges"],
     ["2026-10-26T07:58:43.082Z","fix(bible): the Reborn Shadow Upon Shadow shade toggle on Cat Combo drew a broken image (one icon for every shade count), and a validator check for the rank icons of every multi-rank toggle"],
     ["2026-10-26T07:52:54.965Z","feat(bible): tooltip notes for Reborn Omni Slayer and Alpha Howl (important tooltip omissions now go on the card, user rule 2026-10-26)"],
