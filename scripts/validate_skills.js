@@ -2126,7 +2126,7 @@ if (RUN_DAMAGE_CHECKS) {
   check("formula shows the Hyper Shot term with its distance", sandbox._getRenderedHeroHtml().includes("Hyper Shot 26m"));
   // ---- Extravagance: a skill dependency on every ATK-based Rabbit skill (flag `extravagance`), not a Buff popup entry
   const EXTRA_CARDS = ["nAttack", "cAttack", "maimShot", "bounce", "gilShot", "fourShot", "circleShot", "shootingArray", "tenShot"].map(k => SKILLS.find(s => s.id === "rabbit_" + k));
-  check("Extravagance is flagged on the nine ATK-based offensive skills and nowhere else in Rabbit", EXTRA_CARDS.every(s => s && s.extravagance === true) && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance).length === 9);
+  check("Extravagance is flagged on the nine ATK-based offensive skills and nowhere else in Rabbit, plus the Reborn-only Thousand Shot and Bullet Rain", EXTRA_CARDS.every(s => s && s.extravagance === true) && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance && !s.onlyServer).length === 9 && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance && s.onlyServer).map(s => s.id).sort().join() === "rabbit_bulletRain,rabbit_thousandShot");
   check("Extravagance links reciprocally with each of them", EXTRA_CARDS.every(s => (s.compatSkills || []).includes("rabbit_extravagance")) && EXTRA_CARDS.every(s => SKILLS.find(x => x.id === "rabbit_extravagance").compatSkills.includes(s.id)));
   check("the Buff popup no longer lists Extravagance", !/extravagance512/.test(html));
   const savedAtkRole = inputs.atk.dataset.role; inputs.atk.dataset.role = "atk";   // statBonus() keys off the input data-role
@@ -2227,6 +2227,7 @@ let checkedServerSim = 0;
     sandbox._setServer(srv); sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._selectSkill(sk);
     const act = sandbox._activeSimSkill();
     check(`${sk.id} on ${srv}: Test rolls the server card`, DMG_KEYS.every(k => !(k in o) || act[k] === o[k]));
+    if (typeof sandbox._calcRangeFor !== "function") continue;   // a damage row gated by a dep that is off by default draws no range (Reborn Bounce: From the Above); such a card is rolled with its deps on in its own block
     const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(act, r)));
     let lo = Infinity, hi = -Infinity; for (let i = 0; i < 300; i++) { const x = sandbox._rollOneHit(act, r); lo = Math.min(lo, x); hi = Math.max(hi, x); }
     check(`${sk.id} on ${srv}: Test rolls inside the server range`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
@@ -4245,7 +4246,26 @@ async function donateChildTests(env) {
     const rt = ["rabbit_mix", "rabbit_shake", "rabbit_miracleBlend", "rabbit_stickyGum", "rabbit_acidicField", "rabbit_healingField", "rabbit_immuneShot", "rabbit_boostShot", "rabbit_heatShot", "rabbit_lifeShot"].map(id => SKILLS.find(s => s.id === id));
     good(rt.every(s => s && s.cdDep && s.cdDep.id === "rapidTrance" && (s.castTime === undefined || (s.castDep && s.castDep.id === "rapidTrance"))), "Rapid Trance cooldown toggle on the ten skills it affects, and the cast toggle on the six with a cast bar");
     const ee = SKILLS.find(s => s.id === "rabbit_eagleEye");
-    good(ee && ee.soon === "reborn" && (ee.compatSkills || []).includes("rabbit_mixshot") && !SKILLS.some(s => s.soon && /[0-9]$/.test(s.id)), "stub ids drop the rank digit (rabbit_eagleEye), so the simulator cell links them, and the Eagle Eye stub links Mix Shot back"); }
+    good(ee && ee.onlyServer === "reborn" && !ee.soon && ee.passive && (ee.compatSkills || []).includes("rabbit_mixshot") && !SKILLS.some(s => s.soon && /[0-9]$/.test(s.id)), "Eagle Eye is a real Reborn-only passive card linked to Mix Shot (no stub, SOON_EXTRA empty), and stub ids drop the rank digit"); }
+  // Reborn C6 / C7 Rabbit (2026-10-26): Eagle Eye's RabReach rounding, the Combo / Charge Attack distance boxes, Reborn reach sizes, and Carron Gambit's post-DEF finalOut in the Final range and the Test roll
+  { const ev = (s) => vm.runInContext(s, sandbox), dr = sandbox._depRanks, saved = { ...dr }, savedAtk = sandbox._statInputs.atk.value;
+    const setDeps = (o) => { for (const k of Object.keys(dr)) delete dr[k]; Object.assign(dr, saved, o); };
+    good(ev("[16, 21, 26, 31, 36, 20, 25, 30, 35, 40].map(rbEyeRound).join()") === "22,28,35,42,49,27,34,40,47,54", "Eagle Eye RabReach = RoundToInt(n x 1.35f), float32, .5 to even (30 -> 40)");
+    good(ev("finalOutAdjust({ finalOut: () => 1.6 }, 101)") === 162 && ev("finalOutAdjust({ finalOut: () => 1.15 }, 100)") === 115 && ev("finalOutAdjust({}, 77)") === 77 && ev("finalOutAdjust({ finalOut: () => 1.6 }, 0)") === 0, "finalOut = CeilToInt((float)dmg x factor), nothing at 1 or 0 damage");
+    setDeps({ eagleEye: 1, rabComboLv: 4 }); sandbox._setServer("reborn");
+    good(ev("rabbitComboMaxDistance(4)") === 49 && ev("rabbitChargeMaxDistance()") === 54, "Reborn + Eagle Eye: Combo 4 reaches 49 m, Charge Attack 54 m");
+    sandbox._setServer("og");
+    good(ev("rabbitComboMaxDistance(4)") === 36 && ev("rabbitChargeMaxDistance()") === 40, "BB keeps 36 m / 40 m with the Eagle Eye toggle on");
+    const rr = (id, o) => { setDeps(o); const sk = SKILLS.find(s => s.id === id); return sandbox._reachNormalize(sk.servers.reborn.reach, sk.maxRank || 1); };
+    good(rr("rabbit_acidicField", { eagleEye: 1 })[0].r === 16.2 && rr("rabbit_acidicField", {})[0].r === 12 && rr("rabbit_tenShot", { eagleEye: 1 }).every(p => p.r === 32.4) && rr("rabbit_gilShot", { eagleEye: 1, rabComboLv: 4 })[0].l === 49 && rr("rabbit_statScan", { eagleEye: 1 })[0].r === 54 && rr("rabbit_bounce", { eagleEye: 1, skyfallSniper: 1 })[0].r === 10.8, "Reborn reach goldens: Acidic Field 16.2 m, Ten Shot 32.4 m, Gil Shot 49 m at Combo 4, the 54 m lock, Bounce landing 10.8 m with Skyfall Sniper");
+    for (const sk of SKILLS.filter(s => s.class === "Rabbit" && s.servers && s.servers.reborn && s.servers.reborn.reach)) for (const e of [0, 1]) { let ps = []; try { ps = rr(sk.id, { eagleEye: e, skyfallSniper: e, fieldPharmacy: e, rabComboLv: 4 }); } catch (x) { ps = null; } good(Array.isArray(ps) && ps.every(p => p.src && ["r", "w", "w2", "l", "h"].every(k => p[k] === undefined || p[k] === "inf" || p[k] > 0)), sk.id + " Reborn reach (Eagle Eye " + e + "): positive sizes and a src"); }
+    sandbox._setServer("reborn"); sandbox._statInputs.atk.value = "300";
+    for (const id of ["rabbit_maimShot", "rabbit_tenShot", "rabbit_thousandShot", "rabbit_bulletRain", "rabbit_bounce"]) { const sk = SKILLS.find(s => s.id === id), r = sk.maxRank || 1, fin = {};
+      for (const h of [0, 3]) { setDeps({ carronGambit: h, fromTheAbove: 1, skyfallSniper: 1 }); sandbox._skillRanks[id] = r; sandbox._calcRangeFor = undefined; sandbox._selectSkill(sk); const act = sandbox._activeSimSkill();
+        fin[h] = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(act, r))); let lo = Infinity, hi = -Infinity; for (let i = 0; i < 300; i++) { const x = sandbox._rollOneHit(act, r); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+        good(lo >= fin[h][0] && hi <= fin[h][1], id + " Reborn, " + h + " heads: Test " + lo + "-" + hi + " inside the Final range " + fin[h].join("-")); }
+      good(fin[3][1] > fin[0][1], id + ": 3 Carron Gambit heads raise the Final range (" + fin[0][1] + " -> " + fin[3][1] + ")"); }
+    setDeps({}); sandbox._statInputs.atk.value = savedAtk; sandbox._setServer("og"); }
   // a Reborn desc is the card's base desc plus the change (bible-desc-writing): it must share most of its words with that base desc. Catches an override
   // that a patch put on the wrong card (user 2026-10-25: Mimic's Reborn text showed on Dark Intention, War Capital's on Monkey nAttack). Full reworks opt out with rebornRework:true.
   { const words = (s) => new Set(String(s || "").replace(/<[^>]+>|[*_^\[\]()]/g, " ").split(/\s+/).filter((w) => w.length > 1));
