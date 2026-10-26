@@ -895,6 +895,7 @@ So every target-mode skill a Rabbit casts can reach 54 m instead of 40 m, whatev
 - Shooting Array (BB fix, all servers): BB also needs the target within a flat 20 m (`vFlat sqrMagnitude < 400`, `BB:Rabbit.cs:8120`); the BB card's reach is that ring now (it showed the 40 m lock, which made the Reborn tab look like a change).
 - Bounce / Skyfall Sniper: the fixed 65 / 45 s is AGI-free, but Revised Art still applies (`ceil(0.88 × …)`, 58 / 40 s).
 - Start-of-map cooldown (every combat map: missions, PvP and combat zones, `RebornZone.CombatMap`, `Reborn:RebornZone.cs:28-38`; Revised Art applies, `Reborn:CharacterControl.cs` `addTimeOut`; card bullet on each): Thousand Shot 100 s flat, Trading With Wind 120 s flat (`Reborn:Rabbit.cs` `Start`), Bullet Rain `agiAdjust(360)` (`Seed`).
+- Mix Shot and the Eagle Eye lock line no longer state sizes (they live in the reach field). Bullet Rain keeps firing its 20 volleys after a knock-down (`Reborn:RebornC7Act.cs:5585-5611`).
 
 ### C6 / C7 skills (Reborn only)
 

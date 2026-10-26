@@ -4258,7 +4258,7 @@ async function donateChildTests(env) {
   // Medical Enhancement (both durations), linked to its five BB skills only on Reborn; Rapid Trance's cooldown / cast toggle on the ten BB skills it affects
   { const ms = SKILLS.find(s => s.id === "rabbit_mixshot"), set = (id, r) => { sandbox._depRanks[id] = r; };
     good(ms && ms.onlyServer === "reborn" && !ms.soon && ms.cost.mp === 10 && ms.cost.sp === 30 && ms.cost.spType === "red" && ms.cd === 60 && ms.cdDep && ms.cdDep.id === "rapidTrance" && ms.cdDep.kind === "replace" && ms.cdDep.replaceValue === 0, "Mix Shot: Reborn-only, MP 10, SP 30 consumed, cooldown 60 s that Rapid Trance sets to 0");
-    good(ms && ms.descDep && ms.descDep.id === "eagleEye" && /\*\*24m\*\*/.test(ms.desc(1, 0)) && /\*\*32\.4m\*\*/.test(ms.desc(1, 1)) && /Rapid Trance/.test(ms.desc(1, 0)), "Mix Shot desc: 24m, 32.4m with Eagle Eye, and the Rapid Trance line");
+    good(ms && !/\*\*(24|32\.4)m\*\*/.test(ms.desc(1, 0) + ms.desc(1, 1)) && /ภายในระยะยิง/.test(ms.desc(1, 0)) && /Rapid Trance/.test(ms.desc(1, 0)) && !!ms.reach, "Mix Shot desc: no sizes (24 m / 32.4 m live in its reach), and the Rapid Trance line");
     let r0 = null, r1 = null; try { set("eagleEye", 0); r0 = ms.reach()[0].r; set("eagleEye", 1); r1 = ms.reach()[0].r; set("eagleEye", 0); } catch (e) {}
     good(r0 === 24 && r1 === 32.4 && ms.reachControls && ms.reachControls[0].id === "eagleEye", "Mix Shot reach: a 24 m sphere, 32.4 m with the Eagle Eye toggle in the range popup");
     const five = ["rabbit_medicalEnhancement", "rabbit_heatShot", "rabbit_boostShot", "rabbit_lifeShot", "rabbit_rapidTrance"].map(id => SKILLS.find(s => s.id === id));

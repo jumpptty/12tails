@@ -666,6 +666,7 @@ Build tag: citations are `Reborn:` (`DecompiledSource_Reborn/Assembly-CSharp/`) 
 - **All Feather (`sheep_allFeather`): Reborn gives it to every same-team player on the map plus own mercenaries** (`RebornBalance.AlliesWholeMap`, `Reborn:Sheep.cs:4358`); BB `FindAreaTarget(12 × rangeMod, 3 × rangeMod)` on the caster's layer, non-players included (`BB:Sheep.cs:30303`). Card: Reborn desc, change note, unlimited reach.
 - Bless / Illuminate / Gospel / Blinding Light: "เพื่อนร่วมทีมทุกคน" (same list as All Feather in missions / PvP).
 - Start-of-map cooldown (every combat map: missions, PvP and combat zones, `RebornZone.CombatMap`, `Reborn:RebornZone.cs:28-38`; Revised Art applies, `Reborn:CharacterControl.cs` `addTimeOut`; card bullet on each): Heaven's Verdict `agiAdjust(300)`, Gates of Eden `agiAdjust(360)`.
+- Seraph Wings / Perfect Serenity also act on Radiant Heal's splash, the Holy Orb ally heal, Revert and the Illuminate ticks (both hooks run inside every `RPC_AddHeal` of the Sheep, `Reborn:CharacterControl.cs:8193`, `:8300`): desc lines and links. Gospel / Blinding Light: Bless / Illuminate cost `ceil(1.5 × MP)` (`Reborn:SkillData.cs:142-152`). Gates of Eden: the Sheep stands still 1.15 s (`Reborn:RebornC7Act.cs:808-828`, `:5646`, `:5674-5675`). Heaven's Verdict: only `[clear1]` lasts 1 s.
 
 ### C6 / C7 skills (Reborn only)
 
