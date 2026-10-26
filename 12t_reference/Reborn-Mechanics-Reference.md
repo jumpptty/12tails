@@ -94,7 +94,7 @@ So on Reborn two casters can no longer push a status one level past what either 
 - **AI target scan:** the faster scan (1-2 s → 0.3-0.7 s, 1 s → 0.5 s) is in the monster AIs too (171 of 186 `*AI.cs`, e.g. `Reborn:Alpaca_AI.cs:323` vs `BB:Alpaca_AI.cs:1110`); the Common note says all AI now.
 - **KO cap:** `koAdjust` = `clamp(floor(koMod × KO), 0, 99)` in both builds and runs only inside `hit()` (`Reborn:CharacterControl.cs:7277`, `:11758`; `BB:CharacterControl.cs:20495`); Effect Damage KO is not clamped. The page clamps a card's KO at 99 unless the card or group is purple (several C6 / C7 cards had KO 100).
 - **Stat caps follow `isPlayer`:** summons, Shadow Illusion clones and mercenaries (`Reborn:RebornMerc.cs:944`) stay at 512; mounts (`Reborn:CharacterControl.cs:5258`) and Bat Mimic copies (`Reborn:Bat.cs:6081`) count as players. Common note text fixed.
-- **Open (user decision pending):** about 150 player cards have no `servers.reborn`, so they never offer the Reborn tab and show BB's 512 caps (55 TAL damage / heal cards, 48 CHA durations, 53 INT casts, the mounts).
+- **Reborn tab on every stat-capped card (user 2026-10-26):** cards with no `servers.reborn` whose numbers read a player TAL / INT / CHA through a 512-capped adjuster now offer the Reborn tab too (`rebornStatTab` in index.html, 129 cards), so their Reborn numbers use the uncapped stats.
 
 ## 3. Gear findings
 

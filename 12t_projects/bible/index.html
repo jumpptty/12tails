@@ -8008,7 +8008,7 @@ function tdlRoll(R) {
 let statCapServer = null;
 function rebornOn(card) {
   if (statCapServer !== null) return statCapServer === "reborn";
-  return currentServer === "reborn" && !!card && (card.onlyServer === "reborn" || !!(card.servers && card.servers.reborn));
+  return currentServer === "reborn" && !!card && (card.onlyServer === "reborn" || !!(card.servers && card.servers.reborn) || rebornStatTab(card));
 }
 // Reborn stat caps (Reborn-Mechanics-Reference.md §2.1; Reborn:RebornBalance.cs:182 CapStat, Reborn:CharacterControl.cs:11831-11856): a
 // player's MAG, CHA and TAL, each with its LCK roll, have no upper limit there (minimum 1); a monster or summon (isPlayer false) stays at
@@ -8019,6 +8019,22 @@ let statCapCard = null;
 function ownTalCard(skill) {
   return !!skill && !!(skill.ownStats || skill.ownStatsDmgOnly || skill.ownStatsKaiser || skill.ownStatsPhoenix || skill.ownStatsGaos ||
     (skill.ownStatsMerc && !skill.mercParent) || skill.ownStatsJa || skill.ownStatsGyro || skill.ownStatsGadina);
+}
+// Reborn tab on a card with no Reborn data (user 2026-10-26, like TTO's usesTdlRoll): offered when the card's numbers read a player TAL, INT or
+// CHA through an adjuster that is capped at 512 elsewhere (talAdjust damage / heal, a chaAdjust duration, a magAdjust cast; Reborn-Mechanics-
+// Reference.md 2.1). A summon's own TAL keeps its cap (ownTalCard), and contested durations read CHA raw everywhere, so neither counts. No popup text.
+const _rbStatTab = new Map();
+function rebornStatTab(card) {
+  if (!card || card.onlyServer || card.soon || !card.id) return false;
+  if (_rbStatTab.has(card.id)) return _rbStatTab.get(card.id);
+  const src = (v) => v == null ? "" : String(v);
+  const texts = [card.dmg, card.rawModel && card.rawModel.parts].concat((card.dmgGroups || []).map(g => g.dmg)).map(src).join(" ");
+  const tal = !ownTalCard(card) && /talAdjust|talHealAdjust/.test(texts);
+  const cha = (card.duration !== undefined && !!card.durWrapped) || !!(card.secondaryDuration && card.secondaryDuration.durWrapped);
+  const int = card.castTime !== undefined && !!card.castWrapped;
+  const r = tal || cha || int;
+  _rbStatTab.set(card.id, r);
+  return r;
 }
 function statHi(summon) {
   return rebornOn(statCapCard) && !(summon === undefined ? ownTalCard(statCapCard) : summon) ? Infinity : 512;
@@ -16550,7 +16566,7 @@ function mountSkillCooldownLookup(root){
     const srvs = [];
     if ((skill.servers && skill.servers.tto) || usesTdlRoll(skill)) srvs.push("tto");
     if ((skill.servers && skill.servers.tot) || skill.ps) srvs.push("tot");
-    if (skill.servers && skill.servers.reborn) srvs.push("reborn");   // 4th server, shown only where a card has Reborn data (user 2026-10-25)
+    if ((skill.servers && skill.servers.reborn) || rebornStatTab(skill)) srvs.push("reborn");   // 4th server: a card with Reborn data, or one whose TAL / INT / CHA numbers lose the 512 cap there (user 2026-10-26)
     srvs.push("og");
     return srvs;
   }
@@ -33648,6 +33664,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T06:42:44.503Z","feat(bible): Reborn tab on every card whose TAL / INT / CHA numbers lose the 512 cap on Reborn (129 more cards, like TTO on damage cards), so their Reborn numbers use the uncapped stats"],
     ["2026-10-26T06:32:42.000Z","fix(bible): Reborn review fixes from 7 code reviewers: Formless Path x1.25 toggle on 27 Panda cards, Bounce cooldown with Skyfall, Dream Burst every 8 / 7 / 6 s, KO capped at 99, start-of-map cooldown on every C6 / C7 card, the same-level status rule, Common notes (run speed, potion, hit boxes, AI), C6 / C7 pointer in every Reborn popup and 70+ desc fixes"],
     ["2026-10-26T05:00:32.746Z","feat(bible): Reborn C6 / C7 skills of Monkey as real cards (Soul Link, Ja Overdrive, Gaia Bulwark, Twin Souls, Soul Pact, Runic Inferno, Runic Bastion, Elemental Sovereign + Sovereign Flash): all 96 C6 / C7 skills now real, wired and linked"],
     ["2026-10-26T04:47:18.162Z","feat(bible): Reborn C6 / C7 skills of Sheep, Mole, Penguin and Bat as real cards (32), wired on the original cards they change (Divine Benediction, Smart Warhead, Iron Overdrive, Crown of Stars, Permafrost, Vampiric Surge, Puppeteer, Doomsayer and more)"],
