@@ -4239,6 +4239,18 @@ async function donateChildTests(env) {
       const a = words(at(s.desc, 1)), b = words(at(s.servers.reborn.desc, 1)); if (!a.size) return false;
       let shared = 0; a.forEach((w) => { if (b.has(w)) shared++; }); return shared / a.size < 0.5; }).map((s) => s.id);
     good(!bad.length, "Reborn desc shares less than half its words with the card's own base desc (an override on the wrong card?) on: " + bad.join(", ")); }
+  // every Reborn desc renders at every rank and desc dep rank (user 2026-10-26): descSwap throws when the base wording it edits has moved, and the
+  // other desc loops skip a desc that throws, so a missed swap would show the BB text on Reborn without an error.
+  { const thrown = [];
+    sandbox._setServer("reborn");
+    SKILLS.filter((s) => s.servers && s.servers.reborn && typeof s.servers.reborn.desc === "function").forEach((s) => {
+      const maxDr = s.descDep && s.descDep.maxRank !== undefined ? s.descDep.maxRank : 1;
+      for (let r = 1; r <= Math.max(1, s.maxRank || 1); r++) for (let dr = 0; dr <= maxDr; dr++) {
+        try { s.servers.reborn.desc(r, dr); } catch (e) { thrown.push(s.id + " rank " + r + " dep " + dr + ": " + e.message); return; }
+      }
+    });
+    sandbox._setServer("og");
+    if (thrown.length) { console.error("[REBORN DESC ERROR] a Reborn desc throws (descSwap found no base text?): " + thrown.join("; ")); errorCount++; } else n++; }
   console.log(`Verified ${n} Reborn server infrastructure checks.`);
 }
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
