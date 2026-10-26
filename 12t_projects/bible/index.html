@@ -6364,6 +6364,15 @@
   .sk-desc-mod{display:flex; gap:7px; align-items:flex-start; break-inside:avoid; margin:0 0 3px}
   .sk-desc-mod-ico{width:18px; height:18px; border-radius:3px; flex:none; margin-top:1px}
   @media (max-width:620px){ .sk-desc-mods{column-count:1} }
+  /* Card head pills share one height so the class tag, range and costs line up (user 2026-10-26). */
+  .sk-hero-title .sk-tag, .sk-hero-title .sk-reach-badge, .sk-hero-title .sk-cost-badge{height:18px; box-sizing:border-box; display:inline-flex; align-items:center}
+  /* Phones (user 2026-10-26): the name alone on the first row, class + Passive + range and the costs centred on the second,
+     the costs after a hairline as in the desktop strip. */
+  @media (max-width:620px){
+    .sk-hero > .sk-hero-head > .sk-hero-title{flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px 8px; width:100%}
+    .sk-hero > .sk-hero-head > .sk-hero-title > .sk-hero-name{flex-basis:100%; text-align:center}
+    .sk-hero > .sk-hero-head > .sk-hero-title > .sk-hero-costs::before{content:""; width:1px; height:14px; background:var(--line); margin-right:2px}
+  }
   .sk-skill-nav{display:none}
   @media(max-width:900px){
     .sk-hero{position:relative}
@@ -33810,6 +33819,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T10:29:38.469Z","fix(bible): phone card head in two centred rows (the name, then class + range and costs), and every head pill the same height so they line up on phones and desktop"],
     ["2026-10-26T10:20:18.766Z","feat(bible): a run of four or more skill-effect lines in a description shows as a two-column list with each skill or gear icon (64 card tabs, e.g. Chameleon Combo), and the range pill joins the light-ball animation so Far Reach visibly changes it"],
     ["2026-10-26T10:00:29.136Z","feat(bible): the skill card head is one centred strip on top (icon, name, class + range, costs) and the description takes the whole row under it, from 621 px wide; phones keep their column"],
     ["2026-10-26T09:34:06.121Z","feat(bible): the Passive pill is back on the second row of the card head (class + Passive + range), and the Free pill is gone everywhere (a skill with no cost pills already shows it costs nothing)"],
