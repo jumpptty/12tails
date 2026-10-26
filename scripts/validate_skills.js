@@ -405,13 +405,9 @@ SKILLS.forEach(sk => {
       console.error(`[COST ERROR] ${ctx}: sp cost defined without valid spType ('red' | 'blue')`);
       errorCount++;
     }
-    // Automated summon/companion AI moves must never show a "Free" badge --
-    // they must omit cost completely (AGENTS.md Section 7.4). Real player-paid
-    // spends on a summon-attacker skill (e.g. Titanic Earth Pulse's ownStatsGadinaHP,
-    // Barrel Cannon's ownStatsDmgOnly) are unaffected since they don't set cost.free.
-    const isSummonAttacker = !!(sk.ownStats || sk.ownStatsDmgOnly || sk.ownStatsKaiser || sk.ownStatsGyro || sk.ownStatsPhoenix || sk.ownStatsGadinaHP);
-    if (isSummonAttacker && sk.cost.free === true) {
-      console.error(`[COST ERROR] ${ctx}: automated summon/companion move must omit cost completely, not show a Free badge (AGENTS.md Section 7.4)`);
+    // No Free pill (user 2026-10-26): a card with no cost pills already says it costs nothing, so a skill without a cost omits `cost`.
+    if (sk.cost.free !== undefined) {
+      console.error(`[COST ERROR] ${ctx}: cost.free is gone (no Free pill since 2026-10-26); omit cost for a skill that costs nothing`);
       errorCount++;
     }
   }
