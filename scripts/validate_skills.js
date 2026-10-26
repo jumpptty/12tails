@@ -4153,7 +4153,7 @@ async function donateChildTests(env) {
       const want = SKILLS.filter(s => { const o = (s.servers && s.servers[srv]) || (srv === "tot" ? s.ps : null); return o && o.changeNote; }).length;
       const common = sandbox.commonServerNotes(srv).length, rows = (p.list().match(/class="nl-row[ "]/g) || []).length;
       if (rows !== want + common || want === 0) fail(`${srv}: ${rows} rows, want ${want} + ${common} Common`); else checked++;
-      if (srv === "tto" ? common !== 2 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;
+      if (srv === "tto" ? common !== 3 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26)
       const opens = [...p.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
       if (opens.length !== want || !opens.every(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + srv))) fail(`${srv}: rows do not open the card on this server`); else checked++;
       if (!/class="nl-tag is-svc" style="--kc:var\(--(pro|seal|tip)\)"/.test(p.list())) fail(`${srv}: no change-note tags rendered`); else checked++;

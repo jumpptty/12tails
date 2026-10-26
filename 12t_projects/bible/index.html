@@ -3305,6 +3305,10 @@
   .sk-val-red{
     color:var(--seal); font-weight:600;
   }
+  .sk-server-popup-common{margin-top:10px; padding-top:8px; border-top:1px solid var(--line)}
+  .sk-server-popup-common:first-child{margin-top:0; padding-top:0; border-top:0}
+  .sk-server-popup-common-head{font-size:11px; letter-spacing:.04em; color:var(--muted)}
+  .sk-server-popup-common-title{margin-top:4px; font-weight:600; color:var(--gold)}
   .sk-server-popup-hint{
     font-family:'Prompt',sans-serif; font-size:11px; color:rgba(255,255,255,0.35);
     text-align:right; margin-top:6px;
@@ -8027,14 +8031,19 @@ const _rbStatTab = new Map();
 function rebornStatTab(card) {
   if (!card || card.onlyServer || card.soon || !card.id) return false;
   if (_rbStatTab.has(card.id)) return _rbStatTab.get(card.id);
+  const r = rebornStatCapUsed(card);
+  _rbStatTab.set(card.id, r);
+  return r;
+}
+// the card's numbers read a player TAL / INT / CHA through a 512-capped adjuster (any card, Reborn-only ones too; the popup's stat-cap note)
+function rebornStatCapUsed(card) {
+  if (!card) return false;
   const src = (v) => v == null ? "" : String(v);
   const texts = [card.dmg, card.rawModel && card.rawModel.parts].concat((card.dmgGroups || []).map(g => g.dmg)).map(src).join(" ");
   const tal = !ownTalCard(card) && /talAdjust|talHealAdjust/.test(texts);
   const cha = (card.duration !== undefined && !!card.durWrapped) || !!(card.secondaryDuration && card.secondaryDuration.durWrapped);
   const int = card.castTime !== undefined && !!card.castWrapped;
-  const r = tal || cha || int;
-  _rbStatTab.set(card.id, r);
-  return r;
+  return tal || cha || int;
 }
 function statHi(summon) {
   return rebornOn(statCapCard) && !(summon === undefined ? ownTalCard(statCapCard) : summon) ? Infinity : 512;
@@ -16689,16 +16698,42 @@ function mountSkillCooldownLookup(root){
     </svg>`;
   }
 
+  // Common server notes in a card's server popup (user 2026-10-26): a COMMON_SERVER_NOTES entry with an `id` listed here shows under the card's own
+  // note when its test picks the card (the merged server card, its desc text at max rank). An id with no test (ToT's level growth) never shows on a card.
+  const heroNAttack = (a) => a.id === String(a.class).toLowerCase() + "_nAttack";   // weapon / hat procs and seals roll on the hero's own normal attack, not a summon's
+  const COMMON_NOTE_FOR = {
+    tto: { lck: (a) => usesTdlRoll(a), gearLck: (a) => heroNAttack(a), magic: (a) => TTO_MAGIC_DMG.has(a.id) || !!a.ttoMagicDep },
+    reborn: {
+      itemChance: (a) => heroNAttack(a) || (a.dmgControls || []).includes(REBORN_BELT_DEP),
+      spCeiling: (a, txt) => /SP สูงสุด|เพดาน SP/.test(txt),
+      ai: (a) => ownTalCard(a),
+      seal: (a) => heroNAttack(a),
+      statCap: (a) => rebornStatCapUsed(a),
+      statusMerge: (a) => !!(a.status || (a.lckProc && a.lckProc.applies)),
+      runSpeed: (a, txt) => /ความเร็ววิ่ง|เคลื่อนที่เร็ว/.test(txt),
+      potion: (a, txt) => /Potion/i.test(a.name + " " + txt),
+      hitbox: (a) => { const r = typeof a.reach === "function" ? a.reach(a.maxRank || 1) : a.reach; return (Array.isArray(r) ? r : r ? [r] : []).some(p => p && ["cylinder", "box", "cone", "sector", "sphere", "tube"].includes(p.shape) && !p.faint && !p.unknown); },
+    },
+  };
+  function serverCommonNotesFor(skill, srv){
+    const tests = COMMON_NOTE_FOR[srv];
+    if (!skill || !tests) return [];
+    const a = getActiveSkill(skill, srv);
+    let txt = ""; try { txt = String(typeof a.desc === "function" ? a.desc(a.maxRank || 1, 0) : (a.desc || "")) + " " + String(a.changeNote || ""); } catch (e) { txt = ""; }
+    return commonServerNotes(srv).filter(c => { try { return !!(c.id && tests[c.id] && tests[c.id](a, txt)); } catch (e) { return false; } });
+  }
   function showServerPopup(skill, srv, options = {}) {
     hideServerPopup();
     if (!skill || srv === "og") return;
     const note = options.bodyHtml ? "" : (options.note || getServerChangeNote(skill, srv));
-    if (!note && !options.bodyHtml) return;
+    const common = (options.bodyHtml || options.note) ? [] : serverCommonNotesFor(skill, srv);
+    if (!note && !common.length && !options.bodyHtml) return;
 
     const iconKey = "server_" + srv;
     const srvName = SERVER_LABELS[srv] || srv.toUpperCase();
     const subtitle = options.subtitle || `การปรับสมดุลสกิล • ${skill.name}`;
-    const formattedNote = options.bodyHtml || formatServerNote(note, skill);
+    const commonHtml = common.length ? `<div class="sk-server-popup-common" data-role="server-common"><div class="sk-server-popup-common-head">การเปลี่ยนแปลงทั้งเซิร์ฟที่เกี่ยวกับสกิลนี้</div>${common.map(c => `<div class="sk-server-popup-common-title">${c.title}</div>${formatServerNote(c.note, skill)}`).join("")}</div>` : "";
+    const formattedNote = options.bodyHtml || (formatServerNote(note, skill) + commonHtml);
 
     const backdropEl = document.createElement("div");
     backdropEl.className = "sk-server-backdrop";
@@ -26687,27 +26722,28 @@ function mountNotePage(root, cfg){
 // with nothing to open; the note uses the same "• [Tag] text" lines as a card's changeNote.
 const COMMON_SERVER_NOTES = {
   tto: [
-    { title: "LCK ในการคำนวณ", icon: "item_lck3", note: "• [Adjust] ตัดการสุ่มจาก **LCK** ออกจากสูตร TAL / ATK / DEF ส่วนนี้จึงออกค่าเดียวกันทุกครั้ง" },
-    { title: "อาวุธและหมวกที่ติดผลด้วย LCK", icon: "w_chm66", note: "• [Nerf] โอกาสติดผลของ Poseidon / Frozen / Mummy (อาวุธ + หมวก) ตัด LCK ออก ครบชุดเป็นค่าคงที่" },
+    { id: "lck", title: "LCK ในการคำนวณ", icon: "item_lck3", note: "• [Adjust] ตัดการสุ่มจาก **LCK** ออกจากสูตร TAL / ATK / DEF ส่วนนี้จึงออกค่าเดียวกันทุกครั้ง" },
+    { id: "gearLck", title: "อาวุธและหมวกที่ติดผลด้วย LCK", icon: "w_chm66", note: "• [Nerf] โอกาสติดผลของ Poseidon / Frozen / Mummy (อาวุธ + หมวก) ตัด LCK ออก ครบชุดเป็นค่าคงที่" },
+    { id: "magic", title: "ดาเมจเวทมนตร์ (Magic)", icon: "monkey_fireBall4", note: "• [Buff] สกิลที่เป็นดาเมจเวทมนตร์ คิดกับ DEF ของศัตรูแค่ **ครึ่งเดียว** (ไม่ปัดเศษ) สกิลเหล่านี้มีป้าย ดาเมจเวทมนตร์ ข้างชิปดาเมจดิบ กดที่ป้ายเพื่อดูรายชื่อทั้งหมด" },
   ],
   tot: [
     { title: "สเตตัสตามเลเวล", icon: "common_levelup", note: "• [Nerf] การเติบโตของสเตตัสตามเลเวลถูกจำกัดไว้ที่ **เลเวล 95** ทุก **5 เลเวล** หลังเลเวล 95 เลือกได้ระหว่าง **สเตตัสพื้นฐาน 5 แต้ม** (ไม่ใช่ +5 ทุกค่า) หรือ **แต้มสกิล Class C 1 แต้ม**" },
   ],
   // Reborn (user 2026-10-25): RebornBalance.CapStat (Reborn-Mechanics-Reference.md 2.1, 2.6). talHealAdjust equals talAdjust for a player.
   reborn: [
-    { title: "โอกาสติดผลของไอเทม", icon: "item_lck3", note: "• [Adjust] โอกาสติดผลของไอเทมไม่คิด **LCK** แล้ว แต่คูณ **×1.3** แทน (ปัดขึ้น) คำอธิบายไอเทมแสดงค่าที่คูณแล้ว เช่น Poseidon Bow **+16%** (เดิม **+12%**) โอกาสของสกิลยังคิด LCK ตามเดิม\n• [Adjust] ชิ้นที่ให้ผลเดียวกันรวมโอกาสก่อนคูณ เช่น Poseidon Bow + Poseidon Helmet ได้ **26%** (ไม่ใช่ 16% + 11%)\n• [Adjust] โอกาสคริติคอลจากอุปกรณ์ (เช่น ชุด G. Marshal / G. Champion) ก็คิดแบบเดียวกัน: รวมโอกาสจากทุกชิ้นแล้วคูณ **×1.3** (ปัดขึ้น) ไม่คิด LCK เช่น ครบชุด G. Champion (**18%**) ได้ **24%** ทุกค่า LCK\n• [Buff] เข็มขัด **Asgard / Midgard / Niflheim Belt** เพิ่มโอกาสคริติคอลจากอุปกรณ์ **+3%** (บวกก่อนคูณ ×1.3)" },
-    { title: "เพดาน SP", icon: "mole_reload2", note: "• [Adjust] การฟื้นฟู SP และสกิลที่เพิ่ม SP (เช่น **Blood Rage**, **Skill Gamble**, **Reload**) ไม่ถูกตัดที่ **100** แล้ว: SP เติมได้ถึง **100** หรือถึง SP สูงสุดของตัวเองถ้าสูงกว่า (SP สูงสุด = TAL ÷ 5 + 10 จึงเกิน 100 เมื่อ TAL **455** ขึ้นไป)" },
-    { title: "AI หาเป้าหมาย", icon: "monkey_phoenix4", note: "• [Adjust] AI ทุกตัว ทั้งมอนสเตอร์ บอส สัตว์อัญเชิญ (เช่น **Barrel Bot**, **Phoenix**, **Ja**, **Gadina**, **Gaos**, **Lavu**) ทหารรับจ้าง และ NPC จากเหรียญหาเป้าหมายใหม่ถี่ขึ้น: แบบที่เดิมสุ่มทุก **1-2 วินาที** เป็นทุก **0.3-0.7 วินาที** และแบบที่เดิมทุก **1 วินาที** เป็นทุก **0.5 วินาที**" },
-    { title: "ผนึก (Effect Seal)", icon: "c_all66", note: "• [Adjust] อุปกรณ์แต่ละช่องติด **ผนึก** ได้ **1** อัน ผนึกที่ให้สถานะจะทอยเมื่อท่าโจมตีปกติโดนเป้าหมาย (ฮิตเดียวกับที่ทอยผลของอาวุธ) โอกาส **×1.3** ไม่คิด LCK และระยะเวลาคิดแบบดีบัฟทั่วไป\n• [Adjust] ผนึกต่างแบบที่ให้สถานะเดียวกันรวมโอกาสกัน แต่ผนึกแบบเดียวกันสองช่องนับครั้งเดียว ส่วนผนึกเพิ่มค่าคงที่ (HP สูงสุด SP สูงสุด คริติคอล ต้านทาน น้ำหนัก) ซ้อนกันได้ทุกช่อง\n• [Adjust] อุปกรณ์ที่ติดผนึกแสดงชื่อผนึกแทนผลพิเศษเดิมในคำอธิบาย แต่ผลเดิมยังทำงานอยู่" },
-    { title: "เพดานสเตตัส", icon: "superStatPlus", note: "• [Buff] **TAL**, **INT** และ **CHA** ของผู้เล่นไม่มีเพดาน **512** แล้ว (มอนสเตอร์ สัตว์อัญเชิญ ร่างแยก และทหารรับจ้างยังตันที่ 512 ส่วน Mount นับเป็นผู้เล่น) ดาเมจ ฮีล ระยะเวลา และเวลาร่ายที่คิดจากค่าเหล่านี้จึงโตต่อได้เกิน 512\n• [Buff] **DEF** ของผู้เล่นตันที่ **1024** (เดิม 512)\n• [Adjust] ฮีลที่คิดตาม TAL ใช้สูตรเดียวกับดาเมจทุกประการ จึงไม่มีเพดาน 512 เช่นกัน" },
+    { id: "itemChance", title: "โอกาสติดผลของไอเทม", icon: "item_lck3", note: "• [Adjust] โอกาสติดผลของไอเทมไม่คิด **LCK** แล้ว แต่คูณ **×1.3** แทน (ปัดขึ้น) คำอธิบายไอเทมแสดงค่าที่คูณแล้ว เช่น Poseidon Bow **+16%** (เดิม **+12%**) โอกาสของสกิลยังคิด LCK ตามเดิม\n• [Adjust] ชิ้นที่ให้ผลเดียวกันรวมโอกาสก่อนคูณ เช่น Poseidon Bow + Poseidon Helmet ได้ **26%** (ไม่ใช่ 16% + 11%)\n• [Adjust] โอกาสคริติคอลจากอุปกรณ์ (เช่น ชุด G. Marshal / G. Champion) ก็คิดแบบเดียวกัน: รวมโอกาสจากทุกชิ้นแล้วคูณ **×1.3** (ปัดขึ้น) ไม่คิด LCK เช่น ครบชุด G. Champion (**18%**) ได้ **24%** ทุกค่า LCK\n• [Buff] เข็มขัด **Asgard / Midgard / Niflheim Belt** เพิ่มโอกาสคริติคอลจากอุปกรณ์ **+3%** (บวกก่อนคูณ ×1.3)" },
+    { id: "spCeiling", title: "เพดาน SP", icon: "mole_reload2", note: "• [Adjust] การฟื้นฟู SP และสกิลที่เพิ่ม SP (เช่น **Blood Rage**, **Skill Gamble**, **Reload**) ไม่ถูกตัดที่ **100** แล้ว: SP เติมได้ถึง **100** หรือถึง SP สูงสุดของตัวเองถ้าสูงกว่า (SP สูงสุด = TAL ÷ 5 + 10 จึงเกิน 100 เมื่อ TAL **455** ขึ้นไป)" },
+    { id: "ai", title: "AI หาเป้าหมาย", icon: "monkey_phoenix4", note: "• [Adjust] AI ทุกตัว ทั้งมอนสเตอร์ บอส สัตว์อัญเชิญ (เช่น **Barrel Bot**, **Phoenix**, **Ja**, **Gadina**, **Gaos**, **Lavu**) ทหารรับจ้าง และ NPC จากเหรียญหาเป้าหมายใหม่ถี่ขึ้น: แบบที่เดิมสุ่มทุก **1-2 วินาที** เป็นทุก **0.3-0.7 วินาที** และแบบที่เดิมทุก **1 วินาที** เป็นทุก **0.5 วินาที**" },
+    { id: "seal", title: "ผนึก (Effect Seal)", icon: "c_all66", note: "• [Adjust] อุปกรณ์แต่ละช่องติด **ผนึก** ได้ **1** อัน ผนึกที่ให้สถานะจะทอยเมื่อท่าโจมตีปกติโดนเป้าหมาย (ฮิตเดียวกับที่ทอยผลของอาวุธ) โอกาส **×1.3** ไม่คิด LCK และระยะเวลาคิดแบบดีบัฟทั่วไป\n• [Adjust] ผนึกต่างแบบที่ให้สถานะเดียวกันรวมโอกาสกัน แต่ผนึกแบบเดียวกันสองช่องนับครั้งเดียว ส่วนผนึกเพิ่มค่าคงที่ (HP สูงสุด SP สูงสุด คริติคอล ต้านทาน น้ำหนัก) ซ้อนกันได้ทุกช่อง\n• [Adjust] อุปกรณ์ที่ติดผนึกแสดงชื่อผนึกแทนผลพิเศษเดิมในคำอธิบาย แต่ผลเดิมยังทำงานอยู่" },
+    { id: "statCap", title: "เพดานสเตตัส", icon: "superStatPlus", note: "• [Buff] **TAL**, **INT** และ **CHA** ของผู้เล่นไม่มีเพดาน **512** แล้ว (มอนสเตอร์ สัตว์อัญเชิญ ร่างแยก และทหารรับจ้างยังตันที่ 512 ส่วน Mount นับเป็นผู้เล่น) ดาเมจ ฮีล ระยะเวลา และเวลาร่ายที่คิดจากค่าเหล่านี้จึงโตต่อได้เกิน 512\n• [Buff] **DEF** ของผู้เล่นตันที่ **1024** (เดิม 512)\n• [Adjust] ฮีลที่คิดตาม TAL ใช้สูตรเดียวกับดาเมจทุกประการ จึงไม่มีเพดาน 512 เช่นกัน" },
     // Reborn-Mechanics-Reference.md 2.7 (Reborn:CharacterControl.cs:9658-9663 vs BB:CharacterControl.cs:14115-14143)
-    { title: "สถานะซ้อนจากผู้ใส่คนละคน", icon: "rabbit_heatShot3", note: "• [Adjust] สถานะเดียวกันที่เลเวลเท่ากันจากผู้ใส่ **คนละคน** ไม่เพิ่มเลเวลอีก **1** แล้ว (เดิมได้ +1 เลเวล เช่น กระต่าย **2** ตัวยิง **Heat Shot** ใส่เป้าหมายเดียวกันได้ [heat5]) ระยะเวลาเป็นค่าที่นานกว่าแทน" },
+    { id: "statusMerge", title: "สถานะซ้อนจากผู้ใส่คนละคน", icon: "rabbit_heatShot3", note: "• [Adjust] สถานะเดียวกันที่เลเวลเท่ากันจากผู้ใส่ **คนละคน** ไม่เพิ่มเลเวลอีก **1** แล้ว (เดิมได้ +1 เลเวล เช่น กระต่าย **2** ตัวยิง **Heat Shot** ใส่เป้าหมายเดียวกันได้ [heat5]) ระยะเวลาเป็นค่าที่นานกว่าแทน" },
     // Reborn:Wolf.cs:11271 (Mathf.Clamp(num2, 0, 60)) vs BB:Wolf.cs:621 (0, 12), every hero file; towns Reborn:Bat.cs:11987 (4, 20) vs BB:Bat.cs:1055 (4, 8)
-    { title: "ความเร็ววิ่งสูงสุด", icon: "sheep_allFeather2", note: "• [Buff] ความเร็ววิ่งสูงสุดในการต่อสู้ **12 → 60** และในเมืองหรือแคมป์ **8 → 20** บัฟความเร็วจึงเร็วขึ้นได้เกินเพดานเดิม" },
+    { id: "runSpeed", title: "ความเร็ววิ่งสูงสุด", icon: "sheep_allFeather2", note: "• [Buff] ความเร็ววิ่งสูงสุดในการต่อสู้ **12 → 60** และในเมืองหรือแคมป์ **8 → 20** บัฟความเร็วจึงเร็วขึ้นได้เกินเพดานเดิม" },
     // Reborn:GameGui.cs:2042 (potion 50 s) vs BB:GameGui.cs:32659 (150 s)
-    { title: "คูลดาวน์ยา", icon: "rabbit_extraPotion5", note: "• [Buff] คูลดาวน์ของยา (Potion) **150 → 50 วินาที**" },
+    { id: "potion", title: "คูลดาวน์ยา", icon: "rabbit_extraPotion5", note: "• [Buff] คูลดาวน์ของยา (Potion) **150 → 50 วินาที**" },
     // Reborn:Damage.cs:433-436, :480, :538, :551, :604-608 (RebornHitBox: world-space bounds) vs BB:Damage.cs:1099, :1140, :1156 (CharacterController radius / height)
-    { title: "ขนาดตัวเป้าหมาย", icon: "whale_superSize4", note: "• [Adjust] ท่าที่หาเป้าหมายในวง กล่อง หรือมุม คิดขนาดตัวเป้าหมายจากขนาดจริงในเกมหลังขยายตัว มอนสเตอร์ตัวใหญ่และตัวที่ขยายตัวจึงโดนง่ายขึ้น" },
+    { id: "hitbox", title: "ขนาดตัวเป้าหมาย", icon: "whale_superSize4", note: "• [Adjust] ท่าที่หาเป้าหมายในวง กล่อง หรือมุม คิดขนาดตัวเป้าหมายจากขนาดจริงในเกมหลังขยายตัว มอนสเตอร์ตัวใหญ่และตัวที่ขยายตัวจึงโดนง่ายขึ้น" },
   ],
 };
 function commonServerNotes(srv){ return COMMON_SERVER_NOTES[srv] || []; }
@@ -33718,6 +33754,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T07:14:55.961Z","feat(bible): a TTO / Reborn server popup now lists the common changes that touch that skill (TTO LCK removal, gear LCK, the new Magic Damage [Buff] note; Reborn stat caps, item chances, status merge, hit boxes and more), so cards with no change of their own explain their server numbers too"],
     ["2026-10-26T07:07:24.139Z","feat(bible): the last Reborn review wiring: Mole turrets vs Veil Of Hunt / Night Eye, a Reactor Core Overdrive TAL +120 toggle on 26 Mole cards, the C6 / C7 hooks on Common support hits, Seraph Wings / Perfect Serenity on four more Sheep heals, and small Sheep / Rabbit / Mole fixes"],
     ["2026-10-26T06:53:39.633Z","feat(bible): Reborn Cat purple in the damage numbers: Lunar Tempest's 20% DEF-skipping purple hits on Moon Blade / Moon Storm and Shadow Upon Shadow's purple per shade (0-3 toggle) on every Combo hit, as superscript purple with the gold mixed total (new hitPurple field)"],
     ["2026-10-26T06:42:44.503Z","feat(bible): Reborn tab on every card whose TAL / INT / CHA numbers lose the 512 cap on Reborn (129 more cards, like TTO on damage cards), so their Reborn numbers use the uncapped stats"],
