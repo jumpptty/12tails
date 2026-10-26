@@ -746,6 +746,7 @@ Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`), verified 2026-10-26.
 - Buiten with Soul Pact: the turret runs only while the statue is the current summon (`Reborn:Monkey.cs:15635-15638`), so summoning Phoenix / Ja after it stops the hammer drops for good; the `[buiten]` aura stays.
 - Runic Inferno's ×1.3 also lands on Mike Circle, Mike Blink, Second Stone and the Buiten turret hammers (`Reborn:Monkey.cs:588`, `:5192`, `:3578`, `:4340`): desc line and link on each (no damage model there).
 - `[runicflame]` popup: no code names (all servers); Reborn adds the fixed 15 s with Runic Inferno.
+- Soul Pact: Summon Attack / Defense and the Phoenix4 / Gadina4 skills (Blazing Arrow, Fire Avatar, Planet Breaker, Titanic Earth Pulse, Earth Guard, Earth Form) act on the latest summon only (`Reborn:Monkey.cs:13556-13608`, `:13665-13925`): a Reborn line and a Soul Pact link on each.
 
 ### C6 / C7 skills (Reborn only)
 

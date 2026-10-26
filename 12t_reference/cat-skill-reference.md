@@ -873,6 +873,7 @@ Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`, build and tags in [Re
 - Awareness: a `**Veil Of Hunt:**` line (strips `[huntVeil]` from every enemy it reaches, `Reborn:RebornC7Passive.cs:858-861`). Ninth Life: the +50% speed lasts 3.5 s, `[invisible3]` its own 4 s.
 - **Modelled since 2026-10-26 (`hitPurple`, user decision):** Lunar Tempest's 20% DEF-skipping purple hits on Moon Blade / Moon Storm (`Reborn:RebornC6Passive.cs:88-92`, `:109-112`, then `RPC_AddEffectDamage` after dmgAdjust, `Reborn:CharacterControl.cs:7265-7283`) and Shadow Upon Shadow's `max(1, floor(0.3 × dmg))` purple per shade on every Combo hit (`Reborn:RebornC7Passive.cs:645-661`): Moon Blade / Moon Storm roll the 20% purple outcome per hit (no LCK, after dmgAdjust and FinalOut, no DEF, hitMod rounded down; Moon Blade rank 2 at ATK / TAL 300, DEF 100: 285-315 white, 514-550 purple per hit), and Combo has a 0-3 shade toggle (`REBORN_CAT_SHADOW_DEP` in its damage header) adding the shades' purple to each white hit except Hidden Blade's backstab.
 - Start-of-map cooldown (every combat map: missions, PvP and combat zones, `RebornZone.CombatMap`, `Reborn:RebornZone.cs:28-38`; Revised Art applies, `Reborn:CharacterControl.cs` `addTimeOut`; card bullet on each): Broadside `agiAdjust(300)`, Ghost Galleon `agiAdjust(360)`.
+- Two Pair copies (`RebornC6.PairCopy`, `Reborn:Cat.cs:3169-3191`) skip Unyielding Oath's +1 level and Doomsayer's doom boost (`pairCopy`, `Reborn:RebornC7Passive.cs:800-812`, `:835`): limit line and links on Two Pair.
 
 ### C6 / C7 skills (Reborn only)
 
