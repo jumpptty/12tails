@@ -6347,6 +6347,17 @@
   @media (max-width:900px){ .sk-dep-strip{display:flex; flex-wrap:wrap} .sk-dep-item-name{max-width:180px} }
   .sk-dep-item-tags{display:flex; gap:8px}
   .sk-dep-tag{font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; line-height:1; color:var(--tag-c)}
+  /* Head strip on top (user 2026-10-26, variant G of the head-on-top mocks): from 621 px wide the icon, name, class + range and
+     costs sit on one centred line, each group after a hairline, and the description takes the whole row under it. Phones (<= 620 px)
+     keep their column. One block, so reverting it brings back the three-row head beside the description. */
+  @media (min-width:621px){
+    .sk-hero > .sk-hero-head{flex-wrap:wrap; justify-content:center; gap:10px}
+    .sk-hero > .sk-hero-head .sk-hero-icon{width:56px; height:56px}
+    .sk-hero > .sk-hero-head > .sk-hero-title{flex-direction:row; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px}
+    .sk-hero > .sk-hero-head > .sk-hero-title > .sk-hero-sub::before{content:""; width:1px; height:14px; background:var(--line); margin-right:4px}
+    .sk-hero > .sk-hero-head > .sk-hero-desc{flex-basis:100%; margin-left:0}
+    .sk-hero > .sk-hero-head:has(.sk-hero-pips):has(.sk-hero-desc){row-gap:20px; margin-bottom:12px}
+  }
   .sk-skill-nav{display:none}
   @media(max-width:900px){
     .sk-hero{position:relative}
@@ -33755,6 +33766,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T10:00:29.136Z","feat(bible): the skill card head is one centred strip on top (icon, name, class + range, costs) and the description takes the whole row under it, from 621 px wide; phones keep their column"],
     ["2026-10-26T09:34:06.121Z","feat(bible): the Passive pill is back on the second row of the card head (class + Passive + range), and the Free pill is gone everywhere (a skill with no cost pills already shows it costs nothing)"],
     ["2026-10-26T09:23:41.776Z","feat(bible): bigger skill icon beside the three-row card head (72 px, 64 px on smaller windows, the same on every card), and status popups balance their lines so one wrapped word no longer leaves a near-empty row"],
     ["2026-10-26T09:14:22.099Z","fix(bible): TTO fixed the Chameleon crit gear the same way as ToT (Marshal and Champion count, Mantis does not) on Combo, Left Stride and Critical Plus and in the Chameleon attack sim; Left Stride and Critical Plus get the ToT fix too"],
