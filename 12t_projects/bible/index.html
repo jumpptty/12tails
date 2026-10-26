@@ -3988,16 +3988,23 @@
   .sk-unintended{ display:block; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); color:var(--gold); font-size:11.5px; font-weight:400; }
   .sk-unintended .sk-val{ color:var(--gold); }
   /* Card notes fold into chips (user 2026-10-08: "cluttering the default view"): a chip per kind (tooltip mismatch / BB bug / unintended),
-     the note itself opens on a click. Open state is kept per card across re-renders (noteOpenState). */
+     the note itself opens on a click. Open state is kept per card across re-renders (noteOpenState).
+     Icon only, outside the box (user 2026-10-26): the chips stand in a column in the gutter left of the desc box's gold bar, at its
+     top; the label is the button's tooltip and aria-label. These rules come after the pill rules below and win. */
   .sk-note-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:3px; }
   .sk-note-chip{ display:inline-flex; align-items:center; gap:5px; font:inherit; font-size:11px; font-weight:700; line-height:1.55; padding:4px 10px 1px 8px; border-radius:999px; border:1px solid currentColor; background:transparent; cursor:pointer; opacity:.85; transition:opacity .15s ease, background-color .15s ease; }
   .sk-note-chip:hover, .sk-note-chip:focus-visible{ opacity:1; }
+  .sk-hero-desc{ position:relative; }
+  .sk-hero-desc > .sk-note-chips{ position:absolute; top:3px; right:100%; margin:0 4px 0 0; flex-direction:column; flex-wrap:nowrap; gap:5px; }
+  .sk-hero-desc > .sk-note-chips > .sk-note-chip{ width:20px; height:20px; padding:0; gap:0; justify-content:center; border:0; border-radius:50%; opacity:.92; transition:opacity .15s ease, transform .15s ease; }
+  .sk-hero-desc > .sk-note-chips > .sk-note-chip:hover, .sk-hero-desc > .sk-note-chips > .sk-note-chip:focus-visible{ opacity:1; transform:translateY(-1px); }
+  .sk-hero-desc > .sk-note-chips .sk-note-ico{ width:18px; height:18px; top:0; filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)); }
   .sk-note-panel.sk-note-wait{ opacity:0; }
   .sk-note-ghost{ position:fixed; box-sizing:border-box; z-index:9999; pointer-events:none; border:1px solid currentColor; border-radius:999px; }
   .sk-note-bug{ color:var(--seal); }
   .sk-note-tip{ color:var(--tip); }
   .sk-note-unintended{ color:var(--gold); }
-  .sk-note-ico{ flex:none; width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .sk-note-ico{ flex:none; width:11px; height:11px; fill:currentColor; stroke:none; }   /* solid (NOTE_ICO); the bug's legs carry their own stroke */
   .sk-note-ico{ position:relative; top:-1.5px; }   /* the chip pads 4px top / 1px bottom for the Thai text, which put the icon 1.5px under the chip's middle; lift it back (the text is untouched) */
   .sk-note-panel{ display:block; }
   .sk-note-panel[hidden]{ display:none; }
@@ -6370,6 +6377,8 @@
   .sk-desc-mod > div{min-width:0}
   .sk-desc-mod-ico{width:18px; height:18px; border-radius:3px; flex:none; margin-top:calc(.71em - 9px); object-fit:contain; box-sizing:border-box}
   .sk-desc-mod-ico.is-gear{padding:1px; background:rgba(0,0,0,.35); border:1px solid rgba(212,175,55,.32)}
+  /* A desc line that newly appears (user 2026-10-26) waits unseen for its light ball (heroDelta), then is drawn out like a card note. */
+  .sk-desc-line.sk-desc-wait, .sk-desc-mod.sk-desc-wait{opacity:0}
   @media (max-width:620px){ .sk-desc-mods.is-two{grid-template-columns:minmax(0,1fr); grid-template-rows:none; grid-auto-flow:row} }
   /* Card head pills share one height so the class tag, range and costs line up (user 2026-10-26). */
   .sk-hero-title .sk-tag, .sk-hero-title .sk-reach-badge, .sk-hero-title .sk-cost-badge{height:18px; box-sizing:border-box; display:inline-flex; align-items:center}
@@ -13009,9 +13018,12 @@ function renderDescWithMods(str, skill, lck) {
   const runs = []; let start = null;
   lines.forEach((l, i) => { if (isMod(l)) { if (start === null) start = i; } else { if (start !== null && i - start >= DESC_MOD_MIN) runs.push([start, i]); start = null; } });
   if (start !== null && lines.length - start >= DESC_MOD_MIN) runs.push([start, lines.length]);
-  if (!runs.length || !lines.every(balanced)) return renderRichText(str, skill, lck);
+  if (!lines.every(balanced)) return renderRichText(str, skill, lck);
+  // every text line is its own .sk-desc-line (an icon line is its .sk-desc-mod), so heroDelta can tell a line that newly appears
+  const wrap = (ls) => ls.map((l) => `<span class="sk-desc-line">${renderRichText(l, skill, lck)}</span>`).join("<br>");
+  if (!runs.length) return wrap(lines);
   const out = []; let text = [], r = 0;
-  const flush = () => { if (text.length) out.push(out.length ? `<div class="sk-desc-after">${renderRichText(text.join("<br>"), skill, lck)}</div>` : `<span class="sk-desc-lead">${renderRichText(text.join("<br>"), skill, lck)}</span>`); text = []; };
+  const flush = () => { if (text.length) out.push(out.length ? `<div class="sk-desc-after">${wrap(text)}</div>` : `<span class="sk-desc-lead">${wrap(text)}</span>`); text = []; };
   for (let i = 0; i < lines.length; ) {
     if (r < runs.length && i === runs[r][0]) {
       flush();
@@ -20383,6 +20395,40 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const b = el && el.isConnected ? el : displayEl.querySelector(".sk-magic-badge");
       if (b){ b.classList.remove("sk-magic-wait"); restartClass(b, "sk-magic-in"); }
     }
+    // Desc lines (user 2026-10-26: a whole new line gets the light ball too, in the card notes' style). Every <br> line of the desc
+    // is a .sk-desc-line and every icon line a .sk-desc-mod (renderDescWithMods). A line is known by its text with the numbers
+    // masked, so a rank that only changes a number keeps its line; a line the last state did not have is new: it waits unseen
+    // (.sk-desc-wait), its light lands at its start (the icon of an icon line) and it is drawn out from there.
+    const DESC_LINE_SEL = ".sk-hero-desc .sk-desc-line, .sk-hero-desc .sk-desc-mod";
+    function descLineEls(){ return Array.from(displayEl.querySelectorAll(DESC_LINE_SEL)).filter(el => !el.closest(".sk-status-tip, .sk-note-panel")); }
+    function descLineKey(el){
+      const c = el.cloneNode(true);
+      c.querySelectorAll(".sk-status-tip, button, .sk-roll-old, .sk-roll-tint, .sk-dtag").forEach(n => n.remove());
+      return c.textContent.replace(/\d+(?:[.,]\d+)*/g, "#").replace(/\s+/g, " ").trim();
+    }
+    // A desc number / status keyword is placed by its line (key + which copy of it) and its place inside that line, so a line
+    // that comes or goes does not shift the comparison of everything after it (numbers outside any line keep plain order).
+    function descSigs(list){
+      const occ = new Map(), lineId = new Map(), per = new Map();
+      descLineEls().forEach(l => { const k = descLineKey(l), n = (occ.get(k) || 0) + 1; occ.set(k, n); lineId.set(l, k + "#" + n); });
+      let loose = 0;
+      return list.map(el => {
+        const l = el.closest(".sk-desc-line, .sk-desc-mod"), id = l && lineId.get(l);
+        if (!id) return "~" + (loose++);
+        const i = per.get(id) || 0; per.set(id, i + 1);
+        return id + "|" + i;
+      });
+    }
+    function lineStart(el){
+      const ico = el.querySelector(".sk-desc-mod-ico");
+      const r = ico ? ico.getBoundingClientRect() : (el.getClientRects()[0] || el.getBoundingClientRect());
+      return ico ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: r.left + 6, y: r.top + r.height / 2 };
+    }
+    function revealLine(el){
+      if (!el || !el.isConnected || !el.classList.contains("sk-desc-wait")) return;
+      el.classList.remove("sk-desc-wait");
+      el.animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: 360, easing: "cubic-bezier(.3,.6,.3,1)" });
+    }
     // The reverse (user 2026-10-07): a badge the change removed is put back as a ghost, shrinks out, then its light flies home.
     function magicOut(el, then){
       restartClass(el, "sk-magic-out");
@@ -20739,15 +20785,26 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         stats: statSeen || statInputs().map(([, el]) => statNum(el)),
         click, rank: rankSeen && selected && rankSeen.id === selected.id ? rankSeen.r : null, bdN: bdNSeen || bdCounts(),
         nums: deltaFields().map(list => list.map(deltaValue)), htmls: deltaFields().map(list => list.map(rollHtmls)), magic: !!displayEl.querySelector(".sk-magic-badge:not(.sk-magic-wait):not(.sk-magic-out)"),
-        magicHtml: (displayEl.querySelector(".sk-magic-badge:not(.sk-magic-out)") || {}).outerHTML || "" };
+        magicHtml: (displayEl.querySelector(".sk-magic-badge:not(.sk-magic-out)") || {}).outerHTML || "",
+        lines: descLineEls().map(descLineKey), sigs: deltaFields().map((list, g) => g === 2 || g === 3 ? descSigs(list) : null) };
     }
     function heroDelta(prev){
       if (!prev.id || !selected || prev.id !== selected.id){ rollBase.clear(); rollShown.clear(); dtagCur.clear(); return; }
       const magicNew = prev.magic ? null : displayEl.querySelector(".sk-magic-badge");
       if (magicNew) magicNew.classList.add("sk-magic-wait");
+      const newLines = [];
+      if (prev.lines){
+        const pool = new Map(), lineEls = descLineEls();
+        prev.lines.forEach(k => pool.set(k, (pool.get(k) || 0) + 1));
+        lineEls.forEach(el => { const k = descLineKey(el), n = pool.get(k) || 0; if (n) pool.set(k, n - 1); else if (k) newLines.push(el); });
+        if (newLines.length === lineEls.length || newLines.length > 6) newLines.length = 0;   // a desc rewritten as a whole is a text change, not lines arriving
+      }
+      newLines.forEach(el => el.classList.add("sk-desc-wait"));
+      const newLineSet = new Set(newLines);
       rollHoldAll(prev);   // changed values show their old value until their light lands (or until the held volley plays)
       if (document.querySelector('[data-role="server-popup"], [data-role="preset-popup"], [data-role="bd-backdrop"]')){ deltaHeld = prev; return; }
       if (statTyping){ deltaHeld = prev; return; }   // typing in a stat field: plays once when it is done (statTypingFlush)
+      if (newLines.length) setTimeout(() => newLines.forEach(revealLine), 4000);   // safety: a line never stays unseen (the roll hold's limit too)
       let magicGone = null;
       const magicRow = prev.magic && prev.magicHtml && !displayEl.querySelector(".sk-magic-badge") && displayEl.querySelector(".sk-dmg-calc .sk-dmg-label-row");
       if (magicRow){
@@ -20765,8 +20822,12 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       // numDirOf: which way the number itself moved (+1 / -1 / 0), for the change roll and tag (user 2026-10-06: a shorter
       // cooldown is better, but it rolls down). dirOf stays the better / worse judgement (colour, comets).
       const changed = [], dirOf = new Map(), numDirOf = new Map();
+      const sigNow = deltaFields().map((list, g) => prev.sigs && prev.sigs[g] ? descSigs(list) : null);
+      const sigWas = (prev.sigs || []).map(s => s ? new Map(s.map((x, j) => [x, j])) : null);
       deltaFields().forEach((list, g) => list.forEach((el, i) => {
-        const was = prev.vals[g][i];
+        if (sigNow[g] && newLines.some(l => l.contains(el))) return;   // inside a new line: the line's own light covers it
+        const pi = sigNow[g] ? sigWas[g].get(sigNow[g][i]) : i;
+        const was = pi === undefined ? undefined : prev.vals[g][pi];
         // a value chip changed when it waits on its base (rollHoldAll: the value on screen, maybe older than the snapshot)
         const chip = g === 0 && el.matches(".sk-stat, .sk-summon-stat"), base = chip ? rollBase.get(chipKey(i)) : null;
         if (chip ? !base : (was === undefined || was === deltaText(el))) return;
@@ -20796,6 +20857,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         numDirOf.set(row, [row.querySelector(".sk-dmg-final"), row.querySelector(".sk-dmg-calc")].map(e => (e && numDirOf.get(e)) || 0).find(Boolean) || 0);
       });
       if (magicNew){ changed.push(magicNew); dirOf.set(magicNew, 1); }
+      newLines.forEach(el => { changed.push(el); dirOf.set(el, 1); });
       if (magicGone){ changed.push(magicGone); dirOf.set(magicGone, -1); }
       // Special weapons that cut damage (Wolf Katana, Rabbit Gatling Gun: x0.75) are "worse" when switched on.
       const WORSE_WHEN_ON = ["wolfKatana", "rabW59", "catW59", "mnkW59", "pgnW59", "batW59", "bsnW59", "pndW59", "whlW59", "molW59", "shpW59"];
@@ -20868,6 +20930,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
               setTimeout(() => magicOut(t.el, () => fireShot(t, c, aqua)), i * 45);
               return;
             }
+            if (newLineSet.has(t.el)){
+              setTimeout(() => fireShot(c, lineStart(t.el), tone || false, () => revealLine(t.el)), outDelay + i * 45);
+              return;
+            }
             if (t.el === magicNew){
               const aqua = getComputedStyle(t.el).getPropertyValue("--stat-tal").trim() || "#22d3ee";
               setTimeout(() => fireShot(c, t, aqua, () => revealMagic(t.el)), outDelay + i * 45);
@@ -20934,7 +21000,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           volley(centerOf(pip || from), up); return;
         }
       }
-      if (!src){ changed.forEach((el, i) => { if (el === magicNew) return revealMagic(el); if (el === magicGone) return magicOut(el); const worse = (dirOf.get(el) || 0) < 0, col = worse ? null : statColorFor(el), nd = numDirOf.get(el) || 0; setTimeout(() => { if (!el.isConnected) return; pingField(el, worse ? "sk-delta-down" : (col ? "sk-delta-stat" : "sk-delta"), col); changeOn(el, nd ? nd > 0 : !worse, worse ? SHOT_RED : (col || SHOT_GOLD)); }, i * 30); }); return; }
+      if (!src){ changed.forEach((el, i) => { if (newLineSet.has(el)) return revealLine(el); if (el === magicNew) return revealMagic(el); if (el === magicGone) return magicOut(el); const worse = (dirOf.get(el) || 0) < 0, col = worse ? null : statColorFor(el), nd = numDirOf.get(el) || 0; setTimeout(() => { if (!el.isConnected) return; pingField(el, worse ? "sk-delta-down" : (col ? "sk-delta-stat" : "sk-delta"), col); changeOn(el, nd ? nd > 0 : !worse, worse ? SHOT_RED : (col || SHOT_GOLD)); }, i * 30); }); return; }
       // Dependency toggle: outward light leaves as the icon shows its lit face (180 ms in); when the toggle got worse the
       // icon holds its old face and turns over as the last inward comet lands.
       const c = centerOf(pipPoint(src.b.closest(".sk-dep-btncol"), src.up) || src.b);
@@ -21434,7 +21500,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const noteIsOpen = (k) => noteOpenState.kinds.includes(k);
     const closedDefs = noteDefs.filter(([k]) => !noteIsOpen(k));   // a chip turns into its note and does not come back until the card is visited again
     const noteChipsHtml = noteDefs.length
-      ? `${closedDefs.length ? `<span class="sk-note-chips">${closedDefs.map(([k, , label]) => `<button type="button" class="sk-note-chip sk-note-${k}" data-note-toggle="${k}" aria-expanded="false">${NOTE_ICO[k]}<span>${label}</span></button>`).join("")}</span>` : ""}${noteDefs.map(([k, html]) => `<span class="sk-note-panel" data-note="${k}"${noteIsOpen(k) ? "" : " hidden"}>${html}</span>`).join("")}`
+      ? `${closedDefs.length ? `<span class="sk-note-chips">${closedDefs.map(([k, , label]) => `<button type="button" class="sk-note-chip sk-note-${k}" data-note-toggle="${k}" aria-expanded="false" aria-label="${label}" title="${label}">${NOTE_ICO[k]}</button>`).join("")}</span>` : ""}${noteDefs.map(([k, html]) => `<span class="sk-note-panel" data-note="${k}"${noteIsOpen(k) ? "" : " hidden"}>${html}</span>`).join("")}`
       : "";
     const heroDescHtml = (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml || tipNoteHtml || bbBugHtml || unintendedHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}${activeSelected.soon ? " sk-soon" : ""}">${statusBadgeHtml}${descFormatted}${noteChipsHtml}${liveCheckHtml}${descDepToggle}</div>` : "";
     // Per-card chip repositioning (added 2026-09-19): a skill's own `chipCols`
@@ -26886,11 +26952,12 @@ function bbIssueItems(){
   BB_ISSUES_EXTRA.forEach(e => items.push({ s: e.skill ? SKILLS.find(x => x.id === e.skill) : null, title: e.title, cls: e.cls, kind: e.kind, text: e.text, open: e.open }));
   return items;
 }
-// Icons of the three note kinds: the skill card chips and the bb-issues page tags share them.
+// Icons of the three note kinds: the skill card chips and the bb-issues page tags share them. Solid shapes (user 2026-10-26: easier
+// to see than the old outlines): the "i" and the bug's middle seam are holes (evenodd), the bug's legs are the only strokes.
 const NOTE_ICO = {
-  tip: '<svg class="sk-note-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
-  bug: '<svg class="sk-note-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7.5a3 3 0 0 1 6 0"/><rect x="7" y="8" width="10" height="11" rx="5"/><path d="M12 8v11M4 12h3M17 12h3M5 7l3 2M19 7l-3 2M5 18l3-2M19 18l-3-2"/></svg>',
-  unintended: '<svg class="sk-note-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>',
+  tip: '<svg class="sk-note-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 1.5a10.5 10.5 0 1 1 0 21a10.5 10.5 0 0 1 0-21ZM10.7 10.3h2.6v7.6h-2.6ZM12 5.5a1.65 1.65 0 1 0 0 3.3a1.65 1.65 0 0 0 0-3.3Z"/></svg>',
+  bug: '<svg class="sk-note-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 7.7a3.8 3.8 0 0 1 7.6 0Z"/><path fill-rule="evenodd" d="M12 8.7c3 0 5.4 2.4 5.4 5.4v1.6c0 3-2.4 5.4-5.4 5.4s-5.4-2.4-5.4-5.4v-1.6c0-3 2.4-5.4 5.4-5.4ZM11.3 10.6h1.4v9.2h-1.4Z"/><path d="M3.4 12.6h3M17.6 12.6h3M4.3 7.2l2.9 2.1M19.7 7.2l-2.9 2.1M4.3 19.8l2.7-2.3M19.7 19.8l-2.7-2.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>',
+  unintended: '<svg class="sk-note-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 1.9L4.7 13.4c-.4.5 0 1.2.6 1.2h5.5l-1.5 7c-.1.7.7 1.1 1.2.6l9-11.6c.4-.5 0-1.2-.6-1.2h-5.5l1.5-7c.1-.7-.7-1.1-1.2-.5Z"/></svg>',
 };
 function mountBbIssues(root){
   const KINDS = [
@@ -33831,6 +33898,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T11:48:20.620Z","feat(bible): a description line that newly appears gets its own light ball and is drawn out like a card note, and the bug / tooltip mismatch / unintended notes are solid icons in the gutter left of the description (no pill, no label)"],
     ["2026-10-26T11:30:25.627Z","feat(bible): every run of skill-effect lines in a description gets its icons (a single line too), the list rows line up across both columns, each icon sits centred on its text line, and gear icons get a small frame"],
     ["2026-10-26T10:29:38.469Z","fix(bible): phone card head in two centred rows (the name, then class + range and costs), and every head pill the same height so they line up on phones and desktop"],
     ["2026-10-26T10:20:18.766Z","feat(bible): a run of four or more skill-effect lines in a description shows as a two-column list with each skill or gear icon (64 card tabs, e.g. Chameleon Combo), and the range pill joins the light-ball animation so Far Reach visibly changes it"],
