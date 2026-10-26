@@ -120,7 +120,7 @@ See 2.4.
 
 ### 3.3 Chameleon Combo crit bug: still present
 
-The Bible documents it for BB and TTO ([chameleon-skill-reference.md](chameleon-skill-reference.md) §Crit, `BB:Chameleon_nAttack.cs:517-668`); ToT fixed it. In Reborn the arrow's crit sum is in `Reborn:Chameleon_nAttack.cs:168`-`:199`. The item codes are string-table helpers; decoded:
+The Bible documents it for BB ([chameleon-skill-reference.md](chameleon-skill-reference.md) §Crit, `BB:Chameleon_nAttack.cs:517-668`); ToT and TTO fixed it (user-reported 2026-10-02 / 2026-10-26). In Reborn the arrow's crit sum is in `Reborn:Chameleon_nAttack.cs:168`-`:199`. The item codes are string-table helpers; decoded:
 
 | Slot | Helper | Code | Adds |
 |---|---|---|---|

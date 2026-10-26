@@ -2415,7 +2415,7 @@ let checkedCritView = 0;
   // (merged toggle rank 5) adds 6 x 5 = 30; Critical Plus 4 alone stays x1.8 (checked below).
   {
     const chm = sk("chameleon_nAttack");
-    const CHM = ["criticalPlus", "fatalStrike", "chmGearWeapon", "chmGearMantis", "piercingVenom", "chmTargetPoison", "bowMastery"];
+    const CHM = ["criticalPlus", "fatalStrike", "chmGearWeapon", "chmGearMantis", "chmTotWeapon", "chmTotEquip", "piercingVenom", "chmTargetPoison", "bowMastery"];
     const savedChm = CHM.map(id => [id, deps[id]]);
     const chmSet = (o) => CHM.forEach(id => { deps[id] = o[id] || 0; });
     inputs.atk.value = "128"; inputs.lck.value = "0";
@@ -2428,6 +2428,9 @@ let checkedCritView = 0;
     chmSet({ fatalStrike: 5 }); select(chm, 4); check("Chameleon Combo Fatal Strike 5 (= 4 + Extra Arrows) adds 30", rng(chm, 4).join() === "74,74", rng(chm, 4).join());
     chmSet({ piercingVenom: 2, chmTargetPoison: 6 }); select(chm, 4); check("Chameleon Combo Deadly Venom x poison 6 adds 72", rng(chm, 4).join() === "116,116", rng(chm, 4).join());
     chmSet({ chmGearWeapon: 2, chmGearMantis: 1, criticalPlus: 4 }); check("Chameleon crit base Mantis Bow R + Mantis set + Critical Plus 4 = 32", sandbox._chameleonCritBase() === 32, sandbox._chameleonCritBase());
+    // ToT and TTO fixed the gear check (user-reported 2026-10-02 / 2026-10-26): Champion bow 7 + hat and armor 11 + Critical Plus 4 (20) = 38; the BB gear toggles count for nothing there
+    for (const srv of ["tot", "tto"]) { sandbox._setServer(srv); chmSet({ chmTotWeapon: 2, chmTotEquip: 2, chmGearWeapon: 2, chmGearMantis: 1, criticalPlus: 4 }); check(srv + " Chameleon crit base Champion set + Critical Plus 4 = 38", sandbox._chameleonCritBase() === 38, sandbox._chameleonCritBase()); }
+    sandbox._setServer("og");
     savedChm.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
     cv.set(false);
   }
@@ -2965,7 +2968,7 @@ let checkedDepStrip = 0;
 console.log(`Verified ${checkedDepStrip} dependency strip checks.`);
 
 // Chameleon attack simulator (mountChameleonSim): gear per server, crit totals, server popups, per-server gear memory.
-// BB / TTO follow Chameleon_nAttack.cs:517-668 (G.Marshal Bow +4, Mantis R set 5/4/3); ToT is the user-reported fix
+// BB follows Chameleon_nAttack.cs:517-668 (G.Marshal Bow +4, Mantis R set 5/4/3); ToT and TTO are the user-reported fix
 // (Marshal 5/4/3, Champion 7/6/5, no Mantis). See chameleon-skill-reference.md, Server Balance Variations.
 let checkedChmSim = 0;
 {
@@ -2979,6 +2982,9 @@ let checkedChmSim = 0;
   ok(total("tot", [["CHM_WEAPONS", "marshalBow"], ["CHM_HELMETS", "marshalHelmet"], ["CHM_ARMORS", "marshalArmor"]]) === 12, "ToT Marshal set should total 12");
   ok(total("tot", [["CHM_WEAPONS", "championBow"], ["CHM_HELMETS", "championHelmet"], ["CHM_ARMORS", "championArmor"]]) === 18, "ToT Champion set should total 18");
   ok(total("tot", [["CHM_WEAPONS", "mantisBow"]]) === 0, "Mantis gives no crit on ToT");
+  ok(total("tto", [["CHM_WEAPONS", "marshalBow"], ["CHM_HELMETS", "marshalHelmet"], ["CHM_ARMORS", "marshalArmor"]]) === 12, "TTO Marshal set should total 12 (fixed like ToT, 2026-10-26)");
+  ok(total("tto", [["CHM_WEAPONS", "championBow"], ["CHM_HELMETS", "championHelmet"], ["CHM_ARMORS", "championArmor"]]) === 18, "TTO Champion set should total 18");
+  ok(total("tto", [["CHM_WEAPONS", "mantisBow"], ["CHM_HELMETS", "mantisHat"], ["CHM_ARMORS", "mantisSuit"]]) === 0, "Mantis gives no crit on TTO");
   // mount with recording stubs
   const reg = new Map(), popups = [];
   const mk = () => { const e = makeEl(); e.listeners = {}; e.addEventListener = (t, fn) => { e.listeners[t] = fn; }; e.querySelectorAll = () => []; return e; };
@@ -3009,7 +3015,8 @@ let checkedChmSim = 0;
     ok(now() === bbSet, `BB gear restored after a ToT visit (${now()} vs ${bbSet})`);
     click("tot"); ok(now() === totSet, `ToT gear restored (${now()} vs ${totSet})`);
     n = popups.length; click("tto");
-    ok(popups.length > n && popups[popups.length - 1].innerHTML.includes("Tailstopia Online (TTO)"), "TTO opens its popup");
+    ok(popups.length > n && popups[popups.length - 1].innerHTML.includes("Tailstopia Online (TTO)") && popups[popups.length - 1].innerHTML.includes("sk-tag-fix"), "TTO opens its popup with the crit-gear [Fix]");
+    ok(has("#chmWepSelect", ["marshalBow", "championBow"]) && lacks("#chmWepSelect", ["mantisBow"]) && has("#chmArmSelect", ["marshalArmor", "championArmor"]) && lacks("#chmArmSelect", ["mantisSuit"]), "TTO gear: Marshal + Champion, no Mantis");
     click("og");
   } catch (e) { fail("simulator threw: " + e.message); }
   Object.assign(doc, { addEventListener: saved.add, removeEventListener: saved.rem, createElement: saved.ce, body: saved.body });
