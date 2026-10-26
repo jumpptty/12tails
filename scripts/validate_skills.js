@@ -817,7 +817,7 @@ if (RUN_DAMAGE_CHECKS) {
   const KNOWN_RANGE_SIM_MISMATCH = {
     // (none right now -- add "skillId: reason" only for a mismatch found by this scan and not yet resolved)
   };
-  const DEP_FIELD_NAMES = ["dmgDep", "dmgMultDep", "dmgRankDep", "dmgFlagDep", "dmgReplaceDep", "hitCountDep", "lckDiffDep", "cdDep", "castDep", "koDep"];
+  const DEP_FIELD_NAMES = ["hitOutDep", "dmgDep", "dmgMultDep", "dmgRankDep", "dmgFlagDep", "dmgReplaceDep", "hitCountDep", "lckDiffDep", "cdDep", "castDep", "koDep"];
   const inputs = sandbox._statInputs;
   const N = 1000;   // an overshoot can be a rare tail event (a few in 6000 rolls); only runs under --full / damage-code changes
   const failures = new Map();
@@ -2579,6 +2579,11 @@ let checkedCatPowerTto = 0;
   for (const sk of SKILLS.filter(s => s.class === "Cat" && s.mount)) for (const server of ["og", "tto"]) { sandbox._setServer(server); sandbox._depRanks.catPower = 4; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk); if (sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"')) fail(`${sk.id} on ${server}: a mount attack shows the Power toggle`); else checkedCatPowerTto++; }
   const savedPower = sandbox._depRanks.catPower;
   for (const sk of dmgCats) {
+    if (sk.onlyServer) {   // a server-exclusive card (Reborn C6 / C7) has no TTO tab: Power applies on its own server (hit(), Reborn:CharacterControl.cs:7059-7091)
+      sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._setServer(sk.onlyServer); sandbox._depRanks.catPower = 4; sandbox._selectSkill(sk);
+      if (!sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"')) fail(`${sk.id} on ${sk.onlyServer}: Power toggle missing`); else checkedCatPowerTto++;
+      sandbox._setServer("og"); continue;
+    }
     if (!treeA.has(sk.id) && !(sk.servers && sk.servers.tto)) fail(`${sk.id}: non-Class-A Cat damage skill has no TTO server entry, so its TTO button is missing`); else checkedCatPowerTto++;
     sandbox._skillRanks[sk.id] = sk.maxRank || 1;
     for (const server of ["og", "tto"]) {
@@ -2645,7 +2650,7 @@ let checkedTtoNoLck = 0;
   let bbVaries = 0;
   // Formulas on a runtime variable (Vortex HP, InventoryWeight) need inputs calcRangeFor alone does not have.
   const needsVars = (sk) => /Vortex|InventoryWeight/.test(sandbox._getDmgText(sk, sk.maxRank || 1) + JSON.stringify(sk.dmgGroups || []));
-  for (const sk of SKILLS.filter(s => sandbox._usesTdlRoll(s) && !needsVars(s))) {
+  for (const sk of SKILLS.filter(s => sandbox._usesTdlRoll(s) && !needsVars(s) && !(s.onlyServer && s.onlyServer !== "tto"))) {   // a server-exclusive card (Reborn C6 / C7) offers no TTO toggle
     sandbox._skillRanks[sk.id] = sk.maxRank || 1;
     try {
       const base = rangesAt(sk, "tto", 150, 0);
@@ -4772,7 +4777,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     const REACH_STATIC_OK = {
       bat_nAttack: "projectile, hit time = flight time", bat_echoes: "bouncing projectile", bat_guardianOfTheNight: "AI-driven attacks",
       bat_dreamDazzle: "single locked target, no hit box", bat_phantasmBlast: "single locked target, no hit box", bat_shatteringDream: "single locked target, no hit box",
-      cat_doubleDown: "random targets",
+      cat_doubleDown: "random targets", cat_broadside: "16 shells land at random spots, at most 5 on one target", cat_ghostGalleon: "targeted shells on up to 8 foes a second, then a salute at random spots",
       chameleon_quickFire: "arrows, hit time = flight time",
       chameleon_leftStride: "arrows, hit time = flight time", chameleon_rightStride: "arrows, hit time = flight time",
       mole_nAttack: "projectile", mole_mortarShot: "shells land one by one at different spots", mole_barrelBot_missile: "random targets", mole_missile: "random targets",
