@@ -6270,8 +6270,8 @@
     18%{background-color:rgba(214,64,52,0.30); box-shadow:inset 0 0 0 1px rgba(214,64,52,0.85), inset 0 0 12px rgba(214,64,52,0.68)}
     100%{background-color:transparent; box-shadow:inset 0 0 0 1px transparent, inset 0 0 12px transparent}
   }
-  .sk-val.sk-delta, .sk-cost-badge.sk-delta, .sk-ko-badge.sk-delta, .sk-status.sk-delta{animation:skDeltaText 1.6s ease-out; border-radius:3px}
-  .sk-val.sk-delta-down, .sk-cost-badge.sk-delta-down, .sk-ko-badge.sk-delta-down, .sk-status.sk-delta-down{animation:skDeltaTextDown 1.6s ease-out; border-radius:3px}
+  .sk-val.sk-delta, .sk-cost-badge.sk-delta, .sk-ko-badge.sk-delta, .sk-reach-badge.sk-delta, .sk-status.sk-delta{animation:skDeltaText 1.6s ease-out; border-radius:3px}
+  .sk-val.sk-delta-down, .sk-cost-badge.sk-delta-down, .sk-ko-badge.sk-delta-down, .sk-reach-badge.sk-delta-down, .sk-status.sk-delta-down{animation:skDeltaTextDown 1.6s ease-out; border-radius:3px}
   @keyframes skDeltaText{0%{background-color:rgba(201,162,39,.5); box-shadow:0 0 0 2px rgba(201,162,39,.5)}}
   @keyframes skDeltaTextDown{0%{background-color:rgba(214,64,52,.4); box-shadow:0 0 0 2px rgba(214,64,52,.45)}}
   /* Dependency toggle click (user 2026-10-07: no flip, no light slide): every change is the same tiny pop (scale 1 > 1.07 > 1);
@@ -6297,7 +6297,7 @@
     18%{background-color:color-mix(in srgb, var(--delta-c) 32%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--delta-c) 85%, transparent), inset 0 0 12px color-mix(in srgb, var(--delta-c) 68%, transparent)}
     100%{background-color:transparent; box-shadow:inset 0 0 0 1px transparent, inset 0 0 12px transparent}
   }
-  .sk-val.sk-delta-stat, .sk-cost-badge.sk-delta-stat, .sk-ko-badge.sk-delta-stat, .sk-status.sk-delta-stat{animation:skDeltaTextStat 1.6s ease-out; border-radius:3px}
+  .sk-val.sk-delta-stat, .sk-cost-badge.sk-delta-stat, .sk-ko-badge.sk-delta-stat, .sk-reach-badge.sk-delta-stat, .sk-status.sk-delta-stat{animation:skDeltaTextStat 1.6s ease-out; border-radius:3px}
   @keyframes skDeltaTextStat{0%{background-color:color-mix(in srgb, var(--delta-c) 45%, transparent); box-shadow:0 0 0 2px color-mix(in srgb, var(--delta-c) 50%, transparent)}}
   .sk-dep-toggle, .sk-dep-rank-icon{
     border:none; background:none; padding:0; cursor:pointer; line-height:0; outline:none;
@@ -6358,6 +6358,12 @@
     .sk-hero > .sk-hero-head > .sk-hero-desc{flex-basis:100%; margin-left:0}
     .sk-hero > .sk-hero-head:has(.sk-hero-pips):has(.sk-hero-desc){row-gap:20px; margin-bottom:12px}
   }
+  /* Effect-line list (renderDescWithMods, user 2026-10-26): two columns that fill down, each line led by its skill's or gear's icon. */
+  .sk-desc-lead{color:var(--text)}
+  .sk-desc-mods{column-count:2; column-gap:28px; margin-top:5px; padding-top:5px; border-top:1px solid rgba(212,175,55,.16)}
+  .sk-desc-mod{display:flex; gap:7px; align-items:flex-start; break-inside:avoid; margin:0 0 3px}
+  .sk-desc-mod-ico{width:18px; height:18px; border-radius:3px; flex:none; margin-top:1px}
+  @media (max-width:620px){ .sk-desc-mods{column-count:1} }
   .sk-skill-nav{display:none}
   @media(max-width:900px){
     .sk-hero{position:relative}
@@ -12964,6 +12970,42 @@ function renderRichText(str, skill, lck) {
   return glueThaiLoanwords(renderStatusKeywords(formatDescTokens(str, skill), lck)).replace(/\{\{credit:([a-z0-9_-]+)\}\}/gi, (m, id) => creditButton(id.toLowerCase()));
 }
 
+// Variant 3 of the nAttack mocks (user 2026-10-26): a run of DESC_MOD_MIN or more "**Name:** effect" lines (a linked skill or a named gear
+// piece; any other bold label, e.g. a condition, ends the run) shows as a two-column list, each line led by that skill's icon (DESC_LINE_ICONS for the gear lines, by their label); the lines
+// before the run read as the lead. Lines split at <br>; a desc whose lines do not each close their own spans renders as written.
+const DESC_MOD_MIN = 4;
+const DESC_LINE_ICONS = {
+  "G. Marshal Bow / Mantis Bow R / Mantis Suit R / Mantis Hat R": "item_chmMantis",
+  "G. Marshal Bow / หมวกและชุด Marshal": "item_chmMarshalSet",
+  "G. Champion Bow / หมวก Champion / ชุด Champion": "item_chmChampionSet",
+  "Power Bow": "item_chm59",
+  "Gatling Gun": "item_rab59",
+  "Slayer": "chameleon_slayer4",
+};
+function renderDescWithMods(str, skill, lck) {
+  const lines = String(str || "").split("<br>");
+  const modName = (l) => { const m = /^\s*\*\*([^*]+?):\*\*\s/.exec(l); return m ? m[1] : null; };
+  const isMod = (l) => { const n = modName(l); return !!n && (!!findSkillByMention(n, skill) || n in DESC_LINE_ICONS); };   // a skill or a mapped gear piece
+  const balanced = (l) => (l.match(/<span\b/g) || []).length === (l.match(/<\/span>/g) || []).length;
+  const runs = []; let start = null;
+  lines.forEach((l, i) => { if (isMod(l)) { if (start === null) start = i; } else { if (start !== null && i - start >= DESC_MOD_MIN) runs.push([start, i]); start = null; } });
+  if (start !== null && lines.length - start >= DESC_MOD_MIN) runs.push([start, lines.length]);
+  if (!runs.length || !lines.every(balanced)) return renderRichText(str, skill, lck);
+  const out = []; let text = [], r = 0;
+  const flush = () => { if (text.length) out.push(out.length ? renderRichText(text.join("<br>"), skill, lck) : `<span class="sk-desc-lead">${renderRichText(text.join("<br>"), skill, lck)}</span>`); text = []; };
+  for (let i = 0; i < lines.length; ) {
+    if (r < runs.length && i === runs[r][0]) {
+      flush();
+      out.push(`<div class="sk-desc-mods">${lines.slice(runs[r][0], runs[r][1]).map((l) => {
+        const name = modName(l), sk = findSkillByMention(name, skill), src = SKILL_ICONS[sk ? sk.icon : DESC_LINE_ICONS[name]];
+        return `<div class="sk-desc-mod">${src ? `<img class="sk-desc-mod-ico" src="${src}" alt="">` : `<span class="sk-desc-mod-ico"></span>`}<div>${renderRichText(l.trim(), skill, lck)}</div></div>`;
+      }).join("")}</div>`);
+      i = runs[r][1]; r++;
+    } else { text.push(lines[i]); i++; }
+  }
+  flush();
+  return out.join("");
+}
 function renderStatusKeywords(s, lck, statusPath = []) {
   // Skip [name] occurrences already hand-wrapped in their own <span class="sk-status">
   // (legacy per-card authoring, e.g. bat_dissolute's kw2) -- otherwise this double-wraps.
@@ -20291,7 +20333,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     function deltaFields(){
       // The summon stat block is not one field: each of its stat rows is (user 2026-10-05), so each changed stat gets its own comet.
       // The KO badge is its own field too (user 2026-10-06): a KO-only change sends the light to the badge, not the formula.
-      const DELTA_GROUPS = [".sk-stat:not(.sk-stat-summon), .sk-dmg, .sk-summon-stat, .sk-ko-badge", ".sk-cost-badge", ".sk-hero-desc .sk-val", ".sk-hero-desc .sk-status"];
+      // The range pill is the last group (user 2026-10-26: Far Reach only changes the range, and nothing seemed to happen); higher = better.
+      const DELTA_GROUPS = [".sk-stat:not(.sk-stat-summon), .sk-dmg, .sk-summon-stat, .sk-ko-badge", ".sk-cost-badge", ".sk-hero-desc .sk-val", ".sk-hero-desc .sk-status", ".sk-reach-badge"];
       const DELTA_POPUPS = ".sk-status-tip, .sk-stat-tooltip, .sk-dmg-info-pop, .sk-dep-strip";
       return DELTA_GROUPS.map(sel => Array.from(displayEl.querySelectorAll(sel)).filter(el => !el.closest(DELTA_POPUPS)));
     }
@@ -20662,6 +20705,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const own = (v, alts) => { const c = v.cloneNode(true); c.querySelectorAll(".sk-roll-old, .sk-roll-tint").forEach(n => n.remove()); if (alts) c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt)); return c.textContent; };
       if (el.matches(".sk-cost-badge")) return own(el);
       if (el.matches(".sk-ko-badge")) return own(el.querySelector(".sk-ko-value") || el);
+      if (el.matches(".sk-reach-badge")) return own(el);
       if (el.matches(".sk-summon-stat")) return own(el.querySelector(".sk-summon-stat-value") || el);
       return Array.from(el.querySelectorAll(".sk-stat-value")).filter(v => !v.closest(".sk-stat-tooltip, .sk-dmg-info-pop, .sk-status-tip"))
         .map(v => own(v, true)).join(" ");
@@ -20707,7 +20751,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         if (chip ? !base : (was === undefined || was === deltaText(el))) return;
         changed.push(el);
         let d = 0;
-        if (g <= 1 && prev.nums){
+        if ((g <= 1 || g === 4) && prev.nums){   // chips, costs and the range pill have readable numbers
           const a = nums(base ? base.txt || "" : prev.nums[g][i]), b = nums(deltaValue(el));
           // Compare averages, not sums: a range can collapse to one number (cooldown "12–14s" -> "4s" at high AGI), which
           // a sum read as unreadable, so a shorter cooldown fell back to "up" (user 2026-10-06). Equal counts: same sign.
@@ -21322,7 +21366,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     }
     const descStr = descRaw ? String(descRaw) : "";
     const descClean = descStr.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1");
-    const descFormatted = renderRichText(descStr, activeSelected || selected, statVal(lckEl));
+    const descFormatted = renderDescWithMods(descStr, activeSelected || selected, statVal(lckEl));
     let statusBadgeHtml = "";
     let statusClean = "";
     if (activeSelected.status) {
@@ -33766,6 +33810,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T10:20:18.766Z","feat(bible): a run of four or more skill-effect lines in a description shows as a two-column list with each skill or gear icon (64 card tabs, e.g. Chameleon Combo), and the range pill joins the light-ball animation so Far Reach visibly changes it"],
     ["2026-10-26T10:00:29.136Z","feat(bible): the skill card head is one centred strip on top (icon, name, class + range, costs) and the description takes the whole row under it, from 621 px wide; phones keep their column"],
     ["2026-10-26T09:34:06.121Z","feat(bible): the Passive pill is back on the second row of the card head (class + Passive + range), and the Free pill is gone everywhere (a skill with no cost pills already shows it costs nothing)"],
     ["2026-10-26T09:23:41.776Z","feat(bible): bigger skill icon beside the three-row card head (72 px, 64 px on smaller windows, the same on every card), and status popups balance their lines so one wrapped word no longer leaves a near-empty row"],
