@@ -208,17 +208,23 @@ Related Reborn-only code: `Reborn:M994_FightFireGod.cs`, `M995_CelestialSanctum.
 
 ## 5. Classes
 
-Only Panda and Rabbit (Eagle Eye) have been traced, and only the parts below.
+**C6 / C7 skills of every class are on cards since 2026-10-26** (`onlyServer: "reborn"`, the 451-454 / 461-464 skills, replacing the coming-soon stubs); each class reference holds them under `## Server Balance Variations (Reborn)` → `### C6 / C7 skills (Reborn only)`, with the original skills they change. Shared hooks the cards use:
+
+- **`RebornC6Passive.OnHitOut`** (`Reborn:RebornC6Passive.cs:58-99`, called inside `hit()` at `Reborn:CharacterControl.cs:7261`): a C6 multiplier on the attacker's hit after the skill's own crit and multipliers, before `dmgAdjust`, `CeilToInt((float)dmg × mult)`, never on Effect Damage. App: card field `hitOutDep`.
+- **`RebornC7Passive.FinalOut`** (`Reborn:RebornC7Passive.cs:538-596`, applied at `Reborn:CharacterControl.cs:7275`): a C7 factor after `dmgAdjust` and `defAdjust`, before the target's hitMod, `CeilToInt` in float32, normal hit path only. App: card field `finalOut` (helper `finalOutAdjust`).
+- The C6 / C7 passive hooks run inside `hit()` / `RPC_AddDamage` only, so a hit that skips them (Effect Damage, a penetrating hit) gets none of these factors.
+
+The sections below are the first-pass notes of 2026-10-25.
 
 ### 5.1 Panda
 
-- **SP ceiling:** `RebornBalance.SpCeilingOf` (`Reborn:RebornBalance.cs:559`-`:571`): 100 for everyone; a Panda with skill 443 (`panda_heavenBreath` in the Bible) gets +40, with skill 462 an extra +50. `SpMaxBonusOf` (`:573`-`:580`): +10 with 443. Both are read in `Reborn:CharacterControl.cs:12306`-`:12308`. The name of skill 462 is not resolved.
+- **SP ceiling:** `RebornBalance.SpCeilingOf` (`Reborn:RebornBalance.cs:559`-`:571`): 100 for everyone; a Panda with skill 443 (`panda_heavenBreath` in the Bible) gets +40, with skill 462 an extra +50. `SpMaxBonusOf` (`:573`-`:580`): +10 with 443. Both are read in `Reborn:CharacterControl.cs:12306`-`:12308`. Skill 462 is **Spirit Overflow** (`panda_spiritOverflow`, resolved 2026-10-26; card and effects in [panda-skill-reference.md](panda-skill-reference.md)).
 - **Sacred Sage heal:** `PandaSacredSageHeal(panda, power)` (`Reborn:RebornBalance.cs:582`-`:591`) = `(int)(power × (1 + t / 140))` with `t = max(tal + Random(0, ceil(0.2 × LCK)), 1)`, `0` if `power ≤ 0`. Called from `Reborn:Panda.cs:15657` as `RPC_AddHeal(352 + sLv, PandaSacredSageHeal(char, 50 + 50 × sLv), …)`. For comparison the normal heal scaling is `1 + 0.02 × tal` (`Reborn:CharacterControl.cs:11861`), i.e. `/50`; this one is `/140`.
 - **Sage drain:** `PandaSageDrain(panda)` = `max(1, ceil(tal / 100))` (`Reborn:RebornBalance.cs:593`-`:600`), applied when `IsPandaSageAction(actionCode)` (action codes 300 to 372, `:602`-`:609`) at `Reborn:CharacterControl.cs:7294`-`:7296`. What it drains from whom is not traced.
 
 ### 5.2 Rabbit
 
-- **Eagle Eye** (Class C row C6, skill 451): +35% reach, area, effect size and distance gates on the Rabbit's gun and acid skills, and the whole target lock (drop 40 to 54 m, Tab 36 to 48.6 m) through `RebornC6.RabEye` (`Reborn:RebornC6.cs:2208`). Full list with `file:line`: [rabbit-skill-reference.md, Server Balance Variations (Reborn)](rabbit-skill-reference.md#server-balance-variations-reborn). Not on a card yet (deferred by the user 2026-10-25 until it can be done at full quality).
+- **Eagle Eye** (Class C row C6, skill 451): +35% reach, area, effect size and distance gates on the Rabbit's gun and acid skills, and the whole target lock (drop 40 to 54 m, Tab 36 to 48.6 m) through `RebornC6.RabEye` (`Reborn:RebornC6.cs:2208`). Full list with `file:line`: [rabbit-skill-reference.md, Server Balance Variations (Reborn)](rabbit-skill-reference.md#server-balance-variations-reborn). On a card since 2026-10-26 (`rabbit_eagleEye`), and a Reborn toggle on the 23 cards it scales.
 
 ## 6. Reborn code that is new (file list only, not read)
 
@@ -305,11 +311,11 @@ The section 7.2 rows about the new C6 / C7 skills have not been compared with th
 4. **`ItemClass.att[1]`:** why red-star scaling skips it (which stat it is).
 5. **Whether the original has a pierce `defAdjust` overload.** (The original has no `talHealAdjust`: answered in 2.6.)
 6. **Rebalanced skills in other classes:** only Panda constants were seen in code. The Discord channels were read (section 7): they name about 15 skills but give almost no numbers. Each named skill still needs a code comparison with the original (section 7.2), and the unnamed rebalances are only findable by a skill-by-skill diff.
-7. **Skill 462** (Panda): name.
+7. ~~**Skill 462** (Panda): name.~~ Answered: Spirit Overflow (section 5.1).
 8. **New content:** the `*_C6` / `RebornC6` / `RebornC7` systems, the Zr classes, missions M994-M996, battle pass, guild war, mercenaries.
 
 9. **Rabbit charge release outside Combat zones:** Reborn only takes the hitting `cAttack2` path `if (RebornZone.Combat && ...)` (`Reborn:Rabbit.cs:15484`); BB has no such condition. Which zones count as `RebornZone.Combat` is not traced.
-10. **Where the Bible shows a Reborn-only reach change:** the 18 Rabbit skills Eagle Eye scales have BB `reach` badges only; a Reborn reach path is not designed yet.
+10. ~~**Where the Bible shows a Reborn-only reach change:**~~ Answered 2026-10-26: a card's `servers.reborn.reach` with a Reborn dep in `reachControls` (the range popup's server buttons draw it), first used for Eagle Eye, Tidal Reach and Charged Fang. (Item 9 is a zone gate: the user counts the open world as missions, so it is not a card change.)
 ## 9. Skill simulator on the Reborn website (read 2026-10-25, for the class guide editor)
 
 Source: `https://www.12tails-reborn.com/skills` (Next.js; its page script `/_next/static/chunks/app/skills/page-*.js`, rules in the module exported there, data in `/skills/data/<race>.json`, public static files). The site says its conditions and points per level are the ones the game uses. Race codes: wlf bsn pnd whl cat chm mol rab mnk shp pgn bat. Level range **1-150**.

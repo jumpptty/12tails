@@ -2207,6 +2207,26 @@ let checkedSheepCharge = 0;
     const p = card.rawModel.parts(rank, { ATK, LV: 100 });
     check(label, p.crit + p.plain === want && p.crit === 0, p.crit + p.plain);
   });
+  // Reborn only (Reborn:Sheep.cs:13776-13778): Zealous Charge doubles the cap to 200 x Lv, Divine Benediction counts floor(2 x (held - 0.8)) half-seconds.
+  // [label, rank, ATK, held s (null = full), zealous, divine, white burst, raw, slider max]
+  { const R = (code) => vm.runInContext(code, sandbox);
+    sandbox._setServer("reborn"); R("statCapCard = SKILLS.find((s) => s.id === 'sheep_cAttack')");
+    [
+      ["Reborn Zealous: rank 4, ATK 300, full charge = 3 s x 300 capped at 800, max 3.8 s", 4, 300, null, 1, 0, 0, 800, 3.8],
+      ["Reborn no toggle: rank 4, ATK 300, full = 400 at 2.8 s", 4, 300, null, 0, 0, 0, 400, 2.8],
+      ["Reborn Divine: rank 4, ATK 100, 2.5 s = floor(2 x 1.7) = 3 x 100, cap 400 at 4 / 2 + 0.8 = 2.8 s", 4, 100, 2.5, 0, 1, 0, 300, 2.8],
+      ["Reborn Divine: the 2 s release counts 2", 4, 100, 2, 0, 1, 0, 200, 2.8],
+      ["Reborn Divine: rank 4, ATK 300, cap 400 reached at the 2 s minimum", 4, 300, null, 0, 1, 0, 400, 2],
+      ["Reborn both: rank 4, ATK 100, full = 800 at 8 / 2 + 0.8 = 4.8 s", 4, 100, null, 1, 1, 0, 800, 4.8],
+      ["Reborn both + White Burst: 800 + 100", 4, 100, 20, 1, 1, 1, 900, 4.8],
+    ].forEach(([label, rank, ATK, t, z, dv, wb, want, wantMax]) => {
+      sc.set(t); deps.benediction = 0; deps.whiteBurst = wb; deps.zealousCharge = z; deps.divineBenediction = dv;
+      const p = card.rawModel.parts(rank, { ATK, LV: 100 });
+      check(label, p.crit + p.plain === want && sc.maxTime(rank, ATK) === wantMax, (p.crit + p.plain) + " / max " + sc.maxTime(rank, ATK));
+    });
+    sandbox._setServer("og"); sc.set(20); deps.zealousCharge = 1; deps.divineBenediction = 1; deps.whiteBurst = 0;
+    check("BB ignores the Reborn toggles: rank 4, ATK 100, 20 s = 400, max 4.8 s", card.rawModel.parts(4, { ATK: 100, LV: 100 }).plain === 400 && sc.maxTime(4, 100) === 4.8, card.rawModel.parts(4, { ATK: 100, LV: 100 }).plain);
+    delete deps.zealousCharge; delete deps.divineBenediction; R("statCapCard = null"); }
   sc.set(saved.t); deps.whiteBurst = saved.wb; deps.benediction = saved.b;
 }
 console.log(`Verified ${checkedSheepCharge} Sheep Charge Attack checks.`);
