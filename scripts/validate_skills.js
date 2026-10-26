@@ -1140,6 +1140,19 @@ SKILLS.forEach(sk => {
   }
 });
 
+// 4b. The merged view (2026-10-26): on each server the page shows a card's own list for that server, or its base list. Every link a card shows
+// on a server comes back on the target's list there (both cards offering that server); the pairs above only compare list with list.
+for (const srv of ["tot", "tto", "reborn"]) {
+  SKILLS.forEach(sk => {
+    if (sk.soon || !sandbox._getAvailableServers(sk).includes(srv)) return;
+    compatFor(sk, srv).forEach(targetId => {
+      const target = skillById.get(targetId);
+      if (!target || target.soon || !sandbox._getAvailableServers(target).includes(srv)) return;
+      if (!compatFor(target, srv).includes(sk.id)) { console.error(`[COMPAT ERROR] ${sk.class} > ${sk.name} (${sk.id}) on ${srv}: shows '${targetId}', which does not list it back there`); errorCount++; }
+    });
+  });
+}
+
 // 5. Report standalone dep objects with no matching SKILLS card yet (AGENTS.md
 // Section 5.C Step 3.5's "close the loop" backlog). Informational only -- never
 // fails the build. A dep is "resolved" once some skill's own id matches
