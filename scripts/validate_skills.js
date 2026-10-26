@@ -4245,7 +4245,7 @@ async function donateChildTests(env) {
     sandbox._setServer("reborn");
     SKILLS.filter((s) => s.servers && s.servers.reborn && typeof s.servers.reborn.desc === "function").forEach((s) => {
       const maxDr = s.descDep && s.descDep.maxRank !== undefined ? s.descDep.maxRank : 1;
-      for (let r = 1; r <= Math.max(1, s.maxRank || 1); r++) for (let dr = 0; dr <= maxDr; dr++) {
+      for (let r = 1; r <= Math.max(1, s.maxRank || 1, s.servers.reborn.maxRank || 1); r++) for (let dr = 0; dr <= maxDr; dr++) {   // a Reborn maxRank (Truce Trading 4) is rendered too
         try { s.servers.reborn.desc(r, dr); } catch (e) { thrown.push(s.id + " rank " + r + " dep " + dr + ": " + e.message); return; }
       }
     });

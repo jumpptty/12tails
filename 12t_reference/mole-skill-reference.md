@@ -524,6 +524,14 @@ Private-server values are documented from the Bible skill-detail schema; the Big
 
 Source of server delta: `12t_projects/bible/index.html:9160`.
 
+## Server Balance Variations (Reborn)
+
+Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`), checked 2026-10-26. Citation tags as in [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md). Cards: `servers.reborn`.
+
+- **War Capital (Nerf, already on the card):** MP 100 → 250, SP 50 → 100 (`BB:MoleSkill.cs:1592`, `Reborn:MoleSkill.cs:506`); the base lives at most 30 minutes (`Reborn:Mole_warCapital.cs:175`, `:181`, `:198-207`). Full audit: [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) §7.4.
+- No other original Mole skill has a Reborn card change: the remaining differences are open-world zone gates, global rules (gear crit, item chances, stat caps, SP ceiling, faster AI target scans) or C6 / C7 hooks, all kept off the cards by the user's decisions of 2026-10-26.
+- **Gear crit (Adjust; `mole_nAttack`):** BB `getCritPlus` rolls `lckAdjust(gear sum)` (`BB:Mole.cs:19229`). Reborn adds `RebornBalance.TrinketCritPlus` (+3 for `t_all61`-`63`) and the seal `critical` (`RebornEffects.CritPlus`, server data, not modelled) and rolls `lckItemAdjust(sum)` = `ceil(1.3 × sum)` with no LCK (`Reborn:Mole.cs:18041`, belt `:18071`, roll `:18073`). In the app: the shared Reborn rule (`critChance`, `procChance`, `itemChance`) and the belt toggle `REBORN_BELT_DEP`; [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) §2.2, §2.4.
+
 ## Open items / could not verify
 
 None open. Resolved 2026-10-01 (user decisions):
