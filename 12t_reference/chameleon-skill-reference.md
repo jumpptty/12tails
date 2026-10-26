@@ -644,6 +644,11 @@ Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`, build and tags in [Re
 - **Double Effect, seals (Buff):** `RebornEffects.ProcOnHit(self, target, weapon, nMult)` gets `nMult = hasSkill(431) ? 2 : 1` (`Reborn:Chameleon.cs:10575`, `:10581`): chance `lckItemAdjust(nMult × sum)` (`Reborn:RebornEffects.cs:256`), duration `nMult × getDebuff(magnitude, CHA, target CHA)`, but 1 s for drain seals and magnitude ≤ 0, and the drain amount is not multiplied (`:258-260`). BB has no seals. Not on the card: the Reborn-only Witch Hat `c_allwht` HP Drain 3 roll in the same block (`:10677-10700`, Reborn-only gear is on hold for the Bible).
 - **Gear crit (Adjust; `chameleon_nAttack`, `chameleon_leftStride`, `chameleon_criticalPlus`):** BB rolls the arrow's crit sum (the buggy gear table plus `4 × Critical Plus + 4`) with `lckAdjust` (`BB:Chameleon_nAttack.cs:620-643`). Reborn keeps the same table, adds `RebornBalance.TrinketCritPlus` (+3 for `t_all61`-`63`) and the seal `critical` (`RebornEffects.CritPlus`, server data, not modelled) and rolls `lckItemAdjust(sum)` = `ceil(1.3 × sum)` with no LCK (`Reborn:Chameleon_nAttack.cs:195-202`). In the app: the shared Reborn rule (`critChance`, `procChance`, `itemChance`) and the belt toggle `REBORN_BELT_DEP`; [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) §2.2, §2.4, §3.3.
 
+### Review corrections (2026-10-26)
+
+- Phantom Bloom pull = `min(2.5, max(0, d − 1.5))`: the same beyond 4 m, weaker closer, none within 1.5 m (desc fixed).
+- Adaptive Scale: `[immunity7]` blocks every buff of level 7 or lower from anyone, party buffs included.
+
 ### C6 / C7 skills (Reborn only)
 
 Rows C6 (ids 451-454, Lv 95) and C7 (461-464, Lv 105), 8 Class C points each, all one rank (`Reborn:ChameleonSkill.cs:409-457`, commands `:1017-1054`). None exists in BB (`DecompiledSource/ChameleonSkill.cs` stops at 444). Names: the C6 four have an English `rbNameOverride` in both languages (`Reborn:SkillData.cs:201-204`); the C7 four have none (the client shows the capitalised key, e.g. `VeilOfHunt5`). No Thai names. Every `hasSkill(451-454 / 461-464)` read in the Reborn Assembly-CSharp was checked; the Chameleon ones are listed per skill below. Cards: `onlyServer: "reborn"`; Reborn-only toggles `REBORN_CHAMELEON_<NAME>_DEP` on the BB cards they change.

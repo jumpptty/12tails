@@ -72,6 +72,30 @@ A code is red-star (`IsRedStarCode`, `:119`-`:151`) when it is 7 characters, the
 - **`OverHealMaxHpCapEnabled`:** no code reads it by name. `AddHeal` clamps HP to `mhp` in both builds (`BB:CharacterControl.cs:7444`, `Reborn:CharacterControl.cs:8256`, clamp `:8272`), so a heal never raises HP above max in either. The only overheal mechanic in Reborn is Sheep's: with skill 462, in a Combat zone, the part of a heal beyond the missing HP becomes a `benediction` shield, capped at `clamp(maxHP / 5, 1, 32000)` (`RebornC7Passive.ShpOverheal`, `Reborn:RebornC7Passive.cs:4561-4577`; the cap is `BenedictionCap` `:4552`). That 20% of max HP cap is the most likely meaning of the flag, but it is not proven, since the constant has no reader.
 - **`RPC_AddHeal` / `AddHeal` otherwise match BB** (the `provoke` block that zeroes a heal, HP clamp to `mhp`, MP to `mmp`, KO to `mko`, hate `2 × (HP + MP + SP actually healed)`). Reborn adds: two C7 hooks (`RebornC7Passive.BatHunger`, `SeraphSpread`, `Reborn:CharacterControl.cs:8192-8193`), a `ShpHealHate` hook on the hate (`:8300`), and the SP clamp: `rbSpMax = max(msp, rbSpCeiling)` (`:5983`) instead of BB's fixed 100 (`BB:CharacterControl.cs:7564`, `if (sp > 100)`; Reborn `:8286`); `rbSpCeiling` is 100 plus the Panda bonuses of 5.1.
 
+### 2.7 Status merge: no level bump from a second caster (traced 2026-10-26)
+
+The generic merge inside `RPC_AddStatus` for a status the target already has (same `sType`):
+
+| Existing vs incoming | BB (`BB:CharacterControl.cs:14017-14160`) | Reborn (`Reborn:CharacterControl.cs:9617-9669`) |
+|---|---|---|
+| same level, same caster (`sID`) | `sTime = max(remaining, sTime)` (`:14035`); `sValue` rules for comboPlus / hardenSkin / damagePlus, else max (`:14050-14103`) | identical (`:9632-9657`) |
+| **same level, another caster** | **`sLv++`** unless hpDrain / mpDrain / spDrain (`:14115-14143`), the new caster's `sTime` kept, added at `sLv + 1` | **no level change**: `sTime = max(remaining, sTime)`, `sValue = max(old, new)` (`:9658-9663`) |
+| same level, Cat Two Pair copy (`RebornC6.PairCopy`, Reborn only, `Reborn:Cat.cs:3169-3191`) | (n/a) | dropped when `sTime <= remaining`, else `sValue = max` (`:9623-9631`) |
+| existing level higher | `return` (`:14153-14159`) | `break`, nothing added (`:9665-9668`) |
+| existing level lower | replaced (`:14182`) | replaced (`:9677`) |
+
+So on Reborn two casters can no longer push a status one level past what either gives (BB's "a second Rabbit's Heat Shot on [heat4] gives [heat5]"). The only Reborn level raises are skill-specific: Wolf Unyielding Oath +1 on every buff its holder receives (`Reborn:RebornC7Passive.cs:802-813`), Doomsayer `min(7, sLv + 4)` (`:835-846`) and Cat Grand Casino Arcade's doom `current + 1` (`Reborn:Cat.cs:3865`), which still reaches doom level 8. App: a Reborn Common note row; the four Rabbit medical shots' Reborn desc and change note.
+
+### 2.8 Other global differences found by the 2026-10-26 review
+
+- **Run speed:** the combat run-speed clamp is `Mathf.Clamp(speed, 0, 60)` in every hero file (`Reborn:Wolf.cs:11271`; BB 0-12, `BB:Wolf.cs:621`), and in towns / camps 4-20 (`Reborn:Bat.cs:11987`; BB 4-8, `BB:Bat.cs:1055`). Common note row.
+- **Potion cooldown:** 50 s (`Reborn:GameGui.cs:2042`; BB 150 s, `BB:GameGui.cs:32659`). Common note row.
+- **Hit boxes:** `Damage.FindAreaTarget` / `FindAngleTarget` / `FindRecTarget` / `FindDonutTarget` test the target's world-space bounds (`RebornHitBox.Radius / Bottom / Top`, `Reborn:RebornHitBox.cs`; `Reborn:Damage.cs:433-436`, `:480`, `:538`, `:551`, `:604-608`); BB uses the unscaled `CharacterController` radius and height (`BB:Damage.cs:1099`, `:1140`, `:1156`). Scaled targets are easier to hit. Common note row (reach popups do not model target size on any server).
+- **AI target scan:** the faster scan (1-2 s → 0.3-0.7 s, 1 s → 0.5 s) is in the monster AIs too (171 of 186 `*AI.cs`, e.g. `Reborn:Alpaca_AI.cs:323` vs `BB:Alpaca_AI.cs:1110`); the Common note says all AI now.
+- **KO cap:** `koAdjust` = `clamp(floor(koMod × KO), 0, 99)` in both builds and runs only inside `hit()` (`Reborn:CharacterControl.cs:7277`, `:11758`; `BB:CharacterControl.cs:20495`); Effect Damage KO is not clamped. The page clamps a card's KO at 99 unless the card or group is purple (several C6 / C7 cards had KO 100).
+- **Stat caps follow `isPlayer`:** summons, Shadow Illusion clones and mercenaries (`Reborn:RebornMerc.cs:944`) stay at 512; mounts (`Reborn:CharacterControl.cs:5258`) and Bat Mimic copies (`Reborn:Bat.cs:6081`) count as players. Common note text fixed.
+- **Open (user decision pending):** about 150 player cards have no `servers.reborn`, so they never offer the Reborn tab and show BB's 512 caps (55 TAL damage / heal cards, 48 CHA durations, 53 INT casts, the mounts).
+
 ## 3. Gear findings
 
 ### 3.1 Red star and item chance
