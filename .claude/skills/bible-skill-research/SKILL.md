@@ -22,9 +22,9 @@ Never call a mechanic dead, unwired or "not in code" from one file. A field writ
 
 #### Step A1: Pre-Flight Active Source Extraction (Zero Assumptions)
 No guesses, linear extrapolations or wiki values. Trace:
-0. **Cost/req table:** `python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs` (SP sign: negative = red/consumed, positive = blue/threshold, 0 = none).
+0. **Cost/req table:** `python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs` (SP sign: negative = red/consumed, positive = blue/threshold, 0 = none). A `setReq(reqLv, reqBn)` there is the level / skill-point prerequisite to learn the skill: it never goes on a card and is not a remainder item (user 2026-09-17, standing rule).
 1. **Cast dispatch** in `<Class>.cs`: `RPC_<name>`, `DisplayCastBar`, `addTimeOut`, `magAdjust`/`chaAdjust`/`agiAdjust`, per-rank arrays.
-2. **Execution** in `<Class>_<companion>.cs`: hit loops, secondary triggers, collisions.
+2. **Execution** in `<Class>_<companion>.cs`: hit loops, secondary triggers, collisions. **A hit count only after the whole sequence:** grep every `.hit(` (and `RPC_AddStatus` / `FindRecTarget`) by the coroutine's own instance-variable suffix (e.g. `\$self_\$22163\.mChar\.hit\(`) across the whole file, not inside an `awk` range that can overrun into the next class. Every `return this.Yield(..., new WaitForSeconds(x))` is a real timed pause between `case` states, and a `$i$NNN = 0` / `$i$NNN++` pair feeding a shared label with a `>= N` exit is a repeating tick. Cat's Delta Strike was once called single-hit from one `.hit(`: it is 6 ticks of `0.5×ATK` 0.1 s apart plus a rank finisher, 7 hits.
 3. **Statuses:** `sType` and `nCode` (`StatusData.cs`), `sLv` per rank, classification (`isBuff/Debuff/State/Magical/Physical/Lock/ShieldStatus`, see [12Tails-Mechanics-Reference.md §4.2](../../../12t_reference/12Tails-Mechanics-Reference.md#42-status-classification-cleanse-system-statusdatacs)). `Damage.getDebuff(...)` → `durWrapped:true, durContested:true`; `getDebuffInvert(...)` → `durContestedInverted:true`.
 4. **Rank icons:** every `<skill>1..<maxRank>` icon from `RippedAssets/` (Passive pipeline, below).
 5. **Tooltips:** `<Class>Skill_eng.cs` and `<Class>Skill_thai.cs`.
@@ -32,7 +32,7 @@ No guesses, linear extrapolations or wiki values. Trace:
 7. **Summons:** follow "Summon Mechanics" below.
 
 #### Step A2: Active Review Table
-Present to the user: identity (source key, EN/TH name, planned id, class, max rank); cast excerpt (`<Class>.cs:line`); execution/status excerpt; status profile (`sType`, `nCode`, `sLv`, classification); client tooltips; proposed `desc` (client phrasing as baseline, `**bold**` dynamic values, geometry, cleanse thresholds); proposed card schema (bible-card-fields). Use the compact table format the user prefers.
+Present to the user as **one compact table** (user: not a long prose citation breakdown): identity (source key, EN/TH name, planned id, class, max rank); proposed Thai `desc` (client phrasing as baseline, `**bold**` dynamic values, geometry, cleanse thresholds); one row per chip the card will show (cooldown, cast time, duration, LCK proc, damage or shield formula with any KO badge noted inside it, raw, final), each with its `file:line`; a dependency column (each real dep: the chip it changes, its mechanic, whether the client tooltip hides it); the status (`sType`, `nCode`, `sLv`, classification); client tooltips; proposed card schema (bible-card-fields). Give longer source excerpts only when asked or disputed; the full citation record goes into `12t_reference/<class>-skill-reference.md`.
 
 ### 3.B. Passive Skill Pipeline
 
@@ -47,9 +47,10 @@ Hook excerpt (`file:line`), exact arithmetic, affected actives + proposed dep to
 ### 3.C. Shared Gates, Review & Verification
 
 1. One class at a time; wait for explicit user approval before writing.
-2. When a skill depends on a skill with no card, surface that skill to do next.
+2. When a skill depends on a skill with no card, surface that skill to do next: right after the apply, name every standalone dep object it built for an uncarded skill (Ground Lock's `MNK_GROUNDLOCK_AEGIS_DEP` / `MNK_GROUNDLOCK_SECONDSTONE_DEP`) and suggest those skills ahead of the planned order, even a passive or one the research had deferred.
 3. Every verified finding goes into a card field or `desc`; anything that doesn't fit is listed as a numbered remainder for the user.
-4. After patching, `node scripts/validate_skills.js` must pass before committing.
+4. **Decide from the code (user 2026-10-03: "no need for live check, trusts the code"):** finish the trace and fix the card or reference instead of parking a mechanic as an open live-check question. Read guard clauses raw: the obfuscator writes `if (!x) goto skip;`, so filtering out `goto` / `continue` lines can invert a condition. A live observation the user reports still wins (AGENTS.md §3.4); only private-server values the client code cannot show get `liveCheck`.
+5. After patching, `node scripts/validate_skills.js` must pass before committing.
 
 ## Summon Mechanics, Companion Movesets & Summon Stat Cards
 
@@ -57,7 +58,7 @@ Hook excerpt (`file:line`), exact arithmetic, affected actives + proposed dep to
 2. **Child move cards** (King Kaiser normal attack, Mega Punch, Gyro shot): summon stat row where only stats the move uses glow (others `.sk-summon-stat-unused`); use the summon's own stats (`ownStats`, `ownStatsKaiser`, `ownStatsGyro`, `ownStatsDmgOnly`).
 3. **LCK:** summon LCK is the attacker LCK for hits (`dmgAdjust`); duration/channel variance always uses the **player's** CHA and LCK.
 4. Duration used only for hit-count math: `hideDurationChip:true`.
-5. Automated summon AI moves omit `cost` entirely.
+5. Automated summon AI moves omit `cost` entirely. **A summon command's cooldown is the player-side `addTimeOut`:** when `RPC_<skill>` in `<Class>.cs` starts a companion coroutine, the companion may also set `addTimeOut("<cType>", ownAgiAdjust(...))` on its own controller (`Gadina.cs:5304`). That is an internal command lock (prose only, never the `cd` chip or an `ownStats*` cd). The `cd` chip cites the matching `addTimeOut` on the player's controller with the player's AGI (`Monkey.cs:38056` Earth Guard, `cdPlayerStats: true`, like Planet Breaker and Titanic Earth Pulse).
 6. Stat accent tokens: `--stat-atk/def/agi/vit/int/cha/tal/lck/lv/hp`.
 7. **Rabbit Contract mercenaries** (`ownStatsMerc: "panther" | "leopard" | "golem"`, `contractOwnStats` / `mercOwnStats`): one stats card per unit (`mercParent: true`, full 9-stat grid, all accented, Contract level cast time and 300 s life, no cost or cooldown) plus move cards that attack with the mercenary's own ATK / TAL / LCK. The grid has a **New Order** toggle (`RABBIT_NEWORDER_DEP`, ×1.5 floored on every stat except SP). Move cards map to Contract's internal ID 434. The validator's own-stat render check (Gaos) also covers them.
 8. **NPC coin summons** (`ownStatsMerc: "dwukphu" | "razan" | "boldas" | "italus"`, user 2026-10-19): any class can use an NPC coin, but these cards sit under Rabbit "อื่น ๆ" next to the Contract mercenaries, because Contract (chance not to consume the coin) and New Order (×1.5 stats; every coin free through a BB bug) change them. Same layout as item 7: a `mercParent` summon card (coin icon `coin_npc<N>` from `gamegui/icons/items/coin/`, fixed 3 s cast with `castWrapped:false`, no cost / cooldown / duration: the NPC lives until it dies or the stage ends) plus one card per AI move on the NPC's own stats, internal ID 444. The summon card states the coin rules (Rank, 5 stage mana, one coin per stage, each NPC once per mission, blocked story missions) and the AI's move order; move cards give the AI range and fixed cooldown, and SP-gated moves explain the start SP, `+1` per hit taken and the drain above max SP. Range models come from each Resources prefab (scratch `mdl.js` pipeline); Boldas reuses `REACH_MODELS.Boldas`. Source and citations: `rabbit-skill-reference.md`, "NPC coin summons".
