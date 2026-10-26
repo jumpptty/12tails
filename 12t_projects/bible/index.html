@@ -5164,6 +5164,9 @@
   .sk-dmg-group-label{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; margin:0}
   .sk-dmg-group-formula{font-size:22px}
   .sk-stat-value-sm{font-size:20px}
+  /* Final Damage on a card with several hit groups (user 2026-10-26): the total sits centred between the title and the Test bar
+     instead of hugging the top. The Formula and Raw chips keep their stacked groups. */
+  .sk-dmg-row:has(.sk-dmg-group-list) .sk-dmg-final > .sk-stat-value{margin-top:auto}
   /* Final Damage's dmgGroups branch sums every group's own range (assumes
      every hit connects) -- this caption is the only thing distinguishing
      that from a normal single-hit range at a glance. */
@@ -33898,6 +33901,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T11:54:42.724Z","feat(bible): on a card with several hit groups the Final damage total sits centred between its title and the Test bar instead of hugging the top"],
     ["2026-10-26T11:48:20.620Z","feat(bible): a description line that newly appears gets its own light ball and is drawn out like a card note, and the bug / tooltip mismatch / unintended notes are solid icons in the gutter left of the description (no pill, no label)"],
     ["2026-10-26T11:30:25.627Z","feat(bible): every run of skill-effect lines in a description gets its icons (a single line too), the list rows line up across both columns, each icon sits centred on its text line, and gear icons get a small frame"],
     ["2026-10-26T10:29:38.469Z","fix(bible): phone card head in two centred rows (the name, then class + range and costs), and every head pill the same height so they line up on phones and desktop"],
