@@ -97,6 +97,17 @@ So on Reborn two casters can no longer push a status one level past what either 
 - **Stat caps follow `isPlayer`:** summons, Shadow Illusion clones and mercenaries (`Reborn:RebornMerc.cs:944`) stay at 512; mounts (`Reborn:CharacterControl.cs:5258`) and Bat Mimic copies (`Reborn:Bat.cs:6081`) count as players. Common note text fixed.
 - **Reborn tab on every stat-capped card (user 2026-10-26):** cards with no `servers.reborn` whose numbers read a player TAL / INT / CHA through a 512-capped adjuster now offer the Reborn tab too (`rebornStatTab` in index.html, 129 cards), so their Reborn numbers use the uncapped stats.
 
+### 2.9 Overrides outside the class files, beta and switched-off code (audit 2026-10-26)
+
+Every place where Reborn changes a skill outside `<Class>Skill.cs` / `<Class>.cs` (user request after the Sheep MP ×1.5 find). Method: every `Reborn*.<member>` called from an original gameplay file (488 hooks), every `rb*` member of an original file and every `RebornBalance` member, matched against these references by name and by cited line.
+
+- **`SkillData.getSkill` post-hooks**, run for every skill (`Reborn:SkillData.cs:106-108`): `rbShpPartyBuff` (Bless with 412 / Illuminate with 413: instant, MP `ceil(1.5 ×)`, `:142-153`), `rbCatNightEyeSp` (Awareness of a Cat with 461: `cSP = -20`, i.e. 20 consumed, `:155-165`), `rbMnkSoulParty` (Summon Soul always instant, `:167-173`). `rbNameOverride` (`:175-232`) gives the in-game names of the 49 C6 / C7 skills (all match the cards) and shows `pnd_spTransfer1/2` as the raw text `sageMind1/2`. All are on the cards.
+- **Per-class skill tables:** compiled and compared in the 2026-10-25 research for every class (setReq / setMPSP / mode / target / cType / rSkill); the changes are in §7.4.
+- **Mole turret skills (beta, not on the app):** `RebornMoleTurret` puts four Mole skills in front of the normal skill data and tree (`Reborn:MoleSkill.cs:11-19`, `:757-761`): ids 445-448 `mol_laserTurret`, `mol_frostTurret`, `mol_boltTurret`, `mol_missileTurret`; req Lv 21, MP 15 / 13 / 13 / 20, SP 20 / 25 / 25 / 40 consumed, cooldown `agiAdjust(35 / 40 / 45 / 50)`, cast `magAdjust(5 / 5 / 6 / 7)`, 30 s life, at most 2 of each kind (`Reborn:RebornMoleTurret.cs:8-42`, `:358`, `:362`). `Unlocked` needs `RebornMoleBeta.On`, which the server sends only to tester accounts (`Reborn:RebornMoleBeta.cs:7-15`, `Reborn:RebornMoleTurret.cs:169-174`, `:296-312`). Not live for players, so no cards; the Night Eye card already lists their shots.
+- **Switched-off code:** `RebornC7Act.BatThirdIllusion = false` (`Reborn:RebornC7Act.cs:148`) disables a third Shadow Illusion clone with Nightmare Cascade (463) (`Reborn:Bat.cs:3784-3788`, `:11804-11811`); `PandaSageSpDrainEnabled = false` (`Reborn:RebornBalance.cs:26`).
+- **Network only:** `RebornCastWatch.CastOnTime` (36 cast sites) ends another player's cast state 0.15 s after its cast end when the network event comes late (`Reborn:RebornCastWatch.cs`); no game rule.
+- The other unnamed hooks are visuals, network sync, UI, PvP / town rules, wave-arena buffs, mercenary AI and the party-only ally filter (`AllyFilter` / `AllyAllowedGo`, §2.5, left off the cards by user decision).
+
 ## 3. Gear findings
 
 ### 3.1 Red star and item chance
