@@ -3247,6 +3247,9 @@
     animation:skServerPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     pointer-events:auto; text-align:left; box-sizing:border-box;
   }
+  /* a long note (the card's own + the server-wide notes that touch it) scrolls inside the popup instead of running off the screen;
+     the TTO magic list keeps its own fit (fitMagic) */
+  .sk-server-popup:not(.sk-magic-popup){max-height:calc(100vh - 32px); overflow-y:auto; align-items:safe center}
   @keyframes skServerPopIn{
     from{opacity:0; transform:scale(0.94) translateY(10px)}
     to{opacity:1; transform:scale(1) translateY(0)}
@@ -33756,6 +33759,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T08:06:22.149Z","fix(bible): a server popup taller than the window (a change note plus several server-wide notes) scrolls inside the screen instead of running off both edges"],
     ["2026-10-26T07:58:43.082Z","fix(bible): the Reborn Shadow Upon Shadow shade toggle on Cat Combo drew a broken image (one icon for every shade count), and a validator check for the rank icons of every multi-rank toggle"],
     ["2026-10-26T07:52:54.965Z","feat(bible): tooltip notes for Reborn Omni Slayer and Alpha Howl (important tooltip omissions now go on the card, user rule 2026-10-26)"],
     ["2026-10-26T07:35:37.406Z","fix(bible): three links that were one-way on the ToT / TTO tabs (Sky Crimson <-> Intense Fire and Gadina <-> Earth Form on ToT, Super Seven -> Combo on TTO), and a validator check for links as each server tab shows them"],
