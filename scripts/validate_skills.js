@@ -4251,6 +4251,26 @@ async function donateChildTests(env) {
     });
     sandbox._setServer("og");
     if (thrown.length) { console.error("[REBORN DESC ERROR] a Reborn desc throws (descSwap found no base text?): " + thrown.join("; ")); errorCount++; } else n++; }
+  // the Reborn engine rules (user 2026-10-26; Reborn-Mechanics-Reference.md §2.1, §2.2, §2.4), worked by hand, on probe cards so the result does not
+  // depend on which cards carry Reborn data: ItemChance = (130n + 99) / 100 in integers (18 -> 24, 10 -> 13, not the float 14; 21 -> 28); on a card with
+  // Reborn data a player's TAL 600 gives 100 x (1 + 0.02 x 600) = 1300, CHA 600 100 x (1 + 0.015 x 600) = 1000, INT 640 a cast of 30 - 640/32 = 10;
+  // a summon's own TAL, a card without Reborn data and BB stay at the 512 cap (1124, 868, 14); the belt adds 3 on Reborn only; a gear chance reads no LCK.
+  { const R = (code) => vm.runInContext(code, sandbox);
+    good(R("itemChance(18) === 24 && itemChance(10) === 13 && itemChance(21) === 28 && itemChance(0) === 0 && itemChance(90) === 100"), "itemChance: 18 -> 24, 10 -> 13, 21 -> 28, 0 -> 0, at most 100");
+    const run = (srv) => { sandbox._setServer(srv); return R(`(() => {
+      const cat = SKILLS.find((s) => s.id === "cat_nAttack"), phx = SKILLS.find((s) => s.ownStatsPhoenix);
+      const pl = Object.assign({}, cat, { servers: { reborn: { cd: 1 } } }), sm = Object.assign({}, phx, { servers: { reborn: { cd: 1 } } }), bb = Object.assign({}, cat, { servers: {} });
+      const out = [];
+      statCapCard = pl; out.push(talAdjustAtRoll(100, 600, 0), chaAdjustAtRoll(100, 600, 0), magAdjustAtRoll(30, 640, 0), talAdjustAtRoll(100, 600, 0, false));
+      _depRanks.rbCritBelt = 1; out.push(rbBelt()); _depRanks.rbCritBelt = 0;
+      statCapCard = sm; out.push(talAdjustAtRoll(100, 600, 0), talAdjustAtRoll(100, 600, 0, false));
+      statCapCard = bb; out.push(talAdjustAtRoll(100, 600, 0), chaAdjustAtRoll(100, 600, 0));
+      out.push(critChance(18, 0, pl), critChance(18, 0, bb) === lckAdjustChance(18, 0), procChance({ itemChance: true }, 18, 200, pl), procChance({ itemChance: true }, 18, 200, bb) === lckAdjustChance(18, 200));
+      out.push(lckProcLive({ itemChance: true, chance: 18 }, pl), lckProcLive({ itemChance: true, chance: 18 }, bb));
+      statCapCard = null; return out.join(); })()`); };
+    const rb = run("reborn"), og = run("og"); sandbox._setServer("og");
+    good(rb === "1300,1000,10,1300,3,1124,1300,1124,868,24,true,24,true,false,true", "Reborn engine rules on a Reborn card (TAL / CHA / INT uncapped, belt +3, summon TAL 1124, gear crit 24% with no LCK): got " + rb);
+    good(og.split(",").slice(0, 3).join() === "1124,868,14" && og.split(",")[4] === "0" && og.split(",")[9] === String(vm.runInContext("lckAdjustChance(18, 0)", sandbox)), "BB keeps the 512 caps, no belt and lckAdjust for gear crit: got " + og); }
   console.log(`Verified ${n} Reborn server infrastructure checks.`);
 }
 // liveCheck (GEMINI.md §2): a card value that follows the code but awaits an in-game check renders as the last line of
