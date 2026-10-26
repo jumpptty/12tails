@@ -5422,7 +5422,7 @@ function fontProblems(html) {
   const fail = (m) => { console.error(`[DESC LIST ERROR] ${m}`); errorCount++; };
   for (const [label, key] of Object.entries(DLI)) if (!SKILL_ICONS[key]) fail(`DESC_LINE_ICONS["${label}"] -> "${key}" is not an icon in assets.js`);
   if (R("DESC_MOD_MIN") !== 1) fail("DESC_MOD_MIN must be 1 (every run of icon lines gets its icons)");
-  if (!/\.sk-desc-mod-ico\{[^}]*width:36px; height:36px[^}]*border-radius:50%/.test(html) || !html.includes(".sk-desc-mod-ico > img, .chm-ring > img") || !/\.sk-desc-mod > div\{[^}]*min-height:36px[^}]*justify-content:center/.test(html) || !html.includes('<span class="sk-desc-mod-t">')) fail("the 36 px icon rule is gone: .sk-desc-mod-ico 36 x 36, the text box min-height 36px centring its .sk-desc-mod-t text (a 1-2 line item centred on the icon, a longer one level with its top)");
+  if (!/\.sk-desc-mod-ico\{[^}]*width:27px; height:27px[^}]*border-radius:50%/.test(html) || !html.includes(".sk-desc-mod-ico > img, .chm-ring > img") || !/\.sk-desc-mod > div\{[^}]*min-height:27px[^}]*justify-content:center/.test(html) || !html.includes('<span class="sk-desc-mod-t">')) fail("the 27 px icon rule is gone: .sk-desc-mod-ico 27 x 27, the text box min-height 27px centring its .sk-desc-mod-t text (a 1-2 line item centred on the icon, a longer one level with its top)");
   if (!/\.sk-desc-mods\.is-two\{[^}]*grid-auto-flow:column/.test(html)) fail(".sk-desc-mods.is-two lost its column-filling grid (rows aligned across both columns)");
   const heroDepOf = (c) => c.descDep || c.dep || c.dmgRankDep || c.dmgDep || c.cdDep || null;
   const ranksOf = (d) => { if (!d) return [null]; const a = []; for (let x = d.minRank || 0; x <= Math.min(d.maxRank || 1, 8); x++) a.push(x); return a; };
@@ -5440,6 +5440,36 @@ function fontProblems(html) {
     }
   }
   console.log(`Verified ${lines} desc icon lines in ${texts} rendered descs (each with its icon; alignment rules in place).`);
+}
+// Start-of-mission cooldown (user 2026-10-26): a skill that enters every battle map on cooldown says so on its cooldown chip
+// ("ติด CD เริ่มฉาก", cdMapStart), or with a second "คูลดาวน์เริ่มฉาก" chip when that cooldown differs from the normal one, never in
+// its desc. The card notes (tooltipNote, bbBug, unintended) are icons at the end of the head line, after the costs (same day).
+{
+  const fail = (m) => { console.error(`[CD START ERROR] ${m}`); errorCount++; };
+  const START_RE = /เริ่มด้วยคูลดาวน์|เข้าแผนที่ต่อสู้|ติดคูลดาวน์ตั้งแต่เริ่ม/;
+  let flagged = 0, seconds = 0, texts = 0;
+  for (const s of SKILLS) {
+    if (!s.class) continue;
+    const variants = [["base", s]].concat(Object.entries(s.servers || {}).filter(([, o]) => o).map(([k, o]) => [k, Object.assign({}, s, o)]));
+    for (const [v, o] of variants) {
+      const startChip = !!(o.secondaryCooldown && o.secondaryCooldown.label === "คูลดาวน์เริ่มฉาก");
+      if (o.cdMapStart) {
+        flagged++;
+        if (o.cd === undefined) fail(`${s.id} (${v}): cdMapStart on a card with no cooldown chip`);
+        if (startChip) fail(`${s.id} (${v}): cdMapStart and a "คูลดาวน์เริ่มฉาก" chip at once (the note when both cooldowns match, the chip when they differ)`);
+      }
+      if (startChip) seconds++;
+      for (let r = 1; r <= (o.maxRank || 1); r++) {
+        let t; try { t = typeof o.desc === "function" ? o.desc(r, null) : o.desc; } catch (e) { continue; }
+        if (!t) continue;
+        texts++;
+        if (START_RE.test(String(t))) fail(`${s.id} (${v}, rank ${r}): the desc states the start-of-mission cooldown (it belongs on the cooldown chip)`);
+      }
+    }
+  }
+  if (!html.includes('activeSelected.cdMapStart && "ติด CD เริ่มฉาก"')) fail('the cooldown chip lost its "ติด CD เริ่มฉาก" note (statBaseRow, cdMapStart)');
+  if (!/<div class="sk-hero-sub sk-hero-costs">\$\{c\}<\/div>` : ""; \}\)\(\)\}\r?\n\s*\$\{noteChipsHtml\}/.test(html)) fail("the note icons left the head line (noteChipsHtml right after the costs group)");
+  console.log(`Verified the start-of-mission cooldown: ${flagged} chip notes, ${seconds} second chips, none stated in ${texts} descs; note icons in the head line.`);
 }
 // No reduced-motion gates (user 2026-10-13: "bypass all reduced motion"; 12t_projects/bible/CLAUDE.md §2): every animation plays whatever
 // prefers-reduced-motion says, so no @media rule and no matchMedia check for it (prose comments may still name it).

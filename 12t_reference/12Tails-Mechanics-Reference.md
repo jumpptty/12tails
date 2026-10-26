@@ -954,6 +954,36 @@ Mission 982 "Battle Colosseum" (`MissionData.cs:9893-9974`): `player = 3` per te
 * **Spawn ring.** The 12 SpawnPoints form a ring of radius ≈ 12.5 around the arena centre, about 30° apart, each facing the centre (local positions under `Icons`, centre ≈ (0, 25.5) in x/z). The ring is shared by both teams, so half the respawns land on the side the enemy team started on.
 * **After the revive.** `onRevivePlayer` sets all three character timers to the minimum 6 s (`setTimeOut(slot, 0)` clamps to 6-120, `:1727-1733`, `CharacterData.cs:2269`).
 
+### 4.12 Start-of-mission cooldowns (verified 2026-10-26)
+
+Each class script's `Start()` puts its Class-B pair on cooldown when the character enters a battle map: `while (Game.mGameType > 4) { addTimeOut(<skill>, agiAdjust(N)); ... }` (a junk-predicate loop that runs once). `mGameType > 4` covers normal missions (5) and the PvP arenas M981-M987 (7); towns (3), guild camps (2) and the type-4 missions (list in §4.9) skip it. `addTimeOut` (`CharacterControl.cs:20102`) applies Revised Art (×0.88 rounded up, §3.5) since none of these keys is on its exclusion list, and `agiAdjust` reads the AGI the character spawns with.
+
+| Class | Skill (key): start cooldown | Source |
+|---|---|---|
+| Wolf | dualBrand 120, twinResonance 240 | `Wolf.cs:90`, `:93` |
+| Bison | magmaClutter 90, calamityHammer 150 | `Bison.cs:109`, `:112` |
+| Panda | fuujinKen 240, raijinKen 300 | `Panda.cs:86`, `:89` |
+| Whale | bowlingWhale 180, grandTide 300 | `Whale.cs:98`, `:101` |
+| Cat | pillagePlunge 120, supportFire 240 | `Cat.cs:86`, `:89` |
+| Chameleon | zeroShot 60, thunderDragon 90 | `Chameleon.cs:86`, `:89` |
+| Rabbit | contract 180 | `Rabbit.cs:105` |
+| Mole | warFactory 180, warCapital 300 | `Mole.cs:118`, `:121` |
+| Monkey | volcanicEruption 240, summonGaos 300 | `Monkey.cs:86`, `:89` |
+| Penguin | cosmicRift 180, cosmicFriday 300 | `Penguin.cs:86`, `:89` |
+| Sheep | bookBash 60, worldEncarta 150 | `Sheep.cs:86`, `:89` |
+| Bat | nefariousWhip 180, blackServant 180 | `Bat.cs:86`, `:89` |
+
+Every value equals the skill's own cooldown except Book Bash (no cooldown of its own: the start lock is its only one) and War Factory (180 s = its Cart Bomb step; the other steps wait 3 s). The app shows a start cooldown on the skill's cooldown chip ("ติด CD เริ่มฉาก" when it equals the cooldown, a second "คูลดาวน์เริ่มฉาก" chip when it differs), never in the desc.
+
+**Reborn** (`Reborn:<Class>.cs` `Start()`, run when `RebornZone.CombatMap`: `mGameType > 4`, or a type 4 or lower map that is a combat zone, `Reborn:RebornZone.cs:28-36`) keeps the BB list (its keys read from the string table) and adds its own skills before or after `RebornC7Act.Seed` (`Reborn:RebornC7Act.cs:615-633`):
+
+* Class `Start()` additions: Wolf guardianOath 300, alphaHowl 300 (`Reborn:Wolf.cs:11135-11136`); Bison stampede 240 (`Reborn:Bison.cs:9733`); Panda hundredFists 360 and windAndStrom a flat 125 (`Reborn:Panda.cs:12521`, `:12523`); Whale leviathanTide 300 (`Reborn:Whale.cs:10805`); Cat broadside 300 (`Reborn:Cat.cs:11683`); Chameleon phantomBloom 240 (`Reborn:Chameleon.cs:11113`); Rabbit thousandShot a flat 100 and tradingWithWind a flat 120 (`Reborn:Rabbit.cs:12321-12322`); Mole airStrike 180, ICBM 240, gigaDrill 300, ironOverdrive 300 (`Reborn:Mole.cs:11628-11632`); Monkey twinSouls 300 (`Reborn:Monkey.cs:11149`); Penguin blackhole 240, supernova 360 (`Reborn:Penguin.cs:11086-11087`); Sheep heavensVerdict 300 (`Reborn:Sheep.cs:10613`); Bat puppeteer 360, eternalNight 240 (`Reborn:Bat.cs:11834-11835`). "Flat" = no `agiAdjust`.
+* `Seed`: the class's #464 skill (`Key464`: Bison ragnarokQuake, Panda asuraTrinity, Whale maelstromAbyss, Cat ghostGalleon, Chameleon venomApocalypse, Monkey elementalSovereign, Mole totalWar, Penguin heatDeath, Rabbit bulletRain, Sheep gatesOfEden; Wolf and Bat have none) at `agiAdjust(360)` against a 600 s cooldown, Panda's at `agiAdjust(600)`; Panda comboLink `agiAdjust(600)` (it has no start cooldown on BB); Penguin absoluteWinter a flat 120.
+* Reborn's `addTimeOut` (`Reborn:CharacterControl.cs:11681-11689`) still applies Revised Art, then `RebornHardcore.Cooldown` and `RebornC7Act.OverdriveCooldown`.
+* Start values that differ from the skill's cooldown: the #464 set (360 vs 600), ICBM (240 vs 600), ironOverdrive (300 vs 240), comboLink (600 vs 240).
+
+**ToT / TTO:** no code. ToT lowers Dual Brand / Twin Resonance's cooldowns to 72 / 120 (user-reported); whether their start values changed with them is unknown, and the app assumes they did.
+
 ## Riding mounts: G. Marshal and G. Champion (verified 2026-10-17)
 Mount items any class can ride. In the app: `common_marshalMount`, `common_championMount`, `common_championMount_charge`, and per class `<class>_mountAttack` / `<class>_mountDash` (formulas in each class reference).
 - **Items** (`MountData.cs`): `o_all3` / `o_all4` = `PvpMount1` / `PvpMount2`, the blue and red armoured mupo ("+20 all stats", the G. Marshal pair, matching the (B) / (R) G. Marshal gear; the app shows the red one). `o_all5` = `G.Champion Mount`, the golden armoured mupo ("+50 all stats"). Item `lv` -60 / -70 = PvP rank.
