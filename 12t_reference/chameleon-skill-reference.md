@@ -648,6 +648,7 @@ Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`, build and tags in [Re
 
 - Phantom Bloom pull = `min(2.5, max(0, d − 1.5))`: the same beyond 4 m, weaker closer, none within 1.5 m (desc fixed).
 - Adaptive Scale: `[immunity7]` blocks every buff of level 7 or lower from anyone, party buffs included.
+- Omni Slayer `tooltipNote`: the Thai tooltip (`Reborn:ChameleonSkill_thai.cs`, `chm_omniSlayer5`) names only All Slayer and a +25% against other races; the code gives every Slayer x2 down its line, and the +25% tests `v.Type != "Chameleon"` (`Reborn:RebornC6Passive.cs:94-97`), not race.
 
 ### C6 / C7 skills (Reborn only)
 

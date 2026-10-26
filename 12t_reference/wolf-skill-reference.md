@@ -933,6 +933,7 @@ Build tag: citations are `Reborn:` (`DecompiledSource_Reborn/Assembly-CSharp/`) 
 - `[damagePlus]` popup (all servers): every hit adds `10 × level` and spends one charge; a charge count of 0 (Alpha Howl, `Reborn:Wolf.cs:15972`) never reaches 0, so it lasts the whole duration (`Reborn:CharacterControl.cs:7242-7251`).
 - Trinity Cross: Cross Break / Grand Cross radius ×2 (5 → 10, 6 → 12), the area ×4; the cards say "รัศมีเป็น 2 เท่า".
 - Start-of-map cooldown (every combat map: missions, PvP and combat zones, `RebornZone.CombatMap`, `Reborn:RebornZone.cs:28-38`; Revised Art applies, `Reborn:CharacterControl.cs` `addTimeOut`; card bullet on each): Guardian Oath `agiAdjust(300)`, Alpha Howl `agiAdjust(300)` (`Reborn:Wolf.cs` `Start`).
+- Alpha Howl `tooltipNote`: the Thai tooltip (`Reborn:WolfSkill_thai.cs`, `wlf_alphaHowl5`) says allies get damagePlus 3 for 20 s; the code gives `[damagePlus3]` with charge value 0 (+30 on every hit for the whole 20 s) to every ally in the area, the Wolf included (`Reborn:Wolf.cs:15964-15972`).
 
 ### C6 / C7 skills (Reborn only)
 
