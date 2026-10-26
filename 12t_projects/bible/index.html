@@ -6375,13 +6375,17 @@
      one line = one column. The icon is centred on the line's first text line (.71em = half the 1.42 line height); gear sprites, which
      have no frame of their own, sit in a small one. */
   .sk-desc-lead{color:var(--text)}
-  .sk-desc-mods{display:grid; grid-template-columns:minmax(0,1fr); gap:4px 28px; margin:5px 0 0; padding-top:6px; border-top:1px solid rgba(212,175,55,.16)}
+  .sk-desc-mods{display:grid; grid-template-columns:minmax(0,1fr); gap:6px 28px; margin:5px 0 0; padding-top:7px; border-top:1px solid rgba(212,175,55,.16)}
   .sk-desc-mods.is-two{grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(var(--rows,1),auto); grid-auto-flow:column}
   .sk-desc-mods + .sk-desc-after{margin-top:6px}
-  .sk-desc-mod{display:flex; gap:7px; align-items:flex-start; min-width:0}
-  .sk-desc-mod > div{min-width:0}
-  .sk-desc-mod-ico{width:18px; height:18px; border-radius:3px; flex:none; margin-top:calc(.71em - 9px); object-fit:contain; box-sizing:border-box}
-  .sk-desc-mod-ico.is-gear{padding:1px; background:rgba(0,0,0,.35); border:1px solid rgba(212,175,55,.32)}
+  /* 36 px icons (user 2026-10-26: x4 the area of the 18 px ones). The text box is at least as tall as the icon and centres its text
+     (.sk-desc-mod-t, one block, so the inline flow inside stays intact): a 1-2 line item is centred on the icon, a longer one starts level
+     with the icon's top. */
+  .sk-desc-mod{display:flex; gap:9px; align-items:flex-start; min-width:0}
+  .sk-desc-mod > div{min-width:0; flex:1; min-height:36px; display:flex; flex-direction:column; justify-content:center}
+  .sk-desc-mod-t{display:block}
+  .sk-desc-mod-ico{width:36px; height:36px; border-radius:5px; flex:none; object-fit:contain; box-sizing:border-box}
+  .sk-desc-mod-ico.is-gear{padding:3px; background:rgba(0,0,0,.35); border:1px solid rgba(212,175,55,.32)}
   /* Topic groups (renderDescWithMods, user 2026-10-26): the topic in a narrow gold column at the left, its lines beside it, a hairline
      between groups; phones stack the topic above its lines. An icon run inside a topic drops its own top rule. */
   .sk-desc-topics{margin-top:8px}
@@ -13022,7 +13026,7 @@ function glueDescTails(root){
     line.insertBefore(span, take[0]);
     take.forEach(n => span.appendChild(n));
   };
-  root.querySelectorAll(".sk-desc-line, .sk-desc-mod > div").forEach(line => {
+  root.querySelectorAll(".sk-desc-line, .sk-desc-mod-t").forEach(line => {
     if (line.querySelector(".sk-desc-tail") || len(vis(line)) < DESC_TAIL_MIN * 2) return;
     glueIn(line);
   });
@@ -13143,7 +13147,7 @@ function renderDescBlock(lines, skill, lck, lead) {
       out.push(`<div class="sk-desc-mods${two ? " is-two" : ""}"${two ? ` style="--rows:${Math.ceil(n / 2)}"` : ""}>${lines.slice(runs[r][0], runs[r][1]).map((l) => {
         const name = modName(l), sk = findSkillByMention(name, skill), key = sk ? sk.icon : DESC_LINE_ICONS[name], src = SKILL_ICONS[key];
         const gear = !sk && /^item_/.test(key || "");
-        return `<div class="sk-desc-mod">${src ? `<img class="sk-desc-mod-ico${gear ? " is-gear" : ""}" src="${src}" alt="">` : `<span class="sk-desc-mod-ico"></span>`}<div>${renderRichText(l.trim(), skill, lck)}</div></div>`;
+        return `<div class="sk-desc-mod">${src ? `<img class="sk-desc-mod-ico${gear ? " is-gear" : ""}" src="${src}" alt="">` : `<span class="sk-desc-mod-ico"></span>`}<div><span class="sk-desc-mod-t">${renderRichText(l.trim(), skill, lck)}</span></div></div>`;
       }).join("")}</div>`);
       i = runs[r][1]; r++;
     } else { text.push(lines[i]); i++; }
@@ -33947,6 +33951,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T14:45:45.595Z","feat(bible): description icons are 36 px (4x the area), a short line centred on its icon and a long one level with its top, rows still aligned on every card and server"],
     ["2026-10-26T14:28:04.139Z","feat(bible): every long skill description is now grouped into topics (146 cards, the single lists too), cr. fuWaa is plain text in the wallpaper layer on the main menu only, the wrong Combo Plus tooltip note is gone, and the nAttack hit-shape lines the range preview already draws are removed"],
     ["2026-10-26T13:47:34.586Z","fix(bible): Combo Plus stacks on every Combo stage and every Strike Master attack (the card said only Combo and Three Steps), with links both ways and a note that the Thai tooltip says every attack"],
     ["2026-10-26T13:47:33.586Z","feat(bible): the 88 longest skill descriptions are grouped into topics (a gold topic column at the left, stacked on phones), every line kept word for word, server lines placed in their topic, and descInTopic matches whole topic names"],
