@@ -5422,7 +5422,7 @@ function fontProblems(html) {
   const fail = (m) => { console.error(`[DESC LIST ERROR] ${m}`); errorCount++; };
   for (const [label, key] of Object.entries(DLI)) if (!SKILL_ICONS[key]) fail(`DESC_LINE_ICONS["${label}"] -> "${key}" is not an icon in assets.js`);
   if (R("DESC_MOD_MIN") !== 1) fail("DESC_MOD_MIN must be 1 (every run of icon lines gets its icons)");
-  if (!/\.sk-desc-mod-ico\{width:36px; height:36px/.test(html) || !/\.sk-desc-mod > div\{[^}]*min-height:36px[^}]*justify-content:center/.test(html) || !html.includes('<span class="sk-desc-mod-t">')) fail("the 36 px icon rule is gone: .sk-desc-mod-ico 36 x 36, the text box min-height 36px centring its .sk-desc-mod-t text (a 1-2 line item centred on the icon, a longer one level with its top)");
+  if (!/\.sk-desc-mod-ico\{[^}]*width:36px; height:36px[^}]*border-radius:50%/.test(html) || !html.includes(".sk-desc-mod-ico > img, .chm-ring > img") || !/\.sk-desc-mod > div\{[^}]*min-height:36px[^}]*justify-content:center/.test(html) || !html.includes('<span class="sk-desc-mod-t">')) fail("the 36 px icon rule is gone: .sk-desc-mod-ico 36 x 36, the text box min-height 36px centring its .sk-desc-mod-t text (a 1-2 line item centred on the icon, a longer one level with its top)");
   if (!/\.sk-desc-mods\.is-two\{[^}]*grid-auto-flow:column/.test(html)) fail(".sk-desc-mods.is-two lost its column-filling grid (rows aligned across both columns)");
   const heroDepOf = (c) => c.descDep || c.dep || c.dmgRankDep || c.dmgDep || c.cdDep || null;
   const ranksOf = (d) => { if (!d) return [null]; const a = []; for (let x = d.minRank || 0; x <= Math.min(d.maxRank || 1, 8); x++) a.push(x); return a; };
