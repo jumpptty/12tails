@@ -483,10 +483,11 @@ Companion to `rabbit-skill-reference.md` (cooldown/duration/maxRank — trusted 
   * Lv.1: 100 HP
   * Lv.2: 200 HP
   * Lv.3: 300 HP
-  * Lv.4: 400 HP (500 HP if stacked to Lv.5 by a 2nd Rabbit)
+  * Lv.4: 400 HP
+  * **Heal level = the caster's own level, never 5 (re-checked 2026-10-26):** the shooter computes `mBoostLv = getStatusLv("boost")`, `+1` only while it is below its own cap `mLv = 1 + Medical Enhancement`, otherwise `= mLv` (`Rabbit.cs:28316-28335`), and heals `100 * mBoostLv` (`:28346`). The Lv.5 bump from a 2nd Rabbit happens later inside the target's `RPC_AddStatus`, so it never reaches the heal: the instant heal is at most `100 × (1 + Medical Enhancement)` = 400 HP, also on a target that already has `[boost5]`. Heat Shot is the same (`mHeatLv`, `:28375-28405`): at most 40 SP. So the card's "100 + 100 × (level before the shot), at most 100 × (1 + ME)" is exact.
 * **Status `boost`:** Applies `[boost]` with level `mBoostLv` and duration `chaAdjust(30 + mLv * 5)` (35s, 40s, 45s, 50s) (`Rabbit.cs:28341`). Classification: `isBuffStatus` and `isMagicalStatus` (`StatusData.cs:5729`, `:6716`) — Buff, Magical.
   * **Effect:** Grants `+10 * sLv VIT` (`deltaVit(10 * sLv)`, `CharacterControl.cs:37495`; removed via `deltaVit(-10 * sLv)`, `:16823`).
-* **Level Stacking & Multi-Rabbit Stacking:** Identical to Immune Shot and Heat Shot: increases level by 1 on repeated casts up to `mLv` (Lv.4 with Medical Enhancement 3). A 2nd Rabbit escalates to Lv.5 (+50 VIT, 500 HP heal), after which duration cannot be refreshed until expiration.
+* **Level Stacking & Multi-Rabbit Stacking:** Identical to Immune Shot and Heat Shot: increases level by 1 on repeated casts up to `mLv` (Lv.4 with Medical Enhancement 3). A 2nd Rabbit escalates to Lv.5 (+50 VIT; the instant heal stays 400 HP, see above), after which duration cannot be refreshed until expiration.
 
 ### 15. Heat Shot (`heatShot3`) — active, ally target (verified 2026-09-24)
 * **Source:** `Rabbit.cs:7006-7094` (cast dispatch), `Rabbit.cs:28352-28410` (execution) inside `$RPC_medicalShot$27092`
@@ -663,7 +664,8 @@ Requirements (decode): Bunny Bargain Lv 5/11/17/23 (Bn 1/3/5/7), Special Deal Lv
 - MP 0, SP 0 (decode), cooldown 90 s. Opens a shop object (`Rabbit_mall.cs`, `Init(owner, ownerID, sellerID)`) that other players click within 2 m (`sqrMagnitude <= 4`, `:194`) to buy through `MallGui` (`Rabbit.cs:5626-5644`, `MallGui.cs:4885-4960`). `MallGui` holds 8 item slots (`while (i < 8)`, `MallGui.cs:1126`, `:4594`). No rank check for the tooltip's 4 / 8 sellable items was found in `Rabbit.cs`, `Rabbit_mall.cs`, `MallGui.cs` or `CharacterControl.cs`; `hasSkill(341-343)` at `CharacterControl.cs:4206-4251` is Bison's block (`Type == "Bison"`, `:4011`).
 
 **Shake (`shake1-3`)**
-- SP potion amounts are `4 / 8 / 12` SP per bottle for ranks 1-3 (`Rabbit_potion.cs:342-366`), 3 bottles, matching the card; the HP potions of Mix are `20 / 40 / 60 / 80 + floor(0.3 × ExtraPotion × Lv)` (`:294-330`).
+- SP potion amounts are `4 / 8 / 12` SP per bottle for ranks 1-3 (`Rabbit_potion.cs:342-366`), 3 bottles, matching the card; the HP potions of Mix are `20 / 40 / 60 / 80 + floor(0.3 × ExtraPotion × Lv)` (`:294-330`), where `ExtraPotion` is 0 / 1 from `hasSkill(412)` (`:271-277`) and `Lv` is the **Rabbit's** character level (`characterControl.Lv` of the bottle's owner, not the drinker's).
+- **Who gets a Mix / Shake bottle (checked 2026-10-26):** the same `Rabbit_potion.OnTriggerEnter` as Miracle Blend: only the Rabbit's own client (`characterControl.isMine`, owner = `PhotonClient.ActorNrList[nOwnerID]`) applies it, to any character whose layer equals the Rabbit's layer (`Rabbit_potion.cs:141-207`, layer stored in `Init` `:67`), so the Rabbit itself and its allies, never an enemy. Reborn changes: see "Mix, Shake, Miracle Blend bottles" in the Reborn section.
 
 **Extravagance (`extravagance5`)** — Lv 85 (Bn 6), MP 20, SP 40 red, cooldown `agiAdjust(120)`. The fee is `clamp(floor(0.01 × Gil), 1, 512)` (`Rabbit.cs:40056`); the ATK bonus value is copied from the fee **before** Skill Bargain applies its `floor(0.6 × fee)` (`:40059` copies, `:40068` discounts), so with Skill Bargain the caster still gets the full `+fee ATK` while paying 60% of it. The bonus is `RPC_AddStatus("atkUp", 5, chaAdjust(6), value)` (`:39902`), applied as `deltaAtk(sValue)` (`CharacterControl.cs:33180`, removed at `:14695`), i.e. a flat `+value ATK` for `chaAdjust(6)` seconds.
 

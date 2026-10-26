@@ -291,7 +291,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - SP 36 **blue**, Lv 75/Bn 4, target. CD `agiAdjust(30)` (`:39724`).
 - `RPC_megaDrill` (`:39324-39830`): brief `moveSpeed −5` wind-up, then 4 hits (`i < 4`, `:39761`): `FindRecTarget(pos, fwd, 1, 1, 3, 2, enemy layers)` (2 m wide, 3 m long, `:39563`); `hit(2, t, ATK + talAdjust(45), KO 2, …)` (`:39586`), `sp + 1` per target hit.
-- Passive part: Mega Punch and Mega Hammer `floor(1.5 × hitDmg)` (`:32488`, `:33081`); Barrel Bot gets `drillLv = 1` (`RPC_barrelBot_create`, `:12939`). Card correction: hit count 4 (was 1).
+- Passive part: Mega Punch and Mega Hammer damage **and KO** `floor(1.5 ×)` (`hitDmg` `:32494` / `:33087`, `hitKo` `:32499` / `:33092`, inside `hasSkill(433)` `:32488` / `:33081`; re-checked 2026-10-26, the Mega Drill card had said damage only); Barrel Bot gets `drillLv = 1` (`RPC_barrelBot_create`, `:12939`). Card correction: hit count 4 (was 1).
 
 ### mol_barrelBot1-4 (Barrel Bot, #321-324) (verified 2026-10-01)
 
@@ -520,7 +520,7 @@ Private-server values are documented from the Bible skill-detail schema; the Big
 | Auto Gyro Gun | No simultaneous-turret limit is represented on the original card. | Cap is 8 guns without Hidden Turret or 12 with Hidden Turret. |
 | Flame Turret | The Mole stays a turret for its full `chaAdjust(5)` s (`Mole.cs:27935`). | **Buff:** pressing the skill again during it ends it early (user-reported TTO patch, 2026-10-23; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Smart Shell | Allies inside the blast take half: Stun Mine / Stun Grenade KO halved, Time Nuke / Flame Carnival damage halved (Smart Shell entry above). | Does not reduce damage dealt to allies (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
-| King Kaiser; King Kaiser - Normal Attack / Kaiser Cannon / Kaiser Beam | MHP 2000, then Heavy Built applies `ceil(MHP×(1+0.5×rank))` → 2000 / 3000 / 4000. | **Nerf:** MHP is fixed at 1500 and Heavy Built does not apply. The server selector is present on the parent and all three child cards because their shared own-stat block changes. |
+| King Kaiser; King Kaiser - Normal Attack / Kaiser Cannon / Kaiser Beam | MHP 2000, then Heavy Built applies `ceil(MHP×(1+0.5×rank))` → 2000 / 3000 / 4000. | **Nerf:** MHP is fixed at 1500 and Heavy Built does not apply. The server selector is present on the parent and all three child cards because their shared own-stat block changes; since 2026-10-26 Heavy Built has a TTO tab too, whose desc drops King Kaiser from its list. |
 
 Source of server delta: `12t_projects/bible/index.html:9160`.
 
@@ -575,6 +575,8 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Bombardment | cooldown −35% (180 → 117 s); damage range +20%; resets Blast Throw |
 | Mine Lover | reworked into the active "Blast Throw" (bomb cooldown down, all damage +50%, throws a bomb that explodes on landing), 20 red SP / 10 MP |
 | Napalm | can damage Machine / Structure targets; can no longer damage characters that are dodging |
+
+On the cards (2026-10-26): every row above has a ToT desc built from the base desc (`servers.tot.desc`); the Fire Barrage / Bombardment +20% damage range lives in their `reach` (radius × 1.2 when the ToT tab is on), so their ToT descs add only the Blast Throw reset. The BB Napalm skips `Robots` / `Structure` targets (`Mole.cs:37723`, `:37729`), which is what the ToT change lifts.
 
 
 ### ToT EX learning requirements (published simulator, 2026-10-13)

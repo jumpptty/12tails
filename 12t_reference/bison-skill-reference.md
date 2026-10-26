@@ -562,8 +562,8 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Fury Trance | triggers below 80 / 60 / 40% HP (was 60 / 40 / 20) |
 | Over Power | base cooldown −50% (600 → 300 s); replaces the earlier −30% |
 | Iron Shield / Diamond Shield | base duration 6 → 4 s |
-| Spin Hack | charge range bonus 40% → 50% (the card models +2 m radius from code) |
-| Hold Charge | charge time reduced to 4 s / 8 hits |
+| Spin Hack | charge range bonus 40% → 50%: on the BB base radius `5×rangeMod` (`Bison.cs:20016`, +2 = +40%) that is 5 → 7.5 m, +2.5 m instead of +2 m; Charge Attack's ToT reach and Spin Hack's ToT desc (2026-10-26) use it |
+| Hold Charge | charge time reduced to 4 s / 8 hits. The note does not say which value moves (BB: hits = `floor(clamp(charge s, 2, 8))` at Charge Attack 2, `Bison.cs:5378`; Solid Hold's separate `charge s − 8` threshold, `:5383`), so the card has no ToT desc (2026-10-26) |
 
 
 ### ToT EX learning requirements (published simulator, 2026-10-13)

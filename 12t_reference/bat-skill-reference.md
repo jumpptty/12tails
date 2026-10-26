@@ -273,6 +273,7 @@ Follow-up verification:
 - Passive ranks, reqLv/Bn 1/0, 2/1, 3/2 (`decode_skilldata.py`). `doNormalAttack` (`Bat.cs:10020-10300`): stage 2 needs #101 (pressed 0.3-0.6 s after stage 1), stage 3 needs #102 (after 0.9 s); otherwise stage 1 when the `nAttack` lock is free. Locks: stage 1 and 2 `addTimeOut("nAttack", 1.5)` (`:20367`, `:20659`), stage 3 `2` s (`:21074`), all flat.
 - **Each stage fires a bolt** (`RPC_nAttack_fire1`, `Bat.cs:10746`): one `nAttack_fire` projectile from 1.3 m up / 1 m ahead, `life = 1.25 × rangeMod` s (`:10762`). With #103, stage 3 calls `RPC_nAttack_fire2` instead: three bolts, offset ±1 m sideways and turned ±15° (`:10836-10868`). Bolts home on the locked target only with the `w_bat59` weapon (`:10765-10788`; `Bat_nAttack.InitHoming`, turn 0.1 rad every 0.1 s).
 - **Hit** (`Bat_nAttack.OnTriggerEnter`, `Bat_nAttack.cs:138-366`, on the Bat's own client): first enemy collider touched; `num = (int)(0.5 × ATK)`, `floor(0.75 ×)` with `w_bat59`, then `getCritPlus` (gear crit, standard table, `Bat.cs:19389`), `hit(1, t, num, KO 1, 0, …)`. On a landed hit: `onNormalAttackHit` (weapon procs), +1 SP, and with Amplify Damage (#251-#254) `amplifyDamage` at that level for `getDebuff(3)` s (`:276-363`).
+- **Amplify Damage only from the Bat's own bolts (verified 2026-10-26):** the Bat's bolt applies it after every landed hit (`hit() != 0`, `Bat_nAttack.cs:276-363`); the clone bolt never does (no `amplifyDamage` and no `hasSkill(251-254)` anywhere in `Bat_illusionFire.cs` or `Bat_illusion.cs`; the same in Reborn, where only `Reborn:Bat_nAttack.cs:109-121` counts 251-254). The clone's Drain Life tick has none either (Drain Life entry below).
 - Shadow Illusion clones repeat every stage from their own position (`Bat.cs:10086-10112`, `:10191-10217`, `:10266-10290`); with #103 their stage 3 also fires three bolts (`Bat_illusion.cs:3895-3914`, the clone has the Bat's skill list). A clone copies the Bat's ATK / LCK / gear at summon (`Bat_illusion.cs:60-120`), its `damageMod` is `clamp(0.25 + 0.25n, 0.5, 1)` (`Bat_illusion.cs:151`), and its bolt (`Bat_illusionFire.cs`) has no `w_bat59` cut and only crits with Illusion Effect.
 - **Card (2026-10-06, user):** a `BAT_COMBO_ILLUSION_DEP` rank toggle (0-4 = Shadow Illusion level; 1 clone at rank 1, 2 from rank 2) adds a `Shadow Illusion` group with `stage hits × clones` hits, `damageMod` 0.5 / 0.5 / 0.75 / 1 instead of the player's buffs, and `critOff` unless `BAT_COMBO_ILLUSIONEFFECT_DEP` is on.
 - **Card (2026-10-06):** `BAT_COMBO_GEAR` controls: crit Wand (G. Marshal +5 / G. Champion +7), crit armor + hat (+7 / +11) and Homing Wand (`w_bat59`, "A wand that is precise in striking…", `WeaponData_eng.cs:5764`; `floor(0.75x)` before the crit, exclusive with the crit Wand).
@@ -301,6 +302,11 @@ Follow-up verification:
 - reqLv/Bn 5/1, 13/3, 21/5, 29/7; MP **11 / 15 / 19 / 23**; target, enemy; instant (`decode_skilldata.py`).
 - `RPC_shadowGaze` (`Bat.cs:11281-11620`): cooldown `agiAdjust(30)`, `agiAdjust(20)` with Demon Gaze #412 (`:11319-11333`). Without `massCast` only the target; with it every enemy in `FindAreaTarget(target, 18, 12)`, at most 6 (`:11447-11513`). Each takes `hit(210 + rank, t, talAdjust(12 + 12 × rank + (Demon Gaze ? 12 : 0)), KO 0, 0, …)` (`:11614`).
 - Client tooltips: EN "Instantly deal some damage to the target. (24 [36 / 48 / 60] dmg)" (`BatSkill_eng.cs:240-273`). Matches the `talAdjust` base.
+
+### bat_curse1-4 (Curse, #231-#234): applied level (verified 2026-10-26)
+
+- Each target hit (the target alone, or with `massCast` up to 6 in the Mass Cast area, `Bat.cs:27424`) gets `curse` at `rank + (target has shame ? 1 : 0) + (Bat has learned Dark Stalker #432 ? 1 : 0)` (`Bat.cs:27435`) for `getDebuff(15)` (`:27440`). So Dark Stalker, an active, also works as a passive +1 on every Curse once learned.
+- With Shadow Mastery, when that level is not above the target's current `curse` level, it becomes `clamp(target level + SM, rank, rank + SM)` (`Bat.cs:27462`), then `RPC_AddStatus("curse", …)` (`:27469`). The cap uses the cast rank only, so the Shame / Dark Stalker bonuses are not added on top of it.
 
 ### bat_echoes1-2 (Echoes, #241/#242) (verified 2026-10-01)
 
@@ -383,7 +389,7 @@ Follow-up verification:
 ### bat_autoMass5 (Auto Mass, #431) (verified 2026-10-01)
 
 - Passive, reqLv 75, reqBn 4.
-- **Proc** (cast dispatcher, `Bat.cs:23247-23360`): when the Bat casts Phantom Bane, Dissolute, Corruption, Curse, Doom, Blind, Confusion, Dream Dazzle, Phantasm Blast, Charm or Shame without `massCast` active, `Random.Range(0,100) < lckAdjust(12)` gives `massCast` Lv 1 for a flat **3 s** (`:23360`), which the spell then spreads with.
+- **Proc** (cast dispatcher, `Bat.cs:23247-23360`): when the Bat casts Phantom Bane, Dissolute, Corruption, Curse, Doom, Blind, Confusion, Dream Dazzle, Phantasm Blast, Charm or Shame without `massCast` active, `Random.Range(0,100) < lckAdjust(12)` gives `massCast` Lv 1 for a flat **3 s** (`:23360`), which the spell then spreads with: the spell's own `RPC_<spell>_cast` coroutine starts right after the roll (`:23362-23386`, the `sType` switch) and reads `massCast` at its hit.
 - **Class-C unlock:** Shame, Soul Eater, Paranoia and Shattering Dream read `massCast` only when #431 is learned (`Bat.cs:39599`, `:40828`, `:41411`, `:42038`); otherwise they hit only their target.
 - Client tooltips: EN "Gives 13% chance for any spell to be mass cast. Enable C skills to be mass cast." (`BatSkill_eng.cs:889`). Code wins: base 12, LCK-scaled, and only for the eleven spells above.
 
@@ -509,7 +515,7 @@ All inside `distance < 32`, else run. 55 Doom 2; 45 Echoes 2; 40 Phantasm Blast 
 - **Shadow Illusion spawn:** clone 1 at `getSpawnVector(Bat + up, TransformDirection(−1.5, −1, 2.6))`, clone 2 at `(+1.5, −1, 2.6)`, each passed through `getExpandPos(…, 1, 0.5)` (`Bat.cs:31511-31559`): 2.6 m in front, 1.5 m to each side.
 - **Switch / Shadow Sacrifice:** no distance check; Switch picks an existing clone (`Bat.cs:7861-7951`, `RPC_switch` `:13272-13410`), Shadow Sacrifice drains every clone (`:14100-14350`).
 - **Target spells:** the local cast switch (`Bat.cs:7000-9600`) has no distance gate besides Mirage Orb's 6 m spacing (`:9349`), so curses, Dream spells, Charm, Mimic, Dark Stalker, Soul Eater, Paranoia and Nefarious Whip reach the 40 m target lock ([12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)). Nightmare and Mind Control check `sqrMagnitude > 1600` / `<= 1600` themselves (`:28939`, `:37491`).
-- **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target (flat, no height limit); every living character found counts, the target included. Damage: `RPC_AddEffectDamage(434, Mathf.Clamp(num × 100, 100, 1000))` (`Bat.cs:14692`), so **100 minimum** (the target alone) and **1000 maximum** (10 or more).
+- **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target (flat, no height limit); every living character found counts, the target included. Damage: `RPC_AddEffectDamage(434, Mathf.Clamp(num × 100, 100, 1000))` (`Bat.cs:14692`), so **100 minimum** (the target alone) and **1000 maximum** (10 or more). With Auto Mass and `massCast`, every living enemy in `FindAreaTarget(target, 18, 12)` (at most 6, `Bat.cs:41411-41490`) gets its own `RPC_paranoia_hit`, and each counts the living characters around itself (`findFriends(hit target, 24, its layer)`, `Bat.cs:14627`), verified 2026-10-26.
 
 ## Server Balance Variations (ToT)
 
