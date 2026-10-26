@@ -3939,7 +3939,7 @@
   .sk-empty-state{padding:40px 20px; text-align:center; color:var(--muted); font-size:14px}
   .sk-hero{border:1px solid transparent; border-radius:3px; background:none; padding:16px 20px}
   .sk-hero-head{display:flex; align-items:center; gap:14px; margin-bottom:12px}
-  .sk-hero-icon{width:56px; height:56px; border-radius:6px; flex:none}
+  .sk-hero-icon{width:72px; height:72px; border-radius:7px; flex:none}   /* matches the three-row head (user 2026-10-26); the same size with fewer rows */
   /* Caster badge (2026-08-21): for a "Barrel Bot - X" move whose icon was
      swapped from the generic shared mole_barrelBot art to the REAL Mole
      skill-tree icon of the same-named skill (Mega Punch/Hammer/Drill/
@@ -4316,7 +4316,7 @@
 .sk-empty-state{padding:40px 20px; text-align:center; color:var(--muted); font-size:14px}
   .sk-hero{border:1px solid transparent; border-radius:3px; background:none; padding:16px 20px}
   .sk-hero-head{display:flex; align-items:center; gap:14px; margin-bottom:12px}
-  .sk-hero-icon{width:56px; height:56px; border-radius:6px; flex:none}
+  .sk-hero-icon{width:72px; height:72px; border-radius:7px; flex:none}   /* matches the three-row head (user 2026-10-26); the same size with fewer rows */
   /* Caster badge (2026-08-21): for a "Barrel Bot - X" move whose icon was
      swapped from the generic shared mole_barrelBot art to the REAL Mole
      skill-tree icon of the same-named skill (Mega Punch/Hammer/Drill/
@@ -4446,6 +4446,7 @@
     font-family:'Prompt',sans-serif;
     text-align:center;
     white-space:normal;
+    text-wrap:balance;   /* even lines: no near-empty last row when one word wraps (user 2026-10-26) */
     overflow-wrap:anywhere;
     max-width:min(300px, calc(100vw - 24px));
     box-sizing:border-box;
@@ -6447,7 +6448,7 @@
     /* .sk-has-server-deps override removed */
     .sk-hero{padding:12px 14px}
     .sk-hero-head{gap:10px; margin-bottom:8px}
-    .sk-hero-icon{width:46px; height:46px}
+    .sk-hero-icon{width:64px; height:64px}
     .sk-hero-name{font-size:18px}
     .sk-hero-stats{gap:8px}
     .sk-hero-stats.sk-odds-row{margin-top:8px}
@@ -33762,6 +33763,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T09:23:41.776Z","feat(bible): bigger skill icon beside the three-row card head (72 px, 64 px on smaller windows, the same on every card), and status popups balance their lines so one wrapped word no longer leaves a near-empty row"],
     ["2026-10-26T09:14:22.099Z","fix(bible): TTO fixed the Chameleon crit gear the same way as ToT (Marshal and Champion count, Mantis does not) on Combo, Left Stride and Critical Plus and in the Chameleon attack sim; Left Stride and Critical Plus get the ToT fix too"],
     ["2026-10-26T08:47:58.353Z","fix(bible): Reborn Night Eye also blocks the ice of Frost Tower, the Reborn stat-cap note drops the line that heals by TAL use the damage formula, and the reference records the Reborn override audit (Mole turret beta skills, switched-off third clone)"],
     ["2026-10-26T08:32:35.199Z","fix(bible): tooltip notes on Bison Berserker Rush, Panda Mystic Sage and the four Rabbit shots (the Thai tooltips leave out the HP cap, the full-SP rule and the per-shot stacking; Heat and Boost Shot say 30 s, the code gives 35)"],
