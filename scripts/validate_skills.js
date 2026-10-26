@@ -1140,6 +1140,20 @@ SKILLS.forEach(sk => {
   }
 });
 
+// 4a. Every multi-rank toggle a card shows on any server draws an icon that exists for each rank: the header button takes iconFor(rank), else the
+// icon with its digits swapped for the rank (2026-10-26: a 0-3 Shadow Upon Shadow toggle without iconFor drew a broken cat_shadowUponShadow1).
+{ const depF = ["descDep", "cdDep", "durDep", "castDep", "dmgMultDep", "dmgRankDep", "hitCountDep", "hitOutDep", "dep", "koDep", "dmgDep", "dmgFlagDep", "cdMultDep"], listF = ["dmgControls", "infoDeps", "reachControls"], seenRank = new Set();
+  SKILLS.forEach(sk => (sk.soon ? [] : sandbox._getAvailableServers(sk)).forEach(srv => {
+    const a = sandbox._getActiveSkill(sk, srv);
+    depF.map(k => a[k]).concat(...listF.map(k => (a[k] || []).map(d => d && d.dep ? d.dep : d))).filter(d => d && d.id && (d.maxRank || 1) - (d.minRank || 0) > 1 && !seenRank.has(d.id)).forEach(d => {
+      seenRank.add(d.id);
+      for (let r = d.minRank || 0; r <= d.maxRank; r++) {
+        const key = d.iconFor ? d.iconFor(r) : String(d.icon || "").replace(/\d+$/, "") + (r === 0 ? 1 : r);
+        if (!SKILL_ICONS[key]) { console.error(`[ICON ERROR] toggle ${d.id} (on ${sk.id} / ${srv}): rank ${r} draws '${key}', which is not in SKILL_ICONS (give the dep an iconFor)`); errorCount++; break; }
+      }
+    });
+  }));
+}
 // 4b. The merged view (2026-10-26): on each server the page shows a card's own list for that server, or its base list. Every link a card shows
 // on a server comes back on the target's list there (both cards offering that server); the pairs above only compare list with list.
 for (const srv of ["tot", "tto", "reborn"]) {

@@ -9425,7 +9425,7 @@ const REBORN_CAT_LUNAR_DEP = { id: "lunarTempest", label: "Lunar Tempest", icon:
 const REBORN_CAT_NIGHTEYE_DEP = { id: "nightEye", label: "Night Eye", icon: "cat_nightEye5", minRank: 0, maxRank: 1 };
 const REBORN_CAT_NINTHLIFE_DEP = { id: "ninthLife", label: "Ninth Life", icon: "cat_ninthLife5", minRank: 0, maxRank: 1 };
 // the number of living shades (0-3, Reborn:RebornC7Act.cs:1987-2031); each adds the hitPurple of Combo's white hits
-const REBORN_CAT_SHADOW_DEP = { id: "shadowUponShadow", label: "Shadow Upon Shadow", icon: "cat_shadowUponShadow5", minRank: 0, maxRank: 3, labelFor: (r) => r > 0 ? "Shadow Upon Shadow: เงา " + r + " ตัว" : "Shadow Upon Shadow" };
+const REBORN_CAT_SHADOW_DEP = { id: "shadowUponShadow", label: "Shadow Upon Shadow", icon: "cat_shadowUponShadow5", minRank: 0, maxRank: 3, iconFor: () => "cat_shadowUponShadow5", labelFor: (r) => r > 0 ? "Shadow Upon Shadow: เงา " + r + " ตัว" : "Shadow Upon Shadow" };
 const RABBIT_MEDICAL_ENHANCEMENT_DEP = { id: "medicalEnhancement", label: "Medical Enhancement", icon: "rabbit_medicalEnhancement3", minRank: 0, maxRank: 3, perRank: 5 };
 const RABBIT_ALCHEMISTLAB_DEP = { id: "alchemistLab", label: "Alchemist Lab", icon: "rabbit_alchemistLab4", minRank: 0, maxRank: 4, perRank: 2 };
 const RABBIT_EXTRAPOTION_REACH_DEP = { id: "extraPotion", label: "Extra Potion", icon: "rabbit_extraPotion5", minRank: 0, maxRank: 1 };   // popup handle; shares the id of the Mix card's own dmgDep
@@ -33756,6 +33756,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T07:58:43.082Z","fix(bible): the Reborn Shadow Upon Shadow shade toggle on Cat Combo drew a broken image (one icon for every shade count), and a validator check for the rank icons of every multi-rank toggle"],
     ["2026-10-26T07:52:54.965Z","feat(bible): tooltip notes for Reborn Omni Slayer and Alpha Howl (important tooltip omissions now go on the card, user rule 2026-10-26)"],
     ["2026-10-26T07:35:37.406Z","fix(bible): three links that were one-way on the ToT / TTO tabs (Sky Crimson <-> Intense Fire and Gadina <-> Earth Form on ToT, Super Seven -> Combo on TTO), and a validator check for links as each server tab shows them"],
     ["2026-10-26T07:27:30.526Z","feat(bible): class guide #79 ToT Cat แกรมแท้ 10 10 by Pandyツ"],
