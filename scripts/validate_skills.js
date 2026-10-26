@@ -1524,6 +1524,8 @@ const LCK_GLOW_HIDDEN = {
   tto: Object.fromEntries(["chameleon_tormentRain", "mole_warFactory_sawMachine", "mole_warFactory_bazooka", "mole_warFactory_teslaCoil", "mole_warFactory_rollerMachine"].map(id => [id,
     // TTO (no damage roll): a 3 s cooldown shown in whole seconds; the agiAdjust roll crosses a whole second only at some AGI values (AGI 30: 3s -> 2-3s)
     "the cooldown roll crosses a whole second only at some AGI values"])),
+  // ToT makes Mike Circle active with a 3 s agiAdjust cooldown shown in whole seconds (1.3-1.5 s at AGI 128 rounds up to 2 s): same case as the tto list
+  tot: { monkey_mikeCircle: "the cooldown roll crosses a whole second only at some AGI values" },
 };
 if (RUN_DAMAGE_CHECKS) {
   const inputs = sandbox._statInputs, bad = [], savedIn = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
@@ -1532,17 +1534,19 @@ if (RUN_DAMAGE_CHECKS) {
   // a fresh render goes through another card of the SAME class: a class switch loads that class's saved stat preset over the stats set here
   const sameClass = (sk) => SKILLS.find(x => x.class === sk.class && x.id !== sk.id) || SKILLS.find(x => x.id !== sk.id);
   if (typeof sandbox.getSoftPlayerStatKeys !== "function" || typeof sandbox.getSoftEnemyStatKeys !== "function") bad.push("getSoftPlayerStatKeys / getSoftEnemyStatKeys are missing");
-  for (const srv of ["og", "tot", "tto"]) {
+  for (const srv of ["og", "tot", "tto", "reborn"]) {   // reborn (user 2026-10-26): only the cards with Reborn data (the others render their BB data there)
     sandbox._setServer(srv);
     for (const sk of SKILLS) {
+      if (srv === "reborn" && !(sk.servers && sk.servers.reborn) && sk.onlyServer !== "reborn") continue;
       try {
         // a fresh render each time (another card first): a changed number otherwise leaves its delta-motion markup in the next render
-        const render = (p, e) => { inputs.lck.value = p; inputs.enemyLck.value = e; sandbox._selectSkill(sameClass(sk)); sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+        const render = (p, e) => { inputs.lck.value = p; inputs.enemyLck.value = e; sandbox._selectSkill(sameClass(sk)); sandbox._setServer(srv); sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };   // _setServer again: leaving a server-exclusive card restores the server before it (serverBeforeExclusive), which was the previous pass's after a Reborn-only stub
         const base = render("0", "0");
         if (render("0", "0") !== base) { skippedLckGlow++; continue; }   // a card that draws something random each render can't be measured this way
         const pHigh = render("200", "0"), pMoves = pHigh !== base, eMoves = render("200", "200") !== pHigh;   // enemy measured with the player at 200, so LCK-difference cards show
-        const usedP = sandbox.getUsedPlayerStatKeys(sk), usedE = sandbox.getUsedEnemyStatKeys(sk);
-        const pFull = usedP.has("lck"), pSoft = soft("getSoftPlayerStatKeys", sk).has("lck"), eFull = usedE.has("lck"), eSoft = soft("getSoftEnemyStatKeys", sk).has("lck");
+        const over = srv === "og" ? null : (sk.servers && sk.servers[srv]) || (srv === "tot" ? sk.ps : null), act = over ? Object.assign({}, sk, over) : sk;   // the page's glow reads the server-merged card
+        const usedP = sandbox.getUsedPlayerStatKeys(act), usedE = sandbox.getUsedEnemyStatKeys(act);
+        const pFull = usedP.has("lck"), pSoft = soft("getSoftPlayerStatKeys", act).has("lck"), eFull = usedE.has("lck"), eSoft = soft("getSoftEnemyStatKeys", act).has("lck");
         // A soft glow rolls inside another stat's step, so it may show nothing exactly when that step shows nothing at these settings (no damage
         // until a dep is on, a charge level of 0, a hit pinned at 1): then the stats it rolls with move nothing either and the glow stands.
         const stepMoves = (keys) => keys.some(k => { const el = inputs[k], was = el.value; el.value = "0"; const a = render("200", "0"); el.value = "300"; const b = render("200", "0"); el.value = was; return a !== b; });
@@ -1550,7 +1554,7 @@ if (RUN_DAMAGE_CHECKS) {
         const strong = (fn) => ["400", "0"].some(val => { const keep = ["atk", "tal", "agi", "int", "cha", "enemyDef"].map(k => [k, inputs[k].value]); ["atk", "tal", "agi", "int", "cha"].forEach(k => { inputs[k].value = val; }); inputs.enemyDef.value = "0"; try { return fn(); } finally { keep.forEach(([k, x]) => { inputs[k].value = x; }); } });   // strong stats, then weak ones (a short cooldown's roll shows only at low AGI)
         const pMovesStrong = () => strong(() => render("0", "0") !== render("200", "0")), eMovesStrong = () => strong(() => render("200", "0") !== render("200", "200"));
         checkedLckGlow += 2;
-        const known = (LCK_GLOW_HIDDEN[srv === "tto" ? "tto" : "all"] || {})[sk.id];   // a real roll the shown numbers can't reveal, checked by hand
+        const known = (srv !== "tto" && LCK_GLOW_HIDDEN[srv] || {})[sk.id] || (LCK_GLOW_HIDDEN[srv === "tto" ? "tto" : "all"] || {})[sk.id];   // a real roll the shown numbers can't reveal, checked by hand
         if (known) { knownLckGlow++; continue; }
         if (pMoves && !pFull && !pSoft) bad.push(`${srv} ${sk.id}: the player's LCK moves the numbers but does not glow`);
         if (!pMoves && pFull && !pMovesStrong()) bad.push(`${srv} ${sk.id}: the player's LCK glows fully but moves nothing`);
@@ -4208,6 +4212,9 @@ async function donateChildTests(env) {
     n += classes - bad2;
     const rbp = cellsFor("reborn", "panda");
     good(rbp[443].req.join() === "344" && cellsFor("og", "panda")[443].req.join() === "334", "Reborn Panda Heaven Breath (443) needs 344, BB 334");
+    { const rr = cellsFor("reborn", "rabbit"), br = cellsFor("og", "rabbit");   // Reborn Rabbit (2026-10-26): Mall gone, 341-344 = Truce Trading & Co. 1-4, same Lv / bn / req
+      good([341, 342, 343, 344].every((id, i) => rr[id].icon === "rabbit_truceTrading&co" + (i + 1) && rr[id].name === "Truce Trading & Co. " + (i + 1) && SKILL_ICONS[rr[id].icon] && rr[id].lv === br[id].lv && rr[id].bn === br[id].bn && rr[id].req.join() === br[id].req.join()) && br[341].icon === "rabbit_mall1" && br[343].icon === "rabbit_truceTrading&co1",
+        "Reborn Rabbit 341-344 must be Truce Trading & Co. 1-4 with BB's Lv / bn / req (BB keeps Mall 1-2 and Truce Trading 1-2)"); }
     // a legal Lv 150 Wolf build using the new rows: fill every skill the rules allow in id order and check the result validates and spends no more than the pools
     const wolf = cellsFor("reborn", "wolf"), set = new Set(); let used = 0, usedC = 0; const order = Object.keys(wolf).map(Number).sort((a, b) => a - b);
     let grew = true; while (grew) { grew = false; for (const id of order) { if (set.has(id)) continue; const t = new Set(set); t.add(id); const isC = id >= 400; if ((isC ? usedC + 1 > PR.c(150) : used + 1 > PR.normal(150))) continue; if (validFn(wolf, 4, t, 150)) { set.add(id); isC ? usedC++ : used++; grew = true; } } }

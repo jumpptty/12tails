@@ -27413,8 +27413,11 @@ const SKILL_SIM_SERVERS = {
   og: { name: "BB", full: "BB (BigBugStudio)", cap: LEVEL_CAP.og, patch: {} },
   tot: { name: "ToT", full: "Tales of Tail (ToT)", cap: LEVEL_CAP.tot, patch: { monkey: { 434: { req: [251, 351] } }, panda: { 443: { req: [344] } } } },   // ToT patch notes (user 2026-10-17): Monkey Volcanic Eruption needs Ja 1 / Buiten Hou Hou 1 instead of Fire Rune 1 / Earth Rune 1; Panda Heaven Breath needs Sacred Sage Technique 2 instead of Shadow Fist 4   // ToT and TTO allow Lv 120 (user 2026-10-17); the point pools stop growing at Lv 50 (normal 49) and Lv 110 (Class C 12)
   tto: { name: "TTO", full: "Tailstopia Online (TTO)", cap: LEVEL_CAP.tto, patch: { panda: { 443: { req: [344] } } } },
-  // Reborn (user 2026-10-25): Lv 150, Panda Heaven Breath needs Sacred Sage Technique II like ToT / TTO, plus the C6 / C7 rows (skillSimTrees) and its own pools (SKILL_SIM_POOLS)
-  reborn: { name: SERVER_SHORT.reborn, full: SERVER_FULL.reborn, cap: LEVEL_CAP.reborn, patch: { panda: { 443: { req: [344] } } } }
+  // Reborn (user 2026-10-25): Lv 150, Panda Heaven Breath needs Sacred Sage Technique II like ToT / TTO, plus the C6 / C7 rows (skillSimTrees) and its own pools (SKILL_SIM_POOLS).
+  // Rabbit (2026-10-26): Mall is gone, cells 341-344 are Truce Trading & Co. 1-4 with BB's Lv / bn / requirements (Reborn:RabbitSkill.cs getSkillTree 341-344, the Reborn site's rab.json).
+  reborn: { name: SERVER_SHORT.reborn, full: SERVER_FULL.reborn, cap: LEVEL_CAP.reborn, patch: { panda: { 443: { req: [344] } },
+    rabbit: { 341: { icon: "rabbit_truceTrading&co1", name: "Truce Trading & Co. 1" }, 342: { icon: "rabbit_truceTrading&co2", name: "Truce Trading & Co. 2" },
+      343: { icon: "rabbit_truceTrading&co3", name: "Truce Trading & Co. 3" }, 344: { icon: "rabbit_truceTrading&co4", name: "Truce Trading & Co. 4" } } } }
 };
 // Basic + A + B share one pool (lv-1, max 49: CharacterDataClass.upgradeSkill); C has its own (upgradeCSkill, +1 per 5 levels over 50, max 12).
 const skillSimPoolMax = (lv) => Math.min(Math.max(lv - 1, 0), 49);
@@ -33244,6 +33247,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T02:38:33.103Z","feat(bible): the Reborn skill simulator shows Rabbit's Truce Trading & Co. 1-4 where Mall was, and the validator checks every card on its Reborn tab (LCK glow sweep, Reborn ranks)"],
     ["2026-10-26T02:15:52.970Z","feat(bible): Reborn changes on original skills of all 12 classes (change notes, Reborn descs and toggles: Chiroptophobia, Mind Control, Blood Rage, Berserker Rush, Power Reel, Salvation blocks, Double Effect, Buiten, Gaos riding, Panda SP per hit, Rising Vortex, Ashura, Ice Shield Focus, Cosmic Rift, Truce Trading 4 ranks, Mall, potions, Free Cast, Call To Arm, Perseverance), Common notes for AI rescans and Effect Seals"],
     ["2026-10-26T02:00:16.842Z","feat(bible): Reborn gear crit on the 15 crit cards (x1.3, no LCK, +3 belt toggle, desc and change note), Common notes for gear crit, belts and the SP ceiling, War Capital loses its open-world bullet"],
     ["2026-10-26T01:45:46.509Z","feat(bible): Reborn engine rules: no 512 cap on a player's TAL / INT / CHA, gear crit rolled as an item chance (x1.3, no LCK) with a +3 belt toggle, descSwap guard for server descs"],
