@@ -27381,7 +27381,10 @@ function skillSimTrees(server, classKey){
   if (server !== "reborn" || !SKILL_SIM_REBORN_EXTRA[classKey]) return base;
   if (!SKILL_SIM_REBORN_TREES[classKey]){
     const ex = SKILL_SIM_REBORN_EXTRA[classKey], row = (from) => ex.filter(e => e[0] >= from && e[0] < from + 10).map(e => [e[1], e[2], e[3], e[4], e[5]]);
-    SKILL_SIM_REBORN_TREES[classKey] = base.map((t, ti) => ti === 3 ? Object.assign({}, t, { rows: t.rows.concat([row(450), row(460)]) }) : t);
+    // a cell renamed on Reborn (patch icon / name: Rabbit 341-344 = Truce Trading & Co. 1-4) is drawn renamed: the grid, the guide editor and the image read these rows
+    const patch = SKILL_SIM_SERVERS.reborn.patch[classKey] || {};
+    const named = (t) => { let hit = false; const rows = t.rows.map((r, ri) => r.map((c, k) => { const p = c && patch[t.base + ri * 10 + k + 1]; if (!p || !(p.icon || p.name)) return c; hit = true; return [p.icon || c[0], p.name || c[1]].concat(c.slice(2)); })); return hit ? rows : t.rows; };
+    SKILL_SIM_REBORN_TREES[classKey] = base.map((t, ti) => { const rows = named(t); return ti === 3 ? Object.assign({}, t, { rows: rows.concat([row(450), row(460)]) }) : rows === t.rows ? t : Object.assign({}, t, { rows }); });
   }
   return SKILL_SIM_REBORN_TREES[classKey];
 }
@@ -33247,6 +33250,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-26T02:52:01.576Z","fix(bible): the Reborn Rabbit skill simulator grid draws Truce Trading & Co. 1-4 where Mall was (the rename reached only the learning rules, not the drawn rows)"],
     ["2026-10-26T02:38:33.103Z","feat(bible): the Reborn skill simulator shows Rabbit's Truce Trading & Co. 1-4 where Mall was, and the validator checks every card on its Reborn tab (LCK glow sweep, Reborn ranks)"],
     ["2026-10-26T02:15:52.970Z","feat(bible): Reborn changes on original skills of all 12 classes (change notes, Reborn descs and toggles: Chiroptophobia, Mind Control, Blood Rage, Berserker Rush, Power Reel, Salvation blocks, Double Effect, Buiten, Gaos riding, Panda SP per hit, Rising Vortex, Ashura, Ice Shield Focus, Cosmic Rift, Truce Trading 4 ranks, Mall, potions, Free Cast, Call To Arm, Perseverance), Common notes for AI rescans and Effect Seals"],
     ["2026-10-26T02:00:16.842Z","feat(bible): Reborn gear crit on the 15 crit cards (x1.3, no LCK, +3 belt toggle, desc and change note), Common notes for gear crit, belts and the SP ceiling, War Capital loses its open-world bullet"],

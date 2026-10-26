@@ -4214,7 +4214,10 @@ async function donateChildTests(env) {
     good(rbp[443].req.join() === "344" && cellsFor("og", "panda")[443].req.join() === "334", "Reborn Panda Heaven Breath (443) needs 344, BB 334");
     { const rr = cellsFor("reborn", "rabbit"), br = cellsFor("og", "rabbit");   // Reborn Rabbit (2026-10-26): Mall gone, 341-344 = Truce Trading & Co. 1-4, same Lv / bn / req
       good([341, 342, 343, 344].every((id, i) => rr[id].icon === "rabbit_truceTrading&co" + (i + 1) && rr[id].name === "Truce Trading & Co. " + (i + 1) && SKILL_ICONS[rr[id].icon] && rr[id].lv === br[id].lv && rr[id].bn === br[id].bn && rr[id].req.join() === br[id].req.join()) && br[341].icon === "rabbit_mall1" && br[343].icon === "rabbit_truceTrading&co1",
-        "Reborn Rabbit 341-344 must be Truce Trading & Co. 1-4 with BB's Lv / bn / req (BB keeps Mall 1-2 and Truce Trading 1-2)"); }
+        "Reborn Rabbit 341-344 must be Truce Trading & Co. 1-4 with BB's Lv / bn / req (BB keeps Mall 1-2 and Truce Trading 1-2)");
+      const drawn = trees("reborn", "rabbit").find((t) => t.base === 300).rows[4], drawnBB = trees("og", "rabbit").find((t) => t.base === 300).rows[4];   // what the grid, guide editor and guide image draw
+      good(drawn.every((c, i) => c[0] === "rabbit_truceTrading&co" + (i + 1) && c[1] === "Truce Trading & Co. " + (i + 1)) && drawnBB[0][0] === "rabbit_mall1" && drawnBB[1][1] === "Mall 2",
+        "the Reborn Rabbit grid rows (skillSimTrees) must draw Truce Trading & Co. 1-4 in 341-344, BB keeps Mall 1-2"); }
     // a legal Lv 150 Wolf build using the new rows: fill every skill the rules allow in id order and check the result validates and spends no more than the pools
     const wolf = cellsFor("reborn", "wolf"), set = new Set(); let used = 0, usedC = 0; const order = Object.keys(wolf).map(Number).sort((a, b) => a - b);
     let grew = true; while (grew) { grew = false; for (const id of order) { if (set.has(id)) continue; const t = new Set(set); t.add(id); const isC = id >= 400; if ((isC ? usedC + 1 > PR.c(150) : used + 1 > PR.normal(150))) continue; if (validFn(wolf, 4, t, 150)) { set.add(id); isC ? usedC++ : used++; grew = true; } } }
