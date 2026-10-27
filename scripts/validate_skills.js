@@ -3009,6 +3009,12 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
       else checkedDepStrip++; }
     const mt = SKILLS.find(s => s.id === "mole_moleTank"); sandbox._selectSkill(mt); const hm = sandbox._getRenderedHeroHtml(), pm = parts(hm);
     if (!pm || pm.tpl.includes("<canvas") || !pm.tpl.includes(">หมายเหตุ</div>") || hm.includes("data-gametip")) fail("Mole Tank (a note, no game tooltip): expected a notes-only modal titled หมายเหตุ and no H button");
+    // long descriptions (user 2026-10-27, Reborn bible3: 452 of 967 texts overflow the paper's box): the paper keeps the game's 300 px height
+    // and the description scrolls inside its 160 px box at the game's font size (wheel, drag, keys), so the modal never grows off screen
+    if (!/const GT_DESC_Y = 124, GT_DESC_H = 160;/.test(html) || !/if \(cv\.height !== 300\) cv\.height = 300;/.test(html) || /cv\.height = h;/.test(html)
+      || !/gtText\(ctx, d\.t \|\| "", "GMO24", GT_INK, 35, GT_DESC_Y - cv\._gtScroll, 200, GT_DESC_H, \{ wrap: true \}\)/.test(html)
+      || !/function gtWireScroll\(cv\)\{[\s\S]{0,1600}"wheel"[\s\S]{0,900}"pointermove"[\s\S]{0,700}"keydown"/.test(html)) fail("in-game tooltip: the paper must stay 256 x 300 with the description scrolling inside its box (GT_DESC_H, gtWireScroll: wheel, drag, keys)");
+    else checkedDepStrip++;
     // bigger windows (user 2026-10-27): the modal lives outside the scaled stage, so fitGameTipModal zooms it by the page's own scale
     // (stageScaleNow), capped to the window; it runs on open, after every fitStageToScreen and when a late image redraws the paper
     if (!/function fitGameTipModal\(\)\{[\s\S]{0,700}Math\.min\(stageScaleNow, \(window\.innerWidth - 48\) \/ w, \(window\.innerHeight - 48\) \/ h\)[\s\S]{0,120}pop\.style\.zoom = z\.toFixed\(3\)/.test(html)

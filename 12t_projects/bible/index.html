@@ -4947,7 +4947,9 @@
   @media (max-width:640px){ .sk-server-popup.sk-gt-popup{grid-template-columns:minmax(0,1fr); grid-template-rows:none; grid-template-areas:"head" "rule" "paper" "notes" "hint"; padding:4px 0} }
   .sk-server-backdrop[data-role="gametip-backdrop"]{background:rgba(0,0,0,.93)}   /* no frame, so the card behind must not read through (no blur: "Popup performance") */
   .sk-gt-paper{grid-area:paper; max-width:100%; display:flex; flex-direction:column; align-items:center; gap:8px}
-  .sk-gametip-canvas{display:block; width:320px; max-width:100%; height:auto; filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}   /* 1.25 x the game's 256 px, the size the scaled page showed */
+  .sk-gametip-canvas{display:block; width:320px; max-width:100%; height:auto; filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}
+  .sk-gametip-canvas.is-scroll{cursor:grab; touch-action:none} .sk-gametip-canvas.is-scroll:active{cursor:grabbing}   /* a long description scrolls inside the paper (drawGameTip) */
+  .sk-gametip-canvas:focus-visible{outline:2px solid var(--gold); outline-offset:4px}   /* 1.25 x the game's 256 px, the size the scaled page showed */
   .sk-gt-popup .sk-server-popup-main{min-width:min(280px, 100%)}
   .sk-gt-notes{display:flex; flex-direction:column; gap:10px}
   .sk-gt-notes > span{display:block; margin:0; padding:10px 12px; border:0; border-left:3px solid currentColor; border-radius:4px; background:color-mix(in srgb, currentColor 8%, transparent); font-size:13.5px; line-height:1.65}
@@ -15284,24 +15286,49 @@ function gtText(ctx, text, fontKey, color, x, y, w, h, o){   // one GUI.Label; r
   return top + ls.length * f.line;
 }
 // Draws every tooltip canvas in root (data-gt: name n, icon i, type y, SP s (sign = colour), MP m, description t); re-run when the art loads.
+// The paper keeps the game's 256 x 300 (user 2026-10-27: the Reborn bible3 texts grew so long the paper ran off the screen; it used to grow with
+// the text): a description longer than its box (x 35, y GT_DESC_Y, 200 x GT_DESC_H) scrolls inside it at the game's own font size, by wheel,
+// drag (touch too) or keys (arrows, Page Up / Down, Home / End), with a thin ink scrollbar on the paper's right edge. The modal keeps one
+// height, so it stays centred.
+const GT_DESC_Y = 124, GT_DESC_H = 160;
 function drawGameTips(root){
   if (!root || typeof root.querySelectorAll !== "function") return;
-  root.querySelectorAll("canvas[data-gt]").forEach((cv) => {
-    const A = GAME_TOOLTIP_ART, paper = gtImage(A.backdrop), ctx = cv.getContext && cv.getContext("2d");
-    if (!ctx || !paper || !gtTinted("GMO24", GT_INK) || !gtTinted("GMO32", GT_INK)) return;
-    let d; try { d = JSON.parse(decodeURIComponent(cv.dataset.gt)); } catch (e) { return; }
-    const icon = gtImage(d.i), desc = gtLines(d.t || "", A.GMO24, 200);
-    const h = Math.max(300, Math.ceil(124 + desc.length * A.GMO24.line) + 4);   // no clipping: a long line runs past the paper
-    if (cv.height !== h) cv.height = h;   // CSS keeps the width; the height follows the canvas's own ratio
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.drawImage(paper, 0, 0, 256, 300);
-    gtText(ctx, d.n || "", "GMO32", GT_INK, 24, 8, 210, 30, { middle: true });
-    if (icon) ctx.drawImage(icon, 29, 48, 64, 64);
-    gtText(ctx, d.y, "GMO32", d.y === "Active" ? GT_ACTIVE : GT_PASSIVE, 150, 48, 80, 30, { middle: true });
-    if (!d.s) gtText(ctx, "-", "GMO24", GT_INK, 135, 70, 200, 30, {}); else gtText(ctx, String(Math.abs(d.s)), "GMO32", d.s > 0 ? GT_BLUE : GT_RED, 135, 70, 200, 30, {});
-    if (!d.m) gtText(ctx, "-", "GMO24", GT_INK, 200, 70, 200, 30, {}); else gtText(ctx, String(d.m), "GMO32", GT_BLUE, 200, 70, 200, 30, {});
-    gtText(ctx, d.t || "", "GMO24", GT_INK, 35, 124, 200, 160, { wrap: true });
-  });
+  root.querySelectorAll("canvas[data-gt]").forEach(drawGameTip);
+}
+function drawGameTip(cv){
+  const A = GAME_TOOLTIP_ART, paper = gtImage(A.backdrop), ctx = cv.getContext && cv.getContext("2d");
+  if (!ctx || !paper || !gtTinted("GMO24", GT_INK) || !gtTinted("GMO32", GT_INK)) return;
+  let d = cv._gt; if (!d) { try { d = cv._gt = JSON.parse(decodeURIComponent(cv.dataset.gt)); } catch (e) { return; } }
+  const icon = gtImage(d.i), full = gtLines(d.t || "", A.GMO24, 200).length * A.GMO24.line + 4, max = full - GT_DESC_H > 6 ? full - GT_DESC_H : 0;   // under 6 px over (BB Paranoia: 0.6) is no scroll
+  cv._gtMax = max; cv._gtScroll = Math.min(Math.max(0, cv._gtScroll || 0), max);
+  if (cv.height !== 300) cv.height = 300;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.drawImage(paper, 0, 0, 256, 300);
+  gtText(ctx, d.n || "", "GMO32", GT_INK, 24, 8, 210, 30, { middle: true });
+  if (icon) ctx.drawImage(icon, 29, 48, 64, 64);
+  gtText(ctx, d.y, "GMO32", d.y === "Active" ? GT_ACTIVE : GT_PASSIVE, 150, 48, 80, 30, { middle: true });
+  if (!d.s) gtText(ctx, "-", "GMO24", GT_INK, 135, 70, 200, 30, {}); else gtText(ctx, String(Math.abs(d.s)), "GMO32", d.s > 0 ? GT_BLUE : GT_RED, 135, 70, 200, 30, {});
+  if (!d.m) gtText(ctx, "-", "GMO24", GT_INK, 200, 70, 200, 30, {}); else gtText(ctx, String(d.m), "GMO32", GT_BLUE, 200, 70, 200, 30, {});
+  ctx.save(); ctx.beginPath(); ctx.rect(26, GT_DESC_Y - 6, 214, GT_DESC_H + 6); ctx.clip();   // a little past the box: Thai marks sit outside their glyph cell
+  gtText(ctx, d.t || "", "GMO24", GT_INK, 35, GT_DESC_Y - cv._gtScroll, 200, GT_DESC_H, { wrap: true });
+  ctx.restore();
+  if (max > 0) {
+    const th = Math.max(18, GT_DESC_H * GT_DESC_H / full), ty = GT_DESC_Y + (GT_DESC_H - th) * cv._gtScroll / max;
+    ctx.fillStyle = "rgba(38,26,0,.12)"; ctx.fillRect(241, GT_DESC_Y, 3, GT_DESC_H);
+    ctx.fillStyle = "rgba(38,26,0,.45)"; ctx.fillRect(241, ty, 3, th);
+    if (!cv._gtWired) gtWireScroll(cv);
+  }
+}
+function gtWireScroll(cv){
+  cv._gtWired = true; cv.tabIndex = 0; cv.classList.add("is-scroll");
+  const by = (dy) => { const s0 = cv._gtScroll; cv._gtScroll = Math.min(Math.max(0, s0 + dy), cv._gtMax); if (cv._gtScroll !== s0) drawGameTip(cv); return cv._gtScroll !== s0; };
+  const perPx = () => 300 / (cv.getBoundingClientRect().height || 375);   // paper px per screen px (the modal may be zoomed)
+  cv.addEventListener("wheel", (e) => { const u = e.deltaMode === 1 ? GAME_TOOLTIP_ART.GMO24.line : e.deltaMode === 2 ? GT_DESC_H : perPx(); if (by(e.deltaY * u)) e.preventDefault(); }, { passive: false });
+  let drag = null;
+  cv.addEventListener("pointerdown", (e) => { drag = { y: e.clientY, id: e.pointerId }; try { cv.setPointerCapture(e.pointerId); } catch (x) { } });
+  cv.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; by((drag.y - e.clientY) * perPx()); drag.y = e.clientY; });
+  const end = () => { drag = null; }; cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  cv.addEventListener("keydown", (e) => { const L = GAME_TOOLTIP_ART.GMO24.line, k = { ArrowDown: L, ArrowUp: -L, PageDown: GT_DESC_H - L, PageUp: L - GT_DESC_H, Home: -1e9, End: 1e9 }[e.key]; if (k !== undefined && by(k)) e.preventDefault(); });
 }
 const SKILLS = [
     {
@@ -36198,6 +36225,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T15:36:08.640Z","fix(bible): the in-game tooltip paper keeps the game size and a long description scrolls inside it at the game font size (wheel, drag, keys; 452 Reborn texts overflow), so the pop-up stays centred"],
     ["2026-10-27T15:29:07.121Z","feat(bible): Reborn in-game tooltips come from build 2026.10.27.1936-bible3 (559 texts, dated 27 ต.ค. 2026), and the Reborn tab drops the 130 tooltip mismatch notes that build fixed (4 cut down to what is still wrong, 4 kept)"],
     ["2026-10-27T15:05:41.821Z","docs: every Reborn build gets dated folders and its own citation tag (Reborn: = 2026-10-25, Reborn1027: = 2026.10.27.1936-bible3), and the bible3 patch-note check is recorded (295 of 297 claims confirmed in the code, 2 partial)"],
     ["2026-10-27T14:18:38.846Z","feat(bible): the in-game tooltip pop-up grows with the page on bigger screens (up to the page scale, never past the window), and the Reborn look gets the meadow path wallpaper with a darker veil (.78) and a dark forest base"],
