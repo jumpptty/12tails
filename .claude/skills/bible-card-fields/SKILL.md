@@ -57,7 +57,7 @@ Part of the Bible rulebook (core rules: [12t_projects/bible/CLAUDE.md](../../../
   castWrapped: true, // true if chaAdjust/cast wrapped
   duration: [10, 15, 20],
   durWrapped: true, // true if chaAdjust/dur wrapped; may be (rank) => bool, read through durWrappedOn()
-  durContested: true, // true if Damage.getDebuff contested
+  durContested: true, // true if Damage.getDebuff contested; durContestedInverted: true when the game passes the target's CHA first (BB Doom), read from the server-merged card, so a server override may set it (Reborn Doom: false)
   status: { name: "statusName", sLv: [1, 2, 3], class: "Physical Debuff" },
   dmg: "100 + 20*rank",
   atkCoeff: 1.0,
