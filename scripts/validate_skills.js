@@ -727,6 +727,25 @@ let checkedLckDiff = 0;
     inputs.lck.value = "102"; inputs.enemyLck.value = "202"; sandbox._depRanks[sk.lckDiffDep.id] = 1; sandbox._selectSkill(sk);
     const behindJoker = sandbox._renderOneDmgFormula(sk, 4, sandbox._getDmgText(sk, 4));
     expect("behind on LCK with Joker: shown as a minus term, not \"+ -n\"", [behindJoker.includes("−"), behindJoker.includes("-50")], [true, false]);
+    // Reborn build 2026.10.27.1936-bible3: the Joker term is Mathf.Max(0, 0.5 x (LCK - target LCK)) (Reborn1027:Cat.cs:1508, card flag lckDiffDepFloor),
+    // and Joker's Doom is contested the normal way, Damage.getDebuff(30, cat CHA, target CHA) (Reborn1027:Cat.cs:1514).
+    sandbox._setServer("reborn");
+    try {
+      const rbBehind = rangeAt(4, 200, 102, 202, false), rbJokerBehind = rangeAt(4, 200, 102, 202, true);
+      expect("Reborn: behind on LCK, Joker leaves the min alone", rbJokerBehind[0] - rbBehind[0], 0);
+      expect("Reborn: behind on LCK, Joker leaves the max alone", rbJokerBehind[1] - rbBehind[1], 0);
+      expect("Reborn: ahead on LCK, Joker still adds +0.5*diff", rangeAt(4, 200, 102, 2, true)[0] - rangeAt(4, 200, 102, 2, false)[0], 50);
+      rangeAt(4, 200, 102, 202, true);
+      const rs = sandbox._getActiveSkill(sk, "reborn"), rbFin = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(sk, 4)));
+      let rLo = Infinity, rHi = -Infinity;
+      for (let i = 0; i < 1500; i++) { const r = sandbox._rollOneHit(rs, 4); rLo = Math.min(rLo, r); rHi = Math.max(rHi, r); }
+      expect(`Reborn: final range contains every roll behind on LCK with Joker [range ${rbFin[0]}-${rbFin[1]}, rolled ${rLo}-${rHi}]`, rLo >= rbFin[0] && rHi <= rbFin[1], true);
+      expect("Reborn: behind on LCK, the Joker term is not a minus", sandbox._renderOneDmgFormula(rs, 4, sandbox._getDmgText(rs, 4)).includes("−"), false);
+      const jk = SKILLS.find(s => s.id === "cat_joker");
+      sandbox._skillRanks[jk.id] = 1; sandbox._selectSkill(jk); const jkRb = sandbox._getRenderedHeroHtml();
+      sandbox._setServer("og"); sandbox._selectSkill(jk); const jkBb = sandbox._getRenderedHeroHtml();
+      expect("Joker Doom: inverted CHA contest on BB, the normal one on Reborn", [jkBb.includes("contested base (inverted)"), jkRb.includes("contested base"), jkRb.includes("contested base (inverted)")], [true, true, false]);
+    } finally { sandbox._setServer("og"); }
   } catch (e) {
     console.error(`[LCK-DIFF EXCEPTION] ${e.message}`);
     errorCount++;
@@ -1722,6 +1741,11 @@ let checkedEffectProc = 0;
   check("a card without effectProc.hits carries it on every hit", ep.hitOk(ow, 1, 0) && ep.hitOk(ow, 1, 2));
   deps.catComboHidden = 0; check("Combo without Hidden Blade: Open Wound on all 6 hits", [0, 1, 2, 3, 4, 5].every(i => ep.hitOk(cmb, 3, i)));
   deps.catComboHidden = 3; check("Combo with Hidden Blade: stage 2 hit has no Open Wound", [0, 1, 2, 3, 4, 5].map(i => ep.hitOk(cmb, 3, i)).join() === "true,false,true,true,true,true");
+  // Reborn build 2026.10.27.1936-bible3 calls OpenWound on the stage-2 backstab and on all four Finishing Blow hits (Reborn1027:Cat.cs:405, :7349, :7387, :7425, :7464)
+  { const rb = (s) => sandbox._getActiveSkill(s, "reborn");
+    check("Reborn Combo with Hidden Blade: Open Wound on all 6 hits", [0, 1, 2, 3, 4, 5].every(i => ep.hitOk(rb(cmb), 3, i)));
+    check("Reborn Finishing Blow carries Open Wound on all 4 hits", [0, 1, 2, 3].every(i => ep.hitOk(rb(fbl), 1, i)));
+    check("Reborn Combo with Hidden Blade: the shades echo no backstab", rb(cmb).hitPurple.hits(3).length === 0); }
   inputs.lck.value = savedLck;
   Object.keys(deps).forEach(k => delete deps[k]); Object.assign(deps, savedDeps);
 }
@@ -1913,6 +1937,29 @@ let checkedComboGear = 0;
       setDeps({ catGearWeapon: 2, catGearEquip: 2, catComboHidden: 1 }); select(sk, 3);
       let c = 0; for (let i = 0; i < 300; i++) { sandbox._rollOneHit(sk, 3, undefined, false, 0); if (ep.lastCrit()) c++; }
       check("Cat: Hidden Blade's hit never crits", c === 0, c);
+      // Reborn build 2026.10.27.1936-bible3 (card flag hiddenBladeFixed): the backstab rolls getCritPlus(base + bonus) and takes No Chance
+      // (Reborn1027:Cat.cs:162, :391, :607, :679, :907, :978; Reborn1027:CharacterControl.cs:7315).
+      try {
+        sandbox._setServer("reborn");
+        const rs = sandbox._getActiveSkill(sk, "reborn");
+        check("Reborn Combo carries hiddenBladeFixed", rs.hiddenBladeFixed === true);
+        let c2 = 0; for (let i = 0; i < 300; i++) { sandbox._rollOneHit(rs, 3, undefined, false, 0); if (ep.lastCrit()) c2++; }
+        check("Reborn Cat: Hidden Blade's hit can crit", c2 > 0, c2);
+        sandbox._setServer("og"); select(sk, 3); const [bLo, bHi] = rng().split("-").map(Number);
+        sandbox._setServer("reborn"); select(sk, 3); const [rLo, rHi] = rng().split("-").map(Number);
+        check("Reborn Cat: the backstab's top end is the crit of base + bonus", rLo === bLo && rHi === Math.floor(1.8 * bHi), `${rLo}-${rHi} vs BB ${bLo}-${bHi}`);
+        inputs.atk.value = "200"; inputs.lck.value = "150";
+        [{ catGearEquip: 2, catComboHidden: 3 }, { catGearWeapon: 2, catGearEquip: 2, catComboHidden: 5, catComboNoChance: 1, catPower: 4, catComboCharge: 4 }, { catComboHidden: 2, catComboNoChance: 1 }].forEach(o => {
+          setDeps(o); select(sk, 3);
+          sk.dmgGroups.forEach((g, gi) => {
+            const fin = sandbox._finalRangeForRange(sandbox._calcRangeFor(g.dmg, sandbox._resolveGroupAtkCoeff(rs, g), g));
+            let lo = Infinity, hi = -Infinity;
+            for (let i = 0; i < 300; i++) { const x = sandbox._rollOneHit(rs, 3, undefined, false, gi); lo = Math.min(lo, x); hi = Math.max(hi, x); }
+            check(`Reborn Combo range/sim group ${gi} ${JSON.stringify(o)}`, lo >= fin[0] && hi <= fin[1], `${lo}-${hi} vs ${fin[0]}-${fin[1]}`);
+          });
+        });
+        inputs.atk.value = "200"; inputs.lck.value = "0";
+      } finally { sandbox._setServer("og"); }
     }
     if (k === "mnk") {
       [[{}, 1], [{ earthForm: 1 }, 2], [{ mnkW59: 1 }, 3], [{ earthForm: 1, mnkW59: 1 }, 4]].forEach(([o, want]) => {
@@ -2451,7 +2498,7 @@ let checkedCritView = 0;
   // (merged toggle rank 5) adds 6 x 5 = 30; Critical Plus 4 alone stays x1.8 (checked below).
   {
     const chm = sk("chameleon_nAttack");
-    const CHM = ["criticalPlus", "fatalStrike", "chmGearWeapon", "chmGearMantis", "chmTotWeapon", "chmTotEquip", "piercingVenom", "chmTargetPoison", "bowMastery"];
+    const CHM = ["criticalPlus", "fatalStrike", "chmGearWeapon", "chmGearMantis", "chmTotWeapon", "chmTotEquip", "chmRbWeapon", "chmRbEquip", "venomOverload", "piercingVenom", "chmTargetPoison", "bowMastery"];
     const savedChm = CHM.map(id => [id, deps[id]]);
     const chmSet = (o) => CHM.forEach(id => { deps[id] = o[id] || 0; });
     inputs.atk.value = "128"; inputs.lck.value = "0";
@@ -2466,6 +2513,16 @@ let checkedCritView = 0;
     chmSet({ chmGearWeapon: 2, chmGearMantis: 1, criticalPlus: 4 }); check("Chameleon crit base Mantis Bow R + Mantis set + Critical Plus 4 = 32", sandbox._chameleonCritBase() === 32, sandbox._chameleonCritBase());
     // ToT and TTO fixed the gear check (user-reported 2026-10-02 / 2026-10-26): Champion bow 7 + hat and armor 11 + Critical Plus 4 (20) = 38; the BB gear toggles count for nothing there
     for (const srv of ["tot", "tto"]) { sandbox._setServer(srv); chmSet({ chmTotWeapon: 2, chmTotEquip: 2, chmGearWeapon: 2, chmGearMantis: 1, criticalPlus: 4 }); check(srv + " Chameleon crit base Champion set + Critical Plus 4 = 38", sandbox._chameleonCritBase() === 38, sandbox._chameleonCritBase()); }
+    // Reborn build 2026.10.27.1936-bible3 (Reborn1027:Chameleon_nAttack.cs:169-207): Champion bow 7 + hat and armor 11 + Critical Plus 4 (20) = 38; G. Marshal bow 5 + set 7 = 12;
+    // Mantis Bow R 5 + Mantis set 7 = 12 still counts there; the BB and ToT toggles count for nothing on Reborn
+    sandbox._setServer("reborn");
+    chmSet({ chmRbWeapon: 3, chmRbEquip: 3, chmTotWeapon: 2, chmTotEquip: 2, chmGearWeapon: 2, chmGearMantis: 1, criticalPlus: 4 }); check("reborn Chameleon crit base Champion set + Critical Plus 4 = 38", sandbox._chameleonCritBase() === 38, sandbox._chameleonCritBase());
+    chmSet({ chmRbWeapon: 1, chmRbEquip: 1 }); check("reborn Chameleon crit base G. Marshal Bow + Marshal set = 12", sandbox._chameleonCritBase() === 12, sandbox._chameleonCritBase());
+    chmSet({ chmRbWeapon: 2, chmRbEquip: 2 }); check("reborn Chameleon crit base Mantis Bow R + Mantis set = 12", sandbox._chameleonCritBase() === 12, sandbox._chameleonCritBase());
+    ["chameleon_nAttack", "chameleon_leftStride"].forEach(id => { const ids = sandbox._getActiveSkill(sk(id), "reborn").dmgControls.map(d => d.id); check(id + " on Reborn offers the bible3 gear toggles", ids.includes("chmRbWeapon") && ids.includes("chmRbEquip") && !ids.includes("chmGearWeapon"), ids.join()); });
+    // Venom Overload doubles the Venom Shock burst on Reborn (status value 2, Reborn1027:Chameleon.cs:2907; x2 after the ceil, Reborn1027:CharacterControl.cs:2709)
+    { const rv = sandbox._getActiveSkill(sk("chameleon_venomShock"), "reborn"); chmSet({ chmTargetPoison: 6 }); const one = rv.rawModel.parts(2).plain; chmSet({ chmTargetPoison: 6, venomOverload: 1 }); const two = rv.rawModel.parts(2).plain;
+      check("reborn Venom Shock: Venom Overload doubles the burst", one > 0 && two === 2 * one, one + " -> " + two); }
     sandbox._setServer("og");
     savedChm.forEach(([id, v]) => { if (v === undefined) delete deps[id]; else deps[id] = v; });
     cv.set(false);
@@ -5025,6 +5082,8 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         ["Titanic Earth Pulse TTO waves 3..7 m, BB 1..5 m", cyl(at("monkey_titanicEarthPulse", "tto", 1)).map(p => p.r).join() === "3,4,5,6,7" && cyl(at("monkey_titanicEarthPulse", "og", 1)).map(p => p.r).join() === "1,2,3,4,5"],
         ["Honor TTO + Honor Stand: Hate radius one level up", cyl(at("whale_honor", "tto", 2, { honorStand: 1 }))[1].r === 36 && cyl(at("whale_honor", "og", 2, { honorStand: 1 }))[1].r === 30],
         ["Bison Charge Attack + Spin Hack: ToT 7.5 m, BB 7 m", cyl(at("bison_cAttack", "tot", 2, { spinHack: 1 }))[0].r === 7.5 && cyl(at("bison_cAttack", "og", 2, { spinHack: 1 }))[0].r === 7]
+        , ["Moon Blade Reborn + Lunar Tempest r 3.75 / 5 (bible3, Reborn1027:Cat.cs:6287, :6329), off or BB 3 / 4", cyl(at("cat_moonBlade", "reborn", 2, { lunarTempest: 1 })).map(p => p.r).join() === "3.75,5" && cyl(at("cat_moonBlade", "reborn", 2, { lunarTempest: 0 })).map(p => p.r).join() === "3,4" && cyl(at("cat_moonBlade", "og", 2, { lunarTempest: 1 })).map(p => p.r).join() === "3,4"]
+        , ["Moon Storm Reborn + Lunar Tempest rings 2.5, blast 3.75 (Reborn1027:Cat.cs:6554, :6596)", (() => { const r = cyl(at("cat_moonStorm", "reborn", 2, { lunarTempest: 1 })).map(p => p.r); return r.length === 8 && r.slice(0, 6).every(x => x === 2.5) && r.slice(6).every(x => x === 3.75); })()]
       ];
       for (const [label, ok] of chk) if (!ok) bad("server reach: " + label);
     }
