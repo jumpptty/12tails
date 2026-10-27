@@ -2,10 +2,11 @@
 RippedAssets/
 12TailsOnline_Data/
 DecompiledSource/
-# The Reborn client and its decompile (user 2026-10-25: big folders travel by flash drive, not git)
-12TailsReborn_Data/
-DecompiledSource_Reborn/
-RippedAssets_Reborn/
+# The Reborn client and its decompile (user 2026-10-25: big folders travel by flash drive, not git).
+# One folder set per build, dated (2026-10-27): 12TailsReborn_Data_<date>/, DecompiledSource_Reborn_<date>/, RippedAssets_Reborn_<date>/
+12TailsReborn_Data*/
+DecompiledSource_Reborn*/
+RippedAssets_Reborn*/
 # Frameless Reborn C6/C7 skill art from the Reborn team (shipped framed as 128 px WebP in assets.js SKILL_ICONS)
 /TailsArt/
 

@@ -582,7 +582,7 @@ Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 
 
 ## Server Balance Variations (Reborn)
 
-Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`, build and tags in [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) §1) against BB, traced 2026-10-26; card `servers.reborn`. `Reborn:` = the Reborn decompile, `BB:` = `DecompiledSource/`.
+Reborn client (`DecompiledSource_Reborn_2026-10-25/Assembly-CSharp/`, build and tags in [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) §1) against BB, traced 2026-10-26; card `servers.reborn`. `Reborn:` = the Reborn decompile, `BB:` = `DecompiledSource/`.
 
 - **Blood Rage SP clamp (Adjust):** BB `sp = Mathf.Min(sp + gain, 100)` (`BB:Bison.cs:7250`, `:7258`); Reborn `Mathf.Min(sp + gain, rbSpMax)` (`Reborn:Bison.cs:12027`, `:12031`), `rbSpMax = max(msp, rbSpCeiling)` (`Reborn:CharacterControl.cs:5983-5993`), ceiling 100 for a Bison (`Reborn:RebornBalance.cs:559-571`). So it passes 100 only when max SP does (TAL ≥ 455 or an SP seal). This is the Common SP-ceiling rule; the card gets its own note because its desc states "(ไม่เกิน 100)".
 - **Berserker Rush, Calmar / Nageoire Wing counter (Adjust):** BB rolls `Random.Range(0, 100) >= target.lckAdjust(24)` (`BB:CharacterControl.cs:3573`); Reborn `>= target.lckItemAdjust(24)` (`Reborn:CharacterControl.cs:7222`) = `ItemChance(24)` = (24 × 130 + 99) / 100 = **32%**, no LCK (`Reborn:CharacterControl.cs:11882`, `Reborn:RebornBalance.cs:611-618`). The Bison condition (`berserkerRush`, action code ≤ 9) is unchanged (`Reborn:CharacterControl.cs:7232`).
