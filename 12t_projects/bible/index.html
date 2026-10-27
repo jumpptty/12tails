@@ -4881,7 +4881,7 @@
   .sk-gt-popup .sk-server-popup-main{min-width:min(280px, 100%)}
   .sk-gt-notes{display:flex; flex-direction:column; gap:10px}
   .sk-gt-notes > span{display:block; margin:0; padding:10px 12px; border:0; border-left:3px solid currentColor; border-radius:4px; background:color-mix(in srgb, currentColor 8%, transparent); font-size:13.5px; line-height:1.65}
-  .sk-gametip-note{display:inline-block; padding:2px 9px; border-radius:999px; background:rgba(20,15,12,.88); font-size:11.5px; line-height:1.5; color:var(--muted)}   /* ToT / TTO: the text is BB's */
+  .sk-gt-src{font-family:'Prompt',sans-serif; font-size:12.5px; line-height:1.35; color:var(--text)}   /* where the drawn text comes from (BB before the shutdown / Reborn's code), under the skill name */
   /* Full-width row below the stat grid (Penguin pilot, 2026-08-14). Fixed
      column pins (2026-08-14 follow-up, user-requested): the formula chip
      always sits at half width -- even on skills with no calc chip, so the
@@ -13871,6 +13871,9 @@ const GAME_TOOLTIP_TH = {
 // Reborn's own Thai tooltips (user 2026-10-27), DecompiledSource_Reborn/Assembly-CSharp/<Class>Skill_thai.cs: the C6 / C7 skills are plain
 // `case "bat_vampiricSurge5": return "..."`, the original skills go through the string table (strblob.bytes, Reborn-Mechanics-Reference.md).
 // Only the cards whose Reborn text differs from GAME_TOOLTIP_TH, plus every Reborn-only card; a card not listed reads the same on Reborn.
+// GAME_TOOLTIP_RB_BUILD = the date of the Reborn build that text was read from (Assembly-CSharp.dll, Reborn-Mechanics-Reference.md "Build
+// verified against"); the modal names it. Re-read the text and change the date together after a Reborn update.
+const GAME_TOOLTIP_RB_BUILD = "25 ต.ค. 2026";
 const GAME_TOOLTIP_TH_RB = {
   "bat_vampiricSurge": "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด และท่าชาร์จ proc effect ไอเท็มได้",
   "bat_terminalDecay": "amplifyDamage ขั้น 5 = เป้าหมายรับดาเมจ +25%",
@@ -23167,7 +23170,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const bbBugText = noteSrc.bbBug || (noteSrc.bbBugSee && noteSrc.bbBugSee.text);
     const bbBugHtml = bbBugText ? `<span class="sk-bb-bug"><b>🐞 บั๊กของตัวเกม (${noteSrc.onlyServer ? SERVER_SHORT[noteSrc.onlyServer] : "BB"}):</b> ${renderRichText(bbBugText, noteSrc, statVal(lckEl))}</span>` : "";
     const rbTip = currentServer === "reborn" ? GAME_TOOLTIP_TH_RB[selected.id] : undefined;
-    const gameTip = rbTip || GAME_TOOLTIP_TH[selected.id], gameTipBB = currentServer === "tot" || currentServer === "tto" || (currentServer === "reborn" && rbTip === 0);
+    const gameTip = rbTip || GAME_TOOLTIP_TH[selected.id], gameTipBB = currentServer !== "reborn" || rbTip === 0;
+    // Where the drawn text comes from, a line of its own under the skill name (user 2026-10-27: "Landmine • TTO" read as TTO's own tooltip):
+    // BB, ToT and TTO show the BB client's text as it was before the BB servers shut down; the Reborn tab reads Reborn's code.
+    const gameTipSrc = gameTipBB ? "ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์" : `ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด (${GAME_TOOLTIP_RB_BUILD})`;
     // The three notes are icons at the end of the head line, after the in-game tooltip button; a click on any of them opens the in-game
     // tooltip modal, which holds every note of the card (user 2026-10-27: nothing opens inside the desc any more).
     const noteDefs = [["tip", tipNoteHtml, "คำอธิบายไม่ตรง"], ["bug", bbBugHtml, "บั๊ก"], ["unintended", unintendedHtml, "ไม่ตั้งใจ"]].filter(n => n[1]);
@@ -23611,7 +23617,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const heroPips = heroMax > 1 ? pipsHtml(Math.min(8, heroMax), rank, "hero|" + selected.id, "sk-dep-pips sk-hero-pips") : "";
     // In-game Thai tooltip (user 2026-10-27): the quote-mark tile (icon H) first in the head line's note group, no label. H or any note icon
     // after it opens one modal (openGameTipModal) built from <template class="sk-gametip-tpl">: the game's own tooltip drawn on its paper,
-    // then every note of the card. The Reborn tab reads Reborn's own text; ToT and TTO, whose clients cannot be read, show the BB text marked as such.
+    // then every note of the card. The Reborn tab reads Reborn's own text; BB, ToT and TTO (whose clients cannot be read) show the BB text, and the head says which.
     const gameTipPaper = !gameTip ? "" : (() => {
       const at = (v) => Array.isArray(v) ? v[rank - 1] : v;
       const nameEntry = (currentServer === "reborn" && GAME_TOOLTIP_NAME_RB[selected.id]) || GAME_TOOLTIP_NAME[selected.id] || "";
@@ -23619,11 +23625,11 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const gt = { n: typeof nameEntry === "string" ? nameEntry.replace("#", rank) : (nameEntry[rank - 1] || ""), i: SKILL_ICONS[heroIconKey] || "",
         y: activeSelected.passive ? "Passive" : /^sup_/.test(selected.icon) ? "Support" : "Active", s: cost.spType === "red" ? -sp : sp, m: mp,
         t: (typeof gameTip === "string" ? gameTip : at(gameTip)) || "" };   // SP: red = spent (the game's negative cSP), blue = needed
-      return `<div class="sk-gt-paper"><canvas class="sk-gametip-canvas" width="256" height="300" data-gt="${encodeURIComponent(JSON.stringify(gt))}" aria-label="${gt.t.replace(/"/g, "&quot;")}"></canvas>${gameTipBB ? `<span class="sk-gametip-note">ข้อความจากเกมต้นฉบับ (BB)</span>` : ""}</div>`;
+      return `<div class="sk-gt-paper"><canvas class="sk-gametip-canvas" width="256" height="300" data-gt="${encodeURIComponent(JSON.stringify(gt))}" aria-label="${gt.t.replace(/"/g, "&quot;")}"></canvas></div>`;
     })();
     const gameTipHtml = gameTip ? `<button type="button" class="sk-gametip-btn" data-gametip aria-haspopup="dialog" aria-label="คำอธิบายในเกม" title="คำอธิบายในเกม"><svg viewBox="0 0 28 28" aria-hidden="true"><rect x="3" y="3" width="22" height="22" rx="6" fill="#c9a227"/><path d="M8 18.5c0-3.6 1.6-6.4 4.6-7.6l.6 1.3c-1.5.8-2.3 1.9-2.4 3.2h2.2v3.1H8zm7.2 0c0-3.6 1.6-6.4 4.6-7.6l.6 1.3c-1.5.8-2.3 1.9-2.4 3.2h2.2v3.1h-5z" fill="#150f0c"/></svg></button>` : "";
     const noteHtmls = noteDefs.map(([, html]) => html).join("");
-    const gameTipTpl = (gameTip || noteHtmls) ? `<template class="sk-gametip-tpl"><div class="sk-server-popup sk-gt-popup${noteHtmls ? "" : " is-bare"}" role="dialog" aria-modal="true" aria-labelledby="skGtTitle">${gameTipPaper}<div class="sk-server-popup-main"><div class="sk-server-popup-head"><div class="sk-server-popup-title-wrap"><div class="sk-server-popup-title" id="skGtTitle">${gameTip ? "คำอธิบายในเกม" : "หมายเหตุ"}</div><div class="sk-server-popup-subtitle">${selected.name} • ${SERVER_SHORT[currentServer] || "BB"}</div></div><button type="button" class="sk-server-popup-close" data-role="gametip-close" title="ปิด (Esc)" aria-label="ปิด">×</button></div><div class="sk-server-popup-divider"></div>${noteHtmls ? `<div class="sk-gt-notes">${noteHtmls}</div>` : ""}<div class="sk-server-popup-hint">คลิกบริเวณรอบนอกหรือกด Esc เพื่อปิด</div></div></div></template>` : "";
+    const gameTipTpl = (gameTip || noteHtmls) ? `<template class="sk-gametip-tpl"><div class="sk-server-popup sk-gt-popup${noteHtmls ? "" : " is-bare"}" role="dialog" aria-modal="true" aria-labelledby="skGtTitle">${gameTipPaper}<div class="sk-server-popup-main"><div class="sk-server-popup-head"><div class="sk-server-popup-title-wrap"><div class="sk-server-popup-title" id="skGtTitle">${gameTip ? "คำอธิบายในเกม" : "หมายเหตุ"}</div><div class="sk-server-popup-subtitle">${gameTip ? selected.name : `${selected.name} • ${SERVER_SHORT[currentServer] || "BB"}`}</div>${gameTip ? `<div class="sk-gt-src">${gameTipSrc}</div>` : ""}</div><button type="button" class="sk-server-popup-close" data-role="gametip-close" title="ปิด (Esc)" aria-label="ปิด">×</button></div><div class="sk-server-popup-divider"></div>${noteHtmls ? `<div class="sk-gt-notes">${noteHtmls}</div>` : ""}<div class="sk-server-popup-hint">คลิกบริเวณรอบนอกหรือกด Esc เพื่อปิด</div></div></div></template>` : "";
     const heroIconHtml = `<div class="sk-hero-icon-wrap">${heroIconInner}${casterBadge}${heroPips}</div>`;
     const noteChipsHtml = (gameTipHtml || noteChipsInner) ? `<div class="sk-hero-sub sk-note-chips">${gameTipHtml}${noteChipsInner}${gameTipTpl}</div>` : "";
 
@@ -35650,6 +35656,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T11:30:56.224Z","fix(bible): the in-game tooltip pop-up says where its text comes from under the skill name (BB, ToT and TTO: ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์; Reborn: ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด with the build date), replacing the skill • server line that read as TTO's own tooltip"],
     ["2026-10-27T10:30:02.651Z","feat(bible): 25 new in-game tooltip mismatch notes from a scan of every Thai tooltip (Delta Strike, Ground Lock, Crusader, Ice Shield, Miracle Drop, Second Wind and more), Doom never shows a level below its cast rank, Second Stone hits with KO 10, Gadina / Fatal Strike / Open Wound state their numbers, and 4 older notes that misread the game's wording removed (Heavy Built and others)"],
     ["2026-10-27T09:16:07.545Z","feat(bible): every skill card gets an in-game tooltip button (คำอธิบายในเกม): the game's own Thai tooltip drawn with its paper, fonts and layout (Reborn's own text on the Reborn tab) in a centred pop-up that also holds the card's mismatch / bug / unintended notes, which no longer fold out into the desc"],
     ["2026-10-27T07:11:57.580Z","feat(bible): the class guide editor puts server + class, guide name, author and PVE / PVP on one row on desktop, names and controls lined up"],

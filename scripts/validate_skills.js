@@ -2969,10 +2969,16 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
   { const sf = SKILLS.find(s => s.id === "panda_shadowFist"); sandbox._skillRanks[sf.id] = 4; sandbox._selectSkill(sf); const h = sandbox._getRenderedHeroHtml();
     const gt = (() => { const m = h.match(/data-gt="([^"]+)"/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } })();
     if (!gt || gt.t !== "เพิ่มการโจมตีซ้อนอีกหนึ่งครั้ง ให้กับการโจมตีปกติและท่าสาย sage ของแพนด้า (12dmg)" || gt.n !== "ShadowFist4" || gt.y !== "Passive") fail("Shadow Fist level 4 does not draw its in-game tooltip (ShadowFist4, Passive, the (12dmg) line): " + JSON.stringify(gt)); else checkedDepStrip++; }
-  // ... and a Reborn-only skill shows Reborn's own line on its tab, with no BB mark
+  // ... and a Reborn-only skill shows Reborn's own line on its tab, its modal head saying it comes from Reborn's code
   { const vs = SKILLS.find(s => s.id === "bat_vampiricSurge"); sandbox._setServer("reborn"); sandbox._skillRanks[vs.id] = 1; sandbox._selectSkill(vs); sandbox._setServer("reborn"); sandbox._selectSkill(vs); const h = sandbox._getRenderedHeroHtml(); sandbox._setServer("og");
     const gt = (() => { const m = h.match(/data-gt="([^"]+)"/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } })();
-    if (!gt || gt.t !== "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด และท่าชาร์จ proc effect ไอเท็มได้" || gt.n !== "Vampiric Surge" || h.includes("ข้อความจากเกมต้นฉบับ (BB)")) fail("Vampiric Surge (Reborn) does not draw Reborn's own in-game tooltip: " + JSON.stringify(gt)); else checkedDepStrip++; }
+    if (!gt || gt.t !== "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด และท่าชาร์จ proc effect ไอเท็มได้" || gt.n !== "Vampiric Surge" || !h.includes('<div class="sk-gt-src">ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด (') || h.includes("ข้อความจากเกม BB")) fail("Vampiric Surge (Reborn) does not draw Reborn's own in-game tooltip under a Reborn source line: " + JSON.stringify(gt)); else checkedDepStrip++; }
+  // ... and on BB / ToT / TTO the head says the text is BB's from before the shutdown, never "<skill> • TTO" (user 2026-10-27: that read as TTO's own tooltip)
+  { const lm = SKILLS.find(s => s.id === "mole_mine"); const bad = [];
+    for (const srv of ["og", "tot", "tto"]) { sandbox._setServer(srv); sandbox._selectSkill(lm); sandbox._setServer(srv); sandbox._selectSkill(lm); const h = sandbox._getRenderedHeroHtml();
+      if (!h.includes('<div class="sk-server-popup-subtitle">Landmine</div><div class="sk-gt-src">ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์</div>') || h.includes("ข้อความจากเกมต้นฉบับ")) bad.push(srv); }
+    sandbox._setServer("og");
+    if (bad.length) fail(`Landmine on ${bad.join(", ")}: the in-game tooltip head must read "Landmine" over "ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์"`); else checkedDepStrip++; }
   // ... and the modal (user 2026-10-27): icon H and the note icons open one modal built from <template class="sk-gametip-tpl">, which holds
   //     every note of the card; no note renders anywhere else on the card (the desc never grows), and H comes first in the note group
   { const NOTE_SPANS = ['<span class="sk-tooltip-note">', '<span class="sk-bb-bug">', '<span class="sk-unintended">'];
