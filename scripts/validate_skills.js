@@ -4208,6 +4208,9 @@ async function donateChildTests(env) {
     const rb = sandbox.rebornIssueItems(), rbLines = (b.list().match(/class="nl-line"/g) || []).length;
     if (!rb.length || rbLines !== rb.length) fail(`Reborn issues: ${rbLines} lines, want ${rb.length}`); else checked++;
     if (rb.some(i => !(i.s.onlyServer === "reborn" || (!i.s.onlyServer && i.s.servers && i.s.servers.reborn)))) fail("Reborn issues: a line from a card with no Reborn data"); else checked++;
+    // only issues Reborn introduced (user 2026-10-27): no Reborn line repeats the same card's BB line
+    { const bbKeys = new Set(items.filter(i => i.s).map(i => i.s.id + "|" + i.kind + "|" + i.text)); const dup = rb.find(i => bbKeys.has(i.s.id + "|" + i.kind + "|" + i.text));
+      if (dup) fail(`Reborn issues: ${dup.s.id} repeats its BB ${dup.kind} note`); else checked++; }
     const rbOpens = [...b.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
     if (!rbOpens.length || !rbOpens.every(h => h.endsWith("?server=reborn"))) fail("Reborn issues: rows do not open the card on its Reborn tab"); else checked++;
     b.root._bbIssues.setMode("og");

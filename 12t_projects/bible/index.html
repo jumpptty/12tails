@@ -27048,14 +27048,16 @@ function noteItemsOf(s, a){
   if (a.liveCheck) items.push({ s, cls: s.class, kind: "live", text: a.liveCheck });
   return items;
 }
-// Reborn version of the page (user 2026-10-27, behind the hidden logo hold): what each Reborn card's Reborn tab notes. Only cards with Reborn
-// data (a Reborn-only C6 / C7 card, or an original card with servers.reborn); the tab's merged view counts, so a BB note that still applies
-// in Reborn stays (Chameleon crit gear) and one the override clears ("") drops out.
+// Reborn version of the page (user 2026-10-27, behind the hidden logo hold): only issues Reborn itself introduced (user 2026-10-27: not
+// the BB originals). A Reborn-only C6 / C7 card gives all its notes; an original card with servers.reborn gives the notes of its Reborn tab
+// that its BB tab does not have (same kind and text = inherited, left out), so a Reborn override with its own wording counts.
 function rebornIssueItems(){
-  const items = [];
+  const items = [], key = (i) => i.kind + "|" + i.text;
   SKILLS.forEach(s => {
-    if (s.onlyServer === "reborn") items.push(...noteItemsOf(s, s));
-    else if (!s.onlyServer && s.servers && s.servers.reborn) items.push(...noteItemsOf(s, Object.assign({}, s, s.servers.reborn)));
+    if (s.onlyServer === "reborn") { items.push(...noteItemsOf(s, s)); return; }
+    if (s.onlyServer || !s.servers || !s.servers.reborn) return;
+    const bb = new Set(noteItemsOf(s, s).map(key));
+    items.push(...noteItemsOf(s, Object.assign({}, s, s.servers.reborn)).filter(i => !bb.has(key(i))));
   });
   return items;
 }
@@ -27084,7 +27086,7 @@ function mountBbIssues(root){
   const st = { srv: "og" };
   const HEAD = {
     og: { title: "บั๊ก &amp; คำอธิบายผิด", sub: "จุดที่โค้ดเกมต้นฉบับ (BB) ทำงานผิด หรือไม่ตรงกับที่เกมบอก คลิกสกิลเพื่อเปิดการ์ด", label: "BB" },
-    reborn: { title: "บั๊ก &amp; คำอธิบายผิด (Reborn)", sub: "จุดที่โค้ดของ Tails Reborn ทำงานผิด หรือไม่ตรงกับที่เกมบอก ตามแท็บ Reborn ของแต่ละการ์ด คลิกสกิลเพื่อเปิดการ์ดบนแท็บ Reborn", label: "Tails Reborn" },
+    reborn: { title: "บั๊ก &amp; คำอธิบายผิด (Reborn)", sub: "เฉพาะจุดที่ Tails Reborn ทำให้เกิดใหม่ (ไม่รวมของเกมต้นฉบับ BB) คลิกสกิลเพื่อเปิดการ์ดบนแท็บ Reborn", label: "Tails Reborn" },
   };
   setToolServer("bb-issues", st.srv);   // auto look follows the list shown (cosmetic only)
   const setMode = (m) => {
@@ -34030,6 +34032,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T02:16:02.644Z","fix(bible): the hidden Reborn issues list holds only issues Reborn introduced (62 lines on 58 cards), not the BB originals its cards inherit"],
     ["2026-10-27T01:42:39.008Z","feat(bible): the BB issues page shows the BB logo at the top right, and a hidden 1 s hold on it switches to a Reborn list (each Reborn card bug, tooltip mismatch and unintended note as its Reborn tab shows them, 145 lines on 121 cards)"],
     ["2026-10-27T01:13:33.375Z","fix(bible): Reborn Crown of Stars note lists every hit the x2 skips (Mana Missile, Tornado, Typhoon, Combo and purple damage), checked hit by hit in the Reborn code"],
     ["2026-10-27T01:07:34.202Z","fix(bible): the server switch on the server balance page fits on phones with three servers (logo and count only there, the full name stays as the button label)"],
