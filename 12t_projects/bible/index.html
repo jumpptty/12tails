@@ -3652,6 +3652,10 @@
     .nl-srv{width:100%}
     .nl-srv button{flex:1}
     .nl-srv small{display:none}
+    /* three servers do not fit with their names: logo and count only (user 2026-10-27; the full name is the button's title / label) */
+    .nl-srv button{justify-content:center; gap:6px; padding:6px}
+    .nl-srv button > span{display:none}
+    .nl-srv em{margin-left:0}
     /* the rail becomes a sticky strip of hero icons */
     .nl-body{grid-template-columns:minmax(0, 1fr); gap:12px}
     .nl-rail{z-index:5; top:0; flex-direction:row; max-height:none; overflow-x:auto; padding:6px; border-radius:14px; scrollbar-width:none}
@@ -26901,7 +26905,7 @@ function mountNotePage(root, cfg){
     if (st.kind !== "all" && !kinds.some(k => k.k === st.kind)) st.kind = "all";
     const inCls = st.cls === "all" ? found : found.filter(e => e.cls === st.cls), ofKind = pick(found, st.kind), shown = pick(inCls, st.kind);
     if (srvEl) srvEl.innerHTML = Object.keys(cfg.servers).map(k => { const v = cfg.servers[k], on = k === st.srv;
-      return '<button type="button" data-act="srv" data-v="' + k + '" class="' + (on ? "is-on" : "") + '"' + pressed(on) + '><img src="' + (SKILL_ICONS["server_" + k] || "") + '" alt=""><span><b>' + v.short + "</b><small>" + v.name + "</small></span><em>" + v.count() + "</em></button>"; }).join("");
+      return '<button type="button" data-act="srv" data-v="' + k + '" class="' + (on ? "is-on" : "") + '"' + pressed(on) + ' title="' + v.name + '" aria-label="' + v.name + ' (' + v.count() + ')"><img src="' + (SKILL_ICONS["server_" + k] || "") + '" alt=""><span><b>' + v.short + "</b><small>" + v.name + "</small></span><em>" + v.count() + "</em></button>"; }).join("");
     // rail counts follow the type and the search; the bar is the class's whole mix of types
     const bar = c => { const o = {}; found.filter(e => e.cls === c).forEach(e => e.lines.forEach(l => { const k = cfg.kinds.find(x => cfg.inKind(l.kind, x.k)); if (k) o[k.k] = (o[k.k] || 0) + 1; }));
       return '<span class="nl-bar" aria-hidden="true">' + cfg.kinds.filter(k => o[k.k]).map(k => '<i style="--kc:' + k.color + "; flex:" + o[k.k] + '"></i>').join("") + "</span>"; };
@@ -33974,6 +33978,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T01:07:34.202Z","fix(bible): the server switch on the server balance page fits on phones with three servers (logo and count only there, the full name stays as the button label)"],
     ["2026-10-27T01:02:03.574Z","fix(bible): on phones the ToT / TTO / Reborn wallpaper no longer jumps while scrolling (a fixed layer as tall as the large viewport instead of a fixed cover background that re-fitted every time the address bar moved)"],
     ["2026-10-26T15:32:09.023Z","feat(bible): start-of-mission cooldowns move onto the cooldown chip (· ติด CD เริ่มฉาก on 42 cards, a second คูลดาวน์เริ่มฉาก chip on 12 where the value differs, the desc lines gone) beside · revArt ไม่มีผล, desc icons 27 px, and the bug / tooltip / unintended icons end the head line"],
     ["2026-10-26T14:50:18.714Z","feat(bible): description icons sit in the related-skills gold ring (round, art zoomed and centred like the related skills panel; gear pieces shown whole inside it)"],
