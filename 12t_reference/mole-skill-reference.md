@@ -356,7 +356,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 ### mol_heavyBuilt1-2 (Heavy Built, #361-362) (verified 2026-10-01)
 
-- Passive, Lv/Bn 24/15, 28/18. `getHeavyBuiltLv()` (`:13213`): MHP `ceil(MHP × (1 + 0.5 × lv))` after the other stat changes for Auto Gyro Gun (`:12203`), Barrel Bot (`:12765`) and King Kaiser (`:35925`). Thai tooltip rank 2 says 50 %; English and code say 100 %.
+- Passive, Lv/Bn 24/15, 28/18. `getHeavyBuiltLv()` (`:13213`): MHP `ceil(MHP × (1 + 0.5 × lv))` after the other stat changes for Auto Gyro Gun (`:12203`), Barrel Bot (`:12765`) and King Kaiser (`:35925`). The Thai tooltip is one line for both levels, "อีก 50%": one more +50% per level, which matches the code (not a mismatch, corrected 2026-10-27).
 
 ### mol_synchroMole1-2 (Synchro Mole, #363-364) (verified 2026-10-01)
 
@@ -381,7 +381,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_kingKaiser1 / mol_kaiserCannon1 / mol_kaiserBeam1 (King Kaiser #371, Kaiser Cannon #372, Kaiser Beam #373) (verified 2026-10-01)
 
 - King Kaiser: MP 80, SP −80 (red), Lv 35/Bn 23, instant self. CD `agiAdjust(999)` (`:35380`). Kaiser Cannon (Lv 40/Bn 25) and Kaiser Beam (Lv 45/Bn 27) are passives; the card's rank 1-3 is `getKaiserLv()` (`:13607-13620`).
-- `RPC_kingKaiser_create` (`:35536-36000`): lasts `chaAdjust(240)` (`:35789`); the Kaiser is not a summon (`isSummon = false`, `:35870`); Heavy Built MHP `ceil(× (1 + 0.5 × lv))` (`:35925-35936`); `summon(getKaiserLv())` (`:35995`) sets ATK `150 + 50 × lv`, DEF `100 + 50 × lv` (`KingKaiser.cs:3991-3997`). MHP 2000 from the prefab (see `kingKaiserOwnStats`; re-decoded 2026-10-01: `KingKaiser_b` `CharacterControl` @ `resources.assets` 45046984 → HP/MHP 2000, AGI 100, VIT 200, MAG 75, CHA 200, TAL 150, LCK 75; user confirmed 2000). **Tooltip discrepancy:** "1500 hp" (ToT's value; see Server Balance Variations). `KingKaiserAI.cs` is unreachable for the player's Kaiser (`isControlled = true`, `:35865`). Each cast uses one Kaiser Battery item `m_kbt1` (checked `:7007`, removed `:35684`). The Kaiser's own `CharacterControl` never calls `hasSkill`, so Revised Art does not reach its attack cooldowns.
+- `RPC_kingKaiser_create` (`:35536-36000`): lasts `chaAdjust(240)` (`:35789`); the Kaiser is not a summon (`isSummon = false`, `:35870`); Heavy Built MHP `ceil(× (1 + 0.5 × lv))` (`:35925-35936`); `summon(getKaiserLv())` (`:35995`) sets ATK `150 + 50 × lv`, DEF `100 + 50 × lv` (`KingKaiser.cs:3991-3997`). MHP 2000 from the prefab (see `kingKaiserOwnStats`; re-decoded 2026-10-01: `KingKaiser_b` `CharacterControl` @ `resources.assets` 45046984 → HP/MHP 2000, AGI 100, VIT 200, MAG 75, CHA 200, TAL 150, LCK 75; user confirmed 2000). **Tooltip discrepancy:** "1500 hp" (TTO's value, not BB's; see Server Balance Variations). Card `tooltipNote` on King Kaiser and King Kaiser - Normal Attack, cleared on TTO. `KingKaiserAI.cs` is unreachable for the player's Kaiser (`isControlled = true`, `:35865`). Each cast uses one Kaiser Battery item `m_kbt1` (checked `:7007`, removed `:35684`). The Kaiser's own `CharacterControl` never calls `hasSkill`, so Revised Art does not reach its attack cooldowns.
 
 ### mol_kingKaiser_nAttack (King Kaiser normal attack) (verified 2026-10-01)
 
@@ -511,6 +511,17 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 - **Checked against the 2014 community simulator** (Rain Niar's Mole SkillSimulator V.3; the 3.1 versions are offline) **and TailsTailsSimulator.online/mole**: 95 of 97 cells have the same Lv / points in all three. The two differences: Extra Powder II and Heavy Built II are **Lv 28 / 18 pts in the game code and Lv 27 / 18 pts in both simulators** (the row pattern 24, 27, 30 fits their value). **Needs a live check:** both cells are empty `getSkill` branches (`MoleSkill.cs:580`, `:943`) with no `setReq` of their own, so the decoder's 28 comes from the shared tail they fall into, the same situation as Rabbit's Customized Shotgun II. Both outside simulators' grids are otherwise the same as the code (17 / 30 / 30 / 20 cells; the site's extra Class C row is ignored, the user says there are no EX skills).
 - **SP / MP cost differences** (decoder vs both simulators; the Bible cards already follow the decoder): Detonate 24 SP + 24 MP, Napalm SP 40, Mega Drill SP 36 and Barrel Cannon SP 50 are missing or different in the simulators (they list Mega Drill none, Barrel Cannon 36); King Kaiser SP 80 / MP 80 (simulators SP 55 / MP 80); Flame Carnival MP 35 (simulators SP 10); War Capital MP 100 + SP 50 (simulators SP 50 only); Kaiser Cannon is SP 70 in the simulators and has no cost in the decoder output. The simulator tool shows no costs, so none of these changed it.
 
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`MoleSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Mortar Shot | +10 dmg per shell | `talAdjust(15)` = **+15** | `Mole.cs:10886` |
+| Barrel Bot - Mega Punch | +10 / +20 dmg | bot `talAdjust(12 × PunchLv)` = **+12 / +24**; the tooltip gives the Mole's own Mega Punch (`10×sLv`, `Mole.cs:32478`) | `BarrelBot.cs:2775` |
+| Barrel Bot - Mega Hammer | +12 / +24 dmg | bot `talAdjust(10 × HammerLv)` = **+10 / +20**; the tooltip gives the Mole's own Mega Hammer (`12×sLv`, `Mole.cs:33071`) | `BarrelBot.cs:3170` |
+| King Kaiser, King Kaiser - Normal Attack | 1500 hp | BB **2000** (prefab); 1500 is TTO's | see `RPC_kingKaiser_create` above |
+
 ## Server Balance Variations (TTO)
 
 Private-server values are documented from the Bible skill-detail schema; the BigBug decompile remains the original-server baseline.
@@ -562,7 +573,7 @@ None open. Resolved 2026-10-01 (user decisions):
 3. **King Kaiser HP:** 2000 confirmed (prefab re-decode above).
 4. **War Capital HP:** decoded from the prefab: 1500 HP, all stats 150.
 5. **Saw Machine:** the card counts the 3 front swings.
-6. **Tooltip mismatches** are shown on the cards in red (`__…__`), with the code value used: Landmine, Bombardment, Mine Lover, Super TNT, Speed Drill, Heavy Built (Thai rank 2), Charge Attack (English lock levels), King Kaiser HP.
+6. **Tooltip mismatches** are shown on the cards in red (`__…__`), with the code value used: Landmine, Bombardment, Mine Lover, Super TNT, Charge Attack (English lock levels), King Kaiser HP.
 
 ## Server Balance Variations (ToT patch notes, 2026)
 

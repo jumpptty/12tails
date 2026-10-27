@@ -357,6 +357,16 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 - **Checked against the 2014 community simulator** (Rain Niar's Wolf SkillSimulator V.3) **and TailsTailsSimulator.online/wolf**: 96 of 96 cells have the same Lv / points in all three.
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
 
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`WolfSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Crusader | +25 / 35 / 45 / 55 dmg | `talAdjust(10 + 10×sLv)` = **+20 / 30 / 40 / 50** | `Wolf.cs:21207` |
+| Brave Spirit | 3 / 4 / 5 / 6% speed | `deltaRunSpeed(0.1 × sLv)`: a flat **+0.1 to +0.4** run speed, not a percent (the +4 to +10% damage matches, `:33988`) | `CharacterControl.cs:33991` |
+| Second Wind | heals 50% | **`min(ceil(0.5 × MHP), 10 × Lv)`**: capped at 10 × level (Lv 100 with 3000 MHP heals 1000) | `Wolf.cs:23278` |
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.

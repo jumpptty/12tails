@@ -598,6 +598,15 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 - **Checked against the 2014 community simulator** (Rain Niar's Penguin SkillSimulator V.3) **and TailsTailsSimulator.online/penguin**: 96 of 96 cells have the same Lv / points in all three.
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
 
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`PenguinSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Ice Shield | 30 / 45 / 60 / 75 hp | `talAdjust(10 + 20×sLv)` = **30 / 50 / 70 / 90** | `Penguin.cs:31129` |
+| Mana Surge | MP Transfer +40% of level | `floor(0.5 × Lv)` = **50%** of level | `Penguin.cs:23477` |
+
 ## Server Balance Variations
 
 ### Tailstopia Online (TTO)

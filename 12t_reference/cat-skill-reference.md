@@ -439,6 +439,7 @@ Entries are being written skill by skill; every skill shown in the app needs one
   - **6× tick loop, 0.1s apart** (state 7 increments `$i` at `:37541`, `Yield(7,0.1f)` `:37967`): each iteration re-runs `FindRecTarget` fresh (so a target can leave/enter the zone between ticks) and calls `hit(370+sLv, target, (int)(0.5×ATK), nKo=1, nHate=0, Vector3.up)` (`:37921`) — **no `talAdjust` term at all: this tick's damage does not scale with rank.**
   - → 0.2s (`Yield(8,0.2f)` `:37988`) → state 8: **finishing hit** `hit(372+sLv, target, (int)(0.5×ATK + talAdjust(90×sLv+90)), nKo=1, nHate=0, Vector3.up)` (`:37597`) — the only rank-scaling hit, and the only one matching the client tooltip's flat `+135`/`+180` framing.
   - → 0.1s (`Yield(9,0.1f)` `:37992`) → state 9: wrap up, end action.
+  - **Tooltip mismatch:** TH "(+135 dmg)" / "(+180 dmg)" (`CatSkill_thai.cs:884`, `:895`), but `sLv` is 1 / 2 (`RPC_deltaStrike(…, 1)` / `(…, 2)`, `Cat.cs:5285`, `:5303`), so the finisher's bonus is `talAdjust(180)` / `talAdjust(270)`, and it is on the finishing hit only (the six ticks have no bonus). Card `tooltipNote` (2026-10-27).
   - Total: **6× `0.5×ATK` ticks + 1× `0.5×ATK + talAdjust(90×sLv+90)` finisher = 7 hits**, all requiring the target to still be inside the (re-computed each tick) triangle zone. The `lock` root's own 3s duration (see below) almost exactly spans this whole sequence, releasing right as the finisher lands. `nHate=0` on both hit calls is **not** a distinguishing trait of this skill — every other `.mChar.hit(...)` call across `Cat.cs` also passes `0` for that argument, and `CharacterControl.cs:3771` recomputes the real hate as `nDamage + nHate + nKo×10` regardless, so Delta Strike generates ordinary damage-based hate like any other Cat skill.
 - **`lock` status — root, but NOT the same list as `isLockStatus`/`removeLockStatus` (verified via the full Dead Code Verification Gate sweep, same class of quirk as `frost`):**
   - Applied 3 times during the ~1.3s windup, before any damage lands (`Cat.cs:37186`, `:37265`, `:37430`, redundant/harmless re-application — see the corrected 7-hit timeline above): `RPC_AddStatus("lock", 1, 3, 0, ActorNr)` — bare literal duration `3`, confirmed not `chaAdjust`-wrapped.
@@ -556,6 +557,16 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
   - `felineAgility3` (Basic): game **24/8**, both simulators 28/8. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
   - `felineAgility4` (Basic): game **32/10**, both simulators 38/10. **Needs a live check:** the cell is an empty `getSkill` branch (no `setReq`), so the decoder's value comes from the shared tail it falls into.
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site (it spells the second tree "Glambler"; the game's item names say Gambler, so Gambler is used).
+
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`CatSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Moon Storm | +10 / +15 dmg | `talAdjust(10×sLv + 5)` = **+15 / +25**, sLv 1 / 2 | `Cat.cs:36438`; calls `:5249`, `:5267` |
+| Awareness (level 2) | 18 m | `12 × sLv` = **24 m** | `Cat.cs:8674`; calls `:3719`, `:3737` |
+| Delta Strike, Three Knives | see their sections |  |  |
 
 ## Server Balance Variations
 

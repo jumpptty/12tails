@@ -570,7 +570,7 @@ Requirements from `python scripts/decode_skilldata.py DecompiledSource/RabbitSki
 **Bouncing Bullet (`bouncingBullet5`, `hasSkill(401)`)**
 - With the passive, `RPC_nAttack` skips the single raycast and enters the ricochet loop (`:17459-17520` then `goto IL_F77`). Path budget `bounceRange = 20 + 5 × Combo` (`:17512`); each segment is `Physics.Raycast(..., bounceRange, layer 1)` against walls (`:18123`), `bounceRange -= segment length` (`:18166`), at most 3 segments (`bounceCount < 3`, `:18076`) and it stops once `bounceRange <= 12` (`:18082`). The direction reflects off the wall normal (`:18370`) and there is a `0.3 s` wait between segments (`:18385`).
 - Every segment uses `Physics.RaycastAll` and loops over all colliders with no `break` (`:18197-18345`): each target on the segment is hit, not only the first (`:18259`, `hit(1, ..., getCritPlus((int)(hitDmg + 0.5 × Lv + hyper)), 1, 0, ...)`).
-- **Damage: `+0.5 × character Lv` flat per hit** (`Lv` is `mChar.Lv`, `:18259`), added to `hitDmg`. The client tooltip (`RabbitSkill_thai.cs:913`, "+50% per rabbit level") reads as a percentage; the code is a flat `0.5` per character level (Lv 100 = +50).
+- **Damage: `+0.5 × character Lv` flat per hit** (`Lv` is `mChar.Lv`, `:18259`), added to `hitDmg`. The client tooltip (`RabbitSkill_thai.cs:913`, "dmg อีก 50% ตามระดับเลเวลกระต่าย") means 50% of the rabbit's level, i.e. this same `0.5 × Lv` (Lv 100 = +50): it matches (not a mismatch; corrected 2026-10-27).
 - `+1 SP` per landed hit (`:18314`). The "Bouncing Bullet" message appears only after a real ricochet (`bounceCount > 1`, `:18331-18337`).
 
 **Charge Attack (`RPC_cAttack1/2/0`)**
@@ -793,6 +793,15 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 - **Skill names:** `nAttack` is shown as Long Shot (range +5 m per rank), `cAttack` as Aimed Shot; the first three cAttack ranks and Stat Scan share row 2.
 - **Class C prerequisites** are single skill numbers (`rSkill`): each C skill needs the last skill of its row in the tree above it (Bouncing Bullet 104, Dead Shot 114, From The Above 122, Snipe Mastery 134, Super Stat Plus 144, Knee Shot 204, Extra Potion 214, Miracle Drop 224, Med Research 234, Healing Field 244, Diamond Shot 304, Skill Bargain 314, Big Bag 324, Ten Shot 334, Extravagance 344); Contract needs Acidic Field I + Truce Trading I (243 + 343); New Order needs Contract (434). The four Revised / Stat skills of column 4 (404, 414, 424) have none.
 - **Checked against the 2014 community simulator** (Rain Niar's Rabbit SkillSimulator v3): 92 of 97 cells equal; the differences, where the game code wins: Long Shot II-IV need 0 points (the simulator said 1/2/3), Life Shot needs 21 points (22), Customized Shotgun II shows Lv 28 / 22 pts (32 / 22). **Needs a live check:** Customized Shotgun II has an empty `getSkill` branch (`RabbitSkill.cs:957`) that falls into a shared tail, so its Lv 28 is the decoder's result, not an explicit `setReq`; it breaks the row's +4 level pattern (20, 24, 28, **32**).
+
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`RabbitSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Shooting Array | +6~30 / +12~60 dmg ×4 | 3 hits `talAdjust(15×sLv)` = **+15 / +30**, last hit `talAdjust(30×sLv)` = +30 / +60 | `Rabbit.cs:35331`, `:35630` |
+| Miracle Drop | ×2 damage dealt and taken | `damageMod` and `hitMod` each `+(0.1×sLv + 0.1)`, sLv = `clamp(lab, 1, 4)`: **×1.2 to ×1.5** | `CharacterControl.cs:37671`, `:37674`; `Rabbit_potion.cs:432-438` |
 
 ## Server Balance Variations (TTO)
 

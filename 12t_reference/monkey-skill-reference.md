@@ -735,6 +735,15 @@ The BigBug-side skill formulas, status logic, and geometry remain documented in 
   - Structure damage multiplier increased to `2.0×`.
   - Detonation hitboxes expanded to 3m / 4m / 5m / 6m.
 
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`MonkeySkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| World Ignition (level 2) | +10% damage taken | `hitMod += 0.1 × sLv` = **+20%** | `CharacterControl.cs:37903`; `Monkey.cs:29907` |
+| Ground Lock | 24 / 32 / 40 / 48 dmg | `talAdjust(8×sLv + 12)` = **20 / 28 / 36 / 44** | `Monkey.cs:30625` |
+
 ## Server Balance Variations (Reborn)
 
 Reborn client (`DecompiledSource_Reborn/Assembly-CSharp/`), verified 2026-10-26. Citation tags as in [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md): `Reborn:X.cs:N` = that build, `BB:X.cs:N` = `DecompiledSource/`. Cards: `servers.reborn`. Summon Soul (party-wide, Gaos Soul +20 all stats; already on the card) is in [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md) §7.3. Neither change below is in the in-game tooltips.

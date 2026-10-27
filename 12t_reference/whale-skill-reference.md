@@ -512,6 +512,15 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
   - `rejuvenate3` (B): game **18/7**, both simulators 21/7. The game value comes from an explicit jump to a shared `setReq`; the simulators may show an older server value. **Needs a live check.**
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
 
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`WhaleSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Maelstrom | 25 / 40 dmg ×4 | `talAdjust(20×sLv + 10)` = **30 / 50**, sLv 1 / 2 | `Whale.cs:32691`; `:6131`, `:6584` |
+| Revitalize | allies within 12 m | **every team member, no distance check** | `Whale.cs:36191-36236` |
+
 ## Server Balance Variations
 
 Base engine (BigBug) values are documented above; this section lists private-server deltas.

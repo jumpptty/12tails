@@ -2998,6 +2998,13 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
     if (!pm || pm.tpl.includes("<canvas") || !pm.tpl.includes(">หมายเหตุ</div>") || hm.includes("data-gametip")) fail("Mole Tank (a note, no game tooltip): expected a notes-only modal titled หมายเหตุ and no H button");
     if (modalCards < 200) fail(`only ${modalCards} cards keep their notes in the in-game tooltip modal, expected 200+`); else checkedDepStrip += modalCards;
     console.log(`Verified the in-game tooltip modal: ${modalCards} cards keep every note inside it, H first in the note group.`); }
+  // ... and two fixes from the 2026-10-27 tooltip scan: Doom's level never drops below the cast rank (Bat.cs:29416: at rank 2 the Doom Stack
+  //     slider is raised to 2 and the card shows 450), and Ground Lock's Second Stone hit has KO 10 (Monkey.cs:31096)
+  { const doom = SKILLS.find(s => s.id === "bat_doom"); sandbox._skillRanks[doom.id] = 2; sandbox._depRanks.doomStack = 1; sandbox._selectSkill(doom);
+    if (sandbox._depRanks.doomStack !== 2 || doom.dmg(2, 1) !== "450" || doom.status.sLv(2, 1) !== 2) fail(`Doom rank 2 with the stack at 1: stack ${sandbox._depRanks.doomStack}, dmg ${doom.dmg(2, 1)}, status ${doom.status.sLv(2, 1)} (expected 2 / 450 / 2)`); else checkedDepStrip++;
+    sandbox._skillRanks[doom.id] = 1; sandbox._depRanks.doomStack = 1;
+    const gl = SKILLS.find(s => s.id === "monkey_groundLock"), ss = [gl.dmgGroups[1], gl.servers.tot.dmgGroups[1]];
+    if (ss.some(g => !g || g.ko !== "10" || !/^Second Stone/.test(g.label))) fail("Ground Lock: the Second Stone hit lost its KO 10 (base or ToT)"); else checkedDepStrip++; }
   // 8. a server desc (servers.tto / tot .desc) must differ from the base desc at some rank. ttoDesc() swaps a phrase of the
   //    base text; if that phrase is reworded later the swap silently does nothing and the server card shows stale values.
   {

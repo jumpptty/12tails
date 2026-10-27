@@ -360,7 +360,7 @@ Follow-up verification:
 - Passive, reqLv/Bn 22/15, 28/18, 34/21.
 - **Clone defence:** each Shadow Illusion clone's `hitMod` is `2.0 − 0.2 × level` (1.8 / 1.6 / 1.4) (`Bat.cs:13110`).
 - **Burst:** during Drain Life the burst timer is set from the *next* drain tick: `dreamBurstTimer = drainLifeTimer + 8 − level` right after `drainLifeTimer = Time.time + 1` (`Bat.cs:21782`, `:21833`; again at each burst, `:22074`, `:22093-22099`), so the first burst comes `9 − level` s after the cast and repeats every `9 − level` s (**8 / 7 / 6 s**; corrected 2026-10-26, a frame-step simulation at 30 / 60 / 144 fps agrees). The burst tick skips that second's drain (`:22133`). Reborn is the same without Nightmare Cascade (`Reborn:Bat.cs:629`, `:640`, `:710-717`). Each burst is `hit(360 + level, drainTarget, talAdjust(16 + 4 × level), KO 1 + level, 0, …)` (`:22112`): a normal `hit()` on **the drained target only**, plus the `dreamBurst_hit` visual (`:13952`, effect only). **Clones burst too (verified 2026-10-08):** each clone runs its own burst timer in its drain loop (`Bat_illusion.cs:4397-4402`, `:4637-4659`) and calls `hit(360 + level, drained target, clone talAdjust(16 + 4 × level), 1 + level, 0, …)`; the clone copies the Bat's TAL / ATK / LCK (`:70-90`), so the base is the same and its `dmgAdjust` uses the clone's own `damageMod`. **Bible:** Drain Life carries Dream Burst groups for the Bat and for the clones (`BAT_DREAM_BURST_DEP`, label with the `8 − level` s interval).
-- Client tooltips: EN "Decrease damage taken by illusion by 20% [40 / 60%] and enable drainLife to explode every 7 [6 / 8] seconds. (20 [24 / 28] dmg, 2 [3 / 4] ko)" (`BatSkill_eng.cs:790-812`). Code wins: rank 3 is every 5 s (the "8 seconds" is a tooltip error), and the reduction is 0.2 hitMod per level from a base of 2.0.
+- Client tooltips: EN "Decrease damage taken by illusion by 20% [40 / 60%] and enable drainLife to explode every 7 [6 / 8] seconds. (20 [24 / 28] dmg, 2 [3 / 4] ko)" (`BatSkill_eng.cs:790-812`). Code wins: every **8 / 7 / 6 s** (the line above; corrected 2026-10-27, this line still said rank 3 = 5 s). The Thai tooltip says 7 / 6 / 5 s (card `tooltipNote`). The reduction is 0.2 hitMod per level from a base of 2.0.
 
 ### bat_mimic1-2 (Mimic, #371/#372) (verified 2026-10-01)
 
@@ -516,6 +516,18 @@ All inside `distance < 32`, else run. 55 Doom 2; 45 Echoes 2; 40 Phantasm Blast 
 - **Switch / Shadow Sacrifice:** no distance check; Switch picks an existing clone (`Bat.cs:7861-7951`, `RPC_switch` `:13272-13410`), Shadow Sacrifice drains every clone (`:14100-14350`).
 - **Target spells:** the local cast switch (`Bat.cs:7000-9600`) has no distance gate besides Mirage Orb's 6 m spacing (`:9349`), so curses, Dream spells, Charm, Mimic, Dark Stalker, Soul Eater, Paranoia and Nefarious Whip reach the 40 m target lock ([12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md)). Nightmare and Mind Control check `sqrMagnitude > 1600` / `<= 1600` themselves (`:28939`, `:37491`).
 - **Paranoia ally count:** `Hate.findFriends(target, 24, target.layer)` (`Bat.cs:14627`), a 24 m radius around the target (flat, no height limit); every living character found counts, the target included. Damage: `RPC_AddEffectDamage(434, Mathf.Clamp(num × 100, 100, 1000))` (`Bat.cs:14692`), so **100 minimum** (the target alone) and **1000 maximum** (10 or more). With Auto Mass and `massCast`, every living enemy in `FindAreaTarget(target, 18, 12)` (at most 6, `Bat.cs:41411-41490`) gets its own `RPC_paranoia_hit`, and each counts the living characters around itself (`findFriends(hit target, 24, its layer)`, `Bat.cs:14627`), verified 2026-10-26.
+
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`BatSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Hate Transfer | 40 / 80 hate | hate floor `max(talAdjust(20×sLv), …)` = **20 / 40**, sLv 1 / 2 | `Bat.cs:33400`; calls `:6204`, `:6222` |
+| Dream Dazzle | −9 / −15 sp | 3 hits × `(4 + 2×sLv)` = **−18 / −24** | `Bat.cs:35037`, `:35190` |
+| Phantasm Blast (level 2) | −15% mp | 3 hits × `(0.02 + 0.01×sLv) × MMP` = **−12%** | `Bat.cs:35995`, `:36015` |
+| Dream Burst | every 7 / 6 / 5 s | every `9 − level` s = **8 / 7 / 6 s** | `Bat.cs:21833`, `:22074`, `:22099` |
+| Dark Intention | charge range +50% | `16 + 12 × level` m: 16 → **28 m (+75%)** | `Bat.cs:21612` |
 
 ## Server Balance Variations (ToT)
 

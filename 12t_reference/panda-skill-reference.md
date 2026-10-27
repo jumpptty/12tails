@@ -537,6 +537,14 @@ Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference
 - **Heaven Breath prerequisite (found 2026-10-12 against TailsTopia, the TTO server's simulator):** the game code says `rSkill = 334` (Shadow Fist IV, `PandaSkill.cs:1314`, the same as Spirit Fist), TailsTopia says `344` (Sacred Sage Technique II). The ToT patch note (user 2026-10-17: "[ปรับปรุง] เงื่อนไขอัพสกิล จาก ShadowFist4 > SacredSageTechnique2") makes the same change on ToT. The simulator uses the code (334) on BB and 344 on ToT and TTO (`SKILL_SIM_SERVERS.tot.patch.panda`, `.tto.patch.panda`).
 - The blog's simulator caps at Lv 95, the site at Lv 100 (its extra Class C row is ignored: there are no EX skills). Tree names come from the site.
 
+## Thai tooltip mismatches (scan 2026-10-27)
+
+Every number in the BB Thai tooltip (`PandaSkill_thai.cs`) was compared with the app card, then each suspect with the code. Each row is a card `tooltipNote`.
+
+| Skill | Thai tooltip says | Code says | Source |
+|---|---|---|---|
+| Drunken Spin (and Drunken Fist) | +6 dmg to Drunken Fist | **none**: no Drunken Fist hit reads `getDrunkenSpinLv()`; it only gates `drunk` | `Panda.cs:31741`, `:31963`, `:32138`, `:32286`, `:31817` |
+
 ## Server Balance Variations (ToT)
 
 Private-server values are documented from the Bible skill-detail schema; BigBug source remains the original-server baseline.
