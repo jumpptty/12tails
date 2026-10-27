@@ -2911,6 +2911,7 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
 // 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
 // .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;
+const gameTipCards = [];   // cards that show the in-game tooltip button (checked after the loop)
 {
   const fail = (msg) => { console.error(`[DEP STRIP ERROR] ${msg}`); errorCount++; };
   const splitStrip = (html) => {
@@ -2955,12 +2956,48 @@ let checkedDepStrip = 0;
       else if (m[1] !== m[2] && !m[1].startsWith(m[2] + " (")) fail(`${sk.id}: strip label "${m[2]}" is not the part of "${m[1]}" before its " ("`);
       else checkedDepStrip++;
     }
+    if (html.includes("data-gametip")) gameTipCards.push(sk.id);
     // 6. skill toggles ascend by internal skill ID; non-skill toggles (empty key) come after them
     const keys = [...strip.matchAll(/<div class="sk-dep-item" data-dep-order="(\d*)"/g)].map(m => m[1] === "" ? Infinity : +m[1]);
     if (keys.length !== items) { console.error(`[DEP ORDER ERROR] ${sk.id}: ${items - keys.length} strip item(s) without data-dep-order`); errorCount++; }
     else if (keys.some((k, i) => i > 0 && k < keys[i - 1])) { console.error(`[DEP ORDER ERROR] ${sk.id}: strip not in ascending skill ID order: ${keys.join(", ")}`); errorCount++; }
     else checkedDepStrip++;
   }
+  // 7. in-game Thai tooltip (user 2026-10-27): the button shows on every card with a BB tooltip (603 on 2026-10-27), and Shadow Fist at
+  //    level 4 shows its own level-4 line
+  if (gameTipCards.length < 600) fail(`only ${gameTipCards.length} cards show the in-game tooltip button (คำอธิบายในเกม), expected 600+`); else checkedDepStrip++;
+  { const sf = SKILLS.find(s => s.id === "panda_shadowFist"); sandbox._skillRanks[sf.id] = 4; sandbox._selectSkill(sf); const h = sandbox._getRenderedHeroHtml();
+    const gt = (() => { const m = h.match(/data-gt="([^"]+)"/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } })();
+    if (!gt || gt.t !== "เพิ่มการโจมตีซ้อนอีกหนึ่งครั้ง ให้กับการโจมตีปกติและท่าสาย sage ของแพนด้า (12dmg)" || gt.n !== "ShadowFist4" || gt.y !== "Passive") fail("Shadow Fist level 4 does not draw its in-game tooltip (ShadowFist4, Passive, the (12dmg) line): " + JSON.stringify(gt)); else checkedDepStrip++; }
+  // ... and a Reborn-only skill shows Reborn's own line on its tab, with no BB mark
+  { const vs = SKILLS.find(s => s.id === "bat_vampiricSurge"); sandbox._setServer("reborn"); sandbox._skillRanks[vs.id] = 1; sandbox._selectSkill(vs); sandbox._setServer("reborn"); sandbox._selectSkill(vs); const h = sandbox._getRenderedHeroHtml(); sandbox._setServer("og");
+    const gt = (() => { const m = h.match(/data-gt="([^"]+)"/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } })();
+    if (!gt || gt.t !== "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด และท่าชาร์จ proc effect ไอเท็มได้" || gt.n !== "Vampiric Surge" || h.includes("ข้อความจากเกมต้นฉบับ (BB)")) fail("Vampiric Surge (Reborn) does not draw Reborn's own in-game tooltip: " + JSON.stringify(gt)); else checkedDepStrip++; }
+  // ... and the modal (user 2026-10-27): icon H and the note icons open one modal built from <template class="sk-gametip-tpl">, which holds
+  //     every note of the card; no note renders anywhere else on the card (the desc never grows), and H comes first in the note group
+  { const NOTE_SPANS = ['<span class="sk-tooltip-note">', '<span class="sk-bb-bug">', '<span class="sk-unintended">'];
+    const parts = (h) => { const a = h.indexOf('<template class="sk-gametip-tpl">'), b = a < 0 ? -1 : h.indexOf("</template>", a); return a < 0 || b < 0 ? null : { tpl: h.slice(a, b), out: h.slice(0, a) + h.slice(b) }; };
+    let modalCards = 0;
+    for (const sk of SKILLS) {
+      if (!(sk.tooltipNote || sk.bbBug || sk.bbBugSee || sk.unintended)) continue;
+      let held = false, bad = "";
+      for (let r = 1; r <= (sk.maxRank || 1) && !bad; r++) {   // a rank-gated note (Penguin Ice Block) renders at some ranks only
+        sandbox._skillRanks[sk.id] = r; sandbox._selectSkill(sk); const p = parts(sandbox._getRenderedHeroHtml());
+        if (!p) { bad = `rank ${r}: has a note but no in-game tooltip modal template (sk-gametip-tpl)`; break; }
+        const stray = NOTE_SPANS.filter(t => p.out.includes(t));
+        if (stray.length) bad = `rank ${r}: a note renders outside the in-game tooltip modal (${stray.join(" ")})`;
+        held = held || NOTE_SPANS.some(t => p.tpl.includes(t));
+      }
+      if (bad) fail(`${sk.id} ${bad}`); else if (!held) fail(`${sk.id}: the in-game tooltip modal holds none of the card's notes at any rank`); else modalCards++;
+    }
+    const dfh = SKILLS.find(s => s.id === "panda_drunkenFist"); sandbox._skillRanks[dfh.id] = 2; sandbox._selectSkill(dfh); const h = sandbox._getRenderedHeroHtml();
+    const g = h.indexOf('<div class="sk-hero-sub sk-note-chips">'), hi = h.indexOf("data-gametip", g), ti = h.indexOf("sk-note-tip", g), bi = h.indexOf("sk-note-bug", g);
+    if (g < 0 || !(hi > g && hi < ti && ti < bi)) fail("Drunken Fist: the note group is not [H] [tip] [bug] in the head line");
+    else if (h.includes("sk-note-panel") || h.includes("data-gametip aria-pressed")) fail("Drunken Fist: an old fold-out note panel or pinned hover box is back");
+    const mt = SKILLS.find(s => s.id === "mole_moleTank"); sandbox._selectSkill(mt); const hm = sandbox._getRenderedHeroHtml(), pm = parts(hm);
+    if (!pm || pm.tpl.includes("<canvas") || !pm.tpl.includes(">หมายเหตุ</div>") || hm.includes("data-gametip")) fail("Mole Tank (a note, no game tooltip): expected a notes-only modal titled หมายเหตุ and no H button");
+    if (modalCards < 200) fail(`only ${modalCards} cards keep their notes in the in-game tooltip modal, expected 200+`); else checkedDepStrip += modalCards;
+    console.log(`Verified the in-game tooltip modal: ${modalCards} cards keep every note inside it, H first in the note group.`); }
   // 8. a server desc (servers.tto / tot .desc) must differ from the base desc at some rank. ttoDesc() swaps a phrase of the
   //    base text; if that phrase is reworded later the swap silently does nothing and the server card shows stale values.
   {

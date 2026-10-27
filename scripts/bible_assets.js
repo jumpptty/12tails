@@ -15,7 +15,7 @@ const fs = require("fs"), path = require("path"), os = require("os"), vm = requi
 
 const ROOT = path.resolve(__dirname, ".."), INDEX_FILE = path.join(ROOT, "12t_projects/bible/index.html"), ASSETS_FILE = path.join(ROOT, "12t_projects/bible/assets.js");
 const MANIFEST = [
-  ...["SKILL_ICONS", "EASTER_EGG_IMAGES", "REACH_MODELS", "REACH_TEX", "REACH_SCENES", "CLASS_MINIMAL_ICONS", "CHM_ICONS", "CHM_AUDIO", "TOOL_ART", "CLASS_ART", "CLASS_HERO_ICONS", "CLASS_STORY_ART", "GEAR_ICONS"].map((name) => ({ name, empty: {} })),
+  ...["SKILL_ICONS", "EASTER_EGG_IMAGES", "REACH_MODELS", "REACH_TEX", "REACH_SCENES", "CLASS_MINIMAL_ICONS", "CHM_ICONS", "CHM_AUDIO", "TOOL_ART", "CLASS_ART", "CLASS_HERO_ICONS", "CLASS_STORY_ART", "GEAR_ICONS", "GAME_TOOLTIP_ART"].map((name) => ({ name, empty: {} })),
   ...["REACH_BOLDAS_ICON", "MECH_BG_EVADE", "MECH_BG_MOVESPEED", "DONATE_QR", "TTO_WALLPAPER", "REBORN_WALLPAPER"].map((name) => ({ name, empty: "" })),
 ];
 const TAG_RE = /<script src="assets\.js\?v=([0-9a-f]{10})" id="bibleAssets"><\/script>/;
