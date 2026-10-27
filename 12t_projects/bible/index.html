@@ -12665,6 +12665,7 @@ const STATUS_DESC_SERVER = {
   reborn: {
     // Reborn popup texts (statuses whose effect differs on Reborn)
     hardenskin: (sLv) => descSwap(STATUS_DESC_MAP.hardenskin(sLv), "<br>__ครั้งแรกเริ่มที่ +0__", ""),   // bible3: the first hit carries value = level (Reborn1027:Whale.cs:14225)
+    dissolute: (sLv) => STATUS_DESC_MAP.dissolute(sLv) + "<br>__ไม่ลบและไม่ป้องกัน [gobble] ของวาฬ__",   // bible3: removal and block both skip gobble (Reborn1027:CharacterControl.cs:3700, :9508)
     masscast: descSwap(STATUS_DESC_MAP.masscast, " ยกเว้น Soul Eater ที่ไม่จำกัดจำนวน", ""),   // Soul Eater stops at 6 targets too (Reborn1027:Bat.cs:6816)
     runicflame: descSwap(STATUS_DESC_MAP.runicflame, "(แต่ละแนวอยู่ **5 วินาที** เพิ่มตามค่า CHA)", "(แต่ละแนวอยู่ **5 วินาที** เพิ่มตามค่า CHA หรือ **15 วินาที** คงที่เมื่อเรียน **Runic Inferno**)"),
     gaossoul: "เพิ่มค่าสเตตัสพื้นฐานทั้ง **8** ค่า (ATK, DEF, AGI, VIT, MAG, CHA, TAL, LCK) **+20**",
@@ -36282,6 +36283,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T17:14:09.174Z","feat(bible): Reborn bible3 behaviour fixes for every class, Summon Soul's level-5 souls, and the Reborn Dissolute pop-up says it skips Whale's Gobble"],
     ["2026-10-27T15:51:28.481Z","feat(bible): Reborn behaviour fixes, first batch: Eternal Dark Edge shows the bible3 rule (10% of skill hits become purple whole, DEF skipped) and 13 bug or unintended notes the Reborn team settled leave the Reborn tab"],
     ["2026-10-27T15:36:08.640Z","fix(bible): the in-game tooltip paper keeps the game size and a long description scrolls inside it at the game font size (wheel, drag, keys; 452 Reborn texts overflow), so the pop-up stays centred"],
     ["2026-10-27T15:29:07.121Z","feat(bible): Reborn in-game tooltips come from build 2026.10.27.1936-bible3 (559 texts, dated 27 ต.ค. 2026), and the Reborn tab drops the 130 tooltip mismatch notes that build fixed (4 cut down to what is still wrong, 4 kept)"],
