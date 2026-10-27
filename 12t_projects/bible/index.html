@@ -6357,13 +6357,13 @@
     filter:brightness(1.22);
   }
   /* Dependency strip (2026-09-26): every dep button of a card, one wrapping row under the description, no title.
-     Each item = 40px icon + name + effect tag(s) coloured like the stat they change. */
+     Each item = 32px icon + name + effect tag(s) coloured like the stat they change. */
   /* Boxed like a stat chip (.sk-stat: --panel, 1px --line, 3px radius, 12px 14px padding) and spaced like the chip rows
      (12px below the head and above the chips). The buttons are display:block so no inline baseline gap sits under the icon. */
-  .sk-dep-strip{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); align-items:center; gap:10px 18px; background:none; border:0; border-top:1px solid rgba(212,175,55,.16); border-bottom:1px solid rgba(212,175,55,.16); border-radius:0; padding:12px 14px; margin:0 0 12px}
-  .sk-dep-item{display:flex; align-items:center; gap:8px; min-width:0}
-  .sk-dep-item .sk-dep-toggle, .sk-dep-item .sk-dep-rank-icon{display:block; height:40px; flex:none}
-  .sk-dep-item .sk-dep-toggle img, .sk-dep-item .sk-dep-rank-icon img{width:40px; height:40px}
+  .sk-dep-strip{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); align-items:center; gap:8px 14px; background:none; border:0; border-top:1px solid rgba(212,175,55,.16); border-bottom:1px solid rgba(212,175,55,.16); border-radius:0; padding:9px 14px; margin:0 0 12px}
+  .sk-dep-item{display:flex; align-items:center; gap:7px; min-width:0}
+  .sk-dep-item .sk-dep-toggle, .sk-dep-item .sk-dep-rank-icon{display:block; height:32px; flex:none}
+  .sk-dep-item .sk-dep-toggle img, .sk-dep-item .sk-dep-rank-icon img{width:32px; height:32px}
   /* Rank pips (user 2026-10-08): one dot per rank under each strip icon (a plain toggle has one); filled = reached. A pip that just
      filled pops in with a soft glow, one that just emptied fades back to hollow (renderDepStrip compares with depPipSeen). */
   .sk-dep-btncol{display:flex; flex-direction:column; align-items:center; gap:2px; flex:none}
@@ -6377,10 +6377,12 @@
   /* Hero icon pips (user 2026-10-08): the skill icon has no off, so rank 1 is always lit; hung under the icon so the header does not grow. */
   .sk-hero-pips{position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:3px}
   .sk-hero-head:has(.sk-hero-pips){margin-bottom:22px}
-  .sk-dep-item-text{display:flex; flex-direction:column; gap:3px; min-width:0}
+  .sk-dep-item-text{display:flex; flex-direction:column; gap:2px; min-width:0}
   .sk-dep-item-name{font-family:'Prompt',sans-serif; font-size:12px; color:var(--muted); max-width:100%; white-space:nowrap; overflow:hidden}   /* fitDepLabels() shrinks the font to fit, no ellipsis */
-  /* Desktop: 3 invisible columns so many deps line up in a tidy grid; under 900px (stacked phone layout) items just wrap. */
-  @media (max-width:900px){ .sk-dep-strip{display:flex; flex-wrap:wrap} .sk-dep-item-name{max-width:180px} }
+  /* 4 invisible columns (user 2026-10-27, variant A of the toggle-strip mocks; labels are kept short for them, see depSinkAdd). Tablets (761-900 px,
+     the stacked layout): 3. Phones (<= 760 px): 2, and a name that does not fit wraps to a second line instead of shrinking. */
+  @media (max-width:900px){ .sk-dep-strip{grid-template-columns:repeat(3, minmax(0, 1fr))} }
+  @media (max-width:760px){ .sk-dep-strip{grid-template-columns:repeat(2, minmax(0, 1fr))} .sk-dep-item-name{white-space:normal; line-height:1.25} .sk-dep-item-tags{flex-wrap:wrap; row-gap:2px} }
   .sk-dep-item-tags{display:flex; gap:8px}
   .sk-dep-tag{font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; line-height:1; color:var(--tag-c)}
   /* Head strip on top (user 2026-10-26, variant G of the head-on-top mocks): from 621 px wide the icon, name, class + range and
@@ -8407,7 +8409,7 @@ function procChance(lp, raw, LCK, card) {
 }
 // Reborn belts (Reborn-Mechanics-Reference.md §2.4): t_all61 / 62 / 63 add +3 to every gear crit sum (RebornBalance.TrinketCritPlus,
 // Reborn:RebornBalance.cs:543-557). A Reborn-only toggle in servers.reborn.dmgControls of the crit cards; 0 on every other server.
-const REBORN_BELT_DEP = { id: "rbCritBelt", label: "Asgard / Midgard / Niflheim Belt (+3%)", icon: "item_rbBelt", minRank: 0, maxRank: 1, defaultRank: 0 };
+const REBORN_BELT_DEP = { id: "rbCritBelt", label: "Crit Belt (Asgard / Midgard / Niflheim Belt +3%)", icon: "item_rbBelt", minRank: 0, maxRank: 1, defaultRank: 0 };
 function rbBelt() { return rebornOn(statCapCard) && getDepRank(REBORN_BELT_DEP) > 0 ? 3 : 0; }
 
 // BarrelBot's own independent stat block (Barrel Bot moveset pilot,
@@ -8590,7 +8592,7 @@ const REBORN_MNK_RUNICINFERNO_DEP = { id: "runicInferno", label: "Runic Inferno"
 const REBORN_MNK_RUNICBASTION_DEP = { id: "runicBastion", label: "Runic Bastion", icon: "monkey_runicBastion5", minRank: 0, maxRank: 1 };
 // Runic Inferno (462) on own fire, a battle state: every hit() of the Monkey itself x1.3 after DEF (card field finalOut) while it stands within 1.6 m (flat) of one of its
 // own live Runic Flame drop points (Reborn:RebornC7Passive.cs:553-557, :2913-2939). Summons hit as themselves, so their cards never get it.
-const REBORN_MNK_ONFIRE_DEP = { id: "runicInfernoFire", label: "Runic Inferno (ยืนบนไฟของตัวเอง)", icon: "monkey_runicInferno5", minRank: 0, maxRank: 1 };
+const REBORN_MNK_ONFIRE_DEP = { id: "runicInfernoFire", label: "ยืนบนไฟ Runic Inferno (ไฟของตัวเอง)", icon: "monkey_runicInferno5", minRank: 0, maxRank: 1 };
 const mnkFireMul = () => getDepRank(REBORN_MNK_ONFIRE_DEP) === REBORN_MNK_ONFIRE_DEP.maxRank ? 1.3 : 1;
 // Elemental Sovereign (464) form on, a battle state (SovereignUntil, Reborn:RebornC7Act.cs:3245, :2967-2974): Combo hit 2 splashes (Reborn:RebornC7Passive.cs:663-687).
 const REBORN_MNK_SOVEREIGN_DEP = { id: "elementalSovereign", label: "Elemental Sovereign (ขณะอยู่ในร่าง)", icon: "monkey_elementalSovereign5", minRank: 0, maxRank: 1 };
@@ -9190,7 +9192,7 @@ const BISON_BRUTE_STRENGTH_DEP = {
   minRank: 0,
   maxRank: 5,
   iconFor: (r) => r >= 5 ? "bison_rawStrength5" : "bison_bruteStrength" + Math.max(r, 1),
-  labelFor: (r) => r >= 5 ? "Brute Strength 4 + Raw Strength" : "Brute Strength"
+  labelFor: (r) => r >= 5 ? "Raw Strength (+ Brute Strength 4)" : "Brute Strength"
 };
 
 const BISON_OVER_POWER_DEP = {
@@ -9227,7 +9229,7 @@ const BISON_SPIN_FORCE_DEP = { id: "bisonSpinForce", label: "ท่าหมุ�
 const BISON_GEAR_WEAPON_DEP = { id: "bisonGearWeapon", label: "Crit Axe", icon: "item_bsn58", minRank: 0, maxRank: 2, defaultRank: 0,
   iconFor: (r) => r === 1 ? "item_bsn43" : "item_bsn58", labelFor: (r) => ["Crit Axe", "G. Marshal Axe (+5%)", "G. Champion Axe (+7%)"][r] };
 const BISON_GEAR_EQUIP_DEP = { id: "bisonGearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 const BISON_BLOOD_BATH_DEP = { id: "bloodBath", label: "Blood Bath", icon: "bison_bloodBath5", minRank: 0, maxRank: 1 };
 const BISON_RAGE_CONTROL_DEP = { id: "rageControl", label: "Rage Control", icon: "bison_rageControl5", minRank: 0, maxRank: 1, perRank: 12 };
 const BISON_RAGE_CONTROL_RUSH_DEP = { id: "rageControl", label: "Rage Control", icon: "bison_rageControl5", minRank: 0, maxRank: 1, perRank: 3 };
@@ -9421,9 +9423,9 @@ const REBORN_PGN_PERMAFROST_PROC = { label: "โอกาส Frost", chance: 28,
 // (castDep kind postAdjustMul, castPostMul; Reborn:Penguin.cs:879, Reborn:RebornC7Passive.cs:3322-3338). 5 finished casts arm the next one; its end opens 8 s of x2 on
 // every code >= 10 hit (FinalOut, :3340-3378, :559-563): the condition toggle REBORN_PGN_CROWNX2_DEP.
 const REBORN_PGN_CROWN_DEP = { id: "crownOfStars", label: "Crown Of Stars", icon: "penguin_crownOfStars5", minRank: 0, maxRank: 1, kind: "postAdjustMul", mulFor: (INT) => Math.fround(1 - Math.min(Math.fround(0.4), Math.fround(Math.fround(0.1) * Math.floor(INT / 100)))) };
-const REBORN_PGN_CROWNX2_DEP = { id: "crownX2", label: "Crown Of Stars: ช่วง ×2 (8 วินาทีหลังใช้ดาวครบ)", icon: "penguin_crownOfStars5", minRank: 0, maxRank: 1 };
+const REBORN_PGN_CROWNX2_DEP = { id: "crownX2", label: "Crown Of Stars ×2 (ช่วง 8 วินาทีหลังใช้ดาวครบ)", icon: "penguin_crownOfStars5", minRank: 0, maxRank: 1 };
 // Galactic Stillness (462): x1.15 on every code >= 10 hit, Stargazing (3 s still in a combat zone) x1.25 more (Reborn:RebornC7Passive.cs:564-570, :3559-3577). 0 / 1 learned / 2 Stargazing.
-const REBORN_PGN_GALACTIC_DEP = { id: "galacticStillness", label: "Galactic Stillness", icon: "penguin_galacticStillness5", minRank: 0, maxRank: 2, iconFor: () => "penguin_galacticStillness5", labelFor: (r) => ["Galactic Stillness", "Galactic Stillness (×1.15)", "Galactic Stillness + เพ่งดารา (×1.4375)"][r] };
+const REBORN_PGN_GALACTIC_DEP = { id: "galacticStillness", label: "Galactic Stillness", icon: "penguin_galacticStillness5", minRank: 0, maxRank: 2, iconFor: () => "penguin_galacticStillness5", labelFor: (r) => ["Galactic Stillness", "Galactic Stillness (×1.15)", "Galactic Stillness (+ เพ่งดารา ×1.4375)"][r] };
 const REBORN_PGN_FINALOUT_DEPS = [REBORN_PGN_CROWNX2_DEP, REBORN_PGN_GALACTIC_DEP];
 // A Penguin hit's FinalOut factor: the float32 product of Crown x2 and Galactic x1.15 / x1.25 (card field finalOut, CeilToInt in finalOutAdjust; Reborn:RebornC7Passive.cs:538-596).
 function pgnFinalOut(){ let n = 1; if (getDepRank(REBORN_PGN_CROWNX2_DEP) > 0) n = Math.fround(n * 2); const g = getDepRank(REBORN_PGN_GALACTIC_DEP); if (g > 0) n = Math.fround(n * Math.fround(1.15)); if (g > 1) n = Math.fround(n * Math.fround(1.25)); return n; }
@@ -9514,7 +9516,7 @@ const REBORN_CAT_LUNAR_DEP = { id: "lunarTempest", label: "Lunar Tempest", icon:
 const REBORN_CAT_NIGHTEYE_DEP = { id: "nightEye", label: "Night Eye", icon: "cat_nightEye5", minRank: 0, maxRank: 1 };
 const REBORN_CAT_NINTHLIFE_DEP = { id: "ninthLife", label: "Ninth Life", icon: "cat_ninthLife5", minRank: 0, maxRank: 1 };
 // the number of living shades (0-3, Reborn:RebornC7Act.cs:1987-2031); each adds the hitPurple of Combo's white hits
-const REBORN_CAT_SHADOW_DEP = { id: "shadowUponShadow", label: "Shadow Upon Shadow", icon: "cat_shadowUponShadow5", minRank: 0, maxRank: 3, iconFor: () => "cat_shadowUponShadow5", labelFor: (r) => r > 0 ? "Shadow Upon Shadow: เงา " + r + " ตัว" : "Shadow Upon Shadow" };
+const REBORN_CAT_SHADOW_DEP = { id: "shadowUponShadow", label: "Shadow Upon Shadow", icon: "cat_shadowUponShadow5", minRank: 0, maxRank: 3, iconFor: () => "cat_shadowUponShadow5", labelFor: (r) => r > 0 ? "Shadow Upon Shadow (เงา " + r + " ตัว)" : "Shadow Upon Shadow" };
 const RABBIT_MEDICAL_ENHANCEMENT_DEP = { id: "medicalEnhancement", label: "Medical Enhancement", icon: "rabbit_medicalEnhancement3", minRank: 0, maxRank: 3, perRank: 5 };
 const RABBIT_ALCHEMISTLAB_DEP = { id: "alchemistLab", label: "Alchemist Lab", icon: "rabbit_alchemistLab4", minRank: 0, maxRank: 4, perRank: 2 };
 const RABBIT_EXTRAPOTION_REACH_DEP = { id: "extraPotion", label: "Extra Potion", icon: "rabbit_extraPotion5", minRank: 0, maxRank: 1 };   // popup handle; shares the id of the Mix card's own dmgDep
@@ -9532,7 +9534,7 @@ const CHAMELEON_IMPSLAYER_DEP = { id: "improvedSlayer", label: "Improved Slayer"
 function chameleonArrowPart(){ const fr = getDepRank(CHAMELEON_FARREACH_DEP), bm = getDepRank(CHAMELEON_BOWMASTERY_DEP) > 0; return { shape: "line", l: bm ? 16 + 4 * fr : 12 + 3 * fr, z0: 1, anchor: "self", rangeMod: ["l"], label: "ลูกธนู (ออกจากจุดหน้าตัว 1 m ชนเป้าหมายแรกแล้วหาย)", src: "Chameleon.cs:15586 (จุดเกิด), :8482 (life), Chameleon_nAttack.cs:34, :100 (ความเร็ว)" }; }
 // cast gate: the target must be closer than base + 4 x Far Reach (flat distance, Chameleon.cs:8232)
 function chameleonCastGate(base){ return { shape: "ring", r: base + 4 * getDepRank(CHAMELEON_FARREACH_DEP), anchor: "self", label: "ระยะร่าย (เป้าหมายต้องอยู่ใกล้กว่า วงกลมแนวราบ)", src: "Chameleon.cs:8232, :7754, :7834, :7571" }; }
-const CHAMELEON_SLAYER_MATCH_DEP = { id: "slayerRaceMatch", label: "ตรงเผ่า หรือติด Slayer Mark", icon: "chameleon_markOfSlayer5", minRank: 0, maxRank: 1, defaultRank: 0, mult: 2 };
+const CHAMELEON_SLAYER_MATCH_DEP = { id: "slayerRaceMatch", label: "ตรงเผ่า / Slayer Mark", icon: "chameleon_markOfSlayer5", minRank: 0, maxRank: 1, defaultRank: 0, mult: 2 };
 const CAT_BACKSTAB_DEP = { id: "backstab", label: "Backstab", icon: "cat_backstab5", minRank: 0, maxRank: 1, defaultRank: 0, mult: 2 };
 // Finishing Blow (#423, Cat.cs:32432): Backflip removeLockStatus level +1.
 const CAT_FINISHINGBLOW_DEP = { id: "finishingBlow", label: "Finishing Blow", icon: "cat_finishingBlow5", minRank: 0, maxRank: 1 };
@@ -9580,7 +9582,7 @@ function getDepRank(dep){
 }
 // effectProc controls (2026-09-24). Target-state inputs default to 0 (a fresh target).
 const WHALE_WALLPUNCTURE_DEP = { id: "wallPuncture", label: "Wall Puncture", icon: "whale_wallPuncture4", minRank: 0, maxRank: 4 };
-const PENGUIN_TARGET_FROSTED_DEP = { id: "targetFrosted", label: "เป้าหมายติด Frost อยู่แล้ว", icon: "status_frost", minRank: 0, maxRank: 1, defaultRank: 0 };
+const PENGUIN_TARGET_FROSTED_DEP = { id: "targetFrosted", label: "เป้าหมายติด Frost", icon: "status_frost", minRank: 0, maxRank: 1, defaultRank: 0 };
 const PENGUIN_FROZENBREAK_DEP = { id: "frozenBreak", label: "Frozen Break", icon: "penguin_frozenBreak5", minRank: 0, maxRank: 1 };
 const PENGUIN_TARGET_ICE_DEP = { id: "targetIce", label: "Ice Lv บนเป้าหมาย", icon: "penguin_frozenBlast4", minRank: 0, maxRank: 4, defaultRank: 0 };
 // Same ids as the inline deps on Falling Stars / Falling Comets (Giant Star) and Ice Shield (Frost Spike): the range popup reads the same state.
@@ -9601,7 +9603,7 @@ const WHALE_KINGDOMKNIGHT_RANK_DEP = { id: "12thKingdomKnight", label: "12th Kin
 const MOLE_GEAR_WEAPON_DEP = { id: "moleGearWeapon", label: "Crit Cannon", icon: "item_mol58", minRank: 0, maxRank: 2, defaultRank: 0,
   iconFor: (r) => r === 1 ? "item_mol43" : "item_mol58", labelFor: (r) => ["Crit Cannon", "G. Marshal Cannon (+5%)", "G. Champion Cannon (+7%)"][r] };
 const MOLE_GEAR_EQUIP_DEP = { id: "moleGearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 function moleCritBase(){
   return ([0, 5, 7][getDepRank(MOLE_GEAR_WEAPON_DEP)] || 0) + ([0, 7, 11][getDepRank(MOLE_GEAR_EQUIP_DEP)] || 0) + rbBelt();
 }
@@ -9638,7 +9640,7 @@ const moleRbOD = () => getDepRank(REBORN_MOLE_IRONOVERDRIVE_DEP) > 0;
 const PANDA_GEAR_WEAPON_DEP = { id: "pandaGearWeapon", label: "Crit Knuckle", icon: "item_pnd58", minRank: 0, maxRank: 2, defaultRank: 0,
   iconFor: (r) => r === 1 ? "item_pnd43" : "item_pnd58", labelFor: (r) => ["Crit Knuckle", "G. Marshal Knuckle (+5%)", "G. Champion Knuckle (+7%)"][r] };
 const PANDA_GEAR_EQUIP_DEP = { id: "pandaGearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 const PANDA_FOCUSEDSPIRIT_DEP = { id: "focusedSpirit", label: "Focused Spirit", icon: "panda_focusedSpirit2", minRank: 0, maxRank: 2 };
 const PANDA_AURABLAST_DEP = { id: "auraBlast", label: "Aura Blast", icon: "panda_auraBlast5", minRank: 0, maxRank: 1 };
 function pandaCritBase(){
@@ -9709,13 +9711,13 @@ const pndRollMul = () => getDepRank(REBORN_PANDA_FORMLESS_ROLL_DEP) === REBORN_P
 const PANDA_RB_FP_LINE = "**Formless Path:** ตั้งแต่เริ่มกลิ้งด้วย **Roll** / **Roll Around** จนถึง **5 วินาที** หลังกลิ้งจบ ^^ดาเมจขาว^^ ทุกฮิต **×1.25** (คิดหลังหัก DEF)";
 const PANDA_RB_RF_LINE = "**Resonant Fist:** ทุกจังหวะตีปล่อยคลื่นรอบตัวเพิ่ม (ดาเมจดูในการ์ด **Resonant Fist**)";
 const REBORN_PANDA_FIVEHEAVENPALMS_DEP = { id: "fiveHeavenPalms", label: "Five Heaven Palms", icon: "panda_fiveHeavenPalms5", minRank: 0, maxRank: 2,
-  iconFor: (r) => r === 2 ? "panda_lotusPalm2" : "panda_fiveHeavenPalms5", labelFor: (r) => ["Five Heaven Palms", "Five Heaven Palms", "Five Heaven Palms + ต่อจาก Lotus Palm ภายใน 3 วินาที"][r] };
+  iconFor: (r) => r === 2 ? "panda_lotusPalm2" : "panda_fiveHeavenPalms5", labelFor: (r) => ["Five Heaven Palms", "Five Heaven Palms", "Five Heaven Palms (ต่อจาก Lotus Palm ภายใน 3 วินาที)"][r] };
 function pndSO(){ return (statCapServer !== null ? statCapServer === "reborn" : currentServer === "reborn") && getDepRank(REBORN_PANDA_SPIRITOVERFLOW_DEP) > 0; }
 function pandaFaLv(){ return pndSO() ? 3 : getDepRank(PANDA_FOCUSEDART_DEP); }
 const PANDA_RB_SO_LINE = "<br>**Spirit Overflow:** แทน **Focused Art** ด้วยโบนัส **1.5 × SP** ปัจจุบันในวงเล็บ ATK";
 const PANDA_RB_SO_NOTE = "• [Buff] เมื่อเรียน **Spirit Overflow** โบนัสตาม SP เป็น **1.5 × SP** แทน **Focused Art**";
-const REBORN_PANDA_NOSP_DEP = { id: "rebornHbNoSp", label: "Heaven Breath: ศัตรู SP 0", icon: "panda_heavenBreath5", minRank: 0, maxRank: 1, mult: 2, wrap: true, wrapLabel: "Heaven Breath" };
-const PANDA_SHADOWFIST_DEP = { id: "shadowFist", label: "Shadow Fist / Spirit Fist", icon: "panda_shadowFist4", minRank: 0, maxRank: 5, iconFor: (r) => r >= 5 ? "panda_spiritFist5" : "panda_shadowFist" + Math.max(r, 1) };
+const REBORN_PANDA_NOSP_DEP = { id: "rebornHbNoSp", label: "Heaven Breath (ศัตรู SP 0)", icon: "panda_heavenBreath5", minRank: 0, maxRank: 1, mult: 2, wrap: true, wrapLabel: "Heaven Breath" };
+const PANDA_SHADOWFIST_DEP = { id: "shadowFist", label: "Shadow Fist / Spirit Fist", icon: "panda_shadowFist4", minRank: 0, maxRank: 5, iconFor: (r) => r >= 5 ? "panda_spiritFist5" : "panda_shadowFist" + Math.max(r, 1), labelFor: (r) => r >= 5 ? "Spirit Fist (+ Shadow Fist 4)" : "Shadow Fist" };
 const WHALE_WALLPUNCTURE_LCK = { label: "โอกาส ดาเมจม่วง", chance: (rank, d) => 10 * d, dep: WHALE_WALLPUNCTURE_DEP, simulate: false };
 // Reborn Whale C6 / C7 toggles (Reborn tab only). Each id = its card id without "whale_", so [DEP BACKLOG] and the strip order find the card.
 const REBORN_WHALE_TIDAL_DEP = { id: "tidalReach", label: "Tidal Reach", icon: "whale_tidalReach5", minRank: 0, maxRank: 1 };   // #451: rangeMod +0.3 (Reborn:RebornC6.cs:2237-2253); reachRangeMod reads over.tidalReach
@@ -9731,7 +9733,7 @@ const BAT_DEMON_GAZE_DEP = { id: "demonGaze", label: "Demon Gaze", icon: "bat_de
 const BAT_SHAME_DEP = { id: "shame", label: "Shame", icon: "bat_shame5", minRank: 0, maxRank: 1 };
 const BAT_DARK_STALKER_DEP = { id: "darkStalker", label: "Dark Stalker", icon: "bat_darkStalker1", minRank: 0, maxRank: 1 };
 const BAT_SHADOW_MASTERY_DEP = { id: "shadowMastery", label: "Shadow Mastery", icon: "bat_shadowMastery2", minRank: 0, maxRank: 1, kind: "replace", replaceValue: 0 };
-const BAT_DOOM_STACK_DEP = { id: "doomStack", label: "Doom Stack Level", icon: "bat_doom4", minRank: 1, maxRank: 7, defaultRank: 1 };
+const BAT_DOOM_STACK_DEP = { id: "doomStack", label: "Doom Stack", icon: "bat_doom4", minRank: 1, maxRank: 7, defaultRank: 1 };
 const BAT_DISTANT_ORB_DEP = { id: "distantOrb", label: "Distant Orb", icon: "bat_distantOrb5", minRank: 0, maxRank: 1 };
 const BAT_DREAM_BURST_DEP = { id: "dreamBurst", label: "Dream Burst", icon: "bat_dreamBurst3", minRank: 0, maxRank: 3, cycleRanks: true };   // the clone hitMod is 2.0 - 0.2 x level, so every level matters (user 2026-10-07)
 const BAT_SHATTERING_DREAM_DEP = { id: "shatteringDream", label: "Shattering Dream", icon: "bat_shatteringDream1", minRank: 0, maxRank: 1 };
@@ -9743,18 +9745,18 @@ const chiropLv = () => getDepRank(BAT_CHIRO_BLIND_DEP) + getDepRank(BAT_CHIRO_CO
 // Reborn Chiroptophobia tick: max(7 x sLv + 7, FloorToInt(0.025f x CHA of the Bat that applied it x sLv)) (Reborn:CharacterControl.cs:8982-9005; BB 7 x sLv + 7, BB:CharacterControl.cs:9698).
 // CHA = the skill page's player CHA (chmBurstStatsGlobal), 0 before the page mounts.
 const batChiropRbCha = (lv) => Math.floor(Math.fround(Math.fround(Math.fround(0.025) * (chmBurstStatsGlobal ? chmBurstStatsGlobal()[0] : 0)) * lv));
-const WOLF_CROSS_BREAK_DEP = { id: "crossBreak", label: "Cross Break Rank", icon: "wolf_crossBreak3", minRank: 1, maxRank: 3 };
+const WOLF_CROSS_BREAK_DEP = { id: "crossBreak", label: "Cross Break", icon: "wolf_crossBreak3", minRank: 1, maxRank: 3 };
 const WOLF_THIRD_REND_DEP = { id:"thirdRend", label:"Third Rend", icon:"wolf_thirdRend5", minRank:0, maxRank:1 };
 // Last Blade (#354): the finisher after Blade Song's last slash, Wolf.cs:30072-30170. Blade Song's second damage group.
 const WOLF_LASTBLADE_DEP = { id:"lastBlade", label:"Last Blade", icon:"wolf_lastBlade1", minRank:0, maxRank:1 };
 // Blood Fang (#403): Blade Fang's hit box and damage (Wolf.cs:25766). Shared by Blade Fang's damage dep and its reach preview.
 const WOLF_BLOODFANG_DEP = { id:"bloodFang", label:"Blood Fang", icon:"wolf_bloodFang5", minRank:0, maxRank:1 };
-const WOLF_TARGET_POWER_BREAK_DEP = { id:"targetPowerBreak", label:"Power Break บนเป้าหมาย", icon:"wolf_powerBreak2", minRank:0, maxRank:3 };
-const WOLF_TARGET_ARMOR_BREAK_DEP = { id:"targetArmorBreak", label:"Armor Break บนเป้าหมาย", icon:"wolf_armorBreak2", minRank:0, maxRank:3 };
+const WOLF_TARGET_POWER_BREAK_DEP = { id:"targetPowerBreak", label:"Power Break (บนเป้าหมาย)", icon:"wolf_powerBreak2", minRank:0, maxRank:3 };
+const WOLF_TARGET_ARMOR_BREAK_DEP = { id:"targetArmorBreak", label:"Armor Break (บนเป้าหมาย)", icon:"wolf_armorBreak2", minRank:0, maxRank:3 };
 // Wolf Combo (2026-09-24). Feral Instinct level = rank + Wild Heart (Wolf.cs:8800-8848, :9127).
 const WOLF_WILDHEART_DEP = { id: "wildHeart", label: "Wild Heart", icon: "wolf_wildHeart5", minRank: 0, maxRank: 1 };
 // Feral Instinct 1-4; rank 5 = Feral Instinct 4 + Wild Heart (+1 level), one toggle (user 2026-10-08). Rank 5 uses the Wild Heart art.
-const WOLF_FERALINSTINCT_DEP = { id: "wolfFeralInstinct", label: "Feral Instinct / Wild Heart", icon: "wolf_feralInstinct4", minRank: 0, maxRank: 5, iconFor: (r) => r >= 5 ? "wolf_wildHeart5" : "wolf_feralInstinct" + Math.max(r, 1) };
+const WOLF_FERALINSTINCT_DEP = { id: "wolfFeralInstinct", label: "Feral Instinct / Wild Heart", icon: "wolf_feralInstinct4", minRank: 0, maxRank: 5, iconFor: (r) => r >= 5 ? "wolf_wildHeart5" : "wolf_feralInstinct" + Math.max(r, 1), labelFor: (r) => r >= 5 ? "Wild Heart (+ Feral Instinct 4)" : "Feral Instinct" };
 // Dark Edge status on: every Combo swing is RPC_AddEffectDamage (Wolf.cs:15267, :16098, :16801, :17517, :17835).
 const WOLF_DARKEDGE_DEP = { id: "wolfDarkEdgeOn", label: "Dark Edge", icon: "wolf_darkEdge4", minRank: 0, maxRank: 1, defaultRank: 0 };
 // getCritPlus (Wolf.cs:14044-14188): full set crit chance lckAdjust(12) Marshal (items 43/44) or lckAdjust(18) Champion (58), x1.8.
@@ -9762,7 +9764,7 @@ const WOLF_DARKEDGE_DEP = { id: "wolfDarkEdgeOn", label: "Dark Edge", icon: "wol
 const WOLF_GEAR_WEAPON_DEP = { id: "wolfGearWeapon", label: "Crit Sword", icon: "item_wlf58", minRank: 0, maxRank: 2, defaultRank: 0,
   iconFor: (r) => r === 1 ? "item_wlf43" : "item_wlf58", labelFor: (r) => ["Crit Sword", "G. Marshal Sword (+5%)", "G. Champion Sword (+7%)"][r] };
 const WOLF_GEAR_EQUIP_DEP = { id: "wolfGearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 // Katana (w_wlf59, Lv 60): every Combo stage scales the crit-rolled raw value, floor(0.75x) at stages 1, 3 and 4 and
 // ceil(0.5x) at stage 2, and swings in a fixed 8 m box (8.5 m at stage 3) that rangeMod does not touch
 // (Wolf.cs:15159-15175, :15990-16001, :16693, :17409, :17727). It takes the weapon slot, so a Marshal / Champion set
@@ -9791,7 +9793,7 @@ function pandaWormGearChance(){
 const WHALE_GEAR_WEAPON_DEP = { id: "whaleGearWeapon", label: "Crit Spear", icon: "item_whl58", minRank: 0, maxRank: 2, defaultRank: 0,
   iconFor: (r) => r === 1 ? "item_whl43" : "item_whl58", labelFor: (r) => ["Crit Spear", "G. Marshal Spear (+5%)", "G. Champion Spear (+7%)"][r] };
 const WHALE_GEAR_EQUIP_DEP = { id: "whaleGearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 function whaleCritBase(){
   return ([0, 5, 7][getDepRank(WHALE_GEAR_WEAPON_DEP)] || 0) + ([0, 7, 11][getDepRank(WHALE_GEAR_EQUIP_DEP)] || 0) + rbBelt();
 }
@@ -9799,7 +9801,7 @@ function whaleCritBase(){
 const SHEEP_GEAR_WEAPON_DEP = { id: "sheepGearWeapon", label: "Crit Book", icon: "item_shp58", minRank: 0, maxRank: 2, defaultRank: 0,
   iconFor: (r) => r === 1 ? "item_shp43" : "item_shp58", labelFor: (r) => ["Crit Book", "G. Marshal Book (+5%)", "G. Champion Book (+7%)"][r] };
 const SHEEP_GEAR_EQUIP_DEP = { id: "sheepGearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+  iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 // G. Marshal / G. Champion mounts (user 2026-10-17): the mount copies the rider's base stats and adds +20 / +50 to all eight
 // (PvpMount.cs / ChampionMount.cs onMount), so a mount attack card adds that to the ATK / TAL / LCK the hit uses.
 const MOUNT_TYPE_DEP = { id: "mountType", label: "Mount", icon: "mount_marshal", minRank: 1, maxRank: 2, defaultRank: 1,   // 1 = G. Marshal, 2 = G. Champion: never "off", so the toggle is never greyed and shows the mount picked (user 2026-10-17)
@@ -9862,7 +9864,7 @@ function comboGear(key, noun, w59Label){
   const weapon = { id: key + "GearWeapon", label: "Crit " + noun, icon: "item_" + key + "58", minRank: 0, maxRank: 2, defaultRank: 0,
     iconFor: (r) => "item_" + key + (r === 1 ? "43" : "58"), labelFor: (r) => ["Crit " + noun, "G. Marshal " + noun + " (+5%)", "G. Champion " + noun + " (+7%)"][r] };
   const equip = { id: key + "GearEquip", label: "Crit Armor + Helmet", icon: "item_rabEquip2", minRank: 0, maxRank: 2, defaultRank: 0,
-    iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "Marshal Armor + Helmet (+7%)", "Champion Armor + Helmet (+11%)"][r] };
+    iconFor: (r) => r === 1 ? "item_rabEquip1" : "item_rabEquip2", labelFor: (r) => ["Crit Armor + Helmet", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
   const w59 = { id: key + "W59", label: w59Label, icon: "item_" + key + "59", minRank: 0, maxRank: 1, defaultRank: 0 };
   const base = () => ([0, 5, 7][getDepRank(weapon)] || 0) + ([0, 7, 11][getDepRank(equip)] || 0) + rbBelt();
   return { weapon, equip, w59, controls: [weapon, equip, w59],
@@ -9964,7 +9966,7 @@ function wolfComboCritBase(){
 // isShotgun :11136. Details in 12t_reference/rabbit-skill-reference.md ("Shooting kit").
 const RABBIT_COMBO_LV_DEP = { id: "rabComboLv", label: "nAttack (เลเวลที่เรียน กำหนดระยะยิงของสกิลยิง)", icon: "rabbit_nAttack4", minRank: 0, maxRank: 4 };
 // Hyper Shot 1-4; rank 5 = Hyper Shot 4 + Snipe Mastery (the two are one icon; rank-5 icon key rabbit_hyperShot5 is the Snipe Mastery art).
-const RABBIT_HYPERSHOT_DEP = { id: "rabHyperShot", label: "Hyper Shot / Snipe Mastery", icon: "rabbit_hyperShot5", minRank: 0, maxRank: 5 };
+const RABBIT_HYPERSHOT_DEP = { id: "rabHyperShot", label: "Hyper Shot / Snipe Mastery", icon: "rabbit_hyperShot5", minRank: 0, maxRank: 5, labelFor: (r) => r >= 5 ? "Snipe Mastery (+ Hyper Shot 4)" : "Hyper Shot" };
 const RABBIT_BOUNCING_DEP = { id: "rabBouncing", label: "Bouncing Bullet", icon: "rabbit_bouncingBullet5", minRank: 0, maxRank: 1 };
 // On/off only: rank 1 and 2 differ just in the hit box (FindRecTarget width), not in damage, so Combo does not need the level.
 const RABBIT_SHOTGUN_DEP = { id: "rabShotgun", label: "Customized Shotgun", icon: "rabbit_customizedShotgun2", minRank: 0, maxRank: 1, defaultRank: 0 };
@@ -11255,11 +11257,11 @@ function rabbitChargeFormulaItems(rank, ATK){
 // Combo merges Bulls Eye (#413, Lv 60) into Critical Plus as rank 5 = Critical Plus 4 + Bulls Eye (user 2026-10-05).
 const CHAMELEON_CRITPLUS_DEP = { id: "criticalPlus", label: "Critical Plus", icon: "chameleon_criticalPlus4", minRank: 0, maxRank: 5,
   iconFor: (r) => r >= 5 ? "chameleon_bullsEye5" : "chameleon_criticalPlus" + Math.max(r, 1),
-  labelFor: (r) => r >= 5 ? "Critical Plus 4 + Bulls Eye" : "Critical Plus" };
+  labelFor: (r) => r >= 5 ? "Bulls Eye (+ Critical Plus 4)" : "Critical Plus" };
 const CHAMELEON_BULLSEYE_DEP = { id: "bullsEye", label: "Bulls Eye", icon: "chameleon_bullsEye5", minRank: 0, maxRank: 1 };
 const CHAMELEON_GEAR_WEAPON_DEP = { id: "chmGearWeapon", label: "Crit Bow", icon: "item_chmWeapon2", minRank: 0, maxRank: 2, defaultRank: 0,
   labelFor: (r) => ["Crit Bow", "G. Marshal Bow (+4%)", "Mantis Bow R (+5%)"][r] };
-const CHAMELEON_GEAR_MANTIS_DEP = { id: "chmGearMantis", label: "Mantis Suit R + Mantis Hat R (+7%)", icon: "item_chmMantis", minRank: 0, maxRank: 1, defaultRank: 0 };
+const CHAMELEON_GEAR_MANTIS_DEP = { id: "chmGearMantis", label: "ชุด + หมวก Mantis R (+7%)", icon: "item_chmMantis", minRank: 0, maxRank: 1, defaultRank: 0 };
 // ToT (user-reported 2026-10-02): the server fixed the crit gear check. The client code tests a_chm43 / c_chm43, which do
 // not exist (Marshal hat/armor are a_all43-44 / c_all43-44), and never tests Champion (w_chm58, a_all58). ToT uses the
 // standard table instead: Marshal bow +5, hat + armor +7; Champion bow +7, hat +5, armor +6. Mantis gives no crit on ToT.
@@ -11271,11 +11273,11 @@ const CHAMELEON_TOT_CRIT_NOTE = "• [Fix] ชุด Marshal และ Champion 
 // Left Stride's arrows roll the Combo crit, so its ToT / TTO popup says so.
 const CHAMELEON_FIXED_CRIT_ARROW_NOTE = "• [Fix] ลูกธนูใช้โอกาสคริของ **nAttack** ที่แก้แล้ว: ชุด Marshal และ Champion เพิ่มโอกาสคริได้ตามปกติ และไอเทม Mantis ไม่เพิ่มโอกาสคริ";
 const CHAMELEON_TOT_EQUIP_DEP = { id: "chmTotEquip", label: "Crit Hat + Armor", icon: "item_chmMarshalSet", minRank: 0, maxRank: 2, defaultRank: 0,
-  iconFor: (r) => r === 2 ? "item_chmChampionSet" : "item_chmMarshalSet", labelFor: (r) => ["Crit Hat + Armor", "Marshal Hat + Armor (+7%)", "Champion Hat + Armor (+11%)"][r] };
+  iconFor: (r) => r === 2 ? "item_chmChampionSet" : "item_chmMarshalSet", labelFor: (r) => ["Crit Hat + Armor", "ชุด + หมวก Marshal (+7%)", "ชุด + หมวก Champion (+11%)"][r] };
 // Combo merges Extra Arrows (#403, Lv 55) into Fatal Strike as rank 5 = Fatal Strike 4 + Extra Arrows (status level 5).
 const CHAMELEON_FATALSTRIKE_DEP = { id: "fatalStrike", label: "Fatal Strike", icon: "chameleon_fatalStrike4", minRank: 0, maxRank: 5,
   iconFor: (r) => r >= 5 ? "chameleon_extraArrows5" : "chameleon_fatalStrike" + Math.max(r, 1),
-  labelFor: (r) => r >= 5 ? "Fatal Strike 4 + Extra Arrows" : "Fatal Strike" };
+  labelFor: (r) => r >= 5 ? "Extra Arrows (+ Fatal Strike 4)" : "Fatal Strike" };
 const CHAMELEON_EXTRAARROWS_DEP = { id: "extraArrows", label: "Extra Arrows", icon: "chameleon_extraArrows5", minRank: 0, maxRank: 1 };
 const CHAMELEON_PIERCINGVENOM_DEP = { id: "piercingVenom", label: "Piercing Venom", icon: "chameleon_piercingVenom1", minRank: 0, maxRank: 2,
   iconFor: (r) => r === 2 ? "chameleon_deadlyVenom5" : "chameleon_piercingVenom1", labelFor: (r) => r === 2 ? "Piercing Venom x2 (Deadly Venom)" : "Piercing Venom" };
@@ -11397,7 +11399,7 @@ function skillEffectDamageOn(skill){
   return !!(d && getDepRank(d) === d.maxRank);
 }
 // Cat Combo simulator controls reflect learned skills and current buff state.
-const CAT_COMBO_HIDDEN_DEP = { id: "catComboHidden", label: "Hidden Blade / Jagged Knife", icon: "cat_hiddenBlade4", minRank: 0, maxRank: 5, defaultRank: 0 };
+const CAT_COMBO_HIDDEN_DEP = { id: "catComboHidden", label: "Hidden Blade / Jagged Knife", icon: "cat_hiddenBlade4", minRank: 0, maxRank: 5, defaultRank: 0, labelFor: (r) => r >= 5 ? "Jagged Knife (+ Hidden Blade 4)" : "Hidden Blade" };
 // Cat Power Number series passives (Power One, Two, Three, Seven, Super Seven; CharacterControl.cs:2838-3010).
 // In BigBug engine, applies globally to all Cat attacks. On TTO, restricted strictly to Cat Skill Tree A.
 const CAT_POWER_DEP = { id: "catPower", label: "Active Power digit", icon: "cat_powerSeven4", minRank: 0, maxRank: 4, defaultRank: 0 };
@@ -11449,7 +11451,7 @@ function casinoOdds(lck){
 }
 // Double Focus requires Charge Attack 3 (rSkill 113, CatSkill.cs:1001), so it is the Charge toggle's final step:
 // rank 1-3 = Charge Attack rank, rank 4 = Charge Attack 3 + Double Focus (damagePlus level 3 + 2 = 5).
-const CAT_COMBO_CHARGE_DEP = { id: "catComboCharge", label: "Charge Attack / Double Focus", icon: "cat_cAttack3", minRank: 0, maxRank: 4, defaultRank: 0 };
+const CAT_COMBO_CHARGE_DEP = { id: "catComboCharge", label: "Charge Attack / Double Focus", icon: "cat_cAttack3", minRank: 0, maxRank: 4, defaultRank: 0, labelFor: (r) => r >= 4 ? "Double Focus (+ Charge Attack 3)" : "Charge Attack" };
 function catComboChargeLevel(){ const r = getDepRank(CAT_COMBO_CHARGE_DEP); return r === 4 ? 5 : r; }
 const CAT_COMBO_NO_CHANCE_DEP = { id: "catComboNoChance", label: "No Chance", icon: "cat_noChance5", minRank: 0, maxRank: 1, defaultRank: 0 };
 // Barrel Bot's own stat-boost passives (2026-08-20 pilot) -- shared across
@@ -11460,7 +11462,7 @@ const MOLE_DOUBLEBOT_DEP = { id: "doubleBot", label: "Double Bot",
 // block (barrelBotOwnStats' rank arg) for every "Barrel Bot - X" move. The
 // summoned bot's type string is BarrelBot<cast rank>, so this is the rank the
 // Barrel Bot skill was cast at. Default stays 4 (the old fixed assumption).
-const MOLE_BARRELBOT_LV_DEP = { id: "barrelBotLv", label: "Barrel Bot Level",
+const MOLE_BARRELBOT_LV_DEP = { id: "barrelBotLv", label: "Barrel Bot",
   icon: "mole_barrelBot4", minRank: 1, maxRank: 4, defaultRank: 4 };
 // Deliberately the SAME id AutoGyroGun's own Synchro Mole dep already uses
 // -- one real cast sweeps every matching summon (AutoGyroGun1-5 AND
@@ -11484,7 +11486,7 @@ const MOLE_SYNCHROMOLE_BARRELBOT_DEP = { id: "synchroMole", label: "Synchro Mole
 // requires already knowing it. Icons kingKaiser1/2/3 (not the base cast
 // skill's own 3-rank set -- there isn't one; these are 3 different single-
 // rank skills' own icons, reused here to represent the DERIVED tier number).
-const KING_KAISER_LV_DEP = { id: "kaiserLv", label: "King Kaiser Level",
+const KING_KAISER_LV_DEP = { id: "kaiserLv", label: "King Kaiser",
   icon: "mole_kingKaiser3", minRank: 1, maxRank: 3 };
 // Heavy Built (2026-08-21, user-requested fix) -- a real 0-2 rank passive
 // (hasSkill 361/362, mol_heavyBuilt1/mol_heavyBuilt2)
@@ -19939,7 +19941,9 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (hit){ if (!hit.tags.includes(tag)) hit.tags.push(tag); return ""; }
     const pend = depSink.get("pending:" + dep.id) || [];   // tags a view of this dep registered before it
     depSink.delete("pending:" + dep.id);
-    depSink.set(dep.id, { dep, label: dep.labelFor ? dep.labelFor(getDepRank(dep)) : dep.label, tags: [tag, ...pend.filter(t => t !== tag)], button: buttonHtml });
+    // The strip shows a label up to its first " ("; the rest (a condition, a bonus) is only in the hover text (user 2026-10-27: 4 columns, concise labels).
+    const full = String(dep.labelFor ? dep.labelFor(getDepRank(dep)) : dep.label);
+    depSink.set(dep.id, { dep, label: full.replace(/ \(.*$/, ""), full, tags: [tag, ...pend.filter(t => t !== tag)], button: buttonHtml });
     return "";
   }
   // Sort key of a strip toggle: the internal skill ID of the card it stands for (<class>_<dep id>, common_<dep id>, or its
@@ -19972,7 +19976,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (!depSink || depSink.size === 0) return "";
     const sorted = [...depSink.values()].filter(e => !Array.isArray(e)).map((e, i) =>   /* skip pending view tags */ ({ e, i, k: depOrderKey(e.dep) })).sort((a, b) => (a.k - b.k) || (a.i - b.i));
     const items = sorted.map(({ e, k }) =>
-      `<div class="sk-dep-item" data-dep-order="${k === Infinity ? "" : k}" title="${e.label}"><span class="sk-dep-btncol">${e.button}${depPipsHtml(e.dep)}</span><span class="sk-dep-item-text"><span class="sk-dep-item-name">${e.label}</span><span class="sk-dep-item-tags">${e.tags.map(tg => `<span class="sk-dep-tag" style="--tag-c:var(${DEP_TAG_COLORS[tg] || "--muted"})">${tg}</span>`).join("")}</span></span></div>`
+      `<div class="sk-dep-item" data-dep-order="${k === Infinity ? "" : k}" title="${e.full}"><span class="sk-dep-btncol">${e.button}${depPipsHtml(e.dep)}</span><span class="sk-dep-item-text"><span class="sk-dep-item-name">${e.label}</span><span class="sk-dep-item-tags">${e.tags.map(tg => `<span class="sk-dep-tag" style="--tag-c:var(${DEP_TAG_COLORS[tg] || "--muted"})">${tg}</span>`).join("")}</span></span></div>`
     ).join("");
     return `<div class="sk-dep-strip">${items}</div><!--/sk-dep-strip-->`;
   }
@@ -34031,6 +34035,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T03:57:06.089Z","feat(bible): the toggle strip under a skill shows 4 columns (3 on tablets, 2 on phones) with 32 px icons, and 81 toggle labels are shorter (a label shows up to its first bracket, the rest is its hover text)"],
     ["2026-10-27T02:33:33.925Z","fix(bible): Reborn popups in skill details no longer show the seal and hit-box notes, and the Combo-type cards stop repeating the item-chance x1.3 and belt rule the common note already explains (Chameleon keeps only its Critical Plus part)"],
     ["2026-10-27T02:16:02.644Z","fix(bible): the hidden Reborn issues list holds only issues Reborn introduced (62 lines on 58 cards), not the BB originals its cards inherit"],
     ["2026-10-27T01:42:39.008Z","feat(bible): the BB issues page shows the BB logo at the top right, and a hidden 1 s hold on it switches to a Reborn list (each Reborn card bug, tooltip mismatch and unintended note as its Reborn tab shows them, 145 lines on 121 cards)"],

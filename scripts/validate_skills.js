@@ -1443,9 +1443,9 @@ let checkedChiro = 0;
       sandbox._depRanks.chiroBlind = b; sandbox._depRanks.chiroConfuse = c; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk);
       check(`Blind ${b} + Confuse ${c}: damage ${want}`, sandbox._getDmgText(sk, 1) === want, sandbox._getDmgText(sk, 1));
     });
-    // Strip labels per level: Blind 1 / Blind 2 / Blind 3 (Shame), the same for Confuse.
+    // Strip labels per level: Blind 1 / Blind 2 / Blind 3, the same for Confuse (level 3's "(Shame)" is in the hover text only).
     [["chiroBlind", "Blind"], ["chiroConfuse", "Confuse"]].forEach(([dep, name]) => {
-      [[0, name], [1, name + " 1"], [2, name + " 2"], [3, name + " 3 (Shame)"]].forEach(([r, want]) => {
+      [[0, name], [1, name + " 1"], [2, name + " 2"], [3, name + " 3"]].forEach(([r, want]) => {
         sandbox._depRanks.chiroBlind = 2; sandbox._depRanks.chiroConfuse = 2; sandbox._depRanks[dep] = r; sandbox._selectSkill(sk);
         check(`${dep} level ${r}: the strip label is "${want}"`, sandbox._getRenderedHeroHtml().includes(`<span class="sk-dep-item-name">${want}</span>`), want);
       });
@@ -2916,6 +2916,14 @@ let checkedDepStrip = 0;
     if (html.includes("sk-summon-toggles") && /<div class="sk-summon-toggles[^"]*">\s*<\/div>/.test(html)) fail(`${sk.id}: empty .sk-summon-toggles container left in the summon header`); else checkedDepStrip++;
     // 3. no empty strip
     if (strip && items === 0) fail(`${sk.id}: empty .sk-dep-strip rendered`); else checkedDepStrip++;
+    // 4. 4-column strip (user 2026-10-27): a shown name is the label up to its first " (" and at most 20 letters (Thai vowel and tone
+    //    marks not counted; about the 136 px a 1920 x 1080 column gives at 12 px), the full label is the item's hover text.
+    for (const m of strip.matchAll(/<div class="sk-dep-item" data-dep-order="\d*" title="([^"]*)"><span class="sk-dep-btncol">[\s\S]*?<span class="sk-dep-item-name">([^<]*)<\/span>/g)) {
+      const letters = m[2].replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").length;
+      if (letters > 20) fail(`${sk.id}: strip label "${m[2]}" has ${letters} letters, over 20 for the 4-column strip (move the detail into " (...)")`);
+      else if (m[1] !== m[2] && !m[1].startsWith(m[2] + " (")) fail(`${sk.id}: strip label "${m[2]}" is not the part of "${m[1]}" before its " ("`);
+      else checkedDepStrip++;
+    }
     // 6. skill toggles ascend by internal skill ID; non-skill toggles (empty key) come after them
     const keys = [...strip.matchAll(/<div class="sk-dep-item" data-dep-order="(\d*)"/g)].map(m => m[1] === "" ? Infinity : +m[1]);
     if (keys.length !== items) { console.error(`[DEP ORDER ERROR] ${sk.id}: ${items - keys.length} strip item(s) without data-dep-order`); errorCount++; }
