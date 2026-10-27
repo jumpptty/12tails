@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>12 Tails Bible</title>
+<!-- 12 Tails Bible (c) 2026 jumpptty. All rights reserved; see LICENSE in https://github.com/jumpptty/12tails. Original: https://jumpptty.github.io/12tails/12t_projects/bible/ -->
+<link rel="canonical" href="https://jumpptty.github.io/12tails/12t_projects/bible/">
+<meta name="author" content="jumpptty">
+<meta name="copyright" content="© 2026 jumpptty. All rights reserved.">
 <script id="themeBoot">
   /* Theme (2026-10-10, user): light mode abolished, the app is dark only. data-theme="dark" is set before first paint;
      the old stored choice is dropped. Has an id on purpose: the validator reads the main app script as the first
@@ -31,7 +35,7 @@
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
-    popup: [".hub-music-pop", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
+    popup: [".hub-music-pop", ".copy-note", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
     field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
@@ -64,6 +68,30 @@
 
 <script data-goatcounter="https://jumpptty.goatcounter.com/count"
         async src="https://gc.zgo.at/count.js"></script>
+<script id="copyNotice">
+  /* Copy notice (user 2026-10-27): the original lives at jumpptty.github.io. A copy served from any other web host shows a small banner
+     (.copy-note) linking to the same page on the original. Local copies (double-click, localhost, a home network) and Google Translate's
+     proxy of the original are left alone. Has an id on purpose: the validator reads the main app script as the first id-less script onward. */
+  (function(){
+    var ORIGIN = "https://jumpptty.github.io/12tails/12t_projects/bible/";
+    var host = String(location.hostname || "").toLowerCase();
+    if (!/^https?:$/.test(location.protocol)) return;
+    if (host === "jumpptty.github.io" || host === "jumpptty-github-io.translate.goog") return;
+    if (host === "localhost" || host === "[::1]" || /\.local$/.test(host) || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return;
+    function show(){
+      var bar = document.createElement("aside");
+      bar.className = "copy-note";
+      bar.setAttribute("role", "note");
+      bar.innerHTML = '<span>หน้านี้คัดลอกมาจาก <b>12 Tails Bible</b> ข้อมูลล่าสุดอยู่ที่เว็บต้นฉบับ <a class="copy-note-link">jumpptty.github.io/12tails</a></span>'
+        + '<button type="button" class="copy-note-x" aria-label="ปิด">✕</button>';
+      var link = bar.querySelector("a"), sync = function(){ link.href = ORIGIN + location.hash; };   // the same page on the original
+      sync(); window.addEventListener("hashchange", sync);
+      bar.querySelector("button").addEventListener("click", function(){ bar.remove(); });   // closed for this visit only
+      document.body.appendChild(bar);
+    }
+    if (document.body) show(); else document.addEventListener("DOMContentLoaded", show);
+  })();
+</script>
 <style>
   :root{
     --ink:#eae3d2;
@@ -1396,7 +1424,8 @@
   /* ---- Changelog modal ---- */
   .changelog-backdrop{position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:20px; background:rgba(20,19,17,.72)}
   .changelog-backdrop[hidden]{display:none}
-  .changelog-popup{width:min(560px,100%); max-height:min(720px,calc(100vh - 40px)); overflow:hidden; background:var(--panel); border:1px solid var(--gold); border-radius:6px; box-shadow:0 24px 70px rgba(0,0,0,.45); font-family:'Prompt',sans-serif}
+  .changelog-popup{width:min(560px,100%); max-height:min(720px,calc(100vh - 40px)); overflow:hidden; background:var(--panel); border:1px solid var(--gold); border-radius:6px; box-shadow:0 24px 70px rgba(0,0,0,.45); font-family:'Prompt',sans-serif; display:flex; flex-direction:column}
+  .changelog-head, .changelog-summary, .changelog-more-wrap{flex:none}
   .changelog-head{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 20px 14px; border-bottom:1px solid var(--line)}
   .changelog-kicker{margin:0 0 3px; color:var(--gold); font:600 10px/1.2 'JetBrains Mono','Prompt',monospace; letter-spacing:.12em}
   .changelog-head h2{margin:0; color:var(--text); font-size:19px; line-height:1.2; font-weight:600}
@@ -1404,7 +1433,7 @@
   .changelog-close:hover{background:var(--gold-soft); color:var(--gold)}
   .changelog-summary{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:12px 20px; color:var(--muted); font-size:11.5px; line-height:1.45; border-bottom:1px solid var(--line)}
   .changelog-summary strong{color:var(--gold); font-weight:600; text-align:right; white-space:nowrap}
-  .changelog-list{max-height:min(510px,calc(100vh - 208px)); overflow-y:auto; list-style:none; margin:0; padding:4px 20px 12px; counter-reset:updates}
+  .changelog-list{flex:1 1 auto; min-height:0; overflow-y:auto; list-style:none; margin:0; padding:4px 20px 12px; counter-reset:updates}
   .changelog-list li{position:relative; padding:11px 0 11px 27px; border-bottom:1px solid color-mix(in srgb,var(--line) 64%,transparent); color:var(--text); font-size:12px; line-height:1.45}
   .changelog-list li:last-child{border-bottom:0}
   .changelog-list li::before{content:attr(data-n); position:absolute; left:0; top:12px; color:var(--gold); font:600 10px/1.5 'JetBrains Mono','Prompt',monospace}
@@ -1413,7 +1442,44 @@
   .changelog-more{min-width:132px; padding:7px 14px; border:1px solid var(--gold); border-radius:4px; background:var(--gold-soft); color:var(--gold); font:500 12px/1.3 'Prompt',sans-serif; cursor:pointer; transition:background .15s ease, color .15s ease}
   .changelog-more:hover{background:var(--gold); color:var(--panel)}
   .changelog-more[hidden]{display:none}
+  .changelog-copy{margin:0; color:var(--muted); font-size:10.5px; line-height:1.45}
+  .changelog-copy span{display:block; text-wrap:balance}
+  .changelog-more:not([hidden]) + .changelog-copy{margin-top:8px}
   @media(max-width:560px){.changelog-backdrop{padding:12px}.changelog-head{padding:16px}.changelog-summary{padding:11px 16px; display:block}.changelog-summary strong{display:block; margin-top:3px; text-align:left}.changelog-list{padding-left:16px; padding-right:16px}.changelog-list li{font-size:11.5px}}
+  /* big screens (user 2026-10-27: the pop-up was too small there): the hub's own steps, 1800 × 1100 and 2400 × 1300, about 1.3x and 1.5x;
+     font sizes, not zoom (the pop-up's height is in vh), like the ☕ pop-up */
+  @media (min-width:1800px) and (min-height:1100px){
+    .changelog-popup{width:min(720px,100%); max-height:min(940px,calc(100vh - 40px))}
+    .changelog-head{padding:22px 26px 18px}
+    .changelog-kicker{font-size:13px}
+    .changelog-head h2{font-size:24px}
+    .changelog-close{width:38px; height:38px; font-size:20px}
+    .changelog-summary{padding:15px 26px; font-size:15px}
+    .changelog-list{padding:5px 26px 15px}
+    .changelog-list li{padding:14px 0 14px 35px; font-size:15.5px}
+    .changelog-list li::before{top:15px; font-size:13px}
+    .changelog-entry-time{font-size:13px}
+    .changelog-more-wrap{padding:13px 26px 20px}
+    .changelog-more{min-width:170px; padding:9px 18px; font-size:15.5px}
+    .changelog-copy{font-size:13.5px}
+    .changelog-more:not([hidden]) + .changelog-copy{margin-top:10px}
+  }
+  @media (min-width:2400px) and (min-height:1300px){
+    .changelog-popup{width:min(820px,100%); max-height:min(1080px,calc(100vh - 40px))}
+    .changelog-head{padding:26px 30px 20px}
+    .changelog-kicker{font-size:15px}
+    .changelog-head h2{font-size:28px}
+    .changelog-close{width:44px; height:44px; font-size:23px}
+    .changelog-summary{padding:17px 30px; font-size:17px}
+    .changelog-list{padding:6px 30px 17px}
+    .changelog-list li{padding:16px 0 16px 40px; font-size:18px}
+    .changelog-list li::before{top:17px; font-size:15px}
+    .changelog-entry-time{font-size:15px}
+    .changelog-more-wrap{padding:15px 30px 24px}
+    .changelog-more{min-width:198px; padding:10px 21px; font-size:18px}
+    .changelog-copy{font-size:15.5px}
+    .changelog-more:not([hidden]) + .changelog-copy{margin-top:12px}
+  }
 
   /* ---- Mechanic glossary modal (^^term^^ panels, #mechanicModal). Layout "C · สปอตไลต์" (user 2026-10-19, picked from 3 mocks; replaces the
      2026-09-22 16:9 slide pages): the index is one full-width row per topic (big title, the topic art peeking in, the step names), a topic shows
@@ -5682,6 +5748,15 @@
   .sk-target-toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:999999; max-width:calc(100vw - 32px); padding:9px 14px; border:1px solid var(--gold); border-radius:6px;
     background:var(--panel); color:var(--text); box-shadow:var(--shadow); font-size:13px; line-height:1.45; text-align:center}
   .sk-target-toast[hidden]{display:none}
+  /* Copy notice (script #copyNotice in <head>): shown only on a copy of the page served from another host; above the page, under the pop-ups (90+) */
+  .copy-note{position:fixed; left:16px; bottom:16px; z-index:80; display:flex; align-items:center; gap:12px; max-width:min(560px,calc(100vw - 32px)); padding:9px 10px 9px 14px;
+    border:1px solid var(--gold); border-radius:6px; background:var(--panel); color:var(--text); box-shadow:var(--shadow); font:400 13px/1.5 'Prompt',sans-serif}
+  .copy-note b{color:var(--gold); font-weight:600}
+  .copy-note-link{color:var(--gold); font-weight:600; text-decoration:underline; text-underline-offset:2px; overflow-wrap:anywhere}
+  .copy-note-link:hover{color:var(--text)}
+  .copy-note-x{flex:none; width:26px; height:26px; border:1px solid var(--line); border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; font:13px/1 'Prompt',sans-serif}
+  .copy-note-x:hover{color:var(--gold)}
+  @media (max-width:640px){.copy-note{right:16px; max-width:none; font-size:12.5px}}
   /* +N chip under a player stat while a stat buff is on (hidden otherwise) */
   .sk-stat-bonus{position:absolute; left:0; right:0; top:100%; margin-top:3px; line-height:12px; font-size:10px; font-weight:700; color:#4caf7a; font-variant-numeric:tabular-nums; white-space:nowrap; pointer-events:none}
   .sk-stat-bonus[hidden]{display:none}
@@ -8031,7 +8106,7 @@
       <strong id="changelogActivity"></strong>
     </div>
     <ol class="changelog-list" id="changelogList"></ol>
-    <div class="changelog-more-wrap"><button type="button" class="changelog-more" id="btnChangelogMore">ดูเพิ่มเติม</button></div>
+    <div class="changelog-more-wrap"><button type="button" class="changelog-more" id="btnChangelogMore">ดูเพิ่มเติม</button><p class="changelog-copy"><span>© 2026 jumpptty · สงวนลิขสิทธิ์ ห้ามคัดลอกเว็บไปเผยแพร่ต่อ</span><span>ชื่อ ภาพ และเอฟเฟกต์เสียงจากเกมเป็นของเจ้าของเกม 12 Tails Online</span></p></div>
   </section>
 </div>
 
@@ -35662,6 +35737,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T14:07:23.537Z","feat(bible): copy notices: a LICENSE (all rights reserved), a canonical link to the original, a banner on copies served from other sites that links back to the same page on the original, a two-line © note in the changelog pop-up, and a bigger changelog pop-up on big screens"],
     ["2026-10-27T13:19:40.045Z","feat(bible): Shame names every curse it raises with the highest level one Bat can reach, 18 more Bat cards name the skills that change them (Shadow Mastery on the curses, Nightmare Cascade on Reborn), Shadow Mastery and Doomsayer no longer overstate Shame and the Doom recast, and the in-game tooltip and note icons hover as one group"],
     ["2026-10-27T11:30:56.224Z","fix(bible): the in-game tooltip pop-up says where its text comes from under the skill name (BB, ToT and TTO: ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์; Reborn: ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด with the build date), replacing the skill • server line that read as TTO's own tooltip"],
     ["2026-10-27T10:30:02.651Z","feat(bible): 25 new in-game tooltip mismatch notes from a scan of every Thai tooltip (Delta Strike, Ground Lock, Crusader, Ice Shield, Miracle Drop, Second Wind and more), Doom never shows a level below its cast rank, Second Stone hits with KO 10, Gadina / Fatal Strike / Open Wound state their numbers, and 4 older notes that misread the game's wording removed (Heavy Built and others)"],
