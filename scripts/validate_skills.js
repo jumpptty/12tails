@@ -3008,6 +3008,10 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
       else checkedDepStrip++; }
     const mt = SKILLS.find(s => s.id === "mole_moleTank"); sandbox._selectSkill(mt); const hm = sandbox._getRenderedHeroHtml(), pm = parts(hm);
     if (!pm || pm.tpl.includes("<canvas") || !pm.tpl.includes(">หมายเหตุ</div>") || hm.includes("data-gametip")) fail("Mole Tank (a note, no game tooltip): expected a notes-only modal titled หมายเหตุ and no H button");
+    // bigger windows (user 2026-10-27): the modal lives outside the scaled stage, so fitGameTipModal zooms it by the page's own scale
+    // (stageScaleNow), capped to the window; it runs on open, after every fitStageToScreen and when a late image redraws the paper
+    if (!/function fitGameTipModal\(\)\{[\s\S]{0,700}Math\.min\(stageScaleNow, \(window\.innerWidth - 48\) \/ w, \(window\.innerHeight - 48\) \/ h\)[\s\S]{0,120}pop\.style\.zoom = z\.toFixed\(3\)/.test(html)
+      || !html.includes("  stageScaleNow = scale;") || (html.match(/fitGameTipModal\(\);/g) || []).length < 3) fail("in-game tooltip modal: the page-scale zoom on bigger windows (fitGameTipModal, stageScaleNow) is missing or no longer called on open / refit / image load");
     if (modalCards < 200) fail(`only ${modalCards} cards keep their notes in the in-game tooltip modal, expected 200+`); else checkedDepStrip += modalCards;
     console.log(`Verified the in-game tooltip modal: ${modalCards} cards keep every note inside it, H first in the note group.`); }
   // ... and two fixes from the 2026-10-27 tooltip scan: Doom's level never drops below the cast rank (Bat.cs:29416: at rank 2 the Doom Stack

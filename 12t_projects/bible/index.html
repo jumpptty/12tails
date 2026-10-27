@@ -404,17 +404,18 @@
     --th-veil:rgba(0,0,0,0.72);
   }
   :root[data-theme][data-sk-server="reborn"]{
-      /* palette (user 2026-10-25): the Reborn logo's orange on a dark, slightly blue-black base that sits well on the underwater wallpaper */
-      --ink:#06090e; --panel:#10151c; --panel-2:#181f29; --th-line:#4a3a26; --line:var(--th-line);
+      /* palette (user 2026-10-25): the Reborn logo's orange; since 2026-10-27 (the meadow wallpaper) on a dark forest base, a hint of green in the
+         black, where the first, underwater wallpaper had a blue-black one (#06090e / #10151c / #181f29) */
+      --ink:#080a07; --panel:#12160f; --panel-2:#1a2016; --th-line:#4a3a26; --line:var(--th-line);
       --text:#f3eee6; --muted:#b3b2ae; --gold:#ef8a2a; --gold-soft:rgba(239,138,42,.14);
       --shadow:0 1px 2px rgba(0,0,0,.65), 0 20px 44px -14px rgba(0,0,0,.8);
       /* surface recipe (copied from TTO / ToT): see-through glass over the wallpaper, a warm orange edge and hover; no backdrop blur */
       --th-solid:0%; --th-wash:rgba(255,244,230,.045); --th-blur:none; --th-edge:rgba(239,138,42,.26);
       --th-hover-edge:rgba(239,138,42,.55); --th-hover-glow:0 0 14px rgba(239,138,42,.18);
       --th-shell-bg:var(--glass-gradient);
-      /* page: the underwater temple wallpaper (REBORN_WALLPAPER in assets.js, put on <html> as --reborn-wallpaper by the script), static, under a dark veil */
-      --th-page:linear-gradient(var(--th-veil),var(--th-veil)), var(--reborn-wallpaper, none) center / cover no-repeat, #06090e;
-      --th-veil:rgba(0,0,0,0.66);
+      /* page: the meadow path wallpaper (user 2026-10-27, novice.png; was the underwater temple) (REBORN_WALLPAPER in assets.js, put on <html> as --reborn-wallpaper by the script), static, under a dark veil */
+      --th-page:linear-gradient(var(--th-veil),var(--th-veil)), var(--reborn-wallpaper, none) center / cover no-repeat, #080a07;
+      --th-veil:rgba(0,0,0,0.78);   /* user 2026-10-27: the meadow averages brightness 118 against the sea's 76, so .78 keeps the old .66 darkness (both about 26) */
     }
   :root[data-theme][data-sk-server="tot"]{
     /* palette: Tales of Tails (talesoftails.net) */
@@ -8183,7 +8184,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=c96766f2c0" id="bibleAssets"></script>
+<script src="assets.js?v=f7c6e3802d" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -14783,7 +14784,7 @@ const gtImgs = {}, gtTints = {};
 function gtImage(src){
   if (!src || typeof Image === "undefined") return null;
   let im = gtImgs[src];
-  if (!im){ im = gtImgs[src] = new Image(); im.onload = () => drawGameTips(document); im.src = src; }
+  if (!im){ im = gtImgs[src] = new Image(); im.onload = () => { drawGameTips(document); fitGameTipModal(); }; im.src = src; }   // a late image can change the paper's height
   return im.complete && im.naturalWidth ? im : null;
 }
 function gtTinted(fontKey, color){   // the font atlas (white + glyph alpha) in one colour, cached
@@ -18361,6 +18362,7 @@ function mountSkillCooldownLookup(root){
     document.body.appendChild(back);
     closeGameTipModal.opener = opener;
     drawGameTips(back);
+    fitGameTipModal();
     back.addEventListener("click", (e) => {
       const link = e.target.closest(".sk-desc-skill-link");
       if (link){ const t = SKILLS.find(x => x.id === link.dataset.skillId); closeGameTipModal(); if (t) selectSkill(t); return; }
@@ -31900,7 +31902,7 @@ async function classGuideRenderImage(guide, simRoot){
   const look = document.documentElement.getAttribute("data-sk-server") || "og";
   const urlOf = name => { const m = /url\(["']?([^"')]+)["']?\)/.exec(v(name)); return m ? m[1] : ""; };
   if (look !== "og"){
-    ctx.fillStyle = look === "tto" ? "#0a0a0a" : look === "reborn" ? "#06090e" : "#050505"; ctx.fillRect(0, 0, P.w, P.h);
+    ctx.fillStyle = look === "tto" ? "#0a0a0a" : look === "reborn" ? "#080a07" : "#050505"; ctx.fillRect(0, 0, P.w, P.h);
     const wall = await classGuideImageLoad(urlOf("--" + look + "-wallpaper"));
     if (wall){ const sc = Math.max(P.w / wall.naturalWidth, P.h / wall.naturalHeight), ww = wall.naturalWidth * sc, wh = wall.naturalHeight * sc; ctx.drawImage(wall, (P.w - ww) / 2, (P.h - wh) / 2, ww, wh); }
     ctx.fillStyle = v("--th-veil") || "rgba(0,0,0,.78)"; ctx.fillRect(0, 0, P.w, P.h);
@@ -35737,6 +35739,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T14:18:38.846Z","feat(bible): the in-game tooltip pop-up grows with the page on bigger screens (up to the page scale, never past the window), and the Reborn look gets the meadow path wallpaper with a darker veil (.78) and a dark forest base"],
     ["2026-10-27T14:17:03.221Z","fix(bible): class guide #63 is updated: TTO Chameleon ก่า ATK แหละ เพราะ ธนูดันน้ำมันแสดงผลออกยาก by เอาVit Agi คืนมา"],
     ["2026-10-27T14:07:23.537Z","feat(bible): copy notices: a LICENSE (all rights reserved), a canonical link to the original, a banner on copies served from other sites that links back to the same page on the original, a two-line © note in the changelog pop-up, and a bigger changelog pop-up on big screens"],
     ["2026-10-27T13:19:40.045Z","feat(bible): Shame names every curse it raises with the highest level one Bat can reach, 18 more Bat cards name the skills that change them (Shadow Mastery on the curses, Nightmare Cascade on Reborn), Shadow Mastery and Doomsayer no longer overstate Shame and the Doom recast, and the in-game tooltip and note icons hover as one group"],
@@ -36317,6 +36320,19 @@ window.addEventListener("wheel", (e) => {
   document.body.appendChild(pill);
 }
 
+// The page's current fit-screen scale (tool zoom included), for overlays that live outside the scaled stage.
+let stageScaleNow = 1;
+// In-game tooltip modal on bigger windows (user 2026-10-27): it is appended to <body>, outside the scaled stage, so it grows by the
+// page's own scale, never past the window (24 px each side) and never below its natural size; phones keep their stacked layout.
+function fitGameTipModal(){
+  const pop = document.querySelector('[data-role="gametip-backdrop"] .sk-gt-popup'); if (!pop) return;
+  pop.style.zoom = "";
+  if (window.innerWidth <= 640) return;
+  const w = pop.offsetWidth, h = pop.offsetHeight; if (!w || !h) return;
+  const z = Math.min(stageScaleNow, (window.innerWidth - 48) / w, (window.innerHeight - 48) / h);
+  if (z > 1.01) pop.style.zoom = z.toFixed(3);
+}
+
 function fitStageToScreen(){
   const stage = document.querySelector(".stage");
   const zoomCls = document.documentElement.classList, wasZoomed = zoomCls.contains("tool-zoomed");
@@ -36324,6 +36340,7 @@ function fitStageToScreen(){
   // (2026-09-26: the new 1.6x upscale leaked into the menu, which then slid under the hub bar).
   if (document.documentElement.classList.contains("tool-chm-sim") || !document.documentElement.classList.contains("tool-fit-screen") || ((document.documentElement.classList.contains("tool-rsim") || document.documentElement.classList.contains("tool-cao")) && window.innerWidth < 900)){
     if (stage) stage.style.transform = "";
+    stageScaleNow = 1;
     if (wasZoomed){ zoomCls.remove("tool-zoomed"); window.scrollTo(0, 0); }
     return;
   }
@@ -36361,6 +36378,7 @@ const hubBar = document.querySelector(".hub-bar");
   const upscale = isCao ? caoZoom : ((isSkillLookup || isStatGain) && window.innerWidth >= 900) ? Math.min(1.6, scaleW, availH / Math.max(compH, isStatGain ? 600 : 820)) : 1;
   const zoom = isSkillLookup && window.innerWidth >= 900 ? (toolZoom || 1) : 1;   // tool zoom (setToolZoom above)
   const scale = Math.min(Math.max(1, upscale), scaleH, scaleW) * zoom;
+  stageScaleNow = scale;
 
   stage.style.transform = Math.abs(scale - 1) > 0.001 ? ("scale(" + scale + ")") : "none";
   zoomCls.toggle("tool-zoomed", zoom > 1);
@@ -36375,6 +36393,7 @@ const hubBar = document.querySelector(".hub-bar");
   // Chrome does not resize the page's scroll area for a transform change alone (2026-10-27: at 200 % it kept the 175 % size, so the
   // card's right and bottom edges could not be scrolled to); one layout pass on the stage does.
   if (zoom > 1 || wasZoomed){ stage.style.paddingBottom = "1px"; void stage.offsetHeight; stage.style.paddingBottom = ""; void stage.offsetHeight; }
+  fitGameTipModal();
 }
 
 if (typeof ResizeObserver !== 'undefined') {
