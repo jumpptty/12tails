@@ -3000,6 +3000,12 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
     const g = h.indexOf('<div class="sk-hero-sub sk-note-chips">'), hi = h.indexOf("data-gametip", g), ti = h.indexOf("sk-note-tip", g), bi = h.indexOf("sk-note-bug", g);
     if (g < 0 || !(hi > g && hi < ti && ti < bi)) fail("Drunken Fist: the note group is not [H] [tip] [bug] in the head line");
     else if (h.includes("sk-note-panel") || h.includes("data-gametip aria-pressed")) fail("Drunken Fist: an old fold-out note panel or pinned hover box is back");
+    // they open one modal, so they hover as one (user 2026-10-27): all three inside one .sk-note-group that ends where the template starts,
+    // the group lifts and brightens as a whole, no icon lifts on its own, and a click on the group (a gap) opens the modal
+    { const gs = h.indexOf('<span class="sk-note-group">', g), tp = h.indexOf('<template class="sk-gametip-tpl">', g);
+      if (gs !== g + '<div class="sk-hero-sub sk-note-chips">'.length || !(tp > bi) || !h.slice(gs, tp).endsWith("</button></span>") || !(hi > gs && bi < tp)) fail("Drunken Fist: H and the note icons are not all in one .sk-note-group before the modal template");
+      else if (!/\.sk-note-group:hover, \.sk-note-group:has\(:focus-visible\)\{ transform:translateY\(-1px\); \}/.test(html) || /\.sk-gametip-btn:hover|\.sk-note-chip:hover[^{]*\{[^}]*translateY/.test(html) || !html.includes('closest("[data-gametip], .sk-note-chip, .sk-note-group")')) fail("Drunken Fist: the note group's shared hover (one lift for the group, none per icon) or its group click is missing");
+      else checkedDepStrip++; }
     const mt = SKILLS.find(s => s.id === "mole_moleTank"); sandbox._selectSkill(mt); const hm = sandbox._getRenderedHeroHtml(), pm = parts(hm);
     if (!pm || pm.tpl.includes("<canvas") || !pm.tpl.includes(">หมายเหตุ</div>") || hm.includes("data-gametip")) fail("Mole Tank (a note, no game tooltip): expected a notes-only modal titled หมายเหตุ and no H button");
     if (modalCards < 200) fail(`only ${modalCards} cards keep their notes in the in-game tooltip modal, expected 200+`); else checkedDepStrip += modalCards;
