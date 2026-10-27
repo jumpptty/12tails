@@ -1463,6 +1463,14 @@ let checkedChiro = 0;
   ids.forEach((i, k) => { sandbox._depRanks[i] = saved[k]; });
 }
 console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
+// Skill search forgives one typo (user 2026-10-27): a wrong, missing, extra or swapped letter in a 4+ letter query, from a word start.
+{
+  const t = sandbox.searchTypoMatch;
+  [["stat", true], ["stsa", true], ["stsis", true], ["staasi", true], ["blwo", true], ["sta", false], ["asis", false], ["stxx", false]].forEach(([q, want]) => {
+    if (typeof t !== "function" || t(q, "stasis blow") !== want) { errorCount++; console.error(`[SEARCH TYPO ERROR] "${q}" vs "stasis blow" should be ${want}`); }
+  });
+  console.log("Verified the one-typo skill search.");
+}
 // Dependency toggle labels shrink their font to fit (fitDepLabels, run after every render, on resize and when fonts load) instead of ending in an ellipsis.
 {
   const src = fs.readFileSync(targetPath, "utf8"), css = (src.match(/\.sk-dep-item-name\{[^}]*\}/) || [""])[0];

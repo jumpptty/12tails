@@ -16306,6 +16306,25 @@ function simulateBtnHtml({ role, kind = "dmg", count = "", title = "", groupInde
   return `<button type="button" class="${cls}" data-role="${role}"${gi} title="${title}">${kind === "heal" ? SIM_ICON_HEAL : SIM_ICON_BLAST}<span>${label}</span>${count ? `<span class="sk-sim-count">×${count} ฮิต</span>` : ""}</button>`;
 }
 
+// Skill search, one forgiven typo (user 2026-10-27: "stat" did not find Stasis Blow): true when a query of 4+ letters with one letter
+// wrong, missing, extra or two swapped starts a word of the name (or is one whole word). Lowercase in; getGlobalSkillMatches ranks it
+// after every exact match.
+function searchTypoMatch(q, name){
+  if (q.length < 4) return false;
+  const oneEdit = (a, b) => {
+    const la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > 1) return false;
+    let i = 0; while (i < la && i < lb && a[i] === b[i]) i++;
+    if (la === lb) return i === la || a.slice(i + 1) === b.slice(i + 1) || (a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2));
+    return la > lb ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+  };
+  for (let p = 0; p < name.length; p++){
+    if (p > 0 && /[a-z0-9]/.test(name[p - 1])) continue;   // word starts only
+    const rest = name.slice(p), word = rest.split(/[^a-z0-9]/)[0];
+    if ([q.length - 1, q.length, q.length + 1].some(n => oneEdit(q, rest.slice(0, n))) || oneEdit(q, word)) return true;
+  }
+  return false;
+}
 // Final chip number (user 2026-10-23, variant 5 of 5 mocks): thousands commas and a small muted "~" between the two ends,
 // because "5112–5964" read like a subtraction. A range whose ends match shows one number.
 function fmtFinalRange(range){
@@ -17118,7 +17137,8 @@ function mountSkillCooldownLookup(root){
   let prevPickerClass = null;
 
   // Ranked (user 2026-10-17: typing "wolf" listed Bat's Zombie Wolf cards before Wolf's own skills): 0 = the class whose name was typed,
-  // 1 = the name starts with it, 2 = the name contains it, 3 = id / class / Thai class name only. Ties keep the SKILLS order.
+  // 1 = the name starts with it, 2 = the name contains it, 3 = id / class / Thai class name only, 4 = the name with one typo
+  // (searchTypoMatch, user 2026-10-27). Ties keep the SKILLS order.
   function getGlobalSkillMatches(q) {
     if (!q) return [];
     const rank = s => {
@@ -17128,6 +17148,7 @@ function mountSkillCooldownLookup(root){
       if (name.startsWith(q)) return 1;
       if (name.includes(q)) return 2;
       if ((s.id && s.id.toLowerCase().includes(q)) || cls.includes(q) || (thName && thName.includes(q))) return 3;
+      if (searchTypoMatch(q, name)) return 4;
       return -1;
     };
     return SKILLS.map((s, i) => ({ s, i, r: rank(s) })).filter(x => x.r >= 0).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.s);
@@ -34062,6 +34083,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T05:56:41.933Z","feat(bible): the skill search forgives one typo (a wrong, missing, extra or swapped letter in a query of 4+ letters, from a word start), ranked after every exact match, so stat finds Stasis Blow"],
     ["2026-10-27T04:53:38.872Z","feat(bible): Skill Details zooms with Ctrl + / - / wheel past the fit (the page scrolls and Test results pin on screen), the main description is pure white, and every desc opens with a main sentence (Far Reach and 22 passives got one)"],
     ["2026-10-27T03:57:06.089Z","feat(bible): the toggle strip under a skill shows 4 columns (3 on tablets, 2 on phones) with 32 px icons, and 81 toggle labels are shorter (a label shows up to its first bracket, the rest is its hover text)"],
     ["2026-10-27T02:33:33.925Z","fix(bible): Reborn popups in skill details no longer show the seal and hit-box notes, and the Combo-type cards stop repeating the item-chance x1.3 and belt rule the common note already explains (Chameleon keeps only its Critical Plus part)"],
