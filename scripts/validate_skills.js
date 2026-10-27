@@ -2916,6 +2916,14 @@ let checkedDepStrip = 0;
     if (html.includes("sk-summon-toggles") && /<div class="sk-summon-toggles[^"]*">\s*<\/div>/.test(html)) fail(`${sk.id}: empty .sk-summon-toggles container left in the summon header`); else checkedDepStrip++;
     // 3. no empty strip
     if (strip && items === 0) fail(`${sk.id}: empty .sk-dep-strip rendered`); else checkedDepStrip++;
+    // 5. every desc opens with its main sentence (user 2026-10-27), the white .sk-desc-lead (after the card's status badge, if any),
+    //    never straight with icon lines or a topic
+    const dBox = html.indexOf('class="sk-hero-desc">');
+    if (dBox >= 0){
+      const at = (k) => { const i = html.indexOf(k, dBox); return i < 0 ? Infinity : i; };
+      if (at('<span class="sk-desc-lead">') > Math.min(at('<div class="sk-desc-mods'), at('<div class="sk-desc-topics'), html.length)) { console.error(`[DESC LEAD ERROR] ${sk.id}: the desc has no main sentence before its icon lines or topics`); errorCount++; }
+      else checkedDepStrip++;
+    }
     // 4. 4-column strip (user 2026-10-27): a shown name is the label up to its first " (" and at most 20 letters (Thai vowel and tone
     //    marks not counted; about the 136 px a 1920 x 1080 column gives at 12 px), the full label is the item's hover text.
     for (const m of strip.matchAll(/<div class="sk-dep-item" data-dep-order="\d*" title="([^"]*)"><span class="sk-dep-btncol">[\s\S]*?<span class="sk-dep-item-name">([^<]*)<\/span>/g)) {
