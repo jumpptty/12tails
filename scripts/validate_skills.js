@@ -2972,7 +2972,8 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
   // ... and a Reborn-only skill shows Reborn's own line on its tab, its modal head saying it comes from Reborn's code
   { const vs = SKILLS.find(s => s.id === "bat_vampiricSurge"); sandbox._setServer("reborn"); sandbox._skillRanks[vs.id] = 1; sandbox._selectSkill(vs); sandbox._setServer("reborn"); sandbox._selectSkill(vs); const h = sandbox._getRenderedHeroHtml(); sandbox._setServer("og");
     const gt = (() => { const m = h.match(/data-gt="([^"]+)"/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } })();
-    if (!gt || gt.t !== "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด และท่าชาร์จ proc effect ไอเท็มได้" || gt.n !== "Vampiric Surge" || !h.includes('<div class="sk-gt-src">ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด (') || h.includes("ข้อความจากเกม BB")) fail("Vampiric Surge (Reborn) does not draw Reborn's own in-game tooltip under a Reborn source line: " + JSON.stringify(gt)); else checkedDepStrip++; }
+    // the text of build 2026.10.27.1936-bible3 (Reborn1027:BatSkill_thai.cs; the 2026-10-25 line read "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด…")
+    if (!gt || !String(gt.t).startsWith("LifeDrain ดูดเพิ่ม 3% ATK ต่อวินาที และทุกวินาทีที่ดูดมีโอกาสติด effect ผนึกของไอเท็ม") || gt.n !== "Vampiric Surge" || !h.includes('<div class="sk-gt-src">ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด (27 ต.ค. 2026)') || h.includes("ข้อความจากเกม BB")) fail("Vampiric Surge (Reborn) does not draw Reborn's own in-game tooltip (build 2026.10.27.1936-bible3) under a Reborn source line: " + JSON.stringify(gt && gt.t)); else checkedDepStrip++; }
   // ... and on BB / ToT / TTO the head says the text is BB's from before the shutdown, never "<skill> • TTO" (user 2026-10-27: that read as TTO's own tooltip)
   { const lm = SKILLS.find(s => s.id === "mole_mine"); const bad = [];
     for (const srv of ["og", "tot", "tto"]) { sandbox._setServer(srv); sandbox._selectSkill(lm); sandbox._setServer(srv); sandbox._selectSkill(lm); const h = sandbox._getRenderedHeroHtml();
@@ -3012,7 +3013,8 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
     // (stageScaleNow), capped to the window; it runs on open, after every fitStageToScreen and when a late image redraws the paper
     if (!/function fitGameTipModal\(\)\{[\s\S]{0,700}Math\.min\(stageScaleNow, \(window\.innerWidth - 48\) \/ w, \(window\.innerHeight - 48\) \/ h\)[\s\S]{0,120}pop\.style\.zoom = z\.toFixed\(3\)/.test(html)
       || !html.includes("  stageScaleNow = scale;") || (html.match(/fitGameTipModal\(\);/g) || []).length < 3) fail("in-game tooltip modal: the page-scale zoom on bigger windows (fitGameTipModal, stageScaleNow) is missing or no longer called on open / refit / image load");
-    if (modalCards < 200) fail(`only ${modalCards} cards keep their notes in the in-game tooltip modal, expected 200+`); else checkedDepStrip += modalCards;
+    // 200+ until 2026-10-27, when Reborn build bible3 fixed the tooltips of 52 Reborn-only cards and their notes were removed (175 left)
+    if (modalCards < 170) fail(`only ${modalCards} cards keep their notes in the in-game tooltip modal, expected 170+`); else checkedDepStrip += modalCards;
     console.log(`Verified the in-game tooltip modal: ${modalCards} cards keep every note inside it, H first in the note group.`); }
   // ... and two fixes from the 2026-10-27 tooltip scan: Doom's level never drops below the cast rank (Bat.cs:29416: at rank 2 the Doom Stack
   //     slider is raised to 2 and the card shows 450), and Ground Lock's Second Stone hit has KO 10 (Monkey.cs:31096)
