@@ -1427,6 +1427,19 @@ let checkedComets = 0;
     const fullAvg = shared.reduce((s, v) => s + v, 0) / shared.length, farAvg = [0, 1, 2, 3, 4, 5, 6, 7].map(() => sandbox._rollOneHit(sk, 1, 0, false, undefined, { talRoll: 3, scatterMult: 0.3 })).reduce((s, v) => s + v, 0) / 8;
     check("a far landing (falloff 0.3) deals less than a dead-centre one on the same cast roll", farAvg < fullAvg, farAvg + " vs " + fullAvg);
     check("hit count range is 0 to 5 comets at rank 1 (a comet can miss)", JSON.stringify(sandbox._dmgHitCountRange) === "[0,5]", JSON.stringify(sandbox._dmgHitCountRange));
+    // Reborn build 2026.10.27.1936-bible3 (servers.reborn.scatterOpts): landing Random.Range(-8, 9) / (-10, 11) = -8..+8 / -10..+10 (Reborn1027:Penguin.cs:3120, :3134),
+    // falloff Mathf.Max(0.5f, ...) (:3252, :6832), and FindAreaTarget counts a blast centre inside the body as distance 0 (Reborn1027:Damage.cs:437-443).
+    // 1 m body: the same 145 / 305 hitting cells (the new +8 / +10 rows are all > 7 / 10 m out), of 289 / 441.
+    const rb = Object.assign({}, sk, sk.servers.reborn), rbAt = (r, giant) => { sandbox._depRanks[gid] = giant ? 1 : 0; const c = sandbox._scatterCells(rb, r).cells; return { total: c.length, hits: c.filter(x => x.hit), cells: c }; };
+    const ra = rbAt(1, false), rb15 = rbAt(15, false), rg = rbAt(1, true);
+    check("Reborn: base scatter 17 x 17 (-8..+8), 145 cells hit a 1 m body", ra.total === 289 && ra.hits.length === 145 && ra.cells.some(c => c.x === 8 && c.z === 8), ra.total + "/" + ra.hits.length);
+    check("Reborn: Giant Star scatter 21 x 21 (-10..+10), 305 cells hit a 1 m body", rg.total === 441 && rg.hits.length === 305, rg.total + "/" + rg.hits.length);
+    check("Reborn: every cell hits a 15 m body (a landing inside the body counts as distance 0)", rb15.hits.length === 289 && at(rb15.cells, 1, 0).hit, rb15.hits.length);
+    check("Reborn: the falloff never goes below 0.5 ((-8, -8) on a 15 m body = 0.5, BB 0.0572), (3, 4) keeps 0.5833", Math.min(...rb15.hits.map(c => c.mult)) === 0.5 && at(rb15.cells, -8, -8).mult === 0.5 && Math.abs(at(ra.cells, 3, 4).mult - 7 / 12) < 1e-6, Math.min(...rb15.hits.map(c => c.mult)));
+    sandbox._depRanks[gid] = 0; sandbox._setServer("reborn"); sandbox._selectSkill(sk);
+    const rbHtml = sandbox._getRenderedHeroHtml();
+    check("Reborn card: hit odds 145 / 289 = 50% and the formula term max(0.5, 1 − 0.5·d/6)", rbHtml.includes("โดน 50% ต่อดวง") && rbHtml.includes("max(0.5, 1 − 0.5·d/6)"), rbHtml.includes("โดน 50% ต่อดวง"));
+    sandbox._setServer("og"); sandbox._selectSkill(sk);
   }
   sandbox._depRanks[gid] = savedGiant;
 }
@@ -5149,6 +5162,12 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
       c = P("penguin_fallingStars", 2, { giantStar: 1 }); g("Giant Star: burst r3, the search radius stays 16 (FloorToInt(1.5) = 1)", c[0].r === 16 && c[1].r === 3, c);
       c = P("penguin_fallingComets", 1); g("Falling Comets: lock ring, scatter -8..+7 (15 square, z0 -8), blast r6 h4", c.length === 3 && c[1].w === 15 && c[1].z0 === -8 && c[1].x0 === -0.5 && c[2].r === 6 && c[2].h === 4, c);
       c = P("penguin_fallingComets", 1, { giantStar: 1 }); g("Giant Star: scatter -10..+9 (19 square), blast r9", c[1].w === 19 && c[1].z0 === -10 && c[2].r === 9, c);
+      // Reborn bible3: FloorToInt now wraps (Giant Star ? 1.5 : 1) x (8 + 4 x lv) (Reborn1027:Penguin.cs:2738), and the comets land on -8..+8 / -10..+10 (:3120, :3134)
+      { const RB = (id, rank, o) => { set(o || {}); return sandbox._reachNormalize(SKILLS.find(x => x.id === id).servers.reborn.reach, rank); };
+        c = RB("penguin_fallingStars", 1); const c2 = RB("penguin_fallingStars", 2), g1 = RB("penguin_fallingStars", 1, { giantStar: 1 }), g2 = RB("penguin_fallingStars", 2, { giantStar: 1 });
+        g("Reborn Falling Stars search r12 / r16, Giant Star r18 / r24 (burst r2 / r3)", c[0].r === 12 && c2[0].r === 16 && g1[0].r === 18 && g2[0].r === 24 && c[1].r === 2 && g2[1].r === 3 && g2.every(p => p.src), [c[0].r, c2[0].r, g1[0].r, g2[0].r]);
+        c = RB("penguin_fallingComets", 1); const gc = RB("penguin_fallingComets", 1, { giantStar: 1 });
+        g("Reborn Falling Comets scatter -8..+8 (16 square, z0 -8, centred), Giant Star -10..+10 (20 square), blast r6 / r9", c[1].w === 16 && c[1].z0 === -8 && !c[1].x0 && c[2].r === 6 && gc[1].w === 20 && gc[1].z0 === -10 && gc[2].r === 9, [c[1], gc[1]]); }
       c = P("penguin_manaVortex", 3); g("Mana Vortex rank 3: r24 h6, 5 m ahead", c[0].r === 24 && c[0].h === 6 && c[0].z0 === 5, c);
       c = P("penguin_novaFlare", 1); g("Nova Flare: the vortex radii 16 / 20 / 24", c.length === 3 && c[0].r === 16 && c[1].r === 20 && c[2].r === 24 && c.every(p => p.h === 6), c);
       c = P("penguin_meteora", 2); g("Meteora rank 2: lock ring + r12 h6 at the target", c[1].r === 12 && c[1].h === 6 && c[1].anchor === "target", c);
