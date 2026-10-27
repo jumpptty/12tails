@@ -4201,6 +4201,17 @@ async function donateChildTests(env) {
     const lines = (b.list().match(/class="nl-line"/g) || []).length;
     if (lines !== items.length || !lines) fail(`BB issues: ${lines} lines, want ${items.length}`); else checked++;
     facets(b, "bug");
+    // the BB logo at the top right; its hidden 1 s hold switches to the Reborn list (user 2026-10-27): rebornIssueItems(), cards with Reborn data only,
+    // rows open the card on its Reborn tab, and switching back restores the BB list
+    if (!/class="nl-logo"[^>]*><img src="data:image\//.test(b.root.innerHTML)) fail("BB issues: no BB logo in the header"); else checked++;
+    b.act("kind", "all"); b.root._bbIssues.setMode("reborn");
+    const rb = sandbox.rebornIssueItems(), rbLines = (b.list().match(/class="nl-line"/g) || []).length;
+    if (!rb.length || rbLines !== rb.length) fail(`Reborn issues: ${rbLines} lines, want ${rb.length}`); else checked++;
+    if (rb.some(i => !(i.s.onlyServer === "reborn" || (!i.s.onlyServer && i.s.servers && i.s.servers.reborn)))) fail("Reborn issues: a line from a card with no Reborn data"); else checked++;
+    const rbOpens = [...b.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
+    if (!rbOpens.length || !rbOpens.every(h => h.endsWith("?server=reborn"))) fail("Reborn issues: rows do not open the card on its Reborn tab"); else checked++;
+    b.root._bbIssues.setMode("og");
+    if ((b.list().match(/class="nl-line"/g) || []).length !== items.length) fail("BB issues: switching back from Reborn did not restore the BB list"); else checked++;
   } catch (e) { fail("page threw: " + e.message); }
   if (savedHash !== undefined) sandbox.location.hash = savedHash;
   console.log(`Verified ${checked} server balance / BB issues page checks.`);

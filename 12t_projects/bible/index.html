@@ -3567,6 +3567,14 @@
   .nl h2, .nl h3, .nl h4, .nl p{margin:0; font-family:inherit}
   .nl button{font-family:inherit}
   .nl-head{display:flex; align-items:flex-end; justify-content:space-between; gap:18px 28px; flex-wrap:wrap; margin:0 0 18px}
+  /* BB issues: the server logo at the top right; a 1 s hold switches the page to the Reborn list and back (hidden on purpose, user 2026-10-27) */
+  .nl-head:has(.nl-logo){flex-wrap:nowrap; align-items:center}
+  .nl-head:has(.nl-logo) > div:first-child{min-width:0}
+  .nl-logo{flex:none; width:64px; height:64px; padding:0; border:0; background:none; cursor:default; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-tap-highlight-color:transparent}
+  .nl-logo img{display:block; width:100%; height:100%; object-fit:contain; pointer-events:none}
+  .nl-logo.is-swap img{animation:nlLogoSwap .35s ease-out}
+  @keyframes nlLogoSwap{from{transform:scale(.8); opacity:.4} to{transform:none; opacity:1}}
+  @media (max-width:760px){ .nl-logo{width:48px; height:48px} }
   .nl-title{font-size:30px; font-weight:700; line-height:1.2}
   .nl-sub{margin-top:4px !important; color:var(--muted); font-size:14px}
   .nl-srv{display:flex; padding:4px; border:1px solid var(--line); border-radius:14px; background:var(--panel)}
@@ -26882,7 +26890,8 @@ function mountNotePage(root, cfg){
   Object.keys(SKILL_SIM).forEach(c => SKILL_SIM[c].forEach(tree => tree.rows.forEach((row, ri) => row.forEach((cell, ci) => {
     if (cell && (SKILL_SIM_PASSIVE[c] || []).includes(tree.base + ri * 10 + ci + 1)) passive.add(cell[0]); }))));
   root.innerHTML = '<div class="nl"><div class="nl-head"><div><h2 class="nl-title">' + cfg.title + '</h2><p class="nl-sub">' + cfg.sub + "</p></div>" +
-    (cfg.servers ? '<div class="nl-srv" role="group" aria-label="เซิร์ฟ"></div>' : "") + "</div>" +
+    (cfg.servers ? '<div class="nl-srv" role="group" aria-label="เซิร์ฟ"></div>' : "") +
+    (cfg.logo ? '<button type="button" class="nl-logo" aria-label="' + cfg.logo().label + '"><img src="' + cfg.logo().src + '" alt="" draggable="false"></button>' : "") + "</div>" +
     '<div class="nl-body"><nav class="nl-rail" aria-label="อาชีพ"></nav><div class="nl-main"><div class="nl-tools"><div class="nl-kinds" role="group" aria-label="ประเภท"></div>' +
     '<label class="nl-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" placeholder="ค้นหาสกิลหรือข้อความ" aria-label="ค้นหาสกิลหรือข้อความ"></label></div>' +
     '<div class="nl-list"></div></div></div></div>';
@@ -26937,6 +26946,15 @@ function mountNotePage(root, cfg){
   });
   root.addEventListener("keydown", (e) => { const r = e.target.closest && e.target.closest("[data-open]"); if (r && r === e.target && e.key === "Enter") location.hash = r.dataset.open; });
   root.addEventListener("input", (e) => { if (e.target.matches && e.target.matches(".nl-search input")) { st.q = e.target.value; update(); } });
+  // cfg.onLogoHold: a 1 s hold on the header logo, hidden on purpose (user 2026-10-27: the BB issues page's switch to its Reborn list)
+  if (cfg.onLogoHold) {
+    let holdT = 0;
+    const onLogo = (e) => e.target && e.target.closest && e.target.closest(".nl-logo");
+    const stop = () => { clearTimeout(holdT); holdT = 0; };
+    root.addEventListener("pointerdown", (e) => { if (!onLogo(e)) return; stop(); holdT = setTimeout(() => { holdT = 0; cfg.onLogoHold(); }, 1000); });
+    ["pointerup", "pointercancel", "pointerout"].forEach(t => root.addEventListener(t, (e) => { if (onLogo(e)) stop(); }));   // the img ignores the pointer, so pointerout means the logo was left
+    root.addEventListener("contextmenu", (e) => { if (onLogo(e)) e.preventDefault(); });   // a long press on a phone would open the image menu
+  }
   update();
   return { render: () => { cache = null; update(); } };
 }
@@ -27009,25 +27027,42 @@ const BB_ISSUES_EXTRA = [
   { cls: "Boss", kind: "bug", title: "Germanotta: Paranoia ไม่ขึ้นที่เครื่องคนอื่น", open: "#boss-guide/germanotta", text: "ตอนบอสใช้ Paranoia เกมส่งคำสั่งท่าร่ายไปเครื่องผู้เล่นคนอื่นด้วยชื่อผิด เครื่องอื่นจึงไม่เห็นท่าร่าย และจอมืด **10 วินาที** ที่ควรขึ้นทุกเครื่องขึ้นแค่ที่เครื่องของผู้เล่นที่คุมบอส ดาเมจยังโดนตามปกติ เพราะส่งแยกกัน" },
   { cls: "Boss", kind: "bug", title: "Germanotta: Paranoia ไม่จำกัดจำนวนเป้า", open: "#boss-guide/germanotta", text: "โค้ดของ Paranoia มีตัวนับจำกัดเป้าไว้ที่ **6** ตัว แต่ไม่เคยเพิ่มค่าตัวนับ จึงโดนศัตรูทุกตัวในรัศมี **60m** ไม่จำกัดจำนวน (ท่าตีปกติของบอสนับถูก ยิงสูงสุด **6** ลูก)" },
 ];
+// The note lines of one card: s = the card (class, icon), a = the card or its merged server view, whose notes count: game bug, unintended
+// behaviour, tooltip mismatch (each rank's text once), a red tooltip line inside the desc, a value awaiting an in-game check.
+function noteItemsOf(s, a){
+  const items = [], max = s.maxRank || 1;
+  const evalDesc = (r) => { try { return typeof a.desc === "function" ? String(a.desc(r, null) || "") : String(a.desc || ""); } catch (e) { return ""; } };
+  if (a.bbBug) items.push({ s, cls: s.class, kind: "bug", text: a.bbBug });
+  const un = typeof a.unintended === "function" ? a.unintended(max) : a.unintended;
+  if (un) items.push({ s, cls: s.class, kind: "unintended", text: un });
+  if (a.tooltipNote) {
+    const seen = new Set();
+    for (let r = 1; r <= max; r++) { const t = typeof a.tooltipNote === "function" ? a.tooltipNote(r) : a.tooltipNote; if (t && !seen.has(t)) { seen.add(t); items.push({ s, cls: s.class, kind: "tip", text: t }); } }
+  }
+  const seen = new Set();
+  for (let r = 1; r <= max; r++) {
+    (evalDesc(r).match(/__[^_]*(คำอธิบาย|tooltip|Tooltip|ในเกมระบุ|ในเกมบอก)[^_]*__/g) || []).forEach(m => {
+      const t = m.slice(2, -2); if (!seen.has(t)) { seen.add(t); items.push({ s, cls: s.class, kind: "tip", text: t }); }
+    });
+  }
+  if (a.liveCheck) items.push({ s, cls: s.class, kind: "live", text: a.liveCheck });
+  return items;
+}
+// Reborn version of the page (user 2026-10-27, behind the hidden logo hold): what each Reborn card's Reborn tab notes. Only cards with Reborn
+// data (a Reborn-only C6 / C7 card, or an original card with servers.reborn); the tab's merged view counts, so a BB note that still applies
+// in Reborn stays (Chameleon crit gear) and one the override clears ("") drops out.
+function rebornIssueItems(){
+  const items = [];
+  SKILLS.forEach(s => {
+    if (s.onlyServer === "reborn") items.push(...noteItemsOf(s, s));
+    else if (!s.onlyServer && s.servers && s.servers.reborn) items.push(...noteItemsOf(s, Object.assign({}, s, s.servers.reborn)));
+  });
+  return items;
+}
 function bbIssueItems(){
   const items = [];
-  const evalDesc = (s, r) => { try { return typeof s.desc === "function" ? String(s.desc(r, null) || "") : String(s.desc || ""); } catch (e) { return ""; } };
   SKILLS.forEach(s => {
-    if (s.onlyServer) return;   // a server-exclusive card (Reborn C6 / C7, ToT EX): its notes are that server's, not the original game's
-    const max = s.maxRank || 1;
-    if (s.bbBug) items.push({ s, cls: s.class, kind: "bug", text: s.bbBug });
-    if (s.unintended) items.push({ s, cls: s.class, kind: "unintended", text: s.unintended });
-    if (s.tooltipNote) {
-      const seen = new Set();
-      for (let r = 1; r <= max; r++) { const t = typeof s.tooltipNote === "function" ? s.tooltipNote(r) : s.tooltipNote; if (t && !seen.has(t)) { seen.add(t); items.push({ s, cls: s.class, kind: "tip", text: t }); } }
-    }
-    const seen = new Set();
-    for (let r = 1; r <= max; r++) {
-      (evalDesc(s, r).match(/__[^_]*(คำอธิบาย|tooltip|Tooltip|ในเกมระบุ|ในเกมบอก)[^_]*__/g) || []).forEach(m => {
-        const t = m.slice(2, -2); if (!seen.has(t)) { seen.add(t); items.push({ s, cls: s.class, kind: "tip", text: t }); }
-      });
-    }
-    if (s.liveCheck) items.push({ s, cls: s.class, kind: "live", text: s.liveCheck });
+    if (!s.onlyServer) items.push(...noteItemsOf(s, s));   // a server-exclusive card (Reborn C6 / C7, ToT EX): its notes are that server's, not the original game's
   });
   BB_ISSUES_EXTRA.forEach(e => items.push({ s: e.skill ? SKILLS.find(x => x.id === e.skill) : null, title: e.title, cls: e.cls, kind: e.kind, text: e.text, open: e.open }));
   return items;
@@ -27045,19 +27080,36 @@ function mountBbIssues(root){
     { k: "tip", label: "คำอธิบายไม่ตรง", short: "คำอธิบาย", color: "var(--tip)", ico: NOTE_ICO.tip },
     { k: "unintended", label: "พฤติกรรมที่ไม่ตั้งใจ", short: "ไม่ตั้งใจ", color: "var(--gold)", ico: NOTE_ICO.unintended },
   ];
+  // BB by default; a hidden 1 s hold on the logo switches to the Reborn list and back (user 2026-10-27). Not remembered: every visit opens on BB.
+  const st = { srv: "og" };
+  const HEAD = {
+    og: { title: "บั๊ก &amp; คำอธิบายผิด", sub: "จุดที่โค้ดเกมต้นฉบับ (BB) ทำงานผิด หรือไม่ตรงกับที่เกมบอก คลิกสกิลเพื่อเปิดการ์ด", label: "BB" },
+    reborn: { title: "บั๊ก &amp; คำอธิบายผิด (Reborn)", sub: "จุดที่โค้ดของ Tails Reborn ทำงานผิด หรือไม่ตรงกับที่เกมบอก ตามแท็บ Reborn ของแต่ละการ์ด คลิกสกิลเพื่อเปิดการ์ดบนแท็บ Reborn", label: "Tails Reborn" },
+  };
+  setToolServer("bb-issues", st.srv);   // auto look follows the list shown (cosmetic only)
+  const setMode = (m) => {
+    st.srv = m; const h = HEAD[m];
+    const t = root.querySelector(".nl-title"), sub = root.querySelector(".nl-sub"), logo = root.querySelector(".nl-logo");
+    if (t) t.innerHTML = h.title; if (sub) sub.innerHTML = h.sub;
+    if (logo) { if (logo.setAttribute) logo.setAttribute("aria-label", h.label); const img = logo.querySelector && logo.querySelector("img"); if (img) img.src = SKILL_ICONS["server_" + m] || "";
+      if (logo.classList) { logo.classList.remove("is-swap"); void logo.offsetWidth; logo.classList.add("is-swap"); } }
+    setToolServer("bb-issues", m); api.render();
+  };
   const api = mountNotePage(root, {
-    state: {}, kinds: KINDS, kindKey: "12t-bible-bbi-filter", clsKey: "12t-bible-bbi-class", unit: "รายการ", perLine: true,
-    title: "บั๊ก &amp; คำอธิบายผิด", sub: "จุดที่โค้ดเกมต้นฉบับ (BB) ทำงานผิด หรือไม่ตรงกับที่เกมบอก คลิกสกิลเพื่อเปิดการ์ด",
+    state: st, kinds: KINDS, kindKey: "12t-bible-bbi-filter", clsKey: "12t-bible-bbi-class", unit: "รายการ", perLine: true,
+    title: HEAD.og.title, sub: HEAD.og.sub,
+    logo: () => ({ src: SKILL_ICONS["server_" + st.srv] || "", label: HEAD[st.srv].label }),
+    onLogoHold: () => setMode(st.srv === "reborn" ? "og" : "reborn"),
     inKind: (lk, k) => lk === k || (k === "tip" && lk === "live"),   // a value awaiting an in-game check sits with the tooltip notes, as before
     tag: kind => { if (kind === "live") return { text: "รอยืนยัน", color: "var(--tip)", ico: "⚠", cls: "is-live" };
       const k = KINDS.find(x => x.k === kind); return { text: k.short, color: k.color, ico: k.ico }; },
     entries: () => { const by = new Map();
-      bbIssueItems().forEach(it => { const key = it.s ? it.s.id : "x:" + it.title;
-        if (!by.has(key)) by.set(key, { cls: it.cls, s: it.s, title: it.title || it.s.name, open: it.s ? "#skill-details/" + encodeURIComponent(it.s.id) + "?server=og" : it.open || "", lines: [] });
+      (st.srv === "reborn" ? rebornIssueItems() : bbIssueItems()).forEach(it => { const key = it.s ? it.s.id : "x:" + it.title;
+        if (!by.has(key)) by.set(key, { cls: it.cls, s: it.s, title: it.title || it.s.name, open: it.s ? "#skill-details/" + encodeURIComponent(it.s.id) + "?server=" + st.srv : it.open || "", lines: [] });
         by.get(key).lines.push({ kind: it.kind, html: renderRichText(it.text, it.s) }); });
       return [...by.values()]; },
   });
-  root._bbIssues = { render: api.render, items: bbIssueItems };
+  root._bbIssues = { render: api.render, items: bbIssueItems, setMode };
 }
 // Monster stats page (2026-10-02). MONSTER_STATS = every CharacterControl in the original client data
 // (12TailsOnline_Data: resources.assets, level*, sharedassets*; Unity 3.5.7f6), decoded field by field in
@@ -33978,6 +34030,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-27T01:42:39.008Z","feat(bible): the BB issues page shows the BB logo at the top right, and a hidden 1 s hold on it switches to a Reborn list (each Reborn card bug, tooltip mismatch and unintended note as its Reborn tab shows them, 145 lines on 121 cards)"],
     ["2026-10-27T01:13:33.375Z","fix(bible): Reborn Crown of Stars note lists every hit the x2 skips (Mana Missile, Tornado, Typhoon, Combo and purple damage), checked hit by hit in the Reborn code"],
     ["2026-10-27T01:07:34.202Z","fix(bible): the server switch on the server balance page fits on phones with three servers (logo and count only there, the full name stays as the button label)"],
     ["2026-10-27T01:02:03.574Z","fix(bible): on phones the ToT / TTO / Reborn wallpaper no longer jumps while scrolling (a fixed layer as tall as the large viewport instead of a fixed cover background that re-fitted every time the address bar moved)"],
