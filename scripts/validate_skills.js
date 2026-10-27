@@ -1463,6 +1463,21 @@ let checkedChiro = 0;
   ids.forEach((i, k) => { sandbox._depRanks[i] = saved[k]; });
 }
 console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
+// A fixed chance lives in a chip, never in the desc (user 2026-10-27, fixedChance): no line states a bold percentage next to
+// "ไม่ขึ้นกับ LCK" / "ไม่ปรับด้วย LCK" or "คงที่". The pattern is checked against the old wordings first, so it cannot pass vacuously.
+{
+  const RE = /\*\*\d[\d.]*%\*\*[^<*]{0,25}(ไม่ขึ้นกับ|ไม่ปรับ(ด้วย|ตาม))\s*(ค่า\s*)?LCK|ไม่ขึ้นกับ\s*(ค่า\s*)?LCK\)?[^<*]{0,10}\*\*\d[\d.]*%\*\*|\*\*\d[\d.]*%\*\*\s*คงที่|คงที่\s*\*\*\d[\d.]*%\*\*/;
+  const old = ["มีโอกาส **10%** (ไม่ขึ้นกับค่า LCK) ยิง", "โอกาสยกโล่เป็น **60%** คงที่", "โอกาสคงที่ **40%** ไม่ขึ้นกับ LCK", "สุ่มตรงๆ (ไม่ขึ้นกับ LCK) **60%**", "Helmet** (**8%**) ไม่ปรับด้วย LCK"];
+  const fail = (m) => { errorCount++; console.error("[CHANCE IN DESC ERROR] " + m); };
+  old.forEach((t) => { if (!RE.test(t)) fail(`the pattern misses the old wording "${t}"`); });
+  let tabs = 0;
+  for (const c of SKILLS.filter((x) => !x.soon)) for (const srv of sandbox._getAvailableServers(c)) {
+    const act = sandbox._getActiveSkill(c, srv); let d = ""; try { d = typeof act.desc === "function" ? act.desc(c.maxRank || 1, 1) : act.desc; } catch (e) {}
+    tabs++;
+    for (const l of String(d || "").split("<br>")) if (RE.test(l)) fail(`${c.id} (${srv}): the desc states a fixed chance, move it to a chip (fixedChance): ${l.slice(0, 120)}`);
+  }
+  console.log(`Verified no fixed chance in ${tabs} desc tabs.`);
+}
 // Skill search forgives one typo (user 2026-10-27): a wrong, missing, extra or swapped letter in a 4+ letter query, from a word start.
 {
   const t = sandbox.searchTypoMatch;
