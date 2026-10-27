@@ -2265,6 +2265,10 @@ let checkedSheepCharge = 0;
       ["Reborn Divine: rank 4, ATK 300, cap 400 reached at the 2 s minimum", 4, 300, null, 0, 1, 0, 400, 2],
       ["Reborn both: rank 4, ATK 100, full = 800 at 8 / 2 + 0.8 = 4.8 s", 4, 100, null, 1, 1, 0, 800, 4.8],
       ["Reborn both + White Burst: 800 + 100", 4, 100, 20, 1, 1, 1, 900, 4.8],
+      // bible3 (Reborn1027:Sheep.cs:13886): the Clamp's max is Mathf.Max(ATK, cap), so an ATK above the cap gives the ATK (BB gives the cap, row "ATK above the cap gives the cap")
+      ["Reborn bible3: rank 1, ATK 500 above the cap 100, 2 s release = the ATK", 1, 500, 2, 0, 0, 0, 500, 2],
+      ["Reborn bible3: Divine, ATK 500, 2 s = 2 x 500 stops at the ATK, not at 100", 1, 500, 2, 0, 1, 0, 500, 2],
+      ["Reborn bible3: Zealous, ATK 500 above the cap 200 = the ATK, + White Burst 100", 1, 500, null, 1, 0, 1, 600, 2],
     ].forEach(([label, rank, ATK, t, z, dv, wb, want, wantMax]) => {
       sc.set(t); deps.benediction = 0; deps.whiteBurst = wb; deps.zealousCharge = z; deps.divineBenediction = dv;
       const p = card.rawModel.parts(rank, { ATK, LV: 100 });
