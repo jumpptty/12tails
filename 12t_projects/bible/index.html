@@ -444,6 +444,10 @@
   html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .tool-shell{ background:var(--th-shell-bg); }
   /* the skill description can show status pop-ups over the chips below it: keep it above them (surfaces are isolated, see THEME_SURFACES) */
   html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc{ z-index:3; }
+  /* ...and while one of its statuses is hovered or open, above the related-skills rail too (z-index 4, .sk-compat-rail), whose column
+     its pop-up can reach over: the desc is the pop-up's stacking context, so the pop-up's own z-index cannot lift it past the rail */
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc:has(.sk-status:hover),
+  html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc:has(.sk-status.is-active){ z-index:5; }
 
   /* ---- 3. EFFECT LAYERS ---- */
   /* none: the TTO star sheet and jack-o-lantern clusters were replaced by the wallpaper (user 2026-10-25) */
@@ -36379,6 +36383,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T09:47:02.804Z","fix(bible): status pop-ups on the ToT, TTO and Reborn tabs open above the related-skills column instead of behind it"],
     ["2026-10-28T09:25:38.386Z","fix(bible): the owner's first C6 / C7 limit calls: Broadside, Ghost Galleon, Shadow Upon Shadow and Walking Arsenal get bug chips, Night Eye, Reactor Core, Seraph Wings and Ocean Feast keep red lines, Eternal Dark Edge gets an unintended chip, and three lines are removed"],
     ["2026-10-28T08:37:58.149Z","feat(bible): the Reborn C6 / C7 limit lines checked against bible3: 11 behaviours that look unintended move to unintended chips (Ocean Feast, Reactor Core, Phantom Bloom, Broadside, Ghost Galleon, Night Eye, Undying Fury, Shadow Upon Shadow, Seraph Wings, Walking Arsenal, Nightmare Cascade), 4 out-of-date lines are fixed, explanations leave the red text, and the same rules now read the same on every card"],
     ["2026-10-28T07:07:28.590Z","fix(bible): the [immunity] popup no longer says System statuses are exempt; they are blocked too, only without the IMMUNE text (BB and Reborn code)"],
