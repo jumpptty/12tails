@@ -3081,6 +3081,11 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
       if (gs !== g + '<div class="sk-hero-sub sk-note-chips">'.length || !(tp > bi) || !h.slice(gs, tp).endsWith("</button></span>") || !(hi > gs && bi < tp)) fail("Drunken Fist: H and the note icons are not all in one .sk-note-group before the modal template");
       else if (!/\.sk-note-group:hover, \.sk-note-group:has\(:focus-visible\)\{ transform:translateY\(-1px\); \}/.test(html) || /\.sk-gametip-btn:hover|\.sk-note-chip:hover[^{]*\{[^}]*translateY/.test(html) || !html.includes('closest("[data-gametip], .sk-note-chip, .sk-note-group")')) fail("Drunken Fist: the note group's shared hover (one lift for the group, none per icon) or its group click is missing");
       else checkedDepStrip++; }
+    // a bbBugSee pointer follows its target card on the shown server (user 2026-10-28): Double Cast points at Parallel Shift's bug on BB,
+    // and shows no pointer on Reborn, whose Parallel Shift tab clears it
+    { const dc = SKILLS.find(s => s.id === "penguin_doubleCast"), at = (srv) => { sandbox._setServer(srv); sandbox._selectSkill(dc); return sandbox._getRenderedHeroHtml().includes('<span class="sk-bb-bug">'); };
+      const og = at("og"), rbOn = at("reborn"); sandbox._setServer("og");
+      if (!og || rbOn) fail(`Double Cast bbBugSee pointer: BB ${og ? "shown" : "missing"}, Reborn ${rbOn ? "shown (Parallel Shift's Reborn tab clears the bug)" : "hidden"}`); else checkedDepStrip++; }
     const mt = SKILLS.find(s => s.id === "mole_moleTank"); sandbox._selectSkill(mt); const hm = sandbox._getRenderedHeroHtml(), pm = parts(hm);
     if (!pm || pm.tpl.includes("<canvas") || !pm.tpl.includes(">หมายเหตุ</div>") || hm.includes("data-gametip")) fail("Mole Tank (a note, no game tooltip): expected a notes-only modal titled หมายเหตุ and no H button");
     // long descriptions (user 2026-10-27, Reborn bible3: 452 of 967 texts overflow the paper's box): the paper keeps the game's 300 px height
@@ -4382,16 +4387,27 @@ async function donateChildTests(env) {
     const lines = (b.list().match(/class="nl-line"/g) || []).length;
     if (lines !== items.length || !lines) fail(`BB issues: ${lines} lines, want ${items.length}`); else checked++;
     facets(b, "bug");
-    // the BB logo at the top right; its hidden 1 s hold switches to the Reborn list (user 2026-10-27): rebornIssueItems(), cards with Reborn data only,
-    // rows open the card on its Reborn tab, and switching back restores the BB list
+    // the BB logo at the top right; its hidden 1 s hold switches to the Reborn list (user 2026-10-27): rebornIssueItems(), rows open the card
+    // on its Reborn tab, and switching back restores the BB list
     if (!/class="nl-logo"[^>]*><img src="data:image\//.test(b.root.innerHTML)) fail("BB issues: no BB logo in the header"); else checked++;
     b.act("kind", "all"); b.root._bbIssues.setMode("reborn");
     const rb = sandbox.rebornIssueItems(), rbLines = (b.list().match(/class="nl-line"/g) || []).length;
     if (!rb.length || rbLines !== rb.length) fail(`Reborn issues: ${rbLines} lines, want ${rb.length}`); else checked++;
-    if (rb.some(i => !(i.s.onlyServer === "reborn" || (!i.s.onlyServer && i.s.servers && i.s.servers.reborn)))) fail("Reborn issues: a line from a card with no Reborn data"); else checked++;
-    // only issues Reborn introduced (user 2026-10-27): no Reborn line repeats the same card's BB line
-    { const bbKeys = new Set(items.filter(i => i.s).map(i => i.s.id + "|" + i.kind + "|" + i.text)); const dup = rb.find(i => bbKeys.has(i.s.id + "|" + i.kind + "|" + i.text));
-      if (dup) fail(`Reborn issues: ${dup.s.id} repeats its BB ${dup.kind} note`); else checked++; }
+    // every issue still in the latest Reborn build (user 2026-10-28): each card's Reborn view (servers.reborn merged, Reborn-only cards too);
+    // a card with no Reborn data keeps its BB notes minus the tooltip notes of a tooltip Reborn rewrote; extras unless rbFixed
+    { const has = (list, id, kind) => list.some(i => i.s && i.s.id === id && (!kind || i.kind === kind)), TIP_RB = vm.runInContext("GAME_TOOLTIP_TH_RB", sandbox);
+      const extras = vm.runInContext("BB_ISSUES_EXTRA", sandbox), probe = { id: "zz_rb_probe", name: "Probe", class: "Wolf", bbBug: "probe bug", tooltipNote: "probe tip" };
+      SKILLS.push(probe); extras.push({ cls: "Common", kind: "bug", title: "zz probe", text: "probe" }, { cls: "Common", kind: "bug", rbFixed: true, title: "zz fixed", text: "fixed" });
+      const rbP = sandbox.rebornIssueItems(); SKILLS.pop(); extras.length -= 2;
+      const errs = [];
+      if (rb.some(i => i.s && i.s.onlyServer && i.s.onlyServer !== "reborn")) errs.push("a line from another server's card");
+      if (!has(rb, "panda_hundredFists", "tip")) errs.push("a Reborn-only card's servers.reborn note is missing (Hundred Fists)");
+      if (!has(rb, "mole_barrelBot_punch", "tip")) errs.push("a BB note its Reborn tab keeps is missing (Barrel Bot Punch)");
+      if (has(rb, "whale_honor")) errs.push("a note its Reborn tab clears is listed (Honor)");
+      if (!TIP_RB.bat_darkIntention || has(rb, "bat_darkIntention", "tip")) errs.push("a BB tooltip note of a tooltip Reborn rewrote is listed (Dark Intention)");
+      if (!has(rbP, "zz_rb_probe", "bug") || !has(rbP, "zz_rb_probe", "tip")) errs.push("a card with no Reborn data and an unchanged tooltip lost its BB notes");
+      if (!rbP.some(i => i.title === "zz probe") || rbP.some(i => i.title === "zz fixed") || rb.some(i => !i.s && extras.some(e => e.rbFixed && e.title === i.title))) errs.push("extras: rbFixed not honoured");
+      if (errs.length) errs.forEach(e => fail("Reborn issues: " + e)); else checked++; }
     const rbOpens = [...b.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
     if (!rbOpens.length || !rbOpens.every(h => h.endsWith("?server=reborn"))) fail("Reborn issues: rows do not open the card on its Reborn tab"); else checked++;
     b.root._bbIssues.setMode("og");
