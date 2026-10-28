@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18590,7 +18590,7 @@ function mountSkillCooldownLookup(root){
             <span class="sk-class-badge-name" data-role="class-badge-name"></span>
             <button type="button" class="sk-preset-open" data-role="preset-open" title="ชุดสเตตัส" aria-haspopup="dialog">PRESET 1</button>
           </div>
-          <button type="button" class="sk-revisedart on" data-role="revisedart" title="revisedArt5 (12% cooldown reduction)"></button>
+          <button type="button" class="sk-revisedart on" data-role="revisedart" title="Revised Art 5 (ลดคูลดาวน์ 12%)" aria-pressed="true"></button>
         </div>
         <div class="sk-controls">
           <div><label>CHAR LV</label><input type="number" data-role="lv" min="0" value="100"></div>
@@ -19201,6 +19201,7 @@ function mountSkillCooldownLookup(root){
     const popupEl = document.createElement("div");
     popupEl.className = "sk-server-popup";
     popupEl.setAttribute("data-role", "server-popup");
+    popupEl.setAttribute("role", "dialog"); popupEl.setAttribute("aria-modal", "true");   // the ← / → skill keys stand down behind it (review 2026-10-28)
 
     const hasImg = !!(SKILL_ICONS[iconKey] || SKILL_ICONS[srv]);
     const iconHtml = hasImg
@@ -19316,9 +19317,9 @@ function mountSkillCooldownLookup(root){
       const label = SERVER_LABELS[srv] || srv.toUpperCase();
       const hasImg = !!(SKILL_ICONS[iconKey] || SKILL_ICONS[srv]);
       const content = hasImg
-        ? `<img src="${SKILL_ICONS[iconKey] || SKILL_ICONS[srv]}" alt="${srv.toUpperCase()}">`
+        ? `<img src="${SKILL_ICONS[iconKey] || SKILL_ICONS[srv]}" alt="${label}">`
         : `<span class="sk-server-badge">${srv.toUpperCase()}</span>`;
-      return `<button type="button" class="sk-server-btn${active ? " active" : ""}"${role ? ` data-role="${role}"` : ""} data-server="${srv}" title="${label}">
+      return `<button type="button" class="sk-server-btn${active ? " active" : ""}"${role ? ` data-role="${role}"` : ""} data-server="${srv}" title="${label}" aria-pressed="${active ? "true" : "false"}">
         ${content}
       </button>`;
     }
@@ -19490,7 +19491,7 @@ function mountSkillCooldownLookup(root){
 
     const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
 
-    if (pickerState === 'global' || q !== '') {
+    if (pickerState === 'global' || q.length >= 2) {
       pickerState = 'global';
       const filtered = getGlobalSkillMatches(q);
       const rawTerm = searchEl ? searchEl.value.trim() : '';
@@ -19509,7 +19510,7 @@ function mountSkillCooldownLookup(root){
           ` : `
             <div class="sk-roster-empty">
               <div class="sk-roster-empty-icon">🔍</div>
-              <div class="sk-roster-empty-title">ไม่พบสกิลที่ตรงกับ “${rawTerm.replace(/"/g, '&quot;')}”</div>
+              <div class="sk-roster-empty-title">ไม่พบสกิลที่ตรงกับ “${String(rawTerm).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]))}”</div>
               <div class="sk-roster-empty-sub">ลองค้นหาด้วยคำอื่น หรือล้างคำค้นหาเพื่อย้อนกลับ</div>
             </div>
           `}
@@ -19911,7 +19912,7 @@ function mountSkillCooldownLookup(root){
       labels: Array.from({ length: PRESET_SLOTS }, () => ({ name: "", desc: "" })),
       colors: Array.from({ length: PRESET_SLOTS }, (_, k) => k) });
   }
-  function presetCurrent(){ const els = presetEls(), o = {}; PRESET_STATS.forEach(k => { o[k] = Math.max(0, Math.floor(Number(els[k].value) || 0)); }); o.bd = presetBd(); return o; }
+  function presetCurrent(){ const els = presetEls(), o = {}; PRESET_STATS.forEach(k => { o[k] = Math.max(0, Math.floor(Number(els[k].value) || 0)); }); if (lvEl.dataset.lvClamped !== undefined && String(parseFloat(lvEl.value) || 0) === lvEl.dataset.lvClamped) o.lv = Math.floor(Number(lvEl.dataset.lvWant) || 0); o.bd = presetBd(); return o; }   // a server-clamped LV saves the level from before the clamp
   function presetSame(a, b){ return !!a && !!b && PRESET_STATS.every(k => a[k] === b[k]) && JSON.stringify(a.bd || null) === JSON.stringify(b.bd || null); }
   function presetWrite(vals){
     const els = presetEls();
@@ -20248,7 +20249,7 @@ function mountSkillCooldownLookup(root){
   // their page defaults (input defaultValue) and nothing on in the Buff / Debuff popups. Final: not undoable, and the
   // older preset undo steps are dropped too, since any of them would restore the data from before the reset.
   function presetReset(cls){
-    presetUndoStack.length = 0;
+    presetUndoStack.length = 0; bdUndoStack.length = 0;   // the buff steps too: one Ctrl+Z after the reset brought the old buffs back into PRESET 1 (review 2026-10-28)
     delete presetData.classes[cls]; presetEntry(cls);
     const els = presetEls();
     PRESET_STATS.forEach(k => { els[k].value = els[k].defaultValue; });
@@ -20446,8 +20447,18 @@ function mountSkillCooldownLookup(root){
   // on top of the next view, not a permanent leak.
   window.addEventListener("hashchange", () => {
     const toolPart = location.hash.split("?")[0].split("/")[0];
-    if (toolPart !== "#skill-details" && toolPart !== "#skill-cooldown-lookup") multiHitLayer.innerHTML = "";
+    if (toolPart !== "#skill-details" && toolPart !== "#skill-cooldown-lookup"){ multiHitLayer.innerHTML = ""; closeSkillOverlays(); }
   });
+  // Leaving the tool (phone Back, Alt+←, a hub link) closes its pop-ups too: they live on <body>, outside root, so they stayed over the
+  // menu, and the reach pop-up's capture-phase keys kept W A S D and the arrows blocked there (review 2026-10-28).
+  function closeSkillOverlays(){
+    closeReachPopup();
+    closeGameTipModal();
+    if (bdOpen) bdClose();
+    hidePresetPopup(true);
+    closePresetWindow();
+    if (document.querySelector('[data-role="server-backdrop"]')) hideServerPopup();
+  }
   // Mods popup state (2026-08-16): which buff/debuff icons are toggled on,
   // per side (see MOD_DEFS). Deliberately NOT reset on skill or enemy
   // switch -- these represent the PLAYER's/TARGET's currently active
@@ -22320,7 +22331,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   function renderDmgToggle(dep, tag = "DMG"){
     if (dep.minRank > 0 || dep.cycleRanks) return renderDmgRankToggle(dep, tag); // no "off" state, or opted in (Over Power 0..2): cycle ranks
     const depRank = getDepRank(dep);
-    return depSinkAdd(dep, tag, `<button type="button" class="sk-dep-toggle${depRank === dep.maxRank ? " on" : ""}" data-dep-id="${dep.id}" data-dep-toggle-off="${dep.minRank}" data-dep-toggle-on="${dep.maxRank}" title="${dep.label}"><img src="${SKILL_ICONS[dep.icon]}" alt="${dep.label}"></button>`);
+    return depSinkAdd(dep, tag, `<button type="button" class="sk-dep-toggle${depRank === dep.maxRank ? " on" : ""}" data-dep-id="${dep.id}" data-dep-toggle-off="${dep.minRank}" data-dep-toggle-on="${dep.maxRank}" title="${dep.label}" aria-pressed="${depRank === dep.maxRank}"><img src="${SKILL_ICONS[dep.icon]}" alt="${dep.label}"></button>`);
   }
   // King Kaiser pilot (2026-08-20): the Damage Formula header's bare-button
   // toggle row only ever had 0/1 deps (renderDmgToggle above) until now --
@@ -22332,7 +22343,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   function renderDmgRankToggle(dep, tag = "DMG"){
     const depRank = getDepRank(dep);
     const rankIconKey = dep.iconFor ? dep.iconFor(depRank) : dep.icon.replace(/\d+$/, "") + (depRank === 0 ? 1 : depRank);
-    return depSinkAdd(dep, tag, `<button type="button" class="sk-dep-rank-icon${depRank === 0 ? "" : " on"}" data-dep-id="${dep.id}" data-dep-min-rank="${dep.minRank}" data-dep-max-rank="${dep.maxRank}" title="${dep.label} (${depRank}/${dep.maxRank})"><img src="${SKILL_ICONS[rankIconKey]}" alt="${dep.label}"></button>`);
+    return depSinkAdd(dep, tag, `<button type="button" class="sk-dep-rank-icon${depRank === 0 ? "" : " on"}" data-dep-id="${dep.id}" data-dep-min-rank="${dep.minRank}" data-dep-max-rank="${dep.maxRank}" title="${dep.label} (${depRank}/${dep.maxRank})" aria-label="${dep.label} ระดับ ${depRank}/${dep.maxRank}"><img src="${SKILL_ICONS[rankIconKey]}" alt="${dep.label}"></button>`);
   }
 
   function renderCatPowerToggle(){
@@ -22656,7 +22667,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (isOffOnToggle){
       return `
         <div class="sk-dep${extraClass}">
-          <button type="button" class="sk-dep-toggle${depRank === dep.maxRank ? " on" : ""}" data-dep-id="${dep.id}" data-dep-toggle-off="${dep.minRank}" data-dep-toggle-on="${dep.maxRank}" title="${dep.label}">
+          <button type="button" class="sk-dep-toggle${depRank === dep.maxRank ? " on" : ""}" data-dep-id="${dep.id}" data-dep-toggle-off="${dep.minRank}" data-dep-toggle-on="${dep.maxRank}" title="${dep.label}" aria-pressed="${depRank === dep.maxRank}">
             <img src="${SKILL_ICONS[dep.icon]}" alt="${dep.label}">
           </button>
         </div>
@@ -22665,7 +22676,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const rankIconKey = dep.icon.replace(/\d+$/, "") + (depRank === 0 ? 1 : depRank);
     return `
       <div class="sk-dep${extraClass}">
-        <button type="button" class="sk-dep-rank-icon${depRank === 0 ? "" : " on"}" data-dep-id="${dep.id}" data-dep-min-rank="${dep.minRank}" data-dep-max-rank="${dep.maxRank}" title="${dep.label} (rank ${depRank}/${dep.maxRank})">
+        <button type="button" class="sk-dep-rank-icon${depRank === 0 ? "" : " on"}" data-dep-id="${dep.id}" data-dep-min-rank="${dep.minRank}" data-dep-max-rank="${dep.maxRank}" title="${dep.label} (rank ${depRank}/${dep.maxRank})" aria-label="${dep.label} ระดับ ${depRank}/${dep.maxRank}">
           <img src="${SKILL_ICONS[rankIconKey]}" alt="${dep.label}">
         </button>
       </div>
@@ -23579,7 +23590,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       }
     }
     function renderHero(){
-      { const cap = LEVEL_CAP[currentServer] || LEVEL_CAP.og; lvEl.max = cap; if ((parseFloat(lvEl.value) || 0) > cap) lvEl.value = cap; }   // CHAR LV stops at the server's cap
+      { // CHAR LV stops at the server's cap; the level from before a clamp comes back under a higher cap (review 2026-10-28: Reborn LV 150, then BB, stayed 95)
+        const cap = LEVEL_CAP[currentServer] || LEVEL_CAP.og, d = lvEl.dataset, v = parseFloat(lvEl.value) || 0;
+        const want = (d.lvClamped !== undefined && String(v) === d.lvClamped) ? Number(d.lvWant) : v;   // still showing the clamp: the wanted LV is the one before it
+        const shown = Math.min(want, cap);
+        lvEl.max = cap; if (shown !== v) lvEl.value = shown;
+        if (want > cap){ d.lvWant = want; d.lvClamped = String(shown); } else { delete d.lvWant; delete d.lvClamped; }
+      }
       setToolServer("skill-details", currentServer);   // auto look: the card's own server switch (cosmetic only)
       const prev = heroSnapshot();
       const same = selected && idSeen === selected.id, carry = same ? pingCarryCapture() : [], tags = same ? dtagCarryCapture() : [];
@@ -26297,7 +26314,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     const svg = isBuff ? '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 19,21 5,21 3,10"></polygon></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,21 21,14 19,3 5,3 3,14"></polygon></svg>';
     bdHost.innerHTML = `
       <div class="sk-bd-backdrop" data-role="bd-backdrop">
-        <div class="sk-bd-popup ${isBuff ? "is-buff" : "is-debuff"}" role="dialog" aria-label="${isBuff ? "Buff" : "Debuff"}">
+        <div class="sk-bd-popup ${isBuff ? "is-buff" : "is-debuff"}" role="dialog" aria-modal="true" aria-label="${isBuff ? "Buff" : "Debuff"}">
           <div class="sk-bd-head">${svg}<span class="sk-bd-title">${isBuff ? "Buff" : "Debuff"}</span>${suspended ? '<span class="sk-bd-suspended">Off</span>' : ""}<div class="sk-bd-servers">${BD_SERVERS.map(srv => serverBtnHtml(srv, srv === bdServer, "bd-server")).join("")}</div><button type="button" class="sk-bd-undo" data-role="bd-undo" title="ย้อนกลับ (Ctrl+Z)" aria-label="ย้อนกลับ"${bdUndoStack.length ? "" : " disabled"}>&#8630;</button><button type="button" class="sk-bd-close" data-role="bd-close" aria-label="Close">&times;</button></div>
           ${bdLvTable(sections)}
         </div>
@@ -26430,7 +26447,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
-    if (q !== "") {
+    // Searching starts at two letters: one letter matched most of the 787 cards ("a" built 6 MB of icon HTML; review 2026-10-28).
+    // A first letter typed over an open card keeps the card; back to one letter from a search shows the browse view, like an empty box.
+    if (q.length === 1 && pickerState !== 'global') return;
+    if (q.length >= 2) {
       if (pickerState !== 'global') {
         prevPickerState = (pickerState === 'roster' ? 'roster' : 'classes');
         prevPickerClass = pickerClass;
@@ -26495,6 +26515,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   // (e.g. LCK) triggered the next renderHero().
   atkEl.addEventListener("input", renderHero);
   talEl.addEventListener("input", renderHero);
+  lvEl.addEventListener("input", () => { delete lvEl.dataset.lvWant; delete lvEl.dataset.lvClamped; }, true);   // a typed LV is the new wanted level (capture: before the preset autosave reads it)
   lvEl.addEventListener("input", renderHero);
   // DEF/VIT (2026-08-21, added alongside ATK/TAL/AGI/CHA/INT/LCK to complete
   // all 8 core stats) and the 8 Enemy Stats fields all get the same
@@ -26528,7 +26549,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       updateEnemyCycleDisplay();
       renderHero();
     }));
-  raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); renderHero(); });
+  raBtn.addEventListener("click", () => { revisedArtOn = !revisedArtOn; raBtn.classList.toggle("on", revisedArtOn); raBtn.setAttribute("aria-pressed", revisedArtOn); renderHero(); });
 
   // Document-scoped (not searchEl-scoped) so Left/Right work once a skill card
   // has focus moved off the search box — guarded on root.hidden so this doesn't
@@ -36415,6 +36436,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T13:21:05.223Z","fix(bible): skill details quick wins from the 2026-10-28 review: the page declares Thai, the search term is escaped and searching starts at two letters, a broken link no longer stops the hub, the arrow keys stay put behind the Buff / Debuff and server pop-ups, leaving the tool closes its pop-ups, CHAR LV survives a lower server cap, the preset reset clears buff undo, and toggles report their state to screen readers"],
     ["2026-10-28T13:14:32.250Z","fix(bible): the owner's note calls: a Dark Edge or Lunar Eclipse cast during Holy Wolf is an unintended chip instead of a bug, and Miracle Ascension loses its mass-revive cooldown note (an internal cooldown, hard to show to begin with)"],
     ["2026-10-28T13:03:10.790Z","fix(bible): the desc's icon lines stack in two independent columns, so a tall line no longer leaves a hole beside it when every toggle is on"],
     ["2026-10-28T10:15:43.605Z","fix(bible): the remaining C6 / C7 limit lines decided from the owner's earlier calls: five obvious lines removed (Doomsayer, Nocturne Sovereign, Ghost Galleon, Four Seals, Tidal Reach), and Resonant Fist, Five Heaven Palms, Hundred Fists, Asura Trinity, Shadow Pack and Miracle Ascension get unintended chips"],
@@ -37206,7 +37228,8 @@ window.goatcounter = window.goatcounter || {};
 window.goatcounter.path = function(p) { return getGoatPath(); };
 let isInitialRoute = true;
 function route(){
-  const raw = decodeURIComponent(location.hash.slice(1));
+  let raw;   // a stray % (a cut Thai link) made decodeURIComponent throw and stopped the rest of this script (review 2026-10-28)
+  try { raw = decodeURIComponent(location.hash.slice(1)); } catch (e) { raw = location.hash.slice(1); }
   const qIdx = raw.indexOf("?");
   const qs = qIdx === -1 ? "" : raw.slice(qIdx + 1);
   const parts = (qIdx === -1 ? raw : raw.slice(0, qIdx)).split("/");
