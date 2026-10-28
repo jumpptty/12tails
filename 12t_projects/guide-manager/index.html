@@ -357,7 +357,7 @@ function gmFromBinary(bytes){
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error(GM_BAD); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
-    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error(GM_BAD); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error(GM_BAD); support.push(901 + k); } continue; }
+    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 3) throw new Error(GM_BAD); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error(GM_BAD); support.push(901 + k); } continue; }
     if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= GM_STAT_KEYS.length || order.includes(k)) throw new Error(GM_BAD); order.push(k); } continue; }
     if (tag === 0x4D && !modes){ const m = byte(); if (!m || m > 3) throw new Error(GM_BAD); modes = GM_MODES.filter((k, j) => m & (1 << j)); continue; }
     if (tag === 0x43 && !descCols){ descCols = byte(); if (descCols < 2 || descCols > 3) throw new Error(GM_BAD); continue; }   // description columns, as guide_code.js

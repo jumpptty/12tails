@@ -25,7 +25,7 @@ const PREFIX = "12TG1.", PREFIX2 = "TG2.", PREFIX3 = "TG3";
 //   optional gear block (older codes end before it): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3) and per choice
 //   a flag byte (bit 0 typed name, bit 1 has a Replica, bit 2 the Replica is a typed name, bits 4-7 stat index + 1) + text (item id or name) [+ Replica text]
 //   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
-//   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
+//   optional support block (user 2026-10-17): 0x53, count byte (1-3: three only on Reborn, user 2026-10-28), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
 //   byte 200-211 names a support skill (ids 901-912).
 //   optional stat order block (user 2026-10-18): 0x4F, count byte, then one CLASS_GUIDE_STAT_KEYS index per stat in the author's order; written only when that order is not the fixed one, so older guides keep their exact code.
 //   optional mode block (user 2026-10-20): 0x4D, one byte: bit 0 PVE, bit 1 PVP (CLASS_GUIDE_MODES); written whenever a mode is set (a finished guide always has one).
@@ -109,7 +109,7 @@ function classGuideFromBinary(bytes){
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
-    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
+    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
     if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= CLASS_GUIDE_STAT_KEYS.length || order.includes(k)) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); order.push(k); } continue; }   // the author's stat order (user 2026-10-18)
     if (tag === 0x4D && !modes){ const m = byte(); if (!m || m > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); modes = CLASS_GUIDE_MODES.filter((k, j) => m & (1 << j)); continue; }   // PVE / PVP (user 2026-10-20)
     if (tag === 0x43 && !descCols){ descCols = byte(); if (descCols < 2 || descCols > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); continue; }   // description columns (user 2026-10-21)

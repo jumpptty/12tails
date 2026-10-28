@@ -3862,12 +3862,19 @@ let checkedRsim = 0;
     ok(same({ ...norm(decode(encode(change({gear})))), date: "" }, { ...withGear, date: "" }), "gear round-trips through export / import (the import drops the date, user 2026-10-23)");
     ok(same(Array.from(bin(withGear)), Array.from(gc.classGuideBinary(withGear))) && same(norm(fromBin(bin(withGear))), withGear) && same(norm(gc.decode(gc.encode(withGear))), withGear), "gear round-trips through the format 2 code, page and scripts/guide_code.js identical");
     ok(same(norm(fromBin(bin(norm(fixture)))), norm(fixture)) && !("gear" in norm(fixture)), "a guide without gear has no gear key and its code has no gear block (old codes decode unchanged)");
-    // support skills (user 2026-10-17): up to two (ids 901-912), a note and a cover icon on one; a guide without them has no support key and no code block
+    // support skills (user 2026-10-17): up to two (ids 901-912), three on Reborn (user 2026-10-28), a note and a cover icon on one; a guide without them has no support key and no code block
     { const base = norm(fixture), withSup = norm(change({ build: { ...base.build, support: [903, 911] }, notes: { ...base.notes, 903: "ซัพพอร์ต" }, cover: [903] }));
       ok(same(withSup.build.support, [903, 911]) && withSup.notes[903] === "ซัพพอร์ต" && same(withSup.cover, [903]), "support skills, a note and a cover icon on one normalize unchanged");
       ok(same(Array.from(bin(withSup)), Array.from(gc.classGuideBinary(withSup))) && same(norm(fromBin(bin(withSup))), withSup) && same(norm(gc.decode(gc.encode(withSup))), withSup), "support skills round-trip through the format 2 code, page and scripts/guide_code.js");
       ok(!("support" in base.build) && !("support" in norm(fromBin(bin(base))).build), "a guide without support skills has no support key, before and after its code");
-      rejects(() => norm(change({ build: { ...base.build, support: [901, 902, 903] } })), "reject three support skills");
+      rejects(() => norm(change({ build: { ...base.build, support: [901, 902, 903] } })), "reject three support skills off Reborn (the fixture is ToT)");
+      { const rb = vm.runInContext("CLASS_GUIDES", sandbox).find((g) => g.build.server === "reborn");
+        if (!rb) ok(false, "no embedded Reborn guide to try three support skills on");
+        else { const { id: _rbId, published: _rbPub, ...rg } = rb, three = norm({ ...rg, build: { ...rg.build, support: [901, 905, 912] } });
+          ok(same(three.build.support, [901, 905, 912]) && same(norm(fromBin(bin(three))), three) && same(norm(gc.decode(gc.encode(three))), three), "a Reborn guide keeps three support skills through the page's code and scripts/guide_code.js");
+          rejects(() => norm({ ...rg, build: { ...rg.build, support: [901, 902, 903, 904] } }), "reject four support skills on Reborn");
+          ok(same(norm({ ...rg, build: { ...rg.build, support: [901, 902, 903, 904] } }, { draft: true }).build.support, [901, 902, 903]) && same(norm(change({ build: { ...norm(fixture).build, support: [901, 905, 912] } }), { draft: true }).build.support, [901, 905]), "a draft keeps the first three support skills on Reborn and the first two elsewhere"); } }
+      ok(html.includes("show = building ? [...Array(classGuideSupportMax(srv)).keys()]") && html.includes("state.support = state.support.slice(0, classGuideSupportMax(srv));"), "the guide editor shows the server's support slots and trims them when the server changes");
       rejects(() => norm(change({ build: { ...base.build, support: [901, 901] } })), "reject the same support skill twice");
       rejects(() => norm(change({ build: { ...base.build, support: [913] } })), "reject an unknown support skill");
       // "250+" (user 2026-10-18): the number stays a number, statsPlus lists the "or more" stats; bit 15 in the code, so older codes read the same
@@ -5960,6 +5967,7 @@ if (gmHtml !== null) {
     }
     ok(decoded === doc.guides.length * 3, `${decoded} of ${doc.guides.length * 3} codes read the same as guide_code.js`);
     // a guide with description columns (tag 0x43 / TG2 "w", user 2026-10-21) reads the same too: the page could not read one until 2026-10-28 (guide #82)
+    { const { id: _s3, ...g3 } = doc.guides[0].g, code = gc.encode({ ...g3, build: { ...g3.build, support: [901, 905, 912] } }); let r; try { r = finish(code); } catch (e) { r = String(e.message); } ok(same(r, gc.decode(code)), "a code with three support skills (Reborn, user 2026-10-28): the page reads it differently from guide_code.js"); }
     { const { id: _w, ...gw } = doc.guides[0].g; for (const enc of [gc.encode, gc.encode2]) { const code = enc({ ...gw, descCols: 2 }); let r; try { r = finish(code); } catch (e) { r = String(e.message); } ok(same(r, gc.decode(code)), `a ${code.slice(0, 3)} code with description columns: the page reads it differently from guide_code.js`); } }
     const { id: _id, ...first } = doc.guides[0].g, c3 = gc.encode(first), wrapped = "ไกด์ `" + c3.slice(0, 9) + " \n" + c3.slice(9) + "` จบ";
     ok(same(finish(gm.gmFindCode(wrapped)), gc.decode(c3)), "a TG3 code pasted with chat text, a space and a line break is found and read");

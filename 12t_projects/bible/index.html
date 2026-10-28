@@ -30579,7 +30579,8 @@ const SKILL_SIM_SERVERS = {
   tto: { name: "TTO", full: "Tailstopia Online (TTO)", cap: LEVEL_CAP.tto, patch: { panda: { 443: { req: [344] } } } },
   // Reborn (user 2026-10-25): Lv 150, Panda Heaven Breath needs Sacred Sage Technique II like ToT / TTO, plus the C6 / C7 rows (skillSimTrees) and its own pools (SKILL_SIM_POOLS).
   // Rabbit (2026-10-26): Mall is gone, cells 341-344 are Truce Trading & Co. 1-4 with BB's Lv / bn / requirements (Reborn:RabbitSkill.cs getSkillTree 341-344, the Reborn site's rab.json).
-  reborn: { name: SERVER_SHORT.reborn, full: SERVER_FULL.reborn, cap: LEVEL_CAP.reborn, patch: { panda: { 443: { req: [344] } },
+  // support: a class guide picks up to three support skills there (user 2026-10-28, the live server); every other server two (classGuideSupportMax).
+  reborn: { name: SERVER_SHORT.reborn, full: SERVER_FULL.reborn, cap: LEVEL_CAP.reborn, support: 3, patch: { panda: { 443: { req: [344] } },
     rabbit: { 341: { icon: "rabbit_truceTrading&co1", name: "Truce Trading & Co. 1" }, 342: { icon: "rabbit_truceTrading&co2", name: "Truce Trading & Co. 2" },
       343: { icon: "rabbit_truceTrading&co3", name: "Truce Trading & Co. 3" }, 344: { icon: "rabbit_truceTrading&co4", name: "Truce Trading & Co. 4" } } } }
 };
@@ -30660,8 +30661,9 @@ function skillSimProblems(cells, names, set, lv){
   return out;
 }
 // Support skills (user 2026-10-17): the 12 shared support skills as cells 901-912 (COMMON_SUPPORT_SKILL_IDS order), for the simulator's support row, notes and
-// cover icons. A guide picks up to two (build.support), on every server, with no requirement and no point cost.
+// cover icons. A guide picks up to two (build.support), three on Reborn (user 2026-10-28), with no requirement and no point cost.
 const CLASS_GUIDE_SUPPORT_FIRST = 901;
+const classGuideSupportMax = (server) => (SKILL_SIM_SERVERS[server] && SKILL_SIM_SERVERS[server].support) || 2;
 let classGuideSupportCache = null;
 function classGuideSupportCells(){
   if (classGuideSupportCache) return classGuideSupportCache;
@@ -31900,11 +31902,11 @@ function classGuideNormalize(value, { draft = false } = {}){
     throw new Error("ชุดสกิลไม่ผ่านเงื่อนไข" + (p.length ? ": " + p.slice(0, 3).map(x => x.text).join(" · ") + (p.length > 3 ? " และอีก " + (p.length - 3) + " ข้อ" : "") : "เลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน"));
   }
   if (!object(value.notes) || Object.keys(value.notes).length > 120) throw new Error("รายการโน้ตสกิลไม่ถูกต้อง");
-  const sup = classGuideSupportCells(), cellsAll = Object.assign({}, cells, sup), support = [];   // support skills (user 2026-10-17): up to two, any server
+  const sup = classGuideSupportCells(), cellsAll = Object.assign({}, cells, sup), support = [], supMax = classGuideSupportMax(b.server);   // support skills (user 2026-10-17): up to two, three on Reborn (user 2026-10-28)
   if (b.support !== undefined){
     if (!Array.isArray(b.support)) throw new Error("สกิลซัพพอร์ตไม่ถูกต้อง");
     for (const id of b.support){ if (!sup[id] || support.includes(id)){ if (draft) continue; throw new Error("สกิลซัพพอร์ตไม่ถูกต้อง"); } support.push(id); }
-    if (support.length > 2){ if (draft) support.length = 2; else throw new Error("สกิลซัพพอร์ตเลือกได้ไม่เกิน 2 สกิล"); }
+    if (support.length > supMax){ if (draft) support.length = supMax; else throw new Error(`สกิลซัพพอร์ตเลือกได้ไม่เกิน ${supMax} สกิล`); }
   }
   const stats = classGuideStatsClean(value.stats, draft);
   const statsPlus = value.statsPlus === undefined ? [] : Array.isArray(value.statsPlus) ? CLASS_GUIDE_STATS.map(x => x.key).filter(k => value.statsPlus.includes(k) && classGuideStatKind(stats[k]) === "num") : (() => { throw new Error("สเตตัสแนะนำไม่ถูกต้อง"); })();   // "250+": the stats meant as "or more"
@@ -31973,7 +31975,7 @@ function classGuideExpand(o){
 //   optional gear block (user 2026-10-16; older codes simply end here): 0x47, slot mask byte (bit i = CLASS_GUIDE_GEAR_KEYS[i]), then per slot a count byte (1-3)
 //   and per choice a flag byte (bit 0 typed name, bit 1 has a Replica, bit 2 the Replica is a typed name, bits 4-7 stat index + 1) + text (item id or name) [+ Replica text]
 //   optional cover block (user 2026-10-16): 0x49, count byte (1-5 since 2026-10-17), then one slot byte per cover icon, in the author's order. The blocks may come in any order.
-//   optional support block (user 2026-10-17): 0x53, count byte (1-2), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
+//   optional support block (user 2026-10-17): 0x53, count byte (1-3: three only on Reborn, user 2026-10-28), then one byte per support skill (0-11 = COMMON_SUPPORT_SKILL_IDS order); a note or cover slot
 //   byte 200-211 names a support skill (ids 901-912).
 //   optional stat order block (user 2026-10-18): 0x4F, count byte, then one CLASS_GUIDE_STAT_KEYS index per stat in the author's order; written only when that order is not the fixed one, so older guides keep their exact code.
 //   optional mode block (user 2026-10-20): 0x4D, one byte: bit 0 PVE, bit 1 PVP (CLASS_GUIDE_MODES); written whenever a mode is set (a finished guide always has one).
@@ -32055,7 +32057,7 @@ function classGuideFromBinary(bytes){
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
-    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
+    if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); support.push(901 + k); } continue; }
     if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= CLASS_GUIDE_STAT_KEYS.length || order.includes(k)) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); order.push(k); } continue; }   // the author's stat order (user 2026-10-18)
     if (tag === 0x4D && !modes){ const m = byte(); if (!m || m > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); modes = CLASS_GUIDE_MODES.filter((k, j) => m & (1 << j)); continue; }   // PVE / PVP (user 2026-10-20)
     if (tag === 0x43 && !descCols){ descCols = byte(); if (descCols < 2 || descCols > 3) throw new Error("โค้ดไกด์ไม่ถูกต้อง"); continue; }   // description columns (user 2026-10-21)
@@ -34430,7 +34432,7 @@ function mountSkillSimulator(root, options = {}){
   let cls = "rabbit", trees = SKILL_SIM.rabbit, cells = skillSimCells(trees, SKILL_SIM_SERVERS[srv].patch[cls]);
   const mkCells = () => skillSimCellsFor(srv, cls);
   const poolMax = (lv) => skillSimPools(cells).normal(lv), poolMaxC = (lv) => skillSimPools(cells).c(lv);
-  const state = { lv: cap(), learned: new Set(), support: [] };   // support: up to two support skill ids (901-912), see classGuideSupportCells
+  const state = { lv: cap(), learned: new Set(), support: [] };   // support: up to two support skill ids (901-912), three on Reborn (classGuideSupportMax), see classGuideSupportCells
   const supportCells = classGuideSupportCells();
   // The chosen server and class are remembered (user 2026-10-12), so the two gates only open on the first visit; the build itself is not saved.
   try {
@@ -34599,18 +34601,19 @@ function mountSkillSimulator(root, options = {}){
   function setServer(s){
     const oldCap = cap();
     srv = s; trees = skillSimTrees(srv, cls); cells = mkCells();
+    state.support = state.support.slice(0, classGuideSupportMax(srv));   // leaving Reborn drops a third support skill (Ctrl+Z brings it back)
     state.lv = state.lv === oldCap ? cap() : Math.min(state.lv, cap());
     if (!(expert ? budgetOk : valid)(state.learned, state.lv)){ state.learned = new Set(); }
     buildTrees();
   }
 
-  // The support row (user 2026-10-17): two slots on the grid with the normal frame. Building: both slots (an empty one is a dimmed frame with +, a click opens
+  // The support row (user 2026-10-17): two slots (three on Reborn, user 2026-10-28) on the grid with the normal frame. Building: every slot (an empty one is a dimmed frame with +, a click opens
   // the picker). Reading or writing notes: only the picked ones, and no row at all when there are none.
   function renderSupport(){
     for (const id of Object.keys(cellEls)) if (+id >= CLASS_GUIDE_SUPPORT_FIRST) delete cellEls[id];
     const row = treesEl.querySelector('[data-role="support"]'); if (!row) return;
     row.textContent = "";
-    const building = interaction === "build", show = building ? [0, 1] : state.support.map((_, k) => k);
+    const building = interaction === "build", show = building ? [...Array(classGuideSupportMax(srv)).keys()] : state.support.map((_, k) => k);
     row.hidden = !show.length;
     const gap = treesEl.querySelector('[data-role="supportGap"]'); if (gap) gap.hidden = row.hidden;   // the blank row goes with it
     for (let k = 0; k < 4; k++){
@@ -34633,7 +34636,7 @@ function mountSkillSimulator(root, options = {}){
       row.appendChild(slot);
     }
   }
-  // The support picker: the 12 support skills (the one in the other slot is greyed), plus remove for a filled slot.
+  // The support picker: the 12 support skills (those in the other slots are greyed), plus remove for a filled slot.
   let supportPick = null;
   const closeSupportPick = () => { if (supportPick){ supportPick.remove(); supportPick = null; } };
   function openSupportPick(k, anchor){
@@ -36437,6 +36440,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T14:16:34.173Z","feat(bible): class guides on Reborn can pick up to three support skills (two on every other server), and every guide code reader takes the third"],
     ["2026-10-28T13:40:37.849Z","feat(bible): class guide #82 reborn Whale PVP เพื่อนรัก PVE เพื่อนเลิฟ (อมตะวน) by onemaleshow"],
     ["2026-10-28T13:21:05.223Z","fix(bible): skill details quick wins from the 2026-10-28 review: the page declares Thai, the search term is escaped and searching starts at two letters, a broken link no longer stops the hub, the arrow keys stay put behind the Buff / Debuff and server pop-ups, leaving the tool closes its pop-ups, CHAR LV survives a lower server cap, the preset reset clears buff undo, and toggles report their state to screen readers"],
     ["2026-10-28T13:14:32.250Z","fix(bible): the owner's note calls: a Dark Edge or Lunar Eclipse cast during Holy Wolf is an unintended chip instead of a bug, and Miracle Ascension loses its mass-revive cooldown note (an internal cooldown, hard to show to begin with)"],
