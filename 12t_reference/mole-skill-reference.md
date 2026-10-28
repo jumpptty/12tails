@@ -193,6 +193,9 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_smartShell1 (Smart Shell, #264) (verified 2026-10-01)
 
 - Passive, Lv 33/Bn 24. The +30 Effect Damage and same-layer halving are documented in the Class C passive sweep below (re-checked this pass). Flame Carnival: halving only (`:39113-39125`).
+- **Burst radius (verified 2026-10-28):** `RPC_smartShell_hit` takes `FindAreaTarget(hitPos, 4 + getExtraPowderLv(), 4, enemy layers)` and gives each target without `insight` `RPC_AddEffectDamage(264, 30)` (`Mole.cs:11535-11583`). Landmine and Stun Mine call it from their trigger when `getSmartShellLv() == 1` (`Mole_mine.cs:396-413`, `Mole_stunMine.cs:396-413`), and their own blasts are `4 + ExtraPowderLv` too (`Mole.cs:10575`, `:11072`), so the burst covers the mine's own circle: 4 m, +1 m per Extra Powder level. Flame Carnival's fire loop has no other Smart Shell hook (`Mole.cs:39102-39150`).
+- **Stun Mine ally KO (re-checked 2026-10-28):** with Smart Shell a same-layer target gets a flat `KO 5 × sLv` (`Mole.cs:11092-11156`), not raised by Grenade Cluster or Mine Lover, so the card's "KO แค่ 10" is right.
+- **Bible (2026-10-28):** the Smart Shell card names Extra Powder (burst +1 m per level, base 4 m) on every server; its TTO desc now drops only the ally bullet, so the Extra Powder line stays there too.
 
 ### mol_mineLover5 (Mine Lover, #402) (verified 2026-10-01)
 
@@ -214,6 +217,8 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_detonate1 (Detonate, #273) (verified 2026-10-01)
 
 - MP 24, SP −24 (red), Lv 45/Bn 27. CD `agiAdjust(360)` (`:31268`). Refused with "Cannot find TimeNuke to detonate" and MP/SP returned when no Time Nuke exists (`doSkill`, `Mole.cs:6740-6750`). Detonating early: `mDamage = floor(mDamage × Clamp(elapsedWholeSeconds × 0.0166, 0.1, 0.99))` (`Mole_timeNuke.cs:185`, `:336`).
+- **First second (verified 2026-10-28):** placing sets the start time (`Mole_timeNuke.cs:56-59`), the press stores `elapsed = FloorToInt(Time.time − placed)` (`:472-481`), and `$detonate` applies the clamp only when `elapsed != 0` (`:865-876`), so a Detonate within 1 s of placing deals the full 100 %, like the natural fuse, which never sets it. ToT and TTO report no change, so they follow BB; Reborn bible3 floors `elapsed` at 1 (Reborn section, "Detonate in the first second").
+- **Bible (2026-10-28):** the base desc (BB / ToT / TTO) names the first-second exception; the Reborn desc keeps the plain 10-99 % wording.
 
 ### mol_flameCarnival5 (Flame Carnival, #442) (verified 2026-10-01)
 
@@ -259,7 +264,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_autoGyroGun1-4 (Auto Gyro Gun, #301-304) (verified 2026-10-01)
 
 - MP 10/15/20/25, SP −10 (red) at every rank, Lv/Bn 3/0, 9/1, 15/2, 21/3. Cast through `RPC_assemble1("autoGyroGun", …)` (`:8285`, `:22908-23440`): assemble time `magAdjust(1 + sLv)` = 2-5 s, CD `agiAdjust(30)` (`:23353-23429`); the build aborts if `myCommand` stops being `"assemble"` (`:23146`). Spawn point `getSpawnVector(pos + up, 0.7 × forward − up)` (`:23199`).
-- `RPC_autoGyroGun_create` (`:11751-12160`): prefab `AutoGyroGun1-4`, `isSummon`, life `chaAdjust(120)` (`create(…, chaAdjust(120))`, `AutoGyroGun.cs:1610-1740`). Base stats from `Awake` (`AutoGyroGun.cs:42-140`): all eight stats `10 × sLv`, HP `50 × sLv`. Hidden Turret #403 overrides them (`:12141-12160`): ATK/DEF `(int)(0.25 × sLv × Lv)`, AGI/VIT/MAG/CHA/TAL/LCK `(int)(0.125 × sLv × Lv)`, MHP `ceil(10 × VIT)`. Heavy Built: MHP `ceil(MHP × (1 + 0.5 × lv))` (`:12203-12210`). No turret count limit in the client (ToT's 8/12 cap is server-side, see Server Balance Variations).
+- `RPC_autoGyroGun_create` (`:11751-12160`): prefab `AutoGyroGun1-4`, `isSummon`, life `chaAdjust(120)` (`create(…, chaAdjust(120))`, `AutoGyroGun.cs:1610-1740`). Base stats from `Awake` (`AutoGyroGun.cs:42-140`): all eight stats `10 × sLv`, HP `50 × sLv`. Hidden Turret #403 overrides them (`:12141-12160`): ATK/DEF `(int)(0.25 × sLv × Lv)`, AGI/VIT/MAG/CHA/TAL/LCK `(int)(0.125 × sLv × Lv)`, MHP `ceil(10 × VIT)`. Heavy Built: MHP `ceil(MHP × (1 + 0.5 × lv))` (`:12203-12210`). No turret count limit in the client (TTO's 8/12 cap is server-side, see Server Balance Variations (TTO); this line said ToT until 2026-10-28).
 - Reload clears the `autoGyroGun` cooldown (`:10202`). The app model is `autoGyroGunOwnStats()`.
 
 ### mol_autoGyroGun_nAttack (Auto Gyro Gun attack) (verified 2026-10-01)
@@ -333,6 +338,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - SP 50 **blue**, Lv 85/Bn 6, target. CD `agiAdjust(120)` (`:40199`).
 - `RPC_barrelCannon` (`:39835-40300`): starts `RPC_cannonForm` on the bot (`:39989-40038`) and on the Double Bot second bot (`:40053-40104`). `RPC_cannonForm` (`BarrelBot.cs:5377-5800`): the bot stands still and fires at the Mole's target every 0.5 s (`:5544`, `:5743`) until 10 shells (`mCannonCount >= 10`, `:5716`) or the target is gone; each shell is the cannon hit above. Passive part: CannonLv for the bot (`:13035`); the tooltip's "bombing attack on Mole's Chopper" is covered under Chopper.
+- **Bible (2026-10-28):** the Barrel Cannon card mirrors the Chopper blast (`Mole.cs:33957-33986`, learned check `:33695`) with a **Chopper:** line: every one of the 10 ticks also blasts around the Mole, `talAdjust(20)`, KO 0. The line leaves out the 5 m size, which the Chopper card carries (a radius in this desc would need a matching `reach`).
 
 ### mol_megaPunch1-2 (Mega Punch, #331-332) (verified 2026-10-01)
 
@@ -363,6 +369,8 @@ Raw Damage calc chip to support it (the app's history is in git).
 - MP 15/25, **SP −25 (red) at both ranks**, Lv/Bn 30/21, 33/24. The card's former SP 25/35 was wrong. CD `agiAdjust(300)`.
 - `RPC_synchroMole` (`:13220-13300`): `RPC_AddStatus("synchroMole", sLv, chaAdjust(30), value = Mole TAL)` on the Mole, and the same status for `chaAdjust(30) + 1` s on every own `AutoGyroGun1-5` / `BarrelBot1-5` summon present at cast (not King Kaiser / War Factory). Non-Mole, non-Robots targets refuse it (`CharacterControl.cs:12466-12470`).
 - Effect (`CharacterControl.cs:37714-37777`): `deltaAtk/deltaDef(+floor(0.5 × sLv × value))` on the summons; removal subtracts the same (`:16978-17025`), and the Mole's own removal calls `RPC_synchroMole0`, which strips it from its summons (`Mole.cs:13514-13560`). Buff + State status (`StatusData.cs:4938`, `:6746`). A recast refreshes instead of stacking (`CharacterControl.cs:14103-14182`); summons made after the cast do not get it.
+- **Status value (verified 2026-10-28):** `value = mChar.tal` at the cast, for the Mole (`Mole.cs:13242`) and for every own summon present (`:13267-13370`); the summons apply `deltaAtk` / `deltaDef(floor(0.5 × sLv × value))` (`CharacterControl.cs:37772-37777`): +50 % / +100 % of the Mole's TAL at level 1 / 2, fixed at the cast.
+- **Bible (2026-10-28):** the Auto Gyro Gun and Barrel Bot cards name Synchro Mole on every server (the hand-written TTO Auto Gyro Gun desc too).
 - **App fix:** the summon-stat toggle was Rank 2 only (`floor(TAL)`); it is now a 0-2 rank toggle (`floor(0.5 × rank × TAL)`), id `synchroMole`.
 
 ### mol_doubleBot5 (Double Bot, #423) (verified 2026-10-01)
@@ -377,6 +385,7 @@ Raw Damage calc chip to support it (the app's history is in git).
 ### mol_geniusInvention5 (Genius Invention, #421) (verified 2026-10-01)
 
 - Passive, Lv 70/Bn 3. Workshop tier 5 (`CompoundGui.cs:1249`, `:1852`). Item cooldowns for a Mole with #421 (`GameGui.cs:32730-32790`): firework 3 → 1 s, bomb 30 → 15 s. (`CharacterControl.cs:13421` and the other classes' #421 hooks are not Mole's.)
+- **Giga Cannon (verified 2026-10-28):** the `o_mol3` mount is refused without #421 ("Require geniusInvention skill.", `GameGui.cs:36371-36377`; see the mounts section). **Bible (2026-10-28):** the Genius Invention card names Giga Cannon.
 
 ### mol_kingKaiser1 / mol_kaiserCannon1 / mol_kaiserBeam1 (King Kaiser #371, Kaiser Cannon #372, Kaiser Beam #373) (verified 2026-10-01)
 
@@ -387,6 +396,8 @@ Raw Damage calc chip to support it (the app's history is in git).
 
 - `KingKaiser.doNormalAttack` (`KingKaiser.cs:900-930`): when `nAttack` is ready; at Kaiser level ≥ 2 and a target farther than 10 m (`sqrMagnitude > 100`) it fires Kaiser Cannon instead.
 - `RPC_nAttack` (`KingKaiser.cs:1471-2270`): 3 swings, `addTimeOut("nAttack", 4)` (`:2179`): `FindRecTarget(pos + right, fwd, 2, 2, 5, 3)` → `hit(1, t, ATK, KO 1)` (`:1657-1680`), `FindRecTarget(pos, fwd, 1.5, 1.5, 4, 3)` → `hit(2, t, (int)(1.2 × ATK), KO 1)` (`:1862-1885`), `FindRecTarget(pos + (−1, 0.5, −2), fwd, 2.5, 2.5, 6, 2)` → `hit(3, t, (int)(1.3 × ATK), KO 1)` (`:2008-2031`); Kaiser `sp + 1` per target on swings 1 and 3 (`:1686`, `:2037`).
+- **Kaiser Cannon branch (verified 2026-10-28):** `doNormalAttack` checks `nAttack` off timeout, `mLv > 1` (`getKaiserLv`: 2 with #372, 3 with #373, `Mole.cs:13607-13634`) and a flat target vector with `sqrMagnitude > 100`, then starts `RPC_kaiserMissile` instead of `RPC_nAttack` (`KingKaiser.cs:949-984`); both arm `addTimeOut("nAttack", 4)` (`:2179`, `:2711`), so the swing and the cannon share one 4 s lock.
+- **Bible (2026-10-28):** King Kaiser - Normal Attack names Kaiser Cannon, Kaiser Cannon names the swing it replaces, and the two cards link each other.
 
 ### mol_kingKaiser_missile (Kaiser Cannon) (verified 2026-10-01)
 
@@ -535,6 +546,8 @@ Private-server values are documented from the Bible skill-detail schema; the Big
 
 Source of server delta: `12t_projects/bible/index.html:9160`.
 
+On the cards (2026-10-28): Hidden Turret has a TTO desc that names the 12-gun cap (8 without it), the mirror of the Auto Gyro Gun TTO desc. Time Nuke and Flame Carnival have TTO descs without the Smart Shell ally halving (BB halving `Mole_timeNuke.cs:732-767`, `Mole.cs:39113-39125`): Time Nuke keeps only the +30 Effect Damage on enemies, and Flame Carnival loses its Smart Shell line (the halving was its only effect there). Both rest on the user report in the Smart Shell row. Whether the KO cut on Stun Mine / Stun Grenade is gone too is open (Open items, 2).
+
 ## Server Balance Variations (Reborn)
 
 Reborn client (`DecompiledSource_Reborn_2026-10-25/Assembly-CSharp/`), checked 2026-10-26. Citation tags as in [Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md). Cards: `servers.reborn`.
@@ -580,9 +593,29 @@ Traced 2026-10-26 against the build in [Reborn-Mechanics-Reference.md](Reborn-Me
 - **One-use mount cost (patch-note extra, no card):** one-use mounts are charged their own mana (`Reborn1027:GameGui.cs:1800`): WormBug `o_bug2` 5 (`:953-954`), `o_all9` 90 (`:821-822`); was a flat 90 for both (`Reborn:GameGui.cs:1782`). Mole's Tank (`o_mol2`, 5) is not a one-use mount and is unchanged. No Bible card shows these mounts.
 - **King Kaiser beam timeout deleted (issue-list check 2026-10-28; card `mole_kingKaiser_beam`):** the 2026-10-25 build set `addTimeOut("kaiserBeam", 2f)` and `addTimeOut("kaiserBeam", 30f)` (`Reborn:KingKaiser.cs:457`, `:571`; BB `KingKaiser.cs:3041`, `:3426`) and nothing read them; in 2026-10-27 the string `"kaiserBeam"` (helper `_2005_2004_2004`, decoded with the string table, identical in both builds) is used nowhere, and the only timeouts left are `addTimeOut("nAttack", 4f)` (`Reborn1027:KingKaiser.cs:62`, `:313`, helper `_206B`), which the normal attack checks with `isTimeOut("nAttack")` (`:1448`); the beam is still gated by the robot's 75 SP alone, which the new tooltip states (ไม่มีคูลดาวน์). App: the card's Reborn tab clears its `bbBug`, so the Reborn issue list leaves it out.
 
+### Dependency-line audit (verified 2026-10-28)
+
+Same tags as above (`Reborn1027:` = bible3). A line goes into `servers.reborn` only where Reborn alone has the effect.
+
+- **Burrow Regen on the Charge Attack card:** the tick wants `actionState == "attack"` and `myCommand` `"cAttack1"` / `"burrow"` / `"superDig"` (`Reborn1027:RebornC6Passive.cs:421-453`); the Charge Attack sets `cAttack1` at the dive (`Reborn1027:Mole.cs:504-506`, a string helper; the BB literal is the same, `BB:Mole.cs:22278`) and keeps it for its loop (`:577-582`). Unlike Super Dig's heal (`BB:Mole.cs:21823-21860`, real game modes only) it has no game-mode check. Card: Charge Attack Reborn desc **Burrow Regen:** line (2 % HP every 2 s, lock statuses up to level 7 removed every 0.5 s).
+- **Smart Shell burst:** `4 + ExtraPowderLv + BlastPlus` (`Reborn1027:Mole.cs:15537-15539`), so Smart Warhead's +6 adds to the Extra Powder radius. Card: the Reborn desc shows the Extra Powder line before the Smart Warhead line.
+- **Synchro Mole:** same code as BB (`Reborn1027:Mole.cs:16132-16158`, `Reborn1027:CharacterControl.cs:2931-2934`).
+- **Reactor Core → Synchro Mole:** the status value is `mChar.tal` at the cast (`Reborn1027:Mole.cs:16138` for the Mole, `:16154` for the summons), and during Reactor Overdrive `MolTalSync` has applied `deltaTal(+120)` (`Reborn1027:RebornC7Passive.cs:3191-3201`; granted for 30 s at 100 heat, `:3225-3233`), which adds to `tal` (`Reborn1027:CharacterControl.cs:12093-12097`). A cast during Overdrive gives the summons `floor(0.5 × sLv × (TAL + 120))` = `floor(0.5 × sLv × TAL) + 60 × sLv` ATK and DEF: +60 / +120 more at level 1 / 2, fixed at the cast. Card: Synchro Mole Reborn desc **Reactor Core:** line (`+60 × rank`) and Reborn `compatSkills` both ways. **Not modelled:** `autoGyroGunOwnStats` / `barrelBotOwnStats` compute the Synchro Mole bonus from the Mole's TAL without the Overdrive +120 (the own-stat cards have no Overdrive toggle, see Review corrections).
+- **Chopper + Barrel Cannon:** the same blast as BB, `FindAreaTarget(Mole, 5, 1)` and `hit(443, talAdjust(20), KO 0)` each tick (`Reborn1027:Mole.cs:4662-4674`).
+- **King Kaiser normal attack → Kaiser Cannon:** the same branch as BB (`Reborn1027:KingKaiser.cs:1446-1462`).
+- **Giga Cannon gate:** the same refusal without #421 (string helper, `Reborn1027:GameGui.cs:908-910`).
+- **Detonate:** the Reborn desc keeps the plain 10-99 % wording (it drops the BB first-second exception); see "Detonate in the first second" above.
+- **Re-checked, no change:** the Reborn `Mole.cs` reads the same skill ids as BB plus the known C7 hooks (`BlastPlus`, `BlastMask`, `TrapBonus`, `TrapMayChain`); Iron Overdrive does not halve the Mole-commanded Barrel Cannon (`cannonForm`), so the Barrel Cannon card needs no Iron Overdrive line.
+
 ## Open items / could not verify
 
-None open. Resolved 2026-10-01 (user decisions):
+Open (dependency-line audit 2026-10-28; each needs a live check or a user decision):
+
+1. **ToT Mine Lover on the mines:** ToT turned Mine Lover into the active Blast Throw ("ลดคูลดาวน์ของระเบิดและเพิ่มดาเมจทั้งหมด 50%"). Do Landmine and Stun Mine still get the BB passive part there (damage / KO ×1.25, base cooldown 15 → 8 s and 45 → 23 s; `Mole.cs:10614-10620`, `:23891-23905`, `:26680-26694`, `:11097-11103`)? Their cards have no ToT tab and keep the BB Mine Lover lines. The patch note's "50%" matches the original BB tooltip ("+50% and −50%"), not the code's ×1.25. Needs a live ToT check before anything changes.
+2. **TTO Smart Shell and the KO cut:** TTO Smart Shell "does not reduce damage dealt to allies" (user-reported 2026-10-02). Does that also remove the same-layer KO cut on Stun Mine (allies get `KO 5 × sLv` = 10 instead of the full KO, `Mole.cs:11144-11156`) and Stun Grenade (half KO, `Mole_stunGrenade.cs:200-290`)? The TTO Smart Shell card drops the whole halving bullet, but the report and the change note only say damage. If the KO cut is gone too, Stun Mine and Stun Grenade need TTO descs like Time Nuke's.
+3. **Reload targets:** Reload resets 19 skills (27 with Advance Repair; `Mole.cs:10168-10300`, `:10266`), and none of their cards has a **Reload:** line or link. That follows the house precedent: no class gives cooldown-reset targets a line, and Swift Pace, Phoenix, Gadina and Double Art state the reset only on the resetting card. Should reset-type skills keep this exemption from the one-line-per-modifier rule?
+
+Resolved 2026-10-01 (user decisions):
 
 1. **Kaiser Beam cooldown:** the `kaiserBeam` timeout is never checked; the card shows no cooldown (75 Kaiser SP is the only limit).
 2. **Napalm:** the card assumes point-blank use, with all 5 shells on the target (30 hits).
@@ -604,6 +637,8 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Napalm | can damage Machine / Structure targets; can no longer damage characters that are dodging |
 
 On the cards (2026-10-26): every row above has a ToT desc built from the base desc (`servers.tot.desc`); the Fire Barrage / Bombardment +20% damage range lives in their `reach` (radius × 1.2 when the ToT tab is on), so their ToT descs add only the Blast Throw reset. The BB Napalm skips `Robots` / `Structure` targets (`Mole.cs:37723`, `:37729`), which is what the ToT change lifts.
+
+On the cards (2026-10-28): the Mine Lover ToT desc names Fire Barrage and Bombardment (each resets Blast Throw, the mirror of their ToT descs), with ToT-only `compatSkills` both ways (`servers.tot.compatSkills`). Whether Landmine / Stun Mine keep the BB Mine Lover passive part on ToT is open (Open items, 1).
 
 
 ### ToT EX learning requirements (published simulator, 2026-10-13)
