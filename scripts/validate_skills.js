@@ -5959,6 +5959,8 @@ if (gmHtml !== null) {
       for (const enc of [gc.encode, gc.encode2, gc.encode1]) { const code = enc(guide); if (same(finish(code), gc.decode(code))) decoded++; else ok(false, `guide #${id}: the page reads ${code.slice(0, 12)}… differently from guide_code.js`); }
     }
     ok(decoded === doc.guides.length * 3, `${decoded} of ${doc.guides.length * 3} codes read the same as guide_code.js`);
+    // a guide with description columns (tag 0x43 / TG2 "w", user 2026-10-21) reads the same too: the page could not read one until 2026-10-28 (guide #82)
+    { const { id: _w, ...gw } = doc.guides[0].g; for (const enc of [gc.encode, gc.encode2]) { const code = enc({ ...gw, descCols: 2 }); let r; try { r = finish(code); } catch (e) { r = String(e.message); } ok(same(r, gc.decode(code)), `a ${code.slice(0, 3)} code with description columns: the page reads it differently from guide_code.js`); } }
     const { id: _id, ...first } = doc.guides[0].g, c3 = gc.encode(first), wrapped = "ไกด์ `" + c3.slice(0, 9) + " \n" + c3.slice(9) + "` จบ";
     ok(same(finish(gm.gmFindCode(wrapped)), gc.decode(c3)), "a TG3 code pasted with chat text, a space and a line break is found and read");
     const at = Math.floor(c3.length / 2), broken = c3.slice(0, at) + String.fromCharCode(c3.charCodeAt(at) ^ 1) + c3.slice(at + 1);   // a data character (the last ones may hold only padding bits)

@@ -353,13 +353,14 @@ function gmFromBinary(bytes){
   const unslot = (k) => { if (k >= 200 && k < 212) return 901 + k - 200; if (k >= 160) throw new Error(GM_BAD); return (Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1; };
   const count = varint(), notes = {};
   for (let n = 0; n < count; n++){ notes[unslot(byte())] = text(); }
-  let gear = null, cover = null, support = null, order = null, modes = null;
+  let gear = null, cover = null, support = null, order = null, modes = null, descCols = 0;
   while (i < bytes.length){
     const tag = byte();
     if (tag === 0x49 && !cover){ const n = byte(); if (n < 1 || n > 5) throw new Error(GM_BAD); cover = []; for (let q = 0; q < n; q++){ cover.push(unslot(byte())); } continue; }
     if (tag === 0x53 && !support){ const n = byte(); if (n < 1 || n > 2) throw new Error(GM_BAD); support = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= 12) throw new Error(GM_BAD); support.push(901 + k); } continue; }
     if (tag === 0x4F && !order){ const n = byte(); order = []; for (let q = 0; q < n; q++){ const k = byte(); if (k >= GM_STAT_KEYS.length || order.includes(k)) throw new Error(GM_BAD); order.push(k); } continue; }
     if (tag === 0x4D && !modes){ const m = byte(); if (!m || m > 3) throw new Error(GM_BAD); modes = GM_MODES.filter((k, j) => m & (1 << j)); continue; }
+    if (tag === 0x43 && !descCols){ descCols = byte(); if (descCols < 2 || descCols > 3) throw new Error(GM_BAD); continue; }   // description columns, as guide_code.js
     if (tag !== 0x47 || gear) throw new Error(GM_BAD);
     const m = byte(); gear = {};
     for (let j = 0; j < GM_GEAR_KEYS.length; j++) if (m & (1 << j)){
@@ -370,13 +371,13 @@ function gmFromBinary(bytes){
     }
   }
   if (order){ const keys = order.map((k) => GM_STAT_KEYS[k]); if (keys.length !== Object.keys(stats).length || keys.some((k) => !(k in stats))) throw new Error(GM_BAD); for (const k of keys){ const v = stats[k]; delete stats[k]; stats[k] = v; } }
-  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), ...(modes ? { modes } : {}), notes };
+  return { format: "12t-class-guide", version: 1, title, author, date, description, build: { server, classKey, level, learned, ...(support ? { support } : {}) }, ...(mask ? { stats } : {}), ...(statsPlus.length ? { statsPlus } : {}), ...(gear ? { gear } : {}), ...(cover ? { cover } : {}), ...(modes ? { modes } : {}), ...(descCols ? { descCols } : {}), notes };
 }
 function gmExpand(o){
   if (!o || typeof o.k !== "string") return o;
   const bits = gmFromB64u(o.k), learned = [];
   for (let k = 0; k < bits.length * 8 && k < 160; k++) if (bits[k >> 3] & (1 << (k & 7))) learned.push((Math.floor(k / 40) + 1) * 100 + Math.floor(k % 40 / 4) * 10 + k % 4 + 1);
-  return { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), ...(o.i !== undefined ? { cover: o.i } : {}), ...(o.m !== undefined ? { modes: o.m } : {}), notes: o.n || {} };
+  return { format: "12t-class-guide", version: 1, title: o.t, author: o.a, date: o.d, description: o.x, build: { server: o.s, classKey: o.c, level: o.l, learned }, ...(o.v !== undefined ? { stats: o.v } : {}), ...(o.g !== undefined ? { gear: o.g } : {}), ...(o.i !== undefined ? { cover: o.i } : {}), ...(o.m !== undefined ? { modes: o.m } : {}), ...(o.w !== undefined ? { descCols: o.w } : {}), notes: o.n || {} };
 }
 // raw = the body, inflated when u.deflated
 function gmFinish(u, raw){
