@@ -9149,8 +9149,8 @@ function getUsedPlayerStatKeys(skill) {
     else if (cdWrappedOn(skill) && (!skill.ownStatsGadina || skill.cdPlayerStats) && !(skill.cdDep && skill.cdDep.kind === "replace" && skill.cdDep.replaceValue === 0 && getDepRank(skill.cdDep) === skill.cdDep.maxRank)) used.add("agi");
   }
   if (skill.secondaryCooldown && skill.secondaryCooldown.cdWrapped && !skill.ownStatsGadina) used.add("agi");   // e.g. Book Bash's mission lock (user 2026-10-21: it never glowed)
-  // the same for a cast bar: Rapid Trance skips the cast bar (castDep replace 0), so INT has nothing left to change
-  if (skill.castTime !== undefined && skill.castWrapped && !(skill.castDep && skill.castDep.kind === "replace" && skill.castDep.replaceValue === 0 && getDepRank(skill.castDep) === skill.castDep.maxRank)) used.add("int");
+  // the same for a cast bar: Rapid Trance (castDep) and Instant Cast (castDep2) skip the cast bar (replace 0), so INT has nothing left to change
+  if (skill.castTime !== undefined && skill.castWrapped && ![skill.castDep, skill.castDep2].some(d => d && d.kind === "replace" && d.replaceValue === 0 && getDepRank(d) === d.maxRank)) used.add("int");
   if (skill.duration !== undefined) {
     if (skill.durContested && skill.durContestedSource !== "phoenix") used.add("cha");
     else if (durWrappedOn(skill)) used.add(skill.durAdjust === "tal" ? "tal" : "cha");
@@ -11571,8 +11571,11 @@ function skillEffectDamageOn(skill){
 const CAT_COMBO_HIDDEN_DEP = { id: "catComboHidden", label: "Hidden Blade / Jagged Knife", icon: "cat_hiddenBlade4", minRank: 0, maxRank: 5, defaultRank: 0, labelFor: (r) => r >= 5 ? "Jagged Knife (+ Hidden Blade 4)" : "Hidden Blade" };
 // Cat Power Number series passives (Power One, Two, Three, Seven, Super Seven; CharacterControl.cs:2838-3010).
 // In BigBug engine, applies globally to all Cat attacks. On TTO, restricted strictly to Cat Skill Tree A.
-const CAT_POWER_DEP = { id: "catPower", label: "Active Power digit", icon: "cat_powerSeven4", minRank: 0, maxRank: 4, defaultRank: 0 };
+const CAT_POWER_DEP = { id: "catPower", label: "Active Power digit", icon: "cat_powerSeven4", minRank: 0, maxRank: 4, defaultRank: 0, lineNeedsToggle: true };
 const CAT_COMBO_POWER_DEP = CAT_POWER_DEP;
+// lineNeedsToggle (user 2026-10-28): the "**<Name>:**" desc lines this dep claims show only on a card that draws the dep and has it on
+// (hideOffDepLines); a card without the toggle (a TTO Cat skill outside Class A) hides them too. Every dep with the flag is listed here.
+const LINE_NEEDS_TOGGLE_DEPS = [CAT_POWER_DEP];
 const CAT_TREE_A_SKILLS = new Set([
   "cat_luckyCard",
   "cat_fateDraw",
@@ -11704,6 +11707,10 @@ const MONKEY_RAPIDFIRE_CAST_DEP = { id: "rapidFire", label: "Rapid Fire", icon: 
 
 const MONKEY_RAPIDFIRE_CD_DEP = { id: "rapidFire", label: "Rapid Fire", icon: "monkey_rapidFire3",
   minRank: 0, maxRank: 3, perRank: -3 };
+// Instant Cast / Auto Instant (user 2026-10-28): a card's castDep2, the second cast toggle (Fireball keeps Rapid Fire as its castDep).
+// While on, the cast time is 0 (kind "replace", like Rapid Trance), so the chip reads ไร้หลอด and INT stops glowing.
+const MONKEY_INSTANT_CAST_DEP = { id: "instantCast", label: "Instant Cast", icon: "monkey_instantCast2", minRank: 0, maxRank: 1, kind: "replace", replaceValue: 0 };
+const MONKEY_AUTO_INSTANT_CAST_DEP = { id: "autoInstant", label: "Auto Instant", icon: "monkey_autoInstant5", minRank: 0, maxRank: 1, kind: "replace", replaceValue: 0 };
 
 // Fire Keep (mnk_fireKeep5, hasSkill(402)), Monkey batch2. Flat +20 dmg to
 // every Fire Ball hit (Monkey_fireBall.cs:200, unconditional whenever known)
@@ -22174,15 +22181,19 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   let depLineDeps = null;
   const depLineIcon = (k) => { k = String(k || ""); return k.startsWith("item_") ? k : k.replace(/\d+$/, ""); };
   function hideOffDepLines(str, deps, skill){
-    if (!deps || !deps.size) return str;
+    if (!deps) return str;
+    // a lineNeedsToggle dep the card does not draw claims its lines as off (Cat Power on a TTO skill outside Class A, user 2026-10-28)
+    const drawn = new Set([...deps.keys()].map(d => d.id));
+    const all = [...deps, ...LINE_NEEDS_TOGGLE_DEPS.filter(d => d.lineNeedsToggle && !drawn.has(d.id)).map(d => [d, String(d.label || "").replace(/ \(.*$/, ""), true])];
+    if (!all.length) return str;
     const claimed = new Map(), claim = (key, on) => claimed.set(key, claimed.get(key) || on);   // any toggle on reveals the line
-    for (const [dep, label] of deps) {
-      const lo = dep.minRank || 0, r = getDepRank(dep), on = dep.viewOf ? r > lo : (lo > 0 || r > 0);
+    for (const [dep, label, undrawn] of all) {
+      const lo = dep.minRank || 0, r = getDepRank(dep), on = !undrawn && (dep.viewOf ? r > lo : (lo > 0 || r > 0));
       claim("label:" + label, on);
       claim("icon:" + depLineIcon(dep.icon), on);
       if (dep.iconFor) for (let k = Math.max(lo, 1); k <= (dep.maxRank || 0); k++) {
         const ic = String(dep.iconFor(k) || "");
-        claim("icon:" + depLineIcon(ic), ic.startsWith("item_") ? on : k <= r);
+        claim("icon:" + depLineIcon(ic), !undrawn && (ic.startsWith("item_") ? on : k <= r));
       }
     }
     return String(str).split("<br>").filter((l) => {
@@ -23945,20 +23956,21 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (activeSelected.castTime !== undefined){
       const castDep = activeSelected.castDep;   // the server card's (Reborn Crown Of Stars is servers.reborn.castDep)
       const castDepRank = castDep ? getDepRank(castDep) : null;
+      const castDep2 = activeSelected.castDep2, castDep2Rank = castDep2 ? getDepRank(castDep2) : null;   // a second cast toggle after castDep (Instant Cast: cast 0 while on)
       // Both known castDep cases (Chameleon's linear Improved Slayer, Whale's
       // postMultiply Reduced Cast) apply BEFORE magAdjust in source, unlike
       // the Duration dep pattern (postMultiply applied AFTER chaAdjust) --
       // so rawCast is fully dep-resolved before it ever reaches magAdjustRange,
       // and no post-adjust multiply step runs afterward.
       const castTimeBase = resolveRank(activeSelected.castTime, rank);
-      const rawCast = castDep
+      const rawCast = depRawValue(castDep
         ? (castDep.kind === "postMultiply"
             ? Math.floor(castTimeBase * castDep.multipliers[castDepRank])
             : depRawValue(castTimeBase, castDep, castDepRank))
-        : castTimeBase;
+        : castTimeBase, castDep2, castDep2Rank);
       const castPost = castPostMul(castDep, castDepRank, INT);   // castDep kind postAdjustMul (Crown Of Stars): a factor after magAdjust
       const castRange = (selected.castWrapped ? magAdjustRange(rawCast, INT, LCK) : [rawCast]).map(castPost);
-      const castDepBlock = castDep ? renderDepBlock(castDep, castDepRank, "", "CAST") : "";
+      const castDepBlock = (castDep ? renderDepBlock(castDep, castDepRank, "", "CAST") : "") + (castDep2 ? renderDepBlock(castDep2, castDep2Rank, "", "CAST") : "");
       const castDist = selected.castWrapped ? lckDistribution(rawCast, INT, LCK, magAdjustAtRoll, castPost) : null;
       const zeroCastInfo = selected.castWrapped ? intForZeroCast(rawCast) : null;
       const zeroCastText = zeroCastInfo
@@ -36342,6 +36354,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T04:57:00.741Z","feat(bible): a desc line of a toggle that only some cards draw (Cat Power) stays hidden on the cards without it, such as TTO Cat skills outside Class A, a card can carry a second cast-time toggle (castDep2) after its first, and the Monkey Instant Cast and Auto Instant toggles (cast 0 s while on) are ready for the Monkey cards"],
     ["2026-10-28T04:15:05.753Z","feat(bible): on the skill page a skill's effect line shows only while its toggle on the card is on, so the lines appear one by one as the toggles go on (a line belongs to the toggle that shows its icon, merged toggles like Feral Instinct / Wild Heart and gear tiers included; a line with no toggle on the card always shows)"],
     ["2026-10-28T04:09:48.112Z","feat(bible): 26 Wolf cards name the skills that change them (Lunar Eclipse on the fifteen cards it enlarges, which the Lunar Eclipse card now lists, Charged Fang on the same fifteen on Reborn, Final Eclipse on Lunar Eclipse and Feral Strike, Grand Cross on Cross Break, Feral Instinct and Dark Edge on each other, Charged Fang and Shadow Pack on the Reborn Dark Edge, Eternal Dark Edge on Sky Slasher, Shadow Pack and Eternal Dark Edge on each other, Sublime Art on Holy Sword, Holy Armor, Art Breaker and Mirror Blade, Double Art on Twin Resonance, Power Break, Provoke and Third Rend on Alpha Howl), Final Eclipse says the BB dash puts Feral Strike on its cooldown, the BB Blade Fang line says Lunar Eclipse shortens its reach, and the Reborn Double Art says it never skips the Guardian Oath and Alpha Howl cooldowns"],
     ["2026-10-28T04:04:09.080Z","feat(bible): 19 Sheep cards name the skills that change them (Return Cast on Purifying Tear, Lullaby and Divinity Axe, Seal of Earth on Seal of Attack and Seal of Heaven on Seal of Defense, Radiant Heal and Harmonic Diffuse on each other, Reverse, Repel and Eden Sanctuary on Karma and Karma on them, Divine Benediction and Karma on each other on Reborn, Perfect Serenity on Heaven's Verdict, Seraph Wings and the Reborn nAttack, Free Cast on the Reborn Gospel and Blinding Light), Free Cast lists the 25 skills it refunds and Perfect Serenity the heals it cuts, and the BB Free Cast refund of 0 MP on Seal of Attack and Seal of Defense is a bug note on the three cards"],

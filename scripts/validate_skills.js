@@ -302,6 +302,7 @@ SKILLS.forEach(sk => {
   checkIcon(sk.icon, `${ctx} [main icon]`);
   if (sk.cdDep) checkIcon(sk.cdDep.icon, `${ctx} [cdDep icon]`);
   if (sk.castDep) checkIcon(sk.castDep.icon, `${ctx} [castDep icon]`);
+  if (sk.castDep2) checkIcon(sk.castDep2.icon, `${ctx} [castDep2 icon]`);
   if (sk.dmgDep) checkIcon(sk.dmgDep.icon, `${ctx} [dmgDep icon]`);
   if (sk.dmgRankDep) checkIcon(sk.dmgRankDep.icon, `${ctx} [dmgRankDep icon]`);
   if (sk.dmgMultDep) checkIcon(sk.dmgMultDep.icon, `${ctx} [dmgMultDep icon]`);
@@ -1189,7 +1190,7 @@ for (const srv of ["tot", "tto", "reborn"]) {
 // as the skill(s) that reference it).
 // Standalone combat-condition / stack-count toggles that do not correspond to an individual passive skill card.
 const PSEUDO_DEPS = new Set(["doomStack", "slayerRaceMatch", "moleStructureTarget"]);
-const DEP_FIELDS = ["cdDep", "castDep", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep", "lckDiffDep"];
+const DEP_FIELDS = ["cdDep", "castDep", "castDep2", "dmgDep", "dmgRankDep", "dmgMultDep", "hitCountDep", "dep", "descDep", "koDep", "shieldDep", "shieldRankDep", "lckDiffDep"];
 const seenDeps = new Map(); // dep.id -> { label, resolved, referencedBy: [] }
 SKILLS.forEach(sk => {
   const classPrefix = sk.class.toLowerCase() + "_";
@@ -3196,6 +3197,63 @@ let checkedDepLines = 0;
   sandbox._setServer("og");
 }
 console.log(`Verified ${checkedDepLines} toggle-revealed desc line checks.`);
+
+// Toggle-only lines and the second cast toggle (open-decision pass, user 2026-10-28). A line claimed by a dep with lineNeedsToggle (Cat Power)
+// hides on a card that does not draw that dep (TTO Cat skills outside Class A), whatever its rank; castDep2 (Instant Cast / Auto Instant) is a
+// second cast toggle after castDep: cast 0 while on, castDep (Rapid Fire on Fireball) unchanged while off. Until the class pass puts the line /
+// the toggle on the real cards, a test copy of the card carries it (the page data is never changed here).
+let checkedToggleOnly = 0;
+{
+  const fail = (tag, msg) => { console.error(`[${tag} ERROR] ${msg}`); errorCount++; };
+  const R = sandbox._depRanks, keep = { ...R }, get = (name) => vm.runInContext(name, sandbox);
+  const hero = (sk, srv, rank, ranks) => { Object.assign(R, ranks); sandbox._setServer(srv); sandbox._skillRanks[sk.id] = rank; sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+  const has = (h, name) => h.includes(name + ":");
+  const withLine = (card, line) => {   // a copy whose desc ends with the line on every server
+    const wrap = (d) => typeof d === "function" ? (...a) => String(d(...a)) + "<br>" + line : String(d) + "<br>" + line;
+    const servers = {};
+    for (const [k, o] of Object.entries(card.servers || {})) servers[k] = o && o.desc !== undefined ? { ...o, desc: wrap(o.desc) } : o;
+    return { ...card, desc: wrap(card.desc), servers };
+  };
+  const power = get("CAT_POWER_DEP");
+  if (!power.lineNeedsToggle || !get("LINE_NEEDS_TOGGLE_DEPS").includes(power)) fail("DEP LINE", "CAT_POWER_DEP must carry lineNeedsToggle and be listed in LINE_NEEDS_TOGGLE_DEPS"); else checkedToggleOnly++;
+  if (get("LINE_NEEDS_TOGGLE_DEPS").some(d => !d.lineNeedsToggle)) fail("DEP LINE", "every dep in LINE_NEEDS_TOGGLE_DEPS needs lineNeedsToggle: true"); else checkedToggleOnly++;
+  const rt = SKILLS.find(s => s.id === "cat_reverseThrust"), rtLine = withLine(rt, "**Power Seven:** test line");
+  for (const [card, what] of [[rt, "the card"], [rtLine, "a test copy with a Power Seven line"]]) {
+    if (has(hero(card, "tto", 2, { catPower: 4 }), "Power Seven")) fail("DEP LINE", `cat_reverseThrust on TTO (${what}): a Power Seven line shows at Power 4 although the card has no Power toggle there (lineNeedsToggle)`); else checkedToggleOnly++;
+  }
+  if (!has(hero(rtLine, "og", 2, { catPower: 4 }), "Power Seven")) fail("DEP LINE", "cat_reverseThrust on BB (test copy): the Power Seven line must show while the Power toggle is on"); else checkedToggleOnly++;
+  if (has(hero(rtLine, "og", 2, { catPower: 0 }), "Power Seven")) fail("DEP LINE", "cat_reverseThrust on BB (test copy): the Power Seven line must hide while the Power toggle is off"); else checkedToggleOnly++;
+
+  // the two Monkey cast toggles: label and icon of their card, 0-1, cast 0 while on
+  for (const [name, cardId] of [["MONKEY_INSTANT_CAST_DEP", "monkey_instantCast"], ["MONKEY_AUTO_INSTANT_CAST_DEP", "monkey_autoInstant"]]) {
+    const d = get(name), c = SKILLS.find(s => s.id === cardId);
+    if (!c || d.label !== c.name || d.icon !== c.icon || d.minRank !== 0 || d.maxRank !== 1 || d.kind !== "replace" || d.replaceValue !== 0) fail("CAST TOGGLE", `${name}: expected label and icon of ${cardId}, ranks 0-1, kind replace with replaceValue 0`); else checkedToggleOnly++;
+  }
+  // castDep2 goes through depRawValue only, so a post kind would be ignored
+  SKILLS.forEach(sk => (sk.soon ? [] : sandbox._getAvailableServers(sk)).forEach(srv => {
+    const d = sandbox._getActiveSkill(sk, srv).castDep2;
+    if (d && (/^post/.test(d.kind || "") || d.multipliers || d.mulFor)) fail("CAST TOGGLE", `${sk.id} / ${srv}: castDep2 ${d.id} must be a raw-value kind (replace, perRank or addFor), the cast chip runs no post step for it`);
+  }));
+  const castOf = (h) => {
+    const i = h.indexOf("sk-stat sk-stat-cast"); if (i < 0) return null;
+    const t = h.slice(i, i + 3000), v = /<div class="sk-stat-value[^"]*">([\s\S]*?)<\/div>/.exec(t), b = /<p class="sk-stat-base">([^<]*)/.exec(t);
+    return { value: v ? v[1].replace(/<[^>]*>/g, "").trim() : "", base: b ? b[1] : "" };
+  };
+  const instant = get("MONKEY_INSTANT_CAST_DEP"), fb = SKILLS.find(s => s.id === "monkey_fireBall");
+  const fb2 = fb.castDep2 ? fb : { ...fb, castDep2: instant };
+  let c = castOf(hero(fb, "og", 4, { rapidFire: 3, instantCast: 0 }));
+  if (!c || !c.base.startsWith("base 5s")) fail("CAST TOGGLE", `monkey_fireBall rank 4: Rapid Fire 3 must leave base 5s (8 - 3) on the cast chip, got '${c && c.base}'`); else checkedToggleOnly++;
+  let h = hero(fb2, "og", 4, { rapidFire: 3, instantCast: 0 }); c = castOf(h);
+  if (!c || !c.base.startsWith("base 5s") || !h.includes('data-dep-id="rapidFire"') || !h.includes('data-dep-id="instantCast"')) fail("CAST TOGGLE", `monkey_fireBall with Instant Cast off: expected base 5s (Rapid Fire 3) and both cast toggles in the strip, got '${c && c.base}'`); else checkedToggleOnly++;
+  if (![...sandbox._getUsedPlayerStatKeys(fb2)].includes("int")) fail("CAST TOGGLE", "monkey_fireBall with Instant Cast off: INT must glow (the cast bar reads it)"); else checkedToggleOnly++;
+  h = hero(fb2, "og", 4, { rapidFire: 3, instantCast: 1 }); c = castOf(h);
+  if (!c || !c.base.startsWith("base 0s") || c.value !== "ไร้หลอด") fail("CAST TOGGLE", `monkey_fireBall with Instant Cast on: expected cast 0 (ไร้หลอด, base 0s), got '${c && c.value}' / '${c && c.base}'`); else checkedToggleOnly++;
+  if ([...sandbox._getUsedPlayerStatKeys(fb2)].includes("int")) fail("CAST TOGGLE", "monkey_fireBall with Instant Cast on: INT must not glow (no cast bar)"); else checkedToggleOnly++;
+  for (const k of Object.keys(R)) if (!(k in keep)) delete R[k];
+  Object.assign(R, keep);
+  sandbox._setServer("og");
+}
+console.log(`Verified ${checkedToggleOnly} toggle-only line and second cast toggle checks.`);
 
 // Chameleon attack simulator (mountChameleonSim): gear per server, crit totals, server popups, per-server gear memory.
 // BB follows Chameleon_nAttack.cs:517-668 (G.Marshal Bow +4, Mantis R set 5/4/3); ToT and TTO are the user-reported fix
