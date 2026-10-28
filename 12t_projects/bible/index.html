@@ -22164,8 +22164,38 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   // dependency button is collected here (one entry per dep id, tags merged) and drawn once under the description.
   // Outside renderHero (depSink === null) the helpers return their button HTML as before.
   let depSink = null;
+  // Desc lines revealed by their toggle (user 2026-10-28: "revealing one by one from the toggling on"): while renderHero runs, every
+  // dep drawn on the card is noted here, and the description is built last, without the "**<Name>:**" lines of a toggle that is off.
+  // A line belongs to a toggle that shows its picture (the line's icon: the named card's icon, or its DESC_LINE_ICONS gear icon); a line
+  // whose picture no toggle shows falls back to the toggle's strip label. On: rank > 0; a toggle with no off state (minRank 1+) is always
+  // on; a view (Raw Strength) is on above its minRank. A merged toggle (iconFor: Feral Instinct 1-4 / Wild Heart at 5) turns each skill
+  // on from the first rank that shows it; a gear toggle's tiers (item_ icons) all follow the toggle. A line no toggle claims always shows.
+  // Only the skill page filters: the card data, search and the tooltip modal keep every line.
+  let depLineDeps = null;
+  const depLineIcon = (k) => { k = String(k || ""); return k.startsWith("item_") ? k : k.replace(/\d+$/, ""); };
+  function hideOffDepLines(str, deps, skill){
+    if (!deps || !deps.size) return str;
+    const claimed = new Map(), claim = (key, on) => claimed.set(key, claimed.get(key) || on);   // any toggle on reveals the line
+    for (const [dep, label] of deps) {
+      const lo = dep.minRank || 0, r = getDepRank(dep), on = dep.viewOf ? r > lo : (lo > 0 || r > 0);
+      claim("label:" + label, on);
+      claim("icon:" + depLineIcon(dep.icon), on);
+      if (dep.iconFor) for (let k = Math.max(lo, 1); k <= (dep.maxRank || 0); k++) {
+        const ic = String(dep.iconFor(k) || "");
+        claim("icon:" + depLineIcon(ic), ic.startsWith("item_") ? on : k <= r);
+      }
+    }
+    return String(str).split("<br>").filter((l) => {
+      const m = /^\s*\*\*([^*]+?):\*\*\s/.exec(l);
+      if (!m) return true;
+      const sk = findSkillByMention(m[1], skill), ic = sk ? sk.icon : DESC_LINE_ICONS[m[1]];
+      const key = ic && claimed.has("icon:" + depLineIcon(ic)) ? "icon:" + depLineIcon(ic) : "label:" + m[1];
+      return !claimed.has(key) || claimed.get(key);
+    }).join("<br>");
+  }
   const DEP_TAG_COLORS = { CD: "--stat-agi", CAST: "--stat-int", DUR: "--stat-cha", CHANCE: "--stat-lck", DMG: "--stat-atk", HEAL: "--stat-hp", HITS: "--stat-atk", KO: "--stat-atk", SHIELD: "--stat-def", STATS: "--stat-vit", INFO: "--muted" };
   function depSinkAdd(dep, tag, buttonHtml){
+    if (depLineDeps && dep) depLineDeps.set(dep, String(dep.label || "").replace(/ \(.*$/, ""));   // views too: their line follows their own on state
     // A view of another dep (Raw Strength = Brute Strength rank 5) draws no button; its tag joins the real dep's entry.
     if (dep && dep.viewOf){
       if (!depSink) return "";
@@ -23501,6 +23531,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     }
     function renderHeroNow(){
       depSink = new Map();
+      depLineDeps = new Map();
       updateStatBonus();
       updateEnemyBonus();
     if (!selected){
@@ -23762,7 +23793,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     }
     const descStr = descRaw ? String(descRaw) : "";
     const descClean = descStr.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1");
-    const descFormatted = renderDescWithMods(descStr, activeSelected || selected, statVal(lckEl));
+    const descFormattedFor = (deps) => renderDescWithMods(hideOffDepLines(descStr, deps, activeSelected || selected), activeSelected || selected, statVal(lckEl));   // built after every toggle is drawn
     let statusBadgeHtml = "";
     let statusClean = "";
     if (activeSelected.status) {
@@ -23814,7 +23845,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // tooltip modal, which holds every note of the card (user 2026-10-27: nothing opens inside the desc any more).
     const noteDefs = [["tip", tipNoteHtml, "คำอธิบายไม่ตรง"], ["bug", bbBugHtml, "บั๊ก"], ["unintended", unintendedHtml, "ไม่ตั้งใจ"]].filter(n => n[1]);
     const noteChipsInner = noteDefs.map(([k, , label]) => `<button type="button" class="sk-note-chip sk-note-${k}" data-note-toggle="${k}" aria-haspopup="dialog" aria-label="${label}" title="${label}">${NOTE_ICO[k]}</button>`).join("");
-    const heroDescHtml = (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}${activeSelected.soon ? " sk-soon" : ""}">${statusBadgeHtml}${descFormatted}${liveCheckHtml}${descDepToggle}</div>` : "";
+    const heroDescHtmlFor = (deps) => (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}${activeSelected.soon ? " sk-soon" : ""}">${statusBadgeHtml}${descFormattedFor(deps)}${liveCheckHtml}${descDepToggle}</div>` : "";
     // Per-card chip repositioning (added 2026-09-19): a skill's own `chipCols`
     // field (sparse, e.g. {dur2: 2, lck: 4}) overrides that one chip's default
     // CSS grid-column via an inline style -- every other chip keeps using its
@@ -25330,6 +25361,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     }
 
     const depStripHtml = renderDepStrip();
+    const heroDescHtml = heroDescHtmlFor(depLineDeps);   // the toggles are all drawn now, so the desc can drop the lines of those that are off
+    depLineDeps = null;
     depSink = null;
     displayEl.innerHTML = `
       <div class="sk-detail-layout${compatBlock ? " sk-detail-layout--has-compat" : ""}">
@@ -36309,6 +36342,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T04:15:05.753Z","feat(bible): on the skill page a skill's effect line shows only while its toggle on the card is on, so the lines appear one by one as the toggles go on (a line belongs to the toggle that shows its icon, merged toggles like Feral Instinct / Wild Heart and gear tiers included; a line with no toggle on the card always shows)"],
     ["2026-10-28T04:09:48.112Z","feat(bible): 26 Wolf cards name the skills that change them (Lunar Eclipse on the fifteen cards it enlarges, which the Lunar Eclipse card now lists, Charged Fang on the same fifteen on Reborn, Final Eclipse on Lunar Eclipse and Feral Strike, Grand Cross on Cross Break, Feral Instinct and Dark Edge on each other, Charged Fang and Shadow Pack on the Reborn Dark Edge, Eternal Dark Edge on Sky Slasher, Shadow Pack and Eternal Dark Edge on each other, Sublime Art on Holy Sword, Holy Armor, Art Breaker and Mirror Blade, Double Art on Twin Resonance, Power Break, Provoke and Third Rend on Alpha Howl), Final Eclipse says the BB dash puts Feral Strike on its cooldown, the BB Blade Fang line says Lunar Eclipse shortens its reach, and the Reborn Double Art says it never skips the Guardian Oath and Alpha Howl cooldowns"],
     ["2026-10-28T04:04:09.080Z","feat(bible): 19 Sheep cards name the skills that change them (Return Cast on Purifying Tear, Lullaby and Divinity Axe, Seal of Earth on Seal of Attack and Seal of Heaven on Seal of Defense, Radiant Heal and Harmonic Diffuse on each other, Reverse, Repel and Eden Sanctuary on Karma and Karma on them, Divine Benediction and Karma on each other on Reborn, Perfect Serenity on Heaven's Verdict, Seraph Wings and the Reborn nAttack, Free Cast on the Reborn Gospel and Blinding Light), Free Cast lists the 25 skills it refunds and Perfect Serenity the heals it cuts, and the BB Free Cast refund of 0 MP on Seal of Attack and Seal of Defense is a bug note on the three cards"],
     ["2026-10-28T03:58:34.265Z","feat(bible): 30 Monkey cards name the skills that change them (Fire Keep on nAttack and both Fireballs, Rapid Fire, Intense Fire and Fire Avatar on Fireball, Fire Avatar and Fire Keep mirror them, Earth Form names its learned Combo KO, Auto Instant on Fire Avatar, Earth Form, Volcanic Eruption, Summon Gaos and Instant Cast, Stone Sentinel on Stone Hammer, Titan Sword on the Gadina slash, Damage Cast on HP Transfer and Lavu, Fire Soul and Instant Blaze on Phoenix, Earth Guard on Gadina and the Gadina AI use on Earth Guard, Rapid Fire on Phoenix - Fireball, the ToT Ja and Buiten Hou Hou cooldown resets on Phoenix and Gadina, Elemental Sovereign on the 14 skills it refunds and on Summon Gaos on Reborn, Ja Overdrive and Gaia Bulwark on Fire Avatar, Earth Form and Earth Guard on Reborn), Auto Instant, Ja Overdrive and Gaia Bulwark name the skills they open, a learned Fire Avatar gives every Fireball burn 5, and Runic Flame and Runic Sand link each other"],

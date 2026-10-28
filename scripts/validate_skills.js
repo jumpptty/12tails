@@ -2747,7 +2747,13 @@ let checkedCatPowerTto = 0;
   }
   // Open Wound line (user rule 2026-09-26): every card that carries the Open Wound bonus says which hits get it.
   const owCards = SKILLS.filter(s => s.effectProc && s.effectProc.controls && s.effectProc.controls.some(d => d.id === "openWound"));
-  const heroOf = (sk, server) => { sandbox._setServer(server); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+  const heroOf = (sk, server) => {   // the Open Wound line shows only while its toggle is on (toggle-revealed desc lines, 2026-10-28)
+    const R = sandbox._depRanks, had = "openWound" in R, ow = R.openWound;
+    sandbox._setServer(server); sandbox._skillRanks[sk.id] = sk.maxRank || 1; R.openWound = 1; sandbox._selectSkill(sk);
+    const h = sandbox._getRenderedHeroHtml();
+    if (had) R.openWound = ow; else delete R.openWound;
+    return h;
+  };
   for (const sk of owCards) {
     const h = heroOf(sk, "og");
     if (!h.includes("Open Wound:") || !h.includes("เพิ่มเติม")) fail(`${sk.id}: no Open Wound bonus-damage line in the description`); else checkedCatPowerTto++;
@@ -3148,6 +3154,48 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
   if (!loose.includes('data-dep-id="zzLoose"')) fail("renderDmgToggle with no sink must return the button HTML"); else checkedDepStrip++;
 }
 console.log(`Verified ${checkedDepStrip} dependency strip checks.`);
+
+// Desc lines revealed by their toggle (user 2026-10-28, hideOffDepLines): a "**<Name>:**" line about a toggle on the card shows only
+// while that toggle is on, a view (Raw Strength) follows its own on state, and the card data keeps every line (search, tooltips).
+let checkedDepLines = 0;
+{
+  const fail = (msg) => { console.error(`[DEP LINE ERROR] ${msg}`); errorCount++; };
+  const R = sandbox._depRanks, keep = { ...R };
+  const heroAt = (id, ranks) => {
+    Object.assign(R, ranks);
+    const sk = SKILLS.find(s => s.id === id);
+    sandbox._setServer("og"); sandbox._skillRanks[id] = sk.maxRank || 1; sandbox._selectSkill(sk);
+    return sandbox._getRenderedHeroHtml();
+  };
+  const has = (h, name) => h.includes(name + ":");
+  let h = heroAt("bat_cAttack", { darkIntention: 0 });
+  if (has(h, "Dark Intention")) fail("bat_cAttack: the Dark Intention line shows while its toggle is off"); else checkedDepLines++;
+  h = heroAt("bat_cAttack", { darkIntention: 1 });
+  if (!has(h, "Dark Intention")) fail("bat_cAttack: the Dark Intention line is missing while its toggle is on"); else checkedDepLines++;
+  h = heroAt("bison_nAttack", { bruteStrength: 0 });
+  if (has(h, "Brute Strength") || has(h, "Raw Strength")) fail("bison_nAttack with Brute Strength off: its Brute Strength and Raw Strength lines must be hidden"); else checkedDepLines++;
+  h = heroAt("bison_nAttack", { bruteStrength: 3 });
+  if (!has(h, "Brute Strength") || has(h, "Raw Strength")) fail("bison_nAttack at Brute Strength 3: expected the Brute Strength line and no Raw Strength line (a view is on above its minRank)"); else checkedDepLines++;
+  h = heroAt("bison_nAttack", { bruteStrength: 5 });
+  if (!has(h, "Brute Strength") || !has(h, "Raw Strength")) fail("bison_nAttack at Brute Strength 5: expected both lines"); else checkedDepLines++;
+  h = heroAt("wolf_nAttack", { wolfFeralInstinct: 0 });
+  if (has(h, "Feral Instinct") || has(h, "Wild Heart")) fail("wolf_nAttack with Feral Instinct / Wild Heart off: both lines must be hidden (matched by icon)"); else checkedDepLines++;
+  h = heroAt("wolf_nAttack", { wolfFeralInstinct: 3 });
+  if (!has(h, "Feral Instinct") || has(h, "Wild Heart")) fail("wolf_nAttack at 3: expected Feral Instinct and no Wild Heart (a merged toggle shows Wild Heart from rank 5)"); else checkedDepLines++;
+  h = heroAt("wolf_nAttack", { wolfFeralInstinct: 5 });
+  if (!has(h, "Feral Instinct") || !has(h, "Wild Heart")) fail("wolf_nAttack at 5: expected both lines"); else checkedDepLines++;
+  h = heroAt("bison_nAttack", { bisonGearWeapon: 0 });
+  if (has(h, "G. Marshal / G. Champion Axe")) fail("bison_nAttack with Crit Axe off: the gear line must be hidden (same icon as the toggle)"); else checkedDepLines++;
+  h = heroAt("bison_nAttack", { bisonGearWeapon: 1 });
+  if (!has(h, "G. Marshal / G. Champion Axe")) fail("bison_nAttack with Crit Axe at G. Marshal: the gear line must show (every gear tier follows its toggle)"); else checkedDepLines++;
+  if (!has(h, "Berserker Rush")) fail("bison_nAttack: the Berserker Rush line has no toggle on the card and must always show"); else checkedDepLines++;
+  const bc = SKILLS.find(s => s.id === "bat_cAttack"), bcText = String(typeof bc.desc === "function" ? bc.desc(1, 0) : bc.desc);
+  if (!bcText.includes("**Dark Intention:**")) fail("bat_cAttack: the card data must keep the Dark Intention line (only the skill page hides it)"); else checkedDepLines++;
+  for (const k of Object.keys(R)) if (!(k in keep)) delete R[k];
+  Object.assign(R, keep);
+  sandbox._setServer("og");
+}
+console.log(`Verified ${checkedDepLines} toggle-revealed desc line checks.`);
 
 // Chameleon attack simulator (mountChameleonSim): gear per server, crit totals, server popups, per-server gear memory.
 // BB follows Chameleon_nAttack.cs:517-668 (G.Marshal Bow +4, Mantis R set 5/4/3); ToT and TTO are the user-reported fix
