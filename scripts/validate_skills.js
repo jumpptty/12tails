@@ -5748,7 +5748,10 @@ function fontProblems(html) {
   for (const [label, key] of Object.entries(DLI)) if (!SKILL_ICONS[key]) fail(`DESC_LINE_ICONS["${label}"] -> "${key}" is not an icon in assets.js`);
   if (R("DESC_MOD_MIN") !== 1) fail("DESC_MOD_MIN must be 1 (every run of icon lines gets its icons)");
   if (!/\.sk-desc-mod-ico\{[^}]*width:27px; height:27px[^}]*border-radius:50%/.test(html) || !html.includes(".sk-desc-mod-ico > img, .chm-ring > img") || !/\.sk-desc-mod > div\{[^}]*min-height:27px[^}]*justify-content:center/.test(html) || !html.includes('<span class="sk-desc-mod-t">')) fail("the 27 px icon rule is gone: .sk-desc-mod-ico 27 x 27, the text box min-height 27px centring its .sk-desc-mod-t text (a 1-2 line item centred on the icon, a longer one level with its top)");
-  if (!/\.sk-desc-mods\.is-two\{[^}]*grid-auto-flow:column/.test(html)) fail(".sk-desc-mods.is-two lost its column-filling grid (rows aligned across both columns)");
+  if (!/\.sk-desc-mods\.is-two\{[^}]*grid-template-columns:repeat\(2,/.test(html) || !/\.sk-desc-col\{[^}]*flex-direction:column/.test(html) || !html.includes('balanceDescCols(displayEl.querySelector(".sk-hero-desc"))')) fail(".sk-desc-mods.is-two lost its two stacked columns (.sk-desc-col, each its own stack so a tall line leaves no hole beside it; balanceDescCols evens them after every render)");
+  // the column split (user 2026-10-28): Rabbit Charge Attack with every toggle on (line heights in px) keeps 3 + 2, two tall lines
+  // first go 1 + 3, equal lines keep the left column one ahead
+  { const split = R("descColSplit"); for (const [h, want] of [[[40, 40, 60, 40, 80], 3], [[80, 80, 20, 20], 1], [[40, 40, 40, 40, 40], 3], [[40, 40], 1]]) { const got = split(h, 6); if (got !== want) fail(`descColSplit([${h}], 6) = ${got}, want ${want}`); } }
   const heroDepOf = (c) => c.descDep || c.dep || c.dmgRankDep || c.dmgDep || c.cdDep || null;
   const ranksOf = (d) => { if (!d) return [null]; const a = []; for (let x = d.minRank || 0; x <= Math.min(d.maxRank || 1, 8); x++) a.push(x); return a; };
   let lines = 0, texts = 0;
@@ -5762,6 +5765,7 @@ function fontProblems(html) {
       const out = String(render(String(t), s, 128));
       lines += (out.match(/class="sk-desc-mod"/g) || []).length;
       if (/<span class="sk-desc-mod-ico"><\/span>/.test(out)) fail(`${s.id} (${v}, rank ${r}${dr === null ? "" : ", dep " + dr}): an icon line has no icon`);
+      if ((out.match(/class="sk-desc-col"/g) || []).length !== 2 * (out.match(/class="sk-desc-mods is-two"/g) || []).length) fail(`${s.id} (${v}, rank ${r}${dr === null ? "" : ", dep " + dr}): a two-column icon run is not split into two .sk-desc-col stacks`);
     }
   }
   console.log(`Verified ${lines} desc icon lines in ${texts} rendered descs (each with its icon; alignment rules in place).`);

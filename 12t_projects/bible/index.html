@@ -6513,12 +6513,14 @@
     .sk-hero > .sk-hero-head:has(.sk-hero-pips):has(.sk-hero-desc){row-gap:20px; margin-bottom:12px}
   }
   /* Effect-line list (renderDescWithMods, user 2026-10-26): every run of "**Name:** effect" lines, each line led by its skill's or gear's
-     icon. Two or more lines = two columns that fill down (grid-auto-flow:column over --rows rows, so a row lines up across both columns);
-     one line = one column. The icon is centred on the line's first text line (.71em = half the 1.42 line height); gear sprites, which
-     have no frame of their own, sit in a small one. */
+     icon. Two or more lines = two columns (.sk-desc-col), each its own stack, so a tall line never leaves a hole beside it (user
+     2026-10-28: with every toggle on, the old shared-row grid left gaps); the left column takes the first half and balanceDescCols
+     moves the split so both end as level as they can. One line = one column. The icon is centred on the line's first text line
+     (.71em = half the 1.42 line height); gear sprites, which have no frame of their own, sit in a small one. */
   .sk-desc-lead{color:#fff}   /* the main description, pure white (user 2026-10-27); gold values, links, statuses and limits keep their own colours */
   .sk-desc-mods{display:grid; grid-template-columns:minmax(0,1fr); gap:6px 28px; margin:5px 0 0; padding-top:7px; border-top:1px solid rgba(212,175,55,.16)}
-  .sk-desc-mods.is-two{grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(var(--rows,1),auto); grid-auto-flow:column}
+  .sk-desc-mods.is-two{grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start}
+  .sk-desc-col{display:flex; flex-direction:column; gap:6px; min-width:0}
   .sk-desc-mods + .sk-desc-after{margin-top:6px}
   /* 27 px icons (user 2026-10-26: 36 px, x4 the area of the old 18 px ones, then 27 px, which read better). The text box is at least as tall as the icon and centres its text
      (.sk-desc-mod-t, one block, so the inline flow inside stays intact): a 1-2 line item is centred on the icon, a longer one starts level
@@ -6544,7 +6546,7 @@
   @media (max-width:620px){ .sk-desc-topic{grid-template-columns:minmax(0,1fr); row-gap:3px} }
   /* A desc line that newly appears (user 2026-10-26) waits unseen for its light ball (heroDelta), then is drawn out like a card note. */
   .sk-desc-line.sk-desc-wait, .sk-desc-mod.sk-desc-wait{opacity:0}
-  @media (max-width:620px){ .sk-desc-mods.is-two{grid-template-columns:minmax(0,1fr); grid-template-rows:none; grid-auto-flow:row} }
+  @media (max-width:620px){ .sk-desc-mods.is-two{grid-template-columns:minmax(0,1fr)} }   /* phones: one column, the left stack over the right */
   /* Card head pills share one height so the class tag, range and costs line up (user 2026-10-26). */
   .sk-hero-title .sk-tag, .sk-hero-title .sk-reach-badge, .sk-hero-title .sk-cost-badge{height:18px; box-sizing:border-box; display:inline-flex; align-items:center}
   /* Phones (user 2026-10-26): the name alone on the first row, class + Passive + range and the costs centred on the second,
@@ -13272,6 +13274,28 @@ function glueDescTails(root){
     glueIn(line);
   });
 }
+// Desc icon columns (user 2026-10-28: with every toggle on, the lines piled up with holes beside the tall ones). Each column of a
+// two-column icon run is its own stack (.sk-desc-col). descColSplit picks how many lines, in order, the left column takes so the
+// taller column is as short as it can be; the even split (left one ahead on an odd count) stays unless another is 1 px+ shorter.
+function descColSplit(h, gap){
+  const n = h.length, tot = h.reduce((a, b) => a + b, 0);
+  const cost = (k) => { let l = 0; for (let i = 0; i < k; i++) l += h[i]; return Math.max(l + gap * (k - 1), tot - l + gap * (n - k - 1)); };
+  let best = Math.ceil(n / 2), bc = cost(best);
+  for (let k = 1; k < n; k++){ const c = cost(k); if (c < bc - 1){ best = k; bc = c; } }
+  return best;
+}
+// Measures the lines (both columns are the same width, so a line keeps its height in either) and moves the split. DOM only, order
+// kept, so the delta keys and the line reveal see the same lines; phones (one column) are left alone.
+function balanceDescCols(root){
+  if (!root || typeof getComputedStyle !== "function") return;
+  root.querySelectorAll(".sk-desc-mods.is-two").forEach(box => {
+    const cols = box.querySelectorAll(":scope > .sk-desc-col");
+    if (cols.length !== 2 || cols[1].offsetTop !== cols[0].offsetTop) return;
+    const items = Array.from(box.querySelectorAll(":scope > .sk-desc-col > .sk-desc-mod"));
+    const k = descColSplit(items.map(el => el.offsetHeight), parseFloat(getComputedStyle(cols[0]).rowGap) || 0);
+    if (cols[0].children.length !== k) items.forEach((el, i) => cols[i < k ? 0 : 1].appendChild(el));
+  });
+}
 // Contributors (user 2026-10-06): fans whose findings went into the Bible, in the order the user gives them. id is the
 // key a {{credit:id}} token in any authored text points at; "what" is plain Thai text (rendered as text, never HTML).
 // Declared before renderRichText: text can render before the end of this script runs.
@@ -13386,11 +13410,14 @@ function renderDescBlock(lines, skill, lck, lead) {
     if (r < runs.length && i === runs[r][0]) {
       flush();
       const n = runs[r][1] - runs[r][0], two = n >= DESC_MOD_COLS;
-      out.push(`<div class="sk-desc-mods${two ? " is-two" : ""}"${two ? ` style="--rows:${Math.ceil(n / 2)}"` : ""}>${lines.slice(runs[r][0], runs[r][1]).map((l) => {
+      const items = lines.slice(runs[r][0], runs[r][1]).map((l) => {
         const name = modName(l), sk = findSkillByMention(name, skill), key = sk ? sk.icon : DESC_LINE_ICONS[name], src = SKILL_ICONS[key];
         const gear = !sk && /^item_/.test(key || "");
         return `<div class="sk-desc-mod">${src ? `<span class="sk-desc-mod-ico${gear ? " is-gear" : ""}"><img src="${src}" alt=""></span>` : `<span class="sk-desc-mod-ico"></span>`}<div><span class="sk-desc-mod-t">${renderRichText(l.trim(), skill, lck)}</span></div></div>`;
-      }).join("")}</div>`);
+      });
+      // two columns, each its own stack: the left one takes the first half (one more on an odd count), balanceDescCols evens them after layout
+      const k = Math.ceil(n / 2), col = (a) => `<div class="sk-desc-col">${a.join("")}</div>`;
+      out.push(`<div class="sk-desc-mods${two ? " is-two" : ""}">${two ? col(items.slice(0, k)) + col(items.slice(k)) : items.join("")}</div>`);
       i = runs[r][1]; r++;
     } else { text.push(lines[i]); i++; }
   }
@@ -18965,6 +18992,10 @@ function mountSkillCooldownLookup(root){
   }
   window.addEventListener("resize", fitFinalValues);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitFinalValues);
+  // The desc's two icon columns (balanceDescCols) are evened again when a new width or the fonts change the line heights.
+  function balanceHeroDesc(){ balanceDescCols(displayEl.querySelector(".sk-hero-desc")); }
+  window.addEventListener("resize", balanceHeroDesc);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(balanceHeroDesc);
   // Skill number boxes select their number on focus like the stat inputs, so a click is ready to type over (delegated: the boxes are re-rendered with the card).
   displayEl.addEventListener("focusin", (e) => { const el = e.target; if (el.matches && el.matches("input.sk-current-sp-input, input[data-role=supportLv]")) setTimeout(() => { if (document.activeElement === el) el.select(); }, 0); });
   const classBadgeEl = $('[data-role="class-badge"]', root);
@@ -23557,6 +23588,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       fitFinalValues();
       fitStatDials();
       glueDescTails(displayEl.querySelector(".sk-hero-desc"));   // desc orphan guard (DOM only)
+      balanceHeroDesc();   // the two icon columns end level (DOM only, after the tails are glued)
       pingCarryApply(carry);
       dtagCarryApply(tags);
       idSeen = selected && selected.id;
@@ -36383,6 +36415,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T13:03:10.790Z","fix(bible): the desc's icon lines stack in two independent columns, so a tall line no longer leaves a hole beside it when every toggle is on"],
     ["2026-10-28T10:15:43.605Z","fix(bible): the remaining C6 / C7 limit lines decided from the owner's earlier calls: five obvious lines removed (Doomsayer, Nocturne Sovereign, Ghost Galleon, Four Seals, Tidal Reach), and Resonant Fist, Five Heaven Palms, Hundred Fists, Asura Trinity, Shadow Pack and Miracle Ascension get unintended chips"],
     ["2026-10-28T10:05:37.763Z","fix(bible): the owner's second C6 / C7 limit calls: Formless Path's Roll Around icon gap becomes an unintended chip, Absolute Winter's cage lines merge into one red line, and Nightmare Cascade, Iron Overdrive and Galactic Stillness each lose a line"],
     ["2026-10-28T09:47:02.804Z","fix(bible): status pop-ups on the ToT, TTO and Reborn tabs open above the related-skills column instead of behind it"],
