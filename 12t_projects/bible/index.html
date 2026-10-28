@@ -29351,6 +29351,8 @@ const COMMON_SERVER_NOTES = {
     { id: "runSpeed", title: "ความเร็ววิ่งสูงสุด", icon: "sheep_allFeather2", note: "• [Buff] ความเร็ววิ่งสูงสุดในการต่อสู้ **12 → 60** และในเมืองหรือแคมป์ **8 → 20** บัฟความเร็วจึงเร็วขึ้นได้เกินเพดานเดิม" },
     // Reborn:GameGui.cs:2042 (potion 50 s) vs BB:GameGui.cs:32659 (150 s)
     { id: "potion", title: "คูลดาวน์ยา", icon: "rabbit_extraPotion5", note: "• [Buff] คูลดาวน์ของยา (Potion) **150 → 50 วินาที**" },
+    // Reborn1027:CharacterControl.cs:11758 (Revised Art ×0.88 exempts only nAttack / cAttack / emoticon) vs BB:CharacterControl.cs:20102-20227 (every item timer exempt too); potion Reborn1027:GameGui.cs:2060
+    { id: "itemRevisedArt", title: "Revised Art กับไอเทม", icon: "revisedArt5", note: "• [Buff] **Revised Art** ลดคูลดาวน์ของไอเทมด้วย **12%** (ปัดขึ้น) ทั้งยา อาหาร เครื่องดื่ม และไอเทมอื่นที่มีคูลดาวน์ เช่น ยา **50 → 44 วินาที** (BB ลดเฉพาะคูลดาวน์ของสกิล)" },
     // Reborn:Damage.cs:433-436, :480, :538, :551, :604-608 (RebornHitBox: world-space bounds) vs BB:Damage.cs:1099, :1140, :1156 (CharacterController radius / height)
     { id: "hitbox", title: "ขนาดตัวเป้าหมาย", icon: "whale_superSize4", note: "• [Adjust] ท่าที่หาเป้าหมายในวง กล่อง หรือมุม คิดขนาดตัวเป้าหมายจากขนาดจริงในเกมหลังขยายตัว มอนสเตอร์ตัวใหญ่และตัวที่ขยายตัวจึงโดนง่ายขึ้น" },
     // Reborn1027:GameGui.cs:7911 (ATK row = getBaseStat(9), bonus column getAddStat = getStat − base) vs Reborn:GameGui.cs:7877 / BB:GameGui.cs:12340 (FloorToInt(damageMod × base ATK))
@@ -36440,6 +36442,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-28T15:56:45.421Z","feat(bible): Reborn Common note: Revised Art shortens item cooldowns too (potion 50 to 44 s), and the support skill cooldowns were checked against bible3 (600 s, unchanged)"],
     ["2026-10-28T14:16:34.173Z","feat(bible): class guides on Reborn can pick up to three support skills (two on every other server), and every guide code reader takes the third"],
     ["2026-10-28T13:40:37.849Z","feat(bible): class guide #82 reborn Whale PVP เพื่อนรัก PVE เพื่อนเลิฟ (อมตะวน) by onemaleshow"],
     ["2026-10-28T13:21:05.223Z","fix(bible): skill details quick wins from the 2026-10-28 review: the page declares Thai, the search term is escaped and searching starts at two letters, a broken link no longer stops the hub, the arrow keys stay put behind the Buff / Debuff and server pop-ups, leaving the tool closes its pop-ups, CHAR LV survives a lower server cap, the preset reset clears buff undo, and toggles report their state to screen readers"],
