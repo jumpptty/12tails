@@ -2423,6 +2423,22 @@
   .cg-desc-ref > .cg-para.is-colbreak:first-child,.cg-desc-ref > .is-colbreak + .is-colbreak,.cg-rich-editor > div.is-colbreak:first-child,.cg-rich-editor > .is-colbreak + .is-colbreak,
   .cg-page[data-mode="reader"] > .cg-prose > .cg-desc-ref > .cg-para.is-colbreak,.cg-page[data-mode="author"] .cg-description.is-live .cg-rich-editor > div.is-colbreak{height:0;font-size:0;line-height:0}
   .cg-desc-ref.has-cols > .cg-para.is-colbreak,.cg-rich-editor.has-cols > div.is-colbreak{break-after:column}
+  /* Alignment, page breaks, tabs and bullets (user 2026-10-29, the editor's Word basics; the marks live in the text, see classGuideLineAlign): each line on
+     its own, inside its own column. A page break is an empty block that classGuideDescLayout stretches over the rest of its page (0 high where the
+     description is one column: phones, the side panel), with a faint ขึ้นหน้าใหม่ mark in the editor. Tabs stop every 4 em; a bullet's dot hangs in 1.2 em. */
+  .cg-para.is-center,.cg-rich-editor > div.is-center{text-align:center}
+  .cg-para.is-right,.cg-rich-editor > div.is-right{text-align:right}
+  .cg-prose,.cg-rich-editor{tab-size:4em}
+  .cg-desc-ref > .cg-para.is-pagebreak,.cg-description .cg-rich-editor > div.is-pagebreak{display:block;margin:0;padding:0;font-size:0;line-height:0;color:transparent;user-select:none;break-inside:auto;overflow:hidden}
+  .cg-desc-ref > .cg-para.is-pagebreak{height:0}
+  .cg-desc-ref:not(.is-paged) > .cg-para.is-pagebreak{height:0 !important}   /* not paged (phones, a narrowed window): the reference page's stretch does not count */
+  .cg-rich-editor:not(.is-paged) > div.is-pagebreak{height:auto !important}
+  .cg-rich-editor > div.is-pagebreak::before{content:"ขึ้นหน้าใหม่";display:block;margin:3px 0 2px;padding-top:1px;border-top:1px dashed color-mix(in srgb,var(--gold) 45%,transparent);font-size:12px;line-height:18px;color:var(--muted);text-align:center;text-shadow:none}
+  .cg-description.is-live .cg-rich-editor > div.is-pagebreak{position:relative;overflow:visible}   /* the live box: the mark takes no room, so the pages match the guide page's */
+  .cg-description.is-live .cg-rich-editor > div.is-pagebreak::before{position:absolute;left:0;right:0;top:0;margin:0}
+  .cg-description.is-live .cg-rich-editor > div.is-pagebreak.is-tight::before{content:"";height:0;padding:0}
+  .cg-para.is-bullet,.cg-rich-editor > div.is-bullet{padding-left:1.2em;text-indent:-1.2em}
+  .cg-bullet{display:inline-block;width:1.2em;text-indent:0;color:var(--gold);white-space:pre}
   @media(min-width:761px){
     .cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr)}   /* picks, fields, the description (takes the height) */
     .cg-page[data-mode="author"] .cg-description.is-live{position:relative;justify-items:center}   /* the page centred in the column, its heading row over it (user 2026-10-21) */
@@ -2436,6 +2452,13 @@
   .cg-desc-live-note{font-size:12px;font-weight:400;color:var(--muted)}   /* beside คำอธิบายบิลด์ */
   .cg-desc-live-note[hidden]{display:none}
   .cg-desc-tools{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:12px;font-weight:400;color:var(--muted)}
+  /* ชิดซ้าย / กึ่งกลาง / ชิดขวา (user 2026-10-29, option A: in the heading row before คอลัมน์); the lit one follows the selected lines */
+  .cg-desc-align{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
+  .cg-desc-align + .cg-desc-tools{margin-left:10px}
+  .cg-desc-align button{display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;color:var(--muted);cursor:pointer}
+  .cg-desc-align button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  .cg-desc-align button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+  .cg-desc-align button:hover,.cg-desc-align button:focus-visible{border-color:var(--gold);color:var(--text)}
   .cg-desc-tools button{padding:2px 9px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--muted);font:inherit;font-size:12px;line-height:1.5;cursor:pointer}
   .cg-desc-tools button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
   .cg-desc-tools button:hover,.cg-desc-tools button:focus-visible{border-color:var(--gold);color:var(--text)}
@@ -31961,7 +31984,7 @@ function classGuideDateText(iso){
 // into one-liners of 17-61 and explanations of 76+), 3+ skill notes (7 guides had 1-2, the rest 3-12), any recommended stat and any gear.
 const CLASS_GUIDE_DESC_MIN = 70, CLASS_GUIDE_NOTES_MIN = 3;
 function classGuideCompleteness(g){
-  const letters = [...String(g.description || "").replace(/\*\*/g, "").replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").replace(/\s+/g, " ").trim()].length;
+  const letters = [...String(g.description || "").replace(/\*\*/g, "").replace(/[\u21FF\u21FE\u21DF]/g, "").replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").replace(/\s+/g, " ").trim()].length;
   const parts = [   // now / min: how far a part is from counting (the editor's pop-up shows it for the description and the notes)
     { key: "desc", name: "คำอธิบาย", need: "คำอธิบาย " + CLASS_GUIDE_DESC_MIN + " ตัวอักษรขึ้นไป", now: letters, min: CLASS_GUIDE_DESC_MIN, unit: "ตัวอักษร" },
     { key: "notes", name: "โน้ตสกิล", need: "โน้ตสกิลอย่างน้อย " + CLASS_GUIDE_NOTES_MIN + " สกิล", now: Object.keys(g.notes || {}).length, min: CLASS_GUIDE_NOTES_MIN, unit: "สกิล" },
@@ -32012,10 +32035,108 @@ function classGuideId(raw, index){ return String(raw && Number.isInteger(raw.id)
 // A column break (user 2026-10-21): a line holding only this mark ends its column, so an author can start in column 3 without filling 1 and 2 (step 1:
 // a click in an empty column adds the breaks). It counts only with 2-3 columns (.has-cols); a one-column view (phones, the PNG's one column) ignores it.
 function classGuideColBreak(){ return "⇥"; }
-function classGuideDescPlain(text){ return String(text || "").split("\n").filter(l => l.trim() !== classGuideColBreak()).join("\n"); }   // the text without its breaks
-function classGuideDescTrim(text){   // no break or blank line at the end (a click in an empty column that was never typed in)
-  const ls = String(text).split("\n"); while (ls.length && (!ls[ls.length - 1].trim() || ls[ls.length - 1].trim() === classGuideColBreak())) ls.pop();
-  return ls.join("\n").trim();
+// The description's line marks (user 2026-10-29, the editor's Word basics): a line's first character can set its alignment (none = left, as every guide
+// before), a line holding only ⇟ is a page break (Ctrl+Enter) as one holding only ⇥ is a column break, and a line whose text starts with "• " is a bullet.
+// They are plain text, so a guide code carries them unchanged.
+const CLASS_GUIDE_ALIGN_MARKS = { "⇿": "center", "⇾": "right" };
+function classGuidePageBreak(){ return "⇟"; }
+function classGuideLineAlign(line){ return CLASS_GUIDE_ALIGN_MARKS[String(line).charAt(0)] || ""; }
+function classGuideAlignMark(align){ return Object.keys(CLASS_GUIDE_ALIGN_MARKS).find(k => CLASS_GUIDE_ALIGN_MARKS[k] === align) || ""; }
+function classGuideBreakKind(line){ const t = String(line).trim(); return t === classGuideColBreak() ? "col" : t === classGuidePageBreak() ? "page" : ""; }
+function classGuideDescPlain(text){ return String(text || "").split("\n").filter(l => !classGuideBreakKind(l)).join("\n"); }   // the text without its breaks
+function classGuideDescTrim(text){   // no break, blank or empty aligned line at the end (a click in an empty column that was never typed in), no blank line at the start
+  const ls = String(text).split("\n"), blank = l => !l.slice(classGuideLineAlign(l) ? 1 : 0).trim() || !!classGuideBreakKind(l);
+  while (ls.length && blank(ls[ls.length - 1])) ls.pop();
+  return ls.join("\n").replace(/^\s*\n/, "").trimEnd();   // a tab or spaces at the start of the first line stay (user 2026-10-29: Tab)
+}
+// The text operations behind the description's icons and keys (user 2026-10-29). Each takes the text and the selection (offsets into it) and returns
+// { value, start, end } (the new text and selection), or null when the key is the browser's own.
+function classGuideLineAt(v, a){   // the line holding offset a: its start, end and alignment mark ("" or one character)
+  const s = a > 0 ? v.lastIndexOf("\n", a - 1) + 1 : 0, e0 = v.indexOf("\n", s), e = e0 < 0 ? v.length : e0;
+  return { s, e, mk: CLASS_GUIDE_ALIGN_MARKS[v[s]] ? v[s] : "" };
+}
+// ชิดซ้าย / กึ่งกลาง / ชิดขวา: every line the selection touches (a caret: its line), each on its own; a selection ending at a line's start leaves that
+// line alone (as in Word), break lines take no mark, and the selection moves with the text.
+function classGuideDescAlign(value, a, b, align){
+  const v = String(value), mark = classGuideAlignMark(align), out = [];
+  let pos = 0, shift = 0, na = a, nb = b;
+  v.split("\n").forEach(l => {
+    const s = pos, e = pos + l.length; pos = e + 1;
+    const touched = e >= a && s <= b && !(b > a && s === b), had = classGuideLineAlign(l) ? 1 : 0;
+    const nl = touched && !classGuideBreakKind(l) ? mark + l.slice(had) : l, now = nl.length - l.length + had;   // now = the new mark's length
+    const move = p => shift + s + now + Math.max(0, p - s - had);   // the line's new start, its new mark, then the same place in its text
+    if (a >= s && a <= e) na = move(a); if (b >= s && b <= e) nb = move(b);
+    out.push(nl); shift += nl.length - l.length;
+  });
+  return { value: out.join("\n"), start: na, end: nb };
+}
+// the lit icon: the alignment every selected line shares ("" = left), null when they differ
+function classGuideDescAlignAt(value, a, b){
+  const v = String(value); let pos = 0, seen = null, mixed = false;
+  v.split("\n").forEach(l => { const s = pos, e = pos + l.length; pos = e + 1; if (!(e >= a && s <= b && !(b > a && s === b)) || classGuideBreakKind(l)) return; const k = classGuideLineAlign(l); if (seen === null) seen = k; else if (seen !== k) mixed = true; });
+  return mixed ? null : seen === null ? "" : seen;
+}
+// Ctrl+Enter (a page break) / Ctrl+Shift+Enter (a column break), as in Word: the selection gives way to the break line, the text after the caret starts
+// the line after it with the line's alignment, and a break at a line's start goes before the line with no empty line.
+function classGuideDescBreak(value, a, b, mark){
+  const v = String(value), L = classGuideLineAt(v, a), mk = L.s < a ? L.mk : "";
+  if (!v.slice(L.s + mk.length, a)){ const start = L.s + mark.length + 1 + mk.length; return { value: v.slice(0, L.s) + mark + "\n" + mk + v.slice(b), start, end: start }; }
+  const start = a + mark.length + 2 + mk.length;
+  return { value: v.slice(0, a) + "\n" + mark + "\n" + mk + v.slice(b), start, end: start };
+}
+// Enter: the new line keeps the line's alignment and continues its bullet; Enter on an empty bullet line ends the list instead.
+function classGuideDescEnter(value, a, b){
+  const v = String(value), L = classGuideLineAt(v, a), body = v.slice(L.s + L.mk.length, L.e), bullet = body.startsWith("• ");
+  if (a === b && body === "• " && a === L.e){ const start = L.s + L.mk.length; return { value: v.slice(0, start) + v.slice(L.e), start, end: start }; }
+  const ins = "\n" + L.mk + (bullet && a >= L.s + L.mk.length + 2 ? "• " : ""), start = a + ins.length;
+  return { value: v.slice(0, a) + ins + v.slice(b), start, end: start };
+}
+// "-" then a space at a line's start (after its alignment mark) becomes a bullet as it is typed (Word's AutoFormat); undo = the text with the "- " typed
+function classGuideDescAutoBullet(value, a){
+  const v = String(value), L = classGuideLineAt(v, a), at = L.s + L.mk.length;
+  if (v.slice(at, a) !== "-") return null;
+  return { value: v.slice(0, at) + "• " + v.slice(a), start: at + 2, end: at + 2, undo: { value: v.slice(0, a) + " " + v.slice(a), start: a + 1 } };
+}
+// Backspace right after a bullet takes the bullet off (the text stays); at a line's start right after a break line it removes that break
+function classGuideDescBackspace(value, a){
+  const v = String(value), L = classGuideLineAt(v, a), at = L.s + L.mk.length;
+  if ((a === at + 2 || a === at) && v.slice(at, at + 2) === "• ") return { value: v.slice(0, at) + v.slice(at + 2), start: at, end: at };   // right after the dot, or before it (Home)
+  if (a !== at || L.s === 0) return null;
+  const P = classGuideLineAt(v, L.s - 1);
+  if (!classGuideBreakKind(v.slice(P.s, P.e))) return null;
+  return { value: v.slice(0, P.s) + v.slice(L.s), start: a - (L.s - P.s), end: a - (L.s - P.s) };
+}
+// Tab puts a tab at the caret (in place of a selection); Shift+Tab takes out the one just before the caret (null: there is none, focus moves on)
+function classGuideDescTab(value, a, b, back){
+  const v = String(value);
+  if (back) return a === b && v[a - 1] === "\t" ? { value: v.slice(0, a - 1) + v.slice(a), start: a - 1, end: a - 1 } : null;
+  return { value: v.slice(0, a) + "\t" + v.slice(b), start: a + 1, end: a + 1 };
+}
+// Where offset o sits on screen (user 2026-10-29: undo and the line tools put the selection back where the change was): the line (blocks = one element
+// per line, as the description editor draws it) and the count of shown characters before o on it. Bold markers (the pairs classGuideRichText turns bold)
+// and a line's alignment mark are not shown; without blocks (the notes box) a line break is a shown character.
+function classGuideTextPoint(value, o, blocks){
+  const v = String(value), hid = new Set();
+  v.replace(/\*\*([\s\S]+?)\*\*/g, (m, inner, at) => { [at, at + 1, at + m.length - 2, at + m.length - 1].forEach(i => hid.add(i)); return m; });
+  let line = 0, vis = 0;
+  for (let i = 0; i < Math.min(o, v.length); i++){
+    if (hid.has(i)) continue;
+    if (v[i] === "\n" && blocks){ line++; vis = 0; continue; }
+    if (blocks && (i === 0 || v[i - 1] === "\n") && CLASS_GUIDE_ALIGN_MARKS[v[i]]) continue;
+    vis++;
+  }
+  return { line, vis };
+}
+// The picture's description (user 2026-10-29): it has no pages, so page breaks go (column breaks stay when it draws columns); each line's alignment mark
+// and bullet leave the text and come back per line (classGuideImageWrap hangs a bullet's lines, drawLines draws the dot and the alignment).
+function classGuideImageDesc(text, keepCols){
+  const out = [], align = [], bullet = [];
+  for (const l of String(text || "").split("\n")){
+    const k = classGuideBreakKind(l); if (k === "page" || (k === "col" && !keepCols)) continue;
+    const a = k ? "" : classGuideLineAlign(l), body = a ? l.slice(1) : l, dot = !k && body.startsWith("• ");
+    out.push(dot ? body.slice(2) : body); align.push(a); bullet.push(dot);
+  }
+  return { text: out.join("\n"), align, bullet };
 }
 function classGuideNormalize(value, { draft = false } = {}){
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -32324,29 +32445,51 @@ const CLASS_GUIDE_DESC_PAGE = { w: 1500, h: 330 };
 function classGuideDescLayout(box, cols){   // box at the reference size; returns { pages, height } in the page's own px (a transform does not change them)
   const P = CLASS_GUIDE_DESC_PAGE, n = Math.max(1, Math.min(3, cols || 1));
   box.classList.remove("is-paged"); for (const p of ["height", "columnWidth", "columnGap"]) box.style[p] = "";
+  const breaks = Array.from(box.querySelectorAll(":scope > .is-pagebreak")); breaks.forEach(d => { d.style.height = ""; });
   box.style.columnCount = n > 1 ? String(n) : ""; box.classList.toggle("has-cols", n > 1);   // column breaks count only with columns
   const natural = box.offsetHeight;
-  if (natural <= P.h + 1 && box.scrollWidth <= box.clientWidth + 1) return { pages: 1, height: Math.min(natural, P.h) };   // column breaks past the last column spill sideways: those go to pages
+  if (!breaks.length && natural <= P.h + 1 && box.scrollWidth <= box.clientWidth + 1) return { pages: 1, height: Math.min(natural, P.h) };   // column breaks past the last column spill sideways: those go to pages; a page break always makes pages
   box.classList.add("is-paged"); box.style.columnCount = ""; box.style.height = P.h + "px";
   const cs = getComputedStyle(box), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), inner = box.clientWidth - padX;
   box.style.columnGap = padX + "px"; box.style.columnWidth = Math.floor((inner - (n - 1) * padX) / n) + "px";   // n columns a page; the gap = the side gutters, so a page turn is one box width
-  return { pages: Math.max(1, Math.round(box.scrollWidth / Math.max(1, box.clientWidth))), height: P.h };
+  // Page breaks (user 2026-10-29, Ctrl+Enter): each one, in order, stretches over the rest of its column and the page's columns after it, so the next line
+  // starts at the top of the next page's first column (the guide page and the live box are both laid out here, at the reference size).
+  if (breaks.length){
+    const padL = parseFloat(cs.paddingLeft), padT = parseFloat(cs.paddingTop), colH = box.clientHeight - padT - parseFloat(cs.paddingBottom), pitch = parseFloat(box.style.columnWidth) + padX;
+    for (const d of breaks){
+      const bx = box.getBoundingClientRect(), k = bx.width / Math.max(1, box.offsetWidth) || 1, r = d.getClientRects()[0] || d.getBoundingClientRect();
+      const x = (r.left - bx.left) / k + box.scrollLeft - padL, y = Math.max(0, Math.min(colH, (r.top - bx.top) / k - padT));
+      const rest = n - 1 - Math.max(0, Math.floor((x + padX / 2) / pitch)) % n;
+      d.style.height = Math.max(0, colH - y + rest * colH) + "px";
+      d.classList.toggle("is-tight", colH - y < 24);   // no room for the editor's ขึ้นหน้าใหม่ text on this page: the dashed line alone
+    }
+  }
+  return { pages: Math.max(1, Math.ceil((box.scrollWidth - 1) / Math.max(1, box.clientWidth))), height: P.h };   // up: a last page may use only its first of 2-3 columns
 }
 // The guide view's description, one block per line (user 2026-10-18): side-by-side columns and pages then never split a paragraph. **bold** that runs over
 // a line break is closed at the line's end and reopened on the next; an empty line keeps its height with a <br>.
 function classGuideParaHtml(text){
+  return classGuideDescParts(text).map(p => '<span class="cg-para' + p.cls + '"' + (p.brk ? ' aria-hidden="true"' : "") + ">" + p.inner + "</span>").join("");
+}
+// One entry per line for the guide page and the editor: its classes (" is-head", " is-center" / " is-right", " is-bullet", or a break) and inner HTML.
+function classGuideDescParts(text){
   let open = false;
   return classGuideRichText(text).split("\n").map(line => {
-    if (line.trim() === classGuideColBreak()) return '<span class="cg-para is-colbreak" aria-hidden="true">' + classGuideColBreak() + "</span>";   // a column break (screen readers skip it)
-    const after = (open ? 1 : 0) + (line.match(/<strong>/g) || []).length - (line.match(/<\/strong>/g) || []).length === 1;
-    const plain = line.replace(/<[^>]*>/g, "").trim(), head = plain.length > 0 && plain.length <= 60 && /[:：]$/.test(plain);   // a heading line ("Status Recommend:") stays with the next one
-    const html = '<span class="cg-para' + (head ? " is-head" : "") + '">' + (open ? "<strong>" : "") + (line || "<br>") + (after ? "</strong>" : "") + "</span>";
-    open = after; return html;
-  }).join("");
+    const brk = classGuideBreakKind(line);
+    if (brk) return { cls: " is-" + brk + "break", brk: true, inner: line.trim() };   // a column / page break (screen readers skip it)
+    const align = classGuideLineAlign(line), body = align ? line.slice(1) : line;
+    const after = (open ? 1 : 0) + (body.match(/<strong>/g) || []).length - (body.match(/<\/strong>/g) || []).length === 1;
+    const plain = body.replace(/<[^>]*>/g, "").trim(), head = plain.length > 0 && plain.length <= 60 && /[:：]$/.test(plain);   // a heading line ("Status Recommend:") stays with the next one
+    let bullet = false;
+    const inner = ((open ? "<strong>" : "") + (body || "<br>") + (after ? "</strong>" : "")).replace(/^(<strong>)?• /, (m, s) => { bullet = true; return '<span class="cg-bullet">• </span>' + (s || ""); });   // the dot stands outside its line's bold
+    open = after;
+    return { cls: (head ? " is-head" : "") + (align ? " is-" + align : "") + (bullet ? " is-bullet" : ""), brk: false, inner };
+  });
 }
 // The description editor's lines as blocks (user 2026-10-21), like the guide page's .cg-para: on step 1's live box a paragraph never splits between pages.
+// Breaks and a bullet's dot cannot be typed into (user 2026-10-29).
 function classGuideEditHtml(text){
-  return text ? classGuideParaHtml(text).replace(/<span class="cg-para( is-head| is-colbreak)?"(?: aria-hidden="true")?>/g, (m, cls) => cls === " is-head" ? '<div class="is-head">' : cls ? '<div class="is-colbreak" contenteditable="false">' : "<div>").replace(/<\/span>/g, "</div>") : "";
+  return text ? classGuideDescParts(text).map(p => "<div" + (p.cls ? ' class="' + p.cls.trim() + '"' : "") + (p.brk ? ' contenteditable="false"' : "") + ">" + p.inner.replace('<span class="cg-bullet">', '<span class="cg-bullet" contenteditable="false">') + "</div>").join("") : "";
 }
 // Step 6's desktop preview sizes (user 2026-10-21): the guide page's window area on common computer screens, shown next to the PNG.
 const CLASS_GUIDE_VIEWPORTS = [[1280, 720], [1366, 768], [1536, 864], [1920, 1080], [2560, 1440], [3440, 1440]];
@@ -32366,8 +32509,8 @@ function classGuideBoldEdit(value, start, end, maxLength){
 // Highlight (user 2026-10-15): every bold run stands apart with a space before and after it (none at the start or end of a line, never doubled).
 function classGuideSpaceBold(value){
   return String(value).replace(/\*\*([\s\S]+?)\*\*/g, (m, inner, at, all) => {
-    const before = all[at - 1], after = all[at + m.length];
-    return (before !== undefined && !/\s/.test(before) ? " " : "") + m + (after !== undefined && !/\s/.test(after) ? " " : "");
+    const before = all[at - 1], after = all[at + m.length], lineStart = before !== undefined && CLASS_GUIDE_ALIGN_MARKS[before] && (at === 1 || all[at - 2] === "\n");   // right after a line's alignment mark = its start
+    return (before !== undefined && !/\s/.test(before) && !lineStart ? " " : "") + m + (after !== undefined && !/\s/.test(after) ? " " : "");
   });
 }
 // A text offset carried across a re-render that only added characters (Ctrl+B's spaces around the bold part, user 2026-10-29): the start of a
@@ -32390,6 +32533,7 @@ function classGuideReadEditor(node){
     let value = classGuideReadEditor(child);
     const block = ["DIV", "P", "LI"].includes(tag);
     if (block && value === "\n") value = "";
+    if (block){ const cls = String(child.className || ""), m = /\bis-(center|right)\b/.exec(cls); if (m && !/break\b/.test(cls)) value = classGuideAlignMark(m[1]) + value; }   // a line's alignment, back to its mark
     if (block && text && !text.endsWith("\n")) text += "\n";
     text += ["B", "STRONG"].includes(tag) && value ? "**" + value + "**" : value;
     if (block && i < children.length - 1 && (!text.endsWith("\n") || value === "")) text += "\n";   // an empty line (Enter twice: <div><br></div>) keeps its own line break
@@ -32400,15 +32544,17 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
   let accepted = "", composing = false, applying = false;
   // Own undo / redo (user 2026-10-17): re-rendering after a bold wipes the browser's undo, so the box keeps its history. Bold is one step; typing is
   // grouped into bursts (a new step after 0.8 s idle). Ctrl+Z / Cmd+Z undo, Ctrl+Y / Ctrl+Shift+Z redo.
-  const undo = [], redo = []; let last = "", typing = false, typingTimer = 0;
+  const undo = [], redo = []; let last = "", typing = false, typingTimer = 0, burstSel = null, savedSel = null;
   const changed = () => backing.dispatchEvent(new Event("input", { bubbles: true }));
   const render = value => { backing.value = value; editor.innerHTML = toHtml(value); accepted = editor.innerHTML; last = value; };
   const set = value => { render(value || ""); undo.length = 0; redo.length = 0; typing = false; };   // a new text (another note, a loaded draft) starts a new history
-  const remember = prev => { undo.push(prev); if (undo.length > 200) undo.shift(); redo.length = 0; };
+  // Each step keeps its selection (user 2026-10-29: Ctrl+Z put the caret at the end, so the live description jumped to its last page): an undo puts back
+  // the text and the selection from just before the change, a redo the ones from just after it.
+  const remember = (prev, s) => { undo.push({ v: prev, s: s || null }); if (undo.length > 200) undo.shift(); redo.length = 0; };
   const sync = () => {
     const value = classGuideReadEditor(editor);
     if (value.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
-    if (value !== last){ if (!typing) remember(last); typing = true; clearTimeout(typingTimer); typingTimer = setTimeout(() => { typing = false; }, 800); }
+    if (value !== last){ if (!typing) remember(last, burstSel); typing = true; clearTimeout(typingTimer); typingTimer = setTimeout(() => { typing = false; }, 800); }
     backing.value = value; accepted = editor.innerHTML; last = value; changed(); return true;
   };
   const caretEnd = () => { const r = document.createRange(); r.selectNodeContents(editor); r.collapse(false); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); };
@@ -32428,7 +32574,69 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     const now = editor.textContent, s = pointAt(classGuideKeepOffset(was, now, a, false), true), t = pointAt(classGuideKeepOffset(was, now, b, true), false);
     const r = document.createRange(); r.setStart(s[0], s[1]); r.setEnd(t[0], t[1]); sel.removeAllRanges(); sel.addRange(r);
   };
-  const step = (from, to) => { if (!from.length) return; to.push(last); render(from.pop()); typing = false; changed(); editor.focus(); caretEnd(); };
+  // The selection as offsets into the text and back (user 2026-10-29). A point's offset = the length of the text the box holds up to it (its cloned
+  // range read like the box), less the closing ** of a bold run it cuts; a point from an offset goes through classGuideTextPoint, then the text nodes of
+  // that line (blocks: the description, one element per line) or of the box (the notes), never inside a part that cannot be typed into.
+  const blocks = toHtml === classGuideEditHtml;
+  const offsetAt = (node, off) => {
+    if (node === editor && off < editor.childNodes.length){ node = editor.childNodes[off]; off = 0; }   // between two lines: the start of the next
+    const r = document.createRange(); r.setStart(editor, 0); r.setEnd(node, off);
+    const holder = document.createElement("div"); holder.appendChild(r.cloneContents());
+    let s = classGuideReadEditor(holder);
+    for (let x = node.nodeType === 1 ? node : node.parentNode; x && x !== editor; x = x.parentNode) if (x.nodeType === 1 && /^(B|STRONG)$/.test(x.tagName)){
+      const cut = document.createRange(); cut.selectNodeContents(x); cut.setEnd(node, off); if (cut.toString()) s = s.slice(0, -2); break;
+    }
+    return s.length;
+  };
+  const selNow = () => {
+    const sel = window.getSelection && window.getSelection(); if (!sel || !sel.rangeCount) return null;
+    const r = sel.getRangeAt(0); if (!editor.contains(r.startContainer) || !editor.contains(r.endContainer)) return null;
+    const a = offsetAt(r.startContainer, r.startOffset); return [a, r.collapsed ? a : offsetAt(r.endContainer, r.endOffset)];
+  };
+  const pointIn = (root, n, next) => {
+    const w = document.createTreeWalker(root, 4);   // NodeFilter.SHOW_TEXT
+    for (let t = w.nextNode(); t; t = w.nextNode()){
+      const len = t.nodeValue.length;
+      if (next ? n < len : n <= len){
+        const fixed = t.parentElement && t.parentElement.closest('[contenteditable="false"]');
+        if (fixed && fixed !== editor && editor.contains(fixed)){ const p = fixed.parentNode; return [p, Array.prototype.indexOf.call(p.childNodes, fixed) + (n > 0 ? 1 : 0)]; }
+        return [t, n];
+      }
+      n -= len;
+    }
+    return [root, root.textContent ? root.childNodes.length : 0];
+  };
+  const setSel = s => {
+    if (!s) return;
+    const at = (o, next) => { const p = classGuideTextPoint(last, o, blocks), line = blocks ? editor.children[p.line] : editor; return line ? pointIn(line, p.vis, next) : [editor, editor.childNodes.length]; };
+    const a = Math.max(0, Math.min(s[0], last.length)), b = Math.max(a, Math.min(s[1], last.length)), p1 = at(a, a !== b), p2 = a === b ? p1 : at(b, false);
+    try { const r = document.createRange(); r.setStart(p1[0], p1[1]); r.setEnd(p2[0], p2[1]); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch (e) {}
+  };
+  const diffSel = (v, was) => {   // a step with no selection kept: the part of v that differs from the text before (the caret where a deletion was)
+    let i = 0; while (i < v.length && i < was.length && v[i] === was[i]) i++;
+    let j = 0; while (j < v.length - i && j < was.length - i && v[v.length - 1 - j] === was[was.length - 1 - j]) j++;
+    return [i, v.length - j];
+  };
+  const step = (from, to) => {
+    if (!from.length) return;
+    const e = from.pop(), was = last; to.push({ v: last, s: selNow() });
+    render(e.v); typing = false; changed(); editor.focus(); setSel(e.s || diffSel(e.v, was));
+  };
+  editor.addEventListener("beforeinput", () => { if (!typing) burstSel = selNow(); }, true);   // a typing burst's undo goes back to where it began
+  // ... and ends where the caret moves away (as in Word), so one Ctrl+Z never undoes typing in two places
+  editor.addEventListener("mousedown", () => { typing = false; });
+  editor.addEventListener("keydown", e => { if (/^(Arrow|Home$|End$|Page)/.test(e.key)) typing = false; });
+  document.addEventListener("selectionchange", () => { const s = selNow(); if (s) savedSel = s; });   // for a tool clicked after the box lost its focus
+  // One change from a text operation (user 2026-10-29: alignment, breaks, Enter, Tab, bullets): fn(text, start, end) returns { value, start, end } or null
+  // (the key is the browser's own). One undo step (out.undo: what Ctrl+Z gives back instead of the text before it), then the box drawn with the new selection.
+  const edit = fn => {
+    if (composing) return false;
+    const value = classGuideReadEditor(editor), s = selNow() || savedSel; if (!s) return false;
+    const out = fn(value, Math.min(s[0], value.length), Math.min(s[1], value.length)); if (!out) return false;
+    if (out.value.length > backing.maxLength){ notify("ข้อความยาวเกินกำหนด"); return true; }
+    if (out.value !== value){ if (out.undo) remember(out.undo.value, [out.undo.start, out.undo.start]); else remember(value, s); typing = false; render(out.value); changed(); }
+    editor.focus(); setSel([out.start, out.end]); return true;
+  };
   // The selection, whichever way it was made (left to right, right to left, or dragged past the edge of the box), cut to the box (user 2026-10-17).
   const boxRange = () => {
     const sel = window.getSelection && window.getSelection();
@@ -32445,11 +32653,12 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     const r = boxRange(); if (!r) return false;
     const before = last; typing = false;
     editor.focus(); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    const s0 = selNow();
     applying = true; try { document.execCommand("bold", false); } finally { applying = false; }
     const value = classGuideReadEditor(editor), spaced = classGuideSpaceBold(value), next = spaced.length <= backing.maxLength ? spaced : value;
     if (next.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
     if (next === before) return true;
-    remember(before);
+    remember(before, s0);
     if (next !== value) renderKeepingSelection(next); else { backing.value = next; accepted = editor.innerHTML; last = next; }
     changed(); return true;
   };
@@ -32469,7 +32678,7 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
   editor.addEventListener("compositionend", () => { composing = false; sync(); });
   const insertPlain = e => {
     e.preventDefault(); const transfer = e.clipboardData || e.dataTransfer;
-    if (transfer){ document.execCommand("insertText", false, transfer.getData("text/plain")); sync(); }
+    if (transfer){ document.execCommand("insertText", false, transfer.getData("text/plain")); sync(); if (blocks){ const s = selNow(); render(last); setSel(s); } }   // pasted lines take their own looks (a "• " line its dot)
   };
   editor.addEventListener("paste", insertPlain);
   // Drag and drop (user 2026-10-21: a selection can be dragged, e.g. to another column): the text lands under the pointer (api.dropSpot may first open a
@@ -32484,7 +32693,7 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     const r = document.createRange(); r.setStart(p.offsetNode, p.offset); r.collapse(true); return r;
   };
   editor.addEventListener("drop", e => {
-    e.preventDefault(); const src = dragged; dragged = null;
+    e.preventDefault(); const src = dragged, s0 = selNow(); dragged = null;
     if (composing) return;
     let moved = "";
     if (src){
@@ -32499,7 +32708,7 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     const value = classGuideReadEditor(editor), next = value.replace(T, () => moved);
     if (!value.includes(T)){ render(last); return; }
     if (next.length > backing.maxLength){ render(last); notify("ข้อความยาวเกินกำหนด"); return; }
-    remember(last); typing = false; render(value.replace(T, () => T + moved + T));
+    remember(last, s0); typing = false; render(value.replace(T, () => T + moved + T));
     const marks = [], walk = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);   // select the moved text between the two marks, then take the marks out
     for (let t; (t = walk.nextNode());) for (let i = t.nodeValue.indexOf(T); i >= 0; i = t.nodeValue.indexOf(T, i + 1)) marks.push([t, i]);
     if (marks.length === 2){
@@ -32515,12 +32724,12 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
   const setLines = (list, at) => {
     const next = list.join("\n");
     if (next.length > backing.maxLength){ notify("ข้อความยาวเกินกำหนด"); return; }
-    if (next !== last){ remember(last); typing = false; render(next); changed(); }
+    if (next !== last){ remember(last, selNow()); typing = false; render(next); changed(); }
     editor.focus(); const line = editor.children[at];
     if (line){ const r = document.createRange(); r.setStart(line, 0); r.collapse(true); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
   };
   const draw = list => { const keep = last; render(list.join("\n")); last = keep; };   // the box redrawn without an undo step of its own (the next change records the text before it)
-  const api = { set, bold, lines, setLines, draw, dropSpot: null };
+  const api = { set, bold, lines, setLines, draw, dropSpot: null, edit, selNow, select: setSel, value: () => last };
   set(backing.value || ""); return api;
 }
 const CLASS_GUIDE_BUTTON_ICONS = {
@@ -32692,17 +32901,26 @@ function classGuideImageRuns(text){
   return runs;
 }
 // Greedy wrap for Thai and Latin: word boundaries (Intl.Segmenter when available), characters when one word is wider than a line; newlines kept.
-function classGuideImageWrap(runs, maxWidth, measure, segmenter){
-  const lines = [[]]; let x = 0;
-  const put = (text, gold) => { const line = lines[lines.length - 1], last = line[line.length - 1]; if (last && last.gold === gold) last.text += text; else line.push({ text, gold }); };
-  const newLine = () => { lines.push([]); x = 0; };
+// opts (user 2026-10-29, the description's tabs and bullets): tab = the tab stop in px (a tab moves to the next stop from the line's left), bullets =
+// per paragraph whether it is a bullet (its lines start hang px in; the first one is marked .bullet for drawLines to draw the dot).
+function classGuideImageWrap(runs, maxWidth, measure, segmenter, opts = {}){
+  const lines = [[]], hang = opts.hang || 0, bullets = opts.bullets || []; let x = 0, para = 0;
+  const put = (text, gold) => { const line = lines[lines.length - 1], last = line[line.length - 1]; if (last && last.gold === gold && !last.tab) last.text += text; else line.push({ text, gold }); };
+  const indent = () => { const ln = lines[lines.length - 1]; if (bullets[para]){ ln.indent = hang; x = hang; } };
+  const newLine = () => { lines.push([]); x = 0; indent(); };
+  if (bullets[0]){ indent(); lines[0].bullet = true; }
   for (const run of runs) for (const part of run.text.split(/(\n)/)){
-    if (part === "\n"){ newLine(); lines[lines.length - 1].para = true; continue; }   // a line break starts a paragraph (the PNG's description columns keep them whole)
-    const tokens = run.keep ? [part] : segmenter ? Array.from(segmenter.segment(part), s => s.segment) : part.split(/(\s+)/).filter(Boolean);
+    if (part === "\n"){ para++; newLine(); lines[lines.length - 1].para = true; if (bullets[para]) lines[lines.length - 1].bullet = true; continue; }   // a line break starts a paragraph (the PNG's description columns keep them whole)
+    const tokens = run.keep ? [part] : (segmenter ? Array.from(segmenter.segment(part), s => s.segment) : part.split(/(\s+)/).filter(Boolean)).flatMap(t => t.split(/(\t)/).filter(Boolean));
     for (const tok of tokens){
+      if (tok === "\t" && opts.tab){   // a tab: to the next stop, or the next line when it is past the edge
+        let adv = (Math.floor(x / opts.tab) + 1) * opts.tab - x;
+        if (x > 0 && x + adv > maxWidth){ newLine(); adv = (Math.floor(x / opts.tab) + 1) * opts.tab - x; }
+        lines[lines.length - 1].push({ text: "\t", gold: run.gold, tab: true, w: adv }); x += adv; continue;
+      }
       const w = measure(tok, run.gold);
       if (x > 0 && x + w > maxWidth && tok.trim()) newLine();
-      if (x === 0 && !tok.trim() && lines[lines.length - 1].length === 0 && lines.length > 1) continue;
+      if (x === (lines[lines.length - 1].indent || 0) && !tok.trim() && lines[lines.length - 1].length === 0 && lines.length > 1) continue;
       if (w > maxWidth){   // wider than a line: break between Thai words first (a title chunk is split at spaces only), characters only inside a word that is still too wide
         const pieces = typeof Intl !== "undefined" && Intl.Segmenter ? Array.from(new Intl.Segmenter("th", { granularity: "word" }).segment(tok), s => s.segment) : [tok];
         for (const piece of pieces){
@@ -32728,9 +32946,9 @@ function classGuideImageFitName(measureAt, maxWidth, size, floor = 8){
 function classGuideImageClip(lines, maxLines, maxWidth, measure){
   if (lines.length <= maxLines) return lines;
   if (maxLines <= 0) return [];
-  const out = lines.slice(0, maxLines), last = out[maxLines - 1].map(s => ({ ...s }));
-  const width = () => last.reduce((sum, s) => sum + measure(s.text, s.gold), 0) + measure("…", false);
-  while (last.length && width() > maxWidth){ const s = last[last.length - 1]; s.text = s.text.slice(0, -1); if (!s.text) last.pop(); }
+  const out = lines.slice(0, maxLines), keep = out[maxLines - 1], last = Object.assign(keep.map(s => ({ ...s })), { align: keep.align, indent: keep.indent, bullet: keep.bullet, para: keep.para });
+  const width = () => last.reduce((sum, s) => sum + (s.tab ? s.w : measure(s.text, s.gold)), last.indent || 0) + measure("…", false);
+  while (last.length && width() > maxWidth){ const s = last[last.length - 1]; if (s.tab){ last.pop(); continue; } s.text = s.text.slice(0, -1); if (!s.text) last.pop(); }
   last.push({ text: "…", gold: false }); out[maxLines - 1] = last;
   return out;
 }
@@ -32774,8 +32992,15 @@ async function classGuideRenderImage(guide, simRoot){
   const spaced = px => { if ("letterSpacing" in ctx) ctx.letterSpacing = px + "px"; };
   const segmenter = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter("th", { granularity: "word" }) : null;
   const measureWith = fontFn => (s, g) => { ctx.font = fontFn(g); return ctx.measureText(s).width; };
-  const drawLines = (lines, x0, yStart, lh, fontFn, colors) => {
-    lines.forEach((ln, i) => { let x = x0; for (const s of ln){ ctx.font = fontFn(s.gold); ctx.fillStyle = s.gold ? colors.gold : colors.text; ctx.fillText(s.text, x, yStart + i * lh); x += ctx.measureText(s.text).width; } });
+  // colW (the description, user 2026-10-29): a line's alignment inside its column; a bullet line's dot in gold at its start, its text hung after it; tabs
+  const drawLines = (lines, x0, yStart, lh, fontFn, colors, colW) => {
+    const lineW = ln => ln.reduce((sum, s, j) => { if (s.tab) return sum + s.w; ctx.font = fontFn(s.gold); return sum + ctx.measureText(j === ln.length - 1 ? s.text.trimEnd() : s.text).width; }, ln.indent || 0);
+    lines.forEach((ln, i) => {
+      const off = colW && ln.align ? Math.max(0, (colW - lineW(ln)) * (ln.align === "center" ? 0.5 : 1)) : 0;
+      let x = x0 + off + (ln.indent || 0);
+      if (ln.bullet){ ctx.font = fontFn(false); ctx.fillStyle = colors.gold; ctx.fillText("•", x0 + off, yStart + i * lh); }
+      for (const s of ln){ if (s.tab){ x += s.w; continue; } ctx.font = fontFn(s.gold); ctx.fillStyle = s.gold ? colors.gold : colors.text; ctx.fillText(s.text, x, yStart + i * lh); x += ctx.measureText(s.text).width; }
+    });
   };
   const box = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
@@ -33012,8 +33237,11 @@ async function classGuideRenderImage(guide, simRoot){
   // beside the trees when it fits under the info boxes (user 2026-10-17, as in the reader): the trees then keep the full height
   const fullPlan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: fullH });
   const descLeft = false, descLeftLines = [];   // the description always sits under the trees, as on the guide page (user 2026-10-21)
-  const descPlain = classGuideDescPlain(guide.description).trim();   // column breaks count only where it draws 2-3 columns (below)
-  let descLines = descPlain && !descLeft ? classGuideImageWrap(classGuideImageRuns(descPlain), descTextW, measureWith(descFont), segmenter) : [];
+  // the marks read (user 2026-10-29): alignment and bullets per line, no page breaks; column breaks count only where it draws 2-3 columns (below)
+  const descImg = classGuideImageDesc(guide.description, false), descLead = (descImg.text.match(/^\s*/)[0].match(/\n/g) || []).length, descPlain = descImg.text.trim();
+  const descOne = { text: descPlain, align: descImg.align.slice(descLead), bullet: descImg.bullet.slice(descLead) }, descMulti = classGuideImageDesc(guide.description, true);   // the trim drops the blank lines before the text
+  const wrapDesc = (multi, w, m, f) => { const d = multi ? descMulti : descOne, all = classGuideImageWrap(classGuideImageRuns(d.text), w, m, segmenter, { tab: 4 * f, hang: 1.2 * f, bullets: d.bullet }); let p = 0; all.forEach((ln, i) => { if (i && ln.para) p++; ln.align = d.align[p] || ""; }); return all; };
+  let descLines = descPlain && !descLeft ? wrapDesc(false, descTextW, measureWith(descFont), 23) : [];
   let descNatural = descLines.length ? descLines.length * lh + panelPad * 2 : 0, descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
   const treeRoom = fullH - (descWanted ? descWanted + G : 0);
   let plan = classGuideImagePlan(model, { x: gridX, y: P.margin, w: gridW, h: treeRoom });
@@ -33036,7 +33264,7 @@ async function classGuideRenderImage(guide, simRoot){
   const descWide = noteIds.length > 0 && descLines.length > 0 && notesNeed - panelPad <= row1 + G;   // the last note ends above the description's top   // the notes end above the trees' bottom: the description runs under them too (user 2026-10-17)
   if (descWide){
     descW = P.w - P.margin * 2; descTextW = descW - bar - panelPad * 2;
-    descLines = classGuideImageWrap(classGuideImageRuns(descPlain), descTextW, measureWith(descFont), segmenter);
+    descLines = wrapDesc(false, descTextW, measureWith(descFont), 23);
     descNatural = descLines.length * lh + panelPad * 2; descWanted = Math.min(descNatural, Math.round(fullH * 0.3));
   }
   const rectH = Math.min(fullH, Math.max(row1 + (descLines.length ? G + descWanted : 0), notesNeed));
@@ -33139,19 +33367,19 @@ async function classGuideRenderImage(guide, simRoot){
     for (let f = 23; f >= 15 && !fits; f--){
       const fnt = g => font(g ? 700 : 400, f), flh = Math.round(f * 36 / 23), most = Math.max(1, Math.min(3, Math.floor((descTextW + colGapW) / (38 * f + colGapW))));
       for (let c = guide.descCols || 1; c <= (guide.descCols || 1) && !fits; c++){   // the author's columns (user 2026-10-21)
-        const w = (descTextW - (c - 1) * colGapW) / c, all = classGuideImageWrap(classGuideImageRuns(c > 1 ? guide.description : descPlain), w, measureWith(fnt), segmenter);
+        const w = (descTextW - (c - 1) * colGapW) / c, all = wrapDesc(c > 1, w, measureWith(fnt), f);
         size = f; sLh = flh; sFont = fnt; lines = all; cols = c; colW = w;
         fits = (c > 1 ? Math.max(...descColumns(all, c).map(ch => ch.length)) : all.length) * flh + panelPad * 2 <= dh;
       }
     }
-    if (!fits){ cols = 1; colW = descTextW; lines = classGuideImageWrap(classGuideImageRuns(descPlain), descTextW, measureWith(sFont), segmenter); }   // the cut is in one column
+    if (!fits){ cols = 1; colW = descTextW; lines = wrapDesc(false, descTextW, measureWith(sFont), size); }   // the cut is in one column
     const chunks = cols > 1 ? descColumns(lines, cols) : [lines];
     const usedLines = Math.max(...chunks.map(ch => ch.length)), maxLines = Math.max(1, Math.floor((dh - panelPad * 2) / sLh) - (fits ? 0 : 1));
     pullQuote(P.margin, dy, descW, Math.min(dh, fits ? usedLines * sLh + panelPad * 2 : dh));
     chunks.forEach((ch, c) => {
       const cx = P.margin + bar + panelPad + c * (colW + colGapW);
       if (c > 0){ ctx.fillStyle = "rgba(201,162,39,.22)"; ctx.fillRect(cx - colGapW / 2, dy + panelPad, 1, Math.min(dh - panelPad * 2, usedLines * sLh)); }
-      shadowed(() => drawLines(fits ? ch : classGuideImageClip(ch, maxLines, colW, measureWith(sFont)), cx, dy + panelPad + Math.round(size * 25 / 23), sLh, sFont, { text, gold }));
+      shadowed(() => drawLines(fits ? ch : classGuideImageClip(ch, maxLines, colW, measureWith(sFont)), cx, dy + panelPad + Math.round(size * 25 / 23), sLh, sFont, { text, gold }, colW));
     });
     if (!fits){ ctx.font = font(400, 16); ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText("อ่านคำอธิบายฉบับเต็มได้ในไกด์บนเว็บ 12 Tails Bible", P.margin + descW - panelPad, dy + dh - panelPad + 4); ctx.textAlign = "left"; }
   }
@@ -33258,7 +33486,7 @@ function mountClassGuide(root){
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
       <ol class="cg-step-guide" data-cg-role="stepGuide" hidden></ol>
-      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label class="cg-description"><textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-desc-head">คำอธิบายบิลด์<small class="cg-desc-live-note" data-cg-role="descLiveNote" aria-live="polite" hidden></small><span class="cg-desc-tools" data-cg-role="descTools" role="group" aria-label="จำนวนคอลัมน์ของคำอธิบาย">คอลัมน์<button type="button" data-cg-cols="1">1</button><button type="button" data-cg-cols="2">2</button><button type="button" data-cg-cols="3">3</button></span></span><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span><span class="cg-desc-pager" data-cg-role="descLivePager" hidden><button type="button" data-cg-lv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-lv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
+      <div class="cg-fields"><div class="cg-picks" data-cg-step="1"><b>เซิร์ฟเวอร์และอาชีพ</b><span class="cg-picks-row"><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="server" aria-label="เลือกเซิร์ฟเวอร์"><img class="cls-picker-thumb" data-cg-role="pickSrvThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickSrvName"></span><span class="cls-picker-arrow">▾</span></button><button type="button" class="cls-picker-btn cg-pick" data-cg-pick="pick" aria-label="เลือกอาชีพ"><img class="cls-picker-thumb" data-cg-role="pickClsThumb" src="" alt=""><span class="cls-picker-name" data-cg-role="pickClsName"></span><span class="cls-picker-arrow">▾</span></button></span></div><div class="cg-modes" data-cg-role="modesBox" role="group" aria-label="ไกด์นี้สำหรับ PVE หรือ PVP"><b>ไกด์นี้สำหรับ <small>(เลือกได้ทั้งสองอย่าง)</small></b><span class="cg-modes-row"><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pve" aria-pressed="false">PVE</button><button type="button" class="cg-mode-btn" data-cg-act="mode" data-cg-mode="pvp" aria-pressed="false">PVP</button></span></div><label>ชื่อไกด์<input data-cg-field="title" maxlength="160" placeholder="เช่น บิลด์ลงดันเจี้ยน"></label><label>ชื่อผู้เขียน<input data-cg-field="author" maxlength="120"></label><label class="cg-description"><textarea data-cg-field="description" data-cg-format="bold" maxlength="12000" hidden rows="3" placeholder="จุดเด่น วิธีเล่น และข้อควรรู้"></textarea><span class="cg-desc-head">คำอธิบายบิลด์<small class="cg-desc-live-note" data-cg-role="descLiveNote" aria-live="polite" hidden></small><span class="cg-desc-align" data-cg-role="descAlign" role="group" aria-label="จัดแนวบรรทัด"><button type="button" data-cg-align="" aria-pressed="true" aria-label="ชิดซ้าย" title="ชิดซ้าย (Ctrl+Shift+L)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12M2 6.5h8M2 10h12M2 13.5h8"/></svg></button><button type="button" data-cg-align="center" aria-pressed="false" aria-label="กึ่งกลาง" title="กึ่งกลาง (Ctrl+Shift+E)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12M4 6.5h8M2 10h12M4 13.5h8"/></svg></button><button type="button" data-cg-align="right" aria-pressed="false" aria-label="ชิดขวา" title="ชิดขวา (Ctrl+Shift+R)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12M6 6.5h8M2 10h12M6 13.5h8"/></svg></button></span><span class="cg-desc-tools" data-cg-role="descTools" role="group" aria-label="จำนวนคอลัมน์ของคำอธิบาย">คอลัมน์<button type="button" data-cg-cols="1">1</button><button type="button" data-cg-cols="2">2</button><button type="button" data-cg-cols="3">3</button></span></span><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="คำอธิบายบิลด์" data-cg-editor="description" data-placeholder="จุดเด่น วิธีเล่น และข้อควรรู้ (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์, Ctrl+Enter ขึ้นหน้าใหม่, - แล้วเว้นวรรคเป็นหัวข้อย่อย)"></span><span class="cg-desc-pager" data-cg-role="descLivePager" hidden><button type="button" data-cg-lv="-1" aria-label="หน้าก่อน" title="หน้าก่อน">‹</button><span></span><button type="button" data-cg-lv="1" aria-label="หน้าถัดไป" title="หน้าถัดไป">›</button></span></span></label><p class="cg-step-empty" data-cg-role="noteEmpty">ยังไม่ได้เลือกสกิล คลิกสกิลในตารางด้านขวาเพื่อเริ่มเขียนโน้ต</p><section class="cg-note-editor" data-cg-role="noteEditor" hidden><h3 data-cg-role="noteSkill"></h3><label>เหตุผล / โน้ตพิเศษ<textarea data-cg-role="noteText" data-cg-format="bold" maxlength="3000" hidden rows="4"></textarea><span class="cg-editor-wrap"><span class="cg-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="เหตุผล / โน้ตพิเศษ" data-cg-editor="noteText" data-placeholder="เหตุผลที่เลือกสกิลนี้ หรือข้อควรระวัง (เลือกข้อความแล้วกด Ctrl+B เพื่อไฮไลต์)"></span></span></label><div class="cg-dialog-actions"><button type="button" class="rsim-btn cg-btn cg-btn-quiet cg-note-delete" data-cg-act="deleteNote" hidden>${classGuideButtonIcon("clear")}<span>ลบโน้ต</span></button><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="cancelNote">${classGuideButtonIcon("cancelNote")}<span>ปิด</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="saveNote">${classGuideButtonIcon("saveNote")}<span>บันทึกโน้ต</span></button></div></section></div>
       <div class="cg-cover-row" data-cg-role="coverRow"><div class="cg-cover-pick-btn"><b>เลือก 1-5 สกิลเป็นหน้าปก</b><small data-cg-role="coverHint"></small></div><span class="cg-cover-slots" data-cg-role="coverSlots" aria-hidden="true"></span><button type="button" class="rsim-btn cg-btn cg-btn-quiet" data-cg-act="coverClear" hidden>${classGuideButtonIcon("clear")}<span>ล้าง</span></button></div>
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
@@ -33704,6 +33932,46 @@ function mountClassGuide(root){
   // คอลัมน์ 1 / 2 / 3 for the whole description (user 2026-10-21); Ctrl+Z outside a text box undoes the last change
   const setDescCols = n => { const was = (draft && draft.descCols) || 1; if (!draft || n === was) return; colsUndo.push(was); if (colsUndo.length > 50) colsUndo.shift(); lastEditCols = true; draft.descCols = n; saveDraft(); livePage = 0; layoutDescLive(); };
   descTools.addEventListener("click", e => { const b = e.target.closest("[data-cg-cols]"); if (!b) return; e.preventDefault(); setDescCols(+b.dataset.cgCols); });
+  // The description's Word basics (user 2026-10-29): ชิดซ้าย / กึ่งกลาง / ชิดขวา for the lines the selection touches (Ctrl+Shift+L / E / R), Ctrl+Enter a
+  // page break and Ctrl+Shift+Enter a column break, Enter keeping the line's alignment and bullet, Tab (Esc then Tab leaves the box), "- " bullets, and
+  // Backspace taking a bullet or a break back out. Each is one undo step (classGuideMountEditor's edit).
+  const descEd = editors.description, descAlign = el("descAlign");
+  const alignState = () => {
+    const s = descEd.selNow(); if (!s) return;
+    const now = classGuideDescAlignAt(descEd.value(), s[0], s[1]);
+    descAlign.querySelectorAll("[data-cg-align]").forEach(b => b.setAttribute("aria-pressed", String(now === b.dataset.cgAlign)));
+  };
+  document.addEventListener("selectionchange", alignState);
+  // The caret never rests before a bullet's dot and a selection never starts in it (Home, Shift+Home, a click on the dot): they go to the text, as in Word
+  // (Chrome refuses Ctrl+B and Enter with an end inside the dot, which cannot be typed into).
+  document.addEventListener("selectionchange", () => {
+    const sel = window.getSelection(), s = descEd.selNow(); if (!s || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0), inDot = n => { const e = n && (n.nodeType === 1 ? n : n.parentElement); return !!(e && e.closest(".cg-bullet")); };
+    const v = descEd.value(), L = classGuideLineAt(v, s[0]), at = L.s + L.mk.length, dot = v.startsWith("• ", at);
+    if (s[0] === s[1]){ if (dot && (s[0] === at || inDot(r.startContainer))) descEd.select([at + 2, at + 2]); return; }
+    if ((dot && s[0] === at) || inDot(r.startContainer) || inDot(r.endContainer)){ const a = dot && s[0] <= at + 2 ? at + 2 : s[0]; descEd.select([a, Math.max(a, s[1])]); }
+  });
+  descAlign.addEventListener("mousedown", e => { if (e.target.closest("[data-cg-align]")) e.preventDefault(); });   // the box keeps its focus and selection
+  descAlign.addEventListener("click", e => { const b = e.target.closest("[data-cg-align]"); if (!b) return; e.preventDefault(); descEd.edit((v, a, z) => classGuideDescAlign(v, a, z, b.dataset.cgAlign)); alignState(); });
+  let tabOut = false;
+  liveEd.addEventListener("keydown", e => {
+    if (e.isComposing || e.altKey) return;
+    const mod = e.ctrlKey || e.metaKey, out = tabOut; tabOut = e.key === "Escape";
+    if (mod && e.shiftKey){ const alignKey = { KeyL: "", KeyE: "center", KeyR: "right" }[e.code]; if (alignKey !== undefined){ e.preventDefault(); descEd.edit((v, a, b) => classGuideDescAlign(v, a, b, alignKey)); alignState(); return; } }
+    if (mod && e.key === "Enter"){
+      e.preventDefault();
+      if (e.shiftKey && ((draft && draft.descCols) || 1) < 2){ status("ตัวแบ่งคอลัมน์ใช้ได้เมื่อเลือกคอลัมน์ 2 หรือ 3"); return; }
+      descEd.edit((v, a, b) => classGuideDescBreak(v, a, b, e.shiftKey ? classGuideColBreak() : classGuidePageBreak())); return;
+    }
+    if (e.key === "Tab" && !mod && !out && descEd.edit((v, a, b) => classGuideDescTab(v, a, b, e.shiftKey))) e.preventDefault();   // after Esc, Tab leaves the box
+  });
+  liveEd.addEventListener("beforeinput", e => {
+    if (e.isComposing) return;
+    const t = e.inputType, s = descEd.selNow(), caret = s && s[0] === s[1];
+    if (t === "insertParagraph" || t === "insertLineBreak"){ if (descEd.edit(classGuideDescEnter)) e.preventDefault(); }
+    else if (t === "insertText" && e.data === " " && caret){ if (descEd.edit((v, a) => classGuideDescAutoBullet(v, a))) e.preventDefault(); }
+    else if (t === "deleteContentBackward" && caret){ if (descEd.edit((v, a) => classGuideDescBackspace(v, a))) e.preventDefault(); }
+  });
   document.addEventListener("keydown", e => {
     if (mode !== "author" || !lastEditCols || !colsUndo.length || root.hidden || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
     if (e.target.closest && e.target.closest("input, textarea, [contenteditable]")) return;
@@ -36677,6 +36945,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-29T17:13:11.522Z","feat(bible): class guide editor: Word basics for the description: per-line alignment icons ชิดซ้าย / กึ่งกลาง / ชิดขวา (Ctrl+Shift+L / E / R), Ctrl+Enter page breaks, Tab stops, dash-space bullets, and undo that puts the cursor back where the change was; a 3-column description's partly used last page now counts"],
     ["2026-10-29T16:26:52.906Z","fix(bible): class guide editor: after Ctrl+B the bold text stays selected, so the live description no longer jumps back to page 1 and a second Ctrl+B turns it back"],
     ["2026-10-29T16:02:11.097Z","fix(bible): skill details: the side panel rows lose their box and switch (the ring is the toggle) with the tags right after the rank pips, and a click on a stat panel header box folds and unfolds it with a hover look (no chevrons)"],
     ["2026-10-29T13:38:13.560Z","feat(bible): class guide #84 TTO Mole PVP warfare by ฮิตเตอร์แอร์"],
