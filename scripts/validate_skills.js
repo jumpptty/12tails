@@ -1539,6 +1539,7 @@ console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
 {
   const src = fs.readFileSync(targetPath, "utf8"), bad = [];
   if (!/@media \(min-width:900px\)\{\s*\.sk-side\{position:absolute; left:calc\(100% \+ 20px\); top:0; width:260px/.test(src)) bad.push("the desktop .sk-side placement rule (absolute, 20 px right of .sk, 260 px wide)");
+  if (!/@media\(max-width:899px\)\{\s*\.sk-hero\{position:relative\}/.test(src)) bad.push(".sk-hero position:relative and the ‹ › buttons below 900 px (@media(max-width:899px) block)");
   if (/@media\(max-width:900px\)\{\s*\.sk-hero\{position:relative\}/.test(src)) bad.push(".sk-hero must be position:relative below 900 px only (max-width:899px), or the panel anchors to the card at exactly 900 px");
   if (!src.includes('html.tool-wide-hero .sk > [data-role="display"], html.tool-wide-hero .sk-detail-layout{display:contents}')) bad.push("the phone rule that lets the related list leave the card (display:contents)");
   if (!src.includes("html.tool-wide-hero .sk-rel-phone{order:2")) bad.push("the phone related list after the stats panel (order:2)");
@@ -1553,10 +1554,14 @@ console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
   const h = src.indexOf("function fitStageToScreen(force){"), g = src.indexOf("if (isSkillLookup && !force && fitHoldOn()){ fitHeld = true; return; }", h), s = src.indexOf("  stageScaleNow = scale;", h);
   if (h < 0) bad.push("function fitStageToScreen(force){");
   else if (g < 0 || s < 0 || g > s) bad.push("the hold guard inside fitStageToScreen, before stageScaleNow = scale");
-  if ((src.match(/fitStageToScreen\(true\)/g) || []).length < 3) bad.push("3+ forced refits fitStageToScreen(true) (window resize, tool zoom, tool switch)");
+  for (const [what, re] of [["the window resize handler", /positionDmgInfoPopup\(\); fitStageToScreen\(true\); \} \}\);/], ["setToolZoom", /  fitStageToScreen\(true\);\r?\n  if \(z > 1\)\{/], ["showTool", /  fitStageToScreen\(true\);\r?\n\}\r?\n\r?\nfunction getGoatPath\(\)\{/]])
+    if (!re.test(src)) bad.push(`a forced refit fitStageToScreen(true) in ${what}`);
   if ((src.match(/fitStageToScreen\(skillSwitched\)/g) || []).length !== 2) bad.push("exactly 2 fitStageToScreen(skillSwitched) in renderHeroNow (a new card always fits)");
   if (!src.includes('const sel = ".sk-side, .sk-stats-panel .sk-class-badge";')) bad.push("the hold region (.sk-side and the stat panel headers)");
-  if (!src.includes("if (!e.ctrlKey && !e.metaKey && !e.altKey) fitHoldKey = true;")) bad.push("a shortcut must not arm the keyboard half (Ctrl / Meta / Alt keydowns ignored)");
+  if (!src.includes('if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "Tab" || e.key === "Enter" || e.key === " ")) fitHoldKey = true;')) bad.push("only Tab / Enter / Space arm the keyboard half (a shortcut or a key that moves no focus must not hold the scale)");
+  if (!src.includes("fitTapTimer = setTimeout(fitHoldRelease, 500)") || !src.includes('document.addEventListener("click", () => { if (fitTapTimer){')) bad.push("a touch releases the lock after its click (a 0 ms timer from pointerup can refit before the click lands)");
+  if (!src.includes("if (!e.buttons) fitPtrDown = false;")) bad.push("a pointermove with no button down clears a pointerup that never arrived");
+  if (!src.includes("if (document.body.scrollTop) document.body.scrollTop = 0;")) bad.push("the fit puts back a body scroll that Tab made while the scale was held");
   if (!src.includes('displayEl.querySelector(`button[data-dep-id="${keepDep}"]`)')) bad.push("keyboard focus restored by data-dep-id after the rebuild");
   if (bad.length) { errorCount += bad.length; bad.forEach(b => console.error("[SCALE LOCK ERROR] missing or wrong: " + b)); }
   else console.log("Verified the scale lock (hold guard, forced refits, keyboard focus).");
@@ -6255,6 +6260,7 @@ if (RUN_DAMAGE_CHECKS) {
         try {
           const h1 = render();   // warm-up: the first render after a dep change carries its pips' pop-in classes
           if (id === null) skel0 = skel(h1); else if (skel(h1) !== skel0) skelBad.push(`${sk.id} with ${id} ${max}: the panel's rows or headings changed with a toggle`);
+          if (id === null && h1.includes('<div class="sk-dep-strip">') && !skel0) skelBad.push(`${sk.id}: the skeleton check matched no row in a drawn strip (markup changed?)`);
           const used = sandbox.getUsedPlayerStatKeys(sk);
           const moves = (st) => { const keep = inputs[st].value; inputs[st].value = "0"; const a = render(); inputs[st].value = "300"; const b = render(); inputs[st].value = keep; return a !== b; };
           const movesAnywhere = (st) => moves(st) || ["400", "0"].some(v => { const keep = STATS.filter(k => k !== st).map(k => [k, inputs[k].value]); keep.forEach(([k]) => { inputs[k].value = v; }); try { return moves(st); } finally { keep.forEach(([k, x]) => { inputs[k].value = x; }); } });
