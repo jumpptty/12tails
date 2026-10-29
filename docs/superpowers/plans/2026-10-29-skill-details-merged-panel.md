@@ -8,12 +8,7 @@
 
 ## Status and handoff (2026-10-29, 17:30, workplace PC)
 
-- **Read this first: the workplace session keeps building after 18:00 on branch `wip/merged-panel`, never on `skill-cooldown-lookup`.**
-  - It starts from this commit and pushes only whole steps that pass the validator, one commit per step, with the step number in the subject. It adds no changelog entries; commit B gets one.
-  - **At home, before Step 0:** `git fetch origin`, then look at `origin/wip/merged-panel`. If it has step commits, continue from its newest commit instead of redoing those steps (for example `git merge --ff-only origin/wip/merged-panel` on a clean local branch; never `checkout` / `reset --hard` over `index.html`).
-  - **To take over:** push any commit to `wip/merged-panel`, even a docs-only one. Before every push the workplace session fetches the branch, and it stops for good once the branch holds a commit it did not make.
-  - **Without a takeover,** it stops after Step 9's checks, or at 23:59 on 2026-10-29 at the latest.
-  - **When the panel is done and reviewed,** land it on `skill-cooldown-lookup` as commit B: one commit with its changelog entry. Then delete the WIP branch.
+- **The workplace build was stopped at 17:57 on 2026-10-29** (the PC shut down) while it was still in Step 0, which writes scratch files only. So no `wip/merged-panel` branch exists, and nothing beyond what this note lists was built. On the home PC, start at Step 0.
 - **Step 1 is done (commit A, pushed 2026-10-29 before 18:00); Steps 2-9 are not started.** Commit A has the stat panel collapse, its 6 new `[PANEL ERROR]` checks and the rulebook text (`bible-skill-page-ui` "Stat dials", delta motion, `[PANEL ERROR]` line). Its hover adds the house lift (`translateY(-1px)`) to the plan's CSS. Browser pass A passed on `monkey_fireBall`, 0 console errors:
   - 1920×1080, BB: each chevron hides only its own grid; the header and Buff / Debuff rows stay; the state survives a reload; the dials fit after expanding; (a) a raised AGI sends its light from the header centre.
   - 1280×720, Reborn: both `.sk-badge-line`s fit. (b) A cooldown target of 8 s with the player panel collapsed gave the toast `ปรับ AGI 248 → 257 …` and Ctrl+Z restored 248. (c) DEF hand-set to 50, then Carron re-picked: DEF went back to 2 and every shot had one end at the enemy header. (d) Typing in AGI, then the chevron within 800 ms: 6 shots, none near (0, 0).
