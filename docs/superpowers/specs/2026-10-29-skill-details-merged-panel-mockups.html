@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Merged panel mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0d0b0a;color:#f3e7d3;font:15px/1.6 Prompt,system-ui,sans-serif;padding:24px;max-width:1100px;margin:0 auto}.options{display:flex;flex-direction:column;gap:22px}.option{border:1px solid #4d3b27;border-radius:12px;padding:14px;display:flex;gap:12px}.option .letter{font-weight:700;color:#d8a04a;font-size:20px}.option .content{flex:1;min-width:0}.option[data-choice="b"]{border-color:#d8a04a;box-shadow:0 0 0 1px #d8a04a}.subtitle{color:#bba98a}h3{margin:0 0 8px}</style>
+</head><body>
+<p><b>Owner picked option B (2026-10-29).</b> Reference for docs/superpowers/specs/2026-10-29-skill-details-merged-panel-design.md.</p>
+<style>
+  .lx{font-family:'Prompt',system-ui,sans-serif;color:#f3e7d3;background:linear-gradient(#0b0c17,#100e18 45%,#171009);border-radius:10px;padding:12px;display:grid;grid-template-columns:120px 1fr 190px;gap:10px;font-size:11px;line-height:1.45;min-height:400px}
+  .lx.two{grid-template-columns:120px 1fr}
+  .lx .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start}
+  .lx .stats i{display:block;aspect-ratio:1;border-radius:50%;border:1.5px solid #5b4426}
+  .lx .stats i.on{border-color:#ef6b5a}
+  .lx .card{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .lx .hd{display:flex;align-items:center;gap:7px;justify-content:center;font-weight:700;font-size:13px}
+  .lx .ico{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c98a3e,#3a2510);border:1.5px solid #d8a04a;flex:none}
+  .lx .ico.s{width:18px;height:18px;border-width:1px}
+  .lx .pills{display:flex;gap:4px;font-size:9px;font-weight:600}.lx .pills b{background:#2f6fd0;border-radius:99px;padding:0 6px}.lx .pills b.sp{background:#b33}
+  .lx .desc{border-left:3px solid #d8a04a;background:rgba(216,160,74,.06);padding:6px 9px;border-radius:3px}
+  .lx .desc .new{background:rgba(130,214,143,.12);outline:1px dashed rgba(130,214,143,.5);border-radius:3px;display:block;margin-top:3px}
+  .lx .desc b{color:#f2c879}
+  .lx .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.lx .chips div{border:1px solid #5b4426;background:#1f1914;border-radius:4px;height:38px;padding:3px 5px;font-size:9px;color:#bfae8e}
+  .lx .chips div.w{grid-column:span 2}
+  .lx .strip{border-top:1px solid rgba(212,175,55,.25);border-bottom:1px solid rgba(212,175,55,.25);padding:6px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .lx .tg{display:flex;align-items:center;gap:5px}
+  .lx .tg .ico{width:20px;height:20px}
+  .lx .tg small{display:block;color:#bfae8e;font-size:8.5px}
+  .lx .pips{display:flex;gap:2px;margin-top:1px}.lx .pips u{width:4px;height:4px;border-radius:50%;background:#d8a04a;text-decoration:none}.lx .pips u.o{background:transparent;border:1px solid #d8a04a}
+  .lx .rail{display:flex;flex-direction:column;gap:6px;align-content:start}
+  .lx .rail h5{margin:0 0 2px;color:#d8a04a;font-size:11px;border-bottom:1px solid rgba(216,160,74,.35);padding-bottom:2px}
+  .lx .row{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:6px}
+  .lx .row .nm{flex:1;min-width:0}
+  .lx .row.tog{background:rgba(216,160,74,.07);border:1px solid rgba(216,160,74,.25)}
+  .lx .sw{width:24px;height:13px;border-radius:99px;background:#d8a04a;position:relative;flex:none}.lx .sw::after{content:"";position:absolute;right:2px;top:2px;width:9px;height:9px;border-radius:50%;background:#1a120a}
+  .lx .sw.off{background:#4a3b2c}.lx .sw.off::after{left:2px;right:auto;background:#bfae8e}
+  .lx .relrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid rgba(212,175,55,.2);padding-top:6px}
+  .lx .relrow span{display:flex;align-items:center;gap:4px;font-size:10px}
+  .lx .lock{font-size:9px;color:#82d68f;border:1px dashed rgba(130,214,143,.6);border-radius:5px;padding:2px 5px;align-self:flex-start}
+  .lx .tag{font-size:8px;color:#1a120a;background:#82d68f;border-radius:3px;padding:0 3px;margin-left:3px}
+</style>
+
+<h2>Where should the toggles live so a click never misses?</h2>
+<p class="subtitle">Bison Combo on BB, mocked. The <span style="color:#82d68f">green dashed lines</span> are desc lines that appear when a toggle turns on: today they push the toggle strip down, and the taller card also makes the whole page shrink to fit. All three options add the same scale lock: <b>the page keeps its size while the pointer is over the toggles</b>, then refits when it leaves.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" >
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Your idea: toggles take the right rail, related skills move under the card</h3>
+      <div class="lx">
+        <div class="stats"><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i></div>
+        <div class="card">
+          <div class="hd"><span class="ico"></span>Combo <span class="pills"><b>MP 0</b></span></div>
+          <div class="desc">ฟันต่อเนื่อง 3 ท่า แต่ละท่ามีดาเมจตามค่า ATK…
+            <span class="new"><b>Brute Strength:</b> ดาเมจท่า 3 เพิ่ม…</span>
+            <span class="new"><b>G. Marshal Axe:</b> มีโอกาสคริ…</span></div>
+          <div class="chips"><div class="w">สูตรดาเมจ</div><div>ดาเมจดิบ</div><div>ดาเมจจริง</div></div>
+          <div class="relrow"><b style="color:#d8a04a">สกิลที่เกี่ยวข้อง</b><span><i class="ico s"></i>Added Swing</span><span><i class="ico s"></i>Charge Attack</span><span><i class="ico s"></i>Spin Hack</span><span><i class="ico s"></i>Titan Form</span><span>+4</span></div>
+        </div>
+        <div class="rail">
+          <h5>ตัวเลือก</h5>
+          <div class="tg"><span class="ico"></span><div>Brute Strength<small>DMG CHANCE</small><div class="pips"><u></u><u></u><u></u><u class="o"></u><u class="o"></u></div></div></div>
+          <div class="tg"><span class="ico"></span><div>G. Marshal Axe<small>CHANCE</small><div class="pips"><u></u><u class="o"></u></div></div></div>
+          <div class="tg"><span class="ico"></span><div>Berserker Rush<small>INFO</small><div class="pips"><u class="o"></u></div></div></div>
+          <div class="tg"><span class="ico"></span><div>Titan Form<small>RANGE</small><div class="pips"><u class="o"></u><u class="o"></u></div></div></div>
+          <span class="lock">🔒 fixed spot + scale lock</span>
+        </div>
+      </div>
+      <p>Toggles sit at a fixed spot, top right. Related skills become a compact icon row under the chips (it moves with the desc, but it's a one-off click to leave the card). Two panels stay, so a skill can appear twice (once as a toggle, once as a link).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" >
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>One merged rail: each related skill carries its own toggle</h3>
+      <div class="lx">
+        <div class="stats"><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i></div>
+        <div class="card">
+          <div class="hd"><span class="ico"></span>Combo <span class="pills"><b>MP 0</b></span></div>
+          <div class="desc">ฟันต่อเนื่อง 3 ท่า แต่ละท่ามีดาเมจตามค่า ATK…
+            <span class="new"><b>Brute Strength:</b> ดาเมจท่า 3 เพิ่ม…</span>
+            <span class="new"><b>G. Marshal Axe:</b> มีโอกาสคริ…</span></div>
+          <div class="chips"><div class="w">สูตรดาเมจ</div><div>ดาเมจดิบ</div><div>ดาเมจจริง</div></div>
+        </div>
+        <div class="rail">
+          <h5>อุปกรณ์ / เงื่อนไข</h5>
+          <div class="row tog"><span class="ico s"></span><span class="nm">G. Marshal Axe<div class="pips"><u></u><u class="o"></u></div></span><span class="sw"></span></div>
+          <h5>สกิลที่เกี่ยวข้อง</h5>
+          <div class="row tog"><span class="ico s"></span><span class="nm">Brute Strength<div class="pips"><u></u><u></u><u></u><u class="o"></u><u class="o"></u></div></span><span class="sw"></span></div>
+          <div class="row tog"><span class="ico s"></span><span class="nm">Berserker Rush<div class="pips"><u class="o"></u></div></span><span class="sw off"></span></div>
+          <div class="row tog"><span class="ico s"></span><span class="nm">Titan Form<div class="pips"><u class="o"></u><u class="o"></u></div></span><span class="sw off"></span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Added Swing</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Charge Attack</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Spin Hack</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Over Power</span></div>
+          <span class="lock">🔒 fixed spot + scale lock</span>
+        </div>
+      </div>
+      <p>One panel instead of two: a skill that changes this card shows its switch and pips right on its row (switch = toggle, name = go to that card). Gear and conditions get their own small group on top. Nothing is listed twice; the card itself gets shorter, so it shrinks less to fit.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" >
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Smallest change: the strip moves above the description</h3>
+      <div class="lx">
+        <div class="stats"><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i></div>
+        <div class="card">
+          <div class="hd"><span class="ico"></span>Combo <span class="pills"><b>MP 0</b></span></div>
+          <div class="strip">
+            <div class="tg"><span class="ico"></span><div>Brute Str.<div class="pips"><u></u><u></u><u></u><u class="o"></u><u class="o"></u></div></div></div>
+            <div class="tg"><span class="ico"></span><div>Marshal Axe<div class="pips"><u></u><u class="o"></u></div></div></div>
+            <div class="tg"><span class="ico"></span><div>Berserker<div class="pips"><u class="o"></u></div></div></div>
+            <div class="tg"><span class="ico"></span><div>Titan Form<div class="pips"><u class="o"></u><u class="o"></u></div></div></div>
+          </div>
+          <div class="desc">ฟันต่อเนื่อง 3 ท่า แต่ละท่ามีดาเมจตามค่า ATK…
+            <span class="new"><b>Brute Strength:</b> ดาเมจท่า 3 เพิ่ม…</span>
+            <span class="new"><b>G. Marshal Axe:</b> มีโอกาสคริ…</span></div>
+          <div class="chips"><div class="w">สูตรดาเมจ</div><div>ดาเมจดิบ</div><div>ดาเมจจริง</div></div>
+          <span class="lock">🔒 strip above the growing text + scale lock</span>
+        </div>
+        <div class="rail">
+          <h5>สกิลที่เกี่ยวข้อง</h5>
+          <div class="row"><span class="ico s"></span><span class="nm">Brute Strength</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Berserker Rush</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Titan Form</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Added Swing</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Charge Attack</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Spin Hack</span></div>
+          <div class="row"><span class="ico s"></span><span class="nm">Over Power</span></div>
+        </div>
+      </div>
+      <p>The rail stays as it is; the strip just moves up between the name and the description, so new lines grow below it. A day's work, not a rework. The toggles now come before the text they explain.</p>
+    </div>
+  </div>
+</div>
+
+</body></html>
