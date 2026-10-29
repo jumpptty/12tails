@@ -1015,7 +1015,7 @@ let checkedPanelMarkup = 0;
   const count = (needle) => panel.split(needle).length - 1;
   check("the player caption was replaced by the PRESET button (2026-10-05) and must stay removed", count("ค่าสถานะตัวละครของคุณ") === 0);
   check("enemy caption should appear exactly once", count("ค่าสถานะตัวละครเป้าหมาย") === 1);
-  check("enemy show/hide toggle must stay removed", count("enemystat-toggle") === 0);
+  check("the old whole-panel enemy show/hide toggle (enemystat-toggle, removed 2026-09-19) stays removed; since 2026-10-29 each panel collapses its dials from its header", count("enemystat-toggle") === 0);
   check("the old .sk-controls-actions button row must stay removed", count("sk-controls-actions") === 0);
   const playerBadgeStart = panel.indexOf('class="sk-class-badge"');
   const playerBadgeEnd = panel.indexOf('<div class="sk-controls">', playerBadgeStart);
@@ -1041,6 +1041,13 @@ let checkedPanelMarkup = 0;
         Array.isArray(storyArt[c]) && storyArt[c].length === 5 && storyArt[c].every(s => /^data:image\/webp;base64,/.test(s))));
   }
   check("stat presets must keep their localStorage key (renaming it would drop every saved preset)", html.includes('"12t-bible-stat-presets"'));
+  // Stat panel collapse (2026-10-29): a chevron in each header row hides that panel's dials; a collapsed ring's light leaves from its header.
+  check("the player badge needs its collapse chevron", playerBadge.includes('data-role="stats-collapse" data-panel="player"'));
+  check("the enemy badge needs its collapse chevron", enemyBadge.includes('data-role="stats-collapse" data-panel="enemy"'));
+  check("a collapsed panel hides only its dial grid", html.includes('.sk-stats-panel.is-player-collapsed > .sk-controls, .sk-stats-panel.is-enemy-collapsed .sk-enemystat-controls > .sk-controls{display:none}'));
+  check("the collapse state keeps its localStorage key", html.includes('"12t-bible-stat-collapse"'));
+  check("a chevron click is not a light-ball source", html.includes("[data-role='stats-collapse']"));
+  check("a collapsed stat ring sends its light from its panel header", html.includes("getClientRects().length ? el : (idx >= 9 ? enemyBadgeEl : classBadgeEl)"));
 }
 // 3k. Summon stat-feed glow (getSummonFeedPlayerStatKeys, 2026-09-19): a character stat glows in the player
 // panel when a dependency feeds it into a summon stat AND the selected skill's chips read that summon stat.
