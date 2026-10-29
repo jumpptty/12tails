@@ -5414,6 +5414,13 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
         c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 0, reachReduce: 0, reachLunar: 2 }); g("preview Lunar Eclipse 2 = x1.8 on Counter", c[0].l === 9 && c[0].w === 7.2 && c[0].z0 === -0.54, c[0]);   // -3.6 (x1.8 start) + the 1.7 m dash x1.8 moveMod
         c = sandbox._reachPartsWith(ct, 1, { reachEnlarge: 4, reachReduce: 0, reachLunar: 1 }); g("preview Enlarge 4 + Lunar 1 = x1.8", c[0].l === 9, c[0]);
       }
+      // Overlord's aura follows the body, not rangeMod (user 2026-10-29): the popup offers the body-size toggles when a part's size changes with Enlarge 1
+      {
+        const ol = SKILLS.find(x => x.id === "bison_overlord");
+        c = sandbox._reachPartsWith(ol, 1, { reachTitan: 2 }); g("preview Overlord Titan Form 2 = 18 m aura", c[0].r === 18, c[0]);
+        c = sandbox._reachPartsWith(ol, 1, { reachEnrage: 4 }); g("preview Overlord Enrage 4 = 12 m aura", c[0].r === 12, c[0]);
+        g("popup offers the body-size toggles (scalesWithRm compares part sizes with Enlarge 1)", /const scalesWithRm = [^\n]*reachEnlarge: 1/.test(html));
+      }
       // the popup preview reads its own toggle state and leaves the card's alone
       set({});
       const qs = SKILLS.find(x => x.id === "panda_qiStrike");

@@ -153,7 +153,7 @@ Per-skill entries (`### mol_<name>`) are the verified 2026-10-01 pass; they take
 
 ### mol_extraPowder1-3 (Extra Powder, #261-263) (verified 2026-10-01)
 
-- Passive, Lv/Bn 24/15, 28/18, 30/21. `getExtraPowderLv()` 0-3 (`:11438-11480`). Radius `4 + lv`: Combo (`Mole_nAttack.cs:218`), Landmine (`:10575`), Mortar Shot (`:10850`), Stun Mine (`:11072`), Smart Shell (`:11535`), TNT (`:26033`), Bombardment (`:30323-30373`), Napalm (`:37669`); Time Nuke `20 + lv` (`Mole_timeNuke.cs:882`); Cart Bomb `6 + 1.5 × lv` (`:14177`); Grenade Cluster `(int)(4 + 0.5 × lv)` (`Mole_grenadeCluster.cs:179`).
+- Passive, Lv/Bn 24/15, 28/18, 30/21. `getExtraPowderLv()` 0-3 (`:11438-11480`). Radius `4 + lv`: Combo (`Mole_nAttack.cs:218`), Landmine (`:10575`), Mortar Shot (`:10850`), Stun Mine (`:11072`), Smart Shell (`:11535`), TNT (`:26033`), Bombardment (`:30323-30373`), Napalm (`:37669`); Time Nuke `20 + lv` (`Mole_timeNuke.cs:882`); Cart Bomb `6 + 1.5 × lv`, radius and height (`FindAreaTarget(hitPos, num, num)`, `:14177-14180`); Grenade Cluster `(int)(4 + 0.5 × lv)` (`Mole_grenadeCluster.cs:179`).
 
 Companion to `mole-skill-reference.md` (cooldown/duration/maxRank — trusted as-is below, not
 re-derived here except where flagged). This doc backs the rank-selector + damage-formula fields
