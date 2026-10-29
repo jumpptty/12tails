@@ -4549,6 +4549,18 @@ async function donateChildTests(env) {
   good(html.includes('html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}') && html.includes('html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}') && /@media \(min-width:901px\)\{\s*html\[data-sk-server="tto"\] \.ln-stage\{grid-template-columns:minmax\(0,58fr\) minmax\(0,42fr\)\}/.test(html), "the TTO look must mirror the hub showcase on PC (art left, text right, inside @media (min-width:901px))");
   console.log(`Verified ${n} TTO wallpaper theme checks.`);
 }
+// BB look (user 2026-10-29): the TTO look from before its wallpaper (night sky, TailsTopia's star sheet, warm solid panels with the harlequin texture), without its jack-o-lanterns.
+{
+  let n = 0; const bad = (m) => { console.error(`[BB THEME ERROR] ${m}`); errorCount++; }, good = (c, m) => { if (c) n++; else bad(m); };
+  const i0 = html.indexOf(':root[data-theme][data-sk-server="og"]{'), blk = i0 < 0 ? "" : html.slice(i0, html.indexOf("\n  }", i0));
+  good(blk.includes("--gold:#d0913e") && blk.includes("repeating-linear-gradient(45deg") && blk.includes("linear-gradient(#0b0c17 0%, #100e18 45%, #171009 100%)") && !/--th-solid:0%/.test(blk), "the BB look must keep the old TTO palette, the harlequin --th-texture on solid panels and the night sky --th-page");
+  const sv = (/--bb-stars:url\("data:image\/svg\+xml,([^"]+)"\)/.exec(blk) || [])[1] || "";
+  good((decodeURIComponent(sv).match(/<circle/g) || []).length === 65, "the BB look must embed TailsTopia's star sheet (--bb-stars, 65 circles)");
+  good(/html\[data-sk-server="og"\] body::after\{[^}]*var\(--bb-stars\)/.test(html), "the BB star sheet layer (html[data-sk-server=\"og\"] body::after) is missing");
+  good(!/--[\w-]*lantern|data:image\/webp/.test(blk) && !/skTtoSky|ensureServerBackdrops|\.lan-i\{/.test(html), "the BB look must not bring back the jack-o-lanterns (user 2026-10-29: no pumpkins)");
+  good(html.includes('urlOf("--bb-stars")') && html.includes("// BB's harlequin (--th-texture)"), "the guide image export must draw the BB night sky with stars and the harlequin bands on its panels");
+  console.log(`Verified ${n} BB look checks.`);
+}
 // Reborn as the 4th server, infrastructure (user 2026-10-25): SERVER_INFO lists og / tot / tto / reborn, reborn is W.I.P. and its logo must be the stamped one while it is,
 // the server tab shows Reborn only for a card that has servers.reborn, and the hard-coded server name maps are gone. The look is enabled (2026-10-25); class guides, the Chameleon simulator and the
 // BB issues page are NOT enabled for Reborn yet (checked here so nobody enables one half way).
@@ -4574,7 +4586,7 @@ async function donateChildTests(env) {
     good(rb.length > 50000 && rb.toString("latin1", 0, 4) === "RIFF" && rb.toString("latin1", 8, 12) === "WEBP", "REBORN_WALLPAPER is not a WebP data URI of a real picture (assets.js)"); }
   { const i0 = html.indexOf(':root[data-theme][data-sk-server="reborn"]{'), blk = i0 < 0 ? "" : html.slice(i0, html.indexOf("\n  }", i0));
     good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
-  good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && html.includes("var G = 'html:is([data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot");
+  good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && !html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"])') && html.includes("var G = 'html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot, and og (the BB look, user 2026-10-29)");
   good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
   // Reborn in the skill simulator and the class guide editor (user 2026-10-25; data read from 12tails-reborn.com/skills, Reborn-Mechanics-Reference.md section 9)
   { const pools = vm.runInContext("SKILL_SIM_POOLS", sandbox), PR = pools.reborn, PB = pools.bb;
