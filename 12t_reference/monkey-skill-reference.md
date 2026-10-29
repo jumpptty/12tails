@@ -524,7 +524,7 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 - Client tooltips: EN "Upgrades Gadina's shield to lv.2 [3 / 4]. Gives +20 [40 / 60] def and increases Monkey's ground lock duration to 4 [5 / 6] seconds." (`MonkeySkill_eng.cs:682-704`). Code wins on DEF (20 / 35 / 50); the duration is the CHA-contested base.
 
 ### 4.11 Earth Rune (`monkey_earthRune`, #361-#363)
-- Passive, reqLv/Bn 22/12, 28/16, 34/20. `EarthRune()` (`Monkey.cs:13539-13584`): same roll as Fire Rune (`lckAdjust(12)`, 1 s lockout, `4 × lv` MP and SP), but it runs from the owner's `Update` when the **Monkey takes damage** (`myDamage == −1`, `Monkey.cs:236-242`). No summon calls it.
+- Passive, reqLv/Bn 22/12, 28/16, 34/20. `EarthRune()` (`Monkey.cs:13539-13584`): same roll as Fire Rune (`lckAdjust(12)`, 1 s lockout, `4 × lv` MP and SP), but it runs when the **Monkey takes damage**: `AddDamage` calls it for the Monkey (`CharacterControl.cs:30341`), as does the owner's `Update` (`myDamage == −1`, `Monkey.cs:236-242`). `AddDamage` also calls the summoner's `EarthRune()` when Gadina 1-4 or Buiten 1-4 are hit (`CharacterControl.cs:30435`), so the earth summons trigger it too.
 - Client tooltips: EN "Gives Monkey a 20% chance to restore 4 [8 / 12] SP and 4 [8 / 12] MP everytime he or his earth summon gets hit." (`MonkeySkill_eng.cs:814-836`). Code wins: LCK-scaled 12 base, and only the Monkey's own hits taken.
 
 ### 4.12 Mike Blink (`monkey_mikeBlink`, #401)

@@ -446,7 +446,7 @@ below for why they were initially left out and then given their own rows.
 ### Lotus Palm (`panda_lotusPalm`, skill IDs #361/#362)
 
 - **Ranks, requirements, and cost:** Rank 1 requires Lv. 24 / Bn. 15 and consumes 7 MP + 30 SP (`PandaSkill.cs:870-881`). Rank 2 requires Lv. 27 / Bn. 18 and consumes 7 MP + 35 SP; it is a target-mode enemy skill (`PandaSkill.cs:1494-1514`).
-- **Cooldown:** BigBug baseline is 75 seconds before AGI adjustment: `addTimeOut("lotusPalm", agiAdjust(75))` (`Panda.cs:39317-39322`). ToT changes the base cooldown to 67.5 seconds (documented below under Server Balance Variations).
+- **Cooldown:** BigBug baseline is 75 seconds before AGI adjustment: `addTimeOut("lotusPalm", agiAdjust(75))` (`Panda.cs:39317-39322`). ToT changes the base cooldown to 52.5 seconds (documented below under Server Balance Variations).
 - **One direct target hit:** At 1.4 seconds after the action starts, the cast checks the selected target object and hits it directly — no `FindAreaTarget` call or area pulse loop exists (`Panda.cs:39493-39528`). The raw damage is `floor(0.5 × ATK + talAdjust(10 + 20 × sLv))`, with action ID `360 + sLv` (361/362), KO 5, and a forward force vector (`Panda.cs:39528`). Rank 1 uses `talAdjust(30)`; Rank 2 uses `talAdjust(50)`.
 - **No Focused Art:** The literal hit expression contains only `0.5 × ATK` and `talAdjust(10 + 20 × sLv)`; there is no `getFocusedArtDmg()` call (`Panda.cs:39528`).
 - **Shadow Fist interaction and SP gain:** On a successful direct hit, Lotus Palm grants +1 SP and starts `ShadowFist(target)` (`Panda.cs:39528-39537`). Shadow Fist's Effect Damage is `3 × ShadowFistRank`, plus `floor(0.16 × character level)` with Spirit Fist (#433) (`Panda.cs:9144-9192`, `:35804-35845`).
@@ -455,7 +455,7 @@ below for why they were initially left out and then given their own rows.
 ### Heaven Palm (`panda_heavenPalm`, skill IDs #363/#364)
 
 - **Ranks, requirements, and cost:** Rank 1 requires Lv. 30 / Bn. 21 and consumes 23 MP + 60 SP (`PandaSkill.cs:896-907`). Rank 2 requires Lv. 33 / Bn. 24 and consumes 23 MP + 75 SP; both ranks use target-mode enemy casting (`PandaSkill.cs:1467-1487`).
-- **Cooldown:** BigBug baseline is 150 seconds before AGI adjustment: `addTimeOut("heavenPalm", agiAdjust(150))` (`Panda.cs:40164-40167`). ToT changes the base cooldown to 135 seconds (documented below under Server Balance Variations).
+- **Cooldown:** BigBug baseline is 150 seconds before AGI adjustment: `addTimeOut("heavenPalm", agiAdjust(150))` (`Panda.cs:40164-40167`). ToT changes the base cooldown to 105 seconds (documented below under Server Balance Variations).
 - **Four target-area pulses:** The cast locks movement, schedules pulses at 1.2s, 1.8s, 2.2s, and 2.6s after action start (`Panda.cs:39800-39826`, `:39982-40060`). Every pulse scans around the selected impact position using range `(2 × sLv + 2 + SpiritFistLv) × rangeMod` and height `2 × rangeMod` (`Panda.cs:40077`). This is 4m / 6m base radius at ranks 1 / 2, increased to 5m / 7m with Spirit Fist (#433).
 - **Damage:** Each connected target receives action ID `362 + sLv` (363/364), KO 1, and raw damage `floor(0.5 × ATK + talAdjust(15 × sLv + 10))` (`Panda.cs:40100`). Rank 1 uses `talAdjust(25)`; Rank 2 uses `talAdjust(40)`.
 - **No Focused Art:** The literal hit expression contains only `0.5 × ATK` and `talAdjust(15 × sLv + 10)`; there is no `getFocusedArtDmg()` call (`Panda.cs:40100`).
@@ -556,8 +556,8 @@ Private-server values are documented from the Bible skill-detail schema; BigBug 
 
 | Skill | Original BigBug baseline | ToT delta |
 |---|---|---|
-| Lotus Palm | 75s base cooldown. | Base cooldown reduced to 67.5s. |
-| Heaven Palm | 150s base cooldown. | Base cooldown reduced to 135s. |
+| Lotus Palm | 75s base cooldown. | Base cooldown reduced to 52.5s (−30%, ToT patch notes below). |
+| Heaven Palm | 150s base cooldown. | Base cooldown reduced to 105s (−30%, ToT patch notes below). |
 
 Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 
