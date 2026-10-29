@@ -1042,9 +1042,15 @@ let checkedPanelMarkup = 0;
         Array.isArray(storyArt[c]) && storyArt[c].length === 5 && storyArt[c].every(s => /^data:image\/webp;base64,/.test(s))));
   }
   check("stat presets must keep their localStorage key (renaming it would drop every saved preset)", html.includes('"12t-bible-stat-presets"'));
-  // Stat panel collapse (2026-10-29): a chevron in each header row hides that panel's dials; a collapsed ring's light leaves from its header.
-  check("the player badge needs its collapse chevron", playerBadge.includes('data-role="stats-collapse" data-panel="player"'));
-  check("the enemy badge needs its collapse chevron", enemyBadge.includes('data-role="stats-collapse" data-panel="enemy"'));
+  // Stat panel collapse (2026-10-29): a click on the header box itself folds it (user 2026-10-29, no chevron); the hidden button keeps the
+  // keyboard and screen readers; a collapsed ring's light leaves from its header.
+  check("the player badge needs its collapse button", playerBadge.includes('data-role="stats-collapse" data-panel="player"'));
+  check("the enemy badge needs its collapse button", enemyBadge.includes('data-role="stats-collapse" data-panel="enemy"'));
+  check("no chevron: the collapse buttons hold no icon", !/class="sk-stats-collapse"[^>]*>\s*<svg/.test(html));
+  check("the collapse button is visually hidden (the box is the click target)", html.includes(".sk-stats-collapse{position:absolute; width:1px; height:1px;"));
+  check("a click on the header box, not on its own controls, folds it", html.includes(`box = t.closest && t.closest(".sk-class-badge");`) && html.includes(`box && statsPanelEl.contains(box) && !t.closest("button, input, .sk-enemy-picker-wrap, .sk-enemy-info-wrap") && !box.querySelector(".sk-enemy-picker-wrap.active, .sk-enemy-info-wrap.active")`));
+  check("the header box shows a hover look and the hidden button's focus ring", html.includes(".sk-stats-panel .sk-class-badge:hover:not(:has(button:hover, .sk-enemy-picker-wrap:hover, .sk-enemy-info-wrap:hover))") && html.includes(".sk-stats-panel .sk-class-badge:has(.sk-stats-collapse:focus-visible){outline:"));
+  check("a click on a header box is not a light-ball source", html.includes('if (!e.target.closest("button") && e.target.closest(".sk-stats-panel .sk-class-badge")) return;'));
   check("a collapsed panel hides only its dial grid", html.includes('.sk-stats-panel.is-player-collapsed > .sk-controls, .sk-stats-panel.is-enemy-collapsed .sk-enemystat-controls > .sk-controls{display:none}'));
   check("the collapse state keeps its localStorage key", html.includes('"12t-bible-stat-collapse"'));
   check("a chevron click is not a light-ball source", html.includes("[data-role='stats-collapse']"));
@@ -1545,6 +1551,16 @@ console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
   if (!src.includes("html.tool-wide-hero .sk-rel-phone{order:2")) bad.push("the phone related list after the stats panel (order:2)");
   if (bad.length) { errorCount += bad.length; bad.forEach(b => console.error("[PHONE LAYOUT ERROR] missing or wrong: " + b)); }
   else console.log("Verified the side panel placement rules.");
+}
+// Side panel rows (user 2026-10-29, after the build): no box and no switch (the ring is the toggle), and the tags right after the pips.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), bad = [], row = (src.match(/\.sk-side \.sk-dep-item\{[^}]*\}/) || [""])[0];
+  if (!row) bad.push("the desktop row rule .sk-side .sk-dep-item{…} was not found");
+  else if (/[{;]\s*(border(?!-radius)[a-z-]*|background[a-z-]*):/.test(row)) bad.push("a row with no box (no border or background on .sk-side .sk-dep-item)");
+  if (src.includes("sk-dep-sw")) bad.push("no switch on the row (the .sk-dep-sw markup, its CSS and its click forwarder)");
+  if (!src.includes(".sk-side .sk-dep-item-tags{grid-column:3; grid-row:2; justify-self:start;")) bad.push("the tags right after the pips (.sk-side .sk-dep-item-tags in grid column 3, at its start)");
+  if (bad.length) { errorCount += bad.length; bad.forEach(b => console.error("[SIDE PANEL ERROR] missing or wrong: " + b)); }
+  else console.log("Verified the side panel row style.");
 }
 // Scale lock (spec 2026-10-29): a content refit keeps the scale while the pointer or keyboard focus is on the side panel or a stat panel
 // header; a window resize, tool zoom, tool switch and a new card force it; a shortcut never arms the keyboard half; keyboard focus survives
