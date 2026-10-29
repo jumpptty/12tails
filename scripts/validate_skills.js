@@ -2774,7 +2774,7 @@ let checkedCatPowerTto = 0;
   }
   delete sandbox._depRanks.alchemistLab;
   const mbHtml = heroOf(mb, "og");
-  if (!mbHtml.includes("โอกาส ยาทองต่อขวด") || !mbHtml.includes("โอกาส ยาทองต่อ 4 ขวด")) fail("rabbit_miracleBlend: needs both golden-potion chips (per bottle and per 4 bottles)"); else checkedCatPowerTto++;
+  if (!mbHtml.includes("โอกาส ยาทองต่อขวด") || !mbHtml.includes("โอกาส ยาทองอย่างน้อย 1 ใน 4 ขวด")) fail("rabbit_miracleBlend: needs both golden-potion chips (per bottle and per 4 bottles)"); else checkedCatPowerTto++;
   sandbox._setServer("og");
   if (savedPower === undefined) delete sandbox._depRanks.catPower; else sandbox._depRanks.catPower = savedPower;
 }
