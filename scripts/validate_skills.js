@@ -3784,6 +3784,12 @@ let checkedRsim = 0;
   ok(unbold.value === "before ไทย after" && unbold.start === 7 && unbold.end === 10, "second Ctrl+B removes surrounding emphasis");
   ok(applyBold("**gold**",0,8).value === "gold", "Ctrl+B removes selected markers too");
   ok(bold("text",1,1,3000) === null && bold("text",0,4,7) === null, "shortcut leaves empty selections and full fields unchanged");
+  // Ctrl+B keeps the selection across the re-render that adds its spaces (user 2026-10-29: the lost selection sent the live description back to page 1,
+  // and a second Ctrl+B found nothing selected): the start lands after an added space, the end before it.
+  { let keep = null; try { keep = vm.runInContext("classGuideKeepOffset", sandbox); } catch (e) {}
+    ok(typeof keep === "function" && keep("ก่อนไทยหลัง", "ก่อน ไทย หลัง", 4, false) === 5 && keep("ก่อนไทยหลัง", "ก่อน ไทย หลัง", 7, true) === 8 && keep("abc", "abc", 2, false) === 2 && keep("ab", "ab ", 2, true) === 2,
+      "classGuideKeepOffset carries a selection's text offsets across the spaces Ctrl+B adds");
+    ok(html.includes("if (next !== value) renderKeepingSelection(next);"), "Ctrl+B re-renders through renderKeepingSelection, so the bold text stays selected and the live page stays on it"); }
   const shotDoc = sandbox.document, createBefore = shotDoc.createElement, dots=[];
   try {
     shotDoc.createElement = () => { const d={style:{},removed:false,remove(){this.removed=true;},animate(frames,opts){this.frames=frames;this.opts=opts;return this.animation={cancel(){this.cancelled=true;}};}};dots.push(d);return d; };

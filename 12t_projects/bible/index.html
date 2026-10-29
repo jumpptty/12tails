@@ -32370,6 +32370,14 @@ function classGuideSpaceBold(value){
     return (before !== undefined && !/\s/.test(before) ? " " : "") + m + (after !== undefined && !/\s/.test(after) ? " " : "");
   });
 }
+// A text offset carried across a re-render that only added characters (Ctrl+B's spaces around the bold part, user 2026-10-29): the start of a
+// selection lands after a character added there, its end before it.
+function classGuideKeepOffset(before, after, n, isEnd){
+  let j = 0;
+  for (let i = 0; i < n && j < after.length; i++, j++) while (j < after.length && after[j] !== before[i]) j++;
+  if (!isEnd) while (j < after.length && after[j] !== before[n]) j++;
+  return Math.min(j, after.length);
+}
 // Serialize only text, line breaks and bold from the live editor into portable guide markup.
 function classGuideReadEditor(node){
   let text = "";
@@ -32404,6 +32412,22 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     backing.value = value; accepted = editor.innerHTML; last = value; changed(); return true;
   };
   const caretEnd = () => { const r = document.createRange(); r.selectNodeContents(editor); r.collapse(false); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); };
+  // A re-render drops the selection to the box's start (user 2026-10-29: Ctrl+B on text that needed a space sent the live description back to page 1,
+  // and a second Ctrl+B found nothing selected), so this one carries it over as plain-text offsets (classGuideKeepOffset).
+  const textAt = (node, offset) => { const r = document.createRange(); r.setStart(editor, 0); r.setEnd(node, offset); return r.toString().length; };
+  const pointAt = (n, isStart) => {
+    const w = document.createTreeWalker(editor, 4);   // NodeFilter.SHOW_TEXT
+    for (let t = w.nextNode(); t; t = w.nextNode()){ const len = t.nodeValue.length; if (isStart ? n < len : n <= len) return [t, n]; n -= len; }
+    return [editor, editor.childNodes.length];
+  };
+  const renderKeepingSelection = value => {
+    const sel = window.getSelection(), r0 = sel && sel.rangeCount ? sel.getRangeAt(0) : null, inBox = r0 && editor.contains(r0.startContainer) && editor.contains(r0.endContainer);
+    const was = editor.textContent, a = inBox ? textAt(r0.startContainer, r0.startOffset) : 0, b = inBox ? textAt(r0.endContainer, r0.endOffset) : 0;
+    render(value);
+    if (!inBox) return;
+    const now = editor.textContent, s = pointAt(classGuideKeepOffset(was, now, a, false), true), t = pointAt(classGuideKeepOffset(was, now, b, true), false);
+    const r = document.createRange(); r.setStart(s[0], s[1]); r.setEnd(t[0], t[1]); sel.removeAllRanges(); sel.addRange(r);
+  };
   const step = (from, to) => { if (!from.length) return; to.push(last); render(from.pop()); typing = false; changed(); editor.focus(); caretEnd(); };
   // The selection, whichever way it was made (left to right, right to left, or dragged past the edge of the box), cut to the box (user 2026-10-17).
   const boxRange = () => {
@@ -32426,7 +32450,7 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     if (next.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
     if (next === before) return true;
     remember(before);
-    if (next !== value) render(next); else { backing.value = next; accepted = editor.innerHTML; last = next; }
+    if (next !== value) renderKeepingSelection(next); else { backing.value = next; accepted = editor.innerHTML; last = next; }
     changed(); return true;
   };
   // Keys at the page level (capture), so a selection that ends outside the box still counts; the page's own Ctrl+Z handlers skip editable targets.
@@ -36653,6 +36677,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-29T16:26:52.906Z","fix(bible): class guide editor: after Ctrl+B the bold text stays selected, so the live description no longer jumps back to page 1 and a second Ctrl+B turns it back"],
     ["2026-10-29T16:02:11.097Z","fix(bible): skill details: the side panel rows lose their box and switch (the ring is the toggle) with the tags right after the rank pips, and a click on a stat panel header box folds and unfolds it with a hover look (no chevrons)"],
     ["2026-10-29T13:38:13.560Z","feat(bible): class guide #84 TTO Mole PVP warfare by ฮิตเตอร์แอร์"],
     ["2026-10-29T13:07:14.939Z","fix(bible): skill details side panel review fixes: on a touch screen the scale lock lets go only after the tap's click, only Tab, Enter and Space hold it from the keyboard, a lost pointerup no longer keeps it, the fit undoes a body scroll Tab made meanwhile, a pinned status pop-up stays over a hovered chip, and the validator pins each forced refit, the 899 px rule and a non-empty skeleton"],
