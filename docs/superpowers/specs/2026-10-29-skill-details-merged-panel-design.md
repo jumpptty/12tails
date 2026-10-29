@@ -107,3 +107,31 @@ The owner said "just build it", so these were decided without asking again:
 | Related links already in the desc | 1,868 of 2,651 |
 | Related links in no text and not a toggle | 736, on 236 cards |
 | Panel size under the rule | empty on 314 cards; median 1 item; 90th percentile 4; most 27 |
+
+## As built (2026-10-29)
+
+Built from the plan `docs/superpowers/plans/2026-10-29-skill-details-merged-panel.md`; these calls refine or differ from the text above.
+
+- **Placement (calls 1, 3):** one `aside.sk-side` in the strip's old slot, placed by CSS only: from 900 px it hangs in the old rail's box beside the card; below 900 px it stays under the description. The related rows render twice (the panel and `.sk-rel-phone`), and CSS shows one. 900 px and up is desktop; the ‹ › buttons now show below 900 px only.
+- **Groups and headings (calls 6-8):** one group order everywhere (gear, conditions / modes, then ดาเมจ, เวลา, ระยะ, คำอธิบาย); a skill toggle joins the lowest group any of its tags names (HEAL counts as damage, an unknown tag as คำอธิบาย). Headings show only when the toggle rows span two or more groups (265 tabs), and phones hide them.
+- **Rows (calls 9-10):** the toggle button itself is the ring (the Revised Art pattern) and a switch on the right mirrors it; the ring and the switch are the only toggle zones, the switch forwards to the button, and the name line never toggles.
+- **Name links (calls 11-13):** skill rows and condition rows link the card their shown label names, else the card of their icon key. Every card a skill row can show at any rank counts as covered and leaves the desktop related list; a condition row links its card without covering it.
+- **"Already linked" (calls 17-18):** `findSkillByMention` over every `**…**` in the raw desc of the tab on screen at the current rank and toggle rank, hidden lines included, plus the `liveCheck` note. A union over every toggle rank was not built: related rows sit below every toggle and the fold row, so a list change never moves a toggle.
+- **Lists (calls 19-20):** phones list compat minus the desc's links (toggle cards included); desktop also drops covered cards. More than 6 rows fold into `ทั้งหมด N สกิล`, opened in place, per card for the visit; an opened list over 8 rows uses the compact 2-column grid.
+- **Fit and scale lock (calls 22-27):** compH counts the panel's bottom; the hold region is the panel plus the two stat headers; the pointer is a hit-tested point, focus holds only after a keydown without Ctrl / Meta / Alt; release waits for the click and never runs while a button is down; window resize, tool zoom, tool switch and a new card force a refit; keyboard focus is restored by `data-dep-id`.
+- **Stat panels (calls 28-31):** an 18 px chevron at the end of each header's second line, classes on `.sk-stats-panel` with `display:none`, one `localStorage` key; a hidden ring's light leaves from its header.
+- **Found while building:** the desktop strip needed `align-items:stretch` (the base strip centred its items, which shrank the rows to their content).
+
+Measured on the built page (non-stub tabs: 1,649; the oracle and the page agree on every tab):
+
+| Item | Value |
+|---|---|
+| Tabs with a desktop panel / without | 1,135 / 514 (BB: 274 of 670 cards without) |
+| Tabs with headings | 265 |
+| Folded lists, desktop / phone | 54 / 55 |
+| Most toggle rows | 12 (Bison Combo on Reborn) |
+| Longest related list | 27 (Formless Path on Reborn) |
+| Condition rows with / without a link | 191 / 27 |
+| Related rows, desktop / phone | 1,423 / 1,670 |
+| Tallest panel (estimate) | about 709 px (Chameleon Combo on Reborn) |
+| Toggle drift over 6 clicks with the pointer on the panel | 0 px on 45 targets at three window sizes (before: up to 81 px) |

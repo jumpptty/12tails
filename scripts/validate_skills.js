@@ -114,6 +114,7 @@ const exposeInjection = `
   window._getUsedPlayerStatKeys = getUsedPlayerStatKeys;
   window._monsterStats = MONSTER_STATS; window._mountMonsterStats = mountMonsterStats;
   window._getRenderedHeroHtml = () => displayEl.innerHTML;
+  window._relOpen = typeof relOpen !== "undefined" ? relOpen : new Set();   // the side panel's opened related lists (2026-10-29)
   window._statInputs = { atk: atkEl, tal: talEl, agi: agiEl, int: intEl, cha: chaEl, lck: lckEl, enemyLck: enemyLckEl, enemyDef: enemyDefEl, lv: lvEl };
   window._ttoMagic = { ids: TTO_MAGIC_DMG };
   window._credits = { list: CONTRIBUTORS, render: renderRichText };
@@ -1533,6 +1534,33 @@ console.log(`Verified ${checkedChiro} Chiroptophobia checks.`);
   if (!ok) { errorCount++; console.error("[DEP LABEL ERROR] fitDepLabels is not wired after renderHeroNow / on resize, or .sk-dep-item-name still truncates with an ellipsis"); }
   console.log("Verified dependency toggle labels shrink instead of truncating.");
 }
+// Side panel placement (spec 2026-10-29): from 900 px the aside hangs beside the card (no positioned ancestor between it and .sk, so
+// .sk-hero is position:relative only below 900 px); phones put the related list after the stats panel (the card's wrappers step aside).
+{
+  const src = fs.readFileSync(targetPath, "utf8"), bad = [];
+  if (!/@media \(min-width:900px\)\{\s*\.sk-side\{position:absolute; left:calc\(100% \+ 20px\); top:0; width:260px/.test(src)) bad.push("the desktop .sk-side placement rule (absolute, 20 px right of .sk, 260 px wide)");
+  if (/@media\(max-width:900px\)\{\s*\.sk-hero\{position:relative\}/.test(src)) bad.push(".sk-hero must be position:relative below 900 px only (max-width:899px), or the panel anchors to the card at exactly 900 px");
+  if (!src.includes('html.tool-wide-hero .sk > [data-role="display"], html.tool-wide-hero .sk-detail-layout{display:contents}')) bad.push("the phone rule that lets the related list leave the card (display:contents)");
+  if (!src.includes("html.tool-wide-hero .sk-rel-phone{order:2")) bad.push("the phone related list after the stats panel (order:2)");
+  if (bad.length) { errorCount += bad.length; bad.forEach(b => console.error("[PHONE LAYOUT ERROR] missing or wrong: " + b)); }
+  else console.log("Verified the side panel placement rules.");
+}
+// Scale lock (spec 2026-10-29): a content refit keeps the scale while the pointer or keyboard focus is on the side panel or a stat panel
+// header; a window resize, tool zoom, tool switch and a new card force it; a shortcut never arms the keyboard half; keyboard focus survives
+// a rebuild.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), bad = [];
+  const h = src.indexOf("function fitStageToScreen(force){"), g = src.indexOf("if (isSkillLookup && !force && fitHoldOn()){ fitHeld = true; return; }", h), s = src.indexOf("  stageScaleNow = scale;", h);
+  if (h < 0) bad.push("function fitStageToScreen(force){");
+  else if (g < 0 || s < 0 || g > s) bad.push("the hold guard inside fitStageToScreen, before stageScaleNow = scale");
+  if ((src.match(/fitStageToScreen\(true\)/g) || []).length < 3) bad.push("3+ forced refits fitStageToScreen(true) (window resize, tool zoom, tool switch)");
+  if ((src.match(/fitStageToScreen\(skillSwitched\)/g) || []).length !== 2) bad.push("exactly 2 fitStageToScreen(skillSwitched) in renderHeroNow (a new card always fits)");
+  if (!src.includes('const sel = ".sk-side, .sk-stats-panel .sk-class-badge";')) bad.push("the hold region (.sk-side and the stat panel headers)");
+  if (!src.includes("if (!e.ctrlKey && !e.metaKey && !e.altKey) fitHoldKey = true;")) bad.push("a shortcut must not arm the keyboard half (Ctrl / Meta / Alt keydowns ignored)");
+  if (!src.includes('displayEl.querySelector(`button[data-dep-id="${keepDep}"]`)')) bad.push("keyboard focus restored by data-dep-id after the rebuild");
+  if (bad.length) { errorCount += bad.length; bad.forEach(b => console.error("[SCALE LOCK ERROR] missing or wrong: " + b)); }
+  else console.log("Verified the scale lock (hold guard, forced refits, keyboard focus).");
+}
 // fitDmgValues (the shrink-to-fit step for formulas and chip numbers) must run after the full render AND after both live-refresh paths (refreshLiveDamage and the Panda
 // boxes), and a formula still too wide at its floor scrolls inside its box: a slider or input that widens a formula used to spill out of the card on a phone.
 {
@@ -2221,8 +2249,9 @@ if (RUN_DAMAGE_CHECKS) {
   check("Combo lists its dependencies", ["rabBouncing", "rabHyperShot", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59", "rabShotgun"].every(id => heroC.includes(`data-dep-id="${id}"`)));
   // ---- Dependency order on Combo and the merged Hyper Shot + Snipe Mastery dep
   const strip = heroC.match(/data-dep-id="(rab[A-Za-z0-9]+)"/g).map(s => s.slice(13, -1));
-  // Skill toggles by internal ID (Hyper Shot #131, Customized Shotgun #353, Bouncing Bullet #401, Extravagance #443), then gear and the Gatling Gun.
-  check("Combo dependency strip order: Hyper+Snipe, shotgun, Bouncing, Extravagance, gear, Gatling Gun", ["rabHyperShot", "rabShotgun", "rabBouncing", "rabExtravagance", "rabWeapon", "rabEquip", "rabW59"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
+  // Side panel groups (2026-10-29): gear in insertion order (weapon, armor + helmet, the Gatling Gun), then the damage toggles by internal ID
+  // (Hyper Shot #131, Customized Shotgun #353, Bouncing Bullet #401, Extravagance #443).
+  check("Combo dependency strip order: gear in insertion order, then the damage toggles by internal skill ID (#131, #353, #401, #443)", ["rabWeapon", "rabEquip", "rabW59", "rabHyperShot", "rabShotgun", "rabBouncing", "rabExtravagance"].join() === [...new Set(strip)].join(), [...new Set(strip)].join());
   check("Customized Shotgun is a plain on/off toggle (rank 1 and 2 only change the hit box)", combo.dmgControls.find(d => d.id === "rabShotgun").maxRank === 1);
   check("Hyper Shot is one 0..5 dep whose rank-5 icon exists (rank 5 = Snipe Mastery)", combo.dmgControls[1].id === "rabHyperShot" && combo.dmgControls[1].maxRank === 5 && !!sandbox.SKILL_ICONS.rabbit_hyperShot5 && [1, 2, 3, 4].every(n => sandbox.SKILL_ICONS["rabbit_hyperShot" + n]));
   check("no separate Snipe Mastery dependency remains", !/rabSnipe|RABBIT_SNIPE_DEP/.test(html));
@@ -2580,24 +2609,58 @@ console.log(`Verified ${checkedCritView} crit view checks.`);
 console.log(`Verified ${checkedEnemyCycle} enemy picker checks.`);
 console.log(`Verified ${checkedConsistency} range-vs-simulator consistency checks (every single-hit skill rank, deps default and off, two stat profiles).`);
 
-// Universal Hero Render check (every skill in SKILLS must render without runtime exceptions)
-let checkedHeroRenders = 0;
-for (const sk of SKILLS) {
-  try {
-    sandbox._selectSkill(sk);
-    const heroHtml = sandbox._getRenderedHeroHtml();
-    if (!heroHtml || heroHtml.length < 50) {
-      console.error(`[RENDER ERROR] ${sk.id}: hero HTML is empty or too short`);
-      errorCount++;
-    } else {
+// Universal Hero Render check (every skill on every server tab must render without runtime exceptions: the render-throw check over every
+// desc on every tab), and the side panel's shape on each tab (spec docs/superpowers/specs/2026-10-29-skill-details-merged-panel-design.md)
+let checkedHeroRenders = 0, checkedSidePanel = 0;
+{
+  const sideFail = (msg) => { console.error(`[SIDE PANEL ERROR] ${msg}`); errorCount++; };
+  const relIds = (s) => [...String(s).matchAll(/class="sk-compat-item[^"]*" data-skill-id="([^"]+)"/g)].map(m => m[1]);
+  // the end of the element whose start tag opens at `at` (nested tags of the same name counted)
+  const endOf = (h, at, tag) => { const re = new RegExp(`<${tag}[\\s>]|</${tag}>`, "g"); re.lastIndex = at; let depth = 0, m; while ((m = re.exec(h))) { depth += m[0][1] === "/" ? -1 : 1; if (!depth) return m.index + m[0].length; } return h.length; };
+  const descLinks = (h) => {
+    const d0 = h.indexOf('<div class="sk-hero-desc'); if (d0 < 0) return [];
+    let box = h.slice(d0, endOf(h, d0, "div")).replace(/<template[\s\S]*?<\/template>/g, "");
+    for (let i; (i = box.search(/<span class="sk-status-tip"[ >]/)) >= 0; ) box = box.slice(0, i) + box.slice(endOf(box, i, "span"));
+    return [...box.matchAll(/class="sk-desc-skill-link" data-skill-id="([^"]+)"/g)].map(m => m[1]);
+  };
+  const inOrder = (ids, compat) => { const at = ids.map(id => compat.indexOf(id)); return at.every((x, i) => x >= 0 && (!i || x > at[i - 1])); };
+  for (const sk of SKILLS) for (const srv of (sk.soon ? ["og"] : sandbox._getAvailableServers(sk))) {
+    try {
+      sandbox._setServer(srv); sandbox._selectSkill(sk); sandbox._setServer(srv); sandbox._selectSkill(sk);
+      const h = sandbox._getRenderedHeroHtml();
+      if (!h || h.length < 50) { console.error(`[RENDER ERROR] ${sk.id} ${srv}: hero HTML is empty or too short`); errorCount++; continue; }
       checkedHeroRenders++;
+      const a0 = h.indexOf('<aside class="sk-side"'), a1 = a0 < 0 ? -1 : h.indexOf("</aside>", a0), aside = a0 < 0 ? "" : h.slice(a0, a1);
+      const s0 = h.indexOf('<div class="sk-dep-strip">');
+      const r0 = aside.indexOf('<div class="sk-compat-chip sk-rel'), desk = r0 < 0 ? "" : aside.slice(r0);
+      const p0 = h.indexOf('<div class="sk-compat-chip sk-rel sk-rel-phone'), phone = p0 < 0 ? "" : h.slice(p0, endOf(h, p0, "div"));
+      const compat = sandbox._getActiveSkill(sk, srv).compatSkills || sk.compatSkills || [];
+      const d = relIds(desk), p = relIds(phone), linked = new Set(descLinks(h));
+      const strip = s0 < 0 ? "" : h.slice(s0, h.indexOf("<!--/sk-dep-strip-->", s0));
+      const coverLinks = strip.split('<div class="sk-dep-item"').slice(1).filter(x => /^[^>]*data-dep-group="(dmg|time|range|info)"/.test(x)).map(x => (x.match(/class="sk-dep-link" data-skill-id="([^"]+)"/) || [])[1]).filter(Boolean);
+      const foldBad = (list, ids) => ids.length > 6 ? !list.includes(`<span>ทั้งหมด ${ids.length} สกิล</span>`) : list.includes("sk-rel-more");
+      let why = "";
+      if (h.includes("sk-compat-rail") || h.includes("sk-detail-layout--has-compat")) why = "the old related-skills rail is back";
+      else if (s0 >= 0 && !(a0 >= 0 && s0 > a0 && s0 < a1)) why = "the toggle strip is not inside the side panel";
+      else if (a0 >= 0 && s0 < 0 && !d.length) why = "an empty side panel";
+      else if (h.split('<aside class="sk-side"').length > 2) why = "more than one side panel";
+      else if (new Set(d).size !== d.length || new Set(p).size !== p.length) why = `a related id repeats (desktop ${d.join(",")}; phone ${p.join(",")})`;
+      else if (!inOrder(d, compat) || !inOrder(p, compat)) why = `related ids not from this tab's compatSkills in its order (desktop ${d.join(",")}; phone ${p.join(",")})`;
+      else if (d.includes(sk.id) || p.includes(sk.id)) why = "the open card is listed as its own related skill";
+      else if (d.some(id => !p.includes(id))) why = `desktop related ${d.filter(id => !p.includes(id)).join(",")} missing from the phone list`;
+      else if ([...d, ...p].some(id => linked.has(id))) why = `related ${[...new Set([...d, ...p].filter(id => linked.has(id)))].join(",")} is already a link in the desc box`;
+      else if (d.some(id => coverLinks.includes(id))) why = `desktop related ${d.filter(id => coverLinks.includes(id)).join(",")} is already a toggle row`;
+      else if (foldBad(desk, d) || foldBad(phone, p)) why = `fold row wrong for ${d.length} desktop / ${p.length} phone rows`;
+      if (why) sideFail(`${sk.id} ${srv}: ${why}`); else checkedSidePanel++;
+    } catch (e) {
+      console.error(`[RENDER EXCEPTION] ${sk.id} ${srv}: ${e.message}`);
+      errorCount++;
     }
-  } catch (e) {
-    console.error(`[RENDER EXCEPTION] ${sk.id}: ${e.message}`);
-    errorCount++;
   }
+  sandbox._setServer("og");
 }
-console.log(`Verified ${checkedHeroRenders} hero render checks (every skill selectable without runtime exceptions).`);
+console.log(`Verified ${checkedHeroRenders} hero render checks (every skill selectable on every server tab without runtime exceptions).`);
+console.log(`Verified ${checkedSidePanel} side panel checks (every server tab: the strip inside the panel, the related lists, the fold).`);
 
 // Grand Casino Arcade (Cat.cs:27993-28265): roll = Random.Range(0, clamp(LCK, 0, 255)); <5 Doom (no hit),
 // <50 = 111, <90 = 222, <120 = 333, else 777. Odds chips, raw range, final range and the real simulator must agree.
@@ -2996,8 +3059,9 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   }
   console.log(`Verified ${checked} damage formulas have no unmodelled words.`);
 }
-// 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md): every dep button lives in one
-// .sk-dep-strip under the description, once per dep id, with at least one effect tag; no strip on a card without deps.
+// 3r. Dependency strip (spec docs/superpowers/specs/2026-09-26-dep-strip-design.md; since 2026-10-29 the side panel, spec
+// docs/superpowers/specs/2026-10-29-skill-details-merged-panel-design.md): every dep button lives once in .sk-dep-strip, inside the
+// side panel, once per dep id, with at least one effect tag; no strip on a card without deps.
 let checkedDepStrip = 0;
 const gameTipCards = [];   // cards that show the in-game tooltip button (checked after the loop)
 {
@@ -3036,20 +3100,35 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
       if (at('<span class="sk-desc-lead">') > Math.min(at('<div class="sk-desc-mods'), at('<div class="sk-desc-topics'), html.length)) { console.error(`[DESC LEAD ERROR] ${sk.id}: the desc has no main sentence before its icon lines or topics`); errorCount++; }
       else checkedDepStrip++;
     }
-    // 4. 4-column strip (user 2026-10-27): a shown name is the label up to its first " (" and at most 20 letters (Thai vowel and tone
-    //    marks not counted; about the 136 px a 1920 x 1080 column gives at 12 px), the full label is the item's hover text.
-    for (const m of strip.matchAll(/<div class="sk-dep-item" data-dep-order="\d*" title="([^"]*)"><span class="sk-dep-btncol">[\s\S]*?<span class="sk-dep-item-name">([^<]*)<\/span>/g)) {
+    // 4. short names (user 2026-10-27): a shown name is the label up to its first " (" and at most 20 letters (Thai vowel and tone marks
+    //    not counted; the side panel's name column, about 166 px at 13 px, on desktop; phones wrap at 760 px and below), the full label is
+    //    the item's hover text. Every item must match, so a markup change cannot quietly skip the check.
+    const labelMatches = [...strip.matchAll(/<div class="sk-dep-item" data-dep-order="\d*" title="([^"]*)" data-dep-group="[a-z]+"><span class="sk-dep-btncol">[\s\S]*?<span class="sk-dep-item-name">([^<]*)<\/span>/g)];
+    if (labelMatches.length !== items) fail(`${sk.id}: label check matched ${labelMatches.length} of ${items} items`);
+    for (const m of labelMatches) {
       const letters = m[2].replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").length;
       if (letters > 20) fail(`${sk.id}: strip label "${m[2]}" has ${letters} letters, over 20 for the 4-column strip (move the detail into " (...)")`);
       else if (m[1] !== m[2] && !m[1].startsWith(m[2] + " (")) fail(`${sk.id}: strip label "${m[2]}" is not the part of "${m[1]}" before its " ("`);
       else checkedDepStrip++;
     }
     if (html.includes("data-gametip")) gameTipCards.push(sk.id);
-    // 6. skill toggles ascend by internal skill ID; non-skill toggles (empty key) come after them
-    const keys = [...strip.matchAll(/<div class="sk-dep-item" data-dep-order="(\d*)"/g)].map(m => m[1] === "" ? Infinity : +m[1]);
-    if (keys.length !== items) { console.error(`[DEP ORDER ERROR] ${sk.id}: ${items - keys.length} strip item(s) without data-dep-order`); errorCount++; }
-    else if (keys.some((k, i) => i > 0 && k < keys[i - 1])) { console.error(`[DEP ORDER ERROR] ${sk.id}: strip not in ascending skill ID order: ${keys.join(", ")}`); errorCount++; }
-    else checkedDepStrip++;
+    // 6. groups (spec 2026-10-29): gear, then conditions / modes (no key, insertion order), then the skill groups, each ascending by internal
+    //    skill ID; a heading right before each group's first row when the rows span two or more groups, none otherwise
+    {
+      const GROUPS = ["gear", "cond", "dmg", "time", "range", "info"];
+      const ent = [...strip.matchAll(/<div class="sk-dep-item" data-dep-order="(\d*)" title="[^"]*" data-dep-group="([a-z]+)"/g)].map(m => ({ k: m[1] === "" ? null : +m[1], g: GROUPS.indexOf(m[2]), name: m[2] }));
+      const heads = [...strip.matchAll(/<p class="sk-dep-group-h" data-dep-group="([a-z]+)">/g)].map(m => m[1]);
+      const distinct = [...new Set(ent.map(e => e.name))];
+      const show = () => ent.map(e => e.name + ":" + (e.k === null ? "-" : e.k)).join(", ");
+      let why = "";
+      if (ent.length !== items) why = `${ent.length} of ${items} strip items carry data-dep-order and data-dep-group`;
+      else if (ent.some(e => e.g < 0)) why = `unknown group in ${show()}`;
+      else if (ent.some(e => (e.g < 2) !== (e.k === null))) why = `group and key disagree: ${show()}`;
+      else if (ent.some((e, i) => i > 0 && (e.g < ent[i - 1].g || (e.g === ent[i - 1].g && e.g >= 2 && e.k < ent[i - 1].k)))) why = `rows out of group / skill ID order: ${show()}`;
+      else if (heads.join() !== (distinct.length > 1 ? distinct : []).join()) why = `headings ${heads.join("|") || "(none)"} for groups ${distinct.join("|")}`;
+      else if (heads.length) { let cur = null; for (const t of strip.matchAll(/<p class="sk-dep-group-h" data-dep-group="([a-z]+)">|<div class="sk-dep-item" data-dep-order="\d*" title="[^"]*" data-dep-group="([a-z]+)"/g)) { if (t[1]) cur = t[1]; else if (t[2] !== cur) { why = `a ${t[2]} row is not under its heading`; break; } } }
+      if (why) { console.error(`[DEP ORDER ERROR] ${sk.id}: ${why}`); errorCount++; } else checkedDepStrip++;
+    }
   }
   // 7. in-game Thai tooltip (user 2026-10-27): the button shows on every card with a BB tooltip (603 on 2026-10-27), and Shadow Fist at
   //    level 4 shows its own level-4 line
@@ -3157,6 +3236,35 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
   if (!mbDrop.includes(">CHANCE<")) fail("rabbit_miracleBlend: Miracle Drop item must carry the CHANCE tag"); else checkedDepStrip++;
   if (!stripOf("cat_reverseThrust", "og").includes('data-dep-id="catPower"')) fail("cat_reverseThrust on og: Cat Power item missing"); else checkedDepStrip++;
   if (stripOf("cat_reverseThrust", "tto").includes('data-dep-id="catPower"')) fail("cat_reverseThrust on tto: Cat Power item must be absent"); else checkedDepStrip++;
+  // 5b. groups and name links (spec 2026-10-29)
+  const headsOf = (strip) => [...strip.matchAll(/<p class="sk-dep-group-h" data-dep-group="[a-z]+">([^<]*)<\/p>/g)].map(m => m[1]).join("|");
+  const groupOf = (strip, depId) => { const i = strip.indexOf(`data-dep-id="${depId}"`); if (i < 0) return ""; const m = /data-dep-group="([a-z]+)"/.exec(strip.slice(strip.lastIndexOf('<div class="sk-dep-item"', i), i)); return m ? m[1] : ""; };
+  const bn = stripOf("bison_nAttack");
+  if (headsOf(bn) !== "อุปกรณ์|เงื่อนไข / โหมด|ดาเมจ") fail(`bison_nAttack: headings "${headsOf(bn)}", expected อุปกรณ์|เงื่อนไข / โหมด|ดาเมจ`); else checkedDepStrip++;
+  if (!itemOf(bn, "bruteStrength").includes('class="sk-dep-link" data-skill-id="bison_bruteStrength"')) fail("bison_nAttack: Brute Strength's name must open bison_bruteStrength"); else checkedDepStrip++;
+  const fbs = stripOf("monkey_fireBall");
+  if (groupOf(fbs, "rapidFire") !== "time" || groupOf(fbs, "instantCast") !== "time") fail(`monkey_fireBall: Rapid Fire / Instant Cast in groups "${groupOf(fbs, "rapidFire")}" / "${groupOf(fbs, "instantCast")}", expected time`); else checkedDepStrip++;
+  const rbh = headsOf(stripOf("rabbit_nAttack"));
+  if (rbh !== "อุปกรณ์|ดาเมจ") fail(`rabbit_nAttack: headings "${rbh}", expected อุปกรณ์|ดาเมจ`); else checkedDepStrip++;
+  if (!itemOf(stripOf("chameleon_leftStride"), "chmTargetPoison").includes('data-skill-id="chameleon_poisonArrow"')) fail("chameleon_leftStride: the target poison condition row must link chameleon_poisonArrow"); else checkedDepStrip++;
+  // 5c. the side panel's related lists (spec 2026-10-29): only what the desc does not link; desktop also drops a skill toggle row's card
+  const heroOf = (id, server = "og") => { const sk = byId(id); sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._setServer(server); sandbox._selectSkill(sk); sandbox._setServer(server); sandbox._selectSkill(sk); const h = sandbox._getRenderedHeroHtml(); sandbox._setServer("og"); return h; };
+  const asideOf = (h) => { const i = h.indexOf('<aside class="sk-side"'); return i < 0 ? "" : h.slice(i, h.indexOf("</aside>", i)); };
+  const relOf = (s) => [...String(s).matchAll(/class="sk-compat-item[^"]*" data-skill-id="([^"]+)"/g)].map(m => m[1]).join(",");
+  const phoneOf = (h) => { const i = h.indexOf("sk-rel-phone"); return i < 0 ? "" : h.slice(i); };
+  { const h = heroOf("rabbit_rapidTrance"); if (h.includes('<aside class="sk-side"') || h.includes("sk-rel-phone")) fail("rabbit_rapidTrance: its desc links all its related skills and it has no toggles, so no side panel and no phone list"); else checkedDepStrip++; }
+  { const hb = heroOf("bat_dreamDazzle"), ht = heroOf("bat_dreamDazzle", "tto");
+    if (!itemOf(hb, "shatteringDream").includes('data-skill-id="bat_shatteringDream"') || relOf(asideOf(hb).slice(asideOf(hb).indexOf("sk-rel"))).includes("bat_shatteringDream")) fail("bat_dreamDazzle (BB): Shattering Dream must be a toggle row with its name link, not a related row"); else checkedDepStrip++;
+    const ra = asideOf(ht); if (ht.includes('data-dep-id="shatteringDream"') || relOf(ra) !== "bat_shatteringDream") fail(`bat_dreamDazzle (TTO): no Shattering Dream toggle, and it is the one related row (got "${relOf(ra)}")`); else checkedDepStrip++; }
+  { const h = heroOf("chameleon_nAttack"); const d = relOf(asideOf(h)), p = relOf(phoneOf(h));
+    if (d !== "chameleon_leftStride,chameleon_allSlain" || p.split(",").length !== 3) fail(`chameleon_nAttack: desktop related "${d}" (expected chameleon_leftStride,chameleon_allSlain), phone "${p}" (expected 3)`); else checkedDepStrip++; }
+  { let h = heroOf("bat_blackServant"), a = asideOf(h);
+    if (!a.includes('sk-rel is-fold"') || !a.includes('aria-expanded="false"><span>ทั้งหมด 12 สกิล</span>') || relOf(a).split(",").length !== 12) fail("bat_blackServant: its 12 zombies must fold into ทั้งหมด 12 สกิล, closed"); else checkedDepStrip++;
+    sandbox._relOpen.add("bat_blackServant"); h = heroOf("bat_blackServant"); a = asideOf(h); sandbox._relOpen.delete("bat_blackServant");
+    if (!a.includes('is-fold is-open"') || !a.includes('aria-expanded="true"')) fail("bat_blackServant: an opened related list must render open (is-open, aria-expanded true)"); else checkedDepStrip++; }
+  if (!asideOf(heroOf("panda_formlessPath", "reborn")).includes("<span>ทั้งหมด 27 สกิล</span>")) fail("panda_formlessPath (Reborn): its 27 related rows must fold into ทั้งหมด 27 สกิล"); else checkedDepStrip++;
+  { const h = heroOf("chameleon_bugSlayer"), d = relOf(asideOf(h).slice(asideOf(h).indexOf("sk-rel")));
+    if (!itemOf(h, "slayerRaceMatch").includes('class="sk-dep-link" data-skill-id="chameleon_markOfSlayer"') || d !== "chameleon_markOfSlayer,chameleon_allSlain") fail(`chameleon_bugSlayer: the race condition links Mark of Slayer without covering it (related "${d}", expected chameleon_markOfSlayer,chameleon_allSlain)`); else checkedDepStrip++; }
   // 6. outside renderHero (no sink) a helper still returns its button
   const loose = sandbox._renderDmgToggle({ id: "zzLoose", label: "Loose", icon: "cat_openWound5", minRank: 0, maxRank: 1 });
   if (!loose.includes('data-dep-id="zzLoose"')) fail("renderDmgToggle with no sink must return the button HTML"); else checkedDepStrip++;
@@ -6130,6 +6238,9 @@ if (RUN_DAMAGE_CHECKS) {
   const inputs = sandbox._statInputs, deps = sandbox._depRanks, bad = [], savedIn = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
   const sameClass = (sk) => SKILLS.find(x => x.class === sk.class && x.id !== sk.id) || SKILLS.find(x => x.id !== sk.id);
   const STATS = ["atk", "tal", "agi", "int", "cha"];
+  // the side panel's rows and headings never change with a toggle (spec 2026-10-29): each warm-up render's skeleton against the default state's
+  const skelBad = [];
+  const skel = (h) => [...h.matchAll(/<p class="sk-dep-group-h" data-dep-group="([a-z]+)">|data-dep-group="([a-z]+)"><span class="sk-dep-btncol"><button[^>]*? data-dep-id="([^"]+)"/g)].map(m => m[1] ? "h:" + m[1] : m[3] + ":" + m[2]).join(" ");
   const strip = (h) => h.replace(/(sk-summon-stat-unused[^>]*>[\s\S]*?sk-summon-stat-value[^>]*>)[^<]*/g, "$1");   // unused summon rows' values
   sandbox._setServer("og");
   for (const sk of SKILLS) {
@@ -6137,11 +6248,13 @@ if (RUN_DAMAGE_CHECKS) {
       for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";
       const render = () => { sandbox._selectSkill(sameClass(sk)); sandbox._selectSkill(sk); return strip(sandbox._getRenderedHeroHtml()); };
       const depList = [...new Map([...render().matchAll(/data-dep-id="([^"]+)"[^>]*?data-dep-(?:max-rank|toggle-on)="(\d+)"/g)].map(m => [m[1], +m[2]]))];
+      let skel0 = null;
       for (const [id, max] of [[null, 0], ...depList]) {
         const was = id ? deps[id] : undefined;
         if (id) deps[id] = max;
         try {
-          render();   // warm-up: the first render after a dep change carries its pips' pop-in classes
+          const h1 = render();   // warm-up: the first render after a dep change carries its pips' pop-in classes
+          if (id === null) skel0 = skel(h1); else if (skel(h1) !== skel0) skelBad.push(`${sk.id} with ${id} ${max}: the panel's rows or headings changed with a toggle`);
           const used = sandbox.getUsedPlayerStatKeys(sk);
           const moves = (st) => { const keep = inputs[st].value; inputs[st].value = "0"; const a = render(); inputs[st].value = "300"; const b = render(); inputs[st].value = keep; return a !== b; };
           const movesAnywhere = (st) => moves(st) || ["400", "0"].some(v => { const keep = STATS.filter(k => k !== st).map(k => [k, inputs[k].value]); keep.forEach(([k]) => { inputs[k].value = v; }); try { return moves(st); } finally { keep.forEach(([k, x]) => { inputs[k].value = x; }); } });
@@ -6184,6 +6297,9 @@ if (RUN_DAMAGE_CHECKS) {
   bad.slice(0, 40).forEach(m => console.error("[STAT GLOW ERROR] " + m));
   if (bad.length > 40) console.error(`[STAT GLOW ERROR] ... and ${bad.length - 40} more`);
   errorCount += bad.length;
+  skelBad.slice(0, 20).forEach(m => console.error("[SIDE PANEL ERROR] " + m));
+  if (skelBad.length > 20) console.error(`[SIDE PANEL ERROR] ... and ${skelBad.length - 20} more`);
+  errorCount += skelBad.length;
   console.log(`Verified ${checkedDepGlow} stat glow checks across dep states (every card on BB, each dep at max; LCK on TTO too).`);
 }
 console.log("=== AUDIT SUMMARY ===");

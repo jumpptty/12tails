@@ -463,10 +463,12 @@
   html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .tool-shell{ background:var(--th-shell-bg); }
   /* the skill description can show status pop-ups over the chips below it: keep it above them (surfaces are isolated, see THEME_SURFACES) */
   html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc{ z-index:3; }
-  /* ...and while one of its statuses is hovered or open, above the related-skills rail too (z-index 4, .sk-compat-rail), whose column
-     its pop-up can reach over: the desc is the pop-up's stacking context, so the pop-up's own z-index cannot lift it past the rail */
+  /* ...and while one of its statuses is hovered or open, above the side panel too (z-index 4, .sk-side), whose column its pop-up can
+     reach over: the desc is the pop-up's stacking context, so the pop-up's own z-index cannot lift it past the panel */
   html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc:has(.sk-status:hover),
   html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-hero-desc:has(.sk-status.is-active){ z-index:5; }
+  /* a hovered stat chip is its odds tooltip's stacking context, and the tooltip opens in the side panel's column: lift the chip over the panel */
+  html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) .sk-stat:hover{ z-index:5; }
 
   /* ---- 3. EFFECT LAYERS ---- */
   /* BB (user 2026-10-29): TailsTopia's tiled star sheet over the top of the page, above the sky layer (body::before); the old TTO look's
@@ -4885,27 +4887,22 @@
     .sk-summon-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
     .sk-stat-summon{padding:12px 14px}
   }
-  /* Skill detail + related skills (2026-09-15) -- preserve the established
-     860px skill-card shell and pin related navigation at the top of the
-     right gutter. Simulate output moves to a separate lower-left result lane
-     beneath the player/enemy stat panel, keeping navigation and combat output
-     in distinct gutters. */
+  /* Side panel (2026-10-29, spec docs/superpowers/specs/2026-10-29-skill-details-merged-panel-design.md, mockup B): renderSidePanel writes one
+     aside.sk-side into the hero right under the description (the toggles, then the related skills the desc does not link). From 900 px it hangs
+     in the old rail's place, 20 px right of .sk and level with the stats panel: nothing between it and .sk may be positioned or transformed
+     there (.sk-hero is position:relative below 900 px only). Phones keep the strip under the description and get the related skills as
+     .sk-rel-phone after the enemy panel (phone block). Simulate output keeps its lower-left lane beneath the stat panels. */
   .sk-detail-layout{display:block}
-  .sk-compat-rail{margin-top:14px}
-  /* Keep related skills in the right rail on compact desktop windows. The
-     fit-to-screen pass scales the complete workspace below this width instead
-     of reflowing the navigation underneath the skill card. */
+  .sk-rel-phone{margin-top:14px}
   @media (min-width:900px){
-    .sk-detail-layout--has-compat .sk-compat-rail{
-      position:absolute; left:calc(100% + 20px); top:0; width:260px;
-      margin:0; min-width:0; z-index:4;
-    }
-    .sk-has-compat-left-ledger .sk-multihit-layer{
-      left:auto; right:calc(100% + 20px);
-    }
-    .sk-compat-rail .sk-compat-grid{grid-template-columns:1fr}
-    .sk-compat-rail .sk-compat-single-grid{max-width:none}
-    .sk-compat-rail .sk-compat-many-grid{grid-template-columns:repeat(2, 1fr)}
+    .sk-side{position:absolute; left:calc(100% + 20px); top:0; width:260px; margin:0; z-index:4}
+    .sk-rel-phone{display:none}
+    .sk-has-compat-left-ledger .sk-multihit-layer{left:auto; right:calc(100% + 20px)}
+    .sk-side .sk-rel{margin-top:14px}
+    .sk-side > .sk-rel:first-child{margin-top:0}
+    .sk-side .sk-compat-grid{grid-template-columns:1fr}
+    .sk-side .sk-compat-single-grid{max-width:none}
+    .sk-side .sk-compat-many-grid{grid-template-columns:repeat(2, 1fr)}
   }
 
   /* Related / Compatible Skills Row (2026-09-14). Open layout since 2026-10-18 (user picked B2 of 4 mocks): no panel and
@@ -4913,8 +4910,6 @@
      rings) and its name; the title ends in a fading gold rule. Nothing clips: a long name grows its row instead of being
      clamped, so the name's shadow, the ring's 1 px edge and the hover lift stay whole. Hover lifts the ring and the name,
      never the button itself (a moving hover target makes the cursor flicker at its edge), and adds no glow. */
-  .sk-compat-row{margin-top:14px}
-  .sk-compat-row:empty{display:none; margin:0}
   .sk-compat-chip{padding:0 2px}
   .sk-compat-title{
     display:flex; align-items:center; gap:10px;
@@ -6548,6 +6543,68 @@
   @media (max-width:760px){ .sk-dep-strip{grid-template-columns:repeat(2, minmax(0, 1fr))} .sk-dep-item-name{white-space:normal; line-height:1.25} .sk-dep-item-tags{flex-wrap:wrap; row-gap:2px} }
   .sk-dep-item-tags{display:flex; gap:8px}
   .sk-dep-tag{font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; line-height:1; color:var(--tag-c)}
+  /* Side panel rows (2026-10-29, spec docs/superpowers/specs/2026-10-29-skill-details-merged-panel-design.md): group headings and the switch
+     show in the desktop panel only; a row's name opens its card there (a plain button around the name span, which fitDepLabels still measures). */
+  .sk-dep-group-h, .sk-dep-sw{display:none}   /* desktop side panel only */
+  .sk-dep-link{display:flex; min-width:0; max-width:100%; margin:0; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer}
+  .sk-dep-link > .sk-dep-item-name{min-width:0}   /* fitDepLabels still measures the name inside the link */
+  @media (max-width:899px){ .sk-dep-link{pointer-events:none; cursor:default} }   /* phones keep today's strip: only the icon reacts */
+  /* Related list fold (2026-10-29): more than 6 rows fold into "ทั้งหมด N สกิล", which opens in place */
+  .sk-rel.is-fold:not(.is-open) > .sk-compat-grid{display:none}
+  .sk-rel-more{display:flex; align-items:center; gap:8px; width:100%; min-height:34px; padding:0 2px; box-sizing:border-box; border:0; background:none; color:var(--text); font:500 13px 'Prompt',sans-serif; text-shadow:0 1px 3px rgba(0,0,0,.8); cursor:pointer; text-align:left}
+  .sk-rel-more > span{transition:transform .15s ease, color .15s ease}
+  .sk-rel-more:hover > span{transform:translateY(-1px); color:var(--gold)}
+  .sk-rel-more svg{width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s ease}
+  .sk-rel.is-open .sk-rel-more svg{transform:rotate(180deg)}
+  .sk-rel-more:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .sk-rel-more + .sk-compat-grid{margin-top:6px}
+  /* Side panel rows on desktop (mockup B, 2026-10-29): a fixed 40 px grid row, 32 px | name | 34 px. The toggle button itself is the ring
+     (Revised Art's pattern: the grey / colour state and the pop run on the ring, the art inside is zoomed 1.3x and centred by centreRingImg),
+     the name sits on the first line with the pips under it and the tags on the right of the pip line, and the switch on the right mirrors
+     .on and waits through --flip-delay with the ring. .sk-dep-btncol and .sk-dep-item-text step aside (display:contents), so the markup the
+     delta motion and the validator read stays as it is. The shared .sk-dep-toggle / .sk-pip / .sk-dep-flip-* rules are untouched (the 3D
+     reach popup keeps its look). */
+  @media (min-width:900px){
+    .sk-side .sk-dep-strip{display:flex; flex-direction:column; align-items:stretch; gap:4px; margin:0; padding:0; border:0}   /* stretch: the base strip centres its items */
+    .sk-side .sk-dep-group-h{display:flex; align-items:center; gap:8px; height:18px; margin:6px 0 0; font:600 11px 'Prompt',sans-serif; letter-spacing:.04em; color:var(--gold); text-shadow:0 1px 3px rgba(0,0,0,.8)}
+    .sk-side .sk-dep-group-h::after{content:""; flex:1; height:1px; background:linear-gradient(90deg, rgba(212,175,55,.55), transparent)}
+    .sk-side .sk-dep-group-h:first-child{margin-top:0}
+    .sk-side .sk-dep-item{display:grid; grid-template-columns:32px minmax(0,1fr) 34px; grid-template-rows:17px 11px; column-gap:10px; row-gap:4px; align-content:center; height:40px; box-sizing:border-box; padding:0 4px; border-radius:6px; border:1px solid color-mix(in srgb, var(--gold) 25%, transparent); background:linear-gradient(color-mix(in srgb, var(--gold) 7%, transparent), color-mix(in srgb, var(--gold) 7%, transparent)), color-mix(in srgb, var(--ink) 55%, transparent)}
+    .sk-side .sk-dep-btncol, .sk-side .sk-dep-item-text{display:contents}
+    .sk-side .sk-dep-item :is(.sk-dep-toggle, .sk-dep-rank-icon){grid-column:1; grid-row:1 / span 2; align-self:center; position:relative; width:32px; height:32px; border-radius:50%; overflow:hidden; background:var(--ink); box-shadow:0 0 0 1px rgba(212,175,55,.75); filter:grayscale(100%); opacity:.5; transition:opacity .15s ease, filter .15s ease}
+    .sk-side .sk-dep-item :is(.sk-dep-toggle, .sk-dep-rank-icon).on{filter:none; opacity:1}
+    .sk-side .sk-dep-item :is(.sk-dep-toggle, .sk-dep-rank-icon):hover{opacity:.85; filter:grayscale(80%) brightness(1.2)}
+    .sk-side .sk-dep-item :is(.sk-dep-toggle, .sk-dep-rank-icon).on:hover{opacity:1; filter:brightness(1.22)}
+    .sk-side .sk-dep-item :is(.sk-dep-toggle, .sk-dep-rank-icon) img{position:absolute; inset:0; width:100%; height:100%; border-radius:0; filter:none; opacity:1; transition:none; animation:none !important; transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%))}
+    .sk-side .sk-dep-item[data-dep-group="gear"] :is(.sk-dep-toggle, .sk-dep-rank-icon) img{transform:scale(.8) translate(var(--ring-x,0%), var(--ring-y,0%))}
+    .sk-side .sk-dep-item .sk-dep-flip-on{animation:skDepFlipOn .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item .sk-dep-flip-off{animation:skDepFlipOff .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item .sk-dep-flip-swap{animation:skDepFlipSwap .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item-text > .sk-dep-item-name, .sk-side .sk-dep-link{grid-column:2; grid-row:1; justify-self:start; align-self:end; min-width:0; max-width:100%}
+    .sk-side .sk-dep-item-name{font-size:13px; line-height:17px; color:var(--text); text-shadow:0 1px 3px rgba(0,0,0,.8)}
+    .sk-side .sk-dep-link .sk-dep-item-name{transition:transform .15s ease, color .15s ease}
+    .sk-side .sk-dep-link:hover .sk-dep-item-name{transform:translateY(-1px); color:var(--gold)}
+    .sk-side .sk-dep-link:focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:3px}
+    .sk-side .sk-dep-pips{grid-column:2; grid-row:2; justify-self:start; align-self:center}
+    .sk-side .sk-dep-item-tags{grid-column:2; grid-row:2; justify-self:end; align-self:center; gap:6px}
+    .sk-side .sk-dep-tag{font-size:9px; letter-spacing:.5px; text-shadow:0 1px 2px rgba(0,0,0,.8)}
+    .sk-side .sk-dep-sw{display:block; grid-column:3; grid-row:1 / span 2; align-self:stretch; position:relative; cursor:pointer}
+    .sk-side .sk-dep-sw::before{content:""; position:absolute; right:4px; top:50%; width:26px; height:14px; margin-top:-7px; border-radius:7px; background:color-mix(in srgb, var(--muted) 35%, transparent)}
+    .sk-side .sk-dep-sw::after{content:""; position:absolute; right:18px; top:50%; width:10px; height:10px; margin-top:-5px; border-radius:50%; background:var(--muted)}
+    .sk-side .sk-dep-sw:hover::before{filter:brightness(1.15)}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > .on) .sk-dep-sw::before{background:var(--gold)}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > .on) .sk-dep-sw::after{transform:translateX(12px); background:var(--ink)}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > .sk-dep-flip-on) .sk-dep-sw::before{animation:skSwTrackOn .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > .sk-dep-flip-on) .sk-dep-sw::after{animation:skSwKnobOn .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > .sk-dep-flip-off) .sk-dep-sw::before{animation:skSwTrackOff .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > .sk-dep-flip-off) .sk-dep-sw::after{animation:skSwKnobOff .3s ease-out var(--flip-delay,0ms) backwards}
+    .sk-side .sk-dep-item:has(.sk-dep-btncol > [data-dep-min-rank]:not([data-dep-min-rank="0"])) .sk-dep-sw{visibility:hidden}   /* no off state: no switch */
+    .sk-side .sk-dep-item:has(button[data-dep-id]:focus-visible){outline:2px solid var(--gold); outline-offset:1px}
+  }
+  @keyframes skSwTrackOn{0%{background:color-mix(in srgb, var(--muted) 35%, transparent)}}
+  @keyframes skSwTrackOff{0%{background:var(--gold)}}
+  @keyframes skSwKnobOn{0%{transform:translateX(0); background:var(--muted)}}
+  @keyframes skSwKnobOff{0%{transform:translateX(12px); background:var(--ink)}}
   /* Head strip on top (user 2026-10-26, variant G of the head-on-top mocks): from 621 px wide the icon, name, class + range and
      costs sit on one centred line, each group after a hairline, and the description takes the whole row under it. Phones (<= 620 px)
      keep their column. One block, so reverting it brings back the three-row head beside the description. */
@@ -6604,7 +6661,7 @@
     .sk-hero > .sk-hero-head > .sk-hero-title > .sk-hero-costs::before, .sk-hero > .sk-hero-head > .sk-hero-title > .sk-note-chips::before{content:""; width:1px; height:14px; background:var(--line); margin-right:2px}
   }
   .sk-skill-nav{display:none}
-  @media(max-width:900px){
+  @media(max-width:899px){
     .sk-hero{position:relative}
     .sk-hero-head{padding:0 46px}
     .sk-skill-nav{display:flex; align-items:center; justify-content:center; position:absolute; top:12px; width:40px; height:40px; padding:0; box-sizing:border-box;
@@ -6788,6 +6845,10 @@
     /* .view keeps an identity transform after its fade-in (fill-mode both), which would make it the containing block for position:fixed */
     html.tool-wide-hero .view:not([hidden]){animation-fill-mode:none}
     html.tool-wide-hero .sk-multihit-layer{position:fixed; left:50%; right:auto; top:26vh !important; bottom:auto; transform:translateX(-50%)}
+    /* the side panel's related list goes to the very bottom (after the stats panel, order:1): the card's two wrappers step aside */
+    html.tool-wide-hero .sk > [data-role="display"], html.tool-wide-hero .sk-detail-layout{display:contents}
+    html.tool-wide-hero .sk-rel-phone{order:2; margin:16px 0 0}
+    .sk-side .sk-rel{display:none}
   }
   @media (max-width: 560px){
     html.tool-wide-hero .sk-dmg-calc, html.tool-wide-hero .sk-dmg-final{grid-column:1 / -1}
@@ -19147,7 +19208,7 @@ function mountSkillCooldownLookup(root){
     const rbNames = srv === "reborn" ? (overrides.compatSkills || []).map(id => SKILLS.find(x => x.id === id)).filter(c => c && c.onlyServer === "reborn" && !c.soon && !String(overrides.changeNote || "").includes("**" + c.name + "**")).map(c => "**" + c.name + "**") : [];
     const rbDeps = ["descDep", "cdDep", "durDep", "castDep", "dmgMultDep", "dmgRankDep", "hitCountDep", "hitOutDep", "dep", "koDep"].map(k => overrides[k]).concat(...["dmgControls", "infoDeps", "reachControls"].map(k => (overrides[k] || []).map(d => d && d.dep ? d.dep : d))).filter(d => d && d.id);
     const rbToggled = srv === "reborn" && (overrides.compatSkills || []).some(id => { const c = SKILLS.find(x => x.id === id); return c && c.onlyServer === "reborn" && rbDeps.some(d => d.id === id.slice(id.indexOf("_") + 1) || d.icon === c.icon); });
-    const rbLine = rbNames.length ? `• สกิล C6 / C7 ของ Reborn ที่เกี่ยวข้องกับสกิลนี้: ${rbNames.join(", ")}` + (rbToggled ? " (เปิดสวิตช์ของสกิลนั้นในแถบใต้คำอธิบายเพื่อดูผล)" : "") : "";
+    const rbLine = rbNames.length ? `• สกิล C6 / C7 ของ Reborn ที่เกี่ยวข้องกับสกิลนี้: ${rbNames.join(", ")}` + (rbToggled ? " (เปิดสวิตช์ของสกิลนั้นเพื่อดูผล)" : "") : "";
     if (overrides.changeNote) return rbLine ? overrides.changeNote + "\n" + rbLine : overrides.changeNote;
 
     const diffs = [];
@@ -22305,7 +22366,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   // click-listener below (queries by class, not by which specific dep it
   // is), so no new wiring is needed for any dep used this way.
   // Dependency strip (2026-09-26, docs/superpowers/specs/2026-09-26-dep-strip-design.md): while renderHero() runs, every
-  // dependency button is collected here (one entry per dep id, tags merged) and drawn once under the description.
+  // dependency button is collected here (one entry per dep id, tags merged) and drawn once in the side panel's toggle strip
+  // (beside the card on desktop, under the description on phones; 2026-10-29).
   // Outside renderHero (depSink === null) the helpers return their button HTML as before.
   let depSink = null;
   // Desc lines revealed by their toggle (user 2026-10-28: "revealing one by one from the toggling on"): while renderHero runs, every
@@ -22342,6 +22404,47 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     }).join("<br>");
   }
   const DEP_TAG_COLORS = { CD: "--stat-agi", CAST: "--stat-int", DUR: "--stat-cha", CHANCE: "--stat-lck", DMG: "--stat-atk", HEAL: "--stat-hp", HITS: "--stat-atk", KO: "--stat-atk", SHIELD: "--stat-def", STATS: "--stat-vit", INFO: "--muted" };
+  // Toggle groups (spec 2026-10-29): gear, then conditions / modes (both in insertion order), then the skill toggles by what they change, each
+  // group by internal skill ID. A skill toggle joins the first group one of its tags names (HEAL = damage on heal cards; an unknown tag = info).
+  // Measured 2026-10-29: no toggle changes group with a rank or a toggle state, so the rows never reorder between two clicks.
+  const DEP_GROUPS = [["gear", "อุปกรณ์"], ["cond", "เงื่อนไข / โหมด"], ["dmg", "ดาเมจ"], ["time", "เวลา"], ["range", "ระยะ"], ["info", "คำอธิบาย"]];
+  const DEP_TAG_GROUP = { DMG: 2, HEAL: 2, HITS: 2, KO: 2, CHANCE: 2, SHIELD: 2, STATS: 2, CD: 3, CAST: 3, DUR: 3, RANGE: 4, INFO: 5 };
+  const depGroupOf = (e, k) => k !== Infinity ? Math.min(...e.tags.map(t => DEP_TAG_GROUP[t] || 5)) : (String(e.dep.icon || "").startsWith("item_") ? 0 : 1);
+  // The card a toggle row's name opens at rank r: the card its label names (findSkillByMention, the desc's own link rule), else the card whose
+  // id is the key of the picture it shows; never the open card, a stub, gear, a mount or a status picture.
+  function depLinkCard(dep, r, act){
+    const ok = (sk) => sk && sk.id !== selected.id && !sk.soon ? sk : null;
+    const named = ok(findSkillByMention(String(dep.labelFor ? dep.labelFor(r) : dep.label).replace(/ \(.*$/, ""), act));
+    if (named) return named;
+    const stem = depLineIcon(dep.iconFor ? dep.iconFor(Math.max(1, r)) : dep.icon);
+    return /^(item|mount|status)_/.test(stem) ? null : ok(SKILLS.find(s => s.id === stem));
+  }
+  // Related skills (spec 2026-10-29): only those the desc does not already link; a list over 6 folds into one row that opens in place.
+  const relOpen = new Set();   // cards whose long related list the player opened, for this visit
+  function relListHtml(list, cls){
+    if (!list.length) return "";
+    const n = list.length, fold = n > 6, open = fold && relOpen.has(selected.id), many = n > 8;
+    const grid = n === 1 ? " sk-compat-single-grid" : n <= 4 ? " sk-compat-few-grid" : many ? " sk-compat-many-grid" : "";
+    return `<div class="sk-compat-chip sk-rel${cls}${fold ? " is-fold" : ""}${open ? " is-open" : ""}"><p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>`
+      + (fold ? `<button type="button" class="sk-rel-more" aria-expanded="${open}"><span>ทั้งหมด ${n} สกิล</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>` : "")
+      + `<div class="sk-compat-grid${grid}">` + list.map(sk => `<button type="button" class="sk-compat-item${many ? " sk-compat-item-many" : ""}" data-skill-id="${sk.id}" title="${sk.name}"><span class="sk-compat-ring"><img src="${SKILL_ICONS[sk.icon] || ""}" alt="" class="sk-compat-icon"></span><span class="sk-compat-name">${sk.name}</span></button>`).join("") + `</div></div>`;
+  }
+  // Side panel: the toggle strip, then the related skills this server tab's desc does not link (findSkillByMention over the raw desc, lines hidden
+  // by an off toggle included, plus the liveCheck note). Desktop also leaves out a card a skill toggle row can open at any of its ranks (it appears
+  // once, as that row); phones keep it, since their strip names stay inert. Called after every depSinkAdd, before the desc is built.
+  // ponytail: related rows render twice (panel + phone list, CSS shows one); render the hidden copy lazily if the 27-row cards ever feel slow.
+  function renderSidePanel(act, linkText){
+    const strip = renderDepStrip(act), covered = new Set(), linked = new Set();
+    for (const e of depSink.values()) if (!Array.isArray(e) && depGroupOf(e, depOrderKey(e.dep)) > 1)
+      for (let r = Math.max(1, e.dep.minRank || 0); r <= (e.dep.maxRank || 0); r++){ const c = depLinkCard(e.dep, r, act); if (c) covered.add(c.id); }
+    String(linkText).replace(/\*\*([^*]+)\*\*/g, (m, t) => { const sk = findSkillByMention(t, act); if (sk) linked.add(sk.id); return m; });
+    const phone = [...new Set(act.compatSkills || selected.compatSkills || [])].map(id => SKILLS.find(s => s.id === id)).filter(sk => sk && sk.id !== selected.id && !linked.has(sk.id));
+    const desk = phone.filter(sk => !covered.has(sk.id));
+    return {
+      side: strip || desk.length ? `<aside class="sk-side" aria-label="ตัวเลือกและสกิลที่เกี่ยวข้อง">${strip}${relListHtml(desk, "")}</aside>` : "",
+      phone: relListHtml(phone, " sk-rel-phone")
+    };
+  }
   function depSinkAdd(dep, tag, buttonHtml){
     if (depLineDeps && dep) depLineDeps.set(dep, String(dep.label || "").replace(/ \(.*$/, ""));   // views too: their line follows their own on state
     // A view of another dep (Raw Strength = Brute Strength rank 5) draws no button; its tag joins the real dep's entry.
@@ -22362,9 +22465,9 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     depSink.set(dep.id, { dep, label: full.replace(/ \(.*$/, ""), full, tags: [tag, ...pend.filter(t => t !== tag)], button: buttonHtml });
     return "";
   }
-  // Sort key of a strip toggle: the internal skill ID of the card it stands for (<class>_<dep id>, common_<dep id>, or its
-  // icon key without the rank digit). Gear, target and mode toggles (and a toggle that is the selected card itself) get
-  // Infinity and keep their order after the skill toggles.
+  // Sort key of a strip toggle inside its group: the internal skill ID of the card it stands for (<class>_<dep id>, common_<dep id>,
+  // or its icon key without the rank digit). Gear, target and mode toggles (and a toggle that is the selected card itself) get
+  // Infinity and keep their insertion order (the gear and condition groups, before the skill groups since 2026-10-29).
   function depOrderKey(dep){
     if (!dep || DEP_NOT_SKILL.has(dep.id)) return Infinity;
     const own = selected && selected.id;
@@ -22388,13 +22491,18 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       return `<i class="sk-pip${on ? " on" : ""}${cls}"></i>`;
     }).join("") + `</span>`;
   }
-  function renderDepStrip(){
-    if (!depSink || depSink.size === 0) return "";
-    const sorted = [...depSink.values()].filter(e => !Array.isArray(e)).map((e, i) =>   /* skip pending view tags */ ({ e, i, k: depOrderKey(e.dep) })).sort((a, b) => (a.k - b.k) || (a.i - b.i));
-    const items = sorted.map(({ e, k }) =>
-      `<div class="sk-dep-item" data-dep-order="${k === Infinity ? "" : k}" title="${e.full}"><span class="sk-dep-btncol">${e.button}${depPipsHtml(e.dep)}</span><span class="sk-dep-item-text"><span class="sk-dep-item-name">${e.label}</span><span class="sk-dep-item-tags">${e.tags.map(tg => `<span class="sk-dep-tag" style="--tag-c:var(${DEP_TAG_COLORS[tg] || "--muted"})">${tg}</span>`).join("")}</span></span></div>`
-    ).join("");
-    return `<div class="sk-dep-strip">${items}</div><!--/sk-dep-strip-->`;
+  function renderDepStrip(act){
+    const rows = [...(depSink ? depSink.values() : [])].filter(e => !Array.isArray(e)).map((e, i) => { const k = depOrderKey(e.dep); return { e, i, k, g: depGroupOf(e, k) }; })   /* skip pending view tags */
+      .sort((a, b) => (a.g - b.g) || (a.k - b.k) || (a.i - b.i));   // Infinity - Infinity is NaN: gear and condition rows keep insertion order
+    if (!rows.length) return "";
+    const heads = new Set(rows.map(x => x.g)).size > 1;
+    return `<div class="sk-dep-strip">` + rows.map(({ e, k, g }, n) => {
+      const name = `<span class="sk-dep-item-name">${e.label}</span>`, link = g ? depLinkCard(e.dep, getDepRank(e.dep), act) : null;   // gear rows never link
+      return (heads && (!n || rows[n - 1].g !== g) ? `<p class="sk-dep-group-h" data-dep-group="${DEP_GROUPS[g][0]}">${DEP_GROUPS[g][1]}</p>` : "")
+        + `<div class="sk-dep-item" data-dep-order="${k === Infinity ? "" : k}" title="${e.full}" data-dep-group="${DEP_GROUPS[g][0]}"><span class="sk-dep-btncol">${e.button}${depPipsHtml(e.dep)}</span>`
+        + `<span class="sk-dep-item-text">${link ? `<button type="button" class="sk-dep-link" data-skill-id="${link.id}">${name}</button>` : name}<span class="sk-dep-item-tags">${e.tags.map(tg => `<span class="sk-dep-tag" style="--tag-c:var(${DEP_TAG_COLORS[tg] || "--muted"})">${tg}</span>`).join("")}</span></span>`
+        + `<i class="sk-dep-sw" aria-hidden="true"></i></div>`;
+    }).join("") + `</div><!--/sk-dep-strip-->`;
   }
   function renderDmgToggle(dep, tag = "DMG"){
     if (dep.minRank > 0 || dep.cycleRanks) return renderDmgRankToggle(dep, tag); // no "off" state, or opted in (Over Power 0..2): cycle ranks
@@ -22655,7 +22763,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   }
   function positionCombatLedger(){
     if (multiHitPinned) return;   // pinned by pinMultiHitLayer for the current results
-    const compatRail = $(".sk-compat-rail", displayEl);
+    const compatRail = $(".sk-side", displayEl);   // the side panel (2026-10-29; the related-skills rail before)
     const canUseExternalRails = window.innerWidth >= 900;
     const useExternalLedger = !!compatRail && canUseExternalRails;
     const statsBottom = statsPanelEl && !statsPanelEl.hidden
@@ -22891,13 +22999,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       // The KO badge is its own field too (user 2026-10-06): a KO-only change sends the light to the badge, not the formula.
       // The range pill is the last group (user 2026-10-26: Far Reach only changes the range, and nothing seemed to happen); higher = better.
       const DELTA_GROUPS = [".sk-stat:not(.sk-stat-summon), .sk-dmg, .sk-summon-stat, .sk-ko-badge", ".sk-cost-badge", ".sk-hero-desc .sk-val", ".sk-hero-desc .sk-status", ".sk-reach-badge"];
-      const DELTA_POPUPS = ".sk-status-tip, .sk-stat-tooltip, .sk-dmg-info-pop, .sk-dep-strip";
+      const DELTA_POPUPS = ".sk-status-tip, .sk-stat-tooltip, .sk-dmg-info-pop, .sk-side";
       return DELTA_GROUPS.map(sel => Array.from(displayEl.querySelectorAll(sel)).filter(el => !el.closest(DELTA_POPUPS)));
     }
     // Tooltip text is part of a field's value, so a change that only shows up on hover still counts.
     function deltaText(el){
       const c = el.cloneNode(true);
-      c.querySelectorAll(".sk-dep-strip, button, .sk-ko-badge, .sk-magic-badge, .sk-roll-old, .sk-roll-tint, .sk-dtag").forEach(n => n.remove());
+      c.querySelectorAll(".sk-side, button, .sk-ko-badge, .sk-magic-badge, .sk-roll-old, .sk-roll-tint, .sk-dtag").forEach(n => n.remove());
       c.querySelectorAll("img[alt]").forEach(i => i.replaceWith(i.alt));
       return c.textContent.replace(/\s+/g, " ").trim();
     }
@@ -23387,7 +23495,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const was = prev.deps.get(k);
         if (!was || (was.r === r && was.s === s && k !== prev.clicked + "#1")) return;
         const up = r !== was.r ? r > was.r : b.classList.contains("on");
-        flips.push({ b, up: WORSE_WHEN_ON.includes(id) ? !up : up, wasOn: was.s.startsWith("true"), oldSrc: was.s.slice(was.s.indexOf("|") + 1) });
+        flips.push({ b, id, up: WORSE_WHEN_ON.includes(id) ? !up : up, wasOn: was.s.startsWith("true"), oldSrc: was.s.slice(was.s.indexOf("|") + 1) });
       });
       // off -> on lights up, on -> off greys out, a rank change that stays on (or off) just turns over.
       const flipCls = (f) => { const on = f.b.classList.contains("on"); return on === f.wasOn ? "sk-dep-flip-swap" : (on ? "sk-dep-flip-on" : "sk-dep-flip-off"); };
@@ -23396,6 +23504,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const FLIP_MID = { "sk-dep-flip-on": 0, "sk-dep-flip-off": 0, "sk-dep-flip-swap": 0 };
       const flipStart = (f, delay = 0) => {
         const cls = flipCls(f), img = f.b.querySelector("img");
+        const row = f.b.closest(".sk-dep-item"); if (row) row.style.setProperty("--flip-delay", delay + "ms");   // the side panel's ring and switch wait with the old picture
         if (img){
           img.style.animationDelay = delay + "ms";
           const now = img.getAttribute("src");
@@ -23403,7 +23512,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         }
         restartClass(f.b, cls);
       };
-      const src = flips.find(f => f.up) || flips[0];
+      const src = flips.find(f => f.id === prev.clicked) || flips.find(f => f.up) || flips[0];   // the clicked toggle first: DOM order (gear before skills) must not pick the light's source
       flips.forEach(f => { if (f !== src || f.up) flipStart(f); });
       // Stat colour per chip (user 2026-10-05): a field that did not get worse lights up in the signature colour of the
       // stat that drives it (cooldown AGI, cast time INT, duration CHA / TAL, chance LCK, damage ATK / TAL / DEF ...),
@@ -23688,6 +23797,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     function renderHeroNow(){
       depSink = new Map();
       depLineDeps = new Map();
+      const keepAe = fitHoldKey ? document.activeElement : null;   // a keyboard toggle keeps its focus across the rebuild (scale lock; backlog §6.1)
+      const keepDep = keepAe && keepAe.matches && keepAe.matches("button[data-dep-id]") && displayEl.contains(keepAe) ? keepAe.dataset.depId : "";
       updateStatBonus();
       updateEnemyBonus();
     if (!selected){
@@ -25485,44 +25596,12 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       ? activeSelected.dmgGroups.map((g, i) => buildDmgBlock(dmgModeSkill(activeSelected, g)).replace('data-role="simulate-hit"', `data-role="simulate-group" data-group-index="${i}"`)).join("")
       : buildDmgBlock(activeSelected);
 
-    let compatBlock = "";
-    const activeCompat = (activeSelected && activeSelected.compatSkills) || selected.compatSkills;
-    if (activeCompat && Array.isArray(activeCompat) && activeCompat.length > 0){
-      const count = activeCompat.length;
-      const isMany = count > 8;
-      const gridClass = count === 1 ? "sk-compat-grid sk-compat-single-grid" : (count <= 4 ? "sk-compat-grid sk-compat-few-grid" : (isMany ? "sk-compat-grid sk-compat-many-grid" : "sk-compat-grid"));
-      const itemClass = count === 1 ? "sk-compat-item sk-compat-item-single" : (count <= 4 ? "sk-compat-item sk-compat-item-few" : (isMany ? "sk-compat-item sk-compat-item-many" : "sk-compat-item"));
-
-      const compatItems = activeCompat.map(id => {
-        const sk = SKILLS.find(s => s.id === id);
-        if (!sk) return "";
-        const iconKey = sk.icon;
-        const iconData = SKILL_ICONS[iconKey] || "";
-
-        return `
-          <button type="button" class="${itemClass}" data-skill-id="${sk.id}" title="${sk.name}">
-            <span class="sk-compat-ring"><img src="${iconData}" alt="" class="sk-compat-icon"></span>
-            <span class="sk-compat-name">${sk.name}</span>
-          </button>
-        `;
-      }).join("");
-
-      compatBlock = `
-        <div class="sk-compat-chip">
-          <p class="sk-compat-title">สกิลที่เกี่ยวข้อง</p>
-          <div class="${gridClass}">
-            ${compatItems}
-          </div>
-        </div>
-      `;
-    }
-
-    const depStripHtml = renderDepStrip();
+    const panel = renderSidePanel(activeSelected || selected, descStr + "<br>" + String(liveCheck || ""));   // after every toggle is drawn, before the desc
     const heroDescHtml = heroDescHtmlFor(depLineDeps);   // the toggles are all drawn now, so the desc can drop the lines of those that are off
     depLineDeps = null;
     depSink = null;
     displayEl.innerHTML = `
-      <div class="sk-detail-layout${compatBlock ? " sk-detail-layout--has-compat" : ""}">
+      <div class="sk-detail-layout">
         <div class="sk-detail-main">
           <div class="sk-hero">
         ${(() => { const i = SKILLS_ORDERED.findIndex(x => x.id === selected.id), chev = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -25542,7 +25621,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           ${heroDescHtml}
         </div>
         ${supportLvBlock}
-        ${depStripHtml}
+        ${panel.side}
         ${bbStatsBlock ? `
         <div class="sk-summon-row">
           ${bbStatsBlock}
@@ -25566,13 +25645,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         ${dmgBlock}
           </div>
         </div>
-        ${compatBlock ? `
-        <aside class="sk-compat-rail" aria-label="สกิลที่เกี่ยวข้อง">
-          ${compatBlock}
-        </aside>
-        ` : ""}
+        ${panel.phone}
       </div>
     `;
+    if (keepDep){ const f = displayEl.querySelector(`button[data-dep-id="${keepDep}"]`); if (f) f.focus({ preventScroll: true }); }
 
     // Long ranges (e.g. "108.5–117.1s") can be wider than the stat box at
     // its CSS-declared font-size, especially with both Cooldown and
@@ -25627,41 +25703,21 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         el.style.fontSize = size + "px";
       }
     });
-    // Related-skill chip names shrink to fit their 2-line clamp instead of
-    // ellipsizing (user-requested) -- scrollHeight vs. clientHeight (not
-    // scrollWidth/clientWidth like the single-line loops above) since this
-    // text wraps within a fixed -webkit-line-clamp:2 box: a smaller font
-    // fits more characters per line, so the same text needs fewer wrapped
-    // lines, converging scrollHeight down to the clamped clientHeight. The
-    // CSS ellipsis stays as the ultimate fallback once the 8px floor is hit.
-    $$(".sk-compat-name", displayEl).forEach(el => {
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      // -webkit-line-clamp boxes report scrollHeight ~1px taller than
-      // clientHeight from browser-internal rounding alone, even when the
-      // text fits on one line (verified: a genuine extra wrapped line
-      // shows a ~15px gap, a fitting one still shows 1px) -- a >2
-      // tolerance skips that rounding noise so single-word names like
-      // "Mass Cast" stop shrinking immediately instead of bottoming out
-      // at the floor.
-      while (el.scrollHeight - el.clientHeight > 2 && size > 8){
-        size -= 0.5;
-        el.style.fontSize = size + "px";
-      }
-    });
 
+    const skillSwitched = idSeen !== (selected && selected.id);   // a new card always fits at once, even under the scale lock
     positionStatsPanel();
     positionCombatLedger();
     positionStatTooltips();
     positionDmgInfoPopup();
     setupStatTooltipInteractions();
     setupStatTarget();
-    fitStageToScreen();
+    fitStageToScreen(skillSwitched);
     requestAnimationFrame(() => {
       positionStatsPanel();
       positionCombatLedger();
       positionStatTooltips();
       positionDmgInfoPopup();
-      fitStageToScreen();
+      fitStageToScreen(skillSwitched);
     });
 
     updateClassBadge(selected.class);
@@ -26016,7 +26072,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
 
 
 
-    $$(".sk-compat-item", displayEl).forEach(btn => {
+    $$(".sk-compat-item, .sk-dep-link", displayEl).forEach(btn => {
       btn.addEventListener("click", () => {
         const targetId = btn.dataset.skillId;
         const targetSkill = SKILLS.find(s => s.id === targetId);
@@ -26033,6 +26089,23 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         e.stopPropagation();
         const targetSkill = SKILLS.find(s => s.id === btn.dataset.skillId);
         if (targetSkill) selectSkill(targetSkill);
+      });
+      // Long related lists (spec 2026-10-29): "ทั้งหมด N สกิล" opens in place (no rebuild, so no delta pass), both copies at once.
+      displayEl.addEventListener("click", (e) => {
+        const more = e.target.closest && e.target.closest(".sk-rel-more");
+        if (!more || !displayEl.contains(more) || !selected) return;
+        const open = !relOpen.has(selected.id);
+        if (open) relOpen.add(selected.id); else relOpen.delete(selected.id);
+        $$(".sk-rel.is-fold", displayEl).forEach(r => { r.classList.toggle("is-open", open); const b = r.querySelector(".sk-rel-more"); if (b) b.setAttribute("aria-expanded", String(open)); });
+        positionCombatLedger(); fitStageToScreen();   // grows downward only; the fit waits while the pointer is on the panel
+      });
+      // Side panel rows on desktop (mockup B: "switch = toggle"): the switch clicks the row's own button, so depClicked, DEP_EXCLUSIVE and every
+      // per-dep rule run exactly as for a click on the ring. The name line never toggles; phones keep icon-only.
+      displayEl.addEventListener("click", (e) => {
+        if (window.innerWidth < 900) return;
+        const sw = e.target.closest && e.target.closest(".sk-side .sk-dep-sw");
+        const btn = sw && sw.closest(".sk-dep-item").querySelector("button[data-dep-id]");
+        if (btn) btn.click();
       });
       // Class tag under the skill name: leave the card and open that class's skill grid.
       displayEl.addEventListener("click", (e) => {
@@ -26653,7 +26726,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   // Re-anchor the side-gutter tooltips (and the fit-screen layout above
   // them) when the window is resized — gutter availability and the hero
   // card's on-screen position both depend on viewport size.
-  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); positionCombatLedger(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(); } });
+  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); positionCombatLedger(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(true); } });
 
   renderHero();
 }
@@ -31275,7 +31348,7 @@ function ringIconShift(img){   // the art centre's offset from the image centre,
   ringShiftCache.set(key, out); return out;
 }
 const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
-document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .sk-desc-mod-ico > img, .chm-ring > img, .sk-ra-icon")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
+document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .sk-desc-mod-ico > img, .chm-ring > img, .sk-ra-icon, .sk-side .sk-dep-btncol > button > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = Object.assign({}, skillSimCellsFor(b.server, b.classKey), classGuideSupportCells());
@@ -36590,6 +36663,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-29T12:40:08.413Z","feat(bible): skill details: one side panel beside the card replaces the related-skills rail and the toggle strip (toggles grouped by function with name links and a switch, then the related skills the desc does not link, long lists folded), and the page keeps its scale while the pointer or keyboard focus is on it; phones keep the strip under the description and list the related skills at the bottom"],
     ["2026-10-29T11:50:57.140Z","feat(bible): class guide #83 TTO Wolf Necromancer Wolf แกะชุบได้แค่ 1 หมาชุบได้ทั้งทีม by Hinotoriz"],
     ["2026-10-29T10:38:23.696Z","feat(bible): skill details: the player and enemy stat panels each collapse to their header row (a chevron beside PRESET and beside the enemy caption, remembered per browser); collapsed dials still drive every number and their light balls start from the header"],
     ["2026-10-29T06:30:29.158Z","fix(bible): the owner's calls on the review's waiting items: 2 new BB bug chips (Evasion, Switch) and 5 unintended chips (Holy Light, Overlord, Javelin, Over Presence, Call To Arm), all cleared on Reborn where they are fixed, Gadina's ToT line names Buiten Hou Hou, Lotus and Heaven Palm get a ToT LCK evasion chip, and Gadgeteer and Tent are reworded"],
@@ -37203,7 +37277,7 @@ function setToolZoom(z, ax, ay){
   const px = (ax - r0.left) / s0, py = (ay - r0.top) / s0;   // the stage point under the cursor (or the window's middle)
   toolZoom = z;
   try { localStorage.setItem("12t-bible-tool-zoom", String(Math.round(z * 1000) / 1000)); } catch (e) {}
-  fitStageToScreen();
+  fitStageToScreen(true);
   if (z > 1){ const r1 = stage.getBoundingClientRect(), s1 = r1.width / (stage.offsetWidth || 1); window.scrollBy(r1.left + px * s1 - ax, r1.top + py * s1 - ay); }   // and stays there
 }
 document.addEventListener("keydown", (e) => {
@@ -37227,6 +37301,29 @@ window.addEventListener("wheel", (e) => {
   document.body.appendChild(pill);
 }
 
+// Scale lock (2026-10-29, spec docs/superpowers/specs/2026-10-29-skill-details-merged-panel-design.md): while the pointer or keyboard focus is on
+// the skill page's side panel or a stat panel header (collapse chevron, PRESET, Revised Art, enemy picker), a content refit keeps the current
+// scale, so nothing there moves between two clicks; it refits once both have left. A window resize, tool zoom, tool switch or a new card always
+// refit (fitStageToScreen(true)). The pointer is kept as a point and hit-tested, because each toggle click rebuilds the panel under a still
+// pointer; focus counts only after keyboard input (a mouse click focuses buttons too). var: fitStageToScreen can run before this line.
+var fitHoldPt = null, fitHoldKey = false, fitPtrDown = false, fitHeld = false;
+function fitHoldOn(){
+  if (window.innerWidth < 900) return false;
+  const sel = ".sk-side, .sk-stats-panel .sk-class-badge";
+  let el = null;
+  try { el = fitHoldPt && document.elementFromPoint(fitHoldPt[0], fitHoldPt[1]); } catch (e) {}
+  if (el && el.closest && el.closest(sel)) return true;
+  const f = fitHoldKey ? document.activeElement : null;
+  return !!(f && f.closest && f.closest(sel) && f.getClientRects().length);
+}
+function fitHoldRelease(){ if (fitHeld && !fitPtrDown && !fitHoldOn()) fitStageToScreen(); }
+document.addEventListener("pointerdown", (e) => { fitHoldPt = [e.clientX, e.clientY]; fitHoldKey = false; fitPtrDown = true; }, true);
+document.addEventListener("pointermove", (e) => { fitHoldPt = [e.clientX, e.clientY]; if (fitHeld) fitHoldRelease(); }, { passive: true });
+["pointerup", "pointercancel"].forEach(t => document.addEventListener(t, () => { fitPtrDown = false; setTimeout(fitHoldRelease, 0); }, true));   // after the click lands
+document.addEventListener("mouseout", (e) => { if (!e.relatedTarget){ fitHoldPt = null; fitHoldRelease(); } });   // the pointer left the window
+document.addEventListener("keydown", (e) => { if (!e.ctrlKey && !e.metaKey && !e.altKey) fitHoldKey = true; }, true);   // a shortcut (Ctrl+Z) moves no focus: a mouse-focused chevron must not hold
+document.addEventListener("focusout", () => setTimeout(fitHoldRelease, 0));
+
 // The page's current fit-screen scale (tool zoom included), for overlays that live outside the scaled stage.
 let stageScaleNow = 1;
 // In-game tooltip modal on bigger windows (user 2026-10-27): it is appended to <body>, outside the scaled stage, so it grows by the
@@ -37240,7 +37337,8 @@ function fitGameTipModal(){
   if (z > 1.01) pop.style.zoom = z.toFixed(3);
 }
 
-function fitStageToScreen(){
+function fitStageToScreen(force){
+  fitHeld = false;
   const stage = document.querySelector(".stage");
   const zoomCls = document.documentElement.classList, wasZoomed = zoomCls.contains("tool-zoomed");
   // Any page that is not a fit-screen tool (the menu, CHM sim) must not keep a scale left over from a tool
@@ -37260,16 +37358,18 @@ const hubBar = document.querySelector(".hub-bar");
   const availW = window.innerWidth - 24;
 
   const isSkillLookup = document.documentElement.classList.contains("tool-wide-hero");
+  if (isSkillLookup && !force && fitHoldOn()){ fitHeld = true; return; }   // scale lock (above); Stat Roll shares tool-wide-hero but has no panel
   const statsPanel = isSkillLookup ? document.querySelector(".sk-stats-panel") : null;
   const isStatsVisible = isSkillLookup && statsPanel && !statsPanel.hidden && statsPanel.offsetHeight > 0;
-  const compatRail = isSkillLookup ? document.querySelector(".sk-detail-layout--has-compat .sk-compat-rail") : null;
-  const hasSideCompatRail = !!compatRail && window.innerWidth >= 900;
+  const side = isSkillLookup && window.innerWidth >= 900 ? document.querySelector(".sk-side") : null;
+  const sideH = side && side.offsetHeight ? side.offsetTop + side.offsetHeight : 0;   // 0 while the skill page is hidden (Stat Roll shares tool-wide-hero)
+  const hasSideCompatRail = sideH > 0;
   const compW = hasSideCompatRail
     ? (isStatsVisible ? 1500 : 1220)
     : (isStatsVisible ? 1420 : (shell.offsetWidth || 860));
   const shellH = shell.offsetHeight || 500;
   const statsH = isStatsVisible ? statsPanel.offsetHeight : 0;
-  const compH = Math.max(shellH, statsH, 460);
+  const compH = Math.max(shellH, statsH, sideH, 460);   // desktop never scrolls: the side panel's last row must fit too
 
   const scaleH = availH / compH;
   const scaleW = availW / compW;
@@ -37292,7 +37392,7 @@ const hubBar = document.querySelector(".hub-bar");
   if (zoom > 1){
     // Scaled from its top middle, a card wider than the window grows past the left edge, where no scrollbar reaches: move it right.
     let left = Infinity;
-    document.querySelectorAll(".tool-shell, .sk-stats-panel, .sk-compat-rail").forEach(el => { const r = el.getBoundingClientRect(); if (r.width) left = Math.min(left, r.left + window.scrollX); });
+    document.querySelectorAll(".tool-shell, .sk-stats-panel, .sk-side").forEach(el => { const r = el.getBoundingClientRect(); if (r.width) left = Math.min(left, r.left + window.scrollX); });
     if (left < 12) stage.style.transform = "translateX(" + (12 - left) + "px) scale(" + scale + ")";
     const pill = document.querySelector(".tool-zoom-pill");
     if (pill) pill.innerHTML = 'ซูม <b>' + Math.round(zoom * 100) + '%</b><i aria-hidden="true">×</i>';
@@ -37383,7 +37483,7 @@ function showTool(tool){
   document.documentElement.classList.toggle("tool-guide-reader", tool.id === "class-guide" && container.querySelector('.cg-page[data-mode="reader"]') !== null);
   document.documentElement.classList.toggle("tool-guide-author", tool.id === "class-guide" && container.querySelector('.cg-page[data-mode="author"]') !== null);
   if (tool.id === "class-guide" && container._classGuide) container._classGuide.fitReader();
-  fitStageToScreen();
+  fitStageToScreen(true);
 }
 
 function getGoatPath(){
