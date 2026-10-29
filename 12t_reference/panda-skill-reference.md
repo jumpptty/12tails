@@ -1059,8 +1059,8 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Rising Dragons | rank 2 SP 60 → 55; size +20%; base damage +10% (`dmgMult` 1.1) |
 | Wind & Cloud | base damage +50% (10/09) → +60% (12/09) (`dmgMult` 1.6) |
 | Rain & Storm | base damage +30% (`dmgMult` 1.3) |
-| Lotus Palm | base cooldown −30% (75 → 52.5 s; replaces the earlier −10%); +15 KO (5 → 20); +10% evasion while casting |
-| Heaven Palm | base cooldown −30% (150 → 105 s; replaces the earlier −10%); +2 KO per hit (1 → 3); +10% evasion while casting |
+| Lotus Palm | base cooldown −30% (75 → 52.5 s; replaces the earlier −10%); +15 KO (5 → 20); +10% evasion while casting (scales with LCK, user 2026-10-29; the card's ToT tab shows it as an "โอกาส Evasion" chip) |
+| Heaven Palm | base cooldown −30% (150 → 105 s; replaces the earlier −10%); +2 KO per hit (1 → 3); +10% evasion while casting (scales with LCK, user 2026-10-29; "โอกาส Evasion" chip) |
 | Mystic Sage | cooldown 12 / 6 → 10 / 5 s |
 | Combo Link | casting grants the maximum Combo Plus stack at once; Combo Plus maximum +1 level |
 

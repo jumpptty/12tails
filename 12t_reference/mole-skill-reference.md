@@ -123,7 +123,7 @@ Per-skill entries (`### mol_<name>`) are the verified 2026-10-01 pass; they take
 
 ### mol_gadgeteer1-4 (Gadgeteer, #121-124) (verified 2026-10-01)
 
-- Passive. Only read by the Workshop (`CompoundGui.cs:1190-1250`): each of #121-124 and Genius Invention #421 adds one tier to the Mole compound message index (`Language.getMessage("CompoundGui", 400 + n)`). Tooltip "toy lv 10/20/30/40". Not a combat skill. (`CharacterControl.cs` 121-124 hooks are Sheep/Penguin/Panda code.)
+- Passive. Only read by the Workshop (`CompoundGui.cs:1190-1250`): each of #121-124 and Genius Invention #421 adds one tier to the Mole compound message index (`Language.getMessage("CompoundGui", 400 + n)`). Tooltip "toy lv 10/20/30/40": the numbers are toy levels (user 2026-10-29), so the cards say Gadgeteer reaches toy level 10 × rank and Genius Invention reaches the highest toy level, with no tier number. Not a combat skill. (`CharacterControl.cs` 121-124 hooks are Sheep/Penguin/Panda code.)
 
 ### mol_reload1-2 (Reload, #131-132) (verified 2026-10-01)
 

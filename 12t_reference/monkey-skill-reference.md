@@ -711,7 +711,7 @@ The existing Titanic Earth Pulse notes below are retained. This catalog is the c
 #### ToT — Earth, Gadina, and other branch changes
 
 - **Ground Lock:** root 3s → 4s; damage 24/32/40/48 → 20/40/60/80; Second Stone adds 10 first-hit KO and +1s root.
-- **Gadina:** cooldown 45s → 60s; Rank 4 KO 20 → 40; attacks 50% faster; can coexist with Phoenix; KO range is limited around Gadina.
+- **Gadina:** cooldown 45s → 60s; Rank 4 KO 20 → 40; attacks 50% faster; can coexist with Phoenix (summoning **Buiten Hou Hou** or **Ja** removes both; the patch note calls Buiten Hou Hou "Gui", user-confirmed 2026-10-29); KO range is limited around Gadina.
 - **Gadina normal attack / Titan Sword:** attack interval 4.0s/5.33s → 2.0s/2.67s; Titan Sword ATK 20/40/60 → 40/80/120 and KO 2/3/4 → 6/8/10.
 - **Planet Breaker:** pull/damage range +25%; Earth Soul reduces cooldown to 12s.
 - **Aegis of Earth:** Gadina DEF 20/35/50 → 30/55/80; Ground Lock duration extension removed.
