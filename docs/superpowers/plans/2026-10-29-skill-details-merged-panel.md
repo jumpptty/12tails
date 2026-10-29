@@ -13,7 +13,18 @@
   - 1280×720, Reborn: both `.sk-badge-line`s fit. (b) A cooldown target of 8 s with the player panel collapsed gave the toast `ปรับ AGI 248 → 257 …` and Ctrl+Z restored 248. (c) DEF hand-set to 50, then Carron re-picked: DEF went back to 2 and every shot had one end at the enemy header. (d) Typing in AGI, then the chevron within 800 ms: 6 shots, none near (0, 0).
   - 390×844: both panels collapse and expand, with no sideways scroll.
 
-  Next: Step 0 (harness only), then Step 2.
+- **Step 2's BEFORE drift probe is done** (2026-10-29, on `09a0c06`, the strip under the desc; Step 7 item 1's method, with a reload before each toggle and the click point read after the mouse settles). Drift in px over the 6 clicks:
+  - **`bat_cAttack`, BB, 1366×768:**
+    - `amplifyDamage`: 0, 0, 0, 36.5, 14.9, 14.9; clicks 5-6 landed on Merciless Drain's toggle.
+    - `shadowIllusion`: 58.1 on click 1; click 2 hit a desc skill link and left the card.
+    - `dreamBurst`: 36.5 after click 1; later clicks hit the desc box.
+    - `darkIntention`: 0; all six landed.
+    - `mercilessDrain`: 21.6 after click 1.
+  - **`bison_nAttack`, Reborn, 1920×1080:** after click 1, `bruteStrength` 30.8, `improvedSwing` 21.6, `overPride` 25.6, `colossalWeapon` 31.7, `addedSwing` 81.1 and `savageMomentum` 23.9. Every later click missed its toggle (it landed on the strip, the hero or the card).
+  - **Cause:** one `.stage` transform per burst on both cards, so the drift comes from desc lines pushing the strip down, not from a refit.
+  - **Not taken:** the BEFORE click timings, because they depend on the machine. Take them at home on the PC that will run the AFTER timing, before patching Step 2.
+
+  Next: Step 0 (harness only), then the rest of Step 2.
 - **HEAD:** commit A sits on this plan's commit, which sits on `de6926a` (spec and mockups) and `b11dfc4`. Commit A moved the page's line numbers by a few lines (patches anchor on text, so nothing breaks), and Step 0's baseline now reads `35 stat panel structure checks` (29 + Step 1's 6); every other plan-time number still holds. Step 1's "Also stage this plan file (untracked)" is moot: the plan is already committed.
 - **Scratch:** `<scratch>` is the scratchpad of the session that builds this. Nothing from the planning session's scratchpad (on the workplace PC) is needed, because Step 0 creates every helper. The one exception is Step 0 item 4's "existing scratch helper" `changelog_add.js`, which is not on the home PC: write it fresh. It prepends `["<current UTC ISO>", "<subject>"],` to `CHANGELOG_DATA.entries` at the anchor given there.
 - **Revision done:** a completeness critic checked this plan against the page at `b11dfc4` and found 8 gaps (1 high, 3 medium, 4 low). The revise pass re-ran the critic's probes, confirmed all 8 and fixed them in the text below. "Revision notes" at the end lists each change.
