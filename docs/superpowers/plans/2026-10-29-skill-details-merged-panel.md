@@ -9,6 +9,14 @@
 ## Status and handoff (2026-10-29, 17:30, workplace PC)
 
 - **The workplace build was stopped at 17:57 on 2026-10-29** (the PC shut down) while it was still in Step 0, which writes scratch files only. So no `wip/merged-panel` branch exists, and nothing beyond what this note lists was built. On the home PC, start at Step 0.
+- **Plan for tonight on the home PC (the owner wants it finished on 2026-10-29):**
+  1. `git pull`, then: "build the skill details side panel: read the handoff note in `docs/superpowers/plans/2026-10-29-skill-details-merged-panel.md`, then run Step 0 and Steps 2-9".
+  2. **Orchestration (the one set up at work; repeat it):** one Workflow that runs the steps in order.
+     - **Per step:** one implementer, then two read-only reviewers in parallel: one checks plan conformance (the step's changes and checks, re-running the cheap ones), the other checks regressions and house rules.
+     - **Fixes:** a fixer handles the high and medium findings, at most two fix rounds. Stop if a high finding remains.
+     - **Step 0** gets no review.
+  3. **Commits:** a local commit on `skill-cooldown-lookup` after each step as a checkpoint, never pushed. After Step 9 and a look in the browser, squash them into commit B (`git reset --soft origin/skill-cooldown-lookup`, then one commit with its changelog entry) and push once. If a hook blocks the squash, push the step commits together, with the changelog entry in the last one.
+  4. **Time:** planning took about 3.3 hours, and the build with reviews will also take several hours. Start early, and push nothing before commit B is whole: GitHub Pages serves this branch.
 - **Step 1 is done (commit A, pushed 2026-10-29 before 18:00); Steps 2-9 are not started.** Commit A has the stat panel collapse, its 6 new `[PANEL ERROR]` checks and the rulebook text (`bible-skill-page-ui` "Stat dials", delta motion, `[PANEL ERROR]` line). Its hover adds the house lift (`translateY(-1px)`) to the plan's CSS. Browser pass A passed on `monkey_fireBall`, 0 console errors:
   - 1920×1080, BB: each chevron hides only its own grid; the header and Buff / Debuff rows stay; the state survives a reload; the dials fit after expanding; (a) a raised AGI sends its light from the header centre.
   - 1280×720, Reborn: both `.sk-badge-line`s fit. (b) A cooldown target of 8 s with the player panel collapsed gave the toast `ปรับ AGI 248 → 257 …` and Ctrl+Z restored 248. (c) DEF hand-set to 50, then Carron re-picked: DEF went back to 2 and every shot had one end at the enemy header. (d) Typing in AGI, then the chevron within 800 ms: 6 shots, none near (0, 0).
