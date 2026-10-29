@@ -3798,6 +3798,21 @@ let checkedRsim = 0;
     // the readers badge gets the same pop-up (user 2026-10-20); its "10 นาที" must match the counter query's 10-minute bucket (600000 ms)
     ok(/const viewBadge = [^]{0,1500}classGuideTipBind\(v,/.test(html) && html.includes("อัปเดตทุก 10 นาที หรือนานกว่านั้นถ้าเปิด ad blocker") && html.includes("Math.floor(Date.now() / 600000)"), "the readers badge's pop-up says it updates every 10 minutes, longer with an ad blocker (matches the 600000 ms counter bucket)");
   }
+  // The gallery's dashed gap card (user 2026-10-29): classGuideGaps ranks the holes in the ToT + TTO guides (empty before thin, wider first, the class
+  // with fewer guides, ties rotate). Checked on a fixed guide list, never the live one, so a newly published guide cannot fail the check.
+  { const gaps = vm.runInContext("classGuideGaps", sandbox), topOf = vm.runInContext("classGuideGapTop", sandbox), text = vm.runInContext("classGuideGapText", sandbox);
+    const G = (classKey, server, modes) => ({ build: { classKey, server }, modes });
+    const lib = [G("mole", "tto", ["pve"]), G("mole", "og", ["pvp"]), G("mole", "reborn", ["pvp"]), G("whale", "tto", ["pve"]), G("whale", "tto", ["pve"])];
+    for (const cls of ["panda", "cat", "wolf", "penguin", "bison", "chameleon", "rabbit", "sheep", "bat", "monkey"]) for (const server of ["tot", "tto"]) for (const m of ["pve", "pvp"]) for (let k = 0; k < 4; k++) lib.push(G(cls, server, [m]));
+    const key = (g) => [g.cls, g.srv, g.mode].join(":"), top = (f) => topOf(gaps(lib, f)).map(key).sort().join(" | ");
+    ok(top({}) === "mole::pvp | mole:tot:", "no filters: the top gaps are Mole PVP and Mole on ToT (BB and Reborn guides do not count; Mole has fewer ToT + TTO guides than Whale), tied, so they rotate; got " + top({}));
+    ok(top({ cls: "whale" }) === "whale::pvp | whale:tot:", "filtered to Whale: Whale PVP and Whale on ToT; got " + top({ cls: "whale" }));
+    { const t = topOf(gaps(lib, { cls: "whale", srv: "tto", mode: "pve" })); ok(t.length === 1 && t[0].n === 2 && text(t[0]) === "ไกด์วาฬ PVE บน TTO ยังมีแค่ 2 ไกด์", "a full filter with 1-3 guides is its own thin gap: ไกด์วาฬ PVE บน TTO ยังมีแค่ 2 ไกด์"); }
+    ok(!gaps(lib, { srv: "og" }).length && !gaps(lib, { srv: "reborn" }).length && !gaps(lib, { cls: "panda" }).length, "no gap card on a BB or Reborn filter, nor for a class with 4+ guides in every ToT / TTO combination");
+    ok(text({ cls: "mole", srv: "", mode: "pvp", n: 0 }) === "ยังไม่มีไกด์ตุ่น PVP" && text({ cls: "mole", srv: "tot", mode: "", n: 0 }) === "ยังไม่มีไกด์ตุ่น บน ToT" && text({ cls: "", srv: "tot", mode: "pvp", n: 0 }) === "ยังไม่มีไกด์ PVP บน ToT", "gap texts: ยังไม่มีไกด์ตุ่น PVP, ยังไม่มีไกด์ตุ่น บน ToT, ยังไม่มีไกด์ PVP บน ToT");
+    ok(/const gap = gapCard\(validCount\);[^\n]*\r?\n\s*if \(gap\)\{ if \(validCount > 0 && validCount <= CLASS_GUIDE_GAP_FEW\) cards\.push\(gap\); else cards\.unshift\(gap\); \}/.test(html) && html.includes("if (!validCount && !gap){") && /if \(filterTitle\) return null;/.test(html), "renderGallery places the gap card: after 1-3 matching guides, otherwise first; no empty-gallery text beside it; none during a title search");
+    ok(/else if \(act === "gapWrite"\)\{[^]{0,600}classKey: cls \|\| b\.classKey, level: Math\.min\(b\.level, SKILL_SIM_SERVERS\[server\]\.cap\)[^]{0,200}modes: \[gm\]/.test(html) && /act === "gapWrite"[^]{0,400}askReplace\(/.test(html), "the gap card opens a new guide with its class, server (level clamped to the cap) and PVE / PVP preset, asking before it replaces a draft");
+  }
   // Recommended stats (user 2026-10-15): optional, any of the 8, only filled ones stored. Since 2026-10-18 a value is an integer 0-512, a share "N%"
   // (the shares of a finished guide total 100) or ตัน / ตาม, and the stats keep the author's order (docs/superpowers/specs/2026-10-18-guide-stat-flasks-design.md).
   { const gs = norm(change({stats:{lck:40,agi:77}}));

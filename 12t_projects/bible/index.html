@@ -2681,6 +2681,15 @@
   .cg-page .cg-views svg{display:block;flex:none;width:15px;height:15px;stroke-width:2}
   .cg-page .cg-views b{display:block;font-weight:700;line-height:1}
   .cg-page .cg-guide .cg-guide-date{margin-left:4px}
+  /* the dashed gap card (user 2026-10-29): where a missing guide would go; dashed gold instead of the gilded frame, the class face in a dashed ring */
+  .cg-page .cg-guide.cg-gap{border:2px dashed color-mix(in srgb,var(--gold) 55%,transparent) !important;border-image:none !important;border-radius:6px;background:color-mix(in srgb,var(--gold) 5%,transparent);box-shadow:none;align-content:center}
+  .cg-page .cg-guide.cg-gap:hover,.cg-page .cg-guide.cg-gap:focus-visible{border-color:var(--gold) !important;background:color-mix(in srgb,var(--gold) 10%,transparent)}
+  .cg-page .cg-gap .cg-gap-rot{display:grid;justify-items:center;gap:7px}
+  .cg-page .cg-gap .cg-gap-face{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;border:2px dashed color-mix(in srgb,var(--gold) 55%,transparent);background:center / 80% no-repeat;opacity:.85;font-size:28px;color:var(--gold)}
+  .cg-page .cg-gap .cg-gap-text{font-size:17px;line-height:1.3;color:var(--text)}
+  .cg-page .cg-gap .cg-gap-sub{font-size:12.5px;color:var(--muted)}
+  .cg-page .cg-gap .cg-gap-eyebrow{font-size:12px;font-weight:600;color:var(--gold)}
+  .cg-page .cg-gap .cg-gap-btn{margin-top:3px;padding:5px 14px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:700}
   /* Phones (user 2026-10-17: only 2 guides fitted a page): compact filters and 3-column compact cards */
   @media(max-width:760px){
     .cg-page .cg-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}   /* 2 columns (user 2026-10-20; 3 until then) */
@@ -2693,6 +2702,7 @@
     .cg-page .cg-guide .cg-guide-meta{flex-direction:column;gap:3px;width:100%;min-width:0;font-size:11px;line-height:14px}
     .cg-page .cg-guide .cg-guide-by{display:block;width:100%;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .cg-page .cg-guide .cg-guide-date{display:none}
+    .cg-page .cg-gap .cg-gap-face{width:52px;height:52px;font-size:22px}.cg-page .cg-gap .cg-gap-text{font-size:14px;line-height:1.25}.cg-page .cg-gap .cg-gap-sub{font-size:11px}.cg-page .cg-gap .cg-gap-btn{font-size:12px;padding:4px 10px}
     .cg-page .cg-views{font-size:11.5px}.cg-page .cg-views svg{width:13px;height:13px}.cg-page .cg-rate-star{width:11px;height:11px}
     .cg-page[data-mode="gallery"] .cg-heading{margin:0 0 4px;gap:0}
     .cg-page[data-mode="gallery"] .cg-heading h2{font-size:22px}
@@ -32015,6 +32025,28 @@ const CLASS_GUIDE_CLASS_KEYS = ["rabbit", "mole", "bat", "bison", "cat", "chamel
 const CLASS_GUIDE_SERVER_KEYS = ["og", "tot", "tto", "reborn"];
 const CLASS_GUIDE_STAT_KEYS = ["atk", "def", "tal", "agi", "vit", "cha", "int", "lck"];
 const CLASS_GUIDE_MODES = ["pve", "pvp"];   // what a guide is for, both allowed (user 2026-10-20)
+// Guide gaps (user 2026-10-29): the gallery's dashed "เขียนไกด์" card points at the biggest hole in the guide library. Only ToT and TTO guides count
+// (BB is closed, Reborn is W.I.P.). A gap is a class / server / PVE-PVP combination with CLASS_GUIDE_GAP_FEW guides or fewer that keeps every filter
+// the player set. Rank: empty before thin, then fewer named fields (a wider hole: "ตุ่น PVP" before "ตุ่น PVP บน ToT"), then the class with fewer
+// ToT + TTO guides. classGuideGapTop = the gaps still tied at the top; the card rotates them.
+const CLASS_GUIDE_GAP_SERVERS = ["tot", "tto"], CLASS_GUIDE_GAP_FEW = 3;
+function classGuideGaps(guides, f = {}){
+  if (f.srv && !CLASS_GUIDE_GAP_SERVERS.includes(f.srv)) return [];
+  const live = guides.filter(g => g && g.build && CLASS_GUIDE_GAP_SERVERS.includes(g.build.server));
+  const count = (cls, srv, mode) => live.filter(g => (!cls || g.build.classKey === cls) && (!srv || g.build.server === srv) && (!mode || (g.modes || []).includes(mode))).length;
+  const gaps = [];
+  for (const cls of [""].concat(CLASS_ORDER.map(n => n.toLowerCase()))) for (const srv of [""].concat(CLASS_GUIDE_GAP_SERVERS)) for (const mode of [""].concat(CLASS_GUIDE_MODES)){
+    const width = !!cls + !!srv + !!mode;
+    if (!width || (f.cls && cls !== f.cls) || (f.srv && srv !== f.srv) || (f.mode && mode !== f.mode)) continue;
+    const n = count(cls, srv, mode);
+    if (n <= CLASS_GUIDE_GAP_FEW) gaps.push({ cls, srv, mode, n, width, total: cls ? count(cls, "", "") : n });
+  }
+  return gaps.sort((a, b) => (a.n > 0) - (b.n > 0) || a.width - b.width || a.total - b.total);
+}
+const classGuideGapTop = gaps => gaps.filter(g => (g.n > 0) === (gaps[0].n > 0) && g.width === gaps[0].width && g.total === gaps[0].total);
+// "ตุ่น PVP บน ToT"; a Latin word after Thai gets a space ("ยังไม่มีไกด์ PVP"), Thai joins straight on ("ยังไม่มีไกด์ตุ่น")
+function classGuideGapLabel(gap){ return [gap.cls ? NOTE_CLASS_TH[SKILL_SIM_NAMES[gap.cls]] : "", gap.mode ? gap.mode.toUpperCase() : "", gap.srv ? "บน " + SERVER_SHORT[gap.srv] : ""].filter(Boolean).join(" "); }
+function classGuideGapText(gap){ const l = classGuideGapLabel(gap), sp = /^[A-Za-z]/.test(l) ? " " : ""; return gap.n ? "ไกด์" + sp + l + " ยังมีแค่ " + gap.n + " ไกด์" : "ยังไม่มีไกด์" + sp + l; }
 function classGuideBinary(g){
   const out = [], slot = id => id >= 901 ? 200 + id - 901 : (Math.floor(id / 100) - 1) * 40 + Math.floor(id / 10) % 10 * 4 + (id % 10 - 1);   // support skills 901-912 = slots 200-211
   const varint = n => { while (n >= 0x80){ out.push((n & 0x7F) | 0x80); n = Math.floor(n / 128); } out.push(n); };
@@ -34047,6 +34079,38 @@ function mountClassGuide(root){
   // A filter or sort change goes back to page 1; a resize keeps the page (clamped).
   let galleryPage = 0;
   for (const [role, step] of [["galleryPrev", -1], ["galleryNext", 1]]) el(role).addEventListener("click", () => { galleryPage += step; renderGallery(true); });
+  // The dashed gap card (user 2026-10-29, option A of three mocks): the top of classGuideGaps for the current filters. No guide matches: the first
+  // slot, "be the first"; 1-3 match: after them, "help add more"; 4+ (no filters too): the first slot of page 1 only. Gaps still tied take turns every
+  // 6 s with the hub bar's swap (the old text lifts 14 px and fades, the new one rises in), paused while hovered or focused. No card during a title search.
+  let gapTimer = 0;
+  const gapCard = (matches) => {
+    clearInterval(gapTimer);
+    if (filterTitle) return null;
+    const gaps = classGuideGaps(CLASS_GUIDES, { cls: filterClass, srv: filterServer, mode: filterMode }); if (!gaps.length) return null;
+    const top = classGuideGapTop(gaps), few = matches > 0 && matches <= CLASS_GUIDE_GAP_FEW;
+    const b = document.createElement("button"); b.type = "button"; b.className = "cg-guide cg-gap"; b.dataset.cgAct = "gapWrite";
+    b.innerHTML = (few ? '<span class="cg-gap-eyebrow">ไกด์ในหมวดนี้ยังมีน้อย</span>' : "") + '<span class="cg-gap-rot"><span class="cg-gap-face" aria-hidden="true"></span><strong class="cg-gap-text"></strong><span class="cg-gap-sub"></span></span><span class="cg-gap-btn">+ เขียนไกด์</span>';
+    const rot = b.querySelector(".cg-gap-rot"), face = b.querySelector(".cg-gap-face");
+    let i = 0;
+    const show = () => {
+      const g = top[i], text = classGuideGapText(g), icon = g.cls ? CLASS_HERO_ICONS[SKILL_SIM_NAMES[g.cls]] : g.srv ? SKILL_ICONS["server_" + g.srv] : "";
+      b.dataset.cgGap = [g.cls, g.srv, g.mode].join(":"); b.dataset.cgGapLabel = classGuideGapLabel(g);
+      face.style.backgroundImage = icon ? 'url("' + icon + '")' : ""; face.textContent = icon ? "" : "✎";
+      b.querySelector(".cg-gap-text").textContent = text;
+      b.querySelector(".cg-gap-sub").textContent = g.n ? "มาช่วยกันเพิ่มคลังไกด์" : "มาเป็นคนแรกที่เขียนไกด์นี้";
+      b.setAttribute("aria-label", text + " เขียนไกด์ใหม่");
+    };
+    show();
+    if (top.length > 1) gapTimer = setInterval(() => {
+      if (!b.isConnected){ clearInterval(gapTimer); return; }
+      if (!b.offsetParent || b.matches(":hover, :focus-visible") || !rot.animate) return;
+      rot.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(-14px)" }], { duration: 600, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" }).finished.then(() => {
+        i = (i + 1) % top.length; show();
+        rot.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], { duration: 600, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" });
+      });
+    }, 6000);
+    return b;
+  };
   function renderGallery(keepPage){
     if (keepPage !== true) galleryPage = 0;
     const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = "";   // the fit below may have shrunk the grid
@@ -34059,6 +34123,8 @@ function mountClassGuide(root){
       if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey) || (filterTitle && !String(guide.title).toLowerCase().includes(filterTitle)) || (filterMode && !(guide.modes || []).includes(filterMode))) continue;
       const gid = classGuideId(raw, gi), b = guideCard(guide, "button", gid); b.addEventListener("click", () => openGuide(guide, false, gid)); cards.push(b); validCount++;
     }
+    const gap = gapCard(validCount);   // the dashed gap card (see gapCard): after 1-3 matching guides, otherwise the first slot
+    if (gap){ if (validCount > 0 && validCount <= CLASS_GUIDE_GAP_FEW) cards.push(gap); else cards.unshift(gap); }
     let perPage = cards.length, cols = 1;
     if (cards.length && list.offsetParent){
       cards.forEach(c => list.appendChild(c));   // measured all together: a grid row is as tall as its tallest card
@@ -34105,7 +34171,7 @@ function mountClassGuide(root){
       go(galleryPage + 1, "›", "หน้าถัดไป");
       const count = document.createElement("span"); count.className = "cg-page-count"; count.textContent = (galleryPage + 1) + " / " + pages; pager.appendChild(count);
     }
-    if (!validCount){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? (filterTitle ? "ไม่มีไกด์ที่ชื่อตรงกับคำค้น ลองพิมพ์คำอื่นหรือล้างช่องค้นหา" : "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์ อาชีพ หรือประเภทอื่น") : "ยังไม่มีไกด์จากผู้เล่น กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
+    if (!validCount && !gap){ const empty = document.createElement("p"); empty.className = "cg-empty"; empty.textContent = totalCount ? (filterTitle ? "ไม่มีไกด์ที่ชื่อตรงกับคำค้น ลองพิมพ์คำอื่นหรือล้างช่องค้นหา" : "ไม่มีไกด์ตรงกับตัวกรองที่เลือก ลองเลือกเซิร์ฟเวอร์ อาชีพ หรือประเภทอื่น") : "ยังไม่มีไกด์จากผู้เล่น กด เขียนไกด์ แล้วคัดลอกโค้ดไกด์ส่งให้ผู้ดูแลเพิ่มเข้ารายการได้"; list.appendChild(empty); }
     if (invalidCount) status("มี " + invalidCount + " ไกด์ที่เปิดไม่ได้ กรุณาตรวจสอบโค้ดหรือเงื่อนไขบิลด์");
   }
   // The two tabs (ไกด์จากผู้เล่น / เขียนไกด์) sit at the right of the filter row on the gallery (user 2026-10-17), in the heading everywhere else.
@@ -34427,6 +34493,10 @@ function mountClassGuide(root){
       else if (act === "startResume"){ el("start").close(); startAuthor(); }
       else if (act === "startNew"){ el("start").close(); askReplace(() => { draft = { format: "12t-class-guide", version: 1, title: "", author: "", description: "", build: { ...sim.getBuild(), learned: [] }, notes: {} }; try { localStorage.setItem(stepKey, "1"); } catch (e) {} startAuthor(); status("เริ่มไกด์ใหม่แล้ว"); }); }
       else if (act === "startImport"){ el("start").close(); showImport(); }
+      else if (act === "gapWrite"){   // the gallery's dashed gap card (user 2026-10-29): a new guide with the gap's class, server and PVE / PVP set; a field the gap leaves open stays as it was
+        const [cls, srv, gm] = (target.dataset.cgGap || "::").split(":"), label = target.dataset.cgGapLabel || "", b = sim.getBuild(), server = srv || b.server;
+        askReplace(() => { draft = { format: "12t-class-guide", version: 1, title: "", author: "", description: "", build: { server, classKey: cls || b.classKey, level: Math.min(b.level, SKILL_SIM_SERVERS[server].cap), learned: [] }, notes: {}, ...(gm ? { modes: [gm] } : {}) }; try { localStorage.setItem(stepKey, "1"); } catch (e) {} startAuthor(); status("เริ่มไกด์ใหม่แล้ว" + (label ? " (" + label + ")" : "")); });
+      }
       else if (act === "closeTransfer") el("transfer").close();
       else if (act === "openFullView") el("fullView").showModal();
       else if (act === "closeFullView") el("fullView").close();
@@ -36488,6 +36558,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-29T02:26:55.590Z","feat(bible): the class guide gallery shows a dashed write-this-guide card for the biggest gap in ToT and TTO guides (first slot, or after 1-3 matching guides), rotating tied gaps, and it opens the editor with the gap's class, server and PVE or PVP set"],
     ["2026-10-29T01:26:56.171Z","feat(bible): the BB look wears the old TTO look (night sky with TailsTopia's star sheet, warm solid panels with the harlequin texture) without the pumpkins, on the page and the exported guide image"],
     ["2026-10-29T01:14:51.162Z","fix(bible): reach backlog cleared: Overlord's range preview gets the Enlarge, Reduce, Enrage and Titan Form toggles, so Enrage and Titan Form drop their aura metres, and Extra Powder's Cart Bomb line names the height too"],
     ["2026-10-28T15:56:45.421Z","feat(bible): Reborn Common note: Revised Art shortens item cooldowns too (potion 50 to 44 s), and the support skill cooldowns were checked against bible3 (600 s, unchanged)"],
