@@ -3756,6 +3756,28 @@ let checkedRsim = 0;
   finally { doc.createElement=saved.create;doc.addEventListener=saved.add;sandbox.localStorage=saved.storage;sandbox.openSimServerGate=saved.server;sandbox.openClassPickerModal=saved.gate;sandbox.setToolServer=saved.theme;sandbox.setTimeout=saved.timer;sandbox.clearTimeout=saved.cancel;sandbox.window.addEventListener=saved.winAdd;sandbox.window.open=saved.winOpen;sandbox.location.href=saved.href; }
 }
 
+// The Buff / Debuff pop-up grows with the page on big screens (user 2026-10-29: it stayed at its own size beside a page upscaled 1.6x): bdLvFit(pop,
+// modes, gap, grow) draws the first layout that fits at its own size as large as fits, up to grow; without grow it never grows (the Mods popup).
+{
+  const fit = vm.runInContext("bdLvFit", sandbox), saved = sandbox.getComputedStyle, bad = [];
+  const fake = (w, h, natW, natH) => {
+    const cls = new Set(), host = { clientWidth: w, clientHeight: h };
+    const pop = { isConnected: true, parentElement: host, style: { zoom: "" }, classList: { add: c => cls.add(c), remove: (...cs) => cs.forEach(c => cls.delete(c)) }, querySelectorAll: () => [],
+      get offsetHeight(){ return cls.has("is-two") ? natH * 0.6 : cls.has("is-compact") ? natH * 0.8 : natH; }, get scrollWidth(){ return cls.has("is-two") ? natW * 1.7 : natW; }, cls };
+    return pop;
+  };
+  try {
+    sandbox.getComputedStyle = () => ({ paddingLeft: "16px", paddingRight: "16px", paddingTop: "16px", paddingBottom: "16px" });
+    let p = fake(2560, 1440, 715, 588); fit(p, null, 0, 1.92); if (p.style.zoom !== "1.920" || p.cls.size) bad.push("on a 2560 x 1440 window with room to spare it grows to the page's scale x 1.2 (got zoom " + p.style.zoom + ")");
+    p = fake(900, 700, 715, 588); fit(p, null, 0, 1.92); if (p.style.zoom !== (668 / 588).toFixed(3) || p.cls.size) bad.push("it grows only as far as the window lets it, in its full layout (got " + p.style.zoom + ")");
+    p = fake(2560, 1440, 715, 588); fit(p); if (p.style.zoom !== "") bad.push("without grow it keeps its own size (the Mods popup)");
+    p = fake(800, 400, 715, 588); fit(p, null, 0, 1.92); if (!p.cls.has("is-compact") && !p.cls.has("is-two")) bad.push("a window too small for the full layout still picks a shorter one first");
+  } catch (e){ bad.push("bdLvFit threw: " + e.message); }
+  finally { sandbox.getComputedStyle = saved; }
+  if (!html.includes('function bdGrow(){ return window.innerWidth >= 900 ? Math.max(1, stageScaleNow * 1.2) : 1; }') || !html.includes('bdLvFit(bdHost.querySelector(".sk-bd-popup"), null, 0, bdGrow());')) bad.push("the Buff / Debuff pop-up passes its grow (the page's scale x 1.2 from 900 px) on every render and resize");
+  if (bad.length){ errorCount += bad.length; bad.forEach(b => console.error("[BUFF POPUP ERROR] " + b)); }
+  else console.log("Verified the Buff / Debuff pop-up grows with the page on big screens.");
+}
 // Class Guide portability and reader permissions: independent serialized fixtures.
 {
   const norm = vm.runInContext("classGuideNormalize", sandbox), encode = vm.runInContext("classGuideExport", sandbox), decode = vm.runInContext("classGuideImport", sandbox);

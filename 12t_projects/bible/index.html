@@ -12245,9 +12245,11 @@ function bdLvTable(sections){
 // shrink, so a squeezed two-column table would otherwise "fit"). With none fitting, the one that needs the least
 // shrinking is zoomed down to the window.
 const BD_LV_FIT = [[], ["is-compact"], ["is-two"], ["is-two", "is-compact"]];
-function bdLvFit(pop, modes, gap){
+// grow (user 2026-10-29: the Buff / Debuff pop-up stayed at its own size beside a page upscaled 1.6x on big screens): the zoom it may grow to. The first
+// layout that fits at its own size is drawn as large as the window lets it, up to grow; 1 (the default) = never larger than its own size.
+function bdLvFit(pop, modes, gap, grow){
   if (!pop || !pop.isConnected || typeof getComputedStyle !== "function") return;
-  const host = pop.parentElement, cs = getComputedStyle(host), g = 2 * (gap || 0);
+  const host = pop.parentElement, cs = getComputedStyle(host), g = 2 * (gap || 0), most = Math.max(1, grow || 1);
   const availW = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - g;
   const availH = host.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - g;
   const set = m => { pop.style.zoom = ""; pop.classList.remove("is-compact", "is-two"); m.forEach(c => pop.classList.add(c)); };
@@ -12256,8 +12258,8 @@ function bdLvFit(pop, modes, gap){
   for (const m of modes || BD_LV_FIT){
     set(m);
     if (m.length && !cellOk()) continue;
-    const z = Math.min(1, availH / pop.offsetHeight, availW / pop.scrollWidth);
-    if (z >= 1) return;
+    const z = Math.min(availH / pop.offsetHeight, availW / pop.scrollWidth);
+    if (z >= 1){ const up = Math.min(most, z); if (up > 1) pop.style.zoom = up.toFixed(3); return; }
     if (!best || z > best.z) best = { m, z };
   }
   set(best ? best.m : []);
@@ -26472,7 +26474,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           ${bdLvTable(sections)}
         </div>
       </div>`;
-    bdLvFit(bdHost.querySelector(".sk-bd-popup"));
+    bdLvFit(bdHost.querySelector(".sk-bd-popup"), null, 0, bdGrow());
   }
   function updateBdButtons(){
     const customSide = side => Object.keys(CUSTOM_BD_KINDS).filter(k => CUSTOM_BD_KINDS[k] === side).reduce((n, k) => n + customOn(k).length, 0);
@@ -26596,7 +26598,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && bdOpen) bdClose();
   });
-  addEventListener("resize", () => { if (bdOpen) bdLvFit(bdHost.querySelector(".sk-bd-popup")); });
+  // The pop-up grows with the page (user 2026-10-29): on a desktop up to the page's own scale x 1.2 (stageScaleNow, set by fitStageToScreen), as far as
+  // the window lets it; after a resize it waits a frame for the page's new scale. Phones keep their own size.
+  function bdGrow(){ return window.innerWidth >= 900 ? Math.max(1, stageScaleNow * 1.2) : 1; }
+  addEventListener("resize", () => { if (bdOpen) requestAnimationFrame(() => { if (bdOpen) bdLvFit(bdHost.querySelector(".sk-bd-popup"), null, 0, bdGrow()); }); });
 
   function onSearchInput(){
     const q = searchEl.value.trim().toLowerCase();
@@ -36945,6 +36950,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-29T17:18:09.439Z","feat(bible): skill details: the Buff / Debuff pop-up grows with the page on big screens, up to the page's scale x 1.2 as far as the window lets it (about 1.2x at 1536 x 864, 1.5x at 1920 x 1080, 1.9x at 2560 x 1440); phones keep its size"],
     ["2026-10-29T17:13:11.522Z","feat(bible): class guide editor: Word basics for the description: per-line alignment icons ชิดซ้าย / กึ่งกลาง / ชิดขวา (Ctrl+Shift+L / E / R), Ctrl+Enter page breaks, Tab stops, dash-space bullets, and undo that puts the cursor back where the change was; a 3-column description's partly used last page now counts"],
     ["2026-10-29T16:26:52.906Z","fix(bible): class guide editor: after Ctrl+B the bold text stays selected, so the live description no longer jumps back to page 1 and a second Ctrl+B turns it back"],
     ["2026-10-29T16:02:11.097Z","fix(bible): skill details: the side panel rows lose their box and switch (the ring is the toggle) with the tags right after the rank pips, and a click on a stat panel header box folds and unfolds it with a hover look (no chevrons)"],
