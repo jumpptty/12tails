@@ -2757,11 +2757,15 @@
   .cg-modes.is-missing > b{color:var(--seal,#e5483f)}
   .cg-modes.is-missing .cg-mode-btn{border-color:var(--seal,#e5483f)}
   .cg-mode-chip{padding:1px 9px;border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);border-radius:999px;color:var(--gold);font-size:12.5px;font-weight:600;letter-spacing:.03em;white-space:nowrap}
-  .cg-filter-row2{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-top:-4px}
+  .cg-filter-row2{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:-4px}
   .cg-filter-row2 .cg-gallery-note{flex-basis:auto;margin:0 0 0 auto}
   .cg-mode-pick{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
   .cg-mode-pick > span{margin-right:6px}
   .cg-mode-pick .cg-icon-pick{height:32px;min-width:0;padding:0 12px}
+  .cg-top-pick{height:32px;min-width:32px;padding:0}   /* ดาวฟ้า only (user 2026-10-30): the icon alone, no label and no pop-up; dim until it is on */
+  .cg-page .cg-top-pick .cg-rate-star{width:22px;height:22px;opacity:.4;transition:opacity .15s}
+  .cg-page .cg-top-pick:hover .cg-rate-star,.cg-page .cg-top-pick[aria-pressed="true"] .cg-rate-star{opacity:1}
+  .cg-top-pick[aria-pressed="true"]::after{background:#3fe0d8}
   .cg-fields > .cg-picks{grid-column:1/-1}
   @media(min-width:761px){.cg-fields > .cg-picks{grid-column:1/3}.cg-fields > .cg-modes{grid-column:3;grid-row:1}}   /* PVE / PVP beside the pickers, above the date (user 2026-10-20); phones stack them */
   .cg-page[data-mode="author"] .cg-author[data-step="1"] .cg-fields{grid-template-rows:auto auto minmax(0,1fr)}   /* pickers, then title / author / date, then the description */
@@ -2831,8 +2835,13 @@
   .cg-page .cg-guide .cg-chip{display:inline-flex;align-items:center;padding:0;font-size:12px;line-height:18px;color:var(--text)}   /* class and server: the icon alone, no pill (user 2026-10-21) */
   .cg-page .cg-guide .cg-chip.is-mode{padding:2px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:rgba(255,255,255,.05);color:var(--gold);font-weight:600;letter-spacing:.02em}   /* PVE / PVP (user 2026-10-20) */
   .cg-page .cg-guide .cg-chip img{position:static;display:block;width:22px;height:22px;border-radius:50%;object-fit:contain}
-  .cg-page .cg-guide .cg-guide-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;font-size:12px;line-height:18px;color:var(--muted)}
-  .cg-page .cg-guide .cg-guide-by{font-size:12px;color:var(--muted)}
+  /* every card's foot is the same two rows at the card's bottom (user 2026-10-30): name · date (a long name is cut, the date stays), then the stars and the readers */
+  .cg-page .cg-guide:not(.cg-gap){grid-template-rows:auto auto auto 1fr}
+  .cg-page .cg-guide .cg-guide-meta{display:grid;justify-items:center;align-self:end;gap:4px;width:100%;min-width:0;font-size:12px;line-height:18px;color:var(--muted)}
+  .cg-page .cg-guide .cg-guide-by{display:flex;justify-content:center;max-width:100%;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap}
+  .cg-page .cg-guide .cg-guide-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .cg-page .cg-guide .cg-guide-date{flex:none}
+  .cg-page .cg-guide .cg-guide-stats{display:flex;align-items:center;justify-content:center;gap:10px;min-height:18px}
   .cg-card-preview{width:min(240px,100%)}
   /* estimated readers: gold, the icon and the number centred on one line (user 2026-10-17) */
   .cg-page .cg-views{display:inline-flex;align-items:center;gap:5px;line-height:1;color:var(--gold);font-size:12.5px;vertical-align:-0.25em}   /* centred on the text beside it in an inline line (measured 2026-10-17: it floated 3.6 px high); the gallery's flex row ignores this */
@@ -2871,6 +2880,8 @@
     .cg-page .cg-guide .cg-guide-meta{flex-direction:column;gap:3px;width:100%;min-width:0;font-size:11px;line-height:14px}
     .cg-page .cg-guide .cg-guide-by{display:block;width:100%;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .cg-page .cg-guide .cg-guide-date{display:none}
+    .cg-page .cg-guide .cg-guide-stats{display:contents}
+    .cg-page .cg-guide .cg-guide-meta{display:flex;align-items:center}
     .cg-page .cg-gap .cg-gap-face{width:52px;height:52px;font-size:22px}.cg-page .cg-gap .cg-gap-text{font-size:14px;line-height:1.25}.cg-page .cg-gap .cg-gap-sub{font-size:11px}.cg-page .cg-gap .cg-gap-btn{font-size:12px;padding:4px 10px}
     .cg-page .cg-views{font-size:11.5px}.cg-page .cg-views svg{width:13px;height:13px}.cg-page .cg-rate-star{width:11px;height:11px}
     .cg-page[data-mode="gallery"] .cg-heading{margin:0 0 4px;gap:0}
@@ -32467,6 +32478,7 @@ function classGuideTipBind(el, html, tap){   // html() = the pop-up's markup; a 
   if (tap) el.addEventListener("pointerup", e => { if (e.pointerType !== "mouse"){ if (classGuideTipOwner === el) classGuideTipHide(); else classGuideTipShow(el, html()); } });
 }
 const CLASS_GUIDE_STAR = "12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26", CLASS_GUIDE_STAR_HALF = "12,2 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26";
+function classGuideStarOne(){ return '<svg class="cg-rate-star is-full is-top" viewBox="0 0 24 24" aria-hidden="true"><polygon class="cg-rate-fg" points="' + CLASS_GUIDE_STAR + '"/></svg>'; }   // the ดาวฟ้า filter's icon
 function classGuideStarsHtml(stars, top){   // top: ดาวฟ้า, the five stars in aqua   // five small SVG stars (a half star is the left half of the outline filled), so no font has to carry a half-star glyph
   let out = "";
   for (let i = 1; i <= 5; i++){
@@ -34158,7 +34170,7 @@ function mountClassGuide(root){
   root.innerHTML = `<div class="cg-page" data-mode="gallery">
     <div class="cg-heading"><div><h2>ไกด์อาชีพ</h2></div><nav class="cg-nav" aria-label="ไกด์อาชีพ"><div class="cg-tabs" role="group" aria-label="หน้า"><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="gallery" aria-pressed="true">${classGuideButtonIcon("gallery")}<span>ไกด์จากผู้เล่น</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="author" aria-pressed="false">${classGuideButtonIcon("author")}<span>เขียนไกด์</span></button></div><div class="cg-page-actions"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="exportImage" hidden>${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="copyImage" hidden>${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="useAsBase" hidden>${classGuideButtonIcon("import")}<span>ใช้ไกด์นี้เป็นต้นแบบ</span></button><button type="button" class="rsim-btn cg-btn cg-btn-primary" data-cg-act="returnAuthor" hidden>${classGuideButtonIcon("returnAuthor")}<span>กลับไปแก้ไกด์</span></button></div></nav></div>
     <p class="cg-status" data-cg-role="status" role="status" aria-live="polite"></p>
-    <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><button type="button" class="cg-sort" data-cg-role="sortDate" title="เรียงตามวันที่"></button></div><label class="cg-search-wrap"><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหาชื่อไกด์" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery-wrap"><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><button type="button" class="cg-gallery-edge is-prev" data-cg-role="galleryPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)" hidden>‹</button><button type="button" class="cg-gallery-edge is-next" data-cg-role="galleryNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)" hidden>›</button></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
+    <section data-cg-role="gallery"><div class="cg-filters"><div class="cg-pickrow"><div class="cg-icons" role="group" aria-label="เซิร์ฟเวอร์" data-cg-role="serverPick"></div></div><div class="cg-pickrow"><div class="cg-icons" role="group" aria-label="อาชีพ" data-cg-role="classPick"></div></div><div class="cg-sort-wrap"><button type="button" class="cg-sort" data-cg-role="sortDate" title="เรียงตามวันที่"></button></div><label class="cg-search-wrap"><input type="search" class="cg-search" data-cg-role="titleSearch" placeholder="ค้นหาชื่อไกด์" aria-label="ค้นหาชื่อไกด์" autocomplete="off" spellcheck="false"></label><div class="cg-filter-row2"><div class="cg-mode-pick" role="group" aria-label="ประเภทไกด์" data-cg-role="modePick"><span>ประเภท</span></div><button type="button" class="cg-icon-pick cg-top-pick" data-cg-role="topPick" aria-label="ดาวฟ้า" aria-pressed="false">${classGuideStarOne()}</button><p class="cg-gallery-note">ผู้เขียนที่ต้องการแก้ไขหรือลบไกด์ของตัวเอง ติดต่อได้ตลอดทาง <a href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener">Discord</a></p></div></div><div class="cg-gallery-wrap"><div class="cg-gallery" data-cg-role="guides" aria-live="polite"></div><button type="button" class="cg-gallery-edge is-prev" data-cg-role="galleryPrev" aria-label="หน้าก่อน" title="หน้าก่อน (←)" hidden>‹</button><button type="button" class="cg-gallery-edge is-next" data-cg-role="galleryNext" aria-label="หน้าถัดไป" title="หน้าถัดไป (→)" hidden>›</button></div><nav class="cg-pager" data-cg-role="pager" aria-label="หน้าไกด์" hidden></nav></section>
     <nav class="cg-steps" data-cg-role="steps" aria-label="ขั้นตอนเขียนไกด์">${CLASS_GUIDE_STEPS.map((st, i) => '<button type="button" class="cg-step-tab" data-cg-step-go="' + (i + 1) + '" aria-pressed="' + (i === 0) + '"><b>' + (i + 1) + '</b><span>' + st.label + '</span>' + (st.optional ? '<em>ไม่บังคับ</em>' : "") + '</button>').join("")}<div class="cg-editor-rating" data-cg-role="rating"><span>ความครบถ้วนของเนื้อหา</span><span class="cg-rating" data-cg-role="ratingStars" role="img"></span></div></nav>
     <section class="cg-author" data-cg-role="author" data-step="1" hidden>
       <p class="cg-step-intro" data-cg-role="stepIntro"></p>
@@ -35161,11 +35173,13 @@ function mountClassGuide(root){
   }
   // Icon filters (user 2026-10-17): ทั้งหมด plus one button per server and per class (CLASS_ORDER); one click filters, a click on the chosen icon goes back
   // to ทั้งหมด. A class with no guide (on the chosen server) is greyed but still clickable.
+  let filterTop = false;   // ดาวฟ้า only (user 2026-10-30)
   let filterServer = "", filterClass = "", filterTitle = "", filterMode = "", titleTimer = 0;   // filterMode: "pve" / "pvp" (user 2026-10-20)   // filterTitle: the title search, lower case (user 2026-10-20)
   const syncFilters = () => {
     for (const b of el("serverPick").children) b.setAttribute("aria-pressed", String(b.dataset.key === filterServer));
     for (const b of el("modePick").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.key === filterMode));
-    const have = new Set(CLASS_GUIDES.filter(g => g && g.build && (!filterServer || g.build.server === filterServer) && (!filterMode || (g.modes || []).includes(filterMode))).map(g => g.build.classKey));
+    el("topPick").setAttribute("aria-pressed", String(filterTop));
+    const have = new Set(CLASS_GUIDES.filter(g => g && g.build && (!filterServer || g.build.server === filterServer) && (!filterMode || (g.modes || []).includes(filterMode)) && (!filterTop || classGuideCompleteness(g).top)).map(g => g.build.classKey));
     for (const b of el("classPick").children){ b.setAttribute("aria-pressed", String(b.dataset.key === filterClass)); b.classList.toggle("is-empty", !!b.dataset.key && !have.has(b.dataset.key)); }
   };
   for (const [role, choices] of [["serverPick", [["", "ทุกเซิร์ฟเวอร์"]].concat(Object.entries(SKILL_SIM_SERVERS).map(([key, v]) => [key, v.name, SKILL_ICONS["server_" + key]]))],
@@ -35185,6 +35199,7 @@ function mountClassGuide(root){
     b.addEventListener("click", () => { filterMode = filterMode === key ? "" : key; syncFilters(); renderGallery(); });
     el("modePick").appendChild(b);
   }
+  el("topPick").addEventListener("click", () => { filterTop = !filterTop; syncFilters(); renderGallery(); });
   syncFilters();
   el("titleSearch").addEventListener("input", (e) => { clearTimeout(titleTimer); titleTimer = setTimeout(() => { filterTitle = e.target.value.trim().toLowerCase(); renderGallery(); }, 150); });
   // A guide's card in ไกด์จากผู้เล่น (cover icons, title, class · server · author · date); the preview shows the same card, not clickable (user 2026-10-17).
@@ -35229,13 +35244,14 @@ function mountClassGuide(root){
     chips.append(chip(CLASS_HERO_ICONS[SKILL_SIM_NAMES[guide.build.classKey]], SKILL_SIM_NAMES[guide.build.classKey]), chip(SKILL_ICONS["server_" + guide.build.server], SKILL_SIM_SERVERS[guide.build.server].name));
     for (const m of guide.modes || []){ const c = chip(null, m.toUpperCase()); c.classList.add("is-mode"); chips.appendChild(c); }   // PVE / PVP (user 2026-10-20)
     const meta = document.createElement("span"); meta.className = "cg-guide-meta";
-    const who = document.createElement("span"); who.className = "cg-guide-by"; who.textContent = guide.author || "ยังไม่ระบุผู้เขียน";
+    const who = document.createElement("span"); who.className = "cg-guide-by";
+    const name = document.createElement("span"); name.className = "cg-guide-name"; name.textContent = guide.author || "ยังไม่ระบุผู้เขียน"; who.appendChild(name);   // two rows (user 2026-10-30): name · date, then stars and readers
     const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = "· " + classGuideDateText(guide.date);
     classGuideTipBind(when, () => '<div class="cg-tip-h">วันที่อัพเดทล่าสุด</div>');   // the page's pop-up, as on the stars (user 2026-10-30)
     who.appendChild(when); meta.appendChild(who);
     const done = classGuideCompleteness(guide), stars = document.createElement("span"); stars.className = "cg-rating"; stars.innerHTML = classGuideStarsHtml(done.stars, done.top);   // ความครบถ้วนของเนื้อหา (user 2026-10-20)
-    stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); classGuideTipBind(stars, () => classGuideRatingTip(done, false)); meta.appendChild(stars);
-    if (id) meta.appendChild(viewBadge(id));
+    stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); classGuideTipBind(stars, () => classGuideRatingTip(done, false));
+    const row2 = document.createElement("span"); row2.className = "cg-guide-stats"; row2.appendChild(stars); if (id) row2.appendChild(viewBadge(id)); meta.appendChild(row2);
     b.append(portrait, title, chips, meta);
     return b;
   }
@@ -35255,6 +35271,7 @@ function mountClassGuide(root){
   const gapCard = (matches) => {
     clearInterval(gapTimer);
     if (filterTitle) return null;
+    if (filterTop) return null;   // "write a guide" does not belong among the ดาวฟ้า
     const gaps = classGuideGaps(CLASS_GUIDES, { cls: filterClass, srv: filterServer, mode: filterMode }); if (!gaps.length) return null;
     const top = classGuideGapTop(gaps), few = matches > 0 && matches <= CLASS_GUIDE_GAP_FEW;
     const b = document.createElement("button"); b.type = "button"; b.className = "cg-guide cg-gap"; b.dataset.cgAct = "gapWrite";
@@ -35289,7 +35306,7 @@ function mountClassGuide(root){
     for (const [gi, raw] of byDate){
       let guide; try { guide = classGuideNormalize(raw); } catch (e) { invalidCount++; continue; }
       totalCount++;
-      if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey) || (filterTitle && !String(guide.title).toLowerCase().includes(filterTitle)) || (filterMode && !(guide.modes || []).includes(filterMode))) continue;
+      if ((server && guide.build.server !== server) || (classKey && guide.build.classKey !== classKey) || (filterTitle && !String(guide.title).toLowerCase().includes(filterTitle)) || (filterMode && !(guide.modes || []).includes(filterMode)) || (filterTop && !classGuideCompleteness(guide).top)) continue;
       const gid = classGuideId(raw, gi), b = guideCard(guide, "button", gid); b.addEventListener("click", () => openGuide(guide, false, gid)); cards.push(b); validCount++;
     }
     const gap = gapCard(validCount);   // the dashed gap card (see gapCard): after 1-3 matching guides, otherwise the first slot
@@ -35795,7 +35812,7 @@ function mountClassGuide(root){
   };
   const showGallery = () => { saveDraft(); switchMode("gallery"); sim.setInteraction("read"); renderGallery(); };
   const openAuthor = () => { if (mode !== "author") startAuthor(); };   // #class-guide/write: straight into the editor with the saved draft (no start dialog)
-  const filterBy = (cls, server) => { filterMode = ""; filterClass = CLASS_ORDER.some(n => n.toLowerCase() === cls) ? cls : ""; filterServer = server && SKILL_SIM_SERVERS[server] ? server : ""; syncFilters(); };   // #class-guide?class=<key> (the menu's class portrait)
+  const filterBy = (cls, server) => { filterMode = ""; filterTop = false; filterClass = CLASS_ORDER.some(n => n.toLowerCase() === cls) ? cls : ""; filterServer = server && SKILL_SIM_SERVERS[server] ? server : ""; syncFilters(); };   // #class-guide?class=<key> (the menu's class portrait)
   root._classGuide = { openById, showGallery, filterBy, openAuthor, openGuide, openPreviewEmbed, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery, fitReader };
   renderGallery();
 }
@@ -37826,6 +37843,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-30T10:44:54.841Z","feat(bible): class guide gallery: an icon-only ดาวฟ้า filter, and every card ends in the same two rows: name and date, then stars and readers"],
     ["2026-10-30T10:38:02.457Z","fix(bible): class guide #60 is updated: TTO Panda AGI 295: Golden Ratio by BunSan"],
     ["2026-10-30T10:34:27.483Z","feat(bible): class guide PNG: the description is its first page in room kept for it, with the guide page's line breaks, and the stats and equipment column shrinks to fit; guide view counts refreshed"],
     ["2026-10-30T10:08:55.456Z","fix(bible): class guide editor: Ctrl+B adds spaces only around the part it just made bold, never around the other bold words of the text"],
