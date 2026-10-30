@@ -33103,9 +33103,14 @@ function classGuideBoldEdit(value, start, end, maxLength){
   if (value.length - (to - from) + text.length > maxLength) return null;
   return { text, from, to, selectionStart, selectionEnd };
 }
-// Highlight (user 2026-10-15): every bold run stands apart with a space before and after it (none at the start or end of a line, never doubled).
-function classGuideSpaceBold(value){
-  return String(value).replace(/\*\*([\s\S]+?)\*\*/g, (m, inner, at, all) => {
+// Highlight (user 2026-10-15): a bold run stands apart with a space before and after it (none at the start or end of a line, never doubled). Given the text
+// from before the Ctrl+B, only the runs in the part it changed (user 2026-10-30: bolding one word added spaces around every bold word of the text).
+function classGuideSpaceBold(value, before){
+  const v = String(value), b = before === undefined ? null : String(before);
+  let from = 0, end = 0;
+  if (b !== null){ while (from < v.length && v[from] === b[from]) from++; while (end < v.length - from && end < b.length - from && v[v.length - 1 - end] === b[b.length - 1 - end]) end++; }
+  return v.replace(/\*\*([\s\S]+?)\*\*/g, (m, inner, at, all) => {
+    if (b !== null && (at + m.length <= from || at >= v.length - end)) return m;
     const before = all[at - 1], after = all[at + m.length], lineStart = before !== undefined && CLASS_GUIDE_ALIGN_MARKS[before] && (at === 1 || all[at - 2] === "\n");   // right after a line's alignment mark = its start
     return (before !== undefined && !/\s/.test(before) && !lineStart ? " " : "") + m + (after !== undefined && !/\s/.test(after) ? " " : "");
   });
@@ -33258,7 +33263,7 @@ function classGuideMountEditor(backing, editor, notify, toHtml = classGuideRichT
     editor.focus(); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
     const s0 = selNow();
     applying = true; try { document.execCommand(cmd, false); } finally { applying = false; }
-    const value = classGuideReadEditor(editor), spaced = cmd === "bold" ? classGuideSpaceBold(value) : value, next = spaced.length <= backing.maxLength ? spaced : value;
+    const value = classGuideReadEditor(editor), spaced = cmd === "bold" ? classGuideSpaceBold(value, before) : value, next = spaced.length <= backing.maxLength ? spaced : value;
     if (next.length > backing.maxLength){ editor.innerHTML = accepted; notify("ข้อความยาวเกินกำหนด"); return false; }
     if (next === before){ if (cmd === "underline") renderKeepingSelection(next); return true; }   // nothing to save: the box drawn as it was
     remember(before, s0);
@@ -37806,6 +37811,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-30T10:08:55.456Z","fix(bible): class guide editor: Ctrl+B adds spaces only around the part it just made bold, never around the other bold words of the text"],
     ["2026-10-30T09:53:14.442Z","feat(bible): windowed Chrome layout pass on every tool at 1366 to 2560 wide: tighter one-screen layouts and larger small text, class guide stats and equipment never scroll (the panel shrinks to fit), the try-a-stat button becomes a hidden flask with a dashed outline on hover"],
     ["2026-10-30T04:08:00.144Z","feat(bible): class guide reader for a windowed Chrome: big view for the description and skill notes (formatting kept, notes stepped with arrows, scaled to fit), notes keep a readable size, the info panel shrinks so the description keeps its size, no auto full screen"],
     ["2026-10-30T03:23:11.098Z","feat(bible): class guide gallery: the date on each card shows a วันที่อัพเดทล่าสุด pop-up on hover"],
