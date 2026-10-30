@@ -2485,7 +2485,38 @@
   .cg-desc-size button[data-cg-size="xxl"]{font-size:19px}
   .cg-fs-s{font-size:.8em}.cg-fs-l{font-size:1.25em}.cg-fs-xl{font-size:1.5em}.cg-fs-xxl{font-size:2em}   /* CLASS_GUIDE_SIZE_SCALE */
   .cg-page u{text-underline-offset:.22em}   /* clears Thai vowels below the line (the picture draws it as low) */
-  .cg-page u:has(> strong:only-child,> b:only-child){text-decoration-color:var(--gold)}   /* the browser's own nesting while typing (<u><b>): a gold line under gold text too */
+  .cg-page u:has(> strong:only-child,> b:only-child){text-decoration-color:var(--gold)}
+  /* The reader's big view (user 2026-10-30): the description and each skill note lift on hover (a small lift, the house hover), and a click opens them in
+     the middle of the screen, scaled to the window, borderless on a dimmed page (cgZoom...). The description is its own reference page (the same
+     1500 x 330 layout, columns and pages as the guide page) scaled up; on a phone it is the text, large and scrolling. */
+  .cg-page[data-mode="reader"] [data-cg-role="guideDescription"],.cg-page[data-mode="reader"] .cg-note-item{cursor:zoom-in;transition:transform .15s ease,filter .15s ease}
+  .cg-page[data-mode="reader"] [data-cg-role="guideDescription"]:hover,.cg-page[data-mode="reader"] .cg-note-item:hover{transform:translateY(-2px);filter:brightness(1.08)}
+  .cg-zoom{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,4,3,.94);cursor:zoom-out}
+  .cg-zoom-stage{display:flex;flex-direction:column;align-items:center;gap:14px;animation:cgZoomIn .2s ease-out}
+  @keyframes cgZoomIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .cg-zoom-page{position:relative;overflow:hidden}
+  .cg-zoom-ref{display:block;box-sizing:border-box;width:1500px;margin:0;padding:11px 16px;font-size:19px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75);column-gap:32px;column-rule:1px solid rgba(201,162,39,.22);overflow:hidden;transform-origin:0 0}
+  .cg-zoom-ref.is-paged{column-fill:auto;padding:11px 46px 34px}
+  .cg-zoom-ref > .cg-para.is-colbreak{height:0;font-size:0;line-height:0}
+  .cg-zoom-ref > .cg-sec[data-cols="2"]{column-count:2}
+  .cg-zoom-ref > .cg-sec[data-cols="3"]{column-count:3}
+  .cg-zoom-ref > .cg-sec:is([data-cols="2"],[data-cols="3"]) > .is-colbreak{break-after:column}
+  .cg-zoom-flow{display:block;box-sizing:border-box;width:92vw;max-height:84vh;overflow:auto;padding:4px 6px;font-size:clamp(17px,4.6vw,26px);line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);text-shadow:0 1px 3px #000}
+  .cg-zoom-pager{display:flex;align-items:center;gap:28px;color:var(--muted);font-size:clamp(14px,1.3vw,22px);font-variant-numeric:tabular-nums}
+  .cg-zoom-pager[hidden]{display:none}
+  .cg-zoom-pager button{padding:0 8px;border:0;background:none;color:var(--gold);font:inherit;font-size:2.2em;line-height:1;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .cg-zoom-pager button:hover:not(:disabled){transform:translateY(-2px)}
+  .cg-zoom-pager button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .cg-zoom-pager button:disabled{opacity:.3;cursor:default}
+  .cg-zoom-note{box-sizing:border-box;width:min(88vw,160vh);max-height:80vh;overflow:hidden;font-size:clamp(18px,2.1vw,42px);line-height:1.75;color:var(--text);text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75)}
+  @media(max-width:760px){.cg-zoom-note{overflow:auto}}   /* a phone scrolls a long note; a desktop scales it down to fit (zoomNote fit) */
+  .cg-zoom-note-head{display:flex;align-items:center;gap:.7em;margin-bottom:.5em}
+  .cg-zoom-note-head .cg-note-frame{flex:none;width:3.2em;height:3.2em}   /* the chip's ring, larger */
+  .cg-zoom-note-head h4{margin:0;font-size:1.3em;font-weight:600;color:var(--gold)}
+  .cg-zoom-note-text{white-space:pre-wrap;overflow-wrap:anywhere}
+  .cg-zoom strong,.cg-zoom b{color:var(--gold);font-weight:700}   /* the guide page's looks (they are scoped to .cg-prose / .cg-page, the big view sits on <body>) */
+  .cg-zoom u{text-underline-offset:.22em}
+  .cg-zoom u:has(> strong:only-child,> b:only-child){text-decoration-color:var(--gold)}   /* the browser's own nesting while typing (<u><b>): a gold line under gold text too */
   .cg-desc-tools button{padding:2px 9px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--muted);font:inherit;font-size:12px;line-height:1.5;cursor:pointer}
   .cg-desc-tools button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
   .cg-desc-tools button:hover,.cg-desc-tools button:focus-visible{border-color:var(--gold);color:var(--text)}
@@ -2571,7 +2602,8 @@
     .cg-page[data-mode="reader"] .cg-reader{grid-row:2;align-self:stretch;gap:calc(12px * var(--cg-u,1));overflow:visible}   /* the same gap as between the columns */
     .cg-page[data-mode="reader"] .cg-reader > .cg-reader-box,.cg-page[data-mode="reader"] .cg-reader > .cg-prose{padding:10px 14px}   /* zoomed with the rest, so plain px */
     /* everything inside the panel and the notes column scales by the same factor (zoom keeps the layout real, unlike a transform) */
-    .cg-page[data-mode="reader"] .cg-reader > *,.cg-page[data-mode="reader"] > .cg-note-chips > *{zoom:var(--cg-u,1)}
+    .cg-page[data-mode="reader"] .cg-reader > *{zoom:var(--cg-u,1)}
+    .cg-page[data-mode="reader"] > .cg-note-chips > *{zoom:var(--cg-note-u,var(--cg-u,1))}   /* the notes' own factor, never under 0.8 (user 2026-10-30: unreadable in a windowed Chrome) */
     .cg-page[data-mode="reader"] > .cg-prose{font-size:calc(17px * var(--cg-u,1))}
     /* notes under the trees, laid out like the PNG (fitReader sets the columns, font, icon size and lines per note from the PNG's ladder) */
     .cg-page[data-mode="reader"]{grid-template-rows:auto auto 1fr auto}   /* spare height from the tall panel and notes goes below the description, never between the trees and it */
@@ -34424,6 +34456,7 @@ function mountClassGuide(root){
     const clampU = u => Math.min(1.3, Math.max(0.62, u));
     const setU = u => { if (Math.abs(u - 1) > 0.001) guidePage.style.setProperty("--cg-u", u.toFixed(3)); else guidePage.style.removeProperty("--cg-u"); };
     const uiGuess = !author && isSheet() ? clampU(Math.min(window.innerWidth / 1920, document.documentElement.clientHeight / 1080)) : 1;
+    panel.style.removeProperty("--cg-u");   // the panel's own fit (below) is measured again each time
     setU(uiGuess);
     const colGapNow = () => parseFloat(getComputedStyle(guidePage).columnGap) || 0, gap = 12;
     // the room is the page minus the left panel (the build's own column is set to what it needs, so the columns sit centred together, user 2026-10-16)
@@ -34468,15 +34501,19 @@ function mountClassGuide(root){
       panel.style.height = ""; panel.style.maxHeight = ""; panel.style.alignSelf = "start";   // measure the info panel's own height (it is stretched to the grid's row at the end)
       const colGap = colGapNow(), panelW = panel.offsetWidth; width = Math.max(1, guidePage.clientWidth - panelW - colGap); midW = width;
       if (notesOn){
-        const notesW = Math.round(Math.min(440, Math.max(300, guidePage.clientWidth * 0.2)) * u);   // the notes column scales with the rest
+        const uN = Math.max(u, 0.8);   // the notes' own factor: readable first (user 2026-10-30, a windowed Chrome: they were 7-8 px)
+        guidePage.style.setProperty("--cg-note-u", uN.toFixed(3));
+        const notesW = Math.round(Math.min(440, Math.max(300, guidePage.clientWidth * 0.2)) * uN);   // the notes column scales with the rest
         guidePage.style.setProperty("--cg-notes-w", notesW + "px"); notesBox.style.width = notesW + "px"; notesBox.style.maxHeight = "";
-        let fits = false;
+        let fits = false, stepped = false;
         for (const [fsPng, lines] of NOTE_LADDER){
           const fsPx = Math.round(fsPng * 0.83 * 10) / 10;
+          if (stepped && fsPx * uN < 11) break;   // never under ~11 px on screen: past that the column scrolls instead
+          stepped = true;
           notesBox.style.setProperty("--cg-note-fs", fsPx + "px"); notesBox.style.setProperty("--cg-note-icon", Math.round(fsPx * 3.3) + "px");   // the PNG's proportion (user 2026-10-16: they were a bit too big) notesBox.style.setProperty("--cg-note-lines", lines >= 99 ? "none" : lines);
           if (notesBox.offsetHeight <= free){ fits = true; break; }
         }
-        if (!fits) notesBox.style.maxHeight = free + "px";   // past the last step: the notes scroll in their own column
+        if (!fits){ notesBox.style.setProperty("--cg-note-lines", "none"); notesBox.style.maxHeight = free + "px"; }   // past the last readable step: each note whole, the column scrolls
         midW = Math.max(1, width - notesW - colGap);
       }
       midW = Math.min(midW, maxBuildW());   // never giant cells (see maxBuildW)
@@ -34526,7 +34563,9 @@ function mountClassGuide(root){
       // One rectangle (user 2026-10-16): the info panel stretches to the grid's row, the description fills the height left under the two (down to the
       // bottom), and the notes column runs the full height, so every outer edge lines up and the bottoms meet.
       panel.style.alignSelf = "";
-      const row2 = Math.max(Math.min(sheetInfo.panelH, free), Math.ceil(height * scale));
+      const panelCap = descOn && sheetInfo.descH ? Math.max(Math.ceil(height * scale), free - sheetInfo.descH) : free;   // the info panel never takes the description's planned room (user 2026-10-30: a windowed Chrome squeezed it to 3.6 px text): it shrinks to fit its row instead
+      if (sheetInfo.panelH > panelCap + 1) panel.style.setProperty("--cg-u", ((parseFloat(guidePage.style.getPropertyValue("--cg-u")) || 1) * panelCap / sheetInfo.panelH).toFixed(3));   // too tall for its row: the panel alone shrinks to fit (a max-height let it spill over the description)
+      const row2 = Math.max(Math.min(sheetInfo.panelH, panelCap), Math.ceil(height * scale));
       let bottom = row2;
       // the notes end above the trees' bottom (user 2026-10-17): the description also takes the width under them
       const notesLift = notesOn ? (parseFloat(getComputedStyle(notesBox).marginTop) || 0) : 0, notesPadB = notesOn ? (parseFloat(getComputedStyle(notesBox).paddingBottom) || 0) : 0, notesEnd = notesOn ? notesBox.offsetHeight + notesLift - notesPadB : 0, descWide = descOn && notesOn && notesEnd <= row2 + gap;   // the notes' last line ends above the description's top
@@ -34678,26 +34717,8 @@ function mountClassGuide(root){
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear;
   }
-  // Full screen (user 2026-10-27: the reader is laid out for a full screen): a guide opened from a click on desktop enters the browser's
-  // full screen, and leaving the reader (guide list, editor, another tool, the menu) leaves it again when it was ours. A guide opened
-  // by a link or a reload stays windowed (browsers allow full screen only right after a click or key press), so does the draft preview.
-  let cgFullscreenOurs = false;
-  function cgEnterFullscreen(){
-    const d = document.documentElement;
-    if (document.fullscreenElement || !d.requestFullscreen || !matchMedia("(min-width: 761px) and (hover: hover) and (pointer: fine)").matches) return;
-    if (navigator.userActivation && !navigator.userActivation.isActive) return;
-    d.requestFullscreen().then(() => { cgFullscreenOurs = true; }).catch(() => {});
-  }
-  new MutationObserver(() => {
-    if (!cgFullscreenOurs || document.documentElement.classList.contains("tool-guide-reader")) return;
-    cgFullscreenOurs = false;
-    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-  document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement) cgFullscreenOurs = false; });
   function openGuide(guide, preview = false, id = null){
-    const wasReader = guidePage.dataset.mode === "reader";
     current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
-    if (!preview && !wasReader) cgEnterFullscreen();
     if (currentId){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
     if (currentId){   // the address bar now is the link to share, and Back goes to the guide list (user 2026-10-17), never past it to the main menu
       const want = "#class-guide/" + currentId, marked = history.state && history.state.cgGuide;
@@ -34976,6 +34997,78 @@ function mountClassGuide(root){
     stopNoteAnimation(); stopNoteAnimation = () => {};
     noteChips.forEach(chip => chip.remove()); noteChips.clear(); el("noteChips").hidden = true;
   }
+  // The reader's big view (user 2026-10-30): a click on the guide's description or a skill note (not its skill icon, which opens the skill's card, nor a
+  // click that ends a text selection) opens it huge in the middle of the screen, scaled to the window, borderless; a click anywhere or Esc closes it,
+  // and < > or the arrow keys turn the description's pages (it opens on the page being read).
+  let zoomEl = null, zoomFit = () => {}, zoomKey = () => {};
+  function zoomClose(){ if (!zoomEl) return; zoomEl.remove(); zoomEl = null; window.removeEventListener("resize", zoomFit); document.removeEventListener("keydown", zoomKey, true); }
+  function zoomOpen(fill){
+    zoomClose();
+    zoomEl = document.createElement("div"); zoomEl.className = "cg-zoom"; zoomEl.setAttribute("role", "dialog"); zoomEl.setAttribute("aria-modal", "true");
+    const stage = document.createElement("div"); stage.className = "cg-zoom-stage"; zoomEl.appendChild(stage); document.body.appendChild(zoomEl);
+    const api = fill(stage) || {};
+    zoomFit = () => { if (api.fit) api.fit(); };
+    zoomKey = e => { if (e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); zoomClose(); } else if (api.key && api.key(e)){ e.preventDefault(); e.stopPropagation(); } };
+    window.addEventListener("resize", zoomFit); document.addEventListener("keydown", zoomKey, true);
+    zoomEl.addEventListener("click", e => { if (!e.target.closest(".cg-zoom-pager button")) zoomClose(); });
+    zoomFit();
+  }
+  function zoomDesc(){
+    if (!current || !String(current.description || "").trim()) return;
+    zoomOpen(stage => {
+      const box = document.createElement("div");
+      if (isPhone()){ box.className = "cg-desc-ref cg-zoom-flow"; box.innerHTML = classGuideParaHtml(current.description); stage.appendChild(box); return {}; }   // a phone: the text, large and scrolling
+      box.className = "cg-desc-ref cg-zoom-ref"; box.innerHTML = classGuideParaHtml(current.description);
+      const wrap = document.createElement("div"); wrap.className = "cg-zoom-page"; wrap.appendChild(box); stage.appendChild(wrap);
+      const pager = document.createElement("div"); pager.className = "cg-zoom-pager"; pager.innerHTML = '<button type="button" aria-label="หน้าก่อน">&lt;</button><span></span><button type="button" aria-label="หน้าถัดไป">&gt;</button>'; stage.appendChild(pager);
+      let page = descPage, lay = { pages: 1, height: CLASS_GUIDE_DESC_PAGE.h };
+      const show = () => { page = Math.max(0, Math.min(lay.pages - 1, page)); box.scrollLeft = page * box.clientWidth; pager.hidden = lay.pages < 2; pager.querySelector("span").textContent = (page + 1) + " / " + lay.pages; pager.firstElementChild.disabled = page === 0; pager.lastElementChild.disabled = page >= lay.pages - 1; };
+      pager.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; e.stopPropagation(); page += b === pager.firstElementChild ? -1 : 1; show(); });
+      return {
+        fit(){
+          box.style.transform = ""; lay = classGuideDescLayout(box, current.descCols);
+          const k = Math.min(window.innerWidth * 0.92 / CLASS_GUIDE_DESC_PAGE.w, (window.innerHeight * 0.84 - (lay.pages > 1 ? 60 : 0)) / Math.max(1, lay.height));   // the page as large as the window lets it, room for the pager under it
+          wrap.style.width = Math.floor(CLASS_GUIDE_DESC_PAGE.w * k) + "px"; wrap.style.height = Math.ceil(lay.height * k) + "px"; box.style.transform = "scale(" + k + ")"; show();
+        },
+        key(e){ if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return false; page += e.key === "ArrowLeft" ? -1 : 1; show(); return true; }
+      };
+    });
+  }
+  function zoomNote(chip){   // < > or ← → step to the previous / next note, in the notes' own order (user 2026-10-30)
+    const notes = (current && current.notes) || {}, chips = [...guidePage.querySelectorAll(".cg-note-item")].filter(c => notes[c.dataset.id]).sort((a, b) => a.dataset.id - b.dataset.id);
+    let i = chips.indexOf(chip); if (i < 0) return;
+    zoomOpen(stage => {
+      const card = document.createElement("div"); card.className = "cg-zoom-note"; stage.appendChild(card);
+      const pager = document.createElement("div"); pager.className = "cg-zoom-pager"; pager.innerHTML = '<button type="button" aria-label="โน้ตก่อนหน้า">&lt;</button><span></span><button type="button" aria-label="โน้ตถัดไป">&gt;</button>'; stage.appendChild(pager);
+      const show = () => {
+        i = Math.max(0, Math.min(chips.length - 1, i));
+        const c = chips[i], head = document.createElement("div"); head.className = "cg-zoom-note-head";
+        const frame = c.querySelector(".cg-note-frame"), name = c.querySelector("h4");
+        if (frame){ const f = frame.cloneNode(true); ["data-card", "role", "tabindex", "title"].forEach(a => f.removeAttribute(a)); f.classList.remove("is-boom"); head.appendChild(f); }   // the chip's own ring (its art zoomed and centred, feathered edge), not a square icon cropped to a circle (user 2026-10-30); no card link here
+        if (name) head.appendChild(name.cloneNode(true));
+        const body = document.createElement("div"); body.className = "cg-zoom-note-text"; body.innerHTML = classGuideRichText(notes[c.dataset.id]);
+        card.replaceChildren(head, body); card.scrollTop = 0;
+        pager.hidden = chips.length < 2; pager.querySelector("span").textContent = (i + 1) + " / " + chips.length;
+        pager.firstElementChild.disabled = i === 0; pager.lastElementChild.disabled = i >= chips.length - 1;
+        fit();
+      };
+      const fit = () => {   // a desktop never scrolls the note (user 2026-10-30): a long one's text scales down until it all fits; a phone scrolls
+        card.style.fontSize = "";
+        if (isPhone()) return;
+        let fs = parseFloat(getComputedStyle(card).fontSize);
+        for (let k = 0; k < 12 && card.scrollHeight > card.clientHeight + 1 && fs > 9; k++){ fs = Math.max(9, fs * Math.max(0.8, Math.sqrt(card.clientHeight / card.scrollHeight) * 0.98)); card.style.fontSize = fs.toFixed(2) + "px"; }
+      };
+      pager.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; e.stopPropagation(); i += b === pager.firstElementChild ? -1 : 1; show(); });
+      show();
+      return { fit, key(e){ if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return false; i += e.key === "ArrowLeft" ? -1 : 1; show(); return true; } };
+    });
+  }
+  root.addEventListener("click", e => {
+    if (guidePage.dataset.mode !== "reader" || e.defaultPrevented || !e.target.closest || e.target.closest(".cg-note-frame[data-card]")) return;
+    const sel = window.getSelection(); if (sel && !sel.isCollapsed && String(sel).trim()) return;   // a click that ends a text selection stays one
+    const chip = e.target.closest(".cg-note-item"); if (chip && guidePage.contains(chip)){ zoomNote(chip); return; }
+    if (e.target.closest('[data-cg-role="guideDescription"]')) zoomDesc();
+  });
   function makeNoteChip(info){
     const chip = document.createElement("article"); chip.className = "cg-note-item"; chip.dataset.id = info.id; chip.title = info.cell.name + ": " + String(info.text).replace(/\*\*|__/g, "");   // the whole note when the sheet layout cuts it short
     const frame = document.createElement("span"); frame.className = "cg-note-frame";
@@ -37279,6 +37372,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-30T04:08:00.144Z","feat(bible): class guide reader for a windowed Chrome: big view for the description and skill notes (formatting kept, notes stepped with arrows, scaled to fit), notes keep a readable size, the info panel shrinks so the description keeps its size, no auto full screen"],
     ["2026-10-30T03:23:11.098Z","feat(bible): class guide gallery: the date on each card shows a วันที่อัพเดทล่าสุด pop-up on hover"],
     ["2026-10-30T03:20:34.584Z","feat(bible): class guide #85 TTO Whale วาฬหิวเลือด 1/8 by WhiteAngeL"],
     ["2026-10-30T03:19:51.451Z","fix(bible): class guide stars: the aqua tier is named ดาวฟ้า (ละเอียดยิบ)"],
