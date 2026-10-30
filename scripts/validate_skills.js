@@ -4043,12 +4043,12 @@ let checkedRsim = 0;
     ok((h45.match(/is-full/g) || []).length === 4 && (h45.match(/is-half/g) || []).length === 1 && !/is-empty/.test(h45), "4.5 stars draw as 4 full and 1 half");
     ok((h3.match(/is-full/g) || []).length === 3 && (h3.match(/is-empty/g) || []).length === 2 && !/is-half/.test(h3), "3 stars draw as 3 full and 2 empty");
     ok(embedded.every(g => [3, 3.5, 4, 4.5, 5].includes(comp(norm(g)).stars)), "every embedded guide gets 3-5 stars in half steps");
-    // ดาวสีฟ้า (user 2026-10-30): all five stars plus 1000+ letters of description and 6+ skill notes
+    // ดาวฟ้า (ละเอียดยิบ) (user 2026-10-30): all five stars plus 1000+ letters of description and 6+ skill notes
     { const six = { 101: "a", 102: "b", 111: "c", 112: "d", 121: "e", 122: "f" }, full = { ...base, notes: six, stats: { atk: 100 }, gear: { weapon: [{ item: "x" }] } };
       ok(comp({ ...full, description: "ก".repeat(1000) }).top === true && comp({ ...full, description: "ก".repeat(999) }).top === false && comp({ ...full, description: "ก".repeat(1000), notes: three }).top === false && comp({ ...full, description: "ก".repeat(1000), gear: {} }).top === false,
         "aqua stars need all five stars, 1000+ letters of description and 6+ skill notes");
       const topDone = comp({ ...full, description: "ก".repeat(1000) }), near = comp({ ...full, description: "ก".repeat(640), notes: { 101: "a", 102: "b", 111: "c", 112: "d" } });
-      ok((starsHtml(5, true).match(/is-top/g) || []).length === 5 && !/is-top/.test(starsHtml(5)) && /ดาวสีฟ้า/.test(topDone.label) && /ดาวสีฟ้า/.test(tipTop(topDone, false)) && /640\/1000 · 4\/6/.test(tipTop(near, true)) && !/ดาวสีฟ้า/.test(tipTop(comp(base), true)),
+      ok((starsHtml(5, true).match(/is-top/g) || []).length === 5 && !/is-top/.test(starsHtml(5)) && /ดาวฟ้า \(ละเอียดยิบ\)/.test(topDone.label) && /ดาวฟ้า \(ละเอียดยิบ\)/.test(tipTop(topDone, false)) && /640\/1000 · 4\/6/.test(tipTop(near, true)) && !/ดาวฟ้า \(ละเอียดยิบ\)/.test(tipTop(comp(base), true)),
         "aqua stars draw as five aqua stars, the label and pop-up name them, and from five stars the editor's pop-up shows how far to them (640/1000 · 4/6)"); }
     ok(/function guideCard\([^]{0,2500}classGuideStarsHtml\(/.test(html) && /function updateSteps\(\)\{[^]{0,4000}classGuideStarsHtml\(/.test(html) && html.split("classGuideStarsHtml(").length - 1 === 3, "the stars are drawn on the gallery card and the editor's live line, nowhere else (not the reader)");
     // The page's own pop-up, not the browser's tooltip (user 2026-10-20); in the editor it shows how far each part is from counting

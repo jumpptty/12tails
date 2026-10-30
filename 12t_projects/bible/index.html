@@ -2190,7 +2190,7 @@
   .cg-rate-star{display:block;flex:none;width:13px;height:13px}
   .cg-rate-bg{fill:color-mix(in srgb,var(--gold) 22%,transparent)}
   .cg-rate-fg{fill:var(--gold)}
-  .cg-rate-star.is-top .cg-rate-fg{fill:#3fe0d8}   /* ดาวสีฟ้า (user 2026-10-30): five stars plus 1000+ letters of description and 6+ skill notes */
+  .cg-rate-star.is-top .cg-rate-fg{fill:#3fe0d8}   /* ดาวฟ้า (user 2026-10-30): five stars plus 1000+ letters of description and 6+ skill notes */
   .cg-tip-h b.cg-aqua,.cg-tip-line.is-top i{color:#3fe0d8}
   .cg-tip{white-space:normal;min-width:200px;max-width:min(320px,calc(100vw - 8px));padding:7px 11px}
   .cg-tip-h{margin-bottom:4px;font-size:13px}
@@ -32021,7 +32021,7 @@ function classGuideDateText(iso){
 // a description of 70+ letters (Thai vowel and tone marks and ** not counted, a run of spaces or line breaks counts once; the real descriptions split
 // into one-liners of 17-61 and explanations of 76+), 3+ skill notes (7 guides had 1-2, the rest 3-12), any recommended stat and any gear.
 const CLASS_GUIDE_DESC_MIN = 70, CLASS_GUIDE_NOTES_MIN = 3;
-// ดาวสีฟ้า (user 2026-10-30): a guide with all five stars, 1000+ letters of description (counted as above) and 6+ skill notes shows its five stars in aqua
+// ดาวฟ้า (user 2026-10-30): a guide with all five stars, 1000+ letters of description (counted as above) and 6+ skill notes shows its five stars in aqua
 const CLASS_GUIDE_TOP_DESC = 1000, CLASS_GUIDE_TOP_NOTES = 6;
 function classGuideCompleteness(g){
   const letters = [...String(g.description || "").replace(/^\s*\u21FB[123]\s*$/gm, "").replace(/\*\*|__/g, "").replace(/[\u21FF\u21FE\u21DF\u21E3\u21E1\u21EE\u21EF\u21F3]/g, "").replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "").replace(/\s+/g, " ").trim()].length;
@@ -32034,14 +32034,14 @@ function classGuideCompleteness(g){
   const have = parts.filter(p => p.ok), missing = parts.filter(p => !p.ok), stars = 3 + have.length / 2;
   const label = "ความครบถ้วนของเนื้อหา " + stars + "/5" + (have.length ? " · มี" + have.map(p => p.name).join(" ") : " · มีแค่บิลด์") + (missing.length ? " · ยังไม่มี" + missing.map(p => p.need).join(" ") : "");
   const notes = Object.keys(g.notes || {}).length, top = !missing.length && letters >= CLASS_GUIDE_TOP_DESC && notes >= CLASS_GUIDE_TOP_NOTES;
-  return { stars, label: label + (top ? " · ดาวสีฟ้า" : ""), parts, top, letters, notes };
+  return { stars, label: label + (top ? " · ดาวฟ้า (ละเอียดยิบ)" : ""), parts, top, letters, notes };
 }
 // The stars' pop-up (user 2026-10-20: the page's own, not the browser tooltip; looks like the Skill Simulator's hover tip): the score, then one line per part.
 // progress = the editor: the description and the notes also show how far they are (25/70 ตัวอักษร, 2/3 สกิล).
 function classGuideRatingTip(done, progress){
-  return '<div class="cg-tip-h">ความครบถ้วนของเนื้อหา <b>' + done.stars + '</b>/5' + (done.top ? ' <b class="cg-aqua">· ดาวสีฟ้า</b>' : "") + '</div>' + done.parts.map(p => '<div class="cg-tip-line ' + (p.ok ? "is-ok" : "is-miss") + '"><i>' + (p.ok ? "✓" : "✗") + '</i><span>' + (p.ok || progress ? p.name : p.need) + '</span>'
+  return '<div class="cg-tip-h">ความครบถ้วนของเนื้อหา <b>' + done.stars + '</b>/5' + (done.top ? ' <b class="cg-aqua">· ดาวฟ้า (ละเอียดยิบ)</b>' : "") + '</div>' + done.parts.map(p => '<div class="cg-tip-line ' + (p.ok ? "is-ok" : "is-miss") + '"><i>' + (p.ok ? "✓" : "✗") + '</i><span>' + (p.ok || progress ? p.name : p.need) + '</span>'
     + (progress && p.unit ? '<b>' + (p.ok ? p.now : p.now + "/" + p.min) + " " + p.unit + '</b>' : "") + '</div>').join("")
-    + (done.stars === 5 ? '<div class="cg-tip-line ' + (done.top ? "is-ok is-top" : "is-miss") + '"><i>' + (done.top ? "★" : "✗") + '</i><span>ดาวสีฟ้า: คำอธิบาย ' + CLASS_GUIDE_TOP_DESC + '+ ตัวอักษร และโน้ต ' + CLASS_GUIDE_TOP_NOTES + '+ สกิล</span>'
+    + (done.stars === 5 ? '<div class="cg-tip-line ' + (done.top ? "is-ok is-top" : "is-miss") + '"><i>' + (done.top ? "★" : "✗") + '</i><span>ดาวฟ้า: คำอธิบาย ' + CLASS_GUIDE_TOP_DESC + '+ ตัวอักษร และโน้ต ' + CLASS_GUIDE_TOP_NOTES + '+ สกิล</span>'
       + (progress && !done.top ? '<b>' + Math.min(done.letters, CLASS_GUIDE_TOP_DESC) + "/" + CLASS_GUIDE_TOP_DESC + " · " + Math.min(done.notes, CLASS_GUIDE_TOP_NOTES) + "/" + CLASS_GUIDE_TOP_NOTES + '</b>' : "") + '</div>' : "");   // from five stars: the aqua tier, and in the editor how far to it
 }
 let classGuideTipEl = null, classGuideTipOwner = null;
@@ -32065,7 +32065,7 @@ function classGuideTipBind(el, html, tap){   // html() = the pop-up's markup; a 
   if (tap) el.addEventListener("pointerup", e => { if (e.pointerType !== "mouse"){ if (classGuideTipOwner === el) classGuideTipHide(); else classGuideTipShow(el, html()); } });
 }
 const CLASS_GUIDE_STAR = "12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26", CLASS_GUIDE_STAR_HALF = "12,2 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26";
-function classGuideStarsHtml(stars, top){   // top: ดาวสีฟ้า, the five stars in aqua   // five small SVG stars (a half star is the left half of the outline filled), so no font has to carry a half-star glyph
+function classGuideStarsHtml(stars, top){   // top: ดาวฟ้า, the five stars in aqua   // five small SVG stars (a half star is the left half of the outline filled), so no font has to carry a half-star glyph
   let out = "";
   for (let i = 1; i <= 5; i++){
     const kind = stars >= i ? "full" : stars >= i - 0.5 ? "half" : "empty";
@@ -37277,6 +37277,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-30T03:19:51.451Z","fix(bible): class guide stars: the aqua tier is named ดาวฟ้า (ละเอียดยิบ)"],
     ["2026-10-30T03:14:58.394Z","fix(bible): class guide #83 is updated: TTO Wolf Necromancer Wolf แกะชุบได้แค่ 1 หมาชุบได้ทั้งทีม by Hinotoriz"],
     ["2026-10-30T03:14:22.068Z","feat(bible): class guide editor: column sections for the selected lines or the cursor page, copy and cut keep formatting, aqua 5 stars for complete guides, gold underline under bold; page breaks hold after a column change, no page jumps or flashes, drags stay on their page"],
     ["2026-10-30T02:04:42.018Z","fix(bible): class guide #83 is updated: TTO Wolf Necromancer Wolf แกะชุบได้แค่ 1 หมาชุบได้ทั้งทีม by Hinotoriz"],
