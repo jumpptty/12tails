@@ -34783,6 +34783,7 @@ function mountClassGuide(root){
     const meta = document.createElement("span"); meta.className = "cg-guide-meta";
     const who = document.createElement("span"); who.className = "cg-guide-by"; who.textContent = guide.author || "ยังไม่ระบุผู้เขียน";
     const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = "· " + classGuideDateText(guide.date);
+    classGuideTipBind(when, () => '<div class="cg-tip-h">วันที่อัพเดทล่าสุด</div>');   // the page's pop-up, as on the stars (user 2026-10-30)
     who.appendChild(when); meta.appendChild(who);
     const done = classGuideCompleteness(guide), stars = document.createElement("span"); stars.className = "cg-rating"; stars.innerHTML = classGuideStarsHtml(done.stars, done.top);   // ความครบถ้วนของเนื้อหา (user 2026-10-20)
     stars.setAttribute("role", "img"); stars.setAttribute("aria-label", done.label); classGuideTipBind(stars, () => classGuideRatingTip(done, false)); meta.appendChild(stars);
@@ -37278,6 +37279,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-30T03:23:11.098Z","feat(bible): class guide gallery: the date on each card shows a วันที่อัพเดทล่าสุด pop-up on hover"],
     ["2026-10-30T03:20:34.584Z","feat(bible): class guide #85 TTO Whale วาฬหิวเลือด 1/8 by WhiteAngeL"],
     ["2026-10-30T03:19:51.451Z","fix(bible): class guide stars: the aqua tier is named ดาวฟ้า (ละเอียดยิบ)"],
     ["2026-10-30T03:14:58.394Z","fix(bible): class guide #83 is updated: TTO Wolf Necromancer Wolf แกะชุบได้แค่ 1 หมาชุบได้ทั้งทีม by Hinotoriz"],

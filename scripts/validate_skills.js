@@ -4058,6 +4058,7 @@ let checkedRsim = 0;
     ok(/ความครบถ้วนของเนื้อหา/.test(tEd) && /3\.5/.test(tEd) && /25\/70/.test(tEd) && /2\/3/.test(tEd) && (tEd.match(/is-miss/g) || []).length === 3 && (tEd.match(/is-ok/g) || []).length === 1, "the editor pop-up names the score and shows 25/70 letters and 2/3 skills");
     ok(!/\/70|\/3 /.test(tGal) && (tGal.match(/is-miss/g) || []).length === 3, "the gallery pop-up lists the parts without the progress numbers");
     ok(!/\.title = done\.label/.test(html) && /data-cg-role="ratingStars"/.test(html), "no browser tooltip on the stars; the editor has its live stars line");
+    ok(/when\.className = "cg-guide-date";[^\n]*\n[^\n]*classGuideTipBind\(when, \(\) => '<div class="cg-tip-h">วันที่อัพเดทล่าสุด<\/div>'\)/.test(html), "the gallery card's date shows the page's pop-up วันที่อัพเดทล่าสุด on hover (user 2026-10-30)");
     // the readers badge gets the same pop-up (user 2026-10-20); its "10 นาที" must match the counter query's 10-minute bucket (600000 ms)
     ok(/const viewBadge = [^]{0,1500}classGuideTipBind\(v,/.test(html) && html.includes("อัปเดตทุก 10 นาที หรือนานกว่านั้นถ้าเปิด ad blocker") && html.includes("Math.floor(Date.now() / 600000)"), "the readers badge's pop-up says it updates every 10 minutes, longer with an ad blocker (matches the 600000 ms counter bucket)");
   }
