@@ -339,6 +339,34 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
   var targetSpherical = { radius: initial.radius, theta: initial.theta, phi: initial.phi };
   var animTarget = target.clone();
   var animTo = target.clone();
+  // Start view (windowed review 2026-10-30): the distance and aim that show the whole cave in the viewport's shape (6 % margin), refitted on
+  // every resize until the camera is moved by hand; the fog moves with the distance. Camera axes at the start angles: right (cos t, 0, -sin t),
+  // up (-cos p sin t, sin p, -cos p cos t), back toward the camera (sin p sin t, cos p, sin p cos t).
+  var fitPts = geo.attributes.position.array, fitted = null;
+  function fitCamera(w, h) {
+    if (!w || !h) return;
+    if (fitted && (targetSpherical.radius !== fitted.r || targetSpherical.theta !== initial.theta || targetSpherical.phi !== initial.phi || !animTo.equals(fitted.c))) return;
+    var st = Math.sin(initial.theta), ct = Math.cos(initial.theta), sp = Math.sin(initial.phi), cp = Math.cos(initial.phi);
+    var tanV = Math.tan(camera.fov * Math.PI / 360), tanH = tanV * w / h, o = caveMesh.position;
+    var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, i, vx, vy, vz, u, v;
+    for (i = 0; i < fitPts.length; i += 3) {
+      vx = fitPts[i] + o.x - target.x; vy = fitPts[i + 1] + o.y - target.y; vz = fitPts[i + 2] + o.z - target.z;
+      u = vx * ct - vz * st; v = -vx * cp * st + vy * sp - vz * cp * ct;
+      if (u < x0) x0 = u; if (u > x1) x1 = u; if (v < y0) y0 = v; if (v > y1) y1 = v;
+    }
+    var mx = (x0 + x1) / 2, my = (y0 + y1) / 2, r = 0;
+    var c = new THREE.Vector3(target.x + ct * mx - cp * st * my, target.y + sp * my, target.z - st * mx - cp * ct * my);
+    for (i = 0; i < fitPts.length; i += 3) {
+      vx = fitPts[i] + o.x - c.x; vy = fitPts[i + 1] + o.y - c.y; vz = fitPts[i + 2] + o.z - c.z;
+      u = vx * ct - vz * st; v = -vx * cp * st + vy * sp - vz * cp * ct;
+      r = Math.max(r, vx * sp * st + vy * cp + vz * sp * ct + 1.06 * Math.max(Math.abs(u) / tanH, Math.abs(v) / tanV));
+    }
+    r = Math.min(r, 520);
+    fitted = { r: r, c: c };
+    spherical.radius = targetSpherical.radius = r;
+    animTarget.copy(c); animTo.copy(c);
+    scene.fog.near = 140 + r - initial.radius; scene.fog.far = 620 + r - initial.radius;
+  }
 
   function applyCamera() {
     var s = spherical;
@@ -848,6 +876,7 @@ var WAYPOINTS = [{"id": 1, "x": 26.283, "y": 55.9313, "z": 0.0}, {"id": 2, "x": 
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    fitCamera(w, h);
   }
   window.addEventListener("resize", resize);
   resize();
