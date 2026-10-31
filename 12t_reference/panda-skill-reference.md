@@ -984,6 +984,7 @@ Stage totals: 2.0, 1.8, 3.5, 2.0. Chained start offsets: stage 2 at 2.0, stage 3
 | Climbing Cliff / Crumbling Mountain | Target must be at least 3 m tall. | Also usable on a Whale with Mega Size (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Qi Strike | Charge 2 / 3 / 4 s by rank. | 2 s at every rank (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
 | Delay Qi | Held-punch buff 3 s. | 6 s (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
+| Wind & Cloud, Rain & Storm | No magic / physical split. | Tagged `Magic` on the TailsTopia simulator (read 2026-10-31; not on the 2026-10-06 reading), so hits use half the target's DEF ([TTO Magic Damage](12t_reference/12Tails-Mechanics-Reference.md), `TTO_MAGIC_DMG`). |
 
 - **Bible (2026-10-28):** Tiger Toss has a TTO tab whose Climbing Cliff line also names the Whale with Mega Size (the climb starts from the Tiger Toss grab as on BB, decided 2026-10-28, open item 6). The Delay Qi and Qi Burst TTO tabs give the Qi Burst hold as +3 s, 9 s in all (the 6 s TTO base plus the BB +3 s, decided 2026-10-28, open item 3).
 
@@ -1096,3 +1097,13 @@ Seconds from the start of the move (or of the child routine named), read from th
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 1, 1, 3, 3)`, `hit(1, ATK, KO 1)`, cooldown 2 s (`:7184-7207, :7331`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6, 3)`, `hit(1, ATK, KO 1)`, cooldown 1.5 s (`:7610-7633, :7737`).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Nine Dragons (`panda_nineDragons`) | Active | 254 | 40 | 60 | Physical | enemy | ต่อย 8 หมัดปล่อยมังกรทองกัดศัตรูรอบตัว ราชามังกรพุ่งใส่เป้ารัวกลางอากาศแล้วกระแทกลงพื้น |
+| 453 | Tempest Dance (`panda_tempestDance`) | Active | 354 | 35 | 50 | Magic | self | หมุนเป็นพายุ 5 วิ บังคับทิศได้ โจมตีรอบตัวต่อเนื่อง หลบการโจมตีแล้วสวนกลับ ปิดท้ายด้วยระเบิดที่แรงตามจำนวนฮิต |
+| 454 | Yin Yang Fist (`panda_yinYangFist`) | Active | 444 | 55 | 65 | Magic | self | ผนึกหยินหยางรอบตัว ดูดเป้าหมายในระยะเข้ามาและทำให้ติดสถานะเชื่องช้า และระเบิดสายฟ้าทั่วระยะ เป้าหมายที่ติดสถานะเชื่องช้าโดนความเสียหายเพิ่มขึ้น 30% |

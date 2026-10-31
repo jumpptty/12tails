@@ -4889,11 +4889,57 @@ async function donateChildTests(env) {
     good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
   good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && !html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"])') && html.includes("var G = 'html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot, and og (the BB look, user 2026-10-29)");
   good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
+  // TTO (user 2026-10-31, TailsTopia's simulator read that day): the C pool stops at 9; cells 452-454 need Lv 100, 7 C skills and their required skills, cost no point, one at a time; each has a stub card.
+  { const X = vm.runInContext("SKILL_SIM_TTO_EXTRA", sandbox), cf = vm.runInContext("skillSimCellsFor", sandbox), valid = vm.runInContext("skillSimValid", sandbox), probs = vm.runInContext("skillSimProblems", sandbox), auto = vm.runInContext("skillSimAutoLearn", sandbox);
+    const P = vm.runInContext("SKILL_SIM_POOLS", sandbox), magicSet = vm.runInContext("TTO_MAGIC_DMG", sandbox), over = vm.runInContext("CLASS_GUIDE_TTO_OVER_C", sandbox), isOver = vm.runInContext("classGuideIsOverC", sandbox), cgs = vm.runInContext("CLASS_GUIDES", sandbox), normG = vm.runInContext("classGuideNormalize", sandbox);
+    good(P.tto.c(94) === 8 && P.tto.c(95) === 9 && P.tto.c(110) === 9 && P.bb.c(110) === 12 && P.tto.normal(110) === 49, "TTO C pool: 8 at Lv 94, 9 at Lv 95 and Lv 110; BB / ToT still 12 at Lv 110");
+    good(Object.keys(X).length === 12 && Object.values(X).every(a => a.map(e => e[0]).join() === "452,453,454"), "every class has TTO cells 452, 453, 454 and nothing else (Penguin 463 is left out, user 2026-10-31)");
+    for (const key in X){
+      const cs = cf("tto", key), names = [0, 1, 2, 3].map(String), rulesOf = (id, set, lv) => probs(cs, names, new Set(set), lv).filter(p => p.id === id || p.id === null).map(p => p.rule);
+      const c7 = Object.keys(cs).map(Number).filter(i => i > 400 && !cs[i].ex).slice(0, 7);
+      for (const e of X[key]){
+        const id = e[0], base = [...new Set([...c7, ...e[3]])], cSpent = base.filter(i => i > 400).length, card = SKILLS.find(s => s.id === e[1].replace(/[0-9]+$/, ""));
+        good(cs[id] && cs[id].ex && cs[id].lv === 100 && cs[id].bn === 7 && !cf("og", key)[id], key + " " + id + ": a TTO-only free cell, Lv 100, 7 C skills");
+        good(!rulesOf(id, [...base, id], 100).some(r => ["level", "req", "cbn", "choice", "pool"].includes(r)) || cSpent > 9, key + " " + id + ": Lv 100, 7 C skills and its required skills are enough");
+        good(rulesOf(id, [...base, id], 99).includes("level"), key + " " + id + ": refused below Lv 100");
+        good(rulesOf(id, [id, ...e[3], ...c7.filter(i => !e[3].includes(i)).slice(0, Math.max(0, 6 - e[3].filter(i => i > 400).length))], 100).includes("cbn"), key + " " + id + ": refused with 6 C skills");
+        e[3].forEach(r => good(rulesOf(id, [...base.filter(i => i !== r), id], 100).includes("req"), key + " " + id + ": needs " + r));
+        good(rulesOf(id, [...base, id, X[key].find(o => o[0] !== id)[0]], 100).includes("choice"), key + " " + id + ": one of the three at a time");
+        good(card && card.soon === "tto" && card.onlyServer === "tto" && card.class === vm.runInContext("SKILL_SIM_NAMES", sandbox)[key] && !!card.passive === !!e[4] && typeof card.desc === "string" && card.desc.startsWith(e[8]) && (e[7] === "None") === !card.desc.includes("ประเภทดาเมจ") && (e[5] || e[6] ? card.cost.mp === e[5] && card.cost.sp === e[6] && card.cost.spType === "red" : !card.cost), key + " " + id + ": stub card with the site's text, MP, SP and damage type");
+        good(magicSet.has(card && card.id) === (e[7] === "Magic"), key + " " + id + ": in TTO_MAGIC_DMG exactly when the site tags it Magic");
+        good(!!SKILL_ICONS[e[1]], key + " " + id + ": icon " + e[1] + " is embedded");
+      }
+      good(!cs[463] || !cs[463].ex, key + ": no free cell 463");
+    }
+    { const cs = cf("tto", "wolf"); let s = new Set(); for (const t of [254, 204, 214, 224, 234]){ s = auto(cs, 4, s, 100, t); if (!s) break; }
+      const legal = s && [404, 402, 414, 412, 424, 422, 432].reduce((acc, id) => { acc.add(id); return acc; }, new Set(s));
+      good(legal && valid(cs, 4, new Set([...legal, 452]), 100), "a legal Lv 100 Wolf build learns Wind Bound Domain free on top of 7 C skills");
+      good(legal && !valid(cs, 4, new Set([...legal, 452]), 99) && !valid(cs, 4, new Set([...legal, 452, 453]), 100), "the same build is refused at Lv 99 and with a second free skill");
+      if (legal) { const six = new Set(legal); six.delete(432); good(!valid(cs, 4, new Set([...six, 452]), 100), "the same build is refused with 6 C skills"); }
+    }
+    { const cs = cf("tto", "wolf"), set = new Set(Object.keys(cs).map(Number).filter(i => i > 400 && !cs[i].ex).slice(0, 10)), budget = vm.runInContext("skillSimBudgetOk", sandbox), cBB = cf("tot", "wolf");
+      good(!budget(cs, set, 110) && budget(cBB, set, 110), "10 C skills are over the pool on TTO at Lv 110, not on ToT"); }
+    { const list = cgs.filter(g => g.build.server === "tto" && g.build.learned.filter(i => i > 400 && i < 500).length > 9);
+      good(list.map(g => g.id).join() === "4,6,30,31,58,70" && list.every(g => isOver(g.build)) && over.size === list.length, "the outdated TTO guides are exactly #4, #6, #30, #31, #58, #70 (a replaced or removed guide takes its CLASS_GUIDE_TTO_OVER_C line with it)");
+      good(list.every(g => { try { return normG(g).build.learned.length === g.build.learned.length; } catch (e) { return false; } }), "an outdated TTO guide still opens as written");
+      const copy = JSON.parse(JSON.stringify(list[0])); copy.build.learned = copy.build.learned.concat(copy.build.learned.includes(424) ? 414 : 424).filter((v, i, a) => a.indexOf(v) === i);
+      let refused = false; try { if (!isOver(copy.build)) normG(copy); } catch (e) { refused = true; } good(refused, "a changed over-cap TTO build is refused"); }
+    { const model = vm.runInContext("classGuideImageModel", sandbox), ttoC = model("wolf", "tto")[3].rows, totC = model("wolf", "tot")[3].rows, bbC = model("wolf", "og")[3].rows;
+      const last = ttoC[ttoC.length - 1].slots;
+      good(last.length === 4 && last[0] === null && last.slice(1).map(c => c.id).join() === "452,453,454" && ttoC.every(r => !r.heading), "the TTO grid draws 452-454 as one row under C5, with no heading");
+      good(totC.some(r => r.heading === "ToT EX") && totC.filter(r => r.slots).length === 7 && bbC.filter(r => r.slots).length === 5, "ToT keeps its EX heading and two rows, BB has none"); }
+    { const wolf = SKILLS.find(s => s.id === "wolf_resonanceClaw");
+      sandbox._setServer("tto"); sandbox._skillRanks[wolf.id] = 1; sandbox._selectSkill(wolf); const h = sandbox._getRenderedHeroHtml();
+      good(!h.includes("sk-soon") && h.includes("ฟาดดาบคู่") && h.includes("เวทมนตร์") && h.includes(">55 MP<") && h.includes("sk-cost-sp"), "the Resonance Claw stub renders its text, damage type and MP without the big coming-soon look");
+      const pan = ["panda_wind&cloud", "panda_rain&storm"]; good(pan.every(id => magicSet.has(id) && SKILLS.some(s => s.id === id)), "Panda Wind & Cloud and Rain & Storm are Magic on TTO");
+      const sooner = SKILLS.find(s => s.soon === "reborn" && s.desc === "เร็วๆนี้"); if (sooner){ sandbox._setServer("reborn"); sandbox._selectSkill(sooner); good(sandbox._getRenderedHeroHtml().includes("sk-soon"), "a plain coming-soon stub keeps its big look"); }
+      sandbox._setServer("og"); }
+  }
   // Reborn in the skill simulator and the class guide editor (user 2026-10-25; data read from 12tails-reborn.com/skills, Reborn-Mechanics-Reference.md section 9)
   { const pools = vm.runInContext("SKILL_SIM_POOLS", sandbox), PR = pools.reborn, PB = pools.bb;
     const at = (lv) => PR.normal(lv) + "/" + PR.c(lv);
     good(at(1) === "0/0" && at(50) === "49/0" && at(55) === "49/1" && at(60) === "50/2" && at(150) === "59/20" && PR.ex(150) === 0, "Reborn pools: Lv 1 0/0, 50 49/0, 55 49/1, 60 50/2, 150 59/20 (the site's own numbers), no EX");
-    good(PR.c(70) + PR.normal(70) <= 80 && PB.normal(95) === 49 && PB.c(95) === 9 && PB.ex(100) === 2, "BB / ToT / TTO pools unchanged: 49 normal and 9 C at Lv 95, 2 EX at Lv 100");
+    good(PR.c(70) + PR.normal(70) <= 80 && PB.normal(95) === 49 && PB.c(95) === 9 && PB.ex(100) === 2, "BB / ToT pools unchanged: 49 normal and 9 C at Lv 95, 2 EX at Lv 100");
     const forEach = vm.runInContext("(fn) => Object.keys(SKILL_SIM).forEach(fn)", sandbox), cellsFor = vm.runInContext("skillSimCellsFor", sandbox), validFn = vm.runInContext("skillSimValid", sandbox), trees = vm.runInContext("skillSimTrees", sandbox), pass = vm.runInContext("skillSimPassive", sandbox);
     let classes = 0, bad2 = 0;
     forEach((cls) => {
@@ -5421,7 +5467,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   for (const sk of SKILLS) {
     const maxRank = sk.maxRank || 1;
     const descAt = (r) => typeof sk.desc === "function" ? sk.desc(r) : String(sk.desc || "");
-    if (!sk.reach) { const dd = descAt(maxRank); if (REACH_DESC_RE.test(dd) || (!sk.passive && !/_zombie/.test(sk.id) && !REACH_BACKLOG_EXEMPT.has(sk.id) && REACH_BACKLOG_RE.test(dd.replace(/<br>/g, " ")))){ reachBacklog++; reachBacklogIds.push(sk.id); } continue; }
+    if (!sk.reach) { if (sk.soon) continue; const dd = descAt(maxRank); if (REACH_DESC_RE.test(dd) || (!sk.passive && !/_zombie/.test(sk.id) && !REACH_BACKLOG_EXEMPT.has(sk.id) && REACH_BACKLOG_RE.test(dd.replace(/<br>/g, " ")))){ reachBacklog++; reachBacklogIds.push(sk.id); } continue; }
     for (let r = 1; r <= maxRank; r++) {
       let parts;
       try { parts = sandbox._reachNormalize(sk.reach, r); } catch (e) { bad(`${sk.id} rank ${r}: ${e.message}`); continue; }

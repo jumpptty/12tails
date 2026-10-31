@@ -975,3 +975,13 @@ Seconds from the start of the move (or of the child routine named), read from th
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindAreaTarget(pos, 7, 3)`, `hit(1, (int)(0.75 × ATK), KO 1)`, cooldown 1.5 s (`:9102-9125, :9229`).
 - **mountDash** (normal attack while moving faster): `Physics.Raycast` 40 m to the first collider (`:9642`; the `cat_rAttack` prefab is visual only, no collider), `hit(25, (int)(1.5 × ATK), KO 3)`, cooldown 1.5 s (`:9610, :9680, :9786`).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Royal Flush (`cat_royalFlush`) | Active | 442 | 55 | 50 | Magic | enemy | ปาไพ่ยักษ์ 5 ใบรอบเป้าหมาย เปิดมือโป๊กเกอร์ มือยิ่งสูงยิ่งระเบิดหลายรอบ LCK ช่วยได้ ออก Royal Flush ดาบไพ่ยักษ์ฟาดลงมา |
+| 453 | Crescent Eclipse (`cat_crescentEclipse`) | Active | 443 | 45 | 50 | Physical | enemy | กระโดดใส่เป้าหมาย ปักใบมีด 8 เล่มล้อมแล้วดิ่งลงฟันระเบิดเป้าหมายในระยะ 6.5m เป้าติดดีบัฟโดนโจมตีแรงขึ้นและแมวฮีลได้ครึ่งนึง หากเป้าหมายตายจะระเบิดความเสียหาย (14m) |
+| 454 | Drop Anchor (`cat_dropAnchor`) | Active | 444 | 55 | 50 | Physical | enemy | ทุ่มสมอใส่เป้า (16m) ล่ามโซ่ศัตรูรอบข้างรวมถึงผู้เล่น 6 วิ กดซ้ำหรือหมดเวลาจะกระชากทุกตัวเข้าหาสมอแล้วทุบ ลากมาได้เยอะยิ่งแรง |

@@ -691,3 +691,13 @@ Seconds from the start of the move (or of the child routine named), read from th
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 3, 3, 3, 3)`, `hit(2, ATK, KO 1)`, cooldown 1.5 s (`:6198-6221, :6342`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 8, 3)`, `hit(22, (int)(1.6 × ATK), KO 1)`, cooldown 1.5 s (`:6707-6730, :6839`).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Unchained Fury (`bison_unchainedFury`) | Active | 254 | 40 | 40 | Physical | self | จ่าย HP 15% ล้างสถานะผิดปกติทั้งหมด (3sec) แล้วเข้า Berserker Rush ขั้นสูงสุด 12 วิ ใช้ได้แม้ติดสตัน |
+| 453 | Titan Drop (`bison_titanDrop`) | Active | 354 | 45 | 50 | Physical | enemy | กระโดดใช้ขวานทุบเป้าหมายสร้างคลื่นกระแทกออกไปอีก 2 คลื่นและสร้าง KO |
+| 454 | Magma Quake (`bison_magmaQuake`) | Active | 434 + 444 | 65 | 65 | Physical | self | ฟาดพื้นตามอาวุธที่ไบสันถือ ขวานสร้างทุ่งลาวาเผาศัตรู (6sec) ค้อนกระโดดทุบเกิดแผ่นดินไหว KO ต่อเนื่อง (5sec) |

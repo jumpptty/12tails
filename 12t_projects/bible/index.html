@@ -2586,6 +2586,7 @@
   .cg-title-icon{flex:none;width:32px;height:32px;object-fit:contain}
   .cg-title-server{width:26px;height:26px}
   .cg-title-lv{font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap}
+  .cg-outdated{margin:6px 0 0;color:var(--seal);font-size:13px;font-weight:600;line-height:1.5}
   .cg-unspent{font-size:12px;font-weight:600;line-height:1;padding:4px 8px;border-radius:999px;color:var(--pro);border:1px solid currentColor;background:color-mix(in srgb, var(--pro) 12%, transparent);white-space:nowrap;cursor:help}
   .cg-title-text{display:block;overflow-wrap:anywhere}
   .cg-word{display:inline-block;max-width:100%;overflow-wrap:anywhere}   /* a title chunk stays whole (classGuideTitleInto) */
@@ -8685,7 +8686,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=f7c6e3802d" id="bibleAssets"></script>
+<script src="assets.js?v=61da38d4fb" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -8768,7 +8769,7 @@ function statHi(summon) {
 const TTO_MAGIC_DMG = new Set([
   "wolf_crusader", "wolf_crossBreak", "wolf_grandCross", "wolf_lawBringer", "wolf_dualBrand", "wolf_twinResonance",
   "bison_powerHammer", "bison_calamityHammer", "panda_stasisBlow", "panda_deathBlow", "panda_lotusPalm", "panda_heavenPalm",
-  "panda_fuujinKen", "whale_hydroBlast", "whale_malStorm", "whale_megalodon", "whale_bowlingWhale", "whale_grandTide",
+  "panda_fuujinKen", "panda_wind&cloud", "panda_rain&storm", "whale_hydroBlast", "whale_malStorm", "whale_megalodon", "whale_bowlingWhale", "whale_grandTide",
   "cat_luckyCard", "cat_luckyDice", "cat_doubleDown", "cat_grandCasinoArcade", "cat_moonBlade", "cat_moonStorm",
   "cat_deltaStrike", "chameleon_rightStride", "chameleon_bugSlayer", "chameleon_tailSlayer", "chameleon_elementalSlayer", "chameleon_machineSlayer",
   "chameleon_allBugSlayer", "chameleon_allTailSlayer", "chameleon_allElementalSlayer", "chameleon_allMachineSlayer", "chameleon_allSlain", "chameleon_zeroShot",
@@ -8779,7 +8780,9 @@ const TTO_MAGIC_DMG = new Set([
   "penguin_novaFlare", "penguin_meteora", "penguin_frozenBlast", "penguin_arcticWind", "penguin_tornado", "penguin_typhoon",
   "penguin_absoluteZero", "penguin_blizzard", "penguin_arcticEmperor", "bat_shadowGaze", "bat_echoes", "bat_nightmare",
   "bat_dreamDazzle", "bat_phantasmBlast", "bat_shatteringDream",
+  "wolf_resonanceClaw", "panda_tempestDance", "panda_yinYangFist", "whale_leviathanBreach", "cat_royalFlush", "chameleon_apexHunt", "chameleon_chainLightning", "monkey_jaAscension", "sheep_grandCodex", "penguin_constellation", "penguin_frostField", "penguin_emperorsMarch", "bat_crimsonVerdict", "bat_evilTwin", "bat_nightfallSwarm",
 ]);
+// Re-read 2026-10-31: Panda Wind & Cloud and Rain & Storm are newly tagged; the last line is the new Lv 100 skills tagged Magic (SKILL_SIM_TTO_EXTRA, no damage formula yet).
 // monkey_fireAvatar_fireBall: not tagged in the simulator, but it shoots the same Fireball (user 2026-10-07).
 // A card may instead be magic only while a dep is on (ttoMagicDep: Auto Gyro Gun shots with Synchro Mole, user 2026-10-06).
 function isTtoMagic(skill) {
@@ -19955,13 +19958,13 @@ function mountSkillCooldownLookup(root){
     const trees = SKILL_SIM[key].map((t, ti) => { const cells = t.rows.flat().filter(Boolean); return { name: ["Basic", "A", "B", "C"][ti] || t.name, full: t.name, stems: new Set(cells.map(c => stem(c[0]))), cards: new Set(cells.map(c => skillSimCardId(c[0]))), ids: [] }; });
     const other = { name: "อื่น ๆ", ids: [] };
     // coming-soon cards (SKILL_SIM_REBORN_EXTRA / SKILL_SIM_EX stubs) get their own tabs, named like the Class C tab they extend (user 2026-10-25)
-    const soonTabs = { tot: { name: "C (ToT)", full: "ToT EX", ids: [] }, reborn: { name: "C (RB)", full: "Tails Reborn C6 / C7", ids: [] } };
+    const soonTabs = { tot: { name: "C (ToT)", full: "ToT EX", ids: [] }, reborn: { name: "C (RB)", full: "Tails Reborn C6 / C7", ids: [] }, tto: { name: "C (TTO)", full: "TTO Lv 100", ids: [] } };
     SKILLS.filter(sk => sk.class === cls).forEach(sk => { const ex = sk.soon || sk.onlyServer; if (ex && soonTabs[ex]){ soonTabs[ex].ids.push(sk.id); return; } const t = trees.find(x => x.stems.has(stem(sk.icon))) || trees.find(x => x.cards.has(sk.id)); (t || other).ids.push(sk.id); });
     // a server-exclusive skill (a coming-soon stub or a researched card such as Mix Shot, user 2026-10-25) sits in its server's C tab, in simulator slot order
     const slot = (list) => (list || []).map(c => String(Array.isArray(c) ? c[1] : c.icon).replace(/[0-9]+$/, ""));
     const bySlot = (tab, order) => tab.ids.sort((a, b) => { const i = order.indexOf(a), j = order.indexOf(b); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); });
-    bySlot(soonTabs.tot, slot(SKILL_SIM_EX[key])); bySlot(soonTabs.reborn, slot(SKILL_SIM_REBORN_EXTRA[key]));
-    return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : [], [soonTabs.tot, soonTabs.reborn].filter(t => t.ids.length));
+    bySlot(soonTabs.tot, slot(SKILL_SIM_EX[key])); bySlot(soonTabs.reborn, slot(SKILL_SIM_REBORN_EXTRA[key])); bySlot(soonTabs.tto, slot(SKILL_SIM_TTO_EXTRA[key]));
+    return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : [], [soonTabs.tot, soonTabs.reborn, soonTabs.tto].filter(t => t.ids.length));
   }
   // No scrolling on desktop (user 2026-10-19): a roster or search grid taller than its box first packs its cards tighter
   // (.is-tight), then shows one page at a time with ‹ n / N › under it. Phones keep the scroll.
@@ -24506,7 +24509,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // tooltip modal, which holds every note of the card (user 2026-10-27: nothing opens inside the desc any more).
     const noteDefs = [["tip", tipNoteHtml, "คำอธิบายไม่ตรง"], ["bug", bbBugHtml, "บั๊ก"], ["unintended", unintendedHtml, "ไม่ตั้งใจ"]].filter(n => n[1]);
     const noteChipsInner = noteDefs.map(([k, , label]) => `<button type="button" class="sk-note-chip sk-note-${k}" data-note-toggle="${k}" aria-haspopup="dialog" aria-label="${label}" title="${label}">${NOTE_ICO[k]}</button>`).join("");
-    const heroDescHtmlFor = (deps) => (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}${activeSelected.soon ? " sk-soon" : ""}">${statusBadgeHtml}${descFormattedFor(deps)}${liveCheckHtml}${descDepToggle}</div>` : "";
+    const heroDescHtmlFor = (deps) => (descStr || statusBadgeHtml || descDepToggle || liveCheckHtml) ? `<div class="sk-hero-desc${descDepToggle ? " has-desc-toggle" : ""}${activeSelected.soon && activeSelected.desc === "เร็วๆนี้" ? " sk-soon" : ""}">${statusBadgeHtml}${descFormattedFor(deps)}${liveCheckHtml}${descDepToggle}</div>` : "";
     // Per-card chip repositioning (added 2026-09-19): a skill's own `chipCols`
     // field (sparse, e.g. {dur2: 2, lck: 4}) overrides that one chip's default
     // CSS grid-column via an inline style -- every other chip keeps using its
@@ -31118,14 +31121,33 @@ const SKILL_SIM_EX = {"bat":[{"id":451,"tree":3,"icon":"tot_ex_updamagemonter","
 // C7 = 461-464 (Lv 105), 8 skills needing 8 skills in the tab. [id, icon key, name, reqLv, reqPoints, [reqSkillIds], passive (1) or active (0)]. They take points from the C pool like any C skill.
 const SKILL_SIM_REBORN_EXTRA = {"wolf":[[451,"wolf_chargedFang5","Charged Fang",95,8,[401,411],1],[452,"wolf_guardianOath5","Guardian Oath",95,8,[254],0],[453,"wolf_bladeSymphony5","Blade Symphony",95,8,[354],1],[454,"wolf_alphaHowl5","Alpha Howl",95,8,[444],0],[461,"wolf_unyieldingOath5","Unyielding Oath",105,8,[122,421],1],[462,"wolf_trinityCross5","Trinity Cross",105,8,[264],1],[463,"wolf_eternalDarkEdge5","Eternal Dark Edge",105,8,[364],1],[464,"wolf_shadowPack5","Shadow Pack",105,8,[454],1]],"bison":[[451,"bison_savageMomentum5","Savage Momentum",95,8,[401,411],1],[452,"bison_crimsonThirst5","Crimson Thirst",95,8,[254],1],[453,"bison_gaiaFissure5","Gaia Fissure",95,8,[354],1],[454,"bison_stampede5","Stampede",95,8,[444],0],[461,"bison_crimsonEngine5","Crimson Engine",105,8,[122,421],1],[462,"bison_undyingFury5","Undying Fury",105,8,[264],1],[463,"bison_colossusUnbound5","Colossus Unbound",105,8,[364],1],[464,"bison_ragnarokQuake5","Ragnarok Quake",105,8,[454],0]],"panda":[[451,"panda_resonantFist5","Resonant Fist",95,8,[401,411],1],[452,"panda_dragonTyphoon5","Dragon Typhoon",95,8,[254],1],[453,"panda_windAndStrom5","Wind And Storm",95,8,[354],0],[454,"panda_hundredFists5","Hundred Fists",95,8,[444],0],[461,"panda_formlessPath5","Formless Path",105,8,[122,421],1],[462,"panda_spiritOverflow5","Spirit Overflow",105,8,[264],1],[463,"panda_fiveHeavenPalms5","Five Heaven Palms",105,8,[364],1],[464,"panda_asuraTrinity5","Asura Trinity",105,8,[454],0]],"whale":[[451,"whale_tidalReach5","Tidal Reach",95,8,[401,411],1],[452,"whale_abyssalPierce5","Abyssal Pierce",95,8,[254],1],[453,"whale_bulwarkChorus5","Bulwark Chorus",95,8,[354],1],[454,"whale_leviathanTide5","Leviathan Tide",95,8,[444],0],[461,"whale_oceanFeast5","Ocean Feast",105,8,[122,421],1],[462,"whale_lastBulwark5","Last Bulwark",105,8,[264],1],[463,"whale_podCall5","Pod Call",105,8,[363],0],[464,"whale_maelstromAbyss5","Maelstrom Abyss",105,8,[454],0]],"cat":[[451,"cat_predatorFocus5","Predator Focus",95,8,[401,411],1],[452,"cat_jackpotPair5","Jackpot Pair",95,8,[254],1],[453,"cat_lunarTempest5","Lunar Tempest",95,8,[354],1],[454,"cat_broadside5","Broadside",95,8,[444],0],[461,"cat_nightEye5","Night Eye",105,8,[123,421],1],[462,"cat_ninthLife5","Ninth Life",105,8,[264],1],[463,"cat_shadowUponShadow5","Shadow Upon Shadow",105,8,[364],0],[464,"cat_ghostGalleon5","Ghost Galleon",105,8,[454],0]],"chameleon":[[451,"chameleon_walkingArsenal5","Walking Arsenal",95,8,[401,411],1],[452,"chameleon_venomOverload5","Venom Overload",95,8,[254],1],[453,"chameleon_omniSlayer5","Omni Slayer",95,8,[354],1],[454,"chameleon_phantomBloom5","Phantom Bloom",95,8,[444],0],[461,"chameleon_adaptiveScale5","Adaptive Scale",105,8,[122,421],1],[462,"chameleon_veilOfHunt5","Veil Of Hunt",105,8,[263],0],[463,"chameleon_fourSeals5","Four Seals",105,8,[364],1],[464,"chameleon_venomApocalypse5","Venom Apocalypse",105,8,[454],0]],"mole":[[451,"mole_burrowRegen5","Burrow Regen",95,8,[401,411],1],[452,"mole_airStrike5","Air Strike",95,8,[254],0],[453,"mole_ICBM5","ICBM",95,8,[354],0],[454,"mole_overclockCore5","Giga Drill",95,8,[444],0],[461,"mole_reactorCore5","Reactor Core",105,8,[124,421],1],[462,"mole_smartWarhead5","Smart Warhead",105,8,[264],1],[463,"mole_ironOverdrive5","Iron Overdrive",105,8,[364],0],[464,"mole_totalWar5","Total War",105,8,[454],0]],"rabbit":[[451,"rabbit_eagleEye5","Eagle Eye",95,8,[401,411],1],[452,"rabbit_mixshot","Mix Shot",95,8,[254],0],[453,"rabbit_thousandShot5","Thousand Shot",95,8,[354],0],[454,"rabbit_tradingWithWind5","Trading With Wind",95,8,[444],0],[461,"rabbit_skyfallSniper5","Skyfall Sniper",105,8,[122,421],1],[462,"rabbit_fieldPharmacy5","Field Pharmacy",105,8,[264],1],[463,"rabbit_carronGambit5","Carron Gambit",105,8,[364],0],[464,"rabbit_bulletRain5","Bullet Rain",105,8,[454],0]],"monkey":[[451,"monkey_soulLink5","Soul Link",95,8,[401,411],1],[452,"monkey_jaOverdrive5","Ja Overdrive",95,8,[254],1],[453,"monkey_gaiaBulwark5","Gaia Bulwark",95,8,[354],1],[454,"monkey_twinSouls5","Twin Souls",95,8,[444],0],[461,"monkey_soulPact5","Soul Pact",105,8,[124,421],1],[462,"monkey_runicInferno5","Runic Inferno",105,8,[264],1],[463,"monkey_runicBastion5","Runic Bastion",105,8,[364],1],[464,"monkey_elementalSovereign5","Elemental Sovereign",105,8,[454],0]],"sheep":[[451,"sheep_zealousCharge5","Zealous Charge",95,8,[401,411],1],[452,"sheep_miracleAscension5","Miracle Ascension",95,8,[254],1],[453,"sheep_aegisOfFlock5","Aegis Of Flock",95,8,[354],1],[454,"sheep_heavensVerdict5","Heaven's Verdict",95,8,[444],0],[461,"sheep_perfectSerenity5","Perfect Serenity",105,8,[124,421],1],[462,"sheep_divineBenediction5","Divine Benediction",105,8,[264],1],[463,"sheep_karmicJudgment5","Karmic Judgment",105,8,[364],1],[464,"sheep_gatesOfEden5","Seraph Wings",105,8,[454],0]],"penguin":[[451,"penguin_manaConduit5","Mana Conduit",95,8,[401,411],1],[452,"penguin_blackhole5","Blackhole",95,8,[254],0],[453,"penguin_permafrost5","Permafrost",95,8,[354],1],[454,"penguin_supernova5","Supernova",95,8,[444],0],[461,"penguin_crownOfStars5","Crown Of Stars",105,8,[124,421],1],[462,"penguin_galacticStillness5","Galactic Stillness",105,8,[264],1],[463,"penguin_absoluteWinter5","Absolute Winter",105,8,[364],0],[464,"penguin_heatDeath5","Heat Death",105,8,[454],0]],"bat":[[451,"bat_vampiricSurge5","Vampiric Surge",95,8,[401,411],1],[452,"bat_terminalDecay5","Terminal Decay",95,8,[254],1],[453,"bat_puppeteer5","Puppeteer",95,8,[354],0],[454,"bat_eternalNight5","Eternal Night",95,8,[444],0],[461,"bat_endlessHunger5","Endless Hunger",105,8,[123,421],1],[462,"bat_doomsayer5","Doomsayer",105,8,[264],1],[463,"bat_nightmareCascade5","Nightmare Cascade",105,8,[363],1],[464,"bat_nocturneSovereign5","Nocturne Sovereign",105,8,[454],1]]};
 const SKILL_SIM_REBORN_TREES = {};
+// TTO Lv 100 skills (TailsTopia's simulator, tailstopia.online/skill-simulator, read 2026-10-31; user: no detailed code yet, so stub cards). Class C cells 452-454, one row under C5:
+// Lv 100, 7 ordinary C skills first, no point cost (user 2026-10-31), one of the three at a time. [id, icon key, name (from the site's id), [reqSkillIds], passive (1) or active (0), MP, SP spent, damage type, the site's text].
+const SKILL_SIM_TTO_EXTRA = {
+  "wolf":[[452,"wolf_windBoundDomain5","Wind Bound Domain",[254],0,45,30,"None","ล้างดีบัฟและ ฟื้นพลังชีวิตของหมาป่า 50% และฟื้นพลังชีวิตของพันธมิตรในระยะเท่ากับหมาป่า (50%) แล้วฟื้นต่อเนื่อง (3%/2sec, 6sec) และทำให้ศัตรูติดสถานะอ่อนแรง (ใช้ได้เมื่อ hp เหลือน้อยกว่า 40%)"],[453,"wolf_bladeSurge5","Blade Surge",[354],0,50,55,"Physical","ฟันรอบตัว (7m) เป้าหมายที่อยู่ในระยะจะถูกหยุดนิ่ง ขยับไม่ได้ (2sec) ระหว่างใช้ไม่โดน CC"],[454,"wolf_resonanceClaw5","Resonance Claw",[444],0,55,55,"Magic","ฟาดดาบคู่ปล่อยคลื่น 3 แฉก พุ่งไกลทะลุเป้าหมายในระยะ เป้าหมายที่โดนสกิลจะเกิดระเบิด Resonance"]],
+  "bison":[[452,"bison_unchainedFury5","Unchained Fury",[254],0,40,40,"Physical","จ่าย HP 15% ล้างสถานะผิดปกติทั้งหมด (3sec) แล้วเข้า Berserker Rush ขั้นสูงสุด 12 วิ ใช้ได้แม้ติดสตัน"],[453,"bison_titanDrop5","Titan Drop",[354],0,45,50,"Physical","กระโดดใช้ขวานทุบเป้าหมายสร้างคลื่นกระแทกออกไปอีก 2 คลื่นและสร้าง KO"],[454,"bison_magmaQuake5","Magma Quake",[434,444],0,65,65,"Physical","ฟาดพื้นตามอาวุธที่ไบสันถือ ขวานสร้างทุ่งลาวาเผาศัตรู (6sec) ค้อนกระโดดทุบเกิดแผ่นดินไหว KO ต่อเนื่อง (5sec)"]],
+  "panda":[[452,"panda_nineDragons5","Nine Dragons",[254],0,40,60,"Physical","ต่อย 8 หมัดปล่อยมังกรทองกัดศัตรูรอบตัว ราชามังกรพุ่งใส่เป้ารัวกลางอากาศแล้วกระแทกลงพื้น"],[453,"panda_tempestDance5","Tempest Dance",[354],0,35,50,"Magic","หมุนเป็นพายุ 5 วิ บังคับทิศได้ โจมตีรอบตัวต่อเนื่อง หลบการโจมตีแล้วสวนกลับ ปิดท้ายด้วยระเบิดที่แรงตามจำนวนฮิต"],[454,"panda_yinYangFist5","Yin Yang Fist",[444],0,55,65,"Magic","ผนึกหยินหยางรอบตัว ดูดเป้าหมายในระยะเข้ามาและทำให้ติดสถานะเชื่องช้า และระเบิดสายฟ้าทั่วระยะ เป้าหมายที่ติดสถานะเชื่องช้าโดนความเสียหายเพิ่มขึ้น 30%"]],
+  "whale":[[452,"whale_sovereignImpaler5","Sovereign Impaler",[254],1,0,0,"None","WallPuncture โดนเป้าหมายเพิ่ม 1 Impaler (+1 Impaler/hit, 3max) Armor Shatter รับดาเมจเพิ่ม 15% และทำลายบาเรีย"],[453,"whale_oceansResilience5","Oceans Resilience",[354],1,0,0,"None","hardenSkin เป้าหมายโจมตีวาฬในระยะประชิดจะเพิ่ม Hate และติดสถานะเชื่องช้า โจมตีช้าลง 30% (4sec) หากค่า DEF เต็มรับดาเมจลด 10%"],[454,"whale_leviathanBreach5","Leviathan Breach",[444],0,60,50,"Magic","เรียกโลมากระโดดไปหาเป้า แล้วเรียก Leviathan ขึ้นมาทำความเสียหายอย่างรุนแรงตามค่า ATK และ DEF และสร้างสถานะน้ำวน (5sec)"]],
+  "cat":[[452,"cat_royalFlush5","Royal Flush",[442],0,55,50,"Magic","ปาไพ่ยักษ์ 5 ใบรอบเป้าหมาย เปิดมือโป๊กเกอร์ มือยิ่งสูงยิ่งระเบิดหลายรอบ LCK ช่วยได้ ออก Royal Flush ดาบไพ่ยักษ์ฟาดลงมา"],[453,"cat_crescentEclipse5","Crescent Eclipse",[443],0,45,50,"Physical","กระโดดใส่เป้าหมาย ปักใบมีด 8 เล่มล้อมแล้วดิ่งลงฟันระเบิดเป้าหมายในระยะ 6.5m เป้าติดดีบัฟโดนโจมตีแรงขึ้นและแมวฮีลได้ครึ่งนึง หากเป้าหมายตายจะระเบิดความเสียหาย (14m)"],[454,"cat_dropAnchor5","Drop Anchor",[444],0,55,50,"Physical","ทุ่มสมอใส่เป้า (16m) ล่ามโซ่ศัตรูรอบข้างรวมถึงผู้เล่น 6 วิ กดซ้ำหรือหมดเวลาจะกระชากทุกตัวเข้าหาสมอแล้วทุบ ลากมาได้เยอะยิ่งแรง"]],
+  "chameleon":[[452,"chameleon_venomPhantom5","Venom Phantom",[254],0,50,50,"Physical","ยิงพิษ 5 ดอกใส่เป้าและเป้าหมายข้างเคียง ทุกดอกแยกเป็นร่างเงายิงซ้ำ และแตกเป็น Venom Shock ทิ้งตราภูตพิษ 8 วิ"],[453,"chameleon_apexHunt5","Apex Hunt",[354],0,60,60,"Magic","กระโดดขึ้นสูงชาร์จล็อกเป้าสูงสุด 6 ตัว แล้วยิงพลังธนูใส่ทุกเป้าหมายพร้อมกัน เป้าเลือดน้อยโดนหนักขึ้น (HP < 30%) เป้าหมายติดสถานะ Prey"],[454,"chameleon_chainLightning5","Chain Lightning",[444],0,45,45,"Magic","เพิ่มความเร็วเคลื่อนที่ขึ้น 20% ลดพลังการโจมตีของกิ้งก่าเหลือ 70% ยิงสายฟ้าไปหาเป้าหมาย (2target, -34%dmg) ชิ่งได้สูงสุด 5 ตัว (-20%dmg/target) ลดความเร็วเคลื่อนที่ของกิ้งก่า 60% (4sec)"]],
+  "mole":[[452,"mole_warArea5","War Area",[253,254],0,75,70,"Physical","เพิ่มระดับ Fire Barrage กับ Bombardment เป็นขั้น 3 เรียกพื้นที่สงคราม 10 วิ เครื่องบินกราดยิงและทิ้งระเบิดเพลิงใส่ศัตรูในระยะ"],[453,"mole_twinWarhead5","Twin Warhead",[354],1,0,0,"None","Missile 1-4 ยิงหัวรบ 2 เท่า (30dmg/hit) ทำให้ AutoGyrogun, Barrel Bot และ King Kaiser ในระยะใช้สกิลนี้ได้ และ เพิ่มท่าโจมตีให้ KingKaiser"],[454,"mole_barrelRailgun5","Barrel Railgun",[444],0,70,60,"Physical","ขึ้นขี่ป้อมเรลกันบังคับยิงอัตโนมัติทะลุแนวยาว 12% ทำให้ชา ตัวแรกติดไฟช็อตและ ทิ้งแนวยิงร่องไฟฟ้า (20sec)"]],
+  "rabbit":[[452,"rabbit_medicTurret5","Medic Turret",[442,254],0,55,45,"None","สร้างป้อมรักษา ฮีลพันธมิตรรอบข้างเป็นระยะ และยิงยาใส่พันธมิตรที่ HP น้อยที่สุด (1max)"],[453,"rabbit_coinRicochet5","Coin Ricochet",[443],0,40,45,"Physical","ดีดเหรียญ 4 เหรียญ เด้งเหรียญละ 3 เป้า ทำให้เป้าหมายติดสถานะ Gilded ช้าลง เหรียญสุดท้ายเป็น Cash Out (-Gil/hit)"],[454,"rabbit_bountyHunt5","Bounty Hunt",[444],0,55,50,"Physical","ติดใบประกาศจับเป้าหมาย เป้าหมายที่ติดสถานะจะรับดาเมจเพิ่ม 15% หากเป้าหมายตายจะลดคูลดาวน์ 45 วิ และฮีลฟื้นพลังชีวิตของเพื่อน 10% ได้ SP 20 (12sec)"]],
+  "monkey":[[452,"monkey_jaAscension5","Ja Ascension",[254],0,120,50,"Magic","ติดตัว Ja ทุกตัว +2 Lv กดใช้สังเวย Ja เป็นมงกุฎสุริยะ สกิลสาย A คูลดาวน์ลดลง 30% และเผาศัตรูจนระเบิด"],[453,"monkey_buitenBastion5","Buiten Bastion",[354],0,100,40,"Physical","ติดตัว Buiten ทุกตัว +2 Lv กดใช้สังเวย Buiten เป็นเกราะหินรูนให้เป้าหมาย ดูดซับดาเมจกายภาพ (6sec)"],[454,"monkey_runeGolem5","Rune Golem",[444],0,150,60,"Physical","ใช้ Runic Heartstone เรียก Rune Golem เป้าหมายที่อยู่ในระยะรับดาเมจ และพันธมิตรที่อยู่ในระยะรับดาเมจลด 15%"]],
+  "sheep":[[452,"sheep_gleamingBreath5","Gleaming Breath",[442,254],1,0,0,"None","ทำให้ revive ฟื้นคืนพลังชีวิต HP 90% และเพิ่มสถานะ DEF +30 และ VIT +20 (revive I 10sec, revive II 20sec)"],[453,"sheep_lucentBarrier5","Lucent Barrier",[443,354],1,0,0,"None","ทำให้เวทบาเรีย Reverse สะท้อนดาเมจกลับใส่เป้าหมายที่โจมตี (reverse I 10%, reverse II 20%)"],[454,"sheep_grandCodex5","Grand Codex",[444],0,70,50,"Magic","เรียกคัมภีร์ศักดิ์สิทธิ์ ฮีลพันธมิตรและทำให้ศัตรูติดสถานะเชื่องช้า (heal/2sec) และยิงหอกแสงพุ่งใส่เป้าหมายในระยะ (20sec)"]],
+  "penguin":[[452,"penguin_constellation5","Constellation",[254],0,65,50,"Magic","เรียกดาวตกใส่เป้าและศัตรูรอบข้าง ติด Mana Fracture หากดาวเชื่อมเส้น ตก 3 ดวงขึ้นไปได้ Giant Star"],[453,"penguin_frostField5","Frost Field",[354],0,55,45,"Magic","กระโดดไปหาเป้าหมาย สร้างวงน้ำแข็ง ศัตรูในวงช้าลงและติดสถานะ Frost Mark ครบ 5 แตกเป็น Frost Burst แล้วติด Frost Bite (8sec)"],[454,"penguin_emperorsMarch5","Emperors March",[444],0,80,60,"Magic","เพนกวิน 5 ตัวเลี้ยงบอลพุ่งไปข้างหน้า ติด Frost Mark หากชนกำแพงหรือบอสสร้างความเสียหายเพิ่ม ใช้ต่อจาก Constellation เพนกวิน +3"]],
+  "bat":[[452,"bat_crimsonVerdict5","Crimson Verdict",[254],0,55,50,"Magic","ระเบิดคำสาปโจมตีเป้าหมายและศัตรูในระยะ 10m (2 hit) สร้างความเสียหายตามคำสาปของค้างคาว ถ้าใช้ Mass Cast สร้างความเสียหายด้วยพลังโจมตีที่เพิ่มขึ้นได้โดยไม่ต้องมีคำสาป 24m"],[453,"bat_evilTwin5","Evil Twin",[354],0,55,50,"Magic","กระชากวิญญาณเป้าหมายออกมาไว้ข้างตัว (6sec + CHA) โจมตีวิญญาณร่างจริงรับความเสียหาย 50% เมื่อหมดเวลาวิญญาณจะระเบิดตามความเสียหายที่สะสม และค้างคาวฟื้น HP"],[454,"bat_nightfallSwarm5","Nightfall Swarm",[444],0,70,45,"Magic","แตกร่างเป็นฝูงค้างคาวพุ่งไปข้างหน้า เป้าหมายในระยะมีโอกาสติดคำสาปหรือมายา สร้างความเสียหายตามคำสาปของค้างคาวและ ฟื้น HP ตามจำนวนเป้าหมายที่พุ่งผ่าน"]]
+};
 // Coming-soon cards (user 2026-10-25): the ToT EX skills and Reborn's C6 / C7 skills already sit in the simulator and the class guides, so each gets a normal skill card with no data yet,
 // only desc "เร็วๆนี้" (`soon: "tot" | "reborn"` marks it: roster tabs C (ToT) / C (RB), large desc). The id is the icon key without its rank digit, which is what the simulator's cell -> card link looks up (skillSimCardId).
 // When a skill is researched, replace its card here with a full one (drop `soon`) and it moves out of the tab.
+// The TTO Lv 100 stubs (soon: "tto") already carry MP / SP, the site's text and the damage type; only a desc of exactly "เร็วๆนี้" gets the big coming-soon look.
+const TTO_DMG_TYPE_TH = { Physical: "กายภาพ", Magic: "เวทมนตร์" };   // the site's labels; None has no line
 const SOON_EXTRA = {};   // fields added to a coming-soon stub, by icon key (e.g. a compatSkills link back to a real card; must be reciprocal)
 for (const key of Object.keys(SKILL_SIM_NAMES)){
   const cls = SKILL_SIM_NAMES[key], add = (icon, name, passive, soon, owner = cls, extra) => { const id = icon.replace(/[0-9]+$/, ""); if (SKILLS.some(s => s.id === id)) return; SKILLS.push(Object.assign({ id, name, class: owner, icon, maxRank: 1 }, passive ? { passive: true } : {}, { desc: "เร็วๆนี้", soon, onlyServer: soon }, extra || {})); };
   for (const c of SKILL_SIM_EX[key] || []) if (!c.placeholder && SKILL_ICONS[c.icon]) add(c.icon, c.name, c.type === "Passive", "tot", /^tot_ex_(up|down)damagemonter/.test(c.icon) ? "Common" : cls);   // UpdamageMonter / DownDamageMonter are in every class's ToT EX: one shared Common card each (user 2026-10-25)
   for (const e of SKILL_SIM_REBORN_EXTRA[key] || []) add(e[1], e[2], !!e[6], "reborn", cls, SOON_EXTRA[e[1]]);
+  for (const e of SKILL_SIM_TTO_EXTRA[key] || []) add(e[1], e[2], !!e[4], "tto", cls, Object.assign({ desc: e[8] + (TTO_DMG_TYPE_TH[e[7]] ? "<br>ประเภทดาเมจ **" + TTO_DMG_TYPE_TH[e[7]] + "**" : ""), liveCheck: "คำอธิบายจาก Skill Simulator ของ TailsTopia ยังไม่มีสูตรและตัวเลขละเอียด" }, e[5] || e[6] ? { cost: { mp: e[5], sp: e[6], spType: "red" } } : {}));
 }
 // The trees of a class on a server: BB's, plus the Reborn C6 / C7 rows on Reborn (cached per class).
 function skillSimTrees(server, classKey){
@@ -31146,11 +31168,13 @@ function skillSimPassive(server, classKey){
   return server === "reborn" && SKILL_SIM_REBORN_EXTRA[classKey] ? base.concat(SKILL_SIM_REBORN_EXTRA[classKey].filter(e => e[6]).map(e => e[0])) : base;
 }
 // Point pools per server, kept on the cells object under a symbol (so every rule check reads the pools of the server the cells were built for).
-// BB / ToT / TTO: Basic + A + B share lv-1 (max 49), C has +1 per 5 levels over 50 (max 12), EX (ToT) 1 at Lv 95 and 2 at Lv 100.
+// BB / ToT: Basic + A + B share lv-1 (max 49), C has +1 per 5 levels over 50 (max 12), EX (ToT) 1 at Lv 95 and 2 at Lv 100.
+// TTO (user 2026-10-31, confirmed with its devs): the same, but C stops at 9 at any level. Its "ex" pool only holds the one free Lv 100 skill (SKILL_SIM_TTO_EXTRA).
 // Reborn (the site's own IE / GK): normal = min(lv, 50) - 1, +1 every 10 levels from 60 (max +10); C = +1 at 55 and every 5 after, never past 80 - normal; no EX.
 const SKILL_SIM_POOLS_KEY = Symbol("skillSimPools");
 const SKILL_SIM_POOLS = {
   bb: { normal: (lv) => Math.min(Math.max(lv - 1, 0), 49), c: (lv) => Math.min(Math.max(Math.floor((lv - 50) / 5), 0), 12), ex: (lv) => lv >= 100 ? 2 : lv >= 95 ? 1 : 0 },
+  tto: { normal: (lv) => SKILL_SIM_POOLS.bb.normal(lv), c: (lv) => Math.min(SKILL_SIM_POOLS.bb.c(lv), 9), ex: (lv) => lv >= 100 ? 1 : 0 },
   reborn: {
     normal: (lv) => Math.max(0, Math.min(lv, 50) - 1) + (lv >= 60 ? Math.min(Math.floor((lv - 60) / 10) + 1, 10) : 0),
     c: (lv) => Math.max(0, Math.min(lv >= 55 ? Math.floor((lv - 55) / 5) + 1 : 0, 80 - SKILL_SIM_POOLS.reborn.normal(lv))),
@@ -31160,8 +31184,35 @@ const SKILL_SIM_POOLS = {
 const skillSimPools = (cells) => cells[SKILL_SIM_POOLS_KEY] || SKILL_SIM_POOLS.bb;
 // The cells of a class on a server (patches, ToT EX slots, Reborn C6 / C7 rows) with that server's pools attached.
 function skillSimCellsFor(server, classKey){
-  const cells = skillSimCells(skillSimTrees(server, classKey), SKILL_SIM_SERVERS[server].patch[classKey], server === "tot" ? SKILL_SIM_EX[classKey] : null);
-  if (server === "reborn") cells[SKILL_SIM_POOLS_KEY] = SKILL_SIM_POOLS.reborn;
+  const cells = skillSimCells(skillSimTrees(server, classKey), SKILL_SIM_SERVERS[server].patch[classKey], skillSimExCells(server, classKey));
+  if (server === "reborn" || server === "tto") cells[SKILL_SIM_POOLS_KEY] = SKILL_SIM_POOLS[server];
+  return cells;
+}
+// The free / EX cells of a server, and the rows they add under Class C (the grid and the guide image draw the same rows).
+function skillSimExCells(server, classKey){
+  if (server === "tot") return SKILL_SIM_EX[classKey];
+  if (server !== "tto") return null;
+  return (SKILL_SIM_TTO_EXTRA[classKey] || []).map(e => ({ id: e[0], tree: 3, icon: e[1], name: e[2], lv: 100, bn: 7, req: e[3], ex: true, exclude: [], choice: "tto", type: e[4] ? "Passive" : "Active", placeholder: false }));
+}
+function skillSimExRows(server, cells){
+  const row = (id) => { const c = cells[id]; return c ? [c.icon, c.name, c.lv, c.bn, c.req] : 0; };
+  return server === "tot" ? [[451, 452, 453, 454].map(row), [row(461), 0, 0, 0]] : server === "tto" ? [[0, 452, 453, 454].map(row)] : [];
+}
+// Published TTO guides that spend more than the 9 C points (they predate the cap; user 2026-10-31: keep them as written, marked outdated). Keyed by the exact build, so a guide
+// that gets replaced loses the exemption, and a new guide must obey the cap. A line goes when its guide is replaced or removed ([SKILL SIM ERROR] fails a stale line).
+const CLASS_GUIDE_TTO_OVER_C = new Set([
+  "whale:101,111,112,121,131,132,133,134,141,142,143,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,304,311,312,321,331,332,333,334,341,342,343,344,351,352,361,362,402,403,404,412,422,431,434,442,443,444",   // guide #4
+  "chameleon:101,102,103,104,121,122,131,132,133,134,141,142,143,144,201,211,212,213,214,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,301,311,312,313,314,321,322,323,324,331,332,333,351,401,404,413,421,423,424,431,432,434,441,442,444",   // guide #6
+  "whale:101,102,111,121,122,131,132,133,134,141,142,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,301,302,303,311,312,313,314,331,332,333,334,341,342,343,344,351,352,361,362,402,404,412,421,424,431,434,442,443,444",   // guide #30
+  "wolf:101,102,103,121,122,131,132,133,134,141,142,201,202,203,204,211,221,222,223,224,231,232,233,234,241,242,243,244,251,252,253,254,261,262,263,264,301,302,303,311,321,322,323,324,331,332,341,342,351,402,403,404,422,424,431,432,434,442,444",   // guide #31
+  "sheep:101,111,112,121,122,123,131,141,142,143,144,201,202,203,204,211,212,213,214,221,222,223,224,231,232,241,242,243,244,251,252,253,261,262,263,264,301,311,312,313,314,321,322,323,324,341,342,343,351,402,404,412,413,414,422,423,424,441,442",   // guide #58
+  "sheep:101,102,111,121,122,131,141,201,202,203,204,211,212,213,214,221,222,223,224,241,242,243,244,251,252,253,254,261,262,263,264,271,301,302,311,312,313,314,321,322,323,324,341,342,343,344,351,352,353,402,404,412,413,414,422,423,424,442,443",   // guide #70
+]);
+const classGuideIsOverC = (b) => !!b && b.server === "tto" && Array.isArray(b.learned) && CLASS_GUIDE_TTO_OVER_C.has(b.classKey + ":" + [...b.learned].sort((x, y) => x - y).join());
+// The cells a guide build is checked against: an outdated guide keeps the old C pool.
+function classGuideCellsFor(b){
+  const cells = skillSimCellsFor(b.server, b.classKey);
+  if (classGuideIsOverC(b)) cells[SKILL_SIM_POOLS_KEY] = SKILL_SIM_POOLS.bb;
   return cells;
 }
 const SKILL_SIM_SERVERS = {
@@ -31265,7 +31316,7 @@ function classGuideSupportCells(){
 // The problems of a guide build (its own server and class), for the editor's export guard.
 function classGuideBuildProblems(b){
   if (!b || !SKILL_SIM[b.classKey] || !SKILL_SIM_SERVERS[b.server]) return [];
-  const cells = skillSimCellsFor(b.server, b.classKey);
+  const cells = classGuideCellsFor(b);
   return skillSimProblems(cells, SKILL_SIM[b.classKey].map(t => t.name), new Set(b.learned || []), b.level);
 }
 // Clearing a tree prunes dependent skills and lost tree-point requirements to a fixed point.
@@ -31320,7 +31371,7 @@ function skillSimAutoLearn(cells, treeCount, learned, lv, target){
 // "red" = the click works but other rows are levelled too (extra skills for its points). Class C stays single-click: "yellow" = it can be learned right now, alone. "" = the click does nothing.
 // A guide build's unspent points per pool (user 2026-10-17): the reader and the PNG show the total as a small badge ("↑ เหลือ N แต้ม").
 function classGuideUnspent(b){
-  const cells = skillSimCellsFor(b.server, b.classKey);
+  const cells = classGuideCellsFor(b);
   let used = 0, usedC = 0, usedEx = 0;
   for (const id of b.learned){ const c = cells[id]; if (!c) continue; if (c.ex) usedEx++; else if (id < 400) used++; else usedC++; }
   const PL = skillSimPools(cells), normal = Math.max(PL.normal(b.level) - used, 0), c = Math.max(PL.c(b.level) - usedC, 0), ex = b.server === "tot" ? Math.max(PL.ex(b.level) - usedEx, 0) : 0;
@@ -32753,7 +32804,7 @@ function classGuideNormalize(value, { draft = false } = {}){
   const b = value.build;
   if (!object(b) || typeof b.server !== "string" || typeof b.classKey !== "string" || !own(SKILL_SIM_SERVERS, b.server) || !own(SKILL_SIM, b.classKey)) throw new Error("เซิร์ฟเวอร์หรือคลาสไม่ถูกต้อง");
   if (!Number.isInteger(b.level) || b.level < 1 || b.level > SKILL_SIM_SERVERS[b.server].cap) throw new Error("เลเวลไม่อยู่ในช่วงของเซิร์ฟเวอร์");
-  const cells = skillSimCellsFor(b.server, b.classKey);
+  const cells = classGuideCellsFor(b);
   if (!Array.isArray(b.learned) || b.learned.length > 120 || b.learned.some(id => !Number.isInteger(id) || !own(cells, id))) throw new Error("รายการสกิลไม่ถูกต้อง");
   const learned = new Set(b.learned);
   if (learned.size !== b.learned.length) throw new Error("ชุดสกิลไม่ผ่านเงื่อนไขเลเวล แต้ม หรือสกิลที่ต้องเรียนก่อน");
@@ -33520,13 +33571,10 @@ function classGuideImageModel(classKey, server){
   const trees = skillSimTrees(server, classKey), cells = skillSimCellsFor(server, classKey);
   return trees.map((t, ti) => {
     const rows = t.rows.slice();
-    if (ti === 3 && server === "tot"){
-      rows.push([451, 452, 453, 454].map(id => { const c = cells[id]; return [c.icon, c.name, c.lv, c.bn, c.req]; }));
-      const c = cells[461]; rows.push([[c.icon, c.name, c.lv, c.bn, c.req], 0, 0, 0]);
-    }
+    if (ti === 3) rows.push(...skillSimExRows(server, cells));
     const out = [];
     rows.forEach((row, r) => {
-      if (ti === 3 && r === t.rows.length) out.push({ heading: "ToT EX" });
+      if (ti === 3 && r === t.rows.length && server === "tot") out.push({ heading: "ToT EX" });
       out.push({ slots: row.map((c, k) => {
         if (!c) return null;
         const id = t.base + r * 10 + k + 1, cell = cells[id];
@@ -34186,7 +34234,7 @@ function mountClassGuide(root){
       <div class="cg-send" data-cg-role="send"><section class="cg-send-preview"><h3 class="cg-send-h">ตัวอย่างหน้าไกด์</h3><div class="cg-send-previews"><figure class="cg-send-view"><div class="cg-send-views" role="group" aria-label="ตัวอย่างหน้าไกด์"><button type="button" class="cg-send-vp-step" data-cg-vp-step="-1" aria-label="ขนาดก่อนหน้า">‹</button><span class="cg-send-vp-list">${["รูป PNG", ...CLASS_GUIDE_VIEWPORTS.map(([w, h]) => w + "×" + h)].map((t, i) => '<button type="button" data-cg-vp="' + i + '" aria-pressed="' + (i === 0) + '">' + t + '</button>').join("")}</span><button type="button" class="cg-send-vp-step" data-cg-vp-step="1" aria-label="ขนาดถัดไป">›</button></div><figcaption data-cg-role="sendViewCap">รูป PNG · คลิกเพื่อดูเต็มจอ</figcaption><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span><span class="cg-send-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></span></button><div class="cg-send-vp" data-cg-role="sendVp" hidden><span class="cg-send-thumb-wait">กำลังโหลดหน้าไกด์…</span></div></figure></div></section><div class="cg-send-opts"><section class="cg-send-opt"><span class="cg-send-ic">${classGuideButtonIcon("image")}</span><div class="cg-send-txt"><h3>รูปไกด์ PNG 4K</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p></div><div class="cg-send-btns"><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="copyImage">${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button></div></section><section class="cg-send-opt is-main"><span class="cg-send-ic">${classGuideButtonIcon("copy")}</span><div class="cg-send-txt"><h3>ส่งขึ้นหน้าไกด์จากผู้เล่น</h3><p>คัดลอกโค้ดไกด์ แล้ววาง (Ctrl+V) ส่งทาง <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>Discord</b></a> ไกด์จะขึ้นหน้าไกด์จากผู้เล่นเมื่อเพิ่มให้แล้ว</p></div><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
       <template data-cg-role="modeSwitchTpl"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="cover" aria-pressed="false">${classGuideButtonIcon("cover")}<span>ไอคอนหน้าปก</span></button></div></template>
     </section>
-    <section class="cg-reader" data-cg-role="reader" hidden><div class="cg-reader-box cg-reader-head"><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p></div><div class="cg-reader-box cg-stat-panel" data-cg-role="guideStats" hidden></div><div class="cg-reader-box cg-gear-panel" data-cg-role="guideGear" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p></section>
+    <section class="cg-reader" data-cg-role="reader" hidden><div class="cg-reader-box cg-reader-head"><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-outdated" data-cg-role="guideOutdated" hidden></p></div><div class="cg-reader-box cg-stat-panel" data-cg-role="guideStats" hidden></div><div class="cg-reader-box cg-gear-panel" data-cg-role="guideGear" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p></section>
     <section data-cg-role="sim" hidden></section>
     <dialog class="cg-transfer cg-gear-picker" data-cg-role="gearPicker" aria-labelledby="cgGearTitle"><button type="button" class="cg-note-close" data-cg-act="closeGear" aria-label="ปิด">×</button><h3 id="cgGearTitle" data-cg-role="gearTitle"></h3><input type="search" class="cg-gear-search" data-cg-role="gearSearch" placeholder="ค้นหาชื่อไอเทม" aria-label="ค้นหาชื่อไอเทม"><div class="cg-gear-grid" data-cg-role="gearGrid"></div><div class="cg-gear-typed"><input data-cg-role="gearTyped" maxlength="60" placeholder="ไอเทมใหม่ที่ยังไม่มีในรายการ: พิมพ์ชื่อ" aria-label="พิมพ์ชื่อไอเทมเอง"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="gearUseTyped">ใช้ชื่อนี้</button></div></dialog>
     <dialog class="cg-transfer cg-import-dialog cg-start-dialog" data-cg-role="start" aria-labelledby="cgStartTitle"><button type="button" class="cg-note-close" data-cg-act="closeStart" aria-label="ปิด">×</button><h3 id="cgStartTitle">เขียนไกด์</h3>
@@ -35151,6 +35199,7 @@ function mountClassGuide(root){
     const authorEl = document.createElement("span"); authorEl.className = "cg-byline-author"; authorEl.textContent = current.author || "ยังไม่ระบุผู้เขียน";
     el("guideByline").append(authorEl, " · " + classGuideDateText(current.date));
     if (currentId){ const sep = document.createElement("span"); sep.className = "cg-views-sep"; sep.textContent = " · "; el("guideByline").append(sep, viewBadge(currentId)); }
+    { const over = classGuideIsOverC(current.build); el("guideOutdated").hidden = !over; el("guideOutdated").textContent = over ? "⚠ TTO จำกัดแต้มสาย C สูงสุด " + SKILL_SIM_POOLS.tto.c(current.build.level) + " แต้มแล้ว ไกด์นี้ใช้ " + current.build.learned.filter(id => id >= 400).length + " แต้ม ลงตามนี้ในเกมไม่ได้" : ""; }
     el("guideDescription").innerHTML = '<div class="cg-desc-ref">' + classGuideParaHtml(current.description) + "</div>";   // the reference page (user 2026-10-21)
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear;
@@ -35691,6 +35740,7 @@ function mountClassGuide(root){
       else if (act === "useAsBase"){   // this guide becomes the reader's own draft to edit (was: copy the code, then import it in the editor; user 2026-10-16 button review)
         if (!current) return;
         const base = classGuideNormalize(JSON.parse(JSON.stringify(current)), { draft: true }); delete base.id;
+        if (classGuideIsOverC(base.build)){ let c = 0; base.build.learned = base.build.learned.filter(id => id < 400 || ++c <= SKILL_SIM_POOLS.tto.c(base.build.level)); }   // a copy of an outdated guide must obey the cap
         askReplace(() => { draft = base; startAuthor(); status("คัดลอกไกด์นี้มาเป็นต้นแบบแล้ว แก้ได้เลย"); });
       }
       else if (act === "confirmImport") await confirmImport();
@@ -35941,12 +35991,9 @@ function mountSkillSimulator(root, options = {}){
     const body = document.createElement("div"); body.className = "rsim-tree-body";
     sec.append(head, body);
     const rows = t.rows.slice();
-    if (ti === 3 && srv === "tot"){
-      rows.push([451, 452, 453, 454].map(id => { const c = cells[id]; return [c.icon, c.name, c.lv, c.bn, c.req]; }));
-      const c = cells[461]; rows.push([[c.icon, c.name, c.lv, c.bn, c.req], 0, 0, 0]);
-    }
+    if (ti === 3) rows.push(...skillSimExRows(srv, cells));
     rows.forEach((row, r) => {
-      if (ti === 3 && r === t.rows.length){
+      if (ti === 3 && r === t.rows.length && srv === "tot"){
         const label = document.createElement("div"); label.className = "rsim-ex-heading";
         label.textContent = "ToT EX"; body.appendChild(label);
       }
@@ -36301,7 +36348,7 @@ function mountSkillSimulator(root, options = {}){
     setNotes(value){ notes = { ...value }; seenNotes.clear(); refreshNotes(); },
     loadBuild(build){
       const checked = classGuideNormalize({ format: "12t-class-guide", version: 1, title: "", author: "", description: "", build, notes: {} }, { draft: true }).build;
-      pressEnd(); longDone = false; srv = checked.server; cls = checked.classKey; trees = skillSimTrees(srv, cls); cells = mkCells();
+      pressEnd(); longDone = false; srv = checked.server; cls = checked.classKey; trees = skillSimTrees(srv, cls); cells = classGuideCellsFor(checked);
       state.lv = checked.level; state.learned = new Set(checked.learned); state.support = (checked.support || []).slice(); picked = true; undoStack.length = 0;
       notes = {}; seenNotes.clear(); buildTrees(); update();
     }
@@ -37846,6 +37893,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-31T02:42:51.991Z","feat(bible): TTO skill simulator update: Lv 100 skills 452-454 with stub cards in a C (TTO) tab, Class C points capped at 9 (six older guides stay, marked outdated), Panda Wind & Cloud and Rain & Storm are Magic"],
     ["2026-10-30T14:09:55.907Z","feat(bible): class guides: 70 descriptions reformatted in the style of #60 and #83 (formatting only, the authors' words stay), a plain five-star guide's pop-up no longer says how to get ดาวฟ้า, the ดาวฟ้า filter star is grey and smaller when off; fix(bible): skill details: Rabbit Charge Attack's ระยะ and เล็ง stay inside the formula box"],
     ["2026-10-30T10:44:54.841Z","feat(bible): class guide gallery: an icon-only ดาวฟ้า filter, and every card ends in the same two rows: name and date, then stars and readers"],
     ["2026-10-30T10:38:02.457Z","fix(bible): class guide #60 is updated: TTO Panda AGI 295: Golden Ratio by BunSan"],

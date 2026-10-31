@@ -201,6 +201,7 @@ the heavy part; DEF 192 → −75%).
 > skill, Rabbit Gorgon Shot, Chameleon Slayers). The full list is `TTO_MAGIC_DMG` in the Bible `index.html`.
 > **Conditional:** Mole's Auto Gyro Gun shots are Magic while **Synchro Mole** is on (user-reported 2026-10-06; the
 > simulator tags Synchro Mole itself as Magic).
+> **Re-read 2026-10-31:** 77 families of the original grid are `Magic`: Panda Wind & Cloud and Rain & Storm joined, none left. 15 of the new TTO Lv 100 skills are `Magic` too (their class files; §3.6 "TTO Lv 100 skills").
 > **Measured (user, TTO, 2026-10-06):** Rabbit Gorgon Shot (`talAdjust(50 × sLv)`) at TAL 101 (base 302 / 151), LCK 0
 > on both sides, no buffs, first hit on a fresh target (petrify lowers DEF afterwards). The rest of `defAdjust` is
 > unchanged, both parts still truncated to `int` (see above):
@@ -566,7 +567,7 @@ TailsTopia's page carries, for all 12 classes, the same fields as the game's `Sk
 * **The one difference: Panda Heaven Breath (cmd 443).** Game code: `rSkill = 334` (explicit, `PandaSkill.cs:1314`, the same value as Spirit Fist at `:1291`) = Shadow Fist IV. TailsTopia: `344` = Sacred Sage Technique II. Likely a copy-paste typo in the client that the TTO server fixed. **The tool uses the game code (334); live-check item 13.**
 * **SP / MP: all 1,159 cells equal the decoder values.** This settles section B for every class: Millionaire costs SP 50 / 75, Diamond Shot SP 20, and the Mole costs follow the game code (the blog and TailsTails cost columns were wrong). The costs of the 10 other classes, never compared before, are confirmed as well.
 * **Rules:** same pools (normal points `clamp(lv, 0, 50) - 1`, Class C `clamp(floor(0.2 * (lv - 50)), 0, 12)`) and the same gates (level, points already in the skill's own tree, `rSkill`, the rank before it for ids below 400). A level that no longer fits prunes only the skills that stop being learnable (the hub tool clears the whole build instead; undoable).
-* **Three extra Rabbit entries** (TailsTopia lists 101 Rabbit skills, the client 98): `mixshot` (cmd 452, Lv -1 / -1, needs 442), `thousandShot5` (453, Lv 120 / 7, needs 354) and `tradingWithWind5` (454, Lv 120 / 7, needs 444). Its own code gives them the "unknown" icon, so they have no client art; the tool ignores them (the user says there are no EX skills).
+* **Three extra Rabbit entries** (TailsTopia lists 101 Rabbit skills, the client 98): `mixshot` (cmd 452, Lv -1 / -1, needs 442), `thousandShot5` (453, Lv 120 / 7, needs 354) and `tradingWithWind5` (454, Lv 120 / 7, needs 444). Its own code gives them the "unknown" icon, so they have no client art; the tool ignores them (the user says there are no EX skills). **Superseded 2026-10-31:** cells 452-454 are now real TTO skills in every class, see "TTO Lv 100 skills" below.
 * **How far to trust it:** TailsTopia is a TTO-server tool. Its agreement with the client code means TTO still has the original values in these cells; it is not the original BB server, and it is not a mechanical copy of the client (it differs once). It confirms the code, it does not replace a live check on BB.
 
 **D. Where each class is documented:** every class's table and its own differences are in `12t_reference/<class>-skill-reference.md`, section "Skill Tree Layout & Learn Requirements".
@@ -580,6 +581,16 @@ The user requested ToT EX support for all 12 classes. Source: [ToT library](http
 * **Requirements:** class choices require six already-learned ordinary C skills plus all explicit dependencies from `customReqs` and `exPrereqs`. EX spending never satisfies ordinary C tree-point requirements; ordinary C spending does not consume EX points. EX is single-click, without automatic prerequisite filling.
 * **Availability:** Bat, Bison, Monkey, Panda, Penguin and Wolf publish three named class choices. Cat, Chameleon, Mole, Rabbit, Sheep and Whale still publish placeholder class choices. The hub leaves these unavailable while providing both shared passive choices for every class. Per-class names, levels and prerequisites are recorded in each class reference.
 * **Refunds / reset:** validate all three pools, explicit prerequisites, exclusions and ordinary C counts. Clearing a tree prunes skills losing explicit dependencies or tree-point thresholds repeatedly until the remaining layout is valid. The hub’s existing undo restores server, class, level and EX selections together. BB and TTO do not receive these ToT-only entries.
+
+#### TTO Lv 100 skills (published simulator, 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required), read through the user's Chrome 2026-10-31, rules from its page script. Published server rules, not BigBug engine formulas. Every other cell of all 12 classes still equals the game code on level, points, prerequisite, MP, SP and active / passive.
+
+* **New cells:** every class has three more Class C cells, 452, 453, 454, one row under C5. Per-class names, costs, damage types and the site's text are in `<class>-skill-reference.md`, "TTO Lv 100 skills". The cards are stubs: the server has not published detailed code (user 2026-10-31).
+* **Learning:** Lv 100, 7 skills already learned in the C tree, plus the cell's required skills. The site writes two requirements as one number (`434444` = 434 and 444: `rSkill > 99999`, split by 1000).
+* **No point cost:** the three cells spend neither normal nor C points (user 2026-10-31: "probably correct"; the page script leaves them out of both counters). Only one of the three can be learned at a time.
+* **C pool:** TTO's C pool stops at **9** at any level: `clamp(floor(0.2 × (lv − 50)), 0, 9)`, reached at Lv 95 (page script; user 2026-10-31: confirmed with the TTO devs). BB and ToT keep 12. Six published guides predate this (#4, #6, #30, #31, #58, #70); they stay as written, marked outdated (`CLASS_GUIDE_TTO_OVER_C`).
+* **Left out on purpose (user 2026-10-31):** Penguin's cell 463 `iceBreaker5` (the site lists it with the "unknown" icon and no text), and the site's "forbidden skill" label, a quest-unlock gimmick.
 
 ### 3.7 Skill-window icon containers (verified 2026-10-13)
 

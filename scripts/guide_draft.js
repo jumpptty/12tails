@@ -9,7 +9,7 @@
 //
 // Draft JSON: { server, classKey, level, grid: [Basic rows, A rows, B rows, C rows], title, author, description?, notes?, cover?, modes }
 //   grid rows are strings of 1 (lit) / 0 (dim), one character per cell, left to right, top to bottom, exactly as the simulator draws them;
-//   on ToT the C tree's EX rows follow its 5 rows (row 6 = 451-454, row 7 = 461).
+//   on ToT the C tree's EX rows follow its 5 rows (row 6 = 451-454, row 7 = 461); on TTO row 6 = 452-454 (three characters).
 //   notes / cover keys may be cell ids or skill names ("Volcano", or "Volcano 2" for one rank; a bare name means its highest learned rank).
 "use strict";
 const fs = require("fs");
@@ -24,7 +24,7 @@ function loadSim(){
   if (a < 0 || b < 0) throw new Error("index.html: SKILL_SIM block not found (anchors: 'const SKILL_SIM = {', '// Clearing a tree prunes')");
   const box = {};   // the block also adds the EX icons to SKILL_ICONS, so the sandbox gets an empty one
   const cap = (s.match(/^const LEVEL_CAP = [^\r\n]*/m) || [""])[0];   // the block reads LEVEL_CAP (the server caps), defined elsewhere in index.html
-  vm.runInNewContext(cap + "\n" + s.slice(a, b) + "\n;Object.assign(box, { SKILL_SIM, SKILL_SIM_NAMES, SKILL_SIM_EX, SKILL_SIM_SERVERS, skillSimCells, skillSimValid, skillSimPoolMax, skillSimPoolMaxC, skillSimPoolMaxEx });", { box, SKILL_ICONS: {} });
+  vm.runInNewContext(cap + "\n" + s.slice(a, b) + "\n;Object.assign(box, { SKILL_SIM, SKILL_SIM_NAMES, SKILL_SIM_EX, SKILL_SIM_SERVERS, skillSimCells, skillSimValid, skillSimCellsFor, skillSimPools });", { box, SKILL_ICONS: {}, SKILLS: [], SERVER_SHORT: {}, SERVER_FULL: {} });
   return box;
 }
 const TREE_NAMES = ["Basic", "A", "B", "C"];
@@ -32,7 +32,7 @@ function cellsFor(sim, classKey, server){
   if (!sim.SKILL_SIM[classKey]) throw new Error("unknown class " + classKey + " (one of " + Object.keys(sim.SKILL_SIM).join(", ") + ")");
   if (!sim.SKILL_SIM_SERVERS[server]) throw new Error("unknown server " + server + " (og, tot, tto)");
   const trees = sim.SKILL_SIM[classKey];
-  return { trees, cells: sim.skillSimCells(trees, sim.SKILL_SIM_SERVERS[server].patch[classKey], server === "tot" ? sim.SKILL_SIM_EX[classKey] : null) };
+  return { trees, cells: sim.skillSimCellsFor(server, classKey) };
 }
 const rowsOf = (cells, tree) => {
   const rows = [];
@@ -65,9 +65,10 @@ function problems(sim, cells, set, lv){
     for (const r of c.req) if (!set.has(r)) out.push(id + " " + c.name + ": needs " + r + " " + (cells[r] ? cells[r].name : "?"));
     if (c.ex) usedEx++; else if (id < 400) used++; else usedC++;
   }
-  if (used > sim.skillSimPoolMax(lv)) out.push("normal points: " + used + " used, Lv " + lv + " gives " + sim.skillSimPoolMax(lv));
-  if (usedC > sim.skillSimPoolMaxC(lv)) out.push("Class C points: " + usedC + " used, Lv " + lv + " gives " + sim.skillSimPoolMaxC(lv));
-  if (usedEx > sim.skillSimPoolMaxEx(lv)) out.push("EX points: " + usedEx + " used, Lv " + lv + " gives " + sim.skillSimPoolMaxEx(lv));
+  const PL = sim.skillSimPools(cells);
+  if (used > PL.normal(lv)) out.push("normal points: " + used + " used, Lv " + lv + " gives " + PL.normal(lv));
+  if (usedC > PL.c(lv)) out.push("Class C points: " + usedC + " used, Lv " + lv + " gives " + PL.c(lv));
+  if (usedEx > PL.ex(lv)) out.push("EX points: " + usedEx + " used, Lv " + lv + " gives " + PL.ex(lv));
   for (let t = 0; t < 4; t++){
     const bns = [...set].filter(id => cells[id] && !cells[id].ex && cells[id].tree === t).map(id => cells[id].bn).sort((x, y) => x - y);
     const k = bns.findIndex((bn, i) => bn > i);
@@ -106,7 +107,7 @@ function build(draft){
   if (bad.length || !sim.skillSimValid(cells, trees.length, learned, lv)) throw new Error("the build breaks the learn rules (re-read the screenshot):\n  " + (bad.length ? bad.join("\n  ") : "skillSimValid says no"));
   let used = 0, usedC = 0, usedEx = 0;
   for (const id of learned){ if (cells[id].ex) usedEx++; else if (id < 400) used++; else usedC++; }
-  const pools = "normal " + used + "/" + sim.skillSimPoolMax(lv) + ", C " + usedC + "/" + sim.skillSimPoolMaxC(lv) + (draft.server === "tot" ? ", EX " + usedEx + "/" + sim.skillSimPoolMaxEx(lv) : "");
+  const PL = sim.skillSimPools(cells), pools = "normal " + used + "/" + PL.normal(lv) + ", C " + usedC + "/" + PL.c(lv) + (draft.server === "tot" ? ", EX " + usedEx + "/" + PL.ex(lv) : "");
   const notes = {};
   for (const [k, text] of Object.entries(draft.notes || {})){
     const id = resolve(cells, learned, k), body = String(text).trim();

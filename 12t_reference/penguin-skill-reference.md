@@ -737,3 +737,13 @@ Seconds from the start of the move (or of the child routine named), read from th
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): ice ball flying 14 m/s (`PvpMount_penguin_nAttack.cs:26`; the prefab velocity is 0) for 1.4 × rangeMod s (`PvpMount.cs:4220`) = 19.6 × rangeMod m, `SphereCollider` r 0.35: `hit(1, (int)(0.5 × ATK), KO 1)` on the first target, then `ice` at `clamp(current + 1, 1, 4)` for `Damage.getDebuff(3, cha, target cha)` (`:167, :239-257`), cooldown 1 s (`PvpMount.cs:15920`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6 × rangeMod, 3 × rangeMod)`, `hit(1, talAdjust(30), KO 1)`, cooldown 1 s (`:16144-16167, :16259`).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Constellation (`penguin_constellation`) | Active | 254 | 65 | 50 | Magic | enemy | เรียกดาวตกใส่เป้าและศัตรูรอบข้าง ติด Mana Fracture หากดาวเชื่อมเส้น ตก 3 ดวงขึ้นไปได้ Giant Star |
+| 453 | Frost Field (`penguin_frostField`) | Active | 354 | 55 | 45 | Magic | enemy | กระโดดไปหาเป้าหมาย สร้างวงน้ำแข็ง ศัตรูในวงช้าลงและติดสถานะ Frost Mark ครบ 5 แตกเป็น Frost Burst แล้วติด Frost Bite (8sec) |
+| 454 | Emperors March (`penguin_emperorsMarch`) | Active | 444 | 80 | 60 | Magic | enemy | เพนกวิน 5 ตัวเลี้ยงบอลพุ่งไปข้างหน้า ติด Frost Mark หากชนกำแพงหรือบอสสร้างความเสียหายเพิ่ม ใช้ต่อจาก Constellation เพนกวิน +3 |

@@ -647,3 +647,13 @@ Verified 2026-10-26 against the Reborn decompile (string helpers decoded with th
 - **Bible (2026-10-28, C6 / C7 limit review):** Doomsayer's red recast line is corrected: any Doom recast that lands at the same or a higher level restarts the 20 s (from either caster), a lower one is dropped (`Reborn1027:RebornC7Passive.cs:878-889`, `Reborn1027:Bat.cs:3112-3122`, `Reborn1027:CharacterControl.cs:9695-9742`). Nightmare Cascade: a clone's cast pose ending its Drain Life drain, which stays off until the Bat recasts Drain Life, moves to ⚡ `unintended` (`Reborn1027:RebornC7Act.cs:5699-5777`, `Reborn1027:Bat_illusion.cs:849-853`, `:508`); "no extra clones" becomes a plain bullet under the lead (still at most 2, `Reborn1027:RebornC7Act.cs:148`, `Reborn1027:Bat.cs:3813`) and the empty ## ข้อจำกัด topic goes.
 - **Owner's calls (2026-10-28, C6 / C7 limit review):** Nightmare Cascade: the clone-drain line is removed (no ⚡). Doomsayer's corrected recast line stays red. Nightmare Cascade: the "doesn't add clones" bullet is removed.
 - **Calls made from the owner's pattern (2026-10-28, C6 / C7 limit review; the owner may still override):** Doomsayer: "the curse jumps only while you are alive" and Nocturne Sovereign: "zombies crumble when you die" are removed (death ending a skill is obvious; the owner removed Iron Overdrive's like line).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Crimson Verdict (`bat_crimsonVerdict`) | Active | 254 | 55 | 50 | Magic | enemy | ระเบิดคำสาปโจมตีเป้าหมายและศัตรูในระยะ 10m (2 hit) สร้างความเสียหายตามคำสาปของค้างคาว ถ้าใช้ Mass Cast สร้างความเสียหายด้วยพลังโจมตีที่เพิ่มขึ้นได้โดยไม่ต้องมีคำสาป 24m |
+| 453 | Evil Twin (`bat_evilTwin`) | Active | 354 | 55 | 50 | Magic | enemy | กระชากวิญญาณเป้าหมายออกมาไว้ข้างตัว (6sec + CHA) โจมตีวิญญาณร่างจริงรับความเสียหาย 50% เมื่อหมดเวลาวิญญาณจะระเบิดตามความเสียหายที่สะสม และค้างคาวฟื้น HP |
+| 454 | Nightfall Swarm (`bat_nightfallSwarm`) | Active | 444 | 70 | 45 | Magic | enemy | แตกร่างเป็นฝูงค้างคาวพุ่งไปข้างหน้า เป้าหมายในระยะมีโอกาสติดคำสาปหรือมายา สร้างความเสียหายตามคำสาปของค้างคาวและ ฟื้น HP ตามจำนวนเป้าหมายที่พุ่งผ่าน |

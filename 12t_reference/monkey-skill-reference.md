@@ -864,3 +864,13 @@ Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 1, 1, 3, 3)`, `hit(1, (int)(0.7 × ATK), KO 1)`, cooldown 1.5 s (`:14038-14061, :14185`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6, 3)`, `hit(1, talAdjust(30), KO 1)`, cooldown 5 s (`:14504-14527, :14632`).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Ja Ascension (`monkey_jaAscension`) | Active | 254 | 120 | 50 | Magic | enemy | ติดตัว Ja ทุกตัว +2 Lv กดใช้สังเวย Ja เป็นมงกุฎสุริยะ สกิลสาย A คูลดาวน์ลดลง 30% และเผาศัตรูจนระเบิด |
+| 453 | Buiten Bastion (`monkey_buitenBastion`) | Active | 354 | 100 | 40 | Physical | ally | ติดตัว Buiten ทุกตัว +2 Lv กดใช้สังเวย Buiten เป็นเกราะหินรูนให้เป้าหมาย ดูดซับดาเมจกายภาพ (6sec) |
+| 454 | Rune Golem (`monkey_runeGolem`) | Active | 444 | 150 | 60 | Physical | self | ใช้ Runic Heartstone เรียก Rune Golem เป้าหมายที่อยู่ในระยะรับดาเมจ และพันธมิตรที่อยู่ในระยะรับดาเมจลด 15% |

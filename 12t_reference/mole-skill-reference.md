@@ -676,3 +676,13 @@ Seconds from the start of the move (or of the child routine named), read from th
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): shell launched at 15 m/s (`PvpMount_mole_nAttack.cs:28`) under gravity (the prefab Rigidbody `m_UseGravity: 1`), life 10 × rangeMod s (`PvpMount.cs:3884`), box trigger 0.25 × 0.25 × 0.5; explodes on contact, `FindAreaTarget(hit, 4, 4)` and `hit(1, ATK, KO 1)` (`:229-253`), cooldown 1 s (`PvpMount.cs:13148`).
 - **mountDash** (normal attack while moving faster): drops a bomb at its own position (`RPC_rAttack_mole_fire`) that explodes after 1 s: `FindAreaTarget(pos − 0.5 up, 4, 3)`, `hit(1, (int)(1.5 × ATK), KO 1)`, cooldown 0.5 s (`:13463, :13666-13689, :13751`).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | War Area (`mole_warArea`) | Active | 253 + 254 | 75 | 70 | Physical | enemy | เพิ่มระดับ Fire Barrage กับ Bombardment เป็นขั้น 3 เรียกพื้นที่สงคราม 10 วิ เครื่องบินกราดยิงและทิ้งระเบิดเพลิงใส่ศัตรูในระยะ |
+| 453 | Twin Warhead (`mole_twinWarhead`) | Passive | 354 | 0 | 0 | None | self | Missile 1-4 ยิงหัวรบ 2 เท่า (30dmg/hit) ทำให้ AutoGyrogun, Barrel Bot และ King Kaiser ในระยะใช้สกิลนี้ได้ และ เพิ่มท่าโจมตีให้ KingKaiser |
+| 454 | Barrel Railgun (`mole_barrelRailgun`) | Active | 444 | 70 | 60 | Physical | enemy | ขึ้นขี่ป้อมเรลกันบังคับยิงอัตโนมัติทะลุแนวยาว 12% ทำให้ชา ตัวแรกติดไฟช็อตและ ทิ้งแนวยิงร่องไฟฟ้า (20sec) |

@@ -687,3 +687,13 @@ Verified 2026-10-26 against the Reborn decompile. All eight are one rank (`Rebor
 - **Shield Bash zones (verified 2026-10-28):** the bash needs `RebornZone.Combat` where BB needs `mGameType > 4` (`Reborn1027:Whale.cs:13613`; otherwise the plain `RPC_cAttack2`, `:13623`). `Combat` is true when `mGameType > 4`, and on a map of type 4 or lower only when `CombatHere()`: type 3 with game code 58-69 (`IsCombatZone`) and the local player not inside a `RebornSafeArea` (`Reborn1027:RebornZone.cs:16-26`, `:87-102`, `:117-127`; `Reborn1027:RebornSafeArea.cs:106-123`, position test `:121`). The type-4 maps are BB's (`Reborn1027:M107_RequestFromAlcacia.cs:1926`, `:1954`; `Reborn1027:M917_WarRepose2.cs:2193`, `:2211`), and M927 / M937 again set 5 in `Start()` (`Reborn1027:M927_SilentEarth.cs:1424`, `Reborn1027:M937_BattleForTomorrow.cs:2859`). Card: the Reborn Shield Bash tab swaps the limit line's places to missions, PvP arenas and combat zones outside safe areas. This also answers which zones count as `RebornZone.Combat` ([Reborn-Mechanics-Reference.md](Reborn-Mechanics-Reference.md), open question 9).
 
 **Open:** the Swallow ↔ Auto Shield link on Reborn (open question 3, §4.17). **Decided 2026-10-28:** the Reborn lists leave each other out (§4.17).
+
+## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
+
+Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
+
+| Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
+|---|---|---|---|---|---|---|---|---|
+| 452 | Sovereign Impaler (`whale_sovereignImpaler`) | Passive | 254 | 0 | 0 | None | self | WallPuncture โดนเป้าหมายเพิ่ม 1 Impaler (+1 Impaler/hit, 3max) Armor Shatter รับดาเมจเพิ่ม 15% และทำลายบาเรีย |
+| 453 | Oceans Resilience (`whale_oceansResilience`) | Passive | 354 | 0 | 0 | None | self | hardenSkin เป้าหมายโจมตีวาฬในระยะประชิดจะเพิ่ม Hate และติดสถานะเชื่องช้า โจมตีช้าลง 30% (4sec) หากค่า DEF เต็มรับดาเมจลด 10% |
+| 454 | Leviathan Breach (`whale_leviathanBreach`) | Active | 444 | 60 | 50 | Magic | enemy | เรียกโลมากระโดดไปหาเป้า แล้วเรียก Leviathan ขึ้นมาทำความเสียหายอย่างรุนแรงตามค่า ATK และ DEF และสร้างสถานะน้ำวน (5sec) |
