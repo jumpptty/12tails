@@ -4931,6 +4931,7 @@ async function donateChildTests(env) {
     { const wolf = SKILLS.find(s => s.id === "wolf_resonanceClaw");
       sandbox._setServer("tto"); sandbox._skillRanks[wolf.id] = 1; sandbox._selectSkill(wolf); const h = sandbox._getRenderedHeroHtml();
       good(!h.includes("sk-soon") && h.includes("ฟาดดาบคู่") && h.includes("เวทมนตร์") && h.includes(">55 MP<") && h.includes("sk-cost-sp"), "the Resonance Claw stub renders its text, damage type and MP without the big coming-soon look");
+      good(html.includes('class="sk-roster-tab-srv"') && !/name: "(C|Common) \((ToT|RB|TTO)\)"/.test(html) && ['name: "C", srv: "tot"', 'name: "C", srv: "reborn"', 'name: "C", srv: "tto"', 'name: "Common", srv: "tot"'].every(x => html.includes(x)), "server-only roster tabs show the server logo, not (ToT) / (RB) / (TTO)");
       const pan = ["panda_wind&cloud", "panda_rain&storm"]; good(pan.every(id => magicSet.has(id) && SKILLS.some(s => s.id === id)), "Panda Wind & Cloud and Rain & Storm are Magic on TTO");
       const sooner = SKILLS.find(s => s.soon === "reborn" && s.desc === "เร็วๆนี้"); if (sooner){ sandbox._setServer("reborn"); sandbox._selectSkill(sooner); good(sandbox._getRenderedHeroHtml().includes("sk-soon"), "a plain coming-soon stub keeps its big look"); }
       sandbox._setServer("og"); }
