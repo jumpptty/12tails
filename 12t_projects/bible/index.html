@@ -31150,7 +31150,7 @@ for (const key of Object.keys(SKILL_SIM_NAMES)){
   const cls = SKILL_SIM_NAMES[key], add = (icon, name, passive, soon, owner = cls, extra) => { const id = icon.replace(/[0-9]+$/, ""); if (SKILLS.some(s => s.id === id)) return; SKILLS.push(Object.assign({ id, name, class: owner, icon, maxRank: 1 }, passive ? { passive: true } : {}, { desc: "เร็วๆนี้", soon, onlyServer: soon }, extra || {})); };
   for (const c of SKILL_SIM_EX[key] || []) if (!c.placeholder && SKILL_ICONS[c.icon]) add(c.icon, c.name, c.type === "Passive", "tot", /^tot_ex_(up|down)damagemonter/.test(c.icon) ? "Common" : cls);   // UpdamageMonter / DownDamageMonter are in every class's ToT EX: one shared Common card each (user 2026-10-25)
   for (const e of SKILL_SIM_REBORN_EXTRA[key] || []) add(e[1], e[2], !!e[6], "reborn", cls, SOON_EXTRA[e[1]]);
-  for (const e of SKILL_SIM_TTO_EXTRA[key] || []) add(e[1], e[2], !!e[4], "tto", cls, Object.assign({ desc: e[8] + (TTO_DMG_TYPE_TH[e[7]] ? "<br>ประเภทดาเมจ **" + TTO_DMG_TYPE_TH[e[7]] + "**" : ""), liveCheck: "คำอธิบายจาก Skill Simulator ของ TailsTopia ยังไม่มีสูตรและตัวเลขละเอียด" }, e[5] || e[6] ? { cost: { mp: e[5], sp: e[6], spType: "red" } } : {}));
+  for (const e of SKILL_SIM_TTO_EXTRA[key] || []) add(e[1], e[2], !!e[4], "tto", cls, Object.assign({ desc: e[8] + (TTO_DMG_TYPE_TH[e[7]] ? "<br>ประเภทดาเมจ **" + TTO_DMG_TYPE_TH[e[7]] + "**" : "") }, e[5] || e[6] ? { cost: { mp: e[5], sp: e[6], spType: "red" } } : {}));
 }
 // The trees of a class on a server: BB's, plus the Reborn C6 / C7 rows on Reborn (cached per class).
 function skillSimTrees(server, classKey){
@@ -37896,6 +37896,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-10-31T03:02:02.105Z","fix(bible): TTO Lv 100 skill cards: remove the not-confirmed-in-game line"],
     ["2026-10-31T02:58:52.982Z","feat(bible): skill roster: server-only tabs show the server logo instead of (ToT) / (RB) / (TTO), which read alike"],
     ["2026-10-31T02:42:51.991Z","feat(bible): TTO skill simulator update: Lv 100 skills 452-454 with stub cards in a C (TTO) tab, Class C points capped at 9 (six older guides stay, marked outdated), Panda Wind & Cloud and Rain & Storm are Magic"],
     ["2026-10-30T14:09:55.907Z","feat(bible): class guides: 70 descriptions reformatted in the style of #60 and #83 (formatting only, the authors' words stay), a plain five-star guide's pop-up no longer says how to get ดาวฟ้า, the ดาวฟ้า filter star is grey and smaller when off; fix(bible): skill details: Rabbit Charge Attack's ระยะ and เล็ง stay inside the formula box"],
