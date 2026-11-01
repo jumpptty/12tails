@@ -4255,6 +4255,25 @@ let checkedRsim = 0;
     ok(cd(0, 0, 120) === "15.48s" && cd(3, 0, 120) === "10.84s", "Fireball cooldown keeps its decimals: " + cd(0, 0, 120) + ", " + cd(3, 0, 120) + ", want 15.48s, 10.84s");
     ok(cd(3, 1, 0) === "11s" && cd(3, 1, 120) === "5.68s" && cd(0, 1, 0) === "15s", "Fire Keep halves the raw cooldown, rounded up, before AGI: " + [cd(3, 1, 0), cd(3, 1, 120), cd(0, 1, 0)] + ", want 11s, 5.68s, 15s");
   }
+  // The Test panel (user 2026-11-01): beside the clicked button whatever panels are open; a mixed roll keeps all its colours in the history. Fixed inputs, the two pure helpers.
+  { const Spot = vm.runInContext("testPanelSpot", sandbox), Past = vm.runInContext("testPastHtml", sandbox), err = (m, x) => { console.error("[TEST PANEL ERROR] " + m + (x === undefined ? "" : ": " + x)); errorCount++; };
+    const b = { left: 787, right: 950, top: 387, bottom: 415, width: 163, height: 28 };
+    const r = Spot(b, 200, 90, 1229, 584, false), l = Spot({ left: 900, right: 1100, top: 387, bottom: 415, width: 200, height: 28 }, 200, 90, 1229, 584, false), u = Spot(b, 200, 90, 300, 660, true), tall = Spot(b, 200, 700, 1229, 584, false);
+    if (r.side !== "right" || r.x !== 960 || r.y !== 325) err("beside the button, bottoms level", JSON.stringify(r));
+    if (l.side !== "left" || l.x !== 690) err("no room on the right flips left", JSON.stringify(l));
+    if (u.side !== "up" || u.y !== 287 || u.x !== 94) err("a phone shows it above the button, kept on screen", JSON.stringify(u));
+    if (tall.y !== 4) err("a panel taller than the window starts at its top", JSON.stringify(tall));
+    const digits = h => (h.match(/dmgdigit|alt="\d"/g) || []).length, srcOf = c => vm.runInContext("SKILL_ICONS", sandbox)["dmgdigit_" + c + "1"];
+    const mix = Past({ purpleMix: true, cumulativeValue: 111, white: 11, purple: 100 }, "w", "a"), noPurple = Past({ purpleMix: true, cumulativeValue: 11, white: 11, purple: 0 }, "w", "w"), onlyPurple = Past({ purpleMix: true, cumulativeValue: 11, white: 0, purple: 11 }, "w", "w"), plain = Past({ purpleMix: false, cumulativeValue: 1, white: 1, purple: 0 }, "g", "w");
+    if (!mix.includes(srcOf("y")) || !mix.includes(srcOf("a")) || !mix.includes(srcOf("p")) || mix.includes(srcOf("w")) || digits(mix) !== 8) err("a mixed roll keeps its gold total, its plain part in the server's colour and its purple part");
+    if (noPurple.includes(srcOf("p")) || !noPurple.includes(srcOf("w"))) err("a mixed roll with no purple drops the purple part");
+    if (onlyPurple.includes(srcOf("w")) || !onlyPurple.includes(srcOf("p"))) err("a mixed roll with no white drops the white part");
+    if (!plain.includes(srcOf("g")) || plain.includes(srcOf("y"))) err("a single-colour roll keeps its own colour (a heal stays green)");
+    const src = html; for (const need of ["function placeTestPanel()", "function clearTestPanel()", "TEST_HOLD_MS = 5000", "multiHitGroups.slice().forEach(g => g.hits.forEach(h => revealMultiHit(g, h)))", 'closest(".sk-side")) testPanelHide()', '".sk-test-panel"]']) if (!src.includes(need)) err("missing from the page", need);
+    for (const gone of ["positionCombatLedger", "pinMultiHitLayer", "sk-has-compat-left-ledger", "top:26vh !important"]) if (src.includes(gone)) err("the old lane is back", gone);
+    if (!plain.includes('class="sk-test-past-n"')) err("a past roll's digits sit in a row (a bare .sk-test-past stacks them)");
+    if (!src.includes('classGuideTipDim.classList.toggle("show", !!cast)') || !src.includes(".cg-tip-dim{position:fixed")) err("the class guide's stat pop-ups dim the page");
+  }
   // Hover timings: the same numbers the skill-details chips show for that card and rank (revised art on, dependencies from the build).
   { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
     const strip = h => h.replace(/<[^>]*>/g,"").replace(/\s+/g,"").trim();

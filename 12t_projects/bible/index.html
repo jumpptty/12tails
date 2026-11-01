@@ -35,7 +35,7 @@
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
-    popup: [".hub-music-pop", ".copy-note", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge"],
+    popup: [".hub-music-pop", ".copy-note", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge", ".sk-test-panel"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
     field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
@@ -2254,6 +2254,9 @@
   .cg-cast-bars{display:inline-flex;flex-wrap:wrap;gap:6px}
   .cg-page:not([data-mode="author"]) .cg-cast-bars{display:none}
   .cg-cast-bar[hidden],.cg-page:not([data-mode="author"]) .cg-cast-bar{display:none}
+  /* The stat pop-ups open in the middle of the screen over a dimmed page (user 2026-11-01). Neither takes the pointer, so the hover stays on its button. */
+  .cg-tip-dim{position:fixed; inset:0; z-index:8999; background:rgba(0,0,0,.62); pointer-events:none; opacity:0; transition:opacity .12s ease}
+  .cg-tip-dim.show{opacity:1}
   .cg-tip:has(.cg-cast){max-width:var(--cg-tip-room,calc(100vw - 8px));font-size:var(--cg-cast-fs,12px);padding:.6em .9em}   /* every size below is in em: classGuideCastFit sets the font size from the viewport */
   .cg-cast{width:calc(var(--cg-cast-w,35em) * var(--cg-cast-cols,1));max-width:100%;white-space:normal;font-size:1em;font-weight:500;line-height:1.4}
   .cg-cast .cg-tip-h{margin-bottom:.3em;font-size:1.08em}
@@ -5185,7 +5188,6 @@
   @media (min-width:900px){
     .sk-side{position:absolute; left:calc(100% + 20px); top:0; width:260px; margin:0; z-index:4}
     .sk-rel-phone{display:none}
-    .sk-has-compat-left-ledger .sk-multihit-layer{left:auto; right:calc(100% + 20px)}
     .sk-side .sk-rel{margin-top:14px}
     .sk-side > .sk-rel:first-child{margin-top:0}
     .sk-side .sk-compat-grid{grid-template-columns:1fr}
@@ -5631,86 +5633,31 @@
   /* Real in-game damage-popup digit textures (renderDamageDigits), not this
      tool's own font -- sized to a comparable visual weight to .sk-stat-value
      (30px) despite each PNG's own native ~50x64/46x64 pixel dimensions. */
-  /* Classic floating-damage-number effect (user-requested): fades out at a
-     constant rate (linear, not eased) over 2s while rising by exactly its
-     own height (translateY(-100%) is relative to the element's own box,
-     which is exactly "equal to its height" -- not a fixed px guess).
-     "forwards" holds the fully-faded end state rather than snapping back.
-     Used by .sk-multihit-item/.sk-multihit-total (the Simulate popup, both
-     single- and multi-hit skills alike since 2026-08-17's unification) --
-     each of those elements is created fresh exactly once at its real
-     reveal moment (see revealMultiHit), so the animation just plays
-     natively from there, no restart-on-rerender trick needed. Deliberately
-     NOT respecting prefers-reduced-motion (2026-08-14, user-confirmed
-     after reporting the number rendered fully static -- traced to their
-     own reduce-motion OS/browser setting silently triggering the opt-out
-     this rule used to have here) -- this is a core, explicitly-requested
-     effect, not a decorative flourish like .view's entrance animation
-     below, which still respects the preference. Don't "fix" this by
-     re-adding the media-query opt-out; that was tried and reverted. */
-  @keyframes dmgFinalFloat{
-    0%{opacity:1; transform:translateY(0)}
-    100%{opacity:0; transform:translateY(-100%)}
-  }
   .sk-dmg-final-digit{height:34px; width:auto; display:block}
-  /* Multi-hit Simulate overlay (e.g. manaMissile's several missiles) --
-     appended once to document.body, OUTSIDE .view's subtree (see
-     multiHitLayer's own JS declaration for the full rationale, both why it
-     lives outside root -- .view's transform-animation makes it a
-     containing block for position:fixed descendants, confirmed live to
-     silently shrink this layer down to .tool-shell's own small box when it
-     was still inside root -- and why an already-revealed hit's element is
-     never recreated once appended). inset:0 makes this layer's box match
-     the real viewport now that it's outside that quirk's reach. */
-  .sk-multihit-layer{position:absolute; left:calc(100% + 20px); top:20px; width:270px; pointer-events:none; z-index:15}
-  /* One per Simulate click, positioned via JS (shellRect-anchored, see the
-     click listener) in the open gutter to the right of the tool shell --
-     user-specified, there's nothing else out there to collide with.
-     width:max-content (not the CSS default `auto`) -- confirmed live this
-     was load-bearing, not decorative: a position:absolute element with no
-     explicit width, nested inside ANOTHER position:absolute element with
-     no explicit width (this group sits inside .sk-multihit-layer, itself
-     position:fixed but that's the well-defined outer frame, not the
-     problem) collapses to a 0-width box in this browser instead of
-     shrinking to fit its own children -- .sk-multihit-item below hit the
-     exact same collapse for the identical reason and needs the identical
-     fix. The original single-hit-only popup this file had before
-     2026-08-17's unification (.sk-dmg-final-popup, since removed) never
-     hit this because it was only ONE level of auto-width position:absolute
-     nesting (inside .sk-dmg-final, a normal-flow position:relative box
-     with a real resolved width) -- two auto-width absolutely-positioned
-     levels stacked is what actually breaks. */
-  /* width set inline per-click by the click handler (multiHitGroupWidth),
-     NOT max-content here -- .sk-multihit-total below needs a real, known
-     pixel width on THIS element to center against via left:0/right:0/
-     margin:auto (see that rule's own comment for why translateX(-50%)
-     was tried first and replaced). */
-  .sk-multihit-group{position:absolute}
-  /* Sits at the top of the group, horizontally CENTERED over the hit grid
-     below it via left:0/right:0/margin:0 auto against .sk-multihit-group's
-     own now-explicit width (2026-08-17, replacing an earlier
-     left:Npx/transform:translateX(-50%) approach -- see
-     multiHitGroupWidth's own comment for exactly why that broke: percentage
-     transforms don't play well with this file's nested-absolute-position
-     layout). Stays reliably centered regardless of how many digits the
-     running total itself grows to mid-reveal (e.g. "15" -> "1802"), unlike
-     the transform approach. Full single-hit digit size (34px,
-     .sk-dmg-final-digit's own default), grows/updates in place as each
-     small hit lands, animates only once every hit has (JS-assigned). For a
-     single-hit skill (hitCount===1, the common case) this is the ONLY
-     element rendered -- revealMultiHit skips creating a .sk-multihit-item
-     entirely in that case, since it would just duplicate this same number
-     right below it; centering still resolves correctly with no special-
-     casing needed, since multiHitGroupWidth(1) is just a small fixed box. */
-  .sk-multihit-total{position:absolute; top:0; left:0; right:0; margin:0 auto; display:flex; align-items:center; justify-content:center; width:max-content}
-  /* Individual hits (multi-hit skills only, hitCount>1): 4-column grid via
-     multiHitGridPos, starting below .sk-multihit-total (see that
-     function's own startY). Animates immediately on creation -- no
-     negative delay needed, unlike every other popup in this file, because
-     these are created in real time at their actual reveal moment, never
-     later recreated. width:max-content -- see .sk-multihit-group's comment
-     above for why (this element hit the exact same 0-width collapse live). */
-  .sk-multihit-item{position:absolute; display:flex; align-items:center; width:max-content; animation:dmgFinalFloat 2s linear forwards}
+  /* The Test panel (user 2026-11-01, picked from mocks: option D's panel, option B's pop and roll history). One panel per page, attached to the clicked Test button (placeTestPanel), so it no longer
+     depends on which side panels are open. The layer is a zero-size anchor at the corner of its containing block; the panel inside it takes block coordinates, so the page's scale moves it with the button.
+     Clicks pass through it: it may lie over the side panel's toggles. Plays under reduced motion too (user 2026-08-14, their OS has reduce-motion on; an opt-out here was tried and reverted). */
+  .sk-multihit-layer{position:absolute; left:0; top:0; width:0; height:0; pointer-events:none; z-index:15}
+  .sk-test-panel{position:absolute; left:0; top:0; box-sizing:border-box; width:max-content; min-width:170px; padding:8px 10px 9px; background:var(--panel); border:1px solid var(--gold); border-radius:5px; box-shadow:0 7px 16px rgba(0,0,0,.5); transition:opacity .3s linear}
+  .sk-test-panel[hidden]{display:none}
+  .sk-test-panel.is-off{opacity:0}
+  .sk-test-panel::after{content:""; position:absolute; left:-6px; top:var(--ay,50%); width:10px; height:10px; background:var(--panel); border:solid var(--th-edge,var(--gold)); border-width:0 0 1px 1px; transform:translateY(-50%) rotate(45deg)}
+  .sk-test-panel.is-left::after{left:auto; right:-6px; border-width:1px 1px 0 0}
+  .sk-test-panel.is-up::after{left:var(--ax,50%); top:auto; bottom:-6px; border-width:0 1px 1px 0; transform:translateX(-50%) rotate(45deg)}
+  @keyframes skTestPop{0%{transform:scale(1.28)}100%{transform:scale(1)}}
+  .sk-multihit-total{display:flex; align-items:center; justify-content:center}
+  .sk-multihit-total.is-pop{animation:skTestPop .16s ease-out}
+  .sk-test-more{margin-top:4px; font:500 11px 'Prompt',sans-serif; color:var(--muted); text-align:center}
+  .sk-test-more[hidden]{display:none}
+  .sk-test-hits{display:grid; grid-template-columns:repeat(3,auto); justify-content:center; justify-items:center; gap:2px 10px; margin-top:4px}
+  .sk-test-hits:empty{display:none}
+  .sk-multihit-item{display:flex; align-items:center; width:max-content}
+  /* width:0 + min-width:100%: the history wraps to the panel's width instead of setting it */
+  .sk-test-hist{display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; gap:4px 10px; width:0; min-width:100%; margin-top:7px; padding-top:6px; border-top:1px solid var(--line); opacity:.68}
+  .sk-test-hist:empty{display:none}
+  .sk-test-past,.sk-test-past-n,.sk-test-past-split{display:flex; justify-content:center}
+  .sk-test-past{flex-direction:column; align-items:center; gap:1px}
+  .sk-test-past-split{gap:5px}
   /* Per-hit lckProc marker (2026-08-20, Arctic Wind/Tornado Simulate pilot)
      -- reuses --stat-int (this tool's existing blue token, already used for
      the Damage Formula chip's INT term) rather than introducing a new color,
@@ -6739,8 +6686,8 @@
      panel-background button (that one's icon is a generic UI glyph, not a
      skill icon, so a button "chip" reads fine there). */
   /* Delta motion (2026-10-05, heroDelta): renderHero() rebuilds the card, so these play on the NEW elements once the
-     rebuild is compared with the snapshot taken before it. Like the Test floats, they ignore prefers-reduced-motion
-     (user request; their OS has reduce-motion on, see the dmgFinalFloat note). */
+     rebuild is compared with the snapshot taken before it. Like the Test panel, they ignore prefers-reduced-motion
+     (user request; their OS has reduce-motion on). */
   .sk-delta{animation:skDeltaPing 1.1s ease-out}
   .sk-delta-down{animation:skDeltaPingDown 1.1s ease-out}
   @keyframes skDeltaPing{   /* glow stays inside the chip: one flash, no ring outside (user 2026-10-05) */
@@ -7158,7 +7105,6 @@
     html.tool-wide-hero .sk-stats-panel{position:static; width:auto; margin:16px 0 0; order:1}
     /* .view keeps an identity transform after its fade-in (fill-mode both), which would make it the containing block for position:fixed */
     html.tool-wide-hero .view:not([hidden]){animation-fill-mode:none}
-    html.tool-wide-hero .sk-multihit-layer{position:fixed; left:50%; right:auto; top:26vh !important; bottom:auto; transform:translateX(-50%)}
     /* the side panel's related list goes to the very bottom (after the stats panel, order:1): the card's two wrappers step aside */
     html.tool-wide-hero .sk > [data-role="display"], html.tool-wide-hero .sk-detail-layout{display:contents}
     html.tool-wide-hero .sk-rel-phone{order:2; margin:16px 0 0}
@@ -19052,6 +18998,20 @@ function renderDamageDigits(n, color, size){
   ).join("");
 }
 
+// One finished Test roll in the panel's history. A mixed roll keeps all three of its colours: the gold total, then its white and purple parts (purple left out at 0, white only when there is purple and no white).
+function testPastHtml(g, digitColor, plainColor){
+  if (!g.purpleMix) return '<div class="sk-test-past"><div class="sk-test-past-n">' + renderDamageDigits(g.cumulativeValue, digitColor, 15) + "</div></div>";
+  return '<div class="sk-test-past"><div class="sk-test-past-n">' + renderDamageDigits(g.cumulativeValue, "y", 15) + '</div><div class="sk-test-past-split">' +
+    (g.white > 0 || g.purple === 0 ? '<div class="sk-test-past-n">' + renderDamageDigits(g.white, plainColor, 11) + "</div>" : "") + (g.purple > 0 ? '<div class="sk-test-past-n">' + renderDamageDigits(g.purple, "p", 11) + "</div>" : "") + "</div></div>";
+}
+// Where the Test panel goes, all in window units (b = the button's rect, w / h = the panel's size, W / H = the window): to the button's right, bottoms level; left when the right has no room; above it on a phone (no side panel there) or when neither side fits.
+function testPanelSpot(b, w, h, W, H, narrow){
+  const GAP = 10, EDGE = 6, y = Math.max(4, Math.min(H - h - 4, b.bottom - h));
+  if (!narrow && b.right + GAP + w <= W - EDGE) return { x: b.right + GAP, y, side: "right" };
+  if (!narrow && b.left - GAP - w >= EDGE) return { x: b.left - GAP - w, y, side: "left" };
+  return { x: Math.max(EDGE, Math.min(W - w - EDGE, b.left + b.width / 2 - w / 2)), y: Math.max(4, Math.min(H - h - 4, b.top - GAP - h)), side: "up" };
+}
+
 // Test (damage simulate) button, one helper for every Test button (2026-09-24 redesign).
 // is-new = first-time glow, until any Test is clicked; remembered per viewer (storage is only a convenience).
 const SIM_SEEN_KEY = "12t-bible-sim-seen";
@@ -19477,7 +19437,7 @@ function mountSkillCooldownLookup(root){
     try { localStorage.setItem(STATS_COLLAPSE_KEY, ["player", "enemy"].filter(x => statsCollapse[x]).join(",")); } catch (e2) {}
     applyStatsCollapse();
     if (!statsCollapse[k]) fitStatDials();   // the rings measured 0 while hidden
-    positionCombatLedger(); fitStageToScreen();   // the stats panel is absolute: the shell's ResizeObserver never sees it change
+    placeTestPanel(); fitStageToScreen();   // the stats panel is absolute: the shell's ResizeObserver never sees it change
   });
   // Enemy preset cycle (2026-08-21, relocated from the Final Damage chip's
   // old 3-buttons-at-once .sk-enemy-btns row into this panel, per direct
@@ -20341,8 +20301,7 @@ function mountSkillCooldownLookup(root){
   function afterEnemyChange(){
     updateEnemyCycleDisplay();
     // A simulated roll against the previous target shouldn't linger once a new one is active.
-    multiHitGroups = [];
-    multiHitLayer.innerHTML = "";
+    clearTestPanel();
     renderHero();
   }
   function selectEnemyPreset(id){
@@ -20993,7 +20952,7 @@ function mountSkillCooldownLookup(root){
   // existence check (so a reveal scheduled before a skill/target switch
   // can tell its group was cleared and skip itself) plus dedupe against
   // the odd double-tick -- it does not drive any rendering by itself.
-  let multiHitGroups = []; // [{id, clickedAt, hits:[{revealDelay, pos:{x,y}, value, index}], cumulativeValue}]
+  let multiHitGroups = []; // the Test run still revealing, at most one: [{id, clickedAt, key, hits:[{revealDelay, value, index}], cumulativeValue}]
   // Persistent overlay for multi-hit Simulate groups -- see the comment
   // above. position:fixed + inset:0 (CSS) means this layer's own box
   // always exactly matches whatever frame position:fixed actually resolves
@@ -21005,15 +20964,14 @@ function mountSkillCooldownLookup(root){
   // convert a true-viewport rect (shellRect/finalRect) into a coordinate
   // relative to this layer, regardless of which case applies.
   const multiHitLayer = $('[data-role="multihit-layer"]', root);
-  // Safety net: if the user navigates away from this tool entirely (not
-  // just switches skill/target within it) while a group is mid-animation,
-  // this layer -- now living outside root -- won't be hidden/cleared by
-  // whatever shows/hides root on tool switch. Groups still self-expire
-  // within ~2.3s regardless, so this only prevents a brief visual overlap
-  // on top of the next view, not a permanent leak.
+  // The Test panel's state (placeTestPanel). testHist: finished rolls per Test button, newest first, kept while the panel is faded out; cleared with the panel on a skill or target switch.
+  let testPanel = null, testKey = "m", testHideTimer = 0, testCut = 0, testCells = 39;
+  const testHist = new Map();
+  function clearTestPanel(){ multiHitGroups = []; testHist.clear(); clearTimeout(testHideTimer); if (testPanel){ testPanel.remove(); testPanel = null; } }
+  // Leaving this tool entirely clears it too: the layer is not hidden with the view.
   window.addEventListener("hashchange", () => {
     const toolPart = location.hash.split("?")[0].split("/")[0];
-    if (toolPart !== "#skill-details" && toolPart !== "#skill-cooldown-lookup"){ multiHitLayer.innerHTML = ""; closeSkillOverlays(); }
+    if (toolPart !== "#skill-details" && toolPart !== "#skill-cooldown-lookup"){ clearTestPanel(); closeSkillOverlays(); }
   });
   // Leaving the tool (phone Back, Alt+←, a hub link) closes its pop-ups too: they live on <body>, outside root, so they stayed over the
   // menu, and the reach pop-up's capture-phase keys kept W A S D and the arrows blocked there (review 2026-10-28).
@@ -21915,43 +21873,6 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     lastRollAfterDef = afterDef;
     return staged ? { afterDef, final } : final;
   }
-  // 2D grid (not a single fanned-out row) for multi-hit popups -- laid out
-  // in multiHitLayer's wide-open gutter space (user-specified: to the
-  // right of the tool shell, where there's nothing else at all), generous
-  // enough that even a 3-digit group at adjacent cells never touches its
-  // neighbor. startY (not startX) clears the group's own cumulative-total
-  // readout, which sits at this group's local (0,0) -- user-requested: the
-  // running total reads as sitting ABOVE the individual hits, not beside
-  // them, so the grid starts a row below instead of a column to the right.
-  // Shared constants (not re-declared per-function) so multiHitGroupWidth
-  // below can never silently drift out of sync with the grid it's sizing
-  // the total's centering box against.
-  const MULTIHIT_COLS = 3, MULTIHIT_COL_SPACING = 92, MULTIHIT_ROW_SPACING = 26, MULTIHIT_START_Y = 40;
-  function multiHitGridPos(i, n){
-    const row = Math.floor(i / MULTIHIT_COLS), col = i % MULTIHIT_COLS;
-    return { x: col * MULTIHIT_COL_SPACING, y: MULTIHIT_START_Y + row * MULTIHIT_ROW_SPACING };
-  }
-  // How wide .sk-multihit-group's own box should be so .sk-multihit-total
-  // can center over the grid via a real `left:0; right:0; margin:0 auto`
-  // (2026-08-17, replacing an earlier `left:Npx; transform:translateX(-50%)`
-  // approach -- user-reported the total visibly drifted as its own digit
-  // count grew mid-reveal, e.g. "15" then "1802"). translateX(-50%) is a
-  // PERCENTAGE of the element's own current width, and this element sits
-  // inside a chain of TWO nested position:absolute ancestors with no
-  // explicit width of their own (.sk-multihit-group, .sk-multihit-layer's
-  // position:fixed doesn't count) -- the exact same family of layout
-  // already confirmed to misbehave once in this file (see
-  // .sk-multihit-group's own width:max-content comment, the 0-width
-  // collapse bug). left:0/right:0/margin:auto sidesteps percentage math
-  // entirely: it centers .sk-multihit-total's own intrinsic width within
-  // an EXPLICIT pixel-width parent, which is a much older, more reliably
-  // cross-browser technique than transform-based centering. +100 is a
-  // generous buffer past the grid's rightmost column position, covering
-  // even a wide 4-digit hit value there.
-  function multiHitGroupWidth(n){
-    const itemsInFirstRow = Math.min(MULTIHIT_COLS, n);
-    return (itemsInFirstRow - 1) * MULTIHIT_COL_SPACING + 80;
-  }
   // Reveals exactly ONE hit: rolls it, folds it into the group's running
   // total, and APPENDS a brand-new element -- never touches any
   // previously-appended hit (see multiHitGroups' declaration for why that
@@ -21959,9 +21880,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   // time (see the simulate-hit listener below), not from renderHero().
   // Single-hit skills (group.hits.length===1, the common case -- every
   // Penguin damage skill except manaMissile) are handled by this SAME
-  // function/group mechanism, unified with multi-hit (2026-08-17,
-  // user-requested: single-hit's popup should render in the same gutter
-  // spot multi-hit's does, not stay chip-local) -- but skip creating a
+  // function/group mechanism, unified with multi-hit -- but skip creating a
   // small .sk-multihit-item for that one hit, since it would just show the
   // exact same number twice right next to .sk-multihit-total. The total
   // alone (full digit size) is both "the running sum" and "the one hit" in
@@ -21976,9 +21895,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // ENTIRELY for a pre-rolled hit, silently preventing it from ever being
     // displayed at all. Every other skill's hits still start `value: null`
     // and get rolled lazily right here, unchanged.
-    if (hit.revealed || !multiHitGroups.includes(group)) return;
-    const wrap = multiHitLayer.querySelector(`[data-group-id="${group.id}"]`);
-    if (!wrap) return; // cleared by a skill/target switch since this was scheduled
+    if (hit.revealed || !multiHitGroups.includes(group) || !testPanel) return;   // cleared by a skill/target switch since this was scheduled
     hit.revealed = true;
     if (hit.value === null){
       const simRank = getSkillRank(selected);
@@ -22056,12 +21973,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (group.hits.length > 1){
       const hitEl = document.createElement("div");
       hitEl.className = "sk-multihit-item";
-      hitEl.style.left = hit.pos.x + "px";
-      hitEl.style.top = hit.pos.y + "px";
       hitEl.innerHTML = renderDamageDigits(hit.value, hit.purple ? "p" : digitColor, 20) + (hit.bonus ? `<span class="sk-mix-exp">${renderDamageDigits(hit.bonus, "p", 12)}</span>` : "") + procLabel;
-      wrap.appendChild(hitEl);
+      testPanelAddHit(hitEl);
     }
-    const totalEl = wrap.querySelector(".sk-multihit-total");
+    const totalEl = testPanel.querySelector(".sk-multihit-total");
     // Single-hit skills (group.hits.length===1) never create a
     // .sk-multihit-item at all (see this function's own comment above), so
     // this is the only place their own proc roll could ever be shown --
@@ -22073,32 +21988,13 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         + `${group.white > 0 || group.purple === 0 ? `<div class="sk-mix-row">${renderDamageDigits(group.white, plainColor, 30)}</div>` : ""}`
         + `${group.purple > 0 ? `<div class="sk-mix-row">${renderDamageDigits(group.purple, "p", 30)}</div>` : ""}</div>`
       : renderDamageDigits(group.cumulativeValue, digitColor) + (group.hits.length === 1 ? procLabel : "");
-    // Only once every hit has landed does the running total itself start
-    // floating/fading -- assigning `animation` fresh, right now, on an
-    // element that has existed (static) this whole time, so this is a
-    // real one-time start, not a recreate-and-hope-the-delay-math-lines-up.
-    // Checks `h.revealed`, NOT `h.value !== null` (2026-08-23 fix, user-
-    // reported "typhoon damage sim only returns 1 hit"). The old check was
-    // written for the lazy-roll path, where a hit's `value` only stops being
-    // `null` at the exact moment it's revealed -- so "every value is set"
-    // and "every hit has been shown" were the same fact. Typhoon's hits are
-    // pre-rolled synchronously, ALL at once, at click time (see the click
-    // handler's own typhoonHpNow branch) -- every hit already has a non-null
-    // `value` from the instant the group is created, so the old check fired
-    // true after the very FIRST hit revealed, immediately pruning the group
-    // from `multiHitGroups` -- every later scheduled reveal then hit this
-    // function's own top-of-function `!multiHitGroups.includes(group)` guard
-    // and silently no-opped, which is exactly why only 1 hit ever appeared
-    // regardless of the real (correctly-computed) hit count. `h.revealed`
-    // is the one flag that's only ever true once a hit has actually been
-    // drawn to screen, for both the lazy and pre-rolled paths alike -- see
-    // this function's own top-of-function comment for why `h.revealed` (not
-    // `h.value`) is already the correct "has this hit been shown" signal.
+    totalEl.classList.remove("is-pop"); void totalEl.offsetWidth; totalEl.classList.add("is-pop");
+    // `h.revealed`, not `h.value`: Typhoon's hits are pre-rolled at click time, so every value is set from the start (2026-08-23, "typhoon damage sim only returns 1 hit").
     if (group.hits.every(h => h.revealed)){
-      totalEl.style.animation = "dmgFinalFloat 2s linear forwards";
       multiHitGroups = multiHitGroups.filter(g => g !== group);
-      setTimeout(() => wrap.remove(), 2000);
+      testPanelDone(group, testPastHtml(group, digitColor, plainColor));
     }
+    placeTestPanel();
   }
   // Renders a skill's `dmg` template for the given rank as substituted "hero
   // numbers" (2026-08-19 redesign, superseding the older fully-symbolic
@@ -23178,49 +23074,57 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     statsPanelEl.hidden = !selected;
   }
 
-  // The two external gutters have different live heights: the stats gutter
-  // on the left and the related-skills rail on the right. Put temporary
-  // simulated hits beneath whichever one ends first. A short related list
-  // therefore keeps results on the right; a tall list moves them below the
-  // Enemy Stats panel on the left.
-  // Tool zoom (user 2026-10-27): Test results float in a side lane beside the card and are gone about 3 s after their last hit, so
-  // when that lane is off screen (the card zoomed past the window) they pin just inside the window's right edge, level with the
-  // clicked Test, for that press. Decided once per press; the next press puts the lane back first. var: renderHero can run first.
-  var multiHitPinned = false;
-  function pinMultiHitLayer(btn, groupW){
-    if (multiHitPinned){ multiHitPinned = false; multiHitLayer.style.left = multiHitLayer.style.right = ""; positionCombatLedger(); }
-    if (!btn || !document.documentElement.classList.contains("tool-zoomed")) return;
-    const lane = multiHitLayer.getBoundingClientRect(), cb = multiHitLayer.offsetParent, stage = document.querySelector(".stage");
-    const scale = stage ? (stage.getBoundingClientRect().width / (stage.offsetWidth || 1) || 1) : 1, w = Math.max(lane.width, groupW * scale);
-    if (!cb || (lane.left >= 8 && lane.left + w <= window.innerWidth - 8 && lane.top >= 0 && lane.top <= window.innerHeight - 120)) return;   // the lane is on screen
-    const cbRect = cb.getBoundingClientRect(), x = window.innerWidth - 20 - w, y = Math.min(Math.max(20, btn.getBoundingClientRect().top), window.innerHeight * 0.5);
-    multiHitLayer.style.left = ((x - cbRect.left) / scale) + "px"; multiHitLayer.style.right = "auto";
-    multiHitLayer.style.top = ((y - cbRect.top) / scale) + "px";
-    multiHitPinned = true;
-  }
-  function positionCombatLedger(){
-    if (multiHitPinned) return;   // pinned by pinMultiHitLayer for the current results
-    const compatRail = $(".sk-side", displayEl);   // the side panel (2026-10-29; the related-skills rail before)
-    const canUseExternalRails = window.innerWidth >= 900;
-    const useExternalLedger = !!compatRail && canUseExternalRails;
-    const statsBottom = statsPanelEl && !statsPanelEl.hidden
-      ? Number(statsPanelEl.offsetTop || 0) + Number(statsPanelEl.offsetHeight || 0)
-      : 0;
-    const relatedBottom = compatRail
-      ? Number(compatRail.offsetTop || 0) + Number(compatRail.offsetHeight || 0)
-      : Infinity;
-    const rightLedgerTop = relatedBottom + 16;
-    const leftLedgerTop = statsBottom + 16;
-    const useRightLane = useExternalLedger && rightLedgerTop <= leftLedgerTop;
-    const useLeftLane = useExternalLedger && !useRightLane;
-    root.classList.toggle("sk-has-compat-right-ledger", useRightLane);
-    root.classList.toggle("sk-has-compat-left-ledger", useLeftLane);
-    if (!useExternalLedger){
-      multiHitLayer.style.top = "";
-      return;
+  // The Test panel (user 2026-11-01): it used to float in a lane beside the whole tool, on whichever side panel ended first, so it could land far from the button and moved with the panels.
+  // One panel at a time, for the Test button pressed last (testKey: "m" or a damage group's index). Stays HOLD ms after the last hit, then fades; its history comes back on the next press.
+  // Over the side panel's toggles: clicks pass through, and the mouse or keyboard focus reaching that panel hides it at once.
+  const TEST_HOLD_MS = 5000, TEST_FADE_MS = 300, TEST_HIST_MAX = 5;
+  function testPanelBtn(){ return testKey === "m" ? $('[data-role="simulate-hit"]', displayEl) : $('[data-role="simulate-group"][data-group-index="' + testKey + '"]', displayEl); }
+  function testPanelOpen(key){
+    clearTimeout(testHideTimer); testKey = key; testCut = 0;
+    if (!testPanel){
+      testPanel = document.createElement("div"); testPanel.className = "sk-test-panel";
+      testPanel.innerHTML = '<div class="sk-multihit-total"></div><div class="sk-test-more" hidden></div><div class="sk-test-hits"></div><div class="sk-test-hist"></div>';
+      multiHitLayer.appendChild(testPanel);
     }
-    multiHitLayer.style.top = Math.max(20, useRightLane ? rightLedgerTop : leftLedgerTop) + "px";
+    testPanel.hidden = false; testPanel.classList.remove("is-off");
+    testPanel.querySelector(".sk-multihit-total").innerHTML = ""; testPanel.querySelector(".sk-test-hits").innerHTML = ""; testPanel.querySelector(".sk-test-more").hidden = true;
+    testPanel.querySelector(".sk-test-hist").innerHTML = (testHist.get(key) || []).join("");
+    const cb = multiHitLayer.offsetParent, k = cb ? (cb.getBoundingClientRect().width / (cb.offsetWidth || 1) || 1) : 1;
+    testCells = 3 * Math.max(3, Math.floor((document.documentElement.clientHeight / k - 240) / 24));   // the total, a mixed split and the history keep their room; older hits of a long channel make way
   }
+  function testPanelAddHit(el){
+    const hits = testPanel.querySelector(".sk-test-hits"); hits.appendChild(el);
+    if (hits.children.length <= testCells) return;
+    hits.firstChild.remove(); testCut++;
+    const more = testPanel.querySelector(".sk-test-more"); more.hidden = false; more.textContent = "+ อีก " + testCut + " ฮิตก่อนหน้า";
+  }
+  function testPanelHide(){
+    clearTimeout(testHideTimer);
+    if (!testPanel || testPanel.hidden) return;
+    testPanel.classList.add("is-off");
+    testHideTimer = setTimeout(() => { if (testPanel) testPanel.hidden = true; }, TEST_FADE_MS);
+  }
+  function testPanelDone(group, pastHtml){
+    testHist.set(group.key, [pastHtml].concat(testHist.get(group.key) || []).slice(0, TEST_HIST_MAX));
+    if (!testPanel || testPanel.hidden || testPanel.classList.contains("is-off")) return;   // hidden on the way to the toggles: it stays hidden, the roll is kept
+    clearTimeout(testHideTimer); testHideTimer = setTimeout(testPanelHide, TEST_HOLD_MS);
+  }
+  // Block coordinates (the layer is a zero-size anchor), so the page's scale moves the panel with the button. Runs on every reveal and rebuild, and on resize.
+  function placeTestPanel(){
+    if (!testPanel || testPanel.hidden) return;
+    const btn = testPanelBtn(), cb = multiHitLayer.offsetParent;
+    if (!btn || !cb){ testPanelHide(); return; }
+    const c = cb.getBoundingClientRect(), k = c.width / (cb.offsetWidth || 1) || 1, b = btn.getBoundingClientRect();
+    const w = testPanel.offsetWidth * k, h = testPanel.offsetHeight * k;
+    const p = testPanelSpot(b, w, h, document.documentElement.clientWidth, document.documentElement.clientHeight, window.innerWidth < 900);
+    testPanel.style.left = (p.x - c.left) / k + "px"; testPanel.style.top = (p.y - c.top) / k + "px";
+    testPanel.classList.toggle("is-left", p.side === "left"); testPanel.classList.toggle("is-up", p.side === "up");
+    testPanel.style.setProperty("--ay", (b.top + b.height / 2 - p.y) / k + "px"); testPanel.style.setProperty("--ax", (b.left + b.width / 2 - p.x) / k + "px");
+  }
+  ["pointerover", "focusin"].forEach(ev => root.addEventListener(ev, e => {
+    if (!testPanel || testPanel.hidden || testPanel.classList.contains("is-left") || testPanel.classList.contains("is-up")) return;
+    if ((ev === "focusin" || e.pointerType === "mouse") && e.target.closest && e.target.closest(".sk-side")) testPanelHide();
+  }));
 
   function positionStatTooltips(){
     const shell = document.querySelector(".tool-shell");
@@ -23349,8 +23253,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     fitSearchText();
     requestAnimationFrame(fitSearchText);   // the first pass can run before the row's layout settles
     closeSuggestions();
-    multiHitGroups = [];
-    multiHitLayer.innerHTML = "";
+    clearTestPanel();
     renderHero();
     searchEl.blur();
     syncSkillHash();
@@ -24242,8 +24145,6 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     if (!selected){
       if (!hasSelectedAnySkill){
         displayEl.innerHTML = "";
-        root.classList.remove("sk-has-compat-right-ledger", "sk-has-compat-left-ledger");
-        multiHitLayer.style.top = "";
         if (serverDepsEl) serverDepsEl.innerHTML = "";
         searchWrapEl.classList.add("sk-search-hero");
         if (serverDepsEl) serverDepsEl.innerHTML = "";
@@ -26142,7 +26043,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
 
     const skillSwitched = idSeen !== (selected && selected.id);   // a new card always fits at once, even under the scale lock
     positionStatsPanel();
-    positionCombatLedger();
+    placeTestPanel();
     positionStatTooltips();
     positionDmgInfoPopup();
     setupStatTooltipInteractions();
@@ -26150,7 +26051,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     fitStageToScreen(skillSwitched);
     requestAnimationFrame(() => {
       positionStatsPanel();
-      positionCombatLedger();
+      placeTestPanel();
       positionStatTooltips();
       positionDmgInfoPopup();
       fitStageToScreen(skillSwitched);
@@ -26533,7 +26434,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const open = !relOpen.has(selected.id);
         if (open) relOpen.add(selected.id); else relOpen.delete(selected.id);
         $$(".sk-rel.is-fold", displayEl).forEach(r => { r.classList.toggle("is-open", open); const b = r.querySelector(".sk-rel-more"); if (b) b.setAttribute("aria-expanded", String(open)); });
-        positionCombatLedger(); fitStageToScreen();   // grows downward only; the fit waits while the pointer is on the panel
+        placeTestPanel(); fitStageToScreen();   // grows downward only; the fit waits while the pointer is on the panel
       });
       // Class tag under the skill name: leave the card and open that class's skill grid.
       displayEl.addEventListener("click", (e) => {
@@ -26613,6 +26514,8 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     // per-render listener block for it.
 
     function spawnSimulateGroup(hits, hitCount, btn){
+      // A press during a long run ends it: its remaining hits roll at once, so the history gets its true total (the numbers no longer float side by side, user 2026-11-01).
+      multiHitGroups.slice().forEach(g => g.hits.forEach(h => revealMultiHit(g, h)));
       const procPct = atkCoeffProcChance(selected, getSkillRank(selected), statVal(lckEl));
       const procRoll = () => procPct > 0 && Math.floor(Math.random() * 100) < procPct;
       // atkCoeffProc.perGroup: one roll per game stage (groups sharing procStage share it), not one per click.
@@ -26623,20 +26526,10 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       const variantAlt = groupVariantAlt;
       groupVariantAlt = null;
       const purpleMix = skillPurpleMixPossible(activeSimSkill(), getSkillRank(selected));
-      const group = { id: nextSimulatePopupId++, clickedAt: Date.now(), hits, cumulativeValue: 0, white: 0, purple: 0, statusOn: false, atkCoeffProcOn, variantAlt, purpleMix };
+      const key = btn.getAttribute("data-group-index") || "m";
+      const group = { id: nextSimulatePopupId++, clickedAt: Date.now(), key, hits, cumulativeValue: 0, white: 0, purple: 0, statusOn: false, atkCoeffProcOn, variantAlt, purpleMix };
       multiHitGroups.push(group);
-      if (purpleMix) hits.forEach(h => { h.pos = { x: h.pos.x, y: h.pos.y + 72 }; });
-      const wrap = document.createElement("div");
-      wrap.className = "sk-multihit-group";
-      wrap.dataset.groupId = group.id;
-      wrap.style.left = "0px";
-      wrap.style.top = "0px";
-      wrap.style.width = multiHitGroupWidth(hitCount) + "px";
-      const totalEl = document.createElement("div");
-      totalEl.className = "sk-multihit-total";
-      wrap.appendChild(totalEl);
-      pinMultiHitLayer(btn, multiHitGroupWidth(hitCount));
-      multiHitLayer.appendChild(wrap);
+      testPanelOpen(key);
       revealMultiHit(group, hits[0]);
       hits.slice(1).forEach(h => setTimeout(() => revealMultiHit(group, h), h.revealDelay));
       renderHero();
@@ -26652,7 +26545,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const HIT_INTERVAL_MS = 50;
         const hits = [];
         for (let i = 0; i < hitCount; i++){
-          hits.push({ revealDelay: i * HIT_INTERVAL_MS, pos: multiHitGridPos(i, hitCount), value: null, index: i, groupIndex: gIdx, revealed: false });
+          hits.push({ revealDelay: i * HIT_INTERVAL_MS, value: null, index: i, groupIndex: gIdx, revealed: false });
         }
         spawnSimulateGroup(hits, hitCount, btn);
       });
@@ -26715,7 +26608,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           for (let i = 0; i < TYPHOON_SIM_CAP; i++){
             const rolled = rollOneHit(selected, rank, i, true);
             const proc = rollLckProc(selected);
-            hits.push({ revealDelay: i * HIT_INTERVAL_MS, pos: multiHitGridPos(i, hits.length + 1), value: rolled.final, proc, index: i, revealed: false });
+            hits.push({ revealDelay: i * HIT_INTERVAL_MS, value: rolled.final, proc, index: i, revealed: false });
             hpPool -= rolled.afterDef;
             if (hpPool <= 0) break;
           }
@@ -26728,7 +26621,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           for (let i = 0; i < hitCount; i++){
             const c = sm.cells[Math.floor(Math.random() * sm.cells.length)];
             const value = c.hit ? rollOneHit(selected, rank, i, false, undefined, { talRoll: castRoll, scatterMult: c.mult }) : 0;
-            hits.push({ revealDelay: i * HIT_INTERVAL_MS, pos: multiHitGridPos(i, hitCount), value, tag: c.hit ? c.d.toFixed(1) + "m" : "miss", index: i, revealed: false });
+            hits.push({ revealDelay: i * HIT_INTERVAL_MS, value, tag: c.hit ? c.d.toFixed(1) + "m" : "miss", index: i, revealed: false });
           }
         } else {
           // A genuine fresh roll for duration-derived skills (Tornado), not
@@ -26738,9 +26631,6 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           // Unified path for every skill (2026-08-17) -- single-hit skills
           // are just hitCount===1, handled by the exact same group/reveal
           // mechanism as manaMissile's 7, not a separate code path anymore
-          // (user-requested: single-hit's popup should land in the same
-          // gutter spot multi-hit's does, not stay chip-local -- easiest way
-          // to guarantee that is to make it literally the same code).
           // Flat 50ms between every hit's reveal, for every multi-hit skill,
           // regardless of that skill's own real in-game cadence (2026-08-17,
           // user-specified: "ignore real tick intervals from the game code...
@@ -26753,7 +26643,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
           // factual game info -- it just no longer drives this animation.
           hits = [];
           for (let i = 0; i < hitCount; i++){
-            hits.push({ revealDelay: i * HIT_INTERVAL_MS, pos: multiHitGridPos(i, hitCount), value: null, index: i, revealed: false });
+            hits.push({ revealDelay: i * HIT_INTERVAL_MS, value: null, index: i, revealed: false });
           }
         }
         // Push, don't replace -- clicking again while a previous group is
@@ -27157,7 +27047,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
   // Re-anchor the side-gutter tooltips (and the fit-screen layout above
   // them) when the window is resized — gutter availability and the hero
   // card's on-screen position both depend on viewport size.
-  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); positionCombatLedger(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(true); } });
+  window.addEventListener("resize", () => { if (!root.hidden) { positionStatsPanel(); placeTestPanel(); positionStatTooltips(); positionDmgInfoPopup(); fitStageToScreen(true); } });
 
   renderHero();
 }
@@ -32553,21 +32443,23 @@ function classGuideRatingTip(done, progress){
     + (done.top || (progress && done.stars === 5) ? '<div class="cg-tip-line ' + (done.top ? "is-ok is-top" : "is-miss") + '"><i>' + (done.top ? "★" : "✗") + '</i><span>ดาวฟ้า: คำอธิบาย ' + CLASS_GUIDE_TOP_DESC + '+ ตัวอักษร และโน้ต ' + CLASS_GUIDE_TOP_NOTES + '+ สกิล</span>'
       + (progress && !done.top ? '<b>' + Math.min(done.letters, CLASS_GUIDE_TOP_DESC) + "/" + CLASS_GUIDE_TOP_DESC + " · " + Math.min(done.notes, CLASS_GUIDE_TOP_NOTES) + "/" + CLASS_GUIDE_TOP_NOTES + '</b>' : "") + '</div>' : "");   // the aqua line: on a guide that has it, and in the editor from five stars with how far to it (user 2026-10-30: the gallery does not tell readers of a plain five-star guide how to get it)
 }
-let classGuideTipEl = null, classGuideTipOwner = null;
-function classGuideTipHide(){ if (classGuideTipEl) classGuideTipEl.classList.remove("show"); classGuideTipOwner = null; }
+let classGuideTipEl = null, classGuideTipOwner = null, classGuideTipDim = null;
+function classGuideTipHide(){ if (classGuideTipEl) classGuideTipEl.classList.remove("show"); if (classGuideTipDim) classGuideTipDim.classList.remove("show"); classGuideTipOwner = null; }
 function classGuideTipShow(el, html){   // the shared pop-up (the stars, the readers badge): the Skill Simulator's hover tip look, above el (below when no room)
   if (!classGuideTipEl){
     classGuideTipEl = document.createElement("div"); classGuideTipEl.className = "rsim-tip cg-tip"; classGuideTipEl.setAttribute("aria-hidden", "true"); document.body.appendChild(classGuideTipEl);
+    classGuideTipDim = document.createElement("div"); classGuideTipDim.className = "cg-tip-dim"; document.body.insertBefore(classGuideTipDim, classGuideTipEl);
     // a click (a card opening its guide) or a tap elsewhere, and any scroll, close it; a tap on the editor's own stars toggles it in classGuideTipBind
     document.addEventListener("pointerdown", e => { if (classGuideTipOwner && (e.pointerType === "mouse" || !classGuideTipOwner.contains(e.target))) classGuideTipHide(); }, true);
     window.addEventListener("scroll", classGuideTipHide, true);
   }
   const t = classGuideTipEl; t.style.setProperty("--cg-tip-room", document.documentElement.clientWidth - 8 + "px"); t.innerHTML = html;
   const cast = t.querySelector(".cg-cast"); if (cast) classGuideCastFit(t);
-  const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight, cw = document.documentElement.clientWidth;
+  const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight, cw = document.documentElement.clientWidth, ch = document.documentElement.clientHeight;
+  classGuideTipDim.classList.toggle("show", !!cast);
   t.style.left = Math.max(4, Math.min(document.documentElement.clientWidth - w - 4, r.left + r.width / 2 - w / 2)) + "px";
   t.style.top = Math.max(4, Math.min(document.documentElement.clientHeight - h - 4, r.top - h - 6 >= 4 ? r.top - h - 6 : r.bottom + 6)) + "px";
-  if (cast && r.top - h - 6 < 4 && r.bottom + h + 10 > document.documentElement.clientHeight && (r.right + w + 12 <= cw || r.left - w - 12 >= 0)) t.style.left = (r.right + w + 12 <= cw ? r.right + 8 : r.left - w - 8) + "px";   // too tall for above or below: beside the button, so the dials stay in view
+  if (cast){ t.style.left = Math.max(4, (cw - w) / 2) + "px"; t.style.top = Math.max(4, (ch - h) / 2) + "px"; }   // the stat pop-ups: the middle of the screen, the page dimmed (user 2026-11-01)
   t.classList.add("show"); classGuideTipOwner = el;
 }
 function classGuideTipBind(el, html, tap){   // html() = the pop-up's markup; a mouse hover shows it; with tap (the editor's stars) a tap toggles it too, for phones
@@ -38056,6 +37948,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-01T12:59:06.528Z","feat(bible): Test results in a panel beside the button with roll history; class guide stat pop-ups open centred over a dimmed page"],
     ["2026-11-01T12:21:41.708Z","feat(bible): class guides: AGI, CHA, LCK skill tables and pop-ups that scale with the viewport; fix Fireball cooldown with Fire Keep"],
     ["2026-11-01T11:33:28.807Z","feat(bible): class guides: hourglass on the INT dial shows which INT makes each cast skill ไร้หลอด"],
     ["2026-11-01T05:14:43.773Z","feat(bible): class guide #87 TTO Bison ไบ WAR แท้ง ซัพพอร์ต by ZeiyaAmethyst"],
