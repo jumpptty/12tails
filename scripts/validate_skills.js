@@ -4213,6 +4213,24 @@ let checkedRsim = 0;
     const pc = cellsOf("penguin", "og"), dId = Object.keys(pc).map(Number).find(id => pc[id].icon === "penguin_dispell2");
     ok(dId % 10 === 3 && rankOf(pc, dId) === 2, "Penguin Dispell 2 sits in column 3 and counts as rank 2");
   }
+  // Cast ladder (user 2026-11-01): fixed builds, never the live guide list. Guide #71's author wrote INT 160 for Fire Ball / Ground Lock / Stone Hammer and #81's INT 256 for All Slayer, so these numbers are the authors' as well.
+  { const L = vm.runInContext("classGuideCastLadder", sandbox), Tip = vm.runInContext("classGuideCastTip", sandbox), T = vm.runInContext("classGuideTimings", sandbox), ctxOf = vm.runInContext("classGuideReaderCtx", sandbox);
+    const stepOf = (l, name) => { const s = l.steps.find(x => x.skills.some(k => k.name === name)); return s ? s.int : null; };
+    const monkey = { server: "tto", classKey: "monkey", level: 95, learned: [101,102,111,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,271,301,302,303,304,311,331,332,333,341,342,351,352,361,402,403,404,421,431,432,434,442,444], support: [901,912] };
+    const m = L(monkey);
+    ok(stepOf(m, "Ground Lock") === 128 && stepOf(m, "Stone Hammer") === 128 && stepOf(m, "Fire Ball") === 160 && stepOf(m, "Volcanic Eruption") === 480, "cast ladder: Monkey steps are " + JSON.stringify(m.steps.map(s => [s.int, s.skills.map(k => k.name)])));
+    ok(m.never.length === 1 && m.never[0].name === "Summon Gaos" && m.never[0].left === 8 && m.cap === 512, "cast ladder: Summon Gaos should stay 8 s at the INT 512 cap: " + JSON.stringify(m.never));
+    ok(m.steps.every((s, i) => !i || m.steps[i - 1].int < s.int), "cast ladder: steps must go up");
+    const chm = L({ server: "reborn", classKey: "chameleon", level: 150, learned: [101,102,103,121,122,131,132,141,142,201,211,212,213,214,221,222,223,224,231,232,233,241,242,243,244,251,252,253,254,261,262,263,301,311,312,313,314,321,322,323,324,331,332,333,334,341,342,343,344,351,352,353,354,361,362,363,364,371,372,404,412,414,421,423,424,434,442,443,444,452,453,454,462,463,464] });
+    ok(stepOf(chm, "All Bug Slayer") === 256 && stepOf(chm, "Bug Slayer") === 128, "cast ladder: Chameleon All Slayer should be INT 256, Slayer 128, got " + stepOf(chm, "All Bug Slayer") + ", " + stepOf(chm, "Bug Slayer"));
+    const ctx = ctxOf({ build: monkey }), cell = ctx.cells[204], cast = n => T("monkey_fireBall", 4, { int: n, lck: 0 }, ctx).find(x => x.kind === "cast");
+    ok(cell && cast(160) && cast(160).text === "ไร้หลอด" && cast(159) && cast(159).text !== "ไร้หลอด", "cast ladder: a step must be the first INT the hover calls ไร้หลอด (Fire Ball 4, INT 159 / 160)");
+    ok(L({ server: "tto", classKey: "wolf", level: 95, learned: [101,102] }).total === 0, "cast ladder: a Wolf build has no cast INT can shorten, so no hourglass");
+    const none = Tip(m), at = Tip(m, 160), past = Tip(m, 500);
+    ok(!none.includes("is-here") && !none.includes("cg-cast-now") && none.includes("ไร้หลอดครบที่ INT 480 ยกเว้น Summon Gaos") && none.includes("Summon Gaos เหลือ 8 วินาที ที่ INT 512"), "cast ladder: pop-up with no INT to compare");
+    ok((at.match(/is-here/g) || []).length === 1 && at.includes("อีก 32") && at.includes("cg-cast-now"), "cast ladder: pop-up at INT 160 should mark one row and count on to the next");
+    ok(!past.includes("cg-cast-more") && (past.match(/is-here/g) || []).length === 1, "cast ladder: past the last step nothing is left to count");
+  }
   // Hover timings: the same numbers the skill-details chips show for that card and rank (revised art on, dependencies from the build).
   { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
     const strip = h => h.replace(/<[^>]*>/g,"").replace(/\s+/g,"").trim();

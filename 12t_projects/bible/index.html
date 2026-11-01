@@ -2231,13 +2231,41 @@
   .cg-rate-fg{fill:var(--gold)}
   .cg-rate-star.is-top .cg-rate-fg{fill:#3fe0d8}   /* ดาวฟ้า (user 2026-10-30): five stars plus 1000+ letters of description and 6+ skill notes */
   .cg-tip-h b.cg-aqua,.cg-tip-line.is-top i{color:#3fe0d8}
-  .cg-tip{white-space:normal;min-width:200px;max-width:min(320px,calc(100vw - 8px));padding:7px 11px}
+  .cg-tip{white-space:normal;min-width:200px;max-width:min(320px,var(--cg-tip-room,calc(100vw - 8px)));padding:7px 11px}
   .cg-tip-h{margin-bottom:4px;font-size:13px}
   .cg-tip-h b{color:var(--gold)}
   .cg-tip-line{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:500;line-height:1.55}
   .cg-tip-line i{flex:none;width:12px;font-style:normal;text-align:center}
   .cg-tip-line.is-ok i{color:var(--gold)}
   .cg-tip-line.is-miss{color:var(--muted)}
+  /* Cast-time ladder (user 2026-11-01): the hourglass on the INT dial, after the dials or in step 3's bar, and its pop-up */
+  .cg-cast-btn svg,.cg-cast-lone svg,.cg-cast-bar svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  .cg-cast-btn{position:absolute;top:-3px;right:-3px;z-index:3;width:22px;height:22px;display:grid;place-items:center;padding:0;border:1px solid var(--stat-int);border-radius:50%;background:var(--panel);color:var(--stat-int);cursor:help;transition:transform .12s ease,filter .12s ease}
+  .cg-cast-btn svg{width:13px;height:13px}
+  .cg-stat-ed .cg-cast-btn{right:auto;left:-3px}   /* the editor's × has the other corner */
+  .cg-cast-lone{flex:none;width:66px;display:grid;justify-items:center;gap:6px;padding:0;border:0;background:none;color:var(--stat-int);font:inherit;cursor:help}
+  .cg-cast-lone i{width:62px;height:62px;display:grid;place-items:center}
+  .cg-cast-lone i span{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--stat-int);border-radius:50%;transition:transform .12s ease,filter .12s ease}
+  .cg-cast-lone svg{width:16px;height:16px}
+  .cg-cast-lone b{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .cg-cast-btn:hover,.cg-cast-btn:focus-visible,.cg-cast-lone:hover i span,.cg-cast-lone:focus-visible i span{transform:translateY(-1px);filter:brightness(1.25)}
+  .cg-cast-bar{display:inline-flex;align-items:center;gap:6px;cursor:help}
+  .cg-cast-bar svg{width:14px;height:14px;color:var(--stat-int)}
+  .cg-cast-bar[hidden],.cg-page:not([data-mode="author"]) .cg-cast-bar{display:none}
+  .cg-tip:has(.cg-cast){max-width:min(440px,var(--cg-tip-room,calc(100vw - 8px)))}
+  .cg-cast{width:418px;max-width:100%;white-space:normal;font-size:12px;font-weight:500;line-height:1.4}
+  .cg-cast-sum{margin:0 0 2px}
+  .cg-cast-now{margin:0 0 2px;color:var(--muted)}
+  .cg-cast-rows{margin-top:6px}
+  .cg-cast-row{display:flex;align-items:flex-start;gap:8px;padding:3px 6px;border-radius:4px}
+  .cg-cast-row.is-done{opacity:.46}
+  .cg-cast-row.is-here{background:color-mix(in srgb,var(--stat-int) 12%,transparent);box-shadow:inset 2px 0 0 var(--stat-int)}
+  .cg-cast-n{flex:none;width:36px;font:700 12.5px/22px 'JetBrains Mono','Prompt',monospace;color:var(--stat-int)}
+  .cg-cast-skills{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:3px 10px}
+  .cg-cast-skill{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .cg-cast-skill img{width:22px;height:22px;border-radius:3px;display:block}
+  .cg-cast-more{flex:none;line-height:22px;color:var(--muted);white-space:nowrap}
+  .cg-cast-foot{margin:6px 0 0;padding-top:6px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
   .cg-tip-line b{margin-left:auto;padding-left:14px;font-weight:600;font-variant-numeric:tabular-nums}
   .cg-editor-rating{grid-column:1/-1;justify-self:end;display:flex;align-items:center;gap:6px;padding:0 6px 2px;font-size:12px;line-height:1;color:var(--muted);cursor:help;user-select:none}   /* the editor's live stars, under the step tabs */
   .cg-empty{grid-column:1/-1;border:1px dashed var(--line);padding:36px 24px;color:var(--muted);text-align:center;line-height:1.9}
@@ -32434,7 +32462,7 @@ function classGuideTimings0(cardId, rank, stats, ctx){
       const range = magAdjustRange(rawCast, stats.int, LCK).map(castPostMul(dep, r, stats.int));
       const free = v => Math.abs(v - 0.1) < 0.001, a = range[0], b = range[range.length - 1];
       const castText = free(a) && free(b) ? "ไร้หลอด" : fmtOne(a) === fmtOne(b) ? fmtOne(a) + "s" : free(a) ? "ไร้หลอด ~ " + fmtOne(b) + "s" : free(b) ? fmtOne(a) + " ~ ไร้หลอด" : fmtOne(a) + "–" + fmtOne(b) + "s";
-      out.push({ kind: "cast", label: "เวลาร่าย", text: castText, stat: "int" });
+      out.push({ kind: "cast", label: "เวลาร่าย", text: castText, stat: "int", secs: Math.max(a, b) });
     }
     const durBase = s.duration === undefined ? undefined : pick(s.duration);
     const durTal = s.durAdjust === "tal", durStat = durTal ? "tal" : "cha";   // durAdjust "tal": talAdjust instead of chaAdjust (Stun Mine), the page's durTal
@@ -32526,10 +32554,10 @@ function classGuideTipShow(el, html){   // the shared pop-up (the stars, the rea
     document.addEventListener("pointerdown", e => { if (classGuideTipOwner && (e.pointerType === "mouse" || !classGuideTipOwner.contains(e.target))) classGuideTipHide(); }, true);
     window.addEventListener("scroll", classGuideTipHide, true);
   }
-  const t = classGuideTipEl; t.innerHTML = html;
+  const t = classGuideTipEl; t.style.setProperty("--cg-tip-room", document.documentElement.clientWidth - 8 + "px"); t.innerHTML = html;
   const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
   t.style.left = Math.max(4, Math.min(document.documentElement.clientWidth - w - 4, r.left + r.width / 2 - w / 2)) + "px";
-  t.style.top = (r.top - h - 6 >= 4 ? r.top - h - 6 : r.bottom + 6) + "px";
+  t.style.top = Math.max(4, Math.min(document.documentElement.clientHeight - h - 4, r.top - h - 6 >= 4 ? r.top - h - 6 : r.bottom + 6)) + "px";
   t.classList.add("show"); classGuideTipOwner = el;
 }
 function classGuideTipBind(el, html, tap){   // html() = the pop-up's markup; a mouse hover shows it; with tap (the editor's stars) a tap toggles it too, for phones
@@ -33568,6 +33596,40 @@ function classGuideHoverLines(guide, ctx, cell, learned){
   if (cell.support) return classGuideTimings(cell.card, 1, guide.stats, ctx);   // a support skill: its own card, one rank
   return classGuideTimings(skillSimCardId(cell.icon), ctx.cells ? skillSimCellRank(ctx.cells, cell.id) : 1, guide.stats, ctx);
 }
+// Cast time against INT for a build (user 2026-11-01, Gastropoda on Discord: how little INT makes every cast ไร้หลอด). Every learned skill at its learned rank and the support picks go through classGuideTimings,
+// so the ranks, passives and server numbers are the hover's own. No LCK: reaching a step is ไร้หลอด every time. A skill at the floor with no INT at all has no step. A cast only shortens as INT grows, so each step is a binary search.
+const CLASS_GUIDE_CAST_FREE = 0.1 + 1e-3;
+const CLASS_GUIDE_HOURGLASS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9"/></svg>';
+function classGuideCastLadder(build){
+  const ctx = classGuideReaderCtx({ build }), picks = new Map(), sup = classGuideSupportCells();
+  for (const id of build.learned || []){
+    const cell = ctx.cells[id], card = cell ? skillSimCardId(cell.icon) : ""; if (!card) continue;
+    const rank = skillSimCellRank(ctx.cells, id), had = picks.get(card);
+    if (!had || rank > had.rank) picks.set(card, { card, rank, name: cell.name.replace(/ \d+$/, ""), icon: cell.icon });
+  }
+  for (const id of build.support || []){ const c = sup[id]; if (c && !picks.has(c.card)) picks.set(c.card, { card: c.card, rank: 1, name: c.name, icon: c.icon }); }
+  const prev = statCapServer; statCapServer = build.server; const stat = statHi(false); statCapServer = prev;
+  const hi = stat === Infinity ? 4096 : stat, at = (p, n) => classGuideTimings(p.card, p.rank, { int: n, lck: 0 }, ctx).find(x => x.kind === "cast");   // Reborn: a player's INT has no 512 cap
+  const byInt = new Map(), never = [];
+  for (const p of picks.values()){
+    const first = at(p, 0); if (!first || first.secs <= CLASS_GUIDE_CAST_FREE) continue;
+    const top = at(p, hi); if (top.secs > CLASS_GUIDE_CAST_FREE){ never.push({ name: p.name, icon: p.icon, left: top.secs }); continue; }
+    let lo = 0, up = hi; while (up - lo > 1){ const m = (lo + up) >> 1; if (at(p, m).secs <= CLASS_GUIDE_CAST_FREE) up = m; else lo = m; }
+    if (!byInt.has(up)) byInt.set(up, []); byInt.get(up).push({ name: p.name, icon: p.icon });
+  }
+  const steps = [...byInt.keys()].sort((a, b) => a - b).map(int => ({ int, skills: byInt.get(int) }));
+  return { steps, never, cap: hi, total: never.length + steps.reduce((n, s) => n + s.skills.length, 0) };
+}
+// The pop-up: one line that sums it up, then one row per step. int = the INT to compare with (the dial's number), undefined when there is none: no "you are here" row then.
+function classGuideCastTip(l, int){
+  const has = typeof int === "number", top = l.steps.length ? l.steps[l.steps.length - 1].int : null, left = l.never.map(s => classGuideEsc(s.name)).join(", ");
+  const here = has ? l.steps.filter(s => s.int <= int).pop() : null, done = has ? l.steps.filter(s => s.int <= int).reduce((n, s) => n + s.skills.length, 0) : 0;
+  const sum = top === null ? "สกิลในบิลด์นี้ไม่ถึงไร้หลอด" : left ? "ไร้หลอดครบที่ INT " + top + " ยกเว้น " + left : "ไร้หลอดครบทุกสกิลที่ INT " + top;
+  const rows = l.steps.map(s => '<div class="cg-cast-row' + (s === here ? " is-here" : has && s.int < int ? " is-done" : "") + '"><span class="cg-cast-n">' + s.int + '</span><span class="cg-cast-skills">' +
+    s.skills.map(k => '<span class="cg-cast-skill"><img src="' + (SKILL_ICONS[k.icon] || "") + '" alt="">' + classGuideEsc(k.name) + "</span>").join("") + "</span>" + (has && s.int > int ? '<span class="cg-cast-more">อีก ' + (s.int - int) + "</span>" : "") + "</div>").join("");
+  const foot = l.never.map(s => classGuideEsc(s.name) + " เหลือ " + fmtOne(s.left) + " วินาที ที่ INT " + l.cap).concat("ไม่นับ LCK: ถึงค่านี้แล้วไร้หลอดทุกครั้ง").join(" · ");
+  return '<div class="cg-cast"><div class="cg-tip-h"><b>ไร้หลอดตาม INT</b></div><div class="cg-cast-sum">' + sum + "</div>" + (has ? '<div class="cg-cast-now">INT ' + int + " ไร้หลอด " + done + " จาก " + l.total + " สกิล</div>" : "") + '<div class="cg-cast-rows">' + rows + '</div><div class="cg-cast-foot">' + foot + "</div></div>";
+}
 // ---- Guide image export (user 2026-10-15) ----
 // A landscape picture of a guide, laid out on a 1920x1080 (2x: 3840x2160) frame and then trimmed to the guide plus its margin (2026-10-17), drawn on a canvas from the guide data, so phone and desktop give the same image (user 2026-10-16 revamp).
 // Left: icons + Lv, title, author and date, recommended stats, description. Right: the four trees side by side, then every author note expanded as chips under them.
@@ -34255,7 +34317,24 @@ function mountClassGuide(root){
   const canCopyImage = classGuideCanCopyImage();
   root.querySelector('.cg-send-btns [data-cg-act="copyImage"]').hidden = !canCopyImage;
   // The reader's try-out stats (user 2026-10-17): the + dial goes once all 8 show; ↺ คืนสู่ค่าแนะนำ shows while one differs from the author's (user 2026-10-21).
+  // The hourglass (user 2026-11-01): on the INT dial, or after the dials as เวลาร่าย on a guide with no INT; nothing on a build no INT can shorten (Wolf, Panda, Cat, Bison).
+  const castBtn = (cls, inner, tip) => { const b = document.createElement("button"); b.type = "button"; b.className = cls; b.setAttribute("aria-label", "INT ที่ทำให้สกิลร่ายไร้หลอด"); b.innerHTML = inner; classGuideTipBind(b, tip, true); return b; };
+  const placeReaderCast = () => {
+    const box = root.querySelector('[data-cg-role="guideStats"]'); if (!box) return;
+    const input = box.querySelector('[data-cg-try="int"]'), old = box.querySelector(".cg-cast-btn,.cg-cast-lone");
+    if (!readerCast || !readerCast.total){ if (old) old.remove(); return; }
+    const tip = () => classGuideCastTip(readerCast, viewStats ? viewStats.int : undefined);
+    if (input){
+      const tile = input.closest(".cg-stat-tile"); if (old && old.parentNode === tile) return;
+      if (old) old.remove();
+      tile.appendChild(castBtn("cg-cast-btn", CLASS_GUIDE_HOURGLASS, tip));
+    } else if (!old || !old.classList.contains("cg-cast-lone")){
+      if (old) old.remove();
+      box.insertBefore(castBtn("cg-cast-lone", "<i><span>" + CLASS_GUIDE_HOURGLASS + "</span></i><b>เวลาร่าย</b>", tip), box.querySelector(".cg-stat-add-wrap") || box.querySelector(".cg-stat-reset-row"));
+    }
+  };
   const syncStatTry = () => {
+    placeReaderCast();
     const box = root.querySelector('[data-cg-role="guideStats"]'); if (!box) return;
     const wrap = box.querySelector(".cg-stat-add-wrap"); if (wrap) wrap.hidden = box.querySelectorAll("[data-cg-try]").length >= CLASS_GUIDE_STATS.length;
     const reset = box.querySelector(".cg-stat-reset-row"), off = !box.querySelector(".cg-stat-tile.is-tried");
@@ -34400,10 +34479,21 @@ function mountClassGuide(root){
       + (bad ? (pcts.length ? " · " : "") + '<span class="is-warn">ใส่ได้แค่ตัวเลข 0–512, 250+ หรือ 1–100% หรือกด ตัน / ตาม</span>' : "");
     sum.hidden = !sum.innerHTML;
   };
+  // The same hourglass in the editor (user 2026-11-01): step 3's bar, following every skill learned or removed, and step 2's INT flask once the build has a cast to show. castBtn is a button, so it never starts the flask's drag.
+  let edCastKey = "", edCast = null;
+  const edCastNow = () => { const b = draft && draft.build; if (!b) return null; const k = JSON.stringify([b.server, b.classKey, b.learned, b.support]); if (k !== edCastKey){ edCastKey = k; edCast = classGuideCastLadder(b); } return edCast; };
+  const edCastTip = () => { const n = classGuideNumericStats(draft && draft.stats); return classGuideCastTip(edCastNow(), n ? n.int : undefined); };
+  const placeEdCast = () => {
+    const l = edCastNow(), on = !!(l && l.total), bar = simRoot.querySelector(".cg-cast-bar"), box = el("statEd");
+    if (bar) bar.hidden = !(on && step === 3);
+    const tile = box.querySelector('.cg-stat-ed[data-key="int"] .cg-stat-tile'), old = box.querySelector(".cg-cast-btn");
+    if (old && (!on || old.parentNode !== tile)) old.remove();
+    if (on && tile && !tile.querySelector(".cg-cast-btn")) tile.appendChild(castBtn("cg-cast-btn", CLASS_GUIDE_HOURGLASS, edCastTip));
+  };
   function renderStatEditor(){   // the draft's stats as flasks in the author's order, then the + dial (user 2026-10-18)
     const stats = (draft && draft.stats) || {}, plus = (draft && draft.statsPlus) || [];
     el("statEd").innerHTML = Object.keys(stats).map(k => CLASS_GUIDE_STATS.find(x => x.key === k)).filter(Boolean).map(st => classGuideStatEdHtml(st, stats[st.key], plus.includes(st.key))).join("") + CLASS_GUIDE_STAT_ADD_ED;
-    el("statEd").querySelectorAll(".cg-stat-ed").forEach(prepStatEd); syncStatAdd(); renderStatSum();
+    el("statEd").querySelectorAll(".cg-stat-ed").forEach(prepStatEd); syncStatAdd(); renderStatSum(); placeEdCast();
   }
   // Drag to reorder the editor's flasks (user 2026-10-18): grab a flask anywhere, its input included (a plain click still types; the drag starts after
   // 6 px), but not × or the ตัน / ตาม pills. The lifted flask follows the pointer, the others slide aside (FLIP), + stays last; the drop saves the order.
@@ -34526,7 +34616,7 @@ function mountClassGuide(root){
     el("gearPicker").close(); gearPick = null;
   }
   classGuideTipBind(el("rating"), () => classGuideRatingTip(classGuideCompleteness(draft || {}), true), true);   // the editor's stars: hover or tap for what is missing and how far
-  let readerCtx = null, viewStats = null, resetUndo = null;   // viewStats: the reader's own try-out values (start as the author's); resetUndo: the tries before ↺ คืนสู่ค่าแนะนำ, for Ctrl+Z
+  let readerCtx = null, readerCast = null, viewStats = null, resetUndo = null;   // viewStats: the reader's own try-out values (start as the author's); resetUndo: the tries before ↺ คืนสู่ค่าแนะนำ, for Ctrl+Z
   const saveDraft = () => {
     if (mode !== "author") return;
     draft = collect(); syncExtrasSum(); updateSteps();
@@ -34883,6 +34973,7 @@ function mountClassGuide(root){
   let sendViewTicket = 0, sendViewUrl = "";
   function updateSteps(){
     if (!draft) return;
+    placeEdCast();
     const d = draft, nNotes = Object.keys(d.notes || {}).length;
     { const rate = classGuideCompleteness(d), rs = el("ratingStars"); rs.innerHTML = classGuideStarsHtml(rate.stars, rate.top); rs.setAttribute("aria-label", rate.label); }   // ความครบถ้วนของเนื้อหา, live while writing (user 2026-10-20)
     const done = [!!(d.title && d.title.trim() && d.author && d.author.trim() && d.modes && d.modes.length), !!(((d.stats && Object.keys(d.stats).length) || (d.gear && Object.keys(d.gear).length)) && !classGuideStatsProblem(d.stats) && !statTypo()), !!(d.build && d.build.learned && d.build.learned.length && !buildProblems().length), nNotes > 0, !!(d.cover && d.cover.length), copiedOnce];
@@ -34896,7 +34987,7 @@ function mountClassGuide(root){
     const gd = CLASS_GUIDE_STEPS[step - 1].guide, gl = el("stepGuide");   // the authored markup is static text in CLASS_GUIDE_STEPS
     gl.hidden = !gd || (step === 4 && !el("noteEditor").hidden); if (gd){ gl.innerHTML = gd.map(t => "<li>" + t + "</li>").join(""); gl.classList.toggle("is-single", gd.length === 1); }   // one line needs no number
   }
-  { const bar = simRoot.querySelector(".rsim-bar"); bar.insertBefore(el("modeSwitchTpl").content.firstElementChild, bar.querySelector(".rsim-actions")); }   // user 2026-10-16 button review: it decides what a click on a skill does
+  { const bar = simRoot.querySelector(".rsim-bar"); bar.insertBefore(el("modeSwitchTpl").content.firstElementChild, bar.querySelector(".rsim-actions")); const cast = castBtn("rsim-btn cg-btn cg-btn-secondary cg-cast-bar", CLASS_GUIDE_HOURGLASS + "<span>เวลาร่าย</span>", edCastTip); cast.hidden = true; bar.insertBefore(cast, bar.querySelector(".rsim-actions")); }   // user 2026-10-16 button review: it decides what a click on a skill does
   let readerFitFrame = null;
   const phoneQuery = window.matchMedia("(max-width: 760px)"), isPhone = () => phoneQuery.matches;
   const sheetQuery = window.matchMedia("(min-width: 761px) and (orientation: landscape)"), isSheet = () => sheetQuery.matches;   // landscape reader = the PNG sheet (placeNoteChips, prefillNoteChips)
@@ -35226,7 +35317,7 @@ function mountClassGuide(root){
     fillReader(preview);
     button("returnAuthor").hidden = !preview; backBtn.lastChild.textContent = preview ? "กลับไปแก้ไกด์" : "ไกด์จากผู้เล่น"; backBtn.setAttribute("aria-label", backBtn.lastChild.textContent);   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
     classGuideFlaskFill(el("guideStats"));
-    readerCtx = classGuideReaderCtx(current); viewStats = classGuideNumericStats(current.stats); resetUndo = null; if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
+    readerCtx = classGuideReaderCtx(current); readerCast = classGuideCastLadder(current.build); viewStats = classGuideNumericStats(current.stats); resetUndo = null; placeReaderCast(); if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
     window.scrollTo(0, 0); queueReaderFit();
   }
   // Icon filters (user 2026-10-17): ทั้งหมด plus one button per server and per class (CLASS_ORDER); one click filters, a click on the chosen icon goes back
@@ -35787,7 +35878,7 @@ function mountClassGuide(root){
       else if (act === "pickEdStat"){   // an empty flask at the end, ready for its value (not stored until it has one)
         const st = CLASS_GUIDE_STATS.find(x => x.key === target.dataset.key); if (!st || statEdInput(st.key)) return;
         const wrap = el("statEd").querySelector(".cg-stat-ed-add"); el("edStatPick").hidden = true; wrap.querySelector(".cg-stat-add").setAttribute("aria-expanded", "false");
-        wrap.insertAdjacentHTML("beforebegin", classGuideStatEdHtml(st, null, false)); prepStatEd(wrap.previousElementSibling); syncStatAdd(); renderStatSum(); statEdInput(st.key).focus();
+        wrap.insertAdjacentHTML("beforebegin", classGuideStatEdHtml(st, null, false)); prepStatEd(wrap.previousElementSibling); syncStatAdd(); renderStatSum(); placeEdCast(); statEdInput(st.key).focus();
       }
       else if (act === "statDel"){ const ed = target.closest(".cg-stat-ed"); if (ed){ const before = statSnap(); ed.remove(); syncStatAdd(); renderStatSum(); saveDraft(); statChange(before); } }
       else if (act === "statWord"){   // ตัน / ตาม: press again to clear
@@ -37899,6 +37990,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-01T11:33:28.807Z","feat(bible): class guides: hourglass on the INT dial shows which INT makes each cast skill ไร้หลอด"],
     ["2026-11-01T05:14:43.773Z","feat(bible): class guide #87 TTO Bison ไบ WAR แท้ง ซัพพอร์ต by ZeiyaAmethyst"],
     ["2026-10-31T20:45:41.085Z","feat(bible): class guide #86 TTO Rabbit พยาบาลและบอดี้การ์ด by BankSaiSai"],
     ["2026-10-31T03:02:02.105Z","fix(bible): TTO Lv 100 skill cards: remove the not-confirmed-in-game line"],
