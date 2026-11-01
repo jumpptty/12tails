@@ -4231,6 +4231,30 @@ let checkedRsim = 0;
     ok((at.match(/is-here/g) || []).length === 1 && at.includes("อีก 32") && at.includes("cg-cast-now"), "cast ladder: pop-up at INT 160 should mark one row and count on to the next");
     ok(!past.includes("cg-cast-more") && (past.match(/is-here/g) || []).length === 1, "cast ladder: past the last step nothing is left to count");
   }
+  // AGI, CHA, LCK pop-ups (user 2026-11-01): the upgraded skills at the current stats, the hover's own numbers, no thresholds.
+  { const Tb = vm.runInContext("classGuideStatTable", sandbox), TT = vm.runInContext("classGuideStatTableTip", sandbox), On = vm.runInContext("classGuideStatTipOn", sandbox), Tips = vm.runInContext("classGuideStatTips", sandbox), T = vm.runInContext("classGuideTimings", sandbox), ctxOf = vm.runInContext("classGuideReaderCtx", sandbox);
+    const monkey = { server: "tto", classKey: "monkey", level: 95, learned: [101,102,111,121,122,123,124,131,132,141,142,201,202,203,204,211,212,213,214,221,222,223,231,232,233,234,241,242,243,244,251,252,253,254,261,271,301,302,303,304,311,331,332,333,341,342,351,352,361,402,403,404,421,431,432,434,442,444], support: [901,912] };
+    const small = { server: "tto", classKey: "monkey", level: 95, learned: [201,202,203,204] }, sm = Tb(small, "agi"), ctx = ctxOf({ build: small }), cdAt = st => T("monkey_fireBall", 4, st, ctx).find(x => x.kind === "cd").text;
+    ok(sm.total === 1 && sm.rows[0].name === "Fire Ball", "stat tip: a build with only Fire Ball lists only Fire Ball: " + JSON.stringify(sm.rows.map(r => r.name)));
+    const at = TT(sm, { agi: 120 }), withLck = TT(sm, { agi: 120, lck: 50 });
+    ok(at.includes(">" + cdAt({ agi: 120 }) + "<") && at.includes("คูลดาวน์ ที่ AGI 120"), "stat tip: AGI 120 must show the hover's own cooldown (" + cdAt({ agi: 120 }) + ")");
+    ok(withLck.includes(">" + cdAt({ agi: 120, lck: 50 }) + "<") && withLck.includes("ช่วงตัวเลขมาจาก LCK 50") && cdAt({ agi: 120, lck: 50 }) !== cdAt({ agi: 120 }), "stat tip: LCK on the dial must give the hover's range");
+    ok(!at.includes(">0<") && !at.includes(">512<") && !at.includes("cg-cast-head"), "stat tip: AGI, CHA and LCK show no threshold columns");
+    const a = Tb(monkey, "agi"), c = Tb(monkey, "cha"), l = Tb(monkey, "lck");
+    ok(a.total > 0 && c.total > 0 && l.total > 0, "stat tip: the Monkey build should have rows for AGI, CHA and LCK: " + [a.total, c.total, l.total]);
+    ok(!a.rows.some(r => /เริ่มฉาก/.test(r.label)), "stat tip: no start-of-mission cooldown rows");
+    const vals = TT(a, { agi: 120 }).match(/cg-cast-val">[^<]+/g).map(x => parseFloat(x.split(">")[1]));
+    ok(vals.length === a.total && vals.every((n, i) => !i || vals[i - 1] >= n), "stat tip: rows go from the highest down: " + vals);
+    const tips = Tips(monkey);
+    ok(On("int", tips) && !On("agi", tips) && !On("agi", tips, { cha: 100 }) && On("agi", tips, { agi: 100 }), "stat tip: the hourglass needs no number, a table needs its stat's number");
+    ok(!On("lck", Tips({ server: "tto", classKey: "monkey", level: 95, learned: [] }), { lck: 50 }), "stat tip: nothing learned, no button");
+  }
+  // Fireball's cooldown (user 2026-11-01), Monkey.cs:25153-25170 then :25450: raw with Rapid Fire, Fire Keep's CeilToInt(0.5 × raw), then agiAdjust with no rounding. The chip is compared with the hover below.
+  { const T = vm.runInContext("classGuideTimings", sandbox), cd = (rf, fk, agi, rank = 4) => { const m = new Map(); if (rf) m.set("monkey_rapidFire", rf); if (fk) m.set("monkey_fireKeep", 1); return T("monkey_fireBall", rank, { agi, lck: 0 }, { server: "og", learnedByCard: m, revisedArt: false }).find(x => x.kind === "cd").text; };
+    ok(cd(0, 0, 0) === "30s" && cd(0, 0, 512) === "6s", "Fireball cooldown with no passives must not be rounded down: rank 4 is " + cd(0, 0, 0) + " at AGI 0, " + cd(0, 0, 512) + " at AGI 512, want 30s, 6s");
+    ok(cd(0, 0, 120) === "15.48s" && cd(3, 0, 120) === "10.84s", "Fireball cooldown keeps its decimals: " + cd(0, 0, 120) + ", " + cd(3, 0, 120) + ", want 15.48s, 10.84s");
+    ok(cd(3, 1, 0) === "11s" && cd(3, 1, 120) === "5.68s" && cd(0, 1, 0) === "15s", "Fire Keep halves the raw cooldown, rounded up, before AGI: " + [cd(3, 1, 0), cd(3, 1, 120), cd(0, 1, 0)] + ", want 11s, 5.68s, 15s");
+  }
   // Hover timings: the same numbers the skill-details chips show for that card and rank (revised art on, dependencies from the build).
   { const T = vm.runInContext("classGuideTimings", sandbox), cardOf = vm.runInContext("skillSimCardId", sandbox);
     const strip = h => h.replace(/<[^>]*>/g,"").replace(/\s+/g,"").trim();

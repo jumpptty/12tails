@@ -487,7 +487,7 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 ### 4.5a Rapid Fire (`monkey_rapidFire`, #221-#223)
 - Passive, reqLv/Bn 7/2, 15/4, 23/6 (`decode_skilldata.py`). `getRapidFireLv()` returns 3 / 2 / 1 / 0 for #223 / #222 / #221 / none (`Monkey.cs:11763-11800`); the level is passed to Phoenix on summon (`Monkey.cs:11724`, `Phoenix.cs:4788`).
 - **Phoenix attack speed:** see §4.5 interval — `mag = clamp((0.1 × lv + 0.1) × Monkey MAG, 1, 512)` = 20 / 30 / 40% of Monkey MAG (`Phoenix.cs:2562-2568`).
-- **Monkey's Fireball:** cast time `4 + sLv − lv` and cooldown `18 + 3·sLv − 3·lv`, i.e. −1 / −2 / −3 s cast and **−3 / −6 / −9 s** cooldown (`Monkey.cs:25148`, `:25153`).
+- **Monkey's Fireball:** cast time `4 + sLv − lv` and cooldown `18 + 3·sLv − 3·lv`, i.e. −1 / −2 / −3 s cast and **−3 / −6 / −9 s** cooldown (`Monkey.cs:25148`, `:25153`). With Fire Keep #402 learned, an untargeted cast (`tID == 0`) then takes `CeilToInt(0.5 × that)` (`Monkey.cs:25158-25170`, same in `Reborn1027:Monkey.cs:1603-1607`); a targeted cast keeps the full value. The result goes through `agiAdjust` with no rounding (`Monkey.cs:25450`, `CharacterControl.cs:20575`), so rank 4 + Rapid Fire 3 + Fire Keep is 21 → **11 s** raw, 5.68 s at AGI 120.
 - Client tooltips: EN "Makes phoenix attack 20% [30 / 40%] faster (increases with Monkey's int.) Reduces fireballs' casting and cooldown by 1 [2 / 3] and 2 [4 / 6] seconds." (`MonkeySkill_eng.cs:308-340`). Code wins: cooldown −3 / −6 / −9, not −2 / −4 / −6.
 
 ### 4.6 Intense Fire (`monkey_intenseFire`, #231-#233)
