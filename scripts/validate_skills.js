@@ -3060,7 +3060,7 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   used.forEach(id => { if (!ids.includes(id)) fail(`{{credit:${id}}} has no CONTRIBUTORS entry`); });
   list.filter(c => c.page).forEach(c => { const host = list.find(h => h.id === c.page); if (!host || host.page) fail(`${c.id}: page "${c.page}" must be another entry that has a page of its own`); });   // user 2026-11-02: LiuSuYang on Yoma's page
   { const rf = SKILLS.find(s => s.id === "cat_royalFlush"), cr = ((rf && rf.credits) || []).find(c => c.id === "liusuyang");
-    if ((list.find(c => c.id === "liusuyang") || {}).page !== "yoma" || !cr || !/^ผู้ถอดสูตรดาเมจของ Royal Flush \(TTO\) : /.test(cr.label) || /\{\{credit:/.test(rf.desc)) fail("LiuSuYang is credited on Royal Flush in the head line (its own label, no token left in the desc) and drawn on Yoma's page");
+    if ((list.find(c => c.id === "liusuyang") || {}).page !== "yoma" || !cr || !/^ผู้ถอดสูตรดาเมจของ Royal Flush \(TTO\) : /.test(cr.label) || /\{\{credit:/.test(rf.desc) || !(list.find(c => c.id === "liusuyang") || {}).noName || !/^ผู้ถอดสูตรดาเมจของ \*\*Royal Flush\*\* \(TTO\) : /.test((list.find(c => c.id === "liusuyang") || { what: [""] }).what[0])) fail("LiuSuYang is credited on Royal Flush in the head line (its own label, no token left in the desc) and drawn on Yoma's page");
     if (!vm.runInContext(`creditButton("liusuyang", "X")`, sandbox).includes('title="X"')) fail("creditButton takes a card's own label"); }
   if (used.length && !sandbox._credits.render(`x {{credit:${used[0]}}}`).includes(`class="sk-credit" data-credit="${used[0]}"`)) fail("credit token does not render as .sk-credit");
   console.log(`Verified contributor credits: ${list.length} contributor(s), ${used.length} credited id(s) in use.`);
