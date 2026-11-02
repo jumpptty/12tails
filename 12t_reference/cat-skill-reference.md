@@ -984,6 +984,14 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Royal Flush (cell 452, `cat_royalFlush`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026, digits checked on a 4× zoom; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 55, SP 50, 50% ATK + 35, 1-5 hits, radius 5 m, range 12 m, cooldown 120; per card: spade +8% damage, heart heals 3% HP, diamond +3 SP, club slows 10%; Royal Flush: sword 250% ATK + 250 (6 m).
+
+- **Assumed:** the blast row shows the most, 5 hits; the card's text repeats the per-card effects with no damage change. The preview's 0.5 s between hits and the sword at 3 s are the user's placeholder.
+- **Left out on purpose (user rule 2026-11-02):** the odds of each hand, how much LCK helps, which hand gives how many blasts, and what +8% per spade multiplies. The red line says so.
+- **Original cards:** none named.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |

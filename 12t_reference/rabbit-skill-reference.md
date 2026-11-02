@@ -982,6 +982,30 @@ Verified 2026-10-26 in `DecompiledSource_Reborn_2026-10-25/Assembly-CSharp/` (st
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Medic Turret (cell 452, `rabbit_medicTurret`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: MP 55, SP 45, duration 15 s, 10 × 1.5 s, heal HP 30 + 10, radius 6 m, cooldown 90; capsule on the lowest-HP ally within 10 m, 50 + 15 HP, plus a random Life / Boost / Heat Shot level 1-4; enemies can destroy it (HP 5 x Lv); one at a time.
+
+- **Left out on purpose (user rule 2026-11-02):** "30 + 10", "50 + 15" and "5 x Lv" do not say what the second number or Lv is, so there is no heal row, and the red line says so.
+- **Original cards:** no toggle. It casts Life, Boost and Heat Shot; it does not change those skills, and the card links them in its text.
+
+### Coin Ricochet (cell 453, `rabbit_coinRicochet`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Physical, MP 40, SP 45, 45% ATK + 25, 4 × 3 hits, reach 18 m / 9 m, 100-400 G, cooldown 60; Gilded slows 10% per level (max 4); coin 4 is 100% ATK + 60, +20% per Gilded level; 25 G a coin plus 25 G a bounce hit.
+
+- **The gold adds up:** 4 × 25 + 12 × 25 = 400 G at most, which supports 12 hits with coin 4 bouncing too.
+- **Assumed:** coin 4 hits 3 times; +20% is one bracket on coin 4, `⌈(1 × ATK + talAdjust(60)) × (1 + 0.2 × level)⌉`; 18 m is the coin's reach and 9 m the bounce; it takes Extravagance like the other ATK-based Rabbit cards (ToT and Reborn included). The preview's 0.5 s between hits is the user's placeholder.
+- **Left out on purpose (user rule 2026-11-02):** "เด้งละ +25%" does not say what it adds to or whether it compounds, and the red line says so.
+- **Original cards:** none named.
+
+### Bounty Hunt (cell 454, `rabbit_bountyHunt`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Physical, MP 55, SP 50, 70% ATK + 40, 3 hits, reach 22 m, duration 12 s, cooldown 120; target with Bounty takes +15% damage; shots pass walls; on a kill cooldown -45 s, team heals 10% and +20 SP; own mercenaries attack at once. The picture is cut off above its description; the rest is the site text.
+
+- **Assumed:** Extravagance as above; the duration is shown as fixed. The preview's 0.5 s between hits is the user's placeholder.
+- **Unknown (the card's `liveCheck`):** KO, target count, the shot's width, and whether +15% includes this skill's own hits.
+- **Original cards:** no toggle. The tooltip does not say which mercenaries or that any skill changes.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |

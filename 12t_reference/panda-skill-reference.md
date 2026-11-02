@@ -1102,7 +1102,7 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 ### Tempest Dance (cell 453, `panda_tempestDance`, NOT from verified code)
 
-Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Magical, MP 35, SP 50, 20% ATK + 6, a hit every 0.3 s, radius 3.5 m, duration 5 s, evade 50%, cooldown 75; an evade counters for 50% ATK + 30; closing blast 5.5 m, 80% ATK + 30, +2 per hit landed; steerable, every hit applies Cut. The picture is small: "5.5 m" and "+2" are the least certain readings.
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Magical, MP 35, SP 50, 20% ATK + 6, a hit every 0.3 s, radius 3.5 m, duration 5 s, evade 50%, cooldown 75; an evade counters for 60% ATK + 30; closing blast 5.5 m, 80% ATK + 30, +2 per hit landed; steerable, every hit applies Cut. The picture is small; "60%", "5.5 m" and "+2" were checked on a 5× zoom.
 
 - **User rules 2026-11-02:** a C6 skill's start-of-mission cooldown equals its regular cooldown and is adjusted by AGI; the number after ATK is a `talAdjust()` value.
 - **Assumed:** 16 hits (5 s ÷ 0.3 s, rounded down; 17 if the first hit lands at once); the +2 per hit goes inside the `talAdjust`: `0.8 × ATK + talAdjust(30 + 2 × hits)`; the range preview plays those hits from 0.3 s and the blast at 5 s; "hits landed" is typed into a box, default 16, because hits on several targets may count; the evade is a fixed 50% with no LCK; the duration is fixed.

@@ -700,7 +700,8 @@ Verified 2026-10-26 against the Reborn decompile. All eight are one rank (`Rebor
 
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Passive, stacks 20 (+80 DEF), Hate +5 / 0.5 s, radius 3.5 m, nearby enemies slowed 0.5% per stack (max 10%), at full DEF damage taken -10% and attackers slowed for 4 s.
 
-- **The tooltip contradicts itself:** its effect list says attackers are slowed 40%, its description says 30%. The card shows 40%. **Open:** which is right, and whether "full DEF" means 20 stacks or the DEF cap.
+- **The tooltip contradicts itself:** its effect list says attackers are slowed 40%, its description says 30%. The card shows 40%. **Open:** which is right.
+- **User 2026-11-02:** "DEF เต็ม" probably means Harden Skin at its maximum stacks (20), so the card says so.
 - **Assumed:** the stacks are Harden Skin's, because the description opens with "hardenSkin"; +80 DEF at 20 stacks matches Harden Skin level 4's +4 per stack.
 - **Toggle on an original card, TTO tab only:** `oceansResilience` on Harden Skin, a line only. No number changes, because the stat lives in the status popup.
 
@@ -708,11 +709,11 @@ Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client c
 
 Read from an in-game tooltip picture the user sent on 02/11/2026. Stated by the tooltip: Magical, MP 60, SP 50, cast 1.5 s, cooldown 120; dolphin 40% ATK + 30% DEF + 60, rise 80% ATK + 40% DEF + 120, tsunami 120% ATK + 60% DEF + 220, whirlpool per second 20% ATK + 10% DEF + 40; radius 5 m / 8 m / 6 m; 3 dolphins leap 2-3 times; tsunami +2.5% DEF per stack, Armor Shatter ×1.25; whirlpool lasts 5 s and pulls enemies in.
 
-- **User rules 2026-11-02:** the start-of-mission cooldown equals the regular cooldown and is adjusted by AGI; the number after the stat terms is a `talAdjust()` value; unknown hit timing is a 0.5 s placeholder.
-- **Assumed:** 9 dolphin hits (3 × 3, the most; the least is 6); radii 5 / 8 / 6 are rise / tsunami / whirlpool, because there are three radii for four attacks; "per stack" counts Harden Skin stacks, 0-20; "+2.5% DEF" adds to the tsunami's DEF term, 0.6 + 0.025 × stacks; the DEF is the player's own; ×1.25 is one bracket on the tsunami, `⌈(…) × 1.25⌉`; the cast is shown as fixed. The preview's timing is a placeholder: rise at 5 s, tsunami at 5.5 s, whirlpool every 1 s from 6 s.
-- **Armor Shatter is not an original skill:** it is a status from Sovereign Impaler (cell 452, the site's text), still a stub, so here it is a target condition toggle (`armorShatterTarget`).
-- **Unknown (the card's `liveCheck`):** KO, target count, height, and whether INT changes the cast.
-- **Links:** Harden Skin's TTO tab links this card. It gets no toggle: Harden Skin changes this skill, not the other way round.
+- **User rules 2026-11-02:** the start-of-mission cooldown equals the regular cooldown and is adjusted by AGI; the cast time is adjusted by INT; the number after the stat terms is a `talAdjust()` value; unknown hit timing is a 0.5 s placeholder.
+- **Assumed:** 9 dolphin hits (3 × 3, the most; the least is 6); radii 5 / 8 / 6 are rise / tsunami / whirlpool, because there are three radii for four attacks; the DEF is the player's own. The preview's timing is a placeholder: rise at 5 s, tsunami at 5.5 s, whirlpool every 1 s from 6 s.
+- **Left out on purpose (user 2026-11-02):** "สึนามิ +2.5% DEF/สแตค; Armor Shatter x1.25" is too unclear to model. It does not say what the stack is or what ×1.25 multiplies, so the tsunami stays at 0.6 × DEF with no multiplier, and the card's red line says so. Armor Shatter also appears in Sovereign Impaler's site text (cell 452, still a stub).
+- **Unknown (the card's `liveCheck`):** KO, target count and height.
+- **Original cards:** none. The tooltip names no other skill.
 
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 

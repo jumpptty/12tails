@@ -743,6 +743,21 @@ Checked against `Reborn1027:` (build 2026.10.27.1936-bible3). The BB findings ar
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Lucent Barrier (cell 453, `sheep_lucentBarrier`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Passive, reflect 10% / 20%, duration 3 s; comes with a Reverse barrier on every cast; reflect at Reverse I / II.
+
+- **Left out on purpose (user rule 2026-11-02):** "มาพร้อมบาเรีย Reverse ทุกครั้งที่ร่าย" does not say which cast. The red line says so.
+- **Toggle on an original card, TTO tab only:** `lucentBarrier` on Reverse, a line only.
+
+### Grand Codex (cell 454, `sheep_grandCodex`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 70, SP 50, damage 60% ATK + 50, 3 targets, heal 4% MHP + 40, slow 50% 2 s, radius 12 m, range 16 m, duration 20 s, cooldown 120; a page every 2 s in turn: heal, slow, spears; World Encarta ally inside +25% (slow 62%). The only tooltip so far in English.
+
+- **The math:** 20 ÷ 2 = 10 pages in a cycle of 3, so spears on pages 3, 6, 9 = 3 rounds, at 6, 12 and 18 s.
+- **Assumed:** "+25%" is one bracket on the spears from a toggle (`codexEncarta`); the heal stays as text.
+- **Toggle on an original card, TTO tab only:** `grandCodex` on World Encarta, a line only.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |

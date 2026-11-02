@@ -723,6 +723,29 @@ Rows C6 (ids 451-454, Lv 95) and C7 (461-464, Lv 105), 8 Class C points each, al
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Venom Phantom (cell 452, `chameleon_venomPhantom`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Physical, MP 50, SP 50, 5 hits of 35% ATK + 35, blast 40% ATK + 50, 4 targets, radius 8 m, range 16 m, cooldown 75; every arrow adds poison +1; poison mark 8 s, arrows add poison +1 every 0.5 s; Venom Shock on a marked target spreads within 20 m.
+
+- **Assumed:** one blast. The preview's 0.5 s between hits is the user's placeholder.
+- **Left out on purpose (user rule 2026-11-02):** "แยกเป็นร่างเงายิงซ้ำ" (how many repeats) and "Requiem ระเบิดพิษ 200%" (Requiem is no known skill, 200% of what). The red line says so.
+- **Toggle on an original card, TTO tab only:** `venomPhantom` on Venom Shock, a line only.
+
+### Apex Hunt (cell 453, `chameleon_apexHunt`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 60, SP 60, damage Slayer x3, other targets x1.5, 6 targets, range 24 m, splash 50% / 4 m, cooldown 120; target under 30% HP damage x1.5; survivors get Prey 12 s; on a kill reset Slayer and Apex -30 s.
+
+- **Assumed:** "Slayer" is 0.9 × ATK + talAdjust(60), Slayer at Improved Slayer 4, because this skill needs cell 354, so x3 = 2.7 × ATK + talAdjust(180) and x1.5 = 1.35 × ATK + talAdjust(90); one hit per target with 5 others; the race ×2 is left out; the low HP ×1.5 is one bracket from a target toggle (`apexLowHp`).
+- **Left out on purpose (user rule 2026-11-02):** the splash and what Prey does. The red line says so.
+- **Toggles on original cards, TTO tab only:** `apexHunt` on the four Slayers, a line for the reset.
+
+### Chain Lightning (cell 454, `chameleon_chainLightning`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 45, SP 45, duration 8 s, move speed +20%, normal arrow 70%, split 2 x -34%, chain 5 x -20% per hop, hop range 8 m, cooldown 45; every 3 arrows chain instead of split; after it ends, move speed -60% for 4 s. The picture is small; the site's text confirms these numbers.
+
+- **Left out on purpose (user rule 2026-11-02):** the card has no damage row: the tooltip does not say what 70% multiplies or whether Magical's half DEF reaches the normal arrow. The red line says so.
+- **Toggle on an original card, TTO tab only:** `chainLightning` on nAttack, a line only, no number changes.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |

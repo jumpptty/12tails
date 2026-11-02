@@ -650,6 +650,14 @@ Verified 2026-10-26 against the Reborn decompile (string helpers decoded with th
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Crimson Verdict (cell 452, `bat_crimsonVerdict`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 55, SP 50, damage 120 + 28 per curse level, counts 20 levels, 2 x 75%, radius 10 m, 10 targets, splash 40% / 3 m, cast 1.2 s, cooldown 75; Mass Cast radius 24 m, 16 targets, no curse needed; explodes near to far, one target at a time.
+
+- **Assumed:** `talAdjust(120 + 28 × level)`, with no ATK term (not covered by the user's rule); "2 x 75%" = 2 hits of 75% each, one bracket `⌈(…) × 0.75⌉`; the splash is text only. The preview's 0.5 s between hits is the user's placeholder.
+- **Left out on purpose (user rule 2026-11-02):** the description says Mass Cast damages "with increased attack power" without saying how much, and the red line says so.
+- **Toggle on an original card, TTO tab only:** `crimsonVerdict` on Mass Cast, a line only. On this card `crimsonMass` switches the preview to radius 24.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |
