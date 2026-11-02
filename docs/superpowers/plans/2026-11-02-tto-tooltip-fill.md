@@ -1,6 +1,6 @@
 # TTO tooltip fill: TTO's own in-game tooltip on every card with a TTO skill
 
-Status: not started (planned 2026-11-02). Needs the updated `DecompiledSource_TTO_2026-11-02\` folder (CLAUDE.md's pending line says how to get it onto a PC).
+Status: **done 2026-11-03** (home PC). Extractor: 1,184 of 1,209 tooltips (`BUILD.md` "Rank builders"); 541 cards filled, 588 carry `ttoTip` (bible-card-fields `ttoTip`); 111 BB tooltipNotes kept by rule (TTO kept BB's descriptions), 13 garbled-label notes; 141 MP / SP / cooldown / cast / duration differences on 91 cards listed in `DecompiledSource_TTO_2026-11-02/tooltips/tto_tooltip_vs_card.txt`, not fixed. Needs the updated `DecompiledSource_TTO_2026-11-02\` folder (CLAUDE.md's pending line says how to get it onto a PC).
 
 **How to run it (user 2026-11-02):** mechanical work, done by one session with scratch scripts: no Workflow and no subagents (the user's usage is limited). Ask only if something is truly blocked.
 

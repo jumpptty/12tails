@@ -3216,12 +3216,15 @@ const gameTipCards = [];   // cards that show the in-game tooltip button (checke
     const gt = (() => { const m = h.match(/data-gt="([^"]+)"/); try { return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch (e) { return null; } })();
     // the text of build 2026.10.27.1936-bible3 (Reborn1027:BatSkill_thai.cs; the 2026-10-25 line read "ชาร์จ +3% ATK ตีปกติมีโอกาส 12% ดูดเลือด…")
     if (!gt || !String(gt.t).startsWith("LifeDrain ดูดเพิ่ม 3% ATK ต่อวินาที และทุกวินาทีที่ดูดมีโอกาสติด effect ผนึกของไอเท็ม") || gt.n !== "Vampiric Surge" || !h.includes('<div class="sk-gt-src">ข้อความจากโค้ดเกม Reborn อัปเดตล่าสุด (27 ต.ค. 2026)') || h.includes("ข้อความจากเกม BB")) fail("Vampiric Surge (Reborn) does not draw Reborn's own in-game tooltip (build 2026.10.27.1936-bible3) under a Reborn source line: " + JSON.stringify(gt && gt.t)); else checkedDepStrip++; }
-  // ... and on BB / ToT / TTO the head says the text is BB's from before the shutdown, never "<skill> • TTO" (user 2026-10-27: that read as TTO's own tooltip)
-  { const lm = SKILLS.find(s => s.id === "mole_mine"); const bad = [];
-    for (const srv of ["og", "tot", "tto"]) { sandbox._setServer(srv); sandbox._selectSkill(lm); sandbox._setServer(srv); sandbox._selectSkill(lm); const h = sandbox._getRenderedHeroHtml();
-      if (!h.includes('<div class="sk-server-popup-subtitle">Landmine</div><div class="sk-gt-src">ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์</div>') || h.includes("ข้อความจากเกมต้นฉบับ")) bad.push(srv); }
+  // ... and on BB / ToT / TTO the head says the text is BB's from before the shutdown, never "<skill> • TTO" (user 2026-10-27: that read as TTO's own tooltip),
+  //     unless TTO's own text (ttoTip) is drawn: then its source line instead (Landmine on TTO since 2026-11-03; King Kaiser keeps a TTO tab with no ttoTip)
+  { const head = (id, srv) => { const sk = SKILLS.find(s => s.id === id); sandbox._setServer(srv); sandbox._selectSkill(sk); sandbox._setServer(srv); sandbox._selectSkill(sk); return sandbox._getRenderedHeroHtml(); };
+    const bbHead = (name) => '<div class="sk-server-popup-subtitle">' + name + '</div><div class="sk-gt-src">ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์</div>', bad = [];
+    for (const srv of ["og", "tot"]) { const h = head("mole_mine", srv); if (!h.includes(bbHead("Landmine")) || h.includes("ข้อความจากเกมต้นฉบับ")) bad.push("Landmine on " + srv); }
+    { const h = head("mole_mine", "tto"); if (!h.includes('<div class="sk-gt-src">ข้อความจากโค้ดเกม TTO อัปเดตล่าสุด') || h.includes("ข้อความจากเกม BB")) bad.push("Landmine on tto (TTO's own text)"); }
+    { const h = head("mole_kingKaiser", "tto"); if (!h.includes(bbHead("King Kaiser")) || h.includes("ข้อความจากเกมต้นฉบับ")) bad.push("King Kaiser on tto"); }
     sandbox._setServer("og");
-    if (bad.length) fail(`Landmine on ${bad.join(", ")}: the in-game tooltip head must read "Landmine" over "ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์"`); else checkedDepStrip++; }
+    if (bad.length) fail(`${bad.join(", ")}: the in-game tooltip head must read the skill over "ข้อความจากเกม BB ก่อนปิดเซิร์ฟเวอร์" (or, with a ttoTip on TTO, TTO's source line)`); else checkedDepStrip++; }
   // ... and the modal (user 2026-10-27): icon H and the note icons open one modal built from <template class="sk-gametip-tpl">, which holds
   //     every note of the card; no note renders anywhere else on the card (the desc never grows), and H comes first in the note group
   { const NOTE_SPANS = ['<span class="sk-tooltip-note">', '<span class="sk-bb-bug">', '<span class="sk-unintended">'];
