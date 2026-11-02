@@ -16,7 +16,7 @@ On 2026-11-02 the user asked Claude to "continue the phone book undoing". The ph
 
 - **12 Tails Online** is a Unity MMORPG. Besides the original game (BB, BigBug), the community plays on its own servers: **ToT** (Tales of Tails), **TTO** (TailsTopia Online) and **Reborn** (12 Tails Reborn).
 - **The Bible** (`12t_projects/bible/`, on GitHub Pages) is the user's free fan reference for players: every skill's real formula, cooldown, reach, hidden rules, and where the in-game tooltip is wrong. Players use it to plan builds; contributors are credited by name.
-- **The Bible is only as good as the code it is read from.** Tooltips are often wrong (the club suit of Cat Royal Flush says "slow 10%"; the code gives paralysis). So every number must come from the client code (AGENTS.md section 4: no approximations, no wiki guesses).
+- **The Bible is only as good as the code it is read from.** Tooltips are often wrong or leave things out (Cat Royal Flush's club line says only "ชา 10%", paralysis; the code adds that it hits the first blast only, for 1 s, and ignores LCK; an early reading even took ชา, numb, for ช้า, slow). So every number must come from the client code (AGENTS.md section 4: no approximations, no wiki guesses).
 
 ## History: the decodes so far
 

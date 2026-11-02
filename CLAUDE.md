@@ -15,7 +15,6 @@ AGENTS.md above is the source of truth; this section only maps it onto Claude Co
 - **Bible rulebook:** `12t_projects/bible/CLAUDE.md` holds the core rules (loaded when working in that folder); the topic rules are the `bible-*` project skills below. When a convention changes, update the skill that owns the topic. `GEMINI.md` there is only an index for Gemini / Antigravity, the user's fallback agent (Claude is used ~95% of the time); never put rules in it.
 - **No Artifact publishing:** this project is never published as an Artifact (user rule, 2026-10-06). "Push" means `git push` only.
 - **Git guard:** `.claude/hooks/guard-index-git.sh` denies `git checkout` / `restore` / `reset --hard` / `stash` commands that would touch `12t_projects/bible/index.html` or its `assets.js` (recover from the scratch-dir backup instead).
-- **Pending on the home PC (user 2026-11-02; delete this line when done or declined):** in the first session whose repo is `D:\12tails`, before anything else, remind the user to carry on with the TTO decompile: (1) check that `DecompiledSource_TTO_2026-11-02\` came over on the flash drive to the repo root and that `py -m pip install pefile capstone` is done (its `BUILD.md`, "Moving it to another PC"); (2) offer the patch toolkit in its `BUILD.md`, "Still to do" (`build.py`, `check_build.py`, `find_constants.py`, about an hour), then the next TTO skills from its `pseudo/`.
 
 ### Commands
 
