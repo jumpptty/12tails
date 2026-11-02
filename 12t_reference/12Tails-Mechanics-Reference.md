@@ -584,6 +584,15 @@ The user requested ToT EX support for all 12 classes. Source: [ToT library](http
 * **Ordinary cells on the published dataset:** still 1,159 cells with the same 20 level / point differences as table A, and 20 active / passive flags that differ from the decoded `mode`: Rabbit 322, 323, 403; Mole 273, 373, 412, 433; Bat 413, 422; Cat 423; Chameleon 421; Panda 343, 344, 421, 443; Penguin 421, 422; Sheep 421; Wolf 412, 423. The hub keeps the game code for all of them (ToT rule: only a user-reported balance change overrides it). The dataset's `maxSkillLevel` is 100; the hub's ToT cap stays 110 (user 2026-10-19).
 * **Refunds / reset:** validate all three pools, explicit prerequisites, exclusions and ordinary C counts. Clearing a tree prunes skills losing explicit dependencies or tree-point thresholds repeatedly until the remaining layout is valid. The hub’s existing undo restores server, class, level and EX selections together. BB and TTO do not receive these ToT-only entries.
 
+#### TTO engine helpers (client decompile, 2026-11-02)
+
+Read from TTO's own client (`TTO1102:`, `DecompiledSource_TTO_2026-11-02/`, AGENTS.md):
+
+* `talAdjust(p)` = `(int)(p × (1 + 0.02 × clamp(tal, 1, 512)))` for p > 0, else 0, with no LCK term (`TTO1102:CharacterControl::talAdjust@0x24EBDC0`; the following `ceil` is a no-op). This is the code behind the TTO common note "LCK roll removed from the TAL / ATK / DEF formulas".
+* `lckAdjust(c)` is unchanged from BB: X = c × (1 + 0.01 × clamp(lck, 1, 512)), `floor(100X / (X − c + 100))` (`TTO1102:CharacterControl::lckAdjust@0x24D7290`). Chance rolls still use it (Cat Royal Flush's hand upgrade, `lckAdjust(12)`).
+* `CharacterControl` keeps its real field names in TTO (`hp` 0x68, `sp` 0x6C, `mhp` 0x78, `atk` 0x98, `tal` 0xB0, `lck` 0xB4, `isPlayer` 0x180, `isMine` 0x182); some game classes' own fields were renamed by TTO's obfuscator (`float_0`, `gameObject_3`).
+* `CharacterControl.hit(actionCode, tObject, nDamage, nKo, nHate, nForce, damageType, nNoHate)` and `RPC_AddStatus(eStatus t, sLv, sTime, sValue, sID)`; status numbers are `enum eStatus` in `dump.cs` (306 = paralysis).
+
 #### TTO bug fix, game-wide (user-reported 2026-11-02)
 
 If the target disappears during a cast, the part that applies effects to the target is skipped and the action ends normally. The patch notes name no skill. Per-skill fixes are in each class file, "Server Balance Variations (TTO)".
