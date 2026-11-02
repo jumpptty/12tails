@@ -557,6 +557,9 @@ Source of server deltas: `12t_projects/bible/index.html:8443,8516,8664,8696,8910
 
 ## Server Balance Variations (TTO)
 
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Mimic now grants its status.
+
 Private-server values below are documented from the Bible skill-detail schema, not the BigBug decompile; the original-server column is the BigBug baseline represented by that card.
 
 | Skill | Server | Original BigBug baseline | Server delta |
@@ -654,7 +657,8 @@ Verified 2026-10-26 against the Reborn decompile (string helpers decoded with th
 
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 55, SP 50, damage 120 + 28 per curse level, counts 20 levels, 2 x 75%, radius 10 m, 10 targets, splash 40% / 3 m, cast 1.2 s, cooldown 75; Mass Cast radius 24 m, 16 targets, no curse needed; explodes near to far, one target at a time.
 
-- **Assumed:** `talAdjust(120 + 28 × level)`, with no ATK term (not covered by the user's rule); "2 x 75%" = 2 hits of 75% each, one bracket `⌈(…) × 0.75⌉`; the splash is text only. The preview's 0.5 s between hits is the user's placeholder.
+- **User 2026-11-02:** the damage is `talAdjust(120 + 28 × level)`; "2 x 75%" = 2 hits of 75% each, one bracket `⌈(…) × 0.75⌉`.
+- **Assumed:** the splash is text only. The preview's 0.5 s between hits is the user's placeholder.
 - **Left out on purpose (user rule 2026-11-02):** the description says Mass Cast damages "with increased attack power" without saying how much, and the red line says so.
 - **Toggle on an original card, TTO tab only:** `crimsonVerdict` on Mass Cast, a line only. On this card `crimsonMass` switches the preview to radius 24.
 

@@ -692,6 +692,12 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 3, 3, 3, 3)`, `hit(2, ATK, KO 1)`, cooldown 1.5 s (`:6198-6221, :6342`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 8, 3)`, `hit(22, (int)(1.6 × ATK), KO 1)`, cooldown 1.5 s (`:6707-6730, :6839`).
 
+## Server Balance Variations (TTO)
+
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Iron Skin and Diamond Skin reduce damage by 8 / 16 / 24% at levels 1 / 2 / 3 (they were 16 / 24 / 24%). Note Reborn fixed the same bug differently, to 16 / 24 / 32%.
+- Iron Skin's range mismatch (tooltip 6 m, code 4 m) is not mentioned, so that note stays.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).

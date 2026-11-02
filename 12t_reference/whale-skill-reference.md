@@ -694,6 +694,12 @@ Verified 2026-10-26 against the Reborn decompile. All eight are one rank (`Rebor
 
 **Open:** the Swallow ↔ Auto Shield link on Reborn (open question 3, §4.17). **Decided 2026-10-28:** the Reborn lists leave each other out (§4.17).
 
+## Server Balance Variations (TTO)
+
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Wall Puncture: an nAttack hit that turns purple now applies the weapon effect. The crit note stays: the patch does not mention it.
+- Gourmet Heart: "ทำงานไม่ถูกต้อง" with no detail, so the card is unchanged and its red line says so.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 ### Oceans Resilience (cell 453, `whale_oceansResilience`, NOT from verified code)
@@ -725,7 +731,7 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. **User 2026-11-02:** a C6 skill with a cooldown has the same cooldown at mission start (`cdMapStart`). SP sign (red or blue) is not in the data; the cards use red.
 
 ### Toggles on the original cards (NOT from verified code, 2026-11-02)
 

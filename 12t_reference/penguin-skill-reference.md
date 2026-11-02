@@ -738,6 +738,13 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): ice ball flying 14 m/s (`PvpMount_penguin_nAttack.cs:26`; the prefab velocity is 0) for 1.4 × rangeMod s (`PvpMount.cs:4220`) = 19.6 × rangeMod m, `SphereCollider` r 0.35: `hit(1, (int)(0.5 × ATK), KO 1)` on the first target, then `ice` at `clamp(current + 1, 1, 4)` for `Damage.getDebuff(3, cha, target cha)` (`:167, :239-257`), cooldown 1 s (`PvpMount.cs:15920`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6 × rangeMod, 3 × rangeMod)`, `hit(1, talAdjust(30), KO 1)`, cooldown 1 s (`:16144-16167, :16259`).
 
+## Server Balance Variations (TTO)
+
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Nova Flare now counts its 120 s cooldown.
+- Giant Star now adds 50% to Falling Stars' search radius: 12 / 16 m → 18 / 24 m. Falling Comets is not mentioned, so its tooltip note stays.
+- Cosmic Rift: taking purple damage no longer stops the player from leaving it.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).

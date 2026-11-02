@@ -823,6 +823,10 @@ Every number in the BB Thai tooltip (`RabbitSkill_thai.cs`) was compared with th
 
 ## Server Balance Variations (TTO)
 
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Miracle Blend: status durations (invisible, reduce, enlarge, poison, Miracle Drop) use the casting Rabbit's CHA at the moment the bottle is thrown.
+- Contract: Gil was charged double at levels 1 and 2: 800 → 400 and 2,400 → 1,200. The BB code reads 200 / 600 per spawned unit, so 400 / 1,200 (`Rabbit.cs:11635-11683`), and the card already showed those.
+
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Contract | Mercenaries (Light Panther / Light Leopard / Light Golem) stand still where summoned. | They follow the owner and warp back beside the owner beyond 35 m, like coin-summoned characters (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
@@ -994,7 +998,7 @@ Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client c
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Physical, MP 40, SP 45, 45% ATK + 25, 4 × 3 hits, reach 18 m / 9 m, 100-400 G, cooldown 60; Gilded slows 10% per level (max 4); coin 4 is 100% ATK + 60, +20% per Gilded level; 25 G a coin plus 25 G a bounce hit.
 
 - **The gold adds up:** 4 × 25 + 12 × 25 = 400 G at most, which supports 12 hits with coin 4 bouncing too.
-- **Assumed:** coin 4 hits 3 times; +20% is one bracket on coin 4, `⌈(1 × ATK + talAdjust(60)) × (1 + 0.2 × level)⌉`; 18 m is the coin's reach and 9 m the bounce; it takes Extravagance like the other ATK-based Rabbit cards (ToT and Reborn included). The preview's 0.5 s between hits is the user's placeholder.
+- **Assumed:** coin 4 hits 3 times; +20% is one bracket on coin 4, `⌈(1 × ATK + talAdjust(60)) × (1 + 0.2 × level)⌉`; 18 m is the coin's reach and 9 m the bounce. **User 2026-11-02:** it takes Extravagance like the other ATK-based Rabbit cards (ToT and Reborn included). The preview's 0.5 s between hits is the user's placeholder.
 - **Left out on purpose (user rule 2026-11-02):** "เด้งละ +25%" does not say what it adds to or whether it compounds, and the red line says so.
 - **Original cards:** none named.
 
@@ -1002,7 +1006,7 @@ Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client c
 
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Physical, MP 55, SP 50, 70% ATK + 40, 3 hits, reach 22 m, duration 12 s, cooldown 120; target with Bounty takes +15% damage; shots pass walls; on a kill cooldown -45 s, team heals 10% and +20 SP; own mercenaries attack at once. The picture is cut off above its description; the rest is the site text.
 
-- **Assumed:** Extravagance as above; the duration is shown as fixed. The preview's 0.5 s between hits is the user's placeholder.
+- **User 2026-11-02:** Extravagance as above. **Assumed:** the duration is shown as fixed. The preview's 0.5 s between hits is the user's placeholder.
 - **Unknown (the card's `liveCheck`):** KO, target count, the shot's width, and whether +15% includes this skill's own hits.
 - **Original cards:** no toggle. The tooltip does not say which mercenaries or that any skill changes.
 
@@ -1016,7 +1020,7 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. **User 2026-11-02:** a C6 skill with a cooldown has the same cooldown at mission start (`cdMapStart`). SP sign (red or blue) is not in the data; the cards use red.
 
 ### Toggles on the original cards (NOT from verified code, 2026-11-02)
 

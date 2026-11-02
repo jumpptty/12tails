@@ -1413,6 +1413,7 @@ let checkedTotC6 = 0;
   const ids = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
   for (const k of Object.keys(table)) {
     const sk = SKILLS.find(s => s.id === "tot_ex_" + k), [mp, sp, cd, hits] = table[k];
+    if (cd) check(k + " has the C6 start-of-mission cooldown (user 2026-11-02)", sk.cdMapStart === true, sk.cdMapStart);
     check(k + " is a real ToT-only card", !!sk && sk.onlyServer === "tot" && !sk.soon && ids[sk.id] >= 452 && ids[sk.id] <= 454, sk && sk.soon);
     if (!sk) continue;
     check(k + " cost and cooldown", ((sk.cost || {}).mp || 0) === mp && ((sk.cost || {}).sp || 0) === sp && (sk.cd || 0) === cd, JSON.stringify(sk.cost) + " " + sk.cd);
@@ -4880,7 +4881,7 @@ async function donateChildTests(env) {
       const want = SKILLS.filter(s => { const o = (s.servers && s.servers[srv]) || (srv === "tot" ? s.ps : null); return o && o.changeNote; }).length;
       const common = sandbox.commonServerNotes(srv).length, rows = (p.list().match(/class="nl-row[ "]/g) || []).length;
       if (rows !== want + common || want === 0) fail(`${srv}: ${rows} rows, want ${want} + ${common} Common`); else checked++;
-      if (srv === "tto" ? common !== 3 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26)
+      if (srv === "tto" ? common !== 4 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26), a target lost mid-cast (2026-11-02)
       const opens = [...p.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
       if (opens.length !== want || !opens.every(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + srv))) fail(`${srv}: rows do not open the card on this server`); else checked++;
       if (!/class="nl-tag is-svc" style="--kc:var\(--(pro|seal|tip)\)"/.test(p.list())) fail(`${srv}: no change-note tags rendered`); else checked++;
@@ -5052,6 +5053,20 @@ async function donateChildTests(env) {
         const lastAt = (n) => { inputs.tempestHits = n; heroOn("tto", td); return sandbox._calcRangeFor(last.dmg, last.atkCoeff, last)[0]; }, base = sandbox._calcRangeFor("talAdjust(50)", last.atkCoeff, last)[0]; good(lastAt(10) === base && lastAt(0) < base, "Tempest Dance's closing blast: 10 hits = 0.8 x ATK + talAdjust(30 + 2 x 10)"); inputs.tempestHits = 16; }
       // a number box on a dmgModes card (user 2026-11-02: typing drew every mode into the first row): the box sits on its own row, and the box listener redraws the rows
       good([["panda_tempestDance", "tempestHits"], ["monkey_jaAscension", "jaSunburn"], ["rabbit_coinRicochet", "coinGilded"]].every(([id, key]) => { const boxes = heroOn("tto", SKILLS.find(s => s.id === id)).split('data-role="dmg-input"').length - 1; return boxes === 1; }) && /if \(!activeSelected\.dmgModes\) \{ refreshLiveDamage\(\); return; \}/.test(html) && /modeBoxBusy = true; renderHero\(\); modeBoxBusy = false;/.test(html), "a dmgModes card shows each number box once, and typing redraws its rows instead of the one-row live update");
+      // the TTO patch notes the user pasted (2026-11-02), on the TTO tab only
+      { const c = (id) => SKILLS.find(s => s.id === id), R = sandbox._depRanks, tto = (id) => c(id).servers.tto;
+        const ids = ["cat_nineLives", "cat_nAttack", "cat_openWound", "penguin_novaFlare", "penguin_cosmicRift", "penguin_giantStar", "penguin_fallingStars", "rabbit_miracleBlend", "rabbit_contract", "bison_ironSkin", "bison_diamondSkin", "bat_mimic", "whale_wallPuncture", "whale_gourmetHeart", "mole_gigaCannon"];
+        ids.forEach(id => good(/\[Fix\]/.test(tto(id).changeNote), id + ": a [Fix] line on its TTO tab"));
+        good(tto("cat_nineLives").cd === 60 && tto("cat_nineLives").bbBug === "" && !tto("cat_nineLives").desc(1).includes("ไม่ถูกเรียกใช้") && c("cat_nineLives").bbBug, "Nine Lives: 60 s and no bug on TTO, the BB card keeps its note");
+        [["bison_ironSkin", 1, "**8%**"], ["bison_ironSkin", 2, "**16%**"], ["bison_ironSkin", 3, "**24%**"], ["bison_diamondSkin", 1, "**8%**"], ["bison_diamondSkin", 2, "**16%**"]].forEach(([id, r, want]) => good(tto(id).desc(r).includes(want), id + " rank " + r + " reads " + want));
+        good(c("bison_ironSkin").desc(1).includes("**16%**"), "the BB Iron Skin stays 16% at rank 1");
+        good(tto("bison_diamondSkin").tooltipNote === "" && tto("bison_ironSkin").tooltipNote(1).includes("6m") && !tto("bison_ironSkin").tooltipNote(1).includes("โค้ดจริงลด"), "the Skin tooltip notes keep only what is still wrong");
+        R.giantStar = 0; good(tto("penguin_fallingStars").reach(2)[0].r === 16, "Falling Stars 16 m without Giant Star"); R.giantStar = 1; good(tto("penguin_fallingStars").reach(1)[0].r === 18 && tto("penguin_fallingStars").reach(2)[0].r === 24, "18 / 24 m with it on TTO"); delete R.giantStar; good(c("penguin_giantStar").bbBug && tto("penguin_giantStar").bbBug === "", "Giant Star's bug is cleared on TTO only");
+        good(!tto("cat_nAttack").unintended && !tto("cat_nAttack").effectProc.hits && typeof c("cat_nAttack").effectProc.hits === "function", "Open Wound reaches the Hidden Blade hit on TTO, not on BB");
+        good(tto("cat_nAttack").changeNote.includes("Power Seven") && tto("rabbit_contract").changeNote.includes("เดินตามเจ้าของ"), "the fixes add to the cards' earlier TTO notes");
+        good(!tto("whale_wallPuncture").desc(4).includes("ไม่ติดผลพิเศษ") && tto("rabbit_miracleBlend").desc(1, 0).includes("ตอนที่โยนขวด"), "Wall Puncture and Miracle Blend's TTO text follow the fixes");
+        good(!!tto("whale_gourmetHeart").liveCheck && !!tto("cat_openWound").liveCheck && c("whale_gourmetHeart").unintended, "a patch line that says nothing specific goes in the red line");
+        good(heroOn("tto", c("whale_gourmetHeart")).includes("sk-live-check") && !heroOn("og", c("whale_gourmetHeart")).includes("แพตช์ TTO"), "the red line stays on TTO"); }
       // the rest of the tooltip cards, and the pictures as the in-game tooltip pop-up (user 2026-11-02)
       { const card = (id) => SKILLS.find(s => s.id === id), R = sandbox._depRanks, inputs = vm.runInContext("DMG_INPUT_VALS", sandbox);
         const pics = ["panda_yinYangFist", "panda_tempestDance", "monkey_jaAscension", "monkey_buitenBastion", "whale_leviathanBreach", "whale_oceansResilience", "rabbit_medicTurret", "rabbit_coinRicochet", "rabbit_bountyHunt", "bat_crimsonVerdict", "chameleon_venomPhantom", "chameleon_apexHunt", "chameleon_chainLightning", "sheep_lucentBarrier", "sheep_grandCodex", "mole_twinWarhead", "mole_barrelRailgun", "cat_royalFlush"];

@@ -536,6 +536,9 @@ Every number in the BB Thai tooltip (`MoleSkill_thai.cs`) was compared with the 
 
 ## Server Balance Variations (TTO)
 
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Giga Cannon: the bug that made it disappear is fixed. The notes give no other detail.
+
 Private-server values are documented from the Bible skill-detail schema; the BigBug decompile remains the original-server baseline.
 
 | Skill | Original BigBug baseline | TTO delta |
@@ -689,7 +692,7 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Passive, missiles x2, blast 40 / 3 m, KO 20; a pair hitting one target within 0.5 s makes a gold blast; Gyro turrets within 20 m join in, 2 missiles each; Barrel Bot missile cooldown 40 s; Auto Gyro Gun, Barrel Bot and King Kaiser in range can use this; King Kaiser gains an attack. The picture is a phone photo, straightened for the pop-up.
 
-- **Assumed:** the 40 is `talAdjust(40)`, with no ATK term, not covered by the user's rule.
+- **User 2026-11-02:** a damage number with no ATK term is a `talAdjust()` value, so the 40 is `talAdjust(40)`, and Barrel Railgun's 15 and 10 likewise.
 - **Left out on purpose (user rule 2026-11-02):** which attack King Kaiser gains, and how hard a turret's missile hits. The red line says so.
 - **Toggles on original cards, TTO tab only:** `twinWarhead` on Missile and Barrel Bot - Missile (hits ×2; the bot's cooldown 60 × 2/3 = 40, through `cdBuffDep`), and on Auto Gyro Gun and King Kaiser (lines only).
 
@@ -698,7 +701,7 @@ Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client c
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Physical, MP 70, SP 60, 0.85 ATK + 120, KO 40, reach 45 x 3.2 m, every 2.4 s, cast 6 s, duration 20 s, cooldown 150; paralysis 12% for 2 s on every target hit; Overload 3 x 15, hops 4 m; Trench 10 every 0.5 s for 2.4 s.
 
 - **The math:** 20 ÷ 2.4 = 8.33, so 8 shots; 2.4 ÷ 0.5 = 4.8, so 4 Trench ticks.
-- **Assumed:** Overload and Trench are per shot; 15 and 10 are `talAdjust()`, with no ATK term, not covered by the user's rule; 12% is a fixed chance.
+- **Assumed:** Overload and Trench are per shot; 12% is a fixed chance.
 - **Original cards:** none named.
 
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
@@ -711,7 +714,7 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. **User 2026-11-02:** a C6 skill with a cooldown has the same cooldown at mission start (`cdMapStart`). SP sign (red or blue) is not in the data; the cards use red.
 
 ### Toggles on the original cards (NOT from verified code, 2026-11-02)
 

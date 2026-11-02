@@ -982,6 +982,13 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindAreaTarget(pos, 7, 3)`, `hit(1, (int)(0.75 × ATK), KO 1)`, cooldown 1.5 s (`:9102-9125, :9229`).
 - **mountDash** (normal attack while moving faster): `Physics.Raycast` 40 m to the first collider (`:9642`; the `cat_rAttack` prefab is visual only, no collider), `hit(25, (int)(1.5 × ATK), KO 3)`, cooldown 1.5 s (`:9610, :9680, :9786`).
 
+## Server Balance Variations (TTO)
+
+**Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
+- Nine Lives now honours its 60 s cooldown.
+- Open Wound now reaches the Hidden Blade hit in nAttack's second stage.
+- "OpenWound5 ทำงานไม่ถูกต้อง" is also listed, with no detail, so Finishing Blow's note stays and the card's red line says so.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 ### Royal Flush (cell 452, `cat_royalFlush`, NOT from verified code)
@@ -1002,7 +1009,7 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. **User 2026-11-02:** a C6 skill with a cooldown has the same cooldown at mission start (`cdMapStart`). SP sign (red or blue) is not in the data; the cards use red.
 
 ### Toggles on the original cards (NOT from verified code, 2026-11-02)
 
