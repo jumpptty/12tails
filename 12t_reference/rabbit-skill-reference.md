@@ -842,7 +842,7 @@ Source: [ToT rabbit simulator dataset](https://talesoftails.net/data/skill-simul
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. Their cards and code are in "ToT C6 skills" below. The site's published costs:
 
 | Cell | Published skill name | MP | SP |
 |---|---|---|---|
@@ -989,3 +989,21 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 | 452 | Medic Turret (`rabbit_medicTurret`) | Active | 442 + 254 | 55 | 45 | None | self | สร้างป้อมรักษา ฮีลพันธมิตรรอบข้างเป็นระยะ และยิงยาใส่พันธมิตรที่ HP น้อยที่สุด (1max) |
 | 453 | Coin Ricochet (`rabbit_coinRicochet`) | Active | 443 | 40 | 45 | Physical | enemy | ดีดเหรียญ 4 เหรียญ เด้งเหรียญละ 3 เป้า ทำให้เป้าหมายติดสถานะ Gilded ช้าลง เหรียญสุดท้ายเป็น Cash Out (-Gil/hit) |
 | 454 | Bounty Hunt (`rabbit_bountyHunt`) | Active | 444 | 55 | 50 | Physical | enemy | ติดใบประกาศจับเป้าหมาย เป้าหมายที่ติดสถานะจะรับดาเมจเพิ่ม 15% หากเป้าหมายตายจะลดคูลดาวน์ 45 วิ และฮีลฟื้นพลังชีวิตของเพื่อน 10% ได้ SP 20 (12sec) |
+
+## ToT C6 skills (client excerpts, read 2026-11-02)
+
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+
+### MiracleShot5 (cell 452)
+- MP 40, SP 20, cooldown 140 `agiAdjust` (`ToTC6:Rabbit/452_MiracleShot5.cs:14-19, :46-53`). Raycast range `16 + 5 × nAttack` on the selected ally only, never self (`:106-118`); `noDamage` + `noForce` for `chaAdjust(1)` (`:124-127`).
+- Passive: normal shots pass a status cap of 4 (`:28-32, :131-133`).
+- **Missing:** `ApplyRabbitMedicalShot` (what the cap does), `mpReductionPercent = 50` (`:16`) has no reader.
+
+### PaydayShot5 (cell 453, `RPC_heavyShotgun`)
+- SP 40, cooldown 120 `agiAdjust` (`ToTC6:Rabbit/453_PaydayShot5.cs:30-31, :105-106`). `floor(1 × ATK + talAdjust(40))`, KO 20 free or 0 locked, radius 6, height 8 (`:298-311`).
+- Locked: leap to the target, motion ×1.3, `noDamage` through the move and 0.8 s after landing (`:74-83, :126-132, :320-323`). A hit cuts the remaining cooldown of Four Shot, Circle Shot, Shooting Array, Ten Shot by 80% (`:372-383`).
+- **Missing:** the shotgun passive: `passiveDamagePercent = 25`, `cooldownReductionSeconds = 1` (`:33-34`) have no reader.
+
+### ThousandShot5 (cell 454)
+- SP 50, cooldown 200 `agiAdjust`; 10 hits 0.1 s apart from 1.5 s, `floor(0.8 × ATK + talAdjust(15))`, KO 1; `FindLegacyRecTargets` half-width 2, length 24, height 3 (`ToTC6:Rabbit/454_ThousandShot5.cs:14-27, :64, :126, :189-191, :206-233`).
+- **Missing:** nothing for the card.

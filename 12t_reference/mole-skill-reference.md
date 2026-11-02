@@ -660,7 +660,7 @@ Source: [ToT mole simulator dataset](https://talesoftails.net/data/skill-simulat
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. Their cards and code are in "ToT C6 skills" below. The site's published costs:
 
 | Cell | Published skill name | MP | SP |
 |---|---|---|---|
@@ -692,3 +692,22 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 | 452 | War Area (`mole_warArea`) | Active | 253 + 254 | 75 | 70 | Physical | enemy | เพิ่มระดับ Fire Barrage กับ Bombardment เป็นขั้น 3 เรียกพื้นที่สงคราม 10 วิ เครื่องบินกราดยิงและทิ้งระเบิดเพลิงใส่ศัตรูในระยะ |
 | 453 | Twin Warhead (`mole_twinWarhead`) | Passive | 354 | 0 | 0 | None | self | Missile 1-4 ยิงหัวรบ 2 เท่า (30dmg/hit) ทำให้ AutoGyrogun, Barrel Bot และ King Kaiser ในระยะใช้สกิลนี้ได้ และ เพิ่มท่าโจมตีให้ KingKaiser |
 | 454 | Barrel Railgun (`mole_barrelRailgun`) | Active | 444 | 70 | 60 | Physical | enemy | ขึ้นขี่ป้อมเรลกันบังคับยิงอัตโนมัติทะลุแนวยาว 12% ทำให้ชา ตัวแรกติดไฟช็อตและ ทิ้งแนวยิงร่องไฟฟ้า (20sec) |
+
+## ToT C6 skills (client excerpts, read 2026-11-02)
+
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+
+### AerialDevastation5 (cell 452, `RPC_skyfallBarrage`)
+- MP 30, SP 65, cooldown 234 `agiAdjust`, cast 1 s (`ToTC6:Mole/452_AerialDevastation5.cs:13-16, :101, :113`). Laser `talAdjust(25)`, bomb `talAdjust(45)`, KO 1 (`:19-20, :33, :252`).
+- 6 laser planes on lanes ±7.8 m (6 × 1.3), hit radius 1.6; 5 bombers 3 s later on lanes ±6.24 m (4.8 × 1.3), hit radius 6.8; height 3, length 100 (`:17-18, :24-25, :30-32, :111-112, :249`).
+- Bomb count: one bomb every 0.1 s = every 2 m. Depths per slot 0 / 3.5 / 3.5 / 7 / 7. A drop counts while `2p < 107` and `2p - depth < 100`, so 10 + 11 + 10 + 11 + 10 = 52 (`:145-148, :161, :164, :204-219`).
+- **Missing:** `ApplyLaserContactHits` (laser hit rate), `BombImpact`. The card's number is one laser hit + one bomb, not the skill total.
+
+### MissileBot5 (cell 453)
+- MP 65, SP 15, cooldown 240 `agiAdjust`, cast 9 `magAdjust` (`ToTC6:Mole/453_MissileBot5.cs:13-16, :66-71`). Passive +50% damage (`round`), +2 KO (`:18-19, :43-46`). Bot: HP 870, weight 27, normal KO 5, missile 90 KO 1, ATK / DEF +50, reload 20 s, self-destruct 700 KO 50 at 40% HP, radius 12, trigger 4 m (`:20-31`).
+- **Missing:** `CreateBot` and the bot's AI (do 90 and 700 go through ATK or TAL, other stats, who uses the +50%); the +1 Missile level comes only from the text.
+
+### Nuclear5 (cell 454)
+- MP 70, SP 70, cooldown 300 `agiAdjust`, cast 5 s fixed, fall 2 s, radius 13.5 (`ToTC6:Mole/454_Nuclear5.cs:13-18, :60, :64, :228`). `hit(454, talAdjust(420), KO 100)`; `koAdjust` caps it at 99 (`:321-322`, Mechanics reference).
+- Burn: 10 ticks 1 s apart, `RPC_AddDamage(talAdjust(5))` after `TryEvadeHit`, no DEF (`:328-341`). The Test leaves it out.
+- **Missing:** `CanTarget` (cast range), `Targets` (height).

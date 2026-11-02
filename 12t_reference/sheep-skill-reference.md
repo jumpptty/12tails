@@ -673,7 +673,7 @@ Source: [ToT sheep simulator dataset](https://talesoftails.net/data/skill-simula
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. Their cards and code are in "ToT C6 skills" below. The site's published costs:
 
 | Cell | Published skill name | MP | SP |
 |---|---|---|---|
@@ -750,3 +750,19 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 | 452 | Gleaming Breath (`sheep_gleamingBreath`) | Passive | 442 + 254 | 0 | 0 | None | ally | ทำให้ revive ฟื้นคืนพลังชีวิต HP 90% และเพิ่มสถานะ DEF +30 และ VIT +20 (revive I 10sec, revive II 20sec) |
 | 453 | Lucent Barrier (`sheep_lucentBarrier`) | Passive | 443 + 354 | 0 | 0 | None | ally | ทำให้เวทบาเรีย Reverse สะท้อนดาเมจกลับใส่เป้าหมายที่โจมตี (reverse I 10%, reverse II 20%) |
 | 454 | Grand Codex (`sheep_grandCodex`) | Active | 444 | 70 | 50 | Magic | enemy | เรียกคัมภีร์ศักดิ์สิทธิ์ ฮีลพันธมิตรและทำให้ศัตรูติดสถานะเชื่องช้า (heal/2sec) และยิงหอกแสงพุ่งใส่เป้าหมายในระยะ (20sec) |
+
+## ToT C6 skills (client excerpts, read 2026-11-02)
+
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+
+### EternalSalvation5 (cell 452, `RPC_tailsNeverdie`)
+- Cooldown 400 `agiAdjust`, cast 9 `magAdjust`, Free Cast (`ToTC6:Sheep/452_EternalSalvation5.cs:43, :57, :73`). Revive with full HP and MP, cooldown reset, then `noDamage` (`:145-149`). The cost, MP 90 / SP 50, comes only from the public simulator.
+- **Missing:** `TailsNeverdieMaxTargets` (the text says 6), `tailsNeverdieNoDamageSeconds` (the text says 3, balance `buffDuration` says 5, `:21`), `GetTailsNeverdieTargets` (height, whether radius 20 is used).
+
+### ReflectEncounter5 (cell 453)
+- MP 42, cooldown 240 `agiAdjust`, cast 5 `magAdjust`, duration `chaAdjust(3)` (`ToTC6:Sheep/453_ReflectEncounter5.cs:19-21, :46-51, :58`). `RPC_AddEffectDamage(453, floor(damage × 50%))` on the attacker, Karma reflect too, then the hit's damage becomes -1 with KO and force kept (`:132-153`).
+- **Missing:** `IsReflectEncounterTarget` (who can take it), the code that reads `damage = -1` (the card reads it as "blocked"), `radius = 8` and `passiveDurationPercent = 50` (`:23-24`) have no reader.
+
+### JudgmentFiled5 (cell 454, `RPC_devineSactuary`)
+- MP 70, SP 50, cooldown 120 `agiAdjust`, cast 6 `magAdjust`, drain 20 MP + 8 SP every 1 s (`ToTC6:Sheep/454_JudgmentFiled5.cs:18-24, :50-56, :128-133`). Radius 12, height 6; axe every 5 s, spear every 1 s on every target (`:25-28, :137-149`). Moving or running short stops it (`:119-127`).
+- **Missing (blocks the damage row):** `DevineSactuaryAxe`, `DevineSactuarySpear`. Also `AdjustDevineSactuaryDrain`, and what `damageReductionPercent = 10` applies to.

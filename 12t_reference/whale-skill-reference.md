@@ -572,7 +572,7 @@ Source: [ToT whale simulator dataset](https://talesoftails.net/data/skill-simula
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. Their cards and code are in "ToT C6 skills" below. The site's published costs:
 
 | Cell | Published skill name | MP | SP |
 |---|---|---|---|
@@ -703,3 +703,21 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 | 452 | Sovereign Impaler (`whale_sovereignImpaler`) | Passive | 254 | 0 | 0 | None | self | WallPuncture โดนเป้าหมายเพิ่ม 1 Impaler (+1 Impaler/hit, 3max) Armor Shatter รับดาเมจเพิ่ม 15% และทำลายบาเรีย |
 | 453 | Oceans Resilience (`whale_oceansResilience`) | Passive | 354 | 0 | 0 | None | self | hardenSkin เป้าหมายโจมตีวาฬในระยะประชิดจะเพิ่ม Hate และติดสถานะเชื่องช้า โจมตีช้าลง 30% (4sec) หากค่า DEF เต็มรับดาเมจลด 10% |
 | 454 | Leviathan Breach (`whale_leviathanBreach`) | Active | 444 | 60 | 50 | Magic | enemy | เรียกโลมากระโดดไปหาเป้า แล้วเรียก Leviathan ขึ้นมาทำความเสียหายอย่างรุนแรงตามค่า ATK และ DEF และสร้างสถานะน้ำวน (5sec) |
+
+## ToT C6 skills (client excerpts, read 2026-11-02)
+
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+
+### PiercingKnight5 (cell 452)
+- Wall Puncture level becomes 5 (`ToTC6:Whale/452_PiercingKnight5.cs:14, :20-35`); 20% from `GetPiercingKnightEffectDamageChancePercent` (`:15, :38-47`).
+- **Missing:** the code that reads that chance on 12th Kingdom Knight and Knight of the Deep (purple amount, LCK), and what Wall Puncture level 5 gives.
+
+### SpiralShield5 (cell 453, `RPC_steelSkin`)
+- SP 50, cooldown 90, Harden Skin level 5, +10 DEF per hit (`ToTC6:Whale/453_SpiralShield5.cs:14-17, :29-42, :60-67`). Pressed: damage ×0.5 ceil on the Whale (`:19-20, :98-105`). Sticky 1 on the attacker: 12% for 2 s under Harden Skin, 100% for 1 s under the pressed effect, plain `Random.Range` with no LCK (`:21-24, :108-127`).
+- **Missing:** the code that applies `steelSkin` and sets its cooldown (does AGI or CHA apply), `cooldownReductionPercent = 40` (`:18`) has no reader, the base Harden Skin number behind "doubled".
+
+### Leviathan5 (cell 454)
+- MP 90, SP 65, cooldown 330 `agiAdjust`, cast `magAdjust(floor(8 × 0.5))` because Reduced Cast 373 is its prerequisite (`ToTC6:Whale/454_Leviathan5.cs:14-17, :49-50, :61`).
+- Impact, spawned 4 m behind the target: `floor(1.5 × ceil(talAdjust(floor(weight × 1.5)) × (1 - 0.45 × clamp01(d / 24))))`, KO 15 (`:116-117, :436-444`).
+- Storm: `RPC_AddEffectDamage(31, boss.talAdjust(15))` from 1 s, every 0.35 s, for 10 s = at most 26 ticks (1 + 0.35k < 10), radius 2, height 6 (`:300, :353-358, :455-466`). Lightning: `boss.hit(21, boss.talAdjust(120), KO 1)` and `paralysis` 2 for `getDebuff(6, boss CHA, target CHA)` on a standing or running target (`:506-513`). The boss is an Ewiniar prefab with its scripts off (`:207-215`).
+- **Missing:** Ewiniar's stats on ToT (BB TAL 315, LCK 215, CHA 115; boss-reference.md), so storm and lightning stay in the text; `GetLeviathanTargets` (the cap of 5, height).

@@ -1306,10 +1306,12 @@ if (indexDirty) {
   const refDir = path.resolve(__dirname, '../12t_reference');
   const perClass = new Map();
   SKILLS.forEach(sk => {
-    const [cls, ...rest] = sk.id.split('_');
+    const totEx = sk.id.startsWith('tot_ex_');   // researched ToT EX cards keep their stub id; they are documented in their class file
+    const [cls0, ...rest] = sk.id.split('_');
+    const cls = totEx ? sk.class.toLowerCase() : cls0;
     if (sk.soon) return;   // coming-soon stub cards (ToT EX, Reborn C6 / C7) carry no data yet, nothing to document
     if (cls === 'common') return;   // shared skills live once in 12Tails-Mechanics-Reference.md §3.5
-    const base = rest.join('_');
+    const base = totEx ? sk.id.slice(7) : rest.join('_');
     if (!perClass.has(cls)) {
       const f = path.join(refDir, cls + '-skill-reference.md');
       let text = '';
@@ -1402,6 +1404,36 @@ let checkedWhaleWave = 0;
   inp.whaleWeight = saved.w; inp.whaleWaveDist = saved.d; sandbox._depRanks.divingPress = savedDp;
 }
 console.log(`Verified ${checkedWhaleWave} Whale Wave weight / distance checks.`);
+// ToT C6 cards (ToT_C6Data/, 2026-11-02): costs, cooldowns and hit counts pinned from the files; Leviathan's impact by hand:
+// floor(1.5 x ceil(talAdjust(floor(weight x 1.5)) x (1 - 0.45 x d / 24))) (ToTC6:Whale/454_Leviathan5.cs:436-443).
+let checkedTotC6 = 0;
+{
+  const check = (label, ok, got) => { checkedTotC6++; if (!ok) { errorCount++; console.error("[TOT C6 ERROR] " + label + ": got " + got); } };
+  const table = { royalcard: [32, 20, 200, 0], fullmoon: [0, 0, 0, 0], shadowexecution: [30, 60, 200, 4], venomsplash: [0, 0, 0, 0], apexpredator: [0, 0, 0, 0], slayerburst: [35, 70, 150, 8], aerialdevastation: [30, 65, 234, 2], missilebot: [65, 15, 240, 0], nuclear: [70, 70, 300, 1], miracleshot: [40, 20, 140, 0], paydayshot: [0, 40, 120, 1], thousandshot: [0, 50, 200, 10], eternalsalvation: [90, 50, 400, 0], reflectencounter: [42, 0, 240, 0], judgmentfiled: [70, 50, 120, 0], piercingknight: [0, 0, 0, 0], spiralshield: [0, 50, 90, 0], leviathan: [90, 65, 330, 1] };
+  const ids = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
+  for (const k of Object.keys(table)) {
+    const sk = SKILLS.find(s => s.id === "tot_ex_" + k), [mp, sp, cd, hits] = table[k];
+    check(k + " is a real ToT-only card", !!sk && sk.onlyServer === "tot" && !sk.soon && ids[sk.id] >= 452 && ids[sk.id] <= 454, sk && sk.soon);
+    if (!sk) continue;
+    check(k + " cost and cooldown", ((sk.cost || {}).mp || 0) === mp && ((sk.cost || {}).sp || 0) === sp && (sk.cd || 0) === cd, JSON.stringify(sk.cost) + " " + sk.cd);
+    check(k + " hit count", (sk.hitCount ? sk.hitCount(1) : 0) === hits, sk.hitCount && sk.hitCount(1));
+    if (sk.reach) check(k + " reach cites its file", sk.reach(1).every(p => p === vm.runInContext("REACH_LOCK40", sandbox) || String(p.src).startsWith("ToTC6:")), "src");
+  }
+  const lev = SKILLS.find(s => s.id === "tot_ex_leviathan"), inp = vm.runInContext("DMG_INPUT_VALS", sandbox);
+  const saved = { w: inp.whaleWeight, d: inp.leviathanDist };
+  sandbox._setServer("tot");
+  const at = (w, d) => { inp.whaleWeight = w; inp.leviathanDist = d; sandbox._skillRanks[lev.id] = 1; sandbox._selectSkill(lev); return sandbox._calcRangeFor(sandbox._getDmgText(lev, 1))[0]; };
+  [[100, 0, 150], [100, 12, 150], [100, 24, 150], [37, 6, 55]].forEach(([w, d, n]) => {
+    at(w, d);
+    sandbox._selectSkill(SKILLS.find(s => s.id === "tot_ex_nuclear"));   // a card with no scaling of its own, so this is the plain talAdjust
+    const tal = sandbox._calcRangeFor("talAdjust(" + n + ")")[0];
+    const want = Math.trunc(Math.ceil(Math.fround(tal * Math.fround(1 - Math.fround(Math.fround(0.45) * Math.fround(d / 24))))) * 1.5);
+    check("Leviathan weight " + w + " distance " + d, at(w, d) === want, at(w, d) + " want " + want);
+  });
+  inp.whaleWeight = saved.w; inp.leviathanDist = saved.d;
+  sandbox._setServer("og");
+}
+console.log("Verified " + checkedTotC6 + " ToT C6 card checks.");
 // Every custom number box: integer limits, min <= def <= max (a function max is checked at both ends of its range).
 let checkedInputBoxes = 0;
 SKILLS.forEach(sk => (sk.dmgInputs || []).forEach(d => {
@@ -2290,7 +2322,7 @@ if (RUN_DAMAGE_CHECKS) {
   check("formula shows the Hyper Shot term with its distance", sandbox._getRenderedHeroHtml().includes("Hyper Shot 26m"));
   // ---- Extravagance: a skill dependency on every ATK-based Rabbit skill (flag `extravagance`), not a Buff popup entry
   const EXTRA_CARDS = ["nAttack", "cAttack", "maimShot", "bounce", "gilShot", "fourShot", "circleShot", "shootingArray", "tenShot"].map(k => SKILLS.find(s => s.id === "rabbit_" + k));
-  check("Extravagance is flagged on the nine ATK-based offensive skills and nowhere else in Rabbit, plus the Reborn-only Thousand Shot and Bullet Rain", EXTRA_CARDS.every(s => s && s.extravagance === true) && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance && !s.onlyServer).length === 9 && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance && s.onlyServer).map(s => s.id).sort().join() === "rabbit_bulletRain,rabbit_thousandShot");
+  check("Extravagance is flagged on the nine ATK-based offensive skills and nowhere else in Rabbit, plus the Reborn-only Thousand Shot and Bullet Rain and the ToT-only Payday Shot and Thousand Shot", EXTRA_CARDS.every(s => s && s.extravagance === true) && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance && !s.onlyServer).length === 9 && SKILLS.filter(s => s.class === "Rabbit" && s.extravagance && s.onlyServer).map(s => s.id).sort().join() === "rabbit_bulletRain,rabbit_thousandShot,tot_ex_paydayshot,tot_ex_thousandshot");
   check("Extravagance links reciprocally with each of them", EXTRA_CARDS.every(s => (s.compatSkills || []).includes("rabbit_extravagance")) && EXTRA_CARDS.every(s => SKILLS.find(x => x.id === "rabbit_extravagance").compatSkills.includes(s.id)));
   check("the Buff popup no longer lists Extravagance", !/extravagance512/.test(html));
   const savedAtkRole = inputs.atk.dataset.role; inputs.atk.dataset.role = "atk";   // statBonus() keys off the input data-role
@@ -3626,7 +3658,7 @@ let checkedRsim = 0;
     ok(!valid(base,4,new Set([451]),95), cls + " EX rejected outside ToT without throwing");
     for (const c of EX[cls]){
       ok(c.req.every(id => cs[id]), cls + " prerequisite ids for " + c.id);
-      if (!c.placeholder) ok(!!SKILL_ICONS[c.icon] && (() => { const cid = vm.runInContext("skillSimCardId", sandbox)(c.icon), card = SKILLS.find(s => s.id === cid); return cid === "" || (card && card.soon === "tot"); })(), cls + " embedded icon, and no detail card or a coming-soon stub card " + c.id);
+      if (!c.placeholder) ok(!!SKILL_ICONS[c.icon] && (() => { const cid = vm.runInContext("skillSimCardId", sandbox)(c.icon), card = SKILLS.find(s => s.id === cid); return cid === "" || (card && (card.soon === "tot" || card.onlyServer === "tot")); })(), cls + " embedded icon, and no detail card or a coming-soon stub card " + c.id);
       if (c.id === 451 || c.id === 461) continue;
       ok(c.lv === 100 && c.bn === 6 && c.choice === "row5", cls + " class EX gate " + c.id);
       ok(c.req.join() === expected[cls][c.id-452].join() && !c.placeholder, cls + " exact published prerequisites " + c.id);
@@ -4993,6 +5025,20 @@ async function donateChildTests(env) {
       good(html.includes('class="sk-roster-tab-srv"') && !/name: "(C|Common) \((ToT|RB|TTO)\)"/.test(html) && ['name: "C", srv: "tot"', 'name: "C", srv: "reborn"', 'name: "C", srv: "tto"', 'name: "Common", srv: "tot"'].every(x => html.includes(x)), "server-only roster tabs show the server logo, not (ToT) / (RB) / (TTO)");
       const pan = ["panda_wind&cloud", "panda_rain&storm"]; good(pan.every(id => magicSet.has(id) && SKILLS.some(s => s.id === id)), "Panda Wind & Cloud and Rain & Storm are Magic on TTO");
       const sooner = SKILLS.find(s => s.soon === "reborn" && s.desc === "เร็วๆนี้"); if (sooner){ sandbox._setServer("reborn"); sandbox._selectSkill(sooner); good(sandbox._getRenderedHeroHtml().includes("sk-soon"), "a plain coming-soon stub keeps its big look"); }
+      // the ToT / TTO data warning (user 2026-11-02)
+      const heroOn = (srv, card) => { sandbox._setServer(srv); sandbox._skillRanks[card.id] = 1; sandbox._selectSkill(card); return sandbox._getRenderedHeroHtml(); };
+      const WARN_TOT = 'sk-data-warn">ข้อมูลคุณภาพต่ำ อาจมีผิดพลาด ข้อมูลมาจากโค้ดที่ไม่สมบูรณ์<', WARN_TTO = 'sk-data-warn">ข้อมูลคุณภาพต่ำ อาจมีผิดพลาด ข้อมูลมาจาก Tooltips ในเกม<';
+      const fullMoon = SKILLS.find(s => s.id === "tot_ex_fullmoon"), moon = SKILLS.find(s => s.id === "cat_moonBlade"), totStub = SKILLS.find(s => s.soon === "tot" && s.desc === "เร็วๆนี้");
+      good(heroOn("tot", fullMoon).includes(WARN_TOT), "a researched ToT C6 card opens with the ToT data warning");
+      good(heroOn("tto", wolf).includes(WARN_TTO), "a TTO Lv 100 card opens with the TTO data warning");
+      good(!totStub || !heroOn("tot", totStub).includes("sk-data-warn"), "a plain coming-soon stub has no data warning");
+      good(["og", "tot", "tto", "reborn"].every(srv => !heroOn(srv, moon).includes("sk-data-warn")), "an original card with no C6 toggle on has no data warning");
+      { const probe = { id: "c6WarnProbe", label: "FullMoon5", icon: fullMoon.icon, minRank: 0, maxRank: 1, defaultRank: 0 }, saved = moon.servers.tot;
+        moon.servers.tot = Object.assign({}, saved, { infoDeps: [probe] });
+        sandbox._depRanks[probe.id] = 0; good(!heroOn("tot", moon).includes("sk-data-warn"), "an original card's C6 toggle off: no data warning");
+        sandbox._depRanks[probe.id] = 1; good(heroOn("tot", moon).includes(WARN_TOT), "an original card's C6 toggle on: the data warning shows on that server");
+        good(!heroOn("tto", moon).includes("sk-data-warn"), "a ToT C6 toggle's warning stays on ToT");
+        delete sandbox._depRanks[probe.id]; if (saved) moon.servers.tot = saved; else delete moon.servers.tot; }
       sandbox._setServer("og"); }
   }
   // Reborn in the skill simulator and the class guide editor (user 2026-10-25; data read from 12tails-reborn.com/skills, Reborn-Mechanics-Reference.md section 9)
@@ -5590,6 +5636,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // unless it is listed here with the reason its hits cannot be replayed honestly. A listed card that no longer mismatches fails too, so the list never goes stale.
   {
     const REACH_STATIC_OK = {
+      tot_ex_shadowexecution: "marked targets, burst timing depends on animation lengths not in the data", tot_ex_slayerburst: "homing arrows, flight time depends on the target", tot_ex_aerialdevastation: "chip = one laser hit + one bomb, the real hit count is not in the data",
       bat_nAttack: "projectile, hit time = flight time", bat_echoes: "bouncing projectile", bat_guardianOfTheNight: "AI-driven attacks",
       bat_dreamDazzle: "single locked target, no hit box", bat_phantasmBlast: "single locked target, no hit box", bat_shatteringDream: "single locked target, no hit box",
       cat_doubleDown: "random targets", cat_broadside: "16 shells land at random spots, at most 5 on one target", cat_ghostGalleon: "targeted shells on up to 8 foes a second, then a salute at random spots",

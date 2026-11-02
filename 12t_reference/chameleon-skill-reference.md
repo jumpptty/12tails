@@ -652,7 +652,7 @@ Source: [ToT chameleon simulator dataset](https://talesoftails.net/data/skill-si
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. Their cards and code are in "ToT C6 skills" below. The site's published costs:
 
 | Cell | Published skill name | MP | SP |
 |---|---|---|---|
@@ -730,3 +730,23 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 | 452 | Venom Phantom (`chameleon_venomPhantom`) | Active | 254 | 50 | 50 | Physical | enemy | ยิงพิษ 5 ดอกใส่เป้าและเป้าหมายข้างเคียง ทุกดอกแยกเป็นร่างเงายิงซ้ำ และแตกเป็น Venom Shock ทิ้งตราภูตพิษ 8 วิ |
 | 453 | Apex Hunt (`chameleon_apexHunt`) | Active | 354 | 60 | 60 | Magic | enemy | กระโดดขึ้นสูงชาร์จล็อกเป้าสูงสุด 6 ตัว แล้วยิงพลังธนูใส่ทุกเป้าหมายพร้อมกัน เป้าเลือดน้อยโดนหนักขึ้น (HP < 30%) เป้าหมายติดสถานะ Prey |
 | 454 | Chain Lightning (`chameleon_chainLightning`) | Active | 444 | 45 | 45 | Magic | self | เพิ่มความเร็วเคลื่อนที่ขึ้น 20% ลดพลังการโจมตีของกิ้งก่าเหลือ 70% ยิงสายฟ้าไปหาเป้าหมาย (2target, -34%dmg) ชิ่งได้สูงสุด 5 ตัว (-20%dmg/target) ลดความเร็วเคลื่อนที่ของกิ้งก่า 60% (4sec) |
+
+## ToT C6 skills (client excerpts, read 2026-11-02)
+
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+
+### VenomSplash5 (cell 452)
+- Poison Volley: radius 12 × 1.25 = 15, height 4, a 0.7 s sweep then one more burst; each round hits a target once, `hit((int)(ATK × 1))`, KO 1, adds poison (`ToTC6:Chameleon/452_VenomSplash5.cs:14-16, :92-95, :129-136, :160-163, :184-194`).
+- Venom Shock: when poison has more than 1 s left, `defDown` level 1, value `ceil(DEF × 10 / 100)`, flat 10 s (`:17-18, :268-303`).
+- **Missing:** nothing for the card. The Poison Volley and Venom Shock toggles are not built.
+
+### ApexPredator5 (cell 453)
+- Slayer KO `5 + 10` (`ToTC6:Chameleon/453_ApexPredator5.cs:16, :178-180`). -5 s on `slayer1-4`, `allSlayer1-4`, `allSlain`, once per cast, on a hit from Slayer or All Slayer (`:62-78, :183-184, :238-239`).
+- **Tooltip mismatch:** text says +10 KO on all Slayer skills, All Slayer stays at KO 5 (`:233-235`).
+- **Missing:** `mpReductionPercent = 50` (`:15`) has no reader in the excerpts; All Slain's own code.
+
+### SlayerBurst5 (cell 454)
+- MP 35, SP 70, cooldown 150 `agiAdjust` (`ToTC6:Chameleon/454_SlayerBurst5.cs:14-16, :56`).
+- 8 arrows: 4 straight (radius and height × 1.2), 4 homing (× 1), range 72, speed 20; each arrow hits a target once (`:286-300, :378-380, :411-421, :462`). Damage `(int)(((0.3 + 0.15 × IS) × ATK + talAdjust(20 + 10 × IS)) × 1 × (race ? 2 : 1))`, KO 5 (`:463-470`). The prerequisite is Improved Slayer 4, so IS = 4: 0.9 × ATK + talAdjust(60).
+- The race test is per arrow element and ignores `slayerMark` (`:467`, against Slayer's `ToTC6:Chameleon/453_ApexPredator5.cs:175-176`). The card shows 6 + 2 arrows; its ×2 group uses talAdjust(120), so the roll can differ from the game's by a point or two.
+- **Missing:** nothing for the card.

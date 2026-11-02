@@ -893,7 +893,7 @@ Source: [ToT cat simulator dataset](https://talesoftails.net/data/skill-simulato
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. Their cards and code are in "ToT C6 skills" below. The site's published costs:
 
 | Cell | Published skill name | MP | SP |
 |---|---|---|---|
@@ -991,3 +991,21 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 | 452 | Royal Flush (`cat_royalFlush`) | Active | 442 | 55 | 50 | Magic | enemy | ปาไพ่ยักษ์ 5 ใบรอบเป้าหมาย เปิดมือโป๊กเกอร์ มือยิ่งสูงยิ่งระเบิดหลายรอบ LCK ช่วยได้ ออก Royal Flush ดาบไพ่ยักษ์ฟาดลงมา |
 | 453 | Crescent Eclipse (`cat_crescentEclipse`) | Active | 443 | 45 | 50 | Physical | enemy | กระโดดใส่เป้าหมาย ปักใบมีด 8 เล่มล้อมแล้วดิ่งลงฟันระเบิดเป้าหมายในระยะ 6.5m เป้าติดดีบัฟโดนโจมตีแรงขึ้นและแมวฮีลได้ครึ่งนึง หากเป้าหมายตายจะระเบิดความเสียหาย (14m) |
 | 454 | Drop Anchor (`cat_dropAnchor`) | Active | 444 | 55 | 50 | Physical | enemy | ทุ่มสมอใส่เป้า (16m) ล่ามโซ่ศัตรูรอบข้างรวมถึงผู้เล่น 6 วิ กดซ้ำหรือหมดเวลาจะกระชากทุกตัวเข้าหาสมอแล้วทุบ ลากมาได้เยอะยิ่งแรง |
+
+## ToT C6 skills (client excerpts, read 2026-11-02)
+
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+
+### RoyalCard5 (cell 452, `RPC_secondChance`)
+- MP 32, SP 20, cooldown 200 (`ToTC6:Cat/452_RoyalCard5.cs:14-16`). Heal 75 / 100 / 125%, weights 25 / 50 / 25, caps 577 / 777 / 977 (`:18-26`). The heal lands 1.25 s after the cast (`:70-86`), from `mLastDamage`.
+- **Missing:** `CalculateSecondChanceHeal` (rounding, cap), `SelectSecondChanceTier` (does LCK move the odds), `GamblerBeginAction` (the cooldown goes in raw at `:46`; every other C6 skill wraps it in `agiAdjust`, so the card assumes AGI applies), meaning of `koPercent = 1`.
+
+### FullMoon5 (cell 453)
+- Passive on Moon Blade and Moon Storm: radius and height ×1.625 (`ToTC6:Cat/453_FullMoon5.cs:14, :33-34`); ×2 floored when the caster is in the rear 90° of the target, not on structures (`:47-49, :105-121`); `maim` level 2 for a flat 3 s on every hit (`:76-81`).
+- **Tooltip mismatch:** text says range +40%, code ×1.625 (+62.5%).
+- **Missing:** nothing for the card. The Moon Blade and Moon Storm toggles are not built.
+
+### ShadowExecution5 (cell 454)
+- MP 30, SP 60, cooldown 200 `agiAdjust`, select range 22, mark radius 12, hide 2 s (`ToTC6:Cat/454_ShadowExecution5.cs:14-19, :50, :79`).
+- 4 pulses 0.2 s apart, `hit(454, talAdjust(70), KO 1)` on every marked target (`:172-195`); -10 SP per hit through `spSap` (`:186`); once per target `disarm` 2 `getDebuff(6)` and `bleed` 2 `getDebuff(12)`, +3 s each with Open Wound 443 (`:187-192`). `OpenWound()` itself is not called, so no purple bonus.
+- **Missing:** `ReceiveShadowExecutionMark` (who gets marked, cap, height), `BeginShadowExecutionHide` (the evade the text promises).
