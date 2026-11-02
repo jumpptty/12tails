@@ -867,6 +867,16 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Ja Ascension (cell 452, `monkey_jaAscension`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Magical, MP 120, SP 50, cast 1.5 s, cooldown 120, damage 45 / 2 m, blast 160 / 3 m, duration 10 + Lv, Ja +2 Lv (passive), uses 1 Ja (active), fire skills CD -30%, Sunburn explodes at 5, closing blast 150 radius 6 m, +25% per stack.
+
+- **User rules 2026-11-02:** a C6 skill's start-of-mission cooldown equals its regular cooldown and is adjusted by AGI; the number after ATK is a `talAdjust()` value.
+- **Assumed:** "45", "160" and "150" have no ATK term, and are read as `talAdjust()` too; "+25% per stack" counts Sunburn on the target, drawn as one bracket `⌈talAdjust(150) × (1 + 0.25 × stacks)⌉` with 0-4 stacks because 5 explodes; "สกิลไฟ" = the description's "สาย A" = the Pyromancer tree; -30% applies to the base cooldown, rounded up, after Rapid Fire and Fire Keep and before AGI; the 2, 3 and 6 m rings are drawn around the caster; cast time is shown as fixed.
+- **Placeholder hit counts (user 2026-11-02: unknown timing = 0.5 s):** "Lv" in "10 + Lv" is read as the tooltip's Lv.5, so 15 s (shown as fixed); 15 ÷ 0.5 = 30 burns; one burn is assumed to add one Sunburn stack, so 30 ÷ 5 = 6 Sunburn blasts, and 30 mod 5 = 0 stacks left for the closing blast, which is why the box starts at 0.
+- **Unknown (the card's `liveCheck`):** KO, target count, height, whether INT or CHA change the cast or duration, and what Ja +2 levels gives. Ja's stat table stops at level 4 (Reborn's +1 level kept level 4's stats), so no Ja number changes.
+- **Toggles on original cards, TTO tab only:** `jaAscension` on Fire Ball, Phoenix, Sky Crimson, Blazing Arrow, Flash Fire, Ja, Runic Flame and World Ignition (the -30%, in `cdBuffDep`, which the class guide hover leaves out because the crown is temporary), and on Ja - Detonate (a line only). Passives and summon-owned cooldowns are left out.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |

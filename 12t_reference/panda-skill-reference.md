@@ -1100,6 +1100,15 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Tempest Dance (cell 453, `panda_tempestDance`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Magical, MP 35, SP 50, 20% ATK + 6, a hit every 0.3 s, radius 3.5 m, duration 5 s, evade 50%, cooldown 75; an evade counters for 50% ATK + 30; closing blast 5.5 m, 80% ATK + 30, +2 per hit landed; steerable, every hit applies Cut. The picture is small: "5.5 m" and "+2" are the least certain readings.
+
+- **User rules 2026-11-02:** a C6 skill's start-of-mission cooldown equals its regular cooldown and is adjusted by AGI; the number after ATK is a `talAdjust()` value.
+- **Assumed:** 16 hits (5 s ÷ 0.3 s, rounded down; 17 if the first hit lands at once); the +2 per hit goes inside the `talAdjust`: `0.8 × ATK + talAdjust(30 + 2 × hits)`; the range preview plays those hits from 0.3 s and the blast at 5 s; "hits landed" is typed into a box, default 16, because hits on several targets may count; the evade is a fixed 50% with no LCK; the duration is fixed.
+- **Unknown (the card's `liveCheck`):** KO, target count, height (the reach is two flat rings), Cut's level and duration, and when the first hit lands.
+- **Original cards:** none. The tooltip names no other skill; cell 354 is only the requirement to learn it.
+
 ### Yin Yang Fist (cell 454, `panda_yinYangFist`, NOT from verified code)
 
 Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Magical, MP 55, SP 65, cooldown 120, 20% ATK + 12 for 3 hits, blast 140% ATK + 140, radius 7 m, Yin pulls and slows for 2 s, Yang +30% against a target with Yin, needs Lv 100.
@@ -1108,6 +1117,7 @@ Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client c
 - **User 2026-11-02:** the number after ATK is a `talAdjust`: "140% ATK + 140" = `1.4 × ATK + talAdjust(140)` = 1.4 × ATK + 140 + 2.8 × TAL. The same reading applies to "20% ATK + 12".
 - **Assumed:** the 3 hits are Yin and the blast is Yang; its rounding and place in the damage order are unknown.
 - **User 2026-11-02:** the +30% is ×1.3 on the whole blast, drawn as one bracket: `⌈(1.4 × ATK + talAdjust(140)) × 1.3⌉` (`dmgPostScale`, blast group only). The ceil is that field's existing rounding, not something the tooltip states.
+- **Placeholder (user 2026-11-02):** the tooltip gives no timing, so the range preview plays the 3 hits 0.5 s apart and the blast at 2 s.
 - **Unknown (the card's `liveCheck`):** KO, target count, height (the reach is a flat ring), and whether CHA moves the 2 s slow. "เชื่องช้า" has no known status id, so it is plain text.
 - **Original cards:** none. The tooltip names no other skill; cell 444 is only the requirement to learn it.
 
