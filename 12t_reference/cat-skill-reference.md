@@ -991,12 +991,15 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
-### Royal Flush (cell 452, `cat_royalFlush`, NOT from verified code)
+### Royal Flush (cell 452, `cat_royalFlush`, from a Codex decode, not this repo's verified code)
 
 Read from an in-game tooltip picture the user sent on 02/11/2026, digits checked on a 4× zoom; TTO's client cannot be decoded. The picture is the card's in-game tooltip pop-up. Stated by the tooltip: Magical, MP 55, SP 50, 50% ATK + 35, 1-5 hits, radius 5 m, range 12 m, cooldown 120; per card: spade +8% damage, heart heals 3% HP, diamond +3 SP, club slows 10%; Royal Flush: sword 250% ATK + 250 (6 m).
 
-- **Assumed:** the blast row shows the most, 5 hits; the card's text repeats the per-card effects with no damage change. The preview's 0.5 s between hits and the sword at 3 s are the user's placeholder.
-- **Left out on purpose (user rule 2026-11-02):** the odds of each hand, how much LCK helps, which hand gives how many blasts, and what +8% per spade multiplies. The red line says so.
+- **Formula (the user's Codex decode of the compiled TTO client, 2026-11-02; our repo has no copy to re-check):** A = ATK, T = clamp(TAL, 1, 512), TA(x) = trunc(x × (1 + 0.02 × T)). B = 0.5 × A + TA(35). S = spades in the 5 cards, W = S, or 2 × S on Flush, Straight Flush and Royal Flush. One blast = floor(B × P × (1 + 0.08 × W)). Royal Flush (index 9) adds the sword, floor(2.5 × A) + TA(250), with no P and no spade bonus. Hearts and clubs do not count toward the 8%: hearts go to the heal (`RoyalFlushPayout`), clubs to a status (`RoyalFlushHit`). The real calculation is float32, so an exact-decimal result can differ at a whole-number edge.
+- **Hands (index, name, blasts N, P):** 0 High Card 1, 1.00; 1 One Pair 2, 1.00; 2 Two Pair 2, 1.25; 3 Three of a Kind 3, 1.10; 4 Straight 3, 1.30; 5 Flush 3, 1.30; 6 Full House 4, 1.30; 7 Four of a Kind 4, 1.60; 8 Straight Flush 5, 1.60; 9 Royal Flush 5, 1.60.
+- **Worked example (ATK 200, TAL 100):** TA(35) = 105, B = 205. Royal Flush, 5 spades: W = 10, floor(205 × 1.6 × 1.8) = 590, × 5 = 2,950, sword 500 + 750 = 1,250, total 4,200. No spades: 328 × 5 = 1,640, total 2,890. The validator pins these. They are before DEF and the rest of `hit`.
+- **On the card:** a toggle picks the hand, starting on Royal Flush; a box sets the spades; the sword row shows on Royal Flush only. The preview's 0.5 s between hits and the sword at 3 s are the user's placeholder.
+- **Still unknown (the red line):** each hand's odds and how much LCK helps, KO, and height.
 - **Original cards:** none named.
 
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
