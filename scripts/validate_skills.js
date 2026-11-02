@@ -4644,13 +4644,8 @@ async function donateChildTests(env) {
     && /\.donate-panels\{position:relative;/.test(html) && /#donatePanelQr\[hidden\]\{display:block; visibility:hidden\}/.test(html)
     && /#donatePanelSlip, #donatePanelList\{position:absolute;[^}]*max-height:100%;[^}]*overflow-y:auto/.test(html),
     "the ☕ tab panels must sit in .donate-panels with the QR panel setting the height (hidden = visibility:hidden) and the other two on top of it, so switching tabs never moves the pop-up");
-  // it opens by itself once per device (user 2026-10-23): any open marks the device as seen; the auto open stands down while another
-  // pop-up is up (the Stat Roll / Stat Gain / class guide gates, native dialogs, any aria-modal, any full-screen layer above the page)
-  ok(/const DONATE_AUTO_KEY = "12t-bible-donate-seen";/.test(html)
-    && /function openDonateModal\(\) \{[\s\S]*?localStorage\.setItem\(DONATE_AUTO_KEY, "1"\)[\s\S]*?\n\}/.test(html)
-    && /function donateAutoBlocked\(\) \{[^\n]*\n[^\n]*\[aria-modal="true"\]:not\(\[hidden\]\):not\(#donateModal\), \.sg-gate\.open, dialog\[open\]/.test(html)
-    && /elementsFromPoint\(w \/ 2, h \/ 2\)/.test(html) && (html.match(/^donateAutoOnce\(\);\r?$/gm) || []).length === 1,
-    "the ☕ pop-up must open by itself once per device (DONATE_AUTO_KEY, set on every open) and stand down while another pop-up is up (donateAutoBlocked: aria-modal, .sg-gate.open, dialog[open], a full-screen layer)");
+  // it never opens by itself (user 2026-11-02: the supporter line is prominent enough; it opened once per device from 2026-10-23)
+  ok(!/donateAutoOnce|donateAutoBlocked|DONATE_AUTO_KEY/.test(html), "the ☕ pop-up must not open by itself");
   // closing it turns it into a light ball that flies back into the ☕ button (user 2026-10-23): closeDonateModal → donateFlyHome → fireShot to btnDonate
   ok(/function closeDonateModal\(\) \{[\s\S]*?donateFlyHome\(from\);[\s\S]*?\n\}/.test(html)
     && /function donateFlyHome\(from\) \{[\s\S]*?btnDonate[\s\S]*?fireShot\(a, b, false,[\s\S]*?\n\}/.test(html) && /\.donate-fly-ghost\{position:fixed;/.test(html),

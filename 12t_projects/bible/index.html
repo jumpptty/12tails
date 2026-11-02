@@ -38034,6 +38034,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-02T03:44:25.399Z","fix(bible): the support pop-up no longer opens by itself on a first visit"],
     ["2026-11-02T03:41:22.584Z","feat(bible): TTO Panda Yin Yang Fist from its in-game tooltip; ToT C6 toggles on original cards (not from verified code); Stat Gain on TTO to Lv 100; a report line on the data warning"],
     ["2026-11-02T02:50:26.332Z","feat(bible): ToT C6 cards for Cat, Chameleon, Mole, Rabbit, Sheep and Whale from partial client excerpts, with a low-quality data warning on ToT and TTO C6 skills"],
     ["2026-11-02T02:30:18.317Z","fix(bible): class guide #63 is updated: TTO Chameleon ก่า ATK แหละ เพราะ ธนูดันน้ำมันแสดงผลออกยาก by เอาVit Agi คืนมา"],
@@ -39021,7 +39022,6 @@ function openDonateModal() {
   donateListUi.page = 0;   // the list opens on its newest page
   donateModal.hidden = false;
   document.body.style.overflow = "hidden";
-  try { localStorage.setItem(DONATE_AUTO_KEY, "1"); } catch (e) {}   // seen: it never opens by itself again on this device
 }
 
 function closeDonateModal() {
@@ -39077,36 +39077,6 @@ window.addEventListener("keydown", (e) => {
     closeDonateModal();
   }
 });
-
-// ☕ opens by itself once per device (user 2026-10-23): on the first visit, whatever link brought the visitor in, 1.5 s after the page
-// settles. If another pop-up is up then (the class guide builder's server / class gate, a first-visit guide, any dialog), it stays shut this
-// visit and tries the next one. Any open, by hand or by itself, counts as seen; without storage it never opens by itself.
-const DONATE_AUTO_KEY = "12t-bible-donate-seen";
-function donateAutoBlocked() {
-  if (document.querySelector('[aria-modal="true"]:not([hidden]):not(#donateModal), .sg-gate.open, dialog[open]')) return true;
-  const w = innerWidth, h = innerHeight;
-  for (const el of document.elementsFromPoint(w / 2, h / 2)) {   // any other full-screen layer above the page (z-index 100 or more) is someone else's pop-up
-    for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
-      const cs = getComputedStyle(n);
-      if (cs.position !== "fixed" || (parseInt(cs.zIndex, 10) || 0) < 100) continue;
-      const r = n.getBoundingClientRect();
-      if (r.width * r.height >= w * h * 0.5) return true;
-    }
-  }
-  return false;
-}
-function donateAutoOnce() {
-  let seen = true;
-  try { seen = localStorage.getItem(DONATE_AUTO_KEY) === "1"; } catch (e) {}
-  if (seen || !donateModal) return;
-  setTimeout(() => {
-    if (!donateModal.hidden || donateAutoBlocked()) return;
-    let saved = false;
-    try { localStorage.setItem(DONATE_AUTO_KEY, "1"); saved = true; } catch (e) {}
-    if (saved) openDonateModal();
-  }, 1500);
-}
-donateAutoOnce();
 
 const btnCredits = $("#btnCredits");
 const creditsModal = $("#creditsModal");
