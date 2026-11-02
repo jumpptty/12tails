@@ -4978,7 +4978,7 @@ async function donateChildTests(env) {
     }
     { const cs = cf("tto", "wolf"), set = new Set(Object.keys(cs).map(Number).filter(i => i > 400 && !cs[i].ex).slice(0, 10)), budget = vm.runInContext("skillSimBudgetOk", sandbox), cBB = cf("tot", "wolf");
       good(!budget(cs, set, 110) && budget(cBB, set, 110), "10 C skills are over the pool on TTO at Lv 110, not on ToT"); }
-    { const list = cgs.filter(g => g.build.server === "tto" && g.build.learned.filter(i => i > 400 && i < 500).length > 9);
+    { const list = cgs.filter(g => { if (g.build.server !== "tto") return false; const cs = cf("tto", g.build.classKey); return g.build.learned.filter(i => i > 400 && i < 500 && !(cs[i] || {}).ex).length > 9; });   // the Lv 100 cells (452-454) are free, not C points
       good(list.map(g => g.id).join() === "4,6,30,31,58,70" && list.every(g => isOver(g.build)) && over.size === list.length, "the outdated TTO guides are exactly #4, #6, #30, #31, #58, #70 (a replaced or removed guide takes its CLASS_GUIDE_TTO_OVER_C line with it)");
       good(list.every(g => { try { return normG(g).build.learned.length === g.build.learned.length; } catch (e) { return false; } }), "an outdated TTO guide still opens as written");
       const copy = JSON.parse(JSON.stringify(list[0])); copy.build.learned = copy.build.learned.concat(copy.build.learned.includes(424) ? 414 : 424).filter((v, i, a) => a.indexOf(v) === i);
