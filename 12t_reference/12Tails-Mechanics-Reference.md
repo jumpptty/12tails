@@ -111,7 +111,7 @@ typeLevelStat[i] = floor( (lv - 1) * (baseStat[i] + 3) * 0.083 )
 ```
 So each stat grows ~`(base+3)/12` per level (0.083 ≈ 1/12). Higher base stats grow faster.
 
-> **Server Difference:** Original code has no level cap on this formula (scales continuously up to Lv 100+). In Tales of Tail (ToT), passive stat growth from level is capped at Lv 95 (`min(lv, 95)` — levels 96–100 grant no additional passive level stats). **User-reported 2026-10-25 (not in the decompiled client):** on ToT, every 5 levels past Lv 95 the player chooses between 5 plain stat points (not +5 on every stat) and a Class C skill point (1 assumed from the singular wording; unconfirmed). Shown on the Bible's server balance page under Common.
+> **Server Difference:** Original code has no level cap on this formula (scales continuously up to Lv 100+). In Tales of Tail (ToT), passive stat growth from level is capped at Lv 95 (`min(lv, 95)` — levels 96–100 grant no additional passive level stats). **User-reported 2026-10-25 (not in the decompiled client):** on ToT, every 5 levels past Lv 95 the player chooses between 5 plain stat points (not +5 on every stat) and a Class C skill point (1 assumed from the singular wording; unconfirmed). Shown on the Bible's server balance page under Common. **User-reported 2026-11-02:** on TTO the level cap moved up to Lv 100 and stat growth keeps following this formula up to it, with no stop at Lv 95 (Stat Gain tool). The hub's other TTO level inputs still allow 110 (`LEVEL_CAP.tto`), because four published TTO guides are Lv 110.
 
 **Character creation** `getNewRandomStat` (CharacterData.cs:538–624):
 1. Start with class base stats `getTypeStat(mType)` (CharacterData.cs:547).

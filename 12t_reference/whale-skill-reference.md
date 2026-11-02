@@ -706,7 +706,19 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+
+### Toggles on the original cards (NOT from verified code, 2026-11-02)
+
+**Provisional (user 2026-11-02: "trust the comment descriptions for now").** Each toggle is wired from the `// คำอธิบาย:` comment and the balance block of its `ToT_C6Data` file, because the code that applies most of these effects is outside the excerpts. Where an excerpt's code states a number, that number wins over the comment. Replace these when real code arrives. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
+
+| C6 skill | Original cards | What the toggle does | Source of each part |
+|---|---|---|---|
+| PiercingKnight5 | Wall Puncture, nAttack, Sweep, Javelin, Peninsula Impale | Wall Puncture level 5, so 50% purple | Level 5: `ToTC6:Whale/452_PiercingKnight5.cs:20-35`. **Assumed:** BB's 10% per level still holds at level 5. The purple amount and the `puncture` effect at level 5 are unknown and stay at level 4's |
+| PiercingKnight5 | 12th Kingdom Knight, Knight of the Deep | A fixed 20% chip and a line | 20%: `:38-47`. **Unknown:** the purple amount, so the damage row does not change, and whether LCK moves the chance |
+| SpiralShield5 | Harden Skin | A line (level 5, +10 DEF per hit) and a fixed 12% Sticky chip | Code: `ToTC6:Whale/453_SpiralShield5.cs:29-42, :60-67, :108-127`. The comment says the DEF gain doubles, the card states the code's +10. The Harden Skin status popup still shows the level the card is at |
+
+`Leviathan5` changes no original card.
 
 ### PiercingKnight5 (cell 452)
 - Wall Puncture level becomes 5 (`ToTC6:Whale/452_PiercingKnight5.cs:14, :20-35`); 20% from `GetPiercingKnightEffectDamageChancePercent` (`:15, :38-47`).

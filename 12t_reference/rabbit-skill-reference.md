@@ -992,7 +992,19 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+
+### Toggles on the original cards (NOT from verified code, 2026-11-02)
+
+**Provisional (user 2026-11-02: "trust the comment descriptions for now").** Each toggle is wired from the `// คำอธิบาย:` comment and the balance block of its `ToT_C6Data` file, because the code that applies most of these effects is outside the excerpts. Where an excerpt's code states a number, that number wins over the comment. Replace these when real code arrives. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
+
+| C6 skill | Original cards | What the toggle does | Source of each part |
+|---|---|---|---|
+| PaydayShot5 | Four Shot, Circle Shot, Shooting Array, Ten Shot | A line: a hit from PaydayShot5 cuts the remaining cooldown by 80% | Code: `ToTC6:Rabbit/453_PaydayShot5.cs:372-383`. The comment says "on use", the code says on a hit, so the line follows the code |
+| PaydayShot5 | nAttack | A line: a normal shotgun hit cuts Class B cooldowns by 1 s | **Comment only.** `cooldownReductionSeconds = 1` has no reader in the excerpt, and which Class B skills it means is unknown. `passiveDamagePercent = 25` is not wired: no comment explains it |
+| MiracleShot5 | Medical Enhancement, Immune, Boost, Heat, Life Shot | A line: status cap 4 | `ToTC6:Rabbit/452_MiracleShot5.cs:28-32, :131-133` passes the cap; what it does is in `ApplyRabbitMedicalShot`, outside the excerpt. **Assumed:** it raises the status level limit, from the comment's "full effect" |
+
+`ThousandShot5` changes no original card.
 
 ### MiracleShot5 (cell 452)
 - MP 40, SP 20, cooldown 140 `agiAdjust` (`ToTC6:Rabbit/452_MiracleShot5.cs:14-19, :46-53`). Raycast range `16 + 5 × nAttack` on the selected ally only, never self (`:106-118`); `noDamage` + `noForce` for `chaAdjust(1)` (`:124-127`).

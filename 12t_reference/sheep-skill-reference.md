@@ -753,7 +753,11 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). SP sign (red or blue) is not in the data; the cards use red.
+
+### Toggles on the original cards
+
+None: no comment in Sheep's three files names a change to an original skill, so nothing is wired (2026-11-02). `passiveDurationPercent` and `damageReductionPercent` in their balance blocks have no reader and no comment.
 
 ### EternalSalvation5 (cell 452, `RPC_tailsNeverdie`)
 - Cooldown 400 `agiAdjust`, cast 9 `magAdjust`, Free Cast (`ToTC6:Sheep/452_EternalSalvation5.cs:43, :57, :73`). Revive with full HP and MP, cooldown reset, then `noDamage` (`:145-149`). The cost, MP 90 / SP 50, comes only from the public simulator.

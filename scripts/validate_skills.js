@@ -1434,6 +1434,17 @@ let checkedTotC6 = 0;
   sandbox._setServer("og");
 }
 console.log("Verified " + checkedTotC6 + " ToT C6 card checks.");
+// Stat Gain per server: the tool's own cap and formula lines, run as written (user 2026-11-02: TTO stops at Lv 100, growth does not stop at 95).
+{
+  const sg = html.slice(html.indexOf("function mountStatGain"), html.indexOf("Hub shell: launcher menu"));
+  const sgLines = sg.match(/const maxLv = .*/)[0] + "\n" + sg.match(/const gain = \(lv, base\) => \{[\s\S]*?\n  \};/)[0] + "\nreturn { maxLv, gain };";
+  const at = (srv) => new Function("sgServer", "LEVEL_CAP", sgLines)(srv, { og: 95, tot: 110, tto: 110, reborn: 150 });
+  [["og", 95, 95, 78], ["tot", 110, 110, 78], ["tto", 100, 100, 82], ["tto", 100, 95, 78], ["reborn", 150, 150, 123]].forEach(([srv, cap, lv, want]) => {
+    const t = at(srv);
+    if (t.maxLv() !== cap || t.gain(lv, 7) !== want) { errorCount++; console.error("[STAT GAIN ERROR] " + srv + " Lv " + lv + ": cap " + t.maxLv() + ", base 7 gain " + t.gain(lv, 7) + ", want " + cap + " and " + want); }
+  });
+  if (!sg.includes('data-server="tto"')) { errorCount++; console.error("[STAT GAIN ERROR] no TTO server button"); }
+}
 // Every custom number box: integer limits, min <= def <= max (a function max is checked at both ends of its range).
 let checkedInputBoxes = 0;
 SKILLS.forEach(sk => (sk.dmgInputs || []).forEach(d => {
@@ -2970,7 +2981,7 @@ let checkedTtoNoLck = 0;
       const halfRange = rangesAt(sk, "tto", 51), fullRange = rangesAt(sk, "tto", 102), bbOff = rangesAt(sk, "og", 102);
       magic.add(sk.id);
       if (magicRange !== halfRange) fail(`${sk.id} on tto: DEF 102 gives ${magicRange}, expected the DEF 51 range ${halfRange}`); else checkedTtoNoLck++;
-      if (rangesAt(sk, "og", 102) !== bbOff) fail(`${sk.id}: the magic rule changes the BB range`); else checkedTtoNoLck++;
+      if (!sk.onlyServer && rangesAt(sk, "og", 102) !== bbOff) fail(`${sk.id}: the magic rule changes the BB range`); else checkedTtoNoLck++;
       if (magicRange !== fullRange) halved++;
     } catch (e) { magic.add(sk.id); fail(`${sk.id}: range threw ${e.message}`); }
   }
@@ -4996,7 +5007,7 @@ async function donateChildTests(env) {
         good(rulesOf(id, [id, ...e[3], ...c7.filter(i => !e[3].includes(i)).slice(0, Math.max(0, 6 - e[3].filter(i => i > 400).length))], 100).includes("cbn"), key + " " + id + ": refused with 6 C skills");
         e[3].forEach(r => good(rulesOf(id, [...base.filter(i => i !== r), id], 100).includes("req"), key + " " + id + ": needs " + r));
         good(rulesOf(id, [...base, id, X[key].find(o => o[0] !== id)[0]], 100).includes("choice"), key + " " + id + ": one of the three at a time");
-        good(card && card.soon === "tto" && card.onlyServer === "tto" && card.class === vm.runInContext("SKILL_SIM_NAMES", sandbox)[key] && !!card.passive === !!e[4] && typeof card.desc === "string" && card.desc.startsWith(e[8]) && (e[7] === "None") === !card.desc.includes("ประเภทดาเมจ") && (e[5] || e[6] ? card.cost.mp === e[5] && card.cost.sp === e[6] && card.cost.spType === "red" : !card.cost), key + " " + id + ": stub card with the site's text, MP, SP and damage type");
+        good(card && card.onlyServer === "tto" && card.class === vm.runInContext("SKILL_SIM_NAMES", sandbox)[key] && !!card.passive === !!e[4] && (!card.soon || (card.soon === "tto" && typeof card.desc === "string" && card.desc.startsWith(e[8]) && (e[7] === "None") === !card.desc.includes("ประเภทดาเมจ"))) && (e[5] || e[6] ? card.cost.mp === e[5] && card.cost.sp === e[6] && card.cost.spType === "red" : !card.cost), key + " " + id + ": a stub with the site's text and damage type, or a real card, with the site's MP and SP");
         good(magicSet.has(card && card.id) === (e[7] === "Magic"), key + " " + id + ": in TTO_MAGIC_DMG exactly when the site tags it Magic");
         good(!!SKILL_ICONS[e[1]], key + " " + id + ": icon " + e[1] + " is embedded");
       }
@@ -5031,14 +5042,33 @@ async function donateChildTests(env) {
       const fullMoon = SKILLS.find(s => s.id === "tot_ex_fullmoon"), moon = SKILLS.find(s => s.id === "cat_moonBlade"), totStub = SKILLS.find(s => s.soon === "tot" && s.desc === "เร็วๆนี้");
       good(heroOn("tot", fullMoon).includes(WARN_TOT), "a researched ToT C6 card opens with the ToT data warning");
       good(heroOn("tto", wolf).includes(WARN_TTO), "a TTO Lv 100 card opens with the TTO data warning");
+      good(["tot", "tto"].every(srv => heroOn(srv, srv === "tot" ? fullMoon : wolf).includes('sk-data-warn-sub">หากเจอข้อมูลส่วนไหนของสกิลนี้ ที่ไม่ได้ระบุไว้ในเว็บนี้ สามารถช่วยกันแจ้งมาได้ เดี๊ยวจะใส่เครดิตไว้ให้<')), "both data warnings carry the smaller line asking players to report what is missing");
       good(!totStub || !heroOn("tot", totStub).includes("sk-data-warn"), "a plain coming-soon stub has no data warning");
       good(["og", "tot", "tto", "reborn"].every(srv => !heroOn(srv, moon).includes("sk-data-warn")), "an original card with no C6 toggle on has no data warning");
-      { const probe = { id: "c6WarnProbe", label: "FullMoon5", icon: fullMoon.icon, minRank: 0, maxRank: 1, defaultRank: 0 }, saved = moon.servers.tot;
-        moon.servers.tot = Object.assign({}, saved, { infoDeps: [probe] });
-        sandbox._depRanks[probe.id] = 0; good(!heroOn("tot", moon).includes("sk-data-warn"), "an original card's C6 toggle off: no data warning");
-        sandbox._depRanks[probe.id] = 1; good(heroOn("tot", moon).includes(WARN_TOT), "an original card's C6 toggle on: the data warning shows on that server");
-        good(!heroOn("tto", moon).includes("sk-data-warn"), "a ToT C6 toggle's warning stays on ToT");
-        delete sandbox._depRanks[probe.id]; if (saved) moon.servers.tot = saved; else delete moon.servers.tot; }
+      // TTO Lv 100 cards built from the user's tooltip pictures (user 2026-11-02)
+      { const yy = SKILLS.find(s => s.id === "panda_yinYangFist"), R = sandbox._depRanks; R.yinTarget = 0; const h = heroOn("tto", yy);
+        good(h.includes(WARN_TTO) && !h.includes("sk-soon") && h.includes("sk-magic-badge") && h.includes("ติด CD เริ่มฉาก") && h.includes(">55 MP<") && SKILLS.filter(s => s.id === yy.id).length === 1, "Yin Yang Fist is a real TTO card, one copy, Magic, with the banner and the start-of-mission cooldown");
+        const [yin, yang] = yy.dmgGroups, rangeOf = (g, on) => { R.yinTarget = on; heroOn("tto", yy); return sandbox._calcRangeFor(g.dmg, g.atkCoeff, g)[0]; }, brackets = (on) => { R.yinTarget = on; return (heroOn("tto", yy).match(/⌈/g) || []).length; };   // the sandbox reads the drawn brackets back as glyphs (brToGlyph)
+        good(yy.dmgGroups.length === 2 && yin.hitCount() === 3 && yang.hitCount() === 1, "Yin Yang Fist: 3 Yin hits, then one Yang blast");
+        const yangOff = rangeOf(yang, 0), yangOn = rangeOf(yang, 1); good(yangOff > 0 && yangOn === Math.ceil(Math.fround(yangOff * 1.3)), "the Yang blast is x1.3 with its toggle: " + yangOff + " -> " + yangOn); good(rangeOf(yin, 0) === rangeOf(yin, 1), "the toggle leaves the Yin hits alone");
+        good(brackets(0) === 0 && brackets(1) === 1, "the x1.3 is one bracket, on the blast only: off " + brackets(0) + ", on " + brackets(1)); delete R.yinTarget; }
+      // the ToT C6 toggles on original cards (user 2026-11-02, from the excerpt comments, not verified code): off = the card as it was, on = the warning, the line and the numbers
+      { const R = sandbox._depRanks, ko = (h) => (h.match(/sk-ko-value[^>]*>([^<]*)</) || [])[1], line = (name) => "**" + name + ":**", toggles = [["fullMoon", "FullMoon5", ["cat_moonBlade", "cat_moonStorm"]], ["venomSplash", "VenomSplash5", ["chameleon_poisonVolley", "chameleon_venomShock"]], ["apexPredator", "ApexPredator5", ["chameleon_bugSlayer", "chameleon_tailSlayer", "chameleon_elementalSlayer", "chameleon_machineSlayer", "chameleon_allBugSlayer", "chameleon_allTailSlayer", "chameleon_allElementalSlayer", "chameleon_allMachineSlayer", "chameleon_allSlain"]], ["piercingKnight", "PiercingKnight5", ["whale_wallPuncture", "whale_nAttack", "whale_sweep", "whale_javelin", "whale_peninsulaImpale", "whale_12thKingdomKnight", "whale_knightOfTheDeep"]], ["spiralShield", "SpiralShield5", ["whale_hardenSkin"]], ["missileBot", "MissileBot5", ["mole_missile", "mole_barrelBot_missile"]], ["paydayShot", "PaydayShot5", ["rabbit_fourShot", "rabbit_circleShot", "rabbit_shootingArray", "rabbit_tenShot", "rabbit_nAttack"]], ["miracleShot", "MiracleShot5", ["rabbit_medicalEnhancement", "rabbit_immuneShot", "rabbit_boostShot", "rabbit_heatShot", "rabbit_lifeShot"]]];
+        for (const [dep, name, ids] of toggles) { const c6 = SKILLS.find(s => s.name === name); for (const id of ids) { const c = SKILLS.find(s => s.id === id);
+          R[dep] = 0; const off = heroOn("tot", c); good(!off.includes("sk-data-warn") && off.includes('data-dep-id="' + dep + '"') && !off.includes(">" + name + ":<"), id + ": " + name + " off = its toggle, no warning, no line");
+          R[dep] = 1; const on = heroOn("tot", c); good(on.includes(WARN_TOT) && on.includes(name), id + ": " + name + " on = the ToT warning and its line");
+          good(!heroOn("tto", c).includes("sk-data-warn") && !heroOn("og", c).includes('data-dep-id="' + dep + '"'), id + ": " + name + " stays on ToT"); R[dep] = 0;
+          good((c.servers.tot.compatSkills || []).includes(c6.id) && (c6.compatSkills || []).includes(id) && !(c.compatSkills || []).includes(c6.id), id + " links " + name + " both ways, on ToT only"); } }
+        const at = (id, dep, r) => { R[dep] = r; const h = heroOn("tot", SKILLS.find(s => s.id === id)); R[dep] = 0; return h; }, raw = (id, dep, r) => { const c = SKILLS.find(s => s.id === id); R[dep] = r; heroOn("tot", c); const v = sandbox._calcRangeFor(sandbox._getDmgText(c, 1))[0]; R[dep] = 0; return v; };
+        good(ko(at("chameleon_bugSlayer", "apexPredator", 0)) === "5" && ko(at("chameleon_bugSlayer", "apexPredator", 1)) === "15" && ko(at("chameleon_allBugSlayer", "apexPredator", 1)) === "5", "ApexPredator5: Slayer KO 5 -> 15, All Slayer stays 5");
+        good(ko(at("mole_missile", "missileBot", 0)) === "3" && ko(at("mole_missile", "missileBot", 1)) === "5", "MissileBot5: Missile KO 3 -> 5");
+        const mb = raw("cat_moonBlade", "fullMoon", 0), mbOn = raw("cat_moonBlade", "fullMoon", 1); good(mb > 0 && mbOn === mb * 2, "FullMoon5 doubles Moon Blade's raw: " + mb + " -> " + mbOn);
+        const mi = raw("mole_missile", "missileBot", 0), miOn = raw("mole_missile", "missileBot", 1); good(mi > 0 && miOn === Math.ceil(mi * 1.5), "MissileBot5 is +50% on Missile: " + mi + " -> " + miOn);
+        const nb = SKILLS.find(s => s.id === "mole_missile"); R.missileBot = 1; good(nb.servers.tot.hitCount(4) === 5, "MissileBot5 adds one missile at rank 4"); R.missileBot = 0; good(nb.servers.tot.hitCount(4) === 4, "and none with it off");
+        const vs = SKILLS.find(s => s.id === "chameleon_poisonVolley").servers.tot; good(vs.atkCoeff() === 0.5 && vs.hitCount() === 1, "VenomSplash5 off leaves Poison Volley at 0.5 ATK, 1 hit"); R.venomSplash = 1; good(vs.atkCoeff() === 1 && vs.hitCount() === 2 && vs.reach(1)[0].r === 15, "VenomSplash5 on: 1 ATK, 2 hits, radius 15"); R.venomSplash = 0;
+        const fm = SKILLS.find(s => s.id === "cat_moonBlade").servers.tot; R.fullMoon = 1; good(fm.reach(1).every(p => p.r === (p.label === "ครั้งที่ 1" ? 3 : 4) * 1.625 && p.h === 3 * 1.625), "FullMoon5 scales both rings' radius and height by 1.625"); R.fullMoon = 0;
+        const sw = SKILLS.find(s => s.id === "whale_sweep").servers.tot; R.wallPuncture = 4; good(sw.effectProc.chance() === 40, "Wall Puncture 4 without PiercingKnight5 is 40%"); R.piercingKnight = 1; good(sw.effectProc.chance() === 50, "with it 50%"); R.wallPuncture = 0; good(sw.effectProc.chance() === 0, "no Wall Puncture, no purple"); R.piercingKnight = 0; delete R.wallPuncture;
+        toggles.forEach(t => { delete R[t[0]]; }); }
       sandbox._setServer("og"); }
   }
   // Reborn in the skill simulator and the class guide editor (user 2026-10-25; data read from 12tails-reborn.com/skills, Reborn-Mechanics-Reference.md section 9)
@@ -5636,7 +5666,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   // unless it is listed here with the reason its hits cannot be replayed honestly. A listed card that no longer mismatches fails too, so the list never goes stale.
   {
     const REACH_STATIC_OK = {
-      tot_ex_shadowexecution: "marked targets, burst timing depends on animation lengths not in the data", tot_ex_slayerburst: "homing arrows, flight time depends on the target", tot_ex_aerialdevastation: "chip = one laser hit + one bomb, the real hit count is not in the data",
+      panda_yinYangFist: "hit times are not in the tooltip", tot_ex_shadowexecution: "marked targets, burst timing depends on animation lengths not in the data", tot_ex_slayerburst: "homing arrows, flight time depends on the target", tot_ex_aerialdevastation: "chip = one laser hit + one bomb, the real hit count is not in the data",
       bat_nAttack: "projectile, hit time = flight time", bat_echoes: "bouncing projectile", bat_guardianOfTheNight: "AI-driven attacks",
       bat_dreamDazzle: "single locked target, no hit box", bat_phantasmBlast: "single locked target, no hit box", bat_shatteringDream: "single locked target, no hit box",
       cat_doubleDown: "random targets", cat_broadside: "16 shells land at random spots, at most 5 on one target", cat_ghostGalleon: "targeted shells on up to 8 foes a second, then a salute at random spots",

@@ -1100,6 +1100,17 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
+### Yin Yang Fist (cell 454, `panda_yinYangFist`, NOT from verified code)
+
+Read from an in-game tooltip picture the user sent on 02/11/2026; TTO's client cannot be decoded. Stated by the tooltip: Magical, MP 55, SP 65, cooldown 120, 20% ATK + 12 for 3 hits, blast 140% ATK + 140, radius 7 m, Yin pulls and slows for 2 s, Yang +30% against a target with Yin, needs Lv 100.
+
+- **User rule 2026-11-02:** unless stated otherwise a C6 skill's start-of-mission cooldown equals its regular cooldown, and the cooldown is adjusted by AGI (`cdMapStart`, `cdWrapped`).
+- **User 2026-11-02:** the number after ATK is a `talAdjust`: "140% ATK + 140" = `1.4 × ATK + talAdjust(140)` = 1.4 × ATK + 140 + 2.8 × TAL. The same reading applies to "20% ATK + 12".
+- **Assumed:** the 3 hits are Yin and the blast is Yang; its rounding and place in the damage order are unknown.
+- **User 2026-11-02:** the +30% is ×1.3 on the whole blast, drawn as one bracket: `⌈(1.4 × ATK + talAdjust(140)) × 1.3⌉` (`dmgPostScale`, blast group only). The ceil is that field's existing rounding, not something the tooltip states.
+- **Unknown (the card's `liveCheck`):** KO, target count, height (the reach is a flat ring), and whether CHA moves the 2 s slow. "เชื่องช้า" has no known status id, so it is plain text.
+- **Original cards:** none. The tooltip names no other skill; cell 444 is only the requirement to learn it.
+
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required). These are the values the site publishes for TTO, not BigBug decompiled mechanics: no formula, cooldown or duration is known yet, so the Bible cards are stubs (`soon: "tto"`). Names come from the site's ids. Shared learning rules: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-lv-100-skills-published-simulator-2026-10-31).
 
 | Cell | Skill | Kind | Needs | MP | SP spent | Damage type | Target | Site text |

@@ -733,12 +733,23 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+
+### Toggles on the original cards (NOT from verified code, 2026-11-02)
+
+**Provisional (user 2026-11-02: "trust the comment descriptions for now").** Each toggle is wired from the `// คำอธิบาย:` comment and the balance block of its `ToT_C6Data` file, because the code that applies most of these effects is outside the excerpts. Where an excerpt's code states a number, that number wins over the comment. Replace these when real code arrives. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
+
+| C6 skill | Original cards | What the toggle does | Source of each part |
+|---|---|---|---|
+| VenomSplash5 | Poison Volley, Venom Shock | Poison Volley: 1 × ATK, 2 hits, radius 15; Venom Shock: `defDown` 10% for 10 s | Code: `ToTC6:Chameleon/452_VenomSplash5.cs:14-18, :92-95, :160-163, :268-303`. **Assumed:** the reach draws one radius 15 circle, not the 0.7 s sweep |
+| ApexPredator5 | Bug, Tail, Elemental, Machine Slayer; the four All Slayers; All Slain | Slayer KO 5 → 15; a line for the -5 s on a hit | Code: `ToTC6:Chameleon/453_ApexPredator5.cs:62-78, :178-184, :233-239`. The comment says +10 KO on every Slayer skill, the code leaves All Slayer at KO 5, so the toggle follows the code |
+
+`SlayerBurst5` changes no original card.
 
 ### VenomSplash5 (cell 452)
 - Poison Volley: radius 12 × 1.25 = 15, height 4, a 0.7 s sweep then one more burst; each round hits a target once, `hit((int)(ATK × 1))`, KO 1, adds poison (`ToTC6:Chameleon/452_VenomSplash5.cs:14-16, :92-95, :129-136, :160-163, :184-194`).
 - Venom Shock: when poison has more than 1 s left, `defDown` level 1, value `ceil(DEF × 10 / 100)`, flat 10 s (`:17-18, :268-303`).
-- **Missing:** nothing for the card. The Poison Volley and Venom Shock toggles are not built.
+- **Missing:** nothing for the card.
 
 ### ApexPredator5 (cell 453)
 - Slayer KO `5 + 10` (`ToTC6:Chameleon/453_ApexPredator5.cs:16, :178-180`). -5 s on `slayer1-4`, `allSlayer1-4`, `allSlain`, once per cast, on a hit from Slayer or All Slayer (`:62-78, :183-184, :238-239`).

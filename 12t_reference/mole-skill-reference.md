@@ -695,7 +695,17 @@ Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) 
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are not done yet. SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. SP sign (red or blue) is not in the data; the cards use red.
+
+### Toggles on the original cards (NOT from verified code, 2026-11-02)
+
+**Provisional (user 2026-11-02: "trust the comment descriptions for now").** Each toggle is wired from the `// คำอธิบาย:` comment and the balance block of its `ToT_C6Data` file, because the code that applies most of these effects is outside the excerpts. Where an excerpt's code states a number, that number wins over the comment. Replace these when real code arrives. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
+
+| C6 skill | Original cards | What the toggle does | Source of each part |
+|---|---|---|---|
+| MissileBot5 | Missile, Barrel Bot - Missile | Damage +50%, KO +2, one more missile | +50% and +2 KO: `ToTC6:Mole/453_MissileBot5.cs:18-19, :43-46`. **Comment only:** "+1 Missile level", read as one more missile. **Assumed:** drawn through `dmgPostScale` (ceil) where the code rounds (`Mathf.RoundToInt`), and where it applies in the damage order is not in the excerpt |
+
+`AerialDevastation5` and `Nuclear5` change no original card. Their files also hold `RPC_fireBarrage2` and `RPC_bombardment2` balance blocks, but no comment says they change Fire Barrage or Bombardment, so nothing is wired.
 
 ### AerialDevastation5 (cell 452, `RPC_skyfallBarrage`)
 - MP 30, SP 65, cooldown 234 `agiAdjust`, cast 1 s (`ToTC6:Mole/452_AerialDevastation5.cs:13-16, :101, :113`). Laser `talAdjust(25)`, bomb `talAdjust(45)`, KO 1 (`:19-20, :33, :252`).
