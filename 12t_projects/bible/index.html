@@ -5650,7 +5650,7 @@
   .sk-test-panel{position:absolute; left:0; top:0; box-sizing:border-box; width:max-content; min-width:170px; padding:8px 10px 9px; background:var(--panel); border:1px solid var(--gold); border-radius:5px; box-shadow:0 7px 16px rgba(0,0,0,.5); transition:opacity .3s linear}
   .sk-test-panel[hidden]{display:none}
   .sk-test-panel.is-off{opacity:0}
-  .sk-test-panel::after{content:""; position:absolute; left:-6px; top:var(--ay,50%); width:10px; height:10px; background:var(--panel); border:solid var(--th-edge,var(--gold)); border-width:0 0 1px 1px; transform:translateY(-50%) rotate(45deg)}
+  .sk-test-panel::after{content:""; position:absolute; left:-6px; top:var(--ay,50%); width:10px; height:10px; background:var(--panel); border:solid var(--gold); border-width:0 0 1px 1px; transform:translateY(-50%) rotate(45deg)}
   .sk-test-panel.is-left::after{left:auto; right:-6px; border-width:1px 1px 0 0}
   .sk-test-panel.is-up::after{left:var(--ax,50%); top:auto; bottom:-6px; border-width:0 1px 1px 0; transform:translateX(-50%) rotate(45deg)}
   @keyframes skTestPop{0%{transform:scale(1.28)}100%{transform:scale(1)}}
@@ -38159,6 +38159,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-02T11:38:07.256Z","fix(bible): the Test panel's pointer has the panel's gold edge, so it no longer fades into the page"],
     ["2026-11-02T10:37:53.268Z","feat(bible): class guide #88 TTO Mole PVE ตุ่นป้อม MissileC6 KOทีละ 200 🍆💦 Nemesis ร้องงงง by ZynchroMole"],
     ["2026-11-02T10:21:35.726Z","fix(bible): class guide #71 is updated: TTO Monkey ลิงไฟ PVE ไปได้ทุกที่ แม้ที่ที่ไม่มีเธอ by Oty"],
     ["2026-11-02T10:20:15.355Z","fix(bible): LiuSuYang's line on Yoma's credits page has no name heading and no จากโค้ดเกม"],
