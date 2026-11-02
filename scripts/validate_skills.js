@@ -3057,6 +3057,8 @@ console.log(`Verified ${checkedTtoNoLck} TTO no-LCK-roll checks.`);
   list.forEach(c => { if (!c.id || !c.name || !Array.isArray(c.what) || !c.what.length || !c.what.every(t => /[฀-๿]/.test(t))) fail(`entry ${c.id || "?"} needs id, name and Thai "what" lines`); });
   const used = [...new Set([...html.matchAll(/\{\{credit:([a-z0-9_-]+)\}\}/gi)].map(m => m[1].toLowerCase()))].filter(id => id !== "id");   // "id" = the placeholder in code comments
   used.forEach(id => { if (!ids.includes(id)) fail(`{{credit:${id}}} has no CONTRIBUTORS entry`); });
+  list.filter(c => c.page).forEach(c => { const host = list.find(h => h.id === c.page); if (!host || host.page) fail(`${c.id}: page "${c.page}" must be another entry that has a page of its own`); });   // user 2026-11-02: LiuSuYang on Yoma's page
+  if ((list.find(c => c.id === "liusuyang") || {}).page !== "yoma" ||!/\{\{credit:liusuyang\}\}/.test(html)) fail("LiuSuYang is credited on Royal Flush and drawn on Yoma's page");
   if (used.length && !sandbox._credits.render(`x {{credit:${used[0]}}}`).includes(`class="sk-credit" data-credit="${used[0]}"`)) fail("credit token does not render as .sk-credit");
   console.log(`Verified contributor credits: ${list.length} contributor(s), ${used.length} credited id(s) in use.`);
 }
