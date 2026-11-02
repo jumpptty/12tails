@@ -3616,7 +3616,7 @@ let checkedRsim = 0;
   const pool = vm.runInContext("skillSimPoolMaxEx", sandbox), clear = vm.runInContext("skillSimClearTree", sandbox), unlearn = vm.runInContext("skillSimUnlearnMarker", sandbox);
   const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[SKILL SIM ERROR] ToT EX: " + msg); errorCount++; } };
   [[1,0],[94,0],[95,1],[99,1],[100,2]].forEach(([lv,n]) => ok(pool(lv) === n, "pool at level " + lv));
-  const expected = { bat:[[254],[354],[422]], bison:[[204,402,431,254],[354],[354]], monkey:[[254,402,432],[354,433],[372,403]], panda:[[254],[354],[364,443]], penguin:[[254,244],[354,413,443],[271,444]], wolf:[[254],[354],[422]] };
+  const expected = { bat:[[254],[354],[422]], bison:[[204,402,431,254],[354],[354]], monkey:[[254,402,432],[354,433],[372,403]], panda:[[254],[354],[364,443]], penguin:[[254,244],[354,413,443],[271,444]], wolf:[[254],[354],[422]], cat:[[254],[354,364],[431,364,371]], chameleon:[[254],[354],[344,354,364]], mole:[[254],[354],[273,412]], rabbit:[[254],[354],[372]], sheep:[[254],[354],[433,443]], whale:[[254],[354],[373]] };
   ok(Object.keys(EX).sort().join() === Object.keys(ALL).sort().join(), "all 12 classes covered");
   for (const cls in EX){
     const cs = cellsFn(ALL[cls], null, EX[cls]), base = cellsFn(ALL[cls]);
@@ -3629,7 +3629,6 @@ let checkedRsim = 0;
       if (!c.placeholder) ok(!!SKILL_ICONS[c.icon] && (() => { const cid = vm.runInContext("skillSimCardId", sandbox)(c.icon), card = SKILLS.find(s => s.id === cid); return cid === "" || (card && card.soon === "tot"); })(), cls + " embedded icon, and no detail card or a coming-soon stub card " + c.id);
       if (c.id === 451 || c.id === 461) continue;
       ok(c.lv === 100 && c.bn === 6 && c.choice === "row5", cls + " class EX gate " + c.id);
-      if (!expected[cls]) { ok(c.placeholder && auto(cs,4,new Set(),100,c.id) === null, cls + " unpublished slot unavailable"); continue; }
       ok(c.req.join() === expected[cls][c.id-452].join() && !c.placeholder, cls + " exact published prerequisites " + c.id);
       // Build a viable ordinary layout, taking cheapest valid C choices when additional C points are needed.
       let set = new Set();
@@ -3747,9 +3746,7 @@ let checkedRsim = 0;
     ok(!!cell(451) && !el("exPool").hidden && el("ptsEx").value === "1/2" && cell(451).classList.contains("is-learned"), "undo restores ToT grid, EX selection and counter");
     for (const name of vm.runInContext("CLASS_ORDER",sandbox)){
       action("pick"); classGate.onSelect(name);
-      const placeholder = ["Cat","Chameleon","Mole","Rabbit","Sheep","Whale"].includes(name);
-      ok(!!cell(452) && !!cell(461) && cell(452).classList.contains("is-placeholder") === placeholder && cell(451).classList.contains("is-passive"), name + " mounts correct EX slots and frames");
-      if (placeholder){ click(cell(452)); ok(el("ptsEx").value === "2/2", name + " placeholder click cannot spend points"); }
+      ok(!!cell(452) && !!cell(461) && !cell(452).classList.contains("is-placeholder") && cell(451).classList.contains("is-passive"), name + " mounts correct EX slots and frames");
     }
     ok(html.includes(".rsim-ex-pool[hidden]{display:none;}") && html.includes(".rsim.locked .rsim-trees{visibility:hidden}") && !html.includes("\n.rsim-trees{visibility:hidden}"), "counter hidden CSS and gate visibility remain scoped");
   } catch(e){ok(false,"UI threw: " + e.message);}
@@ -3950,7 +3947,8 @@ let checkedRsim = 0;
   rejects(()=>norm(change({build:{...fixture.build,server:"unknown"}})),"reject unknown server tag");
   rejects(()=>norm(change({notes:{"999":"unknown"}})),"reject unknown note anchor");
   rejects(()=>norm(change({notes:{"451":"x".repeat(3001)}})),"limit per-skill note length");
-  rejects(()=>norm(change({build:{...fixture.build,classKey:"cat",learned:[]},notes:{"452":"not published"}})),"reject unpublished EX note anchor");
+  { const slot = vm.runInContext("SKILL_SIM_EX.cat[1]", sandbox); slot.placeholder = true;   // every ToT slot is published since 2026-10-31; the guard stays for one the site blanks again
+    rejects(()=>norm(change({build:{...fixture.build,classKey:"cat",learned:[]},notes:{"452":"not published"}})),"reject unpublished EX note anchor"); slot.placeholder = false; }
   ok(norm(change({title:"",author:"",date:""}),{draft:true}).title === "", "allow unfinished local drafts");
   rejects(()=>norm(change({modes:undefined})),"require PVE / PVP for export (user 2026-10-20)"); rejects(()=>norm(change({modes:[]})),"an empty PVE / PVP list is not a choice"); rejects(()=>norm(change({modes:["pvx"]})),"reject an unknown mode");
   ok(norm(change({modes:undefined}),{draft:true}).modes === undefined && norm(change({modes:["pvx"]}),{draft:true}).modes === undefined, "a draft may lack PVE / PVP, and drops an unknown one");

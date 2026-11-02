@@ -565,14 +565,20 @@ Source: [ToT whale simulator dataset](https://talesoftails.net/data/skill-simula
 | Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
 |---|---|---|---|---|---|
 | 451 | UpdamageMonter | 95 | 0 | None | Passive |
-| 452 | Unpublished EX slot | 100 | 6 | None | Unavailable |
-| 453 | Unpublished EX slot | 100 | 6 | None | Unavailable |
-| 454 | Unpublished EX slot | 100 | 6 | None | Unavailable |
+| 452 | PiercingKnight5 | 100 | 6 | 254 | Passive |
+| 453 | SpiralShield5 | 100 | 6 | 354 | Active |
+| 454 | Leviathan5 | 100 | 6 | 373 | Active |
 | 461 | DowndamageMonter | 95 | 0 | None | Passive |
 
 Each learned EX skill costs one point from a separate EX pool: 0 below Lv 95, 1 at Lv 95–99, 2 at Lv 100. Cells 451 and 461 exclude each other. At most one of cells 452–454 may be learned. EX skills never count toward ordinary C point requirements. All explicit prerequisites and the six ordinary C skills must remain learned; refunds and tree resets enforce this. See [shared ToT EX rules](12Tails-Mechanics-Reference.md#tot-ex-skills-published-simulator-2026-10-13).
 
-The three Lv 100 slots currently have placeholder names/art in the published dataset. The hub shows them as unavailable and does not invent skills or permit spending points on them.
+The three Lv 100 slots were published by 2026-10-31 (the dataset's last change; read through the user's Chrome 2026-11-02). Names keep the site's spelling. No formula, cooldown or duration is known, so the Bible cards are stubs (`soon: "tot"`). The site's published costs:
+
+| Cell | Published skill name | MP | SP |
+|---|---|---|---|
+| 452 | PiercingKnight5 | - | - |
+| 453 | SpiralShield5 | - | 50 |
+| 454 | Leviathan5 | 90 | 65 |
 
 ## Movement timelines (read 2026-10-15, for the range preview; nominal `moveMod` 1, not live-tested)
 
