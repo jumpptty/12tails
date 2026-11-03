@@ -821,10 +821,11 @@ let checkedLckDiff = 0;
 // (Found 2026-09-19: Lucky Card's LCK-difference roll was missing from the displayed max.)
 let checkedConsistency = 0;
 // Slow damage checks (range-vs-simulator, Wolf Combo, Rabbit shots, ~35 s): run only with --full (use it before git push) or when the uncommitted diff of index.html touches damage code.
-const DAMAGE_CODE_TOUCHED = /\b(dmg\w*|rollOneHit|calcRangeFor|finalRange\w*|substituteDmgVars|talAdjust|atkCoeff|hitCount\w*|lckDiff\w*|effectProc|critProc|rawModel)\b/;
+// Word level (user 2026-11-03): only the changed words count, so a text edit on a one-line card (every field on one line) no longer runs them.
+const DAMAGE_CODE_TOUCHED = /\b(dmg\w*|rollOneHit|calcRangeFor|finalRange\w*|substituteDmgVars|talAdjust|atkCoeff|hitCount\w*|lckDiff\w*|effectProc|critProc|rawModel|power)\b/;
 const RUN_DAMAGE_CHECKS = process.argv.includes("--full") || (() => {
   try {
-    const diff = execFileSync("git", ["diff", "HEAD", "-U0", "--", "12t_projects/bible/index.html"], { encoding: "utf8", maxBuffer: 1 << 28 });
+    const diff = execFileSync("git", ["diff", "HEAD", "-U0", "--word-diff=porcelain", "--", "12t_projects/bible/index.html"], { encoding: "utf8", maxBuffer: 1 << 28 });
     return diff.split(/\r?\n/).some(l => /^[-+][^-+]/.test(l) && DAMAGE_CODE_TOUCHED.test(l));
   } catch (e) { return true; }
 })();
