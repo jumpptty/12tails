@@ -1069,6 +1069,15 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 - **Bible (2026-10-28):** Combo Plus has a ToT tab whose `**Combo Link:**` line mirrors the Combo Link row with the level-5 numbers from the BB formula (+5 ATK per count, up to +50; decided 2026-10-28, open item 5), and the two cards link on ToT. **2026-11-03:** the ToT1103 code above confirms level 5 and the +50 stack; the Combo Link ToT tab now gives cooldown 300, duration 24 and no combo needed.
 
 
+### Checked against ToT code (ToT1103, 2026-11-03)
+
+The ToT team's code batch (`ToT_Skillsim_2026-11-03/`, AGENTS.md) holds a few of these skills. What it shows, and what the Bible's ToT tabs now follow:
+
+- **Rising Dragons:** `RPC_risingDragons` is in `ToT1103:C6/Panda/452_RisingStorm5.cs`. Only **rank 2** changes: the lock scan r 4.5 / h 9 × rangeMod (BB 3 / 6, `:536-537`), the finisher r 4.5 / h 3 × rangeMod (BB 4 / 3, `:614`) and its damage `(int)((0.5 × (ATK + Focused Art) + talAdjust(40 × sLv)) × 1.1)` (`:637`); the ring and dragon visuals ×1.5. Rank 1 is BB in everything shown. The 8 jabs are in `HitRisingDragonPulse` (`:584`), not in the batch, so the card keeps the BB jab area and the patch note's ×1.1 on them (`liveCheck`). Neither the patch note's "size +20%" nor a rank 1 ×1.1 appears in the code. Card: `dmgPostScale` per group (finisher ×1.1 at rank 2, jabs ×1.1), floored; a ToT `reach`.
+- **Lotus Palm:** `TryEvadeHit` dodges a hit with a flat **20%** (`Random.Range(0, 100) < 20`, no LCK) while the target has the `LotusPalm` status (`ToT1103:Shared/gameplay_math.cs:173`); BB has no such dodge. When the status is given and for how long is not in the batch (`liveCheck`). Card: `fixedChance` 20 instead of 10 with LCK.
+- **Heaven Palm:** no Heaven Palm dodge appears in the code. The same function has a flat 20% dodge for a `heavenBreath` status (`:167`), which most likely belongs to a reworked Heaven Breath (#443, a separate passive), not to Heaven Palm; the card keeps the patch note's +10% and the point is in the request to the ToT team.
+- **Wind & Cloud / Rain & Storm** keep BB's `lckAdjust(30)` dodge (`:204`).
+
 ### ToT EX learning requirements (published simulator, 2026-10-13)
 
 Source: [ToT panda simulator dataset](https://talesoftails.net/data/skill-simulator/panda.json), with learning rules from [ToT simulator client](https://talesoftails.net/_next/static/chunks/673.2ecb414e00f7368e.js). These are server-specific published simulator requirements, not BigBug decompiled mechanics or verified damage formulas. Icons were extracted from the site’s `/gamegui/skill-simulator/skills/` assets and embedded in the hub.
