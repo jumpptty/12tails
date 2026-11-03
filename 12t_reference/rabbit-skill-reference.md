@@ -1091,3 +1091,4 @@ These were first wired from the `// คำอธิบาย:` comments (user 20
 
 - **Costs:** the catalog matches the C6 cards (`ToT1103S:Catalog/Catalog_Rabbit.cs`, rows 452-454).
 - **MiracleShot5 MP (answers the liveCheck):** for commands 251-254 (Immune, Boost, Heat, Life Shot) with 452 and 254 learned, `ceil(MP × 50 / 100)` after Revised Magic's `ceil(0.8 ×)` (`ToT1103S:References/Shared_MpDiscountAndCSkillCap.cs:52-61`; `mpReductionPercent 50`, `Balance_DefaultValues.cs:620-636`). The card's liveCheck became a bullet in its ## ติดตัว topic; the four shot cards' own cost chips still show the BB cost.
+- **Cost chips (2026-11-03):** with the MiracleShot5 toggle on, Immune / Boost / Heat / Life Shot's ToT cost chips show `ceil(MP × 0.5)`; Immune Shot got its own MiracleShot5 toggle for it (its status levels still follow Medical Enhancement).

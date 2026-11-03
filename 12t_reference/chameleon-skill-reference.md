@@ -834,3 +834,4 @@ These were first wired from the `// คำอธิบาย:` comments (user 20
 
 - **Costs:** the catalog matches the C6 cards (`ToT1103S:Catalog/Catalog_Chameleon.cs`, rows 452-454).
 - **ApexPredator5 MP (answers the liveCheck):** `getAdjustedSkillMP` takes Revised Magic first (`ceil(0.8 × MP)`), then, for commands 341-344 and 361-364 (the four Slayers and four All Slayers) with 453 and 354 learned, `ceil(× (100 − 50) / 100)` (`ToT1103S:References/Shared_MpDiscountAndCSkillCap.cs:34-51`; `mpReductionPercent 50`, `Balance_DefaultValues.cs:208-221`). Example: MP 12 with Revised Magic → 10 → 5. The card's liveCheck became a ## ลด MP topic; the Slayer cards' own cost chips still show the BB cost.
+- **Cost chips (2026-11-03):** with the ApexPredator5 toggle on, the four Slayer and four All Slayer cards' ToT cost chips show `ceil(MP × 0.5)` (before Revised Magic, which the chips never apply), and their toggle lines say so (`totHalfMp`).
