@@ -827,6 +827,10 @@ Every number in the BB Thai tooltip (`RabbitSkill_thai.cs`) was compared with th
 - Miracle Blend: status durations (invisible, reduce, enlarge, poison, Miracle Drop) use the casting Rabbit's CHA at the moment the bottle is thrown.
 - Contract: Gil was charged double at levels 1 and 2: 800 → 400 and 2,400 → 1,200. The BB code reads 200 / 600 per spawned unit, so 400 / 1,200 (`Rabbit.cs:11635-11683`), and the card already showed those.
 
+**New Order on coin summons (TTO client, checked 2026-11-03):** as on BB, `floor(× 1.5)` on HP, MP, max HP, max MP and the 8 stats of every unit a Rabbit with New Order summons, coin NPCs included (`TTO1102:CharacterControl::onSummonEvent@0x24DF8F0`). On TTO the chapter-scaled coin summons (the five Cults, the Ninja / Samurai / Shogun Bugs, the Gallon bots) then get TTO's chapter multiplier on top, up to ×5.8: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md), "Coin summons: New Order and chapter scaling".
+
+**New Order's free coins: BB's check, not fixed on TTO (client checked 2026-11-03).** `TTO1102:GameGui.<HandleCoinCommand>d__1149::MoveNext@0x206A6B0` keeps BB's two checks unchanged: the Rank check uses `Mathf.Abs(coin.lv) > Rank` ("Not enough rank to use this item"; `FUN_1809f9e00` = `Mathf.Abs`, `neg` / `cmovs`), while the New Order no-consume check compares the raw `coin.lv <= CeilToInt(0.5f × Rank)` (as `BB:GameGui.cs:36792`; Reborn added the `Abs`, `Reborn1027:GameGui.cs:1021-1024`). Contract's no-consume roll is BB's too (`Random.Range(0, 100) <= lckAdjust(30)`). On TTO the coin levels come from the server's item table (`CoinData::getData@0x20EAC80` → `GameData.Coin`), not from a client file, so their sign cannot be read offline; the `Abs` in the Rank check suggests they are still negative like BB's (−25 Dwukphu … −40 Boldas), and then every coin is still free for a Rabbit with New Order whatever its Rank. Live test: a New Order Rabbit whose account Rank is below `2 × |lv| − 1` (below 79 for Boldas) uses a coin; if the coin count does not drop (the free branch, "… with new order!"), the bug is there. Not on the cards yet.
+
 | Skill | Original BigBug baseline | TTO delta |
 |---|---|---|
 | Contract | Mercenaries (Light Panther / Light Leopard / Light Golem) stand still where summoned. | They follow the owner and warp back beside the owner beyond 35 m, like coin-summoned characters (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
@@ -1047,30 +1051,33 @@ The table is what the [TailsTopia skill simulator](https://tailstopia.online/ski
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. **User 2026-11-02:** a C6 skill with a cooldown has the same cooldown at mission start (`cdMapStart`). SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>`, the partial excerpts read 2026-11-02; `ToT1103:` = `ToT_Skillsim_2026-11-03/methods/<path>`, the fuller code the ToT team sent on 2026-11-03 (see AGENTS.md). The numbers are the files' "Fixed default balance" blocks, so the live server could differ; MP and SP match the public ToT simulator. **Helpers (2026-11-03):** `talAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust`, `defAdjust`, `dmgAdjust`, `koAdjust`, `lckAdjust` and `getDebuff` are the same as BB (`ToT1103:Shared/gameplay_math.cs:3-122`, Mechanics reference §2.1), so the cards' BB formulas hold. **SP:** `ToT1103:SKILL_COSTS.md` marks every C6 SP cost of this class as spent, so the cards' red is right. **Start of mission:** only the 454 skill starts a mission on cooldown (`ToT1103:START_COOLDOWNS.md`, the ToT team's note). The 2026-11-02 rule "a C6 skill with a cooldown has the same cooldown at mission start" was an assumption; code wins (user 2026-11-03), so MiracleShot5 and PaydayShot5 lost `cdMapStart`.
 
-### Toggles on the original cards (NOT from verified code, 2026-11-02)
+### Toggles on the original cards (checked against ToT1103 code, 2026-11-03)
 
-**Provisional (user 2026-11-02: "trust the comment descriptions for now").** Each toggle is wired from the `// คำอธิบาย:` comment and the balance block of its `ToT_C6Data` file, because the code that applies most of these effects is outside the excerpts. Where an excerpt's code states a number, that number wins over the comment. Replace these when real code arrives. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
+These were first wired from the `// คำอธิบาย:` comments (user 2026-11-02: "trust the comment descriptions for now"). On 2026-11-03 each row was checked against the ToT1103 code and marked verified or corrected. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
 
 | C6 skill | Original cards | What the toggle does | Source of each part |
 |---|---|---|---|
-| PaydayShot5 | Four Shot, Circle Shot, Shooting Array, Ten Shot | A line: a hit from PaydayShot5 cuts the remaining cooldown by 80% | Code: `ToTC6:Rabbit/453_PaydayShot5.cs:372-383`. The comment says "on use", the code says on a hit, so the line follows the code |
-| PaydayShot5 | nAttack | A line: a normal shotgun hit cuts Class B cooldowns by 1 s | **Comment only.** `cooldownReductionSeconds = 1` has no reader in the excerpt, and which Class B skills it means is unknown. `passiveDamagePercent = 25` is not wired: no comment explains it |
-| MiracleShot5 | Medical Enhancement, Immune, Boost, Heat, Life Shot | A line: status cap 4 | `ToTC6:Rabbit/452_MiracleShot5.cs:28-32, :131-133` passes the cap; what it does is in `ApplyRabbitMedicalShot`, outside the excerpt. **Assumed:** it raises the status level limit, from the comment's "full effect" |
+| PaydayShot5 | Four Shot, Circle Shot, Shooting Array, Ten Shot | A line: a PaydayShot5 cast that hits cuts the remaining cooldown by 80% | **Verified (ToT1103):** `ToT1103:C6/Rabbit/453_PaydayShot5.cs:44-55, :427`. The comment says "on use", the code says on a hit, so the line follows the code |
+| PaydayShot5 | nAttack | The shotgun normal attack: damage `floor((crit + Hyper Shot) × 1.25)`, and each target hit cuts 1 s off the remaining cooldown of 8 Class B skills | **Corrected (ToT1103):** the +25% is `floor((getCritPlus(floor(0.5 × ATK)) + Hyper Shot) × 1.25)` (`ToT1103:C6/Rabbit/453_PaydayShot5.cs:80-81, :108, :127-129`). The 1 s per target hit goes off Gil Shot, Backpack, Four Shot, Circle Shot, Mall, Truce Trading, Shooting Array and Millionaire, never below 0 (`:59-71, :147`) |
+| MiracleShot5 | Medical Enhancement, Boost, Heat, Life Shot | Boost, Heat and Life Shot give level 4 at once, timed as level 4; Boost Shot heals 400 | **Corrected (ToT1103):** with the passive, shot levels 2-4 use the C6 maximum (4) and skip the step-up, so the durations are `chaAdjust(50)`, `chaAdjust(50)` and `chaAdjust(80)`, and Boost Shot heals `100 × 4` (`ToT1103:C6/Rabbit/452_MiracleShot5.cs:191-245`). Immune Shot is unchanged (its maximum stays 1 + Medical Enhancement level, +1 a shot, `:191-206`), so the toggle left the Immune Shot card |
 
 `ThousandShot5` changes no original card.
 
 ### MiracleShot5 (cell 452)
 - MP 40, SP 20, cooldown 140 `agiAdjust` (`ToTC6:Rabbit/452_MiracleShot5.cs:14-19, :46-53`). Raycast range `16 + 5 × nAttack` on the selected ally only, never self (`:106-118`); `noDamage` + `noForce` for `chaAdjust(1)` (`:124-127`).
 - Passive: normal shots pass a status cap of 4 (`:28-32, :131-133`).
-- **Missing:** `ApplyRabbitMedicalShot` (what the cap does), `mpReductionPercent = 50` (`:16`) has no reader.
+- **ToT1103 (2026-11-03), `ApplyRabbitMedicalShot`:** Boost, Heat and Life Shot go straight to level 4 and use level 4's duration; Boost Shot heals 400; Immune Shot keeps its BB step-up (toggle row above; `ToT1103:C6/Rabbit/452_MiracleShot5.cs:191-245`). No start-of-mission cooldown (see above).
+- **Missing:** `mpReductionPercent = 50` still has no reader (`ToT1103:C6/Rabbit/452_MiracleShot5.cs:13`); the -50% MP on the medical shots is the ToT team's note only (`ToT1103:C6_GAMEPLAY.md`).
 
 ### PaydayShot5 (cell 453, `RPC_heavyShotgun`)
 - SP 40, cooldown 120 `agiAdjust` (`ToTC6:Rabbit/453_PaydayShot5.cs:30-31, :105-106`). `floor(1 × ATK + talAdjust(40))`, KO 20 free or 0 locked, radius 6, height 8 (`:298-311`).
 - Locked: leap to the target, motion ×1.3, `noDamage` through the move and 0.8 s after landing (`:74-83, :126-132, :320-323`). A hit cuts the remaining cooldown of Four Shot, Circle Shot, Shooting Array, Ten Shot by 80% (`:372-383`).
-- **Missing:** the shotgun passive: `passiveDamagePercent = 25`, `cooldownReductionSeconds = 1` (`:33-34`) have no reader.
+- **ToT1103 (2026-11-03):** the 80% cut is verified (`ToT1103:C6/Rabbit/453_PaydayShot5.cs:44-55, :427`). The shotgun passive is read in `RPC_shotgun`: damage `floor((crit + Hyper Shot) × 1.25)`, then each target hit takes 1 s off 8 Class B cooldowns (toggle row above; `:59-71`, `:80-83`, `:127-147`). No start-of-mission cooldown (see above).
+- **Missing:** nothing for the card.
 
 ### ThousandShot5 (cell 454)
 - SP 50, cooldown 200 `agiAdjust`; 10 hits 0.1 s apart from 1.5 s, `floor(0.8 × ATK + talAdjust(15))`, KO 1; `FindLegacyRecTargets` half-width 2, length 24, height 3 (`ToTC6:Rabbit/454_ThousandShot5.cs:14-27, :64, :126, :189-191, :206-233`).
+- **ToT1103 (2026-11-03):** the card matches: a 0.5 s pose then 1.0 s, with no MAG, and 2 is the half-width (`ToT1103:C6/Rabbit/454_ThousandShot5.cs:123, :163-188, :218-221`). The ToT team's note (2.5 s, width 2) reads this differently; the code wins. It starts a mission on `agiAdjust(200)` (`ToT1103:START_COOLDOWNS.md`).
 - **Missing:** nothing for the card.
