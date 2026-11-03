@@ -1081,28 +1081,34 @@ The table is what the [TailsTopia skill simulator](https://tailstopia.online/ski
 
 ## ToT C6 skills (client excerpts, read 2026-11-02)
 
-Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>` (see AGENTS.md). The numbers are the file's "Fixed default balance" block, so the live server could differ; MP and SP match the public ToT simulator. Core helpers (`talAdjust`, `agiAdjust`, `getDebuff`, `hit`) are not in the excerpts: the cards use the BB formulas (AGENTS.md §3.5). Toggles on the original cards are in the first subsection and are **not from verified code**. **User 2026-11-02:** a C6 skill with a cooldown has the same cooldown at mission start (`cdMapStart`). SP sign (red or blue) is not in the data; the cards use red.
+Cards `tot_ex_*`, `onlyServer: "tot"`. `ToTC6:` = `ToT_C6Data/<Class>/<file>`, the partial excerpts read 2026-11-02; `ToT1103:` = `ToT_Skillsim_2026-11-03/methods/<path>`, the fuller code the ToT team sent on 2026-11-03 (see AGENTS.md). The numbers are the files' "Fixed default balance" blocks, so the live server could differ; MP and SP match the public ToT simulator. **Helpers (2026-11-03):** `talAdjust`, `agiAdjust`, `magAdjust`, `chaAdjust`, `defAdjust`, `dmgAdjust`, `koAdjust`, `lckAdjust` and `getDebuff` are the same as BB (`ToT1103:Shared/gameplay_math.cs:3-122`, Mechanics reference §2.1), so the cards' BB formulas hold. **SP:** `ToT1103:SKILL_COSTS.md` marks every C6 SP cost of this class as spent, so the cards' red is right. **Start of mission:** only the 454 skill starts a mission on cooldown (`ToT1103:START_COOLDOWNS.md`, the ToT team's note). The 2026-11-02 rule "a C6 skill with a cooldown has the same cooldown at mission start" was an assumption; code wins (user 2026-11-03), so RoyalCard5 lost `cdMapStart`.
 
-### Toggles on the original cards (NOT from verified code, 2026-11-02)
+### Toggles on the original cards (checked against ToT1103 code, 2026-11-03)
 
-**Provisional (user 2026-11-02: "trust the comment descriptions for now").** Each toggle is wired from the `// คำอธิบาย:` comment and the balance block of its `ToT_C6Data` file, because the code that applies most of these effects is outside the excerpts. Where an excerpt's code states a number, that number wins over the comment. Replace these when real code arrives. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
+These were first wired from the `// คำอธิบาย:` comments (user 2026-11-02: "trust the comment descriptions for now"). On 2026-11-03 each row was checked against the ToT1103 code and marked verified or corrected. They are the `totC6Toggle` table in `index.html`, ToT tab only, and each one shows the ToT data warning while on.
 
 | C6 skill | Original cards | What the toggle does | Source of each part |
 |---|---|---|---|
-| FullMoon5 | Moon Blade, Moon Storm | Area radius and height ×1.625, damage ×2, `maim` 2 for a flat 3 s | Code: `ToTC6:Cat/453_FullMoon5.cs:33-34, :47-49, :76-81`. **Assumed:** one toggle stands for "learned + hitting from behind", so ×2 shows whenever it is on, and the ×2 is drawn through `dmgPostScale` (ceil of a whole number, so the same as the floor) |
+| FullMoon5 | Moon Blade, Moon Storm | Area radius and height ×1.625, and Moon Storm's step spacing and 12 m end burst ×1.625 too (burst 19.5 m ahead); damage ×2 from behind; `maim` 2 for a flat 3 s on landed hits | **Verified, reach extended (ToT1103):** ×2 floored before the hit (`ToT1103:C6/Cat/453_FullMoon5.cs:42-47`); `maim` only on hits that land (`:48-57`, `:71-79`); radius, height, spacing and end burst (`:217`, `:259`, `:265`, `:287`). One toggle stands for "learned + hitting from behind"; the ×2 is drawn through `dmgPostScale` (ceil of a whole number, so the same as the floor) |
 
 `RoyalCard5` and `ShadowExecution5` change no original card.
 
 ### RoyalCard5 (cell 452, `RPC_secondChance`)
 - MP 32, SP 20, cooldown 200 (`ToTC6:Cat/452_RoyalCard5.cs:14-16`). Heal 75 / 100 / 125%, weights 25 / 50 / 25, caps 577 / 777 / 977 (`:18-26`). The heal lands 1.25 s after the cast (`:70-86`), from `mLastDamage`.
-- **Missing:** `CalculateSecondChanceHeal` (rounding, cap), `SelectSecondChanceTier` (does LCK move the odds), `GamblerBeginAction` (the cooldown goes in raw at `:46`; every other C6 skill wraps it in `agiAdjust`, so the card assumes AGI applies), meaning of `koPercent = 1`.
+- **ToT1103 (2026-11-03):** heal = `floor(max(0, last damage) × percent / 100)`, then capped (`ToT1103:C6/Cat/452_RoyalCard5.cs:136-138`). The tier roll is a plain `Random.Range` with no LCK (`:38-40`, `:108-113`). The cooldown goes through `agiAdjust` (`:42-43`, `:154`) and is set at the cast, so a cast interrupted before the heal (0.9 s + 0.35 s) gives no heal but still uses the cooldown (`:67-79`). No start-of-mission cooldown (see above).
+- **Missing:** meaning of `koPercent = 1` (`ToT1103:C6/Cat/452_RoyalCard5.cs:14`, no reader).
 
+- **Tooltip mismatch (card `tooltipNote`, 2026-11-03):** the ToT description (`ToTC6:Cat/452_RoyalCard5.cs:3`) gives only 75% / 100% / 125%; the code also rolls them 25 / 50 / 25 and caps the heal at 577 / 777 / 977. The 2026-11-03 desc adds the timing: 0.9 s reveal, heal 0.35 s later, 0.65 s finish, last damage read at the heal (`ToT1103:C6/Cat/452_RoyalCard5.cs:67-90`).
 ### FullMoon5 (cell 453)
 - Passive on Moon Blade and Moon Storm: radius and height ×1.625 (`ToTC6:Cat/453_FullMoon5.cs:14, :33-34`); ×2 floored when the caster is in the rear 90° of the target, not on structures (`:47-49, :105-121`); `maim` level 2 for a flat 3 s on every hit (`:76-81`).
+- **ToT1103 (2026-11-03):** the ×2 is floored before `hit()` (`ToT1103:C6/Cat/453_FullMoon5.cs:42-47`), and `maim` goes only on hits that land (`:48-57`, `:71-79`). Moon Storm's step spacing (1.5 m per step) and its 12 m end burst also scale ×1.625, so the burst is 19.5 m ahead (`:217`, `:259`, `:265`, `:287`); the card's reach toggle scales them too.
 - **Tooltip mismatch:** text says range +40%, code ×1.625 (+62.5%).
 - **Missing:** nothing for the card.
 
 ### ShadowExecution5 (cell 454)
-- MP 30, SP 60, cooldown 200 `agiAdjust`, select range 22, mark radius 12, hide 2 s (`ToTC6:Cat/454_ShadowExecution5.cs:14-19, :50, :79`).
+- MP 30, SP 60, cooldown 200 `agiAdjust`, select range 22, mark radius 12, hidden phase 2 s (`ToTC6:Cat/454_ShadowExecution5.cs:14-19, :50, :79`; the `hide` status itself lasts 4 s, below).
 - 4 pulses 0.2 s apart, `hit(454, talAdjust(70), KO 1)` on every marked target (`:172-195`); -10 SP per hit through `spSap` (`:186`); once per target `disarm` 2 `getDebuff(6)` and `bleed` 2 `getDebuff(12)`, +3 s each with Open Wound 443 (`:187-192`). `OpenWound()` itself is not called, so no purple bonus.
-- **Missing:** `ReceiveShadowExecutionMark` (who gets marked, cap, height), `BeginShadowExecutionHide` (the evade the text promises).
+- **ToT1103 (2026-11-03):** no target cap: every actor that passes `ReceiveShadowExecutionMark` is marked, checked in actor order (`ToT1103:C6/Cat/454_ShadowExecution5.cs:129-135`, `:204-216`). The mark area is a 3D sphere of 12 m around the mark origin (`:211-212`). The hidden phase lasts `castTime` 2 s (`:76`); the `hide` status lasts `ceil(2) + 2` = 4 s (`:225`). The evade is in `TryEvadeHit`: while `IsShadowExecutionEvading`, a hit is evaded and Cat skill 364 heals (`ToT1103:Shared/gameplay_math.cs:218-229`). The pulses start after the action ends (`:155-160`); a marked target that can no longer be targeted is skipped (`:176`). It starts a mission on `agiAdjust(200)` (`ToT1103:START_COOLDOWNS.md`).
+- **Missing:** when `IsShadowExecutionEvading` is true (not in the excerpt).
+
+- **Tooltip mismatch (card `tooltipNote`, 2026-11-03):** the ToT description (`ToTC6:Cat/454_ShadowExecution5.cs:3`) says it inflicts Disarm2 / Bleed2; the code gives them once per target, on its first landed pulse, while the SP loss is on every landed pulse (`ToT1103:C6/Cat/454_ShadowExecution5.cs:178-189`). While the skill runs, `IsShadowExecutionEvading` turns incoming hits into evades and Vendetta (364) gives +10 SP each (`ToT1103:Shared/gameplay_math.cs:221-229`).

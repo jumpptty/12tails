@@ -919,10 +919,16 @@ Source: ToT Facebook patch notes (C6 intro post, 03/08/2026, 10/09/2026, hot fix
 | Counter | SP 2 / 3 → 6 / 8 |
 | Sublime Art | Double Art proc restores 7 MP / 7 SP (was 5 / 5) |
 | Holy Wolf (Holy Sword + Holy Armor) | −33% damage taken; MP regen from max MP; regen every 6 s (was 8); no stat bonus from Holy Sword / Holy Armor while fused (ToT `[holyWolf]` popup via `STATUS_DESC_SERVER`) |
-| Dual Brand | base cooldown −40% (120 → 72 s) |
-| Twin Resonance | wider hit box; one heavy hit instead of several; wave duration and speed +50%; base cooldown −50% (240 → 120 s); KO 10 (raised to 40, then 10 in the 12/09 hot fix). The single hit has no published formula: the ToT card shows the BB formula with a `liveCheck` marker |
+| Dual Brand | base cooldown −40% (120 → 72 s); ToT1103 code confirms `agiAdjust(72)` with the Sublime Art gate (below) |
+| Twin Resonance | wider hit box; one heavy hit instead of several; wave duration and speed +50%; base cooldown −50% (240 → 120 s); KO 10 (raised to 40, then 10 in the 12/09 hot fix). The formula is now in the ToT1103 code (below) |
 | Cross Break / Grand Cross | KO 10 / 20 / 30; Grand Cross cooldown equal to Cross Break (already modelled) |
 | Provoke | 9 → 6 s (10/09) then back to 9 s (12/09): no net change |
+
+**ToT1103 code (2026-11-03, `ToT1103:Older/`):**
+- **Twin Resonance:** `hit(444, talAdjust(240), KO 10)`, with no ATK term (BB: `0.75 × ATK + talAdjust(50)`), and each target is hit once (`ToT1103:Older/wolf_twin_resonance.cs:76`, `:121-138`). The wave starts 2 s after the cast (`:32`), then runs 150 rounds `0.4 / 2.25` s (about 0.178 s) apart: outer radius `3 + 0.8 × i`, a 4 m band, height 4, 190°, out to 122.2 m, about 26.7 s in all (`:77-85`, `:94-128`). Cooldown `agiAdjust(120)` (`:16-19`).
+- **Sublime Art gate:** Twin Resonance skips its cooldown only when Sublime Art (431) is learned and Double Art procs (`ToT1103:Older/wolf_twin_resonance.cs:16-19`). So the BB bug (no Sublime Art check, `Wolf.cs:37207-37213`) is fixed on ToT, and the ToT tabs of Double Art and Sublime Art list Twin Resonance with the other gated skills.
+- **Dual Brand:** cooldown `agiAdjust(72)` behind the same Sublime Art gate; its areas and timing match the card (`ToT1103:Older/wolf_cooldowns.cs:16-19`, `:56-157`).
+- **Start of map:** Dual Brand 72 s and Twin Resonance 120 s at map start are the ToT team's note only (`ToT1103:OLDER_BALANCE.md`); the excerpt shows only the cast cooldowns. See [12Tails-Mechanics-Reference.md §4.12](12Tails-Mechanics-Reference.md#412-start-of-mission-cooldowns-verified-2026-10-26).
 
 
 ### ToT EX learning requirements (published simulator, 2026-10-13)

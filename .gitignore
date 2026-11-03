@@ -11,8 +11,9 @@ RippedAssets_Reborn*/
 DecompiledSource_TTO*/
 # Frameless Reborn C6/C7 skill art from the Reborn team (shipped framed as 128 px WebP in assets.js SKILL_ICONS)
 /TailsArt/
-# ToT C6 client excerpts, cited as ToTC6: (2026-11-02); source code that is not ours to publish
+# ToT client excerpts: ToT_C6Data cited ToTC6: (2026-11-02), ToT_Skillsim_<date> cited ToT<MMDD>: (2026-11-03); source code that is not ours to publish
 /ToT_C6Data/
+/ToT_Skillsim_*/
 
 # Automation / browser test artifacts
 .playwright-mcp/
