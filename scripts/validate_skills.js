@@ -1412,7 +1412,7 @@ console.log(`Verified ${checkedWhaleWave} Whale Wave weight / distance checks.`)
 let checkedTotC6 = 0;
 {
   const check = (label, ok, got) => { checkedTotC6++; if (!ok) { errorCount++; console.error("[TOT C6 ERROR] " + label + ": got " + got); } };
-  const table = { royalcard: [32, 20, 200, 0], fullmoon: [0, 0, 0, 0], shadowexecution: [30, 60, 200, 4], venomsplash: [0, 0, 0, 0], apexpredator: [0, 0, 0, 0], slayerburst: [35, 70, 150, 8], aerialdevastation: [30, 65, 234, 2], missilebot: [65, 15, 240, 0], nuclear: [70, 70, 300, 1], miracleshot: [40, 20, 140, 0], paydayshot: [0, 40, 120, 1], thousandshot: [0, 50, 200, 10], eternalsalvation: [90, 50, 400, 0], reflectencounter: [42, 0, 240, 0], judgmentfiled: [70, 50, 120, 10], reincarnation: [60, 0, 210, 0], bladesymphony: [0, 40, 180, 10], voidbreaker: [20, 20, 60, 1], piercingknight: [0, 0, 0, 0], spiralshield: [0, 50, 90, 0], leviathan: [90, 65, 330, 1] };
+  const table = { royalcard: [32, 20, 200, 0], fullmoon: [0, 0, 0, 0], shadowexecution: [30, 60, 200, 4], venomsplash: [0, 0, 0, 0], apexpredator: [0, 0, 0, 0], slayerburst: [35, 70, 150, 8], aerialdevastation: [30, 65, 234, 2], missilebot: [65, 15, 240, 0], nuclear: [70, 70, 300, 1], miracleshot: [40, 20, 140, 0], paydayshot: [0, 40, 120, 1], thousandshot: [0, 50, 200, 10], eternalsalvation: [90, 50, 400, 0], reflectencounter: [42, 0, 240, 0], judgmentfiled: [70, 50, 120, 10], reincarnation: [60, 0, 210, 0], bladesymphony: [0, 40, 180, 10], voidbreaker: [20, 20, 60, 1], shadowrealm: [45, 0, 120, 0], soulcapture: [60, 35, 180, 0], darkimpulse: [60, 40, 180, 0], piercingknight: [0, 0, 0, 0], spiralshield: [0, 50, 90, 0], leviathan: [90, 65, 330, 1] };
   const ids = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
   for (const k of Object.keys(table)) {
     const sk = SKILLS.find(s => s.id === "tot_ex_" + k), [mp, sp, cd, hits] = table[k];
@@ -1422,6 +1422,14 @@ let checkedTotC6 = 0;
     check(k + " cost and cooldown", ((sk.cost || {}).mp || 0) === mp && ((sk.cost || {}).sp || 0) === sp && (sk.cd || 0) === cd, JSON.stringify(sk.cost) + " " + sk.cd);
     check(k + " hit count", (sk.hitCount ? sk.hitCount(1) : 0) === hits, sk.hitCount && sk.hitCount(1));
     if (sk.reach) check(k + " reach cites its file", sk.reach(1).every(p => p === vm.runInContext("REACH_LOCK40", sandbox) || /^ToT(C6|1103):/.test(String(p.src))), "src");
+  }
+  // Bat (ToT1103:C6/Bat/): Shadow Realm clamp(15 + (CHA - tCHA) / 10, 1, 45) (452:101-102); Soul Capture clamp(12 + (CHA - tCHA) / 20, 1, 30) (453:73-74), the drain (int)(0.09 x ATK) in 2-18 (ToT1103:PARITY_VECTORS.md:30: ATK 120 -> 10, 300 -> 18)
+  {
+    const realm = SKILLS.find(s => s.id === "tot_ex_shadowrealm"), soul = SKILLS.find(s => s.id === "tot_ex_soulcapture");
+    [[200, 100, 25], [100, 200, 5], [100, 145, 11], [100, 1000, 1], [1000, 0, 45]].forEach(([c, t, n]) => check("Shadow Realm time CHA " + c + " vs " + t, realm.durContestFn(15, c, t) === n, realm.durContestFn(15, c, t)));
+    [[200, 100, 17], [100, 145, 10], [0, 1000, 1], [1000, 0, 30]].forEach(([c, t, n]) => check("Soul Capture time CHA " + c + " vs " + t, soul.durContestFn(12, c, t) === n && soul.secondaryDuration.durPostAdd === 5, soul.durContestFn(12, c, t)));
+    [[120, 10], [300, 18], [150, 13], [10, 2]].forEach(([a, n]) => check("Soul Capture drain ATK " + a, soul.rawModel.parts(1, { ATK: a }).plain === n, soul.rawModel.parts(1, { ATK: a }).plain));
+    check("Soul Capture ticks follow its contested time", soul.hitCountDuration === 1 && soul.durContested === true, soul.hitCountDuration);
   }
   const lev = SKILLS.find(s => s.id === "tot_ex_leviathan"), inp = vm.runInContext("DMG_INPUT_VALS", sandbox);
   const saved = { w: inp.whaleWeight, d: inp.leviathanDist };
