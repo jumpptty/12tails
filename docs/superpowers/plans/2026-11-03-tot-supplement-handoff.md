@@ -27,6 +27,6 @@ ToT's answer to our request: the full skill catalog (1,303 entries with MP / SP)
 
 1. **Done 2026-11-03 (home PC):** tag `ToT1103S:References/<file>:<line>` / `ToT1103S:Catalog/<file>:<line>`, in AGENTS.md.
 2. **Done 2026-11-03 (home PC):** items 1-5 on the cards and in the class files' `### Supplement (ToT1103S, 2026-11-03)` subsections (Bat, Bison, Monkey, Penguin, Wolf, Sheep); Fire Avatar got a ToT JaBurst5 toggle (120 s base).
-3. Item 7 is fixed; still decide Lavu's ToT MP (120 on the card vs 100 in ToT's catalog), Delay Qi and Crumbling Mountain.
+3. **Done 2026-11-03 (home PC):** Lavu's ToT tab is MP 100 / 120, SP −50 (the catalog has a row per rank; the patch note's "50 / 120" is SP and rank 2's MP). Delay Qi and Crumbling Mountain stay as they are: the catalog repeats BB's skill data (Delay Qi SP −24, Crumbling Mountain 0), but Delay Qi is never cast from the skill bar (Qi Strike's charge calls it, so its data cost is never charged) and Crumbling Mountain's card SP 40 is BB's `sp >= 40` check, not a cost (panda-skill-reference.md, Crumbling Mountain).
 4. Apply the second audit's findings.
 5. Panda C6 when the user says so.
