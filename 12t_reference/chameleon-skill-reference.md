@@ -745,6 +745,7 @@ First read from an in-game tooltip picture the user sent on 02/11/2026; every `T
 - **Not settled by the code:** hit times are frame-quantized (each `Until` ends on the first frame at or after its time), and the poison and burst are computed from the caster's client copy of the target.
 
 ### Apex Hunt (cell 453, `chameleon_apexHunt`, checked against the TTO client decompile, 2026-11-02)
+- **TTO patch 1.6.2.1 (user 2026-11-03, from the patch notes; the client was not decoded again):** "แก้ไข Skill Apex ทำงานไม่ตรงตาม Description": it now works as its description says, with no detail of what changed. The card keeps the TTO1102 behaviour and says so in its `liveCheck`; its tooltip-mismatch list may now be partly out of date.
 
 First read from an in-game tooltip picture the user sent on 02/11/2026; every `TTO1102:` line below is read from TTO's own client, floats Ghidra dropped read from the instructions. Stated by the tooltip: Magical, MP 60, SP 60, damage Slayer x3, other targets x1.5, 6 targets, range 24 m, splash 50% / 4 m, cooldown 120; target under 30% HP damage x1.5; survivors get Prey 12 s; on a kill reset Slayer and Apex -30 s. All of these are in the code (constants `ApexCooldown 120`, `ApexReach 24`, `ApexReachPerFarReach 4`, `PreySeconds 12`, `ApexMult 3`, `LockMult 1.5`, `ExecuteBelow 0.3`, `ExecuteMult 1.5`, `CraterRadius 4`, `CraterShare 0.5`, `TrophyRefund 30`, `LockMax 6`, `LockGap 0.3`).
 

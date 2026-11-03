@@ -683,6 +683,7 @@ Read from TTO's own client (`TTO1102:`, `DecompiledSource_TTO_2026-11-02/`, AGEN
 If the target disappears during a cast, the part that applies effects to the target is skipped and the action ends normally. The patch notes name no skill. Per-skill fixes are in each class file, "Server Balance Variations (TTO)".
 
 #### TTO Lv 100 skills (published simulator, 2026-10-31)
+* **TTO patch 1.6.2.1 (user 2026-11-03, from the patch notes; the client was not decoded again):** Lv 100 now adds **1 C point** (C pool 9 → **10** at Lv 100) that can go on any C skill, and a Lv 100 (C6) skill costs **1** of those C points once the Shadow Italus quest unlocks it (the quest itself unchanged). The skill simulator: `SKILL_SIM_POOLS.tto.c` = 10 from Lv 100 and `exInC` makes the C6 cell spend from the C pool; the one-C6-at-a-time rule (`choice`) is kept, as the patch says nothing about it (the TTO1102 client had no such rule, see below).
 
 Source: [TailsTopia skill simulator](https://tailstopia.online/skill-simulator) (login required), read through the user's Chrome 2026-10-31, rules from its page script. Published server rules, not BigBug engine formulas. Every other cell of all 12 classes still equals the game code on level, points, prerequisite, MP, SP and active / passive.
 

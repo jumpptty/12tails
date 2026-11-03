@@ -1028,6 +1028,7 @@ Read from an in-game tooltip picture the user sent on 02/11/2026, digits checked
 - **Original cards:** none named.
 
 ### Crescent Eclipse (cell 453, `cat_crescentEclipse`, checked against the TTO client decompile, 2026-11-02)
+- **TTO patch 1.6.2.1 (user 2026-11-03, from the patch notes; the client was not decoded again):** [Bug] the skill no longer misses its target when the Cat stands close (the ≤ 1 m flat case that jumped 14 m straight ahead); the card's `unintended` note was removed. Drop Anchor's same 1 m case is not in the patch and keeps its note.
 
 Read from TTO's own client (`TTO1102:`, `DecompiledSource_TTO_2026-11-02/`, see its `BUILD.md`); every float argument Ghidra dropped (waits, area sizes, reach) was read from the machine code. The in-game tooltip (`TTO1102:SkillDetailData::CatCrescentEclipse@0x21EC7F0` with the client's locale files) states: Physical, leap 14 m, 8 blades, burst 6.5 m (+15% a wound), "the blades strike again", burst +8% per hit this cast landed (max 12), Eclipsed 6 s halves heals, dying while Eclipsed ruptures 3.5 m. Its Thai description is the TailsTopia text in the table below.
 
