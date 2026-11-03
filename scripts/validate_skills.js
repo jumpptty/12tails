@@ -1412,7 +1412,7 @@ console.log(`Verified ${checkedWhaleWave} Whale Wave weight / distance checks.`)
 let checkedTotC6 = 0;
 {
   const check = (label, ok, got) => { checkedTotC6++; if (!ok) { errorCount++; console.error("[TOT C6 ERROR] " + label + ": got " + got); } };
-  const table = { royalcard: [32, 20, 200, 0], fullmoon: [0, 0, 0, 0], shadowexecution: [30, 60, 200, 4], venomsplash: [0, 0, 0, 0], apexpredator: [0, 0, 0, 0], slayerburst: [35, 70, 150, 8], aerialdevastation: [30, 65, 234, 2], missilebot: [65, 15, 240, 0], nuclear: [70, 70, 300, 1], miracleshot: [40, 20, 140, 0], paydayshot: [0, 40, 120, 1], thousandshot: [0, 50, 200, 10], eternalsalvation: [90, 50, 400, 0], reflectencounter: [42, 0, 240, 0], judgmentfiled: [70, 50, 120, 10], reincarnation: [60, 0, 210, 0], bladesymphony: [0, 40, 180, 10], voidbreaker: [20, 20, 60, 1], shadowrealm: [45, 0, 120, 0], soulcapture: [60, 35, 180, 0], darkimpulse: [60, 40, 180, 0], piercingknight: [0, 0, 0, 0], spiralshield: [0, 50, 90, 0], leviathan: [90, 65, 330, 1] };
+  const table = { royalcard: [32, 20, 200, 0], fullmoon: [0, 0, 0, 0], shadowexecution: [30, 60, 200, 4], venomsplash: [0, 0, 0, 0], apexpredator: [0, 0, 0, 0], slayerburst: [35, 70, 150, 8], aerialdevastation: [30, 65, 234, 2], missilebot: [65, 15, 240, 0], nuclear: [70, 70, 300, 1], miracleshot: [40, 20, 140, 0], paydayshot: [0, 40, 120, 1], thousandshot: [0, 50, 200, 10], eternalsalvation: [90, 50, 400, 0], reflectencounter: [42, 0, 240, 0], judgmentfiled: [70, 50, 120, 10], reincarnation: [60, 0, 210, 0], bladesymphony: [0, 40, 180, 10], voidbreaker: [20, 20, 60, 1], shadowrealm: [45, 0, 120, 0], soulcapture: [60, 35, 180, 0], darkimpulse: [60, 40, 180, 0], recurrentnova: [110, 35, 120, 0], frostnova: [0, 0, 0, 0], blackhole: [200, 50, 300, 5], piercingknight: [0, 0, 0, 0], spiralshield: [0, 50, 90, 0], leviathan: [90, 65, 330, 1] };
   const ids = vm.runInContext("SKILL_INTERNAL_ID", sandbox);
   for (const k of Object.keys(table)) {
     const sk = SKILLS.find(s => s.id === "tot_ex_" + k), [mp, sp, cd, hits] = table[k];
@@ -1707,7 +1707,7 @@ console.log(`Verified ${checkedSummonFeed} summon stat-feed glow checks.`);
 let checkedLckGlow = 0, skippedLckGlow = 0, knownLckGlow = 0;
 // Soft glows whose roll is real but never reaches the shown numbers, checked by hand (2026-10-21). A card leaves this list when its display changes.
 const LCK_GLOW_HIDDEN = {
-  all: Object.fromEntries(["cat_luckyDice", "cat_grandCasinoArcade", "mole_stunMine", "mole_stunGrenade", "penguin_fallingComets", "rabbit_backpack", "whale_shieldBash"].map(id => [id,
+  all: Object.fromEntries(["cat_luckyDice", "cat_grandCasinoArcade", "mole_stunMine", "mole_stunGrenade", "penguin_fallingComets", "tot_ex_recurrentnova_comets", "rabbit_backpack", "whale_shieldBash"].map(id => [id,
     // enemy side: the range's low end is fixed (raw damage from 0, a hit that can miss, or Shield Bash's raw = the player's DEF, which this check
     // can't set) and its high end uses the target's roll at 0, so the target's LCK moves only the hits in between (ทดสอบดาเมจ), never the two ends
     "the target's roll moves only the hits inside the range"])),
@@ -1717,6 +1717,8 @@ const LCK_GLOW_HIDDEN = {
   // ToT makes Mike Circle active with a 3 s agiAdjust cooldown shown in whole seconds (1.3-1.5 s at AGI 128 rounds up to 2 s): same case as the tto list
   tot: { monkey_mikeCircle: "the cooldown roll crosses a whole second only at some AGI values" },
 };
+// A ToT-only comet card keeps ToT's rolls on the TTO pass (the page stays on ToT), so it needs the scatter reason there too
+LCK_GLOW_HIDDEN.tto.tot_ex_recurrentnova_comets = LCK_GLOW_HIDDEN.all.penguin_fallingComets;
 if (RUN_DAMAGE_CHECKS) {
   const inputs = sandbox._statInputs, bad = [], savedIn = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
   for (const k of Object.keys(inputs)) inputs[k].value = DATA_ROLE_DEFAULTS[k] !== undefined ? DATA_ROLE_DEFAULTS[k] : "128";   // known stats: earlier checks leave inputs changed (ATK 0 pins every hit at 1)
