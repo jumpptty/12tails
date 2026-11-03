@@ -14190,15 +14190,27 @@ function renderStatusTip(cls, desc, lck, statusPath = []){
     .replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>'), lck, statusPath);
   return `<span class="sk-status-tip" onclick="event.stopPropagation()"><span class="sk-status-tip-type">${cls}</span>${desc ? `<span class="sk-status-tip-divider"></span><span class="sk-status-tip-desc">${desc}</span>` : ""}</span>`;
 }
-// Status tips are centred on their keyword; near a screen edge (phones) nudge them back inside.
+// Status tips are centred on their keyword; near the edge of the window, or of the nearest box that clips them (user 2026-11-03: in the
+// in-game tooltip modal, which scrolls, a tip was cut off at its edge and gave it a scrollbar), nudge them back inside. The nudge is measured
+// on screen, so a scaled stage or a zoomed pop-up (fitGameTipModal) moves the tip by the right amount.
 function clampStatusTip(kw){
   const tip = kw && kw.querySelector(":scope > .sk-status-tip");
   if (!tip) return;
+  let lo = 0, hi = document.documentElement.clientWidth;
+  for (let p = kw.parentElement; p && p !== document.body; p = p.parentElement){
+    const cs = getComputedStyle(p);
+    if (cs.overflowX === "visible" || cs.display === "inline" || cs.display === "contents") continue;   // overflow does not apply to these, so they never clip
+    const box = p.getBoundingClientRect(), s = box.width / (p.offsetWidth || 1) || 1;
+    lo = Math.max(lo, box.left + p.clientLeft * s); hi = Math.min(hi, box.left + (p.clientLeft + p.clientWidth) * s);
+    break;
+  }
+  tip.style.setProperty("--tip-dx", "100px");
+  const moved = tip.getBoundingClientRect().left;
   tip.style.setProperty("--tip-dx", "0px");
-  const r = tip.getBoundingClientRect(), vw = document.documentElement.clientWidth, m = 8;
+  const r = tip.getBoundingClientRect(), k = (moved - r.left) / 100 || 1, m = 8;
   let dx = 0;
-  if (r.left < m) dx = m - r.left; else if (r.right > vw - m) dx = vw - m - r.right;
-  if (dx) tip.style.setProperty("--tip-dx", Math.round(dx) + "px");
+  if (r.left < lo + m) dx = lo + m - r.left; else if (r.right > hi - m) dx = hi - m - r.right;
+  if (dx) tip.style.setProperty("--tip-dx", Math.round(dx / k) + "px");
 }
 document.addEventListener("mouseover", (e) => { const k = e.target.closest && e.target.closest(".sk-status"); if (k) clampStatusTip(k); });
 document.addEventListener("click", (e) => { const k = e.target.closest && e.target.closest(".sk-status"); if (k) requestAnimationFrame(() => clampStatusTip(k)); });
@@ -39030,6 +39042,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-03T01:39:10.342Z","fix(bible): status pop-ups in the in-game tooltip window stay inside it, no cut-off text or scrollbar"],
     ["2026-11-03T01:33:43.420Z","fix(bible): clearer Thai on 21 of the 36 TTO Lv 100 skill descs, wording only"],
     ["2026-11-03T01:21:35.859Z","feat(bible): skill details zoom goes up to 300% and starts at the fit on every visit"],
     ["2026-11-03T01:17:04.526Z","fix(bible): Apex Hunt says a kill by any of its arrows, not the splash, resets the Slayers"],
