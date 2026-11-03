@@ -24,7 +24,10 @@ function loadSim(){
   if (a < 0 || b < 0) throw new Error("index.html: SKILL_SIM block not found (anchors: 'const SKILL_SIM = {', '// Clearing a tree prunes')");
   const box = {};   // the block also adds the EX icons to SKILL_ICONS, so the sandbox gets an empty one
   const cap = (s.match(/^const LEVEL_CAP = [^\r\n]*/m) || [""])[0];   // the block reads LEVEL_CAP (the server caps), defined elsewhere in index.html
-  vm.runInNewContext(cap + "\n" + s.slice(a, b) + "\n;Object.assign(box, { SKILL_SIM, SKILL_SIM_NAMES, SKILL_SIM_EX, SKILL_SIM_SERVERS, skillSimCells, skillSimValid, skillSimCellsFor, skillSimPools });", { box, SKILL_ICONS: {}, SKILLS: [], SERVER_SHORT: {}, SERVER_FULL: {} });
+  // the ToT / TTO C6 toggle and TTO patch tables in between edit SKILLS cards, which this sandbox does not have (broke the script from fb0e921, 2026-11-02): skip them
+  const t1 = s.indexOf("// ToT C6 toggles on original cards", a), t2 = s.indexOf("// The trees of a class on a server", a);
+  const block = t1 > a && t2 > t1 && t2 < b ? s.slice(a, t1) + s.slice(t2, b) : s.slice(a, b);
+  vm.runInNewContext(cap + "\n" + block + "\n;Object.assign(box, { SKILL_SIM, SKILL_SIM_NAMES, SKILL_SIM_EX, SKILL_SIM_SERVERS, skillSimCells, skillSimValid, skillSimCellsFor, skillSimPools });", { box, SKILL_ICONS: {}, SKILLS: [], SERVER_SHORT: {}, SERVER_FULL: {} });
   return box;
 }
 const TREE_NAMES = ["Basic", "A", "B", "C"];
@@ -67,7 +70,8 @@ function problems(sim, cells, set, lv){
   }
   const PL = sim.skillSimPools(cells);
   if (used > PL.normal(lv)) out.push("normal points: " + used + " used, Lv " + lv + " gives " + PL.normal(lv));
-  if (usedC > PL.c(lv)) out.push("Class C points: " + usedC + " used, Lv " + lv + " gives " + PL.c(lv));
+  const usedCAll = usedC + (PL.exInC ? usedEx : 0);   // TTO patch 1.6.2.1: the Lv 100 skill spends a C point too
+  if (usedCAll > PL.c(lv)) out.push("Class C points: " + usedCAll + " used, Lv " + lv + " gives " + PL.c(lv));
   if (usedEx > PL.ex(lv)) out.push("EX points: " + usedEx + " used, Lv " + lv + " gives " + PL.ex(lv));
   for (let t = 0; t < 4; t++){
     const bns = [...set].filter(id => cells[id] && !cells[id].ex && cells[id].tree === t).map(id => cells[id].bn).sort((x, y) => x - y);
@@ -107,7 +111,7 @@ function build(draft){
   if (bad.length || !sim.skillSimValid(cells, trees.length, learned, lv)) throw new Error("the build breaks the learn rules (re-read the screenshot):\n  " + (bad.length ? bad.join("\n  ") : "skillSimValid says no"));
   let used = 0, usedC = 0, usedEx = 0;
   for (const id of learned){ if (cells[id].ex) usedEx++; else if (id < 400) used++; else usedC++; }
-  const PL = sim.skillSimPools(cells), pools = "normal " + used + "/" + PL.normal(lv) + ", C " + usedC + "/" + PL.c(lv) + (draft.server === "tot" ? ", EX " + usedEx + "/" + PL.ex(lv) : "");
+  const PL = sim.skillSimPools(cells), pools = "normal " + used + "/" + PL.normal(lv) + ", C " + (usedC + (PL.exInC ? usedEx : 0)) + "/" + PL.c(lv) + (draft.server === "tot" ? ", EX " + usedEx + "/" + PL.ex(lv) : "");
   const notes = {};
   for (const [k, text] of Object.entries(draft.notes || {})){
     const id = resolve(cells, learned, k), body = String(text).trim();
