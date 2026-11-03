@@ -1113,3 +1113,10 @@ These were first wired from the `// คำอธิบาย:` comments (user 20
 - **Missing:** when `IsShadowExecutionEvading` is true (not in the excerpt).
 
 - **Tooltip mismatch (card `tooltipNote`, 2026-11-03):** the ToT description (`ToTC6:Cat/454_ShadowExecution5.cs:3`) says it inflicts Disarm2 / Bleed2; the code gives them once per target, on its first landed pulse, while the SP loss is on every landed pulse (`ToT1103:C6/Cat/454_ShadowExecution5.cs:178-189`). While the skill runs, `IsShadowExecutionEvading` turns incoming hits into evades and Vendetta (364) gives +10 SP each (`ToT1103:Shared/gameplay_math.cs:221-229`).
+
+### Supplement (ToT1103S, 2026-11-03)
+
+`ToT1103S:` = `ToT_Skillsim_2026-11-03_supplement/supplement-20261103/methods/<path>`, the ToT team's answer of 2026-11-03 (AGENTS.md): skill catalog, default balance blocks, every `addTimeOut` / `RPC_AddStatus` call, every `Start()`. Client defaults, not checked against the live server. Where it contradicts a ToT patch note, the cards follow the code (the client sets these values itself) and the note's number stays here.
+
+- **Costs:** the catalog matches the C6 cards (`ToT1103S:Catalog/Catalog_Cat.cs`, rows 452-454).
+- **ShadowExecution5 evasion:** `IsShadowExecutionEvading` is true only in phase `strike` or `held`, and only with skills 454, 431 (Swift Pace), 364 (Vendetta) and 371 (Delta Strike) learned (`ToT1103S:References/Cat_ShadowExecution.cs:4-16`); `strike` starts in `ReceiveShadowExecutionArrival` (`:18-24`). So there is no evasion during the throw, the hide or the four mark bursts: only from the warp arrival to the end of the 0.5 s hold. The card said "ระหว่างท่า"; it now names the window and the three skills.

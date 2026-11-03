@@ -1084,3 +1084,10 @@ These were first wired from the `// คำอธิบาย:` comments (user 20
 - **ToT1103 (2026-11-03):** the card matches: a 0.5 s pose then 1.0 s, with no MAG, and 2 is the half-width (`ToT1103:C6/Rabbit/454_ThousandShot5.cs:123, :163-188, :218-221`). The ToT team's note (2.5 s, width 2) reads this differently; the code wins. It starts a mission on `agiAdjust(200)` (`ToT1103:START_COOLDOWNS.md`).
 - **Desc rewrite (2026-11-03, ToT1103):** cooldown at the press (`ToT1103:C6/Rabbit/454_ThousandShot5.cs:34-61`); a second gun appears (`:93`); the 0.5 s pose aims at the selected target (`:123-131`), then 1.0 s more, aiming only during the fire prefab's bullet delay (`:163-188`); pulses at 1.5-2.4 s, each re-reading the box from the Rabbit's current position and facing (`:216-228`); 0.1 + 0.12 s to the end (`:230`, `:238-242`); an interrupt stops the rest (`:126`, `:130`, `:166`, `:170`, `:189`, `:231`). No SP line in the excerpt. Card `tooltipNote`: the in-game text leaves out the 10 pulses on every enemy and the 1.5 s wind-up (`ToTC6:Rabbit/454_ThousandShot5.cs:3`).
 - **Missing:** nothing for the card.
+
+### Supplement (ToT1103S, 2026-11-03)
+
+`ToT1103S:` = `ToT_Skillsim_2026-11-03_supplement/supplement-20261103/methods/<path>`, the ToT team's answer of 2026-11-03 (AGENTS.md): skill catalog, default balance blocks, every `addTimeOut` / `RPC_AddStatus` call, every `Start()`. Client defaults, not checked against the live server. Where it contradicts a ToT patch note, the cards follow the code (the client sets these values itself) and the note's number stays here.
+
+- **Costs:** the catalog matches the C6 cards (`ToT1103S:Catalog/Catalog_Rabbit.cs`, rows 452-454).
+- **MiracleShot5 MP (answers the liveCheck):** for commands 251-254 (Immune, Boost, Heat, Life Shot) with 452 and 254 learned, `ceil(MP × 50 / 100)` after Revised Magic's `ceil(0.8 ×)` (`ToT1103S:References/Shared_MpDiscountAndCSkillCap.cs:52-61`; `mpReductionPercent 50`, `Balance_DefaultValues.cs:620-636`). The card's liveCheck became a bullet in its ## ติดตัว topic; the four shot cards' own cost chips still show the BB cost.

@@ -791,3 +791,12 @@ These were first wired from the `// คำอธิบาย:` comments (user 20
 - **Lock range on the card:** the old desc said "ล็อกเป้าได้ไม่จำกัดระยะ", which read against the card's `REACH_LOCK40`. The rewrite says the target is picked with the normal lock and the beam then follows it with no distance check (`:352-356`).
 - **Tooltip mismatch:** the Thai text (`ToT_C6Data/Mole/454_Nuclear5.cs:3`) only says a big missile falls from the sky and deals heavy damage and KO in a wide area; it leaves out the target lock, the 5 s follow, the 2 s fall at the locked spot and the 10 s burning ground (no DEF). Card `tooltipNote`.
 - **Missing:** nothing for the card.
+
+### Supplement (ToT1103S, 2026-11-03)
+
+`ToT1103S:` = `ToT_Skillsim_2026-11-03_supplement/supplement-20261103/methods/<path>`, the ToT team's answer of 2026-11-03 (AGENTS.md): skill catalog, default balance blocks, every `addTimeOut` / `RPC_AddStatus` call, every `Start()`. Client defaults, not checked against the live server. Where it contradicts a ToT patch note, the cards follow the code (the client sets these values itself) and the note's number stays here.
+
+- **Costs:** the catalog matches the C6 cards (`ToT1103S:Catalog/Catalog_Mole.cs`, rows 452-454).
+- **MissileBot5's extra missile (answers the liveCheck):** Missile fires `lv == 4 ? 5 : lv + 1` and Barrel Bot sets `MissileLv = MissileCount` (5), read at the cast (`ToT1103S:References/Mole_MissileBotLinks.cs:59-60, :79-90`), so the toggle's `rank + 1` is code.
+- **Mine Lover still boosts the mines (supersedes decision 1 of 2026-10-28 above):** Landmine `addTimeOut("mine", agiAdjust(hasSkill(402) ? 8 : 15))` and damage `floor(1.5 × talAdjust(10 × sLv + 10))` with 402; Stun Mine `agiAdjust(hasSkill(402) ? 23 : 45)` and KO `floor(1.5 × 10 × (sLv + Grenade Cluster))` (`ToT1103S:References/Balance_Mole.cs:165-177, :270-282, :296-308, :392-405`). So on ToT the bonus is ×1.5 (BB ×1.25) and the patch note's "50%" is the code. The mine cards' ToT tabs keep the Mine Lover toggles at ×1.5 and link Mine Lover again.
+- **Blast Throw (Mine Lover's ToT press, command 402, catalog MP 10 / SP −20, `instant` / `enemy`, `ToT1103S:Catalog/Catalog_Mole.cs:82`):** `RPC_blastThrow` sets `agiAdjust(hasSkill(402) ? 60 : 120)`, plays a 0.6 s throw at the selected target (else 12 m ahead), and the projectile's impact runs `RPC_mine_hit` at level 4 plus Smart Shell's hit when learned (`Balance_Mole.cs:1-130`). The Mine Lover ToT tab now has the cost, the 60 s cooldown and these lines.
