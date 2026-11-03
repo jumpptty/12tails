@@ -1,0 +1,32 @@
+# ToT C6 cards and the 2026-11-03 supplement: handoff
+
+Written 2026-11-03 at the office PC (repo `C:\Users\Jump\Desktop\12tails`) so work can resume at home (`D:\12tails`). Everything below is pushed except the git-ignored ToT folders, which travel on the flash drive (folder `12tails_to_home_2026-11-03`, see its `README.md`).
+
+## Where things stand
+
+- **ToT C6 cards from ToT's code (batch `ToT_Skillsim_2026-11-03/`, cited `ToT1103:`):** done and pushed for Wolf (2424742), Bat (fe40f6d), Penguin (355c79c), Bison (fab9816), Monkey (13ea418), on top of the six classes done earlier (Cat, Chameleon, Mole, Rabbit, Sheep, Whale). **Panda is the only class left and is on hold** (user, 2026-11-03: "don't do panda yet").
+- New app options added on the way (rules in the `bible-*` skills): `durContestFn` (ToT's own CHA-contest time, Bat), per-group `penetrating` on `dmgModes` rows (Monkey Rum Bling), ToT Berserker Rush chance 16 × rank (from ToT's code, user OK'd), guide #91 added and #72 replaced, the outdated-TTO-guide pin counting C points the 1.6.2.1 way.
+- Each class file's last section `## ToT C6 skills (ToT1103 client code, 2026-11-03)` in `12t_reference/` lists what the code shows and what stays `ไม่สามารถยืนยันได้จากโค้ด`.
+
+## The supplement (`Skillsim-Supplement-20261103.zip`, extracted to `ToT_Skillsim_2026-11-03_supplement/`, git-ignored)
+
+ToT's answer to our request: the full skill catalog (1,303 entries with MP / SP), default balance blocks of 49 files (`References/Balance_DefaultValues.cs`), 493 `addTimeOut` / `RPC_AddStatus` call sites (`References/TimingCalls_<Class>.cs`), every class's `Start()` (`References/Start_<Class>.cs`) and the methods we asked for (Double Art, Instant Cast, Rising Dragons, Shadow Execution, Tails Neverdie, Reflect Encounter, MissileBot, Steel Skin, MP discounts, C-point cap). Its values are the client's local defaults (README: not checked against the live server). **Not applied to the app yet.** Citation tag still to decide; proposal: `ToT1103S:References/<file>:<line>` (path from its `methods/` folder).
+
+### Checked so far (2026-11-03, not yet on the cards)
+
+1. **C6 costs:** the catalog matches every C6 card's MP / SP, so the cost lines can drop their `ไม่สามารถยืนยันได้จากโค้ด`.
+2. **Start-of-mission cooldowns:** `Start_<Class>.cs` sets exactly the keys the cards mark with `cdMapStart`, all `agiAdjust`, only when `Game.mGameType > 4`: Bat darkImpulse 180, Bison desTroyer 225, Cat shadowExecution (tuning), Chameleon slayerBurst (tuning), Mole nuclear 300, Monkey rumBling 240, Panda DivineFist 270 (Panda C6 not built yet), Penguin blackHole 300, Rabbit thousandShot 200, Sheep devineSactuary 120, Whale leviathan 330, Wolf voidBreaker 60. The C6 cards' "คูลดาวน์ตอนเข้าด่าน (ทีม ToT ระบุ …)" lines can become verified.
+3. **Cooldown adjusters now in code:** both Bat cast helpers `addTimeOut(skill, agiAdjust(cooldown))` (`TimingCalls_Bat.cs` lines of `RunBatEndgameLongCast` / `RunBatMaintainedLongCast`); Penguin `RPC_cast1` `addTimeOut(sType, agiAdjust(finalTimeout))` and Recurrent Nova sets both the `manaVortex` and the `recurrentNova` keys (`TimingCalls_Penguin.cs`). Whether the Bat / Penguin casts are INT-adjusted is still not shown.
+4. **Balance numbers that answer team-only notes:** Rum Bling `wavePulse` (damage 50, KO 15, radius 12, interval 3, buffValue 4), `flashFire` interval 0.5, `hammerStone` radius 43.2, interval 4 (`Balance_DefaultValues.cs:771-806`; which getter reads which phase is inferred from the names); Buiten Guard `buffDuration 10`, `buffValue 200` (`:352-366`); Shadow Realm tick `"40"`, interval 4, `effectDamage` (`:859-870`, the tick code itself is still missing); Fire Avatar cooldown 600 → 120 with skill 452 (`Balance_MonkeyFire.cs:1319-1327`).
+5. **New detail for the cards:** Tails Neverdie (`Sheep_ReviveAndReflect.cs:25-73`) resets learned cooldowns except a list that includes darkImpulse, desTroyer, rumBling, blackHole and voidBreaker, so Shadow Realm, Soul Capture, Blade Symphony, Reincarnation, Ja Burst, Buiten Guard and Recurrent Nova are reset. Berserker Rush's heal is `ceil(min((0.04 lv + 0.04) × maxDamage, 8 lv))` (`Balance_Bison.cs:957-969`), so RageKing's extra level raises it: check the card.
+6. **Still missing after the supplement:** Reincarnation's cooldown-cut list, VoidBreaker's flat-45 vs % statuses, Shadow Realm +30% / Amplify Damage, `FindBatAreaTargets` cap, Soul Capture's CHA tick / immunity / Drain Life, Dark Impulse +30 stats, Frost Nova's caller and the Arctic Wind / Deadly Frost cuts, Recurrent Nova tower HP and cast time, Black Hole pull height / core size / Meteora finale, the DesTroyer wave constants, rageKing +60 AGI, Rum Bling's duration / heights / stone count / release delays, Buiten Guard's tick count and Effect Damage absorb caller, Ja 4 HP 800 + aura.
+7. **Bible BB-tab costs that disagree with BB's own decoded data AND the ToT catalog (likely card errors, not ToT changes; to confirm and fix):** Mass Cast 2 (40 / −20, card 30 / −15); Guardian of the Night 2 (90 / −45, card 70 / −35); Two Pair, Sweep, Shield Rush and Flying Shield SP is a threshold (+), cards show it spent; Sweep 2 card MP 10 / SP −8 (BB 0 / +16); Javelin card MP 10 (BB 0); Peninsula Round (BB MP 10 / 15, SP −21 / −30, card 0 / −20 / −25); 12th Kingdom Knight 2 (SP −65, card −60); Mana Burn 2 (MP 30, card 20); Stone Hammer has no cost on the card (BB MP 12 / 20 / 28 / 36); Instant Cast lacks SP −15 / −20. Also check: Lavu ToT tab MP 120 vs catalog 100 (SP −50 matches), Delay Qi (catalog SP −24, passive) and Crumbling Mountain (card SP 40, catalog 0). Script: `supp_compare.js` on the flash drive (needs paths adjusted).
+8. **Second audit (older ToT items, the six 2026-11-02 classes, Panda Lotus Palm / Rising Dragons, Double Art, Instant Cast, Steel Skin, Bubble Burst, Reflect Encounter, MissileBot, MP discount, C-point cap):** see `supplement-audit-older-items.md` on the flash drive if it finished before 17:50, else re-run it at home.
+
+## Next steps (ask the user before each)
+
+1. Decide the citation tag for the supplement and note the folder in AGENTS.md (like the ToT1103 batch).
+2. Apply items 1-5 to the cards and class files (drop the answered `ไม่สามารถยืนยันได้จากโค้ด` lines, add Tails Neverdie, check Berserker Rush's heal level).
+3. Fix the BB-tab costs of item 7 after confirming each against `py scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs`.
+4. Apply the second audit's findings.
+5. Panda C6 when the user says so.
