@@ -780,3 +780,12 @@ Cards `tot_ex_rageking` / `tot_ex_earthquake` (passives, ToT toggles on the card
 - `BeginEndgameAction(…, 0, agiAdjust(225))` at the press (`454_DesTroyer5.cs:58-69`); 1.95 s + 0.3 s (aborted if the action changed), wave 1 at `pos + 4 × forward` (fixed), `RPC_DesTroyer_fire` starts; the action ends 0.2 + 0.6 s later (`:94-165`).
 - `RPC_DesTroyer_fire` (`:168-213`) runs on regardless of the action: for wave 1…`WaveCount − 1`, wait `Interval − PullDuration`, pull for `PullDuration` (`PullDestroyerTargets` `:298-346`: `FindLegacyAreaTargets(centre, 15 × rangeMod, 2 × rangeMod)` from the balance block, each target on its own client, alive, movable, flattened toward the centre at 3 m/s, stopping 0.35 m out), then wave k with multiplier `First + Step × k`. The constants (`DestroyerRework*`) are not in the batch; the team (`C6_GAMEPLAY.md`): 4 waves, 3 s apart, 1.5 s pull, ×1 / 1.15 / 1.30 / 1.45.
 - `ApplyDestroyerWaveDamage` (`:244-295`): `RoundToInt(CalcDamage("1.5 * atk + talAdjust(100)") × m)` (rolled again each wave), `FindLegacyAreaTargets(centre, 7 × rangeMod × m, 2 × rangeMod)`, wave 1 KO 100 (99 after `koAdjust`) hate 200, later waves KO 50 hate 100, force (0, 1, 0). `PARITY_VECTORS.md:20`: ATK 120 / TAL 80 → 440.
+
+### Supplement (ToT1103S, 2026-11-03)
+
+`ToT1103S:` = `ToT_Skillsim_2026-11-03_supplement/supplement-20261103/methods/<path>`, the ToT team's answer of 2026-11-03 (AGENTS.md): skill catalog, default balance blocks, every `addTimeOut` / `RPC_AddStatus` call, every `Start()`. Client defaults, not checked against the live server.
+
+- **Costs:** DesTroyer5 MP 70 / SP −70 matches the catalog; RageKing5 and EarthQuake5 are passives with no cost (`ToT1103S:Catalog/Catalog_Bison.cs`, rows 452-454).
+- **Start of mission:** `desTroyer` `agiAdjust(225)` when `Game.mGameType > 4` (`ToT1103S:References/Start_Bison.cs`), as the card's chip says.
+- **Berserker Rush heal:** `heal = ceil(min((0.04 lv + 0.04) × maxDamage, 8 lv))`, `RPC_AddHeal(250 + lv, heal)`, lv = the `berserkerRush` status level (`ToT1103S:References/Balance_Bison.cs:957-969`): the BB formula. RageKing5's +1 level therefore raises it (status level 5: 24% of the swing's largest hit, cap 40 HP); the RageKing5 card says so.
+- **Still missing:** the DesTroyer wave constants (multipliers, spacing, pull time), rageKing's +60 AGI, EarthQuake5's KO cut on targets another machine controls.

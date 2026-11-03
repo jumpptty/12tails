@@ -25,8 +25,8 @@ ToT's answer to our request: the full skill catalog (1,303 entries with MP / SP)
 
 ## Next steps (ask the user before each)
 
-1. Decide the citation tag for the supplement and note the folder in AGENTS.md (like the ToT1103 batch).
-2. Apply items 1-5 to the cards and class files (drop the answered `ไม่สามารถยืนยันได้จากโค้ด` lines, add Tails Neverdie, check Berserker Rush's heal level).
+1. **Done 2026-11-03 (home PC):** tag `ToT1103S:References/<file>:<line>` / `ToT1103S:Catalog/<file>:<line>`, in AGENTS.md.
+2. **Done 2026-11-03 (home PC):** items 1-5 on the cards and in the class files' `### Supplement (ToT1103S, 2026-11-03)` subsections (Bat, Bison, Monkey, Penguin, Wolf, Sheep); Fire Avatar got a ToT JaBurst5 toggle (120 s base).
 3. Item 7 is fixed; still decide Lavu's ToT MP (120 on the card vs 100 in ToT's catalog), Delay Qi and Crumbling Mountain.
 4. Apply the second audit's findings.
 5. Panda C6 when the user says so.
