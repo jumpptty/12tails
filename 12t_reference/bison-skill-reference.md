@@ -584,6 +584,7 @@ Private-server values are documented from the Bible skill-detail schema; BigBug 
 | Skill | Original BigBug baseline | ToT delta |
 |---|---|---|
 | Over Power | 600s base cooldown. | Base cooldown reduced to 420s. |
+| Berserker Rush | `lckAdjust(4 × rank)`, 4 / 8 / 12 / 16% before LCK (`Bison.cs:7812`). | `lckAdjust(16 × rank)`, 16 / 32 / 48 / 64%, in ToT's own `getBerserkerRush`, with or without RageKing5 (`ToT1103:C6/Bison/452_RageKing5.cs:13-37`); no patch note mentions it (found 2026-11-03, user OK'd the card change). |
 
 Source of server delta: `12t_projects/bible/index.html:8972`.
 
@@ -761,3 +762,21 @@ Source of the table: [TailsTopia skill simulator](https://tailstopia.online/skil
 | 452 | Unchained Fury (`bison_unchainedFury`) | Active | 254 | 40 | 40 | Physical | self | จ่าย HP 15% ล้างสถานะผิดปกติทั้งหมด (3sec) แล้วเข้า Berserker Rush ขั้นสูงสุด 12 วิ ใช้ได้แม้ติดสตัน |
 | 453 | Titan Drop (`bison_titanDrop`) | Active | 354 | 45 | 50 | Physical | enemy | กระโดดใช้ขวานทุบเป้าหมายสร้างคลื่นกระแทกออกไปอีก 2 คลื่นและสร้าง KO |
 | 454 | Magma Quake (`bison_magmaQuake`) | Active | 434 + 444 | 65 | 65 | Physical | self | ฟาดพื้นตามอาวุธที่ไบสันถือ ขวานสร้างทุ่งลาวาเผาศัตรู (6sec) ค้อนกระโดดทุบเกิดแผ่นดินไหว KO ต่อเนื่อง (5sec) |
+## ToT C6 skills (ToT1103 client code, 2026-11-03)
+
+Cards `tot_ex_rageking` / `tot_ex_earthquake` (passives, ToT toggles on the cards they change) / `tot_ex_destroyer`, `onlyServer: "tot"`, cells 452-454. Code: `ToT_Skillsim_2026-11-03/methods/C6/Bison/` (cited `ToT1103:C6/Bison/<file>:<line>`). DesTroyer's MP 70 / SP 70 and its 225 s start-of-mission cooldown come only from the team's `SKILL_COSTS.md` / `START_COOLDOWNS.md`.
+
+### RageKing5 (cell 452, passive)
+- `getBerserkerRush` (`452_RageKing5.cs:4-77`): own client, the frame after damage (`myDamage == -1`); level = owned ranks 251-254; `Random.Range(0, 100) < lckAdjust(16 × level)` (BB `4 × level`, so the ToT chance is 4× BB's for every Bison; Server Balance Variations (ToT)); bonus = Rage Control (402) + RageKing (452); time `chaAdjust(3 + 3 × bonus)`; with 452 `RPC_AddHeal(452, 24, …)` (HP +24) and `rageKing` (level = level + bonus, same time, value 60; the team: AGI +60); `berserkerRush` level + bonus.
+- Enrage (`:80-164`): cooldown `agiAdjust(30)`; status `enrage` level `sLv + (402) + (452)`, time `chaAdjust(12 + 12 × that bonus)`, 0.5 s after the press.
+- Hold Charge (`:174-259`): the stored `holdCharge` is level 6 with 452 (1 without); time and value as BB.
+- Bible: toggles on Berserker Rush (level, base time, line; plus the unconditional ToT chance chip and change note), Enrage (level, base time), Hold Charge (level 6), Rage Control (line).
+
+### EarthQuake5 (cell 453, passive)
+- Earth Rupture (`453_EarthQuake5.cs:4-210`): cooldown `agiAdjust(60)`, waves 0.8 s after the press from `pos + (0, 0.2, 0.4)`; with 453 at rank 2 `RPC_earthRupture_fire3`: 5 projectiles at `i × 25°` (i = −2…2), scale ×1.5, velocity ×1.3 (12 → 15.6 m/s, life 2 s ≈ 31 m); rank 1 and rank 2 without 453 as BB. Each wave hit `(int)(0.5 × ATK + talAdjust(30))`, KO 5; with 453 (any rank) a landed hit also does `targetControl.ko -= 10` on the attacker's own copy of the target (`:422-434`), not through `hit()`'s KO (`myKo`, applied by the owner, 12Tails-Mechanics-Reference.md §4.2.2), so whether it sticks on a target another client owns is not in the code. The card's KO badge shows 5 + 10.
+- Earth Smasher (`:213-377`): `agiAdjust(180) × 0.5` with 453, handed to `BisonSkillBeginAction` (before `addTimeOut`, so before Revised Art; the card's `cdBuffDep` finalMultiply applies it after Revised Art, at most 0.5 s off with Revised Art and exact without); 0.8 s, `moveSpeed 2` for 0.6 s, then `FindLegacyAreaTargets(pos, 7 × rangeMod, 2 × rangeMod)`: `floor((0.5 sLv + 0.5) × ATK + talAdjust(50 sLv))`, KO 20 + 20 sLv, SP +1 per landed hit, and with 453 `heavy` 1 for a flat 4 s.
+
+### DesTroyer5 (cell 454, `RPC_DesTroyer`)
+- `BeginEndgameAction(…, 0, agiAdjust(225))` at the press (`454_DesTroyer5.cs:58-69`); 1.95 s + 0.3 s (aborted if the action changed), wave 1 at `pos + 4 × forward` (fixed), `RPC_DesTroyer_fire` starts; the action ends 0.2 + 0.6 s later (`:94-165`).
+- `RPC_DesTroyer_fire` (`:168-213`) runs on regardless of the action: for wave 1…`WaveCount − 1`, wait `Interval − PullDuration`, pull for `PullDuration` (`PullDestroyerTargets` `:298-346`: `FindLegacyAreaTargets(centre, 15 × rangeMod, 2 × rangeMod)` from the balance block, each target on its own client, alive, movable, flattened toward the centre at 3 m/s, stopping 0.35 m out), then wave k with multiplier `First + Step × k`. The constants (`DestroyerRework*`) are not in the batch; the team (`C6_GAMEPLAY.md`): 4 waves, 3 s apart, 1.5 s pull, ×1 / 1.15 / 1.30 / 1.45.
+- `ApplyDestroyerWaveDamage` (`:244-295`): `RoundToInt(CalcDamage("1.5 * atk + talAdjust(100)") × m)` (rolled again each wave), `FindLegacyAreaTargets(centre, 7 × rangeMod × m, 2 × rangeMod)`, wave 1 KO 100 (99 after `koAdjust`) hate 200, later waves KO 50 hate 100, force (0, 1, 0). `PARITY_VECTORS.md:20`: ATK 120 / TAL 80 → 440.
