@@ -3678,14 +3678,14 @@ let checkedRsim = 0;
   ok(gated && rule([gated], 95) === "tree" && probs(R, rn, new Set([gated]), 95)[0].text.includes(rn[R[gated].tree]), "a skill above its tree's rank threshold names the tree");
   ok(gated && budget(R, new Set([gated]), 95) && !budget(R, new Set([gated]), R[gated].lv - 1), "the budget check ignores thresholds but keeps the level");
 }
-// ToT EX: published server allocation rules, independent pools and reset pruning.
+// ToT EX: published server allocation rules, independent pools and reset pruning. Prerequisites: the published lists, except RageKing5 = 254 + 402 from ToT's own upgrade check (ToT1104:C6_RequiredSkills.cs:12, 2026-11-04).
 {
   const EX = vm.runInContext("SKILL_SIM_EX", sandbox), ALL = vm.runInContext("SKILL_SIM", sandbox);
   const cellsFn = vm.runInContext("skillSimCells", sandbox), valid = vm.runInContext("skillSimValid", sandbox), auto = vm.runInContext("skillSimAutoLearn", sandbox);
   const pool = vm.runInContext("skillSimPoolMaxEx", sandbox), clear = vm.runInContext("skillSimClearTree", sandbox), unlearn = vm.runInContext("skillSimUnlearnMarker", sandbox);
   const ok = (pass, msg) => { if (pass) checkedRsim++; else { console.error("[SKILL SIM ERROR] ToT EX: " + msg); errorCount++; } };
   [[1,0],[94,0],[95,1],[99,1],[100,2]].forEach(([lv,n]) => ok(pool(lv) === n, "pool at level " + lv));
-  const expected = { bat:[[254],[354],[422]], bison:[[204,402,431,254],[354],[354]], monkey:[[254,402,432],[354,433],[372,403]], panda:[[254],[354],[364,443]], penguin:[[254,244],[354,413,443],[271,444]], wolf:[[254],[354],[422]], cat:[[254],[354,364],[431,364,371]], chameleon:[[254],[354],[344,354,364]], mole:[[254],[354],[273,412]], rabbit:[[254],[354],[372]], sheep:[[254],[354],[433,443]], whale:[[254],[354],[373]] };
+  const expected = { bat:[[254],[354],[422]], bison:[[254,402],[354],[354]], monkey:[[254,402,432],[354,433],[372,403]], panda:[[254],[354],[364,443]], penguin:[[254,244],[354,413,443],[271,444]], wolf:[[254],[354],[422]], cat:[[254],[354,364],[431,364,371]], chameleon:[[254],[354],[344,354,364]], mole:[[254],[354],[273,412]], rabbit:[[254],[354],[372]], sheep:[[254],[354],[433,443]], whale:[[254],[354],[373]] };
   ok(Object.keys(EX).sort().join() === Object.keys(ALL).sort().join(), "all 12 classes covered");
   for (const cls in EX){
     const cs = cellsFn(ALL[cls], null, EX[cls]), base = cellsFn(ALL[cls]);

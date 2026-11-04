@@ -609,7 +609,7 @@ Source: [ToT bison simulator dataset](https://talesoftails.net/data/skill-simula
 | Cell | Published skill name | Level | Ordinary C skills required | Explicit prerequisite cells | Type / availability |
 |---|---|---|---|---|---|
 | 451 | UpdamageMonter | 95 | 0 | None | Passive |
-| 452 | RageKing5 | 100 | 6 | 204, 402, 431, 254 | Active |
+| 452 | RageKing5 | 100 | 6 | 204, 402, 431, 254 (ToT's own check: **254, 402** only, `ToT1104:C6_RequiredSkills.cs:12`, `:220-223`; the hub follows the code since 2026-11-04) | Active |
 | 453 | EarthQuake5 | 100 | 6 | 354 | Active |
 | 454 | DesTroyer5 | 100 | 6 | 354 | Active |
 | 461 | DowndamageMonter | 95 | 0 | None | Passive |
