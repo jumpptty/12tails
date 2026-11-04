@@ -1000,7 +1000,7 @@ TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch
 - **Swift Pace reset on a player kill:** confirmed, only when the Cat itself gets the kill and has #431 (`TTO1102:Cat::OnKilledPlayer@0x1B84510`, `removeTimeOut` −999).
 - **Power series Tree A only:** confirmed (`TTO1102:CharacterControl::hit@0x24D57E0`). **Copycat:** see the corrected Copycat line above. **Nine Lives cooldown:** confirmed, `agiAdjust(60)` now checked (`TTO1102:Cat::TryHandleMineDeathPrevention@0x1B8E520`). **Open Wound on the nAttack-2 Hidden Blade hit:** confirmed (`TTO1102:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BBD340`; BB skips it, `Cat.cs:17390-17441`).
 - **Damage Roulette:** the 1.0.18 self-reflect fix is current code (a self pick is skipped, as BB); its 50% cap is `[แอบ Nerf]` (above).
-- **Feline Agility (no weight cut):** unclear, the weight is built in `TTO1102:CharacterDataClass::updateData@0x1A47AA0`, not decompiled.
+- **Feline Agility (no weight cut):** confirmed in the machine code of `TTO1102:CharacterDataClass::updateData@0x1A47AA0`: the Cat block (from 0x181A48AE3) adds +5 AGI for each of #131-134 and never touches `weight` (BB also `weight −= 3`, `CharacterDataClass.cs:778-829`). Machine code also gives Copycat `agiAdjust(120)` and Damage Roulette's search `FindAreaTarget(24, 12, 0xFFFDFF00)`, allies included as in BB.
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 

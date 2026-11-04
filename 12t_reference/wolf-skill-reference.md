@@ -1063,7 +1063,7 @@ Verified 2026-10-26 against the Reborn build of [Reborn-Mechanics-Reference.md](
 TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
 
 - **Counter / Impulse:** `lv × HP lost` as Effect Damage 330 + lv with no `0.5 × ATK`, confirmed (`TTO1102:Wolf.<RPC_counter2>d__212::MoveNext@0x1F24480`; BB `Wolf.cs:28506`). **nAttack with Dark Edge** keeps its LCK term (Effect Damage outside `hit()`).
-- **Holy Armor / Holy Wolf DEF fix:** the DEF now comes from `InventoryClass::getStatAtt()` instead of `equipment.att[1]` (`TTO1102:Wolf.<RPC_holyArmor>d__231::MoveNext@0x1F2F480`); the size of the change cannot be read. Grand Cross numbers as BB, now damageType Magic.
+- **Holy Armor / Holy Wolf DEF fix:** the DEF now comes from `InventoryClass::getStatAtt()` instead of `equipment.att[1]` (`TTO1102:Wolf.<RPC_holyArmor>d__231::MoveNext@0x1F2F480`); the size of the change cannot be read. Grand Cross numbers as BB, now damageType Magic. Machine code: Holy Armor `chaAdjust(24)` / `agiAdjust(240)`, Grand Cross area 6 × 8 and `agiAdjust(120)`, as the cards.
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
