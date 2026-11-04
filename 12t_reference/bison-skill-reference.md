@@ -699,6 +699,13 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 - Iron Skin and Diamond Skin reduce damage by 8 / 16 / 24% at levels 1 / 2 / 3 (they were 16 / 24 / 24%). Note Reborn fixed the same bug differently, to 16 / 24 / 32%.
 - Iron Skin's range mismatch (tooltip 6 m, code 4 m) is not mentioned, so that note stays.
 
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Iron Skin / Diamond Skin 8 / 16 / 24%:** confirmed, `ceil(dmg × (1 − 0.08 n))` with n = 1 / 2 / 3 (`TTO1102:CharacterControl::RPC_AddDamage@0x24B8150`; BB n = 2 / 3 / 3, `CharacterControl.cs:4142-4290`); ranges unchanged.
+- Nothing else in the Bison notes; no Bison skill found changed.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 All three cells were read from TTO's own client on 2026-11-02 (`TTO1102:`, `DecompiledSource_TTO_2026-11-02/`, see its `BUILD.md`); TTO's `talAdjust` has no LCK term ([12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md#tto-engine-helpers-client-decompile-2026-11-02)). Every wait below was read from the instructions with capstone (Ghidra drops the float argument of `Waits::Get` and `Bison::Until`); times are seconds from the press. A second, independent pass over the same build (2026-11-02) found every number on the three cards in the code again (costs, cooldowns, waits, damage, KO, radii, hit times, status levels and times, the 24 hammer codes, the `StatusData` lists); its corrections are marked "second pass". Shared by the three:

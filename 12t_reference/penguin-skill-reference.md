@@ -745,6 +745,15 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 - Giant Star now adds 50% to Falling Stars' search radius: 12 / 16 m → 18 / 24 m. Falling Comets is not mentioned, so its tooltip note stays.
 - Cosmic Rift: taking purple damage no longer stops the player from leaving it.
 
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Intellect / Astral Talent +(5 + lv):** confirmed in `TTO1102:CharacterControl::getBaseStat@0x24D1800` (the real stat build, `CharacterDataClass::updateData`, is not decompiled). **Arctic Emperor frost 1 / 2, Nova Flare cooldown (BB's key typo "novaFLare"), Giant Star +50%, Cosmic Rift exit:** confirmed.
+- **Blizzard:** move but no skills confirmed (`Penguin::doSkill@0x1DB2B70`); the waves run in their own coroutine whatever the Penguin does (`<RPC_blizzard_fire>d__225@0x1DE2FE0`; BB stopped them once it left attack / blizzard, `Penguin.cs:34535-34546`): `[แอบ Buff]`.
+- **Double Spell (1.0.18):** repeats of Blink / Falling Stars skip the roll (`<RPC_blink>d__180@0x1DC72C0`, `<RPC_fallingStars>d__187@0x1DED300`): card [Fix]. **Ice Shield (1.5.1.1):** KO 0 on every hit while the shield is up and not pierced (`CharacterControl.<AddDamage>d__46::MoveNext@0x2508720`, `::AddEffectDamage@0x24AC200`; BB only on fully absorbed hits): card [Fix] and a TTO popup.
+- **Falling Stars:** each star copies the damage when it spawns (`<RPC_fallingStars_fire>d__189@0x1DEE820`), so Focus Intellect stays on the first cast of a Double / Triple Cast; probably the 1.5.1.1 "Falling Star" fix, unproven, no card change.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 **In-game tooltip on the cards (2026-11-02):** all three cards carry `ttoTip`, TTO's own tooltip text copied unchanged from `DecompiledSource_TTO_2026-11-02/tooltips/penguin.json` (the `SkillDetailData` builders with the client's `locale/th.json`), so the H button draws the game's tooltip on the TTO tab; the mismatches each subsection names are the cards' `tooltipNote`s.

@@ -605,7 +605,7 @@ Open (dependency-line audit 2026-10-28; each needs a user decision or a live che
 
 - **Copycat (#243-244) clears the target's last damage in PvE:**
   - **Base BigBug Engine:** Copycat reads `tChar.mLastDamage` (`Cat.cs:26602-26608`) but never clears it; the only write is `RPC_AddDamage` (`CharacterControl.cs:31686`), so repeated casts can copy the same hit.
-  - **TTO Server Balance Delta (reported by the user, 2026-09-28; not in the decompiled client):** in PvE, using Copycat clears the target's last damage immediately, so the next Copycat needs a new white-damage hit first.
+  - **TTO Server Balance Delta (reported by the user, 2026-09-28; not in the decompiled client):** in PvE, using Copycat clears the target's last damage immediately, so the next Copycat needs a new white-damage hit first. **Checked 2026-11-04:** the clear runs whenever the target is not a player (monsters and summons, in PvP too), before the `> 0` test, so a failed copy clears too (`TTO1102:Cat.<RPC_copycat>d__200::MoveNext@0x1BA2530`, the only write besides `AddDamage`); the card says so.
 
 
 
@@ -992,6 +992,15 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 **Cat Power on TTO, from the client decompile (2026-11-02):** the user-reported rule "Power One / Two / Three / Seven / Super Seven only for Tree A" is `TTO1102:CharacterControl::hit@0x24D57E0`, which multiplies only for action codes 200-299 (`actionCode − 200 < 100`, Tree A), 452 and 4521 (Royal Flush's blasts and sword). So Royal Flush gets Power on TTO; Crescent Eclipse (453, 4530-4532) and Drop Anchor (454, 4540) do not.
 
 **Damage Roulette is capped at 50% on TTO (client decompile, checked 2026-11-04; finding credited to LiuSuYang on the card):** `TTO1102:CharacterControl::RPC_AddDamage@0x24B8150` rolls `Random.Range(0, 100) < min(lckAdjust(10 × lv + 10), 50)` for `damageRoulette` (504) (machine code checked: `cmp eax, 0x32` / `mov eax, 0x32` right after the `lckAdjust` call at RVA 0x24B9E8C; the function's other four `lckAdjust` rolls have no cap); the rest is BB's (`FindAreaTarget`, one random pick, `RPC_AddEffectDamage(261, damage)`). So Rank 1 reaches the cap at LCK 300 and Rank 2 at LCK 134; without the cap LCK 512 would give 60% / 72%. BB (`CharacterControl.cs:4843`) and Reborn (`Reborn1027:CharacterControl.cs:7659`, same `lckAdjust` at `:11949-11957`) have no cap. ToT: the batches hold only the catalog row (`ToT1103S:Catalog/Catalog_Cat.cs:45-46`), no roll code, so the BB rule applies (no cap). The TTO tooltip says only 20% / 30%.
+
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Swift Pace reset on a player kill:** confirmed, only when the Cat itself gets the kill and has #431 (`TTO1102:Cat::OnKilledPlayer@0x1B84510`, `removeTimeOut` −999).
+- **Power series Tree A only:** confirmed (`TTO1102:CharacterControl::hit@0x24D57E0`). **Copycat:** see the corrected Copycat line above. **Nine Lives cooldown:** confirmed, `agiAdjust(60)` now checked (`TTO1102:Cat::TryHandleMineDeathPrevention@0x1B8E520`). **Open Wound on the nAttack-2 Hidden Blade hit:** confirmed (`TTO1102:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BBD340`; BB skips it, `Cat.cs:17390-17441`).
+- **Damage Roulette:** the 1.0.18 self-reflect fix is current code (a self pick is skipped, as BB); its 50% cap is `[แอบ Nerf]` (above).
+- **Feline Agility (no weight cut):** unclear, the weight is built in `TTO1102:CharacterDataClass::updateData@0x1A47AA0`, not decompiled.
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 

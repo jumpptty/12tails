@@ -1108,6 +1108,14 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): `FindRecTarget(pos, fwd, 1, 1, 3, 3)`, `hit(1, ATK, KO 1)`, cooldown 2 s (`:7184-7207, :7331`).
 - **mountDash** (normal attack while moving faster): `FindAreaTarget(pos, 6, 3)`, `hit(1, ATK, KO 1)`, cooldown 1.5 s (`:7610-7633, :7737`).
 
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Rain & Storm cut 2 / 4 (flat 3 s), Ashura Fist KO 10, Combo Link 10 ATK per combo up to 520, Delay Qi 6 s:** confirmed (`TTO1102:Panda.<RPC_rainStorm>d__218::MoveNext@0x1D8F9D0`, `<RPC_ashuraFist>d__202@0x1D710D0`, `Panda::doSkill@0x1D60F00`, `<RPC_delayQi>d__178@0x1D79050`).
+- **Qi Strike:** charge `min(sLv, 2)` = 1 / 2 / 2 s (`TTO1102:Panda.<RPC_qiStrike1>d__175::MoveNext@0x1D8BC60`; BB `1 + sLv`, `Panda.cs:23028`); the TTO card's "2 s at every rank" is now 1 / 2 / 2.
+- **Climbing on a Mega Size Whale:** confirmed (`TTO1102:Panda.<RPC_grab>d__183::MoveNext@0x1D7F380`). The same function lowers the toss limit: `height × scale ≥ 2.52` climbs (or "Target too large!" without Climbing Cliff), BB tosses below 3 m (`Panda.cs:26113`): `[แอบ Nerf]` on Tiger Toss, `[แอบ Buff]` on Climbing Cliff and Crumbling Mountain.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 **In-game tooltip on the cards (2026-11-02):** all three cards carry `ttoTip`, TTO's own tooltip text copied unchanged from `DecompiledSource_TTO_2026-11-02/tooltips/panda.json` (the `SkillDetailData` builders with the client's `locale/th.json`), so the H button draws the game's tooltip on the TTO tab; the mismatches each subsection names are the cards' `tooltipNote`s. The Tempest Dance and Yin Yang Fist mismatches were first read from the user's pictures; the client's text states the same values the notes quote (every hit Cut, evade 50%; radius 7 m, Yang +30%, Magical).

@@ -564,7 +564,7 @@ Private-server values below are documented from the Bible skill-detail schema, n
 
 | Skill | Server | Original BigBug baseline | Server delta |
 |---|---|---|---|
-| Mass Cast | TTO | The buff lasts 6 / 9 seconds. | Replaced duration-based spreading with exactly 1 / 2 affected casts at ranks 1 / 2. |
+| Mass Cast | TTO | The buff lasts 6 / 9 seconds. | 1 / 2 spread casts at ranks 1 / 2 **within** the same CHA-scaled 6 / 9 s, whichever runs out first (checked 2026-11-04: the status still gets `chaAdjust(3 × (rank + 1))`, `TTO1102:Bat::RPC_massCast@0x1AC7C60`, and each of 16 spread sites lowers its level by 1, `CharacterControl::reduceStatusLv@0x24E1CB0`; the note's "instead of the timer" is wrong). |
 | Dream Dazzle | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
 | Phantasm Blast | TTO | Shattering Dream raises its effective skill level. | Shattering Dream no longer raises its level; the skill uses `talAdjust(10 + 20 × rank)`. |
 | Shattering Dream | TTO | Raises Dream Dazzle and Phantasm Blast by one level. | No longer grants either level increase. |
@@ -650,6 +650,15 @@ Verified 2026-10-26 against the Reborn decompile (string helpers decoded with th
 - **Bible (2026-10-28, C6 / C7 limit review):** Doomsayer's red recast line is corrected: any Doom recast that lands at the same or a higher level restarts the 20 s (from either caster), a lower one is dropped (`Reborn1027:RebornC7Passive.cs:878-889`, `Reborn1027:Bat.cs:3112-3122`, `Reborn1027:CharacterControl.cs:9695-9742`). Nightmare Cascade: a clone's cast pose ending its Drain Life drain, which stays off until the Bat recasts Drain Life, moves to ⚡ `unintended` (`Reborn1027:RebornC7Act.cs:5699-5777`, `Reborn1027:Bat_illusion.cs:849-853`, `:508`); "no extra clones" becomes a plain bullet under the lead (still at most 2, `Reborn1027:RebornC7Act.cs:148`, `Reborn1027:Bat.cs:3813`) and the empty ## ข้อจำกัด topic goes.
 - **Owner's calls (2026-10-28, C6 / C7 limit review):** Nightmare Cascade: the clone-drain line is removed (no ⚡). Doomsayer's corrected recast line stays red. Nightmare Cascade: the "doesn't add clones" bullet is removed.
 - **Calls made from the owner's pattern (2026-10-28, C6 / C7 limit review; the owner may still override):** Doomsayer: "the curse jumps only while you are alive" and Nocturne Sovereign: "zombies crumble when you die" are removed (death ending a skill is obvious; the owner removed Iron Overdrive's like line).
+
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Shattering Dream no longer raises Dream Dazzle / Phantasm Blast:** confirmed, no `hasSkill(443)` level bump (`TTO1102:Bat.<RPC_dreamDazzle_hit>d__195::MoveNext@0x1B01770`, `<RPC_phantasmBlast_hit>d__197::MoveNext@0x1B1DDC0`; BB `Bat.cs:35172-35178`, `:36129-36135`).
+- **Mass Cast:** see the corrected table row above; `reduceStatusLv` re-applies the status with the remaining time rounded down and drops it at 1 s or less.
+- **Mimic keeps buffs (1.5.9.1):** confirmed, `TTO1102:CharacterControl::CopyBuffsFrom@0x24B3530` copies timed buffs except system statuses, fireAvatar, earthForm, cosmicRift, cosmicFriday, mimic and allMimic. Hate Transfer, Grand Cross numbers: as BB.
+- **Damage type:** Dream Dazzle, Phantasm Blast and Shattering Dream hit with damageType 1 (Magic, half DEF on TTO).
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 

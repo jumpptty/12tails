@@ -555,7 +555,7 @@ Base engine (BigBug) values are documented above; this section lists private-ser
 
 ### Tailstopia Online (TTO)
 - **Swallow cannot target the caster; self-target bug fixed on TTO** (user-reported live behavior, 2026-10-13; server-side change, not visible in the BigBug decompiled client). The base self-target interaction documented above (`GameGui.cs:2214`, `Whale.cs:25912`, `CharacterControl.cs:4299-4315` and `:4406-4500`) no longer allows repeated Auto Shield rolls / SP recovery through self-swallow on TTO. The TTO Swallow description and bug note, and Auto Shield description, reflect this fix. This report does not establish a fix for the separate stale “mouth is full” issue or the Dissolute interactions; those remain documented. BigBug and ToT behavior are unchanged by this report. It covers Swallow only, so a self-cast Heavy Weight stays allowed on TTO (BB code, §3.17; decided 2026-10-28, open question 2, §4.17).
-- **Honor Stand also adds +1 to Honor's `sLv`** (user-reported from live play, 2026-09-20; server-side change, not visible in `DecompiledSource/`). Base code (`Whale.cs:23500-23900`) uses the single cast `sLv` for the honor status level, so with the +1 all of these follow it: CHA `+10×sLv` (`CharacterControl.cs:35558`), KO reduction `10%×honorLv` (`:4400`), hate `floor((0.5×sLv+0.5)×CHA)` and taunt radius `18+6×sLv` (`Whale.cs:23876`). Example: rank 4 + Honor Stand → `[honor5]`, CHA +50, hate 300%, radius 48m. The bible card models this as `servers.tto` with an Honor Stand dependency toggle (default learned).
+- **Honor Stand also adds +1 to Honor's `sLv`** (user-reported from live play, 2026-09-20; server-side change, not visible in `DecompiledSource/`). Base code (`Whale.cs:23500-23900`) uses the single cast `sLv` for the honor status level, so with the +1 all of these follow it: CHA `+10×sLv` (`CharacterControl.cs:35558`), KO reduction `10%×honorLv` (`:4400`), hate `floor((0.5×sLv+0.5)×CHA)` and taunt radius `18+6×sLv` (`Whale.cs:23876`). Example: rank 4 + Honor Stand → `[honor5]`, CHA +50, hate 300%, radius 48m. **Corrected 2026-11-04 from the TTO client:** the status level is `sLv + hasSkill(412)` but the hate keeps the cast rank, `floor((0.5 × sLv + 0.5) × CHA) + 500` (`TTO1102:Whale.<RPC_honor>d__170::MoveNext@0x1EDB5A0`), so rank 4 + Honor Stand is 250% + 500; the TTO card's hate text and note follow it. The taunt radius is a float Ghidra dropped, so the card keeps the +1 radius (pinned in the validator) unverified. The bible card models this as `servers.tto` with an Honor Stand dependency toggle (default learned).
 
 
 ### ToT EX learning requirements (published simulator, 2026-10-13)
@@ -699,6 +699,13 @@ Verified 2026-10-26 against the Reborn decompile. All eight are one rank (`Rebor
 **Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
 - Wall Puncture: an nAttack hit that turns purple now applies the weapon effect. The crit note stays: the patch does not mention it.
 - Gourmet Heart: "ทำงานไม่ถูกต้อง" with no detail, so the card is unchanged and its red line says so.
+
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Honor (C) / Honor Stand:** see the corrected Honor Stand line above (level +1 confirmed, hate keeps the cast rank). **No self-swallow, Wall Puncture weapon effects on nAttack:** confirmed (`TTO1102:Whale::doSkill@0x1EC4430`, `Whale::WallPunctureStrike@0x1EC2540`).
+- **Whale copies:** the Whale block of `TTO1102:CharacterControl::RPC_AddDamage@0x24B8150` also runs for a character whose `mShadowOf == "Whale"` (Auto Shield, the Peninsula Round redirect, the Honor Stand KO cut); what sets that field was not traced.
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 

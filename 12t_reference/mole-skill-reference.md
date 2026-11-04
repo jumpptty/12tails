@@ -545,8 +545,8 @@ Private-server values are documented from the Bible skill-detail schema; the Big
 |---|---|---|
 | Auto Gyro Gun | No simultaneous-turret limit is represented on the original card. | Cap is 8 guns without Hidden Turret or 12 with Hidden Turret. |
 | Flame Turret | The Mole stays a turret for its full `chaAdjust(5)` s (`Mole.cs:27935`). | **Buff:** pressing the skill again during it ends it early (user-reported TTO patch, 2026-10-23; server-side, not in `DecompiledSource/`; card `servers.tto`). |
-| Smart Shell | Allies inside the blast take half: Stun Mine / Stun Grenade KO halved, Time Nuke / Flame Carnival damage halved (Smart Shell entry above). | Does not reduce damage dealt to allies (user-reported 2026-10-02; server-side, not in `DecompiledSource/`; card `servers.tto`). |
-| King Kaiser; King Kaiser - Normal Attack / Kaiser Cannon / Kaiser Beam | MHP 2000, then Heavy Built applies `ceil(MHP×(1+0.5×rank))` → 2000 / 3000 / 4000. | **Nerf:** MHP is fixed at 1500 and Heavy Built does not apply. The server selector is present on the parent and all three child cards because their shared own-stat block changes; since 2026-10-26 Heavy Built has a TTO tab too, whose desc drops King Kaiser from its list. |
+| Smart Shell | Allies inside the blast take half: Stun Mine / Stun Grenade KO halved, Time Nuke / Flame Carnival damage halved (Smart Shell entry above). | No change in the TTO client (2026-11-04): TTO's 1.1.3 note says it no longer reduces damage to allies, but Time Nuke still deals `floor(dmg × 0.5 × falloff)` to the owner's layer (`TTO1102:Mole_timeNuke.<doExplode>d__14::MoveNext@0x1CAAD60`) and Flame Carnival `floor(0.5 × talAdjust(10))` (`TTO1102:Mole.<RPC_flameCarnival_fire>d__280::MoveNext@0x1C6F050`). Damage to allies is worked out on the attacker's client, so the cards follow the code; the 2026-10-02 [Nerf] notes and TTO descs were removed. |
+| King Kaiser; King Kaiser - Normal Attack / Kaiser Cannon / Kaiser Beam | MHP 2000, then Heavy Built applies `ceil(MHP×(1+0.5×rank))` → 2000 / 3000 / 4000. | No change in the TTO client (2026-11-04): `TTO1102:Mole.<RPC_kingKaiser_create>d__268::MoveNext@0x1C72DC0` still sets MHP `ceil(MHP × (1 + 0.5 × Heavy Built))` (`Mole::getHeavyBuiltLv@0x1C47FC0`), and "1500 hp" is tooltip text BB's own tooltip shares (`MoleSkill_eng.cs:851`). TTO's prefab HP is in an encrypted bundle and unread, so `kingKaiserOwnStats` uses BB's 2000 on TTO too and the card carries a liveCheck. The [Nerf] notes were removed. The server selector is present on the parent and all three child cards because their shared own-stat block changes; since 2026-10-26 Heavy Built has a TTO tab too, whose desc drops King Kaiser from its list. |
 
 Source of server delta: `12t_projects/bible/index.html:9160`.
 
@@ -685,6 +685,15 @@ Seconds from the start of the move (or of the child routine named), read from th
 Both mounts run the same attack code for this class (`PvpMount.cs` and `ChampionMount.cs` differ only in the +20 / +50 stat bonus, the ride speed 8 / 9 and the Champion's charge; the shared rules are in [12Tails-Mechanics-Reference.md](12Tails-Mechanics-Reference.md#riding-mounts-g-marshal-and-g-champion-verified-2026-10-17)). ATK, TAL and LCK are the mount's own (rider's base stats + bonus). Line numbers are `PvpMount.cs`; `ChampionMount.cs` has the same code a few hundred lines later.
 - **mountAttack** (normal attack while moving at no more than 40% of the run speed): shell launched at 15 m/s (`PvpMount_mole_nAttack.cs:28`) under gravity (the prefab Rigidbody `m_UseGravity: 1`), life 10 × rangeMod s (`PvpMount.cs:3884`), box trigger 0.25 × 0.25 × 0.5; explodes on contact, `FindAreaTarget(hit, 4, 4)` and `hit(1, ATK, KO 1)` (`:229-253`), cooldown 1 s (`PvpMount.cs:13148`).
 - **mountDash** (normal attack while moving faster): drops a bomb at its own position (`RPC_rAttack_mole_fire`) that explodes after 1 s: `FindAreaTarget(pos − 0.5 up, 4, 3)`, `hit(1, (int)(1.5 × ATK), KO 1)`, cooldown 0.5 s (`:13463, :13666-13689, :13751`).
+
+### TTO notes checked against the TTO client (TTO1102, 2026-11-04)
+
+TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
+
+- **Auto Gyro Gun cap 8 / 12:** confirmed (`TTO1102:Mole::AutoGyroGunCap@0x1C2A0D0`); where it is enforced was not found (`Mole::doSkill` did not decompile).
+- **Smart Shell, King Kaiser / Heavy Built:** see the corrected table rows (both notes are not in the client).
+- **Smart Shell purple fix, Napalm / Mortar one fire point, Flame Turret re-press:** confirmed (`TTO1102:Mole::RPC_smartShell_hit@0x1C37D00`; `<RPC_mortarShot>d__216@0x1C79090` and `<RPC_napalm>d__273@0x1C7C4F0` dropped the weapon's firePoint; `Mole::FlameTurretRecast@0x1C2B720`).
+- **Support skills (mineWalker, obsidianFang, divineChannel):** now in `BaseHero` with BB's formulas; the old over-damage cannot be seen.
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
