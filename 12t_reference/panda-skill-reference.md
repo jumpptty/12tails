@@ -776,7 +776,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
   - At the end of Drunken Fist cast (`Panda.cs:32591`), grants self status `drunken` at Level `getDrunkenPlusLv()` for `chaAdjust(12)` seconds.
   - While under status `drunken`, evasion chance is `lckAdjust(5 * sLv)` % (`CharacterControl.cs:3076-3079`).
 
-### Drunken Spin (`panda_drunkenSpin`, skill #423)
+### Drunken Spin (`panda_drunkenSpin`, skill #403)
 
 - **Passive Class-C, Lv 55 / Bn 0, 0 MP / 0 SP, no cooldown** (`PandaSkill.cs:1206-1218`, `decode_skilldata.py`).
 - **Tooltip:** "Passively gives DrunkenFist an extra 6 damage and inflicts drunk status on all targets." (`PandaSkill_eng.cs:964`; Thai `PandaSkill_thai.cs:986`).

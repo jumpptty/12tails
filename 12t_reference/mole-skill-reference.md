@@ -12,7 +12,7 @@ Scope: this table lists active skills (has a real cooldown), max rank only. Pass
 | mortarShot | Mortar Shot | 2 | 30 | true | false | — | — |
 | bunker | Bunker | 2 | 30 | true | false | — | — |
 | tnt | TNT | 4 | 90 | true | false | — | — |
-| stunMine | Stun Mine | 2 | 45 | true | false | 60 | true |
+| stunMine | Stun Mine | 2 | 45 | true | false | 60 | true (`talAdjust`, a BB bug, see below) |
 | stunGrenade | Stun Grenade | 2 | 60 | true | false | — | — |
 | flameTurret | Flame Turret | 3 | 120 | true | false | 5 | true |
 | fireBarrage | Fire Barrage | 2 | 120 | true | false | — | — |
@@ -694,6 +694,14 @@ TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch
 - **Smart Shell, King Kaiser / Heavy Built:** see the corrected table rows (both notes are not in the client).
 - **Smart Shell purple fix, Napalm / Mortar one fire point, Flame Turret re-press:** confirmed (`TTO1102:Mole::RPC_smartShell_hit@0x1C37D00`; `<RPC_mortarShot>d__216@0x1C79090` and `<RPC_napalm>d__273@0x1C7C4F0` dropped the weapon's firePoint; `Mole::FlameTurretRecast@0x1C2B720`).
 - **Support skills (mineWalker, obsidianFang, divineChannel):** now in `BaseHero` with BB's formulas; the old over-damage cannot be seen.
+
+
+#### Full sweep of every Mole skill (2026-11-04)
+
+- **Auto Gyro Gun's shot line is wider `[แอบ Buff]`:** `FindRecTarget(pos, dir, 0.2, 0.5, 8 + 4 × lv, 2)` → `(pos, dir, 0.6, 1.2, 8 + 4 × lv, 2)`. These are half-widths, so the line is 0.4 → 1.2 m wide at the turret and 1 → 2.4 m at the far end; length, height, damage, KO 1 and the 2 s timer are unchanged, with no skill check (`TTO1102:AutoGyroGun.<RPC_fire>d__27::MoveNext@0x1CA9360`, call at 0x1CA9E7E, floats 0.6 / 1.2 read with capstone; BB `AutoGyroGun.cs:1220`). Card: the TTO reach of `mole_autoGyroGun_nAttack`.
+- **Barrel Bot hits are Magic under Synchro Mole** (**Not on the cards (user 2026-11-04):** the Barrel Bot cards keep full DEF and Synchro Mole has no note): every Barrel Bot hit passes `damageType = hasStatus(synchroMole 801)` on the bot: normal attack, Punch, Hammer, Chopper, Drill and the cannon shells (`TTO1102:BarrelBot.<RPC_nAttack>d__48::MoveNext@0x1CBDB90`, `<RPC_punch>d__50@0x1CBEC40`, `<RPC_hammer>d__52@0x1CB6850`, `<RPC_chopper>d__54@0x1CA7530`, `<RPC_drill>d__62@0x1CB5910`, `BarrelBot::RPC_cannon_hit@0x1C995D0`; BB `BarrelBot.cs:1889`, `:2272`, `:2364`, `:2775`, `:3170`, `:3751`, `:4685`). The missile stays physical: `BarrelBot_missile::OnTriggerEnter@0x1CABAA0` takes `defAdjust(…, 0)` itself. TTO's tooltip tags Synchro Mole "Magical", and the Bible applies that to Auto Gyro Gun shots only.
+- **The 8 / 12 gyro cap is only shown:** the only direct callers of `AutoGyroGunCap@0x1C2A0D0` / `CountMyAutoGyroGuns` (E8 / E9 call scan of the `il2cpp` section) are `GameGui::DrawGyroGunBadge` (0x1FFF631 / 0x1FFF690), the "AutoGyroGun n/cap" message in `Mole::RPC_autoGyroGun_create` (0x1C30DF9) and `reportAutoGyroGunCount`. The client never refuses a build, so the cap, if enforced, is server-side; the Auto Gyro Gun and Hidden Turret notes end with "แต่โค้ดเกมแค่แสดงจำนวน…".
+- **Stun Mine:** TTO keeps BB's `talAdjust(60)` lifetime (`TTO1102:Mole_stunMine::Init@0x1CA30A0`).
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 

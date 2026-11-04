@@ -995,6 +995,12 @@ TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch
 - **Backpack (1.0.16):** items counted per slot `clamp(n, 0, 12)` (`TTO1102:Rabbit.<RPC_backpack>d__210::MoveNext@0x1E29B40`; BB no clamp, `Rabbit.cs:31153`), which only touches Big Bag's `0.25 × count`: card [Nerf].
 - **Miracle Blend durations at throw:** confirmed (`TTO1102:Rabbit_potion::Init@0x1E70D70`). **Contract Gil, self-shot block:** as BB in the current code. **Contract5 follow / 35 m warp:** confirmed: `LightPanther_AI` / `LightLeopard_AI` / `LightGolem_AI::AIControl` call `EnemyAI::AI_summonFollow@0x2486890` and `AI_summonWarpLeash@0x2486AE0` (direct calls in the `il2cpp` section), whose range is `get_AI_summonWarpRangeSqr@0x248A360` = 1225 (35 m).
 
+
+#### Full sweep of every Rabbit skill (2026-11-04)
+
+- **Mall cannot open near a Life Altar `[Fix]`:** a new gate refuses Mall within 4 m (flat, dx² + dz² < 16) of a Life Altar (objects tagged `Icon` named `LifeAltar`): message "Cannot open mall near the Life Altar", MP / SP returned, no cooldown (`TTO1102:Rabbit::doSkill@0x1E14510`, call at 0x181E170F6; `Rabbit::IsNearLifeAltar@0x1E08620`). BB has only the "near another mall" gate (`Rabbit.cs:8230-8283`), which TTO keeps. It is the only Mall change in the client, so it is taken as the 1.0.16 fix "แก้บัคสกิล RabbitMall" (which names no behaviour): `[Fix] แก้บัคสกิล: …`, like Gourmet Heart's vague fix (2026-11-04).
+- **Lab drug cooldown 90 / 45 s `[แอบ Buff]`:** a Rabbit lab "drug" item has a 90 s cooldown, 45 s for a Rabbit with Med Research (`TTO1102:GameGui.<UseGeneralFieldItem>d__1144::MoveNext@0x2084DD0`, branch at 0x182085310: `cType == "drug"`, `Type == "Rabbit"` and `hasSkill(432)` → `addTimeOut("drug", 45)`, else 90; BB 150 / 75, `GameGui.cs:32687`, `:32694`). TTO's own tooltip says 45 s (from 90), but no note does.
+
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
 **In-game tooltip on the cards (2026-11-02):** all three cards carry `ttoTip`, TTO's own tooltip text copied unchanged from `DecompiledSource_TTO_2026-11-02/tooltips/rabbit.json` (the `SkillDetailData` builders with the client's `locale/th.json`), so the H button draws the game's tooltip on the TTO tab; the mismatches each subsection names are the cards' `tooltipNote`s.

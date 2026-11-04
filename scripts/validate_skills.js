@@ -4906,7 +4906,7 @@ async function donateChildTests(env) {
       const want = SKILLS.filter(s => { const o = (s.servers && s.servers[srv]) || (srv === "tot" ? s.ps : null); return o && o.changeNote; }).length;
       const common = sandbox.commonServerNotes(srv).length, rows = (p.list().match(/class="nl-row[ "]/g) || []).length;
       if (rows !== want + common || want === 0) fail(`${srv}: ${rows} rows, want ${want} + ${common} Common`); else checked++;
-      if (srv === "tto" ? common !== 4 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26), a target lost mid-cast (2026-11-02)
+      if (srv === "tto" ? common !== 6 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26), a target lost mid-cast (2026-11-02), run speed and gear status resist (แอบ, 2026-11-04)
       const opens = [...p.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
       if (opens.length !== want || !opens.every(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + srv))) fail(`${srv}: rows do not open the card on this server`); else checked++;
       if (!/class="nl-tag is-svc" style="--kc:var\(--(pro|seal|tip)\)"/.test(p.list())) fail(`${srv}: no change-note tags rendered`); else checked++;
@@ -5119,8 +5119,8 @@ async function donateChildTests(env) {
         good(!tto("cat_nAttack").unintended && !tto("cat_nAttack").effectProc.hits && typeof c("cat_nAttack").effectProc.hits === "function", "Open Wound reaches the Hidden Blade hit on TTO, not on BB");
         good(tto("cat_nAttack").changeNote.includes("Power Seven") && tto("rabbit_contract").changeNote.includes("เดินตามเจ้าของ"), "the fixes add to the cards' earlier TTO notes");
         good(!tto("whale_wallPuncture").desc(4).includes("ไม่ติดผลพิเศษ") && tto("rabbit_miracleBlend").desc(1, 0).includes("ตอนที่โยนขวด"), "Wall Puncture and Miracle Blend's TTO text follow the fixes");
-        good(!!tto("whale_gourmetHeart").liveCheck && !!tto("cat_openWound").liveCheck && c("whale_gourmetHeart").unintended, "a patch line that says nothing specific goes in the red line");
-        good(heroOn("tto", c("whale_gourmetHeart")).includes("sk-live-check") && !heroOn("og", c("whale_gourmetHeart")).includes("แพตช์ TTO"), "the red line stays on TTO"); }
+        good(!!tto("cat_openWound").liveCheck && !tto("whale_gourmetHeart").liveCheck && c("whale_gourmetHeart").unintended, "a patch line that says nothing specific goes in the red line (Gourmet Heart's was explained by TTO1102, 2026-11-04)");
+        good(heroOn("tto", c("cat_openWound")).includes("sk-live-check") && !heroOn("og", c("cat_openWound")).includes("sk-live-check"), "the red line stays on TTO"); }
       // the rest of the tooltip cards, and the pictures as the in-game tooltip pop-up (user 2026-11-02)
       { const card = (id) => SKILLS.find(s => s.id === id), R = sandbox._depRanks, inputs = vm.runInContext("DMG_INPUT_VALS", sandbox);
         const pics = ["panda_yinYangFist", "panda_tempestDance", "monkey_jaAscension", "monkey_buitenBastion", "whale_leviathanBreach", "whale_oceansResilience", "rabbit_medicTurret", "rabbit_coinRicochet", "rabbit_bountyHunt", "bat_crimsonVerdict", "chameleon_venomPhantom", "chameleon_apexHunt", "chameleon_chainLightning", "sheep_lucentBarrier", "sheep_grandCodex", "mole_twinWarhead", "mole_barrelRailgun", "cat_royalFlush"];

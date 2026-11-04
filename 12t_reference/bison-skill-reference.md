@@ -704,7 +704,15 @@ Both mounts run the same attack code for this class (`PvpMount.cs` and `Champion
 TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
 
 - **Iron Skin / Diamond Skin 8 / 16 / 24%:** confirmed, `ceil(dmg × (1 − 0.08 n))` with n = 1 / 2 / 3 (`TTO1102:CharacterControl::RPC_AddDamage@0x24B8150`; BB n = 2 / 3 / 3, `CharacterControl.cs:4142-4290`); ranges unchanged.
-- Nothing else in the Bison notes; no Bison skill found changed.
+- Nothing else in the Bison notes. The full sweep below found three code-only changes.
+
+
+#### Full sweep of every Bison skill (2026-11-04)
+
+Every Bison skill read in `TTO1102:` against BB. These differ, and no TTO note names them:
+- **Power Hammer works with 24 hammers `[แอบ Buff]`:** `isHammer()` accepts 6 weapons in BB (w_bsn5 Stone Hammer, w_bsn15, w_bsn19, w_bsn22, w_bsn24, w_bsn25 Champion Barbell; `Bison.cs:8284-8327`) and 24 in TTO: those 6 plus w_bsn32 / 34 Warlord Hammer (V), w_bsn35 Dullahan Hammer, w_bsn40-42 Havoc Hammer (V / R), w_bsn45 White Bass, w_bsn46 Mummy Hammer, w_bsn49 Golden Hammer, w_bsn50-52 Minotaur Hammer (V / R), w_bsn59 Vacuum Hammer, w_bsn60-62 Titan Hammer (V / R), w_bsn68 Titan Hammer and w_bsn69 (a TTO-only weapon, name not found) (`TTO1102:Bison::isHammer@0x1B4EF30`, 24 `String.Equals`). Power Hammer's own numbers are BB's (`getPowerHammerLv@0x1B4EE60`); the other `isHammer` callers only pick hit sounds. Maybe the 1.5.9.1 bug-fix line "ค้อนไทม์ไบสัน" (no detail).
+- **Power Cleave's hammer hit is Magic:** the hammer branch's `hit` passes damageType 1 (half DEF), the axe branch 0 (`TTO1102:Bison.<RPC_powerCleave>d__154::MoveNext@0x1B74C30`, hits at 0x181B75328 / 0x181B75600; BB `Bison.cs:25984`, `:25922`). TTO's tooltip tags Power Hammer "Magical", so no แอบ tag; the Power Cleave card has `ttoMagicDep: BISON_POWER_HAMMER_DEP`.
+- **Calamity Hammer's impact is Physical:** only the 10 lava strikes pass damageType 1 (`TTO1102:Bison.<RPC_calamityHammer_fire>d__183::MoveNext@0x1B60300`, hit at 0x181B60782; BB `Bison.cs:32860`); the impact hit after the 2.1 s windup passes 0 (`<RPC_calamityHammer>d__181::MoveNext@0x1B5F6B0`, hit at 0x181B60119; BB `:32140`). The TTO tab splits the card into a physical impact group (1 hit) and a lava group (10 hits) and has a `tooltipNote` (the tooltip calls the whole skill Magical).
 
 ## TTO Lv 100 skills (TailsTopia simulator, read 2026-10-31)
 
