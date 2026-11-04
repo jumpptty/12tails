@@ -4913,6 +4913,12 @@ async function donateChildTests(env) {
     }
     api.setServer("tto");
     facets(p, "nerf");
+    // [แอบ Buff] / [แอบ Nerf] lines have their own chips (user 2026-11-04), one per line, and none falls into Adjust
+    { const notes = SKILLS.map(s => s.servers && s.servers.tto && s.servers.tto.changeNote).filter(Boolean).concat(sandbox.commonServerNotes("tto").map(c => c.note)).join("\n");
+      const c = p.chips(), want = k => (notes.match(new RegExp("\\[แอบ\\s*" + k + "\\]", "gi")) || []).length;
+      if (!(want("buff") > 0) || c.sneakbuff !== want("buff") || c.sneaknerf !== want("nerf")) fail(`tto: แอบ chips ${c.sneakbuff} / ${c.sneaknerf}, want ${want("buff")} / ${want("nerf")}`); else checked++;
+      if (/\[แอบ/.test(p.list())) fail("tto: a [แอบ …] tag left in the line text"); else checked++;
+      facets(p, "sneakbuff"); }
     const row = { dataset: { open: "#skill-details/wolf_counter?server=tot" } };
     p.root.listeners.click({ target: { closest: (sel) => sel === "[data-open]" ? row : null } });
     if (sandbox.location.hash !== row.dataset.open) fail(`row click sets hash ${sandbox.location.hash}`); else checked++;

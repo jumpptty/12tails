@@ -4035,6 +4035,7 @@
   .nl-kinds button{display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 13px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--muted); font-size:13.5px; white-space:nowrap; cursor:pointer}
   .nl-kinds button b{color:var(--text); font:600 12.5px var(--mono)}
   .nl-kinds .nl-dot{width:8px; height:8px; border-radius:50%; background:var(--kc)}
+  .nl-kinds .nl-dot.is-sneak{box-sizing:border-box; background:none; border:1.5px dashed var(--kc)}
   .nl-kinds .sk-note-ico{width:15px; height:15px; color:var(--kc)}
   .nl-kinds button:hover{color:var(--text)}
   .nl-kinds button.is-on{border-color:var(--kc, var(--gold)); background:color-mix(in srgb, var(--kc, var(--gold)) 16%, var(--panel)); color:var(--text)}
@@ -4068,7 +4069,7 @@
   .nl-tag{flex:none; display:inline-flex; align-items:center; justify-content:flex-start; gap:5px; min-width:96px; height:22px; margin-top:2px; padding:0 8px; border-radius:6px; font-size:11px; font-weight:700; white-space:nowrap;
     color:var(--kc); background:color-mix(in srgb, var(--kc) 13%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--kc) 45%, transparent)}
   .nl-tag.is-svc{justify-content:center; min-width:66px; letter-spacing:.06em; text-transform:uppercase; color:color-mix(in srgb, var(--kc) 72%, #fff)}
-  .nl-tag.is-live{box-shadow:none; outline:1px dashed color-mix(in srgb, var(--kc) 60%, transparent); outline-offset:-1px}
+  .nl-tag.is-live, .nl-tag.is-sneak{box-shadow:none; outline:1px dashed color-mix(in srgb, var(--kc) 60%, transparent); outline-offset:-1px}
   .nl-tag .sk-note-ico{width:13px; height:13px}
   .nl-text{flex:1; min-width:0; color:color-mix(in srgb, var(--text) 84%, var(--muted)); font-size:14px; line-height:1.65; overflow-wrap:anywhere}
   .nl-empty{padding:40px 0; color:var(--muted); text-align:center}
@@ -30781,12 +30782,14 @@ function mountServerChanges(root){
   setToolServer("server-changes", st.srv);   // auto look follows this page's server (cosmetic only)
   const noteOf = (s, k) => { const o = (s.servers && s.servers[k]) || (k === "tot" ? s.ps : null); return o && o.changeNote; };
   const changesFor = k => SKILLS.filter(s => noteOf(s, k));
-  const linesOf = (note, s) => note.split("\n").filter(l => l.trim()).map(l => { const m = /^\s*[•-]?\s*\[(buff|nerf|adjust|rework|fix)\]\s*/i.exec(l);
-    return { kind: m ? m[1].toLowerCase() : "adjust", html: renderRichText(m ? l.slice(m[0].length) : l.replace(/^\s*[•-]\s*/, ""), s) }; });
+  const linesOf = (note, s) => note.split("\n").filter(l => l.trim()).map(l => { const m = /^\s*[•-]?\s*\[(แอบ\s*)?(buff|nerf|adjust|rework|fix)\]\s*/i.exec(l);
+    return { kind: m ? (m[1] ? "sneak" : "") + m[2].toLowerCase() : "adjust", html: renderRichText(m ? l.slice(m[0].length) : l.replace(/^\s*[•-]\s*/, ""), s) }; });
   Object.keys(SERVERS).forEach(k => { SERVERS[k].count = () => changesFor(k).length + commonServerNotes(k).length; });
   const KINDS = [
     { k: "buff", label: "Buff", color: "var(--pro)" },
+    { k: "sneakbuff", label: "แอบ Buff", color: "var(--pro)", sneak: true, ico: '<i class="nl-dot is-sneak"></i>' },   // [แอบ Buff]: in the server's code, in none of its notes (bible-desc-writing)
     { k: "nerf", label: "Nerf", color: "var(--seal)" },
+    { k: "sneaknerf", label: "แอบ Nerf", color: "var(--seal)", sneak: true, ico: '<i class="nl-dot is-sneak"></i>' },
     { k: "adjust", label: "Adjust", color: "var(--tip)" },
     { k: "rework", label: "Rework", color: "var(--stat-int)" },   // pink: its own hue, not Adjust's blue (review 2026-10-30)
     { k: "fix", label: "Fix", color: "var(--status-kw)" },
@@ -30795,7 +30798,7 @@ function mountServerChanges(root){
     state: st, kinds: KINDS, kindKey: "12t-bible-svc-kind", clsKey: "12t-bible-svc-class", srvKey: KEY, servers: SERVERS, unit: "สกิล",
     title: "ปรับสมดุลเซิร์ฟ", sub: "สิ่งที่แต่ละเซิร์ฟเปลี่ยนจากเกมต้นฉบับ คลิกสกิลเพื่อเปิดการ์ดของเซิร์ฟนั้น",
     inKind: (lk, k) => lk === k,
-    tag: kind => { const k = KINDS.find(x => x.k === kind); return { text: k.label, color: k.color, cls: "is-svc" }; },
+    tag: kind => { const k = KINDS.find(x => x.k === kind); return { text: k.label, color: k.color, cls: "is-svc" + (k.sneak ? " is-sneak" : "") }; },
     entries: () => changesFor(st.srv).map(s => ({ cls: s.class, s, title: s.name, open: "#skill-details/" + encodeURIComponent(s.id) + "?server=" + st.srv, lines: linesOf(noteOf(s, st.srv), s) }))
       .concat(commonServerNotes(st.srv).map(c => ({ cls: "Common", s: { icon: c.icon }, title: c.title, open: "", lines: linesOf(c.note, null) }))),
     onServer: k => setToolServer("server-changes", k),
@@ -39211,6 +39214,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-04T08:53:05Z","feat(bible): server changes page gets แอบ Buff and แอบ Nerf filters (those lines used to fall under Adjust)"],
     ["2026-11-04T08:25:49Z","fix(bible): every TTO skill checked against TTO's code: แอบ Buff / แอบ Nerf on Power Hammer, Gyro Gun width, Med Research, run speed cap and gear status resist; Auto Mass [Nerf], Mall [Fix]; Calamity Hammer impact physical, Power Cleave hammer hit Magic, Mana Burn full DEF; TTO tooltip Active / Passive labels from the machine code"],
     ["2026-11-04T07:10:46.375Z","fix(bible): ToT lines that only ToT's code shows get แอบ Buff and แอบ Nerf tags (10 lines: Berserker Rush, Added Swing, Flame Turret, Napalm, Blazing Arrow, Titanic Earth Pulse, Mike Circle, Fire Avatar Fireball, Combo Link, Frost Spike)"],
     ["2026-11-04T07:05:35.213Z","fix(bible): TTO notes keep TTO's claim and end with แต่โค้ดเกม… where the code differs; summon notes on 7 Monkey cards; TTO tooltip MP / SP / level read from the machine code (179 values on 105 cards); Honor hate radius and King Kaiser HP confirmed"],
