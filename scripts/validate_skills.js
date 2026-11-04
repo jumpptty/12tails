@@ -1421,7 +1421,7 @@ let checkedTotC6 = 0;
     if (!sk) continue;
     check(k + " cost and cooldown", ((sk.cost || {}).mp || 0) === mp && ((sk.cost || {}).sp || 0) === sp && (sk.cd || 0) === cd, JSON.stringify(sk.cost) + " " + sk.cd);
     check(k + " hit count", (sk.hitCount ? sk.hitCount(1) : 0) === hits, sk.hitCount && sk.hitCount(1));
-    if (sk.reach) check(k + " reach cites its file", sk.reach(1).every(p => p === vm.runInContext("REACH_LOCK40", sandbox) || /^ToT(C6|1103S?):/.test(String(p.src))), "src");
+    if (sk.reach) check(k + " reach cites its file", sk.reach(1).every(p => p === vm.runInContext("REACH_LOCK40", sandbox) || /^ToT(C6|1103S?|1104):/.test(String(p.src))), "src");
   }
   // Bat (ToT1103:C6/Bat/): Shadow Realm clamp(15 + (CHA - tCHA) / 10, 1, 45) (452:101-102); Soul Capture clamp(12 + (CHA - tCHA) / 20, 1, 30) (453:73-74), the drain (int)(0.09 x ATK) in 2-18 (ToT1103:PARITY_VECTORS.md:30: ATK 120 -> 10, 300 -> 18)
   {
