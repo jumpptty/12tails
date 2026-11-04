@@ -4913,6 +4913,9 @@ async function donateChildTests(env) {
     }
     api.setServer("tto");
     facets(p, "nerf");
+    // a server fixing its own bug is no [Fix] line (user 2026-11-04): a server-only card has no BB bug to fix
+    { const bad = SKILLS.filter(s => s.onlyServer && [s].concat(Object.values(s.servers || {})).some(t => t && typeof t.changeNote === "string" && /\[fix\]/i.test(t.changeNote))).map(s => s.id);
+      if (bad.length) fail(`[Fix] on a server-only card (the server's own bug, not BB's): ${bad.join(", ")}`); else checked++; }
     // [แอบ Buff] / [แอบ Nerf] lines have their own chips (user 2026-11-04), one per line, and none falls into Adjust
     { const notes = SKILLS.map(s => s.servers && s.servers.tto && s.servers.tto.changeNote).filter(Boolean).concat(sandbox.commonServerNotes("tto").map(c => c.note)).join("\n");
       const c = p.chips(), want = k => (notes.match(new RegExp("\\[แอบ\\s*" + k + "\\]", "gi")) || []).length;
@@ -5115,8 +5118,9 @@ async function donateChildTests(env) {
       good([["panda_tempestDance", "tempestHits"], ["monkey_jaAscension", "jaSunburn", 3], ["rabbit_coinRicochet", "coinGilded", 2]].every(([id, key, n = 1]) => { const boxes = heroOn("tto", SKILLS.find(s => s.id === id)).split('data-role="dmg-input"').length - 1; return boxes === n; })   /* Coin Ricochet: one box on each of its two rows (hop, Gilded); Ja Ascension: flares on the first row, stacks and distance on the closing blast's */ && /if \(!activeSelected\.dmgModes\) \{ refreshLiveDamage\(\); return; \}/.test(html) && /modeBoxBusy = true; renderHero\(\); modeBoxBusy = false;/.test(html), "a dmgModes card shows each number box once, and typing redraws its rows instead of the one-row live update");
       // the TTO patch notes the user pasted (2026-11-02), on the TTO tab only
       { const c = (id) => SKILLS.find(s => s.id === id), R = sandbox._depRanks, tto = (id) => c(id).servers.tto;
-        const ids = ["cat_nineLives", "cat_nAttack", "cat_openWound", "penguin_novaFlare", "penguin_cosmicRift", "penguin_giantStar", "penguin_fallingStars", "rabbit_miracleBlend", "rabbit_contract", "bison_ironSkin", "bison_diamondSkin", "bat_mimic", "whale_wallPuncture", "whale_gourmetHeart", "mole_gigaCannon"];
+        const ids = ["cat_nineLives", "cat_nAttack", "cat_openWound", "penguin_novaFlare", "penguin_cosmicRift", "penguin_giantStar", "penguin_fallingStars", "rabbit_miracleBlend", "bison_ironSkin", "bison_diamondSkin", "bat_mimic", "whale_wallPuncture", "whale_gourmetHeart"];
         ids.forEach(id => good(/\[Fix\]/.test(tto(id).changeNote), id + ": a [Fix] line on its TTO tab"));
+        good(!/\[Fix\]/.test(tto("rabbit_contract").changeNote) && !(c("mole_gigaCannon").servers || {}).tto && !/\[Fix\]/.test(tto("monkey_summonSoul").changeNote), "TTO fixing its own bugs is no [Fix] line: Contract double Gil, Giga Cannon, Summon Soul with Ja Ascension (user 2026-11-04)");
         good(tto("cat_nineLives").cd === 60 && tto("cat_nineLives").bbBug === "" && !tto("cat_nineLives").desc(1).includes("ไม่ถูกเรียกใช้") && c("cat_nineLives").bbBug, "Nine Lives: 60 s and no bug on TTO, the BB card keeps its note");
         [["bison_ironSkin", 1, "**8%**"], ["bison_ironSkin", 2, "**16%**"], ["bison_ironSkin", 3, "**24%**"], ["bison_diamondSkin", 1, "**8%**"], ["bison_diamondSkin", 2, "**16%**"]].forEach(([id, r, want]) => good(tto(id).desc(r).includes(want), id + " rank " + r + " reads " + want));
         good(c("bison_ironSkin").desc(1).includes("**16%**"), "the BB Iron Skin stays 16% at rank 1");

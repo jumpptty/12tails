@@ -18754,7 +18754,7 @@ const SKILLS = [
     servers: {
       tto: {
         ttoTip:{ type:"Active", sp:-60, mp:140, dmgType:"Magical", req:75, rows:[["บัฟ","+100 TAL, AGI"],["ระยะเวลา","120 วิ"],["เวลาร่าย","9 วิ"],["คูลดาวน์","600 วิ"]], fx:["สละ Phoenix4 รวมร่างเป็นนกไฟ","ตีปกติยิง Fireball (เว้นนาน ลูกใหญ่ขึ้น)","Fireball ติด burn Lv5"], desc:"รวมร่างกับ Phoenix4 เปลี่ยนการโจมตีปกติเป็นยิงลูกบอลเพลิง  เพิ่มระดับ Burn ของ FireBall2 ระดับ(+100Tal 100Agi)", name:"FireAvatar5" }, desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar (มีหลายตัวจะใช้ตัวที่เรียกไว้นานที่สุด)<br>## ในร่าง<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>• การร่ายสกิล: สามารถร่ายสกิลได้ตามปกติขณะอยู่ในร่างนี้ ใช้ **Earth Form** จะยกเลิกร่างนี้<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s**) และทำให้เป้าหมายติด [burn5]<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• ภูมิคุ้มกัน: Burn, Snowman, Snowball และ KO<br>## สกิลเสริม<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>**Fireball:** แค่เรียนสกิลนี้ไว้ ลูกไฟของ Fireball (รวมลูกที่ปล่อยจาก **Fire Keep**) ทำให้เป้าหมายติด [burn5] แม้ไม่ได้อยู่ในร่าง<br>**Auto Instant:** ร่ายทันทีได้ด้วย [instantCast] หรือโอกาสร่ายทันทีของสกิลนั้น (ไม่มีสกิลนั้นต้องร่ายเต็มหลอด)",
-        changeNote: "• [Buff] ขณะอยู่ในร่าง Fire Avatar สามารถร่ายสกิลได้\n• [Adjust] ใช้ซัมมอนตัวล่าสุด (primary) แต่โค้ดเกมใช้ **Phoenix** 4 ตัวที่เรียกไว้นานที่สุด\n• [Fix] ใช้ร่างนี้กับ **Earth Form** พร้อมกันไม่ได้ ร่างใหม่จะยกเลิกร่างเดิม"
+        changeNote: "• [Buff] ขณะอยู่ในร่าง Fire Avatar สามารถร่ายสกิลได้ (ใช้ **Earth Form** จะยกเลิกร่างนี้)\n• [Adjust] ใช้ซัมมอนตัวล่าสุด (primary) แต่โค้ดเกมใช้ **Phoenix** 4 ตัวที่เรียกไว้นานที่สุด"
       },
       tot: {
         desc: "รวมร่างตัวเองกับ **Phoenix4** เป็นร่าง Fire Avatar<br>## ในร่าง<br>• ค่าสถานะ: เปลี่ยนเผ่าเป็น **Elementals** (**+100 TAL**, **+100 AGI**)<br>" + MNK_FORM_SKILL_LOCK + "<br>• การใช้ไอเทม: สามารถกดใช้ยาทุกชนิดได้<br>• การโจมตีปกติ: เปลี่ยนเป็นการยิงลูกบอลเพลิง (พุ่งตรง **30 m/s**) ทุกการโจมตีครั้งที่ **2** เป็นลูกไฟขนาดใหญ่ที่สุด (ระดับ **4**) ครั้งอื่นเป็นระดับ **1** เสมอ ไม่โตตามเวลา และทำให้เป้าหมายติด [burn5]<br>• ข้อจำกัด: ลบสถานะ [invisible] ทันทีและไม่สามารถล่องหนได้<br>• ภูมิคุ้มกัน: Burn, Snowman, Snowball และ KO<br>## สกิลเสริม<br>**Blazing Fire:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเป็น Blazing Form ได้<br>**Fireball:** แค่เรียนสกิลนี้ไว้ ลูกไฟของ Fireball (รวมลูกที่ปล่อยจาก **Fire Keep**) ทำให้เป้าหมายติด [burn5] แม้ไม่ได้อยู่ในร่าง",
@@ -18906,7 +18906,7 @@ const SKILLS = [
     servers: {
       tto: {
         ttoTip:{ type:"Active", sp:-75, mp:100, dmgType:"Physical", req:75, rows:[["บัฟ","+100 ATK, DEF"],["ระยะเวลา","120 วิ"],["เวลาร่าย","9 วิ"],["คูลดาวน์","600 วิ"]], fx:["สละ Gadina4 รวมร่างเป็นนักรบหิน","ตีปกตินอกร่าง +1 KO"], desc:"รวมร่างกับ Gadina4 เปลี่ยนการโจมตีปกติเป็นการโจมตีระยะประชิด เพิ่ม ko ให้การโจมตีปกติของลิงอีก 1(+100Atk 100Def)", name:"EarthForm5" }, desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form (มีหลายตัวจะใช้ตัวที่เรียกไว้นานที่สุด)<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>• การร่ายสกิล: สามารถร่ายสกิลได้ตามปกติขณะอยู่ในร่างนี้ ใช้ **Fire Avatar** จะยกเลิกร่างนี้<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด<br>• ภูมิคุ้มกัน: Petrify และ KO<br>## สกิลเสริม<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>**nAttack:** แค่เรียนสกิลนี้ไว้ ท่าโจมตีปกติทั้ง **2** ครั้งได้ KO **+1** แม้ไม่ได้อยู่ในร่าง<br>**Auto Instant:** ร่ายทันทีได้ด้วย [instantCast] หรือโอกาสร่ายทันทีของสกิลนั้น (ไม่มีสกิลนั้นต้องร่ายเต็มหลอด)",
-        changeNote: "• [Buff] ขณะอยู่ในร่าง Earth Form สามารถร่ายสกิลได้\n• [Adjust] ใช้ซัมมอนตัวล่าสุด (primary) แต่โค้ดเกมใช้ **Gadina** 4 ตัวที่เรียกไว้นานที่สุด\n• [Fix] ใช้ร่างนี้กับ **Fire Avatar** พร้อมกันไม่ได้ ร่างใหม่จะยกเลิกร่างเดิม"
+        changeNote: "• [Buff] ขณะอยู่ในร่าง Earth Form สามารถร่ายสกิลได้ (ใช้ **Fire Avatar** จะยกเลิกร่างนี้)\n• [Adjust] ใช้ซัมมอนตัวล่าสุด (primary) แต่โค้ดเกมใช้ **Gadina** 4 ตัวที่เรียกไว้นานที่สุด"
       },
       tot: {
         desc: "รวมร่างกับ **Gadina4** เป็นร่าง Earth Form<br>• ค่าสถานะ: **+100 ATK** และ **+100 DEF** ให้ลิง<br>" + MNK_FORM_SKILL_LOCK + "<br>• การใช้ไอเทม: สามารถกดใช้ยาทุกชนิดได้<br>• การโจมตีปกติ: เปลี่ยนเป็นชุดโจมตีระยะประชิด และความเร็วแอนิเมชันการต่อยเพิ่มขึ้น **25%**<br>• ภูมิคุ้มกัน: Petrify และ KO (ไม่กระเด็นจากการโจมตีทางกายภาพทุกรูปแบบ)<br>## สกิลเสริม<br>**Stone Sentinel:** เมื่อเรียนรู้แล้วสามารถกดชาร์จเพื่อตั้งการ์ดได้<br>**nAttack:** แค่เรียนสกิลนี้ไว้ ท่าโจมตีปกติทั้ง **2** ครั้งได้ KO **+1** แม้ไม่ได้อยู่ในร่าง<br>**Auto Instant:** ร่ายทันทีได้ด้วย [instantCast4] จาก **Instant Cast** เลเวล **2** (สกิลสาย C ใช้ได้ **2** ครั้ง)",
@@ -32308,6 +32308,7 @@ for (const [id, add] of [["cat_openWound", ["cat_crescentEclipse", "cat_dropAnch
 }
 { const ow = SKILLS.find(s => s.id === "cat_openWound"); ow.servers.tto.desc = descSwap(ow.desc, "**Finishing Blow**<br>", "**Finishing Blow**, **Crescent Eclipse** และการทุบของ **Drop Anchor** ตอนโซ่แตก<br>"); }
 // TTO bug fixes (user 2026-11-02, the server's patch notes; ToT / TTO rule: a reported change is trusted as written). Each adds to the card's TTO tab: its change note, and the fields it changes.
+// [Fix] only for a BB bug TTO fixed (the BB code misbehaves); TTO fixing a mistake of its own is no line here (user 2026-11-04, bible-desc-writing).
 function ttoFix(id, note, fields){
   const card = SKILLS.find(s => s.id === id), servers = card.servers = card.servers || {}, tto = servers.tto = servers.tto || {};
   tto.changeNote = tto.changeNote ? tto.changeNote + "\n" + note : note;
@@ -32322,7 +32323,6 @@ ttoFix("penguin_cosmicRift", "• [Fix] โดน ^^ดาเมจม่วง^
 ttoFix("penguin_giantStar", "• [Fix] **Falling Stars:** รัศมีหาเป้าหมายไม่เพิ่ม (**12m / 16m**) → เพิ่ม **50%** เป็น **18m / 24m**", { bbBug: "", tooltipNote: "บอกว่าเพิ่ม **ระยะ** ของ Falling Star และ Falling Comet ขึ้น **50%** แต่ **Falling Comets** รัศมีระเบิดเพิ่ม **50%** (**6m** เป็น **9m**) ส่วนระยะกระจายเพิ่มแค่ **25%** (**±8m** เป็น **±10m**)", desc: ttoDescFix("penguin_giantStar", (d) => descSwap(d, "**Falling Stars:** เพิ่มจำนวนเป้าหมายสูงสุดจาก", "**Falling Stars:** เพิ่มรัศมีหาเป้าหมายจาก **12m / 16m** (เลเวล 1 / 2) เป็น **18m / 24m** เพิ่มจำนวนเป้าหมายสูงสุดจาก")) });
 { const stars = SKILLS.find(s => s.id === "penguin_fallingStars"); ttoFix(stars.id, "• [Fix] **Giant Star** ไม่เพิ่มรัศมีหาเป้าหมาย (**12m / 16m** ตามเลเวล) → เพิ่ม **50%** เป็น **18m / 24m**", { tooltipNote: (rank) => rank === 2 ? "ขั้น 2 บอกว่าดาวละ **40** ดาเมจ แต่โค้ดจริงคือ **45**" : "", reach: (rank) => stars.reach(rank).map((p, i) => i ? p : Object.assign({}, p, { r: Math.floor((getDepRank(PENGUIN_GIANTSTAR_DEP) > 0 ? 1.5 : 1) * p.r), src: "TTO patch notes (user 2026-11-02)" })), desc: ttoDescFix(stars.id, (d) => descSwap(d, "**Giant Star:** เพิ่มเป้าหมายสูงสุดเป็น", "**Giant Star:** รัศมีหาเป้าหมายกว้างขึ้น **50%** เพิ่มเป้าหมายสูงสุดเป็น")) }); }
 ttoFix("rabbit_miracleBlend", "• [Fix] ระยะเวลาสถานะจากขวดยาสุ่ม (ล่องหน, ตัวเล็ก, ตัวใหญ่, พิษ, **Miracle Drop**) คิดจาก CHA ของกระต่ายที่ร่าย ณ ตอนที่ขวดถูกโยนออกมา", { desc: ttoDescFix("rabbit_miracleBlend", (d) => descSwap(d, "ที่เดินชนจะได้รับสถานะนั้น", "ที่เดินชนจะได้รับสถานะนั้น นานตาม CHA ของกระต่าย ณ ตอนที่โยนขวด")) });
-ttoFix("rabbit_contract", "• [Fix] หัก Gil เกินจริงเป็นสองเท่าเมื่อจ้าง Lv1 และ Lv2: **800** → **400 Gil** และ **2,400** → **1,200 Gil**");
 { const skinDesc = (id) => ttoDescFix(id, (d, rank) => descSwap(d, "**" + 8 * [2, 3, 3][rank - 1] + "%**", "**" + 8 * rank + "%**"));
   const note = "• [Fix] ค่าลดดาเมจตรงกับคำอธิบายสกิล (เดิมเลเวล 2 และ 3 ได้ผลเท่ากัน): เลเวล 1 **16%** → **8%**, เลเวล 2 **24%** → **16%**, เลเวล 3 **24%**";
   ttoFix("bison_ironSkin", note, { bbBug: "", tooltipNote: (rank) => "บอกว่าลดดาเมจ **" + 8 * rank + "%** ภายใน **6m** แต่โค้ดจริงภายใน **4m**", desc: skinDesc("bison_ironSkin") });
@@ -32330,8 +32330,7 @@ ttoFix("rabbit_contract", "• [Fix] หัก Gil เกินจริงเ�
 ttoFix("bat_mimic", "• [Fix] แปลงร่างแล้วไม่ได้สถานะ → ได้สถานะตามปกติ");
 ttoFix("whale_wallPuncture", "• [Fix] **nAttack** ฮิตที่กลายเป็น ^^ดาเมจม่วง^^ ไม่ติดผลพิเศษของอาวุธ → ติดแล้ว", { desc: ttoDescFix("whale_wallPuncture", (d) => descSwap(d, "<br>**nAttack:** ฮิตที่กลายเป็น ^^ดาเมจม่วง^^ __ไม่ติดผลพิเศษของอาวุธหรือหมวก__", "")) });
 ttoFix("whale_gourmetHeart", "• [Fix] แก้สกิลที่ทำงานไม่ถูกต้อง: ได้โบนัส **+100 HP, +40 MP, +10 SP** จากอาหาร ของหวาน และเครื่องดื่มทุกชนิด (เดิมเฉพาะที่ฟื้น HP / MP / SP / KO)", {});   // TTO1102:GameGui.<HandleFoodCommand>d__1146::MoveNext@0x206CD30 (hasSkill 421 skips the restore checks)
-ttoFix("mole_gigaCannon", "• [Fix] แก้บัคที่ Giga หายไป");
-ttoFix("monkey_summonSoul", "• [Fix] Ja และ Buiten ที่ได้เลเวลเพิ่มจาก **Ja Ascension** / **Buiten Bastion** ให้ค่าสถานะแค่เท่าเลเวล **4** (**+40**) → ให้ตามเลเวลจริง (เลเวล **6** ได้ **+60**)");
+ttoFix("monkey_summonSoul", "• [Buff] Ja และ Buiten ที่ได้เลเวลเพิ่มจาก **Ja Ascension** / **Buiten Bastion** ให้ค่าสถานะตามเลเวลจริง (เลเวล **6** ได้ **+60** เดิมสูงสุดเลเวล **4** ได้ **+40**)");
 // The trees of a class on a server: BB's, plus the Reborn C6 / C7 rows on Reborn (cached per class).
 function skillSimTrees(server, classKey){
   const base = SKILL_SIM[classKey];
@@ -39215,6 +39214,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-04T09:46:01Z","fix(bible): [Fix] only for BB bugs a server fixed; TTO's own fixes folded or dropped (Fire Avatar / Earth Form swap into the skills-in-form Buff, Summon Soul Ja Ascension levels as Buff, Contract double Gil and Giga Cannon removed); validator guard"],
     ["2026-11-04T09:27:20Z","fix(bible): ToT แอบ tags re-checked against ToT's Discord: Napalm [Nerf], Fire Avatar Fireball [Fix], Blazing Arrow rebirth cooldown folded into its Buff line; Fire Avatar's extra Fire Rune roll marked unintended (BB, TTO, Reborn)"],
     ["2026-11-04T09:01:41Z","fix(bible): TTO Ice Shield blocks every KO (hits, purple damage, KO statuses) and Falling Comets / Stars keep Focus Intellect on repeats, back on the cards after a code re-check"],
     ["2026-11-04T08:53:05Z","feat(bible): server changes page gets แอบ Buff and แอบ Nerf filters (those lines used to fall under Adjust)"],

@@ -825,7 +825,7 @@ Every number in the BB Thai tooltip (`RabbitSkill_thai.cs`) was compared with th
 
 **Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
 - Miracle Blend: status durations (invisible, reduce, enlarge, poison, Miracle Drop) use the casting Rabbit's CHA at the moment the bottle is thrown.
-- Contract: Gil was charged double at levels 1 and 2: 800 → 400 and 2,400 → 1,200. The BB code reads 200 / 600 per spawned unit, so 400 / 1,200 (`Rabbit.cs:11635-11683`), and the card already showed those.
+- Contract: Gil was charged double at levels 1 and 2: 800 → 400 and 2,400 → 1,200. The BB code reads 200 / 600 per spawned unit, so 400 / 1,200 (`Rabbit.cs:11635-11683`), and the card already showed those. TTO's own bug, so no card line since 2026-11-04 (the TTO code charges BB's amounts).
 
 **New Order on coin summons (TTO client, checked 2026-11-03):** as on BB, `floor(× 1.5)` on HP, MP, max HP, max MP and the 8 stats of every unit a Rabbit with New Order summons, coin NPCs included (`TTO1102:CharacterControl::onSummonEvent@0x24DF8F0`). On TTO the chapter-scaled coin summons (the five Cults, the Ninja / Samurai / Shogun Bugs, the Gallon bots) then get TTO's chapter multiplier on top, up to ×5.8: [12Tails-Mechanics-Reference.md](12t_reference/12Tails-Mechanics-Reference.md), "Coin summons: New Order and chapter scaling".
 

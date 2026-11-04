@@ -537,7 +537,7 @@ Every number in the BB Thai tooltip (`MoleSkill_thai.cs`) was compared with the 
 ## Server Balance Variations (TTO)
 
 **Bug fixes, user-reported 2026-11-02 (the server's patch notes; not decompiled):**
-- Giga Cannon: the bug that made it disappear is fixed. The notes give no other detail.
+- Giga Cannon: the bug that made it disappear is fixed. The notes give no other detail; no such bug is known in BB, so it is taken as TTO's own and has no card line (since 2026-11-04).
 
 Private-server values are documented from the Bible skill-detail schema; the BigBug decompile remains the original-server baseline.
 
