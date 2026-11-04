@@ -1226,7 +1226,7 @@ Cards `tot_ex_risingstrom` / `tot_ex_absolutecontrol` / `tot_ex_divinefist`, `on
 - **The damage helpers ToT skills call** (`:608-656`): `dmgAdjust = ceil(clamp(damageMod, 0, 5) × d + Random(0, ceil(0.2 × LCK)))`, `koAdjust = clamp(floor(koMod × n), 0, 99)`, `hateAdjust` (0-999), `forceAdjust = forceMod × v`, `defAdjust` with `clamp(DEF + R, 1, 512)` and `ceil(0.35 × max(1, floor(d − 0.5 N)) + 0.65 × max(1, floor(d × (1 − N / (N + 64)))))`: BB's (12Tails-Mechanics-Reference.md §2.2-2.3).
 ### ToT code-only changes (`แอบ` tags, 2026-11-04)
 
-No ToT patch note announced these; they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
+No ToT patch note announced these (re-checked 2026-11-04 against ToT's Discord: every balance image in แพตช์อัพเดตใหญ่, 01/03-01/11/2026, and the text of อัพเดตทั่วไปและแก้บัค); they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
 
 - Combo Link: cooldown 240 → 300 s (`[แอบ Nerf]`)
 

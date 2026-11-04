@@ -818,7 +818,7 @@ Cards `tot_ex_rageking` / `tot_ex_earthquake` (passives, ToT toggles on the card
 - **EarthQuake5:** `Bison_earthRupture.OnCollisionEnter` (`:688-743`) and `RPC_earthSmasher` (`:521-685`) repeat the first batch: the −10 KO is still `targetControl.ko -= 10` on the attacker's copy, so its effect on a target another client owns is still not shown.
 ### ToT code-only changes (`แอบ` tags, 2026-11-04)
 
-No ToT patch note announced these; they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
+No ToT patch note announced these (re-checked 2026-11-04 against ToT's Discord: every balance image in แพตช์อัพเดตใหญ่, 01/03-01/11/2026, and the text of อัพเดตทั่วไปและแก้บัค); they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
 
 - Berserker Rush: status chance ×4 (`[แอบ Buff]`)
 - Added Swing: 4 Hold Charge hits with Charge Attack learned (`[แอบ Buff]`)

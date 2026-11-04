@@ -554,6 +554,7 @@ Requirements and costs from `scripts/decode_skilldata.py DecompiledSource/Monkey
 - Client tooltips: EN "Passively adds 40% of Monkey's level to the summoned Phoenix [Gadina] basic stats." (`MonkeySkill_eng.cs:957`, `:1012`). Code wins: 10% per form level, of each Monkey base stat.
 
 ### 4.17 Fire Avatar - Fireball (`monkey_fireAvatar_fireBall`) and Blazing Fire (`monkey_blazingFire`, #442)
+- **Unintended (user 2026-11-04):** the attack calls `FireRune()` at its end (state 3, `Monkey.cs:38963`) whether or not the ball hits anything, and the ball's hit calls it again (`Monkey_fireBall.cs:261`), so a miss still rolls Fire Rune and a hit rolls twice; the Monkey's normal attacks roll only inside their hit loop (`Monkey.cs:20060`). TTO keeps it (`TTO1102:Monkey.<RPC_phoenixArmor_nAttack>d__234::MoveNext@0x1D11170`, state 3), Reborn too (`Reborn1027:Monkey.cs:6187`); ToT removed the end roll (`ToT1103S:References/Balance_MonkeyFire.cs:1125-1175`; bug fix 23/09/2026 "แก้ไขลิง เมื่อขึ้นFireAvata/EarthForm ตีลมได้ติด Firerune"). Card: `unintended`, cleared on the ToT tab.
 - **Fire Avatar Fireball** (`$RPC_phoenixArmor_nAttack`, `Monkey.cs:38728-39198`): level = 1, +1 for each of 3 / 6 / 9 s since the Monkey's last action (max 4), fired through `RPC_fireBall_fire`; the hit is the Monkey Fireball (`talAdjust(20 + 20 × lv (+20 Fire Keep))`, KO 1, `burn` Lv 5 for `getDebuff(4)`, Fire Rune). Lock `addTimeOut("nAttack", 1)`. The Lv 5 is the `hasSkill(432)` rule of §4.6, so it holds for every Monkey Fireball once Fire Avatar is learned.
 - **Blazing Fire:** passive, reqLv 85, reqBn 6.
   - Flash Fire gets `+10` inside `talAdjust(8 + 8 × rank)` (`Monkey.cs:28598`).
@@ -1027,10 +1028,10 @@ Cards `tot_ex_jaburst` / `tot_ex_buitenguard` / `tot_ex_rumbling`, `onlyServer: 
 - **Still not shown:** `ReduceFireLineCooldowns`' `FireLineCooldownTypes` list (`:725-739` shows the loop only); `PrepareSummonUltimateCaster` (`:764-774`) sets the summon's action and facing; its callers hide Gadina's renderers (`SetSummonUltimateRenderersEnabled(…, false)`, `ToT1103S:References/Balance_MonkeyEarth.cs:390-416`) and cancel Blazing Arrow when the Phoenix dies during the 3 s charge (`Balance_MonkeyFire.cs:621-647`), which implies the hidden summon can still be hit, but no hit check is shown; the call site of `UpdateJaBurstBurn`; Buiten coexisting with other summons (`RPC_buiten_create` hands off to `NotifyMonkeySummonCreation`, whose body is in no batch).
 ### ToT code-only changes (`แอบ` tags, 2026-11-04)
 
-No ToT patch note announced these; they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
+No ToT patch note announced these (re-checked 2026-11-04 against ToT's Discord: every balance image in แพตช์อัพเดตใหญ่, 01/03-01/11/2026, and the text of อัพเดตทั่วไปและแก้บัค); they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
 
-- Blazing Arrow: the shot is lost if the Phoenix dies during the charge (`[แอบ Nerf]`)
+- Blazing Arrow: the shot is lost if the Phoenix dies during the charge (`[แอบ Nerf]`; ToT's 10/09/2026 "ร่างของ Phoenix จะสลาย" is the hidden body, it stays on the field). The returned Phoenix's rebirth cooldown, first in the same line, is ToT's 25/09/2026 bug fix "แก้ไข Phoenix ไม่ติด CD การเกิดจากการใช้สกิล BlazingArrow", a fix of ToT's own rework (BB's Blazing Arrow makes a brand-new Phoenix with its rebirth ready, `Monkey.cs:28255-28290`, `Phoenix.cs:516`, `:4472`), so it is folded into the `[Buff]` rebirth line, not a line of its own (user 2026-11-04)
 - Titanic Earth Pulse: cancelled if the Gadina dies during the 5 s charge (`[แอบ Nerf]`)
 - Mike Circle: 1 SP per press (the rework was announced, the cost was not; `[แอบ Nerf]`)
-- Fire Avatar - Fireball: Fire Rune rolls only on hits (`[แอบ Nerf]`)
+- Fire Avatar - Fireball: Fire Rune rolls only on hits: announced after all (bug-fix channel 23/09/2026, "แก้ไขลิง เมื่อขึ้นFireAvata/EarthForm ตีลมได้ติด Firerune"), so `[Fix]` since the re-check: ToT fixed a BB oddity, card `unintended` below
 
