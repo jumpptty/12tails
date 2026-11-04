@@ -844,3 +844,9 @@ These were first wired from the `// คำอธิบาย:` comments (user 20
 - **Costs:** the catalog matches the C6 cards (`ToT1103S:Catalog/Catalog_Chameleon.cs`, rows 452-454).
 - **ApexPredator5 MP (answers the liveCheck):** `getAdjustedSkillMP` takes Revised Magic first (`ceil(0.8 × MP)`), then, for commands 341-344 and 361-364 (the four Slayers and four All Slayers) with 453 and 354 learned, `ceil(× (100 − 50) / 100)` (`ToT1103S:References/Shared_MpDiscountAndCSkillCap.cs:34-51`; `mpReductionPercent 50`, `Balance_DefaultValues.cs:208-221`). Example: MP 12 with Revised Magic → 10 → 5. The card's liveCheck became a ## ลด MP topic; the Slayer cards' own cost chips still show the BB cost.
 - **Cost chips (2026-11-03):** with the ApexPredator5 toggle on, the four Slayer and four All Slayer cards' ToT cost chips show `ceil(MP × 0.5)` (before Revised Magic, which the chips never apply), and their toggle lines say so (`totHalfMp`).
+
+### Answers (ToT1104A, 2026-11-04)
+
+`ToT1104A:` = `ToT_Skillsim_2026-11-04_answers/<file>:<line>` (AGENTS.md), the ToT team's answers of 2026-11-04 (`Skillsim20261104.zip`) to the questions the ToT1104 follow-up left open; each excerpt names its source file, method and original lines.
+
+- **Fatal Strike's status level (`ToT1104A:Other.cs:151-195`; ChameleonDoSkill.cs:238-253, ChameleonSkillActions.cs:897-918):** commands 301-304 give `level = command − 300` (the rank); the cast is refused ("Cannot add fatalStrike while immune") with MP / SP refunded when the `immunity` level ≥ rank + (403 ? 1 : 0); cooldown `agiAdjust(30)` at the press; 0.3 s later, on the own client, `fatalStrike` at level rank + (Extra Arrows 403 ? 1 : 0), `chaAdjust(12)`, value 5 (+5 with 403). All BB's (Fatal Strike above, `Chameleon.cs:7904`, `:26313`). No card change.

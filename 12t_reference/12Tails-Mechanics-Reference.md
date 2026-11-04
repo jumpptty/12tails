@@ -350,6 +350,8 @@ Cat **Vendetta** (#364) grants the Cat `RPC_AddHeal(364, 0, 0, 10, ...)` (+10 SP
 
 **Not dodgeable:** anything that does not go through `hit()`. That includes Effect Damage (`RPC_AddEffectDamage`, e.g. Panda Shadow Fist, and every Wolf normal attack while Wolf has `darkEdge`, `Wolf.cs:15267`), status ticks/status damage (`StatusUpdate`, `:8832-10634`), projectiles that call `RPC_AddDamage` themselves (`Mole_missile.cs:369`, `BarrelBot_missile.cs:369`, Gallon Bot missile, and many monster projectiles), pet damage, and damage passed on inside `RPC_AddDamage` (`:4994`, `:5531`, `:5661`). The class files contain more direct `RPC_AddDamage` calls that were not classified one by one. The bible's mechanic-glossary topic `evasion` summarises this section.
 
+**ToT (ToT1104A, 2026-11-04):** the same split. ToT's `hit()` calls `HitWithClientDamage`, which after its preflight (no target or `!recieveDamage`, a target dead for 3 s, `hide` / `noDamage` / `jaBurst` / `swallow` / `salvation`) runs `TryEvadeHit(target)` on every white hit; `RPC_AddEffectDamage` has its own preflight and no `TryEvadeHit` (`ToT1104A:Other.cs:3-42`). A ToT skill that calls `RPC_AddDamage` itself can still roll `TryEvadeHit` on its own (Flame Turret and Napalm ticks, mole-skill-reference.md ToT sections).
+
 ### 2.9 Damage routing: `hit()` vs direct `RPC_AddDamage` vs `RPC_AddEffectDamage` (verified 2026-09-24)
 
 There are three entry points, and which one a skill uses decides which pipeline stages it gets:
