@@ -1224,3 +1224,9 @@ Cards `tot_ex_risingstrom` / `tot_ex_absolutecontrol` / `tot_ex_divinefist`, `on
 - **Lotus Palm's dodge:** `TryEvadeHit` reads `heavenBreath` and `LotusPalm`, each `Random.Range(0, 100) < 20` (fixed, `RPC_AddDamage(-82, …)` = a miss, `:588-598`); the ToT team's README: no client code adds a status named `LotusPalm`, and `RPC_lotusPalm_hit` only spawns the effect (`:576-585`). The ToT tab's liveCheck became a red limit line in a ToT desc: the patch's 20% dodge cannot happen. Whether `HitWithClientDamage` (called by `hit`, `:601-605`) runs `TryEvadeHit` is still not shown.
 - **Rising Dragons:** the excerpt (`:226-420`) repeats the supplement (cooldown `agiAdjust(240) × 0.5` with 452, lock r `(4.5 : 3) × rangeMod` h `(9 : 6) × rangeMod`, the finisher ×1.1 at rank 2).
 - **The damage helpers ToT skills call** (`:608-656`): `dmgAdjust = ceil(clamp(damageMod, 0, 5) × d + Random(0, ceil(0.2 × LCK)))`, `koAdjust = clamp(floor(koMod × n), 0, 99)`, `hateAdjust` (0-999), `forceAdjust = forceMod × v`, `defAdjust` with `clamp(DEF + R, 1, 512)` and `ceil(0.35 × max(1, floor(d − 0.5 N)) + 0.65 × max(1, floor(d × (1 − N / (N + 64)))))`: BB's (12Tails-Mechanics-Reference.md §2.2-2.3).
+### ToT code-only changes (`แอบ` tags, 2026-11-04)
+
+No ToT patch note announced these; they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
+
+- Combo Link: cooldown 240 → 300 s (`[แอบ Nerf]`)
+

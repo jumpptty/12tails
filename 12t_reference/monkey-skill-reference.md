@@ -1018,3 +1018,12 @@ Cards `tot_ex_jaburst` / `tot_ex_buitenguard` / `tot_ex_rumbling`, `onlyServer: 
 - **Phoenix:** `GetRebirthChance()` = the owner's `lckAdjust(100)` (with no owner `12 + 6 × type`), `StartRebirthCooldown()` = a flat `addTimeOut("rebirth", 120)` (`:742-755`): the cards' guaranteed rebirth with a 120 s timer is code.
 - **Earth Form:** `GetEarthFormAttackSpeed()` = 1.25 (`:758-761`), the patch's +25%; only the page comment changed.
 - **Still not shown:** `ReduceFireLineCooldowns`' `FireLineCooldownTypes` list (`:725-739` shows the loop only); `PrepareSummonUltimateCaster` (`:764-774`) sets the summon's action and facing; its callers hide Gadina's renderers (`SetSummonUltimateRenderersEnabled(…, false)`, `ToT1103S:References/Balance_MonkeyEarth.cs:390-416`) and cancel Blazing Arrow when the Phoenix dies during the 3 s charge (`Balance_MonkeyFire.cs:621-647`), which implies the hidden summon can still be hit, but no hit check is shown; the call site of `UpdateJaBurstBurn`; Buiten coexisting with other summons (`RPC_buiten_create` hands off to `NotifyMonkeySummonCreation`, whose body is in no batch).
+### ToT code-only changes (`แอบ` tags, 2026-11-04)
+
+No ToT patch note announced these; they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
+
+- Blazing Arrow: the shot is lost if the Phoenix dies during the charge (`[แอบ Nerf]`)
+- Titanic Earth Pulse: cancelled if the Gadina dies during the 5 s charge (`[แอบ Nerf]`)
+- Mike Circle: 1 SP per press (the rework was announced, the cost was not; `[แอบ Nerf]`)
+- Fire Avatar - Fireball: Fire Rune rolls only on hits (`[แอบ Nerf]`)
+

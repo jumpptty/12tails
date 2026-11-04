@@ -808,3 +808,10 @@ Cards `tot_ex_rageking` / `tot_ex_earthquake` (passives, ToT toggles on the card
 - **Added Swing's Hold Charge:** `FinishNormalAttack(expectedCommand, grantHoldCharge)` (`:746-775`) adds `holdCharge` level `hasSkill(452) ? 6 : 1`, time `chaAdjust(3 + Controlled Swing)`, **value 4**, when `grantHoldCharge`, own client and `hasSkill(111)` (Charge Attack rank 1; Hold Charge #113 is not needed). Only `RPC_nAttack5` (Added Swing) passes `true`; stages 1-4 pass `false` (`ToT1103S:References/Balance_Bison.cs:76, :161, :254, :383, :507`). So on ToT a finished Added Swing stores a 4-hit spin (released by the next attack press from standby or run, BB `Bison.cs:5089-5120`), without Solid Hold's extension. BB has only the charge-release grant (`Bison.cs:5383-5405`). New ToT tab on Added Swing (desc line, [Buff]); RageKing5's Hold Charge line names it.
 - **DesTroyer5:** the excerpt (`:38-326`) repeats the first batch; `DestroyerReworkFirstMultiplier`, `…MultiplierStep`, `…WaveCount`, `…WaveInterval` and `…PullDuration` are still names only, so the ×1 / 1.15 / 1.3 / 1.45, the 3 s spacing and the 1.5 s pull stay the team's. The balance blocks (`:4-35`) confirm KO 100 / hate 200 on wave 1 and KO 50 / hate 100 with pull radius 15 and speed 3 after it.
 - **EarthQuake5:** `Bison_earthRupture.OnCollisionEnter` (`:688-743`) and `RPC_earthSmasher` (`:521-685`) repeat the first batch: the −10 KO is still `targetControl.ko -= 10` on the attacker's copy, so its effect on a target another client owns is still not shown.
+### ToT code-only changes (`แอบ` tags, 2026-11-04)
+
+No ToT patch note announced these; they come from ToT's own code (the ToT1103 / ToT1104 sections above) and carry `[แอบ Buff]` / `[แอบ Nerf]` on the cards (bible-desc-writing):
+
+- Berserker Rush: status chance ×4 (`[แอบ Buff]`)
+- Added Swing: 4 Hold Charge hits with Charge Attack learned (`[แอบ Buff]`)
+
