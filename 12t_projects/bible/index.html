@@ -1517,6 +1517,15 @@
   @media (min-width:2400px) and (min-height:1300px){ .changelog-patch-btn{font-size:17px} .changelog-patch-btn img{width:34px; height:34px} }
   .patch-list li.patch-group{padding-left:0; margin-top:6px; color:var(--gold); font-size:.88em; font-weight:600; border-bottom-color:var(--gold)}
   .patch-list li.patch-group::before{content:none}
+  /* featured cards (user 2026-11-06): the top-ranked lines of an entry (its `featured` count) as tinted cards with a gold accent bar and the class's
+     round hero icon (the server logo for C6 / system lines); no rank number, their order is the rank */
+  .patch-list li.patch-feature{margin:8px 0; padding:12px 14px 12px 62px; min-height:62px; box-sizing:border-box; border:1px solid color-mix(in srgb,var(--gold) 40%,transparent); border-left:3px solid var(--gold); border-radius:6px; background:color-mix(in srgb,var(--gold) 9%,transparent)}
+  .patch-list li.patch-feature::before{content:none}
+  .patch-ficon{position:absolute; left:12px; top:12px; width:38px; height:38px; border-radius:50%; object-fit:cover; border:1px solid var(--gold); background:var(--ink)}
+  .patch-ftext{display:block; margin-top:3px; font-size:1.07em; line-height:1.55}
+  .patch-list li.patch-sec{padding:10px 0 4px; color:var(--gold); font-size:.82em; font-weight:600; letter-spacing:.04em; border-bottom:0}
+  .patch-list li.patch-sec::before{content:none}
+  @media(max-width:560px){ .patch-list li.patch-feature{padding-left:54px} .patch-ficon{width:32px; height:32px; left:10px} }
   .patch-ok:disabled{opacity:.55; cursor:not-allowed}
   .patch-ok:disabled:hover{background:var(--gold-soft); color:var(--gold)}
   @media(max-width:560px){.changelog-backdrop{padding:12px}.changelog-head{padding:16px}.changelog-summary{padding:11px 16px; display:block}.changelog-summary strong{display:block; margin-top:3px; text-align:left}.changelog-list{padding-left:16px; padding-right:16px}.changelog-list li{font-size:11.5px}}
@@ -39267,6 +39276,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-06T08:45:20.805Z","feat(bible): patch pop-up shows the top-ranked lines (featured: N) as featured cards with the class hero icon under a เรื่องสำคัญ heading; reopening starts at the top"],
     ["2026-11-06T08:40:11.751Z","feat(bible): patch history: the TTO patch pop-up is logged in PATCH_HISTORY (newest first) and a แพตช์โน้ต TTO button in the changelog header reopens it for review"],
     ["2026-11-06T08:33:49.960Z","fix(bible): patch pop-up gets a บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่ chip for claims the code does not back (Hypershot), the Auto Skill aim fix, and a Hypershot TTO note"],
     ["2026-11-06T08:15:00.204Z","fix(bible): TTO 1.6.2.x follow-up: skill simulator lets a TTO build learn more than one Lv 100 skill (TTO1106 dropped the check), War Area reset untagged, Mall lawn rule, town shield on Swap, Tiger Toss and Parallel Shift, Evil Twin multi-part bosses, King Kaiser stuck-attack reset, one-time patch pop-up"],
@@ -39976,12 +39986,14 @@ function mountChangelog(){
 // Patch history (user 2026-11-06): every patch summary the Bible publishes, newest first, one entry each { key, server, kicker, title, sub, items }.
 // The newest opens on page load once per browser (per `key`) and cannot be closed for its first 3 seconds; the changelog header has one button per
 // server with history that opens that server's entries for review (no lock). A new patch = a new entry on top with a new `key`; old entries stay.
-// The lines are ranked by importance, most important first, and shown in that order: [tag, text (**bold** = gold), kind]. kind (optional): "sneak" = a change TTO's notes do not mention
+// The lines are ranked by importance, most important first, and shown in that order: [tag, text (**bold** = gold), kind]. `featured: N` (optional)
+// shows an entry's first N lines as featured cards (the important topics: bigger, tinted, with the class's hero icon) above the rest. kind (optional): "sneak" = a change TTO's notes do not mention
 // (chip แอบเปลี่ยน); "fix" / "change" = TTO's notes say it was fixed / changed but the code shows nothing that does it (chip บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่;
 // the text says what the code really changed). Never call such a gap a server-side change: small fixes like these live in the client (user 2026-11-06).
 const PATCH_HISTORY = [{
   key: "tto-1.6.2.3",
   server: "tto",
+  featured: 4,
   kicker: "TTO · แพตช์ 1.6.2.1 – 1.6.2.3",
   title: "สรุปการเปลี่ยนแปลงแพตช์ล่าสุด",
   sub: "ตรวจจากโค้ดเกม TTO วันที่ 06/11/2026 · รายละเอียดอยู่ในการ์ดสกิลแต่ละใบ (แท็บ TTO)",
@@ -40014,17 +40026,21 @@ function mountPatchPopup(){
   const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b class="sk-val">$1</b>');
   const KIND = { sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่โค้ดเกมไม่ได้แก้ตามนั้น"],
     change: ['is-claim', "บอกว่าเปลี่ยนแต่", "แพตช์โน้ตบอกว่าเปลี่ยน แต่โค้ดเกมไม่ได้เปลี่ยนตามนั้น"] };
-  const lines = (items) => items.map(([tag, text, kind], i) => { const k = KIND[kind];
-    return '<li data-n="' + String(i + 1).padStart(2, "0") + '"><span class="patch-tag">' + esc(tag) + "</span>"
-      + (k ? '<span class="patch-tag ' + k[0] + '" title="' + k[2] + '">' + k[1] + "</span>" : "") + rich(text) + "</li>"; }).join("");
+  // an entry's lines: the first `featured` as cards (hero icon of the tag's class, else the server logo), the rest numbered by their rank
+  const lines = (e) => { const f = Math.min(e.featured || 0, e.items.length);
+    const one = ([tag, text, kind], i) => { const k = KIND[kind], chips = '<span class="patch-tag">' + esc(tag) + "</span>" + (k ? '<span class="patch-tag ' + k[0] + '" title="' + k[2] + '">' + k[1] + "</span>" : "");
+      if (i >= f) return '<li data-n="' + String(i + 1).padStart(2, "0") + '">' + chips + rich(text) + "</li>";
+      const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS["server_" + e.server];
+      return '<li class="patch-feature">' + (icon ? '<img class="patch-ficon" src="' + icon + '" alt="">' : "") + chips + '<span class="patch-ftext">' + rich(text) + "</span></li>"; };
+    return (f ? '<li class="patch-sec">เรื่องสำคัญ</li>' : "") + e.items.slice(0, f).map(one).join("")
+      + (f && f < e.items.length ? '<li class="patch-sec">การเปลี่ยนแปลงอื่น</li>' : "") + e.items.slice(f).map((it, i) => one(it, i + f)).join(""); };
   // newest first: its own header on top, older entries below as headed groups
   const fill = (entries) => {
     const [top, ...older] = entries;
     document.getElementById("patchKicker").textContent = top.kicker;
     document.getElementById("patchTitle").textContent = top.title;
     document.getElementById("patchSub").textContent = top.sub;
-    list.innerHTML = lines(top.items) + older.map((e) => '<li class="patch-group">' + esc(e.kicker) + " · " + esc(e.sub) + "</li>" + lines(e.items)).join("");
-    list.scrollTop = 0;
+    list.innerHTML = lines(top) + older.map((e) => '<li class="patch-group">' + esc(e.kicker) + " · " + esc(e.sub) + "</li>" + lines(e)).join("");
   };
   let forced = null;   // the key the forced (page-load) showing remembers when it is closed
   const hide = () => {
@@ -40035,6 +40051,7 @@ function mountPatchPopup(){
   const show = (entries, lock) => {
     fill(entries);
     modal.hidden = false;
+    list.scrollTop = 0;   // after showing: a hidden list ignores scrollTop
     modal.querySelector(".patch-popup").focus();
     if (!lock){ ok.disabled = false; ok.textContent = "ปิด"; return; }
     let left = 3;
