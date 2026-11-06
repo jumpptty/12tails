@@ -5021,7 +5021,8 @@ async function donateChildTests(env) {
     good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
   good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && !html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"])') && html.includes("var G = 'html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot, and og (the BB look, user 2026-10-29)");
   good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
-  // TTO (user 2026-10-31, TailsTopia's simulator read that day): the C pool stops at 9; cells 452-454 need Lv 100, 7 C skills and their required skills, cost no point, one at a time; each has a stub card.
+  // TTO (user 2026-10-31, TailsTopia's simulator read that day): the C pool stops at 9; cells 452-454 need Lv 100, 7 C skills and their required skills; each has a card.
+  // Patch 1.6.2.1: C pool 10 at Lv 100 and each Lv 100 skill costs a C point; the TTO1106 client (2026-11-06) no longer limits them to one at a time.
   { const X = vm.runInContext("SKILL_SIM_TTO_EXTRA", sandbox), cf = vm.runInContext("skillSimCellsFor", sandbox), valid = vm.runInContext("skillSimValid", sandbox), probs = vm.runInContext("skillSimProblems", sandbox), auto = vm.runInContext("skillSimAutoLearn", sandbox);
     const P = vm.runInContext("SKILL_SIM_POOLS", sandbox), magicSet = vm.runInContext("TTO_MAGIC_DMG", sandbox), over = vm.runInContext("CLASS_GUIDE_TTO_OVER_C", sandbox), isOver = vm.runInContext("classGuideIsOverC", sandbox), cgs = vm.runInContext("CLASS_GUIDES", sandbox), normG = vm.runInContext("classGuideNormalize", sandbox);
     good(P.tto.c(94) === 8 && P.tto.c(95) === 9 && P.tto.c(99) === 9 && P.tto.c(100) === 10 && P.tto.c(110) === 10 && P.tto.exInC === true && P.bb.c(110) === 12 && P.tto.normal(110) === 49, "TTO C pool: 8 at Lv 94, 9 at Lv 95-99, 10 from Lv 100 with the Lv 100 skill spending one (patch 1.6.2.1); BB / ToT still 12 at Lv 110");
@@ -5036,7 +5037,8 @@ async function donateChildTests(env) {
         good(rulesOf(id, [...base, id], 99).includes("level"), key + " " + id + ": refused below Lv 100");
         good(rulesOf(id, [id, ...e[3], ...c7.filter(i => !e[3].includes(i)).slice(0, Math.max(0, 6 - e[3].filter(i => i > 400).length))], 100).includes("cbn"), key + " " + id + ": refused with 6 C skills");
         e[3].forEach(r => good(rulesOf(id, [...base.filter(i => i !== r), id], 100).includes("req"), key + " " + id + ": needs " + r));
-        good(rulesOf(id, [...base, id, X[key].find(o => o[0] !== id)[0]], 100).includes("choice"), key + " " + id + ": one of the three at a time");
+        { const two = rulesOf(id, [...base, id, X[key].find(o => o[0] !== id)[0]], 100);
+          good(!two.includes("choice") && (cSpent > 8 || !two.includes("pool")), key + " " + id + ": a second Lv 100 skill is allowed, one C point each (TTO1106 dropped TTO1102's one-at-a-time check, ForbiddenSkillGui::LearnBlocker)"); }
         good(card && card.onlyServer === "tto" && card.class === vm.runInContext("SKILL_SIM_NAMES", sandbox)[key] && !!card.passive === !!e[4] && (!card.soon || (card.soon === "tto" && typeof card.desc === "string" && card.desc.startsWith(e[8]) && (e[7] === "None") === !card.desc.includes("ประเภทดาเมจ"))) && (e[5] || e[6] ? card.cost.mp === e[5] && card.cost.sp === e[6] && card.cost.spType === "red" : !card.cost), key + " " + id + ": a stub with the site's text and damage type, or a real card, with the site's MP and SP");
         good(magicSet.has(card && card.id) === (e[7] === "Magic"), key + " " + id + ": in TTO_MAGIC_DMG exactly when the site tags it Magic");
         good(!!SKILL_ICONS[e[1]], key + " " + id + ": icon " + e[1] + " is embedded");
@@ -5858,6 +5860,18 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
     && src.includes('{ k: "bug", label: "บั๊กของตัวเกม", short: "บั๊ก", color: "var(--seal)"') && src.includes('{ k: "tip", label: "คำอธิบายไม่ตรง", short: "คำอธิบาย", color: "var(--tip)"') && src.includes('short: "ไม่ตั้งใจ", color: "var(--gold)"');
   if (!ok) { errorCount++; console.error(`[NOTE COLOUR ERROR] --tip must exist in all 3 theme blocks (${tokens}) and the tooltip chip, note and BB issues tag must use it while bug stays red and unintended gold`); }
   console.log("Verified the three note colours stay distinct.");
+}
+
+// One-time patch pop-up (user 2026-11-06): a ranked list of [tag, text, sneak?] under a key, shown once per browser per key, closable only after 3 s.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), P = vm.runInContext("PATCH_POPUP", sandbox);
+  const shape = !!P && typeof P.key === "string" && P.key && Array.isArray(P.items) && P.items.length > 0
+    && P.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || typeof it[2] === "boolean"));
+  const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();")
+    && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes('localStorage.setItem(PATCH_SEEN_KEY, PATCH_POPUP.key)')
+    && /\.patch-ok:disabled\{/.test(src);
+  if (!shape || !wired) { errorCount++; console.error(`[PATCH POPUP ERROR] PATCH_POPUP needs a key and ranked [tag, text, sneak?] items (${shape}); the dialog, the 3 s lock and the once-per-key memory must stay wired (${wired})`); }
+  else console.log(`Verified the patch pop-up: ${P.items.length} ranked lines under key ${P.key}, 3 s lock, once per browser.`);
 }
 // Co-author page: each finding bolds only its parent skill (** **), which renders as a gold skill link; the pop-up renders the items as rich text.
 let checkedCredits = 0;
