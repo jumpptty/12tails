@@ -1,0 +1,18 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "**/scratchpad/**",
+          "12t_projects/bible/index.html"
+        ],
+        "createdAt": "2026-11-06T08:51:43.958Z",
+        "reason": "User confirmed (2026-11-06): the 3px gold left bar is the Bible's house accent (.sk-hero-desc uses it); patch-pop-up featured cards follow it. Scratch scripts only carry index.html CSS."
+      }
+    ]
+  }
+}

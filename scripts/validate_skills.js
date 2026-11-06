@@ -5862,18 +5862,20 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   console.log("Verified the three note colours stay distinct.");
 }
 
-// Patch history pop-up (user 2026-11-06): PATCH_HISTORY, newest first, entries { key, server, kicker, title, sub, items: ranked [tag, text, kind?] };
+// Patch history pop-up (user 2026-11-06): PATCH_HISTORY, newest first, entries { key, server, kicker, title, items: ranked [tag, text, kind?] }
+// (no sub line: the user dropped that row as wasted space; the check date sits in the kicker);
 // the newest shows once per browser per key and is closable only after 3 s; the changelog header has a review button per server (no lock).
-// kind: "sneak" (not in the server's notes) or "fix" / "change" (the notes claim it, the code does not show it: never "server-side", user 2026-11-06).
+// kind (a string or a list): "bug" (a real bug fix), "sneak" (not in the server's notes) or "fix" / "change" (the notes claim it, the code does not show it:
+// never "server-side", user 2026-11-06).
 {
   const src = fs.readFileSync(targetPath, "utf8"), H = vm.runInContext("PATCH_HISTORY", sandbox), servers = vm.runInContext("SERVER_INFO", sandbox);
   const shape = Array.isArray(H) && H.length > 0 && new Set(H.map((e) => e.key)).size === H.length
-    && H.every((e) => typeof e.key === "string" && e.key && !!servers[e.server] && [e.kicker, e.title, e.sub].every((t) => typeof t === "string" && t) && Array.isArray(e.items) && e.items.length > 0
+    && H.every((e) => typeof e.key === "string" && e.key && !!servers[e.server] && [e.kicker, e.title].every((t) => typeof t === "string" && t) && e.sub === undefined && Array.isArray(e.items) && e.items.length > 0
       && (e.featured === undefined || (Number.isInteger(e.featured) && e.featured >= 0 && e.featured <= e.items.length))
-      && e.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || ["sneak", "fix", "change"].includes(it[2]))
+      && e.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || [].concat(it[2]).every((k) => ["bug", "sneak", "fix", "change"].includes(k)))
         && !/เซิร์ฟเวอร์|server.?side/i.test(it[1])))
-    && src.includes('fix: [\'is-claim\', "บอกว่าแก้แต่"') && src.includes('change: [\'is-claim\', "บอกว่าเปลี่ยนแต่"');
-  const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();")
+    && src.includes('fix: [\'is-claim\', "บอกว่าแก้แต่"') && src.includes('change: [\'is-claim\', "บอกว่าเปลี่ยนแต่"') && src.includes('bug: [\'is-bug\', "แก้บัค"');
+  const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();") && !src.includes('id="patchSub"')
     && src.includes('<div class="changelog-patch-btns" id="patchHistoryBtns"></div>')
     && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes("localStorage.setItem(PATCH_SEEN_KEY, forced)")
     && src.includes("if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show([PATCH_HISTORY[0]], true); }")

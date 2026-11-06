@@ -1506,6 +1506,7 @@
   .patch-tag{display:inline-block; margin-right:6px; padding:0 7px; border:1px solid var(--gold); border-radius:3px; color:var(--gold); font-size:.82em; font-weight:600; line-height:1.6; vertical-align:1px}
   .patch-tag.is-sneak{border-style:dashed; color:var(--muted); border-color:var(--muted)}
   .patch-tag.is-claim{color:var(--seal); border-color:var(--seal)}
+  .patch-tag.is-bug{color:#a78bfa; border-color:rgba(139,92,246,0.55); background:rgba(139,92,246,0.18)}   /* the [Fix] chip's violet */
   /* the changelog header's patch-history buttons, one per server with history (user 2026-11-06): right after the title, a small lift on hover */
   .changelog-patch-btns{display:flex; flex-wrap:wrap; gap:6px; margin-right:auto}
   .changelog-patch-btns:empty{display:none}
@@ -8653,7 +8654,6 @@
         <h2 id="patchTitle"></h2>
       </div>
     </header>
-    <div class="changelog-summary"><span id="patchSub"></span></div>
     <ol class="changelog-list patch-list" id="patchList"></ol>
     <div class="changelog-more-wrap"><button type="button" class="changelog-more patch-ok" id="btnPatchOk" disabled></button></div>
   </section>
@@ -39276,6 +39276,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-06T08:56:54.724Z","feat(bible): patch pop-up: แก้บัค chip on every real bug fix (several chips per line), Mall and Hypershot featured, no sub line (check date in the kicker); impeccable side-tab exception for the Bible page"],
     ["2026-11-06T08:45:20.805Z","feat(bible): patch pop-up shows the top-ranked lines (featured: N) as featured cards with the class hero icon under a เรื่องสำคัญ heading; reopening starts at the top"],
     ["2026-11-06T08:40:11.751Z","feat(bible): patch history: the TTO patch pop-up is logged in PATCH_HISTORY (newest first) and a แพตช์โน้ต TTO button in the changelog header reopens it for review"],
     ["2026-11-06T08:33:49.960Z","fix(bible): patch pop-up gets a บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่ chip for claims the code does not back (Hypershot), the Auto Skill aim fix, and a Hypershot TTO note"],
@@ -39983,38 +39984,38 @@ function mountChangelog(){
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !modal.hidden) hide(); });
 }
 
-// Patch history (user 2026-11-06): every patch summary the Bible publishes, newest first, one entry each { key, server, kicker, title, sub, items }.
+// Patch history (user 2026-11-06): every patch summary the Bible publishes, newest first, one entry each { key, server, kicker (server, patch, check date DD/MM/YYYY), title, items }.
 // The newest opens on page load once per browser (per `key`) and cannot be closed for its first 3 seconds; the changelog header has one button per
 // server with history that opens that server's entries for review (no lock). A new patch = a new entry on top with a new `key`; old entries stay.
 // The lines are ranked by importance, most important first, and shown in that order: [tag, text (**bold** = gold), kind]. `featured: N` (optional)
-// shows an entry's first N lines as featured cards (the important topics: bigger, tinted, with the class's hero icon) above the rest. kind (optional): "sneak" = a change TTO's notes do not mention
+// shows an entry's first N lines as featured cards (the important topics: bigger, tinted, with the class's hero icon) above the rest. kind (optional, a string or a list of them):
+// "bug" = a real bug fix (chip แก้บัค, the [Fix] violet); "sneak" = a change TTO's notes do not mention
 // (chip แอบเปลี่ยน); "fix" / "change" = TTO's notes say it was fixed / changed but the code shows nothing that does it (chip บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่;
 // the text says what the code really changed). Never call such a gap a server-side change: small fixes like these live in the client (user 2026-11-06).
 const PATCH_HISTORY = [{
   key: "tto-1.6.2.3",
   server: "tto",
-  featured: 4,
-  kicker: "TTO · แพตช์ 1.6.2.1 – 1.6.2.3",
+  featured: 6,
+  kicker: "TTO · แพตช์ 1.6.2.1 – 1.6.2.3 · 06/11/2026",
   title: "สรุปการเปลี่ยนแปลงแพตช์ล่าสุด",
-  sub: "ตรวจจากโค้ดเกม TTO วันที่ 06/11/2026 · รายละเอียดอยู่ในการ์ดสกิลแต่ละใบ (แท็บ TTO)",
   items: [
     ["C6", "เลเวล **100** ได้แต้มสาย C เพิ่ม **1** แต้ม (รวม **10**) สกิล C6 ใช้แต้มสาย C ท่าละ **1** แต้ม เรียนในหน้าต่างสกิลหลังทำเควสปลดล็อก และเรียนใหม่หลังรีสกิลไม่เสียเงิน"],
     ["C6", "เรียนสกิล C6 ได้มากกว่า **1** ท่า ถ้าแต้มสาย C พอ (โค้ดเกมเลิกจำกัดทีละท่าแล้ว) Skill Simulator ในไกด์อาชีพรองรับแล้ว", "sneak"],
-    ["Chameleon", "**Apex Hunt** ฆ่าเป้าแล้วรีเซ็ตคูลดาวน์ **Slayer** / **All Slayer** และลดคูลดาวน์ตัวเอง **30 วินาที** ได้จริงแล้ว (เป้าตายภายใน **0.5 วินาที** หลังโดนธนู)"],
+    ["Chameleon", "**Apex Hunt** ฆ่าเป้าแล้วรีเซ็ตคูลดาวน์ **Slayer** / **All Slayer** และลดคูลดาวน์ตัวเอง **30 วินาที** ได้จริงแล้ว (เป้าตายภายใน **0.5 วินาที** หลังโดนธนู)", "bug"],
     ["Monkey", "**Ja Ascension** MP **120 → 60** มงกุฎนาน **6 วินาที + CHA** และกดซ้ำขณะเลือกศัตรู (ไม่เกิน **30 m** แนวราบ) ดวงอาทิตย์จะตกใส่เป้า ยิ่งไกลยิ่งตกช้า"],
-    ["Mole", "**Reload** ที่เรียน **Advance Repair** แล้ว รีเซ็ตคูลดาวน์ **War Area** ด้วย"],
-    ["Monkey", "**Summon Soul** Ja / Buiten ที่ได้เลเวลเพิ่มจาก **Ja Ascension** / **Buiten Bastion** ให้ค่าสถานะตามเลเวลจริง (Ja เลเวล **6** = TAL **+60**)"],
-    ["Rabbit", "**Medic Turret** แคปซูลชนิดเดิมซ้ำ เลเวล **+1** สูงสุดเลเวล **4**"],
-    ["Cat", "**Crescent Eclipse**, **Drop Anchor** และ **Royal Flush** เล็งเป้าที่อยู่ใกล้ไม่เกิน **1 m** ได้แล้ว (เดิมพุ่งไปข้างหน้าเต็มระยะ)"],
-    ["Monkey", "**Rune Golem** ใช้ **Summon Release** แล้วโกเลมเป็นอิสระและหันมาโจมตีตัวเอง เหมือนซัมมอนอื่น (เดิมหายไปเฉยๆ)"],
-    ["C6", "สกิล C6 ที่พุ่งหรือกระโดดไม่ทะลุกำแพงแล้ว (**Titan Drop**, **Frost Field**, สกิล C6 ของแพนด้าและแมว)"],
-    ["Bat", "**Evil Twin** ใช้กับบอสที่มีหลายส่วน วิญญาณแสดงผลเป็นทั้งตัวบอสแล้ว"],
     ["Rabbit", "**Mall** ตั้งร้านได้เฉพาะบนพื้นหญ้าในเมืองแสง"],
-    ["ระบบ", "การกดสกิลเล็งเป้าตามตัวเลือก **Auto Skill** แล้ว (เดิมอ่านตัวเลือก **Auto Attack** แทน รวมถึง **Absolute Zero** ของ Penguin)"],
-    ["ระบบ", "หลอด KO ไม่ติดลบ มอนเตอร์ที่ค้างเลือด **1** หรือตายแล้วไม่ล้ม (รวมจาก **Slayer**) ล้มตามปกติ และ **King Kaiser** ที่ยิงจรวดค้างกลับท่ายืนเองภายใน **8 วินาที**"],
-    ["ระบบ", "ในเมืองและแคมป์กิลด์ **Swap**, **Tiger Toss** และ **Parallel Shift** ไม่มีผลกับผู้เล่นคนอื่น", "sneak"],
-    ["ข้อความ", "Tooltip ภาษาไทยที่เคยเป็นตัวอักษรเพี้ยนอ่านออกแล้ว และคำอธิบาย **Leviathan Breach** ระบุว่าแรงตาม TAL ด้วย (สูตรเดิม)"],
-    ["Rabbit", "**Hypershot**: โค้ดเกมเปลี่ยนแค่ให้ลูกซองขึ้นข้อความ HyperShot ตอนได้โบนัส (เหมือนยิงปกติ) สูตรดาเมจทุกท่าเหมือนเดิม", "fix"]
+    ["Rabbit", "**Hypershot**: โค้ดเกมเปลี่ยนแค่ให้ลูกซองขึ้นข้อความ HyperShot ตอนได้โบนัส (เหมือนยิงปกติ) สูตรดาเมจทุกท่าเหมือนเดิม", "fix"],
+    ["Mole", "**Reload** ที่เรียน **Advance Repair** แล้ว รีเซ็ตคูลดาวน์ **War Area** ด้วย", "bug"],
+    ["Monkey", "**Summon Soul** Ja / Buiten ที่ได้เลเวลเพิ่มจาก **Ja Ascension** / **Buiten Bastion** ให้ค่าสถานะตามเลเวลจริง (Ja เลเวล **6** = TAL **+60**)", "bug"],
+    ["Rabbit", "**Medic Turret** แคปซูลชนิดเดิมซ้ำ เลเวล **+1** สูงสุดเลเวล **4**", "bug"],
+    ["Cat", "**Crescent Eclipse**, **Drop Anchor** และ **Royal Flush** เล็งเป้าที่อยู่ใกล้ไม่เกิน **1 m** ได้แล้ว (เดิมพุ่งไปข้างหน้าเต็มระยะ)", "bug"],
+    ["Monkey", "**Rune Golem** ใช้ **Summon Release** แล้วโกเลมเป็นอิสระและหันมาโจมตีตัวเอง เหมือนซัมมอนอื่น (เดิมหายไปเฉยๆ)", "bug"],
+    ["C6", "สกิล C6 ที่พุ่งหรือกระโดดไม่ทะลุกำแพงแล้ว (**Titan Drop**, **Frost Field**, สกิล C6 ของแพนด้าและแมว)", "bug"],
+    ["Bat", "**Evil Twin** ใช้กับบอสที่มีหลายส่วน วิญญาณแสดงผลเป็นทั้งตัวบอสแล้ว", "bug"],
+    ["ระบบ", "การกดสกิลเล็งเป้าตามตัวเลือก **Auto Skill** แล้ว (เดิมอ่านตัวเลือก **Auto Attack** แทน รวมถึง **Absolute Zero** ของ Penguin)", "bug"],
+    ["ระบบ", "หลอด KO ไม่ติดลบ มอนเตอร์ที่ค้างเลือด **1** หรือตายแล้วไม่ล้ม (รวมจาก **Slayer**) ล้มตามปกติ และ **King Kaiser** ที่ยิงจรวดค้างกลับท่ายืนเองภายใน **8 วินาที**", "bug"],
+    ["ระบบ", "ในเมืองและแคมป์กิลด์ **Swap**, **Tiger Toss** และ **Parallel Shift** ไม่มีผลกับผู้เล่นคนอื่น", ["bug", "sneak"]],
+    ["ข้อความ", "Tooltip ภาษาไทยที่เคยเป็นตัวอักษรเพี้ยนอ่านออกแล้ว และคำอธิบาย **Leviathan Breach** ระบุว่าแรงตาม TAL ด้วย (สูตรเดิม)", "bug"]
   ]
 }];
 const PATCH_SEEN_KEY = "12t-bible-patch-seen";
@@ -40024,11 +40025,11 @@ function mountPatchPopup(){
   if (!modal || !ok || !list || !PATCH_HISTORY.length) return;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b class="sk-val">$1</b>');
-  const KIND = { sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่โค้ดเกมไม่ได้แก้ตามนั้น"],
+  const KIND = { bug: ['is-bug', "แก้บัค", "การแก้บัค"], sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่โค้ดเกมไม่ได้แก้ตามนั้น"],
     change: ['is-claim', "บอกว่าเปลี่ยนแต่", "แพตช์โน้ตบอกว่าเปลี่ยน แต่โค้ดเกมไม่ได้เปลี่ยนตามนั้น"] };
   // an entry's lines: the first `featured` as cards (hero icon of the tag's class, else the server logo), the rest numbered by their rank
   const lines = (e) => { const f = Math.min(e.featured || 0, e.items.length);
-    const one = ([tag, text, kind], i) => { const k = KIND[kind], chips = '<span class="patch-tag">' + esc(tag) + "</span>" + (k ? '<span class="patch-tag ' + k[0] + '" title="' + k[2] + '">' + k[1] + "</span>" : "");
+    const one = ([tag, text, kind], i) => { const chips = '<span class="patch-tag">' + esc(tag) + "</span>" + [].concat(kind || []).map((n) => KIND[n]).filter(Boolean).map((k) => '<span class="patch-tag ' + k[0] + '" title="' + k[2] + '">' + k[1] + "</span>").join("");
       if (i >= f) return '<li data-n="' + String(i + 1).padStart(2, "0") + '">' + chips + rich(text) + "</li>";
       const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS["server_" + e.server];
       return '<li class="patch-feature">' + (icon ? '<img class="patch-ficon" src="' + icon + '" alt="">' : "") + chips + '<span class="patch-ftext">' + rich(text) + "</span></li>"; };
@@ -40039,8 +40040,7 @@ function mountPatchPopup(){
     const [top, ...older] = entries;
     document.getElementById("patchKicker").textContent = top.kicker;
     document.getElementById("patchTitle").textContent = top.title;
-    document.getElementById("patchSub").textContent = top.sub;
-    list.innerHTML = lines(top) + older.map((e) => '<li class="patch-group">' + esc(e.kicker) + " · " + esc(e.sub) + "</li>" + lines(e)).join("");
+    list.innerHTML = lines(top) + older.map((e) => '<li class="patch-group">' + esc(e.kicker) + "</li>" + lines(e)).join("");
   };
   let forced = null;   // the key the forced (page-load) showing remembers when it is closed
   const hide = () => {
