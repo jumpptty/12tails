@@ -5862,19 +5862,23 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   console.log("Verified the three note colours stay distinct.");
 }
 
-// One-time patch pop-up (user 2026-11-06): a ranked list of [tag, text, kind?] under a key, shown once per browser per key, closable only after 3 s.
+// Patch history pop-up (user 2026-11-06): PATCH_HISTORY, newest first, entries { key, server, kicker, title, sub, items: ranked [tag, text, kind?] };
+// the newest shows once per browser per key and is closable only after 3 s; the changelog header has a review button per server (no lock).
 // kind: "sneak" (not in the server's notes) or "fix" / "change" (the notes claim it, the code does not show it: never "server-side", user 2026-11-06).
 {
-  const src = fs.readFileSync(targetPath, "utf8"), P = vm.runInContext("PATCH_POPUP", sandbox);
-  const shape = !!P && typeof P.key === "string" && P.key && Array.isArray(P.items) && P.items.length > 0
-    && P.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || ["sneak", "fix", "change"].includes(it[2]))
-      && !/เซิร์ฟเวอร์|server.?side/i.test(it[1]))
+  const src = fs.readFileSync(targetPath, "utf8"), H = vm.runInContext("PATCH_HISTORY", sandbox), servers = vm.runInContext("SERVER_INFO", sandbox);
+  const shape = Array.isArray(H) && H.length > 0 && new Set(H.map((e) => e.key)).size === H.length
+    && H.every((e) => typeof e.key === "string" && e.key && !!servers[e.server] && [e.kicker, e.title, e.sub].every((t) => typeof t === "string" && t) && Array.isArray(e.items) && e.items.length > 0
+      && e.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || ["sneak", "fix", "change"].includes(it[2]))
+        && !/เซิร์ฟเวอร์|server.?side/i.test(it[1])))
     && src.includes('fix: [\'is-claim\', "บอกว่าแก้แต่"') && src.includes('change: [\'is-claim\', "บอกว่าเปลี่ยนแต่"');
   const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();")
-    && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes('localStorage.setItem(PATCH_SEEN_KEY, PATCH_POPUP.key)')
-    && /\.patch-ok:disabled\{/.test(src);
-  if (!shape || !wired) { errorCount++; console.error(`[PATCH POPUP ERROR] PATCH_POPUP needs a key and ranked [tag, text, kind?] items, kind sneak / fix / change, no server-side guesses (${shape}); the dialog, the 3 s lock and the once-per-key memory must stay wired (${wired})`); }
-  else console.log(`Verified the patch pop-up: ${P.items.length} ranked lines under key ${P.key}, 3 s lock, once per browser.`);
+    && src.includes('<div class="changelog-patch-btns" id="patchHistoryBtns"></div>')
+    && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes("localStorage.setItem(PATCH_SEEN_KEY, forced)")
+    && src.includes("if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show([PATCH_HISTORY[0]], true); }")
+    && src.includes("show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false)") && /\.patch-ok:disabled\{/.test(src);
+  if (!shape || !wired) { errorCount++; console.error(`[PATCH POPUP ERROR] PATCH_HISTORY needs unique keys, a known server and ranked [tag, text, kind?] items, kind sneak / fix / change, no server-side guesses (${shape}); the dialog, the header buttons, the 3 s lock and the once-per-key memory must stay wired (${wired})`); }
+  else console.log(`Verified the patch history: ${H.length} entr${H.length === 1 ? "y" : "ies"}, newest ${H[0].key} (${H[0].items.length} ranked lines) shown once with a 3 s lock, review buttons in the changelog.`);
 }
 // Co-author page: each finding bolds only its parent skill (** **), which renders as a gold skill link; the pop-up renders the items as rich text.
 let checkedCredits = 0;

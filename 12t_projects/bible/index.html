@@ -1506,6 +1506,17 @@
   .patch-tag{display:inline-block; margin-right:6px; padding:0 7px; border:1px solid var(--gold); border-radius:3px; color:var(--gold); font-size:.82em; font-weight:600; line-height:1.6; vertical-align:1px}
   .patch-tag.is-sneak{border-style:dashed; color:var(--muted); border-color:var(--muted)}
   .patch-tag.is-claim{color:var(--seal); border-color:var(--seal)}
+  /* the changelog header's patch-history buttons, one per server with history (user 2026-11-06): right after the title, a small lift on hover */
+  .changelog-patch-btns{display:flex; flex-wrap:wrap; gap:6px; margin-right:auto}
+  .changelog-patch-btns:empty{display:none}
+  .changelog-patch-btn{display:inline-flex; align-items:center; gap:6px; padding:3px 10px 3px 5px; border:1px solid var(--line); border-radius:4px; background:transparent; color:var(--muted); font:600 12px/1.3 'Prompt',sans-serif; cursor:pointer; transition:transform .15s, color .15s, border-color .15s}
+  .changelog-patch-btn img{width:24px; height:24px; object-fit:contain}
+  .changelog-patch-btn:hover{transform:translateY(-1px); color:var(--gold); border-color:var(--gold)}
+  .changelog-patch-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  @media (min-width:1800px) and (min-height:1100px){ .changelog-patch-btn{font-size:15px} .changelog-patch-btn img{width:30px; height:30px} }
+  @media (min-width:2400px) and (min-height:1300px){ .changelog-patch-btn{font-size:17px} .changelog-patch-btn img{width:34px; height:34px} }
+  .patch-list li.patch-group{padding-left:0; margin-top:6px; color:var(--gold); font-size:.88em; font-weight:600; border-bottom-color:var(--gold)}
+  .patch-list li.patch-group::before{content:none}
   .patch-ok:disabled{opacity:.55; cursor:not-allowed}
   .patch-ok:disabled:hover{background:var(--gold-soft); color:var(--gold)}
   @media(max-width:560px){.changelog-backdrop{padding:12px}.changelog-head{padding:16px}.changelog-summary{padding:11px 16px; display:block}.changelog-summary strong{display:block; margin-top:3px; text-align:left}.changelog-list{padding-left:16px; padding-right:16px}.changelog-list li{font-size:11.5px}}
@@ -8614,6 +8625,7 @@
         <p class="changelog-kicker">12 TAILS BIBLE</p>
         <h2 id="changelogTitle">อัปเดตล่าสุด</h2>
       </div>
+      <div class="changelog-patch-btns" id="patchHistoryBtns"></div>
       <button type="button" class="changelog-close" id="btnChangelogClose" aria-label="ปิด">✕</button>
     </header>
     <div class="changelog-summary">
@@ -39255,6 +39267,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-06T08:40:11.751Z","feat(bible): patch history: the TTO patch pop-up is logged in PATCH_HISTORY (newest first) and a แพตช์โน้ต TTO button in the changelog header reopens it for review"],
     ["2026-11-06T08:33:49.960Z","fix(bible): patch pop-up gets a บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่ chip for claims the code does not back (Hypershot), the Auto Skill aim fix, and a Hypershot TTO note"],
     ["2026-11-06T08:15:00.204Z","fix(bible): TTO 1.6.2.x follow-up: skill simulator lets a TTO build learn more than one Lv 100 skill (TTO1106 dropped the check), War Area reset untagged, Mall lawn rule, town shield on Swap, Tiger Toss and Parallel Shift, Evil Twin multi-part bosses, King Kaiser stuck-attack reset, one-time patch pop-up"],
     ["2026-11-06T07:42:00.076Z","fix(bible): TTO 1.6.2.1-1.6.2.3 checked in the 2026-11-06 client (TTO1106): Apex Hunt kill reset works, aimed Solar Collapse falls on the target, Reload resets War Area, Medic Turret shots stack, Rune Golem goes wild on Summon Release, Drop Anchor 1 m aim fixed, readable TTO tooltip labels"],
@@ -39960,13 +39973,15 @@ function mountChangelog(){
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !modal.hidden) hide(); });
 }
 
-// One-time patch pop-up (user 2026-11-06): opens on page load once per browser for each `key`, and cannot be closed for its first 3 seconds.
-// To announce another patch, change `key` (any new string shows it again to every visitor) and the lines. The lines are ranked by importance,
-// most important first, and shown in that order: [tag, text (**bold** = gold), kind]. kind (optional): "sneak" = a change TTO's notes do not mention
+// Patch history (user 2026-11-06): every patch summary the Bible publishes, newest first, one entry each { key, server, kicker, title, sub, items }.
+// The newest opens on page load once per browser (per `key`) and cannot be closed for its first 3 seconds; the changelog header has one button per
+// server with history that opens that server's entries for review (no lock). A new patch = a new entry on top with a new `key`; old entries stay.
+// The lines are ranked by importance, most important first, and shown in that order: [tag, text (**bold** = gold), kind]. kind (optional): "sneak" = a change TTO's notes do not mention
 // (chip แอบเปลี่ยน); "fix" / "change" = TTO's notes say it was fixed / changed but the code shows nothing that does it (chip บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่;
 // the text says what the code really changed). Never call such a gap a server-side change: small fixes like these live in the client (user 2026-11-06).
-const PATCH_POPUP = {
+const PATCH_HISTORY = [{
   key: "tto-1.6.2.3",
+  server: "tto",
   kicker: "TTO · แพตช์ 1.6.2.1 – 1.6.2.3",
   title: "สรุปการเปลี่ยนแปลงแพตช์ล่าสุด",
   sub: "ตรวจจากโค้ดเกม TTO วันที่ 06/11/2026 · รายละเอียดอยู่ในการ์ดสกิลแต่ละใบ (แท็บ TTO)",
@@ -39989,40 +40004,61 @@ const PATCH_POPUP = {
     ["ข้อความ", "Tooltip ภาษาไทยที่เคยเป็นตัวอักษรเพี้ยนอ่านออกแล้ว และคำอธิบาย **Leviathan Breach** ระบุว่าแรงตาม TAL ด้วย (สูตรเดิม)"],
     ["Rabbit", "**Hypershot**: โค้ดเกมเปลี่ยนแค่ให้ลูกซองขึ้นข้อความ HyperShot ตอนได้โบนัส (เหมือนยิงปกติ) สูตรดาเมจทุกท่าเหมือนเดิม", "fix"]
   ]
-};
+}];
 const PATCH_SEEN_KEY = "12t-bible-patch-seen";
+const PATCH_SERVER_NAMES = { og: "BB", tot: "ToT", tto: "TTO", reborn: "Reborn" };
 function mountPatchPopup(){
-  const modal = document.getElementById("patchModal"), ok = document.getElementById("btnPatchOk"), list = document.getElementById("patchList");
-  if (!modal || !ok || !list || !PATCH_POPUP.items.length) return;
-  let seen = null;
-  try { seen = localStorage.getItem(PATCH_SEEN_KEY); } catch (e) {}
-  if (seen === PATCH_POPUP.key) return;
+  const modal = document.getElementById("patchModal"), ok = document.getElementById("btnPatchOk"), list = document.getElementById("patchList"), btns = document.getElementById("patchHistoryBtns");
+  if (!modal || !ok || !list || !PATCH_HISTORY.length) return;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b class="sk-val">$1</b>');
-  document.getElementById("patchKicker").textContent = PATCH_POPUP.kicker;
-  document.getElementById("patchTitle").textContent = PATCH_POPUP.title;
-  document.getElementById("patchSub").textContent = PATCH_POPUP.sub;
   const KIND = { sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่โค้ดเกมไม่ได้แก้ตามนั้น"],
     change: ['is-claim', "บอกว่าเปลี่ยนแต่", "แพตช์โน้ตบอกว่าเปลี่ยน แต่โค้ดเกมไม่ได้เปลี่ยนตามนั้น"] };
-  list.innerHTML = PATCH_POPUP.items.map(([tag, text, kind], i) => { const k = KIND[kind];
+  const lines = (items) => items.map(([tag, text, kind], i) => { const k = KIND[kind];
     return '<li data-n="' + String(i + 1).padStart(2, "0") + '"><span class="patch-tag">' + esc(tag) + "</span>"
       + (k ? '<span class="patch-tag ' + k[0] + '" title="' + k[2] + '">' + k[1] + "</span>" : "") + rich(text) + "</li>"; }).join("");
-  let left = 3;
-  const tick = () => {
-    if (left > 0){ ok.textContent = "อ่านก่อนนะ ปิดได้ใน " + left + " วินาที"; left--; setTimeout(tick, 1000); return; }
-    ok.disabled = false; ok.textContent = "รับทราบ"; ok.focus();
+  // newest first: its own header on top, older entries below as headed groups
+  const fill = (entries) => {
+    const [top, ...older] = entries;
+    document.getElementById("patchKicker").textContent = top.kicker;
+    document.getElementById("patchTitle").textContent = top.title;
+    document.getElementById("patchSub").textContent = top.sub;
+    list.innerHTML = lines(top.items) + older.map((e) => '<li class="patch-group">' + esc(e.kicker) + " · " + esc(e.sub) + "</li>" + lines(e.items)).join("");
+    list.scrollTop = 0;
   };
+  let forced = null;   // the key the forced (page-load) showing remembers when it is closed
   const hide = () => {
     if (ok.disabled) return;
     modal.hidden = true;
-    try { localStorage.setItem(PATCH_SEEN_KEY, PATCH_POPUP.key); } catch (e) {}
+    if (forced){ try { localStorage.setItem(PATCH_SEEN_KEY, forced); } catch (e) {} forced = null; }
+  };
+  const show = (entries, lock) => {
+    fill(entries);
+    modal.hidden = false;
+    modal.querySelector(".patch-popup").focus();
+    if (!lock){ ok.disabled = false; ok.textContent = "ปิด"; return; }
+    let left = 3;
+    ok.disabled = true;
+    const tick = () => {
+      if (left > 0){ ok.textContent = "อ่านก่อนนะ ปิดได้ใน " + left + " วินาที"; left--; setTimeout(tick, 1000); return; }
+      ok.disabled = false; ok.textContent = "รับทราบ"; ok.focus();
+    };
+    tick();
   };
   ok.addEventListener("click", hide);
   modal.addEventListener("click", (event) => { if (event.target === modal) hide(); });
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !modal.hidden) hide(); });
-  modal.hidden = false;
-  modal.querySelector(".patch-popup").focus();
-  tick();
+  // capture phase: over the changelog, Escape closes only this pop-up
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !modal.hidden){ event.stopPropagation(); hide(); } }, true);
+  if (btns){
+    const servers = [...new Set(PATCH_HISTORY.map((e) => e.server))];
+    btns.innerHTML = servers.map((srv) => { const name = esc(PATCH_SERVER_NAMES[srv] || srv), logo = SKILL_ICONS["server_" + srv];
+      return '<button type="button" class="changelog-patch-btn" data-patch-server="' + esc(srv) + '" title="แพตช์โน้ต ' + name + ' ที่ไบเบิ้ลตรวจจากโค้ดเกม">'
+        + (logo ? '<img src="' + logo + '" alt="">' : "") + "<span>แพตช์โน้ต " + name + "</span></button>"; }).join("");
+    btns.addEventListener("click", (event) => { const b = event.target.closest("[data-patch-server]"); if (b) show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false); });
+  }
+  let seen = null;
+  try { seen = localStorage.getItem(PATCH_SEEN_KEY); } catch (e) {}
+  if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show([PATCH_HISTORY[0]], true); }
 }
 
 mountChangelog();
