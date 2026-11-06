@@ -767,6 +767,7 @@ First read from an in-game tooltip picture the user sent on 02/11/2026. It state
 
 First read from an in-game tooltip picture (02/11/2026). It stated Magical, MP 60, SP 50, cast 1.5 s, cooldown 120; dolphin 40% ATK + 30% DEF + 60, rise 80% + 40% + 120, tsunami 120% + 60% + 220, whirlpool per second 20% + 10% + 40; radius 5 / 8 / 6 m; 3 dolphins leap 2-3 times; tsunami +2.5% DEF per stack, Armor Shatter ×1.25; whirlpool 5 s, pulling enemies in. The client was checked the same day, and every number in the picture matches the code.
 
+- **TTO's 2026-11-06 client (`TTO1106:`, not in the patch notes):** only the description text changed: "ตามค่า ATK และ DEF" became "ตามค่า ATK, DEF และ TAL" (`whl_leviathanBreach5`). The skill's code did not change; the flat part of every hit was already `talAdjust`, which the card models, so the card's TTO tooltip text was updated and nothing else.
 - **Cost** (`WhaleSkill::getSkill`): MP 60, SP 50 consumed, aimed at an enemy, magic.
 - **Press** (`TTO1102:Whale::DoRow6Skill@0x1EB8D80`):
   - The target must be a living enemy (on another layer, a layer ≥ 8 other than 17). Otherwise the game shows "Leviathan Breach needs an enemy target." and gives MP / SP back.
