@@ -1526,6 +1526,12 @@
   .patch-ftext{display:block; margin-top:3px; font-size:1.07em; line-height:1.55}
   .patch-list li.patch-sec{padding:10px 0 4px; color:var(--gold); font-size:.82em; font-weight:600; letter-spacing:.04em; border-bottom:0}
   .patch-list li.patch-sec::before{content:none}
+  .patch-tag.is-sneak-nerf{color:#f87171; border:1px dashed rgba(239,68,68,0.55); background:rgba(239,68,68,0.18)}   /* the [Nerf] red, dashed like [แอบ Nerf] */
+  /* tier 1 (user 2026-11-06: an even stronger look than the featured cards): full gold frame, gold gradient, bigger icon and text */
+  .patch-list li.patch-feature.patch-top{padding:16px 16px 16px 78px; min-height:82px; border:2px solid var(--gold); background:linear-gradient(135deg, color-mix(in srgb,var(--gold) 24%,transparent), color-mix(in srgb,var(--gold) 6%,transparent))}
+  .patch-top .patch-ficon{left:14px; top:15px; width:50px; height:50px; border-width:2px}
+  .patch-top .patch-ftext{margin-top:5px; font-size:1.18em; color:var(--text)}
+  @media(max-width:560px){ .patch-list li.patch-feature.patch-top{padding-left:64px} .patch-top .patch-ficon{width:40px; height:40px; left:12px} }
   @media(max-width:560px){ .patch-list li.patch-feature{padding-left:54px} .patch-ficon{width:32px; height:32px; left:10px} }
   .patch-ok:disabled{opacity:.55; cursor:not-allowed}
   .patch-ok:disabled:hover{background:var(--gold-soft); color:var(--gold)}
@@ -39276,6 +39282,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-06T09:09:42.214Z","feat(bible): patch pop-up gets a tier 1 (สำคัญที่สุด) above the featured cards, a แอบ Nerf chip and the gear status resist line (no LCK on TTO); no code wording in the pop-up"],
     ["2026-11-06T08:56:54.724Z","feat(bible): patch pop-up: แก้บัค chip on every real bug fix (several chips per line), Mall and Hypershot featured, no sub line (check date in the kicker); impeccable side-tab exception for the Bible page"],
     ["2026-11-06T08:45:20.805Z","feat(bible): patch pop-up shows the top-ranked lines (featured: N) as featured cards with the class hero icon under a เรื่องสำคัญ heading; reopening starts at the top"],
     ["2026-11-06T08:40:11.751Z","feat(bible): patch history: the TTO patch pop-up is logged in PATCH_HISTORY (newest first) and a แพตช์โน้ต TTO button in the changelog header reopens it for review"],
@@ -39987,24 +39994,28 @@ function mountChangelog(){
 // Patch history (user 2026-11-06): every patch summary the Bible publishes, newest first, one entry each { key, server, kicker (server, patch, check date DD/MM/YYYY), title, items }.
 // The newest opens on page load once per browser (per `key`) and cannot be closed for its first 3 seconds; the changelog header has one button per
 // server with history that opens that server's entries for review (no lock). A new patch = a new entry on top with a new `key`; old entries stay.
-// The lines are ranked by importance, most important first, and shown in that order: [tag, text (**bold** = gold), kind]. `featured: N` (optional)
-// shows an entry's first N lines as featured cards (the important topics: bigger, tinted, with the class's hero icon) above the rest. kind (optional, a string or a list of them):
-// "bug" = a real bug fix (chip แก้บัค, the [Fix] violet); "sneak" = a change TTO's notes do not mention
+// The lines are ranked by importance, most important first, and shown in that order: [tag, text (**bold** = gold), kind]. `tiers: [t1, t2]` (optional)
+// sets the importance tiers, counted from the top: the first t1 lines are tier 1 (the most prominent card, under สำคัญที่สุด), the next t2 lines tier 2
+// (featured cards with the class's hero icon, under เรื่องสำคัญ), the rest tier 3 (numbered lines, under การเปลี่ยนแปลงอื่น). kind (optional, a string or a list of them):
+// No "code" wording in any line, chip or title: everything here is code-derived and people know it (user 2026-11-06).
+// "bug" = a real bug fix (chip แก้บัค, the [Fix] violet); "sneak-nerf" = a change for the worse TTO's notes do not mention (chip แอบ Nerf, the [Nerf]
+// red, dashed); "sneak" = a change TTO's notes do not mention
 // (chip แอบเปลี่ยน); "fix" / "change" = TTO's notes say it was fixed / changed but the code shows nothing that does it (chip บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่;
 // the text says what the code really changed). Never call such a gap a server-side change: small fixes like these live in the client (user 2026-11-06).
 const PATCH_HISTORY = [{
   key: "tto-1.6.2.3",
   server: "tto",
-  featured: 6,
+  tiers: [1, 6],
   kicker: "TTO · แพตช์ 1.6.2.1 – 1.6.2.3 · 06/11/2026",
   title: "สรุปการเปลี่ยนแปลงแพตช์ล่าสุด",
   items: [
+    ["ระบบ", "ค่าต้านทานสถานะจากอุปกรณ์ (อาวุธ ชุด เครื่องประดับ) ไม่ได้โบนัสจาก LCK เหมือน BB: ต้านทานรวม **12%** ที่ LCK **100** ได้แค่ **12%** (BB **21%**)", "sneak-nerf"],
     ["C6", "เลเวล **100** ได้แต้มสาย C เพิ่ม **1** แต้ม (รวม **10**) สกิล C6 ใช้แต้มสาย C ท่าละ **1** แต้ม เรียนในหน้าต่างสกิลหลังทำเควสปลดล็อก และเรียนใหม่หลังรีสกิลไม่เสียเงิน"],
-    ["C6", "เรียนสกิล C6 ได้มากกว่า **1** ท่า ถ้าแต้มสาย C พอ (โค้ดเกมเลิกจำกัดทีละท่าแล้ว) Skill Simulator ในไกด์อาชีพรองรับแล้ว", "sneak"],
+    ["C6", "เรียนสกิล C6 ได้มากกว่า **1** ท่า ถ้าแต้มสาย C พอ Skill Simulator ในไกด์อาชีพรองรับแล้ว", "sneak"],
     ["Chameleon", "**Apex Hunt** ฆ่าเป้าแล้วรีเซ็ตคูลดาวน์ **Slayer** / **All Slayer** และลดคูลดาวน์ตัวเอง **30 วินาที** ได้จริงแล้ว (เป้าตายภายใน **0.5 วินาที** หลังโดนธนู)", "bug"],
     ["Monkey", "**Ja Ascension** MP **120 → 60** มงกุฎนาน **6 วินาที + CHA** และกดซ้ำขณะเลือกศัตรู (ไม่เกิน **30 m** แนวราบ) ดวงอาทิตย์จะตกใส่เป้า ยิ่งไกลยิ่งตกช้า"],
     ["Rabbit", "**Mall** ตั้งร้านได้เฉพาะบนพื้นหญ้าในเมืองแสง"],
-    ["Rabbit", "**Hypershot**: โค้ดเกมเปลี่ยนแค่ให้ลูกซองขึ้นข้อความ HyperShot ตอนได้โบนัส (เหมือนยิงปกติ) สูตรดาเมจทุกท่าเหมือนเดิม", "fix"],
+    ["Rabbit", "**Hypershot**: เปลี่ยนแค่ให้ลูกซองขึ้นข้อความ HyperShot ตอนได้โบนัส (เหมือนยิงปกติ) สูตรดาเมจทุกท่าเหมือนเดิม", "fix"],
     ["Mole", "**Reload** ที่เรียน **Advance Repair** แล้ว รีเซ็ตคูลดาวน์ **War Area** ด้วย", "bug"],
     ["Monkey", "**Summon Soul** Ja / Buiten ที่ได้เลเวลเพิ่มจาก **Ja Ascension** / **Buiten Bastion** ให้ค่าสถานะตามเลเวลจริง (Ja เลเวล **6** = TAL **+60**)", "bug"],
     ["Rabbit", "**Medic Turret** แคปซูลชนิดเดิมซ้ำ เลเวล **+1** สูงสุดเลเวล **4**", "bug"],
@@ -40025,16 +40036,16 @@ function mountPatchPopup(){
   if (!modal || !ok || !list || !PATCH_HISTORY.length) return;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b class="sk-val">$1</b>');
-  const KIND = { bug: ['is-bug', "แก้บัค", "การแก้บัค"], sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่โค้ดเกมไม่ได้แก้ตามนั้น"],
-    change: ['is-claim', "บอกว่าเปลี่ยนแต่", "แพตช์โน้ตบอกว่าเปลี่ยน แต่โค้ดเกมไม่ได้เปลี่ยนตามนั้น"] };
-  // an entry's lines: the first `featured` as cards (hero icon of the tag's class, else the server logo), the rest numbered by their rank
-  const lines = (e) => { const f = Math.min(e.featured || 0, e.items.length);
+  const KIND = { bug: ['is-bug', "แก้บัค", "การแก้บัค"], "sneak-nerf": ['is-sneak-nerf', "แอบ Nerf", "แย่ลงจาก BB และไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่ไม่ได้แก้ตามนั้น"],
+    change: ['is-claim', "บอกว่าเปลี่ยนแต่", "แพตช์โน้ตบอกว่าเปลี่ยน แต่ไม่ได้เปลี่ยนตามนั้น"] };
+  // an entry's lines by tier: tier 1 and tier 2 as cards (hero icon of the tag's class, else the server logo), tier 3 numbered by its rank
+  const lines = (e) => { const [a, b] = e.tiers || [0, 0], t1 = Math.min(a, e.items.length), f = Math.min(t1 + b, e.items.length);
     const one = ([tag, text, kind], i) => { const chips = '<span class="patch-tag">' + esc(tag) + "</span>" + [].concat(kind || []).map((n) => KIND[n]).filter(Boolean).map((k) => '<span class="patch-tag ' + k[0] + '" title="' + k[2] + '">' + k[1] + "</span>").join("");
       if (i >= f) return '<li data-n="' + String(i + 1).padStart(2, "0") + '">' + chips + rich(text) + "</li>";
       const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS["server_" + e.server];
-      return '<li class="patch-feature">' + (icon ? '<img class="patch-ficon" src="' + icon + '" alt="">' : "") + chips + '<span class="patch-ftext">' + rich(text) + "</span></li>"; };
-    return (f ? '<li class="patch-sec">เรื่องสำคัญ</li>' : "") + e.items.slice(0, f).map(one).join("")
-      + (f && f < e.items.length ? '<li class="patch-sec">การเปลี่ยนแปลงอื่น</li>' : "") + e.items.slice(f).map((it, i) => one(it, i + f)).join(""); };
+      return '<li class="patch-feature' + (i < t1 ? " patch-top" : "") + '">' + (icon ? '<img class="patch-ficon" src="' + icon + '" alt="">' : "") + chips + '<span class="patch-ftext">' + rich(text) + "</span></li>"; };
+    const sec = (label, from, to) => to > from ? (f ? '<li class="patch-sec">' + label + "</li>" : "") + e.items.slice(from, to).map((it, i) => one(it, i + from)).join("") : "";
+    return sec("สำคัญที่สุด", 0, t1) + sec("เรื่องสำคัญ", t1, f) + sec("การเปลี่ยนแปลงอื่น", f, e.items.length); };
   // newest first: its own header on top, older entries below as headed groups
   const fill = (entries) => {
     const [top, ...older] = entries;
@@ -40069,7 +40080,7 @@ function mountPatchPopup(){
   if (btns){
     const servers = [...new Set(PATCH_HISTORY.map((e) => e.server))];
     btns.innerHTML = servers.map((srv) => { const name = esc(PATCH_SERVER_NAMES[srv] || srv), logo = SKILL_ICONS["server_" + srv];
-      return '<button type="button" class="changelog-patch-btn" data-patch-server="' + esc(srv) + '" title="แพตช์โน้ต ' + name + ' ที่ไบเบิ้ลตรวจจากโค้ดเกม">'
+      return '<button type="button" class="changelog-patch-btn" data-patch-server="' + esc(srv) + '" title="แพตช์โน้ต ' + name + '">'
         + (logo ? '<img src="' + logo + '" alt="">' : "") + "<span>แพตช์โน้ต " + name + "</span></button>"; }).join("");
     btns.addEventListener("click", (event) => { const b = event.target.closest("[data-patch-server]"); if (b) show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false); });
   }

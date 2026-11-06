@@ -5865,23 +5865,25 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
 // Patch history pop-up (user 2026-11-06): PATCH_HISTORY, newest first, entries { key, server, kicker, title, items: ranked [tag, text, kind?] }
 // (no sub line: the user dropped that row as wasted space; the check date sits in the kicker);
 // the newest shows once per browser per key and is closable only after 3 s; the changelog header has a review button per server (no lock).
-// kind (a string or a list): "bug" (a real bug fix), "sneak" (not in the server's notes) or "fix" / "change" (the notes claim it, the code does not show it:
+// tiers: [t1, t2] = tier 1 (most prominent) and tier 2 (featured) line counts from the top, the rest tier 3.
+// kind (a string or a list): "bug" (a real bug fix), "sneak-nerf" (worse than BB, not in the notes), "sneak" (not in the server's notes) or "fix" / "change" (the notes claim it, the code does not show it:
 // never "server-side", user 2026-11-06).
 {
   const src = fs.readFileSync(targetPath, "utf8"), H = vm.runInContext("PATCH_HISTORY", sandbox), servers = vm.runInContext("SERVER_INFO", sandbox);
   const shape = Array.isArray(H) && H.length > 0 && new Set(H.map((e) => e.key)).size === H.length
     && H.every((e) => typeof e.key === "string" && e.key && !!servers[e.server] && [e.kicker, e.title].every((t) => typeof t === "string" && t) && e.sub === undefined && Array.isArray(e.items) && e.items.length > 0
-      && (e.featured === undefined || (Number.isInteger(e.featured) && e.featured >= 0 && e.featured <= e.items.length))
-      && e.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || [].concat(it[2]).every((k) => ["bug", "sneak", "fix", "change"].includes(k)))
-        && !/เซิร์ฟเวอร์|server.?side/i.test(it[1])))
+      && e.featured === undefined && (e.tiers === undefined || (Array.isArray(e.tiers) && e.tiers.length === 2 && e.tiers.every((n) => Number.isInteger(n) && n >= 0) && e.tiers[0] + e.tiers[1] <= e.items.length))
+      && e.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || [].concat(it[2]).every((k) => ["bug", "sneak", "sneak-nerf", "fix", "change"].includes(k)))
+        && !/เซิร์ฟเวอร์|server.?side|โค้ด/i.test(it[1])))
     && src.includes('fix: [\'is-claim\', "บอกว่าแก้แต่"') && src.includes('change: [\'is-claim\', "บอกว่าเปลี่ยนแต่"') && src.includes('bug: [\'is-bug\', "แก้บัค"');
   const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();") && !src.includes('id="patchSub"')
     && src.includes('<div class="changelog-patch-btns" id="patchHistoryBtns"></div>')
     && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes("localStorage.setItem(PATCH_SEEN_KEY, forced)")
     && src.includes("if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show([PATCH_HISTORY[0]], true); }")
     && src.includes("show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false)") && /\.patch-ok:disabled\{/.test(src)
-    && src.includes("const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS[\"server_\" + e.server];") && /\.patch-list li\.patch-feature\{/.test(src);
-  if (!shape || !wired) { errorCount++; console.error(`[PATCH POPUP ERROR] PATCH_HISTORY needs unique keys, a known server and ranked [tag, text, kind?] items, kind sneak / fix / change, no server-side guesses (${shape}); the dialog, the header buttons, the 3 s lock and the once-per-key memory must stay wired (${wired})`); }
+    && src.includes("const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS[\"server_\" + e.server];") && /\.patch-list li\.patch-feature\{/.test(src)
+    && /\.patch-list li\.patch-feature\.patch-top\{/.test(src) && src.includes('sec("สำคัญที่สุด", 0, t1) + sec("เรื่องสำคัญ", t1, f) + sec("การเปลี่ยนแปลงอื่น", f, e.items.length)');
+  if (!shape || !wired) { errorCount++; console.error(`[PATCH POPUP ERROR] PATCH_HISTORY needs unique keys, a known server and ranked [tag, text, kind?] items, a known kind, no server-side guesses and no "โค้ด" wording (${shape}); the dialog, the header buttons, the 3 s lock and the once-per-key memory must stay wired (${wired})`); }
   else console.log(`Verified the patch history: ${H.length} entr${H.length === 1 ? "y" : "ies"}, newest ${H[0].key} (${H[0].items.length} ranked lines) shown once with a 3 s lock, review buttons in the changelog.`);
 }
 // Co-author page: each finding bolds only its parent skill (** **), which renders as a gold skill link; the pop-up renders the items as rich text.
