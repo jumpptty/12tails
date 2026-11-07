@@ -6858,18 +6858,50 @@ function fontProblems(html) {
 }
 // Launcher links to outside tools (2026-11-07, the online 12 Tails Wardrobe): a TOOLS entry with href is an external link. Everywhere the launcher builds a
 // tool link it must use that URL with target="_blank" rel="noopener" (never #<id>), and route() must never mount it, so the menu still renders offline
-// and a #wardrobe address just shows the menu.
+// and a #wardrobe address just shows the menu. Since 2026-11-08 (user) ห้องแต่งตัว is the third main tool (wax seal, banner thumb, fixed slot) with the
+// code-drawn mirror art LN_ART.mirror (TOOL_ART.WardrobeMirrorStd / WardrobeMirrorSummer: a crossfade between Rabbit's two sets and a tilt toward the
+// cursor like the skill wall), and every way the menu opens it also sends the Bible's own GoatCounter hit for /bible/#wardrobe.
 {
   let linkChecked = 0;
   const ok = (pass, msg) => { if (pass) linkChecked++; else { console.error("[LAUNCH LINK ERROR] " + msg); errorCount++; } };
-  const tools = vm.runInContext("TOOLS", sandbox), ext = tools.filter((t) => t.href), wd = tools.find((t) => t.id === "wardrobe");
-  const gi = vm.runInContext("GEAR_ICONS", sandbox), launcher = String(vm.runInContext("mountLauncher", sandbox)), routeSrc = String(vm.runInContext("route", sandbox));
-  ok(wd && wd.title === "ห้องแต่งตัว" && wd.shortTitle === "ห้องแต่งตัว" && wd.category === "" && /^https:\/\//.test(wd.href) && !wd.collage && !wd.cls && Array.isArray(wd.art) && wd.art.length > 0
-      && wd.art.every((k) => /^(tool|gear):/.test(k) && (k.startsWith("tool:") ? vm.runInContext("TOOL_ART", sandbox)[k.slice(5)] : gi[k.slice(5)])),
-    "TOOLS needs the wardrobe entry: title and shortTitle ห้องแต่งตัว (the wardrobe page's own name), category empty, an https:// href, art from existing TOOL_ART / GEAR_ICONS keys (not a main tool)");
-  const keyOf = (t) => t.art && t.art.join(",");
-  ok(tools.filter((t) => t.id !== "wardrobe" && wd && keyOf(t) && keyOf(t) === keyOf(wd)).length === 0, "the wardrobe's art key must not be shared with another TOOLS entry");
+  const tools = vm.runInContext("TOOLS", sandbox), ext = tools.filter((t) => t.href), wd = tools.find((t) => t.id === "wardrobe") || {};
+  const toolArt = vm.runInContext("TOOL_ART", sandbox), launcher = String(vm.runInContext("mountLauncher", sandbox)), routeSrc = String(vm.runInContext("route", sandbox));
+  ok(wd.title === "ห้องแต่งตัว" && wd.shortTitle === "ห้องแต่งตัว" && wd.category === "" && /^https:\/\//.test(wd.href || "") && wd.collage === "mirror" && !wd.cls && !wd.art,
+    'TOOLS needs the wardrobe entry: title and shortTitle ห้องแต่งตัว (the wardrobe page\'s own name), category empty, an https:// href, collage "mirror" (menu art LN_ART.mirror) and no placeholder art');
+  // the three main tools (user 2026-11-08: ห้องแต่งตัว is the third): first in TOOLS, in this order; no other tool uses a main collage
+  ok(tools.slice(0, 3).map((t) => t.id).join() === "skill-details,class-guide,wardrobe" && tools.slice(3).every((t) => !["skills", "classStory", "mirror"].includes(t.collage)),
+    "TOOLS must start with the three main tools in order: skill-details, class-guide, wardrobe (got " + tools.slice(0, 3).map((t) => t.id).join(", ") + ")");
+  ok(/const isMain = t => t\.collage === "skills" \|\| t\.collage === "classStory" \|\| t\.collage === "mirror";/.test(launcher), "mountLauncher's isMain covers the three main tools (collage skills, classStory, mirror)");
   for (const t of ext) ok(/^https:\/\/[^\s"'<>]+$/.test(t.href) && typeof t.mount !== "function" && !t.mounted, "TOOLS entry " + t.id + ": href must be a plain https:// URL and the entry must have no mount function");
+  // the mirror art: two WebP pictures in TOOL_ART (assets.js); the stage = ground shadow, then the tilting box with the standard picture under the summer
+  // one (its glass only) and a sheen masked to the glass by the summer layer; the thumb = a still of the standard picture
+  const std = toolArt.WardrobeMirrorStd || "", sum = toolArt.WardrobeMirrorSummer || "";
+  ok(/^data:image\/webp;base64,/.test(std) && /^data:image\/webp;base64,/.test(sum) && std !== sum, "TOOL_ART needs WardrobeMirrorStd and WardrobeMirrorSummer (two different WebP data URIs in assets.js)");
+  try {
+    const art = vm.runInContext("LN_ART", sandbox), st = art.mirror("stage"), th = art.mirror("thumb");
+    ok(st.startsWith('<div class="ln-mirror" aria-hidden="true"><span class="ln-mir-floor"></span><div class="ln-mir3d">') && st.includes('<img class="ln-mir-a" src="' + std + '"')
+        && st.includes('<img class="ln-mir-b" src="' + sum + '"') && st.includes('<span class="ln-mir-sheen" style="--mir-mask:url(' + sum + ')"></span>') && st.indexOf("ln-mir-a") < st.indexOf("ln-mir-b"),
+      'LN_ART.mirror("stage"): .ln-mirror (aria-hidden) = .ln-mir-floor, then .ln-mir3d with the standard picture (.ln-mir-a) under the summer one (.ln-mir-b) and the glass sheen masked by the summer layer');
+    ok(th === '<img class="ln-mirth" src="' + std + '" alt="" decoding="async">', 'LN_ART.mirror("thumb"): a still of the standard picture (.ln-mirth)');
+  } catch (e) { ok(false, "LN_ART.mirror threw: " + e.message); }
+  // CSS: the crossfade (opacity, 1.2 s), the tilt (the skill wall's recipe: --tx / --ty, eased by transition: transform .8s), a perspective; only
+  // transform / translate / scale / opacity change over time there, and no filter, box-shadow or glow
+  const rule = (sel) => (html.match(new RegExp("\\n\\s*" + sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\{([^}]*)\\}")) || [])[1] || "";
+  ok(/opacity:0/.test(rule(".ln-mir-b")) && /transition:opacity 1\.2s/.test(rule(".ln-mir-b")) && /opacity:1/.test(rule(".ln-mirror.is-alt .ln-mir-b")),
+    "the summer layer .ln-mir-b fades in and out by opacity over 1.2 s (.ln-mirror.is-alt shows it)");
+  ok(/transform:rotateY\(calc\(-?[\d.]+deg \+ var\(--tx, 0\) \* [\d.]+deg\)\) rotateX\(calc\(-?[\d.]+deg - var\(--ty, 0\) \* [\d.]+deg\)\)/.test(rule(".ln-mir3d"))
+      && /transition:transform \.8s cubic-bezier\(\.2,\.7,\.2,1\)/.test(rule(".ln-mir3d")) && /perspective:\d+px/.test(rule(".ln-mirror")),
+    ".ln-mir3d leans toward the cursor like the skill wall: rotateY(… + var(--tx, 0) × …) rotateX(… − var(--ty, 0) × …), transition: transform .8s cubic-bezier(.2,.7,.2,1), under a perspective on .ln-mirror");
+  const mirRules = [...html.matchAll(/\n\s*(\.[^{}\n]*ln-mir[^{}\n]*)\{([^}]*)\}/g)];   // CSS rules only (they start with a class); commas inside cubic-bezier() do not split
+  const badMotion = mirRules.filter((r) => (r[2].match(/transition:([^;]*)/g) || []).some((tr) => tr.slice(11).split(/,(?![^(]*\))/).some((p) => !/^\s*(transform|translate|scale|opacity)\s/.test(p + " "))) || /(^|;)\s*(filter|box-shadow|animation)\s*:/.test(r[2]));
+  ok(mirRules.length >= 6 && !badMotion.length, "the mirror's rules animate only transform / translate / scale / opacity and carry no filter, box-shadow or animation" + (badMotion.length ? " (check: " + badMotion.map((r) => r[1].trim()).join(" | ") + ")" : ""));
+  // JS: the tilt vars go on the art element itself (the wall or the mirror), never on the launcher root; the crossfade timer (6-9 s) restarts per slide
+  ok((launcher.match(/art\.querySelector\("\.ln-wall, \.ln-mirror"\)/g) || []).length === 2 && !/root\.style\.setProperty\("--t[xy]"/.test(launcher)
+      && /w\.style\.setProperty\("--tx", cl\(/.test(launcher) && /if \(e\.pointerType !== "mouse" \|\|/.test(launcher),
+    "mountLauncher's pointermove (mouse only) sets --tx / --ty on the skill wall or the mirror itself and the pointerleave resets them; never on the launcher root");
+  ok(/const mirStart = m => \{[^\n]*\r?\n[^\n]*m\.classList\.toggle\("is-alt", alt\);[^\n]*6000 \+ Math\.random\(\) \* 3000/.test(launcher) && /clearTimeout\(wallTimer\); clearTimeout\(mirTimer\);/.test(launcher)
+      && /if \(t\.collage === "mirror"\) mirStart\(art\.querySelector\("\.ln-mirror"\)\);/.test(launcher),
+    "mountLauncher crossfades the mirror (mirStart toggles .is-alt, then waits 6-9 s on the standard set) and stops the timer when the slide changes");
   const markup = (saved) => {
     const root = makeEl(), keep = tools.slice(), had = Object.prototype.hasOwnProperty.call(sandbox, "localStorage"), prev = sandbox.localStorage;
     if (saved) sandbox.localStorage = { getItem: () => JSON.stringify(saved), setItem: () => {} };
@@ -6878,27 +6910,61 @@ function fontProblems(html) {
   };
   const esc = (x) => x.replace(/\W/g, (c) => "\\" + c);
   const lsHad = Object.prototype.hasOwnProperty.call(sandbox, "localStorage"), lsBefore = sandbox.localStorage;
-  for (const [label, saved] of [["default order", null], ["a saved order that puts it first", ["wardrobe"]]]) {
+  for (const [label, saved] of [["default order", null], ["a saved order that puts it first", ["wardrobe", "theme-tab"]]]) {
     const m = markup(saved);
     for (const t of ext) {
-      ok(new RegExp('<a class="ln-th" href="' + esc(t.href) + '" target="_blank" rel="noopener" aria-label="' + esc("เปิด " + t.title + " (แท็บใหม่)") + '" data-i="\\d+"').test(m),
+      ok(new RegExp('<a class="ln-th' + (t.collage === "mirror" ? " is-main" : "") + '" href="' + esc(t.href) + '" target="_blank" rel="noopener" aria-label="' + esc("เปิด " + t.title + " (แท็บใหม่)") + '" data-i="\\d+"').test(m),
         "launcher thumb / phone tile of " + t.id + " (" + label + "): href " + t.href + ' with target="_blank" rel="noopener" and aria-label="เปิด ' + t.title + ' (แท็บใหม่)"');
       ok(!m.includes('href="#' + t.id + '"'), "launcher markup (" + label + ") must not link to #" + t.id);
     }
     ok((m.match(/<a class="ln-th/g) || []).length === tools.length, "the launcher builds one thumb per TOOLS entry (" + label + ")");
+    const mains = [...m.matchAll(/<a class="ln-th is-main" href="([^"]*)"[^>]*? data-i="(\d+)"/g)].map((x) => x[1] + "@" + x[2]);
+    ok(mains.join() === "#skill-details@0,#class-guide@1," + wd.href + "@2", "the launcher (" + label + ") builds three main banners in fixed slots: skill details, ไกด์อาชีพ, ห้องแต่งตัว at 0, 1, 2 (got " + mains.join(", ") + ")");
+    ok(m.includes('<img class="ln-mirth" src="' + std + '"'), "the ห้องแต่งตัว banner (" + label + ") shows the still mirror");
+    if (saved) ok(/<a class="ln-th" href="#theme-tab"[^>]*? data-i="3"/.test(m), "a saved order cannot move a main tool: it orders the rest from slot 3 on (theme-tab first after the three banners)");
   }
   ok(Object.prototype.hasOwnProperty.call(sandbox, "localStorage") === lsHad && sandbox.localStorage === lsBefore, "the launcher link checks must leave the sandbox's localStorage as they found it");
   ok(/const toolLabel = t => "เปิด " \+ t\.title \+ \(t\.href \? " \(แท็บใหม่\)" : ""\);/.test(launcher) && (launcher.match(/aria-label="' \+ toolLabel\(t\) \+ '"/g) || []).length === 3
     && !launcher.includes("aria-label=\"เปิด ' + t.title"), "mountLauncher names both art links and an outside tool's thumb with toolLabel(t): เปิด <title>, plus (แท็บใหม่) when it opens a new tab");
   // the links built after the markup guard (stage kicker button, art link, empty-stage click, Enter) go through the same two helpers
   ok(/const toolLink = t => t\.href \? ' href="' \+ t\.href \+ '" target="_blank" rel="noopener"' : ' href="#' \+ t\.id \+ '"';/.test(launcher)
-    && /const openTool = t => \{ if \(t\.href\) window\.open\(t\.href, "_blank", "noopener"\); else location\.hash = "#" \+ t\.id; \};/.test(launcher),
-    "mountLauncher defines toolLink (href + target=_blank + rel=noopener for a tool with href, else #id) and openTool");
+    && /const openTool = t => \{ if \(t\.href\) \{ countOut\(t\); window\.open\(t\.href, "_blank", "noopener"\); \} else location\.hash = "#" \+ t\.id; \};/.test(launcher),
+    "mountLauncher defines toolLink (href + target=_blank + rel=noopener for a tool with href, else #id) and openTool (an outside tool: count it, then open it in a new tab)");
   ok((launcher.match(/\$\{toolLink\(t\)\}|\+ toolLink\(t\) \+/g) || []).length === 4 && !/href="#' \+ t\.id|href="#\$\{t\.id\}|location\.hash = "#" \+ TOOLS\[cur\]\.id|location\.hash = TOOLS\[cur\]\.id/.test(launcher.replace(/const toolLink = [^\n]*/, ""))
     && (launcher.match(/openTool\(TOOLS\[cur\]\)/g) || []).length === 2,
     "mountLauncher builds the thumb, the เปิด seal and both art links with toolLink(t), and opens the empty stage / Enter with openTool(TOOLS[cur]); no #<id> link is built any other way");
   ok(/const tool = TOOLS\.find\(t => t\.id === id && !t\.href\);/.test(routeSrc), "route() must skip a tool with href (an external tool never mounts; its address shows the menu)");
-  console.log("Verified " + linkChecked + " launcher link checks (" + ext.length + " external tool" + (ext.length === 1 ? "" : "s") + ").");
+  // the launcher's own helpers, run on stubs: the seal and the art link of the wardrobe, and the GoatCounter count (blocked GoatCounter = no error)
+  const def = (name) => (launcher.match(new RegExp("^\\s*const " + name + " = ([te] => .*?);(?:\\s*\\/\\/.*)?\\r?$", "m")) || [])[1] || "undefined";
+  const helpers = (win, loc) => new Function("window", "location", "TOOLS", ["toolLink", "toolLabel", "isMain", "countOut", "openTool", "countLink"].map((n) => "const " + n + " = " + def(n) + ";").join("\n")
+    + "\nreturn { toolLink, toolLabel, isMain, countOut, openTool, countLink };")(win, loc, tools);
+  try {
+    const calls = [], opened = [], loc = { hash: "" }, H = helpers({ goatcounter: { count: (v) => calls.push(v) }, open: (...a) => opened.push(a) }, loc);
+    ok(H.isMain(wd) && /isMain\(t\) \? '<a class="ln-play"' \+ toolLink\(t\) \+ '><span class="ln-seal"><span>เปิด<\/span><\/span><\/a>'/.test(launcher)
+        && '<a class="ln-play"' + H.toolLink(wd) + ">" === '<a class="ln-play" href="' + wd.href + '" target="_blank" rel="noopener">',
+      'the ห้องแต่งตัว slide gets the เปิด wax seal, linking to ' + wd.href + ' with target="_blank" rel="noopener"');
+    ok(launcher.includes("art.innerHTML = '<a class=\"ln-artlink\"' + toolLink(t) + ' aria-label=\"' + toolLabel(t) + '\"><span class=\"ln-lift\">' + LN_ART[t.collage](\"stage\") + \"</span></a>\";")
+        && '<a class="ln-artlink"' + H.toolLink(wd) + ' aria-label="' + H.toolLabel(wd) + '">' === '<a class="ln-artlink" href="' + wd.href + '" target="_blank" rel="noopener" aria-label="เปิด ห้องแต่งตัว (แท็บใหม่)">',
+      'the mirror art is one link to ' + wd.href + ' (target="_blank" rel="noopener", aria-label เปิด ห้องแต่งตัว (แท็บใหม่))');
+    H.countOut(wd);
+    ok(calls.length === 1 && JSON.stringify(calls[0]) === JSON.stringify({ path: "/bible/#wardrobe", title: "ห้องแต่งตัว", event: false }),
+      "countOut(wardrobe) sends one GoatCounter hit { path: /bible/#wardrobe, title: ห้องแต่งตัว, event: false } (got " + JSON.stringify(calls) + ")");
+    calls.length = 0; H.openTool(wd);
+    ok(calls.length === 1 && opened.length === 1 && opened[0].join("|") === wd.href + "|_blank|noopener", "openTool(wardrobe) (empty stage click, Enter) counts it once and opens it in a new tab");
+    calls.length = 0; opened.length = 0; H.openTool(tools[0]);
+    ok(!calls.length && !opened.length && loc.hash === "#skill-details", "openTool of a Bible tool goes to #<id> and sends no extra hit (route() counts tool views)");
+    const link = (href) => ({ target: "_blank", getAttribute: (k) => k === "href" ? href : null });
+    const ev = (a, prevented) => ({ defaultPrevented: !!prevented, button: 0, target: { closest: (sel) => sel === 'a[target="_blank"]' ? a : null } });
+    calls.length = 0; H.countLink(ev(link(wd.href)));
+    const one = calls.length; H.countLink(ev(link(wd.href), true)); H.countLink(ev(null)); H.countLink(ev(link("https://example.com/")));
+    ok(one === 1 && calls.length === 1, "countLink counts a click on a link to the wardrobe (thumb, phone tile, seal, art) once, and not a prevented click, a click off links or a link elsewhere");
+    let threw = ""; for (const w of [{}, { goatcounter: {} }, { goatcounter: { count: () => { throw new Error("blocked"); } } }]) try { helpers(w, { hash: "" }).countOut(wd); } catch (e) { threw = e.message; }
+    ok(!threw, "countOut does nothing, without an error, when GoatCounter is blocked, not loaded yet or throws" + (threw ? " (threw " + threw + ")" : ""));
+    const at = (s) => launcher.indexOf(s);
+    ok(at('root.addEventListener("click", countLink); root.addEventListener("auxclick", e => { if (e.button === 1) countLink(e); });') > at('const th = e.target.closest(".ln-th"); if (th && !phone()') && at('const th = e.target.closest(".ln-th"); if (th && !phone()') > 0,
+      "countLink listens for clicks and middle clicks on the launcher after the filmstrip's show-first click (a first click that only shows the slide is not counted)");
+  } catch (e) { ok(false, "the launcher helpers could not be run on stubs: " + e.message); }
+  console.log("Verified " + linkChecked + " launcher link checks (" + ext.length + " external tool" + (ext.length === 1 ? "" : "s") + ", " + tools.filter((t) => ["skills", "classStory", "mirror"].includes(t.collage)).length + " main tools).");
 }
 // Guide manager page (user 2026-10-20): the same page runs on this PC (scripts/add_guide.js serves it) and on the phone (GitHub Pages).
 // Its class faces are a copy of CLASS_HERO_ICONS (the phone never loads the 27 MB assets.js), so a repainted portrait must be copied there too.
