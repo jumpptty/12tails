@@ -8051,12 +8051,12 @@
   @media (max-width:900px){ .ln-svgart, .ln-rain{height:100%} }
   /* ห้องแต่งตัว (LN_ART.mirror, user 2026-11-08): the 9/3 Shadow Mirror with Rabbit's standard set; the summer set (its glass only) fades in over it and
      back every 6-9 s (.is-alt, mirStart). The mirror leans toward the cursor like the skill wall (--tx / --ty -1..1 on .ln-mirror itself, from the
-     launcher's pointermove, mouse only, so phones only crossfade); the angles are the wall's edge travel on a narrower object (the wall's 3.5° / 2°
-     move its far edges about 24 / 10 px; the mirror is about 350 px wide, so 8° sideways does the same, and as tall as the wall it keeps 2° up and down). It stands on a soft ground shadow that stays on the
+     launcher's pointermove, mouse only, so phones only crossfade), exactly as far as the wall: 3.5° sideways, 2° up and down (user 2026-11-08: "tilt a
+     bit"; the wall's own tilt was cut twice for being too strong). It stands on a soft ground shadow that stays on the
      floor while the art lifts on hover, and a faint sheen, masked to the glass, slides across it as it turns. Only transform / translate / scale /
      opacity change; no filter, no glow. */
   .ln-mirror{position:relative; height:min(62vh, 620px); aspect-ratio:613 / 1000; max-width:100%; perspective:1400px}
-  .ln-mir3d{position:absolute; inset:0; transform:rotateY(calc(-6deg + var(--tx, 0) * 8deg)) rotateX(calc(2deg - var(--ty, 0) * 2deg)); transition:transform .8s cubic-bezier(.2,.7,.2,1)}
+  .ln-mir3d{position:absolute; inset:0; transform:rotateY(calc(-6deg + var(--tx, 0) * 3.5deg)) rotateX(calc(2deg - var(--ty, 0) * 2deg)); transition:transform .8s cubic-bezier(.2,.7,.2,1)}
   .ln-mir3d img{position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:contain}
   .ln-mir-b{opacity:0; transition:opacity 1.2s ease-in-out}
   .ln-mirror.is-alt .ln-mir-b{opacity:1}
@@ -39346,6 +39346,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-07T18:09:07.130Z","fix(bible): the mirror leans like the skill wall (3.5° / 2°)"],
     ["2026-11-07T18:03:50.343Z","feat(bible): ห้องแต่งตัว is a main tool (the 9/3 mirror shows Rabbit's standard and summer sets, leans with the cursor; clicks counted)"],
     ["2026-11-07T14:24:58.414Z","fix(bible): the ห้องแต่งตัว tile opens the live wardrobe at 12tails-wardrobe.jumpthai.workers.dev"],
     ["2026-11-07T13:56:43.216Z","fix(bible): the wardrobe tile is named ห้องแต่งตัว like the wardrobe page and says it opens in a new tab"],

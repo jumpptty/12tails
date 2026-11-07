@@ -6889,9 +6889,11 @@ function fontProblems(html) {
   const rule = (sel) => (html.match(new RegExp("\\n\\s*" + sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\{([^}]*)\\}")) || [])[1] || "";
   ok(/opacity:0/.test(rule(".ln-mir-b")) && /transition:opacity 1\.2s/.test(rule(".ln-mir-b")) && /opacity:1/.test(rule(".ln-mirror.is-alt .ln-mir-b")),
     "the summer layer .ln-mir-b fades in and out by opacity over 1.2 s (.ln-mirror.is-alt shows it)");
-  ok(/transform:rotateY\(calc\(-?[\d.]+deg \+ var\(--tx, 0\) \* [\d.]+deg\)\) rotateX\(calc\(-?[\d.]+deg - var\(--ty, 0\) \* [\d.]+deg\)\)/.test(rule(".ln-mir3d"))
-      && /transition:transform \.8s cubic-bezier\(\.2,\.7,\.2,1\)/.test(rule(".ln-mir3d")) && /perspective:\d+px/.test(rule(".ln-mirror")),
-    ".ln-mir3d leans toward the cursor like the skill wall: rotateY(… + var(--tx, 0) × …) rotateX(… − var(--ty, 0) × …), transition: transform .8s cubic-bezier(.2,.7,.2,1), under a perspective on .ln-mirror");
+  // the lean is exactly the wall's (user 2026-11-08: "tilt a bit … like the skill details wall"; the wall's own tilt was cut twice for being too strong)
+  const lean = (r) => (r.match(/rotateY\(calc\(-?[\d.]+deg \+ var\(--tx, 0\) \* ([\d.]+)deg\)\) rotateX\(calc\(-?[\d.]+deg - var\(--ty, 0\) \* ([\d.]+)deg\)\)/) || []).slice(1, 3).join(" / ");
+  const wallLean = lean(rule(".ln-wall")), mirLean = lean(rule(".ln-mir3d"));
+  ok(wallLean && mirLean === wallLean && /transition:transform \.8s cubic-bezier\(\.2,\.7,\.2,1\)/.test(rule(".ln-mir3d")) && /perspective:\d+px/.test(rule(".ln-mirror")),
+    ".ln-mir3d leans toward the cursor exactly as far as the skill wall (rotateY(… + var(--tx, 0) × a) rotateX(… − var(--ty, 0) × b), wall " + (wallLean || "?") + "°, mirror " + (mirLean || "?") + "°), transition: transform .8s cubic-bezier(.2,.7,.2,1), under a perspective on .ln-mirror");
   const mirRules = [...html.matchAll(/\n\s*(\.[^{}\n]*ln-mir[^{}\n]*)\{([^}]*)\}/g)];   // CSS rules only (they start with a class); commas inside cubic-bezier() do not split
   const badMotion = mirRules.filter((r) => (r[2].match(/transition:([^;]*)/g) || []).some((tr) => tr.slice(11).split(/,(?![^(]*\))/).some((p) => !/^\s*(transform|translate|scale|opacity)\s/.test(p + " "))) || /(^|;)\s*(filter|box-shadow|animation)\s*:/.test(r[2]));
   ok(mirRules.length >= 6 && !badMotion.length, "the mirror's rules animate only transform / translate / scale / opacity and carry no filter, box-shadow or animation" + (badMotion.length ? " (check: " + badMotion.map((r) => r[1].trim()).join(" | ") + ")" : ""));
