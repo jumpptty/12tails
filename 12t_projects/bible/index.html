@@ -31768,6 +31768,16 @@ const TOOLS = [
     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
     mounted: false,
     mount(root){ mountThemeTab(root); }
+  },
+  {
+    // External tool (no mount): the online 12 Tails Wardrobe (Cloudflare Pages). `href` is the only place the URL lives; the launcher links to it in a new tab
+    // (toolLink / openTool in mountLauncher) and route() never mounts it. Art is a placeholder (three hat icons as a fan) until the user picks art (2026-11-07).
+    id: "wardrobe",
+    title: "ตู้เสื้อผ้า",
+    shortTitle: "ตู้เสื้อผ้า",
+    category: "",
+    href: "https://12tails-wardrobe.pages.dev/",
+    art: ["gear:a_all1", "gear:a_all15", "gear:a_all43"]
   }
 ];
 
@@ -38957,6 +38967,9 @@ function mountLauncher(root){
   const thumbOf = t => t.collage === "skills" ? { kind: "icon", src: SKILL_ICONS[pick(skillIcons)] } : t.collage === "classStory" ? { kind: "portrait", src: storyOf(pick(classes)) }
     : { kind: /^(skill|gear):/.test(String((t.art || [])[0] || "")) ? "icon" : "portrait", src: artSrc((t.art || [])[0] || "") };
   const accentOf = t => LAUNCH_ACCENT[t.cls] || "var(--gold)";
+  // a tool with href is an outside site (the wardrobe): every link the menu builds for it goes there in a new tab, never to #<id> (route() does not mount it)
+  const toolLink = t => t.href ? ' href="' + t.href + '" target="_blank" rel="noopener"' : ' href="#' + t.id + '"';
+  const openTool = t => { if (t.href) window.open(t.href, "_blank", "noopener"); else location.hash = "#" + t.id; };
   const isMain = t => t.collage === "skills" || t.collage === "classStory";   // skill details and ไกด์อาชีพ
   // the visitor's own tool order (drag to reorder, user 2026-10-19): the two main tools keep their places, the others follow the saved ids, and a tool
   // the saved list does not name (added later) comes after them in its usual order
@@ -38971,7 +38984,7 @@ function mountLauncher(root){
     '<div class="ln-stripbar"><p class="ln-count" aria-hidden="true"></p><h2 class="ln-tools-h">เครื่องมือทั้งหมด</h2><button type="button" class="ln-sarrow prev" aria-label="เลื่อนรายการเครื่องมือไปทางซ้าย" hidden>‹</button><nav class="ln-strip" aria-label="เครื่องมือทั้งหมด">' +
     TOOLS.map((t, i) => { const a = thumbOf(t), main = isMain(t);   // the two main tools get banners (filled once the frames are known)
       const art = LN_ART[t.collage] ? LN_ART[t.collage]("thumb") : t.collage === "skills" ? '<div class="ln-mq"></div>' : t.collage === "classStory" ? '<div class="ln-thpng"></div><img class="ln-thpt" src="' + a.src + '" alt="">' : `<img class="is-${a.kind}" src="${a.src || ""}" alt="" decoding="async">`;
-      return `<a class="ln-th${main ? " is-main" : ""}" href="#${t.id}" data-i="${i}" style="--acc:${accentOf(t)}"><div class="ln-thb">${art}<i></i><span>${t.shortTitle || t.title}</span></div></a>`; }).join("") +
+      return `<a class="ln-th${main ? " is-main" : ""}"${toolLink(t)} data-i="${i}" style="--acc:${accentOf(t)}"><div class="ln-thb">${art}<i></i><span>${t.shortTitle || t.title}</span></div></a>`; }).join("") +
     '</nav><button type="button" class="ln-sarrow next" aria-label="เลื่อนรายการเครื่องมือไปทางขวา" hidden>›</button></div><div class="ln-gsim" aria-hidden="true"><span class="rsim-cell"></span><span class="rsim-cell is-passive"></span></div>';
   if (typeof setInterval !== "function" || typeof matchMedia !== "function") return;   // the validator sandbox: markup only (no timers, no layout)
   const copy = root.querySelector(".ln-copy"), art = root.querySelector(".ln-art"), stage = root.querySelector(".ln-stage"), count = root.querySelector(".ln-count");
@@ -39109,7 +39122,7 @@ function mountLauncher(root){
     copy.innerHTML = (LAUNCH_CATEGORY[t.category] || t.badge ? '<span class="ln-kicker">' + (LAUNCH_CATEGORY[t.category] || "") + (t.badge ? ' <span class="ln-badge">' + t.badge + "</span>" : "") + "</span>" : "") +   // no เครื่องมือหลัก label (user 2026-10-18)
       '<h1 class="ln-title">' + lines(t.title).map((l, k) => '<span style="animation-delay:' + k * 70 + 'ms">' + l + "</span>").join("") + "</h1>" +
       // the เปิด seal only on the two main tools (user 2026-10-18); the others open from their art or thumb
-      (fact || isMain(t) ? '<div class="ln-cta">' + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") + (isMain(t) ? '<a class="ln-play" href="#' + t.id + '"><span class="ln-seal"><span>เปิด</span></span></a>' : "") + "</div>" : "");
+      (fact || isMain(t) ? '<div class="ln-cta">' + (fact ? '<div class="ln-fact"><b>' + fact[0] + "</b><span>" + fact[1] + "</span></div>" : "") + (isMain(t) ? '<a class="ln-play"' + toolLink(t) + '><span class="ln-seal"><span>เปิด</span></span></a>' : "") + "</div>" : "");
     clearInterval(guideTimer); clearTimeout(wallTimer);
     stage.classList.toggle("is-wall", t.collage === "skills");
     stage.classList.toggle("is-guide", t.collage === "classStory" && guides.length > 0);
@@ -39119,7 +39132,7 @@ function mountLauncher(root){
       startWall(art.querySelector(".ln-wall"));
     }
     else if (LN_ART[t.collage]) {   // drawn in code (LN_ART); the art opens its tool like the portraits do
-      art.innerHTML = '<a class="ln-artlink" href="#' + t.id + '" aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + LN_ART[t.collage]("stage") + "</span></a>";
+      art.innerHTML = '<a class="ln-artlink"' + toolLink(t) + ' aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + LN_ART[t.collage]("stage") + "</span></a>";
       if (t.collage === "svcSplit") splitStart();
       if (t.collage === "monsterOrbit") { LN_MON.fill(art.querySelector(".ln-orbit")); if (matchMedia("(hover: none)").matches) setTimeout(() => { const o = art.querySelector(".ln-orbit"); if (o) o.classList.add("is-hot"); }, 450); }
     }
@@ -39133,7 +39146,7 @@ function mountLauncher(root){
       const inner = arts.length && arts.every(k => /^(skill|gear):/.test(k))
         ? '<div class="ln-fan" style="--mid:' + (arts.length - 1) / 2 + '" aria-hidden="true">' + arts.map((k, j) => '<img style="--i:' + j + '" src="' + artSrc(k) + '" alt="">').join("") + "</div>"
         : arts.length ? '<span class="ln-floor" aria-hidden="true"></span>' + lnBugs(t, 0) + lnOrbit3d(t, '<img class="ln-pt" data-k="' + arts[0].replace(/^tool:/, "") + '" src="' + artSrc(arts[0]) + '" alt="">') + lnBugs(t, 1) : "";
-      art.innerHTML = inner ? '<a class="ln-artlink" href="#' + t.id + '" aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + inner + "</span></a>" : "";   // the art opens its tool too
+      art.innerHTML = inner ? '<a class="ln-artlink"' + toolLink(t) + ' aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + inner + "</span></a>" : "";   // the art opens its tool too
     }
     thumbs.forEach((b, k) => { b.classList.toggle("is-on", k === cur); restart(b.querySelector("i")); });
     segs.forEach((s, k) => { s.classList.toggle("is-on", k === cur); s.classList.toggle("is-done", k < cur); restart(s.querySelector("i")); });
@@ -39154,12 +39167,12 @@ function mountLauncher(root){
   stage.addEventListener("pointerup", e => { if (!swiping) return; swiping = false; root.classList.remove("is-paused"); const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) { swiped = true; setTimeout(() => { swiped = false; }, 400); show(cur + (dx < 0 ? 1 : -1)); } });
   stage.addEventListener("click", e => { if (swiped) { e.preventDefault(); e.stopPropagation(); swiped = false; } }, true);   // a swipe that ends on a wall tile does not open it
   stage.addEventListener("pointercancel", () => { swiping = false; root.classList.remove("is-paused"); });
-  stage.addEventListener("click", e => { if (!e.defaultPrevented && !e.target.closest("a, button")) location.hash = "#" + TOOLS[cur].id; });   // empty stage space opens the shown tool's main page (user 2026-10-20: it did nothing)
+  stage.addEventListener("click", e => { if (!e.defaultPrevented && !e.target.closest("a, button")) openTool(TOOLS[cur]); });   // empty stage space opens the shown tool's main page (user 2026-10-20: it did nothing)
   document.addEventListener("keydown", e => {
     if (viewMenu.hidden || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || document.querySelector('[aria-modal="true"]:not([hidden])')) return;
     const tg = e.target && e.target.closest ? e.target : document.body; if (tg.closest("input, textarea, select, [contenteditable]")) return;
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") { show(cur + (e.key === "ArrowRight" ? 1 : -1)); e.preventDefault(); }
-    else if (e.key === "Enter" && !tg.closest("a, button")) location.hash = TOOLS[cur].id;
+    else if (e.key === "Enter" && !tg.closest("a, button")) openTool(TOOLS[cur]);
   });
   new MutationObserver(() => { pngs.forEach(p => p.then(u => u && URL.revokeObjectURL(u))); pngs.clear(); for (const id in readyPng) delete readyPng[id]; const box = art.querySelector(".ln-g"); if (box) showGuide(box, false); })
     .observe(document.documentElement, { attributes: true, attributeFilter: ["data-sk-server"] });   // the PNG follows the look, so a look change re-renders it
@@ -39281,6 +39294,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-07T13:05:38.921Z","feat(bible): ตู้เสื้อผ้า menu tool opens the online 12 Tails Wardrobe"],
     ["2026-11-07T10:58:55.181Z","feat(bible): TTO's own icons for the +15 rings, Shadow Strider and Shark (Orange); Sea Aquamarine and the Light, Water, Earth and Shadow seals get icons"],
     ["2026-11-07T06:48:06.331Z","fix(bible): class guide #99 is updated: TTO Panda เเพนด้า ALL-Around BY:TodTy by TODDDD"],
     ["2026-11-07T06:28:38.086Z","fix(bible): class guide #99 is updated: TTO Panda เเพนด้า ALL-Around BY:TodTy by TODDDD"],
@@ -40387,7 +40401,7 @@ function route(){
   const deepClass = (qs.split("&").find(p => p.indexOf("class=") === 0) || "").slice(6).toLowerCase();   // #class-guide?class=wolf: the guide gallery filtered to that class, every server
   if (id === "skill-cooldown-lookup") id = "skill-details";
   if (id === "skill-simulator"){ id = "class-guide"; parts[0] = id; history.replaceState(null, "", "#" + parts.join("/") + (qs ? "?" + qs : "")); }   // the class guide's old link (shared before 2026-10-16) keeps working
-  const tool = TOOLS.find(t => t.id === id);
+  const tool = TOOLS.find(t => t.id === id && !t.href);
   if (tool) showTool(tool); else showMenu();
   setActiveTool(tool ? tool.id : null);
   if (id === "mech") {
