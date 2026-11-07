@@ -6864,27 +6864,32 @@ function fontProblems(html) {
   const ok = (pass, msg) => { if (pass) linkChecked++; else { console.error("[LAUNCH LINK ERROR] " + msg); errorCount++; } };
   const tools = vm.runInContext("TOOLS", sandbox), ext = tools.filter((t) => t.href), wd = tools.find((t) => t.id === "wardrobe");
   const gi = vm.runInContext("GEAR_ICONS", sandbox), launcher = String(vm.runInContext("mountLauncher", sandbox)), routeSrc = String(vm.runInContext("route", sandbox));
-  ok(wd && wd.title === "ตู้เสื้อผ้า" && wd.shortTitle === "ตู้เสื้อผ้า" && wd.category === "" && /^https:\/\//.test(wd.href) && !wd.collage && !wd.cls && Array.isArray(wd.art) && wd.art.length > 0
+  ok(wd && wd.title === "ห้องแต่งตัว" && wd.shortTitle === "ห้องแต่งตัว" && wd.category === "" && /^https:\/\//.test(wd.href) && !wd.collage && !wd.cls && Array.isArray(wd.art) && wd.art.length > 0
       && wd.art.every((k) => /^(tool|gear):/.test(k) && (k.startsWith("tool:") ? vm.runInContext("TOOL_ART", sandbox)[k.slice(5)] : gi[k.slice(5)])),
-    "TOOLS needs the wardrobe entry: title and shortTitle ตู้เสื้อผ้า, category empty, an https:// href, art from existing TOOL_ART / GEAR_ICONS keys (not a main tool)");
+    "TOOLS needs the wardrobe entry: title and shortTitle ห้องแต่งตัว (the wardrobe page's own name), category empty, an https:// href, art from existing TOOL_ART / GEAR_ICONS keys (not a main tool)");
   const keyOf = (t) => t.art && t.art.join(",");
   ok(tools.filter((t) => t.id !== "wardrobe" && wd && keyOf(t) && keyOf(t) === keyOf(wd)).length === 0, "the wardrobe's art key must not be shared with another TOOLS entry");
   for (const t of ext) ok(/^https:\/\/[^\s"'<>]+$/.test(t.href) && typeof t.mount !== "function" && !t.mounted, "TOOLS entry " + t.id + ": href must be a plain https:// URL and the entry must have no mount function");
   const markup = (saved) => {
-    const root = makeEl(), keep = tools.slice(), had = Object.prototype.hasOwnProperty.call(sandbox, "localStorage");
+    const root = makeEl(), keep = tools.slice(), had = Object.prototype.hasOwnProperty.call(sandbox, "localStorage"), prev = sandbox.localStorage;
     if (saved) sandbox.localStorage = { getItem: () => JSON.stringify(saved), setItem: () => {} };
-    try { vm.runInContext("mountLauncher", sandbox)(root); } finally { if (saved) { if (!had) delete sandbox.localStorage; tools.splice(0, tools.length, ...keep); } }
+    try { vm.runInContext("mountLauncher", sandbox)(root); } finally { if (saved) { if (had) sandbox.localStorage = prev; else delete sandbox.localStorage; tools.splice(0, tools.length, ...keep); } }
     return root.innerHTML;
   };
   const esc = (x) => x.replace(/\W/g, (c) => "\\" + c);
+  const lsHad = Object.prototype.hasOwnProperty.call(sandbox, "localStorage"), lsBefore = sandbox.localStorage;
   for (const [label, saved] of [["default order", null], ["a saved order that puts it first", ["wardrobe"]]]) {
     const m = markup(saved);
     for (const t of ext) {
-      ok(new RegExp('<a class="ln-th" href="' + esc(t.href) + '" target="_blank" rel="noopener" data-i="\\d+"').test(m), "launcher thumb / phone tile of " + t.id + " (" + label + "): href " + t.href + ' with target="_blank" rel="noopener"');
+      ok(new RegExp('<a class="ln-th" href="' + esc(t.href) + '" target="_blank" rel="noopener" aria-label="' + esc("เปิด " + t.title + " (แท็บใหม่)") + '" data-i="\\d+"').test(m),
+        "launcher thumb / phone tile of " + t.id + " (" + label + "): href " + t.href + ' with target="_blank" rel="noopener" and aria-label="เปิด ' + t.title + ' (แท็บใหม่)"');
       ok(!m.includes('href="#' + t.id + '"'), "launcher markup (" + label + ") must not link to #" + t.id);
     }
     ok((m.match(/<a class="ln-th/g) || []).length === tools.length, "the launcher builds one thumb per TOOLS entry (" + label + ")");
   }
+  ok(Object.prototype.hasOwnProperty.call(sandbox, "localStorage") === lsHad && sandbox.localStorage === lsBefore, "the launcher link checks must leave the sandbox's localStorage as they found it");
+  ok(/const toolLabel = t => "เปิด " \+ t\.title \+ \(t\.href \? " \(แท็บใหม่\)" : ""\);/.test(launcher) && (launcher.match(/aria-label="' \+ toolLabel\(t\) \+ '"/g) || []).length === 3
+    && !launcher.includes("aria-label=\"เปิด ' + t.title"), "mountLauncher names both art links and an outside tool's thumb with toolLabel(t): เปิด <title>, plus (แท็บใหม่) when it opens a new tab");
   // the links built after the markup guard (stage kicker button, art link, empty-stage click, Enter) go through the same two helpers
   ok(/const toolLink = t => t\.href \? ' href="' \+ t\.href \+ '" target="_blank" rel="noopener"' : ' href="#' \+ t\.id \+ '"';/.test(launcher)
     && /const openTool = t => \{ if \(t\.href\) window\.open\(t\.href, "_blank", "noopener"\); else location\.hash = "#" \+ t\.id; \};/.test(launcher),

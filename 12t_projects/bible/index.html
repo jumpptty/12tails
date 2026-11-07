@@ -31771,10 +31771,10 @@ const TOOLS = [
   },
   {
     // External tool (no mount): the online 12 Tails Wardrobe (Cloudflare Pages). `href` is the only place the URL lives; the launcher links to it in a new tab
-    // (toolLink / openTool in mountLauncher) and route() never mounts it. Art is a placeholder (three hat icons as a fan) until the user picks art (2026-11-07).
+    // (toolLink / openTool in mountLauncher) and route() never mounts it. Art is a placeholder (three outfit icons as a fan: a_all1 Novice Cloth, a_all15 Santa costume, a_all43 Marshal Armor (B)) until the user picks art (2026-11-07).
     id: "wardrobe",
-    title: "ตู้เสื้อผ้า",
-    shortTitle: "ตู้เสื้อผ้า",
+    title: "ห้องแต่งตัว",
+    shortTitle: "ห้องแต่งตัว",
     category: "",
     href: "https://12tails-wardrobe.pages.dev/",
     art: ["gear:a_all1", "gear:a_all15", "gear:a_all43"]
@@ -38970,6 +38970,8 @@ function mountLauncher(root){
   // a tool with href is an outside site (the wardrobe): every link the menu builds for it goes there in a new tab, never to #<id> (route() does not mount it)
   const toolLink = t => t.href ? ' href="' + t.href + '" target="_blank" rel="noopener"' : ' href="#' + t.id + '"';
   const openTool = t => { if (t.href) window.open(t.href, "_blank", "noopener"); else location.hash = "#" + t.id; };
+  // the art links' name, and an outside tool's thumb (= phone tile) name: a link that opens a new tab says so (เปิด ห้องแต่งตัว (แท็บใหม่))
+  const toolLabel = t => "เปิด " + t.title + (t.href ? " (แท็บใหม่)" : "");
   const isMain = t => t.collage === "skills" || t.collage === "classStory";   // skill details and ไกด์อาชีพ
   // the visitor's own tool order (drag to reorder, user 2026-10-19): the two main tools keep their places, the others follow the saved ids, and a tool
   // the saved list does not name (added later) comes after them in its usual order
@@ -38984,7 +38986,7 @@ function mountLauncher(root){
     '<div class="ln-stripbar"><p class="ln-count" aria-hidden="true"></p><h2 class="ln-tools-h">เครื่องมือทั้งหมด</h2><button type="button" class="ln-sarrow prev" aria-label="เลื่อนรายการเครื่องมือไปทางซ้าย" hidden>‹</button><nav class="ln-strip" aria-label="เครื่องมือทั้งหมด">' +
     TOOLS.map((t, i) => { const a = thumbOf(t), main = isMain(t);   // the two main tools get banners (filled once the frames are known)
       const art = LN_ART[t.collage] ? LN_ART[t.collage]("thumb") : t.collage === "skills" ? '<div class="ln-mq"></div>' : t.collage === "classStory" ? '<div class="ln-thpng"></div><img class="ln-thpt" src="' + a.src + '" alt="">' : `<img class="is-${a.kind}" src="${a.src || ""}" alt="" decoding="async">`;
-      return `<a class="ln-th${main ? " is-main" : ""}"${toolLink(t)} data-i="${i}" style="--acc:${accentOf(t)}"><div class="ln-thb">${art}<i></i><span>${t.shortTitle || t.title}</span></div></a>`; }).join("") +
+      return `<a class="ln-th${main ? " is-main" : ""}"${toolLink(t)}${t.href ? ' aria-label="' + toolLabel(t) + '"' : ""} data-i="${i}" style="--acc:${accentOf(t)}"><div class="ln-thb">${art}<i></i><span>${t.shortTitle || t.title}</span></div></a>`; }).join("") +
     '</nav><button type="button" class="ln-sarrow next" aria-label="เลื่อนรายการเครื่องมือไปทางขวา" hidden>›</button></div><div class="ln-gsim" aria-hidden="true"><span class="rsim-cell"></span><span class="rsim-cell is-passive"></span></div>';
   if (typeof setInterval !== "function" || typeof matchMedia !== "function") return;   // the validator sandbox: markup only (no timers, no layout)
   const copy = root.querySelector(".ln-copy"), art = root.querySelector(".ln-art"), stage = root.querySelector(".ln-stage"), count = root.querySelector(".ln-count");
@@ -39132,7 +39134,7 @@ function mountLauncher(root){
       startWall(art.querySelector(".ln-wall"));
     }
     else if (LN_ART[t.collage]) {   // drawn in code (LN_ART); the art opens its tool like the portraits do
-      art.innerHTML = '<a class="ln-artlink"' + toolLink(t) + ' aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + LN_ART[t.collage]("stage") + "</span></a>";
+      art.innerHTML = '<a class="ln-artlink"' + toolLink(t) + ' aria-label="' + toolLabel(t) + '"><span class="ln-lift">' + LN_ART[t.collage]("stage") + "</span></a>";
       if (t.collage === "svcSplit") splitStart();
       if (t.collage === "monsterOrbit") { LN_MON.fill(art.querySelector(".ln-orbit")); if (matchMedia("(hover: none)").matches) setTimeout(() => { const o = art.querySelector(".ln-orbit"); if (o) o.classList.add("is-hot"); }, 450); }
     }
@@ -39146,7 +39148,7 @@ function mountLauncher(root){
       const inner = arts.length && arts.every(k => /^(skill|gear):/.test(k))
         ? '<div class="ln-fan" style="--mid:' + (arts.length - 1) / 2 + '" aria-hidden="true">' + arts.map((k, j) => '<img style="--i:' + j + '" src="' + artSrc(k) + '" alt="">').join("") + "</div>"
         : arts.length ? '<span class="ln-floor" aria-hidden="true"></span>' + lnBugs(t, 0) + lnOrbit3d(t, '<img class="ln-pt" data-k="' + arts[0].replace(/^tool:/, "") + '" src="' + artSrc(arts[0]) + '" alt="">') + lnBugs(t, 1) : "";
-      art.innerHTML = inner ? '<a class="ln-artlink"' + toolLink(t) + ' aria-label="เปิด ' + t.title + '"><span class="ln-lift">' + inner + "</span></a>" : "";   // the art opens its tool too
+      art.innerHTML = inner ? '<a class="ln-artlink"' + toolLink(t) + ' aria-label="' + toolLabel(t) + '"><span class="ln-lift">' + inner + "</span></a>" : "";   // the art opens its tool too
     }
     thumbs.forEach((b, k) => { b.classList.toggle("is-on", k === cur); restart(b.querySelector("i")); });
     segs.forEach((s, k) => { s.classList.toggle("is-on", k === cur); s.classList.toggle("is-done", k < cur); restart(s.querySelector("i")); });
@@ -39294,6 +39296,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-07T13:56:43.216Z","fix(bible): the wardrobe tile is named ห้องแต่งตัว like the wardrobe page and says it opens in a new tab"],
     ["2026-11-07T13:05:38.921Z","feat(bible): ตู้เสื้อผ้า menu tool opens the online 12 Tails Wardrobe"],
     ["2026-11-07T10:58:55.181Z","feat(bible): TTO's own icons for the +15 rings, Shadow Strider and Shark (Orange); Sea Aquamarine and the Light, Water, Earth and Shadow seals get icons"],
     ["2026-11-07T06:48:06.331Z","fix(bible): class guide #99 is updated: TTO Panda เเพนด้า ALL-Around BY:TodTy by TODDDD"],
