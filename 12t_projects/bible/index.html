@@ -8049,17 +8049,23 @@
   .ln-tabrun .ln-tabrun-move{animation:lnTabRun 21.33s linear infinite}
   @keyframes lnTabRun{to{transform:translateX(var(--run))}}
   @media (max-width:900px){ .ln-svgart, .ln-rain{height:100%} }
-  /* ห้องแต่งตัว (LN_ART.mirror, user 2026-11-08): the 9/3 Shadow Mirror with Rabbit's standard set; the summer set (its glass only) fades in over it and
-     back every 6-9 s (.is-alt, mirStart). The mirror leans toward the cursor like the skill wall (--tx / --ty -1..1 on .ln-mirror itself, from the
-     launcher's pointermove, mouse only, so phones only crossfade), exactly as far as the wall: 3.5° sideways, 2° up and down (user 2026-11-08: "tilt a
-     bit"; the wall's own tilt was cut twice for being too strong). It stands on a soft ground shadow that stays on the
-     floor while the art lifts on hover, and a faint sheen, masked to the glass, slides across it as it turns. Only transform / translate / scale /
-     opacity change; no filter, no glow. */
-  .ln-mirror{position:relative; height:min(62vh, 620px); aspect-ratio:613 / 1000; max-width:100%; perspective:1400px}
+  /* ห้องแต่งตัว (LN_ART.mirror, user 2026-11-08): the 9/3 Shadow Mirror built from layers (art round 4), bottom to top: the frame + glass (.ln-mir-base),
+     a glass box (.ln-mir-glass, clipped by the glass mask WebP, an alpha mask) holding Rabbit's two sets (.ln-mir-rab), the demon tracery drawn OVER her
+     (.ln-mir-tracery, user: "I want the rabbit render to be behind that demon patterns layer"), the glass gloss (.ln-mir-sheenimg) and a faint moving sheen
+     (.ln-mir-sheen, masked by the glass mask). The outfit change SLIDES (user: "instead of fading and appearing in place, I want the fade to slide"): the outgoing
+     set leaves to the left by --mir-slide while fading out, the incoming one comes in from the right (mirSwap in mountLauncher), 1.2 s ease in-out,
+     always leftward; --mir-slide = 55 % of the glass width (the glass is 61.8 % of the 613-wide box) = 34 % of the box. The mirror leans toward the cursor like the
+     skill wall (--tx / --ty -1..1 on .ln-mirror itself, from the launcher's pointermove, mouse only), exactly as far as the wall: 3.5° sideways, 2° up and down
+     (user 2026-11-08: "tilt a bit"; the wall's own tilt was cut twice for being too strong). It stands on a soft ground shadow that stays on the
+     floor while the art lifts on hover. Only transform / translate / scale / opacity change; no filter, no glow. */
+  .ln-mirror{--mir-slide:34%; position:relative; height:min(62vh, 620px); aspect-ratio:613 / 1000; max-width:100%; perspective:1400px}
   .ln-mir3d{position:absolute; inset:0; transform:rotateY(calc(-6deg + var(--tx, 0) * 3.5deg)) rotateX(calc(2deg - var(--ty, 0) * 2deg)); transition:transform .8s cubic-bezier(.2,.7,.2,1)}
   .ln-mir3d img{position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:contain}
-  .ln-mir-b{opacity:0; transition:opacity 1.2s ease-in-out}
-  .ln-mirror.is-alt .ln-mir-b{opacity:1}
+  .ln-mir-glass{position:absolute; inset:0; overflow:hidden; -webkit-mask:var(--mir-mask) center / contain no-repeat; mask:var(--mir-mask) center / contain no-repeat}
+  .ln-mir-rab{translate:var(--mir-slide) 0; opacity:0; transition:translate 1.2s cubic-bezier(.65,0,.35,1), opacity 1.2s cubic-bezier(.65,0,.35,1)}   /* waiting on the right */
+  .ln-mir-rab.is-on{translate:0 0; opacity:1}
+  .ln-mir-rab.is-out{translate:calc(var(--mir-slide) * -1) 0}   /* gone to the left (opacity stays 0) */
+  .ln-mir-tracery, .ln-mir-sheenimg{pointer-events:none}
   .ln-mir-sheen{position:absolute; inset:0; overflow:hidden; pointer-events:none; -webkit-mask:var(--mir-mask) center / contain no-repeat; mask:var(--mir-mask) center / contain no-repeat}
   .ln-mir-sheen::before{content:""; position:absolute; top:0; bottom:0; left:-80%; width:260%; transform:translateX(calc(var(--tx, 0) * -7%)); transition:transform .8s cubic-bezier(.2,.7,.2,1);
     background:linear-gradient(104deg, transparent 40%, rgba(255,255,255,.13) 45%, rgba(255,255,255,.04) 48.5%, rgba(255,255,255,.1) 51%, transparent 56%)}
@@ -8764,7 +8770,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=1a9f0094a1" id="bibleAssets"></script>
+<script src="assets.js?v=a53a1933af" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -38951,16 +38957,19 @@ const LN_ART = {
     const chips = LN_MON.keys.map(([l, col], i) => `<span class="ln-orb-c" style="--i:${i};--a:${(-90 + i * 360 / 13).toFixed(1)}deg"><span class="ln-orb-chip" style="color:${col}">${l}<b></b></span></span>`).join("");
     return `<div class="ln-orbit" aria-hidden="true"><span class="cg-cover-ring ln-pring"><span style="background-image:url(${icon})"></span><img src="${icon}" alt=""></span><div class="ln-orb">${chips}</div></div>`;
   },
-  // ห้องแต่งตัว (user 2026-11-08): the big Shadow Mirror of mission 9/3 in a three-quarter view with Rabbit's standard set on its glass
-  // (TOOL_ART.WardrobeMirrorStd); the summer set (TOOL_ART.WardrobeMirrorSummer, that render's glass only, so the frame never changes) lies over it
-  // and fades in and back every 6-9 s (mirStart in mountLauncher). On the stage the mirror leans toward the cursor like the skill wall (--tx / --ty
-  // on .ln-mirror), over a soft ground shadow, with a faint sheen on the glass (masked by the summer layer's alpha) that slides as it turns.
-  // The thumb is a still of the standard picture. How the art was made: .superpowers/sdd/2026-11-07-wardrobe-online/art/HOW.md (round 2).
+  // ห้องแต่งตัว (user 2026-11-08): the big Shadow Mirror of mission 9/3 in a three-quarter view, built from layers (art round 4, one camera, pixel-aligned):
+  // TOOL_ART.WardrobeMirrorBase (frame + glass), WardrobeMirrorMask (alpha mask of the glass: clips Rabbit), WardrobeMirrorStd / WardrobeMirrorSummer (Rabbit
+  // alone, standard and summer set), WardrobeMirrorTracery (the demon tracery, drawn over her), WardrobeMirrorSheen (the glass gloss, white + alpha) and
+  // WardrobeMirrorThumb (the composed still, for the banner). The sets slide into each other (mirSwap in mountLauncher). On the stage the mirror leans toward
+  // the cursor like the skill wall (--tx / --ty on .ln-mirror), over a soft ground shadow, with a faint sheen (masked by the glass mask) that slides as it turns.
+  // How the art was made: .superpowers/sdd/2026-11-07-wardrobe-online/art/HOW.md (round 4).
   mirror(mode) {
-    const std = TOOL_ART.WardrobeMirrorStd || "", sum = TOOL_ART.WardrobeMirrorSummer || "";
-    if (mode === "thumb") return std ? '<img class="ln-mirth" src="' + std + '" alt="" decoding="async">' : "";
-    return '<div class="ln-mirror" aria-hidden="true"><span class="ln-mir-floor"></span><div class="ln-mir3d">' + (std ? '<img class="ln-mir-a" src="' + std + '" alt="">' : "")
-      + (sum ? '<img class="ln-mir-b" src="' + sum + '" alt=""><span class="ln-mir-sheen" style="--mir-mask:url(' + sum + ')"></span>' : "") + "</div></div>";
+    const T = k => TOOL_ART["WardrobeMirror" + k] || "";
+    if (mode === "thumb") return T("Thumb") ? '<img class="ln-mirth" src="' + T("Thumb") + '" alt="" decoding="async">' : "";
+    const img = (cls, k) => T(k) ? '<img class="' + cls + '" src="' + T(k) + '" alt="">' : "", mask = T("Mask") ? "--mir-mask:url(" + T("Mask") + ")" : "";
+    return '<div class="ln-mirror" aria-hidden="true"><span class="ln-mir-floor"></span><div class="ln-mir3d">' + img("ln-mir-base", "Base")
+      + '<div class="ln-mir-glass" style="' + mask + '">' + img("ln-mir-rab ln-mir-a is-on", "Std") + img("ln-mir-rab ln-mir-b", "Summer") + "</div>"
+      + img("ln-mir-tracery", "Tracery") + img("ln-mir-sheenimg", "Sheen") + '<span class="ln-mir-sheen" style="' + mask + '"></span></div></div>';
   },
 };
 // The monster on the ค่าสถานะมอนสเตอร์ slide: a random real unit from MONSTER_STATS (no NPCs or structures, Lv 30+, HP 3,000+, stats that are
@@ -39130,11 +39139,17 @@ function mountLauncher(root){
     };
     wallTimer = setTimeout(swap, 1400);   // after the entrance
   };
-  // ห้องแต่งตัว (LN_ART.mirror, user 2026-11-08): the standard set shows most of the time; the summer set fades in (1.2 s, CSS .is-alt), stays a moment
-  // and fades back, then the standard set holds 6-9 s. The first swap comes 2.6 s after the slide shows, so its 7 s visit shows both sets. Paused while the menu is hidden.
+  // ห้องแต่งตัว (LN_ART.mirror, user 2026-11-08): the standard set shows most of the time; the summer set slides in (1.2 s, mirSwap), stays a moment and slides
+  // out again, then the standard set holds 6-9 s. Always leftward: the outgoing set leaves to the left, the incoming one comes from the right. The first swap comes
+  // 2.6 s after the slide shows, so its 7 s visit shows both sets. Paused while the menu is hidden.
+  // mirSwap: the waiting layer is put on the right with its transitions off, a reflow is forced, then transitions come back on and the two layers swap classes
+  // (a layer that has left to the left would otherwise slide back across the glass to the right).
+  const mirSwap = m => { const cur = m.querySelector(".ln-mir-rab.is-on"), nxt = m.querySelector(".ln-mir-rab:not(.is-on)"); if (!cur || !nxt) return;
+    nxt.style.transition = "none"; nxt.classList.remove("is-out"); void nxt.offsetWidth; nxt.style.transition = "";
+    cur.classList.remove("is-on"); cur.classList.add("is-out"); nxt.classList.add("is-on"); m.classList.toggle("is-alt", nxt.classList.contains("ln-mir-b")); };
   let mirTimer = 0;
   const mirStart = m => { let alt = false; if (!m) return;
-    const step = () => { if (!m.isConnected) return; if (!viewMenu.hidden && !document.hidden) { alt = !alt; m.classList.toggle("is-alt", alt); } mirTimer = setTimeout(step, alt ? 3400 : 6000 + Math.random() * 3000); };
+    const step = () => { if (!m.isConnected) return; if (!viewMenu.hidden && !document.hidden) { alt = !alt; mirSwap(m); } mirTimer = setTimeout(step, alt ? 3400 : 6000 + Math.random() * 3000); };
     mirTimer = setTimeout(step, 2600); };
   // Desktop: the wall (and the ห้องแต่งตัว mirror, user 2026-11-08) leans toward the cursor (eased by its transition); the vars reset when the mouse leaves
   // the menu. They are set on the wall / mirror itself, never on the launcher root: a root var re-styled the whole launcher on every mouse move (user 2026-10-18, laggy without GPU).
@@ -39349,6 +39364,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-08T02:44:41.134Z","feat(bible): the ห้องแต่งตัว mirror slides between Rabbit's sets, behind the glass's demon tracery (and she stands lower)"],
     ["2026-11-08T01:01:56.670Z","fix(bible): Rabbit centred in the ห้องแต่งตัว mirror"],
     ["2026-11-08T00:50:41.535Z","feat(bible): the ห้องแต่งตัว mirror fills the desktop stage"],
     ["2026-11-07T18:09:07.130Z","fix(bible): the mirror leans like the skill wall (3.5° / 2°)"],

@@ -6859,7 +6859,7 @@ function fontProblems(html) {
 // Launcher links to outside tools (2026-11-07, the online 12 Tails Wardrobe): a TOOLS entry with href is an external link. Everywhere the launcher builds a
 // tool link it must use that URL with target="_blank" rel="noopener" (never #<id>), and route() must never mount it, so the menu still renders offline
 // and a #wardrobe address just shows the menu. Since 2026-11-08 (user) ห้องแต่งตัว is the third main tool (wax seal, banner thumb, fixed slot) with the
-// code-drawn mirror art LN_ART.mirror (TOOL_ART.WardrobeMirrorStd / WardrobeMirrorSummer: a crossfade between Rabbit's two sets and a tilt toward the
+// code-drawn mirror art LN_ART.mirror (layers in TOOL_ART.WardrobeMirror*: Rabbit's two sets slide into each other behind the glass's tracery, and a tilt toward the
 // cursor like the skill wall), and every way the menu opens it also sends the Bible's own GoatCounter hit for /bible/#wardrobe.
 {
   let linkChecked = 0;
@@ -6875,20 +6875,26 @@ function fontProblems(html) {
   for (const t of ext) ok(/^https:\/\/[^\s"'<>]+$/.test(t.href) && typeof t.mount !== "function" && !t.mounted, "TOOLS entry " + t.id + ": href must be a plain https:// URL and the entry must have no mount function");
   // the mirror art: two WebP pictures in TOOL_ART (assets.js); the stage = ground shadow, then the tilting box with the standard picture under the summer
   // one (its glass only) and a sheen masked to the glass by the summer layer; the thumb = a still of the standard picture
-  const std = toolArt.WardrobeMirrorStd || "", sum = toolArt.WardrobeMirrorSummer || "";
-  ok(/^data:image\/webp;base64,/.test(std) && /^data:image\/webp;base64,/.test(sum) && std !== sum, "TOOL_ART needs WardrobeMirrorStd and WardrobeMirrorSummer (two different WebP data URIs in assets.js)");
+  const A = (k) => toolArt["WardrobeMirror" + k] || "", mirKeys = ["Base", "Mask", "Std", "Summer", "Tracery", "Sheen", "Thumb"];
+  ok(mirKeys.every((k) => /^data:image\/webp;base64,/.test(A(k))) && new Set(mirKeys.map(A)).size === mirKeys.length, "TOOL_ART needs WardrobeMirror{Base, Mask, Std, Summer, Tracery, Sheen, Thumb}: seven different WebP data URIs in assets.js (art round 4: Std / Summer are Rabbit alone)");
   try {
-    const art = vm.runInContext("LN_ART", sandbox), st = art.mirror("stage"), th = art.mirror("thumb");
-    ok(st.startsWith('<div class="ln-mirror" aria-hidden="true"><span class="ln-mir-floor"></span><div class="ln-mir3d">') && st.includes('<img class="ln-mir-a" src="' + std + '"')
-        && st.includes('<img class="ln-mir-b" src="' + sum + '"') && st.includes('<span class="ln-mir-sheen" style="--mir-mask:url(' + sum + ')"></span>') && st.indexOf("ln-mir-a") < st.indexOf("ln-mir-b"),
-      'LN_ART.mirror("stage"): .ln-mirror (aria-hidden) = .ln-mir-floor, then .ln-mir3d with the standard picture (.ln-mir-a) under the summer one (.ln-mir-b) and the glass sheen masked by the summer layer');
-    ok(th === '<img class="ln-mirth" src="' + std + '" alt="" decoding="async">', 'LN_ART.mirror("thumb"): a still of the standard picture (.ln-mirth)');
+    const art = vm.runInContext("LN_ART", sandbox), st = art.mirror("stage"), th = art.mirror("thumb"), pos = (s) => st.indexOf(s);
+    const maskStyle = 'style="--mir-mask:url(' + A("Mask") + ')"';
+    ok(st.startsWith('<div class="ln-mirror" aria-hidden="true"><span class="ln-mir-floor"></span><div class="ln-mir3d"><img class="ln-mir-base" src="' + A("Base") + '" alt="">')
+        && st.includes('<div class="ln-mir-glass" ' + maskStyle + '><img class="ln-mir-rab ln-mir-a is-on" src="' + A("Std") + '" alt=""><img class="ln-mir-rab ln-mir-b" src="' + A("Summer") + '" alt=""></div>')
+        && pos('<img class="ln-mir-tracery" src="' + A("Tracery") + '"') > pos("ln-mir-rab ln-mir-b\"") && pos('<img class="ln-mir-sheenimg" src="' + A("Sheen") + '"') > pos("ln-mir-tracery") && st.includes('<span class="ln-mir-sheen" ' + maskStyle + '></span>') && pos("ln-mir-sheen\"") > pos("ln-mir-sheenimg"),
+      'LN_ART.mirror("stage"): .ln-mirror (aria-hidden) = .ln-mir-floor, then .ln-mir3d with the base (.ln-mir-base), the glass box (.ln-mir-glass, glass mask) holding Rabbit\'s standard (.is-on) and summer sets, the TRACERY above them, then the gloss picture and the moving sheen (masked by the glass mask)');
+    ok(th === '<img class="ln-mirth" src="' + A("Thumb") + '" alt="" decoding="async">', 'LN_ART.mirror("thumb"): the composed still (WardrobeMirrorThumb, .ln-mirth)');
   } catch (e) { ok(false, "LN_ART.mirror threw: " + e.message); }
   // CSS: the crossfade (opacity, 1.2 s), the tilt (the skill wall's recipe: --tx / --ty, eased by transition: transform .8s), a perspective; only
   // transform / translate / scale / opacity change over time there, and no filter, box-shadow or glow
   const rule = (sel) => (html.match(new RegExp("\\n\\s*" + sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\{([^}]*)\\}")) || [])[1] || "";
-  ok(/opacity:0/.test(rule(".ln-mir-b")) && /transition:opacity 1\.2s/.test(rule(".ln-mir-b")) && /opacity:1/.test(rule(".ln-mirror.is-alt .ln-mir-b")),
-    "the summer layer .ln-mir-b fades in and out by opacity over 1.2 s (.ln-mirror.is-alt shows it)");
+  const slideVar = +((rule(".ln-mirror").match(/--mir-slide:(\d+)%/) || [])[1] || 0);
+  ok(slideVar >= 20 && slideVar <= 50 && /translate:var\(--mir-slide\) 0/.test(rule(".ln-mir-rab")) && /opacity:0/.test(rule(".ln-mir-rab")) && /transition:translate 1\.2s cubic-bezier\(\.65,0,\.35,1\), opacity 1\.2s cubic-bezier\(\.65,0,\.35,1\)/.test(rule(".ln-mir-rab"))
+      && /translate:0 0/.test(rule(".ln-mir-rab.is-on")) && /opacity:1/.test(rule(".ln-mir-rab.is-on")) && /translate:calc\(var\(--mir-slide\) \* -1\) 0/.test(rule(".ln-mir-rab.is-out")),
+    "Rabbit's sets slide (art round 4): .ln-mirror carries --mir-slide (" + slideVar + " % of the box = 55 % of the glass width, 20-50 %), .ln-mir-rab waits at +--mir-slide with opacity 0, .is-on sits at 0 with opacity 1, .is-out leaves to -(--mir-slide); translate + opacity over 1.2 s, cubic-bezier(.65,0,.35,1)");
+  ok(/-webkit-mask:var\(--mir-mask\) center \/ contain no-repeat/.test(rule(".ln-mir-glass")) && /(^|;)\s*mask:var\(--mir-mask\) center \/ contain no-repeat/.test(rule(".ln-mir-glass")) && /overflow:hidden/.test(rule(".ln-mir-glass")) && /mask:var\(--mir-mask\)/.test(rule(".ln-mir-sheen")),
+    "the glass box .ln-mir-glass clips Rabbit with the glass mask (an alpha WebP, mask: var(--mir-mask) center / contain no-repeat, overflow:hidden), and the moving sheen uses the same mask");
   // the lean is exactly the wall's (user 2026-11-08: "tilt a bit … like the skill details wall"; the wall's own tilt was cut twice for being too strong)
   const lean = (r) => (r.match(/rotateY\(calc\(-?[\d.]+deg \+ var\(--tx, 0\) \* ([\d.]+)deg\)\) rotateX\(calc\(-?[\d.]+deg - var\(--ty, 0\) \* ([\d.]+)deg\)\)/) || []).slice(1, 3).join(" / ");
   const wallLean = lean(rule(".ln-wall")), mirLean = lean(rule(".ln-mir3d"));
@@ -6906,9 +6912,10 @@ function fontProblems(html) {
   ok((launcher.match(/art\.querySelector\("\.ln-wall, \.ln-mirror"\)/g) || []).length === 2 && !/root\.style\.setProperty\("--t[xy]"/.test(launcher)
       && /w\.style\.setProperty\("--tx", cl\(/.test(launcher) && /if \(e\.pointerType !== "mouse" \|\|/.test(launcher),
     "mountLauncher's pointermove (mouse only) sets --tx / --ty on the skill wall or the mirror itself and the pointerleave resets them; never on the launcher root");
-  ok(/const mirStart = m => \{[^\n]*\r?\n[^\n]*m\.classList\.toggle\("is-alt", alt\);[^\n]*6000 \+ Math\.random\(\) \* 3000/.test(launcher) && /clearTimeout\(wallTimer\); clearTimeout\(mirTimer\);/.test(launcher)
+  ok(/const mirSwap = m => \{[^\n]*\r?\n\s*nxt\.style\.transition = "none"; nxt\.classList\.remove\("is-out"\); void nxt\.offsetWidth; nxt\.style\.transition = "";\r?\n\s*cur\.classList\.remove\("is-on"\); cur\.classList\.add\("is-out"\); nxt\.classList\.add\("is-on"\);/.test(launcher)
+      && /const mirStart = m => \{[^\n]*\r?\n[^\n]*mirSwap\(m\);[^\n]*3400 : 6000 \+ Math\.random\(\) \* 3000/.test(launcher) && /mirTimer = setTimeout\(step, 2600\)/.test(launcher) && /clearTimeout\(wallTimer\); clearTimeout\(mirTimer\);/.test(launcher)
       && /if \(t\.collage === "mirror"\) mirStart\(art\.querySelector\("\.ln-mirror"\)\);/.test(launcher),
-    "mountLauncher crossfades the mirror (mirStart toggles .is-alt, then waits 6-9 s on the standard set) and stops the timer when the slide changes");
+    "mountLauncher slides the mirror (mirSwap: the waiting layer is parked on the right with transitions off, a reflow is forced (void nxt.offsetWidth), transitions come back, then the layers swap; mirStart waits 2.6 s, then 3.4 s on summer and 6-9 s on standard) and stops the timer when the slide changes");
   const markup = (saved) => {
     const root = makeEl(), keep = tools.slice(), had = Object.prototype.hasOwnProperty.call(sandbox, "localStorage"), prev = sandbox.localStorage;
     if (saved) sandbox.localStorage = { getItem: () => JSON.stringify(saved), setItem: () => {} };
@@ -6927,7 +6934,7 @@ function fontProblems(html) {
     ok((m.match(/<a class="ln-th/g) || []).length === tools.length, "the launcher builds one thumb per TOOLS entry (" + label + ")");
     const mains = [...m.matchAll(/<a class="ln-th is-main" href="([^"]*)"[^>]*? data-i="(\d+)"/g)].map((x) => x[1] + "@" + x[2]);
     ok(mains.join() === "#skill-details@0,#class-guide@1," + wd.href + "@2", "the launcher (" + label + ") builds three main banners in fixed slots: skill details, ไกด์อาชีพ, ห้องแต่งตัว at 0, 1, 2 (got " + mains.join(", ") + ")");
-    ok(m.includes('<img class="ln-mirth" src="' + std + '"'), "the ห้องแต่งตัว banner (" + label + ") shows the still mirror");
+    ok(m.includes('<img class="ln-mirth" src="' + A("Thumb") + '"'), "the ห้องแต่งตัว banner (" + label + ") shows the still mirror");
     if (saved) ok(/<a class="ln-th" href="#theme-tab"[^>]*? data-i="3"/.test(m), "a saved order cannot move a main tool: it orders the rest from slot 3 on (theme-tab first after the three banners)");
   }
   ok(Object.prototype.hasOwnProperty.call(sandbox, "localStorage") === lsHad && sandbox.localStorage === lsBefore, "the launcher link checks must leave the sandbox's localStorage as they found it");
