@@ -5634,7 +5634,16 @@ async function donateChildTests(env) {
       if (ko !== undefined && (e.hit.ko ? e.hit.ko(N) : 0) !== ko) pf(`${id} N${N} ko != ${ko}`);
     }
     if (E("p_mgb") && E("p_mgb").hit.dmg(9, 4) !== 64) pf("MiniGolden 4th target at N9 != 64");
-    if (perMin(E("p_mnb"), 9, 1) !== 282 || perMin(E("p_mgb"), 9, 5) !== 1160 || perMin(E("p_lmn"), 9, 1) !== 940) pf("per-minute values (expected 282 / 1160 / 940)");
+    // damage in 3,000 frames (2026-11-08: the pet timer counts frames); Mad Peppon's 3 s is 151 frames, so 47 x 3000 / 151 = 934
+    if (perMin(E("p_mnb"), 9, 1) !== 282 || perMin(E("p_mgb"), 9, 5) !== 1160 || perMin(E("p_lmn"), 9, 1) !== 934) pf("per-3,000-frame values (expected 282 / 1160 / 934)");
+    // Frames, not seconds (12Tails-Mechanics-Reference.md §4.9): timer += float32 0.02f per drawn frame, fires at >= T.
+    const frames = run("petInfoFrames");
+    for (const [T, n] of [[3, 151], [6, 301], [9, 450], [12, 600], [15, 750], [45, 2250], [60, 3000], [120, 6001]]) if (frames(T) !== n) pf(`petInfoFrames(${T}) = ${frames(T)}, expected ${n} (float32 0.02f steps)`);
+    for (const p of P) if (p.every) for (const N of [1, 9]) {
+      const want = frames(p.every(N)).toLocaleString("en-US") + " เฟรม";
+      if (!p.desc(N, 156).includes(want)) pf(`${p.id} N${N}: desc does not give the interval as ${want}`);
+    }
+    for (const id of ["p_sab", "p_skm"]) { const e = E(id); if (e && !/ทุก \*\*\d[\d,]* เฟรม\*\*|อย่างน้อย \*\*\d[\d,]* เฟรม\*\*/.test(e.desc(9, 156) + (typeof e.code === "function" ? e.code(9) : e.code || ""))) pf(`${id}: its pet-timer gap is not given in frames`); }
     const CH = { 0: { res3: [4, 12], res5: [6, 14], anubi: [5, 13], karazo: 30, pirate: 4 }, 156: { res3: [9, 25], res5: [14, 29], anubi: [10, 26], karazo: 52, pirate: 9 } };
     for (const L of [0, 156]) {
       const c = CH[L];
@@ -5681,6 +5690,7 @@ async function donateChildTests(env) {
       if (!(p.flags.noLv || p.flags.lvUnused) && !/data-pet-lv="9"/.test(h)) pf(`${p.id} has no level pills`);
       if (p.flags.lck && !/data-pet-lck/.test(h)) pf(`${p.id} uses LCK but has no LCK box`);
       if (p.code && !/pi-gvc is-diff/.test(h)) pf(`${p.id} tooltip difference not shown`);
+      if (p.every && (!/<small>เฟรม<\/small>/.test(h) || !/เฟรมแรก/.test(h) || /<small>วินาที<\/small>|วินาทีแรก/.test(h))) pf(`${p.id} N${N}: the interval tile / timeline is not in frames`);
       if (p.vars && (h.match(/data-pet-var=/g) || []).length !== p.vars.length) pf(`${p.id} variant buttons`);
     }
     const s1 = st({ sel: "p_sky", N: "x", L: -5 }); if (s1.sel !== "p_skr" || s1.vi.p_skr !== 2 || s1.N !== 9 || s1.L !== 0) pf(`petInfoState variant / clamp: ${JSON.stringify(s1)}`);

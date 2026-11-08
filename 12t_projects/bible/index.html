@@ -30889,12 +30889,14 @@ function mountServerChanges(root){
 // red __…คำอธิบาย…__ lines inside desc, liveCheck), unintended behavior (card `unintended`, kind "unintended") and BB_ISSUES_EXTRA
 // (kind "bug" | "tip" | "live" | "unintended"), grouped by class. Rows open the card on BB. rbFixed: gone in the latest Reborn build, so left
 // off the Reborn list (Reborn-Mechanics-Reference.md §2.10): the ATK row (Reborn1027:GameGui.cs:7911), atkAdjust deleted (Reborn:CharacterControl.cs:11773,
-// none in Reborn1027), Paranoia's cast event and its 6-target counter (Reborn1027:Germanotta_AI.cs:221, Reborn1027:Germanotta.cs:527-547).
+// none in Reborn1027), Paranoia's cast event and its 6-target counter (Reborn1027:Germanotta_AI.cs:221, Reborn1027:Germanotta.cs:527-547), and the pet timer
+// that counts frames (BB adds 0.02 per drawn frame, 12Tails-Mechanics-Reference.md §4.9; Reborn adds 1.2 x deltaTime, Reborn1027:Bat.cs:17784).
 const BB_ISSUES_EXTRA = [
   { cls: "Common", kind: "bug", rbFixed: true, title: "ATK ในหน้าต่างสเตตัส (บั๊กการแสดงผล)", text: "สถานะที่เปลี่ยน ^^dmgMod^^ ทำให้ ATK ในหน้าต่างสเตตัส**ดูเหมือน**เพิ่มหรือลดเท่านั้น (แค่การแสดงผล) ของจริงอยู่ที่ dmgMod ซึ่งมองไม่เห็นและไปคูณดาเมจตอนคำนวณ __ค่า ATK ที่แสดงหลังติดสถานะเหล่านี้จึงเอาไปคำนวณอะไรไม่ได้__" },
   { cls: "Common", kind: "bug", rbFixed: true, title: "atkAdjust (ระบบคำนวณ)", text: "ฟังก์ชัน **atkAdjust** มีอยู่ในโค้ดแต่ **ไม่ถูกเรียกใช้ที่ไหนเลย** สกิลที่คิดจาก ATK จึงใช้ค่า ATK ดิบ และได้การแกว่งค่า LCK จาก dmgAdjust / defAdjust เท่านั้น" },
   { cls: "Boss", kind: "bug", rbFixed: true, title: "Germanotta: Paranoia ไม่ขึ้นที่เครื่องคนอื่น", open: "#boss-guide/germanotta", text: "ตอนบอสใช้ Paranoia เกมส่งคำสั่งท่าร่ายไปเครื่องผู้เล่นคนอื่นด้วยชื่อผิด เครื่องอื่นจึงไม่เห็นท่าร่าย และจอมืด **10 วินาที** ที่ควรขึ้นทุกเครื่องขึ้นแค่ที่เครื่องของผู้เล่นที่คุมบอส ดาเมจยังโดนตามปกติ เพราะส่งแยกกัน" },
   { cls: "Boss", kind: "bug", rbFixed: true, title: "Germanotta: Paranoia ไม่จำกัดจำนวนเป้า", open: "#boss-guide/germanotta", text: "โค้ดของ Paranoia มีตัวนับจำกัดเป้าไว้ที่ **6** ตัว แต่ไม่เคยเพิ่มค่าตัวนับ จึงโดนศัตรูทุกตัวในรัศมี **60m** ไม่จำกัดจำนวน (ท่าตีปกติของบอสนับถูก ยิงสูงสุด **6** ลูก)" },
+  { cls: "Common", kind: "unintended", rbFixed: true, title: "สัตว์เลี้ยงทำงานถี่ขึ้นตามเฟรมเรต", open: "#pet-info", text: "เอฟเฟกต์ที่ทำงานตามเวลาของสัตว์เลี้ยง นับเวลารอเป็น **เฟรมภาพ** ไม่ใช่วินาที (ทุกเฟรมเกมบวกเวลาให้ **0.02 วินาที** ไม่ว่าเฟรมนั้นยาวเท่าไร) ตัวเลขในเกมจึงตรงเฉพาะที่ **50 fps** ยิ่งเฟรมเรตสูงยิ่งทำงานถี่ เช่น L. Mad Peppon ที่ควรฟาดทุก **3 วินาที** ฟาดทุก **2.5 วินาที** ที่ 60 fps, **1.05 วินาที** ที่ 144 fps และ **0.63 วินาที** ที่ 240 fps ระดับกราฟิก Good ขึ้นไปเปิด VSync เกมจึงวิ่งตามรีเฟรชเรตของจอ (Simple ลงไปจำกัดที่ **80 fps**) __ผู้เล่นที่ใช้จอรีเฟรชเรตสูงจึงได้สัตว์เลี้ยงทำงานบ่อยกว่าคนอื่น__" },
 ];
 // The note lines of one card: s = the card (class, icon), a = the card or its merged server view, whose notes count: game bug, unintended
 // behaviour, tooltip mismatch (each rank's text once), a red tooltip line inside the desc, a value awaiting an in-game check.
@@ -32772,78 +32774,96 @@ const PET_INFO_ROLES = {
 const PET_INFO_H = h => h === "rm3" ? "**3×rangeMod m**" : "**" + h + "m**";
 const PET_INFO_M = v => (Number.isInteger(v) ? String(v) : v.toFixed(1)) + "m";
 const PET_INFO_MAD_ALLY = "<br>__ถ้าไม่มีศัตรูในระยะ จะโจมตี **เพื่อนร่วมทีม** หรือ summon ของคุณที่อยู่ในระยะแทน__";
+// BB's pet timer counts frames, not seconds (12Tails-Mechanics-Reference.md §4.9, checked 2026-11-08): PetUpdate runs in Update(), once per drawn frame, and adds
+// Time.fixedDeltaTime (float32 0.02f) each time; an effect fires on the first frame the sum reaches the code's number (every pet test is "< T -> wait").
+// So the page shows frames: float32 rounding makes 3 -> 151, 6 -> 301 and 120 -> 6,001, every other interval exactly 50 x. The real time depends on the
+// frame rate. `every` stays the code's number (the validator pins it against the reference); only the display converts.
+const PET_INFO_FRAME_CACHE = new Map();
+function petInfoFrames(T){
+  if (!PET_INFO_FRAME_CACHE.has(T)) {
+    const f = Math.fround, step = f(0.02);
+    let t = f(0), n = 0;
+    while (!(t >= T) && n < 1e6) { t = f(t + step); n++; }
+    PET_INFO_FRAME_CACHE.set(T, n);
+  }
+  return PET_INFO_FRAME_CACHE.get(T);
+}
+const petInfoFramesText = T => petInfoFrames(T).toLocaleString("en-US");
+const PET_INFO_FR = T => "**" + petInfoFramesText(T) + " เฟรม**";
+// Real-time waits (MiniReef's 1 s WaitForSeconds, the Chaos Ray's 0.4 s Time.time ticks) are drawn on the frame timeline at 50 frames a second, the code's own step.
+const PET_INFO_DRAW_FPS = 50;
 const PET_INFO = [
   // ---------------- attack on a timer ----------------
   { id: "p_lmc", role: "atk", req: 31, every: N => 6, area: { r: N => 0.5 + 0.5 * N, h: "rm3", at: "pet", maxT: 1 },
     hit: { color: "white", dmg: N => 31 + 4 * N }, value: N => String(31 + 4 * N),
-    desc: N => `ทุก **6 วินาที** ชกศัตรู **1** ตัวในรัศมี **${PET_INFO_M(0.5 + 0.5 * N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจขาว^^ **${31 + 4 * N}**` + PET_INFO_MAD_ALLY,
+    desc: N => `ทุก ${PET_INFO_FR(6)} ชกศัตรู **1** ตัวในรัศมี **${PET_INFO_M(0.5 + 0.5 * N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจขาว^^ **${31 + 4 * N}**` + PET_INFO_MAD_ALLY,
     tip: { special: N => `mad punch lv.${N}`, th: "แครอนนักชกรุ่น Veggie Weight โจมตีหนักใส่คนที่เข้าใกล้" },
     code: "ถ้าไม่มีศัตรูในระยะ จะชก **เพื่อนร่วมทีม** หรือ summon ของคุณแทน", flags: { ally: true } },
   { id: "p_lmn", role: "atk", req: 31, every: N => 3, area: { r: N => 0.5 + 0.5 * N, h: "rm3", at: "pet", maxT: 1 },
     hit: { color: "white", dmg: N => 11 + 4 * N }, value: N => String(11 + 4 * N),
-    desc: N => `ทุก **3 วินาที** ฟาดศัตรู **1** ตัวในรัศมี **${PET_INFO_M(0.5 + 0.5 * N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจขาว^^ **${11 + 4 * N}**` + PET_INFO_MAD_ALLY,
+    desc: N => `ทุก ${PET_INFO_FR(3)} ฟาดศัตรู **1** ตัวในรัศมี **${PET_INFO_M(0.5 + 0.5 * N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจขาว^^ **${11 + 4 * N}**` + PET_INFO_MAD_ALLY,
     tip: { special: N => `mad fan lv.${N}`, th: "เป็ปปอนพัดกระดาษรุ่นเล่นตลก ฟาดเพรียะสนั่น โจมตีรัวใส่คนที่เข้าใกล้" },
     code: "ถ้าไม่มีศัตรูในระยะ จะฟาด **เพื่อนร่วมทีม** หรือ summon ของคุณแทน", flags: { ally: true } },
   { id: "p_lmo", role: "atk", req: 31, every: N => 9, area: { r: N => 3 + N, h: "rm3", at: "pet", maxT: 1 },
     hit: { color: "purple", dmg: N => 6 + 3 * N }, value: N => String(6 + 3 * N),
-    desc: N => `ทุก **9 วินาที** เป่าฟองใส่ศัตรู **1** ตัวในรัศมี **${PET_INFO_M(3 + N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจม่วง^^ **${6 + 3 * N}**` + PET_INFO_MAD_ALLY,
+    desc: N => `ทุก ${PET_INFO_FR(9)} เป่าฟองใส่ศัตรู **1** ตัวในรัศมี **${PET_INFO_M(3 + N)}** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยง ^^ดาเมจม่วง^^ **${6 + 3 * N}**` + PET_INFO_MAD_ALLY,
     tip: { special: N => `mad bubble lv.${N}`, th: "โคคอนจอมสูบไปป์ รุ่นเป่าฟองสบู่น้ำหอม โจมตีคนที่เข้าในระยะ" },
     code: "ถ้าไม่มีศัตรูในระยะ จะเป่าใส่ **เพื่อนร่วมทีม** หรือ summon ของคุณแทน", flags: { ally: true } },
   { id: "p_msb", role: "atk", req: 41, every: N => 21 - N, area: { r: N => 12, h: "rm3", at: "you", maxT: 3 },
     hit: { color: "purple", dmg: N => 12 + 2 * N }, value: N => String(12 + 2 * N),
-    desc: N => `ทุก **${21 - N} วินาที** ผ่าสายฟ้าใส่ศัตรูสูงสุด **3** ตัวในรัศมี **12m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ตัวละ ^^ดาเมจม่วง^^ **${12 + 2 * N}**`,
+    desc: N => `ทุก ${PET_INFO_FR(21 - N)} ผ่าสายฟ้าใส่ศัตรูสูงสุด **3** ตัวในรัศมี **12m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ตัวละ ^^ดาเมจม่วง^^ **${12 + 2 * N}**`,
     tip: { special: N => `lightning lv.${N}`, th: "สกายบั๊กตัวจิ๊ว ที่มาพร้อมกับสายฟ้า" }, flags: {} },
   { id: "p_mcb", role: "atk", req: 42, every: N => 21 - N, area: { r: N => 8, h: "rm3", at: "you", maxT: 2 },
     hit: { color: "white", dmg: N => 20 + 4 * N, ko: N => 2 }, value: N => String(20 + 4 * N),
-    desc: N => `ทุก **${21 - N} วินาที** ปล่อยคริสตัลใส่ศัตรูสูงสุด **2** ตัวในรัศมี **8m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ตัวละ ^^ดาเมจขาว^^ **${20 + 4 * N}** KO **2**`,
+    desc: N => `ทุก ${PET_INFO_FR(21 - N)} ปล่อยคริสตัลใส่ศัตรูสูงสุด **2** ตัวในรัศมี **8m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ตัวละ ^^ดาเมจขาว^^ **${20 + 4 * N}** KO **2**`,
     tip: { special: N => `crystal drop lv.${N}`, th: "คริสตัลบั๊กตัวจิ๊ว ปล่อยคริสตัลใส่ผู้ไม่หวังดี ที่เข้ามาใกล้" }, flags: {} },
   { id: "p_mab", role: "atk", req: 43, every: N => 21 - N, area: { r: N => 24, h: "rm3", at: "you", maxT: 1 },
     hit: { color: "white", dmg: N => 24 + 4 * N, ko: N => 5, up: true }, value: N => String(24 + 4 * N),
-    desc: N => `ทุก **${21 - N} วินาที** แทงหนามใส่ศัตรู **1** ตัวในรัศมี **24m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ^^ดาเมจขาว^^ **${24 + 4 * N}** KO **5** และกระแทกเป้าหมายลอยขึ้น`,
+    desc: N => `ทุก ${PET_INFO_FR(21 - N)} แทงหนามใส่ศัตรู **1** ตัวในรัศมี **24m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ^^ดาเมจขาว^^ **${24 + 4 * N}** KO **5** และกระแทกเป้าหมายลอยขึ้น`,
     tip: { special: N => `thorn strike lv.${N}`, th: "แมลงโบราณจอมหาเรื่อง แทงหนามใส่เป้าหมาย ในระยะไกล" }, flags: {} },
   { id: "p_mrb", role: "atk", req: 44, every: N => 60, area: { r: N => 18, h: 4, at: "spot", maxT: Infinity, blast: 6, blastH: "rm3" },
     hit: { color: "white", dmg: N => 40 + 20 * N, delay: 1 }, value: N => String(40 + 20 * N),
-    desc: N => `ทุก **60 วินาที** เล็งศัตรูตัวแรกที่เจอในรัศมี **18m** สูง **4m** รอบตัวเอง อีก **1 วินาที** ดาวตกลงตรงจุดนั้น ศัตรูทุกตัวในรัศมี **6m** สูง ${PET_INFO_H("rm3")} โดน ^^ดาเมจขาว^^ **${40 + 20 * N}**`,
+    desc: N => `ทุก ${PET_INFO_FR(60)} เล็งศัตรูตัวแรกที่เจอในรัศมี **18m** สูง **4m** รอบตัวเอง อีก **1 วินาที** ดาวตกลงตรงจุดนั้น ศัตรูทุกตัวในรัศมี **6m** สูง ${PET_INFO_H("rm3")} โดน ^^ดาเมจขาว^^ **${40 + 20 * N}**`,
     tip: { special: N => `falling comet lv.${N}`, th: "รีฟบั๊กตัวเล็ก เหมาะสำหรับกับผู้ชอบ อธิฐานกับดาวหาง" }, flags: {} },
   { id: "p_mmb", role: "atk", req: 45, every: N => 21 - N, area: { r: N => 6, h: "rm3", at: "you", maxT: Infinity },
     hit: { color: "white", dmg: N => N + 4, ko: N => N + 4, up: true }, value: N => String(N + 4),
-    desc: N => `ทุก **${21 - N} วินาที** กระแทกศัตรูทุกตัวในรัศมี **6m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ^^ดาเมจขาว^^ **${N + 4}** KO **${N + 4}** และกระแทกเป้าหมายลอยขึ้น`,
+    desc: N => `ทุก ${PET_INFO_FR(21 - N)} กระแทกศัตรูทุกตัวในรัศมี **6m** สูง ${PET_INFO_H("rm3")} รอบตัวเอง ^^ดาเมจขาว^^ **${N + 4}** KO **${N + 4}** และกระแทกเป้าหมายลอยขึ้น`,
     tip: { special: N => `tails sweep lv.${N}`, th: "ม็อคบัคตัวจิ๋ว ตัวเล็กแต่แรงเยอะใช่ย่อย" }, flags: {} },
   { id: "p_mgb", role: "atk", req: 46, every: N => 21 - N, area: { r: N => 18, h: 4, at: "you", maxT: 4 },
     hit: { color: "white", dmg: (N, k = 1) => 12 + 4 * N + 4 * k, ko: N => 2 }, value: N => `${16 + 4 * N}–${28 + 4 * N}`,
-    desc: N => `ทุก **${21 - N} วินาที** แทงศัตรูสูงสุด **4** ตัวในรัศมี **18m** สูง **4m** รอบตัวเอง ตัวที่ 1–4 โดน ^^ดาเมจขาว^^ **${16 + 4 * N} / ${20 + 4 * N} / ${24 + 4 * N} / ${28 + 4 * N}** KO **2**`,
+    desc: N => `ทุก ${PET_INFO_FR(21 - N)} แทงศัตรูสูงสุด **4** ตัวในรัศมี **18m** สูง **4m** รอบตัวเอง ตัวที่ 1–4 โดน ^^ดาเมจขาว^^ **${16 + 4 * N} / ${20 + 4 * N} / ${24 + 4 * N} / ${28 + 4 * N}** KO **2**`,
     tip: { special: N => `multi strike lv.${N}`, th: "โกลเด้นคิงตัวจิ๋วจอมก่อกวน ชอบใช้หอกแทงรบกวนอยู่เรื่อย" }, flags: {} },
   { id: "p_mnb", role: "atk", req: 47, every: N => 60 - N, area: { r: N => 9, h: "sphere", at: "you", maxT: 1 },
     hit: { color: "white", dmg: N => 15 + 5 * N, hits: 4, tick: 0.4 }, value: N => `${15 + 5 * N}×4`,
-    desc: N => `ทุก **${60 - N} วินาที** ยิงลำแสงจากสัตว์เลี้ยงใส่ศัตรูที่ใกล้ที่สุดในทรงกลมรัศมี **9m** รอบตัวเอง ลำแสงอยู่ **2 วินาที** ทำ ^^ดาเมจขาว^^ **${15 + 5 * N}** ทุก **0.4 วินาที** รวม **4** ฮิต<br>• ฮิตที่ **2 วินาที** พอดีเกิดได้บ้างไม่ได้บ้าง เพราะลำแสงหายในจังหวะเดียวกัน`,
+    desc: N => `ทุก ${PET_INFO_FR(60 - N)} ยิงลำแสงจากสัตว์เลี้ยงใส่ศัตรูที่ใกล้ที่สุดในทรงกลมรัศมี **9m** รอบตัวเอง ลำแสงอยู่ **2 วินาที** ทำ ^^ดาเมจขาว^^ **${15 + 5 * N}** ทุก **0.4 วินาที** รวม **4** ฮิต<br>• ฮิตที่ **2 วินาที** พอดีเกิดได้บ้างไม่ได้บ้าง เพราะลำแสงหายในจังหวะเดียวกัน`,
     tip: { special: N => `chaos ray lv.${N}`, th: "เนเมซิสจิ๋วสุดโหด ยิงลำแสงใส่ชาวบ้านด้วยความโกรธ" }, flags: {} },
   // ---------------- buffs and areas on a timer ----------------
   { id: "p_all1", role: "buff", req: 0, every: N => 60, vl: "มานาภารกิจ", value: N => "+1",
-    desc: N => `ทุก **60 วินาที** ได้มานาภารกิจ **+1** (ปกติด่านให้ **+1** ทุก **12 วินาที**)`,
+    desc: N => `ทุก ${PET_INFO_FR(60)} ได้มานาภารกิจ **+1** (ปกติด่านให้ **+1** ทุก **12 วินาที**)`,
     tip: { special: null, th: "ลูกโป่งที่ระลึก เพิ่ม mana ให้กับ AlphaTester และ Bug Catcher!" }, flags: { noLv: true } },
   { id: "p_lcs", fam: "L. Saver ×3", role: "buff", req: 21, every: N => 32 - 2 * N, chance: N => 4 + 2 * N, value: N => `${4 + 2 * N}%`,
     vars: [
       { id: "p_lcs", label: "Carron", th: "แครอนหน่วยห่วงชูชีพกู้ภัย รายได้ทั้งหมดสมทบทุนผู้ประสบภัยน้ำท่วม" },
       { id: "p_lms", label: "Mupo", th: "มูโป้พิเศษรุ่นห่วงชูชีพกู้ภัย รายได้ทั้งหมดสมทบทุนผู้ประสบภัยน้ำท่วม" },
       { id: "p_lps", label: "Peppon", th: "เป็ปปอนพิเศษรุ่นห่วงชูชีพกู้ภัย รายได้ทั้งหมดสมทบทุนผู้ประสบภัยน้ำท่วม" }],
-    desc: N => `ทุก **${32 - 2 * N} วินาที** มีโอกาส **${4 + 2 * N}%** ได้ [float4] นาน **3 วินาที** (ค่า LCK ไม่ช่วย)`,
+    desc: N => `ทุก ${PET_INFO_FR(32 - 2 * N)} มีโอกาส **${4 + 2 * N}%** ได้ [float4] นาน **3 วินาที** (ค่า LCK ไม่ช่วย)`,
     tip: { special: N => `+${2 + 2 * N}% Float` },
     code: N => `โอกาสจริงคือ **${4 + 2 * N}%** ไม่ใช่ **${2 + 2 * N}%** และค่า LCK ไม่ช่วย`, flags: {} },
   { id: "p_skm", role: "buff", req: 15, every: N => 15, chance: N => 30, value: N => "30%",
-    desc: N => `ทุก **15 วินาที** มีโอกาส **30%** ใส่ [wash4] ให้ตัวเอง (ค่า LCK ไม่ช่วย)<br>__ทำให้บัฟกายภาพของคุณเองหายไป ไม่ใช่ล้างดีบัฟ__`,
+    desc: N => `ทุก ${PET_INFO_FR(15)} มีโอกาส **30%** ใส่ [wash4] ให้ตัวเอง (ค่า LCK ไม่ช่วย)<br>__ทำให้บัฟกายภาพของคุณเองหายไป ไม่ใช่ล้างดีบัฟ__`,
     tip: { special: N => "wash 14%", th: "เมฆฝนปุ้มปุย อันสนใส ช่วยล้างสถานะ และลดน้ำหนัก" },
-    code: "โอกาส **30%** ทุก **15 วินาที** และ [wash] ลบ **บัฟ** ของคุณเอง ไม่ใช่ดีบัฟ", flags: { selfStrip: true, noLv: true } },
+    code: "โอกาส **30%** ทุก " + PET_INFO_FR(15) + " และ [wash] ลบ **บัฟ** ของคุณเอง ไม่ใช่ดีบัฟ", flags: { selfStrip: true, noLv: true } },
   { id: "p_sfb", role: "buff", req: 0, every: N => 60, vl: "ค่าพลังทั้ง 8", value: N => "+8",
-    desc: N => `ทุก **60 วินาที** ได้ [bless1] นาน **${11 + N} วินาที**`,
+    desc: N => `ทุก ${PET_INFO_FR(60)} ได้ [bless1] นาน **${11 + N} วินาที**`,
     tip: { special: N => `bless1 (${11 + N}sec)`, th: "แมลงดอกไม้สีขาวตัวเล็ก ส่งกลื่นหอมชวนสดชื่น" }, flags: {} },
   { id: "p_sim", role: "buff", req: 30, every: N => 45, area: { r: N => 5, h: "rm3", at: "pet", maxT: Infinity }, vl: "ความเร็วศัตรู", value: N => "−30%",
-    desc: N => `ทุก **45 วินาที** ศัตรูทุกตัวในรัศมี **5m** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยงติด [ice2] นาน **${N + 1} วินาที**`,
+    desc: N => `ทุก ${PET_INFO_FR(45)} ศัตรูทุกตัวในรัศมี **5m** สูง ${PET_INFO_H("rm3")} รอบตัวสัตว์เลี้ยงติด [ice2] นาน **${N + 1} วินาที**`,
     tip: { special: N => `ice2 field (${1 + N}sec)`, th: "เพนกวิ้นน้ำแข็งไสที่มีชีวิต!!! กะดุ๊กๆๆๆๆๆเดินตามหลัง" }, flags: {} },
   { id: "p_sam", role: "buff", req: 35, every: N => 120, vl: "ค่าเกราะ", value: N => String(15 + 15 * N),
-    desc: N => `ทุก **120 วินาที** ได้ [bubbleShield2] ค่าเกราะ **${15 + 15 * N}** นาน **${11 + N} วินาที**`,
+    desc: N => `ทุก ${PET_INFO_FR(120)} ได้ [bubbleShield2] ค่าเกราะ **${15 + 15 * N}** นาน **${11 + N} วินาที**`,
     tip: { special: N => `bubleShield2 (${15 + 15 * N}hp)`, th: "แอมโมไนท์ตัวจ้อย คอย ช่วยทำฟองอากาศ ปกป้องเจ้านาย" }, flags: {} },
   { id: "p_spg", role: "buff", req: 41, trigger: N => `HP < ${11 + N}%`, vl: "ค่าเกราะ", value: N => String(30 + 10 * N),
-    desc: N => `เมื่อ HP ต่ำกว่า **${11 + N}%** ของ HP สูงสุด ได้ [iceShield2] ค่าเกราะ **${30 + 10 * N}** นาน **${11 + N} วินาที** เกิดได้ครั้งเดียวในทุก **60 วินาที**`,
+    desc: N => `เมื่อ HP ต่ำกว่า **${11 + N}%** ของ HP สูงสุด ได้ [iceShield2] ค่าเกราะ **${30 + 10 * N}** นาน **${11 + N} วินาที** เกิดได้ครั้งเดียวในทุก ${PET_INFO_FR(60)}`,
     tip: { special: N => `iceShield2 (${30 + 10 * N}hp, ${N + 11}%)`, th: "เพนกวิ้นสายเลือดแท้ที่ถูกจับย่อ ส่วน คอยช่วยเหลือเจ้านาย ยามวิกฤติ" }, flags: {} },
   { id: "p_skr", fam: "S. Ninja Kite ×5", role: "buff", req: 25, every: N => 45 - 2 * N, area: { r: N => 15, h: "rm3", at: "kite", maxT: Infinity }, vl: "รัศมี", value: N => "15m",
     vars: [
@@ -32852,14 +32872,14 @@ const PET_INFO = [
       { id: "p_sky", label: "เหลือง", stat: "def", th: "นินจาบัคบัคสีเหลืองผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" },
       { id: "p_skb", label: "ฟ้า", stat: "int", th: "นินจาบัคบัคสีฟ้าผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" },
       { id: "p_skk", label: "ดำ", stat: "cha", th: "นินจาบัคบัคสีดำผูกติดกับว่าว ลอยละล่องช่วยสอดส่อง" }],
-    desc: N => `ทุก **${45 - 2 * N} วินาที** ศัตรูทุกตัวในรัศมี **15m** สูง ${PET_INFO_H("rm3")} รอบว่าวติด [awareness2] นาน **1 วินาที**`,
+    desc: N => `ทุก ${PET_INFO_FR(45 - 2 * N)} ศัตรูทุกตัวในรัศมี **15m** สูง ${PET_INFO_H("rm3")} รอบว่าวติด [awareness2] นาน **1 วินาที**`,
     tip: { special: N => `awareness ${14 + N}m` },
     code: N => `รัศมีจริง **15m** เสมอ ไม่ใช่ **${14 + N}m** เลเวลสัตว์ช่วยลดเวลารอแทน`, flags: {} },
   // ---------------- reacting to what happens to you ----------------
   { id: "p_sab", role: "react", req: 31, trigger: N => "HP หมด", chance: (N, L) => lckAdjustChance(3 + N, L) + 1, value: (N, L) => `${lckAdjustChance(3 + N, L) + 1}%`,
-    desc: (N, L) => `เมื่อ HP หมด มีโอกาส **${lckAdjustChance(3 + N, L) + 1}%** ฟื้นทันทีด้วย HP **1** แล้วฟื้น HP อีก **100** ครั้งเดียว โอกาสเพิ่มตามค่า LCK<br>• ต้องห่างจากครั้งก่อน (หรือจากตอนใส่สัตว์เลี้ยง) อย่างน้อย **12 วินาที**<br>__ถ้าติด [death] อยู่ จะไม่ฟื้น__ และถ้ามี [autoLife] อยู่ [autoLife] จะทำงานก่อน`,
+    desc: (N, L) => `เมื่อ HP หมด มีโอกาส **${lckAdjustChance(3 + N, L) + 1}%** ฟื้นทันทีด้วย HP **1** แล้วฟื้น HP อีก **100** ครั้งเดียว โอกาสเพิ่มตามค่า LCK<br>• ต้องห่างจากครั้งก่อน (หรือจากตอนใส่สัตว์เลี้ยง) อย่างน้อย ${PET_INFO_FR(12)}<br>__ถ้าติด [death] อยู่ จะไม่ฟื้น__ และถ้ามี [autoLife] อยู่ [autoLife] จะทำงานก่อน`,
     tip: { special: N => `${3 + N}% autoRevive`, th: "อนุบิตัวน้อยผู้มาพร้อมกับพลัง แห่งวิญญาณแห่งความตาย" },
-    code: "โอกาสจริงมากกว่าที่คำนวณจากช่องข้อมูล **1%** และฟื้นได้ครั้งเดียวในทุก **12 วินาที**", flags: { lck: true } },
+    code: "โอกาสจริงมากกว่าที่คำนวณจากช่องข้อมูล **1%** และฟื้นได้ครั้งเดียวในทุก " + PET_INFO_FR(12), flags: { lck: true } },
   { id: "p_skz", role: "react", req: 15, trigger: N => "โดนฮิตเบา", chance: (N, L) => lckAdjustChance(30, L), value: (N, L) => `${lckAdjustChance(30, L)}%`,
     desc: (N, L) => `ทุกครั้งที่โดน ^^ดาเมจขาว^^ ที่เหลือ **1–30** หลังหักเกราะ มีโอกาส **${lckAdjustChance(30, L)}%** ป้องกันจนเหลือ **0** โอกาสเพิ่มตามค่า LCK`,
     tip: { special: N => `block 30 dmg ${14 + N}50%`, th: "ผีร่มน้อย ที่ช่วยกางตัวเอง เพื่อปกป้องเจ้านาย" },
@@ -32896,14 +32916,14 @@ function petInfoFind(id){
   return null;
 }
 function petInfoCount(){ return PET_INFO.reduce((n, p) => n + (p.flags.dead ? 0 : p.vars ? p.vars.length : 1), 0); }
-function petInfoWindow(entry, N){ return entry.every ? Math.max(60, entry.every(N)) : 0; }
-function petInfoFires(entry, N){ const out = []; if (!entry.every) return out; const e = entry.every(N), w = petInfoWindow(entry, N); for (let t = e; t <= w + 1e-9; t += e) out.push(t); return out; }
-// Derived, labelled on the page as "คำนวณ": damage in one minute when targets are always in range.
+function petInfoWindow(entry, N){ return entry.every ? Math.max(3000, petInfoFrames(entry.every(N))) : 0; }   // frames: 3,000 = the code's 60 s
+function petInfoFires(entry, N){ const out = []; if (!entry.every) return out; const e = petInfoFrames(entry.every(N)), w = petInfoWindow(entry, N); for (let t = e; t <= w; t += e) out.push(t); return out; }
+// Derived, labelled on the page as "คำนวณ": damage in 3,000 frames (the code's 60 s; one minute at 50 fps) when targets are always in range.
 function petInfoPerMin(entry, N, crowd){
   if (!entry.hit) return 0;
   let sum = 0;
   for (let k = 1; k <= Math.min(entry.area.maxT, crowd); k++) sum += entry.hit.dmg(N, k) * (entry.hit.hits || 1);
-  return Math.round(sum * 60 / entry.every(N));
+  return Math.round(sum * 3000 / petInfoFrames(entry.every(N)));
 }
 // ---- Special Pet Info: pure renderers (strings only, so validate_skills.js can render every pet in its sandbox) ----
 const PET_INFO_STAT = { atk: ["ATK", "var(--stat-atk)"], agi: ["AGI", "var(--stat-agi)"], def: ["DEF", "var(--stat-def)"], int: ["INT", "var(--stat-int)"], cha: ["CHA", "var(--stat-cha)"] };
@@ -32941,7 +32961,7 @@ function petInfoRosterHtml(st, tab){
     return `<div class="pi-grp" style="--pi-rows:${list.length}"${role === open ? "" : " hidden"}>` +
       list.map(p => {
         const v = petInfoVar(p, st), id = v ? v.id : p.id, on = p.id === st.sel, mark = petInfoMark(p);
-        const right = p.every ? `<span class="pi-k">${PET_INFO_CLOCK}<span class="pi-n">${p.every(st.N)}</span></span>` : p.status ? `<span class="pi-k">${p.status}</span>` : "";
+        const right = p.every ? `<span class="pi-k">${PET_INFO_CLOCK}<span class="pi-n">${petInfoFramesText(p.every(st.N))}</span></span>` : p.status ? `<span class="pi-k">${p.status}</span>` : "";
         return `<button type="button" class="pi-it${on ? " is-on" : ""}" data-pet-sel="${p.id}"${on ? ' aria-current="true"' : ""}>` +
           `<img src="${GEAR_ICONS[id] || ""}" alt="" width="32" height="32"><span class="pi-nm">${petInfoEsc(p.fam || petInfoName(id))}</span>` +
           (mark ? `<span class="pi-warn" aria-label="${mark}">⚠</span>` : "") + right + `</button>`;
@@ -32991,15 +33011,15 @@ function petInfoTimelineHtml(p, N, L){
   const labEvery = fx.length <= 12 ? 1 : Math.ceil(fx.length / 8);   // every hit up to 12, else every n-th evenly (windowed review 2026-10-30: it stopped after 8)
   let h = "";
   fx.forEach((t, i) => {
-    if (p.hit && p.hit.delay) h += `<span class="pi-tk is-mark" style="left:${pct(t)}"></span><span class="pi-tk" style="left:${pct(t + p.hit.delay)}"></span>`;
+    if (p.hit && p.hit.delay) h += `<span class="pi-tk is-mark" style="left:${pct(t)}"></span><span class="pi-tk" style="left:${pct(t + p.hit.delay * PET_INFO_DRAW_FPS)}"></span>`;
     else h += `<span class="pi-tk" style="left:${pct(t)}"></span>`;
-    if (p.hit && p.hit.hits) for (let j = 1; j < p.hit.hits; j++) h += `<span class="pi-tk is-sub" style="left:${pct(t + j * p.hit.tick)}"></span>`;
-    if (i % labEvery === 0) h += `<span class="pi-tl-lab" style="left:${pct(t + ((p.hit && p.hit.delay) || 0))}">${petInfoEsc(p.value(N, L))}</span>`;
+    if (p.hit && p.hit.hits) for (let j = 1; j < p.hit.hits; j++) h += `<span class="pi-tk is-sub" style="left:${pct(t + j * p.hit.tick * PET_INFO_DRAW_FPS)}"></span>`;
+    if (i % labEvery === 0) h += `<span class="pi-tl-lab" style="left:${pct(t + ((p.hit && p.hit.delay) || 0) * PET_INFO_DRAW_FPS)}">${petInfoEsc(p.value(N, L))}</span>`;
   });
   const step = w / 6;
-  for (let s = 0; s <= w + 1e-9; s += step) h += `<span class="pi-tl-sec" style="left:${pct(s)}">${Math.round(s)}</span>`;
-  const head = `ทำงาน <b class="pi-n">${fx.length}</b> ครั้งใน <b class="pi-n">${w}</b> วินาทีแรก (นับจากตอนเริ่มด่าน หรือตอนเปลี่ยนสัตว์เลี้ยง)` +
-    (p.hit ? `<br>ดาเมจต่อนาที (คำนวณ): 1 เป้า <b class="pi-n">${petInfoPerMin(p, N, 1).toLocaleString()}</b> · 5 เป้า <b class="pi-n">${petInfoPerMin(p, N, 5).toLocaleString()}</b> <span class="pi-mute">สมมติว่ามีศัตรูในระยะตลอด</span>` : "");
+  for (let s = 0; s <= w + 1e-9; s += step) h += `<span class="pi-tl-sec" style="left:${pct(s)}">${Math.round(s).toLocaleString("en-US")}</span>`;
+  const head = `ทำงาน <b class="pi-n">${fx.length}</b> ครั้งใน <b class="pi-n">${w.toLocaleString("en-US")}</b> เฟรมแรก (นับจากตอนเริ่มด่าน หรือตอนเปลี่ยนสัตว์เลี้ยง)` +
+    (p.hit ? `<br>ดาเมจต่อ 3,000 เฟรม (คำนวณ): 1 เป้า <b class="pi-n">${petInfoPerMin(p, N, 1).toLocaleString()}</b> · 5 เป้า <b class="pi-n">${petInfoPerMin(p, N, 5).toLocaleString()}</b> <span class="pi-mute">สมมติว่ามีศัตรูในระยะตลอด</span>` : "");
   return `<div class="pi-box"><div class="pi-bh">${head}</div><div class="pi-tl" style="--pi-rc:${PET_INFO_ROLES[p.role].color}"><span class="pi-tl-axis"></span>${h}</div></div>`;
 }
 
@@ -33021,8 +33041,8 @@ function petInfoDetailHtml(st){
   const lck = p.flags.lck ? `<label class="pi-lck">LCK <input type="number" inputmode="numeric" min="0" max="999" value="${L}" data-pet-lck>${L > 512 ? `<span class="pi-mute">คิดสูงสุด 512</span>` : ""}</label>` : "";
   const unit = p.hit ? (p.hit.color === "purple" ? "ม่วง" : "ขาว") : "";
   const tiles = p.role === "atk"
-    ? [["ทำงานทุก", p.every(N), "วินาที"], ["ดาเมจ", p.value(N, L), unit], ["เป้าหมาย", p.area.maxT === Infinity ? "ทุกตัว" : p.area.maxT, p.area.maxT === Infinity ? "" : "ตัว"], ["รัศมี", PET_INFO_M(p.area.blast || p.area.r(N)), ""]]
-    : [[p.every ? "ทำงานทุก" : "ทำงานเมื่อ", p.every ? p.every(N) : p.trigger(N), p.every ? "วินาที" : ""], [p.vl || "โอกาส", p.value(N, L), ""],
+    ? [["ทำงานทุก", petInfoFramesText(p.every(N)), "เฟรม"], ["ดาเมจ", p.value(N, L), unit], ["เป้าหมาย", p.area.maxT === Infinity ? "ทุกตัว" : p.area.maxT, p.area.maxT === Infinity ? "" : "ตัว"], ["รัศมี", PET_INFO_M(p.area.blast || p.area.r(N)), ""]]
+    : [[p.every ? "ทำงานทุก" : "ทำงานเมื่อ", p.every ? petInfoFramesText(p.every(N)) : p.trigger(N), p.every ? "เฟรม" : ""], [p.vl || "โอกาส", p.value(N, L), ""],
        ["ใส่ได้ตั้งแต่", p.req ? "เลเวล " + p.req : "ทุกเลเวล", ""], ["เลเวลสัตว์", p.flags.noLv ? "อัปไม่ได้" : p.flags.lvUnused || p.flags.dead ? "ไม่มีผล" : "มีผล", ""]];
   const tileHtml = `<div class="pi-tiles">${tiles.map(([t, val, u]) => `<div class="pi-tile"><div class="pi-tt">${t}</div><div class="pi-tv"><span class="pi-n">${petInfoEsc(val)}</span>${u ? `<small>${u}</small>` : ""}</div></div>`).join("")}</div>`;
   const range = p.area ? `<div class="pi-box"><div class="pi-bh">มองจากด้านบน ตามสเกลจริง${p.role === "atk" ? " · วงจาง = Mini pet ตัวอื่น" : ""}${p.area.at === "pet" || p.area.at === "kite" ? " · ตำแหน่งสัตว์เลี้ยงในภาพเป็นตัวอย่าง" : ""}</div>${petInfoRangeSvg(p, N)}</div>` : "";
@@ -33036,6 +33056,7 @@ function petInfoDetailHtml(st){
   const facts = `<div class="pi-facts">${[
     "ดาเมจของสัตว์เลี้ยงไม่ผ่าน DEF และไม่ขึ้นกับค่า TAL หรือ LCK แต่ ^^ดาเมจขาว^^ ยังโดนเกราะดูดซับได้",
     "เอฟเฟกต์ที่ทำงานตามเวลา มีผลเฉพาะในภารกิจและ PvP (ไม่มีผลในเมือง แคมป์กิลด์ และภารกิจบางด่าน)",
+    "เวลารอนับเป็นเฟรมภาพ ไม่ใช่วินาที ยิ่งเฟรมเรตสูงยิ่งทำงานถี่ เช่น **3,000 เฟรม** = **50 วินาที** ที่ 60 fps แต่ **20.8 วินาที** ที่ 144 fps",
     "อัปเลเวลสัตว์เลี้ยงได้ **1–9** ที่ร้านสัตว์เลี้ยง",
     "ข้อมูลจากโค้ดเกมต้นฉบับ (BB) เซิร์ฟอื่นอาจปรับไว้",
   ].map(t => `<span>${renderRichText(t)}</span>`).join("")}</div>`;
@@ -39369,6 +39390,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-08T07:03:30.478Z","feat(bible): Special Pet Info gives pet intervals in frames (BB's pet timer counts frames, so pets fire faster on high-refresh screens); BB issues lists it as unintended"],
     ["2026-11-08T06:15:40.930Z","feat(bible): the ห้องแต่งตัว stage counts 1200 skins (12 classes x 20 outfits x 5 colours), like the other main tools"],
     ["2026-11-08T04:38:49.436Z","fix(bible): the ห้องแต่งตัว mirror shows whole (no clipped top or bottom) and leans further with the cursor"],
     ["2026-11-08T02:44:41.134Z","feat(bible): the ห้องแต่งตัว mirror slides between Rabbit's sets, behind the glass's demon tracery (and she stands lower)"],
