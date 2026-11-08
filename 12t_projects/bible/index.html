@@ -8066,6 +8066,9 @@
   .ln-mir-floor{position:absolute; left:4%; right:2%; bottom:-3.5%; height:9%; border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.66), rgba(0,0,0,.32) 55%, transparent);
     transform:translateX(calc(var(--tx, 0) * -10px)); transition:transform .8s cubic-bezier(.2,.7,.2,1), translate .2s ease-out, scale .2s ease-out, opacity .2s}
   .ln-artlink:hover .ln-mir-floor, .ln-artlink:focus-visible .ln-mir-floor{translate:0 6px; scale:.94; opacity:.8}   /* the art lifts 6 px (.ln-lift); its shadow stays on the floor */
+  /* desktop (user 2026-11-08: "way bigger mirror, almost filling the page like skill details and class guide"): the mirror is taller than the stage art area (122 %, nudged up 3 % because the picture has more empty room above the frame);
+     the stage clips the frame's top and bottom, the glass with Rabbit stays whole. Phones keep height:100% below. */
+  @media (min-width:901px){ .ln-stage.is-mirror{overflow:hidden} .ln-stage.is-mirror .ln-mirror{height:122%; max-width:none; translate:0 -3%} }
   @media (max-width:900px){ .ln-mirror{height:100%} }
   /* phones held upright: the mirror takes the card from under the story bars to just above the title (it stood 175 px tall in a 400 px card) */
   @media (max-width:900px) and (orientation:portrait){ .ln-stage.is-mirror .ln-art{top:28px; bottom:84px; height:auto; padding:0} }
@@ -39346,6 +39349,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-08T00:50:41.535Z","feat(bible): the ห้องแต่งตัว mirror fills the desktop stage"],
     ["2026-11-07T18:09:07.130Z","fix(bible): the mirror leans like the skill wall (3.5° / 2°)"],
     ["2026-11-07T18:03:50.343Z","feat(bible): ห้องแต่งตัว is a main tool (the 9/3 mirror shows Rabbit's standard and summer sets, leans with the cursor; clicks counted)"],
     ["2026-11-07T14:24:58.414Z","fix(bible): the ห้องแต่งตัว tile opens the live wardrobe at 12tails-wardrobe.jumpthai.workers.dev"],

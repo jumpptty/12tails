@@ -6894,6 +6894,11 @@ function fontProblems(html) {
   const wallLean = lean(rule(".ln-wall")), mirLean = lean(rule(".ln-mir3d"));
   ok(wallLean && mirLean === wallLean && /transition:transform \.8s cubic-bezier\(\.2,\.7,\.2,1\)/.test(rule(".ln-mir3d")) && /perspective:\d+px/.test(rule(".ln-mirror")),
     ".ln-mir3d leans toward the cursor exactly as far as the skill wall (rotateY(… + var(--tx, 0) × a) rotateX(… − var(--ty, 0) × b), wall " + (wallLean || "?") + "°, mirror " + (mirLean || "?") + "°), transition: transform .8s cubic-bezier(.2,.7,.2,1), under a perspective on .ln-mirror");
+  // desktop size (user 2026-11-08: "way bigger mirror, almost filling the page"): above 900 px the mirror is taller than the stage art area (height > 100 %), the stage clips it,
+  // and the phone rule (height:100%) stays below 900 px
+  const deskM = (html.match(/@media \(min-width:901px\)\{\s*\.ln-stage\.is-mirror\{overflow:hidden\}\s*\.ln-stage\.is-mirror \.ln-mirror\{height:(\d+)%/) || [])[1];
+  ok(deskM && +deskM > 100 && +deskM <= 140 && /@media \(max-width:900px\)\{ \.ln-mirror\{height:100%\} \}/.test(html),
+    "desktop (> 900 px): .ln-stage.is-mirror clips its stage and .ln-mirror is taller than the art area (" + (deskM || "?") + " %, between 101 and 140); phones keep height:100%");
   const mirRules = [...html.matchAll(/\n\s*(\.[^{}\n]*ln-mir[^{}\n]*)\{([^}]*)\}/g)];   // CSS rules only (they start with a class); commas inside cubic-bezier() do not split
   const badMotion = mirRules.filter((r) => (r[2].match(/transition:([^;]*)/g) || []).some((tr) => tr.slice(11).split(/,(?![^(]*\))/).some((p) => !/^\s*(transform|translate|scale|opacity)\s/.test(p + " "))) || /(^|;)\s*(filter|box-shadow|animation)\s*:/.test(r[2]));
   ok(mirRules.length >= 6 && !badMotion.length, "the mirror's rules animate only transform / translate / scale / opacity and carry no filter, box-shadow or animation" + (badMotion.length ? " (check: " + badMotion.map((r) => r[1].trim()).join(" | ") + ")" : ""));
