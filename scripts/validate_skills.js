@@ -4942,7 +4942,9 @@ async function donateChildTests(env) {
       if (items.some(i => !i.fix || srvs.some(k => !S.includes(i.fix[k])))) fail("BB issues: an item without a state on every server"); else checked++;
       const opens = [...L.matchAll(/class="nl-fx" style="[^"]*" data-open="([^"]+)"/g)].map(m => m[1]), cardLines = items.filter(i => i.s).length;
       if (srvs.some(k => opens.filter(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + k)).length !== cardLines)) fail(`BB issues: state cells do not open each server's card (${opens.length} links for ${cardLines} card lines)`); else checked++;
-      if (!/class="nl-fixhead"/.test(L) || (b.fix().match(/class="nl-fs-row"/g) || []).length !== 3) fail("BB issues: no column header or not three summary rows"); else checked++; }
+      // every class panel opens with a strip of the three server icons (no names; user 2026-11-08), and the summary has three rows
+      const grps = (L.match(/class="nl-grp"/g) || []).length, heads = [...L.matchAll(/<div class="nl-fxhead" aria-hidden="true">(.*?)<\/div>/g)];
+      if (!grps || heads.length !== grps || heads.some(h => (h[1].match(/<img /g) || []).length !== 3 || /<\/img>|[A-Za-z]{3,}<\/span>/.test(h[1])) || /nl-fixhead/.test(html) || (b.fix().match(/class="nl-fs-row"/g) || []).length !== 3) fail(`BB issues: ${heads.length} icon strips for ${grps} class panels, or a strip with names, or not three summary rows`); else checked++; }
     // the state rules (the old hidden Reborn list's rules give the Reborn column; TTO / ToT: cleared or [Fix] = fixed, own words = open, inherited = unsure)
     { const fx = sandbox.bbIssueFix, get = (id, kind) => items.find(i => i.s && i.s.id === id && (!kind || i.kind === kind)), errs = [];
       const TIP_RB = vm.runInContext("GAME_TOOLTIP_TH_RB", sandbox);

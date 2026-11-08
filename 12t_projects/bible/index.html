@@ -25,7 +25,7 @@
     // flat panels and modals that never change fill on hover
     panel: [".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".nl-fixsum", ".nl-fixhead", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
+      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".nl-fixsum", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
@@ -4108,8 +4108,9 @@
   .nl-text{flex:1; min-width:0; color:color-mix(in srgb, var(--text) 84%, var(--muted)); font-size:14px; line-height:1.65; overflow-wrap:anywhere}
   .nl-empty{padding:40px 0; color:var(--muted); text-align:center}
 
-  /* BB issues (user 2026-11-08, layout B + D of four mocks): each issue line's state on TTO / ToT / Reborn in three columns under a sticky
-     header, summary bars on top. A state cell links to the card on that server; the columns line up with the header (21 px = the rows' box). */
+  /* BB issues (user 2026-11-08, layout B + D of four mocks): each issue line's state on TTO / ToT / Reborn in three columns, summary bars on top.
+     Each class panel opens with a strip of the three server icons over the columns (no names; user: "bigger server icons, no server name label,
+     cleaner append to top container"). A state cell links to the card on that server. */
   .nl{--fx-w:80px; --fx-gap:4px}
   .nl-fixsum{display:flex; flex-direction:column; gap:8px; margin:0 0 14px; padding:12px 16px; border:1px solid var(--line); border-radius:16px; background:var(--panel)}
   .nl-fs-row{display:grid; grid-template-columns:104px minmax(60px, 1fr) auto; align-items:center; gap:14px}
@@ -4128,9 +4129,9 @@
   .nl-fs-btns button:disabled{opacity:.4; cursor:default}
   .nl-fs-note{margin:2px 0 0 !important; color:var(--muted); font-size:12px}
   .nl-fx-ico{flex:none; width:13px; height:13px; color:var(--fc)}
-  .nl-fixhead{position:sticky; top:0; z-index:3; display:flex; justify-content:flex-end; gap:var(--fx-gap); margin:0 0 12px; padding:6px 20px; border:1px solid var(--line); border-radius:12px; background:var(--panel)}
-  .nl-fixhead span{display:flex; align-items:center; justify-content:center; gap:6px; width:var(--fx-w); color:var(--muted); font-size:12.5px; font-weight:600; white-space:nowrap}
-  .nl-fixhead img{width:20px; height:20px; object-fit:contain}
+  .nl-fxhead{display:flex; justify-content:flex-end; gap:var(--fx-gap); padding:8px 16px 6px; box-shadow:0 1px 0 color-mix(in srgb, var(--line) 60%, transparent)}   /* 16 px = the rows' padding, so each icon sits over its column */
+  .nl-fxhead span{display:flex; justify-content:center; width:var(--fx-w)}
+  .nl-fxhead img{display:block; width:44px; height:44px; object-fit:contain}   /* user 2026-11-08: 30 px was still too small; the column is 80 px */
   .nl-fix{flex:none; display:flex; gap:var(--fx-gap); margin-top:2px}
   .nl-fx{position:relative; display:inline-flex; align-items:center; justify-content:center; gap:5px; width:var(--fx-w); height:22px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;
     color:color-mix(in srgb, var(--fc) 78%, #fff); background:color-mix(in srgb, var(--fc) 12%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--fc) 40%, transparent)}
@@ -4172,7 +4173,7 @@
     .nl-line{flex-direction:column; gap:3px; margin-top:8px}   /* the tag sits above its text, so the text keeps the full width */
     .nl-text{font-size:13.5px}
     /* BB issues: the states turn into chips under the text (server name + mark), no column header; the summary rows wrap */
-    .nl-fixhead{display:none}
+    .nl-fxhead{display:none}
     .nl-fix{flex-wrap:wrap; gap:5px; margin-top:4px}
     .nl-fx{width:auto; padding:0 8px; gap:4px}
     .nl-fx b{display:none}
@@ -8809,7 +8810,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=a53a1933af" id="bibleAssets"></script>
+<script src="assets.js?v=0dc4342f51" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -9542,14 +9543,14 @@ const LEVEL_CAP = { og: 95, tot: 110, tto: 110, reborn: 150 };   // Reborn Lv 15
 // It NEVER selects a server inside a tool (skills / mechanics keep their own switches, default BB). The top-bar menu picks the choice:
 // auto (default) = the look follows the open tool's own server switch (setToolServer); og / tot / tto / reborn = fixed, whatever the tools do.
 // Server registry (user 2026-10-25, Reborn infrastructure): the one list of the servers and their names. `og` = BB, the original client, is the base every other server
-// overrides (card.servers.<key>). `reborn` (12TailsReborn) is the 4th server and WORK IN PROGRESS (wip: true): its logo is the W.I.P.-stamped one, `server_reborn` in assets.js
-// (`server_reborn_clean` is the same logo without the stamp, to swap in when the user removes the W.I.P.; the validator keeps the flag and the icon in step).
+// overrides (card.servers.<key>). `reborn` (12TailsReborn) is the 4th server. Its W.I.P. stamp was dropped on 2026-11-08 (user): wip is false and `server_reborn`
+// in assets.js holds the same bytes as `server_reborn_clean` (the stamped picture is gone; the validator keeps the flag and the icon in step).
 // It has a look (THEME_CHOICES, wallpaper REBORN_WALLPAPER) but is not in BD_SERVERS, the Chameleon simulator or the class guide server keys yet: its server tab shows only where a card has servers.reborn data.
 const SERVER_INFO = {
   og:     { short: "BB",     full: "BB (BigBugStudio)" },
   tot:    { short: "ToT",    full: "Tales of Tail (ToT)" },
   tto:    { short: "TTO",    full: "Tailstopia Online (TTO)" },
-  reborn: { short: "Reborn", full: "Tails Reborn (RB)", wip: true }
+  reborn: { short: "Reborn", full: "Tails Reborn (RB)", wip: false }
 };
 const SERVER_FULL = Object.fromEntries(Object.entries(SERVER_INFO).map(([k, v]) => [k, v.full]));
 const SERVER_SHORT = Object.fromEntries(Object.entries(SERVER_INFO).map(([k, v]) => [k, v.short]));
@@ -30805,7 +30806,7 @@ function mountNotePage(root, cfg){
   const fixCells = l => !cfg.fix || !l.fix ? "" : '<div class="nl-fix">' + cfg.fix.servers.map(s => {
     const x = cfg.fix.states.find(y => y.k === l.fix[s.k]) || cfg.fix.states[cfg.fix.states.length - 1], o = l.opens && l.opens[s.k];
     return '<span class="nl-fx" style="--fc:' + x.color + '"' + (o ? ' data-open="' + o + '"' : "") + ' title="' + s.name + ": " + x.label + (o ? " · " + cfg.fix.openText(s) : "") + '"><small>' + s.short + "</small>" + x.ico + "<b>" + x.label + "</b></span>"; }).join("") + "</div>";
-  const fixHead = () => !cfg.fix ? "" : '<div class="nl-fixhead" aria-hidden="true">' + cfg.fix.servers.map(s => '<span><img src="' + (SKILL_ICONS["server_" + s.k] || "") + '" alt="">' + s.short + "</span>").join("") + "</div>";
+  const fixHead = () => !cfg.fix ? "" : '<div class="nl-fxhead" aria-hidden="true">' + cfg.fix.servers.map(s => '<span title="' + s.name + '"><img src="' + (SKILL_ICONS["server_" + s.k] || "") + '" alt=""></span>').join("") + "</div>";   // the panel's top strip: server icons over the columns
   const row = e => '<article class="nl-row' + (e.open ? "" : " is-static") + '"' + (e.open ? ' data-open="' + e.open + '" tabindex="0" role="link"' : "") + ">" + icon(e.s) +
     '<div class="nl-row-body"><h4>' + esc(e.title) + "</h4>" + e.lines.map(l => '<div class="nl-line' + (cfg.fix ? " has-fix" : "") + '">' + tag(l.kind) + '<div class="nl-text">' + l.html + "</div>" + fixCells(l) + "</div>").join("") + "</div></article>";
   const pressed = on => ' aria-pressed="' + on + '"';
@@ -30832,9 +30833,9 @@ function mountNotePage(root, cfg){
     kindsEl.innerHTML = [{ k: "all", label: "ทั้งหมด" }, ...kinds].map(k => { const n = size(pick(inCls, k.k)), on = st.kind === k.k;
       return '<button type="button" data-act="kind" data-v="' + k.k + '" class="' + (on ? "is-on" : "") + '"' + pressed(on) + (n || on ? "" : " disabled") + (k.color ? ' style="--kc:' + k.color + '"' : "") + ">" +
         (k.k === "all" ? "" : k.ico || '<i class="nl-dot"></i>') + "<span>" + k.label + "</span><b>" + n + "</b></button>"; }).join("");
-    listEl.innerHTML = shown.length ? fixHead() + ORDER.filter(c => shown.some(e => e.cls === c)).map(c => { const mine = shown.filter(e => e.cls === c);
+    listEl.innerHTML = shown.length ? ORDER.filter(c => shown.some(e => e.cls === c)).map(c => { const mine = shown.filter(e => e.cls === c);
       return '<section class="nl-grp"><h3>' + face(c) + "<b>" + NOTE_CLASS_TH[c] + "</b><small>" + c + "</small><em>" + size(mine) + " " + cfg.unit + "</em></h3>" +
-        '<div class="nl-grp-rows">' + mine.map(row).join("") + "</div></section>"; }).join("")
+        '<div class="nl-grp-rows">' + fixHead() + mine.map(row).join("") + "</div></section>"; }).join("")
       : '<p class="nl-empty">' + (q ? "ไม่พบรายการที่ตรงกับคำค้น" : "ยังไม่มีรายการในหมวดนี้") + "</p>";
     // the summary bars (cfg.fix): every server's fixed / open / unsure count, following the class, type and search but never the state filter itself
     if (fixEl) {
@@ -39641,6 +39642,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-08T08:50:04.176Z","fix(bible): BB issues columns get a 44 px server icon strip at the top of each class panel (no names, no floating bar); Reborn logo drops its W.I.P. stamp"],
     ["2026-11-08T08:35:04.255Z","feat(bible): BB issues shows every issue's state on TTO / ToT / Reborn (table, summary bars, TTO checked against its 2 Nov client; hidden Reborn view removed) and TTO tab fixes for Nightmare, Gorgon Shot, Call To Arm and Zombie Wolf"],
     ["2026-11-08T07:03:30.478Z","feat(bible): Special Pet Info gives pet intervals in frames (BB's pet timer counts frames, so pets fire faster on high-refresh screens); BB issues lists it as unintended"],
     ["2026-11-08T06:15:40.930Z","feat(bible): the ห้องแต่งตัว stage counts 1200 skins (12 classes x 20 outfits x 5 colours), like the other main tools"],
