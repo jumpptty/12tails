@@ -770,7 +770,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 
 ### Drunken Plus (`panda_drunkenPlus`, skills #303/#304)
 
-- **Passive, 0 MP / 0 SP, no cooldown.** Rank 1 = Lv 28 / Bn 18, rank 2 = Lv 32 / Bn 21 (`decode_skilldata.py`; `PandaSkill.cs:522-542`, `:1804-1825`).
+- **Passive, 0 MP / 0 SP, no cooldown.** Rank 1 = Lv 15 / Bn 2, rank 2 = Lv 21 / Bn 3 (`decode_skilldata.py`, `pnd_drunkenPlus1` / `pnd_drunkenPlus2`; corrected 2026-11-08: this line read Lv 28 / Bn 18 and Lv 32 / Bn 21, Rising Dragons' numbers; TTO's header gives 15 / 2 and 21 / 3 too).
 - **Tooltip:** "Gives Panda a chance to dodge any incoming attacks while using DrunkenFist and grants drunken status." (`PandaSkill_eng.cs:534-547`; Thai `PandaSkill_thai.cs:556`, `:567`).
 - **Hook:** `getDrunkenPlusLv() = hasSkill(304) ? 2 : (hasSkill(303) ? 1 : 0)` (`Panda.cs:9011-9014`).
   - At the end of Drunken Fist cast (`Panda.cs:32591`), grants self status `drunken` at Level `getDrunkenPlusLv()` for `chaAdjust(12)` seconds.
@@ -780,7 +780,7 @@ Source of server deltas: `12t_projects/bible/index.html:10537-10538`.
 
 - **Passive Class-C, Lv 55 / Bn 0, 0 MP / 0 SP, no cooldown** (`PandaSkill.cs:1206-1218`, `decode_skilldata.py`).
 - **Tooltip:** "Passively gives DrunkenFist an extra 6 damage and inflicts drunk status on all targets." (`PandaSkill_eng.cs:964`; Thai `PandaSkill_thai.cs:986`).
-- **Hook:** `getDrunkenSpinLv() = hasSkill(423) ? 1 : 0` (`Panda.cs:9721-9724`).
+- **Hook:** `getDrunkenSpinLv() = hasSkill(403) ? 1 : 0` (`Panda.cs:9707-9709`; corrected 2026-11-08, it read `hasSkill(423)`; TTO the same, `hasSkill(0x193)`).
   - When learned, connecting hits of Drunken Fist inflict status `drunk` at Level 1 with contested duration (`Panda.cs:31817`, `:32039`, `:32214`, `:32362`): base 12s on hit 1, base 6s on hits 2–4 (`Damage.getDebuff(base, caster.cha, target.cha)`).
   - ⚠️ **Tooltip Discrepancy:** The tooltip claims Drunken Spin grants "+6 damage" to Drunken Fist, but decompiled source tracing confirms no damage modifier or `+6` bonus exists for `hasSkill(423)` in `Panda.cs`.
 

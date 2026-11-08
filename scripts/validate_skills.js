@@ -4887,7 +4887,7 @@ async function donateChildTests(env) {
     vm.runInContext(fn, sandbox)(root);
     const act = (a, v) => root.listeners.click({ target: { closest: (sel) => sel === "button[data-act]" ? { dataset: { act: a, v } } : null } });
     const chips = () => Object.fromEntries([...reg.get(".nl-kinds").innerHTML.matchAll(/data-v="(\w+)".*?<b>(\d+)<\/b><\/button>/g)].map(m => [m[1], +m[2]]));
-    return { root, act, chips, list: () => reg.get(".nl-list").innerHTML, kinds: () => reg.get(".nl-kinds").innerHTML };
+    return { root, act, chips, list: () => reg.get(".nl-list").innerHTML, kinds: () => reg.get(".nl-kinds").innerHTML, fix: () => (reg.get(".nl-fixsum") || { innerHTML: "" }).innerHTML };
   };
   // picking one type leaves every other type chip's count as it was (and above 0), marks the pick, and a second click goes back to all
   const facets = (p, kind) => {
@@ -4906,7 +4906,7 @@ async function donateChildTests(env) {
       const want = SKILLS.filter(s => { const o = (s.servers && s.servers[srv]) || (srv === "tot" ? s.ps : null); return o && o.changeNote; }).length;
       const common = sandbox.commonServerNotes(srv).length, rows = (p.list().match(/class="nl-row[ "]/g) || []).length;
       if (rows !== want + common || want === 0) fail(`${srv}: ${rows} rows, want ${want} + ${common} Common`); else checked++;
-      if (srv === "tto" ? common !== 6 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26), a target lost mid-cast (2026-11-02), run speed and gear status resist (แอบ, 2026-11-04)
+      if (srv === "tto" ? common !== 7 : common !== 1) fail(`${srv}: ${common} Common rows`); else checked++;   // TTO: LCK, gear LCK, Magic Damage (2026-10-26), a target lost mid-cast (2026-11-02), run speed and gear status resist (แอบ, 2026-11-04), getting up keeps lock statuses (TTO1102, 2026-11-08)
       const opens = [...p.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
       if (opens.length !== want || !opens.every(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + srv))) fail(`${srv}: rows do not open the card on this server`); else checked++;
       if (!/class="nl-tag is-svc" style="--kc:var\(--(pro|seal|tip)\)"/.test(p.list())) fail(`${srv}: no change-note tags rendered`); else checked++;
@@ -4930,34 +4930,64 @@ async function donateChildTests(env) {
     if (sandbox.location.hash !== "") fail("clicking a status inside a note navigated away"); else checked++;
     // BB issues page: one tagged line per bbIssueItems() entry, the same facet rule
     const b = mount("mountBbIssues"), items = sandbox.bbIssueItems();
-    const lines = (b.list().match(/class="nl-line"/g) || []).length;
+    const lineCount = () => (b.list().match(/class="nl-line has-fix"/g) || []).length, lines = lineCount();
     if (lines !== items.length || !lines) fail(`BB issues: ${lines} lines, want ${items.length}`); else checked++;
     facets(b, "bug");
-    // the BB logo at the top right; its hidden 1 s hold switches to the Reborn list (user 2026-10-27): rebornIssueItems(), rows open the card
-    // on its Reborn tab, and switching back restores the BB list
+    // the BB logo at the top right; the hidden Reborn list behind it is gone (user 2026-11-08): the Reborn column replaces it
     if (!/class="nl-logo"[^>]*><img src="data:image\//.test(b.root.innerHTML)) fail("BB issues: no BB logo in the header"); else checked++;
-    b.act("kind", "all"); b.root._bbIssues.setMode("reborn");
-    const rb = sandbox.rebornIssueItems(), rbLines = (b.list().match(/class="nl-line"/g) || []).length;
-    if (!rb.length || rbLines !== rb.length) fail(`Reborn issues: ${rbLines} lines, want ${rb.length}`); else checked++;
-    // every issue still in the latest Reborn build (user 2026-10-28): each card's Reborn view (servers.reborn merged, Reborn-only cards too);
-    // a card with no Reborn data keeps its BB notes minus the tooltip notes of a tooltip Reborn rewrote; extras unless rbFixed
-    { const has = (list, id, kind) => list.some(i => i.s && i.s.id === id && (!kind || i.kind === kind)), TIP_RB = vm.runInContext("GAME_TOOLTIP_TH_RB", sandbox);
-      const extras = vm.runInContext("BB_ISSUES_EXTRA", sandbox), probe = { id: "zz_rb_probe", name: "Probe", class: "Wolf", bbBug: "probe bug", tooltipNote: "probe tip" };
-      SKILLS.push(probe); extras.push({ cls: "Common", kind: "bug", title: "zz probe", text: "probe" }, { cls: "Common", kind: "bug", rbFixed: true, title: "zz fixed", text: "fixed" });
-      const rbP = sandbox.rebornIssueItems(); SKILLS.pop(); extras.length -= 2;
-      const errs = [];
-      if (rb.some(i => i.s && i.s.onlyServer && i.s.onlyServer !== "reborn")) errs.push("a line from another server's card");
-      if (!has(rb, "panda_hundredFists", "tip")) errs.push("a Reborn-only card's servers.reborn note is missing (Hundred Fists)");
-      if (!has(rb, "mole_barrelBot_punch", "tip")) errs.push("a BB note its Reborn tab keeps is missing (Barrel Bot Punch)");
-      if (has(rb, "whale_honor")) errs.push("a note its Reborn tab clears is listed (Honor)");
-      if (!TIP_RB.bat_darkIntention || has(rb, "bat_darkIntention", "tip")) errs.push("a BB tooltip note of a tooltip Reborn rewrote is listed (Dark Intention)");
-      if (!has(rbP, "zz_rb_probe", "bug") || !has(rbP, "zz_rb_probe", "tip")) errs.push("a card with no Reborn data and an unchanged tooltip lost its BB notes");
-      if (!rbP.some(i => i.title === "zz probe") || rbP.some(i => i.title === "zz fixed") || rb.some(i => !i.s && extras.some(e => e.rbFixed && e.title === i.title))) errs.push("extras: rbFixed not honoured");
-      if (errs.length) errs.forEach(e => fail("Reborn issues: " + e)); else checked++; }
-    const rbOpens = [...b.list().matchAll(/data-open="([^"]+)"/g)].map(m => m[1]);
-    if (!rbOpens.length || !rbOpens.every(h => h.endsWith("?server=reborn"))) fail("Reborn issues: rows do not open the card on its Reborn tab"); else checked++;
-    b.root._bbIssues.setMode("og");
-    if ((b.list().match(/class="nl-line"/g) || []).length !== items.length) fail("BB issues: switching back from Reborn did not restore the BB list"); else checked++;
+    if (b.root._bbIssues.setMode || typeof sandbox.rebornIssueItems !== "undefined" || /onLogoHold|nlLogoSwap/.test(html)) fail("BB issues: the hidden Reborn view is still there"); else checked++;
+    // every line: three state cells (TTO, ToT, Reborn), each a known state; a card line's cells open the card on that server
+    { const S = ["fixed", "open", "unsure"], L = b.list(), cells = (L.match(/class="nl-fx"/g) || []).length, srvs = ["tto", "tot", "reborn"];
+      if (cells !== 3 * lines) fail(`BB issues: ${cells} state cells for ${lines} lines`); else checked++;
+      if (items.some(i => !i.fix || srvs.some(k => !S.includes(i.fix[k])))) fail("BB issues: an item without a state on every server"); else checked++;
+      const opens = [...L.matchAll(/class="nl-fx" style="[^"]*" data-open="([^"]+)"/g)].map(m => m[1]), cardLines = items.filter(i => i.s).length;
+      if (srvs.some(k => opens.filter(h => /^#skill-details\/[^?"]+\?server=/.test(h) && h.endsWith("?server=" + k)).length !== cardLines)) fail(`BB issues: state cells do not open each server's card (${opens.length} links for ${cardLines} card lines)`); else checked++;
+      if (!/class="nl-fixhead"/.test(L) || (b.fix().match(/class="nl-fs-row"/g) || []).length !== 3) fail("BB issues: no column header or not three summary rows"); else checked++; }
+    // the state rules (the old hidden Reborn list's rules give the Reborn column; TTO / ToT: cleared or [Fix] = fixed, own words = open, inherited = unsure)
+    { const fx = sandbox.bbIssueFix, get = (id, kind) => items.find(i => i.s && i.s.id === id && (!kind || i.kind === kind)), errs = [];
+      const TIP_RB = vm.runInContext("GAME_TOOLTIP_TH_RB", sandbox);
+      if (items.some(i => i.s && i.s.onlyServer)) errs.push("a line from a server-only card");
+      const bp = get("mole_barrelBot_punch", "tip"); if (!bp || bp.fix.reborn !== "open") errs.push("a BB note its Reborn tab keeps is not open on Reborn (Barrel Bot Punch)");
+      const ho = items.filter(i => i.s && i.s.id === "whale_honor"); if (!ho.length || ho.some(i => i.fix.reborn !== "fixed")) errs.push("a note its Reborn tab clears is not fixed on Reborn (Honor)");
+      const di = get("bat_darkIntention", "tip"); if (!TIP_RB.bat_darkIntention || !di || di.fix.reborn !== "fixed") errs.push("a tooltip note of a tooltip Reborn rewrote is not fixed on Reborn (Dark Intention)");
+      const probe = (o, kind) => fx({ s: Object.assign({ id: "zz_probe", name: "Probe", class: "Wolf", bbBug: "probe bug", tooltipNote: "probe tip" }, o), kind, text: kind === "bug" ? "probe bug" : "probe tip" });
+      const p0 = probe({}, "bug"); if (p0.tto !== "unsure" || p0.tot !== "unsure" || p0.reborn !== "open") errs.push(`no server data: ${JSON.stringify(p0)}`);
+      const p1 = probe({ servers: { tto: { bbBug: "" }, tot: { changeNote: "• [Fix] x" }, reborn: { bbBug: "other words" } } }, "bug");
+      if (p1.tto !== "fixed" || p1.tot !== "fixed" || p1.reborn !== "open") errs.push(`cleared / [Fix] / own words: ${JSON.stringify(p1)}`);
+      const p2 = probe({ servers: { tto: { tooltipNote: "tto words" }, tot: { desc: "x" }, reborn: { desc: "x" } } }, "tip");
+      if (p2.tto !== "open" || p2.tot !== "unsure" || p2.reborn !== "open") errs.push(`own tooltip note / inherited: ${JSON.stringify(p2)}`);
+      const e0 = sandbox.bbExtraFix({}), e1 = sandbox.bbExtraFix({ rbFixed: true, fix: { tto: "fixed" } });
+      if (e0.tto !== "unsure" || e0.tot !== "unsure" || e0.reborn !== "open" || e1.tto !== "fixed" || e1.tot !== "unsure" || e1.reborn !== "fixed") errs.push("extras: fix / rbFixed not honoured");
+      const pet = items.find(i => !i.s && /เฟรมเรต/.test(i.title || "")); if (!pet || pet.fix.tto !== "fixed" || pet.fix.reborn !== "fixed" || pet.fix.tot !== "unsure") errs.push("the pet frame-rate row: TTO and Reborn fixed, ToT unsure");
+      // the TTO1102 check (BB_ISSUE_TTO, 12t_reference/tto-bb-issues.md): every key a real card with BB notes of that kind, arrays as long as those notes
+      const TT = vm.runInContext("BB_ISSUE_TTO", sandbox), noteItems = vm.runInContext("noteItemsOf", sandbox), ttoOf = vm.runInContext("bbIssueTto", sandbox), S = ["fixed", "open", "unsure"];
+      for (const [k, val] of Object.entries(TT)) {
+        const [id, kind] = k.split(":"), s = SKILLS.find(x => x.id === id), n = s ? noteItems(s, s).filter(x => x.kind === kind).length : 0;
+        if (!s || s.onlyServer || !n) errs.push(`BB_ISSUE_TTO ${k}: no such card or no ${kind} note`);
+        else if (Array.isArray(val) ? val.length !== n || val.some(x => x !== null && !S.includes(x)) : !S.includes(val)) errs.push(`BB_ISSUE_TTO ${k}: ${JSON.stringify(val)} does not fit its ${n} note(s)`);
+      }
+      const wantTto = { "bat_nightmare:unintended": "fixed", "wolf_crusader:tip": "fixed", "bison_overlord:unintended": "open", "mole_stunMine:bug": "open", "whale_bubbleBurst:bug": "open", "rabbit_gorgonShot:unintended": "fixed" };
+      for (const [k, st] of Object.entries(wantTto)) { const [id, kind] = k.split(":"), it = items.find(i => i.s && i.s.id === id && i.kind === kind); if (!it || it.fix.tto !== st) errs.push(`TTO state of ${k}: ${it && it.fix.tto}, want ${st}`); }
+      if (items.filter(i => !i.s && /ATK ในหน้าต่างสเตตัส|atkAdjust|Germanotta/.test(i.title || "")).some(i => i.fix.tto !== "open")) errs.push("the ATK row, atkAdjust and Germanotta extras must be open on TTO (TTO1102)");
+      const wc = SKILLS.find(x => x.id === "wolf_crusader"), wcTip = wc && noteItems(wc, wc).find(x => x.kind === "tip");
+      if (!wcTip || ttoOf(wc, "tip", wcTip.text) !== "fixed" || ttoOf(wc, "tip", "not a note") !== "fixed" && !Array.isArray(TT["wolf_crusader:tip"])) errs.push("bbIssueTto lookup");
+      // the skill page's TTO tab hides a BB game bug / unintended note fixed on TTO; tooltip notes stay (TTO kept BB's description sentence; bible-card-fields, ttoTip)
+      if (!/const ttoFixedNote = \(kind, text\) => currentServer === "tto"/.test(html) || !/bbBugText && !ttoFixedNote\("bug"/.test(html) || !/noteSrc\.unintended && !ttoFixedNote\("unintended"/.test(html)) errs.push("the TTO tab does not hide bug / unintended notes fixed on TTO");
+      if (/ttoFixedNote\("tip"/.test(html) || !/const tipNoteHtml = tipNoteRaw \? /.test(html)) errs.push("the TTO tab must keep BB tooltip notes (TTO still prints BB's description sentence)");
+      if (errs.length) errs.forEach(e => fail("BB issues states: " + e)); else checked++;
+      const tally = {}; ["tto", "tot", "reborn"].forEach(k => { tally[k] = { fixed: 0, open: 0, unsure: 0 }; items.forEach(i => { tally[k][i.fix[k]]++; }); });
+      // the summary shows exactly these counts; picking a state filters the list, rail and type chips but leaves the summary alone; a second click goes back
+      const sum = () => [...b.fix().matchAll(/data-v="(\w+):(\w+)"[^>]*>(?:(?!<\/button>).)*?<b>(\d+)<\/b><\/button>/g)].map(m => m[1] + ":" + m[2] + "=" + m[3]).join(",");
+      const want = ["tto", "tot", "reborn"].map(k => ["fixed", "open", "unsure"].map(x => k + ":" + x + "=" + tally[k][x]).join(",")).join(",");
+      if (sum() !== want) fail(`BB issues: summary ${sum()} != ${want}`); else checked++;
+      b.act("fix", "reborn:fixed");
+      if (!tally.reborn.fixed || lineCount() !== tally.reborn.fixed) fail(`BB issues: Reborn แก้แล้ว shows ${lineCount()} lines, want ${tally.reborn.fixed}`); else checked++;
+      if (sum() !== want) fail("BB issues: picking a state changed the summary counts"); else checked++;
+      if (b.chips().all !== tally.reborn.fixed) fail(`BB issues: the type chips do not follow the state filter (${b.chips().all} vs ${tally.reborn.fixed})`); else checked++;
+      if (!/data-v="reborn:fixed" class="is-on" aria-pressed="true"/.test(b.fix())) fail("BB issues: the picked state is not marked"); else checked++;
+      b.act("fix", "reborn:fixed");
+      if (lineCount() !== items.length) fail("BB issues: clicking the state again did not go back to all"); else checked++;
+      console.log("BB issues states: " + ["tto", "tot", "reborn"].map(k => `${k} fixed ${tally[k].fixed} / open ${tally[k].open} / unsure ${tally[k].unsure}`).join(" · ")); }
   } catch (e) { fail("page threw: " + e.message); }
   if (savedHash !== undefined) sandbox.location.hash = savedHash;
   console.log(`Verified ${checked} server balance / BB issues page checks.`);

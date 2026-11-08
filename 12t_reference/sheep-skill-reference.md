@@ -745,6 +745,7 @@ Checked against `Reborn1027:` (build 2026.10.27.1936-bible3). The BB findings ar
 
 TTO's own notes (Discord **#nerf-buff** posts 1.1.3 / 1.2.1 / 1.5.1 and **#patch-note**, read in full 2026-11-04) against `TTO1102:` and BB. A plain tag = announced (number corrected to the code where they differ), `[แอบ Buff]` / `[แอบ Nerf]` = in the code but in no note (bible-desc-writing). Every skill's MP / SP / level is BB's (12Tails-Mechanics-Reference.md, TTO engine helpers). Patches 1.6.2.1 / 1.6.2.2 (2026-11-03) are newer than the code.
 
+- **Soul of Arms timing (found 2026-11-08):** TTO paces the hits on a timer of its own, 4.6, 5.1, 5.3, 5.5, 5.7 and 6.2 s after the start it records, the final hit at 9.5 s and the end at 9.8 s (`TTO1102:Sheep.<RPC_soulOfArms_cast>d__193::MoveNext@0x1E9CCD0`, read in the pseudo-C); BB paces them by the animation's events, which the ripped `soulOfArms.anim` does not carry (`m_Events` empty), so whether the times differ cannot be shown. Damage values are BB's. No card line. Every BB issue's TTO state: [tto-bb-issues.md](tto-bb-issues.md).
 - **Soul of Arms −50%:** confirmed, a Sheep in `attack` / `soulOfArms` takes `ceil(0.5 × dmg)` inside the attacker's `hit()` before damageMod and DEF (`TTO1102:CharacterControl::hit@0x24D57E0`); Effect Damage and KO are not halved.
 - **Eden Sanctuary allies only:** confirmed, the mask is the Sheep's team layer (`TTO1102:Sheep_edenSanctuary::Update@0x1EB3680`; BB everyone, `Sheep_edenSanctuary.cs:165`). **Sheep Cult coin AI:** methods exist, not decompiled.
 
