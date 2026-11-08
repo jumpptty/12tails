@@ -31689,6 +31689,10 @@ const TOOLS = [
     title: "ห้องแต่งตัว",
     shortTitle: "ห้องแต่งตัว",
     category: "",
+    // the stage count, like skill-details / class guide (user 2026-11-08: "pick a KPI to show like 800 skins variants or something"): every outfit look in the
+    // public (BB-only) wardrobe = 12 classes x 20 outfits x 5 colours = 1200, counted from wardrobe_dist/data-<hash>/<class>/outfits.json (its "colors" lists)
+    // of the 2026-11-08 build. A static number: recount when the online wardrobe gains or loses outfits or colours.
+    fact: () => [1200, "สกิน"],
     href: "https://12tails-wardrobe.jumpthai.workers.dev/"
   },
   {
@@ -39365,6 +39369,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-08T06:15:40.930Z","feat(bible): the ห้องแต่งตัว stage counts 1200 skins (12 classes x 20 outfits x 5 colours), like the other main tools"],
     ["2026-11-08T04:38:49.436Z","fix(bible): the ห้องแต่งตัว mirror shows whole (no clipped top or bottom) and leans further with the cursor"],
     ["2026-11-08T02:44:41.134Z","feat(bible): the ห้องแต่งตัว mirror slides between Rabbit's sets, behind the glass's demon tracery (and she stands lower)"],
     ["2026-11-08T01:01:56.670Z","fix(bible): Rabbit centred in the ห้องแต่งตัว mirror"],
