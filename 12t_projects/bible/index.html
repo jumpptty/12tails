@@ -1519,9 +1519,9 @@
   /* the header is one big line, the server's name and the patch (user 2026-11-09: no kicker, no date); with more than one patch of that server it is
      a native select of them (the dropdown opens on the title itself), and the list shows the picked patch only */
   .patch-popup #patchTitle{font-size:clamp(18px, 5vw, 40px); line-height:1.1; letter-spacing:.04em; white-space:nowrap}
-  .patch-pick{appearance:none; -webkit-appearance:none; max-width:100%; margin:0; padding:0 .8em 0 0; border:0; border-bottom:1px dashed color-mix(in srgb,var(--gold) 55%,transparent); border-radius:0; background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23d4af37' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right center / .45em; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; transition:color .15s}
+  .patch-pick{appearance:none; -webkit-appearance:none; max-width:100%; margin:0; padding:0; border:0; border-radius:0; outline:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; transition:color .15s}
   .patch-pick:hover{color:var(--gold)}
-  .patch-pick:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .patch-pick:focus, .patch-pick:focus-visible{outline:none}   /* plain text (user 2026-11-09): no caret, underline, border or focus ring */
   .patch-pick option{background:var(--panel); color:var(--text); font-size:16px; letter-spacing:0}
   /* featured cards (user 2026-11-06): the top-ranked lines of an entry (its `featured` count) as tinted cards with a gold accent bar and the class's
      round hero icon (the server logo for C6 / system lines); no rank number, their order is the rank */
@@ -39654,6 +39654,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-09T09:32:54.232Z","fix(bible): the patch pop-up's TAILSTOPIA title is plain text (no border, arrow or underline)"],
     ["2026-11-09T08:22:32.680Z","fix(bible): TTO 1.6.2.4 : Royal Flush on LCK, Drop Anchor rework, Crescent Eclipse MP 35 and speed, Free Cast on every MP skill, patch pop-up"],
     ["2026-11-09T04:40:31.912Z","feat(bible): class guide #100 TTO Monkey Two Avatar + Summon Soul Plus by Nithan"],
     ["2026-11-08T08:50:04.176Z","fix(bible): BB issues columns get a 44 px server icon strip at the top of each class panel (no names, no floating bar); Reborn logo drops its W.I.P. stamp"],
