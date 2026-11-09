@@ -485,6 +485,11 @@ Open (dependency-line audit 2026-10-28; each needs a user decision or a live che
 - **Flying Shield:** `$RPC_flyingShield` spawns the `flyingShield` effect at the Whale (`createEffect`, `Whale.cs:24642-25213`) and the hit comes from `Whale_flyingShield.OnTriggerEnter` (`Whale_flyingShield.cs:126`); the flight path is the effect's animation, with no distance in code.
 - **Homing Shield** lives `chaAdjust(3)` s (`Whale.cs:10431`); Bubble Shield and Homing Shield have no distance gate (40 m target lock).
 
+### Weapon codes w_whl50-62: which lance and shield they load (read 2026-11-09)
+
+- **Royal:** `w_whl50` and `w_whl51` load `royalLance` + `royalShield` (`WhaleEquipment.cs:1570`, `:1579`); `w_whl52` loads `royalLanceR` + `royalShieldR` (`:1255`, `:1264`). **Legend:** `w_whl60` and `w_whl61` load `legendLance` + `legendShield` (`:1548`, `:1557`); `w_whl62` loads `legendLanceR` + `legendShieldR` (`:1415`, `:1424`).
+- Same nest as the Chameleon's bows (chameleon-skill-reference.md, "Weapon codes w_chm50-62", for the reading trap): `if (!(nWeapon == "w_whl60")) { if (w_whl61) {} else if (w_whl62) {R pair} … else if (w_whl79) {eclipse pair} … }` then the legend pair (`:1390-1557`), royal around it (`:1230-1579`). `w_whl79` loads only `eclipseLance` + `eclipseShield`.
+
 ## Skill Tree Layout & Learn Requirements
 
 Verified 2026-10-12 for the Skill Simulator (rules: [12Tails-Mechanics-Reference.md §3.6](12t_reference/12Tails-Mechanics-Reference.md#36-skill-learning-rules-class-skill-window-verified-2026-10-12)). Each cell is `name Lv/points`: required level / skills already learned in the same tree. Cell number = `tree*100 + row*10 + column` (trees 1-4 = Guardian, Aqua Knight, Ocean Templar, Grand Tide). Source: `WhaleSkill.getSkill` (`setReq`, `rSkill`) and `WhaleSkill.getSkillTree`.
