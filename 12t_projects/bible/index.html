@@ -20522,7 +20522,8 @@ function mountSkillCooldownLookup(root){
   window.addEventListener("resize", balanceHeroDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(balanceHeroDesc);
   // Skill number boxes select their number on focus like the stat inputs, so a click is ready to type over (delegated: the boxes are re-rendered with the card).
-  displayEl.addEventListener("focusin", (e) => { const el = e.target; if (el.matches && el.matches("input.sk-current-sp-input, input[data-role=supportLv]")) setTimeout(() => { if (document.activeElement === el) el.select(); }, 0); });
+  // Not a box the code focuses itself to keep the typing going (a dmgModes card redraws from its own box per digit, user 2026-11-09: selecting it made each digit replace the last).
+  displayEl.addEventListener("focusin", (e) => { const el = e.target; if (el.dataset && "keepCaret" in el.dataset){ delete el.dataset.keepCaret; return; } if (el.matches && el.matches("input.sk-current-sp-input, input[data-role=supportLv]")) setTimeout(() => { if (document.activeElement === el) el.select(); }, 0); });
   const classBadgeEl = $('[data-role="class-badge"]', root);
   const enemyBadgeEl = $(".sk-enemy-badge", root);
   const classBadgeImgEl = $('[data-role="class-badge-img"]', root);
@@ -27353,7 +27354,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const typing = document.activeElement === inp, at = [...displayEl.querySelectorAll('[data-role="dmg-input"]')].filter(x => x.dataset.key === d.key).indexOf(inp);
         modeBoxBusy = true; renderHero(); modeBoxBusy = false;
         const again = typing && [...displayEl.querySelectorAll('[data-role="dmg-input"]')].filter(x => x.dataset.key === d.key)[at];
-        if (again) { again.focus({ preventScroll: true }); again.setSelectionRange(again.value.length, again.value.length); }
+        if (again) { again.dataset.keepCaret = ""; again.focus({ preventScroll: true }); again.setSelectionRange(again.value.length, again.value.length); }
       };
       inp.addEventListener("input", update);
       ["change", "blur"].forEach(ev => inp.addEventListener(ev, () => { update(); inp.value = dmgIn(d.key); }));
@@ -39654,6 +39655,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-09T13:11:44.283Z","fix(bible): number boxes on cards with one damage row per part (Evil Twin, Royal Flush, 9 more TTO cards) keep the typed digits again: the per-digit redraw no longer selects the whole number"],
     ["2026-11-09T09:32:54.232Z","fix(bible): the patch pop-up's TAILSTOPIA title is plain text (no border, arrow or underline)"],
     ["2026-11-09T08:22:32.680Z","fix(bible): TTO 1.6.2.4 : Royal Flush on LCK, Drop Anchor rework, Crescent Eclipse MP 35 and speed, Free Cast on every MP skill, patch pop-up"],
     ["2026-11-09T04:40:31.912Z","feat(bible): class guide #100 TTO Monkey Two Avatar + Summon Soul Plus by Nithan"],
