@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "skills": {
+    "animation-quality-gate": {
+      "source": "RobLe3/cc-blender-skill",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/animation-quality-gate/SKILL.md",
+      "computedHash": "44335c1c0b2655676dab4ad7a3595059c9fd9a25bba943ba7ccc3471615e07cc",
+      "installMode": "copy"
+    },
+    "blender-animation": {
+      "source": "RobLe3/cc-blender-skill",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/blender-animation/SKILL.md",
+      "computedHash": "5eb49074e795b227f9578ddf70be7bd9bd72183617014b7fed2aca0498c64c02",
+      "installMode": "copy"
+    },
+    "blender-animation-workflow": {
+      "source": "ifBars/blender-agent-studio",
+      "sourceType": "github",
+      "skillPath": "plugins/blender-agent-studio/skills/blender-animation-workflow/SKILL.md",
+      "computedHash": "69a79266d7b2a3509a99bd1f22c39cc9af1acc2d324e21493088978bb2c92d53",
+      "installMode": "copy"
+    },
+    "blender-cameras": {
+      "source": "RobLe3/cc-blender-skill",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/blender-cameras/SKILL.md",
+      "computedHash": "0d04eb24e4cba46d6cda842dd3bf937f12d5b11de81711bff68635d2b025757d",
+      "installMode": "copy"
+    },
+    "blender-iterative-refinement": {
+      "source": "ifBars/blender-agent-studio",
+      "sourceType": "github",
+      "skillPath": "plugins/blender-agent-studio/skills/blender-iterative-refinement/SKILL.md",
+      "computedHash": "29a69a47282dc055a0fa329916fac02dcb38a8efb1e8c336853ca8af92053dd4",
+      "installMode": "copy"
+    },
+    "blender-motion-state-inspection": {
+      "source": "affaan-m/ECC",
+      "sourceType": "github",
+      "skillPath": "skills/blender-motion-state-inspection/SKILL.md",
+      "computedHash": "dd620dca99aedd7079553f49ba97f4d24d26672195cc4aa5f4ebf2bb8bf9bc1c",
+      "installMode": "copy"
+    },
+    "blender-rendering": {
+      "source": "RobLe3/cc-blender-skill",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/blender-rendering/SKILL.md",
+      "computedHash": "4269dffb51f0fe39ee0e1f11c50ec1c35ad78f00c920363a898eee0f1110e744",
+      "installMode": "copy"
+    },
+    "cinematography-180-degree-rule": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/cinematography-brown/cinematography-180-degree-rule/SKILL.md",
+      "computedHash": "11155060023f50dd032fde43b979e70ed66a3c1993e95f99dc6abc4d1e9f1f1d",
+      "installMode": "copy"
+    },
+    "directing-contrast-emphasis": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/directing-masterclass/directing-contrast-emphasis/SKILL.md",
+      "computedHash": "191e9955d341e813393bfe20767be70091e5d9ab9ae5da61d995e31b48e17a81",
+      "installMode": "copy"
+    },
+    "directing-dramatic-irony": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/directing-masterclass/directing-dramatic-irony/SKILL.md",
+      "computedHash": "e5007bc54d15ec551f297159612df8685a154c706dd50dda1e279f812c10b033",
+      "installMode": "copy"
+    },
+    "directing-reaction-over-action": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/directing-masterclass/directing-reaction-over-action/SKILL.md",
+      "computedHash": "6b86bf6f84052ee249b68714a9415b43ba4093d1c0048ce77d33297b933e4ca4",
+      "installMode": "copy"
+    },
+    "directing-scene-necessity": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/directing-masterclass/directing-scene-necessity/SKILL.md",
+      "computedHash": "35a5b9b4fc728f7f032955e832fe7d4deab84f09f626a758bda4e838a897aa45",
+      "installMode": "copy"
+    },
+    "directing-tension-formula": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/directing-masterclass/directing-tension-formula/SKILL.md",
+      "computedHash": "71ec7737f04d097e4ed75eaca19546da433eeb1d5fda82d7955cb206c66c39c1",
+      "installMode": "copy"
+    },
+    "exaggerated-clarity": {
+      "source": "dylantarre/animation-principles",
+      "sourceType": "github",
+      "skillPath": "skills/02-by-thinking-style/exaggerated-clarity/SKILL.md",
+      "computedHash": "0d162a27734aa5bd2520483da0c8b0e04f62245c100aecf7fafbb704677b3f51",
+      "installMode": "copy"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "913b9d37d0d54047dd65222bb8c67b2bf04e3cb87dcad1729068d7a8b2c8c396",
+      "installMode": "copy"
+    },
+    "joke-engineering": {
+      "source": "jwynia/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/creative/humor/joke-engineering/SKILL.md",
+      "computedHash": "6ae4ce4728409ad3b34a9af774ac7862227a6f1691699992d55d9faeab5b0b3d",
+      "installMode": "copy"
+    },
+    "shot-equal-length-rhythm": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/master-shots-v1/shot-equal-length-rhythm/SKILL.md",
+      "computedHash": "dd66fd9d2a43ee31aa12714995afdd0fda1c15dde26306ca21d12dfd82c8d85d",
+      "installMode": "copy"
+    },
+    "shot-still-vs-motion-decision": {
+      "source": "geegl/directorskills",
+      "sourceType": "github",
+      "skillPath": "output/books/master-shots-v1/shot-still-vs-motion-decision/SKILL.md",
+      "computedHash": "6fe1176e35da9f179732dabc7e96fb5ca49e08bee6d400c68ddb02fc7039dfc1",
+      "installMode": "copy"
+    },
+    "text-to-blender": {
+      "source": "RobLe3/cc-blender-skill",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/text-to-blender/SKILL.md",
+      "computedHash": "7041d48d48fbdefe845df14844cf5b0933af3fc3d80af89d463532a545f4fdb1",
+      "installMode": "copy"
+    }
+  }
+}

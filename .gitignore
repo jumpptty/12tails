@@ -6,7 +6,9 @@ DecompiledSource/
 # One folder set per build, dated (2026-10-27): 12TailsReborn_Data_<date>/, DecompiledSource_Reborn_<date>/, RippedAssets_Reborn_<date>/
 12TailsReborn_Data*/
 DecompiledSource_Reborn*/
+DecompiledSource_Reborn*.zip
 RippedAssets_Reborn*/
+RippedAssets_TTO*/
 # The TTO client decompile (2026-11-02): decrypted metadata, dump.cs, Ghidra pseudo-C, tools, one dated folder per client build
 DecompiledSource_TTO*/
 # Frameless Reborn C6/C7 skill art from the Reborn team (shipped framed as 128 px WebP in assets.js SKILL_ICONS)

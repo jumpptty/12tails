@@ -1,8 +1,9 @@
 {
   "mcpServers": {
     "blender": {
-      "command": "C:\\Users\\Jump\\AppData\\Local\\Microsoft\\WinGet\\Packages\\astral-sh.uv_Microsoft.Winget.Source_8wekyb3d8bbwe\\uvx.exe",
-      "args": ["blender-mcp"]
+      "command": "uvx",
+      "args": ["blender-mcp"],
+      "env": { "DISABLE_TELEMETRY": "true" }
     }
   }
 }
