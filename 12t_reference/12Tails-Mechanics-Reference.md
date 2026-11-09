@@ -120,6 +120,33 @@ So each stat grows ~`(base+3)/12` per level (0.083 ≈ 1/12). Higher base stats 
 4. Add `+1` to all 8 stats and clamp each stat to `[3, 12]`: `Mathf.Clamp(typeStat[k] + 1, 3, 12)` (CharacterData.cs:601).
 Net: Maximum possible roll on any stat is hard-capped at **12**, and minimum possible roll is **3**. For high-base stats (e.g. Bison ATK base 9, Whale DEF base 9), unconstrained `9 + 1 + 4 = 14` is clamped down to `12`.
 
+### 1.5 EXP to the next level: `getNextExp(lv)` (verified 2026-11-06)
+`getNextExp(lv)` = the EXP needed to go from `lv` to `lv + 1`; it is stored as the character's `nexp` (CharacterDataClass.cs:638, 1043).
+
+**BB** (CharacterData.cs:1061-2162): an `if` chain of base values `num` (Lv 1 = 12 … Lv 98 = 49999, any other level = 99999), then `return 2 * num`. So Lv 1→2 costs 24, and Lv 99 and up cost 199,998 each.
+
+**TTO** (`TTO1102:CharacterData::getNextExp@0x1A4A840`, `tableExp@0x1A4BCB0`, `.cctor@0x1A4A370`): the same base values moved into a static `int[100] nextExpTable` (index = level; Lv 1-98 equal BB's, `[99]` = 50000), and `tableExp(lv) = nextExpTable[lv] × 2` for `0 < lv < 100`. The `.cctor` adds an EXP curve, `ExpCurveFromLv = 95` and `ExpCurveRate = 1.5` (double):
+```
+lv <= 95: getNextExp(lv) = tableExp(lv)                                   (same as BB)
+lv >  95: getNextExp(lv) = (int) min(2147483647, tableExp(95) × 1.5^(lv − 95))   = 94000 × 1.5^(lv − 95)
+```
+So on TTO the table's entries for Lv 96-99 are never read, and the last steps cost much more than on BB (BB → TTO: 96→97 96,000 → 141,000; 97→98 98,000 → 211,500; 98→99 99,998 → 317,250; 99→100 199,998 → 475,875). Total EXP from Lv 1 to Lv 100 on TTO: 3,823,901. The level cap itself comes from the server (`Game.maxLevel`, set in `PlayerData.readMaxLevel`), not the client.
+
+TTO EXP to the next level (row + column = the current level; BB is the same up to Lv 95):
+
+| Lv | +0 | +1 | +2 | +3 | +4 | +5 | +6 | +7 | +8 | +9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0+ | - | 24 | 38 | 54 | 74 | 98 | 126 | 160 | 200 | 248 |
+| 10+ | 306 | 372 | 450 | 540 | 644 | 764 | 904 | 1,066 | 1,254 | 1,472 |
+| 20+ | 1,684 | 1,920 | 2,186 | 2,484 | 2,816 | 3,188 | 3,606 | 4,074 | 4,598 | 5,184 |
+| 30+ | 5,666 | 6,188 | 6,752 | 7,360 | 8,016 | 8,726 | 9,492 | 10,320 | 11,214 | 12,180 |
+| 40+ | 12,800 | 13,444 | 14,114 | 14,810 | 15,534 | 16,288 | 17,072 | 17,886 | 18,734 | 19,616 |
+| 50+ | 20,468 | 21,344 | 22,246 | 23,176 | 24,134 | 25,120 | 26,136 | 27,182 | 28,260 | 29,370 |
+| 60+ | 30,514 | 31,692 | 32,906 | 34,156 | 35,444 | 36,770 | 38,136 | 39,542 | 40,990 | 42,482 |
+| 70+ | 44,020 | 45,604 | 47,234 | 48,914 | 50,644 | 52,426 | 54,262 | 56,152 | 58,100 | 60,106 |
+| 80+ | 64,000 | 66,000 | 68,000 | 70,000 | 72,000 | 74,000 | 76,000 | 78,000 | 80,000 | 82,000 |
+| 90+ | 84,000 | 86,000 | 88,000 | 90,000 | 92,000 | 94,000 | 141,000 | 211,500 | 317,250 | 475,875 |
+
 ---
 
 ## 2. Combat / damage pipeline
@@ -697,6 +724,11 @@ The shared engine read in `TTO1102:` against BB: status apply and remove (all 18
 * **Game mode 6009:** boots are off and inventory weight is ignored there (above), and `RPC_AddEffectDamage@0x24BC470` zeroes other actors' Effect Damage to players.
 * **TTO-only hooks (new monsters and maps, not class balance):** `IDamageTakenMod` (MoltenDeepMob, EchoDowned, EchoShield; `DamageTakenMod@0x24B37F0`), per-channel block % (`ApplyChannelBlock@0x24AFDC0`), `abyssExposure` ×(1 + 0.5·value) and `weak` ×(1 + 0.25·lv) in `ApplyDamage@0x24AFEC0`, and the ticks `crystalFrozen` ceil(0.15·max HP) and `airPoison` 99 (`StatusUpdate@0x24C5A90`).
 * **Per-channel block % (monster resist to Physical / Magic / Effect, checked 2026-11-06, the same in TTO1102 and TTO1106):** `CharacterControl` has `physicBlockPct`, `magicBlockPct` and `effectBlockPct`, read by the hit's `damageType` (0 / 1 / 2; `TTO1106:CharacterControl::channelBlockPct@0x24DC010`). It is a flat cut on the final number, **not `hitMod`**: `hit` applies `defAdjust(damageType)` (`TTO1106:CharacterControl::hit@0x24E2630`); `RPC_AddDamage` then multiplies by `hitMod` (clamp 0-3), `DamageTakenMod` and the enemy's `damageTakenScale`, then `JailController::ClampHit` (`TTO1106:CharacterControl::RPC_AddDamage@0x24C4F70`); only then does the `AddDamage` coroutine call `ApplyChannelBlock` (`TTO1106:CharacterControl.<AddDamage>d__46::MoveNext@0x25127A0`, `ApplyChannelBlock@0x24BC8E0`): `nDamage − trunc(pct × nDamage / 100)`, not below 0. Effect Damage does the same with `effectBlockPct` (`TTO1106:CharacterControl::AddEffectDamage@0x24B8D20`). **Knocked down:** while the target's `actionState` is `ko`, the % becomes −10, so it takes +10% of that type instead (only for a type whose % is not 0). **KO:** outside `ko`, the hit's KO is zeroed when (physic = 0 and effect ≠ 0) or (physic ≠ 0 and (magic = 0 or effect = 0)); a magic-only blocker still takes KO. **Poison Fen (mission 9001)** sets it in code after `BaseEnemy::Awake`: DevilTree `magicBlockPct = 80` (`TTO1106:DevilTree::Awake@0x2342A00`), Flower Dryad 85 (`TTO1106:FlowerDryad::Awake@0x2392EE0`); their physical and Effect Damage are not cut. Example, a magic hit of 1,000 after `hitMod`: DevilTree 1,000 − 800 = 200, Flower Dryad 1,000 − 850 = 150; knocked down, 1,000 + 100 = 1,100 on either. Other monsters may carry values in their prefabs, which were not read.
+* **Every other TTO monster damage modifier in code (checked 2026-11-06 in TTO1106 by scanning all code that writes the block %, `damageTakenScale` or `hitMod`; prefab values not read):** only DevilTree and Flower Dryad set a block %, and no monster sets its `hitMod`. `RPC_AddDamage` applies, after `hitMod`: `DamageTakenMod` (an `IDamageTakenMod` component), then `damageTakenScale`, then the enemy's `get_DamageTakenExtra`, all before the block %.
+  * **Molten Deep (M5037)** mobs (`TTO1106:MoltenDeepMob::DamageTakenMod@0x252FCA0`; each class's spec is built in its `.cctor`), multiplying: GlyphSentinel `frontBlock` 0.8 (a hit from within ±60° of its facing × 0.2), VentBeetle `backBonus` 0.5 (from within ±60° behind × 1.5), EennyShadow `shadowShield` (× 0.2 while `MoltenDeepState.ShadowShieldUp`), and ShadowLamplighter `auraRadius` 8 (any other Molten Deep mob within 8 m of a living one × 0.5; `MoltenDeepMob::Covered@0x252F9C0`).
+  * **Echo Room (M5040):** `EchoShield` × 0 while `EchoShield.Question`, × 0.1 for a shadow (`onShadow`) while `EchoShield.Up` (`TTO1106:EchoShield::DamageTakenMod@0x16ED010`); `EchoDowned` × 0 (`@0xE437F0`, a folded `return 0`). Added in `M5040_EchoRoom.<AskQuestion>` / `<BecomeShadow>`; who carries them was not traced further.
+  * **Halloween dungeon (M9002) Queen Undead:** `damageTakenScale` 0 while she channels the seance, 1.5 in the stun window after it, otherwise 1 (`TTO1106:M9002_HalloweenDungeon::UpdateSeance@0x17FE330`). A Bat's hit (action code > 9, `IsHero("Bat")` in `<AddDamage>d__46`) hexes her for `batHexSeconds` 6 s, during which `get_DamageTakenExtra` = 1 + `batHexDamageBonus` 0.25 (`QueenUndead::Hex@0x2634C10`, `get_DamageTakenExtra@0x2638360`; the constructor's defaults).
+  * **Fungspore** reflects a hit from an attacker more than 6 m away (flat distance; `TTO1106:Fungspore::ReflectsHitFrom@0x23CD650`): unless the hit pierces, Fungspore takes 0 and the attacker takes that damage as Effect Damage, action 85 (`RPC_AddDamage`, next to the `reflect` status branch).
 
 #### TTO-only pets (client decompile, 2026-11-07)
 
