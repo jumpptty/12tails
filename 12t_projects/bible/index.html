@@ -35,7 +35,7 @@
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
-    popup: [".hub-music-pop", ".copy-note", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge", ".sk-test-panel"],
+    popup: [".hub-music-pop", ".copy-note", ".donate-nudge", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge", ".sk-test-panel"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
     field: [".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
@@ -1321,6 +1321,23 @@
     opacity:1; background:none; box-shadow:none; transform:scale(1.18);
   }
   .hub-btn-donate:active{transform:scale(.95); opacity:.9}
+  /* the ☕ note (user 2026-11-10): a small card under the hub bar's ☕ on the menu, never the pop-up itself (donateNudgeShow / donateNudgeHide) */
+  .donate-nudge{position:fixed; top:calc(var(--hub-h, 64px) + 10px); right:16px; z-index:80; width:max-content; max-width:calc(100vw - 32px); padding:.8em 1em .75em; border:1px solid var(--gold); border-radius:12px;
+    background:var(--panel); color:var(--text); box-shadow:var(--shadow); font:400 min(13px, 3.2vw)/1.55 'Prompt',sans-serif; opacity:0; translate:0 -8px; transition:opacity .35s ease, translate .35s cubic-bezier(.2,.7,.2,1)}
+  .donate-nudge.is-in{opacity:1; translate:0 0}
+  /* the speech bubble's tail, pointing up at ☕ (donateNudgeAim sets --nudge-tail from the button's position) */
+  .donate-nudge::before{content:""; position:absolute; top:-7px; right:var(--nudge-tail, 22px); width:12px; height:12px; background:var(--panel); border-left:1px solid var(--gold); border-top:1px solid var(--gold); border-top-left-radius:2px; transform:rotate(45deg)}
+  .donate-nudge-text{margin:0}
+  .donate-nudge-text > span{display:block; white-space:nowrap}   /* always two lines: the thanks, then the ask */
+  .donate-nudge-text b{color:var(--gold); font-weight:600}
+  .donate-nudge-acts{display:flex; justify-content:flex-end; gap:.5em; margin-top:.65em}
+  .donate-nudge-acts button{padding:.4em .9em; border-radius:5px; font:600 1em/1.2 'Prompt',sans-serif; cursor:pointer; transition:color .18s ease, filter .18s ease, translate .18s ease}
+  .donate-nudge-later{background:none; border:1px solid transparent; color:var(--muted)}
+  .donate-nudge-later:hover{color:var(--text)}
+  .donate-nudge-go{background:var(--gold); border:1px solid var(--gold); color:#141311}
+  .donate-nudge-go:hover{filter:brightness(1.08); translate:0 -1px}
+  @media (min-width:1800px) and (min-height:1100px){.donate-nudge{font-size:16px}}
+  @media (min-width:2400px) and (min-height:1300px){.donate-nudge{font-size:18px}}
   .hub-btn-changelog{
     display:inline-flex; align-items:center; justify-content:center;
     width:26px; height:26px; padding:0; margin:0; background:none;
@@ -33753,6 +33770,7 @@ async function donateSubmit(ui){
     await donateSend(d, slip);
     ui.name.value = ""; ui.msg.value = ""; ui.slip.value = "";
     say("ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นในรายชื่อผู้สนับสนุนหลังตรวจสลิป", "ok");
+    donateNudgeMark(DONATE_NUDGE.thanks);   // a sent slip rests the note 90 days
   } catch (e) {
     const text = e && typeof e.message === "string" ? e.message : "";
     say(/[\u0E00-\u0E7F]/.test(text) ? text : DONATE_ERRORS.network, "error");   // our own reasons are Thai; anything else is the plain retry text
@@ -39657,6 +39675,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-10T10:04:48.747Z","feat(bible): a polite ☕ speech bubble under the ☕ button on the menu, from a device's 5th visit day and then every 14 days at most (90 after a slip)"],
     ["2026-11-10T04:21:53.067Z","fix(bible): BB Free Cast skips Soul of Arms and Book Bash is a bug now (TTO 1.6.2.4 fixed it), and Return Cast notes its Revised Magic over-refund"],
     ["2026-11-10T04:04:28.589Z","fix(bible): Free Cast / Return Cast on TTO and Reborn: the Revised Magic x0.8 cost is rounded up (TTO1109 ApplySkillCost calls Math.Ceiling, as BB)"],
     ["2026-11-09T13:11:44.283Z","fix(bible): number boxes on cards with one damage row per part (Evil Twin, Royal Flush, 9 more TTO cards) keep the typed digits again: the per-digit redraw no longer selects the whole number"],
@@ -40879,6 +40898,8 @@ function openDonateModal() {
   donateListUi.page = 0;   // the list opens on its newest page
   donateModal.hidden = false;
   document.body.style.overflow = "hidden";
+  donateNudgeHide();
+  donateNudgeMark(DONATE_NUDGE.rest);   // any ☕ open rests the note 14 days
 }
 
 function closeDonateModal() {
@@ -40934,6 +40955,91 @@ window.addEventListener("keydown", (e) => {
     closeDonateModal();
   }
 });
+
+// The ☕ note (user 2026-11-10): a small card under the ☕ button on the menu; the pop-up itself never opens by itself (user 2026-11-02).
+// It first shows on a device's 5th day of visits (counted once a day in localStorage), then rests 14 days after it shows or after any
+// ☕ open, and 90 days after a slip is sent. Only on the menu, 3 s after it shows, never over another pop-up (it waits until that one
+// closes); leaving the menu takes it away. Without storage it never shows.
+const DONATE_NUDGE_KEY = "12t-bible-donate-nudge";
+const DONATE_NUDGE = { days: 5, rest: 14, thanks: 90 };   // first visit day, days of rest after it shows or ☕ opens, after a slip
+function donateNudgeDay(d){ d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function donateNudgeAdd(day, n){ const p = day.split("-").map(Number); return donateNudgeDay(new Date(p[0], p[1] - 1, p[2] + n)); }
+function donateNudgeClean(raw){
+  const s = raw && typeof raw === "object" ? raw : {}, day = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+  return { days: Number.isInteger(s.days) && s.days > 0 ? Math.min(s.days, 99999) : 0, last: day(s.last), next: day(s.next) };
+}
+function donateNudgeVisit(s, today){ return s.last === today ? s : { days: s.days + 1, last: today, next: s.next }; }   // one count a day
+// Flags only an earlier visit can have left (old code, or written by a click / drag / typing, never on page load): their presence in a
+// browser with no note state yet means a returning visitor, who gets a head start (user 2026-11-10: the new key would make everyone wait 5 days).
+const DONATE_NUDGE_RETURNING = ["12t-bible-donate-seen", "12t-bible-patch-seen", "12t-bible-skillsim", "12t-bible-tool-order", "12t-bible-music-vol", "12t-bible-guide-sort",
+  "12t-bible-guide-tries", "12t-bible-class-guide-draft", "12t-bible-stat-presets", "12t-bible-custom-bd", "12t-bible-sim-seen"];
+function donateNudgeSeed(s, returning){ return returning && !s.last && !s.days ? { days: DONATE_NUDGE.days - 2, last: "", next: s.next } : s; }   // today then counts as day 4
+function donateNudgeReturning(){ try { return DONATE_NUDGE_RETURNING.some((k) => localStorage.getItem(k) != null); } catch (e) { return false; } }
+function donateNudgeDue(s, today){ return s.days >= DONATE_NUDGE.days && (!s.next || s.next <= today); }
+function donateNudgeRest(s, today, n){ const next = donateNudgeAdd(today, n); return { days: s.days, last: s.last, next: s.next > next ? s.next : next }; }   // never shortens a longer rest
+function donateNudgeLoad(){
+  let raw; try { raw = localStorage.getItem(DONATE_NUDGE_KEY); } catch (e) { return null; }
+  try { return donateNudgeClean(JSON.parse(raw)); } catch (e) { return donateNudgeClean(null); }
+}
+function donateNudgeSave(s){ try { localStorage.setItem(DONATE_NUDGE_KEY, JSON.stringify(s)); return true; } catch (e) { return false; } }
+function donateNudgeMark(n){ const s = donateNudgeLoad(); if (s) donateNudgeSave(donateNudgeRest(s, donateNudgeDay(), n)); }
+function donateNudgeBlocked(){   // another pop-up is up: the ☕ pop-up, any aria-modal (the patch notes on load), the class gates, a dialog, a full-screen layer
+  if ((donateModal && !donateModal.hidden) || document.querySelector('[aria-modal="true"]:not([hidden]), .sg-gate.open, dialog[open]')) return true;
+  const w = innerWidth, h = innerHeight;
+  for (const el of document.elementsFromPoint(w / 2, h / 2)) {
+    for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.position !== "fixed" || (parseInt(cs.zIndex, 10) || 0) < 100) continue;
+      const r = n.getBoundingClientRect();
+      if (r.width * r.height >= w * h * 0.5) return true;
+    }
+  }
+  return false;
+}
+let donateNudgeEl = null, donateNudgeTimer = 0, donateNudgeShown = false;
+function donateNudgeHide(){
+  const el = donateNudgeEl; donateNudgeEl = null;
+  if (!el) return;
+  el.classList.remove("is-in");
+  setTimeout(() => el.remove(), 400);
+}
+function donateNudgeShow(){
+  const el = donateNudgeEl = document.createElement("aside");
+  el.className = "donate-nudge";
+  el.setAttribute("role", "status");
+  el.innerHTML = '<p class="donate-nudge-text"><span>ขอบคุณที่แวะมาใช้ <b>12 Tails Bible</b> บ่อย ๆ ครับ 🙏</span><span>ถ้าอยากช่วยค่าใช้จ่ายในการพัฒนา ร่วมสนับสนุนได้ที่ ☕</span></p>'
+    + '<div class="donate-nudge-acts"><button type="button" class="donate-nudge-later">ไว้คราวหน้า</button><button type="button" class="donate-nudge-go">ร่วมสนับสนุน</button></div>';
+  el.querySelector(".donate-nudge-later").addEventListener("click", donateNudgeHide);
+  el.querySelector(".donate-nudge-go").addEventListener("click", () => openDonateModal());   // the open hides the note and rests it
+  document.body.appendChild(el);
+  donateNudgeAim();
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("is-in")));
+}
+function donateNudgeAim(){   // the bubble's tail under the middle of ☕ (the hub bar zooms on big screens, so it is measured, not fixed)
+  const el = donateNudgeEl, r = btnDonate && btnDonate.getBoundingClientRect();
+  if (!el || !r || !r.width) return;
+  const b = el.getBoundingClientRect(), x = b.right - (r.left + r.width / 2) - 6;
+  el.style.setProperty("--nudge-tail", Math.round(Math.max(12, Math.min(b.width - 24, x))) + "px");
+}
+window.addEventListener("resize", donateNudgeAim);
+function donateNudgeTry(){
+  clearTimeout(donateNudgeTimer);
+  if (donateNudgeShown) return;
+  donateNudgeTimer = setTimeout(() => {
+    if (donateNudgeShown || !document.documentElement.classList.contains("hub-menu")) return;
+    if (document.hidden || donateNudgeBlocked()) { donateNudgeTry(); return; }   // look again once the other pop-up has closed
+    const s = donateNudgeLoad(), today = donateNudgeDay();
+    if (!s || !donateNudgeDue(s, today) || !donateNudgeSave(donateNudgeRest(s, today, DONATE_NUDGE.rest))) return;
+    donateNudgeShown = true;
+    donateNudgeShow();
+  }, 3000);
+}
+{ const s = donateNudgeLoad(); if (s) donateNudgeSave(donateNudgeVisit(donateNudgeSeed(s, donateNudgeReturning()), donateNudgeDay())); }   // this page load's visit day (a returning visitor's first count starts at day 4)
+window.addEventListener("hashchange", () => {
+  if (document.documentElement.classList.contains("hub-menu")) donateNudgeTry();
+  else { clearTimeout(donateNudgeTimer); donateNudgeHide(); }
+});
+donateNudgeTry();
 
 const btnCredits = $("#btnCredits");
 const creditsModal = $("#creditsModal");
