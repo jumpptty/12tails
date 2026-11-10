@@ -4674,14 +4674,14 @@ async function donateChildTests(env) {
     "the ☕ tab panels must sit in .donate-panels with the QR panel setting the height (hidden = visibility:hidden) and the other two on top of it, so switching tabs never moves the pop-up");
   // it never opens by itself (user 2026-11-02: the supporter line is prominent enough; it opened once per device from 2026-10-23)
   ok(!/donateAutoOnce|donateAutoBlocked|DONATE_AUTO_KEY/.test(html), "the ☕ pop-up must not open by itself");
-  // the ☕ note instead (user 2026-11-10): a small card, first on a device's 5th visit day, then resting 14 days after it shows or any ☕ open, 90 after a slip
+  // the ☕ note instead (user 2026-11-10): a small card, first on a device's 5th visit day, then resting 7 days after it shows or any ☕ open, 90 after a slip
   {
     const fns = ["donateNudgeDay", "donateNudgeAdd", "donateNudgeClean", "donateNudgeVisit", "donateNudgeDue", "donateNudgeRest", "donateNudgeMark", "donateNudgeShow", "donateNudgeHide", "donateNudgeTry"];
     const gone = fns.filter((n) => kind(n) !== "function");
     ok(!gone.length && kind("DONATE_NUDGE") === "object", "the ☕ note's code is missing: " + gone.join(", "));
     if (!gone.length) {
       const C = page("donateNudgeClean"), V = page("donateNudgeVisit"), D = page("donateNudgeDue"), R = page("donateNudgeRest"), A = page("donateNudgeAdd"), N = page("DONATE_NUDGE");
-      ok(N.days === 5 && N.rest === 14 && N.thanks === 90, "DONATE_NUDGE is not { days: 5, rest: 14, thanks: 90 }");
+      ok(N.days === 5 && N.rest === 7 && N.thanks === 90, "DONATE_NUDGE is not { days: 5, rest: 7, thanks: 90 }");
       ok(A("2026-12-25", 14) === "2027-01-08" && A("2028-02-28", 1) === "2028-02-29", "donateNudgeAdd does not add calendar days");
       let st = C(null);
       ok(same(st, { days: 0, last: "", next: "" }) && same(C({ days: -3, last: "x", next: 5 }), st) && same(C("junk"), st), "donateNudgeClean keeps stored garbage");
@@ -4692,7 +4692,7 @@ async function donateChildTests(env) {
       st = V(st, "2026-11-14");
       ok(D(st, "2026-11-14"), "the ☕ note is not due on the 5th visit day");
       st = R(st, "2026-11-14", N.rest);
-      ok(!D(st, "2026-11-27") && D(st, "2026-11-28"), "the ☕ note does not rest 14 days after it shows");
+      ok(!D(st, "2026-11-20") && D(st, "2026-11-21"), "the ☕ note does not rest 7 days after it shows");
       st = R(R(st, "2026-11-14", N.thanks), "2026-11-15", N.rest);
       ok(st.next === "2027-02-12", "a later ☕ open shortens the 90-day rest after a slip");
       if (kind("donateNudgeSeed") === "function") {   // the head start: a returning visitor counts today as day 4 and sees it on the next visit day
@@ -4701,7 +4701,7 @@ async function donateChildTests(env) {
         ok(same(Sd(st, true), st) && same(Sd(V(C(null), "2026-11-09"), true), V(C(null), "2026-11-09")), "the ☕ note's head start changes a state that already counted a day");
       } else ok(false, "donateNudgeSeed (the ☕ note's head start) is missing");
     }
-    ok(/function openDonateModal\(\) \{[\s\S]*?donateNudgeHide\(\);\r?\n  donateNudgeMark\(DONATE_NUDGE\.rest\);[^\n]*\n\}/.test(html), "opening ☕ must hide the note and rest it 14 days");
+    ok(/function openDonateModal\(\) \{[\s\S]*?donateNudgeHide\(\);\r?\n  donateNudgeMark\(DONATE_NUDGE\.rest\);[^\n]*\n\}/.test(html), "opening ☕ must hide the note and rest it 7 days");
     ok(/say\("ได้รับแล้ว[^\r\n]*\r?\n\s*donateNudgeMark\(DONATE_NUDGE\.thanks\);/.test(html), "a sent slip must rest the ☕ note 90 days");
     ok(/popup: \[[^\]]*"\.donate-nudge"/.test(html), "THEME_SURFACES popup must list .donate-nudge");
   }

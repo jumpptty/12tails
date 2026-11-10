@@ -39675,6 +39675,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-10T10:11:07.173Z","fix(bible): the ☕ bubble rests 7 days after it shows or ☕ opens (was 14)"],
     ["2026-11-10T10:04:48.747Z","feat(bible): a polite ☕ speech bubble under the ☕ button on the menu, from a device's 5th visit day and then every 14 days at most (90 after a slip)"],
     ["2026-11-10T04:21:53.067Z","fix(bible): BB Free Cast skips Soul of Arms and Book Bash is a bug now (TTO 1.6.2.4 fixed it), and Return Cast notes its Revised Magic over-refund"],
     ["2026-11-10T04:04:28.589Z","fix(bible): Free Cast / Return Cast on TTO and Reborn: the Revised Magic x0.8 cost is rounded up (TTO1109 ApplySkillCost calls Math.Ceiling, as BB)"],
@@ -40899,7 +40900,7 @@ function openDonateModal() {
   donateModal.hidden = false;
   document.body.style.overflow = "hidden";
   donateNudgeHide();
-  donateNudgeMark(DONATE_NUDGE.rest);   // any ☕ open rests the note 14 days
+  donateNudgeMark(DONATE_NUDGE.rest);   // any ☕ open rests the note 7 days
 }
 
 function closeDonateModal() {
@@ -40957,11 +40958,11 @@ window.addEventListener("keydown", (e) => {
 });
 
 // The ☕ note (user 2026-11-10): a small card under the ☕ button on the menu; the pop-up itself never opens by itself (user 2026-11-02).
-// It first shows on a device's 5th day of visits (counted once a day in localStorage), then rests 14 days after it shows or after any
+// It first shows on a device's 5th day of visits (counted once a day in localStorage), then rests 7 days after it shows or after any
 // ☕ open, and 90 days after a slip is sent. Only on the menu, 3 s after it shows, never over another pop-up (it waits until that one
 // closes); leaving the menu takes it away. Without storage it never shows.
 const DONATE_NUDGE_KEY = "12t-bible-donate-nudge";
-const DONATE_NUDGE = { days: 5, rest: 14, thanks: 90 };   // first visit day, days of rest after it shows or ☕ opens, after a slip
+const DONATE_NUDGE = { days: 5, rest: 7, thanks: 90 };   // first visit day, calendar days of rest after it shows or ☕ opens (user 2026-11-10: 14 -> 7), after a slip
 function donateNudgeDay(d){ d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function donateNudgeAdd(day, n){ const p = day.split("-").map(Number); return donateNudgeDay(new Date(p[0], p[1] - 1, p[2] + n)); }
 function donateNudgeClean(raw){
