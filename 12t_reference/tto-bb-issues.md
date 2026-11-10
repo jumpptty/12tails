@@ -12,7 +12,7 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 
 **Traced last (2026-11-08, user: "Trace all ไม่แน่ใจ").** Seven lines first came back unsure; these methods were then decompiled for them: `ShadowWolf_AI` / `ShadowPanda_AI` / `ShadowRabbit_AI` / `ShadowPenguin_AI` (TTO rebuilt them on an `EnemyAI` base whose `EnemyAI::Learned@0x2487EE0` is `hasSkill(id)` for a unit with no `mShadowOf`, i.e. Bat's zombies, and a by-name skill lookup only for Echo Room shadow copies), `Phoenix_AI::AIControl@0x190CD40` with `EnemyAI::AI_idle@0x2485AB0`, `GameGui.<HandleFoodCommand>d__1146::MoveNext@0x206CD30`, `FoodData::getData@0x20FA9B0` and `MountData::getData@0x2244620`. Six became open. **Still unsure (1):** Mole Tank's English text, which lives only in the item table the server sends at login (`GameData::RequestAll@0x2241310` → `OnResponse@0x2240F80`, gzip), like every item row on TTO (the herbs' type too: their line is open because the handler is BB's, per the 2026-11-06 rule that no client change means no fix).
 
-**Counts (250 lines).** fixed 139, open 110, unsure 1 at TTO1102; since patch 1.6.2.4 (`TTO1109:`, 2026-11-09) fixed 145, open 104, unsure 1 (Free Cast bug and unintended, Seal of Defense bug, Soul of Arms, Return Cast and Book Bash unintended; rows marked "fixed (1.6.2.4)"). The TTO1106 → TTO1109 method diff was read in full and changes no other line (the TTO1102 → TTO1106 changes were not re-checked against this table).
+**Counts (251 lines).** fixed 139, open 111, unsure 1 at TTO1102; since patch 1.6.2.4 (`TTO1109:`, 2026-11-09) fixed 146, open 104, unsure 1 (Free Cast bug and unintended, Seal of Defense bug, Soul of Arms, Return Cast and Book Bash bug, Return Cast unintended; rows marked "fixed (1.6.2.4)"). The TTO1106 → TTO1109 method diff was read in full and changes no other line (the TTO1102 → TTO1106 changes were not re-checked against this table).
 
 ## Found along the way (applied 2026-11-08, user: "Implement all Found along the way according to our convention")
 
@@ -243,8 +243,8 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 | Harmonic Diffuse (2) | tooltip | open | Same at rank 2 (row Hate −30%). `TTO1102:SkillDetailData::SheepHarmonicDiffuse@0x222C4E0` |
 | Harmonic Diffuse (3) | tooltip | open | Same at rank 3 (row Hate −45%). `TTO1102:SkillDetailData::SheepHarmonicDiffuse@0x222C4E0` |
 | Harmonic Diffuse (4) | tooltip | open | Same at rank 4 (row Hate −60%). `TTO1102:SkillDetailData::SheepHarmonicDiffuse@0x222C4E0` |
-| Free Cast | bug | fixed (1.6.2.4) | TTO1102 / TTO1106: seals looked up 'shp_seal1/2', a skill with no row, so the refund was 0 MP. Since 1.6.2.4 the refund is the MP charged (10). `TTO1109:Sheep::RollFreeCast@0x1E69EE0`, `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
-| Free Cast | unintended | fixed (1.6.2.4) | Free Cast now rolls in ApplySkillCost for every MP-spending skill (Soul of Arms and Book Bash included) and refunds the MP charged. `TTO1109:Sheep::RollFreeCast@0x1E69EE0`, `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
+| Free Cast | bug | fixed (1.6.2.4) | TTO1102 / TTO1106: seals looked up 'shp_seal1/2', a skill with no row, so the refund was 0 MP. Since 1.6.2.4 the refund is the MP charged (10), and Free Cast rolls in ApplySkillCost for every MP-spending skill, Soul of Arms and Book Bash included (BB coverage gap; a bug since 2026-11-10, before part of the unintended row). `TTO1109:Sheep::RollFreeCast@0x1E69EE0`, `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
+| Free Cast | unintended | fixed (1.6.2.4) | Refunds the MP charged, so Revised Magic no longer over-refunds (BB: cost 40, paid 32, refund 40). `TTO1109:Sheep::RollFreeCast@0x1E69EE0`, `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
 | Free Cast (1) | tooltip | fixed | Row chance 12% = code lckAdjust(12); description still 6%. `TTO1102:Sheep::getFreeCast@0x1E64E40`, `TTO1102:SkillDetailData::SheepFreeCast@0x222B910` |
 | Free Cast (2) | tooltip | fixed | Row 24% = code; description still 12%. `TTO1102:SkillDetailData::SheepFreeCast@0x222B910` |
 | Holy Light | unintended | open | A target without the effect child still takes no hit that tick. `TTO1102:Sheep.<RPC_holyLight>d__178::MoveNext@0x1E8AA90` |
@@ -259,13 +259,14 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 | Seal of Heaven | tooltip | fixed | Rows damage dealt +15%, taken −5% = BB's multipliers; description still ATK / DEF. `TTO1102:SkillDetailData::SheepSealOfHeaven@0x222FCE0` |
 | Repel (1) | tooltip | fixed | Row shield 50 per hit = code (not used up); description still 50 dmg. `TTO1102:CharacterControl.<AddDamage>d__46::MoveNext@0x2508720`, `TTO1102:SkillDetailData::SheepRepel@0x222EA80` |
 | Repel (2) | tooltip | fixed | Row 100 per hit = code; description still 100 dmg. `TTO1102:SkillDetailData::SheepRepel@0x222EA80` |
-| Soul of Arms | unintended | fixed (1.6.2.4) | Free Cast rolls on its MP through ApplySkillCost. `TTO1109:GameGui::ApplySkillCost@0x20042C0`, `TTO1109:Sheep::RollFreeCast@0x1E69EE0` |
+| Soul of Arms | bug | fixed (1.6.2.4) | Free Cast rolls on its MP through ApplySkillCost. `TTO1109:GameGui::ApplySkillCost@0x20042C0`, `TTO1109:Sheep::RollFreeCast@0x1E69EE0` |
 | Soul of Arms (1) | tooltip | fixed | Rows 6 × 30 and final 100 = code; description still 30~60×7. `TTO1102:Sheep.<RPC_soulOfArms_cast>d__193::MoveNext@0x1E9CCD0`, `TTO1102:SkillDetailData::SheepSoulOfArms@0x222FFF0` |
 | Soul of Arms (2) | tooltip | fixed | Rank-2 rows 6 × 50 and 150 = code; description still 60~100×7. `TTO1102:SkillDetailData::SheepSoulOfArms@0x222FFF0` |
-| Return Cast | unintended | fixed (1.6.2.4) | Book Bash (Class C) and Soul of Arms roll Free Cast; Return Cast still also opens Purifying Tear, Lullaby, Divinity Axe and now Grand Codex (`Sheep.FreeCastNeedsReturnCast`). `TTO1109:Sheep::RollFreeCast@0x1E69EE0` |
+| Return Cast | bug | fixed (1.6.2.4) | Book Bash (Class C) and Soul of Arms roll Free Cast; Return Cast still also opens Purifying Tear, Lullaby, Divinity Axe and now Grand Codex (`Sheep.FreeCastNeedsReturnCast`). `TTO1109:Sheep::RollFreeCast@0x1E69EE0` |
+| Return Cast | unintended | fixed (1.6.2.4) | The 125% refund is of the MP paid, so Revised Magic no longer over-refunds (BB: cost 40, paid 32, refund 50; TTO 40). `TTO1109:Sheep::RollFreeCast@0x1E69EE0`, `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
 | Gospel | tooltip | fixed | Line Bless cooldown 30 s = code; description still 30%. `TTO1102:Sheep.<RPC_cast1>d__159::MoveNext@0x1E7FD20`, `TTO1102:SkillDetailData::SheepGospel@0x222BD80` |
 | Eden Sanctuary | tooltip | fixed | Settled by the card's TTO tab (it clears the note or has a [Fix] line). |
-| Book Bash | unintended | fixed (1.6.2.4) | Free Cast rolls on its MP through ApplySkillCost. `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
+| Book Bash | bug | fixed (1.6.2.4) | Free Cast rolls on its MP through ApplySkillCost. `TTO1109:GameGui::ApplySkillCost@0x20042C0` |
 | World Encarta | tooltip | open | Settled by the card's TTO tab (it carries its own note). |
 
 ### Whale
