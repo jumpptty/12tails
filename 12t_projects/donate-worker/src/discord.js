@@ -8,6 +8,15 @@ const LIST_SEC = 60;
 // Discord wants a DiscordBot user-agent from bots
 const UA = "DiscordBot (https://12tails-donate.workers.dev, 1)";
 
+// backslash before Discord markdown characters; "@" gets a zero-width space so it can never read as a mention
+export const escapeMd = (s) => s.replace(/[\\*_~`|>\[\]()#\-!<]/g, "\\$&").replace(/@/g, "@\u200b");
+
+export async function readMessage(token, channelId, msgId, fetch){
+  const r = await fetch(`${API}/channels/${channelId}/messages/${msgId}`, { headers: { authorization: "Bot " + token, "user-agent": UA } });
+  if (!r.ok) throw new Error("discord " + r.status);
+  return r.json();
+}
+
 export async function readChannel(token, channelId, fetch){
   const out = [];
   for (let before = ""; ;){

@@ -3,7 +3,7 @@
 // The form is the display name, an optional message, an optional amount and the slip. The owner checks the slip against the bank app and
 // reacts ✅ in Discord; a post without an amount asks the owner to reply with it. The embed footer carries the "meta {json}" the list reads.
 import { LIMITS, checkSlipDetails, checkAmount } from "../../../scripts/donors.js";
-import { ORIGINS, META_TAG } from "./discord.js";
+import { ORIGINS, META_TAG, escapeMd } from "./discord.js";
 
 const FIELDS = ["name", "msg"];   // the order checkSlipDetails looks at them
 // file extensions only; which types are allowed comes from LIMITS.slipTypes
@@ -16,9 +16,6 @@ function sniff(b){
   if (ascii(b, 0, "RIFF") && ascii(b, 8, "WEBP")) return "image/webp";
   return null;
 }
-
-// backslash before Discord markdown characters; "@" gets a zero-width space so it can never read as a mention
-const escapeMd = (s) => s.replace(/[\\*_~`|>\[\]()#\-!<]/g, "\\$&").replace(/@/g, "@\u200b");
 
 function answer(status, body, origin){
   const headers = { "Content-Type": "application/json" };

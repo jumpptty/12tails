@@ -4,6 +4,7 @@ import assert from "node:assert";
 import { handleSlip } from "./src/handler.js";
 import donors from "../../scripts/donors.js";
 import { listCases } from "./test_lists.mjs";
+import { guideCases } from "./test_guides.mjs";
 
 const { LIMITS } = donors;
 const SITE = "https://jumpptty.github.io";
@@ -165,7 +166,7 @@ const cases = {
   },
 };
 
-Object.assign(cases, listCases({ setup, post, payloadOf, json, handleSlip }));
+Object.assign(cases, listCases({ setup, post, payloadOf, json, handleSlip }), guideCases);
 
 let n = 0, failed = 0;
 for (const [name, fn] of Object.entries(cases)){
