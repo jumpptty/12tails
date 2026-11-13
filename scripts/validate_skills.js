@@ -4074,6 +4074,38 @@ let checkedRsim = 0;
         const ui = mk(false); submit(ui); const during = [ui.busy, ui.btn.disabled]; submit(ui);
         ok(during[0] === true && during[1] === true && codes === 1, "classGuideSendSubmit marks the send busy and disables ส่งไกด์ before its first wait, so a second tap sends nothing (got busy " + during[0] + ", disabled " + during[1] + ", " + codes + " code reads)");
       } finally { delete sandbox.fetch; delete sandbox.FormData; }
+      // the press in time (review 2026-11-13): run in a child process (the validator cannot wait); the page's sendWho / sendPaint source with stub fields
+      const paintSrc = (html.match(/^  const sendWho = [^\n]*\n  async function sendPaint\(code\)\{[\s\S]*?\n  \}/m) || [""])[0];
+      ok(!!paintSrc, "the editor's sendWho / sendPaint source is found (for the ส่งไกด์ timing checks)");
+      if (paintSrc){
+        const fn = (n) => String(vm.runInContext(n, sandbox)), json = (n) => JSON.stringify(vm.runInContext(n, sandbox));
+        const script = [
+          "(async () => {",
+          "  let release; const classGuideLiveReady = new Promise((r) => { release = r; }); const tick = () => new Promise((r) => setTimeout(r, 0));",
+          "  const nodes = { sendNum: { value: '' }, sendHint: { textContent: '', hidden: true } }, el = (r) => nodes[r];",
+          "  let draft = { title: 'Wolf Guide', author: 'Kong' }, sendTyped = null; const CLASS_GUIDES = [{ id: 49, title: 'Other', author: 'X' }];",
+          "  const classGuideUnpack = async () => JSON.stringify({ title: 'changed' });",
+          "  const bodies = []; const fetch = async (url, opts) => { bodies.push(opts.body); return { json: async () => ({ ok: true }) }; };",
+          "  const DONATE_API = 'https://worker.test', DONATE_ERRORS = " + json("DONATE_ERRORS") + ", CLASS_GUIDE_SEND_ERRORS = " + json("CLASS_GUIDE_SEND_ERRORS") + ";",
+          ...["classGuideId", "classGuideFindSame", "classGuideSameGuide", "donateErrorText", "classGuideSendCode", "classGuideSendSubmit"].map(fn),
+          paintSrc,
+          "  const out = [], status = { textContent: '', dataset: {} }, ui = { busy: false, btn: { disabled: false }, status, num: nodes.sendNum, code: async () => 'TG3\\u4E00', confirm: (code) => sendPaint(code) };",
+          "  const shown = await classGuideSendSubmit({ ...ui, confirm: async () => true });",
+          "  out.push({ pass: shown === false && bodies.length === 0, msg: 'a ส่งไกด์ press whose confirm step reports a #N just filled or a warning just shown sends nothing (got ' + bodies.length + ' sends)' });",
+          "  const entry = sendPaint(null), press = classGuideSendSubmit(ui); await tick(); await tick();",
+          "  CLASS_GUIDES.push({ id: 107, title: 'wolf  guide', author: 'KONG' }); release();",
+          "  const first = await press; await entry;",
+          "  out.push({ pass: first === false && bodies.length === 0 && nodes.sendNum.value === '107' && !nodes.sendHint.hidden && nodes.sendHint.textContent.includes('#107'), msg: 'a ส่งไกด์ press made while the live guide list loads (classGuideLiveReady pending), where the list then fills #107, does not send on that press but shows the hint (got ' + JSON.stringify({ first, sends: bodies.length, num: nodes.sendNum.value, hint: nodes.sendHint.textContent }) + ')' });",
+          "  const second = await classGuideSendSubmit(ui);",
+          "  out.push({ pass: second === true && bodies.length === 1 && bodies[0].get('replaces') === '107' && status.textContent === 'ส่งแล้ว ไกด์จะขึ้นหลังตรวจ', msg: 'the next press sends the guide as the update of #107 (got ' + JSON.stringify({ second, sends: bodies.length, status: status.textContent }) + ')' });",
+          "  process.stdout.write(JSON.stringify(out));",
+          "})().catch((e) => { process.stdout.write(JSON.stringify([{ pass: false, msg: 'the ส่งไกด์ timing checks threw: ' + String(e && e.stack || e) }])); });",
+        ].join("\n");
+        let results = null;
+        try { results = JSON.parse(execFileSync(process.execPath, ["-"], { input: script, encoding: "utf8", timeout: 30000 })); }
+        catch (e) { ok(false, "the ส่งไกด์ timing checks did not run: " + String(e.message).split("\n").slice(0, 3).join(" ")); }
+        if (Array.isArray(results)) results.forEach((r) => ok(r.pass, r.msg));
+      }
     }
     ok(/data-cg-role="send"[^\n]*data-cg-act="send"[^\n]*<span>ส่งไกด์<\/span>/.test(html) && /data-cg-role="send"[^\n]*อัปเดตไกด์เดิม #<input type="number"[^>]*data-cg-role="sendNum"/.test(html) && /data-cg-role="send"[^\n]*data-cg-role="sendStatus"/.test(html),
       "step 6 has the ส่งไกด์ button, the อัปเดตไกด์เดิม # number field and the send status line");

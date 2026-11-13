@@ -36738,8 +36738,9 @@ function mountClassGuide(root){
   // everything (classGuideSameGuide). True when the field or the hint changed, so that press shows it first and sends on the next one.
   const sendWho = () => JSON.stringify([draft && draft.title, draft && draft.author]);
   async function sendPaint(code){
+    const was = el("sendNum").value + "\n" + el("sendHint").textContent;   // at the press, before the wait: a #N the live list fills meanwhile counts as new
     await classGuideLiveReady;
-    const input = el("sendNum"), hint = el("sendHint"), was = input.value + "\n" + hint.textContent;
+    const input = el("sendNum"), hint = el("sendHint");
     const match = classGuideFindSame(CLASS_GUIDES, draft);
     if (sendTyped !== sendWho()) input.value = match === null ? "" : String(match);
     const n = /^\d+$/.test(input.value.trim()) ? +input.value : NaN, i = CLASS_GUIDES.findIndex((x, k) => +classGuideId(x, k) === n);
@@ -39833,6 +39834,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-13T07:29:29.690Z","fix(bible): ส่งไกด์ pressed while the live guide list loads shows the update hint first and sends on the next press"],
     ["2026-11-13T07:21:58.108Z","feat(bible): ส่งไกด์ in the guide editor sends the guide for ✅ approval, as an update when its title and author match"],
     ["2026-11-13T07:03:03.134Z","feat(bible): ✅'d class guides show live from Discord, numbered from 107, and #class-guide/code/<code> previews a code"],
     ["2026-11-13T06:48:08.350Z","feat(bible): the ☕ slip form asks the amount, and ✅'d slips show in the donor list live from Discord"],
