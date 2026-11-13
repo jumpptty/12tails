@@ -42,7 +42,7 @@ Also in `wrangler.toml`: the rate-limit binding `SLIP_LIMIT` (2 requests per min
 
 ## Setup (you do every step; first time about 20 minutes)
 
-Slips only (`DISCORD_WEBHOOK_URL`) were set up before; steps 1 to 5 add the guide side and the ✅ reading.
+Slips only (`DISCORD_WEBHOOK_URL`) were set up before; steps 1 to 5 add the guide side and the ✅ reading. Until step 8 (the push) the site on GitHub Pages is still the old page: it has no ส่งไกด์, no amount field, no live lists and no `#class-guide/code/` route. So step 6 checks the new page from your own copy, and the ดูตัวอย่าง link (it opens the GitHub Pages site) works only after the push.
 
 1. **Guide channel and webhook.** In Discord create a second private text channel (only you can see it). Open **Edit Channel** (gear icon) > **Integrations** > **Webhooks** > **New Webhook** > **Copy Webhook URL**. Keep it in the clipboard; do not paste it into any file.
 2. **The bot.** The Worker reads the channels as a bot. Reuse the wardrobe's **12 Tails Skins** bot, or make a new one at https://discord.com/developers/applications. Then:
@@ -64,10 +64,10 @@ Slips only (`DISCORD_WEBHOOK_URL`) were set up before; steps 1 to 5 add the guid
    ```
 
    The first time ever, it asks you to log in (`npx wrangler login`, press **Allow** in the browser tab) and to pick a `*.workers.dev` subdomain. The Worker address is `https://12tails-donate.<your-subdomain>.workers.dev`.
-6. **Live check.**
-   1. Send a slip from the ☕ pop-up and a guide from the guide page.
-   2. In Discord, react ✅ on both posts.
-   3. Open the site: the slip shows in the donor list and the guide in the guide list.
+6. **Live check, from the local page.** Double-click `12t_projects/bible/index.html` in this branch (the one about to be pushed). A double-clicked page sends `Origin: null`, which the Worker accepts.
+   1. Send a slip from the ☕ pop-up and a guide with ส่งไกด์ in the guide editor.
+   2. In Discord, react ✅ on both posts. (Do not judge the guide's ดูตัวอย่าง link yet: until the push it opens the old site.)
+   3. Reload the local page: the slip shows in the donor list and the guide in the guide list.
    4. Run this twice within 60 seconds (Windows: `curl.exe`, because plain `curl` in PowerShell is another command; on Linux or Mac use `curl` and `-o /dev/null`). The address bar cannot do this check: it sends no `Origin` header, so the Worker answers 403 `origin`.
 
       ```sh
@@ -75,7 +75,9 @@ Slips only (`DISCORD_WEBHOOK_URL`) were set up before; steps 1 to 5 add the guid
       ```
 
       Look for the line `x-list-cache`: the first run usually shows `miss`, the second should show `hit`. The copy is kept per Worker instance, so a `miss` on the second run can just mean another instance answered; try a few more times. Only "never `hit`" is a problem. Do the same for `/api/guides`.
-   5. Remove the ✅ from both posts. After up to 60 seconds each one leaves the site.
+   5. Remove the ✅ from both posts. After up to 60 seconds each one leaves the list.
+7. **Old slip posts, before the push.** Slip posts still waiting in Discord from before this change (no amount, an **อนุมัติ** link) cannot be approved with ✅: they carry no footer data, so a ✅ on them does nothing, and their อนุมัติ link stops working with the push (it opens the retired guide manager). Hand each one (name, message, amount, date) to Claude to add to `DONORS` by hand, then delete the post.
+8. **Push.** Have Claude `git push` the branch. After a minute GitHub Pages serves the new page; then the ดูตัวอย่าง links work too.
 
 If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and every page view reads Discord. The upgrade is a Durable Object that keeps the copy (not needed unless this happens).
 
@@ -84,6 +86,7 @@ If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and e
 - **The ✅ is the approval.** Any ✅ in the channel counts, from anyone who can see it, so keep both channels private.
 - **Amount reply.** The ☕ form asks for the amount, but the Worker still accepts a slip without one (for example from an old cached page). Then the text above the slip says `ไม่มียอด ตอบกลับโพสต์นี้ด้วยยอดเงิน`. Reply to that post with just the number, e.g. `150` or `1,500`. The donor stays off the list until you reply. A reply that is not a valid amount is ignored; the latest valid reply wins. Your reply also overrides an amount sent in the form.
 - **Never delete a numbered guide post.** The guide's number is written into its post (the footer); deleting the post loses the number. To take a guide off the site, remove its ✅ instead.
+- **A guide post that says "แทนที่ #N" for a number that is not a real guide: delete it before you ✅ anything else.** The highest number seen in the channel (including such a `replaces`) sets the next guide's number, so a bogus large one pushes every later number up for good.
 - **Delete rejected posts** (slips or guides you will never ✅); they are only clutter and cost nothing to remove.
 
 ## Check it
@@ -108,12 +111,12 @@ Common to all routes:
 `POST /guide`:
 
 - `code` must be a TG3 or TG2. guide code that decodes to a class guide with a known class and server, a title and an author. `replaces`, if given, is a positive whole number.
-- Errors: `origin`, `method`, `rate`, `invalid` (plus a Thai `message`), `size` (413, body over about 400 KB), `closed` (503, the guide webhook secret is missing), `upstream` (502, Discord refused).
+- Errors: `origin`, `method`, `rate`, `invalid` (plus a Thai `message`), `size` (413, body over about 400 KB), `closed` (503, the guide webhook secret is missing, or `GUIDE_NUM_FLOOR` is not a whole number of 1 or more), `upstream` (502, Discord refused).
 - A code too long for a Discord footer travels as an attached `guide.txt` instead; this is invisible to the author.
 
 `GET /api/donors` and `GET /api/guides`:
 
-- Answer `closed` (503) until what they need is set: `/api/donors` needs `DISCORD_BOT_TOKEN`, `SLIP_CHANNEL` and a valid `DISCORD_WEBHOOK_URL` (its id is read from it); `/api/guides` needs `DISCORD_BOT_TOKEN`, `GUIDE_CHANNEL`, a valid `DISCORD_GUIDE_WEBHOOK_URL` and `GUIDE_NUM_FLOOR`. `upstream` (502) if Discord fails.
+- Answer `closed` (503) until what they need is set: `/api/donors` needs `DISCORD_BOT_TOKEN`, `SLIP_CHANNEL` and a valid `DISCORD_WEBHOOK_URL` (its id is read from it); `/api/guides` needs `DISCORD_BOT_TOKEN`, `GUIDE_CHANNEL`, a valid `DISCORD_GUIDE_WEBHOOK_URL` and a `GUIDE_NUM_FLOOR` of 1 or more (missing or empty closes it: guides are never numbered from 1, which would take embedded guide #1's place). `upstream` (502) if Discord fails.
 - The answer is kept for 60 seconds (`x-list-cache: hit` or `miss`), so Discord is read at most about once a minute per Worker copy, however many people open the page.
 
 ## Android note

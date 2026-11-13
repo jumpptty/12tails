@@ -10,6 +10,8 @@ const FOOTER_MAX = 2048;
 const big = (id) => BigInt(id);
 const byId = (a, b) => (big(a.id) > big(b.id)) - (big(a.id) < big(b.id));
 const posInt = (v) => Number.isInteger(v) && v > 0 ? v : null;
+// the last embedded guide number; missing, empty or < 1 closes the guide routes (Number("") is 0: a new guide would take #1's place)
+const numFloor = (env) => posInt(Number(env.GUIDE_NUM_FLOOR));
 // a code as scripts/add_guide.js's decodeCode reads it: TG3 or TG2. only, and the guide's own format field
 function readCode(code){
   const text = String(code).trim();
@@ -95,6 +97,7 @@ export async function handleGuidePost(request, env, deps){
 
   let hook;
   try { hook = new URL(env.DISCORD_GUIDE_WEBHOOK_URL); webhookParts(hook.href); } catch (e){ return err(503, "closed", origin); }
+  if (!numFloor(env)) return err(503, "closed", origin);
   if (Number(request.headers.get("Content-Length")) > 400000) return err(413, "size", origin);
   let form;
   try { form = await request.formData(); } catch (e){ return bad(origin, "ส่งข้อมูลไม่ครบ"); }
@@ -138,10 +141,10 @@ export async function handleGuides(request, env, deps){
   const refused = await gate(request, env, { method: "GET" });
   if (refused) return refused;
   const origin = request.headers.get("Origin");
-  const token = String(env.DISCORD_BOT_TOKEN || "").trim(), channel = String(env.GUIDE_CHANNEL || "").trim(), floor = Number(env.GUIDE_NUM_FLOOR);
+  const token = String(env.DISCORD_BOT_TOKEN || "").trim(), channel = String(env.GUIDE_CHANNEL || "").trim(), floor = numFloor(env);
   let webhookId;
   try { webhookId = webhookParts(env.DISCORD_GUIDE_WEBHOOK_URL).id; } catch (e){ webhookId = ""; }
-  if (!token || !channel || !webhookId || !Number.isFinite(floor)) return err(503, "closed", origin);
+  if (!token || !channel || !webhookId || !floor) return err(503, "closed", origin);
   const send = deps.fetch, base = new URL(request.url).origin;
   try {
     const { value, hit } = await cachedList("guides:" + channel, async () => {

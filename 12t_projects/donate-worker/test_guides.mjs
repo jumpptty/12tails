@@ -188,6 +188,16 @@ export const guideCases = {
     const bad = await quiet(() => handleGuides(req(), envOf({ GUIDE_CHANNEL: "G4" }), { fetch: async () => new Response("", { status: 500 }) }));
     assert.strictEqual(bad.status, 502);
   },
+  async "a missing, empty, 0, negative or broken GUIDE_NUM_FLOOR closes both guide routes (never numbers from 1)"(){
+    const d = discord({ channel: [gp("20")] });
+    const req = () => new Request("https://worker.test/api/guides", { headers: { Origin: SITE } });
+    for (const GUIDE_NUM_FLOOR of [undefined, "", " ", "0", "-5", "1.5", "abc"]){
+      const env = envOf({ GUIDE_CHANNEL: "GF" + String(GUIDE_NUM_FLOOR), GUIDE_NUM_FLOOR });
+      for (const res of [await handleGuides(req(), env, { fetch: d.fetch }), await handleGuidePost(form({ code: CODE }), env, { fetch: d.fetch })])
+        assert.deepStrictEqual([res.status, (await res.json()).error], [503, "closed"], String(GUIDE_NUM_FLOOR));
+    }
+    assert.strictEqual(d.calls.length, 0);
+  },
   async "GET /g/<id>.<sig>: a wrong sig is 404; the right one is 200 HTML that redirects to #class-guide/code/"(){
     const d = discord({ byId: { 500: gp("500") } }), env = envOf();
     const sig = (await previewLink(env, "500", "https://worker.test")).split(".").pop();
