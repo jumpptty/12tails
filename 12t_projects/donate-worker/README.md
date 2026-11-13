@@ -68,13 +68,13 @@ Slips only (`DISCORD_WEBHOOK_URL`) were set up before; steps 1 to 5 add the guid
    1. Send a slip from the ☕ pop-up and a guide from the guide page.
    2. In Discord, react ✅ on both posts.
    3. Open the site: the slip shows in the donor list and the guide in the guide list.
-   4. Run this twice within 60 seconds (Windows; on Linux or Mac use `-o /dev/null`). The address bar cannot do this check: it sends no `Origin` header, so the Worker answers 403 `origin`.
+   4. Run this twice within 60 seconds (Windows: `curl.exe`, because plain `curl` in PowerShell is another command; on Linux or Mac use `curl` and `-o /dev/null`). The address bar cannot do this check: it sends no `Origin` header, so the Worker answers 403 `origin`.
 
       ```sh
-      curl -s -D - -o NUL -H "Origin: https://jumpptty.github.io" https://12tails-donate.<your-subdomain>.workers.dev/api/donors
+      curl.exe -s -D - -o NUL -H "Origin: https://jumpptty.github.io" https://12tails-donate.<your-subdomain>.workers.dev/api/donors
       ```
 
-      Look for the line `x-list-cache`: the first run shows `miss`, the second should show `hit`. The copy is kept per Worker instance, so a `miss` on the second run can just mean another instance answered; try a few more times. Only "never `hit`" is a problem. Do the same for `/api/guides`.
+      Look for the line `x-list-cache`: the first run usually shows `miss`, the second should show `hit`. The copy is kept per Worker instance, so a `miss` on the second run can just mean another instance answered; try a few more times. Only "never `hit`" is a problem. Do the same for `/api/guides`.
    5. Remove the ✅ from both posts. After up to 60 seconds each one leaves the site.
 
 If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and every page view reads Discord. The upgrade is a Durable Object that keeps the copy (not needed unless this happens).
