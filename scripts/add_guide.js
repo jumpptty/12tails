@@ -1,23 +1,26 @@
 #!/usr/bin/env node
-// Class guide manager (user 2026-10-20): add, replace or remove a guide in ไกด์อาชีพ without a Claude session.
+// Class guide manager (user 2026-10-20): replace or remove a guide embedded in ไกด์อาชีพ without a Claude session.
+// New guides no longer come in here (2026-11-13): the page's ส่งเข้า Discord posts them to the 12tails-donate Worker, the owner ✅s the post and
+// the Worker numbers it from GUIDE_NUM_FLOOR + 1 (12t_projects/donate-worker/wrangler.toml), so it is the one authority over new numbers.
+// An "add" (page queue, batch or command line) is refused with ADD_RETIRED; an old add commit can still be undone.
 // With no arguments (or by double-clicking scripts/add_guide.cmd) it opens a page in the browser, served from this PC only: 127.0.0.1, a key made
 // at start-up on every request, and the Host and Origin checked, so no web page can drive it.
-// The page queues changes (user 2026-10-20: batch, e.g. add 2, replace 2, remove 1) and publishes the whole queue at once.
+// The page queues changes (user 2026-10-20: batch, e.g. replace 2, remove 1) and publishes the whole queue at once.
 // Every publish goes through one pipeline: apply the changes in order to CLASS_GUIDES in 12t_projects/bible/index.html (one JSON object per line,
 // CLASS-GUIDES.md), prepend one changelog entry (also the commit subject), run the validator once (plain, not --full; it also checks
 // that a build is legal), then make one commit and push. Any failure before the commit puts index.html back exactly as it was, so a batch goes
 // up whole or not at all. It refuses while index.html has uncommitted work.
-// * add: the next running id. * replace: the guide keeps its id (its link and view count), everything else comes from the new code.
+// * replace: the guide keeps its id (its link and view count), everything else comes from the new code.
 // * remove: the line becomes "// #N removed <date>: <title> by <author>", so the number is never given out again (ids are never reused).
-// * undo (page button or Ctrl+Z): the last publish made since start-up, the whole batch, is reversed the same way (an added guide is removed,
-//   a removed or replaced one comes back).
+// * undo (page button or Ctrl+Z): the last publish made since start-up, the whole batch, is reversed the same way (a removed or replaced guide
+//   comes back; undoing an old add commit removes the guide it added).
 // * donor-add / donor-remove (user 2026-10-23, the ☕ donor list): one line per approved donation in DONORS, written by scripts/donors.js, added
 //   at the end or simply taken out (no tombstone: a donor id is in no public link). A donor change makes no changelog entry (a batch with guides
 //   too gets the guides' entry only), and a removal's subject never names the donor.
 //
 //   node scripts/add_guide.js                       the page (--port <n>, --no-open)
-//   node scripts/add_guide.js add <code>            the same pipeline on the command line (a bare code also means add)
-//   node scripts/add_guide.js replace <N> <code>
+//   node scripts/add_guide.js add <code>            retired: refuses (a new guide goes through ส่งเข้า Discord on the page)
+//   node scripts/add_guide.js replace <N> <code>    the same pipeline on the command line
 //   node scripts/add_guide.js delete <N>
 //     --dry-run   check everything, then put index.html back: no commit, no push
 //     --no-push   commit, but do not push (also for the page)
@@ -52,6 +55,7 @@ function stampGuide(g, now = new Date()){
   for (const k of Object.keys(g)) delete g[k];
   Object.assign(g, Object.fromEntries(entries));
 }
+const ADD_RETIRED = "ไกด์ใหม่ส่งผ่าน Discord แล้ว (ส่งเข้า Discord ในหน้าจัดการไกด์)";
 const MODES = ["pve", "pvp"], pickModes = (v) => MODES.filter((m) => Array.isArray(v) && v.includes(m));   // PVE / PVP, both allowed; a finished guide needs one (user 2026-10-20)
 
 // ---------- reading and changing CLASS_GUIDES ----------
@@ -123,10 +127,6 @@ function donorOp(it){
 function plan(op, doc){
   if (isDonorOp(op)) return planDonor(op, doc.donors);
   const lines = doc.lines.slice(), byId = (id) => doc.guides.find((x) => x.g.id === id);
-  if (op.action === "add"){
-    const g = op.guide, id = nextId(doc); lines.push(guideLine(id, g));   // the same title and author as another guide is allowed (user 2026-10-20); the page only warns
-    return { id, lines, subject: subj(`feat(bible): class guide #${id} ${label(g)}`), undo: { id, before: null, g, text: `ลบไกด์ #${id} ที่เพิ่งเพิ่ม` } };
-  }
   if (op.action === "replace" || op.action === "delete"){
     const t = byId(op.id); if (!t) throw new Error(`ไม่มีไกด์ #${op.id}`);
     if (op.action === "replace"){
@@ -160,9 +160,9 @@ function planAll(ops, doc){
     items.push({ action: op.action, id: p.id, subject: p.subject });
     doc = { ...doc, lines: p.lines, ...parse(p.lines) };
   });
-  const gOps = ops.filter((o) => !isDonorOp(o)), gItems = items.filter((x) => !("k" in x));
+  const gItems = items.filter((x) => !("k" in x));
   const guides = gItems.length === 1 ? gItems[0].subject
-    : subj(`${gOps.some((o) => o.action === "add") ? "feat" : "fix"}(bible): class guides ${gItems.map((x) => x.subject.replace(/^(feat|fix)\(bible\): class guide /, "")).join("; ")}`);
+    : subj(`fix(bible): class guides ${gItems.map((x) => x.subject.replace(/^fix\(bible\): class guide /, "")).join("; ")}`);
   const subject = gItems.length === items.length ? guides : items.map((x) => x.subject).join("; ");
   return { lines: doc.lines, donorLines: doc.donors.lines, items, subject, changelog: gItems.length ? guides : null, undo };
 }
@@ -173,10 +173,12 @@ function opsFromItems(items){
   return items.map((it, i) => {
     if (it.action === "delete") return { action: "delete", id: +it.id };
     if (it.action === "donor-add" || it.action === "donor-remove"){ try { return donorOp(it); } catch (e){ throw new Error(`รายการที่ ${i + 1}: ${e.message}`); } }
+    if (it.action === "add") throw new Error(`รายการที่ ${i + 1}: ${ADD_RETIRED}`);
+    if (it.action !== "replace") throw new Error(`รายการที่ ${i + 1}: unknown action ${clean(it.action)}`);
     let g; try { g = decodeCode(it.code); } catch (e){ throw new Error(`รายการที่ ${i + 1}: ${e.message}`); }
     stampGuide(g); if (Array.isArray(it.modes)) g.modes = pickModes(it.modes);
     if (!(g.modes || []).length) throw new Error(`รายการที่ ${i + 1}: เลือก PVE / PVP อย่างน้อยหนึ่งอย่าง`);
-    return { action: it.action === "replace" ? "replace" : "add", id: +it.id, guide: g };
+    return { action: "replace", id: +it.id, guide: g };
   });
 }
 // Two guides with the same content (key order, id and PVE / PVP left out: the page sets those), for the page's "nothing would change"
@@ -368,12 +370,11 @@ async function batch(file, st){
 async function cli(words){
   const ask = (q) => new Promise((res) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); rl.question(q, (a) => { rl.close(); res(a); }); });
   let [cmd, ...rest] = words, op;
-  if (findCode(cmd)){ rest = [cmd, ...rest]; cmd = "add"; }
-  if (cmd === "add") op = { action: "add", guide: decodeCode(rest.join(" ") || await ask("Paste the guide code: ")) };
-  else if (cmd === "replace") op = { action: "replace", id: +rest[0], guide: decodeCode(rest.slice(1).join(" ") || await ask("Paste the new code: ")) };
+  if (cmd === "add" || findCode(cmd)) throw new Error(ADD_RETIRED);   // a bare code used to mean add
+  if (cmd === "replace") op = { action: "replace", id: +rest[0], guide: decodeCode(rest.slice(1).join(" ") || await ask("Paste the new code: ")) };
   else if (cmd === "delete") op = { action: "delete", id: +rest[0] };
   if (op && op.guide){ stampGuide(op.guide); console.log(`  Date: the upload time (${op.guide.published}).`); if (val("--modes")) op.guide.modes = pickModes(val("--modes").split(",").map((x) => x.trim().toLowerCase())); if (!(op.guide.modes || []).length) throw new Error("This code has no PVE / PVP tag (made with an older page). Add --modes pve, --modes pvp or --modes pve,pvp."); }
-  else throw new Error("usage: see the header of scripts/add_guide.js");
+  else if (!op) throw new Error("usage: see the header of scripts/add_guide.js");   // delete has no guide (it used to fall in here)
   const p = planAll([op], readGuides());
   console.log("\n  " + p.subject + "\n");
   if (!has("--dry-run") && !has("--yes") && !/^y/i.test((await ask("Publish this? (y/n) ")).trim())) throw new Error("Cancelled. Nothing was changed.");
@@ -477,8 +478,12 @@ async function selftest(){
   const request = (dir, obj) => { const f = path.join(dir, "..", path.basename(dir) + "-request.json"); fs.writeFileSync(f, JSON.stringify(obj)); return f; };
   const notice = (out) => JSON.parse(((out.match(/^::notice title=gm-result::(.*)$/m) || [])[1]) || "null");
   const pre = ["  " + JSON.stringify({ id: 1, ...guide("T1", "A1") }) + ",", "  " + JSON.stringify({ id: 2, ...guide("T2", "A2") }) + ","];
-  const batchItems = [{ action: "add", code: code("T3", "A3"), modes: ["pve"] }, { action: "replace", id: 1, code: code("T1b", "A1"), modes: ["pve"] }, { action: "delete", id: 2 }];
-  const batchSubject = "feat(bible): class guides #3 ToT Wolf T3 by A3; #1 is updated: ToT Wolf T1b by A1; #2 is removed (T2 by A2)";
+  const batchItems = [{ action: "replace", id: 1, code: code("T1b", "A1"), modes: ["pve"] }, { action: "delete", id: 2 }];
+  const batchSubject = "fix(bible): class guides #1 is updated: ToT Wolf T1b by A1; #2 is removed (T2 by A2)";
+  const rep = (title, author = "A") => ({ action: "replace", id: 1, code: code(title, author), modes: ["pve"] });
+  // an embedded add made before 2026-11-13 (when this script still added guides), so its undo stays covered
+  const oldAdd = (dir) => { fs.writeFileSync(path.join(dir, REL), html(dir).replace("\r\n];\r\nconst DONORS", "\r\n" + guideLine(3, guide("T3", "A3")) + "\r\n];\r\nconst DONORS")); sh(dir, "commit", "-q", "-am", "feat(bible): class guide #3 ToT Wolf T3 by A3"); return head(dir); };
+  const RETIRED = "ไกด์ใหม่ส่งผ่าน Discord แล้ว (ส่งเข้า Discord ในหน้าจัดการไกด์)";
   const cases = [];
   const test = (name, fn) => cases.push([name, fn]);
 
@@ -490,35 +495,42 @@ async function selftest(){
     const [it] = m.opsFromItems([{ action: "replace", id: 1, code: code("T1b", "A1"), modes: ["pve"] }]);
     assert.ok(Math.abs(Date.parse(it.guide.published) - Date.now()) < 5000 && it.guide.date.length === 10);
   });
-  test("add: next id, changelog entry = commit subject, pushed", async () => {
-    const dir = fixture(), m = load(dir);
-    await m.apply(m.opsFromItems([{ action: "add", code: code("T3", "A3"), modes: ["pve"] }]), {}, quiet());
-    assert.ok(m.readGuides().lines.some((l) => l.startsWith('  {"id":3,')));
-    assert.strictEqual(newestEntry(dir), "feat(bible): class guide #3 ToT Wolf T3 by A3");
-    assert.strictEqual(subject(dir), "feat(bible): class guide #3 ToT Wolf T3 by A3");
-    assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
+  test("add is retired (2026-11-13): the page's queue, the batch and the command line refuse it, nothing changes", async () => {
+    const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir), item = { action: "add", code: code("T3", "A3"), modes: ["pve"] };
+    assert.throws(() => m.opsFromItems([item]), (e) => e.message === "รายการที่ 1: " + RETIRED);
+    assert.throws(() => m.opsFromItems([batchItems[0], { ...item, action: "bogus" }]), /รายการที่ 2: unknown action bogus/);   // no longer read as an add
+    const r = stage(dir, request(dir, { items: [batchItems[0], item] }), "git");
+    assert.strictEqual(r.status, 1); assert.ok(r.stdout.includes("::error title=gm-error::รายการที่ 2: " + RETIRED), r.stdout);
+    for (const argv of [["add", item.code], [item.code]]){   // a bare code meant add
+      const c = spawnSync(process.execPath, [__filename, ...argv, "--yes", "--no-push"], { cwd: dir, env: { ...process.env, GM_ROOT: dir }, encoding: "utf8" });
+      assert.strictEqual(c.status, 1); assert.ok(c.stderr.includes(RETIRED), argv[0].slice(0, 3) + ": " + c.stdout + c.stderr);
+    }
+    assert.strictEqual(html(dir), before); assert.strictEqual(head(dir), sha);
+    const del = spawnSync(process.execPath, [__filename, "delete", "2", "--yes", "--no-push"], { cwd: dir, env: { ...process.env, GM_ROOT: dir }, encoding: "utf8" });
+    assert.strictEqual(del.status, 0, del.stdout + del.stderr); assert.strictEqual(subject(dir), "fix(bible): class guide #2 is removed (T2 by A2)");   // the command line's delete still works
   });
   let batchLines = null, batchSha = null, batchDir = null;
-  test("batch: add + replace + delete in one commit", async () => {
+  test("batch: replace + delete in one commit, changelog entry = commit subject, pushed", async () => {
     const dir = batchDir = fixture(), m = load(dir);
-    await m.apply(m.opsFromItems(batchItems), { noPush: true }, quiet());
+    await m.apply(m.opsFromItems(batchItems), {}, quiet());
     const lines = batchLines = m.readGuides().lines; batchSha = head(dir);
     assert.ok(lines[0].startsWith('  {"id":1,"format"') && lines[0].includes('"title":"T1b"'));
     assert.strictEqual(lines[1], `  // #2 removed ${day}: T2 by A2`);
-    assert.ok(lines[2].startsWith('  {"id":3,') && lines[2].includes('"title":"T3"'));
+    assert.strictEqual(lines.length, 2);
     assert.strictEqual(subject(dir), batchSubject);
     assert.strictEqual(newestEntry(dir), batchSubject);
+    assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
   });
   test("a guide the validator refuses: index.html as it was, nothing committed", async () => {
     const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir), ui = quiet();
-    await assert.rejects(m.apply(m.opsFromItems([{ action: "add", code: code("FAILME", "A9"), modes: ["pve"] }]), { noPush: true }, ui), /ไกด์ไม่ผ่านการตรวจ/);
+    await assert.rejects(m.apply(m.opsFromItems([rep("FAILME", "A9")]), { noPush: true }, ui), /ไกด์ไม่ผ่านการตรวจ/);
     assert.strictEqual(html(dir), before); assert.strictEqual(head(dir), sha);
     assert.ok(ui.logs.join("\n").includes("[CLASS GUIDE ERROR] fixture refuses FAILME"));
     assert.strictEqual(sh(dir, "status", "--porcelain"), "");
   });
   test("--dry-run: checked, then index.html as it was, no commit", async () => {
     const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir);
-    const r = await m.apply(m.opsFromItems([{ action: "add", code: code("T3", "A3"), modes: ["pve"] }]), { dryRun: true }, quiet());
+    const r = await m.apply(m.opsFromItems([batchItems[0]]), { dryRun: true }, quiet());
     assert.strictEqual(r.dry, true); assert.strictEqual(html(dir), before); assert.strictEqual(head(dir), sha);
   });
   test("uncommitted work in index.html: refused", async () => {
@@ -526,11 +538,18 @@ async function selftest(){
     fs.appendFileSync(path.join(dir, REL), " ");
     await assert.rejects(m.apply([{ action: "delete", id: 1 }], { noPush: true }, quiet()), /index\.html มีงานค้าง/);
   });
-  test("undo from a commit: the batch is reversed, the added guide becomes a tombstone", async () => {
+  test("undo from a commit: the batch is reversed", async () => {
     const m = load(batchDir), ops = m.undoOpsFromCommit(batchSha);
-    assert.deepStrictEqual(ops.map((o) => o.entry.id), [3, 2, 1]);
+    assert.deepStrictEqual(ops.map((o) => o.entry.id), [2, 1]);
+    await m.apply(ops, { noPush: true }, quiet());
+    assert.deepStrictEqual(m.readGuides().lines, pre);
+  });
+  test("undo of an old add commit: the added guide becomes a tombstone", async () => {
+    const dir = fixture(), m = load(dir), ops = m.undoOpsFromCommit(oldAdd(dir));
+    assert.deepStrictEqual(ops.map((o) => [o.entry.id, o.entry.text]), [[3, "ลบไกด์ #3 ที่เพิ่งเพิ่ม"]]);
     await m.apply(ops, { noPush: true }, quiet());
     assert.deepStrictEqual(m.readGuides().lines, [...pre, `  // #3 removed ${day}: T3 by A3`]);
+    assert.strictEqual(subject(dir), "fix(bible): class guide #3 is removed again (undo of its addition: T3 by A3)");
   });
   test("batch stages give the same file and subject as apply, and report it", async () => {
     const dir = fixture(), req = request(dir, { items: batchItems });
@@ -540,21 +559,21 @@ async function selftest(){
     assert.deepStrictEqual(unstamped(load(dir).readGuides().lines), unstamped(batchLines));
     assert.strictEqual(subject(dir), batchSubject);
     assert.strictEqual(sh(dir, "ls-remote", "origin", "refs/heads/main").split(/\s+/)[0], head(dir));
-    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: false, subject: batchSubject, sha: head(dir), items: [{ action: "add", id: 3 }, { action: "replace", id: 1 }, { action: "delete", id: 2 }], undoText: "ย้อนกลับชุดล่าสุด 3 รายการ (#3, #1, #2)" });
+    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: false, subject: batchSubject, sha: head(dir), items: [{ action: "replace", id: 1 }, { action: "delete", id: 2 }], undoText: "ย้อนกลับชุดล่าสุด 2 รายการ (#1, #2)" });
     const undo = request(dir, { undo: { sha: head(dir) } });
     for (const st of ["git", "edit", "check", "commit", "push"]){ r = stage(dir, undo, st); assert.strictEqual(r.status, 0, "undo " + st + ": " + r.stdout + r.stderr); }
-    assert.deepStrictEqual(load(dir).readGuides().lines, [...pre, `  // #3 removed ${day}: T3 by A3`]);
+    assert.deepStrictEqual(load(dir).readGuides().lines, pre);
     assert.strictEqual(notice(r.stdout).undoText, null);
   });
   test("batch --dry-run reports at the check stage without a commit", async () => {
     const dir = fixture(), req = request(dir, { items: [batchItems[0]] }), sha = head(dir);
     let r;
     for (const st of ["git", "edit", "check"]){ r = stage(dir, req, st, "--dry-run"); assert.strictEqual(r.status, 0, st + ": " + r.stdout + r.stderr); }
-    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: true, subject: "feat(bible): class guide #3 ToT Wolf T3 by A3", sha: null, items: [{ action: "add", id: 3 }], undoText: null });
+    assert.deepStrictEqual(notice(r.stdout), { ok: true, dry: true, subject: "fix(bible): class guide #1 is updated: ToT Wolf T1b by A1", sha: null, items: [{ action: "replace", id: 1 }], undoText: null });
     assert.strictEqual(head(dir), sha);
   });
   test("batch: a refused guide reports one gm-error annotation with the validator's lines", async () => {
-    const dir = fixture(), req = request(dir, { items: [{ action: "add", code: code("FAILME", "A9"), modes: ["pve"] }] });
+    const dir = fixture(), req = request(dir, { items: [rep("FAILME", "A9")] });
     for (const st of ["git", "edit"]) assert.strictEqual(stage(dir, req, st).status, 0);
     const r = stage(dir, req, "check"), errs = r.stdout.split(/\r?\n/).filter((l) => l.startsWith("::error title=gm-error::"));
     assert.strictEqual(r.status, 1); assert.strictEqual(errs.length, 1);
@@ -580,7 +599,7 @@ async function selftest(){
     assert.throws(() => m.canonLine("  alert(1)"));
   });
   test("batch: raw validator output cannot pass as a GitHub command", async () => {
-    const dir = fixture(), req = request(dir, { items: [{ action: "add", code: code("INJECTME", "A"), modes: ["pve"] }] });
+    const dir = fixture(), req = request(dir, { items: [rep("INJECTME")] });
     for (const st of ["git", "edit"]) assert.strictEqual(stage(dir, req, st).status, 0);
     const r = stage(dir, req, "check");
     assert.strictEqual(r.status, 1); assert.ok(!/^::notice/m.test(r.stdout), r.stdout);
@@ -590,22 +609,23 @@ async function selftest(){
     for (const st of ["git", "edit", "check", "commit", "push"]) assert.strictEqual(stage(dir, req, st).status, 0);
     const shallow = path.join(tmp, "shallow" + n);
     sh(tmp, "clone", "-q", "--depth", "1", "-b", "main", "file://" + (dir + ".git").replace(/\\/g, "/"), shallow);
-    assert.deepStrictEqual(load(shallow).undoOpsFromCommit(head(dir)).map((o) => o.entry.id), [3, 2, 1]);
+    assert.deepStrictEqual(load(shallow).undoOpsFromCommit(head(dir)).map((o) => o.entry.id), [2, 1]);
   });
   test("a code whose class or server is not a real one is refused (it would reach the page's HTML)", async () => {
     const m = load(fixture()), bad = (build) => gc.encode1({ ...guide("T9", "A9"), build: { ...guide("T9", "A9").build, ...build } });
-    assert.throws(() => m.opsFromItems([{ action: "add", code: bad({ classKey: "<img src=x onerror=alert(1)>" }), modes: ["pve"] }]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
-    assert.throws(() => m.opsFromItems([{ action: "add", code: bad({ server: "zz" }), modes: ["pve"] }]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
-    assert.strictEqual(m.opsFromItems([{ action: "add", code: gc.encode1(guide("T9", "A9")), modes: ["pve"] }]).length, 1);
+    const item = (c) => ({ action: "replace", id: 1, code: c, modes: ["pve"] });
+    assert.throws(() => m.opsFromItems([item(bad({ classKey: "<img src=x onerror=alert(1)>" }))]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
+    assert.throws(() => m.opsFromItems([item(bad({ server: "zz" }))]), /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/);
+    assert.strictEqual(m.opsFromItems([item(gc.encode1(guide("T9", "A9")))]).length, 1);
   });
   test("batch: annotations stay within GitHub's 4,096 characters", async () => {
     const unescape = (s) => s.replace(/%0D/g, "\r").replace(/%0A/g, "\n").replace(/%25/g, "%");
-    const dir = fixture(), req = request(dir, { items: Array.from({ length: 12 }, (_, i) => ({ action: "add", code: code("T".repeat(390) + i, "A"), modes: ["pve"] })) });
+    const dir = fixture(), req = request(dir, { items: Array.from({ length: 12 }, (_, i) => rep("T".repeat(390) + i)) });
     let r;
     for (const st of ["git", "edit", "check"]){ r = stage(dir, req, st, "--dry-run"); assert.strictEqual(r.status, 0, st + ": " + r.stderr); }
     const msg = unescape(r.stdout.match(/^::notice title=gm-result::(.*)$/m)[1]), res = JSON.parse(msg);
     assert.ok(msg.length <= 4096, "gm-result is " + msg.length); assert.strictEqual(res.items.length, 12); assert.ok(res.subject.endsWith("…"));
-    const bad = fixture(), breq = request(bad, { items: [{ action: "add", code: code("LONGFAIL", "A"), modes: ["pve"] }] });
+    const bad = fixture(), breq = request(bad, { items: [rep("LONGFAIL")] });
     for (const st of ["git", "edit"]) assert.strictEqual(stage(bad, breq, st).status, 0);
     const err = unescape(stage(bad, breq, "check").stdout.match(/^::error title=gm-error::(.*)$/m)[1]);
     assert.ok(err.length <= 4096 && err.startsWith("ไกด์ไม่ผ่านการตรวจ"), "gm-error is " + err.length);
@@ -639,18 +659,18 @@ async function selftest(){
     await m.apply(m.opsFromItems([donorAdd()]), { noPush: true }, quiet());   // the real list starts empty
     assert.ok(html(dir).includes("const DONORS = [\r\n" + dn.donorLine(donations(dir)[0]) + "\r\n];\r\nconst CHANGELOG_DATA"));
   });
-  test("mixed batch: guide add + donor add", async () => {
+  test("mixed batch: guide replace + donor add", async () => {
     const dir = fixture(), m = load(dir);
     const r = await m.apply(m.opsFromItems([batchItems[0], donorAdd()]), { noPush: true }, quiet());
-    assert.strictEqual(subject(dir), "feat(bible): class guide #3 ToT Wolf T3 by A3; feat(bible): ขอบคุณผู้สนับสนุน New");
-    assert.deepStrictEqual(changelog(dir), ["feat(bible): class guide #3 ToT Wolf T3 by A3", "init"]);
-    assert.deepStrictEqual(r.items.map((x) => x.url || x.k), [SITE + "#class-guide/3", donations(dir)[1].k]);
-    assert.strictEqual(m.undoText(r.undo), "ย้อนกลับชุดล่าสุด 2 รายการ (#3, ☕)");
+    assert.strictEqual(subject(dir), "fix(bible): class guide #1 is updated: ToT Wolf T1b by A1; feat(bible): ขอบคุณผู้สนับสนุน New");
+    assert.deepStrictEqual(changelog(dir), ["fix(bible): class guide #1 is updated: ToT Wolf T1b by A1", "init"]);
+    assert.deepStrictEqual(r.items.map((x) => x.url || x.k), [SITE + "#class-guide/1", donations(dir)[1].k]);
+    assert.strictEqual(m.undoText(r.undo), "ย้อนกลับชุดล่าสุด 2 รายการ (#1, ☕)");
     await m.apply(r.undo.slice().reverse().map((entry) => ({ action: "undo", entry })), { noPush: true }, quiet());   // the page's own undo
-    assert.deepStrictEqual(m.readGuides().lines, [...pre, `  // #3 removed ${day}: T3 by A3`]);
+    assert.deepStrictEqual(m.readGuides().lines, pre);
     assert.deepStrictEqual(donorLines(dir), [dn.donorLine(OLD)]);
-    assert.strictEqual(subject(dir), "fix(bible): remove a donation; fix(bible): class guide #3 is removed again (undo of its addition: T3 by A3)");
-    assert.strictEqual(newestEntry(dir), "fix(bible): class guide #3 is removed again (undo of its addition: T3 by A3)");
+    assert.strictEqual(subject(dir), "fix(bible): remove a donation; fix(bible): class guide #1 is back to its previous version");
+    assert.strictEqual(newestEntry(dir), "fix(bible): class guide #1 is back to its previous version");
   });
   test("a bad donor item names its position", async () => {
     const dir = fixture(), m = load(dir), before = html(dir), sha = head(dir);

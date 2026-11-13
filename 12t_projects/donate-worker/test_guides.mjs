@@ -106,6 +106,11 @@ export const guideCases = {
     assert.deepStrictEqual(body.embeds[0].footer, first.embeds[0].footer);
     assert.deepStrictEqual(body.allowed_mentions, { parse: [] });
   },
+  async "POST /guide: the local guide manager (http://127.0.0.1:4782, ส่งเข้า Discord) is an accepted origin"(){
+    const d = discord(), res = await handleGuidePost(form({ code: CODE, replaces: "" }, "http://127.0.0.1:4782"), envOf(), { fetch: d.fetch });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.headers.get("Access-Control-Allow-Origin"), "http://127.0.0.1:4782");
+  },
   async "POST /guide: replaces N shows 'แทนที่ #N' with a link to #class-guide/N"(){
     const d = discord();
     await handleGuidePost(form({ code: CODE, replaces: "12" }), envOf(), { fetch: d.fetch });

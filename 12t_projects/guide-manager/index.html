@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'self' https://api.github.com https://12tails-donate.jumpthai.workers.dev; base-uri 'none'; form-action 'none'">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#150f0c">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -60,6 +60,7 @@
   .msg.is-on{display:block}
   .msg.err{background:color-mix(in srgb,var(--seal) 16%,transparent); border:1px solid color-mix(in srgb,var(--seal) 45%,transparent)}
   .msg.warn{background:color-mix(in srgb,var(--gold) 12%,transparent); border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+  .msg.ok{border:1px solid var(--line)}
   .msg .btn{margin-top:8px}
   .modes{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; font-size:13.5px; color:var(--muted)}
   .modes[hidden]{display:none}
@@ -212,7 +213,7 @@
 <div class="app" data-tab="editor">
   <header>
     <svg class="logo" viewBox="8 -10 110 110" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6df98"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#9a7622"/></linearGradient></defs><g fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24 L30 12 L30 78"/><path d="M48 30 C48 12 78 10 80 28 C82 44 60 54 48 78 L82 78 C98 78 106 66 102 52"/></g><path d="M102 52 C96 40 102 26 116 22 C110 34 114 44 102 52Z" fill="url(#g)"/></svg>
-    <h1>จัดการไกด์อาชีพ<small>เพิ่ม แทนที่ หรือลบไกด์ได้ทีละหลายรายการ แล้วอัปขึ้น GitHub ในครั้งเดียว</small></h1>
+    <h1>จัดการไกด์อาชีพ<small>ไกด์ใหม่ส่งเข้า Discord รอ ✅ ส่วนการแทนที่หรือลบไกด์ทำได้ทีละหลายรายการ แล้วอัปขึ้น GitHub ในครั้งเดียว</small></h1>
     <span class="pill" id="pill"><i></i><span id="pillText">กำลังโหลด…</span></span>
     <button type="button" class="btn btn-sm undo" id="undoBtn" title="Ctrl+Z">↶ <span id="undoText"></span></button>
   </header>
@@ -237,7 +238,8 @@
         <div class="preview" id="preview"><span class="face" id="pvFace"></span><div><b id="pvTitle"></b><span id="pvBy"></span><div class="meta" id="pvMeta"></div></div></div>
         <div class="msg" id="msg"></div>
         <div class="modes" id="modes" hidden><span>ไกด์นี้สำหรับ</span><button type="button" class="mbtn" data-m="pve" aria-pressed="false">PVE</button><button type="button" class="mbtn" data-m="pvp" aria-pressed="false">PVP</button><small id="modesHint"></small></div>
-        <div class="row-actions"><button type="button" class="btn btn-gold" id="go" disabled>ใส่ในรายการ</button></div>
+        <div class="row-actions"><button type="button" class="btn btn-gold" id="go" disabled hidden>ใส่ในรายการ</button><button type="button" class="btn btn-gold" id="dc" disabled>ส่งเข้า Discord</button></div>
+        <div class="msg" id="dcMsg" role="status"></div>
       </section>
       <section class="card" id="queue">
         <h2>รายการที่จะอัป <span class="chip num" id="qCount">0</span><button type="button" class="btn btn-sm x" id="qUndo" title="Ctrl+Z" hidden>↶ ย้อน</button><button type="button" class="btn btn-sm" id="qClear" hidden>ล้าง</button></h2>
@@ -571,7 +573,7 @@ const FACES = {"Bat":"data:image/webp;base64,UklGRooLAABXRUJQVlA4WAoAAAAQAAAASgA
 const KEY = "__KEY__", SRV = { og: "BB", tot: "ToT", tto: "TTO" }, ACT = { add: "เพิ่ม", replace: "แทนที่", delete: "ลบ", "donor-add": "ขอบคุณ", "donor-remove": "เอาออก" }, QKEY = "12t-guide-queue";
 const $ = (s) => document.querySelector(s);
 // queue = the changes waiting to be published together; qHist = earlier queues, for Ctrl+Z. The queue survives a reload (localStorage).
-let state = null, mode = { kind: "add" }, check = null, checkTimer = 0, running = false, timer = 0, queue = [], qHist = [];
+let state = null, mode = { kind: "add" }, check = null, checkTimer = 0, running = false, timer = 0, queue = [], qHist = [], dcBusy = false;
 try { const q = JSON.parse(localStorage.getItem(QKEY) || "[]"); if (Array.isArray(q)) queue = q.filter((x) => x && ACT.hasOwnProperty(x.action) && (x.action !== "donor-add" || (x.donor && typeof x.donor === "object"))); } catch (e) {}
 const api = (url, data) => fetch(url, { method: data ? "POST" : "GET", headers: { "X-Key": KEY, "Content-Type": "application/json" }, body: data ? JSON.stringify(data) : undefined });
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -760,7 +762,7 @@ function donorQRow(x, i){
 function renderQueue(){
   $("#qCount").textContent = $("#tabBadge").textContent = queue.length; $("#tabBadge").hidden = !queue.length;
   $("#qList").innerHTML = queue.length ? queue.map((x, i) => isDonor(x) ? donorQRow(x, i) : '<li class="qrow"><span class="qa qa-' + x.action + '">' + ACT[x.action] + '</span><span class="no">#' + esc(plannedId(x, i)) + '</span><span class="face" style="background-image:url(' + face(x.classKey) + ')"></span><div class="tt"><b>' + esc(x.title) + '</b><small>' + esc(x.author) + ' · ' + kindLine(x) + '</small></div><button type="button" class="btn btn-sm qx" data-qi="' + i + '" title="เอาออกจากรายการ" aria-label="เอาออกจากรายการ">✕</button></li>').join("")
-    : '<li class="qhint">ยังไม่มีรายการ วางโค้ดด้านบนเพื่อเพิ่มหรือแทนที่ หรือกด "ลบ" ที่ไกด์ทางขวา แล้วอัปทั้งหมดในครั้งเดียว</li>';
+    : '<li class="qhint">ยังไม่มีรายการ กด "แทนที่" หรือ "ลบ" ที่ไกด์ทางขวา แล้วอัปทั้งหมดในครั้งเดียว (ไกด์ใหม่ส่งเข้า Discord ด้านบน)</li>';
   $("#qUndo").hidden = !qHist.length; $("#qClear").hidden = !queue.length;
   document.querySelectorAll(".qx, #qUndo, #qClear").forEach((b) => b.disabled = running);
 }
@@ -787,16 +789,17 @@ function showCheck(){
   if (!check) return syncGo();
   if (!check.ok){ msg.className = "msg err is-on"; msg.textContent = check.error; return syncGo(); }
   const g = check.guide;
-  $("#modes").hidden = false;
+  $("#modes").hidden = mode.kind !== "replace";   // PVE / PVP picks are for the queue; ส่งเข้า Discord sends the code as it is
   if (!check.shown){ check.shown = true; document.querySelectorAll("#modes .mbtn").forEach((b) => b.setAttribute("aria-pressed", String(g.modes.includes(b.dataset.m)))); }   // only once per code, so a queue redraw keeps the user's picks
   $("#modesHint").textContent = pressedModes().length ? "" : g.modes.length ? "เลือกอย่างน้อยหนึ่งอย่าง" : "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) เลือกให้ที่นี่ก่อนอัป";
   $("#pvFace").style.backgroundImage = "url(" + face(g.classKey) + ")"; $("#pvTitle").textContent = g.title; $("#pvBy").textContent = "โดย " + g.author;
-  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "จะได้เลข #" + (state.next + addsBefore(queue.length))) + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, "วันที่ = เวลาที่อัปโหลด"].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
-  if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่"; }
+  $("#pvMeta").innerHTML = ['<span class="chip num">' + (mode.kind === "replace" ? "แทนที่ #" + mode.id : "ได้เลขเมื่อ ✅ ใน Discord") + "</span>", cap(g.classKey), SRV[g.server], "Lv " + g.level, "วันที่ = เวลาที่อัปโหลด"].map((t, i) => i ? '<span class="chip">' + esc(t) + "</span>" : t).join("");
+  if (!g.modes.length && mode.kind !== "replace"){ msg.className = "msg warn is-on"; msg.textContent = "โค้ดนี้ยังไม่ได้เลือก PVE / PVP (ทำจากหน้าเว็บรุ่นก่อน) ให้ผู้เขียนเลือกในหน้าเขียนไกด์แล้วส่งโค้ดใหม่"; }
+  else if (blocked()){ msg.className = "msg warn is-on"; msg.textContent = "ไกด์ #" + mode.id + " อยู่ในรายการแล้ว เอาออกจากรายการก่อนถ้าจะแทนที่"; }
   else if (unchanged()){ msg.className = "msg warn is-on"; msg.textContent = "โค้ดนี้เหมือนไกด์ #" + mode.id + " ที่มีอยู่ทุกอย่าง แทนที่ไปก็ไม่มีอะไรเปลี่ยน ลองเช็กว่าได้โค้ดฉบับใหม่จากผู้เขียนแล้วหรือยัง"; }   // a heads-up only (user 2026-10-20)
   else if (check.duplicate){   // a heads-up only: the same title and author may be uploaded again (user 2026-10-20)
     msg.className = "msg warn is-on";
-    msg.innerHTML = "มีไกด์ชื่อและผู้เขียนเดียวกันอยู่แล้ว: <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> อัปเป็นไกด์ใหม่อีกอันได้" + (mode.kind === "add" && !queuedFor(check.duplicate.id) ? "<br><button type='button' class='btn btn-sm' id='useReplace'>หรือแทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>" : "");
+    msg.innerHTML = "มีไกด์ชื่อและผู้เขียนเดียวกันอยู่แล้ว: <b>#" + check.duplicate.id + " " + esc(check.duplicate.title) + "</b> ส่งเป็นไกด์ใหม่อีกอันได้" + (mode.kind === "add" && !queuedFor(check.duplicate.id) ? "<br><button type='button' class='btn btn-sm' id='useReplace'>หรือแทนที่ #" + check.duplicate.id + " ด้วยโค้ดนี้</button>" : "");
   }
   syncGo();
 }
@@ -810,6 +813,10 @@ function blocked(){ return !!(check && check.ok && mode.kind === "replace" && qu
 function syncGo(){
   $("#go").disabled = !(check && check.ok && !blocked() && pressedModes().length) || running;
   $("#go").textContent = mode.kind === "replace" ? "ใส่การแทนที่ #" + mode.id + " ในรายการ" : "ใส่ในรายการ";
+  $("#go").hidden = mode.kind !== "replace";   // a new guide is never queued (2026-11-13): it goes to Discord, whose ✅ gives it its number
+  $("#dc").disabled = !(check && check.ok && check.guide.modes.length) || dcBusy;
+  $("#code").readOnly = dcBusy;
+  $("#dc").textContent = dcBusy ? "กำลังส่ง…" : mode.kind === "replace" ? "ส่งอัปเดต #" + mode.id + " เข้า Discord" : "ส่งเข้า Discord";
   $("#publish").disabled = !queue.length || running || !state || state.dirty || !!backend.pending();
   $("#publish").textContent = $("#dry").checked ? "ตรวจอย่างเดียว (" + queue.length + " รายการ)" : "อัปขึ้น GitHub (" + queue.length + " รายการ)";
   $("#pubBar").hidden = !queue.length; $("#pubText").textContent = "รอ " + queue.length + " รายการ";   // the phone's publish bar mirrors the queue card's button
@@ -876,7 +883,7 @@ document.addEventListener("keydown", (e) => {
 function undo(){ ask("ย้อนกลับ", "<b>" + esc(state.undo) + "</b><br>จะ commit และอัปขึ้น GitHub เหมือนการเปลี่ยนแปลงปกติ", "ย้อนกลับ", false, () => { showTab("queue"); run("undo", "กำลังย้อนกลับ", (on) => backend.undo(on)); }); }
 $("#undoBtn").onclick = undo;
 $("#recheck").onclick = load;
-$("#code").addEventListener("input", () => { clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 200); });
+$("#code").addEventListener("input", () => { clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 200); if (!dcBusy) $("#dcMsg").className = "msg"; });
 $("#dry").addEventListener("change", syncGo);
 $("#modes").addEventListener("click", (e) => { const b = e.target.closest(".mbtn"); if (!b) return; b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); showCheck(); });   // PVE / PVP can turn the "nothing would change" warning on or off
 $("#search").addEventListener("input", renderList);
@@ -887,6 +894,30 @@ $("#go").onclick = () => {
   setQueue([...queue, { action: mode.kind, id: mode.kind === "replace" ? mode.id : 0, code: $("#code").value, modes: pressedModes(), title: g.title, author: g.author, classKey: g.classKey, server: g.server }]);
   setMode({ kind: "add" });
 };
+// ส่งเข้า Discord (2026-11-13): the pasted code goes to the 12tails-donate Worker's POST /guide, the same call as the Bible editor's ส่งไกด์
+// (classGuideSendCode), as a plain multipart POST (no custom headers, so no CORS preflight). replaces = the guide being replaced, empty for a new
+// one. The owner's ✅ on the Discord post puts it on the site and gives a new guide its number. One send at a time (dcBusy).
+const WORKER = "https://12tails-donate.jumpthai.workers.dev";
+const DC_ERRORS = { rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่", closed: "Worker ยังไม่เปิดรับไกด์ (ยังไม่ได้ตั้ง webhook ของช่องไกด์)", upstream: "Discord ไม่รับโพสต์ ลองใหม่อีกครั้ง",
+  origin: "Worker ไม่รับคำขอจากที่อยู่นี้ เปิดหน้านี้ที่ http://127.0.0.1:4782 หรือบน GitHub Pages", method: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", size: "โค้ดยาวเกินกว่าที่ Worker รับ", network: "ต่อ Worker ไม่ได้ ลองใหม่อีกครั้ง" };
+async function sendDiscord(){
+  if (dcBusy || !(check && check.ok)) return;
+  const replaces = mode.kind === "replace" ? mode.id : 0, say = (kind, text) => { $("#dcMsg").className = "msg is-on " + kind; $("#dcMsg").textContent = text; };
+  const body = new FormData(); body.append("code", gmFindCode($("#code").value) || ""); body.append("replaces", replaces ? String(replaces) : "");
+  dcBusy = true; syncGo(); say("", "กำลังส่งเข้า Discord…");
+  let reply = null;
+  try { reply = await (await fetch(WORKER + "/guide", { method: "POST", body })).json(); } catch (e) {}
+  dcBusy = false;
+  if (reply && reply.ok === true){
+    setMode({ kind: "add" });   // clears the code, so a second press cannot post it twice
+    say("ok", replaces ? "ส่งอัปเดต #" + replaces + " เข้า Discord แล้ว กด ✅ ที่โพสต์ แล้วฉบับนี้จะขึ้นเว็บแทน #" + replaces + " ภายในราว 1 นาที" : "ส่งเข้า Discord แล้ว กด ✅ ที่โพสต์ แล้วไกด์จะได้เลขและขึ้นเว็บภายในราว 1 นาที");
+  } else {
+    const code = reply && typeof reply.error === "string" ? reply.error : "";
+    say("err", code === "invalid" && typeof reply.message === "string" && reply.message ? reply.message : DC_ERRORS[Object.prototype.hasOwnProperty.call(DC_ERRORS, code) ? code : "network"]);
+  }
+  syncGo();
+}
+$("#dc").onclick = sendDiscord;
 $("#list").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-act]"); if (!b || b.disabled) return;
   const id = +b.closest(".row").dataset.id, g = state.guides.find((x) => x.id === id);

@@ -25,8 +25,8 @@ function thaiMs(s){
   return same ? t.getTime() - 7 * 3600000 : NaN;
 }
 
-// What a donor sends with the slip (user 2026-10-23: only the display name and the message; the owner reads the amount and the transfer time
-// off the slip): { name, msg } cleaned, or an Error with the Thai reason. checkDonation uses it for these two fields, so the rules exist once.
+// The display name and the message a donor sends with the slip: { name, msg } cleaned, or an Error with the Thai reason. checkDonation uses it
+// for these two fields, so the rules exist once. (Since 2026-11-13 the donor sends the amount too, checked by checkAmount; the date is the send time.)
 function checkSlipDetails(d){
   d = d || {};
   const name = typeof d.name === "string" ? clean(d.name) : "", msg = typeof d.msg === "string" ? clean(d.msg) : (d.msg == null ? "" : null);

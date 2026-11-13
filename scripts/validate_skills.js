@@ -3984,6 +3984,12 @@ let checkedRsim = 0;
   const embedded = vm.runInContext("CLASS_GUIDES", sandbox);
   ok(Array.isArray(embedded), "embedded guides use a data array");
   { const ids = embedded.map((g, i) => Number.isInteger(g.id) && g.id > 0 ? String(g.id) : String(i + 1)); ok(new Set(ids).size === ids.length, "embedded guide numbers are unique (link #skill-simulator/<number>): " + ids.join(", ")); embedded.forEach((g, i) => ok(Number.isInteger(g.id) && g.id > 0, "embedded guide " + (i + 1) + " has a running number id (1, 2, 3 ...)")); }
+  { // new guides are numbered by the Worker from GUIDE_NUM_FLOOR + 1 (2026-11-13), so no embedded number (tombstones included) may pass the floor
+    const floor = +((fs.readFileSync(path.join(repoRoot, "12t_projects/donate-worker/wrangler.toml"), "utf8").match(/^GUIDE_NUM_FLOOR = "(\d+)"/m) || [])[1]);
+    const nums = [...embedded.map((g) => g.id), ...[...html.matchAll(/^\s*\/\/ #(\d+) removed/gm)].map((m) => +m[1])];
+    ok(floor > 0, "GUIDE_NUM_FLOOR is read from 12t_projects/donate-worker/wrangler.toml");
+    nums.filter((id) => !(id <= floor)).forEach((id) => ok(false, `guide #${id} is above GUIDE_NUM_FLOOR ${floor}: a new embedded guide number would collide with live numbers`));
+  }
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
   const fixture = { cover:[101],modes:["pve"],format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
   const round = decode(encode(fixture));
@@ -4801,7 +4807,8 @@ async function donateChildTests(env) {
     const wrong = cases.filter(([h, room, want]) => !same(pages(h, room), want)).map(([h, room, want]) => `${JSON.stringify(h)} in ${room}: ${JSON.stringify(pages(h, room))}, expected ${JSON.stringify(want)}`);
     ok(!wrong.length, "donorListPages (rows in order, as many as fit a page, at least one row a page, each page's first row) gives " + wrong.join("; "));
   }
-  // donorSlipCheck = checkSlipDetails: the name and message rules the Worker applies (the amount and date are no longer the donor's to send)
+  // donorSlipCheck = checkSlipDetails: the name and message rules the Worker applies (since 2026-11-13 the donor also sends the amount, checked
+  // apart by checkAmount; the date is the send time the Worker stamps)
   const res = (fn, d) => { try { return { ok: fn(d) }; } catch (e) { return { err: String(e.message) }; } };
   if (have("donorSlipCheck")) {
     const cases = [{ name: "A" }, null, {}, { name: "  ก้อง\n 🐱 " }, { name: "🐱".repeat(40) }, { name: "🐱".repeat(41) }, { name: " \n " }, { name: 5 }, { name: "" },
@@ -7240,7 +7247,7 @@ function fontProblems(html) {
 }
 // Guide manager page (user 2026-10-20): the same page runs on this PC (scripts/add_guide.js serves it) and on the phone (GitHub Pages).
 // Its class faces are a copy of CLASS_HERO_ICONS (the phone never loads the 27 MB assets.js), so a repainted portrait must be copied there too.
-// It may talk only to its own server and api.github.com, and asks search engines to stay away.
+// It may talk only to its own server, api.github.com and the 12tails-donate Worker (ส่งเข้า Discord, 2026-11-13), and asks search engines to stay away.
 const GM_REL = "12t_projects/guide-manager/index.html", gmPath = path.join(repoRoot, GM_REL);
 const gmHtml = fs.existsSync(gmPath) ? fs.readFileSync(gmPath, "utf8") : null;
 {
@@ -7252,7 +7259,7 @@ const gmHtml = fs.existsSync(gmPath) ? fs.readFileSync(gmPath, "utf8") : null;
     const hero = vm.runInContext("window.CLASS_HERO_ICONS", sandbox) || {};
     if (!faces) bad(`${GM_REL}: "const FACES = {…};" (one line) not found`);
     else if (Object.keys(faces).length !== Object.keys(hero).length || Object.keys(hero).some((k) => faces[k] !== hero[k])) bad(`${GM_REL}: FACES differ from CLASS_HERO_ICONS in assets.js; copy them again`);
-    if (!/<meta http-equiv="Content-Security-Policy" content="[^"]*connect-src 'self' https:\/\/api\.github\.com[;"]/.test(gmHtml)) bad(`${GM_REL}: the Content-Security-Policy meta must limit connect-src to 'self' https://api.github.com`);
+    if (!/<meta http-equiv="Content-Security-Policy" content="[^"]*connect-src 'self' https:\/\/api\.github\.com https:\/\/12tails-donate\.jumpthai\.workers\.dev[;"]/.test(gmHtml)) bad(`${GM_REL}: the Content-Security-Policy meta must limit connect-src to 'self' https://api.github.com https://12tails-donate.jumpthai.workers.dev (the Worker, for ส่งเข้า Discord)`);
     if (!gmHtml.includes('<meta name="robots" content="noindex">')) bad(`${GM_REL}: <meta name="robots" content="noindex"> is missing`);
     for (const b of fontProblems(gmHtml)) bad(`${GM_REL}: two fonts only (Prompt; 'JetBrains Mono','Prompt',monospace for numbers): ${b.slice(0, 160)}`);
     if (!gmBad) console.log("Verified the guide manager page: class faces match assets.js, connections limited, not indexed, two fonts only.");
