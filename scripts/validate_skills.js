@@ -4035,6 +4035,8 @@ let checkedRsim = 0;
       ok(run(null) === base, "classGuideMergeLive(embedded, null) returns the embedded array itself");
       ok(ids(run([lv(107, null, { title: "New 107" })])) === "49:Guide 49, 50:Old 50, 107:New 107", "classGuideMergeLive adds a live guide numbered 107 with id 107 (got " + ids(run([lv(107, null, { title: "New 107" })])) + ")");
       ok(ids(run([lv(50, 50, { title: "New 50" })])) === "49:Guide 49, 50:New 50", "classGuideMergeLive: a live guide numbered 50 takes embedded guide 50's place, one entry (got " + ids(run([lv(50, 50, { title: "New 50" })])) + ")");
+      ok(ids(run([lv(30, null, { title: "Low 30" }), lv(49, null, { title: "Takeover 49" }), lv(50, 49, { title: "Wrong 50" })])) === "49:Guide 49, 50:Old 50", "classGuideMergeLive skips a live guide numbered at or below the floor unless it replaces the embedded guide of that number (a blank Worker floor must never take #1's place; got " + ids(run([lv(30, null, { title: "Low 30" }), lv(49, null, { title: "Takeover 49" }), lv(50, 49, { title: "Wrong 50" })])) + ")");
+      ok(/!\(Number\.isInteger\(ans\.floor\) && ans\.floor > 0\)/.test(html), "classGuideLoadLive ignores an answer whose floor is not a whole number of 1 or more");
       ok(ids(run([lv(40, 40, { title: "Back 40" })])) === "49:Guide 49, 50:Old 50", "classGuideMergeLive skips a live guide replacing 40 (at or below the floor 106) when no embedded guide 40 exists: a removed number (got " + ids(run([lv(40, 40, { title: "Back 40" })])) + ")");
       ok(ids(run([{ num: 108, replaces: null, published: "2026-11-13T10:00:00Z", guide: { format: "garbage" } }, { num: 109, replaces: null, guide: "TG3garbage" }, { num: 110, replaces: null, guide: { ...fixture, id: 110, modes: [] } }])) === "49:Guide 49, 50:Old 50", "classGuideMergeLive skips a live guide that fails classGuideNormalize (got " + ids(run([{ num: 108, guide: { format: "garbage" } }])) + ")");
       ok(ids(run([lv(111, null, { title: "First 111" }), lv(111, null, { title: "Second 111" })])) === "49:Guide 49, 50:Old 50, 111:First 111", "classGuideMergeLive keeps only the first of two live guides with the same number");
@@ -4050,9 +4052,18 @@ let checkedRsim = 0;
     ok(/deepSkill === "code"[^\n]*\._classGuide\.openCode\(/.test(routeSrc), "route() has a #class-guide/code/<code> branch that opens the code with openCode");
     ok(/deepSkill && [^\n]*classGuideLiveReady\.then\(/.test(routeSrc), "route(): #class-guide/<N> for a number not embedded waits for classGuideLiveReady before showing the list");
     const openCodeSrc = (html.match(/^  const openCode = async [\s\S]*?\n  \};/m) || [""])[0];
-    ok(openCodeSrc && /classGuideUnpack\(/.test(openCodeSrc) && /openGuide\([^\n]*"code"\)/.test(openCodeSrc) && !/storageKey|stepKey|saveDraft|localStorage|draft =|startAuthor/.test(openCodeSrc),
+    ok(openCodeSrc && /classGuideUnpack\(/.test(openCodeSrc) && /openGuide\([^\n]*"code"[,)]/.test(openCodeSrc) && !/storageKey|stepKey|saveDraft|localStorage|draft =|startAuthor/.test(openCodeSrc),
       "openCode decodes with classGuideUnpack and opens the guide read-only (openGuide ..., \"code\"), never writing the author's draft key");
-    ok(/currentId = preview \|\| code \? null : id;/.test(html), "a code preview has no guide number, so it counts no GoatCounter view and saves no tries"); }
+    ok(/currentId = preview \|\| code \? null : id;/.test(html), "a code preview has no guide number, so it counts no GoatCounter view and saves no tries");
+    // final review 2026-11-13: a shared #class-guide/code/ link must not pass for a published guide, and the owner sees why a guide would be dropped after ✅
+    ok(/const json = await classGuideUnpack\(code\); guide = classGuideImport\(json\); try \{ classGuideNormalize\(JSON\.parse\(json\)\); \} catch \(e\) \{ why = e\.message; \}/.test(openCodeSrc) && /openGuide\(guide, "code", null, false, why\)/.test(openCodeSrc),
+      "openCode runs the strict classGuideNormalize (the check classGuideMergeLive makes after ✅) on the decoded code and passes its reason to openGuide");
+    const fillSrc = (html.match(/^  function fillReader\(preview, unreviewed = null\)\{[^\n]*\n[^\n]*\n[^\n]*\n/m) || [""])[0];
+    ok(/fillReader\(preview, code \? why : null\);/.test(html) && /kind\.classList\.toggle\("is-unreviewed", unreviewed !== null\);/.test(fillSrc) && fillSrc.includes('unreviewed !== null ? "ตัวอย่างไกด์ ยังไม่ผ่านการตรวจ" + (unreviewed ? " · ขึ้นเว็บไม่ได้: " + unreviewed : "")'),
+      "a #class-guide/code/ preview's top line says ตัวอย่างไกด์ ยังไม่ผ่านการตรวจ (never PLAYER GUIDE), plus · ขึ้นเว็บไม่ได้: <reason> when the strict check fails");
+    ok(/\.cg-page\[data-mode="reader"\] \.cg-reader \.cg-kicker\.is-unreviewed\{display:block;/.test(html), "the unreviewed line is shown in reader mode, where the plain kicker is hidden");
+    { const norm = vm.runInContext("classGuideNormalize", sandbox); let why = ""; try { norm({ ...fixture, cover: [] }); } catch (e) { why = e.message; }
+      ok(/[฀-๿]/.test(why), "the strict classGuideNormalize gives a Thai reason for a guide that would be dropped (got " + JSON.stringify(why) + ")"); } }
   // ส่งไกด์ (2026-11-13): step 6 posts the guide code to the Worker's POST /guide (fields code and replaces); a guide whose title and author match one on
   // the site (embedded or live) goes as its update (#N filled for the author, who may clear it); an identical one gets a warning; one send at a time
   { const find = vm.runInContext("typeof classGuideFindSame === 'function' ? classGuideFindSame : null", sandbox);
@@ -4101,17 +4112,24 @@ let checkedRsim = 0;
           "  const classGuideUnpack = async () => JSON.stringify({ title: 'changed' });",
           "  const bodies = []; const fetch = async (url, opts) => { bodies.push(opts.body); return { json: async () => ({ ok: true }) }; };",
           "  const DONATE_API = 'https://worker.test', DONATE_ERRORS = " + json("DONATE_ERRORS") + ", CLASS_GUIDE_SEND_ERRORS = " + json("CLASS_GUIDE_SEND_ERRORS") + ";",
-          ...["classGuideId", "classGuideFindSame", "classGuideSameGuide", "donateErrorText", "classGuideSendCode", "classGuideSendSubmit"].map(fn),
+          ...["classGuideId", "classGuideFindSame", "classGuideSameGuide", "donateErrorText", "classGuideSendCode", "classGuideSendSubmit", "classGuideSendUnlock"].map(fn),
           paintSrc,
-          "  const out = [], status = { textContent: '', dataset: {} }, ui = { busy: false, btn: { disabled: false }, status, num: nodes.sendNum, code: async () => 'TG3\\u4E00', confirm: (code) => sendPaint(code) };",
+          "  const out = [], status = { textContent: '', dataset: {} }, ui = { busy: false, btn: { disabled: false, lastElementChild: { textContent: 'ส่งไกด์' } }, status, num: nodes.sendNum, code: async () => 'TG3\\u4E00', confirm: (code) => sendPaint(code), key: () => JSON.stringify(draft) + '\\n' + nodes.sendNum.value };",
           "  const shown = await classGuideSendSubmit({ ...ui, confirm: async () => true });",
           "  out.push({ pass: shown === false && bodies.length === 0, msg: 'a ส่งไกด์ press whose confirm step reports a #N just filled or a warning just shown sends nothing (got ' + bodies.length + ' sends)' });",
           "  const entry = sendPaint(null), press = classGuideSendSubmit(ui); await tick(); await tick();",
+          "  out.push({ pass: status.textContent === 'กำลังตรวจ…', msg: 'while ส่งไกด์ waits for the live guide list its status line says กำลังตรวจ… (got ' + JSON.stringify(status.textContent) + ')' });",
           "  CLASS_GUIDES.push({ id: 107, title: 'wolf  guide', author: 'KONG' }); release();",
           "  const first = await press; await entry;",
           "  out.push({ pass: first === false && bodies.length === 0 && nodes.sendNum.value === '107' && !nodes.sendHint.hidden && nodes.sendHint.textContent.includes('#107'), msg: 'a ส่งไกด์ press made while the live guide list loads (classGuideLiveReady pending), where the list then fills #107, does not send on that press but shows the hint (got ' + JSON.stringify({ first, sends: bodies.length, num: nodes.sendNum.value, hint: nodes.sendHint.textContent }) + ')' });",
           "  const second = await classGuideSendSubmit(ui);",
           "  out.push({ pass: second === true && bodies.length === 1 && bodies[0].get('replaces') === '107' && status.textContent === 'ส่งแล้ว ไกด์จะขึ้นหลังตรวจ', msg: 'the next press sends the guide as the update of #107 (got ' + JSON.stringify({ second, sends: bodies.length, status: status.textContent }) + ')' });",
+          "  const after = [ui.btn.disabled, ui.btn.lastElementChild.textContent]; classGuideSendUnlock(ui); const still = [ui.btn.disabled, status.textContent];",
+          "  out.push({ pass: after[0] === true && after[1] === 'ส่งแล้ว' && still[0] === true && still[1] === 'ส่งแล้ว ไกด์จะขึ้นหลังตรวจ', msg: 'after a send ส่งไกด์ stays disabled as ส่งแล้ว while nothing changed, so a second press cannot post the guide twice (got ' + JSON.stringify({ after, still }) + ')' });",
+          "  draft = { ...draft, title: 'Wolf Guide v2' }; classGuideSendUnlock(ui);",
+          "  out.push({ pass: ui.btn.disabled === false && ui.btn.lastElementChild.textContent === 'ส่งไกด์' && status.textContent === '', msg: 'an edit after the send (classGuideSendUnlock) enables ส่งไกด์ again and clears ส่งแล้ว (got ' + JSON.stringify({ disabled: ui.btn.disabled, label: ui.btn.lastElementChild.textContent, status: status.textContent }) + ')' });",
+          "  await classGuideSendSubmit(ui); const third = await classGuideSendSubmit(ui), sentAgain = ui.btn.disabled; nodes.sendNum.value = '108'; classGuideSendUnlock(ui);",
+          "  out.push({ pass: third === true && bodies.length === 2 && sentAgain === true && ui.btn.disabled === false, msg: 'changing #N after a send enables ส่งไกด์ again too (got ' + JSON.stringify({ third, sends: bodies.length, sentAgain, disabled: ui.btn.disabled }) + ')' });",
           "  process.stdout.write(JSON.stringify(out));",
           "})().catch((e) => { process.stdout.write(JSON.stringify([{ pass: false, msg: 'the ส่งไกด์ timing checks threw: ' + String(e && e.stack || e) }])); });",
         ].join("\n");
@@ -4128,8 +4146,8 @@ let checkedRsim = 0;
     const lines = html.split(/\r?\n/), checkLine = (needle) => lines.some((l) => l.includes(needle) && /act === "send"/.test(l));
     ok(["classGuideStatsProblem(draft.stats) || statTypo()))", "!(draft && draft.title && draft.title.trim() && draft.author", "!(draft && draft.modes && draft.modes.length)", "!(draft && draft.cover && draft.cover.length)", "buildProblems().length)) guardBuild();"].every(checkLine),
       "ส่งไกด์ runs the same checks as คัดลอกโค้ดไกด์ (stats, title and author, PVE / PVP, cover, build)");
-    ok(/else if \(act === "send"\)\{[^\n]*classGuideSendSubmit\(sendUi\)/.test(html) && /code: \(\) => classGuidePack\(collect\(\)\)/.test(html) && /await classGuideLiveReady;/.test((html.match(/async function sendPaint\([\s\S]*?\n  \}/) || [""])[0]),
-      "the ส่งไกด์ branch sends classGuidePack(collect()) (the code คัดลอกโค้ดไกด์ copies) through classGuideSendSubmit, and #N waits for the live guides"); }
+    ok(/else if \(act === "send"\)\{[^\n]*classGuideSendSubmit\(sendUi\)/.test(html) && /code: \(\) => classGuidePack\(collect\(\)\)[^\n]*key: \(\) => JSON\.stringify\(draft\) \+ "\\n" \+ el\("sendNum"\)\.value/.test(html) && /draft = collect\(\); [^\n]*classGuideSendUnlock\(sendUi\);/.test(html) && /el\("sendNum"\)\.addEventListener\("input", [^\n]*classGuideSendUnlock\(sendUi\)/.test(html) && /await classGuideLiveReady;/.test((html.match(/async function sendPaint\([\s\S]*?\n  \}/) || [""])[0]),
+      "the ส่งไกด์ branch sends classGuidePack(collect()) (the code คัดลอกโค้ดไกด์ copies) through classGuideSendSubmit, #N waits for the live guides, and every draft or #N edit runs classGuideSendUnlock"); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
   rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
   rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");

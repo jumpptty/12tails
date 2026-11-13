@@ -2697,6 +2697,7 @@
   .cg-title-server{width:26px;height:26px}
   .cg-title-lv{font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap}
   .cg-outdated{margin:6px 0 0;color:var(--seal);font-size:13px;font-weight:600;line-height:1.5}
+  .cg-page[data-mode="reader"] .cg-reader .cg-kicker.is-unreviewed{display:block;color:var(--seal);font-size:13px;font-weight:600;letter-spacing:0;line-height:1.5}   /* a #class-guide/code/ preview: ตัวอย่างไกด์ ยังไม่ผ่านการตรวจ (and why it would be dropped) */
   .cg-unspent{font-size:12px;font-weight:600;line-height:1;padding:4px 8px;border-radius:999px;color:var(--pro);border:1px solid currentColor;background:color-mix(in srgb, var(--pro) 12%, transparent);white-space:nowrap;cursor:help}
   .cg-title-text{display:block;overflow-wrap:anywhere}
   .cg-word{display:inline-block;max-width:100%;overflow-wrap:anywhere}   /* a title chunk stays whole (classGuideTitleInto) */
@@ -34521,14 +34522,16 @@ function classGuideImport(code){
 }
 // ✅'d class guides live from Discord (2026-11-13): the Worker's GET /api/guides answer ({ floor, guides: [{ num, replaces, guide, published, msg }] }, each
 // guide already decoded, with id = num) joined to the embedded list. A live guide numbered N takes embedded guide N's place (an approved update, same spot
-// in the list) or joins the end (a new number, above the floor). Skipped: one that replaces a removed number (replaces at or below the floor while no
-// embedded guide has that number), one that does not validate (classGuideNormalize, like an invalid embedded entry), a second one with the same number.
+// in the list) or joins the end (a new number, above the floor). Skipped: one numbered at or below the floor unless it replaces the embedded guide of
+// that number, one that replaces a removed number (replaces at or below the floor while no embedded guide has that number), one that does not validate
+// (classGuideNormalize, like an invalid embedded entry), a second one with the same number.
 function classGuideMergeLive(embedded, live, floor){
   if (!Array.isArray(live)) return embedded;
   const out = embedded.slice(), at = new Map(out.map((g, i) => [classGuideId(g, i), i])), seen = new Set();
   for (const x of live){
     const num = x && x.num;
     if (!Number.isInteger(num) || num < 1 || seen.has(num)) continue;   // first wins, so a bad answer cannot show a guide twice
+    if (num <= floor && !(x.replaces === num && at.has(String(num)))) continue;   // a number up to the floor is an embedded guide's: only its update may take it
     if (Number.isInteger(x.replaces) && x.replaces <= floor && !at.has(String(x.replaces))) continue;   // a removed number never comes back
     try { classGuideNormalize(x.guide); } catch (e) { continue; }
     seen.add(num);
@@ -34567,26 +34570,40 @@ async function classGuideSendCode(code, replaces){
   if (!reply || reply.ok !== true) throw new Error(donateErrorText(reply, CLASS_GUIDE_SEND_ERRORS));
 }
 // the ส่งไกด์ button after the editor's checks (ui = { busy, btn, status, num: the #N field, code: () => the guide code, confirm: code => true when
-// the #N hint or the identical-guide warning has just changed, so this press only shows it and the next one sends }). ui.busy and the disabled
-// button keep a double tap from sending twice. True when sent.
+// the #N hint or the identical-guide warning has just changed, so this press only shows it and the next one sends; key: () => what would be sent,
+// as text }). ui.busy and the disabled button keep a double tap from sending twice; after a send the button stays disabled as ส่งแล้ว (ui.sent)
+// until the key changes (classGuideSendUnlock), so a second press cannot post the same guide again. True when sent.
 async function classGuideSendSubmit(ui){
   if (ui.busy) return false;
   const say = (text, kind) => { ui.status.textContent = text; ui.status.dataset.kind = kind; };
   ui.busy = true; ui.btn.disabled = true;
+  let sent = false; const key = ui.key ? ui.key() : null;
   try {
+    say("กำลังตรวจ…", "busy");   // the code is packed and the live guide list may still be loading (up to 8 s)
     const code = await ui.code();
     if (await ui.confirm(code)){ say("", ""); return false; }
     const raw = String(ui.num.value).trim();
     if ((raw && !/^[1-9]\d{0,8}$/.test(raw)) || (ui.num.validity && ui.num.validity.badInput)) throw new Error(CLASS_GUIDE_SEND_ERRORS.num);
     say("กำลังส่ง…", "busy");
     await classGuideSendCode(code, raw ? +raw : null);
-    say("ส่งแล้ว ไกด์จะขึ้นหลังตรวจ", "ok");
+    say("ส่งแล้ว ไกด์จะขึ้นหลังตรวจ", "ok"); sent = true;
     return true;
   } catch (e) {
     const text = e && typeof e.message === "string" ? e.message : "";
     say(/[\u0E00-\u0E7F]/.test(text) ? text : CLASS_GUIDE_SEND_ERRORS.network, "error");   // our own reasons are Thai; anything else is the plain retry text
     return false;
-  } finally { ui.busy = false; ui.btn.disabled = false; }
+  } finally {
+    ui.busy = false; ui.sent = sent; ui.sentKey = key; ui.btn.disabled = sent;
+    const label = ui.btn.lastElementChild; if (label) label.textContent = sent ? "ส่งแล้ว" : "ส่งไกด์";
+    if (sent) classGuideSendUnlock(ui);   // the draft changed during the send: ready again at once
+  }
+}
+// any edit after a send (the draft or #N, the editor's saveDraft and the #N field): ส่งไกด์ is enabled again and the ส่งแล้ว line goes
+function classGuideSendUnlock(ui){
+  if (!ui.sent || !ui.key || ui.key() === ui.sentKey) return;
+  ui.sent = false; ui.btn.disabled = ui.busy;
+  const label = ui.btn.lastElementChild; if (label) label.textContent = "ส่งไกด์";
+  ui.status.textContent = ""; ui.status.dataset.kind = "";
 }
 // Short guide code (user 2026-10-16). Exports use format 3 ("TG3": the format 2 bytes as CJK characters, below); formats 2 ("TG2.") and 1 ("12TG1.") still import. Format 1: "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
 // tree x row x column slot, in base64url) as JSON, compressed with deflate-raw, in URL-safe base64 (A-Z a-z 0-9 - _).
@@ -36380,7 +36397,7 @@ function mountClassGuide(root){
   let readerCtx = null, readerCast = null, viewStats = null, resetUndo = null;   // viewStats: the reader's own try-out values (start as the author's); resetUndo: the tries before ↺ คืนสู่ค่าแนะนำ, for Ctrl+Z
   const saveDraft = () => {
     if (mode !== "author") return;
-    draft = collect(); syncExtrasSum(); updateSteps();
+    draft = collect(); syncExtrasSum(); updateSteps(); classGuideSendUnlock(sendUi);   // an edit after ส่งไกด์ makes it sendable again
     try { localStorage.setItem(storageKey, JSON.stringify(draft)); } catch (e) { status("บันทึกร่างในเบราว์เซอร์ไม่ได้ กรุณาส่งออกโค้ดเก็บไว้"); }
   };
   mountSkillSimulator(simRoot, {
@@ -36751,8 +36768,8 @@ function mountClassGuide(root){
     hint.textContent = lines.join("\n"); hint.hidden = !lines.length;
     return input.value + "\n" + hint.textContent !== was;
   }
-  el("sendNum").addEventListener("input", () => { sendTyped = sendWho(); sendPaint(null); });
-  const sendUi = { busy: false, btn: button("send"), status: el("sendStatus"), num: el("sendNum"), code: () => classGuidePack(collect()), confirm: code => sendPaint(code) };
+  el("sendNum").addEventListener("input", () => { sendTyped = sendWho(); sendPaint(null); classGuideSendUnlock(sendUi); });
+  const sendUi = { busy: false, btn: button("send"), status: el("sendStatus"), num: el("sendNum"), code: () => classGuidePack(collect()), confirm: code => sendPaint(code), key: () => JSON.stringify(draft) + "\n" + el("sendNum").value };
   function updateSteps(){
     if (!draft) return;
     placeEdCast();
@@ -37059,8 +37076,9 @@ function mountClassGuide(root){
   function toggleCover(id){
     coverChange(list => { const k = list.indexOf(id); if (k >= 0) list.splice(k, 1); else if (list.length < 5) list.push(id); else status("ไอคอนหน้าปกเลือกได้สูงสุด 5 สกิล คลิกสกิลที่เลือกไว้เพื่อเอาออกก่อน"); });
   }
-  function fillReader(preview){   // the guide panel for `current`: title row, byline, description, stats, sets (openGuide, and step 1's measuring pass)
-    el("readerKind").textContent = preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "PLAYER GUIDE";
+  function fillReader(preview, unreviewed = null){   // the guide panel for `current`: title row, byline, description, stats, sets (openGuide, and step 1's measuring pass); unreviewed: a #class-guide/code/ preview's reason it would not go up ("" = none), null for any other guide
+    const kind = el("readerKind"); kind.classList.toggle("is-unreviewed", unreviewed !== null);
+    kind.textContent = unreviewed !== null ? "ตัวอย่างไกด์ ยังไม่ผ่านการตรวจ" + (unreviewed ? " · ขึ้นเว็บไม่ได้: " + unreviewed : "") : preview ? (current.author || "ยังไม่ระบุผู้เขียน") : "PLAYER GUIDE";
     // Title (user 2026-10-15): a row of the class icon, the server icon and "Lv.95" above the guide name (the name gets the full width); the byline is the author in gold and the patch.
     el("guideTitle").textContent = "";
     const titleMeta = document.createElement("span"); titleMeta.className = "cg-title-meta";
@@ -37083,7 +37101,7 @@ function mountClassGuide(root){
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear;
   }
-  function openGuide(guide, preview = false, id = null, keep = false){   // preview: true = the editor's preview, "code" = a #class-guide/code/<code> link (read-only, no number); keep = the same guide drawn again (classGuideLoadLive): its view count, address, page and scroll stay
+  function openGuide(guide, preview = false, id = null, keep = false, why = ""){   // why: for "code", the strict check's reason the guide would be dropped after ✅ ("" = it would go up); preview: true = the editor's preview, "code" = a #class-guide/code/<code> link (read-only, no number); keep = the same guide drawn again (classGuideLoadLive): its view count, address, page and scroll stay
     const code = preview === "code"; preview = preview === true;
     current = classGuideNormalize(guide, { draft: preview || code }); currentId = preview || code ? null : id; if (!keep) descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
     if (currentId && !keep){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
@@ -37097,7 +37115,7 @@ function mountClassGuide(root){
     button("useAsBase").hidden = preview || code;
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
     setToolServer("class-guide", current.build.server);
-    fillReader(preview);
+    fillReader(preview, code ? why : null);
     button("returnAuthor").hidden = !preview; backBtn.lastChild.textContent = preview ? "กลับไปแก้ไกด์" : "ไกด์จากผู้เล่น"; backBtn.setAttribute("aria-label", backBtn.lastChild.textContent);   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
     classGuideFlaskFill(el("guideStats"));
     readerCtx = classGuideReaderCtx(current); readerCast = classGuideStatTips(current.build); viewStats = classGuideNumericStats(current.stats); resetUndo = null; placeReaderCast(); if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
@@ -37745,10 +37763,10 @@ function mountClassGuide(root){
     openGuide(guide, false, id); return true;
   };
   const openCode = async code => {   // #class-guide/code/<code> (the ดูตัวอย่าง link in Discord, 2026-11-13): the code read-only in the reader, never put into the draft; a damaged code shows the list and why
-    const at = location.hash; let guide;
-    try { try { code = decodeURIComponent(code); } catch (e) {} guide = classGuideImport(await classGuideUnpack(code)); }
+    const at = location.hash; let guide, why = "";
+    try { try { code = decodeURIComponent(code); } catch (e) {} const json = await classGuideUnpack(code); guide = classGuideImport(json); try { classGuideNormalize(JSON.parse(json)); } catch (e) { why = e.message; } }   // why: the strict check classGuideMergeLive makes, so the owner sees a guide that would be dropped after ✅
     catch (e){ if (location.hash === at){ showGallery(); status(e.message); } return; }
-    if (location.hash === at) openGuide(guide, "code");
+    if (location.hash === at) openGuide(guide, "code", null, false, why);
   };
   window.addEventListener("cg-live", () => {   // the ✅'d guides from Discord arrived (classGuideLoadLive): the filters and the list are drawn again on the same page, and an open guide that changed is drawn again in place
     syncFilters(); if (mode === "gallery") renderGallery(true);
@@ -39834,6 +39852,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-13T08:25:28.485Z","fix(bible): code previews say ยังไม่ผ่านการตรวจ and why a guide would be dropped; ส่งไกด์ stays sent until the draft changes"],
     ["2026-11-13T07:59:58.013Z","chore: retire the guide manager (page, phone workflow, local server); old guides are replaced or removed by Claude with add_guide.js replace|delete"],
     ["2026-11-13T07:29:29.690Z","fix(bible): ส่งไกด์ pressed while the live guide list loads shows the update hint first and sends on the next press"],
     ["2026-11-13T07:21:58.108Z","feat(bible): ส่งไกด์ in the guide editor sends the guide for ✅ approval, as an update when its title and author match"],
@@ -41147,7 +41166,7 @@ async function classGuideLoadLive(){
     let ans = null;
     try { const r = await fetch(DONATE_API + "/api/guides", { signal: stop.signal }); if (r.ok) ans = await r.json(); }
     finally { clearTimeout(timer); }
-    if (!ans || !Array.isArray(ans.guides) || !Number.isInteger(ans.floor)) return;
+    if (!ans || !Array.isArray(ans.guides) || !(Number.isInteger(ans.floor) && ans.floor > 0)) return;
     const merged = classGuideMergeLive(CLASS_GUIDES, ans.guides, ans.floor);
     if (merged.length === CLASS_GUIDES.length && merged.every((g, i) => g === CLASS_GUIDES[i])) return;   // nothing new
     CLASS_GUIDES.splice(0, CLASS_GUIDES.length, ...merged);

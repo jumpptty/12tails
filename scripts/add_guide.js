@@ -260,5 +260,6 @@ async function selftest(){
 
 // ---------- start ----------
 const words = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--modes");
-if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
+if (require.main !== module) { /* required, not run: start nothing */ }
+else if (has("--selftest")) selftest().catch((e) => { console.error(e.message); process.exit(1); });
 else cli(words).catch((e) => { console.error("\n✗ " + e.message); process.exit(1); });

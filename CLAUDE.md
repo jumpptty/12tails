@@ -34,7 +34,7 @@ python scripts/decode_skilldata.py DecompiledSource/<Class>Skill.cs   # decode c
 node scripts/guide_code.js decode <code | file>                # turn a submitted class guide short code (TG3, TG2. or 12TG1.) into the JSON object to embed (also: encode <json> -> TG3, --selftest)
 node scripts/guide_draft.js layout <class> [server]            # a class's skill-sim rows with cell ids (also: build <draft.json> [out.json] -> checked guide + TG3 code, --selftest)
 node scripts/guide_views.js                                     # refresh CLASS_GUIDE_VIEWS (guide readers for ad-blocked browsers) from GoatCounter; by hand only, NOT before commits since 2026-10-20 (user: the live API does the work) (--dry-run: print only)
-node scripts/add_guide.js replace <N> <code> | delete <N>  [--dry-run | --no-push | --yes]   # Claude only: replace or remove an embedded class guide (changelog, plain validator, one commit, push); `add` refuses (new guides: the Bible editor's ส่งไกด์ + the owner's ✅ in Discord). The guide manager page and its phone workflow were retired 2026-11-13 (CLASS-GUIDES.md)
+node scripts/add_guide.js replace <N> <code> | delete <N>  [--dry-run | --no-push | --yes | --modes pve,pvp]   # Claude only: replace or remove an embedded class guide (changelog, plain validator, one commit, push); `add` refuses (new guides: the Bible editor's ส่งไกด์ + the owner's ✅ in Discord). The guide manager page and its phone workflow were retired 2026-11-13 (CLASS-GUIDES.md)
 node scripts/add_guide.js --selftest                            # the pipeline on throwaway repos
 
 node 12t_projects/donate-worker/test.mjs                        # the ☕ slip Worker (fake Discord fetch + fake rate limiter); setup steps in 12t_projects/donate-worker/README.md
