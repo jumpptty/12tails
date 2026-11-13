@@ -17,7 +17,7 @@ Secrets exist only as Worker secrets, never in a file of this repo. Runs on the 
 | `GET /api/guides` | The ✅'d guides as `{ "floor", "guides": [...] }`. |
 | `GET /g/<msgId>.<sig>` | The ดูตัวอย่าง link: opens the guide in the Bible. Only a link the Worker made itself works (the `<sig>` is checked). |
 
-Any other path answers 404 `not-found`.
+Any other path answers 404 `not-found`. A bad or unsigned `/g/...` link answers a plain-text 404 `not found`; `/g/...` with `DISCORD_BOT_TOKEN` or `GUIDE_CHANNEL` missing answers 503 `closed` (plain text).
 
 ## Variables and secrets
 
@@ -68,7 +68,13 @@ Slips only (`DISCORD_WEBHOOK_URL`) were set up before; steps 1 to 5 add the guid
    1. Send a slip from the ☕ pop-up and a guide from the guide page.
    2. In Discord, react ✅ on both posts.
    3. Open the site: the slip shows in the donor list and the guide in the guide list.
-   4. Open `<Worker address>/api/donors` from the Bible page's origin (or check the site twice): the **second** request within 60 seconds must show the response header `x-list-cache: hit` (the first shows `miss`). The same for `/api/guides`.
+   4. Run this twice within 60 seconds (Windows; on Linux or Mac use `-o /dev/null`). The address bar cannot do this check: it sends no `Origin` header, so the Worker answers 403 `origin`.
+
+      ```sh
+      curl -s -D - -o NUL -H "Origin: https://jumpptty.github.io" https://12tails-donate.<your-subdomain>.workers.dev/api/donors
+      ```
+
+      Look for the line `x-list-cache`: the first run shows `miss`, the second should show `hit`. The copy is kept per Worker instance, so a `miss` on the second run can just mean another instance answered; try a few more times. Only "never `hit`" is a problem. Do the same for `/api/guides`.
    5. Remove the ✅ from both posts. After up to 60 seconds each one leaves the site.
 
 If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and every page view reads Discord. The upgrade is a Durable Object that keeps the copy (not needed unless this happens).
@@ -76,7 +82,7 @@ If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and e
 ## Owner rules
 
 - **The ✅ is the approval.** Any ✅ in the channel counts, from anyone who can see it, so keep both channels private.
-- **Amount reply.** A slip without an amount says so in the post. Reply to that post with just the number, e.g. `150` or `1,500`. A reply that is not a valid amount is ignored; the latest valid reply wins. A slip with no amount at all (no reply, none in the form) does not show.
+- **Amount reply.** The ☕ form asks for the amount, but the Worker still accepts a slip without one (for example from an old cached page). Then the text above the slip says `ไม่มียอด ตอบกลับโพสต์นี้ด้วยยอดเงิน`. Reply to that post with just the number, e.g. `150` or `1,500`. The donor stays off the list until you reply. A reply that is not a valid amount is ignored; the latest valid reply wins. Your reply also overrides an amount sent in the form.
 - **Never delete a numbered guide post.** The guide's number is written into its post (the footer); deleting the post loses the number. To take a guide off the site, remove its ✅ instead.
 - **Delete rejected posts** (slips or guides you will never ✅); they are only clutter and cost nothing to remove.
 
@@ -107,7 +113,7 @@ Common to all routes:
 
 `GET /api/donors` and `GET /api/guides`:
 
-- Answer `closed` (503) until the secrets and vars they need are set (`DISCORD_BOT_TOKEN` and the channel id; for guides also `DISCORD_GUIDE_WEBHOOK_URL` and `GUIDE_NUM_FLOOR`), and `upstream` (502) if Discord fails.
+- Answer `closed` (503) until what they need is set: `/api/donors` needs `DISCORD_BOT_TOKEN`, `SLIP_CHANNEL` and a valid `DISCORD_WEBHOOK_URL` (its id is read from it); `/api/guides` needs `DISCORD_BOT_TOKEN`, `GUIDE_CHANNEL`, a valid `DISCORD_GUIDE_WEBHOOK_URL` and `GUIDE_NUM_FLOOR`. `upstream` (502) if Discord fails.
 - The answer is kept for 60 seconds (`x-list-cache: hit` or `miss`), so Discord is read at most about once a minute per Worker copy, however many people open the page.
 
 ## Android note
