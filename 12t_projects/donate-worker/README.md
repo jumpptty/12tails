@@ -95,7 +95,7 @@ If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and e
 
 Common to all routes:
 
-- Only requests from `https://jumpptty.github.io` (and `null`, a double-clicked local copy of the page); any other origin gets 403 `origin`.
+- Only requests from `https://jumpptty.github.io` (and `null`, a double-clicked local copy of the page, and `http://127.0.0.1:4782`, the guide manager that `scripts/add_guide.js` serves, for its ส่งเข้า Discord); any other origin gets 403 `origin`.
 - Wrong HTTP method: 405 `method`.
 - `POST /slip` and `POST /guide` share the limit of 2 requests per minute per IP (binding `SLIP_LIMIT`), otherwise 429 `rate`.
 
