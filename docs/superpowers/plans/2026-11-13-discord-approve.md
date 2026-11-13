@@ -231,6 +231,19 @@
 - [ ] **Step 4:** `node scripts/add_guide.js --selftest`, `node 12t_projects/donate-worker/test.mjs` and `node scripts/validate_skills.js` all pass.
 - [ ] **Step 5: Commit:** `feat(guide-manager): new guides go through ส่งเข้า Discord for ✅ approval; add_guide.js add is retired`
 
+### Task 8b: Retire the guide manager (user 2026-11-13: "Button striped, guide manager retired. Editing old guides will be done thru Claude anyway")
+
+**Files:**
+- Delete: `12t_projects/guide-manager/` (the page; GitHub Pages stops serving it after the push), `.github/workflows/guide-manager.yml`, `scripts/add_guide.cmd`
+- Modify: `scripts/add_guide.js` (keep only the CLI `replace <N> <code>` and `delete <N>`, with `--dry-run`, `--no-push` and `--yes`, plus `add`, which still refuses; remove the local page server, its start-up key and Host/Origin checks, and the `batch` stages; `--selftest` keeps replace, delete, undo-free CLI coverage and the add refusal), `scripts/donors.js` (remove `donorFragment` / `fromFragment` and their selftest cases if nothing else uses them; keep everything the Worker and the page use), `scripts/validate_skills.js` (remove the "[GUIDE MANAGER ERROR]" checks that read the deleted page: FACES, gm-core, the GitHub reply shapes, the gm donor copies and the CSP; keep the GUIDE_NUM_FLOOR check and every page and donors.js check), `12t_projects/donate-worker/src/discord.js` (ORIGINS back to `[SITE, "null"]`), the docs (`12t_projects/bible/CLASS-GUIDES.md` maintainer section, the root `CLAUDE.md` commands list, `AGENTS.md` deliverables list, `.claude/skills/bible-hub-tools/SKILL.md`, `12t_projects/donate-worker/README.md`: the guide manager is gone; old guides are replaced or removed by Claude with `add_guide.js replace|delete`; old embedded donors are edited by Claude in `DONORS`; old อนุมัติ links in Discord now lead nowhere)
+
+**Interfaces:**
+- Produces: `node scripts/add_guide.js replace <N> <code> | delete <N> [--dry-run | --no-push | --yes]` (unchanged pipeline: changelog, plain validator, one commit, push unless `--no-push`); `add` refuses.
+
+- [ ] **Step 1:** `grep -rn "guide-manager\|add_guide.cmd\|gm[A-Z]\|donorFragment\|fromFragment" --include=*.js --include=*.md --include=*.yml --include=*.html .`, excluding `DecompiledSource*`, `RippedAssets*` and `docs/superpowers/` history. List every hit and decide for each one: removed, or kept with a reason.
+- [ ] **Step 2: Remove.** Run `node scripts/add_guide.js --selftest`, `node scripts/donors.js --selftest`, `node 12t_projects/donate-worker/test.mjs` and `node scripts/validate_skills.js`. All pass.
+- [ ] **Step 3: Commit:** `chore: retire the guide manager (page, phone workflow, local server); old guides are replaced or removed by Claude with add_guide.js replace|delete`
+
 ### Task 9: Owner's turn (not Claude)
 
 - [ ] The owner does the README setup (Task 4), runs `npx wrangler deploy`, and does the live check. Only then `git push`: the page changes call routes that do not exist until the deploy.
