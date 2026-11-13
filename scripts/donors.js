@@ -37,17 +37,28 @@ function checkSlipDetails(d){
   return { name, msg };
 }
 
+const AMOUNT_ERR = () => "ยอดเงินต้องมากกว่า 0 และไม่เกิน " + LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)";
+// An amount in baht, a number or a typed string ("1,500", "12.5"), -> baht rounded to satang, or an Error with the Thai reason.
+function checkAmount(a){
+  if (typeof a === "string"){
+    if (!/^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/.test(a)) throw new Error(AMOUNT_ERR());
+    a = Number(a.replace(/,/g, ""));
+  }
+  if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > LIMITS.amountMax || Math.abs(a * 100 - satang(a)) > 1e-6) throw new Error(AMOUNT_ERR());
+  return satang(a) / 100;
+}
+
 // A whole donation as it is published (name, message, the amount and the transfer time the owner typed from the slip).
 function checkDonation(d, now = new Date()){
   d = d || {};
   const { name, msg } = checkSlipDetails(d);
   const a = d.amount;
-  if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > LIMITS.amountMax || Math.abs(a * 100 - satang(a)) > 1e-6)
-    throw new Error("ยอดเงินต้องมากกว่า 0 และไม่เกิน " + LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)");
+  if (typeof a !== "number") throw new Error(AMOUNT_ERR());   // a string is for checkAmount's callers (the slip form, the owner's reply), not a donation record
+  const amount = checkAmount(a);
   const t = thaiMs(d.date);
   if (isNaN(t)) throw new Error("วันเวลาที่โอนไม่ถูกต้อง (รูปแบบ YYYY-MM-DDTHH:MM)");
   if (t < thaiMs(LIMITS.dateMin) || t > now.getTime() + 24 * 3600000) throw new Error("วันเวลาที่โอนอยู่นอกช่วงที่รับ (ตั้งแต่ 2020-01-01 ถึงไม่เกินพรุ่งนี้)");
-  return { name, msg, amount: satang(a) / 100, date: d.date };
+  return { name, msg, amount, date: d.date };
 }
 
 function newKey(){
@@ -126,6 +137,13 @@ function selftest(){
     "checkDonation amount"(){
       [50, 0.5, 1000000].forEach((a) => assert.strictEqual(ok({ amount: a }).amount, a));
       [0, -1, 1.234, 1000000.01, "50", NaN, Infinity].forEach((a) => bad({ amount: a }, /ยอดเงิน/));
+    },
+    "checkAmount"(){
+      const { checkAmount } = module.exports;
+      assert.strictEqual(checkAmount(50), 50);
+      assert.strictEqual(checkAmount("1,500"), 1500);
+      assert.strictEqual(checkAmount("12.5"), 12.5);
+      [0, -1, 1.234, "150 บาท", "1,50", "", "abc", 1000000.01, NaN].forEach((a) => assert.throws(() => checkAmount(a), /ยอดเงิน/));
     },
     "checkDonation date"(){
       assert.strictEqual(ok({}).date, "2026-10-23T14:05");
@@ -212,5 +230,5 @@ function selftest(){
   console.log("donors selftest: all checks passed (" + n + ")");
 }
 
-module.exports = { LIMITS, checkSlipDetails, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment };
+module.exports = { LIMITS, checkSlipDetails, checkAmount, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment };
 if (require.main === module && process.argv.includes("--selftest")) selftest();
