@@ -8814,6 +8814,7 @@
         <form class="donate-form" id="donateForm" novalidate>
           <label class="donate-field is-wide">ชื่อที่แสดง<input type="text" id="donateName" name="name" autocomplete="nickname" placeholder="ชื่อในเกมหรือชื่อเล่นก็ได้"></label>
           <label class="donate-field is-wide">ข้อความ (ไม่ใส่ก็ได้)<textarea id="donateMsg" name="msg" rows="2" placeholder="ฝากข้อความสั้น ๆ"></textarea></label>
+          <label class="donate-field is-wide">ยอดเงิน (บาท)<input type="text" id="donateAmount" name="amount" inputmode="decimal" autocomplete="off" placeholder="ยอดตามสลิป เช่น 100"></label>
           <label class="donate-field is-wide">รูปสลิป<input type="file" id="donateSlip" name="slip" accept="image/*"></label>
           <div class="donate-send-row">
             <button type="submit" class="donate-btn" id="btnDonateSend">ส่งสลิป</button>
@@ -33661,18 +33662,20 @@ const DONORS = [
   {"k":"7660b15d","id":"31366c07","name":"Columbus","msg":"ขอบคุณเว็ปดี ๆ นะค้าบ","amount":99,"date":"2026-11-09T22:13"},
 ];
 // ☕ pop-up (user 2026-10-23): the donors' names and three tabs under the thank-you text: QR โอนเงิน (the QR card, DONATE_QR in assets.js, to scan or save),
-// ส่งสลิป (an optional slip form of name, message and slip that goes to the user's Discord through the Cloudflare Worker,
-// 12t_projects/donate-worker, which stores nothing; the user reads the amount and date off the slip) and รายชื่อผู้สนับสนุน (the donor list
-// from DONORS above). DONOR_LIMITS, donorSlipCheck and donorRows are scripts/donors.js's LIMITS, checkSlipDetails and groupDonors word for
-// word (the validator checks that they agree), so nothing the Worker would refuse leaves the page. Dates are Thailand time (UTC+7).
+// ส่งสลิป (an optional slip form of name, message, amount and slip that goes to the user's Discord through the Cloudflare Worker,
+// 12t_projects/donate-worker; the user checks the slip and approves it there with a ✅, and the Worker serves the approved ones at
+// GET /api/donors) and รายชื่อผู้สนับสนุน (the donor list: DONORS above plus those live rows, donorMergeLive). DONOR_LIMITS, donorSlipCheck,
+// donorAmountCheck and donorRows are scripts/donors.js's LIMITS, checkSlipDetails, checkAmount and groupDonors word for word (the validator
+// checks that they agree), so nothing the Worker would refuse leaves the page. Dates are Thailand time (UTC+7).
 const DONATE_QR = BIBLE_ASSETS_IN.DONATE_QR || "";
 const DONATE_WORKER_URL = "https://12tails-donate.jumpthai.workers.dev/slip";
+const DONATE_API = DONATE_WORKER_URL.replace(/\/slip$/, "");   // the Worker's root: GET /api/donors serves the ✅'d slips
 const DONOR_LIMITS = { name: 40, msg: 200, amountMax: 1000000, slipBytes: 5242880, slipTypes: ["image/jpeg", "image/png", "image/webp"], dateMin: "2020-01-01T00:00" };
 // the Worker's error codes in Thai ("invalid" shows the Worker's own message, see donateErrorText); network = no answer or one that is not JSON
 const DONATE_ERRORS = { missing: "กรอกให้ครบทุกช่องและแนบสลิป", "file-type": "สลิปต้องเป็นรูป JPG, PNG หรือ WebP", "file-size": "รูปสลิปใหญ่เกิน 5 MB", rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่",
   origin: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", method: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", discord: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", network: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง" };
 // checkSlipDetails: what a donor sends with the slip, the display name and message cleaned, or an Error with the Thai reason (code points, so
-// an emoji is never split; over-long text is refused, never cut). The amount and the transfer time are read off the slip by the user.
+// an emoji is never split; over-long text is refused, never cut). The amount is donorAmountCheck's; the date is the send time the Worker stamps.
 function donorSlipCheck(d){
   const clean = (s) => String(s).replace(/\s+/g, " ").trim(), len = (s) => [...s].length;
   d = d || {};
@@ -33682,6 +33685,16 @@ function donorSlipCheck(d){
   if (msg === null) throw new Error("ข้อความไม่ถูกต้อง");
   if (len(msg) > DONOR_LIMITS.msg) throw new Error("ข้อความยาวเกิน " + DONOR_LIMITS.msg + " ตัวอักษร");
   return { name, msg };
+}
+// checkAmount: an amount in baht, a number or a typed string ("1,500", "12.5"), -> baht rounded to satang, or an Error with the Thai reason
+function donorAmountCheck(a){
+  const err = () => new Error("ยอดเงินต้องมากกว่า 0 และไม่เกิน " + DONOR_LIMITS.amountMax.toLocaleString("en-US") + " บาท (ทศนิยมไม่เกิน 2 ตำแหน่ง)"), satang = (n) => Math.round(n * 100);
+  if (typeof a === "string"){
+    if (!/^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/.test(a)) throw err();
+    a = Number(a.replace(/,/g, ""));
+  }
+  if (typeof a !== "number" || !isFinite(a) || a <= 0 || a > DONOR_LIMITS.amountMax || Math.abs(a * 100 - satang(a)) > 1e-6) throw err();
+  return satang(a) / 100;
 }
 // groupDonors: one row per donor id with the latest name, the latest non-empty message, the total (summed in satang), the count, the latest
 // and first dates; biggest total first, then whoever first gave earlier
@@ -33697,6 +33710,21 @@ function donorRows(donations){
   });
   return [...by.values()].sort((a, b) => b.sat - a.sat || (a.first < b.first ? -1 : a.first > b.first ? 1 : 0))
     .map((r) => ({ id: r.id, name: r.name, msg: r.msg, total: r.sat / 100, count: r.count, date: r.date, first: r.first }));
+}
+// the ✅'d slips the Worker serves (GET /api/donors: { k, name, msg, amount, date }, k = the Discord message id) joined to DONORS: a k already
+// there is skipped, and so is a row that is not a donation; a name matching a donor's latest name takes that donor's id (the key is the guide
+// manager's gmDonorKey word for word: whitespace runs as one space, trimmed, lower case), else "m" + k. live null: donors back unchanged.
+function donorMergeLive(donors, live){
+  if (!live) return donors;
+  const key = (s) => String(s).replace(/\s+/g, " ").trim().toLowerCase(), out = donors.slice(), seen = new Set(donors.map((x) => x.k));
+  live.forEach((x) => {
+    if (!x || typeof x.k !== "string" || !x.k || seen.has(x.k) || typeof x.name !== "string" || !x.name.trim() || typeof x.amount !== "number" || !isFinite(x.amount) || x.amount <= 0
+      || typeof x.date !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(x.date)) return;
+    seen.add(x.k);
+    const n = key(x.name), hit = donorRows(out).find((r) => key(r.name) === n);   // ponytail: donorRows once a live row, fine for a few hundred donations
+    out.push({ k: x.k, id: hit ? hit.id : "m" + x.k, name: x.name, msg: typeof x.msg === "string" ? x.msg : "", amount: x.amount, date: x.date });
+  });
+  return out;
 }
 // a slip straight from a phone camera (a 12 MB JPEG, an iPhone HEIC) is redrawn as a JPEG of at most 1600 px on the long side at quality 0.85
 async function shrinkSlip(file){
@@ -33754,18 +33782,19 @@ function donateErrorText(reply){
 // one slip to the Worker: a plain multipart POST (no custom headers, so no CORS preflight); resolves on { ok: true }, else throws the Thai text
 async function donateSend(d, slip){
   const body = new FormData();
-  body.append("name", d.name); body.append("msg", d.msg); body.append("slip", slip, "slip.jpg");
+  body.append("name", d.name); body.append("msg", d.msg); body.append("amount", String(d.amount)); body.append("slip", slip, "slip.jpg");
   let reply = null;
   try { reply = await (await fetch(DONATE_WORKER_URL, { method: "POST", body })).json(); } catch (e) { reply = null; }
   if (!reply || reply.ok !== true) throw new Error(donateErrorText(reply));
 }
-// the form's send (ui = its fields, the send button and the status line): the page's own checks first, then the slip redrawn, then one send.
-// ui.busy and the disabled button keep a double tap from sending twice; every error keeps what was typed, a sent slip clears the form.
+// the form's send (ui = its fields, the send button and the status line): the page's own checks first (name, message, amount), then the slip
+// redrawn, then one send. ui.busy and the disabled button keep a double tap from sending twice; every error keeps what was typed, a sent slip
+// clears the form.
 async function donateSubmit(ui){
   if (ui.busy) return;
   const say = (text, kind) => { ui.status.textContent = text; ui.status.dataset.kind = kind; };
   let d;
-  try { d = donorSlipCheck({ name: ui.name.value, msg: ui.msg.value }); }
+  try { d = { ...donorSlipCheck({ name: ui.name.value, msg: ui.msg.value }), amount: donorAmountCheck(String(ui.amount.value).trim()) }; }
   catch (e) { say(e.message, "error"); return; }
   const file = ui.slip.files && ui.slip.files[0];
   if (!file) { say(DONATE_ERRORS.missing, "error"); return; }
@@ -33774,7 +33803,7 @@ async function donateSubmit(ui){
     const slip = await shrinkSlip(file);
     if (slip.size > DONOR_LIMITS.slipBytes) throw new Error(DONATE_ERRORS["file-size"]);
     await donateSend(d, slip);
-    ui.name.value = ""; ui.msg.value = ""; ui.slip.value = "";
+    ui.name.value = ""; ui.msg.value = ""; ui.amount.value = ""; ui.slip.value = "";
     say("ได้รับแล้ว ขอบคุณครับ ชื่อจะขึ้นในรายชื่อผู้สนับสนุนหลังตรวจสลิป", "ok");
     donateNudgeMark(DONATE_NUDGE.thanks);   // a sent slip rests the note 90 days
   } catch (e) {
@@ -33879,6 +33908,8 @@ function donateThanksFit(ui){
   ui.list.style.setProperty("--donate-dur", run.dur.toFixed(2) + "s");
   ui.box.classList.add("is-running");
 }
+// the names line drawn again after the live donors arrive (mountMenuThanks sets it; before that, or without the menu, there is nothing to redraw)
+let donateThanksRefresh = () => {};
 // ขอบคุณผู้ร่วมสนับสนุน on the menu (user 2026-10-23): the donors' names line (renderDonorThanks, biggest total first; donateThanksFit runs it
 // as a ticker when the names do not fit) behind the label, in two copies. Desktop: .hub-thanks at the very top, in the hub bar's middle,
 // taking turns with the Discord note on every page (70 / 30, CSS; the user tried four mocks, then the band by the filmstrip, then the menu
@@ -33907,6 +33938,11 @@ function mountMenuThanks(root){
   if (typeof ResizeObserver === "function") uis.forEach((ui) => new ResizeObserver(() => refit(ui)).observe(ui.box));   // e.g. the menu showing again
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { uis.forEach((ui) => { ui.key = 0; }); all(); });
   all();
+  donateThanksRefresh = () => {
+    uis.forEach((ui) => { renderDonorThanks(ui); ui.key = 0; });
+    document.documentElement.classList.toggle("has-thanks", !uis[0].box.hidden);
+    all();
+  };
   return uis;
 }
 // the pop-up's tabs (user 2026-10-23: the slip form and the donor list each get their own tab, so they never crowd the QR card): tabs and
@@ -39681,6 +39717,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-13T06:48:08.350Z","feat(bible): the ☕ slip form asks the amount, and ✅'d slips show in the donor list live from Discord"],
     ["2026-11-13T00:05:23.801Z","feat(bible): class guide #106 TTO Monkey ลิง 2 Element Guardian (Gaos&Golem) by ZoRution"],
     ["2026-11-12T09:08:54.125Z","feat(bible): class guide #105 TTO Monkey two avatar (เน้นไฟ)+ summon soul by unknow"],
     ["2026-11-12T08:52:28.989Z","feat(bible): class guide #104 TTO Monkey two avatar (เน้นไฟ)+ summon soul by unknow"],
@@ -40878,7 +40915,7 @@ const donateModal = $("#donateModal");
 const btnDonateClose = $("#btnDonateClose");
 const btnDonateQr = $("#btnDonateQr");
 const donateForm = $("#donateForm");
-const donateUi = { name: $("#donateName"), msg: $("#donateMsg"), slip: $("#donateSlip"), btn: $("#btnDonateSend"), status: $("#donateStatus"), busy: false };
+const donateUi = { name: $("#donateName"), msg: $("#donateMsg"), amount: $("#donateAmount"), slip: $("#donateSlip"), btn: $("#btnDonateSend"), status: $("#donateStatus"), busy: false };
 const donateTabs = Array.from(document.querySelectorAll("#donateModal [role=tab]"));   // QR โอนเงิน, ส่งสลิป, รายชื่อผู้สนับสนุน
 const donatePanels = donateTabs.map((t) => document.getElementById(t.getAttribute("aria-controls")));
 const donateListUi = { box: $("#donatePanelList"), list: $("#donateList"), pager: $("#donatePager"), num: $("#donatePagerNum"), prev: $("#btnDonatePrev"), next: $("#btnDonateNext"),
@@ -40957,6 +40994,28 @@ donateTabs.forEach((t, i) => {
   t.addEventListener("click", () => { donateShowTab(donateTabs, donatePanels, i); donateTabShown(i); });
   t.addEventListener("keydown", (e) => donateTabKey(e, donateTabs, donatePanels, donateTabShown));
 });
+// the ✅'d slips live from Discord (2026-11-13): one GET of the Worker's /api/donors a page load, after first paint, merged into DONORS
+// (donorMergeLive); then the names line and, once the pop-up has been opened, its list and count are drawn again. Offline, an error answer
+// (403 / 502 / 503), bad JSON or no answer within 8 s leave the page as it is, with the names embedded in DONORS.
+async function donateLoadLive(){
+  try {
+    const stop = new AbortController(), timer = setTimeout(() => stop.abort(), 8000);
+    let live = null;
+    try { const r = await fetch(DONATE_API + "/api/donors", { signal: stop.signal }); if (r.ok) live = (await r.json()).donors; }
+    finally { clearTimeout(timer); }
+    if (!Array.isArray(live)) return;
+    const merged = donorMergeLive(DONORS, live);
+    if (merged.length === DONORS.length) return;   // nothing new
+    DONORS.splice(0, DONORS.length, ...merged);
+    donateThanksRefresh();
+    if (donateReady){
+      donateListUi.rows = donorRecent(donorRows(DONORS));
+      if (donateTabCount) donateCountFill(donateTabCount, donateListUi.rows.length);
+      if (donateModal && !donateModal.hidden) donateListFit(donateListUi);   // redraws the list if its tab shows; otherwise the tab lays it out when picked
+    }
+  } catch (e) { /* no live data: the embedded DONORS stay */ }
+}
+if (typeof requestIdleCallback === "function") requestIdleCallback(() => donateLoadLive(), { timeout: 4000 }); else setTimeout(donateLoadLive, 1000);
 if (donateListUi.prev) donateListUi.prev.addEventListener("click", () => { if (donateListUi.page > 0){ donateListUi.page--; donateListPage(donateListUi); } });
 if (donateListUi.next) donateListUi.next.addEventListener("click", () => { if (donateListUi.page < donateListUi.pages.length - 1){ donateListUi.page++; donateListPage(donateListUi); } });
 if (donateModal) {

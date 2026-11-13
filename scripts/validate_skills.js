@@ -4486,9 +4486,10 @@ console.log(`Verified ${checkedRsim} skill simulator checks.`);
 }
 
 // The ☕ pop-up (user 2026-10-23): three tabs under the thank-you text, QR โอนเงิน (the QR card to scan or save, picked on every open),
-// ส่งสลิป (an optional slip form of name, message and slip, sent through the Worker, 12t_projects/donate-worker; the owner types the amount
-// and date from the slip in the guide manager) and รายชื่อผู้สนับสนุน (the donor list). Its copies of scripts/donors.js (DONOR_LIMITS,
-// donorSlipCheck, donorRows) must agree with it; a slip straight from a phone camera is redrawn as a small JPEG (Review Focus 2); the send
+// ส่งสลิป (an optional slip form of name, message, amount and slip, sent through the Worker, 12t_projects/donate-worker; the owner approves it
+// with a ✅ in Discord) and รายชื่อผู้สนับสนุน (the donor list: DONORS plus the ✅'d slips the Worker serves at GET /api/donors, donorMergeLive and
+// donateLoadLive). Its copies of scripts/donors.js (DONOR_LIMITS, donorSlipCheck, donorAmountCheck, donorRows) must agree with it; a slip
+// straight from a phone camera is redrawn as a small JPEG (Review Focus 2); the send
 // button stays disabled while a send runs (Review Focus 4) and any error keeps what was typed; donor values go in as text only; the text asks
 // for ค่าพัฒนา and never mentions AI; the QR card is in assets.js. The async code (shrinkSlip, the send, the download) runs in a child Node
 // process (donateChildTests below), because this validator is synchronous: the page's own functions, read from the sandbox as source, with
@@ -4530,13 +4531,13 @@ async function donateChildTests(env) {
   check(!threwEmpty && !emptySaves && !shares.length && !anchors.length, "downloadQr does nothing when DONATE_QR is empty (assets.js did not load)");
 
   // donateSubmit: checks first (nothing obviously wrong leaves the page), the button disabled while a send runs, every error keeps the form.
-  // The form is the display name, the message and the slip (user 2026-10-23: the owner reads the amount and date off the slip).
+  // The form is the display name, the message, the amount and the slip (2026-11-13: the owner approves with a ✅ in Discord, so the donor types the amount).
   const mkUi = (v = {}) => {
-    const x = { name: "ก้อง 🐱", msg: "สู้ ๆ ครับ", file: { name: "IMG_0001.HEIC", type: "image/heic", size: 12e6 }, ...v };
-    return { busy: false, name: { value: x.name }, msg: { value: x.msg },
+    const x = { name: "ก้อง 🐱", msg: "สู้ ๆ ครับ", amount: "1,500", file: { name: "IMG_0001.HEIC", type: "image/heic", size: 12e6 }, ...v };
+    return { busy: false, name: { value: x.name }, msg: { value: x.msg }, amount: { value: x.amount },
       slip: { value: x.file ? "C:\\fakepath\\" + x.file.name : "", files: x.file ? [x.file] : [] }, btn: { disabled: false }, status: { textContent: "", dataset: {} } };
   };
-  const typed = (ui) => JSON.stringify([ui.name.value, ui.msg.value, ui.slip.value, ui.slip.files.length]);
+  const typed = (ui) => JSON.stringify([ui.name.value, ui.msg.value, ui.amount.value, ui.slip.value, ui.slip.files.length]);
   const reply = (body) => ({ ok: !!body.ok, status: body.ok ? 200 : 400, json: async () => body });
   S.bmp = { width: 4000, height: 3000 }; S.blobBytes = 300000;
   {
@@ -4549,8 +4550,8 @@ async function donateChildTests(env) {
     check(calls.length === 1 && during === true, `the send button is disabled while a send runs and a second tap sends nothing (Review Focus 4) (got ${calls.length} sends, disabled ${during})`);
     const c = calls[0] || { opts: {} }, b = c.opts.body, slip = b && typeof b.get === "function" ? b.get("slip") : null;
     const keys = b && typeof b.keys === "function" ? [...b.keys()] : [];
-    check(c.url === env.DONATE_WORKER_URL && c.opts.method === "POST" && !("headers" in c.opts) && b instanceof FormData && JSON.stringify(keys) === '["name","msg","slip"]' && b.get("name") === "ก้อง 🐱" && b.get("msg") === "สู้ ๆ ครับ" && slip && slip.type === "image/jpeg" && slip.size === 300000 && slip.name === "slip.jpg",
-      `the send is one POST of FormData with exactly name, msg and the redrawn slip.jpg (no amount, no date) to DONATE_WORKER_URL with no custom headers (got ${JSON.stringify(keys)})`);
+    check(c.url === env.DONATE_WORKER_URL && c.opts.method === "POST" && !("headers" in c.opts) && b instanceof FormData && JSON.stringify(keys) === '["name","msg","amount","slip"]' && b.get("name") === "ก้อง 🐱" && b.get("msg") === "สู้ ๆ ครับ" && b.get("amount") === "1500" && slip && slip.type === "image/jpeg" && slip.size === 300000 && slip.name === "slip.jpg",
+      `the send is one POST of FormData with exactly name, msg, amount (the checked number, "1,500" sent as 1500) and the redrawn slip.jpg (no date) to DONATE_WORKER_URL with no custom headers (got ${JSON.stringify(keys)}, amount ${JSON.stringify(b && typeof b.get === "function" ? b.get("amount") : null)})`);
     if (answer) answer(reply({ ok: false, error: "rate" }));
     await first;
     check(ui.status.textContent === env.DONATE_ERRORS.rate && ui.btn.disabled === false && !ui.busy && typed(ui) === before, `a rate reply shows "${env.DONATE_ERRORS.rate}", enables the send button again and keeps every field (got ${JSON.stringify(ui.status.textContent)})`);
@@ -4567,7 +4568,7 @@ async function donateChildTests(env) {
   }
   {
     const { ui, sent, body } = await send({ msg: "  สู้ ๆ\n ครับ " }, () => reply({ ok: true }));
-    check(sent === 1 && body.get("msg") === "สู้ ๆ ครับ" && ui.status.textContent === env.THANKS && !ui.name.value && !ui.msg.value && !ui.slip.value && !ui.btn.disabled,
+    check(sent === 1 && body.get("msg") === "สู้ ๆ ครับ" && ui.status.textContent === env.THANKS && !ui.name.value && !ui.msg.value && !ui.amount.value && !ui.slip.value && !ui.btn.disabled,
       `a sent slip (the message cleaned as checkSlipDetails does) shows "${env.THANKS}" and clears the form for the next one (got ${JSON.stringify({ sent, status: ui.status.textContent, msg: body && body.get("msg") })})`);
   }
   {
@@ -4577,6 +4578,7 @@ async function donateChildTests(env) {
   const refusals = [
     [{ name: " \n " }, env.MSG.name, "no name"], [{ name: "🐱".repeat(41) }, env.MSG.longName, "a 41-emoji name (refused with the limit, never cut)"], [{ msg: "ก".repeat(201) }, env.MSG.longMsg, "a 201-letter message"],
     [{ file: null }, env.DONATE_ERRORS.missing, "no slip"],
+    [{ amount: "" }, env.MSG.amount, "no amount"], [{ amount: "150 บาท" }, env.MSG.amount, "an amount with words"], [{ amount: "0" }, env.MSG.amount, "a zero amount"], [{ amount: "12.345" }, env.MSG.amount, "an amount with 3 decimals"],
   ];
   for (const [v, want, what] of refusals) {
     const { ui, before, sent } = await send(v, () => reply({ ok: true }));
@@ -4586,6 +4588,42 @@ async function donateChildTests(env) {
   check(unread.sent === 0 && unread.ui.status.textContent === env.READ_ERROR && typed(unread.ui) === unread.before && !unread.ui.btn.disabled, `a slip the browser cannot read is refused with "${env.READ_ERROR}" and the form kept (Review Focus 2) (got ${JSON.stringify(unread.ui.status.textContent)})`);
   S.blobBytes = 5242881; const big = await send({}, () => reply({ ok: true })); S.blobBytes = 300000;
   check(big.sent === 0 && big.ui.status.textContent === env.DONATE_ERRORS["file-size"] && typed(big.ui) === big.before, `a redrawn slip still over 5 MB is refused with "${env.DONATE_ERRORS["file-size"]}" without sending (got ${JSON.stringify(big.ui.status.textContent)})`);
+  {
+    const { sent, body } = await send({ amount: " 99.5 " }, () => reply({ ok: true }));
+    check(sent === 1 && body.get("amount") === "99.5", `an amount typed with spaces around it is sent as the checked number (got ${JSON.stringify(body && body.get("amount"))})`);
+  }
+
+  // donateLoadLive (2026-11-13): one GET of DONATE_API/api/donors after first paint; offline, a 503, bad JSON or the 8 s timeout leave DONORS
+  // and the names line exactly as they are; a good answer merges the ✅'d slips (donorMergeLive) and refreshes the names line once
+  {
+    const before = JSON.stringify(env.DONORS), calls = [], refreshes = () => log.filter((x) => x[0] === "refresh").length;
+    const failures = [
+      [() => { throw new TypeError("Failed to fetch"); }, "offline"],
+      [() => ({ ok: false, status: 503, json: async () => ({ ok: false, error: "discord" }) }), "a 503"],
+      [() => ({ ok: true, status: 200, json: async () => { throw new SyntaxError("Unexpected token <"); } }), "a reply that is not JSON"],
+      [() => ({ ok: true, status: 200, json: async () => ({ donors: "x" }) }), "a reply without a donors list"],
+      [() => ({ ok: true, status: 200, json: async () => null }), "a null reply"],
+    ];
+    for (const [answer, what] of failures) {
+      S.fetch = async (url, opts) => { calls.push({ url, opts }); return answer(); }; log.length = 0;
+      const r = await settle(env.donateLoadLive());
+      check(!r.err && JSON.stringify(env.DONORS) === before && !refreshes(), `donateLoadLive on ${what} never throws and leaves DONORS and the names line as they are (got ${JSON.stringify({ r, refreshes: refreshes() })})`);
+    }
+    check(calls.length === failures.length && calls.every((c) => c.url === env.DONATE_API + "/api/donors" && c.opts && c.opts.signal && typeof c.opts.signal.aborted === "boolean" && !c.opts.method && !c.opts.headers),
+      `donateLoadLive makes one plain GET of DONATE_API + "/api/donors" with an abort signal (got ${JSON.stringify(calls.map((c) => c.url))})`);
+    S.fetch = (url, opts) => new Promise((res, rej) => opts.signal.addEventListener("abort", () => rej(new DOMException("The operation was aborted.", "AbortError")))); log.length = 0;
+    const hang = env.donateLoadLive(); await tick();
+    const timer = log.find((x) => x[0] === "timer");
+    if (timer) timer[2]();
+    const late = await Promise.race([settle(hang), new Promise((r) => setImmediate(() => r({ err: "still waiting after the timer fired" })))]).catch((e) => ({ err: String(e) }));
+    await tick();
+    check(timer && timer[1] >= 5000 && timer[1] <= 10000 && !late.err && JSON.stringify(env.DONORS) === before && !refreshes(), `donateLoadLive gives up after about 8 s (an abort timer) and leaves the page as it is (got ${JSON.stringify({ ms: timer && timer[1], late })})`);
+    const row = { k: "1438000000000000001", name: "Live Donor", msg: "จาก Discord", amount: 120, date: "2026-11-13T09:30" };
+    S.fetch = async () => ({ ok: true, status: 200, json: async () => ({ donors: [row] }) }); log.length = 0;
+    const n = env.DONORS.length, r = await settle(env.donateLoadLive()), last = env.DONORS[env.DONORS.length - 1];
+    check(!r.err && env.DONORS.length === n + 1 && last.k === row.k && last.id === "m" + row.k && last.amount === 120 && last.date === row.date && refreshes() === 1,
+      `donateLoadLive merges a good answer into DONORS in place (a new name gets id m+k) and refreshes the names line once (got ${JSON.stringify({ r, n: env.DONORS.length, last, refreshes: refreshes() })})`);
+  }
   return out;
 }
 {
@@ -4600,7 +4638,8 @@ async function donateChildTests(env) {
     shrinkSlip: "function", downloadQr: "function", donateErrorText: "function", donateSend: "function", donateSubmit: "function", renderDonorList: "function",
     renderDonorThanks: "function", donorTicker: "function", donateThanksFit: "function", donateCountFill: "function", donateTabsNudge: "function", DONATE_TICKER_SPEED: "number",
     donorRecent: "function", donorListPages: "function", donateListPage: "function", donateListFit: "function", donateListUi: "object", donateTabShown: "function",
-    donateShowTab: "function", donateTabKey: "function", openDonateModal: "function", closeDonateModal: "function", donateTabs: "object", donatePanels: "object" };
+    donateShowTab: "function", donateTabKey: "function", openDonateModal: "function", closeDonateModal: "function", donateTabs: "object", donatePanels: "object",
+    donorAmountCheck: "function", donorMergeLive: "function", donateLoadLive: "function", DONATE_API: "string", donateThanksRefresh: "function" };
   const missing = Object.keys(need).filter((n) => kind(n) !== need[n]);
   ok(!missing.length, "the pop-up's code is missing from the main script: " + missing.join(", "));
   const have = (...names) => names.every((n) => !missing.includes(n));
@@ -4613,6 +4652,12 @@ async function donateChildTests(env) {
 
   // the Worker address and the error texts (every code the Worker answers has one; invalid shows the Worker's own message)
   if (have("DONATE_WORKER_URL")) ok(page("DONATE_WORKER_URL") === "https://12tails-donate.jumpthai.workers.dev/slip", "DONATE_WORKER_URL is not https://12tails-donate.jumpthai.workers.dev/slip");
+  ok(have("DONATE_API") && page("DONATE_API") === "https://12tails-donate.jumpthai.workers.dev" && /^const DONATE_API = DONATE_WORKER_URL\.replace\(\/\\\/slip\$\/, ""\);/m.test(html),
+    'DONATE_API must be declared as DONATE_WORKER_URL.replace(/\\/slip$/, "") (the Worker\'s root, for GET /api/donors)');
+  // the live donors start once a page load, after first paint (an idle moment), and nowhere else
+  ok(/^if \(typeof requestIdleCallback === "function"\) requestIdleCallback\(\(\) => donateLoadLive\(\), \{ timeout: \d+ \}\); else setTimeout\(donateLoadLive, \d+\);/m.test(html)
+    && (html.match(/donateLoadLive\(/g) || []).length === 2,   // its definition and that one call
+    "donateLoadLive must be started once, after first paint (requestIdleCallback, else setTimeout), and called nowhere else");
   if (have("DONATE_ERRORS", "donateErrorText")) {
     const E = page("DONATE_ERRORS"), t = page("donateErrorText");
     const want = { missing: "กรอกให้ครบทุกช่องและแนบสลิป", "file-type": "สลิปต้องเป็นรูป JPG, PNG หรือ WebP", "file-size": "รูปสลิปใหญ่เกิน 5 MB", rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่", origin: FAIL_TEXT, method: FAIL_TEXT, discord: FAIL_TEXT };
@@ -4658,7 +4703,31 @@ async function donateChildTests(env) {
     for (const d of cases) { const a = res(page("donorSlipCheck"), d), b = res(dl.checkSlipDetails, d); if (same(a, b)) agree++; else ok(false, `donorSlipCheck and checkSlipDetails disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
     ok(agree === cases.length, `donorSlipCheck gives the same result or message as checkSlipDetails on ${agree} of ${cases.length} cases`);
   }
-  ok(["parseAmountInput", "donateNow", "donorCheck"].every((n) => kind(n) === "undefined"), "parseAmountInput, donateNow and donorCheck must go: the slip form has no amount or date any more");
+  // donorAmountCheck = checkAmount (2026-11-13: the donor types the amount on the slip form), on donors.js's own selftest cases and a few more
+  if (have("donorAmountCheck")) {
+    const cases = [50, "1,500", "12.5", 0, -1, 1.234, "150 บาท", "1,50", "", "abc", 1000000.01, NaN, "1000000", "1,000,000.00", "0.01", 0.1 + 0.2, Infinity, null, undefined, "50", " 50", "1,5000"];
+    const amt = page("donorAmountCheck"), wrong = cases.filter((a) => !same(res(amt, a), res(dl.checkAmount, a)));
+    ok(!wrong.length && res(amt, "1,500").ok === 1500 && res(amt, "12.5").ok === 12.5 && /ยอดเงิน/.test(res(amt, "").err || ""),
+      "donorAmountCheck gives another result or message than checkAmount on " + wrong.map((a) => JSON.stringify(a) || String(a)).join(", "));
+  }
+  // donorMergeLive: the ✅'d slips from GET /api/donors joined to DONORS; a k already there is skipped, a name matching a donor's latest name
+  // (gmDonorKey: whitespace runs as one space, trimmed, case-insensitive) takes that donor's id, else "m" + k; nothing it is given changes
+  if (have("donorMergeLive")) {
+    const merge = page("donorMergeLive"), dn = (k, id, name, date) => ({ k, id, name, msg: "", amount: 100, date }), lv = (k, name, extra) => ({ k, name, msg: "สู้ ๆ", amount: 50, date: "2026-11-13T10:00", ...extra });
+    const base = [dn("aaaaaaaa", "11111111", "old name", "2026-10-01T10:00"), dn("bbbbbbbb", "11111111", "Prime  Code", "2026-10-05T10:00"), dn("cccccccc", "22222222", "Mai", "2026-10-02T10:00")], copy = JSON.stringify(base);
+    const added = (live) => merge(base, live).slice(base.length), ids = (live) => added(live).map((x) => x.id);
+    const liveIn = [lv("901", "Ton")], liveCopy = JSON.stringify(liveIn);
+    ok(merge(base, null) === base, "donorMergeLive(donors, null) must return the donors array itself");
+    ok(same(added(liveIn), [{ k: "901", id: "m901", name: "Ton", msg: "สู้ ๆ", amount: 50, date: "2026-11-13T10:00" }]), `donorMergeLive: a live row with a new name becomes a donation with id "m" + k (got ${JSON.stringify(added(liveIn))})`);
+    ok(same(ids([lv("902", "  prime code "), lv("903", " MAI")]), ["11111111", "22222222"]), `donorMergeLive: a live name matching a donor's latest name (other case and spaces) takes that donor's id (got ${JSON.stringify(ids([lv("902", "  prime code "), lv("903", " MAI")]))})`);
+    ok(same(ids([lv("904", "old name")]), ["m904"]), "donorMergeLive matches only a donor's latest name, not an older one");
+    ok(same(ids([lv("905", "Bee"), lv("906", " bee ")]), ["m905", "m905"]), `donorMergeLive: two live rows with the same new name share one id (got ${JSON.stringify(ids([lv("905", "Bee"), lv("906", " bee ")]))})`);
+    ok(same(added([lv("aaaaaaaa", "x"), lv("907", "y"), lv("907", "y")]).map((x) => x.k), ["907"]), "donorMergeLive skips a live row whose k is already present (embedded or an earlier live row)");
+    ok(same(added([null, lv("908", ""), lv("909", "z", { amount: "50" }), lv("910", "z", { date: "13/11/2026" }), { name: "z", amount: 5, date: "2026-11-13T10:00" }, lv("911", "z", { msg: null })]).map((x) => [x.k, x.msg]), [["911", ""]]),
+      "donorMergeLive skips a live row that is not a donation (no k, no name, an amount that is not a number, a bad date) and reads a missing message as empty");
+    ok(JSON.stringify(base) === copy && JSON.stringify(liveIn) === liveCopy, "donorMergeLive must not change the arrays it is given");
+  }
+  ok(["parseAmountInput", "donateNow", "donorCheck"].every((n) => kind(n) === "undefined"), "parseAmountInput, donateNow and donorCheck must go: the slip form sends no date, and its amount goes through donorAmountCheck");
 
   // the pop-up's text: support for the development cost (user 2026-10-23: one line, no server-cost mention, no Discord line), never AI; the brief's texts;
   // no one-line (nowrap) message any more
@@ -4725,7 +4794,9 @@ async function donateChildTests(env) {
     ok(inside(2).includes('id="donateList"'), "the donor list is in the รายชื่อผู้สนับสนุน panel");
     ok(!/<details\b/.test(modal), "the slip form's <details> wrapper must go (the form has its own tab)");
     const form = (modal.match(/<form\b[^>]*\sid="donateForm"[\s\S]*?<\/form>/) || [""])[0];
-    ok(same([...form.matchAll(/<(?:input|textarea|select)\b[^>]*\sname="([^"]+)"/g)].map((m) => m[1]), ["name", "msg", "slip"]), "the slip form's fields are exactly name, msg and slip (the owner types the amount and date from the slip)");
+    ok(same([...form.matchAll(/<(?:input|textarea|select)\b[^>]*\sname="([^"]+)"/g)].map((m) => m[1]), ["name", "msg", "amount", "slip"]), "the slip form's fields are exactly name, msg, amount and slip (the date is the owner's, from the slip)");
+    ok(/<label class="donate-field[^"]*">ยอดเงิน \(บาท\)<input type="text" id="donateAmount" name="amount" inputmode="decimal"[^>]*><\/label>/.test(form),
+      'the slip form\'s amount field is a text input #donateAmount with inputmode="decimal", labelled ยอดเงิน (บาท)');
   }
   if (have("donateShowTab", "donateTabKey", "openDonateModal", "closeDonateModal", "donateTabs", "donatePanels")) {
     const stub = () => ({ attrs: {}, tabIndex: 0, hidden: false, focused: false, value: "typed", setAttribute(k, x) { this.attrs[k] = String(x); }, getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }, focus() { this.focused = true; } });
@@ -4876,11 +4947,12 @@ async function donateChildTests(env) {
 
   // the async code in a child process: the page's functions as source, the stubs they see, donateChildTests(env)
   const childNames = ["DONATE_WORKER_URL", "DONOR_LIMITS", "DONATE_ERRORS", "donorSlipCheck", "shrinkSlip", "donateErrorText", "donateSend", "donateSubmit", "downloadQr",
-    "DONATE_NUDGE", "DONATE_NUDGE_KEY", "donateNudgeDay", "donateNudgeAdd", "donateNudgeClean", "donateNudgeRest", "donateNudgeLoad", "donateNudgeSave", "donateNudgeMark"];   // donateSubmit rests the ☕ note (no storage in the child: a no-op)
+    "DONATE_NUDGE", "DONATE_NUDGE_KEY", "donateNudgeDay", "donateNudgeAdd", "donateNudgeClean", "donateNudgeRest", "donateNudgeLoad", "donateNudgeSave", "donateNudgeMark",   // donateSubmit rests the ☕ note (no storage in the child: a no-op)
+    "donorAmountCheck", "DONATE_API", "DONORS", "donorRows", "donorMergeLive", "donateLoadLive"];   // donateLoadLive's names line refresh and pop-up are stubs in the child
   if (have(...childNames)) {
     const decl = (name) => { const x = page(name); if (typeof x !== "function") return `const ${name} = ${JSON.stringify(x)};`; const s = String(x); return /^(async\s+)?function\b/.test(s) ? s : `const ${name} = ${s};`; };
     const msg = (d) => res(dl.checkSlipDetails, { name: "A", msg: "", ...d }).err;
-    const env = { READ_ERROR, FAIL_TEXT, THANKS, MSG: { name: msg({ name: " " }), longName: msg({ name: "🐱".repeat(41) }), longMsg: msg({ msg: "ก".repeat(201) }) } };
+    const env = { READ_ERROR, FAIL_TEXT, THANKS, MSG: { name: msg({ name: " " }), longName: msg({ name: "🐱".repeat(41) }), longMsg: msg({ msg: "ก".repeat(201) }), amount: res(dl.checkAmount, "").err } };
     const script = [
       "(async () => {",
       "  const S = { bmp: { width: 4000, height: 3000 }, bmpFail: false, blobBytes: 1234, blobNull: false, fetch: async () => { throw new Error('no fetch stub'); } }, log = [], anchors = [], shares = [];",
@@ -4890,11 +4962,13 @@ async function donateChildTests(env) {
       "  const document = { createElement(tag){ if (String(tag).toLowerCase() === 'canvas') return canvas(); return { tagName: String(tag).toUpperCase(), style: {}, href: '', download: '', rel: '', click(){ anchors.push({ href: this.href, download: this.download }); }, remove(){} }; }, body: { appendChild(){}, removeChild(){}, style: {} } };",
       "  let navigator = {};",
       "  const fetch = (...a) => S.fetch(...a);",
-      "  const setTimeout = () => 0;",
+      "  const setTimeout = (f, ms) => { log.push(['timer', ms, f]); return 0; };",
+      "  let donateThanksRefresh = () => { log.push(['refresh']); };",
+      "  const donateReady = false;",
       "  const QR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';",
       "  let DONATE_QR = QR;",
       ...childNames.map(decl),
-      "  const env = Object.assign(" + JSON.stringify(env) + ", { S, log, anchors, shares, shrinkSlip, donateSubmit, downloadQr, DONATE_ERRORS, DONATE_WORKER_URL,",
+      "  const env = Object.assign(" + JSON.stringify(env) + ", { S, log, anchors, shares, shrinkSlip, donateSubmit, downloadQr, DONATE_ERRORS, DONATE_WORKER_URL, DONATE_API, DONORS, donateLoadLive,",
       "    setNav: (n) => { navigator = n; }, setQr: (q) => { DONATE_QR = q; }, restoreQr: () => { DONATE_QR = QR; }, dropBitmap: () => { createImageBitmap = undefined; }, restoreBitmap: () => { createImageBitmap = realBitmap; } });",
       "  const results = await (" + String(donateChildTests) + ")(env);",
       "  process.stdout.write(JSON.stringify(results));",
