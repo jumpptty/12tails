@@ -73,3 +73,26 @@ export function listAnswer(origin, value, hit){
   if (origin){ headers["Access-Control-Allow-Origin"] = origin; headers.Vary = "Origin"; }
   return new Response(JSON.stringify(value), { headers });
 }
+
+// JSON answer with the CORS headers when the caller's origin is known
+export function answer(status, body, origin){
+  const headers = { "Content-Type": "application/json" };
+  if (origin){ headers["Access-Control-Allow-Origin"] = origin; headers.Vary = "Origin"; }
+  return new Response(JSON.stringify(body), { status, headers });
+}
+
+// The checks every route starts with; returns the refusing Response, or null to carry on.
+// origin, then (preflight) OPTIONS, then method and path, then (limit) the per-IP rate limit, which runs before the body is read.
+export async function gate(request, env, { method, path, preflight = false, limit = false }){
+  const origin = request.headers.get("Origin");
+  if (!ORIGINS.includes(origin)) return answer(403, { ok: false, error: "origin" }, null);
+  if (preflight && request.method === "OPTIONS")
+    return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", Vary: "Origin" } });
+  if (request.method !== method || (path && new URL(request.url).pathname !== path)) return answer(405, { ok: false, error: "method" }, origin);
+  if (limit){
+    let allowed = false;
+    try { allowed = (await env.SLIP_LIMIT.limit({ key: request.headers.get("CF-Connecting-IP") || "unknown" })).success; } catch (e){ console.error("rate limiter failed (refusing): " + (e && e.name) + ": " + (e && e.message)); }
+    if (!allowed) return answer(429, { ok: false, error: "rate" }, origin);
+  }
+  return null;
+}

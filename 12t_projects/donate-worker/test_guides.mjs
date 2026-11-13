@@ -12,6 +12,9 @@ const CODE = encode(guideObj());
 const meta = (o) => ({ embeds: [{ footer: { text: "meta " + JSON.stringify({ v: 1, code: CODE, replaces: null, num: null, ...o }) } }] });
 const OK = [{ emoji: { name: "✅" }, count: 1 }];
 const gp = (id, o = {}, extra = {}) => ({ id, webhook_id: "777", reactions: OK, ...meta(o), ...extra });
+let seed = 7;   // deterministic Thai noise that deflate cannot shrink, so the TG3 code outgrows a footer
+const noise = (n) => Array.from({ length: n }, () => String.fromCharCode(0x0e01 + (seed = (seed * 1103515245 + 12345) % 2147483648) % 80)).join("");
+const LONG = encode(guideObj({ description: noise(12000) }));
 const ctx = { webhookId: "777", floor: 106 };
 const nums = (r) => r.guides.map((g) => [g.msg, g.num]);
 
@@ -74,6 +77,11 @@ export const guideCases = {
     const junk = gp("25", { code: "not a code" });
     assert.deepStrictEqual(nums(listGuides([broken, junk, gp("30")], ctx)), [["30", 201]]);
   },
+  async "listGuides: a replaces 150 post whose ✅ is off still lifts the next number to 151, so a re-✅ never collides"(){
+    const off = gp("20", { replaces: 150 }, { reactions: [] });
+    assert.deepStrictEqual(nums(listGuides([off, gp("30")], ctx)), [["30", 151]]);
+    assert.deepStrictEqual(nums(listGuides([gp("20", { replaces: 150 }), gp("30", { num: 151 })], ctx)), [["20", 150], ["30", 151]]);
+  },
   async "listGuides: a @file post takes its code from the codes map"(){
     const m = gp("20", { code: "@file" });
     assert.deepStrictEqual(listGuides([m], ctx).guides, []);
@@ -106,7 +114,7 @@ export const guideCases = {
     assert.strictEqual(JSON.parse(e.footer.text.slice(5)).replaces, 12);
   },
   async "POST /guide: a code too long for the footer goes in guide.txt as @file and the PATCH keeps the attachment"(){
-    const d = discord(), long = JSON.stringify(guideObj({ description: "ก".repeat(2500) }));
+    const d = discord(), long = LONG;
     const res = await handleGuidePost(form({ code: long }), envOf(), { fetch: d.fetch });
     assert.strictEqual(res.status, 200);
     const body = d.calls[0].init.body, first = payload(d.calls[0]);
@@ -119,7 +127,7 @@ export const guideCases = {
   async "POST /guide: garbage, an unknown class or server, no title or author, a bad replaces are 400 invalid; origin 403; no secret 503; Discord 500 502"(){
     const d = discord(), env = envOf();
     for (const fields of [
-      { code: "garbage" }, { code: "" }, {},
+      { code: "garbage" }, { code: JSON.stringify(guideObj()) }, { code: "12TG1." + CODE }, { code: "" }, {},
       { code: JSON.stringify(guideObj({ build: { server: "tot", classKey: "dragon", level: 1, learned: [] } })) },
       { code: JSON.stringify(guideObj({ build: { server: "x", classKey: "wolf", level: 1, learned: [] } })) },
       { code: JSON.stringify(guideObj({ title: "" })) }, { code: JSON.stringify(guideObj({ author: " " })) },
@@ -157,6 +165,17 @@ export const guideCases = {
     const again = await handleGuides(req(), env, { fetch: d.fetch });
     assert.strictEqual(again.headers.get("x-list-cache"), "hit");
     assert.strictEqual(d.patches().length, 1);
+  },
+  async "GET /api/guides: a failed numbering PATCH keeps that guide out of the answer; the next build numbers it again"(){
+    const channel = [gp("20"), gp("30")], d = discord({ channel }), env = envOf({ GUIDE_CHANNEL: "G5" });
+    let n = 0;
+    const flaky = async (url, init = {}) => init.method === "PATCH" && ++n === 1 ? new Response("", { status: 500 }) : (0, d.fetch)(url, init);
+    const req = () => new Request("https://worker.test/api/guides", { headers: { Origin: SITE } });
+    const first = await quiet(async () => (await handleGuides(req(), env, { fetch: flaky })).json());
+    assert.deepStrictEqual(first.guides.map((g) => [g.msg, g.num]), [["30", 108]]);
+    const later = envOf({ GUIDE_CHANNEL: "G5b" });   // fresh cache
+    const second = await (await handleGuides(req(), later, { fetch: flaky })).json();
+    assert.deepStrictEqual(second.guides.map((g) => [g.msg, g.num]), [["20", 107], ["30", 108]]);
   },
   async "GET /api/guides: a @file post is read from its guide.txt attachment; 503 without a channel; 502 on Discord 500"(){
     const url = "https://cdn.test/guide.txt";

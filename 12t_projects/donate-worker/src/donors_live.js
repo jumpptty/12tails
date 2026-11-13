@@ -1,6 +1,6 @@
 // GET /api/donors: the ☕ list, read live from the private slip channel. A slip counts once the owner reacts ✅.
 import { checkAmount } from "../../../scripts/donors.js";
-import { ORIGINS, readChannel, cachedList, footerMeta, webhookParts, listAnswer } from "./discord.js";
+import { answer, gate, readChannel, cachedList, footerMeta, webhookParts, listAnswer } from "./discord.js";
 
 const big = (id) => BigInt(id);
 
@@ -28,16 +28,12 @@ export function listDonors(messages, { webhookId, ownerId }){
   return out.sort((a, b) => (big(a.k) > big(b.k)) - (big(a.k) < big(b.k)));
 }
 
-const err = (status, error, origin) => {
-  const headers = { "Content-Type": "application/json" };
-  if (origin){ headers["Access-Control-Allow-Origin"] = origin; headers.Vary = "Origin"; }
-  return new Response(JSON.stringify({ ok: false, error }), { status, headers });
-};
+const err = (status, error, origin) => answer(status, { ok: false, error }, origin);
 
 export async function handleDonors(request, env, deps){
+  const refused = await gate(request, env, { method: "GET" });
+  if (refused) return refused;
   const origin = request.headers.get("Origin");
-  if (!ORIGINS.includes(origin)) return err(403, "origin", null);
-  if (request.method !== "GET") return err(405, "method", origin);
   const token = String(env.DISCORD_BOT_TOKEN || "").trim(), channel = String(env.SLIP_CHANNEL || "").trim();
   let webhookId;
   try { webhookId = webhookParts(env.DISCORD_WEBHOOK_URL).id; } catch (e){ webhookId = ""; }

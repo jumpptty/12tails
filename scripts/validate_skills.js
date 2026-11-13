@@ -4619,7 +4619,7 @@ async function donateChildTests(env) {
     for (const [code, text] of Object.entries(want)) ok(t({ ok: false, error: code }) === text, `donateErrorText for ${code} gives ${JSON.stringify(t({ ok: false, error: code }))}, expected ${JSON.stringify(text)}`);
     ok(t({ ok: false, error: "invalid", field: "name", message: "ชื่อยาวเกิน 40 ตัวอักษร" }) === "ชื่อยาวเกิน 40 ตัวอักษร", "donateErrorText for invalid does not show the Worker's message");
     ok([null, undefined, {}, { ok: false }, { ok: false, error: "toString" }, { ok: false, error: "invalid" }, { ok: false, error: "invalid", message: 5 }].every((r) => t(r) === FAIL_TEXT), `donateErrorText gives "${FAIL_TEXT}" for an unknown or empty reply`);
-    const codes = [...new Set([...fs.readFileSync(path.join(__dirname, "../12t_projects/donate-worker/src/handler.js"), "utf8").matchAll(/error: "([a-z-]+)"/g)].map((m) => m[1]))];
+    const codes = [...new Set([...["handler.js", "discord.js"].map((f) => fs.readFileSync(path.join(__dirname, "../12t_projects/donate-worker/src/" + f), "utf8")).join("\n").matchAll(/error: "([a-z-]+)"/g)].map((m) => m[1]))];
     const uncovered = codes.filter((c) => c !== "invalid" && !Object.prototype.hasOwnProperty.call(E, c));
     ok(codes.length >= 7 && !uncovered.length, "DONATE_ERRORS has no text for the Worker's error code(s) " + uncovered.join(", "));
   }

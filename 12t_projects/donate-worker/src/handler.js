@@ -3,7 +3,7 @@
 // The form is the display name, an optional message, an optional amount and the slip. The owner checks the slip against the bank app and
 // reacts ✅ in Discord; a post without an amount asks the owner to reply with it. The embed footer carries the "meta {json}" the list reads.
 import { LIMITS, checkSlipDetails, checkAmount } from "../../../scripts/donors.js";
-import { ORIGINS, META_TAG, escapeMd } from "./discord.js";
+import { META_TAG, escapeMd, answer, gate } from "./discord.js";
 
 const FIELDS = ["name", "msg"];   // the order checkSlipDetails looks at them
 // file extensions only; which types are allowed comes from LIMITS.slipTypes
@@ -17,12 +17,6 @@ function sniff(b){
   return null;
 }
 
-function answer(status, body, origin){
-  const headers = { "Content-Type": "application/json" };
-  if (origin){ headers["Access-Control-Allow-Origin"] = origin; headers.Vary = "Origin"; }
-  return new Response(JSON.stringify(body), { status, headers });
-}
-
 // which field checkSlipDetails refused: test each one alone against known-good values
 function badField(d){
   const ok = { name: "a", msg: "" };
@@ -33,17 +27,9 @@ function badField(d){
 }
 
 export async function handleSlip(request, env, deps){
+  const refused = await gate(request, env, { method: "POST", path: "/slip", preflight: true, limit: true });
+  if (refused) return refused;
   const origin = request.headers.get("Origin");
-  if (!ORIGINS.includes(origin)) return answer(403, { ok: false, error: "origin" }, null);
-  const url = new URL(request.url);
-  if (request.method === "OPTIONS")
-    return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", Vary: "Origin" } });
-  if (request.method !== "POST" || url.pathname !== "/slip") return answer(405, { ok: false, error: "method" }, origin);
-
-  // the limit comes before the body is read
-  let allowed = false;
-  try { allowed = (await env.SLIP_LIMIT.limit({ key: request.headers.get("CF-Connecting-IP") || "unknown" })).success; } catch (e){ console.error("rate limiter failed (refusing): " + (e && e.name) + ": " + (e && e.message)); }
-  if (!allowed) return answer(429, { ok: false, error: "rate" }, origin);
 
   if (Number(request.headers.get("Content-Length")) > LIMITS.slipBytes + 65536) return answer(413, { ok: false, error: "file-size" }, origin);
   let form;

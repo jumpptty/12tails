@@ -2,7 +2,7 @@
 // GET /api/guides lists the ✅'d posts (numbers kept in the post footers), GET /g/<msgId>.<sig> is the owner's ดูตัวอย่าง link.
 // The code is decoded here (scripts/guide_code.js), because the page's own decoder is async; the code itself is never returned.
 import guideCode from "../../../scripts/guide_code.js";
-import { ORIGINS, SITE, META_TAG, escapeMd, readChannel, readMessage, cachedList, footerMeta, webhookParts, editWebhookMessage, listAnswer } from "./discord.js";
+import { SITE, answer, gate, META_TAG, escapeMd, readChannel, readMessage, cachedList, footerMeta, webhookParts, editWebhookMessage, listAnswer } from "./discord.js";
 
 const { decode, CLASS_GUIDE_CLASS_KEYS, CLASS_GUIDE_SERVER_KEYS } = guideCode;
 const PAGE = SITE + "/12tails/12t_projects/bible/";
@@ -10,6 +10,14 @@ const FOOTER_MAX = 2048;
 const big = (id) => BigInt(id);
 const byId = (a, b) => (big(a.id) > big(b.id)) - (big(a.id) < big(b.id));
 const posInt = (v) => Number.isInteger(v) && v > 0 ? v : null;
+// a code as the guide manager's decodeCode reads it: TG3 or TG2. only, and the guide's own format field
+function readCode(code){
+  const text = String(code).trim();
+  if (!/^(TG3|TG2.)/.test(text)) throw new Error("not a guide code");
+  const g = decode(text);
+  if (!g || g.format !== "12t-class-guide") throw new Error("not a guide");
+  return g;
+}
 const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
 
 // the one builder of the post body: a webhook PATCH replaces content and embeds wholesale, so the first post and both edits go through here
@@ -19,8 +27,8 @@ export function guidePostBody(meta, guide, { previewUrl = "", num = null, fileId
     { name: "ผู้เขียน", value: escapeMd(clip(String(guide.author), 200)), inline: true },
     { name: "เซิร์ฟเวอร์", value: String(b.server).toUpperCase(), inline: true },
     { name: "อาชีพ", value: String(b.classKey), inline: true },
-    { name: "เลเวล", value: String(b.level), inline: true },
-    { name: "โหมด", value: (guide.modes || []).join(" / ").toUpperCase() || "-", inline: true },
+    { name: "เลเวล", value: String(Number(b.level) || 0), inline: true },
+    { name: "โหมด", value: (Array.isArray(guide.modes) ? guide.modes : []).join(" / ").toUpperCase() || "-", inline: true },
   ];
   const body = {
     content: [previewUrl && "ดูตัวอย่าง: " + previewUrl, num && `#${num} · อย่าลบโพสต์นี้ ถ้าจะเอาออกให้เอา ✅ ออก`].filter(Boolean).join("\n"),
@@ -56,11 +64,11 @@ export function listGuides(messages, { webhookId, floor, codes = {} }){
   for (const m of messages.filter((x) => x.webhook_id === webhookId).sort(byId)){
     const meta = footerMeta(m), footerNum = meta ? posInt(meta.num) : rawNum(m);
     if (footerNum) top = Math.max(top, footerNum);
+    const replaces = meta && posInt(meta.replaces);
+    if (replaces) top = Math.max(top, replaces);   // also on a post whose ✅ is off: it may be re-✅'d
     if (!meta || !hasCheck(m)) continue;
-    const replaces = posInt(meta.replaces);
-    if (replaces) top = Math.max(top, replaces);
     let guide;
-    try { guide = decode(meta.code === "@file" ? codes[m.id] : meta.code); } catch (e){ continue; }
+    try { guide = readCode(meta.code === "@file" ? codes[m.id] : meta.code); } catch (e){ continue; }
     if (!guide || typeof guide !== "object") continue;
     rows.push({ m, meta, num: replaces || footerNum, guide });
   }
@@ -76,24 +84,14 @@ export function listGuides(messages, { webhookId, floor, codes = {} }){
   return { guides, assign: assign.filter((a) => live.has(rows.find((r) => r.m === a.msg))) };
 }
 
-const err = (status, error, origin, extra = {}) => {
-  const headers = { "Content-Type": "application/json" };
-  if (origin){ headers["Access-Control-Allow-Origin"] = origin; headers.Vary = "Origin"; }
-  return new Response(JSON.stringify({ ok: false, error, ...extra }), { status, headers });
-};
+const err = (status, error, origin, extra = {}) => answer(status, { ok: false, error, ...extra }, origin);
 const bad = (origin, message) => err(400, "invalid", origin, { message });
 const textOf = (v) => typeof v === "string" ? v : "";
 
 export async function handleGuidePost(request, env, deps){
+  const refused = await gate(request, env, { method: "POST", preflight: true, limit: true });
+  if (refused) return refused;
   const origin = request.headers.get("Origin");
-  if (!ORIGINS.includes(origin)) return err(403, "origin", null);
-  if (request.method === "OPTIONS")
-    return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", Vary: "Origin" } });
-  if (request.method !== "POST") return err(405, "method", origin);
-
-  let allowed = false;
-  try { allowed = (await env.SLIP_LIMIT.limit({ key: request.headers.get("CF-Connecting-IP") || "unknown" })).success; } catch (e){ console.error("rate limiter failed (refusing): " + (e && e.name) + ": " + (e && e.message)); }
-  if (!allowed) return err(429, "rate", origin);
 
   let hook;
   try { hook = new URL(env.DISCORD_GUIDE_WEBHOOK_URL); webhookParts(hook.href); } catch (e){ return err(503, "closed", origin); }
@@ -103,7 +101,7 @@ export async function handleGuidePost(request, env, deps){
 
   const code = textOf(form.get("code")).trim(), rawReplaces = textOf(form.get("replaces")).trim();
   let guide;
-  try { guide = decode(code); } catch (e){ return bad(origin, "โค้ดไกด์อ่านไม่ได้"); }
+  try { guide = readCode(code); } catch (e){ return bad(origin, "โค้ดไกด์อ่านไม่ได้"); }
   const b = (guide && guide.build) || {};
   if (!code || !CLASS_GUIDE_CLASS_KEYS.includes(b.classKey) || !CLASS_GUIDE_SERVER_KEYS.includes(b.server)) return bad(origin, "โค้ดไกด์อ่านไม่ได้");
   if (!textOf(guide.title).trim() || !textOf(guide.author).trim()) return bad(origin, "ไกด์ต้องมีชื่อเรื่องและชื่อผู้เขียน");
@@ -133,13 +131,13 @@ export async function handleGuidePost(request, env, deps){
     console.error("guide: " + String(e && e.message).split(env.DISCORD_GUIDE_WEBHOOK_URL).join("<webhook>"));
     return err(502, "upstream", origin);
   }
-  return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": origin, Vary: "Origin" } });
+  return answer(200, { ok: true }, origin);
 }
 
 export async function handleGuides(request, env, deps){
+  const refused = await gate(request, env, { method: "GET" });
+  if (refused) return refused;
   const origin = request.headers.get("Origin");
-  if (!ORIGINS.includes(origin)) return err(403, "origin", null);
-  if (request.method !== "GET") return err(405, "method", origin);
   const token = String(env.DISCORD_BOT_TOKEN || "").trim(), channel = String(env.GUIDE_CHANNEL || "").trim(), floor = Number(env.GUIDE_NUM_FLOOR);
   let webhookId;
   try { webhookId = webhookParts(env.DISCORD_GUIDE_WEBHOOK_URL).id; } catch (e){ webhookId = ""; }
@@ -154,12 +152,13 @@ export async function handleGuides(request, env, deps){
       }
       const { guides, assign } = listGuides(messages, { webhookId, floor, codes });
       // ponytail: two data centres can assign at once; a Durable Object counter if it ever happens
+      const unsaved = new Set();   // a number is shown only once it is in a footer
       for (const { msg, num } of assign){
         const meta = footerMeta(msg), g = guides.find((x) => x.msg === msg.id);
         const fileId = meta.code === "@file" ? String(msg.attachments[0].id) : null;
-        if (!await editWebhookMessage(env.DISCORD_GUIDE_WEBHOOK_URL, msg.id, guidePostBody(meta, g.guide, { previewUrl: await previewLink(env, msg.id, base), num, fileId }), send)) console.error("guides: numbering PATCH failed for " + msg.id);
+        if (!await editWebhookMessage(env.DISCORD_GUIDE_WEBHOOK_URL, msg.id, guidePostBody(meta, g.guide, { previewUrl: await previewLink(env, msg.id, base), num, fileId }), send)) { unsaved.add(msg.id); console.error("guides: numbering PATCH failed for " + msg.id); }
       }
-      return { floor, guides };
+      return { floor, guides: guides.filter((g) => !unsaved.has(g.msg)) };
     });
     return listAnswer(origin, value, hit);
   } catch (e){
