@@ -1,7 +1,7 @@
 // Cases for the Discord reader, the ☕ list and the /slip amount. Run through test.mjs, which passes in its helpers.
 import assert from "node:assert";
 import { listDonors, handleDonors } from "./src/donors_live.js";
-import { readChannel } from "./src/discord.js";
+import { readChannel, cachedList } from "./src/discord.js";
 import worker from "./src/index.js";
 
 const SITE = "https://jumpptty.github.io";
@@ -60,11 +60,23 @@ export function listCases({ setup, post: slipReq, payloadOf, json, handleSlip })
       assert.strictEqual(closed.status, 503);
       assert.deepStrictEqual(await closed.json(), { ok: false, error: "closed" });
       const keep = console.error; console.error = () => {};
-      let bad; try { bad = await handleDonors(req(), env, { fetch: async () => new Response("", { status: 500 }) }); } finally { console.error = keep; }
+      let bad; try { bad = await handleDonors(req(), { ...env, SLIP_CHANNEL: "C2" }, { fetch: async () => new Response("", { status: 500 }) }); } finally { console.error = keep; }
       assert.strictEqual(bad.status, 502);
       assert.deepStrictEqual(await bad.json(), { ok: false, error: "upstream" });
       assert.strictEqual((await handleDonors(req("/api/donors", "https://evil.example"), env, { fetch: ok })).status, 403);
       assert.strictEqual((await handleDonors(new Request("https://worker.test/api/donors", { method: "POST", headers: { Origin: SITE } }), env, { fetch: ok })).status, 405);
+    },
+    async "cachedList: 60 s in-isolate memo, expiry, and a failed make is not kept"(){
+      let t = 1000, n = 0;
+      const now = () => t, make = async () => ++n;
+      assert.deepStrictEqual(await cachedList("k1", make, now), { value: 1, hit: false });
+      t += 59999;
+      assert.deepStrictEqual(await cachedList("k1", make, now), { value: 1, hit: true });
+      assert.strictEqual(n, 1);
+      t += 2;
+      assert.deepStrictEqual(await cachedList("k1", make, now), { value: 2, hit: false });
+      await assert.rejects(cachedList("k2", async () => { throw new Error("x"); }, now), /x/);
+      assert.deepStrictEqual(await cachedList("k2", make, now), { value: 3, hit: false });
     },
     async "index routes: unknown path is a 404 JSON"(){
       const res = await worker.fetch(new Request("https://worker.test/nope"), {});

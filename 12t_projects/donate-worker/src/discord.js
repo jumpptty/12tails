@@ -21,14 +21,21 @@ export async function readChannel(token, channelId, fetch){
   }
 }
 
-// the data centre's cache when there is one (not under node)
-export async function cachedList(key, make){
+// 60 s copy per isolate first (a workers.dev host ignores caches.default), then the data centre's cache when there is one (not under node)
+const memo = new Map();
+export async function cachedList(key, make, now = Date.now){
+  const m = memo.get(key);
+  if (m && m.until > now()) return { value: m.value, hit: true };
   const c = typeof caches === "undefined" ? null : caches.default, req = new Request("https://donate.invalid/" + key);
   const hit = c && await c.match(req);
-  if (hit) return { value: await hit.json(), hit: true };
-  const value = await make();
-  if (c) await c.put(req, new Response(JSON.stringify(value), { headers: { "cache-control": "max-age=" + LIST_SEC } }));
-  return { value, hit: false };
+  let value, fromCache = false;
+  if (hit){ value = await hit.json(); fromCache = true; }
+  else {
+    value = await make();   // a throw skips the memo below
+    if (c) await c.put(req, new Response(JSON.stringify(value), { headers: { "cache-control": "max-age=" + LIST_SEC } }));
+  }
+  memo.set(key, { value, until: now() + LIST_SEC * 1000 });
+  return { value, hit: fromCache };
 }
 
 export function footerMeta(m){

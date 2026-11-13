@@ -43,7 +43,7 @@ export async function handleDonors(request, env, deps){
   try { webhookId = webhookParts(env.DISCORD_WEBHOOK_URL).id; } catch (e){ webhookId = ""; }
   if (!token || !channel || !webhookId) return err(503, "closed", origin);
   try {
-    const { value, hit } = await cachedList("donors", async () => ({
+    const { value, hit } = await cachedList("donors:" + channel, async () => ({
       donors: listDonors(await readChannel(token, channel, deps.fetch), { webhookId, ownerId: String(env.OWNER_ID || "").trim() }),
     }));
     return listAnswer(origin, value, hit);
