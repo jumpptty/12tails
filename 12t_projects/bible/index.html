@@ -2455,6 +2455,12 @@
   .cg-send-steps{margin:0;padding:12px 14px 12px 34px;border:1px solid var(--line);border-radius:6px;background:var(--panel);font-size:14px;line-height:1.8}
   .cg-send-check{margin:0;font-size:13px;color:var(--pro,#5fb36b)}
   .cg-send-check.is-missing{color:var(--seal,#e5483f)}
+  /* ส่งไกด์ (2026-11-13): the อัปเดตไกด์เดิม # field, its hint / identical-guide warning and the send's status line */
+  .cg-send-num{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:13.5px;color:var(--text)}
+  .cg-page .cg-send-num input{width:9em;padding:6px 9px;font-family:'JetBrains Mono','Prompt',monospace}
+  .cg-send-txt .cg-send-hint{margin:8px 0 0;color:var(--gold);white-space:pre-line}
+  .cg-send-txt .cg-send-status{margin:8px 0 0}.cg-send-txt .cg-send-status:empty{display:none}
+  .cg-send-status[data-kind="error"]{color:var(--seal)}.cg-send-status[data-kind="ok"]{color:var(--pro)}
   .cg-steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:4px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
   .cg-step-tab{position:relative;display:grid;justify-items:center;gap:3px;min-width:0;padding:6px 2px;border:0;border-radius:4px;background:none;color:var(--muted);font:inherit;font-size:12px;line-height:1.2;cursor:pointer}
   .cg-step-tab b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);font-size:13px;font-weight:700}
@@ -33773,11 +33779,11 @@ function downloadQr(){
   }
   link();
 }
-// the Thai text for a Worker reply that is not { ok: true }
-function donateErrorText(reply){
+// the Thai text for a Worker reply that is not { ok: true } (errors: the code-to-text map, the ☕ slip's by default; the guide send passes CLASS_GUIDE_SEND_ERRORS)
+function donateErrorText(reply, errors = DONATE_ERRORS){
   const code = reply && typeof reply.error === "string" ? reply.error : "";
   if (code === "invalid" && typeof reply.message === "string" && reply.message) return reply.message;
-  return code && code !== "invalid" && Object.prototype.hasOwnProperty.call(DONATE_ERRORS, code) ? DONATE_ERRORS[code] : DONATE_ERRORS.network;
+  return code && code !== "invalid" && Object.prototype.hasOwnProperty.call(errors, code) ? errors[code] : errors.network;
 }
 // one slip to the Worker: a plain multipart POST (no custom headers, so no CORS preflight); resolves on { ok: true }, else throws the Thai text
 async function donateSend(d, slip){
@@ -34532,6 +34538,56 @@ function classGuideMergeLive(embedded, live, floor){
   return out;
 }
 let classGuideLiveDone = () => {}; const classGuideLiveReady = new Promise(r => { classGuideLiveDone = r; });   // settled by classGuideLoadLive, with or without live guides
+// ส่งไกด์ (2026-11-13): the editor's step 6 posts the guide code to the Worker's POST /guide (DONATE_API), which puts it in the owner's private Discord channel;
+// a ✅ there puts it on the site (classGuideLoadLive). classGuideFindSame: the number of the guide on the site (CLASS_GUIDES, embedded and live) with the
+// draft's title and author, trimmed, case-insensitive, runs of spaces as one (the guide manager's gmClean); the last one when several match; else null.
+function classGuideFindSame(guides, draft){
+  const key = s => String(s == null ? "" : s).replace(/\s+/g, " ").trim().toLowerCase(), t = key(draft && draft.title), a = key(draft && draft.author);
+  if (!t || !a || !Array.isArray(guides)) return null;
+  let found = null;
+  guides.forEach((g, i) => { if (g && key(g.title) === t && key(g.author) === a) found = +classGuideId(g, i); });
+  return found;
+}
+// the guide manager's gmSameGuide word for word (the validator checks they agree): the same content, key order, id, PVE / PVP and the upload stamp left out
+function classGuideSameGuide(a, b){
+  const norm = (v) => Array.isArray(v) ? v.map(norm) : v && typeof v === "object" ? Object.keys(v).sort().reduce((o, k) => (o[k] = norm(v[k]), o), {}) : v;
+  const strip = ({ id, modes, date, published, ...g }) => g;
+  return JSON.stringify(norm(strip(a))) === JSON.stringify(norm(strip(b)));
+}
+// the Worker's error codes for POST /guide in Thai ("invalid" shows the Worker's own message, donateErrorText); num = a #N that is not a whole number
+const CLASS_GUIDE_SEND_ERRORS = { rate: "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่", closed: "ตอนนี้ยังส่งไกด์ไม่ได้ คัดลอกโค้ดไกด์ส่งทาง Discord แทน", upstream: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง",
+  origin: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", method: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", network: "ส่งไม่สำเร็จ ลองใหม่อีกครั้ง", num: "เลขไกด์เดิมต้องเป็นเลขเต็ม เช่น 52 หรือเว้นว่างถ้าเป็นไกด์ใหม่" };
+// one guide to the Worker: a plain multipart POST of code and replaces (empty = a new guide; no custom headers, so no CORS preflight); resolves on
+// { ok: true }, else throws the Thai text
+async function classGuideSendCode(code, replaces){
+  const body = new FormData();
+  body.append("code", code); body.append("replaces", replaces == null ? "" : String(replaces));
+  let reply = null;
+  try { reply = await (await fetch(DONATE_API + "/guide", { method: "POST", body })).json(); } catch (e) { reply = null; }
+  if (!reply || reply.ok !== true) throw new Error(donateErrorText(reply, CLASS_GUIDE_SEND_ERRORS));
+}
+// the ส่งไกด์ button after the editor's checks (ui = { busy, btn, status, num: the #N field, code: () => the guide code, confirm: code => true when
+// the #N hint or the identical-guide warning has just changed, so this press only shows it and the next one sends }). ui.busy and the disabled
+// button keep a double tap from sending twice. True when sent.
+async function classGuideSendSubmit(ui){
+  if (ui.busy) return false;
+  const say = (text, kind) => { ui.status.textContent = text; ui.status.dataset.kind = kind; };
+  ui.busy = true; ui.btn.disabled = true;
+  try {
+    const code = await ui.code();
+    if (await ui.confirm(code)){ say("", ""); return false; }
+    const raw = String(ui.num.value).trim();
+    if ((raw && !/^[1-9]\d{0,8}$/.test(raw)) || (ui.num.validity && ui.num.validity.badInput)) throw new Error(CLASS_GUIDE_SEND_ERRORS.num);
+    say("กำลังส่ง…", "busy");
+    await classGuideSendCode(code, raw ? +raw : null);
+    say("ส่งแล้ว ไกด์จะขึ้นหลังตรวจ", "ok");
+    return true;
+  } catch (e) {
+    const text = e && typeof e.message === "string" ? e.message : "";
+    say(/[\u0E00-\u0E7F]/.test(text) ? text : CLASS_GUIDE_SEND_ERRORS.network, "error");   // our own reasons are Thai; anything else is the plain retry text
+    return false;
+  } finally { ui.busy = false; ui.btn.disabled = false; }
+}
 // Short guide code (user 2026-10-16). Exports use format 3 ("TG3": the format 2 bytes as CJK characters, below); formats 2 ("TG2.") and 1 ("12TG1.") still import. Format 1: "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
 // tree x row x column slot, in base64url) as JSON, compressed with deflate-raw, in URL-safe base64 (A-Z a-z 0-9 - _).
 // Import takes both this and plain JSON. scripts/guide_code.js mirrors the format outside the browser (to embed a submitted guide as a JSON object).
@@ -35147,6 +35203,7 @@ const CLASS_GUIDE_BUTTON_ICONS = {
   cancelNote:'<path d="M9 7L4 12l5 5M4 12h10a6 6 0 0 0 0-12"/>',
   returnAuthor:'<path d="M8 4L3 9l5 5M3 9h8M13 18l7-7 3 3-7 7-4 1z"/>',
   copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',
+  send:'<path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
   download:'<path d="M12 3v12m-5-5l5 5 5-5M4 16v5h16v-5"/>',
   applyImport:'<path d="M3 4h11v6M3 4v16h18V10M9 13l4 4 8-10"/>',
@@ -35999,7 +36056,7 @@ function mountClassGuide(root){
       <div class="cg-extras-panel" data-cg-role="extras">${classGuideStatsEditorHtml()}${classGuideGearEditorHtml()}<small data-cg-role="extrasSum" hidden></small></div>
       <p class="cg-help" data-cg-role="editHelp" hidden></p>
       <section class="cg-cover-card" data-cg-role="coverCard"><h3 class="cg-send-h">การ์ดในหน้าไกด์จากผู้เล่น</h3><p class="cg-cover-card-sub">อัปเดตทันทีเมื่อเลือกหน้าปก</p><div class="cg-card-preview cg-cover-card-host" data-cg-role="cardPreview"></div></section>
-      <div class="cg-send" data-cg-role="send"><section class="cg-send-preview"><h3 class="cg-send-h">ตัวอย่างหน้าไกด์</h3><div class="cg-send-previews"><figure class="cg-send-view"><div class="cg-send-views" role="group" aria-label="ตัวอย่างหน้าไกด์"><button type="button" class="cg-send-vp-step" data-cg-vp-step="-1" aria-label="ขนาดก่อนหน้า">‹</button><span class="cg-send-vp-list">${["รูป PNG", ...CLASS_GUIDE_VIEWPORTS.map(([w, h]) => w + "×" + h)].map((t, i) => '<button type="button" data-cg-vp="' + i + '" aria-pressed="' + (i === 0) + '">' + t + '</button>').join("")}</span><button type="button" class="cg-send-vp-step" data-cg-vp-step="1" aria-label="ขนาดถัดไป">›</button></div><figcaption data-cg-role="sendViewCap">รูป PNG · คลิกเพื่อดูเต็มจอ</figcaption><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span><span class="cg-send-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></span></button><div class="cg-send-vp" data-cg-role="sendVp" hidden><span class="cg-send-thumb-wait">กำลังโหลดหน้าไกด์…</span></div></figure></div></section><div class="cg-send-opts"><section class="cg-send-opt"><span class="cg-send-ic">${classGuideButtonIcon("image")}</span><div class="cg-send-txt"><h3>รูปไกด์ PNG 4K</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p></div><div class="cg-send-btns"><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="copyImage">${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button></div></section><section class="cg-send-opt is-main"><span class="cg-send-ic">${classGuideButtonIcon("copy")}</span><div class="cg-send-txt"><h3>ส่งขึ้นหน้าไกด์จากผู้เล่น</h3><p>คัดลอกโค้ดไกด์ แล้ววาง (Ctrl+V) ส่งทาง <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>Discord</b></a> ไกด์จะขึ้นหน้าไกด์จากผู้เล่นเมื่อเพิ่มให้แล้ว</p></div><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
+      <div class="cg-send" data-cg-role="send"><section class="cg-send-preview"><h3 class="cg-send-h">ตัวอย่างหน้าไกด์</h3><div class="cg-send-previews"><figure class="cg-send-view"><div class="cg-send-views" role="group" aria-label="ตัวอย่างหน้าไกด์"><button type="button" class="cg-send-vp-step" data-cg-vp-step="-1" aria-label="ขนาดก่อนหน้า">‹</button><span class="cg-send-vp-list">${["รูป PNG", ...CLASS_GUIDE_VIEWPORTS.map(([w, h]) => w + "×" + h)].map((t, i) => '<button type="button" data-cg-vp="' + i + '" aria-pressed="' + (i === 0) + '">' + t + '</button>').join("")}</span><button type="button" class="cg-send-vp-step" data-cg-vp-step="1" aria-label="ขนาดถัดไป">›</button></div><figcaption data-cg-role="sendViewCap">รูป PNG · คลิกเพื่อดูเต็มจอ</figcaption><button type="button" class="cg-send-thumb" data-cg-act="openFullView" aria-label="ดูหน้าไกด์เต็มจอ" disabled><img data-cg-role="sendThumb" alt=""><span class="cg-send-thumb-wait">กำลังสร้างภาพ…</span><span class="cg-send-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></span></button><div class="cg-send-vp" data-cg-role="sendVp" hidden><span class="cg-send-thumb-wait">กำลังโหลดหน้าไกด์…</span></div></figure></div></section><div class="cg-send-opts"><section class="cg-send-opt"><span class="cg-send-ic">${classGuideButtonIcon("image")}</span><div class="cg-send-txt"><h3>รูปไกด์ PNG 4K</h3><p>เก็บไว้เอง หรือแชร์ในกลุ่มและโซเชียลได้ทันที</p></div><div class="cg-send-btns"><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="exportImage">${classGuideButtonIcon("download")}<span>ดาวน์โหลดรูป</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="copyImage">${classGuideButtonIcon("copy")}<span>คัดลอกรูป</span></button></div></section><section class="cg-send-opt is-main"><span class="cg-send-ic">${classGuideButtonIcon("send")}</span><div class="cg-send-txt"><h3>ส่งขึ้นหน้าไกด์จากผู้เล่น</h3><p>กด <b>ส่งไกด์</b> แล้วไกด์จะขึ้นหน้าไกด์จากผู้เล่นหลังตรวจ ถ้าส่งไม่ได้ ให้คัดลอกโค้ดไกด์ แล้ววาง (Ctrl+V) ส่งให้ jumpptty ทาง <a class="hub-note-link" href="https://discord.com/users/333828912830480386" target="_blank" rel="noopener"><b>Discord</b></a> แทน</p><label class="cg-send-num">อัปเดตไกด์เดิม #<input type="number" min="1" step="1" inputmode="numeric" data-cg-role="sendNum" placeholder="ว่าง = ไกด์ใหม่"></label><p class="cg-send-hint" data-cg-role="sendHint" hidden></p><p class="cg-send-status" data-cg-role="sendStatus" aria-live="polite"></p></div><div class="cg-send-btns"><button type="button" class="rsim-btn cg-btn cg-btn-primary cg-send-copy" data-cg-act="send">${classGuideButtonIcon("send")}<span>ส่งไกด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary cg-send-copy" data-cg-act="export">${classGuideButtonIcon("copy")}<span>คัดลอกโค้ดไกด์</span></button></div></section></div><p class="cg-send-check" data-cg-role="sendCheck"></p></div>
       <template data-cg-role="modeSwitchTpl"><div class="cg-mode-switch" role="group" aria-label="โหมดแก้ไกด์"><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="build" aria-pressed="true">${classGuideButtonIcon("build")}<span>จัดบิลด์</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="annotate" aria-pressed="false">${classGuideButtonIcon("annotate")}<span>เขียนโน้ตสกิล</span></button><button type="button" class="rsim-btn cg-btn cg-btn-secondary" data-cg-act="cover" aria-pressed="false">${classGuideButtonIcon("cover")}<span>ไอคอนหน้าปก</span></button></div></template>
     </section>
     <section class="cg-reader" data-cg-role="reader" hidden><div class="cg-reader-box cg-reader-head"><p class="cg-kicker" data-cg-role="readerKind"></p><h2 data-cg-role="guideTitle"></h2><p class="cg-byline" data-cg-role="guideByline"></p><p class="cg-outdated" data-cg-role="guideOutdated" hidden></p></div><div class="cg-reader-box cg-stat-panel" data-cg-role="guideStats" hidden></div><div class="cg-reader-box cg-gear-panel" data-cg-role="guideGear" hidden></div><p class="cg-prose" data-cg-role="guideDescription"></p><section class="cg-note-chips" data-cg-role="noteChips" aria-live="polite" hidden><h3 class="cg-note-chips-title">★ โน้ตจากผู้เขียน</h3></section><p class="cg-help">บิลด์นี้อ่านอย่างเดียว คลิกสกิลที่มี ★ เพื่ออ่านเหตุผลจากผู้เขียน</p></section>
@@ -36112,7 +36169,7 @@ function mountClassGuide(root){
   if (typeof MutationObserver !== "undefined") new MutationObserver(syncPicks).observe(simRoot, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["src"] });
   root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-cg-pick]"); if (!b) return; const t = simRoot.querySelector('[data-act="' + b.dataset.cgPick + '"]'); if (t) t.click(); });
   setTimeout(syncPicks, 0);
-  let step = 1, copiedOnce = false;
+  let step = 1, copiedOnce = false, sendTyped = null;   // sendTyped: the [title, author] the author typed or cleared #N for (ส่งไกด์), so it is not filled over
   let mode = "gallery", current = null, currentId = null, draft = null, noteId = null, applying = false;
   const noteUndo = [];
   const syncNoteUndo = () => {};   // no undo button since user 2026-10-16; Ctrl+Z in annotate mode still undoes notes
@@ -36662,6 +36719,7 @@ function mountClassGuide(root){
   });
   function fillSendCard(){
     if (vpFrame){ el("sendVp").classList.remove("is-ready"); postPreview(); requestAnimationFrame(fitSendView); }   // the draft may have changed since
+    sendPaint(null);   // อัปเดตไกด์เดิม #N (ส่งไกด์)
     let g = null; try { g = draft && classGuideNormalize(draft, { draft: true }); } catch (e) { g = null; }
     // the full guide view, small: the PNG export itself, so it always matches the preview and the saved image
     const thumb = el("sendThumb"), btn = button("openFullView"), ticket = ++sendViewTicket;
@@ -36675,6 +36733,25 @@ function mountClassGuide(root){
     }).catch(() => { btn.classList.remove("is-waiting"); });
   }
   let sendViewTicket = 0, sendViewUrl = "";
+  // ส่งไกด์ (2026-11-13): once the live guides are in, #N = the guide on the site with this title and author (classGuideFindSame) unless the author typed
+  // or cleared the field for this title and author; the hint says so, and a code given (the press of ส่งไกด์) also warns when it equals guide #N in
+  // everything (classGuideSameGuide). True when the field or the hint changed, so that press shows it first and sends on the next one.
+  const sendWho = () => JSON.stringify([draft && draft.title, draft && draft.author]);
+  async function sendPaint(code){
+    await classGuideLiveReady;
+    const input = el("sendNum"), hint = el("sendHint"), was = input.value + "\n" + hint.textContent;
+    const match = classGuideFindSame(CLASS_GUIDES, draft);
+    if (sendTyped !== sendWho()) input.value = match === null ? "" : String(match);
+    const n = /^\d+$/.test(input.value.trim()) ? +input.value : NaN, i = CLASS_GUIDES.findIndex((x, k) => +classGuideId(x, k) === n);
+    let same = false; if (code && i >= 0) try { same = classGuideSameGuide(JSON.parse(await classGuideUnpack(code)), CLASS_GUIDES[i]); } catch (e) { same = false; }
+    const lines = [];
+    if (match !== null && n === match) lines.push("พบไกด์ชื่อและผู้เขียนเดียวกัน #" + match + " จะส่งเป็นการอัปเดต ลบเลขออกถ้าจะส่งเป็นไกด์ใหม่");
+    if (same) lines.push("ไกด์นี้เหมือน #" + n + " ทุกอย่าง");
+    hint.textContent = lines.join("\n"); hint.hidden = !lines.length;
+    return input.value + "\n" + hint.textContent !== was;
+  }
+  el("sendNum").addEventListener("input", () => { sendTyped = sendWho(); sendPaint(null); });
+  const sendUi = { busy: false, btn: button("send"), status: el("sendStatus"), num: el("sendNum"), code: () => classGuidePack(collect()), confirm: code => sendPaint(code) };
   function updateSteps(){
     if (!draft) return;
     placeEdCast();
@@ -37555,7 +37632,7 @@ function mountClassGuide(root){
         if (JSON.stringify(draft.notes) !== before){ noteUndo.push(before); syncNoteUndo(); }   // Ctrl+Z in annotate mode brings it back
         sim.setNotes(draft.notes); saveDraft(); el("noteEditor").hidden = true;
       }
-      else if ((act === "export" || act === "exportImage" || act === "copyImage") && mode === "author" && (saveDraft(), classGuideStatsProblem(draft.stats) || statTypo())){ goStep(2); status(classGuideStatsProblem(draft.stats) || STAT_TYPO); }   // shares that do not total 100 (user 2026-10-18)
+      else if ((act === "export" || act === "send" || act === "exportImage" || act === "copyImage") && mode === "author" && (saveDraft(), classGuideStatsProblem(draft.stats) || statTypo())){ goStep(2); status(classGuideStatsProblem(draft.stats) || STAT_TYPO); }   // shares that do not total 100 (user 2026-10-18)
       else if ((act === "exportImage" || act === "copyImage") && mode === "author" && (saveDraft(), buildProblems().length)) guardBuild();
       else if (act === "exportImage"){
         const g = mode === "author" ? (saveDraft(), classGuideNormalize(draft, { draft: true })) : current;
@@ -37637,14 +37714,15 @@ function mountClassGuide(root){
       else if (act === "coverClear") coverChange(list => { list.length = 0; });
       else if (act === "mode"){ target.setAttribute("aria-pressed", String(target.getAttribute("aria-pressed") !== "true")); el("modesBox").classList.remove("is-missing"); saveDraft(); }   // PVE / PVP, both allowed (user 2026-10-20)
       else if (act === "preview"){ saveDraft(); openGuide(draft, true); }
-      else if (act === "export" && !(draft && draft.title && draft.title.trim() && draft.author && draft.author.trim())){ goStep(1); status("ใส่ชื่อไกด์ และชื่อผู้เขียนก่อนคัดลอกโค้ดไกด์"); }
-      else if (act === "export" && !(draft && draft.modes && draft.modes.length)){ goStep(1); el("modesBox").classList.add("is-missing"); status("เลือกว่าไกด์นี้สำหรับ PVE หรือ PVP (เลือกได้ทั้งสองอย่าง) ก่อนคัดลอกโค้ดไกด์"); }   // required (user 2026-10-20)
-      else if (act === "export" && !(draft && draft.cover && draft.cover.length)){   // the cover is required to submit a guide (user 2026-10-16)
-        coverMissing = true; goStep(5); status("เลือกไอคอนหน้าปกอย่างน้อย 1 สกิล (สูงสุด 3) ก่อนคัดลอกโค้ดไกด์");
+      else if ((act === "export" || act === "send") && !(draft && draft.title && draft.title.trim() && draft.author && draft.author.trim())){ goStep(1); status("ใส่ชื่อไกด์ และชื่อผู้เขียนก่อน" + (act === "send" ? "ส่งไกด์" : "คัดลอกโค้ดไกด์")); }
+      else if ((act === "export" || act === "send") && !(draft && draft.modes && draft.modes.length)){ goStep(1); el("modesBox").classList.add("is-missing"); status("เลือกว่าไกด์นี้สำหรับ PVE หรือ PVP (เลือกได้ทั้งสองอย่าง) ก่อน" + (act === "send" ? "ส่งไกด์" : "คัดลอกโค้ดไกด์")); }   // required (user 2026-10-20)
+      else if ((act === "export" || act === "send") && !(draft && draft.cover && draft.cover.length)){   // the cover is required to submit a guide (user 2026-10-16)
+        coverMissing = true; goStep(5); status("เลือกไอคอนหน้าปกอย่างน้อย 1 สกิล (สูงสุด 3) ก่อน" + (act === "send" ? "ส่งไกด์" : "คัดลอกโค้ดไกด์"));
         el("coverRow").scrollIntoView({ block: "nearest" });
       }
-      else if (act === "export" && (saveDraft(), buildProblems().length)) guardBuild();
+      else if ((act === "export" || act === "send") && (saveDraft(), buildProblems().length)) guardBuild();
       else if (act === "export"){ saveDraft(); await classGuideCopy(await classGuidePack(collect())); copiedOnce = true; showCopied(); updateSteps(); }   // copy only (user 2026-10-17: the button must not open Discord)   // no pop-up (user 2026-10-16): step 6 already says where to send it, the button's check mark confirms the copy
+      else if (act === "send"){ saveDraft(); if (await classGuideSendSubmit(sendUi)){ copiedOnce = true; updateSteps(); } }   // ส่งไกด์ (2026-11-13): the code คัดลอกโค้ดไกด์ copies, to the owner's Discord for a ✅
       else if (act === "import") showImport();
       else if (act === "saveNote"){
         const text = el("noteText").value.trim(); if (text.length > 3000) throw new Error("โน้ตยาวเกิน 3,000 ตัวอักษร");
@@ -39755,6 +39833,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-13T07:21:58.108Z","feat(bible): ส่งไกด์ in the guide editor sends the guide for ✅ approval, as an update when its title and author match"],
     ["2026-11-13T07:03:03.134Z","feat(bible): ✅'d class guides show live from Discord, numbered from 107, and #class-guide/code/<code> previews a code"],
     ["2026-11-13T06:48:08.350Z","feat(bible): the ☕ slip form asks the amount, and ✅'d slips show in the donor list live from Discord"],
     ["2026-11-13T00:05:23.801Z","feat(bible): class guide #106 TTO Monkey ลิง 2 Element Guardian (Gaos&Golem) by ZoRution"],

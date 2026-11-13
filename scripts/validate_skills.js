@@ -4039,6 +4039,51 @@ let checkedRsim = 0;
     ok(openCodeSrc && /classGuideUnpack\(/.test(openCodeSrc) && /openGuide\([^\n]*"code"\)/.test(openCodeSrc) && !/storageKey|stepKey|saveDraft|localStorage|draft =|startAuthor/.test(openCodeSrc),
       "openCode decodes with classGuideUnpack and opens the guide read-only (openGuide ..., \"code\"), never writing the author's draft key");
     ok(/currentId = preview \|\| code \? null : id;/.test(html), "a code preview has no guide number, so it counts no GoatCounter view and saves no tries"); }
+  // ส่งไกด์ (2026-11-13): step 6 posts the guide code to the Worker's POST /guide (fields code and replaces); a guide whose title and author match one on
+  // the site (embedded or live) goes as its update (#N filled for the author, who may clear it); an identical one gets a warning; one send at a time
+  { const find = vm.runInContext("typeof classGuideFindSame === 'function' ? classGuideFindSame : null", sandbox);
+    ok(!!find, "classGuideFindSame(guides, draft) exists (ส่งไกด์'s อัปเดตไกด์เดิม #N)");
+    if (find){
+      const gs = [{ ...fixture, id: 49, title: "Wolf  PVE   Guide", author: "Kong" }, { ...fixture, id: 50, title: "Other", author: "Kong" }, { ...fixture, id: 107, title: "Live one", author: "Mew" }];
+      ok(find(gs, { title: "  wolf pve guide ", author: " KONG" }) === 49, "classGuideFindSame finds a guide by title and author, ignoring case, the ends' spaces and runs of spaces (got " + find(gs, { title: "  wolf pve guide ", author: " KONG" }) + ")");
+      ok(find(gs, { title: "LIVE ONE", author: "mew" }) === 107, "classGuideFindSame finds a live guide (numbered 107) too");
+      ok(find(gs, { title: "Wolf PVE Guide", author: "Someone" }) === null && find(gs, { title: "Wolf PVE Guide 2", author: "Kong" }) === null && find(gs, { title: "", author: "" }) === null && find(gs, null) === null && find([], { title: "Other", author: "Kong" }) === null,
+        "classGuideFindSame returns null when no guide has both the title and the author (or the draft has none)");
+      ok(find([...gs, { ...fixture, id: 112, title: "other", author: "kong" }], { title: "Other", author: "Kong" }) === 112, "classGuideFindSame picks the last of two matching guides (the newest)");
+    }
+    const sendCode = vm.runInContext("typeof classGuideSendCode === 'function' ? classGuideSendCode : null", sandbox), submit = vm.runInContext("typeof classGuideSendSubmit === 'function' ? classGuideSendSubmit : null", sandbox);
+    const errs = vm.runInContext("typeof CLASS_GUIDE_SEND_ERRORS === 'object' ? CLASS_GUIDE_SEND_ERRORS : null", sandbox), errText = vm.runInContext("typeof donateErrorText === 'function' ? donateErrorText : null", sandbox);
+    ok(!!sendCode && !!submit && !!errs, "classGuideSendCode(code, replaces), classGuideSendSubmit(ui) and CLASS_GUIDE_SEND_ERRORS exist");
+    if (errs && errText){
+      ok(["rate", "closed", "upstream", "origin", "method", "network"].every((k) => typeof errs[k] === "string" && /[\u0E00-\u0E7F]/.test(errs[k])) && !/สลิป/.test(JSON.stringify(errs)), "CLASS_GUIDE_SEND_ERRORS has a Thai text for rate, closed, upstream, origin, method and network, none about a slip");
+      ok(errText({ ok: false, error: "rate" }, errs) === errs.rate && errText({ ok: false, error: "closed" }, errs) === errs.closed && errText({ ok: false, error: "invalid", message: "โค้ดไกด์ไม่ถูกต้อง" }, errs) === "โค้ดไกด์ไม่ถูกต้อง" && errText({ ok: false, error: "teapot" }, errs) === errs.network && errText(null, errs) === errs.network,
+        "the guide send's errors map like donateErrorText: its own text per code, the Worker's message for invalid, network for anything else");
+      ok(errText({ ok: false, error: "rate" }) === vm.runInContext("DONATE_ERRORS", sandbox).rate, "donateErrorText without a map still gives the ☕ slip texts");
+    }
+    if (sendCode && submit){
+      const calls = []; sandbox.FormData = FormData; sandbox.fetch = (url, opts) => { calls.push({ url, opts }); return new Promise(() => {}); };
+      try {
+        sendCode("TG3\u4E00\u4E01", 52); sendCode("TG3\u4E02", null);
+        const b = (i) => calls[i] && calls[i].opts && calls[i].opts.body, keys = (i) => b(i) && typeof b(i).keys === "function" ? JSON.stringify([...b(i).keys()]) : "";
+        ok(calls.length === 2 && calls.every((c) => c.url === vm.runInContext("DONATE_API", sandbox) + "/guide" && c.opts.method === "POST" && !("headers" in c.opts) && c.opts.body instanceof FormData) && keys(0) === '["code","replaces"]' && b(0).get("code") === "TG3\u4E00\u4E01" && b(0).get("replaces") === "52" && b(1).get("replaces") === "",
+          "classGuideSendCode posts FormData with exactly code and replaces (empty for a new guide) to DONATE_API/guide, no custom headers (got " + JSON.stringify(calls.map((c) => [c.url, keys(calls.indexOf(c))])) + ")");
+        let codes = 0;
+        const mk = (busy) => ({ busy, btn: { disabled: false }, status: { textContent: "เดิม", dataset: {} }, num: { value: "" }, code: () => { codes++; return Promise.resolve("TG3\u4E00"); }, confirm: () => Promise.resolve(false) });
+        const idle = mk(true); submit(idle);
+        ok(codes === 0 && idle.status.textContent === "เดิม" && idle.btn.disabled === false, "the ส่งไกด์ handler (classGuideSendSubmit) returns at once while a send is running (ui.busy)");
+        const ui = mk(false); submit(ui); const during = [ui.busy, ui.btn.disabled]; submit(ui);
+        ok(during[0] === true && during[1] === true && codes === 1, "classGuideSendSubmit marks the send busy and disables ส่งไกด์ before its first wait, so a second tap sends nothing (got busy " + during[0] + ", disabled " + during[1] + ", " + codes + " code reads)");
+      } finally { delete sandbox.fetch; delete sandbox.FormData; }
+    }
+    ok(/data-cg-role="send"[^\n]*data-cg-act="send"[^\n]*<span>ส่งไกด์<\/span>/.test(html) && /data-cg-role="send"[^\n]*อัปเดตไกด์เดิม #<input type="number"[^>]*data-cg-role="sendNum"/.test(html) && /data-cg-role="send"[^\n]*data-cg-role="sendStatus"/.test(html),
+      "step 6 has the ส่งไกด์ button, the อัปเดตไกด์เดิม # number field and the send status line");
+    ok(html.includes('"พบไกด์ชื่อและผู้เขียนเดียวกัน #" + ') && html.includes('" จะส่งเป็นการอัปเดต ลบเลขออกถ้าจะส่งเป็นไกด์ใหม่"') && html.includes('"ไกด์นี้เหมือน #" + ') && html.includes('" ทุกอย่าง"') && html.includes('"ส่งแล้ว ไกด์จะขึ้นหลังตรวจ"'),
+      "ส่งไกด์'s hint, identical-guide warning and success texts are the brief's (2026-11-13)");
+    const lines = html.split(/\r?\n/), checkLine = (needle) => lines.some((l) => l.includes(needle) && /act === "send"/.test(l));
+    ok(["classGuideStatsProblem(draft.stats) || statTypo()))", "!(draft && draft.title && draft.title.trim() && draft.author", "!(draft && draft.modes && draft.modes.length)", "!(draft && draft.cover && draft.cover.length)", "buildProblems().length)) guardBuild();"].every(checkLine),
+      "ส่งไกด์ runs the same checks as คัดลอกโค้ดไกด์ (stats, title and author, PVE / PVP, cover, build)");
+    ok(/else if \(act === "send"\)\{[^\n]*classGuideSendSubmit\(sendUi\)/.test(html) && /code: \(\) => classGuidePack\(collect\(\)\)/.test(html) && /await classGuideLiveReady;/.test((html.match(/async function sendPaint\([\s\S]*?\n  \}/) || [""])[0]),
+      "the ส่งไกด์ branch sends classGuidePack(collect()) (the code คัดลอกโค้ดไกด์ copies) through classGuideSendSubmit, and #N waits for the live guides"); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
   rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
   rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");
@@ -7252,7 +7297,9 @@ if (gmHtml !== null) {
     { const g = doc.guides[0].g, reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(g).reverse()))), other = { ...g, title: g.title + " v2" }, modes = { ...g, modes: ["pvp"], id: 999 };
       const pairs = [[g, reordered], [g, other], [g, modes], [g, { ...g, build: { ...g.build, level: g.build.level - 1 } }]];
       ok(gm.gmSameGuide(g, reordered) && !gm.gmSameGuide(g, other) && gm.gmSameGuide(g, modes) && !gm.gmSameGuide(...pairs[3]), "gmSameGuide: same content in any key order, PVE/PVP and id left out, any real change counts");
-      ok(pairs.every(([a, b]) => gm.gmSameGuide(a, b) === ag.sameGuide(a, b)), "gmSameGuide and add_guide's sameGuide agree"); }
+      ok(pairs.every(([a, b]) => gm.gmSameGuide(a, b) === ag.sameGuide(a, b)), "gmSameGuide and add_guide's sameGuide agree");
+      const pageSame = vm.runInContext("typeof classGuideSameGuide === 'function' ? classGuideSameGuide : null", sandbox), more = [...pairs, [stA, stB], [stA, { ...stB, title: "b" }], [g, { ...g, published: "2020-01-01T00:00:00Z", date: "2020-01-01" }], [g, { ...g, notes: { ...(g.notes || {}), 101: "x" } }]];
+      ok(!!pageSame && more.every(([a, b]) => pageSame(a, b) === gm.gmSameGuide(a, b)), "the Bible's classGuideSameGuide (ส่งไกด์'s identical-guide warning, 2026-11-13) and the guide manager's gmSameGuide agree on fixed pairs"); }
     ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
     // user 2026-10-23: a batch result's donor items ({ action, k }) are no guides, so they get no #class-guide link
     { const mixed = { ...result, items: [{ action: "add", id: 54 }, { action: "donor-add", k: "0a1b2c3d" }, { action: "donor-remove", k: "4e5f6a7b" }] }, out = gm.gmRunOutcome(run("completed", "success"), [ann("gm-result", JSON.stringify(mixed))], SITE);
