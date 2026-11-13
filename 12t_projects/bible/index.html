@@ -34513,6 +34513,25 @@ function classGuideImport(code){
   try { value = JSON.parse(code); } catch (e) { throw new Error("อ่านโค้ดไกด์ไม่ได้ กรุณาวาง JSON ที่ส่งออกจากไกด์อาชีพ"); }
   return classGuideNormalize(value, { draft: true });
 }
+// ✅'d class guides live from Discord (2026-11-13): the Worker's GET /api/guides answer ({ floor, guides: [{ num, replaces, guide, published, msg }] }, each
+// guide already decoded, with id = num) joined to the embedded list. A live guide numbered N takes embedded guide N's place (an approved update, same spot
+// in the list) or joins the end (a new number, above the floor). Skipped: one that replaces a removed number (replaces at or below the floor while no
+// embedded guide has that number), one that does not validate (classGuideNormalize, like an invalid embedded entry), a second one with the same number.
+function classGuideMergeLive(embedded, live, floor){
+  if (!Array.isArray(live)) return embedded;
+  const out = embedded.slice(), at = new Map(out.map((g, i) => [classGuideId(g, i), i])), seen = new Set();
+  for (const x of live){
+    const num = x && x.num;
+    if (!Number.isInteger(num) || num < 1 || seen.has(num)) continue;   // first wins, so a bad answer cannot show a guide twice
+    if (Number.isInteger(x.replaces) && x.replaces <= floor && !at.has(String(x.replaces))) continue;   // a removed number never comes back
+    try { classGuideNormalize(x.guide); } catch (e) { continue; }
+    seen.add(num);
+    const g = { ...x.guide, id: num }, k = at.get(String(num));
+    if (k === undefined) out.push(g); else out[k] = g;
+  }
+  return out;
+}
+let classGuideLiveDone = () => {}; const classGuideLiveReady = new Promise(r => { classGuideLiveDone = r; });   // settled by classGuideLoadLive, with or without live guides
 // Short guide code (user 2026-10-16). Exports use format 3 ("TG3": the format 2 bytes as CJK characters, below); formats 2 ("TG2.") and 1 ("12TG1.") still import. Format 1: "12TG1." + a compact form of the guide (one-letter keys; the learned skills as a 160-bit set, one bit per
 // tree x row x column slot, in base64url) as JSON, compressed with deflate-raw, in URL-safe base64 (A-Z a-z 0-9 - _).
 // Import takes both this and plain JSON. scripts/guide_code.js mirrors the format outside the browser (to embed a submitted guide as a JSON object).
@@ -36986,24 +37005,25 @@ function mountClassGuide(root){
     el("guideStats").innerHTML = classGuideStatsHtml(current.stats, current.statsPlus || []); el("guideStats").hidden = false;
     el("guideGear").innerHTML = classGuideGearHtml(current.gear); el("guideGear").hidden = !current.gear;
   }
-  function openGuide(guide, preview = false, id = null){
-    current = classGuideNormalize(guide, { draft: preview }); currentId = preview ? null : id; descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
-    if (currentId){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
-    if (currentId){   // the address bar now is the link to share, and Back goes to the guide list (user 2026-10-17), never past it to the main menu
+  function openGuide(guide, preview = false, id = null, keep = false){   // preview: true = the editor's preview, "code" = a #class-guide/code/<code> link (read-only, no number); keep = the same guide drawn again (classGuideLoadLive): its view count, address, page and scroll stay
+    const code = preview === "code"; preview = preview === true;
+    current = classGuideNormalize(guide, { draft: preview || code }); currentId = preview || code ? null : id; if (!keep) descPage = 0; switchMode("reader"); clearNoteChips(); placeNoteChips();
+    if (currentId && !keep){ countGuideView(currentId, current.title); delete guideViewCache[currentId]; }   // this visit counts, and the next read is fresh
+    if (currentId && !keep){   // the address bar now is the link to share, and Back goes to the guide list (user 2026-10-17), never past it to the main menu
       const want = "#class-guide/" + currentId, marked = history.state && history.state.cgGuide;
       if (location.hash === want){ if (!marked){ history.replaceState(null, "", "#class-guide"); history.pushState({ cgGuide: 1 }, "", want); } }   // a shared link or a refresh: slip the list in under it once
       else if (location.hash === "#class-guide") history.pushState({ cgGuide: 1 }, "", want);   // opened from the list
       else history.replaceState({ cgGuide: 1 }, "", want);
     }
     setTab(preview ? "author" : "gallery");   // a preview belongs to เขียนไกด์, a community guide to ไกด์จากผู้เล่น
-    button("useAsBase").hidden = preview;
+    button("useAsBase").hidden = preview || code;
     sim.setInteraction("read"); sim.loadBuild(current.build); sim.setNotes(current.notes); prefillNoteChips();
     setToolServer("class-guide", current.build.server);
     fillReader(preview);
     button("returnAuthor").hidden = !preview; backBtn.lastChild.textContent = preview ? "กลับไปแก้ไกด์" : "ไกด์จากผู้เล่น"; backBtn.setAttribute("aria-label", backBtn.lastChild.textContent);   // in the top buttons, not the guide panel: the preview is exactly what a visitor sees (user 2026-10-16)
     classGuideFlaskFill(el("guideStats"));
     readerCtx = classGuideReaderCtx(current); readerCast = classGuideStatTips(current.build); viewStats = classGuideNumericStats(current.stats); resetUndo = null; placeReaderCast(); if (currentId) restoreTries(classGuideTriesLoad(String(currentId)));   // shares and words are not numbers the hover can use; then this guide's own tries (user 2026-10-21)
-    window.scrollTo(0, 0); queueReaderFit();
+    if (!keep) window.scrollTo(0, 0); queueReaderFit();
   }
   // Icon filters (user 2026-10-17): ทั้งหมด plus one button per server and per class (CLASS_ORDER); one click filters, a click on the chosen icon goes back
   // to ทั้งหมด. A class with no guide (on the chosen server) is greyed but still clickable.
@@ -37645,10 +37665,23 @@ function mountClassGuide(root){
     if (mode === "reader" && currentId === id) return true;
     openGuide(guide, false, id); return true;
   };
+  const openCode = async code => {   // #class-guide/code/<code> (the ดูตัวอย่าง link in Discord, 2026-11-13): the code read-only in the reader, never put into the draft; a damaged code shows the list and why
+    const at = location.hash; let guide;
+    try { try { code = decodeURIComponent(code); } catch (e) {} guide = classGuideImport(await classGuideUnpack(code)); }
+    catch (e){ if (location.hash === at){ showGallery(); status(e.message); } return; }
+    if (location.hash === at) openGuide(guide, "code");
+  };
+  window.addEventListener("cg-live", () => {   // the ✅'d guides from Discord arrived (classGuideLoadLive): the filters and the list are drawn again on the same page, and an open guide that changed is drawn again in place
+    syncFilters(); if (mode === "gallery") renderGallery(true);
+    if (mode !== "reader" || !currentId) return;
+    const i = CLASS_GUIDES.findIndex((raw, k) => classGuideId(raw, k) === currentId); let g = null;
+    try { g = classGuideNormalize(CLASS_GUIDES[i]); } catch (e) {}
+    if (g && JSON.stringify(g) !== JSON.stringify(current)){ const y = window.scrollY; openGuide(g, false, currentId, true); window.scrollTo(0, y); }
+  });
   const showGallery = () => { saveDraft(); switchMode("gallery"); sim.setInteraction("read"); renderGallery(); };
   const openAuthor = () => { if (mode !== "author") startAuthor(); };   // #class-guide/write: straight into the editor with the saved draft (no start dialog)
   const filterBy = (cls, server) => { filterMode = ""; filterTop = false; filterClass = CLASS_ORDER.some(n => n.toLowerCase() === cls) ? cls : ""; filterServer = server && SKILL_SIM_SERVERS[server] ? server : ""; syncFilters(); };   // #class-guide?class=<key> (the menu's class portrait)
-  root._classGuide = { openById, showGallery, filterBy, openAuthor, openGuide, openPreviewEmbed, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery, fitReader };
+  root._classGuide = { openById, openCode, showGallery, filterBy, openAuthor, openGuide, openPreviewEmbed, getDraft: () => draft && JSON.parse(JSON.stringify(draft)), startAuthor, renderGallery, fitReader };
   renderGallery();
 }
 
@@ -39407,10 +39440,15 @@ function mountLauncher(root){
   // ไกด์อาชีพ slide: newest guide first; each PNG renders once per visit (or again after a look change, the PNG follows the look)
   // Guides uploaded in the last 24 hours (published, stamped by the upload) come first, every visit of the slide opens on one of them (in turn) and they wear a ใหม่ badge (user 2026-10-19; 24 hours since upload instead of dated today, user 2026-10-23)
   const isNew = g => classGuideIsNew(g);
-  const guides = CLASS_GUIDES.map((g, k) => ({ g, id: classGuideId(g, k) })).filter(x => x.g && x.g.build && CLASS_STORY_ART[SKILL_SIM_NAMES[x.g.build.classKey]])
+  const guideList = () => CLASS_GUIDES.map((g, k) => ({ g, id: classGuideId(g, k) })).filter(x => x.g && x.g.build && CLASS_STORY_ART[SKILL_SIM_NAMES[x.g.build.classKey]])
     .sort((a, b) => isNew(b.g) - isNew(a.g) || String(b.g.published || b.g.date || "").localeCompare(String(a.g.published || a.g.date || "")) || Number(b.id) - Number(a.id));
-  const nNew = guides.filter(x => isNew(x.g)).length;
+  let guides = guideList(), nNew = guides.filter(x => isNew(x.g)).length;
   const pngs = new Map(), readyPng = {}; let gi = -1, feat = 0, guideTimer = 0;
+  window.addEventListener("cg-live", () => {   // the ✅'d guides from Discord (classGuideLoadLive): the slide's list is made again, a replaced guide's image is drawn again, a shown guide count is updated
+    const old = new Map(guides.map(x => [x.id, x.g])); guides = guideList(); nNew = guides.filter(x => isNew(x.g)).length;
+    for (const x of guides) if (old.has(x.id) && old.get(x.id) !== x.g){ pngs.delete(x.id); delete readyPng[x.id]; }
+    const b = copy.querySelector(".ln-fact b"); if (b && TOOLS[cur] && TOOLS[cur].id === "class-guide") b.textContent = CLASS_GUIDES.length;
+  });
   const nextStart = () => nNew ? feat % nNew : gi + 1;   // where the next visit of the slide starts
   const idle = fn => typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 300);
   const guidePng = x => { if (!pngs.has(x.id)) pngs.set(x.id, (async () => { try {
@@ -39717,6 +39755,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-13T07:03:03.134Z","feat(bible): ✅'d class guides show live from Discord, numbered from 107, and #class-guide/code/<code> previews a code"],
     ["2026-11-13T06:48:08.350Z","feat(bible): the ☕ slip form asks the amount, and ✅'d slips show in the donor list live from Discord"],
     ["2026-11-13T00:05:23.801Z","feat(bible): class guide #106 TTO Monkey ลิง 2 Element Guardian (Gaos&Golem) by ZoRution"],
     ["2026-11-12T09:08:54.125Z","feat(bible): class guide #105 TTO Monkey two avatar (เน้นไฟ)+ summon soul by unknow"],
@@ -40889,7 +40928,8 @@ function route(){
   }
   if (tool && tool.id === "class-guide" && deepSkill === "write" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) toolContainers[tool.id]._classGuide.openAuthor();   // #class-guide/write = the guide editor
   else if (tool && tool.id === "class-guide" && deepSkill === "preview" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) toolContainers[tool.id]._classGuide.openPreviewEmbed();   // step 6's desktop preview frame (user 2026-10-21)
-  else if (tool && tool.id === "class-guide" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { if (!toolContainers[tool.id]._classGuide.openById(deepSkill)){ toolContainers[tool.id]._classGuide.showGallery(); history.replaceState(null, "", "#class-guide"); } }   // #class-guide/<guide number>; an unknown number shows the list
+  else if (tool && tool.id === "class-guide" && deepSkill === "code" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) toolContainers[tool.id]._classGuide.openCode((location.hash.match(/^#class-guide\/code\/(.*)$/) || [])[1] || "");   // #class-guide/code/<code>: the ดูตัวอย่าง link in Discord (2026-11-13), a guide code read-only
+  else if (tool && tool.id === "class-guide" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { const cg = toolContainers[tool.id]._classGuide, at = location.hash; if (!cg.openById(deepSkill)) classGuideLiveReady.then(() => { if (location.hash === at && !cg.openById(deepSkill)){ cg.showGallery(); history.replaceState(null, "", "#class-guide"); } }); }   // #class-guide/<guide number>; a number not embedded waits for the ✅'d guides from Discord (classGuideLoadLive), then an unknown number shows the list
   else if (tool && tool.id === "class-guide" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { const cg = toolContainers[tool.id]._classGuide; if (deepClass && cg.filterBy) { cg.filterBy(deepClass, ""); history.replaceState(null, "", "#class-guide"); } cg.showGallery(); }   // the bare tool link (menu tile, tool switcher) always opens ไกด์จากผู้เล่น, never a half-written guide or the last guide read (user 2026-10-17); the draft is saved and เขียนไกด์ resumes it
   if (tool && tool.id === "pet-info" && toolContainers[tool.id] && toolContainers[tool.id]._petInfo) { const pi = toolContainers[tool.id]._petInfo; if (deepSkill && !pi.openById(deepSkill)) history.replaceState(null, "", "#pet-info"); }   // #pet-info/<pet id>; a variant id opens its family; an unknown id keeps the page and cleans the address
   if (tool && tool.id === "skill-details" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._selectSkillById) {
@@ -41016,6 +41056,24 @@ async function donateLoadLive(){
   } catch (e) { /* no live data: the embedded DONORS stay */ }
 }
 if (typeof requestIdleCallback === "function") requestIdleCallback(() => donateLoadLive(), { timeout: 4000 }); else setTimeout(donateLoadLive, 1000);
+// the ✅'d class guides live from Discord (2026-11-13): one GET of the Worker's /api/guides a page load, after first paint, merged into CLASS_GUIDES
+// (classGuideMergeLive); then the guide list, the menu slide and an open guide draw themselves again ("cg-live"). Offline, an error answer, bad JSON or
+// no answer within 8 s leave the embedded guides. classGuideLiveReady settles either way (#class-guide/<N> waits for it before calling N missing).
+async function classGuideLoadLive(){
+  try {
+    const stop = new AbortController(), timer = setTimeout(() => stop.abort(), 8000);
+    let ans = null;
+    try { const r = await fetch(DONATE_API + "/api/guides", { signal: stop.signal }); if (r.ok) ans = await r.json(); }
+    finally { clearTimeout(timer); }
+    if (!ans || !Array.isArray(ans.guides) || !Number.isInteger(ans.floor)) return;
+    const merged = classGuideMergeLive(CLASS_GUIDES, ans.guides, ans.floor);
+    if (merged.length === CLASS_GUIDES.length && merged.every((g, i) => g === CLASS_GUIDES[i])) return;   // nothing new
+    CLASS_GUIDES.splice(0, CLASS_GUIDES.length, ...merged);
+    window.dispatchEvent(new Event("cg-live"));
+  } catch (e) { /* no live data: the embedded guides stay */ }
+  finally { classGuideLiveDone(); }
+}
+if (typeof requestIdleCallback === "function") requestIdleCallback(() => classGuideLoadLive(), { timeout: 4000 }); else setTimeout(classGuideLoadLive, 1000);
 if (donateListUi.prev) donateListUi.prev.addEventListener("click", () => { if (donateListUi.page > 0){ donateListUi.page--; donateListPage(donateListUi); } });
 if (donateListUi.next) donateListUi.next.addEventListener("click", () => { if (donateListUi.page < donateListUi.pages.length - 1){ donateListUi.page++; donateListPage(donateListUi); } });
 if (donateModal) {

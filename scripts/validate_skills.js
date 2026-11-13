@@ -4009,6 +4009,36 @@ let checkedRsim = 0;
     ok(/const isNew = g => classGuideIsNew\(g\);/.test(html) && !/isToday|localDay\(/.test(html), "the home slide's ใหม่ badge and ordering use the 24-hour check, not the calendar day");
     const bkk = (iso) => new Date(Date.parse(iso) + 7 * 36e5).toISOString().slice(0, 10);
     vm.runInContext("CLASS_GUIDES", sandbox).forEach(g => { if (g && g.published !== undefined) ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(g.published) && !isNaN(Date.parse(g.published)) && g.date === bkk(g.published), "guide #" + g.id + " has a valid upload stamp whose date is that moment's day in Thailand"); }); }
+  // ✅'d guides live from Discord (2026-11-13): classGuideMergeLive joins GET /api/guides ({ floor, guides: [{ num, replaces, guide, published }] }) to
+  // CLASS_GUIDES; #class-guide/<N> waits for classGuideLiveReady before calling N missing; #class-guide/code/<code> shows a code read-only, never as the draft
+  { const merge = vm.runInContext("typeof classGuideMergeLive === 'function' ? classGuideMergeLive : null", sandbox);
+    ok(!!merge, "classGuideMergeLive(embedded, live, floor) exists (the ✅'d guides from GET /api/guides)");
+    if (merge){
+      const base = [{ ...fixture, id: 49, title: "Guide 49" }, { ...fixture, id: 50, title: "Old 50" }], copy = JSON.stringify(base);
+      const lv = (num, replaces, extra) => ({ num, replaces, published: "2026-11-13T10:00:00Z", msg: "1", guide: { ...fixture, id: num, published: "2026-11-13T10:00:00Z", date: "2026-11-13", ...extra } });
+      const run = (live, floor = 106) => { try { return merge(base, live, floor); } catch (e) { return { err: e.message }; } };
+      const ids = (r) => Array.isArray(r) ? r.map((g) => g.id + ":" + g.title).join(", ") : JSON.stringify(r);
+      ok(run(null) === base, "classGuideMergeLive(embedded, null) returns the embedded array itself");
+      ok(ids(run([lv(107, null, { title: "New 107" })])) === "49:Guide 49, 50:Old 50, 107:New 107", "classGuideMergeLive adds a live guide numbered 107 with id 107 (got " + ids(run([lv(107, null, { title: "New 107" })])) + ")");
+      ok(ids(run([lv(50, 50, { title: "New 50" })])) === "49:Guide 49, 50:New 50", "classGuideMergeLive: a live guide numbered 50 takes embedded guide 50's place, one entry (got " + ids(run([lv(50, 50, { title: "New 50" })])) + ")");
+      ok(ids(run([lv(40, 40, { title: "Back 40" })])) === "49:Guide 49, 50:Old 50", "classGuideMergeLive skips a live guide replacing 40 (at or below the floor 106) when no embedded guide 40 exists: a removed number (got " + ids(run([lv(40, 40, { title: "Back 40" })])) + ")");
+      ok(ids(run([{ num: 108, replaces: null, published: "2026-11-13T10:00:00Z", guide: { format: "garbage" } }, { num: 109, replaces: null, guide: "TG3garbage" }, { num: 110, replaces: null, guide: { ...fixture, id: 110, modes: [] } }])) === "49:Guide 49, 50:Old 50", "classGuideMergeLive skips a live guide that fails classGuideNormalize (got " + ids(run([{ num: 108, guide: { format: "garbage" } }])) + ")");
+      ok(ids(run([lv(111, null, { title: "First 111" }), lv(111, null, { title: "Second 111" })])) === "49:Guide 49, 50:Old 50, 111:First 111", "classGuideMergeLive keeps only the first of two live guides with the same number");
+      ok(ids(run([null, { num: "112", guide: { ...fixture } }, { num: 0, guide: { ...fixture } }, lv(113, null, { title: "Ok 113" })])) === "49:Guide 49, 50:Old 50, 113:Ok 113", "classGuideMergeLive skips a live item with no positive integer number");
+      ok(JSON.stringify(base) === copy, "classGuideMergeLive must not change the embedded array or its guides");
+      ok(merge(embedded, [], 106).length === embedded.length, "classGuideMergeLive with an empty live list keeps every embedded guide");
+    }
+    ok(/^let classGuideLiveDone = [^\n]*; const classGuideLiveReady = new Promise\(/m.test(html) && /^async function classGuideLoadLive\(\)\{[\s\S]*?DONATE_API \+ "\/api\/guides"[\s\S]*?finally \{ classGuideLiveDone\(\); \}\r?\n\}/m.test(html),
+      "classGuideLoadLive fetches DONATE_API/api/guides and settles classGuideLiveReady on success and on failure");
+    ok(/^if \(typeof requestIdleCallback === "function"\) requestIdleCallback\(\(\) => classGuideLoadLive\(\), \{ timeout: \d+ \}\); else setTimeout\(classGuideLoadLive, \d+\);/m.test(html) && (html.match(/classGuideLoadLive\(/g) || []).length === 2,
+      "classGuideLoadLive must be started once, after first paint (requestIdleCallback, else setTimeout), and called nowhere else");
+    const routeSrc = (html.match(/^function route\(\)\{[\s\S]*?\n\}/m) || [""])[0];
+    ok(/deepSkill === "code"[^\n]*\._classGuide\.openCode\(/.test(routeSrc), "route() has a #class-guide/code/<code> branch that opens the code with openCode");
+    ok(/deepSkill && [^\n]*classGuideLiveReady\.then\(/.test(routeSrc), "route(): #class-guide/<N> for a number not embedded waits for classGuideLiveReady before showing the list");
+    const openCodeSrc = (html.match(/^  const openCode = async [\s\S]*?\n  \};/m) || [""])[0];
+    ok(openCodeSrc && /classGuideUnpack\(/.test(openCodeSrc) && /openGuide\([^\n]*"code"\)/.test(openCodeSrc) && !/storageKey|stepKey|saveDraft|localStorage|draft =|startAuthor/.test(openCodeSrc),
+      "openCode decodes with classGuideUnpack and opens the guide read-only (openGuide ..., \"code\"), never writing the author's draft key");
+    ok(/currentId = preview \|\| code \? null : id;/.test(html), "a code preview has no guide number, so it counts no GoatCounter view and saves no tries"); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
   rejects(()=>norm(change({build:{...fixture.build,learned:[102]}})),"reject orphan rank");
   rejects(()=>norm(change({build:{...fixture.build,learned:[101,101]}})),"reject duplicate learned ids");
