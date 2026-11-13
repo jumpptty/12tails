@@ -3990,6 +3990,14 @@ let checkedRsim = 0;
     ok(floor > 0, "GUIDE_NUM_FLOOR is read from 12t_projects/donate-worker/wrangler.toml");
     nums.filter((id) => !(id <= floor)).forEach((id) => ok(false, `guide #${id} is above GUIDE_NUM_FLOOR ${floor}: a new embedded guide number would collide with live numbers`));
   }
+  { // classGuideSameGuide (ส่งไกด์'s identical-guide warning, 2026-11-13): the same content in any key order is the same guide; id, PVE / PVP and the
+    // upload stamp (date, published) are left out; any real change counts. Fixed pairs (it was compared with the retired guide manager's gmSameGuide).
+    const same = vm.runInContext("typeof classGuideSameGuide === 'function' ? classGuideSameGuide : null", sandbox), g = embedded[0];
+    const reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(g).reverse())));
+    const yes = [[g, reordered], [g, { ...g, modes: ["pvp"], id: 999 }], [g, { ...g, published: "2020-01-01T00:00:00Z", date: "2020-01-01" }]];
+    const no = [[g, { ...g, title: g.title + " v2" }], [g, { ...g, build: { ...g.build, level: g.build.level - 1 } }], [g, { ...g, notes: { ...(g.notes || {}), 101: "x" } }]];
+    ok(!!same && yes.every(([a, b]) => same(a, b) === true) && no.every(([a, b]) => same(a, b) === false), "classGuideSameGuide: same content in any key order (id, PVE / PVP and the upload stamp left out) is the same guide, any real change is not");
+  }
   embedded.forEach((guide,i) => { try { norm(guide); ok(true,"embedded guide " + (i+1) + " validates"); } catch(e){ ok(false,"embedded guide " + (i+1) + ": " + e.message); } });
   const fixture = { cover:[101],modes:["pve"],format:"12t-class-guide",version:1,title:"Wolf guide",author:"ผู้เขียน 🐺",date:"2026-10-16",description:"First line\nSecond line",build:{server:"tot",classKey:"wolf",level:100,learned:[451,101,102,103]},notes:{"103":"Why this rank\n<script>alert('x')</script>","201":"Why I skipped this skill"} };
   const round = decode(encode(fixture));
@@ -4574,7 +4582,7 @@ let checkedRsim = 0;
 }
 console.log(`Verified ${checkedRsim} skill simulator checks.`);
 
-// The ☕ donor list (DONORS in index.html, edited only by scripts/add_guide.js): one approved donation per line, in the exact form
+// The ☕ donor list (DONORS in index.html, edited by Claude by hand since the guide manager was retired, 2026-11-13): one approved donation per line, in the exact form
 // donors.js writes it, so a hand-edited spacing or key order shows up here. Reads the same page text as everything above (--index works).
 {
   const donors = require('./donors.js');
@@ -4825,7 +4833,7 @@ async function donateChildTests(env) {
       "donorAmountCheck gives another result or message than checkAmount on " + wrong.map((a) => JSON.stringify(a) || String(a)).join(", "));
   }
   // donorMergeLive: the ✅'d slips from GET /api/donors joined to DONORS; a k already there is skipped, a name matching a donor's latest name
-  // (gmDonorKey: whitespace runs as one space, trimmed, case-insensitive) takes that donor's id, else "m" + k; nothing it is given changes
+  // (whitespace runs as one space, trimmed, case-insensitive) takes that donor's id, else "m" + k; nothing it is given changes
   if (have("donorMergeLive")) {
     const merge = page("donorMergeLive"), dn = (k, id, name, date) => ({ k, id, name, msg: "", amount: 100, date }), lv = (k, name, extra) => ({ k, name, msg: "สู้ ๆ", amount: 50, date: "2026-11-13T10:00", ...extra });
     const base = [dn("aaaaaaaa", "11111111", "old name", "2026-10-01T10:00"), dn("bbbbbbbb", "11111111", "Prime  Code", "2026-10-05T10:00"), dn("cccccccc", "22222222", "Mai", "2026-10-02T10:00")], copy = JSON.stringify(base);
@@ -7244,163 +7252,6 @@ function fontProblems(html) {
       "countLink listens for clicks and middle clicks on the launcher after the filmstrip's show-first click (a first click that only shows the slide is not counted)");
   } catch (e) { ok(false, "the launcher helpers could not be run on stubs: " + e.message); }
   console.log("Verified " + linkChecked + " launcher link checks (" + ext.length + " external tool" + (ext.length === 1 ? "" : "s") + ", " + tools.filter((t) => ["skills", "classStory", "mirror"].includes(t.collage)).length + " main tools).");
-}
-// Guide manager page (user 2026-10-20): the same page runs on this PC (scripts/add_guide.js serves it) and on the phone (GitHub Pages).
-// Its class faces are a copy of CLASS_HERO_ICONS (the phone never loads the 27 MB assets.js), so a repainted portrait must be copied there too.
-// It may talk only to its own server, api.github.com and the 12tails-donate Worker (ส่งเข้า Discord, 2026-11-13), and asks search engines to stay away.
-const GM_REL = "12t_projects/guide-manager/index.html", gmPath = path.join(repoRoot, GM_REL);
-const gmHtml = fs.existsSync(gmPath) ? fs.readFileSync(gmPath, "utf8") : null;
-{
-  let gmBad = 0;
-  const bad = (msg) => { console.error(`[GUIDE MANAGER ERROR] ${msg}`); errorCount++; gmBad++; };
-  if (gmHtml === null) bad(`${GM_REL} not found`);
-  else {
-    let faces = null; try { faces = JSON.parse((gmHtml.match(/^const FACES = (\{.*\});\r?$/m) || [])[1]); } catch (e) {}
-    const hero = vm.runInContext("window.CLASS_HERO_ICONS", sandbox) || {};
-    if (!faces) bad(`${GM_REL}: "const FACES = {…};" (one line) not found`);
-    else if (Object.keys(faces).length !== Object.keys(hero).length || Object.keys(hero).some((k) => faces[k] !== hero[k])) bad(`${GM_REL}: FACES differ from CLASS_HERO_ICONS in assets.js; copy them again`);
-    if (!/<meta http-equiv="Content-Security-Policy" content="[^"]*connect-src 'self' https:\/\/api\.github\.com https:\/\/12tails-donate\.jumpthai\.workers\.dev[;"]/.test(gmHtml)) bad(`${GM_REL}: the Content-Security-Policy meta must limit connect-src to 'self' https://api.github.com https://12tails-donate.jumpthai.workers.dev (the Worker, for ส่งเข้า Discord)`);
-    if (!gmHtml.includes('<meta name="robots" content="noindex">')) bad(`${GM_REL}: <meta name="robots" content="noindex"> is missing`);
-    for (const b of fontProblems(gmHtml)) bad(`${GM_REL}: two fonts only (Prompt; 'JetBrains Mono','Prompt',monospace for numbers): ${b.slice(0, 160)}`);
-    if (!gmBad) console.log("Verified the guide manager page: class faces match assets.js, connections limited, not indexed, two fonts only.");
-  }
-}
-// The page's own reading of guide codes and of CLASS_GUIDES (its "gm-core" script, used on the phone where there is no add_guide.js) must agree
-// with scripts/guide_code.js and scripts/add_guide.js, and its reading of GitHub's run, job and annotation replies must give the right outcome.
-if (gmHtml !== null) {
-  let gmChecked = 0, gmFailed = 0;
-  const ok = (pass, msg) => { if (pass) gmChecked++; else { console.error(`[GUIDE MANAGER ERROR] gm-core: ${msg}`); errorCount++; gmFailed++; } };
-  const block = (gmHtml.match(/\/\/ gm-core start\r?\n([\s\S]*?)\/\/ gm-core end/) || [])[1];
-  if (!block) ok(false, "gm-core block not found (between // gm-core start and // gm-core end)");
-  else {
-    const zlib = require("zlib"), gc = require(path.join(__dirname, "guide_code.js")), ag = require(path.join(__dirname, "add_guide.js"));
-    const ctx = vm.createContext({ TextDecoder, atob, Blob, DecompressionStream, Response, crypto });
-    vm.runInContext(block, ctx, { filename: GM_REL + " (gm-core)" });
-    const gm = vm.runInContext("({ gmFindCode, gmUnpack, gmFinish, gmCheckGuide, gmSameGuide, gmParseGuides, gmSummary, gmPayloadFits, gmStepsFromJobs, gmRunOutcome, gmKeyProblem })", ctx);   // const functions are not properties of ctx
-    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-    const throws = (fn) => { try { fn(); return ""; } catch (e) { return String(e.message || e); } };
-    const finish = (code) => { const u = gm.gmUnpack(code); return gm.gmFinish(u, u.deflated ? zlib.inflateRawSync(u.bytes) : u.bytes); };
-    const doc = ag.readGuides();
-    let decoded = 0;
-    for (const { g } of doc.guides) {
-      const { id, ...guide } = g;
-      for (const enc of [gc.encode, gc.encode2, gc.encode1]) { const code = enc(guide); if (same(finish(code), gc.decode(code))) decoded++; else ok(false, `guide #${id}: the page reads ${code.slice(0, 12)}… differently from guide_code.js`); }
-    }
-    ok(decoded === doc.guides.length * 3, `${decoded} of ${doc.guides.length * 3} codes read the same as guide_code.js`);
-    // a guide with description columns (tag 0x43 / TG2 "w", user 2026-10-21) reads the same too: the page could not read one until 2026-10-28 (guide #82)
-    { const { id: _s3, ...g3 } = doc.guides[0].g, code = gc.encode({ ...g3, build: { ...g3.build, support: [901, 905, 912] } }); let r; try { r = finish(code); } catch (e) { r = String(e.message); } ok(same(r, gc.decode(code)), "a code with three support skills (Reborn, user 2026-10-28): the page reads it differently from guide_code.js"); }
-    { const { id: _w, ...gw } = doc.guides[0].g; for (const enc of [gc.encode, gc.encode2]) { const code = enc({ ...gw, descCols: 2 }); let r; try { r = finish(code); } catch (e) { r = String(e.message); } ok(same(r, gc.decode(code)), `a ${code.slice(0, 3)} code with description columns: the page reads it differently from guide_code.js`); } }
-    const { id: _id, ...first } = doc.guides[0].g, c3 = gc.encode(first), wrapped = "ไกด์ `" + c3.slice(0, 9) + " \n" + c3.slice(9) + "` จบ";
-    ok(same(finish(gm.gmFindCode(wrapped)), gc.decode(c3)), "a TG3 code pasted with chat text, a space and a line break is found and read");
-    const at = Math.floor(c3.length / 2), broken = c3.slice(0, at) + String.fromCharCode(c3.charCodeAt(at) ^ 1) + c3.slice(at + 1);   // a data character (the last ones may hold only padding bits)
-    ok(/คัดลอกใหม่/.test(throws(() => gm.gmUnpack(broken))) && /คัดลอกใหม่/.test(throws(() => gc.decode(broken))), "a TG3 code with one changed character is refused with the copy-again message, as guide_code.js refuses it");
-    for (const s of [wrapped, gc.encode2(first), gc.encode1(first), "no code here", ""]) ok(gm.gmFindCode(s) === ag.findCode(s), `gmFindCode and add_guide's findCode disagree on ${JSON.stringify(s.slice(0, 20))}`);
-    const pg = gm.gmParseGuides(html);
-    ok(same(pg.guides.map((x) => x.id), doc.guides.map((x) => x.g.id)) && same(pg.removed.map((x) => x.id), doc.removed.map((x) => x.id)) && pg.next === ag.nextId(doc), "gmParseGuides reads the same guides, removed numbers and next number as add_guide.js");
-    ok(same(gm.gmParseGuides(html.replace(/\r\n/g, "\n")).guides.map((x) => x.id), doc.guides.map((x) => x.g.id)), "gmParseGuides reads an LF copy too");
-    const views = vm.runInContext("CLASS_GUIDE_VIEWS", sandbox).counts || {}, g0 = doc.guides[0].g;
-    ok(same(gm.gmSummary(pg.guides[0].g, pg.views), { id: g0.id, modes: g0.modes || [], title: g0.title, author: g0.author, classKey: g0.build.classKey, server: g0.build.server, level: g0.build.level, date: g0.date || "", views: views[g0.id] || 0 }), "gmSummary gives the list row add_guide.js gives");
-    const stA = { id: 9, modes: ["pve"], date: "2026-10-23", published: "2026-10-22T17:59:00Z", title: "a", build: { x: 1 } }, stB = { title: "a", build: { x: 1 }, date: "2020-01-01", published: "2020-01-01T00:00:00Z" };
-    ok(ag.sameGuide(stA, stB) && gm.gmSameGuide(stA, stB) && !ag.sameGuide(stA, { ...stB, title: "b" }) && !gm.gmSameGuide(stA, { ...stB, title: "b" }), "a replacement code is compared without the upload stamp (date, published), in add_guide.js and in the page");
-    const box = (n) => ({ payload: "x".repeat(n - '{"payload":""}'.length) });
-    ok(gm.gmPayloadFits(box(65535)) === true && gm.gmPayloadFits(box(65536)) === false, "gmPayloadFits: 65,535 characters fit, 65,536 do not");
-    // GitHub's replies, shaped as the REST API returns them (GET /actions/runs/{id}/jobs, /actions/runs/{id}, /check-runs/{job}/annotations)
-    const st = (name, status, conclusion = null) => ({ name, status, conclusion });
-    const job = (steps, status = "in_progress") => ({ total_count: 1, jobs: [{ id: 7, status, steps }] });
-    const pre = [st("Set up job", "completed", "success"), st("ส่งงานให้ GitHub", "completed", "success"), st("ส่งงานให้ GitHub", "completed", "success"), st("ตรวจสถานะ git", "completed", "success"), st("แก้ไฟล์ index.html", "completed", "success")];
-    const rows = (...r) => r.map(([key, state]) => ({ key, text: { send: "ส่งงานให้ GitHub", git: "ตรวจสถานะ git", edit: "แก้ไฟล์ index.html", check: "ตรวจด้วย validator", commit: "commit", push: "อัปขึ้น GitHub" }[key], state }));
-    ok(same(gm.gmStepsFromJobs({ total_count: 0, jobs: [] }), rows(["send", "run"])), "a queued run shows ส่งงานให้ GitHub running");
-    // recorded from GitHub 2026-10-20: steps not started yet are "pending"; a run is "pending" then "queued" (no steps) before it starts
-    ok(same(gm.gmStepsFromJobs({ total_count: 1, jobs: [{ id: 7, status: "queued", conclusion: null, steps: [] }] }), rows(["send", "run"])), "a queued job without steps shows ส่งงานให้ GitHub running");
-    ok(same(gm.gmStepsFromJobs(job([st("Set up job", "completed", "success"), st("ส่งงานให้ GitHub", "in_progress"), st("ส่งงานให้ GitHub", "pending"), st("ตรวจสถานะ git", "pending"), st("ตรวจด้วย validator", "pending"), st("Post ส่งงานให้ GitHub", "pending")])), rows(["send", "run"])), "the two ส่งงานให้ GitHub steps are one row, running until both are done; pending steps not shown");
-    ok(same(gm.gmStepsFromJobs(job([...pre, st("ตรวจด้วย validator", "in_progress"), st("commit", "pending"), st("อัปขึ้น GitHub", "pending"), st("Post ส่งงานให้ GitHub", "pending"), st("Complete job", "pending")])), rows(["send", "ok"], ["git", "ok"], ["edit", "ok"], ["check", "run"])), "mid-check: done rows ticked, the validator running, pending steps not shown yet");
-    ok(same(gm.gmStepsFromJobs(job([...pre, st("ตรวจด้วย validator", "completed", "success"), st("commit", "completed", "skipped"), st("อัปขึ้น GitHub", "completed", "skipped"), st("Complete job", "completed", "success")], "completed")), rows(["send", "ok"], ["git", "ok"], ["edit", "ok"], ["check", "ok"])), "a dry run: the skipped commit and push are not shown");
-    ok(same(gm.gmStepsFromJobs(job([...pre, st("ตรวจด้วย validator", "completed", "failure"), st("commit", "completed", "skipped"), st("อัปขึ้น GitHub", "completed", "skipped")], "completed")), rows(["send", "ok"], ["git", "ok"], ["edit", "ok"], ["check", "fail"])), "a failed validator step shows as failed");
-    const SITE = "https://jumpptty.github.io/12tails/12t_projects/bible/", run = (status, conclusion) => ({ status, conclusion, html_url: "https://github.com/jumpptty/12tails/actions/runs/1" });
-    const ann = (title, message) => ({ path: ".github", annotation_level: title === "gm-error" ? "failure" : "notice", title, message });
-    const result = { ok: true, dry: true, subject: "feat(bible): class guide #54 ToT Wolf T by A", sha: null, items: [{ action: "add", id: 54 }], undoText: null };
-    ok(gm.gmRunOutcome(run("in_progress", null), [], SITE) === null, "no outcome while the run is going");
-    ok(same(gm.gmRunOutcome(run("completed", "success"), [ann("Node.js 20 actions are deprecated", "x"), ann("gm-result", JSON.stringify(result))], SITE), { ok: true, dry: true, subject: result.subject, sha: null, undoText: null, items: [{ action: "add", id: 54, url: SITE + "#class-guide/54" }] }), "gm-result becomes the done message with guide links");
-    ok(same(gm.gmRunOutcome(run("completed", "failure"), [ann("gm-error", "ไกด์ไม่ผ่านการตรวจ\n[CLASS GUIDE ERROR] a\n[CLASS GUIDE ERROR] b")], SITE), { ok: false, error: "ไกด์ไม่ผ่านการตรวจ", log: ["[CLASS GUIDE ERROR] a", "[CLASS GUIDE ERROR] b"] }), "gm-error becomes the error and the log lines");
-    ok(same(gm.gmRunOutcome(run("completed", "cancelled"), [], SITE), { ok: false, error: "งานถูกยกเลิก (มีงานอื่นรออยู่บน GitHub) ลองอัปใหม่", runUrl: "https://github.com/jumpptty/12tails/actions/runs/1" }), "a cancelled run says so, with a link to it");
-    // review 2026-10-20: a result note counts only from a run that succeeded; a finished run without a readable result says to check before publishing again
-    const unsure = { ok: false, error: "งานบน GitHub จบแล้วแต่ไม่ได้รับผลลัพธ์ ตรวจใน GitHub ก่อนอัปซ้ำ", runUrl: "https://github.com/jumpptty/12tails/actions/runs/1", unsure: true };
-    ok(same(gm.gmRunOutcome(run("completed", "failure"), [ann("gm-result", JSON.stringify(result)), ann("gm-error", "ไกด์ไม่ผ่านการตรวจ\n[X ERROR] y")], SITE), { ok: false, error: "ไกด์ไม่ผ่านการตรวจ", log: ["[X ERROR] y"] }), "a gm-result note from a failed run is not trusted");
-    ok(same(gm.gmRunOutcome(run("completed", "success"), [ann("gm-result", '{"ok":true,"subj')], SITE), unsure) && same(gm.gmRunOutcome(run("completed", "success"), [], SITE), unsure), "a successful run without a readable result says to check GitHub before publishing again");
-    ok(same(gm.gmRunOutcome(run("completed", "failure"), [], SITE), { ok: false, error: "GitHub ทำงานไม่สำเร็จก่อนถึงขั้นตอนของไกด์ ดูรายละเอียดใน GitHub", runUrl: "https://github.com/jumpptty/12tails/actions/runs/1" }), "a run failing before the pipeline links to GitHub");
-    // review 2026-10-20: a legacy 12TG1 code can carry any class or server text, which the page puts into its HTML
-    { const g = doc.guides[0].g, evil = { ...g, build: { ...g.build, classKey: "<img src=x onerror=alert(1)>" } }, evil2 = { ...g, build: { ...g.build, server: "zz" } };
-      ok(/โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/.test(throws(() => gm.gmCheckGuide(evil))) && /โค้ดนี้ไม่ใช่โค้ดไกด์อาชีพ/.test(throws(() => gm.gmCheckGuide(evil2))), "gmCheckGuide refuses a class or server that is not a real one");
-      ok(doc.guides.every(({ g }) => !throws(() => gm.gmCheckGuide(g))), "gmCheckGuide accepts every embedded guide"); }
-    // user 2026-10-20: a replacement identical to the guide it replaces gets a warning (PVE/PVP and the id are left out: the page sets those)
-    { const g = doc.guides[0].g, reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(g).reverse()))), other = { ...g, title: g.title + " v2" }, modes = { ...g, modes: ["pvp"], id: 999 };
-      const pairs = [[g, reordered], [g, other], [g, modes], [g, { ...g, build: { ...g.build, level: g.build.level - 1 } }]];
-      ok(gm.gmSameGuide(g, reordered) && !gm.gmSameGuide(g, other) && gm.gmSameGuide(g, modes) && !gm.gmSameGuide(...pairs[3]), "gmSameGuide: same content in any key order, PVE/PVP and id left out, any real change counts");
-      ok(pairs.every(([a, b]) => gm.gmSameGuide(a, b) === ag.sameGuide(a, b)), "gmSameGuide and add_guide's sameGuide agree");
-      const pageSame = vm.runInContext("typeof classGuideSameGuide === 'function' ? classGuideSameGuide : null", sandbox), more = [...pairs, [stA, stB], [stA, { ...stB, title: "b" }], [g, { ...g, published: "2020-01-01T00:00:00Z", date: "2020-01-01" }], [g, { ...g, notes: { ...(g.notes || {}), 101: "x" } }]];
-      ok(!!pageSame && more.every(([a, b]) => pageSame(a, b) === gm.gmSameGuide(a, b)), "the Bible's classGuideSameGuide (ส่งไกด์'s identical-guide warning, 2026-11-13) and the guide manager's gmSameGuide agree on fixed pairs"); }
-    ok(gm.gmKeyProblem(401) === "กุญแจใช้ไม่ได้ (หมดอายุหรือถูกลบ) ใส่กุญแจใหม่" && gm.gmKeyProblem(403) === "กุญแจนี้ยังไม่มีสิทธิ์ Actions: Read and write ของ 12tails" && gm.gmKeyProblem(404) === gm.gmKeyProblem(403) && gm.gmKeyProblem(200) === null, "gmKeyProblem names an expired key and a key without Actions write");
-    // user 2026-10-23: a batch result's donor items ({ action, k }) are no guides, so they get no #class-guide link
-    { const mixed = { ...result, items: [{ action: "add", id: 54 }, { action: "donor-add", k: "0a1b2c3d" }, { action: "donor-remove", k: "4e5f6a7b" }] }, out = gm.gmRunOutcome(run("completed", "success"), [ann("gm-result", JSON.stringify(mixed))], SITE);
-      ok(!!out && same(out.items, [{ action: "add", id: 54, url: SITE + "#class-guide/54" }, { action: "donor-add", k: "0a1b2c3d" }, { action: "donor-remove", k: "4e5f6a7b" }]), "a donor item in gm-result gets no guide link"); }
-    // The ☕ donor tab (user 2026-10-23): on the phone the page checks, reads and groups donations itself, so its copies of scripts/donors.js
-    // must give the same results and messages. The อนุมัติ link's fragment is untrusted: anyone can make one.
-    try {
-      const dl = require(path.join(__dirname, "donors.js"));
-      const dn = vm.runInContext("({ gmCheckSlipDetails, gmCheckDonation, GM_DONOR_LIMITS, gmParseDonors, gmFromFragment, gmDonorFromLink, gmGroupDonors, gmDonorMatches, gmDuplicateDonation, gmNewId })", ctx);
-      ok(same(dn.GM_DONOR_LIMITS, dl.LIMITS), "GM_DONOR_LIMITS differ from LIMITS in scripts/donors.js");
-      // what a donor sends since 2026-10-23 (name and message only): gmCheckSlipDetails = checkSlipDetails, whatever amount / date ride along
-      const slipCases = [{ name: "A" }, null, {}, { name: "  ก้อง\n 🐱 " }, { name: "🐱".repeat(40) }, { name: "🐱".repeat(41) }, { name: " \n " }, { name: 5 }, ...["ก".repeat(200), "ก".repeat(201), "a\r\n\r\n b", null, undefined, 5, ""].map((msg) => ({ name: "A", msg })),
-        { name: "A", msg: "m", amount: "abc", date: 5 }, { name: "A", amount: 50, date: "2026-10-23T14:05" }];
-      const resSd = (fn, d) => { try { return { ok: fn(d) }; } catch (e) { return { err: String(e.message) }; } };
-      let sdAgree = 0;
-      for (const d of slipCases) { const a = resSd(dn.gmCheckSlipDetails, d), b = resSd(dl.checkSlipDetails, d); if (same(a, b)) sdAgree++; else ok(false, `gmCheckSlipDetails and checkSlipDetails disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
-      ok(sdAgree === slipCases.length, `gmCheckSlipDetails gives the same result or message as checkSlipDetails on ${sdAgree} of ${slipCases.length} cases`);
-      // donors.js selftest's cases (now = 2026-10-23T08:00Z), and a few shapes a crafted link could carry
-      const now = new Date("2026-10-23T08:00:00Z"), base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" }, v = (d) => ({ ...base, ...d });
-      const cases = [base, null, {}, v({ name: "  ก้อง\n 🐱 " }), v({ name: "🐱".repeat(40) }), v({ name: "🐱".repeat(41) }), v({ name: " \n " }), v({ name: 5 }), v({ msg: "ก".repeat(200) }), v({ msg: "ก".repeat(201) }), v({ msg: "a\r\n\r\n b" }), v({ msg: null }), v({ msg: undefined }), v({ msg: 5 }),
-        ...[50, 0.5, 1000000, 0, -1, 1.234, 1000000.01, "50", NaN, Infinity, 12.345, 0.1 + 0.2].map((amount) => v({ amount })),
-        ...["2026-10-23T14:05", "2026-10-25T00:00", "2019-12-31T23:59", "2026-02-30T10:00", "2026-10-23 14:05", 5, "2020-01-01T00:00", "2026-10-24T14:59", "2026-10-24T15:01"].map((date) => v({ date }))];
-      const res = (fn, d) => { try { return { ok: fn(d, now) }; } catch (e) { return { err: String(e.message) }; } };
-      let agree = 0;
-      for (const d of cases) { const a = res(dn.gmCheckDonation, d), b = res(dl.checkDonation, d); if (same(a, b)) agree++; else ok(false, `gmCheckDonation and checkDonation disagree on ${JSON.stringify(d).slice(0, 60)}: ${JSON.stringify(a).slice(0, 90)} vs ${JSON.stringify(b).slice(0, 90)}`); }
-      ok(agree === cases.length, `gmCheckDonation gives the same result or message as checkDonation on ${agree} of ${cases.length} cases`);
-      const x1 = { k: "0a1b2c3d", id: "11111111", name: "ก้อง 🐱 </script>", msg: "hi", amount: 12.5, date: "2026-10-23T14:05" }, x2 = { ...x1, k: "4e5f6a7b", name: "B", msg: "", amount: 100 };
-      const fixture = (eol, xs) => ["<script>", "const CLASS_GUIDES = [", "];", "const DONORS = [", ...xs.map(dl.donorLine), "];", "</script>"].join(eol);
-      const readsSame = (h) => same(dn.gmParseDonors(h), dl.parseDonors(h).donations.map((t) => t.x));
-      ok(readsSame(html) && readsSame(html.replace(/\r\n/g, "\n")), "gmParseDonors reads the real page's DONORS as parseDonors does (CRLF and LF)");
-      ok(["\r\n", "\n"].every((eol) => readsSame(fixture(eol, [x1, x2])) && dn.gmParseDonors(fixture(eol, [x1, x2])).length === 2 && readsSame(fixture(eol, []))), "gmParseDonors reads a fixture (two donations, an empty block) as parseDonors does");
-      ok(/DONORS/.test(throws(() => dn.gmParseDonors("<script></script>"))), "gmParseDonors refuses a page without DONORS");
-      const gd = (id, name, msg, amount, date) => ({ k: id + date, id, name, msg, amount, date });
-      const sets = [[gd("A", "old", "hi", 100, "2026-10-02T10:00"), gd("B", "bee", "", 150, "2026-10-01T10:00"), gd("A", "new", "", 50, "2026-10-05T10:00")], [gd("C", "c", "", 0.1, "2026-10-01T00:00"), gd("C", "c", "", 0.2, "2026-10-02T00:00")], []];
-      ok(sets.every((s) => same(dn.gmGroupDonors(s), dl.groupDonors(s))), "gmGroupDonors gives groupDonors' rows (merged by id, latest name and message, total in satang, biggest first)");
-      // the อนุมัติ link: a new one carries { name, msg }; an older one (the first slips in the owner's Discord) also the amount and date
-      const fd = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #" }, frag = dl.donorFragment(fd);
-      const oldLink = (o) => "#donor=" + Buffer.from(JSON.stringify(o), "utf8").toString("base64url"), fd4 = { ...fd, amount: 12.5, date: "2026-10-23T14:05" };
-      const bothRead = (h) => { const a = dn.gmFromFragment(h); return same(a, dl.fromFragment(h)) ? a : { disagree: [a, dl.fromFragment(h)] }; };
-      ok(same(bothRead("#" + frag), fd) && same(bothRead(frag), fd), "gmFromFragment and fromFragment give a 2-field link's { name, msg } back (Thai, emoji, &#=)");
-      ok(same(bothRead(oldLink(fd4)), fd4) && same(bothRead(oldLink({ date: "2026-10-23T14:05", x: 1, name: "A", msg: "" })), { name: "A", msg: "", date: "2026-10-23T14:05" }), "gmFromFragment and fromFragment read an older 4-field link (amount and date kept, other keys dropped)");
-      const odd = ["#donor=@@@", "#x=1", "", null, "#donor=" + Buffer.from("[1,2]").toString("base64url"), "#donor=" + Buffer.from("null").toString("base64url"), "#donor=" + Buffer.from([0xff, 0xfe]).toString("base64url"), "#" + frag + "&x=1"];
-      ok(odd.every((h) => dn.gmFromFragment(h) === null && dl.fromFragment(h) === null), "gmFromFragment gives null for anything but a donor link, as fromFragment does");
-      // what a link fills in the donor card: name and message checked like a slip; the amount and date only from an older link that passes
-      // gmCheckDonation (a new link leaves both empty for the owner to type from the slip); a link that fails fills nothing
-      const fromLink = (h) => { try { return { ok: dn.gmDonorFromLink(h, now) }; } catch (e) { return { err: String(e.message) }; } };
-      ok(same(fromLink("#" + frag), { ok: { name: fd.name, msg: fd.msg } }), "gmDonorFromLink on a new link fills only the name and message (amount and date stay empty)");
-      ok(same(fromLink(oldLink({ name: "  Kong ", msg: "", amount: 50, date: "2026-10-23T14:05" })), { ok: { name: "Kong", msg: "", amount: 50, date: "2026-10-23T14:05" } }), "gmDonorFromLink on an older link with a good amount and date fills all four");
-      ok([{ amount: "50", date: "2026-10-23T14:05" }, { amount: 50, date: "2019-01-01T00:00" }, { amount: 50 }].every((x) => same(fromLink(oldLink({ name: "Kong", msg: "", ...x })), { ok: { name: "Kong", msg: "" } })), "gmDonorFromLink drops an older link's amount and date unless both pass gmCheckDonation");
-      ok(same(fromLink("#donor=@@@"), { err: "อ่านข้อมูลในลิงก์ไม่ได้ (ลิงก์ไม่ครบหรือถูกแก้)" }) && same(fromLink(oldLink({ name: " ", msg: "", amount: 50, date: "2026-10-23T14:05" })), { err: "กรุณาใส่ชื่อ" }) && same(fromLink(oldLink({ name: "A", msg: "ก".repeat(201) })), { err: resSd(dl.checkSlipDetails, { name: "A", msg: "ก".repeat(201) }).err }), "gmDonorFromLink refuses an unreadable link and a bad name or message with the Thai reason");
-      const rows = dl.groupDonors(sets[0]);
-      ok(same(dn.gmDonorMatches(rows, "  NEW ").map((r) => r.id), ["A"]) && same(dn.gmDonorMatches(rows, "Bee").map((r) => r.id), ["B"]) && !dn.gmDonorMatches(rows, "old").length && !dn.gmDonorMatches(rows, " ").length, "gmDonorMatches: trimmed, case-insensitive, on a donor's latest name only");
-      // Review Focus 5: the same อนุมัติ link opened twice
-      const list = [{ k: "0a1b2c3d", id: "11111111", name: "Kong", msg: "", amount: 50, date: "2026-10-23T14:05" }], again = { name: "Kong", msg: "ขอบคุณ", amount: 50, date: "2026-10-23T14:05" };
-      const qAdd = [{ action: "donor-add", donor: { id: "22222222", name: "Mai", msg: "", amount: 20, date: "2026-10-22T09:00" } }];
-      ok(dn.gmDuplicateDonation(again, list, []) === true && dn.gmDuplicateDonation({ name: "Mai", msg: "", amount: 20, date: "2026-10-22T09:00" }, [], qAdd) === true && dn.gmDuplicateDonation({ ...again, amount: 51 }, list, qAdd) === false, "gmDuplicateDonation finds the same donation in list or queue");
-      ok(dn.gmDuplicateDonation(again, list, [{ action: "donor-remove", k: "0a1b2c3d" }]) === false, "gmDuplicateDonation leaves out a donation queued for removal (remove, then add it again corrected)");
-      const ids = new Set(Array.from({ length: 200 }, () => dn.gmNewId()));
-      ok(ids.size === 200 && [...ids].every((s) => /^[0-9a-f]{8}$/.test(s)), "gmNewId gives 8 lowercase hex characters (200 without a repeat)");
-    } catch (e) { ok(false, e.message + " (donor checks)"); }
-    if (!gmFailed) console.log(`Verified the guide manager page's own code reader, donor rules and GitHub replies: ${gmChecked} checks (${decoded} codes read like guide_code.js).`);
-  }
 }
 // Runs last: some deps sync the Buff / Debuff state (Amplify Damage writes the enemy debuff), which restoring their rank does not undo.
 // The full glow follows the deps (user 2026-10-21: Cat Combo with Hidden Blade on reads TAL, talAdjust(10 x rank), and TAL did not glow).

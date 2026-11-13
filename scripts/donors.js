@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* donors.js - the shared donation rules for the Bible's donor list (the coffee pop-up).
  *
- * One source for the limits and the pure helpers. The Cloudflare Worker bundles it, scripts/add_guide.js
- * uses it, and the validator checks the browser copies against it. So it stays pure: no fs, no Node-only
- * modules, only globals present in Node 24, Workers and browsers (crypto, TextEncoder, btoa, atob).
+ * One source for the limits and the pure helpers. The Cloudflare Worker bundles it, the validator checks
+ * the Bible page's copies and the embedded DONORS lines against it (Claude edits DONORS by hand since the
+ * guide manager was retired, 2026-11-13). So it stays pure: no fs, no Node-only modules.
  *
  *   node scripts/donors.js --selftest
  *
@@ -48,7 +48,7 @@ function checkAmount(a){
   return satang(a) / 100;
 }
 
-// A whole donation as it is published (name, message, the amount and the transfer time the owner typed from the slip).
+// A whole embedded donation as DONORS holds it (name, message, amount, Thailand-time date).
 function checkDonation(d, now = new Date()){
   d = d || {};
   const { name, msg } = checkSlipDetails(d);
@@ -59,12 +59,6 @@ function checkDonation(d, now = new Date()){
   if (isNaN(t)) throw new Error("วันเวลาที่โอนไม่ถูกต้อง (รูปแบบ YYYY-MM-DDTHH:MM)");
   if (t < thaiMs(LIMITS.dateMin) || t > now.getTime() + 24 * 3600000) throw new Error("วันเวลาที่โอนอยู่นอกช่วงที่รับ (ตั้งแต่ 2020-01-01 ถึงไม่เกินพรุ่งนี้)");
   return { name, msg, amount, date: d.date };
-}
-
-function newKey(){
-  const b = new Uint8Array(4);
-  globalThis.crypto.getRandomValues(b);
-  return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 const donorLine = (x) => "  " + JSON.stringify({ k: x.k, id: x.id, name: x.name, msg: x.msg, amount: x.amount, date: x.date }).replace(/</g, "\\u003c") + ",";   // no "</script>" or "<!--" inside the page script
@@ -93,33 +87,9 @@ function groupDonors(donations){
     .map((r) => ({ id: r.id, name: r.name, msg: r.msg, total: r.sat / 100, count: r.count, date: r.date, first: r.first }));
 }
 
-// The อนุมัติ link's fragment: "donor=<base64url of the UTF-8 JSON { name, msg }>" (the amount and date come off the slip, typed by the owner).
-const donorFragment = (d) => {
-  const bytes = new TextEncoder().encode(JSON.stringify({ name: d.name, msg: d.msg }));
-  let bin = ""; bytes.forEach((b) => { bin += String.fromCharCode(b); });
-  return "donor=" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-};
-// a fragment -> { name, msg } plus the amount and / or date an older link carried (the first slips' links had all four), or null for garbage.
-// Untrusted (anyone can make such a link): the caller still checks every value.
-function fromFragment(hash){
-  const m = String(hash || "").replace(/^#/, "").match(/^donor=([A-Za-z0-9_-]+)$/);
-  if (!m) return null;
-  let d;
-  try {
-    let b = m[1].replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
-    const bin = atob(b);
-    d = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
-  } catch (e){ return null; }
-  if (!d || typeof d !== "object" || Array.isArray(d)) return null;
-  const out = { name: d.name, msg: d.msg }, has = (k) => Object.prototype.hasOwnProperty.call(d, k);
-  if (has("amount")) out.amount = d.amount;
-  if (has("date")) out.date = d.date;
-  return out;
-}
-
 function selftest(){
   const assert = require("assert");
-  const { LIMITS, checkSlipDetails, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment } = module.exports;
+  const { LIMITS, checkSlipDetails, checkDonation, donorLine, parseDonors, groupDonors } = module.exports;
   const now = new Date("2026-10-23T08:00:00Z");
   const base = { name: "A", msg: "", amount: 50, date: "2026-10-23T14:05" };
   const ok = (d) => checkDonation({ ...base, ...d }, now);
@@ -193,33 +163,7 @@ function selftest(){
       [{ name: "" }, { name: "🐱".repeat(41) }, { name: "A", msg: null }, { name: "A", msg: 5 }, { name: "A", msg: "ก".repeat(201) }]
         .forEach((d) => assert.strictEqual(msgOf(sd, d), msgOf((x) => checkDonation({ ...base, ...x }, now), d)));
     },
-    "fragment round trip: name and message only"(){
-      const d = { name: "ก้อง 🐱 &#=", msg: "ขอบคุณ ?x=1&y=2 #" };
-      const f = donorFragment(d);
-      assert.ok(/^donor=[A-Za-z0-9_-]+$/.test(f));
-      assert.deepStrictEqual(fromFragment("#" + f), d);
-      assert.deepStrictEqual(fromFragment(f), d);
-      // a whole donation in gives only its name and message back: the amount and date are read off the slip by the owner
-      assert.deepStrictEqual(fromFragment(donorFragment({ ...d, amount: 12.5, date: "2026-10-23T14:05" })), d);
-    },
-    "an older 4-field link still decodes"(){
-      const old = (o) => "#donor=" + Buffer.from(JSON.stringify(o), "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      const four = { name: "ก้อง 🐱", msg: "ขอบคุณครับ", amount: 50, date: "2026-10-23T14:05" };
-      assert.deepStrictEqual(fromFragment(old(four)), four);
-      assert.deepStrictEqual(fromFragment(old({ name: "A", msg: "", amount: 5 })), { name: "A", msg: "", amount: 5 });
-      assert.deepStrictEqual(fromFragment(old({ date: "2026-10-23T14:05", msg: "m", name: "A", x: 1 })), { name: "A", msg: "m", date: "2026-10-23T14:05" });
-    },
-    "fromFragment gives null for garbage"(){
-      const raw = (s) => "#donor=" + Buffer.from(s, "latin1").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      ["#donor=@@@", "#x=1", "", null, "#donor=", raw("[1,2]"), raw('"text"'), raw("null"), raw("{bad json"), raw('{"name":"\xff"}')]
-        .forEach((h) => assert.strictEqual(fromFragment(h), null, String(h)));
-    },
-    "newKey"(){
-      const s = new Set();
-      for (let i = 0; i < 1000; i++){ const k = newKey(); assert.ok(/^[0-9a-f]{8}$/.test(k)); s.add(k); }
-      assert.strictEqual(s.size, 1000);
-      assert.strictEqual(LIMITS.name, 40);
-    },
+    "LIMITS"(){ assert.strictEqual(LIMITS.name, 40); assert.strictEqual(LIMITS.msg, 200); },
   };
   let n = 0, failed = 0;
   for (const [name, fn] of Object.entries(cases)){
@@ -230,5 +174,5 @@ function selftest(){
   console.log("donors selftest: all checks passed (" + n + ")");
 }
 
-module.exports = { LIMITS, checkSlipDetails, checkAmount, checkDonation, newKey, donorLine, parseDonors, groupDonors, donorFragment, fromFragment };
+module.exports = { LIMITS, checkSlipDetails, checkAmount, checkDonation, donorLine, parseDonors, groupDonors };
 if (require.main === module && process.argv.includes("--selftest")) selftest();

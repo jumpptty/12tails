@@ -1,7 +1,7 @@
 // Discord helpers shared by the Worker routes: the channel reader, the 60 s list cache, the footer meta, webhook edits.
 // Pattern copied from the wardrobe Worker (site_worker.mjs).
 export const SITE = "https://jumpptty.github.io";
-export const ORIGINS = [SITE, "null", "http://127.0.0.1:4782"];   // "null": a double-clicked local copy of the page; 127.0.0.1:4782: the guide manager (scripts/add_guide.js)
+export const ORIGINS = [SITE, "null"];   // "null": a double-clicked local copy of the page
 export const META_TAG = "meta ";
 const API = "https://discord.com/api/v10";
 const LIST_SEC = 60;

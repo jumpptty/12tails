@@ -10,7 +10,7 @@ const FOOTER_MAX = 2048;
 const big = (id) => BigInt(id);
 const byId = (a, b) => (big(a.id) > big(b.id)) - (big(a.id) < big(b.id));
 const posInt = (v) => Number.isInteger(v) && v > 0 ? v : null;
-// a code as the guide manager's decodeCode reads it: TG3 or TG2. only, and the guide's own format field
+// a code as scripts/add_guide.js's decodeCode reads it: TG3 or TG2. only, and the guide's own format field
 function readCode(code){
   const text = String(code).trim();
   if (!/^(TG3|TG2.)/.test(text)) throw new Error("not a guide code");

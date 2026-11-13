@@ -95,7 +95,7 @@ If `x-list-cache` never turns to `hit`, the 60-second copy is not holding, and e
 
 Common to all routes:
 
-- Only requests from `https://jumpptty.github.io` (and `null`, a double-clicked local copy of the page, and `http://127.0.0.1:4782`, the guide manager that `scripts/add_guide.js` serves, for its ส่งเข้า Discord); any other origin gets 403 `origin`.
+- Only requests from `https://jumpptty.github.io` (and `null`, a double-clicked local copy of the page); any other origin gets 403 `origin`.
 - Wrong HTTP method: 405 `method`.
 - `POST /slip` and `POST /guide` share the limit of 2 requests per minute per IP (binding `SLIP_LIMIT`), otherwise 429 `rate`.
 
@@ -118,4 +118,10 @@ Common to all routes:
 
 ## Android note
 
-The old **อนุมัติ** link is gone: slip posts no longer carry one, and the ✅ replaces it. The guide manager's old `#donor=...` links in older Discord messages still work. If one of those opens the guide manager without the donation (no card shows up), Discord's in-app browser dropped the `#...` part. Turn it off: Discord > **User Settings** > **App Settings** > **Web Browser** (or **Appearance** > **Use in-app browser**) and open links in Chrome instead. The new **ดูตัวอย่าง** link has no `#` in it, so it is not affected.
+The **ดูตัวอย่าง** link has no `#` in it, so Discord's Android in-app browser, which drops `#...` fragments, does not break it.
+
+## The retired guide manager (2026-11-13)
+
+The guide manager page and its phone workflow are gone: new guides and ☕ donations go through the ✅ in Discord. The old **อนุมัติ** link (slip posts no longer carry one) opened that page, so the `#donor=...` links in older Discord slip posts now lead nowhere. A donation already embedded in `DONORS` is changed by Claude by hand; an embedded guide is replaced or removed by Claude with `node scripts/add_guide.js replace|delete`.
+
+The fine-grained GitHub token made for the phone guide manager (repository `12tails`, **Actions: Read and write**, expires 2027-10-20) is no longer needed: revoke it on github.com > **Settings** > **Developer settings** > **Personal access tokens** > **Fine-grained tokens**.
