@@ -42,7 +42,7 @@
 
 - [ ] **Step 1: Add selftest case `"checkAmount"`.** `checkAmount(50) === 50`, `checkAmount("1,500") === 1500`, `checkAmount("12.5") === 12.5`. Each of `0, -1, 1.234, "150 บาท", "1,50", "", "abc", 1000000.01, NaN` throws `/ยอดเงิน/`. The existing `"checkDonation amount"` cases still pass.
 - [ ] **Step 2:** `node scripts/donors.js --selftest`. Expect a FAIL, because `checkAmount` is not defined.
-- [ ] **Step 3: Implement `checkAmount`** and make `checkDonation` call it. Number input keeps today's rule exactly.
+- [ ] **Step 3: Implement `checkAmount`** and make `checkDonation` call it. `checkDonation` keeps today's behaviour exactly: it still refuses a string such as `"50"`, by its own `typeof a === "number"` check before calling `checkAmount`, because the validator compares the guide manager's `gmCheckDonation` copy against it.
 - [ ] **Step 4:** `node scripts/donors.js --selftest` passes, and `node scripts/validate_skills.js` passes with no donor-copy errors.
 - [ ] **Step 5: Commit:** `feat(donors): checkAmount, the amount rule shared by the slip form and the owner's amount reply`
 
@@ -73,7 +73,7 @@
   - `/slip`: a post with `amount: "50"` puts `{ v:1, name, msg, amount:50, date:"YYYY-MM-DDTHH:MM" }` (Thailand time) in the footer. A post without an amount is still forwarded with `amount: null`, and its content has "ไม่มียอด". `amount: "abc"` → 400 `invalid` with `field: "amount"`. The content has no `อนุมัติ` link.
   - `GET /api/donors` with a fake fetch answers `{ donors: [...] }`. With the secrets missing it answers 503 `closed`; on Discord 500 it answers 502 `upstream`.
 - [ ] **Step 2:** `node 12t_projects/donate-worker/test.mjs`. Expect FAILs.
-- [ ] **Step 3: Implement** `discord.js`, `donors_live.js`, the `/slip` changes and the `index.js` routes: `/slip` → `handleSlip`, `/api/donors` → `handleDonors`, `/guide` and `/api/guides` and `/g/` in Task 3. Add `[vars]` and `nodejs_compat` to `wrangler.toml`. The `date` field is the send time as `Asia/Bangkok` `YYYY-MM-DDTHH:MM`.
+- [ ] **Step 3: Implement** `discord.js`, `donors_live.js`, the `/slip` changes and the `index.js` routes: `/slip` → `handleSlip`, `/api/donors` → `handleDonors`. Task 3 adds the others. Move `ORIGINS` into `discord.js` (exported) and import it in `handler.js`, so it is defined once. Add `[vars]` and `nodejs_compat` to `wrangler.toml`. The `date` field is the send time as `Asia/Bangkok` `YYYY-MM-DDTHH:MM`.
 - [ ] **Step 4:** `node 12t_projects/donate-worker/test.mjs` passes. `cd 12t_projects/donate-worker && npx wrangler deploy --dry-run` bundles without error.
 - [ ] **Step 5: Commit:** `feat(donate-worker): GET /api/donors lists the ✅'d slips live from Discord; /slip takes the amount`
 
@@ -86,7 +86,7 @@
 **Interfaces:**
 - Consumes: Task 2's `discord.js`. `decode` from `scripts/guide_code.js`, imported like `donors.js`. It needs `nodejs_compat` for `zlib` / `Buffer` / `fs`. If `--dry-run` cannot bundle it, stop and report; do not rewrite the decoder.
 - Produces:
-  - `listGuides(messages, { webhookId, floor: number }) -> { guides: [{ num, replaces, code, published, msg }], assign: [{ msg, num }] }` (pure). Numbering: `replaces` → `num = replaces`; else the footer `num`; else `next = max(floor, every footer num, every replaces) + 1`, handed out to unnumbered ✅'d posts oldest first. When nums collide, the newest message id wins. Posts whose meta cannot be read are skipped, but their `num` still counts if it can be read. `published` is the message timestamp as `YYYY-MM-DDTHH:MM:SSZ`.
+  - `listGuides(messages, { webhookId, floor: number }) -> { guides: [{ num, replaces, guide, published, msg }], assign: [{ msg, num }] }` (pure). `guide` = the code decoded by `guide_code.js` `decode`, plus `id = num`, `published`, and `date` = the Thailand (UTC+7) calendar day of `published` (as `add_guide.js` `stampGuide` does). The page's own decoder is async, so the Worker decodes; the code itself is not returned. A post whose code does not decode is skipped. Numbering: `replaces` → `num = replaces`; else the footer `num`; else `next = max(floor, every footer num, every replaces) + 1`, handed out to unnumbered ✅'d posts oldest first. When nums collide, the newest message id wins. Posts whose meta cannot be read are skipped, but their `num` still counts if it can be read. `published` is the message timestamp as `YYYY-MM-DDTHH:MM:SSZ`.
   - `handleGuidePost(request, env, deps)` (`POST /guide`, form fields `code`, `replaces`).
   - `handleGuides(request, env, deps)` (`GET /api/guides` → `{ floor, guides }`; after `listGuides`, it calls `editWebhookMessage` for each `assign`, writing the footer `num` and the visible line `"#<num> · อย่าลบโพสต์นี้ ถ้าจะเอาออกให้เอา ✅ ออก"`). Mark the race with `// ponytail: two data centres can assign at once; a Durable Object counter if it ever happens`.
   - `previewLink(env, msgId) -> string` = `<worker origin>/g/<msgId>.<sig>`. `sig` is the first 16 hex characters of HMAC-SHA256(key = `DISCORD_GUIDE_WEBHOOK_URL`, `msgId`).
@@ -169,7 +169,7 @@
 **Interfaces:**
 - Consumes: `GET /api/guides` → `{ floor, guides }` (Task 3), `decode` logic already in the page (the editor's import reads TG3).
 - Produces:
-  - `classGuideMergeLive(embedded: object[], live: {num,replaces,code,published}[]|null, floor: number) -> object[]` (pure). For `null` it returns `embedded`. Each live code is decoded, and the guide object gets `id = num` and `published`. It hides the embedded guide with `id === num`. It skips a live guide whose `replaces` ≤ `floor` when no embedded guide has that id (a removed number), and skips one that fails `classGuideNormalize`.
+  - `classGuideMergeLive(embedded: object[], live: {num,replaces,guide,published}[]|null, floor: number) -> object[]` (pure, sync). For `null` it returns `embedded`. Each live item's `guide` is the Worker-decoded guide object, already carrying `id = num`, `published` and `date`. It hides the embedded guide with `id === num`. It skips a live guide whose `replaces` ≤ `floor` when no embedded guide has that id (a removed number), and skips one that fails `classGuideNormalize`.
   - `classGuideLoadLive() -> Promise<void>`: fetch once; then `CLASS_GUIDES.splice(0, CLASS_GUIDES.length, ...merged)` and re-render the open guide view. `classGuideLiveReady` (a Promise) settles either way.
   - The deep link `#class-guide/<N>` for an id not embedded awaits `classGuideLiveReady` before showing missing.
   - The new deep link `#class-guide/code/<encoded TG3>` opens the decoded guide read-only in the reader view. It never touches the author's saved draft. A code that does not decode shows the usual Thai "damaged code" text.
