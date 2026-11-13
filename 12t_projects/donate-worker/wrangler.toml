@@ -1,6 +1,15 @@
 name = "12tails-donate"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The owner fills these (ids from Discord developer mode; not secrets). Secrets (never in this file):
+# DISCORD_WEBHOOK_URL (the slip webhook), DISCORD_BOT_TOKEN, set with `npx wrangler secret put <NAME>`.
+[vars]
+SLIP_CHANNEL = ""
+OWNER_ID = ""
+GUIDE_CHANNEL = ""
+GUIDE_NUM_FLOOR = "106"
 
 # 2 slips per minute per IP (Workers Rate Limiting binding). No secrets in this file:
 # the Discord webhook is set with `npx wrangler secret put DISCORD_WEBHOOK_URL`.

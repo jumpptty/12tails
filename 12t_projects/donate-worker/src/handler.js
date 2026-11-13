@@ -1,12 +1,10 @@
 // The ☕ slip Worker: checks a donor's form and forwards it to a private Discord channel. Nothing is stored.
 // The webhook URL lives only in the Worker secret DISCORD_WEBHOOK_URL.
-// The form is the display name, an optional message and the slip (user 2026-10-23): the owner reads the amount and the transfer time off
-// the slip and types them into the guide manager. An "amount" or "date" field (a page cached from before) is ignored.
-import { LIMITS, checkSlipDetails, donorFragment } from "../../../scripts/donors.js";
+// The form is the display name, an optional message, an optional amount and the slip. The owner checks the slip against the bank app and
+// reacts ✅ in Discord; a post without an amount asks the owner to reply with it. The embed footer carries the "meta {json}" the list reads.
+import { LIMITS, checkSlipDetails, checkAmount } from "../../../scripts/donors.js";
+import { ORIGINS, META_TAG } from "./discord.js";
 
-const SITE = "https://jumpptty.github.io";
-const MANAGER = SITE + "/12tails/12t_projects/guide-manager/";
-const ORIGINS = [SITE, "null"];   // "null": a double-clicked local copy of the page
 const FIELDS = ["name", "msg"];   // the order checkSlipDetails looks at them
 // file extensions only; which types are allowed comes from LIMITS.slipTypes
 const TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
@@ -59,9 +57,14 @@ export async function handleSlip(request, env, deps){
   if (text("name") === null || !slip || typeof slip === "string") return answer(400, { ok: false, error: "missing" }, origin);
 
   const raw = { name: text("name"), msg: text("msg") || "" };
-  let d;
+  let d, amount = null;
   try { d = checkSlipDetails(raw); }
   catch (e){ return answer(400, { ok: false, error: "invalid", field: badField(raw), message: e.message }, origin); }
+  const rawAmount = (text("amount") || "").trim();
+  if (rawAmount){
+    try { amount = checkAmount(rawAmount); }
+    catch (e){ return answer(400, { ok: false, error: "invalid", field: "amount", message: e.message }, origin); }
+  }
 
   if (!LIMITS.slipTypes.includes(slip.type)) return answer(400, { ok: false, error: "file-type" }, origin);
   if (slip.size > LIMITS.slipBytes) return answer(413, { ok: false, error: "file-size" }, origin);
@@ -70,14 +73,16 @@ export async function handleSlip(request, env, deps){
   const filename = "slip." + TYPES[type];
 
   const payload = {
-    content: "**[อนุมัติ](" + MANAGER + "#" + donorFragment(d) + ")**",
+    content: "ตรวจสลิปกับแอปธนาคาร แล้วกด ✅ เพื่อขึ้นรายชื่อ" + (amount === null ? "\nไม่มียอด ตอบกลับโพสต์นี้ด้วยยอดเงิน" : ""),
     embeds: [{
       title: "สลิปใหม่",
-      description: "ดูยอดและวันเวลาที่โอนจากสลิป แล้วกรอกเองในหน้าอนุมัติ",
+      description: "ดูยอดและวันเวลาที่โอนจากสลิป",
       fields: [
         { name: "ชื่อ", value: escapeMd(d.name) },
         { name: "ข้อความ", value: d.msg ? escapeMd(d.msg) : "-" },
+        { name: "ยอด", value: amount === null ? "-" : String(amount) },
       ],
+      footer: { text: META_TAG + JSON.stringify({ v: 1, name: d.name, msg: d.msg, amount, date: new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 16) }) },   // Thailand time
       image: { url: "attachment://" + filename },
     }],
     allowed_mentions: { parse: [] },

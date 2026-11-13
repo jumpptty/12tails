@@ -3,8 +3,9 @@
 import assert from "node:assert";
 import { handleSlip } from "./src/handler.js";
 import donors from "../../scripts/donors.js";
+import { listCases } from "./test_lists.mjs";
 
-const { fromFragment, LIMITS } = donors;
+const { LIMITS } = donors;
 const SITE = "https://jumpptty.github.io";
 const WEBHOOK = "https://discord.test/api/webhooks/1/token";
 const JPEG = [0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -36,7 +37,6 @@ function post({ origin = SITE, fields = good, slip = slipFile(), drop = [], meth
 }
 const json = async (res) => res.json();
 const payloadOf = (call) => JSON.parse(call.init.body.get("payload_json"));
-const linkOf = (payload) => (payload.content.match(/^\*\*\[อนุมัติ\]\(https:\/\/jumpptty\.github\.io\/12tails\/12t_projects\/guide-manager\/#(donor=[A-Za-z0-9_-]+)\)\*\*$/) || [])[1];
 
 const cases = {
   async "good send (name, message, slip) forwards one Discord post"(){
@@ -49,14 +49,12 @@ const cases = {
     assert.strictEqual(s.calls[0].url, WEBHOOK + "?wait=true");
     const body = s.calls[0].init.body, payload = payloadOf(s.calls[0]);
     assert.deepStrictEqual(payload.allowed_mentions, { parse: [] });
-    const frag = linkOf(payload);
-    assert.ok(frag, payload.content);
-    assert.deepStrictEqual(fromFragment(frag), { name: "ก้อง 🐱", msg: "ขอบคุณครับ" });   // exactly the two fields
+    assert.ok(!payload.content.includes("อนุมัติ"), payload.content);   // the link is gone: the owner reacts ✅ in Discord
     assert.strictEqual(payload.embeds.length, 1);
     assert.strictEqual(payload.embeds[0].title, "สลิปใหม่");
     assert.ok(/ยอด/.test(payload.embeds[0].description) && /สลิป/.test(payload.embeds[0].description), payload.embeds[0].description);   // read the amount and date off the slip
-    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.name), ["ชื่อ", "ข้อความ"]);
-    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.value), ["ก้อง 🐱", "ขอบคุณครับ"]);
+    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.name), ["ชื่อ", "ข้อความ", "ยอด"]);
+    assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.value), ["ก้อง 🐱", "ขอบคุณครับ", "-"]);
     assert.strictEqual(payload.embeds[0].image.url, "attachment://slip.jpg");
     const file = body.get("files[0]");
     assert.strictEqual(file.name, "slip.jpg");
@@ -66,22 +64,7 @@ const cases = {
     assert.strictEqual(bare.status, 200);
     const p2 = payloadOf(s.calls[1]);
     assert.strictEqual(p2.embeds[0].fields[1].value, "-");
-    assert.deepStrictEqual(fromFragment(linkOf(p2)), { name: "ก้อง 🐱", msg: "" });
-  },
-  async "an older page that still sends amount and date: ignored, not in the Discord post"(){
-    const s = setup();
-    for (const extra of [{ amount: "50", date: "2026-10-23T14:05" }, { amount: "abc", date: "2019-01-01T00:00" }, { amount: "" }]){
-      const res = await handleSlip(post({ fields: { ...good, ...extra } }), s.env, s.deps);
-      assert.strictEqual(res.status, 200, JSON.stringify(extra));
-      assert.deepStrictEqual(await json(res), { ok: true });
-    }
-    assert.strictEqual(s.calls.length, 3);
-    s.calls.forEach((c) => {
-      const text = c.init.body.get("payload_json"), payload = JSON.parse(text);
-      assert.ok(!/2026-10-23 14:05|2026-10-23T14:05|2019-01-01|"50|abc/.test(text), text);
-      assert.deepStrictEqual(payload.embeds[0].fields.map((f) => f.name), ["ชื่อ", "ข้อความ"]);
-      assert.deepStrictEqual(fromFragment(linkOf(payload)), { name: "ก้อง 🐱", msg: "ขอบคุณครับ" });
-    });
+    assert.strictEqual(JSON.parse(p2.embeds[0].footer.text.slice(5)).msg, "");
   },
   async "other origin is refused"(){
     const s = setup(), res = await handleSlip(post({ origin: "https://evil.example" }), s.env, s.deps);
@@ -123,7 +106,7 @@ const cases = {
     assert.strictEqual(res.status, 400);
     assert.deepStrictEqual([b.ok, b.error, b.field], [false, "invalid", "msg"]);
     assert.ok(b.message.includes("200"));
-    // a bad message with a good name still names msg, and the amount and date an old page sends never decide the field
+    // a bad message with a good name still names msg, and the amount never decides the field (a bad message is checked first)
     const old = await json(await handleSlip(post({ fields: { ...good, msg: "ก".repeat(201), amount: "abc", date: "x" } }), s.env, s.deps));
     assert.deepStrictEqual([old.error, old.field], ["invalid", "msg"]);
     assert.strictEqual(s.calls.length, 0);
@@ -181,6 +164,8 @@ const cases = {
     assert.strictEqual(s.calls.length, 1);
   },
 };
+
+Object.assign(cases, listCases({ setup, post, payloadOf, json, handleSlip }));
 
 let n = 0, failed = 0;
 for (const [name, fn] of Object.entries(cases)){
