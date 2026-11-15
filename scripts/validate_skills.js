@@ -4107,7 +4107,7 @@ let checkedRsim = 0;
         const script = [
           "(async () => {",
           "  let release; const classGuideLiveReady = new Promise((r) => { release = r; }); const tick = () => new Promise((r) => setTimeout(r, 0));",
-          "  const nodes = { sendNum: { value: '' }, sendHint: { textContent: '', hidden: true } }, el = (r) => nodes[r];",
+          "  const nodes = { sendNum: { value: '' }, sendHint: { textContent: '', hidden: true }, sendName: { textContent: '', hidden: true } }, el = (r) => nodes[r];",
           "  let draft = { title: 'Wolf Guide', author: 'Kong' }, sendTyped = null; const CLASS_GUIDES = [{ id: 49, title: 'Other', author: 'X' }];",
           "  const classGuideUnpack = async () => JSON.stringify({ title: 'changed' });",
           "  const bodies = []; const fetch = async (url, opts) => { bodies.push(opts.body); return { json: async () => ({ ok: true }) }; };",
@@ -4122,6 +4122,7 @@ let checkedRsim = 0;
           "  CLASS_GUIDES.push({ id: 107, title: 'wolf  guide', author: 'KONG' }); release();",
           "  const first = await press; await entry;",
           "  out.push({ pass: first === false && bodies.length === 0 && nodes.sendNum.value === '107' && !nodes.sendHint.hidden && nodes.sendHint.textContent.includes('#107'), msg: 'a ส่งไกด์ press made while the live guide list loads (classGuideLiveReady pending), where the list then fills #107, does not send on that press but shows the hint (got ' + JSON.stringify({ first, sends: bodies.length, num: nodes.sendNum.value, hint: nodes.sendHint.textContent }) + ')' });",
+          "  out.push({ pass: !nodes.sendName.hidden && nodes.sendName.textContent.includes('#107') && nodes.sendName.textContent.includes('wolf') && nodes.sendName.textContent.includes('Kong'.toUpperCase()), msg: 'the send card names the guide #N replaces (title and author, got ' + JSON.stringify(nodes.sendName.textContent) + ')' });",
           "  const second = await classGuideSendSubmit(ui);",
           "  out.push({ pass: second === true && bodies.length === 1 && bodies[0].get('replaces') === '107' && status.textContent === 'ส่งแล้ว ไกด์จะขึ้นหลังตรวจ', msg: 'the next press sends the guide as the update of #107 (got ' + JSON.stringify({ second, sends: bodies.length, status: status.textContent }) + ')' });",
           "  const after = [ui.btn.disabled, ui.btn.lastElementChild.textContent]; classGuideSendUnlock(ui); const still = [ui.btn.disabled, status.textContent];",
@@ -4146,6 +4147,8 @@ let checkedRsim = 0;
     const lines = html.split(/\r?\n/), checkLine = (needle) => lines.some((l) => l.includes(needle) && /act === "send"/.test(l));
     ok(["classGuideStatsProblem(draft.stats) || statTypo()))", "!(draft && draft.title && draft.title.trim() && draft.author", "!(draft && draft.modes && draft.modes.length)", "!(draft && draft.cover && draft.cover.length)", "buildProblems().length)) guardBuild();"].every(checkLine),
       "ส่งไกด์ runs the same checks as คัดลอกโค้ดไกด์ (stats, title and author, PVE / PVP, cover, build)");
+    ok(/data-cg-role="send"[^\n]*data-cg-act="export" hidden>/.test(html) && /else if \(act === "send"\)\{ saveDraft\(\); showSendCopy\(\);/.test(html) && /sendCopyBtn\(\)\.hidden = !sendTried;/.test(html), "the send card's คัดลอกโค้ดไกด์ starts hidden and shows once ส่งไกด์ has been pressed (the send button then fills the column)");
+    ok(/\.cg-send-num input::-webkit-inner-spin-button\{-webkit-appearance:none/.test(html) && /\.cg-send-num input\{[^}]*appearance:textfield/.test(html) && /data-cg-role="sendName" hidden/.test(html), "the update-existing-guide # field has no up / down stepper, and the send card has its name line for the guide being replaced");
     ok(/else if \(act === "send"\)\{[^\n]*classGuideSendSubmit\(sendUi\)/.test(html) && /code: \(\) => classGuidePack\(collect\(\)\)[^\n]*key: \(\) => JSON\.stringify\(draft\) \+ "\\n" \+ el\("sendNum"\)\.value/.test(html) && /draft = collect\(\); [^\n]*classGuideSendUnlock\(sendUi\);/.test(html) && /el\("sendNum"\)\.addEventListener\("input", [^\n]*classGuideSendUnlock\(sendUi\)/.test(html) && /await classGuideLiveReady;/.test((html.match(/async function sendPaint\([\s\S]*?\n  \}/) || [""])[0]),
       "the ส่งไกด์ branch sends classGuidePack(collect()) (the code คัดลอกโค้ดไกด์ copies) through classGuideSendSubmit, #N waits for the live guides, and every draft or #N edit runs classGuideSendUnlock"); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
