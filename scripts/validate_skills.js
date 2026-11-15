@@ -5246,24 +5246,21 @@ async function donateChildTests(env) {
   console.log(`Verified ${checked} server balance / BB issues page checks.`);
 }
 
-// TTO wallpaper (user 2026-10-25): the TTO look is a wallpaper under a dark veil (TTO_WALLPAPER, a MANIFEST string container in assets.js, put on <html> as --tto-wallpaper);
-// the stars, lanterns and harlequin of the old look are gone, and the page declares the container like the other string containers.
+// TTO look (user 2026-11-15): TTO wears the BB look again (night sky, TailsTopia's star sheet, warm solid panels with the harlequin texture), so the wallpaper look of 2026-10-25
+// (veil, see-through glass, cr. fuWaa caption, mirrored showcase) is gone. TTO_WALLPAPER stays in assets.js, unused, so it can come back.
 {
   let n = 0; const bad = (m) => { console.error(`[TTO THEME ERROR] ${m}`); errorCount++; }, good = (c, m) => { if (c) n++; else bad(m); };
   good(bibleAssets.MANIFEST.some((m) => m.name === "TTO_WALLPAPER" && m.empty === ""), 'scripts/bible_assets.js MANIFEST has no { name: "TTO_WALLPAPER", empty: "" }');
   good(/^const TTO_WALLPAPER = BIBLE_ASSETS_IN\.TTO_WALLPAPER \|\| "";\r?$/m.test(html), 'index.html does not declare const TTO_WALLPAPER = BIBLE_ASSETS_IN.TTO_WALLPAPER || "";');
-  let wp = ""; try { wp = vm.runInContext("TTO_WALLPAPER", sandbox); } catch (e) {}
-  const bytes = /^data:image\/webp;base64,/.test(wp) ? Buffer.from(wp.slice(23), "base64") : Buffer.alloc(0);
-  good(bytes.length > 50000 && bytes.toString("latin1", 0, 4) === "RIFF" && bytes.toString("latin1", 8, 12) === "WEBP", "TTO_WALLPAPER is not a WebP data URI of a real picture (assets.js)");
-  const tto = (/:root\[data-theme\]\[data-sk-server="tto"\]\{[\s\S]*?\n  \}/.exec(html) || [""])[0];
-  good(/--th-page:[^;]*var\(--tto-wallpaper/.test(tto) && /--th-veil:/.test(tto) && /--th-solid:0%/.test(tto), "the TTO look must put --tto-wallpaper under --th-veil and use see-through surfaces");
+  good(html.includes(':root[data-theme][data-sk-server="tto"],\r\n  :root[data-theme][data-sk-server="og"]{'), "the TTO look must share the BB token block (:root[data-theme][data-sk-server=\"tto\"], then the og selector)");
+  good(!/:root\[data-theme\]\[data-sk-server="tto"\]\{/.test(html) && !/--th-page:[^;]*var\(--tto-wallpaper/.test(html), "TTO has its own wallpaper token block again: it must wear the BB look");
+  good(html.includes('html:is([data-sk-server="og"],[data-sk-server="tto"]) body::after{'), "the star sheet layer (body::after) must cover TTO as well as BB");
   good(!/skTtoSky|--tto-stars|--tto-lantern|ensureServerBackdrops/.test(html), "the old TTO stars / lanterns code is still in index.html");
-  good(html.includes('<div id="skWallCredit">cr. fuWaa</div>') && html.includes('html.hub-menu[data-sk-server="tto"] #skWallCredit{display:block}'), "the wallpaper credit (cr. fuWaa) is missing: the main-menu caption shown in the TTO look");
-  good(!html.includes('octx.fillText("cr. fuWaa"') && !/html\[data-sk-server="tto"\] #skWallCredit\{display:block\}/.test(html), "cr. fuWaa shows only on the main menu (user 2026-10-26): not in the tools, not on the exported guide image");
-  good(/#skWallCredit\{[^}]*z-index:-1/.test(html) && !/#skWallCredit\{[^}]*(border-radius|background:)/.test(html), "cr. fuWaa is plain text in the wallpaper layer (z-index:-1, no pill background or border)");
-  good(html.includes('@media (max-width:760px){ html[data-sk-server="tto"] #skWallCredit{display:none !important} }'), "the cr. fuWaa caption must be hidden on phones (max-width 760px)");
-  good(html.includes('html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}') && html.includes('html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}') && /@media \(min-width:901px\)\{\s*html\[data-sk-server="tto"\] \.ln-stage\{grid-template-columns:minmax\(0,58fr\) minmax\(0,42fr\)\}/.test(html), "the TTO look must mirror the hub showcase on PC (art left, text right, inside @media (min-width:901px))");
-  console.log(`Verified ${n} TTO wallpaper theme checks.`);
+  good(!/skWallCredit/.test(html), "the cr. fuWaa wallpaper caption is back (#skWallCredit): TTO no longer shows the wallpaper");
+  good(!/html\[data-sk-server="tto"\] \.ln-/.test(html), "the mirrored hub showcase of the TTO wallpaper look is back (html[data-sk-server=\"tto\"] .ln-...)");
+  good(html.includes('const bbLook = look === "og" || look === "tto";'), "the guide image export must draw the BB night sky and harlequin panels for TTO too (bbLook)");
+  good(html.includes(':not([data-sk-server="og"]):not([data-sk-server="tto"]) :is(.nl-grp-rows, .nl-rail){--th-solid:92%}'), "the notes page's nearly solid panel rule must skip TTO as well as BB (both are solid)");
+  console.log(`Verified ${n} TTO look checks (the BB look again).`);
 }
 // BB look (user 2026-10-29): the TTO look from before its wallpaper (night sky, TailsTopia's star sheet, warm solid panels with the harlequin texture), without its jack-o-lanterns.
 {
@@ -5272,7 +5269,7 @@ async function donateChildTests(env) {
   good(blk.includes("--gold:#d0913e") && blk.includes("repeating-linear-gradient(45deg") && blk.includes("linear-gradient(#0b0c17 0%, #100e18 45%, #171009 100%)") && !/--th-solid:0%/.test(blk), "the BB look must keep the old TTO palette, the harlequin --th-texture on solid panels and the night sky --th-page");
   const sv = (/--bb-stars:url\("data:image\/svg\+xml,([^"]+)"\)/.exec(blk) || [])[1] || "";
   good((decodeURIComponent(sv).match(/<circle/g) || []).length === 65, "the BB look must embed TailsTopia's star sheet (--bb-stars, 65 circles)");
-  good(/html\[data-sk-server="og"\] body::after\{[^}]*var\(--bb-stars\)/.test(html), "the BB star sheet layer (html[data-sk-server=\"og\"] body::after) is missing");
+  good(/html:is\(\[data-sk-server="og"\],\[data-sk-server="tto"\]\) body::after\{[^}]*var\(--bb-stars\)/.test(html), "the BB / TTO star sheet layer (html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"]) body::after) is missing");
   good(!/--[\w-]*lantern|data:image\/webp/.test(blk) && !/skTtoSky|ensureServerBackdrops|\.lan-i\{/.test(html), "the BB look must not bring back the jack-o-lanterns (user 2026-10-29: no pumpkins)");
   good(html.includes('urlOf("--bb-stars")') && html.includes("// BB's harlequin (--th-texture)"), "the guide image export must draw the BB night sky with stars and the harlequin bands on its panels");
   console.log(`Verified ${n} BB look checks.`);
@@ -5303,7 +5300,7 @@ async function donateChildTests(env) {
   { const i0 = html.indexOf(':root[data-theme][data-sk-server="reborn"]{'), blk = i0 < 0 ? "" : html.slice(i0, html.indexOf("\n  }", i0));
     good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
   good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && !html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"])') && html.includes("var G = 'html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot, and og (the BB look, user 2026-10-29)");
-  good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
+  good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (!bbLook){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB and TTO (Reborn included)");
   // TTO (user 2026-10-31, TailsTopia's simulator read that day): the C pool stops at 9; cells 452-454 need Lv 100, 7 C skills and their required skills; each has a card.
   // Patch 1.6.2.1: C pool 10 at Lv 100 and each Lv 100 skill costs a C point; the TTO1106 client (2026-11-06) no longer limits them to one at a time.
   { const X = vm.runInContext("SKILL_SIM_TTO_EXTRA", sandbox), cf = vm.runInContext("skillSimCellsFor", sandbox), valid = vm.runInContext("skillSimValid", sandbox), probs = vm.runInContext("skillSimProblems", sandbox), auto = vm.runInContext("skillSimAutoLearn", sandbox);
