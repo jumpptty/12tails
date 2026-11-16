@@ -7353,6 +7353,82 @@ if (RUN_DAMAGE_CHECKS) {
   const run = (code) => vm.runInContext(code, sandbox);
   const has = (n) => run(`typeof ${n}`) !== "undefined";
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  // desc-decided skill sources ("<card>:<status>@<server>") a person has read and confirmed (final review 2026-11-16, finding 2)
+  const STATUS_REVIEWED_APPLY = [
+    "bat_chiroptophobia:chiroptophobia@og", "bat_chiroptophobia:chiroptophobia@reborn", "bat_chiroptophobia:chiroptophobia@tto", "bat_darkIntention:spdrain@og",
+    "bat_darkIntention:spdrain@tto", "bat_eternalNight:amplifydamage@reborn", "bat_eternalNight:blind@reborn", "bat_mercilessDrain:spdrain@og",
+    "bat_mercilessDrain:spdrain@tto", "bison_addedSwing:holdcharge@tot", "bison_aftershock:aftershock@og", "bison_aftershock:aftershock@tto",
+    "bison_holdCharge:holdcharge@reborn", "bison_overPower:overpower@og", "bison_overPower:overpower@reborn", "bison_overPower:overpower@tot",
+    "bison_overPower:overpower@tto", "bison_powerReel:cut@og", "bison_powerReel:cut@reborn", "bison_powerReel:cut@tto", "bison_restingGlory:furytrance@reborn",
+    "bison_stampede:paralysis@reborn", "bison_stampede:sticky@reborn", "bison_unchainedFury:berserkerrush@tto", "bison_unchainedFury:unchained@tto",
+    "cat_crescentEclipse:cut@tto", "cat_damageRoulette:damageroulette@og", "cat_damageRoulette:damageroulette@tto", "cat_dropAnchor:bleed@tto",
+    "cat_grandCasinoArcade:doom@og", "cat_grandCasinoArcade:doom@tto", "cat_grandCasinoArcade:nodamage@og", "cat_grandCasinoArcade:nodamage@tto",
+    "cat_grandCasinoArcade:noforce@og", "cat_grandCasinoArcade:noforce@tto", "cat_joker:doom@og", "cat_joker:doom@reborn", "cat_joker:doom@tto",
+    "cat_nineLives:nodamage@og", "cat_nineLives:nodamage@reborn", "cat_nineLives:nodamage@tto", "cat_powerShuffle:agidown@og", "cat_powerShuffle:agidown@tto",
+    "cat_powerShuffle:agiup@og", "cat_powerShuffle:agiup@tto", "cat_powerShuffle:atkdown@og", "cat_powerShuffle:atkdown@tto", "cat_powerShuffle:atkup@og",
+    "cat_powerShuffle:atkup@tto", "cat_powerShuffle:chadown@og", "cat_powerShuffle:chadown@tto", "cat_powerShuffle:chaup@og", "cat_powerShuffle:chaup@tto",
+    "cat_powerShuffle:defdown@og", "cat_powerShuffle:defdown@tto", "cat_powerShuffle:defup@og", "cat_powerShuffle:defup@tto", "cat_powerShuffle:lckdown@og",
+    "cat_powerShuffle:lckdown@tto", "cat_powerShuffle:lckup@og", "cat_powerShuffle:lckup@tto", "cat_powerShuffle:magdown@og", "cat_powerShuffle:magdown@tto",
+    "cat_powerShuffle:magup@og", "cat_powerShuffle:magup@tto", "cat_powerShuffle:taldown@og", "cat_powerShuffle:taldown@tto", "cat_powerShuffle:talup@og",
+    "cat_powerShuffle:talup@tto", "cat_powerShuffle:vitdown@og", "cat_powerShuffle:vitdown@tto", "cat_powerShuffle:vitup@og", "cat_powerShuffle:vitup@tto",
+    "cat_royalFlush:paralysis@tto", "chameleon_adaptiveScale:immunity@reborn", "chameleon_cAttack:poison@tto", "chameleon_phantomBloom:fatalstrike@reborn",
+    "chameleon_phantomBloom:invisible@reborn", "chameleon_phantomBloom:sticky@reborn", "chameleon_poisonArrow:poison@tot", "chameleon_poisonArrow:rust@og",
+    "chameleon_poisonArrow:rust@reborn", "chameleon_poisonArrow:rust@tto", "chameleon_tormentRain:poison@tto", "mole_barrelRailgun:paralysis@tto",
+    "mole_ironOverdrive:nodamage@reborn", "mole_overclockCore:nodamage@reborn", "mole_overclockCore:sticky@reborn", "monkey_fireAvatar:burn@og",
+    "monkey_fireAvatar:burn@reborn", "monkey_fireAvatar:burn@tot", "monkey_fireAvatar:burn@tto", "monkey_fireBall:burn@og", "monkey_fireBall:burn@reborn",
+    "monkey_fireBall:burn@tot", "monkey_fireBall:burn@tto", "monkey_gaiaBulwark:buitensoul@reborn", "monkey_gaiaBulwark:gadinasoul@reborn",
+    "monkey_intenseFire:burn@reborn", "monkey_jaAscension:sunburn@tto", "monkey_jaOverdrive:ja@reborn", "monkey_jaOverdrive:jasoul@reborn",
+    "monkey_jaOverdrive:phoenixsoul@reborn", "monkey_runeGolem:runefracture@tto", "monkey_runicSand:groundlock@og", "monkey_runicSand:groundlock@reborn",
+    "monkey_runicSand:groundlock@tto", "panda_comboLink:comboplus@tot", "panda_comboPlus:comboplus@og", "panda_comboPlus:comboplus@reborn",
+    "panda_comboPlus:comboplus@tot", "panda_comboPlus:comboplus@tto", "panda_delayQi:delayqi@og", "panda_delayQi:delayqi@tto", "panda_drunkenPlus:drunken@og",
+    "panda_drunkenPlus:drunken@reborn", "panda_drunkenPlus:drunken@tto", "panda_drunkenSpin:drunk@og", "panda_drunkenSpin:drunk@reborn", "panda_drunkenSpin:drunk@tto",
+    "panda_nineDragons:lock@tto", "panda_raijinKen:hide@og", "panda_raijinKen:hide@reborn", "panda_raijinKen:hide@tto", "panda_rain&storm:cut@tto",
+    "panda_risingDragons:lock@og", "panda_risingDragons:lock@reborn", "panda_risingDragons:lock@tot", "panda_risingDragons:lock@tto", "panda_risingDragons:noforce@og",
+    "panda_risingDragons:noforce@reborn", "panda_risingDragons:noforce@tot", "panda_risingDragons:noforce@tto", "panda_tempestDance:cut@tto", "panda_tigerToss:grab@og",
+    "panda_tigerToss:grab@reborn", "panda_tigerToss:grab@tot", "panda_tigerToss:grab@tto", "panda_yinYangFist:yinyang@tto", "penguin_absoluteWinter:frost@reborn",
+    "penguin_arcticFrost:frost@og", "penguin_arcticFrost:frost@reborn", "penguin_arcticFrost:frost@tot", "penguin_arcticFrost:frost@tto", "penguin_arcticWind:ice@og",
+    "penguin_arcticWind:ice@reborn", "penguin_arcticWind:ice@tot", "penguin_arcticWind:ice@tto", "penguin_constellation:manafracture@tto",
+    "penguin_crownOfStars:noforce@reborn", "penguin_crownOfStars:noko@reborn", "penguin_dispell:dispell@og", "penguin_dispell:dispell@tto",
+    "penguin_doubleCast:multicast@og", "penguin_doubleCast:multicast@tto", "penguin_doubleSpell:multicast@og", "penguin_doubleSpell:multicast@tto",
+    "penguin_emperorsMarch:frost@tto", "penguin_emperorsMarch:frostbite@tto", "penguin_frostBite:frost@og", "penguin_frostBite:frost@reborn",
+    "penguin_frostBite:frost@tto", "penguin_frostBite:ice@og", "penguin_frostBite:ice@reborn", "penguin_frostBite:ice@tto", "penguin_frostField:frost@tto",
+    "penguin_frostField:frostbite@tto", "penguin_frostField:frostfield@tto", "penguin_frostField:frostmark@tto", "penguin_frostField:frozenground@tto",
+    "penguin_frostSpike:frost@og", "penguin_frostSpike:frost@reborn", "penguin_frostSpike:frost@tot", "penguin_frostSpike:frost@tto", "penguin_iceShield:iceshield@og",
+    "penguin_iceShield:iceshield@reborn", "penguin_iceShield:iceshield@tot", "penguin_iceShield:iceshield@tto", "penguin_iceTwister:frost@og",
+    "penguin_iceTwister:frost@reborn", "penguin_iceTwister:frost@tot", "penguin_iceTwister:frost@tto", "penguin_manaSurge:manaburn@og",
+    "penguin_manaSurge:manaburn@reborn", "penguin_manaSurge:manaburn@tto", "penguin_manaVortex:mpsap@og", "penguin_manaVortex:mpsap@reborn",
+    "penguin_manaVortex:mpsap@tto", "penguin_snowBall:snowball@og", "penguin_snowBall:snowball@reborn", "penguin_snowBall:snowball@tto", "penguin_snowMan:snowman@og",
+    "penguin_snowMan:snowman@reborn", "penguin_snowMan:snowman@tto", "penguin_spreadShot:frost@og", "penguin_spreadShot:frost@reborn", "penguin_spreadShot:frost@tto",
+    "penguin_spreadShot:ice@og", "penguin_spreadShot:ice@reborn", "penguin_spreadShot:ice@tto", "penguin_tripleCast:multicast@og", "penguin_tripleCast:multicast@tto",
+    "rabbit_bounce:hide@og", "rabbit_bounce:hide@reborn", "rabbit_bounce:hide@tto", "rabbit_bulletRain:hide@reborn", "rabbit_coinItalus_bulletRain:hide@og",
+    "rabbit_fieldPharmacy:boost@reborn", "rabbit_fieldPharmacy:heat@reborn", "rabbit_immuneShot:remedy@og", "rabbit_immuneShot:remedy@reborn",
+    "rabbit_immuneShot:remedy@tot", "rabbit_immuneShot:remedy@tto", "rabbit_medicTurret:autolife@tto", "rabbit_medicTurret:boost@tto", "rabbit_medicTurret:heat@tto",
+    "rabbit_miracleBlend:enlarge@og", "rabbit_miracleBlend:enlarge@reborn", "rabbit_miracleBlend:enlarge@tto", "rabbit_miracleBlend:invisible@og",
+    "rabbit_miracleBlend:invisible@reborn", "rabbit_miracleBlend:invisible@tto", "rabbit_miracleBlend:poison@og", "rabbit_miracleBlend:poison@reborn",
+    "rabbit_miracleBlend:poison@tto", "rabbit_miracleBlend:reduce@og", "rabbit_miracleBlend:reduce@reborn", "rabbit_miracleBlend:reduce@tto",
+    "rabbit_miracleDrop:miracledrop@og", "rabbit_miracleDrop:miracledrop@reborn", "rabbit_miracleDrop:miracledrop@tto", "rabbit_rapidTrance:rapidtrance@og",
+    "rabbit_rapidTrance:rapidtrance@reborn", "rabbit_rapidTrance:rapidtrance@tto", "rabbit_stickyGum:sticky@og", "rabbit_stickyGum:sticky@reborn",
+    "rabbit_stickyGum:sticky@tto", "rabbit_tradingWithWind:cleanse@reborn", "rabbit_tradingWithWind:spiritofwind@reborn", "rabbit_tradingWithWind:zephyrlore@reborn",
+    "sheep_aegisOfFlock:repel@reborn", "sheep_allFeather:feather@og", "sheep_allFeather:feather@reborn", "sheep_allFeather:feather@tto", "sheep_feather:feather@og",
+    "sheep_feather:feather@tto", "sheep_floatingWing:wing@og", "sheep_floatingWing:wing@reborn", "sheep_floatingWing:wing@tto", "sheep_heavensVerdict:bless@reborn",
+    "sheep_sealOfEarth:sealofearth@og", "sheep_sealOfEarth:sealofearth@reborn", "sheep_sealOfEarth:sealofearth@tto", "sheep_sealOfHeaven:sealofheaven@og",
+    "sheep_sealOfHeaven:sealofheaven@reborn", "sheep_sealOfHeaven:sealofheaven@tto", "tot_ex_blackhole:mpdrain@tot", "tot_ex_earthquake:heavy@tot",
+    "tot_ex_eternalsalvation:nodamage@tot", "tot_ex_fullmoon:maim@tot", "tot_ex_leviathan:paralysis@tot", "tot_ex_miracleshot:nodamage@tot",
+    "tot_ex_miracleshot:noforce@tot", "tot_ex_paydayshot:nodamage@tot", "tot_ex_rumbling:groundlock@tot", "tot_ex_shadowexecution:bleed@tot",
+    "tot_ex_shadowexecution:disarm@tot", "tot_ex_shadowexecution:hide@tot", "tot_ex_soulcapture:hpdrain@tot", "tot_ex_soulcapture:mpdrain@tot",
+    "tot_ex_spiralshield:sticky@tot", "tot_ex_venomsplash:defdown@tot", "tot_ex_voidbreaker:chadown@tot", "tot_ex_voidbreaker:taldown@tot",
+    "whale_12thKingdomKnight:kingdomknight@og", "whale_12thKingdomKnight:kingdomknight@tot", "whale_12thKingdomKnight:kingdomknight@tto",
+    "whale_bubbleShield:bubbleshield@og", "whale_bubbleShield:bubbleshield@tto", "whale_hardenSkin:hardenskin@og", "whale_hardenSkin:hardenskin@reborn",
+    "whale_hardenSkin:hardenskin@tot", "whale_hardenSkin:hardenskin@tto", "whale_hardenSkin:sticky@tot", "whale_heavyWeight:heavy@og", "whale_heavyWeight:heavy@tto",
+    "whale_leviathanTide:bubbleshield@reborn", "whale_oceansResilience:oceanresilience@tto", "whale_overPresence:overpresence@og",
+    "whale_overPresence:overpresence@reborn", "whale_overPresence:overpresence@tto", "whale_overWeight:heavy@og", "whale_overWeight:heavy@tto",
+    "whale_podCall:salvation@reborn", "whale_salvation:salvation@og", "whale_salvation:salvation@reborn", "whale_salvation:salvation@tto",
+    "whale_sovereignImpaler:impaler@tto", "whale_swallow:gobble@og", "whale_swallow:gobble@reborn", "whale_swallow:gobble@tto", "wolf_alphaHowl:damageplus@reborn",
+    "wolf_artBreaker:artcancel@og", "wolf_artBreaker:artcancel@tto", "wolf_artCancel:artcancel@og", "wolf_artCancel:artcancel@reborn", "wolf_artCancel:artcancel@tto",
+    "wolf_bladeSurge:bladesurge@tto", "wolf_guardianOath:defup@reborn", "wolf_holyArmor:holyarmor@og", "wolf_holyArmor:holyarmor@reborn", "wolf_holyArmor:holyarmor@tot",
+    "wolf_holyArmor:holyarmor@tto", "wolf_holySword:holysword@og", "wolf_holySword:holysword@reborn", "wolf_holySword:holysword@tot", "wolf_holySword:holysword@tto",
+    "wolf_unyieldingOath:damageplus@reborn", "wolf_windBoundDomain:cleanse@tto"
+  ];
   try {
     // ---- Task 1: the status list per server, names, tags
     const need1 = ["STATUS_GAME_KEYS", "STATUS_NAME_FIX", "statusKeysFor", "statusAllKeys", "statusServersOf", "statusDisplayName", "statusTags"];
@@ -7474,16 +7550,70 @@ if (RUN_DAMAGE_CHECKS) {
           applied.set(cls, set); return set;
         };
         let checked = 0;
+        // statuses every hero file applies come from the shared item / flag / food / pet code, so they prove nothing about a class's skills
+        const HEROES = ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"];
+        // so a class "owns" a status when its files apply it more often than the shared baseline (the fewest times any hero file applies it)
+        const countIn = (f) => { const c = {}; for (const m of fs.readFileSync(path.join(dsDir, f), "utf8").matchAll(/(?:RPC_AddStatus|addStatus)"?,?\s*\(?\s*(?:new object\[\]\s*\{\s*)?"([A-Za-z0-9]+)"/g)) { const k = m[1].toLowerCase(); c[k] = (c[k] || 0) + 1; } return c; };
+        const perHero = HEROES.map(h => countIn(h + ".cs"));
+        const baseline = {}; for (const k of new Set(perHero.flatMap(Object.keys))) baseline[k] = Math.min(...perHero.map(c => c[k] || 0));
+        const ownCache = new Map();
+        const own = (cls) => {
+          if (ownCache.has(cls)) return ownCache.get(cls);
+          const extra = [...(SUMMON[cls] || []), ...(cls === "Penguin" ? ["ManaVortex"] : [])], c = {};
+          for (const f of files) if (f === cls + ".cs" || f.startsWith(cls + "_") || extra.some(s => f.startsWith(s))) for (const [k, n] of Object.entries(countIn(f))) c[k] = (c[k] || 0) + n;
+          const set = new Set(Object.keys(c).filter(k => c[k] > (baseline[k] || 0)));
+          ownCache.set(cls, set); return set;
+        };
         for (const r of rows) if (r.srv === "og" && r.kind === "apply" && r.fix !== "apply-checked") {
           const card = SKILLS.find(s => s.id === r.card);
           if (!card || card.onlyServer) continue;
           checked++;
-          if (!appliedBy(card.class).has(r.key)) sg(`${r.card} is listed as a source of ${r.key}, but no ${card.class} code applies "${r.key}" (mark it apply-checked in STATUS_SOURCE_FIX with the reason, or mention)`);
+          if (!(card.class === "Common" ? appliedBy(card.class) : own(card.class)).has(r.key)) sg(`${r.card} is listed as a source of ${r.key}, but no ${card.class} skill code applies "${r.key}" (the shared item code every hero file carries does not count; mark it apply-checked in STATUS_SOURCE_FIX with the reason, or mention)`);
         }
-        console.log(`Cross-checked ${checked} BB skill sources against the class code.`);
+        // the other way round: a status a class's own code applies needs a source of that class (a skill, its class weapon, a pet) or a ruling
+        const CODE = { Wolf: "wlf", Bison: "bsn", Panda: "pnd", Whale: "whl", Cat: "cat", Chameleon: "chm", Rabbit: "rab", Mole: "mol", Monkey: "mnk", Sheep: "shp", Penguin: "pgn", Bat: "bat" };
+        const NONE = has("STATUS_SOURCE_NONE") ? run("STATUS_SOURCE_NONE") : (sg("missing STATUS_SOURCE_NONE"), {});
+        let reverse = 0;
+        for (const cls of HEROES) for (const k of own(cls)) {
+          const gk = run("statusGameKey")(k);
+          if (!gk) continue;
+          reverse++;
+          const src = S(gk, "og");
+          const ok = src.skills.some(x => (SKILLS.find(s => s.id === x.card) || {}).class === cls) || src.items.some(r => (r.items || []).some(id => id.startsWith("w_" + CODE[cls]))) || src.pets.length;
+          if (!ok && !NONE[`${cls}:${gk}`]) sg(`${cls} code applies ${gk} but the glossary lists no ${cls} source (add the card to STATUS_SOURCE_ADD, or rule it in STATUS_SOURCE_NONE with the reason)`);
+        }
+        for (const k of Object.keys(NONE)) { const [cls, key] = k.split(":"); if (!HEROES.includes(cls) || !own(cls).has(String(key).toLowerCase())) sg(`STATUS_SOURCE_NONE ${k}: ${cls} code does not apply ${key} (stale ruling)`); }
+        console.log(`Cross-checked ${checked} BB skill sources against the class code, and ${reverse} class-applied statuses back to a source.`);
       }
-      // spot values
+      // final review fixes (2026-11-16): sources the class code gives but the card text never names, mentions read as sources, server ranges
       const skillIds = (k, srv) => S(k, srv).skills.map(x => x.card);
+      for (const [k, card] of [["allMimic", "bat_allMimic"], ["overLord", "bison_overlord"], ["lastHope", "whale_lastHope"], ["rejuvenate", "whale_rejuvenate"], ["rejuvenate", "whale_revitalize"],
+        ["overPresence", "whale_overPresence"], ["phoenixSoul", "monkey_summonSoul"], ["jaSoul", "monkey_summonSoul"], ["gadinaSoul", "monkey_summonSoul"], ["buitenSoul", "monkey_summonSoul"],
+        ["gaosSoul", "monkey_summonSoul"], ["runicSand", "monkey_runicSand"], ["transform", "mole_kingKaiser"], ["rust", "chameleon_poisonArrow"]])
+        if (!skillIds(k, "og").includes(card)) sg(`${card} applies ${k} in its class code but is not listed as its source`);
+      const hw = S("heavy", "og").skills.find(x => x.card === "whale_heavyWeight");
+      if (!hw || hw.lvMax > 2) sg(`Heavy Weight gives heavy Lv 1-2 (Hydro Blast's damage table is not a source): got ${hw ? hw.lvMin + "-" + hw.lvMax : "none"}`);
+      if (skillIds("blind", "og").includes("bat_shame") || skillIds("confuse", "og").includes("bat_shame")) sg("Shame (an active curse) is a condition on Blind / Confusion, not their source");
+      const bl = S("blind", "og").skills.find(x => x.card === "bat_blind");
+      if (!bl || bl.lvMax < 2) sg("Blind's boosted level (blind2 with Shame) belongs to the Blind card");
+      const cpR = S("comboPlus", "reborn").skills.find(x => x.card === "panda_comboPlus"), cpO = S("comboPlus", "og").skills.find(x => x.card === "panda_comboPlus");
+      if (!cpR || !cpO || cpR.lvMin > cpO.lvMin || cpR.lvMax < cpO.lvMax) sg(`a credited row on Reborn must not hide panda_comboPlus's own BB levels (og ${cpO && cpO.lvMin + "-" + cpO.lvMax}, reborn ${cpR && cpR.lvMin + "-" + cpR.lvMax})`);
+      // every desc-decided source was read by a person: a new one fails until it is reviewed (STATUS_REVIEWED_APPLY below) or ruled in STATUS_SOURCE_FIX
+      const reviewed = new Set(STATUS_REVIEWED_APPLY);
+      const fresh = rows.filter(r => r.kind === "apply" && !r.field && !r.fix && !reviewed.has(`${r.card}:${r.key}@${r.srv}`));
+      fresh.slice(0, 25).forEach(r => sg(`new source read from a card's text, not reviewed yet: ${r.card}:${r.key}@${r.srv} — "${r.ctx}" (read it; add it to STATUS_REVIEWED_APPLY in this check, or rule it in STATUS_SOURCE_FIX)`));
+      if (fresh.length > 25) sg(`... and ${fresh.length - 25} more unreviewed sources`);
+      const liveKeys = new Set(rows.filter(r => r.kind === "apply" && !r.field && !r.fix).map(r => `${r.card}:${r.key}@${r.srv}`));
+      const stale = STATUS_REVIEWED_APPLY.filter(k => !liveKeys.has(k));
+      if (stale.length) sg(`STATUS_REVIEWED_APPLY has ${stale.length} entries no longer read from the cards (remove them): ${stale.slice(0, 8).join(" ")}`);
+      // Reborn rolls built-in item effects through lckItemAdjust = ceil(1.3 x n) with no LCK (Reborn-Mechanics-Reference.md §2.2)
+      if (has("statusItemChanceText")) {
+        const ch = run("statusItemChanceText");
+        if (!/16%/.test(ch({ chance: { lck: 12 } }, "reborn")) || /LCK/.test(ch({ chance: { lck: 12 } }, "reborn").replace("ไม่ขึ้นกับ LCK", ""))) sg(`Reborn item chance for lckAdjust(12) must read 16% with no LCK: "${ch({ chance: { lck: 12 } }, "reborn")}"`);
+        if (!/26%/.test(ch({ chance: { pool: [12, 8] } }, "reborn"))) sg(`Reborn pool chance (12 + 8) must give the full set 26%: "${ch({ chance: { pool: [12, 8] } }, "reborn")}"`);
+        if (!/เพิ่มตาม LCK/.test(ch({ chance: { lck: 12 } }, "og"))) sg("BB item chance keeps its LCK note");
+      } else sg("missing statusItemChanceText");
+      for (const r of run("STATUS_SOURCES_ITEM")) if (r.chance && r.chance.pool && !Array.isArray(r.chance.pool)) sg(`item source ${r.key}: pool chances are [weapon, hat] numbers`);
       if (!skillIds("ice", "og").includes("penguin_frostBite")) sg("penguin_frostBite (the normal attack freeze) should be a source of ice");
       if (skillIds("ice", "og").includes("penguin_nAttack")) sg("a **Frost Bite:** line on penguin_nAttack is credited to penguin_frostBite, not the host card");
       if (skillIds("poison", "og").includes("chameleon_immunity")) sg("chameleon_immunity removes poison; it is not a source");
@@ -7518,7 +7648,11 @@ if (RUN_DAMAGE_CHECKS) {
         if (!tool.fact || tool.fact()[0] !== 258) sg("TOOLS fact must count all 258 statuses");
         if (!(tool.art || []).every(a => /^status:/.test(a) && run("statusIconSrc")(a.slice(7)))) sg("TOOLS art must be status:<key> icons");
       }
-      for (const sel of [".stg-panel", ".stg-tile:not(.is-on)", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
+      for (const sel of [".stg-panel", ".stg-desc", ".stg-tile:not(.is-on)", ".stg-close", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
+      // phone sheet: a deep link opens it and updates the address; it stays solid on the glass looks (ToT / Reborn --th-solid 0%)
+      { const pg = (html.match(/function openByKey\(key, srv\)\{[\s\S]*?\n  \}/) || [""])[0];
+        if (!/openSheet\(\)/.test(pg) || !/linkHash\(\)/.test(pg)) sg("openByKey must open the phone sheet and update the address (linkHash)");
+        if (!/\.stg-panel\.is-sheet\{[^}]*--th-solid:\s*100%/.test(html)) sg("the phone sheet must set --th-solid to 100% (ToT / Reborn looks make panels see-through)"); }
       if (!/html\.tool-status/.test(html) || !/tool-status", tool\.id === "status-glossary"/.test(html)) sg("showTool must toggle html.tool-status");
       if (!/tool\.id === "status-glossary"[^\n]*_statusGlossary/.test(html)) sg("route() must open #status-glossary/<key>");
       if (!miss5.length) {
@@ -7552,7 +7686,13 @@ if (RUN_DAMAGE_CHECKS) {
         if (!t1.includes(run("statusIconSrc")("ice")) || !t1.includes("Ice") || !/is-on/.test(t1)) sg("statusTileHtml(ice) misses its icon, name or on state");
         let checked = 0;
         const mapped = (n) => !!(run("STATUS_CLASS_MAP")[n.toLowerCase()] || run("STATUS_CLASS_MAP")[n]);
-        for (const srv of ["og", "tot", "tto", "reborn"]) for (const k of K(srv)) for (const lv of [null, ...Array.from({ length: Math.max(1, maxLv(k, srv)) }, (_, i) => i + 1)]) {
+        // nested pop-ups inside the panel use the glossary's server, not the skill page's
+        { const plain = (s) => String(s).replace(/<[^>]*>/g, " ").replace(/\*\*|__|\^\^|\s+/g, " ");
+          const dsc = run("getStatusDesc"), tt = plain(dsc("iceShield", null, 156, "tto")), bb = plain(dsc("iceShield", null, 156, "og"));
+          if (tt !== bb) { const words = tt.split(" ").filter(w => w.length > 3 && !bb.includes(w)); const h = plain(panel("armorShatter", "tto", 1, 156));
+            if (words.length && !words.some(w => h.includes(w))) sg("nested [iceShield] inside armorShatter on TTO shows BB's text (pass the server down)"); } }
+        const pillMax = run("statusPillMax");
+        for (const srv of ["og", "tot", "tto", "reborn"]) for (const k of K(srv)) for (const lv of [null, ...Array.from({ length: Math.max(1, pillMax(k, srv)) }, (_, i) => i + 1)]) {
           let h; try { h = panel(k, srv, lv, 156); } catch (e) { sg(`statusPanelHtml(${k}, ${srv}, ${lv}) throws: ${e.message}`); continue; }
           checked++;
           const bad = [];

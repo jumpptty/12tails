@@ -23,13 +23,13 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula"],
     // flat panels and modals that never change fill on hover
-    panel: [".stg-panel", ".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
+    panel: [".stg-panel", ".stg-desc", ".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card", ".sk-roster-header", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
       ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".nl-fixsum", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".stg-tile:not(.is-on)", ".stg-srvbtn:not(.is-on)", ".stg-pill:not(.is-on)", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
+    raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-srvbtn:not(.is-on)", ".stg-pill:not(.is-on)", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
@@ -8527,7 +8527,7 @@
     .stg-types{flex-direction:row; overflow-x:auto; gap:6px; scrollbar-width:none; padding-bottom:2px}
     .stg-types::-webkit-scrollbar{display:none}
     .stg-sep{display:none}
-    .stg-type{white-space:nowrap; flex:none; padding:5px 10px; background:var(--panel)}
+    .stg-type{white-space:nowrap; flex:none; padding:5px 10px; border:1px solid var(--line)}
     .stg-type.is-on{box-shadow:inset 0 -2px 0 var(--gold)}
     .stg-grid{grid-template-columns:repeat(auto-fill, minmax(68px, 1fr)); gap:6px; padding:2px 0 8px}
     .stg-tile{padding:8px 2px 6px; gap:4px}
@@ -8536,7 +8536,8 @@
     /* the chosen status is a bottom sheet over the grid (a panel under 207 tiles meant a 6,000 px scroll back) */
     .stg-panel{position:fixed; left:0; right:0; bottom:0; z-index:60; max-height:78dvh; overflow:auto; padding:14px; border-radius:14px 14px 0 0; border-bottom:0;
       box-shadow:0 -8px 24px rgba(0,0,0,.5); transform:translateY(105%); transition:transform .25s ease; visibility:hidden}
-    .stg-panel.is-sheet{transform:none; visibility:visible}
+    .stg-panel:not(.is-sheet){display:none}   /* a hidden sheet left in the tool container would still lengthen the page */
+    .stg-panel.is-sheet{transform:none; visibility:visible; --th-solid:100%}   /* solid over the grid: the ToT / Reborn looks set panels to 0% fill, and 96% still let tile names show through */
     .stg-close{display:grid; place-items:center; position:sticky; top:0; margin:-4px -4px 0 auto; width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; font-size:15px; cursor:pointer; z-index:1}
   }
 /* </SG:css> */
@@ -14297,9 +14298,11 @@ function statusTags(key){
 // Skills come from the cards themselves: a card's status:{} field, and each [status] in its desc classified by the Thai words just before it
 // (statusMentionKind); STATUS_SOURCE_FIX settles what those words leave open, and [STATUS GLOSSARY ERROR] fails while a mention is unclassified.
 // Items and pets are researched tables (BB client code; 12Tails-Mechanics-Reference.md §4.1 "Statuses from items and pets").
-const STATUS_MENTION_STRONG = /(ที่|ซึ่ง|ระหว่าง(ที่)?|ขณะ(ที่)?|แม้(จะ)?|หาก|ถ้า|เมื่อ|ยกเว้น|ไม่|ยัง|เคย|หรือ)(?:(?!จะ|โดน|ให้|ทำ)[^\[\]•:]){0,14}?(ติด|มี|ได้รับ|ได้)\s*(สถานะ)?\s*(อยู่)?\s*$/;
-const STATUS_MENTION_WORDS = /ได้แก่|นับเป็น|นับว่า|ถือเป็น|ถือว่า|ใช้|หลุด|ถูก|หลัง|ค้าง|ระเบิด|ถือ|เช่น|เปิดเผย|ลบ|ล้าง|ถอน|กำจัด|ปลด|สลาย|ป้องกัน|กัน|ต้าน|ภูมิคุ้มกัน|ยกเว้น|ไม่ติด|ติดไม่ได้|ใส่ไม่ได้|ไม่ได้รับ|แทน|นับ|รวม|เลเวล|ระดับ|ยืด|ต่อเวลา|เหมือน|เท่ากับ|ตาม|จาก|ของ|ระหว่าง|ขณะ|เมื่อ|หาก|ถ้า|แม้|ทะลุ|อ่าน|ตรวจ|ซ้อน|ทับ|หมด|หาย|ใช้ได้|กดได้|ไม่ทำงาน|ไม่มีผล/g;
-const STATUS_APPLY_WORDS = /ด้วย|เป็น|ติด|ได้รับ|ได้|ให้|มอบ|บัฟ|ใส่|กลายเป็น|เข้าสู่|สุ่ม|เกิด|เพิ่ม/g;
+// "ที่ / ซึ่ง" right before ติด / มี = "who has" (a condition); with a verb phrase between ("ที่เป็น Robots ติด", "ที่เข้ามาในออร่าติด") it is
+// "those that … get" (an apply), so that branch takes no gap (final review 2026-11-16: Over Presence and Rusty Decay were read as conditions)
+const STATUS_MENTION_STRONG = /(?:(?:ที่|ซึ่ง)\s*(?:กำลัง|ยัง)?\s*|(?:ระหว่าง(?:ที่)?|ขณะ(?:ที่)?|แม้(?:จะ)?|หาก|ถ้า|เมื่อ|ยกเว้น|ไม่|ยัง|เคย|หรือ)(?:(?!จะ|โดน|ให้|ทำ)[^\[\]•:]){0,14}?)(ติด|มี|ได้รับ|ได้)\s*(สถานะ)?\s*(อยู่)?\s*$/;
+const STATUS_MENTION_WORDS = /เหมือนติด|ได้แก่|นับเป็น|นับว่า|ถือเป็น|ถือว่า|ใช้|หลุด|ถูก|หลัง|ค้าง|ระเบิด|ถือ|เช่น|เปิดเผย|ลบ|ล้าง|ถอน|กำจัด|ปลด|สลาย|ป้องกัน|กัน|ต้าน|ภูมิคุ้มกัน|ยกเว้น|ไม่ติด|ติดไม่ได้|ใส่ไม่ได้|ไม่ได้รับ|แทน|นับ|รวม|เลเวล|ระดับ|ยืด|ต่อเวลา|เหมือน|เท่ากับ|ตาม|จาก|ของ|ระหว่าง|ขณะ|เมื่อ|หาก|ถ้า|แม้|ทะลุ|อ่าน|ตรวจ|ซ้อน|ทับ|หมด|หาย|ใช้ได้|กดได้|ไม่ทำงาน|ไม่มีผล/g;
+const STATUS_APPLY_WORDS = /ด้วย|เป็น|ติด|ได้รับ|ได้|ให้|มอบ|บัฟ|ใส่|กลายเป็น|เข้าสู่|สุ่ม|เกิด/g;   // not เพิ่ม: "โดนแรงขึ้น … ([heavy2] +30)" is a table, not an apply
 const STATUS_MENTION_AFTER = /^\s*(ใหม่ไม่ได้|ไม่นับ|ติดได้|อยู่นานขึ้น|ของ|ที่ได้|จาก|ทำงาน|สูงขึ้น|เติม|ลบสถานะนี้|ซับ|ติดไม่ได้|ไม่ติด|ใส่ไม่ได้|ไม่ได้|อยู่แล้ว|ที่มีอยู่|หมด|หายไป|ถูกล้าง|ถูกลบ)/;
 function statusMentionKind(before, after){
   const pre = String(before).replace(/<[^>]*>|\*\*|__|\^\^|##/g, "").replace(/\s+/g, " ").slice(-60).trimEnd();
@@ -14323,17 +14326,22 @@ const STATUS_SOURCE_FIX = {
   // conditions and other skills' statuses named in a modifier line
   "bison_rageControl:berserkerRush@tto": "mention", "monkey_autoInstant:instantCast": "mention", "penguin_deadlyFrost:frost": "mention",
   "bat_zombieChameleon:poison": "mention",
+  "chameleon_venomPhantom:poison@tto": "apply", "whale_leviathanBreach:hardenSkin@tto": "mention",
+  // final review read of every desc-decided source (2026-11-16): another skill's status named on this card, or a condition
+  "chameleon_immunity:staticDrain@tto": "mention", "chameleon_clearArrow:invisible": "mention", "mole_autoGyroGun:noDamage@reborn": "mention",
+  "penguin_manaSurge:dispell": "mention", "penguin_emperorsMarch:frostField@tto": "mention", "sheep_lucentBarrier:reverse@tto": "mention",
+  "sheep_grandCodex:worldEncarta@tto": "mention",   // "ทุกดอกเพิ่ม [poison] +1" adds stacks; "DEF +2.5% ต่อสแตค [hardenSkin]" reads it
   "bat_shame:dissolute": "mention", "bat_mindControl:nightmare": "mention", "bat_charm:mindControl": "mention", "bison_solidHold:holdCharge": "mention",
-  "cat_twoPair:noDamage": "mention", "cat_twoPair:noForce": "mention", "panda_deathBlow:paralysis": "mention", "penguin_manaBurn:dispell": "mention",
-  "whale_hydroBlast:heavy": "mention", "wolf_lunarEclipse:valor": "mention",
+  "cat_twoPair:noDamage": "mention", "cat_twoPair:noForce": "mention", "panda_deathBlow:paralysis": "mention",
+  "whale_hydroBlast:heavy": "mention",
   "bat_doomsayer:doom@reborn": "mention", "tot_ex_shadowrealm:massCast@tot": "mention", "tot_ex_shadowrealm:amplifyDamage@tot": "mention",
   "tot_ex_soulcapture:charm@tot": "mention", "tot_ex_soulcapture:dissolute@tot": "mention", "tot_ex_rageking:berserkerRush@tot": "mention",
-  "cat_nightEye:ice@reborn": "mention", "chameleon_immunity:invisible@reborn": "mention", "chameleon_immunity:fatalStrike@reborn": "mention",
-  "chameleon_apexHunt:slayerMark@tto": "mention", "chameleon_chainLightning:immunity@tto": "mention", "mole_barrelRailgun:drunk@tto": "mention",
-  "panda_tempestDance:drunk@tto": "mention", "monkey_soulPact:buiten@reborn": "mention", "monkey_runeGolem:instantCast@tto": "mention",
+  "cat_nightEye:ice@reborn": "mention",
+  "chameleon_chainLightning:immunity@tto": "mention", "mole_barrelRailgun:drunk@tto": "mention",
+  "panda_tempestDance:drunk@tto": "mention", "monkey_soulPact:buiten@reborn": "mention",
   "penguin_frostSpike:iceShield@reborn": "mention", "penguin_frostField:windBound@tto": "mention", "wolf_chargedFang:valor@reborn": "mention",
   // merges done by the receiver (RPC_AddStatus), not by the class file
-  "bison_ironShield:perfectShield": "apply-checked", "bison_ironShield:perfectArmor": "apply-checked", "bison_diamondShield:perfectShield": "apply-checked",
+  "bison_ironShield:perfectShield": "apply-checked", "bison_diamondShield:perfectShield": "apply-checked",
   "bison_mythrilSkin:perfectArmor": "apply-checked",   // iron + diamond shield merge, CharacterControl.cs:11975-12040
   "wolf_holySword:holyWolf": "apply-checked", "wolf_holyArmor:holyWolf": "apply-checked"   // holy sword + holy armor merge, CharacterControl.cs:11001-11016
 };
@@ -14368,7 +14376,9 @@ function statusSkillRows(){
           // a "**Name:** …" modifier line says what that other skill adds: a status it applies is credited to that skill's card
           const modName = (/^\s*\*\*([^*]+?):\*\*/.exec(line) || [])[1];
           const modCard = modName ? findSkillByMention(modName, v) : null;
-          const credit = modCard && modCard.id !== v.id && modCard.class === v.class ? modCard : v;
+          // only a passive is the enabler a modifier line credits (Frost Bite on the normal attack); an active named there is a condition
+          // (Shame on Blind), so the host card keeps the apply at its boosted level (final review 2026-11-16)
+          const credit = modCard && modCard.passive && modCard.id !== v.id && modCard.class === v.class ? modCard : v;
           for (const m of line.matchAll(TOK)) {
             if (!isStatus(m[1])) { prevEnd = -1; continue; }
             const gap = prevEnd >= 0 ? line.slice(prevEnd, m.index).replace(/<[^>]*>|\*\*|__/g, "") : null;
@@ -14390,8 +14400,44 @@ function statusSkillRows(){
     const kind = f ? (f === "mention" ? "mention" : "apply") : raw;
     out.push({ card: p.card, srv: p.srv, key: p.key, raw, kind, fix: f || null, field: !!p.field, lvMin: p.lvs.length ? Math.min(...p.lvs) : 0, lvMax: p.lvs.length ? Math.max(...p.lvs) : 0, ctx: raw === "unsure" ? p.uctx : raw === "apply" ? (p.actx || p.ctx) : p.ctx });
   }
+  // sources the card text never names (the code applies them): one row per server the card has (its BB view and every server tab)
+  for (const a of STATUS_SOURCE_ADD) {
+    const s = SKILLS.find(x => x.id === a.card);
+    if (!s) continue;
+    const [lo, hi] = statusLvRange(a.lv);
+    for (const srv of s.onlyServer ? [s.onlyServer] : ["og", ...["tot", "tto", "reborn"].filter(x => bbServerView(s, x))]) {
+      const key = a.key.toLowerCase(), hit = out.find(r => r.card === a.card && r.srv === srv && r.key === key);
+      if (hit) { hit.kind = "apply"; hit.fix = hit.fix || "add"; hit.lvMin = Math.min(hit.lvMin || lo, lo); hit.lvMax = Math.max(hit.lvMax, hi); }
+      else out.push({ card: a.card, srv, key, raw: "add", kind: "apply", fix: "add", field: false, lvMin: lo, lvMax: hi, ctx: a.cite });
+    }
+  }
   return (_statusSkillRows = out);
 }
+// Skill sources whose card text never names the status but whose class code applies it (final review 2026-11-16; [STATUS GLOSSARY ERROR]
+// checks every status a class's own code applies against a source of that class). lv = a level or [min, max].
+const STATUS_SOURCE_ADD = [
+  { card: "bat_allMimic", key: "allMimic", lv: 1, cite: "Bat_illusion.cs:2642" },
+  { card: "bat_mimic", key: "hide", lv: 1, cite: "Bat.cs:39312 (the Bat's own body while it controls the copy)" },
+  { card: "bison_overlord", key: "overLord", lv: [1, 2], cite: "Bison_overLord.cs:28, :110 (level = the skill rank)" },
+  { card: "whale_lastHope", key: "lastHope", lv: [1, 4], cite: "Whale.cs:9488-9515 (level = a count, at most 4)" },
+  { card: "whale_rejuvenate", key: "rejuvenate", lv: [1, 5], cite: "Whale.cs:31336-31356 (rank, +1 with Revitalize #433)" },
+  { card: "whale_revitalize", key: "rejuvenate", lv: 3, cite: "Whale.cs:36236" },
+  ...["phoenixSoul", "jaSoul", "gadinaSoul", "buitenSoul"].map(key => ({ card: "monkey_summonSoul", key, lv: [1, 4], cite: "Monkey.cs:24195-24390 (level = the summon's level)" })),
+  { card: "monkey_summonSoul", key: "gaosSoul", lv: 5, cite: "Monkey.cs:24407" },
+  { card: "monkey_runicSand", key: "runicSand", lv: 1, cite: "Monkey.cs:34130" },
+  { card: "monkey_titanicEarthPulse", key: "noForce", lv: 1, cite: "Monkey.cs:32403 (RPC_earthPulse)" },
+  { card: "mole_kingKaiser", key: "transform", lv: 1, cite: "Mole.cs:36023" },
+  { card: "mole_kingKaiser", key: "hide", lv: 1, cite: "Mole.cs:36135 (the Mole's own body while it controls the robot)" },
+  { card: "mole_kingKaiser", key: "noForce", lv: 1, cite: "Mole.cs:35401" },
+  { card: "panda_comboLink", key: "atkUp", lv: 5, cite: "Panda.cs:40570 (value = the combo count)" },
+  { card: "rabbit_extravagance", key: "atkUp", lv: 5, cite: "Rabbit.cs:39902" }
+];
+// "<Class>:<status>" a class's own code applies but no player skill gives (the reason in the value)
+const STATUS_SOURCE_NONE = {
+  "Mole:noDamage": "1 s of noDamage after the player's own revive (Mole.cs:52935, RPC_revive), not a skill",
+  "Monkey:noDamage": "1 s of noDamage after the player's own revive (Monkey.cs:52503, RPC_revive), not a skill",
+  "Mole:lock": "Ranger Robot (RangerRobot.cs:3112, Lv 5, 6 s), a unit with no card in the Bible"
+};
 // Items that are not equipment in GEAR_DATA (consumables, foods, mounts): game names from FieldData.cs / FoodData.cs / the mount code.
 const STATUS_ITEM_NAMES = {
   f_stb1: "Stimulus Drug", d_drk6: "Coffee", d_drk7: "Beer", d_drk8: "Vodka", d_drk9: "Wine", d_veg16: "Green Fungroom", d_veg17: "Red Fungroom", d_veg18: "Brown Fungroom",
@@ -14447,7 +14493,7 @@ const STATUS_SOURCES_ITEM = [
   { key: "happy", items: statusSeries(3), who: "เป้าหมาย", lv: 3, chance: { lck: 12 }, when: "โจมตีปกติโดน", label: "อาวุธ Paper ทุกอาชีพ", cite: "Bat.cs:54292 (the same table in every hero file)" },
   { key: "heavy", items: statusSeries(49), who: "เป้าหมาย", lv: 2, chance: { lck: 6 }, de: true, when: "โจมตีปกติโดน", label: "อาวุธ Golden ทุกอาชีพ", cite: "Bat.cs:54436 (the same table in every hero file)" },
   { key: "heavy", items: ["w_mnk39"], who: "เป้าหมาย", lv: 1, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Monkey.cs:52831" },
-  { key: "hpDrain", items: [...statusSeries(66), "c_all66"], who: "เป้าหมาย (ผู้ตีได้ HP คืน)", lv: 2, chance: { pool: "อาวุธ +12, หมวก +8 รวมกันแล้วสุ่มตาม LCK" }, de: true, when: "โจมตีปกติโดน", label: "ชุด Poseidon (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54466, :54575, :54629-54641",
+  { key: "hpDrain", items: [...statusSeries(66), "c_all66"], who: "เป้าหมาย (ผู้ตีได้ HP คืน)", lv: 2, chance: { pool: [12, 8] }, de: true, when: "โจมตีปกติโดน", label: "ชุด Poseidon (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54466, :54575, :54629-54641",
     srv: { tto: "TTO: โอกาสไม่ขึ้นกับ LCK ครบชุด 20% (40% กับ Double Effect)" } },
   { key: "hpRegen", items: ["f_dem1"], who: "ทั้งทีม", lv: 1, when: "ใช้", cite: "GameGui.cs:33758, :33813-33824" },
   { key: "ice", items: ["f_ibk1"], who: "ตัวเอง", lv: 6, when: "ใช้ (เฉพาะในภารกิจ)", cite: "GameGui.cs:32494, CharacterControl.cs:44412-44450" },
@@ -14461,7 +14507,7 @@ const STATUS_SOURCES_ITEM = [
   { key: "magicBoost", items: ["f_mbs1", "f_mbs2", "f_mbs3", "f_mbs4", "f_mbs5"], who: "ตัวเอง", lv: [1, 5], when: "ใช้ (เลเวลตามเลขไอเทม)", cite: "FieldData.cs:2812-3260" },
   { key: "speedBoost", items: ["f_sbs1", "f_sbs2", "f_sbs3", "f_sbs4", "f_sbs5"], who: "ตัวเอง", lv: [1, 5], when: "ใช้ (เลเวลตามเลขไอเทม)", cite: "FieldData.cs:2812-3260" },
   { key: "manaBurn", items: ["w_pgn15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Penguin.cs:48563" },
-  { key: "mpDrain", items: [...statusSeries(56), "c_all56"], who: "เป้าหมาย (ผู้ตีได้ MP คืน)", lv: 2, chance: { pool: "อาวุธ +12, หมวก +8 รวมกันแล้วสุ่มตาม LCK" }, de: true, when: "โจมตีปกติโดน", label: "ชุด Frozen (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54454, :54563, :54605-54617",
+  { key: "mpDrain", items: [...statusSeries(56), "c_all56"], who: "เป้าหมาย (ผู้ตีได้ MP คืน)", lv: 2, chance: { pool: [12, 8] }, de: true, when: "โจมตีปกติโดน", label: "ชุด Frozen (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54454, :54563, :54605-54617",
     srv: { tto: "TTO: โอกาสไม่ขึ้นกับ LCK" } },
   { key: "mpRegen", items: ["f_dem2"], who: "ทั้งทีม", lv: 1, when: "ใช้", cite: "GameGui.cs:33841" },
   { key: "needlePrison", items: ["w_mnk15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Monkey.cs:52778" },
@@ -14470,7 +14516,7 @@ const STATUS_SOURCES_ITEM = [
   { key: "paralysis", items: ["w_cat15"], who: "เป้าหมายที่ยืนนิ่งหรือวิ่ง", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Cat.cs:50108-50129" },
   { key: "paralysis", items: ["f_bmb3"], who: "ศัตรูในรัศมี 12m", lv: 2, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36112-36122" },
   { key: "phantomBane", items: ["w_mol39"], who: "เป้าหมาย", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Mole.cs:53320" },
-  { key: "plague", items: [...statusSeries(46), "c_all46"], who: "เป้าหมาย", lv: 1, chance: { pool: "อาวุธ +12, หมวก +8 รวมกันแล้วสุ่มตาม LCK" }, de: true, when: "โจมตีปกติโดน", label: "ชุด Mummy (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54418, :54551, :54581-54593",
+  { key: "plague", items: [...statusSeries(46), "c_all46"], who: "เป้าหมาย", lv: 1, chance: { pool: [12, 8] }, de: true, when: "โจมตีปกติโดน", label: "ชุด Mummy (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54418, :54551, :54581-54593",
     srv: { tto: "TTO: โอกาสไม่ขึ้นกับ LCK" } },
   { key: "plague", items: ["f_bmb5"], who: "ศัตรูในรัศมี 12m", lv: 4, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36274-36284" },
   { key: "poison", items: ["w_rab39"], who: "เป้าหมาย", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Rabbit.cs:49493" },
@@ -14506,14 +14552,18 @@ function statusSources(key, srv){
   const k = String(key).toLowerCase(), s = STATUS_SERVER_ORDER.includes(srv) ? srv : "og", id = k + "|" + s;
   if (_statusSourceCache[id]) return _statusSourceCache[id];
   const rows = statusSkillRows().filter(r => r.key === k && r.kind === "apply");
-  const tabbed = new Set(rows.filter(r => r.srv === s).map(r => r.card));
-  const skills = [];
+  // a card with no tab on this server inherits its BB row; a row credited to it on this server merges with that, never hides it
+  const byCard = new Map();
   for (const r of rows) {
     const card = SKILLS.find(x => x.id === r.card);
     const own = r.srv === s;
-    const inherit = s !== "og" && r.srv === "og" && !card.onlyServer && !bbServerView(card, s) && !tabbed.has(r.card);
-    if (own || inherit) skills.push({ card: r.card, lvMin: r.lvMin, lvMax: r.lvMax });
+    const inherit = s !== "og" && r.srv === "og" && !card.onlyServer && !bbServerView(card, s);
+    if (!own && !inherit) continue;
+    const m = byCard.get(r.card);
+    if (!m) byCard.set(r.card, { card: r.card, lvMin: r.lvMin, lvMax: r.lvMax });
+    else { if (r.lvMin && (!m.lvMin || r.lvMin < m.lvMin)) m.lvMin = r.lvMin; if (r.lvMax > m.lvMax) m.lvMax = r.lvMax; }
   }
+  const skills = [...byCard.values()];
   const items = s === "og" || s === "tot" || s === "tto" || s === "reborn" ? STATUS_SOURCES_ITEM.filter(r => r.key.toLowerCase() === k).map(r => ({ ...r, lvMin: statusLvRange(r.lv)[0], lvMax: statusLvRange(r.lv)[1] })) : [];
   const pets = STATUS_SOURCES_PET.filter(r => r.key.toLowerCase() === k).map(r => ({ ...r, lvMin: statusLvRange(r.lv)[0], lvMax: statusLvRange(r.lv)[1] }));
   return (_statusSourceCache[id] = { skills, items, pets });
@@ -14627,17 +14677,28 @@ function statusRailHtml(state, counts){
   return `<div class="stg-srv" role="group" aria-label="เซิร์ฟเวอร์">${srv}</div><div class="stg-types" role="group" aria-label="ตัวกรอง (เลือกได้หลายอย่าง)">${all}<div class="stg-sep" role="presentation"></div>${groups}</div>`;
 }
 // The popup's own text pipeline (renderStatusTip): **gold**, __red__, ^^term^^ links and nested [status] popups; the status itself stays plain.
-function statusDescHtml(text, lck, key){
+// Reborn rolls built-in item effects through lckItemAdjust = ceil(1.3 x n) with no LCK; a weapon and a hat with the same effect add first
+// (Reborn-Mechanics-Reference.md §2.2). pool = [weapon, hat] raw chances.
+function statusItemChanceText(r, srv){
+  const c = r && r.chance;
+  if (!c) return "";
+  const rb = (n) => Math.ceil(1.3 * n - 1e-9);
+  if (c.lck != null) return srv === "reborn" ? `โอกาส ${rb(c.lck)}% (ไม่ขึ้นกับ LCK)` : `โอกาส ${c.lck}% เพิ่มตาม LCK`;
+  if (Array.isArray(c.pool)) { const [w, h] = c.pool; return srv === "reborn" ? `อาวุธ ${rb(w)}% · หมวก ${rb(h)}% · ครบชุด ${rb(w + h)}% (ไม่ขึ้นกับ LCK)` : `อาวุธ +${w}, หมวก +${h} รวมกันแล้วสุ่มตาม LCK`; }
+  if (c.flat != null) return `โอกาส ${c.flat}% (ไม่ขึ้นกับ LCK)`;
+  return c.pick || "";
+}
+function statusDescHtml(text, lck, key, srv){
   if (!text) return "";
   return renderStatusKeywords(renderMechLinks(String(text))
     .replace(/__([^_]+)__/g, (m, inner) => '<span class="sk-tip-red">' + inner.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-tip-red-b">$1</span>') + '</span>')
-    .replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>'), lck, [String(key).toLowerCase()]);
+    .replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>'), lck, [String(key).toLowerCase()], srv);   // nested pop-ups follow the glossary's server
 }
 function statusSourcesHtml(key, srv){
   const src = statusSources(key, srv), lvText = (a, b) => !b ? "" : a === b ? `Lv ${a}` : `Lv ${a}–${b}`;
   const skills = src.skills.map(x => ({ x, c: SKILLS.find(s => s.id === x.card) })).filter(o => o.c)
     .sort((a, b) => (CLASS_ORDER.indexOf(a.c.class) - CLASS_ORDER.indexOf(b.c.class)) || a.c.name.localeCompare(b.c.name, "en"));
-  const chance = (r) => !r.chance ? "" : r.chance.lck != null ? `โอกาส ${r.chance.lck}% เพิ่มตาม LCK` : r.chance.flat != null ? `โอกาส ${r.chance.flat}% (ไม่ขึ้นกับ LCK)` : r.chance.pick || r.chance.pool || "";
+  const chance = (r) => statusItemChanceText(r, srv);
   const parts = [];
   if (skills.length) parts.push(`<div class="stg-src-group">สกิล</div>` + skills.map(({ x, c }) => {
     const face = CLASS_HERO_ICONS[c.class];
@@ -14666,8 +14727,8 @@ function statusPanelHtml(key, srv, lv, lck){
     + (known ? "" : `<div class="stg-hint">ยังไม่พบเลเวลจากแหล่งที่มา ตัวเลขคิดตามเลเวลที่เลือก</div>`);
   const lckBox = fn && entry.length >= 2 ? `<label class="stg-lck">LCK <input type="number" min="0" max="999" step="1" value="${lck}" data-stg-lck></label>` : "";
   return `<button type="button" class="stg-close" data-stg-close aria-label="ปิด">✕</button><div class="stg-head">${statusRingHtml(k, true)}<div class="stg-head-tx"><h2 class="stg-name">${statusEsc(statusDisplayName(k))}</h2><div class="stg-key">${statusEsc(k)}</div><div class="stg-chips">${chips}</div><div class="stg-srvs">มีบน ${statusServersOf(k).map(s => STATUS_SERVER_LABEL[s]).join(" · ")}${statusServerChanged(k, srv) ? ` <span class="stg-changed">${STATUS_SERVER_LABEL[srv]} ปรับผลของสถานะนี้</span>` : ""}</div></div></div>`
-    + pills + `<div class="stg-lbl">${fn ? `ผลที่เลเวล ${L}` : "ผลของสถานะ"}</div><div class="stg-desc">${now ? statusDescHtml(now, lck, k) : `<span class="stg-muted">ยังไม่มีคำอธิบาย</span>`}</div>`
-    + (formula && formula !== now ? `<div class="stg-formula"><span>สูตร</span>${statusDescHtml(formula, lck, k)}</div>` : "") + lckBox + statusSourcesHtml(k, srv);
+    + pills + `<div class="stg-lbl">${fn ? `ผลที่เลเวล ${L}` : "ผลของสถานะ"}</div><div class="stg-desc">${now ? statusDescHtml(now, lck, k, srv) : `<span class="stg-muted">ยังไม่มีคำอธิบาย</span>`}</div>`
+    + (formula && formula !== now ? `<div class="stg-formula"><span>สูตร</span>${statusDescHtml(formula, lck, k, srv)}</div>` : "") + lckBox + statusSourcesHtml(k, srv);
 }
 function mountStatusGlossary(root){
   const LS = "12t-bible-status";
@@ -14726,7 +14787,8 @@ function mountStatusGlossary(root){
     Object.assign(state, st);
     if (!visible(state.key)) { state.filters = []; query = ""; const s = $('[data-stg="search"]'); if (s) s.value = ""; }
     if (rebuild) { useServer(); buildGrid(); } else { markTile(); applyFilter(); }
-    renderRail(); renderPanel(); save();
+    renderRail(); renderPanel(); save(); linkHash();
+    openSheet();   // a deep link on a phone shows the status, not just the grid
     return true;
   }
   const inPanel = (el) => !!(el && panelEl.contains && panelEl.contains(el));
@@ -15105,11 +15167,11 @@ function mountMechanicGlossary(){
 
 // Shared popup markup for both the [name] shorthand and the status:{} auto-badge
 // -- a real child element, not CSS content:attr() (see .sk-status-tip comment).
-function renderStatusTip(cls, desc, lck, statusPath = []){
+function renderStatusTip(cls, desc, lck, statusPath = [], server){
   // __red__ is regular weight; **bold** nested inside __...__ becomes red + bold; **bold** elsewhere stays gold.
   if (desc) desc = renderStatusKeywords(renderMechLinks(desc)
     .replace(/__([^_]+)__/g, (m, inner) => '<span class="sk-tip-red">' + inner.replace(/\*\*([^*]+)\*\*/g, '<span class="sk-tip-red-b">$1</span>') + '</span>')
-    .replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>'), lck, statusPath);
+    .replace(/\*\*([^*]+)\*\*/g, '<span class="sk-val">$1</span>'), lck, statusPath, server);
   return `<span class="sk-status-tip" onclick="event.stopPropagation()"><span class="sk-status-tip-type">${cls}</span>${desc ? `<span class="sk-status-tip-divider"></span><span class="sk-status-tip-desc">${desc}</span>` : ""}</span>`;
 }
 // Status tips are centred on their keyword; near the edge of the window, or of the nearest box that clips them (user 2026-11-03: in the
@@ -15475,7 +15537,7 @@ function renderDescBlock(lines, skill, lck, lead) {
   flush();
   return out.join("");
 }
-function renderStatusKeywords(s, lck, statusPath = []) {
+function renderStatusKeywords(s, lck, statusPath = [], server) {
   // Skip [name] occurrences already hand-wrapped in their own <span class="sk-status">
   // (legacy per-card authoring, e.g. bat_dissolute's kw2) -- otherwise this double-wraps.
   return s.replace(/(<span class="sk-status"[^>]*>)?\[([a-zA-Z]+)(\d*)\](<\/span>)?/g, (match, openTag, name, num, closeTag) => {
@@ -15485,8 +15547,8 @@ function renderStatusKeywords(s, lck, statusPath = []) {
     const key = name.toLowerCase();
     // Keep a cyclic mention colored, but do not build its popup again.
     if (statusPath.includes(key)) return `<span class="sk-status">[${name}${num}]</span>`;
-    const sDesc = getStatusDesc(name, num ? parseInt(num, 10) : null, lck);
-    return `<span class="sk-status" onclick="this.classList.toggle('is-active');event.stopPropagation();">[${name}${num}]${renderStatusTip(cls, sDesc, lck, [...statusPath, key])}</span>`;
+    const sDesc = getStatusDesc(name, num ? parseInt(num, 10) : null, lck, server);   // server: the status glossary passes its own; elsewhere the skill page's
+    return `<span class="sk-status" onclick="this.classList.toggle('is-active');event.stopPropagation();">[${name}${num}]${renderStatusTip(cls, sDesc, lck, [...statusPath, key], server)}</span>`;
   });
 }
 
@@ -40617,6 +40679,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T13:55:14.298Z","fix(bible): สารานุกรมสถานะ แก้ตามรีวิว: เพิ่มแหล่งที่มาที่ขาด ตัดที่อ่านผิด ช่วงเลเวลข้ามเซิร์ฟ โอกาสไอเทม Reborn และแผ่นรายละเอียดบนมือถือ"],
     ["2026-11-16T13:30:30.734Z","feat(bible): สารานุกรมสถานะ เลือกตัวกรองได้หลายอย่างพร้อมกัน เพิ่มตัวกรองเฉพาะเซิร์ฟเวอร์ ไอคอนเต็มวงกลม และซ่อนสถานะ TTO ที่ยังเจอในเกมไม่ได้"],
     ["2026-11-16T13:16:37.138Z","feat(bible): เครื่องมือใหม่ สารานุกรมสถานะ รวมสถานะทุกเซิร์ฟเวอร์ 263 ชนิด พร้อมประเภท ผลแต่ละเลเวล สูตร และแหล่งที่มา"],
     ["2026-11-16T12:55:19.993Z","feat(bible): เพิ่มสถานะที่ยังไม่มีในคัมภีร์ 46 ชนิด (BB 23, TTO 18, Reborn 3, astralShift, overLord) พร้อมประเภทและคำอธิบายผล"],
@@ -41809,8 +41872,8 @@ function route(){
   else if (tool && tool.id === "class-guide" && deepSkill === "code" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) toolContainers[tool.id]._classGuide.openCode((location.hash.match(/^#class-guide\/code\/(.*)$/) || [])[1] || "");   // #class-guide/code/<code>: the ดูตัวอย่าง link in Discord (2026-11-13), a guide code read-only
   else if (tool && tool.id === "class-guide" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { const cg = toolContainers[tool.id]._classGuide, at = location.hash; if (!cg.openById(deepSkill)) classGuideLiveReady.then(() => { if (location.hash === at && !cg.openById(deepSkill)){ cg.showGallery(); history.replaceState(null, "", "#class-guide"); } }); }   // #class-guide/<guide number>; a number not embedded waits for the ✅'d guides from Discord (classGuideLoadLive), then an unknown number shows the list
   else if (tool && tool.id === "class-guide" && toolContainers[tool.id] && toolContainers[tool.id]._classGuide) { const cg = toolContainers[tool.id]._classGuide; if (deepClass && cg.filterBy) { cg.filterBy(deepClass, ""); history.replaceState(null, "", "#class-guide"); } cg.showGallery(); }   // the bare tool link (menu tile, tool switcher) always opens ไกด์จากผู้เล่น, never a half-written guide or the last guide read (user 2026-10-17); the draft is saved and เขียนไกด์ resumes it
-  if (tool && tool.id === "pet-info" && toolContainers[tool.id] && toolContainers[tool.id]._petInfo) { const pi = toolContainers[tool.id]._petInfo; if (deepSkill && !pi.openById(deepSkill)) history.replaceState(null, "", "#pet-info"); }   // #pet-info/<pet id>
-  if (tool && tool.id === "status-glossary" && toolContainers[tool.id] && toolContainers[tool.id]._statusGlossary) { const sgl = toolContainers[tool.id]._statusGlossary; if (deepSkill && !sgl.openByKey(deepSkill, deepServer)) history.replaceState(null, "", "#status-glossary"); }   // #status-glossary/<key>?server=<srv>; a variant id opens its family; an unknown id keeps the page and cleans the address
+  if (tool && tool.id === "pet-info" && toolContainers[tool.id] && toolContainers[tool.id]._petInfo) { const pi = toolContainers[tool.id]._petInfo; if (deepSkill && !pi.openById(deepSkill)) history.replaceState(null, "", "#pet-info"); }   // #pet-info/<pet id>; a variant id opens its family; an unknown id keeps the page and cleans the address
+  if (tool && tool.id === "status-glossary" && toolContainers[tool.id] && toolContainers[tool.id]._statusGlossary) { const sgl = toolContainers[tool.id]._statusGlossary; if (deepSkill && !sgl.openByKey(deepSkill, deepServer)) history.replaceState(null, "", "#status-glossary"); }   // #status-glossary/<key>?server=<srv> (a key another server lists opens there)
   if (tool && tool.id === "skill-details" && deepSkill && toolContainers[tool.id] && toolContainers[tool.id]._selectSkillById) {
     toolContainers[tool.id]._selectSkillById(deepSkill, deepServer);
   }
