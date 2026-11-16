@@ -8444,6 +8444,8 @@
   .stg-type:disabled{opacity:.4; cursor:default}
   .stg-type i{margin-left:auto; font-style:normal; font-family:'JetBrains Mono','Prompt',monospace; font-size:11.5px}
   .stg-sw{width:12px; height:12px; border-radius:50%; border:3px solid var(--c); flex:none}
+  .stg-sw-ic{width:16px; height:16px; object-fit:contain; flex:none; margin:0 -2px}
+  .stg-changed{display:inline-block; margin-left:6px; color:var(--gold)}
   .stg-sep{height:1px; background:var(--line); margin:6px 4px}
   .stg-types{display:flex; flex-direction:column; gap:2px}
   .stg-mid{display:flex; flex-direction:column; gap:10px; min-width:0}
@@ -8456,11 +8458,13 @@
   .stg-tile-nm{font-size:11.5px; line-height:1.25; text-align:center; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere}
   .stg-tile-nm.is-long{font-size:10px}
   .stg-ring{--c:var(--stg-none); width:58px; height:58px; box-sizing:border-box; border-radius:50%; border:3px solid var(--c); display:grid; place-items:center; background:#0c0b0a; flex:none}
-  .stg-ring-in{width:100%; height:100%; box-sizing:border-box; border-radius:50%; border:2px solid transparent; display:grid; place-items:center}
+  .stg-ring-in{position:relative; width:100%; height:100%; box-sizing:border-box; border-radius:50%; border:2px solid transparent; overflow:hidden}
+  /* the icon fills its circle like the skill rings (user 2026-11-16): art at 1.3x, centred on its visible pixels by centreRingImg, soft round edge */
+  .stg-ring-in > img{position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%));
+    -webkit-mask-image:radial-gradient(circle closest-side, #000 70%, transparent 98%); mask-image:radial-gradient(circle closest-side, #000 70%, transparent 98%)}
   .stg-ring[data-i="buff"] .stg-ring-in{border-color:var(--stg-buff)}
   .stg-ring[data-i="debuff"] .stg-ring-in{border-color:var(--stg-debuff)}
   .stg-ring[data-i="both"] .stg-ring-in{border-color:var(--stg-buff) var(--stg-debuff) var(--stg-debuff) var(--stg-buff)}
-  .stg-ring img{width:66%; height:66%; object-fit:contain}
   .stg-ring.is-big{width:92px; height:92px; border-width:4px}
   .stg-ring.is-big .stg-ring-in{border-width:3px}
   .stg-none{color:var(--muted); font-size:13px; padding:12px; margin:0}
@@ -8937,7 +8941,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=51beb6985c" id="bibleAssets"></script>
+<script src="assets.js?v=561bd51777" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -14246,15 +14250,21 @@ function statusDisplayName(key){
     return w.charAt(0).toUpperCase() + w.slice(1);
   }).join(" ");
 }
+// Keys a server's table has that players cannot meet there yet, left out of the glossary (user 2026-11-16: "exclude TTO icons that are
+// not accessible or encounterable in the game yet"): crimsonBrand, dealersMark and spireLink have no applier anywhere in TTO's client
+// (12Tails-Mechanics-Reference.md, TTO status table); gmDropBoost / gmExpBoost are GM-event icons the user ruled not encounterable.
+// Their class and text entries stay in the popup maps.
+const STATUS_HIDDEN = { tto: ["crimsonBrand", "dealersMark", "spireLink", "gmDropBoost", "gmExpBoost"] };
+const statusHidden = (k) => Object.values(STATUS_HIDDEN).some(list => list.includes(k));
 const _statusKeysCache = {};
 function statusKeysFor(server){
   const srv = STATUS_SERVER_ORDER.includes(server) ? server : "og";
   if (_statusKeysCache[srv]) return _statusKeysCache[srv];
-  const keys = STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.local, srv === "tto" ? STATUS_GAME_KEYS.tto : srv === "reborn" ? STATUS_GAME_KEYS.reborn : []);
+  const keys = STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.local, srv === "tto" ? STATUS_GAME_KEYS.tto : srv === "reborn" ? STATUS_GAME_KEYS.reborn : []).filter(k => !(STATUS_HIDDEN[srv] || []).includes(k));
   return (_statusKeysCache[srv] = keys.slice().sort((a, b) => statusDisplayName(a).localeCompare(statusDisplayName(b), "en") || a.localeCompare(b, "en")));
 }
 function statusAllKeys(){
-  return STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.local, STATUS_GAME_KEYS.tto, STATUS_GAME_KEYS.reborn);
+  return STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.local, STATUS_GAME_KEYS.tto, STATUS_GAME_KEYS.reborn).filter(k => !statusHidden(k));
 }
 function statusGameKey(key){
   const l = String(key).toLowerCase();
@@ -14269,7 +14279,7 @@ function statusServersOf(key){
 // D:\12tails-assets-archive\status-icons-2026-11-16\manifest.json). A key no client ships an icon for shows what the game shows: BB's
 // getIcon falls back to "unknown" (StatusData.cs:20-48), Reborn's cookFeast to "happy" (Reborn1027:StatusData.cs:10-17).
 const STATUS_ICONS = BIBLE_ASSETS_IN.STATUS_ICONS || {};
-const STATUS_ICON_NONE = ["eraseBoost", "hpSap", "koSap", "koDrain", "slayerMark", "gaosSoul", "gmExpBoost", "spireLink", "gmDropBoost", "abyssExposure", "abyssDoom", "weak", "abyssOrbMark", "cookFeast"];
+const STATUS_ICON_NONE = ["eraseBoost", "hpSap", "koSap", "koDrain", "slayerMark", "gaosSoul", "abyssExposure", "abyssDoom", "weak", "abyssOrbMark", "cookFeast"];
 const STATUS_ICON_FALLBACK = { cookfeast: "happy", abyssdoom: "doom", abyssexposure: "amplifydamage", weak: "amplifydamage", abyssorbmark: "sealofattack" };   // TTO1102:StatusData::getIcon@0x224F3C0 remaps these four
 function statusIconSrc(key){
   const l = String(key).toLowerCase();
@@ -14514,11 +14524,18 @@ function statusMaxLevel(key, srv){
 }
 // </SG:sources>
 // <SG:page>
-// Status glossary page (layout C of three mocks, user 2026-11-16): a type rail | an icon grid | the chosen status. Levels are pills, then the
-// popup sentence for that level, with the formula under it (option 1). State { server, type, key, lv } in localStorage "12t-bible-status";
+// Status glossary page (layout C of three mocks, user 2026-11-16): a filter rail | an icon grid | the chosen status. Levels are pills, then the
+// popup sentence for that level, with the formula under it (option 1). State { server, filters, key, lv } in localStorage "12t-bible-status";
 // #status-glossary/<key>?server=<srv> opens a status (a server-only key opens on its own server).
-const STATUS_RAIL_TYPES = [["Buff", "Buff"], ["Debuff", "Debuff"], null, ["Physical", "Physical"], ["Magical", "Magical"], ["State", "State"], ["System", "System"],
-  ["Lock", "Lock"], ["Shield", "Shield"], ["Crowd Control", "Crowd Control"], ["Unclassified", "ไม่อยู่ในหมวดใด"]];
+// Filters (user 2026-11-16: "multiple filters should be able to be chosen at the same time"): OR inside a group, AND across groups, so
+// Debuff + Magical = both, Physical + Magical = either. "Exclusive" (user: "Server Exclusive") = only on the picked server, or that server
+// changed the status (its own STATUS_DESC_SERVER text).
+const STATUS_FILTER_GROUPS = [
+  { id: "side", rows: [["Buff", "Buff"], ["Debuff", "Debuff"]] },
+  { id: "kind", rows: [["Physical", "Physical"], ["Magical", "Magical"], ["State", "State"], ["System", "System"], ["Lock", "Lock"], ["Shield", "Shield"], ["Crowd Control", "Crowd Control"], ["Unclassified", "ไม่อยู่ในหมวดใด"]] },
+  { id: "server", rows: [["Exclusive", "เฉพาะเซิร์ฟเวอร์"]] }
+];
+const STATUS_FILTER_IDS = STATUS_FILTER_GROUPS.flatMap(g => g.rows.map(r => r[0]));
 const STATUS_RING_KEY = { Buff: "buff", Debuff: "debuff", Physical: "phys", Magical: "mag", State: "state", System: "sys", Lock: "lock", Shield: "shield", "Crowd Control": "cc", Unclassified: "none" };
 const STATUS_SERVER_LABEL = { og: "BB", tot: "ToT", tto: "TTO", reborn: "Reborn" };
 const statusEsc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -14553,22 +14570,42 @@ function statusTypeOf(key, type){
   const t = statusTags(key);
   return type === "Unclassified" ? !t.length : t.includes(type);
 }
-// Rail counts follow the server and the search, never the picked type (the facet rule of the server balance page).
-function statusRailCounts(srv, query){
-  const q = String(query || "").trim().toLowerCase(), keys = statusKeysFor(srv).filter(k => statusMatches(k, srv, q));
-  const out = { all: keys.length };
-  for (const row of STATUS_RAIL_TYPES) if (row) out[row[0]] = keys.filter(k => statusTypeOf(k, row[0])).length;
+// the server changed this status: its own popup text there
+const statusServerChanged = (key, srv) => { const m = STATUS_DESC_SERVER[srv] || {}; return srv !== "og" && !!(m[String(key).toLowerCase()] || m[key]); };
+function statusIsExclusive(key, srv){
+  if (srv === "og") return false;
+  const on = statusServersOf(key);
+  return (on.length === 1 && on[0] === srv) || statusServerChanged(key, srv);
+}
+const statusRowMatch = (key, srv, f) => f === "Exclusive" ? statusIsExclusive(key, srv) : statusTypeOf(key, f);
+function statusFilterMatch(key, srv, filters, skipGroup){
+  for (const g of STATUS_FILTER_GROUPS) {
+    if (g.id === skipGroup) continue;
+    const on = (filters || []).filter(f => g.rows.some(r => r[0] === f));
+    if (on.length && !on.some(f => statusRowMatch(key, srv, f))) return false;
+  }
+  return true;
+}
+// A row's count = what that row would add to the current view: the search, the other groups' picks, and this row (the facet rule).
+function statusRailCounts(srv, query, filters){
+  const q = String(query || "").trim().toLowerCase(), base = statusKeysFor(srv).filter(k => statusMatches(k, srv, q));
+  const out = { all: base.length };
+  for (const g of STATUS_FILTER_GROUPS) {
+    const pool = base.filter(k => statusFilterMatch(k, srv, filters, g.id));
+    for (const [f] of g.rows) out[f] = pool.filter(k => statusRowMatch(k, srv, f)).length;
+  }
   return out;
 }
 function statusGlossaryState(raw){
   const r = raw && typeof raw === "object" ? raw : {};
   let server = STATUS_SERVER_ORDER.includes(r.server) ? r.server : "og";
-  const type = STATUS_RAIL_TYPES.some(x => x && x[0] === r.type) ? r.type : "all";
+  let filters = Array.isArray(r.filters) ? r.filters.filter((f, i, a) => STATUS_FILTER_IDS.includes(f) && a.indexOf(f) === i) : [];
+  if (!filters.length && STATUS_FILTER_IDS.includes(r.type)) filters = [r.type];   // the first version stored one type
   let key = r.key ? statusGameKey(r.key) : null;
   if (key && !statusKeysFor(server).includes(key)) server = statusServersOf(key)[0] || server;
   if (!key) key = statusKeysFor(server)[0];
   const max = statusPillMax(key, server), n = parseInt(r.lv, 10);
-  return { server, type, key, lv: Number.isFinite(n) && n >= 1 ? Math.min(n, max) : max };
+  return { server, filters, key, lv: Number.isFinite(n) && n >= 1 ? Math.min(n, max) : max };
 }
 function statusRingHtml(key, big){
   const r = statusRingColors(statusTags(key));
@@ -14581,9 +14618,13 @@ function statusTileHtml(key, on){
 }
 function statusRailHtml(state, counts){
   const srv = STATUS_SERVER_ORDER.map(s => `<button type="button" class="stg-srvbtn${s === state.server ? " is-on" : ""}" data-stg-srv="${s}" aria-pressed="${s === state.server}">${SKILL_ICONS["server_" + s] ? `<img src="${SKILL_ICONS["server_" + s]}" alt="">` : ""}<span>${STATUS_SERVER_LABEL[s]}</span></button>`).join("");
-  const row = (t, label, c) => `<button type="button" class="stg-type${state.type === t ? " is-on" : ""}" data-stg-type="${t}" aria-pressed="${state.type === t}"${c === 0 && state.type !== t ? " disabled" : ""}>${t === "all" ? "" : `<span class="stg-sw" data-o="${STATUS_RING_KEY[t]}"></span>`}<span class="stg-type-nm">${label}</span><i>${c}</i></button>`;
-  return `<div class="stg-srv" role="group" aria-label="เซิร์ฟเวอร์">${srv}</div><div class="stg-types" role="group" aria-label="ประเภท">${row("all", "ทั้งหมด", counts.all)}`
-    + STATUS_RAIL_TYPES.map(x => x ? row(x[0], x[1], counts[x[0]] || 0) : `<div class="stg-sep" role="presentation"></div>`).join("") + `</div>`;
+  const none = !state.filters.length;
+  const row = (f, label, c, icon, title) => { const on = state.filters.includes(f); return `<button type="button" class="stg-type${on ? " is-on" : ""}" data-stg-type="${f}" aria-pressed="${on}"${title ? ` title="${statusEsc(title)}"` : ""}${c === 0 && !on ? " disabled" : ""}>${icon}<span class="stg-type-nm">${label}</span><i>${c}</i></button>`; };
+  const all = `<button type="button" class="stg-type${none ? " is-on" : ""}" data-stg-type="all" aria-pressed="${none}"><span class="stg-type-nm">ทั้งหมด</span><i>${counts.all}</i></button>`;
+  const groups = STATUS_FILTER_GROUPS.map(g => g.rows.map(([f, label]) => f === "Exclusive"
+    ? row(f, `เฉพาะ ${STATUS_SERVER_LABEL[state.server]}`, counts[f] || 0, SKILL_ICONS["server_" + state.server] ? `<img class="stg-sw-ic" src="${SKILL_ICONS["server_" + state.server]}" alt="">` : "", "สถานะที่มีเฉพาะเซิร์ฟเวอร์นี้ หรือเซิร์ฟเวอร์นี้เปลี่ยนผลของสถานะ")
+    : row(f, label, counts[f] || 0, `<span class="stg-sw" data-o="${STATUS_RING_KEY[f]}"></span>`)).join("")).join(`<div class="stg-sep" role="presentation"></div>`);
+  return `<div class="stg-srv" role="group" aria-label="เซิร์ฟเวอร์">${srv}</div><div class="stg-types" role="group" aria-label="ตัวกรอง (เลือกได้หลายอย่าง)">${all}<div class="stg-sep" role="presentation"></div>${groups}</div>`;
 }
 // The popup's own text pipeline (renderStatusTip): **gold**, __red__, ^^term^^ links and nested [status] popups; the status itself stays plain.
 function statusDescHtml(text, lck, key){
@@ -14624,7 +14665,7 @@ function statusPanelHtml(key, srv, lv, lck){
     .map(i => `<button type="button" class="stg-pill${i === L ? " is-on" : ""}${known ? "" : " is-dim"}" data-stg-lv="${i}" aria-pressed="${i === L}">${i}</button>`).join("") + `</div>`
     + (known ? "" : `<div class="stg-hint">ยังไม่พบเลเวลจากแหล่งที่มา ตัวเลขคิดตามเลเวลที่เลือก</div>`);
   const lckBox = fn && entry.length >= 2 ? `<label class="stg-lck">LCK <input type="number" min="0" max="999" step="1" value="${lck}" data-stg-lck></label>` : "";
-  return `<button type="button" class="stg-close" data-stg-close aria-label="ปิด">✕</button><div class="stg-head">${statusRingHtml(k, true)}<div class="stg-head-tx"><h2 class="stg-name">${statusEsc(statusDisplayName(k))}</h2><div class="stg-key">${statusEsc(k)}</div><div class="stg-chips">${chips}</div><div class="stg-srvs">มีบน ${statusServersOf(k).map(s => STATUS_SERVER_LABEL[s]).join(" · ")}</div></div></div>`
+  return `<button type="button" class="stg-close" data-stg-close aria-label="ปิด">✕</button><div class="stg-head">${statusRingHtml(k, true)}<div class="stg-head-tx"><h2 class="stg-name">${statusEsc(statusDisplayName(k))}</h2><div class="stg-key">${statusEsc(k)}</div><div class="stg-chips">${chips}</div><div class="stg-srvs">มีบน ${statusServersOf(k).map(s => STATUS_SERVER_LABEL[s]).join(" · ")}${statusServerChanged(k, srv) ? ` <span class="stg-changed">${STATUS_SERVER_LABEL[srv]} ปรับผลของสถานะนี้</span>` : ""}</div></div></div>`
     + pills + `<div class="stg-lbl">${fn ? `ผลที่เลเวล ${L}` : "ผลของสถานะ"}</div><div class="stg-desc">${now ? statusDescHtml(now, lck, k) : `<span class="stg-muted">ยังไม่มีคำอธิบาย</span>`}</div>`
     + (formula && formula !== now ? `<div class="stg-formula"><span>สูตร</span>${statusDescHtml(formula, lck, k)}</div>` : "") + lckBox + statusSourcesHtml(k, srv);
 }
@@ -14643,8 +14684,8 @@ function mountStatusGlossary(root){
   const panelEl = $('[data-stg="panel"]'), shellEl = $(".stg");
   const phone = () => typeof matchMedia === "function" && matchMedia("(max-width:760px)").matches;
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} };
-  const visible = (k) => statusTypeOf(k, state.type) && statusMatches(k, state.server, query);
-  const renderRail = () => { $('[data-stg="rail"]').innerHTML = statusRailHtml(state, statusRailCounts(state.server, query)); };
+  const visible = (k) => statusFilterMatch(k, state.server, state.filters) && statusMatches(k, state.server, query);
+  const renderRail = () => { $('[data-stg="rail"]').innerHTML = statusRailHtml(state, statusRailCounts(state.server, query, state.filters)); };
   const renderPanel = () => { panelEl.innerHTML = statusPanelHtml(state.key, state.server, state.lv, lck); };
   const applyFilter = () => {
     let shown = 0;
@@ -14680,10 +14721,10 @@ function mountStatusGlossary(root){
   }
   function openByKey(key, srv){
     if (!statusGameKey(key)) return false;
-    const st = statusGlossaryState({ server: srv || state.server, type: state.type, key });
+    const st = statusGlossaryState({ server: srv || state.server, filters: state.filters, key });
     const rebuild = st.server !== state.server;
     Object.assign(state, st);
-    if (!visible(state.key)) { state.type = "all"; query = ""; const s = $('[data-stg="search"]'); if (s) s.value = ""; }
+    if (!visible(state.key)) { state.filters = []; query = ""; const s = $('[data-stg="search"]'); if (s) s.value = ""; }
     if (rebuild) { useServer(); buildGrid(); } else { markTile(); applyFilter(); }
     renderRail(); renderPanel(); save();
     return true;
@@ -14695,7 +14736,11 @@ function mountStatusGlossary(root){
     if (!t) return;
     if (t.hasAttribute("data-stg-key")) select(t.getAttribute("data-stg-key"));
     else if (t.hasAttribute("data-stg-srv")) setServer(t.getAttribute("data-stg-srv"));
-    else if (t.hasAttribute("data-stg-type")) { const ty = t.getAttribute("data-stg-type"); state.type = state.type === ty ? "all" : ty; renderRail(); applyFilter(); save(); }
+    else if (t.hasAttribute("data-stg-type")) {   // filters toggle; ทั้งหมด clears them
+      const f = t.getAttribute("data-stg-type");
+      state.filters = f === "all" ? [] : state.filters.includes(f) ? state.filters.filter(x => x !== f) : state.filters.concat(f);
+      renderRail(); applyFilter(); save();
+    }
     else if (t.hasAttribute("data-stg-lv")) { state.lv = parseInt(t.getAttribute("data-stg-lv"), 10) || 1; renderPanel(); save(); }
   };
   root.addEventListener("click", (e) => { if (!inPanel(e.target)) onClick(e); });
@@ -34178,7 +34223,7 @@ function ringIconShift(img){   // the art centre's offset from the image centre,
   ringShiftCache.set(key, out); return out;
 }
 const centreRingImg = img => { const sh = ringIconShift(img); img.style.setProperty("--ring-x", (-sh.x * 100).toFixed(2) + "%"); img.style.setProperty("--ring-y", (-sh.y * 100).toFixed(2) + "%"); };
-document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .sk-desc-mod-ico > img, .chm-ring > img, .sk-ra-icon, .sk-side .sk-dep-btncol > button > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
+document.addEventListener("load", e => { const t = e.target; if (t && t.matches && t.matches(".cg-cover-ring > img, .cg-note-chip-icon, .sk-compat-ring > img, .sk-desc-mod-ico > img, .chm-ring > img, .sk-ra-icon, .sk-side .sk-dep-btncol > button > img, .stg-ring-in > img")) centreRingImg(t); }, true);   // every ring picture, whenever it appears
 function classGuideCoverIcons(g){
   if (!g || !g.cover || !g.cover.length) return [];
   const b = g.build, cells = Object.assign({}, skillSimCellsFor(b.server, b.classKey), classGuideSupportCells());
@@ -40572,6 +40617,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T13:30:30.734Z","feat(bible): สารานุกรมสถานะ เลือกตัวกรองได้หลายอย่างพร้อมกัน เพิ่มตัวกรองเฉพาะเซิร์ฟเวอร์ ไอคอนเต็มวงกลม และซ่อนสถานะ TTO ที่ยังเจอในเกมไม่ได้"],
     ["2026-11-16T13:16:37.138Z","feat(bible): เครื่องมือใหม่ สารานุกรมสถานะ รวมสถานะทุกเซิร์ฟเวอร์ 263 ชนิด พร้อมประเภท ผลแต่ละเลเวล สูตร และแหล่งที่มา"],
     ["2026-11-16T12:55:19.993Z","feat(bible): เพิ่มสถานะที่ยังไม่มีในคัมภีร์ 46 ชนิด (BB 23, TTO 18, Reborn 3, astralShift, overLord) พร้อมประเภทและคำอธิบายผล"],
     ["2026-11-16T12:47:51.803Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 2 แหล่งที่มาของสถานะจากสกิล อุปกรณ์ ไอเทม และสัตว์เลี้ยง"],

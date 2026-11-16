@@ -7360,14 +7360,15 @@ if (RUN_DAMAGE_CHECKS) {
     miss1.forEach(n => sg(`missing ${n}`));
     if (!miss1.length) {
       const K = run("statusKeysFor"), G = run("STATUS_GAME_KEYS"), name = run("statusDisplayName"), tags = run("statusTags"), srvOf = run("statusServersOf");
-      for (const [srv, n] of Object.entries({ og: 207, tot: 207, tto: 255, reborn: 215 })) {
+      for (const [srv, n] of Object.entries({ og: 207, tot: 207, tto: 250, reborn: 215 })) {
         const ks = K(srv);
         if (ks.length !== n) sg(`${srv}: ${ks.length} statuses, expected ${n}`);
         if (new Set(ks.map(k => k.toLowerCase())).size !== ks.length) sg(`${srv}: a key appears twice (case-insensitive)`);
         const names = ks.map(name);
         if (names.some((x, i) => i && names[i - 1].localeCompare(x, "en") > 0)) sg(`${srv}: not sorted A-Z by display name`);
       }
-      if (run("statusAllKeys()").length !== 263) sg(`statusAllKeys() has ${run("statusAllKeys()").length}, expected 263`);
+      if (run("statusAllKeys()").length !== 258) sg(`statusAllKeys() has ${run("statusAllKeys()").length}, expected 258`);
+      for (const h of ["crimsonBrand", "dealersMark", "spireLink", "gmDropBoost", "gmExpBoost"]) if (K("tto").includes(h) || run("statusGameKey")(h)) sg(`${h} is not encounterable on TTO yet and must be hidden (STATUS_HIDDEN)`);
       if (!run("statusKeysFor(\"tto\")").includes("overLord") || !run("statusKeysFor(\"og\")").includes("astralShift")) sg("astralShift and overLord (applied but missing from getStatusCode) must be on every server");
       for (const [k, want] of [["snowMan", "Snowman"], ["artCancel", "Art Cancel"], ["hpRegen", "HP Regen"], ["guardianOfTheNight", "Guardian of the Night"], ["magDown", "INT Down"], ["noKo", "No KO"], ["atkUp", "ATK Up"], ["dealersMark", "Dealer's Mark"]])
         if (name(k) !== want) sg(`statusDisplayName(${k}) = ${JSON.stringify(name(k))}, expected ${want}`);
@@ -7433,7 +7434,7 @@ if (RUN_DAMAGE_CHECKS) {
       }
       if (src("cookFeast") !== I.happy) sg("cookFeast must show the happy icon (Reborn1027:StatusData.cs:10-17)");
       if (src("weak") !== I.amplifydamage || src("abyssDoom") !== I.doom) sg("weak / abyssDoom must show the icons TTO's getIcon remaps them to (amplifyDamage / doom)");
-      if (src("spireLink") !== I._unknown) sg("spireLink (no TTO icon, no remap) must show the unknown icon");
+      for (const h of ["crimsonbrand", "dealersmark"]) if (I[h]) sg(`STATUS_ICONS.${h}: a hidden status keeps no icon`);
       if (src("nosuchstatus") !== I._unknown) sg("an unknown key must show the unknown icon");
       console.log(`Verified ${Object.keys(I).length} status icons (${NONE.length} statuses use the game's fallback).`);
     }
@@ -7514,7 +7515,7 @@ if (RUN_DAMAGE_CHECKS) {
       if (!tool) sg("no TOOLS entry status-glossary");
       else {
         if (tool.title !== "สารานุกรมสถานะ" || tool.shortTitle !== "สถานะ" || tool.category !== "Reference") sg(`TOOLS entry: title ${tool.title} / ${tool.shortTitle} / ${tool.category}`);
-        if (!tool.fact || tool.fact()[0] !== 263) sg("TOOLS fact must count all 263 statuses");
+        if (!tool.fact || tool.fact()[0] !== 258) sg("TOOLS fact must count all 258 statuses");
         if (!(tool.art || []).every(a => /^status:/.test(a) && run("statusIconSrc")(a.slice(7)))) sg("TOOLS art must be status:<key> icons");
       }
       for (const sel of [".stg-panel", ".stg-tile:not(.is-on)", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
@@ -7525,17 +7526,28 @@ if (RUN_DAMAGE_CHECKS) {
         for (const [tags, want] of [[["Debuff", "Magical", "Lock"], "lock/debuff"], [["Buff", "Magical", "Shield"], "shield/buff"], [["Buff", "Debuff", "Magical"], "mag/both"], [["Debuff", "Physical", "Crowd Control"], "cc/debuff"], [["System"], "sys/none"], [[], "none/none"]])
           { const r = ring(tags); if (r.outer + "/" + r.inner !== want) sg(`statusRingColors(${tags}) = ${r.outer}/${r.inner}, expected ${want}`); }
         const st1 = state({ server: "xx", type: "nope", key: "nope", lv: -3 });
-        if (st1.server !== "og" || st1.type !== "all" || !K("og").includes(st1.key) || !(st1.lv >= 1)) sg(`statusGlossaryState garbage -> ${JSON.stringify(st1)}`);
+        if (st1.server !== "og" || !Array.isArray(st1.filters) || st1.filters.length || !K("og").includes(st1.key) || !(st1.lv >= 1)) sg(`statusGlossaryState garbage -> ${JSON.stringify(st1)}`);
         const st2 = state({ server: "og", key: "gilded" });
         if (st2.server !== "tto" || st2.key !== "gilded") sg(`a TTO-only status linked on BB should open on TTO, got ${JSON.stringify(st2)}`);
         const st3 = state({ server: "og", key: "ice", lv: 99 });
         if (st3.lv > Math.max(1, maxLv("ice", "og"), 5)) sg(`statusGlossaryState clamps the level, got ${st3.lv}`);
-        const c = counts("og", "");
+        if (JSON.stringify(state({ type: "Buff" }).filters) !== '["Buff"]') sg("a stored single type (first version) must become filters [type]");
+        if (JSON.stringify(state({ filters: ["Buff", "nope", "Buff", "Exclusive"] }).filters) !== '["Buff","Exclusive"]') sg("statusGlossaryState must keep known, unique filters");
+        const fm = run("statusFilterMatch"), excl = run("statusIsExclusive");
+        const both = K("og").filter(k => fm(k, "og", ["Debuff", "Magical"])), either = K("og").filter(k => fm(k, "og", ["Physical", "Magical"]));
+        if (!both.length || both.some(k => !(tags(k).includes("Debuff") && tags(k).includes("Magical")))) sg("Debuff + Magical must show statuses that are both (AND across groups)");
+        if (either.length !== K("og").filter(k => tags(k).includes("Physical") || tags(k).includes("Magical")).length) sg("Physical + Magical must show either (OR inside a group)");
+        if (!excl("gilded", "tto") || !excl("hardenSkin", "tto") || excl("ice", "tto") || excl("hardenSkin", "og")) sg("statusIsExclusive: TTO-only keys and TTO-changed texts on TTO only");
+        if (counts("og", "", []).Exclusive !== 0) sg("BB has no server-exclusive status");
+        const ct = counts("tto", "", ["Debuff"]);
+        if (ct.Debuff !== K("tto").filter(k => tags(k).includes("Debuff")).length) sg("a picked row keeps the count it had (its own group is not filtered)");
+        if (ct.Magical !== K("tto").filter(k => tags(k).includes("Debuff") && tags(k).includes("Magical")).length) sg("other groups count inside the picked Debuff");
+        const c = counts("og", "", []);
         if (c.all !== 207) sg(`statusRailCounts(og).all = ${c.all}`);
         if (c.Buff !== K("og").filter(k => tags(k).includes("Buff")).length) sg("statusRailCounts Buff count");
         if (c.Unclassified !== K("og").filter(k => !tags(k).length).length) sg("statusRailCounts Unclassified count");
-        if (counts("og", "zzzz-nothing").all !== 0) sg("a search with no match must count 0");
-        if (!(counts("og", "ice").all >= 1)) sg("search 'ice' must find Ice");
+        if (counts("og", "zzzz-nothing", []).all !== 0) sg("a search with no match must count 0");
+        if (!(counts("og", "ice", []).all >= 1)) sg("search 'ice' must find Ice");
         const t1 = tile("ice", true);
         if (!t1.includes(run("statusIconSrc")("ice")) || !t1.includes("Ice") || !/is-on/.test(t1)) sg("statusTileHtml(ice) misses its icon, name or on state");
         let checked = 0;
@@ -7568,7 +7580,7 @@ if (RUN_DAMAGE_CHECKS) {
         sandbox.localStorage = keepLS;
         console.log(`Verified the status glossary page: ${checked} panels (every status, server and level), the mount and its state cleaning.`);
       }
-      console.log(`Verified status sources:${rows.filter(r => r.kind === "apply").length} skill source rows, ${Object.keys(FIX).length} hand rulings, ${run("STATUS_SOURCES_ITEM").length} item rows, ${run("STATUS_SOURCES_PET").length} pet rows.`);
+      console.log(`Verified status sources: ${rows.filter(r => r.kind === "apply").length} skill source rows, ${Object.keys(FIX).length} hand rulings, ${run("STATUS_SOURCES_ITEM").length} item rows, ${run("STATUS_SOURCES_PET").length} pet rows.`);
     }
   } catch (e) { sg("threw: " + (e && e.stack || e)); }
 }
