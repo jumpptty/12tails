@@ -7668,14 +7668,25 @@ if (RUN_DAMAGE_CHECKS) {
         if (JSON.stringify(state({ type: "Buff" }).filters) !== '["Buff"]') sg("a stored single type (first version) must become filters [type]");
         if (JSON.stringify(state({ filters: ["Buff", "nope", "Buff", "Exclusive"] }).filters) !== '["Buff","Exclusive"]') sg("statusGlossaryState must keep known, unique filters");
         const fm = run("statusFilterMatch"), excl = run("statusIsExclusive");
-        const both = K("og").filter(k => fm(k, "og", ["Debuff", "Magical"])), either = K("og").filter(k => fm(k, "og", ["Physical", "Magical"]));
-        if (!both.length || both.some(k => !(tags(k).includes("Debuff") && tags(k).includes("Magical")))) sg("Debuff + Magical must show statuses that are both (AND across groups)");
-        if (either.length !== K("og").filter(k => tags(k).includes("Physical") || tags(k).includes("Magical")).length) sg("Physical + Magical must show either (OR inside a group)");
+        // every picked filter must hold, inside a group too (user 2026-11-16: "the all filters combination are AND not OR")
+        const both = K("og").filter(k => fm(k, "og", ["Debuff", "Magical"])), pm = K("og").filter(k => fm(k, "og", ["Physical", "Magical"]));
+        if (!both.length || both.some(k => !(tags(k).includes("Debuff") && tags(k).includes("Magical")))) sg("Debuff + Magical must show statuses that are both (AND)");
+        if (pm.length !== K("og").filter(k => tags(k).includes("Physical") && tags(k).includes("Magical")).length) sg("Physical + Magical must show only statuses that are both (AND inside a group too)");
+        if (K("tto").filter(k => fm(k, "tto", ["Buff", "Debuff"])).some(k => !(tags(k).includes("Buff") && tags(k).includes("Debuff")))) sg("Buff + Debuff must show only statuses that are both");
         if (!excl("gilded", "tto") || !excl("hardenSkin", "tto") || excl("ice", "tto") || excl("hardenSkin", "og")) sg("statusIsExclusive: TTO-only keys and TTO-changed texts on TTO only");
         if (counts("og", "", []).Exclusive !== 0) sg("BB has no server-exclusive status");
-        const ct = counts("tto", "", ["Debuff"]);
-        if (ct.Debuff !== K("tto").filter(k => tags(k).includes("Debuff")).length) sg("a picked row keeps the count it had (its own group is not filtered)");
-        if (ct.Magical !== K("tto").filter(k => tags(k).includes("Debuff") && tags(k).includes("Magical")).length) sg("other groups count inside the picked Debuff");
+        // a row's count = the results if that row were added to the picks (a picked row = the current results)
+        const ct = counts("tto", "", ["Debuff"]), dTto = K("tto").filter(k => tags(k).includes("Debuff"));
+        if (ct.Debuff !== dTto.length) sg("a picked row counts the current results");
+        if (ct.Magical !== dTto.filter(k => tags(k).includes("Magical")).length) sg("Magical counts inside the picked Debuff");
+        if (ct.Buff !== dTto.filter(k => tags(k).includes("Buff")).length) sg("Buff counts inside the picked Debuff (AND, same group)");
+        if (counts("og", "", ["Physical"]).Magical !== K("og").filter(k => tags(k).includes("Physical") && tags(k).includes("Magical")).length) sg("Magical counts inside the picked Physical (AND, same group)");
+        // the server picker = the four logos only (user 2026-11-16): no box, no name text; the name is the button's aria-label
+        { const rh = run("statusRailHtml")(state({ server: "tto" }), counts("tto", "", []));
+          const btns = rh.match(/<button[^>]*data-stg-srv="[^"]+"[^>]*>[\s\S]*?<\/button>/g) || [];
+          if (btns.length !== 4 || btns.some(b => b.replace(/<[^>]*>/g, "").trim() || !/aria-label="(BB|ToT|TTO|Reborn)"/.test(b) || !/<img /.test(b))) sg("server buttons must be the logo only, named by aria-label");
+          if (/"\.stg-srvbtn/.test(html)) sg("THEME_SURFACES must not paint the server logos (they have no box)");
+          if (!/\.stg-srvbtn\{[^}]*background:\s*none/.test(html) || /\.stg-srvbtn\.is-on\{[^}]*background/.test(html)) sg("the server logos have no background, picked or not"); }
         const c = counts("og", "", []);
         if (c.all !== 207) sg(`statusRailCounts(og).all = ${c.all}`);
         if (c.Buff !== K("og").filter(k => tags(k).includes("Buff")).length) sg("statusRailCounts Buff count");
