@@ -7432,7 +7432,8 @@ if (RUN_DAMAGE_CHECKS) {
         if (!src(k)) sg(`statusIconSrc(${k}) is empty`);
       }
       if (src("cookFeast") !== I.happy) sg("cookFeast must show the happy icon (Reborn1027:StatusData.cs:10-17)");
-      if (src("weak") !== I._unknown) sg("weak (no TTO icon) must show the unknown icon");
+      if (src("weak") !== I.amplifydamage || src("abyssDoom") !== I.doom) sg("weak / abyssDoom must show the icons TTO's getIcon remaps them to (amplifyDamage / doom)");
+      if (src("spireLink") !== I._unknown) sg("spireLink (no TTO icon, no remap) must show the unknown icon");
       if (src("nosuchstatus") !== I._unknown) sg("an unknown key must show the unknown icon");
       console.log(`Verified ${Object.keys(I).length} status icons (${NONE.length} statuses use the game's fallback).`);
     }
@@ -7504,7 +7505,70 @@ if (RUN_DAMAGE_CHECKS) {
         if (!statusOk(r.key)) sg(`pet source: ${r.key} is not a status`);
       }
       function statusOk(k){ return !!run("statusGameKey")(k); }
-      console.log(`Verified status sources: ${rows.filter(r => r.kind === "apply").length} skill source rows, ${Object.keys(FIX).length} hand rulings, ${run("STATUS_SOURCES_ITEM").length} item rows, ${run("STATUS_SOURCES_PET").length} pet rows.`);
+      // ---- Task 5: the page
+      const K = run("statusKeysFor"), name = run("statusDisplayName"), tags = run("statusTags");
+      const need5 = ["statusGlossaryState", "statusRingColors", "statusTileHtml", "statusPanelHtml", "statusRailCounts", "mountStatusGlossary"];
+      const miss5 = need5.filter(n => !has(n));
+      miss5.forEach(n => sg(`missing ${n}`));
+      const tool = run("TOOLS").find(t => t.id === "status-glossary");
+      if (!tool) sg("no TOOLS entry status-glossary");
+      else {
+        if (tool.title !== "สารานุกรมสถานะ" || tool.shortTitle !== "สถานะ" || tool.category !== "Reference") sg(`TOOLS entry: title ${tool.title} / ${tool.shortTitle} / ${tool.category}`);
+        if (!tool.fact || tool.fact()[0] !== 263) sg("TOOLS fact must count all 263 statuses");
+        if (!(tool.art || []).every(a => /^status:/.test(a) && run("statusIconSrc")(a.slice(7)))) sg("TOOLS art must be status:<key> icons");
+      }
+      for (const sel of [".stg-panel", ".stg-tile:not(.is-on)", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
+      if (!/html\.tool-status/.test(html) || !/tool-status", tool\.id === "status-glossary"/.test(html)) sg("showTool must toggle html.tool-status");
+      if (!/tool\.id === "status-glossary"[^\n]*_statusGlossary/.test(html)) sg("route() must open #status-glossary/<key>");
+      if (!miss5.length) {
+        const ring = run("statusRingColors"), state = run("statusGlossaryState"), panel = run("statusPanelHtml"), tile = run("statusTileHtml"), counts = run("statusRailCounts");
+        for (const [tags, want] of [[["Debuff", "Magical", "Lock"], "lock/debuff"], [["Buff", "Magical", "Shield"], "shield/buff"], [["Buff", "Debuff", "Magical"], "mag/both"], [["Debuff", "Physical", "Crowd Control"], "cc/debuff"], [["System"], "sys/none"], [[], "none/none"]])
+          { const r = ring(tags); if (r.outer + "/" + r.inner !== want) sg(`statusRingColors(${tags}) = ${r.outer}/${r.inner}, expected ${want}`); }
+        const st1 = state({ server: "xx", type: "nope", key: "nope", lv: -3 });
+        if (st1.server !== "og" || st1.type !== "all" || !K("og").includes(st1.key) || !(st1.lv >= 1)) sg(`statusGlossaryState garbage -> ${JSON.stringify(st1)}`);
+        const st2 = state({ server: "og", key: "gilded" });
+        if (st2.server !== "tto" || st2.key !== "gilded") sg(`a TTO-only status linked on BB should open on TTO, got ${JSON.stringify(st2)}`);
+        const st3 = state({ server: "og", key: "ice", lv: 99 });
+        if (st3.lv > Math.max(1, maxLv("ice", "og"), 5)) sg(`statusGlossaryState clamps the level, got ${st3.lv}`);
+        const c = counts("og", "");
+        if (c.all !== 207) sg(`statusRailCounts(og).all = ${c.all}`);
+        if (c.Buff !== K("og").filter(k => tags(k).includes("Buff")).length) sg("statusRailCounts Buff count");
+        if (c.Unclassified !== K("og").filter(k => !tags(k).length).length) sg("statusRailCounts Unclassified count");
+        if (counts("og", "zzzz-nothing").all !== 0) sg("a search with no match must count 0");
+        if (!(counts("og", "ice").all >= 1)) sg("search 'ice' must find Ice");
+        const t1 = tile("ice", true);
+        if (!t1.includes(run("statusIconSrc")("ice")) || !t1.includes("Ice") || !/is-on/.test(t1)) sg("statusTileHtml(ice) misses its icon, name or on state");
+        let checked = 0;
+        const mapped = (n) => !!(run("STATUS_CLASS_MAP")[n.toLowerCase()] || run("STATUS_CLASS_MAP")[n]);
+        for (const srv of ["og", "tot", "tto", "reborn"]) for (const k of K(srv)) for (const lv of [null, ...Array.from({ length: Math.max(1, maxLv(k, srv)) }, (_, i) => i + 1)]) {
+          let h; try { h = panel(k, srv, lv, 156); } catch (e) { sg(`statusPanelHtml(${k}, ${srv}, ${lv}) throws: ${e.message}`); continue; }
+          checked++;
+          const bad = [];
+          if (/\*\*|\^\^|NaN|undefined/.test(h.replace(/<[^>]*>/g, ""))) bad.push("raw markup / NaN / undefined");
+          if (/(^|[^_])__[^_]/.test(h.replace(/<[^>]*>/g, ""))) bad.push("raw __");
+          for (const m of h.matchAll(/\[([a-zA-Z]+)\d*\]/g)) if (mapped(m[1]) && !/<span class="sk-status"[^>]*>$/.test(h.slice(Math.max(0, m.index - 300), m.index))) { bad.push(`raw [${m[1]}]`); break; }
+          if (bad.length) { sg(`statusPanelHtml(${k}, ${srv}, ${lv}): ${bad.join(", ")}`); }
+        }
+        // mount on stubs: the grid lists the server's statuses, the panel shows the picked one; blocked storage still mounts
+        const root = run("(() => { const r = makeSmartRoot(); mountStatusGlossary(r); return r; })()");
+        const api = root._statusGlossary;
+        if (!api) sg("mountStatusGlossary must expose root._statusGlossary");
+        else {
+          const grid = root.querySelector('[data-stg="grid"]').innerHTML, pan = root.querySelector('[data-stg="panel"]').innerHTML;
+          const n = (grid.match(/class="stg-tile(?: is-on)?"/g) || []).length;
+          if (n !== K(api.state.server).length) sg(`mounted grid has ${n} tiles, expected ${K(api.state.server).length}`);
+          if (!pan.includes(name(api.state.key))) sg("mounted panel does not show the picked status");
+          api.openByKey("gilded", "og");
+          if (api.state.server !== "tto" || api.state.key !== "gilded") sg("openByKey(gilded, og) should switch to TTO");
+          if (!root.querySelector('[data-stg="panel"]').innerHTML.includes("Gilded")) sg("panel did not follow openByKey");
+        }
+        const keepLS = sandbox.localStorage;
+        sandbox.localStorage = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+        try { run("(() => { const r = makeSmartRoot(); mountStatusGlossary(r); return r; })()"); } catch (e) { sg("mount with blocked storage throws: " + e.message); }
+        sandbox.localStorage = keepLS;
+        console.log(`Verified the status glossary page: ${checked} panels (every status, server and level), the mount and its state cleaning.`);
+      }
+      console.log(`Verified status sources:${rows.filter(r => r.kind === "apply").length} skill source rows, ${Object.keys(FIX).length} hand rulings, ${run("STATUS_SOURCES_ITEM").length} item rows, ${run("STATUS_SOURCES_PET").length} pet rows.`);
     }
   } catch (e) { sg("threw: " + (e && e.stack || e)); }
 }
