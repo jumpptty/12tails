@@ -7364,6 +7364,9 @@ if (RUN_DAMAGE_CHECKS) {
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   // desc-decided skill sources ("<card>:<status>@<server>") a person has read and confirmed (final review 2026-11-16, finding 2)
   const STATUS_REVIEWED_APPLY = [
+    // read 2026-11-16 when the scan began turning every linked skill to its top rank (lines a learned skill reveals)
+    "cat_insight:insight@reborn", "cat_twoPair:pillage@reborn", "mole_barrelBot:nodamage@reborn", "sheep_feather:wing@og", "sheep_feather:wing@tto",
+    "sheep_allFeather:wing@og", "sheep_allFeather:wing@tto", "sheep_allFeather:wing@reborn",
     "bat_chiroptophobia:chiroptophobia@og", "bat_chiroptophobia:chiroptophobia@reborn", "bat_chiroptophobia:chiroptophobia@tto", "bat_darkIntention:spdrain@og",
     "bat_darkIntention:spdrain@tto", "bat_eternalNight:amplifydamage@reborn", "bat_eternalNight:blind@reborn", "bat_mercilessDrain:spdrain@og",
     "bat_mercilessDrain:spdrain@tto", "bison_addedSwing:holdcharge@tot", "bison_aftershock:aftershock@og", "bison_aftershock:aftershock@tto",
@@ -7665,6 +7668,22 @@ if (RUN_DAMAGE_CHECKS) {
           if (unk && h.includes(unk)) sg(`LN_ART.statusRain(${m}) shows the "?" icon`);
           if (new Set(srcs).size !== srcs.length) sg(`LN_ART.statusRain(${m}) writes an icon's data more than once`); }
       }
+      // top levels (user 2026-11-16: "Bless ... up to level 6 with the help of skill C dep Gospel and another sheep casting on the same target"):
+      // every linked skill at its top rank, then +1 from a second caster at the same level (12Tails-Mechanics-Reference.md §4.2.1) when a skill
+      // puts the status on another unit; never for hp / mp / sp drain, never on Reborn (Reborn-Mechanics-Reference.md §2.7)
+      if (has("statusTopLevel")) {
+        const top = run("statusTopLevel"), pm = run("statusPillMax");
+        // the skill page's Buff popup (STAT_BUFFS / ENEMY_STAT_DEBUFFS, researched levels with a second caster)
+        for (const [k, srv, want] of [["bless", "og", 6], ["heat", "og", 5], ["honor", "og", 5], ["honor", "tto", 6], ["fortune", "og", 6], ["jaSoul", "og", 5], ["shame", "og", 7], ["petrify", "og", 3]])
+          if (top(k, srv) !== want || pm(k, srv) !== want) sg(`top level ${k}@${srv}: ${top(k, srv)} (pills ${pm(k, srv)}), the Buff popup says ${want}`);
+        if (maxLv("bless", "og") !== 5) sg(`bless@og: one Sheep with Gospel gives level ${maxLv("bless", "og")}, expected 5`);
+        if (top("bless", "reborn") !== maxLv("bless", "reborn")) sg("Reborn has no second-caster level (§2.7)");
+        for (const k of ["hpDrain", "mpDrain", "spDrain"]) if (maxLv(k, "og") && top(k, "og") !== maxLv(k, "og")) sg(`${k}: drains never stack a level`);
+        const panel = run("statusPanelHtml");
+        if (!/class="stg-pill[^"]*is-stack[^"]*"/.test(panel("bless", "og", 6, 156))) sg("the stacked level's pill must be marked is-stack");
+        if (!/<div class="stg-hint">เลเวล 6 ต้องมีผู้ร่ายอีกคน/.test(panel("bless", "og", 6, 156))) sg("the stacked level must say it needs a second caster");
+        if (/<div class="stg-hint">เลเวล \d+ ต้องมีผู้ร่ายอีกคน/.test(panel("bless", "og", 5, 156))) sg("a level one caster reaches must not carry the second-caster hint");
+      } else sg("missing statusTopLevel");
       // the rain is diagonal and fast, a blur of icons on purpose (user 2026-11-16: "diagonal and much faster", not meant to be readable)
       { const outs = [has("LN_ART") ? run("LN_ART").statusRain("stage") : "", has("newsPopupHtml") ? run("newsPopupHtml")() : ""];
         for (const h of outs) { const durs = [...h.matchAll(/animation-duration:([\d.]+)s/g)].map(m => +m[1]);

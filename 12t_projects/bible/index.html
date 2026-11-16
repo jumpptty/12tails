@@ -8506,6 +8506,7 @@
   .stg-face{width:16px; height:16px; border-radius:50%}
   .stg-src-lv{font-family:'JetBrains Mono','Prompt',monospace; color:var(--gold); font-size:12px; white-space:nowrap}
   .stg-empty{font-size:12.5px; color:var(--muted); line-height:1.6}
+  .stg-pill.is-stack{border-style:dashed}   /* a level only a second caster reaches (statusTopLevel) */
   .stg-close{display:none}
   @media (min-width:761px){
     html.tool-status .stage{padding-bottom:0}
@@ -14413,6 +14414,7 @@ const STATUS_SOURCE_FIX = {
   "chameleon_immunity:staticDrain@tto": "mention", "chameleon_clearArrow:invisible": "mention", "mole_autoGyroGun:noDamage@reborn": "mention",
   "penguin_manaSurge:dispell": "mention", "penguin_emperorsMarch:frostField@tto": "mention", "sheep_lucentBarrier:reverse@tto": "mention",
   "sheep_grandCodex:worldEncarta@tto": "mention",   // "ทุกดอกเพิ่ม [poison] +1" adds stacks; "DEF +2.5% ต่อสแตค [hardenSkin]" reads it
+  "bat_shadowMastery:doom@reborn": "mention",   // Reborn Doomsayer raises the doom already on a target (2026-11-16)
   "bat_shame:dissolute": "mention", "bat_mindControl:nightmare": "mention", "bat_charm:mindControl": "mention", "bison_solidHold:holdCharge": "mention",
   "cat_twoPair:noDamage": "mention", "cat_twoPair:noForce": "mention", "panda_deathBlow:paralysis": "mention",
   "whale_hydroBlast:heavy": "mention",
@@ -14428,16 +14430,27 @@ const STATUS_SOURCE_FIX = {
   "wolf_holySword:holyWolf": "apply-checked", "wolf_holyArmor:holyWolf": "apply-checked"   // holy sword + holy armor merge, CharacterControl.cs:11001-11016
 };
 let _statusSkillRows = null;
+// Does this line put its status on another unit? The desc house style names who every effect reaches (ตัวเอง / เพื่อนร่วมทีม / ศัตรู / เป้าหมาย,
+// bible-desc-writing), so allies, enemies, a target, a team or an area around someone mean a second caster can add to it; ตัวเอง alone cannot.
+const STATUS_REACH_WORDS = ["เพื่อน", "ศัตรู", "เป้าหมาย", "ทีม", "ผู้เล่นอื่น", "รอบตัว", "ทุกคน"];
+// the skill page passes this dep's rank to a card's desc and status level (heroDep in the skill details renderer)
+const statusHeroDep = (c) => c.descDep || c.dep || c.dmgRankDep || c.dmgDep || c.cdDep || null;
+// a line about a second caster's extra level (Heat Shot: "กระต่าย คนละตัว … เกินเลเวลสูงสุดเป็น [heat5]"): statusTopLevel adds that level itself
+const STATUS_STACK_WORDS = ["คนละตัว", "คนละคน", "เกินเลเวลสูงสุด"];
+function statusStackLine(line){ const s = String(line || "").replace(/<[^>]*>|\*\*|__/g, ""); return STATUS_STACK_WORDS.some(w => s.includes(w)); }
+function statusReachesOthers(line){ const s = String(line || "").replace(/<[^>]*>/g, ""); return STATUS_REACH_WORDS.some(w => s.includes(w)); }
+function statusCardReachesOthers(card){ let d = ""; try { d = String(typeof card.desc === "function" ? card.desc(card.maxRank || 1, (statusHeroDep(card) || {}).maxRank || 0) : (card.desc || "")); } catch (e) { d = ""; } return statusReachesOthers(d.split(/<br\s*\/?>|\n/)[0]); }
 function statusSkillRows(){
   if (_statusSkillRows) return _statusSkillRows;
   const pairs = new Map(), TOK = /\[([a-zA-Z]+)(\d*)\]/g;
   const isStatus = (n) => !!(STATUS_CLASS_MAP[n.toLowerCase()] || STATUS_CLASS_MAP[n]);
-  const note = (card, srv, key, kind, lv, ctx) => {
+  const note = (card, srv, key, kind, lv, ctx, ext) => {
     const id = card.id + "|" + srv + "|" + key;
     let p = pairs.get(id);
     if (!p) pairs.set(id, p = { card: card.id, srv, key, kinds: new Set(), lvs: [], ctx: "", uctx: "", actx: "" });
     p.kinds.add(kind);
     if (kind === "apply" && lv > 0) p.lvs.push(lv);
+    if (kind === "apply" && ext) p.ext = true;
     if (kind === "unsure" && !p.uctx) p.uctx = ctx;
     if (kind === "apply" && !p.actx && ctx !== "status:{}") p.actx = ctx;
     if (ctx === "status:{}") p.field = true;
@@ -14446,13 +14459,19 @@ function statusSkillRows(){
   for (const s of SKILLS) {
     const views = s.onlyServer ? [[s.onlyServer, s]] : [["og", s], ...["tot", "tto", "reborn"].map(srv => [srv, bbServerView(s, srv)]).filter(x => x[1])];
     for (const [srv, v] of views) {
-      const deps = [...new Set([0, (v.dep && v.dep.maxRank) || 0])];
-      for (let r = 1; r <= (v.maxRank || 1); r++) for (const d of deps) {
+      const hd = statusHeroDep(v), deps = [...new Set([0, (hd && hd.maxRank) || 0])];   // the linked skill the skill page passes as depRank
+      // pass 2 turns every linked skill to its top rank (getDepRank through reachDepOverride), so a level only a second skill gives is counted
+      // too (user 2026-11-16: Bless reaches level 5 with Gospel)
+      for (const allTop of [false, true]) for (let r = 1; r <= (v.maxRank || 1); r++) for (const d of deps) {
+        const prevOver = reachDepOverride;
+        if (allTop) reachDepOverride = (dep) => (dep && dep.maxRank != null ? dep.maxRank : undefined);
+        try {
+        let text = ""; try { text = String(typeof v.desc === "function" ? v.desc(r, d) : (v.desc || "")); } catch (e) { text = ""; }
+        const leadExt = statusReachesOthers(text.split(/<br\s*\/?>|\n/)[0] || "");
         if (v.status && v.status.name) {
           let lv = v.status.sLv; try { lv = typeof lv === "function" ? lv(r, d) : lv; } catch (e) { lv = 0; }
-          note(v, srv, String(v.status.name).toLowerCase(), "apply", +lv || 0, "status:{}");
+          note(v, srv, String(v.status.name).toLowerCase(), "apply", +lv || 0, "status:{}", leadExt);
         }
-        let text = ""; try { text = String(typeof v.desc === "function" ? v.desc(r, d) : (v.desc || "")); } catch (e) { text = ""; }
         for (const line of text.split(/<br\s*\/?>|\n/)) {
           let prevEnd = -1, prevKind = null;
           // a "**Name:** …" modifier line says what that other skill adds: a status it applies is credited to that skill's card
@@ -14461,15 +14480,17 @@ function statusSkillRows(){
           // only a passive is the enabler a modifier line credits (Frost Bite on the normal attack); an active named there is a condition
           // (Shame on Blind), so the host card keeps the apply at its boosted level (final review 2026-11-16)
           const credit = modCard && modCard.passive && modCard.id !== v.id && modCard.class === v.class ? modCard : v;
+          const stackLine = statusStackLine(line);
           for (const m of line.matchAll(TOK)) {
             if (!isStatus(m[1])) { prevEnd = -1; continue; }
             const gap = prevEnd >= 0 ? line.slice(prevEnd, m.index).replace(/<[^>]*>|\*\*|__/g, "") : null;
             const kind = gap !== null && /^[\s,、/]*(และ|หรือ)?[\s,]*$/.test(gap) ? prevKind : statusMentionKind(line.slice(0, m.index), line.slice(m.index + m[0].length, m.index + m[0].length + 20));
             const ctx = line.slice(Math.max(0, m.index - 50), m.index + m[0].length + 15).replace(/<[^>]*>/g, "");
-            note(kind === "apply" ? credit : v, srv, m[1].toLowerCase(), kind, m[2] ? +m[2] : 0, ctx);
+            note(kind === "apply" ? credit : v, srv, m[1].toLowerCase(), kind, m[2] && !stackLine ? +m[2] : 0, ctx, statusReachesOthers(line));
             prevEnd = m.index + m[0].length; prevKind = kind;
           }
         }
+        } finally { reachDepOverride = prevOver; }
       }
     }
   }
@@ -14480,7 +14501,7 @@ function statusSkillRows(){
     const fk = !fix && Object.keys(STATUS_SOURCE_FIX).find(k => k.toLowerCase() === (p.card + ":" + p.key + "@" + p.srv).toLowerCase() || k.toLowerCase() === (p.card + ":" + p.key).toLowerCase());
     const f = fix || (fk ? STATUS_SOURCE_FIX[fk] : null);
     const kind = f ? (f === "mention" ? "mention" : "apply") : raw;
-    out.push({ card: p.card, srv: p.srv, key: p.key, raw, kind, fix: f || null, field: !!p.field, lvMin: p.lvs.length ? Math.min(...p.lvs) : 0, lvMax: p.lvs.length ? Math.max(...p.lvs) : 0, ctx: raw === "unsure" ? p.uctx : raw === "apply" ? (p.actx || p.ctx) : p.ctx });
+    out.push({ card: p.card, srv: p.srv, key: p.key, raw, kind, fix: f || null, field: !!p.field, ext: !!p.ext, lvMin: p.lvs.length ? Math.min(...p.lvs) : 0, lvMax: p.lvs.length ? Math.max(...p.lvs) : 0, ctx: raw === "unsure" ? p.uctx : raw === "apply" ? (p.actx || p.ctx) : p.ctx });
   }
   // sources the card text never names (the code applies them): one row per server the card has (its BB view and every server tab)
   for (const a of STATUS_SOURCE_ADD) {
@@ -14490,7 +14511,7 @@ function statusSkillRows(){
     for (const srv of s.onlyServer ? [s.onlyServer] : ["og", ...["tot", "tto", "reborn"].filter(x => bbServerView(s, x))]) {
       const key = a.key.toLowerCase(), hit = out.find(r => r.card === a.card && r.srv === srv && r.key === key);
       if (hit) { hit.kind = "apply"; hit.fix = hit.fix || "add"; hit.lvMin = Math.min(hit.lvMin || lo, lo); hit.lvMax = Math.max(hit.lvMax, hi); }
-      else out.push({ card: a.card, srv, key, raw: "add", kind: "apply", fix: "add", field: false, lvMin: lo, lvMax: hi, ctx: a.cite });
+      else out.push({ card: a.card, srv, key, raw: "add", kind: "apply", fix: "add", field: false, ext: statusCardReachesOthers(s), lvMin: lo, lvMax: hi, ctx: a.cite });
     }
   }
   return (_statusSkillRows = out);
@@ -14642,8 +14663,8 @@ function statusSources(key, srv){
     const inherit = s !== "og" && r.srv === "og" && !card.onlyServer && !bbServerView(card, s);
     if (!own && !inherit) continue;
     const m = byCard.get(r.card);
-    if (!m) byCard.set(r.card, { card: r.card, lvMin: r.lvMin, lvMax: r.lvMax });
-    else { if (r.lvMin && (!m.lvMin || r.lvMin < m.lvMin)) m.lvMin = r.lvMin; if (r.lvMax > m.lvMax) m.lvMax = r.lvMax; }
+    if (!m) byCard.set(r.card, { card: r.card, lvMin: r.lvMin, lvMax: r.lvMax, ext: !!r.ext });
+    else { if (r.lvMin && (!m.lvMin || r.lvMin < m.lvMin)) m.lvMin = r.lvMin; if (r.lvMax > m.lvMax) m.lvMax = r.lvMax; if (r.ext) m.ext = true; }
   }
   const skills = [...byCard.values()];
   const items = s === "og" || s === "tot" || s === "tto" || s === "reborn" ? STATUS_SOURCES_ITEM.filter(r => r.key.toLowerCase() === k).map(r => ({ ...r, lvMin: statusLvRange(r.lv)[0], lvMax: statusLvRange(r.lv)[1] })) : [];
@@ -14653,6 +14674,17 @@ function statusSources(key, srv){
 function statusMaxLevel(key, srv){
   const src = statusSources(key, srv);
   return Math.max(0, ...src.skills.map(x => x.lvMax), ...src.items.map(x => x.lvMax), ...src.pets.map(x => x.lvMax));
+}
+// The highest level a target can carry (user 2026-11-16: "Bless can even go up to level 6 with the help of skill C dep Gospel and another sheep
+// casting on the same target"): a second caster applying the level the target already has adds 1 (12Tails-Mechanics-Reference.md §4.2.1;
+// not hp / mp / sp drain). Only a skill that puts the status on another unit can be that second caster (items, pets and self-only buffs
+// cannot), and Reborn removed the rule (Reborn-Mechanics-Reference.md §2.7).
+const STATUS_NO_STACK = ["hpdrain", "mpdrain", "spdrain"];
+function statusTopLevel(key, srv){
+  const k = String(key).toLowerCase(), one = statusMaxLevel(k, srv);
+  if (srv === "reborn" || STATUS_NO_STACK.includes(k)) return one;
+  const reach = Math.max(0, ...statusSources(k, srv).skills.filter(r => r.ext).map(r => r.lvMax));
+  return Math.max(one, reach ? reach + 1 : 0);
 }
 // </SG:sources>
 // <SG:page>
@@ -14688,7 +14720,7 @@ function statusDescEntry(key, srv){
 // Pills run to the highest level a source gives; a level-scaled text with no known source level gets 1-5, shown dimmed.
 function statusPillMax(key, srv){
   if (typeof statusDescEntry(key, srv) !== "function") return 1;
-  return statusMaxLevel(key, srv) || 5;
+  return statusTopLevel(key, srv) || 5;
 }
 const _statusSearchCache = {};
 function statusSearchText(key, srv){
@@ -14798,8 +14830,9 @@ function statusPanelHtml(key, srv, lv, lck){
   const now = call(fn ? L : null), formula = fn ? call(null) : "";
   const chips = tags.length ? tags.map(t => `<span class="stg-chip" data-c="${STATUS_RING_KEY[t]}">${t}</span>`).join("") : `<span class="stg-chip" data-c="none">ไม่อยู่ในหมวดใด</span>`;
   const pills = !fn ? "" : `<div class="stg-lbl">เลเวล</div><div class="stg-pills" role="group" aria-label="เลเวล">` + Array.from({ length: max }, (_, i) => i + 1)
-    .map(i => `<button type="button" class="stg-pill${i === L ? " is-on" : ""}${known ? "" : " is-dim"}" data-stg-lv="${i}" aria-pressed="${i === L}">${i}</button>`).join("") + `</div>`
-    + (known ? "" : `<div class="stg-hint">ยังไม่พบเลเวลจากแหล่งที่มา ตัวเลขคิดตามเลเวลที่เลือก</div>`);
+    .map(i => `<button type="button" class="stg-pill${i === L ? " is-on" : ""}${known ? "" : " is-dim"}${known && i > known ? " is-stack" : ""}" data-stg-lv="${i}" aria-pressed="${i === L}"${known && i > known ? ' title="ต้องมีผู้ร่ายอีกคน"' : ""}>${i}</button>`).join("") + `</div>`
+    + (known ? "" : `<div class="stg-hint">ยังไม่พบเลเวลจากแหล่งที่มา ตัวเลขคิดตามเลเวลที่เลือก</div>`)
+    + (known && L > known ? `<div class="stg-hint">เลเวล ${L} ต้องมีผู้ร่ายอีกคนใส่สถานะนี้เลเวล ${L - 1} ซ้ำบนเป้าหมายเดียวกัน</div>` : "");
   const lckBox = fn && entry.length >= 2 ? `<label class="stg-lck">LCK <input type="number" min="0" max="999" step="1" value="${lck}" data-stg-lck></label>` : "";
   return `<button type="button" class="stg-close" data-stg-close aria-label="ปิด">✕</button><div class="stg-head">${statusRingHtml(k, true)}<div class="stg-head-tx"><h2 class="stg-name">${statusEsc(statusDisplayName(k))}</h2><div class="stg-key">${statusEsc(k)}</div><div class="stg-chips">${chips}</div><div class="stg-srvs">มีบน ${statusServersOf(k).map(s => STATUS_SERVER_LABEL[s]).join(" · ")}${statusServerChanged(k, srv) ? ` <span class="stg-changed">${STATUS_SERVER_LABEL[srv]} ปรับผลของสถานะนี้</span>` : ""}</div></div></div>`
     + pills + `<div class="stg-lbl">${fn ? `ผลที่เลเวล ${L}` : "ผลของสถานะ"}</div><div class="stg-desc">${now ? statusDescHtml(now, lck, k, srv) : `<span class="stg-muted">ยังไม่มีคำอธิบาย</span>`}</div>`
@@ -40803,6 +40836,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T16:11:48.334Z","fix(bible): สารานุกรมสถานะ เลเวลสูงสุดนับสกิลเสริมและผู้ร่ายคนที่สอง เช่น Bless ถึงเลเวล 6"],
     ["2026-11-16T15:29:15.926Z","feat(bible): สารานุกรมสถานะ ภาพเมนูสายฝนไอคอนสถานะ วงสีบอกประเภทหนาขึ้น และป๊อปอัปของเล่นใหม่แทนแพตช์โน้ต TTO"],
     ["2026-11-16T15:10:06.360Z","fix(bible): ดาเมจเวทมนตร์ TTO ตามโค้ดเกม DEF เกิน 512 นับเป็น 256 และ DEF 0-1 นับเป็น 0.5"],
     ["2026-11-16T14:10:59.105Z","fix(bible): สารานุกรมสถานะ ตัวกรองทุกตัวใช้ร่วมกันแบบ AND และปุ่มเซิร์ฟเวอร์เหลือแค่โลโก้"],
