@@ -137,6 +137,13 @@ Common and boss claims of the Reborn team's patch note (diff archive `fixes/g6.j
 - **`atkAdjust` deleted:** the function BB and the 2026-10-25 build define but never call (`BB:CharacterControl.cs:20516`, `Reborn:CharacterControl.cs:11773`) has no match anywhere in the 2026-10-27 decompile; ATK skills still use the raw ATK, as before. App: the BB Common issue "atkAdjust (ระบบคำนวณ)" carries `rbFixed`, so the Reborn issue list leaves it out.
 - **New in this build, not in the app:** a crit potion bonus `RebornArti.CritPlus` reaches every class's crit roll; no card models potions.
 
+### 2.11 Reborn-only statuses (traced 2026-11-16, for the status glossary)
+
+Reborn's `StatusData.getStatusCode` has BB's 205 keys (helper strings, decoded) plus eight plain-text keys in a closing `switch` (`Reborn1027:StatusData.cs:902-928`): benediction 1120, seraph 1121, reactorOverdrive 1461, huntVeil 1462, carronGambit 1463, formlessFlow 1612, seaFeast 1701, cookFeast 1702. Their icons come from `reborn_icons.assetBundle` (`st_<key>`, `RebornIcons.Get`), falling back to BB icons (`Reborn1027:StatusData.cs:8-58`; cookFeast has no `st_` texture and shows `happy`). The three not described elsewhere:
+- **carronGambit** (in no `is*Status` list): Rabbit C7 Carron Gambit (#463) flips 3 Carron coins (heads 0.4 / 0.5 / 0.6 / 0.75 by coin tier, no LCK; `Reborn1027:RebornC7Act.cs:5167-5211`) and gives level = heads (1-3), 30 s, 90 s cooldown (`:5224-5296`); the Rabbit's damage × 1.15 / 1.35 / 1.6, ceil, after dmgAdjust and defAdjust (`Reborn1027:RebornC7Passive.cs:604-625`, `CharacterControl.cs:7336`); at 3 heads every non-C7 hit also deals max(1, floor(0.2 × damage)) Effect Damage to every other target within 3 m (`RebornC7Act.cs:5540-5564`).
+- **cookFeast** (Buff): eating a cooked food with stats (`Reborn1027:RebornCookFeast.cs:77-100`), Lv 1, ⌊(1 + 0.5w) × secs⌋ s (w = the eater's Culinary Tongue ranks); its stat deltas ⌊(1 + 0.5w) × stat⌋ come from a server table (login key 241, `RebornCookFeastCore.cs:34-164`) and are re-added once a second if lost while time remains (`RebornCookFeast.cs:202-241`).
+- **reactorOverdrive** (in no list): Mole C7 Reactor Core (#461): +2 heat per own damaging hit outside codes 461-464; at 100 heat the Mole gets Lv 1, 30 s (`Reborn1027:RebornC7Passive.cs:538-541`, `:3225-3233`): TAL +120 while held, so max SP +24 (`:3191-3203`, `CharacterControl.cs:12093-12098`).
+
 ## 3. Gear findings
 
 ### 3.1 Red star and item chance

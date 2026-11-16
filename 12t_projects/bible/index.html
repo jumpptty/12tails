@@ -14091,6 +14091,237 @@ function statusTags(key){
   return STATUS_TAG_ORDER.filter(t => have.includes(t));
 }
 // </SG:data>
+// <SG:sources>
+// Status sources: what puts a status on a character (spec "Sources"). Removing, blocking, reading or needing a status is not a source.
+// Skills come from the cards themselves: a card's status:{} field, and each [status] in its desc classified by the Thai words just before it
+// (statusMentionKind); STATUS_SOURCE_FIX settles what those words leave open, and [STATUS GLOSSARY ERROR] fails while a mention is unclassified.
+// Items and pets are researched tables (BB client code; 12Tails-Mechanics-Reference.md §4.1 "Statuses from items and pets").
+const STATUS_MENTION_STRONG = /(ที่|ซึ่ง|ระหว่าง(ที่)?|ขณะ(ที่)?|แม้(จะ)?|หาก|ถ้า|เมื่อ|ยกเว้น|ไม่|ยัง|เคย|หรือ)(?:(?!จะ|โดน|ให้|ทำ)[^\[\]•:]){0,14}?(ติด|มี|ได้รับ|ได้)\s*(สถานะ)?\s*(อยู่)?\s*$/;
+const STATUS_MENTION_WORDS = /ได้แก่|นับเป็น|นับว่า|ถือเป็น|ถือว่า|ใช้|หลุด|ถูก|หลัง|ค้าง|ระเบิด|ถือ|เช่น|เปิดเผย|ลบ|ล้าง|ถอน|กำจัด|ปลด|สลาย|ป้องกัน|กัน|ต้าน|ภูมิคุ้มกัน|ยกเว้น|ไม่ติด|ติดไม่ได้|ใส่ไม่ได้|ไม่ได้รับ|แทน|นับ|รวม|เลเวล|ระดับ|ยืด|ต่อเวลา|เหมือน|เท่ากับ|ตาม|จาก|ของ|ระหว่าง|ขณะ|เมื่อ|หาก|ถ้า|แม้|ทะลุ|อ่าน|ตรวจ|ซ้อน|ทับ|หมด|หาย|ใช้ได้|กดได้|ไม่ทำงาน|ไม่มีผล/g;
+const STATUS_APPLY_WORDS = /ด้วย|เป็น|ติด|ได้รับ|ได้|ให้|มอบ|บัฟ|ใส่|กลายเป็น|เข้าสู่|สุ่ม|เกิด|เพิ่ม/g;
+const STATUS_MENTION_AFTER = /^\s*(ใหม่ไม่ได้|ไม่นับ|ติดได้|อยู่นานขึ้น|ของ|ที่ได้|จาก|ทำงาน|สูงขึ้น|เติม|ลบสถานะนี้|ซับ|ติดไม่ได้|ไม่ติด|ใส่ไม่ได้|ไม่ได้|อยู่แล้ว|ที่มีอยู่|หมด|หายไป|ถูกล้าง|ถูกลบ)/;
+function statusMentionKind(before, after){
+  const pre = String(before).replace(/<[^>]*>|\*\*|__|\^\^|##/g, "").replace(/\s+/g, " ").slice(-60).trimEnd();
+  if (STATUS_MENTION_AFTER.test(String(after || ""))) return "mention";
+  if (STATUS_MENTION_STRONG.test(pre)) return "mention";
+  const last = (re) => { let end = -1; re.lastIndex = 0; for (let m; (m = re.exec(pre));) end = Math.max(end, m.index + m[0].length); return end; };
+  const a = last(STATUS_APPLY_WORDS), m = last(STATUS_MENTION_WORDS);
+  if (a < 0 && m < 0) return "unsure";
+  return m >= a ? "mention" : "apply";
+}
+// "<cardId>:<status key>" (or "...@<server>") -> "apply" | "mention" | "apply-checked" (a source whose class code passes the key in a variable)
+const STATUS_SOURCE_FIX = {
+  // lists whose verb the words before the first token do not carry
+  "bat_nightfallSwarm:blind@tto": "apply", "bat_nightfallSwarm:confuse@tto": "apply",
+  "tot_ex_soulcapture:blind@tot": "apply", "tot_ex_soulcapture:confuse@tot": "apply", "tot_ex_soulcapture:curse@tot": "apply",
+  "sheep_sealOfAttack:sealOfAttack": "apply", "sheep_sealOfDefense:sealOfDefense": "apply",   // "แดง ×3: [sealOfAttack]" = three red orbs give the seal
+  "monkey_fireBall:fireKeep": "apply",   // fire balls are stored in the fireKeep status
+  "mole_bunker:snowMan": "mention", "mole_bunker:snowBall": "mention", "mole_bunker:petrify": "mention", "mole_bunker:sleep": "mention", "mole_bunker:nightmare": "mention",   // "… ติดได้": statuses a Bunkered Mole can still get
+  "cat_twoPair:lastHope": "mention", "cat_twoPair:swallow": "mention", "cat_twoPair:gobble": "mention", "cat_twoPair:charm": "mention", "cat_twoPair:mindControl": "mention",
+  "cat_twoPair:nightmare": "mention", "cat_twoPair:mimic": "mention", "cat_twoPair:allMimic": "mention", "cat_twoPair:transform": "mention", "cat_twoPair:overPresence": "mention",   // statuses Two Pair never copies
+  // conditions and other skills' statuses named in a modifier line
+  "bison_rageControl:berserkerRush@tto": "mention", "monkey_autoInstant:instantCast": "mention", "penguin_deadlyFrost:frost": "mention",
+  "bat_zombieChameleon:poison": "mention",
+  "bat_shame:dissolute": "mention", "bat_mindControl:nightmare": "mention", "bat_charm:mindControl": "mention", "bison_solidHold:holdCharge": "mention",
+  "cat_twoPair:noDamage": "mention", "cat_twoPair:noForce": "mention", "panda_deathBlow:paralysis": "mention", "penguin_manaBurn:dispell": "mention",
+  "whale_hydroBlast:heavy": "mention", "wolf_lunarEclipse:valor": "mention",
+  "bat_doomsayer:doom@reborn": "mention", "tot_ex_shadowrealm:massCast@tot": "mention", "tot_ex_shadowrealm:amplifyDamage@tot": "mention",
+  "tot_ex_soulcapture:charm@tot": "mention", "tot_ex_soulcapture:dissolute@tot": "mention", "tot_ex_rageking:berserkerRush@tot": "mention",
+  "cat_nightEye:ice@reborn": "mention", "chameleon_immunity:invisible@reborn": "mention", "chameleon_immunity:fatalStrike@reborn": "mention",
+  "chameleon_apexHunt:slayerMark@tto": "mention", "chameleon_chainLightning:immunity@tto": "mention", "mole_barrelRailgun:drunk@tto": "mention",
+  "panda_tempestDance:drunk@tto": "mention", "monkey_soulPact:buiten@reborn": "mention", "monkey_runeGolem:instantCast@tto": "mention",
+  "penguin_frostSpike:iceShield@reborn": "mention", "penguin_frostField:windBound@tto": "mention", "wolf_chargedFang:valor@reborn": "mention",
+  // merges done by the receiver (RPC_AddStatus), not by the class file
+  "bison_ironShield:perfectShield": "apply-checked", "bison_ironShield:perfectArmor": "apply-checked", "bison_diamondShield:perfectShield": "apply-checked",
+  "bison_mythrilSkin:perfectArmor": "apply-checked",   // iron + diamond shield merge, CharacterControl.cs:11975-12040
+  "wolf_holySword:holyWolf": "apply-checked", "wolf_holyArmor:holyWolf": "apply-checked"   // holy sword + holy armor merge, CharacterControl.cs:11001-11016
+};
+let _statusSkillRows = null;
+function statusSkillRows(){
+  if (_statusSkillRows) return _statusSkillRows;
+  const pairs = new Map(), TOK = /\[([a-zA-Z]+)(\d*)\]/g;
+  const isStatus = (n) => !!(STATUS_CLASS_MAP[n.toLowerCase()] || STATUS_CLASS_MAP[n]);
+  const note = (card, srv, key, kind, lv, ctx) => {
+    const id = card.id + "|" + srv + "|" + key;
+    let p = pairs.get(id);
+    if (!p) pairs.set(id, p = { card: card.id, srv, key, kinds: new Set(), lvs: [], ctx: "", uctx: "", actx: "" });
+    p.kinds.add(kind);
+    if (kind === "apply" && lv > 0) p.lvs.push(lv);
+    if (kind === "unsure" && !p.uctx) p.uctx = ctx;
+    if (kind === "apply" && !p.actx && ctx !== "status:{}") p.actx = ctx;
+    if (ctx === "status:{}") p.field = true;
+    if (!p.ctx && ctx) p.ctx = ctx;
+  };
+  for (const s of SKILLS) {
+    const views = s.onlyServer ? [[s.onlyServer, s]] : [["og", s], ...["tot", "tto", "reborn"].map(srv => [srv, bbServerView(s, srv)]).filter(x => x[1])];
+    for (const [srv, v] of views) {
+      const deps = [...new Set([0, (v.dep && v.dep.maxRank) || 0])];
+      for (let r = 1; r <= (v.maxRank || 1); r++) for (const d of deps) {
+        if (v.status && v.status.name) {
+          let lv = v.status.sLv; try { lv = typeof lv === "function" ? lv(r, d) : lv; } catch (e) { lv = 0; }
+          note(v, srv, String(v.status.name).toLowerCase(), "apply", +lv || 0, "status:{}");
+        }
+        let text = ""; try { text = String(typeof v.desc === "function" ? v.desc(r, d) : (v.desc || "")); } catch (e) { text = ""; }
+        for (const line of text.split(/<br\s*\/?>|\n/)) {
+          let prevEnd = -1, prevKind = null;
+          // a "**Name:** …" modifier line says what that other skill adds: a status it applies is credited to that skill's card
+          const modName = (/^\s*\*\*([^*]+?):\*\*/.exec(line) || [])[1];
+          const modCard = modName ? findSkillByMention(modName, v) : null;
+          const credit = modCard && modCard.id !== v.id && modCard.class === v.class ? modCard : v;
+          for (const m of line.matchAll(TOK)) {
+            if (!isStatus(m[1])) { prevEnd = -1; continue; }
+            const gap = prevEnd >= 0 ? line.slice(prevEnd, m.index).replace(/<[^>]*>|\*\*|__/g, "") : null;
+            const kind = gap !== null && /^[\s,、/]*(และ|หรือ)?[\s,]*$/.test(gap) ? prevKind : statusMentionKind(line.slice(0, m.index), line.slice(m.index + m[0].length, m.index + m[0].length + 20));
+            const ctx = line.slice(Math.max(0, m.index - 50), m.index + m[0].length + 15).replace(/<[^>]*>/g, "");
+            note(kind === "apply" ? credit : v, srv, m[1].toLowerCase(), kind, m[2] ? +m[2] : 0, ctx);
+            prevEnd = m.index + m[0].length; prevKind = kind;
+          }
+        }
+      }
+    }
+  }
+  const out = [];
+  for (const p of pairs.values()) {
+    const raw = p.kinds.has("apply") ? "apply" : p.kinds.has("unsure") ? "unsure" : "mention";
+    const fix = STATUS_SOURCE_FIX[p.card + ":" + p.key + "@" + p.srv] || STATUS_SOURCE_FIX[p.card + ":" + p.key];
+    const fk = !fix && Object.keys(STATUS_SOURCE_FIX).find(k => k.toLowerCase() === (p.card + ":" + p.key + "@" + p.srv).toLowerCase() || k.toLowerCase() === (p.card + ":" + p.key).toLowerCase());
+    const f = fix || (fk ? STATUS_SOURCE_FIX[fk] : null);
+    const kind = f ? (f === "mention" ? "mention" : "apply") : raw;
+    out.push({ card: p.card, srv: p.srv, key: p.key, raw, kind, fix: f || null, field: !!p.field, lvMin: p.lvs.length ? Math.min(...p.lvs) : 0, lvMax: p.lvs.length ? Math.max(...p.lvs) : 0, ctx: raw === "unsure" ? p.uctx : raw === "apply" ? (p.actx || p.ctx) : p.ctx });
+  }
+  return (_statusSkillRows = out);
+}
+// Items that are not equipment in GEAR_DATA (consumables, foods, mounts): game names from FieldData.cs / FoodData.cs / the mount code.
+const STATUS_ITEM_NAMES = {
+  f_stb1: "Stimulus Drug", d_drk6: "Coffee", d_drk7: "Beer", d_drk8: "Vodka", d_drk9: "Wine", d_veg16: "Green Fungroom", d_veg17: "Red Fungroom", d_veg18: "Brown Fungroom",
+  d_cak5: "Moon Cake", d_cak6: "Moon Cake w Egg", d_sld5: "Super Size Salad", d_dst8: "Speial Penguin Sunday",
+  f_fwk3: "Green Firework", f_fwk5: "NewYear Firework", f_fwk6: "Fire Cracker", f_bmb2: "Fire Bomb", f_bmb3: "Paralize Bomb", f_bmb4: "Smoke Bomb", f_bmb5: "Plague Bomb", f_bmb6: "Frost Bomb",
+  f_wfg1: "WarFlag (y)", f_wfg2: "WarFlag (b)", f_wfg3: "WarFlag (r)", f_wfg4: "WarFlag (w)", f_ebs1: "Boost Eraser 1", f_ebs2: "Boost Eraser 2",
+  f_exl2: "Resilient Elixir", f_ton2: "Resilient Tonic", f_exl3: "Life Elixir", f_ton3: "Life Tonic", f_dem1: "Sacrificial Orb", f_dem2: "Sacrificial Jem", f_dem3: "Sacrificial Idol",
+  f_slb1: "Reduce Drug", f_slb2: "Giant Drug", f_slb3: "Invisible Drug", f_htb1: "Hate Drug", f_kob1: "Ko Drug", f_rmb1: "Remedy Drug", f_ibk1: "Ice Bucket", f_ibk2: "Frost Bucket", f_wtb1: "Water Ball",
+  f_lbs1: "Life Boost 1", f_lbs2: "Life Boost 2", f_lbs3: "Life Boost 3", f_lbs4: "Life Boost 4", f_lbs5: "Life Boost 5",
+  f_mbs1: "Magic Boost 1", f_mbs2: "Magic Boost 2", f_mbs3: "Magic Boost 3", f_mbs4: "Magic Boost 4", f_mbs5: "Magic Boost 5",
+  f_sbs1: "Speed Boost 1", f_sbs2: "Speed Boost 2", f_sbs3: "Speed Boost 3", f_sbs4: "Speed Boost 4", f_sbs5: "Speed Boost 5",
+  o_all3: "G. Marshal", o_all4: "G. Marshal", o_all5: "G. Champion"
+};
+function statusItemName(id){ return (GEAR_INDEX[id] && GEAR_INDEX[id].name) || STATUS_ITEM_NAMES[id] || ""; }
+const STATUS_CLASS_CODES = ["wlf", "bsn", "pnd", "whl", "cat", "chm", "rab", "mol", "mnk", "shp", "pgn", "bat"];
+const statusSeries = (n) => STATUS_CLASS_CODES.map(c => "w_" + c + n);
+// One row per (status, item group). lv: a level or [min, max]; chance: { lck: n } = lckAdjust(n), { flat: n }, { pick: "…" }, absent = always;
+// de: true = doubled for a Chameleon with Double Effect (Chameleon.cs:47347); who / when: short Thai. BB code; servers that change one say so in `srv`.
+const STATUS_SOURCES_ITEM = [
+  { key: "artCancel", items: ["w_shp39"], who: "เป้าหมาย", lv: 1, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Sheep.cs:47558" },
+  ...["immunity", "boost", "heat", "autoLife"].map(key => ({ key, items: ["f_stb1"], who: "ตัวเอง", lv: 2, chance: { pick: "สุ่ม 1 ใน 4 สถานะ" }, when: "ใช้", cite: "GameGui.cs:33384-33443" })),
+  { key: "awake", items: ["d_drk6"], who: "ตัวเอง", lv: 2, when: "กิน", cite: "FoodData.cs:980, GameGui.cs:35032-35059" },
+  { key: "awake", items: ["f_fwk6"], who: "ทุกคนฝั่งเดียวกันในรัศมี 24m", lv: 4, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:37018-37074" },
+  { key: "awareness", items: ["f_fwk3"], who: "ศัตรูในรัศมี 12m", lv: 2, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:35703-35747" },
+  { key: "bleed", items: ["w_wlf39"], who: "เป้าหมาย", lv: 1, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Wolf.cs:46694" },
+  { key: "bless", items: ["f_fwk5"], who: "ฝั่งเดียวกันในรัศมี 12m", lv: 2, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:35845-35884" },
+  { key: "bless", items: ["d_cak5"], who: "ตัวเอง", lv: 1, when: "กิน", cite: "FoodData.cs:490" },
+  { key: "bless", items: ["d_cak6"], who: "ตัวเอง", lv: 4, when: "กิน", cite: "FoodData.cs:522" },
+  { key: "blind", items: ["w_wlf15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Wolf.cs:46641" },
+  { key: "blind", items: ["f_bmb4"], who: "ศัตรูในรัศมี 12m", lv: 2, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36193-36203" },
+  { key: "blueFlag", items: ["f_wfg2"], who: "เพื่อนในรัศมี 12m", lv: 1, when: "ทุก 2 วินาที นาน 60 วินาทีหลังปักธง", cite: "Bison.cs:37410, :38023, :38163" },
+  { key: "cleanse", items: ["f_wfg2"], who: "เพื่อนในรัศมี 12m", lv: 4, when: "ทุก 2 วินาที นาน 60 วินาทีหลังปักธง", cite: "Bison.cs:38028" },
+  { key: "bubbleShield", items: ["w_whl39"], who: "ตัวเอง", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Whale.cs:47115" },
+  { key: "burn", items: ["w_chm39"], who: "เป้าหมาย", lv: 2, chance: { lck: 12 }, de: true, when: "โจมตีปกติโดน", cite: "Chameleon.cs:47488" },
+  { key: "burn", items: ["f_bmb2"], who: "ศัตรูในรัศมี 12m", lv: 2, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36031-36041" },
+  { key: "charm", items: statusSeries(14), who: "เป้าหมายที่เป็นผู้เล่น", lv: 1, chance: { lck: 14 }, de: true, when: "โจมตีปกติโดน", label: "อาวุธ Heart ทุกอาชีพ", cite: "Bat.cs:54310-54322 (the same table in every hero file)" },
+  { key: "charm", items: ["w_bat15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน (รวมร่างแยก)", cite: "Bat.cs:54347, Bat_illusion.cs:7392" },
+  { key: "cleanse", items: ["f_exl2", "f_ton2"], who: "เพื่อนที่เลือก", lv: 4, when: "ใช้", cite: "GameGui.cs:34198, :34253" },
+  { key: "clear", items: ["w_rab15"], who: "ตัวเอง", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Rabbit.cs:49440" },
+  { key: "confuse", items: ["w_bsn15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Bison.cs:41836" },
+  { key: "curse", items: ["o_all3", "o_all4", "o_all5"], who: "ศัตรูที่โดนท่าวิ่งชนขณะค้างคาวขี่", lv: [1, 4], when: "ค้างคาวขี่แล้ววิ่งชนโดน (เลเวลเดิม +1 สูงสุด 4)", cite: "PvpMount.cs:17062-17112, ChampionMount.cs:17858" },
+  { key: "defDown", items: ["w_whl15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Whale.cs:47062" },
+  { key: "defUp", items: ["w_pnd39"], who: "ตัวเอง", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Panda.cs:51318" },
+  { key: "drunk", items: ["d_drk7"], who: "ตัวเอง", lv: 3, when: "กิน", cite: "FoodData.cs:1017" },
+  { key: "drunk", items: ["d_drk8"], who: "ตัวเอง", lv: 4, when: "กิน", cite: "FoodData.cs:1049" },
+  { key: "drunk", items: ["d_drk9", "d_veg17"], who: "ตัวเอง", lv: 2, when: "กิน", cite: "FoodData.cs:1086, :5054" },
+  { key: "eraseBoost", items: ["f_ebs1", "f_ebs2"], who: "ทุกคนในรัศมี 6m จุดที่ตก", lv: 2, when: "ขว้าง", cite: "BoostEraser.cs:38-57, :135, :175; Bison.cs:37856" },
+  { key: "enlarge", items: ["f_slb2"], who: "ตัวเอง", lv: 2, when: "ใช้", cite: "FieldData.cs:3621, GameGui.cs:33674-33701" },
+  { key: "enlarge", items: ["d_sld5"], who: "ตัวเอง", lv: 2, when: "กิน", cite: "FoodData.cs:3551" },
+  { key: "frost", items: ["w_bsn39"], who: "เป้าหมาย", lv: 1, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Bison.cs:41889" },
+  { key: "frost", items: ["f_bmb6"], who: "ศัตรูในรัศมี 12m", lv: 4, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36355-36365" },
+  { key: "frost", items: ["f_ibk2"], who: "ผู้เล่นที่เลือก", lv: 6, when: "ใช้ (เฉพาะในภารกิจ)", cite: "GameGui.cs:32526-32593, CharacterControl.cs:44454-44490" },
+  { key: "happy", items: statusSeries(3), who: "เป้าหมาย", lv: 3, chance: { lck: 12 }, when: "โจมตีปกติโดน", label: "อาวุธ Paper ทุกอาชีพ", cite: "Bat.cs:54292 (the same table in every hero file)" },
+  { key: "heavy", items: statusSeries(49), who: "เป้าหมาย", lv: 2, chance: { lck: 6 }, de: true, when: "โจมตีปกติโดน", label: "อาวุธ Golden ทุกอาชีพ", cite: "Bat.cs:54436 (the same table in every hero file)" },
+  { key: "heavy", items: ["w_mnk39"], who: "เป้าหมาย", lv: 1, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Monkey.cs:52831" },
+  { key: "hpDrain", items: [...statusSeries(66), "c_all66"], who: "เป้าหมาย (ผู้ตีได้ HP คืน)", lv: 2, chance: { pool: "อาวุธ +12, หมวก +8 รวมกันแล้วสุ่มตาม LCK" }, de: true, when: "โจมตีปกติโดน", label: "ชุด Poseidon (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54466, :54575, :54629-54641",
+    srv: { tto: "TTO: โอกาสไม่ขึ้นกับ LCK ครบชุด 20% (40% กับ Double Effect)" } },
+  { key: "hpRegen", items: ["f_dem1"], who: "ทั้งทีม", lv: 1, when: "ใช้", cite: "GameGui.cs:33758, :33813-33824" },
+  { key: "ice", items: ["f_ibk1"], who: "ตัวเอง", lv: 6, when: "ใช้ (เฉพาะในภารกิจ)", cite: "GameGui.cs:32494, CharacterControl.cs:44412-44450" },
+  { key: "ice", items: ["o_all3", "o_all4", "o_all5"], who: "เป้าหมายที่โดนยิงขณะเพนกวินขี่", lv: [1, 4], when: "เพนกวินขี่แล้วโจมตีปกติโดน (เลเวลเดิม +1 สูงสุด 4)", cite: "PvpMount_penguin_nAttack.cs:239-257" },
+  { key: "illuminate", items: ["w_bat39"], who: "ตัวเอง (ร่างแยกถ้าร่างแยกตีโดน)", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Bat.cs:54400, Bat_illusion.cs:7416" },
+  { key: "immunity", items: ["f_exl2", "f_ton2"], who: "เพื่อนที่เลือก", lv: 4, when: "ใช้", cite: "GameGui.cs:34203, :34258" },
+  { key: "invisible", items: ["f_slb3"], who: "ตัวเอง", lv: 2, when: "ใช้", cite: "FieldData.cs:3653" },
+  { key: "ko", items: ["w_pnd15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Panda.cs:51265" },
+  { key: "lckUp", items: ["w_cat39"], who: "ตัวเอง", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Cat.cs:50183" },
+  { key: "lifeBoost", items: ["f_lbs1", "f_lbs2", "f_lbs3", "f_lbs4", "f_lbs5"], who: "ตัวเอง", lv: [1, 5], when: "ใช้ (เลเวลตามเลขไอเทม)", cite: "FieldData.cs:2812-3260" },
+  { key: "magicBoost", items: ["f_mbs1", "f_mbs2", "f_mbs3", "f_mbs4", "f_mbs5"], who: "ตัวเอง", lv: [1, 5], when: "ใช้ (เลเวลตามเลขไอเทม)", cite: "FieldData.cs:2812-3260" },
+  { key: "speedBoost", items: ["f_sbs1", "f_sbs2", "f_sbs3", "f_sbs4", "f_sbs5"], who: "ตัวเอง", lv: [1, 5], when: "ใช้ (เลเวลตามเลขไอเทม)", cite: "FieldData.cs:2812-3260" },
+  { key: "manaBurn", items: ["w_pgn15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Penguin.cs:48563" },
+  { key: "mpDrain", items: [...statusSeries(56), "c_all56"], who: "เป้าหมาย (ผู้ตีได้ MP คืน)", lv: 2, chance: { pool: "อาวุธ +12, หมวก +8 รวมกันแล้วสุ่มตาม LCK" }, de: true, when: "โจมตีปกติโดน", label: "ชุด Frozen (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54454, :54563, :54605-54617",
+    srv: { tto: "TTO: โอกาสไม่ขึ้นกับ LCK" } },
+  { key: "mpRegen", items: ["f_dem2"], who: "ทั้งทีม", lv: 1, when: "ใช้", cite: "GameGui.cs:33841" },
+  { key: "needlePrison", items: ["w_mnk15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Monkey.cs:52778" },
+  { key: "noHate", items: ["f_htb1"], who: "ตัวเอง", lv: 1, when: "ใช้", cite: "FieldData.cs:3717" },
+  { key: "noKo", items: ["f_kob1"], who: "ตัวเอง", lv: 1, when: "ใช้", cite: "FieldData.cs:3685" },
+  { key: "paralysis", items: ["w_cat15"], who: "เป้าหมายที่ยืนนิ่งหรือวิ่ง", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Cat.cs:50108-50129" },
+  { key: "paralysis", items: ["f_bmb3"], who: "ศัตรูในรัศมี 12m", lv: 2, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36112-36122" },
+  { key: "phantomBane", items: ["w_mol39"], who: "เป้าหมาย", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Mole.cs:53320" },
+  { key: "plague", items: [...statusSeries(46), "c_all46"], who: "เป้าหมาย", lv: 1, chance: { pool: "อาวุธ +12, หมวก +8 รวมกันแล้วสุ่มตาม LCK" }, de: true, when: "โจมตีปกติโดน", label: "ชุด Mummy (อาวุธทุกอาชีพ / หมวก)", cite: "Bat.cs:54418, :54551, :54581-54593",
+    srv: { tto: "TTO: โอกาสไม่ขึ้นกับ LCK" } },
+  { key: "plague", items: ["f_bmb5"], who: "ศัตรูในรัศมี 12m", lv: 4, when: "ใช้ (เฉพาะในภารกิจ)", cite: "Bison.cs:36274-36284" },
+  { key: "poison", items: ["w_rab39"], who: "เป้าหมาย", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Rabbit.cs:49493" },
+  { key: "poison", items: ["d_veg16"], who: "ตัวเอง", lv: 2, when: "กิน", cite: "FoodData.cs:5022" },
+  { key: "redFlag", items: ["f_wfg3"], who: "ศัตรูในรัศมี 12m", lv: 1, when: "ทุก 2 วินาที นาน 60 วินาทีหลังปักธง", cite: "Bison.cs:37456, :36679-36746, :38205" },
+  { key: "reduce", items: ["f_slb1"], who: "ตัวเอง", lv: 2, when: "ใช้", cite: "FieldData.cs:3589" },
+  { key: "remedy", items: ["f_rmb1"], who: "ตัวเอง", lv: 4, when: "ใช้", cite: "FieldData.cs:3749" },
+  { key: "revive", items: ["f_dem3"], who: "ทั้งทีม", lv: 1, when: "ใช้", cite: "GameGui.cs:33858" },
+  { key: "revive", items: ["f_exl3", "f_ton3"], who: "เพื่อนที่ตายแล้วอย่างน้อย 5 วินาที", lv: 1, when: "ใช้", cite: "GameGui.cs:33954-34038" },
+  { key: "sleep", items: ["w_shp15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Sheep.cs:47505" },
+  { key: "sleep", items: ["d_veg18"], who: "ตัวเอง", lv: 2, when: "กิน", cite: "FoodData.cs:5086" },
+  { key: "snowMan", items: ["d_dst8"], who: "ตัวเอง", lv: 2, when: "กิน", cite: "FoodData.cs:1664" },
+  { key: "sticky", items: ["w_chm15"], who: "เป้าหมาย", lv: 1, chance: { lck: 6 }, de: true, when: "โจมตีปกติโดน", cite: "Chameleon.cs:47435" },
+  { key: "talUp", items: ["w_mol15"], who: "ตัวเอง", lv: 1, chance: { lck: 6 }, when: "โจมตีปกติโดน", cite: "Mole.cs:53267" },
+  { key: "talUp", items: ["w_pgn39"], who: "ตัวเอง", lv: 2, chance: { lck: 12 }, when: "โจมตีปกติโดน", cite: "Penguin.cs:48616" },
+  { key: "wet", items: ["f_wtb1"], who: "ผู้เล่นทุกฝั่งในรัศมี 4m จุดที่ตก", lv: 1, when: "ขว้าง", cite: "WaterBall.cs:155-206" },
+  { key: "whiteFlag", items: ["f_wfg4"], who: "เพื่อนในรัศมี 12m", lv: 1, when: "ทุก 2 วินาที นาน 60 วินาทีหลังปักธง", cite: "Bison.cs:37502, :38043-38113, :38185" },
+  { key: "yellowFlag", items: ["f_wfg1"], who: "เพื่อนในรัศมี 12m", lv: 1, when: "ทุก 2 วินาที นาน 60 วินาทีหลังปักธง", cite: "Bison.cs:37365, :37867-37940, :38161" },
+  ...["atkUp", "defUp", "agiUp", "vitUp", "magUp", "chaUp", "talUp", "lckUp"].map(key => ({ key, items: [], label: "อาหารที่เพิ่มค่าสถานะ", who: "ตัวเอง", lv: 1, when: "กิน", cite: "GameGui.cs:34854-35020 (88 att[] values in FoodData.cs)" }))
+];
+const STATUS_SOURCES_PET = [
+  { key: "awareness", pet: "p_skr", lv: 2, who: "ศัตรูในรัศมี 15m ของว่าว", cite: "Bat.cs:19037-19127" },
+  { key: "bless", pet: "p_sfb", lv: 1, who: "ตัวเอง", cite: "Bat.cs:18067-18080" },
+  { key: "bubbleShield", pet: "p_sam", lv: 2, who: "ตัวเอง", cite: "Bat.cs:18200-18213" },
+  { key: "ice", pet: "p_sim", lv: 2, who: "ศัตรูในรัศมี 5m ของสัตว์เลี้ยง", cite: "Bat.cs:18098-18162" },
+  { key: "iceShield", pet: "p_spg", lv: 2, who: "ตัวเอง", cite: "Bat.cs:18239-18252" },
+  { key: "wash", pet: "p_skm", lv: 4, who: "ตัวเอง", cite: "Bat.cs:18033-18054" },
+  { key: "float", pet: "p_lcs", lv: 4, who: "ตัวเอง", cite: "Bat.cs:19160-19181" }
+];
+const statusLvRange = (lv) => Array.isArray(lv) ? lv : [lv || 0, lv || 0];
+const _statusSourceCache = {};
+function statusSources(key, srv){
+  const k = String(key).toLowerCase(), s = STATUS_SERVER_ORDER.includes(srv) ? srv : "og", id = k + "|" + s;
+  if (_statusSourceCache[id]) return _statusSourceCache[id];
+  const rows = statusSkillRows().filter(r => r.key === k && r.kind === "apply");
+  const tabbed = new Set(rows.filter(r => r.srv === s).map(r => r.card));
+  const skills = [];
+  for (const r of rows) {
+    const card = SKILLS.find(x => x.id === r.card);
+    const own = r.srv === s;
+    const inherit = s !== "og" && r.srv === "og" && !card.onlyServer && !bbServerView(card, s) && !tabbed.has(r.card);
+    if (own || inherit) skills.push({ card: r.card, lvMin: r.lvMin, lvMax: r.lvMax });
+  }
+  const items = s === "og" || s === "tot" || s === "tto" || s === "reborn" ? STATUS_SOURCES_ITEM.filter(r => r.key.toLowerCase() === k).map(r => ({ ...r, lvMin: statusLvRange(r.lv)[0], lvMax: statusLvRange(r.lv)[1] })) : [];
+  const pets = STATUS_SOURCES_PET.filter(r => r.key.toLowerCase() === k).map(r => ({ ...r, lvMin: statusLvRange(r.lv)[0], lvMax: statusLvRange(r.lv)[1] }));
+  return (_statusSourceCache[id] = { skills, items, pets });
+}
+function statusMaxLevel(key, srv){
+  const src = statusSources(key, srv);
+  return Math.max(0, ...src.skills.map(x => x.lvMax), ...src.items.map(x => x.lvMax), ...src.pets.map(x => x.lvMax));
+}
+// </SG:sources>
 // Mechanic-term glossary (^^term^^, added 2026-09-22). Same shape as
 // STATUS_CLASS_MAP/STATUS_DESC_MAP but for general game-engine mechanics
 // that aren't tied to a status effect -- opens a full modal (unlike the
@@ -39928,6 +40159,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T12:47:51.803Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 2 แหล่งที่มาของสถานะจากสกิล อุปกรณ์ ไอเทม และสัตว์เลี้ยง"],
     ["2026-11-16T12:17:05.687Z","feat(bible): สารานุกรมสถานะ ไอคอนสถานะทั้งหมด 250 ไอคอน อัปสเกลเป็น 128 px (BB, TTO, Reborn)"],
     ["2026-11-16T12:05:11.076Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 1 รายชื่อสถานะของทุกเซิร์ฟเวอร์ (BB 205, TTO 253, Reborn 213)"],
     ["2026-11-15T14:05:48.222Z","fix(bible): Bunker ของ Mole ระบุว่า Mind Control กับ Charm ของค้างคาวร่ายใส่ไม่ได้; บันทึกพฤติกรรมเผ่า Structure ของทุกคลาสและผลสแกนแฟล็ก recieveStatus (44 ชนิดยูนิตที่ติดสถานะไม่ได้) ลงไฟล์อ้างอิง"],

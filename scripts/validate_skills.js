@@ -7424,6 +7424,76 @@ if (RUN_DAMAGE_CHECKS) {
       if (src("nosuchstatus") !== I._unknown) sg("an unknown key must show the unknown icon");
       console.log(`Verified ${Object.keys(I).length} status icons (${NONE.length} statuses use the game's fallback).`);
     }
+    // ---- Task 3: sources (skills derived from the cards + STATUS_SOURCE_FIX; gear, consumables and pets from STATUS_SOURCES_ITEM / _PET)
+    const need3 = ["statusMentionKind", "STATUS_SOURCE_FIX", "statusSkillRows", "STATUS_SOURCES_ITEM", "STATUS_SOURCES_PET", "statusSources", "statusMaxLevel", "statusItemName"];
+    const miss3 = need3.filter(n => !has(n));
+    miss3.forEach(n => sg(`missing ${n}`));
+    if (!miss3.length && !miss1.length) {
+      const rows = run("statusSkillRows()"), FIX = run("STATUS_SOURCE_FIX"), S = run("statusSources"), maxLv = run("statusMaxLevel");
+      const cardIds = new Set(SKILLS.map(s => s.id)), CLS = run("STATUS_CLASS_MAP");
+      const unsure = rows.filter(r => r.kind === "unsure");
+      unsure.slice(0, 30).forEach(r => sg(`unclassified mention: ${r.card}:${r.key}${r.srv !== "og" ? "@" + r.srv : ""} — "${r.ctx}" (add it to STATUS_SOURCE_FIX)`));
+      if (unsure.length > 30) sg(`... and ${unsure.length - 30} more unclassified mentions`);
+      for (const [k, v] of Object.entries(FIX)) {
+        const m = /^([A-Za-z0-9_]+):([A-Za-z]+)(?:@(og|tot|tto|reborn))?$/.exec(k);
+        if (!m) { sg(`STATUS_SOURCE_FIX key "${k}" is not <cardId>:<status>[@server]`); continue; }
+        if (!cardIds.has(m[1])) sg(`STATUS_SOURCE_FIX ${k}: no card ${m[1]}`);
+        if (!CLS[m[2].toLowerCase()] && !CLS[m[2]]) sg(`STATUS_SOURCE_FIX ${k}: ${m[2]} is not a status`);
+        if (!["apply", "mention", "apply-checked"].includes(v)) sg(`STATUS_SOURCE_FIX ${k}: value ${v}`);
+        const hit = rows.filter(r => r.card === m[1] && r.key === m[2].toLowerCase() && (!m[3] || r.srv === m[3]));
+        if (!hit.length) sg(`STATUS_SOURCE_FIX ${k}: the card does not mention that status`);
+        else if (v !== "apply-checked" && hit.every(r => r.raw === v)) sg(`STATUS_SOURCE_FIX ${k}: redundant (the classifier already says ${v})`);
+      }
+      // BB code cross-check: a BB skill source's class code applies that status
+      const dsDir = path.resolve(__dirname, "../DecompiledSource");
+      if (fs.existsSync(dsDir)) {
+        const files = fs.readdirSync(dsDir).filter(f => f.endsWith(".cs"));
+        const SUMMON = { Mole: ["BarrelBot", "AutoGyro", "RangerRobot", "KingKaiser", "MineWalker"], Monkey: ["Phoenix", "Ja", "Gadina", "Buiten", "Gaos", "Lavu"], Rabbit: ["MedicTurret"] };
+        const applied = new Map();
+        const appliedBy = (cls) => {
+          if (applied.has(cls)) return applied.get(cls);
+          const pre = cls === "Common" ? ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"] : [cls, ...(SUMMON[cls] || [])];
+          const set = new Set();
+          for (const f of files) if (pre.some(p => f === p + ".cs" || f.startsWith(p + "_") || (SUMMON[cls] || []).some(s => f.startsWith(s)))) {
+            for (const m of fs.readFileSync(path.join(dsDir, f), "utf8").matchAll(/(?:RPC_AddStatus|addStatus)"?,?\s*\(?\s*(?:new object\[\]\s*\{\s*)?"([A-Za-z0-9]+)"/g)) set.add(m[1].toLowerCase());
+          }
+          applied.set(cls, set); return set;
+        };
+        let checked = 0;
+        for (const r of rows) if (r.srv === "og" && r.kind === "apply" && r.fix !== "apply-checked") {
+          const card = SKILLS.find(s => s.id === r.card);
+          if (!card || card.onlyServer) continue;
+          checked++;
+          if (!appliedBy(card.class).has(r.key)) sg(`${r.card} is listed as a source of ${r.key}, but no ${card.class} code applies "${r.key}" (mark it apply-checked in STATUS_SOURCE_FIX with the reason, or mention)`);
+        }
+        console.log(`Cross-checked ${checked} BB skill sources against the class code.`);
+      }
+      // spot values
+      const skillIds = (k, srv) => S(k, srv).skills.map(x => x.card);
+      if (!skillIds("ice", "og").includes("penguin_frostBite")) sg("penguin_frostBite (the normal attack freeze) should be a source of ice");
+      if (skillIds("ice", "og").includes("penguin_nAttack")) sg("a **Frost Bite:** line on penguin_nAttack is credited to penguin_frostBite, not the host card");
+      if (skillIds("poison", "og").includes("chameleon_immunity")) sg("chameleon_immunity removes poison; it is not a source");
+      if (!S("hpDrain", "og").items.length) sg("hpDrain should have item sources (Poseidon weapons / helmet)");
+      if (!S("ice", "og").pets.some(p => p.pet === "p_sim")) sg("S. Ice Mixer (p_sim) should be a pet source of ice");
+      if (S("gilded", "og").skills.length) sg("gilded is TTO-only; it has no BB source");
+      if (!S("gilded", "tto").skills.length) sg("gilded should have a TTO skill source (Coin Ricochet)");
+      if (maxLv("ice", "og") < 2) sg(`statusMaxLevel(ice, og) = ${maxLv("ice", "og")}`);
+      if (maxLv("charm", "og") !== Math.max(...S("charm", "og").skills.map(x => x.lvMax || 0), ...S("charm", "og").items.map(x => x.lvMax || 0), ...S("charm", "og").pets.map(x => x.lvMax || 0), 0)) sg("statusMaxLevel(charm) is not the highest source level");
+      // items and pets name real things
+      const petFind = run("petInfoFind");
+      for (const r of run("STATUS_SOURCES_ITEM")) {
+        for (const id of r.items || []) if (!run("statusItemName")(id)) sg(`item source ${r.key}: ${id} has no name`);
+        if (!r.cite) sg(`item source ${r.key} ${(r.items || []).join(",")}: no citation`);
+        if (!statusOk(r.key)) sg(`item source: ${r.key} is not a status`);
+      }
+      for (const r of run("STATUS_SOURCES_PET")) {
+        if (!petFind(r.pet)) sg(`pet source ${r.key}: ${r.pet} is not in PET_INFO`);
+        if (!r.cite) sg(`pet source ${r.key} ${r.pet}: no citation`);
+        if (!statusOk(r.key)) sg(`pet source: ${r.key} is not a status`);
+      }
+      function statusOk(k){ return !!run("statusGameKey")(k); }
+      console.log(`Verified status sources: ${rows.filter(r => r.kind === "apply").length} skill source rows, ${Object.keys(FIX).length} hand rulings, ${run("STATUS_SOURCES_ITEM").length} item rows, ${run("STATUS_SOURCES_PET").length} pet rows.`);
+    }
   } catch (e) { sg("threw: " + (e && e.stack || e)); }
 }
 // </SG:checks>
