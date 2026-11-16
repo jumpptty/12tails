@@ -13619,6 +13619,22 @@ const STATUS_CLASS_MAP = {
   eclipsed: "Debuff, Magical",   // TTO Crescent Eclipse (eStatus 513): TTO1102:StatusData::isDebuffStatus@0x2251160, isMagicalStatus@0x22525B0
   anchored: "Debuff, Physical, Crowd Control",   // TTO Drop Anchor (eStatus 510): TTO1102:StatusData::isDebuffStatus@0x2251160, isPhysicalStatus@0x2253510, isCrowdControlStatus@0x2250F10
   pillage: "Debuff, Physical",
+// <SG:cls>
+  // Status glossary pass (2026-11-16): every key left of the three games' status tables. "Unclassified" = in no is*Status list (verified).
+  // BB (StatusData.cs is*Status, 12Tails-Mechanics-Reference.md §4.2.0):
+  darkritual: "Buff, Magical", eraseboost: "Unclassified", flameofreggu: "Buff, State", happy: "System", hpregen: "Buff, System", inferno: "Debuff, Magical",
+  lifeboost: "Buff, Physical", livingdead: "Buff, Magical", lovebind: "Debuff, Magical", magicboost: "Buff, Physical", mount: "Buff, System", mpregen: "Buff, System",
+  nemesislarva: "System", netherbane: "Debuff, Magical", nohate: "Buff, System", plague: "Debuff, Physical", reflect: "Buff, System", rejuvenate: "Buff, Magical",
+  revive: "Buff, State", sad: "System", speedboost: "Buff, Physical", whiteflag: "Buff, State", yellowflag: "Buff, State",
+  astralshift: "Unclassified", overlord: "Unclassified",   // applied (Wolf.cs:10756 / every class; Bison_overLord.cs:110) but missing from getStatusCode and every list
+  // TTO only (TTO1102:StatusData lists read with capstone, the Mechanics reference's TTO status table):
+  abyssdoom: "Debuff, Magical", abyssexposure: "Debuff, Magical", abyssfreeze: "System", abyssorbmark: "State", abysspetrify: "System", abyssshackle: "System",
+  airpoison: "Unclassified", airpoisonimmune: "Buff, Magical", crimsonbrand: "Debuff, Magical", crystalfrozen: "System", crystalfrozenimmune: "Buff, Magical",
+  dealersmark: "Debuff, Magical", gmdropboost: "Unclassified", gmexpboost: "Unclassified", magicwall: "Buff", spirelink: "Buff, State", tempestdance: "Buff, State",
+  weak: "Debuff, Magical",
+  // Reborn only (Reborn1027:StatusData.cs:1587-1677):
+  carrongambit: "Unclassified", cookfeast: "Buff", reactoroverdrive: "Unclassified",
+// </SG:cls>
 };
 // Plain-language effect shown as a 2nd centered line under the classification
 // in [name]'s hover popup. Sparse by design, same safe-fallback shape as
@@ -13953,6 +13969,55 @@ const STATUS_DESC_MAP = {
   lucentbarrier: (sLv) => `ระหว่างที่ติด [reverse] อยู่ด้วย ทุก ^^ดาเมจขาว^^ ที่โดนจากฝ่ายตรงข้ามที่ยังมีชีวิต สะท้อน **${sLv != null ? 10 * sLv : "10×เลเวล"}%** ของดาเมจนั้น (ปัดลง) กลับเป็น ^^ดาเมจม่วง^^ ใส่ผู้โจมตี คิดจากดาเมจเต็มก่อนที่ [reverse] จะเปลี่ยนเป็นฮีล · ^^ดาเมจม่วง^^ ที่โดนไม่สะท้อน`,
   scripturebind: "เคลื่อนที่ได้เร็วสุด **50%** ของความเร็ววิ่ง (**38%** เมื่อ **Grand Codex** ได้ผลจาก [worldEncarta])",
   sanctuary: "ดาเมจที่ได้รับแต่ละครั้ง **×0.5** (ปัดลง) ทั้งดาเมจตรงและ ^^Effect Damage^^<br>• หักครึ่งหลังคิด ^^hitMod^^ แล้ว จึง **คูณซ้อน** กับ hitMod (เช่น hitMod 1.2 → ได้รับ 0.6 เท่า) ไม่ใช่ hitMod -0.5 · ดาเมจที่ตัวเองทำ (^^dmgMod^^) เท่าเดิม",
+// <SG:desc>
+  // Status glossary pass (2026-11-16): the statuses the popups had no text for. Facts and citations: 12Tails-Mechanics-Reference.md §4.2.0 (BB),
+  // its TTO status table (TTO only), Reborn-Mechanics-Reference.md §2.11 (Reborn only). TTO / Reborn-only keys sit here, since only that server lists them.
+  darkritual: "ค่าสถานะทั้ง **8** ค่า **+66** (ไม่ขึ้นกับเลเวล) และตัวใหญ่ขึ้น **10%**",
+  eraseboost: (sLv) => `ตอนติด ลบ [lifeBoost] [magicBoost] และ [speedBoost] ที่เลเวลไม่เกิน **${sLv != null ? 2 * sLv + 1 : "2×เลเวล + 1"}** หลังจากนั้นไม่มีผลอื่น`,
+  flameofreggu: "ค่าสถานะทั้ง **8** ค่าเพิ่มเท่าค่าเติบโตของอาชีพที่เลเวล **50** แต่ตอนหมดลดเท่าค่าที่เลเวล **35** ส่วนต่างจึงค้างถาวรทุกครั้งที่ได้รับ<br>__คิดจากอาชีพของผู้เล่นเครื่องนั้น ไม่ใช่อาชีพของผู้ที่ติด__",
+  happy: (sLv) => `ตอนติด Hate ที่ผู้ติดมีต่อผู้ใส่หมดเร็วขึ้น: เวลาที่เหลือลดลง **${sLv != null ? sLv + "%" : "เลเวล%"}**`,
+  hpregen: "ทุก **2 วินาที** ฟื้น HP ตามค่าที่ได้มา (Sacrificial Orb **300**) ไม่ขึ้นกับเลเวล",
+  inferno: (sLv) => `ได้รับดาเมจเพิ่ม **${sLv != null ? 10 * sLv : "10×เลเวล"}%** (^^hitMod^^) ตอนติดลบ [ignite] กับ [doom] และระหว่างติดได้ทั้งสองไม่ได้<br>หมดเวลาเองแล้วระเบิดใส่ทุกตัวในรัศมี **8m** รวมตัวเองและเพื่อน ดาเมจ **${sLv != null ? 1000 * sLv : "1000×เลเวล"}** (หัก DEF) ลดตามระยะ เหลือ **20%** ที่ขอบ<br>__ถูกลบก่อนหมดเวลาจะไม่ระเบิด__`,
+  lifeboost: (sLv) => `HP สูงสุดอย่างน้อย **${sLv != null ? (sLv <= 5 ? 400 * sLv : 0) : "400×เลเวล"}**: ถ้า HP สูงสุดจาก VIT (ไม่นับบัฟ) ต่ำกว่านี้ เติมส่วนที่ขาดให้ ไม่ใช่บวกเพิ่มทุกครั้ง<br>__เลเวลเกิน **5** ไม่มีผล__`,
+  livingdead: "รับได้เฉพาะ Anubi, Deadbeagle, Deadshund, Deadbull และ Deadcamel: สี่ชนิดหลังรอดจากฮิตที่ทำให้ตาย **1** ครั้ง เหลือ HP **1** แล้วสถานะหายไป",
+  lovebind: "เมื่อผู้ติดตี **Menalisa** ด้วย ^^ดาเมจขาว^^ ที่มีดาเมจ ผู้ติดโดน ^^ดาเมจม่วง^^ ครึ่งหนึ่งของดาเมจนั้นคืน (ดาเมจที่ Menalisa ได้ไม่ลดลง)",
+  magicboost: (sLv) => `MP สูงสุดอย่างน้อย **${sLv != null ? (sLv <= 5 ? 120 * sLv : 0) : "120×เลเวล"}**: ถ้า MP สูงสุดจาก INT (ไม่นับบัฟ) ต่ำกว่านี้ เติมส่วนที่ขาดให้ ไม่ใช่บวกเพิ่มทุกครั้ง<br>__เลเวลเกิน **5** ไม่มีผล__`,
+  mount: "อยู่บนพาหนะ (ไม่ใช่ผู้ขี่) ผู้ขี่บังคับพาหนะแทนตัวเอง<br>ตอนลงจากพาหนะ ผู้ขี่ได้ HP MP SP และ KO ที่พาหนะเหลือ (ยกเว้น MoleTank และ GigaCannon)",
+  mpregen: "ทุก **2 วินาที** ฟื้น MP ตามค่าที่ได้มา (Sacrificial Jem **100**) ไม่ขึ้นกับเลเวล",
+  nemesislarva: "กลายเป็นหินในรังของ Nemesis: ขยับไม่ได้ สถานะทั้งหมดถูกลบและติดสถานะใหม่ไม่ได้ โดน ^^ดาเมจม่วง^^ **93** ทุก **5 วินาที**<br>^^ดาเมจขาว^^ ที่โดนไม่ทำดาเมจ แต่ลดเวลาที่เหลือ **0.3 วินาที** ต่อดาเมจ **1** (ปัดขึ้น) จนหลุด<br>__เป็นสถานะ System จึงล้างด้วยสกิลล้าง Debuff ไม่ได้__",
+  netherbane: "โดน ^^ดาเมจม่วง^^ **130** ทุก **2 วินาที** (ไม่ขึ้นกับเลเวล)",
+  nohate: "ฮิต ^^ดาเมจขาว^^ ของผู้ติดสร้าง Hate แค่ **1**<br>__^^ดาเมจม่วง^^ และการฮีลยังสร้าง Hate ตามปกติ__",
+  plague: (sLv) => `ทุก **9 วินาที** โดน ^^ดาเมจม่วง^^ **${sLv != null ? 20 * sLv + 3 : "20×เลเวล + 3"}** แล้วแพร่ไปยังเพื่อนร่วมทีมของผู้ติดในรัศมี **13m** ด้วยเลเวลเดียวกันและเวลาที่เหลือ<br>Robots ติดไม่ได้`,
+  reflect: "ฮิต ^^ดาเมจขาว^^ ที่มีดาเมจสะท้อนกลับเป็น ^^ดาเมจม่วง^^ เท่ากันใส่ผู้ตี ผู้ติดไม่ได้รับดาเมจ KO หรือ Hate จากฮิตนั้น (ยังโดนผลัก)<br>__^^ดาเมจม่วง^^ ที่โดนไม่สะท้อน__",
+  rejuvenate: (sLv) => `ทุก **4 วินาที** ฟื้น HP **${sLv != null ? `${6 * sLv + 6} + ${(0.4 * sLv).toFixed(1)}%` : "6×เลเวล + 6 + 0.4%×เลเวล"}** ของ HP สูงสุด (ส่วนเปอร์เซ็นต์ปัดลง)`,
+  revive: "ถ้าผู้ติดตายอยู่แล้วตอนได้รับ จะฟื้นทันทีด้วย HP ตามค่าที่ได้มา (ไม่เกิน HP สูงสุด) SP และ KO เต็ม<br>__ไม่ใช่การกันตาย: ตายทีหลังจะไม่ฟื้น__",
+  sad: (sLv) => `ตอนติด Hate ที่ผู้ติดมีต่อผู้ใส่อยู่นานขึ้น: เวลาที่เหลือเพิ่มขึ้น **${sLv != null ? sLv + "%" : "เลเวล%"}**<br>__ไม่มีส่วนไหนในเกมใส่สถานะนี้__`,
+  speedboost: (sLv) => `ขณะวิ่ง ความเร็วเคลื่อนที่อย่างน้อย **${sLv != null ? 4 + sLv : "4 + เลเวล"} m/s** (เร็วกว่านี้อยู่แล้วไม่เปลี่ยน)`,
+  whiteflag: "บอกว่าอยู่ในรัศมีธงขาว ไม่มีผลในตัว (ตัวธงเป็นผู้ฟื้น HP)",
+  yellowflag: "บอกว่าอยู่ในรัศมีธงเหลือง ไม่มีผลในตัว (ตัวธงเป็นผู้ฟื้น MP และ SP)",
+  overlord: (sLv) => `DEF **+${sLv != null ? 5 * sLv : "5×เลเวล"}%** ของ DEF ของไบสันที่ใช้ **Overlord** (ปัดขึ้น) ให้เฉพาะเผ่า Tails`,
+  abyssdoom: "นับถอยหลัง หมดเวลาแล้วตายทันที<br>[cleanse] เลเวล **4** ขึ้นไปลบได้ · [immunity] กันไม่ได้",
+  abyssexposure: "เฉพาะในภารกิจของ Skybug Abyss: ดาเมจที่ได้รับ × (**0.5** × จำนวนชั้น + **1**) ปัดขึ้น ชั้นเพิ่มทีละ **1** ทุกครั้งที่โดนพายุของบอส",
+  abyssfreeze: "แข็งเป็นหิน เคลื่อนที่และกระเด็นไม่ได้ ^^ดาเมจขาว^^ ที่โดนไม่ทำ KO และลุกจากล้มแล้วยังติดอยู่<br>__เป็นสถานะ System จึงล้างด้วยสกิลล้าง Debuff ไม่ได้ และ [immunity] กันไม่ได้__",
+  abyssorbmark: "บอกว่าเป็นผู้ทำลายลูกแก้วของบอสไปแล้ว ไม่มีผลในตัว",
+  abysspetrify: "เป็นหินน้ำแข็ง เคลื่อนที่และกระเด็นไม่ได้ ทุกฮิตที่โดนไม่ทำดาเมจ KO หรือผลัก และนับถอยหลังครั้งละ **1** (เริ่ม **15** ครั้ง) ครบแล้วหลุด<br>ติดอยู่ครบ **10 วินาที** แล้วย้ายไปผู้เล่นที่ใกล้ที่สุดที่ยังไม่ติด",
+  abyssshackle: "ถูกล่าม เคลื่อนที่และกระเด็นไม่ได้ ฮิตจากเพื่อนร่วมทีมไม่ทำดาเมจ แต่หักจากค่าโซ่ (เท่า HP สูงสุดของผู้ติด) จนหลุด<br>ติดอยู่ครบ **10 วินาที** แล้วย้ายไปผู้เล่นที่ใกล้ที่สุดที่ยังไม่ติด",
+  airpoison: "ทุก **4 วินาที** โดน ^^ดาเมจม่วง^^ **99** เว้นแต่มีค่าต้านพิษอากาศ ([airPoisonImmune] หรืออุปกรณ์)<br>[immunity] กันไม่ได้",
+  airpoisonimmune: (sLv) => `ค่าต้านพิษอากาศ **+${sLv != null ? sLv : "เลเวล"}**: กัน [airPoison] และลดเลเวล [poison] ในเขตพิษ`,
+  crimsonbrand: "ได้รับดาเมจเพิ่ม **15%** (^^hitMod^^ **+0.15**)<br>__ไม่มีโค้ดในไคลเอนต์ที่ใส่สถานะนี้__",
+  crystalfrozen: (sLv) => `เคลื่อนที่ได้เร็วสุดเท่าความเร็ววิ่ง **−${sLv != null ? sLv : "เลเวล"}** และถอยหลังไม่ได้<br>ทุก **2 วินาที** โดน ^^ดาเมจม่วง^^ **15%** ของ HP สูงสุด (ปัดขึ้น)`,
+  crystalfrozenimmune: "ค่าต้าน [crystalFrozen] เท่าเลเวล: ตั้งแต่ **1** ไม่ติด [crystalFrozen] ของภารกิจ",
+  dealersmark: (sLv) => `ได้รับดาเมจเพิ่ม **${sLv != null ? 8 * Math.min(3, Math.max(1, sLv)) : "8×เลเวล"}%** (^^hitMod^^ นับได้ถึงเลเวล **3**)<br>__ไม่มีโค้ดในไคลเอนต์ที่ใส่สถานะนี้__`,
+  gmdropboost: "ไอคอนกิจกรรมของ GM ไม่มีผลในไคลเอนต์",
+  gmexpboost: "ไอคอนกิจกรรมของ GM ไม่มีผลในไคลเอนต์",
+  magicwall: "ฮิต ^^ดาเมจขาว^^ ประเภทเวทที่โดนไม่ทำดาเมจ KO หรือผลัก และกำแพงไม่หมดไปเมื่อกัน<br>__ฮิตกายภาพและ ^^ดาเมจม่วง^^ ไม่ถูกกัน · [armorShatter] ลบได้__",
+  spirelink: "ไม่มีผลในไคลเอนต์ และไม่มีโค้ดที่ใส่สถานะนี้",
+  tempestdance: "ระหว่างใช้ **Tempest Dance**: มีโอกาสหลบฮิต (เพิ่มตามค่า LCK) และไม่กระเด็น",
+  weak: (sLv) => `ได้รับดาเมจเพิ่ม **${sLv != null ? 25 * sLv : "25×เลเวล"}%** (คิดหลังสุด ปัดขึ้น)`,
+  carrongambit: (sLv) => `ดาเมจของกระต่าย **×${sLv != null ? ([1.15, 1.35, 1.6][Math.min(3, Math.max(1, sLv)) - 1]) : "1.15 / 1.35 / 1.6"}** (ปัดขึ้น หลังหัก DEF) ตามจำนวนเหรียญที่ออกหัว${sLv == null || sLv >= 3 ? "<br>เลเวล **3**: ทุกฮิตที่ไม่ใช่สกิล C7 ทำ ^^ดาเมจม่วง^^ **20%** ของดาเมจนั้นใส่ทุกตัวรอบ ๆ ในรัศมี **3m**" : ""}`,
+  cookfeast: "ค่าสถานะเพิ่มตามอาหารที่กิน (ค่าจากเซิร์ฟเวอร์) × (**1** + **0.5** × เลเวล **Culinary Tongue** ของวาฬผู้กิน)",
+  reactoroverdrive: "TAL **+120** (SP สูงสุด **+24**)",
+// </SG:desc>
 };
 // Per-server status popup text (2026-10-02): an entry here replaces STATUS_DESC_MAP's for that server. The skill page
 // passes its current server; anything without a server entry falls back to the base text.
@@ -14004,8 +14069,11 @@ function getStatusDesc(name, sLv, lck, server){
 // Every status of every server, in the games' own spelling, from their status tables:
 //   og     = BB StatusData.getStatusCode (StatusData.cs:50-2333), 205 keys (ToT uses the same list: its client is encrypted and names none of its own);
 //   tto    = the 48 keys TTO1102 adds to them (enum eStatus, TTO1102 dump.cs:409378; it also has all 205 of BB's);
-//   reborn = the 8 keys Reborn1027 adds (StatusData.getStatusCode, Reborn1027:StatusData.cs:902-928; its other 205 decode to BB's exactly).
+//   reborn = the 8 keys Reborn1027 adds (StatusData.getStatusCode, Reborn1027:StatusData.cs:902-928; its other 205 decode to BB's exactly);
+//   local  = 2 keys every server applies that the table lacks: astralShift (every class's support skill, a local addStatus) and overLord
+//            (Bison_overLord.cs:110); neither is in any is*Status list (12Tails-Mechanics-Reference.md §4.2.0).
 const STATUS_GAME_KEYS = {
+  local: ["astralShift", "overLord"],
   og: [
     "hide", "noDamage", "noKo", "noHate", "noForce", "lifeBoost", "magicBoost", "speedBoost", "eraseBoost", "atkUp", "defUp", "agiUp", "vitUp",
     "magUp", "chaUp", "talUp", "lckUp", "atkDown", "defDown", "agiDown", "vitDown", "magDown", "chaDown", "talDown", "lckDown", "hpSap", "mpSap",
@@ -14059,11 +14127,11 @@ const _statusKeysCache = {};
 function statusKeysFor(server){
   const srv = STATUS_SERVER_ORDER.includes(server) ? server : "og";
   if (_statusKeysCache[srv]) return _statusKeysCache[srv];
-  const keys = STATUS_GAME_KEYS.og.concat(srv === "tto" ? STATUS_GAME_KEYS.tto : srv === "reborn" ? STATUS_GAME_KEYS.reborn : []);
+  const keys = STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.local, srv === "tto" ? STATUS_GAME_KEYS.tto : srv === "reborn" ? STATUS_GAME_KEYS.reborn : []);
   return (_statusKeysCache[srv] = keys.slice().sort((a, b) => statusDisplayName(a).localeCompare(statusDisplayName(b), "en") || a.localeCompare(b, "en")));
 }
 function statusAllKeys(){
-  return STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.tto, STATUS_GAME_KEYS.reborn);
+  return STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.local, STATUS_GAME_KEYS.tto, STATUS_GAME_KEYS.reborn);
 }
 function statusGameKey(key){
   const l = String(key).toLowerCase();
@@ -14118,7 +14186,7 @@ const STATUS_SOURCE_FIX = {
   "monkey_fireBall:fireKeep": "apply",   // fire balls are stored in the fireKeep status
   "mole_bunker:snowMan": "mention", "mole_bunker:snowBall": "mention", "mole_bunker:petrify": "mention", "mole_bunker:sleep": "mention", "mole_bunker:nightmare": "mention",   // "… ติดได้": statuses a Bunkered Mole can still get
   "cat_twoPair:lastHope": "mention", "cat_twoPair:swallow": "mention", "cat_twoPair:gobble": "mention", "cat_twoPair:charm": "mention", "cat_twoPair:mindControl": "mention",
-  "cat_twoPair:nightmare": "mention", "cat_twoPair:mimic": "mention", "cat_twoPair:allMimic": "mention", "cat_twoPair:transform": "mention", "cat_twoPair:overPresence": "mention",   // statuses Two Pair never copies
+  "cat_twoPair:nightmare": "mention", "cat_twoPair:mimic": "mention", "cat_twoPair:allMimic": "mention", "cat_twoPair:transform": "mention", "cat_twoPair:overPresence": "mention", "cat_twoPair:overLord": "mention",   // statuses Two Pair never copies
   // conditions and other skills' statuses named in a modifier line
   "bison_rageControl:berserkerRush@tto": "mention", "monkey_autoInstant:instantCast": "mention", "penguin_deadlyFrost:frost": "mention",
   "bat_zombieChameleon:poison": "mention",
@@ -40159,6 +40227,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T12:55:19.993Z","feat(bible): เพิ่มสถานะที่ยังไม่มีในคัมภีร์ 46 ชนิด (BB 23, TTO 18, Reborn 3, astralShift, overLord) พร้อมประเภทและคำอธิบายผล"],
     ["2026-11-16T12:47:51.803Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 2 แหล่งที่มาของสถานะจากสกิล อุปกรณ์ ไอเทม และสัตว์เลี้ยง"],
     ["2026-11-16T12:17:05.687Z","feat(bible): สารานุกรมสถานะ ไอคอนสถานะทั้งหมด 250 ไอคอน อัปสเกลเป็น 128 px (BB, TTO, Reborn)"],
     ["2026-11-16T12:05:11.076Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 1 รายชื่อสถานะของทุกเซิร์ฟเวอร์ (BB 205, TTO 253, Reborn 213)"],

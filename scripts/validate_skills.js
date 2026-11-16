@@ -7360,14 +7360,15 @@ if (RUN_DAMAGE_CHECKS) {
     miss1.forEach(n => sg(`missing ${n}`));
     if (!miss1.length) {
       const K = run("statusKeysFor"), G = run("STATUS_GAME_KEYS"), name = run("statusDisplayName"), tags = run("statusTags"), srvOf = run("statusServersOf");
-      for (const [srv, n] of Object.entries({ og: 205, tot: 205, tto: 253, reborn: 213 })) {
+      for (const [srv, n] of Object.entries({ og: 207, tot: 207, tto: 255, reborn: 215 })) {
         const ks = K(srv);
         if (ks.length !== n) sg(`${srv}: ${ks.length} statuses, expected ${n}`);
         if (new Set(ks.map(k => k.toLowerCase())).size !== ks.length) sg(`${srv}: a key appears twice (case-insensitive)`);
         const names = ks.map(name);
         if (names.some((x, i) => i && names[i - 1].localeCompare(x, "en") > 0)) sg(`${srv}: not sorted A-Z by display name`);
       }
-      if (run("statusAllKeys()").length !== 261) sg(`statusAllKeys() has ${run("statusAllKeys()").length}, expected 261`);
+      if (run("statusAllKeys()").length !== 263) sg(`statusAllKeys() has ${run("statusAllKeys()").length}, expected 263`);
+      if (!run("statusKeysFor(\"tto\")").includes("overLord") || !run("statusKeysFor(\"og\")").includes("astralShift")) sg("astralShift and overLord (applied but missing from getStatusCode) must be on every server");
       for (const [k, want] of [["snowMan", "Snowman"], ["artCancel", "Art Cancel"], ["hpRegen", "HP Regen"], ["guardianOfTheNight", "Guardian of the Night"], ["magDown", "INT Down"], ["noKo", "No KO"], ["atkUp", "ATK Up"], ["dealersMark", "Dealer's Mark"]])
         if (name(k) !== want) sg(`statusDisplayName(${k}) = ${JSON.stringify(name(k))}, expected ${want}`);
       for (const [k, want] of [["frost", ["Debuff", "Magical", "Lock"]], ["blackServant", ["Debuff", "Magical", "State"]], ["atkup", ["Buff", "Physical"]], ["gilded", ["Debuff", "Physical", "Crowd Control"]], ["nosuchstatus", []]])
@@ -7388,6 +7389,17 @@ if (RUN_DAMAGE_CHECKS) {
         const all = [...body.matchAll(/public const eStatus ([A-Za-z0-9_]+) =/g)].map(m => m[1]).filter(n => n !== "none");
         const bbL = new Set(G.og.map(k => k.toLowerCase()));
         if (!same(all.filter(n => !bbL.has(n.toLowerCase())).sort(), [...G.tto].sort())) sg(`STATUS_GAME_KEYS.tto differs from TTO1102 eStatus`);
+      }
+      // ---- Task 2: every status of every server has a class (or the verified "Unclassified") and a text
+      { const CLSM = run("STATUS_CLASS_MAP"), desc = run("getStatusDesc"), noCls = new Set(), noTxt = new Set();
+        for (const srv of ["og", "tot", "tto", "reborn"]) for (const k of K(srv)) {
+          if (!(CLSM[k.toLowerCase()] || CLSM[k])) noCls.add(k);
+          let d = ""; try { d = desc(k, null, null, srv); } catch (e) { d = ""; sg(`getStatusDesc(${k}) throws on ${srv}: ${e.message}`); }
+          if (!d) noTxt.add(k);
+        }
+        if (noCls.size) sg(`${noCls.size} statuses have no class: ${[...noCls].join(" ")}`);
+        if (noTxt.size) sg(`${noTxt.size} statuses have no text: ${[...noTxt].join(" ")}`);
+        for (const [k, v] of Object.entries(CLSM)) if (!String(v).split(/,\s*/).every(x => ["Buff", "Debuff", "Physical", "Magical", "State", "System", "Lock", "Shield", "Crowd Control", "Unclassified"].includes(x))) sg(`STATUS_CLASS_MAP.${k} = "${v}" has an unknown tag`);
       }
       console.log(`Verified the status glossary list: ${run("statusAllKeys()").length} statuses (BB ${K("og").length}, TTO ${K("tto").length}, Reborn ${K("reborn").length}).`);
     }
