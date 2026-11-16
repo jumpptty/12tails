@@ -6179,7 +6179,7 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();") && !src.includes('id="patchSub"') && !src.includes('id="patchKicker"') && src.includes('<select class="patch-pick" aria-label="เลือกแพตช์">') && src.includes("list.innerHTML = lines(entries[at]);")
     && src.includes('<div class="changelog-patch-btns" id="patchHistoryBtns"></div>')
     && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes("localStorage.setItem(PATCH_SEEN_KEY, forced)")
-    && src.includes("if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }")
+    && src.includes("if (seen !== PATCH_HISTORY[0].key && !newsTakesPatchSlot()){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }")
     && src.includes("show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false)") && /\.patch-ok:disabled\{/.test(src)
     && src.includes("const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS[\"server_\" + e.server];") && /\.patch-list li\.patch-feature\{/.test(src)
     && /\.patch-list li\.patch-feature\.patch-top\{/.test(src) && src.includes('sec("สำคัญที่สุด", 0, t1) + sec("เรื่องสำคัญ", t1, f) + sec("การเปลี่ยนแปลงอื่น", f, e.items.length)');
@@ -7655,8 +7655,65 @@ if (RUN_DAMAGE_CHECKS) {
       else {
         if (tool.title !== "สารานุกรมสถานะ" || tool.shortTitle !== "สถานะ" || tool.category !== "Reference") sg(`TOOLS entry: title ${tool.title} / ${tool.shortTitle} / ${tool.category}`);
         if (!tool.fact || tool.fact()[0] !== 258) sg("TOOLS fact must count all 258 statuses");
-        if (!(tool.art || []).every(a => /^status:/.test(a) && run("statusIconSrc")(a.slice(7)))) sg("TOOLS art must be status:<key> icons");
+        // menu art = raining status icons, never the "?" icon (user 2026-11-16); each icon's data is written once (CSS var / SVG defs)
+        if (tool.collage !== "statusRain" || tool.art) sg('TOOLS status-glossary: menu art must be collage "statusRain" with no art list');
+        const LA = run("LN_ART"), unk = run("STATUS_ICONS")._unknown, rainIcons = has("statusRainIcons") ? run("statusRainIcons")() : [];
+        if (rainIcons.length < 100 || new Set(rainIcons).size !== rainIcons.length || rainIcons.includes(unk)) sg(`statusRainIcons(): ${rainIcons.length} icons, duplicates or the "?" icon`);
+        if (!LA || typeof LA.statusRain !== "function") sg("LN_ART.statusRain missing");
+        else for (const m of ["stage", "thumb"]) { const h = LA.statusRain(m), srcs = h.match(/data:image\/[^"')\s]+/g) || [];
+          if (srcs.length < 20) sg(`LN_ART.statusRain(${m}) shows only ${srcs.length} icons`);
+          if (unk && h.includes(unk)) sg(`LN_ART.statusRain(${m}) shows the "?" icon`);
+          if (new Set(srcs).size !== srcs.length) sg(`LN_ART.statusRain(${m}) writes an icon's data more than once`); }
       }
+      // the rain is diagonal and fast, a blur of icons on purpose (user 2026-11-16: "diagonal and much faster", not meant to be readable)
+      { const outs = [has("LN_ART") ? run("LN_ART").statusRain("stage") : "", has("newsPopupHtml") ? run("newsPopupHtml")() : ""];
+        for (const h of outs) { const durs = [...h.matchAll(/animation-duration:([\d.]+)s/g)].map(m => +m[1]);
+          if (!/class="ln-srain-tilt"/.test(h) || !durs.length || durs.some(d => d > 5)) sg(`status rain: a tilted layer (ln-srain-tilt) and every loop ≤ 5 s (got ${durs.length ? Math.max(...durs) : "none"})`); }
+        // dealt like cards (user 2026-11-16: "some statuses appeared too much"): no icon twice in a column, every picked icon used, counts within 1
+        for (const h of outs) {
+          const halves = [...h.matchAll(/<div class="ln-srain-col"[^>]*>([\s\S]*?)<\/div>/g)].map(m => { const c = [...m[1].matchAll(/var\(--si(\d+)\)/g)].map(x => +x[1]); return c.slice(0, c.length / 2); });
+          if (halves.some(c => new Set(c).size !== c.length)) sg("status rain: an icon repeats inside one column");
+          const cnt = {}; halves.flat().forEach(i => { cnt[i] = (cnt[i] || 0) + 1; }); const v = Object.values(cnt), nv = (h.match(/--si\d+:url/g) || []).length;
+          if (!v.length || Math.max(...v) - Math.min(...v) > 1 || v.length !== nv) sg(`status rain: icons not dealt evenly (${v.length} of ${nv} used, ${v.length ? Math.min(...v) + "-" + Math.max(...v) : 0} times each)`);
+          if (nv < (h.includes("is-stage") ? 60 : 40)) sg(`status rain: only ${nv} distinct icons`);
+        }
+        if (!/\.ln-srain-tilt\{[^}]*rotate:/.test(html)) sg(".ln-srain-tilt must rotate the columns");
+        // the menu rain fills the whole art column and a little past it (user 2026-11-16: "can it occupy larger area?")
+        if (!/\.ln-srain\.is-stage\{position:absolute; inset:-4% -12% -4% -10%;[^}]*ellipse closest-side/.test(html)) sg(".ln-srain.is-stage: absolute past the art column (inset -4% -12% -4% -10%) with an elliptical fade");
+        if (has("LN_ART") && !/<g transform="rotate\(/.test(run("LN_ART").statusRain("thumb"))) sg("the still rain thumb slants like the stage"); }
+      // the two type rings read apart (user 2026-11-16: "thicker and with really thin black border"): bands of --ro / --ri, 1 px black edges
+      { const ringCss = (sel) => (html.match(new RegExp("\\n  " + sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\{[^}]*\\}")) || [""])[0];
+        const r = ringCss(".stg-ring"), ri = ringCss(".stg-ring-in"), ra = ringCss(".stg-ring-in::after"), big = ringCss(".stg-ring.is-big");
+        const px = (s, v) => parseFloat((s.match(new RegExp("--" + v + ":(\\d+(?:\\.\\d+)?)px")) || [0, 0])[1]);
+        if (px(r, "ro") < 5 || px(r, "ri") < 4 || !/border:var\(--ro\) solid var\(--c\)/.test(r) || !/box-shadow:0 0 0 1px #000/.test(r)) sg(".stg-ring: outer band var(--ro) ≥ 5px, inner ≥ 4px, a 1 px black outer edge");
+        if (!/border:var\(--ri\) solid transparent/.test(ri) || !/box-shadow:0 0 0 1px #000/.test(ri)) sg(".stg-ring-in: inner band var(--ri) with a 1 px black line between the bands");
+        if (!/box-shadow:inset 0 0 0 1px #000/.test(ra) || !/z-index:1/.test(ra)) sg(".stg-ring-in::after: a 1 px black line round the icon, above it");
+        if (px(big, "ro") < 7 || px(big, "ri") < 5) sg(".stg-ring.is-big: bands ≥ 7px / 5px");
+        if (!/\.news-ring \.stg-ring\{box-shadow:0 0 0 1px #000,/.test(html)) sg("the news rings keep the black outer edge under their drop shadow"); }
+      // one-time "ของเล่นใหม่" pop-up (user 2026-11-16), shown on load instead of the TTO patch notes it replaces
+      { const NP = has("NEWS_POPUP") ? run("NEWS_POPUP") : null, PH = run("PATCH_HISTORY");
+        if (!NP) sg("missing NEWS_POPUP");
+        else {
+          if (NP.tool !== "status-glossary" || NP.kicker !== "ของเล่นใหม่" || NP.title !== "สารานุกรมสถานะในเกม" || !NP.key) sg("NEWS_POPUP: tool / kicker / title / key");
+          if (!PH.some(e => e.key === NP.replaces)) sg(`NEWS_POPUP.replaces ${NP.replaces} is not a PATCH_HISTORY key`);
+          const due = run("newsPopupDue");
+          if (!due(null, "", true) || due(NP.key, "", true) || due(null, "#status-glossary", true) || due(null, "#status-glossary/ice", true) || due(null, "", false)) sg("newsPopupDue: unseen = due; seen, on the tool itself, or no storage = not due");
+          if (run("newsTakesPatchSlot")() !== (NP.replaces === PH[0].key)) sg("newsTakesPatchSlot must be true only while the news replaces the newest patch");
+          const h = run("newsPopupHtml")(), plain = h.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+          if (!/<h2 id="newsTitle"[^>]*>[\s\S]*ของเล่นใหม่[\s\S]*สารานุกรมสถานะในเกม[\s\S]*<\/h2>/.test(h)) sg("the pop-up header must read ของเล่นใหม่ สารานุกรมสถานะในเกม");
+          if (!plain.includes(String(run("statusAllKeys")().length))) sg("the pop-up must show the live status count");
+          if (!/href="#status-glossary"/.test(h)) sg("the pop-up needs a link that opens #status-glossary");
+          if (h.includes(run("STATUS_ICONS")._unknown)) sg('the pop-up shows the "?" icon');
+          if (["og", "tot", "tto", "reborn"].some(s => !h.includes(run("SKILL_ICONS")["server_" + s]))) sg("the pop-up shows the four server logos");
+          if (!/<div class="changelog-backdrop news-backdrop" id="newsModal" hidden aria-modal="true" role="dialog" aria-labelledby="newsTitle">/.test(html)) sg("#newsModal: aria-modal dialog toggled by hidden (the donate nudge waits for it)");
+          if (!/class="changelog-popup news-pop"/.test(html)) sg("the news card must carry changelog-popup (theme surfaces)");
+          const mp = (html.match(/function mountPatchPopup\(\)\{[\s\S]*?\n\}/) || [""])[0];
+          if (!/seen !== PATCH_HISTORY\[0\]\.key && !newsTakesPatchSlot\(\)/.test(mp)) sg("mountPatchPopup must not force the patch notes the news replaces");
+          if (!/mountPatchPopup\(\);\r?\nmountNewsPopup\(\);/.test(html)) sg("mountNewsPopup() must run right after mountPatchPopup()");
+          const mn = (html.match(/function mountNewsPopup\(\)\{[\s\S]*?\n\}/) || [""])[0];
+          if (!/NEWS_SEEN_KEY, NEWS_POPUP\.key/.test(mn) || !/PATCH_SEEN_KEY, NEWS_POPUP\.replaces/.test(mn)) sg("closing the news must remember it and the patch it replaces");
+          if (!/patchModal/.test(mn)) sg("the news must wait while the patch notes are open");
+        } }
       for (const sel of [".stg-panel", ".stg-desc", ".stg-tile:not(.is-on)", ".stg-close", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
       // phone sheet: a deep link opens it and updates the address; it stays solid on the glass looks (ToT / Reborn --th-solid 0%)
       { const pg = (html.match(/function openByKey\(key, srv\)\{[\s\S]*?\n  \}/) || [""])[0];

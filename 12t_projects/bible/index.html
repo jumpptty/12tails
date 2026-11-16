@@ -29,7 +29,7 @@
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-pill:not(.is-on)", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
+    raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-pill:not(.is-on)", ".news-feat", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card", ".sk-roster-back", ".sk-roster-tab:not(.is-on)", ".sk-roster-pager button", ".sg-gate-btn", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
@@ -8417,21 +8417,21 @@
   /* ===== Status glossary (tool "status-glossary", user 2026-11-16: layout C of three mocks). Type rail | icon grid | the chosen status.
      Each icon sits in two rings: outer = nature (Physical / Magical / State / System, or Shield / Lock / Crowd Control), inner = Buff / Debuff.
      The rail rows carry the same colours, so they are the legend; the panel says it in words too (colour is never the only cue). */
-  .stg, .stg-panel{--stg-buff:#7fd18b; --stg-debuff:#e57373; --stg-phys:#f0a35e; --stg-mag:#b48cff; --stg-state:#74b9ff; --stg-sys:#a8a29a; --stg-lock:#5fd0b5; --stg-shield:#6fd3e8; --stg-cc:#f49ac1; --stg-none:#6e675c}
+  .stg, .stg-panel, .news-pop{--stg-buff:#7fd18b; --stg-debuff:#e57373; --stg-phys:#f0a35e; --stg-mag:#b48cff; --stg-state:#74b9ff; --stg-sys:#a8a29a; --stg-lock:#5fd0b5; --stg-shield:#6fd3e8; --stg-cc:#f49ac1; --stg-none:#6e675c}
   .stg{display:grid; grid-template-columns:190px minmax(0,1fr) minmax(330px,400px); gap:16px; align-items:start}
   html:not(.tool-status) body > .stg-panel{display:none}   /* the phone sheet lives in <body>; it never shows over another page */
   html.tool-status .stage{max-width:min(1500px, 98vw)}
   html.tool-status .tool-shell{background:none; border:0; box-shadow:none}
-  :is(.stg, .stg-panel) [data-o="buff"], :is(.stg, .stg-panel) [data-c="buff"]{--c:var(--stg-buff)}
-  :is(.stg, .stg-panel) [data-o="debuff"], :is(.stg, .stg-panel) [data-c="debuff"]{--c:var(--stg-debuff)}
-  :is(.stg, .stg-panel) [data-o="phys"], :is(.stg, .stg-panel) [data-c="phys"]{--c:var(--stg-phys)}
-  :is(.stg, .stg-panel) [data-o="mag"], :is(.stg, .stg-panel) [data-c="mag"]{--c:var(--stg-mag)}
-  :is(.stg, .stg-panel) [data-o="state"], :is(.stg, .stg-panel) [data-c="state"]{--c:var(--stg-state)}
-  :is(.stg, .stg-panel) [data-o="sys"], :is(.stg, .stg-panel) [data-c="sys"]{--c:var(--stg-sys)}
-  :is(.stg, .stg-panel) [data-o="lock"], :is(.stg, .stg-panel) [data-c="lock"]{--c:var(--stg-lock)}
-  :is(.stg, .stg-panel) [data-o="shield"], :is(.stg, .stg-panel) [data-c="shield"]{--c:var(--stg-shield)}
-  :is(.stg, .stg-panel) [data-o="cc"], :is(.stg, .stg-panel) [data-c="cc"]{--c:var(--stg-cc)}
-  :is(.stg, .stg-panel) [data-o="none"], :is(.stg, .stg-panel) [data-c="none"]{--c:var(--stg-none)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="buff"], :is(.stg, .stg-panel, .news-pop) [data-c="buff"]{--c:var(--stg-buff)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="debuff"], :is(.stg, .stg-panel, .news-pop) [data-c="debuff"]{--c:var(--stg-debuff)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="phys"], :is(.stg, .stg-panel, .news-pop) [data-c="phys"]{--c:var(--stg-phys)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="mag"], :is(.stg, .stg-panel, .news-pop) [data-c="mag"]{--c:var(--stg-mag)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="state"], :is(.stg, .stg-panel, .news-pop) [data-c="state"]{--c:var(--stg-state)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="sys"], :is(.stg, .stg-panel, .news-pop) [data-c="sys"]{--c:var(--stg-sys)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="lock"], :is(.stg, .stg-panel, .news-pop) [data-c="lock"]{--c:var(--stg-lock)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="shield"], :is(.stg, .stg-panel, .news-pop) [data-c="shield"]{--c:var(--stg-shield)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="cc"], :is(.stg, .stg-panel, .news-pop) [data-c="cc"]{--c:var(--stg-cc)}
+  :is(.stg, .stg-panel, .news-pop) [data-o="none"], :is(.stg, .stg-panel, .news-pop) [data-c="none"]{--c:var(--stg-none)}
   .stg-rail{display:flex; flex-direction:column; gap:2px; padding:4px}
   /* the server picker = the four logos, no box or name (user 2026-11-16); like the skill page's toggle: the others faded grey, the picked one in colour */
   .stg-srv{display:flex; justify-content:space-between; align-items:center; gap:4px; padding:2px 8px 0; margin-bottom:8px}
@@ -8445,7 +8445,7 @@
   .stg-type.is-on{background:var(--panel-2); color:var(--text); box-shadow:inset 3px 0 0 var(--gold)}
   .stg-type:disabled{opacity:.4; cursor:default}
   .stg-type i{margin-left:auto; font-style:normal; font-family:'JetBrains Mono','Prompt',monospace; font-size:11.5px}
-  .stg-sw{width:12px; height:12px; border-radius:50%; border:3px solid var(--c); flex:none}
+  .stg-sw{width:14px; height:14px; box-sizing:border-box; border-radius:50%; border:4px solid var(--c); box-shadow:0 0 0 1px #000; flex:none}
   .stg-sw-ic{width:16px; height:16px; object-fit:contain; flex:none; margin:0 -2px}
   .stg-changed{display:inline-block; margin-left:6px; color:var(--gold)}
   .stg-sep{height:1px; background:var(--line); margin:6px 4px}
@@ -8459,16 +8459,18 @@
   .stg-tile[hidden]{display:none}
   .stg-tile-nm{font-size:11.5px; line-height:1.25; text-align:center; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere}
   .stg-tile-nm.is-long{font-size:10px}
-  .stg-ring{--c:var(--stg-none); width:58px; height:58px; box-sizing:border-box; border-radius:50%; border:3px solid var(--c); display:grid; place-items:center; background:#0c0b0a; flex:none}
-  .stg-ring-in{position:relative; width:100%; height:100%; box-sizing:border-box; border-radius:50%; border:2px solid transparent; overflow:hidden}
+  /* the two type bands read apart (user 2026-11-16: "thicker and with really thin black border"): --ro outer, --ri inner, a 1 px black line
+     outside, between the bands (the inner ring's own shadow) and round the icon (::after, above the picture) */
+  .stg-ring{--c:var(--stg-none); --ro:5px; --ri:4px; width:60px; height:60px; box-sizing:border-box; border-radius:50%; border:var(--ro) solid var(--c); display:grid; place-items:center; background:#0c0b0a; flex:none; box-shadow:0 0 0 1px #000}
+  .stg-ring-in{position:relative; width:100%; height:100%; box-sizing:border-box; border-radius:50%; border:var(--ri) solid transparent; overflow:hidden; box-shadow:0 0 0 1px #000}
+  .stg-ring-in::after{content:""; position:absolute; inset:0; z-index:1; border-radius:50%; box-shadow:inset 0 0 0 1px #000; pointer-events:none}
   /* the icon fills its circle like the skill rings (user 2026-11-16): art at 1.3x, centred on its visible pixels by centreRingImg, soft round edge */
   .stg-ring-in > img{position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%));
     -webkit-mask-image:radial-gradient(circle closest-side, #000 70%, transparent 98%); mask-image:radial-gradient(circle closest-side, #000 70%, transparent 98%)}
   .stg-ring[data-i="buff"] .stg-ring-in{border-color:var(--stg-buff)}
   .stg-ring[data-i="debuff"] .stg-ring-in{border-color:var(--stg-debuff)}
   .stg-ring[data-i="both"] .stg-ring-in{border-color:var(--stg-buff) var(--stg-debuff) var(--stg-debuff) var(--stg-buff)}
-  .stg-ring.is-big{width:92px; height:92px; border-width:4px}
-  .stg-ring.is-big .stg-ring-in{border-width:3px}
+  .stg-ring.is-big{--ro:7px; --ri:6px; width:96px; height:96px}
   .stg-none{color:var(--muted); font-size:13px; padding:12px; margin:0}
   .stg-panel{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; box-sizing:border-box}
   .stg-head{display:flex; gap:14px; align-items:center}
@@ -8533,7 +8535,7 @@
     .stg-grid{grid-template-columns:repeat(auto-fill, minmax(68px, 1fr)); gap:6px; padding:2px 0 8px}
     .stg-tile{padding:8px 2px 6px; gap:4px}
     .stg-tile-nm{font-size:10.5px}
-    .stg-ring{width:46px; height:46px; border-width:2px}
+    .stg-ring{--ro:4px; --ri:3px; width:48px; height:48px}
     /* the chosen status is a bottom sheet over the grid (a panel under 207 tiles meant a 6,000 px scroll back) */
     .stg-panel{position:fixed; left:0; right:0; bottom:0; z-index:60; max-height:78dvh; overflow:auto; padding:14px; border-radius:14px 14px 0 0; border-bottom:0;
       box-shadow:0 -8px 24px rgba(0,0,0,.5); transform:translateY(105%); transition:transform .25s ease; visibility:hidden}
@@ -8541,7 +8543,79 @@
     .stg-panel.is-sheet{transform:none; visibility:visible; --th-solid:100%}   /* solid over the grid: the ToT / Reborn looks set panels to 0% fill, and 96% still let tile names show through */
     .stg-close{display:grid; place-items:center; position:sticky; top:0; margin:-4px -4px 0 auto; width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; font-size:15px; cursor:pointer; z-index:1}
   }
+  /* status rain (statusRainHtml: the glossary's menu art and the news pop-up's band). Columns move by transform only (lnRain); the icons keep
+     their own game frame, so no ring or shadow is added */
+  .ln-srain{position:relative; overflow:hidden; container-type:size}
+  /* diagonal and fast on purpose (user 2026-11-16: "diagonal and much faster", the icons are not meant to be readable): the columns sit in a
+     layer 1.6x the box, turned 22deg, so they fall down and to the left; each loop takes 2-4 s */
+  .ln-srain-tilt{position:absolute; inset:-30%; rotate:22deg}
+  .ln-srain-col{position:absolute; top:0; display:flex; flex-direction:column; translate:-50% 0; animation:lnRain 22s linear infinite; will-change:transform}
+  .ln-srain-col > i{display:block; flex:none; width:var(--srain-ic, 10cqh); height:var(--srain-ic, 10cqh); margin-bottom:var(--srain-gap, 3cqh);
+    background-position:center; background-size:contain; background-repeat:no-repeat}
+  /* the menu rain fills the art column and a little past it (user 2026-11-16: "can it occupy larger area?"): toward the gap before the title,
+     out to the stage edge, a soft elliptical edge instead of a small circle */
+  .ln-srain.is-stage{position:absolute; inset:-4% -12% -4% -10%; --srain-ic:10cqh; --srain-gap:3cqh;
+    -webkit-mask-image:radial-gradient(ellipse closest-side, #000 62%, transparent); mask-image:radial-gradient(ellipse closest-side, #000 62%, transparent)}
+  @media (max-width:900px){ .ln-srain.is-stage{inset:0} }
 /* </SG:css> */
+/* <NEWS:css> */
+  /* ===== "ของเล่นใหม่" one-time pop-up (mountNewsPopup, user 2026-11-16). A dark band of falling status icons with the title and three real
+     glossary rings, four tiles drawn from the page's own pieces (rings, level pills, source chips, server logos), two actions. The card is a
+     .changelog-popup, so the theme looks dress it; the band is art and stays dark in every look. Hover = a small lift / brightness, no glow. */
+  .news-pop{width:min(660px, 100%); max-height:calc(100dvh - 40px); overflow:auto; padding:0; border-radius:10px; display:block; animation:newsIn .35s ease-out}
+  @keyframes newsIn{from{opacity:0; transform:translateY(14px) scale(.985)} to{opacity:1; transform:none}}
+  .news-hero{position:relative; height:228px; overflow:hidden; background:#120d0a; border-bottom:1px solid color-mix(in srgb, var(--gold) 45%, transparent)}
+  .news-rain{position:absolute; inset:0; --srain-ic:20cqh; --srain-gap:6cqh}
+  .news-hero::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(90deg, rgba(18,13,10,.97) 0%, rgba(18,13,10,.88) 40%, rgba(18,13,10,.3) 72%, rgba(18,13,10,.6) 100%), linear-gradient(0deg, rgba(18,13,10,.85), transparent 50%)}
+  .news-hero-tx{position:absolute; left:28px; bottom:24px; z-index:2; max-width:60%}
+  .news-hero h2{margin:0; display:flex; flex-direction:column; align-items:flex-start; gap:8px}
+  .news-kicker{padding:3px 11px; border-radius:999px; background:var(--gold); color:#1a130c; font:700 12.5px/1.35 'Prompt',sans-serif}
+  .news-name{font:700 31px/1.15 'Prompt',sans-serif; color:#f7efe1; text-wrap:balance}
+  .news-count{margin:10px 0 0; font:500 13.5px/1.4 'Prompt',sans-serif; color:#d9cdb8}
+  .news-count b{font:700 1.05em/1 'JetBrains Mono','Prompt',monospace; color:#f3d77a}
+  .news-rings{position:absolute; right:34px; top:50%; translate:0 -50%; width:196px; height:156px; z-index:2}
+  .news-ring{position:absolute}
+  .news-ring .stg-ring{box-shadow:0 0 0 1px #000, 0 12px 26px rgba(0,0,0,.65); animation:newsBob 3.8s ease-in-out infinite alternate}
+  .news-ring.is-c{left:50%; top:50%; translate:-50% -50%}
+  .news-ring.is-l{left:0; top:4px; scale:.7; rotate:-9deg}
+  .news-ring.is-l .stg-ring{animation-delay:-1.3s}
+  .news-ring.is-r{right:0; bottom:0; scale:.7; rotate:9deg}
+  .news-ring.is-r .stg-ring{animation-delay:-2.6s}
+  @keyframes newsBob{from{transform:translateY(-4px)} to{transform:translateY(4px)}}
+  .news-feats{list-style:none; margin:0; padding:20px 24px 4px; display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .news-feat{display:flex; flex-direction:column; gap:4px; padding:14px 16px 15px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2)}
+  .news-feat-art{display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height:44px; margin-bottom:8px}
+  .news-feat-art .stg-ring{--ro:4px; --ri:3px; width:44px; height:44px}
+  .news-feat > b{font:600 14.5px/1.35 'Prompt',sans-serif; color:var(--gold)}
+  .news-feat-p{font:400 13px/1.5 'Prompt',sans-serif; color:var(--muted)}
+  .news-pill{display:grid; place-items:center; width:30px; height:30px; border-radius:7px; border:1px solid var(--line); background:var(--panel);
+    font:700 13px/1 'JetBrains Mono','Prompt',monospace; color:var(--muted)}
+  .news-pill.is-on{background:var(--gold); border-color:var(--gold); color:#1a130c}
+  .news-chip{padding:4px 10px; border-radius:999px; border:1px solid color-mix(in srgb, var(--gold) 55%, transparent); font:500 12px/1.3 'Prompt',sans-serif; color:var(--text)}
+  .news-logos{display:flex; gap:8px}
+  .news-logos img{width:36px; height:36px; object-fit:contain}
+  .news-acts{position:sticky; bottom:0; z-index:3; display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:16px 24px 20px; background:inherit;
+    border-top:1px solid color-mix(in srgb, var(--gold) 22%, transparent)}   /* the actions stay in view when the card scrolls (phones, short windows) */
+  .news-later{padding:10px 16px; border:0; border-radius:6px; background:none; color:var(--muted); font:500 14px/1.2 'Prompt',sans-serif; cursor:pointer; white-space:nowrap}
+  .news-later:hover{color:var(--text)}
+  .news-go{display:inline-flex; align-items:center; gap:8px; padding:11px 20px; border-radius:7px; background:var(--gold); color:#1a130c;
+    font:700 14.5px/1.2 'Prompt',sans-serif; text-decoration:none; white-space:nowrap; transition:translate .15s, filter .15s}
+  .news-go:hover{translate:0 -1px; filter:brightness(1.06)}
+  .news-go:focus-visible, .news-later:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  @media (max-width:640px){
+    .news-backdrop{padding:12px}
+    .news-hero{height:206px}
+    .news-hero-tx{left:18px; right:18px; bottom:18px; max-width:none}
+    .news-name{font-size:25px}
+    .news-rings{right:6px; top:10px; translate:none; scale:.62; transform-origin:top right}
+    .news-feats{grid-template-columns:1fr; padding:14px 14px 2px; gap:10px}
+    .news-feat{padding:12px 14px}
+    .news-acts{flex-direction:column-reverse; align-items:stretch; gap:2px; padding:12px 14px 10px}   /* the open button full width on top, ไว้ทีหลัง under it */
+    .news-go{justify-content:center; padding:11px 14px}
+    .news-later{padding:8px}
+  }
+/* </NEWS:css> */
   /* ===== Special Pet Info (tool "pet-info", user 2026-10-18: layout A "Codex" of 4 mocks). Roster left, the chosen pet right.
      Role colours live on .pi only (no new :root tokens). Hover = a small lift / brightness, never a glow. ===== */
   html.tool-pets .stage{max-width:min(1400px, 98vw)}
@@ -8867,6 +8941,10 @@
     <ol class="changelog-list patch-list" id="patchList"></ol>
     <div class="changelog-more-wrap"><button type="button" class="changelog-more patch-ok" id="btnPatchOk" disabled></button></div>
   </section>
+</div>
+
+<div class="changelog-backdrop news-backdrop" id="newsModal" hidden aria-modal="true" role="dialog" aria-labelledby="newsTitle">
+  <section class="changelog-popup news-pop" tabindex="-1"></section>
 </div>
 
 <div class="mech-backdrop" id="mechanicModal" hidden aria-modal="true" role="dialog" aria-labelledby="mechanicModalTitle">
@@ -14826,6 +14904,45 @@ function mountStatusGlossary(root){
   });
   root._statusGlossary ={ state, select, setServer, openByKey, render: () => { buildGrid(); renderRail(); renderPanel(); } };
   useServer(); buildGrid(); renderRail(); renderPanel();
+}
+// Status rain (user 2026-11-16: the glossary's menu art, also the "ของเล่นใหม่" pop-up's band): every distinct status icon except the "?" one.
+// Each icon's data is written once (a CSS variable on the rain box, an SVG <defs> image in the thumb); the falling copies only point at it.
+const statusRnd = seed => () => (seed = seed * 16807 % 2147483647) / 2147483647;
+function statusRainIcons(){
+  const unk = STATUS_ICONS._unknown, out = new Set();
+  for (const k of statusAllKeys()) { const s = statusIconSrc(k); if (s && s !== unk) out.add(s); }
+  return [...out];
+}
+// n distinct icons in a seeded order
+function statusRainPick(seed, n){
+  const pool = statusRainIcons(), r = statusRnd(seed);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, n);
+}
+// { cls, seed, icons, cols, perCol, speed: [min s, spread s] }: columns that fall by transform only (lnRain); each column holds its cells twice,
+// so the loop from -50% to 0 has no seam. Icon size and gap come from the box's --srain-ic / --srain-gap.
+// deals 0 … n-1 like cards (user 2026-11-16: "some statuses appeared too much"): every shuffled deck is used up before the next, so each icon
+// comes up as often as the others (within one); `avoid` skips the icons already in the column being filled
+function statusRainDealer(n, r){
+  const shuffled = () => { const d = Array.from({ length: n }, (_, i) => i); for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; } return d; };
+  let deck = [];
+  return (avoid) => {
+    for (;;) {
+      if (!deck.length) deck = shuffled();
+      for (let at = deck.length - 1; at >= 0; at--) if (!avoid || !avoid.has(deck[at])) return deck.splice(at, 1)[0];
+      deck = shuffled().concat(deck);   // every card left is already in this column: open the next deck under them
+    }
+  };
+}
+function statusRainHtml(o){
+  const pick = statusRainPick(o.seed, o.icons), r = statusRnd(o.seed + 101), deal = statusRainDealer(pick.length, r);
+  const vars = pick.map((s, i) => `--si${i}:url('${s}')`).join(";");
+  const cols = Array.from({ length: o.cols }, (_, c) => {
+    const used = new Set();
+    const cells = Array.from({ length: o.perCol }, () => { const v = r(), j = deal(used); used.add(j); return `<i style="background-image:var(--si${j});opacity:${(v < .14 ? 1 : .16 + v * .5).toFixed(2)}"></i>`; }).join("");
+    return `<div class="ln-srain-col" style="left:${((c + .5) / o.cols * 100).toFixed(2)}%;animation-duration:${(o.speed[0] + r() * o.speed[1]).toFixed(1)}s;animation-delay:-${(r() * 30).toFixed(1)}s">${cells}${cells}</div>`;
+  }).join("");
+  return `<div class="ln-srain ${o.cls}" style="${vars}" aria-hidden="true"><div class="ln-srain-tilt">${cols}</div></div>`;   // the tilted layer makes the rain diagonal
 }
 // </SG:page>
 // Mechanic-term glossary (^^term^^, added 2026-09-22). Same shape as
@@ -32878,7 +32995,7 @@ const TOOLS = [
   },
   {
     id: "status-glossary",
-    art: ["status:ice", "status:poison", "status:heat", "status:frost", "status:charm"],   // status icons (STATUS_ICONS) as a fan; placeholder until the user picks art (2026-11-16)
+    collage: "statusRain",   // drawn in code: LN_ART (user 2026-11-16: raining status icons, never the "?" icon)
     title: "สารานุกรมสถานะ",
     fact: () => [statusAllKeys().length, "สถานะ"],
     shortTitle: "สถานะ",
@@ -40171,6 +40288,16 @@ const LN_ART = {
       return `<div class="ln-rain-col" style="left:${((c + .5) / 24 * 100).toFixed(2)}%;color:${LN_STAT[c % 8][1]};animation-duration:${(14 + r() * 10).toFixed(1)}s;animation-delay:-${(r() * 20).toFixed(1)}s">${digits}${digits}</div>`; }).join("");
     return `<div class="ln-rain" aria-hidden="true">${cols}<b class="ln-rain-12">12</b></div>`;
   },
+  // สารานุกรมสถานะ (user 2026-11-16): status icons raining, every distinct icon but the "?" one (statusRainHtml); the thumb is a still SVG whose
+  // icons sit once in <defs> and are placed with <use>
+  statusRain(mode) {
+    if (mode !== "thumb") return statusRainHtml({ cls: "is-stage", seed: 11, icons: 60, cols: 14, perCol: 13, speed: [2.2, 1.8] });
+    const p = mode[0], icons = statusRainPick(5, 24), r = statusRnd(29);
+    const defs = icons.map((s, i) => `<image id="${p}si${i}" href="${s}" width="92" height="92"/>`).join("");
+    const deal = statusRainDealer(icons.length, r); let uses = ""; for (let c = 0; c < 15; c++) { const used = new Set(); for (let k = 0; k < 13; k++) { const v = r(), j = deal(used); used.add(j);
+      uses += `<use href="#${p}si${j}" x="${c * 106 - 300}" y="${(c % 2) * 54 - 300 + k * 108}" opacity="${(v < .16 ? 1 : .18 + v * .5).toFixed(2)}"/>`; } }
+    return lnSvg(mode, `<defs>${defs}</defs><g transform="rotate(22 490 440)">${uses}</g>`);
+  },
   // อัตราเติบโต: eight stat arrows rising from a gold base; on the stage they grow in, then breathe a little
   statArrows(mode) {
     const hs = [.85, .5, .95, .65, .78, .45, .7, .6], stage = mode === "stage", p = mode[0];
@@ -40676,6 +40803,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T15:29:15.926Z","feat(bible): สารานุกรมสถานะ ภาพเมนูสายฝนไอคอนสถานะ วงสีบอกประเภทหนาขึ้น และป๊อปอัปของเล่นใหม่แทนแพตช์โน้ต TTO"],
     ["2026-11-16T15:10:06.360Z","fix(bible): ดาเมจเวทมนตร์ TTO ตามโค้ดเกม DEF เกิน 512 นับเป็น 256 และ DEF 0-1 นับเป็น 0.5"],
     ["2026-11-16T14:10:59.105Z","fix(bible): สารานุกรมสถานะ ตัวกรองทุกตัวใช้ร่วมกันแบบ AND และปุ่มเซิร์ฟเวอร์เหลือแค่โลโก้"],
     ["2026-11-16T13:55:14.298Z","fix(bible): สารานุกรมสถานะ แก้ตามรีวิว: เพิ่มแหล่งที่มาที่ขาด ตัดที่อ่านผิด ช่วงเลเวลข้ามเซิร์ฟ โอกาสไอเทม Reborn และแผ่นรายละเอียดบนมือถือ"],
@@ -41563,12 +41691,68 @@ function mountPatchPopup(){
   }
   let seen = null;
   try { seen = localStorage.getItem(PATCH_SEEN_KEY); } catch (e) {}
-  if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }
+  if (seen !== PATCH_HISTORY[0].key && !newsTakesPatchSlot()){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }
 }
+
+// <NEWS:popup>
+// One-time news pop-up (user 2026-11-16: header "ของเล่นใหม่ สารานุกรมสถานะในเกม", a composed pop-up). It takes the page-load slot of the patch notes
+// it replaces (user: "this ของเล่นใหม่ replace the TTO patch note"): while NEWS_POPUP.replaces is the newest patch, mountPatchPopup does not force
+// those notes, and closing the news remembers both. A newer patch still shows first and the news waits for it. Not shown on the glossary's own page
+// (the visitor is there already: it counts as seen) or without storage (it could not be shown only once). The ☕ note waits while it is open.
+const NEWS_POPUP = { key: "status-glossary-2026-11-16", replaces: "tto-1.6.2.4", tool: "status-glossary", kicker: "ของเล่นใหม่", title: "สารานุกรมสถานะในเกม" };
+const NEWS_SEEN_KEY = "12t-bible-news-seen";
+const NEWS_RINGS = { hero: ["poison", "iceShield", "burn"], kinds: ["bless", "poison", "cut"] };   // real glossary rings: Physical, Shield, Magical / Buff, Debuff, State
+function newsTakesPatchSlot(){ return NEWS_POPUP.replaces === PATCH_HISTORY[0].key; }
+function newsPopupDue(seen, hash, readable){
+  if (!readable || seen === NEWS_POPUP.key) return false;
+  const h = String(hash || ""), t = "#" + NEWS_POPUP.tool;
+  return !(h === t || h.startsWith(t + "/") || h.startsWith(t + "?"));
+}
+function newsPopupHtml(){
+  const n = statusAllKeys().length;
+  const logos = STATUS_SERVER_ORDER.map(s => SKILL_ICONS["server_" + s] ? `<img src="${SKILL_ICONS["server_" + s]}" alt="${STATUS_SERVER_LABEL[s]}" title="${STATUS_SERVER_LABEL[s]}">` : "").join("");
+  const pills = [1, 2, 3, 4, 5].map(i => `<span class="news-pill${i === 3 ? " is-on" : ""}">${i}</span>`).join("");
+  const chips = ["สกิล", "อุปกรณ์", "ไอเทม", "สัตว์เลี้ยง"].map(t => `<span class="news-chip">${t}</span>`).join("");
+  const feat = (art, h, p) => `<li class="news-feat"><span class="news-feat-art" aria-hidden="true">${art}</span><b>${h}</b><span class="news-feat-p">${p}</span></li>`;
+  const [l, c, r] = NEWS_RINGS.hero;
+  return `<div class="news-hero">${statusRainHtml({ cls: "news-rain", seed: 23, icons: 40, cols: 16, perCol: 8, speed: [2, 1.6] })}`
+    + `<div class="news-rings" aria-hidden="true"><span class="news-ring is-l">${statusRingHtml(l, true)}</span><span class="news-ring is-r">${statusRingHtml(r, true)}</span><span class="news-ring is-c">${statusRingHtml(c, true)}</span></div>`
+    + `<div class="news-hero-tx"><h2 id="newsTitle"><span class="news-kicker">${NEWS_POPUP.kicker}</span> <span class="news-name">${NEWS_POPUP.title}</span></h2>`
+    + `<p class="news-count">รวม <b>${n}</b> สถานะ จากทั้ง <b>4</b> เซิร์ฟเวอร์</p></div></div>`
+    + `<ul class="news-feats">`
+    + feat(NEWS_RINGS.kinds.map(k => statusRingHtml(k)).join(""), "ดูประเภทได้จากวงสี", "วงนอกบอกชนิดของสถานะ วงในบอกว่าเป็น Buff หรือ Debuff")
+    + feat(pills, "ความแรงทุกเลเวล", "เลือกเลเวลแล้วเห็นผลจริงของเลเวลนั้น พร้อมสูตรคำนวณ")
+    + feat(chips, "ติดจากอะไรบ้าง", "รู้ว่าสกิลหรือของชิ้นไหนทำให้ติด และติดได้ถึงเลเวลเท่าไหร่")
+    + feat(`<span class="news-logos">${logos}</span>`, "ครบทุกเซิร์ฟเวอร์", "สลับดูทีละเซิร์ฟ มีสถานะเฉพาะเซิร์ฟ และกรองหลายอย่างพร้อมกันได้")
+    + `</ul><div class="news-acts"><button type="button" class="news-later" data-news-close>ไว้ทีหลัง</button>`
+    + `<a class="news-go" href="#${NEWS_POPUP.tool}" data-news-close>เปิดสารานุกรมสถานะ <span aria-hidden="true">→</span></a></div>`;
+}
+function mountNewsPopup(){
+  const modal = document.getElementById("newsModal"), card = modal && modal.querySelector(".news-pop");
+  if (!modal || !card) return;
+  let seen = null, readable = true;
+  try { seen = localStorage.getItem(NEWS_SEEN_KEY); } catch (e) { readable = false; }
+  const remember = () => { try { localStorage.setItem(NEWS_SEEN_KEY, NEWS_POPUP.key); if (newsTakesPatchSlot()) localStorage.setItem(PATCH_SEEN_KEY, NEWS_POPUP.replaces); } catch (e) {} };
+  if (!readable || seen === NEWS_POPUP.key) return;
+  if (!newsPopupDue(seen, location.hash, readable)) { remember(); return; }   // opened on the glossary itself: counts as seen
+  const onKey = (e) => { if (e.key === "Escape" && !modal.hidden){ e.stopPropagation(); hide(); } };
+  const hide = () => { if (modal.hidden) return; modal.hidden = true; remember(); document.removeEventListener("keydown", onKey, true); };
+  const show = () => { card.innerHTML = newsPopupHtml(); modal.hidden = false; card.focus(); document.addEventListener("keydown", onKey, true); };
+  card.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("[data-news-close]")) hide(); });   // the link still opens the glossary
+  modal.addEventListener("click", (e) => { if (e.target === modal) hide(); });
+  // a newer patch showing on load goes first; the news follows when it closes
+  const patch = document.getElementById("patchModal");
+  if (patch && !patch.hidden && typeof MutationObserver === "function") {
+    const mo = new MutationObserver(() => { if (patch.hidden){ mo.disconnect(); show(); } });
+    mo.observe(patch, { attributes: true, attributeFilter: ["hidden"] });
+  } else show();
+}
+// </NEWS:popup>
 
 mountChangelog();
 mountMechanicGlossary();
 mountPatchPopup();
+mountNewsPopup();
 
 
 // Tool zoom (user 2026-10-27): fitStageToScreen cancels browser zoom exactly (a zoomed window reports fewer CSS px, so the fit
