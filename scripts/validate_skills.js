@@ -7391,6 +7391,39 @@ if (RUN_DAMAGE_CHECKS) {
       }
       console.log(`Verified the status glossary list: ${run("statusAllKeys()").length} statuses (BB ${K("og").length}, TTO ${K("tto").length}, Reborn ${K("reborn").length}).`);
     }
+    // ---- Task 4: icons (assets.js STATUS_ICONS, 128 px WebP; a key with no icon in any client is in STATUS_ICON_NONE and shows the game's fallback)
+    const need4 = ["STATUS_ICONS", "STATUS_ICON_NONE", "statusIconSrc"];
+    const miss4 = need4.filter(n => !has(n));
+    miss4.forEach(n => sg(`missing ${n}`));
+    if (!miss4.length && !miss1.length) {
+      const I = run("STATUS_ICONS"), NONE = run("STATUS_ICON_NONE"), src = run("statusIconSrc");
+      const webpSize = (uri) => {
+        const b = Buffer.from(String(uri).replace(/^data:image\/webp;base64,/, ""), "base64");
+        if (b.toString("ascii", 0, 4) !== "RIFF" || b.toString("ascii", 8, 12) !== "WEBP") return null;
+        const t = b.toString("ascii", 12, 16);
+        if (t === "VP8X") return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+        if (t === "VP8 ") return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+        if (t === "VP8L") { const v = b.readUInt32LE(21); return [1 + (v & 0x3fff), 1 + ((v >> 14) & 0x3fff)]; }
+        return null;
+      };
+      let bad = 0;
+      for (const [k, uri] of Object.entries(I)) {
+        if (!/^data:image\/webp;base64,/.test(uri)) { sg(`STATUS_ICONS.${k} is not a WebP data URI`); bad++; continue; }
+        const s = webpSize(uri); if (!s || s[0] !== 128 || s[1] !== 128) { sg(`STATUS_ICONS.${k} is ${s ? s.join("x") : "unreadable"}, expected 128x128`); bad++; }
+        if (k !== k.toLowerCase()) sg(`STATUS_ICONS key ${k} is not lower-case`);
+      }
+      if (!I._unknown) sg("STATUS_ICONS has no _unknown (the game's fallback icon)");
+      for (const k of run("statusAllKeys()")) {
+        const own = !!I[k.toLowerCase()], none = NONE.includes(k);
+        if (!own && !none) sg(`${k}: no icon and not in STATUS_ICON_NONE`);
+        if (own && none) sg(`${k}: has an icon but is listed in STATUS_ICON_NONE`);
+        if (!src(k)) sg(`statusIconSrc(${k}) is empty`);
+      }
+      if (src("cookFeast") !== I.happy) sg("cookFeast must show the happy icon (Reborn1027:StatusData.cs:10-17)");
+      if (src("weak") !== I._unknown) sg("weak (no TTO icon) must show the unknown icon");
+      if (src("nosuchstatus") !== I._unknown) sg("an unknown key must show the unknown icon");
+      console.log(`Verified ${Object.keys(I).length} status icons (${NONE.length} statuses use the game's fallback).`);
+    }
   } catch (e) { sg("threw: " + (e && e.stack || e)); }
 }
 // </SG:checks>

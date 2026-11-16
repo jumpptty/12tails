@@ -8814,7 +8814,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=0dc4342f51" id="bibleAssets"></script>
+<script src="assets.js?v=51beb6985c" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -14073,6 +14073,16 @@ function statusServersOf(key){
   const k = statusGameKey(key);
   if (!k) return [];
   return STATUS_SERVER_ORDER.filter(srv => statusKeysFor(srv).includes(k));
+}
+// Icons: assets.js STATUS_ICONS, one 128 px WebP per lower-cased key (Real-ESRGAN upscales of the clients' own icons; batch and sources:
+// D:\12tails-assets-archive\status-icons-2026-11-16\manifest.json). A key no client ships an icon for shows what the game shows: BB's
+// getIcon falls back to "unknown" (StatusData.cs:20-48), Reborn's cookFeast to "happy" (Reborn1027:StatusData.cs:10-17).
+const STATUS_ICONS = BIBLE_ASSETS_IN.STATUS_ICONS || {};
+const STATUS_ICON_NONE = ["eraseBoost", "hpSap", "koSap", "koDrain", "slayerMark", "gaosSoul", "gmExpBoost", "spireLink", "gmDropBoost", "abyssExposure", "abyssDoom", "weak", "abyssOrbMark", "cookFeast"];
+const STATUS_ICON_FALLBACK = { cookfeast: "happy" };
+function statusIconSrc(key){
+  const l = String(key).toLowerCase();
+  return STATUS_ICONS[l] || STATUS_ICONS[STATUS_ICON_FALLBACK[l] || "_unknown"] || "";
 }
 function statusTags(key){
   const cls = STATUS_CLASS_MAP[String(key).toLowerCase()] || STATUS_CLASS_MAP[key];
@@ -39918,6 +39928,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T12:17:05.687Z","feat(bible): สารานุกรมสถานะ ไอคอนสถานะทั้งหมด 250 ไอคอน อัปสเกลเป็น 128 px (BB, TTO, Reborn)"],
     ["2026-11-16T12:05:11.076Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 1 รายชื่อสถานะของทุกเซิร์ฟเวอร์ (BB 205, TTO 253, Reborn 213)"],
     ["2026-11-15T14:05:48.222Z","fix(bible): Bunker ของ Mole ระบุว่า Mind Control กับ Charm ของค้างคาวร่ายใส่ไม่ได้; บันทึกพฤติกรรมเผ่า Structure ของทุกคลาสและผลสแกนแฟล็ก recieveStatus (44 ชนิดยูนิตที่ติดสถานะไม่ได้) ลงไฟล์อ้างอิง"],
     ["2026-11-15T12:57:30.879Z","fix(bible): Bunker ของ Mole แก้ข้อความรับบัฟ: ระบบสถานะไม่ปฏิเสธเพราะ Bunker แต่ Immune / Boost / Heat / Life Shot ของกระต่าย, Mimic ของค้างคาว และออร่า Overlord ของ Bison ใช้กับ Structure ไม่ได้"],
