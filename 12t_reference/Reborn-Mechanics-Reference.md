@@ -144,6 +144,10 @@ Reborn's `StatusData.getStatusCode` has BB's 205 keys (helper strings, decoded) 
 - **cookFeast** (Buff): eating a cooked food with stats (`Reborn1027:RebornCookFeast.cs:77-100`), Lv 1, ⌊(1 + 0.5w) × secs⌋ s (w = the eater's Culinary Tongue ranks); its stat deltas ⌊(1 + 0.5w) × stat⌋ come from a server table (login key 241, `RebornCookFeastCore.cs:34-164`) and are re-added once a second if lost while time remains (`RebornCookFeast.cs:202-241`).
 - **reactorOverdrive** (in no list): Mole C7 Reactor Core (#461): +2 heat per own damaging hit outside codes 461-464; at 100 heat the Mole gets Lv 1, 30 s (`Reborn1027:RebornC7Passive.cs:538-541`, `:3225-3233`): TAL +120 while held, so max SP +24 (`:3191-3203`, `CharacterControl.cs:12093-12098`).
 
+### 2.12 On-hit statuses through Salvation (`RebornCombat.SalvationBlocked`, traced 2026-11-16)
+
+`hit()` clears `RebornCombat.SalvationBlocked` on entry (`Reborn1027:CharacterControl.cs:7091`) and sets it when the target has `salvation` and `RebornCombat.TrySalvationBreak(attacker, target, nDamage)` fails: the hit returns 0 (no damage) with the flag up (`:7161-7165`; the helper strings decode to `salvation`, `noDamage`, `swallow`). Callers can then still apply their on-hit status to the protected target. Captain Crab's two claws do: on `hit() == 0` with the flag up they roll the same 35% Dissolute Lv 4 for `getDebuff(6)` as on a landed hit (`Reborn1027:CaptainCrab.cs:98`, `:257`; landed path `:116`, `:275`), and Dissolute Lv 4 strips Buffs up to Lv 6, so it can remove the Salvation that blocked the claw. On BB and TTO the claw rolls only after a landed hit (`CaptainCrab.cs:1784`, `TTO1114:CaptainCrab.<RPC_nAttack1>d__14::MoveNext@0x22DFB70`). Other files that read the flag, not traced yet: `Bison.cs`, `Cat.cs`, `Wolf.cs`, `ChromeKnight.cs`, `FirstWhale.cs`, `Matti.cs`, `RangerBug.cs`, `SilverBug.cs`, `SilverQueenBug.cs`. `TrySalvationBreak` itself is not traced.
+
 ## 3. Gear findings
 
 ### 3.1 Red star and item chance
