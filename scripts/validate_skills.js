@@ -3039,6 +3039,15 @@ let checkedTtoNoLck = 0;
       const r = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(gorgon, Number(rank))));
       if (r[0] !== want || r[1] !== want) fail(`Gorgon Shot rank ${rank} at DEF ${def} on TTO: ${JSON.stringify(r)}, game shows ${want}`); else checkedTtoNoLck++;
     }
+    // Not live readings: the edges of TTO's own defAdjust (TTO1102:CharacterControl::defAdjust@0x24d0510), which clamps DEF to 1-512
+    // before a Magic hit halves it, so DEF 0-1 counts as 0.5 and DEF above 512 as 256 (halving first gave 299 / 138 at rank 2).
+    const GORGON_CODE_EDGES = { 2: [[0, 300], [1, 300], [600, 100]], 1: [[0, 150], [1, 150], [600, 28]] };
+    for (const [rank, rows] of Object.entries(GORGON_CODE_EDGES)) for (const [def, want] of rows) {
+      sandbox._skillRanks[gorgon.id] = Number(rank);
+      sandbox._setServer("tto"); ins.enemyDef.value = String(def); sandbox._selectSkill(gorgon);
+      const r = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(gorgon, Number(rank))));
+      if (r[0] !== want || r[1] !== want) fail(`Gorgon Shot rank ${rank} at DEF ${def} on TTO: ${JSON.stringify(r)}, TTO's defAdjust gives ${want}`); else checkedTtoNoLck++;
+    }
     if (savedRank === undefined) delete sandbox._skillRanks[gorgon.id]; else sandbox._skillRanks[gorgon.id] = savedRank;
   }
   console.log(`Verified TTO Magic Damage: ${magic.size} listed skills, ${halved} damage cards hit against half DEF, ${gated.length} dep-gated, ${Object.values(GORGON_READINGS).flat().length} Gorgon Shot readings.`);

@@ -9052,8 +9052,10 @@ function isTtoMagic(skill) {
 function ttoMagicHit(skill, g) {
   return currentServer === "tto" && isTtoMagic(skill) && !(g && g.ttoPhysical);
 }
+// TTO's defAdjust clamps the raw DEF to 1-512 first, and a Magic hit then uses 0.25 × N and N / (N + 128): the physical formula at half
+// the clamped DEF, so DEF 0-1 counts as 0.5 and DEF above 512 as 256 (TTO1102:CharacterControl::defAdjust@0x24d0510, unchanged in TTO1114).
 function ttoMagicDef(skill, def, g) {
-  return ttoMagicHit(skill, g) ? def / 2 : def;
+  return ttoMagicHit(skill, g) ? Math.min(Math.max(def, 1), 512) / 2 : def;
 }
 
 // Single-roll versions of the two adjust formulas below, taking the exact
@@ -9131,7 +9133,8 @@ function talAdjustRange(base, TAL, LCK, summon) {
 // in this file) and the Final Damage chip's simulate-on-click random single
 // hit both build on it, rather than duplicating the blend formula twice.
 function defAdjustAtRoll(nDamage, def, R) {
-  const n = Math.min(Math.max(def + tdlRoll(R), 1), 512);
+  // The floor is 1, except a TTO magic hit's halved DEF 0-1 (ttoMagicDef hands over exactly 0.5; game DEF is an integer, so nothing else does).
+  const n = Math.min(Math.max(def + tdlRoll(R), currentServer === "tto" && def === 0.5 ? 0.5 : 1), 512);
   const subtractive = Math.max(1, Math.trunc(nDamage - 0.5 * n));
   const multiplicative = Math.max(1, Math.trunc(nDamage * (1 - n / (n + 64))));
   return Math.ceil(0.35 * subtractive + 0.65 * multiplicative);
@@ -40673,6 +40676,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T15:10:06.360Z","fix(bible): ดาเมจเวทมนตร์ TTO ตามโค้ดเกม DEF เกิน 512 นับเป็น 256 และ DEF 0-1 นับเป็น 0.5"],
     ["2026-11-16T14:10:59.105Z","fix(bible): สารานุกรมสถานะ ตัวกรองทุกตัวใช้ร่วมกันแบบ AND และปุ่มเซิร์ฟเวอร์เหลือแค่โลโก้"],
     ["2026-11-16T13:55:14.298Z","fix(bible): สารานุกรมสถานะ แก้ตามรีวิว: เพิ่มแหล่งที่มาที่ขาด ตัดที่อ่านผิด ช่วงเลเวลข้ามเซิร์ฟ โอกาสไอเทม Reborn และแผ่นรายละเอียดบนมือถือ"],
     ["2026-11-16T13:30:30.734Z","feat(bible): สารานุกรมสถานะ เลือกตัวกรองได้หลายอย่างพร้อมกัน เพิ่มตัวกรองเฉพาะเซิร์ฟเวอร์ ไอคอนเต็มวงกลม และซ่อนสถานะ TTO ที่ยังเจอในเกมไม่ได้"],
